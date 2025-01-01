@@ -19,8 +19,8 @@ type DelegationHistory struct {
 	add       bool
 }
 
-// DelegationStatHistory represents delegation stat for to address
-type DelegationStatHistory struct {
+// DelegationSnapShotHistory represents delegation stat for to address
+type DelegationSnapShotHistory struct {
 	to           std.Address
 	amount       uint64
 	updatedBlock uint64
@@ -28,8 +28,8 @@ type DelegationStatHistory struct {
 }
 
 var (
-	delegationHistory = avl.NewTree() // addr => []delegationHistory
-	delegationStatHistory = avl.NewTree() // addr => []delegationStatHistory
+	delegationHistory         = avl.NewTree() // addr => []delegationHistory
+	delegationSnapShotHistory = avl.NewTree() // addr => []delegationSnapShotHistory
 )
 
 // GetDelegatedCumulative gets the cumulative delegated amount for an address at a certain timestamp.
@@ -51,9 +51,9 @@ func GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
 		))
 	}
 
-	history := make([]DelegationStatHistory, 0)
-	if value, exists := delegationStatHistory.Get(delegator.String()); exists {
-		history = value.([]DelegationStatHistory)
+	history := make([]DelegationSnapShotHistory, 0)
+	if value, exists := delegationSnapShotHistory.Get(delegator.String()); exists {
+		history = value.([]DelegationSnapShotHistory)
 	} else {
 		return 0
 	}

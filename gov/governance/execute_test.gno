@@ -2,15 +2,10 @@ package governance
 
 import (
 	"errors"
-	"std"
 	"testing"
-	"time"
 
-	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-
 	"gno.land/r/gnoswap/v1/consts"
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 func TestParameterRegistry(t *testing.T) {
@@ -132,11 +127,11 @@ func TestValidateProposalState(t *testing.T) {
 			name: "Pass: Text proposal",
 			proposal: &ProposalInfo{
 				ProposalType: Text,
-				ExecutionState: ExecutionState{
-					Executed:  false,
-					Canceled:  false,
-					Rejected:  false,
-					Passed:    true,
+				State: ProposalState{
+					Executed: false,
+					Canceled: false,
+					Rejected: false,
+					Passed:   true,
 				},
 			},
 			want: ExecutionValidator{
@@ -151,11 +146,11 @@ func TestValidateProposalState(t *testing.T) {
 			name: "Pass: Already executed",
 			proposal: &ProposalInfo{
 				ProposalType: ParameterChange,
-				ExecutionState: ExecutionState{
-					Executed:  true,
-					Canceled:  false,
-					Rejected:  false,
-					Passed:    true,
+				State: ProposalState{
+					Executed: true,
+					Canceled: false,
+					Rejected: false,
+					Passed:   true,
 				},
 			},
 			want: ExecutionValidator{
@@ -170,11 +165,11 @@ func TestValidateProposalState(t *testing.T) {
 			name: "Pass: Canceled",
 			proposal: &ProposalInfo{
 				ProposalType: ParameterChange,
-				ExecutionState: ExecutionState{
-					Executed:  false,
-					Canceled:  true,
-					Rejected:  false,
-					Passed:    false,
+				State: ProposalState{
+					Executed: false,
+					Canceled: true,
+					Rejected: false,
+					Passed:   false,
 				},
 			},
 			want: ExecutionValidator{
@@ -289,11 +284,11 @@ func TestParameterRegistry2(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:     "invalid handler",
-			pkgPath:  "invalid",
-			function: "invalid",
-			params:   []string{},
-			setupMock: func(r *ParameterRegistry) {},
+			name:        "invalid handler",
+			pkgPath:     "invalid",
+			function:    "invalid",
+			params:      []string{},
+			setupMock:   func(r *ParameterRegistry) {},
 			expectError: true,
 		},
 	}

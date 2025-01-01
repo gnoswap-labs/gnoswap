@@ -52,12 +52,13 @@ func ProposeText(
 	}
 
 	now := uint64(time.Now().Unix())
+	// votingMax does not include quantities delegated through Launchpad.
 	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
 
 	proposal := ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: Text,
-		ExecutionState: ExecutionState{
+		State: ProposalState{
 			Created:   true,
 			CreatedAt: now,
 			Upcoming:  true,
@@ -76,16 +77,19 @@ func ProposeText(
 	proposals.Set(strconv.Itoa(int(proposalId)), proposal)
 	latestProposalByProposer.Set(proposer.String(), proposalId)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"ProposeText",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"title", title,
 		"description", description,
-		"internal_proposalId", ufmt.Sprintf("%d", proposalId),
+		"proposalId", formatUint64(proposalId),
+		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
+		"createdAt", formatUint64(proposal.State.CreatedAt),
+		"configVersion", formatUint64(proposal.ConfigVersion),
+		"quorumAmount", formatUint64(proposal.QuorumAmount),
 	)
-
 	return proposalId
 }
 
@@ -121,7 +125,7 @@ func ProposeCommunityPoolSpend(
 	proposal := ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: CommunityPoolSpend,
-		ExecutionState: ExecutionState{
+		State: ProposalState{
 			Created:   true,
 			CreatedAt: now,
 			Upcoming:  true,
@@ -208,7 +212,7 @@ func ProposeParameterChange(
 	proposal := ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: ParameterChange,
-		ExecutionState: ExecutionState{
+		State: ProposalState{
 			Created:   true,
 			CreatedAt: now,
 			Upcoming:  true,
@@ -260,8 +264,11 @@ func updateProposalsState() {
 
 	proposals.Iterate("", "", func(key string, value interface{}) bool {
 		proposal := value.(ProposalInfo)
-		updater := newProposalStateUpdater(&proposal, now)
+		if proposal.State.Canceled || proposal.State.Expired || proposal.State.Executed {
+			return false
+		}
 
+		updater := newProposalStateUpdater(&proposal, now)
 		updater.updateVotingState()
 		updater.updateVotingResult()
 		updater.updateExecutionState()
@@ -283,16 +290,16 @@ func newProposalStateUpdater(proposal *ProposalInfo, now uint64) *proposalStateU
 // shouldUpdate determines if the proposal state should be updated.
 // Returns true if the proposal is created, not canceled, and not executed.
 func (u *proposalStateUpdater) shouldUpdate() bool {
-	return u.proposal.ExecutionState.Created &&
-		!u.proposal.ExecutionState.Canceled &&
-		!u.proposal.ExecutionState.Executed
+	return u.proposal.State.Created &&
+		!u.proposal.State.Canceled &&
+		!u.proposal.State.Executed
 }
 
 // getVotingTimes returns the start and end timestamps of the voting period.
 // The start time is CreatedAt + VotingStartDelay.
 // The end time is start time + VotingPeriod.
 func (u *proposalStateUpdater) getVotingTimes() (start, end uint64) {
-	start = u.proposal.ExecutionState.CreatedAt + u.config.VotingStartDelay
+	start = u.proposal.State.CreatedAt + u.config.VotingStartDelay
 	end = start + u.config.VotingPeriod
 	return
 }
@@ -317,9 +324,9 @@ func (u *proposalStateUpdater) updateVotingState() {
 	votingStart, votingEnd := u.getVotingTimes()
 	isVotingPeriod := u.now >= votingStart && u.now <= votingEnd
 
-	if u.proposal.ExecutionState.Upcoming && isVotingPeriod {
-		u.proposal.ExecutionState.Upcoming = false
-		u.proposal.ExecutionState.Active = true
+	if u.proposal.State.Upcoming && isVotingPeriod {
+		u.proposal.State.Upcoming = false
+		u.proposal.State.Active = true
 	}
 }
 
@@ -329,9 +336,9 @@ func (u *proposalStateUpdater) updateVotingState() {
 func (u *proposalStateUpdater) updateVotingResult() {
 	_, votingEnd := u.getVotingTimes()
 
-	hasNoResult := !u.proposal.ExecutionState.Passed &&
-		!u.proposal.ExecutionState.Rejected &&
-		!u.proposal.ExecutionState.Canceled
+	hasNoResult := !u.proposal.State.Passed &&
+		!u.proposal.State.Rejected &&
+		!u.proposal.State.Canceled
 
 	if u.now <= votingEnd || !hasNoResult {
 		return
@@ -341,32 +348,32 @@ func (u *proposalStateUpdater) updateVotingResult() {
 	nayUint := u.proposal.Nay.Uint64()
 
 	if yeaUint >= u.proposal.QuorumAmount && yeaUint > nayUint {
-		u.proposal.ExecutionState.Passed = true
-		u.proposal.ExecutionState.PassedAt = u.now
+		u.proposal.State.Passed = true
+		u.proposal.State.PassedAt = u.now
 	} else {
-		u.proposal.ExecutionState.Rejected = true
-		u.proposal.ExecutionState.RejectedAt = u.now
+		u.proposal.State.Rejected = true
+		u.proposal.State.RejectedAt = u.now
 	}
 
-	u.proposal.ExecutionState.Upcoming = false
-	u.proposal.ExecutionState.Active = false
+	u.proposal.State.Upcoming = false
+	u.proposal.State.Active = false
 }
 
 // updateExecutionState checks if a non-text proposal should expire.
 // It marks the proposal as expired if execution window has ended.
 func (u *proposalStateUpdater) updateExecutionState() {
 	if u.proposal.ProposalType == Text ||
-		!u.proposal.ExecutionState.Passed ||
-		u.proposal.ExecutionState.Executed ||
-		u.proposal.ExecutionState.Expired {
+		!u.proposal.State.Passed ||
+		u.proposal.State.Executed ||
+		u.proposal.State.Expired {
 		return
 	}
 
 	_, executionEnd := u.getExecutionTimes()
 
 	if u.now >= executionEnd {
-		u.proposal.ExecutionState.Expired = true
-		u.proposal.ExecutionState.ExpiredAt = u.now
+		u.proposal.State.Expired = true
+		u.proposal.State.ExpiredAt = u.now
 	}
 }
 

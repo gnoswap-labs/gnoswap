@@ -73,8 +73,8 @@ func proposeCommunityPoolSpend(t *testing.T) {
 
 		uassert.Equal(t, proposal.Proposer, admin)
 		uassert.Equal(t, proposal.ProposalType, "COMMUNITY_POOL_SPEND")
-		uassert.True(t, proposal.ExecutionState.Created)
-		uassert.True(t, proposal.ExecutionState.Upcoming)
+		uassert.True(t, proposal.State.Created)
+		uassert.True(t, proposal.State.Upcoming)
 		uassert.Equal(t, proposal.Yea.ToString(), "0")
 		uassert.Equal(t, proposal.Nay.ToString(), "0")
 		uassert.Equal(t, proposal.ConfigVersion, uint64(1))
@@ -110,7 +110,7 @@ func passAndExecute(t *testing.T) {
 		uassert.Equal(t, `{"height":"245","now":"1234568134","proposals":[{"id":"1","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTEyIiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTY3OTIyIiwiVm90aW5nRW5kIjoiMTIzNDU2Nzk1MiIsIlBhc3NlZCI6InRydWUiLCJQYXNzZWRBdCI6IjEyMzQ1NjgxMzQiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"COMMUNITY_POOL_SPEND","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9","extra":"eyJ0byI6ImcxdzNoNDdoNmx0YTA0N2g2bHRhMDQ3aDZsdGEwNDdoNmxma250cDciLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zIiwiYW1vdW50IjoiMTAwIn0="}]}`, proposalsJson)
 
 		proposal := proposals[proposalId]
-		uassert.True(t, proposal.ExecutionState.Passed)
+		uassert.True(t, proposal.State.Passed)
 	})
 
 	t.Run("successful execute proposal", func(t *testing.T) {
@@ -128,7 +128,7 @@ func passAndExecute(t *testing.T) {
 
 		// status
 		proposal := proposals[proposalId]
-		uassert.True(t, proposal.ExecutionState.Executed)
+		uassert.True(t, proposal.State.Executed)
 	})
 
 	t.Run("already executed", func(t *testing.T) {
@@ -158,7 +158,7 @@ func rejectAndExecute(t *testing.T) {
 		updateProposalsState() // proposal rejected
 		proposal := proposals[proposalId]
 
-		uassert.True(t, proposal.ExecutionState.Rejected)
+		uassert.True(t, proposal.State.Rejected)
 	})
 
 	t.Run("execute rejected proposal", func(t *testing.T) {
@@ -193,8 +193,8 @@ func passAndExpire(t *testing.T) {
 
 		proposal := proposals[proposalId]
 
-		uassert.True(t, proposal.ExecutionState.Passed)
-		uassert.True(t, proposal.ExecutionState.Expired)
+		uassert.True(t, proposal.State.Passed)
+		uassert.True(t, proposal.State.Expired)
 
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-017] proposal execution time expired || execute.gno__Execute() || EXECUTION_WINDOW_OVER (now(1234570602) >= windowEnd(1234569408))",

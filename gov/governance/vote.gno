@@ -60,7 +60,6 @@ func setUserVote(voter std.Address, pid uint64, vote voteWithWeight) {
 	userVotes.Set(createUserVoteKey(voter, pid), vote)
 }
 
-
 ///////////////////// Vote /////////////////////
 
 // Vote allows a user to vote on a given proposal.
@@ -107,9 +106,10 @@ func Vote(pid uint64, yes bool) string {
 		"Vote",
 		"prevAddr", prevAddr,
 		"prevPkgPath", prevPkgPath,
-		"proposalId", ufmt.Sprintf("%d", pid),
+		"proposalId", formatUint64(pid),
+		"voter", voter.String(),
 		"yes", voteToString(yes),
-		"internal_weight", ufmt.Sprintf("%d", state.userWeight),
+		"voteWeight", formatUint64(state.userWeight),
 	)
 
 	return voteKey
@@ -126,7 +126,7 @@ type VoteState struct {
 
 func newVoteState(proposal ProposalInfo, voteKey string, voter std.Address, now uint64) (*VoteState, error) {
 	cfg := GetConfigVersion(proposal.ConfigVersion)
-	votingStartTime := proposal.ExecutionState.CreatedAt + cfg.VotingStartDelay
+	votingStartTime := proposal.State.CreatedAt + cfg.VotingStartDelay
 	votingEndTime := votingStartTime + cfg.VotingPeriod
 
 	hasUserVoted := false
@@ -137,7 +137,7 @@ func newVoteState(proposal ProposalInfo, voteKey string, voter std.Address, now 
 
 	return &VoteState{
 		isVotingPeriod:  now >= votingStartTime && now < votingEndTime,
-		isProposalValid: !proposal.ExecutionState.Canceled,
+		isProposalValid: !proposal.State.Canceled,
 		hasUserVoted:    hasUserVoted,
 		userWeight:      proposal.PossibleAddressWithWeight[voter],
 	}, nil
@@ -202,7 +202,7 @@ func Cancel(proposalId uint64) {
 	updateProposalsState()
 
 	proposal := mustGetProposal(proposalId)
-	if proposal.ExecutionState.Canceled {
+	if proposal.State.Canceled {
 		panic(addDetailToError(
 			errAlreadyCanceledProposal,
 			ufmt.Sprintf("proposalId(%d) has already canceled", proposalId),
@@ -211,7 +211,7 @@ func Cancel(proposalId uint64) {
 
 	config := GetConfigVersion(proposal.ConfigVersion)
 	now := uint64(time.Now().Unix())
-	if now >= (proposal.ExecutionState.CreatedAt + config.VotingStartDelay) {
+	if now >= (proposal.State.CreatedAt + config.VotingStartDelay) {
 		panic(addDetailToError(
 			errUnableToCancleVotingProposal,
 			ufmt.Sprintf("voting has already started for proposalId(%d)", proposalId),
@@ -234,10 +234,10 @@ func Cancel(proposalId uint64) {
 		}
 	}
 
-	proposal.ExecutionState.Canceled = true
-	proposal.ExecutionState.CanceledAt = now
-	proposal.ExecutionState.Upcoming = false
-	proposal.ExecutionState.Active = false
+	proposal.State.Canceled = true
+	proposal.State.CanceledAt = now
+	proposal.State.Upcoming = false
+	proposal.State.Active = false
 
 	proposals.Set(strconv.Itoa(int(proposalId)), proposal)
 

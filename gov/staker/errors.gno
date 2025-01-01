@@ -9,8 +9,8 @@ import (
 var (
 	errNoPermission          = errors.New("[GNOSWAP-GOV_STAKER-001] caller has no permission")
 	errNotRegistered         = errors.New("[GNOSWAP-GOV_STAKER-002] not registered token")
-	errAlreadyRegistered     = errors.New("[GNOSWAP-GOV_STAKER-003] already registered token")
-	errLocked                = errors.New("[GNOSWAP-GOV_STAKER-004] can't transfer token while locked")
+	errTransferFailed        = errors.New("[GNOSWAP-GOV_STAKER-003] transfer failed")
+	errInvalidAmount         = errors.New("[GNOSWAP-GOV_STAKER-004] invalid amount")
 	errNoDelegatedAmount     = errors.New("[GNOSWAP-GOV_STAKER-005] zero delegated amount")
 	errNoDelegatedTarget     = errors.New("[GNOSWAP-GOV_STAKER-006] did not delegated to that address")
 	errNotEnoughDelegated    = errors.New("[GNOSWAP-GOV_STAKER-007] not enough delegated")
@@ -25,4 +25,14 @@ var (
 func addDetailToError(err error, detail string) string {
 	finalErr := ufmt.Errorf("%s || %s", err.Error(), detail)
 	return finalErr.Error()
+}
+
+// checkTransferError checks transfer error.
+func checkTransferError(err error) {
+	if err != nil {
+		panic(addDetailToError(
+			errTransferFailed,
+			err.Error(),
+		))
+	}
 }

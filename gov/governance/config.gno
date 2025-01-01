@@ -13,7 +13,6 @@ import (
 
 var (
 	config         Config
-	// configVersions = make(map[uint64]Config)
 	configVersions = avl.NewTree() // version -> Config
 )
 
@@ -72,40 +71,15 @@ func ReconfigureByAdmin(
 		panic(err)
 	}
 
-	common.IsHalted()
-
-	en.MintAndDistributeGns()
-	updateProposalsState()
-
-	newVersion := getLatestVersion() + 1
-
-	config = Config{
-		VotingStartDelay:              votingStartDelay,
-		VotingPeriod:                  votingPeriod,
-		VotingWeightSmoothingDuration: votingWeightSmoothingDuration,
-		Quorum:                        quorum,
-		ProposalCreationThreshold:     proposalCreationThreshold,
-		ExecutionDelay:                executionDelay,
-		ExecutionWindow:               executionWindow,
-	}
-	setConfigVersion(newVersion, config)
-
-	prevAddr, prevRealm := getPrev()
-	std.Emit(
-		"ReconfigureByAdmin",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"votingStartDelay", ufmt.Sprintf("%d", config.VotingStartDelay),
-		"votingPeriod", ufmt.Sprintf("%d", config.VotingPeriod),
-		"votingWeightSmoothingDuration", ufmt.Sprintf("%d", config.VotingWeightSmoothingDuration),
-		"quorum", ufmt.Sprintf("%d", config.Quorum),
-		"proposalCreationThreshold", ufmt.Sprintf("%d", config.ProposalCreationThreshold),
-		"executionDelay", ufmt.Sprintf("%d", config.ExecutionDelay),
-		"executionWindow", ufmt.Sprintf("%d", config.ExecutionWindow),
-		"internal_newVersion", ufmt.Sprintf("%d", newVersion),
+	return reconfigure(
+		votingStartDelay,
+		votingPeriod,
+		votingWeightSmoothingDuration,
+		quorum,
+		proposalCreationThreshold,
+		executionDelay,
+		executionWindow,
 	)
-
-	return newVersion
 }
 
 // reconfigure updates the Governor's configuration.
@@ -138,11 +112,11 @@ func reconfigure(
 	}
 	setConfigVersion(newVersion, config)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"Reconfigure",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"votingStartDelay", ufmt.Sprintf("%d", config.VotingStartDelay),
 		"votingPeriod", ufmt.Sprintf("%d", config.VotingPeriod),
 		"votingWeightSmoothingDuration", ufmt.Sprintf("%d", config.VotingWeightSmoothingDuration),
@@ -150,7 +124,7 @@ func reconfigure(
 		"proposalCreationThreshold", ufmt.Sprintf("%d", config.ProposalCreationThreshold),
 		"executionDelay", ufmt.Sprintf("%d", config.ExecutionDelay),
 		"executionWindow", ufmt.Sprintf("%d", config.ExecutionWindow),
-		"internal_newVersion", ufmt.Sprintf("%d", newVersion),
+		"newConfigVersion", ufmt.Sprintf("%d", newVersion),
 	)
 
 	return newVersion

@@ -30,8 +30,8 @@ type Config struct {
 	ExecutionWindow uint64
 }
 
-// ExecutionState represents the state of a proposal's execution
-type ExecutionState struct {
+// ProposalState represents the state of a proposal's execution
+type ProposalState struct {
 	Created   bool
 	CreatedAt uint64
 
@@ -106,7 +106,7 @@ type ProposalInfo struct {
 	ProposalType ProposalType
 
 	// The execution state of the proposal
-	ExecutionState ExecutionState
+	State ProposalState
 
 	// How many yes votes have been collected
 	Yea *u256.Uint

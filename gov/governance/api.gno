@@ -137,7 +137,6 @@ func GetVoteByAddressFromProposalById(addr std.Address, id uint64) string {
 	return marshal(votesObj)
 }
 
-
 func createVoteJsonNode(addr std.Address, id uint64, vote voteWithWeight) *json.Node {
 	return json.Builder().
 		WriteString("proposalId", strconv.FormatUint(id, 10)).
@@ -202,25 +201,25 @@ func getProposalStatus(id uint64) string {
 
 	proposal := prop.(ProposalInfo)
 	config := GetConfigVersion(proposal.ConfigVersion)
-	votingStart := proposal.ExecutionState.CreatedAt + config.VotingStartDelay
-	votingEnd := votingStart + config.VotingPeriod	
+	votingStart := proposal.State.CreatedAt + config.VotingStartDelay
+	votingEnd := votingStart + config.VotingPeriod
 
 	proposalObj := json.Builder().
-		WriteString("CreatedAt", strconv.FormatUint(proposal.ExecutionState.CreatedAt, 10)).
-		WriteString("Upcoming", strconv.FormatBool(proposal.ExecutionState.Upcoming)).
-		WriteString("Active", strconv.FormatBool(proposal.ExecutionState.Active)).
+		WriteString("CreatedAt", strconv.FormatUint(proposal.State.CreatedAt, 10)).
+		WriteString("Upcoming", strconv.FormatBool(proposal.State.Upcoming)).
+		WriteString("Active", strconv.FormatBool(proposal.State.Active)).
 		WriteString("VotingStart", strconv.FormatUint(votingStart, 10)).
 		WriteString("VotingEnd", strconv.FormatUint(votingEnd, 10)).
-		WriteString("Passed", strconv.FormatBool(proposal.ExecutionState.Passed)).
-		WriteString("PassedAt", strconv.FormatUint(proposal.ExecutionState.PassedAt, 10)).
-		WriteString("Rejected", strconv.FormatBool(proposal.ExecutionState.Rejected)).
-		WriteString("RejectedAt", strconv.FormatUint(proposal.ExecutionState.RejectedAt, 10)).
-		WriteString("Canceled", strconv.FormatBool(proposal.ExecutionState.Canceled)).
-		WriteString("CanceledAt", strconv.FormatUint(proposal.ExecutionState.CanceledAt, 10)).
-		WriteString("Executed", strconv.FormatBool(proposal.ExecutionState.Executed)).
-		WriteString("ExecutedAt", strconv.FormatUint(proposal.ExecutionState.ExecutedAt, 10)).
-		WriteString("Expired", strconv.FormatBool(proposal.ExecutionState.Expired)).
-		WriteString("ExpiredAt", strconv.FormatUint(proposal.ExecutionState.ExpiredAt, 10)).
+		WriteString("Passed", strconv.FormatBool(proposal.State.Passed)).
+		WriteString("PassedAt", strconv.FormatUint(proposal.State.PassedAt, 10)).
+		WriteString("Rejected", strconv.FormatBool(proposal.State.Rejected)).
+		WriteString("RejectedAt", strconv.FormatUint(proposal.State.RejectedAt, 10)).
+		WriteString("Canceled", strconv.FormatBool(proposal.State.Canceled)).
+		WriteString("CanceledAt", strconv.FormatUint(proposal.State.CanceledAt, 10)).
+		WriteString("Executed", strconv.FormatBool(proposal.State.Executed)).
+		WriteString("ExecutedAt", strconv.FormatUint(proposal.State.ExecutedAt, 10)).
+		WriteString("Expired", strconv.FormatBool(proposal.State.Expired)).
+		WriteString("ExpiredAt", strconv.FormatUint(proposal.State.ExpiredAt, 10)).
 		Node()
 
 	return marshal(proposalObj)

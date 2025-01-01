@@ -6,15 +6,10 @@ import (
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
-
-	en "gno.land/r/gnoswap/v1/emission"
 )
 
 // GetPossibleVotingAddressWithWeight returns the max voting weight + and possible voting address with weight
 func GetPossibleVotingAddressWithWeight(endTimestamp uint64) (uint64, map[std.Address]uint64) {
-	en.MintAndDistributeGns()
-	calculateReward()
-
 	if endTimestamp > uint64(time.Now().Unix()) {
 		panic(addDetailToError(
 			errFutureTime,
@@ -25,8 +20,8 @@ func GetPossibleVotingAddressWithWeight(endTimestamp uint64) (uint64, map[std.Ad
 	totalWeight := uint64(0)
 	addressWithWeight := make(map[std.Address]uint64)
 
-	delegationStatHistory.Iterate("", "", func(key string, value interface{}) bool {
-		history := value.([]DelegationStatHistory)
+	delegationSnapShotHistory.Iterate("", "", func(key string, value interface{}) bool {
+		history := value.([]DelegationSnapShotHistory)
 		toAddr := std.Address(key)
 
 		for i := len(history) - 1; i >= 0; i-- {

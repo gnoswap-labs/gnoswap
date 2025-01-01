@@ -69,7 +69,6 @@ func assertCallerIsLaunchpad() {
 	}
 }
 
-
 func getUint64FromTree(tree *avl.Tree, key string) uint64 {
 	value, exists := tree.Get(key)
 	if !exists {
@@ -89,7 +88,7 @@ func updateUint64InTree(tree *avl.Tree, key string, delta uint64, add bool) uint
 			panic(addDetailToError(
 				errNotEnoughBalance,
 				ufmt.Sprintf("not enough balance: current(%d) < requested(%d)", current, delta),
-            ))
+			))
 		}
 		newValue = current - delta
 	}
@@ -99,7 +98,7 @@ func updateUint64InTree(tree *avl.Tree, key string, delta uint64, add bool) uint
 	return newValue
 }
 
-func getorCreateInnerTree(tree *avl.Tree, key string) *avl.Tree {
+func getOrCreateInnerTree(tree *avl.Tree, key string) *avl.Tree {
 	value, exists := tree.Get(key)
 	if !exists {
 		innerTree := avl.NewTree()

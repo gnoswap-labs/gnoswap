@@ -138,8 +138,8 @@ func calculateGNSEmission() {
 		return
 	}
 
-	gotGnsForEmission = en.GetAccuDistributedAmountForGovStaker()
-	en.ClearAccuDistributedAmountForGovStaker()
+	gotGnsForEmission = en.GetDistributedToGovStaker()
+	en.ClearDistributedToGovStaker()
 	gotGnsForEmission += leftGnsEmissionFromLast
 
 	if gotGnsForEmission == uint64(0) {
@@ -183,25 +183,29 @@ func calculateProtocolFee() {
 		return
 	}
 
+	registered := common.ListRegisteredTokens()
 	// get gov staker's grc20 balance
-	for tokenPath := range registered {
-		tokenBalance := accuProtocolFee[tokenPath]
+	for _, tokenPath := range registered {
+		tokenBalance, exists := accuProtocolFee.Get(tokenPath)
+		if !exists || tokenBalance == uint64(0) {
+			continue
+		}
 
 		leftValue, exists := leftProtocolFeeFromLast.Get(tokenPath)
 		leftFromLast := uint64(0)
 		if exists {
 			leftFromLast = leftValue.(uint64)
 		}
-		tokenBalance += leftFromLast
+		tokenBalance = tokenBalance.(uint64) + leftFromLast
 
-		if tokenBalance == uint64(0) {
+		if tokenBalance.(uint64) == uint64(0) {
 			continue
 		}
 
 		calculated := uint64(0)
 		userXGnsRatio.Iterate("", "", func(key string, value interface{}) bool {
 			ratio := value.(*u256.Uint)
-			protocolFeeX96 := new(u256.Uint).Mul(u256.NewUint(tokenBalance), ratio)
+			protocolFeeX96 := new(u256.Uint).Mul(u256.NewUint(tokenBalance.(uint64)), ratio)
 			protocolFeeX := new(u256.Uint).Div(protocolFeeX96, q96)
 			protocolFee := protocolFeeX.Uint64()
 			if protocolFee == uint64(0) {
@@ -230,7 +234,7 @@ func calculateProtocolFee() {
 		if val, exists := alreadyCalculatedProtocolFee.Get(tokenPath); exists {
 			current = val.(uint64)
 		}
-		alreadyCalculatedProtocolFee.Set(tokenPath, current+tokenBalance)
-		leftProtocolFeeFromLast.Set(tokenPath, tokenBalance-calculated)
+		alreadyCalculatedProtocolFee.Set(tokenPath, current+tokenBalance.(uint64))
+		leftProtocolFeeFromLast.Set(tokenPath, tokenBalance.(uint64)-calculated)
 	}
 }

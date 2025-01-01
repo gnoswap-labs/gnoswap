@@ -32,6 +32,6 @@ func GetDescriptionByProposalId(proposalId uint64) string {
 	return mustGetProposal(proposalId).Description
 }
 
-func GetExecutionStateByProposalId(proposalId uint64) ExecutionState {
-	return mustGetProposal(proposalId).ExecutionState
+func GetExecutionStateByProposalId(proposalId uint64) ProposalState {
+	return mustGetProposal(proposalId).State
 }

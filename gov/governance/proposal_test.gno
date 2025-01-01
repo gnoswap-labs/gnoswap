@@ -1,20 +1,13 @@
 package governance
 
 import (
-	"errors"
-	"std"
-	"strconv"
-	"strings"
-	"testing"
-	"time"
-
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
-
 	u256 "gno.land/p/gnoswap/uint256"
-	gs "gno.land/r/gnoswap/v1/gov/staker"
+	"std"
+	"strconv"
+	"testing"
 )
 
 var (
@@ -99,8 +92,8 @@ func TestProposeText(t *testing.T) {
 			uassert.Equal(t, proposal.Title, tt.title)
 			uassert.Equal(t, proposal.Description, tt.description)
 			uassert.Equal(t, proposal.ProposalType.String(), Text.String())
-			uassert.True(t, proposal.ExecutionState.Created)
-			uassert.True(t, proposal.ExecutionState.Upcoming)
+			uassert.True(t, proposal.State.Created)
+			uassert.True(t, proposal.State.Upcoming)
 		})
 	}
 }
@@ -201,7 +194,7 @@ func TestUpdateProposalsState(t *testing.T) {
 					Yea:           u256.NewUint(100),
 					Nay:           u256.NewUint(200),
 					QuorumAmount:  300,
-					ExecutionState: ExecutionState{
+					State: ProposalState{
 						Created:   true,
 						CreatedAt: baseTime,
 						Active:    true,
@@ -209,16 +202,16 @@ func TestUpdateProposalsState(t *testing.T) {
 				}
 			},
 			validate: func(t *testing.T, proposal ProposalInfo) {
-				if !proposal.ExecutionState.Rejected {
+				if !proposal.State.Rejected {
 					t.Error("Proposal should be rejected")
 				}
-				if proposal.ExecutionState.Active {
+				if proposal.State.Active {
 					t.Error("Proposal should not be active anymore")
 				}
-				if proposal.ExecutionState.Upcoming {
+				if proposal.State.Upcoming {
 					t.Error("Proposal should not be upcoming")
 				}
-				if proposal.ExecutionState.RejectedAt == 0 {
+				if proposal.State.RejectedAt == 0 {
 					t.Error("RejectedAt timestamp should be set")
 				}
 			},
@@ -232,7 +225,7 @@ func TestUpdateProposalsState(t *testing.T) {
 					Yea:           u256.NewUint(400),
 					Nay:           u256.NewUint(200),
 					QuorumAmount:  300,
-					ExecutionState: ExecutionState{
+					State: ProposalState{
 						Created:   true,
 						CreatedAt: baseTime,
 						Active:    true,
@@ -240,13 +233,13 @@ func TestUpdateProposalsState(t *testing.T) {
 				}
 			},
 			validate: func(t *testing.T, proposal ProposalInfo) {
-				if !proposal.ExecutionState.Passed {
+				if !proposal.State.Passed {
 					t.Error("Proposal should be passed")
 				}
-				if proposal.ExecutionState.Active {
+				if proposal.State.Active {
 					t.Error("Proposal should not be active anymore")
 				}
-				if proposal.ExecutionState.PassedAt == 0 {
+				if proposal.State.PassedAt == 0 {
 					t.Error("PassedAt timestamp should be set")
 				}
 			},
@@ -258,7 +251,7 @@ func TestUpdateProposalsState(t *testing.T) {
 				return ProposalInfo{
 					ConfigVersion: 1,
 					ProposalType:  ParameterChange,
-					ExecutionState: ExecutionState{
+					State: ProposalState{
 						Created:   true,
 						CreatedAt: baseTime,
 						Passed:    true,
@@ -267,10 +260,10 @@ func TestUpdateProposalsState(t *testing.T) {
 				}
 			},
 			validate: func(t *testing.T, proposal ProposalInfo) {
-				if !proposal.ExecutionState.Expired {
+				if !proposal.State.Expired {
 					t.Error("Proposal should be expired")
 				}
-				if proposal.ExecutionState.ExpiredAt == 0 {
+				if proposal.State.ExpiredAt == 0 {
 					t.Error("ExpiredAt timestamp should be set")
 				}
 			},
@@ -281,7 +274,7 @@ func TestUpdateProposalsState(t *testing.T) {
 			setupProposal: func(now uint64) ProposalInfo {
 				return ProposalInfo{
 					ConfigVersion: 1,
-					ExecutionState: ExecutionState{
+					State: ProposalState{
 						Created:   true,
 						CreatedAt: baseTime,
 						Canceled:  true,
@@ -290,10 +283,10 @@ func TestUpdateProposalsState(t *testing.T) {
 				}
 			},
 			validate: func(t *testing.T, proposal ProposalInfo) {
-				if !proposal.ExecutionState.Canceled {
+				if !proposal.State.Canceled {
 					t.Error("Proposal should remain canceled")
 				}
-				if !proposal.ExecutionState.Upcoming {
+				if !proposal.State.Upcoming {
 					t.Error("Proposal state should not change when canceled")
 				}
 			},
@@ -305,7 +298,7 @@ func TestUpdateProposalsState(t *testing.T) {
 				return ProposalInfo{
 					ConfigVersion: 1,
 					ProposalType:  Text,
-					ExecutionState: ExecutionState{
+					State: ProposalState{
 						Created:   true,
 						CreatedAt: baseTime,
 						Passed:    true,
@@ -314,7 +307,7 @@ func TestUpdateProposalsState(t *testing.T) {
 				}
 			},
 			validate: func(t *testing.T, proposal ProposalInfo) {
-				if proposal.ExecutionState.Expired {
+				if proposal.State.Expired {
 					t.Error("Text proposal should not expire")
 				}
 			},
@@ -402,9 +395,9 @@ func TestProposeParameterChange(t *testing.T) {
 			uassert.Equal(t, proposal.Execution.Num, tt.numToExecute)
 			uassert.Equal(t, len(proposal.Execution.Msgs), int(tt.numToExecute))
 
-			uassert.True(t, proposal.ExecutionState.Created)
-			uassert.True(t, proposal.ExecutionState.Upcoming)
-			uassert.False(t, proposal.ExecutionState.Active)
+			uassert.True(t, proposal.State.Created)
+			uassert.True(t, proposal.State.Upcoming)
+			uassert.False(t, proposal.State.Active)
 			uassert.True(t, proposal.Yea.IsZero())
 			uassert.True(t, proposal.Nay.IsZero())
 		})

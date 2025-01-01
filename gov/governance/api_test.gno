@@ -13,10 +13,10 @@ func TestCreateProposalJsonNode(t *testing.T) {
 
 	testProposal := ProposalInfo{
 		ConfigVersion: 1,
-		Proposer: propAddr,
-		ProposalType: Text,
-		Title:        title,
-		Description:  desc,
+		Proposer:      propAddr,
+		ProposalType:  Text,
+		Title:         title,
+		Description:   desc,
 	}
 
 	result := createProposalJsonNode(123, testProposal)
@@ -47,7 +47,7 @@ func TestCreateProposalJsonNode(t *testing.T) {
 		}
 
 		if value != field.expected {
-			t.Errorf("value not match: %s, expected: %s, actual: %s", 
+			t.Errorf("value not match: %s, expected: %s, actual: %s",
 				field.key, field.expected, value)
 		}
 	}
@@ -66,26 +66,23 @@ func TestCreateProposalJsonNode(t *testing.T) {
 			continue
 		}
 
-		_, err = b64Decode(value)
-		if err != nil {
-			t.Errorf("failed to decode: %s", err)
-		}
+		decodedValue := b64Decode(value)
 	}
 }
 
 func TestCreateProposalJsonNodeEdgeCases(t *testing.T) {
 	emptyProposal := ProposalInfo{
 		ConfigVersion: 0,
-		Proposer:     testutils.TestAddress("proposal"),
-		ProposalType: Text,
-		Title:        "",
-		Description:  "",
+		Proposer:      testutils.TestAddress("proposal"),
+		ProposalType:  Text,
+		Title:         "",
+		Description:   "",
 	}
 
 	result := createProposalJsonNode(0, emptyProposal)
 
 	requiredFields := []string{
-		"id", "configVersion", "proposer", "status", 
+		"id", "configVersion", "proposer", "status",
 		"type", "title", "description", "vote", "extra",
 	}
 

@@ -37,7 +37,7 @@ func TestVote(t *testing.T) {
 				pid := uint64(1)
 				proposals.Set(strconv.Itoa(int(pid)), ProposalInfo{
 					ConfigVersion: 1,
-					ExecutionState: ExecutionState{
+					State: ProposalState{
 						Created:   true,
 						CreatedAt: baseTime - 60, // Voting period started
 					},
@@ -87,7 +87,7 @@ func TestVote(t *testing.T) {
 				pid := uint64(2)
 				proposals.Set(strconv.Itoa(int(pid)), ProposalInfo{
 					ConfigVersion: 1,
-					ExecutionState: ExecutionState{
+					State: ProposalState{
 						Created:   true,
 						CreatedAt: baseTime - 60,
 					},
@@ -118,7 +118,7 @@ func TestVote(t *testing.T) {
 				pid := uint64(3)
 				proposals.Set(strconv.Itoa(int(pid)), ProposalInfo{
 					ConfigVersion: 1,
-					ExecutionState: ExecutionState{
+					State: ProposalState{
 						Created:   true,
 						CreatedAt: baseTime, // Just created, voting hasn't started
 					},
@@ -136,7 +136,7 @@ func TestVote(t *testing.T) {
 				pid := uint64(5)
 				proposals.Set(strconv.Itoa(int(pid)), ProposalInfo{
 					ConfigVersion: 1,
-					ExecutionState: ExecutionState{
+					State: ProposalState{
 						Created:   true,
 						CreatedAt: baseTime - 60,
 						Canceled:  true,
@@ -155,7 +155,7 @@ func TestVote(t *testing.T) {
 				pid := uint64(6)
 				proposals.Set(strconv.Itoa(int(pid)), ProposalInfo{
 					ConfigVersion: 1,
-					ExecutionState: ExecutionState{
+					State: ProposalState{
 						Created:   true,
 						CreatedAt: baseTime - 60,
 					},
@@ -225,7 +225,7 @@ func TestNewVoteState(t *testing.T) {
 			name: "Valid propoal: in voting period",
 			proposal: ProposalInfo{
 				ConfigVersion: 1,
-				ExecutionState: ExecutionState{
+				State: ProposalState{
 					// voting start: 900 + 50 = 950
 					// voting end: 950 + 100 = 1050
 					CreatedAt: 900,
@@ -248,7 +248,7 @@ func TestNewVoteState(t *testing.T) {
 			name: "Before voting start",
 			proposal: ProposalInfo{
 				ConfigVersion: 1,
-				ExecutionState: ExecutionState{
+				State: ProposalState{
 					CreatedAt: 900,
 					Canceled:  false,
 				},
@@ -269,7 +269,7 @@ func TestNewVoteState(t *testing.T) {
 			name: "After voting end",
 			proposal: ProposalInfo{
 				ConfigVersion: 1,
-				ExecutionState: ExecutionState{
+				State: ProposalState{
 					CreatedAt: 900,
 					Canceled:  false,
 				},
@@ -290,7 +290,7 @@ func TestNewVoteState(t *testing.T) {
 			name: "Canceled proposal",
 			proposal: ProposalInfo{
 				ConfigVersion: 1,
-				ExecutionState: ExecutionState{
+				State: ProposalState{
 					CreatedAt: 900,
 					Canceled:  true,
 				},
@@ -311,7 +311,7 @@ func TestNewVoteState(t *testing.T) {
 			name: "No voting permmisions",
 			proposal: ProposalInfo{
 				ConfigVersion: 1,
-				ExecutionState: ExecutionState{
+				State: ProposalState{
 					CreatedAt: 900,
 					Canceled:  false,
 				},
@@ -330,7 +330,7 @@ func TestNewVoteState(t *testing.T) {
 			name: "Already voted",
 			proposal: ProposalInfo{
 				ConfigVersion: 1,
-				ExecutionState: ExecutionState{
+				State: ProposalState{
 					CreatedAt: 900,
 					Canceled:  false,
 				},

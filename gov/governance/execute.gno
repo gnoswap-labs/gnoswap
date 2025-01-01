@@ -11,7 +11,6 @@ import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/v1/common"
 
-	cp "gno.land/r/gnoswap/v1/community_pool"
 	en "gno.land/r/gnoswap/v1/emission"
 )
 
@@ -103,7 +102,7 @@ func executeProposal(ctx *ExecutionContext, registry *ParameterRegistry) error {
 	case ParameterChange:
 		return executeParameterChange(ctx.Proposal.Execution.Msgs, registry)
 	default:
-		return nil
+		return errUnsupportedProposalType
 	}
 }
 
@@ -192,10 +191,10 @@ func getProposal(proposalId uint64) (*ProposalInfo, error) {
 func validateProposalState(proposal *ProposalInfo) ExecutionValidator {
 	return ExecutionValidator{
 		isTextProposal:    proposal.ProposalType == Text,
-		isAlreadyExecuted: proposal.ExecutionState.Executed,
-		isAlreadyCanceled: proposal.ExecutionState.Canceled,
-		isAlreadyRejected: proposal.ExecutionState.Rejected,
-		hasPassed:         proposal.ExecutionState.Passed,
+		isAlreadyExecuted: proposal.State.Executed,
+		isAlreadyCanceled: proposal.State.Canceled,
+		isAlreadyRejected: proposal.State.Rejected,
+		hasPassed:         proposal.State.Passed,
 	}
 }
 
@@ -238,7 +237,7 @@ func createExecutionContext(proposalId uint64, proposal *ProposalInfo) (*Executi
 }
 
 func calculateVotingEnd(proposal *ProposalInfo, config *Config) uint64 {
-	return proposal.ExecutionState.CreatedAt +
+	return proposal.State.CreatedAt +
 		config.VotingStartDelay +
 		config.VotingPeriod
 }
@@ -280,11 +279,10 @@ func validateVotes(pp *ProposalInfo) error {
 }
 
 func updateProposalState(ctx *ExecutionContext) {
-	ctx.Proposal.ExecutionState.Executed = true
-	ctx.Proposal.ExecutionState.ExecutedAt = ctx.Now
-	ctx.Proposal.ExecutionState.Upcoming = false
-	ctx.Proposal.ExecutionState.Active = false
-	// proposals[ctx.ProposalId] = *ctx.Proposal
+	ctx.Proposal.State.Executed = true
+	ctx.Proposal.State.ExecutedAt = ctx.Now
+	ctx.Proposal.State.Upcoming = false
+	ctx.Proposal.State.Active = false
 	proposals.Set(strconv.Itoa(int(ctx.ProposalId)), *ctx.Proposal)
 }
 
@@ -293,13 +291,7 @@ func validateCommunityPoolToken(pp *ProposalInfo) error {
 		return nil
 	}
 
-	registered := cp.GetRegisteredTokens()
-	commPath := pp.CommunityPoolSpend.TokenPath
-	if !contains(registered, commPath) {
-		return ufmt.Errorf("token(%s) is not registered to community pool",
-			commPath,
-		)
-	}
+	common.MustRegistered(pp.CommunityPoolSpend.TokenPath)
 
 	return nil
 }

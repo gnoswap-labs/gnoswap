@@ -1,8 +1,8 @@
 package governance
 
 import (
-	"gno.land/p/demo/avl"
 	"encoding/base64"
+	"gno.land/p/demo/avl"
 	"std"
 	"strconv"
 
@@ -41,15 +41,6 @@ func voteToString(b bool) string {
 		return "yes"
 	}
 	return "no"
-}
-
-func contains(slice []string, str string) bool {
-	for _, v := range slice {
-		if v == str {
-			return true
-		}
-	}
-	return false
 }
 
 func marshal(data *json.Node) string {

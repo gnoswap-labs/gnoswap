@@ -6,7 +6,8 @@ import (
 	"gno.land/r/gnoswap/v1/consts"
 )
 
-var BLOCK_PER_DAY = consts.TIMESTAMP_DAY / consts.BLOCK_GENERATION_INTERVAL
+// default one day
+var thresholdVotingWeightBlockHeight = consts.TIMESTAMP_DAY / consts.BLOCK_GENERATION_INTERVAL
 
 var (
 	lastCleanedHeight uint64 = 0
@@ -28,21 +29,31 @@ func SetRunning(run bool) {
 	running = run
 }
 
+func GetThresholdVotingWeightBlockHeight() uint64 {
+	return uint64(thresholdVotingWeightBlockHeight)
+}
+
+func SetThresholdVotingWeightBlockHeightByAdmin(height uint64) {
+	assertCallerIsAdmin()
+
+	thresholdVotingWeightBlockHeight = int64(height)
+}
+
 func cleanDelegationStatHistory() {
 	height := uint64(std.GetHeight())
 	sinceLast := height - lastCleanedHeight
 
-	if sinceLast < uint64(BLOCK_PER_DAY) {
+	if sinceLast < uint64(thresholdVotingWeightBlockHeight) {
 		return
 	}
 
 	lastCleanedHeight = height
 
 	// delete history older than 1 day, but keep the latest one
-	keepFrom := height - uint64(BLOCK_PER_DAY)
+	keepFrom := height - uint64(thresholdVotingWeightBlockHeight)
 
-	delegationStatHistory.Iterate("", "", func(key string, value interface{}) bool {
-		history := value.([]DelegationStatHistory)
+	delegationSnapShotHistory.Iterate("", "", func(key string, value interface{}) bool {
+		history := value.([]DelegationSnapShotHistory)
 
 		// reverse history
 		for i := len(history) - 1; i >= 0; i-- {
@@ -52,7 +63,7 @@ func cleanDelegationStatHistory() {
 
 			// save truncated history
 			newHistory := history[i:]
-			delegationStatHistory.Set(key, newHistory)
+			delegationSnapShotHistory.Set(key, newHistory)
 			break
 		}
 

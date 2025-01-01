@@ -19,8 +19,9 @@ import (
 )
 
 type lockedGNS struct {
-	amount uint64
-	unlock uint64
+	amount    uint64
+	unlock    uint64
+	collected bool // TODO:
 }
 
 const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
@@ -38,7 +39,7 @@ var (
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#delegate
 func Delegate(to std.Address, amount uint64) {
 	if running {
-		cleanDelegationStatHistory()
+		cleanDelegationStatHistory() // 함수명 변경
 	}
 
 	CollectReward()
@@ -73,6 +74,7 @@ func Delegate(to std.Address, amount uint64) {
 		"Delegate",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
+		"from", caller.String(),
 		"to", to.String(),
 		"amount", formatUint(amount),
 	)
@@ -221,17 +223,9 @@ func CollectUndelegatedGns() uint64 {
 
 	newLockedList := make([]lockedGNS, 0)
 	for _, locked := range lockedList {
-		if currentTime >= locked.unlock && locked.amount > 0 { // passed 7 days
+		if currentTime >= locked.unlock { // passed 7 days
 			// transfer GNS to caller
 			gns.Transfer(a2u(caller), locked.amount)
-
-			std.Emit(
-				"CollectUndelegatedGns",
-				"prevAddr", prevAddr,
-				"prevRealm", prevPkgPath,
-				"internal_amount", formatUint(locked.amount),
-			)
-
 			lockedAmount -= locked.amount
 			collected += locked.amount
 		} else {
@@ -248,6 +242,17 @@ func CollectUndelegatedGns() uint64 {
 		}
 	}
 
+	if collected > 0 {
+		std.Emit(
+			"CollectUndelegatedGns",
+			"prevAddr", prevAddr,
+			"prevRealm", prevPkgPath,
+			"from", consts.GOV_STAKER_ADDR.String(),
+			"to", caller.String(),
+			"collectedAmount", formatUint(collected),
+		)
+	}
+
 	return collected
 }
 
@@ -262,24 +267,30 @@ func CollectReward() {
 	prevAddr, prevPkgPath := getPrev()
 	caller := std.PrevRealm().Addr()
 
+	// TODO:
 	emissionReward := collectEmissionReward(caller)
 	if emissionReward > 0 {
 		std.Emit(
 			"CollectEmissionReward",
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
-			"internal_amount", formatUint(emissionReward),
+			"to", caller.String(),
+			"emissionRewardAmount", formatUint(emissionReward),
 		)
 	}
 
+	// TODO::
 	collectedFees := collectProtocolFeeReward(caller)
 	for tokenPath, amount := range collectedFees {
+		if tokenPath == consts.WUGNOT_PATH {
+			tokenPath = "ugnot"
+		}
 		std.Emit(
 			"CollectProtocolFeeReward",
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
-			"internal_tokenPath", tokenPath,
-			"internal_amount", formatUint(amount),
+			"tokenPath", tokenPath,
+			"collectedAmount", formatUint(amount),
 		)
 	}
 }
@@ -297,6 +308,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 
 	prevAddr, prevPkgPath := getPrev()
 
+	// TODO::
 	emissionReward := collectEmissionReward(to)
 	if emissionReward > 0 {
 		std.Emit(
@@ -308,6 +320,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 		)
 	}
 
+	// TODO::
 	collectedFees := collectProtocolFeeReward(to)
 	for tokenPath, amount := range collectedFees {
 		std.Emit(
@@ -359,25 +372,44 @@ func collectProtocolFeeReward(addr std.Address) map[string]uint64 {
 	}
 
 	userFees.Iterate("", "", func(tokenPath string, value interface{}) bool {
-        amount := value.(uint64)
-        if amount == 0 {
-            return false
-        }
+		amount := value.(uint64)
+		if amount == 0 {
+			return false
+		}
 
-        if tokenPath == consts.WUGNOT_PATH {
-            if amount > 0 {
-                wugnot.Withdraw(amount)
-                banker := std.GetBanker(std.BankerTypeRealmSend)
-                banker.SendCoins(consts.GOV_STAKER_ADDR, addr, std.Coins{{"ugnot", int64(amount)}})
-            }
-        } else {
-            transferByRegisterCall(tokenPath, addr, amount)
-        }
-        
-        userFees.Set(tokenPath, uint64(0))
-        collectedFees[tokenPath] = amount
-        return false
-    })
+		if tokenPath == consts.WUGNOT_PATH {
+			if amount > 0 {
+				wugnot.Withdraw(amount)
+				banker := std.GetBanker(std.BankerTypeRealmSend)
+				banker.SendCoins(consts.GOV_STAKER_ADDR, addr, std.Coins{{"ugnot", int64(amount)}})
+			}
+		} else {
+			transferProtocolFee(tokenPath, addr, amount)
+		}
+
+		userFees.Set(tokenPath, uint64(0))
+		collectedFees[tokenPath] = amount
+		return false
+	})
 
 	return collectedFees
+}
+
+func transferProtocolFee(tokenPath string, to std.Address, amount uint64) {
+	common.MustRegistered(tokenPath)
+	if to.IsValid() {
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("invalid address %s to transfer protocol fee", to.String()),
+		))
+	}
+	if amount <= 0 {
+		panic(addDetailToError(
+			errInvalidAmount,
+			ufmt.Sprintf("invalid amount %d to transfer protocol fee", amount),
+		))
+	}
+
+	token := common.GetTokenTeller(tokenPath)
+	checkTransferError(token.Transfer(to, amount))
 }
