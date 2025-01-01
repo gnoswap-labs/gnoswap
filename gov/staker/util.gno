@@ -6,7 +6,11 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/json"
+	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
+
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 func marshal(data *json.Node) string {
@@ -45,4 +49,21 @@ func formatUint(v uint64) string {
 
 func formatInt(v int64) string {
 	return strconv.FormatInt(v, 10)
+}
+
+func assertCallerIsAdmin() {
+	caller := std.PrevRealm().Addr()
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
+	}
+}
+
+func assertCallerIsLaunchpad() {
+	caller := std.PrevRealm().Addr()
+	if caller != consts.LAUNCHPAD_ADDR {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("only launchpad can call CollectRewardFromLaunchPad(), called from %s", caller.String()),
+		))
+	}
 }

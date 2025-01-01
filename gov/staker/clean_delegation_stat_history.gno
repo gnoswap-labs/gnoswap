@@ -4,7 +4,6 @@ import (
 	"std"
 
 	"gno.land/r/gnoswap/v1/consts"
-	"gno.land/r/gnoswap/v1/common"
 )
 
 var BLOCK_PER_DAY = consts.TIMESTAMP_DAY / consts.BLOCK_GENERATION_INTERVAL
@@ -18,11 +17,7 @@ var (
 )
 
 func CleanDelegationStatHistoryByAdmin() {
-	caller := std.PrevRealm().Addr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
-
+	assertCallerIsAdmin()
 	cleanDelegationStatHistory()
 }
 
@@ -31,10 +26,7 @@ func GetRunning() bool {
 }
 
 func SetRunning(run bool) {
-	caller := std.PrevRealm().Addr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
+	assertCallerIsAdmin()
 
 	running = run
 }

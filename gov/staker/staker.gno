@@ -302,13 +302,7 @@ func CollectReward() {
 // Only launchpad contract can call this function
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#collectrewardfromlaunchpad
 func CollectRewardFromLaunchPad(to std.Address) {
-	caller := std.PrevRealm().Addr()
-	if caller != consts.LAUNCHPAD_ADDR {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("only launchpad can call CollectRewardFromLaunchPad(), called from %s", caller.String()),
-		))
-	}
+	assertCallerIsLaunchpad()
 
 	common.IsHalted()
 	en.MintAndDistributeGns()
