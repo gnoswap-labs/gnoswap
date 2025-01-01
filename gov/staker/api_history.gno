@@ -25,8 +25,10 @@ func GetPossibleVotingAddressWithWeight(endTimestamp uint64) (uint64, map[std.Ad
 	totalWeight := uint64(0)
 	addressWithWeight := make(map[std.Address]uint64)
 
-	for to, history := range delegationStatHistory {
-		// reverse history
+	delegationStatHistory.Iterate("", "", func(key string, value interface{}) bool {
+		history := value.([]DelegationStatHistory)
+		toAddr := std.Address(key)
+
 		for i := len(history) - 1; i >= 0; i-- {
 			record := history[i]
 
@@ -34,46 +36,21 @@ func GetPossibleVotingAddressWithWeight(endTimestamp uint64) (uint64, map[std.Ad
 				continue
 			}
 
-			addressWithWeight[to] = record.amount
+			addressWithWeight[toAddr] = record.amount
 			totalWeight += record.amount
 
 			break
 		}
-	}
+
+		return false
+	})
 
 	return totalWeight, addressWithWeight
 }
 
 // GetPossibleVotingAddressWithWeightJSON returns the max voting weight + and possible voting address with weight(string json format)
 func GetPossibleVotingAddressWithWeightJSON(endTimestamp uint64) (uint64, string) {
-	en.MintAndDistributeGns()
-	calculateReward()
-
-	if endTimestamp > uint64(time.Now().Unix()) {
-		panic(addDetailToError(
-			errFutureTime,
-			ufmt.Sprintf("endTimestamp(%d) > now(%d)", endTimestamp, time.Now().Unix()),
-		))
-	}
-
-	totalWeight := uint64(0)
-	addressWithWeight := make(map[std.Address]uint64)
-
-	for to, history := range delegationStatHistory {
-		// reverse history
-		for i := len(history) - 1; i >= 0; i-- {
-			record := history[i]
-
-			if record.updatedAt > endTimestamp {
-				continue
-			}
-
-			addressWithWeight[to] = record.amount
-			totalWeight += record.amount
-
-			break
-		}
-	}
+	totalWeight, addressWithWeight := GetPossibleVotingAddressWithWeight(endTimestamp)
 
 	possibleObj := json.ObjectNode("", nil)
 	possibleObj.AppendObject("height", json.StringNode("height", ufmt.Sprintf("%d", std.GetHeight())))

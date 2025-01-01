@@ -43,16 +43,22 @@ func cleanDelegationStatHistory() {
 
 	// delete history older than 1 day, but keep the latest one
 	keepFrom := height - uint64(BLOCK_PER_DAY)
-	for to, history := range delegationStatHistory {
-		// reverse history
-		for i := len(history) - 1; i >= 0; i-- {
-			if history[i].updatedBlock > keepFrom {
-				continue
-			}
 
-			delegationStatHistory[to] = delegationStatHistory[to][i:]
+	delegationStatHistory.Iterate("", "", func(key string, value interface{}) bool {
+        history := value.([]DelegationStatHistory)
+        
+        // reverse history
+        for i := len(history) - 1; i >= 0; i-- {
+            if history[i].updatedBlock > keepFrom {
+                continue
+            }
+
+			// save truncated history
+			newHistory := history[i:]
+			delegationStatHistory.Set(key, newHistory)
 			break
-		}
-
-	}
+        }
+        
+        return false
+    })
 }

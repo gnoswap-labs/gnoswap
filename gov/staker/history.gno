@@ -4,6 +4,7 @@ import (
 	"std"
 	"time"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
 	en "gno.land/r/gnoswap/v1/emission"
@@ -18,9 +19,6 @@ type DelegationHistory struct {
 	add       bool
 }
 
-// to address -> []delegationHistory
-var delegationHistory = make(map[std.Address][]DelegationHistory)
-
 // DelegationStatHistory represents delegation stat for to address
 type DelegationStatHistory struct {
 	to           std.Address
@@ -29,8 +27,10 @@ type DelegationStatHistory struct {
 	updatedAt    uint64
 }
 
-// to address -> []delegationStatHistory
-var delegationStatHistory = make(map[std.Address][]DelegationStatHistory)
+var (
+	delegationHistory = avl.NewTree() // addr => []delegationHistory
+	delegationStatHistory = avl.NewTree() // addr => []delegationStatHistory
+)
 
 // GetDelegatedCumulative gets the cumulative delegated amount for an address at a certain timestamp.
 func GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
@@ -51,8 +51,10 @@ func GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
 		))
 	}
 
-	history, exist := delegationStatHistory[delegator]
-	if !exist || len(history) == 0 {
+	history := make([]DelegationStatHistory, 0)
+	if value, exists := delegationStatHistory.Get(delegator.String()); exists {
+		history = value.([]DelegationStatHistory)
+	} else {
 		return 0
 	}
 
