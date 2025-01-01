@@ -24,6 +24,6 @@ func UserToAddr(user pusers.AddressOrName) std.Address {
 // It panics with a detailed error message if the address is invalid.
 func assertValidAddr(addr std.Address) {
 	if !addr.IsValid() {
-		panic(addDetailToError(errInvalidAddr, addr.String()))
+		panic(newErrorWithDetail(errInvalidAddr, addr.String()))
 	}
 }

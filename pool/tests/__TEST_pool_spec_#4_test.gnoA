@@ -34,9 +34,9 @@ func AfterTest(t *testing.T) {
 	std.TestSetRealm(poolRealm)
 	barBal := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBal := foo.BalanceOf(a2u(consts.POOL_ADDR))
-	bar.Transfer(a2u(admin), barBal)
-	foo.Transfer(a2u(admin), fooBal)
-	delete(pools, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
+	bar.Transfer(a2u(adminAddr), barBal)
+	foo.Transfer(a2u(adminAddr), fooBal)
+	pools.Remove("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
 }
 
 func TestSuccess_price_within_range_transfers_current_price_of_both_tokens(t *testing.T) {
@@ -53,14 +53,14 @@ func TestSuccess_price_within_range_transfers_current_price_of_both_tokens(t *te
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", admin)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", adminAddr)
 
 	// ===================== price within range: transfers current price of both tokens =====================
 	pool := GetPool(token0Path, barPath, 3000)
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick+tickSpacing, maxTick-tickSpacing, "100", admin)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick+tickSpacing, maxTick-tickSpacing, "100", adminAddr)
 
 	barBalance := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBalance := foo.BalanceOf(a2u(consts.POOL_ADDR))
@@ -117,14 +117,14 @@ func TestSuccess_works_for_min_max_tick(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
+	pl.Mint(token0Path, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", adminAddr)
 
 	// ===================== only clears the tick that is not used at all =====================
 
 	pool := GetPool(token0Path, barPath, 3000)
 	tickSpacing := pool.tickSpacing
 
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "10000", admin)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "10000", adminAddr)
 
 	barBalance := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBalance := foo.BalanceOf(a2u(consts.POOL_ADDR))
@@ -148,7 +148,7 @@ func TestSuccess_removing_works(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
+	pl.Mint(token0Path, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", adminAddr)
 
 	// ===================== only clears the tick that is not used at all =====================
 
@@ -156,7 +156,7 @@ func TestSuccess_removing_works(t *testing.T) {
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick+tickSpacing, maxTick-tickSpacing, "10000", admin)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick+tickSpacing, maxTick-tickSpacing, "10000", adminAddr)
 	pl.Burn(token0Path, barPath, 3000, minTick+tickSpacing, maxTick-tickSpacing, "100")
 
 	amount0, amount1 := pl.Collect(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick+tickSpacing, maxTick-tickSpacing, consts.MAX_UINT128, consts.MAX_UINT128)
@@ -172,8 +172,7 @@ func gnsBalance(addr std.Address) uint64 {
 func (pool *Pool) GetTicks(
 	tick int32,
 ) (feeGrowthOutside0X128 *u256.Uint, feeGrowthOutside1X128 *u256.Uint, liquidityGross *u256.Uint, liquidityNet *i256.Int, secondsPerLiquidityOutsideX128 *u256.Uint, tickCumulativeOutside int64, secondsOutside uint32, initialized bool) {
-	info := pool.ticks[tick]
-	info.init()
+	info := pool.getTick(tick)
 
 	return info.feeGrowthOutside0X128, info.feeGrowthOutside1X128, info.liquidityGross, info.liquidityNet, info.secondsPerLiquidityOutsideX128, info.tickCumulativeOutside, info.secondsOutside, info.initialized
 }

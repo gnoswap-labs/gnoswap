@@ -45,18 +45,18 @@ func testMintPosition(t *testing.T) {
 
 		wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // FOR WRAP
 
-		std.TestIssueCoins(admin, std.Coins{{"ugnot", 50000005}})
-		uassert.Equal(t, ugnotBalanceOf(admin), uint64(50000005))
+		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
+		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(50000005))
 
 		std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 200000000}})
-		uassert.Equal(t, ugnotBalanceOf(consts.POSITION_ADDR), uint64(200000000))
+		uassert.Equal(t, ugnotBalanceOf(t, consts.POSITION_ADDR), uint64(200000000))
 
 		banker := std.GetBanker(std.BankerTypeRealmIssue)
-		banker.SendCoins(admin, consts.POSITION_ADDR, std.Coins{{"ugnot", 50000005}})
+		banker.SendCoins(adminAddr, consts.POSITION_ADDR, std.Coins{{"ugnot", 50000005}})
 		std.TestSetOrigSend(std.Coins{{"ugnot", 50000005}}, nil)
-		uassert.Equal(t, ugnotBalanceOf(admin), uint64(0))
+		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(0))
 
-		adminOldWugnotBalance := wugnot.BalanceOf(a2u(admin))
+		adminOldWugnotBalance := wugnot.BalanceOf(admin)
 		uassert.Equal(t, adminOldWugnotBalance, uint64(0))
 
 		tokenId, liquidity, amount0, amount1 := Mint(
@@ -70,8 +70,8 @@ func testMintPosition(t *testing.T) {
 			"0",
 			"0",
 			max_timeout,
-			admin,
-			admin,
+			adminAddr,
+			adminAddr,
 		)
 		std.TestSetOrigSend(std.Coins{{"ugnot", 0}}, nil)
 
@@ -94,8 +94,8 @@ func testMintPosition(t *testing.T) {
 		uassert.Equal(t, position.burned, false)
 
 		// SPEND ALL WUGNOT
-		uassert.Equal(t, wugnot.BalanceOf(a2u(admin)), uint64(0))
-		uassert.Equal(t, ugnotBalanceOf(admin), uint64(15168))
+		uassert.Equal(t, wugnot.BalanceOf(admin), uint64(0))
+		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(15168))
 	})
 }
 
@@ -125,11 +125,11 @@ func testSwap(t *testing.T) {
 			consts.WUGNOT_PATH,
 			consts.GNS_PATH,
 			fee500,
-			admin,
+			adminAddr,
 			true,
 			"1234567",
 			consts.MIN_PRICE,
-			admin,
+			adminAddr,
 		)
 
 		uassert.Equal(t, amount0, "1234567")
@@ -163,8 +163,8 @@ func testDecreaseWithNoUnwrap(t *testing.T) {
 	t.Run("decrease with no unwrap", func(t *testing.T) {
 		// no unwrap => receive with wugnot
 
-		oldWugnotBalance := wugnot.BalanceOf(a2u(admin))
-		oldUgnotBalance := ugnotBalanceOf(admin)
+		oldWugnotBalance := wugnot.BalanceOf(admin)
+		oldUgnotBalance := ugnotBalanceOf(t, adminAddr)
 		uassert.Equal(t, oldWugnotBalance, uint64(0))
 		uassert.Equal(t, oldUgnotBalance, uint64(15168))
 
@@ -178,8 +178,8 @@ func testDecreaseWithNoUnwrap(t *testing.T) {
 			false,
 		)
 
-		newWugnotBalance := wugnot.BalanceOf(a2u(admin))
-		newUgnotBalance := ugnotBalanceOf(admin)
+		newWugnotBalance := wugnot.BalanceOf(admin)
+		newUgnotBalance := ugnotBalanceOf(t, adminAddr)
 
 		uassert.Equal(t, newWugnotBalance, uint64(5122489))
 		uassert.Equal(t, newUgnotBalance, uint64(15168)) // stays same, we didn't unwrap
@@ -190,8 +190,8 @@ func testDecreaseWithUnwrap(t *testing.T) {
 	t.Run("decrease with unwrap", func(t *testing.T) {
 		// unwrap => receive with ugnot
 
-		oldWugnotBalance := wugnot.BalanceOf(a2u(admin))
-		oldUgnotBalance := ugnotBalanceOf(admin)
+		oldWugnotBalance := wugnot.BalanceOf(admin)
+		oldUgnotBalance := ugnotBalanceOf(t, adminAddr)
 		uassert.Equal(t, oldWugnotBalance, uint64(5122489))
 		uassert.Equal(t, oldUgnotBalance, uint64(15168))
 
@@ -205,8 +205,8 @@ func testDecreaseWithUnwrap(t *testing.T) {
 			true,
 		)
 
-		newWugnotBalance := wugnot.BalanceOf(a2u(admin))
-		newUgnotBalance := ugnotBalanceOf(admin)
+		newWugnotBalance := wugnot.BalanceOf(admin)
+		newUgnotBalance := ugnotBalanceOf(t, adminAddr)
 
 		uassert.Equal(t, newWugnotBalance, uint64(5122489))
 		uassert.Equal(t, newUgnotBalance, uint64(4624858))

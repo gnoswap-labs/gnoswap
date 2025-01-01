@@ -34,7 +34,7 @@ func TestCreateFooBarPool(t *testing.T) {
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
-	uassert.Equal(t, len(pools), 1)
+	uassert.Equal(t, pools.Size(), 1)
 }
 
 // Create Bar:Baz Pool
@@ -45,7 +45,7 @@ func TestCreateBarBazPool(t *testing.T) {
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006")
-	uassert.Equal(t, len(pools), 2)
+	uassert.Equal(t, pools.Size(), 2)
 }
 
 // Mint Foo:Bar Liquidity by admin
@@ -63,7 +63,7 @@ func TestMintFooBarLiquidity(t *testing.T) {
 		-test_tickUpper,
 		-test_tickLower,
 		test_liquidityExpectStr,
-		admin,
+		adminAddr,
 	)
 	uassert.Equal(t, amount0, "8040316")
 	uassert.Equal(t, amount1, "2958015")
@@ -84,7 +84,7 @@ func TestMintBarBazLiquidity(t *testing.T) {
 		test_tickLower,
 		test_tickUpper,
 		test_liquidityExpectStr,
-		admin,
+		adminAddr,
 	)
 	uassert.Equal(t, amount0, "2958015")
 	uassert.Equal(t, amount1, "8040316")
@@ -92,11 +92,11 @@ func TestMintBarBazLiquidity(t *testing.T) {
 
 // Swap Foo:Bar Foo > Bar by admin
 func TestSwapFooBarFooToBar(t *testing.T) {
-	oldTest1Bar := balanceOfByRegisterCall(barPath, admin)
-	oldTest1Foo := balanceOfByRegisterCall(fooPath, admin)
+	oldTest1Bar := barToken.BalanceOf(adminAddr)
+	oldTest1Foo := fooToken.BalanceOf(adminAddr)
 
-	oldPoolBar := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
-	oldPoolFoo := balanceOfByRegisterCall(fooPath, consts.POOL_ADDR)
+	oldPoolBar := barToken.BalanceOf(consts.POOL_ADDR)
+	oldPoolFoo := fooToken.BalanceOf(consts.POOL_ADDR)
 
 	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 16000)
@@ -106,20 +106,20 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		admin,
+		adminAddr,
 		true,
 		"16000",
 		consts.MIN_PRICE,
-		admin,
+		adminAddr,
 	)
 	uassert.Equal(t, poolIn, "16000")
 	uassert.Equal(t, poolOut, "-5882")
 
-	newTest1Bar := balanceOfByRegisterCall(barPath, admin)
-	newTest1Foo := balanceOfByRegisterCall(fooPath, admin)
+	newTest1Bar := barToken.BalanceOf(adminAddr)
+	newTest1Foo := fooToken.BalanceOf(adminAddr)
 
-	newPoolBar := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
-	newPoolFoo := balanceOfByRegisterCall(fooPath, consts.POOL_ADDR)
+	newPoolBar := barToken.BalanceOf(consts.POOL_ADDR)
+	newPoolFoo := fooToken.BalanceOf(consts.POOL_ADDR)
 
 	uassert.Equal(t, oldTest1Bar-newTest1Bar, uint64(16000))
 	uassert.Equal(t, newTest1Foo-oldTest1Foo, uint64(5882))
@@ -130,10 +130,10 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 
 // Swap Bar:Baz Bar > Baz by admin
 func TestSwapBarBazBarToBaz(t *testing.T) {
-	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
-	oldadminBazBalance := balanceOfByRegisterCall(bazPath, admin)
-	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
-	oldPoolBazBalance := balanceOfByRegisterCall(bazPath, consts.POOL_ADDR)
+	oldTest1Token0Balance := barToken.BalanceOf(adminAddr)
+	oldadminBazBalance := bazToken.BalanceOf(adminAddr)
+	oldPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
+	oldPoolBazBalance := bazToken.BalanceOf(consts.POOL_ADDR)
 
 	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 16000)
@@ -143,20 +143,20 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 		barPath,
 		bazPath,
 		fee500,
-		admin,
+		adminAddr,
 		true,
 		"16000",
 		consts.MIN_PRICE,
-		admin,
+		adminAddr,
 	)
 
 	uassert.Equal(t, poolIn, "16000")
 	uassert.Equal(t, poolOut, "-43457")
 
-	newTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
-	newadminBazBalance := balanceOfByRegisterCall(bazPath, admin)
-	newPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
-	newPoolBazBalance := balanceOfByRegisterCall(bazPath, consts.POOL_ADDR)
+	newTest1Token0Balance := barToken.BalanceOf(adminAddr)
+	newadminBazBalance := bazToken.BalanceOf(adminAddr)
+	newPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
+	newPoolBazBalance := bazToken.BalanceOf(consts.POOL_ADDR)
 
 	uassert.Equal(t, oldTest1Token0Balance-newTest1Token0Balance, uint64(16000))
 	uassert.Equal(t, newadminBazBalance-oldadminBazBalance, uint64(43457))
@@ -168,10 +168,10 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 func TestCollectFooBarFees(t *testing.T) {
 	std.TestSetRealm(posRealm)
 
-	oldTest1Token1Balance := balanceOfByRegisterCall(fooPath, admin)
-	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
-	oldPoolToken1Balance := balanceOfByRegisterCall(fooPath, consts.POOL_ADDR)
-	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
+	oldTest1Token1Balance := fooToken.BalanceOf(adminAddr)
+	oldTest1Token0Balance := barToken.BalanceOf(adminAddr)
+	oldPoolToken1Balance := fooToken.BalanceOf(consts.POOL_ADDR)
+	oldPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
 
 	// burn 0 to collect swap fees
 	Burn(fooPath, barPath, fee500, -test_tickUpper, -test_tickLower, "0")
@@ -180,7 +180,7 @@ func TestCollectFooBarFees(t *testing.T) {
 		fooPath,
 		barPath,
 		fee500,
-		admin,
+		adminAddr,
 		-test_tickUpper,
 		-test_tickLower,
 		"100000",
@@ -190,10 +190,10 @@ func TestCollectFooBarFees(t *testing.T) {
 	uassert.NotEqual(t, c0, "0") // swap was foo > bar, so only foo has fees
 	uassert.Equal(t, c1, "0")    // swap was foo > bar, so bar has no fees
 
-	newTest1Token1Balance := balanceOfByRegisterCall(fooPath, admin)
-	newTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
-	newPoolToken1Balance := balanceOfByRegisterCall(fooPath, consts.POOL_ADDR)
-	newPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
+	newTest1Token1Balance := fooToken.BalanceOf(adminAddr)
+	newTest1Token0Balance := barToken.BalanceOf(adminAddr)
+	newPoolToken1Balance := fooToken.BalanceOf(consts.POOL_ADDR)
+	newPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
 
 	uassert.Equal(t, newTest1Token1Balance-oldTest1Token1Balance, strToUint64(c1))
 	uassert.Equal(t, newTest1Token0Balance-oldTest1Token0Balance, strToUint64(c0))
@@ -205,10 +205,10 @@ func TestCollectFooBarFees(t *testing.T) {
 func TestCollectBarBazFees(t *testing.T) {
 	std.TestSetRealm(posRealm)
 
-	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
-	oldadminBazBalance := balanceOfByRegisterCall(bazPath, admin)
-	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
-	oldPoolBazBalance := balanceOfByRegisterCall(bazPath, consts.POOL_ADDR)
+	oldTest1Token0Balance := barToken.BalanceOf(adminAddr)
+	oldadminBazBalance := bazToken.BalanceOf(adminAddr)
+	oldPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
+	oldPoolBazBalance := bazToken.BalanceOf(consts.POOL_ADDR)
 
 	// burn 0 to collect swap fees
 	Burn(barPath, bazPath, fee500, test_tickLower, test_tickUpper, "0")
@@ -217,7 +217,7 @@ func TestCollectBarBazFees(t *testing.T) {
 		barPath,
 		bazPath,
 		fee500,
-		admin,
+		adminAddr,
 		test_tickLower,
 		test_tickUpper,
 		"100000",
@@ -227,10 +227,10 @@ func TestCollectBarBazFees(t *testing.T) {
 	uassert.NotEqual(t, c0, "0") // swap was foo > bar, so only foo has fees
 	uassert.Equal(t, c1, "0")    // swap was foo > bar, so bar has no fees
 
-	newTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
-	newadminBazBalance := balanceOfByRegisterCall(bazPath, admin)
-	newPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
-	newPoolBazBalance := balanceOfByRegisterCall(bazPath, consts.POOL_ADDR)
+	newTest1Token0Balance := barToken.BalanceOf(adminAddr)
+	newadminBazBalance := bazToken.BalanceOf(adminAddr)
+	newPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
+	newPoolBazBalance := bazToken.BalanceOf(consts.POOL_ADDR)
 
 	uassert.Equal(t, newTest1Token0Balance-oldTest1Token0Balance, strToUint64(c0))
 	uassert.Equal(t, newadminBazBalance-oldadminBazBalance, strToUint64(c1))
@@ -243,7 +243,7 @@ func TestBurnFooBarLiquidity(t *testing.T) {
 	std.TestSetRealm(posRealm)
 
 	pool := GetPool(fooPath, barPath, fee500)
-	poolOldLiquidity := pool.PoolGetLiquidity()
+	poolOldLiquidity := pool.Liquidity()
 
 	b0, b1 := Burn(
 		fooPath,
@@ -257,7 +257,7 @@ func TestBurnFooBarLiquidity(t *testing.T) {
 	uassert.NotEqual(t, b0, "0")
 	uassert.NotEqual(t, b1, "0")
 
-	poolNewLiquidity := pool.PoolGetLiquidity()
+	poolNewLiquidity := pool.Liquidity()
 
 	uassert.Equal(t, true, new(u256.Uint).Sub(poolOldLiquidity, poolNewLiquidity).Eq(test_liquidityExpect256))
 }
@@ -267,7 +267,7 @@ func TestBurnBarBazLiquidity(t *testing.T) {
 	std.TestSetRealm(posRealm)
 
 	pool := GetPool(barPath, bazPath, fee500)
-	poolOldLiquidity := pool.PoolGetLiquidity()
+	poolOldLiquidity := pool.Liquidity()
 
 	b0, b1 := Burn(
 		barPath,
@@ -281,7 +281,7 @@ func TestBurnBarBazLiquidity(t *testing.T) {
 	uassert.NotEqual(t, b0, "0")
 	uassert.NotEqual(t, b1, "0")
 
-	poolNewLiquidity := pool.PoolGetLiquidity()
+	poolNewLiquidity := pool.Liquidity()
 
 	// uassert.Equal(t, poolOldLiquidity-poolNewLiquidity, test_liquidityExpect256)
 }
@@ -290,16 +290,16 @@ func TestBurnBarBazLiquidity(t *testing.T) {
 func TestCollectFooBarLiquidity(t *testing.T) {
 	std.TestSetRealm(posRealm)
 
-	oldTest1Token1Balance := balanceOfByRegisterCall(fooPath, admin)
-	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
-	oldPoolToken1Balance := balanceOfByRegisterCall(fooPath, consts.POOL_ADDR)
-	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
+	oldTest1Token1Balance := fooToken.BalanceOf(adminAddr)
+	oldTest1Token0Balance := barToken.BalanceOf(adminAddr)
+	oldPoolToken1Balance := fooToken.BalanceOf(consts.POOL_ADDR)
+	oldPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
 
 	c0, c1 := Collect(
 		fooPath,
 		barPath,
 		fee500,
-		admin,
+		adminAddr,
 		-test_tickUpper,
 		-test_tickLower,
 		"100000",
@@ -309,10 +309,10 @@ func TestCollectFooBarLiquidity(t *testing.T) {
 	uassert.NotEqual(t, c0, "0")
 	uassert.NotEqual(t, c1, "0")
 
-	newTest1Token1Balance := balanceOfByRegisterCall(fooPath, admin)
-	newTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
-	newPoolToken1Balance := balanceOfByRegisterCall(fooPath, consts.POOL_ADDR)
-	newPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
+	newTest1Token1Balance := fooToken.BalanceOf(adminAddr)
+	newTest1Token0Balance := barToken.BalanceOf(adminAddr)
+	newPoolToken1Balance := fooToken.BalanceOf(consts.POOL_ADDR)
+	newPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
 
 	uassert.Equal(t, newTest1Token1Balance-oldTest1Token1Balance, strToUint64(c0))
 	uassert.Equal(t, newTest1Token0Balance-oldTest1Token0Balance, strToUint64(c1))
@@ -324,16 +324,16 @@ func TestCollectFooBarLiquidity(t *testing.T) {
 func TestCollectBarBazLiquidity(t *testing.T) {
 	std.TestSetRealm(posRealm)
 
-	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
-	oldadminBazBalance := balanceOfByRegisterCall(bazPath, admin)
-	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
-	oldPoolBazBalance := balanceOfByRegisterCall(bazPath, consts.POOL_ADDR)
+	oldTest1Token0Balance := barToken.BalanceOf(adminAddr)
+	oldadminBazBalance := bazToken.BalanceOf(adminAddr)
+	oldPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
+	oldPoolBazBalance := bazToken.BalanceOf(consts.POOL_ADDR)
 
 	c0, c1 := Collect(
 		barPath,
 		bazPath,
 		fee500,
-		admin,
+		adminAddr,
 		test_tickLower,
 		test_tickUpper,
 		"100000",
@@ -343,10 +343,10 @@ func TestCollectBarBazLiquidity(t *testing.T) {
 	uassert.NotEqual(t, c0, "0")
 	uassert.NotEqual(t, c1, "0")
 
-	newTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
-	newadminBazBalance := balanceOfByRegisterCall(bazPath, admin)
-	newPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
-	newPoolBazBalance := balanceOfByRegisterCall(bazPath, consts.POOL_ADDR)
+	newTest1Token0Balance := barToken.BalanceOf(adminAddr)
+	newadminBazBalance := bazToken.BalanceOf(adminAddr)
+	newPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
+	newPoolBazBalance := bazToken.BalanceOf(consts.POOL_ADDR)
 
 	uassert.Equal(t, newTest1Token0Balance-oldTest1Token0Balance, strToUint64(c0))
 	uassert.Equal(t, newadminBazBalance-oldadminBazBalance, strToUint64(c1))

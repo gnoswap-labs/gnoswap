@@ -39,7 +39,7 @@ func (p *Pool) safeTransfer(
 	amount *i256.Int,
 	isToken0 bool,
 ) {
-	if amount.Sign() != -1 {
+	if amount.Gt(i256.Zero()) {
 		panic(ufmt.Sprintf(
 			"%v. got: %s", errMustBeNegative, amount.ToString(),
 		))

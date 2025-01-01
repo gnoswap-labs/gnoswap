@@ -27,6 +27,38 @@ var (
 	bob   = testutils.TestAddress("bob")
 )
 
+func TestAssertTooManyEmission(t *testing.T) {
+	tests := []struct {
+		name        string
+		amount      uint64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:        "should panic if emission amount is too large",
+			amount:      MAXIMUM_SUPPLY,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-GNS-002] too many emission reward || amount: 1000000000000000",
+		},
+		{
+			name:   "should not panic if emission amount is not too large",
+			amount: 123,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					assertTooManyEmission(tt.amount)
+				})
+			} else {
+				uassert.NotPanics(t, func() { assertTooManyEmission(tt.amount) })
+			}
+		})
+	}
+}
+
 func TestIsLastBlockOfHalvingYear(t *testing.T) {
 	tests := make([]struct {
 		name   string
@@ -34,14 +66,14 @@ func TestIsLastBlockOfHalvingYear(t *testing.T) {
 		want   bool
 	}, 0, 24)
 
-	for i := int64(1); i <= 12; i++ {
+	for i := HALVING_START_YEAR; i <= HALVING_END_YEAR; i++ {
 		tests = append(tests, struct {
 			name   string
 			height int64
 			want   bool
 		}{
 			name:   fmt.Sprintf("last block of halving year %d", i),
-			height: halvingYearBlock[i],
+			height: GetHalvingYearEndBlock(i),
 			want:   true,
 		})
 
@@ -51,7 +83,7 @@ func TestIsLastBlockOfHalvingYear(t *testing.T) {
 			want   bool
 		}{
 			name:   fmt.Sprintf("not last block of halving year %d", i),
-			height: halvingYearBlock[i] - 1,
+			height: GetHalvingYearEndBlock(i) - 1,
 			want:   false,
 		})
 	}
@@ -81,7 +113,7 @@ func TestHandleLeftEmissionAmount(t *testing.T) {
 			name:   fmt.Sprintf("handle left emission amount for year %d, non minted", i),
 			year:   i,
 			amount: 0,
-			want:   halvingYearAmount[i],
+			want:   GetHalvingYearMaxAmount(i),
 		})
 
 		tests = append(tests, struct {
@@ -93,7 +125,7 @@ func TestHandleLeftEmissionAmount(t *testing.T) {
 			name:   fmt.Sprintf("handle left emission amount for year %d, minted", i),
 			year:   i,
 			amount: uint64(123456),
-			want:   halvingYearAmount[i] - uint64(123456),
+			want:   GetHalvingYearMaxAmount(i) - uint64(123456),
 		})
 	}
 }
@@ -108,15 +140,25 @@ func TestSkipIfSameHeight(t *testing.T) {
 	})
 }
 
+func TestSkipIfEmissionEnded(t *testing.T) {
+	t.Run("should skip if emission has ended", func(t *testing.T) {
+		uassert.True(t, skipIfEmissionEnded(GetEndHeight()+1))
+	})
+
+	t.Run("should not skip if emission has not ended", func(t *testing.T) {
+		uassert.False(t, skipIfEmissionEnded(std.GetHeight()))
+	})
+}
+
 func TestGetterSetter(t *testing.T) {
 	t.Run("last minted height", func(t *testing.T) {
-		value := int64(1234)
+		value := int64(123)
 		setLastMintedHeight(value)
 		uassert.Equal(t, value, GetLastMintedHeight())
 	})
 
 	t.Run("left emission amount", func(t *testing.T) {
-		value := uint64(123456)
+		value := uint64(0)
 		setLeftEmissionAmount(value)
 		uassert.Equal(t, value, GetLeftEmissionAmount())
 	})
@@ -237,7 +279,7 @@ func TestGrc20Methods(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testResetGnsTokenObject(t)
+			resetGnsTokenObject(t)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, tt.fn)

@@ -53,8 +53,8 @@ func TestMintPosition01InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		admin,
-		admin,
+		adminAddr,
+		adminAddr,
 	)
 
 	uassert.Equal(t, tokenId, uint64(1))
@@ -87,8 +87,8 @@ func TestMintPosition02InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		admin,
-		admin,
+		adminAddr,
+		adminAddr,
 	)
 
 	uassert.Equal(t, tokenId, uint64(2))
@@ -135,11 +135,11 @@ func TestSwap1(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		admin,
+		adminAddr,
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		admin,
+		adminAddr,
 	)
 
 	uassert.Equal(t, amount0, "1234567")
@@ -178,11 +178,11 @@ func TestSwap2(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		admin,
+		adminAddr,
 		true,
 		"20000000", //
 		consts.MIN_PRICE,
-		admin,
+		adminAddr,
 	)
 
 	uassert.Equal(t, amount0, "20000000")
