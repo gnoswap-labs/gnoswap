@@ -17,6 +17,8 @@ import (
 
 var rewardDistributor = NewRewardDistributor()
 
+// DistributionRecord represents a single reward distribution event.
+// It captures all relevant information about the distribution.
 type DistributionRecord struct {
 	User             std.Address
 	ProjectId        string
@@ -25,9 +27,16 @@ type DistributionRecord struct {
 	DistributeTime   uint64
 }
 
+// RewardDistributor handles the distribution of rewards to users.
+// It manages pending rewards, distribution history, and batch processing.
 type RewardDistributor struct {
+	// pendingRewards tracks unreleased rewards by user and project
 	pendingRewards      *avl.Tree // userAddr:projectId -> *u256.Uint
+
+	// distributionHistory maintains a record of all distributions
 	distributionHistory *avl.Tree // userAddr:projectId:height -> *DistributionRecord
+
+	// lastUpdateHeight tracks the last update height per project
 	lastUpdateHeight    *avl.Tree // projectId -> uint64
 }
 
@@ -39,6 +48,8 @@ func NewRewardDistributor() *RewardDistributor {
 	}
 }
 
+// PendingRewards returns the amount of undistributed rewards for a user in a project.
+// Returns zero if no pending rewards exist.
 func (rd *RewardDistributor) PendingRewards(user std.Address, pid string) (*u256.Uint, error) {
 	key := generateRewardKey(user, pid)
 	value, exists := rd.pendingRewards.Get(key)
@@ -49,7 +60,8 @@ func (rd *RewardDistributor) PendingRewards(user std.Address, pid string) (*u256
 	return value.(*u256.Uint), nil
 }
 
-// DistributeRewards distributes rewards to all depositors in a specific project
+// DistributeRewards processes rewards distribution for an entire project.
+// Calculates and queues rewards for all eligible deposits in the project.
 func (rd *RewardDistributor) DistributeRewards(pid string) error {
 	_, exists := projects[pid]
 	if !exists {
@@ -91,6 +103,8 @@ func (rd *RewardDistributor) DistributeRewards(pid string) error {
 	return nil
 }
 
+// DistributeUserRewards processes reward distribution for a specific user.
+// Returns the distributed amount and any error encountered.
 func (rd *RewardDistributor) DistributeUserReward(user std.Address, pid string) (*u256.Uint, error) {
 	key := generateRewardKey(user, pid)
 
@@ -138,6 +152,8 @@ func (rd *RewardDistributor) DistributeUserReward(user std.Address, pid string) 
 	return reward, nil
 }
 
+// BatchDistribute processes reward distribution for multiple users in batch.
+// Optimizes gas usage by combining multiple distributions.
 func (rd *RewardDistributor) BatchDistribute(users []std.Address, pid string) error {
 	for _, user := range users {
 		_, err := rd.DistributeUserReward(user, pid)
@@ -212,6 +228,8 @@ func generateDistributionHistoryKey(key string, height uint64) string {
 	return ufmt.Sprintf("%s:%d", key, height)
 }
 
+// isRewardClaimable checks if a deposit is eligible for reward collection.
+// Verifies deposit maturity and claim conditions.
 func isRewardClaimable(dpst *Deposit) bool {
 	currentHeight := uint64(std.GetHeight())
 	return currentHeight >= dpst.claimableHeight &&

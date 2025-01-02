@@ -25,18 +25,19 @@ func init() {
 	depositStore = NewDepositStore()
 }
 
-// DepositStore stores deposit-related metadata
+// DepositStore manages deposit-related operations and data storage.
+// It maintains indices for efficient querying of deposits by various criteria.
 type DepositStore struct {
-	// all deposits
+	// deposits stores all deposit information
 	deposits *avl.Tree // deposit ID -> *Deposit
 
-	// deposits by project
+	// depositsByProject indexes deposits by project and tier
 	depositsByProject *avl.Tree // project ID + tier -> []string(depositIds)
 
-	// deposits by user
+	// depositsByUser indexes deposits by user address
 	depositsByUser *avl.Tree // user address -> []string(depositIds)
 
-	// deposits by user & project
+	// depositsByUserProject indexes deposits by user address and project ID
 	depositsByUserProject *avl.Tree // user address + project ID -> []string(depositIds)
 }
 
@@ -67,6 +68,19 @@ type DepositManager interface {
 	CollectDeposit(depositId string, user std.Address) (uint64, error)
 }
 
+// AddDeposit creates a new deposit for the specified project and user.
+//
+// The deposit is added to all relevant indices for efficient querying.
+//
+// Parameters:
+//  - projectId: the ID of the project to deposit into
+//  - user: the address of the depositor
+//  - amount: the amount of GNS deposited
+//  - tier: the tier of the deposit
+//
+// Returns:
+//  - depositId: the ID of the deposit
+//  - error: any error encountered during the process
 func (ds *DepositStore) AddDeposit(projectId string, user std.Address, amount uint64, tier string) (string, error) {
 	project, exists := projects[projectId]
 	if !exists {
@@ -150,6 +164,14 @@ func alreadyDepositedSameTier(ds *DepositStore, user std.Address, projectId, tie
 	return false
 }
 
+// GetDeposit retrieves deposit information by deposit ID.
+//
+// Parameters:
+//  - depositId: the ID of the deposit to retrieve
+//
+// Returns:
+//  - *Deposit: the deposit information
+//  - error: any error encountered during the retrieval
 func (ds *DepositStore) GetDeposit(depositId string) (*Deposit, error) {
 	value, exists := ds.deposits.Get(depositId)
 	if !exists {
@@ -199,6 +221,16 @@ func (ds *DepositStore) GetProjectDeposits(projectId string) ([]*Deposit, error)
 	return deposits, nil
 }
 
+// CollectDeposit processes a deposit collection request.
+// Verifies user authorization and updates relevant project statistics.
+//
+// Parameters:
+//  - depositId: the ID of the deposit to collect
+//  - user: the address of the collector
+//
+// Returns:
+//  - uint64: the amount of GNS collected
+//  - error: any error encountered during the process
 func (ds *DepositStore) CollectDeposit(depositId string, user std.Address) (uint64, error) {
 	dpst, err := ds.GetDeposit(depositId)
 	if err != nil {
