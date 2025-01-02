@@ -7,7 +7,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 var rewardStore *RewardStore
@@ -105,7 +105,7 @@ func calculateProjectReward(proj *Project, startHeight, endHeight uint64) *u256.
 			continue
 		}
 
-		calcStart := common.U64Maxstart(startHeight, t.tier.startHeight)
+		calcStart := common.U64Max(startHeight, t.tier.startHeight)
 		calcEnd := common.U64Min(endHeight, t.tier.endHeight)
 
 		if calcStart > calcEnd {

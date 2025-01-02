@@ -63,7 +63,16 @@ func CreateProject(
 		panic(err)
 	}
 
-	if _, exist := registered[tokenPath]; !exist {
+	registered := common.ListRegisteredTokens()
+	isRegistered := false
+	for _, regToken := range registered {
+		if regToken == tokenPath {
+			isRegistered = true
+			break
+		}
+	}
+
+	if !isRegistered {
 		panic(addDetailToError(
 			errNotRegistered,
 			ufmt.Sprintf("token(%s) not registered", tokenPath),
@@ -90,7 +99,7 @@ func CreateProject(
 			if token == consts.GOV_XGNS_PATH {
 				continue
 			}
-			if _, exist := registered[token]; !exist {
+			if !isRegistered {
 				panic(addDetailToError(
 					errNotRegistered,
 					ufmt.Sprintf("condition token(%s) not registered", token),
@@ -298,7 +307,7 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 	leftReward := left30 + left90 + left180
 
 	if leftReward > 0 {
-		tokenTeller := common.GetTokenTeller(tokenPath)
+		tokenTeller := common.GetTokenTeller(project.tokenPath)
 		tokenTeller.Transfer(
 			recipient,
 			leftReward,

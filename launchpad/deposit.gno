@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v1/common"
@@ -15,6 +16,8 @@ import (
 
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
+
+	pusers "gno.land/p/demo/users"
 )
 
 var (
@@ -357,7 +360,11 @@ func satisfyDepositConditions(p Project) error {
 		case consts.GOV_XGNS_PATH:
 			balance = xgns.BalanceOf(a2u(caller))
 		default:
-			balance = balanceOfByRegisterCall(token, caller)
+			if b, err := balanceOfByRegisterCall(token, caller); err != nil {
+				return err
+			} else {
+				balance = b
+			}
 		}
 
 		// validate minimum amount
@@ -376,4 +383,29 @@ func transferGNS(to std.Address, amount uint64) error {
 	xgns.Burn(a2u(consts.LAUNCHPAD_ADDR), amount)
 	gns.Transfer(a2u(to), amount)
 	return nil
+}
+
+func balanceOfByRegisterCall(pkgPath string, owner std.Address) (uint64, error) {
+	if pkgPath == consts.GNOT {
+		pkgPath = consts.WRAPPED_WUGNOT
+	}
+
+	registeredTokens := common.ListRegisteredTokens()
+	isRegistered := false
+
+	for _, token := range registeredTokens {
+		if token == pkgPath {
+			isRegistered = true
+			break
+		}
+	}
+
+	if !isRegistered {
+		return 0, ufmt.Errorf("token(%s) not registered", pkgPath)
+	}
+
+	token := common.GetToken(pkgPath)
+	balance := token.BalanceOf(owner)
+
+	return balance, nil
 }
