@@ -171,6 +171,66 @@ func TestRewardStore_CalculateProjectReward(t *testing.T) {
 	}
 }
 
+func TestRewardStore_GetRewardsInRange(t *testing.T) {
+	proj := Project{
+		id:          "test:200",
+		startHeight: 100,
+		tier30: Tier{
+			startHeight: 100,
+			endHeight:   200,
+			tierAmount:  1000,
+		},
+		tier30Ratio: 30,
+		tier90: Tier{
+			startHeight: 100,
+			endHeight:   300,
+			tierAmount:  2000,
+		},
+		tier90Ratio: 30,
+		tier180: Tier{
+			startHeight: 100,
+			endHeight:   400,
+			tierAmount:  3000,
+		},
+		tier180Ratio: 40,
+	}
+
+	projects = make(map[string]Project)
+	projects[proj.id] = proj
+
+	rs := NewRewardStore()
+
+	tests := []struct {
+		name        string
+		pid         string
+		startHeight uint64
+		endHeight   uint64
+		wantReward  *u256.Uint
+		wantErr     bool
+	}{
+		{
+			name:        "Full range within single tier",
+			pid:         proj.id,
+			startHeight: 100,
+			endHeight:   200,
+			wantReward:  calculateExpectedReward(t, 100, &proj),
+			wantErr:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reward, err := rs.GetRewardsInRange(tt.pid, tt.startHeight, tt.endHeight)
+			if tt.wantErr {
+				uassert.Error(t, err)
+				return
+			}
+			uassert.NoError(t, err)
+			uassert.True(t, reward.Eq(tt.wantReward))
+		})
+	}
+}
+
 func TestRewardStore_GetAccumulatedRewards(t *testing.T) {
 	rs := NewRewardStore()
 

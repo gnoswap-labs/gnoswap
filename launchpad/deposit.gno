@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/avl"
-	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v1/common"
@@ -16,8 +15,6 @@ import (
 
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
-
-	pusers "gno.land/p/demo/users"
 )
 
 var (
@@ -31,16 +28,16 @@ func init() {
 // DepositStore stores deposit-related metadata
 type DepositStore struct {
 	// all deposits
-	deposits *avl.Tree // key: deposit ID, value: *Deposit
+	deposits *avl.Tree // deposit ID -> *Deposit
 
 	// deposits by project
-	depositsByProject *avl.Tree // key: <project ID, tier>, value: []string(depositIds)
+	depositsByProject *avl.Tree // project ID + tier -> []string(depositIds)
 
 	// deposits by user
-	depositsByUser *avl.Tree // key: user address, value: []string(depositIds)
+	depositsByUser *avl.Tree // user address -> []string(depositIds)
 
 	// deposits by user & project
-	depositsByUserProject *avl.Tree // key: <user address, project ID>, value: []string(depositIds)
+	depositsByUserProject *avl.Tree // user address + project ID -> []string(depositIds)
 }
 
 func NewDepositStore() *DepositStore {
@@ -89,6 +86,10 @@ func (ds *DepositStore) AddDeposit(projectId string, user std.Address, amount ui
 		return "", ufmt.Errorf("tier(%s) is not active", tier)
 	}
 
+	if alreadyDepositedSameTier(ds, user, projectId, tier) {
+		return "", ufmt.Errorf("already deposited in the same project(%s) tier(%s)", projectId, tier)
+	}
+
 	depositId := generateDepositId(projectId, tier, user)
 
 	// calculate claimable height & time
@@ -129,6 +130,24 @@ func (ds *DepositStore) AddDeposit(projectId string, user std.Address, amount ui
 	)
 
 	return depositId, nil
+}
+
+func alreadyDepositedSameTier(ds *DepositStore, user std.Address, projectId, tier string) bool {
+	userProjectKey := ufmt.Sprintf("%s:%s", user.String(), projectId)
+	value, exists := ds.depositsByUserProject.Get(userProjectKey)
+	if !exists {
+		return false
+	}
+
+	depositIds := value.([]string)
+	for _, id := range depositIds {
+		deposit, _ := ds.GetDeposit(id)
+		if deposit.tier == tier {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (ds *DepositStore) GetDeposit(depositId string) (*Deposit, error) {
@@ -194,6 +213,11 @@ func (ds *DepositStore) CollectDeposit(depositId string, user std.Address) (uint
 		return 0, errors.New("deposit already collected")
 	}
 
+	// update deposit
+	dpst.depositCollectHeight = uint64(std.GetHeight())
+	dpst.depositCollectTime = uint64(time.Now().Unix())
+	ds.deposits.Set(depositId, dpst)
+
 	project, exists := projects[dpst.projectId]
 	if !exists {
 		return 0, ufmt.Errorf("project(%s) not found", dpst.projectId)
@@ -203,11 +227,6 @@ func (ds *DepositStore) CollectDeposit(depositId string, user std.Address) (uint
 	if isTierActive(project, tier) {
 		return 0, errors.New("cannot collect from active tier")
 	}
-
-	// update deposit
-	dpst.depositCollectHeight = uint64(std.GetHeight())
-	dpst.depositCollectTime = uint64(time.Now().Unix())
-	ds.deposits.Set(depositId, dpst)
 
 	// upadte project stats
 	ds.updateProjectStats(dpst, project, tier, false)
