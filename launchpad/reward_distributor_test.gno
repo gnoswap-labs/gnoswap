@@ -76,7 +76,6 @@ func TestRewardDistributor(t *testing.T) {
 
 		uassert.Equal(t, distributed.ToString(), initialReward.ToString())
 
-		// 분배 후 대기 리워드가 0인지 확인
 		remaining, _ := rd.PendingRewards(testAddr, project.id)
 		uassert.True(t, remaining.IsZero())
 
@@ -103,7 +102,6 @@ func TestRewardDistributor(t *testing.T) {
 			rd.pendingRewards.Set(generateRewardKey(addr, project.id), u256.NewUint(1000))
 		}
 
-		// 배치 분배 실행
 		err := rd.BatchDistribute(testAddrs, project.id)
 		uassert.NoError(t, err)
 
@@ -111,7 +109,6 @@ func TestRewardDistributor(t *testing.T) {
 			remaining, _ := rd.PendingRewards(addr, project.id)
 			uassert.True(t, remaining.IsZero())
 
-			// 분배 이력 확인
 			height := uint64(std.GetHeight())
 			historyKey := generateDistributionHistoryKey(generateRewardKey(addr, project.id), height)
 			_, exists := rd.distributionHistory.Get(historyKey)
@@ -137,7 +134,6 @@ func TestRewardDistributor(t *testing.T) {
 
 func TestCalculateDepositReward(t *testing.T) {
 	t.Run("Normal case", func(t *testing.T) {
-		// t.Skip("fix")
 		rd := NewRewardDistributor()
 
 		project := Project{
