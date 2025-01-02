@@ -91,6 +91,7 @@ func CreateProject(
 			if token == consts.GOV_XGNS_PATH {
 				continue
 			}
+
 			if err := common.IsRegistered(token); err != nil {
 				panic(addDetailToError(
 					errNotRegistered,
