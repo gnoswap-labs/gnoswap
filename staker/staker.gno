@@ -382,6 +382,8 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 	// internal penalty to community pool
 	gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), reward.InternalPenalty)
 
+	// FIXME @mconcat
+	// panic: slice index out of bounds: 0 (len=0)
 	unclaimableInternal, unclaimableExternal := ProcessUnclaimableReward(deposit.targetPoolPath, uint64(std.GetHeight()))
 
 	// internal unclaimable to community pool
