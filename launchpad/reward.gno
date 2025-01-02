@@ -33,9 +33,9 @@ type Calculator interface {
 
 // RewardStore stores reward-related metadata
 type RewardStore struct {
-	accumulatedRewards   *avl.Tree // key: project ID, value: *u256.Uint
-	lastCalculatedHeight *avl.Tree // key: project ID, value: uint64
-	rewardSnapshots      *avl.Tree // key: <project ID, height>, value: *RewardSnapshot
+	accumulatedRewards   *avl.Tree // project ID -> *u256.Uint
+	lastCalculatedHeight *avl.Tree // project ID -> uint64
+	rewardSnapshots      *avl.Tree // <project ID, height> -> *RewardSnapshot
 }
 
 func NewRewardStore() *RewardStore {
@@ -54,16 +54,16 @@ type RewardSnapshot struct {
 
 func (rs *RewardStore) CalculateRewards(pid string, height uint64) (*u256.Uint, error) {
 	lastHeight, exists := rs.lastCalculatedHeight.Get(pid)
-	if !exists {
-		lastHeight = uint64(0)
+	lstHeight := uint64(0)
+	if exists {
+		lstHeight = lastHeight.(uint64)
 	}
 
-	lstHeight := lastHeight.(uint64)
 	if height <= lstHeight {
 		// return cached value if height already calculated
 		rwd, exists := rs.accumulatedRewards.Get(pid)
 		if !exists {
-			return u256.NewUint(0), nil
+			return u256.Zero(), nil
 		}
 		return rwd.(*u256.Uint), nil
 	}
@@ -78,10 +78,18 @@ func (rs *RewardStore) CalculateRewards(pid string, height uint64) (*u256.Uint, 
 		return u256.Zero(), nil
 	}
 
-	// calculate rewards
-	totalReward := calculateProjectReward(&project, lstHeight, height)
+	// (1) compute a new reward for the interval lstHeight to height
+	newReward := calculateProjectReward(&project, lstHeight, height)
 
-	// update accumulated rewards
+	// (2) add the existing accumulated reward and update it to the final accumulated value
+	oldAccum := u256.Zero()
+	if accum, ok := rs.accumulatedRewards.Get(pid); ok {
+		oldAccum = accum.(*u256.Uint)
+	}
+
+	totalReward := new(u256.Uint).Add(oldAccum, newReward)
+
+	// (3) update accumulated rewards
 	rs.accumulatedRewards.Set(pid, totalReward)
 	rs.lastCalculatedHeight.Set(pid, height)
 
@@ -101,34 +109,40 @@ func calculateProjectReward(proj *Project, startHeight, endHeight uint64) *u256.
 	}
 
 	for _, t := range tiers {
-		if t.tier.startHeight == 0 || t.tier.startHeight > endHeight {
-			continue
-		}
-
-		calcStart := common.U64Max(startHeight, t.tier.startHeight)
-		calcEnd := common.U64Min(endHeight, t.tier.endHeight)
-
-		if calcStart > calcEnd {
-			continue
-		}
-
-		blockReward := calcTierRewardPerBlock(t.tier, t.ratio)
-
-		blocks := calcEnd - calcStart // +1?
-		tierReward := new(u256.Uint).Mul(blockReward, u256.NewUint(blocks))
-		totalReward = new(u256.Uint).Add(totalReward, tierReward) // TODO: need to check overflow?
+		reward := calculateTierRewardForRange(t.tier, t.ratio, startHeight, endHeight)
+		totalReward = new(u256.Uint).Add(totalReward, reward)
 	}
 
 	return totalReward
 }
 
+// calculate start to end height range compensation for a specific tier
+func calculateTierRewardForRange(tier *Tier, ratio, startHeight, endHeight uint64) *u256.Uint {
+	if tier.startHeight == 0 || tier.startHeight > endHeight {
+		return u256.Zero()
+	}
+
+	calcStart := common.U64Max(startHeight, tier.startHeight)
+	calcEnd := common.U64Min(endHeight, tier.endHeight)
+
+	if calcStart > calcEnd {
+		return u256.Zero()
+	}
+
+	blocks := calcEnd - calcStart + 1 // consider off by one
+
+	// reward per block * blocks
+	return new(u256.Uint).Mul(calcTierRewardPerBlock(tier, ratio), u256.NewUint(blocks))
+}
+
 // calcTierRewardPerBlock calculates the reward per block for a given tier
 func calcTierRewardPerBlock(tier *Tier, ratio uint64) *u256.Uint {
 	if tier.tierAmountPerBlockX96 != nil {
-		return tier.tierAmountPerBlockX96
+		// assume ratio is used as a simple scale factor
+		return new(u256.Uint).Mul(tier.tierAmountPerBlockX96, u256.NewUint(ratio))
 	}
 
-	totalBlocks := tier.endHeight - tier.startHeight // +1?
+	totalBlocks := (tier.endHeight - tier.startHeight + 1)
 	if totalBlocks == 0 {
 		return u256.Zero()
 	}
@@ -201,7 +215,7 @@ func calculateTierReward(tier *Tier, height uint64) *u256.Uint {
 		return u256.Zero()
 	}
 
-	blocks := endHeight - tier.startHeight
+	blocks := endHeight - tier.startHeight + 1
 	return new(u256.Uint).Mul(tier.tierAmountPerBlockX96, u256.NewUint(blocks))
 }
 
@@ -211,7 +225,7 @@ func createSnapshotkey(pid string, height uint64) string {
 
 func (rs *RewardStore) GetRewardsInRange(pid string, startHeight, endHeight uint64) (*u256.Uint, error) {
 	if startHeight >= endHeight {
-		return u256.Zero(), nil
+		return u256.Zero(), ufmt.Errorf("startHeight(%d) >= endHeight(%d)", startHeight, endHeight)
 	}
 
 	startReward, err := rs.CalculateRewards(pid, startHeight)
@@ -222,6 +236,13 @@ func (rs *RewardStore) GetRewardsInRange(pid string, startHeight, endHeight uint
 	endReward, err := rs.CalculateRewards(pid, endHeight)
 	if err != nil {
 		return nil, err
+	}
+
+	if endReward.Cmp(startReward) < 0 {
+		return u256.Zero(), ufmt.Errorf(
+			"invalid reward range: endReward(%s) < startReward(%s)",
+			endReward.ToString(), startReward.ToString(),
+		)
 	}
 
 	return new(u256.Uint).Sub(endReward, startReward), nil
