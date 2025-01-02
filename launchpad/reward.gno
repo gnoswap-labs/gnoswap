@@ -31,10 +31,16 @@ type Calculator interface {
 	UpdateRewardSnapshot(pid string) error
 }
 
-// RewardStore stores reward-related metadata
+// RewardStore manages reward calculations and snapshots for projects.
+// It tracks accumulated rewards, calculation heights, and maintains reward history.
 type RewardStore struct {
+	// accumulatedRewards stores total rewards for each project
 	accumulatedRewards   *avl.Tree // project ID -> *u256.Uint
+
+	// lastCalculatedHeights tracks the last block height where rewards were calculated
 	lastCalculatedHeight *avl.Tree // project ID -> uint64
+
+	// rewardSnapshots stores point-in-time reward state
 	rewardSnapshots      *avl.Tree // <project ID, height> -> *RewardSnapshot
 }
 
@@ -46,12 +52,26 @@ func NewRewardStore() *RewardStore {
 	}
 }
 
+// RewardSnapshot represents a point-in-time capture of reward state.
+// It includes the total accumulated reward and tier-specific rewards.
 type RewardSnapshot struct {
 	Height             uint64
 	AccumulatedRewards *u256.Uint
-	TierRewards        *avl.Tree // key: tier, value: *u256.Uint
+	TierRewards        *avl.Tree // tier -> *u256.Uint
 }
 
+// CalculateRewards computes rewards for a project up to the specified height.
+//
+// It returns the total calculated reward and any error encountered.
+// The calculation takes into account tier-specific reward rates and durations.
+//
+// Parameters:
+//  - pid: the project ID
+//  - height: the block height up to which rewards are calculated
+//
+// Returns:
+//  - *u256.Uint: the total calculated reward
+//  - error: any error encountered during the calculation
 func (rs *RewardStore) CalculateRewards(pid string, height uint64) (*u256.Uint, error) {
 	lastHeight, exists := rs.lastCalculatedHeight.Get(pid)
 	lstHeight := uint64(0)
@@ -155,6 +175,8 @@ func calcTierRewardPerBlock(tier *Tier, ratio uint64) *u256.Uint {
 	return amountPerBlock
 }
 
+// GetAccumulatedRewards returns the total accumulated rewards for a project.
+// If no rewards exist, returns zero.
 func (rs *RewardStore) GetAccumulatedRewards(pid string) (*u256.Uint, error) {
 	reward, exists := rs.accumulatedRewards.Get(pid)
 	if !exists {
@@ -163,6 +185,8 @@ func (rs *RewardStore) GetAccumulatedRewards(pid string) (*u256.Uint, error) {
 	return reward.(*u256.Uint), nil
 }
 
+// UpdateRewardSnapshot creates a new snapshot of the current reward state.
+// It captures both total and tier-specific rewards at the current block height.
 func (rs *RewardStore) UpdateRewardSnapshot(pid string) error {
 	height := uint64(std.GetHeight())
 
