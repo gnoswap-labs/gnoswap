@@ -51,7 +51,7 @@ func ApiGetDepositByDepositId(depositId string) string {
         WriteString("depositId", depositId)
     DepositBuilder(builder, deposit)
 
-    return marshal(builder.Build())
+    return marshal(builder.Node())
 }
 
 func ApiGetDepositFullByDepositId(depositId string) string {
@@ -89,7 +89,7 @@ func ApiGetDepositFullByDepositId(depositId string) string {
     // Add deposit info
     DepositBuilder(builder, deposit)
 
-    return marshal(builder.Build())
+    return marshal(builder.Node())
 }
 
 func makeConditionsToStr(conditions map[string]Condition) (string, string) {
