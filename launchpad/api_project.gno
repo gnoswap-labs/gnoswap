@@ -9,18 +9,18 @@ import (
 )
 
 func ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
-    calculateDepositReward()
+	calculateDepositReward()
 
-    project, exist := projects[projectId]
-    if !exist {
-        return ""
-    }
+	project, exist := projects[projectId]
+	if !exist {
+		return ""
+	}
 
-    builder := MetaBuilder().
-        WriteString("projectId", projectId)
-    ProjectBuilder(builder, project)
+	builder := MetaBuilder().
+		WriteString("projectId", projectId)
+	ProjectBuilder(builder, project)
 
-    return marshal(builder.Node())
+	return marshal(builder.Node())
 }
 
 func ApiGetProjectStatisticsByProjectId(projectId string) string {
@@ -37,36 +37,36 @@ func ApiGetProjectStatisticsByProjectId(projectId string) string {
 }
 
 func ApiGetProjectStatisticsByProjectTierId(tierId string) string {
-    calculateDepositReward()
+	calculateDepositReward()
 
-    projectId, tierStr := getProjectIdAndTierFromTierId(tierId)
-    project, exist := projects[projectId]
-    if !exist {
-        return ""
-    }
+	projectId, tierStr := getProjectIdAndTierFromTierId(tierId)
+	project, exist := projects[projectId]
+	if !exist {
+		return ""
+	}
 
-    var tier Tier
-    switch tierStr {
-    case "30":
-        tier = project.tiers[30]
-    case "90":
-        tier = project.tiers[90]
-    case "180":
-        tier = project.tiers[180]
-    default:
-        return ""
-    }
+	var tier Tier
+	switch tierStr {
+	case "30":
+		tier = project.tiers[30]
+	case "90":
+		tier = project.tiers[90]
+	case "180":
+		tier = project.tiers[180]
+	default:
+		return ""
+	}
 
-    builder := MetaBuilder().
-        WriteString("projectId", projectId).
-        WriteString("tierId", tierId).
-        WriteString("tierAmount", ufmt.Sprintf("%d", tier.tierAmount)).
-        WriteString("tierTotalDepositAmount", ufmt.Sprintf("%d", tier.totalDepositAmount)).
-        WriteString("tierActualDepositAmount", ufmt.Sprintf("%d", tier.actualDepositAmount)).
-        WriteString("tierTotalParticipant", ufmt.Sprintf("%d", tier.totalParticipant)).
-        WriteString("tierActualParticipant", ufmt.Sprintf("%d", tier.actualParticipant))
+	builder := MetaBuilder().
+		WriteString("projectId", projectId).
+		WriteString("tierId", tierId).
+		WriteString("tierAmount", ufmt.Sprintf("%d", tier.tierAmount)).
+		WriteString("tierTotalDepositAmount", ufmt.Sprintf("%d", tier.totalDepositAmount)).
+		WriteString("tierActualDepositAmount", ufmt.Sprintf("%d", tier.actualDepositAmount)).
+		WriteString("tierTotalParticipant", ufmt.Sprintf("%d", tier.totalParticipant)).
+		WriteString("tierActualParticipant", ufmt.Sprintf("%d", tier.actualParticipant))
 
-    return marshal(builder.Node())
+	return marshal(builder.Node())
 }
 
 func metaNode() *json.Node {

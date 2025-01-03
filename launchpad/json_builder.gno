@@ -3,6 +3,7 @@ package launchpad
 import (
 	"std"
 	"time"
+
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 )
@@ -63,7 +64,7 @@ func ProjectBuilder(b *json.NodeBuilder, project Project) *json.NodeBuilder {
 
 	// Add tier ratios
 	for _, duration := range []uint64{30, 90, 180} {
-		b.WriteString(ufmt.Sprintf("tier%dRatio", duration), 
+		b.WriteString(ufmt.Sprintf("tier%dRatio", duration),
 			ufmt.Sprintf("%d", project.tiersRatios[duration]))
 	}
 
