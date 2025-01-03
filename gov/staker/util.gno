@@ -50,6 +50,11 @@ func getPrev() (string, string) {
 	return prev.Addr().String(), prev.PkgPath()
 }
 
+// derivePkgAddr derives the Realm address from it's pkgPath parameter
+func derivePkgAddr(pkgPath string) std.Address {
+	return std.DerivePkgAddr(pkgPath)
+}
+
 // a2u converts std.Address to pusers.AddressOrName.
 // pusers is a package that contains the user-related functions.
 //

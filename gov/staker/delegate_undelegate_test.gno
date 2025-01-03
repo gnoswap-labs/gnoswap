@@ -5,10 +5,9 @@ import (
 	"testing"
 
 	"gno.land/p/demo/avl"
-	"gno.land/p/demo/testutils"
 )
 
-func TestDelegate(t *testing.T) {
+func TestDelegateInternal(t *testing.T) {
 	t.Skip("Must running separately. because this test depends on TestUndelegate's state")
 	std.TestSetOrigCaller(testAddr1)
 	resetState()
@@ -54,7 +53,7 @@ func TestDelegate(t *testing.T) {
 	})
 }
 
-func TestUndelegate(t *testing.T) {
+func TestUndelegateInternal(t *testing.T) {
 	t.Skip("Must running separately. because this test depends on TestUndelegate's state")
 	addr1 := testAddr1
 	std.TestSetOrigCaller(addr1)

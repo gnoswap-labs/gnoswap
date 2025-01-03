@@ -8,18 +8,83 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 
+	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
 // Mock or define test realms/addresses if needed
-var adminRealm = std.NewUserRealm(consts.ADMIN)
-var userRealm = std.NewUserRealm(testutils.TestAddress("alice"))
-var invalidAddr = testutils.TestAddress("invalid")
+
+var (
+	adminRealm  = std.NewUserRealm(consts.ADMIN)
+	userRealm   = std.NewUserRealm(testutils.TestAddress("alice"))
+	user2Realm  = std.NewUserRealm(testutils.TestAddress("bob"))
+	invalidAddr = testutils.TestAddress("invalid")
+
+	ugnotDenom string = "ugnot"
+	ugnotPath  string = "ugnot"
+	wugnotPath string = "gno.land/r/demo/wugnot"
+)
 
 func makeFakeAddress(name string) std.Address {
 	return testutils.TestAddress(name)
+}
+
+func ugnotTransfer(t *testing.T, from, to std.Address, amount uint64) {
+	t.Helper()
+
+	std.TestSetRealm(std.NewUserRealm(from))
+	std.TestSetOrigSend(std.Coins{{ugnotDenom, int64(amount)}}, nil)
+	banker := std.GetBanker(std.BankerTypeRealmSend)
+	banker.SendCoins(from, to, std.Coins{{ugnotDenom, int64(amount)}})
+}
+
+func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
+	t.Helper()
+
+	banker := std.GetBanker(std.BankerTypeRealmIssue)
+	coins := banker.GetCoins(addr)
+	if len(coins) == 0 {
+		return 0
+	}
+
+	return uint64(coins.AmountOf(ugnotDenom))
+}
+
+func ugnotMint(t *testing.T, addr std.Address, denom string, amount int64) {
+	t.Helper()
+	banker := std.GetBanker(std.BankerTypeRealmIssue)
+	banker.IssueCoin(addr, denom, amount)
+	std.TestIssueCoins(addr, std.Coins{{denom, int64(amount)}})
+}
+
+func ugnotBurn(t *testing.T, addr std.Address, denom string, amount int64) {
+	t.Helper()
+	banker := std.GetBanker(std.BankerTypeRealmIssue)
+	banker.RemoveCoin(addr, denom, amount)
+}
+
+func ugnotFaucet(t *testing.T, to std.Address, amount uint64) {
+	t.Helper()
+	faucetAddress := consts.ADMIN
+	std.TestSetOrigCaller(faucetAddress)
+
+	if ugnotBalanceOf(t, faucetAddress) < amount {
+		newCoins := std.Coins{{ugnotDenom, int64(amount)}}
+		ugnotMint(t, faucetAddress, newCoins[0].Denom, newCoins[0].Amount)
+		std.TestSetOrigSend(newCoins, nil)
+	}
+	ugnotTransfer(t, faucetAddress, to, amount)
+}
+
+func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
+	t.Helper()
+	std.TestSetRealm(std.NewUserRealm(addr))
+	wugnotAddr := consts.WUGNOT_ADDR
+	banker := std.GetBanker(std.BankerTypeRealmSend)
+	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
+	wugnot.Deposit()
 }
 
 func TestDelegate(t *testing.T) {
@@ -223,12 +288,21 @@ func TestCollectUndelegatedGns(t *testing.T) {
 }
 
 func TestCollectReward(t *testing.T) {
-	// We can test that common.IsHalted(), en.MintAndDistributeGns() are called
-	// and that emission/protocol fee are distributed if user has a reward recorded.
-	// This generally requires mocking userEmissionReward, userProtocolFeeReward, etc.
+	std.TestSetRealm(user2Realm)
+	{
+		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+		std.TestSkipHeights(100)
+		gns.MintGns(a2u(consts.GOV_STAKER_ADDR))
 
-	std.TestSetRealm(userRealm)
-	user := userRealm.Addr().String()
+		std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
+		ugnotFaucet(t, consts.GOV_STAKER_ADDR, 1_000_000)
+		ugnotDeposit(t, consts.GOV_STAKER_ADDR, 1_000_000)
+		ugnotFaucet(t, derivePkgAddr(wugnotPath), 1_000_000)
+		ugnotFaucet(t, user2Realm.Addr(), 1_000_000)
+	}
+
+	std.TestSetRealm(user2Realm)
+	user := user2Realm.Addr().String()
 
 	// set a fake emission reward
 	userEmissionReward.Set(user, uint64(50_000))
@@ -239,12 +313,13 @@ func TestCollectReward(t *testing.T) {
 
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	std.TestSkipHeights(100)
-	gns.MintGns(a2u(userRealm.Addr())) // 2M gns
+	gns.MintGns(a2u(user2Realm.Addr()))
 
-	std.TestSetRealm(adminRealm)
+	std.TestSetRealm(user2Realm)
 	std.TestSkipHeights(100)
 
 	// call CollectReward
+	std.TestSetOrigCaller(user2Realm.Addr())
 	CollectReward()
 
 	// expect user emissionReward = 0

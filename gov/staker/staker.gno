@@ -338,7 +338,6 @@ func collectEmissionReward(addr std.Address) uint64 {
 	if value, exists := userEmissionReward.Get(addr.String()); exists {
 		emissionReward = value.(uint64)
 	}
-	println("emissionReward", emissionReward)
 
 	if emissionReward <= 0 {
 		return 0
