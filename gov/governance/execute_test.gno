@@ -221,7 +221,7 @@ func TestCheckProposalValidation(t *testing.T) {
 				hasPassed:         true,
 			},
 			wantErr: true,
-			errMsg:  "[GNOSWAP-GOVERNANCE-014] can not execute text proposal",
+			errMsg:  "[GNOSWAP-GOVERNANCE-011] can not execute text proposal",
 		},
 		{
 			name: "Fail: Already executed, canceled, or rejected",
@@ -245,7 +245,7 @@ func TestCheckProposalValidation(t *testing.T) {
 				hasPassed:         false,
 			},
 			wantErr: true,
-			errMsg:  "[GNOSWAP-GOVERNANCE-028] proposal not passed",
+			errMsg:  "[GNOSWAP-GOVERNANCE-016] proposal not passed",
 		},
 	}
 
