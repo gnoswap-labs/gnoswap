@@ -6,44 +6,43 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+type TimeInfo struct {
+	height uint64
+	time uint64
+}
+
+type ProjectStats struct {
+    totalDeposit    uint64 // won't be decreased
+    actualDeposit   uint64 // will be decreased if deposit collected 'CollectDepositGns()'
+    totalParticipant uint64 // accu, won't be decreased
+    actualParticipant uint64 // will be decreased if deposit collected 'CollectDepositGns()'
+    totalCollected   uint64 // collect reward amount
+}
+
+type RefundInfo struct {
+	amount uint64
+	height uint64
+	time uint64
+}
+
 type Project struct {
 	id            string // 'tokenPath:createdHeight'
 	name          string
 	tokenPath     string
 	depositAmount uint64
 	recipient     std.Address // string
-
 	conditions map[string]Condition // tokenPath -> Condition
 
-	tier30Ratio uint64
-	tier30      Tier
+	tiers map[uint64]Tier
+	tiersRatios map[uint64]uint64
 
-	tier90      Tier
-	tier90Ratio uint64
+	created TimeInfo
+	started TimeInfo
+	ended TimeInfo // same with tier 180's data
 
-	tier180      Tier
-	tier180Ratio uint64
+	stats ProjectStats
 
-	createdHeight uint64
-	createdTime   uint64
-
-	startHeight uint64
-	startTime   uint64
-
-	endHeight uint64 // same with tier 180's data
-	endTime   uint64 // same with tier 180's data
-
-	totalDepositAmount  uint64 // won't be decreased
-	actualDepositAmount uint64 // will be decreased if deposit collected 'CollectDepositGns()'
-
-	totalParticipant  uint64 // accu, won't be decreased
-	actualParticipant uint64 // will be decreased if deposit collected 'CollectDepositGns()'
-
-	totalCollectedAmount uint64 // collect reward amount
-
-	refundedAmount uint64
-	refundedHeight uint64
-	refundedTime   uint64
+	refund RefundInfo
 }
 
 type Tier struct {
@@ -52,10 +51,8 @@ type Tier struct {
 	tierAmount            uint64
 	tierAmountPerBlockX96 *u256.Uint
 
-	startHeight uint64 // first deposit height
-	startTime   uint64 // first deposit time
-	endHeight   uint64
-	endTime     uint64
+	started TimeInfo // first deposit height
+	ended TimeInfo
 
 	totalDepositAmount  uint64
 	actualDepositAmount uint64
