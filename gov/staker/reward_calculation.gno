@@ -179,7 +179,7 @@ func calculateProtocolFee() {
 
 	accuProtocolFee := pf.GetAccuTransferToGovStaker()
 	pf.ClearAccuTransferToGovStaker()
-	if len(accuProtocolFee) == 0 {
+	if accuProtocolFee.Size() == 0 {
 		return
 	}
 

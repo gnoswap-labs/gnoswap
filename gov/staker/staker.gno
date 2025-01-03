@@ -69,15 +69,15 @@ func Delegate(to std.Address, amount uint64) {
 	// actual delegate
 	delegate(to, amount)
 
-	prevAddr, prevPkgPath := getPrev()
-	std.Emit(
-		"Delegate",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
-		"from", caller.String(),
-		"to", to.String(),
-		"amount", formatUint(amount),
-	)
+	//prevAddr, prevPkgPath := getPrev()
+	//std.Emit(
+	//	"Delegate",
+	//	"prevAddr", prevAddr,
+	//	"prevRealm", prevPkgPath,
+	//	"from", caller.String(),
+	//	"to", to.String(),
+	//	"amount", formatUint(amount),
+	//)
 }
 
 // Redelegate redelegates xGNS from existing delegate to another.
@@ -120,7 +120,7 @@ func Redelegate(from, to std.Address, amount uint64) {
 		))
 	}
 
-	undelegate(from, amount)
+	undelegate(to, amount)
 	delegate(to, amount)
 
 	prevAddr, prevPkgPath := getPrev()
@@ -338,6 +338,7 @@ func collectEmissionReward(addr std.Address) uint64 {
 	if value, exists := userEmissionReward.Get(addr.String()); exists {
 		emissionReward = value.(uint64)
 	}
+	println("emissionReward", emissionReward)
 
 	if emissionReward <= 0 {
 		return 0
@@ -397,7 +398,7 @@ func collectProtocolFeeReward(addr std.Address) map[string]uint64 {
 
 func transferProtocolFee(tokenPath string, to std.Address, amount uint64) {
 	common.MustRegistered(tokenPath)
-	if to.IsValid() {
+	if !to.IsValid() {
 		panic(addDetailToError(
 			errInvalidAddress,
 			ufmt.Sprintf("invalid address %s to transfer protocol fee", to.String()),

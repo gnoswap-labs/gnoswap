@@ -74,7 +74,7 @@ func formatInt(v int64) string {
 
 // assertCallerIsAdmin panics if the caller is not an admin
 func assertCallerIsAdmin() {
-	caller := std.PrevRealm().Addr()
+	caller := getPrevAddr()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err)
 	}
