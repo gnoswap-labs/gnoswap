@@ -20,7 +20,7 @@ func ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
         WriteString("projectId", projectId)
     ProjectBuilder(builder, project)
 
-    return marshal(builder.Build())
+    return marshal(builder.Node())
 }
 
 func ApiGetProjectStatisticsByProjectId(projectId string) string {
@@ -35,7 +35,7 @@ func ApiGetProjectStatisticsByProjectId(projectId string) string {
 		WriteString("projectId", projectId)
 	ProjectBuilder(builder, project)
 
-	return marshal(builder.Build())
+	return marshal(builder.Node())
 }
 
 func ApiGetProjectStatisticsByProjectTierId(tierId string) string {
@@ -68,7 +68,7 @@ func ApiGetProjectStatisticsByProjectTierId(tierId string) string {
         WriteString("tierTotalParticipant", ufmt.Sprintf("%d", tier.totalParticipant)).
         WriteString("tierActualParticipant", ufmt.Sprintf("%d", tier.actualParticipant))
 
-    return marshal(builder.Build())
+    return marshal(builder.Node())
 }
 
 func metaNode() *json.Node {
