@@ -652,7 +652,7 @@ func calculateInternalRewardPerBlockByPoolPath(poolPath string) string {
 	fullGnsForThisHeight := gns.GetAmountByHeight(nowHeight)
 
 	// staker distribution pct
-	bpsPct := en.GetDistributionPct(1)
+	bpsPct := en.GetDistributionBpsPct(1)
 
 	// calculate reward per block
 	stakerGns := fullGnsForThisHeight * bpsPct / 10000

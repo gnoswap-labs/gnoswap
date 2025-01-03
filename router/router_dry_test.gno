@@ -57,8 +57,9 @@ func TestProcessResult(t *testing.T) {
 			resultAmountIn, _ := u256.FromDecimal(tt.resultAmountIn)
 			resultAmountOut, _ := u256.FromDecimal(tt.resultAmountOut)
 			amountSpecified, _ := i256.FromDecimal(tt.amountSpecified)
+			amountLimit, _ := i256.FromDecimal("1")
 
-			result := processResult(tt.swapType, resultAmountIn, resultAmountOut, amountSpecified)
+			result := processResult(tt.swapType, resultAmountIn, resultAmountOut, amountSpecified, amountLimit)
 			uassert.Equal(t, result, tt.expected)
 		})
 	}

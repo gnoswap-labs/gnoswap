@@ -30,7 +30,9 @@ func ExactInSwapRoute(
 	RouteArr string,
 	quoteArr string,
 	amountOutMin string,
+	deadline int64,
 ) (string, string) {
+	checkDeadline(deadline)
 	commonSwapSetup()
 
 	baseParams := BaseSwapParams{

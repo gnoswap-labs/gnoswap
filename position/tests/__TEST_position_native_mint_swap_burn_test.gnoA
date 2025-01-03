@@ -1,4 +1,4 @@
-package position
+package tests
 
 import (
 	"std"
@@ -171,7 +171,7 @@ func testDecreaseWithNoUnwrap(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		DecreaseLiquidity(
 			uint64(1),
-			uint64(10),
+			"15164540",
 			"0",
 			"0",
 			int64(9999999999),
@@ -198,7 +198,7 @@ func testDecreaseWithUnwrap(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		DecreaseLiquidity(
 			uint64(1),
-			uint64(10),
+			"13648086",
 			"0",
 			"0",
 			int64(9999999999),

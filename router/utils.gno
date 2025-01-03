@@ -5,6 +5,7 @@ import (
 	"std"
 	"strconv"
 	"strings"
+	"time"
 
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
@@ -13,12 +14,19 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 )
 
+// assertOnlyNotHalted panics if the contract is halted.
+func assertOnlyNotHalted() {
+	common.IsHalted()
+}
+
+// assertDirectCallOnly panics if the caller is not the user.
 func assertDirectCallOnly() {
 	if common.GetLimitCaller() && std.PrevRealm().PkgPath() != "" {
 		panic(addDetailToError(errNoPermission, "only user can call this function"))
 	}
 }
 
+// assertHopsInRange panics if the number of hops is not in the range 1~3.
 func assertHopsInRange(hops int) {
 	if hops < 1 || hops > 3 {
 		panic(addDetailToError(
@@ -28,6 +36,7 @@ func assertHopsInRange(hops int) {
 	}
 }
 
+// getDataForSinglePath extracts token0, token1, and fee from a single path.
 func getDataForSinglePath(poolPath string) (string, string, uint32) {
 	poolPathSplit, err := common.Split(poolPath, ":", 3)
 	if err != nil {
@@ -44,6 +53,7 @@ func getDataForSinglePath(poolPath string) (string, string, uint32) {
 	return token0, token1, uint32(fee)
 }
 
+// getDataForMultiPath extracts token0, token1, and fee from a multi path.
 func getDataForMultiPath(possiblePath string, poolIdx int) (string, string, uint32) {
 	pools := strings.Split(possiblePath, "*POOL*")
 
@@ -64,6 +74,7 @@ func getDataForMultiPath(possiblePath string, poolIdx int) (string, string, uint
 	return token0, token1, fee
 }
 
+// isStringInStringArr checks if a string is in a string array.
 func isStringInStringArr(arr []string, str string) bool {
 	for _, a := range arr {
 		if a == str {
@@ -73,6 +84,7 @@ func isStringInStringArr(arr []string, str string) bool {
 	return false
 }
 
+// removeStringFromStringArr removes a string from a string array.
 func removeStringFromStringArr(arr []string, str string) []string {
 	for i, a := range arr {
 		if a == str {
@@ -82,10 +94,19 @@ func removeStringFromStringArr(arr []string, str string) []string {
 	return arr
 }
 
+// a2u converts std.Address to pusers.AddressOrName.
+// pusers is a package that contains the user-related functions.
+//
+// Input:
+//   - addr: the address to convert
+//
+// Output:
+//   - pusers.AddressOrName: the converted address
 func a2u(addr std.Address) pusers.AddressOrName {
 	return pusers.AddressOrName(addr)
 }
 
+// min returns the smaller of two integers.
 func min(a, b int) int {
 	if a < b {
 		return a
@@ -93,6 +114,7 @@ func min(a, b int) int {
 	return b
 }
 
+// i256Min returns the smaller of two i256.Int.
 func i256Min(x, y *i256.Int) *i256.Int {
 	if x.Lt(y) {
 		return x
@@ -100,6 +122,7 @@ func i256Min(x, y *i256.Int) *i256.Int {
 	return y
 }
 
+// i256Max returns the larger of two i256.Int.
 func i256Max(x, y *i256.Int) *i256.Int {
 	if x.Gt(y) {
 		return x
@@ -107,17 +130,40 @@ func i256Max(x, y *i256.Int) *i256.Int {
 	return y
 }
 
+// getPrevRealm returns object of the previous realm.
 func prevRealm() string {
 	return std.PrevRealm().PkgPath()
 }
 
+// getPrevAddr returns the address of the previous realm.
+func getPrevAddr() std.Address {
+	return std.PrevRealm().Addr()
+}
+
+// isUserCall returns true if the caller is a user.
 func isUserCall() bool {
 	return std.PrevRealm().IsUser()
 }
 
+// getPrev returns the address and package path of the previous realm.
 func getPrev() (string, string) {
 	prev := std.PrevRealm()
 	return prev.Addr().String(), prev.PkgPath()
+}
+
+// checkDeadline checks if the deadline is expired.
+// If the deadline is expired, it panics.
+// The deadline is expired if the current time is greater than the deadline.
+// Input:
+//   - deadline: the deadline to check
+func checkDeadline(deadline int64) {
+	now := time.Now().Unix()
+	if now > deadline {
+		panic(addDetailToError(
+			errExpired,
+			ufmt.Sprintf("transaction too old, now(%d) > deadline(%d)", now, deadline),
+		))
+	}
 }
 
 // splitSingleChar splits a string by a single character separator.

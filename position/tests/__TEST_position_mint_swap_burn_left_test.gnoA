@@ -1,4 +1,4 @@
-package position
+package tests
 
 import (
 	"std"
@@ -235,7 +235,7 @@ func TestDecreaseAllPos01(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 		uint64(1),   // tokenId
-		100,         // liquidityRatio
+		"318704392", // liquidity
 		"0",         // amount0Min
 		"0",         // amount1Min
 		max_timeout, // deadline
@@ -263,7 +263,7 @@ func TestDecreaseAllPos02(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 		uint64(2),   // tokenId
-		100,         // liquidityRatio
+		"124373229", // liquidityRatio
 		"0",         // amount0Min
 		"0",         // amount1Min
 		max_timeout, // deadline

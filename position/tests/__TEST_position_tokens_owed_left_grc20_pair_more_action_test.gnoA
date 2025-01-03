@@ -1,19 +1,65 @@
-package position
+package tests
 
 import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	pusers "gno.land/p/demo/users"
 
+	"gno.land/r/demo/users"
 	"gno.land/r/gnoswap/v1/consts"
-
-	pl "gno.land/r/gnoswap/v1/pool"
-
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
+	pl "gno.land/r/gnoswap/v1/pool"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
+)
+
+func getPoolFromLpTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {
+	t.Helper()
+
+	position := MustGetPosition(lpTokenId)
+	return pl.GetPoolFromPoolPath(position.poolKey)
+}
+
+const (
+	ugnotDenom string = "ugnot"
+	ugnotPath  string = "gno.land/r/gnoswap/v1/pool:ugnot"
+	wugnotPath string = "gno.land/r/demo/wugnot"
+	gnsPath    string = "gno.land/r/gnoswap/v1/gns"
+	barPath    string = "gno.land/r/onbloc/bar"
+	bazPath    string = "gno.land/r/onbloc/baz"
+	fooPath    string = "gno.land/r/onbloc/foo"
+	oblPath    string = "gno.land/r/onbloc/obl"
+	quxPath    string = "gno.land/r/onbloc/qux"
+
+	fee100               uint32 = 100
+	fee500               uint32 = 500
+	fee3000              uint32 = 3000
+	fee10000             uint32 = 10000
+	maxApprove           uint64 = 18446744073709551615
+	max_timeout          int64  = 9999999999
+	maxSqrtPriceLimitX96 string = "1461446703485210103287273052203988822378723970341"
+
+	TIER_1 uint64 = 1
+	TIER_2 uint64 = 2
+	TIER_3 uint64 = 3
+)
+
+const (
+	// define addresses to use in tests
+	addr01 = testutils.TestAddress("addr01")
+	addr02 = testutils.TestAddress("addr02")
+)
+
+var (
+	adminAddr  = std.Address(consts.ADMIN)
+	admin      = pusers.AddressOrName(adminAddr)
+	adminRealm = std.NewUserRealm(users.Resolve(admin))
+	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
@@ -260,7 +306,7 @@ func TestDecreaseLiquidityPosition02(t *testing.T) {
 
 	lpTokenId := uint64(2)
 
-	ownerOfPosition := gnft.OwnerOf(tokenIdFrom(lpTokenId))
+	ownerOfPosition, _ := gnft.OwnerOf(tokenIdFrom(lpTokenId))
 	uassert.Equal(t, ownerOfPosition, adminAddr)
 
 	unclaimedFee0, unclaimedFee1 := unclaimedFee(lpTokenId)
@@ -273,7 +319,7 @@ func TestDecreaseLiquidityPosition02(t *testing.T) {
 
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 		lpTokenId,
-		100,
+		"872163793",
 		"0",
 		"0",
 		max_timeout,
@@ -283,7 +329,7 @@ func TestDecreaseLiquidityPosition02(t *testing.T) {
 	uassert.Equal(t, amount0, "5459371")
 	uassert.Equal(t, amount1, "55436931")
 
-	ownerOfPosition = gnft.OwnerOf(tokenIdFrom(lpTokenId))
+	ownerOfPosition, _ = gnft.OwnerOf(tokenIdFrom(lpTokenId))
 	uassert.Equal(t, ownerOfPosition, adminAddr)
 
 	defer func() {

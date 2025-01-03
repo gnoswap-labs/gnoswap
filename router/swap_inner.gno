@@ -40,6 +40,7 @@ func swapInner(
 	zeroForOne := data.tokenIn < data.tokenOut
 
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
+	println("sqrtPriceLimitX96 : ", sqrtPriceLimitX96.ToString())
 
 	// ROUTER approves POOL as spender
 	tokenIn := common.GetTokenTeller(data.tokenIn)
@@ -147,12 +148,12 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 	if zeroForOne {
 		minTick := getMinTick(fee)
 		sqrtPriceLimitX96 = common.TickMathGetSqrtRatioAtTick(minTick)
-		return sqrtPriceLimitX96.Add(sqrtPriceLimitX96, u256.One())
+		return new(u256.Uint).Add(sqrtPriceLimitX96, u256.One())
 	}
 
 	maxTick := getMaxTick(fee)
 	sqrtPriceLimitX96 = common.TickMathGetSqrtRatioAtTick(maxTick)
-	return sqrtPriceLimitX96.Sub(sqrtPriceLimitX96, u256.One())
+	return new(u256.Uint).Sub(sqrtPriceLimitX96, u256.One())
 }
 
 // getMinTick returns the minimum tick value for a given fee tier.

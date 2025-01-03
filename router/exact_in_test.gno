@@ -3,6 +3,7 @@ package router
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/r/gnoswap/v1/consts"
 
@@ -153,6 +154,7 @@ func TestExactInSwapRoute(t *testing.T) {
 				tt.routeArr,
 				tt.quoteArr,
 				tt.amountOutMin,
+				time.Now().Add(time.Hour).Unix(),
 			)
 
 			if !tt.wantErr {
