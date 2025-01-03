@@ -1,5 +1,6 @@
 package staker
 
+/*
 // ExternalIncentiveReward
 type ExternalIncentiveReward struct {
 	externalReward *ExternalCalculator
@@ -25,3 +26,5 @@ func (eir *ExternalIncentiveReward) GetOrCreateExternalCalculator(currHeight int
 	}
 	return eir.externalReward
 }
+
+*/

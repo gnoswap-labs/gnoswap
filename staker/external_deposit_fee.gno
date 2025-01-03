@@ -5,7 +5,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/common"
 )
 
@@ -20,7 +19,7 @@ func GetDepositGnsAmount() uint64 {
 func SetDepositGnsAmountByAdmin(amount uint64) {
 	caller := std.PrevRealm().Addr()
 	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	setDepositGnsAmount(amount)
@@ -41,7 +40,7 @@ func SetDepositGnsAmountByAdmin(amount uint64) {
 func SetDepositGnsAmount(amount uint64) {
 	caller := std.PrevRealm().Addr()
 	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	setDepositGnsAmount(amount)

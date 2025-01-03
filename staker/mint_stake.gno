@@ -66,7 +66,7 @@ func MintAndStake(
 
 	// at this point, staker has minted token
 	toTid := grc721.TokenID(ufmt.Sprintf("%d", tokenId))
-	gnft.SetTokenURI(toTid)
+	gnft.SetTokenURIByImageURI(toTid)
 
 	poolPath, _, _ := StakeToken(tokenId) // poolPath, stakedAmount0, stakedAmount1
 

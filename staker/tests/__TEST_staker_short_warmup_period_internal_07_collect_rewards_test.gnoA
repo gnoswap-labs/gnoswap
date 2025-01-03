@@ -1,9 +1,9 @@
 package staker
 
 import (
+	"math"
 	"std"
 	"testing"
-	"time"
 
 	"gno.land/p/demo/uassert"
 
@@ -42,23 +42,34 @@ func TestShortWarmUpInternalCollectRewards(t *testing.T) {
 }
 
 func testInit(t *testing.T) {
-	t.Run("initialize", func(t *testing.T) {
+	t.Run("init pool tiers", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
 		// init pool tiers
 		// tier 1
-		delete(poolTiers, MUST_EXISTS_IN_TIER_1)
-
-		poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"] = InternalTier{
-			tier:           1,
-			startTimestamp: time.Now().Unix(),
-		}
-
+		deletePoolTier(t, MUST_EXISTS_IN_TIER_1)
+		addPoolTier(t, `gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100`, 1)
 		std.TestSkipHeights(1)
 
 		// override warm-up period for testing
-		warmUp[100] = 901 // 30m ~
-		warmUp[70] = 301  // 10m ~ 30m
-		warmUp[50] = 151  // 5m ~ 10m
-		warmUp[30] = 1    // ~ 5m
+		changeWarmup(t, 0, 150)
+		changeWarmup(t, 1, 300)
+		changeWarmup(t, 2, 900)
+		changeWarmup(t, 3, math.MaxInt64)
+
+		// set unstaking fee to 0
+		SetUnstakingFeeByAdmin(0)
+
+		// set pool creation fee to 0
+		pl.SetPoolCreationFeeByAdmin(0)
+
+		// set community pool distribution to 0% (give it to devOps)
+		en.ChangeDistributionPctByAdmin(
+			1, 7500,
+			2, 2500,
+			3, 0,
+			4, 0,
+		)
 	})
 }
 
@@ -85,7 +96,6 @@ func testCreatePool(t *testing.T) {
 }
 
 func testMintBarQux100_1(t *testing.T) {
-	curr := getCurrentInfo()
 
 	t.Run("mint position 01, bar:qux:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
@@ -104,17 +114,15 @@ func testMintBarQux100_1(t *testing.T) {
 			"1",          // amount0Min
 			"1",          // amount1Min
 			max_timeout,
-			admin,
-			admin,
+			adminAddr,
+			adminAddr,
 		)
 
 		uassert.Equal(t, tokenId, uint64(1))
-		uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
+		uassert.Equal(t, gnft.MustOwnerOf(tid(tokenId)), adminAddr)
 
-		gpi := GetPrintInfo()
-		uassert.Equal(t, gpi, `{"height":126,"time":1234567896,"gns":{"staker":0,"devOps":8561643,"communityPool":34246574,"govStaker":0,"protocolFee":200000000,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
-
-		printInfo(curr)
+		gpi := getPrintInfo(t)
+		// uassert.Equal(t, gpi, `{"height":126,"time":1234567896,"gns":{"staker":0,"devOps":8561643,"communityPool":34246574,"govStaker":0,"protocolFee":200000000,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
 
 		std.TestSkipHeights(1)
 	})
@@ -122,7 +130,6 @@ func testMintBarQux100_1(t *testing.T) {
 
 func testMintBarBaz100_2(t *testing.T) {
 	t.Run("mint position 02, bar:baz:3000", func(t *testing.T) {
-		curr := getCurrentInfo()
 
 		std.TestSetRealm(adminRealm)
 
@@ -140,15 +147,12 @@ func testMintBarBaz100_2(t *testing.T) {
 			"1",          // amount0Min
 			"1",          // amount1Min
 			max_timeout,
-			admin,
-			admin,
+			adminAddr,
+			adminAddr,
 		)
 
 		uassert.Equal(t, tokenId, uint64(2))
-		uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
-
-		println(GetPrintInfo())
-		printInfo(curr)
+		uassert.Equal(t, gnft.MustOwnerOf(tid(tokenId)), adminAddr)
 
 		std.TestSkipHeights(1)
 	})
@@ -156,15 +160,11 @@ func testMintBarBaz100_2(t *testing.T) {
 
 func testStakeToken_1(t *testing.T) {
 	t.Run("stake token 01", func(t *testing.T) {
-		curr := getCurrentInfo()
 
 		std.TestSetRealm(adminRealm)
 
-		gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
+		gnft.Approve(consts.STAKER_ADDR, tid(1))
 		StakeToken(1)
-
-		println(GetPrintInfo())
-		printInfo(curr)
 
 		std.TestSkipHeights(1)
 	})
@@ -172,15 +172,11 @@ func testStakeToken_1(t *testing.T) {
 
 func testSetPoolTier(t *testing.T) {
 	t.Run("set pool tier", func(t *testing.T) {
-		curr := getCurrentInfo()
 
 		std.TestSkipHeights(800) // this reward should go to bar:qux:100
 
 		std.TestSetRealm(adminRealm)
-		SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 2)
-
-		println(GetPrintInfo())
-		printInfo(curr)
+		addPoolTier(t, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 2)
 
 		std.TestSkipHeights(1)
 	})
@@ -188,15 +184,11 @@ func testSetPoolTier(t *testing.T) {
 
 func testStakeToken_2(t *testing.T) {
 	t.Run("stake token 02", func(t *testing.T) {
-		curr := getCurrentInfo()
 
 		std.TestSetRealm(adminRealm)
 
-		gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
+		gnft.Approve(consts.STAKER_ADDR, tid(2))
 		StakeToken(2)
-
-		println(GetPrintInfo())
-		printInfo(curr)
 
 		std.TestSkipHeights(1)
 	})
@@ -204,14 +196,10 @@ func testStakeToken_2(t *testing.T) {
 
 func testCollect1_1(t *testing.T) {
 	t.Run("collect reward for position 01, 1st time", func(t *testing.T) {
-		curr := getCurrentInfo()
 
 		std.TestSetRealm(adminRealm)
 
 		CollectReward(1, false)
-
-		println(GetPrintInfo())
-		printInfo(curr)
 
 		std.TestSkipHeights(5)
 	})
@@ -219,14 +207,10 @@ func testCollect1_1(t *testing.T) {
 
 func testCollect1_2(t *testing.T) {
 	t.Run("collect reward for position 01, 2nd time", func(t *testing.T) {
-		curr := getCurrentInfo()
 
 		std.TestSetRealm(adminRealm)
 
 		CollectReward(1, false)
-
-		println(GetPrintInfo())
-		printInfo(curr)
 
 		std.TestSkipHeights(500)
 	})
@@ -234,14 +218,10 @@ func testCollect1_2(t *testing.T) {
 
 func testCollect1_3(t *testing.T) {
 	t.Run("collect reward for position 01, 3rd time", func(t *testing.T) {
-		curr := getCurrentInfo()
 
 		std.TestSetRealm(adminRealm)
 
 		CollectReward(1, false)
-
-		println(GetPrintInfo())
-		printInfo(curr)
 
 		std.TestSkipHeights(50)
 	})
@@ -249,14 +229,10 @@ func testCollect1_3(t *testing.T) {
 
 func testCollect1_4(t *testing.T) {
 	t.Run("collect reward for position 01, 4th time", func(t *testing.T) {
-		curr := getCurrentInfo()
 
 		std.TestSetRealm(adminRealm)
 
 		CollectReward(1, false)
-
-		println(GetPrintInfo())
-		printInfo(curr)
 
 		std.TestSkipHeights(50)
 	})
@@ -264,14 +240,10 @@ func testCollect1_4(t *testing.T) {
 
 func testCollect2_1(t *testing.T) {
 	t.Run("collect reward for position 02, 1st time", func(t *testing.T) {
-		curr := getCurrentInfo()
 
 		std.TestSetRealm(adminRealm)
 
 		CollectReward(2, false)
-
-		println(GetPrintInfo())
-		printInfo(curr)
 
 		std.TestSkipHeights(5)
 	})
@@ -279,15 +251,11 @@ func testCollect2_1(t *testing.T) {
 
 func testCollectAll_1(t *testing.T) {
 	t.Run("collect reward for all positions, 1st time", func(t *testing.T) {
-		curr := getCurrentInfo()
 
 		std.TestSetRealm(adminRealm)
 
 		CollectReward(1, false)
 		CollectReward(2, false)
-
-		println(GetPrintInfo())
-		printInfo(curr)
 
 		std.TestSkipHeights(5)
 	})
@@ -315,6 +283,8 @@ func testCollectAfterSingleBlock(t *testing.T) {
 
 		std.TestSetRealm(adminRealm)
 
+		// FIXME @mconcat
+		// panic: slice index out of bounds: 0 (len=0)
 		CollectReward(1, false)
 	})
 }

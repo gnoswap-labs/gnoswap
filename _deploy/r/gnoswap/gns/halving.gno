@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"gno.land/p/demo/avl"
+
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -56,6 +58,34 @@ var (
 	endTimestamp   int64
 )
 
+var (
+	perBlockMint = avl.NewTree() // height => uint64
+) 
+
+func EmissionUpdates(startHeight uint64, endHeight uint64) ([]uint64, []uint64) {
+	heights := make([]uint64, 0)
+	updates := make([]uint64, 0)
+	perBlockMint.ReverseIterate("", EncodeUint(endHeight), func(key string, value interface{}) bool {
+		heights = append(heights, DecodeUint(key))
+		updates = append(updates, value.(uint64) * 75 / 100) // FIXME!!!
+		return true
+	})
+
+	perBlockMint.Iterate(EncodeUint(startHeight), EncodeUint(endHeight), func(key string, value interface{}) bool {
+		heights = append(heights, DecodeUint(key))
+		updates = append(updates, value.(uint64) * 75 / 100) // FIXME!!!
+		return false
+	})
+
+	return heights, updates
+}
+
+func addPerBlockMintUpdate(height uint64, amount uint64) {
+	perBlockMint.Set(EncodeUint(height), amount)
+}
+
+var halvingYearBlock = make(map[int64]int64)     // year => block
+//var halvingYearTimestamp = make(map[int64]int64) // year => timestamp
 var (
 	halvingYearStartBlock = make([]int64, HALVING_END_YEAR) // start block of each halving year
 	halvingYearEndBlock   = make([]int64, HALVING_END_YEAR) // end block of each halving year
@@ -112,6 +142,8 @@ func initializeHalvingData() {
 
 		setHalvingYearMintAmount(year, uint64(0))
 	}
+
+	addPerBlockMintUpdate(uint64(std.GetHeight()), amountPerBlockPerHalvingYear[1])
 }
 
 func GetAvgBlockTimeInMs() int64 {
@@ -183,8 +215,10 @@ func setAvgBlockTimeInMs(ms int64) {
 	adjustedAmountPerBlock := amountLeft / uint64(blockLeft)
 	setAmountPerBlockPerHalvingYear(currentYear, adjustedAmountPerBlock)
 
-	yearEndHeight := int64(0)
-	nextYearStartHeight := int64(0)
+	// update it
+	amountPerBlockPerHalvingYear[currentYear] = adjustedAmountPerBlock
+	addPerBlockMintUpdate(uint64(std.GetHeight()), adjustedAmountPerBlock)
+
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		if year < currentYear {
 			// pass past halving years
