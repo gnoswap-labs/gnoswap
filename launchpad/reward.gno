@@ -1,273 +1,366 @@
 package launchpad
 
 import (
+	"errors"
 	"std"
+	"time"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v1/common"
+	en "gno.land/r/gnoswap/v1/emission"
+	gs "gno.land/r/gnoswap/v1/gov/staker"
 )
 
-var rewardStore *RewardStore
+var (
+	lastCalculatedHeight uint64
+	lastCalculateHeightForProjectTier = make(map[string]uint64) // using height
+)
 
 func init() {
-	rewardStore = NewRewardStore()
+	lastCalculatedHeight = uint64(std.GetHeight())
 }
 
-// Calculator is an interface responsible for calculating project rewards.
-type Calculator interface {
-	// CalculateRewards calculates the rewards for a specific project.
-	CalculateRewards(pid string, height uint64) (*u256.Uint, error)
-
-	// GetAccumulatedRewards returns the accumulated rewards for a project up to the current point.
-	GetAccumulatedRewards(pid string) (*u256.Uint, error)
-
-	// GetRewardsInRange calculates the rewards for a specific range.
-	GetRewardsInRange(pid string, startHeight, endHeight uint64) (*u256.Uint, error)
-
-	// UpdateRewardSnapshot saves the reward snapshot at the current point in time.
-	UpdateRewardSnapshot(pid string) error
+// RewardCalculationResult represents the result of reward calculation
+type RewardCalculationResult struct {
+	Reward       uint64
+	UpdatedTiers map[string]Tier
 }
 
-// RewardStore manages reward calculations and snapshots for projects.
-// It tracks accumulated rewards, calculation heights, and maintains reward history.
-type RewardStore struct {
-	// accumulatedRewards stores total rewards for each project
-	accumulatedRewards   *avl.Tree // project ID -> *u256.Uint
-
-	// lastCalculatedHeights tracks the last block height where rewards were calculated
-	lastCalculatedHeight *avl.Tree // project ID -> uint64
-
-	// rewardSnapshots stores point-in-time reward state
-	rewardSnapshots      *avl.Tree // <project ID, height> -> *RewardSnapshot
+// CollectProtocolFee collects protocol fee from gov/staker
+// each project's recipient wallet will be rewarded
+// ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectprotocolfee
+func CollectProtocolFee() {
+	caller := std.PrevRealm().Addr()
+	gs.CollectRewardFromLaunchPad(caller)
 }
 
-func NewRewardStore() *RewardStore {
-	return &RewardStore{
-		accumulatedRewards:   avl.NewTree(),
-		lastCalculatedHeight: avl.NewTree(),
-		rewardSnapshots:      avl.NewTree(),
-	}
-}
-
-// RewardSnapshot represents a point-in-time capture of reward state.
-// It includes the total accumulated reward and tier-specific rewards.
-type RewardSnapshot struct {
-	Height             uint64
-	AccumulatedRewards *u256.Uint
-	TierRewards        *avl.Tree // tier -> *u256.Uint
-}
-
-// CalculateRewards computes rewards for a project up to the specified height.
-//
-// It returns the total calculated reward and any error encountered.
-// The calculation takes into account tier-specific reward rates and durations.
-//
-// Parameters:
-//  - pid: the project ID
-//  - height: the block height up to which rewards are calculated
-//
-// Returns:
-//  - *u256.Uint: the total calculated reward
-//  - error: any error encountered during the calculation
-func (rs *RewardStore) CalculateRewards(pid string, height uint64) (*u256.Uint, error) {
-	lastHeight, exists := rs.lastCalculatedHeight.Get(pid)
-	lstHeight := uint64(0)
-	if exists {
-		lstHeight = lastHeight.(uint64)
+// validateRewardCollection validates if reward can be collected
+func validateRewardCollection(deposit Deposit, height uint64) error {
+	if deposit.rewardAmount == 0 {
+		return errors.New("no reward available")
 	}
 
-	if height <= lstHeight {
-		// return cached value if height already calculated
-		rwd, exists := rs.accumulatedRewards.Get(pid)
-		if !exists {
-			return u256.Zero(), nil
-		}
-		return rwd.(*u256.Uint), nil
+	if deposit.rewardCollectTime == 0 && height < deposit.claimableHeight {
+		return errors.New("reward not yet claimable")
 	}
 
-	project, exists := projects[pid] // TODO: avl later
+	return nil
+}
+
+// calculateTierRewards calculates rewards for each tier
+func calculateTierRewards(tier Tier, currentHeight uint64, lastCalcHeight uint64) (*u256.Uint, uint64, error) {
+	if tier.tierAmountPerBlockX96.IsZero() {
+		return u256.Zero(), 0, nil
+	}
+
+	endHeight := minU64(currentHeight, tier.ended.height)
+	sinceLast := endHeight - minU64(endHeight, lastCalcHeight)
+	
+	if sinceLast == 0 {
+		return u256.Zero(), 0, nil
+	}
+
+	rewardX96 := new(u256.Uint).Mul(tier.tierAmountPerBlockX96.NilToZero().Clone(), u256.NewUint(sinceLast))
+	reward := new(u256.Uint).Div(rewardX96, q96).Uint64()
+
+	return rewardX96, reward, nil
+}
+
+// processDepositReward processes reward for a single deposit
+func processDepositReward(deposit Deposit, rewardX96 *u256.Uint, tierAmount uint64) (Deposit, error) {
+	if tierAmount == 0 {
+		return deposit, errors.New("invalid tier amount")
+	}
+
+	ratioX96 := calcDepositRatioX96(tierAmount, deposit.amount)
+	depositRewardX96X96 := u256.Zero().Mul(rewardX96.Clone(), ratioX96)
+	depositRewardX96 := u256.Zero().Div(depositRewardX96X96, q96)
+	depositRewardX := u256.Zero().Div(depositRewardX96, q96)
+	depositReward := depositRewardX.Uint64()
+	
+	deposit.rewardAmount += depositReward
+	return deposit, nil
+}
+
+// CollectRewardByProjectId collects reward from entire deposit of certain project by caller
+// Returns collected reward amount
+// ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectrewardbyprojectid
+func CollectRewardByProjectId(projectId string) uint64 {
+	common.IsHalted()
+	en.MintAndDistributeGns()
+
+	project, exists := projects[projectId]
 	if !exists {
-		return nil, ufmt.Errorf("project(%s) not found", pid)
+		return 0
 	}
 
-	// not started yet
-	if project.startHeight > height {
-		return u256.Zero(), nil
+	calculateDepositReward()
+	project = projects[projectId] // get updated project
+
+	caller := std.PrevRealm().Addr()
+	depositIds, exists := depositsByUserByProject[caller][projectId]
+	if !exists {
+		return 0
 	}
 
-	// (1) compute a new reward for the interval lstHeight to height
-	newReward := calculateProjectReward(&project, lstHeight, height)
+	height := uint64(std.GetHeight())
+	totalReward := uint64(0) // toUser
+	prevAddr, prevRealm := getPrev()
 
-	// (2) add the existing accumulated reward and update it to the final accumulated value
-	oldAccum := u256.Zero()
-	if accum, ok := rs.accumulatedRewards.Get(pid); ok {
-		oldAccum = accum.(*u256.Uint)
+	for _, depositId := range depositIds {
+		deposit := deposits[depositId]
+		if deposit.rewardAmount == 0 {
+			continue
+		}
+
+		project := projects[deposit.projectId]
+		if project.id != projectId {
+			continue
+		}
+
+		if err := validateRewardCollection(deposit, height); err != nil {
+			continue
+		}
+
+		totalReward += deposit.rewardAmount
+
+		std.Emit(
+			"CollectRewardByProjectId",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"projectId", projectId,
+			"depositId", depositId,
+			"amount", ufmt.Sprintf("%d", deposit.rewardAmount),
+		)
+
+		// Update project and tier stats
+		project.stats.totalCollected += deposit.rewardAmount
+		
+		var tier Tier
+		switch deposit.tier {
+		case "30":
+			tier = project.tiers[30]
+			tier.userCollectedAmount += deposit.rewardAmount
+		case "90":
+			tier = project.tiers[90]
+			tier.userCollectedAmount += deposit.rewardAmount
+		case "180":
+			tier = project.tiers[180]
+			tier.userCollectedAmount += deposit.rewardAmount
+		}
+		project = setTier(project, deposit.tier, tier)
+
+		// Update deposit
+		deposit.rewardCollected += deposit.rewardAmount
+		deposit.rewardAmount = 0
+		deposit.rewardCollectHeight = height
+		deposit.rewardCollectTime = uint64(time.Now().Unix())
+		deposits[depositId] = deposit
 	}
 
-	totalReward := new(u256.Uint).Add(oldAccum, newReward)
+	projects[projectId] = project
 
-	// (3) update accumulated rewards
-	rs.accumulatedRewards.Set(pid, totalReward)
-	rs.lastCalculatedHeight.Set(pid, height)
-
-	return totalReward, nil
-}
-
-func calculateProjectReward(proj *Project, startHeight, endHeight uint64) *u256.Uint {
-	totalReward := u256.Zero()
-
-	tiers := []struct {
-		tier  *Tier
-		ratio uint64
-	}{
-		{&proj.tier30, proj.tier30Ratio},
-		{&proj.tier90, proj.tier90Ratio},
-		{&proj.tier180, proj.tier180Ratio},
-	}
-
-	for _, t := range tiers {
-		reward := calculateTierRewardForRange(t.tier, t.ratio, startHeight, endHeight)
-		totalReward = new(u256.Uint).Add(totalReward, reward)
+	if totalReward > 0 {
+		tokenTeller := common.GetTokenTeller(project.tokenPath)
+		tokenTeller.Transfer(caller, totalReward)
 	}
 
 	return totalReward
 }
 
-// calculate start to end height range compensation for a specific tier
-func calculateTierRewardForRange(tier *Tier, ratio, startHeight, endHeight uint64) *u256.Uint {
-	if tier.startHeight == 0 || tier.startHeight > endHeight {
-		return u256.Zero()
+// CollectRewardByDepositId collects reward from certain deposit by caller
+// Returns collected reward amount
+// ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectrewardbydepositid
+func CollectRewardByDepositId(depositId string) uint64 {
+	common.IsHalted()
+
+	deposit, exists := deposits[depositId]
+	if !exists {
+		panic(ufmt.Sprintf("depositId(%s) not found", depositId))
+	}
+	en.MintAndDistributeGns()
+
+	project, exists := projects[deposit.projectId]
+	if !exists {
+		return 0
 	}
 
-	calcStart := common.U64Max(startHeight, tier.startHeight)
-	calcEnd := common.U64Min(endHeight, tier.endHeight)
-
-	if calcStart > calcEnd {
-		return u256.Zero()
+	caller := std.PrevRealm().Addr()
+	if _, exists := depositsByUserByProject[caller]; !exists {
+		return 0
 	}
 
-	blocks := calcEnd - calcStart + 1 // consider off by one
+	calculateDepositReward()
+	project = projects[deposit.projectId]
+	deposit = deposits[depositId]
 
-	// reward per block * blocks
-	return new(u256.Uint).Mul(calcTierRewardPerBlock(tier, ratio), u256.NewUint(blocks))
-}
-
-// calcTierRewardPerBlock calculates the reward per block for a given tier
-func calcTierRewardPerBlock(tier *Tier, ratio uint64) *u256.Uint {
-	if tier.tierAmountPerBlockX96 != nil {
-		// assume ratio is used as a simple scale factor
-		return new(u256.Uint).Mul(tier.tierAmountPerBlockX96, u256.NewUint(ratio))
+	height := uint64(std.GetHeight())
+	if err := validateRewardCollection(deposit, height); err != nil {
+		return 0
 	}
 
-	totalBlocks := (tier.endHeight - tier.startHeight + 1)
-	if totalBlocks == 0 {
-		return u256.Zero()
-	}
-
-	amountPerBlock := new(u256.Uint).Div(
-		new(u256.Uint).Mul(u256.NewUint(tier.tierAmount), q96),
-		u256.NewUint(totalBlocks),
+	reward := deposit.rewardAmount
+	
+	prevAddr, prevRealm := getPrev()
+	std.Emit(
+		"CollectRewardByDepositId",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"depositId", depositId,
+		"internal_amount", ufmt.Sprintf("%d", reward),
 	)
 
-	return amountPerBlock
-}
-
-// GetAccumulatedRewards returns the total accumulated rewards for a project.
-// If no rewards exist, returns zero.
-func (rs *RewardStore) GetAccumulatedRewards(pid string) (*u256.Uint, error) {
-	reward, exists := rs.accumulatedRewards.Get(pid)
-	if !exists {
-		return u256.Zero(), nil
+	// Update project
+	project.stats.totalCollected += reward
+	switch deposit.tier {
+	case "30":
+		t := project.tiers[30]
+		t.userCollectedAmount += reward
+	case "90":
+		t := project.tiers[90]
+		t.userCollectedAmount += reward
+	case "180":
+		t := project.tiers[180]
+		t.userCollectedAmount += reward
 	}
-	return reward.(*u256.Uint), nil
+	projects[deposit.projectId] = project
+
+	// Update deposit
+	deposit.rewardCollected += reward
+	deposit.rewardAmount = 0
+	deposit.rewardCollectHeight = height
+	deposit.rewardCollectTime = uint64(time.Now().Unix())
+	deposits[depositId] = deposit
+
+	// Transfer reward
+	if reward > 0 {
+		tokenTeller := common.GetTokenTeller(project.tokenPath)
+		tokenTeller.Transfer(caller, reward)
+	}
+
+	return reward
 }
 
-// UpdateRewardSnapshot creates a new snapshot of the current reward state.
-// It captures both total and tier-specific rewards at the current block height.
-func (rs *RewardStore) UpdateRewardSnapshot(pid string) error {
+// calculateProjectRewards calculates rewards for a project's deposits
+func calculateProjectRewards(project Project, height uint64) (Project, error) {
+	if project.started.height > height || project.stats.actualParticipant == 0 {
+		return project, nil
+	}
+
+	depositWithTier, exists := depositsByProject[project.id]
+	if !exists {
+		return project, nil
+	}
+
+	tier30 := project.tiers[30]
+	tier90 := project.tiers[90]
+	tier180 := project.tiers[180]
+
+	// Initialize tier calculations
+	for _, tier := range []struct {
+		id     string
+		amount *u256.Uint
+		start  uint64
+	}{
+		{tier30.id, tier30.tierAmountPerBlockX96.NilToZero(), tier30.started.height},
+		{tier90.id, tier90.tierAmountPerBlockX96.NilToZero(), tier90.started.height},
+		{tier180.id, tier180.tierAmountPerBlockX96.NilToZero(), tier180.started.height},
+	} {
+		if lastCalculateHeightForProjectTier[tier.id] == 0 && !tier.amount.IsZero() {
+			lastCalculateHeightForProjectTier[tier.id] = tier.start
+		}
+	}
+
+	// Calculate rewards for each tier
+	tier30RewardX96, reward30, _ := calculateTierRewards(tier30, height, 
+		lastCalculateHeightForProjectTier[tier30.id])
+	tier90RewardX96, reward90, _ := calculateTierRewards(tier90, height, 
+		lastCalculateHeightForProjectTier[tier90.id])
+	tier180RewardX96, reward180, _ := calculateTierRewards(tier180, height, 
+		lastCalculateHeightForProjectTier[tier180.id])
+
+	// Update project tiers
+	tier30.calculatedAmount += reward30
+	tier90.calculatedAmount += reward90
+	tier180.calculatedAmount += reward180
+
+	// Process deposits for each tier
+	for tierStr, depositIds := range depositWithTier {
+		var (
+			tierAmount uint64
+			rewardX96  *u256.Uint
+		)
+
+		switch tierStr {
+		case "30":
+			tierAmount = tier30.actualDepositAmount
+			rewardX96 = tier30RewardX96
+		case "90":
+			tierAmount = tier90.actualDepositAmount
+			rewardX96 = tier90RewardX96
+		case "180":
+			tierAmount = tier180.actualDepositAmount
+			rewardX96 = tier180RewardX96
+		}
+
+		for _, depositId := range depositIds {
+			deposit := deposits[depositId]
+			updatedDeposit, err := processDepositReward(deposit, rewardX96, tierAmount)
+			if err != nil {
+				continue
+			}
+			deposits[depositId] = updatedDeposit
+		}
+	}
+
+	// Update calculation heights
+	if tier30.started.height != 0 {
+		lastCalculateHeightForProjectTier[tier30.id] = height
+	}
+	if tier90.started.height != 0 {
+		lastCalculateHeightForProjectTier[tier90.id] = height
+	}
+	if tier180.started.height != 0 {
+		lastCalculateHeightForProjectTier[tier180.id] = height
+	}
+
+	return project, nil
+}
+
+func calculateDepositReward() {
 	height := uint64(std.GetHeight())
 
-	reward, err := rs.CalculateRewards(pid, height)
-	if err != nil {
-		return err
+	if height == lastCalculatedHeight {
+		return
 	}
+	lastCalculatedHeight = height
 
-	snapshot := &RewardSnapshot{
-		Height:             height,
-		AccumulatedRewards: reward,
-		TierRewards:        avl.NewTree(),
+	for projectId, project := range projects {
+		updatedProject, err := calculateProjectRewards(project, height)
+		if err != nil {
+			continue
+		}
+		projects[projectId] = updatedProject
 	}
-
-	project, exists := projects[pid] // TODO: avl later
-	if !exists {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("project(%s) not found", pid),
-		))
-	}
-
-	tiers := []struct {
-		tier *Tier
-		id   string
-	}{
-		{&project.tier30, "30"},
-		{&project.tier90, "90"},
-		{&project.tier180, "180"},
-	}
-
-	for _, t := range tiers {
-		tierReward := calculateTierReward(t.tier, height)
-		snapshot.TierRewards.Set(t.id, tierReward)
-	}
-
-	key := createSnapshotkey(pid, height)
-	rs.rewardSnapshots.Set(key, snapshot)
-
-	return nil
 }
 
-func calculateTierReward(tier *Tier, height uint64) *u256.Uint {
-	if tier.startHeight == 0 || tier.startHeight > height {
-		return u256.Zero()
-	}
+// calcDepositRatioX96 calculates the deposit ratio with Q96 precision
+func calcDepositRatioX96(tierAmount uint64, amount uint64) *u256.Uint {
+	amountX96 := new(u256.Uint).Mul(u256.NewUint(amount), q96.Clone())
+	amountX96x := new(u256.Uint).Mul(amountX96, u256.NewUint(1_000_000_000))
 
-	endHeight := common.U64Min(height, tier.endHeight)
-	if tier.startHeight >= endHeight {
-		return u256.Zero()
-	}
+	tierAmountX96 := new(u256.Uint).Mul(u256.NewUint(tierAmount), q96.Clone())
 
-	blocks := endHeight - tier.startHeight + 1
-	return new(u256.Uint).Mul(tier.tierAmountPerBlockX96, u256.NewUint(blocks))
+	depositRatioX96 := new(u256.Uint).Div(amountX96x, tierAmountX96)
+	depositRatioX96 = depositRatioX96.Mul(depositRatioX96, q96.Clone())
+	depositRatioX96 = depositRatioX96.Div(depositRatioX96, u256.NewUint(1_000_000_000))
+
+	return depositRatioX96
 }
 
-func createSnapshotkey(pid string, height uint64) string {
-	return ufmt.Sprintf("%s:%d", pid, height)
-}
-
-func (rs *RewardStore) GetRewardsInRange(pid string, startHeight, endHeight uint64) (*u256.Uint, error) {
-	if startHeight >= endHeight {
-		return u256.Zero(), ufmt.Errorf("startHeight(%d) >= endHeight(%d)", startHeight, endHeight)
-	}
-
-	startReward, err := rs.CalculateRewards(pid, startHeight)
-	if err != nil {
-		return nil, err
-	}
-
-	endReward, err := rs.CalculateRewards(pid, endHeight)
-	if err != nil {
-		return nil, err
-	}
-
-	if endReward.Cmp(startReward) < 0 {
-		return u256.Zero(), ufmt.Errorf(
-			"invalid reward range: endReward(%s) < startReward(%s)",
-			endReward.ToString(), startReward.ToString(),
-		)
-	}
-
-	return new(u256.Uint).Sub(endReward, startReward), nil
+// calcProjectTiersRewardPerBlockX96 calculates the reward per block with Q96 precision
+func calcProjectTiersRewardPerBlockX96(tier Tier) *u256.Uint {
+	tierAmountX96 := new(u256.Uint).Mul(u256.NewUint(tier.tierAmount), q96.Clone())
+	return new(u256.Uint).Div(tierAmountX96, u256.NewUint(tier.ended.height-tier.started.height))
 }

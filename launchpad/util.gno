@@ -77,3 +77,11 @@ func min(x, y uint64) uint64 {
 	}
 	return y
 }
+
+func formatUint(value uint64) string {
+	return strconv.FormatUint(value, 10)
+}
+
+func formatInt(value int64) string {
+	return strconv.FormatInt(value, 10)
+}

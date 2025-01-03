@@ -13,4 +13,6 @@ const (
 
 	TIMESTAMP_30DAYS = uint64(30 * 24 * 60 * 60) // 2592000
 	TIMESTAMP_3DAYS  = uint64(3 * 24 * 60 * 60)  // 259200
+
+	TIMESTAMP_DAY = uint64(24 * 60 * 60) // 86400
 )
