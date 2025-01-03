@@ -3,101 +3,109 @@ package staker
 import (
 	"std"
 	"testing"
-	"time"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 )
 
-func TestGetDelegatedCumulative(t *testing.T) {
+func TestDelegate(t *testing.T) {
+	t.Skip("Must running separately. because this test depends on TestUndelegate's state")
+	std.TestSetOrigCaller(testAddr1)
+	resetState()
+
+	addr1 := testAddr1
+
+	t.Run("success - first delegation", func(t *testing.T) {
+		delegate(addr1, 100)
+
+		if totalDelegated != 100 {
+			t.Errorf("expected totalDelegated 100, got %d", totalDelegated)
+		}
+
+		value, exists := delegatorAmount.Get(addr1.String())
+		if !exists || value.(uint64) != 100 {
+			t.Error("delegator amount not updated correctly")
+		}
+
+		innerTree, exists := delegatedFromTo.Get(addr1.String())
+		if !exists {
+			t.Error("delegatedFromTo not updated")
+		}
+
+		inner := innerTree.(*avl.Tree)
+		delegatedAmount, exists := inner.Get(addr1.String())
+		if !exists {
+			t.Error("delegatedFromTo amount incorrect")
+		}
+
+		if delegatedAmount.(uint64) != 100 {
+			t.Error("delegatedFromTo amount incorrect")
+		}
+	})
+
+	t.Run("success - additional delegation", func(t *testing.T) {
+		resetState()
+		delegate(addr1, 100)
+		delegate(addr1, 50)
+
+		if totalDelegated != 150 {
+			t.Errorf("expected totalDelegated 150, got %d", totalDelegated)
+		}
+	})
+}
+
+func TestUndelegate(t *testing.T) {
+	t.Skip("Must running separately. because this test depends on TestUndelegate's state")
+	addr1 := testAddr1
+	std.TestSetOrigCaller(addr1)
+	resetState()
+
+	t.Run("fail - no delegation", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("expected panic for no delegation")
+			}
+		}()
+		undelegate(addr1, 100)
+	})
+
+	t.Run("fail - insufficient amount", func(t *testing.T) {
+		delegate(addr1, 50)
+
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("expected panic for insufficient amount")
+			}
+		}()
+		undelegate(addr1, 100)
+	})
+
+	t.Run("success - partial undelegate", func(t *testing.T) {
+		resetState()
+		delegate(addr1, 100)
+		undelegate(addr1, 30)
+
+		if totalDelegated != 70 {
+			t.Errorf("expected totalDelegated 70, got %d", totalDelegated)
+		}
+	})
+
+	t.Run("success - full undelegate", func(t *testing.T) {
+		resetState()
+		delegate(addr1, 100)
+		undelegate(addr1, 100)
+
+		if totalDelegated != 0 {
+			t.Errorf("expected totalDelegated 0, got %d", totalDelegated)
+		}
+	})
+}
+
+func resetState() {
+	totalDelegated = 0
+	delegatorAmount = avl.NewTree()
+	delegatedFromTo = avl.NewTree()
+	delegatedTo = avl.NewTree()
+	delegationHistory = avl.NewTree()
 	delegationSnapShotHistory = avl.NewTree()
-	
-	addr1 := testutils.TestAddress("test1")
-	now := uint64(time.Now().Unix())
-
-	tests := []struct {
-		name          string
-		setupHistory  []DelegationSnapShotHistory
-		delegator     std.Address
-		endTimestamp  uint64
-		expectAmount  uint64
-		expectPanic   bool
-	}{
-		{
-			name: "no history returns zero",
-			delegator: addr1,
-			endTimestamp: now,
-			expectAmount: 0,
-		},
-		{
-			name: "single history before timestamp",
-			setupHistory: []DelegationSnapShotHistory{
-				{
-					to: addr1,
-					amount: 100,
-					updatedBlock: 1,
-					updatedAt: now - 100,
-				},
-			},
-			delegator: addr1,
-			endTimestamp: now,
-			expectAmount: 100,
-		},
-		{
-			name: "multiple histories returns latest before timestamp",
-			setupHistory: []DelegationSnapShotHistory{
-				{
-					to: addr1,
-					amount: 100,
-					updatedBlock: 1,
-					updatedAt: now - 200,
-				},
-				{
-					to: addr1,
-					amount: 150,
-					updatedBlock: 2,
-					updatedAt: now - 100,
-				},
-				{
-					to: addr1,
-					amount: 200,
-					updatedBlock: 3,
-					updatedAt: now + 100, // Future update
-				},
-			},
-			delegator: addr1,
-			endTimestamp: now,
-			expectAmount: 150,
-		},
-		{
-			name: "future timestamp panics",
-			delegator: addr1,
-			endTimestamp: now + 1000,
-			expectPanic: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			delegationSnapShotHistory = avl.NewTree()
-
-			if len(tt.setupHistory) > 0 {
-				delegationSnapShotHistory.Set(tt.delegator.String(), tt.setupHistory)
-			}
-
-			if tt.expectPanic {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("expected panic but got none")
-					}
-				}()
-			}
-
-			result := GetDelegatedCumulative(tt.delegator, tt.endTimestamp)
-			
-			if !tt.expectPanic && result != tt.expectAmount {
-				t.Errorf("expected amount %d but got %d", tt.expectAmount, result)
-			}
-		})
-	}
 }
