@@ -6,32 +6,17 @@ import (
 	"gno.land/p/demo/avl"
 
 	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
-// GetTotalStaked returns the total amount of GNS staked.
-func GetGNSBalanceOfGovStaker() uint64 {
-	// TODO:
-	// totalDelegated
-	return getRealmGnsBalance()
+// GetTotalxGnsSupply returns the total amount of xGNS supply.
+func GetTotalxGnsSupply() uint64 {
+	return xgns.TotalSupply()
 }
 
-func GetTotalStaked() uint64 {
-	// TODO:
-	// xGNS의 Total Total Supply
-	return getRealmGnsBalance()
-}
-
+// GetTotalVoteWeight returns the total amount of xGNS used for voting.
 func GetTotalVoteWeight() uint64 {
-	// TODO:
-	// xGNS의 Vote Supply
-	return getRealmGnsBalance()
-}
-
-// GetTotalStaked returns the total amount of GNS staked.
-func GetTotalStakedWithoutLockedAmount() uint64 {
-	// TODO:
-	// totalDelegated(GetTotalDelegated()) - lockedAmount(GetTotalLockedAmount())
-	return getRealmGnsBalance() - lockedAmount
+	return xgns.VotingSupply()
 }
 
 // GetTotalDelegated returns the total amount of xGNS delegated.
@@ -77,6 +62,7 @@ func GetDelegationAmountFromTo(from, to std.Address) uint64 {
 	return amount.(uint64)
 }
 
-func getRealmGnsBalance() uint64 {
+// GetRealmGnsBalance returns the amount of GNS in the current realm.
+func GetRealmGnsBalance() uint64 {
 	return gns.BalanceOf(a2u(std.CurrentRealm().Addr()))
 }

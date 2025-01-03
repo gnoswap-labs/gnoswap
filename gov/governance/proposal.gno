@@ -25,7 +25,6 @@ var (
 
 const (
 	GOV_SPLIT = "*GOV*"
-	EXE_SPLIT = "*EXE*"
 )
 
 // ProposeText creates a new text proposal with the given data

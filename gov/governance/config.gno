@@ -17,7 +17,7 @@ var (
 )
 
 func init() {
-	// https: //docs.gnoswap.io/core-concepts/governance
+	// https://docs.gnoswap.io/core-concepts/governance
 	config = Config{
 		VotingStartDelay:              uint64(86400),         // 1d
 		VotingPeriod:                  uint64(604800),        // 7d
