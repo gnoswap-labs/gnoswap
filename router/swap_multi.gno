@@ -98,12 +98,12 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.
 
 	// PROCESS FORWARD INFO
 	currentPoolIndex = len(swapInfo)
-	payer := std.PrevRealm().Addr() // first payer ≈ user
+	payer := getPrevAddr() // first payer ≈ user
 	for {
 		var recipient std.Address
 		currentPoolIndex--
 		if currentPoolIndex == 0 {
-			recipient = std.PrevRealm().Addr() // params.recipient ≈ user
+			recipient = getPrevAddr() // params.recipient ≈ user
 		} else {
 			recipient = consts.ROUTER_ADDR
 		}
@@ -131,5 +131,79 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.
 
 		payer = consts.ROUTER_ADDR
 		swapInfo[currentPoolIndex-1].amountSpecified = i256.FromUint256(amountOut)
+	}
+}
+
+func multiDrySwap(params SwapParams, currentPoolIndex, numPool int, swapPath string) (*u256.Uint, *u256.Uint) { // firstAmountIn, lastAmountOut
+	firstAmountIn := u256.Zero()
+
+	payer := std.GetOrigCaller() // user
+
+	for {
+		currentPoolIndex++
+		
+		amountIn, amountOut := swapDryInner(
+			params.amountSpecified,
+			u256.Zero(),
+			SwapCallbackData{
+				params.tokenIn,
+				params.tokenOut,
+				params.fee,
+				payer,
+			},
+		)
+
+		if currentPoolIndex == 1 {
+			firstAmountIn = amountIn
+		}
+
+		if currentPoolIndex >= numPool {
+			return firstAmountIn, amountOut
+		}
+
+		payer = consts.ROUTER_ADDR
+		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
+
+		params.tokenIn = nextInput
+		params.tokenOut = nextOutput
+		params.fee = nextFee
+		params.amountSpecified = i256.FromUint256(amountOut)
+	}
+
+}
+
+func multiDrySwapNegative(params SwapParams, currentPoolIndex int, swapPath string) (*u256.Uint, *u256.Uint) {
+	firstAmountIn := u256.Zero()
+	payer := consts.ROUTER_ADDR
+
+	for {
+		amountIn, amountOut := swapDryInner(
+			params.amountSpecified,
+			u256.Zero(),
+			SwapCallbackData{
+				params.tokenIn,
+				params.tokenOut,
+				params.fee,
+				payer,
+			},
+		)
+
+		if currentPoolIndex == 0 {
+			firstAmountIn = amountIn
+		}
+
+		currentPoolIndex--
+
+		if currentPoolIndex == -1 {
+			return firstAmountIn, amountOut
+		}
+
+		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
+		intAmountIn := i256.FromUint256(amountIn)
+
+		params.amountSpecified = i256.Zero().Neg(intAmountIn)
+		params.tokenIn = nextInput
+		params.tokenOut = nextOutput
+		params.fee = nextFee
 	}
 }

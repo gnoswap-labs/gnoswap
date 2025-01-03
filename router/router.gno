@@ -5,32 +5,23 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/ufmt"
-
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/demo/wugnot"
-
+	"gno.land/r/gnoswap/v1/consts"
 	en "gno.land/r/gnoswap/v1/emission"
-	sr "gno.land/r/gnoswap/v1/staker"
 )
 
-// Common validation and setup logic extracted from SwapRoute
+// commonSwapSetup Common validation and setup logic extracted from SwapRoute
 func commonSwapSetup() {
-	common.IsHalted()
+	assertOnlyNotHalted()
 	assertDirectCallOnly()
 
 	en.MintAndDistributeGns()
-	if consts.EMISSION_REFACTORED {
-		sr.CalcPoolPositionRefactor()
-	} else {
-		sr.CalcPoolPosition()
-	}
 }
 
+// handleSingleSwap handles a single swap operation.
 func handleSingleSwap(route string, amountSpecified *i256.Int) (*u256.Uint, *u256.Uint) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
@@ -73,7 +64,10 @@ func handleMultiSwap(
 	default:
 		// Any invalid `SwapType` is caught in the `SwapRoute` function,
 		// so no invalid values can get in here.
-		panic("should not reach here")
+		panic(addDetailToError(
+			errInvalidSwapType,
+			ufmt.Sprintf("unknown swapType(%s)", swapType),
+		))
 	}
 }
 
@@ -85,10 +79,10 @@ func finalizeSwap(
 	userBeforeWugnotBalance, userWrappedWugnot uint64,
 	amountSpecified *u256.Uint,
 ) (string, string) {
-	if swapType == ExactOut && resultAmountOut.Gt(amountSpecified) {
+	if swapType == ExactOut && resultAmountOut.Lt(amountSpecified) {
 		panic(addDetailToError(
 			errSlippage,
-			ufmt.Sprintf("too few received for user (expected maximum: %s, actual: %s, swapType: %s)", amountSpecified.ToString(), resultAmountOut.ToString(), swapType.String()),
+			ufmt.Sprintf("too few received for user (expected minimum: %s, actual: %s, swapType: %s)", amountSpecified.ToString(), resultAmountOut.ToString(), swapType.String()),
 		))
 	}
 
@@ -123,7 +117,7 @@ func finalizeSwap(
 			))
 		}
 	} else {
-		if !resultAmountIn.Lte(tokenAmountLimit) {
+		if !(resultAmountIn.Lte(tokenAmountLimit)) {
 			panic(addDetailToError(
 				errSlippage,
 				ufmt.Sprintf("too much spent for user (expected maximum: %s, actual: %s, swapType: %s)", tokenAmountLimit.ToString(), resultAmountIn.ToString(), swapType.String()),
@@ -135,6 +129,14 @@ func finalizeSwap(
 	return resultAmountIn.ToString(), i256.Zero().Neg(intAmountOut).ToString()
 }
 
+// validateRoutesAndQuotes validates the routes and quotes slices based on specific criteria.
+//
+// Parameters:
+// - routes: A slice of strings representing route identifiers.
+// - quotes: A slice of strings representing quote percentages corresponding to each route.
+//
+// Returns:
+// - error: An error if the validation fails; nil if all checks pass.
 func validateRoutesAndQuotes(routes, quotes []string) error {
 	if len(routes) < 1 || len(routes) > 7 {
 		return ufmt.Errorf("route length(%d) must be 1~7", len(routes))
@@ -162,6 +164,16 @@ func validateRoutesAndQuotes(routes, quotes []string) error {
 	return nil
 }
 
+// tryParseRoutes parses and validates routes and quotes strings, returning them as slices.
+//
+// Parameters:
+// - routes: A string containing route identifiers separated by commas (e.g., "route1,route2,route3").
+// - quotes: A string containing quote identifiers separated by commas (e.g., "quote1,quote2,quote3").
+//
+// Returns:
+// - []string: A slice of route identifiers parsed from the `routes` string.
+// - []string: A slice of quote identifiers parsed from the `quotes` string.
+// - error: An error if the validation between routes and quotes fails.
 func tryParseRoutes(routes, quotes string) ([]string, []string, error) {
 	routesArr := splitSingleChar(routes, ',')
 	quotesArr := splitSingleChar(quotes, ',')
