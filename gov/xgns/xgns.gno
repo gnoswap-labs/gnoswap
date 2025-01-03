@@ -88,7 +88,6 @@ func Render(path string) string {
 //
 // This function is restricted to be called only by specific authorized contracts:
 // - Governance staker contract
-// - Launchpad contract
 //
 // If the caller is not one of these contracts, the function will panic with an error.
 //
@@ -111,7 +110,40 @@ func Mint(to pusers.AddressOrName, amount uint64) {
 		))
 	}
 
-	checkErr(ledger.Mint(users.Resolve(to), amount))
+	mint(users.Resolve(to), amount)
+}
+
+// MintByLaunchPad increases the balance of a specified address by a given amount.
+//
+// This function is restricted to be called only by specific authorized contracts:
+// - Launchpad contract
+//
+// If the caller is not one of these contracts, the function will panic with an error.
+//
+// Parameters:
+// - to: The address or name of the user whose balance will be increased.
+// - amount: The amount of tokens to be minted.
+//
+// Errors:
+// - Panics if the caller is unauthorized.
+// - Propagates any error from the ledger.Mint function.
+func MintByLaunchPad(to pusers.AddressOrName, amount uint64) {
+	common.IsHalted()
+
+	caller := std.PrevRealm().Addr()
+	if caller != consts.LAUNCHPAD_ADDR {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("only launchpad(%s) contract can call MintByLaunchPad, called from %s", consts.LAUNCHPAD_ADDR.String(), caller.String()),
+		))
+	}
+
+	mint(users.Resolve(to), amount)
+}
+
+// mint increases the balance of a specified address by a given amount.
+func mint(to std.Address, amount uint64) {
+	checkErr(ledger.Mint(to, amount))
 }
 
 // Burn reduces the balance of a specified address by a given amount.
@@ -141,5 +173,23 @@ func Burn(from pusers.AddressOrName, amount uint64) {
 		))
 	}
 
-	checkErr(ledger.Burn(users.Resolve(from), amount))
+	burn(users.Resolve(from), amount)
+}
+
+func BurnByLaunchPad(from pusers.AddressOrName, amount uint64) {
+	common.IsHalted()
+
+	caller := std.PrevRealm().Addr()
+	if caller != consts.LAUNCHPAD_ADDR {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("only launchpad(%s) contract can call BurnByLaunchPad, called from %s", consts.LAUNCHPAD_ADDR.String(), caller.String()),
+		))
+	}
+
+	burn(users.Resolve(from), amount)
+}
+
+func burn(from std.Address, amount uint64) {
+	checkErr(ledger.Burn(from, amount))
 }
