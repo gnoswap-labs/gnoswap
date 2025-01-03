@@ -14,13 +14,9 @@ func ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
 		return ""
 	}
 
-	totalDepositAmount := project.totalDepositAmount
-	actualDepositAmount := project.actualDepositAmount
+	actualDeposit := project.stats.actualDeposit
 
-	totalParticipant := project.totalParticipant
-	actualParticipant := project.actualParticipant
-
-	totalCollectedAmount := project.totalCollectedAmount
+	totalParticipant := project.stats.totalParticipant
 
 	projectObj := metaNode()
 	projectObj.AppendObject("projectId", json.StringNode("projectId", projectId))
@@ -33,61 +29,61 @@ func ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
 	projectObj.AppendObject("conditionsToken", json.StringNode("conditionsToken", tokenPathList))
 	projectObj.AppendObject("conditionsAmount", json.StringNode("conditionsAmount", amountList))
 
-	projectObj.AppendObject("tier30Ratio", json.StringNode("tier30Ratio", ufmt.Sprintf("%d", project.tier30Ratio)))
-	projectObj.AppendObject("tier90Ratio", json.StringNode("tier90Ratio", ufmt.Sprintf("%d", project.tier90Ratio)))
-	projectObj.AppendObject("tier180Ratio", json.StringNode("tier180Ratio", ufmt.Sprintf("%d", project.tier180Ratio)))
+	projectObj.AppendObject("tier30Ratio", json.StringNode("tier30Ratio", ufmt.Sprintf("%d", project.tiersRatios[30])))
+	projectObj.AppendObject("tier90Ratio", json.StringNode("tier90Ratio", ufmt.Sprintf("%d", project.tiersRatios[90])))
+	projectObj.AppendObject("tier180Ratio", json.StringNode("tier180Ratio", ufmt.Sprintf("%d", project.tiersRatios[180])))
 
-	projectObj.AppendObject("createdHeight", json.StringNode("createdHeight", ufmt.Sprintf("%d", project.createdHeight)))
-	projectObj.AppendObject("createdTime", json.StringNode("createdTime", ufmt.Sprintf("%d", project.createdTime)))
-	projectObj.AppendObject("startHeight", json.StringNode("startHeight", ufmt.Sprintf("%d", project.startHeight)))
-	projectObj.AppendObject("startTime", json.StringNode("startTime", ufmt.Sprintf("%d", project.startTime)))
-	projectObj.AppendObject("endHeight", json.StringNode("endHeight", ufmt.Sprintf("%d", project.endHeight)))
-	projectObj.AppendObject("endTime", json.StringNode("endTime", ufmt.Sprintf("%d", project.endTime)))
+	projectObj.AppendObject("createdHeight", json.StringNode("createdHeight", ufmt.Sprintf("%d", project.created.height)))
+	projectObj.AppendObject("createdTime", json.StringNode("createdTime", ufmt.Sprintf("%d", project.created.time)))
+	projectObj.AppendObject("startHeight", json.StringNode("startHeight", ufmt.Sprintf("%d", project.started.height)))
+	projectObj.AppendObject("startTime", json.StringNode("startTime", ufmt.Sprintf("%d", project.started.time)))
+	projectObj.AppendObject("endHeight", json.StringNode("endHeight", ufmt.Sprintf("%d", project.ended.height)))
+	projectObj.AppendObject("endTime", json.StringNode("endTime", ufmt.Sprintf("%d", project.ended.time)))
 
-	projectObj.AppendObject("totalDepositAmount", json.StringNode("totalDepositAmount", ufmt.Sprintf("%d", totalDepositAmount)))
-	projectObj.AppendObject("actualDepositAmount", json.StringNode("actualDepositAmount", ufmt.Sprintf("%d", actualDepositAmount)))
+	projectObj.AppendObject("totalDeposit", json.StringNode("totalDeposit", ufmt.Sprintf("%d", project.stats.totalDeposit)))
+	projectObj.AppendObject("actualDeposit", json.StringNode("actualDeposit", ufmt.Sprintf("%d", actualDeposit)))
 
 	projectObj.AppendObject("totalParticipant", json.StringNode("totalParticipant", ufmt.Sprintf("%d", totalParticipant)))
-	projectObj.AppendObject("actualParticipant", json.StringNode("actualParticipant", ufmt.Sprintf("%d", actualParticipant)))
+	projectObj.AppendObject("actualParticipant", json.StringNode("actualParticipant", ufmt.Sprintf("%d", project.stats.actualParticipant)))
 
-	projectObj.AppendObject("totalCollectedAmount", json.StringNode("totalCollectedAmount", ufmt.Sprintf("%d", totalCollectedAmount)))
+	projectObj.AppendObject("totalCollected", json.StringNode("totalCollected", ufmt.Sprintf("%d", project.stats.totalCollected)))
 
-	projectObj.AppendObject("refundedAmount", json.StringNode("refundedAmount", ufmt.Sprintf("%d", project.refundedAmount)))
-	projectObj.AppendObject("refundedHeight", json.StringNode("refundedHeight", ufmt.Sprintf("%d", project.refundedHeight)))
-	projectObj.AppendObject("refundedTime", json.StringNode("refundedTime", ufmt.Sprintf("%d", project.refundedTime)))
+	projectObj.AppendObject("refundedAmount", json.StringNode("refundedAmount", ufmt.Sprintf("%d", project.refund.amount)))
+	projectObj.AppendObject("refundedHeight", json.StringNode("refundedHeight", ufmt.Sprintf("%d", project.refund.height)))
+	projectObj.AppendObject("refundedTime", json.StringNode("refundedTime", ufmt.Sprintf("%d", project.refund.time)))
 
-	projectObj.AppendObject("tier30StartHeight", json.StringNode("tier30StartHeight", ufmt.Sprintf("%d", project.tier30.startHeight)))
-	projectObj.AppendObject("tier30StartTime", json.StringNode("tier30StartTime", ufmt.Sprintf("%d", project.tier30.startTime)))
-	projectObj.AppendObject("tier30EndHeight", json.StringNode("tier30EndHeight", ufmt.Sprintf("%d", project.tier30.endHeight)))
-	projectObj.AppendObject("tier30EndTime", json.StringNode("tier30EndTime", ufmt.Sprintf("%d", project.tier30.endTime)))
-	projectObj.AppendObject("tier30TotalDepositAmount", json.StringNode("tier30TotalDepositAmount", ufmt.Sprintf("%d", project.tier30.totalDepositAmount)))
-	//projectObj.AppendObject("tier30ActualDepositAmount", json.StringNode("tier30ActualDepositAmount", ufmt.Sprintf("%d", project.tier30.actualDepositAmount)))
-	projectObj.AppendObject("tier30TotalParticipant", json.StringNode("tier30TotalParticipant", ufmt.Sprintf("%d", project.tier30.totalParticipant)))
-	//projectObj.AppendObject("tier30ActualParticipant", json.StringNode("tier30ActualParticipant", ufmt.Sprintf("%d", project.tier30.actualParticipant)))
-	projectObj.AppendObject("tier30UserCollectedAmount", json.StringNode("tier30UserCollectedAmount", ufmt.Sprintf("%d", project.tier30.userCollectedAmount)))
-	projectObj.AppendObject("tier30CalculatedAmount", json.StringNode("tier30CalculatedAmount", ufmt.Sprintf("%d", project.tier30.calculatedAmount)))
+	projectObj.AppendObject("tier30StartHeight", json.StringNode("tier30StartHeight", ufmt.Sprintf("%d", project.tiers[30].started.height)))
+	projectObj.AppendObject("tier30StartTime", json.StringNode("tier30StartTime", ufmt.Sprintf("%d", project.tiers[30].started.time)))
+	projectObj.AppendObject("tier30EndHeight", json.StringNode("tier30EndHeight", ufmt.Sprintf("%d", project.tiers[30].ended.height)))
+	projectObj.AppendObject("tier30EndTime", json.StringNode("tier30EndTime", ufmt.Sprintf("%d", project.tiers[30].ended.time)))
+	projectObj.AppendObject("tier30TotalDepositAmount", json.StringNode("tier30TotalDepositAmount", ufmt.Sprintf("%d", project.tiers[30].totalDepositAmount)))
+	projectObj.AppendObject("tier30ActualDepositAmount", json.StringNode("tier30ActualDepositAmount", ufmt.Sprintf("%d", project.tiers[30].actualDepositAmount)))
+	projectObj.AppendObject("tier30TotalParticipant", json.StringNode("tier30TotalParticipant", ufmt.Sprintf("%d", project.tiers[30].totalParticipant)))
+	projectObj.AppendObject("tier30ActualParticipant", json.StringNode("tier30ActualParticipant", ufmt.Sprintf("%d", project.tiers[30].actualParticipant)))
+	projectObj.AppendObject("tier30UserCollectedAmount", json.StringNode("tier30UserCollectedAmount", ufmt.Sprintf("%d", project.tiers[30].userCollectedAmount)))
+	projectObj.AppendObject("tier30CalculatedAmount", json.StringNode("tier30CalculatedAmount", ufmt.Sprintf("%d", project.tiers[30].calculatedAmount)))
 
-	projectObj.AppendObject("tier90StartHeight", json.StringNode("tier90StartHeight", ufmt.Sprintf("%d", project.tier90.startHeight)))
-	projectObj.AppendObject("tier90StartTime", json.StringNode("tier90StartTime", ufmt.Sprintf("%d", project.tier90.startTime)))
-	projectObj.AppendObject("tier90EndHeight", json.StringNode("tier90EndHeight", ufmt.Sprintf("%d", project.tier90.endHeight)))
-	projectObj.AppendObject("tier90EndTime", json.StringNode("tier90EndTime", ufmt.Sprintf("%d", project.tier90.endTime)))
-	projectObj.AppendObject("tier90TotalDepositAmount", json.StringNode("tier90TotalDepositAmount", ufmt.Sprintf("%d", project.tier90.totalDepositAmount)))
-	projectObj.AppendObject("tier90ActualDepositAmount", json.StringNode("tier90ActualDepositAmount", ufmt.Sprintf("%d", project.tier90.actualDepositAmount)))
-	projectObj.AppendObject("tier90TotalParticipant", json.StringNode("tier90TotalParticipant", ufmt.Sprintf("%d", project.tier90.totalParticipant)))
-	projectObj.AppendObject("tier90ActualParticipant", json.StringNode("tier90ActualParticipant", ufmt.Sprintf("%d", project.tier90.actualParticipant)))
-	projectObj.AppendObject("tier90UserCollectedAmount", json.StringNode("tier90UserCollectedAmount", ufmt.Sprintf("%d", project.tier90.userCollectedAmount)))
-	projectObj.AppendObject("tier90CalculatedAmount", json.StringNode("tier90CalculatedAmount", ufmt.Sprintf("%d", project.tier90.calculatedAmount)))
+	projectObj.AppendObject("tier90StartHeight", json.StringNode("tier90StartHeight", ufmt.Sprintf("%d", project.tiers[90].started.height)))
+	projectObj.AppendObject("tier90StartTime", json.StringNode("tier90StartTime", ufmt.Sprintf("%d", project.tiers[90].started.time)))
+	projectObj.AppendObject("tier90EndHeight", json.StringNode("tier90EndHeight", ufmt.Sprintf("%d", project.tiers[90].ended.height)))
+	projectObj.AppendObject("tier90EndTime", json.StringNode("tier90EndTime", ufmt.Sprintf("%d", project.tiers[90].ended.time)))
+	projectObj.AppendObject("tier90TotalDepositAmount", json.StringNode("tier90TotalDepositAmount", ufmt.Sprintf("%d", project.tiers[90].totalDepositAmount)))
+	projectObj.AppendObject("tier90ActualDepositAmount", json.StringNode("tier90ActualDepositAmount", ufmt.Sprintf("%d", project.tiers[90].actualDepositAmount)))
+	projectObj.AppendObject("tier90TotalParticipant", json.StringNode("tier90TotalParticipant", ufmt.Sprintf("%d", project.tiers[90].totalParticipant)))
+	projectObj.AppendObject("tier90ActualParticipant", json.StringNode("tier90ActualParticipant", ufmt.Sprintf("%d", project.tiers[90].actualParticipant)))
+	projectObj.AppendObject("tier90UserCollectedAmount", json.StringNode("tier90UserCollectedAmount", ufmt.Sprintf("%d", project.tiers[90].userCollectedAmount)))
+	projectObj.AppendObject("tier90CalculatedAmount", json.StringNode("tier90CalculatedAmount", ufmt.Sprintf("%d", project.tiers[90].calculatedAmount)))
 
-	projectObj.AppendObject("tier180StartHeight", json.StringNode("tier180StartHeight", ufmt.Sprintf("%d", project.tier180.startHeight)))
-	projectObj.AppendObject("tier180StartTime", json.StringNode("tier180StartTime", ufmt.Sprintf("%d", project.tier180.startTime)))
-	projectObj.AppendObject("tier180EndHeight", json.StringNode("tier180EndHeight", ufmt.Sprintf("%d", project.tier180.endHeight)))
-	projectObj.AppendObject("tier180EndTime", json.StringNode("tier180EndTime", ufmt.Sprintf("%d", project.tier180.endTime)))
-	projectObj.AppendObject("tier180TotalDepositAmount", json.StringNode("tier180TotalDepositAmount", ufmt.Sprintf("%d", project.tier180.totalDepositAmount)))
-	projectObj.AppendObject("tier180ActualDepositAmount", json.StringNode("tier180ActualDepositAmount", ufmt.Sprintf("%d", project.tier180.actualDepositAmount)))
-	projectObj.AppendObject("tier180TotalParticipant", json.StringNode("tier180TotalParticipant", ufmt.Sprintf("%d", project.tier180.totalParticipant)))
-	projectObj.AppendObject("tier180ActualParticipant", json.StringNode("tier180ActualParticipant", ufmt.Sprintf("%d", project.tier180.actualParticipant)))
-	projectObj.AppendObject("tier180UserCollectedAmount", json.StringNode("tier180UserCollectedAmount", ufmt.Sprintf("%d", project.tier180.userCollectedAmount)))
-	projectObj.AppendObject("tier180CalculatedAmount", json.StringNode("tier180CalculatedAmount", ufmt.Sprintf("%d", project.tier180.calculatedAmount)))
+	projectObj.AppendObject("tier180StartHeight", json.StringNode("tier180StartHeight", ufmt.Sprintf("%d", project.tiers[180].started.height)))
+	projectObj.AppendObject("tier180StartTime", json.StringNode("tier180StartTime", ufmt.Sprintf("%d", project.tiers[180].started.time)))
+	projectObj.AppendObject("tier180EndHeight", json.StringNode("tier180EndHeight", ufmt.Sprintf("%d", project.tiers[180].ended.height)))
+	projectObj.AppendObject("tier180EndTime", json.StringNode("tier180EndTime", ufmt.Sprintf("%d", project.tiers[180].ended.time)))
+	projectObj.AppendObject("tier180TotalDepositAmount", json.StringNode("tier180TotalDepositAmount", ufmt.Sprintf("%d", project.tiers[180].totalDepositAmount)))
+	projectObj.AppendObject("tier180ActualDepositAmount", json.StringNode("tier180ActualDepositAmount", ufmt.Sprintf("%d", project.tiers[180].actualDepositAmount)))
+	projectObj.AppendObject("tier180TotalParticipant", json.StringNode("tier180TotalParticipant", ufmt.Sprintf("%d", project.tiers[180].totalParticipant)))
+	projectObj.AppendObject("tier180ActualParticipant", json.StringNode("tier180ActualParticipant", ufmt.Sprintf("%d", project.tiers[180].actualParticipant)))
+	projectObj.AppendObject("tier180UserCollectedAmount", json.StringNode("tier180UserCollectedAmount", ufmt.Sprintf("%d", project.tiers[180].userCollectedAmount)))
+	projectObj.AppendObject("tier180CalculatedAmount", json.StringNode("tier180CalculatedAmount", ufmt.Sprintf("%d", project.tiers[180].calculatedAmount)))
 
 	return marshal(projectObj)
 }
@@ -98,13 +94,13 @@ func ApiGetProjectStatisticsByProjectId(projectId string) string {
 		return ""
 	}
 
-	totalDepositAmount := project.totalDepositAmount
-	actualDepositAmount := project.actualDepositAmount
+	totalDeposit := project.stats.totalDeposit
+	actualDeposit := project.stats.actualDeposit
 
-	totalParticipant := project.totalParticipant
-	actualParticipant := project.actualParticipant
+	totalParticipant := project.stats.totalParticipant
+	actualParticipant := project.stats.actualParticipant
 
-	totalCollectedAmount := project.totalCollectedAmount
+	totalCollected := project.stats.totalCollected
 
 	projectObj := metaNode()
 	projectObj.AppendObject("projectId", json.StringNode("projectId", projectId))
@@ -117,28 +113,28 @@ func ApiGetProjectStatisticsByProjectId(projectId string) string {
 	projectObj.AppendObject("conditionsToken", json.StringNode("conditionsToken", tokenPathList))
 	projectObj.AppendObject("conditionsAmount", json.StringNode("conditionsAmount", amountList))
 
-	projectObj.AppendObject("tier30Ratio", json.StringNode("tier30Ratio", ufmt.Sprintf("%d", project.tier30Ratio)))
-	projectObj.AppendObject("tier90Ratio", json.StringNode("tier90Ratio", ufmt.Sprintf("%d", project.tier90Ratio)))
-	projectObj.AppendObject("tier180Ratio", json.StringNode("tier180Ratio", ufmt.Sprintf("%d", project.tier180Ratio)))
+	projectObj.AppendObject("tier30Ratio", json.StringNode("tier30Ratio", ufmt.Sprintf("%d", project.tiers[30].tierAmount)))
+	projectObj.AppendObject("tier90Ratio", json.StringNode("tier90Ratio", ufmt.Sprintf("%d", project.tiers[90].tierAmount)))
+	projectObj.AppendObject("tier180Ratio", json.StringNode("tier180Ratio", ufmt.Sprintf("%d", project.tiers[180].tierAmount)))
 
-	projectObj.AppendObject("createdHeight", json.StringNode("createdHeight", ufmt.Sprintf("%d", project.createdHeight)))
-	projectObj.AppendObject("createdTime", json.StringNode("createdTime", ufmt.Sprintf("%d", project.createdTime)))
-	projectObj.AppendObject("startHeight", json.StringNode("startHeight", ufmt.Sprintf("%d", project.startHeight)))
-	projectObj.AppendObject("startTime", json.StringNode("startTime", ufmt.Sprintf("%d", project.startTime)))
-	projectObj.AppendObject("endHeight", json.StringNode("endHeight", ufmt.Sprintf("%d", project.endHeight)))
-	projectObj.AppendObject("endTime", json.StringNode("endTime", ufmt.Sprintf("%d", project.endTime)))
+	projectObj.AppendObject("createdHeight", json.StringNode("createdHeight", ufmt.Sprintf("%d", project.created.height)))
+	projectObj.AppendObject("createdTime", json.StringNode("createdTime", ufmt.Sprintf("%d", project.created.time)))
+	projectObj.AppendObject("startHeight", json.StringNode("startHeight", ufmt.Sprintf("%d", project.started.height)))
+	projectObj.AppendObject("startTime", json.StringNode("startTime", ufmt.Sprintf("%d", project.started.time)))
+	projectObj.AppendObject("endHeight", json.StringNode("endHeight", ufmt.Sprintf("%d", project.ended.height)))
+	projectObj.AppendObject("endTime", json.StringNode("endTime", ufmt.Sprintf("%d", project.ended.time)))
 
-	projectObj.AppendObject("totalDepositAmount", json.StringNode("totalDepositAmount", ufmt.Sprintf("%d", totalDepositAmount)))
-	projectObj.AppendObject("actualDepositAmount", json.StringNode("actualDepositAmount", ufmt.Sprintf("%d", actualDepositAmount)))
+	projectObj.AppendObject("totalDepositAmount", json.StringNode("totalDepositAmount", ufmt.Sprintf("%d", totalDeposit)))
+	projectObj.AppendObject("actualDepositAmount", json.StringNode("actualDepositAmount", ufmt.Sprintf("%d", actualDeposit)))
 
 	projectObj.AppendObject("totalParticipant", json.StringNode("totalParticipant", ufmt.Sprintf("%d", totalParticipant)))
 	projectObj.AppendObject("actualParticipant", json.StringNode("actualParticipant", ufmt.Sprintf("%d", actualParticipant)))
 
-	projectObj.AppendObject("totalCollectedAmount", json.StringNode("totalCollectedAmount", ufmt.Sprintf("%d", totalCollectedAmount)))
+	projectObj.AppendObject("totalCollectedAmount", json.StringNode("totalCollectedAmount", ufmt.Sprintf("%d", totalCollected)))
 
-	projectObj.AppendObject("refundedAmount", json.StringNode("refundedAmount", ufmt.Sprintf("%d", project.refundedAmount)))
-	projectObj.AppendObject("refundedHeight", json.StringNode("refundedHeight", ufmt.Sprintf("%d", project.refundedHeight)))
-	projectObj.AppendObject("refundedTime", json.StringNode("refundedTime", ufmt.Sprintf("%d", project.refundedTime)))
+	projectObj.AppendObject("refundedAmount", json.StringNode("refundedAmount", ufmt.Sprintf("%d", project.refund.amount)))
+	projectObj.AppendObject("refundedHeight", json.StringNode("refundedHeight", ufmt.Sprintf("%d", project.refund.height)))
+	projectObj.AppendObject("refundedTime", json.StringNode("refundedTime", ufmt.Sprintf("%d", project.refund.time)))
 
 	return marshal(projectObj)
 }
@@ -153,11 +149,11 @@ func ApiGetProjectStatisticsByProjectTierId(tierId string) string {
 	var tier Tier
 	switch tierStr {
 	case "30":
-		tier = project.tier30
+		tier = project.tiers[30]
 	case "90":
-		tier = project.tier90
+		tier = project.tiers[90]
 	case "180":
-		tier = project.tier180
+		tier = project.tiers[180]
 	default:
 		return ""
 	}

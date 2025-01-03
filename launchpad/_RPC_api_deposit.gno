@@ -80,11 +80,11 @@ func ApiGetDepositFullByDepositId(depositId string) string {
 	tierStr := deposit.tier
 	switch tierStr {
 	case "30":
-		tier = project.tier30
+		tier = project.tiers[30]
 	case "90":
-		tier = project.tier90
+		tier = project.tiers[90]
 	case "180":
-		tier = project.tier180
+		tier = project.tiers[180]
 	}
 
 	depositObj := metaNode()
@@ -99,38 +99,38 @@ func ApiGetDepositFullByDepositId(depositId string) string {
 	depositObj.AppendObject("conditionsToken", json.StringNode("conditionsToken", tokenPathList))
 	depositObj.AppendObject("conditionsAmount", json.StringNode("conditionsAmount", amountList))
 
-	depositObj.AppendObject("tier30Ratio", json.StringNode("tier30Ratio", ufmt.Sprintf("%d", project.tier30Ratio)))
-	depositObj.AppendObject("tier90Ratio", json.StringNode("tier90Ratio", ufmt.Sprintf("%d", project.tier90Ratio)))
-	depositObj.AppendObject("tier180Ratio", json.StringNode("tier180Ratio", ufmt.Sprintf("%d", project.tier180Ratio)))
+	depositObj.AppendObject("tier30Ratio", json.StringNode("tier30Ratio", ufmt.Sprintf("%d", project.tiers[30].tierAmount)))
+	depositObj.AppendObject("tier90Ratio", json.StringNode("tier90Ratio", ufmt.Sprintf("%d", project.tiers[90].tierAmount)))
+	depositObj.AppendObject("tier180Ratio", json.StringNode("tier180Ratio", ufmt.Sprintf("%d", project.tiers[180].tierAmount)))
 
-	depositObj.AppendObject("createdHeight", json.StringNode("createdHeight", ufmt.Sprintf("%d", project.createdHeight)))
-	depositObj.AppendObject("createdTime", json.StringNode("createdTime", ufmt.Sprintf("%d", project.createdTime)))
-	depositObj.AppendObject("startHeight", json.StringNode("startHeight", ufmt.Sprintf("%d", project.startHeight)))
-	depositObj.AppendObject("startTime", json.StringNode("startTime", ufmt.Sprintf("%d", project.startTime)))
-	depositObj.AppendObject("endHeight", json.StringNode("endHeight", ufmt.Sprintf("%d", project.endHeight)))
-	depositObj.AppendObject("endTime", json.StringNode("endTime", ufmt.Sprintf("%d", project.endTime)))
+	depositObj.AppendObject("createdHeight", json.StringNode("createdHeight", ufmt.Sprintf("%d", project.created.height)))
+	depositObj.AppendObject("createdTime", json.StringNode("createdTime", ufmt.Sprintf("%d", project.created.time)))
+	depositObj.AppendObject("startHeight", json.StringNode("startHeight", ufmt.Sprintf("%d", project.started.height)))
+	depositObj.AppendObject("startTime", json.StringNode("startTime", ufmt.Sprintf("%d", project.started.time)))
+	depositObj.AppendObject("endHeight", json.StringNode("endHeight", ufmt.Sprintf("%d", project.ended.height)))
+	depositObj.AppendObject("endTime", json.StringNode("endTime", ufmt.Sprintf("%d", project.ended.time)))
 
-	depositObj.AppendObject("totalDepositAmount", json.StringNode("totalDepositAmount", ufmt.Sprintf("%d", project.totalDepositAmount)))
-	depositObj.AppendObject("actualDepositAmount", json.StringNode("actualDepositAmount", ufmt.Sprintf("%d", project.actualDepositAmount)))
+	depositObj.AppendObject("totalDeposit", json.StringNode("totalDeposit", ufmt.Sprintf("%d", project.stats.totalDeposit)))
+	depositObj.AppendObject("actualDeposit", json.StringNode("actualDeposit", ufmt.Sprintf("%d", project.stats.actualDeposit)))
 
-	depositObj.AppendObject("totalParticipant", json.StringNode("totalParticipant", ufmt.Sprintf("%d", project.totalParticipant)))
-	depositObj.AppendObject("actualParticipant", json.StringNode("actualParticipant", ufmt.Sprintf("%d", project.actualParticipant)))
+	depositObj.AppendObject("totalParticipant", json.StringNode("totalParticipant", ufmt.Sprintf("%d", project.stats.totalParticipant)))
+	depositObj.AppendObject("actualParticipant", json.StringNode("actualParticipant", ufmt.Sprintf("%d", project.stats.actualParticipant)))
 
-	depositObj.AppendObject("totalCollectedAmount", json.StringNode("totalCollectedAmount", ufmt.Sprintf("%d", project.totalCollectedAmount)))
+	depositObj.AppendObject("totalCollected", json.StringNode("totalCollected", ufmt.Sprintf("%d", project.stats.totalCollected)))
 
-	depositObj.AppendObject("refundedAmount", json.StringNode("refundedAmount", ufmt.Sprintf("%d", project.refundedAmount)))
-	depositObj.AppendObject("refundedHeight", json.StringNode("refundedHeight", ufmt.Sprintf("%d", project.refundedHeight)))
-	depositObj.AppendObject("refundedTime", json.StringNode("refundedTime", ufmt.Sprintf("%d", project.refundedTime)))
+	depositObj.AppendObject("refundedAmount", json.StringNode("refundedAmount", ufmt.Sprintf("%d", project.refund.amount)))
+	depositObj.AppendObject("refundedHeight", json.StringNode("refundedHeight", ufmt.Sprintf("%d", project.refund.height)))
+	depositObj.AppendObject("refundedTime", json.StringNode("refundedTime", ufmt.Sprintf("%d", project.refund.time)))
 
 	// tier info
 	depositObj.AppendObject("tier", json.StringNode("tier", deposit.tier))
 	depositObj.AppendObject("collectWaitDuration", json.StringNode("collectWaitDuration", ufmt.Sprintf("%d", tier.collectWaitDuration)))
 	depositObj.AppendObject("tierAmount", json.StringNode("tierAmount", ufmt.Sprintf("%d", tier.tierAmount)))
 	depositObj.AppendObject("tierAmountPerBlockX96", json.StringNode("tierAmountPerBlockX96", tier.tierAmountPerBlockX96.ToString()))
-	depositObj.AppendObject("startHeight", json.StringNode("startHeight", ufmt.Sprintf("%d", tier.startHeight)))
-	depositObj.AppendObject("startTime", json.StringNode("startTime", ufmt.Sprintf("%d", tier.startTime)))
-	depositObj.AppendObject("endHeight", json.StringNode("endHeight", ufmt.Sprintf("%d", tier.endHeight)))
-	depositObj.AppendObject("endTime", json.StringNode("endTime", ufmt.Sprintf("%d", tier.endTime)))
+	depositObj.AppendObject("startHeight", json.StringNode("startHeight", ufmt.Sprintf("%d", tier.started.height)))
+	depositObj.AppendObject("startTime", json.StringNode("startTime", ufmt.Sprintf("%d", tier.started.time)))
+	depositObj.AppendObject("endHeight", json.StringNode("endHeight", ufmt.Sprintf("%d", tier.ended.height)))
+	depositObj.AppendObject("endTime", json.StringNode("endTime", ufmt.Sprintf("%d", tier.ended.time)))
 
 	depositObj.AppendObject("totalDepositAmount", json.StringNode("totalDepositAmount", ufmt.Sprintf("%d", tier.totalDepositAmount)))
 	depositObj.AppendObject("actualDepositAmount", json.StringNode("actualDepositAmount", ufmt.Sprintf("%d", tier.actualDepositAmount)))
