@@ -134,6 +134,8 @@ func init() {
 
 	// poolTier.changeTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1, 1)
 	poolTier = NewPoolTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1)
+	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1) // must update pools tree
+
 }
 
 // StakeToken stakes an LP token into the staker contract. It transfer the LP token
