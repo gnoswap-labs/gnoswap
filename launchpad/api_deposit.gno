@@ -40,56 +40,56 @@ func ApiGetClaimableDepositByAddress(address std.Address) uint64 {
 }
 
 func ApiGetDepositByDepositId(depositId string) string {
-    calculateDepositReward()
+	calculateDepositReward()
 
-    deposit, exist := deposits[depositId]
-    if !exist {
-        return ""
-    }
+	deposit, exist := deposits[depositId]
+	if !exist {
+		return ""
+	}
 
-    builder := MetaBuilder().
-        WriteString("depositId", depositId)
-    DepositBuilder(builder, deposit)
+	builder := MetaBuilder().
+		WriteString("depositId", depositId)
+	DepositBuilder(builder, deposit)
 
-    return marshal(builder.Node())
+	return marshal(builder.Node())
 }
 
 func ApiGetDepositFullByDepositId(depositId string) string {
-    calculateDepositReward()
+	calculateDepositReward()
 
-    deposit, exist := deposits[depositId]
-    if !exist {
-        return ""
-    }
+	deposit, exist := deposits[depositId]
+	if !exist {
+		return ""
+	}
 
-    project, exist := projects[deposit.projectId]
-    if !exist {
-        return ""
-    }
+	project, exist := projects[deposit.projectId]
+	if !exist {
+		return ""
+	}
 
-    var tier Tier
-    switch deposit.tier {
-    case "30":
-        tier = project.tiers[30]
-    case "90":
-        tier = project.tiers[90]
-    case "180":
-        tier = project.tiers[180]
-    }
+	var tier Tier
+	switch deposit.tier {
+	case "30":
+		tier = project.tiers[30]
+	case "90":
+		tier = project.tiers[90]
+	case "180":
+		tier = project.tiers[180]
+	}
 
-    builder := MetaBuilder().
-        WriteString("depositId", depositId)
+	builder := MetaBuilder().
+		WriteString("depositId", depositId)
 
-    // Add project info
-    ProjectBuilder(builder, project)
+	// Add project info
+	ProjectBuilder(builder, project)
 
-    // Add tier info
-    TierBuilder(builder, "", tier)
+	// Add tier info
+	TierBuilder(builder, "", tier)
 
-    // Add deposit info
-    DepositBuilder(builder, deposit)
+	// Add deposit info
+	DepositBuilder(builder, deposit)
 
-    return marshal(builder.Node())
+	return marshal(builder.Node())
 }
 
 func makeConditionsToStr(conditions map[string]Condition) (string, string) {
