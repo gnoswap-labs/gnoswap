@@ -6,6 +6,49 @@ type binOp2Test struct {
 	x, y, want string
 }
 
+func TestIsOverflow(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    *Uint
+		expected bool
+	}{
+		{
+			name: "Number greater than max value",
+			input: &Uint{arr: [4]uint64{
+				^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0),
+			}},
+			expected: true,
+		},
+		{
+			name: "Max value",
+			input: &Uint{arr: [4]uint64{
+				^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0) >> 1,
+			}},
+			expected: false,
+		},
+		{
+			name:     "0",
+			input:    &Uint{arr: [4]uint64{0, 0, 0, 0}},
+			expected: false,
+		},
+		{
+			name: "Only 255th bit set",
+			input: &Uint{arr: [4]uint64{
+				0, 0, 0, uint64(1) << 63,
+			}},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.input.IsOverflow(); got != tt.expected {
+				t.Errorf("IsOverflow() = %v, expected %v", got, tt.expected)
+			}
+		})
+	}
+}
+
 func TestAdd(t *testing.T) {
 	tests := []binOp2Test{
 		{"0", "1", "1"},
