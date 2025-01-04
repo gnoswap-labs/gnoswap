@@ -16,16 +16,15 @@ import (
 )
 
 var (
-	banker *grc20.Banker
+	token  *grc20.Token
+	ledger *grc20.PrivateLedger
 	admin  *ownable.Ownable
-	token  grc20.Token
 )
 
 func init() {
 	admin = ownable.NewWithAddress(std.DerivePkgAddr(consts.GOV_STAKER_PATH))
 
-	banker = grc20.NewBanker("XGNS", "xGNS", 6)
-	token = banker.Token()
+	token, ledger = grc20.NewToken("XGNS", "xGNS", 6)
 }
 
 func TotalSupply() uint64 { return token.TotalSupply() }
@@ -53,11 +52,11 @@ func Render(path string) string {
 
 	switch {
 	case path == "":
-		return banker.RenderHome()
+		return token.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := pusers.AddressOrName(parts[1])
 		ownerAddr := users.Resolve(owner)
-		balance := banker.BalanceOf(ownerAddr)
+		balance := token.BalanceOf(ownerAddr)
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"
@@ -76,7 +75,7 @@ func Mint(to pusers.AddressOrName, amount uint64) {
 		))
 	}
 
-	checkErr(banker.Mint(users.Resolve(to), amount))
+	checkErr(ledger.Mint(users.Resolve(to), amount))
 }
 
 func Burn(from pusers.AddressOrName, amount uint64) {
@@ -91,7 +90,7 @@ func Burn(from pusers.AddressOrName, amount uint64) {
 		))
 	}
 
-	checkErr(banker.Burn(users.Resolve(from), amount))
+	checkErr(ledger.Burn(users.Resolve(from), amount))
 }
 
 func a2u(addr std.Address) pusers.AddressOrName {

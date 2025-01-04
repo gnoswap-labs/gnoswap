@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -77,4 +76,12 @@ func min(x, y uint64) uint64 {
 		return x
 	}
 	return y
+}
+
+func formatUint(value uint64) string {
+	return strconv.FormatUint(value, 10)
+}
+
+func formatInt(value int64) string {
+	return strconv.FormatInt(value, 10)
 }
