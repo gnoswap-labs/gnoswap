@@ -1,8 +1,9 @@
-package router
+package tests
 
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/uassert"
 
@@ -71,12 +72,13 @@ func TestExactInputSinglePool(t *testing.T) {
 	swapFee = uint64(0)
 
 	amountIn, amountOut := ExactInSwapRoute(
-		barPath,    // inputToken
-		bazPath,    // outputToken
-		"3",        // amountSpecified
-		poolPath,   // strRouteArr
-		"100",      // quoteArr
-		"1",        // tokenAmountLimit
+		barPath,  // inputToken
+		bazPath,  // outputToken
+		"3",      // amountSpecified
+		poolPath, // strRouteArr
+		"100",    // quoteArr
+		"1",      // tokenAmountLimit
+		time.Now().Add(time.Hour).Unix(),
 	)
 
 	uassert.Equal(t, amountIn, "3")

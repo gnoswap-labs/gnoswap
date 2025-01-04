@@ -372,6 +372,7 @@ func CreatePoolWithoutFee(t *testing.T) {
 	CreatePool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), users.Resolve(admin))
 	CreatePool(t, bazPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), users.Resolve(admin))
 	CreatePool(t, barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), users.Resolve(admin))
+	CreatePool(t, barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), users.Resolve(admin))
 }
 
 func CreateSecondPoolWithoutFee(t *testing.T) {
@@ -448,6 +449,32 @@ func MakeThirdMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 	return pn.Mint(
 		barPath,
 		fooPath,
+		fee500,
+		-887220,
+		887220,
+		"50000",
+		"50000",
+		"0",
+		"0",
+		max_timeout,
+		users.Resolve(admin),
+		users.Resolve(admin),
+	)
+}
+
+func MakeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
+	t.Helper()
+
+	// make actual data to test resetting not only position's state but also pool's state
+	std.TestSetRealm(adminRealm)
+
+	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
+	TokenApprove(t, bazPath, admin, pool, consts.UINT64_MAX)
+
+	// mint position
+	return pn.Mint(
+		barPath,
+		bazPath,
 		fee500,
 		-887220,
 		887220,

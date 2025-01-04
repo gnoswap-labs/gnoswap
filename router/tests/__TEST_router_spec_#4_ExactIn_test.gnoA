@@ -1,8 +1,9 @@
-package router
+package tests
 
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/uassert"
 
@@ -57,12 +58,13 @@ func TestSwapRouteBarfooExactIn(t *testing.T) {
 	token2Before := foo.BalanceOf(a2u(consts.ADMIN))
 
 	amountIn, amountOut := ExactInSwapRoute(
-		barPath,    // inputToken
-		fooPath,    // outputToken
-		"5",        // amountSpecified
+		barPath, // inputToken
+		fooPath, // outputToken
+		"5",     // amountSpecified
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:3000", // strRouteArr
 		"100", // quoteArr
 		"1",   // tokenAmountLimit
+		time.Now().Add(time.Hour).Unix(),
 	)
 
 	token0After := bar.BalanceOf(a2u(consts.ADMIN))
