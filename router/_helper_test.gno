@@ -436,3 +436,27 @@ func MakeSecondMintPositionWithoutFee(t *testing.T) (uint64, string, string, str
 		users.Resolve(admin),
 	)
 }
+
+func MakeThirdMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
+	t.Helper()
+
+	std.TestSetRealm(adminRealm)
+
+	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
+	TokenApprove(t, fooPath, admin, pool, consts.UINT64_MAX)
+
+	return pn.Mint(
+		barPath,
+		fooPath,
+		fee500,
+		-887220,
+		887220,
+		"50000",
+		"50000",
+		"0",
+		"0",
+		max_timeout,
+		users.Resolve(admin),
+		users.Resolve(admin),
+	)
+}

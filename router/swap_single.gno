@@ -1,8 +1,6 @@
 package router
 
 import (
-	"std"
-
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -31,13 +29,13 @@ func singleSwap(params SingleSwapParams) (*u256.Uint, *u256.Uint) { // amountIn,
 
 	amountIn, amountOut := swapInner(
 		params.amountSpecified,
-		std.PrevRealm().Addr(), // if single swap => user will recieve
-		u256.Zero(),            // sqrtPriceLimitX96
+		getPrevAddr(), // if single swap => user will recieve
+		u256.Zero(),   // sqrtPriceLimitX96
 		SwapCallbackData{
 			params.tokenIn,
 			params.tokenOut,
 			params.fee,
-			std.PrevRealm().Addr(), // payer ==> msg.sender,
+			getPrevAddr(), // payer ==> msg.sender,
 		},
 	)
 
@@ -71,7 +69,7 @@ func singleDrySwap(params SingleSwapParams) (*u256.Uint, *u256.Uint) {
 			params.tokenIn,
 			params.tokenOut,
 			params.fee,
-			std.PrevRealm().Addr(),
+			getPrevAddr(),
 		},
 	)
 

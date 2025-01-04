@@ -59,11 +59,12 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.
 	firstAmountIn := u256.Zero()
 
 	swapInfo := []SingleSwapParams{}
-	currentPoolIndex := numPools
 
 	// CALCULATE BACKWARD INFO
-	for {
-		amountIn, _ := singleSwap(
+	currentPoolIndex := numPools
+	for currentPoolIndex >= 0 {
+		// Dry-run
+		amountIn, _ := singleDrySwap(
 			SingleSwapParams{
 				tokenIn:         params.tokenIn,
 				tokenOut:        params.tokenOut,
@@ -78,32 +79,29 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.
 			fee:             params.fee,
 			amountSpecified: params.amountSpecified,
 		}
-
 		swapInfo = append(swapInfo, thisSwap)
 
 		if currentPoolIndex == 0 {
 			break
-		} else {
-			currentPoolIndex--
-
-			nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
-			intAmountIn := i256.FromUint256(amountIn)
-
-			params.tokenIn = nextInput
-			params.tokenOut = nextOutput
-			params.fee = nextFee
-			params.amountSpecified = i256.Zero().Neg(intAmountIn)
 		}
+		currentPoolIndex--
+
+		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
+
+		intAmountIn := i256.FromUint256(amountIn)
+		params.tokenIn = nextInput
+		params.tokenOut = nextOutput
+		params.fee = nextFee
+		params.amountSpecified = i256.Zero().Neg(intAmountIn)
 	}
 
 	// PROCESS FORWARD INFO
-	currentPoolIndex = len(swapInfo)
+	currentPoolIndex = len(swapInfo) - 1
 	payer := getPrevAddr() // first payer ≈ user
-	for {
+	for currentPoolIndex >= 0 {
 		var recipient std.Address
-		currentPoolIndex--
 		if currentPoolIndex == 0 {
-			recipient = getPrevAddr() // params.recipient ≈ user
+			recipient = params.recipient // params.recipient ≈ user
 		} else {
 			recipient = consts.ROUTER_ADDR
 		}
@@ -129,9 +127,11 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.
 			return firstAmountIn, amountOut
 		}
 
-		payer = consts.ROUTER_ADDR
 		swapInfo[currentPoolIndex-1].amountSpecified = i256.FromUint256(amountOut)
+		payer = consts.ROUTER_ADDR
+		currentPoolIndex--
 	}
+	return firstAmountIn, u256.Zero()
 }
 
 func multiDrySwap(params SwapParams, currentPoolIndex, numPool int, swapPath string) (*u256.Uint, *u256.Uint) { // firstAmountIn, lastAmountOut
@@ -141,7 +141,7 @@ func multiDrySwap(params SwapParams, currentPoolIndex, numPool int, swapPath str
 
 	for {
 		currentPoolIndex++
-		
+
 		amountIn, amountOut := swapDryInner(
 			params.amountSpecified,
 			u256.Zero(),

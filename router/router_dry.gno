@@ -43,6 +43,7 @@ func DrySwapRoute(
 			ufmt.Sprintf("invalid amountSpecified(%s), must be positive", specifiedAmount),
 		))
 	}
+
 	amountLimit := i256.MustFromDecimal(tokenAmountLimit)
 	if amountLimit.IsZero() {
 		panic(addDetailToError(
@@ -68,10 +69,15 @@ func DrySwapRoute(
 
 	for i, route := range routes {
 		numHops := strings.Count(route, POOL_SEPARATOR) + 1
+		assertHopsInRange(numHops)
 		// don't need to check error here
 		quote, _ := strconv.Atoi(quotes[i])
-
-		assertHopsInRange(numHops)
+		if quote < 0 || quote > 100 {
+			panic(addDetailToError(
+				errInvalidInput,
+				ufmt.Sprintf("quote(%d) must be 0~100", quote),
+			))
+		}
 
 		toSwap := i256.Zero().Mul(amountSpecified, i256.NewInt(int64(quote)))
 		toSwap = new(i256.Int).Div(toSwap, i256.NewInt(100))
@@ -140,7 +146,7 @@ func handleMultiDrySwap(
 func processResult(swapType SwapType, resultAmountIn, resultAmountOut *u256.Uint, amountSpecified, amountLimit *i256.Int) string {
 	switch swapType {
 	case ExactIn:
-		if !i256.FromUint256(resultAmountIn).Gt(amountSpecified) {
+		if i256.FromUint256(resultAmountIn).Gt(amountSpecified) {
 			return "-1"
 		}
 		if i256.FromUint256(resultAmountOut).Lt(amountLimit) {

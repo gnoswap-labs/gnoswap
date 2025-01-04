@@ -18,6 +18,8 @@ var (
 	errInvalidPoolPath        = errors.New("[GNOSWAP-ROUTER-009] invalid pool path")
 	errWrapUnwrap             = errors.New("[GNOSWAP-ROUTER-010] wrap, unwrap failed")
 	errWugnotMinimum          = errors.New("[GNOSWAP-ROUTER-011] less than minimum amount	")
+	errQuoteParser            = errors.New("[GNOSWAP-ROUTER-012] quote parse failed")
+	errHopsOutOfRange         = errors.New("[GNOSWAP-ROUTER-013] number of hops must be 1~3")
 )
 
 func addDetailToError(err error, detail string) string {

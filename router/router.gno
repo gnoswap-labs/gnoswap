@@ -47,7 +47,7 @@ func handleMultiSwap(
 			tokenIn:         input,
 			tokenOut:        output,
 			fee:             fee,
-			recipient:       std.PrevRealm().Addr(),
+			recipient:       getPrevAddr(),
 			amountSpecified: amountSpecified,
 		}
 		return multiSwap(swapParams, 0, numHops, route)
@@ -57,7 +57,7 @@ func handleMultiSwap(
 			tokenIn:         input,
 			tokenOut:        output,
 			fee:             fee,
-			recipient:       std.PrevRealm().Addr(),
+			recipient:       getPrevAddr(),
 			amountSpecified: amountSpecified,
 		}
 		return multiSwapNegative(swapParams, numHops-1, route)
@@ -79,11 +79,16 @@ func finalizeSwap(
 	userBeforeWugnotBalance, userWrappedWugnot uint64,
 	amountSpecified *u256.Uint,
 ) (string, string) {
-	if swapType == ExactOut && resultAmountOut.Lt(amountSpecified) {
-		panic(addDetailToError(
-			errSlippage,
-			ufmt.Sprintf("too few received for user (expected minimum: %s, actual: %s, swapType: %s)", amountSpecified.ToString(), resultAmountOut.ToString(), swapType.String()),
-		))
+
+	if swapType == ExactOut {
+		// If the pool's raw output is less than user wants, fail fast.
+		// (Optional: some designs skip this, and only check afterFee.)
+		if resultAmountOut.Lt(amountSpecified) {
+			panic(addDetailToError(
+				errSlippage,
+				ufmt.Sprintf("Received more than requested in [EXACT_OUT] requested=%s, actual=%s", amountSpecified.ToString(), resultAmountOut.ToString()),
+			))
+		}
 	}
 
 	afterFee := handleSwapFee(outputToken, resultAmountOut)
@@ -110,23 +115,29 @@ func finalizeSwap(
 	}
 
 	if swapType == ExactIn {
-		if !tokenAmountLimit.Lte(afterFee) {
+		// The user gave a fixed input => we must ensure final out >= tokenAmountLimit
+		// afterFee is the actual tokens user receives
+		if afterFee.Lt(tokenAmountLimit) {
 			panic(addDetailToError(
 				errSlippage,
-				ufmt.Sprintf("too few received for user (expected minimum: %s, actual: %s, swapType: %s)", tokenAmountLimit.ToString(), afterFee.ToString(), swapType.String()),
+				ufmt.Sprintf("ExactIn: too few received (min:%s, got:%s)", tokenAmountLimit.ToString(), afterFee.ToString()),
 			))
 		}
 	} else {
-		if !(resultAmountIn.Lte(tokenAmountLimit)) {
+		// swapType == ExactOut
+		// The user wants to get at least "amountSpecified" final tokens,
+		if resultAmountIn.Gt(tokenAmountLimit) {
 			panic(addDetailToError(
 				errSlippage,
-				ufmt.Sprintf("too much spent for user (expected maximum: %s, actual: %s, swapType: %s)", tokenAmountLimit.ToString(), resultAmountIn.ToString(), swapType.String()),
+				ufmt.Sprintf("ExactOut: too much spent (max:%s, used:%s)", tokenAmountLimit.ToString(), resultAmountIn.ToString()),
 			))
 		}
 	}
 
-	intAmountOut := i256.FromUint256(afterFee)
-	return resultAmountIn.ToString(), i256.Zero().Neg(intAmountOut).ToString()
+	intAmountOut := i256.FromUint256(afterFee) // final user out
+	negativeOut := i256.Zero().Neg(intAmountOut).ToString()
+
+	return resultAmountIn.ToString(), negativeOut
 }
 
 // validateRoutesAndQuotes validates the routes and quotes slices based on specific criteria.

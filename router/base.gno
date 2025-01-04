@@ -118,10 +118,6 @@ func (op *baseSwapOperation) processRoutes(swapType SwapType) (*u256.Uint, *u256
 			return nil, nil, err
 		}
 
-		if swapType == ExactOut {
-			toSwap = i256.Zero().Neg(toSwap)
-		}
-
 		amountIn, amountOut, err := op.processRoute(route, toSwap, swapType)
 		if err != nil {
 			return nil, nil, err
