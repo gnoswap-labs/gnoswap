@@ -5,10 +5,20 @@ import (
 	"strings"
 
 	"gno.land/p/demo/avl"
-	
-	ufmt "gno.land/p/demo/ufmt"
+	"gno.land/p/demo/ufmt"
 )
 
+// EncodeUint converts a uint64 number into a zero-padded 20-character string.
+//
+// Parameters:
+// - num (uint64): The number to encode.
+//
+// Returns:
+// - string: A zero-padded string representation of the number.
+//
+// Example:
+// Input: 12345
+// Output: "00000000000000012345"
 func EncodeUint(num uint64) string {
 	// Convert the value to a decimal string.
 	s := strconv.FormatUint(num, 10)
@@ -18,6 +28,20 @@ func EncodeUint(num uint64) string {
 	return strings.Repeat("0", zerosNeeded) + s
 }
 
+// DecodeUint converts a zero-padded string back into a uint64 number.
+//
+// Parameters:
+// - s (string): The zero-padded string.
+//
+// Returns:
+// - uint64: The decoded number.
+//
+// Panics:
+// - If the string cannot be parsed into a uint64.
+//
+// Example:
+// Input: "00000000000000012345"
+// Output: 12345
 func DecodeUint(s string) uint64 {
 	num, err := strconv.ParseUint(s, 10, 64)
 	if err != nil {
@@ -26,10 +50,20 @@ func DecodeUint(s string) uint64 {
 	return num
 }
 
+// UintTree is a wrapper around an AVL tree for storing uint64 keys as strings.
+//
+// Methods:
+// - Get: Retrieves a value associated with a uint64 key.
+// - Set: Stores a value with a uint64 key.
+// - Has: Checks if a uint64 key exists in the tree.
+// - Remove: Removes a uint64 key and its associated value.
+// - Iterate: Iterates over keys and values in a range.
+// - ReverseIterate: Iterates in reverse order over keys and values in a range.
 type UintTree struct {
 	tree *avl.Tree // blockNumber -> interface{}
 }
 
+// NewUintTree creates a new UintTree instance.
 func NewUintTree() *UintTree {
 	return &UintTree{
 		tree: avl.NewTree(),
@@ -68,6 +102,16 @@ func (self *UintTree) ReverseIterate(start, end uint64, fn func(key uint64, valu
 	})
 }
 
+// RewardCacheTree is a wrapper around an AVL tree for managing reward data.
+//
+// Methods:
+// - Get: Retrieves a reward associated with a uint64 key.
+// - Set: Stores a reward with a uint64 key.
+// - Has: Checks if a uint64 key exists in the tree.
+// - Iterate: Iterates over rewards in a range.
+// - CurrentReward: Gets the most recent reward for a given height.
+// - CurrentRewardAt: Gets the exact reward for a given height (panics if not found).
+// - RewardPerInterval: Calculates rewards over an interval using a callback.
 type RewardCacheTree struct {
 	tree *avl.Tree
 }
@@ -116,7 +160,7 @@ func (self *RewardCacheTree) CurrentRewardAt(currentHeight uint64) interface{} {
 	result, ok := self.tree.Get(EncodeUint(currentHeight))
 	if ok {
 		return result
-	}	
+	}
 	panic(ufmt.Sprintf("RewardCacheTree.CurrentRewardAt() || currentHeight: %d, not found", currentHeight))
 }
 

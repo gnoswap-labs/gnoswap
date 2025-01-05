@@ -82,26 +82,6 @@ func InstantiateWarmup(currentHeight int64) []Warmup {
 	return warmups
 }
 
-/*
-func NewWarmups(currentHeight int64, blockDurations []int64, blockRatios []uint64) []Warmup {
-	warmups := make([]Warmup, 0)
-	for i, duration := range blockDurations {
-		warmups = append(warmups, NewWarmup(currentHeight, i, duration, blockRatios[i]))
-		currentHeight += duration
-	}
-	return warmups
-}
-
-func NewWarmup(currentHeight int64, index int, blockDuration int64, ratio uint64) Warmup {
-	return Warmup{
-		Index: index,
-		BlockDuration: blockDuration,
-		NextWarmupHeight: currentHeight + blockDuration,
-		WarmupRatio: ratio,
-	}
-}
-*/
-
 func (warmup *Warmup) Apply(poolReward uint64, positionLiquidity, stakedLiquidity *u256.Uint) (uint64, uint64) {
 	poolRewardUint := u256.NewUint(poolReward)
 	perPositionReward := u256.Zero().Mul(poolRewardUint, positionLiquidity)

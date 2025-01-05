@@ -3,18 +3,20 @@ package staker
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v1/consts"
-
 	"gno.land/p/demo/avl"
-
-	ufmt "gno.land/p/demo/ufmt"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 var q128 = u256.MustFromDecimal(consts.Q128)
 var q192 = u256.MustFromDecimal("6277101735386680763835789423207666416102355444464034512895")
+var pools *Pools
+
+func init() {
+	pools = NewPools()
+}
 
 type Pools struct {
 	tree *avl.Tree // string poolPath -> pool
@@ -25,8 +27,6 @@ func NewPools() *Pools {
 		tree: avl.NewTree(),
 	}
 }
-
-var pools = NewPools()
 
 func (self *Pools) Get(poolPath string) (*Pool, bool) {
 	v, ok := self.tree.Get(poolPath)
@@ -58,7 +58,7 @@ type Pool struct {
 
 	// conceptually equal with Pool.liquidity but only for the staked positions
 	// updated each time when the pool crosses a staked tick
-	stakedLiquidity *UintTree // blockNumber -> *u256.Uint
+	stakedLiquidity       *UintTree // blockNumber -> *u256.Uint
 	lastUnclaimableHeight *uint64
 
 	// cache of the internal reward per liquidity for each pool in tier
@@ -438,7 +438,7 @@ func (self *Pool) UnclaimableInternalReward(poolTier *PoolTier, startHeight, end
 
 	if currentStakedLiquidity.IsZero() {
 		unclaimable += currentTierReward * (endHeight - startHeight)
-	}	
+	}
 
 	return unclaimable
 }

@@ -7,19 +7,20 @@ import (
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
-
 	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
+
 	"gno.land/r/demo/users"
-	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 	en "gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
+
+	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
@@ -64,11 +65,41 @@ var (
 	addrUsedInTest = []std.Address{addr01, addr02}
 )
 
+func CreatePool(t *testing.T,
+	token0 string,
+	token1 string,
+	fee uint32,
+	sqrtPriceX96 string,
+	caller std.Address,
+) {
+	t.Helper()
+
+	std.TestSetRealm(std.NewUserRealm(caller))
+	poolPath := pl.GetPoolPath(token0, token1, fee)
+	if !pl.DoesPoolPathExist(poolPath) {
+		pl.CreatePool(token0, token1, fee, sqrtPriceX96)
+		//SetPoolTierByAdmin(poolPath, TIER_1)
+	}
+}
+
+func LPTokenStake(t *testing.T, owner pusers.AddressOrName, tokenId uint64) {
+	t.Helper()
+	std.TestSetRealm(std.NewUserRealm(users.Resolve(owner)))
+	//StakeToken(tokenId)
+}
+
+func LPTokenUnStake(t *testing.T, owner pusers.AddressOrName, tokenId uint64, unwrap bool) {
+	t.Helper()
+	std.TestSetRealm(std.NewUserRealm(users.Resolve(owner)))
+	//UnstakeToken(tokenId, unwrap)
+}
+
 func InitialisePoolTest(t *testing.T) {
 	t.Helper()
 
 	ugnotFaucet(t, users.Resolve(admin), 100_000_000_000_000)
 	ugnotDeposit(t, users.Resolve(admin), 100_000_000_000_000)
+	TokenFaucet(t, gnsPath, admin)
 
 	std.TestSetOrigCaller(users.Resolve(admin))
 	TokenApprove(t, gnsPath, admin, pool, maxApprove)
@@ -77,7 +108,6 @@ func InitialisePoolTest(t *testing.T) {
 		pl.CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
 	}
 
-	//2. create position
 	std.TestSetOrigCaller(users.Resolve(alice))
 	TokenFaucet(t, wugnotPath, alice)
 	TokenFaucet(t, gnsPath, alice)
@@ -96,6 +126,45 @@ func InitialisePoolTest(t *testing.T) {
 		max_timeout,
 		users.Resolve(alice),
 		users.Resolve(alice),
+	)
+}
+
+func CreateSecondPoolWithoutFee(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+	pl.SetPoolCreationFeeByAdmin(0)
+
+	CreatePool(t,
+		barPath,
+		bazPath,
+		fee3000,
+		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		users.Resolve(admin),
+	)
+}
+
+func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
+	t.Helper()
+
+	// make actual data to test resetting not only position's state but also pool's state
+	std.TestSetRealm(adminRealm)
+
+	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
+	TokenApprove(t, bazPath, admin, pool, consts.UINT64_MAX)
+
+	// mint position
+	return pn.Mint(
+		barPath,
+		bazPath,
+		fee3000,
+		-887220,
+		887220,
+		"50000",
+		"50000",
+		"0",
+		"0",
+		max_timeout,
+		users.Resolve(admin),
+		users.Resolve(admin),
 	)
 }
 
@@ -365,12 +434,6 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 	wugnot.Deposit()
 }
 
-// resetObject resets the object state(clear or make it default values)
-// func resetObject(t *testing.T) {
-// 	positions = make(map[uint64]Position)
-// 	nextId = 1
-// }
-
 // burnAllNFT burns all NFTs
 func burnAllNFT(t *testing.T) {
 	t.Helper()
@@ -413,23 +476,9 @@ func TestBeforeResetObject(t *testing.T) {
 	uassert.Equal(t, liquidity, "50000", "liquidity should be 50000")
 	uassert.Equal(t, amount0, "50000", "amount0 should be 50000")
 	uassert.Equal(t, amount1, "50000", "amount1 should be 50000")
-	// uassert.Equal(t, len(positions), 1, "positions should have 1 position")
-	// uassert.Equal(t, nextId, uint64(2), "nextId should be 2")
 	uassert.Equal(t, gnft.TotalSupply(), uint64(1), "gnft total supply should be 1")
 	uassert.Equal(t, pl.PoolGetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"), "50000", "pool liquidity should be 50000")
 }
-
-// func TestResetObject(t *testing.T) {
-// 	resetObject(t)
-
-// 	uassert.Equal(t, len(positions), 0, "positions should be empty")
-// 	uassert.Equal(t, nextId, uint64(1), "nextId should be 1")
-// }
-
-// func TestBurnAllNFT(t *testing.T) {
-// 	burnAllNFT(t)
-// 	uassert.Equal(t, gnft.TotalSupply(), uint64(0), "gnft total supply should be 0")
-// }
 
 func deletePoolTier(t *testing.T, poolPath string) {
 	poolTier.changeTier(uint64(std.GetHeight()), poolPath, 0)

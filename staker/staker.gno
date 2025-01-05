@@ -105,13 +105,14 @@ func (self *ExternalIncentives) Size() int {
 }
 
 var (
-	/* common */
-
 	// deposits stores deposit information for each tokenId
 	deposits *Deposits = NewDeposits()
 
 	// externalIncenvies stores external incentive information for each incentiveId
 	externalIncenvies *ExternalIncentives = NewExternalIncentives()
+
+	// poolTier stores pool tier information
+	poolTier *PoolTier
 )
 
 const (
@@ -135,7 +136,6 @@ func init() {
 	// poolTier.changeTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1, 1)
 	poolTier = NewPoolTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1)
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1) // must update pools tree
-
 }
 
 // StakeToken stakes an LP token into the staker contract. It transfer the LP token
@@ -439,6 +439,7 @@ func calculateGnsBalance() uint64 {
 	return gnsBalance(consts.STAKER_ADDR) - externalGnsAmount() - externalDepositGnsAmount()
 }
 */
+
 ////////////////////////////////////////////////////////////
 
 // UnstakeToken withdraws an LP token from staking, collecting all pending rewards

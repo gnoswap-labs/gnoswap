@@ -111,6 +111,12 @@ func CreateExternalIncentive(
 		gns.GetAvgBlockTimeInMs(),
 	)
 
+	if externalIncenvies.Has(incentiveId) {
+		panic(addDetailToError(
+			errIncentiveAlreadyExists,
+			ufmt.Sprintf("incentiveId(%s)", incentiveId),
+		))
+	}
 	// store external incentive information for each incentiveId
 	externalIncenvies.Set(incentiveId, incentive)
 

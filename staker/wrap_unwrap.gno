@@ -9,18 +9,26 @@ import (
 	"gno.land/r/gnoswap/v1/consts"
 )
 
+// wrap converts `ugnot` tokens into `wugnot` tokens.
+//
+// Parameters:
+// - ugnotAmount (uint64): The amount of `ugnot` to wrap.
+//
+// Panics:
+// - If `ugnotAmount` is less than or equal to 0.
+// - If `ugnotAmount` is less than the minimum deposit required (`consts.UGNOT_MIN_DEPOSIT_TO_WRAP`).
 func wrap(ugnotAmount uint64) {
 	if ugnotAmount <= 0 {
 		panic(addDetailToError(
 			errWrapUnwrap,
-			"wrap.gno__wrap() || cannot wrap 0 ugnot",
+			"cannot wrap 0 ugnot",
 		))
 	}
 
 	if ugnotAmount < consts.UGNOT_MIN_DEPOSIT_TO_WRAP {
 		panic(addDetailToError(
 			errWugnotMinimum,
-			ufmt.Sprintf("wrap.gno__wrap() || amount(%d) < minimum(%d)", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP),
+			ufmt.Sprintf("amount(%d) < minimum(%d)", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP),
 		))
 	}
 
@@ -29,16 +37,23 @@ func wrap(ugnotAmount uint64) {
 	banker.SendCoins(consts.STAKER_ADDR, consts.WUGNOT_ADDR, std.Coins{{Denom: "ugnot", Amount: int64(ugnotAmount)}})
 	wugnot.Deposit() // STAKER HAS WUGNOT
 	// SEND WUGNOT: STAKER -> USER
-	wugnot.Transfer(a2u(std.PrevRealm().Addr()), ugnotAmount)
+	wugnot.Transfer(a2u(getPrevAddr()), ugnotAmount)
 }
 
+// unwrap converts `wugnot` tokens back into `ugnot` tokens.
+//
+// Parameters:
+// - wugnotAmount (uint64): The amount of `wugnot` to unwrap.
+//
+// Note:
+// - If `wugnotAmount` is 0, the function simply returns without executing further steps.
 func unwrap(wugnotAmount uint64) {
 	if wugnotAmount == 0 {
 		return
 	}
 
 	// SEND WUGNOT: USER -> STAKER
-	wugnot.TransferFrom(a2u(std.PrevRealm().Addr()), a2u(consts.STAKER_ADDR), wugnotAmount)
+	wugnot.TransferFrom(a2u(getPrevAddr()), a2u(consts.STAKER_ADDR), wugnotAmount)
 
 	// UNWRAP IT
 	wugnot.Withdraw(wugnotAmount)
