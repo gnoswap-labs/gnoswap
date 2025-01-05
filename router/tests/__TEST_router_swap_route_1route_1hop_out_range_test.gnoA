@@ -1,8 +1,9 @@
-package router
+package tests
 
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/uassert"
@@ -66,6 +67,7 @@ func TestDrySwapRouteBazBarExactIn(t *testing.T) {
 		"EXACT_IN", // swapType
 		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
 		"100", // quoteArr
+		"1",   // tokenAmountLimit
 	)
 
 	uassert.Equal(t, dryResult, "367")
@@ -76,15 +78,16 @@ func TestSwapRouteBazBarExactIn(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-ROUTER-012] slippage || router.gno__finalizeSwap() || too few received for user (expected minimum: 2710, actual: 367, swapType: EXACT_IN)`,
+		`[GNOSWAP-ROUTER-002] slippage check failed || ExactIn: too few received (min:2710, got:367)`,
 		func() {
 			ExactInSwapRoute(
-				bazPath,    // inputToken
-				barPath,    // outputToken
-				"1000",     // amountSpecified
+				bazPath, // inputToken
+				barPath, // outputToken
+				"1000",  // amountSpecified
 				"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
 				"100",  // quoteArr
 				"2710", // tokenAmountLimit ( too few recieved (expected 2710, got 300))
+				time.Now().Add(time.Hour).Unix(),
 			)
 		},
 	)

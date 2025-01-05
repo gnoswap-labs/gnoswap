@@ -103,7 +103,7 @@ func (op *baseSwapOperation) validateRouteQuote(quote string, i int) (*i256.Int,
 
 	// calculate amount to swap for this route
 	toSwap := i256.Zero().Mul(op.amountSpecified, i256.NewInt(int64(qt)))
-	toSwap = toSwap.Div(toSwap, i256.NewInt(100))
+	toSwap = i256.Zero().Div(toSwap, i256.NewInt(100))
 
 	return toSwap, nil
 }
@@ -116,10 +116,6 @@ func (op *baseSwapOperation) processRoutes(swapType SwapType) (*u256.Uint, *u256
 		toSwap, err := op.validateRouteQuote(op.quotes[i], i)
 		if err != nil {
 			return nil, nil, err
-		}
-
-		if swapType == ExactOut {
-			toSwap = i256.Zero().Neg(toSwap)
 		}
 
 		amountIn, amountOut, err := op.processRoute(route, toSwap, swapType)

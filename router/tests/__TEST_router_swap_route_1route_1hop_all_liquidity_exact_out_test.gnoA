@@ -1,8 +1,9 @@
-package router
+package tests
 
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/uassert"
 
@@ -50,6 +51,9 @@ func TestPositionMint(t *testing.T) {
 func TestSwapRouteBarBazExactOut(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"
 
+	CreatePoolWithoutFee(t)
+	MakeForthMintPositionWithoutFee(t)
+
 	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -57,15 +61,16 @@ func TestSwapRouteBarBazExactOut(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-ROUTER-012] slippage || router.gno__finalizeSwap() || too few received for user (expected minimum: 120000, actual: 99997, swapType: EXACT_OUT)`,
+		`[GNOSWAP-ROUTER-002] slippage check failed || ExactOut: too much spent (max:0, used:168406)`,
 		func() {
 			amountIn, amountOut := ExactOutSwapRoute(
-				barPath,     // inputToken
-				bazPath,     // outputToken
-				"120000",    // amountSpecified
-				poolPath,    // strRouteArr
-				"100",       // quoteArr
-				"0",         // tokenAmountLimit
+				barPath,  // inputToken
+				bazPath,  // outputToken
+				"120000", // amountSpecified
+				poolPath, // strRouteArr
+				"100",    // quoteArr
+				"0",      // tokenAmountLimit
+				time.Now().Add(time.Hour).Unix(),
 			)
 		},
 	)

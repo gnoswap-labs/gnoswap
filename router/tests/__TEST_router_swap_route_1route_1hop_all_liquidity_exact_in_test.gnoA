@@ -1,8 +1,9 @@
-package router
+package tests
 
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/uassert"
 
@@ -50,6 +51,9 @@ func TestPositionMint(t *testing.T) {
 func TestSwapRouteBarBazExactIn(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"
 
+	CreatePoolWithoutFee(t)
+	MakeForthMintPositionWithoutFee(t)
+
 	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -57,21 +61,22 @@ func TestSwapRouteBarBazExactIn(t *testing.T) {
 
 	// spend all baz in pool
 	amountIn, amountOut := ExactInSwapRoute(
-		barPath,    // inputToken
-		bazPath,    // outputToken
-		"140000",   // amountSpecified
-		poolPath,   // strRouteArr
-		"100",      // quoteArr
-		"0",        // tokenAmountLimit
+		barPath,  // inputToken
+		bazPath,  // outputToken
+		"140000", // amountSpecified
+		poolPath, // strRouteArr
+		"100",    // quoteArr
+		"0",      // tokenAmountLimit
+		time.Now().Add(time.Hour).Unix(),
 	)
 
-	uassert.Equal(t, amountIn, "135049")
-	uassert.Equal(t, amountOut, "-99848")
+	uassert.Equal(t, amountIn, "140000")
+	uassert.Equal(t, amountOut, "-105765")
 
 	pool := pl.GetPool(barPath, bazPath, fee500)
 	poolLiq := pool.Liquidity()
-	uassert.Equal(t, poolLiq.ToString(), "0")
+	uassert.Equal(t, poolLiq.ToString(), "435768")
 
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
-	uassert.Equal(t, poolTick, int32(-887270))
+	uassert.Equal(t, poolTick, int32(-5569))
 }

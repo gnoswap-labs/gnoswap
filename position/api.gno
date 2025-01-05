@@ -73,10 +73,14 @@ func ApiGetPositions() string {
 	// RESPONSE (ARRAY) NODE
 	responses := json.ArrayNode("", []*json.Node{})
 	for _, position := range r.Response {
+		owner, err := gnft.OwnerOf(tokenIdFrom(position.LpTokenId))
+		if err != nil {
+			owner = consts.ZERO_ADDRESS
+		}
 		positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
-			"owner":                    json.StringNode("owner", gnft.OwnerOf(tokenIdFrom(position.LpTokenId)).String()),
+			"owner":                    json.StringNode("owner", owner.String()),
 			"operator":                 json.StringNode("operator", position.Operator),
 			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
 			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
@@ -135,10 +139,14 @@ func ApiGetPosition(lpTokenId uint64) string {
 	// RESPONSE (ARRAY) NODE
 	responses := json.ArrayNode("", []*json.Node{})
 	for _, position := range r.Response {
+		owner, err := gnft.OwnerOf(tokenIdFrom(position.LpTokenId))
+		if err != nil {
+			owner = consts.ZERO_ADDRESS
+		}
 		positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
-			"owner":                    json.StringNode("owner", gnft.OwnerOf(tokenIdFrom(position.LpTokenId)).String()),
+			"owner":                    json.StringNode("owner", owner.String()),
 			"operator":                 json.StringNode("operator", position.Operator),
 			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
 			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
@@ -199,10 +207,14 @@ func ApiGetPositionsByPoolPath(poolPath string) string {
 	// RESPONSE (ARRAY) NODE
 	responses := json.ArrayNode("", []*json.Node{})
 	for _, position := range r.Response {
+		owner, err := gnft.OwnerOf(tokenIdFrom(position.LpTokenId))
+		if err != nil {
+			owner = consts.ZERO_ADDRESS
+		}
 		positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
-			"owner":                    json.StringNode("owner", gnft.OwnerOf(tokenIdFrom(position.LpTokenId)).String()),
+			"owner":                    json.StringNode("owner", owner.String()),
 			"operator":                 json.StringNode("operator", position.Operator),
 			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
 			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
@@ -237,7 +249,12 @@ func ApiGetPositionsByAddress(address std.Address) string {
 	rpcPositions := []RpcPosition{}
 	for lpTokenId := uint64(1); lpTokenId < nextId; lpTokenId++ {
 		position := MustGetPosition(lpTokenId)
-		if !(position.operator == address || gnft.OwnerOf(tokenIdFrom(lpTokenId)) == address) {
+		tokenOwner, err := gnft.OwnerOf(tokenIdFrom(lpTokenId))
+		if err != nil {
+			tokenOwner = consts.ZERO_ADDRESS
+		}
+
+		if !(position.operator == address || tokenOwner == address) {
 			continue
 		}
 
@@ -262,10 +279,14 @@ func ApiGetPositionsByAddress(address std.Address) string {
 	// RESPONSE (ARRAY) NODE
 	responses := json.ArrayNode("", []*json.Node{})
 	for _, position := range r.Response {
+		owner, err := gnft.OwnerOf(tokenIdFrom(position.LpTokenId))
+		if err != nil {
+			owner = consts.ZERO_ADDRESS
+		}
 		positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
-			"owner":                    json.StringNode("owner", gnft.OwnerOf(tokenIdFrom(position.LpTokenId)).String()),
+			"owner":                    json.StringNode("owner", owner.String()),
 			"operator":                 json.StringNode("operator", position.Operator),
 			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
 			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
@@ -400,10 +421,15 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 		unclaimedFee0, unclaimedFee1 = unclaimedFee(lpTokenId)
 	}
 
+	owner, err := gnft.OwnerOf(tokenIdFrom(lpTokenId))
+	if err != nil {
+		owner = consts.ZERO_ADDRESS
+	}
+
 	return RpcPosition{
 		LpTokenId:                lpTokenId,
 		Burned:                   burned,
-		Owner:                    gnft.OwnerOf(tokenIdFrom(lpTokenId)).String(),
+		Owner:                    owner.String(),
 		Operator:                 position.operator.String(),
 		PoolKey:                  position.poolKey,
 		TickLower:                position.tickLower,
