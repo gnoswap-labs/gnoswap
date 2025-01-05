@@ -353,6 +353,12 @@ func (self *PoolTier) TierRewardUpdates(poolPath string, startHeight, endHeight 
 
 	currentTier := uint64(0)
 
+	self.membershipOf(poolPath).ReverseIterate(0, startHeight, func(key uint64, value interface{}) bool {
+		heights = append(heights, key)
+		updates = append(updates, value.(uint64))
+		return true
+	})
+
 	self.membershipOf(poolPath).Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
 		heights, updates = self.cachePerMembership(heights, updates, poolPath, currentTier, startHeight, endHeight)
 

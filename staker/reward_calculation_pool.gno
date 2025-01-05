@@ -413,12 +413,10 @@ func (self *Pool) UnclaimableInternalReward(poolTier *PoolTier, startHeight, end
 
 	unclaimable := uint64(0)
 
-	currentStakedLiquidity := self.CurrentStakedLiquidity(startHeight)
-
 	for i := 1; i < len(tierRewardHeights); i++ {
 		endHeight := tierRewardHeights[i]
 
-		currentStakedLiquidity = self.CurrentStakedLiquidity(startHeight)
+		currentStakedLiquidity := self.CurrentStakedLiquidity(startHeight)
 		self.stakedLiquidity.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
 			if currentStakedLiquidity.IsZero() {
 				unclaimable += currentTierReward * (height - startHeight)
@@ -435,6 +433,17 @@ func (self *Pool) UnclaimableInternalReward(poolTier *PoolTier, startHeight, end
 		startHeight = endHeight
 		currentTierReward = tierRewardUpdates[i]
 	}
+
+	currentStakedLiquidity := self.CurrentStakedLiquidity(startHeight)
+
+	self.stakedLiquidity.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
+		if currentStakedLiquidity.IsZero() {
+			unclaimable += currentTierReward * (height - startHeight)
+		}
+		startHeight = height
+		currentStakedLiquidity = value.(*u256.Uint)
+		return false
+	})
 
 	if currentStakedLiquidity.IsZero() {
 		unclaimable += currentTierReward * (endHeight - startHeight)

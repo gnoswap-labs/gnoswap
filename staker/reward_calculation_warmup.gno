@@ -17,7 +17,7 @@ type Warmup struct {
 	WarmupRatio      uint64
 }
 
-var warmupTemplate []Warmup = DefaultWarmupTemplate(std.GetHeight())
+var warmupTemplate []Warmup = DefaultWarmupTemplate()
 
 func DefaultWarmupTemplate() []Warmup {
 	msInDay := int64(86400000)
