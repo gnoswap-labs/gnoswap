@@ -60,14 +60,16 @@ func Delegate(to std.Address, amount uint64) {
 
 	caller := std.PrevRealm().Addr()
 
+	rewardState.AddStake(uint64(std.GetHeight()), caller, amount, currentBalance())
+
 	// GNS // caller -> GovStaker
 	gns.TransferFrom(a2u(caller), a2u(std.CurrentRealm().Addr()), amount)
 
-	// xGNS mint to caller
-	xgns.Mint(a2u(caller), amount)
-
 	// actual delegate
 	delegate(to, amount)
+
+	// xGNS mint to caller
+	xgns.Mint(a2u(caller), amount)
 
 	//prevAddr, prevPkgPath := getPrev()
 	//std.Emit(
@@ -141,8 +143,6 @@ func Undelegate(from std.Address, amount uint64) {
 		cleanDelegationStatHistory()
 	}
 
-	CollectReward()
-
 	if !from.IsValid() {
 		panic(addDetailToError(
 			errInvalidAddress,
@@ -167,8 +167,12 @@ func Undelegate(from std.Address, amount uint64) {
 		))
 	}
 
+	reward := rewardState.RemoveStake(caller, amount, currentBalance())
+
 	// burn equivalent amount of xGNS
 	xgns.Burn(a2u(caller), amount)
+
+	gns.Transfer(a2u(caller), reward)
 
 	// actual undelegate
 	undelegate(from, amount)
@@ -203,7 +207,6 @@ func Undelegate(from std.Address, amount uint64) {
 func CollectUndelegatedGns() uint64 {
 	common.IsHalted()
 	en.MintAndDistributeGns()
-	calculateReward()
 
 	caller := std.PrevRealm().Addr()
 
@@ -262,10 +265,15 @@ func CollectReward() {
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
-	calculateReward()
+	// calculateReward()
+
 
 	prevAddr, prevPkgPath := getPrev()
 	caller := std.PrevRealm().Addr()
+
+	reward := rewardState.Claim(caller, currentBalance())
+
+	gns.Transfer(a2u(caller), reward)
 
 	// TODO:
 	emissionReward := collectEmissionReward(caller)
@@ -304,8 +312,6 @@ func CollectRewardFromLaunchPad(to std.Address) {
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
-	calculateReward()
-
 	prevAddr, prevPkgPath := getPrev()
 
 	// TODO::
@@ -343,7 +349,7 @@ func collectEmissionReward(addr std.Address) uint64 {
 		return 0
 	}
 
-	govStakerGnsBalance := gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))
+	govStakerGnsBalance := xgns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))
 	if govStakerGnsBalance < emissionReward {
 		panic(addDetailToError(
 			errNotEnoughBalance,

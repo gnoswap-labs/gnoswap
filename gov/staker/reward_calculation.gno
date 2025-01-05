@@ -3,17 +3,176 @@ package staker
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v1/gov/xgns"
-
 	en "gno.land/r/gnoswap/v1/emission"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
+	ufmt "gno.land/p/demo/ufmt"
 	"gno.land/p/demo/avl"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/gov/xgns"
 )
+
+var (
+	currentGNSBalance uint64
+)
+
+func currentBalance() uint64 {
+	// TODO: implement this after checking gns distribution is working
+	// pf.DistributeProtocolFee()
+	// accuProtocolFee := pf.GetAccuTransferToGovStaker()
+	// pf.ClearAccuTransferToGovStaker()
+
+	gotGnsForEmission = en.GetDistributedToGovStaker()
+	en.ClearDistributedToGovStaker()
+
+	currentGNSBalance += gotGnsForEmission
+
+	return currentGNSBalance
+}
+
+type StakerRewardInfo struct {
+	StartHeight uint64 // height when staker started staking
+	PriceDebt *u256.Uint // price debt per xGNS stake, Q128
+	Amount uint64 // amount of xGNS staked
+	Claimed uint64 // amount of GNS reward claimed so far
+}
+
+func (self *StakerRewardInfo) Debug() string {
+	return ufmt.Sprintf("{ StartHeight: %d, PriceDebt: %d, Amount: %d, Claimed: %d }", self.StartHeight, self.PriceDebtUint64(), self.Amount, self.Claimed)
+}
+
+func (self *StakerRewardInfo) PriceDebtUint64() uint64 {
+	return u256.Zero().Rsh(self.PriceDebt, 128).Uint64()
+}
+
+
+type RewardState struct {
+	// CurrentBalance is sum of all the previous balances, including the reward distribution.
+	CurrentBalance uint64 // current balance of gov_staker, used to calculate RewardAccumulation
+	PriceAccumulation *u256.Uint // claimable GNS per xGNS stake, Q128
+	// RewardAccumulation *u256.Uint // reward accumulated so far, Q128
+	TotalStake uint64 // total xGNS staked
+
+	info *avl.Tree // address -> StakerRewardInfo
+}
+
+func NewRewardState() *RewardState {
+	return &RewardState {
+		info: avl.NewTree(),
+		CurrentBalance: 0,
+		PriceAccumulation: u256.Zero(),
+		TotalStake: 0,
+	}
+}
+
+var rewardState = NewRewardState()
+
+func (self *RewardState) Debug() string {
+	return ufmt.Sprintf("{ CurrentBalance: %d, PriceAccumulation: %d, TotalStake: %d, info: len(%d) }", self.CurrentBalance, self.PriceAccumulationUint64(), self.TotalStake, self.info.Size())
+}
+
+func (self *RewardState) Info(staker std.Address) StakerRewardInfo {
+	infoI, exists := self.info.Get(staker.String())
+	if !exists {
+		panic(ufmt.Sprintf("staker %s not found", staker.String()))
+	}
+	return infoI.(StakerRewardInfo)
+}
+
+func (self *RewardState) CalculateReward(staker std.Address) uint64 {
+	info := self.Info(staker)
+	stakerPrice := u256.Zero().Sub(self.PriceAccumulation, info.PriceDebt)
+	reward := stakerPrice.Mul(stakerPrice, u256.NewUint(info.Amount))
+	reward = reward.Rsh(reward, 128)
+	return reward.Uint64()
+}
+
+func (self *RewardState) PriceAccumulationUint64() uint64 {
+	return u256.Zero().Rsh(self.PriceAccumulation, 128).Uint64()
+}
+
+
+// amount MUST be less than or equal to the amount of xGNS staked
+// This function does not check it
+func (self *RewardState) deductReward(staker std.Address, currentBalance uint64) uint64 {
+	info := self.Info(staker)
+	stakerPrice := u256.Zero().Sub(self.PriceAccumulation, info.PriceDebt)
+	reward := stakerPrice.Mul(stakerPrice, u256.NewUint(info.Amount))
+	reward = reward.Rsh(reward, 128)
+	reward64 := reward.Uint64()
+
+	info.Claimed += reward64
+	self.info.Set(staker.String(), info)
+
+	self.CurrentBalance = currentBalance - reward64
+
+	return reward64
+}
+
+// This function MUST be called as a part of AddStake or RemoveStake
+// CurrentBalance / StakeChange / IsRemoveStake will be updated in those functions
+func (self *RewardState) finalize(currentBalance uint64) {
+	delta := currentBalance - self.CurrentBalance
+
+	if self.TotalStake == uint64(0) {
+		// no staker
+		return
+	}
+
+	price := u256.NewUint(delta)
+	price = price.Lsh(price, 128)
+	price = price.Div(price, u256.NewUint(self.TotalStake))
+	self.PriceAccumulation.Add(self.PriceAccumulation, price)
+	self.CurrentBalance = currentBalance
+}
+
+func (self *RewardState) AddStake(currentHeight uint64, staker std.Address, amount uint64, currentBalance uint64) {	
+	if self.info.Has(staker.String()) {
+		panic(ufmt.Sprintf("staker %s already exists", staker.String()))
+	}
+
+	self.finalize(currentBalance)
+
+	self.TotalStake += amount
+
+
+	info := StakerRewardInfo {
+		StartHeight: currentHeight,
+		PriceDebt: self.PriceAccumulation.Clone(),
+		Amount: amount,
+		Claimed: 0,
+	}
+	
+	self.info.Set(staker.String(), info)
+}
+
+func (self *RewardState) Claim(staker std.Address, currentBalance uint64) uint64 {
+	if !self.info.Has(staker.String()) {
+		return 0
+	}
+
+	self.finalize(currentBalance)
+
+	reward := self.deductReward(staker, currentBalance)
+
+	return reward
+}
+
+func (self *RewardState) RemoveStake(staker std.Address, amount uint64, currentBalance uint64) uint64 {
+	self.finalize(currentBalance)
+	
+	reward := self.deductReward(staker, currentBalance)
+
+	self.info.Remove(staker.String())
+
+	self.TotalStake -= amount
+
+	return reward
+}
 
 var (
 	q96                  = u256.MustFromDecimal(consts.Q96)
@@ -65,18 +224,20 @@ func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
 
 	common.IsHalted()
 	en.MintAndDistributeGns()
-	calculateReward()
 
 	currentAmount := getAmountByProjectWallet(addr)
 	if add {
 		amountByProjectWallet.Set(addr.String(), currentAmount+amount)
+		rewardState.AddStake(uint64(std.GetHeight()), caller, amount, currentBalance())
 	} else {
 		amountByProjectWallet.Set(addr.String(), currentAmount-amount)
+		rewardState.RemoveStake(caller, amount, currentBalance())
 	}
+
 }
 
 // LAUCNHAPD DEPOSIT ===
-
+/*
 func calculateReward() {
 	height := uint64(std.GetHeight())
 	if height <= lastCalculatedHeight {
@@ -120,7 +281,7 @@ func calculateReward() {
 
 	lastCalculatedHeight = height
 }
-
+*/
 // calculateXGnsRatio calculates the ratio of user's xGNS amount to total xGNS supply
 func calculateXGnsRatio(amount uint64, xGnsX96 *u256.Uint) *u256.Uint {
 	xGnsAmountX96 := new(u256.Uint).Mul(u256.NewUint(amount), q96)

@@ -35,7 +35,6 @@ var (
 // GetDelegatedCumulative gets the cumulative delegated amount for an address at a certain timestamp.
 func GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
 	en.MintAndDistributeGns()
-	calculateReward()
 
 	if !delegator.IsValid() {
 		panic(addDetailToError(

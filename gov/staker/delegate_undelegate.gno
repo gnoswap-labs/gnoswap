@@ -15,7 +15,7 @@ var (
 	delegatedFromTo = avl.NewTree() // caller => to => amount
 	delegatedTo     = avl.NewTree() // to => amount
 )
-
+ 
 func delegate(to std.Address, amount uint64) {
 	caller := std.PrevRealm().Addr().String()
 	toStr := to.String()

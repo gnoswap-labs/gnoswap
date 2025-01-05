@@ -13,7 +13,6 @@ import (
 // GetLockedAmount gets the total locked amount of GNS.
 func GetLockedAmount() uint64 {
 	en.MintAndDistributeGns()
-	calculateReward()
 
 	return lockedAmount
 }
@@ -23,7 +22,6 @@ func GetLockedAmount() uint64 {
 // - claimable amount
 func GetLockedInfoByAddress(addr std.Address) string {
 	en.MintAndDistributeGns()
-	calculateReward()
 
 	lockeds, exist := addrLockedGns.Get(addr.String())
 	if !exist {
@@ -58,7 +56,6 @@ func GetLockedInfoByAddress(addr std.Address) string {
 
 func GetClaimableRewardByAddress(addr std.Address) string {
 	en.MintAndDistributeGns()
-	calculateReward()
 
 	emissionReward, exist := userEmissionReward.Get(addr.String())
 	if !exist {
