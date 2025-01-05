@@ -175,10 +175,10 @@ func testCollectReward01(t *testing.T) {
 		// 1 block of staker's emission reward == 10702055
 		// 30% as reward, 70% as penalty for position_01
 
-		// panic: insufficient balance
+		gnsBefore := gns.BalanceOf(admin)
 		CollectReward(1, false)
-		// unclaimableInternal 42808216
-		// @mconcat FIXME, THIS IS TOO MUCH
+		gnsAfter := gns.BalanceOf(admin)
+		uassert.Equal(t, gnsAfter-gnsBefore, uint64(3210616))
 
 		std.TestSkipHeights(1)
 	})

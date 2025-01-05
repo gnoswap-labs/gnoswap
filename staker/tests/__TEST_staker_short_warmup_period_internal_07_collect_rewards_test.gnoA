@@ -283,8 +283,6 @@ func testCollectAfterSingleBlock(t *testing.T) {
 
 		std.TestSetRealm(adminRealm)
 
-		// FIXME @mconcat
-		// panic: slice index out of bounds: 0 (len=0)
 		CollectReward(1, false)
 	})
 }
