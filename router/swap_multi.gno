@@ -12,7 +12,7 @@ import (
 func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath string) (*u256.Uint, *u256.Uint) { // firstAmountIn, lastAmountOut
 	firstAmountIn := u256.Zero()
 
-	payer := std.PrevRealm().Addr() // user
+	payer := getPrevAddr() // user
 
 	for {
 		var recipient std.Address
@@ -50,7 +50,6 @@ func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath strin
 		params.tokenIn = nextInput
 		params.tokenOut = nextOutput
 		params.fee = nextFee
-
 		params.amountSpecified = i256.FromUint256(amountOut)
 	}
 }
@@ -137,7 +136,7 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.
 func multiDrySwap(params SwapParams, currentPoolIndex, numPool int, swapPath string) (*u256.Uint, *u256.Uint) { // firstAmountIn, lastAmountOut
 	firstAmountIn := u256.Zero()
 
-	payer := std.GetOrigCaller() // user
+	payer := getPrevAddr() // user
 
 	for {
 		currentPoolIndex++
@@ -162,8 +161,8 @@ func multiDrySwap(params SwapParams, currentPoolIndex, numPool int, swapPath str
 		}
 
 		payer = consts.ROUTER_ADDR
-		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
 
+		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
 		params.tokenIn = nextInput
 		params.tokenOut = nextOutput
 		params.fee = nextFee
