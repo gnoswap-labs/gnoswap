@@ -151,16 +151,13 @@ func (self *ExternalIncentive) RewardLeft(currentHeight uint64) uint64 {
 }
 
 type Deposit struct {
-	owner          std.Address // owner address
-	stakeTimestamp int64       // staked time
-	stakeHeight    int64       // staked block height
-
-	targetPoolPath string     // staked position's pool path
-	tickLower      int32      // tick lower
-	tickUpper      int32      // tick upper
-	liquidity      *u256.Uint // liquidity
-
-	lastCollectHeight uint64 // last collect block height
-
-	warmups []Warmup // warmup information
+	owner             std.Address // owner address
+	stakeTimestamp    int64       // staked time
+	stakeHeight       int64       // staked block height
+	targetPoolPath    string      // staked position's pool path
+	tickLower         int32       // tick lower
+	tickUpper         int32       // tick upper
+	liquidity         *u256.Uint  // liquidity
+	lastCollectHeight uint64      // last collect block height
+	warmups           []Warmup    // warmup information
 }

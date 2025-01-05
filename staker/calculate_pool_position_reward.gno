@@ -2,10 +2,7 @@ package staker
 
 import (
 	"gno.land/r/gnoswap/v1/consts"
-
 	"gno.land/r/gnoswap/v1/gns"
-
-	ufmt "gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -95,7 +92,6 @@ func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits
 	}
 
 	pool.cacheInternalReward(poolTier, currentHeight)
-
 
 	pool.cacheExternalReward(currentHeight)
 

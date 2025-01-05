@@ -1,11 +1,9 @@
 package staker
 
 import (
-	//"std"
 	"math"
 
 	"gno.land/p/demo/avl"
-
 	"gno.land/p/demo/ufmt"
 )
 
@@ -21,6 +19,15 @@ type TierRatio struct {
 	Tier3 uint64
 }
 
+// TierRatioFromCounts calculates the ratio distribution for each tier based on pool counts.
+//
+// Parameters:
+// - tier1Count (uint64): Number of pools in tier 1.
+// - tier2Count (uint64): Number of pools in tier 2.
+// - tier3Count (uint64): Number of pools in tier 3.
+//
+// Returns:
+// - *TierRatio: The ratio distribution across tier 1, 2, and 3.
 func TierRatioFromCounts(tier1Count, tier2Count, tier3Count uint64) *TierRatio {
 	// tier1 always exists
 	if tier2Count == 0 && tier3Count == 0 {
@@ -67,12 +74,24 @@ func (self *TierRatio) Get(tier uint64) uint64 {
 	}
 }
 
+// PoolTier manages pool counts, ratios, and rewards for different tiers.
+//
+// Fields:
+// - count: Stores the number of pools for each tier (blockNumber -> pool count).
+// - tierRatio: Stores the ratio distribution for each tier (blockNumber -> TierRatio).
+// - membership: Tracks which tier a pool belongs to (poolPath -> blockNumber -> tier).
+// - rewardCache: Stores cached rewards for each tier (blockNumber -> reward).
+//
+// Methods:
+// - CurrentCount: Returns the current count of pools in a tier at a specific height.
+// - CurrentRatio: Returns the current ratio for a tier at a specific height.
+// - CurrentTier: Returns the tier of a specific pool at a given height.
+// - CurrentReward: Retrieves the reward for a tier at a specific height.
+// - changeTier: Updates the tier of a pool and recalculates ratios.
 type PoolTier struct {
-	count [4]*UintTree // blockNumber -> uint64 poolCount
-
-	tierRatio *UintTree // blockNumber -> TierRatio
-
-	membership *avl.Tree // poolPath -> blockNumber -> tier(0(deleted), 1, 2, 3)
+	count      [4]*UintTree // blockNumber -> uint64 poolCount
+	tierRatio  *UintTree    // blockNumber -> TierRatio
+	membership *avl.Tree    // poolPath -> blockNumber -> tier(0(deleted), 1, 2, 3)
 
 	// rewardCache is used to calculate internal reward for each tier
 	// rewardCache = (per block emission) / (number of pools in tier) * (tier's ratio)
@@ -80,9 +99,7 @@ type PoolTier struct {
 	lastRewardCacheHeight *uint64
 }
 
-var poolTier *PoolTier
-
-func NewPoolTier(currentHeight uint64, mustExistsInTier1 string) *PoolTier {
+func NewPoolTier(currentHeight uint64, poolPath string) *PoolTier {
 	result := &PoolTier{
 		count: [4]*UintTree{
 			nil,
@@ -104,7 +121,7 @@ func NewPoolTier(currentHeight uint64, mustExistsInTier1 string) *PoolTier {
 	result.count[2].Set(currentHeight, uint64(0))
 	result.count[3].Set(currentHeight, uint64(0))
 	result.tierRatio.Set(currentHeight, TierRatioFromCounts(uint64(1), uint64(0), uint64(0)))
-	result.membershipOf(mustExistsInTier1).Set(currentHeight, uint64(1))
+	result.membershipOf(poolPath).Set(currentHeight, uint64(1))
 	return result
 }
 
@@ -352,14 +369,14 @@ func (self *PoolTier) TierRewardUpdates(poolPath string, startHeight, endHeight 
 }
 
 func nextHeightUpdateI(
-	emissionUpdateHeights []uint64, 
+	emissionUpdateHeights []uint64,
 	emissionUpdateI int,
-	countUpdateHeights []uint64, 
+	countUpdateHeights []uint64,
 	countUpdateI int,
-	ratioUpdateHeights []uint64, 
+	ratioUpdateHeights []uint64,
 	ratioUpdateI int,
 ) (
-	nextHeight uint64, 
+	nextHeight uint64,
 	nextEmissionUpdateI, nextCountUpdateI, nextRatioUpdateI int,
 ) {
 	// Use a sentinel so that a “finished” slice does not interfere
@@ -473,11 +490,11 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
 
 	for emissionUpdateI < len(emissionUpdateHeights) || countUpdateI < len(countUpdateHeights) || ratioUpdateI < len(ratioUpdateHeights) {
 		currentHeight, emissionUpdateI, countUpdateI, ratioUpdateI = nextHeightUpdateI(
-			emissionUpdateHeights, 
+			emissionUpdateHeights,
 			emissionUpdateI,
-			countUpdateHeights, 
+			countUpdateHeights,
 			countUpdateI,
-			ratioUpdateHeights, 
+			ratioUpdateHeights,
 			ratioUpdateI,
 		)
 
@@ -491,7 +508,6 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
 			currentRatio = ratioUpdates[ratioUpdateI]
 		}
 
-
 		if currentCount == 0 {
 			rewardCache.Set(currentHeight, uint64(0))
 		} else {
@@ -501,6 +517,12 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
 	}
 }
 
+// cacheReward calculates and caches rewards for all tiers within a height range.
+//
+// Parameters:
+// - endHeight (uint64): The end height for reward caching.
+// - emissionUpdateHeights ([]uint64): Heights where emission updates occur.
+// - emissionUpdates ([]uint64): Emission values for the corresponding update heights.
 func (self *PoolTier) cacheReward(endHeight uint64, emissionUpdateHeights []uint64, emissionUpdates []uint64) {
 	startHeight := *self.lastRewardCacheHeight
 

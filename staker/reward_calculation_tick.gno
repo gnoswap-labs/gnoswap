@@ -84,6 +84,13 @@ func (self *Ticks) Has(tickId int32) bool {
 	return self.tree.Has(EncodeInt(tickId))
 }
 
+// Tick represents the state of a specific tick in a pool.
+//
+// Fields:
+// - id (int32): The ID of the tick.
+// - stakedLiquidityGross (*u256.Uint): Total gross staked liquidity at this tick.
+// - stakedLiquidityDelta (*i256.Int): Net change in staked liquidity at this tick.
+// - cross (*UintTree): Tracks tick crossing events (block number -> zeroForOne).
 type Tick struct {
 	id int32
 
