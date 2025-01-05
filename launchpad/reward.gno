@@ -50,6 +50,10 @@ func validateRewardCollection(deposit Deposit, height uint64) error {
 
 // calculateTierRewards calculates rewards for each tier
 func calculateTierRewards(tier Tier, currentHeight uint64, lastCalcHeight uint64) (*u256.Uint, uint64, error) {
+	if tier.tierAmountPerBlockX96 == nil {
+		return u256.Zero(), 0, nil
+	}
+
 	if tier.tierAmountPerBlockX96.IsZero() {
 		return u256.Zero(), 0, nil
 	}
@@ -335,7 +339,6 @@ func calculateDepositReward() {
 		return
 	}
 	lastCalculatedHeight = height
-
 	for projectId, project := range projects {
 		updatedProject, err := calculateProjectRewards(project, height)
 		if err != nil {

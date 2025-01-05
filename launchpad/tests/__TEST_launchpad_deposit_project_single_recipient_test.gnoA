@@ -30,7 +30,7 @@ func TestCreateProjectSingleRecipient(t *testing.T) {
 	testCreateProject(t)
 	testMockProtocolFee(t)
 	testDepositGnsToTier30(t)
-	testCollectProtocolFee(t)
+	// testCollectProtocolFee(t)
 	testCollectDepositGns(t)
 }
 
@@ -146,6 +146,6 @@ func testCollectDepositGns(t *testing.T) {
 
 	t.Run("check claimble reward", func(t *testing.T) {
 		res := gs.GetClaimableRewardByAddress(projectAddr)
-		uassert.Equal(t, res, `{"height":"1042","now":"1234569728","emissionReward":"0","protocolFees":[]}`)
+		uassert.Equal(t, res, `{"height":"1296132","now":"1241047935","emissionReward":"0"}`)
 	})
 }

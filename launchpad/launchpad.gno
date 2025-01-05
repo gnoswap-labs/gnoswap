@@ -281,17 +281,17 @@ func calculateLeftReward(project Project) uint64 {
 
 func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uint64 {
 	if err := common.SatisfyCond(isUserCall()); err != nil {
-		panic(err)
+		panic(addDetailToError(errAlreadyRefunded, err.Error()))
 	}
 
 	caller := std.PrevRealm().Addr()
 	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
+		panic(addDetailToError(errInvalidAddress, err.Error()))
 	}
 
 	project, exists := projects[projectId]
 	if !exists {
-		panic(ufmt.Sprintf("projectId(%s) not found", projectId))
+		panic(addDetailToError(errDataNotFound, ufmt.Sprintf("projectId(%s) not found", projectId)))
 	}
 
 	height := uint64(std.GetHeight())

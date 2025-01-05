@@ -74,35 +74,6 @@ func isTierActive(tier Tier, height uint64) bool {
 	return height <= tier.ended.height
 }
 
-// satisfyDepositConditions checks if deposit conditions are met
-func satisfyDepositConditions(project Project, caller std.Address) error {
-	if project.conditions == nil {
-		return nil
-	}
-
-	for _, condition := range project.conditions {
-		if condition.minAmount == 0 {
-			continue
-		}
-		
-		var balance uint64
-		if condition.tokenPath == consts.GOV_XGNS_PATH {
-			balance = xgns.BalanceOf(a2u(caller))
-		} else {
-			balance = common.BalanceOf(condition.tokenPath, caller)
-		}
-
-		if balance < condition.minAmount {
-			return errors.New(ufmt.Sprintf(
-				"insufficient balance(%d) for token(%s)", 
-				balance, 
-				condition.tokenPath,
-			))
-		}
-	}
-	return nil
-}
-
 // createDeposit creates a new deposit entry
 func createDeposit(info ProjectTierInfo, amount uint64) (Deposit, error) {
 	depositor := std.PrevRealm().Addr()
@@ -208,15 +179,12 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 	common.IsHalted()
 
 	projectId, tierStr := getProjectIdAndTierFromTierId(targetProjectTierId)
-	
 	project, tier, err := validateProjectTier(projectId, tierStr)
 	if err != nil {
 		panic(err)
 	}
 
-	if err := satisfyDepositConditions(project, std.PrevRealm().Addr()); err != nil {
-		panic(err)
-	}
+	checkDepositConditions(project)
 
 	en.MintAndDistributeGns()
 
@@ -315,32 +283,32 @@ func processDepositCollection(
 	prevAddr, prevRealm := getPrev()
 
 	for _, dpstId := range dpsts {
-		deposit := deposits[dpstId]
-		project, exists := projects[deposit.projectId]
+		dpst := deposits[dpstId]
+		project, exists := projects[dpst.projectId]
 		if !exists || projectId != "" && project.id != projectId {
 			continue
 		}
 
-		tier := getTier(project, deposit.tier)
-		if isTierActive(tier, height) || deposit.depositCollectHeight != 0 {
+		tier := getTier(project, dpst.tier)
+		if isTierActive(tier, height) || dpst.depositCollectHeight != 0 {
 			continue
 		}
 
-		deposit.depositCollectHeight = height
-		deposit.depositCollectTime = uint64(time.Now().Unix())
-		deposits[deposit.id] = deposit
+		dpst.depositCollectHeight = height
+		dpst.depositCollectTime = uint64(time.Now().Unix())
+		deposits[dpst.id] = dpst
 
-		totalAmount += deposit.amount
+		totalAmount += dpst.amount
 
-		gs.SetAmountByProjectWallet(project.recipient, deposit.amount, false)
+		gs.SetAmountByProjectWallet(project.recipient, dpst.amount, false)
 
-		tier.actualDepositAmount -= deposit.amount
+		tier.actualDepositAmount -= dpst.amount
 		tier.actualParticipant -= 1
 
-		project = setTier(project, deposit.tier, tier)
-		project.stats.actualDeposit -= deposit.amount
+		project = setTier(project, dpst.tier, tier)
+		project.stats.actualDeposit -= dpst.amount
 		project.stats.actualParticipant -= 1
-		projects[deposit.projectId] = project
+		projects[dpst.projectId] = project
 
 		if projectId != "" {
 			std.Emit(
@@ -349,7 +317,7 @@ func processDepositCollection(
 				"prevRealm", prevRealm,
 				"projectId", projectId,
 				"depositId", dpstId,
-				"amount", ufmt.Sprintf("%d", deposit.amount),
+				"amount", ufmt.Sprintf("%d", dpst.amount),
 			)
 		} else {
 			std.Emit(
@@ -357,7 +325,7 @@ func processDepositCollection(
 				"prevAddr", prevAddr,
 				"prevRealm", prevRealm,
 				"depositId", dpstId,
-				"amount", ufmt.Sprintf("%d", deposit.amount),
+				"amount", ufmt.Sprintf("%d", dpst.amount),
 			)
 		}
 	}
@@ -366,29 +334,12 @@ func processDepositCollection(
 }
 
 func CollectDepositGns() uint64 {
-	common.IsHalted()
-	en.MintAndDistributeGns()
-
-	calculateDepositReward()
-
 	caller := std.PrevRealm().Addr()
-	deposits := depositsByUser[caller]
-	
-	amount, err := processDepositCollection(deposits, "")
-	if err != nil {
-		panic(err)
-	}
-
-	if amount > 0 {
-		xgns.Burn(a2u(consts.LAUNCHPAD_ADDR), amount)
-		gns.Transfer(a2u(caller), amount)
-	}
-
-	return amount
+	dpsts := depositsByUser[caller]
+	return processCollectedDeposits(dpsts, "")
 }
 
 func CollectDepositGnsByProjectId(projectId string) uint64 {
-	common.IsHalted()
 	_, exists := projects[projectId]
 	if !exists {
 		return 0
@@ -400,16 +351,21 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 		return 0
 	}
 
-	en.MintAndDistributeGns()
+	return processCollectedDeposits(deposits, projectId)
+}
 
+func processCollectedDeposits(dpsts []string, pid string) uint64 {
+	common.IsHalted()
+	en.MintAndDistributeGns()
 	calculateDepositReward()
 
-	amount, err := processDepositCollection(deposits, projectId)
+	amount, err := processDepositCollection(dpsts, pid)
 	if err != nil {
 		panic(err)
 	}
 
 	if amount > 0 {
+		caller := std.PrevRealm().Addr()
 		xgns.Burn(a2u(consts.LAUNCHPAD_ADDR), amount)
 		gns.Transfer(a2u(caller), amount)
 	}
@@ -536,7 +492,6 @@ func getProjectIdAndTierFromTierId(tierId string) (string, string) {
 	return ufmt.Sprintf("%s:%s", res[0], res[1]), res[2]
 }
 
-// Deprecated: use satisfyDepositConditions instead
 func checkDepositConditions(project Project) {
 	if project.conditions == nil {
 		return
