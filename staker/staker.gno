@@ -134,6 +134,8 @@ func init() {
 
 	// poolTier.changeTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1, 1)
 	poolTier = NewPoolTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1)
+	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1) // must update pools tree
+
 }
 
 // StakeToken stakes an LP token into the staker contract. It transfer the LP token
@@ -382,6 +384,8 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 	// internal penalty to community pool
 	gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), reward.InternalPenalty)
 
+	// FIXME @mconcat
+	// panic: slice index out of bounds: 0 (len=0)
 	unclaimableInternal, unclaimableExternal := ProcessUnclaimableReward(deposit.targetPoolPath, uint64(std.GetHeight()))
 
 	// internal unclaimable to community pool
