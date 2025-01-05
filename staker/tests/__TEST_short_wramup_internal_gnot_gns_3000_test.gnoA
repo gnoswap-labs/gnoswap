@@ -1,4 +1,4 @@
-package staker
+package tests
 
 import (
 	"math"
