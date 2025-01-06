@@ -55,31 +55,40 @@ func (e ExternalIncentive) RewardToken() string {
 	return e.rewardToken
 }
 
-// newExternalIncentive creates a new external incentive
-func newExternalIncentive(
-	startTimestamp int64,
-	endTimestamp int64,
-	createdHeight int64,
-	depositGnsAmount uint64,
-	targetPoolPath string,
-	rewardToken string,
-	rewardAmount uint64,
-	rewardLeft uint64,
-	rewardPerBlock uint64,
-	refundee std.Address,
-) ExternalIncentive {
-	return ExternalIncentive{
-		startTimestamp:   startTimestamp,
-		endTimestamp:     endTimestamp,
-		createdHeight:    createdHeight,
-		depositGnsAmount: depositGnsAmount,
-		targetPoolPath:   targetPoolPath,
-		rewardToken:      rewardToken,
-		rewardAmount:     rewardAmount,
-		rewardLeft:       rewardLeft,
-		rewardPerBlock:   rewardPerBlock,
-		refundee:         refundee,
+func (e ExternalIncentive) RewardAmount() uint64 {
+	return e.rewardAmount
+}
+
+func (self *ExternalIncentive) RewardSpent(currentHeight uint64) uint64 {
+	if currentHeight < uint64(self.startHeight) {
+		return 0
 	}
+
+	if currentHeight > uint64(self.endHeight) {
+		return self.rewardAmount
+	}
+
+	blocks := currentHeight - uint64(self.startHeight)
+	rewardSpent := blocks * self.rewardPerBlock
+	return rewardSpent
+}
+
+func (self *ExternalIncentive) RewardLeft(currentHeight uint64) uint64 {
+	if currentHeight <= uint64(self.startHeight) {
+		return self.rewardAmount
+	}
+
+	if currentHeight > uint64(self.endHeight) {
+		return 0
+	}
+
+	if currentHeight == uint64(self.endHeight) {
+		return self.rewardPerBlock
+	}
+
+	blocks := uint64(self.endHeight) - currentHeight
+	rewardLeft := blocks * self.rewardPerBlock
+	return rewardLeft
 }
 
 func NewExternalIncentive(
@@ -92,7 +101,6 @@ func NewExternalIncentive(
 	refundee std.Address,
 	createdHeight int64,
 	depositGnsAmount uint64,
-
 	currentTime int64, // current time in unix time(seconds)
 	msPerBlock int64, // msPerBlock is in milliseconds
 ) *ExternalIncentive {
@@ -120,34 +128,6 @@ func NewExternalIncentive(
 		createdHeight:    createdHeight,
 		depositGnsAmount: depositGnsAmount,
 	}
-}
-
-func (self *ExternalIncentive) RewardSpent(currentHeight uint64) uint64 {
-	if currentHeight < uint64(self.startHeight) {
-		return 0
-	}
-
-	if currentHeight > uint64(self.endHeight) {
-		return self.rewardAmount
-	}
-
-	blocks := currentHeight - uint64(self.startHeight)
-	rewardSpent := blocks * self.rewardPerBlock
-	return rewardSpent
-}
-
-func (self *ExternalIncentive) RewardLeft(currentHeight uint64) uint64 {
-	if currentHeight < uint64(self.startHeight) {
-		return self.rewardAmount
-	}
-
-	if currentHeight > uint64(self.endHeight) {
-		return 0
-	}
-
-	blocks := uint64(self.endHeight) - currentHeight
-	rewardLeft := blocks * self.rewardPerBlock
-	return rewardLeft
 }
 
 type Deposit struct {

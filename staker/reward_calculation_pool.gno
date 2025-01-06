@@ -10,9 +10,15 @@ import (
 	"gno.land/r/gnoswap/v1/consts"
 )
 
-var q128 = u256.MustFromDecimal(consts.Q128)
-var q192 = u256.MustFromDecimal("6277101735386680763835789423207666416102355444464034512895")
-var pools *Pools
+var (
+	// Q128 is 2^128
+	q128 = u256.MustFromDecimal(consts.Q128)
+	// Q192 is 2^192
+	q192 = u256.MustFromDecimal("6277101735386680763835789423207666416102355444464034512895")
+
+	// pools is the global pool storage
+	pools *Pools
+)
 
 func init() {
 	pools = NewPools()
@@ -498,11 +504,11 @@ func (self *Pool) UnclaimableExternalReward(incentiveId string, startHeight, end
 
 func (self *Pool) processUnclaimableReward(poolTier *PoolTier, endHeight uint64) (uint64, map[string]uint64) {
 	startHeight := *self.lastUnclaimableHeight
-	internalUnclaimable := self.UnclaimableInternalReward(poolTier, startHeight, endHeight)
-	externalUnclaimable := make(map[string]uint64)
+	internalUnClaimable := self.UnclaimableInternalReward(poolTier, startHeight, endHeight)
+	externalUnClaimable := make(map[string]uint64)
 	for incentiveId := range self.incentives.CurrentReward(startHeight) {
-		externalUnclaimable[incentiveId] = self.UnclaimableExternalReward(incentiveId, startHeight, endHeight)
+		externalUnClaimable[incentiveId] = self.UnclaimableExternalReward(incentiveId, startHeight, endHeight)
 	}
 	self.lastUnclaimableHeight = &endHeight
-	return internalUnclaimable, externalUnclaimable
+	return internalUnClaimable, externalUnClaimable
 }
