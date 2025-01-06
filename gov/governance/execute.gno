@@ -34,15 +34,24 @@ func NewParameterRegistry() *ParameterRegistry {
 
 func (r *ParameterRegistry) Register(
 	pkgPath, function string,
-	handler ParameterHandler,
+	hdlr ParameterHandler,
 ) {
 	key := makeHandlerKey(pkgPath, function)
-	r.handlers.Set(key, handler)
+	r.handlers.Set(key, hdlr)
 }
 
 func (r *ParameterRegistry) Handler(pkgPath, function string) (ParameterHandler, error) {
 	key := makeHandlerKey(pkgPath, function)
 	hdlr, exists := r.handlers.Get(key)
+	if !exists {
+		return nil, ufmt.Errorf("handler not found for %s", key)
+	}
+	return hdlr.(ParameterHandler), nil
+}
+
+func (p *ParameterRegistry) Get(pkgPath, function string) (ParameterHandler, error) {
+	key := makeHandlerKey(pkgPath, function)
+	hdlr, exists := p.handlers.Get(key)
 	if !exists {
 		return nil, ufmt.Errorf("handler not found for %s", key)
 	}
