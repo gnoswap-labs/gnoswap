@@ -53,7 +53,13 @@ func assertTokenExists(tokenId uint64) {
 // Panics:
 // - If the caller is not the owner of the token, the function panics with an `errNoPermission` error.
 func assertOnlyOwnerOfToken(tokenId uint64, caller std.Address) {
-	owner := gnft.OwnerOf(tokenIdFrom(tokenId))
+	owner, err := gnft.OwnerOf(tokenIdFrom(tokenId))
+	if err != nil {
+		panic(newErrorWithDetail(
+			errDataNotFound,
+			ufmt.Sprintf("tokenId(%d) doesn't exist", tokenId),
+		))
+	}
 	assertCallerIsOwner(tokenId, owner, caller)
 }
 
@@ -157,15 +163,6 @@ func assertValidLiquidityAmount(liquidity string) {
 	}
 }
 
-func assertValidLiquidityRatio(ratio uint64) {
-	if !(ratio >= 1 && ratio <= 100) {
-		panic(newErrorWithDetail(
-			errInvalidLiquidityRatio,
-			ufmt.Sprintf("liquidity ratio must in range 1 ~ 100(contain), got %d", ratio),
-		))
-	}
-}
-
 // a2u converts std.Address to pusers.AddressOrName.
 // pusers is a package that contains the user-related functions.
 //
@@ -257,9 +254,11 @@ func exists(tokenId uint64) bool {
 // input: tokenId uint64, addr std.Address
 // output: bool
 func isOwner(tokenId uint64, addr std.Address) bool {
-	owner := gnft.OwnerOf(tokenIdFrom(tokenId))
-	if owner == addr {
-		return true
+	owner, err := gnft.OwnerOf(tokenIdFrom(tokenId))
+	if err == nil {
+		if owner == addr {
+			return true
+		}
 	}
 	return false
 }
@@ -269,8 +268,8 @@ func isOwner(tokenId uint64, addr std.Address) bool {
 // input: tokenId uint64, addr std.Address
 // output: bool
 func isOperator(tokenId uint64, addr std.Address) bool {
-	operator, ok := gnft.GetApproved(tokenIdFrom(tokenId))
-	if ok && operator == addr {
+	operator, err := gnft.GetApproved(tokenIdFrom(tokenId))
+	if err == nil && operator == addr {
 		return true
 	}
 	return false
@@ -284,8 +283,8 @@ func isOperator(tokenId uint64, addr std.Address) bool {
 func isStaked(tokenId grc721.TokenID) bool {
 	exist := gnft.Exists(tokenId)
 	if exist {
-		owner := gnft.OwnerOf(tokenId)
-		if owner == consts.STAKER_ADDR {
+		owner, err := gnft.OwnerOf(tokenId)
+		if err == nil && owner == consts.STAKER_ADDR {
 			return true
 		}
 	}

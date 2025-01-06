@@ -19,41 +19,14 @@ var (
 	swapFee = defaultSwapFeeBPS
 )
 
-func handleSwapFee(
-	outputToken string,
-	amount *u256.Uint,
-) *u256.Uint {
-	if swapFee <= 0 {
-		return amount
-	}
-
-	feeAmount := new(u256.Uint).Mul(amount, u256.NewUint(swapFee))
-	feeAmount.Div(feeAmount, u256.NewUint(10000))
-	feeAmountUint64 := feeAmount.Uint64()
-
-	outputTeller := common.GetTokenTeller(outputToken)
-	outputTeller.TransferFrom(std.PrevRealm().Addr(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64)
-
-	prevAddr, prevRealm := getPrev()
-
-	std.Emit(
-		"SwapRouteFee",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"internal_tokenPath", outputToken,
-		"internal_amount", ufmt.Sprintf("%d", feeAmountUint64),
-	)
-
-	toUserAfterProtocol := new(u256.Uint).Sub(amount, feeAmount)
-	return toUserAfterProtocol
-}
-
 // GetSwapFee returns current rate of swap fee
 // ref: https://docs.gnoswap.io/contracts/router/protocol_fee_swap.gno#getswapfee
 func GetSwapFee() uint64 {
 	return swapFee
 }
 
+// SetSwapFeeByAdmin modifies the swap fee
+// Only admin can execute this function
 func SetSwapFeeByAdmin(fee uint64) {
 	caller := std.PrevRealm().Addr()
 	if err := common.AdminOnly(caller); err != nil {
@@ -110,4 +83,33 @@ func setSwapFee(fee uint64) error {
 
 	swapFee = fee
 	return nil
+}
+
+func handleSwapFee(
+	outputToken string,
+	amount *u256.Uint,
+) *u256.Uint {
+	if swapFee <= 0 {
+		return amount
+	}
+
+	feeAmount := new(u256.Uint).Mul(amount, u256.NewUint(swapFee))
+	feeAmount.Div(feeAmount, u256.NewUint(10000))
+	feeAmountUint64 := feeAmount.Uint64()
+
+	outputTeller := common.GetTokenTeller(outputToken)
+	outputTeller.TransferFrom(std.PrevRealm().Addr(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64)
+
+	prevAddr, prevRealm := getPrev()
+
+	std.Emit(
+		"SwapRouteFee",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"internal_tokenPath", outputToken,
+		"internal_amount", ufmt.Sprintf("%d", feeAmountUint64),
+	)
+
+	toUserAfterProtocol := new(u256.Uint).Sub(amount, feeAmount)
+	return toUserAfterProtocol
 }

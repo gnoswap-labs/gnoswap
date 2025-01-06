@@ -1,8 +1,9 @@
-package router
+package tests
 
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/uassert"
@@ -59,6 +60,7 @@ func TestSwapRouteWugnotquxExactIn(t *testing.T) {
 				"gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:500", // strRouteArr
 				"100", // quoteArr
 				"1",   // tokenAmountLimit
+				time.Now().Add(time.Hour).Unix(),
 			)
 		},
 	)

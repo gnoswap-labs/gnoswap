@@ -30,7 +30,7 @@ func TestProcessResult(t *testing.T) {
 			name:            "ExactIn - Input Mismatch",
 			swapType:        ExactIn,
 			resultAmountIn:  "99",
-			resultAmountOut: "95",
+			resultAmountOut: "5",
 			amountSpecified: "100",
 			expected:        "-1",
 		},
@@ -57,8 +57,12 @@ func TestProcessResult(t *testing.T) {
 			resultAmountIn, _ := u256.FromDecimal(tt.resultAmountIn)
 			resultAmountOut, _ := u256.FromDecimal(tt.resultAmountOut)
 			amountSpecified, _ := i256.FromDecimal(tt.amountSpecified)
+			amountLimit, _ := i256.FromDecimal("10")
+			if tt.swapType == ExactOut {
+				amountLimit, _ = i256.FromDecimal("500")
+			}
 
-			result := processResult(tt.swapType, resultAmountIn, resultAmountOut, amountSpecified)
+			result := processResult(tt.swapType, resultAmountIn, resultAmountOut, amountSpecified, amountLimit)
 			uassert.Equal(t, result, tt.expected)
 		})
 	}
