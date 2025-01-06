@@ -70,15 +70,15 @@ var (
 )
 
 func main() {
-	// testInit()
-	// testCreatePool()
+	testInit()
+	testCreatePool()
 
-	// testMintAndStakeWugnotGnsPos01()
+	testMintAndStakeWugnotGnsPos01()
 
-	// testSetPoolTier2() // new pool is set to tier 2
-	// testMintAndStakeBarBazPos02()
+	testSetPoolTier2() // new pool is set to tier 2
+	testMintAndStakeBarBazPos02()
 
-	// testChangePoolTier3() // pool is changed to tier 3
+	testChangePoolTier3() // pool is changed to tier 3
 }
 
 func testInit() {
@@ -138,17 +138,25 @@ func testMintAndStakeWugnotGnsPos01() {
 	gnft.Approve(stakerAddr, tokenIdFrom(1))
 	sr.StakeToken(1)
 
-	/*
-		std.TestSkipHeights(1)
-		TODO: (after fixing unit test) check reward
-	*/
+	std.TestSkipHeights(1)
+	{
+		// check reward for position 01 (gnot:gns:3000 tier 01)
+		std.TestSetRealm(adminRealm)
+		beforeGns := gns.BalanceOf(adminUser)
+		sr.CollectReward(1, false)
+		afterGns := gns.BalanceOf(adminUser)
+		diff := afterGns - beforeGns
+		if diff == 0 {
+			panic("position 01 has some reward (gnot:gns:3000 is tier 01 pool)")
+		}
+	}
 }
 
 func testSetPoolTier2() {
 	std.TestSetRealm(adminRealm)
 
 	std.TestSkipHeights(1)
-	sr.SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", 2) // XXX: not declared
+	sr.SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", 2)
 }
 
 func testMintAndStakeBarBazPos02() {
@@ -176,36 +184,37 @@ func testMintAndStakeBarBazPos02() {
 	gnft.Approve(stakerAddr, tokenIdFrom(2))
 	sr.StakeToken(2)
 
-	/*
-		std.TestSkipHeights(1)
-
-		TODO: (after fixing unit test) check reward
-		- position-01 pool(gnot:gns:3000) is tier 1
-		- position-02 pool(bar:baz:100) is tier 2
-		- staker's emission reward should be distributed to each tier by ratio of 70% and 30% (70% for tier 1, 30% for tier 2)
-	*/
+	std.TestSkipHeights(1)
+	{
+		// check reward for position 02 (bar:baz:100 tier 02)
+		std.TestSetRealm(adminRealm)
+		beforeGns := gns.BalanceOf(adminUser)
+		sr.CollectReward(2, false)
+		afterGns := gns.BalanceOf(adminUser)
+		diff := afterGns - beforeGns
+		if diff == 0 { // 953553 (tier02)
+			panic("position 02 has some reward (bar:baz:100 is tier 02 pool)")
+		}
+	}
 }
 
 func testChangePoolTier3() {
 	std.TestSetRealm(adminRealm)
 
-	std.TestSkipHeights(1)
 	sr.ChangePoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", 3)
 
-	/*
-		std.TestSkipHeights(1)
-
-		TODO: (after fixing unit test) check reward
-		- position-01 pool(gnot:gns:3000) is tier 1
-		- position-02 pool(bar:baz:100) changed from tier 2 to tier 3
-		- staker's emission reward should be distributed to each tier by ratio of 80% and 20% (80% for tier 1, 20% for tier 2)
-
-		!! IMPORTANT:
-		user hasn' collected reward for position 2 yet
-		which means position 2 has reward both
-		- from pool when it was on tier2 and
-		- from pool when it is on tier3
-	*/
+	std.TestSkipHeights(1)
+	{
+		// check reward for position 02 (bar:baz:100 tier 02)
+		std.TestSetRealm(adminRealm)
+		beforeGns := gns.BalanceOf(adminUser)
+		sr.CollectReward(2, false)
+		afterGns := gns.BalanceOf(adminUser)
+		diff := afterGns - beforeGns
+		if diff == 0 { // 635701 (tier03)
+			panic("position 02 has some reward (bar:baz:100 is tier 03 pool)")
+		}
+	}
 }
 
 func tokenIdFrom(tokenId interface{}) grc721.TokenID {

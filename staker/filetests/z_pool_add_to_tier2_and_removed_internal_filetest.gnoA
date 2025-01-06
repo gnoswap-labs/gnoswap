@@ -228,7 +228,7 @@ func testRemovePoolTier() {
 	}
 
 	{
-		// check reward for position 01 (bar:baz:100 tier 01)
+		// check reward for position 02 (bar:baz:100 tier 02)
 		std.TestSetRealm(adminRealm)
 		beforeGns := gns.BalanceOf(adminUser)
 		sr.CollectReward(2, false)
