@@ -3,6 +3,7 @@ package staker
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/uassert"
 
@@ -158,7 +159,8 @@ func testMakePosition1OutRange(t *testing.T) {
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 			"100",
 			"0",
-			max_timeout,
+			time.Now().Unix()+100,
+			// max_timeout,
 		)
 		uassert.Equal(t, tokenIn, "10000")
 		uassert.Equal(t, tokenOut, "-9884")
