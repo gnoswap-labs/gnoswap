@@ -178,16 +178,5 @@ func createParameterHandlers() *ParameterRegistry {
 		return nil
 	})
 
-	registry.Register(consts.STAKER_PATH, "SetWarmUp", func(params []string) error {
-		if err := hasDesiredParams(params, 2); err != nil {
-			return err
-		}
-		sr.SetWarmUp(
-			int64(parseInt(params[0])), // percent
-			int64(parseInt(params[1])), // block
-		)
-		return nil
-	})
-
 	return registry
 }
