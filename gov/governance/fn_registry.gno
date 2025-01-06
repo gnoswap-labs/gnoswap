@@ -140,36 +140,6 @@ func createParameterHandlers() *ParameterRegistry {
 		return nil
 	})
 
-	registry.Register(consts.STAKER_PATH, "SetPoolTier", func(params []string) error {
-		if err := hasDesiredParams(params, 2); err != nil {
-			return err
-		}
-		sr.SetPoolTier(
-			params[0],              // pool
-			parseUint64(params[1]), // tier
-		)
-		return nil
-	})
-
-	registry.Register(consts.STAKER_PATH, "ChangePoolTier", func(params []string) error {
-		if err := hasDesiredParams(params, 2); err != nil {
-			return err
-		}
-		sr.ChangePoolTier(
-			params[0],              // pool
-			parseUint64(params[1]), // tier
-		)
-		return nil
-	})
-
-	registry.Register(consts.STAKER_PATH, "RemovePoolTier", func(params []string) error {
-		if err := hasDesiredParams(params, 1); err != nil {
-			return err
-		}
-		sr.RemovePoolTier(params[0]) // pool
-		return nil
-	})
-
 	registry.Register(consts.STAKER_PATH, "SetUnstakingFee", func(params []string) error {
 		if err := hasDesiredParams(params, 1); err != nil {
 			return err
