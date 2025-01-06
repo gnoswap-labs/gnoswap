@@ -5,10 +5,12 @@
 package staker
 
 import (
+	"math"
 	"std"
 	"testing"
 
 	"gno.land/p/demo/uassert"
+	"gno.land/r/demo/users"
 
 	"gno.land/r/gnoswap/v1/consts"
 
@@ -39,10 +41,13 @@ func TestShortWarmUpTwoExternalIncentive_OneOfThemIsGNS(t *testing.T) {
 func testInit(t *testing.T) {
 	t.Run("initialize", func(t *testing.T) {
 		// override warm-up period for testing
-		warmUp[100] = 901 // 30m ~
-		warmUp[70] = 301  // 10m ~ 30m
-		warmUp[50] = 151  // 5m ~ 10m
-		warmUp[30] = 1    // ~ 5m
+		changeWarmup(t, 0, 150)
+		changeWarmup(t, 1, 300)
+		changeWarmup(t, 2, 900)
+		changeWarmup(t, 3, math.MaxInt64)
+
+		// set unstaking fee to 0
+		SetUnstakingFeeByAdmin(0)
 	})
 }
 
@@ -77,8 +82,8 @@ func testMintBarQux100_1(t *testing.T) {
 			"1",          // amount0Min
 			"1",          // amount1Min
 			max_timeout,
-			admin,
-			admin,
+			users.Resolve(admin),
+			users.Resolve(admin),
 		)
 
 		uassert.Equal(t, tokenId, uint64(1))
@@ -96,15 +101,12 @@ func testCreateExternalIncentiveBar(t *testing.T) {
 		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
 
 		CreateExternalIncentive(
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", // targetPoolPath string,
-			barPath,    // rewardToken string, // token path should be registered
-			"20000000", // _rewardAmount string,
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+			barPath,
+			20000000,
 			1234569600,
 			1234569600+TIMESTAMP_90DAYS,
 		)
-
-		// after
-		printExternalInfo()
 
 		std.TestSkipHeights(1)
 	})
@@ -117,15 +119,12 @@ func testCreateExternalIncentiveGns(t *testing.T) {
 		gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // this includes depositGnsAmount
 
 		CreateExternalIncentive(
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", // targetPoolPath string,
-			consts.GNS_PATH, // rewardToken string, // token path should be registered
-			"20000000",      // _rewardAmount string,
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+			consts.GNS_PATH,
+			20000000,
 			1234569600,
 			1234569600+TIMESTAMP_90DAYS,
 		)
-
-		// after
-		printExternalInfo()
 
 		std.TestSkipHeights(1)
 	})
@@ -135,7 +134,7 @@ func testStakeToken_1(t *testing.T) {
 	t.Run("stake token 1", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
+		gnft.Approve(GetOrigPkgAddr(), tid(1))
 		StakeToken(1)
 
 		std.TestSkipHeights(1)
@@ -145,13 +144,6 @@ func testStakeToken_1(t *testing.T) {
 func testBeforeActive(t *testing.T) {
 	t.Run("before active", func(t *testing.T) {
 		en.MintAndDistributeGns()
-		if consts.EMISSION_REFACTORED {
-			CalcPoolPositionRefactor()
-		} else {
-			CalcPoolPosition()
-		}
-		printExternalInfo()
-
 		std.TestSkipHeights(1)
 	})
 }
@@ -163,12 +155,6 @@ func testAfterActive(t *testing.T) {
 		std.TestSkipHeights(50)  // skip 50 more block
 
 		en.MintAndDistributeGns()
-		if consts.EMISSION_REFACTORED {
-			CalcPoolPositionRefactor()
-		} else {
-			CalcPoolPosition()
-		}
-
 		std.TestSkipHeights(1)
 	})
 }
@@ -177,12 +163,6 @@ func testDuratino200(t *testing.T) {
 	t.Run("duration 200", func(t *testing.T) {
 		std.TestSkipHeights(199) // skip 1 + 199 = 200 more block
 		en.MintAndDistributeGns()
-		if consts.EMISSION_REFACTORED {
-			CalcPoolPositionRefactor()
-		} else {
-			CalcPoolPosition()
-		}
-		printExternalInfo()
 	})
 }
 
@@ -190,13 +170,13 @@ func testCollectReward(t *testing.T) {
 	t.Run("collect reward", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		oldBar := bar.BalanceOf(a2u(admin))
-		oldGns := gns.BalanceOf(a2u(admin))
+		oldBar := bar.BalanceOf(admin)
+		oldGns := gns.BalanceOf(admin)
 
 		CollectReward(1, false)
 
-		newBar := bar.BalanceOf(a2u(admin))
-		newGns := gns.BalanceOf(a2u(admin))
+		newBar := bar.BalanceOf(admin)
+		newGns := gns.BalanceOf(admin)
 
 		uassert.Equal(t, newBar-oldBar, uint64(485))
 		uassert.Equal(t, newGns-oldGns, uint64(485))
