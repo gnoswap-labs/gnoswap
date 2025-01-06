@@ -5,8 +5,8 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 // defaultAllowed is the list of default allowed tokens to create external incentive
@@ -28,7 +28,7 @@ func init() {
 // Panics:
 //   - If the caller is not the admin
 func AddToken(tokenPath string) {
-	caller := std.PrevRealm().Addr()
+	caller := getPrevAddr()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err.Error())
 	}

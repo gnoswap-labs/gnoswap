@@ -137,8 +137,6 @@ func CreatePool(
 	sqrtPriceX96 string,
 ) {
 	assertOnlyNotHalted()
-	assertOnlyRegistered(token0Path)
-	assertOnlyRegistered(token1Path)
 
 	poolInfo := newPoolParams(token0Path, token1Path, fee, sqrtPriceX96)
 	poolInfo = poolInfo.updateWithWrapping()

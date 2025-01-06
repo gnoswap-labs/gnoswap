@@ -1,5 +1,9 @@
 package staker
 
+import (
+	"std"
+)
+
 type RewardToken struct {
 	PoolPath         string   `json:"poolPath"`
 	RewardsTokenList []string `json:"rewardsTokenList"`
@@ -26,9 +30,8 @@ type ApiInternalIncentive struct {
 	RewardPerBlock string `json:"rewardPerBlock"`
 }
 
-//
-//func ApiGetRewardTokens() string {
-//	en.MintAndDistributeGns()
+//	func ApiGetRewardTokens() string {
+//		en.MintAndDistributeGns()
 //
 //	rewardTokens := []RewardToken{}
 //
@@ -689,6 +692,23 @@ type ApiInternalIncentive struct {
 //		}
 //	}
 //}
+
+func updateExternalIncentiveLeftAmount() {
+	// external incentive reward left update
+	externalIncentives.tree.Iterate("", "", func(key string, value interface{}) bool {
+		incentiveId := key
+		incentive := value.(*ExternalIncentive)
+
+		if incentiveId != incentive.incentiveId {
+			panic("incentiveId != incentive.incentiveId")
+		}
+
+		// TODO: check if this is correct
+		incentive.rewardLeft = incentive.RewardLeft(uint64(std.GetHeight()))
+		externalIncentives.tree.Set(key, incentive)
+		return false
+	})
+}
 
 //
 //// LpTokenReward represents the rewards associated with a specific LP token

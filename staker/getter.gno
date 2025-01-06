@@ -14,7 +14,29 @@ import (
 
 //! TODO: Change function names to follow a naming convention
 
-// StakerPoolIncentives returns the list of incentive IDs for a given pool
+// GetPoolByPoolPath retrieves the pool's path using the provided pool path.
+//
+// Parameters:
+// - poolPath (string): The path of the pool to retrieve.
+//
+// Returns:
+// - string: The `poolPath` of the found pool.
+//
+// Panics:
+// - If the pool corresponding to the given `poolPath` does not exist in the `pools` collection.
+func GetPoolByPoolPath(poolPath string) *Pool {
+	pool, ok := pools.Get(poolPath)
+	if !ok {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath)),
+		)
+	}
+
+	return pool
+}
+
+// GetPoolIncentiveIdList returns the list of incentive IDs for a given pool
 //
 // Parameters:
 //   - poolPath (string): The path of the pool to get incentives for
@@ -24,11 +46,8 @@ import (
 //
 // Panics:
 //   - If the pool incentives do not exist for the given pool path
-func StakerPoolIncentives(poolPath string) []string {
-	pool, ok := pools.Get(poolPath)
-	if !ok {
-		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
-	}
+func GetPoolIncentiveIdList(poolPath string) []string {
+	pool := GetPoolByPoolPath(poolPath)
 
 	ids := []string{}
 	pool.incentives.byTime.Iterate("", "", func(key string, value interface{}) bool {
@@ -39,7 +58,34 @@ func StakerPoolIncentives(poolPath string) []string {
 	return ids
 }
 
-// StakerIncentiveTargetPoolPath returns the target pool path for a given incentive
+// GetIncentive retrieves an external incentive by its ID from a specified pool.
+//
+// This function searches for an incentive within the specified pool's incentives,
+// identified by the given `incentiveId`. If the pool or the incentive does not exist,
+// the function panics with an appropriate error message.
+//
+// Parameters:
+// - poolPath (string): The path of the pool containing the incentive.
+// - incentiveId (string): The ID of the incentive to retrieve.
+//
+// Returns:
+// - *ExternalIncentive: A pointer to the retrieved ExternalIncentive.
+//
+// Panics:
+// - If the pool corresponding to the given `poolPath` does not exist.
+// - If the incentive with the specified `incentiveId` does not exist.
+func GetIncentive(poolPath string, incentiveId string) *ExternalIncentive {
+	pool := GetPoolByPoolPath(poolPath)
+
+	incentive, exist := pool.incentives.byTime.Get(incentiveId)
+	if !exist {
+		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
+	}
+
+	return incentive.(*ExternalIncentive)
+}
+
+// GetTargetPoolPathByIncentiveId returns the target pool path for a given incentive
 //
 // Parameters:
 //   - incentiveId (string): The ID of the incentive
@@ -49,21 +95,13 @@ func StakerPoolIncentives(poolPath string) []string {
 //
 // Panics:
 //   - If the incentive does nor exist for the given incentive ID
-func StakerIncentiveTargetPoolPath(incentiveId string, poolPath string) string {
-	pool, ok := pools.Get(poolPath)
-	if !ok {
-		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
-	}
+func GetTargetPoolPathByIncentiveId(incentiveId string, poolPath string) string {
+	incentive := GetIncentive(poolPath, incentiveId)
 
-	incentive, exist := pool.incentives.byTime.Get(incentiveId)
-	if !exist {
-		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
-	}
-
-	return incentive.(*ExternalIncentive).targetPoolPath
+	return incentive.targetPoolPath
 }
 
-// StakerIncentiveRewardToken returns the reward token for a given incentive
+// GetIncentiveRewardToken returns the reward token for a given incentive
 //
 // Parameters:
 //   - incentiveId (string): The ID of the incentive
@@ -73,21 +111,13 @@ func StakerIncentiveTargetPoolPath(incentiveId string, poolPath string) string {
 //
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
-func StakerIncentiveRewardToken(incentiveId string, poolPath string) string {
-	pool, ok := pools.Get(poolPath)
-	if !ok {
-		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
-	}
+func GetIncentiveRewardToken(incentiveId string, poolPath string) string {
+	incentive := GetIncentive(poolPath, incentiveId)
 
-	incentive, exist := pool.incentives.byTime.Get(incentiveId)
-	if !exist {
-		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
-	}
-
-	return incentive.(*ExternalIncentive).rewardToken
+	return incentive.rewardToken
 }
 
-// StakerIncentiveRewardAmount returns the reward amount for a given incentive as a Uint256
+// GetIncentiveRewardAmount returns the reward amount for a given incentive as a Uint256
 //
 // Parameters:
 //   - incentiveId (string): The ID of the incentive
@@ -97,21 +127,13 @@ func StakerIncentiveRewardToken(incentiveId string, poolPath string) string {
 //
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
-func StakerIncentiveRewardAmount(incentiveId string, poolPath string) *u256.Uint {
-	pool, ok := pools.Get(poolPath)
-	if !ok {
-		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
-	}
+func GetIncentiveRewardAmount(incentiveId string, poolPath string) *u256.Uint {
+	incentive := GetIncentive(poolPath, incentiveId)
 
-	incentive, exist := pool.incentives.byTime.Get(incentiveId)
-	if !exist {
-		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
-	}
-
-	return u256.NewUint(incentive.(*ExternalIncentive).rewardAmount)
+	return u256.NewUint(incentive.rewardAmount)
 }
 
-// StakerIncentiveRewardAmountStr returns the reward amount for a given incentive as a string
+// GetIncentiveRewardAmountAsString returns the reward amount for a given incentive as a string
 //
 // Parameters:
 //   - incentiveId (string): The ID of the incentive
@@ -121,18 +143,10 @@ func StakerIncentiveRewardAmount(incentiveId string, poolPath string) *u256.Uint
 //
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
-func StakerIncentiveRewardAmountStr(incentiveId string, poolPath string) string {
-	pool, ok := pools.Get(poolPath)
-	if !ok {
-		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
-	}
+func GetIncentiveRewardAmountAsString(incentiveId string, poolPath string) string {
+	rewardAmount := GetIncentiveRewardAmount(incentiveId, poolPath)
 
-	incentive, exist := pool.incentives.byTime.Get(incentiveId)
-	if !exist {
-		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
-	}
-
-	return u256.NewUint(incentive.(*ExternalIncentive).rewardAmount).ToString()
+	return rewardAmount.ToString()
 }
 
 // StakerIncentiveStartTimestamp returns the start timestamp for a given incentive
@@ -285,8 +299,9 @@ type currentExternalInfo struct {
 }
 
 func printExternalInfo(poolPath string) {
+	currentHeight := std.GetHeight()
 	println("***********************")
-	println("> height:", std.GetHeight())
+	println("> height:", currentHeight)
 	println("> time:", time.Now().Unix())
 	println("[ START ] GET_EXTERNAL INCENTIVE")
 	pool, ok := pools.Get(poolPath)
@@ -294,7 +309,7 @@ func printExternalInfo(poolPath string) {
 		println(" > pool not found")
 		return
 	}
-	if pool.IsExternallyIncentivizedPool(uint64(std.GetHeight())) {
+	if pool.IsExternallyIncentivizedPool(uint64(currentHeight)) {
 		pool.incentives.byHeight.Iterate("", "", func(key string, value interface{}) bool {
 			incentive := value.(*ExternalIncentive)
 			println(" > incentiveId:", incentive.incentiveId)
@@ -355,6 +370,106 @@ type ApiExternalDebugIncentive struct {
 	give70  uint64 `json:"give70"`
 	full100 uint64 `json:"full100"`
 }
+
+func GetExternalIncentive(incentiveId string) *ExternalIncentive {
+	incentive, exist := externalIncentives.tree.Get(incentiveId)
+	if !exist {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId)),
+		)
+	}
+
+	return incentive.(*ExternalIncentive)
+}
+
+func GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive {
+	incentives := []ExternalIncentive{}
+	externalIncentives.tree.Iterate("", "", func(key string, value interface{}) bool {
+		incentive := value.(*ExternalIncentive)
+		if incentive.targetPoolPath == poolPath {
+			incentives = append(incentives, *incentive)
+		}
+		return false
+	})
+
+	return incentives
+}
+
+//
+//func GetPrintExternalInfoByPoolPath(poolPath string) string {
+//	updateExternalIncentiveLeftAmount()
+//
+//	currentHeight := std.GetHeight()
+//	now := time.Now().Unix()
+//
+//	externalDebug := ApiExternalDebugInfo{}
+//	externalDebug.Height = currentHeight
+//	externalDebug.Time = now
+//
+//	externalPositions := []ApiExternalDebugPosition{}
+//
+//	externalPosition := ApiExternalDebugPosition{}
+//	deposits.Iterate(uint64(0), uint64(deposits.Size()), func(tokenId uint64, deposit *Deposit) bool {
+//		externalPosition.LpTokenId = tokenId
+//		externalPosition.StakedHeight = deposit.stakeHeight
+//		externalPosition.StakedTimestamp = deposit.stakeTimestamp
+//
+//		externalIncentivesList := []ApiExternalDebugIncentive{}
+//		externalIncentives.tree.Iterate("", "", func(key string, value interface{}) bool {
+//			incentive := value.(*ExternalIncentive)
+//			if incentive.targetPoolPath == poolPath {
+//				externalIncentive := ApiExternalDebugIncentive{}
+//				externalIncentive.PoolPath = incentive.targetPoolPath
+//				externalIncentive.RewardToken = incentive.rewardToken
+//				externalIncentive.IncentiveId = incentive.incentiveId
+//				externalIncentive.RewardAmount = strconv.FormatUint(incentive.rewardAmount, 10)
+//				externalIncentive.RewardLeft = strconv.FormatUint(incentive.rewardLeft, 10)
+//				externalIncentive.StartTimestamp = incentive.startTimestamp
+//				externalIncentive.EndTimestamp = incentive.endTimestamp
+//				rewardPerBlockU256 := u256.MustFromDecimal(strconv.FormatUint(incentive.rewardPerBlock, 10))
+//				q96 := u256.MustFromDecimal(consts.Q96)
+//				rewardPerBlockX96 := u256.Zero().Mul(rewardPerBlockU256, q96)
+//				externalIncentive.RewardPerBlockX96 = rewardPerBlockX96.ToString()
+//				externalIncentive.RewardPerBlock = new(u256.Uint).Div(rewardPerBlockX96, q96).ToString()
+//				externalIncentive.Refundee = incentive.refundee
+//				externalIncentive.tokenAmountX96 = incentive.tokenAmountX96
+//				externalIncentive.tokenAmount = incentive.tokenAmount
+//				externalIncentive.tokenAmountFull = incentive.tokenAmountFull
+//				externalIncentive.tokenAmountToGive = incentive.tokenAmountToGive
+//				externalIncentive.full30 = incentive.full30
+//				externalIncentive.give30 = incentive.give30
+//				externalIncentive.full50 = incentive.full50
+//				externalIncentive.give50 = incentive.give50
+//				externalIncentive.full70 = incentive.full70
+//				externalIncentive.give70 = incentive.give70
+//				externalIncentive.full100 = incentive.full100
+//				externalIncentivesList = append(externalIncentivesList, externalIncentive)
+//			}
+//			return false
+//		})
+//
+//		return false
+//	})
+//
+//	externalIncentive := ApiExternalDebugIncentive{}
+//	externalIncentive.PoolPath = external.poolPath
+//	externalIncentive.RewardToken = external.tokenPath
+//
+//	incentive := incentives[incentiveId]
+//	externalIncentive.IncentiveId = incentiveId
+//	externalIncentive.RewardAmount = incentive.rewardAmount.ToString()
+//	externalIncentive.RewardLeft = incentive.rewardLeft.ToString()
+//	externalIncentive.StartTimestamp = incentive.startTimestamp
+//	externalIncentive.EndTimestamp = incentive.endTimestamp
+//	externalIncentive.RewardPerBlockX96 = incentive.rewardPerBlockX96.ToString()
+//	externalIncentive.RewardPerBlock = new(u256.Uint).Div(incentive.rewardPerBlockX96, u256.MustFromDecimal(consts.Q96)).ToString()
+//	externalIncentive.Refundee = incentive.refundee
+//
+//	externalIncentive.tokenAmountX96 = external.tokenAmountX96
+//
+//	return ""
+//}
 
 //
 //func GetPrintExternalInfo() string {

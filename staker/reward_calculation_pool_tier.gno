@@ -69,7 +69,7 @@ func (self *TierRatio) Get(tier uint64) uint64 {
 	default:
 		panic(addDetailToError(
 			errInvalidPoolTier,
-			ufmt.Sprintf("0 staker.gno__tierRatio() || tier(%d) is not valid", tier),
+			ufmt.Sprintf("staker.gno__tierRatio() || tier(%d) is not valid", tier),
 		))
 	}
 }
@@ -228,7 +228,7 @@ func (self *PoolTier) countOf(tier uint64) *UintTree {
 	default:
 		panic(addDetailToError(
 			errInvalidPoolTier,
-			ufmt.Sprintf("1 staker.gno__tier() || tier(%d) is not valid", tier),
+			ufmt.Sprintf("staker.gno__tier() || tier(%d) is not valid", tier),
 		))
 	}
 }
@@ -307,7 +307,7 @@ func (self *PoolTier) rewardCacheOf(tier uint64) *RewardCacheTree {
 	default:
 		panic(addDetailToError(
 			errInvalidPoolTier,
-			ufmt.Sprintf("2 staker.gno__rewardCacheOf() || tier(%d) is not valid", tier),
+			ufmt.Sprintf("staker.gno__rewardCacheOf() || tier(%d) is not valid", tier),
 		))
 	}
 }
