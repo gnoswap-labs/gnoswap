@@ -444,16 +444,20 @@ func burnAllNFT(t *testing.T) {
 }
 
 func deletePoolTier(t *testing.T, poolPath string) {
-	poolTier.changeTier(uint64(std.GetHeight()), poolPath, 0)
+	t.Helper()
+	if poolTier != nil {
+		poolTier.changeTier(uint64(std.GetHeight()), poolPath, 0)
+	}
 }
 
 func addPoolTier(t *testing.T, poolPath string, tier uint64) {
-	poolTier.changeTier(uint64(std.GetHeight()), poolPath, tier)
-	pools.GetOrCreate(poolPath)
-}
-
-func changePoolTier(t *testing.T, poolPath string, tier uint64) {
-	poolTier.changeTier(uint64(std.GetHeight()), poolPath, tier)
+	t.Helper()
+	if poolTier != nil {
+		poolTier.changeTier(uint64(std.GetHeight()), poolPath, tier)
+		if pools != nil {
+			pools.GetOrCreate(poolPath)
+		}
+	}
 }
 
 func changeWarmup(t *testing.T, index int, blockDuration int64) {
@@ -559,7 +563,6 @@ func getPrintInfo(t *testing.T) string {
 			tokenId := DecodeUint(tokenIdStr)
 			deposit := value.(*Deposit)
 
-			// println("deposit.targetPoolPath", deposit.targetPoolPath)
 			if deposit.targetPoolPath == poolPath {
 				position := ApiEmissionDebugPosition{}
 				position.LpTokenId = tokenId

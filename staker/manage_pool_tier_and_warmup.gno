@@ -2,9 +2,11 @@ package staker
 
 import (
 	"std"
+	"strconv"
+
+	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
-
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
@@ -41,7 +43,7 @@ func setPoolTier(poolPath string, tier uint64) {
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"poolPath", poolPath,
-		"tier", tier,
+		"tier", strconv.FormatUint(tier, 10),
 	)
 }
 
@@ -72,7 +74,7 @@ func changePoolTier(poolPath string, tier uint64) {
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"poolPath", poolPath,
-		"tier", tier,
+		"tier", strconv.FormatUint(tier, 10),
 	)
 }
 
@@ -81,7 +83,7 @@ func RemovePoolTierByAdmin(poolPath string) {
 	assertMustNotHalted()
 	assertPoolMustExist(poolPath)
 
-	removePoolTier()
+	removePoolTier(poolPath)
 }
 
 func RemovePoolTier(poolPath string) {
@@ -89,7 +91,7 @@ func RemovePoolTier(poolPath string) {
 	assertMustNotHalted()
 	assertPoolMustExist(poolPath)
 
-	removePoolTier()
+	removePoolTier(poolPath)
 }
 
 func removePoolTier(poolPath string) {
@@ -123,15 +125,15 @@ func SetWramUp(index, blockDuration uint64) {
 func setWramUp(index, blockDuration uint64) {
 	en.MintAndDistributeGns()
 
-	modifyWarmup(index, blockDuration)
+	modifyWarmup(int(index), int64(blockDuration))
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
 		"SetWramUp",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"index", index,
-		"blockDuration", blockDuration,
+		"index", strconv.FormatUint(index, 10),
+		"blockDuration", strconv.FormatUint(blockDuration, 10),
 	)
 }
 
