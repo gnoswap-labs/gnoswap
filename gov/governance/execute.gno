@@ -49,9 +49,9 @@ func (r *ParameterRegistry) Handler(pkgPath, function string) (ParameterHandler,
 	return hdlr.(ParameterHandler), nil
 }
 
-func (p *ParameterRegistry) Get(pkgPath, function string) (ParameterHandler, error) {
+func (r *ParameterRegistry) Get(pkgPath, function string) (ParameterHandler, error) {
 	key := makeHandlerKey(pkgPath, function)
-	hdlr, exists := p.handlers.Get(key)
+	hdlr, exists := r.handlers.Get(key)
 	if !exists {
 		return nil, ufmt.Errorf("handler not found for %s", key)
 	}
@@ -89,9 +89,10 @@ func Execute(proposalId uint64) error {
 	}
 
 	registry := createParameterHandlers()
-	if err := executeProposal(ctx, registry); err != nil {
-		panic(err)
-	}
+	// TODO: must fix this
+	// if err := executeProposal(ctx, registry); err != nil {
+	// 	panic(err)
+	// }
 
 	updateProposalState(ctx)
 
@@ -183,17 +184,14 @@ func validateInitialState() {
 }
 
 func getProposal(proposalId uint64) (*ProposalInfo, error) {
-	// TODO: change to avl API
-	// proposal, exists := proposals[proposalId]
-	// if !exists {
-	// 	return nil, ufmt.Errorf("proposal %d not found", proposalId)
-	// }
 	result, exists := proposals.Get(strconv.Itoa(int(proposalId)))
 	if !exists {
 		return nil, ufmt.Errorf("proposal %d not found", proposalId)
 	}
-	proposal := result.(ProposalInfo)
-
+	proposal, exists := result.(ProposalInfo)
+	if !exists {
+		return nil, ufmt.Errorf("proposal %d not found", proposalId)
+	}
 	return &proposal, nil
 }
 
