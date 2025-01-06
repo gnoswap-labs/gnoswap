@@ -206,21 +206,21 @@ func getProposalStatus(id uint64) string {
 
 	state := proposal.State
 	proposalObj := json.Builder().
-		WriteString("CreatedAt", formatUint64(state.CreatedAt)).
-		WriteString("Upcoming", formatBool(state.Upcoming)).
-		WriteString("Active", formatBool(state.Active)).
-		WriteString("VotingStart", formatUint64(votingStart)).
-		WriteString("VotingEnd", formatUint64(votingEnd)).
-		WriteString("Passed", formatBool(state.Passed)).
-		WriteString("PassedAt", formatUint64(state.PassedAt)).
-		WriteString("Rejected", formatBool(state.Rejected)).
-		WriteString("RejectedAt", formatUint64(state.RejectedAt)).
-		WriteString("Canceled", formatBool(state.Canceled)).
-		WriteString("CanceledAt", formatUint64(state.CanceledAt)).
-		WriteString("Executed", formatBool(state.Executed)).
-		WriteString("ExecutedAt", formatUint64(state.ExecutedAt)).
-		WriteString("Expired", formatBool(state.Expired)).
-		WriteString("ExpiredAt", formatUint64(state.ExpiredAt)).
+		WriteString("createdAt", formatUint64(state.CreatedAt)).
+		WriteString("upcoming", formatBool(state.Upcoming)).
+		WriteString("active", formatBool(state.Active)).
+		WriteString("votingStart", formatUint64(votingStart)).
+		WriteString("votingEnd", formatUint64(votingEnd)).
+		WriteString("passed", formatBool(state.Passed)).
+		WriteString("passedAt", formatUint64(state.PassedAt)).
+		WriteString("rejected", formatBool(state.Rejected)).
+		WriteString("rejectedAt", formatUint64(state.RejectedAt)).
+		WriteString("canceled", formatBool(state.Canceled)).
+		WriteString("canceledAt", formatUint64(state.CanceledAt)).
+		WriteString("executed", formatBool(state.Executed)).
+		WriteString("executedAt", formatUint64(state.ExecutedAt)).
+		WriteString("expired", formatBool(state.Expired)).
+		WriteString("expiredAt", formatUint64(state.ExpiredAt)).
 		Node()
 
 	return marshal(proposalObj)

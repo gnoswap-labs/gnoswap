@@ -127,19 +127,19 @@ func TestGetProposalStatus(t *testing.T) {
 		key      string
 		expected string
 	}{
-		{"CreatedAt", strconv.FormatUint(now, 10)},
-		{"Upcoming", "false"},
-		{"Active", "true"},
-		{"Passed", "false"},
-		{"PassedAt", "0"},
-		{"Rejected", "false"},
-		{"RejectedAt", "0"},
-		{"Canceled", "false"},
-		{"CanceledAt", "0"},
-		{"Executed", "false"},
-		{"ExecutedAt", "0"},
-		{"Expired", "false"},
-		{"ExpiredAt", "0"},
+		{"createdAt", strconv.FormatUint(now, 10)},
+		{"upcoming", "false"},
+		{"active", "true"},
+		{"passed", "false"},
+		{"passedAt", "0"},
+		{"rejected", "false"},
+		{"rejectedAt", "0"},
+		{"canceled", "false"},
+		{"canceledAt", "0"},
+		{"executed", "false"},
+		{"executedAt", "0"},
+		{"expired", "false"},
+		{"expiredAt", "0"},
 	}
 
 	for _, tc := range tests {
@@ -169,11 +169,11 @@ func TestGetProposalStatus(t *testing.T) {
 
 	// Test node traversal using ObjectEach
 	expectedFields := map[string]string{
-		"Active":     "false",
-		"Passed":     "true",
-		"PassedAt":   strconv.FormatUint(now+500, 10),
-		"Executed":   "true",
-		"ExecutedAt": strconv.FormatUint(now+1000, 10),
+		"active":     "false",
+		"passed":     "true",
+		"passedAt":   strconv.FormatUint(now+500, 10),
+		"executed":   "true",
+		"executedAt": strconv.FormatUint(now+1000, 10),
 	}
 
 	node2.ObjectEach(func(key string, value *json.Node) {
