@@ -59,7 +59,8 @@ func CreateProject(
 		panic(err)
 	}
 
-	if _, exist := registered[tokenPath]; !exist {
+	registered := common.ListRegisteredTokens()
+	if err := common.IsRegistered(tokenPath); err != nil {
 		panic(addDetailToError(
 			errNotRegistered,
 			ufmt.Sprintf("launchpad_init.gno__CreateProject() || token(%s) not registered", tokenPath),
@@ -86,7 +87,7 @@ func CreateProject(
 			if token == consts.GOV_XGNS_PATH {
 				continue
 			}
-			if _, exist := registered[token]; !exist {
+			if err := common.IsRegistered(token); err != nil {
 				panic(addDetailToError(
 					errNotRegistered,
 					ufmt.Sprintf("condition token(%s) not registered", token),
@@ -205,6 +206,10 @@ func CreateProject(
 
 	projects[projectId] = project
 
+	rewardStates.Set(projectId, "30", NewRewardState(tier30.tierAmountPerBlockX96, startHeight, tier30.endHeight))
+	rewardStates.Set(projectId, "90", NewRewardState(tier90.tierAmountPerBlockX96, startHeight, tier90.endHeight))
+	rewardStates.Set(projectId, "180", NewRewardState(tier180.tierAmountPerBlockX96, startHeight, tier180.endHeight))
+
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
 		"CreateProject",
@@ -280,7 +285,6 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
-	calculateDepositReward()
 	project = projects[projectId] // get updates project
 
 	// calculate left reward
@@ -294,7 +298,7 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 	leftReward := left30 + left90 + left180
 
 	if leftReward > 0 {
-		tokenTeller := common.GetTokenTeller(tokenPath)
+		tokenTeller := common.GetTokenTeller(project.tokenPath)
 		tokenTeller.Transfer(
 			recipient,
 			leftReward,

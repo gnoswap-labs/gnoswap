@@ -9,8 +9,6 @@ import (
 )
 
 func ApiGetClaimableDepositByAddress(address std.Address) uint64 {
-	calculateDepositReward()
-
 	if !address.IsValid() {
 		return 0
 	}
@@ -33,15 +31,15 @@ func ApiGetClaimableDepositByAddress(address std.Address) uint64 {
 			continue
 		}
 
-		gnsToUser += deposit.amount // not reward amount, but deposit amount
+		reward := rewardStates.Get(deposit.projectId, deposit.tier).Claim(depositId, uint64(std.GetHeight()))
+
+		gnsToUser += reward
 	}
 
 	return gnsToUser
 }
 
 func ApiGetDepositByDepositId(depositId string) string {
-	calculateDepositReward()
-
 	deposit, exist := deposits[depositId]
 	if !exist {
 		return ""
@@ -52,7 +50,7 @@ func ApiGetDepositByDepositId(depositId string) string {
 	depositObj.AppendObject("projectId", json.StringNode("projectId", deposit.projectId))
 	depositObj.AppendObject("tier", json.StringNode("tier", deposit.tier))
 	depositObj.AppendObject("depositor", json.StringNode("depositor", deposit.depositor.String()))
-	depositObj.AppendObject("amount", json.StringNode("amount", ufmt.Sprintf("%d", deposit.amount)))
+	// depositObj.AppendObject("amount", json.StringNode("amount", ufmt.Sprintf("%d", deposit.amount)))
 	depositObj.AppendObject("depositHeight", json.StringNode("depositHeight", ufmt.Sprintf("%d", deposit.depositHeight)))
 	depositObj.AppendObject("depositTime", json.StringNode("depositTime", ufmt.Sprintf("%d", deposit.depositTime)))
 	depositObj.AppendObject("depositCollectHeight", json.StringNode("depositCollectHeight", ufmt.Sprintf("%d", deposit.depositCollectHeight)))
@@ -68,8 +66,6 @@ func ApiGetDepositByDepositId(depositId string) string {
 }
 
 func ApiGetDepositFullByDepositId(depositId string) string {
-	calculateDepositReward()
-
 	deposit, exist := deposits[depositId]
 	if !exist {
 		return ""
@@ -147,7 +143,7 @@ func ApiGetDepositFullByDepositId(depositId string) string {
 
 	// deposit info
 	depositObj.AppendObject("depositor", json.StringNode("depositor", deposit.depositor.String()))
-	depositObj.AppendObject("amount", json.StringNode("amount", ufmt.Sprintf("%d", deposit.amount)))
+	// depositObj.AppendObject("amount", json.StringNode("amount", ufmt.Sprintf("%d", deposit.amount)))
 	depositObj.AppendObject("depositHeight", json.StringNode("depositHeight", ufmt.Sprintf("%d", deposit.depositHeight)))
 	depositObj.AppendObject("depositTime", json.StringNode("depositTime", ufmt.Sprintf("%d", deposit.depositTime)))
 	depositObj.AppendObject("depositCollectHeight", json.StringNode("depositCollectHeight", ufmt.Sprintf("%d", deposit.depositCollectHeight)))
