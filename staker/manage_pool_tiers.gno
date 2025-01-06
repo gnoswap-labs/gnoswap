@@ -303,6 +303,24 @@ func RemovePoolTierByAdmin(poolPath string) {
 	)
 }
 
+func RemovePoolTier(poolPath string) {
+	caller := std.PrevRealm().Addr()
+	if err := common.GovernanceOnly(caller); err != nil {
+		panic(err)
+	}
+
+	removePoolTier(poolPath)
+
+	prevAddr, prevRealm := getPrev()
+
+	std.Emit(
+		"RemovePoolTier",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"poolPath", poolPath,
+	)
+}
+
 // removePoolTier removes the pool from poolTiers
 //
 // Parameters:
