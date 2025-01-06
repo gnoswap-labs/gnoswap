@@ -32,12 +32,12 @@ func TestShortWarmUpExternal(t *testing.T) {
 	testAfterActive(t)
 	testDuratino200(t)
 	testCollectReward(t)
-	// testMintBarQux100_2(t)
-	// testSkipSingleBlock(t)
-	// testStakeToken_2(t)
-	// testSingleBlock_TwoPosition(t)
-	// testCollectRewardAll(t)
-	// testPrintAfterCollect(t)
+	testMintBarQux100_2(t)
+	testSkipSingleBlock(t)
+	testStakeToken_2(t)
+	testSingleBlock_TwoPosition(t)
+	testCollectRewardAll(t)
+	testPrintAfterCollect(t)
 }
 
 func testInit(t *testing.T) {
