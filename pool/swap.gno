@@ -477,7 +477,6 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) Swap
 
 // tickTransition handles the transition between price ticks during a swap
 func tickTransition(step StepComputations, zeroForOne bool, state SwapState, pool *Pool) SwapState {
-
 	// ensure existing state to keep immutability
 	newState := state
 
