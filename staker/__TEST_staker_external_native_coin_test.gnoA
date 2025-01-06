@@ -26,7 +26,7 @@ func TestExternalIncentiveNativeCoin(t *testing.T) {
 	testCreateExternalIncentive(t)
 	testStakeToken(t)
 	testCollectExternalReward_1_Unwrap(t)
-	// testCollectExternalReward_1_NoUnWrap(t)
+	testCollectExternalReward_1_NoUnWrap(t)
 }
 
 func testPoolCreatePool(t *testing.T) {
@@ -111,11 +111,9 @@ func testCollectExternalReward_1_Unwrap(t *testing.T) {
 
 		std.TestSkipHeights(900)
 		CollectReward(1, true)
-		// FIXME @mconcat
-		// panic: [GNOSWAP-STAKER-020] invalid pool tier || staker.gno__rewardCacheOf() || tier(0) is not valid
 
 		newUgnotBal := ugnotBalanceOf(t, adminAddr)
-		uassert.Equal(t, newUgnotBal, uint64(99999900000000))
+		uassert.Equal(t, newUgnotBal, uint64(99999900000000+415))
 
 		newWugnotBal := wugnot.BalanceOf(admin)
 		uassert.Equal(t, newWugnotBal, uint64(0))
@@ -127,7 +125,7 @@ func testCollectExternalReward_1_NoUnWrap(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		oldUgnotBal := ugnotBalanceOf(t, adminAddr)
-		uassert.Equal(t, oldUgnotBal, uint64(382))
+		uassert.Equal(t, oldUgnotBal, uint64(99999900000415))
 
 		oldWugnotBal := wugnot.BalanceOf(admin)
 		uassert.Equal(t, oldWugnotBal, uint64(0))
@@ -136,7 +134,7 @@ func testCollectExternalReward_1_NoUnWrap(t *testing.T) {
 		CollectReward(1, false)
 
 		newUgnotBal := ugnotBalanceOf(t, adminAddr)
-		uassert.Equal(t, newUgnotBal, uint64(382))
+		uassert.Equal(t, newUgnotBal, uint64(99999900000415))
 
 		newWugnotBal := wugnot.BalanceOf(admin)
 		uassert.Equal(t, newWugnotBal, uint64(7))
