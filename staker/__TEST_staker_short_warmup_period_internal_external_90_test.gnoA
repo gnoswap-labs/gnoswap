@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
+	"gno.land/r/demo/users"
 
 	"gno.land/r/gnoswap/v1/consts"
 
@@ -95,15 +96,16 @@ func testMintBarQux100_1(t *testing.T) {
 		)
 
 		uassert.Equal(t, tokenId, uint64(1))
-		uassert.Equal(t, gnft.MustOwnerOf(tid(tokenId)), admin)
+		owner, err := gnft.OwnerOf(tid(tokenId))
+		uassert.NoError(t, err)
+		uassert.Equal(t, owner, users.Resolve(admin))
 
 		std.TestSkipHeights(1)
 	})
 }
 
 func testCreateExternalIncentiveBar(t *testing.T) {
-	t.R
-	un("create external incentive bar", func(t *testing.T) {
+	t.Run("create external incentive bar", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		bar.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
@@ -163,8 +165,6 @@ func testDuration200(t *testing.T) {
 	t.Run("duration 200", func(t *testing.T) {
 		std.TestSkipHeights(199) // skip 1 + 199 = 200 more block
 		en.MintAndDistributeGns()
-
-		// printExternalInfo()
 	})
 }
 

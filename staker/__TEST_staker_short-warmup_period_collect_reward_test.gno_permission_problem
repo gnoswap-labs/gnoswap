@@ -54,7 +54,7 @@ func testInit(t *testing.T) {
 		changeWarmup(t, 3, math.MaxInt64)
 
 		// set unstaking fee to 0
-		SetUnstakingFeeByAdmin(0)
+		// SetUnstakingFeeByAdmin(0)
 	})
 }
 
@@ -176,7 +176,6 @@ func testCreateExternalIncentive(t *testing.T) {
 			1234569600,                                        // startTimestamp
 			1234569600+TIMESTAMP_90DAYS,                       // endTimestamp
 		)
-		// std.GetHeight() = 133
 		std.TestSkipHeights(1)
 
 		obl.Approve(pusers.AddressOrName(consts.STAKER_ADDR), uint64(10_000_000_000))
@@ -191,8 +190,10 @@ func testStakeToken01(t *testing.T) {
 
 		std.TestSkipHeights(1)
 
-		// uassert.Equal(t, gnft.OwnerOf(tid(1)), GetOrigPkgAddr()) // staker
-		uassert.Equal(t, len(deposits), 1)
+		owner, err := gnft.OwnerOf(tid(1))
+		uassert.NoError(t, err)
+		uassert.Equal(t, owner, GetOrigPkgAddr())
+		uassert.Equal(t, deposits.Size(), 1)
 	})
 }
 
@@ -203,8 +204,10 @@ func testStakeToken02(t *testing.T) {
 
 		std.TestSkipHeights(1)
 
-		// uassert.Equal(t, gnft.OwnerOf(tid(2)), GetOrigPkgAddr()) // staker
-		uassert.Equal(t, len(deposits), 2)
+		owner, err := gnft.OwnerOf(tid(2))
+		uassert.NoError(t, err)
+		uassert.Equal(t, owner, GetOrigPkgAddr())
+		uassert.Equal(t, deposits.Size(), 2)
 	})
 }
 
@@ -244,7 +247,9 @@ func testUnstakeToken01(t *testing.T) {
 		UnstakeToken(1, false) // GNFT tokenId
 		std.TestSkipHeights(1)
 
-		// uassert.Equal(t, gnft.OwnerOf(tid(1)), admin)
+		owner, err := gnft.OwnerOf(tid(1))
+		uassert.NoError(t, err)
+		uassert.Equal(t, owner, admin)
 
 		// check reward balance after unstake
 		uassert.Equal(t, gns.BalanceOf(admin), uint64(99999443485515))
@@ -259,7 +264,9 @@ func testUnstakeToken02(t *testing.T) {
 
 		std.TestSkipHeights(1)
 
-		// uassert.Equal(t, gnft.OwnerOf(tid(2)), admin)
+		owner, err := gnft.OwnerOf(tid(2))
+		uassert.NoError(t, err)
+		uassert.Equal(t, owner, admin)
 
 		// check reward
 		uassert.Equal(t, gns.BalanceOf(admin), uint64(100001894600370)) // internal
@@ -273,18 +280,13 @@ func testEndExternalIncentive(t *testing.T) {
 		std.TestSkipHeights(9999999)
 
 		// use same parameter as CreateExternalIncentive()
-		// EndExternalIncentive(
-		// 	anoAdmin,
-		// 	"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500",
-		// 	"gno.land/r/onbloc/obl",
-		// 	1234569600,                  // startTimestamp
-		// 	1234569600+TIMESTAMP_90DAYS, // endTimestamp
-		// 	133,
-		// )
-
-		// std.TestSkipHeights(1)
-
-		// uassert.Equal(t, len(incentives), 0)
-		// uassert.Equal(t, len(poolIncentives["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"]), 0)
+		EndExternalIncentive(
+			anoAdmin,
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500",
+			"gno.land/r/onbloc/obl",
+			1234569600,                  // startTimestamp
+			1234569600+TIMESTAMP_90DAYS, // endTimestamp
+			133,
+		)
 	})
 }

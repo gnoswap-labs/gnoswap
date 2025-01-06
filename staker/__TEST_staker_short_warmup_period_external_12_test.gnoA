@@ -100,7 +100,7 @@ func testCreateExternalIncentiveBar(t *testing.T) {
 		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
 
 		CreateExternalIncentive(
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", // targetPoolPath string,
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 			barPath,
 			20000000,
 			1234569600,

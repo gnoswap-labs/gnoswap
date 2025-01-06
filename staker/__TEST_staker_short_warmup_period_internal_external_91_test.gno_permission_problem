@@ -32,6 +32,7 @@ import (
 )
 
 var (
+	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
 	anoAdmin = users.Resolve(admin)
 )
 
@@ -96,7 +97,9 @@ func testMintBarQux100_1(t *testing.T) {
 		)
 
 		uassert.Equal(t, tokenId, uint64(1))
-		uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
+		owner, err := gnft.OwnerOf(tid(tokenId))
+		uassert.NoError(t, err)
+		uassert.Equal(t, owner, users.Resolve(admin))
 		uassert.Equal(t, liquidity, "20026")
 
 		std.TestSkipHeights(1)
@@ -126,7 +129,9 @@ func testMintBarQux100_2(t *testing.T) {
 		)
 
 		uassert.Equal(t, tokenId, uint64(2))
-		uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
+		owner, err := gnft.OwnerOf(tid(tokenId))
+		uassert.NoError(t, err)
+		uassert.Equal(t, owner, users.Resolve(admin))
 		uassert.Equal(t, liquidity, "22605053")
 
 		std.TestSkipHeights(1)

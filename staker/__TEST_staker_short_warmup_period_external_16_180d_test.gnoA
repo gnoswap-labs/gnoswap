@@ -1,3 +1,6 @@
+// external incentive + warm up period testing
+//  qux for 180 days
+
 package staker
 
 import (
@@ -5,8 +8,8 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/demo/users"
 	"gno.land/p/demo/uassert"
+	"gno.land/r/demo/users"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -24,11 +27,11 @@ import (
 	"gno.land/r/onbloc/qux"
 )
 
-func TestShortWarmUp365DayExternal(t *testing.T) {
+func TestShortWarmUp180DayExternal(t *testing.T) {
 	testInit(t)
 	testCreatePool(t)
 	testMintBarQux3000_1_4(t)
-	testCreateExternalIncentiveQux365(t)
+	testCreateExternalIncentiveQux180(t)
 	testStakeToken_1_4(t)
 	testBeforeActive(t)
 	test23HoursAfterActive(t)
@@ -95,8 +98,8 @@ func testMintBarQux3000_1_4(t *testing.T) {
 	})
 }
 
-func testCreateExternalIncentiveQux365(t *testing.T) {
-	t.Run("create external incentive qux 365", func(t *testing.T) {
+func testCreateExternalIncentiveQux180(t *testing.T) {
+	t.Run("create external incentive qux 180", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		qux.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
@@ -108,7 +111,7 @@ func testCreateExternalIncentiveQux365(t *testing.T) {
 			quxPath,
 			10000000000000,
 			1234569600,
-			1234569600+TIMESTAMP_365DAYS,
+			1234569600+TIMESTAMP_180DAYS,
 		)
 		std.TestSkipHeights(1)
 	})
@@ -118,16 +121,16 @@ func testStakeToken_1_4(t *testing.T) {
 	t.Run("stake token 1 ~ 4", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gnft.Approve(GetOrigPkgAddr(), tid(1))
+		gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
 		StakeToken(1)
 
-		gnft.Approve(GetOrigPkgAddr(), tid(2))
+		gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
 		StakeToken(2)
 
-		gnft.Approve(GetOrigPkgAddr(), tid(3))
+		gnft.Approve(a2u(GetOrigPkgAddr()), tid(3))
 		StakeToken(3)
 
-		gnft.Approve(GetOrigPkgAddr(), tid(4))
+		gnft.Approve(a2u(GetOrigPkgAddr()), tid(4))
 		StakeToken(4)
 
 		std.TestSkipHeights(1)
