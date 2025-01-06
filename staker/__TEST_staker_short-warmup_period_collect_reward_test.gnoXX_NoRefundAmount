@@ -4,7 +4,6 @@ import (
 	"math"
 	"std"
 	"testing"
-	"time"
 
 	"gno.land/p/demo/uassert"
 	pusers "gno.land/p/demo/users"
@@ -35,11 +34,11 @@ func TestCollectReward(t *testing.T) {
 	testPositionMint02(t)
 	testCreateExternalIncentive(t)
 	testStakeToken01(t)
-	// testStakeToken02(t)
-	// testCollectReward01_External(t)
-	// testUnstakeToken01(t)
-	// testUnstakeToken02(t)
-	// testEndExternalIncentive(t)
+	testStakeToken02(t)
+	testCollectReward01_External(t)
+	testUnstakeToken01(t)
+	testUnstakeToken02(t)
+	testEndExternalIncentive(t)
 }
 
 func testInit(t *testing.T) {
@@ -150,7 +149,7 @@ func testCreateExternalIncentive(t *testing.T) {
 		// obl token isnt't allowed for external reward, so panic
 		uassert.PanicsWithMessage(
 			t,
-			"[GNOSWAP-STAKER-026] not allowed for external reward || staker.gno__isAllowedForExternalReward() || tokenPath(gno.land/r/onbloc/obl) is not allowed for external reward for poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500)",
+			"[GNOSWAP-STAKER-026] not allowed for external reward: tokenPath(gno.land/r/onbloc/obl) is not allowed for external reward for poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500)",
 			func() {
 				CreateExternalIncentive(
 					"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", // targetPoolPath
@@ -237,7 +236,7 @@ func testUnstakeToken01(t *testing.T) {
 		std.TestSkipHeights(900) //  enough time to claim external reward
 
 		// check reward balance before unstake
-		uassert.Equal(t, gns.BalanceOf(admin), uint64(99999002318056)) // internal
+		uassert.Equal(t, gns.BalanceOf(admin), uint64(99999000000000)) // internal
 		uassert.Equal(t, obl.BalanceOf(admin), uint64(99999000000000)) // external
 
 		// FIXME: remove comment after api is implemented
@@ -249,11 +248,11 @@ func testUnstakeToken01(t *testing.T) {
 
 		owner, err := gnft.OwnerOf(tid(1))
 		uassert.NoError(t, err)
-		uassert.Equal(t, owner, admin)
+		uassert.Equal(t, owner, adminAddr)
 
 		// check reward balance after unstake
-		uassert.Equal(t, gns.BalanceOf(admin), uint64(99999443485515))
-		uassert.Equal(t, obl.BalanceOf(admin), uint64(99999000000736))
+		uassert.Equal(t, gns.BalanceOf(admin), uint64(99999000000000)) // this pool is not internal reward pool
+		uassert.Equal(t, obl.BalanceOf(admin), uint64(99999000001715)) // only external reward is collected
 	})
 }
 
@@ -266,11 +265,11 @@ func testUnstakeToken02(t *testing.T) {
 
 		owner, err := gnft.OwnerOf(tid(2))
 		uassert.NoError(t, err)
-		uassert.Equal(t, owner, admin)
+		uassert.Equal(t, owner, adminAddr)
 
 		// check reward
-		uassert.Equal(t, gns.BalanceOf(admin), uint64(100001894600370)) // internal
-		uassert.Equal(t, obl.BalanceOf(admin), uint64(99999000004890))  // external
+		uassert.Equal(t, gns.BalanceOf(admin), uint64(99999000000000))
+		uassert.Equal(t, obl.BalanceOf(admin), uint64(99999000011371)) // external
 	})
 }
 
@@ -279,6 +278,7 @@ func testEndExternalIncentive(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		std.TestSkipHeights(9999999)
 
+		beforeObl := obl.BalanceOf(admin)
 		// use same parameter as CreateExternalIncentive()
 		EndExternalIncentive(
 			anoAdmin,
@@ -288,5 +288,12 @@ func testEndExternalIncentive(t *testing.T) {
 			1234569600+TIMESTAMP_90DAYS, // endTimestamp
 			133,
 		)
+
+		afterObl := obl.BalanceOf(admin)
+
+		refunded := afterObl - beforeObl
+		if refunded == 0 {
+			panic("no refund amount")
+		}
 	})
 }
