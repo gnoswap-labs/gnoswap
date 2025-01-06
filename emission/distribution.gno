@@ -146,7 +146,7 @@ func distributeToTarget(amount uint64) uint64 {
 			))
 		}
 
-		pct := uint64(iPct)
+		pct := iPct.(uint64)
 		distAmount := calculateAmount(amount, pct)
 		totalSent += distAmount
 
@@ -212,7 +212,7 @@ func GetDistributionBpsPct(target int) uint64 {
 		))
 	}
 
-	return uint64(iUint64)
+	return iUint64.(uint64)
 }
 
 func GetDistributedToStaker() uint64 {
