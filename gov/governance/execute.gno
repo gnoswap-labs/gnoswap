@@ -90,9 +90,9 @@ func Execute(proposalId uint64) error {
 
 	registry := createParameterHandlers()
 	// TODO: must fix this
-	// if err := executeProposal(ctx, registry); err != nil {
-	// 	panic(err)
-	// }
+	if err := executeProposal(ctx, registry); err != nil {
+		panic(err)
+	}
 
 	updateProposalState(ctx)
 
