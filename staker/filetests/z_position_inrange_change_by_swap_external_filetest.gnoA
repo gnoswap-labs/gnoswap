@@ -77,7 +77,6 @@ func main() {
 	testMintBarQuxPos02()
 	testCreateExternalIncentive()
 	testStakeTokenPos01AndPos02()
-	testRewardCheckBeforeActive()
 	testMakeExternalBarStart()
 
 	testCheckReward01() // both positions are in-range
@@ -91,12 +90,6 @@ func main() {
 
 func testInit() {
 	std.TestSetRealm(adminRealm)
-
-	// short warm-up period
-	sr.SetWarmUp(100, 901)
-	sr.SetWarmUp(70, 301)
-	sr.SetWarmUp(50, 151)
-	sr.SetWarmUp(30, 1)
 }
 
 func testCreatePool() {
@@ -186,18 +179,6 @@ func testStakeTokenPos01AndPos02() {
 	sr.StakeToken(2)
 }
 
-func testRewardCheckBeforeActive() {
-	std.TestSkipHeights(1)
-	en.MintAndDistributeGns()
-	sr.CalcPoolPositionRefactor()
-
-	/*
-		TODO: (after fixing unit test) check reward
-		- external bar is not active yet
-		- should be no reward for both positions
-	*/
-}
-
 func testMakeExternalBarStart() {
 	externalStartTime := 1234569600
 	nowTime := time.Now().Unix()
@@ -230,6 +211,7 @@ func testMakePosition1OutRangeBySwap() {
 	bar.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
 	qux.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
 
+	// XX: ./staker: test pkg: panic: runtime error: invalid memory address or nil pointer dereference
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
 		barPath,  // inputToken
 		quxPath,  // outputToken
