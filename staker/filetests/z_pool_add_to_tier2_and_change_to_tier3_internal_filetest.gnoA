@@ -70,15 +70,15 @@ var (
 )
 
 func main() {
-	testInit()
-	testCreatePool()
+	// testInit()
+	// testCreatePool()
 
-	testMintAndStakeWugnotGnsPos01()
+	// testMintAndStakeWugnotGnsPos01()
 
-	testSetPoolTier2() // new pool is set to tier 2
-	testMintAndStakeBarBazPos02()
+	// testSetPoolTier2() // new pool is set to tier 2
+	// testMintAndStakeBarBazPos02()
 
-	testChangePoolTier3() // pool is changed to tier 3
+	// testChangePoolTier3() // pool is changed to tier 3
 }
 
 func testInit() {
