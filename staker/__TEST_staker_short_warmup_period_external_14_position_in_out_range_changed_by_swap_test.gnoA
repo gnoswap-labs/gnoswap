@@ -1,0 +1,275 @@
+// external incentive + warm up period testing
+
+package staker
+
+import (
+	"math"
+	"std"
+	"testing"
+
+	"gno.land/p/demo/uassert"
+	"gno.land/r/demo/users"
+
+	"gno.land/r/gnoswap/v1/consts"
+
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
+	rr "gno.land/r/gnoswap/v1/router"
+
+	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/v1/gns"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/qux"
+)
+
+var poolPath string = "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"
+
+func TestShortWarmUpExternalPositionInOutRangeChangedBySwap(t *testing.T) {
+	testInit(t)
+	testCreatePool(t)
+	testMintBarQux100_1(t)
+	testMintBarQux100_2(t)
+	testCreateExternalIncentive(t)
+	testStakeToken_1_AND_2(t)
+	testBeforeActive(t)
+	testAfter849Blocks(t)
+	testAfter1Block(t)
+	testAfter50Blocks(t)
+	// testMakePosition1OutRange(t)
+	// testRewardNow(t)
+	// testRewardNowAfter1Block(t)
+}
+
+func testInit(t *testing.T) {
+	t.Run("initialize", func(t *testing.T) {
+		changeWarmup(t, 0, 150)
+		changeWarmup(t, 1, 300)
+		changeWarmup(t, 2, 900)
+		changeWarmup(t, 3, math.MaxInt64)
+
+		// set unstaking fee to 0
+		// SetUnstakingFeeByAdmin(0)
+	})
+}
+
+func testCreatePool(t *testing.T) {
+	t.Run("create pool", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
+
+		pl.CreatePool(barPath, quxPath, 100, "79228162514264337593543950337")
+		pl.CreatePool(barPath, bazPath, 3000, "79228162514264337593543950337")
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testMintBarQux100_1(t *testing.T) {
+	t.Run("mint position 01, bar:qux:100", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		tokenId, liquidity, amount0, amount1 := pn.Mint(
+			barPath,    // token0
+			quxPath,    // token1
+			fee100,     // fee
+			int32(-50), // tickLower
+			int32(50),  // tickUpper
+			"50",       // amount0Desired
+			"50",       // amount1Desired
+			"1",        // amount0Min
+			"1",        // amount1Min
+			max_timeout,
+			users.Resolve(admin),
+			users.Resolve(admin),
+		)
+
+		uassert.Equal(t, tokenId, uint64(1))
+		uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testMintBarQux100_2(t *testing.T) {
+	t.Run("mint position 02, bar:qux:100", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		tokenId, liquidity, amount0, amount1 := pn.Mint(
+			barPath,      // token0
+			quxPath,      // token1
+			fee100,       // fee
+			int32(-1000), // tickLower
+			int32(1000),  // tickUpper
+			"500000",     // amount0Desired
+			"500000",     // amount1Desired
+			"1",          // amount0Min
+			"1",          // amount1Min
+			max_timeout,
+			users.Resolve(admin),
+			users.Resolve(admin),
+		)
+
+		uassert.Equal(t, tokenId, uint64(2))
+		uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testCreateExternalIncentive(t *testing.T) {
+	t.Run("create external incentive", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		bar.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
+		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+
+		CreateExternalIncentive(
+			poolPath,
+			barPath,
+			9000000000,
+			1234569600,
+			1234569600+TIMESTAMP_90DAYS,
+		)
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testStakeToken_1_AND_2(t *testing.T) {
+	t.Run("stake position 01 and 02", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		gnft.Approve(GetOrigPkgAddr(), tid(1))
+		StakeToken(1)
+
+		gnft.Approve(GetOrigPkgAddr(), tid(2))
+		StakeToken(2)
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testBeforeActive(t *testing.T) {
+	t.Run("before active", func(t *testing.T) {
+		// FIXME: remove comments after api is fixed
+		// pei := GetPrintExternalInfo()
+		// uassert.Equal(t, pei, `{"height":128,"time":1234567900,"position":[]}`)
+
+		// lp01ExternalRewards := ApiGetRewardsByLpTokenId(1)
+		// uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":128,"timestamp":1234567900},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[]}]}`)
+
+		// lp02ExternalRewards := ApiGetRewardsByLpTokenId(2)
+		// uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":128,"timestamp":1234567900},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[]}]}`)
+	})
+}
+
+func testAfter849Blocks(t *testing.T) {
+	t.Run("after 849 blocks", func(t *testing.T) {
+		std.TestSkipHeights(849) // in-active
+		// FIXME: remove comments after api is fixed
+		// lp01ExternalRewards := ApiGetRewardsByLpTokenId(1)
+		// uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":977,"timestamp":1234569598},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[]}]}`)
+
+		// lp02ExternalRewards := ApiGetRewardsByLpTokenId(2)
+		// uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":977,"timestamp":1234569598},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[]}]}`)
+	})
+}
+
+func testAfter1Block(t *testing.T) {
+	t.Run("after 1 block", func(t *testing.T) {
+		std.TestSkipHeights(1) // active, but no block passed since active
+		// FIXME: remove comments after api is fixed
+		// lp01ExternalRewards := ApiGetRewardsByLpTokenId(1)
+		// uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":978,"timestamp":1234569600},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[]}]}`)
+
+		// lp02ExternalRewards := ApiGetRewardsByLpTokenId(2)
+		// uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":978,"timestamp":1234569600},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[]}]}`)
+	})
+}
+
+func testAfter50Blocks(t *testing.T) {
+	t.Run("after 50 blocks", func(t *testing.T) {
+		std.TestSkipHeights(50)
+		// lp01ExternalRewards := ApiGetRewardsByLpTokenId(1)
+		// uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":67,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
+
+		// lp02ExternalRewards := ApiGetRewardsByLpTokenId(2)
+		// uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":34654,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
+	})
+}
+
+func testMakePosition1OutRange(t *testing.T) {
+	t.Run("make position 01 out of range", func(t *testing.T) {
+		poolTick := pl.PoolGetSlot0Tick(poolPath)
+		println("poolTick", poolTick)
+		// uassert.Equal(t, poolTick, int32(0))
+
+		// ROUTER SWAP
+		// std.TestSetRealm(adminRealm)
+
+		// bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		// qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		// bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+		// qux.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+
+		// tokenIn, tokenOut := rr.ExactInSwapRoute(
+		// 	barPath,    // inputToken
+		// 	quxPath,    // outputToken
+		// 	"100000",   // amountSpecified
+		// 	"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", // strRouteArr
+		// 	"100", // quoteArr
+		// 	"0",   // tokenAmountLimit
+		// )
+		// uassert.Equal(t, tokenIn, "100000")
+		// uassert.Equal(t, tokenOut, "-98873")
+
+		// poolTick = pl.PoolGetSlot0Tick(poolPath)
+		// uassert.Equal(t, poolTick, int32(-195))
+	})
+}
+
+// FIXME: remove comments after api is fixed
+func testRewardNow(t *testing.T) {
+	t.Run("check reward", func(t *testing.T) {
+		// lp01ExternalRewards := ApiGetRewardsByLpTokenId(1)
+		// uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":67,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
+
+		// lp02ExternalRewards := ApiGetRewardsByLpTokenId(2)
+		// uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":34654,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
+	})
+}
+
+func testRewardNowAfter1Block(t *testing.T) {
+	t.Run("check reward after 1 block", func(t *testing.T) {
+		std.TestSkipHeights(1)
+
+		// lp01ExternalRewards := ApiGetRewardsByLpTokenId(1)
+		// uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":1029,"timestamp":1234569702},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":67,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
+
+		// lp02ExternalRewards := ApiGetRewardsByLpTokenId(2)
+		// uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":1029,"timestamp":1234569702},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":35348,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
+	})
+
+	// POSITION #1 PREVIOUS REWARD
+	// `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":67,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
+
+	// POSITION #2 PREVIOUS REWARD
+	// `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":34654,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
+
+	/*
+		PREVIOUS REWARD -> NOW
+		- POSITION #1
+			67 > 67
+		- POSITION #2
+			34654 > 35348
+	*/
+}

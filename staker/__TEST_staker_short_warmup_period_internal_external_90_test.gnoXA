@@ -40,16 +40,7 @@ func TestShortWarmUpInternalAndExternalAllPositionInRange(t *testing.T) {
 
 func testInit(t *testing.T) {
 	t.Run("initialize", func(t *testing.T) {
-		// init pool tiers
-		// tier 1
-
-		// delete(poolTiers, MUST_EXISTS_IN_TIER_1)
 		deletePoolTier(t, MUST_EXISTS_IN_TIER_1)
-
-		// poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"] = InternalTier{
-		// 	tier:           1,
-		// 	startTimestamp: time.Now().Unix(),
-		// }
 		addPoolTier(t, `gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100`, 1)
 
 		// override warm-up period for testing
@@ -111,22 +102,20 @@ func testMintBarQux100_1(t *testing.T) {
 }
 
 func testCreateExternalIncentiveBar(t *testing.T) {
-	t.Run("create external incentive bar", func(t *testing.T) {
+	t.R
+	un("create external incentive bar", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		bar.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
 		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
 
 		CreateExternalIncentive(
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", // targetPoolPath string,
-			barPath, // rewardToken string, // token path should be registered
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+			barPath,
 			20000000,
 			1234569600,
 			1234569600+TIMESTAMP_90DAYS,
 		)
-
-		// after
-		// printExternalInfo()
 
 		std.TestSkipHeights(1)
 	})
@@ -136,19 +125,15 @@ func testCreateExternalIncentiveGns(t *testing.T) {
 	t.Run("create external incentive gns", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // this includes depositGnsAmount
+		gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
 
 		CreateExternalIncentive(
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", // targetPoolPath string,
-			consts.GNS_PATH, // rewardToken string, // token path should be registered
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+			consts.GNS_PATH,
 			20000000,
 			1234569600,
 			1234569600+TIMESTAMP_90DAYS,
 		)
-
-		// after
-		// printExternalInfo()
-
 		std.TestSkipHeights(1)
 	})
 }

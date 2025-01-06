@@ -4,10 +4,12 @@
 package staker
 
 import (
+	"math"
 	"std"
 	"testing"
 
 	"gno.land/p/demo/uassert"
+	"gno.land/r/demo/users"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -67,10 +69,12 @@ func testMintBarQux3000_1_4(t *testing.T) {
 		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-		pn.Mint(barPath, bazPath, fee3000, int32(-1020), int32(1020), "13630", "13630", "0", "0", max_timeout, admin, admin)
-		pn.Mint(barPath, bazPath, fee3000, int32(-1020), int32(1020), "84360", "84360", "0", "0", max_timeout, admin, admin)
-		pn.Mint(barPath, bazPath, fee3000, int32(-1020), int32(1020), "1990", "1990", "0", "0", max_timeout, admin, admin)
-		pn.Mint(barPath, bazPath, fee3000, int32(-1020), int32(1020), "7", "7", "0", "0", max_timeout, admin, admin)
+		anoAdmin := users.Resolve(admin)
+
+		pn.Mint(barPath, bazPath, fee3000, int32(-1020), int32(1020), "13630", "13630", "0", "0", max_timeout, anoAdmin, anoAdmin)
+		pn.Mint(barPath, bazPath, fee3000, int32(-1020), int32(1020), "84360", "84360", "0", "0", max_timeout, anoAdmin, anoAdmin)
+		pn.Mint(barPath, bazPath, fee3000, int32(-1020), int32(1020), "1990", "1990", "0", "0", max_timeout, anoAdmin, anoAdmin)
+		pn.Mint(barPath, bazPath, fee3000, int32(-1020), int32(1020), "7", "7", "0", "0", max_timeout, anoAdmin, anoAdmin)
 		std.TestSkipHeights(1)
 
 		t1Liq := pn.PositionGetPositionLiquidity(1).Clone()
@@ -78,17 +82,11 @@ func testMintBarQux3000_1_4(t *testing.T) {
 		t3Liq := pn.PositionGetPositionLiquidity(3).Clone()
 		t4Liq := pn.PositionGetPositionLiquidity(4).Clone()
 
-		println("t1 liquidity\t", t1Liq.ToString()) // 274141
-		println("t2 liquidity\t", t2Liq.ToString()) // 1696738
-		println("t3 liquidity\t", t3Liq.ToString()) // 40025
-		println("t4 liquidity\t", t4Liq.ToString()) // 140
-
 		all := u256.Zero()
 		all.Add(all, t1Liq)
 		all.Add(all, t2Liq)
 		all.Add(all, t3Liq)
 		all.Add(all, t4Liq)
-		println("all liquidity\t", all.ToString()) // 2011044
 
 		t1pct := t1Liq.Mul(t1Liq, u256.NewUint(100))
 		t1pct.Div(t1pct, all) // 13.6317%
@@ -110,9 +108,9 @@ func testCreateExternalIncentiveQux180(t *testing.T) {
 
 		AddToken(quxPath)
 		CreateExternalIncentive(
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", // targetPoolPath string,
-			quxPath,          // rewardToken string, // token path should be registered
-			"10000000000000", // _rewardAmount string,
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000",
+			quxPath,
+			10000000000000,
 			1234569600,
 			1234569600+TIMESTAMP_180DAYS,
 		)
