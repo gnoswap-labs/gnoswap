@@ -154,7 +154,7 @@ func (self *Tick) previousCross(currentHeight uint64) bool {
 func (self *Tick) modifyDepositLower(currentHeight uint64, currentTick int32, liquidity *i256.Int) {
 	// update staker side tick info
 	self.stakedLiquidityGross = liquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
-	self.stakedLiquidityDelta = self.stakedLiquidityDelta.Add(self.stakedLiquidityDelta, liquidity)
+	self.stakedLiquidityDelta = i256.Zero().Add(self.stakedLiquidityDelta, liquidity)
 
 	self.updateCross(currentHeight, currentTick < self.id)
 	// ticks.Set(self.id, self)
@@ -162,7 +162,7 @@ func (self *Tick) modifyDepositLower(currentHeight uint64, currentTick int32, li
 
 func (self *Tick) modifyDepositUpper(currentHeight uint64, currentTick int32, liquidity *i256.Int) {
 	self.stakedLiquidityGross = liquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
-	self.stakedLiquidityDelta = self.stakedLiquidityDelta.Sub(self.stakedLiquidityDelta, liquidity)
+	self.stakedLiquidityDelta = i256.Zero().Sub(self.stakedLiquidityDelta, liquidity)
 
 	self.updateCross(currentHeight, currentTick < self.id)
 	// ticks.Set(self.id, self)

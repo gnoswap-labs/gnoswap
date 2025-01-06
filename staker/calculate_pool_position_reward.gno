@@ -41,6 +41,7 @@ func calcPositionRewardByWarmups(currentHeight uint64, tokenId uint64) []Reward 
 	}
 	return rewards
 }
+
 func calcPositionReward(currentHeight uint64, tokenId uint64) Reward {
 	deposit := deposits.Get(tokenId)
 	emissionUpdateHeights, emissionUpdates := gns.EmissionUpdates(deposit.lastCollectHeight, currentHeight)
@@ -82,7 +83,6 @@ func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits
 	// cache per-tier and per-pool rewards
 	poolTier.cacheReward(currentHeight, emissionUpdateHeights, emissionUpdates)
 
-
 	deposit := deposits.Get(tokenId)
 	poolPath := deposit.targetPoolPath
 
@@ -116,11 +116,10 @@ func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits
 	return internalRewards, internalPenalties, externalRewards, externalPenalties
 }
 
-func ProcessUnclaimableReward(poolPath string, endHeight uint64) (uint64, map[string]uint64) {
+func ProcessUnClaimableReward(poolPath string, endHeight uint64) (uint64, map[string]uint64) {
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		return 0, make(map[string]uint64)
 	}
 	return pool.processUnclaimableReward(poolTier, endHeight)
 }
-

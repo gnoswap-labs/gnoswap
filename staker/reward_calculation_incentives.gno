@@ -7,36 +7,35 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
 type IncentiveBound struct {
 	Incentive ExternalIncentive
-	IsEnter bool
+	IsEnter   bool
 }
 
 // per-pool incentives
 type Incentives struct {
-	byTime *avl.Tree // (startTime, endTime, creator, rewardToken) => ExternalIncentive
-	byHeight *avl.Tree // (startHeight, endHeight, creator, rewardToken) => ExternalIncentive
+	byTime    *avl.Tree // (startTime, endTime, creator, rewardToken) => ExternalIncentive
+	byHeight  *avl.Tree // (startHeight, endHeight, creator, rewardToken) => ExternalIncentive
 	byCreator *avl.Tree // (creator, startHeight, endHeight, rewardToken) => ExternalIncentive
 
 	incentiveBound *UintTree // blockNumber -> []IncentiveBound
 
-	rewardCache *RewardCacheTree // blockNumber -> map[string]*u256.Uint
+	rewardCache           *RewardCacheTree // blockNumber -> map[string]*u256.Uint
 	lastRewardCacheHeight *uint64
 }
 
 func NewIncentives(currentHeight uint64) Incentives {
 	return Incentives{
-		byTime: avl.NewTree(),
-		byHeight: avl.NewTree(),
+		byTime:    avl.NewTree(),
+		byHeight:  avl.NewTree(),
 		byCreator: avl.NewTree(),
 
 		incentiveBound: NewUintTree(),
 
-		rewardCache: NewRewardCacheTree(),
+		rewardCache:           NewRewardCacheTree(),
 		lastRewardCacheHeight: &currentHeight,
 	}
 }
@@ -52,7 +51,7 @@ func (self *Incentives) Get(startTime, endTime int64, creator std.Address, rewar
 	if !ok {
 		return nil, false
 	}
-	return value.(*ExternalIncentive), true	
+	return value.(*ExternalIncentive), true
 }
 
 func (self *Incentives) GetByIncentiveId(incentiveId string) (*ExternalIncentive, bool) {
@@ -91,7 +90,7 @@ func (self *Incentives) CurrentReward(currentHeight uint64) map[string]*u256.Uin
 }
 
 func (self *Incentives) create(
-	creator std.Address, 
+	creator std.Address,
 	incentive *ExternalIncentive,
 ) {
 	byTimeId := incentiveIdByTime(uint64(incentive.startTimestamp), uint64(incentive.endTimestamp), creator, incentive.rewardToken)
@@ -111,7 +110,7 @@ func (self *Incentives) create(
 	startIncentiveBound := self.GetBound(uint64(incentive.startHeight))
 	startIncentiveBound = append(startIncentiveBound, IncentiveBound{
 		Incentive: *incentive,
-		IsEnter: true,
+		IsEnter:   true,
 	})
 	self.incentiveBound.Set(uint64(incentive.startHeight), startIncentiveBound)
 
@@ -119,10 +118,9 @@ func (self *Incentives) create(
 	endIncentiveBound := self.GetBound(endHeight)
 	endIncentiveBound = append(endIncentiveBound, IncentiveBound{
 		Incentive: *incentive,
-		IsEnter: false,
+		IsEnter:   false,
 	})
 	self.incentiveBound.Set(endHeight, endIncentiveBound)
-
 }
 
 // endHeight MUST be less than or equal to the current block height

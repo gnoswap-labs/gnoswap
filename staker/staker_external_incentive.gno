@@ -14,9 +14,6 @@ import (
 
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // CreateExternalIncentive creates an incentive program for a pool.
@@ -106,19 +103,18 @@ func CreateExternalIncentive(
 		caller,
 		std.GetHeight(),
 		depositGnsAmount,
-
 		time.Now().Unix(),
 		gns.GetAvgBlockTimeInMs(),
 	)
 
-	if externalIncenvies.Has(incentiveId) {
+	if externalIncentives.Has(incentiveId) {
 		panic(addDetailToError(
 			errIncentiveAlreadyExists,
 			ufmt.Sprintf("incentiveId(%s)", incentiveId),
 		))
 	}
 	// store external incentive information for each incentiveId
-	externalIncenvies.Set(incentiveId, incentive)
+	externalIncentives.Set(incentiveId, incentive)
 
 	// deposit gns amount
 	gns.TransferFrom(a2u(caller), a2u(consts.STAKER_ADDR), depositGnsAmount)
@@ -273,30 +269,6 @@ func isMidnight(startTime time.Time) bool {
 	second := startTime.Second()
 
 	return hour == 0 && minute == 0 && second == 0
-}
-
-func getTokenPairBalanceFromPosition(poolPath string, tokenId uint64) (string, string) {
-	pool := pl.GetPoolFromPoolPath(poolPath)
-
-	currentX96 := pool.Slot0SqrtPriceX96()
-	lowerX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickLower(tokenId))
-	upperX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickUpper(tokenId))
-
-	token0Balance, token1Balance := common.GetAmountsForLiquidity(
-		currentX96,
-		lowerX96,
-		upperX96,
-		u256.MustFromDecimal(pn.PositionGetPositionLiquidityStr(tokenId)),
-	)
-
-	if token0Balance == "" {
-		token0Balance = "0"
-	}
-	if token1Balance == "" {
-		token1Balance = "0"
-	}
-
-	return token0Balance, token1Balance
 }
 
 func gnsBalance(addr std.Address) uint64 {

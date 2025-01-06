@@ -181,3 +181,8 @@ func getPrev() (string, string) {
 func isUserCall() bool {
 	return std.PrevRealm().IsUser()
 }
+
+// assertOnlyNotHalted panics if the contract is halted.
+func assertOnlyNotHalted() {
+	common.IsHalted()
+}

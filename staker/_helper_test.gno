@@ -266,8 +266,8 @@ func MintPosition(t *testing.T,
 	tickUpper int32,
 	amount0Desired string, // *u256.Uint
 	amount1Desired string, // *u256.Uint
-	amount0Min string, // *u256.Uint
-	amount1Min string, // *u256.Uint
+	amount0Min string,     // *u256.Uint
+	amount1Min string,     // *u256.Uint
 	deadline int64,
 	mintTo std.Address,
 	caller std.Address,

@@ -2,11 +2,11 @@ package staker
 
 import (
 	"std"
-	"strconv"
 
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
+
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
@@ -43,7 +43,7 @@ func setPoolTier(poolPath string, tier uint64) {
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"poolPath", poolPath,
-		"tier", strconv.FormatUint(tier, 10),
+		"tier", ufmt.Sprintf("%d", tier),
 	)
 }
 
@@ -74,7 +74,7 @@ func changePoolTier(poolPath string, tier uint64) {
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"poolPath", poolPath,
-		"tier", strconv.FormatUint(tier, 10),
+		"tier", ufmt.Sprintf("%d", tier),
 	)
 }
 
@@ -108,32 +108,32 @@ func removePoolTier(poolPath string) {
 	)
 }
 
-func SetWramUpByAdmin(index, duration uint64) {
+func SetWramUpByAdmin(index int, blockDuration int64) {
 	assertOnlyAdmin()
 	assertMustNotHalted()
 
-	setWramUp(index, duration)
+	setWramUp(index, blockDuration)
 }
 
-func SetWramUp(index, blockDuration uint64) {
+func SetWramUp(index int, blockDuration int64) {
 	assertOnlyGovernance()
 	assertMustNotHalted()
 
 	setWramUp(index, blockDuration)
 }
 
-func setWramUp(index, blockDuration uint64) {
+func setWramUp(index int, blockDuration int64) {
 	en.MintAndDistributeGns()
 
-	modifyWarmup(int(index), int64(blockDuration))
+	modifyWarmup(index, blockDuration)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
 		"SetWramUp",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"index", strconv.FormatUint(index, 10),
-		"blockDuration", strconv.FormatUint(blockDuration, 10),
+		"index", ufmt.Sprintf("%d", index),
+		"blockDuration", ufmt.Sprintf("%d", blockDuration),
 	)
 }
 
