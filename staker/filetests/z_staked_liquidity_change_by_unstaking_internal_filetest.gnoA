@@ -78,12 +78,6 @@ func main() {
 func testInit() {
 	std.TestSetRealm(adminRealm)
 
-	// short warm-up period
-	sr.SetWarmUp(100, 901)
-	sr.SetWarmUp(70, 301)
-	sr.SetWarmUp(50, 151)
-	sr.SetWarmUp(30, 1)
-
 	// prepare wugnot
 	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 	banker := std.GetBanker(std.BankerTypeRealmSend)
@@ -132,10 +126,15 @@ func testMintAndStakeWugnotGnsPos01() {
 	gnft.Approve(stakerAddr, tokenIdFrom(1))
 	sr.StakeToken(1)
 
-	/*
-		std.TestSkipHeights(1)
-		TODO: (after fixing unit test) check reward
-	*/
+	// check reward for position 01 (in-range)
+	std.TestSkipHeights(1)
+	beforeGns := gns.BalanceOf(adminUser)
+	sr.CollectReward(1, false)
+	afterGns := gns.BalanceOf(adminUser)
+	diff := afterGns - beforeGns
+	if diff == 0 {
+		panic("position 01 in-range, should have reward")
+	}
 }
 
 func testMintAndStakeWugnotGnsPos02() {
@@ -163,27 +162,40 @@ func testMintAndStakeWugnotGnsPos02() {
 	gnft.Approve(stakerAddr, tokenIdFrom(2))
 	sr.StakeToken(2)
 
-	/*
-		std.TestSkipHeights(1)
+	// check reward for position 02 (in-range)
+	std.TestSkipHeights(1)
+	beforeGns := gns.BalanceOf(adminUser)
+	sr.CollectReward(2, false)
+	afterGns := gns.BalanceOf(adminUser)
+	diff := afterGns - beforeGns
+	if diff == 0 {
+		panic("position 02 in-range, should have reward")
+	}
 
-		TODO: (after fixing unit test) check reward
-		- both positions are in-range
-	*/
+	// check reward for position 01 (in-range)
+	beforeGns = gns.BalanceOf(adminUser)
+	sr.CollectReward(1, false)
+	afterGns = gns.BalanceOf(adminUser)
+	diff = afterGns - beforeGns
+	if diff == 0 {
+		panic("position 01 in-range, should have reward")
+	}
 }
 
 func testUnstakeTokenPos02() {
 	std.TestSetRealm(adminRealm)
 
 	std.TestSkipHeights(1)
-	sr.UnstakeToken(2)
 
-	/*
-		std.TestSkipHeights(1)
+	beforeGns := gns.BalanceOf(adminUser)
+	sr.UnstakeToken(2, false)
+	afterGns := gns.BalanceOf(adminUser)
+	diff := afterGns - beforeGns
+	if diff == 0 {
+		panic("position 02 in-range, should have reward")
+	}
 
-		TODO: (after fixing unit test) check reward
-		- position-02 is unstaked
-		- only position-01 reward should be increased
-	*/
+	std.TestSkipHeights(1)
 }
 
 func tokenIdFrom(tokenId interface{}) grc721.TokenID {

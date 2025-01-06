@@ -85,12 +85,6 @@ func main() {
 
 func testInit() {
 	std.TestSetRealm(adminRealm)
-
-	// short warm-up period
-	sr.SetWarmUp(100, 901)
-	sr.SetWarmUp(70, 301)
-	sr.SetWarmUp(50, 151)
-	sr.SetWarmUp(30, 1)
 }
 
 func testCreatePool() {
@@ -140,7 +134,7 @@ func testCreateExternalIncentive() {
 	sr.CreateExternalIncentive(
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		barPath,
-		"9000000000",
+		9000000000,
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,
 	)
@@ -156,7 +150,7 @@ func testStakeTokenPos01() {
 }
 
 func testMakeExternalBarStart() {
-	externalStartTime := 1234569600
+	externalStartTime := int64(1234569600)
 	nowTime := time.Now().Unix()
 	timeLeft := externalStartTime - nowTime
 
@@ -166,12 +160,16 @@ func testMakeExternalBarStart() {
 	std.TestSkipHeights(int64(blockLeft)) // skip until external bar starts
 	std.TestSkipHeights(10)               // skip bit more to see reward calculation
 
-	/*
-		std.TestSkipHeights(1)
-
-		TODO: (after fixing unit test) check reward
-		- only position-01 reward should be increased
-	*/
+	// check reward for position 01 (in-range)
+	std.TestSetRealm(adminRealm)
+	std.TestSkipHeights(1)
+	beforeBar := bar.BalanceOf(adminUser)
+	sr.CollectReward(1, false)
+	afterBar := bar.BalanceOf(adminUser)
+	diff := afterBar - beforeBar
+	if diff == 0 {
+		panic("position 01 in-range, should have reward")
+	}
 }
 
 func testMintAndStakeBarQuxPos02() {
@@ -199,20 +197,31 @@ func testMintAndStakeBarQuxPos02() {
 	gnft.Approve(stakerAddr, tokenIdFrom(2))
 	sr.StakeToken(2)
 
-	/*
-		std.TestSkipHeights(1)
+	// check reward for position 02 (in-range)
+	std.TestSkipHeights(1)
+	beforeBar := bar.BalanceOf(adminUser)
+	sr.CollectReward(2, false)
+	afterBar := bar.BalanceOf(adminUser)
+	diff := afterBar - beforeBar
+	if diff == 0 {
+		panic("position 02 in-range, should have reward")
+	}
 
-		TODO: (after fixing unit test) check reward
-		- position-02 is in-range
-		- both position-01 and position-02 rewards should be increased
-	*/
+	// check reward for position 01 (in-range)
+	beforeBar = bar.BalanceOf(adminUser)
+	sr.CollectReward(1, false) // FIXME: unexpected panic: slice index out of bounds: 0 (len=0)
+	afterBar = bar.BalanceOf(adminUser)
+	diff = afterBar - beforeBar
+	if diff == 0 {
+		panic("position 01 in-range, should have reward")
+	}
 }
 
 func testUnstakeTokenPos02() {
 	std.TestSetRealm(adminRealm)
 
 	std.TestSkipHeights(1)
-	sr.UnstakeToken(2)
+	sr.UnstakeToken(2, false)
 
 	/*
 		std.TestSkipHeights(1)

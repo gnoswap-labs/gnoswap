@@ -82,12 +82,6 @@ func main() {
 func testInit() {
 	std.TestSetRealm(adminRealm)
 
-	// short warm-up period
-	sr.SetWarmUp(100, 901)
-	sr.SetWarmUp(70, 301)
-	sr.SetWarmUp(50, 151)
-	sr.SetWarmUp(30, 1)
-
 	// prepare wugnot
 	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 	banker := std.GetBanker(std.BankerTypeRealmSend)
@@ -139,17 +133,17 @@ func testStakeAndUnstakeTokenPos01() {
 
 	gnft.Approve(stakerAddr, tokenIdFrom(1))
 
+	beforeGns := gns.BalanceOf(adminUser)
 	std.TestSkipHeights(1)
 	sr.StakeToken(1)
 	sr.UnstakeToken(1, false)
 
-	/*
-		std.TestSkipHeights(1)
+	afterGns := gns.BalanceOf(adminUser)
+	diff := afterGns - beforeGns
 
-		TODO: (after fixing unit test) check collected reward
-		- position 01 has been unstaked in same block
-		- no reward should be collected
-	*/
+	if diff != 0 {
+		panic("position 01 is staked and unstaked in same block, should not have reward")
+	}
 }
 
 func tokenIdFrom(tokenId interface{}) grc721.TokenID {

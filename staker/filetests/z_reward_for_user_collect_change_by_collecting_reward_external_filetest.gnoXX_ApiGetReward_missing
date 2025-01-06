@@ -1,15 +1,15 @@
 // PKGPATH: gno.land/r/gnoswap/v1/staker_test
 
 // POOLs:
-// 1. bar:qux:100
+// 1. gnot:gns:3000
 
 // POSITIONs:
 // 1. in-range
-// 2. (will be staked) out-range
-// 3. (will be staked) in-range
+// 2. in-range
 
 // REWARDs:
 // - external bar ( bar:qux:100 )
+// - external qux ( qux:gns:100 )
 
 package staker_test
 
@@ -23,8 +23,9 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
-	_ "gno.land/r/demo/wugnot"
+	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/gns"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 
@@ -43,6 +44,8 @@ var (
 	stakerAddr  = consts.STAKER_ADDR
 	stakerUser  = common.AddrToUser(stakerAddr)
 	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
+
+	wugnotAddr = consts.WUGNOT_ADDR
 
 	fooPath = "gno.land/r/onbloc/foo"
 	barPath = "gno.land/r/onbloc/bar"
@@ -65,34 +68,33 @@ var (
 	TIMESTAMP_90DAYS  int64 = 90 * 24 * 60 * 60
 	TIMESTAMP_180DAYS int64 = 180 * 24 * 60 * 60
 	TIMESTAMP_365DAYS int64 = 365 * 24 * 60 * 60
-
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"
 )
 
 func main() {
 	testInit()
 	testCreatePool()
-	testMintBarQuxPos01()
 
-	testCreateExternalIncentive()
+	testCreateExternalIncentiveBar()
+	testCreateExternalIncentiveQux()
 
-	testStakeTokenPos01()
-	testMakeExternalBarStart() // position-01 is in-range
+	testMintAndStakeBarQuxPos01()
+	testMintAndStakeBarQuxPos02()
 
-	testMintAndStakeBarQuxPos02() // position-02 is out-range (no reward)
+	testMakeExternalBarAndQuxStart()
 
-	testMintAndStakeBarQuxPos03() // position-03 is in-range
-
+	testCollectRewardPos01()
 }
 
 func testInit() {
 	std.TestSetRealm(adminRealm)
 
-	// short warm-up period
-	sr.SetWarmUp(100, 901)
-	sr.SetWarmUp(70, 301)
-	sr.SetWarmUp(50, 151)
-	sr.SetWarmUp(30, 1)
+	// prepare wugnot
+	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
+	banker := std.GetBanker(std.BankerTypeRealmSend)
+	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
+	std.TestSetOrigSend(std.Coins{{"ugnot", 50_000_000_000_000}}, nil)
+	wugnot.Deposit()
+	std.TestSetOrigSend(nil, nil)
 }
 
 func testCreatePool() {
@@ -109,7 +111,39 @@ func testCreatePool() {
 	)
 }
 
-func testMintBarQuxPos01() {
+func testCreateExternalIncentiveBar() {
+	std.TestSetRealm(adminRealm)
+
+	bar.Approve(common.AddrToUser(consts.STAKER_ADDR), consts.UINT64_MAX)
+	gns.Approve(common.AddrToUser(consts.STAKER_ADDR), depositGnsAmount)
+
+	std.TestSkipHeights(1)
+	sr.CreateExternalIncentive(
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		barPath,
+		9000000000,
+		1234569600,
+		1234569600+TIMESTAMP_90DAYS,
+	)
+}
+
+func testCreateExternalIncentiveQux() {
+	std.TestSetRealm(adminRealm)
+
+	qux.Approve(common.AddrToUser(consts.STAKER_ADDR), consts.UINT64_MAX)
+	gns.Approve(common.AddrToUser(consts.STAKER_ADDR), depositGnsAmount)
+
+	std.TestSkipHeights(1)
+	sr.CreateExternalIncentive(
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		quxPath,
+		18000000000,
+		1234569600,
+		1234569600+TIMESTAMP_90DAYS,
+	)
+}
+
+func testMintAndStakeBarQuxPos01() {
 	std.TestSetRealm(adminRealm)
 
 	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -122,56 +156,17 @@ func testMintBarQuxPos01() {
 		fee100,
 		int32(-50),
 		int32(50),
-		"50",
-		"50",
-		"1",
-		"1",
+		"100",
+		"100",
+		"0",
+		"0",
 		max_timeout,
 		adminAddr,
 		adminAddr,
 	)
-}
-
-func testCreateExternalIncentive() {
-	std.TestSetRealm(adminRealm)
-
-	bar.Approve(common.AddrToUser(consts.STAKER_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.STAKER_ADDR), depositGnsAmount)
-
-	std.TestSkipHeights(1)
-	sr.CreateExternalIncentive(
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
-		barPath,
-		"9000000000",
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
-	)
-}
-
-func testStakeTokenPos01() {
-	std.TestSetRealm(adminRealm)
 
 	gnft.Approve(stakerAddr, tokenIdFrom(1))
-
-	std.TestSkipHeights(1)
 	sr.StakeToken(1)
-}
-
-func testMakeExternalBarStart() {
-	externalStartTime := (1234569600 + TIMESTAMP_90DAYS)
-	nowTime := time.Now().Unix()
-	timeLeft := externalStartTime - nowTime
-
-	blockAvgTime := consts.BLOCK_GENERATION_INTERVAL
-	blockLeft := timeLeft / blockAvgTime
-
-	std.TestSkipHeights(int64(blockLeft)) // skip until external bar starts
-	std.TestSkipHeights(10)               // skip bit more to see reward calculation
-
-	/*
-		TODO: (after fixing unit test) check reward
-		- only position-01 reward should be increased
-	*/
 }
 
 func testMintAndStakeBarQuxPos02() {
@@ -185,8 +180,8 @@ func testMintAndStakeBarQuxPos02() {
 		barPath,
 		quxPath,
 		fee100,
-		int32(60),
-		int32(120),
+		int32(-50),
+		int32(50),
 		"100",
 		"100",
 		"0",
@@ -198,46 +193,40 @@ func testMintAndStakeBarQuxPos02() {
 
 	gnft.Approve(stakerAddr, tokenIdFrom(2))
 	sr.StakeToken(2)
+}
+
+func testMakeExternalBarAndQuxStart() {
+	externalStartTime := int64(1234569600)
+	nowTime := time.Now().Unix()
+	timeLeft := externalStartTime - nowTime
+
+	blockAvgTime := consts.BLOCK_GENERATION_INTERVAL
+	blockLeft := timeLeft / blockAvgTime
+
+	std.TestSkipHeights(int64(blockLeft)) // skip until external bar starts
+	std.TestSkipHeights(10)               // skip bit more to see reward calculation
 
 	/*
 		std.TestSkipHeights(1)
 
 		TODO: (after fixing unit test) check reward
-		- position-02 is out-range
-		- only position-01 reward should be increased
+		- position-01 and position-02 should have the same reward for bar and qux
 	*/
 }
 
-func testMintAndStakeBarQuxPos03() {
+func testCollectRewardPos01() {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	qux.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-
 	std.TestSkipHeights(1)
-	pn.Mint(
-		barPath,
-		quxPath,
-		fee100,
-		int32(-100),
-		int32(100),
-		"100",
-		"100",
-		"0",
-		"0",
-		max_timeout,
-		adminAddr,
-		adminAddr,
-	)
-
-	gnft.Approve(stakerAddr, tokenIdFrom(3))
-	sr.StakeToken(3)
+	sr.CollectReward(1, false)
 
 	/*
 		std.TestSkipHeights(1)
 
 		TODO: (after fixing unit test) check reward
-		- position-01 and position-03 are in-range
+		- only position-01 reward collected (bar and qux)
+		- reward for position-01 should be reset to 0 and increased
+		- reward for position-02 should be increased
 	*/
 }
 

@@ -81,12 +81,6 @@ func main() {
 func testInit() {
 	std.TestSetRealm(adminRealm)
 
-	// short warm-up period
-	sr.SetWarmUp(100, 901)
-	sr.SetWarmUp(70, 301)
-	sr.SetWarmUp(50, 151)
-	sr.SetWarmUp(30, 1)
-
 	// prepare wugnot
 	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 	banker := std.GetBanker(std.BankerTypeRealmSend)
@@ -135,12 +129,16 @@ func testMintAndStakeWugnotGnsPos01() {
 	gnft.Approve(stakerAddr, tokenIdFrom(1))
 	sr.StakeToken(1)
 
-	/*
-		std.TestSkipHeights(1)
+	// check reward for position 01 (in-range)
+	std.TestSkipHeights(1)
+	beforeGns := gns.BalanceOf(adminUser)
+	sr.CollectReward(1, false)
+	afterGns := gns.BalanceOf(adminUser)
+	diff := afterGns - beforeGns
+	if diff == 0 {
+		panic("position 01 in-range, should have reward")
+	}
 
-		TODO: (after fixing unit test) check reward
-		- position-01 is in-range
-	*/
 }
 
 func testMintAndStakeWugnotGnsPos02() {
@@ -168,13 +166,27 @@ func testMintAndStakeWugnotGnsPos02() {
 	gnft.Approve(stakerAddr, tokenIdFrom(2))
 	sr.StakeToken(2)
 
-	/*
-		std.TestSkipHeights(1)
+	std.TestSkipHeights(1)
 
-		TODO: (after fixing unit test) check reward
-		- position-02 is out-range
-		- only position-01 reward should be increased
-	*/
+	// check reward for position 02 (out-range)
+	std.TestSkipHeights(1)
+	beforeGns := gns.BalanceOf(adminUser)
+	sr.CollectReward(2, false)
+	afterGns := gns.BalanceOf(adminUser)
+	diff := afterGns - beforeGns
+	if diff != 0 {
+		panic("position 02 out-range, should not have reward")
+	}
+
+	// check reward for position 01 (in-range)
+	std.TestSkipHeights(1)
+	beforeGns = gns.BalanceOf(adminUser)
+	sr.CollectReward(1, false)
+	afterGns = gns.BalanceOf(adminUser)
+	diff = afterGns - beforeGns
+	if diff == 0 {
+		panic("position 01 in-range, should have reward")
+	}
 }
 
 func testMintAndStakeWugnotGnsPos03() {
@@ -202,13 +214,15 @@ func testMintAndStakeWugnotGnsPos03() {
 	gnft.Approve(stakerAddr, tokenIdFrom(3))
 	sr.StakeToken(3)
 
-	/*
-		std.TestSkipHeights(1)
-
-		TODO: (after fixing unit test) check reward
-		- position-03 is in-range
-		- both position-01 and position-03 rewards should be increased
-	*/
+	// check reward for position 03 (in-range)
+	std.TestSkipHeights(1)
+	beforeGns := gns.BalanceOf(adminUser)
+	sr.CollectReward(3, false)
+	afterGns := gns.BalanceOf(adminUser)
+	diff := afterGns - beforeGns
+	if diff == 0 {
+		panic("position 03 in-range, should have reward")
+	}
 }
 
 func tokenIdFrom(tokenId interface{}) grc721.TokenID {

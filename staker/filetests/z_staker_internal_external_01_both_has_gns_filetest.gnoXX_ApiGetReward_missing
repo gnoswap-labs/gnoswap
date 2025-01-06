@@ -1,10 +1,9 @@
 // PKGPATH: gno.land/r/gnoswap/v1/staker_test
 // 1 pool for tier 1 (gnot:gns:0.3%)
-// - same pool has 1 external incentive (bar)
-// 1 position (in-range changes)
-// - in-range
-// - out-range
-// - in-range
+// - same pool has 2 external incentives
+//   1. bar
+//   2. gns
+//    > internal gns and external gns must not affect each other
 
 package staker_test
 
@@ -27,7 +26,6 @@ import (
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
-	rr "gno.land/r/gnoswap/v1/router"
 	sr "gno.land/r/gnoswap/v1/staker"
 )
 
@@ -63,33 +61,25 @@ var (
 	TIMESTAMP_90DAYS  int64 = 90 * 24 * 60 * 60
 	TIMESTAMP_180DAYS int64 = 180 * 24 * 60 * 60
 	TIMESTAMP_365DAYS int64 = 365 * 24 * 60 * 60
-
-	poolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
 )
 
 func main() {
 	testInit()
 	testCreatePool()
 	testMintWugnotGns01()
-	testMintWugnotGns02()
 	testCreateExternalIncentiveBar()
-	testStakeToken01And02()
+	testCreateExternalIncentiveGns()
+	testStakeToken01()
 	testRewardCheckBeforeActive()
 	testRewardCheckAfterActive()
-	testMakePosition01OutRangeBySwap()
-	testRewardCheckAfterOut()
-	testMakePosition01InRangeBySwap()
-	testRewardCheckAfterIn()
+	testDuration200()
+	testCollectReward()
+	testCollectRewardSameBlockNoReward()
+	testCollectRewardSingleBlock()
 }
 
 func testInit() {
 	std.TestSetRealm(adminRealm)
-
-	// short warm-up period
-	sr.SetWarmUp(100, 901)
-	sr.SetWarmUp(70, 301)
-	sr.SetWarmUp(50, 151)
-	sr.SetWarmUp(30, 1)
 
 	// issue ugnot coins
 	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
@@ -136,31 +126,8 @@ func testMintWugnotGns01() {
 		wugnotPath,
 		gnsPath,
 		fee3000,
-		int32(-60),
-		int32(60),
-		"5000",
-		"5000",
-		"1",
-		"1",
-		max_timeout,
-		adminAddr,
-		adminAddr,
-	)
-}
-
-func testMintWugnotGns02() {
-	std.TestSetRealm(adminRealm)
-
-	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-
-	std.TestSkipHeights(1)
-	pn.Mint(
-		wugnotPath,
-		gnsPath,
-		fee3000,
-		int32(-6000),
-		int32(6000),
+		int32(-1020),
+		int32(1020),
 		"500000000",
 		"500000000",
 		"1",
@@ -182,28 +149,40 @@ func testCreateExternalIncentiveBar() {
 	sr.CreateExternalIncentive(
 		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000",
 		barPath,
-		"20000000",
+		20000000,
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,
 	)
 }
 
-func testStakeToken01And02() {
+func testCreateExternalIncentiveGns() {
+	std.TestSetRealm(adminRealm)
+
+	gns.Approve(common.AddrToUser(consts.STAKER_ADDR), consts.UINT64_MAX)
+
+	std.TestSkipHeights(1)
+	sr.CreateExternalIncentive(
+		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000",
+		gnsPath,
+		20000000,
+		1234569600,
+		1234569600+TIMESTAMP_90DAYS,
+	)
+}
+
+func testStakeToken01() {
 	std.TestSetRealm(adminRealm)
 
 	gnft.Approve(stakerAddr, tokenIdFrom(1))
-	gnft.Approve(stakerAddr, tokenIdFrom(2))
 
 	std.TestSkipHeights(1)
 	sr.StakeToken(1)
-	sr.StakeToken(2)
 	// TODO: (after fixing unit test) check reward by querying with api funcs
 }
 
 func testRewardCheckBeforeActive() {
 	std.TestSkipHeights(1)
 	en.MintAndDistributeGns()
-	sr.CalcPoolPositionRefactor()
 
 	// TODO: (after fixing unit test) check reward by querying with api funcs
 }
@@ -216,72 +195,74 @@ func testRewardCheckAfterActive() {
 	// TODO: (after fixing unit test) check reward by querying with api funcs
 }
 
-func testMakePosition01OutRangeBySwap() {
-	std.TestSetRealm(adminRealm)
+func testDuration200() {
+	std.TestSkipHeights(200)
 
-	poolTick := pl.PoolGetSlot0Tick(poolPath)
-
-	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-
-	wugnot.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
-
-	tokenIn, tokenOut := rr.ExactInSwapRoute(
-		wugnotPath, // inputToken
-		gnsPath,    // outputToken
-		"10000000", // finalAmountIn
-		poolPath,   // RouteArr
-		"100",      // quoteArr
-		"0",        // amountOutMin
-	)
-	println("tokenIn", tokenIn)
-	println("tokenOut", tokenOut)
-	println()
-
-	newPoolTick := pl.PoolGetSlot0Tick(poolPath)
-	println("oldPoolTick", poolTick)
-	println("newPoolTick", newPoolTick)
-	println()
-}
-
-func testRewardCheckAfterOut() {
-	std.TestSkipHeights(1)
 	// TODO: (after fixing unit test) check reward by querying with api funcs
 }
 
-func testMakePosition01InRangeBySwap() {
+func testCollectReward() {
 	std.TestSetRealm(adminRealm)
 
-	poolTick := pl.PoolGetSlot0Tick(poolPath)
+	oldBar := bar.BalanceOf(adminUser)
+	oldGns := gns.BalanceOf(adminUser)
 
-	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	std.TestSkipHeights(1)
+	sr.CollectReward(1, false)
 
-	wugnot.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+	newBar := bar.BalanceOf(adminUser)
+	newGns := gns.BalanceOf(adminUser)
 
-	tokenIn, tokenOut := rr.ExactInSwapRoute(
-		wugnotPath, // inputToken
-		gnsPath,    // outputToken
-		"10000000", // finalAmountIn
-		"gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:3000", // routeArr
-		"100", // quoteArr
-		"0",   // amountOutMin
-	)
-	println("tokenIn", tokenIn)
-	println("tokenOut", tokenOut)
-	println()
+	println("oldBar", oldBar)
+	println("newBar", newBar)
 
-	newPoolTick := pl.PoolGetSlot0Tick(poolPath)
-	println("oldPoolTick", poolTick)
-	println("newPoolTick", newPoolTick)
-	println()
+	// TODO: this gns balance will have both internal and external gns
+	// need to check how much gns is from internal and how much is from external
+	println("oldGns", oldGns)
+	println("newGns", newGns)
 }
 
-func testRewardCheckAfterIn() {
-	std.TestSkipHeights(1)
-	// TODO: (after fixing unit test) check reward by querying with api funcs
+func testCollectRewardSameBlockNoReward() {
+	std.TestSetRealm(adminRealm)
+
+	oldBar := bar.BalanceOf(adminUser)
+	oldGns := gns.BalanceOf(adminUser)
+
+	// std.TestSkipHeights(1) // DO NOT SKIP HEIGHT
+	// current logic is to test collect reward in the same block
+	sr.CollectReward(1, false)
+
+	newBar := bar.BalanceOf(adminUser)
+	newGns := gns.BalanceOf(adminUser)
+
+	println("oldBar", oldBar)
+	println("newBar", newBar)
+
+	// TODO: this gns balance will have both internal and external gns
+	// need to check how much gns is from internal and how much is from external
+	println("oldGns", oldGns)
+	println("newGns", newGns)
+}
+
+func testCollectRewardSingleBlock() {
+	std.TestSetRealm(adminRealm)
+
+	oldBar := bar.BalanceOf(adminUser)
+	oldGns := gns.BalanceOf(adminUser)
+
+	std.TestSkipHeights(1) // ONLY 1 BLOCK PASSED
+	sr.CollectReward(1, false)
+
+	newBar := bar.BalanceOf(adminUser)
+	newGns := gns.BalanceOf(adminUser)
+
+	println("oldBar", oldBar)
+	println("newBar", newBar)
+
+	// TODO: this gns balance will have both internal and external gns
+	// need to check how much gns is from internal and how much is from external
+	println("oldGns", oldGns)
+	println("newGns", newGns)
 }
 
 // NOTE: filetest can not access helper functions in origin package

@@ -82,17 +82,11 @@ func main() {
 
 	testUnstakeTokenPos01()
 
-	// testStakeTokenPos01Again()
+	testStakeTokenPos01Again()
 }
 
 func testInit() {
 	std.TestSetRealm(adminRealm)
-
-	// short warm-up period
-	sr.SetWarmUp(100, 901)
-	sr.SetWarmUp(70, 301)
-	sr.SetWarmUp(50, 151)
-	sr.SetWarmUp(30, 1)
 
 	// prepare wugnot
 	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
@@ -178,13 +172,16 @@ func testUnstakeTokenPos01() {
 	std.TestSetRealm(adminRealm)
 
 	std.TestSkipHeights(1)
+
+	beforeGns := gns.BalanceOf(adminUser)
 	sr.UnstakeToken(1, false)
+	afterGns := gns.BalanceOf(adminUser)
+	diff := afterGns - beforeGns
+	println("diff", diff) // 5267
 
-	/*
-		std.TestSkipHeights(1)
-
-		TODO: (after fixing unit test) check collected reward
-	*/
+	if diff == 0 {
+		panic("position 01 was in-range, should have reward")
+	}
 }
 
 func testStakeTokenPos01Again() {
@@ -194,15 +191,17 @@ func testStakeTokenPos01Again() {
 	gnft.Approve(stakerAddr, tokenIdFrom(1))
 	sr.StakeToken(1)
 
-	/*
-		std.TestSkipHeights(1)
+	// reward check for staked > unstaked > staked position
+	std.TestSkipHeights(1)
+	beforeGns := gns.BalanceOf(adminUser)
+	sr.CollectReward(1, false)
+	afterGns := gns.BalanceOf(adminUser)
+	diff := afterGns - beforeGns
+	println("diff", diff) // 5267
 
-		TODO: (after fixing unit test) check collected reward
-		- token 01 has been re-staked (stake->unstake->stake)
-
-		IMPORTANT:
-		reward amount should be calculate from new staked block height
-	*/
+	if diff == 0 {
+		panic("position 01 in-range, should have reward")
+	}
 }
 
 func tokenIdFrom(tokenId interface{}) grc721.TokenID {

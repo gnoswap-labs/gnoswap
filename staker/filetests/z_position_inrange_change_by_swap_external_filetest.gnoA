@@ -29,7 +29,6 @@ import (
 
 	"gno.land/r/gnoswap/v1/gnft"
 
-	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	rr "gno.land/r/gnoswap/v1/router"
@@ -162,7 +161,7 @@ func testCreateExternalIncentive() {
 	sr.CreateExternalIncentive(
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		barPath,
-		"9000000000",
+		9000000000,
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,
 	)
@@ -180,7 +179,7 @@ func testStakeTokenPos01AndPos02() {
 }
 
 func testMakeExternalBarStart() {
-	externalStartTime := 1234569600
+	externalStartTime := int64(1234569600)
 	nowTime := time.Now().Unix()
 	timeLeft := externalStartTime - nowTime
 
@@ -193,11 +192,16 @@ func testMakeExternalBarStart() {
 }
 
 func testCheckReward01() {
-	std.TestSkipHeights(1)
-	/*
-		TODO: (after fixing unit test) check reward
-		- both positions are in-range
-	*/
+	std.TestSetRealm(adminRealm)
+
+	oldBar := bar.BalanceOf(adminUser)
+	sr.CollectReward(1, false)
+	newBar := bar.BalanceOf(adminUser)
+	diff := newBar - oldBar
+
+	if diff == 0 {
+		panic("position 01 is in-range, should have reward")
+	}
 }
 
 func testMakePosition1OutRangeBySwap() {
@@ -211,15 +215,16 @@ func testMakePosition1OutRangeBySwap() {
 	bar.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
 	qux.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
 
-	// XX: ./staker: test pkg: panic: runtime error: invalid memory address or nil pointer dereference
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
-		barPath,  // inputToken
-		quxPath,  // outputToken
-		"100000", // finalAmountIn
-		poolPath, // RouteArr
-		"100",    // quoteArr
-		"0",      // amountOutMin
+		barPath,     // inputToken
+		quxPath,     // outputToken
+		"100000",    // finalAmountIn
+		poolPath,    // RouteArr
+		"100",       // quoteArr
+		"0",         // amountOutMin
+		max_timeout, // timeout
 	)
+	std.TestSkipHeights(1)
 
 	newPoolTick := pl.PoolGetSlot0Tick(poolPath)
 	println("oldPoolTick", poolTick)
@@ -228,12 +233,16 @@ func testMakePosition1OutRangeBySwap() {
 }
 
 func testCheckReward02() {
-	std.TestSkipHeights(1)
-	/*
-		TODO: (after fixing unit test) check reward
-		- position-01 is out-range
-		- only position-02 reward should be increased
-	*/
+	std.TestSetRealm(adminRealm)
+
+	oldBar := bar.BalanceOf(adminUser)
+	sr.CollectReward(1, false)
+	newBar := bar.BalanceOf(adminUser)
+	diff := newBar - oldBar
+
+	if diff != 0 {
+		panic("position 01 is out-range, should not have reward")
+	}
 }
 
 func testMakePosition1InRangeBySwap() {
@@ -254,6 +263,7 @@ func testMakePosition1InRangeBySwap() {
 		"gno.land/r/onbloc/qux:gno.land/r/onbloc/bar:100",
 		"100",
 		"0",
+		max_timeout,
 	)
 
 	newPoolTick := pl.PoolGetSlot0Tick(poolPath)
@@ -264,10 +274,17 @@ func testMakePosition1InRangeBySwap() {
 
 func testCheckReward03() {
 	std.TestSkipHeights(1)
-	/*
-		TODO: (after fixing unit test) check reward
-		- both positions are in-range
-	*/
+
+	std.TestSetRealm(adminRealm)
+
+	oldBar := bar.BalanceOf(adminUser)
+	sr.CollectReward(1, false)
+	newBar := bar.BalanceOf(adminUser)
+	diff := newBar - oldBar
+
+	if diff <= 0 {
+		panic("position 01 is in-range, should have reward")
+	}
 }
 
 func tokenIdFrom(tokenId interface{}) grc721.TokenID {
