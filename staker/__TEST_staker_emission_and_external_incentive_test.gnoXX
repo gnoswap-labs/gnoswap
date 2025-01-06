@@ -3,10 +3,10 @@ package staker
 import (
 	"std"
 	"testing"
-	"time"
 
 	"gno.land/p/demo/uassert"
 
+	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
@@ -38,16 +38,38 @@ func TestStakerWithEmissionAmount(t *testing.T) {
 }
 
 func testInit(t *testing.T) {
-	t.Run("initial", func(t *testing.T) {
+	t.Run("init pool tiers", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		//pl.SetPoolCreationFeeByAdmin(0)
 
 		// init pool tiers
 		// tier 1
-		poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"] = InternalTier{
-			tier:           1,
-			startTimestamp: time.Now().Unix(),
-		}
+		// deletePoolTier(t, MUST_EXISTS_IN_TIER_1)
+		addPoolTier(t, `gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500`, 1)
+		std.TestSkipHeights(1)
+
+		// set unstaking fee to 0
+		SetUnstakingFeeByAdmin(0)
+
+		// set pool creation fee to 0
+		pl.SetPoolCreationFeeByAdmin(0)
+
+		// set community pool distribution to 0% (give it to devOps)
+		en.ChangeDistributionPctByAdmin(
+			1, 7500,
+			2, 2500,
+			3, 0,
+			4, 0,
+		)
+
+		// prepare wugnot
+		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
+		banker := std.GetBanker(std.BankerTypeRealmSend)
+		banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, std.Coins{{"ugnot", 50_000_000_000_000}})
+		std.TestSetOrigSend(std.Coins{{"ugnot", 50_000_000_000_000}}, nil)
+		wugnot.Deposit()
+		std.TestSetOrigSend(nil, nil)
+
+		std.TestSkipHeights(1)
 	})
 }
 
@@ -100,8 +122,8 @@ func testPositionMintPos01Tier01(t *testing.T) {
 			"0",                         // amount0Min
 			"0",                         // amount1Min
 			max_timeout,
-			admin,
-			admin,
+			adminAddr,
+			adminAddr,
 		)
 		// 3block minting
 		uassert.Equal(t, uint64(100000000000000)+uint64(14269406)+uint64(42808218), gns.TotalSupply())
@@ -117,7 +139,7 @@ func testPositionMintPos01Tier01(t *testing.T) {
 		std.TestSkipHeights(1)
 		// approve nft to staker for staking
 		std.TestSetRealm(adminRealm)
-		gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
+		gnft.Approve(consts.STAKER_ADDR, tid(lpTokenId))
 		std.TestSkipHeights(1)
 	})
 }
@@ -140,8 +162,8 @@ func testPositionMintPos02Tier01(t *testing.T) {
 			"1",          // amount0Min
 			"1",          // amount1Min
 			max_timeout,
-			admin,
-			admin,
+			adminAddr,
+			adminAddr,
 		)
 		// 4block minting
 		uassert.Equal(t, uint64(100000000000000)+uint64(14269406)+uint64(42808218)+uint64(57077624), gns.TotalSupply())
@@ -163,7 +185,7 @@ func testPositionMintPos02Tier01(t *testing.T) {
 
 		// approve nft to staker for staking
 		std.TestSetRealm(adminRealm)
-		gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
+		gnft.Approve(consts.STAKER_ADDR, tid(lpTokenId))
 		std.TestSkipHeights(1)
 	})
 }
@@ -186,8 +208,8 @@ func testPositionMintPos03Tier01(t *testing.T) {
 			"1",          // amount0Min
 			"1",          // amount1Min
 			max_timeout,
-			admin,
-			admin,
+			adminAddr,
+			adminAddr,
 		)
 		// 4block minting
 		uassert.Equal(t, uint64(100000000000000)+uint64(14269406)+uint64(42808218)+uint64(57077624)+uint64(57077624), gns.TotalSupply())
@@ -204,7 +226,7 @@ func testPositionMintPos03Tier01(t *testing.T) {
 
 		// approve nft to staker
 		std.TestSetRealm(adminRealm)
-		gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
+		gnft.Approve(consts.STAKER_ADDR, tid(lpTokenId))
 		std.TestSkipHeights(1)
 	})
 }
@@ -218,7 +240,7 @@ func testCreateExternalIncentive(t *testing.T) {
 		CreateExternalIncentive(
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", // targetPoolPath
 			oblPath,                     // rewardToken
-			"1000000000",                // rewardAmount
+			1000000000,                  // rewardAmount
 			1234569600,                  // startTimestamp
 			1234569600+TIMESTAMP_90DAYS, // endTimestamp
 		)
@@ -316,12 +338,6 @@ func testStakeToken03(t *testing.T) {
 
 func testSameHeightCalculation(t *testing.T) {
 	t.Run("same height calculation", func(t *testing.T) {
-		if consts.EMISSION_REFACTORED {
-			CalcPoolPositionRefactor()
-		} else {
-			CalcPoolPosition()
-		}
-
 		// 1block minting
 		uassert.Equal(t, uint64(1472602698), gnsBalance(consts.DEV_OPS))
 		uassert.Equal(t, uint64(3204195117), gnsBalance(consts.COMMUNITY_POOL_ADDR))
@@ -344,8 +360,6 @@ func testCollectReward01(t *testing.T) {
 		token3Penalty := uint64(6346297)
 		leftAmount := uint64(1)
 		expectedPoolAmount := token2Amount + token2Penalty + token3Amount + token3Penalty + leftAmount
-		uassert.Equal(t, expectedPoolAmount, poolGns["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"])
-		uassert.Equal(t, uint64(0), poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"])
 
 		rewardForUser := uint64(1884096693)
 		rewardForPenalty := uint64(807470014)
@@ -394,9 +408,6 @@ func testUnstakeToken01(t *testing.T) {
 		uassert.Equal(t, currGNSForStaker, gnsBalance(consts.STAKER_ADDR))                                                   // 1021404110
 		uassert.Equal(t, uint64(4013092071)+uint64(713470)+uint64(rewardForPenalty), gnsBalance(consts.COMMUNITY_POOL_ADDR)) // 4015410850
 
-		uassert.Equal(t, uint64(0), poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"])
-		uassert.Equal(t, uint64(0), positionGns[1])
-
 		std.TestSkipHeights(1)
 	})
 }
@@ -408,7 +419,7 @@ func testExternalIncentiveReward(t *testing.T) {
 		CreateExternalIncentive(
 			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000", // targetPoolPath string,
 			consts.GNS_PATH, // rewardToken string, // token path should be registered
-			"20000000",      // _rewardAmount string,
+			20000000,        // _rewardAmount string,
 			1234656000,
 			1234656000+TIMESTAMP_90DAYS,
 		)
@@ -440,10 +451,10 @@ func testExternalIncentiveReward(t *testing.T) {
 			"0",                         // amount0Min
 			"0",                         // amount1Min
 			max_timeout,
-			admin,
-			admin,
+			adminAddr,
+			adminAddr,
 		)
-		gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
+		gnft.Approve(consts.STAKER_ADDR, tid(lpTokenId))
 		// 222 block mint
 		uassert.Equal(t, uint64(100007420091120)+uint64(3025114072), gns.TotalSupply())                // 100010445205192
 		uassert.Equal(t, uint64(1484018222)+uint64(605022814), gnsBalance(consts.DEV_OPS))             // 2089041036

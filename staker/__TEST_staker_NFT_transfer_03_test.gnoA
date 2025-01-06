@@ -4,7 +4,7 @@
 // User 'A' can not collect reward
 // User 'B' can collect reward
 
-package tests
+package staker
 
 import (
 	"gno.land/p/demo/testutils"

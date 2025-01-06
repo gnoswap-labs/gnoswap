@@ -3,13 +3,14 @@
 // User 'A' can not transfer NFT to 'B'
 // user 'A' can collect reward
 
-package tests
+package staker
 
 import (
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
 	"std"
 	"testing"
+
+	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v1/consts"
 

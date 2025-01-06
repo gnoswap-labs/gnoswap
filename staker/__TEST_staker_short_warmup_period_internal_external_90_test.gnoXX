@@ -32,8 +32,6 @@ func TestShortWarmUpInternalAndExternalAllPositionInRange(t *testing.T) {
 	testCreateExternalIncentiveBar(t)
 	testCreateExternalIncentiveGns(t)
 	testStakeToken_1(t)
-	// testBeforeActive(t)
-	// testAfterActive(t)
 	testDuration200(t)
 	testCollectReward(t)
 	testCollectRewardSameBlockNoReward(t)
@@ -194,7 +192,7 @@ func testCollectReward(t *testing.T) {
 		newGns := gns.BalanceOf(admin)
 
 		uassert.Equal(t, newBar-oldBar, uint64(485))
-		uassert.Equal(t, newGns-oldGns, uint64(7861515679)) // external 485 + internal 7861515194
+		uassert.Equal(t, newGns-oldGns, uint64(7861515679))
 	})
 }
 

@@ -3,7 +3,6 @@ package staker
 import (
 	"std"
 	"testing"
-	"time"
 
 	"gno.land/p/demo/uassert"
 
@@ -28,7 +27,7 @@ func TestShortWarmUpInternalPositionInOutRangeChangedBySwap(t *testing.T) {
 	testMintBarQux100_1(t)
 	testMintBarQux100_2(t)
 	testStakeToken_1_2(t)
-	// testMakePosition1OutRange(t)
+	testMakePosition1OutRange(t)
 	// testCheckRewardAfter1Block(t)
 }
 
@@ -167,29 +166,29 @@ func testMakePosition1OutRange(t *testing.T) {
 
 // XXX
 func testCheckRewardAfter1Block(t *testing.T) {
-	t.Run("check reward after 1 block", func(t *testing.T) {
-		poolTick := pl.PoolGetSlot0Tick(poolPath)
-		uassert.Equal(t, poolTick, int32(-194))
-		// AT THIS POINT position #1 is out of range
+	// t.Run("check reward after 1 block", func(t *testing.T) {
+	// 	poolTick := pl.PoolGetSlot0Tick(poolPath)
+	// 	uassert.Equal(t, poolTick, int32(-194))
+	// 	// AT THIS POINT position #1 is out of range
 
-		lpToken01Rewards := ApiGetRewardsByLpTokenId(1)
-		uassert.Equal(t, lpToken01Rewards, `{"stat":{"height":129,"timestamp":1234567902},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v1/gns","rewardTokenAmount":101175,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898}]}]}`)
+	// 	lpToken01Rewards := ApiGetRewardsByLpTokenId(1)
+	// 	uassert.Equal(t, lpToken01Rewards, `{"stat":{"height":129,"timestamp":1234567902},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v1/gns","rewardTokenAmount":101175,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898}]}]}`)
 
-		lpToken02Rewards := ApiGetRewardsByLpTokenId(2)
-		uassert.Equal(t, lpToken02Rewards, `{"stat":{"height":129,"timestamp":1234567902},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v1/gns","rewardTokenAmount":6320056,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898}]}]}`)
+	// 	lpToken02Rewards := ApiGetRewardsByLpTokenId(2)
+	// 	uassert.Equal(t, lpToken02Rewards, `{"stat":{"height":129,"timestamp":1234567902},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v1/gns","rewardTokenAmount":6320056,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898}]}]}`)
 
-		// POSITION #1 PREVIOUS REWARD
-		// `{"stat":{"height":128,"timestamp":1234567900},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v1/gns","rewardTokenAmount":101175,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898}]}]}`)
+	// POSITION #1 PREVIOUS REWARD
+	// `{"stat":{"height":128,"timestamp":1234567900},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v1/gns","rewardTokenAmount":101175,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898}]}]}`)
 
-		// POSITION #2 PREVIOUS REWARD
-		// `{"stat":{"height":128,"timestamp":1234567900},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v1/gns","rewardTokenAmount":3109440,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898}]}]}`)
+	// POSITION #2 PREVIOUS REWARD
+	// `{"stat":{"height":128,"timestamp":1234567900},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v1/gns","rewardTokenAmount":3109440,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898}]}]}`)
 
-		/*
-			PREVIOUS REWARD -> NOW
-			- POSITION #1
-				101175 > 101175
-			- POSITION #2
-				3109440 > 6320056
-		*/
-	})
+	/*
+		PREVIOUS REWARD -> NOW
+		- POSITION #1
+			101175 > 101175
+		- POSITION #2
+			3109440 > 6320056
+	*/
+	// })
 }
