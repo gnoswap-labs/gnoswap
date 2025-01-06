@@ -185,8 +185,6 @@ func setAvgBlockTimeInMs(ms int64) {
 	adjustedAmountPerBlock := amountLeft / uint64(blockLeft)
 	setAmountPerBlockPerHalvingYear(currentYear, adjustedAmountPerBlock)
 
-	// yearEndHeight := int64(0)
-	// nextYearStartHeight := int64(0)
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		if year < currentYear {
 			// pass past halving years
