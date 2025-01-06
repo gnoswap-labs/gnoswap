@@ -3,10 +3,60 @@ package governance
 import (
 	"errors"
 	"testing"
+	"time"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/uassert"
 	"gno.land/r/gnoswap/v1/consts"
+
+	u256 "gno.land/p/gnoswap/uint256"
 )
+
+func TestParameterRegistry_Register(t *testing.T) {
+	registry := NewParameterRegistry()
+
+	testHandler := func(params []string) error {
+		return nil
+	}
+
+	tests := []struct {
+		name     string
+		pkgPath  string
+		function string
+		handler  ParameterHandler
+	}{
+		{
+			name:     "pass",
+			pkgPath:  "test/pkg",
+			function: "testFunc",
+			handler:  testHandler,
+		},
+		{
+			name:     "empty pass",
+			pkgPath:  "",
+			function: "testFunc",
+			handler:  testHandler,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			registry.Register(tt.pkgPath, tt.function, tt.handler)
+
+			handler, err := registry.Handler(tt.pkgPath, tt.function)
+			uassert.NoError(t, err)
+
+			if handler == nil {
+				t.Errorf("handler is nil")
+			}
+
+			expectedKey := makeHandlerKey(tt.pkgPath, tt.function)
+			if _, exists := registry.handlers.Get(expectedKey); !exists {
+				t.Errorf("expected key %s not found", expectedKey)
+			}
+		})
+	}
+}
 
 func TestParameterRegistry(t *testing.T) {
 	tests := []struct {
@@ -110,8 +160,10 @@ func TestExecuteParameterChange(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := executeParameterChange(tt.msgs, registry)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("executeParameterChange2() error = %v, wantErr %v", err, tt.wantErr)
+			if !tt.wantErr {
+				uassert.NoError(t, err)
+			} else {
+				uassert.Error(t, err)
 			}
 		})
 	}

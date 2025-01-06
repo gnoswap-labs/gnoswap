@@ -48,8 +48,7 @@ func getConfigByVersion(v uint64) (Config, bool) {
 func getLatestVersion() uint64 {
 	var maxVersion uint64
 	configVersions.ReverseIterate("", "", func(key string, value interface{}) bool {
-		version, _ := strconv.ParseUint(key, 10, 64)
-		maxVersion = version
+		maxVersion = parseUint64(key)
 		return true
 	})
 	return maxVersion
@@ -117,14 +116,14 @@ func reconfigure(
 		"Reconfigure",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"votingStartDelay", ufmt.Sprintf("%d", config.VotingStartDelay),
-		"votingPeriod", ufmt.Sprintf("%d", config.VotingPeriod),
-		"votingWeightSmoothingDuration", ufmt.Sprintf("%d", config.VotingWeightSmoothingDuration),
-		"quorum", ufmt.Sprintf("%d", config.Quorum),
-		"proposalCreationThreshold", ufmt.Sprintf("%d", config.ProposalCreationThreshold),
-		"executionDelay", ufmt.Sprintf("%d", config.ExecutionDelay),
-		"executionWindow", ufmt.Sprintf("%d", config.ExecutionWindow),
-		"newConfigVersion", ufmt.Sprintf("%d", newVersion),
+		"votingStartDelay", formatUint64(config.VotingStartDelay),
+		"votingPeriod", formatUint64(config.VotingPeriod),
+		"votingWeightSmoothingDuration", formatUint64(config.VotingWeightSmoothingDuration),
+		"quorum", formatUint64(config.Quorum),
+		"proposalCreationThreshold", formatUint64(config.ProposalCreationThreshold),
+		"executionDelay", formatUint64(config.ExecutionDelay),
+		"executionWindow", formatUint64(config.ExecutionWindow),
+		"newConfigVersion", formatUint64(newVersion),
 	)
 
 	return newVersion
@@ -134,7 +133,6 @@ func reconfigure(
 // If version is 0, it returns the current configuration.
 func GetConfigVersion(version uint64) Config {
 	en.MintAndDistributeGns()
-	// updateProposalsState() // do not call this function here, it will cause a init loop in updateProposal()
 
 	if version == 0 {
 		return config

@@ -1,13 +1,14 @@
 package governance
 
 import (
+	"std"
+	"strconv"
+	"testing"
+
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
-	"std"
-	"strconv"
-	"testing"
 )
 
 var (
@@ -76,16 +77,10 @@ func TestProposeText(t *testing.T) {
 				pid = ProposeText(tt.title, tt.description)
 			}()
 
-			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-				return
-			}
+			uassert.NoError(t, err)
 
 			prop, exists := proposals.Get(strconv.Itoa(int(pid)))
-			if !exists {
-				t.Error("Proposal was not stored")
-				return
-			}
+			uassert.True(t, exists)
 
 			proposal := prop.(ProposalInfo)
 
@@ -149,16 +144,10 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 					tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
 			}()
 
-			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-				return
-			}
+			uassert.NoError(t, err)
 
 			prop, exists := proposals.Get(strconv.Itoa(int(pid)))
-			if !exists {
-				t.Error("Proposal was not stored")
-				return
-			}
+			uassert.True(t, exists)
 
 			proposal := prop.(ProposalInfo)
 
@@ -202,18 +191,10 @@ func TestUpdateProposalsState(t *testing.T) {
 				}
 			},
 			validate: func(t *testing.T, proposal ProposalInfo) {
-				if !proposal.State.Rejected {
-					t.Error("Proposal should be rejected")
-				}
-				if proposal.State.Active {
-					t.Error("Proposal should not be active anymore")
-				}
-				if proposal.State.Upcoming {
-					t.Error("Proposal should not be upcoming")
-				}
-				if proposal.State.RejectedAt == 0 {
-					t.Error("RejectedAt timestamp should be set")
-				}
+				uassert.True(t, proposal.State.Rejected)
+				uassert.False(t, proposal.State.Active)
+				uassert.False(t, proposal.State.Upcoming)
+				uassert.NotEqual(t, proposal.State.RejectedAt, uint64(0))
 			},
 		},
 		{
@@ -233,15 +214,9 @@ func TestUpdateProposalsState(t *testing.T) {
 				}
 			},
 			validate: func(t *testing.T, proposal ProposalInfo) {
-				if !proposal.State.Passed {
-					t.Error("Proposal should be passed")
-				}
-				if proposal.State.Active {
-					t.Error("Proposal should not be active anymore")
-				}
-				if proposal.State.PassedAt == 0 {
-					t.Error("PassedAt timestamp should be set")
-				}
+				uassert.True(t, proposal.State.Passed)
+				uassert.False(t, proposal.State.Active)
+				uassert.NotEqual(t, proposal.State.PassedAt, uint64(0))
 			},
 		},
 		{
@@ -260,12 +235,8 @@ func TestUpdateProposalsState(t *testing.T) {
 				}
 			},
 			validate: func(t *testing.T, proposal ProposalInfo) {
-				if !proposal.State.Expired {
-					t.Error("Proposal should be expired")
-				}
-				if proposal.State.ExpiredAt == 0 {
-					t.Error("ExpiredAt timestamp should be set")
-				}
+				uassert.True(t, proposal.State.Expired)
+				uassert.NotEqual(t, proposal.State.ExpiredAt, uint64(0))
 			},
 		},
 		{
@@ -283,12 +254,8 @@ func TestUpdateProposalsState(t *testing.T) {
 				}
 			},
 			validate: func(t *testing.T, proposal ProposalInfo) {
-				if !proposal.State.Canceled {
-					t.Error("Proposal should remain canceled")
-				}
-				if !proposal.State.Upcoming {
-					t.Error("Proposal state should not change when canceled")
-				}
+				uassert.True(t, proposal.State.Canceled)
+				uassert.True(t, proposal.State.Upcoming)
 			},
 		},
 		{
@@ -307,9 +274,7 @@ func TestUpdateProposalsState(t *testing.T) {
 				}
 			},
 			validate: func(t *testing.T, proposal ProposalInfo) {
-				if proposal.State.Expired {
-					t.Error("Text proposal should not expire")
-				}
+				uassert.False(t, proposal.State.Expired)
 			},
 		},
 	}
@@ -324,10 +289,7 @@ func TestUpdateProposalsState(t *testing.T) {
 			updateProposalsState()
 
 			updatedProposal, exists := proposals.Get(strconv.Itoa(int(1)))
-			if !exists {
-				t.Error("Proposal was not stored")
-				return
-			}
+			uassert.True(t, exists)
 			tt.validate(t, updatedProposal.(ProposalInfo))
 		})
 	}
@@ -375,16 +337,10 @@ func TestProposeParameterChange(t *testing.T) {
 				tt.executions,
 			)
 
-			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-				return
-			}
+			uassert.NoError(t, err)
 
 			prop, exists := proposals.Get(strconv.Itoa(int(pid)))
-			if !exists {
-				t.Error("Proposal was not stored")
-				return
-			}
+			uassert.True(t, exists)
 
 			proposal := prop.(ProposalInfo)
 

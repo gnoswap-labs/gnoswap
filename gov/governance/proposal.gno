@@ -157,8 +157,8 @@ func ProposeCommunityPoolSpend(
 		"description", description,
 		"to", to.String(),
 		"tokenPath", tokenPath,
-		"amount", ufmt.Sprintf("%d", amount),
-		"internal_proposalId", ufmt.Sprintf("%d", proposalId),
+		"amount", formatUint64(amount),
+		"internal_proposalId", formatUint64(proposalId),
 	)
 
 	return proposalId
@@ -241,9 +241,9 @@ func ProposeParameterChange(
 		"prevRealm", prevRealm,
 		"title", title,
 		"description", description,
-		"numToExecute", ufmt.Sprintf("%d", numToExecute),
+		"numToExecute", formatUint64(numToExecute),
 		"executions", executions,
-		"internal_proposalId", ufmt.Sprintf("%d", proposalId),
+		"internal_proposalId", formatUint64(proposalId),
 	)
 
 	return proposalId

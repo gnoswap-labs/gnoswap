@@ -30,15 +30,15 @@ func TestCreateParameterHandlers(t *testing.T) {
 		function string
 		params   []string
 		wantErr  bool
-		callFn   func(t *testing.T)
+		validate   func(t *testing.T)
 	}{
 		{
-			name: "Emission_ChangeDistributionPct",
-			path: consts.EMISSION_PATH,
+			name:     "Emission_ChangeDistributionPct",
+			path:     consts.EMISSION_PATH,
 			function: "ChangeDistributionPct",
-			params: []string{"1", "7000", "2", "1500", "3", "1000", "4", "500"},
-			wantErr: false,
-			callFn: func(t *testing.T) {
+			params:   []string{"1", "7000", "2", "1500", "3", "1000", "4", "500"},
+			wantErr:  false,
+			validate: func(t *testing.T) {
 				uassert.Equal(t, en.GetDistributionBpsPct(1), uint64(7000))
 				uassert.Equal(t, en.GetDistributionBpsPct(2), uint64(1500))
 				uassert.Equal(t, en.GetDistributionBpsPct(3), uint64(1000))
@@ -51,119 +51,119 @@ func TestCreateParameterHandlers(t *testing.T) {
 			function: "SetSwapFee",
 			params:   []string{"1000"},
 			wantErr:  false,
-			callFn: func(t *testing.T) {
+			validate: func(t *testing.T) {
 				uassert.Equal(t, rr.GetSwapFee(), uint64(1000))
 			},
 		},
 		{
-			name: "set deposit gns amount",
-			path: consts.STAKER_PATH,
+			name:     "set deposit gns amount",
+			path:     consts.STAKER_PATH,
 			function: "SetDepositGnsAmount",
-			params: []string{"1000"},
-			wantErr: false,
-			callFn: func(t *testing.T) {
+			params:   []string{"1000"},
+			wantErr:  false,
+			validate: func(t *testing.T) {
 				uassert.Equal(t, sr.GetDepositGnsAmount(), uint64(1000))
 			},
 		},
 		{
-			name: "set pool creation fee",
-			path: consts.POOL_PATH,
+			name:     "set pool creation fee",
+			path:     consts.POOL_PATH,
 			function: "SetPoolCreationFee",
-			params: []string{"500"},
-			wantErr: false,
-			callFn: func(t *testing.T) {
+			params:   []string{"500"},
+			wantErr:  false,
+			validate: func(t *testing.T) {
 				uassert.Equal(t, pl.GetPoolCreationFee(), uint64(500))
 			},
 		},
 		{
-			name: "SetWithdrawalFee",
-			path: consts.POOL_PATH,
+			name:     "SetWithdrawalFee",
+			path:     consts.POOL_PATH,
 			function: "SetWithdrawalFee",
-			params: []string{"600"},
-			wantErr: false,
-			callFn: func(t *testing.T) {
+			params:   []string{"600"},
+			wantErr:  false,
+			validate: func(t *testing.T) {
 				uassert.Equal(t, pl.GetWithdrawalFee(), uint64(600))
 			},
 		},
 		{
-			name: "ProtocolFee_SetDevOpsPct",
-			path: consts.PROTOCOL_FEE_PATH,
+			name:     "ProtocolFee_SetDevOpsPct",
+			path:     consts.PROTOCOL_FEE_PATH,
 			function: "SetDevOpsPct",
-			params: []string{"900"},
-			wantErr: false,
-			callFn: func(t *testing.T) {
+			params:   []string{"900"},
+			wantErr:  false,
+			validate: func(t *testing.T) {
 				uassert.Equal(t, pf.GetDevOpsPct(), uint64(900))
 			},
 		},
 		{
-			name: "Router_SetSwapFee",
-			path: consts.ROUTER_PATH,
+			name:     "Router_SetSwapFee",
+			path:     consts.ROUTER_PATH,
 			function: "SetSwapFee",
-			params: []string{"400"},
-			wantErr: false,
-			callFn: func(t *testing.T) {
+			params:   []string{"400"},
+			wantErr:  false,
+			validate: func(t *testing.T) {
 				uassert.Equal(t, rr.GetSwapFee(), uint64(400))
 			},
 		},
 		{
-			name: "Staker_SetDepositGnsAmount",
-			path: consts.STAKER_PATH,
+			name:     "Staker_SetDepositGnsAmount",
+			path:     consts.STAKER_PATH,
 			function: "SetDepositGnsAmount",
-			params: []string{"400"},
-			wantErr: false,
-			callFn: func(t *testing.T) {
+			params:   []string{"400"},
+			wantErr:  false,
+			validate: func(t *testing.T) {
 				uassert.Equal(t, sr.GetDepositGnsAmount(), uint64(400))
 			},
 		},
 		{
-			name: "Staker_SetUnstakingFee",
-			path: consts.STAKER_PATH,
+			name:     "Staker_SetUnstakingFee",
+			path:     consts.STAKER_PATH,
 			function: "SetUnstakingFee",
-			params: []string{"100"},
-			wantErr: false,
-			callFn: func(t *testing.T) {
+			params:   []string{"100"},
+			wantErr:  false,
+			validate: func(t *testing.T) {
 				uassert.Equal(t, sr.GetUnstakingFee(), uint64(100))
 			},
 		},
 		{
-			name: "Staker_RemovePoolTier",
-			path: consts.STAKER_PATH,
+			name:     "Staker_RemovePoolTier",
+			path:     consts.STAKER_PATH,
 			function: "RemovePoolTier",
-			params: []string{"100"},
-			wantErr: false,
-			callFn: func(t *testing.T) {
+			params:   []string{"100"},
+			wantErr:  false,
+			validate: func(t *testing.T) {
 				after := sr.GetPoolsWithTier()
 				uassert.Equal(t, len(after), 1)
 				uassert.Equal(t, after[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000_1")
 			},
 		},
 		{
-			name: "ProtocolFee_SetDevOpsPct",
-			path: consts.PROTOCOL_FEE_PATH,
+			name:     "ProtocolFee_SetDevOpsPct",
+			path:     consts.PROTOCOL_FEE_PATH,
 			function: "SetDevOpsPct",
-			params: []string{"900"},
-			wantErr: false,
-			callFn: func(t *testing.T) {
+			params:   []string{"900"},
+			wantErr:  false,
+			validate: func(t *testing.T) {
 				uassert.Equal(t, pf.GetDevOpsPct(), uint64(900))
 			},
 		},
 		{
-			name: "Router_SetSwapFee",
-			path: consts.ROUTER_PATH,
+			name:     "Router_SetSwapFee",
+			path:     consts.ROUTER_PATH,
 			function: "SetSwapFee",
-			params: []string{"400"},
-			wantErr: false,
-			callFn: func(t *testing.T) {
+			params:   []string{"400"},
+			wantErr:  false,
+			validate: func(t *testing.T) {
 				uassert.Equal(t, rr.GetSwapFee(), uint64(400))
 			},
 		},
 		{
-			name: "Staker_SetDepositGnsAmount",
-			path: consts.STAKER_PATH,
+			name:     "Staker_SetDepositGnsAmount",
+			path:     consts.STAKER_PATH,
 			function: "SetDepositGnsAmount",
-			params: []string{"400"},
-			wantErr: false,
-			callFn: func(t *testing.T) {
+			params:   []string{"400"},
+			wantErr:  false,
+			validate: func(t *testing.T) {
 				uassert.Equal(t, sr.GetDepositGnsAmount(), uint64(400))
 			},
 		},
@@ -178,7 +178,7 @@ func TestCreateParameterHandlers(t *testing.T) {
 				t.Errorf("unexpected error: %v", err)
 			}
 
-			tt.callFn(t)
+			tt.validate(t)
 		})
 	}
 }

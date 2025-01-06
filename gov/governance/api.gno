@@ -13,8 +13,8 @@ import (
 
 func createProposalJsonNode(id uint64, proposal ProposalInfo) *json.Node {
 	return json.Builder().
-		WriteString("id", strconv.FormatUint(id, 10)).
-		WriteString("configVersion", strconv.FormatUint(proposal.ConfigVersion, 10)).
+		WriteString("id", formatUint64(id)).
+		WriteString("configVersion", formatUint64(proposal.ConfigVersion)).
 		WriteString("proposer", proposal.Proposer.String()).
 		WriteString("status", b64Encode(getProposalStatus(id))).
 		WriteString("type", proposal.ProposalType.String()).
@@ -53,7 +53,7 @@ func GetProposalById(id uint64) string {
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
-	_, exists := proposals.Get(strconv.FormatUint(id, 10))
+	_, exists := proposals.Get(formatUint64(id))
 	if !exists {
 		return ""
 	}
@@ -78,13 +78,13 @@ func GetVoteStatusFromProposalById(id uint64) string {
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
-	_, exists := proposals.Get(strconv.FormatUint(id, 10))
+	_, exists := proposals.Get(formatUint64(id))
 	if !exists {
 		return ""
 	}
 
 	votesObj := metaNode()
-	votesObj.AppendObject("proposalId", json.StringNode("proposalId", strconv.FormatUint(id, 10)))
+	votesObj.AppendObject("proposalId", json.StringNode("proposalId", formatUint64(id)))
 	votesObj.AppendObject("votes", json.StringNode("votes", b64Encode(getProposalVotes(id)))) // max, yes, no
 
 	return marshal(votesObj)
@@ -139,17 +139,17 @@ func GetVoteByAddressFromProposalById(addr std.Address, id uint64) string {
 
 func createVoteJsonNode(addr std.Address, id uint64, vote voteWithWeight) *json.Node {
 	return json.Builder().
-		WriteString("proposalId", strconv.FormatUint(id, 10)).
-		WriteString("voteYes", strconv.FormatBool(vote.Yes)).
-		WriteString("voteWeight", strconv.FormatUint(vote.Weight, 10)).
-		WriteString("voteHeight", strconv.FormatUint(vote.VotedHeight, 10)).
-		WriteString("voteTimestamp", strconv.FormatUint(vote.VotedAt, 10)).
+		WriteString("proposalId", formatUint64(id)).
+		WriteString("voteYes", formatBool(vote.Yes)).
+		WriteString("voteWeight", formatUint64(vote.Weight)).
+		WriteString("voteHeight", formatUint64(vote.VotedHeight)).
+		WriteString("voteTimestamp", formatUint64(vote.VotedAt)).
 		Node()
 }
 
 // getProposalExtraData returns the extra data of a proposal based on its type.
 func getProposalExtraData(proposalId uint64) string {
-	proposal, exist := proposals.Get(strconv.FormatUint(proposalId, 10))
+	proposal, exist := proposals.Get(formatUint64(proposalId))
 	if !exist {
 		return ""
 	}
@@ -176,7 +176,7 @@ func getCommunityPoolSpendProposalData(proposalId uint64) string {
 	proposalObj := json.Builder().
 		WriteString("to", proposal.CommunityPoolSpend.To.String()).
 		WriteString("tokenPath", proposal.CommunityPoolSpend.TokenPath).
-		WriteString("amount", strconv.FormatUint(proposal.CommunityPoolSpend.Amount, 10)).
+		WriteString("amount", formatUint64(proposal.CommunityPoolSpend.Amount)).
 		Node()
 
 	return marshal(proposalObj)
@@ -194,7 +194,7 @@ func getParameterChangeProposalData(proposalId uint64) string {
 
 // getProposalStatus returns the status of a proposal.
 func getProposalStatus(id uint64) string {
-	prop, exist := proposals.Get(strconv.Itoa(int(id)))
+	prop, exist := proposals.Get(formatUint64(id))
 	if !exist {
 		return ""
 	}
@@ -204,22 +204,23 @@ func getProposalStatus(id uint64) string {
 	votingStart := proposal.State.CreatedAt + config.VotingStartDelay
 	votingEnd := votingStart + config.VotingPeriod
 
+	state := proposal.State
 	proposalObj := json.Builder().
-		WriteString("CreatedAt", strconv.FormatUint(proposal.State.CreatedAt, 10)).
-		WriteString("Upcoming", strconv.FormatBool(proposal.State.Upcoming)).
-		WriteString("Active", strconv.FormatBool(proposal.State.Active)).
-		WriteString("VotingStart", strconv.FormatUint(votingStart, 10)).
-		WriteString("VotingEnd", strconv.FormatUint(votingEnd, 10)).
-		WriteString("Passed", strconv.FormatBool(proposal.State.Passed)).
-		WriteString("PassedAt", strconv.FormatUint(proposal.State.PassedAt, 10)).
-		WriteString("Rejected", strconv.FormatBool(proposal.State.Rejected)).
-		WriteString("RejectedAt", strconv.FormatUint(proposal.State.RejectedAt, 10)).
-		WriteString("Canceled", strconv.FormatBool(proposal.State.Canceled)).
-		WriteString("CanceledAt", strconv.FormatUint(proposal.State.CanceledAt, 10)).
-		WriteString("Executed", strconv.FormatBool(proposal.State.Executed)).
-		WriteString("ExecutedAt", strconv.FormatUint(proposal.State.ExecutedAt, 10)).
-		WriteString("Expired", strconv.FormatBool(proposal.State.Expired)).
-		WriteString("ExpiredAt", strconv.FormatUint(proposal.State.ExpiredAt, 10)).
+		WriteString("CreatedAt", formatUint64(state.CreatedAt)).
+		WriteString("Upcoming", formatBool(state.Upcoming)).
+		WriteString("Active", formatBool(state.Active)).
+		WriteString("VotingStart", formatUint64(votingStart)).
+		WriteString("VotingEnd", formatUint64(votingEnd)).
+		WriteString("Passed", formatBool(state.Passed)).
+		WriteString("PassedAt", formatUint64(state.PassedAt)).
+		WriteString("Rejected", formatBool(state.Rejected)).
+		WriteString("RejectedAt", formatUint64(state.RejectedAt)).
+		WriteString("Canceled", formatBool(state.Canceled)).
+		WriteString("CanceledAt", formatUint64(state.CanceledAt)).
+		WriteString("Executed", formatBool(state.Executed)).
+		WriteString("ExecutedAt", formatUint64(state.ExecutedAt)).
+		WriteString("Expired", formatBool(state.Expired)).
+		WriteString("ExpiredAt", formatUint64(state.ExpiredAt)).
 		Node()
 
 	return marshal(proposalObj)
@@ -227,7 +228,7 @@ func getProposalStatus(id uint64) string {
 
 // getProposalVotes returns the votes of a proposal.
 func getProposalVotes(id uint64) string {
-	prop, exist := proposals.Get(strconv.FormatUint(id, 10))
+	prop, exist := proposals.Get(formatUint64(id))
 	if !exist {
 		return ""
 	}
@@ -236,7 +237,7 @@ func getProposalVotes(id uint64) string {
 	maxVoting := proposal.MaxVotingWeight.ToString()
 
 	proposalObj := json.Builder().
-		WriteString("quorum", strconv.FormatUint(proposal.QuorumAmount, 10)).
+		WriteString("quorum", formatUint64(proposal.QuorumAmount)).
 		WriteString("max", maxVoting).
 		WriteString("yes", proposal.Yea.ToString()).
 		WriteString("no", proposal.Nay.ToString()).

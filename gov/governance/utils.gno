@@ -2,9 +2,10 @@ package governance
 
 import (
 	"encoding/base64"
-	"gno.land/p/demo/avl"
 	"std"
 	"strconv"
+
+	"gno.land/p/demo/avl"
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
@@ -83,6 +84,10 @@ func formatUint64(v uint64) string {
 
 func formatInt(v int) string {
 	return strconv.FormatInt(int64(v), 10)
+}
+
+func formatBool(v bool) string {
+	return strconv.FormatBool(v)
 }
 
 func parseInt(s string) int {

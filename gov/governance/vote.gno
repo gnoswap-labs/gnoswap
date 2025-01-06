@@ -144,6 +144,7 @@ func newVoteState(proposal ProposalInfo, voteKey string, voter std.Address, now 
 }
 
 func (s *VoteState) validate() error {
+	// TODO: fix this
 	if !s.isVotingPeriod {
 		return errUnableToVoteOutOfPeriod
 	}
@@ -246,6 +247,6 @@ func Cancel(proposalId uint64) {
 		"Cancel",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"proposalId", ufmt.Sprintf("%d", proposalId),
+		"proposalId", formatUint64(proposalId),
 	)
 }

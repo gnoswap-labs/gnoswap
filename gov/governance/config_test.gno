@@ -186,7 +186,6 @@ func TestGetConfigVersion(t *testing.T) {
 
 			expectedConfig := config
 			if tt.version != 0 {
-				// expectedConfig, _ = configVersions.Get(tt.version)
 				expectedConfig, _ = getConfigByVersion(tt.version)
 			}
 			uassert.Equal(t, result.VotingStartDelay, expectedConfig.VotingStartDelay)
