@@ -9,8 +9,6 @@ import (
 )
 
 func ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
-	calculateDepositReward()
-
 	project, exist := projects[projectId]
 	if !exist {
 		return ""
@@ -37,8 +35,6 @@ func ApiGetProjectStatisticsByProjectId(projectId string) string {
 }
 
 func ApiGetProjectStatisticsByProjectTierId(tierId string) string {
-	calculateDepositReward()
-
 	projectId, tierStr := getProjectIdAndTierFromTierId(tierId)
 	project, exist := projects[projectId]
 	if !exist {

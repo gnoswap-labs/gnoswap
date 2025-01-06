@@ -188,7 +188,6 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 
 	en.MintAndDistributeGns()
 
-	calculateDepositReward()
 	project = projects[projectId] // get updates project
 	tier = getTier(project, tierStr) // get updates tier
 
@@ -357,7 +356,6 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 func processCollectedDeposits(dpsts []string, pid string) uint64 {
 	common.IsHalted()
 	en.MintAndDistributeGns()
-	calculateDepositReward()
 
 	amount, err := processDepositCollection(dpsts, pid)
 	if err != nil {
@@ -432,7 +430,6 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 
     en.MintAndDistributeGns()
 
-    calculateDepositReward()
     project = projects[deposit.projectId] // get updated project
 
     // Process deposit collection

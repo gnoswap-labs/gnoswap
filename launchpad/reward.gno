@@ -37,10 +37,6 @@ func CollectProtocolFee() {
 
 // validateRewardCollection validates if reward can be collected
 func validateRewardCollection(deposit Deposit, height uint64) error {
-	if deposit.rewardAmount == 0 {
-		return errors.New("no reward available")
-	}
-
 	if deposit.rewardCollectTime == 0 && height < deposit.claimableHeight {
 		return errors.New("reward not yet claimable")
 	}
@@ -71,6 +67,7 @@ func calculateTierRewards(tier Tier, currentHeight uint64, lastCalcHeight uint64
 	return rewardX96, reward, nil
 }
 
+/*
 // processDepositReward processes reward for a single deposit
 func processDepositReward(deposit Deposit, rewardX96 *u256.Uint, tierAmount uint64) (Deposit, error) {
 	if tierAmount == 0 {
@@ -86,7 +83,7 @@ func processDepositReward(deposit Deposit, rewardX96 *u256.Uint, tierAmount uint
 	deposit.rewardAmount += depositReward
 	return deposit, nil
 }
-
+*/
 // CollectRewardByProjectId collects reward from entire deposit of certain project by caller
 // Returns collected reward amount
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectrewardbyprojectid
@@ -99,7 +96,6 @@ func CollectRewardByProjectId(projectId string) uint64 {
 		return 0
 	}
 
-	calculateDepositReward()
 	project = projects[projectId] // get updated project
 
 	caller := std.PrevRealm().Addr()
@@ -114,7 +110,8 @@ func CollectRewardByProjectId(projectId string) uint64 {
 
 	for _, depositId := range depositIds {
 		deposit := deposits[depositId]
-		if deposit.rewardAmount == 0 {
+		reward := rewardStates.Get(deposit.projectId, deposit.tier).Claim(depositId, height)
+		if reward == 0 {
 			continue
 		}
 
@@ -127,7 +124,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 			continue
 		}
 
-		totalReward += deposit.rewardAmount
+		totalReward += reward
 
 		std.Emit(
 			"CollectRewardByProjectId",
@@ -135,29 +132,28 @@ func CollectRewardByProjectId(projectId string) uint64 {
 			"prevRealm", prevRealm,
 			"projectId", projectId,
 			"depositId", depositId,
-			"amount", ufmt.Sprintf("%d", deposit.rewardAmount),
+			"amount", ufmt.Sprintf("%d", reward),
 		)
 
 		// Update project and tier stats
-		project.stats.totalCollected += deposit.rewardAmount
+		project.stats.totalCollected += reward
 		
 		var tier Tier
 		switch deposit.tier {
 		case "30":
 			tier = project.tiers[30]
-			tier.userCollectedAmount += deposit.rewardAmount
+			tier.userCollectedAmount += reward
 		case "90":
 			tier = project.tiers[90]
-			tier.userCollectedAmount += deposit.rewardAmount
+			tier.userCollectedAmount += reward
 		case "180":
 			tier = project.tiers[180]
-			tier.userCollectedAmount += deposit.rewardAmount
+			tier.userCollectedAmount += reward
 		}
 		project = setTier(project, deposit.tier, tier)
 
 		// Update deposit
-		deposit.rewardCollected += deposit.rewardAmount
-		deposit.rewardAmount = 0
+		deposit.rewardCollected += reward
 		deposit.rewardCollectHeight = height
 		deposit.rewardCollectTime = uint64(time.Now().Unix())
 		deposits[depositId] = deposit
@@ -195,7 +191,6 @@ func CollectRewardByDepositId(depositId string) uint64 {
 		return 0
 	}
 
-	calculateDepositReward()
 	project = projects[deposit.projectId]
 	deposit = deposits[depositId]
 
@@ -204,7 +199,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 		return 0
 	}
 
-	reward := deposit.rewardAmount
+	reward := rewardStates.Get(deposit.projectId, deposit.tier).Claim(deposit.id, height)
 	
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -232,7 +227,6 @@ func CollectRewardByDepositId(depositId string) uint64 {
 
 	// Update deposit
 	deposit.rewardCollected += reward
-	deposit.rewardAmount = 0
 	deposit.rewardCollectHeight = height
 	deposit.rewardCollectTime = uint64(time.Now().Unix())
 	deposits[depositId] = deposit
@@ -245,7 +239,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 
 	return reward
 }
-
+/*
 // calculateProjectRewards calculates rewards for a project's deposits
 func calculateProjectRewards(project Project, height uint64) (Project, error) {
 	if project.started.height > height || project.stats.actualParticipant == 0 {
@@ -347,7 +341,7 @@ func calculateDepositReward() {
 		projects[projectId] = updatedProject
 	}
 }
-
+*/
 // calcDepositRatioX96 calculates the deposit ratio with Q96 precision
 func calcDepositRatioX96(tierAmount uint64, amount uint64) *u256.Uint {
 	amountX96 := new(u256.Uint).Mul(u256.NewUint(amount), q96.Clone())

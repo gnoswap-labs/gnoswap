@@ -302,7 +302,6 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
-	calculateDepositReward()
 	project = projects[projectId] // get updated project
 
 	leftReward := calculateLeftReward(project)

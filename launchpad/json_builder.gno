@@ -102,7 +102,6 @@ func DepositBuilder(b *json.NodeBuilder, deposit Deposit) *json.NodeBuilder {
 		WriteString("depositCollectTime", ufmt.Sprintf("%d", deposit.depositCollectTime)).
 		WriteString("claimableHeight", ufmt.Sprintf("%d", deposit.claimableHeight)).
 		WriteString("claimableTime", ufmt.Sprintf("%d", deposit.claimableTime)).
-		WriteString("rewardAmount", ufmt.Sprintf("%d", deposit.rewardAmount)).
 		WriteString("rewardCollected", ufmt.Sprintf("%d", deposit.rewardCollected)).
 		WriteString("rewardCollectHeight", ufmt.Sprintf("%d", deposit.rewardCollectHeight)).
 		WriteString("rewardCollectTime", ufmt.Sprintf("%d", deposit.rewardCollectTime))

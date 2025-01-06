@@ -86,7 +86,7 @@ type Deposit struct {
 	claimableHeight uint64
 	claimableTime   uint64
 
-	rewardAmount        uint64 // calculated, not collected
+	// rewardAmount        uint64 // calculated, not collected
 	rewardCollected     uint64 // accu, collected
 	rewardCollectHeight uint64 // last collected height
 	rewardCollectTime   uint64 // last collected time

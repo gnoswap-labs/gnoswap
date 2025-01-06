@@ -12,7 +12,7 @@ import (
 
 type StakerRewardInfo struct {
 	StartHeight uint64 // height when staker started staking
-	PriceDebt *u256.Uint // price debt per xGNS stake, Q128
+	PriceDebt *u256.Uint // price debt per xGNS stake, Q96
 	Amount uint64 // amount of xGNS staked
 	Claimed uint64 // amount of GNS reward claimed so far
 }
@@ -22,14 +22,14 @@ func (self *StakerRewardInfo) Debug() string {
 }
 
 func (self *StakerRewardInfo) PriceDebtUint64() uint64 {
-	return u256.Zero().Rsh(self.PriceDebt, 128).Uint64()
+	return u256.Zero().Rsh(self.PriceDebt, 96).Uint64()
 }
 
 type RewardState struct {
 	// CurrentBalance is sum of all the previous balances, including the reward distribution.
 	// CurrentBalance uint64 // current balance of gov_staker, used to calculate RewardAccumulation
-	PriceAccumulation *u256.Uint // claimable GNS per xGNS stake, Q128
-	// RewardAccumulation *u256.Uint // reward accumulated so far, Q128
+	PriceAccumulation *u256.Uint // claimable GNS per xGNS stake, Q96
+	// RewardAccumulation *u256.Uint // reward accumulated so far, Q96
 	TotalStake uint64 // total xGNS staked
 
 	LastHeight uint64 // last height when reward was calculated
@@ -79,7 +79,11 @@ func (states RewardStates) Remove(projectId string, tierStr string) {
 
 
 func (self *RewardState) Debug() string {
-	return ufmt.Sprintf("{ PriceAccumulation: %d, TotalStake: %d, info: len(%d) }", self.PriceAccumulationUint64(), self.TotalStake, self.info.Size())
+	return ufmt.Sprintf("{ PriceAccumulation: %d, TotalStake: %d, LastHeight: %d, RewardPerBlock: %d, EndHeight: %d, info: len(%d) }", self.PriceAccumulationUint64(), self.TotalStake, self.LastHeight, self.RewardPerBlockUint64(), self.EndHeight, self.info.Size())
+}
+
+func (self *RewardState) RewardPerBlockUint64() uint64 {
+	return u256.Zero().Rsh(self.RewardPerBlock, 96).Uint64()
 }
 
 func (self *RewardState) Info(depositId string) StakerRewardInfo {
@@ -94,14 +98,13 @@ func (self *RewardState) CalculateReward(depositId string) uint64 {
 	info := self.Info(depositId)
 	stakerPrice := u256.Zero().Sub(self.PriceAccumulation, info.PriceDebt)
 	reward := stakerPrice.Mul(stakerPrice, u256.NewUint(info.Amount))
-	reward = reward.Rsh(reward, 128)
-	return reward.Uint64()
+	reward = reward.Rsh(reward, 96)
+	return reward.Uint64() - info.Claimed
 }
 
 func (self *RewardState) PriceAccumulationUint64() uint64 {
-	return u256.Zero().Rsh(self.PriceAccumulation, 128).Uint64()
+	return u256.Zero().Rsh(self.PriceAccumulation, 96).Uint64()
 }
-
 
 // amount MUST be less than or equal to the amount of xGNS staked
 // This function does not check it
@@ -109,7 +112,7 @@ func (self *RewardState) deductReward(depositId string, currentHeight uint64) ui
 	info := self.Info(depositId)
 	stakerPrice := u256.Zero().Sub(self.PriceAccumulation, info.PriceDebt)
 	reward := stakerPrice.Mul(stakerPrice, u256.NewUint(info.Amount))
-	reward = reward.Rsh(reward, 128)
+	reward = reward.Rsh(reward, 96)
 	reward64 := reward.Uint64() - info.Claimed
 
 	info.Claimed += reward64
@@ -187,6 +190,7 @@ func (self *RewardState) RemoveStake(depositId string, amount uint64, currentHei
 	return reward
 }
 
+/*
 var (
 	//q96                  = u256.MustFromDecimal(consts.Q96)
 	lastCalculatedHeight uint64 // flag to prevent same block calculation
@@ -206,3 +210,4 @@ var (
 	userEmissionReward    = avl.NewTree() // address -> gnsAmount
 	userProtocolFeeReward = avl.NewTree() // address -> tokenPath -> tokenAmount
 )
+	*/
