@@ -29,7 +29,7 @@ func init() {
 		ExecutionDelay:                uint64(10),   // 10s ≈ 5 block
 		ExecutionWindow:               uint64(1000), // 500 block
 	}
-	configVersions[1] = config
+	setConfigVersion(1, config)
 }
 
 func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
