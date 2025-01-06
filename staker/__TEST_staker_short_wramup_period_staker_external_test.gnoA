@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-
+	"gno.land/r/demo/users"
 	"gno.land/r/gnoswap/v1/consts"
 
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -80,7 +80,6 @@ func testMintBarQux500_1(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		uassert.Equal(t, tokenId, uint64(1))
-		// uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), adminAddr)
 		uassert.Equal(t, amount0, "36790")
 		uassert.Equal(t, amount1, "100000")
 	})
@@ -110,7 +109,6 @@ func testMintBarBaz100_2(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		uassert.Equal(t, tokenId, uint64(2))
-		// uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
 		uassert.Equal(t, amount0, "100000")
 		uassert.Equal(t, amount1, "100000")
 	})
@@ -140,7 +138,6 @@ func testMintBarBaz100_3(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		uassert.Equal(t, tokenId, uint64(3))
-		// uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
 		uassert.Equal(t, amount0, "100000")
 		uassert.Equal(t, amount1, "100000")
 	})
@@ -177,7 +174,9 @@ func testStakeExternal_2(t *testing.T) {
 
 		std.TestSkipHeights(2)
 
-		// uassert.Equal(t, gnft.OwnerOf(tid(2)), GetOrigPkgAddr())
+		owner, err := gnft.OwnerOf(tid(2))
+		uassert.NoError(t, err)
+		uassert.Equal(t, owner, GetOrigPkgAddr())
 		uassert.Equal(t, deposits.Size(), 1)
 	})
 }
@@ -190,7 +189,9 @@ func testStakeExternal_3(t *testing.T) {
 
 		std.TestSkipHeights(2)
 
-		// uassert.Equal(t, gnft.OwnerOf(tid(3)), GetOrigPkgAddr())
+		owner, err := gnft.OwnerOf(tid(3))
+		uassert.NoError(t, err)
+		uassert.Equal(t, owner, GetOrigPkgAddr())
 		uassert.Equal(t, deposits.Size(), 2)
 	})
 }
@@ -203,13 +204,13 @@ func testCollectExternalReward_2(t *testing.T) {
 		oblOld := obl.BalanceOf(a2u(adminAddr))
 		uassert.Equal(t, oblOld, uint64(99999900000000))
 
-		// std.TestSkipHeights(777601) // 45 days + 1 block
-		// CollectReward(2, false) // XXXXX
+		std.TestSkipHeights(777601) // 45 days + 1 block
+		CollectReward(2, false) // XXXXX
 
-		// std.TestSkipHeights(1)
+		std.TestSkipHeights(1)
 
-		// oblNew := obl.BalanceOf(a2u(adminAddr))
-		// uassert.Equal(t, oblNew-oblOld, uint64(9895486))
+		oblNew := obl.BalanceOf(a2u(adminAddr))
+		uassert.Equal(t, oblNew-oblOld, uint64(9895486))
 	})
 }
 
@@ -221,12 +222,12 @@ func testCollectExternalReward_3(t *testing.T) {
 		oblOld := obl.BalanceOf(a2u(adminAddr))
 		uassert.Equal(t, oblOld, uint64(99999909895486))
 
-		// std.TestSkipHeights(1)
-		// CollectReward(3, false)
+		std.TestSkipHeights(1)
+		CollectReward(3, false)
 
-		// std.TestSkipHeights(1)
+		std.TestSkipHeights(1)
 
-		// oblNew := obl.BalanceOf(a2u(adminAddr))
-		// uassert.Equal(t, oblNew-oblOld, uint64(9895478))
+		oblNew := obl.BalanceOf(a2u(adminAddr))
+		uassert.Equal(t, oblNew-oblOld, uint64(9895478))
 	})
 }

@@ -1,6 +1,3 @@
-// external incentive + warm up period testing
-//  qux for 180 days
-
 package staker
 
 import (
@@ -8,8 +5,8 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
 	"gno.land/r/demo/users"
+	"gno.land/p/demo/uassert"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -27,15 +24,14 @@ import (
 	"gno.land/r/onbloc/qux"
 )
 
-func TestShortWarmUp180DayExternal(t *testing.T) {
+func TestShortWarmUp365DayExternal(t *testing.T) {
 	testInit(t)
 	testCreatePool(t)
 	testMintBarQux3000_1_4(t)
-	testCreateExternalIncentiveQux180(t)
+	testCreateExternalIncentiveQux365(t)
 	testStakeToken_1_4(t)
 	testBeforeActive(t)
 	test23HoursAfterActive(t)
-	testJustPrint(t)
 }
 
 func testInit(t *testing.T) {
@@ -44,9 +40,6 @@ func testInit(t *testing.T) {
 		changeWarmup(t, 1, 300)
 		changeWarmup(t, 2, 900)
 		changeWarmup(t, 3, math.MaxInt64)
-
-		// set unstaking fee to 0
-		SetUnstakingFeeByAdmin(0)
 	})
 }
 
@@ -99,8 +92,8 @@ func testMintBarQux3000_1_4(t *testing.T) {
 	})
 }
 
-func testCreateExternalIncentiveQux180(t *testing.T) {
-	t.Run("create external incentive qux 180", func(t *testing.T) {
+func testCreateExternalIncentiveQux365(t *testing.T) {
+	t.Run("create external incentive qux 365", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		qux.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
@@ -112,7 +105,7 @@ func testCreateExternalIncentiveQux180(t *testing.T) {
 			quxPath,
 			10000000000000,
 			1234569600,
-			1234569600+TIMESTAMP_180DAYS,
+			1234569600+TIMESTAMP_365DAYS,
 		)
 		std.TestSkipHeights(1)
 	})
@@ -122,16 +115,16 @@ func testStakeToken_1_4(t *testing.T) {
 	t.Run("stake token 1 ~ 4", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
+		gnft.Approve(GetOrigPkgAddr(), tid(1))
 		StakeToken(1)
 
-		gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
+		gnft.Approve(GetOrigPkgAddr(), tid(2))
 		StakeToken(2)
 
-		gnft.Approve(a2u(GetOrigPkgAddr()), tid(3))
+		gnft.Approve(GetOrigPkgAddr(), tid(3))
 		StakeToken(3)
 
-		gnft.Approve(a2u(GetOrigPkgAddr()), tid(4))
+		gnft.Approve(GetOrigPkgAddr(), tid(4))
 		StakeToken(4)
 
 		std.TestSkipHeights(1)
@@ -141,12 +134,6 @@ func testStakeToken_1_4(t *testing.T) {
 func testBeforeActive(t *testing.T) {
 	t.Run("before active", func(t *testing.T) {
 		en.MintAndDistributeGns()
-		if consts.EMISSION_REFACTORED {
-			CalcPoolPositionRefactor()
-		} else {
-			CalcPoolPosition()
-		}
-
 		std.TestSkipHeights(1)
 	})
 }
@@ -156,14 +143,5 @@ func test23HoursAfterActive(t *testing.T) {
 		std.TestSkipHeights(849)   // in active
 		std.TestSkipHeights(1)     // active // but no block passed since active
 		std.TestSkipHeights(41400) // skip 23 hours of block
-
-		// GetPrintInfo() // INTERNAL GNS
-	})
-}
-
-func testJustPrint(t *testing.T) {
-	t.Run("check external", func(t *testing.T) {
-		gpei := GetPrintExternalInfo() // EXTERNALs
-		uassert.Equal(t, gpei, `{"height":42378,"time":1234652400,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000","rewardToken":"gno.land/r/onbloc/qux","rewardAmount":"10000000000000","startTimestamp":1234569600,"endTimestamp":1250121600,"rewardPerBlockX96":"101888069076986030855894997860082304","stakedOrExternalDuration":41400,"rewardPerBlock":"1286008","refundee":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","tokenAmountFull":7257658143,"tokenAmountToGive":7194548072,"full30":26295862,"give30":7888758,"full50":26295862,"give50":13147931,"full70":105183451,"give70":73628415,"full100":7099882968}]},{"lpTokenId":2,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000","rewardToken":"gno.land/r/onbloc/qux","rewardAmount":"10000000000000","startTimestamp":1234569600,"endTimestamp":1250121600,"rewardPerBlockX96":"101888069076986030855894997860082304","stakedOrExternalDuration":41400,"rewardPerBlock":"1286008","refundee":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","tokenAmountFull":44919747124,"tokenAmountToGive":44529140629,"full30":162752706,"give30":48825812,"full50":162752706,"give50":81376353,"full70":651010827,"give70":455707579,"full100":43943230885}]},{"lpTokenId":3,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000","rewardToken":"gno.land/r/onbloc/qux","rewardAmount":"10000000000000","startTimestamp":1234569600,"endTimestamp":1250121600,"rewardPerBlockX96":"101888069076986030855894997860082304","stakedOrExternalDuration":41400,"rewardPerBlock":"1286008","refundee":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","tokenAmountFull":1059629005,"tokenAmountToGive":1050414839,"full30":3839235,"give30":1151770,"full50":3839235,"give50":1919617,"full70":15356942,"give70":10749859,"full100":1036593593}]},{"lpTokenId":4,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000","rewardToken":"gno.land/r/onbloc/qux","rewardAmount":"10000000000000","startTimestamp":1234569600,"endTimestamp":1250121600,"rewardPerBlockX96":"101888069076986030855894997860082304","stakedOrExternalDuration":41400,"rewardPerBlock":"1286008","refundee":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","tokenAmountFull":3706352,"tokenAmountToGive":3674123,"full30":13428,"give30":4028,"full50":13428,"give50":6714,"full70":53715,"give70":37600,"full100":3625781}]}]}`)
 	})
 }

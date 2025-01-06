@@ -36,9 +36,9 @@ func TestShortWarmUpExternalPositionInOutRangeChangedBySwap(t *testing.T) {
 	testAfter849Blocks(t)
 	testAfter1Block(t)
 	testAfter50Blocks(t)
-	// testMakePosition1OutRange(t)
-	// testRewardNow(t)
-	// testRewardNowAfter1Block(t)
+	testMakePosition1OutRange(t)
+	testRewardNow(t)
+	testRewardNowAfter1Block(t)
 }
 
 func testInit(t *testing.T) {
@@ -47,9 +47,6 @@ func testInit(t *testing.T) {
 		changeWarmup(t, 1, 300)
 		changeWarmup(t, 2, 900)
 		changeWarmup(t, 3, math.MaxInt64)
-
-		// set unstaking fee to 0
-		// SetUnstakingFeeByAdmin(0)
 	})
 }
 
@@ -89,7 +86,10 @@ func testMintBarQux100_1(t *testing.T) {
 		)
 
 		uassert.Equal(t, tokenId, uint64(1))
-		uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
+
+		owner, err := gnft.OwnerOf(tid(tokenId))
+		uassert.NoError(t, err)
+		uassert.Equal(t, owner, users.Resolve(admin))
 
 		std.TestSkipHeights(1)
 	})
@@ -118,7 +118,10 @@ func testMintBarQux100_2(t *testing.T) {
 		)
 
 		uassert.Equal(t, tokenId, uint64(2))
-		uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
+
+		owner, err := gnft.OwnerOf(tid(tokenId))
+		uassert.NoError(t, err)
+		uassert.Equal(t, owner, users.Resolve(admin))
 
 		std.TestSkipHeights(1)
 	})
@@ -209,31 +212,30 @@ func testAfter50Blocks(t *testing.T) {
 func testMakePosition1OutRange(t *testing.T) {
 	t.Run("make position 01 out of range", func(t *testing.T) {
 		poolTick := pl.PoolGetSlot0Tick(poolPath)
-		println("poolTick", poolTick)
-		// uassert.Equal(t, poolTick, int32(0))
+		uassert.Equal(t, poolTick, int32(0))
 
 		// ROUTER SWAP
-		// std.TestSetRealm(adminRealm)
+		std.TestSetRealm(adminRealm)
 
-		// bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		// qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-		// bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
-		// qux.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+		bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+		qux.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
 
-		// tokenIn, tokenOut := rr.ExactInSwapRoute(
-		// 	barPath,    // inputToken
-		// 	quxPath,    // outputToken
-		// 	"100000",   // amountSpecified
-		// 	"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", // strRouteArr
-		// 	"100", // quoteArr
-		// 	"0",   // tokenAmountLimit
-		// )
-		// uassert.Equal(t, tokenIn, "100000")
-		// uassert.Equal(t, tokenOut, "-98873")
+		tokenIn, tokenOut := rr.ExactInSwapRoute(
+			barPath,    // inputToken
+			quxPath,    // outputToken
+			"100000",   // amountSpecified
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", // strRouteArr
+			"100", // quoteArr
+			"0",   // tokenAmountLimit
+		)
+		uassert.Equal(t, tokenIn, "100000")
+		uassert.Equal(t, tokenOut, "-98873")
 
-		// poolTick = pl.PoolGetSlot0Tick(poolPath)
-		// uassert.Equal(t, poolTick, int32(-195))
+		poolTick = pl.PoolGetSlot0Tick(poolPath)
+		uassert.Equal(t, poolTick, int32(-195))
 	})
 }
 
