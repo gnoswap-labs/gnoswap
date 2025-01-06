@@ -26,7 +26,9 @@ import (
 const (
 	HALVING_START_YEAR = int64(1)
 	HALVING_END_YEAR   = int64(12)
+)
 
+var (
 	HALVING_AMOUNTS_PER_YEAR = [12]uint64{
 		18_750_000_000_000 * 12, // Year 1:  225000000000000
 		18_750_000_000_000 * 12, // Year 2:  225000000000000
@@ -183,8 +185,8 @@ func setAvgBlockTimeInMs(ms int64) {
 	adjustedAmountPerBlock := amountLeft / uint64(blockLeft)
 	setAmountPerBlockPerHalvingYear(currentYear, adjustedAmountPerBlock)
 
-	yearEndHeight := int64(0)
-	nextYearStartHeight := int64(0)
+	// yearEndHeight := int64(0)
+	// nextYearStartHeight := int64(0)
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		if year < currentYear {
 			// pass past halving years
