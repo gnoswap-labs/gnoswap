@@ -31,7 +31,9 @@ var (
 	lockedAmount  = uint64(0)
 )
 
-var minimumAmount = uint64(1_000_000)
+var (
+	minimumAmount = uint64(1_000_000)
+)
 
 // Delegate delegates GNS tokens to a specified address.
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#delegate
@@ -341,7 +343,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
 			"to", to.String(),
-			"internal_amount", formatUint(emissionReward),
+			"amount", formatUint(emissionReward),
 		)
 	}
 
@@ -352,8 +354,8 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			"CollectProtocolFeeFromLaunchPad",
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
-			"internal_tokenPath", tokenPath,
-			"internal_amount", formatUint(amount),
+			"tokenPath", tokenPath,
+			"amount", formatUint(amount),
 		)
 	}
 }
