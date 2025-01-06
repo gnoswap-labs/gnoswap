@@ -2,6 +2,7 @@ package staker
 
 import (
 	"std"
+	"strings"
 	"testing"
 	"time"
 
@@ -163,6 +164,220 @@ func TestDelegate(t *testing.T) {
 		// Restore running to true for subsequent tests.
 		std.TestSetOrigCaller(consts.ADMIN)
 		SetRunning(true)
+	}
+}
+
+func TestDelegate_Boundary_Values(t *testing.T) {
+	tests := []struct {
+		name        string
+		to          std.Address
+		amount      uint64
+		expectPanic bool
+		panicMsg    string
+	}{
+		{
+			name:        "delegate zero amount",
+			to:          makeFakeAddress("validator_1"),
+			amount:      0,
+			expectPanic: true,
+			panicMsg:    "delegation amount cannot be 0",
+		},
+		{
+			name:        "delegate max uint64",
+			to:          makeFakeAddress("validator_1"),
+			amount:      ^uint64(0), // max uint64
+			expectPanic: true,
+			panicMsg:    "invalid GNS balance",
+		},
+		{
+			name:        "delegate near max uint64",
+			to:          makeFakeAddress("validator_1"),
+			amount:      ^uint64(0) - 1000,
+			expectPanic: true,
+			panicMsg:    "invalid GNS balance",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			std.TestSetOrigCaller(consts.ADMIN)
+			SetRunning(true)
+			std.TestSetRealm(userRealm)
+
+			if tt.expectPanic {
+				defer func() {
+					r := recover()
+					if r == nil {
+						t.Errorf("Expected panic but got none")
+					}
+					if tt.panicMsg != "" && r != nil {
+						if msg, ok := r.(string); !ok || !strings.Contains(msg, tt.panicMsg) {
+							t.Errorf("Expected panic message containing '%s', got '%v'", tt.panicMsg, r)
+						}
+					}
+				}()
+			}
+
+			Delegate(tt.to, tt.amount)
+		})
+	}
+}
+
+func TestEmptyRewardPool(t *testing.T) {
+	tests := []struct {
+		name           string
+		setupFn        func()
+		expectPanic    bool
+		expectPanicMsg string
+		checkFn        func(t *testing.T)
+	}{
+		{
+			name: "collect with empty reward pool",
+			setupFn: func() {
+				userEmissionReward.Remove(userRealm.Addr().String())
+			},
+			expectPanic: false,
+			checkFn: func(t *testing.T) {
+				if v, exists := userEmissionReward.Get(userRealm.Addr().String()); exists {
+					t.Errorf("Expected userEmissionReward to be removed, but got %d", v.(uint64))
+				}
+			},
+		},
+		{
+			name: "collect with empty protocol fee rewards",
+			setupFn: func() {
+				userProtocolFeeReward.Remove(userRealm.Addr().String())
+			},
+			expectPanic: false,
+			checkFn: func(t *testing.T) {
+				if v, exists := userProtocolFeeReward.Get(userRealm.Addr().String()); exists {
+					t.Errorf("Expected userProtocolFeeReward to be removed, but got %d", v.(uint64))
+				}
+			},
+		},
+		{
+			name: "collect with empty staker GNS balance",
+			setupFn: func() {
+				std.TestSetRealm(std.NewCodeRealm(consts.GOV_STAKER_PATH))
+				userEmissionReward.Set(userRealm.Addr().String(), uint64(1000))
+			},
+			expectPanic:    true,
+			expectPanicMsg: "not enough GNS",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			std.TestSetRealm(userRealm)
+
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+
+			if tt.expectPanic {
+				defer func() {
+					r := recover()
+					if r == nil {
+						t.Errorf("Expected panic but got none")
+					}
+					if tt.expectPanicMsg != "" && r != nil {
+						if msg, ok := r.(string); !ok || !strings.Contains(msg, tt.expectPanicMsg) {
+							t.Errorf("Expected panic message containing '%s', got '%v'", tt.expectPanicMsg, r)
+						}
+					}
+				}()
+			}
+
+			CollectReward()
+
+			if tt.checkFn != nil {
+				tt.checkFn(t)
+			}
+		})
+	}
+}
+
+func TestProtocolFee(t *testing.T) {
+	tests := []struct {
+		name        string
+		setupFn     func()
+		expectPanic bool
+		panicMsg    string
+		checkFn     func(t *testing.T)
+	}{
+		{
+			name: "collect max uint64 protocol fee",
+			setupFn: func() {
+				tree := avl.NewTree()
+				tree.Set(consts.WUGNOT_PATH, uint64(^uint64(0)))
+				userProtocolFeeReward.Set(userRealm.Addr().String(), tree)
+			},
+			expectPanic: true,
+			panicMsg:    "insufficient balance",
+		},
+		{
+			name: "collect multiple empty token balances",
+			setupFn: func() {
+				tree := avl.NewTree()
+				tree.Set(consts.WUGNOT_PATH, uint64(1000))
+				tree.Set("some/other/token", uint64(2000))
+				userProtocolFeeReward.Set(userRealm.Addr().String(), tree)
+			},
+			expectPanic: true,
+			panicMsg:    "insufficient balance",
+		},
+		{
+			name: "collect with zero amounts",
+			setupFn: func() {
+				tree := avl.NewTree()
+				tree.Set(consts.WUGNOT_PATH, uint64(0))
+				tree.Set("some/other/token", uint64(0))
+				userProtocolFeeReward.Set(userRealm.Addr().String(), tree)
+			},
+			expectPanic: false,
+			checkFn: func(t *testing.T) {
+				val, exists := userProtocolFeeReward.Get(userRealm.Addr().String())
+				if !exists {
+					t.Errorf("Expected protocol fee reward entry to exist")
+					return
+				}
+				tree := val.(*avl.Tree)
+				wugnotAmt, _ := tree.Get(consts.WUGNOT_PATH)
+				if wugnotAmt.(uint64) != 0 {
+					t.Errorf("Expected WUGNOT amount to be 0, got %d", wugnotAmt)
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			std.TestSetRealm(userRealm)
+
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+
+			if tt.expectPanic {
+				defer func() {
+					r := recover()
+					if r == nil {
+						t.Errorf("Expected panic but got none")
+					}
+					if tt.panicMsg != "" && r != nil {
+						if msg, ok := r.(string); !ok || !strings.Contains(strings.ToLower(msg), strings.ToLower(tt.panicMsg)) {
+							t.Errorf("Expected panic message containing '%s', got '%v'", tt.panicMsg, r)
+						}
+					}
+				}()
+			}
+
+			CollectReward()
+
+			if tt.checkFn != nil {
+				tt.checkFn(t)
+			}
+		})
 	}
 }
 

@@ -31,15 +31,20 @@ var (
 	lockedAmount  = uint64(0)
 )
 
-var (
-	minimumAmount = uint64(1_000_000)
-)
+var minimumAmount = uint64(1_000_000)
 
 // Delegate delegates GNS tokens to a specified address.
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#delegate
 func Delegate(to std.Address, amount uint64) {
 	if running {
 		cleanDelegationStatHistory() // 함수명 변경
+	}
+
+	if amount == 0 {
+		panic(addDetailToError(
+			errInvalidAmount,
+			"delegation amount cannot be 0",
+		))
 	}
 
 	CollectReward()
@@ -59,6 +64,13 @@ func Delegate(to std.Address, amount uint64) {
 	}
 
 	caller := std.PrevRealm().Addr()
+	gnsBalance := gns.BalanceOf(a2u(caller))
+	if gnsBalance < amount {
+		panic(addDetailToError(
+			errNotEnoughBalance,
+			ufmt.Sprintf("invalid GNS balance(%d) to delegate(%d)", gnsBalance, amount),
+		))
+	}
 
 	rewardState.AddStake(uint64(std.GetHeight()), caller, amount, currentBalance())
 
@@ -267,12 +279,19 @@ func CollectReward() {
 
 	// calculateReward()
 
-
 	prevAddr, prevPkgPath := getPrev()
 	caller := std.PrevRealm().Addr()
 
 	reward := rewardState.Claim(caller, currentBalance())
 
+	// XXX (@notJoon): There could be cases where the reward pool is empty, In such case,
+	// it seems appropriate to return 0 and continue processing.
+	//
+	// This isn't necessarily an abnormal situation, particularly
+	// since it could be because rewards haven't occurred yet or
+	// have already been fully collected.
+	//
+	// still, this is a tangled with the policy issue, so should be discussed.
 	gns.Transfer(a2u(caller), reward)
 
 	// TODO:
