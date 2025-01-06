@@ -16,32 +16,29 @@ import (
 )
 
 var (
-	banker *grc20.Banker
-	admin  *ownable.Ownable
-	token  grc20.Token
+	Token, privateLedger = grc20.NewToken("XGNS", "xGNS", 6)
+	UserTeller           = Token.CallerTeller()
+	owner                = ownable.NewWithAddress("g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d") // ADMIN
 )
 
 func init() {
-	admin = ownable.NewWithAddress(std.DerivePkgAddr(consts.GOV_STAKER_PATH))
-
-	banker = grc20.NewBanker("XGNS", "xGNS", 6)
-	token = banker.Token()
+	// initial minting or registration no need
 }
 
-func TotalSupply() uint64 { return token.TotalSupply() }
+func TotalSupply() uint64 { return UserTeller.TotalSupply() }
 
 func VotingSupply() uint64 {
-	total := token.TotalSupply() // this is entire amount of xGNS minted
+	total := UserTeller.TotalSupply() // this is entire amount of xGNS minted
 
 	// this is amount of xGNS held by launchpad
 	// this xGNS doesn't participate in voting
-	launchpad := token.BalanceOf(consts.LAUNCHPAD_ADDR)
+	launchpad := UserTeller.BalanceOf(consts.LAUNCHPAD_ADDR)
 	return total - launchpad
 }
 
 func BalanceOf(owner pusers.AddressOrName) uint64 {
 	ownerAddr := users.Resolve(owner)
-	return token.BalanceOf(ownerAddr)
+	return UserTeller.BalanceOf(ownerAddr)
 }
 
 // xGNS is non-transferable
@@ -53,11 +50,11 @@ func Render(path string) string {
 
 	switch {
 	case path == "":
-		return banker.RenderHome()
+		return Token.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := pusers.AddressOrName(parts[1])
 		ownerAddr := users.Resolve(owner)
-		balance := banker.BalanceOf(ownerAddr)
+		balance := UserTeller.BalanceOf(ownerAddr)
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"
@@ -76,7 +73,7 @@ func Mint(to pusers.AddressOrName, amount uint64) {
 		))
 	}
 
-	checkErr(banker.Mint(users.Resolve(to), amount))
+	checkErr(privateLedger.Mint(users.Resolve(to), amount))
 }
 
 func Burn(from pusers.AddressOrName, amount uint64) {
@@ -91,7 +88,7 @@ func Burn(from pusers.AddressOrName, amount uint64) {
 		))
 	}
 
-	checkErr(banker.Burn(users.Resolve(from), amount))
+	checkErr(privateLedger.Burn(users.Resolve(from), amount))
 }
 
 func a2u(addr std.Address) pusers.AddressOrName {
