@@ -375,7 +375,6 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 	// do nothing for external penalty
 	// it will be stored in staker, and when external ends will be refunded
 	externalPenalty := reward.ExternalPenalty
-	// println("externalPenalty", externalPenalty)
 
 	// internal reward to user
 	toUser := handleUnstakingFee(consts.GNS_PATH, reward.Internal, true, tokenId, deposit.targetPoolPath)

@@ -82,6 +82,7 @@ func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits
 	// cache per-tier and per-pool rewards
 	poolTier.cacheReward(currentHeight, emissionUpdateHeights, emissionUpdates)
 
+
 	deposit := deposits.Get(tokenId)
 	poolPath := deposit.targetPoolPath
 

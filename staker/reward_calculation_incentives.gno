@@ -123,10 +123,6 @@ func (self *Incentives) create(
 	})
 	self.incentiveBound.Set(endHeight, endIncentiveBound)
 
-	println("endIncentiveBound")
-	for _, bound := range endIncentiveBound {
-		println(bound.Incentive.rewardToken, bound.IsEnter)
-	}
 }
 
 // endHeight MUST be less than or equal to the current block height

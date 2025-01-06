@@ -135,7 +135,11 @@ func (self *Pool) cacheRewardPerLiquidityUnit(startHeight, endHeight uint64, cur
 
 func (self *Pool) cacheInternalReward(poolTier *PoolTier, endHeight uint64) {
 	startHeight := *self.lastRewardCacheHeight
-	currentTierReward := poolTier.CurrentReward(poolTier.CurrentTier(self.poolPath, startHeight), startHeight)
+	currentTier := poolTier.CurrentTier(self.poolPath, startHeight)
+	currentTierReward := uint64(0)
+	if currentTier != 0 {
+		currentTierReward = poolTier.CurrentReward(currentTier, startHeight)
+	}
 
 	tierMembershipHeights, tierMembershipUpdates := poolTier.TierRewardUpdates(self.poolPath, startHeight, endHeight)
 

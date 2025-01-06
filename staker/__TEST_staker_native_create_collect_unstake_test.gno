@@ -21,8 +21,8 @@ import (
 )
 
 func TestNativeCreateAndCollectUnstake(t *testing.T) {
-	testInit(t)
-	testCreatePool(t)
+	testInit_NativeCreateCollectUnstake(t)
+	testCreatePool_NativeCreateCollectUnstake(t)
 	testPositionMintNative01(t)
 	testPositionMintNative02(t)
 	testCreateExternalIncentive(t)
@@ -33,7 +33,7 @@ func TestNativeCreateAndCollectUnstake(t *testing.T) {
 	testEndExternalIncentive(t)
 }
 
-func testInit(t *testing.T) {
+func testInit_NativeCreateCollectUnstake(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
 	// init pool tiers
@@ -61,13 +61,13 @@ func testInit(t *testing.T) {
 	)
 }
 
-func testCreatePool(t *testing.T) {
+func testCreatePool_NativeCreateCollectUnstake(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 		std.TestSkipHeights(1)
 
-		pl.CreatePool(consts.GNOT, consts.GNS_PATH, uint32(500), common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+		pl.CreatePool(consts.WUGNOT_PATH, consts.GNS_PATH, uint32(500), common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 		std.TestSkipHeights(1)
 	})
 }
