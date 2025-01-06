@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -85,6 +86,38 @@ func GetIncentive(poolPath string, incentiveId string) *ExternalIncentive {
 	return incentive.(*ExternalIncentive)
 }
 
+// GetIncentiveStartTimestamp returns the start timestamp for a given incentive
+//
+// Parameters:
+//   - incentiveId (string): The ID of the incentive
+//
+// Returns:
+//   - int64: The start timestamp of the incentive
+//
+// Panics:
+//   - If the incentive does not exist for the given incentiveId
+func GetIncentiveStartTimestamp(poolPath string, incentiveId string) int64 {
+	incentive := GetIncentive(poolPath, incentiveId)
+
+	return incentive.startTimestamp
+}
+
+// GetIncentiveEndTimestamp returns the end timestamp for a given incentive
+//
+// Parameters:
+//   - incentiveId (string): The ID of the incentive
+//
+// Returns:
+//   - int64: The end timestamp of the incentive
+//
+// Panics:
+//   - If the incentive does not exist for the given incentiveId
+func GetIncentiveEndTimestamp(poolPath string, incentiveId string) int64 {
+	incentive := GetIncentive(poolPath, incentiveId)
+
+	return incentive.endTimestamp
+}
+
 // GetTargetPoolPathByIncentiveId returns the target pool path for a given incentive
 //
 // Parameters:
@@ -95,10 +128,24 @@ func GetIncentive(poolPath string, incentiveId string) *ExternalIncentive {
 //
 // Panics:
 //   - If the incentive does nor exist for the given incentive ID
-func GetTargetPoolPathByIncentiveId(incentiveId string, poolPath string) string {
+func GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) string {
 	incentive := GetIncentive(poolPath, incentiveId)
 
 	return incentive.targetPoolPath
+}
+
+// GetCreatedHeightOfIncentive retrieves the creation height of a specified incentive.
+//
+// Parameters:
+// - poolPath (string): The path of the pool containing the incentive.
+// - incentiveId (string): The ID of the incentive to retrieve the creation height for.
+//
+// Returns:
+// - int64: The creation height of the specified incentive.
+func GetCreatedHeightOfIncentive(poolPath string, incentiveId string) int64 {
+	incentive := GetIncentive(poolPath, incentiveId)
+
+	return incentive.createdHeight
 }
 
 // GetIncentiveRewardToken returns the reward token for a given incentive
@@ -111,7 +158,7 @@ func GetTargetPoolPathByIncentiveId(incentiveId string, poolPath string) string 
 //
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
-func GetIncentiveRewardToken(incentiveId string, poolPath string) string {
+func GetIncentiveRewardToken(poolPath string, incentiveId string) string {
 	incentive := GetIncentive(poolPath, incentiveId)
 
 	return incentive.rewardToken
@@ -127,7 +174,7 @@ func GetIncentiveRewardToken(incentiveId string, poolPath string) string {
 //
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
-func GetIncentiveRewardAmount(incentiveId string, poolPath string) *u256.Uint {
+func GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
 	incentive := GetIncentive(poolPath, incentiveId)
 
 	return u256.NewUint(incentive.rewardAmount)
@@ -143,61 +190,64 @@ func GetIncentiveRewardAmount(incentiveId string, poolPath string) *u256.Uint {
 //
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
-func GetIncentiveRewardAmountAsString(incentiveId string, poolPath string) string {
+func GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string {
 	rewardAmount := GetIncentiveRewardAmount(incentiveId, poolPath)
 
 	return rewardAmount.ToString()
 }
 
-// StakerIncentiveStartTimestamp returns the start timestamp for a given incentive
+// GetIncentiveStartHeight retrieves the start height of a specified incentive.
+//
+// This function looks up an incentive within the specified pool using the `poolPath` and `incentiveId`.
+// It then returns the height at which the incentive starts.
 //
 // Parameters:
-//   - incentiveId (string): The ID of the incentive
+// - poolPath (string): The path of the pool containing the incentive.
+// - incentiveId (string): The ID of the incentive to retrieve the start height for.
 //
 // Returns:
-//   - int64: The start timestamp of the incentive
-//
-// Panics:
-//   - If the incentive does not exist for the given incentiveId
-func StakerIncentiveStartTimestamp(incentiveId string, poolPath string) int64 {
-	pool, ok := pools.Get(poolPath)
-	if !ok {
-		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
-	}
+// - int64: The starting height of the specified incentive.
+func GetIncentiveStartHeight(poolPath string, incentiveId string) int64 {
+	incentive := GetIncentive(poolPath, incentiveId)
 
-	incentive, exist := pool.incentives.byTime.Get(incentiveId)
-	if !exist {
-		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
-	}
-
-	return incentive.(*ExternalIncentive).startTimestamp
+	return incentive.startHeight
 }
 
-// StakerIncentiveEndTimestamp returns the end timestamp for a given incentive
+// GetIncentiveEndHeight retrieves the end height of a specified incentive.
+//
+// This function looks up an incentive within the specified pool using the `poolPath` and `incentiveId`.
+// It then returns the height at which the incentive ends.
 //
 // Parameters:
-//   - incentiveId (string): The ID of the incentive
+// - poolPath (string): The path of the pool containing the incentive.
+// - incentiveId (string): The ID of the incentive to retrieve the end height for.
 //
 // Returns:
-//   - int64: The end timestamp of the incentive
-//
-// Panics:
-//   - If the incentive does not exist for the given incentiveId
-func StakerIncentiveEndTimestamp(incentiveId string, poolPath string) int64 {
-	pool, ok := pools.Get(poolPath)
-	if !ok {
-		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
-	}
+// - int64: The ending height of the specified incentive.
+func GetIncentiveEndHeight(poolPath string, incentiveId string) int64 {
+	incentive := GetIncentive(poolPath, incentiveId)
 
-	incentive, exist := pool.incentives.byTime.Get(incentiveId)
-	if !exist {
-		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
-	}
-
-	return incentive.(*ExternalIncentive).endTimestamp
+	return incentive.endHeight
 }
 
-// StakerIncentiveRefundee returns the refundee address for a given incentive
+// GetIncentiveRewardPerBlock retrieves the reward per block of a specified incentive.
+//
+// This function looks up an incentive within the specified pool using the `poolPath` and `incentiveId`.
+// It then returns the reward amount distributed per block for the incentive.
+//
+// Parameters:
+// - poolPath (string): The path of the pool containing the incentive.
+// - incentiveId (string): The ID of the incentive to retrieve the reward per block for.
+//
+// Returns:
+// - uint64: The reward amount distributed per block for the specified incentive.
+func GetIncentiveRewardPerBlock(poolPath string, incentiveId string) uint64 {
+	incentive := GetIncentive(poolPath, incentiveId)
+
+	return incentive.rewardPerBlock
+}
+
+// GetIncentiveRefundee returns the refundee address for a given incentive
 //
 // Parameters:
 //   - incentiveId (string): The ID of the incentive
@@ -207,21 +257,35 @@ func StakerIncentiveEndTimestamp(incentiveId string, poolPath string) int64 {
 //
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
-func StakerIncentiveRefundee(incentiveId string, poolPath string) std.Address {
-	pool, ok := pools.Get(poolPath)
-	if !ok {
-		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
-	}
+func GetIncentiveRefundee(poolPath string, incentiveId string) std.Address {
+	incentive := GetIncentive(poolPath, incentiveId)
 
-	incentive, exist := pool.incentives.byTime.Get(incentiveId)
-	if !exist {
-		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
-	}
-
-	return incentive.(*ExternalIncentive).refundee
+	return incentive.refundee
 }
 
-// StakerDepositOwner returns the owner address of a deposit for a given LP token ID
+// GetDeposit retrieves a deposit associated with a given LP token ID.
+//
+// This function looks up the deposit record for the specified LP token ID in the global `deposits` collection.
+// If the deposit does not exist, it panics with an appropriate error message.
+//
+// Parameters:
+// - lpTokenId (uint64): The unique identifier of the LP token for which the deposit is retrieved.
+//
+// Returns:
+// - *Deposit: A pointer to the `Deposit` object associated with the given LP token ID.
+func GetDeposit(lpTokenId uint64) *Deposit {
+	deposit := deposits.Get(lpTokenId)
+	if deposit == nil {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("lpTokenId(%d) deposit does not exist", lpTokenId)),
+		)
+	}
+
+	return deposit
+}
+
+// GetDepositOwner returns the owner address of a deposit for a given LP token ID
 //
 // Parameters:
 //   - lpTokenId (uint64): The ID of the LP token
@@ -231,16 +295,13 @@ func StakerIncentiveRefundee(incentiveId string, poolPath string) std.Address {
 //
 // Panics:
 //   - If the deposit does not exist for the given lpTokenId
-func StakerDepositOwner(lpTokenId uint64) std.Address {
-	deposit := deposits.Get(lpTokenId)
-	if deposit == nil {
-		panic(ufmt.Sprintf("lpTokenId(%d) deposit does not exist", lpTokenId))
-	}
+func GetDepositOwner(lpTokenId uint64) std.Address {
+	deposit := GetDeposit(lpTokenId)
 
 	return deposit.owner
 }
 
-// StakerDepositStakeTimestamp returns the stake timestamp for a given LP token ID
+// GetDepositStakeTimestamp returns the stake timestamp for a given LP token ID
 //
 // Parameters:
 //   - lpTokenId (uint64): The ID of the LP token
@@ -250,16 +311,30 @@ func StakerDepositOwner(lpTokenId uint64) std.Address {
 //
 // Panics:
 //   - If the deposit does not exist for the given lpTokenId
-func StakerDepositStakeTimestamp(lpTokenId uint64) int64 {
-	deposit := deposits.Get(lpTokenId)
-	if deposit == nil {
-		panic(ufmt.Sprintf("lpTokenId(%d) deposit does not exist", lpTokenId))
-	}
+func GetDepositStakeTimestamp(lpTokenId uint64) int64 {
+	deposit := GetDeposit(lpTokenId)
 
 	return deposit.stakeTimestamp
 }
 
-// StakerDepositTargetPoolPath returns the target pool path for a given LP token ID
+// GetDepositStakeHeight retrieves the stake height of a deposit associated with a given LP token ID.
+//
+// This function looks up the deposit record for the specified LP token ID and returns the height
+// at which the deposit was staked. It relies on the `GetDeposit` function to fetch the deposit.
+// If the deposit does not exist, the function panics.
+//
+// Parameters:
+// - lpTokenId (uint64): The unique identifier of the LP token for which the stake height is retrieved.
+//
+// Returns:
+// - int64: The stake height of the deposit associated with the given LP token ID.
+func GetDepositStakeHeight(lpTokenId uint64) int64 {
+	deposit := GetDeposit(lpTokenId)
+
+	return deposit.stakeHeight
+}
+
+// GetDepositTargetPoolPath returns the target pool path for a given LP token ID
 //
 // Parameters:
 //   - lpTokenId (uint64): The ID of the LP token
@@ -269,16 +344,110 @@ func StakerDepositStakeTimestamp(lpTokenId uint64) int64 {
 //
 // Panics:
 //   - If the deposit does not exist for the given lpTokenId
-func StakerDepositTargetPoolPath(lpTokenId uint64) string {
-	deposit := deposits.Get(lpTokenId)
-	if deposit == nil {
-		panic(ufmt.Sprintf("lpTokenId(%d) deposit does not exist", lpTokenId))
-	}
+func GetDepositTargetPoolPath(lpTokenId uint64) string {
+	deposit := GetDeposit(lpTokenId)
 
 	return deposit.targetPoolPath
 }
 
-// StakerPoolTier returns the tier of a given pool
+// GetDepositTickLower retrieves the lower tick of a deposit associated with a given LP token ID.
+//
+// This function looks up the deposit record for the specified LP token ID and returns
+// the lower tick value of the deposit. If the deposit does not exist, the function panics.
+//
+// Parameters:
+// - lpTokenId (uint64): The unique identifier of the LP token for which the lower tick is retrieved.
+//
+// Returns:
+// - int32: The lower tick value of the deposit.
+func GetDepositTickLower(lpTokenId uint64) int32 {
+	deposit := GetDeposit(lpTokenId)
+
+	return deposit.tickLower
+}
+
+// GetDepositTickUpper retrieves the upper tick of a deposit associated with a given LP token ID.
+//
+// This function looks up the deposit record for the specified LP token ID and returns
+// the upper tick value of the deposit. If the deposit does not exist, the function panics.
+//
+// Parameters:
+// - lpTokenId (uint64): The unique identifier of the LP token for which the upper tick is retrieved.
+//
+// Returns:
+// - int32: The upper tick value of the deposit.
+func GetDepositTickUpper(lpTokenId uint64) int32 {
+	deposit := GetDeposit(lpTokenId)
+
+	return deposit.tickUpper
+}
+
+// GetDepositLiquidity retrieves the liquidity of a deposit associated with a given LP token ID.
+//
+// This function looks up the deposit record for the specified LP token ID and returns
+// the liquidity value as a `*u256.Uint` object. If the deposit does not exist, the function panics.
+//
+// Parameters:
+// - lpTokenId (uint64): The unique identifier of the LP token for which the liquidity is retrieved.
+//
+// Returns:
+// - *u256.Uint: The liquidity value of the deposit.
+func GetDepositLiquidity(lpTokenId uint64) *u256.Uint {
+	deposit := GetDeposit(lpTokenId)
+
+	return deposit.liquidity
+}
+
+// GetDepositLiquidityAsString retrieves the liquidity of a deposit associated with a given LP token ID
+// and returns it as a string.
+//
+// This function looks up the deposit record for the specified LP token ID, retrieves its liquidity,
+// and converts it to a string. If the deposit does not exist, the function panics.
+//
+// Parameters:
+// - lpTokenId (uint64): The unique identifier of the LP token for which the liquidity is retrieved.
+//
+// Returns:
+// - string: The liquidity value of the deposit as a string.
+func GetDepositLiquidityAsString(lpTokenId uint64) string {
+	liquidity := GetDepositLiquidity(lpTokenId)
+
+	return liquidity.ToString()
+}
+
+// GetDepositLastCollectHeight retrieves the last collection height of a deposit associated with a given LP token ID.
+//
+// This function looks up the deposit record for the specified LP token ID and returns
+// the last height at which rewards were collected. If the deposit does not exist, the function panics.
+//
+// Parameters:
+// - lpTokenId (uint64): The unique identifier of the LP token for which the last collection height is retrieved.
+//
+// Returns:
+// - uint64: The last collection height of the deposit.
+func GetDepositLastCollectHeight(lpTokenId uint64) uint64 {
+	deposit := GetDeposit(lpTokenId)
+
+	return deposit.lastCollectHeight
+}
+
+// GetDepositWarmUp retrieves the warm-up records of a deposit associated with a given LP token ID.
+//
+// This function looks up the deposit record for the specified LP token ID and returns
+// the list of warm-up records associated with the deposit. If the deposit does not exist, the function panics.
+//
+// Parameters:
+// - lpTokenId (uint64): The unique identifier of the LP token for which the warm-up records are retrieved.
+//
+// Returns:
+// - []Warmup: A slice of warm-up records associated with the deposit.
+func GetDepositWarmUp(lpTokenId uint64) []Warmup {
+	deposit := GetDeposit(lpTokenId)
+
+	return deposit.warmups
+}
+
+// GetPoolTier returns the tier of a given pool
 //
 // Parameters:
 //   - poolPath (string): The path of the pool
@@ -288,14 +457,68 @@ func StakerDepositTargetPoolPath(lpTokenId uint64) string {
 //
 // Panics:
 //   - If the pool tier does not exist for the given poolPath
-func StakerPoolTier(poolPath string) uint64 {
+func GetPoolTier(poolPath string) uint64 {
 	return poolTier.CurrentTier(poolPath, uint64(std.GetHeight()))
 }
 
-type currentExternalInfo struct {
-	height             int64
-	time               int64
-	externalIncentives []ExternalIncentive
+// GetPoolTierRatio retrieves the current reward ratio for the specified pool tier.
+//
+// This function calculates the reward ratio of a pool by determining its tier
+// using `GetPoolTier` and then fetching the tier's current ratio based on the current block height.
+//
+// Parameters:
+// - poolPath (string): The path of the pool whose tier ratio is retrieved.
+//
+// Returns:
+// - uint64: The current reward ratio for the specified pool tier.
+func GetPoolTierRatio(poolPath string) uint64 {
+	currentHeight := uint64(std.GetHeight())
+	tier := GetPoolTier(poolPath)
+	return poolTier.CurrentRatio(tier, currentHeight)
+}
+
+// GetPoolTierCount retrieves the current count of pools in the specified tier.
+//
+// This function checks the number of pools in the given tier based on the current block height.
+// If the tier is `0`, it returns `0`.
+//
+// Parameters:
+// - tier (uint64): The tier for which the pool count is retrieved.
+//
+// Returns:
+// - uint64: The current count of pools in the specified tier.
+func GetPoolTierCount(tier uint64) uint64 {
+	if tier == 0 {
+		return 0
+	}
+	return poolTier.CurrentCount(tier, uint64(std.GetHeight()))
+}
+
+// GetPoolReward retrieves the current reward amount for the specified pool tier.
+//
+// This function fetches the reward for the given tier based on the current block height.
+//
+// Parameters:
+// - tier (uint64): The tier for which the reward is retrieved.
+//
+// Returns:
+// - uint64: The current reward amount for the specified tier.
+func GetPoolReward(tier uint64) uint64 {
+	return poolTier.CurrentReward(tier, uint64(std.GetHeight()))
+}
+
+// GetRewardCacheOf retrieves the reward cache tree for the specified pool tier.
+//
+// This function returns the `RewardCacheTree` associated with the given tier,
+// which contains cached reward data for the tier.
+//
+// Parameters:
+// - tier (uint64): The tier for which the reward cache is retrieved.
+//
+// Returns:
+// - *RewardCacheTree: A pointer to the reward cache tree for the specified tier.
+func GetRewardCacheOf(tier uint64) *RewardCacheTree {
+	return poolTier.rewardCacheOf(tier)
 }
 
 func printExternalInfo(poolPath string) {
@@ -304,32 +527,172 @@ func printExternalInfo(poolPath string) {
 	println("> height:", currentHeight)
 	println("> time:", time.Now().Unix())
 	println("[ START ] GET_EXTERNAL INCENTIVE")
-	pool, ok := pools.Get(poolPath)
-	if !ok {
-		println(" > pool not found")
-		return
-	}
-	if pool.IsExternallyIncentivizedPool(uint64(currentHeight)) {
-		pool.incentives.byHeight.Iterate("", "", func(key string, value interface{}) bool {
-			incentive := value.(*ExternalIncentive)
+
+	externalIncentives.tree.Iterate("", "", func(key string, value interface{}) bool {
+		incentive := value.(*ExternalIncentive)
+		if incentive.targetPoolPath == poolPath {
 			println(" > incentiveId:", incentive.incentiveId)
 			println(" > targetPoolPath:", incentive.targetPoolPath)
 			println(" > rewardToken:", incentive.rewardToken)
 			println(" > rewardAmount:", strconv.FormatUint(incentive.rewardAmount, 10))
+			println(" > rewardLeft:", strconv.FormatUint(incentive.rewardLeft, 10))
 			println(" > startTimestamp:", strconv.FormatInt(incentive.startTimestamp, 10))
 			println(" > endTimestamp:", strconv.FormatInt(incentive.endTimestamp, 10))
 			rewardPerBlockU256 := u256.MustFromDecimal(strconv.FormatUint(incentive.rewardPerBlock, 10))
 			q96 := u256.MustFromDecimal(consts.Q96)
 			rewardPerBlockX96 := u256.Zero().Mul(rewardPerBlockU256, q96)
 			println(" > rewardPerBlockX96:", rewardPerBlockX96.ToString())
-			println(" > rewardLeft:", strconv.FormatUint(incentive.rewardLeft, 10))
 			println(" > refundee:", incentive.refundee.String())
+		}
+		return false
+	})
+
+	println("[ END ] GET_EXTERNAL INCENTIVE")
+}
+
+// GetExternalIncentive retrieves an external incentive by its ID.
+//
+// This function looks up an external incentive in the global `externalIncentives` tree using the specified `incentiveId`.
+// If the incentive does not exist, the function panics with an appropriate error message.
+//
+// Parameters:
+// - incentiveId (string): The ID of the incentive to retrieve.
+//
+// Returns:
+// - *ExternalIncentive: A pointer to the retrieved `ExternalIncentive` object.
+func GetExternalIncentive(incentiveId string) *ExternalIncentive {
+	incentive, exist := externalIncentives.tree.Get(incentiveId)
+	if !exist {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId)),
+		)
+	}
+
+	return incentive.(*ExternalIncentive)
+}
+
+// GetExternalIncentiveByPoolPath retrieves all external incentives associated with a specific pool path.
+//
+// This function iterates through all external incentives in the global `externalIncentives` tree
+// and returns a list of incentives whose `targetPoolPath` matches the specified `poolPath`.
+//
+// Parameters:
+// - poolPath (string): The path of the pool for which incentives are retrieved.
+//
+// Returns:
+// - []ExternalIncentive: A slice of `ExternalIncentive` objects associated with the specified pool path.
+func GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive {
+	incentives := []ExternalIncentive{}
+	externalIncentives.tree.Iterate("", "", func(key string, value interface{}) bool {
+		incentive := value.(*ExternalIncentive)
+		if incentive.targetPoolPath == poolPath {
+			incentives = append(incentives, *incentive)
+		}
+		return false
+	})
+
+	return incentives
+}
+
+func GetPrintExternalInfo() string {
+	externalDebug := ApiExternalDebugInfo{
+		Height: std.GetHeight(),
+		Time:   time.Now().Unix(),
+	}
+
+	externalPositions := []ApiExternalDebugPosition{}
+	deposits.Iterate(uint64(0), uint64(deposits.Size()), func(tokenId uint64, deposit *Deposit) bool {
+		externalPosition := ApiExternalDebugPosition{
+			LpTokenId:       tokenId,
+			StakedHeight:    deposit.stakeHeight,
+			StakedTimestamp: deposit.stakeTimestamp,
+		}
+
+		externalIncentivesList := []ApiExternalDebugIncentive{}
+		externalIncentives.tree.Iterate("", "", func(key string, value interface{}) bool {
+			incentive := value.(*ExternalIncentive)
+			if incentive.targetPoolPath == deposit.targetPoolPath {
+				externalIncentive := ApiExternalDebugIncentive{
+					PoolPath:          incentive.targetPoolPath,
+					IncentiveId:       key,
+					RewardToken:       incentive.rewardToken,
+					RewardAmount:      strconv.FormatUint(incentive.rewardAmount, 10),
+					RewardLeft:        strconv.FormatUint(incentive.rewardLeft, 10),
+					StartTimestamp:    incentive.startTimestamp,
+					EndTimestamp:      incentive.endTimestamp,
+					RewardPerBlock:    strconv.FormatUint(incentive.rewardPerBlock, 10),
+					Refundee:          incentive.refundee,
+					tokenAmountFull:   incentive.depositGnsAmount,
+					tokenAmountToGive: incentive.RewardSpent(uint64(std.GetHeight())),
+					StartHeight:       incentive.startHeight,
+					EndHeight:         incentive.endHeight,
+				}
+
+				externalIncentivesList = append(externalIncentivesList, externalIncentive)
+			}
 			return false
 		})
-	} else {
-		println(" > pool is not externally incentivized")
+
+		externalPosition.Incentive = externalIncentivesList
+		externalPositions = append(externalPositions, externalPosition)
+		return false
+	})
+
+	externalDebug.Position = externalPositions
+
+	// JSON Serialization
+	node := json.ObjectNode("", map[string]*json.Node{
+		"height":   json.NumberNode("", float64(externalDebug.Height)),
+		"time":     json.NumberNode("", float64(externalDebug.Time)),
+		"position": json.ArrayNode("", makeExternalPositionsNode(externalDebug.Position)),
+	})
+
+	b, err := json.Marshal(node)
+	if err != nil {
+		return "JSON MARSHAL ERROR"
 	}
-	println("[ END ] GET_EXTERNAL INCENTIVE")
+
+	return string(b)
+}
+
+func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Node {
+	externalPositions := make([]*json.Node, 0)
+
+	for _, externalPosition := range positions {
+		incentives := make([]*json.Node, 0)
+		for _, incentive := range externalPosition.Incentive {
+			stakedOrExternalDuration := std.GetHeight() - max(incentive.StartHeight, externalPosition.StakedHeight)
+
+			incentives = append(incentives, json.ObjectNode("", map[string]*json.Node{
+				"poolPath":                 json.StringNode("poolPath", incentive.PoolPath),
+				"rewardToken":              json.StringNode("rewardToken", incentive.RewardToken),
+				"rewardAmount":             json.StringNode("rewardAmount", incentive.RewardAmount),
+				"rewardLeft":               json.StringNode("rewardLeft", incentive.RewardLeft),
+				"startTimestamp":           json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
+				"endTimestamp":             json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
+				"rewardPerBlock":           json.StringNode("rewardPerBlock", incentive.RewardPerBlock),
+				"stakedOrExternalDuration": json.NumberNode("stakedOrExternalDuration", float64(stakedOrExternalDuration)),
+				"tokenAmountFull":          json.NumberNode("tokenAmountFull", float64(incentive.tokenAmountFull)),
+				"tokenAmountToGive":        json.NumberNode("tokenAmountToGive", float64(incentive.tokenAmountToGive)),
+			}))
+		}
+
+		externalPositions = append(externalPositions, json.ObjectNode("", map[string]*json.Node{
+			"lpTokenId":       json.NumberNode("lpTokenId", float64(externalPosition.LpTokenId)),
+			"stakedHeight":    json.NumberNode("stakedHeight", float64(externalPosition.StakedHeight)),
+			"stakedTimestamp": json.NumberNode("stakedTimestamp", float64(externalPosition.StakedTimestamp)),
+			"incentive":       json.ArrayNode("", incentives),
+		}))
+	}
+
+	return externalPositions
+}
+
+type currentExternalInfo struct {
+	height             int64
+	time               int64
+	externalIncentives []ExternalIncentive
 }
 
 type ApiExternalDebugInfo struct {
@@ -356,6 +719,8 @@ type ApiExternalDebugIncentive struct {
 	RewardPerBlockX96 string      `json:"rewardPerBlockX96"`
 	RewardPerBlock    string      `json:"rewardPerBlock"`
 	Refundee          std.Address `json:"refundee"`
+	StartHeight       int64       `json:"startHeight"`
+	EndHeight         int64       `json:"endHeight"`
 	// FROM positionExternal -> externalRewards
 	tokenAmountX96    *u256.Uint `json:"tokenAmountX96"`
 	tokenAmount       uint64     `json:"tokenAmount"`
@@ -370,233 +735,6 @@ type ApiExternalDebugIncentive struct {
 	give70  uint64 `json:"give70"`
 	full100 uint64 `json:"full100"`
 }
-
-func GetExternalIncentive(incentiveId string) *ExternalIncentive {
-	incentive, exist := externalIncentives.tree.Get(incentiveId)
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId)),
-		)
-	}
-
-	return incentive.(*ExternalIncentive)
-}
-
-func GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive {
-	incentives := []ExternalIncentive{}
-	externalIncentives.tree.Iterate("", "", func(key string, value interface{}) bool {
-		incentive := value.(*ExternalIncentive)
-		if incentive.targetPoolPath == poolPath {
-			incentives = append(incentives, *incentive)
-		}
-		return false
-	})
-
-	return incentives
-}
-
-//
-//func GetPrintExternalInfoByPoolPath(poolPath string) string {
-//	updateExternalIncentiveLeftAmount()
-//
-//	currentHeight := std.GetHeight()
-//	now := time.Now().Unix()
-//
-//	externalDebug := ApiExternalDebugInfo{}
-//	externalDebug.Height = currentHeight
-//	externalDebug.Time = now
-//
-//	externalPositions := []ApiExternalDebugPosition{}
-//
-//	externalPosition := ApiExternalDebugPosition{}
-//	deposits.Iterate(uint64(0), uint64(deposits.Size()), func(tokenId uint64, deposit *Deposit) bool {
-//		externalPosition.LpTokenId = tokenId
-//		externalPosition.StakedHeight = deposit.stakeHeight
-//		externalPosition.StakedTimestamp = deposit.stakeTimestamp
-//
-//		externalIncentivesList := []ApiExternalDebugIncentive{}
-//		externalIncentives.tree.Iterate("", "", func(key string, value interface{}) bool {
-//			incentive := value.(*ExternalIncentive)
-//			if incentive.targetPoolPath == poolPath {
-//				externalIncentive := ApiExternalDebugIncentive{}
-//				externalIncentive.PoolPath = incentive.targetPoolPath
-//				externalIncentive.RewardToken = incentive.rewardToken
-//				externalIncentive.IncentiveId = incentive.incentiveId
-//				externalIncentive.RewardAmount = strconv.FormatUint(incentive.rewardAmount, 10)
-//				externalIncentive.RewardLeft = strconv.FormatUint(incentive.rewardLeft, 10)
-//				externalIncentive.StartTimestamp = incentive.startTimestamp
-//				externalIncentive.EndTimestamp = incentive.endTimestamp
-//				rewardPerBlockU256 := u256.MustFromDecimal(strconv.FormatUint(incentive.rewardPerBlock, 10))
-//				q96 := u256.MustFromDecimal(consts.Q96)
-//				rewardPerBlockX96 := u256.Zero().Mul(rewardPerBlockU256, q96)
-//				externalIncentive.RewardPerBlockX96 = rewardPerBlockX96.ToString()
-//				externalIncentive.RewardPerBlock = new(u256.Uint).Div(rewardPerBlockX96, q96).ToString()
-//				externalIncentive.Refundee = incentive.refundee
-//				externalIncentive.tokenAmountX96 = incentive.tokenAmountX96
-//				externalIncentive.tokenAmount = incentive.tokenAmount
-//				externalIncentive.tokenAmountFull = incentive.tokenAmountFull
-//				externalIncentive.tokenAmountToGive = incentive.tokenAmountToGive
-//				externalIncentive.full30 = incentive.full30
-//				externalIncentive.give30 = incentive.give30
-//				externalIncentive.full50 = incentive.full50
-//				externalIncentive.give50 = incentive.give50
-//				externalIncentive.full70 = incentive.full70
-//				externalIncentive.give70 = incentive.give70
-//				externalIncentive.full100 = incentive.full100
-//				externalIncentivesList = append(externalIncentivesList, externalIncentive)
-//			}
-//			return false
-//		})
-//
-//		return false
-//	})
-//
-//	externalIncentive := ApiExternalDebugIncentive{}
-//	externalIncentive.PoolPath = external.poolPath
-//	externalIncentive.RewardToken = external.tokenPath
-//
-//	incentive := incentives[incentiveId]
-//	externalIncentive.IncentiveId = incentiveId
-//	externalIncentive.RewardAmount = incentive.rewardAmount.ToString()
-//	externalIncentive.RewardLeft = incentive.rewardLeft.ToString()
-//	externalIncentive.StartTimestamp = incentive.startTimestamp
-//	externalIncentive.EndTimestamp = incentive.endTimestamp
-//	externalIncentive.RewardPerBlockX96 = incentive.rewardPerBlockX96.ToString()
-//	externalIncentive.RewardPerBlock = new(u256.Uint).Div(incentive.rewardPerBlockX96, u256.MustFromDecimal(consts.Q96)).ToString()
-//	externalIncentive.Refundee = incentive.refundee
-//
-//	externalIncentive.tokenAmountX96 = external.tokenAmountX96
-//
-//	return ""
-//}
-
-//
-//func GetPrintExternalInfo() string {
-//	// TODO: LIMIT ONLY ABCI_QUERY CAN CALL THIS
-//
-//	updateExternalIncentiveLeftAmount()
-//
-//	externalDebug := ApiExternalDebugInfo{}
-//	externalDebug.Height = std.GetHeight()
-//	externalDebug.Time = time.Now().Unix()
-//
-//	externalPositions := []ApiExternalDebugPosition{}
-//	for lpTokenId, externals := range positionExternal {
-//		externalPosition := ApiExternalDebugPosition{}
-//		externalPosition.LpTokenId = lpTokenId
-//		deposit, _ := deposits.get(lpTokenId)
-//		externalPosition.StakedHeight = deposit.stakeHeight
-//		externalPosition.StakedTimestamp = deposit.stakeTimestamp
-//
-//		externalIncentives := []ApiExternalDebugIncentive{}
-//		for incentiveId, external := range externals {
-//			externalIncentive := ApiExternalDebugIncentive{}
-//
-//			externalIncentive.PoolPath = external.poolPath
-//			externalIncentive.RewardToken = external.tokenPath
-//
-//			incentive := incentives[incentiveId]
-//			externalIncentive.IncentiveId = incentiveId
-//			externalIncentive.RewardAmount = incentive.rewardAmount.ToString()
-//			externalIncentive.RewardLeft = incentive.rewardLeft.ToString()
-//			externalIncentive.StartTimestamp = incentive.startTimestamp
-//			externalIncentive.EndTimestamp = incentive.endTimestamp
-//			externalIncentive.RewardPerBlockX96 = incentive.rewardPerBlockX96.ToString()
-//			externalIncentive.RewardPerBlock = new(u256.Uint).Div(incentive.rewardPerBlockX96, u256.MustFromDecimal(consts.Q96)).ToString()
-//			externalIncentive.Refundee = incentive.refundee
-//
-//			externalIncentive.tokenAmountX96 = external.tokenAmountX96
-//
-//			externalWarmUpAmount, exist := positionsExternalWarmUpAmount[lpTokenId][incentiveId]
-//			if !exist {
-//				continue
-//			}
-//			fullAmount := externalWarmUpAmount.full30 + externalWarmUpAmount.full50 + externalWarmUpAmount.full70 + externalWarmUpAmount.full100
-//			toGive := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.full100
-//
-//			externalIncentive.full30 = externalWarmUpAmount.full30
-//			externalIncentive.give30 = externalWarmUpAmount.give30
-//			externalIncentive.full50 = externalWarmUpAmount.full50
-//			externalIncentive.give50 = externalWarmUpAmount.give50
-//			externalIncentive.full70 = externalWarmUpAmount.full70
-//			externalIncentive.give70 = externalWarmUpAmount.give70
-//			externalIncentive.full100 = externalWarmUpAmount.full100
-//
-//			externalIncentive.tokenAmountFull = fullAmount
-//			externalIncentive.tokenAmountToGive = toGive
-//
-//			externalIncentives = append(externalIncentives, externalIncentive)
-//		}
-//		externalPosition.Incentive = externalIncentives
-//
-//		externalPositions = append(externalPositions, externalPosition)
-//	}
-//
-//	externalDebug.Position = externalPositions
-//
-//	// MARSHAL
-//	node := json.ObjectNode("", map[string]*json.Node{
-//		"height":   json.NumberNode("", float64(externalDebug.Height)),
-//		"time":     json.NumberNode("", float64(externalDebug.Time)),
-//		"position": json.ArrayNode("", makeExternalPositionsNode(externalDebug.Position)),
-//	})
-//
-//	b, err := json.Marshal(node)
-//	if err != nil {
-//		return "JSON MARSHAL ERROR"
-//	}
-//
-//	return string(b)
-//
-//	panic("SHOULD BE REIMPLEMENTED BEFORE MERGING")
-//}
-//
-//func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Node {
-//	externalPositions := make([]*json.Node, 0)
-//
-//	for _, externalPosition := range positions {
-//		incentives := make([]*json.Node, 0)
-//		for _, incentive := range externalPosition.Incentive {
-//			deposit, _ := deposits.get(externalPosition.LpTokenId)
-//			_max := common.I64Max(incentive.StartTimestamp, deposit.stakeTimestamp)
-//			stakedOrExternalDuration := (time.Now().Unix() - _max) / consts.BLOCK_GENERATION_INTERVAL
-//
-//			incentives = append(incentives, json.ObjectNode("", map[string]*json.Node{
-//				"poolPath":                 json.StringNode("poolPath", incentive.PoolPath),
-//				"rewardToken":              json.StringNode("rewardToken", incentive.RewardToken),
-//				"rewardAmount":             json.StringNode("rewardAmount", incentive.RewardAmount),
-//				"startTimestamp":           json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
-//				"endTimestamp":             json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
-//				"rewardPerBlockX96":        json.StringNode("rewardPerBlockX96", incentive.RewardPerBlockX96),
-//				"stakedOrExternalDuration": json.NumberNode("stakedOrExternalDuration", float64(stakedOrExternalDuration)),
-//				"rewardPerBlock":           json.StringNode("rewardPerBlock", incentive.RewardPerBlock),
-//				"refundee":                 json.StringNode("refundee", incentive.Refundee.String()),
-//				// "tokenAmountX96":           json.StringNode("tokenAmountX96", incentive.tokenAmountX96.ToString()),
-//				// "tokenAmount":              json.NumberNode("tokenAmount", float64(new(u256.Uint).Div(incentive.tokenAmountX96, _q96).Uint64())),
-//				"tokenAmountFull":   json.NumberNode("tokenAmountFull", float64(incentive.tokenAmountFull)),
-//				"tokenAmountToGive": json.NumberNode("tokenAmountToGive", float64(incentive.tokenAmountToGive)),
-//				//
-//				"full30":  json.NumberNode("full30", float64(incentive.full30)),
-//				"give30":  json.NumberNode("give30", float64(incentive.give30)),
-//				"full50":  json.NumberNode("full50", float64(incentive.full50)),
-//				"give50":  json.NumberNode("give50", float64(incentive.give50)),
-//				"full70":  json.NumberNode("full70", float64(incentive.full70)),
-//				"give70":  json.NumberNode("give70", float64(incentive.give70)),
-//				"full100": json.NumberNode("full100", float64(incentive.full100)),
-//			}))
-//		}
-//
-//		externalPositions = append(externalPositions, json.ObjectNode("", map[string]*json.Node{
-//			"lpTokenId":       json.NumberNode("lpTokenId", float64(externalPosition.LpTokenId)),
-//			"stakedHeight":    json.NumberNode("stakedHeight", float64(externalPosition.StakedHeight)),
-//			"stakedTimestamp": json.NumberNode("stakedTimestamp", float64(externalPosition.StakedTimestamp)),
-//			"incentive":       json.ArrayNode("", incentives),
-//		}))
-//	}
-//
-//	return externalPositions
-//}
 
 // DEBUG INTERNAL (GNS EMISSION)
 type currentInfo struct {
@@ -621,46 +759,4 @@ func getCurrentInfo() currentInfo {
 		gnsProtocolFee:   gns.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)),
 		gnsADMIN:         gns.BalanceOf(a2u(consts.ADMIN)),
 	}
-}
-
-func printInfo(prev currentInfo) currentInfo {
-	curr := getCurrentInfo()
-	/*
-		println("***********************")
-		println("> height:", curr.height)
-		println("> height inc by:", curr.height-prev.height)
-		println("> time:", curr.time)
-		println("> time inc by:", curr.time-prev.time)
-		println("GNS BALANCE CHANGE")
-		println("> staker_bal\t\t", curr.gnsStaker)
-		println("> staker_chg\t\t", int64(curr.gnsStaker-prev.gnsStaker))
-		println("> dev ops\t\t", curr.gnsDevOps)
-		println("> dev ops_chg\t\t", int(curr.gnsDevOps-prev.gnsDevOps))
-		println("> community pool_bal\t", curr.gnsCommunityPool)
-		println("> community pool_chg\t", int(curr.gnsCommunityPool-prev.gnsCommunityPool))
-		println("> gov_staker_bal\t\t", curr.gnsGovStaker)
-		println("> gov_staker_chg\t\t", int(curr.gnsGovStaker-prev.gnsGovStaker))
-		println("> protocol fee_bal\t", curr.gnsProtocolFee)
-		println("> protocol fee_chg\t", int(curr.gnsProtocolFee-prev.gnsProtocolFee))
-		println("> ADMIN_bal\t\t", curr.gnsADMIN)
-		println("> ADMIN_chg\t\t", int(curr.gnsADMIN-prev.gnsADMIN))
-		println("GNS POOL")
-		for k, v := range poolGns {
-			println("> poolPath:", k, "amount:", v)
-		}
-
-
-		println("GNS POSITION")
-		for k, v := range positionGns {
-			posWarmCalc := positionsInternalWarmUpAmount[k]
-			println("> tokenId:", k, "amount:", v, "warmUp:", getRewardRatio(curr.height-deposits[k].stakeHeight))
-			println("> 100%", "full", posWarmCalc.full100, "give", posWarmCalc.full100)
-			println("> 70%", "full", posWarmCalc.full70, "give", posWarmCalc.give70)
-			println("> 50%", "full", posWarmCalc.full50, "give", posWarmCalc.give50)
-			println("> 30%", "full", posWarmCalc.full30, "give", posWarmCalc.give30)
-		}
-	*/
-	//panic("SHOULD BE REIMPLEMENTED BEFORE MERGING")
-
-	return curr
 }

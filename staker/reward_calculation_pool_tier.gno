@@ -307,7 +307,7 @@ func (self *PoolTier) rewardCacheOf(tier uint64) *RewardCacheTree {
 	default:
 		panic(addDetailToError(
 			errInvalidPoolTier,
-			ufmt.Sprintf("staker.gno__rewardCacheOf() || tier(%d) is not valid", tier),
+			ufmt.Sprintf("tier(%d) is not valid", tier),
 		))
 	}
 }
