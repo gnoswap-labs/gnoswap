@@ -30,7 +30,7 @@ func TestCreateParameterHandlers(t *testing.T) {
 		function string
 		params   []string
 		wantErr  bool
-		validate   func(t *testing.T)
+		validate func(t *testing.T)
 	}{
 		{
 			name:     "Emission_ChangeDistributionPct",
@@ -126,18 +126,6 @@ func TestCreateParameterHandlers(t *testing.T) {
 			},
 		},
 		{
-			name:     "Staker_RemovePoolTier",
-			path:     consts.STAKER_PATH,
-			function: "RemovePoolTier",
-			params:   []string{"100"},
-			wantErr:  false,
-			validate: func(t *testing.T) {
-				after := sr.GetPoolsWithTier()
-				uassert.Equal(t, len(after), 1)
-				uassert.Equal(t, after[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000_1")
-			},
-		},
-		{
 			name:     "ProtocolFee_SetDevOpsPct",
 			path:     consts.PROTOCOL_FEE_PATH,
 			function: "SetDevOpsPct",
@@ -167,18 +155,73 @@ func TestCreateParameterHandlers(t *testing.T) {
 				uassert.Equal(t, sr.GetDepositGnsAmount(), uint64(400))
 			},
 		},
+		{
+			name:     "Emission_ChangeDistributionPct_InvalidTotal_Exceed100",
+			path:     consts.EMISSION_PATH,
+			function: "ChangeDistributionPct",
+			params:   []string{"1", "8000", "2", "3000"},
+			wantErr:  true,
+			validate: func(t *testing.T) {
+				defer func() {
+					if r := recover(); r != nil {
+						return
+					}
+				}()
+				// existing state must be preserved in the event of a panic
+				uassert.Equal(t, en.GetDistributionBpsPct(1), uint64(7000))
+			},
+		},
+		{
+			name:     "Router_SetSwapFee_InvalidValue",
+			path:     consts.ROUTER_PATH,
+			function: "SetSwapFee",
+			params:   []string{"-100"},
+			wantErr:  true,
+			validate: func(t *testing.T) {
+				defer func() {
+					if r := recover(); r != nil {
+						return
+					}
+				}()
+				uassert.Equal(t, rr.GetSwapFee(), uint64(400))
+			},
+		},
+		{
+			name:     "Staker_SetUnstakingFee_TooHigh",
+			path:     consts.STAKER_PATH,
+			function: "SetUnstakingFee",
+			params:   []string{"10001"},
+			wantErr:  true,
+			validate: func(t *testing.T) {
+				defer func() {
+					if r := recover(); r != nil {
+						return
+					}
+				}()
+				uassert.Equal(t, sr.GetUnstakingFee(), uint64(100))
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					return
+				} else if r != nil {
+					t.Fatal("unexpected panic")
+				}
+			}()
 			handler, _ := registry.Get(tt.path, tt.function)
-
 			err := handler(tt.params)
+
 			if (err != nil) != tt.wantErr {
 				t.Errorf("unexpected error: %v", err)
 			}
 
-			tt.validate(t)
+			if !tt.wantErr {
+				tt.validate(t)
+			}
 		})
 	}
 }

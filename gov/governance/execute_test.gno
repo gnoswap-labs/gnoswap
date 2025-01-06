@@ -155,6 +155,14 @@ func TestExecuteParameterChange(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "handle multiple messages",
+			msgs: []string{
+				"test/pkg*EXE*TestFunc*EXE*param1",
+				"test/pkg*EXE*TestFunc*EXE*param2",
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {

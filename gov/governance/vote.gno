@@ -144,7 +144,6 @@ func newVoteState(proposal ProposalInfo, voteKey string, voter std.Address, now 
 }
 
 func (s *VoteState) validate() error {
-	// TODO: fix this
 	if !s.isVotingPeriod {
 		return errUnableToVoteOutOfPeriod
 	}
