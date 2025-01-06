@@ -150,6 +150,7 @@ func testMakePosition1OutRange(t *testing.T) {
 		bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
 		qux.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
 
+		// PANIC: ./staker: test pkg: panic: runtime error: invalid memory address or nil pointer dereference
 		tokenIn, tokenOut := rr.ExactInSwapRoute(
 			barPath,
 			quxPath,
