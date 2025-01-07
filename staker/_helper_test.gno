@@ -78,20 +78,17 @@ func CreatePool(t *testing.T,
 	poolPath := pl.GetPoolPath(token0, token1, fee)
 	if !pl.DoesPoolPathExist(poolPath) {
 		pl.CreatePool(token0, token1, fee, sqrtPriceX96)
-		//SetPoolTierByAdmin(poolPath, TIER_1)
 	}
 }
 
 func LPTokenStake(t *testing.T, owner pusers.AddressOrName, tokenId uint64) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(users.Resolve(owner)))
-	//StakeToken(tokenId)
 }
 
 func LPTokenUnStake(t *testing.T, owner pusers.AddressOrName, tokenId uint64, unwrap bool) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(users.Resolve(owner)))
-	//UnstakeToken(tokenId, unwrap)
 }
 
 func InitialisePoolTest(t *testing.T) {
