@@ -2,14 +2,9 @@ package governance
 
 import (
 	"errors"
-	"testing"
-	"time"
-
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/uassert"
 	"gno.land/r/gnoswap/v1/consts"
-
-	u256 "gno.land/p/gnoswap/uint256"
+	"testing"
 )
 
 func TestParameterRegistry_Register(t *testing.T) {
@@ -158,8 +153,8 @@ func TestExecuteParameterChange(t *testing.T) {
 		{
 			name: "handle multiple messages",
 			msgs: []string{
-				"test/pkg*EXE*TestFunc*EXE*param1",
-				"test/pkg*EXE*TestFunc*EXE*param2",
+				"test/pkg*EXE*TestFunc*EXE*param1,param2",
+				"test/pkg*EXE*TestFunc*EXE*param2,param3",
 			},
 			wantErr: false,
 		},
