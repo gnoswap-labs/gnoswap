@@ -9,11 +9,9 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
-	ufmt "gno.land/p/demo/ufmt"
 	"gno.land/p/demo/avl"
+	ufmt "gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
-
-	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
 var (
@@ -35,10 +33,10 @@ func currentBalance() uint64 {
 }
 
 type StakerRewardInfo struct {
-	StartHeight uint64 // height when staker started staking
-	PriceDebt *u256.Uint // price debt per xGNS stake, Q128
-	Amount uint64 // amount of xGNS staked
-	Claimed uint64 // amount of GNS reward claimed so far
+	StartHeight uint64     // height when staker started staking
+	PriceDebt   *u256.Uint // price debt per xGNS stake, Q128
+	Amount      uint64     // amount of xGNS staked
+	Claimed     uint64     // amount of GNS reward claimed so far
 }
 
 func (self *StakerRewardInfo) Debug() string {
@@ -49,10 +47,9 @@ func (self *StakerRewardInfo) PriceDebtUint64() uint64 {
 	return u256.Zero().Rsh(self.PriceDebt, 128).Uint64()
 }
 
-
 type RewardState struct {
 	// CurrentBalance is sum of all the previous balances, including the reward distribution.
-	CurrentBalance uint64 // current balance of gov_staker, used to calculate RewardAccumulation
+	CurrentBalance    uint64     // current balance of gov_staker, used to calculate RewardAccumulation
 	PriceAccumulation *u256.Uint // claimable GNS per xGNS stake, Q128
 	// RewardAccumulation *u256.Uint // reward accumulated so far, Q128
 	TotalStake uint64 // total xGNS staked
@@ -61,11 +58,11 @@ type RewardState struct {
 }
 
 func NewRewardState() *RewardState {
-	return &RewardState {
-		info: avl.NewTree(),
-		CurrentBalance: 0,
+	return &RewardState{
+		info:              avl.NewTree(),
+		CurrentBalance:    0,
 		PriceAccumulation: u256.Zero(),
-		TotalStake: 0,
+		TotalStake:        0,
 	}
 }
 
@@ -94,7 +91,6 @@ func (self *RewardState) CalculateReward(staker std.Address) uint64 {
 func (self *RewardState) PriceAccumulationUint64() uint64 {
 	return u256.Zero().Rsh(self.PriceAccumulation, 128).Uint64()
 }
-
 
 // amount MUST be less than or equal to the amount of xGNS staked
 // This function does not check it
@@ -130,23 +126,28 @@ func (self *RewardState) finalize(currentBalance uint64) {
 	self.CurrentBalance = currentBalance
 }
 
-func (self *RewardState) AddStake(currentHeight uint64, staker std.Address, amount uint64, currentBalance uint64) {	
-	if self.info.Has(staker.String()) {
-		panic(ufmt.Sprintf("staker %s already exists", staker.String()))
-	}
-
+func (self *RewardState) AddStake(currentHeight uint64, staker std.Address, amount uint64, currentBalance uint64) {
 	self.finalize(currentBalance)
 
 	self.TotalStake += amount
 
-
-	info := StakerRewardInfo {
-		StartHeight: currentHeight,
-		PriceDebt: self.PriceAccumulation.Clone(),
-		Amount: amount,
-		Claimed: 0,
+	if self.info.Has(staker.String()) {
+		info := self.Info(staker)
+		info.PriceDebt.Add(info.PriceDebt, u256.NewUint(info.Amount))
+		info.PriceDebt.Add(info.PriceDebt, u256.Zero().Mul(self.PriceAccumulation, u256.NewUint(amount)))
+		info.PriceDebt.Div(info.PriceDebt, u256.NewUint(self.TotalStake))
+		info.Amount += amount
+		self.info.Set(staker.String(), info)
+		return
 	}
-	
+
+	info := StakerRewardInfo{
+		StartHeight: currentHeight,
+		PriceDebt:   self.PriceAccumulation.Clone(),
+		Amount:      amount,
+		Claimed:     0,
+	}
+
 	self.info.Set(staker.String(), info)
 }
 
@@ -164,7 +165,7 @@ func (self *RewardState) Claim(staker std.Address, currentBalance uint64) uint64
 
 func (self *RewardState) RemoveStake(staker std.Address, amount uint64, currentBalance uint64) uint64 {
 	self.finalize(currentBalance)
-	
+
 	reward := self.deductReward(staker, currentBalance)
 
 	self.info.Remove(staker.String())

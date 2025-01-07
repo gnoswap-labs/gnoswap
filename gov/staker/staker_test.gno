@@ -96,8 +96,7 @@ func TestDelegate(t *testing.T) {
 	{
 		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 		std.TestSkipHeights(100)
-		mintedGns := gns.MintGns(a2u(userRealm.Addr())) // 2M gns
-		println("Minted GNS:", mintedGns)
+		gns.MintGns(a2u(userRealm.Addr())) // 2M gns
 
 		std.TestSetRealm(userRealm)
 		to := makeFakeAddress("validator_1")
@@ -164,6 +163,30 @@ func TestDelegate(t *testing.T) {
 		// Restore running to true for subsequent tests.
 		std.TestSetOrigCaller(consts.ADMIN)
 		SetRunning(true)
+	}
+
+	{
+		to := makeFakeAddress("validator_2")
+		amount := uint64(1999_999)
+
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic when delegating below minimumAmount")
+			}
+		}()
+		Delegate(to, amount)
+	}
+
+	{
+		to := makeFakeAddress("validator_2")
+		amount := uint64(2000_000)
+
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic when delegating below minimumAmount")
+			}
+		}()
+		Delegate(to, amount)
 	}
 }
 

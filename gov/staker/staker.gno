@@ -65,6 +65,13 @@ func Delegate(to std.Address, amount uint64) {
 		))
 	}
 
+	if amount%minimumAmount != 0 {
+		panic(addDetailToError(
+			errInvalidAmount,
+			ufmt.Sprintf("amount must be multiple of %d", minimumAmount),
+		))
+	}
+
 	caller := std.PrevRealm().Addr()
 	gnsBalance := gns.BalanceOf(a2u(caller))
 	if gnsBalance < amount {
@@ -126,6 +133,13 @@ func Redelegate(from, to std.Address, amount uint64) {
 		))
 	}
 
+	if amount%minimumAmount != 0 {
+		panic(addDetailToError(
+			errInvalidAmount,
+			ufmt.Sprintf("amount must be multiple of %d", minimumAmount),
+		))
+	}
+
 	caller := std.PrevRealm().Addr()
 
 	delegated := xgns.BalanceOf(a2u(caller))
@@ -168,6 +182,13 @@ func Undelegate(from std.Address, amount uint64) {
 		panic(addDetailToError(
 			errLessThanMinimum,
 			ufmt.Sprintf("minimum amount to undelegate is %d (requested:%d)", minimumAmount, amount),
+		))
+	}
+
+	if amount%minimumAmount != 0 {
+		panic(addDetailToError(
+			errInvalidAmount,
+			ufmt.Sprintf("amount must be multiple of %d", minimumAmount),
 		))
 	}
 
