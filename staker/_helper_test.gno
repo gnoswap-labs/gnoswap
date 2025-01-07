@@ -59,6 +59,7 @@ var (
 	protocolFee = pusers.AddressOrName(consts.PROTOCOL_FEE_ADDR)
 	adminRealm  = std.NewUserRealm(users.Resolve(admin))
 	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm    = std.NewCodeRealm(consts.ROUTER_PATH)
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}

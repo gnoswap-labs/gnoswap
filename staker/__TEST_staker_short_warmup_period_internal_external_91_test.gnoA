@@ -58,18 +58,15 @@ func testInit(t *testing.T) {
 		changeWarmup(t, 3, math.MaxInt64)
 
 		// set unstaking fee to 0
-		SetUnstakingFeeByAdmin(0)
+		// SetUnstakingFeeByAdmin(0)
 	})
 }
 
 func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-
 		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
-
 		pl.CreatePool(barPath, quxPath, 100, "79228162514264337593543950337")
-
 		std.TestSkipHeights(1)
 	})
 }
@@ -201,7 +198,7 @@ func testCheckCurrentReward(t *testing.T) {
 
 func testMakePositionOutRange(t *testing.T) {
 	t.Run("make position out of range", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(rouRealm)
 		amount0, amount1 := pl.Swap(
 			barPath,
 			quxPath,
