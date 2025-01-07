@@ -75,7 +75,12 @@ func (self *RewardState) Debug() string {
 func (self *RewardState) Info(staker std.Address) StakerRewardInfo {
 	infoI, exists := self.info.Get(staker.String())
 	if !exists {
-		panic(ufmt.Sprintf("staker %s not found", staker.String()))
+		return StakerRewardInfo{
+			StartHeight: uint64(std.GetHeight()),
+			PriceDebt:   u256.Zero(),
+			Amount:      0,
+			Claimed:     0,
+		}
 	}
 	return infoI.(StakerRewardInfo)
 }
