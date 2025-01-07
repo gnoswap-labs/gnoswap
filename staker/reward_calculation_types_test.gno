@@ -119,6 +119,34 @@ func TestRewardCacheTree(t *testing.T) {
 	tree.CurrentRewardAt(400)
 }
 
+func TestReverseIterateEmptyStringStart(t *testing.T) {
+	tree := NewRewardCacheTree()
+
+	tree.Set(100, "reward1")
+	tree.Set(200, "reward2")
+	tree.Set(300, "reward3")
+	tree.Set(400, "reward4")
+	tree.Set(500, "reward5")
+
+	var resEmptyString interface{}
+	var resZeroPadded interface{}
+
+	tree.tree.ReverseIterate("", EncodeUint(250), func(k string, v interface{}) bool {
+		resEmptyString = v
+		return true 
+	})
+
+	tree.tree.ReverseIterate(EncodeUint(0), EncodeUint(250), func(k string, v interface{}) bool {
+		resZeroPadded = v
+		return true
+	})
+
+	if resEmptyString != resZeroPadded {
+		t.Errorf("ReverseIterate with '' got %v, while zero-padded got %v; want same result", 
+			resEmptyString, resZeroPadded)
+	}
+}
+
 // Helper function to compare slices of uint64
 func compareUintSlices(t *testing.T, a, b []uint64) bool {
 	t.Helper()
