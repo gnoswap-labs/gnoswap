@@ -370,7 +370,7 @@ func collectEmissionReward(addr std.Address) uint64 {
 		return 0
 	}
 
-	govStakerGnsBalance := xgns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))
+	govStakerGnsBalance := gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))
 	if govStakerGnsBalance < emissionReward {
 		panic(addDetailToError(
 			errNotEnoughBalance,

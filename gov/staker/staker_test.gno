@@ -382,19 +382,25 @@ func TestProtocolFee(t *testing.T) {
 }
 
 func TestRedelegate(t *testing.T) {
-	// assume realm user
-	std.TestSetRealm(userRealm)
+	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	std.TestSkipHeights(100)
+	gns.MintGns(a2u(userRealm.Addr())) // 2M gns
 
 	// user has xGNS from previous test (some minted)
 	// try re-delegating
 	std.TestSetRealm(userRealm)
 	from := userRealm.Addr()
 	to := makeFakeAddress("validator_1")
-	println("to", to)
 	amount := uint64(1_000_000)
 
 	std.TestSetOrigCaller(userRealm.Addr())
+	gns.Approve(a2u(consts.GOV_STAKER_ADDR), amount)
+	Delegate(to, amount)
+
+	std.TestSetOrigCaller(userRealm.Addr())
+	gns.Approve(a2u(consts.GOV_STAKER_ADDR), amount)
 	Redelegate(from, to, amount)
+
 	// check data: user xGNS must remain the same, but from-> to shift in staker structure?
 
 	// not enough xGNS => panic
