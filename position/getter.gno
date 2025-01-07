@@ -3,8 +3,6 @@ package position
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
-
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/gnft"
@@ -85,7 +83,8 @@ func PositionIsInRange(tokenId uint64) bool {
 func PositionGetPositionOwner(tokenId uint64) std.Address {
 	owner, err := gnft.OwnerOf(tokenIdFrom(tokenId))
 	if err != nil {
-		panic(ufmt.Sprintf("owner not found for tokenId: %d", tokenId))
+		panic(newErrorWithDetail(
+			errDataNotFound, err.Error()))
 	}
 	return owner
 }

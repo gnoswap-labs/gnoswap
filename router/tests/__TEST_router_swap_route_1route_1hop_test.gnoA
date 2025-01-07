@@ -1,8 +1,9 @@
-package router
+package tests
 
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/uassert"
 
@@ -52,6 +53,7 @@ func TestDrySwapRouteBarBazExactIn(t *testing.T) {
 		"EXACT_IN", // swapType
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", // strRouteArr
 		"100", // quoteArr
+		"1",
 	)
 
 	uassert.Equal(t, dryResult, "2711")
@@ -64,12 +66,13 @@ func TestSwapRouteBarBazExactIn(t *testing.T) {
 	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
 
 	amountIn, amountOut := ExactInSwapRoute(
-		barPath,    // inputToken
-		bazPath,    // outputToken
-		"1000",     // amountSpecified
+		barPath, // inputToken
+		bazPath, // outputToken
+		"1000",  // amountSpecified
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", // strRouteArr
 		"100",  // quoteArr
 		"2700", // tokenAmountLimit
+		time.Now().Add(time.Hour).Unix(),
 	)
 
 	uassert.Equal(t, amountIn, "1000")
@@ -83,12 +86,13 @@ func TestSwapRouteBarBazExactOut(t *testing.T) {
 	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
 
 	amountIn, amountOut := ExactOutSwapRoute(
-		barPath,     // inputToken
-		bazPath,     // outputToken
-		"1000",      // amountSpecified
+		barPath, // inputToken
+		bazPath, // outputToken
+		"1000",  // amountSpecified
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", // strRouteArr
 		"100", // quoteArr
 		"371", // tokenAmountLimit
+		time.Now().Add(time.Hour).Unix(),
 	)
 
 	uassert.Equal(t, amountIn, "371")
@@ -102,12 +106,13 @@ func TestSwapRouteBazBarExactIn(t *testing.T) {
 	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
 
 	amountIn, amountOut := ExactInSwapRoute(
-		bazPath,    // inputToken
-		barPath,    // outputToken
-		"1000",     // amountSpecified
+		bazPath, // inputToken
+		barPath, // outputToken
+		"1000",  // amountSpecified
 		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
 		"100", // quoteArr
 		"360", // tokenAmountLimit
+		time.Now().Add(time.Hour).Unix(),
 	)
 
 	uassert.Equal(t, amountIn, "1000")
@@ -119,12 +124,13 @@ func TestSwapRouteBazBarExactOut(t *testing.T) {
 	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
 
 	amountIn, amountOut := ExactOutSwapRoute(
-		bazPath,     // inputToken
-		barPath,     // outputToken
-		"3000",      // amountSpecified
+		bazPath, // inputToken
+		barPath, // outputToken
+		"3000",  // amountSpecified
 		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
 		"100",  // quoteArr
 		"8200", // tokenAmountLimit
+		time.Now().Add(time.Hour).Unix(),
 	)
 
 	uassert.Equal(t, amountIn, "8171")

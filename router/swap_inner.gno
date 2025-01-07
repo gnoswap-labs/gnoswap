@@ -51,12 +51,10 @@ func swapInner(
 		data.tokenIn,
 		data.tokenOut,
 		data.fee,
-
 		recipient,
 		zeroForOne,
 		amountSpecified.ToString(),
 		sqrtPriceLimitX96.ToString(),
-
 		data.payer,
 	)
 
@@ -69,7 +67,20 @@ func swapInner(
 	return poolRecv.Abs(), poolOut.Abs()
 }
 
-// swapDryInner simulates a swap operation without executing it.
+// swapDryInner performs a dry-run of a swap operation, calculating the potential
+// received and output amounts without actually executing the swap.
+//
+// Parameters:
+//   - amountSpecified: The amount specified for the swap operation. It is an `i256.Int`
+//     representing the input token amount or output token amount (depending on the swap direction).
+//   - sqrtPriceLimitX96: The price limit of the swap expressed as a square root price in X96 format.
+//     This can be a user-defined limit or set to a default min or max price if not provided.
+//   - data: A `SwapCallbackData` structure containing details about the tokens being swapped,
+//     the fee structure, and other context.
+//
+// Returns:
+// - poolRecv: The absolute value of the maximum amount received by the pool during the swap.
+// - poolOut: The absolute value of the minimum amount output from the pool during the swap.
 func swapDryInner(
 	amountSpecified *i256.Int,
 	sqrtPriceLimitX96 *u256.Uint,
@@ -90,7 +101,6 @@ func swapDryInner(
 		data.tokenIn,
 		data.tokenOut,
 		data.fee,
-
 		zeroForOne,
 		amountSpecified.ToString(),
 		sqrtPriceLimitX96.ToString(),
@@ -147,12 +157,12 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 	if zeroForOne {
 		minTick := getMinTick(fee)
 		sqrtPriceLimitX96 = common.TickMathGetSqrtRatioAtTick(minTick)
-		return sqrtPriceLimitX96.Add(sqrtPriceLimitX96, u256.One())
+		return new(u256.Uint).Add(sqrtPriceLimitX96, u256.One())
 	}
 
 	maxTick := getMaxTick(fee)
 	sqrtPriceLimitX96 = common.TickMathGetSqrtRatioAtTick(maxTick)
-	return sqrtPriceLimitX96.Sub(sqrtPriceLimitX96, u256.One())
+	return new(u256.Uint).Sub(sqrtPriceLimitX96, u256.One())
 }
 
 // getMinTick returns the minimum tick value for a given fee tier.

@@ -1,9 +1,9 @@
 package router
 
 import (
-	"std"
-
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/common"
 )
 
 // singleSwap execute a swap within a single pool using the provided parameters.
@@ -24,15 +24,52 @@ import (
 // The function uses swapInner for the core swap logic and sets the proce limit to 0,
 // allowing the swap to execute at any price point within slippage bounds.
 func singleSwap(params SingleSwapParams) (*u256.Uint, *u256.Uint) { // amountIn, amountOut
+	common.MustRegistered(params.tokenIn)
+	common.MustRegistered(params.tokenOut)
+
 	amountIn, amountOut := swapInner(
 		params.amountSpecified,
-		std.PrevRealm().Addr(), // if single swap => user will recieve
-		u256.Zero(),            // sqrtPriceLimitX96
+		getPrevAddr(), // if single swap => user will recieve
+		u256.Zero(),   // sqrtPriceLimitX96
 		SwapCallbackData{
 			params.tokenIn,
 			params.tokenOut,
 			params.fee,
-			std.PrevRealm().Addr(), // payer ==> msg.sender,
+			getPrevAddr(), // payer ==> msg.sender,
+		},
+	)
+
+	return amountIn, amountOut
+}
+
+// singleDrySwap simulates a single-token swap operation without executing it,
+// returning the calculated input and output token amounts.
+//
+// Parameters:
+// - params: A `SingleSwapParams` structure containing the following fields:
+//   - `tokenIn`: The address of the input token.
+//   - `tokenOut`: The address of the output token.
+//   - `amountSpecified`: The amount specified for the swap (input or output amount depending on the swap direction).
+//   - `fee`: The fee rate applied to the swap.
+//
+// Returns:
+// - *u256.Uint: The calculated amount of the input token required for the swap (`amountIn`).
+// - *u256.Uint: The calculated amount of the output token received from the swap (`amountOut`).
+//
+// Notes:
+// - This function performs a simulation and does not alter the state or execute the actual swap.
+func singleDrySwap(params SingleSwapParams) (*u256.Uint, *u256.Uint) {
+	common.MustRegistered(params.tokenIn)
+	common.MustRegistered(params.tokenOut)
+
+	amountIn, amountOut := swapDryInner(
+		params.amountSpecified,
+		u256.Zero(),
+		SwapCallbackData{
+			params.tokenIn,
+			params.tokenOut,
+			params.fee,
+			getPrevAddr(),
 		},
 	)
 

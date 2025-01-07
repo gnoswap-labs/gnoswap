@@ -520,7 +520,6 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	}
 
 	tokenId := getNextId()
-
 	gnft.Mint(params.mintTo, tokenIdFrom(tokenId)) // owner, tokenId
 
 	pool := pl.GetPoolFromPoolPath(poolKey)

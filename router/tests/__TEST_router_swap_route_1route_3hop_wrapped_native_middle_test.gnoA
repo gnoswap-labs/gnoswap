@@ -1,8 +1,9 @@
-package router
+package tests
 
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/uassert"
 
@@ -86,6 +87,7 @@ func TestDrySwapRouteGnsBarExactIn(t *testing.T) {
 		"EXACT_IN",      // swapType
 		"gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
 		"100", // quoteArr
+		"1",
 	)
 	uassert.Equal(t, dryResult, "7327")
 }
@@ -103,6 +105,7 @@ func TestSwapRouteGnsBarExactIn(t *testing.T) {
 		"gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
 		"100", // quoteArr
 		"0",   // tokenAmountLimit
+		time.Now().Add(time.Hour).Unix(),
 	)
 
 	uassert.Equal(t, amountIn, "1000")

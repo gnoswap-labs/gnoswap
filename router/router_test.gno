@@ -7,7 +7,6 @@ import (
 	"gno.land/p/demo/uassert"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/consts"
 )
 
@@ -70,7 +69,7 @@ func TestFinalizeSwap(t *testing.T) {
 			userWrappedWugnot:       0,
 			amountSpecified:         newUint256("100"),
 			expectError:             true,
-			errorMessage:            "too few received for user",
+			errorMessage:            "[GNOSWAP-ROUTER-002] slippage check failed || Received more than requested in [EXACT_OUT] requested=100, actual=90",
 		},
 		{
 			name:                    "GNOT: Slippage error",

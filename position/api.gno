@@ -143,9 +143,8 @@ func ApiGetPosition(lpTokenId uint64) string {
 	for _, position := range r.Response {
 		owner, err := gnft.OwnerOf(tokenIdFrom(position.LpTokenId))
 		if err != nil {
-			panic(ufmt.Sprintf("owner not found for tokenId: %d", position.LpTokenId))
+			owner = consts.ZERO_ADDRESS
 		}
-
 		positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
@@ -212,9 +211,8 @@ func ApiGetPositionsByPoolPath(poolPath string) string {
 	for _, position := range r.Response {
 		owner, err := gnft.OwnerOf(tokenIdFrom(position.LpTokenId))
 		if err != nil {
-			panic(ufmt.Sprintf("owner not found for tokenId: %d", position.LpTokenId))
+			owner = consts.ZERO_ADDRESS
 		}
-
 		positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
@@ -285,9 +283,8 @@ func ApiGetPositionsByAddress(address std.Address) string {
 	for _, position := range r.Response {
 		owner, err := gnft.OwnerOf(tokenIdFrom(position.LpTokenId))
 		if err != nil {
-			panic(ufmt.Sprintf("owner not found for tokenId: %d", position.LpTokenId))
+			owner = consts.ZERO_ADDRESS
 		}
-
 		positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
@@ -428,7 +425,7 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 
 	owner, err := gnft.OwnerOf(tokenIdFrom(lpTokenId))
 	if err != nil {
-		panic(ufmt.Sprintf("owner not found for tokenId: %d", lpTokenId))
+		owner = consts.ZERO_ADDRESS
 	}
 
 	return RpcPosition{

@@ -1,8 +1,9 @@
-package router
+package tests
 
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/uassert"
 
@@ -54,6 +55,7 @@ func TestDrySwapRouteBarQuxExactIn(t *testing.T) {
 		"EXACT_IN", // swapType
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
 		"50,50", // quoteArr
+		"1",
 	)
 
 	uassert.Equal(t, dryResult, "7346")
@@ -66,12 +68,13 @@ func TestSwapRouteBarQuxExactIn(t *testing.T) {
 	qux.Approve(a2u(consts.ROUTER_ADDR), 10000)
 
 	amountIn, amountOut := ExactInSwapRoute(
-		barPath,    // inputToken
-		quxPath,    // outputToken
-		"1000",     // amountSpecified
+		barPath, // inputToken
+		quxPath, // outputToken
+		"1000",  // amountSpecified
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
 		"50,50", // quoteArr
 		"1",     // tokenAmountLimit
+		time.Now().Add(time.Hour).Unix(),
 	)
 
 	uassert.Equal(t, amountIn, "1000")
@@ -82,12 +85,13 @@ func TestSwapRouteBarQuxExactOut(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
 	amountIn, amountOut := ExactOutSwapRoute(
-		barPath,     // inputToken
-		quxPath,     // outputToken
-		"1000",      // amountSpecified
+		barPath, // inputToken
+		quxPath, // outputToken
+		"1000",  // amountSpecified
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
 		"50,50", // quoteArr
 		"99999", // tokenAmountLimit
+		time.Now().Add(time.Hour).Unix(),
 	)
 
 	uassert.Equal(t, amountIn, "140")
@@ -98,12 +102,13 @@ func TestSwapRouteQuxBarExactIn(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
 	amountIn, amountOut := ExactInSwapRoute(
-		quxPath,    // inputToken
-		barPath,    // outputToken
-		"1000",     // amountSpecified
+		quxPath, // inputToken
+		barPath, // outputToken
+		"1000",  // amountSpecified
 		"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
 		"30,70", // quoteArr
 		"1",     // tokenAmountLimit
+		time.Now().Add(time.Hour).Unix(),
 	)
 
 	uassert.Equal(t, amountIn, "1000")
@@ -117,12 +122,13 @@ func TestwapRouteQuxBarExactOut(t *testing.T) {
 	bar.Approve(a2u(consts.ROUTER_ADDR), 10000)
 
 	amountIn, amountOut := ExactOutSwapRoute(
-		quxPath,     // inputToken
-		barPath,     // outputToken
-		"1000",      // amountSpecified
+		quxPath, // inputToken
+		barPath, // outputToken
+		"1000",  // amountSpecified
 		"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
 		"30,70", // quoteArr
 		"99999", // tokenAmountLimit
+		time.Now().Add(time.Hour).Unix(),
 	)
 
 	uassert.Equal(t, amountIn, "7365")

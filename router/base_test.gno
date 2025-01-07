@@ -3,11 +3,9 @@ package router
 import (
 	"errors"
 	"std"
-	"strings"
 	"testing"
 
 	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/p/demo/uassert"
@@ -199,6 +197,7 @@ func TestProcessRoute(t *testing.T) {
 
 	t.Run("Single hop route", func(t *testing.T) {
 		CreatePoolWithoutFee(t)
+		MakeThirdMintPositionWithoutFee(t)
 		route := "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"
 		toSwap := i256.NewInt(1000)
 		swapType := ExactIn
@@ -206,7 +205,7 @@ func TestProcessRoute(t *testing.T) {
 		amountIn, amountOut, err := op.processRoute(route, toSwap, swapType)
 
 		uassert.Equal(t, err, nil)
-		uassert.Equal(t, amountIn.ToString(), "0")
-		uassert.Equal(t, amountOut.ToString(), "0")
+		uassert.Equal(t, amountIn.ToString(), "1000")
+		uassert.Equal(t, amountOut.ToString(), "979")
 	})
 }

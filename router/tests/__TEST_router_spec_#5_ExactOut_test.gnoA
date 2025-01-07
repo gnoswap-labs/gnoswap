@@ -1,8 +1,9 @@
-package router
+package tests
 
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/uassert"
 
@@ -48,12 +49,13 @@ func TestSwapRouteBarBazExactOut(t *testing.T) {
 	token1Before := baz.BalanceOf(a2u(consts.ADMIN))
 
 	amountIn, amountOut := ExactOutSwapRoute(
-		barPath,     // inputToken
-		bazPath,     // outputToken
-		"1",         // amountSpecified
+		barPath, // inputToken
+		bazPath, // outputToken
+		"1",     // amountSpecified
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", // strRouteArr
 		"100", // quoteArr
 		"3",   // tokenAmountLimit
+		time.Now().Add(time.Hour).Unix(),
 	)
 
 	token0After := bar.BalanceOf(a2u(consts.ADMIN))
@@ -89,7 +91,7 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-ROUTER-005] invalid input || router.gno__SwapRoute() || ugnot sent by user(12345) is not equal to amountSpecified(3)`,
+		`[GNOSWAP-POOL-008] requested data not found || expected poolPath(gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:3000) to exist`,
 		func() {
 			ExactOutSwapRoute(
 				consts.GNOT, // inputToken
@@ -98,6 +100,7 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 				"gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:3000", // strRouteArr
 				"100", // quoteArr
 				"1",   // tokenAmountLimit
+				time.Now().Add(time.Hour).Unix(),
 			)
 		},
 	)

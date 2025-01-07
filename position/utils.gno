@@ -55,7 +55,10 @@ func assertTokenExists(tokenId uint64) {
 func assertOnlyOwnerOfToken(tokenId uint64, caller std.Address) {
 	owner, err := gnft.OwnerOf(tokenIdFrom(tokenId))
 	if err != nil {
-		panic(ufmt.Sprintf("owner not found for tokenId: %d", tokenId))
+		panic(newErrorWithDetail(
+			errDataNotFound,
+			ufmt.Sprintf("tokenId(%d) doesn't exist", tokenId),
+		))
 	}
 	assertCallerIsOwner(tokenId, owner, caller)
 }
@@ -261,11 +264,10 @@ func exists(tokenId uint64) bool {
 // output: bool
 func isOwner(tokenId uint64, addr std.Address) bool {
 	owner, err := gnft.OwnerOf(tokenIdFrom(tokenId))
-	if err != nil {
-		panic(ufmt.Sprintf("owner not found for tokenId: %d", tokenId))
-	}
-	if owner == addr {
-		return true
+	if err == nil {
+		if owner == addr {
+			return true
+		}
 	}
 	return false
 }
@@ -276,10 +278,7 @@ func isOwner(tokenId uint64, addr std.Address) bool {
 // output: bool
 func isOperator(tokenId uint64, addr std.Address) bool {
 	operator, err := gnft.GetApproved(tokenIdFrom(tokenId))
-	if err != nil {
-		panic(ufmt.Sprintf("operator not found for tokenId: %d", tokenId))
-	}
-	if operator == addr {
+	if err == nil && operator == addr {
 		return true
 	}
 	return false
@@ -294,10 +293,7 @@ func isStaked(tokenId grc721.TokenID) bool {
 	exist := gnft.Exists(tokenId)
 	if exist {
 		owner, err := gnft.OwnerOf(tokenId)
-		if err != nil {
-			panic(ufmt.Sprintf("owner not found for tokenId: %d", tokenId))
-		}
-		if owner == consts.STAKER_ADDR {
+		if err == nil && owner == consts.STAKER_ADDR {
 			return true
 		}
 	}
