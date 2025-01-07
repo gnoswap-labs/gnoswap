@@ -220,8 +220,17 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		pool.modifyDeposit(tokenId, signedLiquidity, uint64(currentHeight))
 	}
 
-	pool.ticks.Get(deposit.tickLower).modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
-	pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
+	// this could happen because of how position stores the ticks.
+	// ticks are negated if the token1 < token0
+	token0 := pl.PoolGetToken0(poolPath)
+	token1 := pl.PoolGetToken1(poolPath)
+	if token1 < token0 {
+		pool.ticks.Get(deposit.tickLower).modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
+		pool.ticks.Get(deposit.tickUpper).modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
+	} else {
+		pool.ticks.Get(deposit.tickLower).modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
+		pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
+	}
 
 	prevAddr, prevPkgPath := getPrev()
 
@@ -518,8 +527,17 @@ func applyUnStake(tokenId uint64) {
 	if pn.PositionIsInRange(tokenId) {
 		pool.modifyDeposit(tokenId, signedLiquidity, currentHeight)
 	}
-	pool.ticks.Get(deposit.tickLower).modifyDepositLower(currentHeight, currentTick, signedLiquidity)
-	pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(currentHeight, currentTick, signedLiquidity)
+
+	poolPath := pn.PositionGetPositionPoolKey(tokenId)
+	token0 := pl.PoolGetToken0(poolPath)
+	token1 := pl.PoolGetToken1(poolPath)
+	if token1 < token0 {
+		pool.ticks.Get(deposit.tickLower).modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
+		pool.ticks.Get(deposit.tickUpper).modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
+	} else {
+		pool.ticks.Get(deposit.tickLower).modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
+		pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
+	}
 
 	deposits.Remove(tokenId)
 
