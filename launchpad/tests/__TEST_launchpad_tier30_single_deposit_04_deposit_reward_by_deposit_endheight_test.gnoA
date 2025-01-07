@@ -89,7 +89,7 @@ func collectRewardByDepositId(t *testing.T) {
 	t.Run("claim after tier30 ends", func(t *testing.T) {
 		std.TestSkipHeights(5)
 
-		tier30EndHeight := projects[`gno.land/r/onbloc/obl:124`].tier30.endHeight
+		tier30EndHeight := projects[`gno.land/r/onbloc/obl:124`].tiers[30].ended.height
 		currHeight := uint64(std.GetHeight())
 		uassert.Equal(t, bool(tier30EndHeight < currHeight), true)
 
