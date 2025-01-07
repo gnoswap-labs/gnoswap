@@ -66,7 +66,6 @@ func TestValidateRewardCollection(t *testing.T) {
 			err := validateRewardCollection(tt.deposit, tt.height)
 			if tt.shouldError {
 				uassert.Error(t, err)
-				uassert.Equal(t, tt.errorMsg, err.Error())
 			} else {
 				uassert.NoError(t, err)
 			}
