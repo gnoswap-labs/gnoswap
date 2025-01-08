@@ -108,33 +108,46 @@ func removePoolTier(poolPath string) {
 	)
 }
 
-func SetWarmUpByAdmin(index int, blockDuration int64) {
+func SetWarmUpByAdmin(pct, blockDuration int64) {
 	assertOnlyAdmin()
 	assertMustNotHalted()
 
-	setWarmUp(index, blockDuration)
+	setWarmUp(pct, blockDuration)
 }
 
-func SetWarmUp(index int, blockDuration int64) {
+func SetWarmUp(pct, blockDuration int64) {
 	assertOnlyGovernance()
 	assertMustNotHalted()
 
-	setWarmUp(index, blockDuration)
+	setWarmUp(pct, blockDuration)
 }
 
-func setWarmUp(index int, blockDuration int64) {
+func setWarmUp(pct, blockDuration int64) {
 	en.MintAndDistributeGns()
 
-	modifyWarmup(index, blockDuration)
+	modifyWarmup(pctToIndex(pct), blockDuration)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
 		"SetWarmUp",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"index", ufmt.Sprintf("%d", index),
+		"pct", ufmt.Sprintf("%d", pct),
 		"blockDuration", ufmt.Sprintf("%d", blockDuration),
 	)
+}
+
+func pctToIndex(pct int64) int {
+	switch pct {
+	case 30:
+		return 0
+	case 50:
+		return 1
+	case 70:
+		return 2
+	case 100:
+		return 3
+	}
 }
 
 func assertPoolMustExist(poolPath string) {
