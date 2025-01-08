@@ -239,7 +239,6 @@ func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
 		amountByProjectWallet.Set(addr.String(), currentAmount-amount)
 		rewardState.RemoveStake(caller, amount, currentBalance())
 	}
-
 }
 
 // LAUCNHAPD DEPOSIT ===
@@ -352,11 +351,7 @@ func calculateProtocolFee() {
 
 	registered := common.ListRegisteredTokens()
 	// get gov staker's grc20 balance
-	for _, tokenPath := range registered {
-		tokenBalance, exists := accuProtocolFee.Get(tokenPath)
-		if !exists || tokenBalance == uint64(0) {
-			continue
-		}
+	for _, tokenPath := range common.ListRegisteredTokens() {
 
 		leftValue, exists := leftProtocolFeeFromLast.Get(tokenPath)
 		leftFromLast := uint64(0)

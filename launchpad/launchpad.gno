@@ -43,21 +43,21 @@ type ProjectInput struct {
 	DepositAmount    uint64
 	ConditionsToken  string
 	ConditionsAmount string
-	Tier30Ratio     uint64
-	Tier90Ratio     uint64
-	Tier180Ratio    uint64
-	StartTime       uint64
+	Tier30Ratio      uint64
+	Tier90Ratio      uint64
+	Tier180Ratio     uint64
+	StartTime        uint64
 }
 
 // validateProjectInput validates the input parameters for creating a new project
 func validateProjectInput(input ProjectInput, now uint64) error {
 	if input.Tier30Ratio+input.Tier90Ratio+input.Tier180Ratio != 100 {
-		return errors.New(ufmt.Sprintf("invalid ratio, sum of all tiers(30:%d, 90:%d, 180:%d) should be 100", 
+		return errors.New(ufmt.Sprintf("invalid ratio, sum of all tiers(30:%d, 90:%d, 180:%d) should be 100",
 			input.Tier30Ratio, input.Tier90Ratio, input.Tier180Ratio))
 	}
 
 	if input.StartTime <= now {
-		return errors.New(ufmt.Sprintf("invalid start time(%d), cannot start project in past(now:%d)", 
+		return errors.New(ufmt.Sprintf("invalid start time(%d), cannot start project in past(now:%d)",
 			input.StartTime, now))
 	}
 
@@ -83,9 +83,9 @@ func validateToken(tokenPath string, registeredTokens []string) error {
 }
 
 // createTier creates a new tier with the given parameters
-func createTier(projectId string, duration uint64, amount uint64, startHeight uint64, 
+func createTier(projectId string, duration uint64, amount uint64, startHeight uint64,
 	startTime uint64, collectWaitDuration uint64) Tier {
-	
+
 	tierId := generateTierId(projectId, duration)
 	endTime := startTime + (duration * TIMESTAMP_DAY)
 	endHeight := startHeight + (duration * TIMESTAMP_DAY * 1000 / uint64(gns.GetAvgBlockTimeInMs()))
@@ -134,10 +134,10 @@ func CreateProject(
 		DepositAmount:    depositAmount,
 		ConditionsToken:  conditionsToken,
 		ConditionsAmount: conditionsAmount,
-		Tier30Ratio:     tier30Ratio,
-		Tier90Ratio:     tier90Ratio,
-		Tier180Ratio:    tier180Ratio,
-		StartTime:       startTime,
+		Tier30Ratio:      tier30Ratio,
+		Tier90Ratio:      tier90Ratio,
+		Tier180Ratio:     tier180Ratio,
+		StartTime:        startTime,
 	}
 
 	now := uint64(time.Now().Unix())
@@ -191,13 +191,13 @@ func CreateProject(
 		recipient:     recipient,
 		conditions:    conditions,
 		tiers: map[uint64]Tier{
-			30: tier30,
-			90: tier90,
+			30:  tier30,
+			90:  tier90,
 			180: tier180,
 		},
 		tiersRatios: map[uint64]uint64{
-			30: tier30Ratio,
-			90: tier90Ratio,
+			30:  tier30Ratio,
+			90:  tier90Ratio,
 			180: tier180Ratio,
 		},
 		created: TimeInfo{
@@ -255,12 +255,12 @@ func validateTransferLeft(project Project, recipient std.Address, height uint64)
 	}
 
 	if height < project.ended.height {
-		return errors.New(ufmt.Sprintf("project not ended yet(current:%d, endHeight: %d)", 
+		return errors.New(ufmt.Sprintf("project not ended yet(current:%d, endHeight: %d)",
 			height, project.ended.height))
 	}
 
 	if project.refund.height != 0 {
-		return errors.New(ufmt.Sprintf("project already refunded(height:%d)", 
+		return errors.New(ufmt.Sprintf("project already refunded(height:%d)",
 			project.refund.height))
 	}
 
@@ -304,7 +304,7 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 
 	project = projects[projectId] // get updated project
 
-	leftReward := calculateLeftReward(project)
+	leftReward := rewardStates.DeleteProject(projectId)
 
 	if leftReward > 0 {
 		tokenTeller := common.GetTokenTeller(project.tokenPath)
@@ -328,7 +328,7 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 	project.refund = RefundInfo{
 		amount: leftReward,
 		height: height,
-		time: uint64(time.Now().Unix()),
+		time:   uint64(time.Now().Unix()),
 	}
 	projects[projectId] = project
 
@@ -344,7 +344,7 @@ func makeConditions(conditionsToken string, conditionsAmount string) map[string]
 	tokens := strings.Split(conditionsToken, PAD_SEP)
 	amounts := strings.Split(conditionsAmount, PAD_SEP)
 	if len(tokens) != len(amounts) {
-		panic(ufmt.Sprintf("invalid conditions(numTokens(%d) != numAmounts(%d))", 
+		panic(ufmt.Sprintf("invalid conditions(numTokens(%d) != numAmounts(%d))",
 			len(tokens), len(amounts)))
 	}
 
