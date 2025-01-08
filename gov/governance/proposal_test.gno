@@ -79,7 +79,7 @@ func TestProposeText(t *testing.T) {
 
 			uassert.NoError(t, err)
 
-			prop, exists := proposals.Get(strconv.Itoa(int(pid)))
+			prop, exists := proposals.Get(formatUint64(pid))
 			uassert.True(t, exists)
 
 			proposal := prop.(ProposalInfo)
@@ -146,7 +146,7 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 
 			uassert.NoError(t, err)
 
-			prop, exists := proposals.Get(strconv.Itoa(int(pid)))
+			prop, exists := proposals.Get(formatUint64(pid))
 			uassert.True(t, exists)
 
 			proposal := prop.(ProposalInfo)
@@ -168,7 +168,7 @@ func TestUpdateProposalsState(t *testing.T) {
 	}
 	setConfigVersion(1, newConfig)
 
-	testCases := []struct {
+	tests := []struct {
 		name          string
 		currentTime   uint64
 		setupProposal func(uint64) ProposalInfo
@@ -279,16 +279,16 @@ func TestUpdateProposalsState(t *testing.T) {
 		},
 	}
 
-	for _, tt := range testCases {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			proposals = avl.NewTree()
 
 			proposal := tt.setupProposal(tt.currentTime)
-			proposals.Set(strconv.Itoa(int(1)), proposal)
+			proposals.Set(formatUint64(1), proposal)
 
 			updateProposalsState()
 
-			updatedProposal, exists := proposals.Get(strconv.Itoa(int(1)))
+			updatedProposal, exists := proposals.Get(formatUint64(1))
 			uassert.True(t, exists)
 			tt.validate(t, updatedProposal.(ProposalInfo))
 		})
@@ -339,7 +339,7 @@ func TestProposeParameterChange(t *testing.T) {
 
 			uassert.NoError(t, err)
 
-			prop, exists := proposals.Get(strconv.Itoa(int(pid)))
+			prop, exists := proposals.Get(formatUint64(pid))
 			uassert.True(t, exists)
 
 			proposal := prop.(ProposalInfo)

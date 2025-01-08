@@ -2,7 +2,6 @@ package governance
 
 import (
 	"std"
-	"strconv"
 	"strings"
 	"time"
 
@@ -73,7 +72,7 @@ func ProposeText(
 	}
 
 	proposalId++
-	proposals.Set(strconv.Itoa(int(proposalId)), proposal)
+	proposals.Set(formatUint64(proposalId), proposal)
 	latestProposalByProposer.Set(proposer.String(), proposalId)
 
 	prevAddr, prevPkgPath := getPrev()
@@ -145,7 +144,7 @@ func ProposeCommunityPoolSpend(
 	}
 
 	proposalId++
-	proposals.Set(strconv.Itoa(int(proposalId)), proposal)
+	proposals.Set(formatUint64(proposalId), proposal)
 	latestProposalByProposer.Set(proposer.String(), proposalId)
 
 	prevAddr, prevRealm := getPrev()
@@ -231,7 +230,7 @@ func ProposeParameterChange(
 	}
 
 	proposalId++
-	proposals.Set(strconv.Itoa(int(proposalId)), proposal)
+	proposals.Set(formatUint64(proposalId), proposal)
 	latestProposalByProposer.Set(proposer.String(), proposalId)
 
 	prevAddr, prevRealm := getPrev()

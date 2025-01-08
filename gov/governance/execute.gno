@@ -74,6 +74,13 @@ type ExecutionContext struct {
 	WindowEnd   uint64
 }
 
+func (e *ExecutionContext) String() string {
+	return ufmt.Sprintf(
+		"ProposalId: %d, Now: %d, Config: %v, Proposal: %v, WindowStart: %d, WindowEnd: %d",
+		e.ProposalId, e.Now, e.Config, e.Proposal, e.WindowStart, e.WindowEnd,
+	)
+}
+
 func Execute(proposalId uint64) error {
 	ctx, err := prepareExecution(proposalId)
 	if err != nil {
@@ -89,9 +96,8 @@ func Execute(proposalId uint64) error {
 	}
 
 	registry := createParameterHandlers()
-	// TODO: must fix this
 	if err := executeProposal(ctx, registry); err != nil {
-		panic(err)
+		return err
 	}
 
 	updateProposalState(ctx)
@@ -109,7 +115,7 @@ func Execute(proposalId uint64) error {
 
 func executeProposal(ctx *ExecutionContext, registry *ParameterRegistry) error {
 	switch ctx.Proposal.ProposalType {
-	case ParameterChange:
+	case ParameterChange, CommunityPoolSpend:
 		return executeParameterChange(ctx.Proposal.Execution.Msgs, registry)
 	default:
 		return errUnsupportedProposalType

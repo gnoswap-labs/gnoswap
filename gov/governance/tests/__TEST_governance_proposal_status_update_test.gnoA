@@ -76,9 +76,7 @@ func TestProposeText(t *testing.T) {
 
 		voteKey := Vote(proposalId, true)
 
-		// TODO: fix this
-		// voted := votes[voteKey]
-		voted := true
+		voted := GetVoteByVoteKey(voteKey)
 		uassert.True(t, voted)
 
 		updateProposalsState()
@@ -225,7 +223,7 @@ func TestParamaterChange(t *testing.T) {
 		nowTime = uint64(time.Now().Unix())
 
 		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
+		voted := GetVoteByVoteKey(voteKey)
 		uassert.True(t, voted)
 
 		updateProposalsState()

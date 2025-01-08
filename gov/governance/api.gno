@@ -198,14 +198,19 @@ func getProposalStatus(id uint64) string {
 	if !exist {
 		return ""
 	}
-
 	proposal := prop.(ProposalInfo)
+
 	config := GetConfigVersion(proposal.ConfigVersion)
+
 	votingStart := proposal.State.CreatedAt + config.VotingStartDelay
 	votingEnd := votingStart + config.VotingPeriod
 
-	state := proposal.State
-	proposalObj := json.Builder().
+	node := createProposalStateNode(proposal.State, votingStart, votingEnd)
+	return marshal(node)
+}
+
+func createProposalStateNode(state ProposalState, votingStart, votingEnd uint64) *json.Node {
+	return json.Builder().
 		WriteString("createdAt", formatUint64(state.CreatedAt)).
 		WriteString("upcoming", formatBool(state.Upcoming)).
 		WriteString("active", formatBool(state.Active)).
@@ -222,8 +227,6 @@ func getProposalStatus(id uint64) string {
 		WriteString("expired", formatBool(state.Expired)).
 		WriteString("expiredAt", formatUint64(state.ExpiredAt)).
 		Node()
-
-	return marshal(proposalObj)
 }
 
 // getProposalVotes returns the votes of a proposal.

@@ -13,7 +13,7 @@ import (
 )
 
 func mustGetProposal(proposalId uint64) ProposalInfo {
-	result, exists := proposals.Get(strconv.Itoa(int(proposalId)))
+	result, exists := proposals.Get(formatUint64(proposalId))
 	if !exists {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -22,6 +22,39 @@ func mustGetProposal(proposalId uint64) ProposalInfo {
 	}
 
 	return result.(ProposalInfo)
+}
+
+func mustGetVote(key string) bool {
+	vote, exists := votes.Get(key)
+	if !exists {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("voteKey(%s) not found", key),
+		))
+	}
+	return vote.(bool)
+}
+
+// Helper function to validate and get vote information
+func getVoteInfoFromKey(voteKey string) (voteWithWeight, bool) {
+	mustGetVote(voteKey)
+
+	pid, addr := divideVoteKeyToProposalIdAndUser(voteKey)
+
+	voteInfo, exists := getUserVote(addr, pid)
+	if !exists {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("voteKey(%s) not found", voteKey),
+		))
+	}
+
+	return voteInfo, true
+}
+
+func mustGetVoteInfo(voteKey string) voteWithWeight {
+	voteInfo, _ := getVoteInfoFromKey(voteKey)
+	return voteInfo
 }
 
 func iterTree(tree *avl.Tree, cb func(key string, value interface{}) bool) {

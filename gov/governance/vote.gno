@@ -2,7 +2,6 @@ package governance
 
 import (
 	"std"
-	"strconv"
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -91,7 +90,7 @@ func Vote(pid uint64, yes bool) string {
 		panic(err)
 	}
 
-	proposals.Set(strconv.Itoa(int(pid)), proposal)
+	proposals.Set(formatUint64(pid), proposal)
 
 	setVote(pid, voter.String(), yes)
 	setUserVote(voter, pid, voteWithWeight{
@@ -239,7 +238,7 @@ func Cancel(proposalId uint64) {
 	proposal.State.Upcoming = false
 	proposal.State.Active = false
 
-	proposals.Set(strconv.Itoa(int(proposalId)), proposal)
+	proposals.Set(formatUint64(proposalId), proposal)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(

@@ -126,27 +126,17 @@ func passAndExecute(t *testing.T) {
 		uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(87043376))
 		uassert.Equal(t, gns.BalanceOf(a2u(to)), uint64(0))
 
-		Execute(proposalId)
+		err := Execute(proposalId)
+		uassert.NoError(t, err)
 		std.TestSkipHeights(1)
 
-		// uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(87043276))
-		// uassert.Equal(t, gns.BalanceOf(a2u(to)), uint64(100))
-
-		// pp, exists := proposals.Get(strconv.FormatUint(proposalId, 10))
-		// if !exists {
-		// 	t.Errorf("Proposal not found after creation")
-		// }
-		// proposal := pp.(ProposalInfo)
-		// uassert.True(t, proposal.State.Executed)
+		pp, exists := proposals.Get(strconv.FormatUint(proposalId, 10))
+		if !exists {
+			t.Errorf("Proposal not found after creation")
+		}
+		proposal := pp.(ProposalInfo)
+		uassert.True(t, proposal.State.Executed)
 	})
-
-	// t.Run("already executed", func(t *testing.T) {
-	// 	uassert.PanicsWithMessage(t,
-	// 		"[GNOSWAP-GOVERNANCE-015] unable to execute proposal || execute.gno__Execute() || proposalId(1) has already executed(true) or canceled(false) or rejected(false), failed to execute",
-	// 		func() {
-	// 			Execute(proposalId)
-	// 		})
-	// })
 }
 
 func rejectAndExecute(t *testing.T) {

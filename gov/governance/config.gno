@@ -2,7 +2,6 @@ package governance
 
 import (
 	"std"
-	"strconv"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
@@ -34,11 +33,11 @@ func init() {
 }
 
 func setConfigVersion(v uint64, cfg Config) {
-	configVersions.Set(strconv.Itoa(int(v)), cfg)
+	configVersions.Set(formatUint64(v), cfg)
 }
 
 func getConfigByVersion(v uint64) (Config, bool) {
-	value, exists := configVersions.Get(strconv.Itoa(int(v)))
+	value, exists := configVersions.Get(formatUint64(v))
 	if !exists {
 		return Config{}, false
 	}
