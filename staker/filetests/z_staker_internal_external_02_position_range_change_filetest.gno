@@ -11,7 +11,6 @@ package staker_test
 import (
 	"std"
 	"strconv"
-	"time"
 
 	"gno.land/p/demo/grc/grc721"
 
@@ -178,18 +177,14 @@ func testCreateExternalIncentiveBar() {
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,
 	)
+	// startHeight 978
+	// endHeight 3888978
+	// nowHeight 127
 
 	// make it start
-	externalStartTime := int64(1234569600)
-	nowTime := time.Now().Unix()
-	timeLeft := externalStartTime - nowTime
-
-	blockAvgTime := consts.BLOCK_GENERATION_INTERVAL
-	blockLeft := timeLeft / blockAvgTime
-
+	blockLeft := 978 - 127
 	std.TestSkipHeights(int64(blockLeft)) // skip until external bar starts
 	std.TestSkipHeights(10)               // skip bit more to see reward calculation
-
 }
 
 func testStakeToken01And02() {
