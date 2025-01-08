@@ -407,6 +407,7 @@ func TestMultipleDeposits(t *testing.T) {
 			CurrentTime: uint64(time.Now().Unix()),
 		}
 
+		std.TestSetRealm(std.NewUserRealm(testAddr))
 		deposit, _ := createDeposit(info, 100)
 		deposits[deposit.id] = deposit
 		updateDepositIndices(deposit, state)
