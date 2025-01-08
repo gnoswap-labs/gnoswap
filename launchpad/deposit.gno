@@ -3,6 +3,7 @@ package launchpad
 import (
 	"errors"
 	"std"
+	"strconv"
 	"time"
 
 	"gno.land/p/demo/ufmt"
@@ -158,7 +159,8 @@ func updateDepositIndices(deposit Deposit, state *DepositState) {
 
 // processFirstDeposit handles the first deposit for a project tier
 func processFirstDeposit(info ProjectTierInfo) (Tier, error) {
-	if info.Tier.totalParticipant != 0 {
+	info.Tier.totalParticipant++
+	if info.Tier.totalParticipant > 1 {
 		return info.Tier, nil
 	}
 
@@ -235,10 +237,10 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"targetProjectTierId", targetProjectTierId,
-		"amount", ufmt.Sprintf("%d", amount),
+		"amount", strconv.FormatUint(amount, 10),
 		"depositId", deposit.id,
-		"claimableHeight", ufmt.Sprintf("%d", deposit.claimableHeight),
-		"claimableTime", ufmt.Sprintf("%d", deposit.claimableTime),
+		"claimableHeight", strconv.FormatUint(deposit.claimableHeight, 10),
+		"claimableTime", strconv.FormatUint(deposit.claimableTime, 10),
 	)
 
 	// Process first deposit if applicable
@@ -249,14 +251,14 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 
 	if updatedTier.started.height == info.Height {
 		std.Emit(
-			"FirstDepoistForProjectTier",
+			"FirstDepositForProjectTier",
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
 			"targetProjectTierId", targetProjectTierId,
-			"amount", ufmt.Sprintf("%d", amount),
+			"amount", strconv.FormatUint(amount, 10),
 			"depositId", deposit.id,
-			"claimableHeight", ufmt.Sprintf("%d", deposit.claimableHeight),
-			"claimableTime", ufmt.Sprintf("%d", deposit.claimableTime),
+			"claimableHeight", strconv.FormatUint(deposit.claimableHeight, 10),
+			"claimableTime", strconv.FormatUint(deposit.claimableTime, 10),
 			"tierAmountPerBlockX96", updatedTier.tierAmountPerBlockX96.ToString(),
 		)
 	}
@@ -279,7 +281,7 @@ func processDepositCollection(
 ) (uint64, error) {
 	totalAmount := uint64(0) // gnsToUser
 	height := uint64(std.GetHeight())
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 
 	for _, dpstId := range dpsts {
 		dpst := deposits[dpstId]
@@ -313,18 +315,18 @@ func processDepositCollection(
 			std.Emit(
 				"CollectDepositGnsByProjectId",
 				"prevAddr", prevAddr,
-				"prevRealm", prevRealm,
+				"prevRealm", prevPkgPath,
 				"projectId", projectId,
 				"depositId", dpstId,
-				"amount", ufmt.Sprintf("%d", dpst.amount),
+				"amount", strconv.FormatUint(dpst.amount, 10),
 			)
 		} else {
 			std.Emit(
 				"CollectDepositGns",
 				"prevAddr", prevAddr,
-				"prevRealm", prevRealm,
+				"prevRealm", prevPkgPath,
 				"depositId", dpstId,
-				"amount", ufmt.Sprintf("%d", dpst.amount),
+				"amount", strconv.FormatUint(dpst.amount, 10),
 			)
 		}
 	}
@@ -443,13 +445,13 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 	gs.SetAmountByProjectWallet(project.recipient, amount, false)
 
 	// Emit collection event
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"CollectDepositGnsByDepositId",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"depositId", depositId,
-		"amount", ufmt.Sprintf("%d", amount),
+		"amount", strconv.FormatUint(amount, 10),
 	)
 
 	// Process token transfers if amount > 0

@@ -3,6 +3,7 @@ package launchpad
 import (
 	"errors"
 	"std"
+	"strconv"
 	"time"
 
 	"gno.land/p/demo/ufmt"
@@ -13,7 +14,7 @@ import (
 )
 
 var (
-	lastCalculatedHeight uint64
+	lastCalculatedHeight              uint64
 	lastCalculateHeightForProjectTier = make(map[string]uint64) // using height
 )
 
@@ -56,7 +57,7 @@ func calculateTierRewards(tier Tier, currentHeight uint64, lastCalcHeight uint64
 
 	endHeight := minU64(currentHeight, tier.ended.height)
 	sinceLast := endHeight - minU64(endHeight, lastCalcHeight)
-	
+
 	if sinceLast == 0 {
 		return u256.Zero(), 0, nil
 	}
@@ -79,7 +80,7 @@ func processDepositReward(deposit Deposit, rewardX96 *u256.Uint, tierAmount uint
 	depositRewardX96 := u256.Zero().Div(depositRewardX96X96, q96)
 	depositRewardX := u256.Zero().Div(depositRewardX96, q96)
 	depositReward := depositRewardX.Uint64()
-	
+
 	deposit.rewardAmount += depositReward
 	return deposit, nil
 }
@@ -106,7 +107,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 
 	height := uint64(std.GetHeight())
 	totalReward := uint64(0) // toUser
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 
 	for _, depositId := range depositIds {
 		deposit := deposits[depositId]
@@ -129,15 +130,15 @@ func CollectRewardByProjectId(projectId string) uint64 {
 		std.Emit(
 			"CollectRewardByProjectId",
 			"prevAddr", prevAddr,
-			"prevRealm", prevRealm,
+			"prevRealm", prevPkgPath,
 			"projectId", projectId,
 			"depositId", depositId,
-			"amount", ufmt.Sprintf("%d", reward),
+			"amount", strconv.FormatUint(reward, 10),
 		)
 
 		// Update project and tier stats
 		project.stats.totalCollected += reward
-		
+
 		var tier Tier
 		switch deposit.tier {
 		case "30":
@@ -200,14 +201,14 @@ func CollectRewardByDepositId(depositId string) uint64 {
 	}
 
 	reward := rewardStates.Get(deposit.projectId, deposit.tier).Claim(deposit.id, height)
-	
-	prevAddr, prevRealm := getPrev()
+
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"CollectRewardByDepositId",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"depositId", depositId,
-		"internal_amount", ufmt.Sprintf("%d", reward),
+		"amount", strconv.FormatUint(reward, 10),
 	)
 
 	// Update project
@@ -239,6 +240,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 
 	return reward
 }
+
 /*
 // calculateProjectRewards calculates rewards for a project's deposits
 func calculateProjectRewards(project Project, height uint64) (Project, error) {
@@ -271,11 +273,11 @@ func calculateProjectRewards(project Project, height uint64) (Project, error) {
 	}
 
 	// Calculate rewards for each tier
-	tier30RewardX96, reward30, _ := calculateTierRewards(tier30, height, 
+	tier30RewardX96, reward30, _ := calculateTierRewards(tier30, height,
 		lastCalculateHeightForProjectTier[tier30.id])
-	tier90RewardX96, reward90, _ := calculateTierRewards(tier90, height, 
+	tier90RewardX96, reward90, _ := calculateTierRewards(tier90, height,
 		lastCalculateHeightForProjectTier[tier90.id])
-	tier180RewardX96, reward180, _ := calculateTierRewards(tier180, height, 
+	tier180RewardX96, reward180, _ := calculateTierRewards(tier180, height,
 		lastCalculateHeightForProjectTier[tier180.id])
 
 	// Update project tiers
