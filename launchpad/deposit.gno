@@ -516,22 +516,6 @@ func checkDepositConditions(project Project) {
 	}
 }
 
-// Deprecated: use isProjectActive instead
-func checkProjectActive(project Project) bool {
-	if project.started.height > uint64(std.GetHeight()) {
-		// not started yet
-		return false
-	}
-
-	if project.ended.height < uint64(std.GetHeight()) {
-		// already ended
-		return false
-	}
-
-	return true
-}
-
-// Deprecated: use isTierActive instead
 func checkTierActive(project Project, tier Tier) bool {
 	if tier.ended.height < uint64(std.GetHeight()) {
 		return false

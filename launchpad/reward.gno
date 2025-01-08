@@ -358,6 +358,6 @@ func calcDepositRatioX96(tierAmount uint64, amount uint64) *u256.Uint {
 
 // calcProjectTiersRewardPerBlockX96 calculates the reward per block with Q96 precision
 func calcProjectTiersRewardPerBlockX96(tier Tier) *u256.Uint {
-	tierAmountX96 := new(u256.Uint).Mul(u256.NewUint(tier.tierAmount), q96.Clone())
+	tierAmountX96 := new(u256.Uint).Mul(u256.NewUint(tier.tierAmount), q96)
 	return new(u256.Uint).Div(tierAmountX96, u256.NewUint(tier.ended.height-tier.started.height))
 }

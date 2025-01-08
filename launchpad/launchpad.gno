@@ -72,16 +72,6 @@ func validateProjectInput(input ProjectInput, now uint64) error {
 	return nil
 }
 
-// validateToken checks if the token is registered
-func validateToken(tokenPath string, registeredTokens []string) error {
-	for _, regToken := range registeredTokens {
-		if regToken == tokenPath {
-			return nil
-		}
-	}
-	return errors.New(ufmt.Sprintf("token(%s) not registered", tokenPath))
-}
-
 // createTier creates a new tier with the given parameters
 func createTier(projectId string, duration uint64, amount uint64, startHeight uint64,
 	startTime uint64, collectWaitDuration uint64) Tier {
@@ -118,10 +108,6 @@ func CreateProject(
 ) string {
 	common.IsHalted()
 
-	if err := common.SatisfyCond(isUserCall()); err != nil {
-		panic(err)
-	}
-
 	caller := std.PrevRealm().Addr()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err)
@@ -145,8 +131,7 @@ func CreateProject(
 		panic(err)
 	}
 
-	registered := common.ListRegisteredTokens()
-	if err := validateToken(tokenPath, registered); err != nil {
+	if err := common.IsRegistered(tokenPath); err != nil {
 		panic(err)
 	}
 
