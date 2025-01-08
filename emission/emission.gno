@@ -2,11 +2,9 @@ package emission
 
 import (
 	"std"
+	"strconv"
 	"time"
 
-	"gno.land/p/demo/ufmt"
-
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
@@ -32,15 +30,18 @@ func MintAndDistributeGns() uint64 {
 
 	// Mint new tokens and add any leftover amounts from previous distribution
 	mintedEmissionRewardAmount := gns.MintGns(a2u(consts.EMISSION_ADDR))
+
+	distributableAmount := mintedEmissionRewardAmount
+	prevLeftAmount := GetLeftGNSAmount()
 	if hasLeftGNSAmount() {
-		mintedEmissionRewardAmount += GetLeftGNSAmount()
+		distributableAmount += prevLeftAmount
 		setLeftGNSAmount(0)
 	}
 
 	// Distribute tokens and track any undistributed amount
-	distributedGNSAmount := distributeToTarget(mintedEmissionRewardAmount)
-	if mintedEmissionRewardAmount != distributedGNSAmount {
-		setLeftGNSAmount(mintedEmissionRewardAmount - distributedGNSAmount)
+	distributedGNSAmount := distributeToTarget(distributableAmount)
+	if distributableAmount != distributedGNSAmount {
+		setLeftGNSAmount(distributableAmount - distributedGNSAmount)
 	}
 
 	// Emit event with distribution details
@@ -49,11 +50,14 @@ func MintAndDistributeGns() uint64 {
 		"MintAndDistributeGns",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"internal_lastHeight", ufmt.Sprintf("%d", lastExecutedHeight),
-		"internal_height", ufmt.Sprintf("%d", currentHeight),
-		"internal_time", ufmt.Sprintf("%d", time.Now().Unix()),
-		"internal_amount", ufmt.Sprintf("%d", mintedEmissionRewardAmount),
-		"internal_totalSupply", ufmt.Sprintf("%d", gns.TotalSupply()),
+		"lastHeight", strconv.FormatInt(lastExecutedHeight, 10),
+		"currentHeight", strconv.FormatInt(currentHeight, 10),
+		"currentTimestamp", strconv.FormatInt(time.Now().Unix(), 10),
+		"mintedAmount", strconv.FormatUint(mintedEmissionRewardAmount, 10),
+		"prevLeftAmount", strconv.FormatUint(prevLeftAmount, 10),
+		"distributedAmount", strconv.FormatUint(distributedGNSAmount, 10),
+		"currentLeftAmount", strconv.FormatUint(GetLeftGNSAmount(), 10),
+		"gnsTotalSupply", strconv.FormatUint(gns.TotalSupply(), 10),
 	)
 
 	setLastExecutedHeight(currentHeight)

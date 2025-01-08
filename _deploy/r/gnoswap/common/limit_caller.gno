@@ -2,6 +2,7 @@ package common
 
 import (
 	"std"
+	"strconv"
 
 	"gno.land/p/demo/ufmt"
 )
@@ -47,6 +48,6 @@ func SetLimitCaller(v bool) {
 		"SetLimitCaller",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"limitCaller", ufmt.Sprintf("%t", v),
+		"limitCaller", strconv.FormatBool(v),
 	)
 }

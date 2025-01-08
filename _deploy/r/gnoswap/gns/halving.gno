@@ -5,8 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"gno.land/p/demo/ufmt"
-
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
@@ -125,14 +123,28 @@ func SetAvgBlockTimeInMsByAdmin(ms int64) {
 		panic(err)
 	}
 
+	prevAvgBlockTimeMs := avgBlockTimeMs
 	setAvgBlockTimeInMs(ms)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"SetAvgBlockTimeInMsByAdmin",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"ms", ufmt.Sprintf("%d", ms),
+		"prevRealm", prevPkgPath,
+		"newAvgBlockTimeMs", strconv.FormatInt(ms, 10),
+		"prevAvgBlockTimeMs", strconv.FormatInt(prevAvgBlockTimeMs, 10),
+		"endBlock1Year", strconv.FormatInt(halvingYearEndBlock[0], 10),
+		"endBlock2Year", strconv.FormatInt(halvingYearEndBlock[1], 10),
+		"endBlock3Year", strconv.FormatInt(halvingYearEndBlock[2], 10),
+		"endBlock4Year", strconv.FormatInt(halvingYearEndBlock[3], 10),
+		"endBlock5Year", strconv.FormatInt(halvingYearEndBlock[4], 10),
+		"endBlock6Year", strconv.FormatInt(halvingYearEndBlock[5], 10),
+		"endBlock7Year", strconv.FormatInt(halvingYearEndBlock[6], 10),
+		"endBlock8Year", strconv.FormatInt(halvingYearEndBlock[7], 10),
+		"endBlock9Year", strconv.FormatInt(halvingYearEndBlock[8], 10),
+		"endBlock10Year", strconv.FormatInt(halvingYearEndBlock[9], 10),
+		"endBlock11Year", strconv.FormatInt(halvingYearEndBlock[10], 10),
+		"endBlock12Year", strconv.FormatInt(halvingYearEndBlock[11], 10),
 	)
 }
 
@@ -144,14 +156,28 @@ func SetAvgBlockTimeInMs(ms int64) {
 		panic(err)
 	}
 
+	prevAvgBlockTimeMs := avgBlockTimeMs
 	setAvgBlockTimeInMs(ms)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"SetAvgBlockTimeInMs",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"ms", ufmt.Sprintf("%d", ms),
+		"prevRealm", prevPkgPath,
+		"newAvgBlockTimeMs", strconv.FormatInt(ms, 10),
+		"prevAvgBlockTimeMs", strconv.FormatInt(prevAvgBlockTimeMs, 10),
+		"endBlock1Year", strconv.FormatInt(halvingYearEndBlock[0], 10),
+		"endBlock2Year", strconv.FormatInt(halvingYearEndBlock[1], 10),
+		"endBlock3Year", strconv.FormatInt(halvingYearEndBlock[2], 10),
+		"endBlock4Year", strconv.FormatInt(halvingYearEndBlock[3], 10),
+		"endBlock5Year", strconv.FormatInt(halvingYearEndBlock[4], 10),
+		"endBlock6Year", strconv.FormatInt(halvingYearEndBlock[5], 10),
+		"endBlock7Year", strconv.FormatInt(halvingYearEndBlock[6], 10),
+		"endBlock8Year", strconv.FormatInt(halvingYearEndBlock[7], 10),
+		"endBlock9Year", strconv.FormatInt(halvingYearEndBlock[8], 10),
+		"endBlock10Year", strconv.FormatInt(halvingYearEndBlock[9], 10),
+		"endBlock11Year", strconv.FormatInt(halvingYearEndBlock[10], 10),
+		"endBlock12Year", strconv.FormatInt(halvingYearEndBlock[11], 10),
 	)
 }
 

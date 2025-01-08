@@ -194,14 +194,16 @@ func CreatePool(
 			"PoolCreationFee",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
-			"internal_poolPath", poolPath,
-			"internal_tokenPath", consts.GNS_PATH,
-			"internal_amount", ufmt.Sprintf("%d", poolCreationFee),
+			"poolPath", poolPath,
+			"feeTokenPath", consts.GNS_PATH,
+			"feeAmount", strconv.FormatUint(poolCreationFee, 10),
 		)
 	}
 
 	pool = newPool(poolInfo)
 	pools.Set(poolPath, pool)
+
+	currentTick := common.TickMathGetTickAtSqrtRatio(sqrtPriceX96)
 
 	std.Emit(
 		"CreatePool",
@@ -209,9 +211,11 @@ func CreatePool(
 		"prevRealm", prevRealm,
 		"token0Path", token0Path,
 		"token1Path", token1Path,
-		"fee", ufmt.Sprintf("%d", fee),
+		"fee", strconv.FormatUint(uint64(fee), 10),
 		"sqrtPriceX96", sqrtPriceX96,
-		"internal_poolPath", poolPath,
+		"poolPath", poolPath,
+		"tick", strconv.FormatInt(int64(currentTick), 10),
+		"tickSpacing", strconv.FormatInt(int64(poolInfo.TickSpacing()), 10),
 	)
 }
 

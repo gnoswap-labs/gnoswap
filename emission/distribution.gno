@@ -121,13 +121,13 @@ func changeDistributionPcts(
 		"ChangeDistributionPct",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"target01", strconv.Itoa(target01),
+		"target01", targetToStr(target01),
 		"pct01", strconv.FormatUint(pct01, 10),
-		"target02", strconv.Itoa(target02),
+		"target02", targetToStr(target02),
 		"pct02", strconv.FormatUint(pct02, 10),
-		"target03", strconv.Itoa(target03),
+		"target03", targetToStr(target03),
 		"pct03", strconv.FormatUint(pct03, 10),
-		"target04", strconv.Itoa(target04),
+		"target04", targetToStr(target04),
 		"pct04", strconv.FormatUint(pct04, 10),
 	)
 }
@@ -259,4 +259,19 @@ func ClearDistributedToGovStaker() {
 
 func setDistributionBpsPct(target int, pct uint64) {
 	distributionBpsPct.Set(strconv.Itoa(target), pct)
+}
+
+func targetToStr(target int) string {
+	switch target {
+	case LIQUIDITY_STAKER:
+		return "LIQUIDITY_STAKER"
+	case DEVOPS:
+		return "DEVOPS"
+	case COMMUNITY_POOL:
+		return "COMMUNITY_POOL"
+	case GOV_STAKER:
+		return "GOV_STAKER"
+	default:
+		return "UNKNOWN"
+	}
 }

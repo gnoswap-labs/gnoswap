@@ -2,6 +2,7 @@ package pool
 
 import (
 	"std"
+	"strconv"
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/v1/common"
@@ -52,9 +53,9 @@ func Swap(
 	sqrtPriceLimitX96 string,
 	payer std.Address, // router
 ) (string, string) {
-	common.IsHalted()
+	assertOnlyNotHalted()
 	if common.GetLimitCaller() {
-		caller := std.PrevRealm().Addr()
+		caller := getPrevAddr()
 		if err := common.RouterOnly(caller); err != nil {
 			panic(addDetailToError(
 				errNoPermission,
@@ -114,16 +115,23 @@ func Swap(
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"poolPath", GetPoolPath(token0Path, token1Path, fee),
-		"zeroForOne", ufmt.Sprintf("%t", zeroForOne),
-		"amountSpecified", amountSpecified,
+		"zeroForOne", strconv.FormatBool(zeroForOne),
+		"requestAmount", amountSpecified,
 		"sqrtPriceLimitX96", sqrtPriceLimitX96,
 		"payer", payer.String(),
 		"recipient", recipient.String(),
-		"internal_amount0", result.Amount0.ToString(),
-		"internal_amount1", result.Amount1.ToString(),
-		"internal_protocolFee0", pool.protocolFees.token0.ToString(),
-		"internal_protocolFee1", pool.protocolFees.token1.ToString(),
-		"internal_sqrtPriceX96", pool.slot0.sqrtPriceX96.ToString(),
+		"token0Amount", result.Amount0.ToString(),
+		"token1Amount", result.Amount1.ToString(),
+		"protocolFee0", pool.protocolFees.token0.ToString(),
+		"protocolFee1", pool.protocolFees.token1.ToString(),
+		"sqrtPriceX96", pool.slot0.sqrtPriceX96.ToString(),
+		"exactIn", strconv.FormatBool(comp.ExactInput),
+		"currentTick", strconv.FormatInt(int64(pool.Slot0Tick()), 10),
+		"liquidity", pool.Liquidity().ToString(),
+		"feeGrowthGlobal0X128", pool.FeeGrowthGlobal0X128().ToString(),
+		"feeGrowthGlobal1X128", pool.FeeGrowthGlobal1X128().ToString(),
+		"balanceToken0", pool.BalanceToken0().ToString(),
+		"balanceToken1", pool.BalanceToken1().ToString(),
 	)
 
 	return result.Amount0.ToString(), result.Amount1.ToString()

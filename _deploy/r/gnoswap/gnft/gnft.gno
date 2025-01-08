@@ -361,8 +361,8 @@ func setTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) error {
 		"SetTokenURI",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpTokenId", "tid",
-		"tokenURI", "tURI",
+		"lpTokenId", string(tid),
+		"tokenURI", string(tURI),
 	)
 
 	return nil

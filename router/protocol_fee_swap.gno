@@ -2,6 +2,7 @@ package router
 
 import (
 	"std"
+	"strconv"
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
@@ -28,22 +29,24 @@ func GetSwapFee() uint64 {
 // SetSwapFeeByAdmin modifies the swap fee
 // Only admin can execute this function
 func SetSwapFeeByAdmin(fee uint64) {
-	caller := std.PrevRealm().Addr()
+	caller := getPrevAddr()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err)
 	}
 
+	prevSwapFee := swapFee
 	if err := setSwapFee(fee); err != nil {
 		panic(err)
 	}
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 
 	std.Emit(
 		"SetSwapFeeByAdmin",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"fee", ufmt.Sprintf("%d", fee),
+		"prevRealm", prevPkgPath,
+		"newFee", strconv.FormatUint(fee, 10),
+		"prevFee", strconv.FormatUint(prevSwapFee, 10),
 	)
 }
 
@@ -51,22 +54,24 @@ func SetSwapFeeByAdmin(fee uint64) {
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/router/protocol_fee_swap.gno#setswapfee
 func SetSwapFee(fee uint64) {
-	caller := std.PrevRealm().Addr()
+	caller := getPrevAddr()
 	if err := common.GovernanceOnly(caller); err != nil {
 		panic(err)
 	}
 
+	prevSwapFee := swapFee
 	if err := setSwapFee(fee); err != nil {
 		panic(err)
 	}
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 
 	std.Emit(
 		"SetSwapFee",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"fee", ufmt.Sprintf("%d", fee),
+		"prevRealm", prevPkgPath,
+		"newFee", strconv.FormatUint(fee, 10),
+		"prevFee", strconv.FormatUint(prevSwapFee, 10),
 	)
 }
 
@@ -100,14 +105,14 @@ func handleSwapFee(
 	outputTeller := common.GetTokenTeller(outputToken)
 	outputTeller.TransferFrom(std.PrevRealm().Addr(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 
 	std.Emit(
 		"SwapRouteFee",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"internal_tokenPath", outputToken,
-		"internal_amount", ufmt.Sprintf("%d", feeAmountUint64),
+		"prevRealm", prevPkgPath,
+		"tokenPath", outputToken,
+		"amount", strconv.FormatUint(feeAmountUint64, 10),
 	)
 
 	toUserAfterProtocol := new(u256.Uint).Sub(amount, feeAmount)

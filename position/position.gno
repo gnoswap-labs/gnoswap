@@ -237,12 +237,12 @@ func Mint(
 		"Mint",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"tickLower", ufmt.Sprintf("%d", processedInput.tickLower),
-		"tickUpper", ufmt.Sprintf("%d", processedInput.tickUpper),
+		"tickLower", strconv.FormatInt(int64(processedInput.tickLower), 10),
+		"tickUpper", strconv.FormatInt(int64(processedInput.tickUpper), 10),
 		"poolPath", processedInput.poolPath,
 		"mintTo", mintTo.String(),
 		"caller", caller.String(),
-		"lpTokenId", ufmt.Sprintf("%d", tokenId),
+		"lpTokenId", strconv.FormatUint(tokenId, 10),
 		"liquidity", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
@@ -615,6 +615,8 @@ func IncreaseLiquidity(
 	}
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(poolPath)
+	token0Balance := pl.PoolGetBalanceToken0(poolPath)
+	token1Balance := pl.PoolGetBalanceToken1(poolPath)
 
 	prevAddr, prevPkgPath := getPrevAsString()
 
@@ -624,11 +626,14 @@ func IncreaseLiquidity(
 		"prevRealm", prevPkgPath,
 		"poolPath", poolPath,
 		"caller", caller.String(),
-		"lpTokenId", ufmt.Sprintf("%d", tokenId),
+		"lpTokenId", strconv.FormatUint(tokenId, 10),
 		"liquidity", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"sqrtPriceX96", poolSqrtPriceX96,
+		"positionLiquidity", position.liquidity.ToString(),
+		"token0Balance", token0Balance.ToString(),
+		"token1Balance", token1Balance.ToString(),
 	)
 
 	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
@@ -776,6 +781,8 @@ func DecreaseLiquidity(
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(poolPath)
+	token0Balance := pl.PoolGetBalanceToken0(poolPath)
+	token1Balance := pl.PoolGetBalanceToken1(poolPath)
 
 	prevAddr, prevPkgPath := getPrevAsString()
 
@@ -783,16 +790,18 @@ func DecreaseLiquidity(
 		"DecreaseLiquidity",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpTokenId", ufmt.Sprintf("%d", tokenId),
-		"removeLiquidity", liquidityStr,
-		"internal_poolPath", poolPath,
-		"internal_liquidity", liquidity.ToString(),
-		"internal_fee0", fee0.ToString(),
-		"internal_fee1", fee1.ToString(),
-		"internal_amount0", amount0.ToString(),
-		"internal_amount1", amount1.ToString(),
-		"internal_unwrapResult", ufmt.Sprintf("%t", unwrapResult),
-		"internal_sqrtPriceX96", poolSqrtPriceX96,
+		"lpTokenId", strconv.FormatUint(tokenId, 10),
+		"poolPath", poolPath,
+		"decreasedLiquidity", liquidity.ToString(),
+		"feeAmount0", fee0.ToString(),
+		"feeAmount1", fee1.ToString(),
+		"amount0", amount0.ToString(),
+		"amount1", amount1.ToString(),
+		"unwrapResult", strconv.FormatBool(unwrapResult),
+		"sqrtPriceX96", poolSqrtPriceX96,
+		"positionLiquidity", PositionGetPositionLiquidityStr(tokenId),
+		"token0Balance", token0Balance.ToString(),
+		"token1Balance", token1Balance.ToString(),
 	)
 
 	return tokenId, liquidity.ToString(), fee0.ToString(), fee1.ToString(), amount0.ToString(), amount1.ToString(), poolPath
@@ -981,11 +990,11 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 		"CollectSwapFee",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpTokenId", ufmt.Sprintf("%d", tokenId),
-		"fee0", withoutFee0,
-		"fee1", withoutFee1,
+		"lpTokenId", strconv.FormatUint(tokenId, 10),
+		"feeAmount0", withoutFee0,
+		"feeAmount1", withoutFee1,
 		"poolPath", position.poolKey,
-		"unwrapResult", ufmt.Sprintf("%t", unwrapResult),
+		"unwrapResult", strconv.FormatBool(unwrapResult),
 	)
 
 	return tokenId, withoutFee0, withoutFee1, position.poolKey, amount0, amount1
@@ -1095,22 +1104,27 @@ func Reposition(
 	mustUpdatePosition(tokenId, position)
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(position.poolKey)
+	token0Balance := pl.PoolGetBalanceToken0(poolPath)
+	token1Balance := pl.PoolGetBalanceToken1(poolPath)
 	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(
 		"Reposition",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpTokenId", ufmt.Sprintf("%d", tokenId),
-		"tickLower", ufmt.Sprintf("%d", tickLower),
-		"tickUpper", ufmt.Sprintf("%d", tickUpper),
+		"lpTokenId", strconv.FormatUint(tokenId, 10),
+		"tickLower", strconv.FormatInt(int64(tickLower), 10),
+		"tickUpper", strconv.FormatInt(int64(tickUpper), 10),
 		"liquidity", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
-		"oldTickLower", ufmt.Sprintf("%d", oldTickLower),
-		"oldTickUpper", ufmt.Sprintf("%d", oldTickUpper),
+		"prevTickLower", strconv.FormatInt(int64(oldTickLower), 10),
+		"prevTickUpper", strconv.FormatInt(int64(oldTickUpper), 10),
 		"poolPath", position.poolKey,
 		"sqrtPriceX96", poolSqrtPriceX96,
+		"positionLiquidity", PositionGetPositionLiquidityStr(tokenId),
+		"token0Balance", token0Balance.ToString(),
+		"token1Balance", token1Balance.ToString(),
 	)
 
 	return tokenId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()

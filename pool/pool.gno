@@ -2,6 +2,7 @@ package pool
 
 import (
 	"std"
+	"strconv"
 
 	"gno.land/p/demo/ufmt"
 
@@ -267,11 +268,11 @@ func setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8, eventName string) 
 		eventName,
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"feeProtocol0Old", ufmt.Sprintf("%d", feeProtocol0Old),
-		"feeProtocol1Old", ufmt.Sprintf("%d", feeProtocol1Old),
-		"feeProtocol0", ufmt.Sprintf("%d", feeProtocol0),
-		"feeProtocol1", ufmt.Sprintf("%d", feeProtocol1),
-		"internal_newFee", ufmt.Sprintf("%d", newFee),
+		"prevFeeProtocol0", strconv.FormatUint(uint64(feeProtocol0Old), 10),
+		"prevFeeProtocol1", strconv.FormatUint(uint64(feeProtocol1Old), 10),
+		"feeProtocol0", strconv.FormatUint(uint64(feeProtocol0), 10),
+		"feeProtocol1", strconv.FormatUint(uint64(feeProtocol1), 10),
+		"newFee", strconv.FormatUint(uint64(newFee), 10),
 	)
 }
 
@@ -383,10 +384,10 @@ func CollectProtocolByAdmin(
 		"prevRealm", prevPkgPath,
 		"token0Path", token0Path,
 		"token1Path", token1Path,
-		"fee", ufmt.Sprintf("%d", fee),
+		"fee", strconv.FormatUint(uint64(fee), 10),
 		"recipient", recipient.String(),
-		"internal_amount0", amount0,
-		"internal_amount1", amount1,
+		"collectedAmount0", amount0,
+		"collectedAmount1", amount1,
 	)
 
 	return amount0, amount1
@@ -421,10 +422,10 @@ func CollectProtocol(
 		"prevRealm", prevPkgPath,
 		"token0Path", token0Path,
 		"token1Path", token1Path,
-		"fee", ufmt.Sprintf("%d", fee),
+		"fee", strconv.FormatUint(uint64(fee), 10),
 		"recipient", recipient.String(),
-		"internal_amount0", amount0,
-		"internal_amount1", amount1,
+		"collectedAmount0", amount0,
+		"collectedAmount1", amount1,
 	)
 
 	return amount0, amount1
