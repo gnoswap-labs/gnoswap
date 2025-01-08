@@ -1,10 +1,6 @@
 package launchpad
 
 import (
-	"std"
-	"time"
-
-	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 )
 
@@ -63,14 +59,4 @@ func ApiGetProjectStatisticsByProjectTierId(tierId string) string {
 		WriteString("tierActualParticipant", ufmt.Sprintf("%d", tier.actualParticipant))
 
 	return marshal(builder.Node())
-}
-
-func metaNode() *json.Node {
-	height := std.GetHeight()
-	now := time.Now().Unix()
-
-	metaObj := json.ObjectNode("", nil)
-	metaObj.AppendObject("height", json.StringNode("height", ufmt.Sprintf("%d", height)))
-	metaObj.AppendObject("now", json.StringNode("now", ufmt.Sprintf("%d", now)))
-	return metaObj
 }
