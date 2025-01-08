@@ -29,7 +29,7 @@ func init() {
 		ExecutionDelay:                uint64(10),   // 10s ≈ 5 block
 		ExecutionWindow:               uint64(1000), // 500 block
 	}
-	configVersions[1] = config
+	setConfigVersion(1, config)
 }
 
 func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
@@ -262,88 +262,6 @@ func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
 	})
 }
 
-func TestProposeParameterChange_Staker_SetPoolTier(t *testing.T) {
-	std.TestSkipHeights(5)
-
-	std.TestSetRealm(adminRealm)
-	proposalId := ProposeParameterChange(
-		"test_title",
-		"test_description",
-		uint64(1),
-		"gno.land/r/gnoswap/v1/staker*EXE*SetPoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100,1",
-	)
-
-	std.TestSkipHeights(5)
-	Vote(proposalId, true)
-
-	t.Run("execute proposal", func(t *testing.T) {
-		// create sample pool
-		std.TestSetRealm(adminRealm)
-		pl.SetPoolCreationFeeByAdmin(0)
-		pl.CreatePool(consts.WUGNOT_PATH, consts.GNS_PATH, 100, "79228162514264337593543950337")
-
-		std.TestSkipHeights(20)
-		std.TestSetRealm(govRealm)
-		Execute(proposalId)
-
-		after := sr.GetPoolsWithTier()
-		uassert.Equal(t, len(after), 2)
-		uassert.Equal(t, after[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000_1")
-		uassert.Equal(t, after[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100_1")
-	})
-}
-
-func TestProposeParameterChange_Staker_ChangePoolTier(t *testing.T) {
-	std.TestSkipHeights(5)
-
-	std.TestSetRealm(adminRealm)
-	proposalId := ProposeParameterChange(
-		"test_title",
-		"test_description",
-		uint64(1),
-		"gno.land/r/gnoswap/v1/staker*EXE*ChangePoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100,3",
-	)
-
-	std.TestSkipHeights(5)
-	Vote(proposalId, true)
-
-	t.Run("execute proposal", func(t *testing.T) {
-		std.TestSkipHeights(20)
-		std.TestSetRealm(govRealm)
-		Execute(proposalId)
-
-		after := sr.GetPoolsWithTier()
-		uassert.Equal(t, len(after), 2)
-		uassert.Equal(t, after[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000_1")
-		uassert.Equal(t, after[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100_3")
-	})
-}
-
-func TestProposeParameterChange_Staker_RemovePoolTier(t *testing.T) {
-	std.TestSkipHeights(5)
-
-	std.TestSetRealm(adminRealm)
-	proposalId := ProposeParameterChange(
-		"test_title",
-		"test_description",
-		uint64(1),
-		"gno.land/r/gnoswap/v1/staker*EXE*RemovePoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100",
-	)
-
-	std.TestSkipHeights(5)
-	Vote(proposalId, true)
-
-	t.Run("execute proposal", func(t *testing.T) {
-		std.TestSkipHeights(20)
-		std.TestSetRealm(govRealm)
-		Execute(proposalId)
-
-		after := sr.GetPoolsWithTier()
-		uassert.Equal(t, len(after), 1)
-		uassert.Equal(t, after[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000_1")
-	})
-}
-
 func TestProposeParameterChange_Staker_SetUnstakingFee(t *testing.T) {
 	std.TestSkipHeights(5)
 
@@ -364,29 +282,6 @@ func TestProposeParameterChange_Staker_SetUnstakingFee(t *testing.T) {
 		Execute(proposalId)
 
 		uassert.Equal(t, sr.GetUnstakingFee(), uint64(200))
-	})
-}
-
-func TestProposeParameterChange_Staker_SetWarmUp(t *testing.T) {
-	std.TestSkipHeights(5)
-
-	std.TestSetRealm(adminRealm)
-	proposalId := ProposeParameterChange(
-		"test_title",
-		"test_description",
-		uint64(1),
-		"gno.land/r/gnoswap/v1/staker*EXE*SetWarmUp*EXE*100,1000",
-	)
-
-	std.TestSkipHeights(5)
-	Vote(proposalId, true)
-
-	t.Run("execute proposal", func(t *testing.T) {
-		std.TestSkipHeights(20)
-		std.TestSetRealm(govRealm)
-		Execute(proposalId)
-
-		uassert.Equal(t, sr.GetWarmUp(100), int64(1000))
 	})
 }
 

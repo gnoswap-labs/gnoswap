@@ -14,3 +14,9 @@ func addDetailToError(err error, detail string) string {
 	finalErr := ufmt.Errorf("%s || %s", err.Error(), detail)
 	return finalErr.Error()
 }
+
+func checkErr(err error) {
+	if err != nil {
+		panic(err.Error())
+	}
+}

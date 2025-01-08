@@ -32,12 +32,15 @@ type FooToken struct{}
 func (FooToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
 	return foo.Transfer
 }
+
 func (FooToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
 	return foo.TransferFrom
 }
+
 func (FooToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
 	return foo.BalanceOf
 }
+
 func (FooToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return foo.Approve
 }
@@ -47,12 +50,15 @@ type BarToken struct{}
 func (BarToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
 	return bar.Transfer
 }
+
 func (BarToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
 	return bar.TransferFrom
 }
+
 func (BarToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
 	return bar.BalanceOf
 }
+
 func (BarToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return bar.Approve
 }
@@ -62,12 +68,15 @@ type BazToken struct{}
 func (BazToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
 	return baz.Transfer
 }
+
 func (BazToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
 	return baz.TransferFrom
 }
+
 func (BazToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
 	return baz.BalanceOf
 }
+
 func (BazToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return baz.Approve
 }
@@ -77,12 +86,15 @@ type QuxToken struct{}
 func (QuxToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
 	return qux.Transfer
 }
+
 func (QuxToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
 	return qux.TransferFrom
 }
+
 func (QuxToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
 	return qux.BalanceOf
 }
+
 func (QuxToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return qux.Approve
 }
@@ -92,12 +104,15 @@ type WugnotToken struct{}
 func (WugnotToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
 	return wugnot.Transfer
 }
+
 func (WugnotToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
 	return wugnot.TransferFrom
 }
+
 func (WugnotToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
 	return wugnot.BalanceOf
 }
+
 func (WugnotToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return wugnot.Approve
 }
@@ -107,12 +122,15 @@ type OBLToken struct{}
 func (OBLToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
 	return obl.Transfer
 }
+
 func (OBLToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
 	return obl.TransferFrom
 }
+
 func (OBLToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
 	return obl.BalanceOf
 }
+
 func (OBLToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return obl.Approve
 }
@@ -137,40 +155,4 @@ func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 
 func init() {
 	std.TestSetRealm(std.NewUserRealm(consts.TOKEN_REGISTER))
-
-	// COMMUNITY POOL
-	cp.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
-	cp.RegisterGRC20Interface("gno.land/r/onbloc/foo", FooToken{})
-	cp.RegisterGRC20Interface("gno.land/r/onbloc/baz", BazToken{})
-	cp.RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
-	cp.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
-	cp.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
-	cp.RegisterGRC20Interface("gno.land/r/gnoswap/v1/gns", GNSToken{})
-
-	// PROTOCOL FEE
-	pf.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
-	pf.RegisterGRC20Interface("gno.land/r/onbloc/foo", FooToken{})
-	pf.RegisterGRC20Interface("gno.land/r/onbloc/baz", BazToken{})
-	pf.RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
-	pf.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
-	pf.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
-	pf.RegisterGRC20Interface("gno.land/r/gnoswap/v1/gns", GNSToken{})
-
-	// GOV STAKER
-	gs.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
-	gs.RegisterGRC20Interface("gno.land/r/onbloc/foo", FooToken{})
-	gs.RegisterGRC20Interface("gno.land/r/onbloc/baz", BazToken{})
-	gs.RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
-	gs.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
-	gs.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
-	gs.RegisterGRC20Interface("gno.land/r/gnoswap/v1/gns", GNSToken{})
-
-	// LAUNCHPAD
-	lp.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
-	lp.RegisterGRC20Interface("gno.land/r/onbloc/foo", FooToken{})
-	lp.RegisterGRC20Interface("gno.land/r/onbloc/baz", BazToken{})
-	lp.RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
-	lp.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
-	lp.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
-	lp.RegisterGRC20Interface("gno.land/r/gnoswap/v1/gns", GNSToken{})
 }

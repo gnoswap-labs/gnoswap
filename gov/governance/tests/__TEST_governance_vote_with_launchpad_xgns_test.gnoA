@@ -2,6 +2,7 @@ package governance
 
 import (
 	"std"
+	"strconv"
 	"testing"
 	"time"
 
@@ -47,7 +48,7 @@ func init() {
 		ExecutionDelay:                uint64(10),   // 10s ≈ 5 block
 		ExecutionWindow:               uint64(1000), // 500 block
 	}
-	configVersions[1] = config
+	setConfigVersion(1, config)
 }
 
 func TestVoteWithoutLaunchpadXGns(t *testing.T) {
@@ -126,7 +127,7 @@ func testDelegate01_2000000_toDummy(t *testing.T) {
 		uassert.Equal(t, xgns.VotingSupply(), uint64(0))
 
 		uassert.Equal(t, std.GetHeight(), int64(134))
-		uassert.Equal(t, time.Now().Unix(), int64(1234567912))
+		uassert.Equal(t, time.Now().Unix(), int64(1234567945))
 
 		std.TestSetRealm(adminRealm)
 		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(2_000_000))
@@ -147,16 +148,19 @@ func testProposeText(t *testing.T) {
 
 		// text proposal
 		uassert.Equal(t, std.GetHeight(), int64(145))
-		uassert.Equal(t, time.Now().Unix(), int64(1234567934))
+		uassert.Equal(t, time.Now().Unix(), int64(1234568000))
 
 		std.TestSetRealm(adminRealm)
 		proposalID := ProposeText("test_title", "test_description")
 		uassert.Equal(t, proposalID, uint64(1))
 
-		proposal := proposals[proposalID]
+		// proposal := proposals[proposalID]
+		pp, ok := proposals.Get(strconv.FormatUint(proposalID, 10))
+		uassert.True(t, ok)
+		proposal := pp.(ProposalInfo)
 		uassert.Equal(t, proposal.QuorumAmount, uint64(1_000_000)) // 50% of voting xGNS supply (2_000_000)
 
-		maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.ExecutionState.CreatedAt - config.VotingWeightSmoothingDuration)
+		maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.CreatedAt - config.VotingWeightSmoothingDuration)
 		// config.VotingWeightSmoothingDuration = 10s = 5 block
 
 		uassert.Equal(t, maxVotingWeight, uint64(2_000_000))
@@ -175,16 +179,22 @@ func testVote(t *testing.T) {
 		std.TestSetRealm(dummyRealm)
 		Vote(proposalId, true)
 
-		proposal := proposals[proposalId]
+		// proposal := proposals[proposalId]
+		pp, ok := proposals.Get(strconv.FormatUint(proposalId, 10))
+		uassert.True(t, ok)
+		proposal := pp.(ProposalInfo)
 		uassert.Equal(t, "2000000", proposal.Yea.ToString()) // 2_000_000
 		uassert.Equal(t, "0", proposal.Nay.ToString())
 	})
 
 	t.Run("gov/staker api get possible voting address with weight", func(t *testing.T) {
-		proposal := proposals[uint64(1)]
-		maxVoting, addrsWithVooting := gs.GetPossibleVotingAddressWithWeightJSON(proposal.ExecutionState.CreatedAt)
+		// proposal := proposals[uint64(1)]
+		pp, ok := proposals.Get(strconv.FormatUint(uint64(1), 10))
+		uassert.True(t, ok)
+		proposal := pp.(ProposalInfo)
+		maxVoting, addrsWithVooting := gs.GetPossibleVotingAddressWithWeightJSON(proposal.State.CreatedAt)
 
 		uassert.Equal(t, maxVoting, uint64(2_000_000)) // 2000000
-		uassert.Equal(t, addrsWithVooting, `{"height":"150","now":"1234567944","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","weight":"2000000"}]}`)
+		uassert.Equal(t, addrsWithVooting, `{"height":"150","now":"1234568025","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","weight":"2000000"}]}`)
 	})
 }

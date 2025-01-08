@@ -38,7 +38,7 @@ func TestProposeText(t *testing.T) {
 			ExecutionDelay:                uint64(10),   // 10s ≈ 5 block
 			ExecutionWindow:               uint64(1000), // 500 block
 		}
-		configVersions[1] = config
+		setConfigVersion(1, config)
 	})
 
 	oldHeight = uint64(std.GetHeight())
@@ -51,7 +51,7 @@ func TestProposeText(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		proposalId := ProposeText("test_title_1", "test_description_1")
 		updateProposalsState()
-		proposalStat := proposals[proposalId].ExecutionState
+		proposalStat := mustGetProposal(proposalId).State
 
 		uassert.True(t, proposalStat.Created)
 		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
@@ -75,11 +75,12 @@ func TestProposeText(t *testing.T) {
 		nowTime = uint64(time.Now().Unix())
 
 		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
+
+		voted := GetVoteByVoteKey(voteKey)
 		uassert.True(t, voted)
 
 		updateProposalsState()
-		proposalStat := proposals[proposalId].ExecutionState
+		proposalStat := mustGetProposal(proposalId).State
 
 		uassert.True(t, proposalStat.Created)
 		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
@@ -103,7 +104,7 @@ func TestProposeText(t *testing.T) {
 		nowTime = uint64(time.Now().Unix())
 
 		updateProposalsState()
-		proposalStat := proposals[proposalId].ExecutionState
+		proposalStat := mustGetProposal(proposalId).State
 
 		uassert.True(t, proposalStat.Created)
 		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
@@ -124,55 +125,22 @@ func TestProposeText(t *testing.T) {
 		std.TestSkipHeights(500)
 
 		updateProposalsState()
-		proposalStat := proposals[proposalId].ExecutionState
+		proposalStat := mustGetProposal(proposalId).State
 
-		if proposalStat.Created != true {
-			t.Errorf("Proposal should be created")
-		}
+		uassert.True(t, proposalStat.Created)
+		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
+		uassert.False(t, proposalStat.Upcoming)
+		uassert.False(t, proposalStat.Active)
+		uassert.True(t, proposalStat.Passed)
+		uassert.Equal(t, proposalStat.PassedAt, nowTime)
+		uassert.Equal(t, proposalStat.PassedAt, nowTime)
+		uassert.False(t, proposalStat.Rejected)
+		uassert.Equal(t, proposalStat.RejectedAt, 0)
+		uassert.False(t, proposalStat.Canceled)
+		uassert.Equal(t, proposalStat.CanceledAt, 0)
 
-		if proposalStat.CreatedAt != oldTime {
-			t.Errorf("Proposal created at time is incorrect")
-		}
-
-		if proposalStat.Upcoming != false {
-			t.Errorf("Proposal should not be upcoming")
-		}
-
-		if proposalStat.Active != false {
-			t.Errorf("Proposal should not be active")
-		}
-
-		if proposalStat.Passed != true {
-			t.Errorf("Proposal should be passed")
-		}
-
-		if proposalStat.PassedAt != nowTime {
-			t.Errorf("Proposal passed at time should be now")
-		}
-
-		if proposalStat.Rejected != false {
-			t.Errorf("Proposal should not be rejected")
-		}
-
-		if proposalStat.RejectedAt != uint64(0) {
-			t.Errorf("Proposal rejected at time should be 0")
-		}
-
-		if proposalStat.Canceled != false {
-			t.Errorf("Proposal should not be cancelled")
-		}
-
-		if proposalStat.CanceledAt != uint64(0) {
-			t.Errorf("Proposal cancelled at time should be 0")
-		}
-
-		if proposalStat.Executed != false {
-			t.Errorf("Proposal should not be executed")
-		}
-
-		if proposalStat.ExecutedAt != uint64(0) {
-			t.Errorf("Proposal executed at time should be 0")
-		}
+		uassert.False(t, proposalStat.Executed)
+		uassert.Equal(t, proposalStat.ExecutedAt, 0)
 	})
 
 	t.Run("create new text proposal and cancel", func(t *testing.T) {
@@ -181,7 +149,7 @@ func TestProposeText(t *testing.T) {
 		Cancel(proposalId)
 
 		updateProposalsState()
-		proposalStat := proposals[proposalId].ExecutionState
+		proposalStat := mustGetProposal(proposalId).State
 
 		nowHeight = uint64(std.GetHeight())
 		nowTime = uint64(time.Now().Unix())
@@ -218,7 +186,7 @@ func TestParamaterChange(t *testing.T) {
 			ExecutionDelay:                uint64(10),   // 10s ≈ 5 block
 			ExecutionWindow:               uint64(1000), // 500 block
 		}
-		configVersions[1] = config
+		setConfigVersion(1, config)
 	})
 
 	oldHeight = uint64(std.GetHeight())
@@ -231,7 +199,7 @@ func TestParamaterChange(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		proposalId := ProposeParameterChange("test_title_3", "test_description_3", uint64(1), "gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*100")
 		updateProposalsState()
-		proposalStat := proposals[proposalId].ExecutionState
+		proposalStat := mustGetProposal(proposalId).State
 
 		uassert.True(t, proposalStat.Created)
 		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
@@ -255,13 +223,11 @@ func TestParamaterChange(t *testing.T) {
 		nowTime = uint64(time.Now().Unix())
 
 		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not recorded correctly")
-		}
+		voted := GetVoteByVoteKey(voteKey)
+		uassert.True(t, voted)
 
 		updateProposalsState()
-		proposalStat := proposals[proposalId].ExecutionState
+		proposalStat := mustGetProposal(proposalId).State
 
 		uassert.True(t, proposalStat.Created)
 		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
@@ -285,7 +251,7 @@ func TestParamaterChange(t *testing.T) {
 		nowTime = uint64(time.Now().Unix())
 
 		updateProposalsState()
-		proposalStat := proposals[proposalId].ExecutionState
+		proposalStat := mustGetProposal(proposalId).State
 
 		uassert.True(t, proposalStat.Created)
 		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
@@ -305,7 +271,7 @@ func TestParamaterChange(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		Execute(proposalId)
 		updateProposalsState()
-		proposalStat := proposals[proposalId].ExecutionState
+		proposalStat := mustGetProposal(proposalId).State
 
 		nowHeight = uint64(std.GetHeight())
 		nowTime = uint64(time.Now().Unix())
@@ -330,7 +296,7 @@ func TestParamaterChange(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		std.TestSkipHeights(1000)
 		updateProposalsState()
-		proposalStat := proposals[proposalId].ExecutionState
+		proposalStat := mustGetProposal(proposalId).State
 
 		uassert.True(t, proposalStat.Created)
 		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
@@ -355,7 +321,7 @@ func TestParamaterChange(t *testing.T) {
 		Cancel(proposalId)
 
 		updateProposalsState()
-		proposalStat := proposals[proposalId].ExecutionState
+		proposalStat := mustGetProposal(proposalId).State
 
 		nowHeight = uint64(std.GetHeight())
 		nowTime = uint64(time.Now().Unix())
@@ -384,7 +350,7 @@ func TestParamaterChange(t *testing.T) {
 		nowHeight = uint64(std.GetHeight())
 
 		updateProposalsState()
-		proposalStat := proposals[proposalId].ExecutionState
+		proposalStat := mustGetProposal(proposalId).State
 
 		uassert.True(t, proposalStat.Created)
 		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
@@ -417,7 +383,7 @@ func TestParamaterChange(t *testing.T) {
 		nowTime = uint64(time.Now().Unix())
 
 		updateProposalsState()
-		proposalStat := proposals[proposalId].ExecutionState
+		proposalStat := mustGetProposal(proposalId).State
 
 		uassert.True(t, proposalStat.Created)
 		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
@@ -445,7 +411,7 @@ func TestParamaterChange(t *testing.T) {
 		nowTime = uint64(time.Now().Unix())
 		nowHeight = uint64(std.GetHeight())
 
-		proposalStat := proposals[proposalId].ExecutionState
+		proposalStat := mustGetProposal(proposalId).State
 		uassert.True(t, proposalStat.Created)
 		uassert.Equal(t, proposalStat.CreatedAt, oldOldTime)
 		uassert.False(t, proposalStat.Upcoming)
@@ -468,7 +434,7 @@ func TestParamaterChange(t *testing.T) {
 		std.TestSkipHeights(100)
 		updateProposalsState()
 
-		proposalStat := proposals[proposalId].ExecutionState
+		proposalStat := mustGetProposal(proposalId).State
 		uassert.True(t, proposalStat.Created)
 		uassert.False(t, proposalStat.Upcoming)
 		uassert.False(t, proposalStat.Active)

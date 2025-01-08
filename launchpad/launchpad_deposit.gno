@@ -72,7 +72,6 @@ func DepositGns(
 	en.MintAndDistributeGns()
 
 	// after all pre-checks
-	calculateDepositReward()
 	project = projects[projectId]    // get updates project
 	tier = getTier(project, tierStr) // get updates tier
 
@@ -118,7 +117,7 @@ func DepositGns(
 		projectId:       projectId,
 		tier:            tierStr,
 		depositor:       depositor,
-		amount:          amount,
+		// amount:          amount,
 		depositHeight:   uint64(std.GetHeight()),
 		depositTime:     uint64(time.Now().Unix()),
 		claimableHeight: claimableHeight,
@@ -187,9 +186,9 @@ func DepositGns(
 
 	// update tier
 	tier.totalDepositAmount += amount
-	tier.actualDepositAmount += amount
+	//tier.actualDepositAmount += amount
 	tier.totalParticipant += 1
-	tier.actualParticipant += 1
+	//tier.actualParticipant += 1
 	project = setTier(project, tierStr, tier)
 
 	// update project
@@ -210,8 +209,6 @@ func DepositGns(
 func CollectDepositGns() uint64 {
 	common.IsHalted()
 	en.MintAndDistributeGns()
-
-	calculateDepositReward()
 
 	caller := std.PrevRealm().Addr()
 	userDeposits := depositsByUser[caller]
@@ -245,18 +242,20 @@ func CollectDepositGns() uint64 {
 		deposit.depositCollectTime = uint64(time.Now().Unix())
 		deposits[deposit.id] = deposit
 
-		gnsToUser += deposit.amount
+		reward := rewardStates.Get(deposit.projectId, deposit.tier).Claim(deposit.id, uint64(std.GetHeight()))
+
+		gnsToUser += reward
 
 		// update gov_staker contract's variable to calculate proejct's recipient's reward
-		gs.SetAmountByProjectWallet(project.recipient, deposit.amount, false) // subtract
+		gs.SetAmountByProjectWallet(project.recipient, reward, false) // subtract
 
 		// update tier
-		tier.actualDepositAmount -= deposit.amount
+		tier.actualDepositAmount -= reward
 		tier.actualParticipant -= 1
 
 		// update project
 		project = setTier(project, deposit.tier, tier)
-		project.actualDepositAmount -= deposit.amount
+		project.actualDepositAmount -= reward
 		project.actualParticipant -= 1
 		projects[deposit.projectId] = project
 
@@ -266,7 +265,7 @@ func CollectDepositGns() uint64 {
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
 			"internal_depositId", depositId,
-			"internal_amount", ufmt.Sprintf("%d", deposit.amount),
+			"internal_amount", ufmt.Sprintf("%d", reward),
 		)
 	}
 
@@ -304,8 +303,6 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
-	calculateDepositReward()
-
 	prevAddr, prevRealm := getPrev()
 
 	gnsToUser := uint64(0)
@@ -335,18 +332,19 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 		deposit.depositCollectTime = uint64(time.Now().Unix())
 		deposits[deposit.id] = deposit
 
-		gnsToUser += deposit.amount
+		reward := rewardStates.Get(deposit.projectId, deposit.tier).Claim(deposit.id, uint64(std.GetHeight()))
+		gnsToUser += reward
 
 		// update gov_staker contract's variable to calculate proejct's recipient's reward
-		gs.SetAmountByProjectWallet(project.recipient, deposit.amount, false) // subtract
+		gs.SetAmountByProjectWallet(project.recipient, reward, false) // subtract
 
 		// update tier
-		tier.actualDepositAmount -= deposit.amount
+		tier.actualDepositAmount -= reward
 		tier.actualParticipant -= 1
 
 		// update project
 		project = setTier(project, deposit.tier, tier)
-		project.actualDepositAmount -= deposit.amount
+		project.actualDepositAmount -= reward
 		project.actualParticipant -= 1
 		projects[deposit.projectId] = project
 
@@ -357,7 +355,7 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 			"prevRealm", prevRealm,
 			"projectId", projectId,
 			"internal_depositId", depositId,
-			"internal_amount", ufmt.Sprintf("%d", deposit.amount),
+			"internal_amount", ufmt.Sprintf("%d", reward),
 		)
 	}
 
@@ -395,7 +393,6 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
-	calculateDepositReward()
 	project = projects[deposit.projectId] // get updates project
 
 	// check active
@@ -413,16 +410,18 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 	deposit.depositCollectTime = uint64(time.Now().Unix())
 	deposits[deposit.id] = deposit
 
+	reward := rewardStates.Get(deposit.projectId, deposit.tier).Claim(deposit.id, uint64(std.GetHeight()))
+
 	// update gov_staker contract's variable to calculate proejct's recipient's reward
-	gs.SetAmountByProjectWallet(project.recipient, deposit.amount, false) // subtract
+	gs.SetAmountByProjectWallet(project.recipient, reward, false) // subtract
 
 	// update tier
-	tier.actualDepositAmount -= deposit.amount
+	tier.actualDepositAmount -= reward
 	tier.actualParticipant -= 1
 
 	// update project
 	project = setTier(project, deposit.tier, tier)
-	project.actualDepositAmount -= deposit.amount
+	project.actualDepositAmount -= reward
 	project.actualParticipant -= 1
 	projects[deposit.projectId] = project
 
@@ -433,14 +432,14 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"depositId", depositId,
-		"internal_amount", ufmt.Sprintf("%d", deposit.amount),
+		"internal_amount", ufmt.Sprintf("%d", reward),
 	)
 
-	if deposit.amount > 0 {
-		xgns.Burn(a2u(consts.LAUNCHPAD_ADDR), deposit.amount)
-		gns.Transfer(a2u(caller), deposit.amount)
+	if reward > 0 {
+		xgns.Burn(a2u(consts.LAUNCHPAD_ADDR), reward)
+		gns.Transfer(a2u(caller), reward)
 
-		return deposit.amount //
+		return reward //
 	}
 
 	return 0

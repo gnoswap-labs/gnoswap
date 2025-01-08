@@ -4,6 +4,7 @@ import (
 	"std"
 	"time"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
 	en "gno.land/r/gnoswap/v1/emission"
@@ -18,41 +19,41 @@ type DelegationHistory struct {
 	add       bool
 }
 
-// to address -> []delegationHistory
-var delegationHistory = make(map[std.Address][]DelegationHistory)
-
-// DelegationStatHistory represents delegation stat for to address
-type DelegationStatHistory struct {
+// DelegationSnapShotHistory represents delegation stat for to address
+type DelegationSnapShotHistory struct {
 	to           std.Address
 	amount       uint64
 	updatedBlock uint64
 	updatedAt    uint64
 }
 
-// to address -> []delegationStatHistory
-var delegationStatHistory = make(map[std.Address][]DelegationStatHistory)
+var (
+	delegationHistory         = avl.NewTree() // addr => []delegationHistory
+	delegationSnapShotHistory = avl.NewTree() // addr => []delegationSnapShotHistory
+)
 
 // GetDelegatedCumulative gets the cumulative delegated amount for an address at a certain timestamp.
 func GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
 	en.MintAndDistributeGns()
-	calculateReward()
 
 	if !delegator.IsValid() {
 		panic(addDetailToError(
 			errInvalidAddress,
-			ufmt.Sprintf("history.gno__GetDelegatedCumulative() || invalid delegator address: %s", delegator.String()),
+			ufmt.Sprintf("invalid delegator address: %s", delegator.String()),
 		))
 	}
 
 	if endTimestamp > uint64(time.Now().Unix()) {
 		panic(addDetailToError(
 			errFutureTime,
-			ufmt.Sprintf("history.gno__GetDelegatedCumulative() || endTimestamp(%d) > now(%d)", endTimestamp, time.Now().Unix()),
+			ufmt.Sprintf("endTimestamp(%d) > now(%d)", endTimestamp, time.Now().Unix()),
 		))
 	}
 
-	history, exist := delegationStatHistory[delegator]
-	if !exist || len(history) == 0 {
+	history := make([]DelegationSnapShotHistory, 0)
+	if value, exists := delegationSnapShotHistory.Get(delegator.String()); exists {
+		history = value.([]DelegationSnapShotHistory)
+	} else {
 		return 0
 	}
 

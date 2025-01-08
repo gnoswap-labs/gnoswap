@@ -9,8 +9,6 @@ import (
 )
 
 func ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
-	calculateDepositReward()
-
 	project, exist := projects[projectId]
 	if !exist {
 		return ""
@@ -63,9 +61,9 @@ func ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
 	projectObj.AppendObject("tier30EndHeight", json.StringNode("tier30EndHeight", ufmt.Sprintf("%d", project.tier30.endHeight)))
 	projectObj.AppendObject("tier30EndTime", json.StringNode("tier30EndTime", ufmt.Sprintf("%d", project.tier30.endTime)))
 	projectObj.AppendObject("tier30TotalDepositAmount", json.StringNode("tier30TotalDepositAmount", ufmt.Sprintf("%d", project.tier30.totalDepositAmount)))
-	projectObj.AppendObject("tier30ActualDepositAmount", json.StringNode("tier30ActualDepositAmount", ufmt.Sprintf("%d", project.tier30.actualDepositAmount)))
+	//projectObj.AppendObject("tier30ActualDepositAmount", json.StringNode("tier30ActualDepositAmount", ufmt.Sprintf("%d", project.tier30.actualDepositAmount)))
 	projectObj.AppendObject("tier30TotalParticipant", json.StringNode("tier30TotalParticipant", ufmt.Sprintf("%d", project.tier30.totalParticipant)))
-	projectObj.AppendObject("tier30ActualParticipant", json.StringNode("tier30ActualParticipant", ufmt.Sprintf("%d", project.tier30.actualParticipant)))
+	//projectObj.AppendObject("tier30ActualParticipant", json.StringNode("tier30ActualParticipant", ufmt.Sprintf("%d", project.tier30.actualParticipant)))
 	projectObj.AppendObject("tier30UserCollectedAmount", json.StringNode("tier30UserCollectedAmount", ufmt.Sprintf("%d", project.tier30.userCollectedAmount)))
 	projectObj.AppendObject("tier30CalculatedAmount", json.StringNode("tier30CalculatedAmount", ufmt.Sprintf("%d", project.tier30.calculatedAmount)))
 
@@ -95,8 +93,6 @@ func ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
 }
 
 func ApiGetProjectStatisticsByProjectId(projectId string) string {
-	calculateDepositReward()
-
 	project, exist := projects[projectId]
 	if !exist {
 		return ""
@@ -148,8 +144,6 @@ func ApiGetProjectStatisticsByProjectId(projectId string) string {
 }
 
 func ApiGetProjectStatisticsByProjectTierId(tierId string) string {
-	calculateDepositReward()
-
 	projectId, tierStr := getProjectIdAndTierFromTierId(tierId)
 	project, exist := projects[projectId]
 	if !exist {

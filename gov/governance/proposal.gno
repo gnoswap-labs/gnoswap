@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -17,8 +18,12 @@ import (
 
 var (
 	proposalId               uint64
-	proposals                = make(map[uint64]ProposalInfo) // proposalId -> ProposalInfo
-	latestProposalByProposer = make(map[std.Address]uint64)  // proposer -> proposalId
+	proposals                = avl.NewTree() // proposalId -> ProposalInfo
+	latestProposalByProposer = avl.NewTree() // proposer -> proposalId
+)
+
+const (
+	GOV_SPLIT = "*GOV*"
 )
 
 // ProposeText creates a new text proposal with the given data
@@ -40,17 +45,18 @@ func ProposeText(
 	if !enough {
 		panic(addDetailToError(
 			errNotEnoughBalance,
-			ufmt.Sprintf("governance.gno__ProposeText() || proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
+			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
 		))
 	}
 
 	now := uint64(time.Now().Unix())
+	// votingMax does not include quantities delegated through Launchpad.
 	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
 
 	proposal := ProposalInfo{
 		Proposer:     proposer,
-		ProposalType: "TEXT",
-		ExecutionState: ExecutionState{
+		ProposalType: Text,
+		State: ProposalState{
 			Created:   true,
 			CreatedAt: now,
 			Upcoming:  true,
@@ -59,26 +65,29 @@ func ProposeText(
 		Nay:                       u256.Zero(),
 		MaxVotingWeight:           u256.NewUint(votingMax),
 		PossibleAddressWithWeight: possibleAddressWithWeight,
-		ConfigVersion:             uint64(len(configVersions)), // use latest config version
+		ConfigVersion:             uint64(configVersions.Size()), // use latest config version
 		QuorumAmount:              xgns.VotingSupply() * config.Quorum / 100,
 		Title:                     title,
 		Description:               description,
 	}
 
 	proposalId++
-	proposals[proposalId] = proposal
-	latestProposalByProposer[proposer] = proposalId
+	proposals.Set(formatUint64(proposalId), proposal)
+	latestProposalByProposer.Set(proposer.String(), proposalId)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"ProposeText",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"title", title,
 		"description", description,
-		"internal_proposalId", ufmt.Sprintf("%d", proposalId),
+		"proposalId", formatUint64(proposalId),
+		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
+		"createdAt", formatUint64(proposal.State.CreatedAt),
+		"configVersion", formatUint64(proposal.ConfigVersion),
+		"quorumAmount", formatUint64(proposal.QuorumAmount),
 	)
-
 	return proposalId
 }
 
@@ -104,7 +113,7 @@ func ProposeCommunityPoolSpend(
 	if !enough {
 		panic(addDetailToError(
 			errNotEnoughBalance,
-			ufmt.Sprintf("governance.gno__ProposeCommunityPoolSpend() || proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
+			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
 		))
 	}
 
@@ -113,8 +122,8 @@ func ProposeCommunityPoolSpend(
 
 	proposal := ProposalInfo{
 		Proposer:     proposer,
-		ProposalType: "COMMUNITY_POOL_SPEND",
-		ExecutionState: ExecutionState{
+		ProposalType: CommunityPoolSpend,
+		State: ProposalState{
 			Created:   true,
 			CreatedAt: now,
 			Upcoming:  true,
@@ -123,7 +132,7 @@ func ProposeCommunityPoolSpend(
 		Nay:                       u256.Zero(),
 		MaxVotingWeight:           u256.NewUint(votingMax),
 		PossibleAddressWithWeight: possibleAddressWithWeight,
-		ConfigVersion:             uint64(len(configVersions)),
+		ConfigVersion:             uint64(configVersions.Size()),
 		QuorumAmount:              xgns.VotingSupply() * config.Quorum / 100,
 		Title:                     title,
 		Description:               description,
@@ -135,8 +144,8 @@ func ProposeCommunityPoolSpend(
 	}
 
 	proposalId++
-	proposals[proposalId] = proposal
-	latestProposalByProposer[proposer] = proposalId
+	proposals.Set(formatUint64(proposalId), proposal)
+	latestProposalByProposer.Set(proposer.String(), proposalId)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -147,8 +156,8 @@ func ProposeCommunityPoolSpend(
 		"description", description,
 		"to", to.String(),
 		"tokenPath", tokenPath,
-		"amount", ufmt.Sprintf("%d", amount),
-		"internal_proposalId", ufmt.Sprintf("%d", proposalId),
+		"amount", formatUint64(amount),
+		"internal_proposalId", formatUint64(proposalId),
 	)
 
 	return proposalId
@@ -175,42 +184,24 @@ func ProposeParameterChange(
 	if !enough {
 		panic(addDetailToError(
 			errNotEnoughBalance,
-			ufmt.Sprintf("governance.gno__ProposeParameterChange() || proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
+			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
 		))
 	}
 
 	if numToExecute == 0 {
 		panic(addDetailToError(
 			errInvalidInput,
-			ufmt.Sprintf("governance.gno__ProposeParameterChange() || numToExecute is 0"),
+			ufmt.Sprintf("numToExecute is 0"),
 		))
 	}
 
 	// check if numToExecute is a valid number
-	splitGov := strings.Split(executions, "*GOV*")
+	splitGov := strings.Split(executions, GOV_SPLIT)
 	if uint64(len(splitGov)) != numToExecute {
 		panic(addDetailToError(
 			errInvalidInput,
-			ufmt.Sprintf("governance.gno__ProposeParameterChange() || numToExecute(%d) does not match the number of executions(%d)", numToExecute, len(splitGov)),
+			ufmt.Sprintf("numToExecute(%d) does not match the number of executions(%d)", numToExecute, len(splitGov)),
 		))
-	}
-
-	// check if each execution is valid
-	for _, gov := range splitGov {
-		splitExe := strings.Split(gov, "*EXE*")
-		if len(splitExe) != 3 {
-			panic(addDetailToError(
-				errInvalidInput,
-				ufmt.Sprintf("governance.gno__ProposeParameterChange() || invalid execution(%s) to split by *EXE*, seems like param didn't passed", gov),
-			))
-		}
-
-		pkgPath := splitExe[0]
-		funcName := splitExe[1]
-		params := splitExe[2]
-
-		// check if msg is callable
-		callableMsg(pkgPath, funcName, params)
 	}
 
 	now := uint64(time.Now().Unix())
@@ -218,8 +209,8 @@ func ProposeParameterChange(
 
 	proposal := ProposalInfo{
 		Proposer:     proposer,
-		ProposalType: "PARAMETER_CHANGE",
-		ExecutionState: ExecutionState{
+		ProposalType: ParameterChange,
+		State: ProposalState{
 			Created:   true,
 			CreatedAt: now,
 			Upcoming:  true,
@@ -228,7 +219,7 @@ func ProposeParameterChange(
 		Nay:                       u256.Zero(),
 		MaxVotingWeight:           u256.NewUint(votingMax),
 		PossibleAddressWithWeight: possibleAddressWithWeight,
-		ConfigVersion:             uint64(len(configVersions)),
+		ConfigVersion:             uint64(configVersions.Size()),
 		QuorumAmount:              xgns.VotingSupply() * config.Quorum / 100,
 		Title:                     title,
 		Description:               description,
@@ -239,8 +230,8 @@ func ProposeParameterChange(
 	}
 
 	proposalId++
-	proposals[proposalId] = proposal
-	latestProposalByProposer[proposer] = proposalId
+	proposals.Set(formatUint64(proposalId), proposal)
+	latestProposalByProposer.Set(proposer.String(), proposalId)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -249,72 +240,138 @@ func ProposeParameterChange(
 		"prevRealm", prevRealm,
 		"title", title,
 		"description", description,
-		"numToExecute", ufmt.Sprintf("%d", numToExecute),
+		"numToExecute", formatUint64(numToExecute),
 		"executions", executions,
-		"internal_proposalId", ufmt.Sprintf("%d", proposalId),
+		"internal_proposalId", formatUint64(proposalId),
 	)
 
 	return proposalId
 }
 
+// proposalStateUpdater handles the state transitions of a proposal.
+type proposalStateUpdater struct {
+	proposal *ProposalInfo
+	config   Config
+	now      uint64
+}
+
+// updateProposalsState updates the state of all proposals based on current time.
+// It processes voting periods, results, and execution windows for each proposal.
 func updateProposalsState() {
 	now := uint64(time.Now().Unix())
-	for id, proposal := range proposals {
-		config := GetConfigVersion(proposal.ConfigVersion)
 
-		// check if proposal is in a state that needs to be updated
-		// - created
-		// - not canceled
-		// - not executed
-
-		// proposal is in voting period
-		if proposal.ExecutionState.Created &&
-			!proposal.ExecutionState.Canceled &&
-			!proposal.ExecutionState.Executed {
-
-			if proposal.ExecutionState.Upcoming && // was upcoming
-				now >= (proposal.ExecutionState.CreatedAt+config.VotingStartDelay) && // voting started
-				now <= (proposal.ExecutionState.CreatedAt+config.VotingStartDelay+config.VotingPeriod) { // voting not ended
-				proposal.ExecutionState.Upcoming = false
-				proposal.ExecutionState.Active = true
-			}
+	proposals.Iterate("", "", func(key string, value interface{}) bool {
+		proposal := value.(ProposalInfo)
+		if proposal.State.Canceled || proposal.State.Expired || proposal.State.Executed {
+			return false
 		}
 
-		// proposal voting ended, check if passed or rejected
-		if now > (proposal.ExecutionState.CreatedAt+config.VotingStartDelay+config.VotingPeriod) &&
-			(proposal.ExecutionState.Passed == false && proposal.ExecutionState.Rejected == false && proposal.ExecutionState.Canceled == false) {
-			yeaUint := proposal.Yea.Uint64()
-			nayUint := proposal.Nay.Uint64()
-			quorumUint := proposal.QuorumAmount
+		updater := newProposalStateUpdater(&proposal, now)
+		updater.updateVotingState()
+		updater.updateVotingResult()
+		updater.updateExecutionState()
 
-			if yeaUint >= quorumUint && yeaUint > nayUint {
-				proposal.ExecutionState.Passed = true
-				proposal.ExecutionState.PassedAt = now
-			} else {
-				proposal.ExecutionState.Rejected = true
-				proposal.ExecutionState.RejectedAt = now
-			}
-			proposal.ExecutionState.Upcoming = false
-			proposal.ExecutionState.Active = false
-		}
+		proposals.Set(key, *updater.proposal)
+		return false
+	})
+}
 
-		// (non text) proposal passed but not executed until executing window ends
-		if proposal.ProposalType != "TEXT" && // isn't text type ≈ can be executed
-			proposal.ExecutionState.Passed && // passed
-			!proposal.ExecutionState.Executed && // not executed
-			!proposal.ExecutionState.Expired { // not expired
+// newProposalStateUpdater creates a new proposalStateUpdater.
+func newProposalStateUpdater(proposal *ProposalInfo, now uint64) *proposalStateUpdater {
+	return &proposalStateUpdater{
+		proposal: proposal,
+		config:   GetConfigVersion(proposal.ConfigVersion),
+		now:      now,
+	}
+}
 
-			votingEnd := proposal.ExecutionState.CreatedAt + config.VotingStartDelay + config.VotingPeriod
-			windowStart := votingEnd + config.ExecutionDelay
-			windowEnd := windowStart + config.ExecutionWindow
+// shouldUpdate determines if the proposal state should be updated.
+// Returns true if the proposal is created, not canceled, and not executed.
+func (u *proposalStateUpdater) shouldUpdate() bool {
+	return u.proposal.State.Created &&
+		!u.proposal.State.Canceled &&
+		!u.proposal.State.Executed
+}
 
-			if now >= windowEnd { // execution window ended
-				proposal.ExecutionState.Expired = true
-				proposal.ExecutionState.ExpiredAt = now
-			}
-		}
+// getVotingTimes returns the start and end timestamps of the voting period.
+// The start time is CreatedAt + VotingStartDelay.
+// The end time is start time + VotingPeriod.
+func (u *proposalStateUpdater) getVotingTimes() (start, end uint64) {
+	start = u.proposal.State.CreatedAt + u.config.VotingStartDelay
+	end = start + u.config.VotingPeriod
+	return
+}
 
-		proposals[id] = proposal
+// getExecutionTimes returns the start and end timestamps of the execution window.
+// The start time is after voting end + ExecutionDelay.
+// The end time is start time + ExecutionWindow.
+func (u *proposalStateUpdater) getExecutionTimes() (start, end uint64) {
+	_, votingEnd := u.getVotingTimes()
+	start = votingEnd + u.config.ExecutionDelay
+	end = start + u.config.ExecutionWindow
+	return
+}
+
+// updateVotingState updates the voting state of the proposal.
+// It transitions from upcoming to active state when voting period starts.
+func (u *proposalStateUpdater) updateVotingState() {
+	if !u.shouldUpdate() {
+		return
+	}
+
+	votingStart, votingEnd := u.getVotingTimes()
+	isVotingPeriod := u.now >= votingStart && u.now <= votingEnd
+
+	if u.proposal.State.Upcoming && isVotingPeriod {
+		u.proposal.State.Upcoming = false
+		u.proposal.State.Active = true
+	}
+}
+
+// updateVotingResult determines the outcome of voting when voting period ends.
+// It sets the proposal as passed if it meets quorum and has more yes votes than no votes.
+// Otherwise, it marks the proposal as rejected.
+func (u *proposalStateUpdater) updateVotingResult() {
+	_, votingEnd := u.getVotingTimes()
+
+	hasNoResult := !u.proposal.State.Passed &&
+		!u.proposal.State.Rejected &&
+		!u.proposal.State.Canceled
+
+	if u.now <= votingEnd || !hasNoResult {
+		return
+	}
+
+	yeaUint := u.proposal.Yea.Uint64()
+	nayUint := u.proposal.Nay.Uint64()
+
+	if yeaUint >= u.proposal.QuorumAmount && yeaUint > nayUint {
+		u.proposal.State.Passed = true
+		u.proposal.State.PassedAt = u.now
+	} else {
+		u.proposal.State.Rejected = true
+		u.proposal.State.RejectedAt = u.now
+	}
+
+	u.proposal.State.Upcoming = false
+	u.proposal.State.Active = false
+}
+
+// updateExecutionState checks if a non-text proposal should expire.
+// It marks the proposal as expired if execution window has ended.
+func (u *proposalStateUpdater) updateExecutionState() {
+	if u.proposal.ProposalType == Text ||
+		!u.proposal.State.Passed ||
+		u.proposal.State.Executed ||
+		u.proposal.State.Expired {
+		return
+	}
+
+	_, executionEnd := u.getExecutionTimes()
+
+	if u.now >= executionEnd {
+		u.proposal.State.Expired = true
+		u.proposal.State.ExpiredAt = u.now
 	}
 }
 
