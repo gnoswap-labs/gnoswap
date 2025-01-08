@@ -31,15 +31,13 @@ var (
 	lockedAmount  = uint64(0)
 )
 
-var (
-	minimumAmount = uint64(1_000_000)
-)
+var minimumAmount = uint64(1_000_000)
 
 // Delegate delegates GNS tokens to a specified address.
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#delegate
 func Delegate(to std.Address, amount uint64) {
 	if running {
-		cleanDelegationStatHistory() // 함수명 변경
+		cleanDelegationStatHistory()
 	}
 
 	if amount == 0 {
@@ -92,15 +90,15 @@ func Delegate(to std.Address, amount uint64) {
 	// xGNS mint to caller
 	xgns.Mint(a2u(caller), amount)
 
-	//prevAddr, prevPkgPath := getPrev()
-	//std.Emit(
-	//	"Delegate",
-	//	"prevAddr", prevAddr,
-	//	"prevRealm", prevPkgPath,
-	//	"from", caller.String(),
-	//	"to", to.String(),
-	//	"amount", formatUint(amount),
-	//)
+	prevAddr, prevPkgPath := getPrev()
+	std.Emit(
+		"Delegate",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"from", caller.String(),
+		"to", to.String(),
+		"amount", formatUint(amount),
+	)
 }
 
 // Redelegate redelegates xGNS from existing delegate to another.
