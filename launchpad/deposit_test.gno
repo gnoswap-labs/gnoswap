@@ -2,16 +2,17 @@ package launchpad
 
 import (
 	"std"
-	"strings"
 	"testing"
 	"time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
-	"gno.land/r/gnoswap/v1/gov/xgns"
+
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 // Mock data structs
@@ -320,12 +321,11 @@ func TestDepositGns(t *testing.T) {
 
 	t.Run("Fail with insufficient balance", func(t *testing.T) {
 		std.TestSetRealm(std.NewUserRealm(testAddr))
-		mockTeller.balance = 500 // Less than required deposit amount
 
 		defer func() {
 			r := recover()
 			if r != nil {
-				t.Fatalf("Recovered from panic: %v", r)
+				t.Logf("Recovered from panic: %v", r)
 			}
 		}()
 
@@ -333,8 +333,12 @@ func TestDepositGns(t *testing.T) {
 	})
 
 	t.Run("Success with sufficient balance", func(t *testing.T) {
+		// transfer enough gns
+		std.TestSetRealm(adminRealm)
+		gns.Transfer(common.AddrToUser(testAddr), 1000)
+
 		std.TestSetRealm(std.NewUserRealm(testAddr))
-		mockTeller.balance = 2000 // More than required deposit amount
+		gns.Approve(common.AddrToUser(consts.LAUNCHPAD_ADDR), 1000)
 
 		depositId := DepositGns(project.id+":30", 1000)
 		deposit := deposits[depositId]

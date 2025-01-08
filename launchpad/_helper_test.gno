@@ -6,10 +6,16 @@ import (
 
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 	"gno.land/r/demo/users"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
+)
+
+var (
+	adminAddr  = consts.ADMIN
+	adminUser  = common.AddrToUser(adminAddr)
+	adminRealm = std.NewUserRealm(adminAddr)
 )
 
 // MockXGNSToken implements basic functionality for testing xgns token
