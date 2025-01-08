@@ -41,8 +41,8 @@ type ProjectInput struct {
 	TokenPath        string
 	Recipient        std.Address
 	DepositAmount    uint64
-	ConditionsToken  string
-	ConditionsAmount string
+	ConditionsToken  string // spearated by PAD_SEP (`*PAD*`)
+	ConditionsAmount string // spearated by PAD_SEP (`*PAD*`)
 	Tier30Ratio      uint64
 	Tier90Ratio      uint64
 	Tier180Ratio     uint64
@@ -159,7 +159,7 @@ func CreateProject(
 	// Transfer tokens
 	tokenTeller := common.GetTokenTeller(tokenPath)
 	tokenTeller.TransferFrom(
-		std.PrevRealm().Addr(),
+		caller,
 		std.Address(consts.LAUNCHPAD_ADDR),
 		depositAmount,
 	)

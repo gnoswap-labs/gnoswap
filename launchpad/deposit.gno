@@ -249,7 +249,7 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 
 	if updatedTier.started.height == info.Height {
 		std.Emit(
-			"FirstDepoistForProjectTier", // ????
+			"FirstDepoistForProjectTier",
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
 			"targetProjectTierId", targetProjectTierId,
