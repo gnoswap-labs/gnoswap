@@ -3,8 +3,8 @@ package launchpad
 import (
 	"testing"
 
-	"gno.land/p/demo/ufmt"
 	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -21,28 +21,16 @@ func TestValidateRewardCollection(t *testing.T) {
 		{
 			name: "Valid reward ready to collect",
 			deposit: Deposit{
-				//rewardAmount:    1000,
-				claimableHeight: 50,  // Less than current height
+				claimableHeight:   50, // Less than current height
 				rewardCollectTime: 0,
 			},
 			height:      currentHeight,
 			shouldError: false,
 		},
 		{
-			name: "No reward available",
-			deposit: Deposit{
-				//rewardAmount:    0,
-				claimableHeight: 50,
-			},
-			height:      currentHeight,
-			shouldError: true,
-			errorMsg:    "no reward available",
-		},
-		{
 			name: "Reward not yet claimable",
 			deposit: Deposit{
-				//rewardAmount:    1000,
-				claimableHeight: 150,  // Greater than current height
+				claimableHeight:   150, // Greater than current height
 				rewardCollectTime: 0,
 			},
 			height:      currentHeight,
@@ -52,7 +40,6 @@ func TestValidateRewardCollection(t *testing.T) {
 		{
 			name: "Already collected reward can be collected before claimable height",
 			deposit: Deposit{
-				//rewardAmount:      1000,
 				claimableHeight:   150,
 				rewardCollectTime: 1, // Already collected before
 			},
@@ -118,125 +105,125 @@ func TestCalculateDepositRatioX96(t *testing.T) {
 }
 
 func TestProcessDepositReward(t *testing.T) {
-    q96 = u256.MustFromDecimal("79228162514264337593543950336")
+	q96 = u256.MustFromDecimal("79228162514264337593543950336")
 
-    tests := []struct {
-        name           string
-        deposit       Deposit
-        rewardX96     *u256.Uint
-        tierAmount    uint64
-        expectedReward uint64
-        shouldError   bool
-    }{
-        {
-            name: "Normal reward calculation",
-            deposit: Deposit{
-                amount:       1000,
-                //rewardAmount: 0,
-            },
-            rewardX96:      u256.NewUint(1000).Mul(u256.NewUint(1000), q96),
-            tierAmount:     2000,
-            expectedReward: 500, // (1000/2000) * 1000 = 500
-            shouldError:    false,
-        },
+	tests := []struct {
+		name           string
+		deposit        Deposit
+		rewardX96      *u256.Uint
+		tierAmount     uint64
+		expectedReward uint64
+		shouldError    bool
+	}{
+		{
+			name: "Normal reward calculation",
+			deposit: Deposit{
+				amount: 1000,
+				//rewardAmount: 0,
+			},
+			rewardX96:      u256.NewUint(1000).Mul(u256.NewUint(1000), q96),
+			tierAmount:     2000,
+			expectedReward: 500, // (1000/2000) * 1000 = 500
+			shouldError:    false,
+		},
 		/*
-        {
-            name: "Tier amount is 0",
-            deposit: Deposit{
-                amount:       1000,
-                //rewardAmount: 0,
-            },
-            rewardX96:      u256.NewUint(1000),
-            tierAmount:     0,
-            expectedReward: 0,
-            shouldError:    true,
-        },*/
-        {
-            name: "Reward is accumulated",
-            deposit: Deposit{
-                amount:       1000,
-                //rewardAmount: 100,
-            },
-            rewardX96:      u256.NewUint(1000).Mul(u256.NewUint(1000), q96),
-            tierAmount:     2000,
-            expectedReward: 500, // 600, // Existing 100 + New reward 500
-            shouldError:    false,
-        },
-    }
+		   {
+		       name: "Tier amount is 0",
+		       deposit: Deposit{
+		           amount:       1000,
+		           //rewardAmount: 0,
+		       },
+		       rewardX96:      u256.NewUint(1000),
+		       tierAmount:     0,
+		       expectedReward: 0,
+		       shouldError:    true,
+		   },*/
+		{
+			name: "Reward is accumulated",
+			deposit: Deposit{
+				amount: 1000,
+				//rewardAmount: 100,
+			},
+			rewardX96:      u256.NewUint(1000).Mul(u256.NewUint(1000), q96),
+			tierAmount:     2000,
+			expectedReward: 500, // 600, // Existing 100 + New reward 500
+			shouldError:    false,
+		},
+	}
 
-    for i, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			state := NewRewardState(tt.rewardX96, 1000, 2000)
 			depositId := ufmt.Sprintf("depositId-%d", i)
 			state.AddStake(1000, depositId, tt.deposit.amount)
 			state.TotalStake = tt.tierAmount // force overriding total stake
 			state.finalize(1001)
 
-			reward := state.CalculateReward(depositId)	
-            uassert.Equal(t, tt.expectedReward, reward)
-        })
-    }
+			reward := state.CalculateReward(depositId)
+			uassert.Equal(t, tt.expectedReward, reward)
+		})
+	}
 }
 
 func TestCalculateTierRewards(t *testing.T) {
-    q96 = u256.MustFromDecimal("79228162514264337593543950336")
+	q96 = u256.MustFromDecimal("79228162514264337593543950336")
 
-    tests := []struct {
-        name           string
-        tier           Tier
-        currentHeight  uint64
-        lastCalcHeight uint64
-        expectedRewardX96 string
-        expectedReward uint64
-        shouldBeZero   bool
-    }{
-        {
-            name: "tierAmountPerBlockX96 is 0",
-            tier: Tier{
-                tierAmountPerBlockX96: u256.Zero(),
-                ended: TimeInfo{height: 1000},
-            },
-            currentHeight:  500,
-            lastCalcHeight: 400,
-            shouldBeZero:   true,
-        },
-        {
-            name: "sinceLast is 0",
-            tier: Tier{
-                tierAmountPerBlockX96: u256.NewUint(1000),
-                ended: TimeInfo{height: 1000},
-            },
-            currentHeight:  500,
-            lastCalcHeight: 500,
-            shouldBeZero:   true,
-        },
-        {
-            name: "Current height exceeds end height",
-            tier: Tier{
-                tierAmountPerBlockX96: u256.NewUint(1000),
-                ended: TimeInfo{height: 450},
-            },
-            currentHeight:     500,
-            lastCalcHeight:    400,
-            expectedRewardX96: "50000", // 1000 * (450-400)
-            expectedReward:    0,       // (50000 / Q96)
-        },
-    }
+	tests := []struct {
+		name              string
+		tier              Tier
+		currentHeight     uint64
+		lastCalcHeight    uint64
+		expectedRewardX96 string
+		expectedReward    uint64
+		shouldBeZero      bool
+	}{
+		{
+			name: "tierAmountPerBlockX96 is 0",
+			tier: Tier{
+				tierAmountPerBlockX96: u256.Zero(),
+				ended:                 TimeInfo{height: 1000},
+			},
+			currentHeight:  500,
+			lastCalcHeight: 400,
+			shouldBeZero:   true,
+		},
+		{
+			name: "sinceLast is 0",
+			tier: Tier{
+				tierAmountPerBlockX96: u256.NewUint(1000),
+				ended:                 TimeInfo{height: 1000},
+			},
+			currentHeight:  500,
+			lastCalcHeight: 500,
+			shouldBeZero:   true,
+		},
+		{
+			name: "Current height exceeds end height",
+			tier: Tier{
+				tierAmountPerBlockX96: u256.NewUint(1000),
+				ended:                 TimeInfo{height: 450},
+			},
+			currentHeight:     500,
+			lastCalcHeight:    400,
+			expectedRewardX96: "50000", // 1000 * (450-400)
+			expectedReward:    0,       // (50000 / Q96)
+		},
+	}
 
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            rewardX96, reward, err := calculateTierRewards(tt.tier, tt.currentHeight, tt.lastCalcHeight)
-            
-            uassert.NoError(t, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rewardX96, reward, err := calculateTierRewards(tt.tier, tt.currentHeight, tt.lastCalcHeight)
 
-            if tt.shouldBeZero {
-                uassert.Equal(t, true, rewardX96.IsZero())
-                uassert.Equal(t, uint64(0), reward)
-            } else {
-                expected := u256.MustFromDecimal(tt.expectedRewardX96)
-                uassert.Equal(t, 0, rewardX96.Cmp(expected))
-                uassert.Equal(t, tt.expectedReward, reward)
-            }
-        })
-    }
+			uassert.NoError(t, err)
+
+			if tt.shouldBeZero {
+				uassert.Equal(t, true, rewardX96.IsZero())
+				uassert.Equal(t, uint64(0), reward)
+			} else {
+				expected := u256.MustFromDecimal(tt.expectedRewardX96)
+				uassert.Equal(t, 0, rewardX96.Cmp(expected))
+				uassert.Equal(t, tt.expectedReward, reward)
+			}
+		})
+	}
 }
