@@ -23,8 +23,10 @@ type voteWithWeight struct {
 }
 
 var (
-	votes     = avl.NewTree() // voteKey(proposalId:user) -> yes/no
-	userVotes = avl.NewTree() // user -> proposalId -> voteWithWeight
+	votes         = avl.NewTree()           // voteKey(proposalId:user) -> yes/no
+	userVotes     = avl.NewTree()           // user -> proposalId -> voteWithWeight
+	accumYesVotes = make(map[uint64]uint64) // proposalId -> yes
+	accumNoVotes  = make(map[uint64]uint64) // proposalId -> no
 )
 
 func createVoteKey(pid uint64, voter string) string {
@@ -40,7 +42,8 @@ func getVote(pid uint64, voter string) (bool, bool) {
 }
 
 func setVote(pid uint64, voter string, vote bool) {
-	votes.Set(createVoteKey(pid, voter), vote)
+	voteKey := createVoteKey(pid, voter)
+	votes.Set(voteKey, vote)
 }
 
 func createUserVoteKey(voter std.Address, pid uint64) string {
@@ -56,6 +59,11 @@ func getUserVote(voter std.Address, pid uint64) (voteWithWeight, bool) {
 }
 
 func setUserVote(voter std.Address, pid uint64, vote voteWithWeight) {
+	if vote.Yes {
+		accumYesVotes[pid] += vote.Weight
+	} else {
+		accumNoVotes[pid] += vote.Weight
+	}
 	userVotes.Set(createUserVoteKey(voter, pid), vote)
 }
 
@@ -109,6 +117,8 @@ func Vote(pid uint64, yes bool) string {
 		"voter", voter.String(),
 		"yes", voteToString(yes),
 		"voteWeight", formatUint64(state.userWeight),
+		"voteYes", formatUint64(accumYesVotes[pid]),
+		"voteNo", formatUint64(accumNoVotes[pid]),
 	)
 
 	return voteKey
@@ -240,11 +250,11 @@ func Cancel(proposalId uint64) {
 
 	proposals.Set(formatUint64(proposalId), proposal)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"Cancel",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"proposalId", formatUint64(proposalId),
 	)
 }

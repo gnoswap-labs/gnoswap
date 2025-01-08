@@ -315,19 +315,18 @@ func CollectReward() {
 	// still, this is a tangled with the policy issue, so should be discussed.
 	gns.Transfer(a2u(caller), reward)
 
-	// TODO:
 	emissionReward := collectEmissionReward(caller)
 	if emissionReward > 0 {
 		std.Emit(
 			"CollectEmissionReward",
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
+			"from", consts.GOV_STAKER_ADDR.String(),
 			"to", caller.String(),
 			"emissionRewardAmount", formatUint(emissionReward),
 		)
 	}
 
-	// TODO::
 	collectedFees := collectProtocolFeeReward(caller)
 	for tokenPath, amount := range collectedFees {
 		if tokenPath == consts.WUGNOT_PATH {
@@ -338,6 +337,8 @@ func CollectReward() {
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
 			"tokenPath", tokenPath,
+			"from", consts.GOV_STAKER_ADDR.String(),
+			"to", caller.String(),
 			"collectedAmount", formatUint(amount),
 		)
 	}
@@ -354,19 +355,18 @@ func CollectRewardFromLaunchPad(to std.Address) {
 
 	prevAddr, prevPkgPath := getPrev()
 
-	// TODO::
 	emissionReward := collectEmissionReward(to)
 	if emissionReward > 0 {
 		std.Emit(
 			"CollectEmissionFromLaunchPad",
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
+			"from", consts.GOV_STAKER_ADDR.String(),
 			"to", to.String(),
-			"amount", formatUint(emissionReward),
+			"emissionRewardAmount", formatUint(emissionReward),
 		)
 	}
 
-	// TODO::
 	collectedFees := collectProtocolFeeReward(to)
 	for tokenPath, amount := range collectedFees {
 		std.Emit(
@@ -374,7 +374,9 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
 			"tokenPath", tokenPath,
-			"amount", formatUint(amount),
+			"from", consts.GOV_STAKER_ADDR.String(),
+			"to", caller.String(),
+			"collectedAmount", formatUint(amount),
 		)
 	}
 }
