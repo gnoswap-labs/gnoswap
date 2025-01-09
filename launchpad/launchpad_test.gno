@@ -8,6 +8,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
@@ -507,6 +508,86 @@ func TestCreateTier(t *testing.T) {
 			uassert.Equal(t, got.ended.height, tt.want.ended.height)
 			uassert.Equal(t, got.ended.time, tt.want.ended.time)
 			uassert.True(t, projectTiersWithoutDeposit[got.id])
+		})
+	}
+}
+
+func TestCalculateProjectParams(t *testing.T) {
+	currentTime := uint64(time.Now().Unix())
+	baseHeight := uint64(std.GetHeight())
+
+	tests := []struct {
+		name    string
+		input   ProjectInput
+		now     uint64
+		want    *ProjectCalculationResult
+		wantErr bool
+	}{
+		{
+			name: "valid input with equal ratio distribution",
+			input: ProjectInput{
+				DepositAmount: 3000,
+				Tier30Ratio:   33,
+				Tier90Ratio:   33,
+				Tier180Ratio:  34,
+				StartTime:     currentTime + 1000, // 1000 seconds in future
+			},
+			now: currentTime,
+			want: &ProjectCalculationResult{
+				Tier30Amount:  990,              // 3000 * 33 / 100
+				Tier90Amount:  990,              // 3000 * 33 / 100
+				Tier180Amount: 1020,             // 3000 * 34 / 100
+				StartHeight:   baseHeight + 500, // 1000 seconds = 500 blocks
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid input with uneven ratio distribution",
+			input: ProjectInput{
+				DepositAmount: 10000,
+				Tier30Ratio:   20,
+				Tier90Ratio:   30,
+				Tier180Ratio:  50,
+				StartTime:     currentTime + 2000, // 2000 seconds in future
+			},
+			now: currentTime,
+			want: &ProjectCalculationResult{
+				Tier30Amount:  2000,              // 10000 * 20 / 100
+				Tier90Amount:  3000,              // 10000 * 30 / 100
+				Tier180Amount: 5000,              // 10000 * 50 / 100
+				StartHeight:   baseHeight + 1000, // 2000 seconds = 1000 blocks
+			},
+			wantErr: false,
+		},
+		{
+			name: "start time in the past",
+			input: ProjectInput{
+				DepositAmount: 1000,
+				Tier30Ratio:   30,
+				Tier90Ratio:   30,
+				Tier180Ratio:  40,
+				StartTime:     currentTime - 1000, // 과거 시간
+			},
+			now:     currentTime,
+			want:    nil,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := calculateProjectParams(tt.input, tt.now)
+
+			if tt.wantErr {
+				uassert.Error(t, err)
+				return
+			}
+
+			uassert.NoError(t, err)
+			uassert.Equal(t, got.Tier30Amount, tt.want.Tier30Amount)
+			uassert.Equal(t, got.Tier90Amount, tt.want.Tier90Amount)
+			uassert.Equal(t, got.Tier180Amount, tt.want.Tier180Amount)
+			uassert.Equal(t, got.StartHeight, tt.want.StartHeight)
 		})
 	}
 }

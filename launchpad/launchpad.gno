@@ -149,22 +149,16 @@ func CreateProject(
 		depositAmount,
 	)
 
-	// Calculate tier amounts
-	tier30Amount := depositAmount * tier30Ratio / 100
-	tier90Amount := depositAmount * tier90Ratio / 100
-	tier180Amount := depositAmount * tier180Ratio / 100
+	calcResult, err := calculateProjectParams(input, now)
+	if err != nil {
+		panic(addDetailToError(errInvalidInput, err.Error()))
+	}
 
-	// Calculate project timings
-	height := uint64(std.GetHeight())
-	timeUntilStart := startTime - now
-	avgBlockTimeMs := uint64(gns.GetAvgBlockTimeInMs())
-	blockDuration := timeUntilStart * 1000 / avgBlockTimeMs
-	startHeight := height + blockDuration
+	startHeight := calcResult.StartHeight
 
-	// Create tiers
-	tier30 := createTier(projectId, 30, tier30Amount, startHeight, startTime, covertToMillisecond(TIMESTAMP_3DAYS))
-	tier90 := createTier(projectId, 90, tier90Amount, startHeight, startTime, covertToMillisecond(TIMESTAMP_7DAYS))
-	tier180 := createTier(projectId, 180, tier180Amount, startHeight, startTime, covertToMillisecond(TIMESTAMP_14DAYS))
+	tier30 := createTier(projectId, 30, calcResult.Tier30Amount, startHeight, startTime, covertToMillisecond(TIMESTAMP_3DAYS))
+	tier90 := createTier(projectId, 90, calcResult.Tier90Amount, startHeight, startTime, covertToMillisecond(TIMESTAMP_7DAYS))
+	tier180 := createTier(projectId, 180, calcResult.Tier180Amount, startHeight, startTime, covertToMillisecond(TIMESTAMP_14DAYS))
 
 	conditions := makeConditions(conditionsToken, conditionsAmount)
 
@@ -218,15 +212,52 @@ func CreateProject(
 		"startTime", formatUint(startTime),
 		"startHeight", formatUint(startHeight),
 		"projectId", projectId,
-		"tier30Amount", formatUint(tier30Amount),
+		"tier30Amount", formatUint(calcResult.Tier30Amount),
 		"tier30EndHeight", formatUint(tier30.ended.height),
-		"tier90Amount", formatUint(tier90Amount),
+		"tier90Amount", formatUint(calcResult.Tier90Amount),
 		"tier90EndHeight", formatUint(tier90.ended.height),
-		"tier180Amount", formatUint(tier180Amount),
+		"tier180Amount", formatUint(calcResult.Tier180Amount),
 		"tier180EndHeight", formatUint(tier180.ended.height),
 	)
 
 	return projectId
+}
+
+// middle result of project params calculation
+type ProjectCalculationResult struct {
+	Tier30Amount  uint64
+	Tier90Amount  uint64
+	Tier180Amount uint64
+	StartHeight   uint64
+}
+
+func calculateProjectParams(input ProjectInput, now uint64) (*ProjectCalculationResult, error) {
+	tier30Amount := input.DepositAmount * input.Tier30Ratio / 100
+	tier90Amount := input.DepositAmount * input.Tier90Ratio / 100
+	tier180Amount := input.DepositAmount * input.Tier180Ratio / 100
+
+	if input.StartTime < now {
+		return nil, ufmt.Errorf("startTime(%d) must be greater than now(%d)", input.StartTime, now)
+	}
+
+	// calculate when the block starts
+	timeUntilStart := input.StartTime - now
+
+	avgBlockTimeMs := uint64(gns.GetAvgBlockTimeInMs())
+	if avgBlockTimeMs == 0 {
+		return nil, ufmt.Errorf("average block time not available")
+	}
+
+	blockDuration := timeUntilStart * 1000 / avgBlockTimeMs
+	height := uint64(std.GetHeight())
+	startHeight := height + blockDuration
+
+	return &ProjectCalculationResult{
+		Tier30Amount:  tier30Amount,
+		Tier90Amount:  tier90Amount,
+		Tier180Amount: tier180Amount,
+		StartHeight:   startHeight,
+	}, nil
 }
 
 func covertToMillisecond(timestamp uint64) uint64 {
