@@ -18,7 +18,7 @@ var (
 	currentGNSBalance uint64
 )
 
-func currentBalance() uint64 {
+func getCurrentGNSBalance() uint64 {
 	// TODO: implement this after checking gns distribution is working
 	// pf.DistributeProtocolFee()
 	// accuProtocolFee := pf.GetAccuTransferToGovStaker()
@@ -30,6 +30,28 @@ func currentBalance() uint64 {
 	currentGNSBalance += gotGnsForEmission
 
 	return currentGNSBalance
+}
+
+var (
+	currentProtocolFeeBalance *avl.Tree
+)
+
+func getCurrentProtocolFeeBalance() *avl.Tree {
+	gotAccuProtocolFee := pf.GetAccuTransferToGovStaker()
+	pf.ClearAccuTransferToGovStaker()
+
+	gotAccuProtocolFee.Iterate("", "", func(key string, value interface{}) bool {
+		amount := value.(uint64)
+		currentValue := uint64(0)
+		currentValueI, ok := currentProtocolFeeBalance.Get(key)
+		if ok {
+			currentValue += currentValueI.(uint64)
+		}
+		currentProtocolFeeBalance.Set(key, currentValue + amount)
+		return false
+	})
+
+	return currentProtocolFeeBalance
 }
 
 type StakerRewardInfo struct {
@@ -67,6 +89,7 @@ func NewRewardState() *RewardState {
 }
 
 var rewardState = NewRewardState()
+var protocolFeeState = NewRewardState()
 
 func (self *RewardState) Debug() string {
 	return ufmt.Sprintf("{ CurrentBalance: %d, PriceAccumulation: %d, TotalStake: %d, info: len(%d) }", self.CurrentBalance, self.PriceAccumulationUint64(), self.TotalStake, self.info.Size())
@@ -195,9 +218,10 @@ var (
 )
 
 var (
-	userXGnsRatio         = avl.NewTree() // address -> ratioX96
-	userEmissionReward    = avl.NewTree() // address -> gnsAmount
-	userProtocolFeeReward = avl.NewTree() // address -> tokenPath -> tokenAmount
+	// userXGnsRatio         = avl.NewTree() // address -> ratioX96
+	// userEmissionReward    = avl.NewTree() // address -> gnsAmount
+	// XXX: 업데이트 안 되고 있음.
+	// userProtocolFeeReward = avl.NewTree() // address -> tokenPath -> tokenAmount
 )
 
 // === LAUNCHPAD DEPOSIT
@@ -337,6 +361,7 @@ func calculateGNSEmission() {
 }
 
 func calculateProtocolFee() {
+	// XXX: 사용안됨. Set이 안되중 protocol 뭐시기가 업데이트 안되는 중
 	// gov_staker received protocol_fee
 	// but no gns has been staked, left amount will be used next time
 	if userXGnsRatio.Size() == 0 {
@@ -398,6 +423,7 @@ func calculateProtocolFee() {
 		if val, exists := alreadyCalculatedProtocolFee.Get(tokenPath); exists {
 			current = val.(uint64)
 		}
+		// XXXXX
 		alreadyCalculatedProtocolFee.Set(tokenPath, current+tokenBalance.(uint64))
 		leftProtocolFeeFromLast.Set(tokenPath, tokenBalance.(uint64)-calculated)
 	}
