@@ -27,6 +27,8 @@ import (
 	sr "gno.land/r/gnoswap/v1/staker"
 )
 
+//! TODO: may need to change deadline param in `ExactInSwapRoute` function
+
 var (
 	launchpadProject01Addr  = testutils.TestAddress("launchpadProject01")
 	launchpadProject01Realm = std.NewUserRealm(launchpadProject01Addr)
@@ -143,7 +145,7 @@ func testMint(t *testing.T) {
 func testStakeToken(t *testing.T) {
 	t.Run("stake token", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		gnft.Approve(a2u(consts.STAKER_ADDR), "1")
+		gnft.Approve(consts.STAKER_ADDR, "1")
 
 		sr.StakeToken(1)
 
@@ -296,6 +298,7 @@ func testSwapRoute(t *testing.T) {
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
 			"100",
 			"1",
+			time.Now().Unix(),
 		)
 		uassert.Equal(t, amountIn, "100000")
 		uassert.Equal(t, amountOut, "-99800")
@@ -321,6 +324,7 @@ func testSwapRoute(t *testing.T) {
 			"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500",
 			"100",
 			"1",
+			time.Now().Unix(),
 		)
 		uassert.Equal(t, amountIn, "100000")
 		uassert.Equal(t, amountOut, "-99800")
@@ -348,6 +352,7 @@ func testSwapRoute(t *testing.T) {
 			"gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:3000",
 			"100",
 			"1",
+			time.Now().Unix(),
 		)
 		uassert.Equal(t, amountIn, "100000")
 		uassert.Equal(t, amountOut, "-99550")
@@ -411,8 +416,7 @@ func testCheckReward(t *testing.T) {
 
 func checkProtocolFeeBalance() {
 	println("[START] checkProtocolFeeBalance")
-	pfRegistered := pf.GetRegisteredTokens()
-	for _, token := range pfRegistered {
+	for _, token := range common.ListRegisteredTokens() {
 		balance := common.BalanceOf(token, consts.PROTOCOL_FEE_ADDR)
 		if balance != 0 {
 			println("token", token)
