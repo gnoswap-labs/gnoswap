@@ -349,9 +349,11 @@ func calculateProtocolFee() {
 		return
 	}
 
-	registered := common.ListRegisteredTokens()
-	// get gov staker's grc20 balance
 	for _, tokenPath := range common.ListRegisteredTokens() {
+		tokenBalance, exists := accuProtocolFee.Get(tokenPath)
+		if !exists || tokenBalance == uint64(0) {
+			continue
+		}
 
 		leftValue, exists := leftProtocolFeeFromLast.Get(tokenPath)
 		leftFromLast := uint64(0)
