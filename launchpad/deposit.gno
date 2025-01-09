@@ -167,7 +167,14 @@ func processFirstDeposit(info ProjectTierInfo) (Tier, error) {
 	tier := info.Tier
 	tier.started.height = info.Height
 	tier.started.time = info.CurrentTime
-	tier.tierAmountPerBlockX96 = calcProjectTiersRewardPerBlockX96(tier)
+	tier.tierAmountPerBlockX128 = calcProjectTiersRewardPerBlockX128(tier)
+
+	// should be update reward state here
+	rewardState := NewRewardState(tier.tierAmountPerBlockX128, info.Height, info.Tier.ended.height)
+	rewardStates.Set(info.Project.id, info.TierStr, rewardState)
+
+	// Remove from projectTiersWithoutDeposit as it now has a deposit
+    delete(projectTiersWithoutDeposit, tier.id)
 
 	return tier, nil
 }
@@ -259,7 +266,7 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 			"depositId", deposit.id,
 			"claimableHeight", strconv.FormatUint(deposit.claimableHeight, 10),
 			"claimableTime", strconv.FormatUint(deposit.claimableTime, 10),
-			"tierAmountPerBlockX96", updatedTier.tierAmountPerBlockX96.ToString(),
+			"tierAmountPerBlockX128", updatedTier.tierAmountPerBlockX128.ToString(),
 		)
 	}
 
@@ -270,6 +277,12 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 	project.stats.totalParticipant++
 	project.stats.actualParticipant++
 	projects[projectId] = project
+
+	rewardState, err := rewardStates.Get(projectId, tierStr)
+	if err != nil {
+		panic(err)
+	}
+	rewardState.AddStake(uint64(std.GetHeight()), deposit.id, amount)
 
 	return deposit.id
 }

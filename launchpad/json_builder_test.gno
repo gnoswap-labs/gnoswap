@@ -53,7 +53,7 @@ func TestTierBuilder(t *testing.T) {
 	tier := Tier{
 		collectWaitDuration:   100,
 		tierAmount:            5000,
-		tierAmountPerBlockX96: amountPerBlock,
+		tierAmountPerBlockX128: amountPerBlock,
 		started:               TimeInfo{height: 100, time: 1234567890},
 		ended:                 TimeInfo{height: 200, time: 1234567899},
 		totalDepositAmount:    1000,
@@ -68,7 +68,7 @@ func TestTierBuilder(t *testing.T) {
 	TierBuilder(b, "test", tier)
 
 	result := b.Node()
-	expected := `{"testCollectWaitDuration":"100","testTierAmount":"5000","testTierAmountPerBlockX96":"1000000","testStartedHeight":"100","testStartedTime":"1234567890","testEndedHeight":"200","testEndedTime":"1234567899","testTotalDepositAmount":"1000","testActualDepositAmount":"800","testTotalParticipant":"50","testActualParticipant":"40","testUserCollectedAmount":"300","testCalculatedAmount":"400"}`
+	expected := `{"testCollectWaitDuration":"100","testTierAmount":"5000","testTierAmountPerBlockX128":"1000000","testStartedHeight":"100","testStartedTime":"1234567890","testEndedHeight":"200","testEndedTime":"1234567899","testTotalDepositAmount":"1000","testActualDepositAmount":"800","testTotalParticipant":"50","testActualParticipant":"40","testUserCollectedAmount":"300","testCalculatedAmount":"400"}`
 
 	res, err := json.Marshal(result)
 	uassert.NoError(t, err)

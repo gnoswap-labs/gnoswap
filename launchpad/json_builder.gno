@@ -37,8 +37,8 @@ func RefundInfoBuilder(b *json.NodeBuilder, info RefundInfo) *json.NodeBuilder {
 func TierBuilder(b *json.NodeBuilder, prefix string, tier Tier) *json.NodeBuilder {
 	b.WriteString(prefix+"CollectWaitDuration", ufmt.Sprintf("%d", tier.collectWaitDuration))
 	b.WriteString(prefix+"TierAmount", ufmt.Sprintf("%d", tier.tierAmount))
-	if tier.tierAmountPerBlockX96 != nil {
-		b.WriteString(prefix+"TierAmountPerBlockX96", tier.tierAmountPerBlockX96.ToString())
+	if tier.tierAmountPerBlockX128 != nil {
+		b.WriteString(prefix+"TierAmountPerBlockX128", tier.tierAmountPerBlockX128.ToString())
 	}
 	TimeInfoBuilder(b, prefix+"Started", tier.started)
 	TimeInfoBuilder(b, prefix+"Ended", tier.ended)

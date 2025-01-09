@@ -24,7 +24,7 @@ var (
 )
 
 var (
-	q96 = u256.Zero()
+	q128 = u256.Zero()
 )
 
 const (
@@ -32,7 +32,7 @@ const (
 )
 
 func init() {
-	q96 = u256.MustFromDecimal(consts.Q96)
+	q128 = u256.MustFromDecimal(consts.Q128)
 }
 
 // ProjectInput represents the input parameters for creating a new project
@@ -89,6 +89,13 @@ func createTier(projectId string, duration uint64, amount uint64, startHeight ui
 			time:   endTime,
 		},
 	}
+
+	// Calculate reward per block for the tier
+	tier.tierAmountPerBlockX128 = calcProjectTiersRewardPerBlockX128(tier)
+
+	// Initialize reward state for this tier
+	rewardState := NewRewardState(tier.tierAmountPerBlockX128, startHeight, endHeight)
+	rewardStates.Set(projectId, strconv.FormatUint(duration, 10), rewardState)
 
 	projectTiersWithoutDeposit[tierId] = true
 	return tier

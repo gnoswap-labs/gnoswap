@@ -49,7 +49,7 @@ type Tier struct {
 	id                    string // '{projectId}:duration' // duartion == 30, 90, 180
 	collectWaitDuration   uint64 // block
 	tierAmount            uint64
-	tierAmountPerBlockX96 *u256.Uint
+	tierAmountPerBlockX128 *u256.Uint
 
 	started TimeInfo // first deposit height
 	ended TimeInfo

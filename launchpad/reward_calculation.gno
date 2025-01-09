@@ -9,7 +9,7 @@ import (
 
 type StakerRewardInfo struct {
 	StartHeight uint64     // height when staker started staking
-	PriceDebt   *u256.Uint // price debt per xGNS stake, Q96
+	PriceDebt   *u256.Uint // price debt per xGNS stake, Q128
 	Amount      uint64     // amount of xGNS staked
 	Claimed     uint64     // amount of GNS reward claimed so far
 }
@@ -19,15 +19,15 @@ func (self *StakerRewardInfo) Debug() string {
 }
 
 func (self *StakerRewardInfo) PriceDebtUint64() uint64 {
-	return u256.Zero().Rsh(self.PriceDebt, 96).Uint64()
+		return u256.Zero().Rsh(self.PriceDebt, 128).Uint64()
 }
 
 type RewardState struct {
-	PriceAccumulation *u256.Uint // claimable Launchpad reward per xGNS stake, Q96
+	PriceAccumulation *u256.Uint // claimable Launchpad reward per xGNS stake, Q128
 	TotalStake        uint64     // total xGNS staked
 
 	LastHeight     uint64     // last height when reward was calculated
-	RewardPerBlock *u256.Uint // reward per block, = Tier.tierAmountPerBlockX96
+	RewardPerBlock *u256.Uint // reward per block, = Tier.tierAmountPerBlockX128
 	EndHeight      uint64
 
 	TotalEmptyBlock uint64
@@ -44,6 +44,18 @@ func NewRewardState(rewardPerBlock *u256.Uint, startHeight uint64, endHeight uin
 		EndHeight:         endHeight,
 		info:              avl.NewTree(),
 	}
+}
+
+func (self *RewardState) PriceAccumulationUint64() uint64 {
+	return u256.Zero().Rsh(self.PriceAccumulation, 128).Uint64()
+}
+
+func (self *RewardState) RewardPerBlockUint64() uint64 {
+	return u256.Zero().Rsh(self.RewardPerBlock, 128).Uint64()
+}
+
+func (self *RewardState) Debug() string {
+	return ufmt.Sprintf("{ PriceAccumulation: %d, TotalStake: %d, LastHeight: %d, RewardPerBlock: %d, EndHeight: %d, info: len(%d) }", self.PriceAccumulationUint64(), self.TotalStake, self.LastHeight, self.RewardPerBlockUint64(), self.EndHeight, self.info.Size())
 }
 
 type RewardStates struct {
@@ -63,7 +75,9 @@ func (states RewardStates) Get(projectId string, tierStr string) (*RewardState, 
 	return statesI.(*RewardState), nil
 }
 
+/// XXXX
 func (states RewardStates) Set(projectId string, tierStr string, state *RewardState) {
+	println("pass set")
 	key := projectId + ":" + tierStr
 	states.states.Set(key, state)
 }
@@ -91,14 +105,6 @@ func (states RewardStates) DeleteProject(projectId string) uint64 {
 	return totalLeftover
 }
 
-func (self *RewardState) Debug() string {
-	return ufmt.Sprintf("{ PriceAccumulation: %d, TotalStake: %d, LastHeight: %d, RewardPerBlock: %d, EndHeight: %d, info: len(%d) }", self.PriceAccumulationUint64(), self.TotalStake, self.LastHeight, self.RewardPerBlockUint64(), self.EndHeight, self.info.Size())
-}
-
-func (self *RewardState) RewardPerBlockUint64() uint64 {
-	return u256.Zero().Rsh(self.RewardPerBlock, 96).Uint64()
-}
-
 func (self *RewardState) Info(depositId string) StakerRewardInfo {
 	infoI, exists := self.info.Get(depositId)
 	if !exists {
@@ -111,21 +117,18 @@ func (self *RewardState) CalculateReward(depositId string) uint64 {
 	info := self.Info(depositId)
 	stakerPrice := u256.Zero().Sub(self.PriceAccumulation, info.PriceDebt)
 	reward := stakerPrice.Mul(stakerPrice, u256.NewUint(info.Amount))
-	reward = reward.Rsh(reward, 96)
+	reward = reward.Rsh(reward,128)
 	return reward.Uint64() - info.Claimed
-}
-
-func (self *RewardState) PriceAccumulationUint64() uint64 {
-	return u256.Zero().Rsh(self.PriceAccumulation, 96).Uint64()
 }
 
 // amount MUST be less than or equal to the amount of xGNS staked
 // This function does not check it
 func (self *RewardState) deductReward(depositId string, currentHeight uint64) uint64 {
+	println("deductReward debug", self.Debug())
 	info := self.Info(depositId)
 	stakerPrice := u256.Zero().Sub(self.PriceAccumulation, info.PriceDebt)
 	reward := stakerPrice.Mul(stakerPrice, u256.NewUint(info.Amount))
-	reward = reward.Rsh(reward, 96)
+	reward = reward.Rsh(reward, 128)
 	reward64 := reward.Uint64() - info.Claimed
 
 	info.Claimed += reward64
@@ -143,10 +146,15 @@ func (self *RewardState) finalize(currentHeight uint64) {
 		// Not started yet
 		return
 	}
+	if self.LastHeight >= self.EndHeight {
+		// already ended
+		return
+	}
 	if currentHeight > self.EndHeight {
 		currentHeight = self.EndHeight
 	}
 
+	// ????? height 차이에 의한 오차 고
 	delta := u256.NewUint(currentHeight - self.LastHeight)
 	delta = delta.Mul(delta, self.RewardPerBlock)
 
@@ -187,11 +195,14 @@ func (self *RewardState) AddStake(currentHeight uint64, depositId string, amount
 		Claimed:     0,
 	}
 
+	println("addstake info", info.Debug())
+
 	self.info.Set(depositId, info)
 }
 
 func (self *RewardState) Claim(depositId string, currentHeight uint64) uint64 {
 	if !self.info.Has(depositId) {
+		println("claim debug", self.Debug())
 		return 0
 	}
 

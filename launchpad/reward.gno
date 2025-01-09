@@ -47,11 +47,11 @@ func validateRewardCollection(deposit Deposit, height uint64) error {
 
 // calculateTierRewards calculates rewards for each tier
 func calculateTierRewards(tier Tier, currentHeight uint64, lastCalcHeight uint64) (*u256.Uint, uint64, error) {
-	if tier.tierAmountPerBlockX96 == nil {
+	if tier.tierAmountPerBlockX128 == nil {
 		return u256.Zero(), 0, nil
 	}
 
-	if tier.tierAmountPerBlockX96.IsZero() {
+	if tier.tierAmountPerBlockX128.IsZero() {
 		return u256.Zero(), 0, nil
 	}
 
@@ -62,10 +62,10 @@ func calculateTierRewards(tier Tier, currentHeight uint64, lastCalcHeight uint64
 		return u256.Zero(), 0, nil
 	}
 
-	rewardX96 := new(u256.Uint).Mul(tier.tierAmountPerBlockX96.NilToZero().Clone(), u256.NewUint(sinceLast))
-	reward := new(u256.Uint).Div(rewardX96, q96).Uint64()
+	rewardX128 := new(u256.Uint).Mul(tier.tierAmountPerBlockX128.NilToZero().Clone(), u256.NewUint(sinceLast))
+	reward := new(u256.Uint).Div(rewardX128, q128).Uint64()
 
-	return rewardX96, reward, nil
+	return rewardX128, reward, nil
 }
 
 /*
@@ -94,12 +94,14 @@ func CollectRewardByProjectId(projectId string) uint64 {
 
 	project, exists := projects[projectId]
 	if !exists {
+		println("A: return 0")
 		return 0
 	}
 
 	caller := std.PrevRealm().Addr()
 	depositIds, exists := depositsByUserByProject[caller][projectId]
 	if !exists {
+		println("B: return 0")
 		return 0
 	}
 
@@ -110,24 +112,29 @@ func CollectRewardByProjectId(projectId string) uint64 {
 	for _, depositId := range depositIds {
 		deposit, exists := deposits[depositId]
 		if !exists {
+			println("C: continue")
 			continue
 		}
 
 		rewardState, err := rewardStates.Get(deposit.projectId, deposit.tier)
 		if err != nil {
+			println("D: continue")
 			continue
 		}
 		reward := rewardState.Claim(depositId, height)
 		if reward == 0 {
+			println("E: continue")
 			continue
 		}
 
 		project := projects[deposit.projectId]
 		if project.id != projectId {
+			println("F: continue")
 			continue
 		}
 
 		if err := validateRewardCollection(deposit, height); err != nil {
+			println("G: continue")
 			continue
 		}
 
@@ -354,22 +361,22 @@ func calculateDepositReward() {
 	}
 }
 */
-// calcDepositRatioX96 calculates the deposit ratio with Q96 precision
-func calcDepositRatioX96(tierAmount uint64, amount uint64) *u256.Uint {
-	amountX96 := new(u256.Uint).Mul(u256.NewUint(amount), q96.Clone())
-	amountX96x := new(u256.Uint).Mul(amountX96, u256.NewUint(1_000_000_000))
+// calcDepositRatioX128 calculates the deposit ratio with Q128 precision
+func calcDepositRatioX128(tierAmount uint64, amount uint64) *u256.Uint {
+	amountX128 := new(u256.Uint).Mul(u256.NewUint(amount), q128.Clone())
+	amountX128x := new(u256.Uint).Mul(amountX128, u256.NewUint(1_000_000_000))
 
-	tierAmountX96 := new(u256.Uint).Mul(u256.NewUint(tierAmount), q96.Clone())
+	tierAmountX128 := new(u256.Uint).Mul(u256.NewUint(tierAmount), q128.Clone())
 
-	depositRatioX96 := new(u256.Uint).Div(amountX96x, tierAmountX96)
-	depositRatioX96 = depositRatioX96.Mul(depositRatioX96, q96.Clone())
+	depositRatioX96 := new(u256.Uint).Div(amountX128x, tierAmountX128)
+	depositRatioX96 = depositRatioX96.Mul(depositRatioX96, q128.Clone())
 	depositRatioX96 = depositRatioX96.Div(depositRatioX96, u256.NewUint(1_000_000_000))
 
 	return depositRatioX96
 }
 
 // calcProjectTiersRewardPerBlockX96 calculates the reward per block with Q96 precision
-func calcProjectTiersRewardPerBlockX96(tier Tier) *u256.Uint {
-	tierAmountX96 := new(u256.Uint).Mul(u256.NewUint(tier.tierAmount), q96)
-	return new(u256.Uint).Div(tierAmountX96, u256.NewUint(tier.ended.height-tier.started.height))
+func calcProjectTiersRewardPerBlockX128(tier Tier) *u256.Uint {
+	tierAmountX128 := new(u256.Uint).Mul(u256.NewUint(tier.tierAmount), q128)
+	return new(u256.Uint).Div(tierAmountX128, u256.NewUint(tier.ended.height-tier.started.height))
 }
