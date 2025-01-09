@@ -97,8 +97,6 @@ func CollectRewardByProjectId(projectId string) uint64 {
 		return 0
 	}
 
-	project = projects[projectId] // get updated project
-
 	caller := std.PrevRealm().Addr()
 	depositIds, exists := depositsByUserByProject[caller][projectId]
 	if !exists {
@@ -110,8 +108,16 @@ func CollectRewardByProjectId(projectId string) uint64 {
 	prevAddr, prevPkgPath := getPrev()
 
 	for _, depositId := range depositIds {
-		deposit := deposits[depositId]
-		reward := rewardStates.Get(deposit.projectId, deposit.tier).Claim(depositId, height)
+		deposit, exists := deposits[depositId]
+		if !exists {
+			continue
+		}
+
+		rewardState, err := rewardStates.Get(deposit.projectId, deposit.tier)
+		if err != nil {
+			continue
+		}
+		reward := rewardState.Claim(depositId, height)
 		if reward == 0 {
 			continue
 		}
@@ -200,7 +206,11 @@ func CollectRewardByDepositId(depositId string) uint64 {
 		return 0
 	}
 
-	reward := rewardStates.Get(deposit.projectId, deposit.tier).Claim(deposit.id, height)
+	rewardState, err := rewardStates.Get(deposit.projectId, deposit.tier)
+	if err != nil {
+		return 0
+	}
+	reward := rewardState.Claim(deposit.id, height)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(

@@ -54,13 +54,13 @@ var rewardStates = RewardStates{
 	states: avl.NewTree(),
 }
 
-func (states RewardStates) Get(projectId string, tierStr string) *RewardState {
+func (states RewardStates) Get(projectId string, tierStr string) (*RewardState, error) {
 	key := projectId + ":" + tierStr
 	statesI, exists := states.states.Get(key)
 	if !exists {
-		return nil
+		return nil, ufmt.Errorf("reward state not found for projectId %s and tierStr %s", projectId, tierStr)
 	}
-	return statesI.(*RewardState)
+	return statesI.(*RewardState), nil
 }
 
 func (states RewardStates) Set(projectId string, tierStr string, state *RewardState) {
