@@ -57,31 +57,31 @@ func GetLockedInfoByAddress(addr std.Address) string {
 func GetClaimableRewardByAddress(addr std.Address) string {
 	en.MintAndDistributeGns()
 
-	emissionReward, exist := userEmissionReward.Get(addr.String())
-	if !exist {
+	rewardState.finalize(getCurrentBalance(), getCurrentProtocolFeeBalance())
+
+	emissionReward, protocolFeeRewards := rewardState.CalculateReward(addr)
+
+	if emissionReward == 0 && len(protocolFeeRewards) == 0 {
 		return ""
 	}
 
 	data := json.Builder().
 		WriteString("height", formatInt(std.GetHeight())).
 		WriteString("now", formatInt(time.Now().Unix())).
-		WriteString("emissionReward", formatUint(emissionReward.(uint64))).
+		WriteString("emissionReward", formatUint(emissionReward)).
 		Node()
 
-	protocolFees, exist := userProtocolFeeReward.Get(addr.String())
-	if exist {
+	if len(protocolFeeRewards) > 0 {
 		pfArr := json.ArrayNode("", nil)
-		protocolFees.(*avl.Tree).Iterate("", "", func(key string, value interface{}) bool {
-			amount := value.(uint64)
-			if amount > 0 {
+		for tokenPath, protocolFeeReward := range protocolFeeRewards {
+			if protocolFeeReward > 0 {
 				pfObj := json.Builder().
-					WriteString("tokenPath", key).
-					WriteString("amount", formatUint(amount)).
+					WriteString("tokenPath", tokenPath).
+					WriteString("amount", formatUint(protocolFeeReward)).
 					Node()
 				pfArr.AppendArray(pfObj)
 			}
-			return false
-		})
+		}
 
 		data.AppendObject("protocolFees", pfArr)
 	}

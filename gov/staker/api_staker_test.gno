@@ -73,26 +73,39 @@ func TestGetLockedInfoByAddress_EmptyLocks(t *testing.T) {
 
 func TestGetClaimableRewardByAddress(t *testing.T) {
 	addr := testutils.TestAddress("claimable_test")
-	userEmissionReward.Set(addr.String(), uint64(1000))
 
-	pfTree := avl.NewTree()
-	pfTree.Set("token1:token2", uint64(500))
-	pfTree.Set("token2:token3", uint64(300))
-	userProtocolFeeReward.Set(addr.String(), pfTree)
+	rewardState.AddStake(uint64(std.GetHeight()), addr, 100, 0, nil)
+
+	currentGNSBalance = 1000
+	// userEmissionReward.Set(addr.String(), uint64(1000))
+
+	currentProtocolFeeBalance["token1:token2"] = 500
+	currentProtocolFeeBalance["token2:token3"] = 300
+	//pfTree := avl.NewTree()
+	//pfTree.Set("token1:token2", uint64(500))
+	//pfTree.Set("token2:token3", uint64(300))
+	//userProtocolFeeReward.Set(addr.String(), pfTree)
 
 	result := GetClaimableRewardByAddress(addr)
 
 	node := json.Must(json.Unmarshal([]byte(result)))
 
+
+	println("4444")
 	uassert.True(t, node.HasKey("height"))
 	uassert.True(t, node.HasKey("now"))
 
+	println("3333")
 	emissionReward, err := node.MustKey("emissionReward").GetString()
 	uassert.NoError(t, err)
 	uassert.Equal(t, emissionReward, "1000")
 
+	println("2222")
+
 	protocolFees := node.MustKey("protocolFees")
 	uassert.True(t, protocolFees.IsArray())
+
+	println("1111")
 
 	protocolFees.ArrayEach(func(i int, fee *json.Node) {
 		tokenPath, err := fee.MustKey("tokenPath").GetString()
@@ -116,5 +129,6 @@ func TestGetClaimableRewardByAddress_NoRewards(t *testing.T) {
 	addr := testutils.TestAddress("no_reward_test")
 
 	result := GetClaimableRewardByAddress(addr)
+	println("result", result)
 	uassert.Equal(t, result, "")
 }
