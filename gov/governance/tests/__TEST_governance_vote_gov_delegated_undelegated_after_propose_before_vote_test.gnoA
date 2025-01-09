@@ -2,6 +2,7 @@ package governance
 
 import (
 	"std"
+	"strconv"
 	"testing"
 	"time"
 
@@ -31,7 +32,7 @@ func init() {
 		ExecutionDelay:                uint64(10),   // 10s ≈ 5 block
 		ExecutionWindow:               uint64(1000), // 500 block
 	}
-	configVersions[1] = config
+	setConfigVersion(1, config)
 }
 
 func TestProposeText(t *testing.T) {
@@ -97,10 +98,13 @@ func testProposeText(t *testing.T) {
 			proposalID := ProposeText("test_title", "test_description")
 			uassert.Equal(t, proposalID, uint64(1))
 
-			proposal := proposals[proposalID]
+			// proposal := proposals[proposalID]
+			pp, ok := proposals.Get(strconv.FormatUint(proposalID, 10))
+			uassert.True(t, ok)
+			proposal := pp.(ProposalInfo)
 			uassert.Equal(t, proposal.QuorumAmount, uint64(1_500_000)) // 50% of voting xGNS supply
 
-			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.ExecutionState.CreatedAt - config.VotingWeightSmoothingDuration)
+			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.CreatedAt - config.VotingWeightSmoothingDuration)
 			// config.VotingWeightSmoothingDuration = 10s = 5 block
 
 			uassert.Equal(t, maxVotingWeight, uint64(0))
@@ -120,10 +124,12 @@ func testProposeText(t *testing.T) {
 			proposalID := ProposeText("test_title", "test_description")
 			uassert.Equal(t, proposalID, uint64(2))
 
-			proposal := proposals[proposalID]
+			pp, ok := proposals.Get(strconv.FormatUint(proposalID, 10))
+			uassert.True(t, ok)
+			proposal := pp.(ProposalInfo)
 			uassert.Equal(t, proposal.QuorumAmount, uint64(1_500_000)) // 50% of voting xGNS supply
 
-			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.ExecutionState.CreatedAt - config.VotingWeightSmoothingDuration)
+			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.CreatedAt - config.VotingWeightSmoothingDuration)
 			// config.VotingWeightSmoothingDuration = 10s = 5 block
 
 			uassert.Equal(t, maxVotingWeight, uint64(3000000))
@@ -153,7 +159,9 @@ func testVote(t *testing.T) {
 		std.TestSetRealm(dummyRealm)
 		Vote(proposalId, true)
 
-		proposal := proposals[proposalId]
+		pp, ok := proposals.Get(strconv.FormatUint(proposalId, 10))
+		uassert.True(t, ok)
+		proposal := pp.(ProposalInfo)
 		uassert.Equal(t, "2000000", proposal.Yea.ToString()) // 2_000_000
 		uassert.Equal(t, "0", proposal.Nay.ToString())
 	})

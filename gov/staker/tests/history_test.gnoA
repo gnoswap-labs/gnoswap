@@ -18,7 +18,7 @@ func TestGetDelegatedCumulative(t *testing.T) {
 
 	// simulate time passing and additional stakes
 	currentTime := uint64(1000)
-	delegationStatHistory[delegateAddr] = []DelegationStatHistory{
+	history := []DelegationStatHistory{
 		{
 			amount:       1000,
 			updatedBlock: 1,
@@ -35,6 +35,8 @@ func TestGetDelegatedCumulative(t *testing.T) {
 			updatedAt:    currentTime + 200,
 		},
 	}
+
+	delegationStatHistory.Set(delegateAddr.String(), history)
 
 	tests := []struct {
 		name           string

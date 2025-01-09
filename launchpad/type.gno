@@ -78,7 +78,7 @@ type Deposit struct {
 	projectId string
 	tier      string // 30, 60, 180 // instead of tierId
 	depositor std.Address
-	amount    uint64
+	// amount    uint64
 
 	depositHeight uint64
 	depositTime   uint64

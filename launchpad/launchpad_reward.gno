@@ -25,11 +25,11 @@ func CollectProtocolFee() {
 }
 
 var (
-	lastCalculatedHeight uint64
+	//lastCalculatedHeight uint64
 )
 
 func init() {
-	lastCalculatedHeight = uint64(std.GetHeight())
+	//lastCalculatedHeight = uint64(std.GetHeight())
 }
 
 // CollectRewardByProjectId collects reward from entire deposit of certain project by caller
@@ -44,7 +44,6 @@ func CollectRewardByProjectId(projectId string) uint64 {
 		return 0
 	}
 
-	calculateDepositReward()
 	project = projects[projectId] // get updates project
 
 	caller := std.PrevRealm().Addr()
@@ -70,15 +69,9 @@ func CollectRewardByProjectId(projectId string) uint64 {
 			continue
 		}
 
-		if deposit.rewardAmount > 0 {
-			if deposit.rewardCollectTime != 0 {
-				toUser += deposit.rewardAmount
-			} else {
-				if uint64(std.GetHeight()) < deposit.claimableHeight {
-					continue
-				}
-				toUser += deposit.rewardAmount
-			}
+		reward := rewardStates.Get(projectId, deposit.tier).Claim(depositId, uint64(std.GetHeight()))
+		if reward > 0 {
+			toUser += reward
 
 			std.Emit(
 				"CollectRewardByProjectId",
@@ -86,28 +79,28 @@ func CollectRewardByProjectId(projectId string) uint64 {
 				"prevRealm", prevRealm,
 				"projectId", projectId,
 				"internal_depositId", depositId,
-				"internal_amount", ufmt.Sprintf("%d", deposit.rewardAmount),
+				"internal_amount", ufmt.Sprintf("%d", reward),
 			)
 
 			// update project
-			project.totalCollectedAmount += deposit.rewardAmount
+			project.totalCollectedAmount += reward
 
 			var tier Tier
 			switch deposit.tier {
 			case "30":
 				tier = project.tier30
-				tier.userCollectedAmount += deposit.rewardAmount
+				tier.userCollectedAmount += reward
 			case "90":
 				tier = project.tier90
-				tier.userCollectedAmount += deposit.rewardAmount
+				tier.userCollectedAmount += reward
 			case "180":
 				tier = project.tier180
-				tier.userCollectedAmount += deposit.rewardAmount
+				tier.userCollectedAmount += reward
 			}
 			project = setTier(project, deposit.tier, tier)
 
 			// update deposit
-			deposit.rewardCollected += deposit.rewardAmount
+			deposit.rewardCollected += reward
 			deposit.rewardAmount = 0
 			deposit.rewardCollectHeight = uint64(std.GetHeight())
 			deposit.rewardCollectTime = uint64(time.Now().Unix())
@@ -153,22 +146,14 @@ func CollectRewardByDepositId(depositId string) uint64 {
 		return 0
 	}
 
-	calculateDepositReward()
 	project = projects[deposit.projectId] // get updates project
 	deposit = deposits[depositId]         // get updated deposit
 
 	toUser := uint64(0)
 
-	if deposit.rewardAmount > 0 {
-		if deposit.rewardCollectTime != 0 {
-			toUser += deposit.rewardAmount
-		} else {
-			if uint64(std.GetHeight()) < deposit.claimableHeight {
-				return 0
-			}
-
-			toUser += deposit.rewardAmount
-		}
+	reward := rewardStates.Get(deposit.projectId, deposit.tier).Claim(depositId, uint64(std.GetHeight()))
+	if reward > 0 {
+		toUser += reward
 
 		prevAddr, prevRealm := getPrev()
 		std.Emit(
@@ -176,25 +161,25 @@ func CollectRewardByDepositId(depositId string) uint64 {
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
 			"depositId", depositId,
-			"internal_amount", ufmt.Sprintf("%d", deposit.rewardAmount),
+			"internal_amount", ufmt.Sprintf("%d", reward),
 		)
 
 		// update project
-		project.totalCollectedAmount += deposit.rewardAmount
+		project.totalCollectedAmount += reward
 		tierStr := deposit.tier
 		switch tierStr {
 		case "30":
-			project.tier30.userCollectedAmount += deposit.rewardAmount
+			project.tier30.userCollectedAmount += reward
 		case "90":
-			project.tier90.userCollectedAmount += deposit.rewardAmount
+			project.tier90.userCollectedAmount += reward
 		case "180":
-			project.tier180.userCollectedAmount += deposit.rewardAmount
+			project.tier180.userCollectedAmount += reward
 		}
 
 		projects[deposit.projectId] = project
 
 		// update deposit
-		deposit.rewardCollected += deposit.rewardAmount
+		deposit.rewardCollected += reward
 		deposit.rewardAmount = 0
 		deposit.rewardCollectHeight = uint64(std.GetHeight())
 		deposit.rewardCollectTime = uint64(time.Now().Unix())
@@ -210,8 +195,9 @@ func CollectRewardByDepositId(depositId string) uint64 {
 
 	return toUser
 }
-
+/*
 var lastCalculateHeightForProjectTier = make(map[string]uint64) // using height
+
 
 // amount of project token for each deposit will be calculated
 func calculateDepositReward() {
@@ -355,7 +341,7 @@ func calculateDepositReward() {
 		projects[project.id] = project
 	}
 }
-
+*/
 func calcDepositRatioX96(tierAmount uint64, amount uint64) *u256.Uint {
 	amountX96 := new(u256.Uint).Mul(u256.NewUint(amount), q96)
 	amountX96x := new(u256.Uint).Mul(amountX96, u256.NewUint(1_000_000_000))
