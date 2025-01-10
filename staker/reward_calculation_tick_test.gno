@@ -69,10 +69,10 @@ func TestTicksBasic(t *testing.T) {
 
 	tick100 := ticks.Get(100)
 	uassert.True(t, ticks.Has(100))
-	uassert.Equal(t, tick100.id, 100)
+	uassert.Equal(t, tick100.id, int32(100))
 
 	tick100Again := ticks.Get(100)
-	uassert.Equal(t, tick100Again, tick100)
+	uassert.Equal(t, int32(tick100Again.id), int32(tick100.id))
 	uassert.True(t, tick100Again.stakedLiquidityGross.IsZero())
 	uassert.True(t, tick100Again.stakedLiquidityDelta.IsZero())
 

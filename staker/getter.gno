@@ -458,7 +458,7 @@ func GetDepositWarmUp(lpTokenId uint64) []Warmup {
 // Panics:
 //   - If the pool tier does not exist for the given poolPath
 func GetPoolTier(poolPath string) uint64 {
-	return poolTier.CurrentTier(poolPath, uint64(std.GetHeight()))
+	return poolTier.CurrentTier(poolPath)
 }
 
 // GetPoolTierRatio retrieves the current reward ratio for the specified pool tier.
@@ -472,9 +472,8 @@ func GetPoolTier(poolPath string) uint64 {
 // Returns:
 // - uint64: The current reward ratio for the specified pool tier.
 func GetPoolTierRatio(poolPath string) uint64 {
-	currentHeight := uint64(std.GetHeight())
 	tier := GetPoolTier(poolPath)
-	return poolTier.CurrentRatio(tier, currentHeight)
+	return poolTier.tierRatio.Get(tier)
 }
 
 // GetPoolTierCount retrieves the current count of pools in the specified tier.
@@ -491,7 +490,7 @@ func GetPoolTierCount(tier uint64) uint64 {
 	if tier == 0 {
 		return 0
 	}
-	return poolTier.CurrentCount(tier, uint64(std.GetHeight()))
+	return uint64(poolTier.CurrentCount(tier))
 }
 
 // GetPoolReward retrieves the current reward amount for the specified pool tier.
@@ -504,7 +503,9 @@ func GetPoolTierCount(tier uint64) uint64 {
 // Returns:
 // - uint64: The current reward amount for the specified tier.
 func GetPoolReward(tier uint64) uint64 {
-	return poolTier.CurrentReward(tier, uint64(std.GetHeight()))
+	rewardDenominators := poolTier.tierRatio.IntoRewardDenominators(poolTier.CurrentCounts())
+	currentEmission := poolTier.emissionUpdate(uint64(std.GetHeight()), uint64(std.GetHeight())).LastEmissionUpdate
+	return ApplyDenominator(currentEmission, rewardDenominators[tier])
 }
 
 // GetRewardCacheOf retrieves the reward cache tree for the specified pool tier.
@@ -517,9 +518,9 @@ func GetPoolReward(tier uint64) uint64 {
 //
 // Returns:
 // - *RewardCacheTree: A pointer to the reward cache tree for the specified tier.
-func GetRewardCacheOf(tier uint64) *RewardCacheTree {
-	return poolTier.rewardCacheOf(tier)
-}
+//func GetRewardCacheOf(tier uint64) *RewardCacheTree {
+//	return poolTier.rewardCacheOf(tier)
+//}
 
 func printExternalInfo(poolPath string) {
 	currentHeight := std.GetHeight()

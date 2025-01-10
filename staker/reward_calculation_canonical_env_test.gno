@@ -13,6 +13,8 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	en "gno.land/r/gnoswap/v1/emission"
 )
 
 type canonicalPool struct {
@@ -71,7 +73,7 @@ type canonicalRewardState struct {
 	CurrentTimestamp int64
 }
 
-func NewCanonicalRewardState(t *testing.T, poolTier *PoolTier, pools *Pools, deposits *Deposits, tickCrossHook func(pools *Pools, height func() int64) func(poolPath string, tickId int32, zeroForOne bool)) *canonicalRewardState {
+func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tickCrossHook func(pools *Pools, height func() int64) func(poolPath string, tickId int32, zeroForOne bool)) *canonicalRewardState {
 	result := &canonicalRewardState{
 		t: t,
 		global: &emulatedGlobalState{
@@ -89,6 +91,7 @@ func NewCanonicalRewardState(t *testing.T, poolTier *PoolTier, pools *Pools, dep
 	result.tickCrossHook = tickCrossHook(pools, func() int64 {
 		return int64(result.CurrentHeight())
 	})
+	result.global.poolTier = NewPoolTier(1, test_gnousdc, result.EmissionUpdates)
 
 	result.NextBlock() // must skip height 0
 
@@ -108,7 +111,16 @@ func (self *canonicalRewardState) isInRange(deposit *Deposit) bool {
 	return deposit.tickLower <= tick && tick < deposit.tickUpper
 }
 
-func (self *canonicalRewardState) EmissionUpdates(startHeight uint64, endHeight uint64) ([]uint64, []uint64) {
+func (self *canonicalRewardState) GetLatestEmissionUpdate() uint64 {
+	var emission uint64
+	self.emissionUpdates.ReverseIterate(0, uint64(self.CurrentHeight()), func(key uint64, value interface{}) bool {
+		emission = value.(uint64)
+		return true
+	})
+	return emission
+}
+
+func (self *canonicalRewardState) EmissionUpdates(startHeight uint64, endHeight uint64) en.EmissionUpdate {
 	heights := make([]uint64, 0)
 	updates := make([]uint64, 0)
 	self.emissionUpdates.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
@@ -117,7 +129,11 @@ func (self *canonicalRewardState) EmissionUpdates(startHeight uint64, endHeight 
 		return false
 	})
 
-	return heights, updates
+	return en.EmissionUpdate{
+		LastEmissionUpdate: self.GetLatestEmissionUpdate(),
+		EmissionUpdateHeights: heights,
+		EmissionUpdates: updates,
+	}
 }
 
 func (self *canonicalRewardState) SetEmissionUpdate(emission uint64) {
@@ -237,13 +253,14 @@ func (self *canonicalRewardState) CanonicalRewardOfHeight(depositId uint64, heig
 
 func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]uint64, []uint64, []map[string]uint64, []map[string]uint64) {
 	currentHeight := uint64(self.CurrentHeight())
-	emissionUpdateHeights, emissionUpdates := self.EmissionUpdates(*self.global.poolTier.lastRewardCacheHeight, currentHeight)
+	emissionUpdate := self.EmissionUpdates(*self.global.poolTier.lastRewardCacheHeight, currentHeight)
+
 	deposits := self.global.deposits
 	pools := self.global.pools
 	poolTier := self.global.poolTier
 
 	// cache per-tier and per-pool rewards
-	poolTier.cacheReward(currentHeight, emissionUpdateHeights, emissionUpdates)
+	poolTier.cacheReward(currentHeight, pools)
 
 	deposit := deposits.Get(tokenId)
 	poolPath := deposit.targetPoolPath
@@ -254,7 +271,7 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 		pools.Set(poolPath, pool)
 	}
 
-	pool.cacheInternalReward(poolTier, currentHeight)
+	// cacheInternalReward is called by poolTier.cacheReward
 	pool.cacheExternalReward(currentHeight)
 
 	// eligible(in-range) intervals for a position
@@ -466,7 +483,7 @@ func (self *canonicalRewardState) ChangePoolTier(poolPath string, tier uint64) {
 	if !self.global.pools.Has(poolPath) {
 		self.global.pools.Set(poolPath, NewPool(poolPath, uint64(self.CurrentHeight())))
 	}
-	self.global.poolTier.changeTier(uint64(self.CurrentHeight()), poolPath, tier)
+	self.global.poolTier.changeTier(uint64(self.CurrentHeight()), self.global.pools, poolPath, tier)
 }
 
 func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64, initialTick int32) {
@@ -478,7 +495,7 @@ func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64
 		tickCrossHook: self.tickCrossHook,
 	}
 	self.global.pools.Set(poolPath, NewPool(poolPath, uint64(self.CurrentHeight())))
-	self.global.poolTier.changeTier(uint64(self.CurrentHeight()), poolPath, initialTier)
+	self.global.poolTier.changeTier(uint64(self.CurrentHeight()), self.global.pools, poolPath, initialTier)
 }
 
 func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {

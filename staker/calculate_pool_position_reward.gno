@@ -3,6 +3,7 @@ package staker
 import (
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
+	en "gno.land/r/gnoswap/v1/emission"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -25,49 +26,51 @@ type Reward struct {
 }
 
 func calcPositionRewardByWarmups(currentHeight uint64, tokenId uint64) []Reward {
-	deposit := deposits.Get(tokenId)
-	emissionUpdateHeights, emissionUpdates := gns.EmissionUpdates(deposit.lastCollectHeight, currentHeight)
-	internalRewards, internalPenalties, externalRewards, externalPenalties := CalcPositionReward(currentHeight, tokenId, deposits, pools, poolTier, emissionUpdateHeights, emissionUpdates)
+	rewards := CalcPositionReward(CalcPositionRewardParam{
+		CurrentHeight: currentHeight,
+		Deposits: deposits,
+		Pools: pools,
+		PoolTier: poolTier,
+		TokenId: tokenId,
+	})
 
-	rewards := make([]Reward, len(internalRewards))
-	for i := range internalRewards {
-		rewards[i] = Reward{}
-		rewards[i].Internal = internalRewards[i]
-		rewards[i].InternalPenalty = internalPenalties[i]
-		if len(externalRewards) > i {
-			rewards[i].External = externalRewards[i]
-			rewards[i].ExternalPenalty = externalPenalties[i]
-		}
-	}
 	return rewards
 }
 
 func calcPositionReward(currentHeight uint64, tokenId uint64) Reward {
-	deposit := deposits.Get(tokenId)
-	emissionUpdateHeights, emissionUpdates := gns.EmissionUpdates(deposit.lastCollectHeight, currentHeight)
-	internalRewards, internalPenalties, externalRewards, externalPenalties := CalcPositionReward(currentHeight, tokenId, deposits, pools, poolTier, emissionUpdateHeights, emissionUpdates)
+	rewards := CalcPositionReward(CalcPositionRewardParam{
+		CurrentHeight: currentHeight,
+		Deposits: deposits,
+		Pools: pools,
+		PoolTier: poolTier,
+		TokenId: tokenId,
+	})
 
 	internal := uint64(0)
-	for _, reward := range internalRewards {
-		internal += reward
+	for _, reward := range rewards {
+		internal += reward.Internal
 	}
 
 	internalPenalty := uint64(0)
-	for _, penalty := range internalPenalties {
-		internalPenalty += penalty
+	for _, reward := range rewards {
+		internalPenalty += reward.InternalPenalty
 	}
 
 	externalReward := make(map[string]uint64)
-	for _, external := range externalRewards {
-		for incentive, reward := range external {
-			externalReward[incentive] += reward
+	for _, reward := range rewards {
+		if reward.External != nil {
+			for incentive, reward := range reward.External {
+				externalReward[incentive] += reward
+			}
 		}
 	}
 
 	externalPenalty := make(map[string]uint64)
-	for _, external := range externalPenalties {
-		for incentive, penalty := range external {
-			externalPenalty[incentive] += penalty
+	for _, reward := range rewards {
+		if reward.ExternalPenalty != nil {
+			for incentive, penalty := range reward.ExternalPenalty {
+				externalPenalty[incentive] += penalty
+			}
 		}
 	}
 
@@ -79,41 +82,74 @@ func calcPositionReward(currentHeight uint64, tokenId uint64) Reward {
 	}
 }
 
-func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits, pools *Pools, poolTier *PoolTier, emissionUpdateHeights []uint64, emissionUpdates []uint64) ([]uint64, []uint64, []map[string]uint64, []map[string]uint64) {
-	// cache per-tier and per-pool rewards
-	poolTier.cacheReward(currentHeight, emissionUpdateHeights, emissionUpdates)
+type CalcPositionRewardParam struct {
+	// Environmental variables
+	CurrentHeight uint64
+	Deposits *Deposits
+	Pools *Pools
+	PoolTier *PoolTier
 
-	deposit := deposits.Get(tokenId)
+	// Position variables
+	TokenId uint64
+}
+
+func CalcPositionReward(param CalcPositionRewardParam) []Reward {
+	println("===== CalcPositionReward", param.TokenId)
+
+	// cache per-pool rewards in the internal incentive(tiers)
+	param.PoolTier.cacheReward(param.CurrentHeight, param.Pools)
+
+	deposit := param.Deposits.Get(param.TokenId)
 	poolPath := deposit.targetPoolPath
 
-	pool, ok := pools.Get(poolPath)
+	pool, ok := param.Pools.Get(poolPath)
 	if !ok {
-		pool = NewPool(poolPath, currentHeight)
-		pools.Set(poolPath, pool)
+		pool = NewPool(poolPath, param.CurrentHeight)
+		param.Pools.Set(poolPath, pool)
 	}
 
-	pool.cacheInternalReward(poolTier, currentHeight)
-
-	pool.cacheExternalReward(currentHeight)
-
+	// cacheInternalReward is called by poolTier.cacheReward
+	pool.cacheExternalReward(param.CurrentHeight)
 	// eligible(in-range) intervals for a position
-	upperTick := pool.ticks.Get(deposit.tickUpper)
-	lowerTick := pool.ticks.Get(deposit.tickLower)
+	// XXX: Tick ordering code, memoing for future
+	tickUpper := deposit.tickUpper
+	tickLower := deposit.tickLower
+	token0, token1, _ := poolPathDivide(poolPath)
+	if token1 < token0 {
+		tickUpper, tickLower = -tickLower, -tickUpper
+	}
+	upperTick := pool.ticks.Get(tickUpper)
+	lowerTick := pool.ticks.Get(tickLower)
+	// XXX: Tick ordering code, memoing for future
 
 	lastCollectHeight := deposit.lastCollectHeight
+	println("===== lastCollectHeight", param.TokenId, lastCollectHeight)
 
 	initialUpperCross := upperTick.previousCross(lastCollectHeight)
 	initialLowerCross := lowerTick.previousCross(lastCollectHeight)
 	currentlyInRange := initialUpperCross && !initialLowerCross
 
-	tickUpperCrosses := upperTick.crossInfo(lastCollectHeight, currentHeight)
-	tickLowerCrosses := lowerTick.crossInfo(lastCollectHeight, currentHeight)
+	tickUpperCrosses := upperTick.crossInfo(lastCollectHeight, param.CurrentHeight)
+	tickLowerCrosses := lowerTick.crossInfo(lastCollectHeight, param.CurrentHeight)
 
-	internalRewards, internalPenalties := pool.InternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(currentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
+	internalRewards, internalPenalties := pool.InternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(param.CurrentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
 
-	externalRewards, externalPenalties := pool.ExternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(currentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
+	externalRewards, externalPenalties := pool.ExternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(param.CurrentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
 
-	return internalRewards, internalPenalties, externalRewards, externalPenalties
+	rewards := make([]Reward, len(internalRewards))
+	for i := range internalRewards {
+		rewards[i] = Reward{
+			Internal:        internalRewards[i],
+			InternalPenalty: internalPenalties[i],
+		}
+		if externalRewards != nil {
+			if len(externalRewards[i]) > 0 {
+				rewards[i].External = externalRewards[i]
+				rewards[i].ExternalPenalty = externalPenalties[i]
+			}
+		}
+	}
+	return rewards
 }
 
 func ProcessUnClaimableReward(poolPath string, endHeight uint64) (uint64, map[string]uint64) {

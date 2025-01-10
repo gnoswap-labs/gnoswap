@@ -334,7 +334,27 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 			liquidityInRangeDelta = i256.Zero().Neg(liquidityInRangeDelta)
 		}
 		stakedLiquidity := pool.CurrentStakedLiquidity(blockNumber)
-		pool.stakedLiquidity.Set(blockNumber, liquidityMathAddDelta(stakedLiquidity, liquidityInRangeDelta))
+		deltaApplied := liquidityMathAddDelta(stakedLiquidity, liquidityInRangeDelta)
+
+
+		switch deltaApplied.Sign() {
+		case -1:
+			panic("stakedLiquidity is less than 0")
+		case 0:
+			if stakedLiquidity.Sign() == 1 {
+				// StakedLiquidity moved from positive to zero, start unclaimable period
+				pool.startInternalUnclaimablePeriod(blockNumber)
+			}
+		case 1:
+			if stakedLiquidity.Sign() == 0 {
+				// StakedLiquidity moved from zero to positive, end unclaimable period
+				pool.endInternalUnclaimablePeriod(blockNumber)
+			}
+		}
+
+		pool.updateRewardByLiquidityChange(*pool.tierRewardTotal, blockNumber, deltaApplied)
+
+		pool.stakedLiquidity.Set(blockNumber, deltaApplied)
 
 		// I'm not sure if this is needed. We may not need to update the pool info because the stakedLiquidity pointer itself has not changed.
 		// pools.Set(poolPath, pool)

@@ -444,17 +444,17 @@ func burnAllNFT(t *testing.T) {
 func deletePoolTier(t *testing.T, poolPath string) {
 	t.Helper()
 	if poolTier != nil {
-		poolTier.changeTier(uint64(std.GetHeight()), poolPath, 0)
+		poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, 0)
 	}
 }
 
 func addPoolTier(t *testing.T, poolPath string, tier uint64) {
 	t.Helper()
 	if poolTier != nil {
-		poolTier.changeTier(uint64(std.GetHeight()), poolPath, tier)
 		if pools != nil {
 			pools.GetOrCreate(poolPath)
 		}
+		poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, tier)
 	}
 }
 
@@ -463,9 +463,10 @@ func changeWarmup(t *testing.T, index int, blockDuration int64) {
 }
 
 func getNumPoolTiers(t *testing.T) (uint64, uint64, uint64) {
-	tier1Num := poolTier.count[1].tree.Size()
-	tier2Num := poolTier.count[2].tree.Size()
-	tier3Num := poolTier.count[3].tree.Size()
+	counts := poolTier.CurrentCounts()
+	tier1Num := counts[1]
+	tier2Num := counts[2]
+	tier3Num := counts[3]
 
 	return uint64(tier1Num), uint64(tier2Num), uint64(tier3Num)
 }
@@ -538,7 +539,7 @@ func getPrintInfo(t *testing.T) string {
 
 	poolTiers := make(map[string]uint64)
 	pools.tree.Iterate("", "", func(poolPath string, iPool interface{}) bool {
-		poolTier := poolTier.CurrentTier(poolPath, uint64(std.GetHeight()))
+		poolTier := poolTier.CurrentTier(poolPath)
 		poolTiers[poolPath] = poolTier
 		return false
 	})
@@ -647,7 +648,7 @@ func makePoolsNode(t *testing.T, emissionPool []ApiEmissionDebugPool) []*json.No
 
 	poolTiers := make(map[string]uint64)
 	pools.tree.Iterate("", "", func(poolPath string, iPool interface{}) bool {
-		poolTier := poolTier.CurrentTier(poolPath, uint64(std.GetHeight()))
+		poolTier := poolTier.CurrentTier(poolPath)
 		poolTiers[poolPath] = poolTier
 		return false
 	})

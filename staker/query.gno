@@ -41,7 +41,7 @@ func QueryPoolData(poolPath string) (*PoolData, error) {
 	}
 
 	currentHeight := uint64(std.GetHeight())
-	tier := poolTier.CurrentTier(poolPath, currentHeight)
+	tier := poolTier.CurrentTier(poolPath)
 
 	ictvIds := filterActiveIncentives(pool, currentHeight)
 

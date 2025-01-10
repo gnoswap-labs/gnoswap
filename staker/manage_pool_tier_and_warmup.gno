@@ -34,7 +34,7 @@ func SetPoolTier(poolPath string, tier uint64) {
 func setPoolTier(poolPath string, tier uint64) {
 	en.MintAndDistributeGns()
 
-	poolTier.changeTier(uint64(std.GetHeight()), poolPath, tier)
+	poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, tier)
 	pools.GetOrCreate(poolPath)
 
 	prevAddr, prevRealm := getPrev()
@@ -66,7 +66,7 @@ func ChangePoolTier(poolPath string, tier uint64) {
 func changePoolTier(poolPath string, tier uint64) {
 	en.MintAndDistributeGns()
 
-	poolTier.changeTier(uint64(std.GetHeight()), poolPath, tier)
+	poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, tier)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -97,7 +97,7 @@ func RemovePoolTier(poolPath string) {
 func removePoolTier(poolPath string) {
 	en.MintAndDistributeGns()
 
-	poolTier.changeTier(uint64(std.GetHeight()), poolPath, NOT_EMISSION_TARGET_TIER)
+	poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, NOT_EMISSION_TARGET_TIER)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -147,6 +147,8 @@ func pctToIndex(pct int64) int {
 		return 2
 	case 100:
 		return 3
+	default:
+		panic("staker.gno__pctToIndex() || pct is not valid")
 	}
 }
 

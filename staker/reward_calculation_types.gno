@@ -169,13 +169,16 @@ type RewardCalculationFunc = func(blockNumbers uint64, poolReward interface{})
 func (self *RewardCacheTree) RewardPerInterval(startHeight, endHeight uint64, f RewardCalculationFunc) {
 	currentPoolReward := self.CurrentReward(startHeight)
 	currentHeight := startHeight
+	println("RewardPerInterval 0:", startHeight, endHeight, currentPoolReward)
 	self.Iterate(startHeight, endHeight, func(height uint64, poolReward interface{}) bool {
+		println("RewardPerInterval 1:", height, currentHeight, poolReward, currentPoolReward)
 		f(height-currentHeight, currentPoolReward)
 		currentHeight = height
 		currentPoolReward = poolReward
 		return false
 	})
 	if endHeight > currentHeight {
+		println("RewardPerInterval 2:", endHeight, currentHeight, currentPoolReward)
 		f(endHeight-currentHeight, currentPoolReward)
 	}
 }

@@ -135,7 +135,7 @@ func init() {
 	// ONLY GNOT:GNS 0.3%
 
 	// poolTier.changeTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1, 1)
-	poolTier = NewPoolTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1)
+	poolTier = NewPoolTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1, en.GetStakerEmissionUpdates)
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1) // must update pools tree
 }
 
@@ -188,14 +188,16 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	currentHeight := std.GetHeight()
 	liquidity := getLiquidity(tokenId)
 
+	tickLower, tickUpper := getTickOf(tokenId)
+
 	// staked status
 	deposit := &Deposit{
 		owner:             caller,
 		stakeTimestamp:    time.Now().Unix(),
 		stakeHeight:       currentHeight,
 		targetPoolPath:    poolPath,
-		tickLower:         pn.PositionGetPositionTickLower(tokenId),
-		tickUpper:         pn.PositionGetPositionTickUpper(tokenId),
+		tickLower:         tickLower,
+		tickUpper:         tickUpper,
 		liquidity:         liquidity,
 		lastCollectHeight: uint64(currentHeight),
 		warmups:           InstantiateWarmup(currentHeight),
@@ -222,15 +224,10 @@ func StakeToken(tokenId uint64) (string, string, string) {
 
 	// this could happen because of how position stores the ticks.
 	// ticks are negated if the token1 < token0
-	token0 := pl.PoolGetToken0(poolPath)
-	token1 := pl.PoolGetToken1(poolPath)
-	if token1 < token0 {
-		pool.ticks.Get(deposit.tickLower).modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
-		pool.ticks.Get(deposit.tickUpper).modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
-	} else {
-		pool.ticks.Get(deposit.tickLower).modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
-		pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
-	}
+	upperTick := pool.ticks.Get(tickUpper)
+	lowerTick := pool.ticks.Get(tickLower)
+	upperTick.modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
+	lowerTick.modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
 
 	prevAddr, prevPkgPath := getPrev()
 
@@ -339,7 +336,7 @@ func transferDeposit(tokenId uint64, owner, caller, to std.Address) error {
 //   - poolPath (string): The path of the pool to which the LP token is staked
 //
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#collectreward
-func CollectReward(tokenId uint64, unwrapResult bool) string {
+func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 	assertOnlyNotHalted()
 
 	en.MintAndDistributeGns()
@@ -353,6 +350,8 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 	currentHeight := std.GetHeight()
 	// get all internal and external rewards
 	reward := calcPositionReward(uint64(currentHeight), tokenId)
+
+	println("reward", reward)
 
 	// update lastCollectHeight to current height
 	deposit.lastCollectHeight = uint64(currentHeight)
@@ -380,6 +379,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 
 	// internal reward to user
 	toUser := handleUnstakingFee(consts.GNS_PATH, reward.Internal, true, tokenId, deposit.targetPoolPath)
+	println("toUser", toUser)
 	if toUser > 0 {
 		gns.Transfer(a2u(deposit.owner), toUser)
 		// internal penalty to community pool
@@ -414,7 +414,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 		"internal_unClaimable", strconv.FormatUint(unClaimableInternal, 10),
 	)
 
-	return strconv.FormatUint(toUser, 10)
+	return strconv.FormatUint(toUser, 10), strconv.FormatUint(reward.InternalPenalty, 10)
 }
 
 /*
@@ -528,16 +528,10 @@ func applyUnStake(tokenId uint64) {
 		pool.modifyDeposit(tokenId, signedLiquidity, currentHeight)
 	}
 
-	poolPath := pn.PositionGetPositionPoolKey(tokenId)
-	token0 := pl.PoolGetToken0(poolPath)
-	token1 := pl.PoolGetToken1(poolPath)
-	if token1 < token0 {
-		pool.ticks.Get(deposit.tickLower).modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
-		pool.ticks.Get(deposit.tickUpper).modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
-	} else {
-		pool.ticks.Get(deposit.tickLower).modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
-		pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
-	}
+	upperTick := pool.ticks.Get(deposit.tickUpper)
+	lowerTick := pool.ticks.Get(deposit.tickLower)
+	upperTick.modifyDepositUpper(currentHeight, currentTick, signedLiquidity)
+	lowerTick.modifyDepositLower(currentHeight, currentTick, signedLiquidity)
 
 	deposits.Remove(tokenId)
 
@@ -650,4 +644,10 @@ func getTokenPairBalanceFromPosition(poolPath string, tokenId uint64) (string, s
 	}
 
 	return token0Balance, token1Balance
+}
+
+func getTickOf(tokenId uint64) (int32, int32) {
+	tickLower := pn.PositionGetPositionTickLower(tokenId)
+	tickUpper := pn.PositionGetPositionTickUpper(tokenId)
+	return tickLower, tickUpper
 }
