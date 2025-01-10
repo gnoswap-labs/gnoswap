@@ -217,6 +217,10 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	currentTick := pl.PoolGetSlot0Tick(poolPath)
 	isInRange := false
 
+	// TODO: call cache functions at the every staker related state change
+	poolTier.cacheReward(uint64(currentHeight), pools)
+	pool.cacheExternalReward(uint64(currentHeight))
+
 	if pn.PositionIsInRange(tokenId) {
 		isInRange = true
 		pool.modifyDeposit(tokenId, signedLiquidity, uint64(currentHeight))
@@ -350,8 +354,6 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 	currentHeight := std.GetHeight()
 	// get all internal and external rewards
 	reward := calcPositionReward(uint64(currentHeight), tokenId)
-
-	println("reward", reward)
 
 	// update lastCollectHeight to current height
 	deposit.lastCollectHeight = uint64(currentHeight)
@@ -650,7 +652,7 @@ func getTickOf(tokenId uint64) (int32, int32) {
 	tickLower := pn.PositionGetPositionTickLower(tokenId)
 	tickUpper := pn.PositionGetPositionTickUpper(tokenId)
 	if tickUpper < tickLower {
-		panic(ufmt.Sprintf("tickUpper(%d) is less than tickLower(%d)", tickUpper.id, tickLower.id))
+		panic(ufmt.Sprintf("tickUpper(%d) is less than tickLower(%d)", tickUpper, tickLower))
 	}
-	return tickLower.id, tickUpper.id
+	return tickLower, tickUpper
 }

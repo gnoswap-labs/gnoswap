@@ -475,12 +475,10 @@ func TestTickCross_5(t *testing.T) {
 
 	// eligible
 	// entered range
-	println(">>>> MoveTick", gnousdc, 100)
 	canonical.MoveTick(gnousdc, 100)
 	canonical.NextBlock()
 
 	// block 3
-	println(">>>> NextBlock", gnousdc, 100)
 	canonical.AssertCanonicalRewardOf(0, expected)
 	canonical.AssertEmulatedRewardOf(0, expected)
 

@@ -156,7 +156,6 @@ func (self *Pool) cacheRewardPerLiquidityUnit(startHeight, endHeight uint64, cur
 }
 
 func (self *Pool) cacheInternalReward(currentHeight uint64, emissionUpdate en.EmissionUpdate, rewardDenominator uint64) {
-	println(">>>> cacheInternalReward", currentHeight, emissionUpdate, rewardDenominator)
 	currentEmission := emissionUpdate.LastEmissionUpdate
 
 	startHeight := *self.lastRewardCacheHeight
@@ -176,7 +175,6 @@ func (self *Pool) cacheInternalReward(currentHeight uint64, emissionUpdate en.Em
 
 func (self *Pool) cacheExternalReward(endHeight uint64) {
 	self.stakedLiquidity.Iterate(0, 9999999, func(key uint64, value interface{}) bool {
-		println("(((cacheExternalReward)))", key, value.(*u256.Uint).ToString())
 		return false
 	})
 
@@ -193,7 +191,6 @@ func (self *Pool) cacheExternalReward(endHeight uint64) {
 	self.incentives.cacheRewardPerLiquidityUnit(startHeight, endHeight, currentStakedLiquidity)
 
 	self.incentives.rewardCache.Iterate(0, 9999999, func(key uint64, value interface{}) bool {
-		println("cacheExternalReward", key, value)
 		return false
 	})
 }
@@ -233,6 +230,7 @@ func (self *ExternalRewardState) Calculate(startHeight, endHeight int64, current
 	rewards := make([]map[string]uint64, len(self.deposit.warmups))
 	penalties := make([]map[string]uint64, len(self.deposit.warmups))
 
+
 	for i := range self.rewards {
 		rewards[i] = make(map[string]uint64)
 		penalties[i] = make(map[string]uint64)
@@ -244,17 +242,20 @@ func (self *ExternalRewardState) Calculate(startHeight, endHeight int64, current
 		}
 	}
 
-
 	return rewards, penalties
 }
 
 func (self *ExternalRewardState) AccumulateReward(startHeight, endHeight uint64) {
 	self.pool.incentives.rewardCache.RewardPerInterval(startHeight, endHeight, func(blockNumber uint64, poolRewardI interface{}) {
-		poolRewardRatios := map[string]*u256.Uint{}
-		if poolRewardI != nil {
-			poolRewardRatios = poolRewardI.(map[string]*u256.Uint)
-		}
-		for incentiveId, rewardRatio := range poolRewardRatios {
+		incentiveRewardEntry := poolRewardI.(IncentiveRewardEntry)
+		for _, incentiveId := range incentiveRewardEntry.ActiveIncentives {
+			incentive, ok := self.pool.incentives.GetByIncentiveId(incentiveId)
+			if !ok {
+				panic("incentive not found")
+			}
+			rewardRatio := u256.NewUint(incentive.rewardPerBlock)
+			rewardRatio.Mul(rewardRatio, q192)
+			rewardRatio.Div(rewardRatio, incentiveRewardEntry.TotalStakedLiquidity)
 			positionReward := u256.Zero().Mul(self.deposit.liquidity, rewardRatio)
 			positionReward = u256.Zero().Mul(positionReward, u256.NewUint(blockNumber))
 			acc, ok := self.rewards[self.currentWarmup.Index][incentiveId]
@@ -265,6 +266,7 @@ func (self *ExternalRewardState) AccumulateReward(startHeight, endHeight uint64)
 			self.rewards[self.currentWarmup.Index][incentiveId] = acc
 		}
 	})
+
 }
 
 func (self *ExternalRewardState) ApplyWarmup() {
@@ -367,7 +369,6 @@ func (self *InternalRewardState) Calculate(startHeight, endHeight int64, current
 }
 
 func (self *InternalRewardState) AccumulateReward(startHeight, endHeight uint64) {
-	println("!AccumulateReward", startHeight, endHeight)
 	self.pool.rewardCache.RewardPerInterval(startHeight, endHeight, func(blockNumber uint64, poolRewardI interface{}) {
 		poolRewardRatio := poolRewardI.(*u256.Uint)
 		positionReward := u256.Zero().Mul(self.deposit.liquidity, poolRewardRatio)

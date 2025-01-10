@@ -28,7 +28,7 @@ type Incentives struct {
 
 	incentiveBound *UintTree // blockNumber -> []IncentiveBound
 
-	currentIncentives []string
+	// currentIncentives []string
 
 	rewardCache           *RewardCacheTree // blockNumber -> IncentiveRewardEntry
 	lastRewardCacheHeight *uint64
@@ -44,8 +44,6 @@ func NewIncentives(currentHeight uint64) Incentives {
 
 		rewardCache:           NewRewardCacheTree(),
 		lastRewardCacheHeight: &currentHeight,
-
-		currentIncentives: []string{},
 	}
 }
 
@@ -141,8 +139,10 @@ func (self *Incentives) cacheRewardPerLiquidityUnit(startHeight, endHeight uint6
 
 	self.incentiveBound.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
 		bound := value.([]IncentiveBound)
+		for _, bound := range bound {
+		}
 		reward := IncentiveRewardEntry{
-			ActiveIncentives: []string{},
+			ActiveIncentives: make([]string, len(currentReward.ActiveIncentives)),
 			TotalStakedLiquidity: currentReward.TotalStakedLiquidity.Clone(),
 		}
 		copy(reward.ActiveIncentives, currentReward.ActiveIncentives)
@@ -159,17 +159,19 @@ func (self *Incentives) cacheRewardPerLiquidityUnit(startHeight, endHeight uint6
 			}
 		}
 		self.rewardCache.Set(key, reward)
+		currentReward = reward
 		return false
 	})
 	*self.lastRewardCacheHeight = endHeight
 }
 
 func (self *Incentives) updateRewardByLiquidityChange(currentHeight uint64, liquidity *u256.Uint) {
+	currentReward := self.CurrentReward(currentHeight)
+
 	entry := IncentiveRewardEntry{
-		ActiveIncentives: []string{},
+		ActiveIncentives: make([]string, len(currentReward.ActiveIncentives)),
 		TotalStakedLiquidity: liquidity.Clone(),
 	}
-	copy(entry.ActiveIncentives, self.currentIncentives)
-
+	copy(entry.ActiveIncentives, currentReward.ActiveIncentives)
 	self.rewardCache.Set(currentHeight, entry)
 }

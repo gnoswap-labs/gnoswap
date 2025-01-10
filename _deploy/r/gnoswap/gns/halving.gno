@@ -62,18 +62,21 @@ var (
 	perBlockMint = avl.NewTree() // height => uint64
 ) 
 
+func GetCurrentEmission() uint64 {
+	emision := uint64(0)
+	perBlockMint.ReverseIterate("", EncodeUint(uint64(std.GetHeight())), func(key string, value interface{}) bool {
+		emision = value.(uint64)
+		return true
+	})
+	return emision
+}
+
 func EmissionUpdates(startHeight uint64, endHeight uint64) ([]uint64, []uint64) {
 	heights := make([]uint64, 0)
 	updates := make([]uint64, 0)
-	perBlockMint.ReverseIterate("", EncodeUint(endHeight), func(key string, value interface{}) bool {
-		heights = append(heights, DecodeUint(key))
-		updates = append(updates, value.(uint64) * 75 / 100) // FIXME!!!
-		return true
-	})
-
 	perBlockMint.Iterate(EncodeUint(startHeight), EncodeUint(endHeight), func(key string, value interface{}) bool {
 		heights = append(heights, DecodeUint(key))
-		updates = append(updates, value.(uint64) * 75 / 100) // FIXME!!!
+		updates = append(updates, value.(uint64))
 		return false
 	})
 

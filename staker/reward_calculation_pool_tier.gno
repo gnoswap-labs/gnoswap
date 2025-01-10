@@ -195,7 +195,6 @@ func (self *PoolTier) changeTier(currentHeight uint64, pools *Pools, poolPath st
 		if !ok {
 			panic("changeTier: pool not found")
 		}
-		*pool.tierReward = 0
 	} else {
 		self.membership.Set(poolPath, nextTier)
 	}
