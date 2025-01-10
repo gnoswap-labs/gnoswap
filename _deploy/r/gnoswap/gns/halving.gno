@@ -60,11 +60,11 @@ var (
 
 var (
 	perBlockMint = avl.NewTree() // height => uint64
-) 
+)
 
 func GetCurrentEmission() uint64 {
 	emision := uint64(0)
-	perBlockMint.ReverseIterate("", EncodeUint(uint64(std.GetHeight())), func(key string, value interface{}) bool {
+	perBlockMint.ReverseIterate("", common.EncodeUint(uint64(std.GetHeight())), func(key string, value interface{}) bool {
 		emision = value.(uint64)
 		return true
 	})
@@ -74,8 +74,8 @@ func GetCurrentEmission() uint64 {
 func EmissionUpdates(startHeight uint64, endHeight uint64) ([]uint64, []uint64) {
 	heights := make([]uint64, 0)
 	updates := make([]uint64, 0)
-	perBlockMint.Iterate(EncodeUint(startHeight), EncodeUint(endHeight), func(key string, value interface{}) bool {
-		heights = append(heights, DecodeUint(key))
+	perBlockMint.Iterate(common.EncodeUint(startHeight), common.EncodeUint(endHeight), func(key string, value interface{}) bool {
+		heights = append(heights, common.DecodeUint(key))
 		updates = append(updates, value.(uint64))
 		return false
 	})
@@ -84,11 +84,11 @@ func EmissionUpdates(startHeight uint64, endHeight uint64) ([]uint64, []uint64) 
 }
 
 func addPerBlockMintUpdate(height uint64, amount uint64) {
-	perBlockMint.Set(EncodeUint(height), amount)
+	perBlockMint.Set(common.EncodeUint(height), amount)
 }
 
-var halvingYearBlock = make(map[int64]int64)     // year => block
-//var halvingYearTimestamp = make(map[int64]int64) // year => timestamp
+var halvingYearBlock = make(map[int64]int64) // year => block
+// var halvingYearTimestamp = make(map[int64]int64) // year => timestamp
 var (
 	halvingYearStartBlock = make([]int64, HALVING_END_YEAR) // start block of each halving year
 	halvingYearEndBlock   = make([]int64, HALVING_END_YEAR) // end block of each halving year
@@ -106,6 +106,8 @@ func init() {
 
 	// initialize halving data
 	initializeHalvingData()
+
+	addPerBlockMintUpdate(uint64(std.GetHeight()), amountPerBlockPerHalvingYear[HALVING_START_YEAR])
 
 	// set end timestamp
 	// after 12 years, timestamp which gns emission will be ended
@@ -145,8 +147,6 @@ func initializeHalvingData() {
 
 		setHalvingYearMintAmount(year, uint64(0))
 	}
-
-	addPerBlockMintUpdate(uint64(std.GetHeight()), amountPerBlockPerHalvingYear[1])
 }
 
 func GetAvgBlockTimeInMs() int64 {

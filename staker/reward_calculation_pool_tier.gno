@@ -8,7 +8,6 @@ import (
 	en "gno.land/r/gnoswap/v1/emission"
 )
 
-
 const TierRatioLCM = 8400 // LCM(20, 30, 50, 70, 80, 100)
 
 // 100%, 0%, 0% if no tier2 and tier3
@@ -93,7 +92,7 @@ func (self *TierRatio) Get(tier uint64) uint64 {
 	default:
 		panic("invalid tier")
 	}
-}	
+}
 
 // PoolTier manages pool counts, ratios, and rewards for different tiers.
 //
@@ -108,7 +107,7 @@ func (self *TierRatio) Get(tier uint64) uint64 {
 // - CurrentReward: Retrieves the reward for a tier at a specific height.
 // - changeTier: Updates the tier of a pool and recalculates ratios.
 type PoolTier struct {
-	membership *avl.Tree    // poolPath -> tier(1, 2, 3)
+	membership *avl.Tree // poolPath -> tier(1, 2, 3)
 
 	tierRatio *TierRatio
 
@@ -122,9 +121,9 @@ type PoolTier struct {
 
 func NewPoolTier(currentHeight uint64, initialPoolPath string, emissionUpdate func(uint64, uint64) en.EmissionUpdate) *PoolTier {
 	result := &PoolTier{
-		membership: avl.NewTree(),
-		tierRatio: TierRatioFromCounts(1, 0, 0),
-		emissionUpdate: emissionUpdate,
+		membership:            avl.NewTree(),
+		tierRatio:             TierRatioFromCounts(1, 0, 0),
+		emissionUpdate:        emissionUpdate,
 		lastRewardCacheHeight: &currentHeight,
 	}
 
