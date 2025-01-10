@@ -3,6 +3,7 @@ package emission
 import (
 	"std"
 	"strconv"
+	"strings"
 
 	"gno.land/r/gnoswap/v1/consts"
 
@@ -47,6 +48,109 @@ func init() {
 	distributionBpsPct.Set(strconv.Itoa(DEVOPS), 2000)
 	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), 500)
 	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), 0)
+
+	addStakerPerBlockMintUpdate(uint64(std.GetHeight()), gns.GetCurrentEmission() * 7500)
+}
+
+var (
+	stakerPerBlockMint = avl.NewTree() // height => uint64
+)
+
+func EncodeUint(num uint64) string {
+	// Convert the value to a decimal string.
+	s := strconv.FormatUint(num, 10)
+
+	// Zero-pad to a total length of 20 characters.
+	zerosNeeded := 20 - len(s)
+	return strings.Repeat("0", zerosNeeded) + s
+}
+
+func DecodeUint(s string) uint64 {
+	num, err := strconv.ParseUint(s, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return num
+}
+
+var lastGNSEmissionUpdateHeight uint64
+
+func updateStakerEmission() {
+	if lastGNSEmissionUpdateHeight == uint64(std.GetHeight()) {
+		return
+	}
+
+	emissionHeights, emissionUpdates := gns.EmissionUpdates(lastGNSEmissionUpdateHeight, uint64(std.GetHeight()))
+
+	for i, height := range emissionHeights {
+		stakerPerBlockMint.Set(EncodeUint(height), emissionUpdates[i] * GetDistributionBpsPct(LIQUIDITY_STAKER) / 10000)
+	}
+
+	lastGNSEmissionUpdateHeight = uint64(std.GetHeight())
+}
+
+func GetLatestStakerEmission(endHeight uint64) uint64 {
+	updateStakerEmission()
+
+	var emission uint64
+	stakerPerBlockMint.ReverseIterate("", EncodeUint(endHeight), func(key string, value interface{}) bool {
+		emission = value.(uint64)
+		return true
+	})
+
+	return emission
+}
+
+func GetCurrentStakerEmission() uint64 {
+	updateStakerEmission()
+
+	var emission uint64
+	stakerPerBlockMint.ReverseIterate("", EncodeUint(uint64(std.GetHeight())), func(key string, value interface{}) bool {
+		emission = value.(uint64)
+		return true
+	})
+
+	return emission
+}
+
+func GetStakerEmissionUpdates(startHeight uint64, endHeight uint64) EmissionUpdate {
+	updateStakerEmission()
+
+	heights := make([]uint64, 0)
+	updates := make([]uint64, 0)
+	stakerPerBlockMint.Iterate(EncodeUint(startHeight), EncodeUint(endHeight), func(key string, value interface{}) bool {
+		heights = append(heights, DecodeUint(key))
+		updates = append(updates, value.(uint64))
+		return false
+	})
+
+	return EmissionUpdate {
+		LastEmissionUpdate: GetLatestStakerEmission(startHeight),
+		EmissionUpdateHeights: heights,
+		EmissionUpdates: updates,
+	}
+}
+
+
+// Stores the emission update information for a given interval.
+// An EmissionUpdate is constructed by [startHeight, endHeight).
+//
+// Fields:
+// - LastEmissionUpdate: the value of emission update, either at the startHeight, or before.
+// - EmissionUpdateHeights: the heights of emission updates between [startHeight, endHeight).
+// - EmissionUpdates: the values of emission updates between [startHeight, endHeight).
+type EmissionUpdate struct {
+	LastEmissionUpdate uint64
+	EmissionUpdateHeights []uint64
+	EmissionUpdates []uint64
+}
+
+func (self *EmissionUpdate) IsEmpty() bool {
+	return len(self.EmissionUpdateHeights) == 0 && len(self.EmissionUpdates) == 0
+}
+
+func addStakerPerBlockMintUpdate(height uint64, amount uint64) {
+	stakerPerBlockMint.Set(EncodeUint(height), amount / 10000)
 }
 
 // ChangeDistributionPctByAdmin changes the distribution percentage for the given targets.
@@ -97,6 +201,8 @@ func ChangeDistributionPct(
 	assertSumDistributionPct(pct01, pct02, pct03, pct04)
 	assertOnlyNotHalted()
 
+	addStakerPerBlockMintUpdate(uint64(std.GetHeight()), gns.GetCurrentEmission() * pct01 / 10000)
+
 	changeDistributionPcts(
 		target01, pct01,
 		target02, pct02,
@@ -115,6 +221,8 @@ func changeDistributionPcts(
 	setDistributionBpsPct(target02, pct02)
 	setDistributionBpsPct(target03, pct03)
 	setDistributionBpsPct(target04, pct04)
+
+	addStakerPerBlockMintUpdate(uint64(std.GetHeight()), gns.GetCurrentEmission() * pct01)
 
 	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
@@ -146,8 +254,8 @@ func distributeToTarget(amount uint64) uint64 {
 			))
 		}
 
-		pct := uint64(iPct)
-		distAmount := calculateAmount(amount, pct)
+		pct := iPct.(int)
+		distAmount := calculateAmount(amount, uint64(pct))
 		totalSent += distAmount
 
 		transferToTarget(targetInt, distAmount)
@@ -212,7 +320,7 @@ func GetDistributionBpsPct(target int) uint64 {
 		))
 	}
 
-	return uint64(iUint64)
+	return iUint64.(uint64)
 }
 
 func GetDistributedToStaker() uint64 {
