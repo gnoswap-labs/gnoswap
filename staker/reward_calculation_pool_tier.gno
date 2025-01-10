@@ -63,22 +63,18 @@ func TierRatioFromCounts(tier1Count, tier2Count, tier3Count uint64) *TierRatio {
 // RewardDenominator[i] = TierCount[i] * TierRatioLCM / (TierRatio[i] * 100)
 // TierReward[i] = Emission * TierRatioLCM / RewardDenominator[i] / 100
 func (self *TierRatio) IntoRewardDenominators(counts []uint64) []uint64 {
-	println("IntoRewardDenominators", self, counts)
 	result := make([]uint64, 4)
 	for i := 1; i < 4; i++ {
 		if counts[i] == 0 {
 			result[i] = 0
 		} else {
-			println("IntoRewardDenominators", i, counts[i], self.Get(uint64(i)))
 			result[i] = counts[i] * TierRatioLCM / (self.Get(uint64(i)))
 		}
 	}
-	println("IntoRewardDenominators result", result)
 	return result
 }
 
 func ApplyDenominator(emission uint64, denominator uint64) uint64 {
-	println(">>>> ApplyDenominator", emission, TierRatioLCM, denominator)
 	if denominator == 0 {
 		return 0
 	}
@@ -236,8 +232,6 @@ func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
 	// - msPerBlock is changed
 	// - emission distribution ratio is changed
 	// during the period of PoolTier.lastRewardCacheHeight to currentHeight
-	println("cacheReward", *self.lastRewardCacheHeight, currentHeight)
-	println("emissionUpdate", self.emissionUpdate(*self.lastRewardCacheHeight, currentHeight))
 
 	emissionUpdate := self.emissionUpdate(*self.lastRewardCacheHeight, currentHeight)
 	if emissionUpdate.IsEmpty() {
@@ -246,11 +240,10 @@ func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
 
 	rewardDenominators := self.tierRatio.IntoRewardDenominators(self.CurrentCounts())
 
-	println(">>>> rewardDenominators", rewardDenominators)
 	self.membership.Iterate("", "", func(key string, value interface{}) bool {
 		pool, ok := pools.Get(key)
 		if !ok {
-			panic("cacheReward: pool not found")
+			panic("pool not found")
 		}
 
 		pool.cacheInternalReward(currentHeight, emissionUpdate, rewardDenominators[value.(uint64)])

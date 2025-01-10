@@ -71,8 +71,7 @@ type Pool struct {
 	lastUnclaimableHeight *uint64
 	unclaimableAcc *uint64
 
-	tierReward *uint64 // per liquidity, (internal reward / total staked liquidity) * Q192
-	tierRewardTotal *uint64 // total internal reward, used for unclaimable reward calculation
+	tierRewardTotal *uint64 // current total internal reward per block, used for unclaimable reward calculation
 
 	rewardCache           *RewardCacheTree // blockNumber -> *u256.Uint
 	lastRewardCacheHeight *uint64
@@ -84,7 +83,6 @@ type Pool struct {
 
 func NewPool(poolPath string, currentHeight uint64) *Pool {
 	unclaimableAcc := uint64(0)
-	tierReward := uint64(0)
 	tierRewardTotal := uint64(0)
 
 	return &Pool{
@@ -92,7 +90,6 @@ func NewPool(poolPath string, currentHeight uint64) *Pool {
 		stakedLiquidity:       NewUintTree(),
 		lastUnclaimableHeight: &currentHeight,
 		unclaimableAcc:        &unclaimableAcc,
-		tierReward:            &tierReward,
 		tierRewardTotal:       &tierRewardTotal,
 		rewardCache:           NewRewardCacheTree(),
 		lastRewardCacheHeight: &currentHeight,
@@ -129,6 +126,8 @@ func (self *Pool) updateRewardByLiquidityChange(currentTierReward uint64, curren
 	ratio = u256.Zero().Mul(ratio, q192)
 	ratio = u256.Zero().Div(ratio, liquidity)
 	self.rewardCache.Set(currentHeight, ratio)
+
+	self.incentives.updateRewardByLiquidityChange(currentHeight, liquidity)
 }
 
 func (self *Pool) cacheRewardPerLiquidityUnit(startHeight, endHeight uint64, currentTierReward uint64) {
@@ -176,6 +175,11 @@ func (self *Pool) cacheInternalReward(currentHeight uint64, emissionUpdate en.Em
 }
 
 func (self *Pool) cacheExternalReward(endHeight uint64) {
+	self.stakedLiquidity.Iterate(0, 9999999, func(key uint64, value interface{}) bool {
+		println("(((cacheExternalReward)))", key, value.(*u256.Uint).ToString())
+		return false
+	})
+
 	startHeight := *self.incentives.lastRewardCacheHeight
 	currentStakedLiquidity := self.CurrentStakedLiquidity(startHeight)
 
@@ -187,6 +191,11 @@ func (self *Pool) cacheExternalReward(endHeight uint64) {
 	})
 
 	self.incentives.cacheRewardPerLiquidityUnit(startHeight, endHeight, currentStakedLiquidity)
+
+	self.incentives.rewardCache.Iterate(0, 9999999, func(key uint64, value interface{}) bool {
+		println("cacheExternalReward", key, value)
+		return false
+	})
 }
 
 type ExternalRewardState struct {
@@ -501,7 +510,7 @@ func (self *Pool) processUnclaimableReward(poolTier *PoolTier, endHeight uint64)
 	internalUnClaimable := *self.unclaimableAcc
 	*self.unclaimableAcc = 0
 	externalUnClaimable := make(map[string]uint64)
-	for incentiveId := range self.incentives.CurrentReward(startHeight) {
+	for _, incentiveId := range self.incentives.CurrentReward(startHeight).ActiveIncentives {
 		externalUnClaimable[incentiveId] = self.UnclaimableExternalReward(incentiveId, startHeight, endHeight)
 	}
 	self.lastUnclaimableHeight = &endHeight

@@ -1,0 +1,772 @@
+diff --git a/emission/distribution.gno b/emission/distribution.gno
+index d2cc02c..ada9ec8 100644
+--- a/emission/distribution.gno
++++ b/emission/distribution.gno
+@@ -47,6 +47,10 @@ func init() {
+ 	distributionBpsPct.Set(strconv.Itoa(DEVOPS), 2000)
+ 	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), 500)
+ 	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), 0)
++	addPerBlockMintUpdate(LIQUIDITY_STAKER, uint64(std.GetHeight()), 0)
++	addPerBlockMintUpdate(DEVOPS, uint64(std.GetHeight()), 0)
++	addPerBlockMintUpdate(COMMUNITY_POOL, uint64(std.GetHeight()), 0)
++	addPerBlockMintUpdate(GOV_STAKER, uint64(std.GetHeight()), 0)
+ }
+ 
+ // ChangeDistributionPctByAdmin changes the distribution percentage for the given targets.
+@@ -146,12 +150,14 @@ func distributeToTarget(amount uint64) uint64 {
+ 			))
+ 		}
+ 
+-		pct := uint64(iPct)
++		pct := iPct.(uint64)
+ 		distAmount := calculateAmount(amount, pct)
+ 		totalSent += distAmount
+ 
+ 		transferToTarget(targetInt, distAmount)
+ 
++		addPerBlockMintUpdate(targetInt, uint64(std.GetHeight()), distAmount)
++
+ 		return false
+ 	})
+ 
+@@ -260,3 +266,89 @@ func ClearDistributedToGovStaker() {
+ func setDistributionBpsPct(target int, pct uint64) {
+ 	distributionBpsPct.Set(strconv.Itoa(target), pct)
+ }
++
++var (
++	perBlockMintToStaker        = avl.NewTree() // height => uint64
++	perBlockMintToGovStaker     = avl.NewTree() // height => uint64
++	perBlockMintToCommunityPool = avl.NewTree() // height => uint64
++)
++
++func EmissionUpdatesToStaker(startHeight uint64, endHeight uint64) ([]uint64, []uint64) {
++	heights := make([]uint64, 0)
++	updates := make([]uint64, 0)
++
++	perBlockMintToStaker.ReverseIterate("", EncodeUint(startHeight-1), func(key string, value interface{}) bool {
++		heights = append(heights, DecodeUint(key))
++		updates = append(updates, value.(uint64))
++		return true
++	})
++
++	perBlockMintToStaker.Iterate(EncodeUint(startHeight), EncodeUint(endHeight), func(key string, value interface{}) bool {
++		heights = append(heights, DecodeUint(key))
++		updates = append(updates, value.(uint64))
++		return false
++	})
++
++	return heights, updates
++}
++
++func EmissionUpdatesToCommunityPool(startHeight uint64, endHeight uint64) ([]uint64, []uint64) {
++	heights := make([]uint64, 0)
++	updates := make([]uint64, 0)
++
++	perBlockMintToCommunityPool.ReverseIterate("", EncodeUint(startHeight-1), func(key string, value interface{}) bool {
++		heights = append(heights, DecodeUint(key))
++		updates = append(updates, value.(uint64))
++		return true
++	})
++
++	perBlockMintToCommunityPool.Iterate(EncodeUint(startHeight), EncodeUint(endHeight), func(key string, value interface{}) bool {
++		heights = append(heights, DecodeUint(key))
++		updates = append(updates, value.(uint64))
++		return false
++	})
++
++	return heights, updates
++}
++
++func EmissionUpdatesToGovStaker(startHeight uint64, endHeight uint64) ([]uint64, []uint64) {
++	heights := make([]uint64, 0)
++	updates := make([]uint64, 0)
++
++	perBlockMintToGovStaker.Iterate(EncodeUint(startHeight), EncodeUint(endHeight), func(key string, value interface{}) bool {
++		heights = append(heights, DecodeUint(key))
++		updates = append(updates, value.(uint64))
++		return false
++	})
++
++	perBlockMintToGovStaker.ReverseIterate("", EncodeUint(endHeight), func(key string, value interface{}) bool {
++		heights = append(heights, DecodeUint(key))
++		updates = append(updates, value.(uint64))
++		return true
++	})
++
++	return heights, updates
++}
++
++func addPerBlockMintUpdate(target int, height uint64, amount uint64) {
++	switch target {
++	case LIQUIDITY_STAKER:
++		perBlockMintToStaker.Set(EncodeUint(height), amount)
++		println("===========>[", height, "] To Staker : ", amount)
++	case DEVOPS:
++
++	case COMMUNITY_POOL:
++		perBlockMintToCommunityPool.Set(EncodeUint(height), amount)
++		println("[", height, "] To CommunityPool : ", amount)
++
++	case GOV_STAKER:
++		perBlockMintToGovStaker.Set(EncodeUint(height), amount)
++		println("[", height, "] To Gov Staker : ", amount)
++
++	default:
++		panic(addDetailToError(
++			errInvalidEmissionTarget,
++			ufmt.Sprintf("invalid target(%d)", target),
++		))
++	}
++}
+diff --git a/emission/emission.gno b/emission/emission.gno
+index b249248..266b0d4 100644
+--- a/emission/emission.gno
++++ b/emission/emission.gno
+@@ -6,7 +6,6 @@ import (
+ 
+ 	"gno.land/p/demo/ufmt"
+ 
+-	"gno.land/r/gnoswap/v1/common"
+ 	"gno.land/r/gnoswap/v1/consts"
+ 	"gno.land/r/gnoswap/v1/gns"
+ )
+diff --git a/emission/utils.gno b/emission/utils.gno
+index e5f0a9c..db54978 100644
+--- a/emission/utils.gno
++++ b/emission/utils.gno
+@@ -2,6 +2,8 @@ package emission
+ 
+ import (
+ 	"std"
++	"strconv"
++	"strings"
+ 
+ 	"gno.land/p/demo/ufmt"
+ 	pusers "gno.land/p/demo/users"
+@@ -90,3 +92,20 @@ func assertSumDistributionPct(pct01, pct02, pct03, pct04 uint64) {
+ 		))
+ 	}
+ }
++
++func EncodeUint(num uint64) string {
++	// Convert the value to a decimal string.
++	s := strconv.FormatUint(num, 10)
++
++	// Zero-pad to a total length of 20 characters.
++	zerosNeeded := 20 - len(s)
++	return strings.Repeat("0", zerosNeeded) + s
++}
++
++func DecodeUint(s string) uint64 {
++	num, err := strconv.ParseUint(s, 10, 64)
++	if err != nil {
++		panic(err)
++	}
++	return num
++}
+diff --git a/position/getter.gno b/position/getter.gno
+index c4964e7..34f48ca 100644
+--- a/position/getter.gno
++++ b/position/getter.gno
+@@ -74,7 +74,7 @@ func PositionIsInRange(tokenId uint64) bool {
+ 	poolPath := position.poolKey
+ 	poolCurrentTick := pl.PoolGetSlot0Tick(poolPath)
+ 
+-	if position.tickLower <= poolCurrentTick && poolCurrentTick <= position.tickUpper {
++	if position.tickLower <= poolCurrentTick && poolCurrentTick < position.tickUpper {
+ 		return true
+ 	}
+ 	return false
+diff --git a/staker/__TEST_staker_emission_and_external_incentive_test.gno b/staker/__TEST_staker_emission_and_external_incentive_test.gno
+index 0e60043..97f02f7 100644
+--- a/staker/__TEST_staker_emission_and_external_incentive_test.gno
++++ b/staker/__TEST_staker_emission_and_external_incentive_test.gno
+@@ -121,7 +121,7 @@ func testPositionMintPos01Tier01(t *testing.T) {
+ 			"gno.land/r/gnoswap/v1/gns", // token0
+ 			"gno.land/r/demo/wugnot",    // token1
+ 			fee3000,                     // fee
+-			int32(0),                    // tickLower
++			int32(-60),                  // tickLower
+ 			int32(60),                   // tickUpper
+ 			"1000",                      // amount0Desired
+ 			"1000",                      // amount1Desired
+@@ -141,7 +141,7 @@ func testPositionMintPos01Tier01(t *testing.T) {
+ 		uassert.Equal(t, uint64(1), gnsBalance(consts.EMISSION_ADDR))
+ 		uassert.Equal(t, uint64(1), lpTokenId)
+ 		uassert.Equal(t, gnft.MustOwnerOf(tid(lpTokenId)), users.Resolve(admin))
+-		uassert.Equal(t, amount0, "0")
++		uassert.Equal(t, amount0, "1000")
+ 		uassert.Equal(t, amount1, "1000")
+ 
+ 		std.TestSkipHeights(1)
+diff --git a/staker/calculate_pool_position_reward.gno b/staker/calculate_pool_position_reward.gno
+index 7b27c9d..65c03f3 100644
+--- a/staker/calculate_pool_position_reward.gno
++++ b/staker/calculate_pool_position_reward.gno
+@@ -1,10 +1,10 @@
+ package staker
+ 
+ import (
+-	"gno.land/r/gnoswap/v1/consts"
+-	"gno.land/r/gnoswap/v1/gns"
+-
+ 	u256 "gno.land/p/gnoswap/uint256"
++	"gno.land/r/gnoswap/v1/consts"
++	en "gno.land/r/gnoswap/v1/emission"
++	pn "gno.land/r/gnoswap/v1/position"
+ )
+ 
+ // Q96
+@@ -24,10 +24,12 @@ type Reward struct {
+ 	ExternalPenalty map[string]uint64
+ }
+ 
++// For Debug
+ func calcPositionRewardByWarmups(currentHeight uint64, tokenId uint64) []Reward {
+ 	deposit := deposits.Get(tokenId)
+-	emissionUpdateHeights, emissionUpdates := gns.EmissionUpdates(deposit.lastCollectHeight, currentHeight)
+-	internalRewards, internalPenalties, externalRewards, externalPenalties := CalcPositionReward(currentHeight, tokenId, deposits, pools, poolTier, emissionUpdateHeights, emissionUpdates)
++	emissionUpdateHeights, emissionUpdates := en.EmissionUpdatesToStaker(deposit.lastCollectHeight, currentHeight)
++	calcTierReward(currentHeight, emissionUpdateHeights, emissionUpdates)
++	internalRewards, internalPenalties, externalRewards, externalPenalties := CalcPositionReward(currentHeight, tokenId, deposits, pools, poolTier)
+ 
+ 	rewards := make([]Reward, len(internalRewards))
+ 	for i := range internalRewards {
+@@ -42,10 +44,48 @@ func calcPositionRewardByWarmups(currentHeight uint64, tokenId uint64) []Reward
+ 	return rewards
+ }
+ 
++func printWarmup(warmup *Warmup) {
++	println("Warmup : ", warmup.Index, ", BlockDuration : ", warmup.BlockDuration, ", NextWarmupHeight : ", warmup.NextWarmupHeight, ", WarmupRatio : ", warmup.WarmupRatio)
++}
++
++func printDeposit(deposit *Deposit, currentHeight, tokenId uint64) {
++	println("[", currentHeight, "],[", tokenId, "], Deposit : ", deposit.owner, ", path : ", deposit.targetPoolPath, ", tickLower : ", deposit.tickLower, ", tickUpper : ", deposit.tickUpper, ", liquidity : ", deposit.liquidity.ToString(), ", lastCollectHeight :", deposit.lastCollectHeight)
++	for _, warmup := range deposit.warmups {
++		printWarmup(&warmup)
++	}
++}
++
++
++
++var lastEmissionUpdateHeight uint64 = 0
++
++func calcTierReward(currentHeight uint64, emissionUpdateHeights []uint64, emissionUpdateAmounts []uint64) {
++	// cache per-tier and per-pool rewards
++	poolTier.cacheReward(currentHeight, emissionUpdateHeights, emissionUpdateAmounts)
++	rewardCache := poolTier.rewardCacheOf(1)
++	rewardCache.Iterate(0, currentHeight, func(height uint64, reward interface{}) bool {
++		println("RewardCache : ", height, ", ", reward)
++		return false
++	})
++}
++
+ func calcPositionReward(currentHeight uint64, tokenId uint64) Reward {
+ 	deposit := deposits.Get(tokenId)
+-	emissionUpdateHeights, emissionUpdates := gns.EmissionUpdates(deposit.lastCollectHeight, currentHeight)
+-	internalRewards, internalPenalties, externalRewards, externalPenalties := CalcPositionReward(currentHeight, tokenId, deposits, pools, poolTier, emissionUpdateHeights, emissionUpdates)
++	// TODO: For Debugging
++	printDeposit(deposit, currentHeight, tokenId)
++
++	println(">>>>>>>>>>>>> EmissionUpdatesToStaker")
++	// TODO:
++	println(">>>>>>>>>>>>> lastEmissionUpdateHeight : ", *poolTier.lastRewardCacheHeight, ", currentHeight : ", currentHeight)
++	emissionUpdateHeights, emissionUpdates := en.EmissionUpdatesToStaker(*poolTier.lastRewardCacheHeight, currentHeight)
++	accumulatedEmission := uint64(0)
++	for i := range emissionUpdateHeights {
++		accumulatedEmission += emissionUpdates[i]
++		println(emissionUpdateHeights[i], ", ", emissionUpdates[i], ", accumulatedEmission : ", accumulatedEmission)
++	}
++	calcTierReward(currentHeight, emissionUpdateHeights, emissionUpdates)
++
++	internalRewards, internalPenalties, externalRewards, externalPenalties := CalcPositionReward(currentHeight, tokenId, deposits, pools, poolTier)
+ 
+ 	internal := uint64(0)
+ 	for _, reward := range internalRewards {
+@@ -79,10 +119,7 @@ func calcPositionReward(currentHeight uint64, tokenId uint64) Reward {
+ 	}
+ }
+ 
+-func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits, pools *Pools, poolTier *PoolTier, emissionUpdateHeights []uint64, emissionUpdates []uint64) ([]uint64, []uint64, []map[string]uint64, []map[string]uint64) {
+-	// cache per-tier and per-pool rewards
+-	poolTier.cacheReward(currentHeight, emissionUpdateHeights, emissionUpdates)
+-
++func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits, pools *Pools, poolTier *PoolTier) ([]uint64, []uint64, []map[string]uint64, []map[string]uint64) {
+ 	deposit := deposits.Get(tokenId)
+ 	poolPath := deposit.targetPoolPath
+ 
+@@ -97,18 +134,30 @@ func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits
+ 	pool.cacheExternalReward(currentHeight)
+ 
+ 	// eligible(in-range) intervals for a position
+-	upperTick := pool.ticks.Get(deposit.tickUpper)
+-	lowerTick := pool.ticks.Get(deposit.tickLower)
+-
++	tickUpper := deposit.tickUpper
++	tickLower := deposit.tickLower
++	token0, token1, _ := poolPathDivide(poolPath)
++	if token1 < token0 {
++		tickUpper, tickLower = -tickLower, -tickUpper
++	}
++	upperTick := pool.ticks.Get(tickUpper)
++	lowerTick := pool.ticks.Get(tickLower)
+ 	lastCollectHeight := deposit.lastCollectHeight
+ 
+ 	initialUpperCross := upperTick.previousCross(lastCollectHeight)
+ 	initialLowerCross := lowerTick.previousCross(lastCollectHeight)
++	println(">>>>>>>>>>>> initialUpperCross : ", initialUpperCross, ", initialLowerCross : ", initialLowerCross)
+ 	currentlyInRange := initialUpperCross && !initialLowerCross
++	println(">>>>>>>>>>>> currentlyInRange : ", currentlyInRange)
++
++	if pn.PositionIsInRange(tokenId) {
++		currentlyInRange = true
++	}
+ 
+ 	tickUpperCrosses := upperTick.crossInfo(lastCollectHeight, currentHeight)
+ 	tickLowerCrosses := lowerTick.crossInfo(lastCollectHeight, currentHeight)
+ 
++	println(">>>>>>> lastCollectHeight : ", lastCollectHeight, ", currentHeight : ", currentHeight, ", currentlyInRange : ", currentlyInRange, ", tickUpperCrosses : ", tickUpperCrosses, ", tickLowerCrosses : ", tickLowerCrosses)
+ 	internalRewards, internalPenalties := pool.InternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(currentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
+ 
+ 	externalRewards, externalPenalties := pool.ExternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(currentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
+diff --git a/staker/reward_calculation_pool_tier.gno b/staker/reward_calculation_pool_tier.gno
+index 603d6ba..512ca2c 100644
+--- a/staker/reward_calculation_pool_tier.gno
++++ b/staker/reward_calculation_pool_tier.gno
+@@ -228,7 +228,7 @@ func (self *PoolTier) countOf(tier uint64) *UintTree {
+ 	default:
+ 		panic(addDetailToError(
+ 			errInvalidPoolTier,
+-			ufmt.Sprintf("staker.gno__tier() || tier(%d) is not valid", tier),
++			ufmt.Sprintf("tier(%d) is not valid", tier),
+ 		))
+ 	}
+ }
+@@ -480,10 +480,25 @@ func nextHeightUpdateI(
+ // iterate over denominator updates and cache reward for each block
+ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64, emissionUpdateHeights []uint64, emissionUpdates []uint64) {
+ 	rewardCache := self.rewardCacheOf(tier)
++	println("==============================================================")
++	println("tier [", tier, "] rewardCache size ", rewardCache.tree.Size())
+ 
+ 	countUpdateHeights, countUpdates := self.TierCountUpdates(tier, startHeight, endHeight)
+ 	ratioUpdateHeights, ratioUpdates := self.TierRatioUpdates(tier, startHeight, endHeight)
+ 
++	println("\t[emissionUpdateHeights] ")
++	for i, height := range emissionUpdateHeights {
++		println("\t[", height, "] ", emissionUpdates[i])
++	}
++	println("\t[countUpdateHeights] ")
++	for i, height := range countUpdateHeights {
++		println("\t[", height, "] ", countUpdates[i])
++	}
++	println("\t[ratioUpdateHeights] ")
++	for i, height := range ratioUpdateHeights {
++		println("\t[", height, "] ", ratioUpdates[i])
++	}
++
+ 	emissionUpdateI := 0
+ 	countUpdateI := 0
+ 	ratioUpdateI := 0
+@@ -495,6 +510,10 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
+ 	currentRatio := ratioUpdates[ratioUpdateI]
+ 
+ 	for emissionUpdateI < len(emissionUpdateHeights) || countUpdateI < len(countUpdateHeights) || ratioUpdateI < len(ratioUpdateHeights) {
++		println("[Condition 1] emissionUpdateI < len(emissionUpdateHeights)", emissionUpdateI < len(emissionUpdateHeights))
++		println("[Condition 2] countUpdateI < len(countUpdateHeights)", countUpdateI < len(countUpdateHeights))
++		println("[Condition 3] ratioUpdateI < len(ratioUpdateHeights)", ratioUpdateI < len(ratioUpdateHeights))
++
+ 		currentHeight, emissionUpdateI, countUpdateI, ratioUpdateI = nextHeightUpdateI(
+ 			emissionUpdateHeights,
+ 			emissionUpdateI,
+@@ -504,23 +523,32 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
+ 			ratioUpdateI,
+ 		)
+ 
++		println("currentHeight ", currentHeight, ", emissionUpdateI ", emissionUpdateI, ", countUpdateI ", countUpdateI, ", ratioUpdateI ", ratioUpdateI)
++
+ 		if emissionUpdateI < len(emissionUpdateHeights) {
+ 			currentEmission = emissionUpdates[emissionUpdateI]
++			println("emissionUpdateI < len(emissionUpdateHeights) ", currentEmission)
+ 		}
+ 		if countUpdateI < len(countUpdateHeights) {
+ 			currentCount = countUpdates[countUpdateI]
++			println("countUpdateI < len(countUpdateHeights) ", currentCount)
+ 		}
+ 		if ratioUpdateI < len(ratioUpdateHeights) {
+ 			currentRatio = ratioUpdates[ratioUpdateI]
++			println("ratioUpdateI < len(ratioUpdateHeights) ", currentRatio)
+ 		}
+ 
+ 		if currentCount == 0 {
+ 			rewardCache.Set(currentHeight, uint64(0))
++			println("set reward Cache [", currentHeight, "] ", uint64(0))
+ 		} else {
+ 			reward := currentEmission * currentRatio / currentCount / 100
+ 			rewardCache.Set(currentHeight, reward)
++			println("set reward Cache [", currentHeight, "] ", reward)
+ 		}
++
+ 	}
++	println("==============================================================")
+ }
+ 
+ // cacheReward calculates and caches rewards for all tiers within a height range.
+@@ -532,7 +560,9 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
+ func (self *PoolTier) cacheReward(endHeight uint64, emissionUpdateHeights []uint64, emissionUpdates []uint64) {
+ 	startHeight := *self.lastRewardCacheHeight
+ 
++	println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ", *self.lastRewardCacheHeight)
+ 	for tier := uint64(1); tier <= 3; tier++ {
+ 		self.cacheTierReward(tier, startHeight, endHeight, emissionUpdateHeights, emissionUpdates)
+ 	}
++	*self.lastRewardCacheHeight = endHeight // TODO: Check Update Timeimg
+ }
+diff --git a/staker/reward_calculation_tick.gno b/staker/reward_calculation_tick.gno
+index 553a200..cf93e7a 100644
+--- a/staker/reward_calculation_tick.gno
++++ b/staker/reward_calculation_tick.gno
+@@ -120,6 +120,7 @@ func (self *Tick) crossInfo(startHeight, endHeight uint64) []int64 {
+ 	tickCrosses := make([]int64, 0)
+ 
+ 	self.cross.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
++		println("key : ", key, ", value : ", value.(bool))
+ 		zeroForOne := value.(bool)
+ 		if zeroForOne {
+ 			tickCrosses = append(tickCrosses, -int64(key))
+@@ -133,18 +134,15 @@ func (self *Tick) crossInfo(startHeight, endHeight uint64) []int64 {
+ }
+ 
+ func (self *Tick) updateCross(blockNumber uint64, zeroForOne bool) {
+-	// cross, ok := self.cross.Get(blockNumber)
+-	// if !ok {
+ 	self.cross.Set(blockNumber, zeroForOne)
+-	// } else if cross != zeroForOne {
+-	// 	self.cross.Remove(blockNumber)
+-	// }
++	println("updateCross ", blockNumber, ", ", zeroForOne)
+ }
+ 
+ func (self *Tick) previousCross(currentHeight uint64) bool {
+ 	// There MUST be at least one cross, set when the position is staked
+ 	cross := false
+ 	self.cross.ReverseIterate(0, currentHeight-1, func(key uint64, value interface{}) bool {
++		println(">>>>>>>>>>>>>>>>> previousCross ", key, value.(bool))
+ 		cross = value.(bool)
+ 		return true
+ 	})
+@@ -153,17 +151,26 @@ func (self *Tick) previousCross(currentHeight uint64) bool {
+ 
+ func (self *Tick) modifyDepositLower(currentHeight uint64, currentTick int32, liquidity *i256.Int) {
+ 	// update staker side tick info
++	println("stakedLiquidityGross ", self.stakedLiquidityGross.ToString(), ", liquidity ", liquidity.ToString())
+ 	self.stakedLiquidityGross = liquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
++	if self.stakedLiquidityGross.Lt(u256.Zero()) {
++		panic("stakedLiquidityGross is negative")
++	}
+ 	self.stakedLiquidityDelta = i256.Zero().Add(self.stakedLiquidityDelta, liquidity)
+ 
++	println("modifyDepositLower: currentTick =", currentTick, "tickId =", self.id, "stakedLiquidityGross =", self.stakedLiquidityGross.ToString(), "stakedLiquidityDelta =", self.stakedLiquidityDelta.ToString())
+ 	self.updateCross(currentHeight, currentTick < self.id)
+-	// ticks.Set(self.id, self)
++	//ticks.Set(self.id, self)
+ }
+ 
+ func (self *Tick) modifyDepositUpper(currentHeight uint64, currentTick int32, liquidity *i256.Int) {
+ 	self.stakedLiquidityGross = liquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
++	if self.stakedLiquidityGross.Lt(u256.Zero()) {
++		panic("stakedLiquidityGross is negative")
++	}
+ 	self.stakedLiquidityDelta = i256.Zero().Sub(self.stakedLiquidityDelta, liquidity)
+ 
++	println("modifyDepositUpper: currentTick =", currentTick, "tickId =", self.id, "stakedLiquidityGross =", self.stakedLiquidityGross.ToString(), "stakedLiquidityDelta =", self.stakedLiquidityDelta.ToString())
+ 	self.updateCross(currentHeight, currentTick < self.id)
+ 	// ticks.Set(self.id, self)
+ }
+@@ -177,11 +184,16 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool,
+ 	tickLowerCrossI := 0
+ 	tickUpperCrossLen := len(tickUpperCross)
+ 	tickLowerCrossLen := len(tickLowerCross)
++	println("*******************************************************")
++	println("tickCross ", tickUpperCrossLen, tickLowerCrossLen)
++	println("startHeight ", startHeight, ", endHeight ", endHeight)
+ 
+ 	for tickUpperCrossI < tickUpperCrossLen && tickLowerCrossI < tickLowerCrossLen {
+ 		upperCross := tickUpperCross[tickUpperCrossI]
+ 		lowerCross := tickLowerCross[tickLowerCrossI]
+ 
++		println("upperCross : ", upperCross, ", lowerCross : ", lowerCross)
++
+ 		lowerHeight := lowerCross
+ 		if lowerHeight < 0 {
+ 			lowerHeight = -lowerHeight
+@@ -201,6 +213,7 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool,
+ 		if upperCross == lowerCross {
+ 			if currentInRange {
+ 				// exit range
++				println("ForEachEligibleInterval 1", startHeight, lowerHeight)
+ 				f(uint64(startHeight), uint64(lowerHeight))
+ 				currentInRange = false
+ 			}
+@@ -235,6 +248,7 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool,
+ 			} else {
+ 				// exit range
+ 				if currentInRange {
++					println("ForEachEligibleInterval 2", startHeight, upperHeight)
+ 					f(uint64(startHeight), uint64(upperHeight))
+ 					currentInRange = false
+ 				}
+@@ -257,6 +271,7 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool,
+ 			} else {
+ 				// exit range
+ 				if currentInRange {
++					println("ForEachEligibleInterval 3", startHeight, lowerHeight)
+ 					f(uint64(startHeight), uint64(lowerHeight))
+ 					currentInRange = false
+ 				}
+@@ -283,6 +298,7 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool,
+ 		} else {
+ 			// exit range
+ 			if currentInRange {
++				println("ForEachEligibleInterval 4", startHeight, cross)
+ 				f(uint64(startHeight), uint64(cross))
+ 				currentInRange = false
+ 			}
+@@ -304,6 +320,7 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool,
+ 		} else {
+ 			// exit range
+ 			if currentInRange {
++				println("ForEachEligibleInterval 5", startHeight, -cross)
+ 				f(uint64(startHeight), uint64(-cross))
+ 				currentInRange = false
+ 			}
+@@ -311,6 +328,7 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool,
+ 	}
+ 
+ 	if currentInRange {
++		println("ForEachEligibleInterval 6", startHeight, endHeight)
+ 		f(uint64(startHeight), uint64(endHeight))
+ 	}
+ 
+diff --git a/staker/reward_calculation_types.gno b/staker/reward_calculation_types.gno
+index 2de82e5..ee07bed 100644
+--- a/staker/reward_calculation_types.gno
++++ b/staker/reward_calculation_types.gno
+@@ -6,6 +6,8 @@ import (
+ 
+ 	"gno.land/p/demo/avl"
+ 	"gno.land/p/demo/ufmt"
++
++	u256 "gno.land/p/gnoswap/uint256"
+ )
+ 
+ // EncodeUint converts a uint64 number into a zero-padded 20-character string.
+@@ -169,13 +171,24 @@ type RewardCalculationFunc = func(blockNumbers uint64, poolReward interface{})
+ func (self *RewardCacheTree) RewardPerInterval(startHeight, endHeight uint64, f RewardCalculationFunc) {
+ 	currentPoolReward := self.CurrentReward(startHeight)
+ 	currentHeight := startHeight
++	switch cpr := currentPoolReward.(type) {
++	case uint64:
++		println("RewardPerInterval 0(uint64)", startHeight, ", ", currentPoolReward)
++	case *u256.Uint:
++		println("RewardPerInterval 0(u256)", startHeight, ", ", cpr.ToString())
++	}
++
++	println("===>startHeight : ", startHeight, ", endHeight : ", endHeight)
++	println("===>RewardCacheTree Size : ", self.tree.Size())
+ 	self.Iterate(startHeight, endHeight, func(height uint64, poolReward interface{}) bool {
++		println("RewardPerInterval 1", height)
+ 		f(height-currentHeight, currentPoolReward)
+ 		currentHeight = height
+ 		currentPoolReward = poolReward
+ 		return false
+ 	})
+ 	if endHeight > currentHeight {
++		println("RewardPerInterval 2", endHeight)
+ 		f(endHeight-currentHeight, currentPoolReward)
+ 	}
+ }
+\ No newline at end of file
+diff --git a/staker/staker.gno b/staker/staker.gno
+index ff448fe..51e7b29 100644
+--- a/staker/staker.gno
++++ b/staker/staker.gno
+@@ -20,6 +20,8 @@ import (
+ 
+ 	i256 "gno.land/p/gnoswap/int256"
+ 	u256 "gno.land/p/gnoswap/uint256"
++
++	pusers "gno.land/p/demo/users"
+ )
+ 
+ type Deposits struct {
+@@ -134,7 +136,6 @@ func init() {
+ 	// tier 1
+ 	// ONLY GNOT:GNS 0.3%
+ 
+-	// poolTier.changeTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1, 1)
+ 	poolTier = NewPoolTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1)
+ 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1) // must update pools tree
+ }
+@@ -163,6 +164,8 @@ func init() {
+ //
+ // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#staketoken
+ func StakeToken(tokenId uint64) (string, string, string) {
++
++	println("================== Stake Token (", tokenId, ") ==================")
+ 	assertOnlyNotHalted()
+ 	assertOnlyNotStaked(tokenId)
+ 
+@@ -187,6 +190,7 @@ func StakeToken(tokenId uint64) (string, string, string) {
+ 	}
+ 	currentHeight := std.GetHeight()
+ 	liquidity := getLiquidity(tokenId)
++	tickLower, tickUpper := getTickOf(tokenId)
+ 
+ 	// staked status
+ 	deposit := &Deposit{
+@@ -194,8 +198,8 @@ func StakeToken(tokenId uint64) (string, string, string) {
+ 		stakeTimestamp:    time.Now().Unix(),
+ 		stakeHeight:       currentHeight,
+ 		targetPoolPath:    poolPath,
+-		tickLower:         pn.PositionGetPositionTickLower(tokenId),
+-		tickUpper:         pn.PositionGetPositionTickUpper(tokenId),
++		tickLower:         tickLower,
++		tickUpper:         tickUpper,
+ 		liquidity:         liquidity,
+ 		lastCollectHeight: uint64(currentHeight),
+ 		warmups:           InstantiateWarmup(currentHeight),
+@@ -214,23 +218,28 @@ func StakeToken(tokenId uint64) (string, string, string) {
+ 	signedLiquidity := i256.FromUint256(liquidity)
+ 	currentTick := pl.PoolGetSlot0Tick(poolPath)
+ 	isInRange := false
++	println("[", currentHeight, "][", tokenId, "] currentTick: ", currentTick)
+ 
++	println("in-range :", pn.PositionIsInRange(tokenId))
+ 	if pn.PositionIsInRange(tokenId) {
+ 		isInRange = true
+ 		pool.modifyDeposit(tokenId, signedLiquidity, uint64(currentHeight))
+ 	}
+-
+-	// this could happen because of how position stores the ticks.
+-	// ticks are negated if the token1 < token0
+-	token0 := pl.PoolGetToken0(poolPath)
+-	token1 := pl.PoolGetToken1(poolPath)
+-	if token1 < token0 {
+-		pool.ticks.Get(deposit.tickLower).modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
+-		pool.ticks.Get(deposit.tickUpper).modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
+-	} else {
+-		pool.ticks.Get(deposit.tickLower).modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
+-		pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
+-	}
++	println("inRange : ", isInRange)
++
++	upperTick := pool.ticks.Get(deposit.tickUpper)
++	lowerTick := pool.ticks.Get(deposit.tickLower)
++
++	upperTick.modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
++	println("upperTick id : ", upperTick.id)
++	println("upperTick stakedLiquidityGross: ", upperTick.stakedLiquidityGross.ToString())
++	println("upperTick stakedLiquidityDelta: ", upperTick.stakedLiquidityDelta.ToString())
++	println("upperTick Size: ", upperTick.cross.tree.Size())
++	lowerTick.modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
++	println("lowerTick id: ", lowerTick.id)
++	println("lowerTick stakedLiquidityGross: ", lowerTick.stakedLiquidityGross.ToString())
++	println("lowerTick stakedLiquidityDelta: ", lowerTick.stakedLiquidityDelta.ToString())
++	println("lowerTick Size: ", lowerTick.cross.tree.Size())
+ 
+ 	prevAddr, prevPkgPath := getPrev()
+ 
+@@ -339,7 +348,14 @@ func transferDeposit(tokenId uint64, owner, caller, to std.Address) error {
+ //   - poolPath (string): The path of the pool to which the LP token is staked
+ //
+ // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#collectreward
+-func CollectReward(tokenId uint64, unwrapResult bool) string {
++func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
++
++	println("")
++	println("")
++	println("")
++	println("")
++	println("================== CollectReward (", tokenId, ") ==================")
++
+ 	assertOnlyNotHalted()
+ 
+ 	en.MintAndDistributeGns()
+@@ -353,6 +369,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
+ 	currentHeight := std.GetHeight()
+ 	// get all internal and external rewards
+ 	reward := calcPositionReward(uint64(currentHeight), tokenId)
++	println("tokenId: ", tokenId, ", reward internal : ", reward.Internal, ", reward penalty : ", reward.InternalPenalty)
+ 
+ 	// update lastCollectHeight to current height
+ 	deposit.lastCollectHeight = uint64(currentHeight)
+@@ -381,6 +398,8 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
+ 	// internal reward to user
+ 	toUser := handleUnstakingFee(consts.GNS_PATH, reward.Internal, true, tokenId, deposit.targetPoolPath)
+ 	if toUser > 0 {
++		println("gns balance (staker) : ", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
++
+ 		gns.Transfer(a2u(deposit.owner), toUser)
+ 		// internal penalty to community pool
+ 		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), reward.InternalPenalty)
+@@ -414,7 +433,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
+ 		"internal_unClaimable", strconv.FormatUint(unClaimableInternal, 10),
+ 	)
+ 
+-	return strconv.FormatUint(toUser, 10)
++	return strconv.FormatUint(toUser, 10), strconv.FormatUint(reward.InternalPenalty, 10)
+ }
+ 
+ /*
+@@ -527,17 +546,21 @@ func applyUnStake(tokenId uint64) {
+ 	if pn.PositionIsInRange(tokenId) {
+ 		pool.modifyDeposit(tokenId, signedLiquidity, currentHeight)
+ 	}
++	//pool.ticks.Get(deposit.tickLower).modifyDepositLower(currentHeight, currentTick, signedLiquidity)
++	//pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(currentHeight, currentTick, signedLiquidity)
+ 
+ 	poolPath := pn.PositionGetPositionPoolKey(tokenId)
+-	token0 := pl.PoolGetToken0(poolPath)
+-	token1 := pl.PoolGetToken1(poolPath)
++	tickUpper := deposit.tickUpper
++	tickLower := deposit.tickLower
++	token0, token1, _ := poolPathDivide(poolPath)
+ 	if token1 < token0 {
+-		pool.ticks.Get(deposit.tickLower).modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
+-		pool.ticks.Get(deposit.tickUpper).modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
+-	} else {
+-		pool.ticks.Get(deposit.tickLower).modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
+-		pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
++		tickUpper, tickLower = -tickLower, -tickUpper
+ 	}
++	upperTick := pool.ticks.Get(tickUpper)
++	lowerTick := pool.ticks.Get(tickLower)
++
++	upperTick.modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
++	lowerTick.modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
+ 
+ 	deposits.Remove(tokenId)
+ 
+@@ -619,6 +642,12 @@ func getLiquidity(tokenId uint64) *u256.Uint {
+ 	return u256.MustFromDecimal(liq)
+ }
+ 
++func getTickOf(tokenId uint64) (int32, int32) {
++	tickLower := pn.PositionGetPositionTickLower(tokenId)
++	tickUpper := pn.PositionGetPositionTickUpper(tokenId)
++	return tickLower, tickUpper
++}
++
+ func assertOnlyNotStaked(tokenId uint64) {
+ 	if deposits.Has(tokenId) {
+ 		panic(addDetailToError(
+@@ -648,6 +677,6 @@ func getTokenPairBalanceFromPosition(poolPath string, tokenId uint64) (string, s
+ 	if token1Balance == "" {
+ 		token1Balance = "0"
+ 	}
+-
++	println("[", tokenId, "]=== token0Balance: ", token0Balance, ", token1Balance: ", token1Balance)
+ 	return token0Balance, token1Balance
+ }

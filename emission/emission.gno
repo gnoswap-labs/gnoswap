@@ -22,30 +22,24 @@ var (
 func MintAndDistributeGns() uint64 {
 	assertOnlyNotHalted()
 
-	println("AAA")
 	currentHeight := std.GetHeight()
 	lastMintedHeight := gns.GetLastMintedHeight()
 	if lastMintedHeight >= currentHeight {
 		// Skip if we've already minted tokens at this height
 		return 0
 	}
-	println("BBB")
-
 	// Mint new tokens and add any leftover amounts from previous distribution
 	mintedEmissionRewardAmount := gns.MintGns(a2u(consts.EMISSION_ADDR))
 	if hasLeftGNSAmount() {
 		mintedEmissionRewardAmount += GetLeftGNSAmount()
 		setLeftGNSAmount(0)
 	}
-	println("CCC")
 	// Distribute tokens and track any undistributed amount
 	distributedGNSAmount := distributeToTarget(mintedEmissionRewardAmount)
-	println("DDD")
 	if mintedEmissionRewardAmount != distributedGNSAmount {
 		setLeftGNSAmount(mintedEmissionRewardAmount - distributedGNSAmount)
 	}
 
-	println("DDD")
 	// Emit event with distribution details
 	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
@@ -59,10 +53,8 @@ func MintAndDistributeGns() uint64 {
 		"internal_totalSupply", ufmt.Sprintf("%d", gns.TotalSupply()),
 	)
 
-	println("EEE")
 	setLastExecutedHeight(currentHeight)
 
-	println("FFF")
 	return distributedGNSAmount
 }
 

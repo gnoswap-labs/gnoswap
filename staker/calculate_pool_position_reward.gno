@@ -94,8 +94,6 @@ type CalcPositionRewardParam struct {
 }
 
 func CalcPositionReward(param CalcPositionRewardParam) []Reward {
-	println("===== CalcPositionReward", param.TokenId)
-
 	// cache per-pool rewards in the internal incentive(tiers)
 	param.PoolTier.cacheReward(param.CurrentHeight, param.Pools)
 
@@ -123,7 +121,6 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 	// XXX: Tick ordering code, memoing for future
 
 	lastCollectHeight := deposit.lastCollectHeight
-	println("===== lastCollectHeight", param.TokenId, lastCollectHeight)
 
 	initialUpperCross := upperTick.previousCross(lastCollectHeight)
 	initialLowerCross := lowerTick.previousCross(lastCollectHeight)

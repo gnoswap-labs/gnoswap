@@ -15,6 +15,11 @@ type IncentiveBound struct {
 	IsEnter   bool
 }
 
+type IncentiveRewardEntry struct {
+	ActiveIncentives []string
+	TotalStakedLiquidity *u256.Uint
+}
+
 // per-pool incentives
 type Incentives struct {
 	byTime    *avl.Tree // (startTime, endTime, creator, rewardToken) => ExternalIncentive
@@ -23,7 +28,9 @@ type Incentives struct {
 
 	incentiveBound *UintTree // blockNumber -> []IncentiveBound
 
-	rewardCache           *RewardCacheTree // blockNumber -> map[string]*u256.Uint
+	currentIncentives []string
+
+	rewardCache           *RewardCacheTree // blockNumber -> IncentiveRewardEntry
 	lastRewardCacheHeight *uint64
 }
 
@@ -37,6 +44,8 @@ func NewIncentives(currentHeight uint64) Incentives {
 
 		rewardCache:           NewRewardCacheTree(),
 		lastRewardCacheHeight: &currentHeight,
+
+		currentIncentives: []string{},
 	}
 }
 
@@ -81,12 +90,15 @@ func (self *Incentives) GetBound(height uint64) []IncentiveBound {
 }
 
 // cacheReward() MUST be called before this function
-func (self *Incentives) CurrentReward(currentHeight uint64) map[string]*u256.Uint {
+func (self *Incentives) CurrentReward(currentHeight uint64) IncentiveRewardEntry {
 	value := self.rewardCache.CurrentReward(currentHeight)
 	if value == nil {
-		return make(map[string]*u256.Uint)
+		return IncentiveRewardEntry{
+			ActiveIncentives: []string{},
+			TotalStakedLiquidity: u256.Zero(),
+		}
 	}
-	return value.(map[string]*u256.Uint)
+	return value.(IncentiveRewardEntry)
 }
 
 func (self *Incentives) create(
@@ -129,22 +141,35 @@ func (self *Incentives) cacheRewardPerLiquidityUnit(startHeight, endHeight uint6
 
 	self.incentiveBound.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
 		bound := value.([]IncentiveBound)
-		reward := make(map[string]*u256.Uint)
-		for incentiveId, ratio := range currentReward {
-			reward[incentiveId] = ratio
+		reward := IncentiveRewardEntry{
+			ActiveIncentives: []string{},
+			TotalStakedLiquidity: currentReward.TotalStakedLiquidity.Clone(),
 		}
+		copy(reward.ActiveIncentives, currentReward.ActiveIncentives)
 		for _, bound := range bound {
 			if bound.IsEnter {
-				delta := u256.NewUint(bound.Incentive.rewardPerBlock)
-				deltaQ192 := delta.Mul(delta, q192)
-				ratio := u256.Zero().Div(deltaQ192, stakedLiquidity)
-				reward[bound.Incentive.incentiveId] = ratio
+				reward.ActiveIncentives = append(reward.ActiveIncentives, bound.Incentive.incentiveId)
 			} else {
-				delete(reward, bound.Incentive.incentiveId)
+				for i, incentiveId := range reward.ActiveIncentives {
+					if incentiveId == bound.Incentive.incentiveId {
+						reward.ActiveIncentives = append(reward.ActiveIncentives[:i], reward.ActiveIncentives[i+1:]...)
+						break
+					}
+				}
 			}
 		}
 		self.rewardCache.Set(key, reward)
 		return false
 	})
 	*self.lastRewardCacheHeight = endHeight
+}
+
+func (self *Incentives) updateRewardByLiquidityChange(currentHeight uint64, liquidity *u256.Uint) {
+	entry := IncentiveRewardEntry{
+		ActiveIncentives: []string{},
+		TotalStakedLiquidity: liquidity.Clone(),
+	}
+	copy(entry.ActiveIncentives, self.currentIncentives)
+
+	self.rewardCache.Set(currentHeight, entry)
 }

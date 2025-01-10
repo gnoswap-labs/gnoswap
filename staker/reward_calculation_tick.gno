@@ -330,6 +330,10 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 		tick.updateCross(blockNumber, zeroForOne)
 
 		liquidityInRangeDelta := tick.stakedLiquidityDelta
+		if liquidityInRangeDelta.Sign() == 0 {
+			return
+		}
+
 		if zeroForOne {
 			liquidityInRangeDelta = i256.Zero().Neg(liquidityInRangeDelta)
 		}
@@ -344,11 +348,13 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 			if stakedLiquidity.Sign() == 1 {
 				// StakedLiquidity moved from positive to zero, start unclaimable period
 				pool.startInternalUnclaimablePeriod(blockNumber)
+				pool.startExternalUnclaimablePeriod(blockNumber)
 			}
 		case 1:
 			if stakedLiquidity.Sign() == 0 {
 				// StakedLiquidity moved from zero to positive, end unclaimable period
 				pool.endInternalUnclaimablePeriod(blockNumber)
+				pool.endExternalUnclaimablePeriod(blockNumber)
 			}
 		}
 

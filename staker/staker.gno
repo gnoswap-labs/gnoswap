@@ -649,5 +649,8 @@ func getTokenPairBalanceFromPosition(poolPath string, tokenId uint64) (string, s
 func getTickOf(tokenId uint64) (int32, int32) {
 	tickLower := pn.PositionGetPositionTickLower(tokenId)
 	tickUpper := pn.PositionGetPositionTickUpper(tokenId)
-	return tickLower, tickUpper
+	if tickUpper < tickLower {
+		panic(ufmt.Sprintf("tickUpper(%d) is less than tickLower(%d)", tickUpper.id, tickLower.id))
+	}
+	return tickLower.id, tickUpper.id
 }

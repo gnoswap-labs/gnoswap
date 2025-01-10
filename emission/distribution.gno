@@ -44,12 +44,12 @@ var (
 // - Governance Stakers: 0%
 func init() {
 	distributionBpsPct = avl.NewTree()
-	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), 7500)
-	distributionBpsPct.Set(strconv.Itoa(DEVOPS), 2000)
-	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), 500)
-	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), 0)
+	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), uint64(7500))
+	distributionBpsPct.Set(strconv.Itoa(DEVOPS), uint64(2000))
+	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), uint64(500))
+	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), uint64(0))
 
-	addStakerPerBlockMintUpdate(uint64(std.GetHeight()), gns.GetCurrentEmission() * 7500)
+	addStakerPerBlockMintUpdate(uint64(std.GetHeight()), gns.GetCurrentEmission() * uint64(7500))
 }
 
 var (
@@ -254,8 +254,8 @@ func distributeToTarget(amount uint64) uint64 {
 			))
 		}
 
-		pct := iPct.(int)
-		distAmount := calculateAmount(amount, uint64(pct))
+		pct := iPct.(uint64)
+		distAmount := calculateAmount(amount, pct)
 		totalSent += distAmount
 
 		transferToTarget(targetInt, distAmount)
