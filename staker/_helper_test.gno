@@ -264,8 +264,8 @@ func MintPosition(t *testing.T,
 	tickUpper int32,
 	amount0Desired string, // *u256.Uint
 	amount1Desired string, // *u256.Uint
-	amount0Min string,     // *u256.Uint
-	amount1Min string,     // *u256.Uint
+	amount0Min string, // *u256.Uint
+	amount1Min string, // *u256.Uint
 	deadline int64,
 	mintTo std.Address,
 	caller std.Address,
@@ -445,6 +445,8 @@ func deletePoolTier(t *testing.T, poolPath string) {
 	t.Helper()
 	if poolTier != nil {
 		poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, 0)
+	} else {
+		panic("poolTier is nil")
 	}
 }
 
@@ -453,7 +455,14 @@ func addPoolTier(t *testing.T, poolPath string, tier uint64) {
 	if poolTier != nil {
 		if pools != nil {
 			pools.GetOrCreate(poolPath)
+		} else {
+			panic(addDetailToError(
+				errPoolNotFound, ufmt.Sprintf("unknown error - pools is nil")))
 		}
+		poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, tier)
+	} else {
+		poolTier = NewPoolTier(uint64(std.GetHeight()), poolPath, en.GetStakerEmissionUpdates)
+		pools.GetOrCreate(poolPath) // must update pools tree
 		poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, tier)
 	}
 }
@@ -463,7 +472,7 @@ func changeWarmup(t *testing.T, index int, blockDuration int64) {
 }
 
 func getNumPoolTiers(t *testing.T) (uint64, uint64, uint64) {
-	counts := poolTier.CurrentCounts()
+	counts := poolTier.CurrentAllTierCounts()
 	tier1Num := counts[1]
 	tier2Num := counts[2]
 	tier3Num := counts[3]

@@ -48,7 +48,8 @@ func init() {
 	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), uint64(500))
 	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), uint64(0))
 
-	addStakerPerBlockMintUpdate(uint64(std.GetHeight()), gns.GetCurrentEmission()*uint64(7500))
+	//addStakerPerBlockMintUpdate(uint64(std.GetHeight()), gns.GetCurrentEmission()*uint64(7500))
+	lastGNSEmissionUpdateHeight = uint64(std.GetHeight())
 }
 
 var (
@@ -65,10 +66,13 @@ func updateStakerEmission() {
 	emissionHeights, emissionUpdates := gns.EmissionUpdates(lastGNSEmissionUpdateHeight, uint64(std.GetHeight()))
 
 	for i, height := range emissionHeights {
+		println("*******************************[", height, "] updateStakerEmission : to ", emissionUpdates[i]*GetDistributionBpsPct(LIQUIDITY_STAKER)/10000)
 		stakerPerBlockMint.Set(common.EncodeUint(height), emissionUpdates[i]*GetDistributionBpsPct(LIQUIDITY_STAKER)/10000)
 	}
 
+	println("lastGNSEmissionUpdateHeight : ", lastGNSEmissionUpdateHeight)
 	lastGNSEmissionUpdateHeight = uint64(std.GetHeight())
+	println("lastGNSEmissionUpdateHeight : ", lastGNSEmissionUpdateHeight)
 }
 
 func GetLatestStakerEmission(endHeight uint64) uint64 {
@@ -131,6 +135,7 @@ func (self *EmissionUpdate) IsEmpty() bool {
 }
 
 func addStakerPerBlockMintUpdate(height uint64, amount uint64) {
+	println("[", height, "] addStakerPerBlockMintUpdate : to ", amount)
 	stakerPerBlockMint.Set(common.EncodeUint(height), amount/10000)
 }
 
@@ -265,6 +270,7 @@ func transferToTarget(target int, amount uint64) {
 		gns.Transfer(a2u(consts.STAKER_ADDR), amount)
 		distributedToStaker += amount
 		accuDistributedToStaker += amount
+		println("\t\t\t=================>[", std.GetHeight(), "] distributeToTarget : to Staker (", " : ", amount, "), accum : ", accuDistributedToStaker)
 
 	case DEVOPS:
 		gns.Transfer(a2u(consts.DEV_OPS), amount)

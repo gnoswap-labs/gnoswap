@@ -107,8 +107,6 @@ func init() {
 	// initialize halving data
 	initializeHalvingData()
 
-	addPerBlockMintUpdate(uint64(std.GetHeight()), amountPerBlockPerHalvingYear[HALVING_START_YEAR])
-
 	// set end timestamp
 	// after 12 years, timestamp which gns emission will be ended
 	// it can not be changed

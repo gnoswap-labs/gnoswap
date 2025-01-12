@@ -8,7 +8,7 @@ import (
 
 var (
 	errNoPermission                = errors.New("[GNOSWAP-STAKER-001] caller has no permission")
-	errNotRegistered               = errors.New("[GNOSWAP-STAKER-002] not registered token")
+	errPoolNotFound                = errors.New("[GNOSWAP-STAKER-002] pool not found")
 	errAlreadyRegistered           = errors.New("[GNOSWAP-STAKER-003] already registered token")
 	errLocked                      = errors.New("[GNOSWAP-STAKER-004] can't transfer token while locked")
 	errWrapUnwrap                  = errors.New("[GNOSWAP-STAKER-005] wrap, unwrap failed")

@@ -183,6 +183,13 @@ func calculateAmountToMint(fromHeight, toHeight int64) uint64 {
 		fromHeight = mintUntilHeight + 1
 	}
 
+	if fromHeight == toHeight {
+		addPerBlockMintUpdate(uint64(toHeight), GetAmountPerBlockPerHalvingYear(GetHalvingYearByHeight(toHeight)))
+	} else {
+		addPerBlockMintUpdate(uint64(fromHeight), GetAmountPerBlockPerHalvingYear(GetHalvingYearByHeight(fromHeight)))
+		addPerBlockMintUpdate(uint64(toHeight), GetAmountPerBlockPerHalvingYear(GetHalvingYearByHeight(toHeight)))
+	}
+
 	assertTooManyEmission(totalAmountToMint)
 	return totalAmountToMint
 }

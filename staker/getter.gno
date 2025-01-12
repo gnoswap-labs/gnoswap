@@ -503,7 +503,7 @@ func GetPoolTierCount(tier uint64) uint64 {
 // Returns:
 // - uint64: The current reward amount for the specified tier.
 func GetPoolReward(tier uint64) uint64 {
-	rewardDenominators := poolTier.tierRatio.IntoRewardDenominators(poolTier.CurrentCounts())
+	rewardDenominators := poolTier.tierRatio.IntoRewardDenominators(poolTier.CurrentAllTierCounts())
 	currentEmission := poolTier.emissionUpdate(uint64(std.GetHeight()), uint64(std.GetHeight())).LastEmissionUpdate
 	return ApplyDenominator(currentEmission, rewardDenominators[tier])
 }

@@ -4,11 +4,18 @@ import (
 	"std"
 
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/ufmt"
 
 	en "gno.land/r/gnoswap/v1/emission"
 )
 
-const TierRatioLCM = 8400 // LCM(20, 30, 50, 70, 80, 100)
+const (
+	TierRatioLCM = 8400 // LCM(20, 30, 50, 70, 80, 100)
+	AllTierCount = 4    // 0, 1, 2, 3
+	Tier1        = 1
+	Tier2        = 2
+	Tier3        = 3
+)
 
 // 100%, 0%, 0% if no tier2 and tier3
 // 80%, 0%, 20% if no tier2
@@ -62,18 +69,27 @@ func TierRatioFromCounts(tier1Count, tier2Count, tier3Count uint64) *TierRatio {
 // RewardDenominator[i] = TierCount[i] * TierRatioLCM / (TierRatio[i] * 100)
 // TierReward[i] = Emission * TierRatioLCM / RewardDenominator[i] / 100
 func (self *TierRatio) IntoRewardDenominators(counts []uint64) []uint64 {
-	result := make([]uint64, 4)
-	for i := 1; i < 4; i++ {
+	if len(counts) != AllTierCount {
+		panic(addDetailToError(
+			errInvalidPoolTier, ufmt.Sprintf("invalid tier count length(%d)", len(counts))),
+		)
+	}
+
+	println("\tIntoRewardDenominators : , All tier counts len : ", len(counts))
+	result := make([]uint64, AllTierCount)
+	for i := Tier1; i < AllTierCount; i++ {
 		if counts[i] == 0 {
 			result[i] = 0
 		} else {
 			result[i] = counts[i] * TierRatioLCM / (self.Get(uint64(i)))
 		}
+		println("\t[", i, "] : ", counts[i], ", ratio : ", self.Get(uint64(i)), ", result : ", result[i])
 	}
 	return result
 }
 
 func ApplyDenominator(emission uint64, denominator uint64) uint64 {
+	println("\tApplyDenominator : emission : ", emission, ", denominator : ", denominator, ", return : ", emission*TierRatioLCM/denominator/100)
 	if denominator == 0 {
 		return 0
 	}
@@ -83,14 +99,15 @@ func ApplyDenominator(emission uint64, denominator uint64) uint64 {
 
 func (self *TierRatio) Get(tier uint64) uint64 {
 	switch tier {
-	case 1:
+	case Tier1:
 		return self.Tier1
-	case 2:
+	case Tier2:
 		return self.Tier2
-	case 3:
+	case Tier3:
 		return self.Tier3
 	default:
-		panic("invalid tier")
+		panic(addDetailToError(
+			errInvalidPoolTier, ufmt.Sprintf("unsupported tier(%d)", tier)))
 	}
 }
 
@@ -163,8 +180,8 @@ func (self *PoolTier) CurrentCount(tier uint64) int {
 	return count
 }
 
-func (self *PoolTier) CurrentCounts() []uint64 {
-	count := make([]uint64, 4)
+func (self *PoolTier) CurrentAllTierCounts() []uint64 {
+	count := make([]uint64, AllTierCount)
 	self.membership.Iterate("", "", func(key string, value interface{}) bool {
 		count[value.(uint64)]++
 		return false
@@ -181,6 +198,10 @@ func (self *PoolTier) CurrentTier(poolPath string) uint64 {
 }
 
 func (self *PoolTier) changeTier(currentHeight uint64, pools *Pools, poolPath string, nextTier uint64) {
+	// TODO:
+	// poolPath validation check
+
+	println("[", currentHeight, "] changeTier Start -> poolPath : ", poolPath, ", nextTier : ", nextTier)
 	self.cacheReward(currentHeight, pools)
 
 	currentTier := self.CurrentTier(poolPath)
@@ -190,7 +211,7 @@ func (self *PoolTier) changeTier(currentHeight uint64, pools *Pools, poolPath st
 
 	if nextTier == 0 {
 		self.membership.Remove(poolPath)
-		pool, ok := pools.Get(poolPath)
+		_, ok := pools.Get(poolPath)
 		if !ok {
 			panic("changeTier: pool not found")
 		}
@@ -198,8 +219,8 @@ func (self *PoolTier) changeTier(currentHeight uint64, pools *Pools, poolPath st
 		self.membership.Set(poolPath, nextTier)
 	}
 
-	counts := self.CurrentCounts()
-	self.tierRatio = TierRatioFromCounts(counts[1], counts[2], counts[3])
+	counts := self.CurrentAllTierCounts()
+	self.tierRatio = TierRatioFromCounts(counts[Tier1], counts[Tier2], counts[Tier3])
 
 	rewardDenominators := self.tierRatio.IntoRewardDenominators(counts)
 
@@ -231,12 +252,19 @@ func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
 	// - emission distribution ratio is changed
 	// during the period of PoolTier.lastRewardCacheHeight to currentHeight
 
-	emissionUpdate := self.emissionUpdate(*self.lastRewardCacheHeight, currentHeight)
-	if emissionUpdate.IsEmpty() {
+	println("[", currentHeight, "] cacheReward Start -> lastRewardCacheHeight : ", *self.lastRewardCacheHeight)
+	if *self.lastRewardCacheHeight == currentHeight {
+		println("lastRewardCacheHeight is same with currentHeight")
 		return
 	}
 
-	rewardDenominators := self.tierRatio.IntoRewardDenominators(self.CurrentCounts())
+	emissionUpdate := self.emissionUpdate(*self.lastRewardCacheHeight, currentHeight)
+	if emissionUpdate.IsEmpty() {
+		println("emissionUpdate is empty")
+		return
+	}
+
+	rewardDenominators := self.tierRatio.IntoRewardDenominators(self.CurrentAllTierCounts())
 
 	self.membership.Iterate("", "", func(key string, value interface{}) bool {
 		pool, ok := pools.Get(key)
@@ -244,12 +272,15 @@ func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
 			panic("pool not found")
 		}
 
+		println("")
+		println("\tmembership : ", key, ", ", value.(uint64))
 		pool.cacheInternalReward(currentHeight, emissionUpdate, rewardDenominators[value.(uint64)])
 
 		return false
 	})
 
 	*self.lastRewardCacheHeight = currentHeight
+	println("[", currentHeight, "] cacheReward End : lastRewardCacheHeight ", *self.lastRewardCacheHeight)
 }
 
 func (self *PoolTier) IsInternallyIncentivizedPool(currentHeight uint64, poolPath string) bool {

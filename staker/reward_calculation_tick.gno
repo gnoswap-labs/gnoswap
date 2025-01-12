@@ -120,6 +120,7 @@ func (self *Tick) crossInfo(startHeight, endHeight uint64) []int64 {
 	tickCrosses := make([]int64, 0)
 
 	self.cross.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
+		println("key : ", key, ", value : ", value.(bool))
 		zeroForOne := value.(bool)
 		if zeroForOne {
 			tickCrosses = append(tickCrosses, -int64(key))
@@ -133,18 +134,15 @@ func (self *Tick) crossInfo(startHeight, endHeight uint64) []int64 {
 }
 
 func (self *Tick) updateCross(blockNumber uint64, zeroForOne bool) {
-	// cross, ok := self.cross.Get(blockNumber)
-	// if !ok {
 	self.cross.Set(blockNumber, zeroForOne)
-	// } else if cross != zeroForOne {
-	// 	self.cross.Remove(blockNumber)
-	// }
+	println("updateCross ", blockNumber, ", ", zeroForOne)
 }
 
 func (self *Tick) previousCross(currentHeight uint64) bool {
 	// There MUST be at least one cross, set when the position is staked
 	cross := false
 	self.cross.ReverseIterate(0, currentHeight-1, func(key uint64, value interface{}) bool {
+		println(">>>>>>>>>>>>>>>>> previousCross ", key, value.(bool))
 		cross = value.(bool)
 		return true
 	})
@@ -153,17 +151,26 @@ func (self *Tick) previousCross(currentHeight uint64) bool {
 
 func (self *Tick) modifyDepositLower(currentHeight uint64, currentTick int32, liquidity *i256.Int) {
 	// update staker side tick info
+	println("stakedLiquidityGross ", self.stakedLiquidityGross.ToString(), ", liquidity ", liquidity.ToString())
 	self.stakedLiquidityGross = liquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
+	if self.stakedLiquidityGross.Lt(u256.Zero()) {
+		panic("stakedLiquidityGross is negative")
+	}
 	self.stakedLiquidityDelta = i256.Zero().Add(self.stakedLiquidityDelta, liquidity)
 
+	println("modifyDepositLower: currentTick =", currentTick, "tickId =", self.id, "stakedLiquidityGross =", self.stakedLiquidityGross.ToString(), "stakedLiquidityDelta =", self.stakedLiquidityDelta.ToString())
 	self.updateCross(currentHeight, currentTick < self.id)
 	// ticks.Set(self.id, self)
 }
 
 func (self *Tick) modifyDepositUpper(currentHeight uint64, currentTick int32, liquidity *i256.Int) {
 	self.stakedLiquidityGross = liquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
+	if self.stakedLiquidityGross.Lt(u256.Zero()) {
+		panic("stakedLiquidityGross is negative")
+	}
 	self.stakedLiquidityDelta = i256.Zero().Sub(self.stakedLiquidityDelta, liquidity)
 
+	println("modifyDepositUpper: currentTick =", currentTick, "tickId =", self.id, "stakedLiquidityGross =", self.stakedLiquidityGross.ToString(), "stakedLiquidityDelta =", self.stakedLiquidityDelta.ToString())
 	self.updateCross(currentHeight, currentTick < self.id)
 	// ticks.Set(self.id, self)
 }

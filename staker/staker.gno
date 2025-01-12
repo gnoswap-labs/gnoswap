@@ -20,6 +20,8 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	pusers "gno.land/p/demo/users"
 )
 
 type Deposits struct {
@@ -134,7 +136,6 @@ func init() {
 	// tier 1
 	// ONLY GNOT:GNS 0.3%
 
-	// poolTier.changeTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1, 1)
 	poolTier = NewPoolTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1, en.GetStakerEmissionUpdates)
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1) // must update pools tree
 }
@@ -163,6 +164,8 @@ func init() {
 //
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#staketoken
 func StakeToken(tokenId uint64) (string, string, string) {
+
+	println("================== Stake Token (", tokenId, ") ==================")
 	assertOnlyNotHalted()
 	assertOnlyNotStaked(tokenId)
 
@@ -216,6 +219,7 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	signedLiquidity := i256.FromUint256(liquidity)
 	currentTick := pl.PoolGetSlot0Tick(poolPath)
 	isInRange := false
+	println("[", currentHeight, "][", tokenId, "] currentTick: ", currentTick)
 
 	// TODO: call cache functions at the every staker related state change
 	poolTier.cacheReward(uint64(currentHeight), pools)
@@ -231,7 +235,15 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	upperTick := pool.ticks.Get(tickUpper)
 	lowerTick := pool.ticks.Get(tickLower)
 	upperTick.modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
+	println("upperTick id : ", upperTick.id)
+	println("upperTick stakedLiquidityGross: ", upperTick.stakedLiquidityGross.ToString())
+	println("upperTick stakedLiquidityDelta: ", upperTick.stakedLiquidityDelta.ToString())
+	println("upperTick Size: ", upperTick.cross.tree.Size())
 	lowerTick.modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
+	println("lowerTick id: ", lowerTick.id)
+	println("lowerTick stakedLiquidityGross: ", lowerTick.stakedLiquidityGross.ToString())
+	println("lowerTick stakedLiquidityDelta: ", lowerTick.stakedLiquidityDelta.ToString())
+	println("lowerTick Size: ", lowerTick.cross.tree.Size())
 
 	prevAddr, prevPkgPath := getPrev()
 
@@ -341,6 +353,13 @@ func transferDeposit(tokenId uint64, owner, caller, to std.Address) error {
 //
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#collectreward
 func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
+
+	println("")
+	println("")
+	println("")
+	println("")
+	println("================== CollectReward (", tokenId, ") ==================")
+
 	assertOnlyNotHalted()
 
 	en.MintAndDistributeGns()
@@ -383,6 +402,8 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 	toUser := handleUnstakingFee(consts.GNS_PATH, reward.Internal, true, tokenId, deposit.targetPoolPath)
 	println("toUser", toUser)
 	if toUser > 0 {
+		println("gns balance (staker) : ", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
+
 		gns.Transfer(a2u(deposit.owner), toUser)
 		// internal penalty to community pool
 		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), reward.InternalPenalty)
@@ -394,6 +415,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 	// FIXME @mconcat
 	// panic: slice index out of bounds: 0 (len=0)
 	unClaimableInternal, unClaimableExternal := ProcessUnClaimableReward(deposit.targetPoolPath, uint64(currentHeight))
+	println("unClaimableInternal : ", unClaimableInternal)
 	if unClaimableInternal > 0 {
 		// internal unclaimable to community pool
 		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), unClaimableInternal)
@@ -644,7 +666,7 @@ func getTokenPairBalanceFromPosition(poolPath string, tokenId uint64) (string, s
 	if token1Balance == "" {
 		token1Balance = "0"
 	}
-
+	println("[", tokenId, "]=== token0Balance: ", token0Balance, ", token1Balance: ", token1Balance)
 	return token0Balance, token1Balance
 }
 
@@ -656,3 +678,8 @@ func getTickOf(tokenId uint64) (int32, int32) {
 	}
 	return tickLower, tickUpper
 }
+
+// TODO:
+// SetTier
+// RemoveTier
+// ChangeTier

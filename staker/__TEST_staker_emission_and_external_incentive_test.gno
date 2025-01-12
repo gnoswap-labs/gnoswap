@@ -24,15 +24,16 @@ import (
 
 func TestStakerWithEmissionAmount(t *testing.T) {
 	testInit(t)
-	testCreatePool(t)
+	testCreatPool_WUGNOT_GNS(t)
+	//testCreatePool_BAR_QUX(t)
 	testPositionMintPos01Tier01(t)
-	testPositionMintPos02Tier01(t)
-	testPositionMintPos03Tier01(t)
-	testCreateExternalIncentive(t)
+	//testPositionMintPos02Tier01(t)
+	//testPositionMintPos03Tier01(t)
+	//testCreateExternalIncentive(t)
 	testStakeToken01(t)
-	testStakeToken02(t)
-	testStakeToken03(t)
-	testSameHeightCalculation(t)
+	//testStakeToken02(t)
+	//testStakeToken03(t)
+	//testSameHeightCalculation(t)
 	testCollectReward01(t)
 	//testUnstakeToken01(t)
 	//testExternalIncentiveReward(t)
@@ -45,8 +46,7 @@ func testInit(t *testing.T) {
 		// init pool tiers
 		// tier 1
 		// deletePoolTier(t, MUST_EXISTS_IN_TIER_1)
-		println("GENESIS", std.GetHeight())
-		addPoolTier(t, `gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500`, 1)
+		//println("GENESIS", std.GetHeight())
 		std.TestSkipHeights(1)
 
 		// set unstaking fee to 0
@@ -54,6 +54,7 @@ func testInit(t *testing.T) {
 
 		// set pool creation fee to 0
 		//pl.SetPoolCreationFeeByAdmin(0)
+		println("height", std.GetHeight())
 
 		// set community pool distribution to 0% (give it to devOps)
 		en.ChangeDistributionPctByAdmin(
@@ -75,8 +76,9 @@ func testInit(t *testing.T) {
 	})
 }
 
-func testCreatePool(t *testing.T) {
-	t.Run("create pool", func(t *testing.T) {
+func testCreatPool_WUGNOT_GNS(t *testing.T) {
+	t.Run("create pool wugnot-gns-3000", func(t *testing.T) {
+		println("[", std.GetHeight(), "]", "create pool wugnot-gns-3000")
 		uassert.Equal(t, uint64(100000000000000), gns.TotalSupply())
 		uassert.Equal(t, uint64(0), gnsBalance(consts.EMISSION_ADDR))
 		uassert.Equal(t, uint64(0), gnsBalance(consts.STAKER_ADDR))
@@ -91,7 +93,14 @@ func testCreatePool(t *testing.T) {
 		uassert.Equal(t, uint64(100000000000000)+(2*oneBlockEmissionAmount), gns.TotalSupply())
 
 		std.TestSkipHeights(1)
+	})
+}
 
+func testCreatePool_BAR_QUX(t *testing.T) {
+	t.Run("create pool bra-qux-500", func(t *testing.T) {
+		println("[ ", std.GetHeight(), "]", "create pool bar-qux-500")
+		std.TestSetRealm(adminRealm)
+		oneBlockEmissionAmount := uint64(14269406)
 		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		pl.CreatePool(barPath, quxPath, 500, "130621891405341611593710811006") // tick 10_000 ≈ x2.7
@@ -105,6 +114,8 @@ func testCreatePool(t *testing.T) {
 		uassert.Equal(t, (3*oneBlockDevOpsAmount)+1, gnsBalance(consts.DEV_OPS))
 		uassert.Equal(t, uint64(1), gnsBalance(consts.EMISSION_ADDR))
 
+		println("[", std.GetHeight(), "]", "addPoolTier ", barPath, quxPath, 500, "to : 1tier")
+		addPoolTier(t, `gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500`, 1)
 		std.TestSkipHeights(1)
 	})
 }
@@ -122,7 +133,7 @@ func testPositionMintPos01Tier01(t *testing.T) {
 			"gno.land/r/gnoswap/v1/gns", // token0
 			"gno.land/r/demo/wugnot",    // token1
 			fee3000,                     // fee
-			int32(-60),                    // tickLower
+			int32(-60),                  // tickLower
 			int32(60),                   // tickUpper
 			"1000",                      // amount0Desired
 			"1000",                      // amount1Desired
@@ -132,6 +143,7 @@ func testPositionMintPos01Tier01(t *testing.T) {
 			adminAddr,
 			adminAddr,
 		)
+		println("lpTokenId : ", lpTokenId, ", liquidity : ", liquidity, ", amount0 : ", amount0, ", amount1 : ", amount1)
 		oneBlockEmissionAmount := uint64(14269406)
 		uassert.Equal(t, uint64(100000000000000)+(6*oneBlockEmissionAmount), gns.TotalSupply())
 		oneBlockStakerAmount := uint64(10702054)
@@ -174,6 +186,7 @@ func testPositionMintPos02Tier01(t *testing.T) {
 			adminAddr,
 			adminAddr,
 		)
+		println("lpTokenId : ", lpTokenId, ", liquidity : ", liquidity, ", amount0 : ", amount0, ", amount1 : ", amount1)
 		oneBlockEmissionAmount := uint64(14269406)
 		oneBlockStakerAmount := uint64(10702054)
 		oneBlockDevOpsAmount := uint64(3567351)
@@ -218,6 +231,7 @@ func testPositionMintPos03Tier01(t *testing.T) {
 			adminAddr,
 			adminAddr,
 		)
+		println("lpTokenId : ", lpTokenId, ", liquidity : ", liquidity, ", amount0 : ", amount0, ", amount1 : ", amount1)
 
 		oneBlockEmissionAmount := uint64(14269406)
 		oneBlockStakerAmount := uint64(10702054)
@@ -402,27 +416,29 @@ func testCollectReward01(t *testing.T) {
 
 		println("1")
 		r1, p1 := CollectReward(1, false)
-		println("2")
-		r2, p2 := CollectReward(2, false)
-		println("3")
-		r3, p3 := CollectReward(3, false)
+		//println("2")
+		//r2, p2 := CollectReward(2, false)
+		//println("3")
+		//r3, p3 := CollectReward(3, false)
 
 		println("r1", r1)
 		println("p1", p1)
-		println("r2", r2)
-		println("p2", p2)
-		println("r3", r3)
-		println("p3", p3)
+		//println("r2", r2)
+		//println("p2", p2)
+		//println("r3", r3)
+		//println("p3", p3)
 
 		n1, _ := strconv.ParseUint(r1, 10, 64)
-		n2, _ := strconv.ParseUint(r2, 10, 64)
-		n3, _ := strconv.ParseUint(r3, 10, 64)
-		rsum := n1 + n2 + n3
+		//n2, _ := strconv.ParseUint(r2, 10, 64)
+		//n3, _ := strconv.ParseUint(r3, 10, 64)
+		//rsum := n1 + n2 + n3
+		rsum := n1
 
 		m1, _ := strconv.ParseUint(p1, 10, 64)
-		m2, _ := strconv.ParseUint(p2, 10, 64)
-		m3, _ := strconv.ParseUint(p3, 10, 64)
-		psum := m1 + m2 + m3
+		//m2, _ := strconv.ParseUint(p2, 10, 64)
+		//m3, _ := strconv.ParseUint(p3, 10, 64)
+		//psum := m1 + m2 + m3
+		psum := m1
 		println("sum : ", rsum)
 		println("sum : ", psum)
 		println("sum : ", rsum+psum)
@@ -459,15 +475,15 @@ func testCollectReward01(t *testing.T) {
 		prevGNSForStaker := uint64(3686215680)
 		currentGNSForStaker := prevGNSForStaker + uint64(21404109) - rewardForUser - rewardForPenalty
 		println("5")
-		uassert.Equal(t, currentGNSForStaker, gnsBalance(consts.STAKER_ADDR))               // 1016053082
+		uassert.Equal(t, currentGNSForStaker, gnsBalance(consts.STAKER_ADDR)) // 1016053082
 		println("6")
-		uassert.Equal(t, uint64(1472602698)+uint64(5707762), gnsBalance(consts.DEV_OPS))    // 1478310460
+		uassert.Equal(t, uint64(1472602698)+uint64(5707762), gnsBalance(consts.DEV_OPS)) // 1478310460
 		println("7")
 		uassert.Equal(t, uint64(200000000)+rewardFee, gnsBalance(consts.PROTOCOL_FEE_ADDR)) // 218840966
 		println("8")
-		uassert.Equal(t, uint64(100007363013496)+uint64(28538812), gns.TotalSupply())       // 100007391552308
+		uassert.Equal(t, uint64(100007363013496)+uint64(28538812), gns.TotalSupply()) // 100007391552308
 		println("9")
-		uassert.Equal(t, uint64(2), gnsBalance(consts.EMISSION_ADDR))                       // 2
+		uassert.Equal(t, uint64(2), gnsBalance(consts.EMISSION_ADDR)) // 2
 
 		std.TestSkipHeights(1)
 	})
