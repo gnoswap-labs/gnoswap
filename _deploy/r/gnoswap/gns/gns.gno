@@ -68,6 +68,7 @@ func MintGns(address pusers.AddressOrName) uint64 {
 
 	// calculate gns amount to mint
 	amountToMint := calculateAmountToMint(lastMintedHeight+1, currentHeight)
+	println("============> GNS : MintGNS : [", lastMintedHeight+1, "] [", currentHeight, "] [", amountToMint, "]")
 
 	// update
 	setLastMintedHeight(currentHeight)
@@ -149,6 +150,9 @@ func checkErr(err error) {
 // It calculates the amount of gns to mint for each halving year for block range.
 // It also handles the left emission amount if the current block range includes halving year end block.
 func calculateAmountToMint(fromHeight, toHeight int64) uint64 {
+	println("============> GNS : calculateAmountToMint : [", fromHeight, "] [", toHeight, "]")
+	prevHeight := fromHeight
+	currentHeight := toHeight
 	fromYear := GetHalvingYearByHeight(fromHeight)
 
 	// if toHeight is greater than emission end height, set toHeight to emission end height
@@ -183,11 +187,11 @@ func calculateAmountToMint(fromHeight, toHeight int64) uint64 {
 		fromHeight = mintUntilHeight + 1
 	}
 
-	if fromHeight == toHeight {
-		addPerBlockMintUpdate(uint64(toHeight), GetAmountPerBlockPerHalvingYear(GetHalvingYearByHeight(toHeight)))
+	if prevHeight == currentHeight {
+		addPerBlockMintUpdate(uint64(currentHeight), GetAmountPerBlockPerHalvingYear(GetHalvingYearByHeight(currentHeight)))
 	} else {
-		addPerBlockMintUpdate(uint64(fromHeight), GetAmountPerBlockPerHalvingYear(GetHalvingYearByHeight(fromHeight)))
-		addPerBlockMintUpdate(uint64(toHeight), GetAmountPerBlockPerHalvingYear(GetHalvingYearByHeight(toHeight)))
+		addPerBlockMintUpdate(uint64(prevHeight), GetAmountPerBlockPerHalvingYear(GetHalvingYearByHeight(prevHeight)))
+		addPerBlockMintUpdate(uint64(currentHeight), GetAmountPerBlockPerHalvingYear(GetHalvingYearByHeight(currentHeight)))
 	}
 
 	assertTooManyEmission(totalAmountToMint)

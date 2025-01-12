@@ -74,7 +74,9 @@ func GetCurrentEmission() uint64 {
 func EmissionUpdates(startHeight uint64, endHeight uint64) ([]uint64, []uint64) {
 	heights := make([]uint64, 0)
 	updates := make([]uint64, 0)
+	println("EmissionUpdates : ", startHeight, ", ", endHeight)
 	perBlockMint.Iterate(common.EncodeUint(startHeight), common.EncodeUint(endHeight), func(key string, value interface{}) bool {
+		println("EmissionUpdates : ", key, ", ", value)
 		heights = append(heights, common.DecodeUint(key))
 		updates = append(updates, value.(uint64))
 		return false

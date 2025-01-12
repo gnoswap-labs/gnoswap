@@ -182,6 +182,11 @@ func (self *Pool) cacheInternalReward(currentHeight uint64, emissionUpdate en.Em
 	}
 
 	self.cacheRewardPerLiquidityUnit(startHeight, currentHeight, ApplyDenominator(currentEmission, rewardDenominator))
+	if *self.lastUnclaimableHeight != 0 && self.CurrentStakedLiquidity(currentHeight).IsZero() {
+		self.endInternalUnclaimablePeriod(currentHeight)
+		self.startInternalUnclaimablePeriod(currentHeight)
+	}
+
 	*self.lastRewardCacheHeight = currentHeight
 	println("\t\tlastRewardCacheHeight : ", *self.lastRewardCacheHeight)
 	println("\t[", currentHeight, "] cacheInternalReward End ")

@@ -466,6 +466,13 @@ func testCollectReward01(t *testing.T) {
 		uassert.Equal(t, uint64(1865255727), rewardForUserWithFee)
 		println("3")
 		uassert.Equal(t, rewardForUserWithFee, gnsBalance(consts.ADMIN)-beforeGNSForAdmin)
+		println("before GNS For Admin : ", beforeGNSForAdmin)
+		println("after GNS For Admin : ", gnsBalance(consts.ADMIN))
+		println("actual reward GNS For Admin : ", gnsBalance(consts.ADMIN)-beforeGNSForAdmin)
+
+		// 5425941631 = 1605308099 + 3745718900 + 53510270 (74914378)
+		// 5425941631
+		// 5425941377
 
 		prevGNSForCommunityPool := uint64(3204195117) + uint64(1426940)
 		currGNSForCommunityPool := prevGNSForCommunityPool + rewardForPenalty

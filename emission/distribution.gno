@@ -137,6 +137,7 @@ func (self *EmissionUpdate) IsEmpty() bool {
 func addStakerPerBlockMintUpdate(height uint64, amount uint64) {
 	println("[", height, "] addStakerPerBlockMintUpdate : to ", amount)
 	stakerPerBlockMint.Set(common.EncodeUint(height), amount/10000)
+	//stakerPerBlockMint.Set(common.EncodeUint(height), amount)
 }
 
 // ChangeDistributionPctByAdmin changes the distribution percentage for the given targets.
