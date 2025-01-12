@@ -114,6 +114,7 @@ func NewExternalIncentive(
 	startHeight := std.GetHeight() + blocksLeftUntilStartHeight
 	endHeight := std.GetHeight() + blocksLeftUntilEndHeight
 
+
 	return &ExternalIncentive{
 		incentiveId:      incentiveId,
 		targetPoolPath:   targetPoolPath,

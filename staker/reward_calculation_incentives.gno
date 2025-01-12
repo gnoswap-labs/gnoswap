@@ -139,13 +139,13 @@ func (self *Incentives) cacheRewardPerLiquidityUnit(startHeight, endHeight uint6
 
 	self.incentiveBound.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
 		bound := value.([]IncentiveBound)
-		for _, bound := range bound {
-		}
 		reward := IncentiveRewardEntry{
 			ActiveIncentives: make([]string, len(currentReward.ActiveIncentives)),
 			TotalStakedLiquidity: currentReward.TotalStakedLiquidity.Clone(),
 		}
-		copy(reward.ActiveIncentives, currentReward.ActiveIncentives)
+		for i, incentiveId := range currentReward.ActiveIncentives {
+			reward.ActiveIncentives[i] = incentiveId
+		}
 		for _, bound := range bound {
 			if bound.IsEnter {
 				reward.ActiveIncentives = append(reward.ActiveIncentives, bound.Incentive.incentiveId)
@@ -172,6 +172,11 @@ func (self *Incentives) updateRewardByLiquidityChange(currentHeight uint64, liqu
 		ActiveIncentives: make([]string, len(currentReward.ActiveIncentives)),
 		TotalStakedLiquidity: liquidity.Clone(),
 	}
-	copy(entry.ActiveIncentives, currentReward.ActiveIncentives)
+
+	for i, incentiveId := range currentReward.ActiveIncentives {
+		entry.ActiveIncentives[i] = incentiveId
+	}
+
 	self.rewardCache.Set(currentHeight, entry)
 }
+
