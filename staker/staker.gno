@@ -404,9 +404,16 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 	if toUser > 0 {
 		println("gns balance (staker) : ", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
 
+		println("sending reward", toUser, "to", deposit.owner, "// gns balance (staker) :", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
 		gns.Transfer(a2u(deposit.owner), toUser)
+		println("sending reward ok")
+		println()
+
 		// internal penalty to community pool
+		println("sending penalty", reward.InternalPenalty, "to community pool // gns balance (staker) :", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
 		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), reward.InternalPenalty)
+		println("sending penalty ok")
+		println()
 
 		// TODO:
 		// reward ledger update!!
@@ -418,7 +425,10 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 	println("unClaimableInternal : ", unClaimableInternal)
 	if unClaimableInternal > 0 {
 		// internal unclaimable to community pool
+		println("sending unClaimableInternal", unClaimableInternal, " to community pool // gns balance (staker) :", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
 		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), unClaimableInternal)
+		println("sending unClaimableInternal ok")
+		println()
 	}
 
 	prevAddr, prevPkgPath := getPrev()
