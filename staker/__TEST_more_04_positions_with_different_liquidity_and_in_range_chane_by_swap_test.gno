@@ -31,7 +31,6 @@ func TestMore04(t *testing.T) {
 	testPrintWarmup(t)
 	testStakeTokenPos01(t)
 	testStakeTokenPos02ToWarmUp70_Pos03ToWarmUp50_Pos04ToWarmUp30_Pos05(t)
-	// testSkip1BlockAndCollectReward(t)
 }
 
 func testInit(t *testing.T) {
@@ -254,8 +253,7 @@ func testStakeTokenPos02ToWarmUp70_Pos03ToWarmUp50_Pos04ToWarmUp30_Pos05(t *test
 		CollectReward(4, false) // toUser 0 (out of range)
 		CollectReward(5, false) // toUser 0 (out of range)
 
-		// CollectReward(3, false) // toUser 331211442847 // FIXME: insufficient balance
-		// 테스트 실행하면 3번 포지션에 대해 유저한테 리워드 주는거까지는 통과
-		// 그러나 페널티를 커뮤니티 풀에 줄 때 스테이커의 GNS 잔액보다 더 높게 계산되어 있는 페널티를 전송할 때 잔액 부족 발생 중
+		// FIXED: staker.gno CollectReward (L405~L419)
+		CollectReward(3, false)
 	})
 }
