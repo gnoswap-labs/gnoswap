@@ -75,9 +75,7 @@ func (states RewardStates) Get(projectId string, tierStr string) (*RewardState, 
 	return statesI.(*RewardState), nil
 }
 
-/// XXXX
 func (states RewardStates) Set(projectId string, tierStr string, state *RewardState) {
-	println("pass set")
 	key := projectId + ":" + tierStr
 	states.states.Set(key, state)
 }
@@ -154,7 +152,6 @@ func (self *RewardState) finalize(currentHeight uint64) {
 		currentHeight = self.EndHeight
 	}
 
-	// ????? height 차이에 의한 오차 고
 	delta := u256.NewUint(currentHeight - self.LastHeight)
 	delta = delta.Mul(delta, self.RewardPerBlock)
 
