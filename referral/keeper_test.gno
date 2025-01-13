@@ -300,7 +300,6 @@ func TestRemove(t *testing.T) {
 				t.Errorf("remove() unexpected error = %v", err)
 			}
 
-			// 삭제 후 has() 호출로 실제 삭제 되었는지 확인
 			if k.has(tt.addr) {
 				t.Errorf("remove() referral still exists after removal")
 			}
