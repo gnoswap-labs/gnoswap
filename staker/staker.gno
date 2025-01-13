@@ -605,12 +605,6 @@ func requireTokenOwnership(owner, caller std.Address) error {
 
 // poolHasIncentives checks if the pool has any active incentives (internal or external).
 func poolHasIncentives(poolPath string) error {
-	// TODO:
-	// check!! below code line have to be removed
-	pools.tree.Iterate("", "", func(poolPath string, value interface{}) bool {
-		return false
-	})
-	//
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		return ufmt.Errorf(
