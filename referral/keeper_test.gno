@@ -1,10 +1,8 @@
 package referral
 
 import (
-	"math/rand"
 	"std"
 	"testing"
-	"time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
