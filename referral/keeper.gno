@@ -37,31 +37,42 @@ func (k *keeper) update(addr, newRefAddr std.Address) error {
 // setReferral handles the common logic for registering and updating referrals.
 // It validates the addresses and caller, then stores the referral relationship.
 //
+// Note: The current implementation allows circular references, but since it only manages
+// simple reference relationships, cycles are not a significant issue. However, when introducing
+// a referral-based reward system in the future or adding business logic where cycles could cause problems,
+// it will be necessary to implement validation checks.
+//
 // TODO: need to discuss what values to emit as event
 func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error {
 	if err := isValidCaller(std.GetOrigCaller()); err != nil {
 		return err
 	}
 
-	if !addr.IsValid() {
-		return NewError(ErrInvalidAddress)
+	if err := k.validateAddresses(addr, refAddr); err != nil {
+		return err
 	}
 
 	if refAddr == zeroAddress {
-		k.remove(addr)
-	}
-
-	if !refAddr.IsValid() {
-		return NewError(ErrInvalidAddress)
+		return k.remove(addr)
 	}
 
 	k.store.Set(addr.String(), refAddr.String())
-
 	std.Emit(eventType,
 		"my_address", addr.String(),
 		"ref_address", refAddr.String(),
 	)
 
+	return nil
+}
+
+// validateAddresses checks if the given addresses are valid for referral
+func (k *keeper) validateAddresses(addr, refAddr std.Address) error {
+	if !addr.IsValid() || (refAddr != zeroAddress && !refAddr.IsValid()) {
+		return NewError(ErrInvalidAddress)
+	}
+	if addr == refAddr {
+		return NewError(ErrSelfReferral)
+	}
 	return nil
 }
 

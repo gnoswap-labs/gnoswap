@@ -8,16 +8,20 @@ const (
 	ErrNone = iota
 	ErrInvalidAddress
 	ErrZeroAddress
+	ErrSelfReferral
 	ErrUnauthorized
 	ErrInvalidCaller
+	ErrCyclicReference
 	ErrNotFound
 )
 
 var errorMessages = map[int]string{
 	ErrInvalidAddress: "invalid address format",
 	ErrZeroAddress:    "zero address is not allowed",
+	ErrSelfReferral:   "self referral is not allowed",
 	ErrUnauthorized:   "unauthorized caller",
 	ErrInvalidCaller:  "invalid caller",
+	ErrCyclicReference: "cyclic reference is not allowed",
 	ErrNotFound:       "referral not found",
 }
 
