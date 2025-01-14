@@ -6,13 +6,9 @@ import (
 	"time"
 
 	"gno.land/p/demo/avl"
-
-	"gno.land/p/demo/ufmt"
-
+	"gno.land/p/demo/json"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
-
-	"gno.land/p/demo/json"
 )
 
 // init 12 years halving tier block
@@ -28,8 +24,10 @@ import (
 const (
 	HALVING_START_YEAR = int64(1)
 	HALVING_END_YEAR   = int64(12)
+)
 
-	HALVING_AMOUNTS_PER_YEAR = [12]uint64{
+var (
+	HALVING_AMOUNTS_PER_YEAR = [HALVING_END_YEAR]uint64{
 		18_750_000_000_000 * 12, // Year 1:  225000000000000
 		18_750_000_000_000 * 12, // Year 2:  225000000000000
 		9_375_000_000_000 * 12,  // Year 3:  112500000000000
@@ -50,103 +48,233 @@ var (
 	blockPerDay  = consts.TIMESTAMP_DAY / consts.BLOCK_GENERATION_INTERVAL
 
 	avgBlockTimeMs int64 = consts.SECOND_IN_MILLISECOND * consts.BLOCK_GENERATION_INTERVAL
+	perBlockMint         = avl.NewTree() // height => uint64
 )
 
-var (
-	startHeight    int64
-	startTimestamp int64
-	endTimestamp   int64
-)
-
-var (
-	perBlockMint = avl.NewTree() // height => uint64
-)
-
-func GetCurrentEmission() uint64 {
-	emision := uint64(0)
-	perBlockMint.ReverseIterate("", common.EncodeUint(uint64(std.GetHeight())), func(key string, value interface{}) bool {
-		emision = value.(uint64)
-		return true
-	})
-	return emision
+type HalvingData struct {
+	startBlockHeight []int64
+	endBlockHeight   []int64
+	startTimestamp   []int64
+	maxAmount        []uint64
+	mintedAmount     []uint64
+	leftAmount       []uint64
+	accumAmount      []uint64
+	amountPerBlock   []uint64
 }
 
-func EmissionUpdates(startHeight uint64, endHeight uint64) ([]uint64, []uint64) {
-	heights := make([]uint64, 0)
-	updates := make([]uint64, 0)
-	println("EmissionUpdates : ", startHeight, ", ", endHeight)
-	perBlockMint.Iterate(common.EncodeUint(startHeight), common.EncodeUint(endHeight), func(key string, value interface{}) bool {
-		println("EmissionUpdates : ", key, ", ", value)
-		heights = append(heights, common.DecodeUint(key))
-		updates = append(updates, value.(uint64))
-		return false
-	})
-
-	return heights, updates
+func (h *HalvingData) getStartBlockHeight(year int64) int64 {
+	if year == 0 {
+		return 0
+	}
+	return h.startBlockHeight[year-1]
 }
 
-func addPerBlockMintUpdate(height uint64, amount uint64) {
-	perBlockMint.Set(common.EncodeUint(height), amount)
+func (h *HalvingData) setStartBlockHeight(year int64, height int64) {
+	assertValidYear(year)
+	h.startBlockHeight[year-1] = height
 }
 
-var halvingYearBlock = make(map[int64]int64) // year => block
-// var halvingYearTimestamp = make(map[int64]int64) // year => timestamp
-var (
-	halvingYearStartBlock = make([]int64, HALVING_END_YEAR) // start block of each halving year
-	halvingYearEndBlock   = make([]int64, HALVING_END_YEAR) // end block of each halving year
-	halvingYearTimestamp  = make([]int64, HALVING_END_YEAR) // start timestamp of each halving year
-
-	halvingYearMaxAmount         = make([]uint64, HALVING_END_YEAR) // max amount per year can be minted
-	halvingYearMintAmount        = make([]uint64, HALVING_END_YEAR) // actual minted amount per year
-	halvingYearAccuAmount        = make([]uint64, HALVING_END_YEAR) // accumulated minted amount per year
-	amountPerBlockPerHalvingYear = make([]uint64, HALVING_END_YEAR) // amount per block per year to mint
-)
-
-func init() {
-	startHeight = std.GetHeight()
-	startTimestamp = time.Now().Unix()
-
-	// initialize halving data
-	initializeHalvingData()
-
-	// set end timestamp
-	// after 12 years, timestamp which gns emission will be ended
-	// it can not be changed
-	setEndTimestamp(startTimestamp + consts.TIMESTAMP_YEAR*HALVING_END_YEAR)
+func (h *HalvingData) getEndBlockHeight(year int64) int64 {
+	if year == 0 {
+		return 0
+	}
+	return h.endBlockHeight[year-1]
 }
 
-// initializeHalvingData initializes the halving data
-// it should be called only once, so we call this in init()
-func initializeHalvingData() {
+func (h *HalvingData) setEndBlockHeight(year int64, height int64) {
+	assertValidYear(year)
+	h.endBlockHeight[year-1] = height
+}
+
+func (h *HalvingData) getStartTimestamp(year int64) int64 {
+	if year == 0 {
+		return 0
+	}
+	return h.startTimestamp[year-1]
+}
+
+func (h *HalvingData) setStartTimestamp(year int64, timestamp int64) {
+	assertValidYear(year)
+	h.startTimestamp[year-1] = timestamp
+}
+
+func (h *HalvingData) getMaxAmount(year int64) uint64 {
+	if year == 0 {
+		return 0
+	}
+	return h.maxAmount[year-1]
+}
+
+func (h *HalvingData) setMaxAmount(year int64, amount uint64) {
+	assertValidYear(year)
+	h.maxAmount[year-1] = amount
+}
+
+func (h *HalvingData) getMintedAmount(year int64) uint64 {
+	if year == 0 {
+		return 0
+	}
+	return h.mintedAmount[year-1]
+}
+
+func (h *HalvingData) setMintedAmount(year int64, amount uint64) {
+	assertValidYear(year)
+	h.mintedAmount[year-1] = amount
+}
+
+func (h *HalvingData) getLeftAmount(year int64) uint64 {
+	if year == 0 {
+		return 0
+	}
+	return h.leftAmount[year-1]
+}
+
+func (h *HalvingData) setLeftAmount(year int64, amount uint64) {
+	assertValidYear(year)
+	h.leftAmount[year-1] = amount
+}
+
+func (h *HalvingData) getAccumAmount(year int64) uint64 {
+	if year == 0 {
+		return 0
+	}
+	return h.accumAmount[year-1]
+}
+
+func (h *HalvingData) setAccumAmount(year int64, amount uint64) {
+	assertValidYear(year)
+	h.accumAmount[year-1] = amount
+}
+
+func (h *HalvingData) addAccumAmount(year int64, amount uint64) {
+	assertValidYear(year)
+	h.accumAmount[year-1] += amount
+}
+
+func (h *HalvingData) getAmountPerBlock(year int64) uint64 {
+	if year == 0 {
+		return 0
+	}
+	return h.amountPerBlock[year-1]
+}
+
+func (h *HalvingData) setAmountPerBlock(year int64, amount uint64) {
+	assertValidYear(year)
+	h.amountPerBlock[year-1] = amount
+}
+
+func (h *HalvingData) initialize(startHeight, startTimestamp int64) {
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		// set max emission amount per year
 		// each year can not mint more than this amount
 		currentYearMaxAmount := GetHalvingAmountsPerYear(year)
-		setHalvingYearMaxAmount(year, currentYearMaxAmount)
+		h.setMaxAmount(year, currentYearMaxAmount)
 
 		if year == HALVING_START_YEAR {
-			setHalvingYearAccuAmount(year, currentYearMaxAmount)
-			setHalvingYearStartBlock(year, startHeight)
-			setHalvingYearEndBlock(year, startHeight+(blockPerYear*year))
+			h.setAccumAmount(year, currentYearMaxAmount)
+			h.setStartBlockHeight(year, startHeight)
+			h.setEndBlockHeight(year, startHeight+(blockPerYear*year)-1)
 		} else {
 			// accumulate amount until current year, is the sum of current year max amount and accumulated amount until previous year
-			setHalvingYearAccuAmount(year, currentYearMaxAmount+GetHalvingYearAccuAmount(year-1))
+			h.setAccumAmount(year, currentYearMaxAmount+h.getAccumAmount(year-1))
 
-			// start block of current year, is the next block of previous year end block
-			setHalvingYearStartBlock(year, GetHalvingYearEndBlock(year-1)+1)
+			// start block of current year, is the next block of previous year of end block
+			h.setStartBlockHeight(year, h.getEndBlockHeight(year-1)+1)
 
 			// end block of current year, is sum of start block and block per year
-			setHalvingYearEndBlock(year, GetHalvingYearStartBlock(year)+blockPerYear)
+			h.setEndBlockHeight(year, h.getStartBlockHeight(year)+blockPerYear-1)
 		}
 
-		setHalvingYearTimestamp(year, startTimestamp+(consts.TIMESTAMP_YEAR*(year-1)))
+		h.setStartTimestamp(year, startTimestamp+(consts.TIMESTAMP_YEAR*(year-1)))
 
 		amountPerDay := currentYearMaxAmount / consts.DAY_PER_YEAR
 		amountPerBlock := amountPerDay / uint64(blockPerDay)
-		setAmountPerBlockPerHalvingYear(year, uint64(amountPerBlock))
-
-		setHalvingYearMintAmount(year, uint64(0))
+		h.setAmountPerBlock(year, uint64(amountPerBlock))
+		h.setMintedAmount(year, uint64(0))
+		h.setLeftAmount(year, currentYearMaxAmount)
 	}
+}
+
+type EmissionState struct {
+	startHeight    int64
+	startTimestamp int64
+	endTimestamp   int64
+	halvingData    HalvingData
+}
+
+func GetEmissionState() *EmissionState {
+	if emissionState == nil {
+		emissionState = NewEmissionState()
+		emissionState.initializeHalvingData()
+	}
+	return emissionState
+}
+
+func NewEmissionState() *EmissionState {
+	now := time.Now().Unix() + consts.BLOCK_GENERATION_INTERVAL
+	emissionEndTime := now + consts.TIMESTAMP_YEAR*HALVING_END_YEAR
+
+	return &EmissionState{
+		startHeight:    std.GetHeight() + 1,
+		startTimestamp: now,
+		endTimestamp:   emissionEndTime,
+		halvingData: HalvingData{
+			startBlockHeight: make([]int64, HALVING_END_YEAR),
+			endBlockHeight:   make([]int64, HALVING_END_YEAR),
+			startTimestamp:   make([]int64, HALVING_END_YEAR),
+			maxAmount:        make([]uint64, HALVING_END_YEAR),
+			mintedAmount:     make([]uint64, HALVING_END_YEAR),
+			leftAmount:       make([]uint64, HALVING_END_YEAR),
+			accumAmount:      make([]uint64, HALVING_END_YEAR),
+			amountPerBlock:   make([]uint64, HALVING_END_YEAR),
+		},
+	}
+}
+
+func (e *EmissionState) getStartHeight() int64 {
+	return e.startHeight
+}
+
+func (e *EmissionState) setStartHeight(height int64) {
+	e.startHeight = height
+}
+
+func (e *EmissionState) getStartTimestamp() int64 {
+	return e.startTimestamp
+}
+
+func (e *EmissionState) setStartTimestamp(timestamp int64) {
+	e.startTimestamp = timestamp
+}
+
+func (e *EmissionState) getEndTimestamp() int64 {
+	return e.endTimestamp
+}
+
+func (e *EmissionState) setEndTimestamp(timestamp int64) {
+	e.endTimestamp = timestamp
+}
+
+func (e *EmissionState) getHalvingData() HalvingData {
+	return e.halvingData
+}
+
+func (e *EmissionState) setHalvingData(data HalvingData) {
+	e.halvingData = data
+}
+
+// initializeHalvingData initializes the halving data
+// it should be called only once, so we call this in init()
+func (e *EmissionState) initializeHalvingData() {
+	halvingData := e.getHalvingData()
+	halvingData.initialize(e.getStartHeight(), e.getStartTimestamp())
+	e.setHalvingData(halvingData)
+}
+
+var emissionState *EmissionState
+
+func init() {
+	emissionState = GetEmissionState()
 }
 
 func GetAvgBlockTimeInMs() int64 {
@@ -155,71 +283,66 @@ func GetAvgBlockTimeInMs() int64 {
 
 // SetAvgBlockTimeInMsByAdmin sets the average block time in millisecond.
 func SetAvgBlockTimeInMsByAdmin(ms int64) {
-	caller := std.PrevRealm().Addr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
+	assertCallerIsAdmin()
 
+	prevAvgBlockTimeInMs := GetAvgBlockTimeInMs()
 	setAvgBlockTimeInMs(ms)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"SetAvgBlockTimeInMsByAdmin",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"ms", ufmt.Sprintf("%d", ms),
+		"prevRealm", prevPkgPath,
+		"prevAvgBlockTimeInMs", strconv.FormatInt(prevAvgBlockTimeInMs, 10),
+		"avgBlockTimeInMs", strconv.FormatInt(ms, 10),
 	)
 }
 
 // SetAvgBlockTimeInMs sets the average block time in millisecond.
 // Only governance contract can execute this function via proposal
 func SetAvgBlockTimeInMs(ms int64) {
-	caller := std.PrevRealm().Addr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err)
-	}
+	assertCallerIsGovernance()
 
+	prevAvgBlockTimeInMs := GetAvgBlockTimeInMs()
 	setAvgBlockTimeInMs(ms)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"SetAvgBlockTimeInMs",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"ms", ufmt.Sprintf("%d", ms),
+		"prevRealm", prevPkgPath,
+		"prevAvgBlockTimeInMs", strconv.FormatInt(prevAvgBlockTimeInMs, 10),
+		"avgBlockTimeInMs", strconv.FormatInt(ms, 10),
 	)
 }
 
 func setAvgBlockTimeInMs(ms int64) {
-	common.IsHalted()
-
-	// update block per year
-	value1 := int64(consts.TIMESTAMP_YEAR * consts.SECOND_IN_MILLISECOND)
-	value2 := int64(value1 / ms)
-	blockPerYear = value2
+	assertShouldNotBeHalted()
 
 	now := time.Now().Unix()
 	height := std.GetHeight()
 
+	// update block per year
+	yearByMilliSec := secToMs(consts.TIMESTAMP_YEAR)
+	blockPerYear = yearByMilliSec / ms
+
 	// get the halving year and end timestamp of current time
-	currentYear, endTimestamp := getHalvingYearAndEndTimestamp(now)
+	currentYear, currentYearEndTimestamp := getHalvingYearAndEndTimestamp(now)
 
 	// how much time left for current halving year
-	timeLeft := endTimestamp - now
-	timeLeftMs := timeLeft * consts.SECOND_IN_MILLISECOND
+	timeLeft := currentYearEndTimestamp - now
+	timeLeftMs := secToMs(timeLeft)
 
 	// how many block left for current halving year
-	blockLeft := (timeLeftMs / ms)
+	blockLeft := timeLeftMs / ms
 	// how many reward left for current halving year
 	minted := GetMintedEmissionAmount()
 	amountLeft := GetHalvingYearAccuAmount(currentYear) - minted
 
 	// how much reward should be minted per block for current halving year
 	adjustedAmountPerBlock := amountLeft / uint64(blockLeft)
-	setAmountPerBlockPerHalvingYear(currentYear, adjustedAmountPerBlock)
-
 	// update it
-	amountPerBlockPerHalvingYear[currentYear] = adjustedAmountPerBlock
+	setAmountPerBlockPerHalvingYear(currentYear, adjustedAmountPerBlock)
 	addPerBlockMintUpdate(uint64(std.GetHeight()), adjustedAmountPerBlock)
 
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
@@ -276,75 +399,92 @@ func GetHalvingYearByHeight(height int64) int64 {
 	return 0
 }
 
-// getHalvingYearAndEndTimestamp returns the halving year and end timestamp of the given timestamp
-// if the timestamp is not in any halving year, it returns 0, 0
-func getHalvingYearAndEndTimestamp(timestamp int64) (int64, int64) {
-	if timestamp > endTimestamp { // after 12 years
-		return 0, 0
-	}
-
-	timestamp -= startTimestamp
-
-	year := timestamp / consts.TIMESTAMP_YEAR
-	year += 1 // since we subtract startTimestamp at line 215, we need to add 1 to get the correct year
-
-	return year, startTimestamp + (consts.TIMESTAMP_YEAR * year)
-}
-
 func GetHalvingYearStartBlock(year int64) int64 {
-	return halvingYearStartBlock[year-1]
+	halvingData := GetEmissionState().getHalvingData()
+	return halvingData.getStartBlockHeight(year)
 }
 
 func setHalvingYearStartBlock(year int64, block int64) {
-	halvingYearStartBlock[year-1] = block
+	halvingData := GetEmissionState().getHalvingData()
+	halvingData.setStartBlockHeight(year, block)
+	GetEmissionState().setHalvingData(halvingData)
 }
 
 func GetHalvingYearEndBlock(year int64) int64 {
-	return halvingYearEndBlock[year-1]
+	halvingData := GetEmissionState().getHalvingData()
+	return halvingData.getEndBlockHeight(year)
 }
 
 func setHalvingYearEndBlock(year int64, block int64) {
-	halvingYearEndBlock[year-1] = block
+	halvingData := GetEmissionState().getHalvingData()
+	halvingData.setEndBlockHeight(year, block)
+	GetEmissionState().setHalvingData(halvingData)
 }
 
 func GetHalvingYearTimestamp(year int64) int64 {
-	return halvingYearTimestamp[year-1]
+	halvingData := GetEmissionState().getHalvingData()
+	return halvingData.getStartTimestamp(year)
 }
 
 func setHalvingYearTimestamp(year int64, timestamp int64) {
-	halvingYearTimestamp[year-1] = timestamp
+	halvingData := GetEmissionState().getHalvingData()
+	halvingData.setStartTimestamp(year, timestamp)
+	GetEmissionState().setHalvingData(halvingData)
 }
 
 func GetHalvingYearMaxAmount(year int64) uint64 {
-	return halvingYearMaxAmount[year-1]
+	halvingData := GetEmissionState().getHalvingData()
+	return halvingData.getMaxAmount(year)
 }
 
 func setHalvingYearMaxAmount(year int64, amount uint64) {
-	halvingYearMaxAmount[year-1] = amount
+	halvingData := GetEmissionState().getHalvingData()
+	halvingData.setMaxAmount(year, amount)
+	GetEmissionState().setHalvingData(halvingData)
 }
 
 func GetHalvingYearMintAmount(year int64) uint64 {
-	return halvingYearMintAmount[year-1]
+	halvingData := GetEmissionState().getHalvingData()
+	return halvingData.getMintedAmount(year)
 }
 
 func setHalvingYearMintAmount(year int64, amount uint64) {
-	halvingYearMintAmount[year-1] = amount
+	halvingData := GetEmissionState().getHalvingData()
+	halvingData.setMintedAmount(year, amount)
+	GetEmissionState().setHalvingData(halvingData)
+}
+
+func GetHalvingYearLeftAmount(year int64) uint64 {
+	halvingData := GetEmissionState().getHalvingData()
+	return halvingData.getLeftAmount(year)
+}
+
+func setHalvingYearLeftAmount(year int64, amount uint64) {
+	halvingData := GetEmissionState().getHalvingData()
+	halvingData.setLeftAmount(year, amount)
+	GetEmissionState().setHalvingData(halvingData)
 }
 
 func GetHalvingYearAccuAmount(year int64) uint64 {
-	return halvingYearAccuAmount[year-1]
+	halvingData := GetEmissionState().getHalvingData()
+	return halvingData.getAccumAmount(year)
 }
 
 func setHalvingYearAccuAmount(year int64, amount uint64) {
-	halvingYearAccuAmount[year-1] = amount
+	halvingData := GetEmissionState().getHalvingData()
+	halvingData.setAccumAmount(year, amount)
+	GetEmissionState().setHalvingData(halvingData)
 }
 
 func GetAmountPerBlockPerHalvingYear(year int64) uint64 {
-	return amountPerBlockPerHalvingYear[year-1]
+	halvingData := GetEmissionState().getHalvingData()
+	return halvingData.getAmountPerBlock(year)
 }
 
 func setAmountPerBlockPerHalvingYear(year int64, amount uint64) {
-	amountPerBlockPerHalvingYear[year-1] = amount
+	halvingData := GetEmissionState().getHalvingData()
+	halvingData.setAmountPerBlock(year, amount)
+	GetEmissionState().setHalvingData(halvingData)
 }
 
 func GetHalvingAmountsPerYear(year int64) uint64 {
@@ -358,11 +498,11 @@ func GetEndHeight() int64 {
 }
 
 func GetEndTimestamp() int64 {
-	return endTimestamp
+	return GetEmissionState().getEndTimestamp()
 }
 
 func setEndTimestamp(timestamp int64) {
-	endTimestamp = timestamp
+	GetEmissionState().setEndTimestamp(timestamp)
 }
 
 func GetHalvingInfo() string {
@@ -396,4 +536,51 @@ func GetHalvingInfo() string {
 
 func isEmissionEnded(height int64) bool {
 	return height > GetEndHeight()
+}
+
+// getHalvingYearAndEndTimestamp returns the halving year and end timestamp of the given timestamp
+// if the timestamp is not in any halving year, it returns 0, 0
+func getHalvingYearAndEndTimestamp(timestamp int64) (int64, int64) {
+	state := GetEmissionState()
+
+	endTimestamp := state.getEndTimestamp()
+	startTimestamp := state.getStartTimestamp()
+
+	if timestamp > endTimestamp { // after 12 years
+		return 0, 0
+	}
+
+	timestamp -= startTimestamp
+
+	year := timestamp / consts.TIMESTAMP_YEAR
+	year += 1 // since we subtract startTimestamp at line 215, we need to add 1 to get the correct year
+
+	return year, startTimestamp + (consts.TIMESTAMP_YEAR * year)
+}
+
+func GetCurrentEmission() uint64 {
+	emission := uint64(0)
+	perBlockMint.ReverseIterate("", common.EncodeUint(uint64(std.GetHeight())), func(key string, value interface{}) bool {
+		emission = value.(uint64)
+		return true
+	})
+	return emission
+}
+
+func EmissionUpdates(startHeight uint64, endHeight uint64) ([]uint64, []uint64) {
+	heights := make([]uint64, 0)
+	updates := make([]uint64, 0)
+	println("EmissionUpdates : ", startHeight, ", ", endHeight)
+	perBlockMint.Iterate(common.EncodeUint(startHeight), common.EncodeUint(endHeight), func(key string, value interface{}) bool {
+		println("EmissionUpdates : ", key, ", ", value)
+		heights = append(heights, common.DecodeUint(key))
+		updates = append(updates, value.(uint64))
+		return false
+	})
+
+	return heights, updates
+}
+
+func addPerBlockMintUpdate(height uint64, amount uint64) {
+	perBlockMint.Set(common.EncodeUint(height), amount)
 }

@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	errNoPermission    = errors.New("[GNOSWAP-GNS-001] caller has no permission")
+	errInvalidYear     = errors.New("[GNOSWAP-GNS-001] invalid year")
 	errTooManyEmission = errors.New("[GNOSWAP-GNS-002] too many emission reward")
 )
 
