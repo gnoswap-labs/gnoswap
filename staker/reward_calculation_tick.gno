@@ -160,7 +160,7 @@ func (self *Tick) crossInfo(startHeight, endHeight uint64) []int64 {
 
 func (self *Tick) updateCross(blockNumber uint64, zeroForOne bool) {
 	self.cross.Set(blockNumber, zeroForOne)
-	println("updateCross ", blockNumber, ", ", zeroForOne)
+	println("updateCross ", self.id, " : ", blockNumber, ", ", zeroForOne)
 }
 
 func (self *Tick) previousCross(currentHeight uint64) bool {
@@ -349,11 +349,11 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool, 
 	return currentInRange, tickUpperCross[tickUpperCrossI:], tickLowerCross[tickLowerCrossI:]
 }
 
-func (self *Tick) updateCurrentOutsideAccumulation(blockNumber uint64, oldAcc *u256.Uint) {
+func (self *Tick) updateCurrentOutsideAccumulation(blockNumber uint64, acc *u256.Uint) {
 	currentOutsideAccumulation := self.CurrentOutsideAccumulation(blockNumber)
 	println("currentOutsideAccumulation : ", currentOutsideAccumulation.ToString())
-	println("oldAcc : ", oldAcc.ToString())
-	newOutsideAccumulation := u256.Zero().Sub(oldAcc, currentOutsideAccumulation)
+	println("accumulation : ", acc.ToString())
+	newOutsideAccumulation := u256.Zero().Sub(acc, currentOutsideAccumulation)
 	println("newOutsideAccumulation : ", newOutsideAccumulation.ToString())
 	self.outsideAccumulation.Set(blockNumber, newOutsideAccumulation)
 }
@@ -372,6 +372,16 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 		println("	blockNumber : ", blockNumber)
 		tick.updateCross(blockNumber, zeroForOne)
 
+		println("tickId : ", tickId)
+		// historical tick does NOT actually reflect the tick at the blockNumber, but it provides correct ordering for the staked positions.
+		// (because TickCrossHook is called only for the staked-initialized ticks)
+		// you should not use the historical tick for equality, only for comparison.
+		if zeroForOne {
+			pool.historicalTick.Set(blockNumber, tickId-1)
+		} else {
+			pool.historicalTick.Set(blockNumber, tickId)
+		}
+
 		liquidityInRangeDelta := tick.stakedLiquidityDelta
 		if liquidityInRangeDelta.Sign() == 0 {
 			return
@@ -385,8 +395,8 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 		deltaApplied := liquidityMathAddDelta(stakedLiquidity, liquidityInRangeDelta)
 		println("deltaApplied : ", deltaApplied.ToString())
 
-		oldAcc := pool.updateGlobalRewardRatioAccumulation(blockNumber, stakedLiquidity)
-		tick.updateCurrentOutsideAccumulation(blockNumber, oldAcc)
+		newAcc := pool.updateGlobalRewardRatioAccumulation(blockNumber, stakedLiquidity)
+		tick.updateCurrentOutsideAccumulation(blockNumber, newAcc)
 
 		switch deltaApplied.Sign() {
 		case -1:

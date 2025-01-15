@@ -39,7 +39,7 @@ func testInit(t *testing.T) {
 
 		// bar:baz:100 is only pool for internal emission reward (tier1)
 		deletePoolTier(t, MUST_EXISTS_IN_TIER_1)
-		addPoolTier(t, poolPath, 1)
+		addPoolTier(t, poolPath, 1, 0)
 
 		// set unstaking fee to 0
 		SetUnstakingFeeByAdmin(0)

@@ -95,21 +95,16 @@ type CalcPositionRewardParam struct {
 	TokenId uint64
 }
 
-
-
 func CalcPositionReward(param CalcPositionRewardParam) []Reward {
-
-
 	// cache per-pool rewards in the internal incentive(tiers)
 	param.PoolTier.cacheReward(param.CurrentHeight, param.Pools)
 
 	deposit := param.Deposits.Get(param.TokenId)
 	poolPath := deposit.targetPoolPath
 
-
 	pool, ok := param.Pools.Get(poolPath)
 	if !ok {
-		pool = NewPool(poolPath, param.CurrentHeight)
+		pool = NewPool(poolPath, param.CurrentHeight, pl.PoolGetSlot0Tick(poolPath))
 		param.Pools.Set(poolPath, pool)
 	}
 
@@ -136,7 +131,7 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 	tickUpperCrosses := upperTick.crossInfo(lastCollectHeight, param.CurrentHeight)
 	tickLowerCrosses := lowerTick.crossInfo(lastCollectHeight, param.CurrentHeight)
 
-	internalRewards, internalPenalties := pool.InternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(param.CurrentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
+	internalRewards, internalPenalties := pool.InternalRewardOf(deposit).Calculate(0/*testing, remove later*/, int64(lastCollectHeight), int64(param.CurrentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
 
 	externalRewards, externalPenalties := pool.ExternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(param.CurrentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
 

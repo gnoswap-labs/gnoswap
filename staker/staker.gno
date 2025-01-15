@@ -137,7 +137,7 @@ func init() {
 	// ONLY GNOT:GNS 0.3%
 
 	poolTier = NewPoolTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1, en.GetStakerEmissionUpdates)
-	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1) // must update pools tree
+	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1, 0/*FIXME XXX: WE NEED TO GET THE TICK*/) // must update pools tree
 }
 
 // StakeToken stakes an LP token into the staker contract. It transfer the LP token
@@ -205,6 +205,10 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		lastCollectHeight: uint64(currentHeight),
 		warmups:           InstantiateWarmup(currentHeight),
 	}
+
+	currentTick := pl.PoolGetSlot0Tick(poolPath)
+	deposit.globalRewardRatioAccumulationDebt = pool.CalculateRawRewardForPosition(uint64(currentHeight), currentTick, deposit)
+
 	deposits.Set(tokenId, deposit)
 
 	if caller == owner { // if caller is owner, transfer NFT ownership to staker contract
@@ -217,7 +221,6 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	pn.SetPositionOperator(tokenId, caller)
 
 	signedLiquidity := i256.FromUint256(liquidity)
-	currentTick := pl.PoolGetSlot0Tick(poolPath)
 	isInRange := false
 	println("[", currentHeight, "][", tokenId, "] currentTick: ", currentTick)
 
