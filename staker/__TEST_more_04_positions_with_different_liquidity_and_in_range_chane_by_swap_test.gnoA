@@ -18,9 +18,7 @@ import (
 	"gno.land/r/onbloc/baz"
 )
 
-var (
-	poolPath string = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
-)
+var poolPath string = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
 
 func TestMore04(t *testing.T) {
 	testInit(t)
@@ -59,7 +57,6 @@ func testInit(t *testing.T) {
 
 func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
-		println("[", std.GetHeight(), "]", "create pool bar-baz-100")
 		std.TestSetRealm(adminRealm)
 
 		// set pool creation fee to 0
@@ -68,14 +65,10 @@ func testCreatePool(t *testing.T) {
 		barToken := common.GetTokenTeller(barPath)
 		bazToken := common.GetTokenTeller(bazPath)
 		gnsToken := common.GetTokenTeller(consts.GNS_PATH)
-		println(barToken.BalanceOf(adminAddr))
-		println(bazToken.BalanceOf(adminAddr))
-		println(gnsToken.BalanceOf(adminAddr))
 		gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		pl.CreatePool(barPath, bazPath, 100, "79228162514264337593543950337") // price ratio 1:1
-		println(gnsToken.BalanceOf(adminAddr))
 		addPoolTier(t, poolPath, 1)
 		std.TestSkipHeights(1)
 	})

@@ -24,9 +24,7 @@ import (
 	"gno.land/r/onbloc/obl"
 )
 
-var (
-	anoAdmin = users.Resolve(admin)
-)
+var anoAdmin = users.Resolve(admin)
 
 func TestCollectReward_Full(t *testing.T) {
 	testInit(t)
@@ -54,7 +52,7 @@ func testInit(t *testing.T) {
 		changeWarmup(t, 3, math.MaxInt64)
 
 		// set unstaking fee to 0
-		//SetUnstakingFeeByAdmin(0)
+		// SetUnstakingFeeByAdmin(0)
 	})
 }
 
@@ -199,7 +197,6 @@ func testStakeToken01(t *testing.T) {
 
 func testStakeToken02(t *testing.T) {
 	t.Run("stake position 02, bar:qux:500", func(t *testing.T) {
-		println("========>[", std.GetHeight(), "]", "Stake 2")
 		std.TestSetRealm(adminRealm)
 		StakeToken(2) // GNFT tokenId
 
