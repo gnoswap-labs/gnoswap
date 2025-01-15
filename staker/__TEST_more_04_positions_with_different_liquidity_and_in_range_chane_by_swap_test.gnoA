@@ -10,15 +10,15 @@ import (
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
 
+	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 )
 
-var (
-	poolPath string = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
-)
+var poolPath string = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
 
 func TestMore04(t *testing.T) {
 	testInit(t)
@@ -39,13 +39,6 @@ func testInit(t *testing.T) {
 
 		// bar:baz:100 is only pool for internal emission reward (tier1)
 		deletePoolTier(t, MUST_EXISTS_IN_TIER_1)
-		addPoolTier(t, poolPath, 1)
-
-		// set unstaking fee to 0
-		SetUnstakingFeeByAdmin(0)
-
-		// set pool creation fee to 0
-		pl.SetPoolCreationFeeByAdmin(0)
 
 		// set community pool distribution to 0% (give it to devOps)
 		en.ChangeDistributionPctByAdmin(
@@ -54,6 +47,11 @@ func testInit(t *testing.T) {
 			3, 0,
 			4, 0,
 		)
+
+		// set unstaking fee to 0
+		SetUnstakingFeeByAdmin(0)
+
+		std.TestSkipHeights(1)
 	})
 }
 
@@ -61,7 +59,17 @@ func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
+		// set pool creation fee to 0
+		pl.SetPoolCreationFeeByAdmin(uint64(0))
+
+		barToken := common.GetTokenTeller(barPath)
+		bazToken := common.GetTokenTeller(bazPath)
+		gnsToken := common.GetTokenTeller(consts.GNS_PATH)
+		gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		pl.CreatePool(barPath, bazPath, 100, "79228162514264337593543950337") // price ratio 1:1
+		addPoolTier(t, poolPath, 1)
 		std.TestSkipHeights(1)
 	})
 }
