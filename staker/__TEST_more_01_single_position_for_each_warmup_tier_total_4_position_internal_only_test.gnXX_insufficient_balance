@@ -1,0 +1,270 @@
+package staker
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
+
+	en "gno.land/r/gnoswap/v1/emission"
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
+
+	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/v1/gns"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
+)
+
+var (
+	poolPath string = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+)
+
+func TestMore01(t *testing.T) {
+	testInit(t)
+	testCreatePool(t)
+	testMintBarBaz100Pos01(t)
+	testMintBarBaz100Pos02(t)
+	testMintBarBaz100Pos03(t)
+	testMintBarBaz100Pos04(t)
+	testPrintWarmup(t)
+	testStakeTokenPos01(t) // FIXME #L249
+	// testStakeTokenPos02(t)
+	// testStakeTokenPos03(t)
+	// testStakeTokenPos04(t)
+	// testCollecRewardAll(t)
+	// testSkip1BlockAndCollectReward(t)
+}
+
+func testInit(t *testing.T) {
+	t.Run("initialize", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		// bar:baz:100 is only pool for internal emission reward (tier1)
+		deletePoolTier(t, MUST_EXISTS_IN_TIER_1)
+		addPoolTier(t, poolPath, 1)
+
+		// set unstaking fee to 0
+		SetUnstakingFeeByAdmin(0)
+
+		// set pool creation fee to 0
+		pl.SetPoolCreationFeeByAdmin(0)
+
+		// set community pool distribution to 0% (give it to devOps)
+		en.ChangeDistributionPctByAdmin(
+			1, 7500,
+			2, 2500,
+			3, 0,
+			4, 0,
+		)
+	})
+}
+
+func testCreatePool(t *testing.T) {
+	t.Run("create pool", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		pl.CreatePool(barPath, bazPath, 100, "79228162514264337593543950337")
+		std.TestSkipHeights(1)
+	})
+}
+
+func testMintBarBaz100Pos01(t *testing.T) {
+	t.Run("mint position 01, bar:baz:100", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		tokenId, liquidity, amount0, amount1 := pn.Mint(
+			barPath,    // token0
+			bazPath,    // token1
+			fee100,     // fee
+			int32(-30), // tickLower
+			int32(30),  // tickUpper
+			"50",       // amount0Desired
+			"50",       // amount1Desired
+			"1",        // amount0Min
+			"1",        // amount1Min
+			max_timeout,
+			adminAddr,
+			adminAddr,
+		)
+		std.TestSkipHeights(1)
+	})
+}
+
+func testMintBarBaz100Pos02(t *testing.T) {
+	t.Run("mint position 02, bar:baz:100", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		tokenId, liquidity, amount0, amount1 := pn.Mint(
+			barPath,    // token0
+			bazPath,    // token1
+			fee100,     // fee
+			int32(-30), // tickLower
+			int32(30),  // tickUpper
+			"50",       // amount0Desired
+			"50",       // amount1Desired
+			"1",        // amount0Min
+			"1",        // amount1Min
+			max_timeout,
+			adminAddr,
+			adminAddr,
+		)
+		std.TestSkipHeights(1)
+	})
+}
+
+func testMintBarBaz100Pos03(t *testing.T) {
+	t.Run("mint position 03, bar:baz:100", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		tokenId, liquidity, amount0, amount1 := pn.Mint(
+			barPath,    // token0
+			bazPath,    // token1
+			fee100,     // fee
+			int32(-30), // tickLower
+			int32(30),  // tickUpper
+			"50",       // amount0Desired
+			"50",       // amount1Desired
+			"1",        // amount0Min
+			"1",        // amount1Min
+			max_timeout,
+			adminAddr,
+			adminAddr,
+		)
+		std.TestSkipHeights(1)
+	})
+}
+
+func testMintBarBaz100Pos04(t *testing.T) {
+	t.Run("mint position 04, bar:baz:100", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		tokenId, liquidity, amount0, amount1 := pn.Mint(
+			barPath,    // token0
+			bazPath,    // token1
+			fee100,     // fee
+			int32(-30), // tickLower
+			int32(30),  // tickUpper
+			"50",       // amount0Desired
+			"50",       // amount1Desired
+			"1",        // amount0Min
+			"1",        // amount1Min
+			max_timeout,
+			adminAddr,
+			adminAddr,
+		)
+		std.TestSkipHeights(1)
+	})
+}
+
+func testPrintWarmup(t *testing.T) {
+	t.Run("print warmup", func(t *testing.T) {
+		println("30", warmupTemplate[0].BlockDuration)
+		println("50", warmupTemplate[1].BlockDuration)
+		println("70", warmupTemplate[2].BlockDuration)
+		println("100", warmupTemplate[3].BlockDuration)
+	})
+}
+
+func testStakeTokenPos01(t *testing.T) {
+	t.Run("stake position 01", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		gnft.Approve(consts.STAKER_ADDR, tid(1))
+		StakeToken(1)
+		std.TestSkipHeights(1)
+	})
+
+	t.Run("collect reward for 01 block", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		userOldGns := gns.BalanceOf(admin)
+		communityOldGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		println("userOldGns", userOldGns)           // 100000000000000
+		println("communityOldGns", communityOldGns) // 0
+
+		CollectReward(1, false)
+
+		userNewGns := gns.BalanceOf(admin)
+		communityNewGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		println("userNewGns", userNewGns) // 100000003210616
+		// increased 3210616
+		// staker receives 10702054 gns from emission
+		// position 01 is in 30% warm up period
+		// 30% is reward + 70% is penalty
+		// 10702054 * 30% = 3210616
+
+		println("communityNewGns", communityNewGns) // 50299653
+		// increased 50299653
+		// staker did received 4 block of gns emission when there is no staked position
+		// 10702054 * 4 = 42808216
+
+		// 50299653 - 42808216 = 7491437
+		// position 01 did received 30% for warm up period, which 70% is peanlty
+		// 10702054 * 70% = 7491437
+
+		// 7491437 + 42808216 = 50299653
+		std.TestSkipHeights(1)
+	})
+
+	t.Run("make it warm up 50%", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		std.TestSkipHeights(216001)
+		CollectReward(1, false)
+
+		std.TestSkipHeights(1) // 1 block for 50% warm up
+		userOldGns := gns.BalanceOf(admin)
+		communityOldGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		println("userOldGns", userOldGns)           // 100693509152279
+		println("communityOldGns", communityOldGns) // 1618220128150
+
+		CollectReward(1, false)
+
+		userNewGns := gns.BalanceOf(admin)
+		communityNewGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		println("userNewGns", userNewGns) // 100693514503305
+		// increased 5351026 (100693514503305 - 100693509152279)
+		// staker receives 10702054 gns from emission
+		// position 01 is in 50% warm up period
+		// 50% is reward + 50% is penalty
+
+		println("communityNewGns", communityNewGns) // 1618225479177
+		// increased 5351027 (1618225479177 - 1618220128150)
+	})
+
+	t.Run("make it warm up 70%", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		std.TestSkipHeights(2)
+		CollectReward(1, false)
+		// FIXME
+		// 251 라인에서 1블록 스킵하면 CollectReward 정상 동작, 그러나 2 블록 이상 스킵하면 insufficientBalance 패닉 발생
+		// 터미널에 출력되는 로그 보면 unClaimableReward가 10702054 로 계산되고 있음 (이게 원인인듯)
+		// > 스테이킹 포지션 변동 없이 그냥 블록만 증가시켰는데 갑자기 unclaimable이 저만큼 잡혀서 부족한걸로 추정 됨
+		// >>>>>>>>>>>> internalUnClaimable :  10702054 , externalUnClaimable :  map{}
+		// unClaimableInternal :  1070205
+	})
+}
+
+func testStakeTokenPos02(t *testing.T) {
+	t.Run("stake position 02", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		gnft.Approve(consts.STAKER_ADDR, tid(2))
+		StakeToken(2)
+		std.TestSkipHeights(1)
+	})
+}

@@ -93,6 +93,24 @@ func OwnerOf(tid grc721.TokenID) (std.Address, error) {
 	return ownerAddr, nil
 }
 
+// MustOwnerOf returns the current owner's address of a specific token ID
+// Parameters:
+//   - tid: The token ID to check ownership of
+//
+// Returns:
+//   - std.Address: The address of the token owner
+//
+// Panics:
+//   - If the token ID is invalid
+func MustOwnerOf(tid grc721.TokenID) std.Address {
+	ownerAddr, err := OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return ownerAddr
+}
+
 // SetTokenURI sets the metadata URI using a randomly generated SVG image
 // Parameters:
 //   - tid (grc721.TokenID): The token ID for which the URI will be updated.

@@ -38,6 +38,6 @@ func resetHalvingRelatedObject(t *testing.T) {
 	startHeight = std.GetHeight()
 	startTimestamp = time.Now().Unix()
 
-	initializeHalvingData()
+	emissionState = GetEmissionState()
 	setEndTimestamp(startTimestamp + consts.TIMESTAMP_YEAR*HALVING_END_YEAR)
 }

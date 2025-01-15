@@ -498,6 +498,10 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 		}
 
 		newState.liquidity = liquidityMathAddDelta(state.liquidity, liquidityNet)
+
+		if tickCrossHook != nil {
+			tickCrossHook(pool.PoolPath(), step.tickNext, zeroForOne)
+		}
 	}
 
 	if zeroForOne {
