@@ -261,10 +261,8 @@ func testUnstakeToken01(t *testing.T) {
 func testUnstakeToken02(t *testing.T) {
 	t.Run("unstake position 02, bar:qux:500", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		println("========>[", std.GetHeight(), "]", "UnStake 2")
 		now := uint64(time.Now().Unix())
 		gap := now - 1234569600
-		println("========>[", now, "], [", gap, "], [", gap/uint64(consts.BLOCK_GENERATION_INTERVAL), "] UnStake 2")
 
 		// 0.4586225023
 		// 514
@@ -274,8 +272,6 @@ func testUnstakeToken02(t *testing.T) {
 		UnstakeToken(2, true) // GNFT tokenId
 		afterBalance := obl.BalanceOf(a2u(consts.STAKER_ADDR))
 		afterObl := obl.BalanceOf(admin)
-		println("before : ", beforeBalance, ", after : ", afterBalance, ", diff : ", beforeBalance-afterBalance)
-		println("before : ", beforeObl, ", after : ", afterObl, ", diff : ", afterObl-beforeObl)
 
 		std.TestSkipHeights(1)
 
