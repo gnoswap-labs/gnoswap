@@ -2,12 +2,14 @@ package staker
 
 import (
 	"math"
+	"std"
 	"testing"
 
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 func TestDefaultWarmupTemplate(t *testing.T) {
@@ -291,4 +293,127 @@ func TestRewardCalculationPrecision(t *testing.T) {
 			uassert.True(t, math.Abs(float64(tt.reward)-float64(reward+penalty)) <= 1)
 		})
 	}
+}
+
+func TestMultipleWarmupPeriods(t *testing.T) {
+	msInDay := int64(86400000)
+	// Base reward calculation: poolRewardPerBlock * (position/staked)
+	// 100 * (1000/2000) = 50 per block
+	blocksInDay := msInDay / int64(gns.GetAvgBlockTimeInMs()) // 43200
+	baseReward := uint64(50)
+
+	t.Run("7 days staking period", func(t *testing.T) {
+		// Step 1: Per Position Reward calculation
+		// poolRewardPerBlock * (position/staked) = 100 * (1000/2000) = 50 per block
+		//
+		// Step 2: Rewards for first 5 days with WarmupRatio30 (30%)
+		// baseReward * number of blocks * warmupRatio
+		// 50 * (5 * blocksInDay) * 30% = expected reward for 5 days => 3240000
+		//
+		// Step 3: Rewards for next 2 days with WarmupRatio50 (50%)
+		// baseReward * number of blocks * warmupRatio
+		// 50 * (2 * blocksInDay) * 50% = expected reward for 2 days => 2160000
+		startHeight := int64(1000)
+		std.TestSkipHeights(startHeight)
+
+		deposit := &Deposit{
+			warmups: InstantiateWarmup(startHeight),
+		}
+
+		position := u256.NewUint(1000)
+		staked := u256.NewUint(2000)
+
+		var totalReward, totalPenalty uint64
+
+		// WarmupRatio30 (30%) 5 days
+		blocks5Days := uint64(5 * blocksInDay)
+		reward5Days, penalty5Days := deposit.warmups[0].Apply(
+			baseReward*blocks5Days,
+			position,
+			staked,
+		)
+		totalReward += reward5Days
+		totalPenalty += penalty5Days
+
+		// baseReward * blocks * 0.3
+		expected5Days := baseReward * blocks5Days * 30 / 100
+		uassert.Equal(t, expected5Days, reward5Days,
+			ufmt.Sprintf("5 days reward mismatch: expected %d, got %d", expected5Days, reward5Days))
+
+		// WarmupRatio50 (50%) 2 days
+		std.TestSkipHeights(5 * blocksInDay)
+		blocks2Days := uint64(2 * blocksInDay)
+		reward2Days, penalty2Days := deposit.warmups[1].Apply(
+			baseReward*blocks2Days,
+			position,
+			staked,
+		)
+		totalReward += reward2Days
+		totalPenalty += penalty2Days
+
+		// baseReward * blocks * 0.5
+		expected2Days := baseReward * blocks2Days * 50 / 100
+		uassert.Equal(t, expected2Days, reward2Days,
+			ufmt.Sprintf("2 days reward mismatch: expected %d, got %d", expected2Days, reward2Days))
+
+		expectedTotal := expected5Days + expected2Days
+		uassert.Equal(t, expectedTotal, totalReward,
+			ufmt.Sprintf("Total reward mismatch: expected %d, got %d", expectedTotal, totalReward))
+	})
+
+	t.Run("40 days staking period", func(t *testing.T) {
+		// Reward calculation for 40 days period with different warmup ratios
+		//
+		// Step 1: Base reward per block
+		// poolRewardPerBlock * (position/staked) = 100 * (1000/2000) = 50 per block
+		//
+		// Step 2: Period-specific rewards
+		// Days 0-5: 50 * (5 * blocksInDay) * 30% = reward for first 5 days => 2430000
+		// Days 6-10: 50 * (5 * blocksInDay) * 50% = reward for next 5 days => 5400000
+		// Days 11-30: 50 * (20 * blocksInDay) * 70% = reward for next 20 days => 30240000
+		// Days 31-40: 50 * (10 * blocksInDay) * 100% = reward for final 10 days => 21600000
+		//
+		// Step 3: Total reward is sum of all period rewards
+		startHeight := int64(2000)
+		std.TestSkipHeights(startHeight)
+
+		deposit := &Deposit{
+			warmups: InstantiateWarmup(startHeight),
+		}
+
+		position := u256.NewUint(1000)
+		staked := u256.NewUint(2000)
+
+		periods := []struct {
+			days        int64
+			warmupRatio uint64
+		}{
+			{5, 30},   // 0-5 days
+			{5, 50},   // 6-10 days
+			{20, 70},  // 11-30 days
+			{10, 100}, // 31-40 days
+		}
+
+		var totalReward, totalPenalty uint64
+		currentHeight := startHeight
+
+		for i, period := range periods {
+			blocks := uint64(period.days * blocksInDay)
+			reward, penalty := deposit.warmups[i].Apply(
+				baseReward*blocks,
+				position,
+				staked,
+			)
+			totalReward += reward
+			totalPenalty += penalty
+
+			expectedReward := baseReward * blocks * period.warmupRatio / 100
+			uassert.Equal(t, expectedReward, reward,
+				ufmt.Sprintf("Period %d reward mismatch: expected %d, got %d",
+					i, expectedReward, reward))
+
+			std.TestSkipHeights(period.days * blocksInDay)
+			currentHeight += period.days * blocksInDay
+		}
+	})
 }
