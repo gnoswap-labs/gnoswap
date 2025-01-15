@@ -10,7 +10,7 @@ var (
 	errNoPermission                = errors.New("[GNOSWAP-STAKER-001] caller has no permission")
 	errPoolNotFound                = errors.New("[GNOSWAP-STAKER-002] pool not found")
 	errAlreadyRegistered           = errors.New("[GNOSWAP-STAKER-003] already registered token")
-	errLocked                      = errors.New("[GNOSWAP-STAKER-004] can't transfer token while locked")
+	errInsufficientReward          = errors.New("[GNOSWAP-STAKER-004] insufficient reward")
 	errWrapUnwrap                  = errors.New("[GNOSWAP-STAKER-005] wrap, unwrap failed")
 	errWugnotMinimum               = errors.New("[GNOSWAP-STAKER-006] can not wrapless than minimum amount")
 	errInvalidInput                = errors.New("[GNOSWAP-STAKER-007] invalid input data")

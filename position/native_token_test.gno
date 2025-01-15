@@ -88,7 +88,7 @@ func TestTransferUGNOT(t *testing.T) {
 	}
 }
 
-func TestWrap(t *testing.T) {
+func TestWrapInPosition(t *testing.T) {
 	tests := []struct {
 		name        string
 		action      func(t *testing.T, from, to std.Address) error
