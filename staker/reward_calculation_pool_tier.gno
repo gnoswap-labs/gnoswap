@@ -146,6 +146,7 @@ type PoolTier struct {
 	// Field for queries to get a list of halving blocks, halving intervals, etc.
 	halvingInfo HalvingInfo
 
+	// TODO: remove this
 	emissionUpdate func(uint64, uint64) en.EmissionUpdate
 }
 

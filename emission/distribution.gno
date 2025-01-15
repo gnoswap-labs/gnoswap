@@ -196,12 +196,27 @@ func ChangeDistributionPct(
 	)
 }
 
+// 여기인듯?
 func changeDistributionPcts(
 	target01 int, pct01 uint64,
 	target02 int, pct02 uint64,
 	target03 int, pct03 uint64,
 	target04 int, pct04 uint64,
 ) {
+	// First, cache the percentage of the staker just before it changes Callback if needed
+    // (check if the LIQUIDITY_STAKER was located between target01 and 04)
+	if stakerDistributionPctChangeCallback != nil {
+        if target01 == LIQUIDITY_STAKER {
+            stakerDistributionPctChangeCallback(pct01)
+        } else if target02 == LIQUIDITY_STAKER {
+            stakerDistributionPctChangeCallback(pct02)
+        } else if target03 == LIQUIDITY_STAKER {
+            stakerDistributionPctChangeCallback(pct03)
+        } else if target04 == LIQUIDITY_STAKER {
+            stakerDistributionPctChangeCallback(pct04)
+        }
+    }
+
 	setDistributionBpsPct(target01, pct01)
 	setDistributionBpsPct(target02, pct02)
 	setDistributionBpsPct(target03, pct03)

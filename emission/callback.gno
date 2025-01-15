@@ -1,0 +1,13 @@
+package emission
+
+type LiquidityStakerDistributionPctChangeCallback func(uint64)
+
+var stakerDistributionPctChangeCallback LiquidityStakerDistributionPctChangeCallback
+
+func SetLiquidityStakerDistributionPctChangeCallback(callback LiquidityStakerDistributionPctChangeCallback) {
+    stakerDistributionPctChangeCallback = callback
+}
+
+func GetLiquidityStakerDistributionPctChangeCallback() LiquidityStakerDistributionPctChangeCallback {
+	return stakerDistributionPctChangeCallback
+}
