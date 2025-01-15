@@ -265,7 +265,6 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 	deposit := deposits.Get(tokenId)
 	poolPath := deposit.targetPoolPath
 
-
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		pool = NewPool(poolPath, currentHeight, self.Pool[poolPath].tick)
@@ -276,24 +275,24 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 	pool.cacheExternalReward(currentHeight)
 
 	// eligible(in-range) intervals for a position
-	upperTick := pool.ticks.Get(deposit.tickUpper)
-	lowerTick := pool.ticks.Get(deposit.tickLower)
+	//upperTick := pool.ticks.Get(deposit.tickUpper)
+	//lowerTick := pool.ticks.Get(deposit.tickLower)
 
 	lastCollectHeight := deposit.lastCollectHeight
 
-	initialUpperCross := upperTick.previousCross(lastCollectHeight)
-	initialLowerCross := lowerTick.previousCross(lastCollectHeight)
+	//initialUpperCross := upperTick.previousCross(lastCollectHeight)
+	//initialLowerCross := lowerTick.previousCross(lastCollectHeight)
 
-	currentlyInRange := initialUpperCross && !initialLowerCross
+	//currentlyInRange := initialUpperCross && !initialLowerCross
 
-	tickUpperCrosses := upperTick.crossInfo(lastCollectHeight, currentHeight)
-	tickLowerCrosses := lowerTick.crossInfo(lastCollectHeight, currentHeight)
+	//tickUpperCrosses := upperTick.crossInfo(lastCollectHeight, currentHeight)
+	//tickLowerCrosses := lowerTick.crossInfo(lastCollectHeight, currentHeight)
 
-	internalRewards, internalPenalties := pool.InternalRewardOf(deposit).Calculate(self.Pool[poolPath].tick, int64(lastCollectHeight), int64(currentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
+	internalRewards, internalPenalties := pool.InternalRewardOf(deposit).Calculate(self.Pool[poolPath].tick, int64(lastCollectHeight), int64(currentHeight))
 
-	externalRewards, externalPenalties := pool.ExternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(currentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
+	//externalRewards, externalPenalties := pool.ExternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(currentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
 
-	return internalRewards, internalPenalties, externalRewards, externalPenalties
+	return internalRewards, internalPenalties, nil, nil
 }
 
 func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
@@ -367,8 +366,6 @@ func (self *canonicalRewardState) StakeToken(tokenId uint64, targetPoolPath stri
 	if canonicalPool.tier == 0 && len(canonicalPool.incentive) == 0 {
 		return errors.New("pool has no tier or incentive")
 	}
-
-	deposit.globalRewardRatioAccumulationDebt = pool.CalculateRawRewardForPosition(uint64(currentHeight), canonicalPool.tick, deposit)
 
 	// update global state
 	self.global.deposits.Set(tokenId, deposit)

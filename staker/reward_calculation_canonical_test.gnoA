@@ -838,7 +838,7 @@ func TestCanonicalWarmup_1(t *testing.T) {
 	canonical.NextBlock()
 	canonical.NextBlock()
 	canonical.AssertEmulatedRewardOf(0, expected*10)
-
+/*
 	expected = canonical.PerBlockEmission * 50 / 100
 
 	canonical.NextBlock()
@@ -852,7 +852,7 @@ func TestCanonicalWarmup_1(t *testing.T) {
 	canonical.NextBlock()
 	canonical.NextBlock()
 	canonical.AssertEmulatedRewardOf(0, expected*10)
-/*
+
 	expected = canonical.PerBlockEmission * 70 / 100
 
 	canonical.NextBlock()

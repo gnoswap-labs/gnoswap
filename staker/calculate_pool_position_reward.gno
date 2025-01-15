@@ -118,22 +118,22 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 	if token1 < token0 {
 		tickUpper, tickLower = -tickLower, -tickUpper
 	}
-	upperTick := pool.ticks.Get(tickUpper)
-	lowerTick := pool.ticks.Get(tickLower)
+	//upperTick := pool.ticks.Get(tickUpper)
+	//lowerTick := pool.ticks.Get(tickLower)
 	// XXX: Tick ordering code, memoing for future
 
 	lastCollectHeight := deposit.lastCollectHeight
-
+/*
 	initialUpperCross := upperTick.previousCross(lastCollectHeight)
 	initialLowerCross := lowerTick.previousCross(lastCollectHeight)
 	currentlyInRange := initialUpperCross && !initialLowerCross
 
 	tickUpperCrosses := upperTick.crossInfo(lastCollectHeight, param.CurrentHeight)
 	tickLowerCrosses := lowerTick.crossInfo(lastCollectHeight, param.CurrentHeight)
+*/
+	internalRewards, internalPenalties := pool.InternalRewardOf(deposit).Calculate(0/*testing, remove later*/, int64(lastCollectHeight), int64(param.CurrentHeight))
 
-	internalRewards, internalPenalties := pool.InternalRewardOf(deposit).Calculate(0/*testing, remove later*/, int64(lastCollectHeight), int64(param.CurrentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
-
-	externalRewards, externalPenalties := pool.ExternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(param.CurrentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
+	//externalRewards, externalPenalties := pool.ExternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(param.CurrentHeight))
 
 	rewards := make([]Reward, len(internalRewards))
 	for i := range internalRewards {
@@ -141,12 +141,14 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 			Internal:        internalRewards[i],
 			InternalPenalty: internalPenalties[i],
 		}
+		/*
 		if externalRewards != nil {
 			if len(externalRewards[i]) > 0 {
 				rewards[i].External = externalRewards[i]
 				rewards[i].ExternalPenalty = externalPenalties[i]
 			}
 		}
+			*/
 	}
 	return rewards
 }

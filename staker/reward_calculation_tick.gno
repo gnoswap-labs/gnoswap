@@ -62,7 +62,7 @@ func (self *Ticks) Get(tickId int32) *Tick {
 			id:                   tickId,
 			stakedLiquidityGross: u256.Zero(),
 			stakedLiquidityDelta: i256.Zero(),
-			cross:                NewUintTree(),
+			//cross:                NewUintTree(),
 			outsideAccumulation:  NewUintTree(),
 		}
 		self.tree.Set(EncodeInt(tickId), tick)
@@ -109,20 +109,6 @@ type Tick struct {
 	// conceptually equal with Pool.liquidityNet but only for the staked positions
 	stakedLiquidityDelta *i256.Int
 
-	// Notes for future optimizations.
-	//
-	// During swap, the states with the number of ticks that has been crossed are updated to store cross information.
-	// Considering one tick is ~0.01%, if there is a 0.5% price change for a single swap(in common max slippage setting),
-	// 50 ticks are crossed and 50 state write has to be done.
-	// Considering that this number is capped by the max slippage in most of the cases, the scalability might not be a problem.
-	// If this turns out to cause a gas cost issue, you may consider batching the
-	// multiple tick's cross state into single state, similar to tick bitmap.
-	// e.g. instead of having avl.Tree for each tick as key, use a segment of 32 ticks as bulk key.
-	// The value can be a 64-bit integer, where each 2-bit represents 00(no-update), 01(backward-cross), 10(forward-cross), 11(no-update).
-
-	// block number -> TickCross
-	cross *UintTree
-
 	// currentOutsideAccumulation is the accumulation of the blockNumber / TotalStkae outside the tick.
 	// It is calculated by subtracting the current tick's currentOutsideAccumulation from the global reward ratio accumulation.
 	outsideAccumulation *UintTree // blockNumber -> *u256.Uint
@@ -139,7 +125,7 @@ func (self *Tick) CurrentOutsideAccumulation(blockNumber uint64) *u256.Uint {
 	}
 	return acc
 }
-
+/*
 // TickCrosses are encoded as int64, where negative value is backward cross(zeroForOne=true), positive value is forward cross(zeroForOne=false).
 func (self *Tick) crossInfo(startHeight, endHeight uint64) []int64 {
 	tickCrosses := make([]int64, 0)
@@ -173,7 +159,7 @@ func (self *Tick) previousCross(currentHeight uint64) bool {
 	})
 	return cross
 }
-
+*/
 func (self *Tick) modifyDepositLower(currentHeight uint64, currentTick int32, liquidity *i256.Int) {
 	// update staker side tick info
 	println("stakedLiquidityGross ", self.stakedLiquidityGross.ToString(), ", liquidity ", liquidity.ToString())
@@ -184,7 +170,7 @@ func (self *Tick) modifyDepositLower(currentHeight uint64, currentTick int32, li
 	self.stakedLiquidityDelta = i256.Zero().Add(self.stakedLiquidityDelta, liquidity)
 
 	println("modifyDepositLower: currentTick =", currentTick, "tickId =", self.id, "stakedLiquidityGross =", self.stakedLiquidityGross.ToString(), "stakedLiquidityDelta =", self.stakedLiquidityDelta.ToString())
-	self.updateCross(currentHeight, currentTick < self.id)
+	//self.updateCross(currentHeight, currentTick < self.id)
 	// ticks.Set(self.id, self)
 }
 
@@ -196,7 +182,7 @@ func (self *Tick) modifyDepositUpper(currentHeight uint64, currentTick int32, li
 	self.stakedLiquidityDelta = i256.Zero().Sub(self.stakedLiquidityDelta, liquidity)
 
 	println("modifyDepositUpper: currentTick =", currentTick, "tickId =", self.id, "stakedLiquidityGross =", self.stakedLiquidityGross.ToString(), "stakedLiquidityDelta =", self.stakedLiquidityDelta.ToString())
-	self.updateCross(currentHeight, currentTick < self.id)
+	//self.updateCross(currentHeight, currentTick < self.id)
 	// ticks.Set(self.id, self)
 }
 
@@ -370,9 +356,10 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 
 		blockNumber := uint64(height())
 		println("	blockNumber : ", blockNumber)
-		tick.updateCross(blockNumber, zeroForOne)
+		//tick.updateCross(blockNumber, zeroForOne)
 
 		println("tickId : ", tickId)
+
 		// historical tick does NOT actually reflect the tick at the blockNumber, but it provides correct ordering for the staked positions.
 		// (because TickCrossHook is called only for the staked-initialized ticks)
 		// you should not use the historical tick for equality, only for comparison.
