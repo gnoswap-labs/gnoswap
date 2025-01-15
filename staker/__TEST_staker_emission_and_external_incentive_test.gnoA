@@ -115,7 +115,7 @@ func testCreatePool_BAR_QUX(t *testing.T) {
 		uassert.Equal(t, uint64(1), gnsBalance(consts.EMISSION_ADDR))
 
 		println("[", std.GetHeight(), "]", "addPoolTier ", barPath, quxPath, 500, "to : 1tier")
-		addPoolTier(t, `gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500`, 1)
+		addPoolTier(t, `gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500`, 1, 10000)
 		std.TestSkipHeights(1)
 	})
 }

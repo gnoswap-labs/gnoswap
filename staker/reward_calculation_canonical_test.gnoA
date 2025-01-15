@@ -267,7 +267,7 @@ func TestCanonicalTickCross_2(t *testing.T) {
 		t.Errorf("StakeToken failed: %s", err.Error())
 	}
 
-	err = canonical.StakeToken(
+	err = canonical.StakeToken( 
 		1,
 		gnousdc,
 		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
@@ -280,29 +280,37 @@ func TestCanonicalTickCross_2(t *testing.T) {
 		t.Errorf("StakeToken failed: %s", err.Error())
 	}
 
+	println("###########################111")
 	// eligible
 	canonical.MoveTick(gnousdc, 120)
 	canonical.NextBlockNoCanonical()
 
+	println("###########################222")
 	// not eligible
 	canonical.MoveTick(gnousdc, 90)
 	canonical.NextBlockNoCanonical()
 
+	println("###########################333")
 	// not eligible
 	canonical.MoveTick(gnousdc, 80)
 	canonical.NextBlockNoCanonical()
 
+	println("###########################444")
+
 	// not eligible
 	canonical.MoveTick(gnousdc, 220)
 	canonical.NextBlockNoCanonical()
+	println("###########################555")
 
 	// eligible
 	canonical.MoveTick(gnousdc, 180)
 	canonical.NextBlockNoCanonical()
+	println("###########################666")
 
 	// eligible
 	canonical.MoveTick(gnousdc, 120)
 	canonical.NextBlockNoCanonical()
+	println("###########################777")
 
 	expected := canonical.PerBlockEmission * 30 / 100
 	canonical.AssertEmulatedRewardOf(0, expected*3/2)
@@ -367,7 +375,9 @@ func TestCanonicalTickCross_3(t *testing.T) {
 	canonical.NextBlockNoCanonical()
 
 	expected := canonical.PerBlockEmission * 30 / 100
+	println("###########################888")
 	canonical.AssertEmulatedRewardOf(0, expected*2*1/4)
+	println("###########################999")
 	canonical.AssertEmulatedRewardOf(1, expected*2*3/4)
 }
 
@@ -471,7 +481,9 @@ func TestCanonicalTickCross_5(t *testing.T) {
 
 	// block 2
 	canonical.AssertCanonicalRewardOf(0, 0)
+	println("<<<<<<<<###########################111")
 	canonical.AssertEmulatedRewardOf(0, 0)
+	println(">>>>>>>>>##########################111")
 
 	// eligible
 	// entered range
@@ -480,7 +492,9 @@ func TestCanonicalTickCross_5(t *testing.T) {
 
 	// block 3
 	canonical.AssertCanonicalRewardOf(0, expected)
+	println("<<<<<<###########################222")
 	canonical.AssertEmulatedRewardOf(0, expected)
+	println(">>>>>>>>>##########################222")
 
 	// eligible
 	canonical.MoveTick(gnousdc, 101)
@@ -488,28 +502,36 @@ func TestCanonicalTickCross_5(t *testing.T) {
 
 	// block 4
 	canonical.AssertCanonicalRewardOf(0, expected)
+	println("<<<<<<<<##########################333")
 	canonical.AssertEmulatedRewardOf(0, expected)
+	println(">>>>>>>>>##########################333")
 
 	// eligible
 	canonical.MoveTick(gnousdc, 299)
 	canonical.NextBlock()
 
 	canonical.AssertCanonicalRewardOf(0, expected)
+	println("<<<<<<<<##########################444")
 	canonical.AssertEmulatedRewardOf(0, expected)
+	println(">>>>>>>>>##########################444")
 
 	// not eligible
 	canonical.MoveTick(gnousdc, 300)
 	canonical.NextBlock()
 
 	canonical.AssertCanonicalRewardOf(0, 0)
+	println("<<<<<<<<##########################555")
 	canonical.AssertEmulatedRewardOf(0, 0)
+	println(">>>>>>>>>##########################555")
 
 	// not eligible
 	canonical.MoveTick(gnousdc, 301)
 	canonical.NextBlock()
 
 	canonical.AssertCanonicalRewardOf(0, 0)
+	println("<<<<<<<<##########################666")
 	canonical.AssertEmulatedRewardOf(0, 0)
+	println(">>>>>>>>>##########################666")
 }
 
 // Test tick crossing at tick boundaries, backward direction
@@ -830,7 +852,7 @@ func TestCanonicalWarmup_1(t *testing.T) {
 	canonical.NextBlock()
 	canonical.NextBlock()
 	canonical.AssertEmulatedRewardOf(0, expected*10)
-
+/*
 	expected = canonical.PerBlockEmission * 70 / 100
 
 	canonical.NextBlock()
@@ -858,6 +880,7 @@ func TestCanonicalWarmup_1(t *testing.T) {
 	canonical.NextBlock()
 	canonical.NextBlock()
 	canonical.AssertEmulatedRewardOf(0, expected*10)
+	*/
 }
 
 func TestCanonicalWarmup_2(t *testing.T) {

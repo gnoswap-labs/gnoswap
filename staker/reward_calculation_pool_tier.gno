@@ -144,7 +144,7 @@ func NewPoolTier(currentHeight uint64, initialPoolPath string, emissionUpdate fu
 		lastRewardCacheHeight: &currentHeight,
 	}
 
-	result.createPool(pools, initialPoolPath, 1, currentHeight)
+	result.createPool(pools, initialPoolPath, 1, 0/*FIXME XXX: WE NEED TO GET THE TICK*/, currentHeight)
 	return result
 }
 
@@ -158,8 +158,8 @@ func (self *PoolTier) membershipOf(poolPath string) *UintTree {
 	return v.(*UintTree)
 }
 
-func (self *PoolTier) createPool(pools *Pools, poolPath string, initialTier uint64, currentHeight uint64) {
-	_ = pools.GetOrCreate(poolPath)
+func (self *PoolTier) createPool(pools *Pools, poolPath string, initialTier uint64, initialTick int32, currentHeight uint64) {
+	_ = pools.GetOrCreate(poolPath, initialTick)
 
 	self.changeTier(currentHeight, pools, poolPath, initialTier)
 }
@@ -261,7 +261,7 @@ func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
 	emissionUpdate := self.emissionUpdate(*self.lastRewardCacheHeight, currentHeight)
 	if emissionUpdate.IsEmpty() {
 		println("emissionUpdate is empty")
-		return
+		//return
 	}
 
 	rewardDenominators := self.tierRatio.IntoRewardDenominators(self.CurrentAllTierCounts())

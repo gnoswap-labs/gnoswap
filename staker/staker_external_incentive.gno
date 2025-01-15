@@ -91,7 +91,7 @@ func CreateExternalIncentive(
 		panic(err.Error())
 	}
 
-	pool := pools.GetOrCreate(targetPoolPath)
+	pool := pools.GetOrCreate(targetPoolPath, pl.PoolGetSlot0Tick(targetPoolPath))
 
 	incentive := NewExternalIncentive(
 		incentiveId,

@@ -142,5 +142,10 @@ type Deposit struct {
 	tickUpper         int32       // tick upper
 	liquidity         *u256.Uint  // liquidity
 	lastCollectHeight uint64      // last collect block height
-	warmups           []Warmup    // warmup information
+	warmups           []Warmup    // warmup information	
+
+	globalRewardRatioAccumulationDebt *u256.Uint
+
+	claimed uint64
 }
+
