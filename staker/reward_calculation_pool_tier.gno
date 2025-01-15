@@ -111,6 +111,14 @@ func (self *TierRatio) Get(tier uint64) uint64 {
 	}
 }
 
+type HalvingInfo interface {
+	// Return a list of halving blocks within the interval (start, end) in ascending order
+	GetHalvingBlocksInRange(start, end uint64) []uint64
+
+	// Returns the emission value at that block (after half-life), etc.
+	GetEmissionAfterHalving(currentEmission uint64) uint64
+}
+
 // PoolTier manages pool counts, ratios, and rewards for different tiers.
 //
 // Fields:
@@ -132,6 +140,11 @@ type PoolTier struct {
 	// rewardCache = (per block emission) / (number of pools in tier) * (tier's ratio)
 	// rewardCache           [4]*RewardCacheTree // blockNumber -> uint64
 	lastRewardCacheHeight *uint64
+
+	currentEmission uint64
+
+	// Field for queries to get a list of halving blocks, halving intervals, etc.
+	halvingInfo HalvingInfo
 
 	emissionUpdate func(uint64, uint64) en.EmissionUpdate
 }
@@ -204,6 +217,7 @@ func (self *PoolTier) changeTier(currentHeight uint64, pools *Pools, poolPath st
 	println("[", currentHeight, "] changeTier Start -> poolPath : ", poolPath, ", nextTier : ", nextTier)
 	self.cacheReward(currentHeight, pools)
 
+	// same as prev. no need to update
 	currentTier := self.CurrentTier(poolPath)
 	if currentTier == nextTier {
 		return
@@ -246,6 +260,52 @@ func CalculateTierReward(currentEmission uint64, tierRatio *TierRatio, tier uint
 // There MUST be no ratio/count/tier change during the emissionUpdates
 // (due to calling cacheReward() at the start of changeTier(), this holds true).
 func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
+	lastHeight := *self.lastRewardCacheHeight
+	if currentHeight <= lastHeight {
+		// no need to check
+		return
+	}
+
+	// find halving blocks in range
+	halvingBlocks := self.halvingInfo.GetHalvingBlocksInRange(lastHeight+1, currentHeight)
+
+	cursor := lastHeight
+	currentEmission := self.currentEmission
+
+	for _, hvBlock := range halvingBlocks {
+		if hvBlock <= cursor {
+			continue
+		}
+
+		if hvBlock > currentHeight {
+			break
+		}
+
+		// caching: (cursor+1 ~ hvBlock)
+		startBlock := cursor
+		endBlock := hvBlock
+		if endBlock > startBlock {
+			self.applyCacheToAllPools(pools, startBlock, endBlock, currentEmission)
+			cursor = endBlock - 1
+		}
+
+		// halve emissions when halvingBlock is reached
+		currentEmission = self.halvingInfo.GetEmissionAfterHalving(currentEmission)
+	}
+
+	// remaining range (cursor+1 ~ currentHeight)
+	if cursor < currentHeight {
+		self.applyCacheToAllPools(pools, cursor, currentHeight, currentEmission)
+		cursor = currentHeight
+	}
+
+	// update lastRewardCacheHeight and currentEmission
+	*self.lastRewardCacheHeight = currentHeight
+	self.currentEmission = currentEmission
+}
+
+/*
+func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
 	// PoolTier.cacheReward is executed only when emissionUpdate is not empty, which means:
 	// - there is a new halving event
 	// - msPerBlock is changed
@@ -281,6 +341,33 @@ func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
 
 	*self.lastRewardCacheHeight = currentHeight
 	println("[", currentHeight, "] cacheReward End : lastRewardCacheHeight ", *self.lastRewardCacheHeight)
+}
+*/
+
+func (self *PoolTier) applyCacheToAllPools(pools *Pools, startBlock, endBlock, emissionInThisInterval uint64) {
+	if startBlock >= endBlock {
+		return
+	}
+
+	// calculate denominator and number of pools in each tier
+	counts := self.CurrentAllTierCounts()
+	denominators := self.tierRatio.IntoRewardDenominators(counts)
+
+	// apply cache to all pools
+	self.membership.Iterate("", "", func(key string, value interface{}) bool {
+		tierNum := value.(uint64)
+		pool, ok := pools.Get(key)
+		if !ok {
+			return false
+		}
+
+		// real reward
+		partialReward := ApplyDenominator(emissionInThisInterval, denominators[tierNum])
+
+		// accumulate the reward for the interval (startBlock to endBlock) in the Pool
+		pool.cacheInternalReward(startBlock, endBlock, partialReward)
+		return false
+	})
 }
 
 func (self *PoolTier) IsInternallyIncentivizedPool(currentHeight uint64, poolPath string) bool {
