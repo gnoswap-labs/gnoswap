@@ -402,21 +402,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 	toUser := handleUnstakingFee(consts.GNS_PATH, reward.Internal, true, tokenId, deposit.targetPoolPath)
 	println("toUser", toUser)
 	if toUser > 0 {
-		stakerBalance := gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR))
-		println("gns balance (staker) : ", stakerBalance)
-
-		// calculate total required GNS amount
-		totalRequired := toUser + reward.InternalPenalty
-
-		// if total required amount exceeeds staker's balance,
-		// adjust both user reward and penalty proportionally
-		if totalRequired > stakerBalance {
-			// adjustment ratio based on available balance
-			// and apply ratio to both user reward and penalty
-			ratio := float64(stakerBalance) / float64(totalRequired)
-			toUser = uint64(float64(toUser) * ratio)
-			reward.InternalPenalty = uint64(float64(reward.InternalPenalty) * ratio)
-		}
+		println("gns balance (staker) : ", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
 
 		println("sending reward", toUser, "to", deposit.owner, "// gns balance (staker) :", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
 		gns.Transfer(a2u(deposit.owner), toUser)
