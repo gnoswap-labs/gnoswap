@@ -79,6 +79,10 @@ type Pool struct {
 	incentives Incentives
 
 	ticks *Ticks
+
+	// BlockNumber / TotalStake accumulation, Q128.
+	globalRewardRatioAccumulation *u256.Uint
+	lastGlobalRewardRatioAccumulationHeight *uint64
 }
 
 func NewPool(poolPath string, currentHeight uint64) *Pool {
@@ -95,6 +99,8 @@ func NewPool(poolPath string, currentHeight uint64) *Pool {
 		lastRewardCacheHeight: &currentHeight,
 		incentives:            NewIncentives(currentHeight),
 		ticks:                 NewTicks(),
+		globalRewardRatioAccumulation: u256.Zero(),
+		lastGlobalRewardRatioAccumulationHeight: &currentHeight,
 	}
 }
 
@@ -137,6 +143,7 @@ func (self *Pool) cacheRewardPerLiquidityUnit(startHeight, endHeight uint64, cur
 	if *self.lastUnclaimableHeight != 0 {
 		self.endInternalUnclaimablePeriod(startHeight)
 		*self.tierRewardTotal = currentTierReward
+		println("		->tierRewardTotal : ", *self.tierRewardTotal)
 		self.startInternalUnclaimablePeriod(startHeight)
 	}
 
@@ -212,6 +219,34 @@ func (self *Pool) cacheExternalReward(endHeight uint64) {
 	self.incentives.rewardCache.Iterate(0, 9999999, func(key uint64, value interface{}) bool {
 		return false
 	})
+}
+
+// returns the old global reward ratio accumulation
+func (self *Pool) updateGlobalRewardRatioAccumulation(currentHeight uint64, currentStakedLiquidity *u256.Uint) *u256.Uint {
+	println("[[updateGlobalRewardRatioAccumulation]]")
+	println("	currentHeight : ", currentHeight)
+	println("	lastGlobalRewardRatioAccumulationHeight : ", *self.lastGlobalRewardRatioAccumulationHeight)
+	blockDiff := currentHeight - *self.lastGlobalRewardRatioAccumulationHeight
+	println("	blockDiff : ", blockDiff)
+	oldAcc := self.globalRewardRatioAccumulation
+	println("	oldAcc : ", oldAcc.ToString())
+	if blockDiff == 0 {
+		return oldAcc
+	}
+
+	acc := u256.NewUint(blockDiff)
+	acc = acc.Mul(acc, q128)
+	println("	currentStakedLiquidity : ", currentStakedLiquidity.ToString())
+	acc = acc.Div(acc, currentStakedLiquidity)
+
+	println("	acc : ", acc.ToString())
+
+	self.globalRewardRatioAccumulation = oldAcc.Add(oldAcc, acc)
+	println("	self.globalRewardRatioAccumulation : ", self.globalRewardRatioAccumulation.ToString())
+	*self.lastGlobalRewardRatioAccumulationHeight = currentHeight
+	println("	lastGlobalRewardRatioAccumulationHeight : ", *self.lastGlobalRewardRatioAccumulationHeight)
+	println("[[updateGlobalRewardRatioAccumulation]] End")
+	return oldAcc
 }
 
 type ExternalRewardState struct {
@@ -406,6 +441,9 @@ func (self *InternalRewardState) ApplyWarmup() {
 		reward := u256.Zero()
 		totalReward := u256.Zero().Div(self.rewards[i], q192)
 
+
+		println("totalReward : ", totalReward.ToString())
+
 		reward = reward.Mul(self.rewards[i], u256.NewUint(warmup.WarmupRatio))
 		reward = reward.Div(reward, u256.NewUint(100))
 		reward = reward.Div(reward, q192)
@@ -415,6 +453,13 @@ func (self *InternalRewardState) ApplyWarmup() {
 		self.rewards[i] = reward
 		self.penalties[i] = penalty
 	}
+}
+
+func abs(x int64) uint64 {
+	if x < 0 {
+		return uint64(-x)
+	}
+	return uint64(x)
 }
 
 func (self *InternalRewardState) TickCrossesToInternalReward(startHeight, endHeight int64, currentlyInRange bool, tickUpperCrosses []int64, tickLowerCrosses []int64) {
@@ -428,6 +473,44 @@ func (self *InternalRewardState) TickCrossesToInternalReward(startHeight, endHei
 		}
 
 		if endHeight < warmup.NextWarmupHeight {
+			// testing
+			upperTick := self.deposit.tickUpper
+			lowerTick := self.deposit.tickLower
+			upperCross := tickUpperCrosses[len(tickUpperCrosses)-1]
+			lowerCross := tickLowerCrosses[len(tickLowerCrosses)-1]
+			upperHeight := abs(upperCross)
+			lowerHeight := abs(lowerCross)
+			var currentTick int32
+			if upperHeight == lowerHeight {
+				if upperCross != lowerCross {
+					currentTick = (upperTick + lowerTick) / 2 // denoting inrange
+				} else if upperCross < 0 {
+					currentTick = lowerTick - 1
+				} else {
+					currentTick = upperTick + 1
+				}
+			} else if upperHeight > lowerHeight {
+				if upperCross < 0 {
+					if lowerCross < 0 {
+						currentTick = lowerTick - 1
+					} else {
+						currentTick = (upperTick + lowerTick) / 2
+					}
+				} else {
+					currentTick = upperTick + 1
+				}
+			} else {
+				if lowerCross < 0 {
+					currentTick = lowerTick - 1
+				} else {
+					if upperCross < 0 {
+						currentTick = (upperTick + lowerTick) / 2
+					} else {
+						currentTick = upperTick + 1
+					}
+				}
+			}
+
 			// fully submerged in the current warmup
 			currentlyInRange, tickUpperCrosses, tickLowerCrosses = ForEachEligibleInterval(
 				startHeight,
@@ -437,6 +520,36 @@ func (self *InternalRewardState) TickCrossesToInternalReward(startHeight, endHei
 				tickLowerCrosses,
 				self.AccumulateReward,
 			)
+
+			// checking if global reward ratio logic is correct
+			globalAcc := self.pool.globalRewardRatioAccumulation
+			lowerAcc := self.pool.ticks.Get(self.deposit.tickLower).CurrentOutsideAccumulation(uint64(endHeight))
+			upperAcc := self.pool.ticks.Get(self.deposit.tickUpper).CurrentOutsideAccumulation(uint64(endHeight))
+			println("globalAcc : ", globalAcc.ToString(), ", lowerAcc : ", lowerAcc.ToString(), ", upperAcc : ", upperAcc.ToString())
+			var rewardAcc *u256.Uint
+
+			if currentTick < lowerTick {
+				println("currentTick < lowerTick")
+				rewardAcc = u256.Zero().Sub(lowerAcc, upperAcc)
+			} else if currentTick >= upperTick {
+				println("currentTick >= upperTick")
+				rewardAcc = u256.Zero().Sub(upperAcc, lowerAcc)
+			} else {
+				println("currentTick >= lowerTick && currentTick < upperTick")
+				globalAcc := self.pool.globalRewardRatioAccumulation
+				rewardAcc = u256.Zero().Sub(globalAcc, lowerAcc)
+				rewardAcc = rewardAcc.Sub(rewardAcc, upperAcc)
+			}
+
+			println("rewardAcc : ", rewardAcc.ToString())
+			rewardAcc = rewardAcc.Mul(rewardAcc, self.deposit.liquidity)
+			println("rewardAcc : ", rewardAcc.ToString())
+			currentReward := uint64(1000000000) // *self.pool.tierRewardTotal
+			println("currentReward : ", currentReward)
+			rewardAcc = rewardAcc.Mul(rewardAcc, u256.NewUint(currentReward))
+			println("rewardAcc : ", rewardAcc.ToString())
+			rewardAcc = rewardAcc.Div(rewardAcc, q128)
+			println("rewardAcc : ", rewardAcc.ToString())
 
 			// done
 			break

@@ -20,7 +20,7 @@ func Setup(t *testing.T) *canonicalRewardState {
 	return NewCanonicalRewardState(t, pools, deposits, TickCrossHook)
 }
 
-func TestSimple(t *testing.T) {
+func TestCanonicalSimple(t *testing.T) {
 	canonical := Setup(t)
 
 	gnousdc := test_gnousdc
@@ -50,7 +50,7 @@ func TestSimple(t *testing.T) {
 }
 
 // To check precision error
-func TestLargeStakedLiquidity(t *testing.T) {
+func TestCanonicalLargeStakedLiquidity(t *testing.T) {
 	canonical := Setup(t)
 
 	gnousdc := test_gnousdc
@@ -75,7 +75,7 @@ func TestLargeStakedLiquidity(t *testing.T) {
 }
 
 // To check precision error
-func TestLargeStakedLiquidity_2(t *testing.T) {
+func TestCanonicalLargeStakedLiquidity_2(t *testing.T) {
 	canonical := Setup(t)
 
 	gnousdc := test_gnousdc
@@ -119,7 +119,7 @@ func TestLargeStakedLiquidity_2(t *testing.T) {
 }
 
 // Tests simple case with tick crossing
-func TestTickCross_0(t *testing.T) {
+func TestCanonicalTickCross_0(t *testing.T) {
 	canonical := Setup(t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
@@ -197,7 +197,7 @@ func TestTickCross_0(t *testing.T) {
 }
 
 // Tests tick crossing with lazy evaluation of position reward
-func TestTickCross_1(t *testing.T) {
+func TestCanonicalTickCross_1(t *testing.T) {
 	canonical := Setup(t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
@@ -248,7 +248,7 @@ func TestTickCross_1(t *testing.T) {
 }
 
 // Test tick crossing with multiple positions with same tick, same liquidity
-func TestTickCross_2(t *testing.T) {
+func TestCanonicalTickCross_2(t *testing.T) {
 	canonical := Setup(t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
@@ -310,7 +310,7 @@ func TestTickCross_2(t *testing.T) {
 }
 
 // Test tick crossing with multiple positions with same tick, different liquidity
-func TestTickCross_3(t *testing.T) {
+func TestCanonicalTickCross_3(t *testing.T) {
 	canonical := Setup(t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
@@ -372,7 +372,7 @@ func TestTickCross_3(t *testing.T) {
 }
 
 // Test tick crossing with multiple positions with different tick, same liquidity
-func TestTickCross_4(t *testing.T) {
+func TestCanonicalTickCross_4(t *testing.T) {
 	canonical := Setup(t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
@@ -443,7 +443,7 @@ func TestTickCross_4(t *testing.T) {
 }
 
 // Test tick crossing at tick boundaries, forward direction
-func TestTickCross_5(t *testing.T) {
+func TestCanonicalTickCross_5(t *testing.T) {
 	canonical := Setup(t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
@@ -513,7 +513,7 @@ func TestTickCross_5(t *testing.T) {
 }
 
 // Test tick crossing at tick boundaries, backward direction
-func TestTickCross_6(t *testing.T) {
+func TestCanonicalTickCross_6(t *testing.T) {
 	canonical := Setup(t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
@@ -571,7 +571,7 @@ func TestTickCross_6(t *testing.T) {
 	canonical.AssertEmulatedRewardOf(0, 0)
 }
 
-func TestExternalReward_1(t *testing.T) {
+func TestCanonicalExternalReward_1(t *testing.T) {
 	canonical := Setup(t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
@@ -599,7 +599,7 @@ func TestExternalReward_1(t *testing.T) {
 	canonical.AssertEmulatedExternalRewardOf(uint64(0), incentiveId, expected)
 }
 
-func TestMultiplePool_1(t *testing.T) {
+func TestCanonicalMultiplePool_1(t *testing.T) {
 	canonical := Setup(t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
@@ -662,7 +662,7 @@ func TestMultiplePool_1(t *testing.T) {
 	canonical.AssertEmulatedRewardOf(1, expected/2)
 }
 
-func TestMultiplePool_2(t *testing.T) {
+func TestCanonicalMultiplePool_2(t *testing.T) {
 	canonical := Setup(t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
@@ -746,7 +746,7 @@ func TestMultiplePool_2(t *testing.T) {
 }
 
 // Large number of blocks passed
-func TestLargeBlocksPassed(t *testing.T) {
+func TestCanonicalLargeBlocksPassed(t *testing.T) {
 	canonical := Setup(t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
@@ -780,7 +780,7 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 	return ufmt.Sprintf("%s:%s:%d", token0Path, token1Path, fee)
 }
 
-func TestWarmup_1(t *testing.T) {
+func TestCanonicalWarmup_1(t *testing.T) {
 	modifyWarmup(0, 10)
 	modifyWarmup(1, 10)
 	modifyWarmup(2, 10)
@@ -860,7 +860,7 @@ func TestWarmup_1(t *testing.T) {
 	canonical.AssertEmulatedRewardOf(0, expected*10)
 }
 
-func TestWarmup_2(t *testing.T) {
+func TestCanonicalWarmup_2(t *testing.T) {
 	modifyWarmup(0, 10)
 	modifyWarmup(1, 10)
 	modifyWarmup(2, 10)
@@ -943,7 +943,7 @@ func TestWarmup_2(t *testing.T) {
 // randomized
 
 // Test tick crossing at tick boundaries, random direction
-func TestTickCross_7(t *testing.T) {
+func TestCanonicalTickCross_7(t *testing.T) {
 	canonical := Setup(t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
@@ -987,7 +987,7 @@ func TestTickCross_7(t *testing.T) {
 
 // Test tick crossing with multiple positions with different tick, different liquidity
 // Equivalence test
-func TestTickCross_8(t *testing.T) {
+func TestCanonicalTickCross_8(t *testing.T) {
 	canonical := Setup(t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
@@ -1046,7 +1046,7 @@ func TestTickCross_8(t *testing.T) {
 
 // Test tick crossing with multiple positions with different tick, different liquidity, emulated reward flushed for every 100 blocks
 // Equivalence test
-func TestTickCross_9(t *testing.T) {
+func TestCanonicalTickCross_9(t *testing.T) {
 	canonical := Setup(t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
