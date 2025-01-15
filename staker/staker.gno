@@ -207,7 +207,6 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	}
 
 	currentTick := pl.PoolGetSlot0Tick(poolPath)
-	deposit.globalRewardRatioAccumulationDebt = pool.CalculateRawRewardForPosition(uint64(currentHeight), currentTick, deposit)
 
 	deposits.Set(tokenId, deposit)
 
@@ -221,6 +220,7 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	pn.SetPositionOperator(tokenId, caller)
 
 	signedLiquidity := i256.FromUint256(liquidity)
+
 	isInRange := false
 	println("[", currentHeight, "][", tokenId, "] currentTick: ", currentTick)
 
@@ -241,12 +241,12 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	println("upperTick id : ", upperTick.id)
 	println("upperTick stakedLiquidityGross: ", upperTick.stakedLiquidityGross.ToString())
 	println("upperTick stakedLiquidityDelta: ", upperTick.stakedLiquidityDelta.ToString())
-	println("upperTick Size: ", upperTick.cross.tree.Size())
+	//println("upperTick Size: ", upperTick.cross.tree.Size())
 	lowerTick.modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
 	println("lowerTick id: ", lowerTick.id)
 	println("lowerTick stakedLiquidityGross: ", lowerTick.stakedLiquidityGross.ToString())
 	println("lowerTick stakedLiquidityDelta: ", lowerTick.stakedLiquidityDelta.ToString())
-	println("lowerTick Size: ", lowerTick.cross.tree.Size())
+	//println("lowerTick Size: ", lowerTick.cross.tree.Size())
 
 	prevAddr, prevPkgPath := getPrev()
 

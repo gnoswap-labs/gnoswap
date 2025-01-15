@@ -432,8 +432,8 @@ type InternalRewardState struct {
 	rewards       []*u256.Uint
 	penalties     []*u256.Uint
 
-	refactorRewards []*u256.Uint
-	refactorPenalties []*u256.Uint
+	refactorRewards []uint64
+	refactorPenalties []uint64
 }
 
 func (self *Pool) InternalRewardOf(deposit *Deposit) *InternalRewardState {
@@ -443,30 +443,35 @@ func (self *Pool) InternalRewardOf(deposit *Deposit) *InternalRewardState {
 		currentWarmup: deposit.warmups[0],
 		rewards:       make([]*u256.Uint, len(deposit.warmups)),
 		penalties:     make([]*u256.Uint, len(deposit.warmups)),
-		refactorRewards: make([]*u256.Uint, len(deposit.warmups)),
-		refactorPenalties: make([]*u256.Uint, len(deposit.warmups)),
+		refactorRewards: make([]uint64, len(deposit.warmups)),
+		refactorPenalties: make([]uint64, len(deposit.warmups)),
 	}
 
 	for i := range result.rewards {
 		result.rewards[i] = u256.Zero()
 		result.penalties[i] = u256.Zero()
 
-		result.refactorRewards[i] = u256.Zero()
-		result.refactorPenalties[i] = u256.Zero()
+		result.refactorRewards[i] = 0
+		result.refactorPenalties[i] = 0
 	}
 
 	return result
 }
 
-func (self *InternalRewardState) Calculate(currentTick int32, startHeight, endHeight int64, currentlyInRange bool, tickUpperCrosses []int64, tickLowerCrosses []int64) ([]uint64, []uint64) {
-	self.TickCrossesToInternalReward(currentTick, startHeight, endHeight, currentlyInRange, tickUpperCrosses, tickLowerCrosses)
+func (self *InternalRewardState) Calculate(currentTick int32, startHeight, endHeight int64) ([]uint64, []uint64) {
+	self.TickCrossesToInternalReward(currentTick, startHeight, endHeight)
+
+	println("[[[[ self.rewards ]]]] : ", self.rewards[0].ToString(), self.rewards[1].ToString(), self.rewards[2].ToString(), self.rewards[3].ToString())
+	println("[[[[ self.penalties ]]]] : ", self.penalties[0].ToString(), self.penalties[1].ToString(), self.penalties[2].ToString(), self.penalties[3].ToString())
+	println("[[[[ self.refactorRewards ]]]] : ", self.refactorRewards[0], self.refactorRewards[1], self.refactorRewards[2], self.refactorRewards[3])
+	println("[[[[ self.refactorPenalties ]]]] : ", self.refactorPenalties[0], self.refactorPenalties[1], self.refactorPenalties[2], self.refactorPenalties[3])
 
 	rewards := make([]uint64, len(self.deposit.warmups))
 	penalties := make([]uint64, len(self.deposit.warmups))
 
-	for i, reward := range self.rewards {
-		rewards[i] = reward.Uint64()
-		penalties[i] = self.penalties[i].Uint64()
+	for i, reward := range self.refactorRewards {
+		rewards[i] = reward
+		penalties[i] = self.refactorPenalties[i]
 	}
 
 	return rewards, penalties
@@ -485,20 +490,15 @@ func (self *InternalRewardState) AccumulateReward(startHeight, endHeight uint64)
 }
 
 func (self *InternalRewardState) ApplyWarmup() {
-	claimed := uint64(0)
-	println("claimed : ", self.deposit.claimed)
-	
 	for i, warmup := range self.deposit.warmups {
-		println("self.refactorRewards[i] : ", i, self.refactorRewards[i].ToString())
+		println("self.refactorRewards[i] : ", i, self.refactorRewards[i])
+		/*
 
-		claimed += self.refactorRewards[i].Uint64()
 		if self.rewards[i].IsZero() {
 			continue
 		}
 		reward := u256.Zero()
 		totalReward := u256.Zero().Div(self.rewards[i], q192)
-
-
 
 		println("############ totalReward : ", i, totalReward.ToString())
 
@@ -510,11 +510,13 @@ func (self *InternalRewardState) ApplyWarmup() {
 
 		self.rewards[i] = reward
 		self.penalties[i] = penalty
+		*/
+		//==========================
+
+		refactorReward := self.refactorRewards[i]
+		self.refactorRewards[i] = refactorReward * warmup.WarmupRatio / 100
+		self.refactorPenalties[i] = refactorReward - self.refactorRewards[i]
 	}
-
-	println("new claimed : ", claimed)
-
-	self.deposit.claimed = claimed
 }
 
 func abs(x int64) uint64 {
@@ -524,9 +526,7 @@ func abs(x int64) uint64 {
 	return uint64(x)
 }
 
-func (self *InternalRewardState) TickCrossesToInternalReward(currentTick int32, startHeight, endHeight int64, currentlyInRange bool, tickUpperCrosses []int64, tickLowerCrosses []int64) {
-	claiming := u256.Zero() // will be eventually added to position.claimed
-
+func (self *InternalRewardState) TickCrossesToInternalReward(currentTick int32, startHeight, endHeight int64) {
 	for _, warmup := range self.deposit.warmups {
 		self.currentWarmup = warmup
 
@@ -537,6 +537,7 @@ func (self *InternalRewardState) TickCrossesToInternalReward(currentTick int32, 
 
 		if endHeight < warmup.NextWarmupHeight {
 			println("fully submerged in the current warmup", warmup.Index)
+			/*
 			// fully submerged in the current warmup
 			currentlyInRange, tickUpperCrosses, tickLowerCrosses = ForEachEligibleInterval(
 				startHeight,
@@ -546,14 +547,12 @@ func (self *InternalRewardState) TickCrossesToInternalReward(currentTick int32, 
 				tickLowerCrosses,
 				self.AccumulateReward,
 			)
-
+			*/
 			// checking if global reward ratio logic is correct
 
 			// println("globalAcc : ", globalAcc.ToString(), ", lowerAcc : ", lowerAcc.ToString(), ", upperAcc : ", upperAcc.ToString())
 			// XXX it should be calculatereward, not raw reward
-			rewardAcc := self.pool.CalculateRewardForPosition(uint64(endHeight), self.pool.CurrentTick(uint64(endHeight)), self.deposit, claiming)
-
-			claiming = claiming.Add(claiming, rewardAcc)
+			rewardAcc := self.pool.CalculateRewardForPosition(uint64(startHeight), self.pool.CurrentTick(uint64(startHeight)), uint64(endHeight), self.pool.CurrentTick(uint64(endHeight)), self.deposit)
 
 			println("rewardAcc 3 : ", rewardAcc.ToString())
 			rewardAcc = rewardAcc.Mul(rewardAcc, self.deposit.liquidity)
@@ -565,14 +564,16 @@ func (self *InternalRewardState) TickCrossesToInternalReward(currentTick int32, 
 			rewardAcc = rewardAcc.Div(rewardAcc, q128)
 			println("############ rewardAcc : ", rewardAcc.ToString())
 
-			self.refactorRewards[self.currentWarmup.Index] = rewardAcc
-
-
+			self.refactorRewards[self.currentWarmup.Index] = rewardAcc.Uint64()
 
 			// done
 			break
 		}
 
+		// XXX it should be calculatereward, not raw reward
+		rewardAcc := self.pool.CalculateRewardForPosition(uint64(startHeight), self.pool.CurrentTick(uint64(startHeight)), uint64(warmup.NextWarmupHeight), self.pool.CurrentTick(uint64(warmup.NextWarmupHeight)), self.deposit)
+
+		/*
 		// partially included in the current warmup
 		println("partially included in the current warmup", warmup.Index)
 		currentlyInRange, tickUpperCrosses, tickLowerCrosses = ForEachEligibleInterval(
@@ -583,34 +584,32 @@ func (self *InternalRewardState) TickCrossesToInternalReward(currentTick int32, 
 			tickLowerCrosses,
 			self.AccumulateReward,
 		)
+					*/
 		startHeight = warmup.NextWarmupHeight
 
 
 		// checking if global reward ratio logic is correct
 //		println("globalAcc : ", globalAcc.ToString(), ", lowerAcc : ", lowerAcc.ToString(), ", upperAcc : ", upperAcc.ToString())
 
-		// XXX it should be calculatereward, not raw reward
-		rewardAcc := self.pool.CalculateRewardForPosition(uint64(endHeight), self.pool.CurrentTick(uint64(warmup.NextWarmupHeight)), self.deposit, claiming)
-
-		claiming = claiming.Add(claiming, rewardAcc)
+		//claiming = claiming.Add(claiming, rewardAcc)
 
 		println("rewardAcc 3 : ", rewardAcc.ToString())
-		rewardAcc = rewardAcc.Sub(rewardAcc, self.deposit.globalRewardRatioAccumulationDebt)
-		println("rewardAcc 4 : ", rewardAcc.ToString())
 		rewardAcc = rewardAcc.Mul(rewardAcc, self.deposit.liquidity)
-		println("rewardAcc 5 : ", rewardAcc.ToString())
+		println("rewardAcc 4 : ", rewardAcc.ToString())
 		currentReward := uint64(1000000000) // *self.pool.tierRewardTotal
 		println("currentReward : ", currentReward)
 		rewardAcc = rewardAcc.Mul(rewardAcc, u256.NewUint(currentReward))
-		println("rewardAcc 6 : ", rewardAcc.ToString())
+		println("rewardAcc 5 : ", rewardAcc.ToString())
 		rewardAcc = rewardAcc.Div(rewardAcc, q128)
 		println("############ rewardAcc : ", rewardAcc.ToString())
 
-		self.refactorRewards[self.currentWarmup.Index] = rewardAcc
+		self.refactorRewards[self.currentWarmup.Index] = rewardAcc.Uint64()
 
 	}
 
 	self.ApplyWarmup()
+
+	self.deposit.claimHeight = uint64(endHeight)
 }
 
 func (self *Pool) modifyDeposit(tokenId uint64, delta *i256.Int, currentHeight uint64) {
@@ -735,14 +734,14 @@ func (self *Pool) CalculateRawRewardForPosition(currentHeight uint64, currentTic
 }
 
 // Applying debt and claiming
-func (self *Pool) CalculateRewardForPosition(currentHeight uint64, currentTick int32, deposit *Deposit, claiming *u256.Uint) *u256.Uint {
-	rewardAcc := self.CalculateRawRewardForPosition(currentHeight, currentTick, deposit)
+func (self *Pool) CalculateRewardForPosition(startHeight uint64, startTick int32, endHeight uint64, endTick int32, deposit *Deposit) *u256.Uint {
+	rewardAcc := self.CalculateRawRewardForPosition(endHeight, endTick, deposit)
 	println("rewardAcc 1 : ", rewardAcc.ToString())
 
-	rewardAcc = rewardAcc.Sub(rewardAcc, deposit.globalRewardRatioAccumulationDebt)
+	debtAcc := self.CalculateRawRewardForPosition(startHeight, startTick, deposit)
+	println("debtAcc : ", debtAcc.ToString())
+	rewardAcc = rewardAcc.Sub(rewardAcc, debtAcc)
 	println("rewardAcc 2 : ", rewardAcc.ToString())
-	rewardAcc = rewardAcc.Sub(rewardAcc, claiming)
-	println("claiming : ", claiming.ToString())
 
 	return rewardAcc
 }
