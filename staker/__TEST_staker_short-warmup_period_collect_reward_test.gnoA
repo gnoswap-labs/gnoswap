@@ -4,6 +4,7 @@ import (
 	"math"
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/uassert"
 	pusers "gno.land/p/demo/users"
@@ -27,7 +28,7 @@ var (
 	anoAdmin = users.Resolve(admin)
 )
 
-func TestCollectReward(t *testing.T) {
+func TestCollectReward_Full(t *testing.T) {
 	testInit(t)
 	testPoolCreatePool(t)
 	testPositionMint01(t)
@@ -53,7 +54,7 @@ func testInit(t *testing.T) {
 		changeWarmup(t, 3, math.MaxInt64)
 
 		// set unstaking fee to 0
-		// SetUnstakingFeeByAdmin(0)
+		//SetUnstakingFeeByAdmin(0)
 	})
 }
 
@@ -198,6 +199,7 @@ func testStakeToken01(t *testing.T) {
 
 func testStakeToken02(t *testing.T) {
 	t.Run("stake position 02, bar:qux:500", func(t *testing.T) {
+		println("========>[", std.GetHeight(), "]", "Stake 2")
 		std.TestSetRealm(adminRealm)
 		StakeToken(2) // GNFT tokenId
 
@@ -259,7 +261,21 @@ func testUnstakeToken01(t *testing.T) {
 func testUnstakeToken02(t *testing.T) {
 	t.Run("unstake position 02, bar:qux:500", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
+		println("========>[", std.GetHeight(), "]", "UnStake 2")
+		now := uint64(time.Now().Unix())
+		gap := now - 1234569600
+		println("========>[", now, "], [", gap, "], [", gap/uint64(consts.BLOCK_GENERATION_INTERVAL), "] UnStake 2")
+
+		// 0.4586225023
+		// 514
+		// 235.9169250514
+		beforeBalance := obl.BalanceOf(a2u(consts.STAKER_ADDR))
+		beforeObl := obl.BalanceOf(admin)
 		UnstakeToken(2, true) // GNFT tokenId
+		afterBalance := obl.BalanceOf(a2u(consts.STAKER_ADDR))
+		afterObl := obl.BalanceOf(admin)
+		println("before : ", beforeBalance, ", after : ", afterBalance, ", diff : ", beforeBalance-afterBalance)
+		println("before : ", beforeObl, ", after : ", afterObl, ", diff : ", afterObl-beforeObl)
 
 		std.TestSkipHeights(1)
 
@@ -269,7 +285,7 @@ func testUnstakeToken02(t *testing.T) {
 
 		// check reward
 		uassert.Equal(t, gns.BalanceOf(admin), uint64(99999000000000))
-		uassert.Equal(t, obl.BalanceOf(admin), uint64(99999000011371)) // external
+		uassert.Equal(t, obl.BalanceOf(admin), uint64(99999000011399)) // external + 9684
 	})
 }
 
