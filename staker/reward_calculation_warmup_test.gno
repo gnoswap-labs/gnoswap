@@ -336,7 +336,7 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 		totalPenalty += penalty5Days
 
 		// baseReward * blocks * 0.3
-		expected5Days := baseReward * blocks5Days * 30 / 100
+		expected5Days := baseReward * blocks5Days * 30 / 100 * 1000 / 2000
 		uassert.Equal(t, expected5Days, reward5Days,
 			ufmt.Sprintf("5 days reward mismatch: expected %d, got %d", expected5Days, reward5Days))
 
@@ -352,7 +352,7 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 		totalPenalty += penalty2Days
 
 		// baseReward * blocks * 0.5
-		expected2Days := baseReward * blocks2Days * 50 / 100
+		expected2Days := baseReward * blocks2Days * 50 / 100 * 1000 / 2000
 		uassert.Equal(t, expected2Days, reward2Days,
 			ufmt.Sprintf("2 days reward mismatch: expected %d, got %d", expected2Days, reward2Days))
 
@@ -407,7 +407,7 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 			totalReward += reward
 			totalPenalty += penalty
 
-			expectedReward := baseReward * blocks * period.warmupRatio / 100
+			expectedReward := baseReward * blocks * period.warmupRatio / 100 * 1000 / 2000
 			uassert.Equal(t, expectedReward, reward,
 				ufmt.Sprintf("Period %d reward mismatch: expected %d, got %d",
 					i, expectedReward, reward))
