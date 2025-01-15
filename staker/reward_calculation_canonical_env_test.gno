@@ -265,6 +265,7 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 	deposit := deposits.Get(tokenId)
 	poolPath := deposit.targetPoolPath
 
+
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		pool = NewPool(poolPath, currentHeight)

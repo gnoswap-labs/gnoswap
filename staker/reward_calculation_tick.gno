@@ -63,6 +63,7 @@ func (self *Ticks) Get(tickId int32) *Tick {
 			stakedLiquidityGross: u256.Zero(),
 			stakedLiquidityDelta: i256.Zero(),
 			cross:                NewUintTree(),
+			outsideAccumulation:  NewUintTree(),
 		}
 		self.tree.Set(EncodeInt(tickId), tick)
 		return tick
@@ -82,6 +83,14 @@ func (self *Ticks) Set(tickId int32, tick *Tick) {
 
 func (self *Ticks) Has(tickId int32) bool {
 	return self.tree.Has(EncodeInt(tickId))
+}
+
+type TickCross struct {
+	cross bool
+
+	// BlockNumber / TotalStake accumulation, Q128.
+	// Pool.globalRewardRatioAccumulation at the point of the tick crossing
+	accumulation *u256.Uint 
 }
 
 // Tick represents the state of a specific tick in a pool.
@@ -111,8 +120,24 @@ type Tick struct {
 	// e.g. instead of having avl.Tree for each tick as key, use a segment of 32 ticks as bulk key.
 	// The value can be a 64-bit integer, where each 2-bit represents 00(no-update), 01(backward-cross), 10(forward-cross), 11(no-update).
 
-	// block number -> zeroForOne
+	// block number -> TickCross
 	cross *UintTree
+
+	// currentOutsideAccumulation is the accumulation of the blockNumber / TotalStkae outside the tick.
+	// It is calculated by subtracting the current tick's currentOutsideAccumulation from the global reward ratio accumulation.
+	outsideAccumulation *UintTree // blockNumber -> *u256.Uint
+}
+
+func (self *Tick) CurrentOutsideAccumulation(blockNumber uint64) *u256.Uint {
+	var acc *u256.Uint
+	self.outsideAccumulation.ReverseIterate(0, blockNumber, func(key uint64, value interface{}) bool {
+		acc = value.(*u256.Uint)
+		return true
+	})
+	if acc == nil {
+		acc = u256.Zero()
+	}
+	return acc
 }
 
 // TickCrosses are encoded as int64, where negative value is backward cross(zeroForOne=true), positive value is forward cross(zeroForOne=false).
@@ -324,6 +349,15 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool, 
 	return currentInRange, tickUpperCross[tickUpperCrossI:], tickLowerCross[tickLowerCrossI:]
 }
 
+func (self *Tick) updateCurrentOutsideAccumulation(blockNumber uint64, oldAcc *u256.Uint) {
+	currentOutsideAccumulation := self.CurrentOutsideAccumulation(blockNumber)
+	println("currentOutsideAccumulation : ", currentOutsideAccumulation.ToString())
+	println("oldAcc : ", oldAcc.ToString())
+	newOutsideAccumulation := u256.Zero().Sub(oldAcc, currentOutsideAccumulation)
+	println("newOutsideAccumulation : ", newOutsideAccumulation.ToString())
+	self.outsideAccumulation.Set(blockNumber, newOutsideAccumulation)
+}
+
 func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tickId int32, zeroForOne bool) {
 	return func(poolPath string, tickId int32, zeroForOne bool) {
 		pool, ok := pools.Get(poolPath)
@@ -331,9 +365,11 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 			return
 		}
 
+		println("[[TickCrossHook]]  tickId : ", tickId, ", zeroForOne : ", zeroForOne)
 		tick := pool.ticks.Get(tickId)
 
 		blockNumber := uint64(height())
+		println("	blockNumber : ", blockNumber)
 		tick.updateCross(blockNumber, zeroForOne)
 
 		liquidityInRangeDelta := tick.stakedLiquidityDelta
@@ -345,8 +381,12 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 			liquidityInRangeDelta = i256.Zero().Neg(liquidityInRangeDelta)
 		}
 		stakedLiquidity := pool.CurrentStakedLiquidity(blockNumber)
+		println("stakedLiquidity : ", stakedLiquidity.ToString())
 		deltaApplied := liquidityMathAddDelta(stakedLiquidity, liquidityInRangeDelta)
+		println("deltaApplied : ", deltaApplied.ToString())
 
+		oldAcc := pool.updateGlobalRewardRatioAccumulation(blockNumber, stakedLiquidity)
+		tick.updateCurrentOutsideAccumulation(blockNumber, oldAcc)
 
 		switch deltaApplied.Sign() {
 		case -1:

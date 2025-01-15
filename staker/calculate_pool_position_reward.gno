@@ -4,6 +4,8 @@ import (
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
 	en "gno.land/r/gnoswap/v1/emission"
+	pn "gno.land/r/gnoswap/v1/position"
+	pl "gno.land/r/gnoswap/v1/pool"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -93,12 +95,17 @@ type CalcPositionRewardParam struct {
 	TokenId uint64
 }
 
+
+
 func CalcPositionReward(param CalcPositionRewardParam) []Reward {
+
+
 	// cache per-pool rewards in the internal incentive(tiers)
 	param.PoolTier.cacheReward(param.CurrentHeight, param.Pools)
 
 	deposit := param.Deposits.Get(param.TokenId)
 	poolPath := deposit.targetPoolPath
+
 
 	pool, ok := param.Pools.Get(poolPath)
 	if !ok {
