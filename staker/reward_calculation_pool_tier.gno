@@ -304,46 +304,6 @@ func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
 	self.currentEmission = currentEmission
 }
 
-/*
-func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
-	// PoolTier.cacheReward is executed only when emissionUpdate is not empty, which means:
-	// - there is a new halving event
-	// - msPerBlock is changed
-	// - emission distribution ratio is changed
-	// during the period of PoolTier.lastRewardCacheHeight to currentHeight
-
-	println("[", currentHeight, "] cacheReward Start -> lastRewardCacheHeight : ", *self.lastRewardCacheHeight)
-	if *self.lastRewardCacheHeight == currentHeight {
-		println("lastRewardCacheHeight is same with currentHeight")
-		return
-	}
-
-	emissionUpdate := self.emissionUpdate(*self.lastRewardCacheHeight, currentHeight)
-	if emissionUpdate.IsEmpty() {
-		println("emissionUpdate is empty")
-		return
-	}
-
-	rewardDenominators := self.tierRatio.IntoRewardDenominators(self.CurrentAllTierCounts())
-
-	self.membership.Iterate("", "", func(key string, value interface{}) bool {
-		pool, ok := pools.Get(key)
-		if !ok {
-			panic("pool not found")
-		}
-
-		println("")
-		println("\tmembership : ", key, ", ", value.(uint64))
-		pool.cacheInternalReward(currentHeight, emissionUpdate, rewardDenominators[value.(uint64)])
-
-		return false
-	})
-
-	*self.lastRewardCacheHeight = currentHeight
-	println("[", currentHeight, "] cacheReward End : lastRewardCacheHeight ", *self.lastRewardCacheHeight)
-}
-*/
-
 func (self *PoolTier) applyCacheToAllPools(pools *Pools, startBlock, endBlock, emissionInThisInterval uint64) {
 	if startBlock >= endBlock {
 		return
