@@ -124,6 +124,8 @@ func GetStakerEmissionUpdates(startHeight uint64, endHeight uint64) EmissionUpda
 // - LastEmissionUpdate: the value of emission update, either at the startHeight, or before.
 // - EmissionUpdateHeights: the heights of emission updates between [startHeight, endHeight).
 // - EmissionUpdates: the values of emission updates between [startHeight, endHeight).
+//
+// TODO: remove this.
 type EmissionUpdate struct {
 	LastEmissionUpdate    uint64
 	EmissionUpdateHeights []uint64
