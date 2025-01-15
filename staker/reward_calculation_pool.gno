@@ -88,6 +88,8 @@ type Pool struct {
 func NewPool(poolPath string, currentHeight uint64) *Pool {
 	unclaimableAcc := uint64(0)
 	tierRewardTotal := uint64(0)
+	// For some reason we cannot use &currentHeight directly
+	currentHeightVar := currentHeight
 
 	return &Pool{
 		poolPath:              poolPath,
@@ -100,7 +102,7 @@ func NewPool(poolPath string, currentHeight uint64) *Pool {
 		incentives:            NewIncentives(currentHeight),
 		ticks:                 NewTicks(),
 		globalRewardRatioAccumulation: u256.Zero(),
-		lastGlobalRewardRatioAccumulationHeight: &currentHeight,
+		lastGlobalRewardRatioAccumulationHeight: &currentHeightVar,
 	}
 }
 
@@ -196,6 +198,9 @@ func (self *Pool) cacheInternalReward(currentHeight uint64, emissionUpdate en.Em
 
 	*self.lastRewardCacheHeight = currentHeight
 	println("\t\tlastRewardCacheHeight : ", *self.lastRewardCacheHeight)
+
+	self.updateGlobalRewardRatioAccumulation(currentHeight, self.CurrentStakedLiquidity(currentHeight))
+
 	println("\t[", currentHeight, "] cacheInternalReward End ")
 }
 
