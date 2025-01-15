@@ -15,18 +15,13 @@ type IncentiveBound struct {
 	IsEnter   bool
 }
 
-type IncentiveRewardEntry struct {
-	ActiveIncentives []string
-	TotalStakedLiquidity *u256.Uint
-}
-
 // per-pool incentives
 type Incentives struct {
 	byTime    *avl.Tree // (startTime, endTime, creator, rewardToken) => ExternalIncentive
 	byHeight  *avl.Tree // (startHeight, endHeight, creator, rewardToken) => ExternalIncentive
 	byCreator *avl.Tree // (creator, startHeight, endHeight, rewardToken) => ExternalIncentive
 
-	incentiveBound *UintTree // blockNumber -> []IncentiveBound
+	// incentiveBound *UintTree // blockNumber -> []IncentiveBound
 
 	// currentIncentives []string
 
@@ -40,7 +35,7 @@ func NewIncentives(currentHeight uint64) Incentives {
 		byHeight:  avl.NewTree(),
 		byCreator: avl.NewTree(),
 
-		incentiveBound: NewUintTree(),
+		// incentiveBound: NewUintTree(),
 
 		rewardCache:           NewRewardCacheTree(),
 		lastRewardCacheHeight: &currentHeight,
@@ -78,7 +73,7 @@ func (self *Incentives) remove(incentive *ExternalIncentive) {
 	self.byHeight.Remove(byHeightId)
 	self.byCreator.Remove(byCreatorId)
 }
-
+/*
 func (self *Incentives) GetBound(height uint64) []IncentiveBound {
 	value, ok := self.incentiveBound.Get(height)
 	if !ok {
@@ -98,6 +93,7 @@ func (self *Incentives) CurrentReward(currentHeight uint64) IncentiveRewardEntry
 	}
 	return value.(IncentiveRewardEntry)
 }
+*/
 
 func (self *Incentives) create(
 	creator std.Address,
@@ -116,7 +112,7 @@ func (self *Incentives) create(
 	self.byTime.Set(byTimeId, incentive)
 	self.byHeight.Set(byHeightId, incentive)
 	self.byCreator.Set(byCreatorId, incentive)
-
+/*
 	startIncentiveBound := self.GetBound(uint64(incentive.startHeight))
 	startIncentiveBound = append(startIncentiveBound, IncentiveBound{
 		Incentive: *incentive,
@@ -131,8 +127,9 @@ func (self *Incentives) create(
 		IsEnter:   false,
 	})
 	self.incentiveBound.Set(endHeight, endIncentiveBound)
+	*/
 }
-
+/*
 // endHeight MUST be less than or equal to the current block height
 func (self *Incentives) cacheRewardPerLiquidityUnit(startHeight, endHeight uint64, stakedLiquidity *u256.Uint) {
 	currentReward := self.CurrentReward(startHeight)
@@ -180,3 +177,4 @@ func (self *Incentives) updateRewardByLiquidityChange(currentHeight uint64, liqu
 	self.rewardCache.Set(currentHeight, entry)
 }
 
+*/
