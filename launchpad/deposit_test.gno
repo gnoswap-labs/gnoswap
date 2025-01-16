@@ -8,11 +8,12 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
+	pusers "gno.land/p/demo/users"
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
-
 	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
 // Mock data structs
@@ -634,4 +635,150 @@ func TestProcessCollectedDeposits_BalanceChanges(t *testing.T) {
 	amount := processCollectedDeposits([]string{deposit.id}, "")
 
 	xgnsCheckTotalSupply(t, mockXGNS, 1000)
+}
+
+func TestCollectDepositGnsByDepositId_ClaimableCheck(t *testing.T) {
+	_, depositor := setupTestDeposit(t)
+	std.TestSkipHeights(10)
+	project := createTestProject(t)
+	projects[project.id] = project
+
+	// TierInfo
+	now := uint64(time.Now().Unix())
+	height := uint64(std.GetHeight())
+	info := ProjectTierInfo{
+		Project:     project,
+		Tier:        project.tiers[30],
+		TierStr:     "30",
+		Height:      height,
+		CurrentTime: now,
+	}
+
+	std.TestSkipHeights(10)
+	deposit, err := createDeposit(info, 100)
+	if err != nil {
+		t.Fatalf("failed create deposit: %v", err)
+	}
+
+	updateDepositIndices(deposit, &DepositState{
+		Deposits:              deposits,
+		DepositsByProject:     depositsByProject,
+		DepositsByUser:        depositsByUser,
+		DepositsByUserProject: depositsByUserByProject,
+	})
+
+	t.Run("Collect early => Should panic", func(t *testing.T) {
+		std.TestSetRealm(std.NewUserRealm(depositor))
+
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("expected panic but did not occur")
+			}
+		}()
+		CollectDepositGnsByDepositId(deposit.id)
+	})
+}
+
+func TestCollectDepositGnsByDepositId_OtherOwner(t *testing.T) {
+	_, userA := setupTestDeposit(t)
+	userB := testutils.TestAddress("userB")
+
+	project := createTestProject(t)
+	projects[project.id] = project
+
+	// deposit 생성 (owner= userA)
+	now := uint64(time.Now().Unix())
+	height := uint64(std.GetHeight())
+	info := ProjectTierInfo{
+		Project:     project,
+		Tier:        project.tiers[30],
+		TierStr:     "30",
+		Height:      height,
+		CurrentTime: now,
+	}
+
+	deposit, err := createDeposit(info, 100)
+	if err != nil {
+		t.Fatalf("failed to create deposit: %v", err)
+	}
+
+	updateDepositIndices(deposit, &DepositState{
+		Deposits:              deposits,
+		DepositsByProject:     depositsByProject,
+		DepositsByUser:        depositsByUser,
+		DepositsByUserProject: depositsByUserByProject,
+	})
+
+	t.Run("UserB tries to collect userA's deposit => panic expected", func(t *testing.T) {
+		std.TestSetRealm(std.NewUserRealm(userB))
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("expected panic but did not occur")
+			} else {
+				uassert.Equal(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || user has no deposits in any project", r.(string))
+			}
+		}()
+		CollectDepositGnsByDepositId(deposit.id)
+	})
+}
+
+func TestCollectDepositGnsByDepositId_ExactClaimable(t *testing.T) {
+	_, userA := setupTestDeposit(t)
+	project := createTestProject(t)
+	projects[project.id] = project
+
+	now := uint64(time.Now().Unix())
+	initialHeight := uint64(std.GetHeight())
+
+	info := ProjectTierInfo{
+		Project:     project,
+		Tier:        project.tiers[30],
+		TierStr:     "30",
+		Height:      initialHeight,
+		CurrentTime: now,
+	}
+
+	std.TestSetRealm(std.NewUserRealm(userA))
+	// deposit
+	deposit, err := createDeposit(info, 200)
+	if err != nil {
+		t.Fatalf("failed create deposit: %v", err)
+	}
+	deposit.claimableHeight = initialHeight + 10
+	deposit.claimableTime = now + 60
+
+	updateDepositIndices(deposit, &DepositState{
+		Deposits:              deposits,
+		DepositsByProject:     depositsByProject,
+		DepositsByUser:        depositsByUser,
+		DepositsByUserProject: depositsByUserByProject,
+	})
+
+	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	std.TestSkipHeights(int64(10))
+	gns.MintGns(a2u(consts.LAUNCHPAD_ADDR))
+	std.TestSkipHeights(int64(10))
+
+	std.TestSetRealm(std.NewUserRealm(userA))
+	gns.Approve(a2u(std.Address(consts.LAUNCHPAD_ADDR)), 1000)
+	token, _ := setupXGNSTest(t)
+
+	std.TestSetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
+	std.TestSetOrigCaller(std.Address(consts.LAUNCHPAD_PATH))
+	xgnsMint(t, token, pusers.AddressOrName(consts.LAUNCHPAD_ADDR), 1000)
+
+	std.TestSetRealm(std.NewUserRealm(consts.LAUNCHPAD_ADDR))
+	xgns.Mint(
+		a2u(std.Address(consts.LAUNCHPAD_ADDR)),
+		1000,
+	)
+
+	skipCount := deposit.claimableHeight - uint64(std.GetHeight())
+	if skipCount > 0 {
+		std.TestSkipHeights(int64(skipCount))
+	}
+
+	std.TestSetRealm(std.NewUserRealm(userA))
+	collected := CollectDepositGnsByDepositId(deposit.id)
+	uassert.Equal(t, uint64(200), collected, "should collect the deposit fully after claimableHeight/time")
 }

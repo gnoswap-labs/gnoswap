@@ -61,6 +61,16 @@ func minU64(x, y uint64) uint64 {
 	return y
 }
 
+// containsString returns true if the string is in the slice.
+func containsString(arr []string, val string) bool {
+	for _, v := range arr {
+		if v == val {
+			return true
+		}
+	}
+	return false
+}
+
 // GetOrigPkgAddr returns the original package address.
 // In position contract, original package address is the position address.
 func GetOrigPkgAddr() std.Address {
@@ -123,5 +133,21 @@ func assertOnlyValidAddress(addr std.Address) {
 			errInvalidAddress,
 			ufmt.Sprintf("(%s)", addr),
 		))
+	}
+}
+
+// assertNotZeroAmount panics if the amount is zero.
+func assertNotZeroAmount(amount uint64) {
+	if amount <= 0 {
+		panic(addDetailToError(
+			errZeroAmount, ufmt.Sprintf("(%d)", amount)))
+	}
+}
+
+// assertValidProjectId panics if the project ID is invalid.
+func assertValidProjectId(projectId string) {
+	if projectId == "" {
+		panic(addDetailToError(
+			errInvalidProjectId, ufmt.Sprintf("(%s)", projectId)))
 	}
 }

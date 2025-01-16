@@ -40,53 +40,53 @@ func CollectProtocolFee() {
 // Returns collected reward amount
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectrewardbyprojectid
 func CollectRewardByProjectId(projectId string) uint64 {
-	common.IsHalted()
+	assertOnlyNotHalted()
 	en.MintAndDistributeGns()
 
 	project, exists := projects[projectId]
 	if !exists {
-		println("A: return 0")
-		return 0
+		panic(addDetailToError(
+			errInvalidProjectId, ufmt.Sprintf("projectId(%s) not found", projectId)))
 	}
 
-	caller := std.PrevRealm().Addr()
+	caller := getPrevAddr()
 	depositIds, exists := depositsByUserByProject[caller][projectId]
 	if !exists {
-		println("B: return 0")
-		return 0
+		panic(addDetailToError(
+			errNotExistDeposit, ufmt.Sprintf("depositId (%s) not found", projectId)))
 	}
 
-	height := uint64(std.GetHeight())
+	currentHeight := uint64(std.GetHeight())
 	totalReward := uint64(0) // toUser
 	prevAddr, prevPkgPath := getPrev()
 
 	for _, depositId := range depositIds {
-		deposit, exists := deposits[depositId]
-		if !exists {
-			println("C: continue")
-			continue
+		deposit, ok := deposits[depositId]
+		if !ok {
+			//continue
+			panic(addDetailToError(
+				errNotExistDeposit, ufmt.Sprintf("depositId (%s) not found", depositId)))
 		}
 
 		rewardState, err := rewardStates.Get(deposit.projectId, deposit.tier)
 		if err != nil {
-			println("D: continue")
 			continue
 		}
-		reward := rewardState.Claim(depositId, height)
+
+		reward := rewardState.Claim(depositId, currentHeight)
 		if reward == 0 {
 			println("E: continue")
 			continue
 		}
 
-		project := projects[deposit.projectId]
-		if project.id != projectId {
-			println("F: continue")
-			continue
+		pjt := projects[deposit.projectId]
+		if pjt.id != projectId {
+			panic(addDetailToError(
+				errInvalidProjectId, ufmt.Sprintf("projectId(%s) not matched", projectId)))
 		}
 
-		if err := validateRewardCollection(deposit, height); err != nil {
-			println("G: continue")
-			continue
+		if err = validateRewardCollection(deposit, currentHeight); err != nil {
+			panic(err.Error())
 		}
 
 		totalReward += reward
@@ -119,7 +119,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 
 		// Update deposit
 		deposit.rewardCollected += reward
-		deposit.rewardCollectHeight = height
+		deposit.rewardCollectHeight = currentHeight
 		deposit.rewardCollectTime = uint64(time.Now().Unix())
 		deposits[depositId] = deposit
 	}
@@ -212,7 +212,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 // validateRewardCollection validates if reward can be collected
 func validateRewardCollection(deposit Deposit, height uint64) error {
 	if deposit.rewardCollectTime == 0 && height < deposit.claimableHeight {
-		return errors.New("reward not yet claimable")
+		return errors.New(addDetailToError(errNotYetClaimReward, "reward not yet claimable"))
 	}
 	return nil
 }

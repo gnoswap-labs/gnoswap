@@ -7,7 +7,10 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/obl"
 )
 
@@ -740,6 +743,280 @@ func TestCalculateProjectParams(t *testing.T) {
 			uassert.Equal(t, got.Tier90Amount, tt.want.Tier90Amount)
 			uassert.Equal(t, got.Tier180Amount, tt.want.Tier180Amount)
 			uassert.Equal(t, got.StartHeight, tt.want.StartHeight)
+		})
+	}
+}
+
+func TestGenerateProjectId(t *testing.T) {
+	setupTest(t)
+
+	currentHeight := std.GetHeight()
+
+	tests := []struct {
+		name       string
+		tokenPath  string
+		mockHeight int64
+		want       string
+	}{
+		{
+			name:       "normal token path",
+			tokenPath:  "gno.land/r/gnoswap/gns",
+			mockHeight: currentHeight + 10,
+			want:       "",
+		},
+		{
+			name:       "another token path",
+			tokenPath:  "gno.land/r/onbloc/obl",
+			mockHeight: currentHeight + 5,
+			want:       "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			heightBefore := std.GetHeight()
+			skip := tt.mockHeight - heightBefore
+			if skip > 0 {
+				std.TestSkipHeights(skip)
+			}
+
+			got := generateProjectId(tt.tokenPath)
+
+			want := ufmt.Sprintf("%s:%d", tt.tokenPath, std.GetHeight())
+
+			uassert.Equal(t, got, want)
+		})
+	}
+}
+
+func TestGenerateTierId(t *testing.T) {
+	setupTest(t)
+
+	tests := []struct {
+		name      string
+		projectId string
+		duration  uint64
+		want      string
+	}{
+		{
+			name:      "30-day tier",
+			projectId: "gno.land/r/gnoswap/gns:100",
+			duration:  30,
+			want:      "gno.land/r/gnoswap/gns:100:30",
+		},
+		{
+			name:      "90-day tier",
+			projectId: "gno.land/r/onbloc/obl:999",
+			duration:  90,
+			want:      "gno.land/r/onbloc/obl:999:90",
+		},
+		{
+			name:      "180-day tier",
+			projectId: "myProject:1234",
+			duration:  180,
+			want:      "myProject:1234:180",
+		},
+		{
+			name:      "zero-day tier",
+			projectId: "testProj:555",
+			duration:  0,
+			want:      "testProj:555:0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := generateTierId(tt.projectId, tt.duration)
+			uassert.Equal(t, got, tt.want)
+		})
+	}
+}
+
+func TestCovertTimeToHeight(t *testing.T) {
+	setupTest(t)
+
+	tests := []struct {
+		name      string
+		timestamp uint64
+		want      uint64
+	}{
+		{
+			name:      "3600 seconds => 1800 blocks",
+			timestamp: 3600, // 1hour
+			want:      1800, // 3600 * 1000 / 2000
+		},
+		{
+			name:      "0 seconds => 0 blocks",
+			timestamp: 0,
+			want:      0,
+		},
+		{
+			name:      "small seconds => 1 block",
+			timestamp: 2, // 2 seconds
+			want:      1, // 2 * 1000 / 2000 = 1
+		},
+		{
+			name:      "larger value",
+			timestamp: 86400, // 1day (seconds)
+			want:      43200, // 86400 * 1000 / 2000
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := covertTimeToHeight(tt.timestamp)
+			uassert.Equal(t, got, tt.want)
+		})
+	}
+
+	// division by zero test
+	t.Run("blocktime is zero => panic", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("expected panic but got none")
+			} else {
+				uassert.Equal(t, r.(string), "division by zero")
+			}
+		}()
+
+		std.TestSetRealm(adminRealm)
+		gns.SetAvgBlockTimeInMsByAdmin(0)
+		_ = covertTimeToHeight(1000)
+	})
+}
+
+func TestTransferLeftFromProjectByAdmin(t *testing.T) {
+	setupTest(t)
+
+	validRecipient := testutils.TestAddress("recipient")
+	invalidRecipient := std.Address("invalidRecipient")
+
+	projectId := "dummyProject:100"
+	dummyProject := Project{
+		id:        projectId,
+		name:      "Dummy Project",
+		tokenPath: oblPath,
+		tiers: map[uint64]Tier{
+			30:  {tierAmount: 1000, calculatedAmount: 400},
+			90:  {tierAmount: 2000, calculatedAmount: 2000},
+			180: {tierAmount: 3000, calculatedAmount: 2500},
+		},
+		ended: TimeInfo{
+			height: 120,
+			time:   uint64(time.Now().Unix() - 1),
+		},
+	}
+
+	tests := []struct {
+		name          string
+		setupFunc     func()
+		projectId     string
+		recipient     std.Address
+		mockHeight    uint64
+		expectedPanic string
+	}{
+		{
+			name: "project not found",
+			setupFunc: func() {
+				projects = make(map[string]Project)
+			},
+			projectId:     "nonExistentProject",
+			recipient:     validRecipient,
+			mockHeight:    200,
+			expectedPanic: "[GNOSWAP-LAUNCHPAD-005] data not found || projectId(nonExistentProject) not found",
+		},
+		{
+			name: "invalid recipient address",
+			setupFunc: func() {
+				projects = make(map[string]Project)
+				projects[projectId] = dummyProject
+			},
+			projectId:     projectId,
+			recipient:     invalidRecipient,
+			mockHeight:    200,
+			expectedPanic: "[GNOSWAP-LAUNCHPAD-006] invalid condition || invalid recipient address(invalidRecipient)",
+		},
+		{
+			name: "project not ended yet",
+			setupFunc: func() {
+				projects = make(map[string]Project)
+				p := dummyProject
+				p.ended.height = 300
+				projects[projectId] = p
+			},
+			projectId:     projectId,
+			recipient:     validRecipient,
+			mockHeight:    250,
+			expectedPanic: "[GNOSWAP-LAUNCHPAD-006] invalid condition || project not ended yet(current:250, endHeight: 300)",
+		},
+		{
+			name: "project already refunded",
+			setupFunc: func() {
+				projects = make(map[string]Project)
+				p := dummyProject
+				p.refund = RefundInfo{
+					amount: 10,
+					height: 110,
+					time:   uint64(time.Now().Unix()),
+				}
+				projects[projectId] = p
+			},
+			projectId:     projectId,
+			recipient:     validRecipient,
+			mockHeight:    200,
+			expectedPanic: "[GNOSWAP-LAUNCHPAD-006] invalid condition || project already refunded(height:110)",
+		},
+		{
+			name: "success leftover transfer",
+			setupFunc: func() {
+				projects = make(map[string]Project)
+				p := dummyProject
+				p.ended.height = 120
+				p.refund = RefundInfo{}
+				projects[projectId] = p
+			},
+			projectId:     projectId,
+			recipient:     validRecipient,
+			mockHeight:    200,
+			expectedPanic: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			std.TestSetRealm(adminRealm)
+			// set up
+			tt.setupFunc()
+
+			// control block height
+			currHeight := std.GetHeight()
+			skip := int64(tt.mockHeight) - int64(currHeight)
+			if skip > 0 {
+				std.TestSkipHeights(skip)
+			}
+
+			defer func() {
+				if r := recover(); r != nil {
+					if tt.expectedPanic == "" {
+						t.Errorf("unexpected panic: %v", r)
+					} else {
+						uassert.Equal(t, r.(string), tt.expectedPanic)
+					}
+				} else if tt.expectedPanic != "" {
+					t.Errorf("expected panic(%s) but got none", tt.expectedPanic)
+				}
+			}()
+
+			// run
+			got := TransferLeftFromProjectByAdmin(tt.projectId, tt.recipient)
+
+			if tt.expectedPanic == "" {
+				project := projects[tt.projectId]
+				// leftover = (1000-400) + (2000-2000) + (3000-2500) = 600
+				uassert.Equal(t, got, uint64(600))
+				uassert.Equal(t, project.refund.amount, uint64(600))
+				uassert.Equal(t, project.refund.height, tt.mockHeight)
+			}
 		})
 	}
 }

@@ -8,10 +8,10 @@ import (
 )
 
 type StakerRewardInfo struct {
-	StartHeight uint64     // height when staker started staking
-	PriceDebt   *u256.Uint // price debt per xGNS stake, Q128
-	Amount      uint64     // amount of xGNS staked
-	Claimed     uint64     // amount of GNS reward claimed so far
+	StartHeight uint64     // height when launchpad started staking
+	PriceDebt   *u256.Uint // price debt per GNS stake, Q128
+	Amount      uint64     // amount of GNS staked
+	Claimed     uint64     // amount of reward claimed so far
 }
 
 func (self *StakerRewardInfo) Debug() string {
@@ -106,7 +106,8 @@ func (states RewardStates) DeleteProject(projectId string) uint64 {
 func (self *RewardState) Info(depositId string) StakerRewardInfo {
 	infoI, exists := self.info.Get(depositId)
 	if !exists {
-		panic(ufmt.Sprintf("depositId %s not found", depositId))
+		panic(addDetailToError(
+			errNotExistDeposit, ufmt.Sprintf("(%s)", depositId)))
 	}
 	return infoI.(StakerRewardInfo)
 }
@@ -123,16 +124,35 @@ func (self *RewardState) CalculateReward(depositId string) uint64 {
 // This function does not check it
 func (self *RewardState) deductReward(depositId string, currentHeight uint64) uint64 {
 	println("deductReward debug", self.Debug())
+	if currentHeight < self.LastHeight {
+		panic(addDetailToError(
+			errInvalidRewardState,
+			ufmt.Sprintf("currentHeight %d is less than LastHeight %d", currentHeight, self.LastHeight)))
+	}
+
+	deposit := deposits[depositId]
+	if deposit.claimableHeight > currentHeight {
+		panic(addDetailToError(
+			errInvalidRewardState,
+			ufmt.Sprintf("currentHeight %d is less than claimableHeight %d", currentHeight, deposit.claimableHeight)))
+	}
+
 	info := self.Info(depositId)
-	stakerPrice := u256.Zero().Sub(self.PriceAccumulation, info.PriceDebt)
-	reward := stakerPrice.Mul(stakerPrice, u256.NewUint(info.Amount))
-	reward = reward.Rsh(reward, 128)
-	reward64 := reward.Uint64() - info.Claimed
+	if info.StartHeight > currentHeight {
+		panic(addDetailToError(
+			errInvalidRewardState,
+			ufmt.Sprintf("currentHeight %d is less than StartHeight %d", currentHeight, info.StartHeight)))
+	}
+	reward64 := self.CalculateReward(depositId)
+
+	if reward64 == 0 {
+		return 0
+	}
 
 	info.Claimed += reward64
 	self.info.Set(depositId, info)
 
-	self.LastHeight = currentHeight
+	//self.LastHeight = currentHeight
 
 	return reward64
 }
@@ -152,29 +172,35 @@ func (self *RewardState) finalize(currentHeight uint64) {
 		currentHeight = self.EndHeight
 	}
 
-	delta := u256.NewUint(currentHeight - self.LastHeight)
+	diff := currentHeight - self.LastHeight
+	delta := u256.NewUint(diff)
 	delta = delta.Mul(delta, self.RewardPerBlock)
 
 	if self.TotalStake == uint64(0) {
-		self.TotalEmptyBlock += currentHeight - self.LastHeight
+		self.TotalEmptyBlock += diff
 		self.LastHeight = currentHeight
 		return
 	}
 
 	price := delta.Div(delta, u256.NewUint(self.TotalStake))
-	self.PriceAccumulation.Add(self.PriceAccumulation, price)
+	self.PriceAccumulation = u256.Zero().Add(self.PriceAccumulation, price)
 	self.LastHeight = currentHeight
 }
 
 func (self *RewardState) AddStake(currentHeight uint64, depositId string, amount uint64) {
 	if self.info.Has(depositId) {
-		panic(ufmt.Sprintf("depositId %s already exists", depositId))
+		panic(addDetailToError(
+			errAlreadyExistDeposit,
+			ufmt.Sprintf("depositId %s already exists", depositId)))
 	}
 
 	self.finalize(currentHeight)
 
 	self.TotalStake += amount
 
+	// TODO:
+	// 1. 여기는 절대 타지 않는 코드로 보임
+	// 2. depositId가 블록 높이를 포함하고 있어서, 같은 DepositId에 Add되기 어려움
 	if self.info.Has(depositId) {
 		info := self.Info(depositId)
 		info.PriceDebt.Add(info.PriceDebt, u256.NewUint(info.Amount))
@@ -199,8 +225,9 @@ func (self *RewardState) AddStake(currentHeight uint64, depositId string, amount
 
 func (self *RewardState) Claim(depositId string, currentHeight uint64) uint64 {
 	if !self.info.Has(depositId) {
-		println("claim debug", self.Debug())
-		return 0
+		panic(addDetailToError(
+			errNotExistDeposit,
+			ufmt.Sprintf("depositId %s", depositId)))
 	}
 
 	self.finalize(currentHeight)
@@ -211,6 +238,12 @@ func (self *RewardState) Claim(depositId string, currentHeight uint64) uint64 {
 }
 
 func (self *RewardState) RemoveStake(depositId string, amount uint64, currentHeight uint64) uint64 {
+	if !self.info.Has(depositId) {
+		panic(addDetailToError(
+			errNotExistDeposit,
+			ufmt.Sprintf("depositId %s", depositId)))
+	}
+
 	self.finalize(currentHeight)
 
 	reward := self.deductReward(depositId, currentHeight)
