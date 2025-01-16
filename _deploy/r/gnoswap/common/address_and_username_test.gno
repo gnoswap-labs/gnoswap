@@ -103,11 +103,11 @@ func TestAssertValidAddr(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					assertValidAddr(tt.addr)
+					AssertValidAddr(tt.addr)
 				})
 			} else {
 				uassert.NotPanics(t, func() {
-					assertValidAddr(tt.addr)
+					AssertValidAddr(tt.addr)
 				})
 			}
 		})

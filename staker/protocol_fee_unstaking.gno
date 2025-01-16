@@ -5,8 +5,8 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -14,6 +14,20 @@ var (
 	unstakingFee = uint64(100) // 1%
 )
 
+// handleUnstakingFee calculates and applies the unstaking fee.
+//
+// The function deducts a fee from the unstaked amount based on the `unstakingFee` rate,
+// sends the fee to the protocol fee address, and emits an event indicating the fee transfer.
+//
+// Parameters:
+// - tokenPath (string): The token path (e.g., the contract managing the token).
+// - amount (uint64): The total unstaked amount.
+// - internal (bool): Indicates if the fee is for internal or external use.
+// - tokenId (uint64): The token ID associated with the unstaking action.
+// - poolPath (string): The pool path related to the unstaking.
+//
+// Returns:
+// - uint64: The amount after deducting the unstaking fee.
 func handleUnstakingFee(
 	tokenPath string,
 	amount uint64,
@@ -44,10 +58,10 @@ func handleUnstakingFee(
 			"internal_tokenPath", consts.GNS_PATH,
 			"internal_amount", ufmt.Sprintf("%d", feeAmount),
 		)
-
 	} else {
 		// external contract has fee
-		transferByRegisterCall(tokenPath, consts.PROTOCOL_FEE_ADDR, feeAmount)
+		teller := common.GetTokenTeller(tokenPath)
+		teller.Transfer(consts.PROTOCOL_FEE_ADDR, feeAmount)
 
 		std.Emit(
 			"ProtocolFeeExternalReward",
@@ -69,10 +83,20 @@ func GetUnstakingFee() uint64 {
 	return unstakingFee
 }
 
+// SetUnstakingFeeByAdmin sets the unstaking fee rate by an admin.
+//
+// This function ensures that only admins can modify the unstaking fee. It validates
+// the input fee and emits an event indicating the change.
+//
+// Parameters:
+// - fee (uint64): The new unstaking fee rate in basis points (bps).
+//
+// Panics:
+// - If the caller is not an admin.
 func SetUnstakingFeeByAdmin(fee uint64) {
 	caller := std.PrevRealm().Addr()
 	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	setUnstakingFee(fee)

@@ -163,6 +163,15 @@ func assertValidLiquidityAmount(liquidity string) {
 	}
 }
 
+func assertValidLiquidityRatio(ratio uint64) {
+	if !(ratio >= 1 && ratio <= 100) {
+		panic(newErrorWithDetail(
+			errInvalidLiquidityRatio,
+			ufmt.Sprintf("liquidity ratio must in range 1 ~ 100(contain), got %d", ratio),
+		))
+	}
+}
+
 // a2u converts std.Address to pusers.AddressOrName.
 // pusers is a package that contains the user-related functions.
 //

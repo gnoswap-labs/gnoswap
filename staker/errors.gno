@@ -8,9 +8,9 @@ import (
 
 var (
 	errNoPermission                = errors.New("[GNOSWAP-STAKER-001] caller has no permission")
-	errNotRegistered               = errors.New("[GNOSWAP-STAKER-002] not registered token")
+	errPoolNotFound                = errors.New("[GNOSWAP-STAKER-002] pool not found")
 	errAlreadyRegistered           = errors.New("[GNOSWAP-STAKER-003] already registered token")
-	errLocked                      = errors.New("[GNOSWAP-STAKER-004] can't transfer token while locked")
+	errInsufficientReward          = errors.New("[GNOSWAP-STAKER-004] insufficient reward")
 	errWrapUnwrap                  = errors.New("[GNOSWAP-STAKER-005] wrap, unwrap failed")
 	errWugnotMinimum               = errors.New("[GNOSWAP-STAKER-006] can not wrapless than minimum amount")
 	errInvalidInput                = errors.New("[GNOSWAP-STAKER-007] invalid input data")
@@ -34,6 +34,11 @@ var (
 	errInvalidIncentiveDuration    = errors.New("[GNOSWAP-STAKER-025] invalid incentive duration")
 	errNotAllowedForExternalReward = errors.New("[GNOSWAP-STAKER-026] not allowed for external reward")
 	errInvalidWarmUpPercent        = errors.New("[GNOSWAP-STAKER-027] invalid warm-up duration")
+	errInvalidTickCross            = errors.New("[GNOSWAP-STAKER-028] invalid tick cross")
+	errIncentiveAlreadyExists      = errors.New("[GNOSWAP-STAKER-029] incentive already exists")
+	errIncentiveNotFound           = errors.New("[GNOSWAP-STAKER-030] incentive not found")
+	errWarmUpAmountNotFound        = errors.New("[GNOSWAP-STAKER-031] warm-up amount not found")
+	errOverflow                    = errors.New("[GNOSWAP-STAKER-032] overflow")
 )
 
 func addDetailToError(err error, detail string) string {

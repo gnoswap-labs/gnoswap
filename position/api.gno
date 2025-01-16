@@ -4,6 +4,7 @@ import (
 	"std"
 	"time"
 
+	ufmt "gno.land/p/demo/ufmt"
 	"gno.land/p/demo/json"
 	i256 "gno.land/p/gnoswap/int256"
 	"gno.land/r/gnoswap/v1/common"
@@ -75,8 +76,9 @@ func ApiGetPositions() string {
 	for _, position := range r.Response {
 		owner, err := gnft.OwnerOf(tokenIdFrom(position.LpTokenId))
 		if err != nil {
-			owner = consts.ZERO_ADDRESS
+			panic(ufmt.Sprintf("owner not found for tokenId: %d", position.LpTokenId))
 		}
+
 		positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
@@ -249,12 +251,12 @@ func ApiGetPositionsByAddress(address std.Address) string {
 	rpcPositions := []RpcPosition{}
 	for lpTokenId := uint64(1); lpTokenId < nextId; lpTokenId++ {
 		position := MustGetPosition(lpTokenId)
-		tokenOwner, err := gnft.OwnerOf(tokenIdFrom(lpTokenId))
+		owner, err := gnft.OwnerOf(tokenIdFrom(lpTokenId))
 		if err != nil {
-			tokenOwner = consts.ZERO_ADDRESS
+			panic(ufmt.Sprintf("owner not found for tokenId: %d", lpTokenId))
 		}
 
-		if !(position.operator == address || tokenOwner == address) {
+		if !(position.operator == address || owner == address) {
 			continue
 		}
 

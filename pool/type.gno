@@ -343,6 +343,17 @@ type Pool struct {
 	tickBitmaps *avl.Tree // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
 
 	positions *avl.Tree // maps the key (caller, lower tick, upper tick) to a unique position
+
+	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool)
+}
+
+var tickCrossHook func(poolPath string, tickId int32, zeroForOne bool)
+
+func SetTickCrossHook(hook func(poolPath string, tickId int32, zeroForOne bool)) {
+	if tickCrossHook != nil {
+		panic("tickCrossHook already set")
+	}
+	tickCrossHook = hook
 }
 
 func newPool(poolInfo *createPoolParams) *Pool {
@@ -366,6 +377,10 @@ func newPool(poolInfo *createPoolParams) *Pool {
 		tickBitmaps:          avl.NewTree(),
 		positions:            avl.NewTree(),
 	}
+}
+
+func (p *Pool) PoolPath() string {
+	return GetPoolPath(p.token0Path, p.token1Path, p.fee)
 }
 
 func (p *Pool) Token0Path() string {

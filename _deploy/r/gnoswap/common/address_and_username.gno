@@ -10,7 +10,7 @@ import (
 // AddrToUser converts a type from address to AddressOrName.
 // It panics if the address is invalid.
 func AddrToUser(addr std.Address) pusers.AddressOrName {
-	assertValidAddr(addr)
+	AssertValidAddr(addr)
 	return pusers.AddressOrName(addr)
 }
 
@@ -20,9 +20,9 @@ func UserToAddr(user pusers.AddressOrName) std.Address {
 	return users.Resolve(user)
 }
 
-// assertValidAddr checks if the given address is valid.
+// AssertValidAddr checks if the given address is valid.
 // It panics with a detailed error message if the address is invalid.
-func assertValidAddr(addr std.Address) {
+func AssertValidAddr(addr std.Address) {
 	if !addr.IsValid() {
 		panic(newErrorWithDetail(errInvalidAddr, addr.String()))
 	}

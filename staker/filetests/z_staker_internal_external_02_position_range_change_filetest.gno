@@ -1,0 +1,318 @@
+// PKGPATH: gno.land/r/gnoswap/v1/staker_test
+// 1 pool for tier 1 (gnot:gns:0.3%)
+// - same pool has 1 external incentive (bar)
+// 1 position (in-range changes)
+// - in-range
+// - out-range
+// - in-range
+
+package staker_test
+
+import (
+	"std"
+	"strconv"
+
+	"gno.land/p/demo/grc/grc721"
+
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
+
+	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/onbloc/bar"
+	_ "gno.land/r/onbloc/baz"
+
+	"gno.land/r/gnoswap/v1/gnft"
+
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
+	rr "gno.land/r/gnoswap/v1/router"
+	sr "gno.land/r/gnoswap/v1/staker"
+)
+
+var (
+	adminAddr  = consts.ADMIN
+	adminUser  = common.AddrToUser(adminAddr)
+	adminRealm = std.NewUserRealm(adminAddr)
+
+	stakerAddr  = consts.STAKER_ADDR
+	stakerUser  = common.AddrToUser(stakerAddr)
+	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
+
+	wugnotAddr = consts.WUGNOT_ADDR
+
+	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar"
+	bazPath = "gno.land/r/onbloc/baz"
+	quxPath = "gno.land/r/onbloc/qux"
+	oblPath = "gno.land/r/onbloc/obl"
+
+	gnsPath    = "gno.land/r/gnoswap/v1/gns"
+	wugnotPath = "gno.land/r/demo/wugnot"
+
+	fee100  uint32 = 100
+	fee500  uint32 = 500
+	fee3000 uint32 = 3000
+
+	max_timeout int64 = 9999999999
+
+	// external incentive deposit fee
+	depositGnsAmount uint64 = 1_000_000_000 // 1_000 GNS
+
+	TIMESTAMP_90DAYS  int64 = 90 * 24 * 60 * 60
+	TIMESTAMP_180DAYS int64 = 180 * 24 * 60 * 60
+	TIMESTAMP_365DAYS int64 = 365 * 24 * 60 * 60
+
+	poolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
+)
+
+func main() {
+	testInit()
+	testCreatePool()
+	testMintWugnotGns01()
+	testMintWugnotGns02()
+	testCreateExternalIncentiveBar()
+	testStakeToken01And02()
+	testMakePosition01OutRangeBySwap()
+	testRewardCheckAfterOut()
+	testMakePosition01InRangeBySwap()
+	testRewardCheckAfterIn()
+}
+
+func testInit() {
+	std.TestSetRealm(adminRealm)
+
+	// issue ugnot coins
+	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
+
+	// prepare wugnot
+	banker := std.GetBanker(std.BankerTypeRealmSend)
+	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
+	std.TestSetOrigSend(std.Coins{{"ugnot", 50_000_000_000_000}}, nil)
+	wugnot.Deposit()
+	std.TestSetOrigSend(nil, nil)
+}
+
+func testCreatePool() {
+	std.TestSetRealm(adminRealm)
+
+	pl.SetPoolCreationFeeByAdmin(0)
+
+	std.TestSkipHeights(1)
+	// tier 1 by default
+	pl.CreatePool(
+		wugnotPath,
+		gnsPath,
+		fee3000,
+		common.TickMathGetSqrtRatioAtTick(0).ToString(), // 79228162514264337593543950337
+	)
+
+	// wil be set to tier 2, and change to tier 1
+	pl.CreatePool(
+		barPath,
+		bazPath,
+		fee100,
+		common.TickMathGetSqrtRatioAtTick(0).ToString(), // 79228162514264337593543950337
+	)
+}
+
+func testMintWugnotGns01() {
+	std.TestSetRealm(adminRealm)
+
+	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSkipHeights(1)
+	pn.Mint(
+		wugnotPath,
+		gnsPath,
+		fee3000,
+		int32(-60),
+		int32(60),
+		"500000000",
+		"500000000",
+		"1",
+		"1",
+		max_timeout,
+		adminAddr,
+		adminAddr,
+	)
+}
+
+func testMintWugnotGns02() {
+	std.TestSetRealm(adminRealm)
+
+	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSkipHeights(1)
+	pn.Mint(
+		wugnotPath,
+		gnsPath,
+		fee3000,
+		int32(-6000),
+		int32(6000),
+		"500000000",
+		"500000000",
+		"1",
+		"1",
+		max_timeout,
+		adminAddr,
+		adminAddr,
+	)
+}
+
+func testCreateExternalIncentiveBar() {
+	std.TestSetRealm(adminRealm)
+
+	bar.Approve(common.AddrToUser(consts.STAKER_ADDR), consts.UINT64_MAX)
+	gns.Approve(common.AddrToUser(consts.STAKER_ADDR), depositGnsAmount)
+
+	std.TestSkipHeights(1)
+	sr.AddToken(barPath)
+	sr.CreateExternalIncentive(
+		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000",
+		barPath,
+		20000000,
+		1234569600,
+		1234569600+TIMESTAMP_90DAYS,
+	)
+	// startHeight 978
+	// endHeight 3888978
+	// nowHeight 127
+
+	// make it start
+	blockLeft := 978 - 127
+	std.TestSkipHeights(int64(blockLeft)) // skip until external bar starts
+	std.TestSkipHeights(10)               // skip bit more to see reward calculation
+}
+
+func testStakeToken01And02() {
+	std.TestSetRealm(adminRealm)
+
+	gnft.Approve(stakerAddr, tokenIdFrom(1))
+	gnft.Approve(stakerAddr, tokenIdFrom(2))
+
+	sr.StakeToken(1)
+	sr.StakeToken(2)
+
+	// check reward for position 01 (in-range)
+	std.TestSkipHeights(10) // internal reward + external reward
+
+	gnsOld := gns.BalanceOf(adminUser)
+	barOld := bar.BalanceOf(adminUser)
+	sr.CollectReward(1, false)
+	gnsNew := gns.BalanceOf(adminUser)
+	barNew := bar.BalanceOf(adminUser)
+	diffGns := gnsNew - gnsOld
+	diffBar := barNew - barOld
+	if diffGns == 0 {
+		panic("position 01 in-range, should have internal reward")
+	}
+	if diffBar == 0 {
+		panic("position 01 in-range, should have external reward") // FIXME EXTERNAL REWARD IS 0
+	}
+}
+
+func testMakePosition01OutRangeBySwap() {
+	std.TestSetRealm(adminRealm)
+
+	poolTick := pl.PoolGetSlot0Tick(poolPath)
+
+	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	wugnot.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+	gns.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+
+	tokenIn, tokenOut := rr.ExactInSwapRoute(
+		wugnotPath,  // inputToken
+		gnsPath,     // outputToken
+		"10000000",  // finalAmountIn
+		poolPath,    // RouteArr
+		"100",       // quoteArr
+		"0",         // amountOutMin
+		max_timeout, // deadline
+	)
+	println("tokenIn", tokenIn)
+	println("tokenOut", tokenOut)
+	println()
+
+	newPoolTick := pl.PoolGetSlot0Tick(poolPath)
+	println("oldPoolTick", poolTick)
+	println("newPoolTick", newPoolTick)
+	println()
+}
+
+func testRewardCheckAfterOut() {
+	std.TestSkipHeights(1)
+	// TODO: (after fixing unit test) check reward by querying with api funcs
+}
+
+func testMakePosition01InRangeBySwap() {
+	std.TestSetRealm(adminRealm)
+
+	poolTick := pl.PoolGetSlot0Tick(poolPath)
+
+	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	wugnot.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+	gns.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+
+	tokenIn, tokenOut := rr.ExactInSwapRoute(
+		wugnotPath, // inputToken
+		gnsPath,    // outputToken
+		"10000000", // finalAmountIn
+		"gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:3000", // routeArr
+		"100",       // quoteArr
+		"0",         // amountOutMin
+		max_timeout, // deadline
+	)
+	println("tokenIn", tokenIn)
+	println("tokenOut", tokenOut)
+	println()
+
+	newPoolTick := pl.PoolGetSlot0Tick(poolPath)
+	println("oldPoolTick", poolTick)
+	println("newPoolTick", newPoolTick)
+	println()
+}
+
+func testRewardCheckAfterIn() {
+	std.TestSkipHeights(1)
+	// TODO: (after fixing unit test) check reward by querying with api funcs
+}
+
+// NOTE: filetest can not access helper functions in origin package
+// so we need to implement the helper function here
+
+func tokenIdFrom(tokenId interface{}) grc721.TokenID {
+	if tokenId == nil {
+		panic("tokenId is nil")
+	}
+
+	switch tokenId.(type) {
+	case string:
+		return grc721.TokenID(tokenId.(string))
+	case int:
+		return grc721.TokenID(strconv.Itoa(tokenId.(int)))
+	case uint64:
+		return grc721.TokenID(strconv.Itoa(int(tokenId.(uint64))))
+	case grc721.TokenID:
+		return tokenId.(grc721.TokenID)
+	default:
+		panic("unsupported tokenId type")
+	}
+}
+
+func ugnotBalanceOf(addr std.Address) uint64 {
+	testBanker := std.GetBanker(std.BankerTypeReadonly)
+
+	coins := testBanker.GetCoins(addr)
+	if len(coins) == 0 {
+		return 0
+	}
+
+	return uint64(coins.AmountOf("ugnot"))
+}

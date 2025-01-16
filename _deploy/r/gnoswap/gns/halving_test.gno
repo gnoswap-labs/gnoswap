@@ -3,6 +3,7 @@ package gns
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/uassert"
@@ -13,21 +14,24 @@ import (
 var (
 	govRealm   = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
 	adminRealm = std.NewUserRealm(consts.ADMIN)
+
+	startHeight    int64 = std.GetHeight()
+	startTimestamp int64 = time.Now().Unix() + consts.BLOCK_GENERATION_INTERVAL
 )
 
 var FIRST_BLOCK_OF_YEAR = []int64{
-	startHeight + (blockPerYear * 0) + 1,
-	startHeight + (blockPerYear * 1) + 2,
-	startHeight + (blockPerYear * 2) + 3,
-	startHeight + (blockPerYear * 3) + 4,
-	startHeight + (blockPerYear * 4) + 5,
-	startHeight + (blockPerYear * 5) + 6,
-	startHeight + (blockPerYear * 6) + 7,
-	startHeight + (blockPerYear * 7) + 8,
-	startHeight + (blockPerYear * 8) + 9,
-	startHeight + (blockPerYear * 9) + 10,
-	startHeight + (blockPerYear * 10) + 11,
-	startHeight + (blockPerYear * 11) + 12,
+	startHeight + (blockPerYear * 0),
+	startHeight + (blockPerYear * 1) + 1,
+	startHeight + (blockPerYear * 2) + 2,
+	startHeight + (blockPerYear * 3) + 3,
+	startHeight + (blockPerYear * 4) + 4,
+	startHeight + (blockPerYear * 5) + 5,
+	startHeight + (blockPerYear * 6) + 6,
+	startHeight + (blockPerYear * 7) + 7,
+	startHeight + (blockPerYear * 8) + 8,
+	startHeight + (blockPerYear * 9) + 9,
+	startHeight + (blockPerYear * 10) + 10,
+	startHeight + (blockPerYear * 11) + 11,
 }
 
 var FIRST_TIMESTAMP_OF_YEAR = []int64{
@@ -64,6 +68,21 @@ func TestGetAmountByHeight(t *testing.T) {
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		firstBlockOfYear := FIRST_BLOCK_OF_YEAR[year-1]
 		uassert.Equal(t, GetAmountPerBlockPerHalvingYear(year), GetAmountByHeight(firstBlockOfYear))
+		if year == HALVING_START_YEAR {
+			uassert.Equal(t, GetHalvingYearAccuAmount(year), GetHalvingYearMaxAmount(year))
+		} else {
+			uassert.Equal(t, GetHalvingYearAccuAmount(year), GetHalvingYearAccuAmount(year-1)+GetHalvingYearMaxAmount(year))
+			uassert.Equal(t, int64(1), GetHalvingYearStartBlock(year)-GetHalvingYearEndBlock(year-1))
+		}
+		uassert.Equal(t, blockPerYear, (GetHalvingYearEndBlock(year) - GetHalvingYearStartBlock(year) + 1))
+
+		if year == HALVING_START_YEAR {
+			uassert.Equal(t, GetHalvingYearMaxAmount(year)+GetAmountPerBlockPerHalvingYear(year+1), calculateAmountToMint(GetHalvingYearStartBlock(year), GetHalvingYearStartBlock(year+1)))
+		} else if year == HALVING_END_YEAR {
+			uassert.Equal(t, GetHalvingYearMaxAmount(year)-GetAmountPerBlockPerHalvingYear(year), calculateAmountToMint(GetHalvingYearStartBlock(year)+1, GetHalvingYearEndBlock(year)+1))
+		} else {
+			uassert.Equal(t, GetHalvingYearMaxAmount(year)-GetAmountPerBlockPerHalvingYear(year)+GetAmountPerBlockPerHalvingYear(year+1), calculateAmountToMint(GetHalvingYearStartBlock(year)+1, GetHalvingYearStartBlock(year+1)))
+		}
 	}
 }
 

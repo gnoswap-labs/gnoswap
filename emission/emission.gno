@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
@@ -29,14 +28,12 @@ func MintAndDistributeGns() uint64 {
 		// Skip if we've already minted tokens at this height
 		return 0
 	}
-
 	// Mint new tokens and add any leftover amounts from previous distribution
 	mintedEmissionRewardAmount := gns.MintGns(a2u(consts.EMISSION_ADDR))
 	if hasLeftGNSAmount() {
 		mintedEmissionRewardAmount += GetLeftGNSAmount()
 		setLeftGNSAmount(0)
 	}
-
 	// Distribute tokens and track any undistributed amount
 	distributedGNSAmount := distributeToTarget(mintedEmissionRewardAmount)
 	if mintedEmissionRewardAmount != distributedGNSAmount {

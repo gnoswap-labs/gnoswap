@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	pusers "gno.land/p/demo/users"
 
 	"gno.land/r/gnoswap/v1/consts"
 )
@@ -26,6 +27,114 @@ var (
 	alice = testutils.TestAddress("alice")
 	bob   = testutils.TestAddress("bob")
 )
+
+func TestGetName(t *testing.T) {
+	uassert.Equal(t, "Gnoswap", GetName())
+}
+
+func TestGetSymbol(t *testing.T) {
+	uassert.Equal(t, "GNS", GetSymbol())
+}
+
+func TestGetDecimals(t *testing.T) {
+	uassert.Equal(t, uint(6), GetDecimals())
+}
+
+func TestTotalSupply(t *testing.T) {
+
+	uassert.Equal(t, INITIAL_MINT_AMOUNT, TotalSupply())
+}
+
+func TestKnownAccounts(t *testing.T) {
+	uassert.Equal(t, int(1), KnownAccounts())
+}
+
+func TestBalanceOfAddress(t *testing.T) {
+	t.Run(
+		"should return balance of address",
+		func(t *testing.T) {
+			uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOfAddress(consts.ADMIN))
+		},
+	)
+	t.Run(
+		"should panic if address is not valid",
+		func(t *testing.T) {
+			uassert.PanicsWithMessage(t, "[GNOSWAP-COMMON-005] invalid address || 0xabcdefg", func() {
+				BalanceOfAddress("0xabcdefg")
+			})
+		},
+	)
+}
+
+func TestAllowanceOfAddress(t *testing.T) {
+	t.Run(
+		"should return allowance of address",
+		func(t *testing.T) {
+			uassert.Equal(t, uint64(0), AllowanceOfAddress(consts.ADMIN, alice))
+
+			std.TestSetOrigCaller(consts.ADMIN)
+			Approve(pusers.AddressOrName(alice), uint64(123))
+			uassert.Equal(t, uint64(123), AllowanceOfAddress(consts.ADMIN, alice))
+		},
+	)
+	t.Run(
+		"should panic if address is not valid",
+		func(t *testing.T) {
+			uassert.PanicsWithMessage(t, "[GNOSWAP-COMMON-005] invalid address || 0xabcdefg", func() {
+				AllowanceOfAddress("0xabcdefg", alice)
+			})
+		},
+	)
+	t.Run(
+		"should panic if spender is not valid",
+		func(t *testing.T) {
+			uassert.PanicsWithMessage(t, "[GNOSWAP-COMMON-005] invalid address || 0xabcdefg", func() {
+				AllowanceOfAddress(consts.ADMIN, "0xabcdefg")
+			})
+		},
+	)
+}
+
+func TestBalanceOf(t *testing.T) {
+	uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(a2u(consts.ADMIN)))
+}
+
+func TestSpendAllowance(t *testing.T) {
+	t.Run(
+		"should spend allowance",
+		func(t *testing.T) {
+			std.TestSetOrigCaller(consts.ADMIN)
+			Approve(a2u(alice), uint64(123))
+
+			SpendAllowance(a2u(consts.ADMIN), a2u(alice), uint64(23))
+			uassert.Equal(t, uint64(100), Allowance(a2u(consts.ADMIN), a2u(alice)))
+		},
+	)
+	t.Run(
+		"should panic if address is not valid",
+		func(t *testing.T) {
+			uassert.PanicsWithMessage(t, "invalid address", func() {
+				SpendAllowance("0xabcdefg", a2u(alice), uint64(123))
+			})
+		},
+	)
+	t.Run(
+		"should panic if spender is not valid",
+		func(t *testing.T) {
+			uassert.PanicsWithMessage(t, "invalid address", func() {
+				SpendAllowance(a2u(consts.ADMIN), "0xabcdefg", uint64(123))
+			})
+		},
+	)
+	t.Run(
+		"should panic if allowance is not enough",
+		func(t *testing.T) {
+			uassert.PanicsWithMessage(t, "insufficient allowance", func() {
+				SpendAllowance(a2u(consts.ADMIN), a2u(alice), uint64(123))
+			})
+		},
+	)
+}
 
 func TestAssertTooManyEmission(t *testing.T) {
 	tests := []struct {
