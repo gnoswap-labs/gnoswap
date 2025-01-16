@@ -46,102 +46,9 @@ func init() {
 	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), uint64(7500))
 	distributionBpsPct.Set(strconv.Itoa(DEVOPS), uint64(2000))
 	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), uint64(500))
-	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), uint64(0))
-
-	//addStakerPerBlockMintUpdate(uint64(std.GetHeight()), gns.GetCurrentEmission()*uint64(7500))
-	//lastGNSEmissionUpdateHeight = uint64(std.GetHeight())
-}
-/*
-var (
-	stakerPerBlockMint = avl.NewTree() // height => uint64
-)
-
-var lastGNSEmissionUpdateHeight uint64
-
-func updateStakerEmission() {
-	if lastGNSEmissionUpdateHeight == uint64(std.GetHeight()) {
-		return
-	}
-
-	emissionHeights, emissionUpdates := gns.EmissionUpdates(lastGNSEmissionUpdateHeight, uint64(std.GetHeight()))
-
-	for i, height := range emissionHeights {
-		println("*******************************[", height, "] updateStakerEmission : to ", emissionUpdates[i]*GetDistributionBpsPct(LIQUIDITY_STAKER)/10000)
-		stakerPerBlockMint.Set(common.EncodeUint(height), emissionUpdates[i]*GetDistributionBpsPct(LIQUIDITY_STAKER)/10000)
-	}
-
-	println("lastGNSEmissionUpdateHeight : ", lastGNSEmissionUpdateHeight)
-	lastGNSEmissionUpdateHeight = uint64(std.GetHeight())
-	println("lastGNSEmissionUpdateHeight : ", lastGNSEmissionUpdateHeight)
+	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), uint64(0))	
 }
 
-func GetLatestStakerEmission(endHeight uint64) uint64 {
-	updateStakerEmission()
-
-	var emission uint64
-	stakerPerBlockMint.ReverseIterate("", common.EncodeUint(endHeight), func(key string, value interface{}) bool {
-		emission = value.(uint64)
-		return true
-	})
-
-	return emission
-}
-
-func GetCurrentStakerEmission() uint64 {
-	updateStakerEmission()
-
-	var emission uint64
-	stakerPerBlockMint.ReverseIterate("", common.EncodeUint(uint64(std.GetHeight())), func(key string, value interface{}) bool {
-		emission = value.(uint64)
-		return true
-	})
-
-	return emission
-}
-
-func GetStakerEmissionUpdates(startHeight uint64, endHeight uint64) EmissionUpdate {
-	updateStakerEmission()
-
-	heights := make([]uint64, 0)
-	updates := make([]uint64, 0)
-	stakerPerBlockMint.Iterate(common.EncodeUint(startHeight), common.EncodeUint(endHeight), func(key string, value interface{}) bool {
-		heights = append(heights, common.DecodeUint(key))
-		updates = append(updates, value.(uint64))
-		return false
-	})
-
-	return EmissionUpdate{
-		LastEmissionUpdate:    GetLatestStakerEmission(startHeight),
-		EmissionUpdateHeights: heights,
-		EmissionUpdates:       updates,
-	}
-}
-
-// Stores the emission update information for a given interval.
-// An EmissionUpdate is constructed by [startHeight, endHeight).
-//
-// Fields:
-// - LastEmissionUpdate: the value of emission update, either at the startHeight, or before.
-// - EmissionUpdateHeights: the heights of emission updates between [startHeight, endHeight).
-// - EmissionUpdates: the values of emission updates between [startHeight, endHeight).
-//
-// TODO: remove this.
-type EmissionUpdate struct {
-	LastEmissionUpdate    uint64
-	EmissionUpdateHeights []uint64
-	EmissionUpdates       []uint64
-}
-
-func (self *EmissionUpdate) IsEmpty() bool {
-	return len(self.EmissionUpdateHeights) == 0 && len(self.EmissionUpdates) == 0
-}
-
-func addStakerPerBlockMintUpdate(height uint64, amount uint64) {
-	println("[", height, "] addStakerPerBlockMintUpdate : to ", amount)
-	stakerPerBlockMint.Set(common.EncodeUint(height), amount/10000)
-	//stakerPerBlockMint.Set(common.EncodeUint(height), amount)
-}
-*/
 // ChangeDistributionPctByAdmin changes the distribution percentage for the given targets.
 // Panics if following conditions are not met:
 // - caller is not admin
@@ -198,7 +105,6 @@ func ChangeDistributionPct(
 	)
 }
 
-// 여기인듯?
 func changeDistributionPcts(
 	target01 int, pct01 uint64,
 	target02 int, pct02 uint64,
@@ -211,8 +117,6 @@ func changeDistributionPcts(
 	setDistributionBpsPct(target02, pct02)
 	setDistributionBpsPct(target03, pct03)
 	setDistributionBpsPct(target04, pct04)
-
-	// addStakerPerBlockMintUpdate(uint64(std.GetHeight()), gns.GetCurrentEmission()*pct01)
 
 	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
