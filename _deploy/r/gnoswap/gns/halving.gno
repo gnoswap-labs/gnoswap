@@ -606,31 +606,3 @@ func getHalvingYearAndEndTimestamp(timestamp int64) (int64, int64) {
 
 	return year, startTimestamp + (consts.TIMESTAMP_YEAR * year)
 }
-/*
-func GetCurrentEmission() uint64 {
-	emission := uint64(0)
-	perBlockMint.ReverseIterate("", common.EncodeUint(uint64(std.GetHeight())), func(key string, value interface{}) bool {
-		emission = value.(uint64)
-		return true
-	})
-	return emission
-}
-
-func EmissionUpdates(startHeight uint64, endHeight uint64) ([]uint64, []uint64) {
-	heights := make([]uint64, 0)
-	updates := make([]uint64, 0)
-	println("EmissionUpdates : ", startHeight, ", ", endHeight)
-	perBlockMint.Iterate(common.EncodeUint(startHeight), common.EncodeUint(endHeight), func(key string, value interface{}) bool {
-		println("EmissionUpdates : ", key, ", ", value)
-		heights = append(heights, common.DecodeUint(key))
-		updates = append(updates, value.(uint64))
-		return false
-	})
-
-	return heights, updates
-}
-
-func addPerBlockMintUpdate(height uint64, amount uint64) {
-	perBlockMint.Set(common.EncodeUint(height), amount)
-}
-*/

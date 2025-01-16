@@ -111,14 +111,6 @@ func (self *TierRatio) Get(tier uint64) uint64 {
 	}
 }
 
-type HalvingInfo interface {
-	// Return a list of halving blocks within the interval (start, end) in ascending order
-	GetHalvingBlocksInRange(start, end uint64) []uint64
-
-	// Returns the emission value at that block (after half-life), etc.
-	GetEmission(currentEmission uint64) uint64
-}
-
 // PoolTier manages pool counts, ratios, and rewards for different tiers.
 //
 // Fields:
@@ -265,7 +257,6 @@ func CalculateTierReward(currentEmission uint64, tierRatio *TierRatio, tier uint
 // There MUST be no ratio/count/tier change during the emissionUpdates
 // (due to calling cacheReward() at the start of changeTier(), this holds true).
 func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
-	println("====== cacheReward Start -> currentHeight : ", currentHeight, ", lastHeight : ", *self.lastRewardCacheHeight)
 	lastHeight := *self.lastRewardCacheHeight
 	if currentHeight <= lastHeight {
 		// no need to check
@@ -277,8 +268,6 @@ func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
 
 	cursor := lastHeight
 	currentEmission := self.currentEmission
-
-	println("====== cacheReward halvingBlocks : ", halvingBlocks, ", halvingEmissions : ", halvingEmissions, ", currentEmission : ", currentEmission)
 
 	for i, hvBlock := range halvingBlocks {
 		if hvBlock <= cursor {
@@ -310,8 +299,6 @@ func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
 	// update lastRewardCacheHeight and currentEmission
 	*self.lastRewardCacheHeight = currentHeight
 	self.currentEmission = currentEmission
-
-	println("====== cacheReward End -> currentEmission : ", currentEmission)
 }
 
 func (self *PoolTier) applyCacheToAllPools(pools *Pools, startBlock, endBlock, emissionInThisInterval uint64) {

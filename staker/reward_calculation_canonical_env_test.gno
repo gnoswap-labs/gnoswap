@@ -74,7 +74,6 @@ type canonicalRewardState struct {
 }
 
 func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tickCrossHook func(pools *Pools, height func() int64) func(poolPath string, tickId int32, zeroForOne bool)) *canonicalRewardState {
-	println("DDD")
 	result := &canonicalRewardState{
 		t: t,
 		global: &emulatedGlobalState{
@@ -89,19 +88,14 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 		PerBlockEmission: 1000000000,
 		CurrentTimestamp: 0,
 	}
-	println("EEE")
 	result.tickCrossHook = tickCrossHook(pools, func() int64 {
 		return int64(result.CurrentHeight())
 	})
-	println("FFF")
 	result.global.poolTier = NewPoolTier(124, test_gnousdc, func() uint64 { return result.PerBlockEmission }, func(start, end uint64) ([]uint64, []uint64) { return nil, nil })
-	println("GGG")
 
 	result.NextBlock() // must skip height 0
 
-	println("HHH")
 	result.SetEmissionUpdate(1000000000)
-	println("III")
 
 	return result
 }
@@ -116,32 +110,7 @@ func (self *canonicalRewardState) isInRange(deposit *Deposit) bool {
 	tick := self.Pool[deposit.targetPoolPath].tick
 	return deposit.tickLower <= tick && tick < deposit.tickUpper
 }
-/*
-func (self *canonicalRewardState) GetLatestEmissionUpdate() uint64 {
-	var emission uint64
-	self.emissionUpdates.ReverseIterate(0, uint64(self.CurrentHeight()), func(key uint64, value interface{}) bool {
-		emission = value.(uint64)
-		return true
-	})
-	return emission
-}
 
-func (self *canonicalRewardState) EmissionUpdates(startHeight uint64, endHeight uint64) en.EmissionUpdate {
-	heights := make([]uint64, 0)
-	updates := make([]uint64, 0)
-	self.emissionUpdates.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
-		heights = append(heights, key)
-		updates = append(updates, value.(uint64))
-		return false
-	})
-
-	return en.EmissionUpdate{
-		LastEmissionUpdate: self.GetLatestEmissionUpdate(),
-		EmissionUpdateHeights: heights,
-		EmissionUpdates: updates,
-	}
-}
-*/
 func (self *canonicalRewardState) SetEmissionUpdate(emission uint64) {
 	self.emissionUpdates.Set(uint64(self.CurrentHeight()), emission)
 	self.PerBlockEmission = emission

@@ -170,35 +170,6 @@ func (self *Pool) cacheInternalReward(currentHeight, currentEmission uint64) {
 	*self.lastRewardCacheHeight = currentHeight
 }
 
-// func (self *Pool) cacheInternalReward(currentHeight uint64, emissionUpdate en.EmissionUpdate, rewardDenominator uint64) {
-// 	println("\t[", currentHeight, "] cacheInternalReward Strat ")
-// 	currentEmission := emissionUpdate.LastEmissionUpdate
-// 	println("\t\tcurrentEmission to Staker per block: ", currentEmission)
-
-// 	startHeight := *self.lastRewardCacheHeight
-// 	println("\t\tstartHeight : ", startHeight)
-
-// 	for i, height := range emissionUpdate.EmissionUpdateHeights {
-// 		emission := emissionUpdate.EmissionUpdates[i]
-// 		println("\t\theight : ", height, ", emission : ", emission)
-
-// 		self.cacheRewardPerLiquidityUnit(startHeight, height, ApplyDenominator(currentEmission, rewardDenominator))
-// 		startHeight = height
-
-// 		currentEmission = emission
-// 	}
-
-// 	self.cacheRewardPerLiquidityUnit(startHeight, currentHeight, ApplyDenominator(currentEmission, rewardDenominator))
-// 	if *self.lastUnclaimableHeight != 0 && self.CurrentStakedLiquidity(currentHeight).IsZero() {
-// 		self.endInternalUnclaimablePeriod(currentHeight)
-// 		self.startInternalUnclaimablePeriod(currentHeight)
-// 	}
-
-// 	*self.lastRewardCacheHeight = currentHeight
-// 	println("\t\tlastRewardCacheHeight : ", *self.lastRewardCacheHeight)
-// 	println("\t[", currentHeight, "] cacheInternalReward End ")
-// }
-
 func (self *Pool) cacheExternalReward(endHeight uint64) {
 	self.stakedLiquidity.Iterate(0, 9999999, func(key uint64, value interface{}) bool {
 		return false
