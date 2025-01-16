@@ -32,59 +32,10 @@ type RewardCalculationResult struct {
 // each project's recipient wallet will be rewarded
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectprotocolfee
 func CollectProtocolFee() {
-	caller := std.PrevRealm().Addr()
+	caller := getPrevAddr()
 	gs.CollectRewardFromLaunchPad(caller)
 }
 
-// validateRewardCollection validates if reward can be collected
-func validateRewardCollection(deposit Deposit, height uint64) error {
-	if deposit.rewardCollectTime == 0 && height < deposit.claimableHeight {
-		return errors.New("reward not yet claimable")
-	}
-
-	return nil
-}
-
-// calculateTierRewards calculates rewards for each tier
-func calculateTierRewards(tier Tier, currentHeight uint64, lastCalcHeight uint64) (*u256.Uint, uint64, error) {
-	if tier.tierAmountPerBlockX128 == nil {
-		return u256.Zero(), 0, nil
-	}
-
-	if tier.tierAmountPerBlockX128.IsZero() {
-		return u256.Zero(), 0, nil
-	}
-
-	endHeight := minU64(currentHeight, tier.ended.height)
-	sinceLast := endHeight - minU64(endHeight, lastCalcHeight)
-
-	if sinceLast == 0 {
-		return u256.Zero(), 0, nil
-	}
-
-	rewardX128 := new(u256.Uint).Mul(tier.tierAmountPerBlockX128.NilToZero().Clone(), u256.NewUint(sinceLast))
-	reward := new(u256.Uint).Div(rewardX128, q128).Uint64()
-
-	return rewardX128, reward, nil
-}
-
-/*
-// processDepositReward processes reward for a single deposit
-func processDepositReward(deposit Deposit, rewardX96 *u256.Uint, tierAmount uint64) (Deposit, error) {
-	if tierAmount == 0 {
-		return deposit, errors.New("invalid tier amount")
-	}
-
-	ratioX96 := calcDepositRatioX96(tierAmount, deposit.amount)
-	depositRewardX96X96 := u256.Zero().Mul(rewardX96.Clone(), ratioX96)
-	depositRewardX96 := u256.Zero().Div(depositRewardX96X96, q96)
-	depositRewardX := u256.Zero().Div(depositRewardX96, q96)
-	depositReward := depositRewardX.Uint64()
-
-	deposit.rewardAmount += depositReward
-	return deposit, nil
-}
-*/
 // CollectRewardByProjectId collects reward from entire deposit of certain project by caller
 // Returns collected reward amount
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectrewardbyprojectid
@@ -155,13 +106,13 @@ func CollectRewardByProjectId(projectId string) uint64 {
 		var tier Tier
 		switch deposit.tier {
 		case "30":
-			tier = project.tiers[30]
+			tier = project.tiers[TIER30]
 			tier.userCollectedAmount += reward
 		case "90":
-			tier = project.tiers[90]
+			tier = project.tiers[TIER90]
 			tier.userCollectedAmount += reward
 		case "180":
-			tier = project.tiers[180]
+			tier = project.tiers[TIER180]
 			tier.userCollectedAmount += reward
 		}
 		project = setTier(project, deposit.tier, tier)
@@ -232,13 +183,13 @@ func CollectRewardByDepositId(depositId string) uint64 {
 	project.stats.totalCollected += reward
 	switch deposit.tier {
 	case "30":
-		t := project.tiers[30]
+		t := project.tiers[TIER30]
 		t.userCollectedAmount += reward
 	case "90":
-		t := project.tiers[90]
+		t := project.tiers[TIER90]
 		t.userCollectedAmount += reward
 	case "180":
-		t := project.tiers[180]
+		t := project.tiers[TIER180]
 		t.userCollectedAmount += reward
 	}
 	projects[deposit.projectId] = project
@@ -257,6 +208,75 @@ func CollectRewardByDepositId(depositId string) uint64 {
 
 	return reward
 }
+
+// validateRewardCollection validates if reward can be collected
+func validateRewardCollection(deposit Deposit, height uint64) error {
+	if deposit.rewardCollectTime == 0 && height < deposit.claimableHeight {
+		return errors.New("reward not yet claimable")
+	}
+	return nil
+}
+
+// calculateTierRewards calculates rewards for each tier
+func calculateTierRewards(tier Tier, currentHeight uint64, lastCalcHeight uint64) (*u256.Uint, uint64, error) {
+	if tier.tierAmountPerBlockX128 == nil {
+		return u256.Zero(), 0, nil
+	}
+
+	if tier.tierAmountPerBlockX128.IsZero() {
+		return u256.Zero(), 0, nil
+	}
+
+	endHeight := minU64(currentHeight, tier.ended.height)
+	sinceLast := endHeight - minU64(endHeight, lastCalcHeight)
+
+	if sinceLast == 0 {
+		return u256.Zero(), 0, nil
+	}
+
+	rewardX128 := new(u256.Uint).Mul(tier.tierAmountPerBlockX128.NilToZero().Clone(), u256.NewUint(sinceLast))
+	reward := new(u256.Uint).Div(rewardX128, q128).Uint64()
+
+	return rewardX128, reward, nil
+}
+
+// calcDepositRatioX128 calculates the deposit ratio with Q128 precision
+func calcDepositRatioX128(tierAmount uint64, amount uint64) *u256.Uint {
+	amountX128 := new(u256.Uint).Mul(u256.NewUint(amount), q128.Clone())
+	amountX128x := new(u256.Uint).Mul(amountX128, u256.NewUint(1_000_000_000))
+
+	tierAmountX128 := new(u256.Uint).Mul(u256.NewUint(tierAmount), q128.Clone())
+
+	depositRatioX96 := new(u256.Uint).Div(amountX128x, tierAmountX128)
+	depositRatioX96 = depositRatioX96.Mul(depositRatioX96, q128.Clone())
+	depositRatioX96 = depositRatioX96.Div(depositRatioX96, u256.NewUint(1_000_000_000))
+
+	return depositRatioX96
+}
+
+// calcProjectTiersRewardPerBlockX96 calculates the reward per block with Q96 precision
+func calcProjectTiersRewardPerBlockX128(tier Tier) *u256.Uint {
+	tierAmountX128 := new(u256.Uint).Mul(u256.NewUint(tier.tierAmount), q128)
+	return new(u256.Uint).Div(tierAmountX128, u256.NewUint(tier.ended.height-tier.started.height))
+}
+
+/*
+// processDepositReward processes reward for a single deposit
+func processDepositReward(deposit Deposit, rewardX96 *u256.Uint, tierAmount uint64) (Deposit, error) {
+	if tierAmount == 0 {
+		return deposit, errors.New("invalid tier amount")
+	}
+
+	ratioX96 := calcDepositRatioX96(tierAmount, deposit.amount)
+	depositRewardX96X96 := u256.Zero().Mul(rewardX96.Clone(), ratioX96)
+	depositRewardX96 := u256.Zero().Div(depositRewardX96X96, q96)
+	depositRewardX := u256.Zero().Div(depositRewardX96, q96)
+	depositReward := depositRewardX.Uint64()
+
+	deposit.rewardAmount += depositReward
+	return deposit, nil
+}
+*/
 
 /*
 // calculateProjectRewards calculates rewards for a project's deposits
@@ -361,22 +381,3 @@ func calculateDepositReward() {
 	}
 }
 */
-// calcDepositRatioX128 calculates the deposit ratio with Q128 precision
-func calcDepositRatioX128(tierAmount uint64, amount uint64) *u256.Uint {
-	amountX128 := new(u256.Uint).Mul(u256.NewUint(amount), q128.Clone())
-	amountX128x := new(u256.Uint).Mul(amountX128, u256.NewUint(1_000_000_000))
-
-	tierAmountX128 := new(u256.Uint).Mul(u256.NewUint(tierAmount), q128.Clone())
-
-	depositRatioX96 := new(u256.Uint).Div(amountX128x, tierAmountX128)
-	depositRatioX96 = depositRatioX96.Mul(depositRatioX96, q128.Clone())
-	depositRatioX96 = depositRatioX96.Div(depositRatioX96, u256.NewUint(1_000_000_000))
-
-	return depositRatioX96
-}
-
-// calcProjectTiersRewardPerBlockX96 calculates the reward per block with Q96 precision
-func calcProjectTiersRewardPerBlockX128(tier Tier) *u256.Uint {
-	tierAmountX128 := new(u256.Uint).Mul(u256.NewUint(tier.tierAmount), q128)
-	return new(u256.Uint).Div(tierAmountX128, u256.NewUint(tier.ended.height-tier.started.height))
-}

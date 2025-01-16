@@ -90,7 +90,7 @@ func testDepositGnsToTier30(t *testing.T) {
 
 		uassert.Equal(t, tier30.id, `gno.land/r/onbloc/obl:124:30`)
 		uassert.Equal(t, tier30.tierAmount, uint64(100000000))
-		uassert.NotEqual(t, tier30.tierAmountPerBlockX96.ToString(), `0`)
+		uassert.NotEqual(t, tier30.tierAmountPerBlockX128.ToString(), `0`)
 		uassert.Equal(t, tier30.ended.time, project.started.time+TIMESTAMP_30DAYS)
 		uassert.Equal(t, tier30.actualDepositAmount, uint64(0))
 		uassert.Equal(t, tier30.actualParticipant, uint64(0))
@@ -119,7 +119,7 @@ func testDepositGnsToTier30(t *testing.T) {
 		tier30 := project.tiers[30]
 		uassert.Equal(t, tier30.id, `gno.land/r/onbloc/obl:124:30`)
 		uassert.Equal(t, tier30.tierAmount, uint64(100000000))
-		uassert.NotEqual(t, tier30.tierAmountPerBlockX96.ToString(), `0`)
+		uassert.NotEqual(t, tier30.tierAmountPerBlockX128.ToString(), `0`)
 		uassert.Equal(t, tier30.ended.time, project.started.time+TIMESTAMP_30DAYS)
 		uassert.Equal(t, tier30.userCollectedAmount, uint64(0))
 		uassert.Equal(t, tier30.calculatedAmount, uint64(0))
@@ -232,7 +232,6 @@ func testCollectRewardByDepositId(t *testing.T) {
 		uassert.Equal(t, deposit.depositTime, uint64(1234567902))
 		uassert.Equal(t, deposit.depositCollectHeight, uint64(0))
 		uassert.Equal(t, deposit.depositCollectTime, uint64(0))
-		uassert.Equal(t, deposit.rewardAmount, uint64(0))
 		uassert.Equal(t, deposit.rewardCollected, uint64(10111111))
 		uassert.Equal(t, deposit.rewardCollectHeight, uint64(220))
 		uassert.Equal(t, deposit.rewardCollectTime, uint64(1234568084))
@@ -260,7 +259,6 @@ func testCollectRewardByDepositId(t *testing.T) {
 		uassert.Equal(t, deposit.depositTime, uint64(1234567902))
 		uassert.Equal(t, deposit.depositCollectHeight, uint64(0))
 		uassert.Equal(t, deposit.depositCollectTime, uint64(0))
-		uassert.Equal(t, deposit.rewardAmount, uint64(0))
 		uassert.Equal(t, deposit.rewardCollected, uint64(21222222))
 		uassert.Equal(t, deposit.rewardCollectHeight, uint64(320))
 		uassert.Equal(t, deposit.rewardCollectTime, uint64(1234568284))
@@ -269,7 +267,9 @@ func testCollectRewardByDepositId(t *testing.T) {
 
 func testMoreBlocks(t *testing.T) {
 	std.TestSkipHeights(10)
-	calculateDepositReward()
+	// TODO:
+	// reimplement calculateDepositReward()
+	//calculateDepositReward()
 
 	// check tier30
 	project := projects[`gno.land/r/onbloc/obl:124`]

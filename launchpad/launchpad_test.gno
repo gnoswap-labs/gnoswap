@@ -2,15 +2,11 @@ package launchpad
 
 import (
 	"std"
-	"strings"
 	"testing"
 	"time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
-
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/onbloc/obl"
 )
@@ -120,20 +116,22 @@ func TestCreateProject(t *testing.T) {
 		startTime     uint64
 		expectedId    string
 		expectedError string
+		duplicateTest bool
 	}{
 		{
-			name:         "normal project creation",
-			projectName:  "Obl Protocol",
-			tokenPath:    oblPath,
-			projectOwner: projectAddr,
-			totalAmount:  uint64(1_000_000_000),
-			conditions:   fooBarWithpad,
-			ratios:       "1*PAD*2",
-			tier30Ratio:  uint64(10),
-			tier90Ratio:  uint64(20),
-			tier180Ratio: uint64(70),
-			startTime:    uint64(time.Now().Unix() + 10),
-			expectedId:   "gno.land/r/onbloc/obl:124",
+			name:          "normal project creation",
+			projectName:   "Obl Protocol",
+			tokenPath:     oblPath,
+			projectOwner:  projectAddr,
+			totalAmount:   uint64(1_000_000_000),
+			conditions:    fooBarWithpad,
+			ratios:        "1*PAD*2",
+			tier30Ratio:   uint64(10),
+			tier90Ratio:   uint64(20),
+			tier180Ratio:  uint64(70),
+			startTime:     uint64(time.Now().Unix() + 10),
+			expectedId:    "gno.land/r/onbloc/obl:124",
+			expectedError: "",
 		},
 		{
 			name:          "invalid ratio sum (less than 100%)",
@@ -147,7 +145,7 @@ func TestCreateProject(t *testing.T) {
 			tier90Ratio:   uint64(20),
 			tier180Ratio:  uint64(60),
 			startTime:     uint64(time.Now().Unix() + 10),
-			expectedError: "invalid tier ratio sum",
+			expectedError: "[GNOSWAP-LAUNCHPAD-007] invalid input data || invalid ratio, sum of all tiers(30:10, 90:20, 180:60) should be 100",
 		},
 		{
 			name:          "project name is empty",
@@ -161,7 +159,159 @@ func TestCreateProject(t *testing.T) {
 			tier90Ratio:   uint64(20),
 			tier180Ratio:  uint64(70),
 			startTime:     uint64(time.Now().Unix() + 10),
-			expectedError: "project name cannot be empty",
+			expectedError: "[GNOSWAP-LAUNCHPAD-007] invalid input data || invalid project name",
+		},
+		{
+			name:          "project owner address is invalid",
+			projectName:   "TTT",
+			tokenPath:     oblPath,
+			projectOwner:  "abcdef",
+			totalAmount:   uint64(1_000_000_000),
+			conditions:    fooBarWithpad,
+			ratios:        "1*PAD*2",
+			tier30Ratio:   uint64(10),
+			tier90Ratio:   uint64(20),
+			tier180Ratio:  uint64(70),
+			startTime:     uint64(time.Now().Unix() + 10),
+			expectedError: "[GNOSWAP-LAUNCHPAD-002] invalid address || (abcdef)",
+		},
+		{
+			name:          "invalid start time",
+			projectName:   "Obl Protocol",
+			tokenPath:     oblPath,
+			projectOwner:  projectAddr,
+			totalAmount:   uint64(1_000_000_000),
+			conditions:    fooBarWithpad,
+			ratios:        "1*PAD*2",
+			tier30Ratio:   uint64(10),
+			tier90Ratio:   uint64(20),
+			tier180Ratio:  uint64(70),
+			startTime:     uint64(time.Now().Unix()),
+			expectedId:    "gno.land/r/onbloc/obl:124",
+			expectedError: "[GNOSWAP-LAUNCHPAD-007] invalid input data || invalid start time(1234567890), cannot start project in past(now:1234567902)",
+		},
+		{
+			name:          "invalid token path",
+			projectName:   "Obl Protocol",
+			tokenPath:     "gno.land/r/test/token",
+			projectOwner:  projectAddr,
+			totalAmount:   uint64(1_000_000_000),
+			conditions:    fooBarWithpad,
+			ratios:        "1*PAD*2",
+			tier30Ratio:   uint64(10),
+			tier90Ratio:   uint64(20),
+			tier180Ratio:  uint64(70),
+			startTime:     uint64(time.Now().Unix() + 50),
+			expectedId:    "gno.land/r/onbloc/obl:124",
+			expectedError: "[GNOSWAP-LAUNCHPAD-007] invalid input data || token(gno.land/r/test/token) is not registered to grc20reg",
+		},
+		{
+			name:          "duplicate project test - origin",
+			projectName:   "Obl Protocol",
+			tokenPath:     oblPath,
+			projectOwner:  projectAddr,
+			totalAmount:   uint64(1_000_000_000),
+			conditions:    fooBarWithpad,
+			ratios:        "1*PAD*2",
+			tier30Ratio:   uint64(10),
+			tier90Ratio:   uint64(20),
+			tier180Ratio:  uint64(70),
+			startTime:     uint64(time.Now().Unix() + 50),
+			expectedId:    "gno.land/r/onbloc/obl:130",
+			expectedError: "",
+			duplicateTest: true,
+		},
+		{
+			name:          "duplicate project test - duplicate",
+			projectName:   "Obl Protocol",
+			tokenPath:     oblPath,
+			projectOwner:  projectAddr,
+			totalAmount:   uint64(1_000_000_000),
+			conditions:    fooBarWithpad,
+			ratios:        "1*PAD*2",
+			tier30Ratio:   uint64(10),
+			tier90Ratio:   uint64(20),
+			tier180Ratio:  uint64(70),
+			startTime:     uint64(time.Now().Unix() + 50),
+			expectedId:    "gno.land/r/onbloc/obl:130",
+			expectedError: "[GNOSWAP-LAUNCHPAD-008] can not create same project in same block || project(gno.land/r/onbloc/obl:130) already exists",
+			duplicateTest: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			std.TestSetRealm(adminRealm)
+			obl.Approve(a2u(consts.LAUNCHPAD_ADDR), tt.totalAmount)
+			if !tt.duplicateTest {
+				std.TestSkipHeights(1)
+			}
+
+			defer func() {
+				if r := recover(); r != nil {
+					if tt.expectedError == "" {
+						t.Errorf("unexpected error: %v", r)
+					} else {
+						uassert.Equal(t, r.(string), tt.expectedError)
+					}
+				}
+			}()
+
+			projectId := CreateProject(
+				tt.projectName,
+				tt.tokenPath,
+				tt.projectOwner,
+				tt.totalAmount,
+				tt.conditions,
+				tt.ratios,
+				tt.tier30Ratio,
+				tt.tier90Ratio,
+				tt.tier180Ratio,
+				tt.startTime,
+			)
+
+			if tt.expectedError == "" {
+				uassert.Equal(t, projectId, tt.expectedId)
+			}
+			if !tt.duplicateTest {
+				std.TestSkipHeights(1)
+			}
+		})
+	}
+}
+
+func TestCreateProject_TierAndBalance(t *testing.T) {
+	projectAddr := testutils.TestAddress("projectAddr")
+	fooBarWithpad := "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar"
+	tests := []struct {
+		name          string
+		projectName   string
+		tokenPath     string
+		projectOwner  std.Address
+		totalAmount   uint64
+		conditions    string
+		ratios        string
+		tier30Ratio   uint64
+		tier90Ratio   uint64
+		tier180Ratio  uint64
+		startTime     uint64
+		expectedId    string
+		expectedError string
+	}{
+		{
+			name:          "normal project creation",
+			projectName:   "Obl Protocol",
+			tokenPath:     oblPath,
+			projectOwner:  projectAddr,
+			totalAmount:   uint64(1_000_000_000),
+			conditions:    fooBarWithpad,
+			ratios:        "1*PAD*2",
+			tier30Ratio:   uint64(10),
+			tier90Ratio:   uint64(20),
+			tier180Ratio:  uint64(70),
+			startTime:     uint64(time.Now().Unix() + 10),
+			expectedId:    "gno.land/r/onbloc/obl:124",
+			expectedError: "[GNOSWAP-LAUNCHPAD-008] can not create same project in same block || project(gno.land/r/onbloc/obl:124) already exists",
 		},
 	}
 
@@ -175,6 +325,8 @@ func TestCreateProject(t *testing.T) {
 				if r := recover(); r != nil {
 					if tt.expectedError == "" {
 						t.Errorf("unexpected error: %v", r)
+					} else {
+						uassert.Equal(t, r.(string), tt.expectedError)
 					}
 				}
 			}()

@@ -19,7 +19,7 @@ var (
 	// depositId -> deposit
 	deposits = make(map[string]Deposit)
 
-	// proejct -> tier -> []depositId
+	// project -> tier -> []depositId
 	depositsByProject = make(map[string]map[string][]string)
 
 	// user -> []depositId
@@ -46,151 +46,19 @@ type ProjectTierInfo struct {
 	CurrentTime uint64
 }
 
-// validateProjectTier validates a project and its tier
-func validateProjectTier(projectId string, tierStr string) (Project, Tier, error) {
-	project, exists := projects[projectId]
-	if !exists {
-		return Project{}, Tier{}, errors.New(ufmt.Sprintf("project(%s) not found", projectId))
-	}
-
-	tier := getTier(project, tierStr)
-	if !isProjectActive(project, uint64(std.GetHeight())) {
-		return Project{}, Tier{}, errors.New("project is not active")
-	}
-
-	if !isTierActive(tier, uint64(std.GetHeight())) {
-		return Project{}, Tier{}, errors.New("tier is not active")
-	}
-
-	return project, tier, nil
-}
-
-// isProjectActive checks if a project is currently active
-func isProjectActive(project Project, height uint64) bool {
-	return project.started.height <= height && height <= project.ended.height
-}
-
-// isTierActive checks if a tier is currently active
-func isTierActive(tier Tier, height uint64) bool {
-	return height <= tier.ended.height
-}
-
-// createDeposit creates a new deposit entry
-func createDeposit(info ProjectTierInfo, amount uint64) (Deposit, error) {
-	depositor := std.PrevRealm().Addr()
-	depositId := ufmt.Sprintf("%s:%s:%s:%d",
-		info.Project.id,
-		info.TierStr,
-		depositor.String(),
-		info.Height,
-	)
-
-	claimableHeight, claimableTime := calculateClaimableTimes(info)
-
-	deposit := Deposit{
-		id:              depositId,
-		projectId:       info.Project.id,
-		tier:            info.TierStr,
-		depositor:       depositor,
-		amount:          amount,
-		depositHeight:   info.Height,
-		depositTime:     info.CurrentTime,
-		claimableHeight: claimableHeight,
-		claimableTime:   claimableTime,
-	}
-
-	return deposit, nil
-}
-
-// calculateClaimableTimes calculates the claimable height and time for a deposit
-func calculateClaimableTimes(info ProjectTierInfo) (uint64, uint64) {
-	var waitDuration uint64
-	switch info.TierStr {
-	case "30":
-		waitDuration = TIMESTAMP_3DAYS
-	case "90":
-		waitDuration = TIMESTAMP_7DAYS
-	case "180":
-		waitDuration = TIMESTAMP_14DAYS
-	}
-
-	calcHeight := info.Height + info.Tier.collectWaitDuration
-	calcTime := info.CurrentTime + waitDuration
-
-	return min(calcHeight, info.Tier.ended.height),
-		min(calcTime, info.Tier.ended.time)
-}
-
-// updateDepositIndices updates all deposit-related indices
-func updateDepositIndices(deposit Deposit, state *DepositState) {
-	// Update depositsByUser
-	if state.DepositsByUser[deposit.depositor] == nil {
-		state.DepositsByUser[deposit.depositor] = []string{}
-	}
-	state.DepositsByUser[deposit.depositor] = append(
-		state.DepositsByUser[deposit.depositor],
-		deposit.id,
-	)
-
-	// Update depositsByProject
-	if state.DepositsByProject[deposit.projectId] == nil {
-		state.DepositsByProject[deposit.projectId] = make(map[string][]string)
-	}
-	if state.DepositsByProject[deposit.projectId][deposit.tier] == nil {
-		state.DepositsByProject[deposit.projectId][deposit.tier] = []string{}
-	}
-	state.DepositsByProject[deposit.projectId][deposit.tier] = append(
-		state.DepositsByProject[deposit.projectId][deposit.tier],
-		deposit.id,
-	)
-
-	// Update depositsByUserProject
-	if state.DepositsByUserProject[deposit.depositor] == nil {
-		state.DepositsByUserProject[deposit.depositor] = make(map[string][]string)
-	}
-	if state.DepositsByUserProject[deposit.depositor][deposit.projectId] == nil {
-		state.DepositsByUserProject[deposit.depositor][deposit.projectId] = []string{}
-	}
-	state.DepositsByUserProject[deposit.depositor][deposit.projectId] = append(
-		state.DepositsByUserProject[deposit.depositor][deposit.projectId],
-		deposit.id,
-	)
-}
-
-// processFirstDeposit handles the first deposit for a project tier
-func processFirstDeposit(info ProjectTierInfo) (Tier, error) {
-	info.Tier.totalParticipant++
-	if info.Tier.totalParticipant > 1 {
-		return info.Tier, nil
-	}
-
-	tier := info.Tier
-	tier.started.height = info.Height
-	tier.started.time = info.CurrentTime
-	tier.tierAmountPerBlockX128 = calcProjectTiersRewardPerBlockX128(tier)
-
-	// should be update reward state here
-	rewardState := NewRewardState(tier.tierAmountPerBlockX128, info.Height, info.Tier.ended.height)
-	rewardStates.Set(info.Project.id, info.TierStr, rewardState)
-
-	// Remove from projectTiersWithoutDeposit as it now has a deposit
-    delete(projectTiersWithoutDeposit, tier.id)
-
-	return tier, nil
-}
-
 // DepositGns deposit gns to the project's tier
 // gns will be locked in `launchpad` contract
 // xgns will be minted to the `launchpad` contract
 // Returns depositId
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_deposit.gno#depositgns
 func DepositGns(targetProjectTierId string, amount uint64) string {
-	common.IsHalted()
+	assertOnlyNotHalted()
 
 	projectId, tierStr := getProjectIdAndTierFromTierId(targetProjectTierId)
 	project, tier, err := validateProjectTier(projectId, tierStr)
 	if err != nil {
-		panic(err)
+		panic(addDetailToError(
+			errInvalidProjectTier, err.Error()))
 	}
 
 	checkDepositConditions(project)
@@ -205,7 +73,7 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 
 	// gns will be locked in `launchpad` contract
 	gns.TransferFrom(
-		a2u(std.PrevRealm().Addr()),
+		a2u(getPrevAddr()),
 		a2u(std.Address(consts.LAUNCHPAD_ADDR)),
 		amount,
 	)
@@ -287,6 +155,27 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 	return deposit.id
 }
 
+func CollectDepositGns() uint64 {
+	caller := std.PrevRealm().Addr()
+	dpsts := depositsByUser[caller]
+	return processCollectedDeposits(dpsts, "")
+}
+
+func CollectDepositGnsByProjectId(projectId string) uint64 {
+	_, exists := projects[projectId]
+	if !exists {
+		return 0
+	}
+
+	caller := std.PrevRealm().Addr()
+	deposits := depositsByUserByProject[caller][projectId]
+	if deposits == nil {
+		return 0
+	}
+
+	return processCollectedDeposits(deposits, projectId)
+}
+
 // processDepositCollection processes the collection of deposits
 func processDepositCollection(
 	dpsts []string,
@@ -345,27 +234,6 @@ func processDepositCollection(
 	}
 
 	return totalAmount, nil
-}
-
-func CollectDepositGns() uint64 {
-	caller := std.PrevRealm().Addr()
-	dpsts := depositsByUser[caller]
-	return processCollectedDeposits(dpsts, "")
-}
-
-func CollectDepositGnsByProjectId(projectId string) uint64 {
-	_, exists := projects[projectId]
-	if !exists {
-		return 0
-	}
-
-	caller := std.PrevRealm().Addr()
-	deposits := depositsByUserByProject[caller][projectId]
-	if deposits == nil {
-		return 0
-	}
-
-	return processCollectedDeposits(deposits, projectId)
 }
 
 func processCollectedDeposits(dpsts []string, pid string) uint64 {
@@ -480,7 +348,6 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 func getProjectIdFromTierId(tierId string) string {
 	// input: gno.land/r/gnoswap/gns:123:30
 	// output: gno.land/r/gnoswap/gns:123
-
 	res, err := common.Split(tierId, ":", 3)
 	if err != nil {
 		panic(addDetailToError(
@@ -492,6 +359,17 @@ func getProjectIdFromTierId(tierId string) string {
 	return ufmt.Sprintf("%s:%s", res[0], res[1])
 }
 
+// getProjectIdAndTierFromTierId extracts the project ID and tier from a given tier ID.
+//
+// This function splits the provided `tierId` into three parts using the `:` separator and
+// returns the first two parts as the project ID and the third part as the tier.
+//
+// Parameters:
+// - tierId (string): The tier ID in the format "{projectId}:{tier}".
+//
+// Returns:
+// - string: The project ID derived from the first two parts of the `tierId`.
+// - string: The tier derived from the third part of the `tierId`.
 func getProjectIdAndTierFromTierId(tierId string) (string, string) {
 	res, err := common.Split(tierId, ":", 3)
 	if err != nil {
@@ -504,12 +382,20 @@ func getProjectIdAndTierFromTierId(tierId string) (string, string) {
 	return ufmt.Sprintf("%s:%s", res[0], res[1]), res[2]
 }
 
+// checkDepositConditions validates whether the caller meets the deposit conditions of the given project.
+//
+// This function checks if the caller satisfies all conditions required for depositing into the specified project.
+// Each condition specifies a minimum token balance that must be met. If any condition is not met, the function
+// panics with an appropriate error message.
+//
+// Parameters:
+// - project (Project): The project containing the deposit conditions to validate.
 func checkDepositConditions(project Project) {
 	if project.conditions == nil {
 		return
 	}
 
-	caller := std.PrevRealm().Addr()
+	caller := getPrevAddr()
 	for _, condition := range project.conditions {
 		if condition.minAmount == 0 {
 			continue
@@ -522,6 +408,7 @@ func checkDepositConditions(project Project) {
 		} else {
 			balance = common.BalanceOf(condition.tokenPath, caller)
 		}
+
 		if balance < condition.minAmount {
 			panic(addDetailToError(
 				errNotEnoughBalance,
@@ -542,11 +429,11 @@ func checkTierActive(project Project, tier Tier) bool {
 func getTier(project Project, tierStr string) Tier {
 	switch tierStr {
 	case "30":
-		return project.tiers[30]
+		return project.tiers[TIER30]
 	case "90":
-		return project.tiers[90]
+		return project.tiers[TIER90]
 	case "180":
-		return project.tiers[180]
+		return project.tiers[TIER180]
 	default:
 		panic(addDetailToError(
 			errInvalidTier,
@@ -558,11 +445,11 @@ func getTier(project Project, tierStr string) Tier {
 func setTier(project Project, tierStr string, tier Tier) Project {
 	switch tierStr {
 	case "30":
-		project.tiers[30] = tier
+		project.tiers[TIER30] = tier
 	case "90":
-		project.tiers[90] = tier
+		project.tiers[TIER90] = tier
 	case "180":
-		project.tiers[180] = tier
+		project.tiers[TIER180] = tier
 	default:
 		panic(addDetailToError(
 			errInvalidTier,
@@ -575,4 +462,160 @@ func setTier(project Project, tierStr string, tier Tier) Project {
 
 func isPassedClaimableHeight(deposit Deposit, height uint64) bool {
 	return deposit.claimableHeight <= height
+}
+
+// validateProjectTier validates a project and its tier
+func validateProjectTier(projectId string, tierStr string) (Project, Tier, error) {
+	project, exists := projects[projectId]
+	if !exists {
+		return Project{}, Tier{}, errors.New(ufmt.Sprintf("project(%s) not found", projectId))
+	}
+
+	currentHeight := uint64(std.GetHeight())
+
+	tier := getTier(project, tierStr)
+	if !isProjectActive(project, currentHeight) {
+		return Project{}, Tier{}, errors.New("project is not active")
+	}
+
+	if !isTierActive(tier, currentHeight) {
+		return Project{}, Tier{}, errors.New("tier is not active")
+	}
+
+	return project, tier, nil
+}
+
+// isProjectActive checks if a project is currently active
+func isProjectActive(project Project, height uint64) bool {
+	return project.started.height <= height && height <= project.ended.height
+}
+
+// isTierActive checks if a tier is currently active
+func isTierActive(tier Tier, height uint64) bool {
+	return height <= tier.ended.height
+}
+
+// createDeposit creates a new deposit for a specific project tier and depositor.
+//
+// This function generates a unique deposit ID, calculates the claimable height and time,
+// and initializes a `Deposit` object with the provided details.
+//
+// Parameters:
+//   - info (ProjectTierInfo): Information about the project tier, including project details,
+//     tier string, current block height, and current time.
+//   - amount (uint64): The amount to be deposited.
+//
+// Returns:
+// - Deposit: The newly created `Deposit` object containing all relevant details.
+// - error: Returns an error if the deposit creation fails (currently always returns `nil`).
+func createDeposit(info ProjectTierInfo, amount uint64) (Deposit, error) {
+	// Validate input parameters
+	if amount == 0 {
+		return Deposit{}, errors.New(ufmt.Sprintf("deposit amount cannot be zero"))
+	}
+
+	if info.Project.id == "" || info.TierStr == "" {
+		return Deposit{}, errors.New(ufmt.Sprintf("invalid project or tier information"))
+	}
+
+	depositor := getPrevAddr()
+	depositId := ufmt.Sprintf("%s:%s:%s:%d",
+		info.Project.id,
+		info.TierStr,
+		depositor.String(),
+		info.Height,
+	)
+
+	claimableHeight, claimableTime := calculateClaimableTimes(info)
+
+	deposit := Deposit{
+		id:              depositId,
+		projectId:       info.Project.id,
+		tier:            info.TierStr,
+		depositor:       depositor,
+		amount:          amount,
+		depositHeight:   info.Height,
+		depositTime:     info.CurrentTime,
+		claimableHeight: claimableHeight,
+		claimableTime:   claimableTime,
+	}
+
+	return deposit, nil
+}
+
+// calculateClaimableTimes calculates the claimable height and time for a deposit
+func calculateClaimableTimes(info ProjectTierInfo) (uint64, uint64) {
+	var waitDuration uint64
+	switch info.TierStr {
+	case "30":
+		waitDuration = TIMESTAMP_3DAYS
+	case "90":
+		waitDuration = TIMESTAMP_7DAYS
+	case "180":
+		waitDuration = TIMESTAMP_14DAYS
+	}
+
+	calcHeight := info.Height + info.Tier.collectWaitDuration
+	calcTime := info.CurrentTime + waitDuration
+
+	return minU64(calcHeight, info.Tier.ended.height),
+		minU64(calcTime, info.Tier.ended.time)
+}
+
+// updateDepositIndices updates all deposit-related indices
+func updateDepositIndices(deposit Deposit, state *DepositState) {
+	// Update depositsByUser
+	if state.DepositsByUser[deposit.depositor] == nil {
+		state.DepositsByUser[deposit.depositor] = []string{}
+	}
+	state.DepositsByUser[deposit.depositor] = append(
+		state.DepositsByUser[deposit.depositor],
+		deposit.id,
+	)
+
+	// Update depositsByProject
+	if state.DepositsByProject[deposit.projectId] == nil {
+		state.DepositsByProject[deposit.projectId] = make(map[string][]string)
+	}
+	if state.DepositsByProject[deposit.projectId][deposit.tier] == nil {
+		state.DepositsByProject[deposit.projectId][deposit.tier] = []string{}
+	}
+	state.DepositsByProject[deposit.projectId][deposit.tier] = append(
+		state.DepositsByProject[deposit.projectId][deposit.tier],
+		deposit.id,
+	)
+
+	// Update depositsByUserProject
+	if state.DepositsByUserProject[deposit.depositor] == nil {
+		state.DepositsByUserProject[deposit.depositor] = make(map[string][]string)
+	}
+	if state.DepositsByUserProject[deposit.depositor][deposit.projectId] == nil {
+		state.DepositsByUserProject[deposit.depositor][deposit.projectId] = []string{}
+	}
+	state.DepositsByUserProject[deposit.depositor][deposit.projectId] = append(
+		state.DepositsByUserProject[deposit.depositor][deposit.projectId],
+		deposit.id,
+	)
+}
+
+// processFirstDeposit handles the first deposit for a project tier
+func processFirstDeposit(info ProjectTierInfo) (Tier, error) {
+	info.Tier.totalParticipant++
+	if info.Tier.totalParticipant > 1 {
+		return info.Tier, nil
+	}
+
+	tier := info.Tier
+	tier.started.height = info.Height
+	tier.started.time = info.CurrentTime
+	tier.tierAmountPerBlockX128 = calcProjectTiersRewardPerBlockX128(tier)
+
+	// should be update reward state here
+	rewardState := NewRewardState(tier.tierAmountPerBlockX128, info.Height, info.Tier.ended.height)
+	rewardStates.Set(info.Project.id, info.TierStr, rewardState)
+
+	// Remove from projectTiersWithoutDeposit as it now has a deposit
+	delete(projectTiersWithoutDeposit, tier.id)
+
+	return tier, nil
 }

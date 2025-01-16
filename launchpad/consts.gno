@@ -15,4 +15,8 @@ const (
 	TIMESTAMP_3DAYS  = uint64(3 * 24 * 60 * 60)  // 259200
 
 	TIMESTAMP_DAY = uint64(24 * 60 * 60) // 86400
+
+	TIER30  = uint64(30)
+	TIER90  = uint64(90)
+	TIER180 = uint64(180)
 )

@@ -19,7 +19,7 @@ func (self *StakerRewardInfo) Debug() string {
 }
 
 func (self *StakerRewardInfo) PriceDebtUint64() uint64 {
-		return u256.Zero().Rsh(self.PriceDebt, 128).Uint64()
+	return u256.Zero().Rsh(self.PriceDebt, 128).Uint64()
 }
 
 type RewardState struct {
@@ -90,7 +90,7 @@ func (states RewardStates) DeleteProject(projectId string) uint64 {
 			totalEmptyBlock += state.EndHeight - state.LastHeight
 		}
 		totalEmptyBlockU256 := u256.NewUint(totalEmptyBlock)
-		totalEmptyRewards := totalEmptyBlockU256.Mul(totalEmptyBlockU256, state.RewardPerBlock)
+		totalEmptyRewards := u256.Zero().Mul(totalEmptyBlockU256, state.RewardPerBlock)
 		totalLeftover += totalEmptyRewards.Uint64()
 		keys = append(keys, key)
 		return false
@@ -115,7 +115,7 @@ func (self *RewardState) CalculateReward(depositId string) uint64 {
 	info := self.Info(depositId)
 	stakerPrice := u256.Zero().Sub(self.PriceAccumulation, info.PriceDebt)
 	reward := stakerPrice.Mul(stakerPrice, u256.NewUint(info.Amount))
-	reward = reward.Rsh(reward,128)
+	reward = reward.Rsh(reward, 128)
 	return reward.Uint64() - info.Claimed
 }
 

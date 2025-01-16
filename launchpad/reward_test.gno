@@ -98,7 +98,9 @@ func TestCalculateDepositRatioX128(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ratio := calcDepositRatioX128(tt.tierAmount, tt.amount)
+			println(ratio.ToString())
 			expected := u256.MustFromDecimal(tt.expected)
+			println(expected.ToString())
 			uassert.Equal(t, 0, ratio.Cmp(expected))
 		})
 	}
@@ -119,7 +121,7 @@ func TestProcessDepositReward(t *testing.T) {
 				amount: 1000,
 				//rewardAmount: 0,
 			},
-			rewardX128:      u256.NewUint(1000).Mul(u256.NewUint(1000), q128),
+			rewardX128:     u256.NewUint(1000).Mul(u256.NewUint(1000), q128),
 			tierAmount:     2000,
 			expectedReward: 500, // (1000/2000) * 1000 = 500
 			shouldError:    false,
@@ -142,7 +144,7 @@ func TestProcessDepositReward(t *testing.T) {
 				amount: 1000,
 				//rewardAmount: 100,
 			},
-			rewardX128:      u256.NewUint(1000).Mul(u256.NewUint(1000), q128),
+			rewardX128:     u256.NewUint(1000).Mul(u256.NewUint(1000), q128),
 			tierAmount:     2000,
 			expectedReward: 500, // 600, // Existing 100 + New reward 500
 			shouldError:    false,
@@ -151,7 +153,7 @@ func TestProcessDepositReward(t *testing.T) {
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			state := NewRewardState(tt.rewardX128	, 1000, 2000)
+			state := NewRewardState(tt.rewardX128, 1000, 2000)
 			depositId := ufmt.Sprintf("depositId-%d", i)
 			state.AddStake(1000, depositId, tt.deposit.amount)
 			state.TotalStake = tt.tierAmount // force overriding total stake
@@ -165,19 +167,19 @@ func TestProcessDepositReward(t *testing.T) {
 
 func TestCalculateTierRewards(t *testing.T) {
 	tests := []struct {
-		name              string
-		tier              Tier
-		currentHeight     uint64
-		lastCalcHeight    uint64
+		name               string
+		tier               Tier
+		currentHeight      uint64
+		lastCalcHeight     uint64
 		expectedRewardX128 string
-		expectedReward    uint64
-		shouldBeZero      bool
+		expectedReward     uint64
+		shouldBeZero       bool
 	}{
 		{
 			name: "tierAmountPerBlockX96 is 0",
 			tier: Tier{
 				tierAmountPerBlockX128: u256.Zero(),
-				ended:                 TimeInfo{height: 1000},
+				ended:                  TimeInfo{height: 1000},
 			},
 			currentHeight:  500,
 			lastCalcHeight: 400,
@@ -187,7 +189,7 @@ func TestCalculateTierRewards(t *testing.T) {
 			name: "sinceLast is 0",
 			tier: Tier{
 				tierAmountPerBlockX128: u256.NewUint(1000),
-				ended:                 TimeInfo{height: 1000},
+				ended:                  TimeInfo{height: 1000},
 			},
 			currentHeight:  500,
 			lastCalcHeight: 500,
@@ -197,12 +199,12 @@ func TestCalculateTierRewards(t *testing.T) {
 			name: "Current height exceeds end height",
 			tier: Tier{
 				tierAmountPerBlockX128: u256.NewUint(1000),
-				ended:                 TimeInfo{height: 450},
+				ended:                  TimeInfo{height: 450},
 			},
-			currentHeight:     500,
-			lastCalcHeight:    400,
+			currentHeight:      500,
+			lastCalcHeight:     400,
 			expectedRewardX128: "50000", // 1000 * (450-400)
-			expectedReward:    0,       // (50000 / Q96)
+			expectedReward:     0,       // (50000 / Q96)
 		},
 	}
 
