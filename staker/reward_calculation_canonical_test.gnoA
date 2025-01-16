@@ -14,8 +14,11 @@ import (
 )
 
 func Setup(t *testing.T) *canonicalRewardState {
+	println("AAA")
 	pools := NewPools()
+	println("BBB")
 	deposits := NewDeposits()
+	println("CCC")
 
 	return NewCanonicalRewardState(t, pools, deposits, TickCrossHook)
 }

@@ -49,9 +49,9 @@ func init() {
 	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), uint64(0))
 
 	//addStakerPerBlockMintUpdate(uint64(std.GetHeight()), gns.GetCurrentEmission()*uint64(7500))
-	lastGNSEmissionUpdateHeight = uint64(std.GetHeight())
+	//lastGNSEmissionUpdateHeight = uint64(std.GetHeight())
 }
-
+/*
 var (
 	stakerPerBlockMint = avl.NewTree() // height => uint64
 )
@@ -141,7 +141,7 @@ func addStakerPerBlockMintUpdate(height uint64, amount uint64) {
 	stakerPerBlockMint.Set(common.EncodeUint(height), amount/10000)
 	//stakerPerBlockMint.Set(common.EncodeUint(height), amount)
 }
-
+*/
 // ChangeDistributionPctByAdmin changes the distribution percentage for the given targets.
 // Panics if following conditions are not met:
 // - caller is not admin
@@ -207,24 +207,12 @@ func changeDistributionPcts(
 ) {
 	// First, cache the percentage of the staker just before it changes Callback if needed
     // (check if the LIQUIDITY_STAKER was located between target01 and 04)
-	if stakerDistributionPctChangeCallback != nil {
-        if target01 == LIQUIDITY_STAKER {
-            stakerDistributionPctChangeCallback(pct01)
-        } else if target02 == LIQUIDITY_STAKER {
-            stakerDistributionPctChangeCallback(pct02)
-        } else if target03 == LIQUIDITY_STAKER {
-            stakerDistributionPctChangeCallback(pct03)
-        } else if target04 == LIQUIDITY_STAKER {
-            stakerDistributionPctChangeCallback(pct04)
-        }
-    }
-
 	setDistributionBpsPct(target01, pct01)
 	setDistributionBpsPct(target02, pct02)
 	setDistributionBpsPct(target03, pct03)
 	setDistributionBpsPct(target04, pct04)
 
-	addStakerPerBlockMintUpdate(uint64(std.GetHeight()), gns.GetCurrentEmission()*pct01)
+	// addStakerPerBlockMintUpdate(uint64(std.GetHeight()), gns.GetCurrentEmission()*pct01)
 
 	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
@@ -369,5 +357,31 @@ func ClearDistributedToGovStaker() {
 }
 
 func setDistributionBpsPct(target int, pct uint64) {
+	if target == LIQUIDITY_STAKER {
+		oldPct, exist := distributionBpsPct.Get(strconv.Itoa(target))
+		if !exist {
+			panic("should not happen")
+		}
+	
+		if oldPct.(uint64) != pct {
+			callbackStakerEmissionChange(calculateAmount(gns.GetEmission(), pct))
+		}
+	}
+
 	distributionBpsPct.Set(strconv.Itoa(target), pct)
+}
+
+func GetEmission() uint64 {
+	return calculateAmount(gns.GetEmission(), GetDistributionBpsPct(LIQUIDITY_STAKER))
+}
+
+// When there is a staker % change, it will trigger the StakerCallback first, which should "flush" the halving blocks first(by poolTier calling the GetHalvingBlocksInRange before it updates the emission).
+// Therefore, if there are halving blocks exist from what we got from gns side, there must be no % change event between those blocks, which means we can use the current distribution pct to calculate the emissions for the past halving blocks.
+func GetHalvingBlocksInRange(start, end uint64) ([]uint64, []uint64) {
+	halvingBlocks, halvingEmissions := gns.GetHalvingBlocksInRange(int64(start), int64(end))
+	for i := range halvingBlocks {
+		// Applying staker ratio for past halving blocks
+		halvingEmissions[i] = calculateAmount(halvingEmissions[i], GetDistributionBpsPct(LIQUIDITY_STAKER))
+	}
+	return halvingBlocks, halvingEmissions
 }

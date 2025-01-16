@@ -136,7 +136,7 @@ func init() {
 	// tier 1
 	// ONLY GNOT:GNS 0.3%
 
-	poolTier = NewPoolTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1, en.GetStakerEmissionUpdates)
+	poolTier = NewPoolTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange)
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1) // must update pools tree
 }
 
