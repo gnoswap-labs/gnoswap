@@ -83,7 +83,7 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 			deposits: deposits,
 		},
 		Pool:             make(map[string]*canonicalPool),
-		Reward:           make([][]Reward, 0),
+		Reward:           make([][]Reward, 124),
 		emissionUpdates:  NewUintTree(),
 		MsPerBlock:       1000,
 		PerBlockEmission: 1000000000,
@@ -198,7 +198,7 @@ func (self *canonicalRewardState) ExternalRewardPerPool(currentHeight int) map[s
 }
 
 func (self *canonicalRewardState) CurrentHeight() int {
-	return len(self.Reward)+124 // due to testing requirement
+	return len(self.Reward) // due to testing requirement
 }
 
 // Process block with canonical reward calculation

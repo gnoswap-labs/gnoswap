@@ -159,6 +159,7 @@ func NewPoolTier(currentHeight uint64, initialPoolPath string, getEmission func(
 		lastRewardCacheHeight: &currentHeight,
 		getEmission:           getEmission,
 		getHalvingBlocksInRange: getHalvingBlocksInRange,
+		currentEmission:       getEmission(),
 	}
 
 	result.createPool(pools, initialPoolPath, 1, currentHeight)
@@ -264,6 +265,7 @@ func CalculateTierReward(currentEmission uint64, tierRatio *TierRatio, tier uint
 // There MUST be no ratio/count/tier change during the emissionUpdates
 // (due to calling cacheReward() at the start of changeTier(), this holds true).
 func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
+	println("====== cacheReward Start -> currentHeight : ", currentHeight, ", lastHeight : ", *self.lastRewardCacheHeight)
 	lastHeight := *self.lastRewardCacheHeight
 	if currentHeight <= lastHeight {
 		// no need to check
@@ -275,6 +277,8 @@ func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
 
 	cursor := lastHeight
 	currentEmission := self.currentEmission
+
+	println("====== cacheReward halvingBlocks : ", halvingBlocks, ", halvingEmissions : ", halvingEmissions, ", currentEmission : ", currentEmission)
 
 	for i, hvBlock := range halvingBlocks {
 		if hvBlock <= cursor {
@@ -306,6 +310,8 @@ func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
 	// update lastRewardCacheHeight and currentEmission
 	*self.lastRewardCacheHeight = currentHeight
 	self.currentEmission = currentEmission
+
+	println("====== cacheReward End -> currentEmission : ", currentEmission)
 }
 
 func (self *PoolTier) applyCacheToAllPools(pools *Pools, startBlock, endBlock, emissionInThisInterval uint64) {
@@ -326,10 +332,10 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, startBlock, endBlock, e
 		}
 
 		// real reward
-		partialReward := ApplyDenominator(emissionInThisInterval, denominators[tierNum])
+		reward := ApplyDenominator(emissionInThisInterval, denominators[tierNum])
 
 		// accumulate the reward for the interval (startBlock to endBlock) in the Pool
-		pool.cacheInternalReward(startBlock, endBlock, partialReward)
+		pool.cacheInternalReward(startBlock, reward)
 		return false
 	})
 }
