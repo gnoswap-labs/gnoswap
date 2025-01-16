@@ -85,14 +85,6 @@ func (self *Ticks) Has(tickId int32) bool {
 	return self.tree.Has(EncodeInt(tickId))
 }
 
-type TickCross struct {
-	cross bool
-
-	// BlockNumber / TotalStake accumulation, Q128.
-	// Pool.globalRewardRatioAccumulation at the point of the tick crossing
-	accumulation *u256.Uint 
-}
-
 // Tick represents the state of a specific tick in a pool.
 //
 // Fields:

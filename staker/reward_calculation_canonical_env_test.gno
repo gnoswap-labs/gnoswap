@@ -74,6 +74,8 @@ type canonicalRewardState struct {
 }
 
 func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tickCrossHook func(pools *Pools, height func() int64) func(poolPath string, tickId int32, zeroForOne bool)) *canonicalRewardState {
+	std.TestSkipHeights(1)
+
 	result := &canonicalRewardState{
 		t: t,
 		global: &emulatedGlobalState{
@@ -96,6 +98,10 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 	result.NextBlock() // must skip height 0
 
 	result.SetEmissionUpdate(1000000000)
+
+	if std.GetHeight() != int64(result.CurrentHeight()) {
+		panic(ufmt.Sprintf("height mismatch: %d != %d", std.GetHeight(), result.CurrentHeight()))
+	}
 
 	return result
 }
@@ -212,6 +218,7 @@ func (self *canonicalRewardState) CalculateCanonicalReward() []Reward {
 func (self *canonicalRewardState) NextBlock() {
 	self.Reward = append(self.Reward, self.CalculateCanonicalReward())
 	self.CurrentTimestamp += self.MsPerBlock
+	std.TestSkipHeights(1)
 }
 
 func (self *canonicalRewardState) NextBlockNoCanonical() {

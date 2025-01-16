@@ -145,16 +145,17 @@ type PoolTier struct {
 }
 
 func NewPoolTier(currentHeight uint64, initialPoolPath string, getEmission func() uint64, getHalvingBlocksInRange func(start, end uint64) ([]uint64, []uint64)) *PoolTier {
+	nextHeight := currentHeight + 1
 	result := &PoolTier{
 		membership:            avl.NewTree(),
 		tierRatio:             TierRatioFromCounts(1, 0, 0),
-		lastRewardCacheHeight: &currentHeight,
+		lastRewardCacheHeight: &nextHeight,
 		getEmission:           getEmission,
 		getHalvingBlocksInRange: getHalvingBlocksInRange,
 		currentEmission:       getEmission(),
 	}
 
-	result.createPool(pools, initialPoolPath, 1, 0/*FIXME XXX: WE NEED TO GET THE TICK*/, currentHeight)
+	result.createPool(pools, initialPoolPath, 1, 0/*FIXME XXX: WE NEED TO GET THE TICK*/, nextHeight)
 	return result
 }
 
