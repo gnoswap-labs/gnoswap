@@ -173,7 +173,7 @@ func (self *Pool) updateRewardByLiquidityChange(currentTierReward uint64, curren
 }
 
 func (self *Pool) cacheRewardPerLiquidityUnit(startHeight, endHeight uint64, currentTierReward uint64) {
-	println("\t\t\t->cacheRewardPerLiquidityUnit Start : [", startHeight, "], [", endHeight, "], (", currentTierReward, "), lastUnclaimableHeight ", *self.lastUnclaimableHeight)
+	println("\t\t\t->cacheRewardPerLiquidityUnit Start : [", startHeight, "], [", endHeight, "], (", currentTierReward, "), lastUnclaimableHeight ", *self.lastUnclaimableHeight, ", currentTierReward : ", currentTierReward)
 	// Unclaimable reward calculation uses tierRewardTotal, so we need to update it
 	if *self.lastUnclaimableHeight != 0 {
 		self.endInternalUnclaimablePeriod(startHeight)
@@ -197,33 +197,13 @@ func (self *Pool) cacheRewardPerLiquidityUnit(startHeight, endHeight uint64, cur
 
 		return false
 	})
-	self.stakedLiquidity.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
-		stakedLiquidity := value.(*u256.Uint)
-		println("[", startHeight, "], [", endHeight, "], key : ", height, ", value : ", stakedLiquidity.ToString())
-		return false
-	})
-	println("\t\t\t->cacheRewardPerLiquidityUnit End : [", startHeight, "], [", endHeight, "], (", currentTierReward, "), lastUnclaimableHeight ", *self.lastUnclaimableHeight)
 }
 
-func (self *Pool) cacheInternalReward(currentHeight uint64, emissionUpdate en.EmissionUpdate, rewardDenominator uint64) {
-	println("\t[", currentHeight, "] cacheInternalReward Strat ")
-	currentEmission := emissionUpdate.LastEmissionUpdate
-	println("\t\tcurrentEmission to Staker per block: ", currentEmission)
-
+func (self *Pool) cacheInternalReward(currentHeight, currentEmission uint64) {
 	startHeight := *self.lastRewardCacheHeight
-	println("\t\tstartHeight : ", startHeight)
 
-	for i, height := range emissionUpdate.EmissionUpdateHeights {
-		emission := emissionUpdate.EmissionUpdates[i]
-		println("\t\theight : ", height, ", emission : ", emission)
+	self.cacheRewardPerLiquidityUnit(startHeight, currentHeight, currentEmission)
 
-		self.cacheRewardPerLiquidityUnit(startHeight, height, ApplyDenominator(currentEmission, rewardDenominator))
-		startHeight = height
-
-		currentEmission = emission
-	}
-
-	self.cacheRewardPerLiquidityUnit(startHeight, currentHeight, ApplyDenominator(currentEmission, rewardDenominator))
 	if *self.lastUnclaimableHeight != 0 && self.CurrentStakedLiquidity(currentHeight).IsZero() {
 		self.endInternalUnclaimablePeriod(currentHeight)
 		self.startInternalUnclaimablePeriod(currentHeight)

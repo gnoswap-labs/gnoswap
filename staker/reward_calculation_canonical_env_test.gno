@@ -82,7 +82,7 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 			deposits: deposits,
 		},
 		Pool:             make(map[string]*canonicalPool),
-		Reward:           make([][]Reward, 0),
+		Reward:           make([][]Reward, 124),
 		emissionUpdates:  NewUintTree(),
 		MsPerBlock:       1000,
 		PerBlockEmission: 1000000000,
@@ -91,7 +91,7 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 	result.tickCrossHook = tickCrossHook(pools, func() int64 {
 		return int64(result.CurrentHeight())
 	})
-	result.global.poolTier = NewPoolTier(1, test_gnousdc, result.EmissionUpdates)
+	result.global.poolTier = NewPoolTier(124, test_gnousdc, func() uint64 { return result.PerBlockEmission }, func(start, end uint64) ([]uint64, []uint64) { return nil, nil })
 
 	result.NextBlock() // must skip height 0
 
@@ -109,31 +109,6 @@ type emulatedGlobalState struct {
 func (self *canonicalRewardState) isInRange(deposit *Deposit) bool {
 	tick := self.Pool[deposit.targetPoolPath].tick
 	return deposit.tickLower <= tick && tick < deposit.tickUpper
-}
-
-func (self *canonicalRewardState) GetLatestEmissionUpdate() uint64 {
-	var emission uint64
-	self.emissionUpdates.ReverseIterate(0, uint64(self.CurrentHeight()), func(key uint64, value interface{}) bool {
-		emission = value.(uint64)
-		return true
-	})
-	return emission
-}
-
-func (self *canonicalRewardState) EmissionUpdates(startHeight uint64, endHeight uint64) en.EmissionUpdate {
-	heights := make([]uint64, 0)
-	updates := make([]uint64, 0)
-	self.emissionUpdates.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
-		heights = append(heights, key)
-		updates = append(updates, value.(uint64))
-		return false
-	})
-
-	return en.EmissionUpdate{
-		LastEmissionUpdate: self.GetLatestEmissionUpdate(),
-		EmissionUpdateHeights: heights,
-		EmissionUpdates: updates,
-	}
 }
 
 func (self *canonicalRewardState) SetEmissionUpdate(emission uint64) {
@@ -192,7 +167,7 @@ func (self *canonicalRewardState) ExternalRewardPerPool(currentHeight int) map[s
 }
 
 func (self *canonicalRewardState) CurrentHeight() int {
-	return len(self.Reward)
+	return len(self.Reward) // due to testing requirement
 }
 
 // Process block with canonical reward calculation
@@ -253,7 +228,6 @@ func (self *canonicalRewardState) CanonicalRewardOfHeight(depositId uint64, heig
 
 func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]uint64, []uint64, []map[string]uint64, []map[string]uint64) {
 	currentHeight := uint64(self.CurrentHeight())
-	emissionUpdate := self.EmissionUpdates(*self.global.poolTier.lastRewardCacheHeight, currentHeight)
 
 	deposits := self.global.deposits
 	pools := self.global.pools

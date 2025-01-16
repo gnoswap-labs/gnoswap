@@ -133,15 +133,25 @@ type PoolTier struct {
 	// rewardCache           [4]*RewardCacheTree // blockNumber -> uint64
 	lastRewardCacheHeight *uint64
 
-	emissionUpdate func(uint64, uint64) en.EmissionUpdate
+	currentEmission uint64
+
+	// returns current emission.
+	getEmission func() uint64
+
+	// returns a list of halving blocks within the interval [start, end) in ascending order
+	// there MUST NOT be any emission amount change between start and end - those had to be handled by the CallbackStakerEmissionChange. 
+	getHalvingBlocksInRange func(start, end uint64) ([]uint64, []uint64)
+
 }
 
-func NewPoolTier(currentHeight uint64, initialPoolPath string, emissionUpdate func(uint64, uint64) en.EmissionUpdate) *PoolTier {
+func NewPoolTier(currentHeight uint64, initialPoolPath string, getEmission func() uint64, getHalvingBlocksInRange func(start, end uint64) ([]uint64, []uint64)) *PoolTier {
 	result := &PoolTier{
 		membership:            avl.NewTree(),
 		tierRatio:             TierRatioFromCounts(1, 0, 0),
-		emissionUpdate:        emissionUpdate,
 		lastRewardCacheHeight: &currentHeight,
+		getEmission:           getEmission,
+		getHalvingBlocksInRange: getHalvingBlocksInRange,
+		currentEmission:       getEmission(),
 	}
 
 	result.createPool(pools, initialPoolPath, 1, 0/*FIXME XXX: WE NEED TO GET THE TICK*/, currentHeight)
@@ -165,7 +175,7 @@ func (self *PoolTier) createPool(pools *Pools, poolPath string, initialTier uint
 }
 
 func (self *PoolTier) CurrentReward(tier uint64) uint64 {
-	currentEmission := self.emissionUpdate(uint64(std.GetHeight()), uint64(std.GetHeight())).LastEmissionUpdate
+	currentEmission := self.getEmission()
 	return currentEmission * self.tierRatio.Get(tier) / uint64(self.CurrentCount(tier)) / 100
 }
 
@@ -204,6 +214,7 @@ func (self *PoolTier) changeTier(currentHeight uint64, pools *Pools, poolPath st
 	println("[", currentHeight, "] changeTier Start -> poolPath : ", poolPath, ", nextTier : ", nextTier)
 	self.cacheReward(currentHeight, pools)
 
+	// same as prev. no need to update
 	currentTier := self.CurrentTier(poolPath)
 	if currentTier == nextTier {
 		return
@@ -226,7 +237,7 @@ func (self *PoolTier) changeTier(currentHeight uint64, pools *Pools, poolPath st
 
 	// We only care about the current emission update at the current height.
 	// Any emission update were already handled by the cacheReward() at the start of changeTier().
-	currentEmission := self.emissionUpdate(currentHeight, currentHeight).LastEmissionUpdate
+	currentEmission := self.getEmission()
 
 	self.membership.Iterate("", "", func(key string, value interface{}) bool {
 		pool, ok := pools.Get(key)
@@ -246,43 +257,82 @@ func CalculateTierReward(currentEmission uint64, tierRatio *TierRatio, tier uint
 // There MUST be no ratio/count/tier change during the emissionUpdates
 // (due to calling cacheReward() at the start of changeTier(), this holds true).
 func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
-	// PoolTier.cacheReward is executed only when emissionUpdate is not empty, which means:
-	// - there is a new halving event
-	// - msPerBlock is changed
-	// - emission distribution ratio is changed
-	// during the period of PoolTier.lastRewardCacheHeight to currentHeight
-
-	println("[", currentHeight, "] cacheReward Start -> lastRewardCacheHeight : ", *self.lastRewardCacheHeight)
-	if *self.lastRewardCacheHeight == currentHeight {
-		println("lastRewardCacheHeight is same with currentHeight")
+	lastHeight := *self.lastRewardCacheHeight
+	if currentHeight <= lastHeight {
+		// no need to check
 		return
 	}
 
-	emissionUpdate := self.emissionUpdate(*self.lastRewardCacheHeight, currentHeight)
-	if emissionUpdate.IsEmpty() {
-		println("emissionUpdate is empty")
-		//return
-	}
+	// find halving blocks in range
+	halvingBlocks, halvingEmissions := self.getHalvingBlocksInRange(lastHeight, currentHeight)
 
-	rewardDenominators := self.tierRatio.IntoRewardDenominators(self.CurrentAllTierCounts())
+	cursor := lastHeight
+	currentEmission := self.currentEmission
 
-	self.membership.Iterate("", "", func(key string, value interface{}) bool {
-		pool, ok := pools.Get(key)
-		if !ok {
-			panic("pool not found")
+	for i, hvBlock := range halvingBlocks {
+		if hvBlock <= cursor {
+			continue
 		}
 
-		println("")
-		println("\tmembership : ", key, ", ", value.(uint64))
-		pool.cacheInternalReward(currentHeight, emissionUpdate, rewardDenominators[value.(uint64)])
+		if hvBlock > currentHeight {
+			break
+		}
 
+		// caching: [cursor, hvBlock)
+		startBlock := cursor
+		endBlock := hvBlock
+		if endBlock > startBlock {
+			self.applyCacheToAllPools(pools, startBlock, endBlock, currentEmission)
+			cursor = endBlock
+		}
+
+		// halve emissions when halvingBlock is reached
+		currentEmission = halvingEmissions[i]
+	}
+
+	// remaining range (cursor+1 ~ currentHeight)
+	if cursor < currentHeight {
+		self.applyCacheToAllPools(pools, cursor, currentHeight, currentEmission)
+		cursor = currentHeight
+	}
+
+	// update lastRewardCacheHeight and currentEmission
+	*self.lastRewardCacheHeight = currentHeight
+	self.currentEmission = currentEmission
+}
+
+func (self *PoolTier) applyCacheToAllPools(pools *Pools, startBlock, endBlock, emissionInThisInterval uint64) {
+	if startBlock >= endBlock {
+		return
+	}
+
+	// calculate denominator and number of pools in each tier
+	counts := self.CurrentAllTierCounts()
+	denominators := self.tierRatio.IntoRewardDenominators(counts)
+
+	// apply cache to all pools
+	self.membership.Iterate("", "", func(key string, value interface{}) bool {
+		tierNum := value.(uint64)
+		pool, ok := pools.Get(key)
+		if !ok {
+			return false
+		}
+
+		// real reward
+		reward := ApplyDenominator(emissionInThisInterval, denominators[tierNum])
+
+		// accumulate the reward for the interval (startBlock to endBlock) in the Pool
+		pool.cacheInternalReward(startBlock, reward)
 		return false
 	})
-
-	*self.lastRewardCacheHeight = currentHeight
-	println("[", currentHeight, "] cacheReward End : lastRewardCacheHeight ", *self.lastRewardCacheHeight)
 }
 
 func (self *PoolTier) IsInternallyIncentivizedPool(currentHeight uint64, poolPath string) bool {
 	return self.CurrentTier(poolPath) > 0
+}
+
+// Called when msPerBlock is changed or staker emission % is changed.
+// This does not take account of halving.
+func CallbackStakerEmissionChange(amount uint64) {
+	poolTier.cacheReward(uint64(std.GetHeight()), pools)
 }
