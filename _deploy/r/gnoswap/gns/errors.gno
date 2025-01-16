@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	errInvalidYear     = errors.New("[GNOSWAP-GNS-001] invalid year")
-	errTooManyEmission = errors.New("[GNOSWAP-GNS-002] too many emission reward")
+	errInvalidYear                 = errors.New("[GNOSWAP-GNS-001] invalid year")
+	errTooManyEmission             = errors.New("[GNOSWAP-GNS-002] too many emission reward")
+	errCallbackEmissionChangeIsNil = errors.New("[GNOSWAP-GNS-003] callback emission change is nil")
 )
 
 func addDetailToError(err error, detail string) string {

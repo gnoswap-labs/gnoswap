@@ -7,7 +7,6 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/json"
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 )
 
@@ -61,7 +60,6 @@ type HalvingData struct {
 	accumAmount      []uint64
 	amountPerBlock   []uint64
 }
-
 
 func (h *HalvingData) getStartBlockHeight(year int64) int64 {
 	if year == 0 {
@@ -389,7 +387,10 @@ func setAvgBlockTimeInMs(ms int64) {
 	// how much reward should be minted per block for current halving year
 	adjustedAmountPerBlock := amountLeft / uint64(blockLeft)
 	// update it
-	setAmountPerBlockPerHalvingYear(currentYear, adjustedAmountPerBlock)	
+	setAmountPerBlockPerHalvingYear(currentYear, adjustedAmountPerBlock)
+	if callbackEmissionChange == nil {
+		panic(errCallbackEmissionChangeIsNil.Error())
+	}
 	callbackEmissionChange(adjustedAmountPerBlock)
 
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
@@ -418,8 +419,6 @@ func setAvgBlockTimeInMs(ms int64) {
 	}
 
 	avgBlockTimeMs = ms
-
-
 }
 
 // GetAmountByHeight returns the amount of gns to mint by height
