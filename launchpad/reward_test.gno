@@ -1,8 +1,10 @@
 package launchpad
 
 import (
+	"std"
 	"testing"
 
+	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -224,4 +226,40 @@ func TestCalculateTierRewards(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCollectRewardByDepositId_FailCases(t *testing.T) {
+	setup := func() {
+        projects = make(map[string]Project)
+        deposits = make(map[string]Deposit)
+        depositsByUserByProject = make(map[std.Address]map[string][]string)
+    }
+
+	t.Run("ID not found", func(t *testing.T) {
+        setup()
+        
+        defer func() {
+            if r := recover(); r == nil {
+                t.Error("expected panic but not")
+            }
+        }()
+        
+        CollectRewardByDepositId("non_existent_id")
+    })
+
+	t.Run("Claimable height before", func(t *testing.T) {
+        setup()
+
+        projectId := "test_project"
+        depositId := "test_deposit"
+
+        deposits[depositId] = Deposit{
+            id: depositId,
+            projectId: projectId,
+            claimableHeight: uint64(std.GetHeight()) + 1000,
+        }
+
+		reward := CollectRewardByDepositId(depositId)
+		uassert.Equal(t, reward, uint64(0))
+	})
 }
