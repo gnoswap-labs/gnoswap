@@ -382,6 +382,15 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 	for incentiveId, amount := range externalReward {
 		incentive := externalIncentives.Get(incentiveId)
 		rewardToken := incentive.rewardToken
+		if incentive.rewardAmount < amount {
+			panic(addDetailToError(
+				errInsufficientReward,
+				ufmt.Sprintf("incentiveId(%s) has insufficient reward(%d)", incentiveId, amount),
+			))
+		}
+		incentive.rewardAmount -= amount
+		incentive.rewardLeft = incentive.rewardAmount
+		externalIncentives.Set(incentiveId, incentive)
 
 		toUser := handleUnstakingFee(rewardToken, amount, false, tokenId, incentive.targetPoolPath)
 
@@ -391,7 +400,9 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 
 	// do nothing for external penalty
 	// it will be stored in staker, and when external ends will be refunded
-	externalPenalty := reward.ExternalPenalty
+	externalIncentivePenalty := reward.ExternalPenalty
+	externalIncentiveReward := reward.External
+
 	// TODO:
 	// externalPenalty should be stored in staker
 	// And update reward ledger
