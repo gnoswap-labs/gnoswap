@@ -116,7 +116,7 @@ type HalvingInfo interface {
 	GetHalvingBlocksInRange(start, end uint64) []uint64
 
 	// Returns the emission value at that block (after half-life), etc.
-	GetEmissionAfterHalving(currentEmission uint64) uint64
+	GetEmission(currentEmission uint64) uint64
 }
 
 // PoolTier manages pool counts, ratios, and rewards for different tiers.
@@ -143,19 +143,22 @@ type PoolTier struct {
 
 	currentEmission uint64
 
-	// Field for queries to get a list of halving blocks, halving intervals, etc.
-	halvingInfo HalvingInfo
+	// returns current emission.
+	getEmission func() uint64
 
-	// TODO: remove this
-	emissionUpdate func(uint64, uint64) en.EmissionUpdate
+	// returns a list of halving blocks within the interval [start, end) in ascending order
+	// there MUST NOT be any emission amount change between start and end - those had to be handled by the CallbackStakerEmissionChange. 
+	getHalvingBlocksInRange func(start, end uint64) ([]uint64, []uint64)
+
 }
 
-func NewPoolTier(currentHeight uint64, initialPoolPath string, emissionUpdate func(uint64, uint64) en.EmissionUpdate) *PoolTier {
+func NewPoolTier(currentHeight uint64, initialPoolPath string, getEmission func() uint64, getHalvingBlocksInRange func(start, end uint64) ([]uint64, []uint64)) *PoolTier {
 	result := &PoolTier{
 		membership:            avl.NewTree(),
 		tierRatio:             TierRatioFromCounts(1, 0, 0),
-		emissionUpdate:        emissionUpdate,
 		lastRewardCacheHeight: &currentHeight,
+		getEmission:           getEmission,
+		getHalvingBlocksInRange: getHalvingBlocksInRange,
 	}
 
 	result.createPool(pools, initialPoolPath, 1, currentHeight)
@@ -179,7 +182,7 @@ func (self *PoolTier) createPool(pools *Pools, poolPath string, initialTier uint
 }
 
 func (self *PoolTier) CurrentReward(tier uint64) uint64 {
-	currentEmission := self.emissionUpdate(uint64(std.GetHeight()), uint64(std.GetHeight())).LastEmissionUpdate
+	currentEmission := self.getEmission()
 	return currentEmission * self.tierRatio.Get(tier) / uint64(self.CurrentCount(tier)) / 100
 }
 
@@ -241,7 +244,7 @@ func (self *PoolTier) changeTier(currentHeight uint64, pools *Pools, poolPath st
 
 	// We only care about the current emission update at the current height.
 	// Any emission update were already handled by the cacheReward() at the start of changeTier().
-	currentEmission := self.emissionUpdate(currentHeight, currentHeight).LastEmissionUpdate
+	currentEmission := self.getEmission()
 
 	self.membership.Iterate("", "", func(key string, value interface{}) bool {
 		pool, ok := pools.Get(key)
@@ -268,12 +271,12 @@ func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
 	}
 
 	// find halving blocks in range
-	halvingBlocks := self.halvingInfo.GetHalvingBlocksInRange(lastHeight+1, currentHeight)
+	halvingBlocks, halvingEmissions := self.getHalvingBlocksInRange(lastHeight+1, currentHeight)
 
 	cursor := lastHeight
 	currentEmission := self.currentEmission
 
-	for _, hvBlock := range halvingBlocks {
+	for i, hvBlock := range halvingBlocks {
 		if hvBlock <= cursor {
 			continue
 		}
@@ -282,16 +285,16 @@ func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
 			break
 		}
 
-		// caching: (cursor+1 ~ hvBlock)
+		// caching: [cursor, hvBlock)
 		startBlock := cursor
 		endBlock := hvBlock
 		if endBlock > startBlock {
 			self.applyCacheToAllPools(pools, startBlock, endBlock, currentEmission)
-			cursor = endBlock - 1
+			cursor = endBlock
 		}
 
 		// halve emissions when halvingBlock is reached
-		currentEmission = self.halvingInfo.GetEmissionAfterHalving(currentEmission)
+		currentEmission = halvingEmissions[i]
 	}
 
 	// remaining range (cursor+1 ~ currentHeight)
@@ -333,4 +336,10 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, startBlock, endBlock, e
 
 func (self *PoolTier) IsInternallyIncentivizedPool(currentHeight uint64, poolPath string) bool {
 	return self.CurrentTier(poolPath) > 0
+}
+
+// Called when msPerBlock is changed or staker emission % is changed.
+// This does not take account of halving.
+func CallbackStakerEmissionChange(amount uint64) {
+	poolTier.cacheReward(uint64(std.GetHeight()), pools)
 }

@@ -1,13 +1,25 @@
 package emission
 
-type LiquidityStakerDistributionPctChangeCallback func(uint64)
+import (
+	"gno.land/r/gnoswap/v1/gns"
+)
 
-var stakerDistributionPctChangeCallback LiquidityStakerDistributionPctChangeCallback
+var callbackStakerEmissionChange func(amount uint64)
 
-func SetLiquidityStakerDistributionPctChangeCallback(callback LiquidityStakerDistributionPctChangeCallback) {
-    stakerDistributionPctChangeCallback = callback
+func SetCallbackStakerEmissionChange(callback func(amount uint64)) {
+	if callbackStakerEmissionChange != nil {
+		panic("callbackStakerEmissionChange already set")
+	}
+	callbackStakerEmissionChange = callback
 }
 
-func GetLiquidityStakerDistributionPctChangeCallback() LiquidityStakerDistributionPctChangeCallback {
-	return stakerDistributionPctChangeCallback
+// Called when per-block emission is changed from the gns side.
+// It does not process non-immediate emission changes, such as halving.
+func callbackEmissionChange(amount uint64) {
+	callbackStakerEmissionChange(calculateAmount(amount, GetDistributionBpsPct(LIQUIDITY_STAKER)))
 }
+
+func init() {
+	gns.SetCallbackEmissionChange(callbackEmissionChange)
+}
+

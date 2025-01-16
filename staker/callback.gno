@@ -7,15 +7,9 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 )
 
-func CreateStakerDistributionCallback(pt *PoolTier) (en.LiquidityStakerDistributionPctChangeCallback, error) {
-	return func(pct uint64) {
-		// caching the reward
-		// pt.cacheReward(uint64(std.GetHeight()), pools)
-		currentHeight := uint64(std.GetHeight())
-
-		// update the current emission
-		newEmission := gns.GetCurrentEmission()
-		pt.cacheReward(currentHeight, pools)
-		pt.currentEmission = newEmission
-	}, nil
+func CreateCallbackStakerEmissionChange(pt *PoolTier, pools *Pools) func(uint64) {
+	return func(emission uint64) {
+		pt.cacheReward(uint64(std.GetHeight()), pools)
+		pt.currentEmission = emission
+	}
 }
