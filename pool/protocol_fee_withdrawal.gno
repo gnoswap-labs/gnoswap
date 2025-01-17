@@ -5,8 +5,10 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
+	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
 
 // withdrawalFeeBPS is the fee that is charged when a user withdraws their collected fees
@@ -68,9 +70,11 @@ func HandleWithdrawalFee(
 
 	token0Teller := common.GetTokenTeller(token0Path)
 	checkTransferError(token0Teller.TransferFrom(positionCaller, consts.PROTOCOL_FEE_ADDR, feeAmount0.Uint64()))
+	pf.AddToProtocolFee(token0Path, feeAmount0.Uint64())
 
 	token1Teller := common.GetTokenTeller(token1Path)
 	checkTransferError(token1Teller.TransferFrom(positionCaller, consts.PROTOCOL_FEE_ADDR, feeAmount1.Uint64()))
+	pf.AddToProtocolFee(token1Path, feeAmount1.Uint64())
 
 	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(

@@ -11,7 +11,10 @@ import (
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
+
 	en "gno.land/r/gnoswap/v1/emission"
+	pf "gno.land/r/gnoswap/v1/protocol_fee"
+
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -189,6 +192,7 @@ func CreatePool(
 
 	if poolCreationFee > 0 {
 		gns.TransferFrom(a2u(std.PrevRealm().Addr()), a2u(consts.PROTOCOL_FEE_ADDR), poolCreationFee)
+		pf.AddToProtocolFee(consts.GNS_PATH, poolCreationFee)
 
 		std.Emit(
 			"PoolCreationFee",
