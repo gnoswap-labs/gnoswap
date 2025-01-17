@@ -166,14 +166,13 @@ func (self *Pool) cacheReward(startHeight, endHeight int64, currentTierReward ui
 
 	oldTierReward := self.rewardCache.CurrentReward(startHeight)
 	if oldTierReward != currentTierReward {
+		println("	cacheReward SET", self.poolPath, startHeight, currentTierReward)
 		self.rewardCache.Set(startHeight, currentTierReward)
 	}
 
 }
 
-func (self *Pool) cacheInternalReward(currentHeight int64, currentEmission uint64) {
-	startHeight := self.lastRewardCacheHeight
-
+func (self *Pool) cacheInternalReward(startHeight, currentHeight int64, currentEmission uint64) {
 	self.cacheReward(startHeight, currentHeight, currentEmission)
 
 	if self.lastUnclaimableHeight != 0 && self.CurrentStakedLiquidity(currentHeight).IsZero() {

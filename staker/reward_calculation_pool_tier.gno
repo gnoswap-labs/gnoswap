@@ -226,12 +226,6 @@ func (self *PoolTier) changeTier(currentHeight int64, pools *Pools, poolPath str
 			panic("changeTier: pool not found")
 		}
 		pool.cacheReward(currentHeight, currentHeight, 0)
-	} else if currentTier == 0 {
-		// new internal reward
-		pool, ok := pools.Get(poolPath)
-		if !ok {
-			panic("changeTier: pool not found")
-		}
 	} else {
 		self.membership.Set(poolPath, nextTier)
 	}
@@ -337,7 +331,7 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, startBlock, endBlock in
 		reward := ApplyDenominator(emissionInThisInterval, denominators[tierNum])
 		// accumulate the reward for the interval (startBlock to endBlock) in the Pool
 		// TODO: the startBlock in this scope and the pool's lastRewardCacheHeight MUST be the same. They should be merged into the one variable(preferrably by passing StartHeight explicitly)
-		pool.cacheInternalReward(endBlock, reward)
+		pool.cacheInternalReward(startBlock, endBlock, reward)
 		return false
 	})
 }

@@ -198,8 +198,6 @@ func (self *canonicalRewardState) CalculateCanonicalReward() map[uint64]Reward {
 
 	println("	###CalculateCanonicalReward")
 	self.global.deposits.Iterate(0, math.MaxUint64, func(tokenId uint64, deposit *Deposit) bool {
-		println("	", tokenId, " : ", deposit.targetPoolPath, " : ", deposit.liquidity.ToString(), self.isInRange(deposit), self.global.poolTier.CurrentTier(deposit.targetPoolPath))
-
 		if deposit.liquidity.IsZero() { // removed deposit
 			return false
 		}
@@ -418,6 +416,9 @@ func (self *canonicalRewardState) StakeToken(tokenId uint64, targetPoolPath stri
 	if self.isInRange(deposit) {
 		pool.modifyDeposit(signedLiquidity, currentHeight, canonicalPool.tick)
 	}
+	// historical tick must be set regardless of the deposit's range
+	pool.historicalTick.Set(currentHeight, canonicalPool.tick)
+
 	pool.ticks.Get(deposit.tickLower).modifyDepositLower(currentHeight, canonicalPool.tick, signedLiquidity)
 	pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(currentHeight, canonicalPool.tick, signedLiquidity)
 
@@ -565,7 +566,7 @@ func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
 		return
 	}
 
-	self.t.Logf("	(%d->%d) %s", pool.tick, tick, pool.poolPath)
+	self.t.Logf("	[%d] (%d->%d) %s", self.CurrentHeight(), pool.tick, tick, pool.poolPath)
 
 	zeroForOne := tick < pool.tick // true if moving left, false if moving right
 	if zeroForOne {

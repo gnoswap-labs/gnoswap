@@ -231,6 +231,8 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		isInRange = true
 		pool.modifyDeposit(signedLiquidity, currentHeight, currentTick)
 	}
+	// historical tick must be set regardless of the deposit's range
+	pool.historicalTick.Set(currentHeight, currentTick)
 
 	// this could happen because of how position stores the ticks.
 	// ticks are negated if the token1 < token0
