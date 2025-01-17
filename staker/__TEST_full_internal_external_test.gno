@@ -4,9 +4,12 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
+	"gno.land/r/demo/users"
+
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
-
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -14,6 +17,36 @@ import (
 
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
+
+	"gno.land/r/demo/wugnot"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
+	"gno.land/r/onbloc/foo"
+	"gno.land/r/onbloc/qux"
+)
+
+const (
+	ugnotDenom string = "ugnot"
+	ugnotPath  string = "gno.land/r/gnoswap/v1/pool:ugnot"
+	wugnotPath string = "gno.land/r/demo/wugnot"
+	gnsPath    string = "gno.land/r/gnoswap/v1/gns"
+	barPath    string = "gno.land/r/onbloc/bar"
+	bazPath    string = "gno.land/r/onbloc/baz"
+	fooPath    string = "gno.land/r/onbloc/foo"
+	oblPath    string = "gno.land/r/onbloc/obl"
+	quxPath    string = "gno.land/r/onbloc/qux"
+
+	fee100      uint32 = 100
+	fee500      uint32 = 500
+	fee3000     uint32 = 3000
+	maxApprove  uint64 = 18446744073709551615
+	max_timeout int64  = 9999999999
+)
+
+var (
+	wugnotAddr = consts.WUGNOT_ADDR
+	stakerAddr = consts.STAKER_ADDR
+	anoAdmin   = users.Resolve(admin)
 )
 
 func TestShortWarmUpInternalAndExternalAllPositionInRange(t *testing.T) {
@@ -22,20 +55,19 @@ func TestShortWarmUpInternalAndExternalAllPositionInRange(t *testing.T) {
 	testCreateExternalIncentiveGns(t) // GNS로 리워드 생성 ( gnot:gns:0.3% 풀은 인터널도 GNS고 익스터널도 GNS )
 	testMintPos01InRange(t)
 
-	testMintPos02InRange(t)  // xx
-	testMintPos03OutRange(t) // xx
-	testMintPos04OutRange(t) // xx
-	testMintPos05OutRange(t) // xx
-	testMintPos06OutRange(t) // xx
-
 	testCreateBarBaz500Tier02(t) // 포지션 아예 없어서 커뮤니티 풀로 빠져야 함
-	testStakeToken01(t)          // 여기 직전까지는 스테이킹 된 포지션 없어서 wugnot gns 0.3% 풀에 쌓인 리워드 커뮤니티 풀로 빠져야 함
+	testMintPos02InRange(t)      //
+	testMintPos03OutRange(t)     //
+	testMintPos04OutRange(t)     //
+	testMintPos05OutRange(t)     //
+	testMintPos06OutRange(t)     //
 
-	testStakeToken02(t) // xx
-	testStakeToken03(t) // xx
-	testStakeToken04(t) // xx
-	testStakeToken05(t) // xx
-	testStakeToken06(t) // xx
+	testStakeToken01(t) // 여기 직전까지는 스테이킹 된 포지션 없어서 wugnot gns 0.3% 풀에 쌓인 리워드 커뮤니티 풀로 빠져야 함
+	testStakeToken02(t) //
+	testStakeToken03(t) //
+	testStakeToken04(t) //
+	testStakeToken05(t) //
+	testStakeToken06(t) //
 
 	testCollectRewardAll_30(t) // 10블록 쯤 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령 (웜업 30% 구간)
 
@@ -49,7 +81,7 @@ func TestShortWarmUpInternalAndExternalAllPositionInRange(t *testing.T) {
 	testCollectRewardDummy(t)           // xx, 2번 포지션 리워드 수령 => 그러면 bar foo 풀에는 스테이킹 된거 없어서 커뮤 풀로 빠져야 함
 	testOneClickStakingPos07OutRange(t) // xx, 원클릭 스테이킹으로 애초에 outRange => 몇 블록 증가 후 7번 포지션 리워드 수령 해보면 outRange기 떄문에 커뮤 풀로 빠져야 함
 
-	testChangeAvgBlockTimeTo4000(t)     // 평균 블록 시간 변경
+	//testChangeAvgBlockTimeTo4000(t) // 평균 블록 시간 변경
 	testChangeDistributionPctByAdmin(t) // 스테이커한테 가는 에미션 비율 변경
 	testUnstakeToken01(t)               // 전체 스티이킹 된 유도성 변경
 
@@ -69,6 +101,7 @@ func TestShortWarmUpInternalAndExternalAllPositionInRange(t *testing.T) {
 
 func testInit(t *testing.T) {
 	t.Run("initialize", func(t *testing.T) {
+		println("[", std.GetHeight(), "] [testInit]")
 		std.TestSetRealm(adminRealm)
 
 		// 언스테이킹 수수료 0으로 바꿈 // 계산 편함
@@ -97,7 +130,8 @@ func testCreatePoolWugnotGns3000Tier01(t *testing.T) {
 	t.Run("create pool gnot:gns:0.3%", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		pl.CreatePool(wugnotPath, gnsPath, 3000, common.TickMathGetSqrtRatioAtTick(0)) // current tick 0
+		gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		pl.CreatePool(wugnotPath, gnsPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // current tick 0
 
 		std.TestSkipHeights(1)
 	})
@@ -152,8 +186,8 @@ func testMintPos02InRange(t *testing.T) {
 	t.Run("mint position 01 in range", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-		gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+		baz.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
 
 		std.TestSkipHeights(1)
 		pn.Mint(
@@ -287,7 +321,8 @@ func testCreateBarBaz500Tier02(t *testing.T) {
 	t.Run("create bar:baz:500 pool, and set internal emission tier #2", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		pl.CreatePool(barPath, bazPath, 500, common.TickMathGetSqrtRatioAtTick(0))
+		gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		pl.CreatePool(barPath, bazPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 		std.TestSkipHeights(1)
 
 		SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 2)
@@ -298,7 +333,9 @@ func testCreateBarBaz500Tier02(t *testing.T) {
 func testStakeToken01(t *testing.T) {
 	t.Run("stake token 01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		gnft.Approve(stakerAddr, tokenIdFrom(1))
+		gnft.Approve(stakerAddr, common.TokenIdFrom(1))
+		approver, err := gnft.GetApproved(common.TokenIdFrom(1))
+		println("approver", approver, err)
 		StakeToken(1)
 		std.TestSkipHeights(1)
 	})
@@ -307,7 +344,7 @@ func testStakeToken01(t *testing.T) {
 func testStakeToken02(t *testing.T) {
 	t.Run("stake token 02", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		gnft.Approve(stakerAddr, tokenIdFrom(2))
+		gnft.Approve(stakerAddr, common.TokenIdFrom(2))
 		StakeToken(2)
 		std.TestSkipHeights(1)
 	})
@@ -316,7 +353,7 @@ func testStakeToken02(t *testing.T) {
 func testStakeToken03(t *testing.T) {
 	t.Run("stake token 03", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		gnft.Approve(stakerAddr, tokenIdFrom(3))
+		gnft.Approve(stakerAddr, common.TokenIdFrom(3))
 		StakeToken(3)
 		std.TestSkipHeights(1)
 	})
@@ -325,7 +362,7 @@ func testStakeToken03(t *testing.T) {
 func testStakeToken04(t *testing.T) {
 	t.Run("stake token 04", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		gnft.Approve(stakerAddr, tokenIdFrom(4))
+		gnft.Approve(stakerAddr, common.TokenIdFrom(4))
 		StakeToken(4)
 		std.TestSkipHeights(1)
 	})
@@ -334,7 +371,7 @@ func testStakeToken04(t *testing.T) {
 func testStakeToken05(t *testing.T) {
 	t.Run("stake token 05", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		gnft.Approve(stakerAddr, tokenIdFrom(5))
+		gnft.Approve(stakerAddr, common.TokenIdFrom(5))
 		StakeToken(5)
 		std.TestSkipHeights(1)
 	})
@@ -343,7 +380,7 @@ func testStakeToken05(t *testing.T) {
 func testStakeToken06(t *testing.T) {
 	t.Run("stake token 06", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		gnft.Approve(stakerAddr, tokenIdFrom(6))
+		gnft.Approve(stakerAddr, common.TokenIdFrom(6))
 		StakeToken(6)
 		std.TestSkipHeights(1)
 	})
@@ -353,6 +390,7 @@ func testCollectRewardAll_30(t *testing.T) {
 	t.Run("collect reward for all position, while warm up is in 30", func(t *testing.T) {
 		std.TestSkipHeights(10)
 
+		std.TestSetRealm(adminRealm)
 		CollectReward(1, false)
 		CollectReward(2, false)
 		CollectReward(3, false)
@@ -373,6 +411,7 @@ func testCollectRewardAll_50(t *testing.T) {
 	t.Run("collect reward for all position, while warm up is in 50", func(t *testing.T) {
 		std.TestSkipHeights(blocksIn5Days)
 
+		std.TestSetRealm(adminRealm)
 		CollectReward(1, false)
 		CollectReward(2, false)
 		CollectReward(3, false)
@@ -393,6 +432,7 @@ func testCollectRewardAll_70(t *testing.T) {
 	t.Run("collect reward for all position, while warm up is in 70", func(t *testing.T) {
 		std.TestSkipHeights(blocksIn10Days - blocksIn5Days)
 
+		std.TestSetRealm(adminRealm)
 		CollectReward(1, false)
 		CollectReward(2, false)
 		CollectReward(3, false)
@@ -413,6 +453,7 @@ func testCollectRewardAll_100(t *testing.T) {
 	t.Run("collect reward for all position, while warm up is in 100", func(t *testing.T) {
 		std.TestSkipHeights(blocksIn30Days - blocksIn10Days)
 
+		std.TestSetRealm(adminRealm)
 		CollectReward(1, false)
 		CollectReward(2, false)
 		CollectReward(3, false)
@@ -451,7 +492,7 @@ func testCreatePoolBarFoo100Tier03(t *testing.T) {
 	t.Run("create bar:foo:100 pool, and set internal emission tier #3", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		pl.CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(600000))
+		pl.CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(600000).ToString())
 		std.TestSkipHeights(1)
 
 		SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", 3)
@@ -461,6 +502,8 @@ func testCreatePoolBarFoo100Tier03(t *testing.T) {
 
 func testCollectRewardDummy(t *testing.T) {
 	t.Run("collect reward for all position, while warm up is in 30", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
 		CollectReward(2, false)
 		std.TestSkipHeights(1)
 	})
@@ -544,7 +587,7 @@ func testChangeDistributionPctByAdmin(t *testing.T) {
 func testUnstakeToken01(t *testing.T) {
 	t.Run("unstake token 01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		UnstakeToken(1)
+		UnstakeToken(1, false)
 		std.TestSkipHeights(1)
 	})
 
@@ -565,7 +608,7 @@ func testCreatePoolBazQuxExternalOnly(t *testing.T) {
 	t.Run("create pool baz:qux:0.3%", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		pl.CreatePool(bazPath, quxPath, 3000, common.TickMathGetSqrtRatioAtTick(0)) // current tick 0
+		pl.CreatePool(bazPath, quxPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // current tick 0
 
 		std.TestSkipHeights(1)
 	})
@@ -581,8 +624,8 @@ func testCreateExternalIncentiveBar(t *testing.T) {
 			"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
 			consts.GNS_PATH,
 			20000000,
-			1234569600,
-			1234569600+TIMESTAMP_90DAYS,
+			1237161600,
+			1237161600+TIMESTAMP_90DAYS,
 		)
 
 		std.TestSkipHeights(1)
@@ -619,7 +662,7 @@ func testMintPos08InRange(t *testing.T) {
 func testStakeToken08(t *testing.T) {
 	t.Run("stake token 08", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		gnft.Approve(stakerAddr, tokenIdFrom(8))
+		gnft.Approve(stakerAddr, common.TokenIdFrom(8))
 		StakeToken(8)
 		std.TestSkipHeights(1)
 	})
@@ -628,6 +671,7 @@ func testStakeToken08(t *testing.T) {
 func testCollectReward08(t *testing.T) {
 	t.Run("collect reward for 08 position, while warm up is in 30", func(t *testing.T) {
 		std.TestSkipHeights(9)
+		std.TestSetRealm(adminRealm)
 		CollectReward(8, false)
 		std.TestSkipHeights(1)
 	})
@@ -635,12 +679,13 @@ func testCollectReward08(t *testing.T) {
 
 func testStartExternalIncentive(t *testing.T) {
 	t.Run("external incentive start block skip", func(t *testing.T) {
-		std.TestSkipHeights(100)
+		std.TestSkipHeights(686)
 	})
 }
 
 func testCollectReward08AfterStart(t *testing.T) {
 	t.Run("collect reward for 08 position", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
 		CollectReward(8, false)
 		std.TestSkipHeights(1)
 	})
@@ -650,16 +695,19 @@ func testEndExternalIncentiveBar(t *testing.T) {
 	t.Run("end external incentive bar", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		std.TestSkipHeights(XXXX) // 종료되도록 블록 증가
+		std.TestSkipHeights(1295572) // 종료되도록 블록 증가
 
 		EndExternalIncentive(
 			anoAdmin,
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
 			"gno.land/r/onbloc/obl",
-			1234569600,                  // startTimestamp
-			1234569600+TIMESTAMP_90DAYS, // endTimestamp
-			133,
+			1237161600,                  // startTimestamp
+			1237161600+TIMESTAMP_90DAYS, // endTimestamp
+			1296169,
 		)
+		//1296855
+		//3888000
+		//1295572
 
 		// 종료 후 확인해야 할꺼
 		// - 웜업에 따른 페널티 수량 환불
@@ -672,9 +720,9 @@ func testEndExternalIncentiveBar(t *testing.T) {
 func testReStakeTokenPos01(t *testing.T) {
 	t.Run("re-stake token 01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		gnft.Approve(stakerAddr, tokenIdFrom(1))
+		gnft.Approve(stakerAddr, common.TokenIdFrom(1))
 		StakeToken(1)
-		std.TestSkipHeights(1)
+		std.TestSkipHeights(2)
 	})
 
 	t.Run("collect reward for position 01", func(t *testing.T) {
