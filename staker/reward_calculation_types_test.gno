@@ -78,8 +78,8 @@ func TestUintTree(t *testing.T) {
 	var keys []uint64
 	var values []interface{}
 
-	tree.Iterate(100, 300, func(key uint64, value interface{}) bool {
-		keys = append(keys, key)
+	tree.Iterate(100, 300, func(key int64, value interface{}) bool {
+		keys = append(keys, uint64(key))
 		values = append(values, value)
 		return false
 	})

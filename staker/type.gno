@@ -41,6 +41,8 @@ type ExternalIncentive struct {
 	endHeight        int64       // end height for external reward
 	rewardPerBlock   uint64      // reward per block
 	refundee         std.Address // refundee address
+
+	unclaimableRefunded bool // whether unclaimable reward is refunded
 }
 
 func (e ExternalIncentive) StartTimestamp() int64 {
@@ -130,6 +132,7 @@ func NewExternalIncentive(
 		refundee:         refundee,
 		createdHeight:    createdHeight,
 		depositGnsAmount: depositGnsAmount,
+		unclaimableRefunded: false,
 	}
 }
 
@@ -141,9 +144,9 @@ type Deposit struct {
 	tickLower         int32       // tick lower
 	tickUpper         int32       // tick upper
 	liquidity         *u256.Uint  // liquidity
-	lastCollectHeight uint64      // last collect block height
+	lastCollectHeight int64      // last collect block height
 	warmups           []Warmup    // warmup information	
 	
-	claimHeight       uint64      // last claim block height
+	claimHeight       int64      // last claim block height
 }
 

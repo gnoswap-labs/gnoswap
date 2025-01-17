@@ -444,7 +444,7 @@ func burnAllNFT(t *testing.T) {
 func deletePoolTier(t *testing.T, poolPath string) {
 	t.Helper()
 	if poolTier != nil {
-		poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, 0)
+		poolTier.changeTier(std.GetHeight(), pools, poolPath, 0)
 	} else {
 		panic("poolTier is nil")
 	}
@@ -459,11 +459,11 @@ func addPoolTier(t *testing.T, poolPath string, tier uint64, tick int32) {
 			panic(addDetailToError(
 				errPoolNotFound, ufmt.Sprintf("unknown error - pools is nil")))
 		}
-		poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, tier)
+		poolTier.changeTier(std.GetHeight(), pools, poolPath, tier)
 	} else {
-		poolTier = NewPoolTier(pools, uint64(std.GetHeight()), poolPath, en.GetEmission, en.GetHalvingBlocksInRange)
+		poolTier = NewPoolTier(pools, std.GetHeight(), poolPath, en.GetEmission, en.GetHalvingBlocksInRange)
 		pools.GetOrCreate(poolPath, tick) // must update pools tree
-		poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, tier)
+		poolTier.changeTier(std.GetHeight(), pools, poolPath, tier)
 	}
 }
 
@@ -481,7 +481,7 @@ func getNumPoolTiers(t *testing.T) (uint64, uint64, uint64) {
 }
 
 type gnsBalanceTracker struct {
-	height               uint64
+	height               int64
 	stakerBalance        uint64
 	devOpsBalance        uint64
 	communityPoolBalance uint64
@@ -494,7 +494,7 @@ func gnsBalanceCheck(t *testing.T, beforeBalance gnsBalanceTracker, printChange 
 	t.Helper()
 
 	caller := std.PrevRealm().Addr()
-	height := uint64(std.GetHeight())
+	height := std.GetHeight()
 	stakerBalance := gns.BalanceOf(a2u(consts.STAKER_ADDR))
 	devOpsBalance := gns.BalanceOf(a2u(consts.DEV_OPS))
 	communityPoolBalance := gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR))
@@ -696,7 +696,7 @@ func makePositionsNode(t *testing.T, poolPath string) []*json.Node {
 			stakedDuration := std.GetHeight() - deposit.stakeHeight
 			ratio := getRewardRatio(t, stakedDuration)
 
-			rewardByWarmup := calcPositionRewardByWarmups(uint64(std.GetHeight()), uint64(tokenId))
+			rewardByWarmup := calcPositionRewardByWarmups(std.GetHeight(), tokenId)
 			if len(rewardByWarmup) != 4 {
 				panic("len(rewardByWarmup) != 4")
 			}

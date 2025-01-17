@@ -9,7 +9,7 @@ import (
 
 func CreateCallbackStakerEmissionChange(pt *PoolTier, pools *Pools) func(uint64) {
 	return func(emission uint64) {
-		pt.cacheReward(uint64(std.GetHeight()), pools)
+		pt.cacheReward(std.GetHeight(), pools)
 		pt.currentEmission = emission
 	}
 }

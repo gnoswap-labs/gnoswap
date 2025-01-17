@@ -106,9 +106,9 @@ type Tick struct {
 	outsideAccumulation *UintTree // blockNumber -> *u256.Uint
 }
 
-func (self *Tick) CurrentOutsideAccumulation(blockNumber uint64) *u256.Uint {
+func (self *Tick) CurrentOutsideAccumulation(blockNumber int64) *u256.Uint {
 	var acc *u256.Uint
-	self.outsideAccumulation.ReverseIterate(0, blockNumber, func(key uint64, value interface{}) bool {
+	self.outsideAccumulation.ReverseIterate(0, blockNumber, func(key int64, value interface{}) bool {
 		acc = value.(*u256.Uint)
 		return true
 	})
@@ -117,42 +117,8 @@ func (self *Tick) CurrentOutsideAccumulation(blockNumber uint64) *u256.Uint {
 	}
 	return acc
 }
-/*
-// TickCrosses are encoded as int64, where negative value is backward cross(zeroForOne=true), positive value is forward cross(zeroForOne=false).
-func (self *Tick) crossInfo(startHeight, endHeight uint64) []int64 {
-	tickCrosses := make([]int64, 0)
 
-	self.cross.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
-		println("key : ", key, ", value : ", value.(bool))
-		zeroForOne := value.(bool)
-		if zeroForOne {
-			tickCrosses = append(tickCrosses, -int64(key))
-		} else {
-			tickCrosses = append(tickCrosses, int64(key))
-		}
-		return false
-	})
-
-	return tickCrosses
-}
-
-func (self *Tick) updateCross(blockNumber uint64, zeroForOne bool) {
-	self.cross.Set(blockNumber, zeroForOne)
-	println("updateCross ", self.id, " : ", blockNumber, ", ", zeroForOne)
-}
-
-func (self *Tick) previousCross(currentHeight uint64) bool {
-	// There MUST be at least one cross, set when the position is staked
-	cross := false
-	self.cross.ReverseIterate(0, currentHeight-1, func(key uint64, value interface{}) bool {
-		println(">>>>>>>>>>>>>>>>> previousCross ", key, value.(bool))
-		cross = value.(bool)
-		return true
-	})
-	return cross
-}
-*/
-func (self *Tick) modifyDepositLower(currentHeight uint64, currentTick int32, liquidity *i256.Int) {
+func (self *Tick) modifyDepositLower(currentHeight int64, currentTick int32, liquidity *i256.Int) {
 	// update staker side tick info
 	println("stakedLiquidityGross ", self.stakedLiquidityGross.ToString(), ", liquidity ", liquidity.ToString())
 	self.stakedLiquidityGross = liquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
@@ -166,7 +132,7 @@ func (self *Tick) modifyDepositLower(currentHeight uint64, currentTick int32, li
 	// ticks.Set(self.id, self)
 }
 
-func (self *Tick) modifyDepositUpper(currentHeight uint64, currentTick int32, liquidity *i256.Int) {
+func (self *Tick) modifyDepositUpper(currentHeight int64, currentTick int32, liquidity *i256.Int) {
 	self.stakedLiquidityGross = liquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
 	if self.stakedLiquidityGross.Lt(u256.Zero()) {
 		panic("stakedLiquidityGross is negative")
@@ -178,156 +144,7 @@ func (self *Tick) modifyDepositUpper(currentHeight uint64, currentTick int32, li
 	// ticks.Set(self.id, self)
 }
 
-type PerIntervalFunc = func(startHeight, endHeight uint64)
-
-// Gas optimization: encoding { height: int64, inRange: bool } as int64.
-// height will be negative if inRange is false.
-func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool, tickUpperCross []int64, tickLowerCross []int64, f PerIntervalFunc) (bool, []int64, []int64) {
-	tickUpperCrossI := 0
-	tickLowerCrossI := 0
-	tickUpperCrossLen := len(tickUpperCross)
-	tickLowerCrossLen := len(tickLowerCross)
-
-	for tickUpperCrossI < tickUpperCrossLen && tickLowerCrossI < tickLowerCrossLen {
-		upperCross := tickUpperCross[tickUpperCrossI]
-		lowerCross := tickLowerCross[tickLowerCrossI]
-
-		lowerHeight := lowerCross
-		if lowerHeight < 0 {
-			lowerHeight = -lowerHeight
-		}
-
-		upperHeight := upperCross
-		if upperHeight < 0 {
-			upperHeight = -upperHeight
-		}
-
-		// reached the end height
-		if lowerHeight >= endHeight || upperHeight >= endHeight {
-			break
-		}
-
-		// If the heights are the same, and they have the same zeroForOne, the tick has passed through the whole position range(outrange)
-		if upperCross == lowerCross {
-			if currentInRange {
-				// exit range
-				f(uint64(startHeight), uint64(lowerHeight))
-				currentInRange = false
-			}
-			tickUpperCrossI++
-			tickLowerCrossI++
-			continue
-		}
-
-		// If the height is the same, and zeroForOne is different, the tick has entered the position and then "bounced" back(inrange)
-		if upperCross == -lowerCross {
-			if !currentInRange {
-				// enter range
-				startHeight = lowerHeight
-				currentInRange = true
-			}
-			tickUpperCrossI++
-			tickLowerCrossI++
-			continue
-		}
-
-		// Upper tick passed,
-		// - if zeroForOne, backward cross, negative height, inrange
-		// - If !zeroForOne, forward cross, positive height, outrange
-		// => inRange == upperCross < 0
-		if upperHeight < lowerHeight {
-			if upperCross < 0 {
-				// enter range
-				if !currentInRange {
-					startHeight = upperHeight
-					currentInRange = true
-				}
-			} else {
-				// exit range
-				if currentInRange {
-					f(uint64(startHeight), uint64(upperHeight))
-					currentInRange = false
-				}
-			}
-			tickUpperCrossI++
-			continue
-		}
-
-		// Lower tick passed,
-		// - if zeroForOne, backward cross, negative height, outrange
-		// - If !zeroForOne, forward cross, positive height, inrange
-		// => inRange == lowerCross > 0
-		if lowerHeight < upperHeight {
-			if lowerCross > 0 {
-				// enter range
-				if !currentInRange {
-					startHeight = lowerHeight
-					currentInRange = true
-				}
-			} else {
-				// exit range
-				if currentInRange {
-					f(uint64(startHeight), uint64(lowerHeight))
-					currentInRange = false
-				}
-			}
-			tickLowerCrossI++
-			continue
-		}
-
-		panic("unreachable")
-	}
-
-	for ; tickUpperCrossI < len(tickUpperCross); tickUpperCrossI++ {
-		cross := tickUpperCross[tickUpperCrossI]
-		// reached the end height
-		if cross >= endHeight || -cross >= endHeight {
-			break
-		}
-		if cross < 0 {
-			// enter range
-			if !currentInRange {
-				startHeight = -cross
-				currentInRange = true
-			}
-		} else {
-			// exit range
-			if currentInRange {
-				f(uint64(startHeight), uint64(cross))
-				currentInRange = false
-			}
-		}
-	}
-
-	for ; tickLowerCrossI < len(tickLowerCross); tickLowerCrossI++ {
-		cross := tickLowerCross[tickLowerCrossI]
-		// reached the end height
-		if cross >= endHeight || -cross >= endHeight {
-			break
-		}
-		if cross > 0 {
-			// enter range
-			if !currentInRange {
-				startHeight = cross
-				currentInRange = true
-			}
-		} else {
-			// exit range
-			if currentInRange {
-				f(uint64(startHeight), uint64(-cross))
-				currentInRange = false
-			}
-		}
-	}
-
-	if currentInRange {
-		f(uint64(startHeight), uint64(endHeight))
-	}
-
-	return currentInRange, tickUpperCross[tickUpperCrossI:], tickLowerCross[tickLowerCrossI:]
-}
-
-func (self *Tick) updateCurrentOutsideAccumulation(blockNumber uint64, acc *u256.Uint) {
+func (self *Tick) updateCurrentOutsideAccumulation(blockNumber int64, acc *u256.Uint) {
 	currentOutsideAccumulation := self.CurrentOutsideAccumulation(blockNumber)
 	println("currentOutsideAccumulation : ", currentOutsideAccumulation.ToString())
 	println("accumulation : ", acc.ToString())
@@ -346,7 +163,7 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 		println("[[TickCrossHook]]  tickId : ", tickId, ", zeroForOne : ", zeroForOne)
 		tick := pool.ticks.Get(tickId)
 
-		blockNumber := uint64(height())
+		blockNumber := height()
 		println("	blockNumber : ", blockNumber)
 		//tick.updateCross(blockNumber, zeroForOne)
 
@@ -369,33 +186,8 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 		if zeroForOne {
 			liquidityInRangeDelta = i256.Zero().Neg(liquidityInRangeDelta)
 		}
-		stakedLiquidity := pool.CurrentStakedLiquidity(blockNumber)
-		println("stakedLiquidity : ", stakedLiquidity.ToString())
-		deltaApplied := liquidityMathAddDelta(stakedLiquidity, liquidityInRangeDelta)
-		println("deltaApplied : ", deltaApplied.ToString())
-
-		newAcc := pool.updateGlobalRewardRatioAccumulation(blockNumber, stakedLiquidity)
+		newAcc := pool.modifyDeposit(liquidityInRangeDelta, blockNumber)
 		tick.updateCurrentOutsideAccumulation(blockNumber, newAcc)
-
-		switch deltaApplied.Sign() {
-		case -1:
-			panic("stakedLiquidity is less than 0")
-		case 0:
-			if stakedLiquidity.Sign() == 1 {
-				// StakedLiquidity moved from positive to zero, start unclaimable period
-				pool.startInternalUnclaimablePeriod(blockNumber)
-			}
-		case 1:
-			if stakedLiquidity.Sign() == 0 {
-				// StakedLiquidity moved from zero to positive, end unclaimable period
-				pool.endInternalUnclaimablePeriod(blockNumber)
-			}
-		}
-
-		pool.stakedLiquidity.Set(blockNumber, deltaApplied)
-
-		// I'm not sure if this is needed. We may not need to update the pool info because the stakedLiquidity pointer itself has not changed.
-		// pools.Set(poolPath, pool)
 	}
 }
 

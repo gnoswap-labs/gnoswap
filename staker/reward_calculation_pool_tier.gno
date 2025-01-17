@@ -131,7 +131,7 @@ type PoolTier struct {
 	// rewardCache is used to calculate internal reward for each tier
 	// rewardCache = (per block emission) / (number of pools in tier) * (tier's ratio)
 	// rewardCache           [4]*RewardCacheTree // blockNumber -> uint64
-	lastRewardCacheHeight uint64
+	lastRewardCacheHeight int64
 
 	currentEmission uint64
 
@@ -140,11 +140,11 @@ type PoolTier struct {
 
 	// returns a list of halving blocks within the interval [start, end) in ascending order
 	// there MUST NOT be any emission amount change between start and end - those had to be handled by the CallbackStakerEmissionChange. 
-	getHalvingBlocksInRange func(start, end uint64) ([]uint64, []uint64)
+	getHalvingBlocksInRange func(start, end int64) ([]int64, []uint64)
 
 }
 
-func NewPoolTier(pools *Pools, currentHeight uint64, initialPoolPath string, getEmission func() uint64, getHalvingBlocksInRange func(start, end uint64) ([]uint64, []uint64)) *PoolTier {
+func NewPoolTier(pools *Pools, currentHeight int64, initialPoolPath string, getEmission func() uint64, getHalvingBlocksInRange func(start, end int64) ([]int64, []uint64)) *PoolTier {
 	result := &PoolTier{
 		membership:            avl.NewTree(),
 		tierRatio:             TierRatioFromCounts(1, 0, 0),
@@ -168,7 +168,7 @@ func (self *PoolTier) membershipOf(poolPath string) *UintTree {
 	return v.(*UintTree)
 }
 
-func (self *PoolTier) createPool(pools *Pools, poolPath string, initialTier uint64, initialTick int32, currentHeight uint64) {
+func (self *PoolTier) createPool(pools *Pools, poolPath string, initialTier uint64, initialTick int32, currentHeight int64) {
 	_ = pools.GetOrCreate(poolPath, initialTick)
 
 	self.changeTier(currentHeight, pools, poolPath, initialTier)
@@ -207,7 +207,7 @@ func (self *PoolTier) CurrentTier(poolPath string) uint64 {
 	return tier.(uint64)
 }
 
-func (self *PoolTier) changeTier(currentHeight uint64, pools *Pools, poolPath string, nextTier uint64) {
+func (self *PoolTier) changeTier(currentHeight int64, pools *Pools, poolPath string, nextTier uint64) {
 	// TODO:
 	// poolPath validation check
 
@@ -258,7 +258,7 @@ func CalculateTierReward(currentEmission uint64, tierRatio *TierRatio, tier uint
 // cacheReward MUST be called before calculating any position reward
 // There MUST be no ratio/count/tier change during the emissionUpdates
 // (due to calling cacheReward() at the start of changeTier(), this holds true).
-func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
+func (self *PoolTier) cacheReward(currentHeight int64, pools *Pools) {
 	lastHeight := self.lastRewardCacheHeight
 	println("[[[cacheReward]]] currentHeight : ", currentHeight, ", lastHeight : ", lastHeight)
 
@@ -317,7 +317,7 @@ func (self *PoolTier) cacheReward(currentHeight uint64, pools *Pools) {
 	self.currentEmission = currentEmission
 }
 
-func (self *PoolTier) applyCacheToAllPools(pools *Pools, startBlock, endBlock, emissionInThisInterval uint64) {
+func (self *PoolTier) applyCacheToAllPools(pools *Pools, startBlock, endBlock int64, emissionInThisInterval uint64) {
 	println("###### applyCacheToAllPools startBlock : ", startBlock, ", endBlock : ", endBlock, ", emissionInThisInterval : ", emissionInThisInterval)
 	if startBlock >= endBlock {
 		return
@@ -345,12 +345,12 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, startBlock, endBlock, e
 	})
 }
 
-func (self *PoolTier) IsInternallyIncentivizedPool(currentHeight uint64, poolPath string) bool {
+func (self *PoolTier) IsInternallyIncentivizedPool(currentHeight int64, poolPath string) bool {
 	return self.CurrentTier(poolPath) > 0
 }
 
 // Called when msPerBlock is changed or staker emission % is changed.
 // This does not take account of halving.
 func CallbackStakerEmissionChange(amount uint64) {
-	poolTier.cacheReward(uint64(std.GetHeight()), pools)
+	poolTier.cacheReward(std.GetHeight(), pools)
 }

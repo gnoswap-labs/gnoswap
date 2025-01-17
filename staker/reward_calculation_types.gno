@@ -70,35 +70,35 @@ func NewUintTree() *UintTree {
 	}
 }
 
-func (self *UintTree) Get(key uint64) (interface{}, bool) {
-	v, ok := self.tree.Get(EncodeUint(key))
+func (self *UintTree) Get(key int64) (interface{}, bool) {
+	v, ok := self.tree.Get(EncodeUint(uint64(key)))
 	if !ok {
 		return nil, false
 	}
 	return v, true
 }
 
-func (self *UintTree) Set(key uint64, value interface{}) {
-	self.tree.Set(EncodeUint(key), value)
+func (self *UintTree) Set(key int64, value interface{}) {
+	self.tree.Set(EncodeUint(uint64(key)), value)
 }
 
-func (self *UintTree) Has(key uint64) bool {
-	return self.tree.Has(EncodeUint(key))
+func (self *UintTree) Has(key int64) bool {
+	return self.tree.Has(EncodeUint(uint64(key)))
 }
 
-func (self *UintTree) Remove(key uint64) {
-	self.tree.Remove(EncodeUint(key))
+func (self *UintTree) Remove(key int64) {
+	self.tree.Remove(EncodeUint(uint64(key)))
 }
 
-func (self *UintTree) Iterate(start, end uint64, fn func(key uint64, value interface{}) bool) {
-	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(key string, value interface{}) bool {
-		return fn(DecodeUint(key), value)
+func (self *UintTree) Iterate(start, end int64, fn func(key int64, value interface{}) bool) {
+	self.tree.Iterate(EncodeUint(uint64(start)), EncodeUint(uint64(end)), func(key string, value interface{}) bool {
+		return fn(int64(DecodeUint(key)), value)
 	})
 }
 
-func (self *UintTree) ReverseIterate(start, end uint64, fn func(key uint64, value interface{}) bool) {
-	self.tree.ReverseIterate(EncodeUint(start), EncodeUint(end), func(key string, value interface{}) bool {
-		return fn(DecodeUint(key), value)
+func (self *UintTree) ReverseIterate(start, end int64, fn func(key int64, value interface{}) bool) {
+	self.tree.ReverseIterate(EncodeUint(uint64(start)), EncodeUint(uint64(end)), func(key string, value interface{}) bool {
+		return fn(int64(DecodeUint(key)), value)
 	})
 }
 
@@ -122,54 +122,54 @@ func NewRewardCacheTree() *RewardCacheTree {
 	}
 }
 
-func (self *RewardCacheTree) Get(key uint64) (interface{}, bool) {
-	v, ok := self.tree.Get(EncodeUint(key))
+func (self *RewardCacheTree) Get(key int64) (interface{}, bool) {
+	v, ok := self.tree.Get(EncodeUint(uint64(key)))
 	if !ok {
 		return nil, false
 	}
 	return v, true
 }
 
-func (self *RewardCacheTree) Set(key uint64, value interface{}) {
-	self.tree.Set(EncodeUint(key), value)
+func (self *RewardCacheTree) Set(key int64, value interface{}) {
+	self.tree.Set(EncodeUint(uint64(key)), value)
 }
 
-func (self *RewardCacheTree) Has(key uint64) bool {
-	return self.tree.Has(EncodeUint(key))
+func (self *RewardCacheTree) Has(key int64) bool {
+	return self.tree.Has(EncodeUint(uint64(key)))
 }
 
-func (self *RewardCacheTree) Iterate(start, end uint64, fn func(key uint64, value interface{}) bool) {
-	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(key string, value interface{}) bool {
-		return fn(DecodeUint(key), value)
+func (self *RewardCacheTree) Iterate(start, end int64, fn func(key int64, value interface{}) bool) {
+	self.tree.Iterate(EncodeUint(uint64(start)), EncodeUint(uint64(end)), func(key string, value interface{}) bool {
+		return fn(int64(DecodeUint(key)), value)
 	})
 }
 
-func (self *RewardCacheTree) CurrentReward(currentHeight uint64) interface{} {
-	result, ok := self.tree.Get(EncodeUint(currentHeight))
+func (self *RewardCacheTree) CurrentReward(currentHeight int64) interface{} {
+	result, ok := self.tree.Get(EncodeUint(uint64(currentHeight)))
 	if ok {
 		return result
 	}
-	self.tree.ReverseIterate("", EncodeUint(currentHeight), func(key string, value interface{}) bool {
+	self.tree.ReverseIterate("", EncodeUint(uint64(currentHeight)), func(key string, value interface{}) bool {
 		result = value
 		return true
 	})
 	return result
 }
 
-func (self *RewardCacheTree) CurrentRewardAt(currentHeight uint64) interface{} {
-	result, ok := self.tree.Get(EncodeUint(currentHeight))
+func (self *RewardCacheTree) CurrentRewardAt(currentHeight int64) interface{} {
+	result, ok := self.tree.Get(EncodeUint(uint64(currentHeight)))
 	if ok {
 		return result
 	}
 	panic(ufmt.Sprintf("RewardCacheTree.CurrentRewardAt() || currentHeight: %d, not found", currentHeight))
 }
 
-type RewardCalculationFunc = func(blockNumbers uint64, poolReward interface{})
+type RewardCalculationFunc = func(blockNumbers int64, poolReward interface{})
 
-func (self *RewardCacheTree) RewardPerInterval(startHeight, endHeight uint64, f RewardCalculationFunc) {
+func (self *RewardCacheTree) RewardPerInterval(startHeight, endHeight int64, f RewardCalculationFunc) {
 	currentPoolReward := self.CurrentReward(startHeight)
 	currentHeight := startHeight
-	self.Iterate(startHeight, endHeight, func(height uint64, poolReward interface{}) bool {
+	self.Iterate(startHeight, endHeight, func(height int64, poolReward interface{}) bool {
 		f(height-currentHeight, currentPoolReward)
 		currentHeight = height
 		currentPoolReward = poolReward

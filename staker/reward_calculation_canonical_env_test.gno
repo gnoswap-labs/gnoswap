@@ -41,7 +41,7 @@ func (self *canonicalPool) InternalReward(emission uint64, ratio *TierRatio) uin
 	}
 }
 
-func (self *canonicalPool) ExternalReward(currentHeight int) map[string]uint64 {
+func (self *canonicalPool) ExternalReward(currentHeight int64) map[string]uint64 {
 	reward := make(map[string]uint64)
 
 	for _, incentive := range self.incentive {
@@ -95,10 +95,10 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 	})
 
 	// Technically, the block number being provided to the NewPoolTier should be 124, but because of duplicate creation of the default pool, we put 123 here to just make rewardCache work for the testing.
-	result.global.poolTier = NewPoolTier(pools, 123, test_gnousdc, func() uint64 { return result.PerBlockEmission }, func(start, end uint64) ([]uint64, []uint64) { 
-		heights := make([]uint64, 0)
+	result.global.poolTier = NewPoolTier(pools, 123, test_gnousdc, func() uint64 { return result.PerBlockEmission }, func(start, end int64) ([]int64, []uint64) { 
+		heights := make([]int64, 0)
 		emissions := make([]uint64, 0)
-		result.emissionUpdates.Iterate(start, end, func(key uint64, value interface{}) bool {
+		result.emissionUpdates.Iterate(start, end, func(key int64, value interface{}) bool {
 			heights = append(heights, key)
 			emissions = append(emissions, value.(uint64))
 			return false
@@ -110,7 +110,7 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 
 	result.SetEmissionUpdate(1000000000)
 
-	if std.GetHeight() != int64(result.CurrentHeight()) {
+	if std.GetHeight() != result.CurrentHeight() {
 		panic(ufmt.Sprintf("height mismatch: %d != %d", std.GetHeight(), result.CurrentHeight()))
 	}
 
@@ -129,7 +129,7 @@ func (self *canonicalRewardState) isInRange(deposit *Deposit) bool {
 }
 
 func (self *canonicalRewardState) SetEmissionUpdate(emission uint64) {
-	self.emissionUpdates.Set(uint64(self.CurrentHeight()), emission)
+	self.emissionUpdates.Set(self.CurrentHeight(), emission)
 	self.PerBlockEmission = emission
 }
 
@@ -173,7 +173,7 @@ func (self *canonicalRewardState) InternalRewardPerPool(emission uint64) map[str
 	return reward
 }
 
-func (self *canonicalRewardState) ExternalRewardPerPool(currentHeight int) map[string]map[string]uint64 {
+func (self *canonicalRewardState) ExternalRewardPerPool(currentHeight int64) map[string]map[string]uint64 {
 	reward := make(map[string]map[string]uint64)
 
 	for _, pool := range self.Pool {
@@ -183,8 +183,8 @@ func (self *canonicalRewardState) ExternalRewardPerPool(currentHeight int) map[s
 	return reward
 }
 
-func (self *canonicalRewardState) CurrentHeight() int {
-	return len(self.Reward) // due to testing requirement
+func (self *canonicalRewardState) CurrentHeight() int64 {
+	return int64(len(self.Reward)) // due to testing requirement
 }
 
 // Process block with canonical reward calculation
@@ -194,7 +194,7 @@ func (self *canonicalRewardState) CalculateCanonicalReward() []Reward {
 
 	liquidityPerPool := self.LiquidityPerPool()
 	internalRewardPerPool := self.InternalRewardPerPool(self.PerBlockEmission)
-	externalRewardPerPool := self.ExternalRewardPerPool(currentHeight)
+	externalRewardPerPool := self.ExternalRewardPerPool(int64(currentHeight))
 
 	for i := 0; i < self.global.deposits.Size(); i++ {
 		deposit := self.global.deposits.Get(uint64(i))
@@ -244,6 +244,15 @@ func (self *canonicalRewardState) NextBlockNoCanonical() {
 	}
 }
 
+func (self *canonicalRewardState) UnclaimableExternalRewardOf(depositId uint64, incentiveId string) uint64 {
+	pool, ok := self.global.pools.Get(self.global.deposits.Get(depositId).targetPoolPath)
+	if !ok {
+		panic("pool not found")
+	}
+
+	return pool.incentives.calculateUnclaimableReward(incentiveId)
+}
+
 func (self *canonicalRewardState) CanonicalRewardOf(depositId uint64) Reward {
 	return self.Reward[self.CurrentHeight()-1][depositId]
 }
@@ -253,7 +262,7 @@ func (self *canonicalRewardState) CanonicalRewardOfHeight(depositId uint64, heig
 }
 
 func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]uint64, []uint64, []map[string]uint64, []map[string]uint64) {
-	currentHeight := uint64(self.CurrentHeight())
+	currentHeight := self.CurrentHeight()
 
 	// cache per-tier and per-pool rewards
 	self.global.poolTier.cacheReward(currentHeight, self.global.pools)
@@ -279,8 +288,13 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 	}
 
 	allIncentives := pool.incentives.GetAllInHeights(int64(lastCollectHeight), int64(currentHeight))
-	
+
+	println("[[[allIncentives]]]")
 	for _, incentive := range allIncentives {
+		println("incentiveId: ", incentive.incentiveId)
+	}
+	
+	for incentiveId, incentive := range allIncentives {
 		externalReward, externalPenalty := pool.RewardStateOf(deposit).CalculateExternalReward(int64(lastCollectHeight), int64(currentHeight), incentive)
 
 		for i := range externalReward {
@@ -304,7 +318,7 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
 	println("externalPenalties: ", externalPenalties)
 	
 	deposit := self.global.deposits.Get(depositId)
-	deposit.lastCollectHeight = uint64(self.CurrentHeight())
+	deposit.lastCollectHeight = self.CurrentHeight()
 
 	internal := uint64(0)
 	for _, reward := range rewards {
@@ -340,15 +354,9 @@ func (self *canonicalRewardState) SetMsPerBlock(msPerBlock int64) {
 	// TODO: implement
 }
 
-func (self *canonicalRewardState) SetPerBlockEmission(perBlockEmission uint64) {
-	// TODO: implement
-}
-
 // Emulation of staker.gno public entrypoints
 func (self *canonicalRewardState) StakeToken(tokenId uint64, targetPoolPath string, owner std.Address, tickLower int32, tickUpper int32, liquidity *u256.Uint) error {
-	println("[[[StakeToken Start]]]")
-	
-	currentHeight := uint64(self.CurrentHeight())
+	currentHeight := self.CurrentHeight()
 	pool, ok := self.global.pools.Get(targetPoolPath)
 	if !ok {
 		panic("should not happen")
@@ -360,8 +368,8 @@ func (self *canonicalRewardState) StakeToken(tokenId uint64, targetPoolPath stri
 		tickLower:         tickLower,
 		tickUpper:         tickUpper,
 		liquidity:         liquidity,
-		lastCollectHeight: uint64(currentHeight),
-		warmups:           InstantiateWarmup(int64(currentHeight)),
+		lastCollectHeight: currentHeight,
+		warmups:           InstantiateWarmup(currentHeight),
 	}
 
 	canonicalPool, ok := self.Pool[deposit.targetPoolPath]
@@ -379,10 +387,12 @@ func (self *canonicalRewardState) StakeToken(tokenId uint64, targetPoolPath stri
 
 	signedLiquidity := i256.FromUint256(deposit.liquidity)
 	if self.isInRange(deposit) {
-		pool.modifyDeposit(tokenId, signedLiquidity, currentHeight)
+		pool.modifyDeposit(signedLiquidity, currentHeight)
 	}
 	pool.ticks.Get(deposit.tickLower).modifyDepositLower(currentHeight, canonicalPool.tick, signedLiquidity)
 	pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(currentHeight, canonicalPool.tick, signedLiquidity)
+
+
 
 	return nil
 }
@@ -394,7 +404,7 @@ func (self *canonicalRewardState) CollectReward(tokenId uint64) {
 func (self *canonicalRewardState) UnstakeToken(tokenId uint64) {
 	deposit := self.global.deposits.Get(tokenId)
 
-	currentHeight := uint64(self.CurrentHeight())
+	currentHeight := self.CurrentHeight()
 
 	canonicalPool, ok := self.Pool[deposit.targetPoolPath]
 	if !ok {
@@ -414,7 +424,7 @@ func (self *canonicalRewardState) UnstakeToken(tokenId uint64) {
 	signedLiquidity := i256.FromUint256(deposit.liquidity)
 	signedLiquidity = signedLiquidity.Neg(signedLiquidity)
 	if self.isInRange(deposit) {
-		pool.modifyDeposit(tokenId, signedLiquidity, currentHeight)
+		pool.modifyDeposit(signedLiquidity, currentHeight)
 	}
 	pool.ticks.Get(deposit.tickLower).modifyDepositLower(currentHeight, canonicalPool.tick, signedLiquidity)
 	pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(currentHeight, canonicalPool.tick, signedLiquidity)
@@ -432,7 +442,10 @@ func newExternalIncentiveByHeight(
 ) *ExternalIncentive {
 	rewardPerBlock := rewardAmount / uint64(endHeight-startHeight)
 
+	byTimeId := incentiveIdByTime(startTimestamp, endTimestamp, refundee, rewardToken)
+
 	return &ExternalIncentive{
+		incentiveId:      byTimeId,
 		targetPoolPath:   targetPoolPath,
 		rewardToken:      rewardToken,
 		rewardAmount:     rewardAmount,
@@ -490,9 +503,9 @@ func (self *canonicalRewardState) ChangePoolTier(poolPath string, tier uint64) {
 
 	// update global state
 	if !self.global.pools.Has(poolPath) {
-		self.global.pools.Set(poolPath, NewPool(poolPath, uint64(self.CurrentHeight()), pool.tick))
+		self.global.pools.Set(poolPath, NewPool(poolPath, self.CurrentHeight(), pool.tick))
 	}
-	self.global.poolTier.changeTier(uint64(self.CurrentHeight()), self.global.pools, poolPath, tier)
+	self.global.poolTier.changeTier(self.CurrentHeight(), self.global.pools, poolPath, tier)
 }
 
 func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64, initialTick int32) {
@@ -503,8 +516,8 @@ func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64
 		incentive:     make([]*ExternalIncentive, 0),
 		tickCrossHook: self.tickCrossHook,
 	}
-	self.global.pools.Set(poolPath, NewPool(poolPath, uint64(self.CurrentHeight()), initialTick))
-	self.global.poolTier.changeTier(uint64(self.CurrentHeight()), self.global.pools, poolPath, initialTier)
+	self.global.pools.Set(poolPath, NewPool(poolPath, self.CurrentHeight(), initialTick))
+	self.global.poolTier.changeTier(self.CurrentHeight(), self.global.pools, poolPath, initialTier)
 }
 
 func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
