@@ -143,7 +143,8 @@ type Deposit struct {
 	liquidity         *u256.Uint  // liquidity
 	lastCollectHeight int64      // last collect block height
 	warmups           []Warmup    // warmup information	
-	
-	claimHeight       int64      // last claim block height
+
+	// TODO: remove this
+	unstakeReward uint64
 }
 

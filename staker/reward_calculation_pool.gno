@@ -168,6 +168,7 @@ func (self *Pool) cacheReward(startHeight, endHeight int64, currentTierReward ui
 	if oldTierReward != currentTierReward {
 		self.rewardCache.Set(startHeight, currentTierReward)
 	}
+
 }
 
 func (self *Pool) cacheInternalReward(currentHeight int64, currentEmission uint64) {
@@ -316,7 +317,7 @@ func (self *RewardState) RewardPerWarmup(startHeight, endHeight int64, rewardPer
 			rewardAcc = rewardAcc.Mul(rewardAcc, self.deposit.liquidity)
 			rewardAcc = rewardAcc.Mul(rewardAcc, u256.NewUint(rewardPerBlock))
 			rewardAcc = rewardAcc.Div(rewardAcc, q128)
-
+			println("	rewardAcc : ", rewardAcc.Uint64())
 			self.rewards[self.currentWarmup.Index] += rewardAcc.Uint64()
 
 			// done
@@ -328,13 +329,11 @@ func (self *RewardState) RewardPerWarmup(startHeight, endHeight int64, rewardPer
 		rewardAcc = rewardAcc.Mul(rewardAcc, self.deposit.liquidity)
 		rewardAcc = rewardAcc.Mul(rewardAcc, u256.NewUint(rewardPerBlock))
 		rewardAcc = rewardAcc.Div(rewardAcc, q128)
-
+		println("	rewardAcc : ", rewardAcc.Uint64())
 		self.rewards[self.currentWarmup.Index] += rewardAcc.Uint64()
 
 		startHeight = warmup.NextWarmupHeight
 	}
-
-	self.deposit.claimHeight = endHeight
 }
 
 func (self *Pool) modifyDeposit(delta *i256.Int, currentHeight int64, nextTick int32) *u256.Uint {
@@ -440,6 +439,8 @@ func (self *Pool) CalculateRewardForPosition(startHeight int64, startTick int32,
 	println("	debtAcc : ", debtAcc.Uint64())
 
 	rewardAcc = rewardAcc.Sub(rewardAcc, debtAcc)
+
+	println("	final rewardAcc : ", rewardAcc.Uint64())
 
 	return rewardAcc
 }

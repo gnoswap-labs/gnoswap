@@ -208,8 +208,10 @@ func (self *PoolTier) changeTier(currentHeight int64, pools *Pools, poolPath str
 	// TODO:
 	// poolPath validation check
 
-	self.cacheReward(currentHeight, pools)
+	println("	changeTier : ", poolPath, " : ", nextTier)
 
+	self.cacheReward(currentHeight, pools)
+	
 	// same as prev. no need to update
 	currentTier := self.CurrentTier(poolPath)
 	if currentTier == nextTier {
@@ -217,8 +219,16 @@ func (self *PoolTier) changeTier(currentHeight int64, pools *Pools, poolPath str
 	}
 
 	if nextTier == 0 {
+		// existing internal reward
 		self.membership.Remove(poolPath)
-		_, ok := pools.Get(poolPath)
+		pool, ok := pools.Get(poolPath)
+		if !ok {
+			panic("changeTier: pool not found")
+		}
+		pool.cacheReward(currentHeight, currentHeight, 0)
+	} else if currentTier == 0 {
+		// new internal reward
+		pool, ok := pools.Get(poolPath)
 		if !ok {
 			panic("changeTier: pool not found")
 		}
@@ -255,6 +265,8 @@ func CalculateTierReward(currentEmission uint64, tierRatio *TierRatio, tier uint
 // There MUST be no ratio/count/tier change during the emissionUpdates
 // (due to calling cacheReward() at the start of changeTier(), this holds true).
 func (self *PoolTier) cacheReward(currentHeight int64, pools *Pools) {
+	println("cacheReward", currentHeight)
+
 	lastHeight := self.lastRewardCacheHeight
 
 	if currentHeight <= lastHeight {
@@ -299,10 +311,12 @@ func (self *PoolTier) cacheReward(currentHeight int64, pools *Pools) {
 
 	// update lastRewardCacheHeight and currentEmission
 	self.lastRewardCacheHeight = currentHeight
+	println("set lastRewardCacheHeight", self.lastRewardCacheHeight)
 	self.currentEmission = currentEmission
 }
 
 func (self *PoolTier) applyCacheToAllPools(pools *Pools, startBlock, endBlock int64, emissionInThisInterval uint64) {
+	println("applyCacheToAllPools", startBlock, endBlock, emissionInThisInterval)
 	if startBlock >= endBlock {
 		return
 	}
