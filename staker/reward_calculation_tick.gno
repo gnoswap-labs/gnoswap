@@ -392,8 +392,6 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 			}
 		}
 
-		pool.updateRewardByLiquidityChange(*pool.tierRewardTotal, blockNumber, deltaApplied)
-
 		pool.stakedLiquidity.Set(blockNumber, deltaApplied)
 
 		// I'm not sure if this is needed. We may not need to update the pool info because the stakedLiquidity pointer itself has not changed.

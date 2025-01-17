@@ -461,7 +461,7 @@ func addPoolTier(t *testing.T, poolPath string, tier uint64, tick int32) {
 		}
 		poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, tier)
 	} else {
-		poolTier = NewPoolTier(uint64(std.GetHeight()), poolPath, en.GetEmission, en.GetHalvingBlocksInRange)
+		poolTier = NewPoolTier(pools, uint64(std.GetHeight()), poolPath, en.GetEmission, en.GetHalvingBlocksInRange)
 		pools.GetOrCreate(poolPath, tick) // must update pools tree
 		poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, tier)
 	}

@@ -118,19 +118,9 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 	if token1 < token0 {
 		tickUpper, tickLower = -tickLower, -tickUpper
 	}
-	//upperTick := pool.ticks.Get(tickUpper)
-	//lowerTick := pool.ticks.Get(tickLower)
-	// XXX: Tick ordering code, memoing for future
 
 	lastCollectHeight := deposit.lastCollectHeight
-/*
-	initialUpperCross := upperTick.previousCross(lastCollectHeight)
-	initialLowerCross := lowerTick.previousCross(lastCollectHeight)
-	currentlyInRange := initialUpperCross && !initialLowerCross
 
-	tickUpperCrosses := upperTick.crossInfo(lastCollectHeight, param.CurrentHeight)
-	tickLowerCrosses := lowerTick.crossInfo(lastCollectHeight, param.CurrentHeight)
-*/
 	internalRewards, internalPenalties := pool.InternalRewardOf(deposit).Calculate(0/*testing, remove later*/, int64(lastCollectHeight), int64(param.CurrentHeight))
 
 	//externalRewards, externalPenalties := pool.ExternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(param.CurrentHeight))

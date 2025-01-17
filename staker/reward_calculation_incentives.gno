@@ -25,8 +25,8 @@ type Incentives struct {
 
 	// currentIncentives []string
 
-	rewardCache           *RewardCacheTree // blockNumber -> IncentiveRewardEntry
-	lastRewardCacheHeight *uint64
+	//rewardCache           *RewardCacheTree // blockNumber -> IncentiveRewardEntry
+	//lastRewardCacheHeight *uint64
 }
 
 func NewIncentives(currentHeight uint64) Incentives {
@@ -37,8 +37,8 @@ func NewIncentives(currentHeight uint64) Incentives {
 
 		// incentiveBound: NewUintTree(),
 
-		rewardCache:           NewRewardCacheTree(),
-		lastRewardCacheHeight: &currentHeight,
+		//rewardCache:           NewRewardCacheTree(),
+		//lastRewardCacheHeight: &currentHeight,
 	}
 }
 
