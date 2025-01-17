@@ -4,7 +4,6 @@ import (
 	"std"
 	"strconv"
 
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
 
@@ -46,7 +45,7 @@ func init() {
 	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), uint64(7500))
 	distributionBpsPct.Set(strconv.Itoa(DEVOPS), uint64(2000))
 	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), uint64(500))
-	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), uint64(0))	
+	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), uint64(0))
 }
 
 // ChangeDistributionPctByAdmin changes the distribution percentage for the given targets.
@@ -112,7 +111,7 @@ func changeDistributionPcts(
 	target04 int, pct04 uint64,
 ) {
 	// First, cache the percentage of the staker just before it changes Callback if needed
-    // (check if the LIQUIDITY_STAKER was located between target01 and 04)
+	// (check if the LIQUIDITY_STAKER was located between target01 and 04)
 	setDistributionBpsPct(target01, pct01)
 	setDistributionBpsPct(target02, pct02)
 	setDistributionBpsPct(target03, pct03)
@@ -148,8 +147,8 @@ func distributeToTarget(amount uint64) uint64 {
 			))
 		}
 
-		pct := iPct.(uint64)
-		distAmount := calculateAmount(amount, pct)
+		pct := iPct.(int)
+		distAmount := calculateAmount(amount, uint64(pct))
 		totalSent += distAmount
 
 		transferToTarget(targetInt, distAmount)

@@ -7,7 +7,6 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/json"
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 )
 
@@ -389,7 +388,10 @@ func setAvgBlockTimeInMs(ms int64) {
 	// how much reward should be minted per block for current halving year
 	adjustedAmountPerBlock := amountLeft / uint64(blockLeft)
 	// update it
-	setAmountPerBlockPerHalvingYear(currentYear, adjustedAmountPerBlock)	
+	setAmountPerBlockPerHalvingYear(currentYear, adjustedAmountPerBlock)
+	if callbackEmissionChange == nil {
+		panic(errCallbackEmissionChangeIsNil.Error())
+	}
 	callbackEmissionChange(adjustedAmountPerBlock)
 
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {

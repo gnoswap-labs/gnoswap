@@ -205,9 +205,6 @@ func checkErr(err error) {
 // It calculates the amount of gns to mint for each halving year for block range.
 // It also handles the left emission amount if the current block range includes halving year end block.
 func calculateAmountToMint(fromHeight, toHeight int64) uint64 {
-	prevHeight := fromHeight
-	currentHeight := toHeight
-
 	// if toHeight is greater than emission end height, set toHeight to emission end height
 	endH := GetEndHeight()
 	if toHeight > endH {
