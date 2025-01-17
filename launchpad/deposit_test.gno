@@ -269,7 +269,7 @@ func TestCalculateClaimableTimes(t *testing.T) {
 }
 
 func TestCollectDeposit(t *testing.T) {
-	mockTeller, testAddr := setupTestDeposit(t)
+	_, testAddr := setupTestDeposit(t)
 	project := createTestProject(t)
 	projects[project.id] = project
 	currentTime := uint64(time.Now().Unix())
@@ -300,7 +300,7 @@ func TestCollectDeposit(t *testing.T) {
 
 	t.Run("Cannot collect before claimable height", func(t *testing.T) {
 		std.TestSetRealm(std.NewUserRealm(testAddr))
-		amount, err := processDepositCollection([]string{deposit.id}, "")
+		amount, _ := processDepositCollection([]string{deposit.id}, "")
 		uassert.Equal(t, uint64(0), amount)
 	})
 
@@ -309,14 +309,14 @@ func TestCollectDeposit(t *testing.T) {
 		std.TestSkipHeights(int64(deposit.claimableHeight - height + 1))
 
 		std.TestSetRealm(std.NewUserRealm(testAddr))
-		amount, err := processDepositCollection([]string{deposit.id}, "")
-		uassert.NoError(t, err)
+		amount, errCode := processDepositCollection([]string{deposit.id}, "")
+		uassert.NoError(t, errCode)
 		uassert.Equal(t, uint64(100), amount)
 	})
 }
 
 func TestDepositGns(t *testing.T) {
-	mockTeller, testAddr := setupTestDeposit(t)
+	_, testAddr := setupTestDeposit(t)
 	project := createTestProject(t)
 	projects[project.id] = project
 
@@ -326,11 +326,12 @@ func TestDepositGns(t *testing.T) {
 		defer func() {
 			r := recover()
 			if r != nil {
-				t.Logf("Recovered from panic: %v", r)
+				uassert.Equal(t, "insufficient balance", r.(string))
 			}
 		}()
 
 		DepositGns(project.id+":30", 1000)
+		std.TestSkipHeights(1)
 	})
 
 	t.Run("Success with sufficient balance", func(t *testing.T) {
@@ -387,7 +388,7 @@ func TestUpdateDepositIndices(t *testing.T) {
 }
 
 func TestMultipleDeposits(t *testing.T) {
-	mockTeller, testAddr := setupTestDeposit(t)
+	_, testAddr := setupTestDeposit(t)
 	project := createTestProject(t)
 	projects[project.id] = project
 
@@ -611,7 +612,7 @@ func TestProcessCollectedDeposits_TransactionFail(t *testing.T) {
 }
 
 func TestProcessCollectedDeposits_BalanceChanges(t *testing.T) {
-	mockXGNS, testAddr := setupXGNSTest(t)
+	mockXGNS, _ := setupXGNSTest(t)
 	project := createTestProject(t)
 	projects[project.id] = project
 

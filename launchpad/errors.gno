@@ -31,6 +31,9 @@ var (
 	errInvalidProjectId    = errors.New("[GNOSWAP-LAUNCHPAD-022] invalid project id")
 	errAlreadyCollected    = errors.New("[GNOSWAP-LAUNCHPAD-023] already collected")
 	errNotYetClaimReward   = errors.New("[GNOSWAP-LAUNCHPAD-024] not yet claim reward")
+	errInvalidCaller       = errors.New("[GNOSWAP-LAUNCHPAD-025] invalid caller")
+	errInvalidOwner        = errors.New("[GNOSWAP-LAUNCHPAD-026] invalid owner")
+	errInvalidAvgBlockTime = errors.New("[GNOSWAP-LAUNCHPAD-027] invalid average block time")
 )
 
 func addDetailToError(err error, detail string) string {

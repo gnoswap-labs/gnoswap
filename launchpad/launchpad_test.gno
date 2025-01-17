@@ -12,6 +12,8 @@ import (
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/obl"
+
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 func setupTest(t *testing.T) {
@@ -24,6 +26,344 @@ func createTestAddress(t *testing.T) std.Address {
 	return addr
 }
 
+func TestValidateName(t *testing.T) {
+	tests := []struct {
+		name      string
+		inputName string
+		wantErr   bool
+	}{
+		{"ValidName", "MyProject", false},
+		{"EmptyName", "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			in := ProjectInput{Name: tt.inputName}
+			err := in.ValidateName()
+			if tt.wantErr {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateTokenPath(t *testing.T) {
+	tests := []struct {
+		name      string
+		tokenPath string
+		wantErr   bool
+	}{
+		{"ValidToken", "gno.land/r/gnoswap/v1/gns", false},
+		{"EmptyToken", "", true},
+		{"UnregisteredToken", "invalid/token", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			in := ProjectInput{TokenPath: tt.tokenPath}
+			err := in.ValidateTokenPath()
+			if tt.wantErr {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateRecipient(t *testing.T) {
+	tests := []struct {
+		name      string
+		recipient std.Address
+		wantErr   bool
+	}{
+		{"ValidRecipient", std.Address(consts.ADMIN), false},
+		{"InvalidRecipient", std.Address("xyz..."), true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			in := ProjectInput{Recipient: tt.recipient}
+			err := in.ValidateRecipient()
+			if tt.wantErr {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateDepositAmount(t *testing.T) {
+	tests := []struct {
+		name          string
+		depositAmount uint64
+		wantErr       bool
+	}{
+		{"Valid", 100, false},
+		{"ZeroDeposit", 0, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			in := ProjectInput{DepositAmount: tt.depositAmount}
+			err := in.ValidateDepositAmount()
+			if tt.wantErr {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateRatio(t *testing.T) {
+	tests := []struct {
+		name           string
+		t30, t90, t180 uint64
+		wantErr        bool
+	}{
+		{"ValidSum100", 30, 50, 20, false},
+		{"Not100", 10, 10, 10, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			in := ProjectInput{
+				Tier30Ratio:  tt.t30,
+				Tier90Ratio:  tt.t90,
+				Tier180Ratio: tt.t180,
+			}
+			err := in.ValidateRatio()
+			if tt.wantErr {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateStartTime(t *testing.T) {
+	now := uint64(1000)
+	tests := []struct {
+		name      string
+		startTime uint64
+		wantErr   bool
+	}{
+		{"ValidFuture", 2000, false},
+		{"Now", 1000, true},
+		{"Past", 999, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			in := ProjectInput{StartTime: tt.startTime}
+			err := in.ValidateStartTime(now)
+			if tt.wantErr {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestParseConditions(t *testing.T) {
+	tests := []struct {
+		name        string
+		condToken   string
+		condAmount  string
+		wantErr     bool
+		expectedLen int
+	}{
+		{
+			name:        "ValidMultiple",
+			condToken:   "gno.land/r/demo/wugnot*PAD*gno.land/r/gnoswap/v1/gns",
+			condAmount:  "100*PAD*200",
+			wantErr:     false,
+			expectedLen: 2,
+		},
+		{
+			name:        "EmptyToken",
+			condToken:   "",
+			condAmount:  "100",
+			wantErr:     true,
+			expectedLen: 0,
+		},
+		{
+			name:        "LenMismatch",
+			condToken:   "valid/T0*PAD*valid/T1*PAD*valid/T2",
+			condAmount:  "100*PAD*200",
+			wantErr:     true,
+			expectedLen: 0,
+		},
+		{
+			name:        "UnregisteredToken",
+			condToken:   "invalid/token",
+			condAmount:  "100",
+			wantErr:     true,
+			expectedLen: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			in := ProjectInput{
+				ConditionsToken:  tt.condToken,
+				ConditionsAmount: tt.condAmount,
+			}
+			conds, err := in.ParseConditions()
+			if tt.wantErr {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, tt.expectedLen, len(conds))
+				if tt.expectedLen > 0 {
+					uassert.Equal(t, uint64(100), conds["gno.land/r/demo/wugnot"].minAmount)
+					uassert.Equal(t, uint64(200), conds["gno.land/r/gnoswap/v1/gns"].minAmount)
+				}
+			}
+		})
+	}
+}
+
+func TestValidateAll(t *testing.T) {
+	now := uint64(1000)
+	tests := []struct {
+		name    string
+		input   ProjectInput
+		wantErr bool
+	}{
+		{
+			name: "AllValid",
+			input: ProjectInput{
+				Name:             "ProjectName",
+				TokenPath:        "gno.land/r/gnoswap/v1/gns",
+				Recipient:        std.Address(consts.ADMIN),
+				DepositAmount:    1000,
+				ConditionsToken:  "gno.land/r/demo/wugnot",
+				ConditionsAmount: "10",
+				Tier30Ratio:      50,
+				Tier90Ratio:      30,
+				Tier180Ratio:     20,
+				StartTime:        2000,
+			},
+			wantErr: false,
+		},
+		{
+			name: "InvalidName",
+			input: ProjectInput{
+				Name: "",
+				// 나머지는 유효 값
+				TokenPath:        "valid/token",
+				Recipient:        std.Address("g1valid"),
+				DepositAmount:    10,
+				ConditionsToken:  "valid/T0",
+				ConditionsAmount: "1",
+				Tier30Ratio:      80,
+				Tier90Ratio:      10,
+				Tier180Ratio:     10,
+				StartTime:        2000,
+			},
+			wantErr: true,
+		},
+		{
+			name: "BadTokenPath",
+			input: ProjectInput{
+				Name:             "Proj",
+				TokenPath:        "invalid/token",
+				Recipient:        std.Address("g1valid"),
+				DepositAmount:    10,
+				ConditionsToken:  "valid/T0",
+				ConditionsAmount: "1",
+				Tier30Ratio:      80,
+				Tier90Ratio:      10,
+				Tier180Ratio:     10,
+				StartTime:        2000,
+			},
+			wantErr: true,
+		},
+		{
+			name: "BadRecipient",
+			input: ProjectInput{
+				Name:             "Proj",
+				TokenPath:        "valid/token",
+				Recipient:        std.Address("xinvalid"),
+				DepositAmount:    10,
+				ConditionsToken:  "valid/T0",
+				ConditionsAmount: "1",
+				Tier30Ratio:      80,
+				Tier90Ratio:      10,
+				Tier180Ratio:     10,
+				StartTime:        2000,
+			},
+			wantErr: true,
+		},
+		{
+			name: "BadDepositAmount",
+			input: ProjectInput{
+				Name:             "Proj",
+				TokenPath:        "valid/token",
+				Recipient:        std.Address("g1abc"),
+				DepositAmount:    0,
+				ConditionsToken:  "valid/T0",
+				ConditionsAmount: "1",
+				Tier30Ratio:      80,
+				Tier90Ratio:      10,
+				Tier180Ratio:     10,
+				StartTime:        2000,
+			},
+			wantErr: true,
+		},
+		{
+			name: "BadRatio",
+			input: ProjectInput{
+				Name:             "Proj",
+				TokenPath:        "valid/token",
+				Recipient:        std.Address("g1abc"),
+				DepositAmount:    100,
+				ConditionsToken:  "valid/T0",
+				ConditionsAmount: "1",
+				Tier30Ratio:      80,
+				Tier90Ratio:      10,
+				Tier180Ratio:     30, // sum=120 !=100
+				StartTime:        2000,
+			},
+			wantErr: true,
+		},
+		{
+			name: "StartTimePast",
+			input: ProjectInput{
+				Name:             "Proj",
+				TokenPath:        "valid/token",
+				Recipient:        std.Address("g1abc"),
+				DepositAmount:    100,
+				ConditionsToken:  "valid/T0",
+				ConditionsAmount: "1",
+				Tier30Ratio:      80,
+				Tier90Ratio:      10,
+				Tier180Ratio:     10,
+				StartTime:        999, // <=now
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := tt.input.ValidateAll(now)
+			if tt.wantErr {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestValidateProjectInput(t *testing.T) {
 	now := uint64(time.Now().Unix())
 	testCases := []struct {
@@ -34,14 +374,16 @@ func TestValidateProjectInput(t *testing.T) {
 		{
 			name: "Valid input",
 			input: ProjectInput{
-				Name:          "Test Project",
-				TokenPath:     "test/token",
-				Recipient:     createTestAddress(t),
-				DepositAmount: 1000,
-				Tier30Ratio:   30,
-				Tier90Ratio:   30,
-				Tier180Ratio:  40,
-				StartTime:     now + 3600, // 1 hour in future
+				Name:             "Test Project",
+				TokenPath:        "gno.land/r/gnoswap/v1/gns",
+				Recipient:        createTestAddress(t),
+				DepositAmount:    1000,
+				ConditionsToken:  "gno.land/r/demo/wugnot",
+				ConditionsAmount: "10",
+				Tier30Ratio:      30,
+				Tier90Ratio:      30,
+				Tier180Ratio:     40,
+				StartTime:        now + 3600, // 1 hour in future
 			},
 			shouldError: false,
 		},
@@ -91,14 +433,270 @@ func TestValidateProjectInput(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := validateProjectInput(tc.input, now)
+			_, err := tc.input.ValidateAll(now)
 			if tc.shouldError && err == nil {
 				t.Errorf("Expected error but got none")
 			}
 			if !tc.shouldError && err != nil {
-				t.Errorf("Unexpected error: %v", err)
+				t.Errorf("Unexpected error: %v", err.Error())
 			}
 		})
+	}
+}
+
+func TestProject_GetSet(t *testing.T) {
+	conditions := make(map[string]Condition)
+	tiers := make(map[uint64]Tier)
+	tiersRatios := make(map[uint64]uint64)
+
+	p := NewProject(
+		"pid",
+		"MyProject",
+		"gno.land/r/gnoswap/v1/gns",
+		1000,
+		"g1qxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+		conditions,
+		tiers,
+		tiersRatios,
+		TimeInfo{height: 1, time: 1001},
+		TimeInfo{height: 2, time: 1002},
+		TimeInfo{height: 3, time: 1003},
+		NewProjectStats(10, 20, 30, 40, 50),
+		RefundInfo{amount: 99, height: 10, time: 999},
+	)
+
+	if p.ID() != "pid" {
+		t.Errorf("NewProject id mismatch, got=%s", p.ID())
+	}
+	if p.Name() != "MyProject" {
+		t.Errorf("NewProject name mismatch, got=%s", p.Name())
+	}
+	if p.TokenPath() != "gno.land/r/gnoswap/v1/gns" {
+		t.Errorf("NewProject tokenPath mismatch, got=%s", p.TokenPath())
+	}
+	if p.DepositAmount() != 1000 {
+		t.Errorf("NewProject depositAmount mismatch, got=%d", p.DepositAmount())
+	}
+	if p.Recipient().String() != "g1qxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" {
+		t.Errorf("NewProject recipient mismatch, got=%s", p.Recipient())
+	}
+	created := p.Created()
+	if created.Height() != 1 {
+		t.Errorf("NewProject Created Height mismatch, got=%d", created.Height())
+	}
+	ended := p.Ended()
+	if ended.Time() != 1003 {
+		t.Errorf("NewProject Ended Time mismatch, got=%d", ended.Time())
+	}
+	stats := p.Stats()
+	if stats.TotalCollected() != 50 {
+		t.Errorf("NewProject Stats mismatch, got=%d", stats.TotalCollected())
+	}
+	refund := p.Refund()
+	if refund.Amount() != 99 {
+		t.Errorf("NewProject Refund mismatch, got=%d", refund.Amount())
+	}
+
+	p.SetID("pid2")
+	if p.ID() != "pid2" {
+		t.Errorf("SetID failed, got=%s", p.ID())
+	}
+	p.SetName("MyProject2")
+	if p.Name() != "MyProject2" {
+		t.Errorf("SetName failed, got=%s", p.Name())
+	}
+	p.SetTokenPath("new/tokenPath")
+	if p.TokenPath() != "new/tokenPath" {
+		t.Errorf("SetTokenPath failed, got=%s", p.TokenPath())
+	}
+	p.SetDepositAmount(2000)
+	if p.DepositAmount() != 2000 {
+		t.Errorf("SetDepositAmount failed, got=%d", p.DepositAmount())
+	}
+}
+
+func TestTier_GetSet(t *testing.T) {
+	emptyUint := u256.Zero()
+
+	tr := NewTier(
+		"tierId", 10, 100,
+		emptyUint.Clone(),
+		TimeInfo{height: 0, time: 0},
+		TimeInfo{height: 100, time: 9999},
+		1000, 800, 50, 45, 12, 200,
+		NewReward(u256.NewUint(1234), 10, 9999, nil),
+	)
+
+	if tr.ID() != "tierId" {
+		t.Errorf("Tier ID mismatch, got=%s", tr.ID())
+	}
+	if tr.CollectWaitDuration() != 10 {
+		t.Errorf("Tier CollectWaitDuration mismatch, got=%d", tr.CollectWaitDuration())
+	}
+	if tr.TierAmount() != 100 {
+		t.Errorf("Tier TierAmount mismatch, got=%d", tr.TierAmount())
+	}
+	if tr.TierAmountPerBlockX128().Cmp(u256.Zero()) != 0 {
+		t.Errorf("Tier TierAmountPerBlockX128 mismatch, expect=0")
+	}
+	if tr.TotalDepositAmount() != 1000 {
+		t.Errorf("Tier TotalDepositAmount mismatch, got=%d", tr.TotalDepositAmount())
+	}
+	if tr.ActualDepositAmount() != 800 {
+		t.Errorf("Tier ActualDepositAmount mismatch, got=%d", tr.ActualDepositAmount())
+	}
+	if tr.TotalParticipant() != 50 {
+		t.Errorf("Tier TotalParticipant mismatch, got=%d", tr.TotalParticipant())
+	}
+	if tr.ActualParticipant() != 45 {
+		t.Errorf("Tier ActualParticipant mismatch, got=%d", tr.ActualParticipant())
+	}
+	if tr.UserCollectedAmount() != 12 {
+		t.Errorf("Tier UserCollectedAmount mismatch, got=%d", tr.UserCollectedAmount())
+	}
+	if tr.CalculatedAmount() != 200 {
+		t.Errorf("Tier CalculatedAmount mismatch, got=%d", tr.CalculatedAmount())
+	}
+
+	tr.SetID("tierIdNew")
+	if tr.ID() != "tierIdNew" {
+		t.Errorf("SetID failed, got=%s", tr.ID())
+	}
+	tr.SetTierAmount(999)
+	if tr.TierAmount() != 999 {
+		t.Errorf("SetTierAmount failed, got=%d", tr.TierAmount())
+	}
+	tr.SetActualDepositAmount(777)
+	if tr.ActualDepositAmount() != 777 {
+		t.Errorf("SetActualDepositAmount failed, got=%d", tr.ActualDepositAmount())
+	}
+}
+
+func TestRewardInfo_GetSet(t *testing.T) {
+	ri := NewRewardInfo(
+		u256.NewUint(111),
+		222, 333, 444, 555, 666, 777,
+	)
+	if ri.PriceDebt().ToString() != "111" {
+		t.Errorf("PriceDebt mismatch, got=%s", ri.PriceDebt().ToString())
+	}
+	if ri.DepositAmount() != 222 {
+		t.Errorf("DepositAmount mismatch, got=%d", ri.DepositAmount())
+	}
+	if ri.RewardAmount() != 333 {
+		t.Errorf("RewardAmount mismatch, got=%d", ri.RewardAmount())
+	}
+	if ri.Claimed() != 444 {
+		t.Errorf("Claimed mismatch, got=%d", ri.Claimed())
+	}
+	if ri.StartHeight() != 555 {
+		t.Errorf("StartHeight mismatch, got=%d", ri.StartHeight())
+	}
+	if ri.GetEndHeight() != 666 {
+		t.Errorf("EndHeight mismatch, got=%d", ri.GetEndHeight())
+	}
+	if ri.GetLastHeight() != 777 {
+		t.Errorf("LastHeight mismatch, got=%d", ri.GetLastHeight())
+	}
+	ri.SetPriceDebt(u256.NewUint(999))
+	if ri.PriceDebt().ToString() != "999" {
+		t.Errorf("SetPriceDebt failed, got=%s", ri.PriceDebt().ToString())
+	}
+	ri.SetRewardAmount(1234)
+	if ri.RewardAmount() != 1234 {
+		t.Errorf("SetRewardAmount failed, got=%d", ri.RewardAmount())
+	}
+}
+
+func TestTimeInfo_GetSet(t *testing.T) {
+	ti := NewTimeInfo(50, 5000)
+
+	if ti.Height() != 50 {
+		t.Errorf("Height mismatch, got=%d", ti.Height())
+	}
+	if ti.Time() != 5000 {
+		t.Errorf("Time mismatch, got=%d", ti.Time())
+	}
+
+	ti.SetHeight(100)
+	ti.SetTime(9999)
+	if ti.Height() != 100 {
+		t.Errorf("SetHeight failed, got=%d", ti.Height())
+	}
+	if ti.Time() != 9999 {
+		t.Errorf("SetTime failed, got=%d", ti.Time())
+	}
+}
+
+func TestRefundInfo_GetSet(t *testing.T) {
+	ri := NewRefundInfo(11, 22, 33)
+	if ri.Amount() != 11 {
+		t.Errorf("Amount mismatch, got=%d", ri.Amount())
+	}
+	if ri.Height() != 22 {
+		t.Errorf("Height mismatch, got=%d", ri.Height())
+	}
+	if ri.Time() != 33 {
+		t.Errorf("Time mismatch, got=%d", ri.Time())
+	}
+
+	ri.SetAmount(111)
+	ri.SetHeight(222)
+	ri.SetTime(333)
+	if ri.Amount() != 111 {
+		t.Errorf("SetAmount failed, got=%d", ri.Amount())
+	}
+	if ri.Height() != 222 {
+		t.Errorf("SetHeight failed, got=%d", ri.Height())
+	}
+	if ri.Time() != 333 {
+		t.Errorf("SetTime failed, got=%d", ri.Time())
+	}
+}
+
+func TestCondition_GetSet(t *testing.T) {
+	c := NewCondition("my/token", 1000)
+	if c.TokenPath() != "my/token" {
+		t.Errorf("Condition TokenPath mismatch, got=%s", c.TokenPath())
+	}
+	if c.MinAmount() != 1000 {
+		t.Errorf("Condition MinAmount mismatch, got=%d", c.MinAmount())
+	}
+
+	c.SetTokenPath("new/token")
+	if c.TokenPath() != "new/token" {
+		t.Errorf("SetTokenPath failed, got=%s", c.TokenPath())
+	}
+	c.SetMinAmount(2000)
+	if c.MinAmount() != 2000 {
+		t.Errorf("SetMinAmount failed, got=%d", c.MinAmount())
+	}
+}
+
+func TestReward_GetSet(t *testing.T) {
+	acc := u256.NewUint(1000)
+	r := NewReward(acc, 10, 1000, nil)
+
+	if r.AccumRewardPerDeposit().Cmp(u256.NewUint(1000)) != 0 {
+		t.Errorf("AccumRewardPerDeposit mismatch, got=%s", r.AccumRewardPerDeposit().ToString())
+	}
+	if r.GetLastHeight() != 10 {
+		t.Errorf("LastHeight mismatch, got=%d", r.GetLastHeight())
+	}
+	if r.GetEndHeight() != 1000 {
+		t.Errorf("EndHeight mismatch, got=%d", r.GetEndHeight())
+	}
+	if r.Info() != nil {
+		t.Errorf("Info mismatch, got=%v, want=nil", r.Info())
+	}
+
+	r.SetAccumRewardPerDeposit(u256.NewUint(9999))
+	if r.AccumRewardPerDeposit().ToString() != "9999" {
+		t.Errorf("SetAccumRewardPerDeposit failed, got=%s", r.AccumRewardPerDeposit().ToString())
+	}
+	r.SetLastHeight(111)
+	if r.GetLastHeight() != 111 {
+		t.Errorf("SetLastHeight failed, got=%d", r.GetLastHeight())
 	}
 }
 
@@ -162,7 +760,7 @@ func TestCreateProject(t *testing.T) {
 			tier90Ratio:   uint64(20),
 			tier180Ratio:  uint64(70),
 			startTime:     uint64(time.Now().Unix() + 10),
-			expectedError: "[GNOSWAP-LAUNCHPAD-007] invalid input data || invalid project name",
+			expectedError: "[GNOSWAP-LAUNCHPAD-007] invalid input data || project name cannot be empty",
 		},
 		{
 			name:          "project owner address is invalid",
@@ -176,7 +774,7 @@ func TestCreateProject(t *testing.T) {
 			tier90Ratio:   uint64(20),
 			tier180Ratio:  uint64(70),
 			startTime:     uint64(time.Now().Unix() + 10),
-			expectedError: "[GNOSWAP-LAUNCHPAD-002] invalid address || (abcdef)",
+			expectedError: "[GNOSWAP-LAUNCHPAD-002] invalid address || recipient address(abcdef)",
 		},
 		{
 			name:          "invalid start time",
@@ -191,7 +789,7 @@ func TestCreateProject(t *testing.T) {
 			tier180Ratio:  uint64(70),
 			startTime:     uint64(time.Now().Unix()),
 			expectedId:    "gno.land/r/onbloc/obl:124",
-			expectedError: "[GNOSWAP-LAUNCHPAD-007] invalid input data || invalid start time(1234567890), cannot start project in past(now:1234567902)",
+			expectedError: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234567890) must be greater than now(1234567902)",
 		},
 		{
 			name:          "invalid token path",
@@ -206,7 +804,7 @@ func TestCreateProject(t *testing.T) {
 			tier180Ratio:  uint64(70),
 			startTime:     uint64(time.Now().Unix() + 50),
 			expectedId:    "gno.land/r/onbloc/obl:124",
-			expectedError: "[GNOSWAP-LAUNCHPAD-007] invalid input data || token(gno.land/r/test/token) is not registered to grc20reg",
+			expectedError: "[GNOSWAP-LAUNCHPAD-007] invalid input data || tokenPath(gno.land/r/test/token) not registered",
 		},
 		{
 			name:          "duplicate project test - origin",
@@ -366,14 +964,14 @@ func TestMakeConditions(t *testing.T) {
 	}{
 		{
 			name:             "normal multiple input",
-			conditionsToken:  "token1*PAD*token2*PAD*token3",
+			conditionsToken:  "gno.land/r/gnoswap/v1/gns*PAD*gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
 			conditionsAmount: "100*PAD*200*PAD*300",
 			wantLen:          3,
 			wantPanic:        false,
 			wantAmounts: map[string]uint64{
-				"token1": 100,
-				"token2": 200,
-				"token3": 300,
+				"gno.land/r/gnoswap/v1/gns": 100,
+				"gno.land/r/onbloc/foo":     200,
+				"gno.land/r/onbloc/bar":     300,
 			},
 		},
 		{
@@ -381,17 +979,17 @@ func TestMakeConditions(t *testing.T) {
 			conditionsToken:  "",
 			conditionsAmount: "",
 			wantLen:          0,
-			wantPanic:        false,
+			wantPanic:        true,
 			wantAmounts:      nil,
 		},
 		{
 			name:             "single condition",
-			conditionsToken:  "token1",
+			conditionsToken:  "gno.land/r/gnoswap/v1/gns",
 			conditionsAmount: "100",
 			wantLen:          1,
 			wantPanic:        false,
 			wantAmounts: map[string]uint64{
-				"token1": 100,
+				"gno.land/r/gnoswap/v1/gns": 100,
 			},
 		},
 		{
@@ -414,15 +1012,19 @@ func TestMakeConditions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			defer func() {
-				r := recover()
-				if (r != nil) != tt.wantPanic {
-					t.Errorf("makeConditions() panic = %v, wantPanic = %v", r != nil, tt.wantPanic)
-				}
-			}()
-
-			got := makeConditions(tt.conditionsToken, tt.conditionsAmount)
-
+			input := ProjectInput{
+				Name:             tt.name,
+				TokenPath:        "gno.land/r/gnoswap/v1/gns",
+				Recipient:        std.Address(consts.ADMIN),
+				DepositAmount:    1000000,
+				ConditionsToken:  tt.conditionsToken,
+				ConditionsAmount: tt.conditionsAmount,
+				Tier30Ratio:      20,
+				Tier90Ratio:      30,
+				Tier180Ratio:     50,
+				StartTime:        uint64(time.Now().Unix() + 100),
+			}
+			got, err := input.ParseConditions()
 			if !tt.wantPanic {
 				if tt.wantAmounts == nil {
 					if got != nil {
@@ -442,6 +1044,8 @@ func TestMakeConditions(t *testing.T) {
 					uassert.True(t, exists)
 					uassert.Equal(t, condition.minAmount, wantAmount)
 				}
+			} else {
+				uassert.Error(t, err)
 			}
 		})
 	}
@@ -864,7 +1468,7 @@ func TestCovertTimeToHeight(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := covertTimeToHeight(tt.timestamp)
+			got := convertTimeToHeight(tt.timestamp)
 			uassert.Equal(t, got, tt.want)
 		})
 	}
@@ -881,7 +1485,7 @@ func TestCovertTimeToHeight(t *testing.T) {
 
 		std.TestSetRealm(adminRealm)
 		gns.SetAvgBlockTimeInMsByAdmin(0)
-		_ = covertTimeToHeight(1000)
+		_ = convertTimeToHeight(1000)
 	})
 }
 
@@ -923,7 +1527,7 @@ func TestTransferLeftFromProjectByAdmin(t *testing.T) {
 			projectId:     "nonExistentProject",
 			recipient:     validRecipient,
 			mockHeight:    200,
-			expectedPanic: "[GNOSWAP-LAUNCHPAD-005] data not found || projectId(nonExistentProject) not found",
+			expectedPanic: "[GNOSWAP-LAUNCHPAD-003] requested data not found || projectId(nonExistentProject) not found",
 		},
 		{
 			name: "invalid recipient address",
@@ -934,7 +1538,7 @@ func TestTransferLeftFromProjectByAdmin(t *testing.T) {
 			projectId:     projectId,
 			recipient:     invalidRecipient,
 			mockHeight:    200,
-			expectedPanic: "[GNOSWAP-LAUNCHPAD-006] invalid condition || invalid recipient address(invalidRecipient)",
+			expectedPanic: "[GNOSWAP-LAUNCHPAD-013] invalid transfer condition || invalid recipient address(invalidRecipient)",
 		},
 		{
 			name: "project not ended yet",
@@ -947,7 +1551,7 @@ func TestTransferLeftFromProjectByAdmin(t *testing.T) {
 			projectId:     projectId,
 			recipient:     validRecipient,
 			mockHeight:    250,
-			expectedPanic: "[GNOSWAP-LAUNCHPAD-006] invalid condition || project not ended yet(current:250, endHeight: 300)",
+			expectedPanic: "[GNOSWAP-LAUNCHPAD-013] invalid transfer condition || project not ended yet(current:250, endHeight: 300)",
 		},
 		{
 			name: "project already refunded",
@@ -964,7 +1568,7 @@ func TestTransferLeftFromProjectByAdmin(t *testing.T) {
 			projectId:     projectId,
 			recipient:     validRecipient,
 			mockHeight:    200,
-			expectedPanic: "[GNOSWAP-LAUNCHPAD-006] invalid condition || project already refunded(height:110)",
+			expectedPanic: "[GNOSWAP-LAUNCHPAD-013] invalid transfer condition || project already refunded(height:110)",
 		},
 		{
 			name: "success leftover transfer",

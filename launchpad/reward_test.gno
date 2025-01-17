@@ -3,6 +3,7 @@ package launchpad
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
@@ -63,8 +64,6 @@ func TestValidateRewardCollection(t *testing.T) {
 }
 
 func TestCalculateDepositRatioX128(t *testing.T) {
-	q128 = u256.MustFromDecimal("18446744073709551616")
-
 	tests := []struct {
 		name       string
 		tierAmount uint64
@@ -75,19 +74,19 @@ func TestCalculateDepositRatioX128(t *testing.T) {
 			name:       "Equal amounts",
 			tierAmount: 1000,
 			amount:     1000,
-			expected:   "79228162514264337593543950336", // 1.0 in Q96
+			expected:   "340282366920938463463374607431768211456", // 1.0 in Q128
 		},
 		{
 			name:       "Half amount",
 			tierAmount: 1000,
 			amount:     500,
-			expected:   "39614081257132168796771975168", // 0.5 in Q96
+			expected:   "170141183460469231731687303715884105728", // 0.5 in Q128
 		},
 		{
 			name:       "Double amount",
 			tierAmount: 500,
 			amount:     1000,
-			expected:   "158456325028528675187087900672", // 2.0 in Q96
+			expected:   "680564733841876926926749214863536422912", // 2.0 in Q128
 		},
 		{
 			name:       "Zero amount",
@@ -100,9 +99,7 @@ func TestCalculateDepositRatioX128(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ratio := calcDepositRatioX128(tt.tierAmount, tt.amount)
-			println(ratio.ToString())
 			expected := u256.MustFromDecimal(tt.expected)
-			println(expected.ToString())
 			uassert.Equal(t, 0, ratio.Cmp(expected))
 		})
 	}
@@ -230,36 +227,133 @@ func TestCalculateTierRewards(t *testing.T) {
 
 func TestCollectRewardByDepositId_FailCases(t *testing.T) {
 	setup := func() {
-        projects = make(map[string]Project)
-        deposits = make(map[string]Deposit)
-        depositsByUserByProject = make(map[std.Address]map[string][]string)
-    }
+		projects = make(map[string]Project)
+		deposits = make(map[string]Deposit)
+		depositsByUserByProject = make(map[std.Address]map[string][]string)
+	}
 
 	t.Run("ID not found", func(t *testing.T) {
-        setup()
-        
-        defer func() {
-            if r := recover(); r == nil {
-                t.Error("expected panic but not")
-            }
-        }()
-        
-        CollectRewardByDepositId("non_existent_id")
-    })
+		setup()
+
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("expected panic but not")
+			}
+		}()
+
+		CollectRewardByDepositId("non_existent_id")
+	})
 
 	t.Run("Claimable height before", func(t *testing.T) {
-        setup()
+		setup()
 
-        projectId := "test_project"
-        depositId := "test_deposit"
+		projectId := "test_project"
+		depositId := "test_deposit"
 
-        deposits[depositId] = Deposit{
-            id: depositId,
-            projectId: projectId,
-            claimableHeight: uint64(std.GetHeight()) + 1000,
-        }
+		deposits[depositId] = Deposit{
+			id:              depositId,
+			projectId:       projectId,
+			claimableHeight: uint64(std.GetHeight()) + 1000,
+		}
 
 		reward := CollectRewardByDepositId(depositId)
 		uassert.Equal(t, reward, uint64(0))
+	})
+}
+
+func TestCollectRewardByDepositId_OwnerCheck(t *testing.T) {
+	userA := testutils.TestAddress("userA")
+	userB := testutils.TestAddress("userB")
+
+	project := createTestProject(t)
+	projects[project.id] = project
+
+	depositA := Deposit{
+		id:              "depA",
+		projectId:       project.id,
+		tier:            "30",
+		depositor:       userA,
+		claimableHeight: 10,                               // 지금 height 0 가정
+		claimableTime:   uint64(time.Now().Unix()) + 1000, // 지금보다 이후
+	}
+
+	updateDepositIndices(depositA, &DepositState{
+		Deposits:              deposits,
+		DepositsByProject:     depositsByProject,
+		DepositsByUser:        depositsByUser,
+		DepositsByUserProject: depositsByUserByProject,
+	})
+
+	depositB := Deposit{
+		id:              "depB",
+		projectId:       project.id,
+		tier:            "30",
+		depositor:       userB,
+		claimableHeight: 10,
+		claimableTime:   uint64(time.Now().Unix()) + 1000,
+	}
+
+	updateDepositIndices(depositB, &DepositState{
+		Deposits:              deposits,
+		DepositsByProject:     depositsByProject,
+		DepositsByUser:        depositsByUser,
+		DepositsByUserProject: depositsByUserByProject,
+	})
+
+	t.Run("UserA tries depositB => panic", func(t *testing.T) {
+		std.TestSetRealm(std.NewUserRealm(userA))
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.Errorf("expected panic, got none")
+			} else {
+				t.Logf("got panic: %v", r)
+			}
+		}()
+		CollectRewardByDepositId("depB")
+	})
+
+	t.Run("UserA depositA => not claimable yet", func(t *testing.T) {
+		std.TestSetRealm(std.NewUserRealm(userA))
+		// height=0, depositA.claimableHeight=10
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.Errorf("expected panic for not claimable, got none")
+			} else {
+				t.Logf("got panic: %v", r)
+			}
+		}()
+		CollectRewardByDepositId("depA")
+	})
+
+	std.TestSkipHeights(11) // now height=11 >= depositA.claimableHeight=10
+
+	depA := deposits["depA"]
+	depA.claimableTime = 0
+	deposits["depA"] = depA
+
+	t.Run("UserA depositA => claim success", func(t *testing.T) {
+		std.TestSetRealm(std.NewUserRealm(userA))
+
+		rewardPerBlock := u256.NewUint(100)
+		rewardPerBlock = u256.Zero().Lsh(rewardPerBlock, 128)
+		mockRs := &RewardState{
+			PriceAccumulation: u256.NewUint(1),
+			TotalStake:        100,
+			LastHeight:        0,
+			RewardPerBlock:    rewardPerBlock,
+		}
+		mockRs.info.Set("depA", &StakerRewardInfo{
+			StartHeight: 123,
+			PriceDebt:   u256.Zero(),
+			Amount:      100,
+			Claimed:     0,
+		})
+		rewardStates.Set(project.id, "30", mockRs)
+
+		amount := CollectRewardByDepositId("depA")
+		println("3")
+		uassert.Equal(t, uint64(100), amount)
 	})
 }

@@ -86,6 +86,7 @@ func (states RewardStates) DeleteProject(projectId string) uint64 {
 	states.states.Iterate(projectId+":", projectId+";", func(key string, value interface{}) bool {
 		state := value.(*RewardState)
 		totalEmptyBlock := state.TotalEmptyBlock
+		println("totalEmptyBlock", totalEmptyBlock)
 		if state.TotalStake == 0 {
 			totalEmptyBlock += state.EndHeight - state.LastHeight
 		}
@@ -99,6 +100,7 @@ func (states RewardStates) DeleteProject(projectId string) uint64 {
 	for _, key := range keys {
 		states.states.Remove(key)
 	}
+	println("totalLeftover", totalLeftover)
 
 	return totalLeftover
 }

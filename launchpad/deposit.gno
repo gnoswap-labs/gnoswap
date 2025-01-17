@@ -27,6 +27,9 @@ var (
 
 	//  user -> project -> []depositId
 	depositsByUserByProject = make(map[std.Address]map[string][]string)
+
+	// depositState contains all deposit-related indices
+	depositState DepositState
 )
 
 // DepositState represents the state of the deposits
@@ -99,12 +102,12 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 
 	// Update indices
 	deposits[deposit.id] = deposit
-	updateDepositIndices(deposit, &DepositState{
-		Deposits:              deposits,
-		DepositsByProject:     depositsByProject,
-		DepositsByUser:        depositsByUser,
-		DepositsByUserProject: depositsByUserByProject,
-	})
+	//updateDepositIndices(deposit, &DepositState{
+	//	Deposits:              deposits,
+	//	DepositsByProject:     depositsByProject,
+	//	DepositsByUser:        depositsByUser,
+	//	DepositsByUserProject: depositsByUserByProject,
+	//})
 
 	// Emit deposit event
 	prevAddr, prevPkgPath := getPrev()

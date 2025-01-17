@@ -8,6 +8,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
@@ -138,7 +139,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 // Returns collected reward amount
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectrewardbydepositid
 func CollectRewardByDepositId(depositId string) uint64 {
-	common.IsHalted()
+	assertOnlyNotHalted()
 
 	deposit, exists := deposits[depositId]
 	if !exists {
@@ -148,12 +149,12 @@ func CollectRewardByDepositId(depositId string) uint64 {
 
 	project, exists := projects[deposit.projectId]
 	if !exists {
-		return 0
+		panic(addDetailToError(errInvalidProjectId, ufmt.Sprintf("projectId(%s) not found", deposit.projectId)))
 	}
 
-	caller := std.PrevRealm().Addr()
+	caller := getPrevAddr()
 	if _, exists := depositsByUserByProject[caller]; !exists {
-		return 0
+		panic(addDetailToError(errInvalidCaller, ufmt.Sprintf("caller(%s) not found", caller)))
 	}
 
 	project = projects[deposit.projectId]
@@ -161,12 +162,13 @@ func CollectRewardByDepositId(depositId string) uint64 {
 
 	height := uint64(std.GetHeight())
 	if err := validateRewardCollection(deposit, height); err != nil {
-		return 0
+		panic(err.Error())
 	}
 
 	rewardState, err := rewardStates.Get(deposit.projectId, deposit.tier)
 	if err != nil {
-		return 0
+		panic(addDetailToError(
+			errInvalidInput, err.Error()))
 	}
 	reward := rewardState.Claim(deposit.id, height)
 
@@ -211,8 +213,13 @@ func CollectRewardByDepositId(depositId string) uint64 {
 
 // validateRewardCollection validates if reward can be collected
 func validateRewardCollection(deposit Deposit, height uint64) error {
-	if deposit.rewardCollectTime == 0 && height < deposit.claimableHeight {
-		return errors.New(addDetailToError(errNotYetClaimReward, "reward not yet claimable"))
+	caller := getPrevAddr()
+	if err := validateRewardOwner(deposit.id, caller); err != nil {
+		return err
+	}
+
+	if err := validateRewardClaimable(deposit, height); err != nil {
+		return err
 	}
 	return nil
 }
@@ -242,14 +249,19 @@ func calculateTierRewards(tier Tier, currentHeight uint64, lastCalcHeight uint64
 
 // calcDepositRatioX128 calculates the deposit ratio with Q128 precision
 func calcDepositRatioX128(tierAmount uint64, amount uint64) *u256.Uint {
+	println("tierAmount", tierAmount)
 	amountX128 := new(u256.Uint).Mul(u256.NewUint(amount), q128.Clone())
 	amountX128x := new(u256.Uint).Mul(amountX128, u256.NewUint(1_000_000_000))
+	println("amountX128x", amountX128x.ToString())
 
 	tierAmountX128 := new(u256.Uint).Mul(u256.NewUint(tierAmount), q128.Clone())
+	println("tierAmountX128", tierAmountX128.ToString())
 
 	depositRatioX96 := new(u256.Uint).Div(amountX128x, tierAmountX128)
-	depositRatioX96 = depositRatioX96.Mul(depositRatioX96, q128.Clone())
-	depositRatioX96 = depositRatioX96.Div(depositRatioX96, u256.NewUint(1_000_000_000))
+	println("depositRatioX96", depositRatioX96.ToString())
+	depositRatioX96 = new(u256.Uint).Mul(depositRatioX96, q128.Clone())
+	depositRatioX96 = new(u256.Uint).Div(depositRatioX96, u256.NewUint(1_000_000_000))
+	println("depositRatioX96", depositRatioX96.ToString())
 
 	return depositRatioX96
 }
@@ -258,6 +270,43 @@ func calcDepositRatioX128(tierAmount uint64, amount uint64) *u256.Uint {
 func calcProjectTiersRewardPerBlockX128(tier Tier) *u256.Uint {
 	tierAmountX128 := new(u256.Uint).Mul(u256.NewUint(tier.tierAmount), q128)
 	return new(u256.Uint).Div(tierAmountX128, u256.NewUint(tier.ended.height-tier.started.height))
+}
+
+// calcRewardPerBlockX128 calculates the reward per block with Q128 precision
+func calcRewardPerBlockX128(tierAmount uint64, duration uint64) *u256.Uint {
+	tierAmountX128 := new(u256.Uint).Mul(u256.NewUint(tierAmount), q128)
+	return new(u256.Uint).Div(tierAmountX128, u256.NewUint(duration))
+}
+
+// validateRewardOwner checks if the deposit is truly owned by `caller`.
+func validateRewardOwner(depositId string, caller std.Address) error {
+	dep, ok := deposits[depositId]
+	if !ok {
+		return errors.New(addDetailToError(errNotExistDeposit, ufmt.Sprintf("depositId(%s)", depositId)))
+	}
+	projMap, userHasProject := depositsByUserByProject[caller]
+	if !userHasProject {
+		return errors.New(addDetailToError(errInvalidCaller, ufmt.Sprintf("caller(%s) not found", caller)))
+	}
+	depositIds, userHasDeposits := projMap[dep.projectId]
+	if !userHasDeposits {
+		return errors.New(addDetailToError(errNotExistDeposit, ufmt.Sprintf("caller(%s) no deposit for project(%s)", caller, dep.projectId)))
+	}
+	if !containsString(depositIds, depositId) {
+		return errors.New(addDetailToError(errInvalidOwner, ufmt.Sprintf("caller(%s) does not own depositId(%s)", caller, depositId)))
+	}
+	return nil
+}
+
+// validateRewardClaimable checks if reward can be claimed
+// e.g. deposit.claimableHeight, deposit.claimableTime
+func validateRewardClaimable(deposit Deposit, currentHeight uint64) error {
+	if deposit.rewardCollectTime == 0 {
+		if currentHeight < deposit.claimableHeight {
+			return errors.New(addDetailToError(errNotYetClaimReward, ufmt.Sprintf("need block >= %d, current=%d", deposit.claimableHeight, currentHeight)))
+		}
+	}
+	return nil
 }
 
 /*
