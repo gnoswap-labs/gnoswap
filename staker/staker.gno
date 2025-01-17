@@ -226,7 +226,6 @@ func StakeToken(tokenId uint64) (string, string, string) {
 
 	// TODO: call cache functions at the every staker related state change
 	poolTier.cacheReward(uint64(currentHeight), pools)
-	pool.cacheExternalReward(uint64(currentHeight))
 
 	if pn.PositionIsInRange(tokenId) {
 		isInRange = true

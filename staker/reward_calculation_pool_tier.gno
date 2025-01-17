@@ -145,7 +145,6 @@ type PoolTier struct {
 }
 
 func NewPoolTier(pools *Pools, currentHeight uint64, initialPoolPath string, getEmission func() uint64, getHalvingBlocksInRange func(start, end uint64) ([]uint64, []uint64)) *PoolTier {
-	println("[[[NewPoolTier]]] currentHeight : ", currentHeight)
 	result := &PoolTier{
 		membership:            avl.NewTree(),
 		tierRatio:             TierRatioFromCounts(1, 0, 0),

@@ -108,10 +108,6 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 		param.Pools.Set(poolPath, pool)
 	}
 
-	// cacheInternalReward is called by poolTier.cacheReward
-	pool.cacheExternalReward(param.CurrentHeight)
-	// eligible(in-range) intervals for a position
-	// XXX: Tick ordering code, memoing for future
 	tickUpper := deposit.tickUpper
 	tickLower := deposit.tickLower
 	token0, token1, _ := poolPathDivide(poolPath)
@@ -121,24 +117,34 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 
 	lastCollectHeight := deposit.lastCollectHeight
 
-	internalRewards, internalPenalties := pool.InternalRewardOf(deposit).Calculate(0/*testing, remove later*/, int64(lastCollectHeight), int64(param.CurrentHeight))
+	internalRewards, internalPenalties := pool.RewardStateOf(deposit).CalculateInternalReward(int64(lastCollectHeight), int64(param.CurrentHeight), pool.rewardCache)
 
-	//externalRewards, externalPenalties := pool.ExternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(param.CurrentHeight))
+	allIncentives := pool.incentives.GetAllInHeights(int64(lastCollectHeight), int64(param.CurrentHeight))
+	
+	externalRewards := make([]map[string]uint64, 4)
+	externalPenalties := make([]map[string]uint64, 4)
+	for i := range externalRewards {
+		externalRewards[i] = make(map[string]uint64)
+		externalPenalties[i] = make(map[string]uint64)
+	}
+
+	for _, incentive := range allIncentives {
+		externalReward, externalPenalty := pool.RewardStateOf(deposit).CalculateExternalReward(int64(lastCollectHeight), int64(param.CurrentHeight), incentive)
+
+		for i := range externalReward {
+			externalRewards[i][incentive.incentiveId] = externalReward[i]
+			externalPenalties[i][incentive.incentiveId] = externalPenalty[i]
+		}
+	}
 
 	rewards := make([]Reward, len(internalRewards))
 	for i := range internalRewards {
 		rewards[i] = Reward{
 			Internal:        internalRewards[i],
 			InternalPenalty: internalPenalties[i],
+			External:        externalRewards[i],
+			ExternalPenalty: externalPenalties[i],
 		}
-		/*
-		if externalRewards != nil {
-			if len(externalRewards[i]) > 0 {
-				rewards[i].External = externalRewards[i]
-				rewards[i].ExternalPenalty = externalPenalties[i]
-			}
-		}
-			*/
 	}
 	return rewards
 }
