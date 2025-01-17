@@ -337,7 +337,7 @@ func TestDistributeToTarget(t *testing.T) {
 			shouldPanic: true,
 			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(a)",
 			setup: func() {
-				distributionBpsPct.Set("a", 1000)
+				distributionBpsPct.Set("a", uint64(1000))
 			},
 			amount: 100,
 		},

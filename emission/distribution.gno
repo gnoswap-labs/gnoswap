@@ -147,7 +147,7 @@ func distributeToTarget(amount uint64) uint64 {
 			))
 		}
 
-		pct := iPct.(int)
+		pct := iPct.(uint64)
 		distAmount := calculateAmount(amount, uint64(pct))
 		totalSent += distAmount
 
