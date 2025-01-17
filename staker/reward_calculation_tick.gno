@@ -120,14 +120,12 @@ func (self *Tick) CurrentOutsideAccumulation(blockNumber int64) *u256.Uint {
 
 func (self *Tick) modifyDepositLower(currentHeight int64, currentTick int32, liquidity *i256.Int) {
 	// update staker side tick info
-	println("stakedLiquidityGross ", self.stakedLiquidityGross.ToString(), ", liquidity ", liquidity.ToString())
 	self.stakedLiquidityGross = liquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
 	if self.stakedLiquidityGross.Lt(u256.Zero()) {
 		panic("stakedLiquidityGross is negative")
 	}
 	self.stakedLiquidityDelta = i256.Zero().Add(self.stakedLiquidityDelta, liquidity)
 
-	println("modifyDepositLower: currentTick =", currentTick, "tickId =", self.id, "stakedLiquidityGross =", self.stakedLiquidityGross.ToString(), "stakedLiquidityDelta =", self.stakedLiquidityDelta.ToString())
 	//self.updateCross(currentHeight, currentTick < self.id)
 	// ticks.Set(self.id, self)
 }
@@ -139,17 +137,13 @@ func (self *Tick) modifyDepositUpper(currentHeight int64, currentTick int32, liq
 	}
 	self.stakedLiquidityDelta = i256.Zero().Sub(self.stakedLiquidityDelta, liquidity)
 
-	println("modifyDepositUpper: currentTick =", currentTick, "tickId =", self.id, "stakedLiquidityGross =", self.stakedLiquidityGross.ToString(), "stakedLiquidityDelta =", self.stakedLiquidityDelta.ToString())
 	//self.updateCross(currentHeight, currentTick < self.id)
 	// ticks.Set(self.id, self)
 }
 
 func (self *Tick) updateCurrentOutsideAccumulation(blockNumber int64, acc *u256.Uint) {
 	currentOutsideAccumulation := self.CurrentOutsideAccumulation(blockNumber)
-	println("currentOutsideAccumulation : ", currentOutsideAccumulation.ToString())
-	println("accumulation : ", acc.ToString())
 	newOutsideAccumulation := u256.Zero().Sub(acc, currentOutsideAccumulation)
-	println("newOutsideAccumulation : ", newOutsideAccumulation.ToString())
 	self.outsideAccumulation.Set(blockNumber, newOutsideAccumulation)
 }
 
@@ -160,22 +154,17 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 			return
 		}
 
-		println("[[TickCrossHook]]  tickId : ", tickId, ", zeroForOne : ", zeroForOne)
 		tick := pool.ticks.Get(tickId)
 
 		blockNumber := height()
-		println("	blockNumber : ", blockNumber)
 		//tick.updateCross(blockNumber, zeroForOne)
 
-		println("tickId : ", tickId)
 
-		// historical tick does NOT actually reflect the tick at the blockNumber, but it provides correct ordering for the staked positions.
-		// (because TickCrossHook is called only for the staked-initialized ticks)
-		// you should not use the historical tick for equality, only for comparison.
+		var nextTick int32
 		if zeroForOne {
-			pool.historicalTick.Set(blockNumber, tickId-1)
+			nextTick = tickId - 1
 		} else {
-			pool.historicalTick.Set(blockNumber, tickId)
+			nextTick = tickId
 		}
 
 		liquidityInRangeDelta := tick.stakedLiquidityDelta
@@ -186,7 +175,7 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 		if zeroForOne {
 			liquidityInRangeDelta = i256.Zero().Neg(liquidityInRangeDelta)
 		}
-		newAcc := pool.modifyDeposit(liquidityInRangeDelta, blockNumber)
+		newAcc := pool.modifyDeposit(liquidityInRangeDelta, blockNumber, nextTick)
 		tick.updateCurrentOutsideAccumulation(blockNumber, newAcc)
 	}
 }

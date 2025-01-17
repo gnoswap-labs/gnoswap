@@ -257,6 +257,14 @@ func (self *canonicalRewardState) CanonicalRewardOf(depositId uint64) Reward {
 	return self.Reward[self.CurrentHeight()-1][depositId]
 }
 
+func (self *canonicalRewardState) SafeCanonicalRewardOf(depositId uint64) (Reward, bool) {
+	rewards := self.Reward[self.CurrentHeight()-1]
+	if len(rewards) <= int(depositId) {
+		return Reward{}, false
+	}
+	return rewards[depositId], true
+}
+
 func (self *canonicalRewardState) CanonicalRewardOfHeight(depositId uint64, height uint64) Reward {
 	return self.Reward[height][depositId]
 }
@@ -289,11 +297,6 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 
 	allIncentives := pool.incentives.GetAllInHeights(int64(lastCollectHeight), int64(currentHeight))
 
-	println("[[[allIncentives]]]")
-	for _, incentive := range allIncentives {
-		println("incentiveId: ", incentive.incentiveId)
-	}
-	
 	for incentiveId, incentive := range allIncentives {
 		externalReward, externalPenalty := pool.RewardStateOf(deposit).CalculateExternalReward(int64(lastCollectHeight), int64(currentHeight), incentive)
 
@@ -359,7 +362,7 @@ func (self *canonicalRewardState) StakeToken(tokenId uint64, targetPoolPath stri
 	currentHeight := self.CurrentHeight()
 	pool, ok := self.global.pools.Get(targetPoolPath)
 	if !ok {
-		panic("should not happen")
+		panic("should not happen 1")
 	}
 	deposit := &Deposit{
 		owner:             owner,
@@ -387,7 +390,7 @@ func (self *canonicalRewardState) StakeToken(tokenId uint64, targetPoolPath stri
 
 	signedLiquidity := i256.FromUint256(deposit.liquidity)
 	if self.isInRange(deposit) {
-		pool.modifyDeposit(signedLiquidity, currentHeight)
+		pool.modifyDeposit(signedLiquidity, currentHeight, canonicalPool.tick)
 	}
 	pool.ticks.Get(deposit.tickLower).modifyDepositLower(currentHeight, canonicalPool.tick, signedLiquidity)
 	pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(currentHeight, canonicalPool.tick, signedLiquidity)
@@ -408,7 +411,7 @@ func (self *canonicalRewardState) UnstakeToken(tokenId uint64) {
 
 	canonicalPool, ok := self.Pool[deposit.targetPoolPath]
 	if !ok {
-		panic("should not happen")
+		panic("should not happen 2")
 	}
 
 	// update global state
@@ -419,12 +422,12 @@ func (self *canonicalRewardState) UnstakeToken(tokenId uint64) {
 	})
 	pool, ok := self.global.pools.Get(deposit.targetPoolPath)
 	if !ok {
-		panic("should not happen")
+		panic("should not happen 3")
 	}
 	signedLiquidity := i256.FromUint256(deposit.liquidity)
 	signedLiquidity = signedLiquidity.Neg(signedLiquidity)
 	if self.isInRange(deposit) {
-		pool.modifyDeposit(signedLiquidity, currentHeight)
+		pool.modifyDeposit(signedLiquidity, currentHeight, canonicalPool.tick)
 	}
 	pool.ticks.Get(deposit.tickLower).modifyDepositLower(currentHeight, canonicalPool.tick, signedLiquidity)
 	pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(currentHeight, canonicalPool.tick, signedLiquidity)
@@ -523,11 +526,11 @@ func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64
 func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
 	pool, ok := self.Pool[poolPath]
 	if !ok {
-		panic("should not happen")
+		panic("should not happen 4")
 	}
 	globalPool, ok := self.global.pools.Get(poolPath)
 	if !ok {
-		panic("should not happen")
+		panic("should not happen 5")
 	}
 
 	if pool.tick == tick {
@@ -599,7 +602,7 @@ func (self *canonicalRewardState) AssertEmulatedRewardOf(depositId uint64, expec
 func (self *canonicalRewardState) AssertEmulatedExternalRewardOf(depositId uint64, incentiveId string, expected uint64) {
 	reward := self.EmulatedRewardOf(depositId)
 	if !isInErrorRange(expected, reward.External[incentiveId]) {
-		self.t.Errorf("emulated external reward of %d mismatch: expected %d, got %d", depositId, expected, reward.External[incentiveId])
+		self.t.Errorf("!!!!emulated external reward of %d mismatch: expected %d, got %d", depositId, expected, reward.External[incentiveId])
 	}
 }
 
@@ -619,7 +622,9 @@ func (self *canonicalRewardState) AssertEquivalence(depositId uint64) {
 }
 
 func (self *canonicalRewardState) AssertEmulatedRewardMap(expected map[uint64]uint64) {
+	println("[[[AssertEmulatedRewardMap Start]]]")
 	for key, value := range expected {
+		println("key: ", key, "value: ", value)
 		self.AssertEmulatedRewardOf(key, value)
 	}
 }

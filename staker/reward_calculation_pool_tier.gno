@@ -75,7 +75,6 @@ func (self *TierRatio) IntoRewardDenominators(counts []uint64) []uint64 {
 		)
 	}
 
-	println("\tIntoRewardDenominators : , All tier counts len : ", len(counts))
 	result := make([]uint64, AllTierCount)
 	for i := Tier1; i < AllTierCount; i++ {
 		if counts[i] == 0 {
@@ -83,13 +82,11 @@ func (self *TierRatio) IntoRewardDenominators(counts []uint64) []uint64 {
 		} else {
 			result[i] = counts[i] * TierRatioLCM / (self.Get(uint64(i)))
 		}
-		println("\t[", i, "] : ", counts[i], ", ratio : ", self.Get(uint64(i)), ", result : ", result[i])
 	}
 	return result
 }
 
 func ApplyDenominator(emission uint64, denominator uint64) uint64 {
-	println("\tApplyDenominator : emission : ", emission, ", denominator : ", denominator, ", return : ", emission*TierRatioLCM/denominator/100)
 	if denominator == 0 {
 		return 0
 	}
@@ -211,7 +208,6 @@ func (self *PoolTier) changeTier(currentHeight int64, pools *Pools, poolPath str
 	// TODO:
 	// poolPath validation check
 
-	println("[", currentHeight, "] changeTier Start -> poolPath : ", poolPath, ", nextTier : ", nextTier)
 	self.cacheReward(currentHeight, pools)
 
 	// same as prev. no need to update
@@ -260,7 +256,6 @@ func CalculateTierReward(currentEmission uint64, tierRatio *TierRatio, tier uint
 // (due to calling cacheReward() at the start of changeTier(), this holds true).
 func (self *PoolTier) cacheReward(currentHeight int64, pools *Pools) {
 	lastHeight := self.lastRewardCacheHeight
-	println("[[[cacheReward]]] currentHeight : ", currentHeight, ", lastHeight : ", lastHeight)
 
 	if currentHeight <= lastHeight {
 		// no need to check
@@ -269,14 +264,9 @@ func (self *PoolTier) cacheReward(currentHeight int64, pools *Pools) {
 
 	// find halving blocks in range
 	halvingBlocks, halvingEmissions := self.getHalvingBlocksInRange(lastHeight, currentHeight)
-	println("[[[cacheReward]]] halvingBlocks : ", halvingBlocks)
-	println("[[[cacheReward]]] halvingEmissions : ", halvingEmissions)
 
 	cursor := lastHeight
 	currentEmission := self.currentEmission
-
-	println("[[[cacheReward]]] cursor : ", cursor)
-	println("[[[cacheReward]]] currentEmission : ", currentEmission)
 
 	for i, hvBlock := range halvingBlocks {
 		/*
@@ -293,9 +283,7 @@ func (self *PoolTier) cacheReward(currentHeight int64, pools *Pools) {
 		startBlock := cursor
 		endBlock := hvBlock
 		if endBlock > startBlock {
-			println("[[[cacheReward]]] applyCacheToAllPools Start halvingBlock : ", hvBlock)
 			self.applyCacheToAllPools(pools, startBlock, endBlock, currentEmission)
-			println("[[[cacheReward]]] applyCacheToAllPools End halvingBlock : ", hvBlock)
 			cursor = endBlock
 		}
 
@@ -305,20 +293,16 @@ func (self *PoolTier) cacheReward(currentHeight int64, pools *Pools) {
 
 	// remaining range [cursor, currentHeight)
 	if cursor < currentHeight {
-		println("###### applyCacheToAllPools")
 		self.applyCacheToAllPools(pools, cursor, currentHeight, currentEmission)
-		println("###### applyCacheToAllPools done")
 		cursor = currentHeight
 	}
 
 	// update lastRewardCacheHeight and currentEmission
 	self.lastRewardCacheHeight = currentHeight
-	println("[[[cacheReward]]] lastRewardCacheHeight set : ", self.lastRewardCacheHeight)
 	self.currentEmission = currentEmission
 }
 
 func (self *PoolTier) applyCacheToAllPools(pools *Pools, startBlock, endBlock int64, emissionInThisInterval uint64) {
-	println("###### applyCacheToAllPools startBlock : ", startBlock, ", endBlock : ", endBlock, ", emissionInThisInterval : ", emissionInThisInterval)
 	if startBlock >= endBlock {
 		return
 	}
@@ -337,7 +321,6 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, startBlock, endBlock in
 
 		// real reward
 		reward := ApplyDenominator(emissionInThisInterval, denominators[tierNum])
-		println("###### applyCacheToAllPools reward : ", reward)
 		// accumulate the reward for the interval (startBlock to endBlock) in the Pool
 		// TODO: the startBlock in this scope and the pool's lastRewardCacheHeight MUST be the same. They should be merged into the one variable(preferrably by passing StartHeight explicitly)
 		pool.cacheInternalReward(endBlock, reward)

@@ -124,7 +124,6 @@ func (self *Incentives) create(
 }
 
 func (self *Incentives) startUnclaimablePeriod(startHeight int64) {
-	println("[[startUnclaimablePeriod]] startHeight : ", startHeight)
 	self.unclaimablePeriods.Set(startHeight, int64(0))
 }
 
@@ -142,11 +141,8 @@ func (self *Incentives) endUnclaimablePeriod(endHeight int64) {
 
 	if startHeight == 0 {
 		// No ongoing unclaimable period found
-		println("[[endUnclaimablePeriod]] No ongoing unclaimable period found")
 		return
 	}
-
-	println("[[endUnclaimablePeriod]] startHeight : ", startHeight, ", endHeight : ", endHeight)
 
 	if startHeight == endHeight {
 		self.unclaimablePeriods.Remove(startHeight)
@@ -158,30 +154,20 @@ func (self *Incentives) endUnclaimablePeriod(endHeight int64) {
 func (self *Incentives) calculateUnclaimableReward(incentiveId string) uint64 {
 	incentive, ok := self.GetByIncentiveId(incentiveId)
 	if !ok {
-		println("incentive not found")
 		return 0
 	}
 
 	blocks := int64(0)
 
-	println("[[calculateUnclaimableReward]] startHeight : ", incentive.startHeight, ", endHeight : ", incentive.endHeight)
-
-	println("all unclaimable periods : ")
-	self.unclaimablePeriods.Iterate(0, 999999, func(key int64, value interface{}) bool {
-		println("key : ", key, ", value : ", value.(int64))
-		return false
-	})
 
 	self.unclaimablePeriods.ReverseIterate(0, incentive.startHeight, func(key int64, value interface{}) bool {
 		endHeight := value.(int64)
-		println("[[calculateUnclaimableReward]] key : ", key, ", endHeight : ", endHeight)
 		if endHeight == 0 {
 			endHeight = incentive.endHeight
 		}
 		if endHeight <= incentive.startHeight {
 			return true
 		}
-		println("[[calculateUnclaimableReward]] key : ", key, ", endHeight : ", endHeight)
 		blocks += endHeight - incentive.startHeight
 		return true
 	})
@@ -192,12 +178,9 @@ func (self *Incentives) calculateUnclaimableReward(incentiveId string) uint64 {
 		if endHeight == 0 {
 			endHeight = incentive.endHeight
 		}
-		println("[[calculateUnclaimableReward]] startHeight : ", startHeight, ", endHeight : ", endHeight)
 		blocks += endHeight - startHeight
 		return false
 	})
-
-	println("[[calculateUnclaimableReward]] blocks : ", blocks)
 
 	return uint64(blocks) * incentive.rewardPerBlock
 }

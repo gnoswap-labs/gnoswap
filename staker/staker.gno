@@ -229,7 +229,7 @@ func StakeToken(tokenId uint64) (string, string, string) {
 
 	if pn.PositionIsInRange(tokenId) {
 		isInRange = true
-		pool.modifyDeposit(signedLiquidity, currentHeight)
+		pool.modifyDeposit(signedLiquidity, currentHeight, currentTick)
 	}
 
 	// this could happen because of how position stores the ticks.
@@ -429,10 +429,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 	println("unClaimableInternal : ", unClaimableInternal)
 	if unClaimableInternal > 0 {
 		// internal unclaimable to community pool
-		println("sending unClaimableInternal", unClaimableInternal, " to community pool // gns balance (staker) :", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
 		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), unClaimableInternal)
-		println("sending unClaimableInternal ok")
-		println()
 	}
 
 	prevAddr, prevPkgPath := getPrev()
@@ -563,7 +560,7 @@ func applyUnStake(tokenId uint64) {
 	signedLiquidity := i256.FromUint256(deposit.liquidity)
 	signedLiquidity = signedLiquidity.Neg(signedLiquidity)
 	if pn.PositionIsInRange(tokenId) {
-		pool.modifyDeposit(signedLiquidity, currentHeight)
+		pool.modifyDeposit(signedLiquidity, currentHeight, currentTick)
 	}
 
 	upperTick := pool.ticks.Get(deposit.tickUpper)
@@ -674,7 +671,6 @@ func getTokenPairBalanceFromPosition(poolPath string, tokenId uint64) (string, s
 	if token1Balance == "" {
 		token1Balance = "0"
 	}
-	println("[", tokenId, "]=== token0Balance: ", token0Balance, ", token1Balance: ", token1Balance)
 	return token0Balance, token1Balance
 }
 
