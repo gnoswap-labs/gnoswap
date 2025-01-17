@@ -84,7 +84,7 @@ func CreateExternalIncentive(
 	caller := std.PrevRealm().Addr()
 
 	// incentiveId := incentiveIdCompute(std.PrevRealm().Addr(), targetPoolPath, rewardToken, startTimestamp, endTimestamp, std.GetHeight())
-	incentiveId := incentiveIdByTime(uint64(startTimestamp), uint64(endTimestamp), caller, rewardToken)
+	incentiveId := incentiveIdByTime(startTimestamp, endTimestamp, caller, rewardToken)
 
 	externalDuration := uint64(endTimestamp - startTimestamp)
 	if err := isValidIncentiveDuration(externalDuration); err != nil {
@@ -162,11 +162,11 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 		))
 	}
 
-	now := time.Now().Unix()
-	if now < ictv.endTimestamp {
+	now := std.GetHeight()
+	if now < ictv.endHeight {
 		panic(addDetailToError(
 			errCannotEndIncentive,
-			ufmt.Sprintf("staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(%d), current(%d)", ictv.endTimestamp, now),
+			ufmt.Sprintf("staker.gno__EndExternalIncentive() || cannot end incentive before endHeight(%d), current(%d)", ictv.endHeight, now),
 		))
 	}
 
@@ -183,6 +183,11 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	// when incentive ended, refund remaining reward
 	refund := ictv.rewardLeft
 
+	if !ictv.unclaimableRefunded {
+		refund += pool.incentives.calculateUnclaimableReward(ictv.incentiveId)
+		ictv.unclaimableRefunded = true
+	}
+
 	poolLeftExternalRewardAmount := common.BalanceOf(ictv.rewardToken, consts.STAKER_ADDR)
 	if poolLeftExternalRewardAmount < refund {
 		refund = poolLeftExternalRewardAmount
@@ -198,8 +203,6 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 
 	// also refund deposit gns amount
 	gns.Transfer(a2u(ictv.refundee), ictv.depositGnsAmount)
-
-	pool.incentives.remove(ictv)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(

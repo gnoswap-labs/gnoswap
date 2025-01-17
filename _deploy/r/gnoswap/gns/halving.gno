@@ -205,9 +205,9 @@ func SetCallbackEmissionChange(callback func(amount uint64)) {
 }
 
 // endHeight MUST be smaller than the current height(we don't read future halving blocks with this function)
-func GetHalvingBlocksInRange(startHeight, endHeight int64) ([]uint64, []uint64) {
+func GetHalvingBlocksInRange(startHeight, endHeight int64) ([]int64, []uint64) {
 	halvingData := GetEmissionState().getHalvingData()
-	halvingBlocks := []uint64{}
+	halvingBlocks := []int64{}
 	halvingEmissions := []uint64{}
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		startBlock := halvingData.getStartBlockHeight(year)
@@ -217,7 +217,7 @@ func GetHalvingBlocksInRange(startHeight, endHeight int64) ([]uint64, []uint64) 
 		if endHeight < startBlock {
 			break
 		}
-		halvingBlocks = append(halvingBlocks, uint64(startBlock))
+		halvingBlocks = append(halvingBlocks, startBlock)
 		halvingEmissions = append(halvingEmissions, halvingData.getAmountPerBlock(year))
 	}
 	return halvingBlocks, halvingEmissions

@@ -49,7 +49,7 @@ func (self *Pools) Get(poolPath string) (*Pool, bool) {
 func (self *Pools) GetOrCreate(poolPath string, currentTick int32) *Pool {
 	pool, ok := self.Get(poolPath)
 	if !ok {
-		pool = NewPool(poolPath, uint64(std.GetHeight()), currentTick)
+		pool = NewPool(poolPath, std.GetHeight(), currentTick)
 		self.Set(poolPath, pool)
 	}
 	return pool
@@ -70,14 +70,14 @@ type Pool struct {
 	// updated each time when the pool crosses a staked tick
 	stakedLiquidity *UintTree // blockNumber -> *u256.Uint
 
-	lastUnclaimableHeight *uint64
-	unclaimableAcc        *uint64
+	lastUnclaimableHeight int64
+	unclaimableAcc        uint64
 
-	tierRewardTotal *uint64 // current total internal reward per block, used for unclaimable reward calculation
+	tierRewardTotal uint64 // current total internal reward per block, used for unclaimable reward calculation
 
 	// stores per-block reward for this pool at a given height
 	rewardCache           *RewardCacheTree // blockNumber -> uint64
-	lastRewardCacheHeight *uint64
+	lastRewardCacheHeight int64
 
 	incentives Incentives
 
@@ -90,24 +90,18 @@ type Pool struct {
 	historicalTick *UintTree // blockNumber -> int32
 }
 
-func NewPool(poolPath string, currentHeight uint64, currentTick int32) *Pool {
-	unclaimableAcc := uint64(0)
-	tierRewardTotal := uint64(0)
-	// For some reason we cannot use &currentHeight directly
-	// currentHeightVar := currentHeight
-
+func NewPool(poolPath string, currentHeight int64, currentTick int32) *Pool {
 	pool := &Pool{
 		poolPath:              poolPath,
 		stakedLiquidity:       NewUintTree(),
-		lastUnclaimableHeight: &currentHeight,
-		unclaimableAcc:        &unclaimableAcc,
-		tierRewardTotal:       &tierRewardTotal,
+		lastUnclaimableHeight: currentHeight,
+		unclaimableAcc:        0,
+		tierRewardTotal:       0,
 		rewardCache:           NewRewardCacheTree(),
-		lastRewardCacheHeight: &currentHeight,
-		incentives:            NewIncentives(currentHeight),
+		lastRewardCacheHeight: currentHeight,
+		incentives:            NewIncentives(),
 		ticks:                 NewTicks(),
 		globalRewardRatioAccumulation: NewUintTree(),
-		// lastGlobalRewardRatioAccumulationHeight: &currentHeightVar,
 		historicalTick: NewUintTree(),
 	}
 
@@ -118,16 +112,16 @@ func NewPool(poolPath string, currentHeight uint64, currentTick int32) *Pool {
 }
 
 // Returns the latest staked liquidity at the height equal or before the current height
-func (self *Pool) CurrentStakedLiquidity(currentHeight uint64) *u256.Uint {
+func (self *Pool) CurrentStakedLiquidity(currentHeight int64) *u256.Uint {
 	stakedLiquidity := u256.Zero()
-	self.stakedLiquidity.ReverseIterate(0, currentHeight, func(key uint64, value interface{}) bool {
+	self.stakedLiquidity.ReverseIterate(0, currentHeight, func(key int64, value interface{}) bool {
 		stakedLiquidity = value.(*u256.Uint)
 		return true
 	})
 	return stakedLiquidity
 }
 
-func (self *Pool) CurrentReward(currentHeight uint64) *u256.Uint {
+func (self *Pool) CurrentReward(currentHeight int64) *u256.Uint {
 	reward := self.rewardCache.CurrentReward(currentHeight)
 	if reward == nil {
 		return u256.Zero()
@@ -135,10 +129,10 @@ func (self *Pool) CurrentReward(currentHeight uint64) *u256.Uint {
 	return reward.(*u256.Uint)
 }
 
-func (self *Pool) CurrentGlobalRewardRatioAccumulation(currentHeight uint64) (uint64, *u256.Uint) {
-	var height uint64
+func (self *Pool) CurrentGlobalRewardRatioAccumulation(currentHeight int64) (int64, *u256.Uint) {
+	var height int64
 	var acc *u256.Uint
-	self.globalRewardRatioAccumulation.ReverseIterate(0, currentHeight, func(key uint64, value interface{}) bool {
+	self.globalRewardRatioAccumulation.ReverseIterate(0, currentHeight, func(key int64, value interface{}) bool {
 		height = key
 		acc = value.(*u256.Uint)
 		return true
@@ -149,28 +143,27 @@ func (self *Pool) CurrentGlobalRewardRatioAccumulation(currentHeight uint64) (ui
 	return height, acc
 }
 
-func (self *Pool) CurrentTick(currentHeight uint64) int32 {
+func (self *Pool) CurrentTick(currentHeight int64) int32 {
 	var tick int32
-	self.historicalTick.ReverseIterate(0, currentHeight, func(key uint64, value interface{}) bool {
+	self.historicalTick.ReverseIterate(0, currentHeight, func(key int64, value interface{}) bool {
 		tick = value.(int32)
 		return true
 	})
 	return tick
 }
 
-// cacheReward() MUST be called before this function
-func (self *Pool) IsExternallyIncentivizedPool(currentHeight uint64) bool {
+func (self *Pool) IsExternallyIncentivizedPool(currentHeight int64) bool {
 	return self.incentives.byTime.Size() != 0
 }
 
-func (self *Pool) cacheReward(startHeight, endHeight uint64, currentTierReward uint64) {
-	println("\t\t\t->cacheRewardPerLiquidityUnit Start : [", startHeight, "], [", endHeight, "], (", currentTierReward, "), lastUnclaimableHeight ", *self.lastUnclaimableHeight, ", currentTierReward : ", currentTierReward)
+func (self *Pool) cacheReward(startHeight, endHeight int64, currentTierReward uint64) {
+	println("\t\t\t->cacheRewardPerLiquidityUnit Start : [", startHeight, "], [", endHeight, "], (", currentTierReward, "), lastUnclaimableHeight ", self.lastUnclaimableHeight, ", currentTierReward : ", currentTierReward)
 	// Unclaimable reward calculation uses tierRewardTotal, so we need to update it
-	if *self.lastUnclaimableHeight != 0 {
-		self.endInternalUnclaimablePeriod(startHeight)
-		*self.tierRewardTotal = currentTierReward
-		println("		->tierRewardTotal : ", *self.tierRewardTotal)
-		self.startInternalUnclaimablePeriod(startHeight)
+	if self.lastUnclaimableHeight != 0 {
+		self.endUnclaimablePeriod(startHeight, false)
+		self.tierRewardTotal = currentTierReward
+		println("		->tierRewardTotal : ", self.tierRewardTotal)
+		self.startUnclaimablePeriod(startHeight, false)
 	}
 
 	oldTierReward := self.rewardCache.CurrentReward(startHeight)
@@ -179,30 +172,30 @@ func (self *Pool) cacheReward(startHeight, endHeight uint64, currentTierReward u
 	}
 }
 
-func (self *Pool) cacheInternalReward(currentHeight, currentEmission uint64) {
-	startHeight := *self.lastRewardCacheHeight
+func (self *Pool) cacheInternalReward(currentHeight int64, currentEmission uint64) {
+	startHeight := self.lastRewardCacheHeight
 
 	self.cacheReward(startHeight, currentHeight, currentEmission)
 
-	if *self.lastUnclaimableHeight != 0 && self.CurrentStakedLiquidity(currentHeight).IsZero() {
-		self.endInternalUnclaimablePeriod(currentHeight)
-		self.startInternalUnclaimablePeriod(currentHeight)
+	if self.lastUnclaimableHeight != 0 && self.CurrentStakedLiquidity(currentHeight).IsZero() {
+		self.endUnclaimablePeriod(currentHeight, false)
+		self.startUnclaimablePeriod(currentHeight, false)
 	}
 
-	*self.lastRewardCacheHeight = currentHeight
-	println("\t\tlastRewardCacheHeight : ", *self.lastRewardCacheHeight)
+	self.lastRewardCacheHeight = currentHeight
+	println("\t\tlastRewardCacheHeight : ", self.lastRewardCacheHeight)
 
 	self.updateGlobalRewardRatioAccumulation(currentHeight, self.CurrentStakedLiquidity(currentHeight))
 }
 
-func (self *Pool) calculateGlobalRewardRatioAccumulation(currentHeight uint64, currentStakedLiquidity *u256.Uint) *u256.Uint {
+func (self *Pool) calculateGlobalRewardRatioAccumulation(currentHeight int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
 	oldAccHeight, oldAcc := self.CurrentGlobalRewardRatioAccumulation(currentHeight)
 	blockDiff := currentHeight - oldAccHeight
 	if blockDiff == 0 {
 		return oldAcc.Clone()
 	}
 
-	acc := u256.NewUint(blockDiff)
+	acc := u256.NewUint(uint64(blockDiff))
 	acc = acc.Mul(acc, q128)
 	acc = acc.Div(acc, currentStakedLiquidity)
 
@@ -210,7 +203,7 @@ func (self *Pool) calculateGlobalRewardRatioAccumulation(currentHeight uint64, c
 }
 
 // returns the old global reward ratio accumulation
-func (self *Pool) updateGlobalRewardRatioAccumulation(currentHeight uint64, currentStakedLiquidity *u256.Uint) *u256.Uint {
+func (self *Pool) updateGlobalRewardRatioAccumulation(currentHeight int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
 	newAcc := self.calculateGlobalRewardRatioAccumulation(currentHeight, currentStakedLiquidity)
 
 	self.globalRewardRatioAccumulation.Set(currentHeight, newAcc)
@@ -244,10 +237,10 @@ func (self *Pool) RewardStateOf(deposit *Deposit) *RewardState {
 }
 
 func (self *RewardState) CalculateInternalReward(startHeight, endHeight int64, rewardCache *RewardCacheTree) ([]uint64, []uint64) {
-	currentReward := rewardCache.CurrentReward(uint64(startHeight)).(uint64)
-	rewardCache.Iterate(uint64(startHeight), uint64(endHeight), func(key uint64, value interface{}) bool {
+	currentReward := rewardCache.CurrentReward(startHeight).(uint64)
+	rewardCache.Iterate(startHeight, endHeight, func(key int64, value interface{}) bool {
 		// we calculate per-position reward
-		self.TickCrossesToReward(startHeight, int64(key), currentReward)
+		self.RewardPerWarmup(startHeight, int64(key), currentReward)
 		currentReward = value.(uint64)
 		startHeight = int64(key)
 		self.currentWarmup = self.deposit.warmups[0]
@@ -255,7 +248,7 @@ func (self *RewardState) CalculateInternalReward(startHeight, endHeight int64, r
 	})
 
 	if startHeight < endHeight {
-		self.TickCrossesToReward(startHeight, endHeight, currentReward)
+		self.RewardPerWarmup(startHeight, endHeight, currentReward)
 	}
 
 	self.ApplyWarmup()
@@ -289,7 +282,7 @@ func (self *RewardState) CalculateExternalReward(startHeight, endHeight int64, i
 
 	rewardPerBlock := incentive.rewardPerBlock
 
-	self.TickCrossesToReward(startHeight, endHeight, rewardPerBlock)
+	self.RewardPerWarmup(startHeight, endHeight, rewardPerBlock)
 
 	self.ApplyWarmup()
 
@@ -311,7 +304,7 @@ func abs(x int64) uint64 {
 	return uint64(x)
 }
 
-func (self *RewardState) TickCrossesToReward(startHeight, endHeight int64, rewardPerBlock uint64) {
+func (self *RewardState) RewardPerWarmup(startHeight, endHeight int64, rewardPerBlock uint64) {
 	for _, warmup := range self.deposit.warmups {
 		self.currentWarmup = warmup
 
@@ -321,7 +314,7 @@ func (self *RewardState) TickCrossesToReward(startHeight, endHeight int64, rewar
 		}
 
 		if endHeight < warmup.NextWarmupHeight {
-			rewardAcc := self.pool.CalculateRewardForPosition(uint64(startHeight), self.pool.CurrentTick(uint64(startHeight)), uint64(endHeight), self.pool.CurrentTick(uint64(endHeight)), self.deposit)
+			rewardAcc := self.pool.CalculateRewardForPosition(startHeight, self.pool.CurrentTick(startHeight), endHeight, self.pool.CurrentTick(endHeight), self.deposit)
 
 			rewardAcc = rewardAcc.Mul(rewardAcc, self.deposit.liquidity)
 			rewardAcc = rewardAcc.Mul(rewardAcc, u256.NewUint(rewardPerBlock))
@@ -333,7 +326,7 @@ func (self *RewardState) TickCrossesToReward(startHeight, endHeight int64, rewar
 			break
 		}
 
-		rewardAcc := self.pool.CalculateRewardForPosition(uint64(startHeight), self.pool.CurrentTick(uint64(startHeight)), uint64(warmup.NextWarmupHeight), self.pool.CurrentTick(uint64(warmup.NextWarmupHeight)), self.deposit)
+		rewardAcc := self.pool.CalculateRewardForPosition(startHeight, self.pool.CurrentTick(startHeight), warmup.NextWarmupHeight, self.pool.CurrentTick(warmup.NextWarmupHeight), self.deposit)
 
 		rewardAcc = rewardAcc.Mul(rewardAcc, self.deposit.liquidity)
 		rewardAcc = rewardAcc.Mul(rewardAcc, u256.NewUint(rewardPerBlock))
@@ -344,86 +337,71 @@ func (self *RewardState) TickCrossesToReward(startHeight, endHeight int64, rewar
 		startHeight = warmup.NextWarmupHeight
 	}
 
-	self.deposit.claimHeight = uint64(endHeight)
+	self.deposit.claimHeight = endHeight
 }
 
-func (self *Pool) modifyDeposit(tokenId uint64, delta *i256.Int, currentHeight uint64) {
+func (self *Pool) modifyDeposit(delta *i256.Int, currentHeight int64) *u256.Uint {
 	// update staker side pool info
 	lastStakedLiquidity := self.CurrentStakedLiquidity(currentHeight)
 	deltaApplied := liquidityMathAddDelta(lastStakedLiquidity, delta)
+	result := self.updateGlobalRewardRatioAccumulation(currentHeight, self.CurrentStakedLiquidity(currentHeight))
+
+	switch deltaApplied.Sign() {
+	case -1:
+		panic("stakedLiquidity is less than 0")
+	case 0:
+		if lastStakedLiquidity.Sign() == 1 {
+			// StakedLiquidity moved from positive to zero, start unclaimable period
+			self.startUnclaimablePeriod(currentHeight, true)
+		}
+	case 1:
+		if lastStakedLiquidity.Sign() == 0 {
+			// StakedLiquidity moved from zero to positive, end unclaimable period
+			self.endUnclaimablePeriod(currentHeight, true)
+		}
+	}
+
 	self.stakedLiquidity.Set(currentHeight, deltaApplied)
-	self.updateGlobalRewardRatioAccumulation(currentHeight, self.CurrentStakedLiquidity(currentHeight))
+
+	return result
 }
 
-func (self *Pool) startInternalUnclaimablePeriod(currentHeight uint64) {
-	if *self.lastUnclaimableHeight == 0 {
+func (self *Pool) startUnclaimablePeriod(currentHeight int64, external bool) {
+	if self.lastUnclaimableHeight == 0 {
 		// We set only if it's the first time entering(0 indicates not set yet)
 		// PoolTier can set lastUnclaimable other than tickCrossHook when
 		// cacheInternalReward() updates currentTierReward
-		*self.lastUnclaimableHeight = currentHeight
+		self.lastUnclaimableHeight = currentHeight
+
+		if external {
+			self.incentives.startUnclaimablePeriod(currentHeight)
+		}
 	}
 }
 
-func (self *Pool) endInternalUnclaimablePeriod(currentHeight uint64) {
-	if *self.lastUnclaimableHeight == 0 {
+func (self *Pool) endUnclaimablePeriod(currentHeight int64, external bool) {
+	if self.lastUnclaimableHeight == 0 {
 		// This should not happen, but guarding just in case
 		return
 	}
-	unclaimableHeights := currentHeight - *self.lastUnclaimableHeight
-	*self.lastUnclaimableHeight = 0
-	*self.unclaimableAcc += unclaimableHeights * *self.tierRewardTotal
+	if external {
+		self.incentives.endUnclaimablePeriod(currentHeight)
+	}
+	unclaimableHeights := currentHeight - self.lastUnclaimableHeight
+	self.lastUnclaimableHeight = 0
+	self.unclaimableAcc += uint64(unclaimableHeights) * self.tierRewardTotal
+
 }
 
-func (self *Pool) UnclaimableExternalReward(incentiveId string, startHeight, endHeight uint64) uint64 {
-	incentive, ok := self.incentives.GetByIncentiveId(incentiveId)
-	if !ok {
-		return 0
-	}
-
-	if startHeight > uint64(incentive.endHeight) || endHeight < uint64(incentive.startHeight) {
-		return 0
-	}
-
-	if startHeight < uint64(incentive.startHeight) {
-		startHeight = uint64(incentive.startHeight)
-	}
-
-	if endHeight > uint64(incentive.endHeight) {
-		endHeight = uint64(incentive.endHeight)
-	}
-
-	rewardPerBlock := incentive.rewardPerBlock
-
-	unclaimable := uint64(0)
-
-	currentStakedLiquidity := self.CurrentStakedLiquidity(startHeight)
-
-	self.stakedLiquidity.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
-		if currentStakedLiquidity.IsZero() {
-			unclaimable += rewardPerBlock * (height - startHeight)
-		}
-		startHeight = height
-		currentStakedLiquidity = value.(*u256.Uint)
-		return false
-	})
-
-	if currentStakedLiquidity.IsZero() {
-		unclaimable += rewardPerBlock * (endHeight - startHeight)
-	}
-
-	return unclaimable
-}
-
-func (self *Pool) processUnclaimableReward(poolTier *PoolTier, endHeight uint64) (uint64, map[string]uint64) {
-	//startHeight := *self.lastUnclaimableHeight
-	internalUnClaimable := *self.unclaimableAcc
-	*self.unclaimableAcc = 0
-	self.lastUnclaimableHeight = &endHeight
-	return internalUnClaimable, make(map[string]uint64)
+func (self *Pool) processUnclaimableReward(poolTier *PoolTier, endHeight int64) uint64 {
+	internalUnClaimable := self.unclaimableAcc
+	self.unclaimableAcc = 0
+	self.lastUnclaimableHeight = endHeight
+	return internalUnClaimable
 }
 
 // Calculates reward for a position, *without* considering debt or warmup
-func (self *Pool) CalculateRawRewardForPosition(currentHeight uint64, currentTick int32, deposit *Deposit) *u256.Uint {
+func (self *Pool) CalculateRawRewardForPosition(currentHeight int64, currentTick int32, deposit *Deposit) *u256.Uint {
 	var rewardAcc *u256.Uint
 
 	globalAcc := self.calculateGlobalRewardRatioAccumulation(currentHeight, self.CurrentStakedLiquidity(currentHeight))
@@ -457,7 +435,7 @@ func (self *Pool) CalculateRawRewardForPosition(currentHeight uint64, currentTic
 }
 
 // Applying debt and claiming
-func (self *Pool) CalculateRewardForPosition(startHeight uint64, startTick int32, endHeight uint64, endTick int32, deposit *Deposit) *u256.Uint {
+func (self *Pool) CalculateRewardForPosition(startHeight int64, startTick int32, endHeight int64, endTick int32, deposit *Deposit) *u256.Uint {
 	rewardAcc := self.CalculateRawRewardForPosition(endHeight, endTick, deposit)
 	println("rewardAcc 1 : ", rewardAcc.ToString())
 

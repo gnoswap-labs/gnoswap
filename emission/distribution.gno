@@ -280,8 +280,8 @@ func GetEmission() uint64 {
 
 // When there is a staker % change, it will trigger the StakerCallback first, which should "flush" the halving blocks first(by poolTier calling the GetHalvingBlocksInRange before it updates the emission).
 // Therefore, if there are halving blocks exist from what we got from gns side, there must be no % change event between those blocks, which means we can use the current distribution pct to calculate the emissions for the past halving blocks.
-func GetHalvingBlocksInRange(start, end uint64) ([]uint64, []uint64) {
-	halvingBlocks, halvingEmissions := gns.GetHalvingBlocksInRange(int64(start), int64(end))
+func GetHalvingBlocksInRange(start, end int64) ([]int64, []uint64) {
+	halvingBlocks, halvingEmissions := gns.GetHalvingBlocksInRange(start, end)
 	for i := range halvingBlocks {
 		// Applying staker ratio for past halving blocks
 		halvingEmissions[i] = calculateAmount(halvingEmissions[i], GetDistributionBpsPct(LIQUIDITY_STAKER))

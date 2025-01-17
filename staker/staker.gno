@@ -136,7 +136,7 @@ func init() {
 	// tier 1
 	// ONLY GNOT:GNS 0.3%
 
-	poolTier = NewPoolTier(pools, uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange)
+	poolTier = NewPoolTier(pools, std.GetHeight(), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange)
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1, 0/*FIXME XXX: WE NEED TO GET THE TICK*/) // must update pools tree
 }
 
@@ -202,7 +202,7 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		tickLower:         tickLower,
 		tickUpper:         tickUpper,
 		liquidity:         liquidity,
-		lastCollectHeight: uint64(currentHeight),
+		lastCollectHeight: currentHeight,
 		warmups:           InstantiateWarmup(currentHeight),
 	}
 
@@ -225,23 +225,23 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	println("[", currentHeight, "][", tokenId, "] currentTick: ", currentTick)
 
 	// TODO: call cache functions at the every staker related state change
-	poolTier.cacheReward(uint64(currentHeight), pools)
+	poolTier.cacheReward(currentHeight, pools)
 
 	if pn.PositionIsInRange(tokenId) {
 		isInRange = true
-		pool.modifyDeposit(tokenId, signedLiquidity, uint64(currentHeight))
+		pool.modifyDeposit(signedLiquidity, currentHeight)
 	}
 
 	// this could happen because of how position stores the ticks.
 	// ticks are negated if the token1 < token0
 	upperTick := pool.ticks.Get(tickUpper)
 	lowerTick := pool.ticks.Get(tickLower)
-	upperTick.modifyDepositUpper(uint64(currentHeight), currentTick, signedLiquidity)
+	upperTick.modifyDepositUpper(currentHeight, currentTick, signedLiquidity)
 	println("upperTick id : ", upperTick.id)
 	println("upperTick stakedLiquidityGross: ", upperTick.stakedLiquidityGross.ToString())
 	println("upperTick stakedLiquidityDelta: ", upperTick.stakedLiquidityDelta.ToString())
 	//println("upperTick Size: ", upperTick.cross.tree.Size())
-	lowerTick.modifyDepositLower(uint64(currentHeight), currentTick, signedLiquidity)
+	lowerTick.modifyDepositLower(currentHeight, currentTick, signedLiquidity)
 	println("lowerTick id: ", lowerTick.id)
 	println("lowerTick stakedLiquidityGross: ", lowerTick.stakedLiquidityGross.ToString())
 	println("lowerTick stakedLiquidityDelta: ", lowerTick.stakedLiquidityDelta.ToString())
@@ -332,7 +332,7 @@ func transferDeposit(tokenId uint64, owner, caller, to std.Address) error {
 
 ////////////////////////////////////////////////////////////
 
-// CollectReward harvests accumulated rewards for a staked position. This includes both
+// ectReward harvests accumulated rewards for a staked position. This includes both
 // inernal GNS emission and external incentive rewards.
 //
 // State Transition:
@@ -374,10 +374,10 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 
 	currentHeight := std.GetHeight()
 	// get all internal and external rewards
-	reward := calcPositionReward(uint64(currentHeight), tokenId)
+	reward := calcPositionReward(currentHeight, tokenId)
 
 	// update lastCollectHeight to current height
-	deposit.lastCollectHeight = uint64(currentHeight)
+	deposit.lastCollectHeight = currentHeight
 
 	// transfer external rewards to user
 	externalReward := reward.External
@@ -391,25 +391,16 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 			))
 		}
 		incentive.rewardAmount -= amount
-		incentive.rewardLeft = incentive.rewardAmount
 		externalIncentives.Set(incentiveId, incentive)
 
 		toUser := handleUnstakingFee(rewardToken, amount, false, tokenId, incentive.targetPoolPath)
 
 		teller := common.GetTokenTeller(rewardToken)
 		teller.Transfer(deposit.owner, toUser)
+
+		externalPenalty := reward.ExternalPenalty[incentiveId]
+		incentive.rewardLeft += externalPenalty
 	}
-
-	// do nothing for external penalty
-	// it will be stored in staker, and when external ends will be refunded
-	externalIncentivePenalty := reward.ExternalPenalty
-	externalIncentiveReward := reward.External
-
-	// TODO:
-	// externalPenalty should be stored in staker
-	// And update reward ledger
-
-	// println("externalPenalty", externalPenalty)
 
 	// internal reward to user
 	toUser := handleUnstakingFee(consts.GNS_PATH, reward.Internal, true, tokenId, deposit.targetPoolPath)
@@ -434,7 +425,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 
 	// FIXME @mconcat
 	// panic: slice index out of bounds: 0 (len=0)
-	unClaimableInternal, unClaimableExternal := ProcessUnClaimableReward(deposit.targetPoolPath, uint64(currentHeight))
+	unClaimableInternal := ProcessUnClaimableReward(deposit.targetPoolPath, currentHeight)
 	println("unClaimableInternal : ", unClaimableInternal)
 	if unClaimableInternal > 0 {
 		// internal unclaimable to community pool
@@ -567,12 +558,12 @@ func applyUnStake(tokenId uint64) {
 		))
 	}
 
-	currentHeight := uint64(std.GetHeight())
+	currentHeight := std.GetHeight()
 	currentTick := pl.PoolGetSlot0Tick(deposit.targetPoolPath)
 	signedLiquidity := i256.FromUint256(deposit.liquidity)
 	signedLiquidity = signedLiquidity.Neg(signedLiquidity)
 	if pn.PositionIsInRange(tokenId) {
-		pool.modifyDeposit(tokenId, signedLiquidity, currentHeight)
+		pool.modifyDeposit(signedLiquidity, currentHeight)
 	}
 
 	upperTick := pool.ticks.Get(deposit.tickUpper)
@@ -625,8 +616,8 @@ func poolHasIncentives(poolPath string) error {
 			errNonIncentivizedPool, poolPath,
 		)
 	}
-	hasInternal := poolTier.IsInternallyIncentivizedPool(uint64(std.GetHeight()), poolPath)
-	hasExternal := pool.IsExternallyIncentivizedPool(uint64(std.GetHeight()))
+	hasInternal := poolTier.IsInternallyIncentivizedPool(std.GetHeight(), poolPath)
+	hasExternal := pool.IsExternallyIncentivizedPool(std.GetHeight())
 	if hasInternal == false && hasExternal == false {
 		return ufmt.Errorf(
 			"%v: can not stake position to non incentivized pool(%s)",

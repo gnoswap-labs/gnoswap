@@ -425,7 +425,7 @@ func GetDepositLiquidityAsString(lpTokenId uint64) string {
 //
 // Returns:
 // - uint64: The last collection height of the deposit.
-func GetDepositLastCollectHeight(lpTokenId uint64) uint64 {
+func GetDepositLastCollectHeight(lpTokenId uint64) int64 {
 	deposit := GetDeposit(lpTokenId)
 
 	return deposit.lastCollectHeight

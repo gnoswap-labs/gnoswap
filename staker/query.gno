@@ -40,7 +40,7 @@ func QueryPoolData(poolPath string) (*PoolData, error) {
 		return nil, ufmt.Errorf("pool %s not found", poolPath)
 	}
 
-	currentHeight := uint64(std.GetHeight())
+	currentHeight := std.GetHeight()
 	tier := poolTier.CurrentTier(poolPath)
 
 	ictvIds := filterActiveIncentives(pool, currentHeight)
@@ -106,14 +106,14 @@ func QueryDepositData(lpTokenId uint64) (*DepositData, error) {
 	}, nil
 }
 
-func filterActiveIncentives(pool *Pool, currentHeight uint64) []string {
+func filterActiveIncentives(pool *Pool, currentHeight int64) []string {
 	ictvIds := make([]string, 0)
 	pool.incentives.byHeight.Iterate("", "", func(key string, value interface{}) bool {
 		ictv := value.(*ExternalIncentive)
-		if uint64(ictv.startHeight) <= currentHeight && currentHeight < uint64(ictv.endHeight) {
+		if ictv.startHeight <= currentHeight && currentHeight < ictv.endHeight {
 			ictvId := incentiveIdByTime(
-				uint64(ictv.startHeight),
-				uint64(ictv.endHeight),
+				ictv.startHeight,
+				ictv.endHeight,
 				ictv.refundee,
 				ictv.rewardToken,
 			)
