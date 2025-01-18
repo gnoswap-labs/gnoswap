@@ -34,8 +34,8 @@ func SetPoolTier(poolPath string, tier uint64) {
 func setPoolTier(poolPath string, tier uint64) {
 	en.MintAndDistributeGns()
 
-	poolTier.changeTier(std.GetHeight(), pools, poolPath, tier)
 	pools.GetOrCreate(poolPath, pl.PoolGetSlot0Tick(poolPath))
+	poolTier.changeTier(std.GetHeight(), pools, poolPath, tier)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
