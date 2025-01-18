@@ -107,12 +107,15 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 
 	lastCollectHeight := deposit.lastCollectHeight
 
-	// if this pool is not incentivized for internal(emission) reward, then just return
-	if param.PoolTier.CurrentTier(poolPath) == 0 {
-		return []Reward{}
-	}
+	// 풀이 꼭 인터널이 있어야 하는건 아님
+	// 익스터널 인센티브만 있는 풀도 있을 수 있음
+	// 따라서 예외처리 해야 함
+	internalRewards := []uint64{0, 0, 0, 0}
+	internalPenalties := []uint64{0, 0, 0, 0}
 
-	internalRewards, internalPenalties := pool.RewardStateOf(deposit).CalculateInternalReward(lastCollectHeight, param.CurrentHeight, pool.rewardCache)
+	if param.PoolTier.CurrentTier(poolPath) != 0 {
+		internalRewards, internalPenalties = pool.RewardStateOf(deposit).CalculateInternalReward(lastCollectHeight, param.CurrentHeight, pool.rewardCache)
+	}
 
 	allIncentives := pool.incentives.GetAllInHeights(lastCollectHeight, param.CurrentHeight)
 
@@ -141,6 +144,7 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 			ExternalPenalty: externalPenalties[i],
 		}
 	}
+
 	return rewards
 }
 
