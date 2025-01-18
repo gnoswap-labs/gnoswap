@@ -49,6 +49,8 @@ var (
 	stakerAddr = consts.STAKER_ADDR
 
 	externalCreator = testutils.TestAddress("externalCreator")
+
+	genesisBlockHeight:= int64(123)
 )
 
 func TestFullInternalExternal(t *testing.T) {
@@ -71,8 +73,8 @@ func TestFullInternalExternal(t *testing.T) {
 	testStakeToken05(t) //
 	testStakeToken06(t) //
 
-	testCollectRewardAll_30(t)  // 10블록 쯤 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령 (웜업 30% 구간)
-	testCollectRewardAll_50(t)  // 웜업 50% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
+	testCollectRewardAll_30(t) // 10블록 쯤 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령 (웜업 30% 구간)
+	testCollectRewardAll_50(t) // 웜업 50% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
 	testCollectRewardAll_70(t)  // 웜업 70% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
 	testCollectRewardAll_100(t) // 웜업 100% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
 
@@ -97,7 +99,9 @@ func TestFullInternalExternal(t *testing.T) {
 
 	testReStakeTokenPos01(t) // 스테이킹 해서 웝업 100% 찍었다가 언스테이킹 된 토큰 다시 스테이킹 ( 웜업 처음(30%)부터 적용되야 함 )
 
+
 	// XXXXX 수정 필요
+	// FIXME @mconcat @onlyhyde @notJoon
 	// testChangeAvgBlockTimeTo4000(t) // XXXXXXXXX 평균 블록 시간 변경
 	// testChangeDistributionPctByAdmin(t) // XXXXXXXXX 스테이커한테 가는 에미션 비율 변경
 
@@ -174,18 +178,18 @@ func testCreateExternalIncentiveGns(t *testing.T) {
 		oneBlockEmissionAmount := uint64(14269406)
 		initialStakerAmount := uint64(32106163) // 14269406*3*0.75
 		oneBlockStakerAmount := uint64(10702054)
-		initialDepOpsAmount := uint64(10702054) // 14269406*3*0.25
+		initialDevOpsAmount := uint64(10702054) // 14269406*3*0.25
 		oneBlockDevOpsAmount := uint64(3567351)
-		externalInecntiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
+		externalIncentiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
 		emissionLeft := uint64(1)
 		gnsPer2Block := uint64(1)
 
 		uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
 		uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
 
-		expectStakerBalance := uint64(0) + initialStakerAmount + externalInecntiveDeposit
+		expectStakerBalance := uint64(0) + initialStakerAmount + externalIncentiveDeposit
 		uassert.Equal(t, expectStakerBalance, gnsBalance(consts.STAKER_ADDR))
-		uassert.Equal(t, uint64(0)+initialDepOpsAmount, gnsBalance(consts.DEV_OPS))
+		uassert.Equal(t, uint64(0)+initialDevOpsAmount, gnsBalance(consts.DEV_OPS))
 
 		std.TestSkipHeights(1)
 	})
@@ -219,18 +223,18 @@ func testMintPos01InRange(t *testing.T) {
 		oneBlockEmissionAmount := uint64(14269406)
 		initialStakerAmount := uint64(32106163) // 14269406*3*0.75
 		oneBlockStakerAmount := uint64(10702054)
-		initialDepOpsAmount := uint64(10702054) // 14269406*3*0.25
+		initialDevOpsAmount := uint64(10702054) // 14269406*3*0.25
 		oneBlockDevOpsAmount := uint64(3567351)
-		externalInecntiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
+		externalIncentiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
 		emissionLeft := uint64(1)
 		gnsPer2Block := uint64(1)
 
 		uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
 		uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
 
-		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalInecntiveDeposit
+		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalIncentiveDeposit
 		uassert.Equal(t, expectStakerBalance+gnsPer2Block, gnsBalance(consts.STAKER_ADDR))
-		expectedDevOpsBalance := uint64(0) + initialDepOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
+		expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
 		uassert.Equal(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS))
 
 		std.TestSkipHeights(1)
@@ -253,18 +257,18 @@ func testCreateBarBaz500Tier02(t *testing.T) {
 		oneBlockEmissionAmount := uint64(14269406)
 		initialStakerAmount := uint64(32106163) // 14269406*3*0.75
 		oneBlockStakerAmount := uint64(10702054)
-		initialDepOpsAmount := uint64(10702054) // 14269406*3*0.25
+		initialDevOpsAmount := uint64(10702054) // 14269406*3*0.25
 		oneBlockDevOpsAmount := uint64(3567351)
-		externalInecntiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
+		externalIncentiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
 		emissionLeft := uint64(1)
 		gnsPer2Block := uint64(1)
 
 		uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
 		uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
 
-		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalInecntiveDeposit
+		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalIncentiveDeposit
 		uassert.Equal(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR))
-		expectedDevOpsBalance := uint64(0) + initialDepOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
+		expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
 		uassert.Equal(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS))
 
 		std.TestSkipHeights(1)
@@ -299,18 +303,18 @@ func testMintPos02InRange(t *testing.T) {
 		oneBlockEmissionAmount := uint64(14269406)
 		initialStakerAmount := uint64(32106163) // 14269406*3*0.75
 		oneBlockStakerAmount := uint64(10702054)
-		initialDepOpsAmount := uint64(10702054) // 14269406*3*0.25
+		initialDevOpsAmount := uint64(10702054) // 14269406*3*0.25
 		oneBlockDevOpsAmount := uint64(3567351)
-		externalInecntiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
+		externalIncentiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
 		emissionLeft := uint64(1)
 		gnsPer2Block := uint64(1)
 
 		uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
 		uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
 
-		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalInecntiveDeposit
+		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalIncentiveDeposit
 		uassert.Equal(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR))
-		expectedDevOpsBalance := uint64(0) + initialDepOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
+		expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
 		uassert.Equal(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS))
 
 		std.TestSkipHeights(1)
@@ -345,18 +349,18 @@ func testMintPos03OutRange(t *testing.T) {
 		oneBlockEmissionAmount := uint64(14269406)
 		initialStakerAmount := uint64(32106163) // 14269406*3*0.75
 		oneBlockStakerAmount := uint64(10702054)
-		initialDepOpsAmount := uint64(10702054) // 14269406*3*0.25
+		initialDevOpsAmount := uint64(10702054) // 14269406*3*0.25
 		oneBlockDevOpsAmount := uint64(3567351)
-		externalInecntiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
+		externalIncentiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
 		emissionLeft := uint64(1)
 		gnsPer2Block := uint64(1)
 
 		uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
 		uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
 
-		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalInecntiveDeposit
+		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalIncentiveDeposit
 		uassert.Equal(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR))
-		expectedDevOpsBalance := uint64(0) + initialDepOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
+		expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
 		uassert.Equal(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS))
 
 		std.TestSkipHeights(1)
@@ -391,18 +395,18 @@ func testMintPos04OutRange(t *testing.T) {
 		oneBlockEmissionAmount := uint64(14269406)
 		initialStakerAmount := uint64(32106163) // 14269406*3*0.75
 		oneBlockStakerAmount := uint64(10702054)
-		initialDepOpsAmount := uint64(10702054) // 14269406*3*0.25
+		initialDevOpsAmount := uint64(10702054) // 14269406*3*0.25
 		oneBlockDevOpsAmount := uint64(3567351)
-		externalInecntiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
+		externalIncentiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
 		emissionLeft := uint64(1)
 		gnsPer2Block := uint64(1)
 
 		uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
 		uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
 
-		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalInecntiveDeposit
+		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalIncentiveDeposit
 		uassert.Equal(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR))
-		expectedDevOpsBalance := uint64(0) + initialDepOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
+		expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
 		uassert.Equal(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS))
 
 		std.TestSkipHeights(1)
@@ -437,18 +441,18 @@ func testMintPos05OutRange(t *testing.T) {
 		oneBlockEmissionAmount := uint64(14269406)
 		initialStakerAmount := uint64(32106163) // 14269406*3*0.75
 		oneBlockStakerAmount := uint64(10702054)
-		initialDepOpsAmount := uint64(10702054) // 14269406*3*0.25
+		initialDevOpsAmount := uint64(10702054) // 14269406*3*0.25
 		oneBlockDevOpsAmount := uint64(3567351)
-		externalInecntiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
+		externalIncentiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
 		emissionLeft := uint64(1)
 		gnsPer2Block := uint64(1)
 
 		uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
 		uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
 
-		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalInecntiveDeposit
+		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalIncentiveDeposit
 		uassert.Equal(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR))
-		expectedDevOpsBalance := uint64(0) + initialDepOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
+		expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
 		uassert.Equal(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS))
 
 		std.TestSkipHeights(1)
@@ -483,18 +487,18 @@ func testMintPos06OutRange(t *testing.T) {
 		oneBlockEmissionAmount := uint64(14269406)
 		initialStakerAmount := uint64(32106163) // 14269406*3*0.75
 		oneBlockStakerAmount := uint64(10702054)
-		initialDepOpsAmount := uint64(10702054) // 14269406*3*0.25
+		initialDevOpsAmount := uint64(10702054) // 14269406*3*0.25
 		oneBlockDevOpsAmount := uint64(3567351)
-		externalInecntiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
+		externalIncentiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
 		emissionLeft := uint64(1)
 		gnsPer2Block := uint64(1)
 
 		uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
 		uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
 
-		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalInecntiveDeposit
+		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalIncentiveDeposit
 		uassert.Equal(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR))
-		expectedDevOpsBalance := uint64(0) + initialDepOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
+		expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
 		uassert.Equal(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS))
 
 		std.TestSkipHeights(1)
@@ -516,18 +520,18 @@ func testStakeToken01(t *testing.T) {
 		oneBlockEmissionAmount := uint64(14269406)
 		initialStakerAmount := uint64(32106163) // 14269406*3*0.75
 		oneBlockStakerAmount := uint64(10702054)
-		initialDepOpsAmount := uint64(10702054) // 14269406*3*0.25
+		initialDevOpsAmount := uint64(10702054) // 14269406*3*0.25
 		oneBlockDevOpsAmount := uint64(3567351)
-		externalInecntiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
+		externalIncentiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
 		emissionLeft := uint64(1)
 		gnsPer2Block := uint64(1)
 
 		uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
 		uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
 
-		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalInecntiveDeposit
+		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalIncentiveDeposit
 		uassert.Equal(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR))
-		expectedDevOpsBalance := uint64(0) + initialDepOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
+		expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
 		uassert.Equal(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS))
 
 		std.TestSkipHeights(1)
@@ -547,18 +551,18 @@ func testStakeToken02(t *testing.T) {
 		oneBlockEmissionAmount := uint64(14269406)
 		initialStakerAmount := uint64(32106163) // 14269406*3*0.75
 		oneBlockStakerAmount := uint64(10702054)
-		initialDepOpsAmount := uint64(10702054) // 14269406*3*0.25
+		initialDevOpsAmount := uint64(10702054) // 14269406*3*0.25
 		oneBlockDevOpsAmount := uint64(3567351)
-		externalInecntiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
+		externalIncentiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
 		emissionLeft := uint64(1)
 		gnsPer2Block := uint64(1)
 
 		uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
 		uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
 
-		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalInecntiveDeposit
+		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalIncentiveDeposit
 		uassert.Equal(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR))
-		expectedDevOpsBalance := uint64(0) + initialDepOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
+		expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
 		uassert.Equal(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS))
 
 		std.TestSkipHeights(1)
@@ -578,18 +582,18 @@ func testStakeToken03(t *testing.T) {
 		oneBlockEmissionAmount := uint64(14269406)
 		initialStakerAmount := uint64(32106163) // 14269406*3*0.75
 		oneBlockStakerAmount := uint64(10702054)
-		initialDepOpsAmount := uint64(10702054) // 14269406*3*0.25
+		initialDevOpsAmount := uint64(10702054) // 14269406*3*0.25
 		oneBlockDevOpsAmount := uint64(3567351)
-		externalInecntiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
+		externalIncentiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
 		emissionLeft := uint64(1)
 		gnsPer2Block := uint64(1)
 
 		uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
 		uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
 
-		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalInecntiveDeposit
+		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalIncentiveDeposit
 		uassert.Equal(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR))
-		expectedDevOpsBalance := uint64(0) + initialDepOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
+		expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
 		uassert.Equal(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS))
 
 		std.TestSkipHeights(1)
@@ -609,18 +613,18 @@ func testStakeToken04(t *testing.T) {
 		oneBlockEmissionAmount := uint64(14269406)
 		initialStakerAmount := uint64(32106163) // 14269406*3*0.75
 		oneBlockStakerAmount := uint64(10702054)
-		initialDepOpsAmount := uint64(10702054) // 14269406*3*0.25
+		initialDevOpsAmount := uint64(10702054) // 14269406*3*0.25
 		oneBlockDevOpsAmount := uint64(3567351)
-		externalInecntiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
+		externalIncentiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
 		emissionLeft := uint64(1)
 		gnsPer2Block := uint64(1)
 
 		uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
 		uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
 
-		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalInecntiveDeposit
+		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalIncentiveDeposit
 		uassert.Equal(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR))
-		expectedDevOpsBalance := uint64(0) + initialDepOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
+		expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
 		uassert.Equal(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS))
 
 		std.TestSkipHeights(1)
@@ -640,18 +644,18 @@ func testStakeToken05(t *testing.T) {
 		oneBlockEmissionAmount := uint64(14269406)
 		initialStakerAmount := uint64(32106163) // 14269406*3*0.75
 		oneBlockStakerAmount := uint64(10702054)
-		initialDepOpsAmount := uint64(10702054) // 14269406*3*0.25
+		initialDevOpsAmount := uint64(10702054) // 14269406*3*0.25
 		oneBlockDevOpsAmount := uint64(3567351)
-		externalInecntiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
+		externalIncentiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
 		emissionLeft := uint64(1)
 		gnsPer2Block := uint64(1)
 
 		uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
 		uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
 
-		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalInecntiveDeposit
+		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalIncentiveDeposit
 		uassert.Equal(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR))
-		expectedDevOpsBalance := uint64(0) + initialDepOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
+		expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
 		uassert.Equal(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS))
 
 		std.TestSkipHeights(1)
@@ -664,6 +668,7 @@ func testStakeToken06(t *testing.T) {
 		currentHeight := std.GetHeight()
 		Gap := uint64(currentHeight - genesisBlockHeight)
 		println("[", std.GetHeight(), "][****** Reward No OutRange ******] [stake token 06]")
+
 		std.TestSetRealm(adminRealm)
 		gnft.Approve(stakerAddr, common.TokenIdFrom(6))
 		StakeToken(6)
@@ -671,18 +676,18 @@ func testStakeToken06(t *testing.T) {
 		oneBlockEmissionAmount := uint64(14269406)
 		initialStakerAmount := uint64(32106163) // 14269406*3*0.75
 		oneBlockStakerAmount := uint64(10702054)
-		initialDepOpsAmount := uint64(10702054) // 14269406*3*0.25
+		initialDevOpsAmount := uint64(10702054) // 14269406*3*0.25
 		oneBlockDevOpsAmount := uint64(3567351)
-		externalInecntiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
+		externalIncentiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
 		emissionLeft := uint64(1)
 		gnsPer2Block := uint64(1)
 
 		uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
 		uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
 
-		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalInecntiveDeposit
+		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalIncentiveDeposit
 		uassert.Equal(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR))
-		expectedDevOpsBalance := uint64(0) + initialDepOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
+		expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
 		uassert.Equal(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS))
 
 		std.TestSkipHeights(1)
@@ -695,7 +700,7 @@ func testCollectRewardAll_30(t *testing.T) {
 		currentHeight := std.GetHeight()
 		Gap := uint64(currentHeight - genesisBlockHeight)
 		println("[", std.GetHeight(), "] [collect reward for all position, while warm up is in 30]")
-		std.TestSkipHeights(1)
+
 		std.TestSetRealm(adminRealm)
 		CollectReward(1, false)
 		CollectReward(2, false)
@@ -703,23 +708,23 @@ func testCollectRewardAll_30(t *testing.T) {
 		CollectReward(4, false)
 		CollectReward(5, false)
 		CollectReward(6, false)
-
 		oneBlockEmissionAmount := uint64(14269406)
 		initialStakerAmount := uint64(32106163) // 14269406*3*0.75
 		oneBlockStakerAmount := uint64(10702054)
-		initialDepOpsAmount := uint64(10702054) // 14269406*3*0.25
+		initialDevOpsAmount := uint64(10702054) // 14269406*3*0.25
 		oneBlockDevOpsAmount := uint64(3567351)
-		externalInecntiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
+		externalIncentiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
 		emissionLeft := uint64(1)
 		gnsPer2Block := uint64(1)
 
-		// uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
-		// uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
+		uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
+		uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
 
-		// expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalInecntiveDeposit
-		// uassert.Equal(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR))
-		// expectedDevOpsBalance := uint64(0) + initialDepOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
-		// uassert.Equal(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS))
+		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalIncentiveDeposit
+		uassert.Equal(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR)+totalEmissionSent)
+
+		expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
+		uassert.Equal(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS))
 
 		std.TestSkipHeights(1)
 	})
@@ -741,10 +746,16 @@ func testCollectRewardAll_50(t *testing.T) {
 		CollectReward(4, false)
 		CollectReward(5, false)
 		CollectReward(6, false)
+
 		std.TestSkipHeights(1)
 	})
 
 	t.Run("only single block for 50% warm up", func(t *testing.T) {
+		genesisBlockHeight := int64(123)
+		currentHeight := std.GetHeight()
+		Gap := uint64(currentHeight - genesisBlockHeight)
+		println("[", std.GetHeight(), "] [collect reward for all position, while warm up is in 50]")
+
 		std.TestSetRealm(adminRealm)
 		CollectReward(1, false)
 		CollectReward(2, false)
@@ -752,6 +763,24 @@ func testCollectRewardAll_50(t *testing.T) {
 		CollectReward(4, false)
 		CollectReward(5, false)
 		CollectReward(6, false)
+
+		oneBlockEmissionAmount := uint64(14269406)
+		initialStakerAmount := uint64(32106163) // 14269406*3*0.75
+		oneBlockStakerAmount := uint64(10702054)
+		initialDevOpsAmount := uint64(10702054) // 14269406*3*0.25
+		oneBlockDevOpsAmount := uint64(3567351)
+		externalIncentiveDeposit := uint64(20000000) + uint64(1_000_000_000) // reward + depositGns
+		emissionLeft := uint64(1)
+		gnsPer2Block := uint64(1)
+
+		uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
+		uassert.True(t, isNear99Pct(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR)))
+
+		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalIncentiveDeposit
+		uassert.True(t, isNear99Pct(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR)+totalEmissionSent))
+		expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
+		uassert.True(t, isNear99Pct(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS)))
+
 		std.TestSkipHeights(1)
 	})
 }
@@ -1397,4 +1426,21 @@ func testChangeDistributionPctByAdmin(t *testing.T) {
 		)
 		std.TestSkipHeights(1)
 	})
+}
+
+// 기존 방식은 매 블록 마다 모든 포지션에 대해 모든 리워드 계산을 하기 때문에 오차를 최소화 할 수 있음
+// 그러나, 여기에 소모되는 비용이(가스도 그렇고, 계산에 필요한 리소스도 그렇고) 너무 크기 때문에
+// 지금과 같이 변경점과 블록 증가 높이에 따라 계산하기 때문에 어느 정도 오차가 발생할 수 있음
+// 이 함수는 오차 범위가 99% 이내인지 확인 함
+func isNear99Pct(t *testing.T, expected, actual uint64) bool {
+	t.Helper()
+
+	lower := expected * 99 / 100
+	upper := expected * 101 / 100
+
+	if lower <= actual && actual <= upper {
+		return true
+	}
+
+	return false
 }
