@@ -4,9 +4,9 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	pusers "gno.land/p/demo/users"
-	"gno.land/r/demo/users"
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
@@ -47,7 +47,8 @@ const (
 var (
 	wugnotAddr = consts.WUGNOT_ADDR
 	stakerAddr = consts.STAKER_ADDR
-	anoAdmin   = users.Resolve(admin)
+
+	externalCreator = testutils.TestAddress("externalCreator")
 )
 
 func TestFullInternalExternal(t *testing.T) {
@@ -57,11 +58,11 @@ func TestFullInternalExternal(t *testing.T) {
 	testMintPos01InRange(t)
 
 	testCreateBarBaz500Tier02(t) // 포지션 아예 없어서 커뮤니티 풀로 빠져야 함
-	testMintPos02InRange(t)      // bar:baz:500
+	testMintPos02InRange(t)      // bar:baz:0.05%
 	testMintPos03OutRange(t)     // gnot:gns:0.3%
-	testMintPos04OutRange(t)     // bar:baz:500
+	testMintPos04OutRange(t)     // bar:baz:0.05%
 	testMintPos05OutRange(t)     // gnot:gns:0.3%
-	testMintPos06OutRange(t)     // bar:baz:500
+	testMintPos06OutRange(t)     // bar:baz:0.05%
 
 	testStakeToken01(t) // 여기 직전까지는 스테이킹 된 포지션 없어서 wugnot gns 0.3% 풀에 쌓인 리워드 커뮤니티 풀로 빠져야 함
 	testStakeToken02(t) //
@@ -80,24 +81,25 @@ func TestFullInternalExternal(t *testing.T) {
 
 	testCreatePoolBarFoo100Tier03(t)    // 틱 600000, 인터널 티어 #3
 	testCollectRewardDummy(t)           // 2번 포지션 리워드 수령 => 그러면 bar foo 풀에는 스테이킹 된거 없어서 커뮤 풀로 빠져야 함
-	testOneClickStakingPos07OutRange(t) // 원클릭 스테이킹으로 애초에 outRange로 스테이킹 됨 => 블록 증가 후 7번 포지션 리워드 수령 해보면 outRange기 떄문에 커뮤 풀로 빠져야 함
+	testOneClickStakingPos07OutRange(t) // bar:foo:0.01%, 원클릭 스테이킹으로 애초에 outRange로 스테이킹 됨 => 블록 증가 후 7번 포지션 리워드 수령 해보면 outRange기 떄문에 커뮤 풀로 빠져야 함
 
+	testUnstakeToken01(t) // 전체 스테이킹 된 유동성 변경
+
+	// EXTERNAL ONLY
+	testCreatePoolBazQux3000ExternalOnly(t) // 풀 만드는데 익스터널 인센티브만 있는 풀임
+	testCreateExternalIncentiveBaz(t)       // 위에서 만든 풀 대상으로 baz 익스터널 인센티브 생성
+	testMintPos08InRange(t)                 // 포지션 생성
+	testStakeToken08(t)                     // 스테이킹
+	testCollectReward08(t)                  // 10 블록 쯤 증가시키고 리워드 수령하면 0으로 나와야 함 (익스터널 아직 시작 안 됨)
+	testStartExternalIncentive(t)           // 익스터널 인센티브 시작
+	testCollectReward08AfterStart(t)        // 10 블록 증가 후 리워드 수령하면 웜업 구간에 맞는 10 블록 만큼의 리워드 나와야 함 ( 몇 퍼센트 구간인지는 위에서 익스터널 시작시킬려고 몇 블록을 스킵했는지에 따라 다름)
+	testEndExternalIncentiveBaz(t)          // baz 인센티브 종료 ( 페널티 수량 환불되야 함 )
+
+	testReStakeTokenPos01(t) // 스테이킹 해서 웝업 100% 찍었다가 언스테이킹 된 토큰 다시 스테이킹 ( 웜업 처음(30%)부터 적용되야 함 )
+
+	// XXXXX 수정 필요
 	// testChangeAvgBlockTimeTo4000(t) // XXXXXXXXX 평균 블록 시간 변경
-
-	// testChangeDistributionPctByAdmin(t) // 스테이커한테 가는 에미션 비율 변경
-	// testUnstakeToken01(t)               // 전체 스티이킹 된 유도성 변경
-	//
-	//testCreatePoolBazQuxExternalOnly(t) // xx, 풀 만드는데 익스터널 인센티브만 있는 풀임
-	//testCreateExternalIncentiveBar(t)   // xx, 위에서 만든 풀 대상으로 익스터널 인센티브 생성
-	//testMintPos08InRange(t)             // xx, 포지션 생성
-	//testStakeToken08(t)                 // xx, 스테이킹
-	//testCollectReward08(t)              // xx, 10 블록 쯤 증가시키고 리워드 수령하면 0으로 나와야 함 (익스터널 아직 시작 안 됨)
-	//testStartExternalIncentive(t)       // xx, 익스터널 인센티브 시작시키고 (블록 스킵 충분히)
-	//testCollectReward08AfterStart(t)    // xx, 10 블록 증가 후 리워드 수령하면 웜업 구간에 맞는 10 블록 만큼의 리워드 나와야 함 ( 몇 퍼센트 구간인지는 위에서 익스터널 시작시킬려고 몇 블록을 스킵했는지에 따라 다름)
-	//
-	//testEndExternalIncentiveBar(t) // bar 인센티브 종료 ( 페널티 수량 환불되야 함 )
-	//
-	//testReStakeTokenPos01(t) // 스테이킹 해서 웝업 100% 찍었다가 언스테이킹 된 토큰 다시 스테이킹 ( 웜업 처음(30%)부터 적용되야 함 )
+	// testChangeDistributionPctByAdmin(t) // XXXXXXXXX 스테이커한테 가는 에미션 비율 변경
 
 }
 
@@ -946,7 +948,7 @@ func testSwapExactIn(t *testing.T) {
 }
 
 func testSwapExactOut(t *testing.T) {
-	t.Run("swap token0 to token1 500 // swap #1", func(t *testing.T) {
+	t.Run("swap token1 to token1 0 // swap #1", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
 		gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -976,7 +978,7 @@ func testSwapExactOut(t *testing.T) {
 		std.TestSkipHeights(1)
 	})
 
-	t.Run("swap token0 to token1 500 // swap #2", func(t *testing.T) {
+	t.Run("swap token1 to token1 0 // swap #2", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
 		gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -1006,7 +1008,7 @@ func testSwapExactOut(t *testing.T) {
 		std.TestSkipHeights(1)
 	})
 
-	t.Run("swap token0 to token1 500 // swap #3", func(t *testing.T) {
+	t.Run("swap token1 to token1 0 // swap #3", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
 		gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -1036,7 +1038,7 @@ func testSwapExactOut(t *testing.T) {
 		std.TestSkipHeights(1)
 	})
 
-	t.Run("swap token0 to token1 500 // swap #4", func(t *testing.T) {
+	t.Run("swap token1 to token1 0 // swap #4", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
 		gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -1131,100 +1133,75 @@ func testOneClickStakingPos07OutRange(t *testing.T) {
 	})
 }
 
-func testChangeAvgBlockTimeTo4000(t *testing.T) {
-	// 원래 블록 시간 2초였으나 4초로 증가
-	// 1 블록 당 민팅되는 GNS 수량 2배로 증가됨
-	t.Run("change avg block time to 4000", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		gns.SetAvgBlockTimeInMsByAdmin(4000)
-		std.TestSkipHeights(1)
-	})
-
-	t.Run("collect reward position 01", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-
-		CollectReward(1, false) // 1 블록 증가하고 리워드 확인해보면 얘한테 떨어지는 수량 거의 2배로 되야 함
-		std.TestSkipHeights(1)
-
-		// 원복
-		gns.SetAvgBlockTimeInMsByAdmin(2000)
-	})
-}
-
-func testChangeDistributionPctByAdmin(t *testing.T) {
-	t.Run("change staker's emission distribution pct to 50%", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-
-		en.ChangeDistributionPctByAdmin(
-			1, 5000, // 스테이커
-			2, 5000, // 데브옵스
-			3, 0, // 커뮤니티풀
-			4, 0, // xGNS
-		)
-		std.TestSkipHeights(1)
-	})
-
-	t.Run("collect reward position 01", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		CollectReward(1, false)
-		std.TestSkipHeights(1)
-		// 에미션을 통해 스테이커한테 분배되는 비율이 감소 됨
-		// 따라서 각 포지션이 수령할 수 있는 리워드 수량도 감소되야 함
-
-		// 원복
-		en.ChangeDistributionPctByAdmin(
-			1, 7500, // 스테이커
-			2, 2500, // 데브옵스
-			3, 0, // 커뮤니티풀
-			4, 0, // xGNS
-		)
-		std.TestSkipHeights(1)
-	})
-}
-
 func testUnstakeToken01(t *testing.T) {
 	t.Run("unstake token 01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
+		CollectReward(1, false) // 더미 수령
+
+		oldCommuGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
 		UnstakeToken(1, false)
 		std.TestSkipHeights(1)
+
+		newCommuGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		println("[unstakeToken] communityPool receive", newCommuGns-oldCommuGns) // 0
+		println()
+
+		// 블록 당 에미션 리워드 스테이커한테 할당 비율 10702054
+		// 티어 1, 50% ~= 5351027
+		// 티어 2, 30% ~= 3210616
+		// 티어 3, 20% ~= 2140410
+
+		// wugnot:gns:0.3% // currentTick: 0
+		// 1번 포지션 inRange // -60 ~ 60
+		// 3번 포지션 outRange // 60 ~ 120
+		// 5번 포지션 outRange // -120 ~ -60
+		// 이 상태에서 1번 언스테이킹 하면, 해당 풀에 떨어지는 리워드(티어 1 = 5351027)는 커뮤니티 풀로 빠져야 함
+
 	})
 
-	t.Run("collect reward for all position", func(t *testing.T) {
-		// 포지션 01번 언스테이킹 되었으니
-		// 동일한 풀에 있는 나머지 inRange 포지션들의 리워드는 증가되야 함
+	t.Run("collect reward for position 03 (has same pool with position 01)", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		CollectReward(2, false)
-		CollectReward(3, false)
-		CollectReward(4, false)
-		CollectReward(5, false)
-		CollectReward(6, false)
+
+		oldCommuGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		CollectReward(3, false) // 더미 수령
 		std.TestSkipHeights(1)
+		newCommuGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		println("[collectReward] communityPool receive #1", newCommuGns-oldCommuGns) // 5351027
+		println()
 	})
 }
 
-func testCreatePoolBazQuxExternalOnly(t *testing.T) {
+func testCreatePoolBazQux3000ExternalOnly(t *testing.T) {
 	t.Run("create pool baz:qux:0.3%", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		pl.CreatePool(bazPath, quxPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // current tick 0
-
 		std.TestSkipHeights(1)
 	})
 }
 
-func testCreateExternalIncentiveBar(t *testing.T) {
-	t.Run("create external incentive gns for baz:qux:0.3% pool", func(t *testing.T) {
+func testCreateExternalIncentiveBaz(t *testing.T) {
+	t.Run("create external incentive baz for baz:qux:0.3% pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
+		baz.Transfer(common.AddrToUser(externalCreator), 20000000)         // for external incentive
+		gns.Transfer(common.AddrToUser(externalCreator), depositGnsAmount) // for deposit
 
-		gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // this includes depositGnsAmount
+		std.TestSetRealm(std.NewUserRealm(externalCreator))
+		baz.Approve(a2u(consts.STAKER_ADDR), 20000000)
+		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
 
 		CreateExternalIncentive(
 			"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
-			consts.GNS_PATH,
+			bazPath,
 			20000000,
-			1237161600,
-			1237161600+TIMESTAMP_90DAYS,
+			1238457600,
+			1238457600+TIMESTAMP_90DAYS,
 		)
+		// startHeight 1944978
+		// endHeight 5832978
+
+		// 5832978 - 1944978 = 3888000 ( incentive block duration )
+		// 20000000 / 3888000 = 5.1440329218 ( amount of baz reward per block )
 
 		std.TestSkipHeights(1)
 	})
@@ -1267,7 +1244,7 @@ func testStakeToken08(t *testing.T) {
 }
 
 func testCollectReward08(t *testing.T) {
-	t.Run("collect reward for 08 position, while warm up is in 30", func(t *testing.T) {
+	t.Run("collect reward for 08 position, baz incentive not yet started", func(t *testing.T) {
 		std.TestSkipHeights(9)
 		std.TestSetRealm(adminRealm)
 		CollectReward(8, false)
@@ -1277,7 +1254,8 @@ func testCollectReward08(t *testing.T) {
 
 func testStartExternalIncentive(t *testing.T) {
 	t.Run("external incentive start block skip", func(t *testing.T) {
-		std.TestSkipHeights(686)
+		std.TestSkipHeights(1944978 - std.GetHeight())
+		std.TestSkipHeights(10)
 	})
 }
 
@@ -1285,33 +1263,68 @@ func testCollectReward08AfterStart(t *testing.T) {
 	t.Run("collect reward for 08 position", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		CollectReward(8, false)
+		// bar reward amount per blokc is 5.1440329218 == 5
+		// 10 block skipped after incentive start
+		// position08 staked duration is 812 ( which is 30% warmUp period )
+
+		// 5 * 10 * 30% = 15 // user receives
 		std.TestSkipHeights(1)
 	})
 }
 
-func testEndExternalIncentiveBar(t *testing.T) {
+func testEndExternalIncentiveBaz(t *testing.T) {
 	t.Run("end external incentive bar", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(std.NewUserRealm(externalCreator))
 
-		std.TestSkipHeights(1295572) // 종료되도록 블록 증가
+		// 종료 전 토큰 잔액 저장
+		// - gns: 익스터널 생성 시 예치한 gns 환불
+		// - baz: 읷트널로 제공한 수량 중 페널티 환불
+		oldGns := gns.BalanceOf(common.AddrToUser(externalCreator))
+		oldBaz := baz.BalanceOf(common.AddrToUser(externalCreator))
+
+		lpOldBaz := baz.BalanceOf(common.AddrToUser(adminAddr))
+
+		// 종료되도록 블록 증가
+		std.TestSkipHeights(5832978 - std.GetHeight())
+		std.TestSkipHeights(1)
 
 		EndExternalIncentive(
-			anoAdmin,
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
-			"gno.land/r/onbloc/obl",
-			1237161600,                  // startTimestamp
-			1237161600+TIMESTAMP_90DAYS, // endTimestamp
-			1296169,
+			externalCreator,
+			"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
+			"gno.land/r/onbloc/baz",
+			1238457600,
+			1238457600+TIMESTAMP_90DAYS,
+			1944978,
 		)
-		//1296855
-		//3888000
-		//1295572
+		std.TestSkipHeights(1)
+
+		newGns := gns.BalanceOf(common.AddrToUser(externalCreator))
+		newBaz := baz.BalanceOf(common.AddrToUser(externalCreator))
 
 		// 종료 후 확인해야 할꺼
-		// - 웜업에 따른 페널티 수량 환불
-		// - 익스터널 생성 시 디파짓으로 넣은 gns 수량 환불
-		// - 아직 리워드 수령하지 않은 유저는 계속 리워드 수령 가능
-		// - 익스터널 종료 이후 리워드가 추가적으로 발생하면 안 됨
+
+		// 1. 익스터널 생성 시 디파짓으로 넣은 gns 수량 환불
+		refundGns := newGns - oldGns
+		uassert.Equal(t, depositGnsAmount, refundGns, "gns refund amount mismatch")
+
+		// 2. 웜업에 따른 페널티 수량 환불
+		// > 8번 포지션에서 50개의 익스터널 리워드 발생, 30%는 리워드로, 나머지 70%가 페널티로
+		refundBaz := newBaz - oldBaz
+		uassert.Equal(t, uint64(35), refundBaz)
+
+		// 3. 아직 리워드 수령하지 않은 유저는 계속 리워드 수령 가능
+		std.TestSetRealm(adminRealm)
+		CollectReward(8, false)
+		std.TestSkipHeights(1)
+
+		lpNewBaz := baz.BalanceOf(common.AddrToUser(adminAddr))
+		uassert.True(t, lpNewBaz-lpOldBaz > 0)
+
+		// 4. 익스터널 종료 이후 블록이 아무리 많이 생겨도 리워드가 추가적으로 발생하면 안 됨
+		std.TestSkipHeights(123)
+		CollectReward(8, false)
+		lpNewBaz2 := baz.BalanceOf(common.AddrToUser(adminAddr))
+		uassert.Equal(t, lpNewBaz, lpNewBaz2)
 	})
 }
 
@@ -1328,6 +1341,60 @@ func testReStakeTokenPos01(t *testing.T) {
 		// 웜업 30% 부터 적용되야 함
 		std.TestSetRealm(adminRealm)
 		CollectReward(1, false)
+		std.TestSkipHeights(1)
+	})
+}
+
+// XXXXX 이하 수정 필요
+func testChangeAvgBlockTimeTo4000(t *testing.T) {
+	// 원래 블록 시간 2초였으나 4초로 증가
+	// 1 블록 당 민팅되는 GNS 수량 2배로 증가됨
+	t.Run("change avg block time to 4000", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		gns.SetAvgBlockTimeInMsByAdmin(4000)
+		std.TestSkipHeights(1)
+	})
+
+	t.Run("collect reward position 01", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		CollectReward(1, false) // 1 블록 증가하고 리워드 확인해보면 얘한테 떨어지는 수량 거의 2배로 되야 함
+		std.TestSkipHeights(1)
+
+		// 원복
+		gns.SetAvgBlockTimeInMsByAdmin(2000)
+	})
+}
+
+func testChangeDistributionPctByAdmin(t *testing.T) {
+	t.Run("change staker's emission distribution pct to 50%", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		// 1번 포지션 리워드 수령
+		CollectReward(1, false)
+
+		en.ChangeDistributionPctByAdmin( // XXXXXXXXX panic: runtime error: invalid memory address or nil pointer dereference
+			1, 0, // 스테이커
+			2, 10000, // 데브옵스
+			3, 0, // 커뮤니티풀
+			4, 0, // xGNS
+		)
+		std.TestSkipHeights(1) // 1 블록 증가 했으나, 스테이커의 에미션은 비율 0%
+	})
+
+	t.Run("collect reward position 01", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		CollectReward(1, false)
+		std.TestSkipHeights(1)
+		// 에미션을 통해 스테이커한테 분배되는 비율이 0이 됨
+
+		// 원복
+		en.ChangeDistributionPctByAdmin(
+			1, 7500, // 스테이커
+			2, 2500, // 데브옵스
+			3, 0, // 커뮤니티풀
+			4, 0, // xGNS
+		)
 		std.TestSkipHeights(1)
 	})
 }

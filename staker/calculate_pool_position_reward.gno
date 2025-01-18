@@ -110,6 +110,7 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 	// 풀이 꼭 인터널이 있어야 하는건 아님
 	// 익스터널 인센티브만 있는 풀도 있을 수 있음
 	// 따라서 예외처리 해야 함
+	// > 단순 초기화가 아니라 굳이 4개의 아이템을 넣어주는 이유는 리턴할 때 internalRewards 길이만큼 돌면서 externalReward 값을 대입하기 때문
 	internalRewards := []uint64{0, 0, 0, 0}
 	internalPenalties := []uint64{0, 0, 0, 0}
 
