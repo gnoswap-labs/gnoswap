@@ -50,7 +50,7 @@ var (
 
 	externalCreator = testutils.TestAddress("externalCreator")
 
-	genesisBlockHeight:= int64(123)
+	genesisBlockHeight = int64(123)
 )
 
 func TestFullInternalExternal(t *testing.T) {
@@ -73,8 +73,8 @@ func TestFullInternalExternal(t *testing.T) {
 	testStakeToken05(t) //
 	testStakeToken06(t) //
 
-	testCollectRewardAll_30(t) // 10블록 쯤 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령 (웜업 30% 구간)
-	testCollectRewardAll_50(t) // 웜업 50% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
+	testCollectRewardAll_30(t)  // 10블록 쯤 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령 (웜업 30% 구간)
+	testCollectRewardAll_50(t)  // 웜업 50% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
 	testCollectRewardAll_70(t)  // 웜업 70% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
 	testCollectRewardAll_100(t) // 웜업 100% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
 
@@ -98,7 +98,6 @@ func TestFullInternalExternal(t *testing.T) {
 	testEndExternalIncentiveBaz(t)          // baz 인센티브 종료 ( 페널티 수량 환불되야 함 )
 
 	testReStakeTokenPos01(t) // 스테이킹 해서 웝업 100% 찍었다가 언스테이킹 된 토큰 다시 스테이킹 ( 웜업 처음(30%)부터 적용되야 함 )
-
 
 	// XXXXX 수정 필요
 	// FIXME @mconcat @onlyhyde @notJoon
@@ -1431,12 +1430,13 @@ func testChangeDistributionPctByAdmin(t *testing.T) {
 // 기존 방식은 매 블록 마다 모든 포지션에 대해 모든 리워드 계산을 하기 때문에 오차를 최소화 할 수 있음
 // 그러나, 여기에 소모되는 비용이(가스도 그렇고, 계산에 필요한 리소스도 그렇고) 너무 크기 때문에
 // 지금과 같이 변경점과 블록 증가 높이에 따라 계산하기 때문에 어느 정도 오차가 발생할 수 있음
-// 이 함수는 오차 범위가 99% 이내인지 확인 함
+// 이 함수는 오차 범위가 99.99% 이내인지 확인 함
 func isNear99Pct(t *testing.T, expected, actual uint64) bool {
 	t.Helper()
 
-	lower := expected * 99 / 100
-	upper := expected * 101 / 100
+	// 99.99%
+	lower := expected * 9999 / 10000
+	upper := expected * 10001 / 10000
 
 	if lower <= actual && actual <= upper {
 		return true
