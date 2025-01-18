@@ -2,9 +2,6 @@ package staker
 
 import (
 	"gno.land/r/gnoswap/v1/consts"
-	"gno.land/r/gnoswap/v1/gns"
-	en "gno.land/r/gnoswap/v1/emission"
-	pn "gno.land/r/gnoswap/v1/position"
 	pl "gno.land/r/gnoswap/v1/pool"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -30,10 +27,10 @@ type Reward struct {
 func calcPositionRewardByWarmups(currentHeight int64, tokenId uint64) []Reward {
 	rewards := CalcPositionReward(CalcPositionRewardParam{
 		CurrentHeight: currentHeight,
-		Deposits: deposits,
-		Pools: pools,
-		PoolTier: poolTier,
-		TokenId: tokenId,
+		Deposits:      deposits,
+		Pools:         pools,
+		PoolTier:      poolTier,
+		TokenId:       tokenId,
 	})
 
 	return rewards
@@ -42,10 +39,10 @@ func calcPositionRewardByWarmups(currentHeight int64, tokenId uint64) []Reward {
 func calcPositionReward(currentHeight int64, tokenId uint64) Reward {
 	rewards := CalcPositionReward(CalcPositionRewardParam{
 		CurrentHeight: currentHeight,
-		Deposits: deposits,
-		Pools: pools,
-		PoolTier: poolTier,
-		TokenId: tokenId,
+		Deposits:      deposits,
+		Pools:         pools,
+		PoolTier:      poolTier,
+		TokenId:       tokenId,
 	})
 
 	internal := uint64(0)
@@ -87,9 +84,9 @@ func calcPositionReward(currentHeight int64, tokenId uint64) Reward {
 type CalcPositionRewardParam struct {
 	// Environmental variables
 	CurrentHeight int64
-	Deposits *Deposits
-	Pools *Pools
-	PoolTier *PoolTier
+	Deposits      *Deposits
+	Pools         *Pools
+	PoolTier      *PoolTier
 
 	// Position variables
 	TokenId uint64
@@ -110,10 +107,14 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 
 	lastCollectHeight := deposit.lastCollectHeight
 
+	// if this pool is not incentivized for internal(emission) reward, then just return
+	if param.PoolTier.CurrentTier(poolPath) == 0 {
+		return []Reward{}
+	}
+
 	internalRewards, internalPenalties := pool.RewardStateOf(deposit).CalculateInternalReward(lastCollectHeight, param.CurrentHeight, pool.rewardCache)
 
 	allIncentives := pool.incentives.GetAllInHeights(lastCollectHeight, param.CurrentHeight)
-
 
 	externalRewards := make([]map[string]uint64, 4)
 	externalPenalties := make([]map[string]uint64, 4)
