@@ -1,0 +1,256 @@
+package tests
+
+import (
+	"std"
+	"testing"
+	"time"
+
+	"gno.land/p/demo/uassert"
+
+	"gno.land/r/gnoswap/v1/consts"
+
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
+
+	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
+	"gno.land/r/onbloc/qux"
+)
+
+func TestRouterAll2Route2HopWithEmission(t *testing.T) {
+	testCreatePool(t)
+	testPositionMint(t)
+	testDrySwapRouteBarQuxExactIn(t)
+	testSwapRouteBarQuxExactIn(t)
+	testDrySwapRouteBarQuxExactOut(t)
+	testSwapRouteBarQuxExactOut(t)
+	testDrySwapRouteQuxBarExactIn(t)
+	testSwapRouteQuxBarExactIn(t)
+	testDrySwapRouteQuxBarExactOut(t)
+	testSwapRouteQuxBarExactOut(t)
+}
+
+func testCreatePool(t *testing.T) {
+	t.Run("create pool", func(t *testing.T) {
+		uassert.Equal(t, gns.TotalSupply(), uint64(100000000000000))
+		uassert.Equal(t, gnsBalance(consts.EMISSION_ADDR), uint64(0))
+		uassert.Equal(t, gnsBalance(consts.STAKER_ADDR), uint64(0))
+		uassert.Equal(t, gnsBalance(consts.DEV_OPS), uint64(0))
+
+		std.TestSetRealm(adminRealm)
+		std.TestSkipHeights(100)
+
+		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*2)
+
+		pl.CreatePool(barPath, bazPath, uint32(500), "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+		pl.CreatePool(bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+		std.TestSkipHeights(1)
+
+		uassert.Equal(t, gns.TotalSupply(), uint64(100001426940600))
+		uassert.Equal(t, gnsBalance(consts.EMISSION_ADDR), uint64(0))
+		uassert.Equal(t, gnsBalance(consts.STAKER_ADDR), uint64(1070205450))
+		uassert.Equal(t, gnsBalance(consts.DEV_OPS), uint64(285388120))
+	})
+}
+
+func testPositionMint(t *testing.T) {
+	t.Run("position mint", func(t *testing.T) {
+		// bar_baz_500 by admin
+		std.TestSetRealm(adminRealm)
+
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		// Mint
+		pn.Mint(barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr)
+		pn.Mint(bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr)
+		std.TestSkipHeights(1)
+
+		uassert.Equal(t, gns.TotalSupply(), uint64(100001441210006))
+		uassert.Equal(t, gnsBalance(consts.EMISSION_ADDR), uint64(1))
+		uassert.Equal(t, gnsBalance(consts.STAKER_ADDR), uint64(1080907504))
+		uassert.Equal(t, gnsBalance(consts.DEV_OPS), uint64(288242001))
+	})
+}
+
+func testDrySwapRouteBarQuxExactIn(t *testing.T) {
+	t.Run("dry swap route bar qux exact in", func(t *testing.T) {
+		dryResult := DrySwapRoute(
+			barPath,    // inputToken
+			quxPath,    // outputToken
+			"1000",     // amountSpecified
+			"EXACT_IN", // swapType
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+			"50,50", // quoteArr
+			"1",
+		)
+
+		uassert.Equal(t, dryResult, "7346")
+	})
+}
+
+func testSwapRouteBarQuxExactIn(t *testing.T) {
+	t.Run("swap route bar qux exact in", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		bar.Approve(a2u(consts.POOL_ADDR), 10000)
+		qux.Approve(a2u(consts.ROUTER_ADDR), 10000)
+
+		amountIn, amountOut := ExactInSwapRoute(
+			barPath, // inputToken
+			quxPath, // outputToken
+			"1000",  // amountSpecified
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+			"50,50", // quoteArr
+			"1",     // tokenAmountLimit
+			time.Now().Add(time.Hour).Unix(),
+		)
+		std.TestSkipHeights(1)
+
+		uassert.Equal(t, gns.TotalSupply(), uint64(100001455479412))
+		uassert.Equal(t, gnsBalance(consts.EMISSION_ADDR), uint64(1))
+		uassert.Equal(t, gnsBalance(consts.STAKER_ADDR), uint64(0))
+		uassert.Equal(t, gnsBalance(consts.DEV_OPS), uint64(291095882))
+
+		uassert.Equal(t, amountIn, "1000")
+		uassert.Equal(t, amountOut, "-7318")
+	})
+}
+
+func testDrySwapRouteBarQuxExactOut(t *testing.T) {
+	t.Run("dry swap route bar qux exact out", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		dryResult := DrySwapRoute(
+			barPath,     // inputToken
+			quxPath,     // outputToken
+			"1000",      // amountSpecified
+			"EXACT_OUT", // swapType
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+			"50,50", // quoteArr
+			"100000",
+		)
+
+		uassert.Equal(t, dryResult, "140")
+	})
+}
+
+func testSwapRouteBarQuxExactOut(t *testing.T) {
+	t.Run("swap route bar qux exact out", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		amountIn, amountOut := ExactOutSwapRoute(
+			barPath, // inputToken
+			quxPath, // outputToken
+			"1000",  // amountSpecified
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+			"50,50", // quoteArr
+			"99999", // tokenAmountLimit
+			time.Now().Add(time.Hour).Unix(),
+		)
+		std.TestSkipHeights(1)
+
+		uassert.Equal(t, gns.TotalSupply(), uint64(100001469748818))
+		uassert.Equal(t, gnsBalance(consts.EMISSION_ADDR), uint64(1))
+		uassert.Equal(t, gnsBalance(consts.STAKER_ADDR), uint64(0))
+		uassert.Equal(t, gnsBalance(consts.DEV_OPS), uint64(293949763))
+
+		uassert.Equal(t, amountIn, "140")
+		uassert.Equal(t, amountOut, "-1001")
+	})
+}
+
+func testDrySwapRouteQuxBarExactIn(t *testing.T) {
+	t.Run("dry swap route qux bar exact in", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		dryResult := DrySwapRoute(
+			quxPath,    // inputToken
+			barPath,    // outputToken
+			"1000",     // amountSpecified
+			"EXACT_IN", // swapType
+			"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+			"30,70", // quoteArr
+			"1",
+		)
+
+		uassert.Equal(t, dryResult, "135")
+	})
+}
+
+func testSwapRouteQuxBarExactIn(t *testing.T) {
+	t.Run("swap route qux bar exact in", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		amountIn, amountOut := ExactInSwapRoute(
+			quxPath, // inputToken
+			barPath, // outputToken
+			"1000",  // amountSpecified
+			"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+			"30,70", // quoteArr
+			"1",     // tokenAmountLimit
+			time.Now().Add(time.Hour).Unix(),
+		)
+		std.TestSkipHeights(1)
+
+		uassert.Equal(t, gns.TotalSupply(), uint64(100001484018224))
+		uassert.Equal(t, gnsBalance(consts.EMISSION_ADDR), uint64(1))
+		uassert.Equal(t, gnsBalance(consts.STAKER_ADDR), uint64(0))
+		uassert.Equal(t, gnsBalance(consts.DEV_OPS), uint64(296803644))
+
+		uassert.Equal(t, amountIn, "1000")
+		uassert.Equal(t, amountOut, "-135")
+	})
+}
+
+func testDrySwapRouteQuxBarExactOut(t *testing.T) {
+	t.Run("dry swap route qux bar exact out", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		dryResult := DrySwapRoute(
+			quxPath,     // inputToken
+			barPath,     // outputToken
+			"1000",      // amountSpecified
+			"EXACT_OUT", // swapType
+			"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+			"30,70", // quoteArr
+			"100000",
+		)
+
+		uassert.Equal(t, dryResult, "7351")
+	})
+}
+
+func testSwapRouteQuxBarExactOut(t *testing.T) {
+	t.Run("swap route qux bar exact out", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		qux.Approve(a2u(consts.POOL_ADDR), 10000)
+		bar.Approve(a2u(consts.ROUTER_ADDR), 10000)
+
+		amountIn, amountOut := ExactOutSwapRoute(
+			quxPath, // inputToken
+			barPath, // outputToken
+			"1000",  // amountSpecified
+			"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+			"30,70", // quoteArr
+			"99999", // tokenAmountLimit
+			time.Now().Add(time.Hour).Unix(),
+		)
+		std.TestSkipHeights(1)
+
+		uassert.Equal(t, gns.TotalSupply(), uint64(100001498287630))
+		uassert.Equal(t, gnsBalance(consts.EMISSION_ADDR), uint64(1))
+		uassert.Equal(t, gnsBalance(consts.STAKER_ADDR), uint64(0))
+		uassert.Equal(t, gnsBalance(consts.DEV_OPS), uint64(299657525))
+
+		uassert.Equal(t, amountIn, "7365")
+		uassert.Equal(t, amountOut, "-999")
+	})
+}
+
+func gnsBalance(addr std.Address) uint64 {
+	return gns.BalanceOf(a2u(addr))
+}
