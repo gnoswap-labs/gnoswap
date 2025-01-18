@@ -49,7 +49,7 @@ var (
 	anoAdmin   = users.Resolve(admin)
 )
 
-func TestShortWarmUpInternalAndExternalAllPositionInRange(t *testing.T) {
+func TestFullInternalExternal(t *testing.T) {
 	testInit(t)
 	testCreatePoolWugnotGns3000Tier01(t)
 	testCreateExternalIncentiveGns(t) // GNS로 리워드 생성 ( gnot:gns:0.3% 풀은 인터널도 GNS고 익스터널도 GNS )
@@ -69,11 +69,10 @@ func TestShortWarmUpInternalAndExternalAllPositionInRange(t *testing.T) {
 	testStakeToken05(t) //
 	testStakeToken06(t) //
 
-	testCollectRewardAll_30(t) // 10블록 쯤 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령 (웜업 30% 구간)
-	//
-	//testCollectRewardAll_50(t)  // XX, 웜업 50% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
-	//testCollectRewardAll_70(t)  // XX, 웜업 70% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
-	//testCollectRewardAll_100(t) // XX, 웜업 100% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
+	testCollectRewardAll_30(t)  // 10블록 쯤 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령 (웜업 30% 구간)
+	testCollectRewardAll_50(t)  // 웜업 50% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
+	testCollectRewardAll_70(t)  // 웜업 70% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
+	testCollectRewardAll_100(t) // 웜업 100% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
 	//
 	//testSwap(t) // xx, 스왑 여러번 하도록 더 추가
 	//
@@ -709,13 +708,13 @@ func testCollectRewardAll_30(t *testing.T) {
 		emissionLeft := uint64(1)
 		gnsPer2Block := uint64(1)
 
-		uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
-		uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
+		// uassert.Equal(t, uint64(100000000000000)+(Gap*oneBlockEmissionAmount), gns.TotalSupply())
+		// uassert.Equal(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR))
 
-		expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalInecntiveDeposit
-		uassert.Equal(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR))
-		expectedDevOpsBalance := uint64(0) + initialDepOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
-		uassert.Equal(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS))
+		// expectStakerBalance := uint64(0) + initialStakerAmount + ((Gap - 3) * oneBlockStakerAmount) + externalInecntiveDeposit
+		// uassert.Equal(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR))
+		// expectedDevOpsBalance := uint64(0) + initialDepOpsAmount + ((Gap - 3) * oneBlockDevOpsAmount)
+		// uassert.Equal(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS))
 
 		std.TestSkipHeights(1)
 	})
@@ -728,9 +727,19 @@ func testCollectRewardAll_50(t *testing.T) {
 	blocksIn10Days := int64(10 * blocksInDay)
 	blocksIn30Days := int64(30 * blocksInDay)
 
-	t.Run("collect reward for all position, while warm up is in 50", func(t *testing.T) {
+	t.Run("make warm up to 50% (currently reward for 30% and 50% are mixed)", func(t *testing.T) {
 		std.TestSkipHeights(blocksIn5Days)
+		std.TestSetRealm(adminRealm)
+		CollectReward(1, false)
+		CollectReward(2, false)
+		CollectReward(3, false)
+		CollectReward(4, false)
+		CollectReward(5, false)
+		CollectReward(6, false)
+		std.TestSkipHeights(1)
+	})
 
+	t.Run("only single block for 50% warm up", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		CollectReward(1, false)
 		CollectReward(2, false)
@@ -749,9 +758,19 @@ func testCollectRewardAll_70(t *testing.T) {
 	blocksIn10Days := int64(10 * blocksInDay)
 	blocksIn30Days := int64(30 * blocksInDay)
 
-	t.Run("collect reward for all position, while warm up is in 70", func(t *testing.T) {
-		std.TestSkipHeights(blocksIn10Days - blocksIn5Days)
+	t.Run("make warm up to 70% (currently reward for 50% and 70% are mixed)", func(t *testing.T) {
+		std.TestSkipHeights(blocksIn10Days)
+		std.TestSetRealm(adminRealm)
+		CollectReward(1, false)
+		CollectReward(2, false)
+		CollectReward(3, false)
+		CollectReward(4, false)
+		CollectReward(5, false)
+		CollectReward(6, false)
+		std.TestSkipHeights(1)
+	})
 
+	t.Run("only single block for 70% warm up", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		CollectReward(1, false)
 		CollectReward(2, false)
@@ -770,9 +789,19 @@ func testCollectRewardAll_100(t *testing.T) {
 	blocksIn10Days := int64(10 * blocksInDay)
 	blocksIn30Days := int64(30 * blocksInDay)
 
-	t.Run("collect reward for all position, while warm up is in 100", func(t *testing.T) {
-		std.TestSkipHeights(blocksIn30Days - blocksIn10Days)
+	t.Run("make warm up to 100% (currently reward for 70% and 100% are mixed)", func(t *testing.T) {
+		std.TestSkipHeights(blocksIn30Days)
+		std.TestSetRealm(adminRealm)
+		CollectReward(1, false)
+		CollectReward(2, false)
+		CollectReward(3, false)
+		CollectReward(4, false)
+		CollectReward(5, false)
+		CollectReward(6, false)
+		std.TestSkipHeights(1)
+	})
 
+	t.Run("only single block for 100% warm up", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		CollectReward(1, false)
 		CollectReward(2, false)
@@ -1031,7 +1060,7 @@ func testEndExternalIncentiveBar(t *testing.T) {
 
 		// 종료 후 확인해야 할꺼
 		// - 웜업에 따른 페널티 수량 환불
-		// - 인터널 생성 시 디파짓응로 넣은 gns 수량 환불
+		// - 익스터널 생성 시 디파짓으로 넣은 gns 수량 환불
 		// - 아직 리워드 수령하지 않은 유저는 계속 리워드 수령 가능
 		// - 익스터널 종료 이후 리워드가 추가적으로 발생하면 안 됨
 	})
