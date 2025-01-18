@@ -10,6 +10,7 @@ import (
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
+
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -56,11 +57,11 @@ func TestFullInternalExternal(t *testing.T) {
 	testMintPos01InRange(t)
 
 	testCreateBarBaz500Tier02(t) // 포지션 아예 없어서 커뮤니티 풀로 빠져야 함
-	testMintPos02InRange(t)
-	testMintPos03OutRange(t)
-	testMintPos04OutRange(t)
-	testMintPos05OutRange(t)
-	testMintPos06OutRange(t)
+	testMintPos02InRange(t)      // bar:baz:500
+	testMintPos03OutRange(t)     // gnot:gns:0.3%
+	testMintPos04OutRange(t)     // bar:baz:500
+	testMintPos05OutRange(t)     // gnot:gns:0.3%
+	testMintPos06OutRange(t)     // bar:baz:500
 
 	testStakeToken01(t) // 여기 직전까지는 스테이킹 된 포지션 없어서 wugnot gns 0.3% 풀에 쌓인 리워드 커뮤니티 풀로 빠져야 함
 	testStakeToken02(t) //
@@ -73,16 +74,18 @@ func TestFullInternalExternal(t *testing.T) {
 	testCollectRewardAll_50(t)  // 웜업 50% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
 	testCollectRewardAll_70(t)  // 웜업 70% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
 	testCollectRewardAll_100(t) // 웜업 100% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
-	//
-	//testSwap(t) // xx, 스왑 여러번 하도록 더 추가
-	//
-	//testCreatePoolBarFoo100Tier03(t)    // xx, 틱 600000
-	//testCollectRewardDummy(t)           // xx, 2번 포지션 리워드 수령 => 그러면 bar foo 풀에는 스테이킹 된거 없어서 커뮤 풀로 빠져야 함
-	//testOneClickStakingPos07OutRange(t) // xx, 원클릭 스테이킹으로 애초에 outRange => 몇 블록 증가 후 7번 포지션 리워드 수령 해보면 outRange기 떄문에 커뮤 풀로 빠져야 함
-	//
-	////testChangeAvgBlockTimeTo4000(t) // XXXXXXXXX 평균 블록 시간 변경
-	//testChangeDistributionPctByAdmin(t) // 스테이커한테 가는 에미션 비율 변경
-	//testUnstakeToken01(t)               // 전체 스티이킹 된 유도성 변경
+
+	testSwapExactIn(t)
+	testSwapExactOut(t)
+
+	testCreatePoolBarFoo100Tier03(t)    // 틱 600000, 인터널 티어 #3
+	testCollectRewardDummy(t)           // 2번 포지션 리워드 수령 => 그러면 bar foo 풀에는 스테이킹 된거 없어서 커뮤 풀로 빠져야 함
+	testOneClickStakingPos07OutRange(t) // 원클릭 스테이킹으로 애초에 outRange로 스테이킹 됨 => 블록 증가 후 7번 포지션 리워드 수령 해보면 outRange기 떄문에 커뮤 풀로 빠져야 함
+
+	// testChangeAvgBlockTimeTo4000(t) // XXXXXXXXX 평균 블록 시간 변경
+
+	// testChangeDistributionPctByAdmin(t) // 스테이커한테 가는 에미션 비율 변경
+	// testUnstakeToken01(t)               // 전체 스티이킹 된 유도성 변경
 	//
 	//testCreatePoolBazQuxExternalOnly(t) // xx, 풀 만드는데 익스터널 인센티브만 있는 풀임
 	//testCreateExternalIncentiveBar(t)   // xx, 위에서 만든 풀 대상으로 익스터널 인센티브 생성
@@ -813,11 +816,9 @@ func testCollectRewardAll_100(t *testing.T) {
 	})
 }
 
-func testSwap(t *testing.T) {
-	t.Run("swap tokenXX to tokenXX", func(t *testing.T) {
+func testSwapExactIn(t *testing.T) {
+	t.Run("swap token0 to token1 500 // swap #1", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-
-		// 1st swap
 		wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
 		gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -827,12 +828,241 @@ func testSwap(t *testing.T) {
 		tokenIn, tokenOut := rr.ExactInSwapRoute(
 			wugnotPath, // inputToken
 			gnsPath,    // outputToken
-			"10000000", // finalAmountIn
+			"500",      // finalAmountIn
 			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000", // RouteArr
 			"100",       // quoteArr
 			"0",         // amountOutMin
 			max_timeout, // deadline
 		)
+		std.TestSkipHeights(1)
+	})
+	// tick changed
+	// - from 0 to -30
+	// position-01 range
+	// - from -60 ~ 60
+	// stil in range
+	// - there are rewards
+	t.Run("check reward for position 01 // #1", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		CollectReward(1, false)
+		std.TestSkipHeights(1)
+	})
+
+	t.Run("swap token0 to token1 500 // swap #2", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+		gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		wugnot.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+		gns.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+
+		tokenIn, tokenOut := rr.ExactInSwapRoute(
+			wugnotPath, // inputToken
+			gnsPath,    // outputToken
+			"500",      // finalAmountIn
+			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000", // RouteArr
+			"100",       // quoteArr
+			"0",         // amountOutMin
+			max_timeout, // deadline
+		)
+		std.TestSkipHeights(1)
+	})
+	// tick changed
+	// - from 0 to -30
+	// position-01 range
+	// - from -60 ~ 60
+	// stil in range
+	// - there are rewards
+	t.Run("check reward for position 01 // #2", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		CollectReward(1, false)
+		std.TestSkipHeights(1)
+	})
+
+	t.Run("swap token0 to token1 500 // swap #3", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+		gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		wugnot.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+		gns.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+
+		tokenIn, tokenOut := rr.ExactInSwapRoute(
+			wugnotPath, // inputToken
+			gnsPath,    // outputToken
+			"500",      // finalAmountIn
+			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000", // RouteArr
+			"100",       // quoteArr
+			"0",         // amountOutMin
+			max_timeout, // deadline
+		)
+		std.TestSkipHeights(1)
+	})
+	// tick changed
+	// - from -60 to -90
+	// position-01 range
+	// - from -60 ~ 60
+	// out range
+	t.Run("check reward for position 01 // #3-1", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		CollectReward(1, false) // should have reward for block that exeucted swap
+		std.TestSkipHeights(1)
+	})
+	t.Run("check reward for position 01 // #3-2", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		CollectReward(1, false) // should have no reward since position is out of range
+		std.TestSkipHeights(1)
+	})
+
+	t.Run("swap token0 to token1 500 // swap #4", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+		gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		wugnot.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+		gns.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+
+		tokenIn, tokenOut := rr.ExactInSwapRoute(
+			wugnotPath, // inputToken
+			gnsPath,    // outputToken
+			"500",      // finalAmountIn
+			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000", // RouteArr
+			"100",       // quoteArr
+			"0",         // amountOutMin
+			max_timeout, // deadline
+		)
+		std.TestSkipHeights(1)
+	})
+	// tick changed
+	// - from -90 to -119
+	// position-01 range
+	// - from -60 ~ 60
+	// out range
+	t.Run("check reward for position 01 // #4", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		CollectReward(1, false) // should have reward for block that exeucted swap
+		std.TestSkipHeights(1)
+	})
+}
+
+func testSwapExactOut(t *testing.T) {
+	t.Run("swap token0 to token1 500 // swap #1", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+		gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		wugnot.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+		gns.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+
+		tokenIn, tokenOut := rr.ExactOutSwapRoute(
+			gnsPath,    // inputToken
+			wugnotPath, // outputToken
+			"500",      // amountOut
+			"gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:3000", // RouteArr
+			"100",       // quoteArr
+			"1000",      // amountInMax
+			max_timeout, // deadline
+		)
+		std.TestSkipHeights(1)
+	})
+	// tick changed
+	// - from -119 ~ -89
+	// position-05 range
+	// - from 60 ~ 120
+	// out range
+	t.Run("check reward for position 03 // #1", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		CollectReward(3, false)
+		std.TestSkipHeights(1)
+	})
+
+	t.Run("swap token0 to token1 500 // swap #2", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+		gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		wugnot.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+		gns.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+
+		tokenIn, tokenOut := rr.ExactOutSwapRoute(
+			gnsPath,    // inputToken
+			wugnotPath, // outputToken
+			"500",      // amountOut
+			"gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:3000", // RouteArr
+			"100",       // quoteArr
+			"1000",      // amountInMax
+			max_timeout, // deadline
+		)
+		std.TestSkipHeights(1)
+	})
+	// tick changed
+	// - from -89 ~ -60
+	// position-05 range
+	// - from 60 ~ 120
+	// out range
+	t.Run("check reward for position 03 // #2", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		CollectReward(3, false)
+		std.TestSkipHeights(1)
+	})
+
+	t.Run("swap token0 to token1 500 // swap #3", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+		gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		wugnot.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+		gns.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+
+		tokenIn, tokenOut := rr.ExactOutSwapRoute(
+			gnsPath,    // inputToken
+			wugnotPath, // outputToken
+			"500",      // amountOut
+			"gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:3000", // RouteArr
+			"100",       // quoteArr
+			"1000",      // amountInMax
+			max_timeout, // deadline
+		)
+		std.TestSkipHeights(1)
+	})
+	// tick changed
+	// - from -60 ~ -30
+	// position-05 range
+	// - from 60 ~ 120
+	// out range
+	t.Run("check reward for position 03 // #3", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		CollectReward(3, false)
+		std.TestSkipHeights(1)
+	})
+
+	t.Run("swap token0 to token1 500 // swap #4", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+		gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		wugnot.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+		gns.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+
+		tokenIn, tokenOut := rr.ExactOutSwapRoute(
+			gnsPath,    // inputToken
+			wugnotPath, // outputToken
+			"500",      // amountOut
+			"gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:3000", // RouteArr
+			"100",       // quoteArr
+			"1000",      // amountInMax
+			max_timeout, // deadline
+		)
+		std.TestSkipHeights(1)
+	})
+	// tick changed
+	// - from -30 ~ 0
+	// position-05 range
+	// - from 60 ~ 120
+	// out range
+	t.Run("check reward for position 03 // #4", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		CollectReward(3, false)
 		std.TestSkipHeights(1)
 	})
 }
@@ -853,13 +1083,21 @@ func testCollectRewardDummy(t *testing.T) {
 	t.Run("collect reward for all position, while warm up is in 30", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
+		oldCommunityPool := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
 		CollectReward(2, false)
 		std.TestSkipHeights(1)
+
+		newCommunityPool := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		// println("oldCommunityPool", oldCommunityPool)
+		// println("newCommunityPool", newCommunityPool)
+		// println("diff", newCommunityPool.Sub(oldCommunityPool))
+		println("communityPool receive", newCommunityPool-oldCommunityPool)
+		println()
 	})
 }
 
 func testOneClickStakingPos07OutRange(t *testing.T) {
-	t.Run("mint and stake grc20 pair", func(t *testing.T) {
+	t.Run("mint and stake grc20 pair (pos #7)", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -877,8 +1115,19 @@ func testOneClickStakingPos07OutRange(t *testing.T) {
 			max_timeout,
 		)
 		uassert.Equal(t, lpTokenId, uint64(7))
-
 		std.TestSkipHeights(1)
+	})
+
+	t.Run("collect reward for position 07", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		oldCommunityPool := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		CollectReward(7, false)
+		std.TestSkipHeights(1)
+
+		newCommunityPool := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		println("communityPool receive", newCommunityPool-oldCommunityPool)
+		println()
 	})
 }
 
