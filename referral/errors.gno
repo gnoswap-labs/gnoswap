@@ -12,6 +12,7 @@ const (
 	ErrUnauthorized
 	ErrInvalidCaller
 	ErrCyclicReference
+	ErrTooManyRequests
 	ErrNotFound
 )
 
@@ -22,6 +23,7 @@ var errorMessages = map[int]string{
 	ErrUnauthorized:    "unauthorized caller",
 	ErrInvalidCaller:   "invalid caller",
 	ErrCyclicReference: "cyclic reference is not allowed",
+	ErrTooManyRequests: "too many requests: operations allowed once per 24 hours for each address",
 	ErrNotFound:        "referral not found",
 }
 

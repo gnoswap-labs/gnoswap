@@ -2,13 +2,20 @@ package referral
 
 import (
 	"std"
+	"time"
 
 	"gno.land/p/demo/avl"
+)
+
+const (
+	// MinTimeBetweenUpdates represents minimum duration between operations
+    MinTimeBetweenUpdates int64 = 24 * 60 * 60
 )
 
 // keeper implements the `ReferralKeeper` interface using an AVL tree for storage.
 type keeper struct {
 	store *avl.Tree
+	lastOps map[string]int64
 }
 
 // check interface implementation at compile time
@@ -19,6 +26,7 @@ var _ ReferralKeeper = &keeper{}
 func NewKeeper() ReferralKeeper {
 	return &keeper{
 		store: avl.NewTree(),
+		lastOps: make(map[string]int64),
 	}
 }
 
@@ -45,6 +53,10 @@ func (k *keeper) update(addr, newRefAddr std.Address) error {
 // TODO: need to discuss what values to emit as event
 func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error {
 	if err := isValidCaller(std.PrevRealm().Addr()); err != nil {
+		return err
+	}
+
+	if err := k.checkRateLimit(addr.String()); err != nil {
 		return err
 	}
 
@@ -139,4 +151,20 @@ func (k *keeper) isEmpty() bool {
         return true // stop iteration on first item
     })
     return empty
+}
+
+// checkRateLimit verifies if enough time has passed since the last operation
+func (k *keeper) checkRateLimit(addr string) error {
+    now := time.Now().Unix()
+    
+    if lastOpTime, exists := k.lastOps[addr]; exists {
+        timeSinceLastOp := now - lastOpTime
+        
+        if timeSinceLastOp < MinTimeBetweenUpdates {
+            return NewError(ErrTooManyRequests)
+        }
+    }
+    
+    k.lastOps[addr] = now
+    return nil
 }

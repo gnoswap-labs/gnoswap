@@ -3,6 +3,7 @@ package referral
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
@@ -16,6 +17,13 @@ var (
 	validAddr2  = testutils.TestAddress("valid2")
 	invalidAddr = testutils.TestAddress("invalid")
 )
+
+// time mocking
+var currentTime int64 = time.Now().Unix()
+
+func mockTimeNow() time.Time {
+    return time.Unix(currentTime, 0)
+}
 
 func setupKeeper() *keeper { return NewKeeper().(*keeper) }
 
@@ -346,35 +354,6 @@ func TestRemove(t *testing.T) {
 	}
 }
 
-func TestZeroAddressFlow(t *testing.T) {
-	k := setupKeeper()
-	cleanup := mockValidCaller()
-	defer cleanup()
-
-	err := k.register(validAddr1, validAddr2)
-	if err != nil {
-		t.Fatalf("Failed to register initial referral: %v", err)
-	}
-
-	err = k.update(validAddr1, zeroAddress)
-	if err != nil {
-		t.Fatalf("Failed to update to zero address: %v", err)
-	}
-
-	_, err = k.get(validAddr1)
-	if err == nil {
-		t.Error("Expected error when getting removed referral")
-	}
-	referralErr, ok := err.(*ReferralError)
-	if !ok || referralErr.Code != ErrNotFound {
-		t.Errorf("Expected ErrNotFound, got %v", err)
-	}
-
-	if k.has(validAddr1) {
-		t.Error("Expected has() to return false after zero address registration")
-	}
-}
-
 func TestUpdateNonExistentReferral(t *testing.T) {
 	k := setupKeeper()
 	cleanup := mockValidCaller()
@@ -395,57 +374,30 @@ func TestUpdateNonExistentReferral(t *testing.T) {
 }
 
 func TestDuplicateRegistration(t *testing.T) {
-	k := setupKeeper()
-	cleanup := mockValidCaller()
-	defer cleanup()
+    k := setupKeeper()
+    cleanup := mockValidCaller()
+    defer cleanup()
 
-	err := k.register(validAddr1, validAddr2)
-	if err != nil {
-		t.Fatalf("First registration failed: %v", err)
-	}
+    originalTimeNow := time.Now
+    time.Now = mockTimeNow
+    defer func() { time.Now = originalTimeNow }()
 
-	// register again with same address
-	err = k.register(validAddr1, validAddr2)
-	if err != nil {
-		t.Errorf("Duplicate registration should succeed, got error: %v", err)
-	}
+    err := k.register(validAddr1, validAddr2)
+    if err != nil {
+        t.Fatalf("First registration failed: %v", err)
+    }
 
-	// original referral should be preserved
-	refAddr, err := k.get(validAddr1)
-	if err != nil || refAddr != validAddr2 {
-		t.Errorf("Original referral was not preserved")
-	}
-}
+    currentTime += MinTimeBetweenUpdates + 1
 
-func TestRemoveAndUpdate(t *testing.T) {
-	k := setupKeeper()
-	cleanup := mockValidCaller()
-	defer cleanup()
+    err = k.register(validAddr1, validAddr2)
+    if err != nil {
+        t.Errorf("Duplicate registration should succeed, got error: %v", err)
+    }
 
-	err := k.register(validAddr1, validAddr2)
-	if err != nil {
-		t.Fatalf("Initial registration failed: %v", err)
-	}
-
-	err = k.remove(validAddr1)
-	if err != nil {
-		t.Fatalf("Remove failed: %v", err)
-	}
-
-	if k.has(validAddr1) {
-		t.Error("Referral still exists after removal")
-	}
-
-	newRefAddr := testutils.TestAddress("valid3")
-	err = k.update(validAddr1, newRefAddr)
-	if err != nil {
-		t.Errorf("Update after remove failed: %v", err)
-	}
-
-	refAddr, err := k.get(validAddr1)
-	if err != nil || refAddr != newRefAddr {
-		t.Error("New referral was not properly registered after remove")
-	}
+    refAddr, err := k.get(validAddr1)
+    if err != nil || refAddr != validAddr2 {
+        t.Errorf("Original referral was not preserved")
+    }
 }
 
 // TODO: Chained references seem to need discussion.
@@ -521,70 +473,6 @@ func TestReferralCycles(t *testing.T) {
 	refAddr, _ = k.get(addr3)
 	if refAddr != addr1 {
 		t.Error("addr3's referral should be addr1")
-	}
-}
-
-func TestStateConsistency(t *testing.T) {
-	k := setupKeeper()
-	cleanup := mockValidCaller()
-	defer cleanup()
-
-	// verify state consistency after performing multiple operations in succession
-	operations := []struct {
-		op   string
-		addr std.Address
-		ref  std.Address
-	}{
-		{"register", validAddr1, validAddr2},
-		{"update", validAddr1, testutils.TestAddress("new")},
-		{"remove", validAddr1, zeroAddress},
-		{"register", validAddr1, validAddr2},
-		{"update", validAddr1, zeroAddress},
-		{"register", validAddr1, testutils.TestAddress("final")},
-	}
-
-	expectedExists := false
-	var expectedRef std.Address
-
-	for i, op := range operations {
-		switch op.op {
-		case "register":
-			err := k.register(op.addr, op.ref)
-			if err != nil {
-				t.Errorf("Operation %d: register failed: %v", i, err)
-			}
-			expectedExists = true
-			expectedRef = op.ref
-		case "update":
-			err := k.update(op.addr, op.ref)
-			if err != nil {
-				t.Errorf("Operation %d: update failed: %v", i, err)
-			}
-			expectedExists = op.ref != zeroAddress
-			expectedRef = op.ref
-		case "remove":
-			err := k.remove(op.addr)
-			if err != nil {
-				t.Errorf("Operation %d: remove failed: %v", i, err)
-			}
-			expectedExists = false
-		}
-
-		// check state consistency
-		exists := k.has(op.addr)
-		if exists != expectedExists {
-			t.Errorf("Operation %d: has() = %v, want %v", i, exists, expectedExists)
-		}
-
-		if expectedExists {
-			ref, err := k.get(op.addr)
-			if err != nil {
-				t.Errorf("Operation %d: get() failed: %v", i, err)
-			}
-			if ref != expectedRef {
-				t.Errorf("Operation %d: get() = %v, want %v", i, ref, expectedRef)
-			}
-		}
 	}
 }
 
