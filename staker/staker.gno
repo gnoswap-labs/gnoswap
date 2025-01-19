@@ -116,6 +116,13 @@ var (
 
 	// poolTier stores pool tier information
 	poolTier *PoolTier
+
+	// totalEmissionSent is the total amount of GNS emission sent from staker to user(and community pool if penalty exists)
+	// which includes following
+	// 1. reward sent to user (which also includes protocol_fee)
+	// 2. penalty sent to community pool
+	// 3. unclaimable reward
+	totalEmissionSent uint64
 )
 
 const (
@@ -137,7 +144,7 @@ func init() {
 	// ONLY GNOT:GNS 0.3%
 
 	poolTier = NewPoolTier(pools, std.GetHeight(), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange)
-	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1, 0/*FIXME XXX: WE NEED TO GET THE TICK*/) // must update pools tree
+	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1, 0
 }
 
 // StakeToken stakes an LP token into the staker contract. It transfer the LP token
@@ -384,6 +391,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 	// transfer external rewards to user
 	externalReward := reward.External
 	for incentiveId, amount := range externalReward {
+		println("[EXTERNAL] incentiveId", incentiveId)
 		incentive := externalIncentives.Get(incentiveId)
 		rewardToken := incentive.rewardToken
 		if incentive.rewardAmount < amount {
@@ -399,35 +407,48 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 
 		teller := common.GetTokenTeller(rewardToken)
 		teller.Transfer(deposit.owner, toUser)
+		println("[EXTERNAL] Token", rewardToken)
+		println("[EXTERNAL] sending reward", toUser, "to", deposit.owner)
+		println("[EXTERNAL] transfer ok")
 
 		externalPenalty := reward.ExternalPenalty[incentiveId]
+		println("[EXTERNAL] externalPenalty", externalPenalty)
+
+		println("[EXTERNAL] Before_incentive.rewardLeft", incentive.rewardLeft)
 		incentive.rewardLeft += externalPenalty
+		println("[EXTERNAL] After_incentive.rewardLeft", incentive.rewardLeft)
+		println()
+
+		// unwrap if necessary
+		if unwrapResult && rewardToken == consts.WUGNOT_PATH {
+			unwrap(toUser)
+		}
 	}
 
 	// internal reward to user
 	toUser := handleUnstakingFee(consts.GNS_PATH, reward.Internal, true, tokenId, deposit.targetPoolPath)
-	println("toUser", toUser)
-	if toUser > 0 {
-		println("gns balance (staker) : ", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
+	totalEmissionSent += toUser
 
-		println("sending reward", toUser, "to", deposit.owner, "// gns balance (staker) :", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
+	if toUser > 0 {
+		println("[INTERNAL] gns balance (staker) : ", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
+
+		println("[INTERNAL] sending reward\t", toUser, "to", deposit.owner, "// gns balance (staker) :", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
 		gns.Transfer(a2u(deposit.owner), toUser)
-		println("sending reward ok")
-		println()
+		println("[INTERNAL] sending reward ok")
 
 		// internal penalty to community pool
-		println("sending penalty", reward.InternalPenalty, "to community pool // gns balance (staker) :", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
+		println("[INTERNAL] sending penalty\t", reward.InternalPenalty, "to community pool // gns balance (staker) :", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
 		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), reward.InternalPenalty)
-		println("sending penalty ok")
+		totalEmissionSent += reward.InternalPenalty
+		println("[INTERNAL] sending penalty ok")
 		println()
 
 		// TODO:
 		// reward ledger update!!
 	}
 
-	// FIXME @mconcat
-	// panic: slice index out of bounds: 0 (len=0)
 	unClaimableInternal := ProcessUnClaimableReward(deposit.targetPoolPath, currentHeight)
+	totalEmissionSent += unClaimableInternal
 	println("unClaimableInternal : ", unClaimableInternal)
 	if unClaimableInternal > 0 {
 		// internal unclaimable to community pool
