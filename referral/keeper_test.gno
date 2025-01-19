@@ -73,6 +73,13 @@ func TestRegister(t *testing.T) {
 			wantErr:     true,
 			errCode:     ErrSelfReferral,
 		},
+		{
+			name: "zero address referral",
+			addr: validAddr1,
+			refAddr: zeroAddress,
+			setupCaller: mockValidCaller,
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {

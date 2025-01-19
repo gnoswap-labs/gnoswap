@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/ufmt"
 )
 
 const (
@@ -56,12 +57,14 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 		return err
 	}
 
-	if err := k.checkRateLimit(addr.String()); err != nil {
+	if err := k.validateAddresses(addr, refAddr); err != nil {
 		return err
 	}
 
-	if err := k.validateAddresses(addr, refAddr); err != nil {
-		return err
+	if err := k.checkRateLimit(addr.String()); err != nil {
+		// XXX: because of the weird type-related errors, this is the only
+		// part where we need to use `ufmt.Errorf` to build error message.
+		return ufmt.Errorf("too many requests")
 	}
 
 	if refAddr == zeroAddress {
@@ -102,12 +105,12 @@ func (k *keeper) remove(target std.Address) error {
 		return err
 	}
 
-	if err := k.checkRateLimit(target.String()); err != nil {
-		return err
-	}
-
 	if !target.IsValid() {
 		return NewError(ErrInvalidAddress)
+	}
+
+	if err := k.checkRateLimit(target.String()); err != nil {
+		return err
 	}
 
 	k.store.Remove(target.String())
