@@ -46,7 +46,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				HandleWithdrawalFee(0, "pkgPath", "1000", "pkgPath", "1000", "poolPath", users.Resolve(admin))
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-COMMON-004] token is not registered || token(pkgPath) is not registered",
+			expected:    "[GNOSWAP-COMMON-004] token is not registered || token(pkgPath)",
 			shouldPanic: true,
 		},
 		{

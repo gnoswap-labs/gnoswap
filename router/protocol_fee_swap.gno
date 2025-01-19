@@ -9,6 +9,8 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
+
+	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
 
 const (
@@ -99,6 +101,7 @@ func handleSwapFee(
 
 	outputTeller := common.GetTokenTeller(outputToken)
 	outputTeller.TransferFrom(std.PrevRealm().Addr(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64)
+	pf.AddToProtocolFee(outputToken, feeAmountUint64)
 
 	prevAddr, prevRealm := getPrev()
 
