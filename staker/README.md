@@ -2,17 +2,24 @@
 
 ## Abstract
 
-Staker module distributes internal / external rewards to the stakers. 
+The **Staker** module handles the distribution of both **internal** (GNS emission) and **external** (user-provided) rewards to stakers:
 
-* Internal reward(GNS emission) is distributed across internally incentivized("tiered") pools. Three tiers, 1, 2, and 3, are present. The emission is first splitted across three tiers based on TierRatio, evenly splitted between the tier member pools, and propertionally(in respect to staked liquidity) distributed to the in-range staked positions.
+- **Internal rewards (GNS emission)** are allocated to “tiered” pools (tiers 1, 2, and 3). First, emission is split across the tiers according to the **TierRatio**. Then, within each tier, the emission is shared evenly among member pools and finally distributed proportionally to each staked position’s in-range liquidity.
 
-* External rewards(user provided incentives) could be set for pools. If a user creates an external incentive on a pool, the incentive will emit constant reward per block. Any user who have in-range staked liquidity on the pool will be eligible to claim the external incentive, proportionally to their liquidity.
+- **External rewards** (user-provided incentives) can be created for specific pools. Each external incentive emits a constant reward per block. Any user with in-range staked liquidity on that pool can claim a share of the reward, proportional to their staked liquidity.
 
-* During the blocks where there are zero in-range staked liquidity, internal emission goes to community pool, and external reward gets refunded to the incentive creator.
+- If, during a given block, no staked liquidity is in range, the internal emission is diverted to the community pool, and any external reward for that block is returned to the incentive creator.
 
-* Each staked position will have their own warmup period designated upon their stake. Until they unstake, the staked positions will be passing through multiple warmup periods. For each warmup period, the user will get certain percentage of the reward and the rest will go to either community pool(internal) or the refundee(external). 
+- Every staked position has a designated warmup schedule. As it remains staked, the position progresses through multiple warmup periods. In each warmup period, a certain percentage of the reward is awarded to the position, and the remainder goes either to the community pool (for internal incentives) or is returned to the incentive creator (for external incentives).
 
 ## Main Reward Calculation Logic
+
+Below is an example function that computes the rewards for a position. It does the following:
+
+1. Caches any pending per-pool internal incentive rewards up to the current block.  
+2. Retrieves or initializes the pool from `param.Pools`.  
+3. Accumulates internal and external rewards (and the corresponding penalties) for each warmup period.  
+4. Returns a list of rewards, one for each warmup period of the staked position.
 
 ```go
 func CalcPositionReward(param CalcPositionRewardParam) []Reward {
@@ -30,19 +37,18 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 
 	lastCollectHeight := deposit.lastCollectHeight
 
-	// Initializes reward/penalty arrays for rewards and penalties for each warmup
+	// Initialize arrays to hold reward & penalty data for each warmup
 	internalRewards := make([]uint64, len(deposit.warmups))
 	internalPenalties := make([]uint64, len(deposit.warmups))
 	externalRewards := make([]map[string]uint64, len(deposit.warmups))
 	externalPenalties := make([]map[string]uint64, len(deposit.warmups))
 
 	if param.PoolTier.CurrentTier(poolPath) != 0 {
-		// Internal incentivized pool. 
-		// Calculate reward for each warmup
+		// Internal incentivized pool
 		internalRewards, internalPenalties = pool.RewardStateOf(deposit).CalculateInternalReward(lastCollectHeight, param.CurrentHeight)
 	}
 
-	// All active incentives
+	// Retrieve all active external incentives from lastCollectHeight to CurrentHeight
 	allIncentives := pool.incentives.GetAllInHeights(lastCollectHeight, param.CurrentHeight)
 
 	for i := range externalRewards {
@@ -51,9 +57,12 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 	}
 
 	for incentiveId, incentive := range allIncentives {
-		// External incentivized pool.
-		// Calculate reward for each warmup
-		externalReward, externalPenalty := pool.RewardStateOf(deposit).CalculateExternalReward(int64(lastCollectHeight), int64(param.CurrentHeight), incentive)
+		// External incentivized pool
+		externalReward, externalPenalty := pool.RewardStateOf(deposit).CalculateExternalReward(
+			int64(lastCollectHeight),
+			int64(param.CurrentHeight),
+			incentive,
+		)
 
 		for i := range externalReward {
 			externalRewards[i][incentiveId] = externalReward[i]
@@ -77,23 +86,26 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 
 ## TickCrossHook
 
-TickCrossHook is called when a swap happens through an initialized tick. When called, it first checks if it has any staked position with that tick, and if so, it
+`TickCrossHook` is triggered whenever a swap crosses an initialized tick. If any staked position uses that tick, the hook:
 
-1. Updates stakedLiquidity and globalRewardRatioAccumulation
-2. Sets historical tick
-3. Depending on the sign of the staked liquidity, it starts or ends unclaimable period.
-4. Updates CurrentOutsideAccumulation of the tick.
+1. Updates the `stakedLiquidity` and `globalRewardRatioAccumulation`.
+2. Sets the historical tick (for record-keeping and later calculations).
+3. Depending on whether the total staked liquidity is now nonzero or zero, it begins or ends any unclaimable period.
+4. Updates the `CurrentOutsideAccumulation` for the tick.
 
-The globalRewardRatioAccumulation stores the integral of $f(h) = 1 / TotalStakedLiquidity(h)$, excluding where TotalStakedLiquidity(h) is zero. currentOutsideAccumulation stores the same data but only for the duration where the pool tick has been the opposite side(in respect to the current tick). When tick cross happens, the "opposite" changes, and the CurrentOutsideAccumulation is recalculated by subtracting it from the latest globalRewardRatioAccumulation.
+The variable `globalRewardRatioAccumulation` holds the integral of $\(f(h) = 1 \,/\, \text{TotalStakedLiquidity}(h)\)$, but only when \(\text{TotalStakedLiquidity}(h)\) is nonzero. Meanwhile, `CurrentOutsideAccumulation` tracks the same integral but over intervals where the pool tick is considered “outside” (i.e., on the opposite side of the current tick). When a tick cross occurs, this “outside” condition may flip, so the hook adjusts `CurrentOutsideAccumulation` by subtracting it from the latest `globalRewardRatioAccumulation`.
 
 ## Internal Reward
 
-Internal rewards are distributed across the different tiers, and then each pools. Each internal reward is calculated via
+Internal rewards are distributed across tiers and then among pools. Each pool’s internal reward is determined as:
+
 ```math
 \text{poolReward}(\mathrm{pool}) 
 = \frac{\text{emission} \,\times\, \mathrm{TierRatio}\!\bigl(\mathrm{tier}(\mathrm{pool})\bigr)}
-       {\mathrm{Count}\!\bigl(\mathrm{tier}(\mathrm{pool})\bigr)},
+       {\mathrm{Count}\!\bigl(\mathrm{tier}(\mathrm{pool})\bigr)}.
 ```
+
+The TierRatio is defined piecewise:
 
 ```math
 \mathrm{TierRatio}(t) \;=\;
@@ -109,29 +121,30 @@ Internal rewards are distributed across the different tiers, and then each pools
 \end{cases}
 ```
 
+The total emission used by the staker contract is:
+
 ```math
 \text{emission} 
 = \mathrm{GNSEmissionPerSecond} 
-  \;\times\;
-  \biggl(\frac{\mathrm{avgMsPerBlock}}{1000}\biggr)
-  \;\times\;
+  \times
+  \Bigl(\frac{\mathrm{avgMsPerBlock}}{1000}\Bigr)
+  \times
   \mathrm{StakerEmissionRatio}.
 ```
 
-There is always at least one tier-1 pool.
+> **Note:**  
+> - There is always at least one tier-1 pool.  
+> - `GNSEmissionPerSecond` is a constant apart from any halving events (ignored here).  
+> - When `avgMsPerBlock` or `StakerEmissionRatio` changes, a callback is triggered to cache rewards up to the current block and then update the emission rate.
 
-The result of this equation could be changed when variable emission or Count(t) changes.
+### How Internal Rewards Are Cached and Distributed
 
-Emission(for staker contract) is calculated by applying avgMsPerBlock and StakerEmissionRatio to GNSEmissionPerSecond. GNSEmissionPerSecond is constant(other than halving event, which we will ignore in this paragraph). When one of those two variables are modified, the `callbackStakerEmissionChange` function is called, which will caches the reward until the current block and updates the current emission with the provided amount.
+- **PoolTier.cacheReward** recalculates all reward-related data from the last cache height to the current block.  
+  - **Halving blocks:** If there are halving events in this interval, the process “splits” the caching at each halving block, updates the staker emission accordingly, and continues.  
+  - **Unclaimable period:** If the pool had no in-range stakers (currently in unclaimable state), it updates the unclaimable accumulation using the old emission rate, then starts a new period immediately so the future accumulation could be done based on the new emission rate.
+  - The function finally updates the `GlobalRewardRatioAccumulation`, which is used later to compute each position’s rewards.
 
-PoolTier.cacheReward recalculates all reward-related updates happened since the last cache height.
-- Halving blocks: if there were halving events, split caching operation at the halving periods. The caching will be done for each halving periods, staker emission is updated, and then the caching operation moves forward.
-- Unclaimable period: if the pool is currently in the unclaimable period(there are no claimable stakers), it will updates the unclaimable accumulation using the old emission, and then updates to start a new period(only for the internal)
-- After checking these, it updates GlobalRewardRatioAccumulation, which is used to calculate the rewards for the positions.
-
-Once the cache is filled until the current block, CalculateInternalReward is called to obtain reward for the total claimable internal reward for the position.
-
-The reward is calculated in the following way(given a poolReward):
+- After caching is updated to the current block, **CalculateInternalReward** computes the total claimable internal rewards for a position. Consider the math:
 
 ```math
 \begin{aligned}
@@ -162,9 +175,42 @@ The reward is calculated in the following way(given a poolReward):
 \end{aligned}
 ```
 
-We calculate this TotalRewardRatio for each poolReward interval(by iterating through rewardCache), and take sum of each $TotalRewardRatio(=BlockNumber/TotalStake) * poolReward * positionLiquidity$.
+where
+- $\(L(h)\)$ = `tickLower.OutsideAccumulation(h)`
+- $\(U(h)\)$ = `tickUpper.OutsideAccumulation(h)`
+- $\(G(h)\)$ = `globalRewardRatioAccumulation(h)`
+- $\(\ell\)$ = `tickLower.id`, $\(u\)$ = `tickUpper.id`
 
+The final reward for a position is the sum of each applicable `TotalRewardRatio` multiplied by `poolReward` and `positionLiquidity`:
+```math
+\begin{aligned}
+\text{finalReward}
+&=
+  \text{TotalRewardRatio} 
+  \;\times\;
+  \text{poolReward}
+  \;\times\;
+  \text{positionLiquidity}
+\\[6pt]
+&=
+  \Bigl(
+    \int_{s}^{e}
+      \frac{1}{\mathrm{TotalStakedLiquidity}(h)}
+    \, dh
+  \Bigr)
+  \;\times\;
+  \text{poolReward}
+  \;\times\;
+  \text{positionLiquidity}
+\\[6pt]
+&=
+  \int_{s}^{e}
+    \frac{\text{poolReward}\;\times\;\text{positionLiquidity}}{\mathrm{TotalStakedLiquidity}(h)}
+  \, dh.
+\end{aligned}
+```
+(`BlockFraction` is essentially the fraction of blocks over which the position was active, derived from the reward ratio calculations.)
 
 ## External Reward
 
-External rewards have persistent reward per block for their lifetime. When calculating external reward for a specific incentive, the only difference with the internal reward is that there are no rewardCache which stores variable poolReward, rather we only calculate $TotalRewardRatio$ once and multiply it by `ExternalIncentive.rewardPerBlock`.
+External rewards emit a constant **reward per block** for their duration. To calculate the external reward for a specific incentive, we reuse the same approach of computing a `TotalRewardRatio` (similar to the internal reward method), but without any tier-based pooling or variable `poolReward`. Instead, we multiply the `TotalRewardRatio` by `ExternalIncentive.rewardPerBlock` and `positionLiquidity` for the relevant blocks.
