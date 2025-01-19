@@ -9,8 +9,6 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
-	_ "gno.land/r/onbloc/baz"
-	_ "gno.land/r/onbloc/foo"
 )
 
 var (
