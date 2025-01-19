@@ -449,13 +449,7 @@ func TestRedelegate(t *testing.T) {
 func TestUndelegate(t *testing.T) {
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	std.TestSkipHeights(101)
-	test := gns.MintGns(a2u(user3Realm.Addr())) // 2M gns
-	println("test mint gns", test)
-
-	println(gns.BalanceOf(a2u(user3Realm.Addr())))
-
-	//std.TestSetRealm(std.NewCodeRealm(consts.GOV_STAKER_PATH))
-	//xgns.Mint(a2u(user3Realm.Addr()), 1_000_000)
+	gns.MintGns(a2u(user3Realm.Addr())) // 2M gns
 
 	std.TestSetRealm(user3Realm)
 	to := makeFakeAddress("validator_1")
@@ -465,13 +459,12 @@ func TestUndelegate(t *testing.T) {
 	gns.Approve(a2u(consts.GOV_STAKER_ADDR), amount)
 	Delegate(to, amount)
 	Undelegate(to, amount)
-	// check:
-	// - xGNS burned?
+
 	if xgns.BalanceOf(a2u(user3Realm.Addr())) == 1_000_000 {
 		t.Errorf("Expected user xGNS to be 0 after undelegating 1_000_000, got %d",
 			xgns.BalanceOf(a2u(user3Realm.Addr())))
 	}
-	// - lockedGns created?
+
 	lockedList, exist := addrLockedGns.Get(user3Realm.Addr().String())
 	if !exist {
 		t.Errorf("Expected lockedGNS to be created after Undelegate")
@@ -596,7 +589,6 @@ func TestCollectReward(t *testing.T) {
 		t.Errorf("Expected userEmissionReward to be 0 after collect, got %d", claimableAmount)
 	}
 	if len(protocolFeeClaimable) != 1 {
-		println("protocolFeeClaimable", protocolFeeClaimable)
 		t.Errorf("Expected size=1, but let's check the actual value = 0?")
 	}
 	for _, amount := range protocolFeeClaimable {

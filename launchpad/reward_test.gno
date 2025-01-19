@@ -289,8 +289,8 @@ func TestCollectRewardByDepositId_OwnerCheck(t *testing.T) {
 		projectId:         project.id,
 		tier:              "30",
 		depositor:         userA,
-		claimableHeight:   133,                              // 지금 height 0 가정
-		claimableTime:     uint64(time.Now().Unix()) + 1000, // 지금보다 이후
+		claimableHeight:   133,
+		claimableTime:     uint64(time.Now().Unix()) + 1000,
 		rewardCollectTime: 0,
 	}
 
