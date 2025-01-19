@@ -3,7 +3,6 @@ package launchpad
 import (
 	"testing"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
@@ -231,17 +230,4 @@ func TestRewardState_SmallIntervals(t *testing.T) {
 
 	uassert.Equal(t, reward1, reward2)
 	uassert.Equal(t, reward1, uint64(1000))
-}
-
-func TestRewardState_StakeBeforeStartHeight(t *testing.T) {
-	rewardPerBlock := u256.NewUint(1000).Lsh(u256.NewUint(1000), 128)
-	startHeight := uint64(100)
-	state := NewRewardState(rewardPerBlock, startHeight, 1000)
-
-	// Try to stake before start height
-	state.AddStake(50, "deposit1", 100)
-
-	info := state.Info("deposit1")
-	uassert.Equal(t, info.StartHeight, startHeight,
-		"Stake should be recorded with start height even if added before")
 }

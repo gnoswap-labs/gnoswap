@@ -91,9 +91,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 			continue
 		}
 
-		// tier update
 		tier.userCollectedAmount += rewardAmount
-		// project update
 		project.Stats().totalCollected += rewardAmount
 
 		totalReward += rewardAmount
@@ -135,32 +133,39 @@ func CollectRewardByDepositId(depositId string) uint64 {
 	if !exists {
 		panic(ufmt.Sprintf("depositId(%s) not found", depositId))
 	}
-	en.MintAndDistributeGns()
 
-	project, exists := projects[deposit.projectId]
-	if !exists {
-		panic(addDetailToError(errInvalidProjectId, ufmt.Sprintf("projectId(%s) not found", deposit.projectId)))
-	}
-
-	caller := getPrevAddr()
-	if _, exists := depositsByUserByProject[caller]; !exists {
-		panic(addDetailToError(errInvalidCaller, ufmt.Sprintf("caller(%s) not found", caller)))
-	}
-
-	project = projects[deposit.projectId]
-	deposit = deposits[depositId]
-
-	height := uint64(std.GetHeight())
-	if err := validateRewardCollection(deposit, height); err != nil {
+	currentHeight := uint64(std.GetHeight())
+	if err := validateRewardCollection(deposit, currentHeight); err != nil {
 		panic(err.Error())
 	}
 
-	rewardState, err := rewardStates.Get(deposit.projectId, deposit.tier)
+	project, err := getProject(deposit.ProjectID())
 	if err != nil {
-		panic(addDetailToError(
-			errInvalidInput, err.Error()))
+		panic(err.Error())
 	}
-	reward := rewardState.Claim(deposit.id, height)
+
+	en.MintAndDistributeGns()
+
+	tier, err := project.Tier(convertTierTypeStrToUint64(deposit.Tier()))
+	if err != nil {
+		panic(err.Error())
+	}
+
+	reward := tier.Reward()
+	rewardPerDeposit, err := reward.finalize(currentHeight, tier.ActualDepositAmount(), tier.TierAmountPerBlockX128())
+	if err != nil {
+		panic(err.Error())
+	}
+	reward.addRewardPerDeposit(rewardPerDeposit)
+	reward.SetLastHeight(currentHeight)
+
+	rewardAmount := reward.deductReward(depositId, currentHeight)
+	if rewardAmount == 0 {
+		panic(addDetailToError(errAlreadyCollected, ufmt.Sprintf("depositId(%s)", depositId)))
+	}
+
+	tier.userCollectedAmount += rewardAmount
+	project.Stats().totalCollected += rewardAmount
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -168,47 +173,35 @@ func CollectRewardByDepositId(depositId string) uint64 {
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"depositId", depositId,
-		"amount", strconv.FormatUint(reward, 10),
+		"amount", strconv.FormatUint(rewardAmount, 10),
 	)
 
-	// Update project
-	project.stats.totalCollected += reward
-	switch deposit.tier {
-	case "30":
-		t := project.tiers[TIER30]
-		t.userCollectedAmount += reward
-	case "90":
-		t := project.tiers[TIER90]
-		t.userCollectedAmount += reward
-	case "180":
-		t := project.tiers[TIER180]
-		t.userCollectedAmount += reward
-	}
-	projects[deposit.projectId] = project
+	project.setTier(convertTierTypeStrToUint64(deposit.Tier()), tier)
 
 	// Update deposit
-	deposit.rewardCollected += reward
-	deposit.rewardCollectHeight = height
-	deposit.rewardCollectTime = uint64(time.Now().Unix())
+	deposit.SetRewardCollected(deposit.RewardCollected() + rewardAmount)
+	deposit.SetRewardCollectHeight(currentHeight)
+	deposit.SetRewardCollectTime(uint64(time.Now().Unix()))
 	deposits[depositId] = deposit
 
+	projects[deposit.projectId] = project
+
 	// Transfer reward
-	if reward > 0 {
+	if rewardAmount > 0 {
 		tokenTeller := common.GetTokenTeller(project.tokenPath)
-		tokenTeller.Transfer(caller, reward)
+		tokenTeller.Transfer(getPrevAddr(), rewardAmount)
 	}
 
-	return reward
+	return rewardAmount
 }
 
 // validateRewardCollection validates if reward can be collected
 func validateRewardCollection(deposit Deposit, height uint64) error {
 	caller := getPrevAddr()
-	if err := validateRewardOwner(deposit.id, caller); err != nil {
+	if err := validateRewardClaimable(deposit, height); err != nil {
 		return err
 	}
-
-	if err := validateRewardClaimable(deposit, height); err != nil {
+	if err := validateRewardOwner(deposit.id, caller); err != nil {
 		return err
 	}
 	return nil
@@ -292,125 +285,3 @@ func validateRewardClaimable(deposit Deposit, currentHeight uint64) error {
 	}
 	return nil
 }
-
-/*
-// processDepositReward processes reward for a single deposit
-func processDepositReward(deposit Deposit, rewardX96 *u256.Uint, tierAmount uint64) (Deposit, error) {
-	if tierAmount == 0 {
-		return deposit, errors.New("invalid tier amount")
-	}
-
-	ratioX96 := calcDepositRatioX96(tierAmount, deposit.amount)
-	depositRewardX96X96 := u256.Zero().Mul(rewardX96.Clone(), ratioX96)
-	depositRewardX96 := u256.Zero().Div(depositRewardX96X96, q96)
-	depositRewardX := u256.Zero().Div(depositRewardX96, q96)
-	depositReward := depositRewardX.Uint64()
-
-	deposit.rewardAmount += depositReward
-	return deposit, nil
-}
-*/
-
-/*
-// calculateProjectRewards calculates rewards for a project's deposits
-func calculateProjectRewards(project Project, height uint64) (Project, error) {
-	if project.started.height > height || project.stats.actualParticipant == 0 {
-		return project, nil
-	}
-
-	depositWithTier, exists := depositsByProject[project.id]
-	if !exists {
-		return project, nil
-	}
-
-	tier30 := project.tiers[30]
-	tier90 := project.tiers[90]
-	tier180 := project.tiers[180]
-
-	// Initialize tier calculations
-	for _, tier := range []struct {
-		id     string
-		amount *u256.Uint
-		start  uint64
-	}{
-		{tier30.id, tier30.tierAmountPerBlockX96.NilToZero(), tier30.started.height},
-		{tier90.id, tier90.tierAmountPerBlockX96.NilToZero(), tier90.started.height},
-		{tier180.id, tier180.tierAmountPerBlockX96.NilToZero(), tier180.started.height},
-	} {
-		if lastCalculateHeightForProjectTier[tier.id] == 0 && !tier.amount.IsZero() {
-			lastCalculateHeightForProjectTier[tier.id] = tier.start
-		}
-	}
-
-	// Calculate rewards for each tier
-	tier30RewardX96, reward30, _ := calculateTierRewards(tier30, height,
-		lastCalculateHeightForProjectTier[tier30.id])
-	tier90RewardX96, reward90, _ := calculateTierRewards(tier90, height,
-		lastCalculateHeightForProjectTier[tier90.id])
-	tier180RewardX96, reward180, _ := calculateTierRewards(tier180, height,
-		lastCalculateHeightForProjectTier[tier180.id])
-
-	// Update project tiers
-	tier30.calculatedAmount += reward30
-	tier90.calculatedAmount += reward90
-	tier180.calculatedAmount += reward180
-
-	// Process deposits for each tier
-	for tierStr, depositIds := range depositWithTier {
-		var (
-			tierAmount uint64
-			rewardX96  *u256.Uint
-		)
-
-		switch tierStr {
-		case "30":
-			tierAmount = tier30.actualDepositAmount
-			rewardX96 = tier30RewardX96
-		case "90":
-			tierAmount = tier90.actualDepositAmount
-			rewardX96 = tier90RewardX96
-		case "180":
-			tierAmount = tier180.actualDepositAmount
-			rewardX96 = tier180RewardX96
-		}
-
-		for _, depositId := range depositIds {
-			deposit := deposits[depositId]
-			updatedDeposit, err := processDepositReward(deposit, rewardX96, tierAmount)
-			if err != nil {
-				continue
-			}
-			deposits[depositId] = updatedDeposit
-		}
-	}
-
-	// Update calculation heights
-	if tier30.started.height != 0 {
-		lastCalculateHeightForProjectTier[tier30.id] = height
-	}
-	if tier90.started.height != 0 {
-		lastCalculateHeightForProjectTier[tier90.id] = height
-	}
-	if tier180.started.height != 0 {
-		lastCalculateHeightForProjectTier[tier180.id] = height
-	}
-
-	return project, nil
-}
-
-func calculateDepositReward() {
-	height := uint64(std.GetHeight())
-
-	if height == lastCalculatedHeight {
-		return
-	}
-	lastCalculatedHeight = height
-	for projectId, project := range projects {
-		updatedProject, err := calculateProjectRewards(project, height)
-		if err != nil {
-			continue
-		}
-		projects[projectId] = updatedProject
-	}
-}
-*/

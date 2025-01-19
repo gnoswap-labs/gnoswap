@@ -54,7 +54,7 @@ func createTestProject(t *testing.T) Project {
 	tiersRatios := make(map[uint64]uint64)
 
 	tiers[30] = Tier{
-		id:                  ufmt.Sprintf("test/token:%d:30", height),
+		id:                  ufmt.Sprintf("gno.land/r/gnoswap/v1/gns:%d:30", height),
 		collectWaitDuration: TIMESTAMP_3DAYS * 1000 / 1000,
 		tierAmount:          300,
 		started: TimeInfo{
@@ -70,7 +70,7 @@ func createTestProject(t *testing.T) Project {
 	tiersRatios[30] = 30
 
 	tiers[90] = Tier{
-		id:                  ufmt.Sprintf("test/token:%d:90", height),
+		id:                  ufmt.Sprintf("gno.land/r/gnoswap/v1/gns:%d:90", height),
 		collectWaitDuration: TIMESTAMP_7DAYS * 1000 / 1000,
 		tierAmount:          300,
 		started: TimeInfo{
@@ -86,7 +86,7 @@ func createTestProject(t *testing.T) Project {
 	tiersRatios[90] = 30
 
 	tiers[180] = Tier{
-		id:                  ufmt.Sprintf("test/token:%d:180", height),
+		id:                  ufmt.Sprintf("gno.land/r/gnoswap/v1/gns:%d:180", height),
 		collectWaitDuration: TIMESTAMP_14DAYS * 1000 / 1000,
 		tierAmount:          400,
 		started: TimeInfo{
@@ -102,9 +102,9 @@ func createTestProject(t *testing.T) Project {
 	tiersRatios[180] = 40
 
 	return Project{
-		id:            ufmt.Sprintf("test/token:%d", height),
+		id:            ufmt.Sprintf("gno.land/r/gnoswap/v1/gns:%d", height),
 		name:          "Test Project",
-		tokenPath:     "test/token",
+		tokenPath:     "gno.land/r/gnoswap/v1/gns",
 		depositAmount: 1000,
 		recipient:     testutils.TestAddress("recipient"),
 		conditions:    make(map[string]Condition),

@@ -22,13 +22,14 @@ func TestValidateRewardCollection(t *testing.T) {
 		errorMsg    string
 	}{
 		{
-			name: "Valid reward ready to collect",
+			name: "invalid deposit Id",
 			deposit: Deposit{
 				claimableHeight:   50, // Less than current height
 				rewardCollectTime: 0,
 			},
 			height:      currentHeight,
-			shouldError: false,
+			shouldError: true,
+			errorMsg:    "[GNOSWAP-LAUNCHPAD-020] not exist deposit || depositId()",
 		},
 		{
 			name: "Reward not yet claimable",
@@ -41,10 +42,22 @@ func TestValidateRewardCollection(t *testing.T) {
 			errorMsg:    "reward not yet claimable",
 		},
 		{
-			name: "Already collected reward can be collected before claimable height",
+			name: "Reward already collected",
 			deposit: Deposit{
-				claimableHeight:   150,
-				rewardCollectTime: 1, // Already collected before
+				claimableHeight:   50, // Less than current height
+				rewardCollectTime: 100,
+			},
+			height:      currentHeight,
+			shouldError: true,
+			errorMsg:    "[GNOSWAP-LAUNCHPAD-023] already collected",
+		},
+		{
+			name: "Valid case",
+			deposit: Deposit{
+				id:                "depositId",
+				depositor:         "g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm",
+				claimableHeight:   50, // Less than current height
+				rewardCollectTime: 0,
 			},
 			height:      currentHeight,
 			shouldError: false,
@@ -53,6 +66,9 @@ func TestValidateRewardCollection(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if !tt.shouldError {
+				updateDeposit(tt.deposit)
+			}
 			err := validateRewardCollection(tt.deposit, tt.height)
 			if tt.shouldError {
 				uassert.Error(t, err)
@@ -125,18 +141,17 @@ func TestProcessDepositReward(t *testing.T) {
 			expectedReward: 500, // (1000/2000) * 1000 = 500
 			shouldError:    false,
 		},
-		/*
-		   {
-		       name: "Tier amount is 0",
-		       deposit: Deposit{
-		           amount:       1000,
-		           //rewardAmount: 0,
-		       },
-		       rewardX96:      u256.NewUint(1000),
-		       tierAmount:     0,
-		       expectedReward: 0,
-		       shouldError:    true,
-		   },*/
+		{
+			name: "Zero tier amount",
+			deposit: Deposit{
+				amount: 1000,
+				//rewardAmount: 0,
+			},
+			rewardX128:     u256.NewUint(1000).Mul(u256.NewUint(1000), q128),
+			tierAmount:     0,
+			expectedReward: 0,
+			shouldError:    true,
+		},
 		{
 			name: "Reward is accumulated",
 			deposit: Deposit{
@@ -256,8 +271,9 @@ func TestCollectRewardByDepositId_FailCases(t *testing.T) {
 			claimableHeight: uint64(std.GetHeight()) + 1000,
 		}
 
-		reward := CollectRewardByDepositId(depositId)
-		uassert.Equal(t, reward, uint64(0))
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-024] not yet claim reward || need block >= 1123, current=123", func() {
+			CollectRewardByDepositId(depositId)
+		})
 	})
 }
 
@@ -269,36 +285,28 @@ func TestCollectRewardByDepositId_OwnerCheck(t *testing.T) {
 	projects[project.id] = project
 
 	depositA := Deposit{
-		id:              "depA",
-		projectId:       project.id,
-		tier:            "30",
-		depositor:       userA,
-		claimableHeight: 10,                               // 지금 height 0 가정
-		claimableTime:   uint64(time.Now().Unix()) + 1000, // 지금보다 이후
+		id:                "depA",
+		projectId:         project.id,
+		tier:              "30",
+		depositor:         userA,
+		claimableHeight:   133,                              // 지금 height 0 가정
+		claimableTime:     uint64(time.Now().Unix()) + 1000, // 지금보다 이후
+		rewardCollectTime: 0,
 	}
 
-	updateDepositIndices(depositA, &DepositState{
-		Deposits:              deposits,
-		DepositsByProject:     depositsByProject,
-		DepositsByUser:        depositsByUser,
-		DepositsByUserProject: depositsByUserByProject,
-	})
+	updateDeposit(depositA)
 
 	depositB := Deposit{
-		id:              "depB",
-		projectId:       project.id,
-		tier:            "30",
-		depositor:       userB,
-		claimableHeight: 10,
-		claimableTime:   uint64(time.Now().Unix()) + 1000,
+		id:                "depB",
+		projectId:         project.id,
+		tier:              "30",
+		depositor:         userB,
+		claimableHeight:   10,
+		claimableTime:     uint64(time.Now().Unix()) + 1000,
+		rewardCollectTime: 0,
 	}
 
-	updateDepositIndices(depositB, &DepositState{
-		Deposits:              deposits,
-		DepositsByProject:     depositsByProject,
-		DepositsByUser:        depositsByUser,
-		DepositsByUserProject: depositsByUserByProject,
-	})
+	updateDeposit(depositB)
 
 	t.Run("UserA tries depositB => panic", func(t *testing.T) {
 		std.TestSetRealm(std.NewUserRealm(userA))
@@ -307,7 +315,7 @@ func TestCollectRewardByDepositId_OwnerCheck(t *testing.T) {
 			if r == nil {
 				t.Errorf("expected panic, got none")
 			} else {
-				t.Logf("got panic: %v", r)
+				uassert.Equal(t, "[GNOSWAP-LAUNCHPAD-026] invalid owner || caller(g1w4ek2ujpta047h6lta047h6lta047h6l55c22z) does not own depositId(depB)", r.(string))
 			}
 		}()
 		CollectRewardByDepositId("depB")
@@ -321,7 +329,7 @@ func TestCollectRewardByDepositId_OwnerCheck(t *testing.T) {
 			if r == nil {
 				t.Errorf("expected panic for not claimable, got none")
 			} else {
-				t.Logf("got panic: %v", r)
+				uassert.Equal(t, "[GNOSWAP-LAUNCHPAD-024] not yet claim reward || need block >= 133, current=123", r.(string))
 			}
 		}()
 		CollectRewardByDepositId("depA")
@@ -336,21 +344,24 @@ func TestCollectRewardByDepositId_OwnerCheck(t *testing.T) {
 	t.Run("UserA depositA => claim success", func(t *testing.T) {
 		std.TestSetRealm(std.NewUserRealm(userA))
 
+		rewardPerDeposit := u256.NewUint(1)
+		rewardPerDepositX128 := u256.Zero().Lsh(rewardPerDeposit, 128)
 		rewardPerBlock := u256.NewUint(100)
 		rewardPerBlock = u256.Zero().Lsh(rewardPerBlock, 128)
-		mockRs := &RewardState{
-			PriceAccumulation: u256.NewUint(1),
-			TotalStake:        100,
-			LastHeight:        0,
-			RewardPerBlock:    rewardPerBlock,
-		}
-		mockRs.info.Set("depA", &StakerRewardInfo{
-			StartHeight: 123,
-			PriceDebt:   u256.Zero(),
-			Amount:      100,
-			Claimed:     0,
+		mockReward := NewReward(rewardPerDepositX128, 123, 10000)
+		mockReward.info.Set("depA", &RewardInfo{
+			startHeight:   123,
+			priceDebt:     u256.Zero(),
+			depositAmount: 100,
+			claimed:       0,
 		})
-		rewardStates.Set(project.id, "30", mockRs)
+		mockTier := &Tier{
+			tierAmountPerBlockX128: rewardPerBlock,
+			totalDepositAmount:     100,
+			ended:                  TimeInfo{height: 10000},
+		}
+		mockTier.SetReward(*mockReward)
+		project.setTier(TIER30, *mockTier)
 
 		amount := CollectRewardByDepositId("depA")
 		uassert.Equal(t, uint64(100), amount)

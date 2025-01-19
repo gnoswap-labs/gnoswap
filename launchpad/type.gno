@@ -574,7 +574,6 @@ func (r *Reward) deductReward(depositId string, currentHeight uint64) uint64 {
 	if reward64 == 0 {
 		return 0
 	}
-
 	info.SetClaimed(info.Claimed() + reward64)
 	r.info.Set(depositId, info)
 

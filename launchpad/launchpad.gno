@@ -470,7 +470,6 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 	if err := common.SatisfyCond(isUserCall()); err != nil {
 		panic(addDetailToError(errNotUserCaller, err.Error()))
 	}
-
 	assertOnlyAdmin()
 	assertOnlyNotHalted()
 

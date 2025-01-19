@@ -49,10 +49,46 @@ type ProjectTierInfo struct {
 	CurrentTime   uint64
 }
 
-// DepositGns deposit gns to the project's tier
-// gns will be locked in `launchpad` contract
-// xgns will be minted to the `launchpad` contract
-// Returns depositId
+// DepositGns handles the deposit process for a specific project tier.
+//
+// This function validates the deposit conditions, checks the activation status of the project and tier,
+// and creates a new deposit for the caller. It updates the project, tier, and reward states accordingly.
+//
+// Parameters:
+// - targetProjectTierId (string): The ID of the target project and tier in the format "{projectId}:{tierType}".
+// - amount (uint64): The amount to deposit.
+//
+// Returns:
+// - string: The ID of the newly created deposit.
+//
+// Panics:
+// - If the system is halted.
+// - If the amount is invalid (e.g., zero).
+// - If the project or tier is inactive.
+// - If the deposit conditions are not satisfied.
+// - If an error occurs during deposit creation or reward state update.
+//
+// Logic:
+// 1. **Validation**:
+//   - Check if the system is halted or the deposit amount is valid.
+//   - Retrieve the project and validate its activation status.
+//   - Validate deposit conditions for the caller.
+//   - Retrieve and validate the tier's activation status.
+//
+// 2. **Deposit Creation**:
+//   - Create a deposit using the project and tier information.
+//   - Update deposit indices and tier details (e.g., `StartHeight`, `TierAmountPerBlockX128`).
+//
+// 3. **Reward Updates**:
+//   - Update the tier's reward state, including reward per deposit and participant counts.
+//   - Update the project's stats (e.g., total deposit amount, participant count).
+//
+// 4. **Transfer and Lock Tokens**:
+//   - Transfer the deposit amount to the `launchpad` contract and mint `xGNS` tokens.
+//
+// 5. **Emit Events**:
+//   - Emit events for both the deposit and the first deposit for the tier (if applicable).
+//
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_deposit.gno#depositgns
 func DepositGns(targetProjectTierId string, amount uint64) string {
 	assertOnlyNotHalted()
@@ -184,10 +220,21 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 	return deposit.id
 }
 
+// CollectDepositGns collects rewards from all deposits associated with the caller.
+//
+// This function retrieves all deposits for the caller, validates their claimable status,
+// and processes the collection of rewards.
+//
+// Returns:
+// - uint64: The total amount of rewards collected.
+//
+// Panics:
+// - If the caller has no deposits.
+// - If an error occurs during the reward collection process.
 func CollectDepositGns() uint64 {
 	caller := getPrevAddr()
 	depositList, ok := depositsByUser[caller]
-	if depositList == nil || !ok {
+	if depositList == nil || !ok || len(depositList) == 0 {
 		panic(addDetailToError(
 			errNotExistDeposit,
 			ufmt.Sprintf("no deposit list for user(%s)", caller),
@@ -197,35 +244,65 @@ func CollectDepositGns() uint64 {
 	return processCollectedDeposits(depositList, "")
 }
 
+// CollectDepositGnsByProjectId collects rewards from all deposits associated with a specific project.
+//
+// This function retrieves all deposits for the caller under the specified project ID,
+// validates their claimable status, and processes the collection of rewards.
+//
+// Parameters:
+// - projectId (string): The ID of the project.
+//
+// Returns:
+// - uint64: The total amount of rewards collected for the project.
+//
+// Panics:
+// - If the project ID is invalid.
+// - If the caller has no deposits in the specified project.
+// - If an error occurs during the reward collection process.
 func CollectDepositGnsByProjectId(projectId string) uint64 {
 	assertValidProjectId(projectId)
 
-	_, exists := projects[projectId]
-	if !exists {
-		panic(addDetailToError(
-			errInvalidProjectId,
-			ufmt.Sprintf("%s", projectId),
-		))
+	_, err := getProject(projectId)
+	if err != nil {
+		panic(err.Error())
 	}
 
 	caller := getPrevAddr()
-	depositList, ok := depositsByUserByProject[caller][projectId]
-	if depositList == nil || !ok {
+	if _, exists := depositsByUserByProject[caller]; !exists {
+		panic(addDetailToError(errInvalidCaller, ufmt.Sprintf("caller(%s) not found", caller)))
+	}
+	depositList, exists := depositsByUserByProject[caller][projectId]
+	if depositList == nil || !exists {
 		panic(addDetailToError(
-			errNotExistDeposit,
-			ufmt.Sprintf("no deposit list for project(%s)", projectId),
-		))
+			errNotExistDeposit, ufmt.Sprintf("no deposit list for project(%s)", projectId)))
 	}
 
 	return processCollectedDeposits(depositList, projectId)
 }
 
+// CollectDepositGnsByDepositId collects rewards from a specific deposit by ID.
+//
+// This function retrieves a specific deposit by its ID, validates its claimable status,
+// and processes the collection of rewards.
+//
+// Parameters:
+// - depositId (string): The ID of the deposit to collect rewards from.
+//
+// Returns:
+// - uint64: The amount of rewards collected.
+//
+// Panics:
+// - If the system is halted.
+// - If the deposit ID is invalid.
+// - If the deposit does not belong to the caller.
+// - If the deposit is not yet claimable or has already been collected.
+// - If an error occurs during the reward collection process.
 func CollectDepositGnsByDepositId(depositId string) uint64 {
 	assertOnlyNotHalted()
 	assertValidProjectId(depositId)
 
 	caller := getPrevAddr()
-	// Validate deposit collection request
+
 	deposit, project, err := validateDepositCollection(depositId, caller)
 	if err != nil {
 		panic(addDetailToError(errInvalidInput, err.Error()))
@@ -233,7 +310,7 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 
 	en.MintAndDistributeGns()
 
-	project = projects[deposit.projectId] // get updated project
+	project = projects[deposit.projectId]
 
 	// Process deposit collection
 	height := uint64(std.GetHeight())
@@ -361,6 +438,16 @@ func checkDepositConditions(project Project) {
 	}
 }
 
+// checkTierActive checks whether a specific tier in a project is active.
+//
+// This function verifies if the tier's end height is greater than or equal to the current block height.
+//
+// Parameters:
+// - project (Project): The project to which the tier belongs.
+// - tier (Tier): The tier to check.
+//
+// Returns:
+// - bool: True if the tier is active, otherwise false.
 func checkTierActive(project Project, tier Tier) bool {
 	if tier.ended.height < uint64(std.GetHeight()) {
 		return false
@@ -369,6 +456,19 @@ func checkTierActive(project Project, tier Tier) bool {
 	return true
 }
 
+// convertTierTypeStrToUint64 converts a tier type string to its corresponding uint64 value.
+//
+// This function maps tier strings ("30", "90", "180") to predefined constants (`TIER30`, `TIER90`, `TIER180`).
+// If the input string is invalid, the function panics.
+//
+// Parameters:
+// - tierType (string): The tier type as a string.
+//
+// Returns:
+// - uint64: The corresponding uint64 constant for the tier type.
+//
+// Panics:
+// - If the tierType is invalid, an error is raised.
 func convertTierTypeStrToUint64(tierType string) uint64 {
 	switch tierType {
 	case "30":
@@ -385,6 +485,20 @@ func convertTierTypeStrToUint64(tierType string) uint64 {
 	}
 }
 
+// getTier retrieves a specific tier from a project based on the tier string.
+//
+// This function fetches the tier object corresponding to the input string ("30", "90", "180").
+// If the input string is invalid, the function panics.
+//
+// Parameters:
+// - project (Project): The project containing the tiers.
+// - tierStr (string): The tier identifier as a string ("30", "90", "180").
+//
+// Returns:
+// - Tier: The tier object corresponding to the specified tier string.
+//
+// Panics:
+// - If the tierStr is invalid, an error is raised.
 func getTier(project Project, tierStr string) Tier {
 	switch tierStr {
 	case "30":
@@ -401,6 +515,21 @@ func getTier(project Project, tierStr string) Tier {
 	}
 }
 
+// setTier updates the tier information for a specific project.
+//
+// This function sets the tier data for the specified tier string ("30", "90", "180").
+// If the input string is invalid, the function panics.
+//
+// Parameters:
+// - project (Project): The project to update.
+// - tierStr (string): The tier identifier as a string ("30", "90", "180").
+// - tier (Tier): The tier object to set.
+//
+// Returns:
+// - Project: The updated project object with the modified tier.
+//
+// Panics:
+// - If the tierStr is invalid, an error is raised.
 func setTier(project Project, tierStr string, tier Tier) Project {
 	switch tierStr {
 	case "30":
@@ -419,20 +548,49 @@ func setTier(project Project, tierStr string, tier Tier) Project {
 	return project
 }
 
+// isPassedClaimableHeight checks if a deposit has reached its claimable block height.
+//
+// Parameters:
+// - deposit (Deposit): The deposit to check.
+// - height (uint64): The current block height.
+//
+// Returns:
+// - bool: True if the deposit's claimable height has been reached, otherwise false.
 func isPassedClaimableHeight(deposit Deposit, height uint64) bool {
 	return deposit.claimableHeight <= height
 }
 
+// isAlreadyCollected checks if a deposit has already been collected.
+//
+// Parameters:
+// - deposit (Deposit): The deposit to check.
+//
+// Returns:
+// - bool: True if the deposit has already been collected, otherwise false.
 func isAlreadyCollected(deposit Deposit) bool {
 	return deposit.depositCollectHeight != 0
 }
 
-// isProjectActive checks if a project is currently active
+// isProjectActive checks if a project is currently active based on the block height.
+//
+// Parameters:
+// - project (Project): The project to check.
+// - height (uint64): The current block height.
+//
+// Returns:
+// - bool: True if the project is active, otherwise false.
 func isProjectActive(project Project, height uint64) bool {
 	return project.started.height <= height && height <= project.ended.height
 }
 
-// isTierActive checks if a tier is currently active
+// isTierActive checks if a specific tier is currently active based on the block height.
+//
+// Parameters:
+// - tier (Tier): The tier to check.
+// - height (uint64): The current block height.
+//
+// Returns:
+// - bool: True if the tier is active, otherwise false.
 func isTierActive(tier Tier, height uint64) bool {
 	return height <= tier.ended.height
 }
@@ -591,28 +749,6 @@ func updateDepositIndices(deposit Deposit, state *DepositState) {
 	)
 }
 
-// processFirstDeposit handles the first deposit for a project tier
-func processFirstDeposit(info ProjectTierInfo) (Tier, error) {
-	info.Tier.totalParticipant++
-	if info.Tier.totalParticipant > 1 {
-		return info.Tier, nil
-	}
-
-	tier := info.Tier
-	tier.started.height = info.CurrentHeight
-	tier.started.time = info.CurrentTime
-	tier.tierAmountPerBlockX128 = calcProjectTiersRewardPerBlockX128(tier)
-
-	// should be update reward state here
-	rewardState := NewRewardState(tier.tierAmountPerBlockX128, tier.started.height, tier.ended.height)
-	rewardStates.Set(info.Project.id, info.TierType, rewardState)
-
-	// Remove from projectTiersWithoutDeposit as it now has a deposit
-	delete(projectTiersWithoutDeposit, tier.id)
-
-	return tier, nil
-}
-
 // processDepositCollection processes the collection of deposits
 func processDepositCollection(
 	depositList []string,
@@ -630,25 +766,29 @@ func processDepositCollection(
 			continue
 		}
 
-		tier := getTier(project, deposit.tier)
+		tier, err := project.Tier(convertTierTypeStrToUint64(deposit.tier))
+		if err != nil {
+			panic(err.Error())
+		}
 		if !isPassedClaimableHeight(deposit, currentHeight) || isAlreadyCollected(deposit) {
 			continue
 		}
 
-		deposit.depositCollectHeight = currentHeight
-		deposit.depositCollectTime = now
+		deposit.SetDepositCollectHeight(currentHeight)
+		deposit.SetDepositCollectTime(now)
 		deposits[deposit.id] = deposit
 
 		totalAmount += deposit.amount
 
 		gs.SetAmountByProjectWallet(project.recipient, deposit.amount, false)
 
-		tier.actualDepositAmount -= deposit.amount
-		tier.actualParticipant -= 1
+		tier.SetActualDepositAmount(tier.ActualDepositAmount() - deposit.amount)
+		tier.SetActualParticipant(tier.ActualParticipant() - 1)
 
-		project = setTier(project, deposit.tier, tier)
-		project.stats.actualDeposit -= deposit.amount
-		project.stats.actualParticipant -= 1
+		project.setTier(convertTierTypeStrToUint64(deposit.tier), tier)
+		project.Stats().SetActualDeposit(project.Stats().actualDeposit - deposit.amount)
+		project.Stats().SetActualParticipant(project.Stats().actualParticipant - 1)
+
 		projects[deposit.projectId] = project
 
 		if projectId != "" {
@@ -736,24 +876,29 @@ func processDeposit(deposit *Deposit, project *Project, height uint64) (uint64, 
 	//if isTierActive(tier, height) {
 	//	return 0, errors.New(addDetailToError(errActiveProject, "tier is still active"))
 	//}
+	tier, err := project.Tier(convertTierTypeStrToUint64(deposit.tier))
+	if err != nil {
+		return 0, err
+	}
 
 	if deposit.depositCollectHeight != 0 {
 		return 0, errors.New(addDetailToError(errAlreadyCollected, ufmt.Sprintf("depositId (%s)", deposit.id)))
 	}
 
 	// Update deposit status
-	deposit.depositCollectHeight = height
-	deposit.depositCollectTime = uint64(time.Now().Unix())
+	deposit.SetDepositCollectHeight(height)
+	deposit.SetDepositCollectTime(uint64(time.Now().Unix()))
 	deposits[deposit.id] = *deposit
 
 	// Update project tier
-	tier.actualDepositAmount -= deposit.amount
-	tier.actualParticipant--
+	tier.SetActualDepositAmount(tier.ActualDepositAmount() - deposit.amount)
+	tier.SetActualParticipant(tier.ActualParticipant() - 1)
 
 	// Update project
-	*project = setTier(*project, deposit.tier, tier)
-	project.stats.actualDeposit -= deposit.amount
-	project.stats.actualParticipant--
+	project.setTier(convertTierTypeStrToUint64(deposit.tier), tier)
+	project.Stats().SetActualDeposit(project.Stats().actualDeposit - deposit.amount)
+	project.Stats().SetActualParticipant(project.Stats().actualParticipant - 1)
+
 	projects[deposit.projectId] = *project
 
 	return deposit.amount, nil
