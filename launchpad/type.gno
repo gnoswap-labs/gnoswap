@@ -1,10 +1,16 @@
 package launchpad
 
 import (
+	"errors"
 	"std"
 
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
 type ProjectStats struct {
@@ -18,8 +24,8 @@ type ProjectStats struct {
 // NewProjectStats returns a pointer to a new ProjectStats with the given values.
 func NewProjectStats(
 	totalDeposit, actualDeposit, totalParticipant, actualParticipant, totalCollected uint64,
-) ProjectStats {
-	return ProjectStats{
+) *ProjectStats {
+	return &ProjectStats{
 		totalDeposit:      totalDeposit,
 		actualDeposit:     actualDeposit,
 		totalParticipant:  totalParticipant,
@@ -66,15 +72,13 @@ type Project struct {
 	depositAmount uint64
 	recipient     std.Address          // string
 	conditions    map[string]Condition // tokenPath -> Condition
-
-	tiers       map[uint64]Tier
-	tiersRatios map[uint64]uint64
-
-	created TimeInfo
-	started TimeInfo
-	ended   TimeInfo // same with tier 180's data
-	stats   ProjectStats
-	refund  RefundInfo
+	tiers         map[uint64]Tier
+	tiersRatios   map[uint64]uint64
+	created       TimeInfo
+	started       TimeInfo
+	ended         TimeInfo // same with tier 180's data
+	stats         ProjectStats
+	refund        RefundInfo
 }
 
 // NewProject returns a pointer to a new Project with the given values.
@@ -88,8 +92,8 @@ func NewProject(
 	created, started, ended TimeInfo,
 	stats ProjectStats,
 	refund RefundInfo,
-) Project {
-	return Project{
+) *Project {
+	return &Project{
 		id:            id,
 		name:          name,
 		tokenPath:     tokenPath,
@@ -172,8 +176,8 @@ func (p *Project) Ended() TimeInfo {
 func (p *Project) SetEnded(v TimeInfo) {
 	p.ended = v
 }
-func (p *Project) Stats() ProjectStats {
-	return p.stats
+func (p *Project) Stats() *ProjectStats {
+	return &p.stats
 }
 func (p *Project) SetStats(v ProjectStats) {
 	p.stats = v
@@ -184,26 +188,61 @@ func (p *Project) Refund() RefundInfo {
 func (p *Project) SetRefund(v RefundInfo) {
 	p.refund = v
 }
+func (p *Project) Tier(key uint64) (Tier, error) {
+	tier, exists := p.tiers[key]
+	if !exists {
+		return Tier{}, errors.New(addDetailToError(
+			errDataNotFound, ufmt.Sprintf("tier(%s) not found", key)))
+	}
+	return tier, nil
+}
+func (p *Project) isActivated(currentHeight uint64) bool {
+	return p.started.Height() <= currentHeight && currentHeight < p.ended.Height()
+}
+func (p *Project) checkDepositConditions(caller std.Address) {
+	conditions := p.Conditions()
+	if conditions == nil {
+		panic(addDetailToError(
+			errInvalidData, "conditions is nil"))
+	}
+
+	for _, condition := range conditions {
+		// xGNS(or GNS) may have a zero condition
+		if condition.MinAmount() == 0 {
+			continue
+		}
+
+		var balance uint64
+		if condition.TokenPath() == consts.GOV_XGNS_PATH {
+			balance = xgns.BalanceOf(common.AddrToUser(caller))
+		} else {
+			balance = common.BalanceOf(condition.TokenPath(), caller)
+		}
+
+		if balance < condition.MinAmount() {
+			panic(addDetailToError(
+				errNotEnoughBalance, ufmt.Sprintf("insufficient balance(%d) for condition token(%s)", balance, condition.tokenPath)))
+		}
+	}
+}
+func (p *Project) setTier(key uint64, tier Tier) {
+	p.tiers[key] = tier
+}
 
 type Tier struct {
 	id                     string // '{projectId}:duration' // duartion == 30, 90, 180
 	collectWaitDuration    uint64 // block
 	tierAmount             uint64
 	tierAmountPerBlockX128 *u256.Uint
-
-	started TimeInfo // first deposit height
-	ended   TimeInfo //
-
-	totalDepositAmount  uint64 // accumulated deposit amount
-	actualDepositAmount uint64 // actual deposit amount
-
-	totalParticipant  uint64 // accumulated participant
-	actualParticipant uint64 // actual participant
-
-	userCollectedAmount uint64 // total collected amount by user
-	calculatedAmount    uint64 // total calculated amount
-
-	reward Reward
+	started                TimeInfo // first deposit height
+	ended                  TimeInfo //
+	totalDepositAmount     uint64   // accumulated deposit amount
+	actualDepositAmount    uint64   // actual deposit amount
+	totalParticipant       uint64   // accumulated participant
+	actualParticipant      uint64   // actual participant
+	userCollectedAmount    uint64   // total collected amount by user
+	calculatedAmount       uint64   // total calculated amount
+	reward                 Reward
 }
 
 // NewTier returns a pointer to a new Tier with the given values.
@@ -257,7 +296,7 @@ func (t *Tier) TierAmountPerBlockX128() *u256.Uint {
 	return t.tierAmountPerBlockX128
 }
 func (t *Tier) SetTierAmountPerBlockX128(v *u256.Uint) {
-	t.tierAmountPerBlockX128 = v
+	t.tierAmountPerBlockX128 = v.Clone()
 }
 func (t *Tier) Started() TimeInfo {
 	return t.started
@@ -312,6 +351,20 @@ func (t *Tier) Reward() Reward {
 }
 func (t *Tier) SetReward(v Reward) {
 	t.reward = v
+}
+func (t *Tier) isActivated(currentHeight uint64) bool {
+	return t.started.Height() <= currentHeight && currentHeight < t.ended.Height()
+}
+func (t *Tier) isFirstDeposit() bool {
+	return t.totalParticipant == 0
+}
+func (t *Tier) updateStarted(height, time uint64) {
+	t.started.SetHeight(height)
+	t.started.SetTime(time)
+	t.reward.SetLastHeight(height)
+}
+func (t *Tier) rewardPerBlockUint64() uint64 {
+	return u256.Zero().Rsh(t.tierAmountPerBlockX128, 128).Uint64()
 }
 
 type RewardInfo struct {
@@ -394,13 +447,12 @@ type Reward struct {
 func NewReward(
 	accumRewardPerDeposit *u256.Uint,
 	lastHeight, endHeight uint64,
-	info *avl.Tree,
-) Reward {
-	return Reward{
+) *Reward {
+	return &Reward{
 		accumRewardPerDeposit: accumRewardPerDeposit,
 		LastHeight:            lastHeight,
 		EndHeight:             endHeight,
-		info:                  info,
+		info:                  avl.NewTree(),
 	}
 }
 
@@ -428,28 +480,193 @@ func (r *Reward) Info() *avl.Tree {
 func (r *Reward) SetInfo(v *avl.Tree) {
 	r.info = v
 }
+func (r *Reward) accumulationRewardUint64() uint64 {
+	return u256.Zero().Rsh(r.accumRewardPerDeposit, 128).Uint64()
+}
+func (r *Reward) InfoOf(depositId string) RewardInfo {
+	infoI, exists := r.info.Get(depositId)
+	if !exists {
+		panic(addDetailToError(
+			errNotExistDeposit, ufmt.Sprintf("(%s)", depositId)))
+	}
+	return infoI.(RewardInfo)
+}
+func (r *Reward) calculateRewardPerDeposit(rewardPerBlock, totalStaked uint64) (*u256.Uint, error) {
+	// blockDuration * rewardPerBlock / totalStaked
+	currentHeight := uint64(std.GetHeight())
+	lastUpdateHeight := r.GetLastHeight()
+	if currentHeight == lastUpdateHeight {
+		return u256.Zero(), nil
+	}
+	if currentHeight < lastUpdateHeight {
+		return nil, errors.New(addDetailToError(
+			errInvalidHeight, ufmt.Sprintf("currentHeight(%d) <= lastUpdateHeight(%d)", currentHeight, lastUpdateHeight)))
+	}
+	if rewardPerBlock == 0 {
+		return nil, errors.New(addDetailToError(
+			errNoLeftReward, ufmt.Sprintf("rewardPerBlock(%d)", rewardPerBlock)))
+	}
+	if totalStaked == 0 {
+		return u256.Zero(), nil
+	}
+
+	blockDuration := currentHeight - lastUpdateHeight
+	totalReward := u256.Zero().Mul(u256.NewUint(blockDuration), u256.NewUint(rewardPerBlock))
+	rewardPerDeposit := u256.Zero().Div(totalReward, u256.NewUint(totalStaked))
+	return rewardPerDeposit, nil
+}
+
+func (r *Reward) addRewardPerDeposit(rewardPerDeposit *u256.Uint) {
+	if rewardPerDeposit.IsZero() {
+		return
+	}
+	r.SetAccumRewardPerDeposit(u256.Zero().Add(r.AccumRewardPerDeposit(), rewardPerDeposit))
+}
+
+func (r *Reward) calculateReward(depositId string) uint64 {
+	info := r.InfoOf(depositId)
+	actualRewardPerDeposit := u256.Zero().Sub(r.AccumRewardPerDeposit(), info.PriceDebt())
+	reward := u256.Zero().Mul(actualRewardPerDeposit, u256.NewUint(info.DepositAmount()))
+	reward = reward.Rsh(reward, 128)
+	return reward.Uint64() - info.Claimed()
+}
 
 type Deposit struct {
-	id string // 'projectId:tier:depositor:height'
-
-	projectId string
-	tier      string // 30, 60, 180 // instead of tierId
-	depositor std.Address
-	amount    uint64
-
-	depositHeight uint64
-	depositTime   uint64
-
+	id                   string // 'projectId:tier:depositor:height'
+	projectId            string
+	tier                 string // 30, 60, 180 // instead of tierId
+	depositor            std.Address
+	amount               uint64
+	depositHeight        uint64
+	depositTime          uint64
 	depositCollectHeight uint64 // withdraw deposited gns height
 	depositCollectTime   uint64 // withdraw deposited gns timestamp
+	claimableHeight      uint64 // claimable reward block height
+	claimableTime        uint64 // claimable reward timestamp
+	rewardAmount         uint64 // calculated, not collected
+	rewardCollected      uint64 // accu, collected
+	rewardCollectHeight  uint64 // last collected height
+	rewardCollectTime    uint64 // last collected time
+}
 
-	claimableHeight uint64 // claimable reward block height
-	claimableTime   uint64 // claimable reward timestamp
+// NewDeposit returns a pointer to a new Deposit with the given values.
+func NewDeposit(
+	id, projectId, tier string,
+	depositor std.Address,
+	amount, depositHeight, depositTime uint64,
+	depositCollectHeight, depositCollectTime uint64,
+	claimableHeight, claimableTime uint64,
+	rewardAmount, rewardCollected uint64,
+	rewardCollectHeight, rewardCollectTime uint64,
+) *Deposit {
+	return &Deposit{
+		id:                   id,
+		projectId:            projectId,
+		tier:                 tier,
+		depositor:            depositor,
+		amount:               amount,
+		depositHeight:        depositHeight,
+		depositTime:          depositTime,
+		depositCollectHeight: depositCollectHeight,
+		depositCollectTime:   depositCollectTime,
+		claimableHeight:      claimableHeight,
+		claimableTime:        claimableTime,
+		rewardAmount:         rewardAmount,
+		rewardCollected:      rewardCollected,
+		rewardCollectHeight:  rewardCollectHeight,
+		rewardCollectTime:    rewardCollectTime,
+	}
+}
 
-	rewardAmount        uint64 // calculated, not collected
-	rewardCollected     uint64 // accu, collected
-	rewardCollectHeight uint64 // last collected height
-	rewardCollectTime   uint64 // last collected time
+func (d *Deposit) ID() string {
+	return d.id
+}
+func (d *Deposit) SetID(v string) {
+	d.id = v
+}
+func (d *Deposit) ProjectID() string {
+	return d.projectId
+}
+func (d *Deposit) SetProjectID(v string) {
+	d.projectId = v
+}
+func (d *Deposit) Tier() string {
+	return d.tier
+}
+func (d *Deposit) SetTier(v string) {
+	d.tier = v
+}
+func (d *Deposit) Depositor() std.Address {
+	return d.depositor
+}
+func (d *Deposit) SetDepositor(v std.Address) {
+	d.depositor = v
+}
+func (d *Deposit) Amount() uint64 {
+	return d.amount
+}
+func (d *Deposit) SetAmount(v uint64) {
+	d.amount = v
+}
+func (d *Deposit) DepositHeight() uint64 {
+	return d.depositHeight
+}
+func (d *Deposit) SetDepositHeight(v uint64) {
+	d.depositHeight = v
+}
+func (d *Deposit) DepositTime() uint64 {
+	return d.depositTime
+}
+func (d *Deposit) SetDepositTime(v uint64) {
+	d.depositTime = v
+}
+func (d *Deposit) DepositCollectHeight() uint64 {
+	return d.depositCollectHeight
+}
+func (d *Deposit) SetDepositCollectHeight(v uint64) {
+	d.depositCollectHeight = v
+}
+func (d *Deposit) DepositCollectTime() uint64 {
+	return d.depositCollectTime
+}
+func (d *Deposit) SetDepositCollectTime(v uint64) {
+	d.depositCollectTime = v
+}
+func (d *Deposit) ClaimableHeight() uint64 {
+	return d.claimableHeight
+}
+func (d *Deposit) SetClaimableHeight(v uint64) {
+	d.claimableHeight = v
+}
+func (d *Deposit) ClaimableTime() uint64 {
+	return d.claimableTime
+}
+func (d *Deposit) SetClaimableTime(v uint64) {
+	d.claimableTime = v
+}
+func (d *Deposit) RewardAmount() uint64 {
+	return d.rewardAmount
+}
+func (d *Deposit) SetRewardAmount(v uint64) {
+	d.rewardAmount = v
+}
+func (d *Deposit) RewardCollected() uint64 {
+	return d.rewardCollected
+}
+func (d *Deposit) SetRewardCollected(v uint64) {
+	d.rewardCollected = v
+}
+func (d *Deposit) RewardCollectHeight() uint64 {
+	return d.rewardCollectHeight
+}
+func (d *Deposit) SetRewardCollectHeight(v uint64) {
+	d.rewardCollectHeight = v
+}
+func (d *Deposit) RewardCollectTime() uint64 {
+	return d.rewardCollectTime
+}
+func (d *Deposit) SetRewardCollectTime(v uint64) {
+	d.rewardCollectTime = v
 }
 
 type TimeInfo struct {

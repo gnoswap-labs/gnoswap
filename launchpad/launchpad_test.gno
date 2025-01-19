@@ -461,7 +461,7 @@ func TestProject_GetSet(t *testing.T) {
 		TimeInfo{height: 1, time: 1001},
 		TimeInfo{height: 2, time: 1002},
 		TimeInfo{height: 3, time: 1003},
-		NewProjectStats(10, 20, 30, 40, 50),
+		*NewProjectStats(10, 20, 30, 40, 50),
 		RefundInfo{amount: 99, height: 10, time: 999},
 	)
 
@@ -513,6 +513,32 @@ func TestProject_GetSet(t *testing.T) {
 	if p.DepositAmount() != 2000 {
 		t.Errorf("SetDepositAmount failed, got=%d", p.DepositAmount())
 	}
+	t.Run("TestProject_isActivated", func(t *testing.T) {
+		now := uint64(1)
+		if p.isActivated(now) {
+			t.Errorf("isActivated(%d) returned true, want false (before started)", now)
+		}
+
+		now = uint64(2)
+		if !p.isActivated(now) {
+			t.Errorf("isActivated(%d) returned false, want true (exactly started)", now)
+		}
+
+		now = uint64(2)
+		if !p.isActivated(now) {
+			t.Errorf("isActivated(%d) returned false, want true (between start and end)", now)
+		}
+
+		now = uint64(3)
+		if p.isActivated(now) {
+			t.Errorf("isActivated(%d) returned true, want false (exactly ended)", now)
+		}
+
+		now = uint64(4)
+		if p.isActivated(now) {
+			t.Errorf("isActivated(%d) returned true, want false (after ended)", now)
+		}
+	})
 }
 
 func TestTier_GetSet(t *testing.T) {
@@ -524,7 +550,7 @@ func TestTier_GetSet(t *testing.T) {
 		TimeInfo{height: 0, time: 0},
 		TimeInfo{height: 100, time: 9999},
 		1000, 800, 50, 45, 12, 200,
-		NewReward(u256.NewUint(1234), 10, 9999, nil),
+		*NewReward(u256.NewUint(1234), 10, 9999),
 	)
 
 	if tr.ID() != "tierId" {
@@ -612,7 +638,7 @@ func TestTimeInfo_GetSet(t *testing.T) {
 	ti := NewTimeInfo(50, 5000)
 
 	if ti.Height() != 50 {
-		t.Errorf("Height mismatch, got=%d", ti.Height())
+		t.Errorf("CurrentHeight mismatch, got=%d", ti.Height())
 	}
 	if ti.Time() != 5000 {
 		t.Errorf("Time mismatch, got=%d", ti.Time())
@@ -634,7 +660,7 @@ func TestRefundInfo_GetSet(t *testing.T) {
 		t.Errorf("Amount mismatch, got=%d", ri.Amount())
 	}
 	if ri.Height() != 22 {
-		t.Errorf("Height mismatch, got=%d", ri.Height())
+		t.Errorf("CurrentHeight mismatch, got=%d", ri.Height())
 	}
 	if ri.Time() != 33 {
 		t.Errorf("Time mismatch, got=%d", ri.Time())
@@ -675,7 +701,7 @@ func TestCondition_GetSet(t *testing.T) {
 
 func TestReward_GetSet(t *testing.T) {
 	acc := u256.NewUint(1000)
-	r := NewReward(acc, 10, 1000, nil)
+	r := NewReward(acc, 10, 1000)
 
 	if r.AccumRewardPerDeposit().Cmp(u256.NewUint(1000)) != 0 {
 		t.Errorf("AccumRewardPerDeposit mismatch, got=%s", r.AccumRewardPerDeposit().ToString())

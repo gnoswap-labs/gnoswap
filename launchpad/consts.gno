@@ -19,4 +19,6 @@ const (
 	TOTAL_TIERS = 3
 
 	PAD_SEP = "*PAD*"
+
+	MINIMUM_DEPOSIT_AMOUNT = uint64(1_000_000)
 )

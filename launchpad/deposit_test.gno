@@ -9,6 +9,7 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
+	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
@@ -64,6 +65,7 @@ func createTestProject(t *testing.T) Project {
 			height: height + (30 * 24 * 60 * 60),
 			time:   now + (30 * 24 * 60 * 60),
 		},
+		reward: *NewReward(u256.Zero(), 0, 0),
 	}
 	tiersRatios[30] = 30
 
@@ -79,6 +81,7 @@ func createTestProject(t *testing.T) Project {
 			height: height + (90 * 24 * 60 * 60),
 			time:   now + (90 * 24 * 60 * 60),
 		},
+		reward: *NewReward(u256.Zero(), 0, 0),
 	}
 	tiersRatios[90] = 30
 
@@ -94,6 +97,7 @@ func createTestProject(t *testing.T) Project {
 			height: height + (180 * 24 * 60 * 60),
 			time:   now + (180 * 24 * 60 * 60),
 		},
+		reward: *NewReward(u256.Zero(), 0, 0),
 	}
 	tiersRatios[180] = 40
 
@@ -178,11 +182,11 @@ func TestCreateDeposit(t *testing.T) {
 	height := uint64(std.GetHeight())
 
 	info := ProjectTierInfo{
-		Project:     project,
-		Tier:        project.tiers[30],
-		TierStr:     "30",
-		Height:      height,
-		CurrentTime: now,
+		Project:       project,
+		Tier:          project.tiers[30],
+		TierType:      "30",
+		CurrentHeight: height,
+		CurrentTime:   now,
 	}
 
 	deposit, err := createDeposit(info, 100)
@@ -214,15 +218,15 @@ func TestCalculateClaimableTimes(t *testing.T) {
 						time:   1000000,
 					},
 				},
-				TierStr:     "30",
-				Height:      500,
-				CurrentTime: 500000,
+				TierType:      "30",
+				CurrentHeight: 500,
+				CurrentTime:   500000,
 			},
-			wantHeight: 600,    // Height(500) + collectWaitDuration(100)
+			wantHeight: 600,    // CurrentHeight(500) + collectWaitDuration(100)
 			wantTime:   759200, // CurrentTime(500000) + TIMESTAMP_3DAYS
 		},
 		{
-			name: "Tier 90 - Exceeds End Height/Time",
+			name: "Tier 90 - Exceeds End CurrentHeight/Time",
 			info: ProjectTierInfo{
 				Project: Project{},
 				Tier: Tier{
@@ -232,9 +236,9 @@ func TestCalculateClaimableTimes(t *testing.T) {
 						time:   600000,
 					},
 				},
-				TierStr:     "90",
-				Height:      400,
-				CurrentTime: 400000,
+				TierType:      "90",
+				CurrentHeight: 400,
+				CurrentTime:   400000,
 			},
 			wantHeight: 550,    // min(400+200, endHeight(550))
 			wantTime:   600000, // min(400000+TIMESTAMP_7DAYS, endTime(600000))
@@ -250,11 +254,11 @@ func TestCalculateClaimableTimes(t *testing.T) {
 						time:   2000000,
 					},
 				},
-				TierStr:     "180",
-				Height:      100,
-				CurrentTime: 100000,
+				TierType:      "180",
+				CurrentHeight: 100,
+				CurrentTime:   100000,
 			},
-			wantHeight: 400,     // Height(100) + collectWaitDuration(300)
+			wantHeight: 400,     // CurrentHeight(100) + collectWaitDuration(300)
 			wantTime:   1309600, // CurrentTime(100000) + TIMESTAMP_14DAYS
 		},
 	}
@@ -277,11 +281,11 @@ func TestCollectDeposit(t *testing.T) {
 
 	// Create test deposit
 	info := ProjectTierInfo{
-		Project:     project,
-		Tier:        project.tiers[30],
-		TierStr:     "30",
-		Height:      height,
-		CurrentTime: currentTime,
+		Project:       project,
+		Tier:          project.tiers[30],
+		TierType:      "30",
+		CurrentHeight: height,
+		CurrentTime:   currentTime,
 	}
 
 	deposit, err := createDeposit(info, 100)
@@ -326,7 +330,7 @@ func TestDepositGns(t *testing.T) {
 		defer func() {
 			r := recover()
 			if r != nil {
-				uassert.Equal(t, "insufficient balance", r.(string))
+				uassert.Equal(t, "[GNOSWAP-LAUNCHPAD-017] invalid amount || amount(1000) should greater than minimum deposit amount(1000000)", r.(string))
 			}
 		}()
 
@@ -337,15 +341,16 @@ func TestDepositGns(t *testing.T) {
 	t.Run("Success with sufficient balance", func(t *testing.T) {
 		// transfer enough gns
 		std.TestSetRealm(adminRealm)
-		gns.Transfer(common.AddrToUser(testAddr), 1000)
+		gns.Transfer(common.AddrToUser(testAddr), 1000000)
 
 		std.TestSetRealm(std.NewUserRealm(testAddr))
-		gns.Approve(common.AddrToUser(consts.LAUNCHPAD_ADDR), 1000)
+		gns.Approve(common.AddrToUser(consts.LAUNCHPAD_ADDR), 1000000)
 
-		depositId := DepositGns(project.id+":30", 1000)
+		std.TestSkipHeights(10)
+		depositId := DepositGns(project.id+":30", 1000000)
 		deposit := deposits[depositId]
 
-		uassert.Equal(t, deposit.amount, uint64(1000))
+		uassert.Equal(t, deposit.amount, uint64(1000000))
 		uassert.Equal(t, deposit.depositor, testAddr)
 	})
 }
@@ -402,11 +407,11 @@ func TestMultipleDeposits(t *testing.T) {
 	// Create multiple deposits
 	for i := 0; i < 3; i++ {
 		info := ProjectTierInfo{
-			Project:     project,
-			Tier:        project.tiers[30],
-			TierStr:     "30",
-			Height:      uint64(std.GetHeight()),
-			CurrentTime: uint64(time.Now().Unix()),
+			Project:       project,
+			Tier:          project.tiers[30],
+			TierType:      "30",
+			CurrentHeight: uint64(std.GetHeight()),
+			CurrentTime:   uint64(time.Now().Unix()),
 		}
 
 		std.TestSetRealm(std.NewUserRealm(testAddr))
@@ -594,11 +599,11 @@ func TestProcessCollectedDeposits_TransactionFail(t *testing.T) {
 	projects[project.id] = project
 
 	info := ProjectTierInfo{
-		Project:     project,
-		Tier:        project.tiers[30],
-		TierStr:     "30",
-		Height:      uint64(std.GetHeight()),
-		CurrentTime: uint64(time.Now().Unix()),
+		Project:       project,
+		Tier:          project.tiers[30],
+		TierType:      "30",
+		CurrentHeight: uint64(std.GetHeight()),
+		CurrentTime:   uint64(time.Now().Unix()),
 	}
 
 	deposit, _ := createDeposit(info, 1000)
@@ -620,11 +625,11 @@ func TestProcessCollectedDeposits_BalanceChanges(t *testing.T) {
 	xgnsMint(t, mockXGNS, a2u(consts.LAUNCHPAD_ADDR), depositAmount)
 
 	info := ProjectTierInfo{
-		Project:     project,
-		Tier:        project.tiers[30],
-		TierStr:     "30",
-		Height:      uint64(std.GetHeight()),
-		CurrentTime: uint64(time.Now().Unix()),
+		Project:       project,
+		Tier:          project.tiers[30],
+		TierType:      "30",
+		CurrentHeight: uint64(std.GetHeight()),
+		CurrentTime:   uint64(time.Now().Unix()),
 	}
 
 	deposit, _ := createDeposit(info, depositAmount)
@@ -648,11 +653,11 @@ func TestCollectDepositGnsByDepositId_ClaimableCheck(t *testing.T) {
 	now := uint64(time.Now().Unix())
 	height := uint64(std.GetHeight())
 	info := ProjectTierInfo{
-		Project:     project,
-		Tier:        project.tiers[30],
-		TierStr:     "30",
-		Height:      height,
-		CurrentTime: now,
+		Project:       project,
+		Tier:          project.tiers[30],
+		TierType:      "30",
+		CurrentHeight: height,
+		CurrentTime:   now,
 	}
 
 	std.TestSkipHeights(10)
@@ -691,11 +696,11 @@ func TestCollectDepositGnsByDepositId_OtherOwner(t *testing.T) {
 	now := uint64(time.Now().Unix())
 	height := uint64(std.GetHeight())
 	info := ProjectTierInfo{
-		Project:     project,
-		Tier:        project.tiers[30],
-		TierStr:     "30",
-		Height:      height,
-		CurrentTime: now,
+		Project:       project,
+		Tier:          project.tiers[30],
+		TierType:      "30",
+		CurrentHeight: height,
+		CurrentTime:   now,
 	}
 
 	deposit, err := createDeposit(info, 100)
@@ -732,11 +737,11 @@ func TestCollectDepositGnsByDepositId_ExactClaimable(t *testing.T) {
 	initialHeight := uint64(std.GetHeight())
 
 	info := ProjectTierInfo{
-		Project:     project,
-		Tier:        project.tiers[30],
-		TierStr:     "30",
-		Height:      initialHeight,
-		CurrentTime: now,
+		Project:       project,
+		Tier:          project.tiers[30],
+		TierType:      "30",
+		CurrentHeight: initialHeight,
+		CurrentTime:   now,
 	}
 
 	std.TestSetRealm(std.NewUserRealm(userA))

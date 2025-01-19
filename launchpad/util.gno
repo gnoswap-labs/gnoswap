@@ -12,6 +12,7 @@ import (
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 func strToInt(str string) int {
@@ -136,11 +137,15 @@ func assertOnlyValidAddress(addr std.Address) {
 	}
 }
 
-// assertNotZeroAmount panics if the amount is zero.
-func assertNotZeroAmount(amount uint64) {
-	if amount <= 0 {
+// assertValidAmount panics if the amount is zero.
+func assertValidAmount(amount uint64) {
+	if amount < MINIMUM_DEPOSIT_AMOUNT {
 		panic(addDetailToError(
-			errZeroAmount, ufmt.Sprintf("(%d)", amount)))
+			errInvalidAmount, ufmt.Sprintf("amount(%d) should greater than minimum deposit amount(%d)", amount, MINIMUM_DEPOSIT_AMOUNT)))
+	}
+	if (amount % MINIMUM_DEPOSIT_AMOUNT) != 0 {
+		panic(addDetailToError(
+			errInvalidAmount, ufmt.Sprintf("amount(%d) must be a multiple of 1_000_000", amount)))
 	}
 }
 
@@ -150,4 +155,15 @@ func assertValidProjectId(projectId string) {
 		panic(addDetailToError(
 			errInvalidProjectId, ufmt.Sprintf("(%s)", projectId)))
 	}
+}
+
+// convertTimeToHeight converts the given timestamp to block height based on the average block time.
+func convertTimeToHeight(timestamp uint64) uint64 {
+	avgBlockTimeMs := uint64(gns.GetAvgBlockTimeInMs())
+	if avgBlockTimeMs == 0 {
+		panic(addDetailToError(
+			errInvalidAvgBlockTime,
+			ufmt.Sprintf("%d", avgBlockTimeMs)))
+	}
+	return timestamp * 1000 / avgBlockTimeMs
 }

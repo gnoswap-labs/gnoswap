@@ -22,8 +22,8 @@ var (
 	errInvalidCondition    = errors.New("[GNOSWAP-LAUNCHPAD-013] invalid transfer condition")
 	errConvertFail         = errors.New("[GNOSWAP-LAUNCHPAD-014] convert fail")
 	errNotUserCaller       = errors.New("[GNOSWAP-LAUNCHPAD-015] only user caller")
-	errInvalidProjectTier  = errors.New("[GNOSWAP-LAUNCHPAD-016] invalid project tier")
-	errZeroAmount          = errors.New("[GNOSWAP-LAUNCHPAD-017] zero amount")
+	errInvalidData         = errors.New("[GNOSWAP-LAUNCHPAD-016] invalid data")
+	errInvalidAmount       = errors.New("[GNOSWAP-LAUNCHPAD-017] invalid amount")
 	errDuplicateDeposit    = errors.New("[GNOSWAP-LAUNCHPAD-018] duplicate deposit")
 	errInvalidRewardState  = errors.New("[GNOSWAP-LAUNCHPAD-019] invalid reward state")
 	errNotExistDeposit     = errors.New("[GNOSWAP-LAUNCHPAD-020] not exist deposit")
@@ -34,6 +34,8 @@ var (
 	errInvalidCaller       = errors.New("[GNOSWAP-LAUNCHPAD-025] invalid caller")
 	errInvalidOwner        = errors.New("[GNOSWAP-LAUNCHPAD-026] invalid owner")
 	errInvalidAvgBlockTime = errors.New("[GNOSWAP-LAUNCHPAD-027] invalid average block time")
+	errInvalidHeight       = errors.New("[GNOSWAP-LAUNCHPAD-028] invalid height")
+	errInvalidTotalStaked  = errors.New("[GNOSWAP-LAUNCHPAD-029] invalid total staked")
 )
 
 func addDetailToError(err error, detail string) string {

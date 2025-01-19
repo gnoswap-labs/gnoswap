@@ -1,12 +1,10 @@
 package launchpad
 
 import (
-	"std"
-	"testing"
-	"time"
-
 	"gno.land/p/demo/json"
 	u256 "gno.land/p/gnoswap/uint256"
+	"std"
+	"testing"
 
 	"gno.land/p/demo/uassert"
 )
@@ -51,17 +49,17 @@ func TestProjectStatsBuilder(t *testing.T) {
 func TestTierBuilder(t *testing.T) {
 	amountPerBlock := u256.MustFromDecimal("1000000")
 	tier := Tier{
-		collectWaitDuration:   100,
-		tierAmount:            5000,
+		collectWaitDuration:    100,
+		tierAmount:             5000,
 		tierAmountPerBlockX128: amountPerBlock,
-		started:               TimeInfo{height: 100, time: 1234567890},
-		ended:                 TimeInfo{height: 200, time: 1234567899},
-		totalDepositAmount:    1000,
-		actualDepositAmount:   800,
-		totalParticipant:      50,
-		actualParticipant:     40,
-		userCollectedAmount:   300,
-		calculatedAmount:      400,
+		started:                TimeInfo{height: 100, time: 1234567890},
+		ended:                  TimeInfo{height: 200, time: 1234567899},
+		totalDepositAmount:     1000,
+		actualDepositAmount:    800,
+		totalParticipant:       50,
+		actualParticipant:      40,
+		userCollectedAmount:    300,
+		calculatedAmount:       400,
 	}
 
 	b := json.Builder()

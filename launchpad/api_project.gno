@@ -31,7 +31,7 @@ func ApiGetProjectStatisticsByProjectId(projectId string) string {
 }
 
 func ApiGetProjectStatisticsByProjectTierId(tierId string) string {
-	projectId, tierStr := getProjectIdAndTierFromTierId(tierId)
+	projectId, tierStr := splitProjectIdAndTier(tierId)
 	project, exist := projects[projectId]
 	if !exist {
 		return ""
