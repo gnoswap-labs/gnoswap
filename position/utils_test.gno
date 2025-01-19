@@ -931,7 +931,6 @@ func TestSplitOf(t *testing.T) {
 			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid poolKey(gno.land/r/gnoswap/v1/gns:gno.land/r/demo)",
 			shouldPanic:   true,
 		},
-		// 정상 케이스
 		{
 			name:          "Success - valid poolKey",
 			poolKey:       "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:500",

@@ -1,4 +1,4 @@
-package launchpad
+package tests
 
 import (
 	"std"
@@ -141,3 +141,4 @@ func testCollectRewardTier180(t *testing.T) {
 		reward := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
 		uassert.Equal(t, reward, uint64(699999999))
 	})
+}

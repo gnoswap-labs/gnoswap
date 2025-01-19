@@ -1,4 +1,4 @@
-package launchpad
+package tests
 
 import (
 	"std"
@@ -96,7 +96,6 @@ func collectRewardByProjectId(t *testing.T) {
 		uassert.Equal(t, reward, uint64(0))
 	})
 
-	//
 	uassert.Equal(t, len(deposits), 1)
 	deposit := deposits[`gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`]
 	uassert.Equal(t, deposit.id, `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
@@ -108,15 +107,12 @@ func collectRewardByProjectId(t *testing.T) {
 	uassert.Equal(t, deposit.depositTime, uint64(1234567902))
 	uassert.Equal(t, deposit.depositCollectHeight, uint64(0))
 	uassert.Equal(t, deposit.depositCollectTime, uint64(0))
-	uassert.Equal(t, deposit.rewardAmount, uint64(0))
 	uassert.Equal(t, deposit.rewardCollectHeight, uint64(1031))
 	uassert.Equal(t, deposit.rewardCollectTime, uint64(1234569706))
 
-	//
 	uassert.Equal(t, len(depositsByProject), 1)
 	uassert.Equal(t, depositsByProject[`gno.land/r/onbloc/obl:124`][`30`][0], `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
 
-	//
 	uassert.Equal(t, len(depositsByUser), 1)
 	uassert.Equal(t, depositsByUser[`g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv`][0], `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
 }

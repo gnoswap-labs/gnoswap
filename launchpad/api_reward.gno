@@ -31,7 +31,12 @@ func ApiGetDepositRewardByDepositId(depositId string) uint64 {
 		return 0
 	}
 
-	return deposit.rewardAmount
+	rewardState, err := rewardStates.Get(deposit.projectId, deposit.tier)
+	if err != nil {
+		return 0
+	}
+
+	return rewardState.CalculateReward(depositId)
 }
 
 func ApiGetDepositRewardByAddress(address std.Address) uint64 {
@@ -50,7 +55,11 @@ func ApiGetDepositRewardByAddress(address std.Address) uint64 {
 		if !exist {
 			continue
 		}
-		totalReward += deposit.rewardAmount
+		rewardState, err := rewardStates.Get(deposit.projectId, deposit.tier)
+		if err != nil {
+			continue
+		}
+		totalReward += rewardState.CalculateReward(depositId)
 	}
 
 	return totalReward

@@ -343,7 +343,7 @@ func TestCheckOverFlowInt128(t *testing.T) {
 		},
 		{
 			name:        "Overflow case - exceeds MAX_INT128",
-			input:       i256.MustFromDecimal(consts.MAX_INT256), // 최대값 + 1
+			input:       i256.MustFromDecimal(consts.MAX_INT256),
 			shouldPanic: true,
 			expected:    "[GNOSWAP-POOL-026] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
 		},

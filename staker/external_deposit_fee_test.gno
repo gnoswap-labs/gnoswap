@@ -8,7 +8,6 @@ import (
 )
 
 func TestGetDepositGnsAmount(t *testing.T) {
-	// 초기값 확인
 	expected := uint64(1_000_000_000)
 	actual := GetDepositGnsAmount()
 

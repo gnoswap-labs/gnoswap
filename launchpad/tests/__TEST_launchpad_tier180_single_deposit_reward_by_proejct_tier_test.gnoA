@@ -1,4 +1,4 @@
-package launchpad
+package tests
 
 import (
 	"std"
@@ -78,44 +78,48 @@ func testCollectReward(t *testing.T) {
 	std.TestSetRealm(user01Realm)
 
 	t.Run("claim reward before 14 days(for 180day tier's init reward)", func(t *testing.T) {
-		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
-		uassert.Equal(t, reward, uint64(0))
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-024] not yet claim reward || need block >= 604929, current=130", func() {
+			CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+		})
 		std.TestSkipHeights(1)
 	})
 
 	t.Run("claim reward before 14 days(for 180day tier's init reward)", func(t *testing.T) {
 		std.TestSkipHeights(123)
-		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
-		uassert.Equal(t, reward, uint64(0))
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-024] not yet claim reward || need block >= 604929, current=254", func() {
+			CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+		})
 		std.TestSkipHeights(1)
 	})
 
 	t.Run("claim after 14 days", func(t *testing.T) {
 		std.TestSkipHeights(int64(TIMESTAMP_14DAYS) / 2)
 		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
-		uassert.Equal(t, reward, uint64(70777777))
+		uassert.Equal(t, reward, uint64(54455787))
 	})
 
 	t.Run("no more claim in same block", func(t *testing.T) {
-		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
-		uassert.Equal(t, reward, uint64(0))
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-023] already collected || depositId(gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129)", func() {
+			CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+		})
 	})
 
 	t.Run("wait 1 more block, then claim", func(t *testing.T) {
 		std.TestSkipHeights(1)
 		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
-		uassert.Equal(t, reward, uint64(129629))
+		uassert.Equal(t, reward, uint64(90))
 	})
 
 	t.Run("180day tier is over", func(t *testing.T) {
 		std.TestSkipHeights(int64(TIMESTAMP_180DAYS) / 2)
 		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
-		uassert.Equal(t, reward, uint64(629092592))
+		uassert.Equal(t, reward, uint64(645544122))
 	})
 
 	t.Run("more block after 180 days", func(t *testing.T) {
 		std.TestSkipHeights(int64(TIMESTAMP_180DAYS) / 2)
-		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
-		uassert.Equal(t, reward, uint64(0))
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-028] invalid height || LastHeight(8381056) >= EndHeight(7776129)", func() {
+			CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+		})
 	})
 }
