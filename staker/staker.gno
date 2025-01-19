@@ -30,7 +30,7 @@ type Deposits struct {
 
 func NewDeposits() *Deposits {
 	return &Deposits{
-		tree: avl.NewTree(), // tokenId -> Deposit
+		tree: avl.NewTree(), // tokenId -> *Deposit
 	}
 }
 
@@ -107,12 +107,57 @@ func (self *ExternalIncentives) Size() int {
 	return self.tree.Size()
 }
 
+type Stakers struct {
+	tree *avl.Tree // address -> depositId -> *Deposit
+}
+
+func NewStakers() *Stakers {
+	return &Stakers{
+		tree: avl.NewTree(),
+	}
+}
+
+func (self *Stakers) IterateAll(address std.Address, fn func(depositId uint64, deposit *Deposit) bool) {
+	depositTreeI, ok := self.tree.Get(address.String())
+	if !ok {
+		return
+	}
+	depositTree := depositTreeI.(*avl.Tree)
+	depositTree.Iterate("", "", func(depositId string, depositI interface{}) bool {
+		deposit := depositI.(*Deposit)
+		return fn(DecodeUint(depositId), deposit)
+	})
+}
+
+func (self *Stakers) AddDeposit(address std.Address, depositId uint64, deposit *Deposit) {
+	depositTreeI, ok := self.tree.Get(address.String())
+	if !ok {
+		depositTree := avl.NewTree()
+		self.tree.Set(address.String(), depositTree)
+		depositTreeI = depositTree
+	}
+	depositTree := depositTreeI.(*avl.Tree)
+	depositTree.Set(EncodeUint(depositId), deposit)
+}
+
+func (self *Stakers) RemoveDeposit(address std.Address, depositId uint64) {
+	depositTreeI, ok := self.tree.Get(address.String())
+	if !ok {
+		return
+	}
+	depositTree := depositTreeI.(*avl.Tree)
+	depositTree.Remove(EncodeUint(depositId))
+}
+
 var (
 	// deposits stores deposit information for each tokenId
 	deposits *Deposits = NewDeposits()
 
 	// externalIncentives stores external incentive information for each incentiveId
 	externalIncentives *ExternalIncentives = NewExternalIncentives()
+
+	// stakers stores staker information for each address
+	stakers *Stakers = NewStakers()
 
 	// poolTier stores pool tier information
 	poolTier *PoolTier
@@ -217,6 +262,7 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	currentTick := pl.PoolGetSlot0Tick(poolPath)
 
 	deposits.Set(tokenId, deposit)
+	stakers.AddDeposit(caller, tokenId, deposit)
 
 	if caller == owner { // if caller is owner, transfer NFT ownership to staker contract
 		if err := transferDeposit(tokenId, owner, caller, consts.STAKER_ADDR); err != nil {
@@ -593,6 +639,7 @@ func applyUnStake(tokenId uint64) {
 	lowerTick.modifyDepositLower(currentHeight, currentTick, signedLiquidity)
 
 	deposits.Remove(tokenId)
+	stakers.RemoveDeposit(deposit.owner, tokenId)
 
 	owner := gnft.MustOwnerOf(tid(tokenId))
 	caller := getPrevAddr()

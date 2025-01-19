@@ -68,6 +68,12 @@ func (self *Pools) Has(poolPath string) bool {
 	return self.tree.Has(poolPath)
 }
 
+func (self *Pools) IterateAll(fn func(key string, pool *Pool) bool) {
+	self.tree.Iterate("", "", func(key string, value interface{}) bool {
+		return fn(key, value.(*Pool))
+	})
+}
+
 // Pool is a struct for storing an incentivized pool information
 // Each pool stores Incentives and Ticks associated with it.
 //

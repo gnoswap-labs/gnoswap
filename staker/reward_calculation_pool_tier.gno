@@ -175,9 +175,6 @@ func (self *PoolTier) CurrentTier(poolPath string) uint64 {
 // changeTier updates the tier of a pool, recalculates ratios, and applies
 // updated per-pool reward to each of the pools.
 func (self *PoolTier) changeTier(currentHeight int64, pools *Pools, poolPath string, nextTier uint64) {
-	// TODO:
-	// poolPath validation check
-
 	self.cacheReward(currentHeight, pools)
 	
 	// same as prev. no need to update
@@ -269,7 +266,6 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentBlock int64, emi
 		// real reward
 		reward := emissionInThisInterval * self.tierRatio.Get(tierNum) / 100 / counts[tierNum]
 		// accumulate the reward for the interval (startBlock to endBlock) in the Pool
-		// TODO: the startBlock in this scope and the pool's lastRewardCacheHeight MUST be the same. They should be merged into the one variable(preferrably by passing StartHeight explicitly)
 		pool.cacheInternalReward(currentBlock, reward)
 		return false
 	})
@@ -278,4 +274,12 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentBlock int64, emi
 // IsInternallyIncentivizedPool returns true if the pool is in a tier.
 func (self *PoolTier) IsInternallyIncentivizedPool(poolPath string) bool {
 	return self.CurrentTier(poolPath) > 0
+}
+
+func (self *PoolTier) CurrentRewardPerPool(poolPath string) uint64 {
+	emission := self.getEmission()
+	counts := self.CurrentAllTierCounts()
+	tierNum := self.CurrentTier(poolPath)
+	reward := emission * self.tierRatio.Get(tierNum) / 100 / counts[tierNum]
+	return reward
 }
