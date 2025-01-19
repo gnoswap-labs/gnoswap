@@ -14,7 +14,7 @@ var (
 	tokenListWithAmount = make(map[string]uint64) // tokenPath -> amount
 )
 
-// TokenList returns only the token path.
+// TokenList returns only the list of token path.
 // If positive is true, it returns only the token path with amount > 0.
 // If positive is false, it returns all the token path.
 func TokenList(positive bool) []string {
@@ -47,7 +47,7 @@ func AddToProtocolFee(tokenPath string, amount uint64) {
 // only `gov/staker` can execute this function.
 func ClearTokenListWithAmount() {
 	assertOnlyGovStaker()
-	tokenListWithAmount = map[string]uint64{}
+	clearTokenListWithAmount()
 }
 
 // TransferProtocolFee transfers the protocol fee to devOps and gov/staker.
@@ -62,12 +62,17 @@ func TransferProtocolFee() map[string]uint64 {
 	for token, amount := range tokenListWithAmount {
 		balance := common.BalanceOf(token, consts.PROTOCOL_FEE_ADDR)
 
-		// amount in `tokenListWithAmount` is corrupted, it should be equal to balance
-		if amount != balance {
-			panic(errInvalidAmount.Error())
+		// anyone can just send certain grc20 token to `protocol_fee` contract
+		// therefore, we don't need any guard logic to check whether protocol_fee's xxx token balance is equal to `amount`
+		// however, amount always should be less than or equal to balance
+		if amount > balance {
+			panic(addDetailToError(
+				errInvalidAmount,
+				ufmt.Sprintf("amount: %d should be less than or equal to balance: %d", amount, balance),
+			))
 		}
 
-		if balance > 0 {
+		if amount > 0 {
 			toDevOps := balance * devOpsPct / 10000 // default 0%
 			toGovStaker := balance - toDevOps       // default 100%
 
@@ -86,7 +91,7 @@ func TransferProtocolFee() map[string]uint64 {
 		}
 	}
 
-	ClearTokenListWithAmount()
+	clearTokenListWithAmount()
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -98,6 +103,11 @@ func TransferProtocolFee() map[string]uint64 {
 	)
 
 	return toReturn
+}
+
+// clearTokenListWithAmount clears the tokenListWithAmount.
+func clearTokenListWithAmount() {
+	tokenListWithAmount = map[string]uint64{}
 }
 
 // assertOnlyPoolRouterStaker panics if the caller is not the pool, router, or staker contract.
@@ -120,6 +130,8 @@ func assertOnlyGovStaker() {
 		panic(err.Error())
 	}
 }
+
+// assert
 
 func makeEventString(tokenPath string, amount uint64) string {
 	return tokenPath + "*FEE*" + ufmt.Sprintf("%d", amount)
