@@ -79,7 +79,7 @@ func Delegate(to std.Address, amount uint64) {
 		))
 	}
 
-	rewardState.AddStake(uint64(std.GetHeight()), caller, amount, currentBalance())
+	rewardState.AddStake(uint64(std.GetHeight()), caller, amount, getCurrentBalance(), getCurrentProtocolFeeBalance())
 
 	// GNS // caller -> GovStaker
 	gns.TransferFrom(a2u(caller), a2u(std.CurrentRealm().Addr()), amount)
@@ -200,12 +200,16 @@ func Undelegate(from std.Address, amount uint64) {
 		))
 	}
 
-	reward := rewardState.RemoveStake(caller, amount, currentBalance())
+	reward, protocolFeeRewards := rewardState.RemoveStake(caller, amount, getCurrentBalance(), getCurrentProtocolFeeBalance())
 
 	// burn equivalent amount of xGNS
 	xgns.Burn(a2u(caller), amount)
 
 	gns.Transfer(a2u(caller), reward)
+
+	for tokenPath, amount := range protocolFeeRewards {
+		transferProtocolFee(tokenPath, from, amount)
+	}
 
 	// actual undelegate
 	undelegate(from, amount)
@@ -303,7 +307,7 @@ func CollectReward() {
 	prevAddr, prevPkgPath := getPrev()
 	caller := std.PrevRealm().Addr()
 
-	reward := rewardState.Claim(caller, currentBalance())
+	reward, protocolFeeRewards := rewardState.Claim(caller, getCurrentBalance(), getCurrentProtocolFeeBalance())
 
 	// XXX (@notJoon): There could be cases where the reward pool is empty, In such case,
 	// it seems appropriate to return 0 and continue processing.
@@ -313,26 +317,32 @@ func CollectReward() {
 	// have already been fully collected.
 	//
 	// still, this is a tangled with the policy issue, so should be discussed.
-	gns.Transfer(a2u(caller), reward)
+
 
 	// TODO:
-	emissionReward := collectEmissionReward(caller)
-	if emissionReward > 0 {
+	if reward > 0 {
+		gns.Transfer(a2u(caller), reward)
 		std.Emit(
 			"CollectEmissionReward",
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
 			"to", caller.String(),
-			"emissionRewardAmount", formatUint(emissionReward),
+			"emissionRewardAmount", formatUint(reward),
 		)
 	}
 
 	// TODO::
-	collectedFees := collectProtocolFeeReward(caller)
-	for tokenPath, amount := range collectedFees {
+	for tokenPath, amount := range protocolFeeRewards {
 		if tokenPath == consts.WUGNOT_PATH {
-			tokenPath = "ugnot"
+			if amount > 0 {
+				wugnot.Withdraw(amount)
+				banker := std.GetBanker(std.BankerTypeRealmSend)
+				banker.SendCoins(consts.GOV_STAKER_ADDR, caller, std.Coins{{"ugnot", int64(amount)}})
+			}
+		} else {
+			transferProtocolFee(tokenPath, caller, amount)
 		}
+
 		std.Emit(
 			"CollectProtocolFeeReward",
 			"prevAddr", prevAddr,
@@ -355,8 +365,9 @@ func CollectRewardFromLaunchPad(to std.Address) {
 	prevAddr, prevPkgPath := getPrev()
 
 	// TODO::
-	emissionReward := collectEmissionReward(to)
+	emissionReward, protocolFeeRewards := rewardState.Claim(to, getCurrentBalance(), getCurrentProtocolFeeBalance())
 	if emissionReward > 0 {
+		gns.Transfer(a2u(to), emissionReward)
 		std.Emit(
 			"CollectEmissionFromLaunchPad",
 			"prevAddr", prevAddr,
@@ -367,8 +378,8 @@ func CollectRewardFromLaunchPad(to std.Address) {
 	}
 
 	// TODO::
-	collectedFees := collectProtocolFeeReward(to)
-	for tokenPath, amount := range collectedFees {
+	for tokenPath, amount := range protocolFeeRewards {
+		transferProtocolFee(tokenPath, to, amount)
 		std.Emit(
 			"CollectProtocolFeeFromLaunchPad",
 			"prevAddr", prevAddr,
@@ -377,8 +388,11 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			"amount", formatUint(amount),
 		)
 	}
+
+
 }
 
+/*
 func collectEmissionReward(addr std.Address) uint64 {
 	emissionReward := uint64(0)
 	if value, exists := userEmissionReward.Get(addr.String()); exists {
@@ -440,7 +454,7 @@ func collectProtocolFeeReward(addr std.Address) map[string]uint64 {
 
 	return collectedFees
 }
-
+*/
 func transferProtocolFee(tokenPath string, to std.Address, amount uint64) {
 	common.MustRegistered(tokenPath)
 	if !to.IsValid() {

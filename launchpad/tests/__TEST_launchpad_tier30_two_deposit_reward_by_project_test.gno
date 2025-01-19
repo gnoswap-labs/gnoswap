@@ -1,4 +1,4 @@
-package launchpad
+package tests
 
 import (
 	"std"
@@ -114,7 +114,7 @@ func collectRewardByProjectId(t *testing.T) {
 
 		std.TestSkipHeights(int64(TIMESTAMP_30DAYS) / 2)
 		reward := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
-		uassert.Equal(t, reward, uint64(50055554))
+		uassert.Equal(t, reward, uint64(50000038))
 	})
 
 	t.Run("claim after 30 days by user02", func(t *testing.T) {
@@ -122,7 +122,7 @@ func collectRewardByProjectId(t *testing.T) {
 
 		std.TestSkipHeights(int64(TIMESTAMP_30DAYS) / 2)
 		reward := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
-		uassert.Equal(t, reward, uint64(49944443))
+		uassert.Equal(t, reward, uint64(49999961))
 	})
 
 	t.Run("no more claim in same block by user 01", func(t *testing.T) {

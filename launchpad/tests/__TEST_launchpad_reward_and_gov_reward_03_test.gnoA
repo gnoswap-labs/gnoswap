@@ -1,4 +1,4 @@
-package launchpad
+package tests
 
 import (
 	"std"
@@ -22,10 +22,11 @@ import (
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
-	pf "gno.land/r/gnoswap/v1/protocol_fee"
 	rr "gno.land/r/gnoswap/v1/router"
 	sr "gno.land/r/gnoswap/v1/staker"
 )
+
+//! TODO: may need to change deadline param in `ExactInSwapRoute` function
 
 var (
 	launchpadProject01Addr  = testutils.TestAddress("launchpadProject01")
@@ -143,7 +144,7 @@ func testMint(t *testing.T) {
 func testStakeToken(t *testing.T) {
 	t.Run("stake token", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		gnft.Approve(a2u(consts.STAKER_ADDR), "1")
+		gnft.Approve(consts.STAKER_ADDR, "1")
 
 		sr.StakeToken(1)
 
@@ -289,14 +290,14 @@ func testSwapRoute(t *testing.T) {
 		bar.Approve(a2u(consts.ROUTER_ADDR), uint64(1_000_000))
 		foo.Approve(a2u(consts.ROUTER_ADDR), uint64(1_000_000))
 
-		amountIn, amountOut := rr.SwapRoute(
+		amountIn, amountOut := rr.ExactInSwapRoute(
 			barPath,
 			fooPath,
 			"100000",
-			"EXACT_IN",
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
 			"100",
 			"1",
+			time.Now().Unix(),
 		)
 		uassert.Equal(t, amountIn, "100000")
 		uassert.Equal(t, amountOut, "-99800")
@@ -315,14 +316,14 @@ func testSwapRoute(t *testing.T) {
 		bar.Approve(a2u(consts.ROUTER_ADDR), uint64(1_000_000))
 		baz.Approve(a2u(consts.ROUTER_ADDR), uint64(1_000_000))
 
-		amountIn, amountOut := rr.SwapRoute(
+		amountIn, amountOut := rr.ExactInSwapRoute(
 			bazPath,
 			barPath,
 			"100000",
-			"EXACT_IN",
 			"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500",
 			"100",
 			"1",
+			time.Now().Unix(),
 		)
 		uassert.Equal(t, amountIn, "100000")
 		uassert.Equal(t, amountOut, "-99800")
@@ -343,14 +344,14 @@ func testSwapRoute(t *testing.T) {
 		gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		wugnot.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
 
-		amountIn, amountOut := rr.SwapRoute(
+		amountIn, amountOut := rr.ExactInSwapRoute(
 			consts.GNS_PATH,
 			consts.WUGNOT_PATH,
 			"100000",
-			"EXACT_IN",
 			"gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:3000",
 			"100",
 			"1",
+			time.Now().Unix(),
 		)
 		uassert.Equal(t, amountIn, "100000")
 		uassert.Equal(t, amountOut, "-99550")
@@ -413,9 +414,7 @@ func testCheckReward(t *testing.T) {
 }
 
 func checkProtocolFeeBalance() {
-	println("[START] checkProtocolFeeBalance")
-	pfRegistered := pf.GetRegisteredTokens()
-	for _, token := range pfRegistered {
+	for _, token := range common.ListRegisteredTokens() {
 		balance := common.BalanceOf(token, consts.PROTOCOL_FEE_ADDR)
 		if balance != 0 {
 			println("token", token)

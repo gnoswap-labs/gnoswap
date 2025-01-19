@@ -1,4 +1,4 @@
-package launchpad
+package tests
 
 import (
 	"std"
@@ -89,14 +89,14 @@ func testRouterSwapRoute(t *testing.T) {
 		bar.Approve(a2u(consts.ROUTER_ADDR), uint64(100_000))
 		foo.Approve(a2u(consts.ROUTER_ADDR), uint64(100_000))
 
-		amountIn, amountOut := rr.SwapRoute(
+		amountIn, amountOut := rr.ExactInSwapRoute(
 			barPath,
 			fooPath,
 			"100000",
-			"EXACT_IN",
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
 			"100",
 			"1",
+			time.Now().Unix()+10,
 		)
 		uassert.Equal(t, amountIn, "100000")
 		uassert.Equal(t, amountOut, "-99800")

@@ -8,8 +8,11 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
-
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 func strToInt(str string) int {
@@ -48,10 +51,6 @@ func b64Encode(data string) string {
 	return string(b64.StdEncoding.EncodeToString([]byte(data)))
 }
 
-func prevRealm() string {
-	return std.PrevRealm().PkgPath()
-}
-
 func a2u(addr std.Address) pusers.AddressOrName {
 	return pusers.AddressOrName(addr)
 }
@@ -63,18 +62,108 @@ func minU64(x, y uint64) uint64 {
 	return y
 }
 
+// containsString returns true if the string is in the slice.
+func containsString(arr []string, val string) bool {
+	for _, v := range arr {
+		if v == val {
+			return true
+		}
+	}
+	return false
+}
+
+// GetOrigPkgAddr returns the original package address.
+// In position contract, original package address is the position address.
+func GetOrigPkgAddr() std.Address {
+	return consts.LAUNCHPAD_ADDR
+}
+
+// isUserCall returns true if the caller is a user.
 func isUserCall() bool {
 	return std.PrevRealm().IsUser()
 }
 
+// getPrev returns the address and package path of the previous realm.
 func getPrev() (string, string) {
 	prev := std.PrevRealm()
 	return prev.Addr().String(), prev.PkgPath()
 }
 
-func min(x, y uint64) uint64 {
-	if x < y {
-		return x
+// getPrevRealm returns object of the previous realm.
+func getPrevRealm() std.Realm {
+	return std.PrevRealm()
+}
+
+// getPrevAddr returns the address of the previous realm.
+func getPrevAddr() std.Address {
+	return std.PrevRealm().Addr()
+}
+
+// getPrevPkgPath returns the package path of the previous realm.
+func getPrevPkgPath() string {
+	return std.PrevRealm().PkgPath()
+}
+
+// formatUint returns the string representation of the uint64 value.
+func formatUint(value uint64) string {
+	return strconv.FormatUint(value, 10)
+}
+
+// formatInt returns the string representation of the int64 value.
+func formatInt(value int64) string {
+	return strconv.FormatInt(value, 10)
+}
+
+// assertOnlyNotHalted panics if the contract is halted.
+func assertOnlyNotHalted() {
+	common.IsHalted()
+}
+
+// assertOnlyAdmin panics if the caller is not an admin.
+func assertOnlyAdmin() {
+	caller := getPrevAddr()
+	if err := common.AdminOnly(caller); err != nil {
+		panic(addDetailToError(errInvalidAddress, err.Error()))
 	}
-	return y
+}
+
+// assertOnlyValidAddress panics if the address is invalid.
+func assertOnlyValidAddress(addr std.Address) {
+	if !addr.IsValid() {
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("(%s)", addr),
+		))
+	}
+}
+
+// assertValidAmount panics if the amount is zero.
+func assertValidAmount(amount uint64) {
+	if amount < MINIMUM_DEPOSIT_AMOUNT {
+		panic(addDetailToError(
+			errInvalidAmount, ufmt.Sprintf("amount(%d) should greater than minimum deposit amount(%d)", amount, MINIMUM_DEPOSIT_AMOUNT)))
+	}
+	if (amount % MINIMUM_DEPOSIT_AMOUNT) != 0 {
+		panic(addDetailToError(
+			errInvalidAmount, ufmt.Sprintf("amount(%d) must be a multiple of 1_000_000", amount)))
+	}
+}
+
+// assertValidProjectId panics if the project ID is invalid.
+func assertValidProjectId(projectId string) {
+	if projectId == "" {
+		panic(addDetailToError(
+			errInvalidProjectId, ufmt.Sprintf("(%s)", projectId)))
+	}
+}
+
+// convertTimeToHeight converts the given timestamp to block height based on the average block time.
+func convertTimeToHeight(timestamp uint64) uint64 {
+	avgBlockTimeMs := uint64(gns.GetAvgBlockTimeInMs())
+	if avgBlockTimeMs == 0 {
+		panic(addDetailToError(
+			errInvalidAvgBlockTime,
+			ufmt.Sprintf("%d", avgBlockTimeMs)))
+	}
+	return timestamp * 1000 / avgBlockTimeMs
 }

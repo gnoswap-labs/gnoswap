@@ -1,4 +1,4 @@
-package launchpad
+package tests
 
 import (
 	"std"
@@ -151,53 +151,4 @@ func (USDCToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 
 func init() {
 	std.TestSetRealm(std.NewUserRealm(consts.TOKEN_REGISTER))
-
-	// pool
-	pl.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
-	pl.RegisterGRC20Interface("gno.land/r/onbloc/foo", FooToken{})
-	pl.RegisterGRC20Interface("gno.land/r/onbloc/baz", BazToken{})
-	pl.RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
-	pl.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
-	pl.RegisterGRC20Interface("gno.land/r/gnoswap/v1/gns", GNSToken{})
-	pl.RegisterGRC20Interface("gno.land/r/onbloc/usdc", USDCToken{})
-
-	// router
-	rr.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
-	rr.RegisterGRC20Interface("gno.land/r/onbloc/foo", FooToken{})
-	rr.RegisterGRC20Interface("gno.land/r/onbloc/baz", BazToken{})
-	rr.RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
-	rr.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
-	rr.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
-	rr.RegisterGRC20Interface("gno.land/r/gnoswap/v1/gns", GNSToken{})
-	rr.RegisterGRC20Interface("gno.land/r/onbloc/usdc", USDCToken{})
-
-	// protocol_fee
-	pf.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
-	pf.RegisterGRC20Interface("gno.land/r/onbloc/foo", FooToken{})
-	pf.RegisterGRC20Interface("gno.land/r/onbloc/baz", BazToken{})
-	pf.RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
-	pf.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
-	pf.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
-	pf.RegisterGRC20Interface("gno.land/r/gnoswap/v1/gns", GNSToken{})
-	pf.RegisterGRC20Interface("gno.land/r/onbloc/usdc", USDCToken{})
-
-	// gov_staker
-	gs.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
-	gs.RegisterGRC20Interface("gno.land/r/onbloc/foo", FooToken{})
-	gs.RegisterGRC20Interface("gno.land/r/onbloc/baz", BazToken{})
-	gs.RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
-	gs.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
-	gs.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
-	gs.RegisterGRC20Interface("gno.land/r/gnoswap/v1/gns", GNSToken{})
-	gs.RegisterGRC20Interface("gno.land/r/onbloc/usdc", USDCToken{})
-
-	RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
-	RegisterGRC20Interface("gno.land/r/onbloc/foo", FooToken{})
-	RegisterGRC20Interface("gno.land/r/onbloc/baz", BazToken{})
-	RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
-	RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
-	RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
-	RegisterGRC20Interface("gno.land/r/gnoswap/v1/gns", GNSToken{})
-	RegisterGRC20Interface("gno.land/r/onbloc/usdc", USDCToken{})
 }
