@@ -52,9 +52,9 @@ func incentiveIdCompute(caller std.Address, targetPoolPath, rewardToken string, 
 // Example:
 // Input: startTime=12345, endTime=67890, creator="g1xyz", rewardToken="gns"
 // Output: "000000000000012345:000000000000067890:g1xyz:gns"
-func incentiveIdByTime(startTime, endTime uint64, creator std.Address, rewardToken string) string {
-	startTimeEncode := EncodeUint(startTime)
-	endTimeEncode := EncodeUint(endTime)
+func incentiveIdByTime(startTime, endTime int64, creator std.Address, rewardToken string) string {
+	startTimeEncode := EncodeUint(uint64(startTime))
+	endTimeEncode := EncodeUint(uint64(endTime))
 	creatorEncode := creator.String()
 
 	byTimeId := []byte(startTimeEncode)
@@ -90,9 +90,9 @@ func incentiveIdByTime(startTime, endTime uint64, creator std.Address, rewardTok
 // Example:
 // Input: startHeight=123, endHeight=456, creator="g1xyz", rewardToken="gns"
 // Output: "000000000000000123:000000000000000456:g1xyz:gns", "g1xyz:000000000000000123:000000000000000456:gns"
-func incentiveIdByHeight(startHeight, endHeight uint64, creator std.Address, rewardToken string) (string, string) {
-	startHeightEncode := EncodeUint(startHeight)
-	endHeightEncode := EncodeUint(endHeight)
+func incentiveIdByHeight(startHeight, endHeight int64, creator std.Address, rewardToken string) (string, string) {
+	startHeightEncode := EncodeUint(uint64(startHeight))
+	endHeightEncode := EncodeUint(uint64(endHeight))
 	creatorEncode := creator.String()
 
 	byHeightId := []byte(startHeightEncode)

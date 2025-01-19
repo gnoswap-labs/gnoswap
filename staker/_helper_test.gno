@@ -444,7 +444,7 @@ func burnAllNFT(t *testing.T) {
 func deletePoolTier(t *testing.T, poolPath string) {
 	t.Helper()
 	if poolTier != nil {
-		poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, 0)
+		poolTier.changeTier(std.GetHeight(), pools, poolPath, 0)
 	} else {
 		panic("poolTier is nil")
 	}
@@ -459,11 +459,11 @@ func addPoolTier(t *testing.T, poolPath string, tier uint64) {
 			panic(addDetailToError(
 				errPoolNotFound, ufmt.Sprintf("unknown error - pools is nil")))
 		}
-		poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, tier)
+		poolTier.changeTier(std.GetHeight(), pools, poolPath, tier)
 	} else {
-		poolTier = NewPoolTier(uint64(std.GetHeight()), poolPath, en.GetStakerEmissionUpdates)
+		poolTier = NewPoolTier(pools, std.GetHeight(), poolPath, en.GetEmission, en.GetHalvingBlocksInRange)
 		pools.GetOrCreate(poolPath) // must update pools tree
-		poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, tier)
+		poolTier.changeTier(std.GetHeight(), pools, poolPath, tier)
 	}
 }
 
@@ -481,7 +481,7 @@ func getNumPoolTiers(t *testing.T) (uint64, uint64, uint64) {
 }
 
 type gnsBalanceTracker struct {
-	height               uint64
+	height               int64
 	stakerBalance        uint64
 	devOpsBalance        uint64
 	communityPoolBalance uint64
@@ -494,26 +494,13 @@ func gnsBalanceCheck(t *testing.T, beforeBalance gnsBalanceTracker, printChange 
 	t.Helper()
 
 	caller := std.PrevRealm().Addr()
-	height := uint64(std.GetHeight())
+	height := std.GetHeight()
 	stakerBalance := gns.BalanceOf(a2u(consts.STAKER_ADDR))
 	devOpsBalance := gns.BalanceOf(a2u(consts.DEV_OPS))
 	communityPoolBalance := gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR))
 	govStakerBalance := gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))
 	protocolFeeBalance := gns.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR))
 	callerBalance := gns.BalanceOf(a2u(caller))
-
-	if printChange {
-		println("[START] gnsBalanceCheck")
-		println("height", beforeBalance.height, "->", height, "|| diff", height-beforeBalance.height)
-		println("stakerBalance", beforeBalance.stakerBalance, "->", stakerBalance, "|| diff", stakerBalance-beforeBalance.stakerBalance)
-		println("devOpsBalance", beforeBalance.devOpsBalance, "->", devOpsBalance, "|| diff", devOpsBalance-beforeBalance.devOpsBalance)
-		println("communityPoolBalance", beforeBalance.communityPoolBalance, "->", communityPoolBalance, "|| diff", communityPoolBalance-beforeBalance.communityPoolBalance)
-		println("govStakerBalance", beforeBalance.govStakerBalance, "->", govStakerBalance, "|| diff", govStakerBalance-beforeBalance.govStakerBalance)
-		println("protocolFeeBalance", beforeBalance.protocolFeeBalance, "->", protocolFeeBalance, "|| diff", protocolFeeBalance-beforeBalance.protocolFeeBalance)
-		println("callerBalance", beforeBalance.callerBalance, "->", callerBalance, "|| diff", callerBalance-beforeBalance.callerBalance)
-		println("[END] gnsBalanceCheck")
-		println()
-	}
 
 	return gnsBalanceTracker{
 		height:               height,
@@ -696,7 +683,7 @@ func makePositionsNode(t *testing.T, poolPath string) []*json.Node {
 			stakedDuration := std.GetHeight() - deposit.stakeHeight
 			ratio := getRewardRatio(t, stakedDuration)
 
-			rewardByWarmup := calcPositionRewardByWarmups(uint64(std.GetHeight()), uint64(tokenId))
+			rewardByWarmup := calcPositionRewardByWarmups(std.GetHeight(), tokenId)
 			if len(rewardByWarmup) != 4 {
 				panic("len(rewardByWarmup) != 4")
 			}

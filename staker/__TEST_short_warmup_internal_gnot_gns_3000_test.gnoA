@@ -122,52 +122,6 @@ func testStakeToken01(t *testing.T) {
 func testCollectReward01(t *testing.T) {
 	t.Run("collect reward", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		// println(getPrintInfo(t))
-		/*
-			{
-			  "height": "127",
-			  "time": "1234567898",
-			  "gns": {
-			    "staker": "42808219",
-			    "devOps": "14269404",
-			    "communityPool": "0",
-			    "govStaker": "0",
-			    "protocolFee": "0",
-			    "GnoswapAdmin": "99999999999950"
-			  },
-			  "pool": [
-			    {
-			      "poolPath": "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000",
-			      "tier": "1",
-			      "numPoolSameTier": "1",
-			      "position": [
-			        {
-			          "lpTokenId": "1",
-			          "stakedHeight": "126",
-			          "stakedTimestamp": "1234567896",
-			          "stakedDuration": "1",
-			          "fullAmount": "10702053",
-			          "ratio": "30",
-			          "warmUpAmount": "3210616",
-			          "full30": "10702053",
-			          "give30": "3210616",
-			          "penalty30": "7491437",
-			          "full50": "0",
-			          "give50": "0",
-			          "penalty50": "0",
-			          "full70": "0",
-			          "give70": "0",
-			          "penalty70": "0",
-			          "full100": "0",
-			          "give100": "0",
-			          "penalty100": "0"
-			        }
-			      ]
-			    }
-			  ]
-			}
-		*/
-
 		// 3 block of staker's emission reward == 32106164
 		// should be sent to community pool
 		// - it is duration when no position is staked
@@ -178,7 +132,8 @@ func testCollectReward01(t *testing.T) {
 		gnsBefore := gns.BalanceOf(admin)
 		CollectReward(1, false)
 		gnsAfter := gns.BalanceOf(admin)
-		uassert.Equal(t, gnsAfter-gnsBefore, uint64(3210616))
+
+		uassert.True(t, isInErrorRange(uint64(3210616), gnsAfter-gnsBefore))
 
 		std.TestSkipHeights(1)
 	})

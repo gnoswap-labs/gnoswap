@@ -6,27 +6,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-type InternalTier struct {
-	tier           uint64 // internal reward tier
-	startTimestamp int64  // start time for internal reward
-}
-
-func (i InternalTier) Tier() uint64 {
-	return i.tier
-}
-
-func (i InternalTier) StartTimestamp() int64 {
-	return i.startTimestamp
-}
-
-// newInternalTier creates a new internal tier
-func newInternalTier(tier uint64, startTimestamp int64) InternalTier {
-	return InternalTier{
-		tier:           tier,
-		startTimestamp: startTimestamp,
-	}
-}
-
+// ExternalIncentive is a struct for storing external incentive information.
 type ExternalIncentive struct {
 	incentiveId      string      // incentive id
 	startTimestamp   int64       // start time for external reward
@@ -41,6 +21,8 @@ type ExternalIncentive struct {
 	endHeight        int64       // end height for external reward
 	rewardPerBlock   uint64      // reward per block
 	refundee         std.Address // refundee address
+
+	unclaimableRefunded bool // whether unclaimable reward is refunded
 }
 
 func (e ExternalIncentive) StartTimestamp() int64 {
@@ -107,15 +89,12 @@ func NewExternalIncentive(
 	incentiveDuration := endTimestamp - startTimestamp
 	incentiveBlock := incentiveDuration * 1000 / msPerBlock
 	rewardPerBlock := rewardAmount / uint64(incentiveBlock)
-	println("rewardPerBlock", rewardPerBlock)
 
 	blocksLeftUntilStartHeight := (startTimestamp - currentTime) * 1000 / msPerBlock
 	blocksLeftUntilEndHeight := (endTimestamp - currentTime) * 1000 / msPerBlock
 
 	startHeight := std.GetHeight() + blocksLeftUntilStartHeight
-	println("startHeight", startHeight)
 	endHeight := std.GetHeight() + blocksLeftUntilEndHeight
-	println("endHeight", endHeight)
 
 	return &ExternalIncentive{
 		incentiveId:      incentiveId,
@@ -130,6 +109,7 @@ func NewExternalIncentive(
 		refundee:         refundee,
 		createdHeight:    createdHeight,
 		depositGnsAmount: depositGnsAmount,
+		unclaimableRefunded: false,
 	}
 }
 
@@ -141,6 +121,7 @@ type Deposit struct {
 	tickLower         int32       // tick lower
 	tickUpper         int32       // tick upper
 	liquidity         *u256.Uint  // liquidity
-	lastCollectHeight uint64      // last collect block height
-	warmups           []Warmup    // warmup information
+	lastCollectHeight int64      // last collect block height
+	warmups           []Warmup    // warmup information	
 }
+

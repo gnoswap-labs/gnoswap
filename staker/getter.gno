@@ -13,8 +13,6 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 )
 
-//! TODO: Change function names to follow a naming convention
-
 // GetPoolByPoolPath retrieves the pool's path using the provided pool path.
 //
 // Parameters:
@@ -425,7 +423,7 @@ func GetDepositLiquidityAsString(lpTokenId uint64) string {
 //
 // Returns:
 // - uint64: The last collection height of the deposit.
-func GetDepositLastCollectHeight(lpTokenId uint64) uint64 {
+func GetDepositLastCollectHeight(lpTokenId uint64) int64 {
 	deposit := GetDeposit(lpTokenId)
 
 	return deposit.lastCollectHeight
@@ -503,52 +501,7 @@ func GetPoolTierCount(tier uint64) uint64 {
 // Returns:
 // - uint64: The current reward amount for the specified tier.
 func GetPoolReward(tier uint64) uint64 {
-	rewardDenominators := poolTier.tierRatio.IntoRewardDenominators(poolTier.CurrentAllTierCounts())
-	currentEmission := poolTier.emissionUpdate(uint64(std.GetHeight()), uint64(std.GetHeight())).LastEmissionUpdate
-	return ApplyDenominator(currentEmission, rewardDenominators[tier])
-}
-
-// GetRewardCacheOf retrieves the reward cache tree for the specified pool tier.
-//
-// This function returns the `RewardCacheTree` associated with the given tier,
-// which contains cached reward data for the tier.
-//
-// Parameters:
-// - tier (uint64): The tier for which the reward cache is retrieved.
-//
-// Returns:
-// - *RewardCacheTree: A pointer to the reward cache tree for the specified tier.
-//func GetRewardCacheOf(tier uint64) *RewardCacheTree {
-//	return poolTier.rewardCacheOf(tier)
-//}
-
-func printExternalInfo(poolPath string) {
-	currentHeight := std.GetHeight()
-	println("***********************")
-	println("> height:", currentHeight)
-	println("> time:", time.Now().Unix())
-	println("[ START ] GET_EXTERNAL INCENTIVE")
-
-	externalIncentives.tree.Iterate("", "", func(key string, value interface{}) bool {
-		incentive := value.(*ExternalIncentive)
-		if incentive.targetPoolPath == poolPath {
-			println(" > incentiveId:", incentive.incentiveId)
-			println(" > targetPoolPath:", incentive.targetPoolPath)
-			println(" > rewardToken:", incentive.rewardToken)
-			println(" > rewardAmount:", strconv.FormatUint(incentive.rewardAmount, 10))
-			println(" > rewardLeft:", strconv.FormatUint(incentive.rewardLeft, 10))
-			println(" > startTimestamp:", strconv.FormatInt(incentive.startTimestamp, 10))
-			println(" > endTimestamp:", strconv.FormatInt(incentive.endTimestamp, 10))
-			rewardPerBlockU256 := u256.MustFromDecimal(strconv.FormatUint(incentive.rewardPerBlock, 10))
-			q96 := u256.MustFromDecimal(consts.Q96)
-			rewardPerBlockX96 := u256.Zero().Mul(rewardPerBlockU256, q96)
-			println(" > rewardPerBlockX96:", rewardPerBlockX96.ToString())
-			println(" > refundee:", incentive.refundee.String())
-		}
-		return false
-	})
-
-	println("[ END ] GET_EXTERNAL INCENTIVE")
+	return poolTier.CurrentReward(tier)
 }
 
 // GetExternalIncentive retrieves an external incentive by its ID.

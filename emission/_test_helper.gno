@@ -22,10 +22,10 @@ func resetObject(t *testing.T) {
 	t.Helper()
 
 	distributionBpsPct = avl.NewTree()
-	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), 7500)
-	distributionBpsPct.Set(strconv.Itoa(DEVOPS), 2000)
-	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), 500)
-	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), 0)
+	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), uint64(7500))
+	distributionBpsPct.Set(strconv.Itoa(DEVOPS), uint64(2000))
+	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), uint64(500))
+	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), uint64(0))
 
 	distributedToStaker = 0
 	distributedToDevOps = 0

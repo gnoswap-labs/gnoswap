@@ -156,36 +156,48 @@ func TestGetHalvingInfo(t *testing.T) {
 
 func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 	t.Run("panic if caller is not admin", func(t *testing.T) {
+		oldCallback := callbackEmissionChange
+		callbackEmissionChange = func(amount uint64) {}
 		uassert.PanicsWithMessage(t,
 			"caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission",
 			func() {
 				SetAvgBlockTimeInMsByAdmin(1)
 			},
 		)
+		callbackEmissionChange = oldCallback
 	})
 
 	t.Run("success if caller is admin", func(t *testing.T) {
+		oldCallback := callbackEmissionChange
+		callbackEmissionChange = func(amount uint64) {}
 		std.TestSkipHeights(1)
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
 		SetAvgBlockTimeInMsByAdmin(2)
 		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(2))
+		callbackEmissionChange = oldCallback
 	})
 }
 
 func TestSetAvgBlockTimeInMs(t *testing.T) {
 	t.Run("panic if caller is not governance contract", func(t *testing.T) {
+		oldCallback := callbackEmissionChange
+		callbackEmissionChange = func(amount uint64) {}
 		uassert.PanicsWithMessage(t,
 			"caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission",
 			func() {
 				SetAvgBlockTimeInMs(3)
 			},
 		)
+		callbackEmissionChange = oldCallback
 	})
 
 	t.Run("success if caller is governance contract", func(t *testing.T) {
+		oldCallback := callbackEmissionChange
+		callbackEmissionChange = func(amount uint64) {}
 		std.TestSkipHeights(3)
 		std.TestSetRealm(govRealm)
 		SetAvgBlockTimeInMs(4)
 		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(4))
+		callbackEmissionChange = oldCallback
 	})
 }
