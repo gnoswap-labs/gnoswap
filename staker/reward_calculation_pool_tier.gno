@@ -259,8 +259,6 @@ func CalculateTierReward(currentEmission uint64, tierRatio *TierRatio, tier uint
 // There MUST be no ratio/count/tier change during the emissionUpdates
 // (due to calling cacheReward() at the start of changeTier(), this holds true).
 func (self *PoolTier) cacheReward(currentHeight int64, pools *Pools) {
-	println("cacheReward", currentHeight)
-
 	lastHeight := self.lastRewardCacheHeight
 
 	if currentHeight <= lastHeight {
@@ -338,10 +336,4 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, startBlock, endBlock in
 
 func (self *PoolTier) IsInternallyIncentivizedPool(currentHeight int64, poolPath string) bool {
 	return self.CurrentTier(poolPath) > 0
-}
-
-// Called when msPerBlock is changed or staker emission % is changed.
-// This does not take account of halving.
-func CallbackStakerEmissionChange(amount uint64) {
-	poolTier.cacheReward(std.GetHeight(), pools)
 }
