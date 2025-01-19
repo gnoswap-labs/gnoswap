@@ -14,6 +14,7 @@ var validCallers = map[std.Address]bool{
 	consts.ROUTER_ADDR:         true,
 	consts.POSITION_ADDR:       true,
 	consts.STAKER_ADDR:         true,
+	consts.LAUNCHPAD_ADDR:      true,
 }
 
 // isValidCaller checks if the given address has permission to modify referral data.
