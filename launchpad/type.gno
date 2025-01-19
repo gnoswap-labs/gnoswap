@@ -435,6 +435,12 @@ func (r *RewardInfo) GetLastHeight() uint64 {
 func (r *RewardInfo) SetLastHeight(v uint64) {
 	r.LastHeight = v
 }
+func (r *RewardInfo) calculateReward(accumRewardPerDeposit *u256.Uint) uint64 {
+	actualRewardPerDeposit := u256.Zero().Sub(accumRewardPerDeposit, r.PriceDebt())
+	reward := u256.Zero().Mul(actualRewardPerDeposit, u256.NewUint(r.DepositAmount()))
+	reward = u256.Zero().Rsh(reward, 128)
+	return reward.Uint64() - r.Claimed()
+}
 
 type Reward struct {
 	accumRewardPerDeposit *u256.Uint // claimable Launchpad reward per GNS stake, Q128
@@ -483,15 +489,16 @@ func (r *Reward) SetInfo(v *avl.Tree) {
 func (r *Reward) accumulationRewardUint64() uint64 {
 	return u256.Zero().Rsh(r.accumRewardPerDeposit, 128).Uint64()
 }
-func (r *Reward) InfoOf(depositId string) RewardInfo {
+func (r *Reward) InfoOf(depositId string) *RewardInfo {
 	infoI, exists := r.info.Get(depositId)
 	if !exists {
 		panic(addDetailToError(
 			errNotExistDeposit, ufmt.Sprintf("(%s)", depositId)))
 	}
-	return infoI.(RewardInfo)
+
+	return infoI.(*RewardInfo)
 }
-func (r *Reward) calculateRewardPerDeposit(rewardPerBlock, totalStaked uint64) (*u256.Uint, error) {
+func (r *Reward) calculateRewardPerDeposit(rewardPerBlock *u256.Uint, totalStaked uint64) (*u256.Uint, error) {
 	// blockDuration * rewardPerBlock / totalStaked
 	currentHeight := uint64(std.GetHeight())
 	lastUpdateHeight := r.GetLastHeight()
@@ -502,16 +509,19 @@ func (r *Reward) calculateRewardPerDeposit(rewardPerBlock, totalStaked uint64) (
 		return nil, errors.New(addDetailToError(
 			errInvalidHeight, ufmt.Sprintf("currentHeight(%d) <= lastUpdateHeight(%d)", currentHeight, lastUpdateHeight)))
 	}
-	if rewardPerBlock == 0 {
+	if rewardPerBlock.IsZero() {
 		return nil, errors.New(addDetailToError(
 			errNoLeftReward, ufmt.Sprintf("rewardPerBlock(%d)", rewardPerBlock)))
 	}
 	if totalStaked == 0 {
 		return u256.Zero(), nil
 	}
+	if currentHeight > r.EndHeight {
+		currentHeight = r.EndHeight
+	}
 
 	blockDuration := currentHeight - lastUpdateHeight
-	totalReward := u256.Zero().Mul(u256.NewUint(blockDuration), u256.NewUint(rewardPerBlock))
+	totalReward := u256.Zero().Mul(u256.NewUint(blockDuration), rewardPerBlock)
 	rewardPerDeposit := u256.Zero().Div(totalReward, u256.NewUint(totalStaked))
 	return rewardPerDeposit, nil
 }
@@ -523,12 +533,52 @@ func (r *Reward) addRewardPerDeposit(rewardPerDeposit *u256.Uint) {
 	r.SetAccumRewardPerDeposit(u256.Zero().Add(r.AccumRewardPerDeposit(), rewardPerDeposit))
 }
 
-func (r *Reward) calculateReward(depositId string) uint64 {
+func (r *Reward) finalize(currentHeight, totalStaked uint64, rewardPerBlock *u256.Uint) (*u256.Uint, error) {
+	if currentHeight < r.LastHeight {
+		// Not started yet
+		return nil, errors.New(addDetailToError(
+			errInvalidHeight, ufmt.Sprintf("currentHeight(%d) <= LastHeight(%d)", currentHeight, r.LastHeight)))
+	}
+	if r.LastHeight > r.EndHeight {
+		// already ended
+		return nil, errors.New(addDetailToError(
+			errInvalidHeight, ufmt.Sprintf("LastHeight(%d) >= EndHeight(%d)", r.LastHeight, r.EndHeight)))
+	}
+	if currentHeight > r.EndHeight {
+		currentHeight = r.EndHeight
+	}
+	return r.calculateRewardPerDeposit(rewardPerBlock, totalStaked)
+}
+func (r *Reward) deductReward(depositId string, currentHeight uint64) uint64 {
+	if currentHeight < r.LastHeight {
+		panic(addDetailToError(
+			errInvalidRewardState,
+			ufmt.Sprintf("currentHeight %d is less than LastHeight %d", currentHeight, r.LastHeight)))
+	}
+
+	deposit := deposits[depositId]
+	if currentHeight < deposit.claimableHeight {
+		panic(addDetailToError(
+			errInvalidRewardState,
+			ufmt.Sprintf("currentHeight %d is less than claimableHeight %d", currentHeight, deposit.claimableHeight)))
+	}
+
 	info := r.InfoOf(depositId)
-	actualRewardPerDeposit := u256.Zero().Sub(r.AccumRewardPerDeposit(), info.PriceDebt())
-	reward := u256.Zero().Mul(actualRewardPerDeposit, u256.NewUint(info.DepositAmount()))
-	reward = reward.Rsh(reward, 128)
-	return reward.Uint64() - info.Claimed()
+	if currentHeight < info.StartHeight() {
+		panic(addDetailToError(
+			errInvalidRewardState,
+			ufmt.Sprintf("currentHeight %d is less than StartHeight %d", currentHeight, info.StartHeight())))
+	}
+	reward64 := info.calculateReward(r.AccumRewardPerDeposit())
+
+	if reward64 == 0 {
+		return 0
+	}
+
+	info.SetClaimed(info.Claimed() + reward64)
+	r.info.Set(depositId, info)
+
+	return reward64
 }
 
 type Deposit struct {
@@ -667,6 +717,9 @@ func (d *Deposit) RewardCollectTime() uint64 {
 }
 func (d *Deposit) SetRewardCollectTime(v uint64) {
 	d.rewardCollectTime = v
+}
+func (d *Deposit) isClaimable(currentHeight uint64) bool {
+	return d.claimableHeight <= currentHeight
 }
 
 type TimeInfo struct {

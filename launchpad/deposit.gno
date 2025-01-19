@@ -120,7 +120,7 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 	}
 
 	reward := tier.Reward()
-	rewardPerDeposit, err := reward.calculateRewardPerDeposit(tier.rewardPerBlockUint64(), tier.ActualDepositAmount())
+	rewardPerDeposit, err := reward.calculateRewardPerDeposit(tier.TierAmountPerBlockX128(), tier.ActualDepositAmount())
 	if err != nil {
 		panic(err.Error())
 	}

@@ -86,7 +86,6 @@ func (states RewardStates) DeleteProject(projectId string) uint64 {
 	states.states.Iterate(projectId+":", projectId+";", func(key string, value interface{}) bool {
 		state := value.(*RewardState)
 		totalEmptyBlock := state.TotalEmptyBlock
-		println("totalEmptyBlock", totalEmptyBlock)
 		if state.TotalStake == 0 {
 			totalEmptyBlock += state.EndHeight - state.LastHeight
 		}
@@ -100,7 +99,6 @@ func (states RewardStates) DeleteProject(projectId string) uint64 {
 	for _, key := range keys {
 		states.states.Remove(key)
 	}
-	println("totalLeftover", totalLeftover)
 
 	return totalLeftover
 }
@@ -125,7 +123,6 @@ func (self *RewardState) CalculateReward(depositId string) uint64 {
 // amount MUST be less than or equal to the amount of xGNS staked
 // This function does not check it
 func (self *RewardState) deductReward(depositId string, currentHeight uint64) uint64 {
-	println("deductReward debug", self.Debug())
 	if currentHeight < self.LastHeight {
 		panic(addDetailToError(
 			errInvalidRewardState,
@@ -153,8 +150,6 @@ func (self *RewardState) deductReward(depositId string, currentHeight uint64) ui
 
 	info.Claimed += reward64
 	self.info.Set(depositId, info)
-
-	//self.LastHeight = currentHeight
 
 	return reward64
 }
@@ -200,9 +195,6 @@ func (self *RewardState) AddStake(currentHeight uint64, depositId string, amount
 
 	self.TotalStake += amount
 
-	// TODO:
-	// 1. 여기는 절대 타지 않는 코드로 보임
-	// 2. depositId가 블록 높이를 포함하고 있어서, 같은 DepositId에 Add되기 어려움
 	if self.info.Has(depositId) {
 		info := self.Info(depositId)
 		info.PriceDebt.Add(info.PriceDebt, u256.NewUint(info.Amount))
@@ -219,8 +211,6 @@ func (self *RewardState) AddStake(currentHeight uint64, depositId string, amount
 		Amount:      amount,
 		Claimed:     0,
 	}
-
-	println("addstake info", info.Debug())
 
 	self.info.Set(depositId, info)
 }
@@ -256,25 +246,3 @@ func (self *RewardState) RemoveStake(depositId string, amount uint64, currentHei
 
 	return reward
 }
-
-/*
-var (
-	//q96                  = u256.MustFromDecimal(consts.Q96)
-	lastCalculatedHeight uint64 // flag to prevent same block calculation
-)
-
-var (
-	gotGnsForEmission            uint64
-	leftGnsEmissionFromLast      uint64
-	alreadyCalculatedGnsEmission uint64
-
-	leftProtocolFeeFromLast      = avl.NewTree() // tokenPath -> tokenAmount
-	alreadyCalculatedProtocolFee = avl.NewTree() // tokenPath -> tokenAmount
-)
-
-var (
-	userXGnsRatio         = avl.NewTree() // address -> ratioX96
-	userEmissionReward    = avl.NewTree() // address -> gnsAmount
-	userProtocolFeeReward = avl.NewTree() // address -> tokenPath -> tokenAmount
-)
-*/

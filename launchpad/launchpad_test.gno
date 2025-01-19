@@ -712,10 +712,9 @@ func TestReward_GetSet(t *testing.T) {
 	if r.GetEndHeight() != 1000 {
 		t.Errorf("EndHeight mismatch, got=%d", r.GetEndHeight())
 	}
-	if r.Info() != nil {
-		t.Errorf("Info mismatch, got=%v, want=nil", r.Info())
+	if r.Info() == nil {
+		t.Errorf("Info mismatch, got=%v, want=not nil", r.Info())
 	}
-
 	r.SetAccumRewardPerDeposit(u256.NewUint(9999))
 	if r.AccumRewardPerDeposit().ToString() != "9999" {
 		t.Errorf("SetAccumRewardPerDeposit failed, got=%s", r.AccumRewardPerDeposit().ToString())

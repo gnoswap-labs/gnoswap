@@ -42,86 +42,76 @@ func CollectProtocolFee() {
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectrewardbyprojectid
 func CollectRewardByProjectId(projectId string) uint64 {
 	assertOnlyNotHalted()
-	en.MintAndDistributeGns()
 
-	project, exists := projects[projectId]
-	if !exists {
-		panic(addDetailToError(
-			errInvalidProjectId, ufmt.Sprintf("projectId(%s) not found", projectId)))
+	project, err := getProject(projectId)
+	if err != nil {
+		panic(err.Error())
 	}
-
 	caller := getPrevAddr()
+	if _, exists := depositsByUserByProject[caller]; !exists {
+		panic(addDetailToError(errInvalidCaller, ufmt.Sprintf("caller(%s) not found", caller)))
+	}
 	depositIds, exists := depositsByUserByProject[caller][projectId]
 	if !exists {
 		panic(addDetailToError(
 			errNotExistDeposit, ufmt.Sprintf("depositId (%s) not found", projectId)))
 	}
+	en.MintAndDistributeGns()
 
 	currentHeight := uint64(std.GetHeight())
 	totalReward := uint64(0) // toUser
-	prevAddr, prevPkgPath := getPrev()
+	prevPkgPath := getPrevPkgPath()
 
 	for _, depositId := range depositIds {
 		deposit, ok := deposits[depositId]
 		if !ok {
-			//continue
-			panic(addDetailToError(
-				errNotExistDeposit, ufmt.Sprintf("depositId (%s) not found", depositId)))
-		}
-
-		rewardState, err := rewardStates.Get(deposit.projectId, deposit.tier)
-		if err != nil {
 			continue
 		}
 
-		reward := rewardState.Claim(depositId, currentHeight)
-		if reward == 0 {
-			println("E: continue")
+		if !deposit.isClaimable(currentHeight) {
 			continue
 		}
-
-		pjt := projects[deposit.projectId]
-		if pjt.id != projectId {
-			panic(addDetailToError(
-				errInvalidProjectId, ufmt.Sprintf("projectId(%s) not matched", projectId)))
-		}
-
 		if err = validateRewardCollection(deposit, currentHeight); err != nil {
 			panic(err.Error())
 		}
 
-		totalReward += reward
+		tier, err := project.Tier(convertTierTypeStrToUint64(deposit.Tier()))
+		if err != nil {
+			panic(err.Error())
+		}
+		reward := tier.Reward()
+		rewardPerDeposit, err := reward.finalize(currentHeight, tier.ActualDepositAmount(), tier.TierAmountPerBlockX128())
+		if err != nil {
+			panic(err.Error())
+		}
+		reward.addRewardPerDeposit(rewardPerDeposit)
+		reward.SetLastHeight(currentHeight)
+		rewardAmount := reward.deductReward(depositId, currentHeight)
+		if rewardAmount == 0 {
+			continue
+		}
+
+		// tier update
+		tier.userCollectedAmount += rewardAmount
+		// project update
+		project.Stats().totalCollected += rewardAmount
+
+		totalReward += rewardAmount
 
 		std.Emit(
 			"CollectRewardByProjectId",
-			"prevAddr", prevAddr,
+			"prevAddr", caller.String(),
 			"prevRealm", prevPkgPath,
 			"projectId", projectId,
 			"depositId", depositId,
-			"amount", strconv.FormatUint(reward, 10),
+			"amount", strconv.FormatUint(rewardAmount, 10),
 		)
-
-		// Update project and tier stats
-		project.stats.totalCollected += reward
-
-		var tier Tier
-		switch deposit.tier {
-		case "30":
-			tier = project.tiers[TIER30]
-			tier.userCollectedAmount += reward
-		case "90":
-			tier = project.tiers[TIER90]
-			tier.userCollectedAmount += reward
-		case "180":
-			tier = project.tiers[TIER180]
-			tier.userCollectedAmount += reward
-		}
-		project = setTier(project, deposit.tier, tier)
+		project.setTier(convertTierTypeStrToUint64(deposit.Tier()), tier)
 
 		// Update deposit
-		deposit.rewardCollected += reward
-		deposit.rewardCollectHeight = currentHeight
-		deposit.rewardCollectTime = uint64(time.Now().Unix())
+		deposit.SetRewardCollected(deposit.RewardCollected() + rewardAmount)
+		deposit.SetRewardCollectHeight(currentHeight)
+		deposit.SetRewardCollectTime(uint64(time.Now().Unix()))
 		deposits[depositId] = deposit
 	}
 
@@ -249,20 +239,14 @@ func calculateTierRewards(tier Tier, currentHeight uint64, lastCalcHeight uint64
 
 // calcDepositRatioX128 calculates the deposit ratio with Q128 precision
 func calcDepositRatioX128(tierAmount uint64, amount uint64) *u256.Uint {
-	println("tierAmount", tierAmount)
 	amountX128 := new(u256.Uint).Mul(u256.NewUint(amount), q128.Clone())
 	amountX128x := new(u256.Uint).Mul(amountX128, u256.NewUint(1_000_000_000))
-	println("amountX128x", amountX128x.ToString())
 
 	tierAmountX128 := new(u256.Uint).Mul(u256.NewUint(tierAmount), q128.Clone())
-	println("tierAmountX128", tierAmountX128.ToString())
 
 	depositRatioX96 := new(u256.Uint).Div(amountX128x, tierAmountX128)
-	println("depositRatioX96", depositRatioX96.ToString())
 	depositRatioX96 = new(u256.Uint).Mul(depositRatioX96, q128.Clone())
 	depositRatioX96 = new(u256.Uint).Div(depositRatioX96, u256.NewUint(1_000_000_000))
-	println("depositRatioX96", depositRatioX96.ToString())
-
 	return depositRatioX96
 }
 

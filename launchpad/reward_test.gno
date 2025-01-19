@@ -353,7 +353,6 @@ func TestCollectRewardByDepositId_OwnerCheck(t *testing.T) {
 		rewardStates.Set(project.id, "30", mockRs)
 
 		amount := CollectRewardByDepositId("depA")
-		println("3")
 		uassert.Equal(t, uint64(100), amount)
 	})
 }
