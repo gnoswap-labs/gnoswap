@@ -197,7 +197,6 @@ func (self *canonicalRewardState) CalculateCanonicalReward() map[uint64]Reward {
 	internalRewardPerPool := self.InternalRewardPerPool(self.PerBlockEmission)
 	externalRewardPerPool := self.ExternalRewardPerPool(int64(currentHeight))
 
-	println("	###CalculateCanonicalReward")
 	self.global.deposits.Iterate(0, math.MaxUint64, func(tokenId uint64, deposit *Deposit) bool {
 		if !self.isInRange(deposit) {
 			return false
@@ -309,15 +308,9 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 }
 
 func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
-	// emissionUpdateHeights, emissionUpdates := self.EmissionUpdates(*self.global.poolTier.lastRewardCacheHeight, uint64(self.CurrentHeight()))
-
-	println("[[[EmulatedRewardOf Start]]]")
-
 	if !self.global.deposits.Has(depositId) {
-		println("[[[EmulatedRewardOf End]]]: nonexisting")
 		claimed := self.emulatedClaimedReward[depositId]
 		self.emulatedClaimedReward[depositId] = 0
-		println("	claimed : ", claimed)
 		return Reward{
 			Internal: claimed,
 			InternalPenalty: 0,
@@ -328,12 +321,6 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
 
 	rewards, penalties, externalRewards, externalPenalties := self.EmulateCalcPositionReward(depositId)
 
-	println("[[[EmulatedRewardOf Start]]]")
-	println("rewards: ", rewards)
-	println("penalties: ", penalties)
-	println("externalRewards: ", externalRewards)
-	println("externalPenalties: ", externalPenalties)
-	
 	deposit := self.global.deposits.Get(depositId)
 	deposit.lastCollectHeight = self.CurrentHeight()
 
@@ -343,7 +330,6 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
 	}
 	claimed, ok := self.emulatedClaimedReward[depositId]
 	if ok {
-		println("ADDED CLAIMED REWARD", claimed, internal+claimed)
 		internal += claimed
 		self.emulatedClaimedReward[depositId] = 0
 	}
@@ -437,7 +423,6 @@ func (self *canonicalRewardState) UnstakeToken(tokenId uint64) {
 
 	// Emulating CollectReward()
 	reward := self.EmulatedRewardOf(tokenId)
-	println("ADD TO CLAIMED REWARD", tokenId, reward.Internal)
 	self.emulatedClaimedReward[tokenId] += reward.Internal
 
 	// update global state
@@ -618,7 +603,6 @@ func isInErrorRange(expected uint64, actual uint64) bool {
 
 func (self *canonicalRewardState) AssertEmulatedRewardOf(depositId uint64, expected uint64) {
 	reward := self.EmulatedRewardOf(depositId)
-	println("	reward : ", reward.Internal)
 	if !isInErrorRange(expected, reward.Internal) {
 		self.t.Errorf("emulated reward of %d mismatch: expected %d, got %d", depositId, expected, reward.Internal)
 		panic("emulated reward mismatch")
@@ -648,9 +632,7 @@ func (self *canonicalRewardState) AssertEquivalence(depositId uint64) {
 }
 
 func (self *canonicalRewardState) AssertEmulatedRewardMap(expected map[uint64]uint64) {
-	println("[[[AssertEmulatedRewardMap Start]]]")
 	for key, value := range expected {
-		println("key: ", key, "value: ", value)
 		self.AssertEmulatedRewardOf(key, value)
 	}
 }

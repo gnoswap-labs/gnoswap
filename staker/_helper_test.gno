@@ -502,19 +502,6 @@ func gnsBalanceCheck(t *testing.T, beforeBalance gnsBalanceTracker, printChange 
 	protocolFeeBalance := gns.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR))
 	callerBalance := gns.BalanceOf(a2u(caller))
 
-	if printChange {
-		println("[START] gnsBalanceCheck")
-		println("height", beforeBalance.height, "->", height, "|| diff", height-beforeBalance.height)
-		println("stakerBalance", beforeBalance.stakerBalance, "->", stakerBalance, "|| diff", stakerBalance-beforeBalance.stakerBalance)
-		println("devOpsBalance", beforeBalance.devOpsBalance, "->", devOpsBalance, "|| diff", devOpsBalance-beforeBalance.devOpsBalance)
-		println("communityPoolBalance", beforeBalance.communityPoolBalance, "->", communityPoolBalance, "|| diff", communityPoolBalance-beforeBalance.communityPoolBalance)
-		println("govStakerBalance", beforeBalance.govStakerBalance, "->", govStakerBalance, "|| diff", govStakerBalance-beforeBalance.govStakerBalance)
-		println("protocolFeeBalance", beforeBalance.protocolFeeBalance, "->", protocolFeeBalance, "|| diff", protocolFeeBalance-beforeBalance.protocolFeeBalance)
-		println("callerBalance", beforeBalance.callerBalance, "->", callerBalance, "|| diff", callerBalance-beforeBalance.callerBalance)
-		println("[END] gnsBalanceCheck")
-		println()
-	}
-
 	return gnsBalanceTracker{
 		height:               height,
 		stakerBalance:        stakerBalance,

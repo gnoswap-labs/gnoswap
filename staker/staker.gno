@@ -217,8 +217,6 @@ func init() {
 //
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#staketoken
 func StakeToken(tokenId uint64) (string, string, string) {
-
-	println("================== Stake Token (", tokenId, ") ==================")
 	assertOnlyNotHalted()
 	assertOnlyNotStaked(tokenId)
 
@@ -274,9 +272,7 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	pn.SetPositionOperator(tokenId, caller)
 
 	signedLiquidity := i256.FromUint256(liquidity)
-
 	isInRange := false
-	println("[", currentHeight, "][", tokenId, "] currentTick: ", currentTick)
 
 	// TODO: call cache functions at the every staker related state change
 	poolTier.cacheReward(currentHeight, pools)
@@ -292,16 +288,9 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	// ticks are negated if the token1 < token0
 	upperTick := pool.ticks.Get(tickUpper)
 	lowerTick := pool.ticks.Get(tickLower)
+
 	upperTick.modifyDepositUpper(currentHeight, currentTick, signedLiquidity)
-	println("upperTick id : ", upperTick.id)
-	println("upperTick stakedLiquidityGross: ", upperTick.stakedLiquidityGross.ToString())
-	println("upperTick stakedLiquidityDelta: ", upperTick.stakedLiquidityDelta.ToString())
-	//println("upperTick Size: ", upperTick.cross.tree.Size())
 	lowerTick.modifyDepositLower(currentHeight, currentTick, signedLiquidity)
-	println("lowerTick id: ", lowerTick.id)
-	println("lowerTick stakedLiquidityGross: ", lowerTick.stakedLiquidityGross.ToString())
-	println("lowerTick stakedLiquidityDelta: ", lowerTick.stakedLiquidityDelta.ToString())
-	//println("lowerTick Size: ", lowerTick.cross.tree.Size())
 
 	prevAddr, prevPkgPath := getPrev()
 
@@ -411,13 +400,6 @@ func transferDeposit(tokenId uint64, owner, caller, to std.Address) error {
 //
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#collectreward
 func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
-
-	println("")
-	println("")
-	println("")
-	println("")
-	println("================== CollectReward (", tokenId, ") ==================")
-
 	assertOnlyNotHalted()
 
 	en.MintAndDistributeGns()
@@ -438,7 +420,6 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 	// transfer external rewards to user
 	externalReward := reward.External
 	for incentiveId, amount := range externalReward {
-		println("[EXTERNAL] incentiveId", incentiveId)
 		incentive := externalIncentives.Get(incentiveId)
 		rewardToken := incentive.rewardToken
 		if incentive.rewardAmount < amount {
@@ -454,17 +435,9 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 
 		teller := common.GetTokenTeller(rewardToken)
 		teller.Transfer(deposit.owner, toUser)
-		println("[EXTERNAL] Token", rewardToken)
-		println("[EXTERNAL] sending reward", toUser, "to", deposit.owner)
-		println("[EXTERNAL] transfer ok")
 
 		externalPenalty := reward.ExternalPenalty[incentiveId]
-		println("[EXTERNAL] externalPenalty", externalPenalty)
-
-		println("[EXTERNAL] Before_incentive.rewardLeft", incentive.rewardLeft)
 		incentive.rewardLeft += externalPenalty
-		println("[EXTERNAL] After_incentive.rewardLeft", incentive.rewardLeft)
-		println()
 
 		// unwrap if necessary
 		if unwrapResult && rewardToken == consts.WUGNOT_PATH {
@@ -477,18 +450,11 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 	totalEmissionSent += toUser
 
 	if toUser > 0 {
-		println("[INTERNAL] gns balance (staker) : ", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
-
-		println("[INTERNAL] sending reward\t", toUser, "to", deposit.owner, "// gns balance (staker) :", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
 		gns.Transfer(a2u(deposit.owner), toUser)
-		println("[INTERNAL] sending reward ok")
 
 		// internal penalty to community pool
-		println("[INTERNAL] sending penalty\t", reward.InternalPenalty, "to community pool // gns balance (staker) :", gns.BalanceOf(pusers.AddressOrName(consts.STAKER_ADDR)))
 		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), reward.InternalPenalty)
 		totalEmissionSent += reward.InternalPenalty
-		println("[INTERNAL] sending penalty ok")
-		println()
 
 		// TODO:
 		// reward ledger update!!
@@ -496,7 +462,6 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 
 	unClaimableInternal := ProcessUnClaimableReward(deposit.targetPoolPath, currentHeight)
 	totalEmissionSent += unClaimableInternal
-	println("unClaimableInternal : ", unClaimableInternal)
 	if unClaimableInternal > 0 {
 		// internal unclaimable to community pool
 		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), unClaimableInternal)
@@ -521,37 +486,6 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 
 	return strconv.FormatUint(toUser, 10), strconv.FormatUint(reward.InternalPenalty, 10)
 }
-
-/*
-func applyCollectReward(
-	result *collectResult,
-	unwrap bool,
-) ([]externalRewardResult, internalRewardResult) {
-	rewardResults := make([]externalRewardResult, 0)
-
-	// apply external rewards
-	result.externalRewards.Iterate("", "", func(ictvId string, value interface{}) bool {
-		reward := value.(externalRewardInfo)
-		rewardResult := applyExternalReward(result.tokenId, reward, result.owner, unwrap)
-		rewardResults = append(rewardResults, rewardResult)
-		return false // continue to iterate
-	})
-
-	// apply internal rewards
-	internalRewardResult := applyInternalReward(result.tokenId, result.internalRewards, result.owner)
-
-	// update staker GNS balance
-	lastCalculatedBalance = calculateGnsBalance()
-
-	return rewardResults, internalRewardResult
-}
-
-func calculateGnsBalance() uint64 {
-	return gnsBalance(consts.STAKER_ADDR) - externalGnsAmount() - externalDepositGnsAmount()
-}
-*/
-
-////////////////////////////////////////////////////////////
 
 // UnstakeToken withdraws an LP token from staking, collecting all pending rewards
 // and returning the token to its original owner.
