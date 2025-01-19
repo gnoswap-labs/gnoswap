@@ -36,10 +36,6 @@ func TestNativeCreateAndCollectUnstake(t *testing.T) {
 func testInit_NativeCreateCollectUnstake(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	// init pool tiers
-	addPoolTier(t, `gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500`, 1)
-	addPoolTier(t, `gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500`, 2)
-
 	// override warm-up period for testing
 	changeWarmup(t, 0, 150)
 	changeWarmup(t, 1, 300)
@@ -67,8 +63,11 @@ func testCreatePool_NativeCreateCollectUnstake(t *testing.T) {
 		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 		std.TestSkipHeights(1)
 
+		pl.CreatePool(barPath, fooPath, uint32(500), common.TickMathGetSqrtRatioAtTick(0).ToString())
 		pl.CreatePool(consts.WUGNOT_PATH, consts.GNS_PATH, uint32(500), common.TickMathGetSqrtRatioAtTick(-10000).ToString())
-		std.TestSkipHeights(1)
+		SetPoolTierByAdmin(`gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500`, 1)
+		SetPoolTierByAdmin(`gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500`, 2)
+		std.TestSkipHeights(18)
 	})
 }
 
@@ -296,13 +295,9 @@ func testEndExternalIncentive(t *testing.T) {
 			1234569600+TIMESTAMP_90DAYS, // endTimestamp
 			134,
 		)
-
 		std.TestSkipHeights(1)
 
-		// FIXME: @mconcat
-		// left reward CAN NOT BE Zero
-		// there should be some reward left to refund
-		uassert.Equal(t, wugnot.BalanceOf(admin), uint64(622937))
-		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(99998010)) // always refund
+		uassert.Equal(t, wugnot.BalanceOf(admin), uint64(622937))         // stays same
+		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(100264985)) // did get some refund
 	})
 }

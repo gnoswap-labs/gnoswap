@@ -7,10 +7,11 @@
 package staker
 
 import (
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
 	"std"
 	"testing"
+
+	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v1/consts"
 
@@ -88,7 +89,7 @@ func testPoolCreatePool(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		pl.CreatePool(barPath, quxPath, 500, "130621891405341611593710811006") // tick 10_000 ≈ x2.7
 		// tier 1
-		addPoolTier(t, `gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500`, 1)
+		SetPoolTierByAdmin(`gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500`, 1)
 		std.TestSkipHeights(1)
 	})
 }
@@ -174,7 +175,7 @@ func testCollectReward01(t *testing.T) {
 	t.Run("admin can not collect reward(not a owner)", func(t *testing.T) {
 		uassert.PanicsWithMessage(
 			t,
-			`[GNOSWAP-STAKER-001] caller has no permission: caller is not owner of tokenId(1)`,
+			`[GNOSWAP-STAKER-001] caller has no permission || caller is not owner of tokenId(1)`,
 			func() {
 				std.TestSetRealm(adminRealm)
 				CollectReward(1, false)
