@@ -51,6 +51,7 @@ func ClearTokenListWithAmount() {
 }
 
 // TransferProtocolFee transfers the protocol fee to devOps and gov/staker.
+// only `gov/staker` can execute this function.
 // It returns list of token with amount has been sent to gov/staker.
 func TransferProtocolFee() map[string]uint64 {
 	assertOnlyGovStaker()
@@ -130,8 +131,6 @@ func assertOnlyGovStaker() {
 		panic(err.Error())
 	}
 }
-
-// assert
 
 func makeEventString(tokenPath string, amount uint64) string {
 	return tokenPath + "*FEE*" + ufmt.Sprintf("%d", amount)
