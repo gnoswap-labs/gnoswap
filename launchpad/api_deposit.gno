@@ -94,13 +94,13 @@ func makeConditionsToStr(conditions map[string]Condition) (string, string) {
 
 	for tokenPath, condition := range conditions {
 		// append with *PAD*, except last one
-		tokenPathList += tokenPath + "*PAD*"
-		amountList += ufmt.Sprintf("%d", condition.minAmount) + "*PAD*"
+		tokenPathList += tokenPath + PAD_SEP
+		amountList += ufmt.Sprintf("%d", condition.minAmount) + PAD_SEP
 	}
 
 	// remove last *PAD*
-	tokenPathList = strings.TrimSuffix(tokenPathList, "*PAD*")
-	amountList = strings.TrimSuffix(amountList, "*PAD*")
+	tokenPathList = strings.TrimSuffix(tokenPathList, PAD_SEP)
+	amountList = strings.TrimSuffix(amountList, PAD_SEP)
 
 	return tokenPathList, amountList
 }
