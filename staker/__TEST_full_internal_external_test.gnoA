@@ -98,11 +98,8 @@ func TestFullInternalExternal(t *testing.T) {
 
 	testReStakeTokenPos01(t) // 스테이킹 해서 웝업 100% 찍었다가 언스테이킹 된 토큰 다시 스테이킹 ( 웜업 처음(30%)부터 적용되야 함 )
 
-	// XXXXX 수정 필요
-	// FIXME @mconcat @onlyhyde @notJoon
-	// testChangeAvgBlockTimeTo4000(t) // XXXXXXXXX 평균 블록 시간 변경
-	// testChangeDistributionPctByAdmin(t) // XXXXXXXXX 스테이커한테 가는 에미션 비율 변경
-
+	testChangeAvgBlockTimeTo4000(t)     // 블록 시간 2배로 증가
+	testChangeDistributionPctByAdmin(t) //  스테이커한테 가는 에미션 비율 변경
 }
 
 func testInit(t *testing.T) {
@@ -167,7 +164,8 @@ func testCreateExternalIncentiveGns(t *testing.T) {
 			1234569600,
 			1234569600+TIMESTAMP_90DAYS,
 		)
-		checkGnsBalance(t)
+
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -193,7 +191,7 @@ func testMintPos01InRange(t *testing.T) {
 			adminAddr,
 			adminAddr,
 		)
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -209,7 +207,7 @@ func testCreateBarBaz500Tier02(t *testing.T) {
 		println("[", std.GetHeight(), "] (gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500) Set PoolTier 2")
 		SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 2)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -235,7 +233,7 @@ func testMintPos02InRange(t *testing.T) {
 			adminAddr,
 			adminAddr,
 		)
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -261,7 +259,7 @@ func testMintPos03OutRange(t *testing.T) {
 			adminAddr,
 			adminAddr,
 		)
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -287,7 +285,7 @@ func testMintPos04OutRange(t *testing.T) {
 			adminAddr,
 			adminAddr,
 		)
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -313,7 +311,7 @@ func testMintPos05OutRange(t *testing.T) {
 			adminAddr,
 			adminAddr,
 		)
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -339,7 +337,7 @@ func testMintPos06OutRange(t *testing.T) {
 			adminAddr,
 			adminAddr,
 		)
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -352,7 +350,7 @@ func testStakeToken01(t *testing.T) {
 		gnft.Approve(stakerAddr, common.TokenIdFrom(1))
 		StakeToken(1)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -365,7 +363,7 @@ func testStakeToken02(t *testing.T) {
 		gnft.Approve(stakerAddr, common.TokenIdFrom(2))
 		StakeToken(2)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -378,7 +376,7 @@ func testStakeToken03(t *testing.T) {
 		gnft.Approve(stakerAddr, common.TokenIdFrom(3))
 		StakeToken(3)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -391,7 +389,7 @@ func testStakeToken04(t *testing.T) {
 		gnft.Approve(stakerAddr, common.TokenIdFrom(4))
 		StakeToken(4)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -404,7 +402,7 @@ func testStakeToken05(t *testing.T) {
 		gnft.Approve(stakerAddr, common.TokenIdFrom(5))
 		StakeToken(5)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -417,7 +415,7 @@ func testStakeToken06(t *testing.T) {
 		gnft.Approve(stakerAddr, common.TokenIdFrom(6))
 		StakeToken(6)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -434,7 +432,7 @@ func testCollectRewardAllForWarmUp30(t *testing.T) {
 		CollectReward(5, false)
 		CollectReward(6, false)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -472,7 +470,7 @@ func testCollectRewardAllForWarmUp50(t *testing.T) {
 		CollectReward(5, false)
 		CollectReward(6, false)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -496,7 +494,7 @@ func testCollectRewardAllForWarmUp70(t *testing.T) {
 		CollectReward(5, false)
 		CollectReward(6, false)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 
@@ -511,7 +509,7 @@ func testCollectRewardAllForWarmUp70(t *testing.T) {
 		CollectReward(5, false)
 		CollectReward(6, false)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -535,7 +533,7 @@ func testCollectRewardAllForWarmUp100(t *testing.T) {
 		CollectReward(5, false)
 		CollectReward(6, false)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 
@@ -550,7 +548,7 @@ func testCollectRewardAllForWarmUp100(t *testing.T) {
 		CollectReward(5, false)
 		CollectReward(6, false)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -576,7 +574,7 @@ func testSwapExactIn(t *testing.T) {
 		// tick changed
 		// > from 0 to -30
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 
@@ -589,7 +587,7 @@ func testSwapExactIn(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		CollectReward(1, false)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 
@@ -613,7 +611,7 @@ func testSwapExactIn(t *testing.T) {
 		// tick changed
 		// > from 0 to -30
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 
@@ -626,7 +624,7 @@ func testSwapExactIn(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		CollectReward(1, false)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 
@@ -648,7 +646,7 @@ func testSwapExactIn(t *testing.T) {
 			max_timeout, // deadline
 		)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 	// tick changed
@@ -658,7 +656,7 @@ func testSwapExactIn(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		CollectReward(1, false) // should have reward for block that exeucted swap
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 	t.Run("check reward for position 01 // #3-2", func(t *testing.T) {
@@ -669,7 +667,7 @@ func testSwapExactIn(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		CollectReward(1, false) // should have no reward since position is out of range
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 
@@ -691,7 +689,7 @@ func testSwapExactIn(t *testing.T) {
 			max_timeout, // deadline
 		)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 	// tick changed
@@ -727,7 +725,7 @@ func testSwapExactOut(t *testing.T) {
 		// tick changed
 		// > from -119 ~ -89
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 
@@ -739,7 +737,7 @@ func testSwapExactOut(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		CollectReward(3, false)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 
@@ -763,7 +761,7 @@ func testSwapExactOut(t *testing.T) {
 		// tick changed
 		// > from -89 ~ -60
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 
@@ -775,7 +773,7 @@ func testSwapExactOut(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		CollectReward(3, false)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 
@@ -799,7 +797,7 @@ func testSwapExactOut(t *testing.T) {
 		// tick changed
 		// > from -60 ~ -30
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 
@@ -811,7 +809,7 @@ func testSwapExactOut(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		CollectReward(3, false)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 
@@ -835,7 +833,7 @@ func testSwapExactOut(t *testing.T) {
 		// tick changed
 		// > from -30 ~ 0
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 
@@ -847,7 +845,7 @@ func testSwapExactOut(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		CollectReward(3, false)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -862,7 +860,7 @@ func testCreatePoolBarFoo100Tier03(t *testing.T) {
 		// height 1944165
 		SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", 3)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -887,7 +885,7 @@ func testOneClickStakingPos07OutRange(t *testing.T) {
 		)
 		uassert.Equal(t, lpTokenId, uint64(7))
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 
@@ -909,7 +907,7 @@ func testOneClickStakingPos07OutRange(t *testing.T) {
 		// bar:foo:0.1% 풀이 1944165 블록에서 티어 3으로 설정되었고, 현재 블록은 1944167
 		// 2 블록 만큼의 리워드(2140410 * 2 = 4280820)가 해당 풀까지 전달되었으나 분배 할 포지션이 없는 관계로 커뮤니티 풀로 빠져야 함
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -920,7 +918,7 @@ func testUnstakeToken01(t *testing.T) {
 
 		UnstakeToken(1, false)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 
@@ -938,7 +936,7 @@ func testUnstakeToken01(t *testing.T) {
 		newCommuGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
 		uassert.Equal(t, uint64(5351027), newCommuGns-oldCommuGns)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 
 	})
@@ -950,7 +948,7 @@ func testCreatePoolBazQux3000ExternalOnly(t *testing.T) {
 
 		pl.CreatePool(bazPath, quxPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // current tick 0
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
@@ -978,7 +976,7 @@ func testCreateExternalIncentiveBaz(t *testing.T) {
 		// 5832978 - 1944978 = 3888000 ( incentive block duration )
 		// 20000000 / 3888000 = 5.1440329218 ( amount of baz reward per block )
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, depositGnsAmount)
 		std.TestSkipHeights(1)
 	})
 }
@@ -1006,7 +1004,7 @@ func testMintPos08InRange(t *testing.T) {
 			adminAddr,
 		)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, depositGnsAmount)
 		std.TestSkipHeights(1)
 	})
 }
@@ -1017,7 +1015,7 @@ func testStakeToken08(t *testing.T) {
 		gnft.Approve(stakerAddr, common.TokenIdFrom(8))
 		StakeToken(8)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, depositGnsAmount)
 		std.TestSkipHeights(1)
 	})
 }
@@ -1034,7 +1032,7 @@ func testCollectReward08(t *testing.T) {
 		uassert.Equal(t, uint64(0), newBaz-oldBaz)
 		// 익스터널 인센티브가 시작되지 않았기에 리워드가 0
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, depositGnsAmount)
 		std.TestSkipHeights(1)
 	})
 }
@@ -1054,13 +1052,13 @@ func testCollectReward08AfterStart(t *testing.T) {
 		CollectReward(8, false)
 		newBaz := baz.BalanceOf(common.AddrToUser(adminAddr))
 
-		uassert.True(t, isNear99Pct(t, uint64(15), newBaz-oldBaz))
+		uassert.True(t, isNear(t, uint64(15), newBaz-oldBaz))
 		// 5 * 10 * 30% = 15 // user receives
 		// > bar reward amount per block is 5.1440329218 == 5
 		// > 10 block skipped after incentive start
 		// > position08 staked duration is 812 ( which is 30% warmUp period )
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, depositGnsAmount)
 		std.TestSkipHeights(1)
 	})
 }
@@ -1121,7 +1119,7 @@ func testEndExternalIncentiveBaz(t *testing.T) {
 		lpNewBaz2 := baz.BalanceOf(common.AddrToUser(adminAddr))
 		uassert.Equal(t, lpNewBaz, lpNewBaz2)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 	})
 }
 
@@ -1131,7 +1129,7 @@ func testReStakeTokenPos01(t *testing.T) {
 		gnft.Approve(stakerAddr, common.TokenIdFrom(1))
 		StakeToken(1)
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 
@@ -1141,17 +1139,16 @@ func testReStakeTokenPos01(t *testing.T) {
 		oldGns := gns.BalanceOf(common.AddrToUser(adminAddr))
 		CollectReward(1, false)
 		newGns := gns.BalanceOf(common.AddrToUser(adminAddr))
-		uassert.True(t, isNear99Pct(t, uint64(1605308), newGns-oldGns))
+		uassert.True(t, isNear(t, uint64(1605308), newGns-oldGns))
 		// 1번 포지션 다시 스테이킹 하고 1 블록 지남 (웜업 30% 부터 계산)
 		// 현재 gnot:gns:0.3% 풀은 티어 1이며, 블록 당 5351027 개의 리워드가 할당 됨
 		// 5351027 * 30% = 1605308.1
 
-		checkGnsBalance(t)
+		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
 	})
 }
 
-// XXXXX 이하 수정 필요
 func testChangeAvgBlockTimeTo4000(t *testing.T) {
 	// 원래 블록 시간 2초였으나 4초로 증가
 	// 1 블록 당 민팅되는 GNS 수량 2배로 증가됨
@@ -1159,12 +1156,24 @@ func testChangeAvgBlockTimeTo4000(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		gns.SetAvgBlockTimeInMsByAdmin(4000)
 		std.TestSkipHeights(1)
+
+		// 리워드 초기화
+		CollectReward(1, false)
 	})
 
 	t.Run("collect reward position 01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
+		std.TestSkipHeights(1)
 
+		oldGns := gns.BalanceOf(common.AddrToUser(adminAddr))
 		CollectReward(1, false) // 1 블록 증가하고 리워드 확인해보면 얘한테 떨어지는 수량 거의 2배로 되야 함
+		newGns := gns.BalanceOf(common.AddrToUser(adminAddr))
+		uassert.True(t, isNear(t, uint64(3210616), newGns-oldGns))
+
+		// 블록 시간 2초일 때 블록 당 리워드 = 10702054
+		// 블록 시간 4초일 때 블록 당 리워드 = 21404108
+		// 티어 1, 2, 3 모두 풀이 있어서, 티어 1 풀은 50%인 10702054 할당
+		// 그 중 warmUp 30% = 10702054 * 30% = 3210616.2
 		std.TestSkipHeights(1)
 
 		// 원복
@@ -1179,20 +1188,33 @@ func testChangeDistributionPctByAdmin(t *testing.T) {
 		// 1번 포지션 리워드 수령
 		CollectReward(1, false)
 
-		en.ChangeDistributionPctByAdmin( // XXXXXXXXX panic: runtime error: invalid memory address or nil pointer dereference
-			1, 0, // 스테이커
-			2, 10000, // 데브옵스
+		en.ChangeDistributionPctByAdmin(
+			1, 5000, // 스테이커
+			2, 5000, // 데브옵스
 			3, 0, // 커뮤니티풀
 			4, 0, // xGNS
 		)
-		std.TestSkipHeights(1) // 1 블록 증가 했으나, 스테이커의 에미션은 비율 0%
+		std.TestSkipHeights(1) // 1 블록 증가 했으나, 스테이커의 에미션은 비율 5%
+
+		// 리워드 초기화
+		CollectReward(1, false)
 	})
 
 	t.Run("collect reward position 01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		CollectReward(1, false)
 		std.TestSkipHeights(1)
-		// 에미션을 통해 스테이커한테 분배되는 비율이 0이 됨
+
+		oldGns := gns.BalanceOf(common.AddrToUser(adminAddr))
+		CollectReward(1, false)
+		newGns := gns.BalanceOf(common.AddrToUser(adminAddr))
+		uassert.True(t, isNear(t, uint64(1070205), newGns-oldGns))
+		// uassert.True(t, isNear(t, uint64(0), newGns-oldGns))
+		// 1 블록 당 발행되는 에미션 수량 14269406
+		// (원래) 75% 할당 = 10702054
+		// (변경) 50% 할당 = 7134703
+
+		// 티어 1 풀은 50% 만큼 분배 = 7134703 * 50% = 3567351.5
+		// 그 중 warmUp 30% = 3567351.5 * 30% = 1070205.45
 
 		// 원복
 		en.ChangeDistributionPctByAdmin(
@@ -1205,7 +1227,7 @@ func testChangeDistributionPctByAdmin(t *testing.T) {
 	})
 }
 
-func checkGnsBalance(t *testing.T) {
+func checkGnsBalance(t *testing.T, adjustAmount uint64) {
 	t.Helper()
 
 	currentHeight := std.GetHeight()
@@ -1220,29 +1242,37 @@ func checkGnsBalance(t *testing.T) {
 	initialDevOpsAmount := uint64(10702054) // 14269406*0.25*3
 
 	externalIncentiveDeposit := uint64(20000000) + depositGnsAmount // externalReward + depositGns
-	emissionLeft := uint64(1)
+	emissionLeft := blockPassedFromGenesis / 2
 	gnsPer2Block := uint64(1)
 
 	uassert.Equal(t, uint64(100000000000000)+(blockPassedFromGenesis*oneBlockEmissionAmount), gns.TotalSupply())
-	uassert.True(t, isNear99Pct(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR)))
 
-	expectStakerBalance := uint64(0) + initialStakerAmount + ((blockPassedFromGenesis - 3) * oneBlockStakerAmount) + externalIncentiveDeposit
-	uassert.True(t, isNear99Pct(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR)+totalEmissionSent))
+	uassert.True(t, isNear(t, uint64(0), gnsBalance(consts.EMISSION_ADDR)))
+
+	expectStakerBalance := uint64(0) + initialStakerAmount + ((blockPassedFromGenesis - 3) * oneBlockStakerAmount) + externalIncentiveDeposit + adjustAmount
+	uassert.True(t, isNear(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR)+totalEmissionSent))
 
 	expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((blockPassedFromGenesis - 3) * oneBlockDevOpsAmount)
-	uassert.True(t, isNear99Pct(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS)))
+	uassert.True(t, isNear(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS)))
 }
 
-// 기존 방식은 매 블록 마다 모든 포지션에 대해 모든 리워드 계산을 하기 때문에 오차를 최소화 할 수 있음
-// 그러나, 여기에 소모되는 비용이(가스도 그렇고, 계산에 필요한 리소스도 그렇고) 너무 크기 때문에
-// 지금과 같이 변경점과 블록 증가 높이에 따라 계산하기 때문에 어느 정도 오차가 발생할 수 있음
-// 이 함수는 오차 범위가 99.99% 이내인지 확인 함
-func isNear99Pct(t *testing.T, expected, actual uint64) bool {
+// check whether the actual value is within 99.999% of the expected value
+func isNear(t *testing.T, expected, actual uint64) bool {
 	t.Helper()
 
-	// 99.99%
-	lower := expected * 9999 / 10000
-	upper := expected * 10001 / 10000
+	// 99.999%
+	lower := expected * 99999 / 100000
+	upper := expected * 100001 / 100000
+
+	if lower <= actual && actual <= upper {
+		return true
+	}
+
+	lower = expected - 1
+	if lower > expected {
+		lower = 0
+	}
+	upper = expected + 1
 
 	if lower <= actual && actual <= upper {
 		return true
