@@ -450,11 +450,11 @@ func deletePoolTier(t *testing.T, poolPath string) {
 	}
 }
 
-func addPoolTier(t *testing.T, poolPath string, tier uint64, tick int32) {
+func addPoolTier(t *testing.T, poolPath string, tier uint64) {
 	t.Helper()
 	if poolTier != nil {
 		if pools != nil {
-			pools.GetOrCreate(poolPath, tick)
+			pools.GetOrCreate(poolPath)
 		} else {
 			panic(addDetailToError(
 				errPoolNotFound, ufmt.Sprintf("unknown error - pools is nil")))
@@ -462,7 +462,7 @@ func addPoolTier(t *testing.T, poolPath string, tier uint64, tick int32) {
 		poolTier.changeTier(std.GetHeight(), pools, poolPath, tier)
 	} else {
 		poolTier = NewPoolTier(pools, std.GetHeight(), poolPath, en.GetEmission, en.GetHalvingBlocksInRange)
-		pools.GetOrCreate(poolPath, tick) // must update pools tree
+		pools.GetOrCreate(poolPath) // must update pools tree
 		poolTier.changeTier(std.GetHeight(), pools, poolPath, tier)
 	}
 }

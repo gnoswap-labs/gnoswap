@@ -14,7 +14,7 @@ func TestQueryPoolData(t *testing.T) {
 	testAddr := testutils.TestAddress("test_address")
 	poolPath := "test_pool"
 
-	pool := NewPool(poolPath, std.GetHeight(), 0)
+	pool := NewPool(poolPath, std.GetHeight())
 	pools.Set(poolPath, pool)
 
 	// Add test incentive to pool

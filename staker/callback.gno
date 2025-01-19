@@ -6,14 +6,18 @@ import (
 	en "gno.land/r/gnoswap/v1/emission"
 )
 
-/*
-func CreateCallbackStakerEmissionChange(pt *PoolTier, pools *Pools) func(uint64) {
-	return func(emission uint64) {
-		pt.cacheReward(std.GetHeight(), pools)
-		pt.currentEmission = emission
-	}
-}
-*/
+
+// callbackStakerEmissionChange is called by emission when 
+// - msPerBlock is changed
+// - staker emission % is changed
+// it does NOT get called in regards of halving(manually handled in cacheReward).
+//
+// Initially, it is passed to emission in staker.gno#init().
+//
+// For the parameter `emission`, which is a per-block emission for staker contract,
+// - It first caches the reward until the current block height.
+// - Then, it updates the `currentEmission` of the poolTier,
+//   which will be applied for future blocks thereafter.
 func callbackStakerEmissionChange(emission uint64) {
 	poolTier.cacheReward(std.GetHeight(), pools)
 	poolTier.currentEmission = emission

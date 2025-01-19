@@ -49,7 +49,7 @@ func QueryPoolData(poolPath string) (*PoolData, error) {
 		PoolPath:         poolPath,
 		Tier:             tier,
 		ActiveIncentives: ictvIds,
-		StakedLiquidity:  pool.CurrentStakedLiquidity(currentHeight),
+		StakedLiquidity:  pool.currentStakedLiquidity,
 	}, nil
 }
 

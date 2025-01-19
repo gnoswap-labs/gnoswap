@@ -26,7 +26,7 @@ type canonicalPool struct {
 	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool)
 }
 
-func (self *canonicalPool) InternalReward(emission uint64, ratio *TierRatio, count uint64) uint64 {
+func (self *canonicalPool) InternalReward(emission uint64, ratio TierRatio, count uint64) uint64 {
 	switch self.tier {
 	case 0:
 		return 0
@@ -279,13 +279,13 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 
 	pool, ok := self.global.pools.Get(poolPath)
 	if !ok {
-		pool = NewPool(poolPath, currentHeight, self.Pool[poolPath].tick)
+		pool = NewPool(poolPath, currentHeight)
 		self.global.pools.Set(poolPath, pool)
 	}
 
 	lastCollectHeight := deposit.lastCollectHeight
 
-	internalRewards, internalPenalties := pool.RewardStateOf(deposit).CalculateInternalReward(int64(lastCollectHeight), int64(currentHeight), pool.rewardCache)
+	internalRewards, internalPenalties := pool.RewardStateOf(deposit).CalculateInternalReward(int64(lastCollectHeight), int64(currentHeight))
 
 	externalRewards := make([]map[string]uint64, 4)
 	externalPenalties := make([]map[string]uint64, 4)
@@ -504,7 +504,7 @@ func (self *canonicalRewardState) CreateExternalIncentive(targetPoolPath string,
 	pool.incentive = append(pool.incentive, incentive)
 
 	// update global state
-	self.global.pools.GetOrCreate(targetPoolPath, pool.tick).incentives.create(refundee, incentive)
+	self.global.pools.GetOrCreate(targetPoolPath).incentives.create(refundee, incentive)
 
 	return incentive.incentiveId
 }
@@ -530,7 +530,7 @@ func (self *canonicalRewardState) ChangePoolTier(poolPath string, tier uint64) {
 
 	// update global state
 	if !self.global.pools.Has(poolPath) {
-		self.global.pools.Set(poolPath, NewPool(poolPath, self.CurrentHeight(), pool.tick))
+		self.global.pools.Set(poolPath, NewPool(poolPath, self.CurrentHeight()))
 	}
 	self.global.poolTier.changeTier(self.CurrentHeight(), self.global.pools, poolPath, tier)
 }
@@ -543,7 +543,7 @@ func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64
 		incentive:     make([]*ExternalIncentive, 0),
 		tickCrossHook: self.tickCrossHook,
 	}
-	self.global.pools.Set(poolPath, NewPool(poolPath, self.CurrentHeight(), initialTick))
+	self.global.pools.Set(poolPath, NewPool(poolPath, self.CurrentHeight()))
 	self.global.poolTier.changeTier(self.CurrentHeight(), self.global.pools, poolPath, initialTier)
 }
 

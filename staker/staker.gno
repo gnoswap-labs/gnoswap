@@ -143,7 +143,7 @@ func init() {
 	// tier 1
 	// ONLY GNOT:GNS 0.3%
 
-	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1, 0)
+	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1)
 	poolTier = NewPoolTier(pools, std.GetHeight(), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange)
 	en.SetCallbackStakerEmissionChange(callbackStakerEmissionChange)
 }
@@ -637,8 +637,8 @@ func poolHasIncentives(poolPath string) error {
 			errNonIncentivizedPool, poolPath,
 		)
 	}
-	hasInternal := poolTier.IsInternallyIncentivizedPool(std.GetHeight(), poolPath)
-	hasExternal := pool.IsExternallyIncentivizedPool(std.GetHeight())
+	hasInternal := poolTier.IsInternallyIncentivizedPool(poolPath)
+	hasExternal := pool.IsExternallyIncentivizedPool()
 	if hasInternal == false && hasExternal == false {
 		return ufmt.Errorf(
 			"%v: can not stake position to non incentivized pool(%s)",

@@ -6,27 +6,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-type InternalTier struct {
-	tier           uint64 // internal reward tier
-	startTimestamp int64  // start time for internal reward
-}
-
-func (i InternalTier) Tier() uint64 {
-	return i.tier
-}
-
-func (i InternalTier) StartTimestamp() int64 {
-	return i.startTimestamp
-}
-
-// newInternalTier creates a new internal tier
-func newInternalTier(tier uint64, startTimestamp int64) InternalTier {
-	return InternalTier{
-		tier:           tier,
-		startTimestamp: startTimestamp,
-	}
-}
-
+// ExternalIncentive is a struct for storing external incentive information.
 type ExternalIncentive struct {
 	incentiveId      string      // incentive id
 	startTimestamp   int64       // start time for external reward

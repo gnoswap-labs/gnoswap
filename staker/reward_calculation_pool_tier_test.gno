@@ -41,7 +41,7 @@ func TestTierRatioFromCounts(t *testing.T) {
 
 	for _, tt := range tests {
 		result := TierRatioFromCounts(tt.tier1Count, tt.tier2Count, tt.tier3Count)
-		if *result != tt.expected {
+		if result != tt.expected {
 			t.Errorf("TierRatioFromCounts(%d, %d, %d) = %v; want %v",
 				tt.tier1Count, tt.tier2Count, tt.tier3Count, result, tt.expected)
 		}

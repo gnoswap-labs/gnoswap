@@ -17,11 +17,14 @@ func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
 	return true
 }
 
+// Reward is a struct for storing reward for a position.
+// Internal reward is the GNS reward, external reward is the reward for other incentives.
+// Penalties are the amount that is deducted from the reward due to the position's warmup.
 type Reward struct {
 	Internal        uint64
 	InternalPenalty uint64
-	External        map[string]uint64
-	ExternalPenalty map[string]uint64
+	External        map[string]uint64 // Incentive ID -> TokenAmount
+	ExternalPenalty map[string]uint64 // Incentive ID -> TokenAmount
 }
 
 func calcPositionRewardByWarmups(currentHeight int64, tokenId uint64) []Reward {
@@ -81,6 +84,7 @@ func calcPositionReward(currentHeight int64, tokenId uint64) Reward {
 	}
 }
 
+// CalcPositionRewardParam is a struct for calculating position reward
 type CalcPositionRewardParam struct {
 	// Environmental variables
 	CurrentHeight int64
@@ -101,33 +105,35 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 
 	pool, ok := param.Pools.Get(poolPath)
 	if !ok {
-		pool = NewPool(poolPath, param.CurrentHeight, pl.PoolGetSlot0Tick(poolPath))
+		pool = NewPool(poolPath, param.CurrentHeight)
 		param.Pools.Set(poolPath, pool)
 	}
 
 	lastCollectHeight := deposit.lastCollectHeight
 
-	// 풀이 꼭 인터널이 있어야 하는건 아님
-	// 익스터널 인센티브만 있는 풀도 있을 수 있음
-	// 따라서 예외처리 해야 함
-	// > 단순 초기화가 아니라 굳이 4개의 아이템을 넣어주는 이유는 리턴할 때 internalRewards 길이만큼 돌면서 externalReward 값을 대입하기 때문
-	internalRewards := []uint64{0, 0, 0, 0}
-	internalPenalties := []uint64{0, 0, 0, 0}
+	// Initializes reward/penalty arrays for rewards and penalties for each warmup
+	internalRewards := make([]uint64, len(deposit.warmups))
+	internalPenalties := make([]uint64, len(deposit.warmups))
+	externalRewards := make([]map[string]uint64, len(deposit.warmups))
+	externalPenalties := make([]map[string]uint64, len(deposit.warmups))
 
 	if param.PoolTier.CurrentTier(poolPath) != 0 {
-		internalRewards, internalPenalties = pool.RewardStateOf(deposit).CalculateInternalReward(lastCollectHeight, param.CurrentHeight, pool.rewardCache)
+		// Internal incentivized pool. 
+		// Calculate reward for each warmup
+		internalRewards, internalPenalties = pool.RewardStateOf(deposit).CalculateInternalReward(lastCollectHeight, param.CurrentHeight)
 	}
 
+	// All active incentives
 	allIncentives := pool.incentives.GetAllInHeights(lastCollectHeight, param.CurrentHeight)
 
-	externalRewards := make([]map[string]uint64, 4)
-	externalPenalties := make([]map[string]uint64, 4)
 	for i := range externalRewards {
 		externalRewards[i] = make(map[string]uint64)
 		externalPenalties[i] = make(map[string]uint64)
 	}
 
 	for incentiveId, incentive := range allIncentives {
+		// External incentivized pool.
+		// Calculate reward for each warmup
 		externalReward, externalPenalty := pool.RewardStateOf(deposit).CalculateExternalReward(int64(lastCollectHeight), int64(param.CurrentHeight), incentive)
 
 		for i := range externalReward {

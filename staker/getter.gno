@@ -503,9 +503,7 @@ func GetPoolTierCount(tier uint64) uint64 {
 // Returns:
 // - uint64: The current reward amount for the specified tier.
 func GetPoolReward(tier uint64) uint64 {
-	rewardDenominators := poolTier.tierRatio.IntoRewardDenominators(poolTier.CurrentAllTierCounts())
-	currentEmission := poolTier.getEmission()
-	return ApplyDenominator(currentEmission, rewardDenominators[tier])
+	return poolTier.CurrentReward(tier)
 }
 
 // GetRewardCacheOf retrieves the reward cache tree for the specified pool tier.
