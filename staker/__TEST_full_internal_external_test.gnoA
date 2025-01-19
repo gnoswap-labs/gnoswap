@@ -98,11 +98,8 @@ func TestFullInternalExternal(t *testing.T) {
 
 	testReStakeTokenPos01(t) // 스테이킹 해서 웝업 100% 찍었다가 언스테이킹 된 토큰 다시 스테이킹 ( 웜업 처음(30%)부터 적용되야 함 )
 
-	// XXXXX 수정 필요
-	// FIXME @mconcat @onlyhyde @notJoon
-	// testChangeAvgBlockTimeTo4000(t) // XXXXXXXXX 평균 블록 시간 변경
-	// testChangeDistributionPctByAdmin(t) // XXXXXXXXX 스테이커한테 가는 에미션 비율 변경
-
+	testChangeAvgBlockTimeTo4000(t)     // 블록 시간 2배로 증가
+	testChangeDistributionPctByAdmin(t) //  스테이커한테 가는 에미션 비율 변경
 }
 
 func testInit(t *testing.T) {
@@ -1151,7 +1148,6 @@ func testReStakeTokenPos01(t *testing.T) {
 	})
 }
 
-// XXXXX 이하 수정 필요
 func testChangeAvgBlockTimeTo4000(t *testing.T) {
 	// 원래 블록 시간 2초였으나 4초로 증가
 	// 1 블록 당 민팅되는 GNS 수량 2배로 증가됨
@@ -1159,12 +1155,24 @@ func testChangeAvgBlockTimeTo4000(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		gns.SetAvgBlockTimeInMsByAdmin(4000)
 		std.TestSkipHeights(1)
+
+		// 리워드 초기화
+		CollectReward(1, false)
 	})
 
 	t.Run("collect reward position 01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
+		std.TestSkipHeights(1)
 
+		oldGns := gns.BalanceOf(common.AddrToUser(adminAddr))
 		CollectReward(1, false) // 1 블록 증가하고 리워드 확인해보면 얘한테 떨어지는 수량 거의 2배로 되야 함
+		newGns := gns.BalanceOf(common.AddrToUser(adminAddr))
+		uassert.True(t, isNear99Pct(t, uint64(3210616), newGns-oldGns))
+
+		// 블록 시간 2초일 때 블록 당 리워드 = 10702054
+		// 블록 시간 4초일 때 블록 당 리워드 = 21404108
+		// 티어 1, 2, 3 모두 풀이 있어서, 티어 1 풀은 50%인 10702054 할당
+		// 그 중 warmUp 30% = 10702054 * 30% = 3210616.2
 		std.TestSkipHeights(1)
 
 		// 원복
@@ -1179,20 +1187,33 @@ func testChangeDistributionPctByAdmin(t *testing.T) {
 		// 1번 포지션 리워드 수령
 		CollectReward(1, false)
 
-		en.ChangeDistributionPctByAdmin( // XXXXXXXXX panic: runtime error: invalid memory address or nil pointer dereference
-			1, 0, // 스테이커
-			2, 10000, // 데브옵스
+		en.ChangeDistributionPctByAdmin(
+			1, 5000, // 스테이커
+			2, 5000, // 데브옵스
 			3, 0, // 커뮤니티풀
 			4, 0, // xGNS
 		)
-		std.TestSkipHeights(1) // 1 블록 증가 했으나, 스테이커의 에미션은 비율 0%
+		std.TestSkipHeights(1) // 1 블록 증가 했으나, 스테이커의 에미션은 비율 5%
+
+		// 리워드 초기화
+		CollectReward(1, false)
 	})
 
 	t.Run("collect reward position 01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		CollectReward(1, false)
 		std.TestSkipHeights(1)
-		// 에미션을 통해 스테이커한테 분배되는 비율이 0이 됨
+
+		oldGns := gns.BalanceOf(common.AddrToUser(adminAddr))
+		CollectReward(1, false)
+		newGns := gns.BalanceOf(common.AddrToUser(adminAddr))
+		uassert.True(t, isNear99Pct(t, uint64(1070205), newGns-oldGns))
+		// uassert.True(t, isNear99Pct(t, uint64(0), newGns-oldGns))
+		// 1 블록 당 발행되는 에미션 수량 14269406
+		// (원래) 75% 할당 = 10702054
+		// (변경) 50% 할당 = 7134703
+
+		// 티어 1 풀은 50% 만큼 분배 = 7134703 * 50% = 3567351.5
+		// 그 중 warmUp 30% = 3567351.5 * 30% = 1070205.45
 
 		// 원복
 		en.ChangeDistributionPctByAdmin(
