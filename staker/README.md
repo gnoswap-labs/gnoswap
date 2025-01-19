@@ -75,15 +75,27 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 }
 ```
 
+## TickCrossHook
+
+TickCrossHook is called when a swap happens through an initialized tick. When called, it first checks if it has any staked position with that tick, and if so, it
+
+1. Updates stakedLiquidity and globalRewardRatioAccumulation
+2. Sets historical tick
+3. Depending on the sign of the staked liquidity, it starts or ends unclaimable period.
+4. Updates CurrentOutsideAccumulation of the tick.
+
+The globalRewardRatioAccumulation stores the integral of $f(h) = 1 / TotalStakedLiquidity(h)$, excluding where TotalStakedLiquidity(h) is zero. currentOutsideAccumulation stores the same data but only for the duration where the pool tick has been the opposite side(in respect to the current tick). When tick cross happens, the "opposite" changes, and the CurrentOutsideAccumulation is recalculated by subtracting it from the latest globalRewardRatioAccumulation.
+
 ## Internal Reward
 
 Internal rewards are distributed across the different tiers, and then each pools. Each internal reward is calculated via
-$$
+```math
 \text{poolReward}(\mathrm{pool}) 
 = \frac{\text{emission} \,\times\, \mathrm{TierRatio}\!\bigl(\mathrm{tier}(\mathrm{pool})\bigr)}
        {\mathrm{Count}\!\bigl(\mathrm{tier}(\mathrm{pool})\bigr)},
-$$
-$$
+```
+
+```math
 \mathrm{TierRatio}(t) \;=\;
 \begin{cases}
 [1,\,0,\,0]_{\,t-1}, 
@@ -95,15 +107,16 @@ $$
 [0.5,\,0.3,\,0.2]_{\,t-1}, 
 & \text{otherwise}.
 \end{cases}
-$$
-$$
+```
+
+```math
 \text{emission} 
 = \mathrm{GNSEmissionPerSecond} 
   \;\times\;
   \biggl(\frac{\mathrm{avgMsPerBlock}}{1000}\biggr)
   \;\times\;
   \mathrm{StakerEmissionRatio}.
-$$
+```
 
 There is always at least one tier-1 pool.
 
@@ -120,9 +133,9 @@ Once the cache is filled until the current block, CalculateInternalReward is cal
 
 The reward is calculated in the following way(given a poolReward):
 
-$$
+```math
 \begin{aligned}
-\text{TotalReward}
+\text{TotalRewardRatio}
 &=
   \underbrace{\text{CRP}\bigl(\text{startHeight},\, h_1\bigr)}_{\text{CRP}(s,h_1)} \times r_1
   \;+\;
@@ -147,10 +160,11 @@ $$
       & \text{otherwise}.
   \end{cases}
 \end{aligned}
-$$
+```
+
+We calculate this TotalRewardRatio for each poolReward interval(by iterating through rewardCache), and take sum of each $TotalRewardRatio(=BlockNumber/TotalStake) * poolReward * positionLiquidity$.
+
 
 ## External Reward
 
-## Unclaimable Period
-
-## Warmup Period
+External rewards have persistent reward per block for their lifetime. When calculating external reward for a specific incentive, the only difference with the internal reward is that there are no rewardCache which stores variable poolReward, rather we only calculate $TotalRewardRatio$ once and multiply it by `ExternalIncentive.rewardPerBlock`.
