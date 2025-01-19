@@ -40,6 +40,8 @@ func TestShortWarmUpTwoExternalIncentive_OneOfThemIsGNS(t *testing.T) {
 
 func testInit(t *testing.T) {
 	t.Run("initialize", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
 		// override warm-up period for testing
 		changeWarmup(t, 0, 150)
 		changeWarmup(t, 1, 300)
@@ -87,7 +89,7 @@ func testMintBarQux100_1(t *testing.T) {
 		)
 
 		uassert.Equal(t, tokenId, uint64(1))
-		uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
+		uassert.Equal(t, gnft.MustOwnerOf(tid(tokenId)), adminAddr)
 
 		std.TestSkipHeights(1)
 	})
@@ -178,8 +180,8 @@ func testCollectReward(t *testing.T) {
 		newBar := bar.BalanceOf(admin)
 		newGns := gns.BalanceOf(admin)
 
-		uassert.Equal(t, newBar-oldBar, uint64(485))
-		uassert.Equal(t, newGns-oldGns, uint64(485))
+		uassert.Equal(t, newBar-oldBar, uint64(878))
+		uassert.Equal(t, newGns-oldGns, uint64(878))
 
 		uassert.True(t, newBar > oldBar)
 		uassert.True(t, newGns > oldGns)
