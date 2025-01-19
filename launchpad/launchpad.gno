@@ -688,8 +688,6 @@ func validateTransferLeft(project Project, recipient std.Address, height uint64)
 	return nil
 }
 
-// TODO:
-// tier30 + 90 + 180 = depositAmount ??
 // calculateLeftReward calculates the remaining reward amount for each tier
 func calculateLeftReward(project Project) uint64 {
 	tier30 := project.tiers[30]
