@@ -1,4 +1,4 @@
-package launchpad
+package tests
 
 import (
 	"std"
