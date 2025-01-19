@@ -152,6 +152,10 @@ func CollectRewardByDepositId(depositId string) uint64 {
 	}
 
 	reward := tier.Reward()
+	if reward.GetLastHeight() == currentHeight {
+		panic(addDetailToError(errAlreadyCollected, ufmt.Sprintf("depositId(%s)", depositId)))
+	}
+
 	rewardPerDeposit, err := reward.finalize(currentHeight, tier.ActualDepositAmount(), tier.TierAmountPerBlockX128())
 	if err != nil {
 		panic(err.Error())
@@ -164,6 +168,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 		panic(addDetailToError(errAlreadyCollected, ufmt.Sprintf("depositId(%s)", depositId)))
 	}
 
+	tier.SetReward(reward)
 	tier.userCollectedAmount += rewardAmount
 	project.Stats().totalCollected += rewardAmount
 
