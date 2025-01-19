@@ -761,8 +761,17 @@ func processDepositCollection(
 
 	for _, depositId := range depositList {
 		deposit := deposits[depositId]
+		// Skip if deposit is already collected
+		if deposit.depositCollectHeight != 0 {
+			continue
+		}
+
 		project, exists := projects[deposit.projectId]
 		if !exists || projectId != "" && project.id != projectId {
+			continue
+		}
+
+		if currentHeight < project.Ended().height {
 			continue
 		}
 
@@ -809,6 +818,10 @@ func processDepositCollection(
 				"amount", strconv.FormatUint(deposit.amount, 10),
 			)
 		}
+	}
+
+	if totalAmount == 0 {
+		return 0, errors.New("no deposit to collect")
 	}
 
 	return totalAmount, nil
