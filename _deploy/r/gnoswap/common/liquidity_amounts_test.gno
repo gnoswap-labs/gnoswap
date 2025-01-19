@@ -240,7 +240,7 @@ func TestGetLiquidityForAmounts(t *testing.T) {
 	}{
 		{
 			name:          "Basic Liquidity Calculation - Token0 Dominant",
-			sqrtRatioX96:  q96.ToString(), // 현재 가격이 Q96
+			sqrtRatioX96:  q96.ToString(),
 			sqrtRatioAX96: (new(u256.Uint).Mul(q96, u256.NewUint(4))).ToString(),
 			sqrtRatioBX96: (new(u256.Uint).Mul(q96, u256.NewUint(16))).ToString(),
 			amount0:       "1000000",

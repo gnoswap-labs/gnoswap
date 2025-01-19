@@ -249,12 +249,6 @@ func testStakeTokenPos01(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		std.TestSkipHeights(2)
 		CollectReward(1, false)
-		// FIXME
-		// 251 라인에서 1블록 스킵하면 CollectReward 정상 동작, 그러나 2 블록 이상 스킵하면 insufficientBalance 패닉 발생
-		// 터미널에 출력되는 로그 보면 unClaimableReward가 10702054 로 계산되고 있음 (이게 원인인듯)
-		// > 스테이킹 포지션 변동 없이 그냥 블록만 증가시켰는데 갑자기 unclaimable이 저만큼 잡혀서 부족한걸로 추정 됨
-		// >>>>>>>>>>>> internalUnClaimable :  10702054 , externalUnClaimable :  map{}
-		// unClaimableInternal :  1070205
 	})
 }
 
