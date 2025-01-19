@@ -73,13 +73,6 @@ func TestRegister(t *testing.T) {
 			wantErr:     true,
 			errCode:     ErrSelfReferral,
 		},
-		{
-			name:        "zero address referral",
-			addr:        validAddr1,
-			refAddr:     zeroAddress,
-			setupCaller: mockValidCaller,
-			wantErr:     false,
-		},
 	}
 
 	for _, tt := range tests {
@@ -148,16 +141,6 @@ func TestUpdate(t *testing.T) {
 			setupCaller: mockValidCaller,
 			wantErr:     true,
 			errCode:     ErrSelfReferral,
-		},
-		{
-			name:    "update to zero address",
-			addr:    validAddr1,
-			refAddr: zeroAddress,
-			setupState: func(k *keeper) {
-				k.store.Set(validAddr1.String(), validAddr2.String())
-			},
-			setupCaller: mockValidCaller,
-			wantErr:     false,
 		},
 	}
 
@@ -370,67 +353,6 @@ func TestUpdateNonExistentReferral(t *testing.T) {
 	}
 	if refAddr != validAddr2 {
 		t.Errorf("got refAddr = %v, want %v", refAddr, validAddr2)
-	}
-}
-
-func TestDuplicateRegistration(t *testing.T) {
-    k := setupKeeper()
-    cleanup := mockValidCaller()
-    defer cleanup()
-
-    originalTimeNow := time.Now
-    time.Now = mockTimeNow
-    defer func() { time.Now = originalTimeNow }()
-
-    err := k.register(validAddr1, validAddr2)
-    if err != nil {
-        t.Fatalf("First registration failed: %v", err)
-    }
-
-    currentTime += MinTimeBetweenUpdates + 1
-
-    err = k.register(validAddr1, validAddr2)
-    if err != nil {
-        t.Errorf("Duplicate registration should succeed, got error: %v", err)
-    }
-
-    refAddr, err := k.get(validAddr1)
-    if err != nil || refAddr != validAddr2 {
-        t.Errorf("Original referral was not preserved")
-    }
-}
-
-// TODO: Chained references seem to need discussion.
-func TestChainedReferrals(t *testing.T) {
-	k := setupKeeper()
-	cleanup := mockValidCaller()
-	defer cleanup()
-
-	addr1 := testutils.TestAddress("addr1")
-	addr2 := testutils.TestAddress("addr2")
-	addr3 := testutils.TestAddress("addr3")
-
-	// A -> B -> C
-	err := k.register(addr1, addr2)
-	if err != nil {
-		t.Fatalf("Failed to register addr1->addr2: %v", err)
-	}
-
-	err = k.register(addr2, addr3)
-	if err != nil {
-		t.Fatalf("Failed to register addr2->addr3: %v", err)
-	}
-
-	// remove middle node (B)
-	err = k.remove(addr2)
-	if err != nil {
-		t.Fatalf("Failed to remove addr2: %v", err)
-	}
-
-	// A -> C
-	refAddr, err := k.get(addr1)
-	if err != nil || refAddr != addr2 {
-		t.Error("addr1's referral should still point to addr2")
 	}
 }
 

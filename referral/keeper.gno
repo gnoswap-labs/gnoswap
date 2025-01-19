@@ -102,6 +102,10 @@ func (k *keeper) remove(target std.Address) error {
 		return err
 	}
 
+	if err := k.checkRateLimit(target.String()); err != nil {
+		return err
+	}
+
 	if !target.IsValid() {
 		return NewError(ErrInvalidAddress)
 	}
