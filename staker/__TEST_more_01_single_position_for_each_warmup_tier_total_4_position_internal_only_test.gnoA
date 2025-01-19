@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
@@ -29,13 +31,10 @@ func TestMore01(t *testing.T) {
 	testMintBarBaz100Pos02(t)
 	testMintBarBaz100Pos03(t)
 	testMintBarBaz100Pos04(t)
-	testPrintWarmup(t)
-	testStakeTokenPos01(t) // FIXME #L249
-	// testStakeTokenPos02(t)
-	// testStakeTokenPos03(t)
-	// testStakeTokenPos04(t)
-	// testCollecRewardAll(t)
-	// testSkip1BlockAndCollectReward(t)
+	testStakeTokenPos01(t)
+	testStakeTokenPos02To04(t)
+	testCollecRewardAll(t)
+	testSkip1BlockAndCollectReward(t)
 }
 
 func testInit(t *testing.T) {
@@ -61,11 +60,12 @@ func testInit(t *testing.T) {
 func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
+
 		// set pool creation fee to 0
 		pl.SetPoolCreationFeeByAdmin(0)
 
 		pl.CreatePool(barPath, bazPath, 100, "79228162514264337593543950337")
-		addPoolTier(t, poolPath, 1)
+		SetPoolTierByAdmin(poolPath, 1)
 		std.TestSkipHeights(1)
 	})
 }
@@ -170,15 +170,6 @@ func testMintBarBaz100Pos04(t *testing.T) {
 	})
 }
 
-func testPrintWarmup(t *testing.T) {
-	t.Run("print warmup", func(t *testing.T) {
-		println("30", warmupTemplate[0].BlockDuration)
-		println("50", warmupTemplate[1].BlockDuration)
-		println("70", warmupTemplate[2].BlockDuration)
-		println("100", warmupTemplate[3].BlockDuration)
-	})
-}
-
 func testStakeTokenPos01(t *testing.T) {
 	t.Run("stake position 01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
@@ -193,21 +184,21 @@ func testStakeTokenPos01(t *testing.T) {
 
 		userOldGns := gns.BalanceOf(admin)
 		communityOldGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
-		println("userOldGns", userOldGns)           // 100000000000000
-		println("communityOldGns", communityOldGns) // 0
+		uassert.Equal(t, uint64(100000000000000), userOldGns)
+		uassert.Equal(t, uint64(0), communityOldGns)
 
 		CollectReward(1, false)
 
 		userNewGns := gns.BalanceOf(admin)
 		communityNewGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
-		println("userNewGns", userNewGns) // 100000003210616
+		uassert.True(t, isInErrorRange(uint64(3210616), userNewGns-userOldGns))
 		// increased 3210616
 		// staker receives 10702054 gns from emission
 		// position 01 is in 30% warm up period
 		// 30% is reward + 70% is penalty
 		// 10702054 * 30% = 3210616
 
-		println("communityNewGns", communityNewGns) // 50299653
+		uassert.True(t, isInErrorRange(uint64(50299653), communityNewGns-communityOldGns))
 		// increased 50299653
 		// staker did received 4 block of gns emission when there is no staked position
 		// 10702054 * 4 = 42808216
@@ -228,36 +219,149 @@ func testStakeTokenPos01(t *testing.T) {
 		std.TestSkipHeights(1) // 1 block for 50% warm up
 		userOldGns := gns.BalanceOf(admin)
 		communityOldGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
-		println("userOldGns", userOldGns)           // 100693509152279
-		println("communityOldGns", communityOldGns) // 1618220128150
 
 		CollectReward(1, false)
 
 		userNewGns := gns.BalanceOf(admin)
 		communityNewGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
-		println("userNewGns", userNewGns) // 100693514503305
-		// increased 5351026 (100693514503305 - 100693509152279)
+
+		uassert.True(t, isInErrorRange(uint64(5351026), userNewGns-userOldGns))
+		// increased 5351026
 		// staker receives 10702054 gns from emission
 		// position 01 is in 50% warm up period
-		// 50% is reward + 50% is penalty
 
-		println("communityNewGns", communityNewGns) // 1618225479177
-		// increased 5351027 (1618225479177 - 1618220128150)
+		// 50% is reward + 50% is penalty
+		uassert.True(t, isInErrorRange(uint64(5351026), communityNewGns-communityOldGns))
 	})
 
 	t.Run("make it warm up 70%", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		std.TestSkipHeights(2)
+		std.TestSkipHeights(432001)
 		CollectReward(1, false)
+
+		std.TestSkipHeights(1) // 1 block for 70% warm up
+		userOldGns := gns.BalanceOf(admin)
+		communityOldGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+
+		CollectReward(1, false)
+
+		userNewGns := gns.BalanceOf(admin)
+		communityNewGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+
+		uassert.True(t, isInErrorRange(uint64(7491437), userNewGns-userOldGns))
+		// increased 7491437
+		// staker receives 10702054 gns from emission
+		// position 01 is in 70% warm up period
+
+		uassert.True(t, isInErrorRange(uint64(3210616), communityNewGns-communityOldGns))
+		// 30% is penalty
+		// 10702054 * 30% = 3210616
+	})
+
+	t.Run("make it warm up 100%", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		std.TestSkipHeights(1728000)
+		CollectReward(1, false)
+
+		std.TestSkipHeights(1) // 1 block for 100% warm up
+		userOldGns := gns.BalanceOf(admin)
+		communityOldGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+
+		CollectReward(1, false)
+
+		userNewGns := gns.BalanceOf(admin)
+		communityNewGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+
+		uassert.True(t, isInErrorRange(uint64(10702054), userNewGns-userOldGns))
+		// increased 10702054
+		// staker receives 10702054 gns from emission
+
+		uassert.Equal(t, uint64(0), communityNewGns-communityOldGns)
+		// no penalty
 	})
 }
 
-func testStakeTokenPos02(t *testing.T) {
+func testStakeTokenPos02To04(t *testing.T) {
 	t.Run("stake position 02", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		gnft.Approve(consts.STAKER_ADDR, tid(2))
 		StakeToken(2)
+	})
+
+	t.Run("stake position 03", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		gnft.Approve(consts.STAKER_ADDR, tid(3))
+		StakeToken(3)
 		std.TestSkipHeights(1)
+	})
+
+	t.Run("stake position 04", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		gnft.Approve(consts.STAKER_ADDR, tid(4))
+		StakeToken(4)
+		std.TestSkipHeights(1)
+	})
+}
+
+func testCollecRewardAll(t *testing.T) {
+	t.Run("collect reward for all", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		CollectReward(1, false)
+		CollectReward(2, false)
+		CollectReward(3, false)
+		CollectReward(4, false)
+	})
+}
+
+func testSkip1BlockAndCollectReward(t *testing.T) {
+	t.Run("skip 1 block", func(t *testing.T) {
+		std.TestSkipHeights(1)
+	})
+
+	t.Run("collect reward for pos01", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		beforeGns := gns.BalanceOf(admin)
+		CollectReward(1, false)
+		afterGns := gns.BalanceOf(admin)
+
+		uassert.True(t, isInErrorRange(uint64(2675513), afterGns-beforeGns))
+		// 1 block of emission reward for staker = 10702054
+		// 4 in-range position staked with same liquidity
+		// each position receives 10702054 * 25% = 2675513.5
+	})
+
+	t.Run("collect reward for pos02", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		beforeGns := gns.BalanceOf(admin)
+		CollectReward(2, false)
+		afterGns := gns.BalanceOf(admin)
+		uassert.True(t, isInErrorRange(uint64(2675513*30/100), afterGns-beforeGns))
+		// warm up 30%
+	})
+
+	t.Run("collect reward for pos03", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		beforeGns := gns.BalanceOf(admin)
+		CollectReward(3, false)
+		afterGns := gns.BalanceOf(admin)
+		uassert.True(t, isInErrorRange(uint64(2675513*30/100), afterGns-beforeGns))
+		// warm up 30%
+	})
+
+	t.Run("collect reward for pos04", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		beforeGns := gns.BalanceOf(admin)
+		CollectReward(4, false)
+		afterGns := gns.BalanceOf(admin)
+		uassert.True(t, isInErrorRange(uint64(2675513*30/100), afterGns-beforeGns))
+		// warm up 30%
 	})
 }

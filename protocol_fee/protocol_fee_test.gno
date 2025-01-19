@@ -61,7 +61,7 @@ func TestSetDevOpsPctByAdminInvalidFee(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-PROTOCOL_FEE-006] invalid percentage || pct(100001) should not be bigger than 10000`,
+		`[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(100001) should not be bigger than 10000`,
 		func() {
 			SetDevOpsPctByAdmin(100001)
 		},

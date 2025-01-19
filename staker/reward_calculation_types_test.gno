@@ -78,8 +78,8 @@ func TestUintTree(t *testing.T) {
 	var keys []uint64
 	var values []interface{}
 
-	tree.Iterate(100, 300, func(key uint64, value interface{}) bool {
-		keys = append(keys, key)
+	tree.Iterate(100, 300, func(key int64, value interface{}) bool {
+		keys = append(keys, uint64(key))
 		values = append(values, value)
 		return false
 	})
@@ -90,60 +90,6 @@ func TestUintTree(t *testing.T) {
 
 	if !compareUintSlices(t, keys, expectedKeys) || !compareInterfaces(t, values, expectedValues) {
 		t.Errorf("UintTree.Iterate() keys = %v, values = %v; want keys = %v, values = %v", keys, values, expectedKeys, expectedValues)
-	}
-}
-
-func TestRewardCacheTree(t *testing.T) {
-	tree := NewRewardCacheTree()
-
-	// Test Set and Get
-	tree.Set(100, "reward1")
-	tree.Set(200, "reward2")
-	if value, ok := tree.Get(100); !ok || value != "reward1" {
-		t.Errorf("RewardCacheTree.Get(100) = %v, %v; want reward1, true", value, ok)
-	}
-
-	// Test CurrentReward
-	tree.Set(300, "reward3")
-	reward := tree.CurrentReward(250)
-	if reward != "reward2" {
-		t.Errorf("RewardCacheTree.CurrentReward(250) = %v; want reward2", reward)
-	}
-
-	// Test CurrentRewardAt
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("RewardCacheTree.CurrentRewardAt(400) did not panic")
-		}
-	}()
-	tree.CurrentRewardAt(400)
-}
-
-func TestReverseIterateEmptyStringStart(t *testing.T) {
-	tree := NewRewardCacheTree()
-
-	tree.Set(100, "reward1")
-	tree.Set(200, "reward2")
-	tree.Set(300, "reward3")
-	tree.Set(400, "reward4")
-	tree.Set(500, "reward5")
-
-	var resEmptyString interface{}
-	var resZeroPadded interface{}
-
-	tree.tree.ReverseIterate("", EncodeUint(250), func(k string, v interface{}) bool {
-		resEmptyString = v
-		return true 
-	})
-
-	tree.tree.ReverseIterate(EncodeUint(0), EncodeUint(250), func(k string, v interface{}) bool {
-		resZeroPadded = v
-		return true
-	})
-
-	if resEmptyString != resZeroPadded {
-		t.Errorf("ReverseIterate with '' got %v, while zero-padded got %v; want same result", 
-			resEmptyString, resZeroPadded)
 	}
 }
 
