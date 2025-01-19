@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
@@ -16,9 +15,9 @@ func TestGetLockedInfoByAddress(t *testing.T) {
 
 	now := uint64(time.Now().Unix())
 	lockedGNSList := []lockedGNS{
-		{amount: 1000, unlock: now - 100},     // already unlocked
-		{amount: 2000, unlock: now + 100},     // still locked
-		{amount: 3000, unlock: now - 50},      // already unlocked
+		{amount: 1000, unlock: now - 100}, // already unlocked
+		{amount: 2000, unlock: now + 100}, // still locked
+		{amount: 3000, unlock: now - 50},  // already unlocked
 	}
 	addrLockedGns.Set(addr.String(), lockedGNSList)
 
@@ -90,22 +89,15 @@ func TestGetClaimableRewardByAddress(t *testing.T) {
 
 	node := json.Must(json.Unmarshal([]byte(result)))
 
-
-	println("4444")
 	uassert.True(t, node.HasKey("height"))
 	uassert.True(t, node.HasKey("now"))
 
-	println("3333")
 	emissionReward, err := node.MustKey("emissionReward").GetString()
 	uassert.NoError(t, err)
 	uassert.Equal(t, emissionReward, "1000")
 
-	println("2222")
-
 	protocolFees := node.MustKey("protocolFees")
 	uassert.True(t, protocolFees.IsArray())
-
-	println("1111")
 
 	protocolFees.ArrayEach(func(i int, fee *json.Node) {
 		tokenPath, err := fee.MustKey("tokenPath").GetString()
@@ -129,6 +121,5 @@ func TestGetClaimableRewardByAddress_NoRewards(t *testing.T) {
 	addr := testutils.TestAddress("no_reward_test")
 
 	result := GetClaimableRewardByAddress(addr)
-	println("result", result)
 	uassert.Equal(t, result, "")
 }

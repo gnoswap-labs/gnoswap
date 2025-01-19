@@ -36,7 +36,6 @@ var (
 	errInvalidAvgBlockTime = errors.New("[GNOSWAP-LAUNCHPAD-027] invalid average block time")
 	errInvalidHeight       = errors.New("[GNOSWAP-LAUNCHPAD-028] invalid height")
 	errTierHasParticipants = errors.New("[GNOSWAP-LAUNCHPAD-029] tier has participants")
-	errInvalidTotalStaked  = errors.New("[GNOSWAP-LAUNCHPAD-029] invalid total staked")
 )
 
 func addDetailToError(err error, detail string) string {
