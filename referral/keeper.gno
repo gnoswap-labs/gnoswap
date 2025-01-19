@@ -63,8 +63,8 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 	k.store.Set(addr.String(), refAddr.String())
 	std.Emit(
 		eventType,
-		"my_address", addr.String(),
-		"ref_address", refAddr.String(),
+		"myAddress", addr.String(),
+		"refAddress", refAddr.String(),
 	)
 
 	return nil
@@ -130,4 +130,13 @@ func (k *keeper) get(addr std.Address) (std.Address, error) {
 	}
 
 	return std.Address(refAddr), nil
+}
+
+func (k *keeper) isEmpty() bool {
+    empty := true
+    k.store.Iterate("", "", func(key string, value interface{}) bool {
+        empty = false
+        return true // stop iteration on first item
+    })
+    return empty
 }

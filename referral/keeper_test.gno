@@ -643,3 +643,179 @@ func TestStress(t *testing.T) {
 		}
 	}
 }
+
+func TestIsEmpty(t *testing.T) {
+    tests := []struct {
+        name       string
+        setupState func(*keeper)
+        want       bool
+    }{
+        {
+            name:       "new keeper must empty",
+            setupState: func(k *keeper) {},
+            want:       true,
+        },
+        {
+            name: "keeper with data must not be empty",
+            setupState: func(k *keeper) {
+                k.store.Set(validAddr1.String(), validAddr2.String())
+            },
+            want: false,
+        },
+        {
+            name: "keeper with all data removed must be empty",
+            setupState: func(k *keeper) {
+                k.store.Set(validAddr1.String(), validAddr2.String())
+                k.store.Remove(validAddr1.String())
+            },
+            want: true,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            k := setupKeeper()
+            tt.setupState(k)
+
+            if got := k.isEmpty(); got != tt.want {
+                t.Errorf("isEmpty() = %v, want %v", got, tt.want)
+            }
+        })
+    }
+}
+
+/*             Getter Tests               */
+
+func TestGetReferral(t *testing.T) {
+    tests := []struct {
+        name        string
+        addr        string
+        setupState  func()
+        want        string
+        shouldPanic bool
+    }{
+        {
+            name: "retrieve existing referral",
+            addr: validAddr1.String(),
+            setupState: func() {
+                gReferralKeeper = NewKeeper()
+                cleanup := mockValidCaller()
+                defer cleanup()
+                gReferralKeeper.register(validAddr1, validAddr2)
+            },
+            want:        validAddr2.String(),
+            shouldPanic: false,
+        },
+        {
+            name: "retrieve non-existent referral",
+            addr: validAddr1.String(),
+            setupState: func() {
+                gReferralKeeper = NewKeeper()
+            },
+            shouldPanic: true,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            tt.setupState()
+
+            if tt.shouldPanic {
+                defer func() {
+                    if r := recover(); r == nil {
+                        t.Error("GetReferral() function did not panic")
+                    }
+                }()
+            }
+
+            got := GetReferral(tt.addr)
+            if !tt.shouldPanic && got != tt.want {
+                t.Errorf("GetReferral() = %v, want %v", got, tt.want)
+            }
+        })
+    }
+}
+
+func TestHasReferral(t *testing.T) {
+    tests := []struct {
+        name       string
+        addr       string
+        setupState func()
+        want       bool
+    }{
+        {
+            name: "referral exists",
+            addr: validAddr1.String(),
+            setupState: func() {
+                gReferralKeeper = NewKeeper()
+                cleanup := mockValidCaller()
+                defer cleanup()
+                gReferralKeeper.register(validAddr1, validAddr2)
+            },
+            want: true,
+        },
+        {
+            name: "referral does not exist",
+            addr: validAddr1.String(),
+            setupState: func() {
+                gReferralKeeper = NewKeeper()
+            },
+            want: false,
+        },
+        {
+            name: "zero address referral",
+            addr: validAddr1.String(),
+            setupState: func() {
+                gReferralKeeper = NewKeeper()
+                cleanup := mockValidCaller()
+                defer cleanup()
+                gReferralKeeper.register(validAddr1, zeroAddress)
+            },
+            want: false,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            tt.setupState()
+            if got := HasReferral(tt.addr); got != tt.want {
+                t.Errorf("HasReferral() = %v, want %v", got, tt.want)
+            }
+        })
+    }
+}
+
+func TestGlobalIsEmpty(t *testing.T) {
+    tests := []struct {
+        name       string
+        setupState func()
+        want       bool
+    }{
+        {
+            name: "new global keeper must be empty",
+            setupState: func() {
+                gReferralKeeper = NewKeeper()
+            },
+            want: true,
+        },
+        {
+            name: "keeper with data must not be empty",
+            setupState: func() {
+                gReferralKeeper = NewKeeper()
+                cleanup := mockValidCaller()
+                defer cleanup()
+                gReferralKeeper.register(validAddr1, validAddr2)
+            },
+            want: false,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            tt.setupState()
+            if got := IsEmpty(); got != tt.want {
+                t.Errorf("IsEmpty() = %v, want %v", got, tt.want)
+            }
+        })
+    }
+}

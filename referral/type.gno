@@ -7,9 +7,9 @@ var zeroAddress = std.Address("")
 
 // Event types for each referral actions.
 const (
-	EventTypeRegister = "register_referral"
-	EventTypeUpdate   = "update_referral"
-	EventTypeRemove   = "remove_referral"
+	EventTypeRegister = "RegisterReferral"
+	EventTypeUpdate   = "UpdateReferral"
+	EventTypeRemove   = "RemoveReferral"
 )
 
 // ReferralKeeper defines the interface for managing referral relationships.
@@ -32,4 +32,7 @@ type ReferralKeeper interface {
 	// get retrieves the referral address for a given address.
 	// returns an error if the address is invalid or if the referral relationship does not exist.
 	get(addr std.Address) (std.Address, error)
+
+	// isEmpty checks if the referral relationship is empty.
+	isEmpty() bool
 }
