@@ -2,10 +2,7 @@ package staker
 
 import (
 	"std"
-
-	en "gno.land/r/gnoswap/v1/emission"
 )
-
 
 // callbackStakerEmissionChange is called by emission when 
 // - msPerBlock is changed
