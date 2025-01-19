@@ -36,7 +36,7 @@ def copy_contracts(workdir):
 
     # Copy gnoswap realms
     # TODO: Detect realms automatically
-    for realm in ["pool", "position", "router", "staker", "emission", "community_pool", "protocol_fee", "launchpad", "gov"]:
+    for realm in ["pool", "position", "router", "staker", "emission", "community_pool", "protocol_fee", "launchpad", "gov", "referral"]:
         shutil.copytree(realm, os.path.join(gno_dir, "r", "gnoswap", "v1", realm), dirs_exist_ok=True)
 
 def move_tests(workdir):
