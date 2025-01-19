@@ -455,9 +455,6 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 		// internal penalty to community pool
 		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), reward.InternalPenalty)
 		totalEmissionSent += reward.InternalPenalty
-
-		// TODO:
-		// reward ledger update!!
 	}
 
 	unClaimableInternal := ProcessUnClaimableReward(deposit.targetPoolPath, currentHeight)
@@ -687,8 +684,3 @@ func getTickOf(tokenId uint64) (int32, int32) {
 	}
 	return tickLower, tickUpper
 }
-
-// TODO:
-// SetTier
-// RemoveTier
-// ChangeTier
