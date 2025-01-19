@@ -93,7 +93,7 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 3. Depending on whether the total staked liquidity is now nonzero or zero, it begins or ends any unclaimable period.
 4. Updates the `CurrentOutsideAccumulation` for the tick.
 
-The variable `globalRewardRatioAccumulation` holds the integral of $\(f(h) = 1 \,/\, \text{TotalStakedLiquidity}(h)\)$, but only when \(\text{TotalStakedLiquidity}(h)\) is nonzero. Meanwhile, `CurrentOutsideAccumulation` tracks the same integral but over intervals where the pool tick is considered “outside” (i.e., on the opposite side of the current tick). When a tick cross occurs, this “outside” condition may flip, so the hook adjusts `CurrentOutsideAccumulation` by subtracting it from the latest `globalRewardRatioAccumulation`.
+The variable `globalRewardRatioAccumulation` holds the integral of $\(f(h) = 1 \div \text{TotalStakedLiquidity}(h)\)$, but only when \(\text{TotalStakedLiquidity}(h)\) is nonzero. Meanwhile, `CurrentOutsideAccumulation` tracks the same integral but over intervals where the pool tick is considered “outside” (i.e., on the opposite side of the current tick). When a tick cross occurs, this “outside” condition may flip, so the hook adjusts `CurrentOutsideAccumulation` by subtracting it from the latest `globalRewardRatioAccumulation`.
 
 ## Internal Reward
 
@@ -135,7 +135,7 @@ The total emission used by the staker contract is:
 > **Note:**  
 > - There is always at least one tier-1 pool.  
 > - `GNSEmissionPerSecond` is a constant apart from any halving events (ignored here).  
-> - When `avgMsPerBlock` or `StakerEmissionRatio` changes, a callback is triggered to cache rewards up to the current block and then update the emission rate.
+> - When `avgMsPerBlock` or `StakerEmissionRatio` changes, a callback is triggered to cache rewards up to the current block and then update the emission rate. This also happens when a pool has its tier changed.
 
 ### How Internal Rewards Are Cached and Distributed
 
@@ -144,31 +144,40 @@ The total emission used by the staker contract is:
   - **Unclaimable period:** If the pool had no in-range stakers (currently in unclaimable state), it updates the unclaimable accumulation using the old emission rate, then starts a new period immediately so the future accumulation could be done based on the new emission rate.
   - The function finally updates the `GlobalRewardRatioAccumulation`, which is used later to compute each position’s rewards.
 
-- After caching is updated to the current block, **CalculateInternalReward** computes the total claimable internal rewards for a position. Consider the math:
+- After caching is updated to the current block, **CalculateInternalReward** computes the total claimable internal rewards for a position. Consider the following formulation, which handles multiple warmup intervals:
 
 ```math
 \begin{aligned}
-\text{TotalRewardRatio}
+\mathrm{TotalRewardRatio}(s,e)
 &=
-  \underbrace{\text{CRP}\bigl(\text{startHeight},\, h_1\bigr)}_{\text{CRP}(s,h_1)} \times r_1
-  \;+\;
-  \underbrace{\text{CRP}\bigl(h_1,\, h_2\bigr)}_{\text{CRP}(h_1,h_2)} \times r_2
-  \;+\;
-  \underbrace{\text{CRP}\bigl(h_2,\, \text{endHeight}\bigr)}_{\text{CRP}(h_2,e)} \times r_3,
+  \sum_{i=0}^{m-1}
+    \Bigl[
+      \Delta\mathrm{Raw}\bigl(\alpha_i,\, \beta_i\bigr)
+    \Bigr]
+    \times
+    r_i,
 \\[6pt]
-\text{CRP}(a, b)
+\alpha_i
 &=
-  \text{CalcRaw}(b)
+  \max\!\bigl(s,\, H_{i-1}\bigr),
+\quad
+\beta_i
+=
+  \min\!\bigl(e,\, H_{i}\bigr),
+\\[6pt]
+\Delta\mathrm{Raw}(a, b)
+&=
+  \mathrm{CalcRaw}(b)
   \;-\;
-  \text{CalcRaw}(a),
+  \mathrm{CalcRaw}(a),
 \\[6pt]
-\text{CalcRaw}(h)
+\mathrm{CalcRaw}(h)
 &=
   \begin{cases}
     L(h) \;-\; U(h), 
-      & \text{if } \text{tick}(h) < \ell, \\[6pt]
-    U(h) \;-\; L(h), 
-      & \text{if } \text{tick}(h) \ge u, \\[6pt]
+      & \text{if } \mathrm{tick}(h) < \ell, \\[4pt]
+    U(h) \;-\; L(h),
+      & \text{if } \mathrm{tick}(h) \ge u, \\[4pt]
     G(h) \;-\; \bigl(L(h) + U(h)\bigr), 
       & \text{otherwise}.
   \end{cases}
@@ -176,6 +185,8 @@ The total emission used by the staker contract is:
 ```
 
 where
+- Each warmup interval $\(\bigl[H_{i-1},\,H_{i}\bigr]\)$ has a reward ratio $r_i$.
+- $\alpha_i = \max(s,\, H_{i-1})$ and $\beta_i = \min(e,\, H_{i})$ slice the interval to fit $[s,e)$. If $\alpha_i \ge \beta_i$, that segment contributes zero.
 - $\(L(h)\)$ = `tickLower.OutsideAccumulation(h)`
 - $\(U(h)\)$ = `tickUpper.OutsideAccumulation(h)`
 - $\(G(h)\)$ = `globalRewardRatioAccumulation(h)`
@@ -209,7 +220,6 @@ The final reward for a position is the sum of each applicable `TotalRewardRatio`
   \, dh.
 \end{aligned}
 ```
-(`BlockFraction` is essentially the fraction of blocks over which the position was active, derived from the reward ratio calculations.)
 
 ## External Reward
 
