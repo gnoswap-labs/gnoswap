@@ -4,9 +4,10 @@
 package staker
 
 import (
-	"gno.land/p/demo/uassert"
 	"std"
 	"testing"
+
+	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v1/consts"
 
@@ -76,7 +77,7 @@ func testPoolCreatePool(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		pl.CreatePool(barPath, quxPath, 500, "130621891405341611593710811006") // tick 10_000 ≈ x2.7
 		// tier 1
-		addPoolTier(t, `gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500`, 1)
+		SetPoolTierByAdmin(`gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500`, 1)
 		std.TestSkipHeights(1)
 	})
 }

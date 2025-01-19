@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v1/consts"
 
 	en "gno.land/r/gnoswap/v1/emission"
@@ -28,7 +30,6 @@ func TestMore02(t *testing.T) {
 	testMintBarBaz100Pos02(t)
 	testMintBarBaz100Pos03(t)
 	testMintBarBaz100Pos04(t)
-	testPrintWarmup(t)
 	testCreateBarExternal(t)
 	testCreateBazExternal(t)
 	testStakeTokenPos01ToWarmUp100(t)
@@ -165,15 +166,6 @@ func testMintBarBaz100Pos04(t *testing.T) {
 	})
 }
 
-func testPrintWarmup(t *testing.T) {
-	t.Run("print warmup", func(t *testing.T) {
-		println("30", warmupTemplate[0].BlockDuration)
-		println("50", warmupTemplate[1].BlockDuration)
-		println("70", warmupTemplate[2].BlockDuration)
-		println("100", warmupTemplate[3].BlockDuration)
-	})
-}
-
 func testCreateBarExternal(t *testing.T) {
 	t.Run("create external incentive bar 365 days", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
@@ -237,13 +229,13 @@ func testStakeTokenPos01ToWarmUp100(t *testing.T) {
 
 		userNewBar := bar.BalanceOf(admin)
 		userNewBaz := baz.BalanceOf(admin)
-		println("bar reward", userNewBar-userOldBar)
+		uassert.True(t, isInErrorRange(uint64(6944), userNewBar-userOldBar))
 		// increased 6944
 		// position 01 is in 30% warm up period
 		// 30% is reward
 		// 23148(rewardPerBlock) * 30% = 6944.4
 
-		println("baz reward", userNewBaz-userOldBaz)
+		uassert.True(t, isInErrorRange(uint64(7), userNewBaz-userOldBaz))
 		// increased 6
 		// position 01 is in 30% warm up period
 		// 30% is reward
@@ -266,13 +258,13 @@ func testStakeTokenPos01ToWarmUp100(t *testing.T) {
 
 		userNewBar := bar.BalanceOf(admin)
 		userNewBaz := baz.BalanceOf(admin)
-		println("bar reward", userNewBar-userOldBar)
+		uassert.True(t, isInErrorRange(uint64(11574), userNewBar-userOldBar))
 		// increased 11573
 		// position 01 is in 50% warm up period
 		// 50% is reward
 		// 23148(rewardPerBlock) * 50% = 11574
 
-		println("baz reward", userNewBaz-userOldBaz)
+		uassert.True(t, isInErrorRange(uint64(12), userNewBaz-userOldBaz))
 		// increased 11
 		// position 01 is in 50% warm up period
 		// 50% is reward
@@ -296,13 +288,13 @@ func testStakeTokenPos01ToWarmUp100(t *testing.T) {
 		userNewBar := bar.BalanceOf(admin)
 		userNewBaz := baz.BalanceOf(admin)
 
-		println("bar reward", userNewBar-userOldBar)
+		uassert.True(t, isInErrorRange(uint64(16204), userNewBar-userOldBar))
 		// increased 16203
 		// position 01 is in 70% warm up period
 		// 70% is reward
 		// 23148(rewardPerBlock) * 70% = 16203.6
 
-		println("baz reward", userNewBaz-userOldBaz)
+		uassert.True(t, isInErrorRange(uint64(16), userNewBaz-userOldBaz))
 		// increased 16
 		// position 01 is in 70% warm up period
 		// 70% is reward
@@ -325,12 +317,12 @@ func testStakeTokenPos01ToWarmUp100(t *testing.T) {
 
 		userNewBar := bar.BalanceOf(admin)
 		userNewBaz := baz.BalanceOf(admin)
-		println("bar reward", userNewBar-userOldBar)
+		uassert.True(t, isInErrorRange(uint64(23148), userNewBar-userOldBar))
 		// increased 23147
 		// position 01 is in 100% warm up period
 		// 100% is reward
 
-		println("baz reward", userNewBaz-userOldBaz)
+		uassert.True(t, isInErrorRange(uint64(23), userNewBaz-userOldBaz))
 		// increased 22
 		// position 01 is in 100% warm up period
 		// 100% is reward
@@ -396,12 +388,12 @@ func testSkip1BlockAndCollectReward(t *testing.T) {
 
 		newBar := bar.BalanceOf(admin)
 		newBaz := baz.BalanceOf(admin)
-		println("bar reward", newBar-oldBar)
+		uassert.True(t, isInErrorRange(uint64(5787), newBar-oldBar))
 		// 5786
 		// position 01 is in 100% warm up period
 		// 100% is reward (5787 * 100%)
 
-		println("baz reward", newBaz-oldBaz)
+		uassert.True(t, isInErrorRange(uint64(6), newBaz-oldBaz))
 		// 5
 		// position 01 is in 100% warm up period
 		// 100% is reward (5.75 * 100%)
@@ -417,12 +409,12 @@ func testSkip1BlockAndCollectReward(t *testing.T) {
 
 		newBar := bar.BalanceOf(admin)
 		newBaz := baz.BalanceOf(admin)
-		println("bar reward", newBar-oldBar)
+		uassert.True(t, isInErrorRange(uint64(4050), newBar-oldBar))
 		// 4050
 		// position 02 is in 70% warm up period
 		// 70% is reward (5787 * 70%)
 
-		println("baz reward", newBaz-oldBaz)
+		uassert.True(t, isInErrorRange(uint64(4), newBaz-oldBaz))
 		// 4
 		// position 02 is in 70% warm up period
 		// 70% is reward (5.75 * 70%)
@@ -438,12 +430,12 @@ func testSkip1BlockAndCollectReward(t *testing.T) {
 
 		newBar := bar.BalanceOf(admin)
 		newBaz := baz.BalanceOf(admin)
-		println("bar reward", newBar-oldBar)
+		uassert.True(t, isInErrorRange(uint64(2893), newBar-oldBar))
 		// 2893
 		// position 03 is in 50% warm up period
 		// 50% is reward (5787 * 50%)
 
-		println("baz reward", newBaz-oldBaz)
+		uassert.True(t, isInErrorRange(uint64(3), newBaz-oldBaz))
 		// 2
 		// position 03 is in 50% warm up period
 		// 50% is reward (5.75 * 50%)
@@ -459,15 +451,14 @@ func testSkip1BlockAndCollectReward(t *testing.T) {
 
 		newBar := bar.BalanceOf(admin)
 		newBaz := baz.BalanceOf(admin)
-		println("bar reward", newBar-oldBar)
+		uassert.True(t, isInErrorRange(uint64(1736), newBar-oldBar))
 		// 1736
 		// position 04 is in 30% warm up period
 		// 30% is reward (5787 * 30%)
 
-		println("baz reward", newBaz-oldBaz)
+		uassert.True(t, isInErrorRange(uint64(2), newBaz-oldBaz))
 		// 1
 		// position 04 is in 30% warm up period
 		// 30% is reward (5.75 * 30%)
 	})
-
 }

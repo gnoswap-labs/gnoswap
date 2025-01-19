@@ -1062,7 +1062,7 @@ func Reposition(
 
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
-			poolKey:        position.poolKey, // TOOD: FIX: 신규 틱 범위로 생성핵서 필요해야 함
+			poolKey:        position.poolKey,
 			tickLower:      tickLower,
 			tickUpper:      tickUpper,
 			amount0Desired: u256.MustFromDecimal(amount0DesiredStr),

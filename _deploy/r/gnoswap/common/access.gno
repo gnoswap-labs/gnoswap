@@ -58,6 +58,14 @@ func RouterOnly(caller std.Address) error {
 	return nil
 }
 
+// PoolOnly checks if the caller is the pool contract.
+func PoolOnly(caller std.Address) error {
+	if caller != consts.POOL_ADDR {
+		return ufmt.Errorf(ErrNoPermission, caller.String())
+	}
+	return nil
+}
+
 // PositionOnly checks if the caller is the position contract.
 func PositionOnly(caller std.Address) error {
 	if caller != consts.POSITION_ADDR {

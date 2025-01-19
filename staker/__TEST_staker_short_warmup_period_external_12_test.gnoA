@@ -5,12 +5,12 @@
 package staker
 
 import (
+	"math"
 	"std"
 	"testing"
 
 	"gno.land/p/demo/uassert"
 	"gno.land/r/demo/users"
-	pusers "gno.land/p/demo/users"
 
 	"gno.land/r/gnoswap/v1/consts"
 
@@ -40,10 +40,13 @@ func TestShortWarmUpTWoExternalIncentive(t *testing.T) {
 
 func testInit(t *testing.T) {
 	t.Run("initialize", func(t *testing.T) {
-		changeWarmup(t, 100, 901)
-		changeWarmup(t, 70, 301)
-		changeWarmup(t, 50, 151)
-		changeWarmup(t, 30, 1)
+		std.TestSetRealm(adminRealm)
+
+		// override warm-up period for testing
+		changeWarmup(t, 0, 150)
+		changeWarmup(t, 1, 300)
+		changeWarmup(t, 2, 900)
+		changeWarmup(t, 3, math.MaxInt64)
 
 		// set unstaking fee to 0
 		SetUnstakingFeeByAdmin(0)
@@ -86,7 +89,7 @@ func testMintBarQux100_1(t *testing.T) {
 		)
 
 		uassert.Equal(t, tokenId, uint64(1))
-		uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
+		uassert.Equal(t, gnft.MustOwnerOf(tid(tokenId)), adminAddr)
 
 		std.TestSkipHeights(1)
 	})

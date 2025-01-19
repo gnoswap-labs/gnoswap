@@ -275,7 +275,7 @@ func TestIsNative(t *testing.T) {
 		},
 		{
 			name:     "Similar but Different Token",
-			token:    "GNOT", // 대문자
+			token:    "GNOT",
 			expected: false,
 		},
 	}

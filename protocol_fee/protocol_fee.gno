@@ -135,11 +135,6 @@ func ClearAccuTransferToGovStaker() {
 	accuToGovStaker = avl.NewTree()
 }
 
-// assertOnlyNotHalted panics if the contract is halted.
-func assertOnlyNotHalted() {
-	common.IsHalted()
-}
-
 // addAccuToGovStaker adds the amount to the accuToGovStaker by token path.
 func addAccuToGovStaker(path string, amount uint64) {
 	before := GetAccuTransferToGovStakerByTokenPath(path)

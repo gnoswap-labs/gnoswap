@@ -257,7 +257,6 @@ func TestValidateAll(t *testing.T) {
 			name: "InvalidName",
 			input: ProjectInput{
 				Name: "",
-				// 나머지는 유효 값
 				TokenPath:        "valid/token",
 				Recipient:        std.Address("g1valid"),
 				DepositAmount:    10,
@@ -1350,7 +1349,7 @@ func TestCalculateProjectParams(t *testing.T) {
 				Tier30Ratio:   30,
 				Tier90Ratio:   30,
 				Tier180Ratio:  40,
-				StartTime:     currentTime - 1000, // 과거 시간
+				StartTime:     currentTime - 1000,
 			},
 			now:     currentTime,
 			want:    nil,

@@ -23,8 +23,8 @@ func TestIncentiveIdCompute(t *testing.T) {
 }
 
 func TestIncentiveIdByTime(t *testing.T) {
-	startTime := uint64(12345)
-	endTime := uint64(67890)
+	startTime := int64(12345)
+	endTime := int64(67890)
 	creator := std.Address("g1xyz")
 	rewardToken := "gns"
 
@@ -37,8 +37,8 @@ func TestIncentiveIdByTime(t *testing.T) {
 }
 
 func TestIncentiveIdByHeight(t *testing.T) {
-	startHeight := uint64(123)
-	endHeight := uint64(456)
+	startHeight := int64(123)
+	endHeight := int64(456)
 	creator := std.Address("g1xyz")
 	rewardToken := "gns"
 

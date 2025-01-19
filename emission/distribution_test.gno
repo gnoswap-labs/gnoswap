@@ -13,6 +13,9 @@ import (
 func TestChangeDistributionPctByAdmin(t *testing.T) {
 	resetObject(t)
 
+	originCallback := callbackStakerEmissionChange
+	callbackStakerEmissionChange = func(amount uint64) {}
+
 	tests := []struct {
 		name        string
 		shouldPanic bool
@@ -53,10 +56,10 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 			targets:     []int{1, 2, 3, 4},
 			pcts:        []uint64{1000, 2000, 3000, 4000},
 			verify: func() {
-				uassert.Equal(t, uint64(1000), GetDistributionBpsPct(1))
-				uassert.Equal(t, uint64(2000), GetDistributionBpsPct(2))
-				uassert.Equal(t, uint64(3000), GetDistributionBpsPct(3))
-				uassert.Equal(t, uint64(4000), GetDistributionBpsPct(4))
+				uassert.Equal(t, uint64(1000), GetDistributionBpsPct(int(1)))
+				uassert.Equal(t, uint64(2000), GetDistributionBpsPct(int(2)))
+				uassert.Equal(t, uint64(3000), GetDistributionBpsPct(int(3)))
+				uassert.Equal(t, uint64(4000), GetDistributionBpsPct(int(4)))
 			},
 		},
 	}
@@ -96,10 +99,14 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 			}
 		})
 	}
+	callbackStakerEmissionChange = originCallback
 }
 
 func TestChangeDistributionPct(t *testing.T) {
 	resetObject(t)
+
+	originCallback := callbackStakerEmissionChange
+	callbackStakerEmissionChange = func(amount uint64) {}
 
 	tests := []struct {
 		name        string
@@ -184,10 +191,14 @@ func TestChangeDistributionPct(t *testing.T) {
 			}
 		})
 	}
+	callbackStakerEmissionChange = originCallback
 }
 
 func TestChangeDistributionPcts(t *testing.T) {
 	resetObject(t)
+
+	originCallback := callbackStakerEmissionChange
+	callbackStakerEmissionChange = func(amount uint64) {}
 
 	changeDistributionPcts(
 		1, 1000,
@@ -199,6 +210,8 @@ func TestChangeDistributionPcts(t *testing.T) {
 	uassert.Equal(t, uint64(2000), GetDistributionBpsPct(2))
 	uassert.Equal(t, uint64(3000), GetDistributionBpsPct(3))
 	uassert.Equal(t, uint64(4000), GetDistributionBpsPct(4))
+
+	callbackStakerEmissionChange = originCallback
 }
 
 func TestCalculateAmount(t *testing.T) {
@@ -324,7 +337,7 @@ func TestDistributeToTarget(t *testing.T) {
 			shouldPanic: true,
 			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(a)",
 			setup: func() {
-				distributionBpsPct.Set("a", 1000)
+				distributionBpsPct.Set("a", uint64(1000))
 			},
 			amount: 100,
 		},

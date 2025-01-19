@@ -34,8 +34,8 @@ func SetPoolTier(poolPath string, tier uint64) {
 func setPoolTier(poolPath string, tier uint64) {
 	en.MintAndDistributeGns()
 
-	poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, tier)
 	pools.GetOrCreate(poolPath)
+	poolTier.changeTier(std.GetHeight(), pools, poolPath, tier)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -66,7 +66,7 @@ func ChangePoolTier(poolPath string, tier uint64) {
 func changePoolTier(poolPath string, tier uint64) {
 	en.MintAndDistributeGns()
 
-	poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, tier)
+	poolTier.changeTier(std.GetHeight(), pools, poolPath, tier)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -97,7 +97,7 @@ func RemovePoolTier(poolPath string) {
 func removePoolTier(poolPath string) {
 	en.MintAndDistributeGns()
 
-	poolTier.changeTier(uint64(std.GetHeight()), pools, poolPath, NOT_EMISSION_TARGET_TIER)
+	poolTier.changeTier(std.GetHeight(), pools, poolPath, NOT_EMISSION_TARGET_TIER)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(

@@ -692,7 +692,7 @@ func TestCollectDepositGnsByDepositId_OtherOwner(t *testing.T) {
 	project := createTestProject(t)
 	projects[project.id] = project
 
-	// deposit 생성 (owner= userA)
+	// create deposit (owner = userA)
 	now := uint64(time.Now().Unix())
 	height := uint64(std.GetHeight())
 	info := ProjectTierInfo{
