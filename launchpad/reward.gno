@@ -14,15 +14,6 @@ import (
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 )
 
-var (
-	lastCalculatedHeight              uint64
-	lastCalculateHeightForProjectTier = make(map[string]uint64) // using height
-)
-
-func init() {
-	lastCalculatedHeight = uint64(std.GetHeight())
-}
-
 // RewardCalculationResult represents the result of reward calculation
 type RewardCalculationResult struct {
 	Reward       uint64

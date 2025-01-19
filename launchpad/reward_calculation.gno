@@ -3,7 +3,7 @@ package launchpad
 
 import (
 	"gno.land/p/demo/avl"
-	ufmt "gno.land/p/demo/ufmt"
+	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 

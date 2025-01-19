@@ -662,8 +662,6 @@ func createTier(
 		reward:                 *reward,
 	}
 
-	// TODO: MyungHwan
-	// Initialize reward state for this tier
 	rewardState := NewRewardState(tier.tierAmountPerBlockX128, startHeight, endHeight)
 	rewardStates.Set(projectId, strconv.FormatUint(duration, 10), rewardState)
 
