@@ -1051,7 +1051,7 @@ func testCollectReward08AfterStart(t *testing.T) {
 		CollectReward(8, false)
 		newBaz := baz.BalanceOf(common.AddrToUser(adminAddr))
 
-		uassert.True(t, isNear99Pct(t, uint64(15), newBaz-oldBaz))
+		uassert.True(t, isNear(t, uint64(15), newBaz-oldBaz))
 		// 5 * 10 * 30% = 15 // user receives
 		// > bar reward amount per block is 5.1440329218 == 5
 		// > 10 block skipped after incentive start
@@ -1138,7 +1138,7 @@ func testReStakeTokenPos01(t *testing.T) {
 		oldGns := gns.BalanceOf(common.AddrToUser(adminAddr))
 		CollectReward(1, false)
 		newGns := gns.BalanceOf(common.AddrToUser(adminAddr))
-		uassert.True(t, isNear99Pct(t, uint64(1605308), newGns-oldGns))
+		uassert.True(t, isNear(t, uint64(1605308), newGns-oldGns))
 		// 1번 포지션 다시 스테이킹 하고 1 블록 지남 (웜업 30% 부터 계산)
 		// 현재 gnot:gns:0.3% 풀은 티어 1이며, 블록 당 5351027 개의 리워드가 할당 됨
 		// 5351027 * 30% = 1605308.1
@@ -1167,7 +1167,7 @@ func testChangeAvgBlockTimeTo4000(t *testing.T) {
 		oldGns := gns.BalanceOf(common.AddrToUser(adminAddr))
 		CollectReward(1, false) // 1 블록 증가하고 리워드 확인해보면 얘한테 떨어지는 수량 거의 2배로 되야 함
 		newGns := gns.BalanceOf(common.AddrToUser(adminAddr))
-		uassert.True(t, isNear99Pct(t, uint64(3210616), newGns-oldGns))
+		uassert.True(t, isNear(t, uint64(3210616), newGns-oldGns))
 
 		// 블록 시간 2초일 때 블록 당 리워드 = 10702054
 		// 블록 시간 4초일 때 블록 당 리워드 = 21404108
@@ -1206,8 +1206,8 @@ func testChangeDistributionPctByAdmin(t *testing.T) {
 		oldGns := gns.BalanceOf(common.AddrToUser(adminAddr))
 		CollectReward(1, false)
 		newGns := gns.BalanceOf(common.AddrToUser(adminAddr))
-		uassert.True(t, isNear99Pct(t, uint64(1070205), newGns-oldGns))
-		// uassert.True(t, isNear99Pct(t, uint64(0), newGns-oldGns))
+		uassert.True(t, isNear(t, uint64(1070205), newGns-oldGns))
+		// uassert.True(t, isNear(t, uint64(0), newGns-oldGns))
 		// 1 블록 당 발행되는 에미션 수량 14269406
 		// (원래) 75% 할당 = 10702054
 		// (변경) 50% 할당 = 7134703
@@ -1245,20 +1245,17 @@ func checkGnsBalance(t *testing.T) {
 	gnsPer2Block := uint64(1)
 
 	uassert.Equal(t, uint64(100000000000000)+(blockPassedFromGenesis*oneBlockEmissionAmount), gns.TotalSupply())
-	uassert.True(t, isNear99Pct(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR)))
+	uassert.True(t, isNear(t, uint64(0)+emissionLeft, gnsBalance(consts.EMISSION_ADDR)))
 
 	expectStakerBalance := uint64(0) + initialStakerAmount + ((blockPassedFromGenesis - 3) * oneBlockStakerAmount) + externalIncentiveDeposit
-	uassert.True(t, isNear99Pct(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR)+totalEmissionSent))
+	uassert.True(t, isNear(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR)+totalEmissionSent))
 
 	expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((blockPassedFromGenesis - 3) * oneBlockDevOpsAmount)
-	uassert.True(t, isNear99Pct(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS)))
+	uassert.True(t, isNear(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS)))
 }
 
-// 기존 방식은 매 블록 마다 모든 포지션에 대해 모든 리워드 계산을 하기 때문에 오차를 최소화 할 수 있음
-// 그러나, 여기에 소모되는 비용이(가스도 그렇고, 계산에 필요한 리소스도 그렇고) 너무 크기 때문에
-// 지금과 같이 변경점과 블록 증가 높이에 따라 계산하기 때문에 어느 정도 오차가 발생할 수 있음
-// 이 함수는 오차 범위가 99.99% 이내인지 확인 함
-func isNear99Pct(t *testing.T, expected, actual uint64) bool {
+// check whether the actual value is within 99.99% of the expected value
+func isNear(t *testing.T, expected, actual uint64) bool {
 	t.Helper()
 
 	// 99.99%
