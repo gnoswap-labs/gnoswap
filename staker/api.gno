@@ -1,17 +1,15 @@
 package staker
 
 import (
+	"math"
 	"std"
 	"strconv"
-	"math"
 	"time"
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/consts"
-	pl "gno.land/r/gnoswap/v1/pool"
 	en "gno.land/r/gnoswap/v1/emission"
 )
 
@@ -55,18 +53,16 @@ func ApiGetRewardTokens() string {
 		}
 
 		// HANDLE EXTERNAL
-		if !pool.IsExternallyIncentivizedPool() {
-			return false
-		}
-
-		pool.incentives.byTime.Iterate("", "", func(key string, value interface{}) bool {
-			ictv := value.(*ExternalIncentive)
-			if ictv.RewardToken() == "" {
+		if pool.IsExternallyIncentivizedPool() {
+			pool.incentives.byTime.Iterate("", "", func(key string, value interface{}) bool {
+				ictv := value.(*ExternalIncentive)
+				if ictv.RewardToken() == "" {
+					return false
+				}
+				thisPoolRewardTokens = append(thisPoolRewardTokens, ictv.RewardToken())
 				return false
-			}
-			thisPoolRewardTokens = append(thisPoolRewardTokens, ictv.RewardToken())
-			return false
-		})
+			})
+		}
 
 		if len(thisPoolRewardTokens) == 0 {
 			return false
@@ -141,7 +137,6 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 		PoolPath:         pool.poolPath,
 		RewardsTokenList: thisPoolRewardTokens,
 	})
-	
 
 	// STAT NODE
 	_stat := json.ObjectNode("", map[string]*json.Node{
@@ -635,8 +630,8 @@ func calculateInternalRewardPerBlockByPoolPath(poolPath string) string {
 
 // LpTokenReward represents the rewards associated with a specific LP token
 type LpTokenReward struct {
-	LpTokenId uint64   `json:"lpTokenId"` // The ID of the LP token
-	Address   string   `json:"address"`   // The address associated with the LP token
+	LpTokenId uint64      `json:"lpTokenId"` // The ID of the LP token
+	Address   string      `json:"address"`   // The address associated with the LP token
 	Rewards   []ApiReward `json:"rewards"`
 }
 
@@ -683,7 +678,7 @@ type ResponseApiGetRewardByLpTokenId struct {
 // ResponseApiGetStakes represents the API response for getting stakes.
 type ResponseApiGetStakes struct {
 	Stat     ResponseQueryBase `json:"stat"`     // Basic query information
-	Response []ApiStake           `json:"response"` // A slice of Stake structs
+	Response []ApiStake        `json:"response"` // A slice of Stake structs
 }
 
 func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
@@ -727,7 +722,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 	}
 
 	r := ResponseApiGetRewards{
-		Stat:     qb,
+		Stat: qb,
 		Response: []LpTokenReward{
 			{
 				LpTokenId: targetLpTokenId,
