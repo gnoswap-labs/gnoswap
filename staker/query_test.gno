@@ -14,7 +14,7 @@ func TestQueryPoolData(t *testing.T) {
 	testAddr := testutils.TestAddress("test_address")
 	poolPath := "test_pool"
 
-	pool := NewPool(poolPath, uint64(std.GetHeight()))
+	pool := NewPool(poolPath, std.GetHeight())
 	pools.Set(poolPath, pool)
 
 	// Add test incentive to pool
@@ -26,8 +26,8 @@ func TestQueryPoolData(t *testing.T) {
 	incentive := &ExternalIncentive{
 		startTimestamp: startTime,
 		endTimestamp:   endTime,
-		startHeight:    int64(std.GetHeight()),
-		endHeight:      int64(std.GetHeight() + 100),
+		startHeight:    std.GetHeight(),
+		endHeight:      std.GetHeight() + 100,
 		rewardToken:    rewardToken,
 		rewardAmount:   rewardAmount,
 		refundee:       testAddr,

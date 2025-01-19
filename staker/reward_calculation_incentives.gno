@@ -10,50 +10,46 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-type IncentiveBound struct {
-	Incentive ExternalIncentive
-	IsEnter   bool
-}
 
-type IncentiveRewardEntry struct {
-	ActiveIncentives []string
-	TotalStakedLiquidity *u256.Uint
-}
-
-// per-pool incentives
+// Incentives is a collection of external incentives for a given pool.
+// 
+// Fields:
+// - byTime: ExternalIncentive primarily indexed by startTime
+// - byHeight: ExternalIncentive primarily indexed by startHeight
+// - byEndHeight: ExternalIncentive primarily indexed by endHeight
+// - byCreator: ExternalIncentive primarily indexed by creator
+//
+// - unclaimablePeriods: 
+//   For each unclaimable period(start, end) for this pool,
+//   it stores (key: start) => (value: end)
+//   if end is 0, it means the unclaimable period is ongoing.
 type Incentives struct {
 	byTime    *avl.Tree // (startTime, endTime, creator, rewardToken) => ExternalIncentive
 	byHeight  *avl.Tree // (startHeight, endHeight, creator, rewardToken) => ExternalIncentive
+	byEndHeight *avl.Tree // (endHeight, startHeight, creator, rewardToken) => ExternalIncentive
 	byCreator *avl.Tree // (creator, startHeight, endHeight, rewardToken) => ExternalIncentive
 
-	incentiveBound *UintTree // blockNumber -> []IncentiveBound
-
-	// currentIncentives []string
-
-	rewardCache           *RewardCacheTree // blockNumber -> IncentiveRewardEntry
-	lastRewardCacheHeight *uint64
+	unclaimablePeriods *UintTree // startHeight => endHeight
 }
 
-func NewIncentives(currentHeight uint64) Incentives {
-	return Incentives{
+// NewIncentives creates a new Incentives instance.
+func NewIncentives() Incentives {
+	result := Incentives{
 		byTime:    avl.NewTree(),
 		byHeight:  avl.NewTree(),
+		byEndHeight: avl.NewTree(),
 		byCreator: avl.NewTree(),
-
-		incentiveBound: NewUintTree(),
-
-		rewardCache:           NewRewardCacheTree(),
-		lastRewardCacheHeight: &currentHeight,
+		unclaimablePeriods: NewUintTree(),
 	}
+
+	// initial unclaimable period starts, as there cannot be any staked positions yet.
+	result.unclaimablePeriods.Set(std.GetHeight(), int64(0))
+	return result
 }
 
-func (self *Incentives) Exists(startTime, endTime int64, creator std.Address, rewardToken string) bool {
-	byTimeId := incentiveIdByTime(uint64(startTime), uint64(endTime), creator, rewardToken)
-	return self.byTime.Has(byTimeId)
-}
-
+// Get incentive by time
 func (self *Incentives) Get(startTime, endTime int64, creator std.Address, rewardToken string) (*ExternalIncentive, bool) {
-	byTimeId := incentiveIdByTime(uint64(startTime), uint64(endTime), creator, rewardToken)
+	byTimeId := incentiveIdByTime(startTime, endTime, creator, rewardToken)
 	value, ok := self.byTime.Get(byTimeId)
 	if !ok {
 		return nil, false
@@ -61,6 +57,7 @@ func (self *Incentives) Get(startTime, endTime int64, creator std.Address, rewar
 	return value.(*ExternalIncentive), true
 }
 
+// Get incentive by full incentiveId(by time)
 func (self *Incentives) GetByIncentiveId(incentiveId string) (*ExternalIncentive, bool) {
 	value, ok := self.byTime.Get(incentiveId)
 	if !ok {
@@ -69,41 +66,50 @@ func (self *Incentives) GetByIncentiveId(incentiveId string) (*ExternalIncentive
 	return value.(*ExternalIncentive), true
 }
 
-// MUST be called after std.GetHeight() > endHeight
-func (self *Incentives) remove(incentive *ExternalIncentive) {
-	byTimeId := incentiveIdByTime(uint64(incentive.startTimestamp), uint64(incentive.endTimestamp), incentive.refundee, incentive.rewardToken)
-	self.byTime.Remove(byTimeId)
+// Get all incentives that is active in given [startHeight, endHeight)
+func (self *Incentives) GetAllInHeights(startHeight, endHeight int64) map[string]*ExternalIncentive {
+	incentives := make(map[string]*ExternalIncentive)
+	// Iterate all incentives that has start height less than endHeight
+	self.byHeight.ReverseIterate(
+		"",
+		EncodeUint(uint64(endHeight)),
+		func(key string, value interface{}) bool {
+			incentive := value.(*ExternalIncentive)
+			if incentive.endHeight < startHeight {
+				// incentive is already ended
+				return false
+			}
+			
+			incentives[incentive.incentiveId] = incentive
+			return false
+		},
+	)
+	// Iterate all incentives that has end height greater than startHeight
+	self.byEndHeight.Iterate(
+		EncodeUint(uint64(startHeight)),
+		"",
+		func(key string, value interface{}) bool {
+			incentive := value.(*ExternalIncentive)
+			if incentive.startHeight > endHeight {
+				// incentive is not started yet
+				return false
+			}
 
-	byHeightId, byCreatorId := incentiveIdByHeight(uint64(incentive.startHeight), uint64(incentive.endHeight), incentive.refundee, incentive.rewardToken)
-	self.byHeight.Remove(byHeightId)
-	self.byCreator.Remove(byCreatorId)
+			incentives[incentive.incentiveId] = incentive
+			return false
+		},
+	)
+	return incentives
 }
 
-func (self *Incentives) GetBound(height uint64) []IncentiveBound {
-	value, ok := self.incentiveBound.Get(height)
-	if !ok {
-		return []IncentiveBound{}
-	}
-	return value.([]IncentiveBound)
-}
-
-// cacheReward() MUST be called before this function
-func (self *Incentives) CurrentReward(currentHeight uint64) IncentiveRewardEntry {
-	value := self.rewardCache.CurrentReward(currentHeight)
-	if value == nil {
-		return IncentiveRewardEntry{
-			ActiveIncentives: []string{},
-			TotalStakedLiquidity: u256.Zero(),
-		}
-	}
-	return value.(IncentiveRewardEntry)
-}
-
+// Create a new external incentive
+// Panics if the incentive already exists.
+// Sets to byTime, byHeight, byEndHeight, byCreator
 func (self *Incentives) create(
 	creator std.Address,
 	incentive *ExternalIncentive,
 ) {
-	byTimeId := incentiveIdByTime(uint64(incentive.startTimestamp), uint64(incentive.endTimestamp), creator, incentive.rewardToken)
+	byTimeId := incentiveIdByTime(incentive.startTimestamp, incentive.endTimestamp, creator, incentive.rewardToken)
 	if self.byTime.Has(byTimeId) {
 		panic(addDetailToError(
 			errIncentiveAlreadyExists,
@@ -111,72 +117,78 @@ func (self *Incentives) create(
 		))
 	}
 
-	byHeightId, byCreatorId := incentiveIdByHeight(uint64(incentive.startHeight), uint64(incentive.endHeight), creator, incentive.rewardToken)
+	byHeightId, byCreatorId := incentiveIdByHeight(incentive.startHeight, incentive.endHeight, creator, incentive.rewardToken)
+	byEndHeightId, _ := incentiveIdByHeight(incentive.endHeight, incentive.startHeight, creator, incentive.rewardToken)
 
 	self.byTime.Set(byTimeId, incentive)
 	self.byHeight.Set(byHeightId, incentive)
+	self.byEndHeight.Set(byEndHeightId, incentive)
 	self.byCreator.Set(byCreatorId, incentive)
-
-	startIncentiveBound := self.GetBound(uint64(incentive.startHeight))
-	startIncentiveBound = append(startIncentiveBound, IncentiveBound{
-		Incentive: *incentive,
-		IsEnter:   true,
-	})
-	self.incentiveBound.Set(uint64(incentive.startHeight), startIncentiveBound)
-
-	endHeight := uint64(incentive.endHeight)
-	endIncentiveBound := self.GetBound(endHeight)
-	endIncentiveBound = append(endIncentiveBound, IncentiveBound{
-		Incentive: *incentive,
-		IsEnter:   false,
-	})
-	self.incentiveBound.Set(endHeight, endIncentiveBound)
 }
 
-// endHeight MUST be less than or equal to the current block height
-func (self *Incentives) cacheRewardPerLiquidityUnit(startHeight, endHeight uint64, stakedLiquidity *u256.Uint) {
-	currentReward := self.CurrentReward(startHeight)
+// starts incentive unclaimable period for this pool
+func (self *Incentives) startUnclaimablePeriod(startHeight int64) {
+	self.unclaimablePeriods.Set(startHeight, int64(0))
+}
 
-	self.incentiveBound.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
-		bound := value.([]IncentiveBound)
-		reward := IncentiveRewardEntry{
-			ActiveIncentives: make([]string, len(currentReward.ActiveIncentives)),
-			TotalStakedLiquidity: currentReward.TotalStakedLiquidity.Clone(),
+// ends incentive unclaimable period for this pool
+// ignores if currently not in unclaimable period
+func (self *Incentives) endUnclaimablePeriod(endHeight int64) {
+	startHeight := int64(0)
+	self.unclaimablePeriods.ReverseIterate(0, endHeight, func(key int64, value interface{}) bool {
+		if value.(int64) != 0 {
+			// Already ended, no need to update
+			// keeping startHeight as 0 to indicate this
+			return true
 		}
-		for i, incentiveId := range currentReward.ActiveIncentives {
-			reward.ActiveIncentives[i] = incentiveId
+		startHeight = key
+		return true
+	})
+
+	if startHeight == 0 {
+		// No ongoing unclaimable period found
+		return
+	}
+
+	if startHeight == endHeight {
+		self.unclaimablePeriods.Remove(startHeight)
+	} else {
+		self.unclaimablePeriods.Set(startHeight, endHeight)
+	}
+}
+
+// calculate unclaimable reward by checking unclaimable periods
+func (self *Incentives) calculateUnclaimableReward(incentiveId string) uint64 {
+	incentive, ok := self.GetByIncentiveId(incentiveId)
+	if !ok {
+		return 0
+	}
+
+	blocks := int64(0)
+
+
+	self.unclaimablePeriods.ReverseIterate(0, incentive.startHeight, func(key int64, value interface{}) bool {
+		endHeight := value.(int64)
+		if endHeight == 0 {
+			endHeight = incentive.endHeight
 		}
-		for _, bound := range bound {
-			if bound.IsEnter {
-				reward.ActiveIncentives = append(reward.ActiveIncentives, bound.Incentive.incentiveId)
-			} else {
-				for i, incentiveId := range reward.ActiveIncentives {
-					if incentiveId == bound.Incentive.incentiveId {
-						reward.ActiveIncentives = append(reward.ActiveIncentives[:i], reward.ActiveIncentives[i+1:]...)
-						break
-					}
-				}
-			}
+		if endHeight <= incentive.startHeight {
+			return true
 		}
-		self.rewardCache.Set(key, reward)
-		currentReward = reward
+		blocks += endHeight - incentive.startHeight
+		return true
+	})
+
+	self.unclaimablePeriods.Iterate(incentive.startHeight, incentive.endHeight, func(key int64, value interface{}) bool {
+		startHeight := key
+		endHeight := value.(int64)
+		if endHeight == 0 {
+			endHeight = incentive.endHeight
+		}
+		blocks += endHeight - startHeight
 		return false
 	})
-	*self.lastRewardCacheHeight = endHeight
-}
 
-func (self *Incentives) updateRewardByLiquidityChange(currentHeight uint64, liquidity *u256.Uint) {
-	currentReward := self.CurrentReward(currentHeight)
-
-	entry := IncentiveRewardEntry{
-		ActiveIncentives: make([]string, len(currentReward.ActiveIncentives)),
-		TotalStakedLiquidity: liquidity.Clone(),
-	}
-
-	for i, incentiveId := range currentReward.ActiveIncentives {
-		entry.ActiveIncentives[i] = incentiveId
-	}
-
-	self.rewardCache.Set(currentHeight, entry)
+	return uint64(blocks) * incentive.rewardPerBlock
 }
 

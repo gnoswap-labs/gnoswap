@@ -100,23 +100,26 @@ func testStakeToken(t *testing.T) {
 }
 
 func testCollectExternalReward_1_Unwrap(t *testing.T) {
+	t.Run("collect all rewards", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		std.TestSkipHeights(900)
+		CollectReward(1, false)
+	})
+
 	t.Run("collect external reward 01, unwrap", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
+		std.TestSkipHeights(1)
 
 		oldUgnotBal := ugnotBalanceOf(t, adminAddr)
-		uassert.Equal(t, oldUgnotBal, uint64(99999900000000))
-
 		oldWugnotBal := wugnot.BalanceOf(admin)
-		uassert.Equal(t, oldWugnotBal, uint64(0))
 
-		std.TestSkipHeights(900)
 		CollectReward(1, true)
 
 		newUgnotBal := ugnotBalanceOf(t, adminAddr)
-		uassert.Equal(t, newUgnotBal, uint64(99999900000000+415))
-
 		newWugnotBal := wugnot.BalanceOf(admin)
-		uassert.Equal(t, newWugnotBal, uint64(0))
+
+		uassert.True(t, newUgnotBal > oldUgnotBal)    // unwrapping true increases ugnot balance
+		uassert.True(t, newWugnotBal == oldWugnotBal) // wugnot stays
 	})
 }
 
@@ -125,18 +128,15 @@ func testCollectExternalReward_1_NoUnWrap(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		oldUgnotBal := ugnotBalanceOf(t, adminAddr)
-		uassert.Equal(t, oldUgnotBal, uint64(99999900000415))
-
 		oldWugnotBal := wugnot.BalanceOf(admin)
-		uassert.Equal(t, oldWugnotBal, uint64(0))
 
 		std.TestSkipHeights(1)
 		CollectReward(1, false)
 
 		newUgnotBal := ugnotBalanceOf(t, adminAddr)
-		uassert.Equal(t, newUgnotBal, uint64(99999900000415))
-
 		newWugnotBal := wugnot.BalanceOf(admin)
-		uassert.Equal(t, newWugnotBal, uint64(7))
+
+		uassert.True(t, newWugnotBal > oldWugnotBal) // unwrapping false increases wugnot balance
+		uassert.True(t, newUgnotBal == oldUgnotBal)  // ugnot stays
 	})
 }

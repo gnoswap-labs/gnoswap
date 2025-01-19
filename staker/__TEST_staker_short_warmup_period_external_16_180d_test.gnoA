@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/r/demo/users"
-
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/demo/users"
 
 	"gno.land/r/gnoswap/v1/consts"
 
@@ -34,11 +34,13 @@ func TestShortWarmUp180DayExternal(t *testing.T) {
 	testCreateExternalIncentiveQux180(t)
 	testStakeToken_1_4(t)
 	testBeforeActive(t)
-	test23HoursAfterActive(t)
+	testRewardFor1Block(t)
 }
 
 func testInit(t *testing.T) {
 	t.Run("override warm-up period", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
 		changeWarmup(t, 0, 150)
 		changeWarmup(t, 1, 300)
 		changeWarmup(t, 2, 900)
@@ -121,16 +123,16 @@ func testStakeToken_1_4(t *testing.T) {
 	t.Run("stake token 1 ~ 4", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
+		gnft.Approve(GetOrigPkgAddr(), tid(1))
 		StakeToken(1)
 
-		gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
+		gnft.Approve(GetOrigPkgAddr(), tid(2))
 		StakeToken(2)
 
-		gnft.Approve(a2u(GetOrigPkgAddr()), tid(3))
+		gnft.Approve(GetOrigPkgAddr(), tid(3))
 		StakeToken(3)
 
-		gnft.Approve(a2u(GetOrigPkgAddr()), tid(4))
+		gnft.Approve(GetOrigPkgAddr(), tid(4))
 		StakeToken(4)
 
 		std.TestSkipHeights(1)
@@ -144,10 +146,82 @@ func testBeforeActive(t *testing.T) {
 	})
 }
 
-func test23HoursAfterActive(t *testing.T) {
-	t.Run("23 hours after active", func(t *testing.T) {
-		std.TestSkipHeights(849)   // in active
-		std.TestSkipHeights(1)     // active // but no block passed since active
-		std.TestSkipHeights(41400) // skip 23 hours of block
+func testRewardFor1Block(t *testing.T) {
+	t.Run("reward for 1 block of 90 days external", func(t *testing.T) {
+		std.TestSkipHeights(849) // in active
+		std.TestSkipHeights(1)   // active // but no block passed since active
+		std.TestSetRealm(adminRealm)
+
+		CollectReward(1, false)
+		CollectReward(2, false)
+		CollectReward(3, false)
+		CollectReward(4, false)
+	})
+
+	t.Run("skip 1 block", func(t *testing.T) {
+		std.TestSkipHeights(1)
+		std.TestSetRealm(adminRealm)
+
+		/*
+			- each staked position's liquidity ratio
+			> position01: 13.6317%
+			> position02: 84.3710%
+			> position03: 1.9902%
+			> position04: 0.0069%
+
+			- block per reward 1286008
+		*/
+
+		t.Run("collect reward position 01", func(t *testing.T) {
+			std.TestSetRealm(adminRealm)
+
+			oldQux := qux.BalanceOf(admin)
+			CollectReward(1, false)
+			newQux := qux.BalanceOf(admin)
+			uassert.True(t, isInErrorRange(newQux-oldQux, uint64(122713)))
+			// reward 122713
+			// penalty 52592
+			// total 175305
+			// 1286008 * 13.6317% = 175304.752536
+		})
+
+		t.Run("collect reward position 02", func(t *testing.T) {
+			std.TestSetRealm(adminRealm)
+
+			oldQux := qux.BalanceOf(admin)
+			CollectReward(2, false)
+			newQux := qux.BalanceOf(admin)
+			uassert.True(t, isInErrorRange(newQux-oldQux, uint64(759511)))
+			// reward 759511
+			// penalty 325506
+			// total 1085017
+			// 1286008 * 84.3710% = 1085017.80968
+		})
+
+		t.Run("collect reward position 03", func(t *testing.T) {
+			std.TestSetRealm(adminRealm)
+
+			oldQux := qux.BalanceOf(admin)
+			CollectReward(3, false)
+			newQux := qux.BalanceOf(admin)
+			uassert.True(t, isInErrorRange(newQux-oldQux, uint64(17915)))
+			// reward 17915
+			// penalty 7679
+			// total 25594
+			// 1286008 * 1.9902% = 25594.131216
+		})
+
+		t.Run("collect reward position 04", func(t *testing.T) {
+			std.TestSetRealm(adminRealm)
+
+			oldQux := qux.BalanceOf(admin)
+			CollectReward(4, false)
+			newQux := qux.BalanceOf(admin)
+			uassert.True(t, isInErrorRange(newQux-oldQux, uint64(62)))
+			// reward 62
+			// penalty 27
+			// total 89
+			// 1286008 * 0.0069% = 88.734552
+		})
 	})
 }

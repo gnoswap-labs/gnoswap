@@ -7,7 +7,6 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/json"
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 )
 
@@ -61,6 +60,7 @@ type HalvingData struct {
 	accumAmount      []uint64
 	amountPerBlock   []uint64
 }
+
 
 func (h *HalvingData) getStartBlockHeight(year int64) int64 {
 	if year == 0 {
@@ -193,6 +193,52 @@ func (h *HalvingData) initialize(startHeight, startTimestamp int64) {
 		h.setMintedAmount(year, uint64(0))
 		h.setLeftAmount(year, currentYearMaxAmount)
 	}
+}
+
+var callbackEmissionChange func(amount uint64)
+
+func SetCallbackEmissionChange(callback func(amount uint64)) {
+	if callbackEmissionChange != nil {
+		panic("callbackEmissionChange already set")
+	}
+	callbackEmissionChange = callback
+}
+
+// endHeight MUST be smaller than the current height(we don't read future halving blocks with this function)
+func GetHalvingBlocksInRange(startHeight, endHeight int64) ([]int64, []uint64) {
+	halvingData := GetEmissionState().getHalvingData()
+	halvingBlocks := []int64{}
+	halvingEmissions := []uint64{}
+	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
+		startBlock := halvingData.getStartBlockHeight(year)
+		if startBlock < startHeight {
+			continue
+		}
+		if endHeight < startBlock {
+			break
+		}
+		halvingBlocks = append(halvingBlocks, startBlock)
+		halvingEmissions = append(halvingEmissions, halvingData.getAmountPerBlock(year))
+	}
+	return halvingBlocks, halvingEmissions
+}
+
+// height MUST be smaller than the current height(we don't read future emissions)
+func GetEmission() uint64 {
+	halvingData := GetEmissionState().getHalvingData()
+	height := std.GetHeight()
+
+	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
+		startBlock := halvingData.getStartBlockHeight(year)
+		endBlock := halvingData.getEndBlockHeight(year)
+		if startBlock <= height && height < endBlock {
+			return halvingData.getAmountPerBlock(year)
+		}
+	}
+
+	// haven't reached the start of the halvings
+	// TODO: check if returning 0 is correct
+	return 0
 }
 
 type EmissionState struct {
@@ -343,7 +389,10 @@ func setAvgBlockTimeInMs(ms int64) {
 	adjustedAmountPerBlock := amountLeft / uint64(blockLeft)
 	// update it
 	setAmountPerBlockPerHalvingYear(currentYear, adjustedAmountPerBlock)
-	addPerBlockMintUpdate(uint64(std.GetHeight()), adjustedAmountPerBlock)
+	if callbackEmissionChange == nil {
+		panic(errCallbackEmissionChangeIsNil.Error())
+	}
+	callbackEmissionChange(adjustedAmountPerBlock)
 
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		if year < currentYear {
@@ -371,6 +420,8 @@ func setAvgBlockTimeInMs(ms int64) {
 	}
 
 	avgBlockTimeMs = ms
+
+
 }
 
 // GetAmountByHeight returns the amount of gns to mint by height
@@ -556,31 +607,4 @@ func getHalvingYearAndEndTimestamp(timestamp int64) (int64, int64) {
 	year += 1 // since we subtract startTimestamp at line 215, we need to add 1 to get the correct year
 
 	return year, startTimestamp + (consts.TIMESTAMP_YEAR * year)
-}
-
-func GetCurrentEmission() uint64 {
-	emission := uint64(0)
-	perBlockMint.ReverseIterate("", common.EncodeUint(uint64(std.GetHeight())), func(key string, value interface{}) bool {
-		emission = value.(uint64)
-		return true
-	})
-	return emission
-}
-
-func EmissionUpdates(startHeight uint64, endHeight uint64) ([]uint64, []uint64) {
-	heights := make([]uint64, 0)
-	updates := make([]uint64, 0)
-	println("EmissionUpdates : ", startHeight, ", ", endHeight)
-	perBlockMint.Iterate(common.EncodeUint(startHeight), common.EncodeUint(endHeight), func(key string, value interface{}) bool {
-		println("EmissionUpdates : ", key, ", ", value)
-		heights = append(heights, common.DecodeUint(key))
-		updates = append(updates, value.(uint64))
-		return false
-	})
-
-	return heights, updates
-}
-
-func addPerBlockMintUpdate(height uint64, amount uint64) {
-	perBlockMint.Set(common.EncodeUint(height), amount)
 }
