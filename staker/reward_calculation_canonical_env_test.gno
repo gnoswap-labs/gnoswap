@@ -358,11 +358,6 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
 	}
 }
 
-// Emulation of gns.gno emission changes
-func (self *canonicalRewardState) SetMsPerBlock(msPerBlock int64) {
-	// TODO: implement
-}
-
 // Emulation of staker.gno public entrypoints
 func (self *canonicalRewardState) StakeToken(tokenId uint64, targetPoolPath string, owner std.Address, tickLower int32, tickUpper int32, liquidity *u256.Uint) error {
 	currentHeight := self.CurrentHeight()
@@ -405,10 +400,6 @@ func (self *canonicalRewardState) StakeToken(tokenId uint64, targetPoolPath stri
 	pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(currentHeight, canonicalPool.tick, signedLiquidity)
 
 	return nil
-}
-
-func (self *canonicalRewardState) CollectReward(tokenId uint64) {
-	// TODO: implement
 }
 
 func (self *canonicalRewardState) UnstakeToken(tokenId uint64) {
@@ -492,10 +483,6 @@ func (self *canonicalRewardState) CreateExternalIncentive(targetPoolPath string,
 	self.global.pools.GetOrCreate(targetPoolPath).incentives.create(refundee, incentive)
 
 	return incentive.incentiveId
-}
-
-func (self *canonicalRewardState) EndExternalIncentive(targetPoolPath string, rewardToken string) {
-	// TODO: implement
 }
 
 func (self *canonicalRewardState) ChangePoolTier(poolPath string, tier uint64) {

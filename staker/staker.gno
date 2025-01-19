@@ -274,7 +274,6 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	signedLiquidity := i256.FromUint256(liquidity)
 	isInRange := false
 
-	// TODO: call cache functions at the every staker related state change
 	poolTier.cacheReward(currentHeight, pools)
 
 	if pn.PositionIsInRange(tokenId) {

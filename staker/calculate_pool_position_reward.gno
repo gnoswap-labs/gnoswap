@@ -27,6 +27,7 @@ type Reward struct {
 	ExternalPenalty map[string]uint64 // Incentive ID -> TokenAmount
 }
 
+// calculate position reward by each warmup
 func calcPositionRewardByWarmups(currentHeight int64, tokenId uint64) []Reward {
 	rewards := CalcPositionReward(CalcPositionRewardParam{
 		CurrentHeight: currentHeight,
@@ -39,6 +40,7 @@ func calcPositionRewardByWarmups(currentHeight int64, tokenId uint64) []Reward {
 	return rewards
 }
 
+// calculate total position rewards and penalties
 func calcPositionReward(currentHeight int64, tokenId uint64) Reward {
 	rewards := CalcPositionReward(CalcPositionRewardParam{
 		CurrentHeight: currentHeight,
@@ -155,6 +157,7 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 	return rewards
 }
 
+// calculates internal unclaimable reward for the pool
 func ProcessUnClaimableReward(poolPath string, endHeight int64) uint64 {
 	pool, ok := pools.Get(poolPath)
 	if !ok {

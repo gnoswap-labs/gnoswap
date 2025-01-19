@@ -13,8 +13,6 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 )
 
-//! TODO: Change function names to follow a naming convention
-
 // GetPoolByPoolPath retrieves the pool's path using the provided pool path.
 //
 // Parameters:

@@ -72,8 +72,6 @@ func (self *Ticks) Get(tickId int32) *Tick {
 
 func (self *Ticks) Set(tickId int32, tick *Tick) {
 	if tick.stakedLiquidityGross.IsZero() {
-		// TODO: check if this could cause memory leak of GC halt
-		// because tick.cross being dropped may overload the VM GC
 		self.tree.Remove(EncodeInt(tickId))
 		return
 	}
