@@ -473,29 +473,55 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 	assertOnlyAdmin()
 	assertOnlyNotHalted()
 
-	project, exists := projects[projectId]
-	if !exists {
-		panic(addDetailToError(errDataNotFound, ufmt.Sprintf("projectId(%s) not found", projectId)))
+	project, err := getProject(projectId)
+	if err != nil {
+		panic(err.Error())
 	}
 
-	height := uint64(std.GetHeight())
-	if err := validateTransferLeft(project, recipient, height); err != nil {
+	currentHeight := uint64(std.GetHeight())
+	if err := validateTransferLeft(project, recipient, currentHeight); err != nil {
 		panic(addDetailToError(
 			errInvalidCondition, err.Error()))
 	}
 
 	en.MintAndDistributeGns()
 
-	project = projects[projectId] // get updated project
+	accumTotalReward := uint64(0)
+	accumLeftReward := uint64(0)
+	accumCollectedReward := uint64(0)
+	tierMap := project.Tiers()
+	for _, tier := range tierMap {
+		if !tier.isEnded(currentHeight) {
+			panic(addDetailToError(
+				errActiveProject, ufmt.Sprintf("tier(%d) is not ended", tier.ID())))
+		}
+		if tier.ActualParticipant() > 0 {
+			panic(addDetailToError(
+				errTierHasParticipants, ufmt.Sprintf("tier(%d) has (%d) participants", tier.ID(), tier.ActualParticipant())))
+		}
+		leftReward := tier.calculateLeftReward()
+		accumLeftReward += leftReward
+		accumCollectedReward += tier.UserCollectedAmount()
+		accumTotalReward += tier.TierAmount()
+	}
 
-	leftReward := rewardStates.DeleteProject(projectId)
+	if accumTotalReward != accumCollectedReward+accumLeftReward {
+		panic(addDetailToError(
+			errInvalidRewardState, ufmt.Sprintf("accumTotalReward(%d) != accumCollectedReward(%d)+accumLeftReward(%d)", accumTotalReward, accumCollectedReward, accumLeftReward)))
+	}
 
-	// TODO:
-	// compare with (totalAmount - distributedAmount)
+	projectLeftReward := project.calculateLeftReward()
+	project.refund = RefundInfo{
+		amount: projectLeftReward,
+		height: currentHeight,
+		time:   uint64(time.Now().Unix()),
+	}
 
-	if leftReward > 0 {
+	projects[projectId] = project
+
+	if projectLeftReward > 0 {
 		tokenTeller := common.GetTokenTeller(project.tokenPath)
-		tokenTeller.Transfer(recipient, leftReward)
+		tokenTeller.Transfer(recipient, projectLeftReward)
 	}
 
 	std.Emit(
@@ -503,7 +529,7 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 		"projectId", projectId,
 		"recipient", recipient.String(),
 		"tokenPath", project.tokenPath,
-		"leftReward", strconv.FormatUint(leftReward, 10),
+		"leftReward", strconv.FormatUint(projectLeftReward, 10),
 		"tier30Full", strconv.FormatUint(project.tiers[30].tierAmount, 10),
 		"tier30Left", strconv.FormatUint(project.tiers[30].tierAmount-project.tiers[30].calculatedAmount, 10),
 		"tier90Full", strconv.FormatUint(project.tiers[90].tierAmount, 10),
@@ -512,14 +538,7 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 		"tier180Left", strconv.FormatUint(project.tiers[180].tierAmount-project.tiers[180].calculatedAmount, 10),
 	)
 
-	project.refund = RefundInfo{
-		amount: leftReward,
-		height: height,
-		time:   uint64(time.Now().Unix()),
-	}
-	projects[projectId] = project
-
-	return leftReward
+	return projectLeftReward
 }
 
 // calculateProjectParams calculates project-related parameters based on the input and current time.
@@ -658,14 +677,14 @@ func validateTransferLeft(project Project, recipient std.Address, height uint64)
 		return errors.New(ufmt.Sprintf("invalid recipient address(%s)", recipient.String()))
 	}
 
-	if height < project.ended.height {
+	if height < project.Ended().height {
 		return errors.New(ufmt.Sprintf("project not ended yet(current:%d, endHeight: %d)",
 			height, project.ended.height))
 	}
 
-	if project.refund.height != 0 {
+	if project.Refund().height != 0 {
 		return errors.New(ufmt.Sprintf("project already refunded(height:%d)",
-			project.refund.height))
+			project.Refund().height))
 	}
 
 	return nil

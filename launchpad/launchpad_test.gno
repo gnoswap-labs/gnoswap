@@ -1526,9 +1526,9 @@ func TestTransferLeftFromProjectByAdmin(t *testing.T) {
 		name:      "Dummy Project",
 		tokenPath: oblPath,
 		tiers: map[uint64]Tier{
-			30:  {tierAmount: 1000, calculatedAmount: 400},
-			90:  {tierAmount: 2000, calculatedAmount: 2000},
-			180: {tierAmount: 3000, calculatedAmount: 2500},
+			30:  {tierAmount: 1000, userCollectedAmount: 400},
+			90:  {tierAmount: 2000, userCollectedAmount: 2000},
+			180: {tierAmount: 3000, userCollectedAmount: 2500},
 		},
 		ended: TimeInfo{
 			height: 120,
@@ -1601,12 +1601,14 @@ func TestTransferLeftFromProjectByAdmin(t *testing.T) {
 				projects = make(map[string]Project)
 				p := dummyProject
 				p.ended.height = 120
+				p.depositAmount = 6000
+				p.stats.totalCollected = 4900
 				p.refund = RefundInfo{}
 				projects[projectId] = p
 			},
 			projectId:     projectId,
 			recipient:     validRecipient,
-			mockHeight:    200,
+			mockHeight:    250,
 			expectedPanic: "",
 		},
 	}
@@ -1641,9 +1643,9 @@ func TestTransferLeftFromProjectByAdmin(t *testing.T) {
 
 			if tt.expectedPanic == "" {
 				project := projects[tt.projectId]
-				// leftover = (1000-400) + (2000-2000) + (3000-2500) = 600
-				uassert.Equal(t, got, uint64(600))
-				uassert.Equal(t, project.refund.amount, uint64(600))
+				// leftover = (1000-400) + (2000-2000) + (3000-2500) = 1100
+				uassert.Equal(t, got, uint64(1100))
+				uassert.Equal(t, project.refund.amount, uint64(1100))
 				uassert.Equal(t, project.refund.height, tt.mockHeight)
 			}
 		})

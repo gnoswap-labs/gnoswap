@@ -228,6 +228,9 @@ func (p *Project) checkDepositConditions(caller std.Address) {
 func (p *Project) setTier(key uint64, tier Tier) {
 	p.tiers[key] = tier
 }
+func (p *Project) calculateLeftReward() uint64 {
+	return p.DepositAmount() - p.Stats().totalCollected
+}
 
 type Tier struct {
 	id                     string // '{projectId}:duration' // duartion == 30, 90, 180
@@ -365,6 +368,12 @@ func (t *Tier) updateStarted(height, time uint64) {
 }
 func (t *Tier) rewardPerBlockUint64() uint64 {
 	return u256.Zero().Rsh(t.tierAmountPerBlockX128, 128).Uint64()
+}
+func (t *Tier) isEnded(currentHeight uint64) bool {
+	return t.ended.Height() < currentHeight
+}
+func (t *Tier) calculateLeftReward() uint64 {
+	return t.tierAmount - t.userCollectedAmount
 }
 
 type RewardInfo struct {
