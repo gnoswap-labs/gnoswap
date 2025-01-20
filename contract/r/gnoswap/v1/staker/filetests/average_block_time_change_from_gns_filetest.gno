@@ -4,12 +4,11 @@
 // 1. gnot:gns:3000
 
 // POSITIONs:
-// 1. in-range
-// 2. (will be staked) out-range
-// 3. (will be staked) in-range
+// 1. in-range ( will be unstaked )
 
 // REWARDs:
 // - internal tier 1 ( gnot:gns:3000 )
+// - halving changes
 
 package staker_test
 
@@ -18,6 +17,7 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/grc/grc721"
+	"gno.land/p/demo/testutils"
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
@@ -36,6 +36,11 @@ var (
 	adminAddr  = consts.ADMIN
 	adminUser  = common.AddrToUser(adminAddr)
 	adminRealm = std.NewUserRealm(adminAddr)
+
+	// g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup
+	externalCreatorAddr  = testutils.TestAddress("externalCreator")
+	externalCreatorUser  = common.AddrToUser(externalCreatorAddr)
+	externalCreatorRealm = std.NewUserRealm(externalCreatorAddr)
 
 	stakerAddr  = consts.STAKER_ADDR
 	stakerUser  = common.AddrToUser(stakerAddr)
@@ -64,18 +69,16 @@ var (
 	TIMESTAMP_90DAYS  int64 = 90 * 24 * 60 * 60
 	TIMESTAMP_180DAYS int64 = 180 * 24 * 60 * 60
 	TIMESTAMP_365DAYS int64 = 365 * 24 * 60 * 60
+
+	poolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
 )
 
 func main() {
 	testInit()
 	testCreatePool()
-
-	testMintAndStakeWugnotGnsPos01() // position-01 is in-range
-
-	testMintAndStakeWugnotGnsPos02() // position-02 is out-range (no reward)
-
-	testMintAndStakeWugnotGnsPos03() // position-03 is in-range
-
+	testMintWugnotGnsPos01()
+	testStakeTokenPos01()
+	testGnsAvgBlockTime()
 }
 
 func testInit() {
@@ -88,6 +91,9 @@ func testInit() {
 	std.TestSetOrigSend(std.Coins{{"ugnot", 50_000_000_000_000}}, nil)
 	wugnot.Deposit()
 	std.TestSetOrigSend(nil, nil)
+
+	// set unstaking fee to 0
+	sr.SetUnstakingFeeByAdmin(0)
 }
 
 func testCreatePool() {
@@ -104,7 +110,7 @@ func testCreatePool() {
 	)
 }
 
-func testMintAndStakeWugnotGnsPos01() {
+func testMintWugnotGnsPos01() {
 	std.TestSetRealm(adminRealm)
 
 	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -117,111 +123,59 @@ func testMintAndStakeWugnotGnsPos01() {
 		fee3000,
 		int32(-60),
 		int32(60),
-		"100",
-		"100",
-		"0",
-		"0",
+		"50",
+		"50",
+		"1",
+		"1",
 		max_timeout,
 		adminAddr,
 		adminAddr,
 	)
+}
 
-	gnft.Approve(stakerAddr, tokenIdFrom(1))
+func testStakeTokenPos01() {
+	std.TestSetRealm(adminRealm)
+
+	// stake
+	gnft.Approve(consts.STAKER_ADDR, tokenIdFrom(1))
 	sr.StakeToken(1)
 
-	// check reward for position 01 (in-range)
-	std.TestSkipHeights(1)
-	beforeGns := gns.BalanceOf(adminUser)
+	before := gns.BalanceOf(adminUser)
+
+	std.TestSkipHeights(100)
 	sr.CollectReward(1, false)
-	afterGns := gns.BalanceOf(adminUser)
-	diff := afterGns - beforeGns
-	if diff == 0 {
-		panic("position 01 in-range, should have reward")
-	}
 
-}
+	after := gns.BalanceOf(adminUser)
 
-func testMintAndStakeWugnotGnsPos02() {
-	std.TestSetRealm(adminRealm)
-
-	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-
-	std.TestSkipHeights(1)
-	pn.Mint(
-		wugnotPath,
-		gnsPath,
-		fee3000,
-		int32(60),
-		int32(120),
-		"100",
-		"100",
-		"0",
-		"0",
-		max_timeout,
-		adminAddr,
-		adminAddr,
-	)
-
-	gnft.Approve(stakerAddr, tokenIdFrom(2))
-	sr.StakeToken(2)
-
-	std.TestSkipHeights(1)
-
-	// check reward for position 02 (out-range)
-	std.TestSkipHeights(1)
-	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(2, false)
-	afterGns := gns.BalanceOf(adminUser)
-	diff := afterGns - beforeGns
-	if diff != 0 {
-		panic("position 02 out-range, should not have reward")
-	}
-
-	// check reward for position 01 (in-range)
-	std.TestSkipHeights(1)
-	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(1, false)
-	afterGns = gns.BalanceOf(adminUser)
-	diff = afterGns - beforeGns
-	if diff == 0 {
-		panic("position 01 in-range, should have reward")
+	diff := after - before
+	if diff <= 0 {
+		panic("reward can not be 0 for 100 blocks")
 	}
 }
 
-func testMintAndStakeWugnotGnsPos03() {
+func testGnsAvgBlockTime() {
 	std.TestSetRealm(adminRealm)
 
-	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-
+	before := gns.BalanceOf(adminUser)
 	std.TestSkipHeights(1)
-	pn.Mint(
-		wugnotPath,
-		gnsPath,
-		fee3000,
-		int32(-60),
-		int32(60),
-		"100",
-		"100",
-		"0",
-		"0",
-		max_timeout,
-		adminAddr,
-		adminAddr,
-	)
+	sr.CollectReward(1, false)
+	after := gns.BalanceOf(adminUser)
 
-	gnft.Approve(stakerAddr, tokenIdFrom(3))
-	sr.StakeToken(3)
+	diff := after - before // actual reward for 1 block when avg block time was 2000ms(2s)
+	if !isInErrorRange(3210616, diff) {
+		panic("expected about 3210616")
+	}
 
-	// check reward for position 03 (in-range)
+	gns.SetAvgBlockTimeInMsByAdmin(4000) // orig block time was 2000ms(2s), change it to 4s
+	sr.CollectReward(1, false)           // clear reward
+
+	before = gns.BalanceOf(adminUser)
 	std.TestSkipHeights(1)
-	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(3, false)
-	afterGns := gns.BalanceOf(adminUser)
-	diff := afterGns - beforeGns
-	if diff == 0 {
-		panic("position 03 in-range, should have reward")
+	sr.CollectReward(1, false) // actual reward for 1 block when avg block time was 4000ms(4s)
+	after = gns.BalanceOf(adminUser)
+	diff = after - before
+	if !isInErrorRange(6421232, diff) {
+		panic("expected about 6421232") // block time has doubled, so reward should be doubled too
 	}
 }
 
@@ -242,4 +196,10 @@ func tokenIdFrom(tokenId interface{}) grc721.TokenID {
 	default:
 		panic("unsupported tokenId type")
 	}
+}
+
+func isInErrorRange(expected uint64, actual uint64) bool {
+	lowerBound := expected * 999999 / 1000000
+	upperBound := expected * 1000001 / 1000000
+	return actual >= lowerBound && actual <= upperBound
 }
