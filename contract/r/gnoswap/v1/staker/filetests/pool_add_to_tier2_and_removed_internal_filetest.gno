@@ -91,6 +91,9 @@ func testInit() {
 	std.TestSetOrigSend(std.Coins{{"ugnot", 50_000_000_000_000}}, nil)
 	wugnot.Deposit()
 	std.TestSetOrigSend(nil, nil)
+
+	// set unstaking fee to 0
+	sr.SetUnstakingFeeByAdmin(0)
 }
 
 func testCreatePool() {
@@ -145,15 +148,14 @@ func testMintAndStakeWugnotGnsPos01() {
 	sr.CollectReward(1, false)
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
-	if diff == 0 {
-		panic("position 01 has some reward (gnot:gns:3000 is tier 01 pool)")
+	if !isInErrorRange(3210615, diff) {
+		panic("expected about 3210615") // 10702054 * 100%(tier1 ratio) * 30%(warmUp)
 	}
 }
 
 func testSetPoolTier2() {
 	std.TestSetRealm(adminRealm)
 
-	std.TestSkipHeights(1)
 	sr.SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", 2)
 }
 
@@ -163,7 +165,6 @@ func testMintAndStakeBarBazPos02() {
 	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
 	pn.Mint(
 		barPath,
 		bazPath,
@@ -181,8 +182,8 @@ func testMintAndStakeBarBazPos02() {
 
 	gnft.Approve(stakerAddr, tokenIdFrom(2))
 	sr.StakeToken(2)
-
 	std.TestSkipHeights(1)
+
 	{
 		// check reward for position 01 (gnot:gns:3000 tier 01)
 		std.TestSetRealm(adminRealm)
@@ -190,8 +191,8 @@ func testMintAndStakeBarBazPos02() {
 		sr.CollectReward(1, false)
 		afterGns := gns.BalanceOf(adminUser)
 		diff := afterGns - beforeGns
-		if diff == 0 {
-			panic("position 01 has some reward (gnot:gns:3000 is tier 01 pool)")
+		if !isInErrorRange(2247430, diff) {
+			panic("expected about 2247430") // 10702054 * 70%(tier1 ratio) * 30%(warmUp)
 		}
 	}
 
@@ -202,8 +203,8 @@ func testMintAndStakeBarBazPos02() {
 		sr.CollectReward(2, false)
 		afterGns := gns.BalanceOf(adminUser)
 		diff := afterGns - beforeGns
-		if diff == 0 {
-			panic("position 02 has some reward (bar:baz:100 is tier 02 pool)")
+		if !isInErrorRange(963184, diff) {
+			panic("expected about 963184") // 10702054 * 30%(tier2 ratio) * 30% (warmUp)
 		}
 	}
 }
@@ -211,10 +212,9 @@ func testMintAndStakeBarBazPos02() {
 func testRemovePoolTier() {
 	std.TestSetRealm(adminRealm)
 
-	std.TestSkipHeights(1)
 	sr.RemovePoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100")
-
 	std.TestSkipHeights(1)
+
 	{
 		// check reward for position 01 (gnot:gns:3000 tier 01)
 		std.TestSetRealm(adminRealm)
@@ -222,8 +222,8 @@ func testRemovePoolTier() {
 		sr.CollectReward(1, false)
 		afterGns := gns.BalanceOf(adminUser)
 		diff := afterGns - beforeGns
-		if diff == 0 {
-			panic("position 01 has some reward (gnot:gns:3000 is tier 01 pool)")
+		if !isInErrorRange(3210615, diff) {
+			panic("expected about 3210615") // 10702054 * 100%(tier1 ratio) * 30%(warmUp)
 		}
 	}
 
@@ -234,8 +234,8 @@ func testRemovePoolTier() {
 		sr.CollectReward(2, false)
 		afterGns := gns.BalanceOf(adminUser)
 		diff := afterGns - beforeGns
-		if diff == 0 {
-			panic("position 02 has some reward (bar:baz:100 is tier 02 pool)")
+		if diff != 0 {
+			panic("expected about 0") // bar:baz:100 is removed from internal tiers
 		}
 	}
 }
@@ -257,4 +257,10 @@ func tokenIdFrom(tokenId interface{}) grc721.TokenID {
 	default:
 		panic("unsupported tokenId type")
 	}
+}
+
+func isInErrorRange(expected uint64, actual uint64) bool {
+	lowerBound := expected * 999999 / 1000000
+	upperBound := expected * 1000001 / 1000000
+	return actual >= lowerBound && actual <= upperBound
 }

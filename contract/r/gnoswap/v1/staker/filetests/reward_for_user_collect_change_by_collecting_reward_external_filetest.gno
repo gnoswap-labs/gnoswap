@@ -1,13 +1,15 @@
 // PKGPATH: gno.land/r/gnoswap/v1/staker_test
 
 // POOLs:
-// 1. bar:qux:100
+// 1. gnot:gns:3000
 
 // POSITIONs:
 // 1. in-range
+// 2. in-range
 
 // REWARDs:
-// - external gns 90 days ( bar:qux:100 )
+// - external bar ( bar:qux:100 )
+// - external qux ( qux:gns:100 )
 
 package staker_test
 
@@ -17,12 +19,14 @@ import (
 	"time"
 
 	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/json"
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
+	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/gns"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 
@@ -38,14 +42,11 @@ var (
 	adminUser  = common.AddrToUser(adminAddr)
 	adminRealm = std.NewUserRealm(adminAddr)
 
-	// g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup
-	externalCreatorAddr  = testutils.TestAddress("externalCreator")
-	externalCreatorUser  = common.AddrToUser(externalCreatorAddr)
-	externalCreatorRealm = std.NewUserRealm(externalCreatorAddr)
-
 	stakerAddr  = consts.STAKER_ADDR
 	stakerUser  = common.AddrToUser(stakerAddr)
 	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
+
+	wugnotAddr = consts.WUGNOT_ADDR
 
 	fooPath = "gno.land/r/onbloc/foo"
 	barPath = "gno.land/r/onbloc/bar"
@@ -68,30 +69,33 @@ var (
 	TIMESTAMP_90DAYS  int64 = 90 * 24 * 60 * 60
 	TIMESTAMP_180DAYS int64 = 180 * 24 * 60 * 60
 	TIMESTAMP_365DAYS int64 = 365 * 24 * 60 * 60
-
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"
 )
 
 func main() {
 	testInit()
 	testCreatePool()
-	testMintBarQuxPos01()
-	testMintBarQuxPos02()
 
-	testCreateExternalIncentiveGns()
-	testMakeExternalStart()
+	testCreateExternalIncentiveBar()
+	testCreateExternalIncentiveQux()
 
-	testStakeTokenPos01()
-	testStakeTokenPos02()
+	testMintAndStakeBarQuxPos01()
+	testMintAndStakeBarQuxPos02()
 
-	testCollectRewardPos01AndPos02()
+	testMakeExternalBarAndQuxStart()
 
-	testEndExternalGns()
-	testCollectRewardPos01AndPos02AfterEnd()
+	testCollectRewardPos01()
 }
 
 func testInit() {
 	std.TestSetRealm(adminRealm)
+
+	// prepare wugnot
+	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
+	banker := std.GetBanker(std.BankerTypeRealmSend)
+	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
+	std.TestSetOrigSend(std.Coins{{"ugnot", 50_000_000_000_000}}, nil)
+	wugnot.Deposit()
+	std.TestSetOrigSend(nil, nil)
 }
 
 func testCreatePool() {
@@ -108,71 +112,91 @@ func testCreatePool() {
 	)
 }
 
-func testMintBarQuxPos01() {
+func testCreateExternalIncentiveBar() {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	qux.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-
-	std.TestSkipHeights(1)
-	pn.Mint(
-		barPath,
-		quxPath,
-		fee100,
-		int32(-50),
-		int32(50),
-		"50",
-		"50",
-		"1",
-		"1",
-		max_timeout,
-		adminAddr,
-		adminAddr,
-	)
-}
-
-func testMintBarQuxPos02() {
-	std.TestSetRealm(adminRealm)
-
-	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	qux.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-
-	std.TestSkipHeights(1)
-	pn.Mint(
-		barPath,
-		quxPath,
-		fee100,
-		int32(-50),
-		int32(50),
-		"50",
-		"50",
-		"1",
-		"1",
-		max_timeout,
-		adminAddr,
-		adminAddr,
-	)
-}
-
-func testCreateExternalIncentiveGns() {
-	std.TestSetRealm(adminRealm)
-	gns.Transfer(externalCreatorUser, 9000000000)
-	gns.Transfer(externalCreatorUser, depositGnsAmount)
-
-	std.TestSetRealm(externalCreatorRealm) // creator
-	gns.Approve(common.AddrToUser(consts.STAKER_ADDR), consts.UINT64_MAX)
+	bar.Approve(common.AddrToUser(consts.STAKER_ADDR), consts.UINT64_MAX)
+	gns.Approve(common.AddrToUser(consts.STAKER_ADDR), depositGnsAmount)
 
 	std.TestSkipHeights(1)
 	sr.CreateExternalIncentive(
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
-		gnsPath,
+		barPath,
 		9000000000,
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,
 	)
 }
 
-func testMakeExternalStart() {
+func testCreateExternalIncentiveQux() {
+	std.TestSetRealm(adminRealm)
+
+	qux.Approve(common.AddrToUser(consts.STAKER_ADDR), consts.UINT64_MAX)
+	gns.Approve(common.AddrToUser(consts.STAKER_ADDR), depositGnsAmount)
+
+	std.TestSkipHeights(1)
+	sr.CreateExternalIncentive(
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		quxPath,
+		18000000000,
+		1234569600,
+		1234569600+TIMESTAMP_90DAYS,
+	)
+}
+
+func testMintAndStakeBarQuxPos01() {
+	std.TestSetRealm(adminRealm)
+
+	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSkipHeights(1)
+	pn.Mint(
+		barPath,
+		quxPath,
+		fee100,
+		int32(-50),
+		int32(50),
+		"100",
+		"100",
+		"0",
+		"0",
+		max_timeout,
+		adminAddr,
+		adminAddr,
+	)
+
+	gnft.Approve(stakerAddr, tokenIdFrom(1))
+	sr.StakeToken(1)
+}
+
+func testMintAndStakeBarQuxPos02() {
+	std.TestSetRealm(adminRealm)
+
+	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSkipHeights(1)
+	pn.Mint(
+		barPath,
+		quxPath,
+		fee100,
+		int32(-50),
+		int32(50),
+		"100",
+		"100",
+		"0",
+		"0",
+		max_timeout,
+		adminAddr,
+		adminAddr,
+	)
+
+	gnft.Approve(stakerAddr, tokenIdFrom(2))
+	sr.StakeToken(2)
+}
+
+func testMakeExternalBarAndQuxStart() {
 	externalStartTime := int64(1234569600)
 	nowTime := time.Now().Unix()
 	timeLeft := externalStartTime - nowTime
@@ -182,84 +206,22 @@ func testMakeExternalStart() {
 
 	std.TestSkipHeights(int64(blockLeft)) // skip until external bar starts
 	std.TestSkipHeights(10)               // skip bit more to see reward calculation
+
+	if extractReward(1) != extractReward(2) {
+		panic("reward is not equal")
+	}
 }
 
-func testStakeTokenPos01() {
+func testCollectRewardPos01() {
 	std.TestSetRealm(adminRealm)
 
-	std.TestSkipHeights(1)
-	gnft.Approve(stakerAddr, tokenIdFrom(1))
-	sr.StakeToken(1)
-}
-
-func testStakeTokenPos02() {
-	std.TestSetRealm(adminRealm)
-
-	std.TestSkipHeights(1)
-	gnft.Approve(stakerAddr, tokenIdFrom(2))
-	sr.StakeToken(2)
-}
-
-func testCollectRewardPos01AndPos02() {
-	std.TestSetRealm(adminRealm)
-
-	std.TestSkipHeights(1)
+	std.TestSkipHeights(10)
 	sr.CollectReward(1, false)
-	sr.CollectReward(2, false) // unexpected panic: slice index out of bounds: 0
 
-	/*
-		std.TestSkipHeights(1)
-
-		TODO: (after fixing unit test) check collected reward
-	*/
-}
-
-func testEndExternalGns() {
-	externalEndTime := (1234569600 + TIMESTAMP_90DAYS)
-	nowTime := time.Now().Unix()
-	timeLeft := externalEndTime - nowTime
-
-	blockAvgTime := consts.BLOCK_GENERATION_INTERVAL
-	blockLeft := timeLeft / blockAvgTime
-
-	std.TestSkipHeights(int64(blockLeft)) // skip until external gns ends
-	std.TestSkipHeights(10)               // skip bit more to see reward calculation
-
-	std.TestSetRealm(externalCreatorRealm)
-	gnsBalanceBeforeEnds := gns.BalanceOf(externalCreatorUser)
-	sr.EndExternalIncentive(
-		externalCreatorAddr,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
-		gnsPath,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
-		126,
-	)
-	gnsBalanceAfterEnds := gns.BalanceOf(externalCreatorUser)
-
-	/*
-		std.TestSkipHeights(1)
-
-		TODO: (after fixing unit test) check
-		- refunded reward amount for refunedee
-		- refunded gns amount for refundee (depositGnsAmount refund)
-	*/
-}
-
-func testCollectRewardPos01AndPos02AfterEnd() {
-	std.TestSetRealm(adminRealm)
-
-	std.TestSkipHeights(1)
-	sr.CollectReward(1, false)
-	sr.CollectReward(2, false)
-
-	/*
-		std.TestSkipHeights(1)
-
-		TODO: (after fixing unit test) check collected reward
-		- even external gns is ended, user hasn't collected reward yet
-		- there should be some reward collected
-	*/
+	reward01 := extractReward(1)
+	if reward01 != 0 {
+		panic("reward collected, should be 0 for checking")
+	}
 }
 
 func tokenIdFrom(tokenId interface{}) grc721.TokenID {
@@ -279,4 +241,21 @@ func tokenIdFrom(tokenId interface{}) grc721.TokenID {
 	default:
 		panic("unsupported tokenId type")
 	}
+}
+
+func extractReward(tokenId uint64) uint64 {
+	apiReward := sr.ApiGetRewardsByLpTokenId(tokenId)
+	rawReward, _ := json.Unmarshal([]byte(apiReward))
+	rawRewardObject, _ := rawReward.GetKey("response")
+	arrReward, _ := rawRewardObject.GetArray()
+
+	reward, _ := arrReward[0].GetKey("rewards")
+	rewardArr, _ := reward.GetArray()
+	if len(rewardArr) == 0 {
+		return 0
+	}
+	rewardTokenAmount, _ := rewardArr[0].GetKey("rewardTokenAmount")
+
+	rewardTokenAmountInt, _ := strconv.ParseUint(rewardTokenAmount.String(), 10, 64)
+	return rewardTokenAmountInt
 }

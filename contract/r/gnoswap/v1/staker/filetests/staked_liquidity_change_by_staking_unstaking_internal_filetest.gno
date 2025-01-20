@@ -2,15 +2,13 @@
 
 // POOLs:
 // 1. gnot:gns:3000
-// 2. bar:baz:100
 
 // POSITIONs:
-// 1. in-range ( gnot:gns:3000 )
-// 2. in-range ( bar:baz:100 )
+// 1. in-range
+// 2. (will be untaked) in-range
 
 // REWARDs:
 // - internal tier 1 ( gnot:gns:3000 )
-// - internal tier 2 ( bar:baz:100 ) -> will be changed to tier 3
 
 package staker_test
 
@@ -25,8 +23,6 @@ import (
 
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
 
 	"gno.land/r/gnoswap/v1/gnft"
 
@@ -74,11 +70,11 @@ func main() {
 	testCreatePool()
 
 	testMintAndStakeWugnotGnsPos01()
+	testMintAndStakeWugnotGnsPos02()
 
-	testSetPoolTier2() // new pool is set to tier 2
-	testMintAndStakeBarBazPos02()
-
-	testChangePoolTier3() // pool is changed to tier 3
+	testCollectReward()
+	testUnstakeTokenPos02()
+	testCollectRewardAfterUnstake()
 }
 
 func testInit() {
@@ -91,6 +87,8 @@ func testInit() {
 	std.TestSetOrigSend(std.Coins{{"ugnot", 50_000_000_000_000}}, nil)
 	wugnot.Deposit()
 	std.TestSetOrigSend(nil, nil)
+
+	sr.SetUnstakingFeeByAdmin(0)
 }
 
 func testCreatePool() {
@@ -103,12 +101,6 @@ func testCreatePool() {
 		wugnotPath,
 		gnsPath,
 		fee3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(), // 79228162514264337593543950337
-	)
-	pl.CreatePool(
-		barPath,
-		bazPath,
-		fee100,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(), // 79228162514264337593543950337
 	)
 }
@@ -137,41 +129,21 @@ func testMintAndStakeWugnotGnsPos01() {
 
 	gnft.Approve(stakerAddr, tokenIdFrom(1))
 	sr.StakeToken(1)
-
-	std.TestSkipHeights(1)
-	{
-		// check reward for position 01 (gnot:gns:3000 tier 01)
-		std.TestSetRealm(adminRealm)
-		beforeGns := gns.BalanceOf(adminUser)
-		sr.CollectReward(1, false)
-		afterGns := gns.BalanceOf(adminUser)
-		diff := afterGns - beforeGns
-		if diff == 0 {
-			panic("position 01 has some reward (gnot:gns:3000 is tier 01 pool)")
-		}
-	}
 }
 
-func testSetPoolTier2() {
+func testMintAndStakeWugnotGnsPos02() {
 	std.TestSetRealm(adminRealm)
 
-	std.TestSkipHeights(1)
-	sr.SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", 2)
-}
-
-func testMintAndStakeBarBazPos02() {
-	std.TestSetRealm(adminRealm)
-
-	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	baz.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	pn.Mint(
-		barPath,
-		bazPath,
-		fee100,
-		int32(-50),
-		int32(50),
+		wugnotPath,
+		gnsPath,
+		fee3000,
+		int32(-60),
+		int32(60),
 		"100",
 		"100",
 		"0",
@@ -183,37 +155,44 @@ func testMintAndStakeBarBazPos02() {
 
 	gnft.Approve(stakerAddr, tokenIdFrom(2))
 	sr.StakeToken(2)
+	std.TestSkipHeights(1)
+}
+
+func testCollectReward() {
+	std.TestSetRealm(adminRealm)
+
+	// clear reward
+	sr.CollectReward(1, false)
+	sr.CollectReward(2, false)
 
 	std.TestSkipHeights(1)
-	{
-		// check reward for position 02 (bar:baz:100 tier 02)
-		std.TestSetRealm(adminRealm)
-		beforeGns := gns.BalanceOf(adminUser)
-		sr.CollectReward(2, false)
-		afterGns := gns.BalanceOf(adminUser)
-		diff := afterGns - beforeGns
-		if diff == 0 { // 953553 (tier02)
-			panic("position 02 has some reward (bar:baz:100 is tier 02 pool)")
-		}
+	beforeGns := gns.BalanceOf(adminUser)
+	sr.CollectReward(1, false)
+	afterGns := gns.BalanceOf(adminUser)
+	diff := afterGns - beforeGns
+
+	if !isInErrorRange(diff, 1605307) { // 10702054 * 50% * 30%
+		panic("expected about 1605307")
 	}
 }
 
-func testChangePoolTier3() {
+func testUnstakeTokenPos02() {
 	std.TestSetRealm(adminRealm)
 
-	sr.ChangePoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", 3)
+	sr.UnstakeToken(2, false)
+}
 
+func testCollectRewardAfterUnstake() {
+	std.TestSetRealm(adminRealm)
+
+	beforeGns := gns.BalanceOf(adminUser)
 	std.TestSkipHeights(1)
-	{
-		// check reward for position 02 (bar:baz:100 tier 02)
-		std.TestSetRealm(adminRealm)
-		beforeGns := gns.BalanceOf(adminUser)
-		sr.CollectReward(2, false)
-		afterGns := gns.BalanceOf(adminUser)
-		diff := afterGns - beforeGns
-		if diff == 0 { // 635701 (tier03)
-			panic("position 02 has some reward (bar:baz:100 is tier 03 pool)")
-		}
+	sr.CollectReward(1, false)
+	afterGns := gns.BalanceOf(adminUser)
+	diff := afterGns - beforeGns
+
+	if !isInErrorRange(diff, 3210615) { // 10702054 * 30%
+		panic("expected about 3210615")
 	}
 }
 
@@ -234,4 +213,10 @@ func tokenIdFrom(tokenId interface{}) grc721.TokenID {
 	default:
 		panic("unsupported tokenId type")
 	}
+}
+
+func isInErrorRange(expected uint64, actual uint64) bool {
+	lowerBound := expected * 999999 / 1000000
+	upperBound := expected * 1000001 / 1000000
+	return actual >= lowerBound && actual <= upperBound
 }
