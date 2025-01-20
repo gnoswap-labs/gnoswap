@@ -17,6 +17,7 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/grc/grc721"
+	"gno.land/p/demo/json"
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
@@ -131,11 +132,6 @@ func testMintAndStakeWugnotGnsPos01() {
 
 	gnft.Approve(stakerAddr, tokenIdFrom(1))
 	sr.StakeToken(1)
-
-	/*
-		std.TestSkipHeights(1)
-		TODO: (after fixing unit test) check reward
-	*/
 }
 
 func testMintAndStakeWugnotGnsPos02() {
@@ -162,29 +158,23 @@ func testMintAndStakeWugnotGnsPos02() {
 
 	gnft.Approve(stakerAddr, tokenIdFrom(2))
 	sr.StakeToken(2)
-
-	/*
-		std.TestSkipHeights(1)
-
-		TODO: (after fixing unit test) check reward
-		- both positions are in-range
-	*/
 }
 
 func testCollectRewardPos01() {
 	std.TestSetRealm(adminRealm)
-
 	std.TestSkipHeights(1)
+
+	apiRewardBefore := extractReward(1)
 	sr.CollectReward(1, false)
+	apiRewardAfter := extractReward(1)
 
-	/*
-		std.TestSkipHeights(1)
+	if apiRewardBefore == apiRewardAfter {
+		panic("can not be same")
+	}
 
-		TODO: (after fixing unit test) check reward
-		- only position-01 reward collected
-		- reward for position-01 should be reset to 0 and increased
-		- reward for position-02 should be increased
-	*/
+	if apiRewardAfter != 0 {
+		panic("reward should be 0")
+	}
 }
 
 func tokenIdFrom(tokenId interface{}) grc721.TokenID {
@@ -204,4 +194,21 @@ func tokenIdFrom(tokenId interface{}) grc721.TokenID {
 	default:
 		panic("unsupported tokenId type")
 	}
+}
+
+func extractReward(tokenId uint64) uint64 {
+	apiReward := sr.ApiGetRewardsByLpTokenId(tokenId)
+	rawReward, _ := json.Unmarshal([]byte(apiReward))
+	rawRewardObject, _ := rawReward.GetKey("response")
+	arrReward, _ := rawRewardObject.GetArray()
+
+	reward, _ := arrReward[0].GetKey("rewards")
+	rewardArr, _ := reward.GetArray()
+	if len(rewardArr) == 0 {
+		return 0
+	}
+	rewardTokenAmount, _ := rewardArr[0].GetKey("rewardTokenAmount")
+
+	rewardTokenAmountInt, _ := strconv.ParseUint(rewardTokenAmount.String(), 10, 64)
+	return rewardTokenAmountInt
 }

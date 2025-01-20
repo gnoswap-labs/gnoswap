@@ -144,13 +144,14 @@ func testUnstakePos01() {
 
 	oldCommunityGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
 
-	std.TestSkipHeights(1)
+	// this position-01 has been staked and staked same time
 	sr.UnstakeToken(1, false)
 
 	afterCommunityGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
 
+	// therefore community pool should receive no-position-staked pool's reward
 	increased := afterCommunityGns - oldCommunityGns
-	if increased < 0 {
+	if increased != 10702054 { // one block's reward
 		panic("community pool should receive no-position-staked pool's reward")
 	}
 }

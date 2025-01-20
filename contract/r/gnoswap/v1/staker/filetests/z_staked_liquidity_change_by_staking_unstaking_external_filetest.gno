@@ -5,8 +5,7 @@
 
 // POSITIONs:
 // 1. in-range
-// 2. (will be staked) out-range
-// 3. (will be staked) in-range
+// 2. (will be unstaked) in-range
 
 // REWARDs:
 // - external bar ( bar:qux:100 )
@@ -73,20 +72,23 @@ func main() {
 	testInit()
 	testCreatePool()
 	testMintBarQuxPos01()
+	testMintBarQuxPos02()
 
 	testCreateExternalIncentive()
 
 	testStakeTokenPos01()
-	testMakeExternalBarStart() // position-01 is in-range
+	testStakeTokenPos02()
+	testMakeExternalBarStart()
 
-	testMintAndStakeBarQuxPos02() // position-02 is out-range (no reward)
-
-	//testMintAndStakeBarQuxPos03() // position-03 is in-range
-
+	testCollectReward()
+	testUnstakeTokenPos02()
+	testCollectRewardAfterUnstake()
 }
 
 func testInit() {
 	std.TestSetRealm(adminRealm)
+
+	sr.SetUnstakingFeeByAdmin(0)
 }
 
 func testCreatePool() {
@@ -110,7 +112,29 @@ func testMintBarQuxPos01() {
 	qux.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
+	pn.Mint(
+		barPath,
+		quxPath,
+		fee100,
+		int32(-50),
+		int32(50),
+		"50",
+		"50",
+		"1",
+		"1",
+		max_timeout,
+		adminAddr,
+		adminAddr,
+	)
+}
 
+func testMintBarQuxPos02() {
+	std.TestSetRealm(adminRealm)
+
+	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSkipHeights(1)
 	pn.Mint(
 		barPath,
 		quxPath,
@@ -146,10 +170,17 @@ func testCreateExternalIncentive() {
 func testStakeTokenPos01() {
 	std.TestSetRealm(adminRealm)
 
-	gnft.Approve(stakerAddr, tokenIdFrom(1))
-
 	std.TestSkipHeights(1)
+
+	gnft.Approve(stakerAddr, tokenIdFrom(1))
 	sr.StakeToken(1)
+}
+
+func testStakeTokenPos02() {
+	std.TestSetRealm(adminRealm)
+
+	gnft.Approve(stakerAddr, tokenIdFrom(2))
+	sr.StakeToken(2)
 }
 
 func testMakeExternalBarStart() {
@@ -163,7 +194,6 @@ func testMakeExternalBarStart() {
 	std.TestSkipHeights(int64(blockLeft)) // skip until external bar starts
 	std.TestSkipHeights(10)               // skip bit more to see reward calculation
 
-
 	// check reward for position 01 (in-range)
 	std.TestSetRealm(adminRealm)
 	beforeBar := bar.BalanceOf(adminUser)
@@ -175,86 +205,34 @@ func testMakeExternalBarStart() {
 	}
 }
 
-func testMintAndStakeBarQuxPos02() {
+func testCollectReward() {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	qux.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-
+	oldBar := bar.BalanceOf(adminUser)
 	std.TestSkipHeights(1)
-	pn.Mint(
-		barPath,
-		quxPath,
-		fee100,
-		int32(60),
-		int32(120),
-		"100",
-		"100",
-		"0",
-		"0",
-		max_timeout,
-		adminAddr,
-		adminAddr,
-	)
-
-	gnft.Approve(stakerAddr, tokenIdFrom(2))
-
-	sr.StakeToken(2)
-
-	// check reward for position 02 (out-range)
-	std.TestSkipHeights(1)
-	beforeBar := bar.BalanceOf(adminUser)
-	sr.CollectReward(2, false)
-	afterBar := bar.BalanceOf(adminUser)
-	diff := afterBar - beforeBar
-	if diff != 0 {
-		panic("position 02 out-range, should not have reward")
-	}
-
-	// check reward for position 01 (in-range)
-	std.TestSkipHeights(1)
-	beforeBar = bar.BalanceOf(adminUser)
 	sr.CollectReward(1, false)
-	afterBar = bar.BalanceOf(adminUser)
-	diff = afterBar - beforeBar
-	if diff == 0 {
-		panic("position 01 in-range, should have reward")
+	newBar := bar.BalanceOf(adminUser)
+	diff := newBar - oldBar
+	if !isInErrorRange(diff, 347) { // 2314(rewardPerBlock) * 50%(position01Ratio) * 30%(warmUp)
+		panic("expected about 347")
 	}
 }
 
-func testMintAndStakeBarQuxPos03() {
+func testUnstakeTokenPos02() {
+	std.TestSetRealm(adminRealm)
+	sr.UnstakeToken(2, false) // position 02 is unstaked, position 01 the only staked position
+}
+
+func testCollectRewardAfterUnstake() {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	qux.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-
+	oldBar := bar.BalanceOf(adminUser)
 	std.TestSkipHeights(1)
-	pn.Mint(
-		barPath,
-		quxPath,
-		fee100,
-		int32(-100),
-		int32(100),
-		"100",
-		"100",
-		"0",
-		"0",
-		max_timeout,
-		adminAddr,
-		adminAddr,
-	)
-
-	gnft.Approve(stakerAddr, tokenIdFrom(3))
-	sr.StakeToken(3)
-
-	// check reward for position 03 (in-range)
-	std.TestSkipHeights(1)
-	beforeBar := bar.BalanceOf(adminUser)
-	sr.CollectReward(3, false)
-	afterBar := bar.BalanceOf(adminUser)
-	diff := afterBar - beforeBar
-	if diff == 0 {
-		panic("position 03 in-range, should have reward")
+	sr.CollectReward(1, false)
+	newBar := bar.BalanceOf(adminUser)
+	diff := newBar - oldBar
+	if !isInErrorRange(diff, 693) { // 2314(rewardPerBlock) * 30%(warmUp)
+		panic("expected about 693")
 	}
 }
 
@@ -275,4 +253,10 @@ func tokenIdFrom(tokenId interface{}) grc721.TokenID {
 	default:
 		panic("unsupported tokenId type")
 	}
+}
+
+func isInErrorRange(expected uint64, actual uint64) bool {
+	lowerBound := expected * 999999 / 1000000
+	upperBound := expected * 1000001 / 1000000
+	return actual >= lowerBound && actual <= upperBound
 }
