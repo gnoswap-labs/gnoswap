@@ -2,7 +2,7 @@
 // with two external incentives for same pool
 // bar + gns
 
-package tests
+package staker
 
 import (
 	"math"

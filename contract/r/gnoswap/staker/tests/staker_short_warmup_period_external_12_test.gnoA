@@ -2,7 +2,7 @@
 // with two external incentives for same pool
 // bar + qux
 
-package tests
+package staker
 
 import (
 	"math"

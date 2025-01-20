@@ -1,4 +1,4 @@
-package tests
+package staker
 
 import (
 	"std"
@@ -55,51 +55,51 @@ var (
 
 func TestFullInternalExternal(t *testing.T) {
 	testInit(t)
-	testCreatePoolWugnotGns3000Tier01(t)
-	testCreateExternalIncentiveGns(t) // GNS로 리워드 생성 ( gnot:gns:0.3% 풀은 인터널도 GNS고 익스터널도 GNS )
+	testCreatePoolWugnotGns3000Tier01(t) // currentTick 0, internal tier #1
+	testCreateExternalIncentiveGns(t) // create external reward with gns token (gnot:gns:0.3% pool will have both internal GNS and external GNS )
 	testMintPos01InRange(t)
 
-	testCreateBarBaz500Tier02(t) // 포지션 아예 없어서 커뮤니티 풀로 빠져야 함
+	testCreateBarBaz500Tier02(t) // currentTIck 0, internal tier #2
 	testMintPos02InRange(t)      // bar:baz:0.05%
 	testMintPos03OutRange(t)     // gnot:gns:0.3%
 	testMintPos04OutRange(t)     // bar:baz:0.05%
 	testMintPos05OutRange(t)     // gnot:gns:0.3%
 	testMintPos06OutRange(t)     // bar:baz:0.05%
 
-	testStakeToken01(t) // 여기 직전까지는 스테이킹 된 포지션 없어서 wugnot gns 0.3% 풀에 쌓인 리워드 커뮤니티 풀로 빠져야 함
-	testStakeToken02(t) //
-	testStakeToken03(t) //
-	testStakeToken04(t) //
-	testStakeToken05(t) //
-	testStakeToken06(t) //
+	testStakeToken01(t) // there are no staked positions for gnot:gns:0.3% pool until very first stkaing => unclaimable rewards
+	testStakeToken02(t) 
+	testStakeToken03(t) 
+	testStakeToken04(t) 
+	testStakeToken05(t) 
+	testStakeToken06(t) 
 
-	testCollectRewardAllForWarmUp30(t)  // 10블록 쯤 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령 (웜업 30% 구간)
-	testCollectRewardAllForWarmUp50(t)  // 웜업 50% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
-	testCollectRewardAllForWarmUp70(t)  // 웜업 70% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
-	testCollectRewardAllForWarmUp100(t) // 웜업 100% 까지 증가시키고, 한 블록 내에서 1~6번 포지션 리워드 수령
+	testCollectRewardAllForWarmUp30(t)  // collect reward while all positions are in warmUp period 30%
+	testCollectRewardAllForWarmUp50(t)  // collect reward while all positions are in warmUp period 50%
+	testCollectRewardAllForWarmUp70(t)  // collect reward while all positions are in warmUp period 70%
+	testCollectRewardAllForWarmUp100(t) // collect reward while all positions are in warmUp period 1000%
 
 	testSwapExactIn(t)
 	testSwapExactOut(t)
 
-	testCreatePoolBarFoo100Tier03(t)    // 틱 600000, 인터널 티어 #3
-	testOneClickStakingPos07OutRange(t) // bar:foo:0.01%, 원클릭 스테이킹으로 애초에 outRange로 스테이킹 됨 => 블록 증가 후 7번 포지션 리워드 수령 해보면 outRange기 떄문에 커뮤 풀로 빠져야 함
+	testCreatePoolBarFoo100Tier03(t)    // currentTick 600000, internal tier #3
+	testOneClickStakingPos07OutRange(t) // staked with out-range, therefore reward this this position should be unclaimble, which community_pool receives
 
-	testUnstakeToken01(t) // 전체 스테이킹 된 유동성 변경
+	testUnstakeToken01(t) // change total staked liquidity
 
 	// EXTERNAL ONLY
-	testCreatePoolBazQux3000ExternalOnly(t) // 풀 만드는데 익스터널 인센티브만 있는 풀임
-	testCreateExternalIncentiveBaz(t)       // 위에서 만든 풀 대상으로 baz 익스터널 인센티브 생성
-	testMintPos08InRange(t)                 // 포지션 생성
-	testStakeToken08(t)                     // 스테이킹
-	testCollectReward08(t)                  // 10 블록 쯤 증가시키고 리워드 수령하면 0으로 나와야 함 (익스터널 아직 시작 안 됨)
-	testStartExternalIncentive(t)           // 익스터널 인센티브 시작
-	testCollectReward08AfterStart(t)        // 10 블록 증가 후 리워드 수령하면 웜업 구간에 맞는 10 블록 만큼의 리워드 나와야 함 ( 몇 퍼센트 구간인지는 위에서 익스터널 시작시킬려고 몇 블록을 스킵했는지에 따라 다름)
-	testEndExternalIncentiveBaz(t)          // baz 인센티브 종료 ( 페널티 수량 환불되야 함 )
+	testCreatePoolBazQux3000ExternalOnly(t) // pool with ONLY EXTERNAL INCETNIVE
+	testCreateExternalIncentiveBaz(t)       // create baz external
+	testMintPos08InRange(t)                 
+	testStakeToken08(t)                     
+	testCollectReward08(t)                  // external did not started yet, no reward
+	testStartExternalIncentive(t)           // start external
+	testCollectReward08AfterStart(t)        
+	testEndExternalIncentiveBaz(t)          // ends external (external creator recieves penalty amount (caused by warm up))
 
-	testReStakeTokenPos01(t) // 스테이킹 해서 웝업 100% 찍었다가 언스테이킹 된 토큰 다시 스테이킹 ( 웜업 처음(30%)부터 적용되야 함 )
+	testReStakeTokenPos01(t) // position-01 was warm up 100%, but unstaked and staked again ( warm up should be reset to 30% )
 
-	testChangeAvgBlockTimeTo4000(t)     // 블록 시간 2배로 증가
-	testChangeDistributionPctByAdmin(t) //  스테이커한테 가는 에미션 비율 변경
+	testChangeAvgBlockTimeTo4000(t)     // change avg block time to 4s (orig: 2s)
+	testChangeDistributionPctByAdmin(t) // change staker's emission distribution percentage to 50% (orig: 75%)
 }
 
 func testInit(t *testing.T) {
@@ -107,21 +107,20 @@ func testInit(t *testing.T) {
 		println("[", std.GetHeight(), "] [testInit]")
 		std.TestSetRealm(adminRealm)
 
-		// 언스테이킹 수수료 0으로 바꿈 // 계산 편함
+		
 		SetUnstakingFeeByAdmin(0)
 		println("[", std.GetHeight(), "] [testInit] SetUnstakingFeeByAdmin(0)")
 
-		// 에미션 분배 커뮤니티 비율 0%로 (대신 devOps 한테 많이 가게))
-		// 에미션 기본 분배 대상 4개 중에 커뮤니티 풀한테 주는 비율이 이미 있어서 인터널 페널티 발생 시 잔액에 영향을 주기 때문에 애초에 커뮤니티 풀한테는 자동으로 안 풀리게 하고 테스트하는게 깔끔
+		
 		en.ChangeDistributionPctByAdmin(
-			1, 7500, // 스테이커
-			2, 2500, // 데브옵스
-			3, 0, // 커뮤니티풀
+			1, 7500, // staker
+			2, 2500, // devOps
+			3, 0, // community pool
 			4, 0, // xGNS
 		)
 		println("[", std.GetHeight(), "] [testInit] ChangeDistributionPctByAdmin(75, 25, 0, 0)")
 
-		// admin 계정한테 wugnot 토큰 미리 좀 넉넉하게 할당
+		
 		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 		banker := std.GetBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
@@ -898,14 +897,14 @@ func testOneClickStakingPos07OutRange(t *testing.T) {
 
 		newCommunityPool := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
 		uassert.Equal(t, uint64(4280820), newCommunityPool-oldCommunityPool)
-		// 현재 모든 인터널 티어에 대해서 풀이 존재
-		// > 블록 당 에미션 리워드 스테이커 비율 10702054
-		// > 티어 1, 50% ~= 5351027
-		// > 티어 2, 30% ~= 3210616
-		// > 티어 3, 20% ~= 2140410
+		// all internal tier exists 
+		// staker's emission reward per block 10702054
+		// > tier 1, 50% ~= 5351027
+		// > tier 2, 30% ~= 3210616
+		// > tier 3, 20% ~= 2140410
 
-		// bar:foo:0.1% 풀이 1944165 블록에서 티어 3으로 설정되었고, 현재 블록은 1944167
-		// 2 블록 만큼의 리워드(2140410 * 2 = 4280820)가 해당 풀까지 전달되었으나 분배 할 포지션이 없는 관계로 커뮤니티 풀로 빠져야 함
+		// bar:foo:0.1% pool has ben set to tier 3, at block 1944165 (current block is 1944167)
+		// 2 block reward ª2140410 * 2 = 4280820) goes to community_pool as unclaimable
 
 		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
@@ -926,13 +925,14 @@ func testUnstakeToken01(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		// wugnot:gns:0.3% // currentTick: 0
-		// 1번 포지션 inRange // -60 ~ 60 || 언스테이킹 됨
-		// 3번 포지션 outRange // 60 ~ 120
-		// 5번 포지션 outRange // -120 ~ -60
-		// > 결국 해당 풀은 outRange 포지션만 있기에 해당 풀에 분배되는 에미션 리워드(티어1 = 5351027)는 커뮤니티 풀로 빠져야 함
+		// > position-01 inRange // -60 ~ 60 || unstaked
+		// > position-03 outRange // 60 ~ 120
+		// > position-05 outRange // -120 ~ -60
+		// this pool may have mulitple staked position, but nothing is inrange
+		// therefore reward for this pool(5351027) goes to community_pool as unclaimable
 
 		oldCommuGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
-		CollectReward(3, false) // 더미 수령
+		CollectReward(3, false) // dummy claim
 		newCommuGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
 		uassert.Equal(t, uint64(5351027), newCommuGns-oldCommuGns)
 
@@ -1030,7 +1030,7 @@ func testCollectReward08(t *testing.T) {
 
 		newBaz := baz.BalanceOf(common.AddrToUser(adminAddr))
 		uassert.Equal(t, uint64(0), newBaz-oldBaz)
-		// 익스터널 인센티브가 시작되지 않았기에 리워드가 0
+		// extenral incentive not yet started
 
 		checkGnsBalance(t, depositGnsAmount)
 		std.TestSkipHeights(1)
@@ -1067,17 +1067,11 @@ func testEndExternalIncentiveBaz(t *testing.T) {
 	t.Run("end external incentive bar", func(t *testing.T) {
 		std.TestSetRealm(std.NewUserRealm(externalCreator))
 
-		// 종료 전 익스터널 만든 주소의 토큰 잔액 저장
-		// - gns: 익스터널 생성 시 예치한 gns 환불
-		// - baz: 익스터널로 제공한 수량 중 페널티 환불
 		oldGns := gns.BalanceOf(common.AddrToUser(externalCreator))
 		oldBaz := baz.BalanceOf(common.AddrToUser(externalCreator))
 
-		// 해당 포지션에 유동성 제공한 주소의 토큰 잔액 저장
-		// - baz: 리워드 수령되는지 확인
 		lpOldBaz := baz.BalanceOf(common.AddrToUser(adminAddr))
 
-		// 종료되도록 블록 증가
 		std.TestSkipHeights(5832978 - std.GetHeight())
 		std.TestSkipHeights(1)
 
@@ -1093,19 +1087,18 @@ func testEndExternalIncentiveBaz(t *testing.T) {
 
 		newGns := gns.BalanceOf(common.AddrToUser(externalCreator))
 		newBaz := baz.BalanceOf(common.AddrToUser(externalCreator))
+		
 
-		// 종료 후 확인해야 할꺼
-
-		// 1. 익스터널 생성 시 디파짓으로 넣은 gns 수량 환불
+		// 1. external creator recieves deposit gns amount
 		refundGns := newGns - oldGns
 		uassert.Equal(t, depositGnsAmount, refundGns, "gns refund amount mismatch")
 
-		// 2. 웜업에 따른 페널티 수량 환불
-		// > 8번 포지션에서 50개의 익스터널 리워드 발생, 30%(15개)는 리워드로, 나머지 70%(35개)가 페널티로
+		// 2. external creator receives penalty made by warm up
+		// > position-08 had 50 reward (30% = 15 goes to reward, 70% = 35 goes to penalty )
 		refundBaz := newBaz - oldBaz
 		uassert.Equal(t, uint64(35), refundBaz)
 
-		// 3. 아직 리워드 수령하지 않은 유저는 계속 리워드 수령 가능
+		// 3. liquidity provider(who has staked position) still can receive reward even external is ended
 		std.TestSetRealm(adminRealm)
 		CollectReward(8, false)
 		std.TestSkipHeights(1)
@@ -1113,7 +1106,7 @@ func testEndExternalIncentiveBaz(t *testing.T) {
 		lpNewBaz := baz.BalanceOf(common.AddrToUser(adminAddr))
 		uassert.True(t, lpNewBaz-lpOldBaz > 0)
 
-		// 4. 익스터널 종료 이후 블록이 아무리 많이 생겨도 리워드가 추가적으로 발생하면 안 됨
+		// 4. after external ends, no reward can be made
 		std.TestSkipHeights(123)
 		CollectReward(8, false)
 		lpNewBaz2 := baz.BalanceOf(common.AddrToUser(adminAddr))
@@ -1140,8 +1133,8 @@ func testReStakeTokenPos01(t *testing.T) {
 		CollectReward(1, false)
 		newGns := gns.BalanceOf(common.AddrToUser(adminAddr))
 		uassert.True(t, isNear(t, uint64(1605308), newGns-oldGns))
-		// 1번 포지션 다시 스테이킹 하고 1 블록 지남 (웜업 30% 부터 계산)
-		// 현재 gnot:gns:0.3% 풀은 티어 1이며, 블록 당 5351027 개의 리워드가 할당 됨
+		// position-01 is in warm up 30%
+		// gnot:gns:0.3% is tier 1 pool, will get 5351027 per block
 		// 5351027 * 30% = 1605308.1
 
 		checkGnsBalance(t, 0)
@@ -1150,14 +1143,12 @@ func testReStakeTokenPos01(t *testing.T) {
 }
 
 func testChangeAvgBlockTimeTo4000(t *testing.T) {
-	// 원래 블록 시간 2초였으나 4초로 증가
-	// 1 블록 당 민팅되는 GNS 수량 2배로 증가됨
 	t.Run("change avg block time to 4000", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		gns.SetAvgBlockTimeInMsByAdmin(4000)
 		std.TestSkipHeights(1)
 
-		// 리워드 초기화
+		// dummy claim
 		CollectReward(1, false)
 	})
 
@@ -1166,17 +1157,18 @@ func testChangeAvgBlockTimeTo4000(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		oldGns := gns.BalanceOf(common.AddrToUser(adminAddr))
-		CollectReward(1, false) // 1 블록 증가하고 리워드 확인해보면 얘한테 떨어지는 수량 거의 2배로 되야 함
+		CollectReward(1, false)
 		newGns := gns.BalanceOf(common.AddrToUser(adminAddr))
 		uassert.True(t, isNear(t, uint64(3210616), newGns-oldGns))
 
-		// 블록 시간 2초일 때 블록 당 리워드 = 10702054
-		// 블록 시간 4초일 때 블록 당 리워드 = 21404108
-		// 티어 1, 2, 3 모두 풀이 있어서, 티어 1 풀은 50%인 10702054 할당
-		// 그 중 warmUp 30% = 10702054 * 30% = 3210616.2
+		// reward per block when avg block time is 2s = 10702054
+		// reward per block when avg block time is 4s = 21404108
+		
+		// tier 1 gets 50% = 21404108 * 50% = 10702054
+		// warmUp 30% = 10702054 * 30% = 3210616.2
 		std.TestSkipHeights(1)
 
-		// 원복
+		// revert changes
 		gns.SetAvgBlockTimeInMsByAdmin(2000)
 	})
 }
@@ -1185,18 +1177,15 @@ func testChangeDistributionPctByAdmin(t *testing.T) {
 	t.Run("change staker's emission distribution pct to 50%", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		// 1번 포지션 리워드 수령
-		CollectReward(1, false)
-
 		en.ChangeDistributionPctByAdmin(
-			1, 5000, // 스테이커
-			2, 5000, // 데브옵스
-			3, 0, // 커뮤니티풀
+			1, 5000, // staker
+			2, 5000, // devops
+			3, 0, // community pool
 			4, 0, // xGNS
 		)
-		std.TestSkipHeights(1) // 1 블록 증가 했으나, 스테이커의 에미션은 비율 5%
+		std.TestSkipHeights(1) 
 
-		// 리워드 초기화
+		// dummy claim
 		CollectReward(1, false)
 	})
 
@@ -1208,19 +1197,18 @@ func testChangeDistributionPctByAdmin(t *testing.T) {
 		CollectReward(1, false)
 		newGns := gns.BalanceOf(common.AddrToUser(adminAddr))
 		uassert.True(t, isNear(t, uint64(1070205), newGns-oldGns))
-		// uassert.True(t, isNear(t, uint64(0), newGns-oldGns))
-		// 1 블록 당 발행되는 에미션 수량 14269406
-		// (원래) 75% 할당 = 10702054
-		// (변경) 50% 할당 = 7134703
+		// emission per 1 block 14269406
+		// (orig) 75%  = 10702054
+		// (new) 50% = 7134703
 
-		// 티어 1 풀은 50% 만큼 분배 = 7134703 * 50% = 3567351.5
-		// 그 중 warmUp 30% = 3567351.5 * 30% = 1070205.45
+		// tier 1 gets 50% = 7134703 * 50% = 3567351.5
+		// warmUp 30% = 3567351.5 * 30% = 1070205.45
 
-		// 원복
+		// revert changes
 		en.ChangeDistributionPctByAdmin(
-			1, 7500, // 스테이커
-			2, 2500, // 데브옵스
-			3, 0, // 커뮤니티풀
+			1, 7500, // staker
+			2, 2500, // devops
+			3, 0, // community pool
 			4, 0, // xGNS
 		)
 		std.TestSkipHeights(1)

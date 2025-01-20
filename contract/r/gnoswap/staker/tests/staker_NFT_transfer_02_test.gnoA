@@ -1,7 +1,7 @@
 // User 'A' mints and stake NFT (with one click staking)
 // user 'A' can collect reward
 
-package tests
+package staker
 
 import (
 	"std"

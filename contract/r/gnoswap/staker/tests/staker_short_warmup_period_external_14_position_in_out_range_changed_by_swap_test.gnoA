@@ -1,6 +1,6 @@
 // external incentive + warm up period testing
 
-package tests
+package staker
 
 import (
 	"math"

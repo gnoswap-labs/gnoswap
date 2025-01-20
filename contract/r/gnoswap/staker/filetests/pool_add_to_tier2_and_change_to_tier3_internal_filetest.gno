@@ -2,12 +2,15 @@
 
 // POOLs:
 // 1. gnot:gns:3000
+// 2. bar:baz:100
 
 // POSITIONs:
-// 1. in-range ( stake -> unstake -> restake)
+// 1. in-range ( gnot:gns:3000 )
+// 2. in-range ( bar:baz:100 )
 
 // REWARDs:
 // - internal tier 1 ( gnot:gns:3000 )
+// - internal tier 2 ( bar:baz:100 ) -> will be changed to tier 3
 
 package staker_test
 
@@ -16,13 +19,14 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/testutils"
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
 
 	"gno.land/r/gnoswap/v1/gnft"
 
@@ -35,11 +39,6 @@ var (
 	adminAddr  = consts.ADMIN
 	adminUser  = common.AddrToUser(adminAddr)
 	adminRealm = std.NewUserRealm(adminAddr)
-
-	// g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup
-	externalCreatorAddr  = testutils.TestAddress("externalCreator")
-	externalCreatorUser  = common.AddrToUser(externalCreatorAddr)
-	externalCreatorRealm = std.NewUserRealm(externalCreatorAddr)
 
 	stakerAddr  = consts.STAKER_ADDR
 	stakerUser  = common.AddrToUser(stakerAddr)
@@ -68,21 +67,18 @@ var (
 	TIMESTAMP_90DAYS  int64 = 90 * 24 * 60 * 60
 	TIMESTAMP_180DAYS int64 = 180 * 24 * 60 * 60
 	TIMESTAMP_365DAYS int64 = 365 * 24 * 60 * 60
-
-	poolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
 )
 
 func main() {
 	testInit()
 	testCreatePool()
-	testMintWugnotGnsPos01()
-	testMintWugnotGnsPos02()
 
-	testStakeTokenPos01AndPos02()
+	testMintAndStakeWugnotGnsPos01()
 
-	testUnstakeTokenPos01()
+	testSetPoolTier2() // new pool is set to tier 2
+	testMintAndStakeBarBazPos02()
 
-	testStakeTokenPos01Again()
+	testChangePoolTier3() // pool is changed to tier 3
 }
 
 func testInit() {
@@ -95,6 +91,9 @@ func testInit() {
 	std.TestSetOrigSend(std.Coins{{"ugnot", 50_000_000_000_000}}, nil)
 	wugnot.Deposit()
 	std.TestSetOrigSend(nil, nil)
+
+	// set unstaking fee to 0
+	sr.SetUnstakingFeeByAdmin(0)
 }
 
 func testCreatePool() {
@@ -109,9 +108,15 @@ func testCreatePool() {
 		fee3000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(), // 79228162514264337593543950337
 	)
+	pl.CreatePool(
+		barPath,
+		bazPath,
+		fee100,
+		common.TickMathGetSqrtRatioAtTick(0).ToString(), // 79228162514264337593543950337
+	)
 }
 
-func testMintWugnotGnsPos01() {
+func testMintAndStakeWugnotGnsPos01() {
 	std.TestSetRealm(adminRealm)
 
 	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -124,83 +129,94 @@ func testMintWugnotGnsPos01() {
 		fee3000,
 		int32(-60),
 		int32(60),
-		"50",
-		"50",
-		"1",
-		"1",
+		"100",
+		"100",
+		"0",
+		"0",
 		max_timeout,
 		adminAddr,
 		adminAddr,
 	)
-}
-
-func testMintWugnotGnsPos02() {
-	std.TestSetRealm(adminRealm)
-
-	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-
-	std.TestSkipHeights(1)
-	pn.Mint(
-		wugnotPath,
-		gnsPath,
-		fee3000,
-		int32(-1020),
-		int32(1020),
-		"500000",
-		"500000",
-		"1",
-		"1",
-		max_timeout,
-		adminAddr,
-		adminAddr,
-	)
-}
-
-func testStakeTokenPos01AndPos02() {
-	std.TestSetRealm(adminRealm)
 
 	gnft.Approve(stakerAddr, tokenIdFrom(1))
-	gnft.Approve(stakerAddr, tokenIdFrom(2))
-
-	std.TestSkipHeights(1)
 	sr.StakeToken(1)
-	sr.StakeToken(2)
-}
-
-func testUnstakeTokenPos01() {
-	std.TestSetRealm(adminRealm)
 
 	std.TestSkipHeights(1)
-
-	beforeGns := gns.BalanceOf(adminUser)
-	sr.UnstakeToken(1, false)
-	afterGns := gns.BalanceOf(adminUser)
-	diff := afterGns - beforeGns
-	println("diff", diff) // 5267
-
-	if diff == 0 {
-		panic("position 01 was in-range, should have reward")
+	{
+		// check reward for position 01 (gnot:gns:3000 tier 01)
+		std.TestSetRealm(adminRealm)
+		beforeGns := gns.BalanceOf(adminUser)
+		sr.CollectReward(1, false)
+		afterGns := gns.BalanceOf(adminUser)
+		diff := afterGns - beforeGns
+		if !isInErrorRange(3210615, diff) {
+			panic("expected about 3210615") // 10702054 * 100%(tier1 ratio) * 30%(warmUp)
+		}
 	}
 }
 
-func testStakeTokenPos01Again() {
+func testSetPoolTier2() {
 	std.TestSetRealm(adminRealm)
 
 	std.TestSkipHeights(1)
-	gnft.Approve(stakerAddr, tokenIdFrom(1))
-	sr.StakeToken(1)
+	sr.SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", 2)
+}
 
-	// reward check for staked > unstaked > staked position
+func testMintAndStakeBarBazPos02() {
+	std.TestSetRealm(adminRealm)
+
+	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	baz.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+
 	std.TestSkipHeights(1)
-	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(1, false)
-	afterGns := gns.BalanceOf(adminUser)
-	diff := afterGns - beforeGns
-	println("diff", diff) // 5267
+	pn.Mint(
+		barPath,
+		bazPath,
+		fee100,
+		int32(-50),
+		int32(50),
+		"100",
+		"100",
+		"0",
+		"0",
+		max_timeout,
+		adminAddr,
+		adminAddr,
+	)
 
-	if diff == 0 {
-		panic("position 01 in-range, should have reward")
+	gnft.Approve(stakerAddr, tokenIdFrom(2))
+	sr.StakeToken(2)
+
+	std.TestSkipHeights(1)
+	{
+		// check reward for position 02 (bar:baz:100 tier 02)
+		std.TestSetRealm(adminRealm)
+		beforeGns := gns.BalanceOf(adminUser)
+		sr.CollectReward(2, false)
+		afterGns := gns.BalanceOf(adminUser)
+		diff := afterGns - beforeGns
+		if !isInErrorRange(963184, diff) { // 10702054 * 30%(tier2 ratio) * 30% (warmUp)
+			panic("expected about 963184")
+		}
+	}
+}
+
+func testChangePoolTier3() {
+	std.TestSetRealm(adminRealm)
+
+	sr.ChangePoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", 3)
+
+	std.TestSkipHeights(1)
+	{
+		// check reward for position 02 (bar:baz:100 tier 02)
+		std.TestSetRealm(adminRealm)
+		beforeGns := gns.BalanceOf(adminUser)
+		sr.CollectReward(2, false)
+		afterGns := gns.BalanceOf(adminUser)
+		diff := afterGns - beforeGns
+		if !isInErrorRange(642122, diff) { // 10702054 * 20%(tier3 ratio) * 30% (warmUp)
+			panic("expected about 642122")
+		}
 	}
 }
 
@@ -221,4 +237,10 @@ func tokenIdFrom(tokenId interface{}) grc721.TokenID {
 	default:
 		panic("unsupported tokenId type")
 	}
+}
+
+func isInErrorRange(expected uint64, actual uint64) bool {
+	lowerBound := expected * 999999 / 1000000
+	upperBound := expected * 1000001 / 1000000
+	return actual >= lowerBound && actual <= upperBound
 }

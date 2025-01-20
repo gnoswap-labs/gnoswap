@@ -1,7 +1,7 @@
 // external incentive + warm up period testing
 //  qux for 180 days
 
-package tests
+package staker
 
 import (
 	"math"

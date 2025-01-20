@@ -3,7 +3,7 @@
 // User 'A' can not transfer NFT to 'B'
 // user 'A' can collect reward
 
-package tests
+package staker
 
 import (
 	"std"
