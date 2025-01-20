@@ -231,7 +231,6 @@ func testEndExternalGns() {
 		126,
 	)
 	gnsBalanceAfterEnds := gns.BalanceOf(externalCreatorUser)
-	println("gnsBalanceAfterEnds", gnsBalanceAfterEnds)
 	if gnsBalanceAfterEnds != 1000028693 {
 		// 1000000000 = depositGnsAmount
 		// 28693 = penalty
