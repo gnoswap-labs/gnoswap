@@ -392,69 +392,6 @@ func CollectRewardFromLaunchPad(to std.Address) {
 
 }
 
-/*
-func collectEmissionReward(addr std.Address) uint64 {
-	emissionReward := uint64(0)
-	if value, exists := userEmissionReward.Get(addr.String()); exists {
-		emissionReward = value.(uint64)
-	}
-
-	if emissionReward <= 0 {
-		return 0
-	}
-
-	govStakerGnsBalance := gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))
-	if govStakerGnsBalance < emissionReward {
-		panic(addDetailToError(
-			errNotEnoughBalance,
-			ufmt.Sprintf("not enough GNS(%d) in the realm to send emission reward(%d) for user %s", govStakerGnsBalance, emissionReward, addr.String()),
-		))
-	}
-
-	// transfer GNS to addr
-	gns.Transfer(a2u(addr), emissionReward)
-	userEmissionReward.Set(addr.String(), uint64(0))
-
-	return emissionReward
-}
-
-func collectProtocolFeeReward(addr std.Address) map[string]uint64 {
-	collectedFees := make(map[string]uint64)
-
-	value, exists := userProtocolFeeReward.Get(addr.String())
-	if !exists {
-		return collectedFees
-	}
-
-	userFees := value.(*avl.Tree)
-	if userFees.Size() == 0 {
-		return collectedFees
-	}
-
-	userFees.Iterate("", "", func(tokenPath string, value interface{}) bool {
-		amount := value.(uint64)
-		if amount == 0 {
-			return false
-		}
-
-		if tokenPath == consts.WUGNOT_PATH {
-			if amount > 0 {
-				wugnot.Withdraw(amount)
-				banker := std.GetBanker(std.BankerTypeRealmSend)
-				banker.SendCoins(consts.GOV_STAKER_ADDR, addr, std.Coins{{"ugnot", int64(amount)}})
-			}
-		} else {
-			transferProtocolFee(tokenPath, addr, amount)
-		}
-
-		userFees.Set(tokenPath, uint64(0))
-		collectedFees[tokenPath] = amount
-		return false
-	})
-
-	return collectedFees
-}
-*/
 func transferProtocolFee(tokenPath string, to std.Address, amount uint64) {
 	common.MustRegistered(tokenPath)
 	if !to.IsValid() {

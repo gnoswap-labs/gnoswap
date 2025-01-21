@@ -72,7 +72,7 @@ func ProposeText(
 	}
 
 	proposalId++
-	proposals.Set(formatUint64(proposalId), proposal)
+	proposals.Set(formatUint(proposalId), proposal)
 	latestProposalByProposer.Set(proposer.String(), proposalId)
 
 	prevAddr, prevPkgPath := getPrev()
@@ -82,11 +82,11 @@ func ProposeText(
 		"prevRealm", prevPkgPath,
 		"title", title,
 		"description", description,
-		"proposalId", formatUint64(proposalId),
+		"proposalId", formatUint(proposalId),
 		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
-		"createdAt", formatUint64(proposal.State.CreatedAt),
-		"configVersion", formatUint64(proposal.ConfigVersion),
-		"quorumAmount", formatUint64(proposal.QuorumAmount),
+		"createdAt", formatUint(proposal.State.CreatedAt),
+		"configVersion", formatUint(proposal.ConfigVersion),
+		"quorumAmount", formatUint(proposal.QuorumAmount),
 	)
 	return proposalId
 }
@@ -144,7 +144,7 @@ func ProposeCommunityPoolSpend(
 	}
 
 	proposalId++
-	proposals.Set(formatUint64(proposalId), proposal)
+	proposals.Set(formatUint(proposalId), proposal)
 	latestProposalByProposer.Set(proposer.String(), proposalId)
 
 	prevAddr, prevRealm := getPrev()
@@ -156,8 +156,8 @@ func ProposeCommunityPoolSpend(
 		"description", description,
 		"to", to.String(),
 		"tokenPath", tokenPath,
-		"amount", formatUint64(amount),
-		"internal_proposalId", formatUint64(proposalId),
+		"amount", formatUint(amount),
+		"internal_proposalId", formatUint(proposalId),
 	)
 
 	return proposalId
@@ -230,7 +230,7 @@ func ProposeParameterChange(
 	}
 
 	proposalId++
-	proposals.Set(formatUint64(proposalId), proposal)
+	proposals.Set(formatUint(proposalId), proposal)
 	latestProposalByProposer.Set(proposer.String(), proposalId)
 
 	prevAddr, prevRealm := getPrev()
@@ -240,9 +240,9 @@ func ProposeParameterChange(
 		"prevRealm", prevRealm,
 		"title", title,
 		"description", description,
-		"numToExecute", formatUint64(numToExecute),
+		"numToExecute", formatUint(numToExecute),
 		"executions", executions,
-		"internal_proposalId", formatUint64(proposalId),
+		"internal_proposalId", formatUint(proposalId),
 	)
 
 	return proposalId

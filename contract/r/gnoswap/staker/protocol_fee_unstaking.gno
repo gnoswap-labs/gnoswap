@@ -57,10 +57,10 @@ func handleUnstakingFee(
 			"ProtocolFeeInternalReward",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
-			"internal_lpTokenId", ufmt.Sprintf("%d", tokenId),
+			"internal_lpTokenId", formatUint(tokenId),
 			"internal_poolPath", poolPath,
 			"internal_tokenPath", consts.GNS_PATH,
-			"internal_amount", ufmt.Sprintf("%d", feeAmount),
+			"internal_amount", formatUint(feeAmount),
 		)
 	} else {
 		// external contract has fee
@@ -72,10 +72,10 @@ func handleUnstakingFee(
 			"ProtocolFeeExternalReward",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
-			"internal_lpTokenId", ufmt.Sprintf("%d", tokenId),
+			"internal_lpTokenId", formatUint(tokenId),
 			"internal_poolPath", poolPath,
 			"internal_tokenPath", tokenPath,
-			"internal_amount", ufmt.Sprintf("%d", feeAmount),
+			"internal_amount", formatUint(feeAmount),
 		)
 	}
 
@@ -112,7 +112,7 @@ func SetUnstakingFeeByAdmin(fee uint64) {
 		"SetUnstakingFeeByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"fee", ufmt.Sprintf("%d", fee),
+		"fee", formatUint(fee),
 	)
 }
 
@@ -140,7 +140,7 @@ func SetUnstakingFee(fee uint64) {
 		"SetUnstakingFee",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"fee", ufmt.Sprintf("%d", fee),
+		"fee", formatUint(fee),
 	)
 }
 

@@ -2,6 +2,7 @@ package emission
 
 import (
 	"std"
+	"strconv"
 
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
@@ -88,5 +89,31 @@ func assertSumDistributionPct(pct01, pct02, pct03, pct04 uint64) {
 			errInvalidEmissionPct,
 			ufmt.Sprintf("sum of all pct should be 100%% (10000 bps), got %d", sum),
 		))
+	}
+}
+
+func formatUint(v interface{}) string {
+	switch v := v.(type) {
+	case uint8:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint32:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint64:
+		return strconv.FormatUint(v, 10)
+	default:
+		panic(ufmt.Sprintf("invalid type: %T", v))
+	}
+}
+
+func formatInt(v interface{}) string {
+	switch v := v.(type) {
+	case int32:
+		return strconv.FormatInt(int64(v), 10)
+	case int64:
+		return strconv.FormatInt(v, 10)
+	case int:
+		return strconv.Itoa(v)
+	default:
+		panic(ufmt.Sprintf("invalid type: %T", v))
 	}
 }

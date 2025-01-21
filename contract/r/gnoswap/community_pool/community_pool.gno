@@ -2,8 +2,7 @@ package community_pool
 
 import (
 	"std"
-
-	"gno.land/p/demo/ufmt"
+	"strconv"
 
 	"gno.land/r/gnoswap/v1/common"
 )
@@ -37,7 +36,7 @@ func transferToken(tokenPath string, to std.Address, amount uint64) {
 		"prevRealm", prevRealm,
 		"tokenPath", tokenPath,
 		"to", to.String(),
-		"amount", ufmt.Sprintf("%d", amount),
+		"amount", strconv.FormatUint(amount, 10),
 	)
 }
 

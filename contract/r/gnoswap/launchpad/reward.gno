@@ -3,7 +3,6 @@ package launchpad
 import (
 	"errors"
 	"std"
-	"strconv"
 	"time"
 
 	"gno.land/p/demo/ufmt"
@@ -93,7 +92,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 			"prevRealm", prevPkgPath,
 			"projectId", projectId,
 			"depositId", depositId,
-			"amount", strconv.FormatUint(rewardAmount, 10),
+			"amount", formatUint(rewardAmount),
 		)
 		project.setTier(convertTierTypeStrToUint64(deposit.Tier()), tier)
 
@@ -169,7 +168,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"depositId", depositId,
-		"amount", strconv.FormatUint(rewardAmount, 10),
+		"amount", formatUint(rewardAmount),
 	)
 
 	project.setTier(convertTierTypeStrToUint64(deposit.Tier()), tier)

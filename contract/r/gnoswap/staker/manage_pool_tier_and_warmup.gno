@@ -43,7 +43,7 @@ func setPoolTier(poolPath string, tier uint64) {
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"poolPath", poolPath,
-		"tier", ufmt.Sprintf("%d", tier),
+		"tier", formatUint(tier),
 	)
 }
 
@@ -74,7 +74,7 @@ func changePoolTier(poolPath string, tier uint64) {
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"poolPath", poolPath,
-		"tier", ufmt.Sprintf("%d", tier),
+		"tier", formatUint(tier),
 	)
 }
 
@@ -132,8 +132,8 @@ func setWarmUp(pct, blockDuration int64) {
 		"SetWarmUp",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"pct", ufmt.Sprintf("%d", pct),
-		"blockDuration", ufmt.Sprintf("%d", blockDuration),
+		"pct", formatUint(pct),
+		"blockDuration", formatInt(blockDuration),
 	)
 }
 

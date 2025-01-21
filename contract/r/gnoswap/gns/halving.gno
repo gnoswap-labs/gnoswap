@@ -61,7 +61,6 @@ type HalvingData struct {
 	amountPerBlock   []uint64
 }
 
-
 func (h *HalvingData) getStartBlockHeight(year int64) int64 {
 	if year == 0 {
 		return 0
@@ -339,8 +338,8 @@ func SetAvgBlockTimeInMsByAdmin(ms int64) {
 		"SetAvgBlockTimeInMsByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"prevAvgBlockTimeInMs", strconv.FormatInt(prevAvgBlockTimeInMs, 10),
-		"avgBlockTimeInMs", strconv.FormatInt(ms, 10),
+		"prevAvgBlockTimeInMs", formatInt(prevAvgBlockTimeInMs),
+		"avgBlockTimeInMs", formatInt(ms),
 	)
 }
 
@@ -357,8 +356,8 @@ func SetAvgBlockTimeInMs(ms int64) {
 		"SetAvgBlockTimeInMs",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"prevAvgBlockTimeInMs", strconv.FormatInt(prevAvgBlockTimeInMs, 10),
-		"avgBlockTimeInMs", strconv.FormatInt(ms, 10),
+		"prevAvgBlockTimeInMs", formatInt(prevAvgBlockTimeInMs),
+		"avgBlockTimeInMs", formatInt(ms),
 	)
 }
 
@@ -420,7 +419,6 @@ func setAvgBlockTimeInMs(ms int64) {
 	}
 
 	avgBlockTimeMs = ms
-
 
 }
 
