@@ -302,8 +302,8 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		"amount0", token0Amount,
 		"amount1", token1Amount,
 		"liquidity", liquidity.ToString(),
-		"currentTick", strconv.FormatInt(int64(currentTick), 10),
-		"isInRange", strconv.FormatBool(isInRange),
+		"currentTick", formatInt(currentTick),
+		"isInRange", formatBool(isInRange),
 	)
 
 	// positionsInternalWarmUpAmount[tokenId] = warmUpAmount{}
@@ -468,19 +468,19 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 		"CollectReward",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpTokenId", strconv.FormatUint(tokenId, 10),
+		"lpTokenId", formatUint(tokenId),
 		"internal_poolPath", deposit.targetPoolPath,
 		"internal_incentiveId", "INTERNAL",
 		"internal_rewardToken", consts.GNS_PATH,
 		"internal_recipient", deposit.owner.String(),
-		"internal_reward", strconv.FormatUint(reward.Internal, 10),
-		"internal_toUser", strconv.FormatUint(toUser, 10),
-		"internal_toFee", strconv.FormatUint(reward.Internal-toUser, 10),
-		"internal_toPenalty", strconv.FormatUint(reward.InternalPenalty, 10),
-		"internal_unClaimable", strconv.FormatUint(unClaimableInternal, 10),
+		"internal_reward", formatUint(reward.Internal),
+		"internal_toUser", formatUint(toUser),
+		"internal_toFee", formatUint(reward.Internal-toUser),
+		"internal_toPenalty", formatUint(reward.InternalPenalty),
+		"internal_unClaimable", formatUint(unClaimableInternal),
 	)
 
-	return strconv.FormatUint(toUser, 10), strconv.FormatUint(reward.InternalPenalty, 10)
+	return formatUint(toUser), formatUint(reward.InternalPenalty)
 }
 
 // UnstakeToken withdraws an LP token from staking, collecting all pending rewards
@@ -533,8 +533,8 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 		"UnstakeToken",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpTokenId", ufmt.Sprintf("%d", tokenId),
-		"unwrapResult", ufmt.Sprintf("%t", unwrapResult),
+		"lpTokenId", formatUint(tokenId),
+		"unwrapResult", formatBool(unwrapResult),
 		"internal_poolPath", poolPath,
 		"internal_from", deposit.owner.String(),
 		"internal_to", consts.STAKER_ADDR.String(),
@@ -584,7 +584,7 @@ func applyUnStake(tokenId uint64) {
 		"UnstakeToken",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpTokenId", strconv.FormatUint(tokenId, 10),
+		"lpTokenId", formatUint(tokenId),
 		"internal_poolPath", deposit.targetPoolPath,
 		"internal_from", GetOrigPkgAddr().String(),
 		"internal_to", deposit.owner.String(),

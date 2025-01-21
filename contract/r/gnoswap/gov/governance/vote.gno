@@ -90,7 +90,7 @@ func Vote(pid uint64, yes bool) string {
 		panic(err)
 	}
 
-	proposals.Set(formatUint64(pid), proposal)
+	proposals.Set(formatUint(pid), proposal)
 
 	setVote(pid, voter.String(), yes)
 	setUserVote(voter, pid, voteWithWeight{
@@ -105,10 +105,10 @@ func Vote(pid uint64, yes bool) string {
 		"Vote",
 		"prevAddr", prevAddr,
 		"prevPkgPath", prevPkgPath,
-		"proposalId", formatUint64(pid),
+		"proposalId", formatUint(pid),
 		"voter", voter.String(),
 		"yes", voteToString(yes),
-		"voteWeight", formatUint64(state.userWeight),
+		"voteWeight", formatUint(state.userWeight),
 	)
 
 	return voteKey
@@ -238,13 +238,13 @@ func Cancel(proposalId uint64) {
 	proposal.State.Upcoming = false
 	proposal.State.Active = false
 
-	proposals.Set(formatUint64(proposalId), proposal)
+	proposals.Set(formatUint(proposalId), proposal)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
 		"Cancel",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"proposalId", formatUint64(proposalId),
+		"proposalId", formatUint(proposalId),
 	)
 }

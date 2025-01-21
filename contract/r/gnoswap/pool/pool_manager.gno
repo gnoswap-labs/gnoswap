@@ -200,7 +200,7 @@ func CreatePool(
 			"prevRealm", prevRealm,
 			"internal_poolPath", poolPath,
 			"internal_tokenPath", consts.GNS_PATH,
-			"internal_amount", ufmt.Sprintf("%d", poolCreationFee),
+			"internal_amount", formatUint(poolCreationFee),
 		)
 	}
 
@@ -213,7 +213,7 @@ func CreatePool(
 		"prevRealm", prevRealm,
 		"token0Path", token0Path,
 		"token1Path", token1Path,
-		"fee", ufmt.Sprintf("%d", fee),
+		"fee", formatUint(fee),
 		"sqrtPriceX96", sqrtPriceX96,
 		"internal_poolPath", poolPath,
 	)

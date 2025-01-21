@@ -81,7 +81,7 @@ func HandleWithdrawalFee(
 		"WithdrawalFee",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpTokenId", ufmt.Sprintf("%d", tokenId),
+		"lpTokenId", formatUint(tokenId),
 		"token0Path", token0Path,
 		"token1Path", token1Path,
 		"internal_fee0Amount", feeAmount0.ToString(),
@@ -115,7 +115,7 @@ func SetWithdrawalFee(fee uint64) {
 		"SetWithdrawalFee",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"fee", ufmt.Sprintf("%d", fee),
+		"fee", formatUint(fee),
 	)
 }
 
@@ -135,7 +135,7 @@ func SetWithdrawalFeeByAdmin(fee uint64) {
 		"SetWithdrawalFeeByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"fee", ufmt.Sprintf("%d", fee),
+		"fee", formatUint(fee),
 	)
 }
 

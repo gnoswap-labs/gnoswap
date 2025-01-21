@@ -2,6 +2,7 @@ package protocol_fee
 
 import (
 	"std"
+	"strconv"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
@@ -98,7 +99,7 @@ func setDevOpsPct(pct uint64) {
 		"SetDevOpsPct",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"pct", ufmt.Sprintf("%d", pct),
+		"pct", strconv.FormatUint(pct, 10),
 	)
 }
 

@@ -122,14 +122,14 @@ func changeDistributionPcts(
 		"ChangeDistributionPct",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"target01", strconv.Itoa(target01),
-		"pct01", strconv.FormatUint(pct01, 10),
-		"target02", strconv.Itoa(target02),
-		"pct02", strconv.FormatUint(pct02, 10),
-		"target03", strconv.Itoa(target03),
-		"pct03", strconv.FormatUint(pct03, 10),
-		"target04", strconv.Itoa(target04),
-		"pct04", strconv.FormatUint(pct04, 10),
+		"target01", formatInt(target01),
+		"pct01", formatUint(pct01),
+		"target02", formatInt(target02),
+		"pct02", formatUint(pct02),
+		"target03", formatInt(target03),
+		"pct03", formatUint(pct03),
+		"target04", formatInt(target04),
+		"pct04", formatUint(pct04),
 	)
 }
 
@@ -179,7 +179,6 @@ func transferToTarget(target int, amount uint64) {
 		gns.Transfer(a2u(consts.STAKER_ADDR), amount)
 		distributedToStaker += amount
 		accuDistributedToStaker += amount
-		println("\t\t\t=================>[", std.GetHeight(), "] distributeToTarget : to Staker (", " : ", amount, "), accum : ", accuDistributedToStaker)
 
 	case DEVOPS:
 		gns.Transfer(a2u(consts.DEV_OPS), amount)
@@ -265,7 +264,7 @@ func setDistributionBpsPct(target int, pct uint64) {
 		if !exist {
 			panic("should not happen")
 		}
-	
+
 		if oldPct.(uint64) != pct {
 			callbackStakerEmissionChange(calculateAmount(gns.GetEmission(), pct))
 		}

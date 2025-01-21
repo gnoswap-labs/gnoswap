@@ -79,7 +79,7 @@ func TestProposeText(t *testing.T) {
 
 			uassert.NoError(t, err)
 
-			prop, exists := proposals.Get(formatUint64(pid))
+			prop, exists := proposals.Get(formatUint(pid))
 			uassert.True(t, exists)
 
 			proposal := prop.(ProposalInfo)
@@ -146,7 +146,7 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 
 			uassert.NoError(t, err)
 
-			prop, exists := proposals.Get(formatUint64(pid))
+			prop, exists := proposals.Get(fomatUint(pid))
 			uassert.True(t, exists)
 
 			proposal := prop.(ProposalInfo)
@@ -284,11 +284,11 @@ func TestUpdateProposalsState(t *testing.T) {
 			proposals = avl.NewTree()
 
 			proposal := tt.setupProposal(tt.currentTime)
-			proposals.Set(formatUint64(1), proposal)
+			proposals.Set(fomatUint(1), proposal)
 
 			updateProposalsState()
 
-			updatedProposal, exists := proposals.Get(formatUint64(1))
+			updatedProposal, exists := proposals.Get(fomatUint(1))
 			uassert.True(t, exists)
 			tt.validate(t, updatedProposal.(ProposalInfo))
 		})
@@ -339,7 +339,7 @@ func TestProposeParameterChange(t *testing.T) {
 
 			uassert.NoError(t, err)
 
-			prop, exists := proposals.Get(formatUint64(pid))
+			prop, exists := proposals.Get(fomatUint(pid))
 			uassert.True(t, exists)
 
 			proposal := prop.(ProposalInfo)
