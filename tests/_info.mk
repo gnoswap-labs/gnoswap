@@ -26,9 +26,7 @@ TX_EXPIRE := 9999999999
 MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 ROOT_DIR:=$(shell dirname $(MAKEFILE))/../
 
+
+# TODO: change below 2 values based on which chain to deploy
 GNOLAND_RPC_URL ?= localhost:26657
 CHAINID ?= dev
-## TODO:
-## change admin address in consts.gno based on which chain to deploy
-## > LOCAL g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c
-## > TESTNET XX
