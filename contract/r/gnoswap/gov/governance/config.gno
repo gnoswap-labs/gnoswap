@@ -33,11 +33,11 @@ func init() {
 }
 
 func setConfigVersion(v uint64, cfg Config) {
-	configVersions.Set(formatUint64(v), cfg)
+	configVersions.Set(formatUint(v), cfg)
 }
 
 func getConfigByVersion(v uint64) (Config, bool) {
-	value, exists := configVersions.Get(formatUint64(v))
+	value, exists := configVersions.Get(formatUint(v))
 	if !exists {
 		return Config{}, false
 	}
@@ -115,14 +115,14 @@ func reconfigure(
 		"Reconfigure",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"votingStartDelay", formatUint64(config.VotingStartDelay),
-		"votingPeriod", formatUint64(config.VotingPeriod),
-		"votingWeightSmoothingDuration", formatUint64(config.VotingWeightSmoothingDuration),
-		"quorum", formatUint64(config.Quorum),
-		"proposalCreationThreshold", formatUint64(config.ProposalCreationThreshold),
-		"executionDelay", formatUint64(config.ExecutionDelay),
-		"executionWindow", formatUint64(config.ExecutionWindow),
-		"newConfigVersion", formatUint64(newVersion),
+		"votingStartDelay", formatUint(config.VotingStartDelay),
+		"votingPeriod", formatUint(config.VotingPeriod),
+		"votingWeightSmoothingDuration", formatUint(config.VotingWeightSmoothingDuration),
+		"quorum", formatUint(config.Quorum),
+		"proposalCreationThreshold", formatUint(config.ProposalCreationThreshold),
+		"executionDelay", formatUint(config.ExecutionDelay),
+		"executionWindow", formatUint(config.ExecutionWindow),
+		"newConfigVersion", formatUint(newVersion),
 	)
 
 	return newVersion

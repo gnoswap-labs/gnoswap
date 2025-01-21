@@ -132,11 +132,11 @@ func CreateExternalIncentive(
 		"prevRealm", prevRealm,
 		"poolPath", targetPoolPath,
 		"rewardToken", rewardToken,
-		"rewardAmount", ufmt.Sprintf("%d", rewardAmount),
-		"startTimestamp", ufmt.Sprintf("%d", startTimestamp),
-		"endTimestamp", ufmt.Sprintf("%d", endTimestamp),
+		"rewardAmount", formatUint(rewardAmount),
+		"startTimestamp", formatInt(startTimestamp),
+		"endTimestamp", formatInt(endTimestamp),
 		"internal_incentiveId", incentiveId,
-		"internal_depositGnsAmount", ufmt.Sprintf("%d", depositGnsAmount),
+		"internal_depositGnsAmount", formatUint(depositGnsAmount),
 		"internal_external", "created",
 	)
 }
@@ -213,8 +213,8 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 		"rewardToken", rewardToken,
 		"refundee", refundee.String(),
 		"internal_endBy", ictv.refundee.String(),
-		"internal_refundAmount", ufmt.Sprintf("%d", refund),
-		"internal_refundGnsAmount", ufmt.Sprintf("%d", ictv.depositGnsAmount),
+		"internal_refundAmount", formatUint(refund),
+		"internal_refundGnsAmount", formatUint(ictv.depositGnsAmount),
 		"internal_incentiveId", ufmt.Sprintf("%d:%d:%s:%s", startTimestamp, endTimestamp, refundee, rewardToken),
 	)
 }

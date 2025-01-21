@@ -144,10 +144,10 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
 			"targetProjectTierId", targetProjectTierId,
-			"amount", strconv.FormatUint(amount, 10),
+			"amount", formatUint(amount),
 			"depositId", deposit.id,
-			"claimableHeight", strconv.FormatUint(deposit.claimableHeight, 10),
-			"claimableTime", strconv.FormatUint(deposit.claimableTime, 10),
+			"claimableHeight", formatUint(deposit.claimableHeight),
+			"claimableTime", formatUint(deposit.claimableTime),
 			"tierAmountPerBlockX128", tier.TierAmountPerBlockX128().ToString(),
 		)
 

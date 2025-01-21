@@ -45,7 +45,7 @@ func SetSwapFeeByAdmin(fee uint64) {
 		"SetSwapFeeByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"fee", ufmt.Sprintf("%d", fee),
+		"fee", formatUint(fee),
 	)
 }
 
@@ -68,7 +68,7 @@ func SetSwapFee(fee uint64) {
 		"SetSwapFee",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"fee", ufmt.Sprintf("%d", fee),
+		"fee", formatUint(fee),
 	)
 }
 
@@ -110,7 +110,7 @@ func handleSwapFee(
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"internal_tokenPath", outputToken,
-		"internal_amount", ufmt.Sprintf("%d", feeAmountUint64),
+		"internal_amount", formatUint(feeAmountUint64),
 	)
 
 	toUserAfterProtocol := new(u256.Uint).Sub(amount, feeAmount)

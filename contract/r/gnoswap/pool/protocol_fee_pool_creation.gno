@@ -37,7 +37,7 @@ func SetPoolCreationFee(fee uint64) {
 		"SetPoolCreationFee",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"fee", ufmt.Sprintf("%d", fee),
+		"fee", formatUint(fee),
 	)
 }
 
@@ -59,7 +59,7 @@ func SetPoolCreationFeeByAdmin(fee uint64) {
 		"SetPoolCreationFeeByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"fee", ufmt.Sprintf("%d", fee),
+		"fee", formatUint(fee),
 	)
 }
 

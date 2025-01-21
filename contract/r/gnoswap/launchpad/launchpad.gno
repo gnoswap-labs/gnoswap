@@ -529,13 +529,13 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 		"projectId", projectId,
 		"recipient", recipient.String(),
 		"tokenPath", project.tokenPath,
-		"leftReward", strconv.FormatUint(projectLeftReward, 10),
-		"tier30Full", strconv.FormatUint(project.tiers[30].tierAmount, 10),
-		"tier30Left", strconv.FormatUint(project.tiers[30].tierAmount-project.tiers[30].calculatedAmount, 10),
-		"tier90Full", strconv.FormatUint(project.tiers[90].tierAmount, 10),
-		"tier90Left", strconv.FormatUint(project.tiers[90].tierAmount-project.tiers[90].calculatedAmount, 10),
-		"tier180Full", strconv.FormatUint(project.tiers[180].tierAmount, 10),
-		"tier180Left", strconv.FormatUint(project.tiers[180].tierAmount-project.tiers[180].calculatedAmount, 10),
+		"leftReward", formatUint(projectLeftReward),
+		"tier30Full", formatUint(project.tiers[30].tierAmount),
+		"tier30Left", formatUint(project.tiers[30].tierAmount-project.tiers[30].calculatedAmount),
+		"tier90Full", formatUint(project.tiers[90].tierAmount),
+		"tier90Left", formatUint(project.tiers[90].tierAmount-project.tiers[90].calculatedAmount),
+		"tier180Full", formatUint(project.tiers[180].tierAmount),
+		"tier180Left", formatUint(project.tiers[180].tierAmount-project.tiers[180].calculatedAmount),
 	)
 
 	return projectLeftReward

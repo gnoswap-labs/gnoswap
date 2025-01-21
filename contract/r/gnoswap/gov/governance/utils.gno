@@ -13,7 +13,7 @@ import (
 )
 
 func mustGetProposal(proposalId uint64) ProposalInfo {
-	result, exists := proposals.Get(formatUint64(proposalId))
+	result, exists := proposals.Get(formatUint(proposalId))
 	if !exists {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -111,12 +111,17 @@ func getPrev() (string, string) {
 	return prev.Addr().String(), prev.PkgPath()
 }
 
-func formatUint64(v uint64) string {
-	return strconv.FormatUint(v, 10)
-}
-
-func formatInt(v int) string {
-	return strconv.FormatInt(int64(v), 10)
+func formatUint(v interface{}) string {
+	switch v := v.(type) {
+	case uint8:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint32:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint64:
+		return strconv.FormatUint(v, 10)
+	default:
+		panic(ufmt.Sprintf("invalid type: %T", v))
+	}
 }
 
 func formatBool(v bool) string {

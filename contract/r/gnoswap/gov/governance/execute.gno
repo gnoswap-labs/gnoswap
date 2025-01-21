@@ -107,7 +107,7 @@ func Execute(proposalId uint64) error {
 		"Execute",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"proposalId", strconv.Itoa(int(proposalId)),
+		"proposalId", formatUint(proposalId),
 	)
 
 	return nil

@@ -215,3 +215,16 @@ func splitSingleChar(s string, sep byte) []string {
 	result = append(result, s[start:])
 	return result
 }
+
+func formatUint(v interface{}) string {
+	switch v := v.(type) {
+	case uint8:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint32:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint64:
+		return strconv.FormatUint(v, 10)
+	default:
+		panic(ufmt.Sprintf("invalid type: %T", v))
+	}
+}

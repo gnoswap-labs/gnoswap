@@ -114,7 +114,7 @@ func Swap(
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"poolPath", GetPoolPath(token0Path, token1Path, fee),
-		"zeroForOne", ufmt.Sprintf("%t", zeroForOne),
+		"zeroForOne", formatBool(zeroForOne),
 		"amountSpecified", amountSpecified,
 		"sqrtPriceLimitX96", sqrtPriceLimitX96,
 		"payer", payer.String(),

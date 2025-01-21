@@ -2,6 +2,7 @@ package common
 
 import (
 	"std"
+	"strconv"
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/v1/consts"
@@ -94,6 +95,6 @@ func setHalt(halt bool) {
 		"setHalt",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"halt", ufmt.Sprintf("%t", halt),
+		"halt", strconv.FormatBool(halt),
 	)
 }

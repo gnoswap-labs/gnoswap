@@ -4,8 +4,6 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/demo/ufmt"
-
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
@@ -46,11 +44,11 @@ func MintAndDistributeGns() uint64 {
 		"MintAndDistributeGns",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"internal_lastHeight", ufmt.Sprintf("%d", lastExecutedHeight),
-		"internal_height", ufmt.Sprintf("%d", currentHeight),
-		"internal_time", ufmt.Sprintf("%d", time.Now().Unix()),
-		"internal_amount", ufmt.Sprintf("%d", mintedEmissionRewardAmount),
-		"internal_totalSupply", ufmt.Sprintf("%d", gns.TotalSupply()),
+		"internal_lastHeight", formatInt(lastExecutedHeight),
+		"internal_height", formatInt(currentHeight),
+		"internal_time", formatInt(time.Now().Unix()),
+		"internal_amount", formatUint(mintedEmissionRewardAmount),
+		"internal_totalSupply", formatUint(gns.TotalSupply()),
 	)
 
 	setLastExecutedHeight(currentHeight)

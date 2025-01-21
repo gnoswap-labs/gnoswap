@@ -2,7 +2,6 @@ package gns
 
 import (
 	"std"
-	"strconv"
 	"strings"
 
 	"gno.land/p/demo/grc/grc20"
@@ -134,10 +133,10 @@ func MintGns(address pusers.AddressOrName) uint64 {
 		"MintGNS",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"mintedBlockHeight", strconv.FormatInt(currentHeight, 10),
-		"mintedGNSAmount", strconv.FormatUint(amountToMint, 10),
-		"accumMintedGNSAmount", strconv.FormatUint(GetMintedEmissionAmount(), 10),
-		"accumLeftMintGNSAmount", strconv.FormatUint(GetLeftEmissionAmount(), 10),
+		"mintedBlockHeight", formatInt(currentHeight),
+		"mintedGNSAmount", formatUint(amountToMint),
+		"accumMintedGNSAmount", formatUint(GetMintedEmissionAmount()),
+		"accumLeftMintGNSAmount", formatUint(GetLeftEmissionAmount()),
 	)
 
 	return amountToMint
@@ -155,10 +154,10 @@ func Burn(from pusers.AddressOrName, amount uint64) {
 		"Burn",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"burnedBlockHeight", strconv.FormatInt(std.GetHeight(), 10),
+		"burnedBlockHeight", formatInt(std.GetHeight()),
 		"burnFrom", fromAddr.String(),
-		"burnedGNSAmount", strconv.FormatUint(amount, 10),
-		"accumBurnedGNSAmount", strconv.FormatUint(GetBurnAmount(), 10),
+		"burnedGNSAmount", formatUint(amount),
+		"accumBurnedGNSAmount", formatUint(GetBurnAmount()),
 	)
 }
 
