@@ -1,16 +1,12 @@
 package staker
 
 import (
-	"std"
-
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-
-	en "gno.land/r/gnoswap/v1/emission"
 )
 
 const (
-	AllTierCount = 4    // 0, 1, 2, 3
+	AllTierCount = 4 // 0, 1, 2, 3
 	Tier1        = 1
 	Tier2        = 2
 	Tier3        = 3
@@ -104,9 +100,8 @@ type PoolTier struct {
 	getEmission func() uint64
 
 	// returns a list of halving blocks within the interval [start, end) in ascending order
-	// there MUST NOT be any emission amount change between start and end - those had to be handled by the CallbackStakerEmissionChange. 
+	// there MUST NOT be any emission amount change between start and end - those had to be handled by the CallbackStakerEmissionChange.
 	getHalvingBlocksInRange func(start, end int64) ([]int64, []uint64)
-
 }
 
 // NewPoolTier creates a new PoolTier instance with single initial 1 tier pool.
@@ -122,12 +117,12 @@ type PoolTier struct {
 // - *PoolTier: The new PoolTier instance.
 func NewPoolTier(pools *Pools, currentHeight int64, initialPoolPath string, getEmission func() uint64, getHalvingBlocksInRange func(start, end int64) ([]int64, []uint64)) *PoolTier {
 	result := &PoolTier{
-		membership:            avl.NewTree(),
-		tierRatio:             TierRatioFromCounts(1, 0, 0),
-		lastRewardCacheHeight: currentHeight + 1,
-		getEmission:           getEmission,
+		membership:              avl.NewTree(),
+		tierRatio:               TierRatioFromCounts(1, 0, 0),
+		lastRewardCacheHeight:   currentHeight + 1,
+		getEmission:             getEmission,
 		getHalvingBlocksInRange: getHalvingBlocksInRange,
-		currentEmission:       getEmission(),
+		currentEmission:         getEmission(),
 	}
 
 	pools.Set(initialPoolPath, NewPool(initialPoolPath, currentHeight+1))
@@ -176,7 +171,6 @@ func (self *PoolTier) CurrentTier(poolPath string) uint64 {
 // updated per-pool reward to each of the pools.
 func (self *PoolTier) changeTier(currentHeight int64, pools *Pools, poolPath string, nextTier uint64) {
 	self.cacheReward(currentHeight, pools)
-	
 	// same as prev. no need to update
 	currentTier := self.CurrentTier(poolPath)
 	if currentTier == nextTier {
