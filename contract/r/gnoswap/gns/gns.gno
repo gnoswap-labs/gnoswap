@@ -49,35 +49,8 @@ func init() {
 	burnAmount = uint64(0)
 }
 
-func GetName() string {
-	return Token.GetName()
-}
-
-func GetSymbol() string {
-	return Token.GetSymbol()
-}
-
-func GetDecimals() uint {
-	return Token.GetDecimals()
-}
-
 func TotalSupply() uint64 {
 	return Token.TotalSupply()
-}
-
-func KnownAccounts() int {
-	return Token.KnownAccounts()
-}
-
-func BalanceOfAddress(owner std.Address) uint64 {
-	common.AssertValidAddr(owner)
-	return Token.BalanceOf(owner)
-}
-
-func AllowanceOfAddress(owner, spender std.Address) uint64 {
-	common.AssertValidAddr(owner)
-	common.AssertValidAddr(spender)
-	return Token.Allowance(owner, spender)
 }
 
 func BalanceOf(owner std.Address) uint64 {
@@ -88,10 +61,7 @@ func Allowance(owner, spender std.Address) uint64 {
 	return UserTeller.Allowance(owner, spender)
 }
 
-func SpendAllowance(owner, spender std.Address, amount uint64) {
-	checkErr(privateLedger.SpendAllowance(owner, spender, amount))
-}
-
+func MintGns(address std.Address) uint64 {
 func MintGns(address std.Address) uint64 {
 	lastGNSMintedHeight := GetLastMintedHeight()
 	currentHeight := std.GetHeight()
@@ -116,6 +86,7 @@ func MintGns(address std.Address) uint64 {
 
 	// mint calculated amount to address
 	err := privateLedger.Mint(address, amountToMint)
+	err := privateLedger.Mint(address, amountToMint)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -135,7 +106,9 @@ func MintGns(address std.Address) uint64 {
 }
 
 func Burn(from std.Address, amount uint64) {
+func Burn(from std.Address, amount uint64) {
 	owner.AssertCallerIsOwner()
+	checkErr(privateLedger.Burn(from, amount))
 	checkErr(privateLedger.Burn(from, amount))
 
 	burnAmount += amount
@@ -147,6 +120,7 @@ func Burn(from std.Address, amount uint64) {
 		"prevRealm", prevPkgPath,
 		"burnedBlockHeight", formatInt(std.GetHeight()),
 		"burnFrom", from.String(),
+		"burnFrom", from.String(),
 		"burnedGNSAmount", formatUint(amount),
 		"accumBurnedGNSAmount", formatUint(GetBurnAmount()),
 	)
@@ -154,12 +128,18 @@ func Burn(from std.Address, amount uint64) {
 
 func Transfer(to std.Address, amount uint64) {
 	checkErr(UserTeller.Transfer(to, amount))
+func Transfer(to std.Address, amount uint64) {
+	checkErr(UserTeller.Transfer(to, amount))
 }
 
 func Approve(spender std.Address, amount uint64) {
 	checkErr(UserTeller.Approve(spender, amount))
+func Approve(spender std.Address, amount uint64) {
+	checkErr(UserTeller.Approve(spender, amount))
 }
 
+func TransferFrom(from, to std.Address, amount uint64) {
+	checkErr(UserTeller.TransferFrom(from, to, amount))
 func TransferFrom(from, to std.Address, amount uint64) {
 	checkErr(UserTeller.TransferFrom(from, to, amount))
 }
@@ -172,6 +152,8 @@ func Render(path string) string {
 	case path == "":
 		return Token.RenderHome()
 	case c == 2 && parts[0] == "balance":
+		owner := std.Address(parts[1])
+		balance := UserTeller.BalanceOf(owner)
 		owner := std.Address(parts[1])
 		balance := UserTeller.BalanceOf(owner)
 		return ufmt.Sprintf("%d\n", balance)
