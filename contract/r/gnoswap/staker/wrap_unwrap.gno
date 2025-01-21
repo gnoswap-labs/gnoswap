@@ -6,6 +6,7 @@ import (
 	"gno.land/r/demo/wugnot"
 
 	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 )
 
@@ -36,8 +37,9 @@ func wrap(ugnotAmount uint64) {
 	banker := std.GetBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(consts.STAKER_ADDR, consts.WUGNOT_ADDR, std.Coins{{Denom: "ugnot", Amount: int64(ugnotAmount)}})
 	wugnot.Deposit() // STAKER HAS WUGNOT
+
 	// SEND WUGNOT: STAKER -> USER
-	wugnot.Transfer(a2u(getPrevAddr()), ugnotAmount)
+	wugnot.Transfer(common.AddrToUser(std.PrevRealm().Addr()), ugnotAmount)
 }
 
 // unwrap converts `wugnot` tokens back into `ugnot` tokens.
@@ -53,7 +55,7 @@ func unwrap(wugnotAmount uint64) {
 	}
 
 	// SEND WUGNOT: USER -> STAKER
-	wugnot.TransferFrom(a2u(getPrevAddr()), a2u(consts.STAKER_ADDR), wugnotAmount)
+	wugnot.TransferFrom(common.AddrToUser(std.PrevRealm().Addr()), common.AddrToUser(consts.STAKER_ADDR), wugnotAmount)
 
 	// UNWRAP IT
 	wugnot.Withdraw(wugnotAmount)

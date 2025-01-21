@@ -117,7 +117,7 @@ func CreateExternalIncentive(
 	externalIncentives.Set(incentiveId, incentive)
 
 	// deposit gns amount
-	gns.TransferFrom(a2u(caller), a2u(consts.STAKER_ADDR), depositGnsAmount)
+	gns.TransferFrom(caller, consts.STAKER_ADDR, depositGnsAmount)
 
 	// transfer reward token from user to staker
 	teller := common.GetTokenTeller(rewardToken)
@@ -202,7 +202,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	}
 
 	// also refund deposit gns amount
-	gns.Transfer(a2u(ictv.refundee), ictv.depositGnsAmount)
+	gns.Transfer(ictv.refundee, ictv.depositGnsAmount)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -275,7 +275,7 @@ func isMidnight(startTime time.Time) bool {
 }
 
 func gnsBalance(addr std.Address) uint64 {
-	return gns.BalanceOf(a2u(addr))
+	return gns.BalanceOf(addr)
 }
 
 func isAllowedForExternalReward(poolPath, tokenPath string) error {

@@ -34,11 +34,11 @@ import (
 
 var (
 	adminAddr  = consts.ADMIN
-	adminUser  = common.AddrToUser(adminAddr)
+	adminUser  = adminAddr
 	adminRealm = std.NewUserRealm(adminAddr)
 
 	stakerAddr  = consts.STAKER_ADDR
-	stakerUser  = common.AddrToUser(stakerAddr)
+	stakerUser  = stakerAddr
 	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
 
 	wugnotAddr = consts.WUGNOT_ADDR
@@ -114,8 +114,8 @@ func testCreatePool() {
 func testMintWugnotGnsPos01() {
 	std.TestSetRealm(adminRealm)
 
-	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	pn.Mint(
@@ -137,8 +137,8 @@ func testMintWugnotGnsPos01() {
 func testMintWugnotGnsPos02() {
 	std.TestSetRealm(adminRealm)
 
-	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	pn.Mint(
@@ -187,11 +187,11 @@ func testMakePosition1OutRangeBySwap() {
 
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 
-	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-	wugnot.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+	wugnot.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+	gns.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
 
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
 		wugnotPath, // inputToken
@@ -228,11 +228,11 @@ func testMakePosition1InRangeBySwap() {
 
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 
-	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-	wugnot.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+	wugnot.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+	gns.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
 
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
 		gnsPath,

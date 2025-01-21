@@ -23,11 +23,11 @@ var (
 
 func TestMintPostInit(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-1).ToString())
 
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	thisPool := GetPool(barPath, fooPath, fee500)
 

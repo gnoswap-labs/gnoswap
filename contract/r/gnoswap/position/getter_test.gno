@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/r/demo/users"
 	"gno.land/r/gnoswap/v1/consts"
 )
 
@@ -14,7 +13,7 @@ func setupPositionGetter(t *testing.T) {
 	t.Helper()
 
 	CreatePoolWithoutFee(t)
-	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
+	std.TestSetRealm(std.NewUserRealm(admin))
 	position := Position{
 		nonce:                    u256.Zero(),
 		operator:                 consts.POSITION_ADDR,

@@ -25,13 +25,13 @@ func init() {
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestPoolBalanceInit(t *testing.T) {
-	poolBar := bar.BalanceOf(a2u(consts.POOL_ADDR))
-	poolFoo := foo.BalanceOf(a2u(consts.POOL_ADDR))
+	poolBar := bar.BalanceOf(consts.POOL_ADDR)
+	poolFoo := foo.BalanceOf(consts.POOL_ADDR)
 
 	uassert.Equal(t, poolBar, uint64(0))
 	uassert.Equal(t, poolFoo, uint64(0))
@@ -39,8 +39,8 @@ func TestPoolBalanceInit(t *testing.T) {
 
 func TestMintPosition01InRange(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -64,8 +64,8 @@ func TestMintPosition01InRange(t *testing.T) {
 }
 
 func TestPoolBalanceMint01(t *testing.T) {
-	poolBar := bar.BalanceOf(a2u(consts.POOL_ADDR))
-	poolFoo := foo.BalanceOf(a2u(consts.POOL_ADDR))
+	poolBar := bar.BalanceOf(consts.POOL_ADDR)
+	poolFoo := foo.BalanceOf(consts.POOL_ADDR)
 
 	uassert.Equal(t, poolBar, uint64(18394892))
 	uassert.Equal(t, poolFoo, uint64(50000000))
@@ -73,8 +73,8 @@ func TestPoolBalanceMint01(t *testing.T) {
 
 func TestMintPosition02InRange(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -98,8 +98,8 @@ func TestMintPosition02InRange(t *testing.T) {
 }
 
 func TestPoolBalanceMint02(t *testing.T) {
-	poolBar := bar.BalanceOf(a2u(consts.POOL_ADDR))
-	poolFoo := foo.BalanceOf(a2u(consts.POOL_ADDR))
+	poolBar := bar.BalanceOf(consts.POOL_ADDR)
+	poolFoo := foo.BalanceOf(consts.POOL_ADDR)
 
 	uassert.Equal(t, poolBar, uint64(22073871))
 	uassert.Equal(t, poolFoo, uint64(60000000))
@@ -128,7 +128,7 @@ func TestSwap1(t *testing.T) {
 	// token1: 60000000
 
 	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), 1234567)
+	bar.Approve(consts.POOL_ADDR, 1234567)
 
 	std.TestSetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
@@ -171,7 +171,7 @@ func TestSwap2(t *testing.T) {
 	// token1: 56661277
 
 	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	std.TestSetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
@@ -284,8 +284,8 @@ func TestDecreaseAllPos02(t *testing.T) {
 }
 
 func printPoolBalance() {
-	poolBar := bar.BalanceOf(a2u(consts.POOL_ADDR))
-	poolFoo := foo.BalanceOf(a2u(consts.POOL_ADDR))
+	poolBar := bar.BalanceOf(consts.POOL_ADDR)
+	poolFoo := foo.BalanceOf(consts.POOL_ADDR)
 
 	println("pool token0 bar:", poolBar)
 	println("pool token1 foo:", poolFoo)

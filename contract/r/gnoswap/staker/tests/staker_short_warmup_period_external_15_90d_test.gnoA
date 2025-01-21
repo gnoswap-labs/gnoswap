@@ -55,7 +55,7 @@ func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
+		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee()*3)
 
 		pl.CreatePool(barPath, bazPath, 3000, "79228162514264337593543950337")
 
@@ -67,10 +67,10 @@ func testMintBarQux3000_1_4(t *testing.T) {
 	t.Run("mint bar qux 3000 1 4", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-		anoAdmin := users.Resolve(admin)
+		anoAdmin := admin
 
 		pn.Mint(barPath, bazPath, fee3000, int32(-1020), int32(1020), "13630", "13630", "0", "0", max_timeout, anoAdmin, anoAdmin)
 		pn.Mint(barPath, bazPath, fee3000, int32(-1020), int32(1020), "84360", "84360", "0", "0", max_timeout, anoAdmin, anoAdmin)
@@ -104,8 +104,8 @@ func testCreateExternalIncentiveQux90(t *testing.T) {
 	t.Run("create external incentive qux 90", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		qux.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
-		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+		qux.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
+		gns.Approve(consts.STAKER_ADDR, depositGnsAmount)
 
 		AddToken(quxPath)
 		CreateExternalIncentive(

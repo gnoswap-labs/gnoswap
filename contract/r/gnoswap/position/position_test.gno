@@ -10,7 +10,6 @@ import (
 	"gno.land/p/demo/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/demo/users"
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gnft"
 )
@@ -180,28 +179,28 @@ func TestComputePositionKey(t *testing.T) {
 	}{
 		{
 			name:      "Basic Position Key",
-			owner:     users.Resolve(alice),
+			owner:     alice,
 			tickLower: -100,
 			tickUpper: 200,
 			expected:  "ZzF2OWt4amNtOXRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bHpkNDBnaF9fLTEwMF9fMjAw", // Base64 of "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh__-100__200"
 		},
 		{
 			name:      "Zero Ticks",
-			owner:     users.Resolve(alice),
+			owner:     alice,
 			tickLower: 0,
 			tickUpper: 0,
 			expected:  "ZzF2OWt4amNtOXRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bHpkNDBnaF9fMF9fMA==", // Base64 of "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh__0__0"
 		},
 		{
 			name:      "Negative Lower Tick",
-			owner:     users.Resolve(alice),
+			owner:     alice,
 			tickLower: -50,
 			tickUpper: 150,
 			expected:  "ZzF2OWt4amNtOXRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bHpkNDBnaF9fLTUwX18xNTA=", // Base64 of "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh__-50__150"
 		},
 		{
 			name:      "Same Tick Bounds",
-			owner:     users.Resolve(alice),
+			owner:     alice,
 			tickLower: 300,
 			tickUpper: 300,
 			expected:  "ZzF2OWt4amNtOXRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bHpkNDBnaF9fMzAwX18zMDA=", // Base64 of "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh__300__300"
@@ -382,7 +381,7 @@ func TestProcessTokens(t *testing.T) {
 			token1:         "tokenB",
 			amount0Desired: "100",
 			amount1Desired: "200",
-			caller:         users.Resolve(alice),
+			caller:         alice,
 			expected0:      "tokenA",
 			expected1:      "tokenB",
 			isNative0:      false,
@@ -397,7 +396,7 @@ func TestProcessTokens(t *testing.T) {
 			token1:         gnsPath,
 			amount0Desired: "1300",
 			amount1Desired: "200",
-			caller:         users.Resolve(alice),
+			caller:         alice,
 			expected0:      consts.WRAPPED_WUGNOT,
 			expected1:      "gno.land/r/gnoswap/v1/gns",
 			isNative0:      true,
@@ -519,7 +518,7 @@ func TestProcessMintInput(t *testing.T) {
 				amount1Min:     "1800",
 				tickLower:      -10000,
 				tickUpper:      10000,
-				caller:         users.Resolve(alice),
+				caller:         alice,
 			},
 			expectedToken0:  gnsPath,
 			expectedToken1:  barPath,
@@ -540,7 +539,7 @@ func TestProcessMintInput(t *testing.T) {
 				amount1Min:     "800",
 				tickLower:      -20000,
 				tickUpper:      20000,
-				caller:         users.Resolve(alice),
+				caller:         alice,
 			},
 			expectedToken0:  gnsPath,
 			expectedToken1:  barPath,
@@ -561,7 +560,7 @@ func TestProcessMintInput(t *testing.T) {
 				amount1Min:     "1800",
 				tickLower:      -5000,
 				tickUpper:      5000,
-				caller:         users.Resolve(alice),
+				caller:         alice,
 			},
 			expectError: true,
 		},
@@ -629,8 +628,8 @@ func TestMintInternal(t *testing.T) {
 				amount1Desired: u256.MustFromDecimal("10000"),
 				amount0Min:     u256.MustFromDecimal("10"),
 				amount1Min:     u256.MustFromDecimal("10"),
-				caller:         users.Resolve(alice),
-				mintTo:         users.Resolve(alice),
+				caller:         alice,
+				mintTo:         alice,
 			},
 			expectedTokenId:   101,
 			expectedLiquidity: "2005104",
@@ -650,8 +649,8 @@ func TestMintInternal(t *testing.T) {
 				amount1Desired: u256.MustFromDecimal("10000"),
 				amount0Min:     u256.MustFromDecimal("10"),
 				amount1Min:     u256.MustFromDecimal("10"),
-				caller:         users.Resolve(alice),
-				mintTo:         users.Resolve(alice),
+				caller:         alice,
+				mintTo:         alice,
 			},
 			expectPanic:   true,
 			expectedError: "token id already exists",
@@ -669,8 +668,8 @@ func TestMintInternal(t *testing.T) {
 				amount1Desired: u256.Zero(),
 				amount0Min:     u256.NewUint(5),
 				amount1Min:     u256.NewUint(5),
-				caller:         users.Resolve(alice),
-				mintTo:         users.Resolve(alice),
+				caller:         alice,
+				mintTo:         alice,
 			},
 			expectPanic:   true,
 			expectedError: "[GNOSWAP-POOL-010] zero liquidity",
@@ -732,8 +731,8 @@ func TestMint(t *testing.T) {
 			minAmount0:      "950000",
 			minAmount1:      "900000",
 			deadline:        time.Now().Add(10 * time.Minute).Unix(),
-			mintTo:          users.Resolve(alice),
-			caller:          users.Resolve(alice),
+			mintTo:          alice,
+			caller:          alice,
 			expectPanic:     false,
 			expectedAmount0: 1000000,
 			expectedAmount1: 1000000,
@@ -750,8 +749,8 @@ func TestMint(t *testing.T) {
 			minAmount0:      "950000",
 			minAmount1:      "1900000",
 			deadline:        time.Now().Add(-10 * time.Minute).Unix(),
-			mintTo:          users.Resolve(alice),
-			caller:          users.Resolve(alice),
+			mintTo:          alice,
+			caller:          alice,
 			expectPanic:     true,
 			expectedError:   "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234567290)",
 			expectedAmount0: 950000,
@@ -769,8 +768,8 @@ func TestMint(t *testing.T) {
 			minAmount0:      "950000",
 			minAmount1:      "1900000",
 			deadline:        time.Now().Add(10 * time.Minute).Unix(),
-			mintTo:          users.Resolve(alice),
-			caller:          users.Resolve(alice),
+			mintTo:          alice,
+			caller:          alice,
 			expectPanic:     true,
 			expectedError:   "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(600), tickUpper(500)",
 			expectedAmount0: 950000,
@@ -788,8 +787,8 @@ func TestMint(t *testing.T) {
 			minAmount0:      "950000",
 			minAmount1:      "1900000",
 			deadline:        time.Now().Add(10 * time.Minute).Unix(),
-			mintTo:          users.Resolve(admin),
-			caller:          users.Resolve(alice),
+			mintTo:          admin,
+			caller:          alice,
 			expectPanic:     true,
 			expectedError:   "[GNOSWAP-POSITION-012] invalid address || (g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh, g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d)",
 			expectedAmount0: 950000,
@@ -847,7 +846,7 @@ func TestMint(t *testing.T) {
 }
 
 func TestIncreaseLiquidityInternal(t *testing.T) {
-	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
+	std.TestSetRealm(std.NewUserRealm(admin))
 	position := Position{
 		poolKey:                  "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
 		tickLower:                -10000,
@@ -922,7 +921,7 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 }
 
 func TestIncreaseLiquidity(t *testing.T) {
-	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
+	std.TestSetRealm(std.NewUserRealm(admin))
 	tests := []struct {
 		name             string
 		tokenId          uint64
@@ -1105,7 +1104,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 	}
 
 	CreatePoolWithoutFee(t)
-	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
+	std.TestSetRealm(std.NewUserRealm(admin))
 	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
 	TokenApprove(t, fooPath, admin, pool, consts.UINT64_MAX)
 	tokenId, _, _, _ := Mint(
@@ -1119,8 +1118,8 @@ func TestDecreaseLiquidity(t *testing.T) {
 		"0",
 		"0",
 		time.Now().Add(time.Hour).Unix(),
-		users.Resolve(admin),
-		users.Resolve(admin),
+		admin,
+		admin,
 	)
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1226,7 +1225,7 @@ func TestCollectFees(t *testing.T) {
 	}
 
 	CreatePoolWithoutFee(t)
-	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
+	std.TestSetRealm(std.NewUserRealm(admin))
 	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
 	TokenApprove(t, fooPath, admin, pool, consts.UINT64_MAX)
 
@@ -1242,8 +1241,8 @@ func TestCollectFees(t *testing.T) {
 		"0",
 		"0",
 		time.Now().Add(time.Hour).Unix(),
-		users.Resolve(admin),
-		users.Resolve(admin),
+		admin,
+		admin,
 	)
 
 	for _, tt := range tests {
@@ -1345,7 +1344,7 @@ func TestReposition(t *testing.T) {
 	}
 
 	CreatePoolWithoutFee(t)
-	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
+	std.TestSetRealm(std.NewUserRealm(admin))
 	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
 	TokenApprove(t, fooPath, admin, pool, consts.UINT64_MAX)
 
@@ -1361,8 +1360,8 @@ func TestReposition(t *testing.T) {
 		"0",
 		"0",
 		time.Now().Add(time.Hour).Unix(),
-		users.Resolve(admin),
-		users.Resolve(admin),
+		admin,
+		admin,
 	)
 
 	for _, tt := range tests {

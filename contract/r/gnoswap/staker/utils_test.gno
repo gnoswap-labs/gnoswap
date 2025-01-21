@@ -6,9 +6,7 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/uassert"
-	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/demo/users"
 	"gno.land/r/gnoswap/v1/consts"
 )
 
@@ -175,29 +173,6 @@ func TestTid(t *testing.T) {
 			} else {
 				tid(tc.input)
 			}
-		})
-	}
-}
-
-func TestA2u(t *testing.T) {
-	addr := std.Address("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
-
-	tests := []struct {
-		name     string
-		input    std.Address
-		expected pusers.AddressOrName
-	}{
-		{
-			name:     "Success - a2u",
-			input:    addr,
-			expected: pusers.AddressOrName(addr),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			got := a2u(tc.input)
-			uassert.Equal(t, users.Resolve(got).String(), users.Resolve(tc.expected).String())
 		})
 	}
 }

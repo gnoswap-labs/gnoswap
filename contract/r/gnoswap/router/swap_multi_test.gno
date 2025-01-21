@@ -6,7 +6,6 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 
-	"gno.land/r/demo/users"
 	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/onbloc/bar"
@@ -37,15 +36,15 @@ func TestMultiSwap(t *testing.T) {
 				MakeMintPositionWithoutFee(t)
 
 				std.TestSetRealm(user1Realm)
-				bar.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-				baz.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-				TokenFaucet(t, barPath, a2u(user1Addr))
+				bar.Approve(consts.ROUTER_ADDR, maxApprove)
+				baz.Approve(consts.ROUTER_ADDR, maxApprove)
+				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{
 				tokenIn:         barPath,
 				tokenOut:        bazPath,
 				fee:             3000,
-				recipient:       users.Resolve(alice),
+				recipient:       alice,
 				amountSpecified: i256.MustFromDecimal("100"),
 			},
 			currentPoolIndex: 0,
@@ -67,16 +66,16 @@ func TestMultiSwap(t *testing.T) {
 				MakeSecondMintPositionWithoutFee(t)
 
 				std.TestSetRealm(user1Realm)
-				bar.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-				baz.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-				qux.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-				TokenFaucet(t, barPath, a2u(user1Addr))
+				bar.Approve(consts.ROUTER_ADDR, maxApprove)
+				baz.Approve(consts.ROUTER_ADDR, maxApprove)
+				qux.Approve(consts.ROUTER_ADDR, maxApprove)
+				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{
 				tokenIn:         barPath,
 				tokenOut:        bazPath,
 				fee:             3000,
-				recipient:       users.Resolve(alice),
+				recipient:       alice,
 				amountSpecified: i256.MustFromDecimal("100"),
 			},
 			currentPoolIndex: 0,
@@ -96,16 +95,16 @@ func TestMultiSwap(t *testing.T) {
 				MakeSecondMintPositionWithoutFee(t)
 
 				std.TestSetRealm(user1Realm)
-				bar.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-				baz.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-				qux.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-				TokenFaucet(t, barPath, a2u(user1Addr))
+				bar.Approve(consts.ROUTER_ADDR, maxApprove)
+				baz.Approve(consts.ROUTER_ADDR, maxApprove)
+				qux.Approve(consts.ROUTER_ADDR, maxApprove)
+				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{
 				tokenIn:         barPath,
 				tokenOut:        bazPath,
 				fee:             3000,
-				recipient:       users.Resolve(alice),
+				recipient:       alice,
 				amountSpecified: i256.MustFromDecimal("-96"),
 			},
 			currentPoolIndex: 0,

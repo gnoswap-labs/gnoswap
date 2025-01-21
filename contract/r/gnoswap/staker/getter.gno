@@ -706,11 +706,11 @@ func getCurrentInfo() currentInfo {
 	return currentInfo{
 		height:           std.GetHeight(),
 		time:             time.Now().Unix(),
-		gnsStaker:        gns.BalanceOf(a2u(consts.STAKER_ADDR)),
-		gnsDevOps:        gns.BalanceOf(a2u(consts.DEV_OPS)),
-		gnsCommunityPool: gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)),
-		gnsGovStaker:     gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)),
-		gnsProtocolFee:   gns.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)),
-		gnsADMIN:         gns.BalanceOf(a2u(consts.ADMIN)),
+		gnsStaker:        gns.BalanceOf(consts.STAKER_ADDR),
+		gnsDevOps:        gns.BalanceOf(consts.DEV_OPS),
+		gnsCommunityPool: gns.BalanceOf(consts.COMMUNITY_POOL_ADDR),
+		gnsGovStaker:     gns.BalanceOf(consts.GOV_STAKER_ADDR),
+		gnsProtocolFee:   gns.BalanceOf(consts.PROTOCOL_FEE_ADDR),
+		gnsADMIN:         gns.BalanceOf(consts.ADMIN),
 	}
 }

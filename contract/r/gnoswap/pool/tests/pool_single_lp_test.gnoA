@@ -34,7 +34,7 @@ func TestInitCreatePool(t *testing.T) {
 	// call gns faucet to get creation fee
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // x2.7
 }
 
@@ -42,8 +42,8 @@ func TestInitCreatePool(t *testing.T) {
 func TestMint(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	std.TestSetRealm(posRealm)
 	amount0, amount1 := Mint(

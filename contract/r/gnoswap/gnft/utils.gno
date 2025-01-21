@@ -5,7 +5,6 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
 )
 
 // getPrevAsString returns the address and package path of the previous realm.
@@ -17,18 +16,6 @@ func getPrevAsString() (string, string) {
 // getPrevAddr returns the address of the previous realm.
 func getPrevAddr() std.Address {
 	return std.PrevRealm().Addr()
-}
-
-// a2u converts std.Address to pusers.AddressOrName.
-// pusers is a package that contains the user-related functions.
-//
-// Input:
-//   - addr: the address to convert
-//
-// Output:
-//   - pusers.AddressOrName: the converted address
-func a2u(addr std.Address) pusers.AddressOrName {
-	return pusers.AddressOrName(addr)
 }
 
 // tid converts uint64 to grc721.TokenID.

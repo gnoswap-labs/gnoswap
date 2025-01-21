@@ -22,15 +22,15 @@ import (
 func TestCreatePool(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
 }
 
 func TestPositionMint(t *testing.T) {
 	// bar_baz_500 by admin
 	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), 100000)
-	baz.Approve(a2u(consts.POOL_ADDR), 100000)
+	bar.Approve(consts.POOL_ADDR, 100000)
+	baz.Approve(consts.POOL_ADDR, 100000)
 
 	// Mint
 	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(-6000), int32(6000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr)
@@ -56,8 +56,8 @@ func TestSwapRouteBarBazExactOut(t *testing.T) {
 
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	baz.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX) // ITS FOR 0.15% fee
 
 	uassert.PanicsWithMessage(
 		t,

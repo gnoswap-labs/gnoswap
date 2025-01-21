@@ -14,7 +14,7 @@ import (
 
 func init() {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
+	gns.Approve(consts.GOV_STAKER_ADDR, uint64(1_000_000))
 	gs.Delegate(admin, uint64(1_000_000))
 	std.TestSkipHeights(11) // VotingWeightSmoothingDuration is 10 block
 
@@ -32,7 +32,7 @@ func init() {
 }
 
 func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *testing.T) {
-	uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(0))
+	uassert.Equal(t, gns.BalanceOf(consts.COMMUNITY_POOL_ADDR), uint64(0))
 	uassert.Equal(t, std.GetHeight(), int64(123))
 
 	std.TestSkipHeights(5)
@@ -48,7 +48,7 @@ func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *te
 		)
 
 		uassert.Equal(t, proposalID, uint64(1))
-		uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(3567351)) // community pool receives 5% of emission reward
+		uassert.Equal(t, gns.BalanceOf(consts.COMMUNITY_POOL_ADDR), uint64(3567351)) // community pool receives 5% of emission reward
 		uassert.Equal(t, std.GetHeight(), int64(128))
 	})
 
@@ -70,7 +70,7 @@ func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *te
 		std.TestSkipHeights(31) // ends voting period
 		updateProposalsState()
 
-		uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(33533103))
+		uassert.Equal(t, gns.BalanceOf(consts.COMMUNITY_POOL_ADDR), uint64(33533103))
 		uassert.Equal(t, std.GetHeight(), int64(170)) // 42 from block initial(123)
 	})
 
@@ -79,7 +79,7 @@ func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *te
 		std.TestSetRealm(adminRealm)
 
 		uassert.Equal(t, gns.GetAvgBlockTimeInMs(), int64(2000))
-		uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(33533103))
+		uassert.Equal(t, gns.BalanceOf(consts.COMMUNITY_POOL_ADDR), uint64(33533103))
 
 		proposalID := ProposeParameterChange(
 			"test_title",
@@ -92,6 +92,6 @@ func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *te
 		uassert.NoError(t, err)
 
 		uassert.Equal(t, gns.GetAvgBlockTimeInMs(), int64(123))
-		uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(33532198)) // 905 transferred, as paramter from proposal L#44
+		uassert.Equal(t, gns.BalanceOf(consts.COMMUNITY_POOL_ADDR), uint64(33532198)) // 905 transferred, as paramter from proposal L#44
 	})
 }

@@ -44,7 +44,7 @@ func testPoolInitCreatePool(t *testing.T) {
 
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
 		pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
 		std.TestSkipHeights(1)
 
@@ -58,8 +58,8 @@ func testPoolInitCreatePool(t *testing.T) {
 func testMintPositionFullInRange(t *testing.T) {
 	t.Run("mint position full in range", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, liquidity, amount0, amount1 := Mint(
 			barPath,
@@ -87,8 +87,8 @@ func testMintPositionFullInRange(t *testing.T) {
 func testIncreaseLiquidity(t *testing.T) {
 	t.Run("increase liquidity", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, liquidity, amount0, amount1, poolPath := IncreaseLiquidity(
 			uint64(1),
@@ -110,8 +110,8 @@ func testIncreaseLiquidity(t *testing.T) {
 func testDecreaseLiquidity(t *testing.T) {
 	t.Run("decrease liquidity", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 			uint64(1),
@@ -133,8 +133,8 @@ func testDecreaseLiquidity(t *testing.T) {
 func testCollectFee(t *testing.T) {
 	t.Run("collect fee", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, fee0, fee1, poolPath, _, _ := CollectFee(uint64(1), false)
 		std.TestSkipHeights(1)
@@ -147,5 +147,5 @@ func testCollectFee(t *testing.T) {
 }
 
 func gnsBalance(addr std.Address) uint64 {
-	return gns.BalanceOf(a2u(addr))
+	return gns.BalanceOf(addr)
 }
