@@ -4,7 +4,6 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/json"
 
 	en "gno.land/r/gnoswap/v1/emission"
