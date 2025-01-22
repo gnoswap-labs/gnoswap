@@ -50,6 +50,7 @@ jobs:
           python3 setup.py -w /home/runner/work/gnoswap/gnoswap
 
       - name: Prepare `uint256` tests
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/p/gnoswap/uint256
         run: |
           for f in *_test.gno; do
@@ -82,6 +83,7 @@ jobs:
           done
 
       - name: Prepare `int256` tests
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/p/gnoswap/int256
         run: |
           for f in *_test.gno; do
@@ -114,6 +116,7 @@ jobs:
           done
 
       - name: Prepare `gnsmath` tests
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/p/gnoswap/gnsmath
         run: |
           for f in *_test.gno; do
@@ -146,6 +149,7 @@ jobs:
           done
 
       - name: Prepare `common` tests
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/common
         run: |
           for f in *_test.gno; do
@@ -178,6 +182,7 @@ jobs:
           done
 
       - name: Prepare `gns` tests
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gns
         run: |
           for f in *_test.gno; do
@@ -210,6 +215,7 @@ jobs:
           done
 
       - name: Prepare `gnft` tests
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gnft
         run: |
           for f in *_test.gno; do
@@ -242,6 +248,7 @@ jobs:
           done
 
       - name: Prepare `gov/xgns` tests
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gov/xgns
         run: |
           for f in *_test.gno; do
@@ -274,6 +281,7 @@ jobs:
           done
 
       - name: Prepare `emission` tests
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/emission
         run: |
           for f in *_test.gno; do
@@ -306,6 +314,7 @@ jobs:
           done
 
       - name: Prepare `protocol_fee` tests
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/protocol_fee
         run: |
           for f in *_test.gno; do
@@ -338,6 +347,7 @@ jobs:
           done
 
       - name: Prepare `pool` tests
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/pool
         run: |
           for f in *_test.gno; do
@@ -370,6 +380,7 @@ jobs:
           done
 
       - name: Prepare `position` tests
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/position
         run: |
           for f in *_test.gno; do
@@ -402,6 +413,7 @@ jobs:
           done
 
       - name: Prepare `router` tests
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/router
         run: |
           for f in *_test.gno; do
@@ -434,6 +446,7 @@ jobs:
           done
 
       - name: Prepare `staker` tests
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/staker
         run: |
           for f in *_test.gno; do
@@ -466,6 +479,7 @@ jobs:
           done
 
       - name: Prepare `community_pool` tests
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/community_pool
         run: |
           for f in *_test.gno; do
@@ -498,6 +512,7 @@ jobs:
           done
 
       - name: Prepare `gov/staker` tests
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gov/staker
         run: |
           for f in *_test.gno; do
@@ -530,6 +545,7 @@ jobs:
           done
 
       - name: Prepare `gov/governance` tests
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gov/governance
         run: |
           for f in *_test.gno; do
@@ -562,6 +578,7 @@ jobs:
           done
 
       - name: Prepare `launchpad` tests
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/launchpad
         run: |
           for f in *_test.gno; do
