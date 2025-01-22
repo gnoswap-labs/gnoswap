@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	pusers "gno.land/p/demo/users"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -134,8 +133,8 @@ func TestTransferFromAndVerify(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			TokenFaucet(t, tt.tokenPath, pusers.AddressOrName(tt.from))
-			TokenApprove(t, tt.tokenPath, pusers.AddressOrName(tt.from), pool, u256.MustFromDecimal(tt.amount.ToString()).Uint64())
+			TokenFaucet(t, tt.tokenPath, tt.from)
+			TokenApprove(t, tt.tokenPath, tt.from, pool, u256.MustFromDecimal(tt.amount.ToString()).Uint64())
 
 			tt.pool.safeTransferFrom(tt.from, tt.to, tt.tokenPath, u256.MustFromDecimal(tt.amount.ToString()), tt.isToken0)
 
@@ -163,8 +162,8 @@ func TestTransferFromAndVerify(t *testing.T) {
 
 		negativeAmount := i256.NewInt(-500)
 
-		TokenFaucet(t, fooPath, pusers.AddressOrName(testutils.TestAddress("from_addr")))
-		TokenApprove(t, fooPath, pusers.AddressOrName(testutils.TestAddress("from_addr")), pusers.AddressOrName(consts.POOL_ADDR), u256.MustFromDecimal(negativeAmount.Abs().ToString()).Uint64())
+		TokenFaucet(t, fooPath, testutils.TestAddress("from_addr"))
+		TokenApprove(t, fooPath, testutils.TestAddress("from_addr"), consts.POOL_ADDR, u256.MustFromDecimal(negativeAmount.Abs().ToString()).Uint64())
 		pool.safeTransferFrom(
 			testutils.TestAddress("from_addr"),
 			testutils.TestAddress("to_addr"),

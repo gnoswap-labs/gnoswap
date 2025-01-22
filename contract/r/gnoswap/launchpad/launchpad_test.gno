@@ -256,7 +256,7 @@ func TestValidateAll(t *testing.T) {
 		{
 			name: "InvalidName",
 			input: ProjectInput{
-				Name: "",
+				Name:             "",
 				TokenPath:        "valid/token",
 				Recipient:        std.Address("g1valid"),
 				DepositAmount:    10,
@@ -867,7 +867,7 @@ func TestCreateProject(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			std.TestSetRealm(adminRealm)
-			obl.Approve(a2u(consts.LAUNCHPAD_ADDR), tt.totalAmount)
+			obl.Approve(consts.LAUNCHPAD_ADDR, tt.totalAmount)
 			if !tt.duplicateTest {
 				std.TestSkipHeights(1)
 			}
@@ -943,7 +943,7 @@ func TestCreateProject_TierAndBalance(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			std.TestSetRealm(adminRealm)
-			obl.Approve(a2u(consts.LAUNCHPAD_ADDR), tt.totalAmount)
+			obl.Approve(consts.LAUNCHPAD_ADDR, tt.totalAmount)
 			std.TestSkipHeights(1)
 
 			defer func() {

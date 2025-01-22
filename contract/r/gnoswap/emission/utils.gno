@@ -5,17 +5,11 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
 
 	"gno.land/r/gnoswap/v1/common"
 )
 
 const MAX_BPS_PCT uint64 = 10000
-
-// a2u converts std.Address to pusers.AddressOrName.
-func a2u(addr std.Address) pusers.AddressOrName {
-	return pusers.AddressOrName(addr)
-}
 
 // getPrevRealm returns object of the previous realm.
 func getPrevRealm() std.Realm {

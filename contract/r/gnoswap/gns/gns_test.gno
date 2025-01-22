@@ -7,7 +7,6 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	pusers "gno.land/p/demo/users"
 
 	"gno.land/r/gnoswap/v1/consts"
 )
@@ -73,7 +72,7 @@ func TestAllowanceOfAddress(t *testing.T) {
 			uassert.Equal(t, uint64(0), AllowanceOfAddress(consts.ADMIN, alice))
 
 			std.TestSetOrigCaller(consts.ADMIN)
-			Approve(pusers.AddressOrName(alice), uint64(123))
+			Approve(alice, uint64(123))
 			uassert.Equal(t, uint64(123), AllowanceOfAddress(consts.ADMIN, alice))
 		},
 	)
@@ -96,7 +95,7 @@ func TestAllowanceOfAddress(t *testing.T) {
 }
 
 func TestBalanceOf(t *testing.T) {
-	uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(a2u(consts.ADMIN)))
+	uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(consts.ADMIN))
 }
 
 func TestSpendAllowance(t *testing.T) {
@@ -104,17 +103,17 @@ func TestSpendAllowance(t *testing.T) {
 		"should spend allowance",
 		func(t *testing.T) {
 			std.TestSetOrigCaller(consts.ADMIN)
-			Approve(a2u(alice), uint64(123))
+			Approve(alice, uint64(123))
 
-			SpendAllowance(a2u(consts.ADMIN), a2u(alice), uint64(23))
-			uassert.Equal(t, uint64(100), Allowance(a2u(consts.ADMIN), a2u(alice)))
+			SpendAllowance(consts.ADMIN, alice, uint64(23))
+			uassert.Equal(t, uint64(100), Allowance(consts.ADMIN, alice))
 		},
 	)
 	t.Run(
 		"should panic if address is not valid",
 		func(t *testing.T) {
 			uassert.PanicsWithMessage(t, "invalid address", func() {
-				SpendAllowance("0xabcdefg", a2u(alice), uint64(123))
+				SpendAllowance("0xabcdefg", alice, uint64(123))
 			})
 		},
 	)
@@ -122,7 +121,7 @@ func TestSpendAllowance(t *testing.T) {
 		"should panic if spender is not valid",
 		func(t *testing.T) {
 			uassert.PanicsWithMessage(t, "invalid address", func() {
-				SpendAllowance(a2u(consts.ADMIN), "0xabcdefg", uint64(123))
+				SpendAllowance(consts.ADMIN, "0xabcdefg", uint64(123))
 			})
 		},
 	)
@@ -130,7 +129,7 @@ func TestSpendAllowance(t *testing.T) {
 		"should panic if allowance is not enough",
 		func(t *testing.T) {
 			uassert.PanicsWithMessage(t, "insufficient allowance", func() {
-				SpendAllowance(a2u(consts.ADMIN), a2u(alice), uint64(123))
+				SpendAllowance(consts.ADMIN, alice, uint64(123))
 			})
 		},
 	)
@@ -289,33 +288,33 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "BalanceOf(admin)",
 			fn: func() {
-				uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(a2u(consts.ADMIN)))
+				uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(consts.ADMIN))
 			},
 		},
 		{
 			name: "BalanceOf(alice)",
 			fn: func() {
-				uassert.Equal(t, uint64(0), BalanceOf(a2u(alice)))
+				uassert.Equal(t, uint64(0), BalanceOf(alice))
 			},
 		},
 		{
 			name: "Allowance(admin, alice)",
 			fn: func() {
-				uassert.Equal(t, uint64(0), Allowance(a2u(consts.ADMIN), a2u(alice)))
+				uassert.Equal(t, uint64(0), Allowance(consts.ADMIN, alice))
 			},
 		},
 		{
 			name: "MintGns success",
 			fn: func() {
 				std.TestSetRealm(emissionRealm)
-				MintGns(a2u(consts.ADMIN))
+				MintGns(consts.ADMIN)
 			},
 		},
 		{
 			name: "MintGns without permission should panic",
 			fn: func() {
 				std.TestSkipHeights(1)
-				MintGns(a2u(consts.ADMIN))
+				MintGns(consts.ADMIN)
 			},
 			shouldPanic: true,
 			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission`,
@@ -324,13 +323,13 @@ func TestGrc20Methods(t *testing.T) {
 			name: "Burn success",
 			fn: func() {
 				std.TestSetRealm(adminRealm)
-				Burn(a2u(consts.ADMIN), uint64(1))
+				Burn(consts.ADMIN, uint64(1))
 			},
 		},
 		{
 			name: "Burn without permission should panic",
 			fn: func() {
-				Burn(a2u(consts.ADMIN), uint64(1))
+				Burn(consts.ADMIN, uint64(1))
 			},
 			shouldPanic: true,
 			panicMsg:    `ownable: caller is not owner`,
@@ -339,14 +338,14 @@ func TestGrc20Methods(t *testing.T) {
 			name: "Transfer success",
 			fn: func() {
 				std.TestSetRealm(adminRealm)
-				Transfer(a2u(alice), uint64(1))
+				Transfer(alice, uint64(1))
 			},
 		},
 		{
 			name: "Transfer without enough balance should panic",
 			fn: func() {
 				std.TestSetRealm(std.NewUserRealm(alice))
-				Transfer(a2u(bob), uint64(1))
+				Transfer(bob, uint64(1))
 			},
 			shouldPanic: true,
 			panicMsg:    `insufficient balance`,
@@ -355,7 +354,7 @@ func TestGrc20Methods(t *testing.T) {
 			name: "Transfer to self should panic",
 			fn: func() {
 				std.TestSetRealm(adminRealm)
-				Transfer(a2u(consts.ADMIN), uint64(1))
+				Transfer(consts.ADMIN, uint64(1))
 			},
 			shouldPanic: true,
 			panicMsg:    `cannot send transfer to self`,
@@ -365,21 +364,21 @@ func TestGrc20Methods(t *testing.T) {
 			fn: func() {
 				// approve first
 				std.TestSetRealm(adminRealm)
-				Approve(a2u(alice), uint64(1))
+				Approve(alice, uint64(1))
 
 				// alice transfer admin's balance to bob
 				std.TestSetRealm(std.NewUserRealm(alice))
-				TransferFrom(a2u(consts.ADMIN), a2u(bob), uint64(1))
+				TransferFrom(consts.ADMIN, bob, uint64(1))
 			},
 		},
 		{
 			name: "TransferFrom without enough allowance should panic",
 			fn: func() {
 				std.TestSetRealm(adminRealm)
-				Approve(a2u(alice), uint64(1))
+				Approve(alice, uint64(1))
 
 				std.TestSetRealm(std.NewUserRealm(alice))
-				TransferFrom(a2u(consts.ADMIN), a2u(bob), uint64(2))
+				TransferFrom(consts.ADMIN, bob, uint64(2))
 			},
 			shouldPanic: true,
 			panicMsg:    `insufficient allowance`,
