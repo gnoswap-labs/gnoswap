@@ -1,0 +1,577 @@
+name: run-test
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run-test:
+    strategy:
+      fail-fast: false
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+
+      - name: Check gno(master)
+        uses: actions/checkout@v4
+        with:
+          repository: gnolang/gno
+          ref: master
+          path: ./gno
+
+      - name: Config gnovm
+        run: |
+          sed -i 's/ctx.Timestamp += (count \* 5)/ctx.Timestamp += (count \* 2)/g' ./gno/gnovm/tests/stdlibs/std/std.go
+
+      - name: Install `gno`
+        run: |
+          cd gno
+          make install.gno
+
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      - name: Checkout gnoswap(main)
+        uses: actions/checkout@v4
+        with:
+          path: ./tmp/gnoswap
+
+      - name: Run setup.py to copy contracts into gno
+        run: |
+          cd tmp/gnoswap
+          python3 setup.py -w /home/runner/work/gnoswap/gnoswap
+
+      - name: Prepare `uint256` tests
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/p/gnoswap/uint256
+        run: |
+          for f in *_test.gno; do
+            [ -e "$f" ] || continue
+
+            if [ "$f" == "_helper_test.gno" ]; then
+              continue
+            fi
+
+            mv "$f" "${f}A"
+          done
+
+      - name: Run `uint256` tests one by one
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/p/gnoswap/uint256
+        run: |
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+
+            # make testfile as .gno
+            mv "$f" "$base.gno"
+
+            # run test
+            gno test ./ -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+
+            # revert testfile to .gnoA
+            mv "$base.gno" "$f"
+          done
+
+      - name: Prepare `int256` tests
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/p/gnoswap/int256
+        run: |
+          for f in *_test.gno; do
+            [ -e "$f" ] || continue
+
+            if [ "$f" == "_helper_test.gno" ]; then
+              continue
+            fi
+
+            mv "$f" "${f}A"
+          done
+
+      - name: Run `int256` tests one by one
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/p/gnoswap/int256
+        run: |
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+
+            # make testfile as .gno
+            mv "$f" "$base.gno"
+
+            # run test
+            gno test ./ -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+
+            # revert testfile to .gnoA
+            mv "$base.gno" "$f"
+          done
+
+      - name: Prepare `gnsmath` tests
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/p/gnoswap/gnsmath
+        run: |
+          for f in *_test.gno; do
+            [ -e "$f" ] || continue
+
+            if [ "$f" == "_helper_test.gno" ]; then
+              continue
+            fi
+
+            mv "$f" "${f}A"
+          done
+
+      - name: Run `gnsmath` tests one by one
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/p/gnoswap/gnsmath
+        run: |
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+
+            # make testfile as .gno
+            mv "$f" "$base.gno"
+
+            # run test
+            gno test ./ -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+
+            # revert testfile to .gnoA
+            mv "$base.gno" "$f"
+          done
+
+      - name: Prepare `common` tests
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/common
+        run: |
+          for f in *_test.gno; do
+            [ -e "$f" ] || continue
+
+            if [ "$f" == "_helper_test.gno" ]; then
+              continue
+            fi
+
+            mv "$f" "${f}A"
+          done
+
+      - name: Run `common` tests one by one
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/common
+        run: |
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+
+            # make testfile as .gno
+            mv "$f" "$base.gno"
+
+            # run test
+            gno test ./ -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+
+            # revert testfile to .gnoA
+            mv "$base.gno" "$f"
+          done
+
+      - name: Prepare `gns` tests
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gns
+        run: |
+          for f in *_test.gno; do
+            [ -e "$f" ] || continue
+
+            if [ "$f" == "_helper_test.gno" ]; then
+              continue
+            fi
+
+            mv "$f" "${f}A"
+          done
+
+      - name: Run `gns` tests one by one
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gns
+        run: |
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+
+            # make testfile as .gno
+            mv "$f" "$base.gno"
+
+            # run test
+            gno test ./ -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+
+            # revert testfile to .gnoA
+            mv "$base.gno" "$f"
+          done
+
+      - name: Prepare `gnft` tests
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gnft
+        run: |
+          for f in *_test.gno; do
+            [ -e "$f" ] || continue
+
+            if [ "$f" == "_helper_test.gno" ]; then
+              continue
+            fi
+
+            mv "$f" "${f}A"
+          done
+
+      - name: Run `gnft` tests one by one
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gnft
+        run: |
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+
+            # make testfile as .gno
+            mv "$f" "$base.gno"
+
+            # run test
+            gno test ./ -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+
+            # revert testfile to .gnoA
+            mv "$base.gno" "$f"
+          done
+
+      - name: Prepare `gov/xgns` tests
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gov/xgns
+        run: |
+          for f in *_test.gno; do
+            [ -e "$f" ] || continue
+
+            if [ "$f" == "_helper_test.gno" ]; then
+              continue
+            fi
+
+            mv "$f" "${f}A"
+          done
+
+      - name: Run `gov/xgns` tests one by one
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gov/xgns
+        run: |
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+
+            # make testfile as .gno
+            mv "$f" "$base.gno"
+
+            # run test
+            gno test ./ -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+
+            # revert testfile to .gnoA
+            mv "$base.gno" "$f"
+          done
+
+      - name: Prepare `emission` tests
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/emission
+        run: |
+          for f in *_test.gno; do
+            [ -e "$f" ] || continue
+
+            if [ "$f" == "_helper_test.gno" ]; then
+              continue
+            fi
+
+            mv "$f" "${f}A"
+          done
+
+      - name: Run `emission` tests one by one
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/emission
+        run: |
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+
+            # make testfile as .gno
+            mv "$f" "$base.gno"
+
+            # run test
+            gno test ./ -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+
+            # revert testfile to .gnoA
+            mv "$base.gno" "$f"
+          done
+
+      - name: Prepare `protocol_fee` tests
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/protocol_fee
+        run: |
+          for f in *_test.gno; do
+            [ -e "$f" ] || continue
+
+            if [ "$f" == "_helper_test.gno" ]; then
+              continue
+            fi
+
+            mv "$f" "${f}A"
+          done
+
+      - name: Run `protocol_fee` tests one by one
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/protocol_fee
+        run: |
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+
+            # make testfile as .gno
+            mv "$f" "$base.gno"
+
+            # run test
+            gno test ./ -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+
+            # revert testfile to .gnoA
+            mv "$base.gno" "$f"
+          done
+
+      - name: Prepare `pool` tests
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/pool
+        run: |
+          for f in *_test.gno; do
+            [ -e "$f" ] || continue
+
+            if [ "$f" == "_helper_test.gno" ]; then
+              continue
+            fi
+
+            mv "$f" "${f}A"
+          done
+
+      - name: Run `pool` tests one by one
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/pool
+        run: |
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+
+            # make testfile as .gno
+            mv "$f" "$base.gno"
+
+            # run test
+            gno test ./ -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+            
+            # revert testfile to .gnoA
+            mv "$base.gno" "$f"
+          done
+
+      - name: Prepare `position` tests
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/position
+        run: |
+          for f in *_test.gno; do
+            [ -e "$f" ] || continue
+
+            if [ "$f" == "_helper_test.gno" ]; then
+              continue
+            fi
+
+            mv "$f" "${f}A"
+          done
+
+      - name: Run `position` tests one by one
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/position
+        run: |
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+
+            # make testfile as .gno
+            mv "$f" "$base.gno"
+
+            # run test
+            gno test ./ -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+            
+            # revert testfile to .gnoA
+            mv "$base.gno" "$f"
+          done
+
+      - name: Prepare `router` tests
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/router
+        run: |
+          for f in *_test.gno; do
+            [ -e "$f" ] || continue
+
+            if [ "$f" == "_helper_test.gno" ]; then
+              continue
+            fi
+
+            mv "$f" "${f}A"
+          done
+
+      - name: Run `router` tests one by one
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/router
+        run: |
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+
+            # make testfile as .gno
+            mv "$f" "$base.gno"
+
+            # run test
+            gno test ./ -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+            
+            # revert testfile to .gnoA
+            mv "$base.gno" "$f"
+          done
+
+      - name: Prepare `staker` tests
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/staker
+        run: |
+          for f in *_test.gno; do
+            [ -e "$f" ] || continue
+
+            if [ "$f" == "_helper_test.gno" ]; then
+              continue
+            fi
+
+            mv "$f" "${f}A"
+          done
+
+      - name: Run `staker` tests one by one
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/staker
+        run: |
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+
+            # make testfile as .gno
+            mv "$f" "$base.gno"
+
+            # run test
+            gno test ./ -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+            
+            # revert testfile to .gnoA
+            mv "$base.gno" "$f"
+          done
+
+      - name: Prepare `community_pool` tests
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/community_pool
+        run: |
+          for f in *_test.gno; do
+            [ -e "$f" ] || continue
+
+            if [ "$f" == "_helper_test.gno" ]; then
+              continue
+            fi
+
+            mv "$f" "${f}A"
+          done
+
+      - name: Run `community_pool` tests one by one
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/community_pool
+        run: |
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+
+            # make testfile as .gno
+            mv "$f" "$base.gno"
+
+            # run test
+            gno test ./ -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+            
+            # revert testfile to .gnoA
+            mv "$base.gno" "$f"
+          done
+
+      - name: Prepare `gov/staker` tests
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gov/staker
+        run: |
+          for f in *_test.gno; do
+            [ -e "$f" ] || continue
+
+            if [ "$f" == "_helper_test.gno" ]; then
+              continue
+            fi
+
+            mv "$f" "${f}A"
+          done
+
+      - name: Run `gov/staker` tests one by one
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gov/staker
+        run: |
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+
+            # make testfile as .gno
+            mv "$f" "$base.gno"
+
+            # run test
+            gno test ./ -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+            
+            # revert testfile to .gnoA
+            mv "$base.gno" "$f"
+          done
+
+      - name: Prepare `gov/governance` tests
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gov/governance
+        run: |
+          for f in *_test.gno; do
+            [ -e "$f" ] || continue
+
+            if [ "$f" == "_helper_test.gno" ]; then
+              continue
+            fi
+
+            mv "$f" "${f}A"
+          done
+
+      - name: Run `gov/governance` tests one by one
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gov/governance
+        run: |
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+
+            # make testfile as .gno
+            mv "$f" "$base.gno"
+
+            # run test
+            gno test ./ -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+            
+            # revert testfile to .gnoA
+            mv "$base.gno" "$f"
+          done
+
+      - name: Prepare `launchpad` tests
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/launchpad
+        run: |
+          for f in *_test.gno; do
+            [ -e "$f" ] || continue
+
+            if [ "$f" == "_helper_test.gno" ]; then
+              continue
+            fi
+
+            mv "$f" "${f}A"
+          done
+
+      - name: Run `launchpad` tests one by one
+        working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/launchpad
+        run: |
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+
+            # make testfile as .gno
+            mv "$f" "$base.gno"
+
+            # run test
+            gno test ./ -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+            
+            # revert testfile to .gnoA
+            mv "$base.gno" "$f"
+          done
