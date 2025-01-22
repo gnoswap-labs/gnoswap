@@ -85,7 +85,6 @@ func MintGns(address std.Address) uint64 {
 
 	// mint calculated amount to address
 	err := privateLedger.Mint(address, amountToMint)
-	err := privateLedger.Mint(address, amountToMint)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -107,7 +106,6 @@ func MintGns(address std.Address) uint64 {
 func Burn(from std.Address, amount uint64) {
 	owner.AssertCallerIsOwner()
 	checkErr(privateLedger.Burn(from, amount))
-	checkErr(privateLedger.Burn(from, amount))
 
 	burnAmount += amount
 
@@ -117,7 +115,6 @@ func Burn(from std.Address, amount uint64) {
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"burnedBlockHeight", formatInt(std.GetHeight()),
-		"burnFrom", from.String(),
 		"burnFrom", from.String(),
 		"burnedGNSAmount", formatUint(amount),
 		"accumBurnedGNSAmount", formatUint(GetBurnAmount()),
@@ -144,8 +141,6 @@ func Render(path string) string {
 	case path == "":
 		return Token.RenderHome()
 	case c == 2 && parts[0] == "balance":
-		owner := std.Address(parts[1])
-		balance := UserTeller.BalanceOf(owner)
 		owner := std.Address(parts[1])
 		balance := UserTeller.BalanceOf(owner)
 		return ufmt.Sprintf("%d\n", balance)
