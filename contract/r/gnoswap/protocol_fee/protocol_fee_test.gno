@@ -11,6 +11,9 @@ import (
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
+
+	_ "gno.land/r/onbloc/baz"
+	_ "gno.land/r/onbloc/foo"
 )
 
 var (
