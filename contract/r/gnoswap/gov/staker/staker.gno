@@ -21,7 +21,7 @@ import (
 type lockedGNS struct {
 	amount    uint64
 	unlock    uint64
-	collected bool // TODO:
+	collected bool
 }
 
 const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
@@ -318,20 +318,18 @@ func CollectReward() {
 	//
 	// still, this is a tangled with the policy issue, so should be discussed.
 
-
-	// TODO:
 	if reward > 0 {
 		gns.Transfer(a2u(caller), reward)
 		std.Emit(
 			"CollectEmissionReward",
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
+			"from", consts.GOV_STAKER_ADDR.String(),
 			"to", caller.String(),
 			"emissionRewardAmount", formatUint(reward),
 		)
 	}
 
-	// TODO::
 	for tokenPath, amount := range protocolFeeRewards {
 		if tokenPath == consts.WUGNOT_PATH {
 			if amount > 0 {
@@ -348,6 +346,8 @@ func CollectReward() {
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
 			"tokenPath", tokenPath,
+			"from", consts.GOV_STAKER_ADDR.String(),
+			"to", caller.String(),
 			"collectedAmount", formatUint(amount),
 		)
 	}
@@ -364,7 +364,6 @@ func CollectRewardFromLaunchPad(to std.Address) {
 
 	prevAddr, prevPkgPath := getPrev()
 
-	// TODO::
 	emissionReward, protocolFeeRewards := rewardState.Claim(to, getCurrentBalance(), getCurrentProtocolFeeBalance())
 	if emissionReward > 0 {
 		gns.Transfer(a2u(to), emissionReward)
@@ -372,12 +371,12 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			"CollectEmissionFromLaunchPad",
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
+			"from", consts.GOV_STAKER_ADDR.String(),
 			"to", to.String(),
-			"amount", formatUint(emissionReward),
+			"emissionRewardAmount", formatUint(emissionReward),
 		)
 	}
 
-	// TODO::
 	for tokenPath, amount := range protocolFeeRewards {
 		transferProtocolFee(tokenPath, to, amount)
 		std.Emit(
@@ -385,10 +384,11 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
 			"tokenPath", tokenPath,
-			"amount", formatUint(amount),
+			"from", consts.GOV_STAKER_ADDR.String(),
+			"to", to.String(),
+			"collectedAmount", formatUint(amount),
 		)
 	}
-
 
 }
 

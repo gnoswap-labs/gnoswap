@@ -41,18 +41,18 @@ const (
 func HandleWithdrawalFee(
 	tokenId uint64,
 	token0Path string,
-	_amount0 string, // uint256
+	amount0 string, // uint256
 	token1Path string,
-	_amount1 string, // uint256
+	amount1 string, // uint256
 	poolPath string,
 	positionCaller std.Address,
 ) (string, string) { // uint256 x2
-	common.IsHalted()
+	assertOnlyNotHalted()
 	common.MustRegistered(token0Path)
 	common.MustRegistered(token1Path)
 
 	// only position contract can call this function
-	caller := std.PrevRealm().Addr()
+	caller := getPrevAddr()
 	if err := common.PositionOnly(caller); err != nil {
 		panic(addDetailToError(
 			errNoPermission,
@@ -62,11 +62,11 @@ func HandleWithdrawalFee(
 
 	fee := GetWithdrawalFee()
 	if fee == ZeroBps {
-		return _amount0, _amount1
+		return amount0, amount1
 	}
 
-	feeAmount0, afterAmount0 := calculateAmountWithFee(u256.MustFromDecimal(_amount0), u256.NewUint(fee))
-	feeAmount1, afterAmount1 := calculateAmountWithFee(u256.MustFromDecimal(_amount1), u256.NewUint(fee))
+	feeAmount0, afterAmount0 := calculateAmountWithFee(u256.MustFromDecimal(amount0), u256.NewUint(fee))
+	feeAmount1, afterAmount1 := calculateAmountWithFee(u256.MustFromDecimal(amount1), u256.NewUint(fee))
 
 	token0Teller := common.GetTokenTeller(token0Path)
 	checkTransferError(token0Teller.TransferFrom(positionCaller, consts.PROTOCOL_FEE_ADDR, feeAmount0.Uint64()))
@@ -82,11 +82,9 @@ func HandleWithdrawalFee(
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"lpTokenId", formatUint(tokenId),
-		"token0Path", token0Path,
-		"token1Path", token1Path,
-		"internal_fee0Amount", feeAmount0.ToString(),
-		"internal_fee1Amount", feeAmount1.ToString(),
 		"poolPath", poolPath,
+		"feeAmount0", feeAmount0.ToString(),
+		"feeAmount1", feeAmount1.ToString(),
 	)
 
 	return afterAmount0.ToString(), afterAmount1.ToString()
@@ -102,11 +100,13 @@ func GetWithdrawalFee() uint64 {
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_withdrawal.gno#setwithdrawalfee
 func SetWithdrawalFee(fee uint64) {
-	common.IsHalted()
-	caller := std.PrevRealm().Addr()
+	assertOnlyNotHalted()
+	caller := getPrevAddr()
 	if err := common.GovernanceOnly(caller); err != nil {
 		panic(err.Error())
 	}
+
+	prevWithdrawalFee := withdrawalFeeBPS
 
 	setWithdrawalFee(fee)
 
@@ -115,18 +115,21 @@ func SetWithdrawalFee(fee uint64) {
 		"SetWithdrawalFee",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"fee", formatUint(fee),
+		"prevFee", formatUint(prevWithdrawalFee),
+		"newFee", formatUint(fee),
 	)
 }
 
 // SetWithdrawalFeeByAdmin sets the withdrawal fee by Admin.
 // Only admin can execute this function.
 func SetWithdrawalFeeByAdmin(fee uint64) {
-	common.IsHalted()
-	caller := std.PrevRealm().Addr()
+	assertOnlyNotHalted()
+	caller := getPrevAddr()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err.Error())
 	}
+
+	prevWithdrawalFee := withdrawalFeeBPS
 
 	setWithdrawalFee(fee)
 
@@ -135,7 +138,8 @@ func SetWithdrawalFeeByAdmin(fee uint64) {
 		"SetWithdrawalFeeByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"fee", formatUint(fee),
+		"prevFee", formatUint(prevWithdrawalFee),
+		"newFee", formatUint(fee),
 	)
 }
 
