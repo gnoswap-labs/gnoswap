@@ -63,6 +63,7 @@ jobs:
           done
 
       - name: Run `uint256` tests one by one
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/p/gnoswap/uint256
         run: |
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
@@ -94,6 +95,7 @@ jobs:
           done
 
       - name: Run `int256` tests one by one
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/p/gnoswap/int256
         run: |
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
@@ -125,6 +127,7 @@ jobs:
           done
 
       - name: Run `gnsmath` tests one by one
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/p/gnoswap/gnsmath
         run: |
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
@@ -156,6 +159,7 @@ jobs:
           done
 
       - name: Run `common` tests one by one
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/common
         run: |
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
@@ -187,6 +191,7 @@ jobs:
           done
 
       - name: Run `gns` tests one by one
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gns
         run: |
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
@@ -218,6 +223,7 @@ jobs:
           done
 
       - name: Run `gnft` tests one by one
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gnft
         run: |
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
@@ -249,6 +255,7 @@ jobs:
           done
 
       - name: Run `gov/xgns` tests one by one
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gov/xgns
         run: |
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
@@ -280,6 +287,7 @@ jobs:
           done
 
       - name: Run `emission` tests one by one
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/emission
         run: |
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
@@ -311,6 +319,7 @@ jobs:
           done
 
       - name: Run `protocol_fee` tests one by one
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/protocol_fee
         run: |
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
@@ -342,6 +351,7 @@ jobs:
           done
 
       - name: Run `pool` tests one by one
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/pool
         run: |
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
@@ -373,6 +383,7 @@ jobs:
           done
 
       - name: Run `position` tests one by one
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/position
         run: |
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
@@ -404,6 +415,7 @@ jobs:
           done
 
       - name: Run `router` tests one by one
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/router
         run: |
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
@@ -435,6 +447,7 @@ jobs:
           done
 
       - name: Run `staker` tests one by one
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/staker
         run: |
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
@@ -466,6 +479,7 @@ jobs:
           done
 
       - name: Run `community_pool` tests one by one
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/community_pool
         run: |
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
@@ -497,6 +511,7 @@ jobs:
           done
 
       - name: Run `gov/staker` tests one by one
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gov/staker
         run: |
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
@@ -528,6 +543,7 @@ jobs:
           done
 
       - name: Run `gov/governance` tests one by one
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/gov/governance
         run: |
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
@@ -559,6 +575,7 @@ jobs:
           done
 
       - name: Run `launchpad` tests one by one
+        if: always()
         working-directory: /home/runner/work/gnoswap/gnoswap/gno/examples/gno.land/r/gnoswap/v1/launchpad
         run: |
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
