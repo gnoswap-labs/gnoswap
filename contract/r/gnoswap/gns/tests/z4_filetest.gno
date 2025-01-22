@@ -14,6 +14,9 @@ import (
 
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
+
+	_ "gno.land/r/gnoswap/v1/emission"
+	_ "gno.land/r/gnoswap/v1/staker"
 )
 
 var t *testing.T
