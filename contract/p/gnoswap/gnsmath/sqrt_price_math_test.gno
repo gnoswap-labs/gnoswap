@@ -222,7 +222,7 @@ func TestSqrtPriceMathGetNextSqrtPriceFromInput(t *testing.T) {
 			amountIn:     u256.MustFromDecimal("1024"),
 			zeroForOne:   false,
 			shouldPanic:  true,
-			panicMsg:     "sqrtPx96 + quotient overflow uint160",
+			panicMsg:     "GetNextSqrtPriceFromAmount1RoundingDown sqrtPx96 + quotient overflow uint160",
 		},
 		{
 			name:                 "any input amount cannot underflow the price",
