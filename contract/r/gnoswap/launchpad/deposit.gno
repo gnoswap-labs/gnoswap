@@ -353,6 +353,8 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 // Returns:
 // - string: The project ID derived from the first two parts of the `tierId`.
 // - string: The tier derived from the third part of the `tierId`.
+//
+// TODO: to p/launchpad package
 func splitProjectIdAndTier(tierId string) (string, string) {
 	res, err := common.Split(tierId, ":", 3)
 	if err != nil {
@@ -469,6 +471,8 @@ func checkTierActive(project Project, tier Tier) bool {
 //
 // Panics:
 // - If the tierType is invalid, an error is raised.
+//
+// TODO: to p/launchpad package => ParseTierDuration
 func convertTierTypeStrToUint64(tierType string) uint64 {
 	switch tierType {
 	case "30":
@@ -642,6 +646,7 @@ func generateDepositId(info ProjectTierInfo, depositor std.Address) string {
 
 // calculateClaimableTimes calculates the claimable height and time for a deposit
 func calculateClaimableTimes(info ProjectTierInfo) (uint64, uint64) {
+	// TODO: use p/launchpad FromTierType
 	var waitDuration uint64
 	switch info.TierType {
 	case "30":
