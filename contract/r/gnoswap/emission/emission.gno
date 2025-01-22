@@ -27,7 +27,7 @@ func MintAndDistributeGns() uint64 {
 		return 0
 	}
 	// Mint new tokens and add any leftover amounts from previous distribution
-	mintedEmissionRewardAmount := gns.MintGns(a2u(consts.EMISSION_ADDR))
+	mintedEmissionRewardAmount := gns.MintGns(consts.EMISSION_ADDR)
 	if hasLeftGNSAmount() {
 		mintedEmissionRewardAmount += GetLeftGNSAmount()
 		setLeftGNSAmount(0)

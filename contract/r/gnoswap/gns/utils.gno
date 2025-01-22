@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
@@ -18,10 +17,6 @@ func getPrev() (string, string) {
 
 func getPrevAddr() std.Address {
 	return std.PrevRealm().Addr()
-}
-
-func a2u(addr std.Address) pusers.AddressOrName {
-	return pusers.AddressOrName(addr)
 }
 
 func assertShouldNotBeHalted() {

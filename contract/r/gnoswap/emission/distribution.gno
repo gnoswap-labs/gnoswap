@@ -4,11 +4,11 @@ import (
 	"std"
 	"strconv"
 
-	"gno.land/r/gnoswap/v1/consts"
-	"gno.land/r/gnoswap/v1/gns"
-
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 const (
@@ -176,22 +176,22 @@ func calculateAmount(amount, bptPct uint64) uint64 {
 func transferToTarget(target int, amount uint64) {
 	switch target {
 	case LIQUIDITY_STAKER:
-		gns.Transfer(a2u(consts.STAKER_ADDR), amount)
+		gns.Transfer(consts.STAKER_ADDR, amount)
 		distributedToStaker += amount
 		accuDistributedToStaker += amount
 
 	case DEVOPS:
-		gns.Transfer(a2u(consts.DEV_OPS), amount)
+		gns.Transfer(consts.DEV_OPS, amount)
 		distributedToDevOps += amount
 		accuDistributedToDevOps += amount
 
 	case COMMUNITY_POOL:
-		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), amount)
+		gns.Transfer(consts.COMMUNITY_POOL_ADDR, amount)
 		distributedToCommunityPool += amount
 		accuDistributedToCommunityPool += amount
 
 	case GOV_STAKER:
-		gns.Transfer(a2u(consts.GOV_STAKER_ADDR), amount)
+		gns.Transfer(consts.GOV_STAKER_ADDR, amount)
 		distributedToGovStaker += amount
 		accuDistributedToGovStaker += amount
 

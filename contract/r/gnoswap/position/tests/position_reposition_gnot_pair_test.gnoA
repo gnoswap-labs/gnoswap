@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	pusers "gno.land/p/demo/users"
+
 	"gno.land/r/demo/users"
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/common"
@@ -17,7 +17,7 @@ import (
 
 const (
 	ugnotDenom string = "ugnot"
-	ugnotPath  string = "gno.land/r/gnoswap/v1/pool:ugnot"
+	ugnotPath  string = "ugnot"
 	wugnotPath string = "gno.land/r/demo/wugnot"
 	gnsPath    string = "gno.land/r/gnoswap/v1/gns"
 	barPath    string = "gno.land/r/onbloc/bar"
@@ -41,8 +41,8 @@ const (
 
 var (
 	adminAddr  = std.Address(consts.ADMIN)
-	admin      = pusers.AddressOrName(adminAddr)
-	adminRealm = std.NewUserRealm(users.Resolve(admin))
+	admin      = adminAddr
+	adminRealm = std.NewUserRealm(admin)
 	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
 )
 
@@ -80,7 +80,7 @@ func testPoolInitCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
 		pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // x2.71814592682522526700950038502924144268035888671875
 	})
 }
@@ -89,10 +89,10 @@ func testMintPosition01InRange(t *testing.T) {
 	t.Run("mint position 01 in range", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-		wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // FOR WRAP
+		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // FOR WRAP
 
 		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(50000005))
@@ -152,7 +152,7 @@ func testSwap(t *testing.T) {
 	t.Run("swap", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // amountIn
+		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // amountIn
 
 		std.TestSetRealm(rouRealm)
 		amount0, amount1 := pl.Swap(
@@ -214,8 +214,8 @@ func testDecreaseLiquidityInPosition(t *testing.T) {
 		uassert.Equal(t, ownerOfPosition, adminAddr)
 
 		// approve fee0, fee1 to pool
-		gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 			lpTokenId,

@@ -41,7 +41,7 @@ func testCreatePool(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		std.TestSkipHeights(100)
 
-		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*2)
+		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee()*2)
 
 		pl.CreatePool(barPath, bazPath, uint32(500), "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 		pl.CreatePool(bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
@@ -59,9 +59,9 @@ func testPositionMint(t *testing.T) {
 		// bar_baz_500 by admin
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		// Mint
 		pn.Mint(barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr)
@@ -95,8 +95,8 @@ func testSwapRouteBarQuxExactIn(t *testing.T) {
 	t.Run("swap route bar qux exact in", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.POOL_ADDR), 10000)
-		qux.Approve(a2u(consts.ROUTER_ADDR), 10000)
+		bar.Approve(consts.POOL_ADDR, 10000)
+		qux.Approve(consts.ROUTER_ADDR, 10000)
 
 		amountIn, amountOut := ExactInSwapRoute(
 			barPath, // inputToken
@@ -227,8 +227,8 @@ func testSwapRouteQuxBarExactOut(t *testing.T) {
 	t.Run("swap route qux bar exact out", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		qux.Approve(a2u(consts.POOL_ADDR), 10000)
-		bar.Approve(a2u(consts.ROUTER_ADDR), 10000)
+		qux.Approve(consts.POOL_ADDR, 10000)
+		bar.Approve(consts.ROUTER_ADDR, 10000)
 
 		amountIn, amountOut := ExactOutSwapRoute(
 			quxPath, // inputToken
@@ -252,5 +252,5 @@ func testSwapRouteQuxBarExactOut(t *testing.T) {
 }
 
 func gnsBalance(addr std.Address) uint64 {
-	return gns.BalanceOf(a2u(addr))
+	return gns.BalanceOf(addr)
 }

@@ -39,7 +39,7 @@ func TestMintAndCheckRelativeData(t *testing.T) {
 	t.Run("mint for 10 blocks", func(t *testing.T) {
 		std.TestSetRealm(emissionRealm)
 		std.TestSkipHeights(10)
-		mintedAmount := MintGns(a2u(consts.ADMIN))
+		mintedAmount := MintGns(consts.ADMIN)
 		uassert.Equal(t, mintAmountFor10Blocks, mintedAmount)
 	})
 
@@ -68,7 +68,7 @@ func TestBurnAndCheckRelativeData(t *testing.T) {
 	burnAmount := uint64(100000000)
 	t.Run("burn amount", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		Burn(a2u(consts.ADMIN), burnAmount)
+		Burn(consts.ADMIN, burnAmount)
 	})
 
 	// after burn

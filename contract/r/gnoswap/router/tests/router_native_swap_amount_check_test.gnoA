@@ -22,7 +22,7 @@ import (
 func TestCreatePool(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
+	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee()*3)
 
 	pl.CreatePool(consts.GNOT, quxPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 	// 1 bar ≈ 19.683 gnot
@@ -45,8 +45,8 @@ func TestSwapRouteWugnotquxExactIn(t *testing.T) {
 	t.Skip("TODO: fail with unregistered token panic")
 	std.TestSetRealm(adminRealm)
 
-	wugnot.Approve(a2u(consts.ROUTER_ADDR), 1000000)
-	qux.Approve(a2u(consts.ROUTER_ADDR), 1000000)
+	wugnot.Approve(consts.ROUTER_ADDR, 1000000)
+	qux.Approve(consts.ROUTER_ADDR, 1000000)
 	std.TestSetOrigSend(std.Coins{{"ugnot", 12345}}, nil) // sented ugnot amount
 
 	uassert.PanicsWithMessage(

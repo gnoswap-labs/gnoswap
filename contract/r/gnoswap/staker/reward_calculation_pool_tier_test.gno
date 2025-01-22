@@ -5,13 +5,11 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
 	"gno.land/r/gnoswap/v1/consts"
 	pl "gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/qux"
-	en "gno.land/r/gnoswap/v1/emission"
 )
 
 func TestTierRatioFromCounts(t *testing.T) {
@@ -22,10 +20,10 @@ func TestTierRatioFromCounts(t *testing.T) {
 	user1Realm := std.NewUserRealm(user1Addr)
 
 	std.TestSetRealm(user1Realm)
-	bar.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-	baz.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-	qux.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-	TokenFaucet(t, barPath, a2u(user1Addr))
+	bar.Approve(consts.ROUTER_ADDR, maxApprove)
+	baz.Approve(consts.ROUTER_ADDR, maxApprove)
+	qux.Approve(consts.ROUTER_ADDR, maxApprove)
+	TokenFaucet(t, barPath, user1Addr)
 
 	tests := []struct {
 		tier1Count uint64
@@ -92,10 +90,11 @@ var test_gnousdc = pl.GetPoolPath("gno.land/r/demo/wugnot", "gno.land/r/gnoswap/
 
 func SetupPoolTier(t *testing.T) *PoolTier {
 	poolTier := NewPoolTier(NewPools(), 1, test_gnousdc, func() uint64 { return 1000 }, func(start, end int64) ([]int64, []uint64) { return nil, nil })
-	
+
 	poolTier.changeTier(1, pools, test_gnousdc, 1)
 	return poolTier
 }
+
 /*
 func TestPoolTierSimple(t *testing.T) {
 	poolTier := SetupPoolTier(t)
@@ -130,4 +129,4 @@ func TestPoolTierSimple(t *testing.T) {
 	uassert.Equal(t, uint64(14000), poolTier.CurrentReward(1, currentHeight))
 	uassert.Equal(t, uint64(6000), poolTier.CurrentReward(2, currentHeight))
 }
-	*/
+*/

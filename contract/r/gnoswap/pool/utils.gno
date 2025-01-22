@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -102,40 +101,6 @@ func toUint128(value *u256.Uint) *u256.Uint {
 		value = value.And(value, mask)
 	}
 	return value
-}
-
-// a2u converts a std.Address to a pusers.AddressOrName, ensuring the input address is valid.
-//
-// This function takes a `std.Address` and verifies its validity. If the address is invalid,
-// the function triggers a panic with an appropriate error message. For valid addresses,
-// it performs the conversion to `pusers.AddressOrName`.
-//
-// Parameters:
-// - addr (std.Address): The input address to be converted.
-//
-// Returns:
-// - pusers.AddressOrName: The converted address, wrapped as a `pusers.AddressOrName` type.
-//
-// Panics:
-//   - If the provided `addr` is invalid, the function will panic with an error indicating
-//     the invalid address.
-//
-// Notes:
-//   - The function relies on the `addr.IsValid()` method to determine the validity of the input address.
-//   - It uses `addDetailToError` to provide additional context for the error message when an invalid
-//     address is encountered.
-//
-// Example:
-// converted := a2u(std.Address("validAddress")) // Successful conversion
-// a2u(std.Address("")) // Panics due to invalid address
-func a2u(addr std.Address) pusers.AddressOrName {
-	if !addr.IsValid() {
-		panic(addDetailToError(
-			errInvalidAddress,
-			addr.String(),
-		))
-	}
-	return pusers.AddressOrName(addr)
 }
 
 // u256Min returns the smaller of two *u256.Uint values.

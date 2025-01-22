@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
 	"gno.land/r/gnoswap/v1/common"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -92,18 +91,6 @@ func removeStringFromStringArr(arr []string, str string) []string {
 		}
 	}
 	return arr
-}
-
-// a2u converts std.Address to pusers.AddressOrName.
-// pusers is a package that contains the user-related functions.
-//
-// Input:
-//   - addr: the address to convert
-//
-// Output:
-//   - pusers.AddressOrName: the converted address
-func a2u(addr std.Address) pusers.AddressOrName {
-	return pusers.AddressOrName(addr)
 }
 
 // min returns the smaller of two integers.

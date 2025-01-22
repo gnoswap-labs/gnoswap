@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	pusers "gno.land/p/demo/users"
-	"gno.land/r/demo/users"
 	"gno.land/r/gnoswap/v1/consts"
 )
 
@@ -29,8 +27,8 @@ func TestTransferUGNOT(t *testing.T) {
 			verify: func(t *testing.T, to std.Address) uint64 {
 				return ugnotBalanceOf(t, to)
 			},
-			from:        users.Resolve(alice),
-			to:          users.Resolve(bob),
+			from:        alice,
+			to:          bob,
 			expected:    "0",
 			shouldPanic: false,
 		},
@@ -45,7 +43,7 @@ func TestTransferUGNOT(t *testing.T) {
 				return ugnotBalanceOf(t, to)
 			},
 			from:        consts.POSITION_ADDR,
-			to:          users.Resolve(bob),
+			to:          bob,
 			expected:    "100",
 			shouldPanic: false,
 		},
@@ -104,8 +102,8 @@ func TestWrapInPosition(t *testing.T) {
 				return wrap(999, to)
 			},
 			verify:      nil,
-			from:        users.Resolve(alice),
-			to:          users.Resolve(bob),
+			from:        alice,
+			to:          bob,
 			expected:    "amount(999) < minimum(1000)",
 			shouldPanic: true,
 		},
@@ -115,8 +113,8 @@ func TestWrapInPosition(t *testing.T) {
 				return wrap(0, to)
 			},
 			verify:      nil,
-			from:        users.Resolve(alice),
-			to:          users.Resolve(bob),
+			from:        alice,
+			to:          bob,
 			expected:    "amount(0) < minimum(1000)",
 			shouldPanic: true,
 		},
@@ -128,10 +126,10 @@ func TestWrapInPosition(t *testing.T) {
 				return wrap(1000, to)
 			},
 			verify: func(t *testing.T, to std.Address) uint64 {
-				return TokenBalance(t, wugnotPath, pusers.AddressOrName(to))
+				return TokenBalance(t, wugnotPath, to)
 			},
 			from:        consts.POSITION_ADDR,
-			to:          users.Resolve(bob),
+			to:          bob,
 			expected:    "1000",
 			shouldPanic: false,
 		},
@@ -190,8 +188,8 @@ func TestUnWrap(t *testing.T) {
 				return unwrap(0, to)
 			},
 			verify:      nil,
-			from:        users.Resolve(alice),
-			to:          users.Resolve(bob),
+			from:        alice,
+			to:          bob,
 			expected:    "amount(0) is zero",
 			shouldPanic: true,
 		},
@@ -202,14 +200,14 @@ func TestUnWrap(t *testing.T) {
 				std.TestSetRealm(std.NewUserRealm(from))
 				wrap(1000, to)
 				std.TestSetRealm(std.NewUserRealm(to))
-				TokenApprove(t, wugnotPath, pusers.AddressOrName(to), pusers.AddressOrName(from), 1000)
+				TokenApprove(t, wugnotPath, to, from, 1000)
 				return unwrap(1000, to)
 			},
 			verify: func(t *testing.T, to std.Address) uint64 {
-				return TokenBalance(t, wugnotPath, pusers.AddressOrName(to))
+				return TokenBalance(t, wugnotPath, to)
 			},
 			from:        consts.POSITION_ADDR,
-			to:          users.Resolve(bob),
+			to:          bob,
 			expected:    "1000",
 			shouldPanic: false,
 		},
@@ -342,28 +340,28 @@ func TestSafeWrapNativeToken(t *testing.T) {
 		{
 			name:          "Panic - Zero UGNOT",
 			amountDesired: "50",
-			userAddress:   users.Resolve(alice),
+			userAddress:   alice,
 			sentAmount:    0,
 			expectPanic:   true,
 		},
 		{
 			name:          "Panic - Insufficient UGNOT",
 			amountDesired: "150",
-			userAddress:   users.Resolve(alice),
+			userAddress:   alice,
 			sentAmount:    100,
 			expectPanic:   true,
 		},
 		{
 			name:          "Panic - Invalid Desired Amount",
 			amountDesired: "invalid",
-			userAddress:   users.Resolve(alice),
+			userAddress:   alice,
 			sentAmount:    200,
 			expectPanic:   true,
 		},
 		{
 			name:          "Successful wrap - Exact Amount",
 			amountDesired: "1050",
-			userAddress:   users.Resolve(alice),
+			userAddress:   alice,
 			sentAmount:    1050,
 			expectPanic:   false,
 			expectedWrap:  1050,
@@ -371,7 +369,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 		{
 			name:          "Excess Refund",
 			amountDesired: "1000",
-			userAddress:   users.Resolve(alice),
+			userAddress:   alice,
 			sentAmount:    1500,
 			expectPanic:   false,
 			expectedWrap:  1000,
@@ -379,7 +377,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 		{
 			name:          "Boundary Test - Exact Match",
 			amountDesired: "1000",
-			userAddress:   users.Resolve(alice),
+			userAddress:   alice,
 			sentAmount:    1000,
 			expectPanic:   false,
 			expectedWrap:  1000,
@@ -387,14 +385,14 @@ func TestSafeWrapNativeToken(t *testing.T) {
 		{
 			name:          "Zero Desired Amount",
 			amountDesired: "0",
-			userAddress:   users.Resolve(alice),
+			userAddress:   alice,
 			sentAmount:    100,
 			expectPanic:   true,
 		},
 		{
 			name:          "Wrap Error Test",
 			amountDesired: "100",
-			userAddress:   users.Resolve(alice),
+			userAddress:   alice,
 			sentAmount:    100,
 			expectPanic:   true, // Simulate wrap error internally
 		},

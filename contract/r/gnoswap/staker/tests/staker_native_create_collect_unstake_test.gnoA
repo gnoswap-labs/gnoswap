@@ -60,7 +60,7 @@ func testInit_NativeCreateCollectUnstake(t *testing.T) {
 func testCreatePool_NativeCreateCollectUnstake(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
 		std.TestSkipHeights(1)
 
 		pl.CreatePool(barPath, fooPath, uint32(500), common.TickMathGetSqrtRatioAtTick(0).ToString())
@@ -75,10 +75,10 @@ func testPositionMintNative01(t *testing.T) {
 	t.Run("position mint native 01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)    // MINT
-		wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // MINT
+		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // MINT
+		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // MINT
 
-		wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // WRAP
+		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // WRAP
 		std.TestSkipHeights(3)
 
 		// prepare 50000005ugnot (5 for refund test)
@@ -124,10 +124,10 @@ func testPositionMintNative02(t *testing.T) {
 	t.Run("position mint native 02", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)    // MINT
-		wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // MINT
+		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // MINT
+		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // MINT
 
-		wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // WRAP
+		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // WRAP
 		std.TestSkipHeights(3)
 
 		// prepare 50000005ugnot (5 for refund test)
@@ -189,11 +189,11 @@ func testCreateExternalIncentive(t *testing.T) {
 		adminOldWugnotBalance := wugnot.BalanceOf(admin)
 		// uassert.Equal(t, adminOldWugnotBalance, uint64(0))
 
-		wugnot.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
+		wugnot.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
 		std.TestSkipHeights(1)
 
 		AddToken(oblPath)
-		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+		gns.Approve(consts.STAKER_ADDR, depositGnsAmount)
 
 		CreateExternalIncentive(
 			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500", // targetPoolPath
@@ -281,7 +281,7 @@ func testUnstakeToken02(t *testing.T) {
 
 func testEndExternalIncentive(t *testing.T) {
 	t.Run("end external incentive", func(t *testing.T) {
-		wugnot.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // UNWRAP
+		wugnot.Approve(consts.STAKER_ADDR, consts.UINT64_MAX) // UNWRAP
 		uassert.Equal(t, wugnot.BalanceOf(admin), uint64(622937))
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(99998010))
 

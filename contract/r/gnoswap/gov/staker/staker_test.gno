@@ -6,13 +6,14 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/demo/testutils"
+	"gno.land/r/demo/wugnot"
+
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
-// Mock or define test realms/addresses if needed
-/*
 var (
 	adminRealm  = std.NewUserRealm(consts.ADMIN)
 	userRealm   = std.NewUserRealm(testutils.TestAddress("alice"))
@@ -86,7 +87,7 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
 	wugnot.Deposit()
 }
-*/
+
 func TestDelegate(t *testing.T) {
 	std.TestSetOrigCaller(consts.ADMIN)
 	SetRunning(true)
@@ -95,16 +96,16 @@ func TestDelegate(t *testing.T) {
 	{
 		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 		std.TestSkipHeights(100)
-		gns.MintGns(a2u(userRealm.Addr())) // 2M gns
+		gns.MintGns(userRealm.Addr()) // 2M gns
 
 		std.TestSetRealm(userRealm)
 		to := makeFakeAddress("validator_1")
 		amount := uint64(1_000_000)
 
-		gns.Approve(a2u(consts.GOV_STAKER_ADDR), amount)
+		gns.Approve(consts.GOV_STAKER_ADDR, amount)
 		Delegate(to, amount)
 
-		minted := xgns.BalanceOf(a2u(userRealm.Addr()))
+		minted := xgns.BalanceOf(userRealm.Addr())
 		if minted != amount {
 			t.Errorf("Delegate minted xGNS = %d, want %d", minted, amount)
 		}
@@ -416,7 +417,7 @@ func TestProtocolFee(t *testing.T) {
 func TestRedelegate(t *testing.T) {
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	std.TestSkipHeights(100)
-	gns.MintGns(a2u(userRealm.Addr())) // 2M gns
+	gns.MintGns(userRealm.Addr()) // 2M gns
 
 	// user has xGNS from previous test (some minted)
 	// try re-delegating
@@ -426,11 +427,11 @@ func TestRedelegate(t *testing.T) {
 	amount := uint64(1_000_000)
 
 	std.TestSetOrigCaller(userRealm.Addr())
-	gns.Approve(a2u(consts.GOV_STAKER_ADDR), amount)
+	gns.Approve(consts.GOV_STAKER_ADDR, amount)
 	Delegate(to, amount)
 
 	std.TestSetOrigCaller(userRealm.Addr())
-	gns.Approve(a2u(consts.GOV_STAKER_ADDR), amount)
+	gns.Approve(consts.GOV_STAKER_ADDR, amount)
 	Redelegate(from, to, amount)
 
 	// check data: user xGNS must remain the same, but from-> to shift in staker structure?
@@ -449,20 +450,20 @@ func TestRedelegate(t *testing.T) {
 func TestUndelegate(t *testing.T) {
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	std.TestSkipHeights(101)
-	gns.MintGns(a2u(user3Realm.Addr())) // 2M gns
+	gns.MintGns(user3Realm.Addr()) // 2M gns
 
 	std.TestSetRealm(user3Realm)
 	to := makeFakeAddress("validator_1")
 	amount := uint64(1_000_000)
 
 	std.TestSetOrigCaller(user3Realm.Addr())
-	gns.Approve(a2u(consts.GOV_STAKER_ADDR), amount)
+	gns.Approve(consts.GOV_STAKER_ADDR, amount)
 	Delegate(to, amount)
 	Undelegate(to, amount)
 
-	if xgns.BalanceOf(a2u(user3Realm.Addr())) == 1_000_000 {
+	if xgns.BalanceOf(user3Realm.Addr()) == 1_000_000 {
 		t.Errorf("Expected user xGNS to be 0 after undelegating 1_000_000, got %d",
-			xgns.BalanceOf(a2u(user3Realm.Addr())))
+			xgns.BalanceOf(user3Realm.Addr()))
 	}
 
 	lockedList, exist := addrLockedGns.Get(user3Realm.Addr().String())
@@ -549,7 +550,7 @@ func TestCollectReward(t *testing.T) {
 	{
 		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 		std.TestSkipHeights(100)
-		gns.MintGns(a2u(consts.GOV_STAKER_ADDR))
+		gns.MintGns(consts.GOV_STAKER_ADDR)
 
 		std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
 		ugnotFaucet(t, consts.GOV_STAKER_ADDR, 1_000_000)
@@ -574,7 +575,7 @@ func TestCollectReward(t *testing.T) {
 
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	std.TestSkipHeights(100)
-	gns.MintGns(a2u(user2Realm.Addr()))
+	gns.MintGns(user2Realm.Addr())
 
 	std.TestSetRealm(user2Realm)
 	std.TestSkipHeights(100)

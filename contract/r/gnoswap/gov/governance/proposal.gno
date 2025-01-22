@@ -376,7 +376,7 @@ func (u *proposalStateUpdater) updateExecutionState() {
 }
 
 func checkEnoughXGnsToPropose(proposer std.Address) (bool, uint64, uint64) {
-	xGNSBalance := xgns.BalanceOf(a2u(proposer))
+	xGNSBalance := xgns.BalanceOf(proposer)
 
 	if xGNSBalance < config.ProposalCreationThreshold {
 		return false, xGNSBalance, config.ProposalCreationThreshold

@@ -31,7 +31,7 @@ func TestCreateFooBarPool(t *testing.T) {
 	// call gns faucet to get creation fee
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
 
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 	uassert.Equal(t, pools.Size(), 1)
@@ -42,7 +42,7 @@ func TestCreateBarBazPool(t *testing.T) {
 	// call gns faucet to get creation fee
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
 
 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006")
 	uassert.Equal(t, pools.Size(), 2)
@@ -51,8 +51,8 @@ func TestCreateBarBazPool(t *testing.T) {
 // Mint Foo:Bar Liquidity by admin
 func TestMintFooBarLiquidity(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	std.TestSetRealm(posRealm)
 	amount0, amount1 := Mint(
@@ -72,8 +72,8 @@ func TestMintFooBarLiquidity(t *testing.T) {
 // Mint Bar:Baz Liquidity by admin
 func TestMintBarBazLiquidity(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	std.TestSetRealm(posRealm)
 	amount0, amount1 := Mint(
@@ -99,7 +99,7 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 	oldPoolFoo := fooToken.BalanceOf(consts.POOL_ADDR)
 
 	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), 16000)
+	bar.Approve(consts.POOL_ADDR, 16000)
 
 	std.TestSetRealm(rouRealm)
 	poolIn, poolOut := Swap(
@@ -136,7 +136,7 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 	oldPoolBazBalance := bazToken.BalanceOf(consts.POOL_ADDR)
 
 	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), 16000)
+	bar.Approve(consts.POOL_ADDR, 16000)
 
 	std.TestSetRealm(rouRealm)
 	poolIn, poolOut := Swap(

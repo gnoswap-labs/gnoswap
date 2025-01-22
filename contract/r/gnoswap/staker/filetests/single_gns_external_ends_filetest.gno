@@ -35,16 +35,16 @@ import (
 
 var (
 	adminAddr  = consts.ADMIN
-	adminUser  = common.AddrToUser(adminAddr)
+	adminUser  = adminAddr
 	adminRealm = std.NewUserRealm(adminAddr)
 
 	// g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup
 	externalCreatorAddr  = testutils.TestAddress("externalCreator")
-	externalCreatorUser  = common.AddrToUser(externalCreatorAddr)
+	externalCreatorUser  = externalCreatorAddr
 	externalCreatorRealm = std.NewUserRealm(externalCreatorAddr)
 
 	stakerAddr  = consts.STAKER_ADDR
-	stakerUser  = common.AddrToUser(stakerAddr)
+	stakerUser  = stakerAddr
 	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
 
 	fooPath = "gno.land/r/onbloc/foo"
@@ -112,8 +112,8 @@ func testCreatePool() {
 func testMintBarQuxPos01() {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	qux.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	pn.Mint(
@@ -135,8 +135,8 @@ func testMintBarQuxPos01() {
 func testMintBarQuxPos02() {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	qux.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	pn.Mint(
@@ -161,7 +161,7 @@ func testCreateExternalIncentiveGns() {
 	gns.Transfer(externalCreatorUser, depositGnsAmount)
 
 	std.TestSetRealm(externalCreatorRealm) // creator
-	gns.Approve(common.AddrToUser(consts.STAKER_ADDR), consts.UINT64_MAX)
+	gns.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	sr.CreateExternalIncentive(

@@ -24,7 +24,7 @@ var (
 
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
 	pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
 	singlePool := pl.GetPoolFromPoolPath("gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
@@ -35,27 +35,27 @@ func TestFreshUser(t *testing.T) {
 	std.TestIssueCoins(fresh02, std.Coins{{"ugnot", 100_000_000}})
 
 	std.TestSetRealm(adminRealm)
-	gns.Transfer(a2u(fresh01), 100_000_000)
-	gns.Transfer(a2u(fresh02), 100_000_000)
+	gns.Transfer(fresh01, 100_000_000)
+	gns.Transfer(fresh02, 100_000_000)
 
 	// fresh users will have...
 	// 100_000_000 ugnot
 	// 100_000_000 gns
 	uassert.Equal(t, ugnotBalanceOf(t, fresh01), uint64(100_000_000))
-	uassert.Equal(t, gns.BalanceOf(a2u(fresh01)), uint64(100_000_000))
+	uassert.Equal(t, gns.BalanceOf(fresh01), uint64(100_000_000))
 
 	uassert.Equal(t, ugnotBalanceOf(t, fresh02), uint64(100_000_000))
-	uassert.Equal(t, gns.BalanceOf(a2u(fresh02)), uint64(100_000_000))
+	uassert.Equal(t, gns.BalanceOf(fresh02), uint64(100_000_000))
 }
 
 func TestOneSideOnlyGrc20WithoutSend(t *testing.T) {
 	fresh01Realm := std.NewUserRealm(fresh01)
 	std.TestSetRealm(fresh01Realm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)    // POOL FOR MINT
-	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // POOL FOR MINT
+	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // POOL FOR MINT
+	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // POOL FOR MINT
 
-	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // POSITION FOR WRAP
+	wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // POSITION FOR WRAP
 
 	// should panic
 	// user is trying to mint position with native coin, but didn't send any native coin
@@ -86,10 +86,10 @@ func TestOneSideOnlyGrc20WithSend0Coin(t *testing.T) {
 	fresh01Realm := std.NewUserRealm(fresh01)
 	std.TestSetRealm(fresh01Realm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)    // POOL FOR MINT
-	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // POOL FOR MINT
+	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // POOL FOR MINT
+	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // POOL FOR MINT
 
-	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // POSITION FOR WRAP
+	wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // POSITION FOR WRAP
 
 	std.TestSetOrigSend(std.Coins{{"ugnot", 0}}, nil)
 
@@ -122,10 +122,10 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 	fresh01Realm := std.NewUserRealm(fresh01)
 	std.TestSetRealm(fresh01Realm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)    // POOL FOR MINT
-	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // POOL FOR MINT
+	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // POOL FOR MINT
+	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // POOL FOR MINT
 
-	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // POSITION FOR WRAP
+	wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // POSITION FOR WRAP
 
 	std.TestSetOrigSend(std.Coins{{"ugnot", 100_000_000}}, nil)
 	std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 100_000_000}})
@@ -150,17 +150,17 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 	// mint 90000000
 	// => remain 10000000
 	uassert.Equal(t, ugnotBalanceOf(t, fresh01), uint64(10000000))
-	uassert.Equal(t, wugnot.BalanceOf(a2u(fresh01)), uint64(0)) // position will unwrap remaining wugnot to ugnot, so wugnot balance should be 0
+	uassert.Equal(t, wugnot.BalanceOf(fresh01), uint64(0)) // position will unwrap remaining wugnot to ugnot, so wugnot balance should be 0
 }
 
 // func TestBothWithFresh(t *testing.T) {
 // 	fresh02Realm := std.NewUserRealm(fresh02)
 // 	std.TestSetRealm(fresh02Realm)
 
-// 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)    // POOL FOR MINT
-// 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // POOL FOR MINT
+// 	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // POOL FOR MINT
+// 	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // POOL FOR MINT
 
-// 	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // POSITION FOR WRAP
+// 	wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // POSITION FOR WRAP
 
 // 	std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 100_000_000}})
 // 	std.TestSetOrigSend(std.Coins{{"ugnot", 100_000_000}}, nil)
@@ -186,17 +186,17 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 // 	// mint 70_000_000
 // 	// => remain 30_000_000
 // 	uassert.Equal(t, ugnotBalanceOf(t, fresh02), uint64(30_000_000))
-// 	uassert.Equal(t, wugnot.BalanceOf(a2u(fresh02)), uint64(0)) // position will unwrap remaining wugnot to ugnot, so wugnot balance should be 0
+// 	uassert.Equal(t, wugnot.BalanceOf(fresh02), uint64(0)) // position will unwrap remaining wugnot to ugnot, so wugnot balance should be 0
 // }
 
 // func TestBothWithFreshButNoSend(t *testing.T) {
 // 	fresh02Realm := std.NewUserRealm(fresh02)
 // 	std.TestSetRealm(fresh02Realm)
 
-// 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)    // POOL FOR MINT
-// 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // POOL FOR MINT
+// 	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // POOL FOR MINT
+// 	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // POOL FOR MINT
 
-// 	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // POSITION FOR WRAP
+// 	wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // POSITION FOR WRAP
 
 // 	std.TestSetOrigSend(std.Coins{{"ugnot", 0}}, nil)
 

@@ -21,7 +21,7 @@ import (
 
 func TestCreatePool(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*2)
+	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee()*2)
 
 	pl.CreatePool(barPath, bazPath, 3000, "79228162514264337593543950336")
 }
@@ -30,8 +30,8 @@ func TestPositionMint(t *testing.T) {
 	// bar_baz_3000 by admin
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	// Mint
 	pn.Mint(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, adminAddr)
@@ -40,11 +40,11 @@ func TestPositionMint(t *testing.T) {
 func TestSwapRouteBazBarExactOut(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(a2u(consts.ROUTER_ADDR), 1000000)
-	baz.Approve(a2u(consts.ROUTER_ADDR), 1000000)
+	bar.Approve(consts.ROUTER_ADDR, 1000000)
+	baz.Approve(consts.ROUTER_ADDR, 1000000)
 
-	token0Before := bar.BalanceOf(a2u(consts.ADMIN))
-	token1Before := baz.BalanceOf(a2u(consts.ADMIN))
+	token0Before := bar.BalanceOf(consts.ADMIN)
+	token1Before := baz.BalanceOf(consts.ADMIN)
 
 	amountIn, amountOut := ExactOutSwapRoute(
 		bazPath, // inputToken
@@ -56,8 +56,8 @@ func TestSwapRouteBazBarExactOut(t *testing.T) {
 		time.Now().Add(time.Hour).Unix(),
 	)
 
-	token0After := bar.BalanceOf(a2u(consts.ADMIN))
-	token1After := baz.BalanceOf(a2u(consts.ADMIN))
+	token0After := bar.BalanceOf(consts.ADMIN)
+	token1After := baz.BalanceOf(consts.ADMIN)
 
 	uassert.Equal(t, amountIn, "3")
 	uassert.Equal(t, amountOut, "-1")

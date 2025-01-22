@@ -57,7 +57,7 @@ func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
+		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee()*3)
 
 		pl.CreatePool(barPath, quxPath, 100, "79228162514264337593543950337")
 		pl.CreatePool(barPath, bazPath, 3000, "79228162514264337593543950337")
@@ -70,8 +70,8 @@ func testMintBarQux100_1(t *testing.T) {
 	t.Run("mint position 01, bar:qux:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,      // token0
@@ -84,8 +84,8 @@ func testMintBarQux100_1(t *testing.T) {
 			"1",          // amount0Min
 			"1",          // amount1Min
 			max_timeout,
-			users.Resolve(admin),
-			users.Resolve(admin),
+			admin,
+			admin,
 		)
 
 		uassert.Equal(t, tokenId, uint64(1))
@@ -99,8 +99,8 @@ func testCreateExternalIncentiveBar(t *testing.T) {
 	t.Run("create external incentive bar", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
-		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+		bar.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
+		gns.Approve(consts.STAKER_ADDR, depositGnsAmount)
 
 		CreateExternalIncentive(
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
@@ -118,8 +118,8 @@ func testCreateExternalIncentiveQux(t *testing.T) {
 	t.Run("create external incentive qux", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		qux.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
-		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+		qux.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
+		gns.Approve(consts.STAKER_ADDR, depositGnsAmount)
 
 		CreateExternalIncentive(
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",

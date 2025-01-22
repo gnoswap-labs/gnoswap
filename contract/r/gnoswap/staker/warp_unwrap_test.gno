@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	pusers "gno.land/p/demo/users"
 	"gno.land/r/gnoswap/v1/consts"
 )
 
@@ -47,7 +46,7 @@ func TestWrap(t *testing.T) {
 				wrap(1_000)
 			},
 			verify: func() uint64 {
-				return TokenBalance(t, wugnotPath, pusers.AddressOrName(user1Addr))
+				return TokenBalance(t, wugnotPath, user1Addr)
 			},
 			expected:    "1000",
 			shouldPanic: false,
@@ -115,11 +114,11 @@ func TestUnwrap(t *testing.T) {
 				std.TestSetRealm(std.NewUserRealm(user2Addr))
 				wrap(1_000)
 				std.TestSetRealm(std.NewUserRealm(user2Addr))
-				wugnotApprove(t, pusers.AddressOrName(user2Addr), pusers.AddressOrName(consts.STAKER_ADDR), 1_000)
+				wugnotApprove(t, user2Addr, consts.STAKER_ADDR, 1_000)
 				unwrap(1_000)
 			},
 			verify: func() uint64 {
-				return TokenBalance(t, wugnotPath, pusers.AddressOrName(user2Addr))
+				return TokenBalance(t, wugnotPath, user2Addr)
 			},
 			expected:    "0",
 			shouldPanic: false,

@@ -37,7 +37,7 @@ func testCreateProject(t *testing.T) {
 	t.Run("create project", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		obl.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
+		obl.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000_000))
 		std.TestSkipHeights(1)
 
 		projectId := CreateProject(
@@ -61,13 +61,13 @@ func depositGnsTier(t *testing.T) {
 	t.Run("deposit gns to tier 30 by user01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
+		gns.Transfer(user01, uint64(1_000_000)) // to deposit
 		// transfer some grc20 tokens to bypass project condition
-		foo.Transfer(a2u(user01), uint64(10))
-		bar.Transfer(a2u(user01), uint64(10))
+		foo.Transfer(user01, uint64(10))
+		bar.Transfer(user01, uint64(10))
 
 		std.TestSetRealm(user01Realm)
-		gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000))
+		gns.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000))
 
 		// skip some blocks to make project active
 		std.TestSkipHeights(4)
@@ -78,13 +78,13 @@ func depositGnsTier(t *testing.T) {
 	t.Run("deposit gns to tier 30 by user02", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Transfer(a2u(user02), uint64(9_000_000)) // to deposit
+		gns.Transfer(user02, uint64(9_000_000)) // to deposit
 		// transfer some grc20 tokens to bypass project condition
-		foo.Transfer(a2u(user02), uint64(10))
-		bar.Transfer(a2u(user02), uint64(10))
+		foo.Transfer(user02, uint64(10))
+		bar.Transfer(user02, uint64(10))
 
 		std.TestSetRealm(user02Realm)
-		gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(9_000_000))
+		gns.Approve(consts.LAUNCHPAD_ADDR, uint64(9_000_000))
 
 		// skip some blocks to make project active
 		DepositGns("gno.land/r/onbloc/obl:124:30", uint64(1_000_000))
