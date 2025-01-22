@@ -37,12 +37,11 @@ func TestMint(t *testing.T) {
 	}
 
 	// prepare ugnot
+	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 1_000_000}})
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-	testBanker.IssueCoin(adminAddr, "ugnot", 1_000_000)
 
-	// simulate transfer & decrase
+	// simulate transfer
 	std.TestSetOrigSend(std.Coins{{"ugnot", 1_000_000}}, nil)
-	testBanker.RemoveCoin(adminAddr, "ugnot", 1_000_000)
 
 	// Deposit(wrap)
 	std.TestSetRealm(adminRealm)
@@ -75,7 +74,7 @@ func TestSwapBuyNative(t *testing.T) {
 	adminOldT0Bal := common.GetToken(pool.token0Path).BalanceOf(adminAddr)
 	adminOldT1Bal := common.GetToken(pool.token1Path).BalanceOf(adminAddr)
 	uassert.Equal(t, adminOldT0Bal, uint64(704198))
-	uassert.Equal(t, adminOldT1Bal, uint64(99999999195968))
+	uassert.Equal(t, adminOldT1Bal, uint64(99999899195968))
 
 	std.TestSetRealm(adminRealm)
 	foo.Approve(consts.POOL_ADDR, 10000)
@@ -98,7 +97,7 @@ func TestSwapBuyNative(t *testing.T) {
 	adminNewT0Bal := common.GetToken(pool.token0Path).BalanceOf(adminAddr)
 	adminNewT1Bal := common.GetToken(pool.token1Path).BalanceOf(adminAddr)
 	uassert.Equal(t, adminNewT0Bal, uint64(694198))         // - 10_000 // user sells 10_000
-	uassert.Equal(t, adminNewT1Bal, uint64(99999999223091)) // gets WGNOT
+	uassert.Equal(t, adminNewT1Bal, uint64(99999899223091)) // gets WGNOT
 }
 
 func TestSwapSellNative(t *testing.T) {
@@ -107,7 +106,7 @@ func TestSwapSellNative(t *testing.T) {
 	adminOldT0Bal := common.GetToken(pool.token0Path).BalanceOf(adminAddr)
 	adminOldT1Bal := common.GetToken(pool.token1Path).BalanceOf(adminAddr)
 	uassert.Equal(t, adminOldT0Bal, uint64(694198))         // foo
-	uassert.Equal(t, adminOldT1Bal, uint64(99999999223091)) // wugnot
+	uassert.Equal(t, adminOldT1Bal, uint64(99999899223091)) // wugnot
 
 	std.TestSetRealm(adminRealm)
 	wugnot.Approve(consts.POOL_ADDR, 27123)
@@ -130,5 +129,5 @@ func TestSwapSellNative(t *testing.T) {
 	adminNewT0Bal := common.GetToken(pool.token0Path).BalanceOf(adminAddr)
 	adminNewT1Bal := common.GetToken(pool.token1Path).BalanceOf(adminAddr)
 	uassert.Equal(t, adminNewT0Bal, uint64(697885))         // foo
-	uassert.Equal(t, adminNewT1Bal, uint64(99999999213091)) // wugnot
+	uassert.Equal(t, adminNewT1Bal, uint64(99999899213091)) // wugnot
 }
