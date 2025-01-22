@@ -62,7 +62,6 @@ func Allowance(owner, spender std.Address) uint64 {
 }
 
 func MintGns(address std.Address) uint64 {
-func MintGns(address std.Address) uint64 {
 	lastGNSMintedHeight := GetLastMintedHeight()
 	currentHeight := std.GetHeight()
 
@@ -106,7 +105,6 @@ func MintGns(address std.Address) uint64 {
 }
 
 func Burn(from std.Address, amount uint64) {
-func Burn(from std.Address, amount uint64) {
 	owner.AssertCallerIsOwner()
 	checkErr(privateLedger.Burn(from, amount))
 	checkErr(privateLedger.Burn(from, amount))
@@ -128,18 +126,12 @@ func Burn(from std.Address, amount uint64) {
 
 func Transfer(to std.Address, amount uint64) {
 	checkErr(UserTeller.Transfer(to, amount))
-func Transfer(to std.Address, amount uint64) {
-	checkErr(UserTeller.Transfer(to, amount))
 }
 
 func Approve(spender std.Address, amount uint64) {
 	checkErr(UserTeller.Approve(spender, amount))
-func Approve(spender std.Address, amount uint64) {
-	checkErr(UserTeller.Approve(spender, amount))
 }
 
-func TransferFrom(from, to std.Address, amount uint64) {
-	checkErr(UserTeller.TransferFrom(from, to, amount))
 func TransferFrom(from, to std.Address, amount uint64) {
 	checkErr(UserTeller.TransferFrom(from, to, amount))
 }

@@ -190,20 +190,17 @@ func TestGrc20Methods(t *testing.T) {
 			name: "BalanceOf(admin)",
 			fn: func() {
 				uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(consts.ADMIN))
-				uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(consts.ADMIN))
 			},
 		},
 		{
 			name: "BalanceOf(alice)",
 			fn: func() {
 				uassert.Equal(t, uint64(0), BalanceOf(alice))
-				uassert.Equal(t, uint64(0), BalanceOf(alice))
 			},
 		},
 		{
 			name: "Allowance(admin, alice)",
 			fn: func() {
-				uassert.Equal(t, uint64(0), Allowance(consts.ADMIN, alice))
 				uassert.Equal(t, uint64(0), Allowance(consts.ADMIN, alice))
 			},
 		},
@@ -212,14 +209,12 @@ func TestGrc20Methods(t *testing.T) {
 			fn: func() {
 				std.TestSetRealm(emissionRealm)
 				MintGns(consts.ADMIN)
-				MintGns(consts.ADMIN)
 			},
 		},
 		{
 			name: "MintGns without permission should panic",
 			fn: func() {
 				std.TestSkipHeights(1)
-				MintGns(consts.ADMIN)
 				MintGns(consts.ADMIN)
 			},
 			shouldPanic: true,
@@ -230,13 +225,11 @@ func TestGrc20Methods(t *testing.T) {
 			fn: func() {
 				std.TestSetRealm(adminRealm)
 				Burn(consts.ADMIN, uint64(1))
-				Burn(consts.ADMIN, uint64(1))
 			},
 		},
 		{
 			name: "Burn without permission should panic",
 			fn: func() {
-				Burn(consts.ADMIN, uint64(1))
 				Burn(consts.ADMIN, uint64(1))
 			},
 			shouldPanic: true,
@@ -247,14 +240,12 @@ func TestGrc20Methods(t *testing.T) {
 			fn: func() {
 				std.TestSetRealm(adminRealm)
 				Transfer(alice, uint64(1))
-				Transfer(alice, uint64(1))
 			},
 		},
 		{
 			name: "Transfer without enough balance should panic",
 			fn: func() {
 				std.TestSetRealm(std.NewUserRealm(alice))
-				Transfer(bob, uint64(1))
 				Transfer(bob, uint64(1))
 			},
 			shouldPanic: true,
@@ -264,7 +255,6 @@ func TestGrc20Methods(t *testing.T) {
 			name: "Transfer to self should panic",
 			fn: func() {
 				std.TestSetRealm(adminRealm)
-				Transfer(consts.ADMIN, uint64(1))
 				Transfer(consts.ADMIN, uint64(1))
 			},
 			shouldPanic: true,
@@ -276,11 +266,9 @@ func TestGrc20Methods(t *testing.T) {
 				// approve first
 				std.TestSetRealm(adminRealm)
 				Approve(alice, uint64(1))
-				Approve(alice, uint64(1))
 
 				// alice transfer admin's balance to bob
 				std.TestSetRealm(std.NewUserRealm(alice))
-				TransferFrom(consts.ADMIN, bob, uint64(1))
 				TransferFrom(consts.ADMIN, bob, uint64(1))
 			},
 		},
@@ -289,10 +277,8 @@ func TestGrc20Methods(t *testing.T) {
 			fn: func() {
 				std.TestSetRealm(adminRealm)
 				Approve(alice, uint64(1))
-				Approve(alice, uint64(1))
 
 				std.TestSetRealm(std.NewUserRealm(alice))
-				TransferFrom(consts.ADMIN, bob, uint64(2))
 				TransferFrom(consts.ADMIN, bob, uint64(2))
 			},
 			shouldPanic: true,
