@@ -27,8 +27,23 @@ var (
 	bob   = testutils.TestAddress("bob")
 )
 
-func TestTotalSupply(t *testing.T) {
+func TestGetName(t *testing.T) {
+	uassert.Equal(t, "Gnoswap", GetName())
+}
 
+func TestGetSymbol(t *testing.T) {
+	uassert.Equal(t, "GNS", GetSymbol())
+}
+
+func TestGetDecimals(t *testing.T) {
+	uassert.Equal(t, uint(6), GetDecimals())
+}
+
+func TestKnownAccounts(t *testing.T) {
+	uassert.Equal(t, int(1), KnownAccounts())
+}
+
+func TestTotalSupply(t *testing.T) {
 	uassert.Equal(t, INITIAL_MINT_AMOUNT, TotalSupply())
 }
 
