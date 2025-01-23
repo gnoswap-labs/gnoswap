@@ -115,16 +115,6 @@ func TestEmissionOnly(t *testing.T) {
 	})
 }
 
-func TestTokenRegisterOnly(t *testing.T) {
-	t.Run("caller is token register", func(t *testing.T) {
-		uassert.NoError(t, TokenRegisterOnly(consts.TOKEN_REGISTER))
-	})
-
-	t.Run("caller is not token register", func(t *testing.T) {
-		uassert.Error(t, TokenRegisterOnly(addr01))
-	})
-}
-
 func TestUserOnly(t *testing.T) {
 	t.Run("caller is user", func(t *testing.T) {
 		uassert.NoError(t, UserOnly(std.NewUserRealm(addr01)))

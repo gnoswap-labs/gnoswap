@@ -22,10 +22,8 @@ func GetPoolCreationFee() uint64 {
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#setpoolcreationfee
 func SetPoolCreationFee(fee uint64) {
-	// TODO:
-	// 1. IsHalted name chnage to assertIsHalted
-	common.IsHalted()
-	caller := std.PrevRealm().Addr()
+	assertOnlyNotHalted()
+	caller := getPrevAddr()
 	if err := common.GovernanceOnly(caller); err != nil {
 		panic(err.Error())
 	}
@@ -43,11 +41,9 @@ func SetPoolCreationFee(fee uint64) {
 // SetPoolCreationFeeByAdmin sets the poolCreationFee by Admin.
 // Only admin can execute this function.
 func SetPoolCreationFeeByAdmin(fee uint64) {
-	// TODO:
-	// 1. IsHalted name chnage to assertIsHalted
-	common.IsHalted()
+	assertOnlyNotHalted()
 
-	caller := std.PrevRealm().Addr()
+	caller := getPrevAddr()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err.Error())
 	}

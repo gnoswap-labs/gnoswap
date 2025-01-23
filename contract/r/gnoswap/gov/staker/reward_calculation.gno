@@ -15,16 +15,11 @@ import (
 )
 
 var (
-	currentGNSBalance uint64 = 0
+	currentGNSBalance         uint64            = 0
 	currentProtocolFeeBalance map[string]uint64 = make(map[string]uint64)
 )
 
 func getCurrentBalance() uint64 {
-	// TODO: implement this after checking gns distribution is working
-	// pf.DistributeProtocolFee()
-	// accuProtocolFee := pf.GetAccuTransferToGovStaker()
-	// pf.ClearAccuTransferToGovStaker()
-
 	gotGnsForEmission = en.GetDistributedToGovStaker()
 	en.ClearDistributedToGovStaker()
 
@@ -34,6 +29,7 @@ func getCurrentBalance() uint64 {
 }
 
 func getCurrentProtocolFeeBalance() map[string]uint64 {
+	pf.DistributeProtocolFee()
 	gotAccuProtocolFee := pf.GetAccuTransferToGovStaker()
 
 	gotAccuProtocolFee.Iterate("", "", func(key string, value interface{}) bool {
@@ -48,12 +44,12 @@ func getCurrentProtocolFeeBalance() map[string]uint64 {
 }
 
 type StakerRewardInfo struct {
-	StartHeight uint64     // height when staker started staking
-	PriceDebt   *u256.Uint // price debt per xGNS stake, Q128
+	StartHeight          uint64                // height when staker started staking
+	PriceDebt            *u256.Uint            // price debt per xGNS stake, Q128
 	ProtocolFeePriceDebt map[string]*u256.Uint // protocol fee debt per xGNS stake, Q128
-	Amount      uint64     // amount of xGNS staked
-	Claimed     uint64     // amount of GNS reward claimed so far
-	ProtocolFeeClaimed map[string]uint64 // protocol fee amount claimed per token
+	Amount               uint64                // amount of xGNS staked
+	Claimed              uint64                // amount of GNS reward claimed so far
+	ProtocolFeeClaimed   map[string]uint64     // protocol fee amount claimed per token
 }
 
 func (self *StakerRewardInfo) Debug() string {
@@ -66,23 +62,23 @@ func (self *StakerRewardInfo) PriceDebtUint64() uint64 {
 
 type RewardState struct {
 	// CurrentBalance is sum of all the previous balances, including the reward distribution.
-	CurrentBalance    uint64     // current balance of gov_staker, used to calculate RewardAccumulation
-	CurrentProtocolFeeBalance map[string]uint64 // current protocol fee balance per token
-	PriceAccumulation *u256.Uint // claimable GNS per xGNS stake, Q128
+	CurrentBalance               uint64                // current balance of gov_staker, used to calculate RewardAccumulation
+	CurrentProtocolFeeBalance    map[string]uint64     // current protocol fee balance per token
+	PriceAccumulation            *u256.Uint            // claimable GNS per xGNS stake, Q128
 	ProtocolFeePriceAccumulation map[string]*u256.Uint // protocol fee debt per xGNS stake, Q128
-	TotalStake uint64 // total xGNS staked
+	TotalStake                   uint64                // total xGNS staked
 
 	info *avl.Tree // address -> StakerRewardInfo
 }
 
 func NewRewardState() *RewardState {
 	return &RewardState{
-		info:              avl.NewTree(),
-		CurrentBalance:    0,
-		CurrentProtocolFeeBalance: make(map[string]uint64),
-		PriceAccumulation: u256.Zero(),
+		info:                         avl.NewTree(),
+		CurrentBalance:               0,
+		CurrentProtocolFeeBalance:    make(map[string]uint64),
+		PriceAccumulation:            u256.Zero(),
 		ProtocolFeePriceAccumulation: make(map[string]*u256.Uint),
-		TotalStake:        0,
+		TotalStake:                   0,
 	}
 }
 
@@ -96,12 +92,12 @@ func (self *RewardState) Info(staker std.Address) StakerRewardInfo {
 	infoI, exists := self.info.Get(staker.String())
 	if !exists {
 		return StakerRewardInfo{
-			StartHeight: uint64(std.GetHeight()),
-			PriceDebt:   u256.Zero(),
+			StartHeight:          uint64(std.GetHeight()),
+			PriceDebt:            u256.Zero(),
 			ProtocolFeePriceDebt: make(map[string]*u256.Uint),
-			Amount:      0,
-			Claimed:     0,
-			ProtocolFeeClaimed: make(map[string]uint64),
+			Amount:               0,
+			Claimed:              0,
+			ProtocolFeeClaimed:   make(map[string]uint64),
 		}
 	}
 	return infoI.(StakerRewardInfo)
@@ -227,11 +223,11 @@ func (self *RewardState) AddStake(currentHeight uint64, staker std.Address, amou
 	}
 
 	info := StakerRewardInfo{
-		StartHeight: currentHeight,
-		PriceDebt:   self.PriceAccumulation.Clone(),
-		Amount:      amount,
-		Claimed:     0,
-		ProtocolFeeClaimed: make(map[string]uint64),
+		StartHeight:          currentHeight,
+		PriceDebt:            self.PriceAccumulation.Clone(),
+		Amount:               amount,
+		Claimed:              0,
+		ProtocolFeeClaimed:   make(map[string]uint64),
 		ProtocolFeePriceDebt: make(map[string]*u256.Uint),
 	}
 
@@ -271,7 +267,6 @@ func (self *RewardState) RemoveStake(staker std.Address, amount uint64, currentB
 
 	return reward, protocolFeeRewards
 }
-
 
 var (
 	q96                  = u256.MustFromDecimal(consts.Q96)

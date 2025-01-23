@@ -21,7 +21,7 @@ import (
 type lockedGNS struct {
 	amount    uint64
 	unlock    uint64
-	collected bool // TODO:
+	collected bool
 }
 
 const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
@@ -318,7 +318,6 @@ func CollectReward() {
 	//
 	// still, this is a tangled with the policy issue, so should be discussed.
 
-	// TODO:
 	if reward > 0 {
 		gns.Transfer(caller, reward)
 		std.Emit(
@@ -330,7 +329,6 @@ func CollectReward() {
 		)
 	}
 
-	// TODO::
 	for tokenPath, amount := range protocolFeeRewards {
 		if tokenPath == consts.WUGNOT_PATH {
 			if amount > 0 {
@@ -363,7 +361,6 @@ func CollectRewardFromLaunchPad(to std.Address) {
 
 	prevAddr, prevPkgPath := getPrev()
 
-	// TODO::
 	emissionReward, protocolFeeRewards := rewardState.Claim(to, getCurrentBalance(), getCurrentProtocolFeeBalance())
 	if emissionReward > 0 {
 		gns.Transfer(to, emissionReward)
@@ -376,7 +373,6 @@ func CollectRewardFromLaunchPad(to std.Address) {
 		)
 	}
 
-	// TODO::
 	for tokenPath, amount := range protocolFeeRewards {
 		transferProtocolFee(tokenPath, to, amount)
 		std.Emit(

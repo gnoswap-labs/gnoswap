@@ -235,8 +235,6 @@ func GetEmission() uint64 {
 		}
 	}
 
-	// haven't reached the start of the halvings
-	// TODO: check if returning 0 is correct
 	return 0
 }
 

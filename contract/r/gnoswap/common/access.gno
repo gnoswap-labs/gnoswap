@@ -98,15 +98,6 @@ func EmissionOnly(caller std.Address) error {
 	return nil
 }
 
-// DEPRECATED
-// TODO: remove after r/grc20reg is applied for all contracts
-func TokenRegisterOnly(caller std.Address) error {
-	if caller != consts.TOKEN_REGISTER {
-		return ufmt.Errorf(ErrNoPermission, caller.String())
-	}
-	return nil
-}
-
 // UserOnly checks if the caller is a user.
 func UserOnly(prev std.Realm) error {
 	if !prev.IsUser() {
