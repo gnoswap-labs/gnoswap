@@ -49,7 +49,7 @@ func testDelegate01_1000000(t *testing.T) {
 		uassert.Equal(t, xgns.VotingSupply(), uint64(0))
 
 		std.TestSetRealm(adminRealm)
-		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
+		gns.Approve(consts.GOV_STAKER_ADDR, uint64(1_000_000))
 
 		gs.Delegate(admin, uint64(1_000_000)) // self delegate
 
@@ -72,7 +72,7 @@ func testDelegate02_2000000(t *testing.T) {
 		uassert.Equal(t, xgns.VotingSupply(), uint64(1_000_000))
 
 		std.TestSetRealm(adminRealm)
-		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(2_000_000))
+		gns.Approve(consts.GOV_STAKER_ADDR, uint64(2_000_000))
 
 		gs.Delegate(dummyAddr, uint64(2_000_000)) // delegate to dummy
 

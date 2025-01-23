@@ -26,7 +26,7 @@ func testPoolInitCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
 		pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 	})
 }
@@ -35,10 +35,10 @@ func testMintPosition(t *testing.T) {
 	t.Run("mint position", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-		wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // WRAP
+		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // WRAP
 
 		// prepare 50000005ugnot (5 for refund test)
 		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
@@ -95,10 +95,10 @@ func testIncreaseLiquidity(t *testing.T) {
 	t.Run("increase liquidity", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-		wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // WRAP
+		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // WRAP
 
 		pool := getPoolFromLpTokenId(t, uint64(1))
 		oldLiquidity := pool.Liquidity()

@@ -67,9 +67,9 @@ func testCreatePool(t *testing.T) {
 		barToken := common.GetTokenTeller(barPath)
 		bazToken := common.GetTokenTeller(bazPath)
 		gnsToken := common.GetTokenTeller(consts.GNS_PATH)
-		gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 		pl.CreatePool(barPath, bazPath, 100, "79228162514264337593543950337") // price ratio 1:1
 		SetPoolTierByAdmin(poolPath, 1)
 		std.TestSkipHeights(1)
@@ -80,8 +80,8 @@ func testMintBarBaz100Pos01(t *testing.T) {
 	t.Run("mint position 01, bar:baz:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,         // token0
@@ -105,8 +105,8 @@ func testMintBarBaz100Pos02(t *testing.T) {
 	t.Run("mint position 02, bar:baz:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,      // token0
@@ -130,8 +130,8 @@ func testMintBarBaz100Pos03(t *testing.T) {
 	t.Run("mint position 03, bar:baz:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,     // token0
@@ -155,8 +155,8 @@ func testMintBarBaz100Pos04(t *testing.T) {
 	t.Run("mint position 04, bar:baz:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,     // token0
@@ -180,8 +180,8 @@ func testMintBarBaz100Pos05(t *testing.T) {
 	t.Run("mint position 05, bar:baz:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,                   // token0

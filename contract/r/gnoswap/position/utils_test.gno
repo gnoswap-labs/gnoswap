@@ -9,8 +9,6 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
-	"gno.land/r/demo/users"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 )
@@ -94,8 +92,8 @@ func TestAssertTokenExists(t *testing.T) {
 func TestAssertOnlyOwnerOfToken(t *testing.T) {
 	// Mock token ownership
 	mockTokenId := uint64(1)
-	mockOwner := users.Resolve(admin)
-	mockCaller := users.Resolve(alice)
+	mockOwner := admin
+	mockCaller := alice
 	//MakeMintPositionWithoutFee(t)
 
 	t.Run("Token Owned by Caller - No Panic", func(t *testing.T) {
@@ -184,7 +182,7 @@ func TestAssertOnlyNotHalted(t *testing.T) {
 					assertOnlyNotHalted()
 				})
 			} else {
-				std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
+				std.TestSetRealm(std.NewUserRealm(admin))
 				common.SetHaltByAdmin(true)
 				uassert.PanicsWithMessage(t, tc.panicMsg, func() {
 					assertOnlyNotHalted()
@@ -343,29 +341,6 @@ func TestAssertValidNumberString(t *testing.T) {
 
 			// Test function
 			assertValidNumberString(tt.input)
-		})
-	}
-}
-
-func TestA2u(t *testing.T) {
-	addr := std.Address("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
-
-	tests := []struct {
-		name     string
-		input    std.Address
-		expected pusers.AddressOrName
-	}{
-		{
-			name:     "Success - a2u",
-			input:    addr,
-			expected: pusers.AddressOrName(addr),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			got := a2u(tc.input)
-			uassert.Equal(t, users.Resolve(got).String(), users.Resolve(tc.expected).String())
 		})
 	}
 }
@@ -642,13 +617,13 @@ func TestIsOwner(t *testing.T) {
 		{
 			name:     "Fail - is not owner",
 			tokenId:  1,
-			addr:     users.Resolve(alice),
+			addr:     alice,
 			expected: false,
 		},
 		{
 			name:     "Success - is owner",
 			tokenId:  1,
-			addr:     users.Resolve(admin),
+			addr:     admin,
 			expected: true,
 		},
 	}
@@ -665,7 +640,7 @@ func TestIsOperator(t *testing.T) {
 	tests := []struct {
 		name     string
 		tokenId  uint64
-		addr     pusers.AddressOrName
+		addr     std.Address
 		expected bool
 	}{
 		{
@@ -686,7 +661,7 @@ func TestIsOperator(t *testing.T) {
 			if tc.expected {
 				LPTokenApprove(t, admin, tc.addr, tc.tokenId)
 			}
-			got := isOperator(tc.tokenId, users.Resolve(tc.addr))
+			got := isOperator(tc.tokenId, tc.addr)
 			uassert.Equal(t, tc.expected, got)
 		})
 	}
@@ -695,8 +670,8 @@ func TestIsOperator(t *testing.T) {
 func TestIsStaked(t *testing.T) {
 	tests := []struct {
 		name     string
-		owner    pusers.AddressOrName
-		operator pusers.AddressOrName
+		owner    std.Address
+		operator std.Address
 		tokenId  uint64
 		expected bool
 	}{
@@ -726,7 +701,7 @@ func TestIsStaked(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.expected && tc.owner == tc.operator {
 				MakeMintPositionWithoutFee(t)
-				LPTokenApprove(t, tc.owner, pusers.AddressOrName(consts.STAKER_ADDR), tc.tokenId)
+				LPTokenApprove(t, tc.owner, consts.STAKER_ADDR, tc.tokenId)
 				LPTokenStake(t, tc.owner, tc.tokenId)
 			}
 			got := isStaked(tokenIdFrom(tc.tokenId))
@@ -741,8 +716,8 @@ func TestIsStaked(t *testing.T) {
 func TestIsOwnerOrOperator(t *testing.T) {
 	tests := []struct {
 		name     string
-		owner    pusers.AddressOrName
-		operator pusers.AddressOrName
+		owner    std.Address
+		operator std.Address
 		tokenId  uint64
 		expected bool
 	}{
@@ -775,9 +750,9 @@ func TestIsOwnerOrOperator(t *testing.T) {
 			}
 			var got bool
 			if tc.owner == tc.operator {
-				got = isOwnerOrOperator(users.Resolve(tc.owner), tc.tokenId)
+				got = isOwnerOrOperator(tc.owner, tc.tokenId)
 			} else {
-				got = isOwnerOrOperator(users.Resolve(tc.operator), tc.tokenId)
+				got = isOwnerOrOperator(tc.operator, tc.tokenId)
 			}
 			uassert.Equal(t, tc.expected, got)
 		})
@@ -787,8 +762,8 @@ func TestIsOwnerOrOperator(t *testing.T) {
 func TestIsOwnerOrOperatorWithStake(t *testing.T) {
 	tests := []struct {
 		name     string
-		owner    pusers.AddressOrName
-		operator pusers.AddressOrName
+		owner    std.Address
+		operator std.Address
 		tokenId  uint64
 		isStake  bool
 		expected bool
@@ -814,10 +789,10 @@ func TestIsOwnerOrOperatorWithStake(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.isStake {
 				tokenId, _, _, _ := MakeMintPositionWithoutFee(t)
-				LPTokenApprove(t, pusers.AddressOrName(tc.owner), pusers.AddressOrName(consts.STAKER_ADDR), tc.tokenId)
+				LPTokenApprove(t, tc.owner, consts.STAKER_ADDR, tc.tokenId)
 				LPTokenStake(t, tc.owner, tc.tokenId)
 			}
-			got := isOwnerOrOperator(users.Resolve(tc.operator), tc.tokenId)
+			got := isOwnerOrOperator(tc.operator, tc.tokenId)
 			uassert.Equal(t, tc.expected, got)
 		})
 	}

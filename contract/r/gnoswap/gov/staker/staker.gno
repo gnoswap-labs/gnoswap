@@ -71,7 +71,7 @@ func Delegate(to std.Address, amount uint64) {
 	}
 
 	caller := std.PrevRealm().Addr()
-	gnsBalance := gns.BalanceOf(a2u(caller))
+	gnsBalance := gns.BalanceOf(caller)
 	if gnsBalance < amount {
 		panic(addDetailToError(
 			errNotEnoughBalance,
@@ -82,13 +82,13 @@ func Delegate(to std.Address, amount uint64) {
 	rewardState.AddStake(uint64(std.GetHeight()), caller, amount, getCurrentBalance(), getCurrentProtocolFeeBalance())
 
 	// GNS // caller -> GovStaker
-	gns.TransferFrom(a2u(caller), a2u(std.CurrentRealm().Addr()), amount)
+	gns.TransferFrom(caller, std.CurrentRealm().Addr(), amount)
 
 	// actual delegate
 	delegate(to, amount)
 
 	// xGNS mint to caller
-	xgns.Mint(a2u(caller), amount)
+	xgns.Mint(caller, amount)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -140,7 +140,7 @@ func Redelegate(from, to std.Address, amount uint64) {
 
 	caller := std.PrevRealm().Addr()
 
-	delegated := xgns.BalanceOf(a2u(caller))
+	delegated := xgns.BalanceOf(caller)
 	if delegated < amount {
 		panic(addDetailToError(
 			errNotEnoughBalance,
@@ -191,7 +191,7 @@ func Undelegate(from std.Address, amount uint64) {
 	}
 
 	caller := std.PrevRealm().Addr()
-	delegated := xgns.BalanceOf(a2u(caller))
+	delegated := xgns.BalanceOf(caller)
 
 	if delegated < amount {
 		panic(addDetailToError(
@@ -203,9 +203,9 @@ func Undelegate(from std.Address, amount uint64) {
 	reward, protocolFeeRewards := rewardState.RemoveStake(caller, amount, getCurrentBalance(), getCurrentProtocolFeeBalance())
 
 	// burn equivalent amount of xGNS
-	xgns.Burn(a2u(caller), amount)
+	xgns.Burn(caller, amount)
 
-	gns.Transfer(a2u(caller), reward)
+	gns.Transfer(caller, reward)
 
 	for tokenPath, amount := range protocolFeeRewards {
 		transferProtocolFee(tokenPath, from, amount)
@@ -265,7 +265,7 @@ func CollectUndelegatedGns() uint64 {
 	for _, locked := range lockedList {
 		if currentTime >= locked.unlock { // passed 7 days
 			// transfer GNS to caller
-			gns.Transfer(a2u(caller), locked.amount)
+			gns.Transfer(caller, locked.amount)
 			lockedAmount -= locked.amount
 			collected += locked.amount
 		} else {
@@ -319,7 +319,7 @@ func CollectReward() {
 	// still, this is a tangled with the policy issue, so should be discussed.
 
 	if reward > 0 {
-		gns.Transfer(a2u(caller), reward)
+		gns.Transfer(caller, reward)
 		std.Emit(
 			"CollectEmissionReward",
 			"prevAddr", prevAddr,
@@ -366,7 +366,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 
 	emissionReward, protocolFeeRewards := rewardState.Claim(to, getCurrentBalance(), getCurrentProtocolFeeBalance())
 	if emissionReward > 0 {
-		gns.Transfer(a2u(to), emissionReward)
+		gns.Transfer(to, emissionReward)
 		std.Emit(
 			"CollectEmissionFromLaunchPad",
 			"prevAddr", prevAddr,

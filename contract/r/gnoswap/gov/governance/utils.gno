@@ -9,7 +9,6 @@ import (
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
 )
 
 func mustGetProposal(proposalId uint64) ProposalInfo {
@@ -100,10 +99,6 @@ func b64Decode(data string) string {
 
 func prevRealm() string {
 	return std.PrevRealm().PkgPath()
-}
-
-func a2u(addr std.Address) pusers.AddressOrName {
-	return pusers.AddressOrName(addr)
 }
 
 func getPrev() (string, string) {

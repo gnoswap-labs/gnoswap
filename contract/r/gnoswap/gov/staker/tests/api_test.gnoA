@@ -47,7 +47,7 @@ func delegateAdmin(t *testing.T) {
 	t.Run("delegateAdmin", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1000001))
+		gns.Approve(consts.GOV_STAKER_ADDR, uint64(1000001))
 		Delegate(dummyAddr, 1000001)
 
 		uassert.Equal(t, GetTotalStaked(), uint64(1000001))

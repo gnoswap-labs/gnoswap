@@ -447,10 +447,10 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 	totalEmissionSent += toUser
 
 	if toUser > 0 {
-		gns.Transfer(a2u(deposit.owner), toUser)
+		gns.Transfer(deposit.owner, toUser)
 
 		// internal penalty to community pool
-		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), reward.InternalPenalty)
+		gns.Transfer(consts.COMMUNITY_POOL_ADDR, reward.InternalPenalty)
 		totalEmissionSent += reward.InternalPenalty
 	}
 
@@ -458,7 +458,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 	totalEmissionSent += unClaimableInternal
 	if unClaimableInternal > 0 {
 		// internal unclaimable to community pool
-		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), unClaimableInternal)
+		gns.Transfer(consts.COMMUNITY_POOL_ADDR, unClaimableInternal)
 	}
 
 	prevAddr, prevPkgPath := getPrev()

@@ -8,10 +8,8 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
@@ -341,10 +339,10 @@ func TestDepositGns(t *testing.T) {
 	t.Run("Success with sufficient balance", func(t *testing.T) {
 		// transfer enough gns
 		std.TestSetRealm(adminRealm)
-		gns.Transfer(common.AddrToUser(testAddr), 1000000)
+		gns.Transfer(testAddr, 1000000)
 
 		std.TestSetRealm(std.NewUserRealm(testAddr))
-		gns.Approve(common.AddrToUser(consts.LAUNCHPAD_ADDR), 1000000)
+		gns.Approve(consts.LAUNCHPAD_ADDR, 1000000)
 
 		std.TestSkipHeights(10)
 		depositId := DepositGns(project.id+":30", 1000000)
@@ -609,7 +607,7 @@ func TestProcessCollectedDeposits_TransactionFail(t *testing.T) {
 	deposit, _ := createDeposit(info, 1000)
 	deposits[deposit.id] = deposit
 
-	xgnsMint(t, mockXGNS, a2u(consts.LAUNCHPAD_ADDR), 500)
+	xgnsMint(t, mockXGNS, consts.LAUNCHPAD_ADDR, 500)
 
 	std.TestSetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
 
@@ -622,7 +620,7 @@ func TestProcessCollectedDeposits_BalanceChanges(t *testing.T) {
 	projects[project.id] = project
 
 	depositAmount := uint64(1000)
-	xgnsMint(t, mockXGNS, a2u(consts.LAUNCHPAD_ADDR), depositAmount)
+	xgnsMint(t, mockXGNS, consts.LAUNCHPAD_ADDR, depositAmount)
 
 	info := ProjectTierInfo{
 		Project:       project,
@@ -762,20 +760,20 @@ func TestCollectDepositGnsByDepositId_ExactClaimable(t *testing.T) {
 
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	std.TestSkipHeights(int64(10))
-	gns.MintGns(a2u(consts.LAUNCHPAD_ADDR))
+	gns.MintGns(consts.LAUNCHPAD_ADDR)
 	std.TestSkipHeights(int64(10))
 
 	std.TestSetRealm(std.NewUserRealm(userA))
-	gns.Approve(a2u(std.Address(consts.LAUNCHPAD_ADDR)), 1000)
+	gns.Approve(consts.LAUNCHPAD_ADDR, 1000)
 	token, _ := setupXGNSTest(t)
 
 	std.TestSetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
 	std.TestSetOrigCaller(std.Address(consts.LAUNCHPAD_PATH))
-	xgnsMint(t, token, pusers.AddressOrName(consts.LAUNCHPAD_ADDR), 1000)
+	xgnsMint(t, token, consts.LAUNCHPAD_ADDR, 1000)
 
 	std.TestSetRealm(std.NewUserRealm(consts.LAUNCHPAD_ADDR))
 	xgns.Mint(
-		a2u(std.Address(consts.LAUNCHPAD_ADDR)),
+		consts.LAUNCHPAD_ADDR,
 		1000,
 	)
 

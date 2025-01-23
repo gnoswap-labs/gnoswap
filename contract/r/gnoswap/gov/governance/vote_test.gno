@@ -34,7 +34,7 @@ func TestVote(t *testing.T) {
 			name: "Successful YES vote",
 			setup: func() uint64 {
 				pid := uint64(1)
-				proposals.Set(fomatUint(pid), ProposalInfo{
+				proposals.Set(formatUint(pid), ProposalInfo{
 					ConfigVersion: 1,
 					State: ProposalState{
 						Created:   true,
@@ -51,7 +51,7 @@ func TestVote(t *testing.T) {
 			yes:         true,
 			expectError: false,
 			validate: func(t *testing.T, voteKey string) {
-				prop, exists := proposals.Get(fomatUint(1))
+				prop, exists := proposals.Get(formatUint(1))
 				if !exists {
 					t.Error("Proposal was not stored")
 					return
@@ -84,7 +84,7 @@ func TestVote(t *testing.T) {
 			name: "Successful NO vote",
 			setup: func() uint64 {
 				pid := uint64(2)
-				proposals.Set(fomatUint(pid), ProposalInfo{
+				proposals.Set(formatUint(pid), ProposalInfo{
 					ConfigVersion: 1,
 					State: ProposalState{
 						Created:   true,
@@ -101,7 +101,7 @@ func TestVote(t *testing.T) {
 			yes:         false,
 			expectError: false,
 			validate: func(t *testing.T, voteKey string) {
-				prop, exists := proposals.Get(fomatUint(2))
+				prop, exists := proposals.Get(formatUint(2))
 				if !exists {
 					t.Error("Proposal was not stored")
 					return
@@ -115,7 +115,7 @@ func TestVote(t *testing.T) {
 			name: "Vote before voting period starts",
 			setup: func() uint64 {
 				pid := uint64(3)
-				proposals.Set(fomatUint(pid), ProposalInfo{
+				proposals.Set(formatUint(pid), ProposalInfo{
 					ConfigVersion: 1,
 					State: ProposalState{
 						Created:   true,
@@ -133,7 +133,7 @@ func TestVote(t *testing.T) {
 			name: "Vote on canceled proposal",
 			setup: func() uint64 {
 				pid := uint64(5)
-				proposals.Set(fomatUint(pid), ProposalInfo{
+				proposals.Set(formatUint(pid), ProposalInfo{
 					ConfigVersion: 1,
 					State: ProposalState{
 						Created:   true,
@@ -152,7 +152,7 @@ func TestVote(t *testing.T) {
 			name: "Double voting attempt",
 			setup: func() uint64 {
 				pid := uint64(6)
-				proposals.Set(fomatUint(pid), ProposalInfo{
+				proposals.Set(formatUint(pid), ProposalInfo{
 					ConfigVersion: 1,
 					State: ProposalState{
 						Created:   true,

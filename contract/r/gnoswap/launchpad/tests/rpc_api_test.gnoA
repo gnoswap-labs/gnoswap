@@ -41,16 +41,16 @@ func testMockProtocolFee(t *testing.T) {
 		// admin > protocol_fee
 		// send qux, bar for testing
 		std.TestSetRealm(adminRealm)
-		bar.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
-		qux.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 2500)
+		bar.Transfer(consts.PROTOCOL_FEE_ADDR, 1000)
+		qux.Transfer(consts.PROTOCOL_FEE_ADDR, 2500)
 
-		uassert.Equal(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
-		uassert.Equal(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-		uassert.Equal(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+		uassert.Equal(t, bar.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(1000))
+		uassert.Equal(t, bar.BalanceOf(consts.DEV_OPS), uint64(0))
+		uassert.Equal(t, bar.BalanceOf(consts.GOV_STAKER_ADDR), uint64(0))
 
-		uassert.Equal(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(2500))
-		uassert.Equal(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-		uassert.Equal(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+		uassert.Equal(t, qux.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(2500))
+		uassert.Equal(t, qux.BalanceOf(consts.DEV_OPS), uint64(0))
+		uassert.Equal(t, qux.BalanceOf(consts.GOV_STAKER_ADDR), uint64(0))
 	})
 }
 
@@ -63,7 +63,7 @@ func testCreateProject(t *testing.T) {
 
 	t.Run("create project", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		obl.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
+		obl.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000_000))
 		std.TestSkipHeights(1)
 
 		projectId := CreateProject(
@@ -91,7 +91,7 @@ func testCreateProject(t *testing.T) {
 	t.Run("create another project", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
+		bar.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000_000))
 		std.TestSkipHeights(1)
 
 		projectId := CreateProject(
@@ -114,14 +114,14 @@ func testCreateProject(t *testing.T) {
 func testDepositGnsToTierProject01_Tier30(t *testing.T) {
 	t.Run("deposit to obl project, tier 30", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
+		gns.Transfer(user01, uint64(1_000_000)) // to deposit
 		// transfer some grc20 tokens to bypass project condition
-		foo.Transfer(a2u(user01), uint64(10))
-		bar.Transfer(a2u(user01), uint64(10))
+		foo.Transfer(user01, uint64(10))
+		bar.Transfer(user01, uint64(10))
 
 		// user01 makes deposit
 		std.TestSetRealm(user01Realm)
-		gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000))
+		gns.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000))
 
 		// skip some blocks to make project active
 		std.TestSkipHeights(4)
@@ -155,8 +155,8 @@ func testCollectProtocolFeeByProject01Recipient(t *testing.T) {
 	t.Run("claim protocol reward", func(t *testing.T) {
 		std.TestSetRealm(projectRealm)
 
-		oldBar := bar.BalanceOf(a2u(projectAddr))
-		oldQux := qux.BalanceOf(a2u(projectAddr))
+		oldBar := bar.BalanceOf(projectAddr)
+		oldQux := qux.BalanceOf(projectAddr)
 		uassert.Equal(t, oldBar, uint64(0))
 		uassert.Equal(t, oldQux, uint64(0))
 
@@ -168,8 +168,8 @@ func testCollectProtocolFeeByProject01Recipient(t *testing.T) {
 
 		CollectProtocolFee()
 
-		newBar := bar.BalanceOf(a2u(projectAddr))
-		newQux := qux.BalanceOf(a2u(projectAddr))
+		newBar := bar.BalanceOf(projectAddr)
+		newQux := qux.BalanceOf(projectAddr)
 		uassert.Equal(t, newBar, uint64(1000))
 		uassert.Equal(t, newQux, uint64(2500))
 

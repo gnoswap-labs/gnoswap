@@ -40,5 +40,5 @@ func resetObject(t *testing.T) {
 func gnsBalance(t *testing.T, addr std.Address) uint64 {
 	t.Helper()
 
-	return gns.BalanceOf(a2u(addr))
+	return gns.BalanceOf(addr)
 }

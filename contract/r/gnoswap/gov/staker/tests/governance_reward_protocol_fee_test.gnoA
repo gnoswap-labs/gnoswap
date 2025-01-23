@@ -52,13 +52,13 @@ func delegateFromAdminToDummy(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
 	// gns before emission
-	uassert.Equal(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(0))
-	uassert.Equal(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(0))
-	uassert.Equal(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+	uassert.Equal(t, gns.BalanceOf(consts.STAKER_ADDR), uint64(0))
+	uassert.Equal(t, gns.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, gns.BalanceOf(consts.COMMUNITY_POOL_ADDR), uint64(0))
+	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR), uint64(0))
 
 	std.TestSkipHeights(1)
-	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1000001))
+	gns.Approve(consts.GOV_STAKER_ADDR, uint64(1000001))
 	Delegate(dummyToAddr, 1000001)
 
 	// gns emission after adjustment & delegate
@@ -67,54 +67,54 @@ func delegateFromAdminToDummy(t *testing.T) {
 	// 20% ≈ 2853881.2
 	// 5% ≈ 713470.3
 
-	uassert.Equal(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(10702054))
-	uassert.Equal(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(2853881))
-	uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(713470))
-	uassert.Equal(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000001))
-	uassert.Equal(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))-xgns.TotalSupply(), uint64(0))
+	uassert.Equal(t, gns.BalanceOf(consts.STAKER_ADDR), uint64(10702054))
+	uassert.Equal(t, gns.BalanceOf(consts.DEV_OPS), uint64(2853881))
+	uassert.Equal(t, gns.BalanceOf(consts.COMMUNITY_POOL_ADDR), uint64(713470))
+	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR), uint64(1000001))
+	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR)-xgns.TotalSupply(), uint64(0))
 }
 
 func delegetFromDummyToDummy(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Transfer(a2u(dummyAddr), 5000000)
+	gns.Transfer(dummyAddr, 5000000)
 
 	std.TestSkipHeights(1)
 	std.TestSetRealm(dummyRealm)
-	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(5000000))
+	gns.Approve(consts.GOV_STAKER_ADDR, uint64(5000000))
 	Delegate(dummyAddr, 5000000)
 
-	uassert.Equal(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(21404109))
-	uassert.Equal(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(5707762))
-	uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(1426940))
-	uassert.Equal(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(6000001))
-	uassert.Equal(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))-xgns.TotalSupply(), uint64(0))
+	uassert.Equal(t, gns.BalanceOf(consts.STAKER_ADDR), uint64(21404109))
+	uassert.Equal(t, gns.BalanceOf(consts.DEV_OPS), uint64(5707762))
+	uassert.Equal(t, gns.BalanceOf(consts.COMMUNITY_POOL_ADDR), uint64(1426940))
+	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR), uint64(6000001))
+	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR)-xgns.TotalSupply(), uint64(0))
 }
 
 func mockProtocolFee(t *testing.T) {
 	// admin > protocol_fee
 	// send qux, bar for testing
 	std.TestSetRealm(adminRealm)
-	bar.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
-	qux.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 2500)
+	bar.Transfer(consts.PROTOCOL_FEE_ADDR, 1000)
+	qux.Transfer(consts.PROTOCOL_FEE_ADDR, 2500)
 
 	// wugnot
 	std.TestSetOrigSend(std.Coins{{"ugnot", 10000}}, nil)
 	std.TestIssueCoins(consts.WUGNOT_ADDR, std.Coins{{"ugnot", 10000}})
 	wugnot.Deposit()
 
-	wugnot.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 10000)
+	wugnot.Transfer(consts.PROTOCOL_FEE_ADDR, 10000)
 
-	uassert.Equal(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
-	uassert.Equal(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	uassert.Equal(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(1000))
+	uassert.Equal(t, bar.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(consts.GOV_STAKER_ADDR), uint64(0))
 
-	uassert.Equal(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(2500))
-	uassert.Equal(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	uassert.Equal(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(2500))
+	uassert.Equal(t, qux.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(consts.GOV_STAKER_ADDR), uint64(0))
 
-	uassert.Equal(t, wugnot.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(10000))
-	uassert.Equal(t, wugnot.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	uassert.Equal(t, wugnot.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+	uassert.Equal(t, wugnot.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(10000))
+	uassert.Equal(t, wugnot.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, wugnot.BalanceOf(consts.GOV_STAKER_ADDR), uint64(0))
 }
 
 func skipDummyBlocks(t *testing.T) {
@@ -123,13 +123,13 @@ func skipDummyBlocks(t *testing.T) {
 	calculateReward() // pf fee distribution being triggered
 	std.TestSkipHeights(1)
 
-	uassert.Equal(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
-	uassert.Equal(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	uassert.Equal(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000))
+	uassert.Equal(t, bar.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(consts.GOV_STAKER_ADDR), uint64(1000))
 
-	uassert.Equal(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
-	uassert.Equal(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	uassert.Equal(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(2500))
+	uassert.Equal(t, qux.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(consts.GOV_STAKER_ADDR), uint64(2500))
 }
 
 func reward(t *testing.T) {
@@ -139,14 +139,14 @@ func reward(t *testing.T) {
 	})
 
 	t.Run("collect reward", func(t *testing.T) {
-		uassert.Equal(t, bar.BalanceOf(a2u(dummyAddr)), uint64(0))
-		uassert.Equal(t, qux.BalanceOf(a2u(dummyAddr)), uint64(0))
+		uassert.Equal(t, bar.BalanceOf(dummyAddr), uint64(0))
+		uassert.Equal(t, qux.BalanceOf(dummyAddr), uint64(0))
 		uassert.Equal(t, ugnotBalanceOf(dummyAddr), uint64(0))
 
 		std.TestSetRealm(dummyRealm)
 		CollectReward()
-		uassert.Equal(t, bar.BalanceOf(a2u(dummyAddr)), uint64(833))
-		uassert.Equal(t, qux.BalanceOf(a2u(dummyAddr)), uint64(2083))
+		uassert.Equal(t, bar.BalanceOf(dummyAddr), uint64(833))
+		uassert.Equal(t, qux.BalanceOf(dummyAddr), uint64(2083))
 		uassert.Equal(t, ugnotBalanceOf(dummyAddr), uint64(8333))
 	})
 
@@ -154,8 +154,8 @@ func reward(t *testing.T) {
 		std.TestSetRealm(dummyRealm)
 		CollectReward()
 
-		uassert.Equal(t, bar.BalanceOf(a2u(dummyAddr)), uint64(833))
-		uassert.Equal(t, qux.BalanceOf(a2u(dummyAddr)), uint64(2083))
+		uassert.Equal(t, bar.BalanceOf(dummyAddr), uint64(833))
+		uassert.Equal(t, qux.BalanceOf(dummyAddr), uint64(2083))
 		uassert.Equal(t, ugnotBalanceOf(dummyAddr), uint64(8333))
 	})
 
@@ -163,8 +163,8 @@ func reward(t *testing.T) {
 		std.TestSkipHeights(1)
 		CollectReward() // even more block, protocol_fee didn't increase
 
-		uassert.Equal(t, bar.BalanceOf(a2u(dummyAddr)), uint64(833))
-		uassert.Equal(t, qux.BalanceOf(a2u(dummyAddr)), uint64(2083))
+		uassert.Equal(t, bar.BalanceOf(dummyAddr), uint64(833))
+		uassert.Equal(t, qux.BalanceOf(dummyAddr), uint64(2083))
 		uassert.Equal(t, ugnotBalanceOf(dummyAddr), uint64(8333))
 	})
 }
@@ -172,48 +172,48 @@ func reward(t *testing.T) {
 func mockProtocolFee2(t *testing.T) {
 	// admin > protocol_fee
 	// send qux, bar for testing
-	uassert.Equal(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
-	uassert.Equal(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	uassert.Equal(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(167))
+	uassert.Equal(t, bar.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(consts.GOV_STAKER_ADDR), uint64(167))
 
-	uassert.Equal(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
-	uassert.Equal(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	uassert.Equal(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(417))
+	uassert.Equal(t, qux.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(consts.GOV_STAKER_ADDR), uint64(417))
 
 	std.TestSetRealm(adminRealm)
-	bar.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 2500)
-	qux.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 4000)
+	bar.Transfer(consts.PROTOCOL_FEE_ADDR, 2500)
+	qux.Transfer(consts.PROTOCOL_FEE_ADDR, 4000)
 	std.TestSkipHeights(1)
 
-	uassert.Equal(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(2500))
-	uassert.Equal(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	uassert.Equal(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(167))
+	uassert.Equal(t, bar.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(2500))
+	uassert.Equal(t, bar.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(consts.GOV_STAKER_ADDR), uint64(167))
 
-	uassert.Equal(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(4000))
-	uassert.Equal(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	uassert.Equal(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(417))
+	uassert.Equal(t, qux.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(4000))
+	uassert.Equal(t, qux.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(consts.GOV_STAKER_ADDR), uint64(417))
 
 	calculateReward()
 
-	uassert.Equal(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
-	uassert.Equal(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	uassert.Equal(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(2667))
+	uassert.Equal(t, bar.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(consts.GOV_STAKER_ADDR), uint64(2667))
 
-	uassert.Equal(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
-	uassert.Equal(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	uassert.Equal(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(4417))
+	uassert.Equal(t, qux.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(consts.GOV_STAKER_ADDR), uint64(4417))
 }
 
 func moreReward(t *testing.T) {
 	std.TestSkipHeights(1)
 	std.TestSetRealm(dummyRealm)
 
-	uassert.Equal(t, bar.BalanceOf(a2u(dummyAddr)), uint64(833))
-	uassert.Equal(t, qux.BalanceOf(a2u(dummyAddr)), uint64(2083))
+	uassert.Equal(t, bar.BalanceOf(dummyAddr), uint64(833))
+	uassert.Equal(t, qux.BalanceOf(dummyAddr), uint64(2083))
 
 	CollectReward()
-	uassert.Equal(t, bar.BalanceOf(a2u(dummyAddr)), uint64(2917))
-	uassert.Equal(t, qux.BalanceOf(a2u(dummyAddr)), uint64(5417))
+	uassert.Equal(t, bar.BalanceOf(dummyAddr), uint64(2917))
+	uassert.Equal(t, qux.BalanceOf(dummyAddr), uint64(5417))
 
 	uassert.Equal(t, userProtocolFeeReward[dummyAddr][barPath], uint64(0))
 	uassert.Equal(t, userProtocolFeeReward[dummyAddr][quxPath], uint64(0))
@@ -222,16 +222,16 @@ func moreReward(t *testing.T) {
 func undelegateAdmin(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	uassert.Equal(t, bar.BalanceOf(a2u(admin)), uint64(99999999996500))
-	uassert.Equal(t, qux.BalanceOf(a2u(admin)), uint64(99999999993500))
+	uassert.Equal(t, bar.BalanceOf(admin), uint64(99999999996500))
+	uassert.Equal(t, qux.BalanceOf(admin), uint64(99999999993500))
 
 	uassert.Equal(t, userProtocolFeeReward[admin][barPath], uint64(582))
 	uassert.Equal(t, userProtocolFeeReward[admin][quxPath], uint64(1082))
 
 	Undelegate(dummyToAddr, 1000001)
 
-	uassert.Equal(t, bar.BalanceOf(a2u(admin)), uint64(99999999997082))
-	uassert.Equal(t, qux.BalanceOf(a2u(admin)), uint64(99999999994582))
+	uassert.Equal(t, bar.BalanceOf(admin), uint64(99999999997082))
+	uassert.Equal(t, qux.BalanceOf(admin), uint64(99999999994582))
 
 	uassert.Equal(t, userProtocolFeeReward[admin][barPath], uint64(0))
 	uassert.Equal(t, userProtocolFeeReward[admin][quxPath], uint64(0))

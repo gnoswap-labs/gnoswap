@@ -811,7 +811,7 @@ func DecreaseLiquidity(
 // If unwrapResult is true and the position involves WUGNOT, any leftover WUGNOT will be
 // unwrapped to GNOT at the end of the operation.
 // Returns tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
-func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string) {
+func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string) 
 	verifyTokenIdAndOwnership(params.tokenId)
 
 	// BEFORE DECREASE LIQUIDITY, COLLECT FEE FIRST
@@ -837,7 +837,11 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	}
 
 	caller := getPrevAddr()
-	beforeWugnotBalance := wugnot.BalanceOf(a2u(caller)) // before unwrap
+	// NOTE: XXX
+	// Currently, wugnot is using users.AddressOrName so we have no choice but to change type for it.
+	// When, wugnot is using std.Address, we can remove converting.
+	// This applies to every wugnot related calls.
+	beforeWugnotBalance := wugnot.BalanceOf(common.AddrToUser(caller)) // before unwrap
 
 	pToken0, pToken1, pFee := splitOf(position.poolKey)
 	burn0, burn1 := pl.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, liquidityToRemove.ToString())
@@ -915,7 +919,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	handleUnwrap(pToken0, pToken1, params.unwrapResult, beforeWugnotBalance, caller)
 
 	return params.tokenId, liquidityToRemove, fee0, fee1, collectAmount0, collectAmount1, position.poolKey
-}
+
 
 // CollectFee collects swap fee from the position
 // Returns tokenId, afterFee0, afterFee1, poolPath, origFee0, origFee1
@@ -953,7 +957,7 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 	// check user wugnot amount
 	// need this value to unwrap fee
 	caller := getPrevAddr()
-	userWugnot := wugnot.BalanceOf(a2u(caller))
+	userWugnot := wugnot.BalanceOf(common.AddrToUser(caller))
 
 	// collect fee
 	amount0, amount1 := pl.Collect(

@@ -3,8 +3,6 @@ package router
 import (
 	"std"
 
-	pusers "gno.land/p/demo/users"
-
 	"gno.land/r/demo/wugnot"
 
 	"gno.land/r/gnoswap/v1/consts"
@@ -52,7 +50,7 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 }
 
 func wugnotBalanceOf(addr std.Address) uint64 {
-	addrToUser := pusers.AddressOrName(addr)
+	addrToUser := addr
 	return wugnot.BalanceOf(addrToUser)
 }
 

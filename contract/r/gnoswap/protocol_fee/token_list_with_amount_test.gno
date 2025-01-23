@@ -9,13 +9,15 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
+	_ "gno.land/r/onbloc/baz"
+	_ "gno.land/r/onbloc/foo"
 )
 
 var (
 	dummyRealm = std.NewCodeRealm("gno.land/r/dummy")
 
 	adminAddr  = consts.ADMIN
-	adminUser  = common.AddrToUser(adminAddr)
+	adminUser  = adminAddr
 	adminRealm = std.NewUserRealm(adminAddr)
 )
 
