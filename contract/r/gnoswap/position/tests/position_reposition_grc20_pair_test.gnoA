@@ -1,13 +1,11 @@
-package tests
+package position
 
 import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/demo/users"
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
@@ -39,12 +37,6 @@ const (
 	TIER_1 uint64 = 1
 	TIER_2 uint64 = 2
 	TIER_3 uint64 = 3
-)
-
-const (
-	// define addresses to use in tests
-	addr01 = testutils.TestAddress("addr01")
-	addr02 = testutils.TestAddress("addr02")
 )
 
 var (

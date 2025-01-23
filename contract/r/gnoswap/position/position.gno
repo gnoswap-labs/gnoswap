@@ -802,7 +802,7 @@ func DecreaseLiquidity(
 // If unwrapResult is true and the position involves WUGNOT, any leftover WUGNOT will be
 // unwrapped to GNOT at the end of the operation.
 // Returns tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
-func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string) 
+func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string) {
 	verifyTokenIdAndOwnership(params.tokenId)
 
 	// BEFORE DECREASE LIQUIDITY, COLLECT FEE FIRST
@@ -910,7 +910,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	handleUnwrap(pToken0, pToken1, params.unwrapResult, beforeWugnotBalance, caller)
 
 	return params.tokenId, liquidityToRemove, fee0, fee1, collectAmount0, collectAmount1, position.poolKey
-
+}
 
 // CollectFee collects swap fee from the position
 // Returns tokenId, afterFee0, afterFee1, poolPath, origFee0, origFee1

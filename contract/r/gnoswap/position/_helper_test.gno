@@ -49,7 +49,7 @@ const (
 	TIER_3 uint64 = 3
 )
 
-const (
+var (
 	// define addresses to use in tests
 	addr01 = testutils.TestAddress("addr01")
 	addr02 = testutils.TestAddress("addr02")
@@ -571,8 +571,6 @@ func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
 
 func ugnotMint(t *testing.T, addr std.Address, denom string, amount int64) {
 	t.Helper()
-	banker := std.GetBanker(std.BankerTypeRealmIssue)
-	banker.IssueCoin(addr, denom, amount)
 	std.TestIssueCoins(addr, std.Coins{{denom, int64(amount)}})
 }
 

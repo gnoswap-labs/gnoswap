@@ -1,4 +1,4 @@
-package tests
+package position
 
 import (
 	"std"
@@ -7,7 +7,6 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/demo/users"
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
@@ -42,7 +41,7 @@ const (
 	TIER_3 uint64 = 3
 )
 
-const (
+var (
 	// define addresses to use in tests
 	addr01 = testutils.TestAddress("addr01")
 	addr02 = testutils.TestAddress("addr02")
@@ -127,6 +126,7 @@ func TestSwap1(t *testing.T) {
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
 		"100",
 		"6550809",
+		max_timeout,
 	)
 	println("amount0, amount1:", amount0, amount1)
 	uassert.Equal(t, amount0, "6508448")
@@ -244,6 +244,7 @@ func TestSwap2(t *testing.T) {
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
 		"100",
 		"2866635",
+		max_timeout,
 	)
 	uassert.Equal(t, amount0, "5000000")
 	uassert.Equal(t, amount1, "-2881042") // -2881041.945
@@ -306,6 +307,7 @@ func TestSwap3(t *testing.T) {
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
 		"100",
 		"559130",
+		max_timeout,
 	)
 	// 1000000,-559976
 	uassert.Equal(t, amount0, "1000000")
@@ -351,11 +353,10 @@ func TestDecreaseLiquidityPosition02(t *testing.T) {
 	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 	oldLiquidities := getPoolFromLpTokenId(t, lpTokenId).Liquidity()
-	println("oldLiquidities:", oldLiquidities.ToString())
 
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 		lpTokenId,
-		"31",
+		"9944318",
 		"2091922",
 		"1005220",
 		max_timeout,
@@ -401,11 +402,10 @@ func TestDecreaseLiquidityPosition02All(t *testing.T) {
 	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	oldLiquidities := getPoolFromLpTokenId(t, lpTokenId).Liquidity()
-	println("oldLiquidities:", oldLiquidities.ToString())
 
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 		lpTokenId,
-		"100",
+		"22134129",
 		"0",
 		"0",
 		max_timeout,
