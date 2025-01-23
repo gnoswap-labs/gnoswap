@@ -41,6 +41,8 @@ type DepositState struct {
 }
 
 // ProjectTierInfo contains information about a project tier
+//
+// TODO: to p/launchpad package with New function.
 type ProjectTierInfo struct {
 	Project       Project
 	Tier          Tier

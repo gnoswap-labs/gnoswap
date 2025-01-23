@@ -41,11 +41,11 @@ func SplitProjectIdAndTier(tierId string) (string, string, error) {
 func ParseTierDuration(tierType string) (uint64, error) {
 	switch tierType {
 	case "30":
-		return TIER30
+		return TIER30, nil
 	case "90":
-		return TIER90
+		return TIER90, nil
 	case "180":
-		return TIER180
+		return TIER180, nil
 	default:
 		return 0, ufmt.Errorf("invalid tierType: %s", tierType)
 	}
@@ -56,11 +56,11 @@ func ParseTierDuration(tierType string) (uint64, error) {
 func FromTierType(tierType string) (uint64, error) {
 	switch tierType {
 	case "30":
-		return TIER30
+		return TIER30, nil
 	case "90":
-		return TIER90
+		return TIER90, nil
 	case "180":
-		return TIER180
+		return TIER180, nil
 	default:
 		return 0, ufmt.Errorf("invalid tierType: %s", tierType)
 	}
