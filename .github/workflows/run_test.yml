@@ -20,33 +20,33 @@ jobs:
             folder: "gno/examples/gno.land/p/gnoswap/int256"
           - name: "p/gnsmath"
             folder: "gno/examples/gno.land/p/gnoswap/gnsmath"
-          - name: "r/gnoswap/v1/common"
+          - name: "r/common"
             folder: "gno/examples/gno.land/r/gnoswap/v1/common"
-          - name: "r/gnoswap/v1/gns"
+          - name: "r/gns"
             folder: "gno/examples/gno.land/r/gnoswap/v1/gns"
-          - name: "r/gnoswap/v1/gnft"
+          - name: "r/gnft"
             folder: "gno/examples/gno.land/r/gnoswap/v1/gnft"
-          - name: "r/gnoswap/v1/gov/xgns"
+          - name: "r/gov/xgns"
             folder: "gno/examples/gno.land/r/gnoswap/v1/gov/xgns"
-          - name: "r/gnoswap/v1/emission"
+          - name: "r/emission"
             folder: "gno/examples/gno.land/r/gnoswap/v1/emission"
-          - name: "r/gnoswap/v1/protocol_fee"
+          - name: "r/protocol_fee"
             folder: "gno/examples/gno.land/r/gnoswap/v1/protocol_fee"
-          - name: "r/gnoswap/v1/pool"
+          - name: "r/pool"
             folder: "gno/examples/gno.land/r/gnoswap/v1/pool"
-          - name: "r/gnoswap/v1/position"
+          - name: "r/position"
             folder: "gno/examples/gno.land/r/gnoswap/v1/position"
-          - name: "r/gnoswap/v1/router"
+          - name: "r/router"
             folder: "gno/examples/gno.land/r/gnoswap/v1/router"
-          - name: "r/gnoswap/v1/staker"
+          - name: "r/staker"
             folder: "gno/examples/gno.land/r/gnoswap/v1/staker"
-          - name: "r/gnoswap/v1/community_pool"
+          - name: "r/community_pool"
             folder: "gno/examples/gno.land/r/gnoswap/v1/community_pool"
-          - name: "r/gnoswap/v1/gov/staker"
+          - name: "r/gov/staker"
             folder: "gno/examples/gno.land/r/gnoswap/v1/gov/staker"
-          - name: "r/gnoswap/v1/gov/governance"
+          - name: "r/gov/governance"
             folder: "gno/examples/gno.land/r/gnoswap/v1/gov/governance"
-          - name: "r/gnoswap/v1/launchpad"
+          - name: "r/launchpad"
             folder: "gno/examples/gno.land/r/gnoswap/v1/launchpad"
 
     steps:
@@ -72,13 +72,11 @@ jobs:
       - name: Config gnovm
         run: |
           sed -i 's/ctx.Timestamp += (count \* 5)/ctx.Timestamp += (count \* 2)/g' ./gno/gnovm/tests/stdlibs/std/std.go
-
       # 5. Build/install `gno` CLI
       - name: Install gno
         run: |
           cd gno
           make install.gno
-
       # 6. Set up Python
       - name: Set up python
         uses: actions/setup-python@v4
@@ -96,7 +94,6 @@ jobs:
         run: |
           cd tmp/gnoswap
           python3 setup.py -w /home/runner/work/gnoswap/gnoswap
-
       # 9. Now run the tests in parallel via the matrix.
       #    Each job will handle ONE contract from the matrix.
       - name: "Run tests for ${{ matrix.name }}"
@@ -104,25 +101,20 @@ jobs:
         # continue-on-error: true
         run: |
           FOLDER="${{ matrix.folder }}"
-
           # 1) Run unit tests first
           gno test ./"$FOLDER" \
             -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
-
           # 2) Remove all _test.gno except _helper_test.gno
           find ./"$FOLDER" -type f -name "*_test.gno" \
             ! -name "_helper_test.gno" \
             -exec rm -f {} +
-
           # 3) One-by-one gnoA tests: rename *.gnoA => *.gno, run, revert
           cd ./"$FOLDER"
           TESTFILES=$(ls | grep '_test.gnoA$' || true)
           for f in $TESTFILES; do
             base="${f%.gnoA}"
             mv "$f" "$base.gno"
-
             gno test . \
               -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
-
             mv "$base.gno" "$f"
           done
