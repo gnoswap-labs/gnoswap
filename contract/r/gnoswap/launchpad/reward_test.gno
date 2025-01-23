@@ -79,48 +79,6 @@ func TestValidateRewardCollection(t *testing.T) {
 	}
 }
 
-func TestCalculateDepositRatioX128(t *testing.T) {
-	tests := []struct {
-		name       string
-		tierAmount uint64
-		amount     uint64
-		expected   string
-	}{
-		{
-			name:       "Equal amounts",
-			tierAmount: 1000,
-			amount:     1000,
-			expected:   "340282366920938463463374607431768211456", // 1.0 in Q128
-		},
-		{
-			name:       "Half amount",
-			tierAmount: 1000,
-			amount:     500,
-			expected:   "170141183460469231731687303715884105728", // 0.5 in Q128
-		},
-		{
-			name:       "Double amount",
-			tierAmount: 500,
-			amount:     1000,
-			expected:   "680564733841876926926749214863536422912", // 2.0 in Q128
-		},
-		{
-			name:       "Zero amount",
-			tierAmount: 1000,
-			amount:     0,
-			expected:   "0",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ratio := calcDepositRatioX128(tt.tierAmount, tt.amount)
-			expected := u256.MustFromDecimal(tt.expected)
-			uassert.Equal(t, 0, ratio.Cmp(expected))
-		})
-	}
-}
-
 func TestProcessDepositReward(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -175,67 +133,6 @@ func TestProcessDepositReward(t *testing.T) {
 
 			reward := state.CalculateReward(depositId)
 			uassert.Equal(t, tt.expectedReward, reward)
-		})
-	}
-}
-
-func TestCalculateTierRewards(t *testing.T) {
-	tests := []struct {
-		name               string
-		tier               Tier
-		currentHeight      uint64
-		lastCalcHeight     uint64
-		expectedRewardX128 string
-		expectedReward     uint64
-		shouldBeZero       bool
-	}{
-		{
-			name: "tierAmountPerBlockX96 is 0",
-			tier: Tier{
-				tierAmountPerBlockX128: u256.Zero(),
-				ended:                  TimeInfo{height: 1000},
-			},
-			currentHeight:  500,
-			lastCalcHeight: 400,
-			shouldBeZero:   true,
-		},
-		{
-			name: "sinceLast is 0",
-			tier: Tier{
-				tierAmountPerBlockX128: u256.NewUint(1000),
-				ended:                  TimeInfo{height: 1000},
-			},
-			currentHeight:  500,
-			lastCalcHeight: 500,
-			shouldBeZero:   true,
-		},
-		{
-			name: "Current height exceeds end height",
-			tier: Tier{
-				tierAmountPerBlockX128: u256.NewUint(1000),
-				ended:                  TimeInfo{height: 450},
-			},
-			currentHeight:      500,
-			lastCalcHeight:     400,
-			expectedRewardX128: "50000", // 1000 * (450-400)
-			expectedReward:     0,       // (50000 / Q96)
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			rewardX128, reward, err := calculateTierRewards(tt.tier, tt.currentHeight, tt.lastCalcHeight)
-
-			uassert.NoError(t, err)
-
-			if tt.shouldBeZero {
-				uassert.Equal(t, true, rewardX128.IsZero())
-				uassert.Equal(t, uint64(0), reward)
-			} else {
-				expected := u256.MustFromDecimal(tt.expectedRewardX128)
-				uassert.Equal(t, 0, rewardX128.Cmp(expected))
-				uassert.Equal(t, tt.expectedReward, reward)
-			}
 		})
 	}
 }

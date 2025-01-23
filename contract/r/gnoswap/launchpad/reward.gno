@@ -202,48 +202,6 @@ func validateRewardCollection(deposit Deposit, height uint64) error {
 	return nil
 }
 
-// calculateTierRewards calculates rewards for each tier
-func calculateTierRewards(tier Tier, currentHeight uint64, lastCalcHeight uint64) (*u256.Uint, uint64, error) {
-	if tier.tierAmountPerBlockX128 == nil {
-		return u256.Zero(), 0, nil
-	}
-
-	if tier.tierAmountPerBlockX128.IsZero() {
-		return u256.Zero(), 0, nil
-	}
-
-	endHeight := minU64(currentHeight, tier.ended.height)
-	sinceLast := endHeight - minU64(endHeight, lastCalcHeight)
-
-	if sinceLast == 0 {
-		return u256.Zero(), 0, nil
-	}
-
-	rewardX128 := new(u256.Uint).Mul(tier.tierAmountPerBlockX128.NilToZero().Clone(), u256.NewUint(sinceLast))
-	reward := new(u256.Uint).Div(rewardX128, q128).Uint64()
-
-	return rewardX128, reward, nil
-}
-
-// calcDepositRatioX128 calculates the deposit ratio with Q128 precision
-func calcDepositRatioX128(tierAmount uint64, amount uint64) *u256.Uint {
-	amountX128 := new(u256.Uint).Mul(u256.NewUint(amount), q128.Clone())
-	amountX128x := new(u256.Uint).Mul(amountX128, u256.NewUint(1_000_000_000))
-
-	tierAmountX128 := new(u256.Uint).Mul(u256.NewUint(tierAmount), q128.Clone())
-
-	depositRatioX96 := new(u256.Uint).Div(amountX128x, tierAmountX128)
-	depositRatioX96 = new(u256.Uint).Mul(depositRatioX96, q128.Clone())
-	depositRatioX96 = new(u256.Uint).Div(depositRatioX96, u256.NewUint(1_000_000_000))
-	return depositRatioX96
-}
-
-// calcProjectTiersRewardPerBlockX96 calculates the reward per block with Q96 precision
-func calcProjectTiersRewardPerBlockX128(tier Tier) *u256.Uint {
-	tierAmountX128 := new(u256.Uint).Mul(u256.NewUint(tier.tierAmount), q128)
-	return new(u256.Uint).Div(tierAmountX128, u256.NewUint(tier.ended.height-tier.started.height))
-}
-
 // calcRewardPerBlockX128 calculates the reward per block with Q128 precision
 func calcRewardPerBlockX128(tierAmount uint64, duration uint64) *u256.Uint {
 	tierAmountX128 := new(u256.Uint).Mul(u256.NewUint(tierAmount), q128)
