@@ -452,9 +452,10 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 			"recipient", deposit.owner.String(),
 			"incentiveId", incentiveId,
 			"rewardToken", rewardToken,
-			"rewardAmount", formatUint(toUser),
+			"rewardAmount", formatUint(amount),
+			"rewardToUser", formatUint(toUser),
+			"rewardToFee", formatUint(amount-toUser),
 			"rewardPenalty", formatUint(externalPenalty),
-			"rewardFee", formatUint(amount-toUser),
 			"isRequestUnwrap", formatBool(unwrapResult),
 		)
 	}

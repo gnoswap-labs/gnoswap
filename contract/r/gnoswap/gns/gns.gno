@@ -234,6 +234,14 @@ func calculateAmountToMint(fromHeight, toHeight int64) uint64 {
 		setHalvingYearMintAmount(year, GetHalvingYearMintAmount(year)+yearAmountToMint)
 		setHalvingYearLeftAmount(year, GetHalvingYearLeftAmount(year)-yearAmountToMint)
 
+		std.Emit(
+			"CalculateAmountToMint",
+			"fromHeight", formatInt(curFrom),
+			"toHeight", formatInt(mintUntilHeight),
+			"year", formatInt(year),
+			"singleBlockAmount", formatUint(singleBlockAmount),
+		)
+
 		// update fromHeight for next year (if necessary)
 		curFrom = mintUntilHeight + 1
 		if curFrom > toHeight {
