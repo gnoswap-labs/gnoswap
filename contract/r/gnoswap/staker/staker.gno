@@ -2,7 +2,6 @@ package staker
 
 import (
 	"std"
-	"strconv"
 	"time"
 
 	"gno.land/p/demo/avl"
@@ -295,11 +294,13 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		"StakeToken",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpTokenId", strconv.FormatUint(tokenId, 10),
+		"positionId", formatUint(tokenId),
 		"poolPath", poolPath,
 		"amount0", token0Amount,
 		"amount1", token1Amount,
 		"liquidity", liquidity.ToString(),
+		"positionUpperTick", formatInt(tickUpper),
+		"positionLowerTick", formatInt(tickLower),
 		"currentTick", formatInt(currentTick),
 		"isInRange", formatBool(isInRange),
 	)
@@ -374,11 +375,11 @@ func transferDeposit(tokenId uint64, owner, caller, to std.Address) error {
 
 ////////////////////////////////////////////////////////////
 
-// ectReward harvests accumulated rewards for a staked position. This includes both
-// inernal GNS emission and external incentive rewards.
+// CollectReward harvests accumulated rewards for a staked position. This includes both
+// internal GNS emission and external incentive rewards.
 //
 // State Transition:
-//  1. Warm-up amounts are cleares for both internal and external rewards
+//  1. Warm-up amounts are clears for both internal and external rewards
 //  2. Reward tokens are transferred to the owner
 //  3. Penalty fees are transferred to protocol/community addresses
 //  4. GNS balance is recalculated
@@ -399,13 +400,13 @@ func transferDeposit(tokenId uint64, owner, caller, to std.Address) error {
 func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 	assertOnlyNotHalted()
 
-	en.MintAndDistributeGns()
-
 	deposit := deposits.Get(tokenId)
 	caller := getPrevAddr()
 	if err := common.SatisfyCond(caller == deposit.owner); err != nil {
 		panic(addDetailToError(errNoPermission, ufmt.Sprintf("caller is not owner of tokenId(%d)", tokenId)))
 	}
+
+	en.MintAndDistributeGns()
 
 	currentHeight := std.GetHeight()
 	// get all internal and external rewards
@@ -413,6 +414,8 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 
 	// update lastCollectHeight to current height
 	deposit.lastCollectHeight = currentHeight
+
+	prevAddr, prevPkgPath := getPrev()
 
 	// transfer external rewards to user
 	externalReward := reward.External
@@ -428,7 +431,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 		incentive.rewardAmount -= amount
 		externalIncentives.Set(incentiveId, incentive)
 
-		toUser := handleUnstakingFee(rewardToken, amount, false, tokenId, incentive.targetPoolPath)
+		toUser := handleUnStakingFee(rewardToken, amount, false, tokenId, incentive.targetPoolPath)
 
 		teller := common.GetTokenTeller(rewardToken)
 		teller.Transfer(deposit.owner, toUser)
@@ -440,48 +443,61 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 		if unwrapResult && rewardToken == consts.WUGNOT_PATH {
 			unwrap(toUser)
 		}
+		std.Emit(
+			"CollectReward",
+			"prevAddr", prevAddr,
+			"prevRealm", prevPkgPath,
+			"positionId", formatUint(tokenId),
+			"poolPath", deposit.targetPoolPath,
+			"recipient", deposit.owner.String(),
+			"incentiveId", incentiveId,
+			"rewardToken", rewardToken,
+			"rewardAmount", formatUint(toUser),
+			"rewardPenalty", formatUint(externalPenalty),
+			"rewardFee", formatUint(amount-toUser),
+			"isRequestUnwrap", formatBool(unwrapResult),
+		)
 	}
 
 	// internal reward to user
-	toUser := handleUnstakingFee(consts.GNS_PATH, reward.Internal, true, tokenId, deposit.targetPoolPath)
-	totalEmissionSent += toUser
+	toUser := handleUnStakingFee(consts.GNS_PATH, reward.Internal, true, tokenId, deposit.targetPoolPath)
 
 	if toUser > 0 {
+		// internal reward to user
+		totalEmissionSent += toUser
 		gns.Transfer(deposit.owner, toUser)
 
 		// internal penalty to community pool
-		gns.Transfer(consts.COMMUNITY_POOL_ADDR, reward.InternalPenalty)
 		totalEmissionSent += reward.InternalPenalty
+		gns.Transfer(consts.COMMUNITY_POOL_ADDR, reward.InternalPenalty)
 	}
 
 	unClaimableInternal := ProcessUnClaimableReward(deposit.targetPoolPath, currentHeight)
-	totalEmissionSent += unClaimableInternal
 	if unClaimableInternal > 0 {
-		// internal unclaimable to community pool
+		// internal unClaimable to community pool
+		totalEmissionSent += unClaimableInternal
 		gns.Transfer(consts.COMMUNITY_POOL_ADDR, unClaimableInternal)
 	}
 
-	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"CollectReward",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpTokenId", formatUint(tokenId),
-		"internal_poolPath", deposit.targetPoolPath,
-		"internal_incentiveId", "INTERNAL",
-		"internal_rewardToken", consts.GNS_PATH,
-		"internal_recipient", deposit.owner.String(),
-		"internal_reward", formatUint(reward.Internal),
-		"internal_toUser", formatUint(toUser),
-		"internal_toFee", formatUint(reward.Internal-toUser),
-		"internal_toPenalty", formatUint(reward.InternalPenalty),
-		"internal_unClaimable", formatUint(unClaimableInternal),
+		"positionId", formatUint(tokenId),
+		"poolPath", deposit.targetPoolPath,
+		"recipient", deposit.owner.String(),
+		"rewardToken", consts.GNS_PATH,
+		"rewardAmount", formatUint(reward.Internal),
+		"rewardToUser", formatUint(toUser),
+		"rewardToFee", formatUint(reward.Internal-toUser),
+		"rewardPenalty", formatUint(reward.InternalPenalty),
+		"rewardUnClaimableAmount", formatUint(unClaimableInternal),
 	)
 
 	return formatUint(toUser), formatUint(reward.InternalPenalty)
 }
 
-// UnstakeToken withdraws an LP token from staking, collecting all pending rewards
+// UnStakeToken withdraws an LP token from staking, collecting all pending rewards
 // and returning the token to its original owner.
 //
 // State transitions:
@@ -497,7 +513,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 // Requirements:
 // - Contract must not be halted
 // - Position must be staked (have deposit record)
-// - Rewards are automatically collected before unstaking
+// - Rewards are automatically collected before unStaking
 //
 // Params:
 // - tokenId (uint64): ID of the staked LP token
@@ -509,10 +525,10 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 // - token1Amount (string): Final amount of token1 in the position
 //
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#unstaketoken
-func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { // poolPath, token0Amount, token1Amount
+func UnStakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { // poolPath, token0Amount, token1Amount
 	assertOnlyNotHalted()
 
-	// unstaked status
+	// unStaked status
 	deposit := deposits.Get(tokenId)
 	poolPath := deposit.targetPoolPath
 
@@ -528,16 +544,16 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
-		"UnstakeToken",
+		"UnStakeToken",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpTokenId", formatUint(tokenId),
-		"unwrapResult", formatBool(unwrapResult),
-		"internal_poolPath", poolPath,
-		"internal_from", deposit.owner.String(),
-		"internal_to", consts.STAKER_ADDR.String(),
-		"internal_amount0", token0Amount,
-		"internal_amount1", token1Amount,
+		"positionId", formatUint(tokenId),
+		"poolPath", poolPath,
+		"isRequestUnwrap", formatBool(unwrapResult),
+		"from", consts.STAKER_ADDR.String(),
+		"to", deposit.owner.String(),
+		"amount0", token0Amount,
+		"amount1", token1Amount,
 	)
 
 	return poolPath, token0Amount, token1Amount
@@ -579,15 +595,19 @@ func applyUnStake(tokenId uint64) {
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
-		"UnstakeToken",
+		"UnStakeToken",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpTokenId", formatUint(tokenId),
-		"internal_poolPath", deposit.targetPoolPath,
-		"internal_from", GetOrigPkgAddr().String(),
-		"internal_to", deposit.owner.String(),
-		"internal_amount0", token0Amount,
-		"internal_amount1", token1Amount,
+		"positionId", formatUint(tokenId),
+		"poolPath", deposit.targetPoolPath,
+		"from", GetOrigPkgAddr().String(),
+		"to", deposit.owner.String(),
+		"amount0", token0Amount,
+		"amount1", token1Amount,
+		"liquidity", deposit.liquidity.ToString(),
+		"positionUpperTick", formatInt(upperTick),
+		"positionLowerTick", formatInt(lowerTick),
+		"currentTick", formatInt(currentTick),
 	)
 }
 
