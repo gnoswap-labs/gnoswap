@@ -828,10 +828,6 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	}
 
 	caller := getPrevAddr()
-	// NOTE: XXX
-	// Currently, wugnot is using users.AddressOrName so we have no choice but to change type for it.
-	// When, wugnot is using std.Address, we can remove converting.
-	// This applies to every wugnot related calls.
 	beforeWugnotBalance := wugnot.BalanceOf(caller) // before unwrap
 
 	pToken0, pToken1, pFee := splitOf(position.poolKey)

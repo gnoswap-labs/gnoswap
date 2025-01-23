@@ -50,7 +50,7 @@ func TestSwapRouteWugnotquxExactIn(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-ROUTER-005] invalid input || router.gno__SwapRoute() || ugnot sent by user(12345) is not equal to amountSpecified(3)`,
+		`[GNOSWAP-ROUTER-005] invalid input data || invalid ExactInSwapOperation: ugnot sent by user(12345) is not equal to amountSpecified(3)`,
 		func() {
 			ExactInSwapRoute(
 				consts.GNOT, // inputToken

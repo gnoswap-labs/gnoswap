@@ -10,9 +10,28 @@ import (
 )
 
 var (
-	adminAddr  = consts.ADMIN
-	adminUser  = adminAddr
-	adminRealm = std.NewUserRealm(adminAddr)
+	admin     = consts.ADMIN
+	adminAddr = consts.ADMIN
+	adminUser = adminAddr
+
+	fooPath string = "gno.land/r/onbloc/foo"
+	barPath string = "gno.land/r/onbloc/bar"
+	bazPath string = "gno.land/r/onbloc/baz"
+	quxPath string = "gno.land/r/onbloc/qux"
+	oblPath string = "gno.land/r/onbloc/obl"
+
+	fee100  uint32 = 100
+	fee500  uint32 = 500
+	fee3000 uint32 = 3000
+
+	maxApprove uint64 = 18446744073709551615
+)
+
+// Realms to mock frames
+var (
+	adminRealm = std.NewUserRealm(admin)
+	posRealm   = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
 )
 
 // MockXGNSToken implements basic functionality for testing xgns token
@@ -135,4 +154,16 @@ func createMockXGNSTeller() *MockTokenTeller {
 		balance: 1000,
 		addr:    testutils.TestAddress("mock_xgns"),
 	}
+}
+
+/* HELPER */
+func ugnotBalanceOf(addr std.Address) uint64 {
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+
+	coins := testBanker.GetCoins(addr)
+	if len(coins) == 0 {
+		return 0
+	}
+
+	return uint64(coins.AmountOf("ugnot"))
 }
