@@ -7,7 +7,7 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 func TestGetOrigPkgAddr(t *testing.T) {

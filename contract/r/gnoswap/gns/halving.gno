@@ -7,7 +7,7 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/json"
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 // init 12 years halving tier block

@@ -4,11 +4,11 @@ import (
 	"std"
 	"time"
 
-	ufmt "gno.land/p/demo/ufmt"
 	"gno.land/p/demo/json"
+	ufmt "gno.land/p/demo/ufmt"
+	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gnft"
 	pl "gno.land/r/gnoswap/v1/pool"
 )

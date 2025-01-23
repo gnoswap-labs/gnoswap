@@ -7,7 +7,7 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
 

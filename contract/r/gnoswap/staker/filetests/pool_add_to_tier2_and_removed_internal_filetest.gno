@@ -20,8 +20,8 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/gns"

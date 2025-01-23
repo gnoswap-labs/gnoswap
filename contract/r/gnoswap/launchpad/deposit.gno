@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 	gs "gno.land/r/gnoswap/v1/gov/staker"

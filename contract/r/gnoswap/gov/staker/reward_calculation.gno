@@ -6,8 +6,8 @@ import (
 	en "gno.land/r/gnoswap/v1/emission"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/p/demo/avl"
 	ufmt "gno.land/p/demo/ufmt"

@@ -2,8 +2,8 @@ package common
 
 import (
 	"gno.land/p/demo/ufmt"
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/r/gnoswap/v1/consts"
 )
 
 // toAscendingOrder checks if the first value is greater than
