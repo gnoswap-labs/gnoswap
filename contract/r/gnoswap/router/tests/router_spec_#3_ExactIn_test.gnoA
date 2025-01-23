@@ -48,7 +48,6 @@ func TestPositionMint(t *testing.T) {
 }
 
 func TestSwapRouteFooBarExactIn(t *testing.T) {
-	t.Skip("TODO: token not registered")
 	std.TestSetRealm(adminRealm)
 
 	bar.Approve(consts.ROUTER_ADDR, 1000000)

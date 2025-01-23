@@ -9,7 +9,6 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
 	en "gno.land/r/gnoswap/v1/emission"
@@ -95,7 +94,7 @@ func finalizeSwap(
 
 	afterFee := handleSwapFee(outputToken, resultAmountOut)
 
-	userNewWugnotBalance := wugnot.BalanceOf(common.AddrToUser(std.PrevRealm().Addr()))
+	userNewWugnotBalance := wugnot.BalanceOf(std.PrevRealm().Addr())
 	if inputToken == consts.GNOT {
 		totalBefore := userBeforeWugnotBalance + userWrappedWugnot
 		spend := totalBefore - userNewWugnotBalance

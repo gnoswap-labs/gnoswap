@@ -19,7 +19,6 @@ import (
 )
 
 func TestExactInputSinglePool1_to_0(t *testing.T) {
-	t.Skip("TODO: fail with token registration error")
 	// ================================ Pool Setup & Add Liquidity================================================
 	std.TestSetRealm(adminRealm)
 

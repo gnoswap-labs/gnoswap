@@ -129,7 +129,7 @@ func TokenBalance(t *testing.T, tokenPath string, owner std.Address) uint64 {
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
-		return wugnot.BalanceOf(common.AddrToUser(owner))
+		return wugnot.BalanceOf(owner)
 	case gnsPath:
 		return gns.BalanceOf(owner)
 	case barPath:
@@ -151,7 +151,7 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender std.Address) 
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
-		return wugnot.Allowance(common.AddrToUser(owner), common.AddrToUser(spender))
+		return wugnot.Allowance(owner, spender)
 	case gnsPath:
 		return gns.Allowance(owner, spender)
 	case barPath:
@@ -223,7 +223,7 @@ func LPTokenUnStake(t *testing.T, owner std.Address, tokenId uint64, unwrap bool
 func wugnotApprove(t *testing.T, owner, spender std.Address, amount uint64) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(owner))
-	wugnot.Approve(common.AddrToUser(spender), amount)
+	wugnot.Approve(spender, amount)
 }
 
 func gnsApprove(t *testing.T, owner, spender std.Address, amount uint64) {
@@ -265,7 +265,7 @@ func quxApprove(t *testing.T, owner, spender std.Address, amount uint64) {
 func wugnotTransfer(t *testing.T, to std.Address, amount uint64) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(admin))
-	wugnot.Transfer(common.AddrToUser(to), amount)
+	wugnot.Transfer(to, amount)
 }
 
 func gnsTransfer(t *testing.T, to std.Address, amount uint64) {
