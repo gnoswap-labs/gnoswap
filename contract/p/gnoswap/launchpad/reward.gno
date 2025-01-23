@@ -4,12 +4,16 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+const (
+	Q128 string = "340282366920938463463374607431768211456" // 2 ** 128
+)
+
 var (
 	q128 = u256.Zero()
 )
 
 func init() {
-	q128 = u256.MustFromDecimal(consts.Q128)
+	q128 = u256.MustFromDecimal(Q128)
 }
 
 // CalculateTierRewardRate calculates the reward per block with Q128 precision

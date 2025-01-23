@@ -13,12 +13,6 @@ import (
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 )
 
-// RewardCalculationResult represents the result of reward calculation
-type RewardCalculationResult struct {
-	Reward       uint64
-	UpdatedTiers map[string]Tier
-}
-
 // CollectProtocolFee collects protocol fee from gov/staker
 // each project's recipient wallet will be rewarded
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectprotocolfee
