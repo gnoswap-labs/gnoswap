@@ -203,6 +203,8 @@ func validateRewardCollection(deposit Deposit, height uint64) error {
 }
 
 // calcRewardPerBlockX128 calculates the reward per block with Q128 precision
+//
+// TODO: use p/launchpad/reward.gno CalculateTierRewardRate
 func calcRewardPerBlockX128(tierAmount uint64, duration uint64) *u256.Uint {
 	tierAmountX128 := new(u256.Uint).Mul(u256.NewUint(tierAmount), q128)
 	return new(u256.Uint).Div(tierAmountX128, u256.NewUint(duration))
