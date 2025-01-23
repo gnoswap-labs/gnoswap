@@ -56,7 +56,7 @@ func TestMintGns(t *testing.T) {
 		std.TestSkipHeights(123)    // pass some block to bypass last block check
 		common.SetHaltByAdmin(true) // set halt
 		uassert.PanicsWithMessage(t, "[GNOSWAP-COMMON-002] halted || GnoSwap is halted", func() {
-			MintGns(a2u(consts.ADMIN))
+			MintGns(consts.ADMIN)
 		})
 
 		common.SetHaltByAdmin(false) // unset halt

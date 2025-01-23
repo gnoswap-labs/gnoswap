@@ -38,7 +38,7 @@ func skip50Blocks() {
 	uassert.Equal(t, std.GetHeight(), int64(173))
 
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	gns.MintGns(user01Addr)) // 14269406 * 50 = 71347030
+	gns.MintGns(user01Addr) // 14269406 * 50 = 71347030
 	uassert.Equal(t, uint64(713470300), gns.GetMintedEmissionAmount())
 }
 
@@ -48,7 +48,7 @@ func blockTime4000ms() {
 
 	std.TestSkipHeights(1)
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	gns.MintGns(user01Addr))                                                // 2853881
+	gns.MintGns(user01Addr)                                                     // 2853881
 	uassert.Equal(t, uint64(713470300+28538812), gns.GetMintedEmissionAmount()) // 742009112
 
 	// next halving year start/end block

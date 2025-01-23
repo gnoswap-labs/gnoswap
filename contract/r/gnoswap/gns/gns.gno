@@ -69,17 +69,6 @@ func KnownAccounts() int {
 	return Token.KnownAccounts()
 }
 
-func BalanceOfAddress(owner std.Address) uint64 {
-	common.AssertValidAddr(owner)
-	return Token.BalanceOf(owner)
-}
-
-func AllowanceOfAddress(owner, spender std.Address) uint64 {
-	common.AssertValidAddr(owner)
-	common.AssertValidAddr(spender)
-	return Token.Allowance(owner, spender)
-}
-
 func BalanceOf(owner std.Address) uint64 {
 	return UserTeller.BalanceOf(owner)
 }
