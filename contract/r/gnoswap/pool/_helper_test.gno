@@ -55,6 +55,7 @@ var (
 
 var (
 	admin       = consts.ADMIN
+	adminAddr   = admin
 	alice       = testutils.TestAddress("alice")
 	pool        = consts.POOL_ADDR
 	protocolFee = consts.PROTOCOL_FEE_ADDR

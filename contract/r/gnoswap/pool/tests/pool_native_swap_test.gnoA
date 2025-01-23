@@ -49,7 +49,7 @@ func TestMint(t *testing.T) {
 
 	std.TestSetRealm(adminRealm)
 	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	// Mint
 	std.TestSetRealm(posRealm)
@@ -109,7 +109,7 @@ func TestSwapSellNative(t *testing.T) {
 	uassert.Equal(t, adminOldT1Bal, uint64(99999899223091)) // wugnot
 
 	std.TestSetRealm(adminRealm)
-	wugnot.Approve(consts.POOL_ADDR, 27123)
+	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), 27123)
 
 	std.TestSetRealm(rouRealm)
 	amount0, amount1 := Swap( // ugnot 10_000 > foo ??
