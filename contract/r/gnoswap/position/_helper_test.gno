@@ -663,7 +663,6 @@ func burnAllNFT(t *testing.T) {
 }
 
 func TestBeforeResetPositionObject(t *testing.T) {
-	t.Skip("only available for single file(current file) test")
 	// make actual data to test resetting not only position's state but also pool's state
 	std.TestSetRealm(adminRealm)
 
@@ -679,7 +678,6 @@ func TestBeforeResetPositionObject(t *testing.T) {
 }
 
 func TestResetObject(t *testing.T) {
-	t.Skip("only available for single file(current file) test")
 	resetObject(t)
 
 	uassert.Equal(t, positions.Size(), 0, "positions should be empty")
@@ -687,7 +685,6 @@ func TestResetObject(t *testing.T) {
 }
 
 func TestBurnTokens(t *testing.T) {
-	t.Skip("only available for single file(current file) test")
 	burnTokens(t)
 
 	uassert.Equal(t, foo.BalanceOf(addr01), uint64(0)) // 100_000_000 -> 0
@@ -695,7 +692,6 @@ func TestBurnTokens(t *testing.T) {
 }
 
 func TestBurnAllNFT(t *testing.T) {
-	t.Skip("only available for single file(current file) test")
 	burnAllNFT(t)
 	uassert.Equal(t, gnft.TotalSupply(), uint64(0), "gnft total supply should be 0")
 }

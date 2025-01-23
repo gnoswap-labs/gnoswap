@@ -387,12 +387,15 @@ func TestSwap_Failures(t *testing.T) {
 }
 
 func TestDrySwap_Failures(t *testing.T) {
-	t.Skip("can not mock function")
+	std.TestSetRealm(adminRealm)
+	SetPoolCreationFeeByAdmin(0)
+	CreatePool(barPath, bazPath, fee100, "79228162514264337593543950336")
+
 	// mockPool := &Pool{
-	// 	token0Path:  "token0",
-	// 	token1Path:  "token1",
-	// 	fee:         3000,
-	// 	tickSpacing: 60,
+	// 	token0Path:  barPath,
+	// 	token1Path:  bazPath,
+	// 	fee:         fee100,
+	// 	tickSpacing: 10,
 	// 	slot0: Slot0{
 	// 		sqrtPriceX96: u256.MustFromDecimal("1000000000000000000"), // 1.0
 	// 		tick:         0,
@@ -415,80 +418,72 @@ func TestDrySwap_Failures(t *testing.T) {
 	// 	positions:            avl.NewTree(),
 	// }
 
-	// originalGetPool := GetPool
-	// defer func() {
-	// 	GetPool = originalGetPool
-	// }()
-	// GetPool = func(token0Path, token1Path string, fee uint32) *Pool {
-	// 	return mockPool
-	// }
+	tests := []struct {
+		name              string
+		token0Path        string
+		token1Path        string
+		fee               uint32
+		zeroForOne        bool
+		amountSpecified   string
+		sqrtPriceLimitX96 string
+		expectAmount0     string
+		expectAmount1     string
+		expectSuccess     bool
+	}{
+		{
+			name:              "zero amount token0 to token1",
+			token0Path:        barPath,
+			token1Path:        bazPath,
+			fee:               fee100,
+			zeroForOne:        true,
+			amountSpecified:   "0",
+			sqrtPriceLimitX96: "79228162514264337593543950337",
+			expectAmount0:     "0",
+			expectAmount1:     "0",
+			expectSuccess:     false,
+		},
+		{
+			name:              "insufficient balance",
+			token0Path:        barPath,
+			token1Path:        bazPath,
+			fee:               fee100,
+			zeroForOne:        false,
+			amountSpecified:   "2000000000",
+			sqrtPriceLimitX96: "79228162514264337593543950337",
+			expectAmount0:     "0",
+			expectAmount1:     "0",
+			expectSuccess:     false,
+		},
+		{
+			name:              "insufficient balance token1 to token0",
+			token0Path:        barPath,
+			token1Path:        bazPath,
+			fee:               fee100,
+			zeroForOne:        false,
+			amountSpecified:   "3000000000",
+			sqrtPriceLimitX96: "79228162514264337593543950337",
+			expectAmount0:     "0",
+			expectAmount1:     "0",
+			expectSuccess:     false,
+		},
+	}
 
-	// tests := []struct {
-	// 	name              string
-	// 	token0Path        string
-	// 	token1Path        string
-	// 	fee               uint32
-	// 	zeroForOne        bool
-	// 	amountSpecified   string
-	// 	sqrtPriceLimitX96 string
-	// 	expectAmount0     string
-	// 	expectAmount1     string
-	// 	expectSuccess     bool
-	// }{
-	// 	{
-	// 		name:              "zero amount token0 to token1",
-	// 		token0Path:        "token0",
-	// 		token1Path:        "token1",
-	// 		fee:               3000,
-	// 		zeroForOne:        true,
-	// 		amountSpecified:   "0",
-	// 		sqrtPriceLimitX96: "900000000000000000",
-	// 		expectAmount0:     "0",
-	// 		expectAmount1:     "0",
-	// 		expectSuccess:     false,
-	// 	},
-	// 	{
-	// 		name:              "insufficient balance",
-	// 		token0Path:        "token0",
-	// 		token1Path:        "token1",
-	// 		fee:               3000,
-	// 		zeroForOne:        false,
-	// 		amountSpecified:   "2000000000",
-	// 		sqrtPriceLimitX96: "1100000000000000000",
-	// 		expectAmount0:     "0",
-	// 		expectAmount1:     "0",
-	// 		expectSuccess:     false,
-	// 	},
-	// 	{
-	// 		name:              "insufficient balance token1 to token0",
-	// 		token0Path:        "token0",
-	// 		token1Path:        "token1",
-	// 		fee:               3000,
-	// 		zeroForOne:        false,
-	// 		amountSpecified:   "3000000000",
-	// 		sqrtPriceLimitX96: "1100000000000000000",
-	// 		expectAmount0:     "0",
-	// 		expectAmount1:     "0",
-	// 		expectSuccess:     false,
-	// 	},
-	// }
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			amount0, amount1, success := DrySwap(
+				tt.token0Path,
+				tt.token1Path,
+				tt.fee,
+				tt.zeroForOne,
+				tt.amountSpecified,
+				tt.sqrtPriceLimitX96,
+			)
 
-	// for _, tt := range tests {
-	// 	t.Run(tt.name, func(t *testing.T) {
-	// 		amount0, amount1, success := DrySwap(
-	// 			tt.token0Path,
-	// 			tt.token1Path,
-	// 			tt.fee,
-	// 			tt.zeroForOne,
-	// 			tt.amountSpecified,
-	// 			tt.sqrtPriceLimitX96,
-	// 		)
-
-	// 		uassert.Equal(t, success, tt.expectSuccess)
-	// 		uassert.Equal(t, amount0, tt.expectAmount0)
-	// 		uassert.Equal(t, amount1, tt.expectAmount1)
-	// 	})
-	// }
+			uassert.Equal(t, success, tt.expectSuccess)
+			uassert.Equal(t, amount0, tt.expectAmount0)
+			uassert.Equal(t, amount1, tt.expectAmount1)
+		})
+	}
 }
 
 func TestSwapAndDrySwapComparison(t *testing.T) {
