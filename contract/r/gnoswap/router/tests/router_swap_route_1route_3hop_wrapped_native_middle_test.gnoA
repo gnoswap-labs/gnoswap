@@ -1,4 +1,4 @@
-package tests
+package router
 
 import (
 	"std"
@@ -46,7 +46,7 @@ func TestPositionMintGnsGnot(t *testing.T) {
 	wugnot.Deposit()
 
 	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.GNS_PATH, consts.WRAPPED_WUGNOT, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr)
 
@@ -67,7 +67,7 @@ func TestPositionMintGnotBar(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 	wugnot.Deposit()
 
-	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.WRAPPED_WUGNOT, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr)

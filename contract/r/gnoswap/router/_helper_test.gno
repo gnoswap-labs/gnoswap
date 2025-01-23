@@ -49,7 +49,7 @@ const (
 	FEE_HIGH   uint32 = 10000
 )
 
-const (
+var (
 	// define addresses to use in tests
 	addr01 = testutils.TestAddress("addr01")
 	addr02 = testutils.TestAddress("addr02")

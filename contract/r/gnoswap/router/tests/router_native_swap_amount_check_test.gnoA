@@ -1,4 +1,4 @@
-package tests
+package router
 
 import (
 	"std"
@@ -45,7 +45,7 @@ func TestSwapRouteWugnotquxExactIn(t *testing.T) {
 	t.Skip("TODO: fail with unregistered token panic")
 	std.TestSetRealm(adminRealm)
 
-	wugnot.Approve(consts.ROUTER_ADDR, 1000000)
+	wugnot.Approve(common.AddrToUser(consts.ROUTER_ADDR), 1000000)
 	qux.Approve(consts.ROUTER_ADDR, 1000000)
 	std.TestSetOrigSend(std.Coins{{"ugnot", 12345}}, nil) // sented ugnot amount
 
