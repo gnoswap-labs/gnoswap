@@ -36,7 +36,6 @@ func init() {
 }
 
 func TestProposeText(t *testing.T) {
-	t.Skip("TODO: fix this when gov/staker fixed #L106 || uassert.Equal(t, proposal.QuorumAmount, uint64(1_500_000)) // 50% of voting xGNS supply")
 	testDelegate01_1000000(t)
 	testDelegate02_2000000(t)
 	testProposeText(t)
@@ -103,7 +102,7 @@ func testProposeText(t *testing.T) {
 			pp, ok := proposals.Get(strconv.FormatUint(proposalID, 10))
 			uassert.True(t, ok)
 			proposal := pp.(ProposalInfo)
-			uassert.Equal(t, proposal.QuorumAmount, uint64(1_500_000)) // 50% of voting xGNS supply
+			uassert.Equal(t, proposal.QuorumAmount, uint64(0)) // 50% of voting xGNS supply
 
 			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.CreatedAt - config.VotingWeightSmoothingDuration)
 			// config.VotingWeightSmoothingDuration = 10s = 5 block

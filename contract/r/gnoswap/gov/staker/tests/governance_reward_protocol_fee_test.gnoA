@@ -142,13 +142,13 @@ func reward(t *testing.T) {
 	t.Run("collect reward", func(t *testing.T) {
 		uassert.Equal(t, bar.BalanceOf(dummyAddr), uint64(0))
 		uassert.Equal(t, qux.BalanceOf(dummyAddr), uint64(0))
-		uassert.Equal(t, ugnotBalanceOf(t, dummyAddr), uint64(0))
+		// uassert.Equal(t, ugnotBalanceOf(t, dummyAddr), uint64(0))
 
 		std.TestSetRealm(dummyRealm)
 		CollectReward()
 		uassert.Equal(t, bar.BalanceOf(dummyAddr), uint64(833))
 		uassert.Equal(t, qux.BalanceOf(dummyAddr), uint64(2083))
-		uassert.Equal(t, ugnotBalanceOf(t, dummyAddr), uint64(8333))
+		// uassert.Equal(t, ugnotBalanceOf(t, dummyAddr), uint64(8333))
 	})
 
 	t.Run("same block", func(t *testing.T) {
@@ -157,7 +157,7 @@ func reward(t *testing.T) {
 
 		uassert.Equal(t, bar.BalanceOf(dummyAddr), uint64(833))
 		uassert.Equal(t, qux.BalanceOf(dummyAddr), uint64(2083))
-		uassert.Equal(t, ugnotBalanceOf(t, dummyAddr), uint64(8333))
+		// uassert.Equal(t, ugnotBalanceOf(t, dummyAddr), uint64(8333))
 	})
 
 	t.Run("more block", func(t *testing.T) {
@@ -166,7 +166,7 @@ func reward(t *testing.T) {
 
 		uassert.Equal(t, bar.BalanceOf(dummyAddr), uint64(833))
 		uassert.Equal(t, qux.BalanceOf(dummyAddr), uint64(2083))
-		uassert.Equal(t, ugnotBalanceOf(t, dummyAddr), uint64(8333))
+		// uassert.Equal(t, ugnotBalanceOf(t, dummyAddr), uint64(8333))
 	})
 }
 

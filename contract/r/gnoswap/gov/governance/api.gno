@@ -40,7 +40,7 @@ func GetProposals() string {
 	proposals.Iterate("", "", func(key string, value interface{}) bool {
 		proposalObj := getProposalById(proposalId)
 		proposalArr.AppendArray(proposalObj)
-		return true
+		return false
 	})
 
 	proposalsObj.AppendObject("proposals", proposalArr)
