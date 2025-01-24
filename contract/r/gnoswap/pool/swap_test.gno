@@ -391,32 +391,6 @@ func TestDrySwap_Failures(t *testing.T) {
 	SetPoolCreationFeeByAdmin(0)
 	CreatePool(barPath, bazPath, fee100, "79228162514264337593543950336")
 
-	// mockPool := &Pool{
-	// 	token0Path:  barPath,
-	// 	token1Path:  bazPath,
-	// 	fee:         fee100,
-	// 	tickSpacing: 10,
-	// 	slot0: Slot0{
-	// 		sqrtPriceX96: u256.MustFromDecimal("1000000000000000000"), // 1.0
-	// 		tick:         0,
-	// 		feeProtocol:  0,
-	// 		unlocked:     true,
-	// 	},
-	// 	liquidity: u256.MustFromDecimal("1000000000000000000"), // 1.0
-	// 	balances: Balances{
-	// 		token0: u256.MustFromDecimal("1000000000"),
-	// 		token1: u256.MustFromDecimal("1000000000"),
-	// 	},
-	// 	protocolFees: ProtocolFees{
-	// 		token0: u256.Zero(),
-	// 		token1: u256.Zero(),
-	// 	},
-	// 	feeGrowthGlobal0X128: u256.Zero(),
-	// 	feeGrowthGlobal1X128: u256.Zero(),
-	// 	tickBitmaps:          avl.NewTree(),
-	// 	ticks:                avl.NewTree(),
-	// 	positions:            avl.NewTree(),
-	// }
 
 	tests := []struct {
 		name              string
