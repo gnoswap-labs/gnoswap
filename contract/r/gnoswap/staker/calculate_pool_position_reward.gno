@@ -1,7 +1,7 @@
 package staker
 
 import (
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )

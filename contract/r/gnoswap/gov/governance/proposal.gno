@@ -53,6 +53,9 @@ func ProposeText(
 	// votingMax does not include quantities delegated through Launchpad.
 	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
 
+	maxVotingWeight := u256.NewUint(votingMax)
+	quorumAmount := maxVotingWeight.Uint64() * config.Quorum / 100
+
 	proposal := ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: Text,
@@ -63,10 +66,10 @@ func ProposeText(
 		},
 		Yea:                       u256.Zero(),
 		Nay:                       u256.Zero(),
-		MaxVotingWeight:           u256.NewUint(votingMax),
+		MaxVotingWeight:           maxVotingWeight,
 		PossibleAddressWithWeight: possibleAddressWithWeight,
 		ConfigVersion:             uint64(configVersions.Size()), // use latest config version
-		QuorumAmount:              xgns.VotingSupply() * config.Quorum / 100,
+		QuorumAmount:              quorumAmount,
 		Title:                     title,
 		Description:               description,
 	}
@@ -83,10 +86,10 @@ func ProposeText(
 		"title", title,
 		"description", description,
 		"proposalId", formatUint(proposalId),
-		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
-		"createdAt", formatUint(proposal.State.CreatedAt),
-		"configVersion", formatUint(proposal.ConfigVersion),
 		"quorumAmount", formatUint(proposal.QuorumAmount),
+		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
+		"configVersion", formatUint(proposal.ConfigVersion),
+		"createdAt", formatUint(proposal.State.CreatedAt),
 	)
 	return proposalId
 }
@@ -120,6 +123,9 @@ func ProposeCommunityPoolSpend(
 	now := uint64(time.Now().Unix())
 	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
 
+	maxVotingWeight := u256.NewUint(votingMax)
+	quorumAmount := maxVotingWeight.Uint64() * config.Quorum / 100
+
 	proposal := ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: CommunityPoolSpend,
@@ -130,10 +136,10 @@ func ProposeCommunityPoolSpend(
 		},
 		Yea:                       u256.Zero(),
 		Nay:                       u256.Zero(),
-		MaxVotingWeight:           u256.NewUint(votingMax),
+		MaxVotingWeight:           maxVotingWeight,
 		PossibleAddressWithWeight: possibleAddressWithWeight,
 		ConfigVersion:             uint64(configVersions.Size()),
-		QuorumAmount:              xgns.VotingSupply() * config.Quorum / 100,
+		QuorumAmount:              quorumAmount,
 		Title:                     title,
 		Description:               description,
 		CommunityPoolSpend: CommunityPoolSpendInfo{
@@ -147,17 +153,21 @@ func ProposeCommunityPoolSpend(
 	proposals.Set(formatUint(proposalId), proposal)
 	latestProposalByProposer.Set(proposer.String(), proposalId)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"ProposeCommunityPoolSpend",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"title", title,
 		"description", description,
 		"to", to.String(),
 		"tokenPath", tokenPath,
 		"amount", formatUint(amount),
-		"internal_proposalId", formatUint(proposalId),
+		"proposalId", formatUint(proposalId),
+		"quorumAmount", formatUint(proposal.QuorumAmount),
+		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
+		"configVersion", formatUint(proposal.ConfigVersion),
+		"createdAt", formatUint(proposal.State.CreatedAt),
 	)
 
 	return proposalId
@@ -207,6 +217,9 @@ func ProposeParameterChange(
 	now := uint64(time.Now().Unix())
 	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
 
+	maxVotingWeight := u256.NewUint(votingMax)
+	quorumAmount := maxVotingWeight.Uint64() * config.Quorum / 100
+
 	proposal := ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: ParameterChange,
@@ -217,10 +230,10 @@ func ProposeParameterChange(
 		},
 		Yea:                       u256.Zero(),
 		Nay:                       u256.Zero(),
-		MaxVotingWeight:           u256.NewUint(votingMax),
+		MaxVotingWeight:           maxVotingWeight,
 		PossibleAddressWithWeight: possibleAddressWithWeight,
 		ConfigVersion:             uint64(configVersions.Size()),
-		QuorumAmount:              xgns.VotingSupply() * config.Quorum / 100,
+		QuorumAmount:              quorumAmount,
 		Title:                     title,
 		Description:               description,
 		Execution: ExecutionInfo{
@@ -233,16 +246,20 @@ func ProposeParameterChange(
 	proposals.Set(formatUint(proposalId), proposal)
 	latestProposalByProposer.Set(proposer.String(), proposalId)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"ProposeParameterChange",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"title", title,
 		"description", description,
 		"numToExecute", formatUint(numToExecute),
 		"executions", executions,
-		"internal_proposalId", formatUint(proposalId),
+		"proposalId", formatUint(proposalId),
+		"quorumAmount", formatUint(proposal.QuorumAmount),
+		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
+		"configVersion", formatUint(proposal.ConfigVersion),
+		"createdAt", formatUint(proposal.State.CreatedAt),
 	)
 
 	return proposalId

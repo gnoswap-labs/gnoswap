@@ -10,8 +10,8 @@ import (
 
 	plp "gno.land/p/gnoswap/gnsmath"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/gnoswap/v1/gns"
 

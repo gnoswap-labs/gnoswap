@@ -9,8 +9,8 @@ import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	en "gno.land/r/gnoswap/v1/emission"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
@@ -198,14 +198,16 @@ func CreatePool(
 			"PoolCreationFee",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
-			"internal_poolPath", poolPath,
-			"internal_tokenPath", consts.GNS_PATH,
-			"internal_amount", formatUint(poolCreationFee),
+			"poolPath", poolPath,
+			"feeTokenPath", consts.GNS_PATH,
+			"feeAmount", formatUint(poolCreationFee),
 		)
 	}
 
 	pool = newPool(poolInfo)
 	pools.Set(poolPath, pool)
+
+	currentTick := common.TickMathGetTickAtSqrtRatio(sqrtPriceX96)
 
 	std.Emit(
 		"CreatePool",
@@ -213,9 +215,11 @@ func CreatePool(
 		"prevRealm", prevRealm,
 		"token0Path", token0Path,
 		"token1Path", token1Path,
-		"fee", formatUint(fee),
+		"fee", formatUint(uint64(fee)),
 		"sqrtPriceX96", sqrtPriceX96,
-		"internal_poolPath", poolPath,
+		"poolPath", poolPath,
+		"tick", formatInt(int64(currentTick)),
+		"tickSpacing", formatInt(int64(poolInfo.TickSpacing())),
 	)
 }
 

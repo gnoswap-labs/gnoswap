@@ -7,7 +7,7 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -122,13 +122,13 @@ func changeDistributionPcts(
 		"ChangeDistributionPct",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"target01", formatInt(target01),
+		"target01", targetToStr(target01),
 		"pct01", formatUint(pct01),
-		"target02", formatInt(target02),
+		"target02", targetToStr(target02),
 		"pct02", formatUint(pct02),
-		"target03", formatInt(target03),
+		"target03", targetToStr(target03),
 		"pct03", formatUint(pct03),
-		"target04", formatInt(target04),
+		"target04", targetToStr(target04),
 		"pct04", formatUint(pct04),
 	)
 }
@@ -286,4 +286,19 @@ func GetHalvingBlocksInRange(start, end int64) ([]int64, []uint64) {
 		halvingEmissions[i] = calculateAmount(halvingEmissions[i], GetDistributionBpsPct(LIQUIDITY_STAKER))
 	}
 	return halvingBlocks, halvingEmissions
+}
+
+func targetToStr(target int) string {
+	switch target {
+	case LIQUIDITY_STAKER:
+		return "LIQUIDITY_STAKER"
+	case DEVOPS:
+		return "DEVOPS"
+	case COMMUNITY_POOL:
+		return "COMMUNITY_POOL"
+	case GOV_STAKER:
+		return "GOV_STAKER"
+	default:
+		return "UNKNOWN"
+	}
 }

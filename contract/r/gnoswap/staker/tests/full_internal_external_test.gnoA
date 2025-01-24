@@ -7,8 +7,8 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -55,7 +55,7 @@ var (
 func TestFullInternalExternal(t *testing.T) {
 	testInit(t)
 	testCreatePoolWugnotGns3000Tier01(t) // currentTick 0, internal tier #1
-	testCreateExternalIncentiveGns(t) // create external reward with gns token (gnot:gns:0.3% pool will have both internal GNS and external GNS )
+	testCreateExternalIncentiveGns(t)    // create external reward with gns token (gnot:gns:0.3% pool will have both internal GNS and external GNS )
 	testMintPos01InRange(t)
 
 	testCreateBarBaz500Tier02(t) // currentTIck 0, internal tier #2
@@ -66,11 +66,11 @@ func TestFullInternalExternal(t *testing.T) {
 	testMintPos06OutRange(t)     // bar:baz:0.05%
 
 	testStakeToken01(t) // there are no staked positions for gnot:gns:0.3% pool until very first stkaing => unclaimable rewards
-	testStakeToken02(t) 
-	testStakeToken03(t) 
-	testStakeToken04(t) 
-	testStakeToken05(t) 
-	testStakeToken06(t) 
+	testStakeToken02(t)
+	testStakeToken03(t)
+	testStakeToken04(t)
+	testStakeToken05(t)
+	testStakeToken06(t)
 
 	testCollectRewardAllForWarmUp30(t)  // collect reward while all positions are in warmUp period 30%
 	testCollectRewardAllForWarmUp50(t)  // collect reward while all positions are in warmUp period 50%
@@ -88,12 +88,12 @@ func TestFullInternalExternal(t *testing.T) {
 	// EXTERNAL ONLY
 	testCreatePoolBazQux3000ExternalOnly(t) // pool with ONLY EXTERNAL INCETNIVE
 	testCreateExternalIncentiveBaz(t)       // create baz external
-	testMintPos08InRange(t)                 
-	testStakeToken08(t)                     
-	testCollectReward08(t)                  // external did not started yet, no reward
-	testStartExternalIncentive(t)           // start external
-	testCollectReward08AfterStart(t)        
-	testEndExternalIncentiveBaz(t)          // ends external (external creator recieves penalty amount (caused by warm up))
+	testMintPos08InRange(t)
+	testStakeToken08(t)
+	testCollectReward08(t)        // external did not started yet, no reward
+	testStartExternalIncentive(t) // start external
+	testCollectReward08AfterStart(t)
+	testEndExternalIncentiveBaz(t) // ends external (external creator recieves penalty amount (caused by warm up))
 
 	testReStakeTokenPos01(t) // position-01 was warm up 100%, but unstaked and staked again ( warm up should be reset to 30% )
 
@@ -106,11 +106,9 @@ func testInit(t *testing.T) {
 		println("[", std.GetHeight(), "] [testInit]")
 		std.TestSetRealm(adminRealm)
 
-		
 		SetUnstakingFeeByAdmin(0)
 		println("[", std.GetHeight(), "] [testInit] SetUnstakingFeeByAdmin(0)")
 
-		
 		en.ChangeDistributionPctByAdmin(
 			1, 7500, // staker
 			2, 2500, // devOps
@@ -119,7 +117,6 @@ func testInit(t *testing.T) {
 		)
 		println("[", std.GetHeight(), "] [testInit] ChangeDistributionPctByAdmin(75, 25, 0, 0)")
 
-		
 		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 		banker := std.GetBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
@@ -896,7 +893,7 @@ func testOneClickStakingPos07OutRange(t *testing.T) {
 
 		newCommunityPool := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
 		uassert.Equal(t, uint64(4280820), newCommunityPool-oldCommunityPool)
-		// all internal tier exists 
+		// all internal tier exists
 		// staker's emission reward per block 10702054
 		// > tier 1, 50% ~= 5351027
 		// > tier 2, 30% ~= 3210616
@@ -1086,7 +1083,6 @@ func testEndExternalIncentiveBaz(t *testing.T) {
 
 		newGns := gns.BalanceOf(externalCreator)
 		newBaz := baz.BalanceOf(externalCreator)
-		
 
 		// 1. external creator recieves deposit gns amount
 		refundGns := newGns - oldGns
@@ -1162,7 +1158,7 @@ func testChangeAvgBlockTimeTo4000(t *testing.T) {
 
 		// reward per block when avg block time is 2s = 10702054
 		// reward per block when avg block time is 4s = 21404108
-		
+
 		// tier 1 gets 50% = 21404108 * 50% = 10702054
 		// warmUp 30% = 10702054 * 30% = 3210616.2
 		std.TestSkipHeights(1)
@@ -1182,7 +1178,7 @@ func testChangeDistributionPctByAdmin(t *testing.T) {
 			3, 0, // community pool
 			4, 0, // xGNS
 		)
-		std.TestSkipHeights(1) 
+		std.TestSkipHeights(1)
 
 		// dummy claim
 		CollectReward(1, false)

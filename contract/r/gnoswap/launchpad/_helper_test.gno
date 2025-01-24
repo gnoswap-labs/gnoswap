@@ -6,7 +6,7 @@ import (
 
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/testutils"
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 var (

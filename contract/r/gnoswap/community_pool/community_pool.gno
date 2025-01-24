@@ -29,11 +29,12 @@ func transferToken(tokenPath string, to std.Address, amount uint64) {
 	teller := common.GetTokenTeller(tokenPath)
 	checkErr(teller.Transfer(to, amount))
 
-	prevAddr, prevRealm := getPrevAsString()
+	prevAddr, prevPkgPath := getPrevAsString()
+
 	std.Emit(
 		"TransferToken",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"tokenPath", tokenPath,
 		"to", to.String(),
 		"amount", strconv.FormatUint(amount, 10),

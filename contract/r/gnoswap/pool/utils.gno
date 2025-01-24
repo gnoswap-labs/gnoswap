@@ -8,8 +8,8 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 )
 
 // safeConvertToUint64 safely converts a *u256.Uint value to a uint64, ensuring no overflow.

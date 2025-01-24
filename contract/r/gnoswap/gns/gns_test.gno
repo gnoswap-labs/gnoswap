@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 const (
@@ -39,13 +39,12 @@ func TestGetDecimals(t *testing.T) {
 	uassert.Equal(t, uint(6), GetDecimals())
 }
 
-func TestTotalSupply(t *testing.T) {
-
-	uassert.Equal(t, INITIAL_MINT_AMOUNT, TotalSupply())
-}
-
 func TestKnownAccounts(t *testing.T) {
 	uassert.Equal(t, int(1), KnownAccounts())
+}
+
+func TestTotalSupply(t *testing.T) {
+	uassert.Equal(t, INITIAL_MINT_AMOUNT, TotalSupply())
 }
 
 func TestBalanceOf(t *testing.T) {

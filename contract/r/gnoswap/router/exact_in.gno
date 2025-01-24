@@ -26,7 +26,7 @@ func NewExactInSwapOperation(pp ExactInParams) *ExactInSwapOperation {
 func ExactInSwapRoute(
 	inputToken string,
 	outputToken string,
-	finalAmountIn string,
+	amountIn string,
 	RouteArr string,
 	quoteArr string,
 	amountOutMin string,
@@ -44,7 +44,7 @@ func ExactInSwapRoute(
 
 	pp := NewExactInParams(
 		baseParams,
-		finalAmountIn,
+		amountIn,
 		amountOutMin,
 	)
 
@@ -58,7 +58,7 @@ func ExactInSwapRoute(
 		))
 	}
 
-	finalAmountIn, finalAmountOut := finalizeSwap(
+	inputAmount, outputAmount := finalizeSwap(
 		pp.InputToken,
 		pp.OutputToken,
 		result.AmountIn,
@@ -78,15 +78,14 @@ func ExactInSwapRoute(
 		"prevRealm", prevPkgPath,
 		"input", pp.InputToken,
 		"output", pp.OutputToken,
-		"amountIn", result.AmountIn.ToString(),
+		"exactAmount", amountIn,
 		"route", pp.RouteArr,
 		"quote", pp.QuoteArr,
-		"internal_amountIn", result.AmountIn.ToString(),
-		"internal_amountOut", result.AmountOut.ToString(),
-		"internal_amountOutWithoutFee", result.AmountOut.ToString(),
+		"resultInputAmount", inputAmount,
+		"resultOutputAmount", outputAmount,
 	)
 
-	return finalAmountIn, finalAmountOut
+	return inputAmount, outputAmount
 }
 
 func (op *ExactInSwapOperation) Validate() error {

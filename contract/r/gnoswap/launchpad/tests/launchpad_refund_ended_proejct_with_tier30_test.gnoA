@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -267,9 +267,6 @@ func testCollectRewardByDepositId(t *testing.T) {
 
 func testMoreBlocks(t *testing.T) {
 	std.TestSkipHeights(10)
-	// TODO:
-	// reimplement calculateDepositReward()
-	//calculateDepositReward()
 
 	// check tier30
 	project := projects[`gno.land/r/onbloc/obl:124`]
