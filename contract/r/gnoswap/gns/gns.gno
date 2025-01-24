@@ -49,6 +49,10 @@ func init() {
 	burnAmount = uint64(0)
 }
 
+func TotalSupply() uint64 {
+	return Token.TotalSupply()
+}
+
 func GetName() string {
 	return Token.GetName()
 }
@@ -61,35 +65,16 @@ func GetDecimals() uint {
 	return Token.GetDecimals()
 }
 
-func TotalSupply() uint64 {
-	return Token.TotalSupply()
-}
-
 func KnownAccounts() int {
 	return Token.KnownAccounts()
 }
 
-func BalanceOfAddress(owner std.Address) uint64 {
-	common.AssertValidAddr(owner)
+func BalanceOf(owner std.Address) uint64 {
 	return Token.BalanceOf(owner)
 }
 
-func AllowanceOfAddress(owner, spender std.Address) uint64 {
-	common.AssertValidAddr(owner)
-	common.AssertValidAddr(spender)
-	return Token.Allowance(owner, spender)
-}
-
-func BalanceOf(owner std.Address) uint64 {
-	return UserTeller.BalanceOf(owner)
-}
-
 func Allowance(owner, spender std.Address) uint64 {
-	return UserTeller.Allowance(owner, spender)
-}
-
-func SpendAllowance(owner, spender std.Address, amount uint64) {
-	checkErr(privateLedger.SpendAllowance(owner, spender, amount))
+	return Token.Allowance(owner, spender)
 }
 
 func MintGns(address std.Address) uint64 {
@@ -173,7 +158,7 @@ func Render(path string) string {
 		return Token.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := std.Address(parts[1])
-		balance := UserTeller.BalanceOf(owner)
+		balance := Token.BalanceOf(owner)
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"
