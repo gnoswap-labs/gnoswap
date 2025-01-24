@@ -113,9 +113,9 @@ func TestCreateParameterHandlers(t *testing.T) {
 			},
 		},
 		{
-			name:     "Staker_SetUnstakingFee",
+			name:     "Staker_SetUnStakingFee",
 			path:     consts.STAKER_PATH,
-			function: "SetUnstakingFee",
+			function: "SetUnStakingFee",
 			params:   []string{"100"},
 			wantErr:  false,
 			validate: func(t *testing.T) {
@@ -184,9 +184,9 @@ func TestCreateParameterHandlers(t *testing.T) {
 			},
 		},
 		{
-			name:     "Staker_SetUnstakingFee_TooHigh",
+			name:     "Staker_SetUnStakingFee_TooHigh",
 			path:     consts.STAKER_PATH,
-			function: "SetUnstakingFee",
+			function: "SetUnStakingFee",
 			params:   []string{"10001"},
 			wantErr:  true,
 			validate: func(t *testing.T) {

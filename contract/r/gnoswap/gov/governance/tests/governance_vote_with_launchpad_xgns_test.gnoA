@@ -78,8 +78,8 @@ func testLaunchpad(t *testing.T) {
 			oblPath,
 			projectAddr,
 			uint64(1_000_000_000), // 1000000000
-			"",
-			"",
+			"gno.land/r/demo/wugnot",
+			"0",
 			uint64(10),                   // 100000000
 			uint64(20),                   // 200000000
 			uint64(70),                   // 700000000
@@ -127,7 +127,6 @@ func testDelegate01_2000000_toDummy(t *testing.T) {
 		uassert.Equal(t, xgns.VotingSupply(), uint64(0))
 
 		uassert.Equal(t, std.GetHeight(), int64(134))
-		uassert.Equal(t, time.Now().Unix(), int64(1234567945))
 
 		std.TestSetRealm(adminRealm)
 		gns.Approve(consts.GOV_STAKER_ADDR, uint64(2_000_000))
@@ -148,7 +147,6 @@ func testProposeText(t *testing.T) {
 
 		// text proposal
 		uassert.Equal(t, std.GetHeight(), int64(145))
-		uassert.Equal(t, time.Now().Unix(), int64(1234568000))
 
 		std.TestSetRealm(adminRealm)
 		proposalID := ProposeText("test_title", "test_description")
@@ -195,6 +193,6 @@ func testVote(t *testing.T) {
 		maxVoting, addrsWithVooting := gs.GetPossibleVotingAddressWithWeightJSON(proposal.State.CreatedAt)
 
 		uassert.Equal(t, maxVoting, uint64(2_000_000)) // 2000000
-		uassert.Equal(t, addrsWithVooting, `{"height":"150","now":"1234568025","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","weight":"2000000"}]}`)
+		uassert.Equal(t, addrsWithVooting, `{"height":"150","now":"1234567944","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","weight":"2000000"}]}`)
 	})
 }

@@ -101,16 +101,16 @@ func GetVotesByAddress(addr std.Address) string {
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
-	if _, exist := userVotes.Get(addr.String()); !exist {
-		return ""
-	}
-
 	votesObj := metaNode()
 	votesArr := json.ArrayNode("", nil)
 
-	userVotes.Iterate(addr.String(), "", func(key string, value interface{}) bool {
-		voteObj := createVoteJsonNode(addr, proposalId, value.(voteWithWeight))
-		votesArr.AppendArray(voteObj)
+	// sertUesrVote does add data to `userVotes` with key (voter_pid) as key
+	// therefore this function can not search for 'specific_address'
+	userVotes.Iterate("", "", func(key string, value interface{}) bool {
+		if strings.HasPrefix(key, addr.String()) {
+			voteObj := createVoteJsonNode(addr, proposalId, value.(voteWithWeight))
+			votesArr.AppendArray(voteObj)
+		}
 		return true
 	})
 	votesObj.AppendObject("votes", votesArr)

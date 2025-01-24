@@ -135,12 +135,12 @@ func TestProposeText(t *testing.T) {
 		uassert.Equal(t, proposalStat.PassedAt, nowTime)
 		uassert.Equal(t, proposalStat.PassedAt, nowTime)
 		uassert.False(t, proposalStat.Rejected)
-		uassert.Equal(t, proposalStat.RejectedAt, 0)
+		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
 		uassert.False(t, proposalStat.Canceled)
-		uassert.Equal(t, proposalStat.CanceledAt, 0)
+		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
 
 		uassert.False(t, proposalStat.Executed)
-		uassert.Equal(t, proposalStat.ExecutedAt, 0)
+		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
 	})
 
 	t.Run("create new text proposal and cancel", func(t *testing.T) {
