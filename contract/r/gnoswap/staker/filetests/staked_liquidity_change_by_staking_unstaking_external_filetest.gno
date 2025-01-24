@@ -88,7 +88,7 @@ func main() {
 func testInit() {
 	std.TestSetRealm(adminRealm)
 
-	sr.SetUnstakingFeeByAdmin(0)
+	sr.SetUnStakingFeeByAdmin(0)
 }
 
 func testCreatePool() {

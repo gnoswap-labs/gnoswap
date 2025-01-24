@@ -71,7 +71,7 @@ func testInit(t *testing.T) {
 		pl.SetPoolCreationFeeByAdmin(0)
 
 		// no unstaking fee
-		SetUnstakingFeeByAdmin(0)
+		SetUnStakingFeeByAdmin(0)
 
 		std.TestSkipHeights(1)
 	})

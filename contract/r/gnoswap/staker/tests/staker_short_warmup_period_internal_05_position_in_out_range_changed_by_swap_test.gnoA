@@ -46,7 +46,7 @@ func testInit(t *testing.T) {
 		changeWarmup(t, 3, math.MaxInt64)
 
 		// set unstaking fee to 0
-		SetUnstakingFeeByAdmin(0)
+		SetUnStakingFeeByAdmin(0)
 	})
 }
 

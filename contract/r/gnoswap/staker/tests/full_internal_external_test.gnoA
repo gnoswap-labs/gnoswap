@@ -106,8 +106,8 @@ func testInit(t *testing.T) {
 		println("[", std.GetHeight(), "] [testInit]")
 		std.TestSetRealm(adminRealm)
 
-		SetUnstakingFeeByAdmin(0)
-		println("[", std.GetHeight(), "] [testInit] SetUnstakingFeeByAdmin(0)")
+		SetUnStakingFeeByAdmin(0)
+		println("[", std.GetHeight(), "] [testInit] SetUnStakingFeeByAdmin(0)")
 
 		en.ChangeDistributionPctByAdmin(
 			1, 7500, // staker
