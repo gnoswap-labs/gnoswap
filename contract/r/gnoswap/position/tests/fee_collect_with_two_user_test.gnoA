@@ -7,8 +7,8 @@ import (
 
 	"gno.land/p/demo/testutils"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/bar"
@@ -41,24 +41,24 @@ This test demonstrates a issue(Gnoswap-19) fee collection mechanism. The key ste
 func TestCollectFeeWithTwoUser(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 	common.SetLimitCaller(true)
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
 
 	// -23028
 	pl.CreatePool(barPath, bazPath, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
 
 	// initial balance for user1 & user2
-	bar.Transfer(a2u(user1Adderss), 100_000_000)
-	baz.Transfer(a2u(user1Adderss), 100_000_000)
-	bar.Transfer(a2u(user2Adderss), 100_000_000)
-	baz.Transfer(a2u(user2Adderss), 100_000_000)
+	bar.Transfer(user1Adderss, 100_000_000)
+	baz.Transfer(user1Adderss, 100_000_000)
+	bar.Transfer(user2Adderss, 100_000_000)
+	baz.Transfer(user2Adderss, 100_000_000)
 
 	t.Run("mint and swap fee should be distributed to user's liquidity", func(t *testing.T) {
 		std.TestSetRealm(user1Realm)
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		bar.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
 
 		tokenId_res1, liquidity_res1, amount0_res1, amount1_res1 := Mint(
 			barPath,                // token0 string,
@@ -77,10 +77,10 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 		println("tokenId_res1:", tokenId_res1)
 
 		std.TestSetRealm(user2Realm)
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		bar.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
 
 		tokenId_res2, liquidity_res2, amount0_res2, amount1_res2 := Mint(
 			barPath,                // token0 string,
@@ -122,23 +122,23 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 		// ====== Collect fees and compare ======
 		// user1
 		// std.TestSetRealm(user1Realm)
-		// bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		// baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		// userBarBalanceBeforeCollect_1 := bar.BalanceOf(a2u(user1Adderss))
-		// userBazBalanceBeforeCollect_1 := baz.BalanceOf(a2u(user1Adderss))
+		// bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		// baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		// userBarBalanceBeforeCollect_1 := bar.BalanceOf(user1Adderss)
+		// userBazBalanceBeforeCollect_1 := baz.BalanceOf(user1Adderss)
 		// tokenId_res3, withoutFee0_res3, withoutFee1_res3, positionPoolKey_res3, _, _ := CollectFee(tokenId_res1, false)
-		// userBarBalanceAfterCollect_1 := bar.BalanceOf(a2u(user1Adderss))
-		// userBazBalanceAfterCollect_1 := baz.BalanceOf(a2u(user1Adderss))
+		// userBarBalanceAfterCollect_1 := bar.BalanceOf(user1Adderss)
+		// userBazBalanceAfterCollect_1 := baz.BalanceOf(user1Adderss)
 
 		// 	// user2
 		// 	std.TestSetRealm(user2Realm)
-		// 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		// 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		// 	userBarBalanceBeforeCollect_2 := bar.BalanceOf(a2u(user2Adderss))
-		// 	userBazBalanceBeforeCollect_2 := baz.BalanceOf(a2u(user2Adderss))
+		// 	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		// 	baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		// 	userBarBalanceBeforeCollect_2 := bar.BalanceOf(user2Adderss)
+		// 	userBazBalanceBeforeCollect_2 := baz.BalanceOf(user2Adderss)
 		// 	tokenId_res4, withoutFee0_res4, withoutFee1_res4, positionPoolKey_res4, _, _ := pn.CollectFee(tokenId_res2, false)
-		// 	userBarBalanceAfterCollect_2 := bar.BalanceOf(a2u(user2Adderss))
-		// 	userBazBalanceAfterCollect_2 := baz.BalanceOf(a2u(user2Adderss))
+		// 	userBarBalanceAfterCollect_2 := bar.BalanceOf(user2Adderss)
+		// 	userBazBalanceAfterCollect_2 := baz.BalanceOf(user2Adderss)
 		// 	uassert.Equal(t, (userBarBalanceAfterCollect_1-userBarBalanceBeforeCollect_1)-(userBarBalanceAfterCollect_2-userBarBalanceBeforeCollect_2), uint64(0))
 		// 	uassert.Equal(t, (userBazBalanceAfterCollect_1-userBazBalanceBeforeCollect_1)-(userBazBalanceAfterCollect_2-userBazBalanceBeforeCollect_2), uint64(0))
 	})
@@ -146,13 +146,13 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 
 func TestCollectTwo(t *testing.T) {
 	std.TestSetRealm(user1Realm)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 	CollectFee(uint64(1), false)
 
 	// std.TestSetRealm(user2Realm)
-	// bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	// baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	// bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	// baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 	// CollectFee(uint64(2), false)
 
 	// tokenId_res3, withoutFee0_res3, withoutFee1_res3, positionPoolKey_res3, _, _ := CollectFee(uint64(1), false)

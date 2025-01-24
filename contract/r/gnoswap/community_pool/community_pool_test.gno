@@ -7,8 +7,8 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/gnoswap/v1/gns"
 )
@@ -62,7 +62,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 			name: "panic if not enough balance",
 			setup: func() {
 				std.TestSetRealm(adminRealm)
-				gns.Transfer(common.AddrToUser(consts.COMMUNITY_POOL_ADDR), 10_000)
+				gns.Transfer(consts.COMMUNITY_POOL_ADDR, 10_000)
 			},
 			caller:      adminRealm,
 			tokenPath:   consts.GNS_PATH,
@@ -95,9 +95,9 @@ func TestTransferTokenByAdmin(t *testing.T) {
 					TransferTokenByAdmin(tt.tokenPath, tt.to, tt.amount)
 				})
 			} else {
-				receiverOldBalance := gns.BalanceOf(common.AddrToUser(tt.to))
+				receiverOldBalance := gns.BalanceOf(tt.to)
 				TransferTokenByAdmin(tt.tokenPath, tt.to, tt.amount)
-				receiverNewBalance := gns.BalanceOf(common.AddrToUser(tt.to))
+				receiverNewBalance := gns.BalanceOf(tt.to)
 				uassert.Equal(t, receiverNewBalance-receiverOldBalance, tt.amount)
 			}
 		})
@@ -175,9 +175,9 @@ func TestTransferToken(t *testing.T) {
 					TransferToken(tt.tokenPath, tt.to, tt.amount)
 				})
 			} else {
-				receiverOldBalance := gns.BalanceOf(common.AddrToUser(tt.to))
+				receiverOldBalance := gns.BalanceOf(tt.to)
 				TransferToken(tt.tokenPath, tt.to, tt.amount)
-				receiverNewBalance := gns.BalanceOf(common.AddrToUser(tt.to))
+				receiverNewBalance := gns.BalanceOf(tt.to)
 				uassert.Equal(t, receiverNewBalance-receiverOldBalance, tt.amount)
 			}
 		})

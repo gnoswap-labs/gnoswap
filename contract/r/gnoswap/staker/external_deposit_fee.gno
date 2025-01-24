@@ -3,8 +3,6 @@ package staker
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
-
 	"gno.land/r/gnoswap/v1/common"
 )
 
@@ -37,6 +35,7 @@ func SetDepositGnsAmountByAdmin(amount uint64) {
 		panic(err.Error())
 	}
 
+	prevDepositGnsAmount := getDepositGnsAmount()
 	setDepositGnsAmount(amount)
 
 	prevAddr, prevPkgPath := getPrev()
@@ -45,7 +44,8 @@ func SetDepositGnsAmountByAdmin(amount uint64) {
 		"SetDepositGnsAmountByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"amount", formatUint(amount),
+		"prevAmount", formatUint(prevDepositGnsAmount),
+		"newAmount", formatUint(amount),
 	)
 }
 
@@ -58,6 +58,7 @@ func SetDepositGnsAmount(amount uint64) {
 		panic(err.Error())
 	}
 
+	prevDepositGnsAmount := getDepositGnsAmount()
 	setDepositGnsAmount(amount)
 
 	prevAddr, prevPkgPath := getPrev()
@@ -66,10 +67,15 @@ func SetDepositGnsAmount(amount uint64) {
 		"SetDepositGnsAmount",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"amount", formatUint(amount),
+		"prevAmount", formatUint(prevDepositGnsAmount),
+		"newAmount", formatUint(amount),
 	)
 }
 
 func setDepositGnsAmount(amount uint64) {
 	depositGnsAmount = amount
+}
+
+func getDepositGnsAmount() uint64 {
+	return depositGnsAmount
 }

@@ -6,9 +6,7 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
-
+	"gno.land/p/gnoswap/consts"
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -74,8 +72,8 @@ func testMintBarBaz100Pos01(t *testing.T) {
 	t.Run("mint position 01, bar:baz:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,    // token0
@@ -99,8 +97,8 @@ func testMintBarBaz100Pos02(t *testing.T) {
 	t.Run("mint position 02, bar:baz:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,    // token0
@@ -124,8 +122,8 @@ func testMintBarBaz100Pos03(t *testing.T) {
 	t.Run("mint position 03, bar:baz:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,    // token0
@@ -149,8 +147,8 @@ func testMintBarBaz100Pos04(t *testing.T) {
 	t.Run("mint position 04, bar:baz:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,    // token0
@@ -183,14 +181,14 @@ func testStakeTokenPos01(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		userOldGns := gns.BalanceOf(admin)
-		communityOldGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		communityOldGns := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
 		uassert.Equal(t, uint64(100000000000000), userOldGns)
 		uassert.Equal(t, uint64(0), communityOldGns)
 
 		CollectReward(1, false)
 
 		userNewGns := gns.BalanceOf(admin)
-		communityNewGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		communityNewGns := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
 		uassert.True(t, isInErrorRange(uint64(3210616), userNewGns-userOldGns))
 		// increased 3210616
 		// staker receives 10702054 gns from emission
@@ -218,12 +216,12 @@ func testStakeTokenPos01(t *testing.T) {
 
 		std.TestSkipHeights(1) // 1 block for 50% warm up
 		userOldGns := gns.BalanceOf(admin)
-		communityOldGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		communityOldGns := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
 
 		CollectReward(1, false)
 
 		userNewGns := gns.BalanceOf(admin)
-		communityNewGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		communityNewGns := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
 
 		uassert.True(t, isInErrorRange(uint64(5351026), userNewGns-userOldGns))
 		// increased 5351026
@@ -241,12 +239,12 @@ func testStakeTokenPos01(t *testing.T) {
 
 		std.TestSkipHeights(1) // 1 block for 70% warm up
 		userOldGns := gns.BalanceOf(admin)
-		communityOldGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		communityOldGns := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
 
 		CollectReward(1, false)
 
 		userNewGns := gns.BalanceOf(admin)
-		communityNewGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		communityNewGns := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
 
 		uassert.True(t, isInErrorRange(uint64(7491437), userNewGns-userOldGns))
 		// increased 7491437
@@ -265,12 +263,12 @@ func testStakeTokenPos01(t *testing.T) {
 
 		std.TestSkipHeights(1) // 1 block for 100% warm up
 		userOldGns := gns.BalanceOf(admin)
-		communityOldGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		communityOldGns := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
 
 		CollectReward(1, false)
 
 		userNewGns := gns.BalanceOf(admin)
-		communityNewGns := gns.BalanceOf(common.AddrToUser(consts.COMMUNITY_POOL_ADDR))
+		communityNewGns := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
 
 		uassert.True(t, isInErrorRange(uint64(10702054), userNewGns-userOldGns))
 		// increased 10702054

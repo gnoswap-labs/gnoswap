@@ -6,7 +6,7 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -33,7 +33,7 @@ func testPoolCreatePool(t *testing.T) {
 	t.Run("pool create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
+		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee()*3)
 
 		pl.CreatePool(barPath, bazPath, 100, "79228162514264337593543950337") // will be external
 		std.TestSkipHeights(1)
@@ -43,8 +43,8 @@ func testPoolCreatePool(t *testing.T) {
 func testMintBarBaz100(t *testing.T) {
 	t.Run("mint position 01, bar:baz:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 		std.TestSkipHeights(2)
 
 		tokenId, liquidity, amount0, amount1 := pn.Mint(
@@ -70,8 +70,8 @@ func testCreateExternalIncentive(t *testing.T) {
 
 		std.TestSetRealm(adminRealm)
 
-		wugnot.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
-		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+		wugnot.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
+		gns.Approve(consts.STAKER_ADDR, depositGnsAmount)
 
 		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 		banker := std.GetBanker(std.BankerTypeRealmSend)

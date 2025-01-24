@@ -9,11 +9,9 @@ import (
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/uassert"
-	pusers "gno.land/p/demo/users"
 
 	"gno.land/p/demo/avl"
-	"gno.land/r/demo/users"
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 func TestMarshal(t *testing.T) {
@@ -114,31 +112,6 @@ func TestGetPrev(t *testing.T) {
 			addr, pkgPath := tt.action()
 			uassert.Equal(t, tt.expectedAddr, addr)
 			uassert.Equal(t, tt.expectedPkgPath, pkgPath)
-		})
-	}
-}
-
-func TestA2u(t *testing.T) {
-	var (
-		addr = std.Address("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
-	)
-
-	tests := []struct {
-		name     string
-		input    std.Address
-		expected pusers.AddressOrName
-	}{
-		{
-			name:     "Success - a2u",
-			input:    addr,
-			expected: pusers.AddressOrName(addr),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			got := a2u(tc.input)
-			uassert.Equal(t, users.Resolve(got).String(), users.Resolve(tc.expected).String())
 		})
 	}
 }

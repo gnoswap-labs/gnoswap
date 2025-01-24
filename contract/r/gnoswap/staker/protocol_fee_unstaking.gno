@@ -5,8 +5,8 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
 
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
@@ -16,7 +16,7 @@ var (
 	unstakingFee = uint64(100) // 1%
 )
 
-// handleUnstakingFee calculates and applies the unstaking fee.
+// handleUnStakingFee calculates and applies the unstaking fee.
 //
 // The function deducts a fee from the unstaked amount based on the `unstakingFee` rate,
 // sends the fee to the protocol fee address, and emits an event indicating the fee transfer.
@@ -30,7 +30,7 @@ var (
 //
 // Returns:
 // - uint64: The amount after deducting the unstaking fee.
-func handleUnstakingFee(
+func handleUnStakingFee(
 	tokenPath string,
 	amount uint64,
 	internal bool,
@@ -46,21 +46,21 @@ func handleUnstakingFee(
 		return amount
 	}
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 
 	if internal {
 		// staker contract has fee
-		gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), feeAmount)
+		gns.Transfer(consts.PROTOCOL_FEE_ADDR, feeAmount)
 		pf.AddToProtocolFee(consts.GNS_PATH, feeAmount)
 
 		std.Emit(
 			"ProtocolFeeInternalReward",
 			"prevAddr", prevAddr,
-			"prevRealm", prevRealm,
-			"internal_lpTokenId", formatUint(tokenId),
-			"internal_poolPath", poolPath,
-			"internal_tokenPath", consts.GNS_PATH,
-			"internal_amount", formatUint(feeAmount),
+			"prevRealm", prevPkgPath,
+			"fromPositionId", formatUint(tokenId),
+			"fromPoolPath", poolPath,
+			"feeTokenPath", consts.GNS_PATH,
+			"feeAmount", formatUint(feeAmount),
 		)
 	} else {
 		// external contract has fee
@@ -71,11 +71,11 @@ func handleUnstakingFee(
 		std.Emit(
 			"ProtocolFeeExternalReward",
 			"prevAddr", prevAddr,
-			"prevRealm", prevRealm,
-			"internal_lpTokenId", formatUint(tokenId),
-			"internal_poolPath", poolPath,
-			"internal_tokenPath", tokenPath,
-			"internal_amount", formatUint(feeAmount),
+			"prevRealm", prevPkgPath,
+			"fromPositionId", formatUint(tokenId),
+			"fromPoolPath", poolPath,
+			"feeTokenPath", tokenPath,
+			"feeAmount", formatUint(feeAmount),
 		)
 	}
 
@@ -88,7 +88,7 @@ func GetUnstakingFee() uint64 {
 	return unstakingFee
 }
 
-// SetUnstakingFeeByAdmin sets the unstaking fee rate by an admin.
+// SetUnStakingFeeByAdmin sets the unstaking fee rate by an admin.
 //
 // This function ensures that only admins can modify the unstaking fee. It validates
 // the input fee and emits an event indicating the change.
@@ -98,53 +98,52 @@ func GetUnstakingFee() uint64 {
 //
 // Panics:
 // - If the caller is not an admin.
-func SetUnstakingFeeByAdmin(fee uint64) {
+func SetUnStakingFeeByAdmin(fee uint64) {
 	caller := std.PrevRealm().Addr()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err.Error())
 	}
 
-	setUnstakingFee(fee)
+	prevUnStakingFee := getUnStakingFee()
 
-	prevAddr, prevRealm := getPrev()
+	setUnStakingFee(fee)
+
+	prevAddr, prevPkgPath := getPrev()
 
 	std.Emit(
-		"SetUnstakingFeeByAdmin",
+		"SetUnStakingFeeByAdmin",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"fee", formatUint(fee),
+		"prevRealm", prevPkgPath,
+		"prevFee", formatUint(prevUnStakingFee),
+		"newFee", formatUint(fee),
 	)
 }
 
-// SetUnstakingFee modifies the unstaking fee
+// SetUnStakingFee modifies the unstaking fee
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#setunstakingfee
-func SetUnstakingFee(fee uint64) {
-	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"reward_fee.gno__SetUnstakingFee() || only governance(%s) can set unstaking fee, called from %s",
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
-			),
-		))
+func SetUnStakingFee(fee uint64) {
+	caller := getPrevAddr()
+	if err := common.GovernanceOnly(caller); err != nil {
+		panic(addDetailToError(err.Error()))
 	}
 
-	setUnstakingFee(fee)
+	prevUnStakingFee := getUnStakingFee()
 
-	prevAddr, prevRealm := getPrev()
+	setUnStakingFee(fee)
+
+	prevAddr, prevPkgPath := getPrev()
 
 	std.Emit(
-		"SetUnstakingFee",
+		"SetUnStakingFee",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"fee", formatUint(fee),
+		"prevRealm", prevPkgPath,
+		"prevFee", formatUint(prevUnStakingFee),
+		"newFee", formatUint(fee),
 	)
 }
 
-func setUnstakingFee(fee uint64) {
+func setUnStakingFee(fee uint64) {
 	// 10000 (bps) = 100%
 	if fee > 10000 {
 		panic(addDetailToError(
@@ -154,4 +153,8 @@ func setUnstakingFee(fee uint64) {
 	}
 
 	unstakingFee = fee
+}
+
+func getUnStakingFee() uint64 {
+	return unstakingFee
 }

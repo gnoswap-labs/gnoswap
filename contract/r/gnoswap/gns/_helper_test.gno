@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ownable"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 func resetObject(t *testing.T) {

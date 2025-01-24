@@ -9,7 +9,7 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 
@@ -17,13 +17,11 @@ import (
 	"gno.land/r/onbloc/qux"
 
 	"gno.land/p/demo/testutils"
-	pusers "gno.land/p/demo/users"
-	"gno.land/r/demo/users"
 )
 
 const (
 	ugnotDenom string = "ugnot"
-	ugnotPath  string = "gno.land/r/gnoswap/v1/pool:ugnot"
+	ugnotPath  string = "ugnot"
 	wugnotPath string = "gno.land/r/demo/wugnot"
 	gnsPath    string = "gno.land/r/gnoswap/v1/gns"
 	barPath    string = "gno.land/r/onbloc/bar"
@@ -46,11 +44,11 @@ const (
 )
 
 var (
-	admin       = pusers.AddressOrName(consts.ADMIN)
-	alice       = pusers.AddressOrName(testutils.TestAddress("alice"))
-	pool        = pusers.AddressOrName(consts.POOL_ADDR)
-	protocolFee = pusers.AddressOrName(consts.PROTOCOL_FEE_ADDR)
-	adminRealm  = std.NewUserRealm(users.Resolve(admin))
+	admin       = consts.ADMIN
+	alice       = testutils.TestAddress("alice")
+	pool        = consts.POOL_ADDR
+	protocolFee = consts.PROTOCOL_FEE_ADDR
+	adminRealm  = std.NewUserRealm(admin)
 	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
 
 	// addresses used in tests
@@ -85,8 +83,8 @@ func testPoolCreatePool(t *testing.T) {
 func testStakerMintAndStake(t *testing.T) {
 	t.Run("mint and stake", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 		std.TestSkipHeights(2)
 
 		tokenId, _, _, _, _ := MintAndStake(

@@ -9,8 +9,8 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/gnoswap/v1/gns"
 )
@@ -23,11 +23,11 @@ var (
 
 func TestMintPostInit(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-1).ToString())
 
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	thisPool := GetPool(barPath, fooPath, fee500)
 

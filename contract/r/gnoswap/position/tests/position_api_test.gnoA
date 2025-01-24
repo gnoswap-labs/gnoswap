@@ -7,8 +7,8 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/uassert"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/bar"
@@ -28,15 +28,15 @@ func init() {
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 	pl.CreatePool(bazPath, quxPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestMintFooBar(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	// admin mints => will get tid 1 nft
 	Mint(fooPath, barPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, adminAddr, adminAddr)
@@ -47,8 +47,8 @@ func TestMintFooBar(t *testing.T) {
 
 func TestMintBazQux(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	// admin mints => will get tid 3 nft
 	Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, adminAddr, adminAddr)

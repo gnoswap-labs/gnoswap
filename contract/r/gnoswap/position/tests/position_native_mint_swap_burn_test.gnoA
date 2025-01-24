@@ -6,8 +6,8 @@ import (
 
 	"gno.land/p/demo/uassert"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 
@@ -31,7 +31,7 @@ func testPoolInitCreatePool(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		pl.SetPoolCreationFeeByAdmin(0)
 
-		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
 		pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
 	})
 }
@@ -40,10 +40,10 @@ func testMintPosition(t *testing.T) {
 	t.Run("mint position", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-		wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // FOR WRAP
+		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // FOR WRAP
 
 		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(50000005))
@@ -116,9 +116,9 @@ func testSwap(t *testing.T) {
 		std.TestSetOrigSend(std.Coins{{"ugnot", 1234567}}, nil)
 		wugnot.Deposit()
 
-		wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX)
-		wugnot.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
 
 		std.TestSetRealm(rouRealm)
 		amount0, amount1 := pl.Swap(

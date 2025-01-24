@@ -4,51 +4,12 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	pusers "gno.land/p/demo/users"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/demo/users"
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
-
-func TestA2U(t *testing.T) {
-	validAddr := testutils.TestAddress("validAddr")
-	invalidAddr := std.Address("invalidAddr")
-
-	tests := []struct {
-		name        string
-		expected    string
-		address     std.Address
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name:     "valid address",
-			expected: validAddr.String(),
-			address:  validAddr,
-		},
-		{
-			name:        "invalid address",
-			expected:    invalidAddr.String(),
-			address:     invalidAddr,
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-023] invalid address || invalidAddr",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() { a2u(tt.address) })
-			} else {
-				uassert.Equal(t, tt.expected, users.Resolve(a2u(tt.address)).String())
-			}
-		})
-	}
-}
 
 func TestU256Min(t *testing.T) {
 	tests := []struct {
@@ -229,31 +190,6 @@ func TestSafeConvertToInt128(t *testing.T) {
 			if res.ToString() != tt.wantRes {
 				t.Errorf("safeConvertToUint64() = %v, want %v", res, tt.wantRes)
 			}
-		})
-	}
-}
-
-func TestA2u(t *testing.T) {
-	var (
-		addr = std.Address("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
-	)
-
-	tests := []struct {
-		name     string
-		input    std.Address
-		expected pusers.AddressOrName
-	}{
-		{
-			name:     "Success - a2u",
-			input:    addr,
-			expected: pusers.AddressOrName(addr),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			got := a2u(tc.input)
-			uassert.Equal(t, users.Resolve(got).String(), users.Resolve(tc.expected).String())
 		})
 	}
 }

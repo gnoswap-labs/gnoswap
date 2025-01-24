@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/onbloc/obl"
 )
@@ -34,7 +34,7 @@ func testCreateProject(t *testing.T) {
 	t.Run("create project", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		obl.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
+		obl.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000_000))
 		std.TestSkipHeights(1)
 
 		{
@@ -64,10 +64,10 @@ func testCreateProject(t *testing.T) {
 
 func testMakeProjectEnd(t *testing.T) {
 	t.Run("make project end", func(t *testing.T) {
-		user01OldOblBalance := obl.BalanceOf(a2u(user01))
+		user01OldOblBalance := obl.BalanceOf(user01)
 		uassert.Equal(t, user01OldOblBalance, uint64(0)) // already collected
 
-		refundOldOblBalance := obl.BalanceOf(a2u(refundAddr))
+		refundOldOblBalance := obl.BalanceOf(refundAddr)
 		uassert.Equal(t, refundOldOblBalance, uint64(0))
 
 		std.TestSkipHeights(10)                           // make active
@@ -75,10 +75,10 @@ func testMakeProjectEnd(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		TransferLeftFromProjectByAdmin(`gno.land/r/onbloc/obl:124`, refundAddr)
 
-		user01NewOblBalance := obl.BalanceOf(a2u(user01))
+		user01NewOblBalance := obl.BalanceOf(user01)
 		uassert.Equal(t, user01NewOblBalance, uint64(0))
 
-		refundNewOblBalance := obl.BalanceOf(a2u(refundAddr))
+		refundNewOblBalance := obl.BalanceOf(refundAddr)
 		uassert.Equal(t, refundNewOblBalance, uint64(1000000000))
 	})
 }

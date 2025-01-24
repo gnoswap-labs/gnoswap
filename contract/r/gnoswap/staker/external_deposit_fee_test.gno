@@ -4,7 +4,7 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 func TestGetDepositGnsAmount(t *testing.T) {

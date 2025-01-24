@@ -18,8 +18,8 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/gns"
@@ -33,11 +33,11 @@ import (
 
 var (
 	adminAddr  = consts.ADMIN
-	adminUser  = common.AddrToUser(adminAddr)
+	adminUser  = adminAddr
 	adminRealm = std.NewUserRealm(adminAddr)
 
 	stakerAddr  = consts.STAKER_ADDR
-	stakerUser  = common.AddrToUser(stakerAddr)
+	stakerUser  = stakerAddr
 	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
 
 	wugnotAddr = consts.WUGNOT_ADDR
@@ -108,8 +108,8 @@ func testCreatePool() {
 func testMintAndStakeWugnotGnsPos01() {
 	std.TestSetRealm(adminRealm)
 
-	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	pn.Mint(
@@ -134,8 +134,8 @@ func testMintAndStakeWugnotGnsPos01() {
 func testMintAndStakeWugnotGnsPos02() {
 	std.TestSetRealm(adminRealm)
 
-	wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	pn.Mint(

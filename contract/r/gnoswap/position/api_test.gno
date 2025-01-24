@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/uassert"
-	"gno.land/r/demo/users"
 )
 
 func setupPositions(t *testing.T) {
@@ -17,7 +16,7 @@ func setupPositions(t *testing.T) {
 
 func TestApiGetPositions(t *testing.T) {
 	setupPositions(t)
-	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
+	std.TestSetRealm(std.NewUserRealm(admin))
 
 	result := ApiGetPositions()
 
@@ -257,7 +256,7 @@ func TestApiGetPositionsByPoolPath(t *testing.T) {
 }
 
 func TestApiGetPositionsByAddress(t *testing.T) {
-	address := users.Resolve(admin)
+	address := admin
 	result := ApiGetPositionsByAddress(address)
 
 	root, err := json.Unmarshal([]byte(result))

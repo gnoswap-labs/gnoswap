@@ -4,14 +4,11 @@ import (
 	"std"
 
 	"gno.land/p/demo/avl"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v1/consts"
-
-	en "gno.land/r/gnoswap/v1/emission"
-
-	pl "gno.land/r/gnoswap/v1/pool"
+	"gno.land/p/gnoswap/consts"
 )
 
 var (
@@ -80,40 +77,40 @@ func (self *Pools) IterateAll(fn func(key string, pool *Pool) bool) {
 // Fields:
 // - poolPath: The path of the pool.
 //
-// - currentStakedLiquidity: 
-//   The current total staked liquidity of the in-range positions for the pool. 
-//   Updated when tick cross happens or stake/unstake happens.
-//   Used to calculate the global reward ratio accumulation or 
-//   decide whether to enter/exit unclaimable period.
+//   - currentStakedLiquidity:
+//     The current total staked liquidity of the in-range positions for the pool.
+//     Updated when tick cross happens or stake/unstake happens.
+//     Used to calculate the global reward ratio accumulation or
+//     decide whether to enter/exit unclaimable period.
 //
-// - lastUnclaimableHeight: 
-//   The height at which the unclaimable period started.
-//   Set to 0 when the pool is not in an unclaimable period.
+//   - lastUnclaimableHeight:
+//     The height at which the unclaimable period started.
+//     Set to 0 when the pool is not in an unclaimable period.
 //
-// - unclaimableAcc: 
-//   The accumulated undisributed unclaimable reward. 
-//   Reset to 0 when processUnclaimableReward is called and sent to community pool.
+//   - unclaimableAcc:
+//     The accumulated undisributed unclaimable reward.
+//     Reset to 0 when processUnclaimableReward is called and sent to community pool.
 //
-// - rewardCache: 
-//   The cached per-block reward emitted for this pool. 
-//   Stores new entry only when the reward is changed.
-//   PoolTier.cacheReward() updates this.
+//   - rewardCache:
+//     The cached per-block reward emitted for this pool.
+//     Stores new entry only when the reward is changed.
+//     PoolTier.cacheReward() updates this.
 //
 // - incentives: The external incentives associated with the pool.
 //
 // - ticks: The Ticks associated with the pool.
 //
-// - globalRewardRatioAccumulation: 
-//   Global ratio of BlockNumber / TotalStake accumulation(since the pool creation)
-//   Stores new entry only when tick cross or stake/unstake happens.
-//   It is used to calculate the reward for a staked position at certain height.
+//   - globalRewardRatioAccumulation:
+//     Global ratio of BlockNumber / TotalStake accumulation(since the pool creation)
+//     Stores new entry only when tick cross or stake/unstake happens.
+//     It is used to calculate the reward for a staked position at certain height.
 //
-// - historicalTick: 
-//   The historical tick for the pool at a given height.
-//   It does not reflect the exact tick at the blockNumber, 
-//   but it provides correct ordering for the staked position's ticks.
-//   Therefore, you should not compare it for equality, only for ordering.
-//   Set when tick cross happens or a new position is created.
+//   - historicalTick:
+//     The historical tick for the pool at a given height.
+//     It does not reflect the exact tick at the blockNumber,
+//     but it provides correct ordering for the staked position's ticks.
+//     Therefore, you should not compare it for equality, only for ordering.
+//     Set when tick cross happens or a new position is created.
 type Pool struct {
 	poolPath string
 
@@ -122,7 +119,7 @@ type Pool struct {
 	lastUnclaimableHeight int64
 	unclaimableAcc        uint64
 
-	rewardCache           *UintTree // uint64 blockNumber -> uint64 gnsReward
+	rewardCache *UintTree // uint64 blockNumber -> uint64 gnsReward
 
 	incentives Incentives
 
@@ -136,15 +133,15 @@ type Pool struct {
 // NewPool creates a new pool with the given poolPath and currentHeight.
 func NewPool(poolPath string, currentHeight int64) *Pool {
 	pool := &Pool{
-		poolPath:              poolPath,
-		stakedLiquidity:       NewUintTree(),
-		lastUnclaimableHeight: currentHeight,
-		unclaimableAcc:        0,
-		rewardCache:           NewUintTree(),
-		incentives:            NewIncentives(),
-		ticks:                 NewTicks(),
+		poolPath:                      poolPath,
+		stakedLiquidity:               NewUintTree(),
+		lastUnclaimableHeight:         currentHeight,
+		unclaimableAcc:                0,
+		rewardCache:                   NewUintTree(),
+		incentives:                    NewIncentives(),
+		ticks:                         NewTicks(),
 		globalRewardRatioAccumulation: NewUintTree(),
-		historicalTick: NewUintTree(),
+		historicalTick:                NewUintTree(),
 	}
 
 	pool.globalRewardRatioAccumulation.Set(currentHeight, u256.Zero())
@@ -263,21 +260,21 @@ func (self *Pool) updateGlobalRewardRatioAccumulation(currentHeight int64, curre
 
 // RewardState is a struct for storing the intermediate state for reward calculation.
 type RewardState struct {
-	pool *Pool
-	deposit       *Deposit
+	pool    *Pool
+	deposit *Deposit
 
 	// accumulated rewards for each warmup
-	rewards []uint64
+	rewards   []uint64
 	penalties []uint64
 }
 
 // RewardStateOf initializes a new RewardState for the given deposit.
 func (self *Pool) RewardStateOf(deposit *Deposit) *RewardState {
 	result := &RewardState{
-		pool: self,
-		deposit:       deposit,
-		rewards:       make([]uint64, len(deposit.warmups)),
-		penalties:     make([]uint64, len(deposit.warmups)),
+		pool:      self,
+		deposit:   deposit,
+		rewards:   make([]uint64, len(deposit.warmups)),
+		penalties: make([]uint64, len(deposit.warmups)),
 	}
 
 	for i := range result.rewards {

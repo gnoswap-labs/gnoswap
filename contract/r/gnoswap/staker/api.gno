@@ -9,7 +9,7 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 	en "gno.land/r/gnoswap/v1/emission"
 )
 

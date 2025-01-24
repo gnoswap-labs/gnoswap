@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
@@ -200,11 +200,11 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 
 	// gns will be locked in `launchpad` contract
 	gns.TransferFrom(
-		a2u(getPrevAddr()),
-		a2u(std.Address(consts.LAUNCHPAD_ADDR)),
+		getPrevAddr(),
+		consts.LAUNCHPAD_ADDR,
 		amount,
 	)
-	xgns.Mint(a2u(std.Address(consts.LAUNCHPAD_ADDR)), amount)
+	xgns.Mint(consts.LAUNCHPAD_ADDR, amount)
 
 	// Emit deposit event
 	prevAddr, prevPkgPath := getPrev()
@@ -336,8 +336,8 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 
 	// Process token transfers if amount > 0
 	if amount > 0 {
-		xgns.Burn(a2u(consts.LAUNCHPAD_ADDR), amount)
-		gns.Transfer(a2u(caller), amount)
+		xgns.Burn(consts.LAUNCHPAD_ADDR, amount)
+		gns.Transfer(caller, amount)
 		return amount
 	}
 
@@ -428,7 +428,7 @@ func checkDepositConditions(project Project) {
 		// check balance
 		var balance uint64
 		if condition.tokenPath == consts.GOV_XGNS_PATH {
-			balance = xgns.BalanceOf(a2u(caller))
+			balance = xgns.BalanceOf(caller)
 		} else {
 			balance = common.BalanceOf(condition.tokenPath, caller)
 		}
@@ -845,8 +845,8 @@ func processCollectedDeposits(depositList []string, pid string) uint64 {
 
 	if amount > 0 {
 		caller := getPrevAddr()
-		xgns.Burn(a2u(consts.LAUNCHPAD_ADDR), amount)
-		gns.Transfer(a2u(caller), amount)
+		xgns.Burn(consts.LAUNCHPAD_ADDR, amount)
+		gns.Transfer(caller, amount)
 	}
 
 	return amount

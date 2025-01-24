@@ -50,7 +50,7 @@ func ExactOutSwapRoute(
 		panic(addDetailToError(errInvalidInput, err.Error()))
 	}
 
-	finalAmountIn, finalAmountOut := finalizeSwap(
+	inputAmount, outputAmount := finalizeSwap(
 		pp.InputToken,
 		pp.OutputToken,
 		result.AmountIn,
@@ -70,15 +70,14 @@ func ExactOutSwapRoute(
 		"prevRealm", prevPkgPath,
 		"input", pp.InputToken,
 		"output", pp.OutputToken,
-		"amountOut", pp.AmountOut,
+		"exactAmount", amountOut,
 		"route", pp.RouteArr,
 		"quote", pp.QuoteArr,
-		"internal_amountIn", result.AmountIn.ToString(),
-		"internal_amountOut", result.AmountOut.ToString(),
-		"internal_amountOutWithoutFee", result.AmountOut.ToString(),
+		"resultInputAmount", inputAmount,
+		"resultOutputAmount", outputAmount,
 	)
 
-	return finalAmountIn, finalAmountOut
+	return inputAmount, outputAmount
 }
 
 func (op *ExactOutSwapOperation) Validate() error {

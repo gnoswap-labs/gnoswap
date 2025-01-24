@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 
 	gs "gno.land/r/gnoswap/v1/gov/staker"
@@ -34,7 +34,7 @@ func testCreateProject(t *testing.T) {
 		var allocationTokenAmount uint64 = 1_000_000_000_000 // 1000000000000
 
 		std.TestSetRealm(adminRealm)
-		obl.Approve(a2u(consts.LAUNCHPAD_ADDR), allocationTokenAmount)
+		obl.Approve(consts.LAUNCHPAD_ADDR, allocationTokenAmount)
 		std.TestSkipHeights(1)
 
 		projectId := CreateProject(
@@ -69,16 +69,16 @@ func depositTier30(t *testing.T) {
 		gnsAmount := uint64(300_000_000)
 
 		std.TestSetRealm(adminRealm)
-		gns.Transfer(a2u(user01), xGnsAmount+gnsAmount)
-		usdc.Transfer(a2u(user01), usdcAmount)
+		gns.Transfer(user01, xGnsAmount+gnsAmount)
+		usdc.Transfer(user01, usdcAmount)
 
 		std.TestSkipHeights(10) // start project
 
 		std.TestSetRealm(user01Realm)
-		gns.Approve(a2u(consts.GOV_STAKER_ADDR), xGnsAmount)
+		gns.Approve(consts.GOV_STAKER_ADDR, xGnsAmount)
 		gs.Delegate(user01, xGnsAmount) // make xGNS required amount
 
-		gns.Approve(a2u(consts.LAUNCHPAD_ADDR), gnsAmount)
+		gns.Approve(consts.LAUNCHPAD_ADDR, gnsAmount)
 		DepositGns("gno.land/r/onbloc/obl:124:30", gnsAmount)
 	})
 }

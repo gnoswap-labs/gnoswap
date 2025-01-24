@@ -7,14 +7,12 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	pusers "gno.land/p/demo/users"
-	"gno.land/r/demo/users"
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 func TestSetPoolCreationFee(t *testing.T) {
 	var (
-		admin = pusers.AddressOrName("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
+		admin = std.Address("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
 	)
 
 	tests := []struct {
@@ -28,7 +26,7 @@ func TestSetPoolCreationFee(t *testing.T) {
 			name: "Panic call by non-governance",
 			action: func() {
 				const newFee = 2_000_000_000
-				std.TestSetOrigCaller(users.Resolve(admin))
+				std.TestSetOrigCaller(admin)
 				SetPoolCreationFee(newFee)
 			},
 			verify:      nil,
@@ -82,8 +80,8 @@ func TestSetPoolCreationFee(t *testing.T) {
 
 func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 	var (
-		admin = pusers.AddressOrName(consts.ADMIN)
-		alice = pusers.AddressOrName(testutils.TestAddress("alice"))
+		admin = consts.ADMIN
+		alice = testutils.TestAddress("alice")
 	)
 
 	tests := []struct {
@@ -111,7 +109,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			name: "Panic call by non-admin (user)",
 			action: func() {
 				const newFee = 2_000_000_000
-				std.TestSetOrigCaller(users.Resolve(alice))
+				std.TestSetOrigCaller(alice)
 				{
 					SetPoolCreationFeeByAdmin(newFee)
 				}
@@ -124,7 +122,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			name: "Success call by admin",
 			action: func() {
 				const newFee = 2_000_000_000
-				std.TestSetOrigCaller(users.Resolve(admin))
+				std.TestSetOrigCaller(admin)
 				{
 					SetPoolCreationFeeByAdmin(newFee)
 				}
@@ -139,7 +137,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			name: "Success call by admin (rollback)",
 			action: func() {
 				const newFee = 1_000_000_000
-				std.TestSetOrigCaller(users.Resolve(admin))
+				std.TestSetOrigCaller(admin)
 				{
 					SetPoolCreationFeeByAdmin(newFee)
 				}

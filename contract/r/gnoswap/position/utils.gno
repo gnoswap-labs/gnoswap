@@ -7,10 +7,9 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gnft"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -170,18 +169,6 @@ func assertValidLiquidityRatio(ratio uint64) {
 			ufmt.Sprintf("liquidity ratio must in range 1 ~ 100(contain), got %d", ratio),
 		))
 	}
-}
-
-// a2u converts std.Address to pusers.AddressOrName.
-// pusers is a package that contains the user-related functions.
-//
-// Input:
-//   - addr: the address to convert
-//
-// Output:
-//   - pusers.AddressOrName: the converted address
-func a2u(addr std.Address) pusers.AddressOrName {
-	return pusers.AddressOrName(addr)
 }
 
 // derivePkgAddr derives the Realm address from it's pkgpath parameter
@@ -367,7 +354,6 @@ func verifySlippageAmounts(amount0, amount1, amount0Min, amount1Min *u256.Uint) 
 		))
 	}
 }
-
 
 func formatUint(v interface{}) string {
 	switch v := v.(type) {

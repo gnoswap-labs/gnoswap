@@ -7,8 +7,8 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/uassert"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -31,7 +31,7 @@ func TestSwapRouteSingleRouteSinlgeHopWithNativeInAndOut(t *testing.T) {
 func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
+		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee()*3)
 
 		pl.CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006")                         // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 		pl.CreatePool(bazPath, quxPath, fee500, "130621891405341611593710811006")                         // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
@@ -57,8 +57,8 @@ func testPositionMint(t *testing.T) {
 	t.Run("position mint", func(t *testing.T) {
 		t.Run("bar:baz:500", func(t *testing.T) {
 			std.TestSetRealm(adminRealm)
-			bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-			baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+			bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+			baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 			tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr)
 
 			uassert.Equal(t, tokenId, uint64(1))
@@ -69,8 +69,8 @@ func testPositionMint(t *testing.T) {
 
 	t.Run("baz:qux:500", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 		tokenId, liquidity, amount0, amount1 := pn.Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr)
 
 		uassert.Equal(t, tokenId, uint64(2))
@@ -80,10 +80,10 @@ func testPositionMint(t *testing.T) {
 
 	t.Run("qux:gnot:500", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-		wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // wrap / unwrap
+		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // wrap / unwrap
 
 		// send coin
 		std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 1000009}}) // without issuing, it will fail `source address g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5 does not exist`
@@ -105,9 +105,9 @@ func testPositionMint(t *testing.T) {
 // 	t.Run("swap, buy native, bar > gnot", func(t *testing.T) {
 // 		std.TestSetRealm(adminRealm)
 
-// 		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)      // input
-// 		wugnot.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // output fee ≈ 0.15%
-// 		wugnot.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // output unwrap
+// 		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)      // input
+// 		wugnot.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX) // output fee ≈ 0.15%
+// 		wugnot.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX) // output unwrap
 
 // 		// check protocol fee before swap
 // 		feeColUgnot := ugnotBalanceOf(t, consts.PROTOCOL_FEE_ADDR)
@@ -146,8 +146,8 @@ func testPositionMint(t *testing.T) {
 // 	t.Run("swap, sell native, gnot > bar", func(t *testing.T) {
 // 		std.TestSetRealm(adminRealm)
 
-// 		wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // input
-// 		bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)  // output fee ≈ 0.15%
+// 		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // input
+// 		bar.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)  // output fee ≈ 0.15%
 
 // 		// check user balance
 // 		uassert.Equal(t, wugnotBalanceOf(admin), uint64(0))

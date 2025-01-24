@@ -7,7 +7,7 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -72,7 +72,7 @@ func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
+		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee()*3)
 
 		pl.CreatePool(barPath, quxPath, 100, "79228162514264337593543950337")
 		SetPoolTierByAdmin(`gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100`, 1)
@@ -85,8 +85,8 @@ func testMintBarQux100_1(t *testing.T) {
 	t.Run("mint position 01, bar:qux:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,      // token0
@@ -114,8 +114,8 @@ func testMintBarQux100_2(t *testing.T) {
 	t.Run("mint position 02, bar:qux:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,      // token0

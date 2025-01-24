@@ -2,7 +2,6 @@ package governance
 
 import (
 	"std"
-	"strconv"
 	"testing"
 
 	"gno.land/p/demo/avl"
@@ -146,7 +145,7 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 
 			uassert.NoError(t, err)
 
-			prop, exists := proposals.Get(fomatUint(pid))
+			prop, exists := proposals.Get(formatUint(pid))
 			uassert.True(t, exists)
 
 			proposal := prop.(ProposalInfo)
@@ -284,11 +283,11 @@ func TestUpdateProposalsState(t *testing.T) {
 			proposals = avl.NewTree()
 
 			proposal := tt.setupProposal(tt.currentTime)
-			proposals.Set(fomatUint(1), proposal)
+			proposals.Set(formatUint(uint32(1)), proposal)
 
 			updateProposalsState()
 
-			updatedProposal, exists := proposals.Get(fomatUint(1))
+			updatedProposal, exists := proposals.Get(formatUint(uint32(1)))
 			uassert.True(t, exists)
 			tt.validate(t, updatedProposal.(ProposalInfo))
 		})
@@ -339,7 +338,7 @@ func TestProposeParameterChange(t *testing.T) {
 
 			uassert.NoError(t, err)
 
-			prop, exists := proposals.Get(fomatUint(pid))
+			prop, exists := proposals.Get(formatUint(pid))
 			uassert.True(t, exists)
 
 			proposal := prop.(ProposalInfo)

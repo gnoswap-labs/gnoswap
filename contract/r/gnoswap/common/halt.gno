@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 // halted is a global flag that indicates whether the GnoSwap is currently halted.
@@ -90,11 +90,11 @@ func SetHalt(halt bool) {
 func setHalt(halt bool) {
 	halted = halt
 
-	prevAddr, prevRealm := getPrevAsString()
+	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
 		"setHalt",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"halt", strconv.FormatBool(halt),
 	)
 }

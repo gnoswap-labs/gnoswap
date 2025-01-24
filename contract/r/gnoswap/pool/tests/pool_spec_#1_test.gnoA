@@ -10,7 +10,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -32,10 +32,10 @@ func init() {
 func AfterTest(t *testing.T) {
 	poolRealm := std.NewUserRealm(consts.POOL_ADDR)
 	std.TestSetRealm(poolRealm)
-	barBal := bar.BalanceOf(a2u(consts.POOL_ADDR))
-	fooBal := foo.BalanceOf(a2u(consts.POOL_ADDR))
-	bar.Transfer(a2u(adminAddr), barBal)
-	foo.Transfer(a2u(adminAddr), fooBal)
+	barBal := bar.BalanceOf(consts.POOL_ADDR)
+	fooBal := foo.BalanceOf(consts.POOL_ADDR)
+	bar.Transfer(adminAddr, barBal)
+	foo.Transfer(adminAddr, fooBal)
 	pools.Remove("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
 }
 
@@ -48,7 +48,7 @@ func TestCreateFooBarPool_Should_be_failed_if_price_is_too_low(t *testing.T) {
 
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
 
 	uassert.PanicsWithMessage(
 		t,
@@ -62,7 +62,7 @@ func TestCreateFooBarPool_Should_be_failed_if_price_is_too_low(t *testing.T) {
 
 func TestCreateFooBarPool_Should_be_failed_if_price_is_too_high(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
 
 	uassert.PanicsWithMessage(
 		t,
@@ -75,7 +75,7 @@ func TestCreateFooBarPool_Should_be_failed_if_price_is_too_high(t *testing.T) {
 
 func TestCreateFooBarPool_can_be_init_at_MIN_SQRT_RATIO(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
 	pl.CreatePool(barPath, fooPath, 3000, "4295128739") // MIN_SQRT_RATIO
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
@@ -86,7 +86,7 @@ func TestCreateFooBarPool_can_be_init_at_MIN_SQRT_RATIO(t *testing.T) {
 func TestCreateFooBarPool_can_be_init_at_MAX_SQRT_RATIO_Sub1(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
 	pl.CreatePool(barPath, fooPath, 3000, "1461446703485210103287273052203988822378723970341") // MAX_SQRT_RATIO-1
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
@@ -96,7 +96,7 @@ func TestCreateFooBarPool_can_be_init_at_MAX_SQRT_RATIO_Sub1(t *testing.T) {
 
 func TestCreateFooBarPool_set_initial_variables(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
 
 	pl.CreatePool(barPath, fooPath, 3000, "56022770974786139918731938227") // encodePriceSqrt(1, 2)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
@@ -118,10 +118,10 @@ func TestMint_fail_if_tickLower_greater_than_tickUpper(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
 
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 	pl.CreatePool(barPath, fooPath, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
@@ -143,10 +143,10 @@ func TestMint_fail_if_tickLower_less_than_min_tick(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
 
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 	pl.CreatePool(barPath, fooPath, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
@@ -168,9 +168,9 @@ func TestMint_fail_if_tickUpper_greater_than_max_tick(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 	pl.CreatePool(barPath, fooPath, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
@@ -192,10 +192,10 @@ func TestMint_fail_if_amount_exceeds_the_max(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
 
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 	pl.CreatePool(barPath, fooPath, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
@@ -221,10 +221,10 @@ func TestMint_fail_if_total_amount_at_tick_exceeds_the_max(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
 
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 	pl.CreatePool(barPath, fooPath, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
@@ -271,12 +271,12 @@ func TestMint_fail_if_amount_is_0(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
 
 	fooPath := "gno.land/r/onbloc/foo"
 
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 	pl.CreatePool(barPath, fooPath, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
@@ -297,5 +297,5 @@ func TestMint_fail_if_amount_is_0(t *testing.T) {
 }
 
 func gnsBalance(addr std.Address) uint64 {
-	return gns.BalanceOf(a2u(addr))
+	return gns.BalanceOf(addr)
 }

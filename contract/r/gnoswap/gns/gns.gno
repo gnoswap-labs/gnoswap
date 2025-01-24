@@ -7,13 +7,10 @@ import (
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
 
 	"gno.land/r/demo/grc20reg"
-	"gno.land/r/demo/users"
 
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 const (
@@ -52,6 +49,10 @@ func init() {
 	burnAmount = uint64(0)
 }
 
+func TotalSupply() uint64 {
+	return Token.TotalSupply()
+}
+
 func GetName() string {
 	return Token.GetName()
 }
@@ -64,43 +65,19 @@ func GetDecimals() uint {
 	return Token.GetDecimals()
 }
 
-func TotalSupply() uint64 {
-	return Token.TotalSupply()
-}
-
 func KnownAccounts() int {
 	return Token.KnownAccounts()
 }
 
-func BalanceOfAddress(owner std.Address) uint64 {
-	common.AssertValidAddr(owner)
+func BalanceOf(owner std.Address) uint64 {
 	return Token.BalanceOf(owner)
 }
 
-func AllowanceOfAddress(owner, spender std.Address) uint64 {
-	common.AssertValidAddr(owner)
-	common.AssertValidAddr(spender)
+func Allowance(owner, spender std.Address) uint64 {
 	return Token.Allowance(owner, spender)
 }
 
-func BalanceOf(owner pusers.AddressOrName) uint64 {
-	ownerAddr := users.Resolve(owner)
-	return UserTeller.BalanceOf(ownerAddr)
-}
-
-func Allowance(owner, spender pusers.AddressOrName) uint64 {
-	ownerAddr := users.Resolve(owner)
-	spenderAddr := users.Resolve(spender)
-	return UserTeller.Allowance(ownerAddr, spenderAddr)
-}
-
-func SpendAllowance(owner, spender pusers.AddressOrName, amount uint64) {
-	ownerAddr := users.Resolve(owner)
-	spenderAddr := users.Resolve(spender)
-	checkErr(privateLedger.SpendAllowance(ownerAddr, spenderAddr, amount))
-}
-
-func MintGns(address pusers.AddressOrName) uint64 {
+func MintGns(address std.Address) uint64 {
 	lastGNSMintedHeight := GetLastMintedHeight()
 	currentHeight := std.GetHeight()
 
@@ -123,7 +100,7 @@ func MintGns(address pusers.AddressOrName) uint64 {
 	setLeftEmissionAmount(GetLeftEmissionAmount() - amountToMint)
 
 	// mint calculated amount to address
-	err := privateLedger.Mint(users.Resolve(address), amountToMint)
+	err := privateLedger.Mint(address, amountToMint)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -142,10 +119,9 @@ func MintGns(address pusers.AddressOrName) uint64 {
 	return amountToMint
 }
 
-func Burn(from pusers.AddressOrName, amount uint64) {
+func Burn(from std.Address, amount uint64) {
 	owner.AssertCallerIsOwner()
-	fromAddr := users.Resolve(from)
-	checkErr(privateLedger.Burn(fromAddr, amount))
+	checkErr(privateLedger.Burn(from, amount))
 
 	burnAmount += amount
 
@@ -155,26 +131,22 @@ func Burn(from pusers.AddressOrName, amount uint64) {
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"burnedBlockHeight", formatInt(std.GetHeight()),
-		"burnFrom", fromAddr.String(),
+		"burnFrom", from.String(),
 		"burnedGNSAmount", formatUint(amount),
 		"accumBurnedGNSAmount", formatUint(GetBurnAmount()),
 	)
 }
 
-func Transfer(to pusers.AddressOrName, amount uint64) {
-	toAddr := users.Resolve(to)
-	checkErr(UserTeller.Transfer(toAddr, amount))
+func Transfer(to std.Address, amount uint64) {
+	checkErr(UserTeller.Transfer(to, amount))
 }
 
-func Approve(spender pusers.AddressOrName, amount uint64) {
-	spenderAddr := users.Resolve(spender)
-	checkErr(UserTeller.Approve(spenderAddr, amount))
+func Approve(spender std.Address, amount uint64) {
+	checkErr(UserTeller.Approve(spender, amount))
 }
 
-func TransferFrom(from, to pusers.AddressOrName, amount uint64) {
-	fromAddr := users.Resolve(from)
-	toAddr := users.Resolve(to)
-	checkErr(UserTeller.TransferFrom(fromAddr, toAddr, amount))
+func TransferFrom(from, to std.Address, amount uint64) {
+	checkErr(UserTeller.TransferFrom(from, to, amount))
 }
 
 func Render(path string) string {
@@ -185,9 +157,8 @@ func Render(path string) string {
 	case path == "":
 		return Token.RenderHome()
 	case c == 2 && parts[0] == "balance":
-		owner := pusers.AddressOrName(parts[1])
-		ownerAddr := users.Resolve(owner)
-		balance := UserTeller.BalanceOf(ownerAddr)
+		owner := std.Address(parts[1])
+		balance := Token.BalanceOf(owner)
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"
@@ -247,6 +218,14 @@ func calculateAmountToMint(fromHeight, toHeight int64) uint64 {
 
 		setHalvingYearMintAmount(year, GetHalvingYearMintAmount(year)+yearAmountToMint)
 		setHalvingYearLeftAmount(year, GetHalvingYearLeftAmount(year)-yearAmountToMint)
+
+		std.Emit(
+			"CalculateAmountToMint",
+			"fromHeight", formatInt(curFrom),
+			"toHeight", formatInt(mintUntilHeight),
+			"year", formatInt(year),
+			"singleBlockAmount", formatUint(singleBlockAmount),
+		)
 
 		// update fromHeight for next year (if necessary)
 		curFrom = mintUntilHeight + 1

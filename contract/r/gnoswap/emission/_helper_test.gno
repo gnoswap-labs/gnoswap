@@ -7,7 +7,7 @@ import (
 
 	"gno.land/p/demo/avl"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -40,5 +40,5 @@ func resetObject(t *testing.T) {
 func gnsBalance(t *testing.T, addr std.Address) uint64 {
 	t.Helper()
 
-	return gns.BalanceOf(a2u(addr))
+	return gns.BalanceOf(addr)
 }
