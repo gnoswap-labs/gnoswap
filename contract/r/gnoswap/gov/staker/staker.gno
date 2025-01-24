@@ -332,6 +332,12 @@ func CollectReward() {
 	for tokenPath, amount := range protocolFeeRewards {
 		if tokenPath == consts.WUGNOT_PATH {
 			if amount > 0 {
+				if currentProtocolFeeBalance[tokenPath] < amount {
+					panic(addDetailToError(
+						errNotEnoughBalance,
+						ufmt.Sprintf("not enough %s balance(%d) to collect(%d)", tokenPath, currentProtocolFeeBalance[tokenPath], amount),
+					))
+				}
 				currentProtocolFeeBalance[tokenPath] -= amount
 				wugnot.Withdraw(amount)
 				banker := std.GetBanker(std.BankerTypeRealmSend)

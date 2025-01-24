@@ -151,8 +151,13 @@ func (self *RewardState) deductReward(staker std.Address, currentBalance uint64)
 		protocolFeePrice := u256.Zero().Sub(protocolFeePriceAccumulation, protocolFeePriceDebt)
 		protocolFeeReward := protocolFeePrice.Mul(protocolFeePrice, u256.NewUint(info.Amount))
 		protocolFeeReward = protocolFeeReward.Rsh(protocolFeeReward, 128)
-		protocolFeeRewards[tokenPath] = protocolFeeReward.Uint64()
-		info.ProtocolFeeClaimed[tokenPath] += protocolFeeReward.Uint64()
+		protocolFeeReward64 := protocolFeeReward.Uint64()
+		if protocolFeeReward64 == 0 {
+			continue
+		}
+		protocolFeeReward64 -= info.ProtocolFeeClaimed[tokenPath]
+		protocolFeeRewards[tokenPath] = protocolFeeReward64
+		info.ProtocolFeeClaimed[tokenPath] += protocolFeeReward64
 	}
 
 	self.info.Set(staker.String(), info)
@@ -182,6 +187,9 @@ func (self *RewardState) finalize(currentBalance uint64, currentProtocolFeeBalan
 
 	for tokenPath, currentProtocolFeeBalance := range currentProtocolFeeBalances {
 		protocolFeeDelta := currentProtocolFeeBalance - self.CurrentProtocolFeeBalance[tokenPath]
+		if protocolFeeDelta == 0 {
+			continue
+		}
 		protocolFeePrice := u256.NewUint(protocolFeeDelta)
 		protocolFeePrice = protocolFeePrice.Lsh(protocolFeePrice, 128)
 		protocolFeePrice = protocolFeePrice.Div(protocolFeePrice, u256.NewUint(self.TotalStake))

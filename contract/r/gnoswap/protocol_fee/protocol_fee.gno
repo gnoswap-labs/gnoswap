@@ -35,7 +35,6 @@ func DistributeProtocolFee() {
 
 		balance := common.BalanceOf(token, consts.PROTOCOL_FEE_ADDR)
 		if balance > 0 {
-			println("balance of", token, ":", balance)
 			toDevOps := balance * devOpsPct / 10000 // default 0%
 			toGovStaker := balance - toDevOps       // default 100%
 
