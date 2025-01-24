@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"gno.land/p/demo/avl"
-	"gno.land/p/demo/ufmt"
 )
 
 // EncodeUint converts a uint64 number into a zero-padded 20-character string.

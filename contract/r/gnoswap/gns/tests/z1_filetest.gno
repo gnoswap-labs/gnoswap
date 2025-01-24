@@ -9,9 +9,8 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -35,7 +34,7 @@ func skip50Blocks() {
 	uassert.Equal(t, std.GetHeight(), int64(173))
 
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	mintedAmount := gns.MintGns(a2u(user01Addr))
+	mintedAmount := gns.MintGns(user01Addr)
 	uassert.Equal(t, uint64(713470300), mintedAmount) // 14269406 * 50
 	uassert.Equal(t, uint64(713470300), gns.GetMintedEmissionAmount())
 }
@@ -63,7 +62,7 @@ func blockTime2500ms() {
 
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	std.TestSkipHeights(1)
-	mintedAmount := gns.MintGns(a2u(user01Addr))
+	mintedAmount := gns.MintGns(user01Addr)
 	uassert.Equal(t, uint64(17836757), mintedAmount)
 	uassert.Equal(t, uint64(713470300+17836757), gns.GetMintedEmissionAmount()) // 731307057
 }
@@ -75,7 +74,7 @@ func reachAlmostFirstHalving() {
 
 	std.TestSkipHeights(blockLeftUntilEnd - 1) // 1 block left until first halving year ends
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	gns.MintGns(a2u(user01Addr))
+	gns.MintGns(user01Addr)
 
 	uassert.Equal(t, uint64(224999969664063), gns.GetMintedEmissionAmount())
 	// 224999969664063 - 731307057 = 224999238357006
@@ -85,7 +84,7 @@ func reachAlmostFirstHalving() {
 func reachExactFirstHalving() {
 	std.TestSkipHeights(1)
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	gns.MintGns(a2u(user01Addr))
+	gns.MintGns(user01Addr)
 
 	// minted all amount for first halving year
 	uassert.Equal(t, uint64(225000000000000), gns.GetMintedEmissionAmount())
@@ -104,10 +103,6 @@ func startSecondHalving() {
 	uassert.Equal(t, uint64(14269406), amount)
 
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	gns.MintGns(a2u(user01Addr))
+	gns.MintGns(user01Addr)
 	uassert.Equal(t, uint64(225000000000000+14269406), gns.GetMintedEmissionAmount())
-}
-
-func a2u(addr std.Address) pusers.AddressOrName {
-	return pusers.AddressOrName(addr)
 }

@@ -6,15 +6,12 @@ import (
 
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/testutils"
-	pusers "gno.land/p/demo/users"
-	"gno.land/r/demo/users"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 var (
 	adminAddr  = consts.ADMIN
-	adminUser  = common.AddrToUser(adminAddr)
+	adminUser  = adminAddr
 	adminRealm = std.NewUserRealm(adminAddr)
 )
 
@@ -42,18 +39,18 @@ func (m *MockXGNSToken) VotingSupply() uint64 {
 	return total - launchpad
 }
 
-func (m *MockXGNSToken) BalanceOf(owner pusers.AddressOrName) uint64 {
-	ownerAddr := users.Resolve(owner)
+func (m *MockXGNSToken) BalanceOf(owner std.Address) uint64 {
+	ownerAddr := owner
 	return m.token.BalanceOf(ownerAddr)
 }
 
-func (m *MockXGNSToken) Mint(to pusers.AddressOrName, amount uint64) error {
-	toAddr := users.Resolve(to)
+func (m *MockXGNSToken) Mint(to std.Address, amount uint64) error {
+	toAddr := to
 	return m.ledger.Mint(toAddr, amount)
 }
 
-func (m *MockXGNSToken) Burn(from pusers.AddressOrName, amount uint64) error {
-	fromAddr := users.Resolve(from)
+func (m *MockXGNSToken) Burn(from std.Address, amount uint64) error {
+	fromAddr := from
 	return m.ledger.Burn(fromAddr, amount)
 }
 
@@ -67,7 +64,7 @@ func setupXGNSTest(t *testing.T) (*MockXGNSToken, std.Address) {
 	return mockToken, testAddr
 }
 
-func xgnsMint(t *testing.T, token *MockXGNSToken, to pusers.AddressOrName, amount uint64) {
+func xgnsMint(t *testing.T, token *MockXGNSToken, to std.Address, amount uint64) {
 	t.Helper()
 	// Set realm to gov/staker or launchpad to have permission
 	std.TestSetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
@@ -77,7 +74,7 @@ func xgnsMint(t *testing.T, token *MockXGNSToken, to pusers.AddressOrName, amoun
 	}
 }
 
-func xgnsBurn(t *testing.T, token *MockXGNSToken, from pusers.AddressOrName, amount uint64) {
+func xgnsBurn(t *testing.T, token *MockXGNSToken, from std.Address, amount uint64) {
 	t.Helper()
 	// Set realm to gov/staker or launchpad to have permission
 	std.TestSetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
@@ -87,7 +84,7 @@ func xgnsBurn(t *testing.T, token *MockXGNSToken, from pusers.AddressOrName, amo
 	}
 }
 
-func xgnsCheckBalance(t *testing.T, token *MockXGNSToken, owner pusers.AddressOrName, expected uint64) {
+func xgnsCheckBalance(t *testing.T, token *MockXGNSToken, owner std.Address, expected uint64) {
 	t.Helper()
 	balance := token.BalanceOf(owner)
 	if balance != expected {
@@ -114,7 +111,7 @@ func xgnsCheckVotingSupply(t *testing.T, token *MockXGNSToken, expected uint64) 
 // Example test using helper functions
 func TestXGNSHelpers(t *testing.T) {
 	token, testAddr := setupXGNSTest(t)
-	testUser := a2u(testAddr)
+	testUser := testAddr
 
 	// Test minting
 	xgnsMint(t, token, testUser, 1000)
@@ -127,7 +124,7 @@ func TestXGNSHelpers(t *testing.T) {
 	xgnsCheckTotalSupply(t, token, 500)
 
 	// Test Voting Supply
-	launchpadAddr := a2u(consts.LAUNCHPAD_ADDR)
+	launchpadAddr := consts.LAUNCHPAD_ADDR
 	xgnsMint(t, token, launchpadAddr, 200)
 	xgnsCheckVotingSupply(t, token, 500) // Only testUser's balance counts
 }

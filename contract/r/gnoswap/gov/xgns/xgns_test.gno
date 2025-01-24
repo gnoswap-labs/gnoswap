@@ -4,10 +4,9 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 
 	"gno.land/p/demo/uassert"
-	pusers "gno.land/p/demo/users"
 )
 
 func TestTotalSupply(t *testing.T) {
@@ -23,10 +22,10 @@ func TestVotingSupply(t *testing.T) {
 	launchpadBalance := uint64(200)
 
 	std.TestSetRealm(std.NewCodeRealm(consts.GOV_STAKER_PATH))
-	Mint(pusers.AddressOrName(consts.GOV_STAKER_ADDR), initialSupply-launchpadBalance)
+	Mint(consts.GOV_STAKER_ADDR, initialSupply-launchpadBalance)
 
 	std.TestSetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
-	MintByLaunchPad(pusers.AddressOrName(consts.LAUNCHPAD_ADDR), launchpadBalance)
+	MintByLaunchPad(consts.LAUNCHPAD_ADDR, launchpadBalance)
 
 	expectedVotingSupply := initialSupply - launchpadBalance
 	actualVotingSupply := VotingSupply()
@@ -35,7 +34,7 @@ func TestVotingSupply(t *testing.T) {
 	}
 
 	expectedBalance := launchpadBalance
-	actualBalance := BalanceOf(pusers.AddressOrName(consts.LAUNCHPAD_ADDR))
+	actualBalance := BalanceOf(consts.LAUNCHPAD_ADDR)
 	if actualBalance != expectedBalance {
 		t.Errorf("BalanceOf() failed. Expected %d, got %d", expectedBalance, actualBalance)
 	}
@@ -45,10 +44,10 @@ func TestMintFail(t *testing.T) {
 	amount := uint64(100)
 	std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
 	uassert.PanicsWithMessage(t, "[GNOSWAP-XGNS-001] caller has no permission || only gov/staker(g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa) or launchpad(g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3) contract can call Mint, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", func() {
-		Mint(pusers.AddressOrName(consts.GOV_STAKER_ADDR), amount)
+		Mint(consts.GOV_STAKER_ADDR, amount)
 	})
 	uassert.PanicsWithMessage(t, "[GNOSWAP-XGNS-001] caller has no permission || only launchpad(g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3) contract can call MintByLaunchPad, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", func() {
-		MintByLaunchPad(pusers.AddressOrName(consts.GOV_STAKER_ADDR), amount)
+		MintByLaunchPad(consts.GOV_STAKER_ADDR, amount)
 	})
 }
 
@@ -56,9 +55,9 @@ func TestBurn(t *testing.T) {
 	burnAmount := uint64(200)
 
 	std.TestSetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
-	BurnByLaunchPad(pusers.AddressOrName(consts.LAUNCHPAD_ADDR), burnAmount)
+	BurnByLaunchPad(consts.LAUNCHPAD_ADDR, burnAmount)
 	expectedBalance := uint64(0)
-	actualBalance := BalanceOf(pusers.AddressOrName(consts.LAUNCHPAD_ADDR))
+	actualBalance := BalanceOf(consts.LAUNCHPAD_ADDR)
 	if actualBalance != expectedBalance {
 		t.Errorf("Burn() failed. Expected %d, got %d", expectedBalance, actualBalance)
 	}
@@ -68,9 +67,9 @@ func TestBurnFail(t *testing.T) {
 	amount := uint64(100)
 	std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
 	uassert.PanicsWithMessage(t, "[GNOSWAP-XGNS-001] caller has no permission || only gov/staker(g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa) or launchpad(g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3) contract can call Burn, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", func() {
-		Burn(pusers.AddressOrName(consts.GOV_STAKER_ADDR), amount)
+		Burn(consts.GOV_STAKER_ADDR, amount)
 	})
 	uassert.PanicsWithMessage(t, "[GNOSWAP-XGNS-001] caller has no permission || only launchpad(g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3) contract can call BurnByLaunchPad, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", func() {
-		BurnByLaunchPad(pusers.AddressOrName(consts.GOV_STAKER_ADDR), amount)
+		BurnByLaunchPad(consts.GOV_STAKER_ADDR, amount)
 	})
 }

@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -41,7 +41,7 @@ func TestRefundEndedProjectWithTier30(t *testing.T) {
 func testCreateProject(t *testing.T) {
 	t.Run("check before project create", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		obl.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
+		obl.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000_000))
 		std.TestSkipHeights(1)
 
 		// check before project create
@@ -72,14 +72,14 @@ func testCreateProject(t *testing.T) {
 
 func testDepositGnsToTier30(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
+	gns.Transfer(user01, uint64(1_000_000)) // to deposit
 
 	// transfer some grc20 tokens to bypass project condition
-	foo.Transfer(a2u(user01), uint64(10))
-	bar.Transfer(a2u(user01), uint64(10))
+	foo.Transfer(user01, uint64(10))
+	bar.Transfer(user01, uint64(10))
 
 	std.TestSetRealm(user01Realm)
-	gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000))
+	gns.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000))
 
 	t.Run("check before deposit", func(t *testing.T) {
 		// check before deposit
@@ -267,9 +267,6 @@ func testCollectRewardByDepositId(t *testing.T) {
 
 func testMoreBlocks(t *testing.T) {
 	std.TestSkipHeights(10)
-	// TODO:
-	// reimplement calculateDepositReward()
-	//calculateDepositReward()
 
 	// check tier30
 	project := projects[`gno.land/r/onbloc/obl:124`]
@@ -280,10 +277,10 @@ func testMoreBlocks(t *testing.T) {
 
 func testMakeProjectEnd(t *testing.T) {
 	t.Run("make project end", func(t *testing.T) {
-		user01OldOblBalance := obl.BalanceOf(a2u(user01))
+		user01OldOblBalance := obl.BalanceOf(user01)
 		uassert.Equal(t, user01OldOblBalance, uint64(21222222)) // already collected
 
-		refundOldOblBalance := obl.BalanceOf(a2u(refundAddr))
+		refundOldOblBalance := obl.BalanceOf(refundAddr)
 		uassert.Equal(t, refundOldOblBalance, uint64(0))
 
 		std.TestSkipHeights(int64(TIMESTAMP_180DAYS) / 2)
@@ -291,10 +288,10 @@ func testMakeProjectEnd(t *testing.T) {
 		TransferLeftFromProjectByAdmin(`gno.land/r/onbloc/obl:124`, refundAddr)
 		std.TestSkipHeights(1)
 
-		user01NewOblBalance := obl.BalanceOf(a2u(user01))
+		user01NewOblBalance := obl.BalanceOf(user01)
 		uassert.Equal(t, user01NewOblBalance, uint64(21222222))
 
-		refundNewOblBalance := obl.BalanceOf(a2u(refundAddr))
+		refundNewOblBalance := obl.BalanceOf(refundAddr)
 		uassert.Equal(t, refundNewOblBalance, uint64(900000001))
 	})
 }

@@ -10,8 +10,8 @@ import (
 
 	plp "gno.land/p/gnoswap/gnsmath"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/gnoswap/v1/gns"
 
@@ -21,7 +21,7 @@ import (
 
 func TestTickTransaction(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	gns.Approve(consts.POOL_ADDR, poolCreationFee)
 
 	testSqrt := common.TickMathGetSqrtRatioAtTick(-24081)
 	testSqrt = testSqrt.Add(testSqrt, u256.One())
@@ -33,8 +33,8 @@ func TestTickTransaction(t *testing.T) {
 	uassert.Equal(t, thisPool.slot0.tick, int32(-24081))
 
 	liqToMint := "10000000000" // 10_000_000_000
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	std.TestSetRealm(posRealm)
 	Mint(

@@ -1,16 +1,13 @@
 package governance
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 
-	cn "gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
-	gs "gno.land/r/gnoswap/v1/gov/staker"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 	rr "gno.land/r/gnoswap/v1/router"

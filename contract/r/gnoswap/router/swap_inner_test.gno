@@ -7,14 +7,13 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/demo/users"
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 
-    "gno.land/p/demo/uassert"
+	"gno.land/p/demo/uassert"
 )
 
 func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
@@ -87,13 +86,13 @@ func TestSwapInner(t *testing.T) {
 				MakeMintPositionWithoutFee(t)
 
 				std.TestSetRealm(user1Realm)
-				bar.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-				baz.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-				TokenFaucet(t, barPath, a2u(user1Addr))
-				TokenFaucet(t, bazPath, a2u(user1Addr))
+				bar.Approve(consts.ROUTER_ADDR, maxApprove)
+				baz.Approve(consts.ROUTER_ADDR, maxApprove)
+				TokenFaucet(t, barPath, user1Addr)
+				TokenFaucet(t, bazPath, user1Addr)
 			},
 			amountSpecified:   i256.MustFromDecimal("100"),
-			recipient:         users.Resolve(alice),
+			recipient:         alice,
 			sqrtPriceLimitX96: u256.NewUint(4295128740),
 			data: SwapCallbackData{
 				tokenIn:  barPath,
@@ -109,11 +108,11 @@ func TestSwapInner(t *testing.T) {
 
 	for _, tt := range tests {
 		std.TestSetRealm(user1Realm)
-		bar.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-		baz.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-		bar.Approve(a2u(consts.POOL_ADDR), maxApprove)
-		baz.Approve(a2u(consts.POOL_ADDR), maxApprove)
-		TokenFaucet(t, barPath, a2u(consts.ROUTER_ADDR))
+		bar.Approve(consts.ROUTER_ADDR, maxApprove)
+		baz.Approve(consts.ROUTER_ADDR, maxApprove)
+		bar.Approve(consts.POOL_ADDR, maxApprove)
+		baz.Approve(consts.POOL_ADDR, maxApprove)
+		TokenFaucet(t, barPath, consts.ROUTER_ADDR)
 
 		if tt.setupFn != nil {
 			tt.setupFn(t)

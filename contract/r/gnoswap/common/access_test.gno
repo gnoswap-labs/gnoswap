@@ -7,7 +7,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 var (
@@ -112,16 +112,6 @@ func TestEmissionOnly(t *testing.T) {
 
 	t.Run("caller is not emission", func(t *testing.T) {
 		uassert.Error(t, EmissionOnly(addr01))
-	})
-}
-
-func TestTokenRegisterOnly(t *testing.T) {
-	t.Run("caller is token register", func(t *testing.T) {
-		uassert.NoError(t, TokenRegisterOnly(consts.TOKEN_REGISTER))
-	})
-
-	t.Run("caller is not token register", func(t *testing.T) {
-		uassert.Error(t, TokenRegisterOnly(addr01))
 	})
 }
 

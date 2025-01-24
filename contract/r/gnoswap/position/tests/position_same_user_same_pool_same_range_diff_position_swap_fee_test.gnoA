@@ -6,10 +6,8 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/demo/users"
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
 
@@ -19,7 +17,7 @@ import (
 
 const (
 	ugnotDenom string = "ugnot"
-	ugnotPath  string = "gno.land/r/gnoswap/v1/pool:ugnot"
+	ugnotPath  string = "ugnot"
 	wugnotPath string = "gno.land/r/demo/wugnot"
 	gnsPath    string = "gno.land/r/gnoswap/v1/gns"
 	barPath    string = "gno.land/r/onbloc/bar"
@@ -49,22 +47,22 @@ const (
 
 var (
 	adminAddr  = std.Address(consts.ADMIN)
-	admin      = pusers.AddressOrName(adminAddr)
-	adminRealm = std.NewUserRealm(users.Resolve(admin))
+	admin      = adminAddr
+	adminRealm = std.NewUserRealm(admin)
 	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestMintPosition01InRange(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
-	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
+	bar.Approve(consts.POOL_ADDR, 18394892)
+	foo.Approve(consts.POOL_ADDR, 50000000)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -102,8 +100,8 @@ func TestMintPosition01InRange(t *testing.T) {
 
 func TestMintPosition02InRange(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
-	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
+	bar.Approve(consts.POOL_ADDR, 18394892)
+	foo.Approve(consts.POOL_ADDR, 50000000)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -141,7 +139,7 @@ func TestMintPosition02InRange(t *testing.T) {
 
 func TestSwap1(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), 1234567)
+	bar.Approve(consts.POOL_ADDR, 1234567)
 
 	std.TestSetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
@@ -167,8 +165,8 @@ func TestUnclaimedFee01(t *testing.T) {
 
 	{
 		std.TestSetRealm(adminRealm)
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, afterFee0, afterFee1, poolPath, fee0, fee1 := CollectFee(1, false)
 		position := MustGetPosition(tokenId)
@@ -187,8 +185,8 @@ func TestUnclaimedFee02(t *testing.T) {
 
 	{
 		std.TestSetRealm(adminRealm)
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, afterFee0, afterFee1, poolPath, fee0, fee1 := CollectFee(2, false)
 		position := MustGetPosition(tokenId)

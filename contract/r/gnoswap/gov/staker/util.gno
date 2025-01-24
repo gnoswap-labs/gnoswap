@@ -8,10 +8,9 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 )
 
 // marshal data to json string
@@ -53,18 +52,6 @@ func getPrev() (string, string) {
 // derivePkgAddr derives the Realm address from it's pkgPath parameter
 func derivePkgAddr(pkgPath string) std.Address {
 	return std.DerivePkgAddr(pkgPath)
-}
-
-// a2u converts std.Address to pusers.AddressOrName.
-// pusers is a package that contains the user-related functions.
-//
-// Input:
-//   - addr: the address to convert
-//
-// Output:
-//   - pusers.AddressOrName: the converted address
-func a2u(addr std.Address) pusers.AddressOrName {
-	return pusers.AddressOrName(addr)
 }
 
 // formatUint formats a uint64 to a string

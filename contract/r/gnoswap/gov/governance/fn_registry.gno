@@ -3,7 +3,7 @@ package governance
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 
 	cp "gno.land/r/gnoswap/v1/community_pool"

@@ -7,9 +7,7 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
-
+	"gno.land/p/gnoswap/consts"
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -80,8 +78,8 @@ func testMintWugnotGnsPos01(t *testing.T) {
 	t.Run("mint wugnot gns 3000", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		wugnot.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-		gns.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		tokenId, liquidity, amount0, amount1 := pn.Mint(
 			wugnotPath,   // token0

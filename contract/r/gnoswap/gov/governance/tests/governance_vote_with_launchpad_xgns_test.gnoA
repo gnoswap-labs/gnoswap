@@ -11,7 +11,7 @@ import (
 
 	"gno.land/r/onbloc/obl"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
@@ -62,7 +62,7 @@ func TestVoteWithoutLaunchpadXGns(t *testing.T) {
 func testCheckInitialGnsAndXGns(t *testing.T) {
 	t.Run("check current gns and xgns (total/voting) supply", func(t *testing.T) {
 		uassert.Equal(t, gns.TotalSupply(), uint64(100_000_000_000_000))
-		uassert.Equal(t, gns.BalanceOf(a2u(admin)), uint64(100_000_000_000_000))
+		uassert.Equal(t, gns.BalanceOf(admin), uint64(100_000_000_000_000))
 		uassert.Equal(t, xgns.TotalSupply(), uint64(0))
 		uassert.Equal(t, xgns.VotingSupply(), uint64(0))
 	})
@@ -72,7 +72,7 @@ func testLaunchpad(t *testing.T) {
 	t.Run("launchpad project create", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		obl.Approve(a2u(consts.LAUNCHPAD_ADDR), 1_000_000_000)
+		obl.Approve(consts.LAUNCHPAD_ADDR, 1_000_000_000)
 		projectId := lp.CreateProject(
 			"OBL PROTOCOL",
 			oblPath,
@@ -91,10 +91,10 @@ func testLaunchpad(t *testing.T) {
 
 	t.Run("deposit gns", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
+		gns.Transfer(user01, uint64(1_000_000)) // to deposit
 
 		std.TestSetRealm(user01Realm)
-		gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000))
+		gns.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000))
 
 		// before
 		uassert.Equal(t, xgns.TotalSupply(), uint64(0))
@@ -130,7 +130,7 @@ func testDelegate01_2000000_toDummy(t *testing.T) {
 		uassert.Equal(t, time.Now().Unix(), int64(1234567945))
 
 		std.TestSetRealm(adminRealm)
-		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(2_000_000))
+		gns.Approve(consts.GOV_STAKER_ADDR, uint64(2_000_000))
 		gs.Delegate(dummyAddr, uint64(2_000_000)) // delegate to dummy
 
 		// after delegate 01

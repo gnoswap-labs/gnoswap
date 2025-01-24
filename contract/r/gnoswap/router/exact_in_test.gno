@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -114,9 +114,9 @@ func TestExactInSwapRoute(t *testing.T) {
 		{
 			name: "BAR -> BAZ",
 			setup: func() {
-				bar.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-				baz.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-				TokenFaucet(t, barPath, a2u(user1Addr))
+				bar.Approve(consts.ROUTER_ADDR, maxApprove)
+				baz.Approve(consts.ROUTER_ADDR, maxApprove)
+				TokenFaucet(t, barPath, user1Addr)
 			},
 			inputToken:   barPath,
 			outputToken:  bazPath,
@@ -131,10 +131,10 @@ func TestExactInSwapRoute(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			std.TestSetRealm(user1Realm)
-			bar.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-			baz.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
-			bar.Approve(a2u(consts.POOL_ADDR), maxApprove)
-			baz.Approve(a2u(consts.POOL_ADDR), maxApprove)
+			bar.Approve(consts.ROUTER_ADDR, maxApprove)
+			baz.Approve(consts.ROUTER_ADDR, maxApprove)
+			bar.Approve(consts.POOL_ADDR, maxApprove)
+			baz.Approve(consts.POOL_ADDR, maxApprove)
 			if tt.setup != nil {
 				tt.setup()
 			}

@@ -8,8 +8,8 @@ import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
@@ -214,7 +214,7 @@ func (p *Project) checkDepositConditions(caller std.Address) {
 
 		var balance uint64
 		if condition.TokenPath() == consts.GOV_XGNS_PATH {
-			balance = xgns.BalanceOf(common.AddrToUser(caller))
+			balance = xgns.BalanceOf(caller)
 		} else {
 			balance = common.BalanceOf(condition.TokenPath(), caller)
 		}

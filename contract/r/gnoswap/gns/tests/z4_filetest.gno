@@ -11,9 +11,8 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -36,7 +35,7 @@ func reachAlmostEndOfEmission() {
 	std.TestSkipHeights(untilEnds - 10) // 10 blocks before end of emission
 
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	minted := gns.MintGns(a2u(user01Addr))
+	minted := gns.MintGns(user01Addr)
 
 	// minted all amount for year 01 ~ 11
 	for year := int64(1); year <= 11; year++ {
@@ -60,7 +59,7 @@ func skip50Blocks() {
 
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	std.TestSkipHeights(50)
-	gns.MintGns(a2u(user01Addr))
+	gns.MintGns(user01Addr)
 
 	// total supply
 	totalSupply := gns.TotalSupply()
@@ -76,7 +75,7 @@ func moreBlocksAfterEmissionEnds() {
 	std.TestSkipHeights(10)
 
 	// no gns will be minted after emission ends
-	minted := gns.MintGns(a2u(user01Addr))
+	minted := gns.MintGns(user01Addr)
 	uassert.Equal(t, uint64(0), minted)
 
 	// total supply
@@ -86,8 +85,4 @@ func moreBlocksAfterEmissionEnds() {
 	// minted amount
 	mintedAmount := gns.GetMintedEmissionAmount()
 	uassert.Equal(t, gns.MAX_EMISSION_AMOUNT, mintedAmount)
-}
-
-func a2u(addr std.Address) pusers.AddressOrName {
-	return pusers.AddressOrName(addr)
 }

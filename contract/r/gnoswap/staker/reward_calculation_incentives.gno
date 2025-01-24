@@ -4,30 +4,26 @@ import (
 	"std"
 
 	"gno.land/p/demo/avl"
-
 	"gno.land/p/demo/ufmt"
-
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
-
 // Incentives is a collection of external incentives for a given pool.
-// 
+//
 // Fields:
 // - byTime: ExternalIncentive primarily indexed by startTime
 // - byHeight: ExternalIncentive primarily indexed by startHeight
 // - byEndHeight: ExternalIncentive primarily indexed by endHeight
 // - byCreator: ExternalIncentive primarily indexed by creator
 //
-// - unclaimablePeriods: 
-//   For each unclaimable period(start, end) for this pool,
-//   it stores (key: start) => (value: end)
-//   if end is 0, it means the unclaimable period is ongoing.
+//   - unclaimablePeriods:
+//     For each unclaimable period(start, end) for this pool,
+//     it stores (key: start) => (value: end)
+//     if end is 0, it means the unclaimable period is ongoing.
 type Incentives struct {
-	byTime    *avl.Tree // (startTime, endTime, creator, rewardToken) => ExternalIncentive
-	byHeight  *avl.Tree // (startHeight, endHeight, creator, rewardToken) => ExternalIncentive
+	byTime      *avl.Tree // (startTime, endTime, creator, rewardToken) => ExternalIncentive
+	byHeight    *avl.Tree // (startHeight, endHeight, creator, rewardToken) => ExternalIncentive
 	byEndHeight *avl.Tree // (endHeight, startHeight, creator, rewardToken) => ExternalIncentive
-	byCreator *avl.Tree // (creator, startHeight, endHeight, rewardToken) => ExternalIncentive
+	byCreator   *avl.Tree // (creator, startHeight, endHeight, rewardToken) => ExternalIncentive
 
 	unclaimablePeriods *UintTree // startHeight => endHeight
 }
@@ -35,10 +31,10 @@ type Incentives struct {
 // NewIncentives creates a new Incentives instance.
 func NewIncentives() Incentives {
 	result := Incentives{
-		byTime:    avl.NewTree(),
-		byHeight:  avl.NewTree(),
-		byEndHeight: avl.NewTree(),
-		byCreator: avl.NewTree(),
+		byTime:             avl.NewTree(),
+		byHeight:           avl.NewTree(),
+		byEndHeight:        avl.NewTree(),
+		byCreator:          avl.NewTree(),
 		unclaimablePeriods: NewUintTree(),
 	}
 
@@ -79,7 +75,7 @@ func (self *Incentives) GetAllInHeights(startHeight, endHeight int64) map[string
 				// incentive is already ended
 				return false
 			}
-			
+
 			incentives[incentive.incentiveId] = incentive
 			return false
 		},
@@ -166,7 +162,6 @@ func (self *Incentives) calculateUnclaimableReward(incentiveId string) uint64 {
 
 	blocks := int64(0)
 
-
 	self.unclaimablePeriods.ReverseIterate(0, incentive.startHeight, func(key int64, value interface{}) bool {
 		endHeight := value.(int64)
 		if endHeight == 0 {
@@ -191,4 +186,3 @@ func (self *Incentives) calculateUnclaimableReward(incentiveId string) uint64 {
 
 	return uint64(blocks) * incentive.rewardPerBlock
 }
-

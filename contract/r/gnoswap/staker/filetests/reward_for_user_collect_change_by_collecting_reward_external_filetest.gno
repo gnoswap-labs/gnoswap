@@ -21,8 +21,8 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/json"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/gns"
@@ -39,11 +39,11 @@ import (
 
 var (
 	adminAddr  = consts.ADMIN
-	adminUser  = common.AddrToUser(adminAddr)
+	adminUser  = adminAddr
 	adminRealm = std.NewUserRealm(adminAddr)
 
 	stakerAddr  = consts.STAKER_ADDR
-	stakerUser  = common.AddrToUser(stakerAddr)
+	stakerUser  = stakerAddr
 	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
 
 	wugnotAddr = consts.WUGNOT_ADDR
@@ -115,8 +115,8 @@ func testCreatePool() {
 func testCreateExternalIncentiveBar() {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(common.AddrToUser(consts.STAKER_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.STAKER_ADDR), depositGnsAmount)
+	bar.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
+	gns.Approve(consts.STAKER_ADDR, depositGnsAmount)
 
 	std.TestSkipHeights(1)
 	sr.CreateExternalIncentive(
@@ -131,8 +131,8 @@ func testCreateExternalIncentiveBar() {
 func testCreateExternalIncentiveQux() {
 	std.TestSetRealm(adminRealm)
 
-	qux.Approve(common.AddrToUser(consts.STAKER_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.STAKER_ADDR), depositGnsAmount)
+	qux.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
+	gns.Approve(consts.STAKER_ADDR, depositGnsAmount)
 
 	std.TestSkipHeights(1)
 	sr.CreateExternalIncentive(
@@ -147,8 +147,8 @@ func testCreateExternalIncentiveQux() {
 func testMintAndStakeBarQuxPos01() {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	qux.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	pn.Mint(
@@ -173,8 +173,8 @@ func testMintAndStakeBarQuxPos01() {
 func testMintAndStakeBarQuxPos02() {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	qux.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	pn.Mint(

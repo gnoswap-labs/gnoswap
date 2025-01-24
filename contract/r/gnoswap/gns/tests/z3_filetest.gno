@@ -9,9 +9,8 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -36,7 +35,7 @@ func skip50Blocks() {
 	uassert.Equal(t, std.GetHeight(), int64(173))
 
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	gns.MintGns(a2u(user01Addr)) // 14269406 * 50 = 713470300
+	gns.MintGns(user01Addr)) // 14269406 * 50 = 71347030
 	uassert.Equal(t, uint64(713470300), gns.GetMintedEmissionAmount())
 }
 
@@ -46,7 +45,7 @@ func blockTime4000ms() {
 
 	std.TestSkipHeights(1)
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	gns.MintGns(a2u(user01Addr))                                                // 28538812
+	gns.MintGns(user01Addr))                                                // 2853881
 	uassert.Equal(t, uint64(713470300+28538812), gns.GetMintedEmissionAmount()) // 742009112
 
 	// next halving year start/end block
@@ -61,7 +60,7 @@ func reachAboutHalfOfFirstHalving() {
 
 	std.TestSkipHeights(3941987)
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	gns.MintGns(a2u(user01Addr))
+	gns.MintGns(user01Addr)
 
 	// stil in first halving year
 	year := gns.GetHalvingYearByHeight(std.GetHeight())
@@ -79,7 +78,7 @@ func reachFirstHalving() {
 	std.TestSkipHeights(blockLeftUntilEndOfYear01)
 
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	gns.MintGns(a2u(user01Addr))
+	gns.MintGns(user01Addr)
 
 	// minted all amount for first halving year
 	uassert.Equal(t, gns.GetHalvingYearMaxAmount(1), gns.GetMintedEmissionAmount())
@@ -99,10 +98,6 @@ func startSecondHalving() {
 	uassert.Equal(t, uint64(14269406), amount)
 
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	gns.MintGns(a2u(user01Addr))
+	gns.MintGns(user01Addr)
 	uassert.Equal(t, uint64(225000000000000+14269406), gns.GetMintedEmissionAmount())
-}
-
-func a2u(addr std.Address) pusers.AddressOrName {
-	return pusers.AddressOrName(addr)
 }

@@ -7,7 +7,7 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 
@@ -100,9 +100,9 @@ func testCreateExternalIncentiveBarAndBaz(t *testing.T) {
 	t.Run("create external incentive for bar:baz:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
-		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount*2)
+		bar.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
+		gns.Approve(consts.STAKER_ADDR, depositGnsAmount*2)
 
 		CreateExternalIncentive(
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
@@ -138,8 +138,8 @@ func testCreateExternalIncentiveQux(t *testing.T) {
 	t.Run("create external incentive for bar:qux:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		qux.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
-		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+		qux.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
+		gns.Approve(consts.STAKER_ADDR, depositGnsAmount)
 
 		CreateExternalIncentive(
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
@@ -156,8 +156,8 @@ func testMintAndStakeOnlyInternal01And02(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		// token to provide liquidity
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		// position01
 		lpTokenId, _, _, _, _ := MintAndStake(
@@ -198,8 +198,8 @@ func testMintAndStakeOnlyExternal03And04(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		// token to provide liquidity
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		// position03
 		lpTokenId, _, _, _, _ := MintAndStake(
@@ -240,8 +240,8 @@ func testMintAndStakeBothInternalAndExternal05(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		// token to provide liquidity
-		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 		// position05
 		lpTokenId, _, _, _, _ := MintAndStake(

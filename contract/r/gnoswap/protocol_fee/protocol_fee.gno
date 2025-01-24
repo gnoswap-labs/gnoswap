@@ -7,8 +7,8 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 )
 
 var (
@@ -92,14 +92,16 @@ func setDevOpsPct(pct uint64) {
 		))
 	}
 
+	prevDevOpsPct := devOpsPct
 	devOpsPct = pct
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"SetDevOpsPct",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"pct", strconv.FormatUint(pct, 10),
+		"prevRealm", prevPkgPath,
+		"newPct", strconv.FormatUint(pct, 10),
+		"prevPct", strconv.FormatUint(prevDevOpsPct, 10),
 	)
 }
 

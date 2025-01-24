@@ -6,10 +6,8 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/demo/users"
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -21,7 +19,7 @@ import (
 
 const (
 	ugnotDenom string = "ugnot"
-	ugnotPath  string = "gno.land/r/gnoswap/v1/pool:ugnot"
+	ugnotPath  string = "ugnot"
 	wugnotPath string = "gno.land/r/demo/wugnot"
 	gnsPath    string = "gno.land/r/gnoswap/v1/gns"
 	barPath    string = "gno.land/r/onbloc/bar"
@@ -51,8 +49,8 @@ const (
 
 var (
 	adminAddr  = std.Address(consts.ADMIN)
-	admin      = pusers.AddressOrName(adminAddr)
-	adminRealm = std.NewUserRealm(users.Resolve(admin))
+	admin      = adminAddr
+	adminRealm = std.NewUserRealm(admin)
 	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
 )
 
@@ -66,7 +64,7 @@ func getPoolFromLpTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee3000, "79228162514264337593543950337")
 	std.TestSkipHeights(10)
 }
@@ -74,8 +72,8 @@ func TestPoolInitCreatePool(t *testing.T) {
 func TestMintPosition01(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -115,11 +113,11 @@ func TestMintPosition01(t *testing.T) {
 func TestSwap1(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+	foo.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
 
 	amount0, amount1 := rr.ExactOutSwapRoute(
 		barPath,
@@ -151,8 +149,8 @@ func TestSwap1(t *testing.T) {
 
 func TestMintPosition02(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -191,8 +189,8 @@ func TestMintPosition02(t *testing.T) {
 
 func TestMintPosition03(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -232,11 +230,11 @@ func TestMintPosition03(t *testing.T) {
 func TestSwap2(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+	foo.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
 
 	amount0, amount1 := rr.ExactInSwapRoute(
 		barPath,
@@ -253,8 +251,8 @@ func TestSwap2(t *testing.T) {
 
 func TestMintPosition04(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -294,11 +292,11 @@ func TestMintPosition04(t *testing.T) {
 func TestSwap3(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+	foo.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
 
 	amount0, amount1 := rr.ExactInSwapRoute(
 		barPath,
@@ -316,8 +314,8 @@ func TestSwap3(t *testing.T) {
 
 func TestIncreaseLiquidity02(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	pool := getPoolFromLpTokenId(t, uint64(2))
 	oldLiquidity := pool.Liquidity()
@@ -349,8 +347,8 @@ func TestDecreaseLiquidityPosition02(t *testing.T) {
 	uassert.Equal(t, ownerOfPosition, adminAddr)
 
 	// approve fee0, feelpTokenId to pool
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 	oldLiquidities := getPoolFromLpTokenId(t, lpTokenId).Liquidity()
 	println("oldLiquidities:", oldLiquidities.ToString())
 
@@ -398,8 +396,8 @@ func TestDecreaseLiquidityPosition02All(t *testing.T) {
 	uassert.Equal(t, ownerOfPosition, adminAddr)
 
 	// approve fee0, feelpTokenId to pool
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	oldLiquidities := getPoolFromLpTokenId(t, lpTokenId).Liquidity()
 	println("oldLiquidities:", oldLiquidities.ToString())

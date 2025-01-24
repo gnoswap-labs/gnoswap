@@ -19,8 +19,8 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	_ "gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/gns"
@@ -37,11 +37,11 @@ import (
 
 var (
 	adminAddr  = consts.ADMIN
-	adminUser  = common.AddrToUser(adminAddr)
+	adminUser  = adminAddr
 	adminRealm = std.NewUserRealm(adminAddr)
 
 	stakerAddr  = consts.STAKER_ADDR
-	stakerUser  = common.AddrToUser(stakerAddr)
+	stakerUser  = stakerAddr
 	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
 
 	fooPath = "gno.land/r/onbloc/foo"
@@ -108,8 +108,8 @@ func testCreatePool() {
 func testMintBarQuxPos01() {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	qux.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	pn.Mint(
@@ -131,8 +131,8 @@ func testMintBarQuxPos01() {
 func testMintBarQuxPos02() {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	qux.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	pn.Mint(
@@ -154,8 +154,8 @@ func testMintBarQuxPos02() {
 func testCreateExternalIncentive() {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(common.AddrToUser(consts.STAKER_ADDR), consts.UINT64_MAX)
-	gns.Approve(common.AddrToUser(consts.STAKER_ADDR), depositGnsAmount)
+	bar.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
+	gns.Approve(consts.STAKER_ADDR, depositGnsAmount)
 
 	std.TestSkipHeights(1)
 	sr.CreateExternalIncentive(
@@ -209,11 +209,11 @@ func testMakePosition1OutRangeBySwap() {
 
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 
-	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	qux.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-	bar.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
-	qux.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+	qux.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
 
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
 		barPath,     // inputToken
@@ -250,11 +250,11 @@ func testMakePosition1InRangeBySwap() {
 
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 
-	bar.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
-	qux.Approve(common.AddrToUser(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-	bar.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
-	qux.Approve(common.AddrToUser(consts.ROUTER_ADDR), consts.UINT64_MAX)
+	bar.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+	qux.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
 
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
 		quxPath,

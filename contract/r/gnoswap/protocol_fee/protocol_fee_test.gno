@@ -7,8 +7,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
@@ -16,7 +15,6 @@ import (
 
 var (
 	adminAddr  = consts.ADMIN
-	adminUser  = common.AddrToUser(adminAddr)
 	adminRealm = std.NewUserRealm(adminAddr)
 )
 
@@ -24,26 +22,26 @@ func TestDistributeProtocolFee(t *testing.T) {
 	// admin > protocol_fee
 	// send qux, bar for testing
 	std.TestSetRealm(adminRealm)
-	bar.Transfer(common.AddrToUser(consts.PROTOCOL_FEE_ADDR), 1000)
-	qux.Transfer(common.AddrToUser(consts.PROTOCOL_FEE_ADDR), 1000)
+	bar.Transfer(consts.PROTOCOL_FEE_ADDR, 1000)
+	qux.Transfer(consts.PROTOCOL_FEE_ADDR, 1000)
 
-	uassert.Equal(t, bar.BalanceOf(common.AddrToUser(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
-	uassert.Equal(t, bar.BalanceOf(common.AddrToUser(consts.DEV_OPS)), uint64(0))
-	uassert.Equal(t, bar.BalanceOf(common.AddrToUser(consts.GOV_STAKER_ADDR)), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(1000))
+	uassert.Equal(t, bar.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(consts.GOV_STAKER_ADDR), uint64(0))
 
-	uassert.Equal(t, qux.BalanceOf(common.AddrToUser(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
-	uassert.Equal(t, qux.BalanceOf(common.AddrToUser(consts.DEV_OPS)), uint64(0))
-	uassert.Equal(t, qux.BalanceOf(common.AddrToUser(consts.GOV_STAKER_ADDR)), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(1000))
+	uassert.Equal(t, qux.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(consts.GOV_STAKER_ADDR), uint64(0))
 
 	DistributeProtocolFee()
 
-	uassert.Equal(t, bar.BalanceOf(common.AddrToUser(consts.PROTOCOL_FEE_ADDR)), uint64(0))
-	uassert.Equal(t, bar.BalanceOf(common.AddrToUser(consts.DEV_OPS)), uint64(0))
-	uassert.Equal(t, bar.BalanceOf(common.AddrToUser(consts.GOV_STAKER_ADDR)), uint64(1000))
+	uassert.Equal(t, bar.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(consts.GOV_STAKER_ADDR), uint64(1000))
 
-	uassert.Equal(t, qux.BalanceOf(common.AddrToUser(consts.PROTOCOL_FEE_ADDR)), uint64(0))
-	uassert.Equal(t, qux.BalanceOf(common.AddrToUser(consts.DEV_OPS)), uint64(0))
-	uassert.Equal(t, qux.BalanceOf(common.AddrToUser(consts.GOV_STAKER_ADDR)), uint64(1000))
+	uassert.Equal(t, qux.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(consts.GOV_STAKER_ADDR), uint64(1000))
 }
 
 func TestSetDevOpsPctByAdminNoPermission(t *testing.T) {

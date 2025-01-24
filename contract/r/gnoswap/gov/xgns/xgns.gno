@@ -7,12 +7,9 @@ import (
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/demo/users"
-
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 )
 
 var (
@@ -60,9 +57,8 @@ func VotingSupply() uint64 {
 //
 // Returns:
 // - uint64: The current token balance of the specified address.
-func BalanceOf(owner pusers.AddressOrName) uint64 {
-	ownerAddr := users.Resolve(owner)
-	return token.BalanceOf(ownerAddr)
+func BalanceOf(owner std.Address) uint64 {
+	return token.BalanceOf(owner)
 }
 
 // xGNS is non-transferable
@@ -75,9 +71,7 @@ func Render(path string) string {
 	case path == "":
 		return token.RenderHome()
 	case c == 2 && parts[0] == "balance":
-		owner := pusers.AddressOrName(parts[1])
-		ownerAddr := users.Resolve(owner)
-		balance := token.BalanceOf(ownerAddr)
+		balance := token.BalanceOf(std.Address(parts[1]))
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"
@@ -98,7 +92,7 @@ func Render(path string) string {
 // Errors:
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Mint function.
-func Mint(to pusers.AddressOrName, amount uint64) {
+func Mint(to std.Address, amount uint64) {
 	common.IsHalted()
 
 	// only (gov staker) or (launchpad) contract can call Mint
@@ -110,7 +104,7 @@ func Mint(to pusers.AddressOrName, amount uint64) {
 		))
 	}
 
-	checkErr(ledger.Mint(users.Resolve(to), amount))
+	checkErr(ledger.Mint(to, amount))
 }
 
 // MintByLaunchPad increases the balance of a specified address by a given amount.
@@ -127,7 +121,7 @@ func Mint(to pusers.AddressOrName, amount uint64) {
 // Errors:
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Mint function.
-func MintByLaunchPad(to pusers.AddressOrName, amount uint64) {
+func MintByLaunchPad(to std.Address, amount uint64) {
 	common.IsHalted()
 
 	caller := std.PrevRealm().Addr()
@@ -138,7 +132,7 @@ func MintByLaunchPad(to pusers.AddressOrName, amount uint64) {
 		))
 	}
 
-	mint(users.Resolve(to), amount)
+	mint(to, amount)
 }
 
 // mint increases the balance of a specified address by a given amount.
@@ -161,7 +155,7 @@ func mint(to std.Address, amount uint64) {
 // Errors:
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Burn function.
-func Burn(from pusers.AddressOrName, amount uint64) {
+func Burn(from std.Address, amount uint64) {
 	common.IsHalted()
 
 	// only (gov staker) or (launchpad) contract can call Mint
@@ -173,10 +167,10 @@ func Burn(from pusers.AddressOrName, amount uint64) {
 		))
 	}
 
-	burn(users.Resolve(from), amount)
+	burn(from, amount)
 }
 
-func BurnByLaunchPad(from pusers.AddressOrName, amount uint64) {
+func BurnByLaunchPad(from std.Address, amount uint64) {
 	common.IsHalted()
 
 	caller := std.PrevRealm().Addr()
@@ -186,7 +180,7 @@ func BurnByLaunchPad(from pusers.AddressOrName, amount uint64) {
 			ufmt.Sprintf("only launchpad(%s) contract can call BurnByLaunchPad, called from %s", consts.LAUNCHPAD_ADDR.String(), caller.String()),
 		))
 	}
-	burn(users.Resolve(from), amount)
+	burn(from, amount)
 }
 
 func burn(from std.Address, amount uint64) {

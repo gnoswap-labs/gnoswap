@@ -9,8 +9,8 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 )
 
 var (
@@ -379,8 +379,8 @@ func setTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) error {
 		"SetTokenURI",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpTokenId", "tid",
-		"tokenURI", "tURI",
+		"lpTokenId", string(tid),
+		"tokenURI", string(tURI),
 	)
 
 	return nil

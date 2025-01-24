@@ -1,8 +1,7 @@
 package staker
 
 import (
-	"gno.land/r/gnoswap/v1/consts"
-	pl "gno.land/r/gnoswap/v1/pool"
+	"gno.land/p/gnoswap/consts"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -120,7 +119,7 @@ func CalcPositionReward(param CalcPositionRewardParam) []Reward {
 	externalPenalties := make([]map[string]uint64, len(deposit.warmups))
 
 	if param.PoolTier.CurrentTier(poolPath) != 0 {
-		// Internal incentivized pool. 
+		// Internal incentivized pool.
 		// Calculate reward for each warmup
 		internalRewards, internalPenalties = pool.RewardStateOf(deposit).CalculateInternalReward(lastCollectHeight, param.CurrentHeight)
 	}

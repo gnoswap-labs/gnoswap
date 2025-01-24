@@ -6,10 +6,9 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 )
 
 // GetOrigPkgAddr returns the original package address.
@@ -79,18 +78,6 @@ func poolPathDivide(poolPath string) (string, string, string) {
 
 	pToken0, pToken1, fee := res[0], res[1], res[2]
 	return pToken0, pToken1, fee
-}
-
-// a2u converts std.Address to pusers.AddressOrName.
-// pusers is a package that contains the user-related functions.
-//
-// Input:
-//   - addr: the address to convert
-//
-// Output:
-//   - pusers.AddressOrName: the converted address
-func a2u(addr std.Address) pusers.AddressOrName {
-	return pusers.AddressOrName(addr)
 }
 
 // tid converts uint64 to grc721.TokenID.
