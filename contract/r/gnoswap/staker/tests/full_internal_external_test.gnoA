@@ -911,7 +911,7 @@ func testUnstakeToken01(t *testing.T) {
 	t.Run("unstake token 01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		UnstakeToken(1, false)
+		UnStakeToken(1, false)
 
 		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)

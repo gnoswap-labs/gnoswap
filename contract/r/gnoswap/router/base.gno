@@ -67,7 +67,7 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 	specifiedAmount *i256.Int,
 ) error {
 	// no native token
-	if inputToken == consts.GNOT || outputToken == consts.GNOT {
+	if inputToken == consts.WUGNOT_PATH || outputToken == consts.WUGNOT_PATH {
 		return nil
 	}
 

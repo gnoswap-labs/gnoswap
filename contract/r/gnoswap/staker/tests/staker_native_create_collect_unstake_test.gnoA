@@ -269,7 +269,7 @@ func testUnstakeToken02(t *testing.T) {
 
 		std.TestSetRealm(adminRealm)
 
-		UnstakeToken(2, false) // GNFT tokenId
+		UnStakeToken(2, false) // GNFT tokenId
 		std.TestSkipHeights(1)
 
 		uassert.Equal(t, gnft.MustOwnerOf(tid(2)), adminAddr)
