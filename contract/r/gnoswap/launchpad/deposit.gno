@@ -13,6 +13,7 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 	"gno.land/r/gnoswap/v1/gov/xgns"
+	ppad "gno.land/p/gnoswap/v1/launchpad"
 )
 
 var (
@@ -153,7 +154,7 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 			"tierAmountPerBlockX128", tier.TierAmountPerBlockX128().ToString(),
 		)
 
-		rewardState := NewRewardState(tier.tierAmountPerBlockX128, tier.started.height, tier.ended.height)
+		rewardState := ppad.NewRewardState(tier.tierAmountPerBlockX128, tier.started.height, tier.ended.height)
 		rewardStates.Set(info.Project.id, info.TierType, rewardState)
 	}
 

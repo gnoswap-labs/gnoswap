@@ -9,6 +9,7 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+	ppad "gno.land/p/gnoswap/v1/launchpad"
 )
 
 func TestValidateRewardCollection(t *testing.T) {
@@ -125,13 +126,14 @@ func TestProcessDepositReward(t *testing.T) {
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			state := NewRewardState(tt.rewardX128, 1000, 2000)
+			state := ppad.NewRewardState(tt.rewardX128, 1000, 2000)
 			depositId := ufmt.Sprintf("depositId-%d", i)
 			state.AddStake(1000, depositId, tt.deposit.amount)
-			state.TotalStake = tt.tierAmount // force overriding total stake
-			state.finalize(1001)
+			state.SetTotalStake(tt.tierAmount)
+			state.Finalize(1001)
 
-			reward := state.CalculateReward(depositId)
+			reward, err := state.CalculateReward(depositId)
+			uassert.NoError(t, err)
 			uassert.Equal(t, tt.expectedReward, reward)
 		})
 	}

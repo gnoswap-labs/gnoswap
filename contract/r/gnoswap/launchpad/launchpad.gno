@@ -13,7 +13,8 @@ import (
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/gns"
+
+	ppad "gno.land/p/gnoswap/v1/launchpad"
 )
 
 var (
@@ -717,7 +718,7 @@ func createTier(
 		reward:                 *reward,
 	}
 
-	rewardState := NewRewardState(tier.tierAmountPerBlockX128, startHeight, endHeight)
+	rewardState := ppad.NewRewardState(tier.tierAmountPerBlockX128, startHeight, endHeight)
 	rewardStates.Set(projectId, strconv.FormatUint(duration, 10), rewardState)
 
 	projectTiersWithoutDeposit[tierId] = true

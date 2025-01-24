@@ -73,6 +73,7 @@ type RewardState struct {
 // Getters for RewardState
 func (rs *RewardState) PriceAccumulation() *u256.Uint { return rs.priceAccumulation }
 func (rs *RewardState) TotalStake() uint64            { return rs.totalStake }
+func (rs *RewardState) SetTotalStake(amount uint64)    { rs.totalStake = amount }
 func (rs *RewardState) LastHeight() uint64            { return rs.lastHeight }
 func (rs *RewardState) RewardPerBlock() *u256.Uint    { return rs.rewardPerBlock }
 func (rs *RewardState) EndHeight() uint64             { return rs.endHeight }

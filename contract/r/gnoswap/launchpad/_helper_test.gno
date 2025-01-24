@@ -13,6 +13,13 @@ var (
 	adminAddr  = consts.ADMIN
 	adminUser  = adminAddr
 	adminRealm = std.NewUserRealm(adminAddr)
+
+	fooPath string = "gno.land/r/onbloc/foo"
+	barPath string = "gno.land/r/onbloc/bar"
+	bazPath string = "gno.land/r/onbloc/baz"
+	quxPath string = "gno.land/r/onbloc/qux"
+
+	oblPath string = "gno.land/r/onbloc/obl"
 )
 
 // MockXGNSToken implements basic functionality for testing xgns token

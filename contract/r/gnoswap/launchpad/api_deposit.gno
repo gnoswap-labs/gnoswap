@@ -31,7 +31,10 @@ func ApiGetClaimableDepositByAddress(address std.Address) uint64 {
 		}
 
 		rwd, _ := rewardStates.Get(deposit.projectId, deposit.tier)
-		reward := rwd.Claim(depositId, uint64(std.GetHeight()))
+		reward, err := rwd.Claim(depositId, uint64(std.GetHeight()))
+		if err != nil {
+			panic(err.Error())
+		}
 
 		gnsToUser += reward
 	}
