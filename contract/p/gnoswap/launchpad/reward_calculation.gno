@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -248,6 +249,62 @@ func (rs *RewardState) RemoveStake(depositId string, amount uint64, currentHeigh
 
 	return reward, nil
 }
+
+// region: RewardStates
+
+type RewardStates struct {
+	states *avl.Tree // projectId:tier string -> RewardState
+}
+
+func NewRewardStates() RewardStates {
+	return RewardStates{
+		states: avl.NewTree(),
+	}
+}
+
+func (rs *RewardStates) Get(pid, tier string) (*RewardState, error) {
+	key := createId(pid, tier)
+	statesI, exists := rs.states.Get(key)
+	if !exists {
+		return nil, ufmt.Errorf("reward state not found for projectId %s and tierStr %s", pid, tier)
+	}
+	return statesI.(*RewardState), nil
+}
+
+func (rs *RewardStates) Set(pid, tier string, state *RewardState) error {
+	key := createId(pid, tier)
+	ok := rs.states.Set(key, state)
+	if !ok {
+		return ufmt.Errorf("failed to set reward state for projectId %s and tierStr %s", pid, tier)
+	}
+	return nil
+}
+
+func (rs *RewardStates) DeleteProject(pid string) uint64 {
+	totalLeftOver := uint64(0)
+
+	keys := make([]string, 0)
+	rs.states.Iterate(pid+":", pid+";", func(key string, value interface{}) bool {
+		state := value.(*RewardState)
+		totalEmptyBlock := state.TotalEmptyBlock()
+		if state.TotalStake() == 0 {
+			totalEmptyBlock += state.EndHeight() - state.LastHeight()
+		}
+
+		totalEmptyRewards := u256.Zero().Mul(u256.NewUint(totalEmptyBlock), state.RewardPerBlock())
+		totalLeftOver += totalEmptyRewards.Uint64()
+		keys = append(keys, key)
+		return false
+	})
+
+	for _, key := range keys {
+		rs.states.Remove(key)
+	}
+
+	return totalLeftOver
+}
+
+// region: depositInfo
 
 // Helper struct for deposit info
 type depositInfo struct {
