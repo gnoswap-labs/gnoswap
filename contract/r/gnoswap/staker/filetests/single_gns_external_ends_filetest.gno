@@ -19,8 +19,8 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/testutils"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/bar"

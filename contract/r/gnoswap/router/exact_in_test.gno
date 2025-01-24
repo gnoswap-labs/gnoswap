@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"

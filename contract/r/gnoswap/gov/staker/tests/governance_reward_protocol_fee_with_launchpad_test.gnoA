@@ -11,7 +11,7 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 	en "gno.land/r/gnoswap/v1/emission"
 	lp "gno.land/r/gnoswap/v1/launchpad"
 
@@ -42,7 +42,6 @@ var (
 	user01      = testutils.TestAddress("user01")
 	user01Realm = std.NewUserRealm(user01)
 )
-
 
 func TestGovernanceRewardProtocolFeeWithLaunchpad(t *testing.T) {
 	delegateFromAdminToDummy(t)

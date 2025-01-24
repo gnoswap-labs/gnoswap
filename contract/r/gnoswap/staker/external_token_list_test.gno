@@ -1,13 +1,5 @@
 package staker
 
-import (
-	"std"
-	"testing"
-
-	"gno.land/p/demo/testutils"
-
-	"gno.land/r/gnoswap/v1/consts"
-)
 /*
 func TestAddToken(t *testing.T) {
 	adminAddr := consts.ADMIN

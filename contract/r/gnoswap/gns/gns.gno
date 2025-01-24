@@ -10,7 +10,7 @@ import (
 
 	"gno.land/r/demo/grc20reg"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 const (

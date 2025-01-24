@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 var (
