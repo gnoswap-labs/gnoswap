@@ -1,4 +1,4 @@
-package tests
+package position
 
 import (
 	"std"
@@ -39,7 +39,7 @@ const (
 	TIER_3 uint64 = 3
 )
 
-const (
+var (
 	// define addresses to use in tests
 	addr01 = testutils.TestAddress("addr01")
 	addr02 = testutils.TestAddress("addr02")

@@ -1,4 +1,4 @@
-package tests
+package router
 
 import (
 	"std"
@@ -50,8 +50,6 @@ func TestPositionMint(t *testing.T) {
 }
 
 func TestExactInputSinglePool(t *testing.T) {
-	t.Skip("TODO: fail with token registration error")
-
 	// 0 -> 1
 	pool := pl.GetPool(barPath, bazPath, FEE_MEDIUM)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"

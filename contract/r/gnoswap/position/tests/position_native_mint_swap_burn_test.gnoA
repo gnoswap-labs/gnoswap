@@ -1,4 +1,4 @@
-package tests
+package position
 
 import (
 	"std"
@@ -56,7 +56,7 @@ func testMintPosition(t *testing.T) {
 		std.TestSetOrigSend(std.Coins{{"ugnot", 50000005}}, nil)
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(0))
 
-		adminOldWugnotBalance := wugnot.BalanceOf(admin)
+		adminOldWugnotBalance := wugnot.BalanceOf(adminAddr)
 		uassert.Equal(t, adminOldWugnotBalance, uint64(0))
 
 		tokenId, liquidity, amount0, amount1 := Mint(
@@ -94,7 +94,7 @@ func testMintPosition(t *testing.T) {
 		uassert.Equal(t, position.burned, false)
 
 		// SPEND ALL WUGNOT
-		uassert.Equal(t, wugnot.BalanceOf(admin), uint64(0))
+		uassert.Equal(t, wugnot.BalanceOf(adminAddr), uint64(0))
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(15168))
 	})
 }
@@ -163,7 +163,7 @@ func testDecreaseWithNoUnwrap(t *testing.T) {
 	t.Run("decrease with no unwrap", func(t *testing.T) {
 		// no unwrap => receive with wugnot
 
-		oldWugnotBalance := wugnot.BalanceOf(admin)
+		oldWugnotBalance := wugnot.BalanceOf(adminAddr)
 		oldUgnotBalance := ugnotBalanceOf(t, adminAddr)
 		uassert.Equal(t, oldWugnotBalance, uint64(0))
 		uassert.Equal(t, oldUgnotBalance, uint64(15168))
@@ -178,7 +178,7 @@ func testDecreaseWithNoUnwrap(t *testing.T) {
 			false,
 		)
 
-		newWugnotBalance := wugnot.BalanceOf(admin)
+		newWugnotBalance := wugnot.BalanceOf(adminAddr)
 		newUgnotBalance := ugnotBalanceOf(t, adminAddr)
 
 		uassert.Equal(t, newWugnotBalance, uint64(5122489))
@@ -190,7 +190,7 @@ func testDecreaseWithUnwrap(t *testing.T) {
 	t.Run("decrease with unwrap", func(t *testing.T) {
 		// unwrap => receive with ugnot
 
-		oldWugnotBalance := wugnot.BalanceOf(admin)
+		oldWugnotBalance := wugnot.BalanceOf(adminAddr)
 		oldUgnotBalance := ugnotBalanceOf(t, adminAddr)
 		uassert.Equal(t, oldWugnotBalance, uint64(5122489))
 		uassert.Equal(t, oldUgnotBalance, uint64(15168))
@@ -205,7 +205,7 @@ func testDecreaseWithUnwrap(t *testing.T) {
 			true,
 		)
 
-		newWugnotBalance := wugnot.BalanceOf(admin)
+		newWugnotBalance := wugnot.BalanceOf(adminAddr)
 		newUgnotBalance := ugnotBalanceOf(t, adminAddr)
 
 		uassert.Equal(t, newWugnotBalance, uint64(5122489))

@@ -230,7 +230,7 @@ func TestBalanceOf(t *testing.T) {
 	defaultHolder := std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")
 
 	// result from grc2reg and (direct import/call) should be the same
-	uassert.Equal(t, foo20.BalanceOf(AddrToUser(defaultHolder)), BalanceOf(tokenPath, defaultHolder))
+	uassert.Equal(t, foo20.BalanceOf(defaultHolder), BalanceOf(tokenPath, defaultHolder))
 }
 
 func TestAllowance(t *testing.T) {
@@ -238,7 +238,7 @@ func TestAllowance(t *testing.T) {
 	spender := std.Address("g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6")
 
 	// result from grc2reg and (direct import/call) should be the same
-	uassert.Equal(t, foo20.Allowance(AddrToUser(owner), AddrToUser(spender)), Allowance(tokenPath, owner, spender))
+	uassert.Equal(t, foo20.Allowance(owner, spender), Allowance(tokenPath, owner, spender))
 }
 
 // areSlicesEqual compares two slices of strings

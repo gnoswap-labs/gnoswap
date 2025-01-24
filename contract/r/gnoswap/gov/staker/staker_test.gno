@@ -14,79 +14,6 @@ import (
 	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
-var (
-	adminRealm  = std.NewUserRealm(consts.ADMIN)
-	userRealm   = std.NewUserRealm(testutils.TestAddress("alice"))
-	user2Realm  = std.NewUserRealm(testutils.TestAddress("bob"))
-	user3Realm  = std.NewUserRealm(testutils.TestAddress("charlie"))
-	invalidAddr = testutils.TestAddress("invalid")
-
-	ugnotDenom string = "ugnot"
-	ugnotPath  string = "ugnot"
-	wugnotPath string = "gno.land/r/demo/wugnot"
-
-	realmPrefix = "/gno.land/r/gnoswap/v1/gov/staker"
-)
-
-func makeFakeAddress(name string) std.Address {
-	return testutils.TestAddress(name)
-}
-
-func ugnotTransfer(t *testing.T, from, to std.Address, amount uint64) {
-	t.Helper()
-
-	std.TestSetRealm(std.NewUserRealm(from))
-	std.TestSetOrigSend(std.Coins{{ugnotDenom, int64(amount)}}, nil)
-	banker := std.GetBanker(std.BankerTypeRealmSend)
-
-	banker.SendCoins(from, to, std.Coins{{ugnotDenom, int64(amount)}})
-}
-
-func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
-	t.Helper()
-
-	banker := std.GetBanker(std.BankerTypeRealmIssue)
-	coins := banker.GetCoins(addr)
-	if len(coins) == 0 {
-		return 0
-	}
-
-	return uint64(coins.AmountOf(ugnotDenom))
-}
-
-func ugnotMint(t *testing.T, addr std.Address, denom string, amount int64) {
-	t.Helper()
-	banker := std.GetBanker(std.BankerTypeRealmIssue)
-	banker.IssueCoin(addr, ugnotDenom, amount)
-	std.TestIssueCoins(addr, std.Coins{{ugnotDenom, int64(amount)}})
-}
-
-func ugnotBurn(t *testing.T, addr std.Address, denom string, amount int64) {
-	t.Helper()
-	banker := std.GetBanker(std.BankerTypeRealmIssue)
-	banker.RemoveCoin(addr, ugnotDenom, amount)
-}
-
-func ugnotFaucet(t *testing.T, to std.Address, amount uint64) {
-	t.Helper()
-	faucetAddress := consts.ADMIN
-	std.TestSetOrigCaller(faucetAddress)
-
-	if ugnotBalanceOf(t, faucetAddress) < amount {
-		ugnotMint(t, faucetAddress, ugnotPath, int64(amount))
-		std.TestSetOrigSend(std.Coins{{ugnotPath, int64(amount)}}, nil)
-	}
-	ugnotTransfer(t, faucetAddress, to, amount)
-}
-
-func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
-	t.Helper()
-	std.TestSetRealm(std.NewUserRealm(addr))
-	wugnotAddr := consts.WUGNOT_ADDR
-	banker := std.GetBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
-	wugnot.Deposit()
-}
 
 func TestDelegate(t *testing.T) {
 	std.TestSetOrigCaller(consts.ADMIN)
@@ -428,7 +355,7 @@ func TestRedelegate(t *testing.T) {
 
 	std.TestSetOrigCaller(userRealm.Addr())
 	gns.Approve(consts.GOV_STAKER_ADDR, amount)
-	Delegate(to, amount)
+	Delegate(from, amount)
 
 	std.TestSetOrigCaller(userRealm.Addr())
 	gns.Approve(consts.GOV_STAKER_ADDR, amount)
@@ -544,8 +471,6 @@ func TestCollectUndelegatedGns(t *testing.T) {
 }
 
 func TestCollectReward(t *testing.T) {
-	t.Skip("minting ugnot is not working")
-
 	std.TestSetRealm(user2Realm)
 	{
 		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
@@ -589,8 +514,8 @@ func TestCollectReward(t *testing.T) {
 	if claimableAmount != 0 {
 		t.Errorf("Expected userEmissionReward to be 0 after collect, got %d", claimableAmount)
 	}
-	if len(protocolFeeClaimable) != 1 {
-		t.Errorf("Expected size=1, but let's check the actual value = 0?")
+	if len(protocolFeeClaimable) != 0 {
+		t.Errorf("Expected protocolFeeClaimable to be empty after collect, got %d", len(protocolFeeClaimable))
 	}
 	for _, amount := range protocolFeeClaimable {
 		if amount != 0 {

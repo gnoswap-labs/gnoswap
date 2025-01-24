@@ -1,0 +1,120 @@
+name: run-test
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-gnoswap:
+    runs-on: ubuntu-latest
+    # fail-fast: false ensures that if one matrix entry fails,
+    #            it doesn't cancel the others.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: "p/uint256"
+            folder: "gno/examples/gno.land/p/gnoswap/uint256"
+          - name: "p/int256"
+            folder: "gno/examples/gno.land/p/gnoswap/int256"
+          - name: "p/gnsmath"
+            folder: "gno/examples/gno.land/p/gnoswap/gnsmath"
+          - name: "r/common"
+            folder: "gno/examples/gno.land/r/gnoswap/v1/common"
+          - name: "r/gns"
+            folder: "gno/examples/gno.land/r/gnoswap/v1/gns"
+          - name: "r/gnft"
+            folder: "gno/examples/gno.land/r/gnoswap/v1/gnft"
+          - name: "r/gov/xgns"
+            folder: "gno/examples/gno.land/r/gnoswap/v1/gov/xgns"
+          - name: "r/emission"
+            folder: "gno/examples/gno.land/r/gnoswap/v1/emission"
+          - name: "r/protocol_fee"
+            folder: "gno/examples/gno.land/r/gnoswap/v1/protocol_fee"
+          - name: "r/pool"
+            folder: "gno/examples/gno.land/r/gnoswap/v1/pool"
+          - name: "r/position"
+            folder: "gno/examples/gno.land/r/gnoswap/v1/position"
+          - name: "r/router"
+            folder: "gno/examples/gno.land/r/gnoswap/v1/router"
+          - name: "r/staker"
+            folder: "gno/examples/gno.land/r/gnoswap/v1/staker"
+          - name: "r/community_pool"
+            folder: "gno/examples/gno.land/r/gnoswap/v1/community_pool"
+          - name: "r/gov/staker"
+            folder: "gno/examples/gno.land/r/gnoswap/v1/gov/staker"
+          - name: "r/gov/governance"
+            folder: "gno/examples/gno.land/r/gnoswap/v1/gov/governance"
+          - name: "r/launchpad"
+            folder: "gno/examples/gno.land/r/gnoswap/v1/launchpad"
+
+    steps:
+      # 1. Check out gnoswap repository (with your workflow file, etc.)
+      - name: Check out gnoswap repo
+        uses: actions/checkout@v4
+
+      # 2. Check out gno(master) into ./gno
+      - name: Check out gno(master)
+        uses: actions/checkout@v4
+        with:
+          repository: gnolang/gno
+          ref: master # can be used with tag also (e.g `chain/test5.0`)
+          path: ./gno
+
+      # 3. Install Go
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      # 4. Configure gnovm
+      - name: Config gnovm
+        run: |
+          sed -i 's/ctx.Timestamp += (count \* 5)/ctx.Timestamp += (count \* 2)/g' ./gno/gnovm/tests/stdlibs/std/std.go
+      # 5. Build/install `gno` CLI
+      - name: Install gno
+        run: |
+          cd gno
+          make install.gno
+      # 6. Set up Python
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      # 7. Check out your gnoswap repo into ./tmp/gnoswap
+      - name: Checkout gnoswap(main)
+        uses: actions/checkout@v4
+        with:
+          path: ./tmp/gnoswap
+
+      # 8. Run setup.py (copy contracts into gno)
+      - name: Run setup.py
+        run: |
+          cd tmp/gnoswap
+          python3 setup.py -w /home/runner/work/gnoswap/gnoswap
+      # 9. Now run the tests in parallel via the matrix.
+      #    Each job will handle ONE contract from the matrix.
+      - name: "Run tests for ${{ matrix.name }}"
+        # if any test fails, we keep going to test all contracts:
+        # continue-on-error: true
+        run: |
+          FOLDER="${{ matrix.folder }}"
+          # 1) Run unit tests first
+          gno test ./"$FOLDER" \
+            -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+          # 2) Remove all _test.gno except _helper_test.gno
+          find ./"$FOLDER" -type f -name "*_test.gno" \
+            ! -name "_helper_test.gno" \
+            -exec rm -f {} +
+          # 3) One-by-one gnoA tests: rename *.gnoA => *.gno, run, revert
+          cd ./"$FOLDER"
+          TESTFILES=$(ls | grep '_test.gnoA$' || true)
+          for f in $TESTFILES; do
+            base="${f%.gnoA}"
+            mv "$f" "$base.gno"
+            gno test . \
+              -root-dir /home/runner/work/gnoswap/gnoswap/gno -v
+            mv "$base.gno" "$f"
+          done

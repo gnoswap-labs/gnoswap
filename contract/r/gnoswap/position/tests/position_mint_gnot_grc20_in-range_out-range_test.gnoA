@@ -1,4 +1,4 @@
-package tests
+package position
 
 import (
 	"std"
@@ -52,7 +52,7 @@ func TestOneSideOnlyGrc20WithoutSend(t *testing.T) {
 	fresh01Realm := std.NewUserRealm(fresh01)
 	std.TestSetRealm(fresh01Realm)
 
-	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // POOL FOR MINT
+	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)                       // POOL FOR MINT
 	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // POOL FOR MINT
 
 	wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // POSITION FOR WRAP
@@ -86,7 +86,7 @@ func TestOneSideOnlyGrc20WithSend0Coin(t *testing.T) {
 	fresh01Realm := std.NewUserRealm(fresh01)
 	std.TestSetRealm(fresh01Realm)
 
-	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // POOL FOR MINT
+	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)                       // POOL FOR MINT
 	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // POOL FOR MINT
 
 	wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // POSITION FOR WRAP
@@ -122,7 +122,7 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 	fresh01Realm := std.NewUserRealm(fresh01)
 	std.TestSetRealm(fresh01Realm)
 
-	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // POOL FOR MINT
+	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)                       // POOL FOR MINT
 	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // POOL FOR MINT
 
 	wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // POSITION FOR WRAP

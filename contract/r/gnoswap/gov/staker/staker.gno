@@ -148,7 +148,7 @@ func Redelegate(from, to std.Address, amount uint64) {
 		))
 	}
 
-	undelegate(to, amount)
+	undelegate(from, amount)
 	delegate(to, amount)
 
 	prevAddr, prevPkgPath := getPrev()
@@ -302,8 +302,6 @@ func CollectReward() {
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
-	// calculateReward()
-
 	prevAddr, prevPkgPath := getPrev()
 	caller := std.PrevRealm().Addr()
 
@@ -319,6 +317,7 @@ func CollectReward() {
 	// still, this is a tangled with the policy issue, so should be discussed.
 
 	if reward > 0 {
+		currentGNSBalance -= reward
 		gns.Transfer(caller, reward)
 		std.Emit(
 			"CollectEmissionReward",
@@ -333,9 +332,17 @@ func CollectReward() {
 	for tokenPath, amount := range protocolFeeRewards {
 		if tokenPath == consts.WUGNOT_PATH {
 			if amount > 0 {
+				if currentProtocolFeeBalance[tokenPath] < amount {
+					panic(addDetailToError(
+						errNotEnoughBalance,
+						ufmt.Sprintf("not enough %s balance(%d) to collect(%d)", tokenPath, currentProtocolFeeBalance[tokenPath], amount),
+					))
+				}
+				currentProtocolFeeBalance[tokenPath] -= amount
 				wugnot.Withdraw(amount)
 				banker := std.GetBanker(std.BankerTypeRealmSend)
 				banker.SendCoins(consts.GOV_STAKER_ADDR, caller, std.Coins{{"ugnot", int64(amount)}})
+
 			}
 		} else {
 			transferProtocolFee(tokenPath, caller, amount)
@@ -407,6 +414,7 @@ func transferProtocolFee(tokenPath string, to std.Address, amount uint64) {
 		))
 	}
 
+	currentProtocolFeeBalance[tokenPath] -= amount
 	token := common.GetTokenTeller(tokenPath)
 	checkTransferError(token.Transfer(to, amount))
 }

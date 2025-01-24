@@ -88,7 +88,7 @@ func testInit() {
 	wugnot.Deposit()
 	std.TestSetOrigSend(nil, nil)
 
-	sr.SetUnstakingFeeByAdmin(0)
+	sr.SetUnStakingFeeByAdmin(0)
 }
 
 func testCreatePool() {
@@ -179,7 +179,7 @@ func testCollectReward() {
 func testUnstakeTokenPos02() {
 	std.TestSetRealm(adminRealm)
 
-	sr.UnstakeToken(2, false)
+	sr.UnStakeToken(2, false)
 }
 
 func testCollectRewardAfterUnstake() {

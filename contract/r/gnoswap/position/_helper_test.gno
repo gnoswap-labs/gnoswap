@@ -49,7 +49,7 @@ const (
 	TIER_3 uint64 = 3
 )
 
-const (
+var (
 	// define addresses to use in tests
 	addr01 = testutils.TestAddress("addr01")
 	addr02 = testutils.TestAddress("addr02")
@@ -135,7 +135,7 @@ func TokenBalance(t *testing.T, tokenPath string, owner std.Address) uint64 {
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
-		return wugnot.BalanceOf(common.AddrToUser(owner))
+		return wugnot.BalanceOf(owner)
 	case gnsPath:
 		return gns.BalanceOf(owner)
 	case barPath:
@@ -157,7 +157,7 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender std.Address) 
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
-		return wugnot.Allowance(common.AddrToUser(owner), common.AddrToUser(spender))
+		return wugnot.Allowance(owner, spender)
 	case gnsPath:
 		return gns.Allowance(owner, spender)
 	case barPath:
@@ -451,7 +451,7 @@ func LPTokenStake(t *testing.T, owner std.Address, tokenId uint64) {
 func LPTokenUnStake(t *testing.T, owner std.Address, tokenId uint64, unwrap bool) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(owner))
-	sr.UnstakeToken(tokenId, unwrap)
+	sr.UnStakeToken(tokenId, unwrap)
 }
 
 func getPoolFromLpTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {
@@ -464,7 +464,7 @@ func getPoolFromLpTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {
 func wugnotApprove(t *testing.T, owner, spender std.Address, amount uint64) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(owner))
-	wugnot.Approve(common.AddrToUser(spender), amount)
+	wugnot.Approve(spender, amount)
 }
 
 func gnsApprove(t *testing.T, owner, spender std.Address, amount uint64) {
@@ -506,7 +506,7 @@ func quxApprove(t *testing.T, owner, spender std.Address, amount uint64) {
 func wugnotTransfer(t *testing.T, to std.Address, amount uint64) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(admin))
-	wugnot.Transfer(common.AddrToUser(to), amount)
+	wugnot.Transfer(to, amount)
 }
 
 func gnsTransfer(t *testing.T, to std.Address, amount uint64) {
@@ -571,8 +571,6 @@ func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
 
 func ugnotMint(t *testing.T, addr std.Address, denom string, amount int64) {
 	t.Helper()
-	banker := std.GetBanker(std.BankerTypeRealmIssue)
-	banker.IssueCoin(addr, denom, amount)
 	std.TestIssueCoins(addr, std.Coins{{denom, int64(amount)}})
 }
 
@@ -665,7 +663,7 @@ func burnAllNFT(t *testing.T) {
 }
 
 func TestBeforeResetPositionObject(t *testing.T) {
-	t.Skip("only available for single file(current file) test")
+	t.Skip("only works when testing this single file")
 	// make actual data to test resetting not only position's state but also pool's state
 	std.TestSetRealm(adminRealm)
 
@@ -681,7 +679,7 @@ func TestBeforeResetPositionObject(t *testing.T) {
 }
 
 func TestResetObject(t *testing.T) {
-	t.Skip("only available for single file(current file) test")
+	t.Skip("only works when testing this single file")
 	resetObject(t)
 
 	uassert.Equal(t, positions.Size(), 0, "positions should be empty")
@@ -689,7 +687,7 @@ func TestResetObject(t *testing.T) {
 }
 
 func TestBurnTokens(t *testing.T) {
-	t.Skip("only available for single file(current file) test")
+	t.Skip("only works when testing this single file")
 	burnTokens(t)
 
 	uassert.Equal(t, foo.BalanceOf(addr01), uint64(0)) // 100_000_000 -> 0
@@ -697,7 +695,7 @@ func TestBurnTokens(t *testing.T) {
 }
 
 func TestBurnAllNFT(t *testing.T) {
-	t.Skip("only available for single file(current file) test")
+	t.Skip("only works when testing this single file")
 	burnAllNFT(t)
 	uassert.Equal(t, gnft.TotalSupply(), uint64(0), "gnft total supply should be 0")
 }

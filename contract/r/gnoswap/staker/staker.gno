@@ -187,7 +187,12 @@ func init() {
 
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1)
 	poolTier = NewPoolTier(pools, std.GetHeight(), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange)
+	RegisterCallbackStakerEmissionChange()
+}
+
+func RegisterCallbackStakerEmissionChange() {
 	en.SetCallbackStakerEmissionChange(callbackStakerEmissionChange)
+	en.RegisterGnsChangeCallback()
 }
 
 // StakeToken stakes an LP token into the staker contract. It transfer the LP token
@@ -606,8 +611,8 @@ func applyUnStake(tokenId uint64) {
 		"amount0", token0Amount,
 		"amount1", token1Amount,
 		"liquidity", deposit.liquidity.ToString(),
-		"positionUpperTick", formatInt(upperTick),
-		"positionLowerTick", formatInt(lowerTick),
+		"positionUpperTick", formatInt(deposit.tickUpper),
+		"positionLowerTick", formatInt(deposit.tickLower),
 		"currentTick", formatInt(currentTick),
 	)
 }

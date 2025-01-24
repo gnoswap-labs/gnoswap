@@ -16,10 +16,11 @@ func SetCallbackStakerEmissionChange(callback func(amount uint64)) {
 // Called when per-block emission is changed from the gns side.
 // It does not process non-immediate emission changes, such as halving.
 func callbackEmissionChange(amount uint64) {
-	callbackStakerEmissionChange(calculateAmount(amount, GetDistributionBpsPct(LIQUIDITY_STAKER)))
+	calculatedAmount := calculateAmount(amount, GetDistributionBpsPct(LIQUIDITY_STAKER))
+	callbackStakerEmissionChange(calculatedAmount)
 }
 
-func init() {
+func RegisterGnsChangeCallback() {
+	assertStakerOnly()
 	gns.SetCallbackEmissionChange(callbackEmissionChange)
 }
-

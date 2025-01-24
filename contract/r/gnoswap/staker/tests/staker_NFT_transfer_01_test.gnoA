@@ -41,7 +41,7 @@ const (
 	max_timeout int64  = 9999999999
 )
 
-const (
+var (
 	// define addresses to use in tests
 	addr01 = testutils.TestAddress("addr01")
 	addr02 = testutils.TestAddress("addr02")

@@ -43,7 +43,7 @@ func testInit_NativeCreateCollectUnstake(t *testing.T) {
 	changeWarmup(t, 3, math.MaxInt64)
 
 	// set unstaking fee to 0
-	SetUnstakingFeeByAdmin(0)
+	SetUnStakingFeeByAdmin(0)
 
 	// set pool creation fee to 0
 	pl.SetPoolCreationFeeByAdmin(0)
@@ -269,7 +269,7 @@ func testUnstakeToken02(t *testing.T) {
 
 		std.TestSetRealm(adminRealm)
 
-		UnstakeToken(2, false) // GNFT tokenId
+		UnStakeToken(2, false) // GNFT tokenId
 		std.TestSkipHeights(1)
 
 		uassert.Equal(t, gnft.MustOwnerOf(tid(2)), adminAddr)

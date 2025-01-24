@@ -1,4 +1,4 @@
-package tests
+package router
 
 import (
 	"gno.land/p/demo/uassert"

@@ -43,7 +43,7 @@ const (
 	max_timeout int64  = 9999999999
 )
 
-const (
+var (
 	// define addresses to use in tests
 	addr01 = testutils.TestAddress("addr01")
 	addr02 = testutils.TestAddress("addr02")
@@ -192,7 +192,7 @@ func TokenBalance(t *testing.T, tokenPath string, owner std.Address) uint64 {
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
-		return wugnot.BalanceOf(common.AddrToUser(owner))
+		return wugnot.BalanceOf(owner)
 	case gnsPath:
 		return gns.BalanceOf(owner)
 	case barPath:
@@ -214,7 +214,7 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender std.Address) 
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
-		return wugnot.Allowance(common.AddrToUser(owner), common.AddrToUser(spender))
+		return wugnot.Allowance(owner, spender)
 	case gnsPath:
 		return gns.Allowance(owner, spender)
 	case barPath:
@@ -289,7 +289,7 @@ func MintPosition(t *testing.T,
 func wugnotApprove(t *testing.T, owner, spender std.Address, amount uint64) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(owner))
-	wugnot.Approve(common.AddrToUser(spender), amount)
+	wugnot.Approve(spender, amount)
 }
 
 func gnsApprove(t *testing.T, owner, spender std.Address, amount uint64) {
@@ -331,7 +331,7 @@ func quxApprove(t *testing.T, owner, spender std.Address, amount uint64) {
 func wugnotTransfer(t *testing.T, to std.Address, amount uint64) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(admin))
-	wugnot.Transfer(common.AddrToUser(to), amount)
+	wugnot.Transfer(to, amount)
 }
 
 func gnsTransfer(t *testing.T, to std.Address, amount uint64) {
@@ -396,8 +396,6 @@ func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
 
 func ugnotMint(t *testing.T, addr std.Address, denom string, amount int64) {
 	t.Helper()
-	banker := std.GetBanker(std.BankerTypeRealmIssue)
-	banker.IssueCoin(addr, denom, amount)
 	std.TestIssueCoins(addr, std.Coins{{denom, int64(amount)}})
 }
 

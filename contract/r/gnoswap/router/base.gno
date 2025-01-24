@@ -13,7 +13,6 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
 )
 
 const (
@@ -68,12 +67,12 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 	specifiedAmount *i256.Int,
 ) error {
 	// no native token
-	if inputToken == consts.GNOT || outputToken == consts.GNOT {
+	if inputToken == consts.WUGNOT_PATH || outputToken == consts.WUGNOT_PATH {
 		return nil
 	}
 
 	// save current user's WGNOT amount
-	op.userBeforeWugnotBalance = wugnot.BalanceOf(common.AddrToUser(std.PrevRealm().Addr()))
+	op.userBeforeWugnotBalance = wugnot.BalanceOf(std.PrevRealm().Addr())
 
 	if swapType == ExactIn && inputToken == consts.GNOT {
 		sent := std.GetOrigSend()

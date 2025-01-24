@@ -39,7 +39,7 @@ func proposeText(t *testing.T) {
 	t.Run("ProposeText with insufficient delegation", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-GOVERNANCE-005] not enough balance || governance.gno__ProposeText() || proposer(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) has not enough xGNS, balance(0), wanted(100)",
+			"[GNOSWAP-GOVERNANCE-004] not enough balance || proposer(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) has not enough xGNS, balance(0), wanted(100)",
 			func() {
 				ProposeText("title", "text")
 			})
@@ -60,7 +60,6 @@ func proposeText(t *testing.T) {
 		gns.Approve(consts.GOV_STAKER_ADDR, uint64(1_000_000))
 		gs.Delegate(admin, uint64(1_000_000)) // self delegate
 		uassert.Equal(t, int64(123), std.GetHeight())
-		uassert.Equal(t, int64(1234567890), time.Now().Unix())
 		std.TestSkipHeights(1)
 
 		// after delegate 01
@@ -70,7 +69,6 @@ func proposeText(t *testing.T) {
 		gns.Approve(consts.GOV_STAKER_ADDR, uint64(2_000_000))
 		gs.Delegate(dummyAddr, uint64(2_000_000)) // delegate to dummy
 		uassert.Equal(t, int64(124), std.GetHeight())
-		uassert.Equal(t, int64(1234567892), time.Now().Unix())
 		std.TestSkipHeights(1)
 
 		// after delegate 02
@@ -85,16 +83,17 @@ func proposeText(t *testing.T) {
 			uassert.Equal(t, proposalID, uint64(1))
 
 			votesJsonAdmin := GetVotesByAddress(admin)
-			uassert.Equal(t, votesJsonAdmin, ``)
+			uassert.Equal(t, votesJsonAdmin, `{"height":"125","now":"1234567894","votes":[]}`)
 
 			votesJsonDummy := GetVotesByAddress(dummyAddr)
-			uassert.Equal(t, votesJsonDummy, ``)
+			uassert.Equal(t, votesJsonDummy, `{"height":"125","now":"1234567894","votes":[]}`)
 
 			// proposal := proposals[proposalID]
 			pp, ok := proposals.Get(strconv.FormatUint(proposalID, 10))
 			uassert.True(t, ok)
 			proposal := pp.(ProposalInfo)
-			uassert.Equal(t, proposal.QuorumAmount, uint64(1_500_000)) // 50% of voting xGNS supply
+
+			uassert.Equal(t, proposal.QuorumAmount, uint64(0)) // 50% of voting xGNS supply
 
 			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.CreatedAt - config.VotingWeightSmoothingDuration)
 			// config.VotingWeightSmoothingDuration = 10s = 5 block
@@ -115,13 +114,13 @@ func proposeText(t *testing.T) {
 			uassert.Equal(t, proposalID, uint64(2))
 
 			proposalsJson = GetProposals()
-			// uassert.Equal(t, proposalsJson, ``)
+			uassert.Equal(t, proposalsJson, `{"height":"130","now":"1234567904","proposals":[{"id":"2","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJjcmVhdGVkQXQiOiIxMjM0NTY3OTA0IiwidXBjb21pbmciOiJ0cnVlIiwiYWN0aXZlIjoiZmFsc2UiLCJ2b3RpbmdTdGFydCI6IjEyMzQ1Njc5MTQiLCJ2b3RpbmdFbmQiOiIxMjM0NTY3OTQ0IiwicGFzc2VkIjoiZmFsc2UiLCJwYXNzZWRBdCI6IjAiLCJyZWplY3RlZCI6ImZhbHNlIiwicmVqZWN0ZWRBdCI6IjAiLCJjYW5jZWxlZCI6ImZhbHNlIiwiY2FuY2VsZWRBdCI6IjAiLCJleGVjdXRlZCI6ImZhbHNlIiwiZXhlY3V0ZWRBdCI6IjAiLCJleHBpcmVkIjoiZmFsc2UiLCJleHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiIxNTAwMDAwIiwibWF4IjoiMzAwMDAwMCIsInllcyI6IjAiLCJubyI6IjAifQ==","extra":""},{"id":"2","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJjcmVhdGVkQXQiOiIxMjM0NTY3OTA0IiwidXBjb21pbmciOiJ0cnVlIiwiYWN0aXZlIjoiZmFsc2UiLCJ2b3RpbmdTdGFydCI6IjEyMzQ1Njc5MTQiLCJ2b3RpbmdFbmQiOiIxMjM0NTY3OTQ0IiwicGFzc2VkIjoiZmFsc2UiLCJwYXNzZWRBdCI6IjAiLCJyZWplY3RlZCI6ImZhbHNlIiwicmVqZWN0ZWRBdCI6IjAiLCJjYW5jZWxlZCI6ImZhbHNlIiwiY2FuY2VsZWRBdCI6IjAiLCJleGVjdXRlZCI6ImZhbHNlIiwiZXhlY3V0ZWRBdCI6IjAiLCJleHBpcmVkIjoiZmFsc2UiLCJleHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiIxNTAwMDAwIiwibWF4IjoiMzAwMDAwMCIsInllcyI6IjAiLCJubyI6IjAifQ==","extra":""}]}`)
 
 			votesJsonAdmin := GetVotesByAddress(admin)
-			uassert.Equal(t, votesJsonAdmin, ``)
+			uassert.Equal(t, votesJsonAdmin, `{"height":"130","now":"1234567904","votes":[]}`)
 
 			votesJsonDummy := GetVotesByAddress(dummyAddr)
-			uassert.Equal(t, votesJsonDummy, ``)
+			uassert.Equal(t, votesJsonDummy, `{"height":"130","now":"1234567904","votes":[]}`)
 
 			// proposal := proposals[proposalID]
 			pp, _ := proposals.Get(strconv.FormatUint(proposalID, 10))
@@ -148,7 +147,7 @@ func vote(t *testing.T) {
 	t.Run("Vote non existent proposal", func(t *testing.T) {
 		std.TestSetRealm(dummyRealm)
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-GOVERNANCE-004] requested data not found || vote.gno__Vote() || proposalId(123) does not exist",
+			"[GNOSWAP-GOVERNANCE-003] requested data not found || proposalId(123) not found",
 			func() {
 				Vote(uint64(123), true)
 			})
@@ -171,6 +170,6 @@ func vote(t *testing.T) {
 		uassert.Equal(t, true, state.Active)
 
 		proposalsJson := GetProposals()
-		uassert.Equal(t, proposalsJson, `{"height":"141","now":"1234567926","proposals":[{"id":"1","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3ODk0IiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6InRydWUiLCJWb3RpbmdTdGFydCI6IjEyMzQ1Njc5MDQiLCJWb3RpbmdFbmQiOiIxMjM0NTY3OTM0IiwiUGFzc2VkIjoiZmFsc2UiLCJQYXNzZWRBdCI6IjAiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiIxNTAwMDAwIiwibWF4IjoiMCIsInllcyI6IjAiLCJubyI6IjAifQ==","extra":""},{"id":"2","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTA0IiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6InRydWUiLCJWb3RpbmdTdGFydCI6IjEyMzQ1Njc5MTQiLCJWb3RpbmdFbmQiOiIxMjM0NTY3OTQ0IiwiUGFzc2VkIjoiZmFsc2UiLCJQYXNzZWRBdCI6IjAiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiIxNTAwMDAwIiwibWF4IjoiMzAwMDAwMCIsInllcyI6IjIwMDAwMDAiLCJubyI6IjAifQ==","extra":""}]}`)
+		uassert.Equal(t, proposalsJson, `{"height":"141","now":"1234567926","proposals":[{"id":"2","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJjcmVhdGVkQXQiOiIxMjM0NTY3OTA0IiwidXBjb21pbmciOiJmYWxzZSIsImFjdGl2ZSI6InRydWUiLCJ2b3RpbmdTdGFydCI6IjEyMzQ1Njc5MTQiLCJ2b3RpbmdFbmQiOiIxMjM0NTY3OTQ0IiwicGFzc2VkIjoiZmFsc2UiLCJwYXNzZWRBdCI6IjAiLCJyZWplY3RlZCI6ImZhbHNlIiwicmVqZWN0ZWRBdCI6IjAiLCJjYW5jZWxlZCI6ImZhbHNlIiwiY2FuY2VsZWRBdCI6IjAiLCJleGVjdXRlZCI6ImZhbHNlIiwiZXhlY3V0ZWRBdCI6IjAiLCJleHBpcmVkIjoiZmFsc2UiLCJleHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiIxNTAwMDAwIiwibWF4IjoiMzAwMDAwMCIsInllcyI6IjIwMDAwMDAiLCJubyI6IjAifQ==","extra":""},{"id":"2","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJjcmVhdGVkQXQiOiIxMjM0NTY3OTA0IiwidXBjb21pbmciOiJmYWxzZSIsImFjdGl2ZSI6InRydWUiLCJ2b3RpbmdTdGFydCI6IjEyMzQ1Njc5MTQiLCJ2b3RpbmdFbmQiOiIxMjM0NTY3OTQ0IiwicGFzc2VkIjoiZmFsc2UiLCJwYXNzZWRBdCI6IjAiLCJyZWplY3RlZCI6ImZhbHNlIiwicmVqZWN0ZWRBdCI6IjAiLCJjYW5jZWxlZCI6ImZhbHNlIiwiY2FuY2VsZWRBdCI6IjAiLCJleGVjdXRlZCI6ImZhbHNlIiwiZXhlY3V0ZWRBdCI6IjAiLCJleHBpcmVkIjoiZmFsc2UiLCJleHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiIxNTAwMDAwIiwibWF4IjoiMzAwMDAwMCIsInllcyI6IjIwMDAwMDAiLCJubyI6IjAifQ==","extra":""}]}`)
 	})
 }

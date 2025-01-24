@@ -73,7 +73,7 @@ collect-staking-reward-1:
 # unstake token
 unstake-token-1:
 	$(info ************ unstake token 1  ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func UnstakeToken -args 1 -args true -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func UnStakeToken -args 1 -args true -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 

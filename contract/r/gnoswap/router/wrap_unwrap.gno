@@ -7,7 +7,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
 )
 
 func wrap(ugnotAmount uint64) {
@@ -32,7 +31,7 @@ func wrap(ugnotAmount uint64) {
 	wugnot.Deposit() // ROUTER HAS WUGNOT
 
 	// SEND WUGNOT: ROUTER -> USER
-	wugnot.Transfer(common.AddrToUser(std.PrevRealm().Addr()), ugnotAmount)
+	wugnot.Transfer(std.PrevRealm().Addr(), ugnotAmount)
 }
 
 func unwrap(wugnotAmount uint64) {
@@ -41,7 +40,7 @@ func unwrap(wugnotAmount uint64) {
 	}
 
 	// SEND WUGNOT: USER -> ROUTER
-	wugnot.TransferFrom(common.AddrToUser(std.PrevRealm().Addr()), common.AddrToUser(consts.ROUTER_ADDR), wugnotAmount)
+	wugnot.TransferFrom(std.PrevRealm().Addr(), consts.ROUTER_ADDR, wugnotAmount)
 
 	// UNWRAP IT
 	wugnot.Withdraw(wugnotAmount)

@@ -387,40 +387,10 @@ func TestSwap_Failures(t *testing.T) {
 }
 
 func TestDrySwap_Failures(t *testing.T) {
-	mockPool := &Pool{
-		token0Path:  "token0",
-		token1Path:  "token1",
-		fee:         3000,
-		tickSpacing: 60,
-		slot0: Slot0{
-			sqrtPriceX96: u256.MustFromDecimal("1000000000000000000"), // 1.0
-			tick:         0,
-			feeProtocol:  0,
-			unlocked:     true,
-		},
-		liquidity: u256.MustFromDecimal("1000000000000000000"), // 1.0
-		balances: Balances{
-			token0: u256.MustFromDecimal("1000000000"),
-			token1: u256.MustFromDecimal("1000000000"),
-		},
-		protocolFees: ProtocolFees{
-			token0: u256.Zero(),
-			token1: u256.Zero(),
-		},
-		feeGrowthGlobal0X128: u256.Zero(),
-		feeGrowthGlobal1X128: u256.Zero(),
-		tickBitmaps:          avl.NewTree(),
-		ticks:                avl.NewTree(),
-		positions:            avl.NewTree(),
-	}
+	std.TestSetRealm(adminRealm)
+	SetPoolCreationFeeByAdmin(0)
+	CreatePool(barPath, bazPath, fee100, "79228162514264337593543950336")
 
-	originalGetPool := GetPool
-	defer func() {
-		GetPool = originalGetPool
-	}()
-	GetPool = func(token0Path, token1Path string, fee uint32) *Pool {
-		return mockPool
-	}
 
 	tests := []struct {
 		name              string
@@ -436,36 +406,36 @@ func TestDrySwap_Failures(t *testing.T) {
 	}{
 		{
 			name:              "zero amount token0 to token1",
-			token0Path:        "token0",
-			token1Path:        "token1",
-			fee:               3000,
+			token0Path:        barPath,
+			token1Path:        bazPath,
+			fee:               fee100,
 			zeroForOne:        true,
 			amountSpecified:   "0",
-			sqrtPriceLimitX96: "900000000000000000",
+			sqrtPriceLimitX96: "79228162514264337593543950337",
 			expectAmount0:     "0",
 			expectAmount1:     "0",
 			expectSuccess:     false,
 		},
 		{
 			name:              "insufficient balance",
-			token0Path:        "token0",
-			token1Path:        "token1",
-			fee:               3000,
+			token0Path:        barPath,
+			token1Path:        bazPath,
+			fee:               fee100,
 			zeroForOne:        false,
 			amountSpecified:   "2000000000",
-			sqrtPriceLimitX96: "1100000000000000000",
+			sqrtPriceLimitX96: "79228162514264337593543950337",
 			expectAmount0:     "0",
 			expectAmount1:     "0",
 			expectSuccess:     false,
 		},
 		{
 			name:              "insufficient balance token1 to token0",
-			token0Path:        "token0",
-			token1Path:        "token1",
-			fee:               3000,
+			token0Path:        barPath,
+			token1Path:        bazPath,
+			fee:               fee100,
 			zeroForOne:        false,
 			amountSpecified:   "3000000000",
-			sqrtPriceLimitX96: "1100000000000000000",
+			sqrtPriceLimitX96: "79228162514264337593543950337",
 			expectAmount0:     "0",
 			expectAmount1:     "0",
 			expectSuccess:     false,

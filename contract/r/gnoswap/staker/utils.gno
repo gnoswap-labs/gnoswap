@@ -183,7 +183,7 @@ func formatUint(v interface{}) string {
 	case uint64:
 		return strconv.FormatUint(v, 10)
 	default:
-		panic(ufmt.Sprintf("invalid type: %T", v))
+		panic(ufmt.Sprintf("invalid type for Unsigned: %T", v))
 	}
 }
 
@@ -196,7 +196,7 @@ func formatInt(v interface{}) string {
 	case int:
 		return strconv.Itoa(v)
 	default:
-		panic(ufmt.Sprintf("invalid type: %T", v))
+		panic(ufmt.Sprintf("invalid type for Signed: %T", v))
 	}
 }
 

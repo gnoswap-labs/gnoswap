@@ -145,7 +145,7 @@ func testUnstakePos01() {
 	oldCommunityGns := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
 
 	// this position-01 has been staked and staked same time
-	sr.UnstakeToken(1, false)
+	sr.UnStakeToken(1, false)
 
 	afterCommunityGns := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
 

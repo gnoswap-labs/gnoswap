@@ -55,10 +55,10 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
-		uassert.Equal(t, en.GetDistributionPct(1), uint64(7000))
-		uassert.Equal(t, en.GetDistributionPct(2), uint64(1500))
-		uassert.Equal(t, en.GetDistributionPct(3), uint64(1000))
-		uassert.Equal(t, en.GetDistributionPct(4), uint64(500))
+		uassert.Equal(t, en.GetDistributionBpsPct(1), uint64(7000))
+		uassert.Equal(t, en.GetDistributionBpsPct(2), uint64(1500))
+		uassert.Equal(t, en.GetDistributionBpsPct(3), uint64(1000))
+		uassert.Equal(t, en.GetDistributionBpsPct(4), uint64(500))
 	})
 }
 
@@ -120,7 +120,7 @@ func TestProposeParameterChange_GOV_reconfigure(t *testing.T) {
 		config.ProposalCreationThreshold = 100
 		config.ExecutionDelay = 10
 		config.ExecutionWindow = 1000
-		configVersions[uint64(2)] = config
+		setConfigVersion(2, config)
 	})
 }
 
@@ -262,7 +262,7 @@ func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
 	})
 }
 
-func TestProposeParameterChange_Staker_SetUnstakingFee(t *testing.T) {
+func TestProposeParameterChange_Staker_SetUnStakingFee(t *testing.T) {
 	std.TestSkipHeights(5)
 
 	std.TestSetRealm(adminRealm)
@@ -270,7 +270,7 @@ func TestProposeParameterChange_Staker_SetUnstakingFee(t *testing.T) {
 		"test_title",
 		"test_description",
 		uint64(1),
-		"gno.land/r/gnoswap/v1/staker*EXE*SetUnstakingFee*EXE*200",
+		"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*200",
 	)
 
 	std.TestSkipHeights(5)
@@ -279,6 +279,7 @@ func TestProposeParameterChange_Staker_SetUnstakingFee(t *testing.T) {
 	t.Run("execute proposal", func(t *testing.T) {
 		std.TestSkipHeights(20)
 		std.TestSetRealm(govRealm)
+
 		Execute(proposalId)
 
 		uassert.Equal(t, sr.GetUnstakingFee(), uint64(200))

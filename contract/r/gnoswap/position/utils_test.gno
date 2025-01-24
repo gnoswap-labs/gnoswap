@@ -46,20 +46,8 @@ func TestGetOrigPkgAddr(t *testing.T) {
 
 func TestAssertTokenExists(t *testing.T) {
 	// Mock setup
-	mockTokenId := uint64(1001)
+	mockTokenId := uint64(1)
 	mockInvalidTokenId := uint64(9999)
-
-	oldExists := exists
-	// Mock the exists function
-	mockExists := func(tokenId uint64) bool {
-		if tokenId == mockTokenId {
-			return true
-		}
-		return false
-	}
-
-	// Replace exists with mockExists for testing
-	exists = mockExists
 
 	t.Run("Token Exists - No Panic", func(t *testing.T) {
 		defer func() {
@@ -85,8 +73,6 @@ func TestAssertTokenExists(t *testing.T) {
 		}()
 		assertTokenExists(0) // Assume tokenId 0 does not exist
 	})
-
-	exists = oldExists
 }
 
 func TestAssertOnlyOwnerOfToken(t *testing.T) {

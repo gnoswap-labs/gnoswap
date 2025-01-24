@@ -170,11 +170,11 @@ func createParameterHandlers() *ParameterRegistry {
 		return nil
 	})
 
-	registry.Register(consts.STAKER_PATH, "SetUnstakingFee", func(params []string) error {
+	registry.Register(consts.STAKER_PATH, "SetUnStakingFee", func(params []string) error {
 		if err := hasDesiredParams(params, 1); err != nil {
 			return err
 		}
-		sr.SetUnstakingFee(parseUint64(params[0]))
+		sr.SetUnStakingFee(parseUint64(params[0]))
 		return nil
 	})
 

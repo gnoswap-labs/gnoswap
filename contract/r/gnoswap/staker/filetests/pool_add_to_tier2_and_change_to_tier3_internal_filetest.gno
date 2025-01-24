@@ -93,7 +93,7 @@ func testInit() {
 	std.TestSetOrigSend(nil, nil)
 
 	// set unstaking fee to 0
-	sr.SetUnstakingFeeByAdmin(0)
+	sr.SetUnStakingFeeByAdmin(0)
 }
 
 func testCreatePool() {

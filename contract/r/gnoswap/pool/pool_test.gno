@@ -1,14 +1,16 @@
 package pool
 
 import (
+	"std"
 	"testing"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/gnoswap/consts"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
 )
 
 func TestMint(t *testing.T) {
@@ -41,30 +43,39 @@ func TestMint(t *testing.T) {
 
 		Mint(token0Path, token1Path, fee, recipient, tickLower, tickUpper, "0", authorized)
 	})
+
+	t.Run("successful mint", func(t *testing.T) {
+		// create pool first
+		std.TestSetRealm(adminRealm)
+		SetPoolCreationFeeByAdmin(0)
+		CreatePool(
+			"gno.land/r/onbloc/bar",
+			"gno.land/r/onbloc/baz",
+			fee100,
+			"79228162514264337593543950336",
+		)
+
+		// approve enough token to mint position
+		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+
+		std.TestSetRealm(std.NewCodeRealm(consts.POSITION_PATH))
+		mintAmount0, mintAmount1 := Mint(
+			"gno.land/r/onbloc/bar",
+			"gno.land/r/onbloc/baz",
+			fee100,
+			consts.POSITION_ADDR,
+			int32(-100),
+			int32(100),
+			"10000000000",
+			consts.ADMIN,
+		)
+		uassert.Equal(t, mintAmount0, "49872721")
+		uassert.Equal(t, mintAmount1, "49872721")
+	})
 }
 
 func TestBurn(t *testing.T) {
-	// Setup
-	originalGetPool := GetPool
-	defer func() {
-		GetPool = originalGetPool
-	}()
-
-	// Mock data
-	mockCaller := consts.POSITION_ADDR
-	mockPosition := PositionInfo{
-		liquidity:   u256.NewUint(1000),
-		tokensOwed0: u256.NewUint(0),
-		tokensOwed1: u256.NewUint(0),
-	}
-	mockPool := &Pool{
-		positions: avl.NewTree(),
-	}
-
-	GetPool = func(token0Path, token1Path string, fee uint32) *Pool {
-		return mockPool
-	}
-
 	tests := []struct {
 		name            string
 		liquidityAmount string
@@ -76,11 +87,11 @@ func TestBurn(t *testing.T) {
 	}{
 		{
 			name:            "successful burn",
-			liquidityAmount: "500",
+			liquidityAmount: "10000000000", // burn all liquidity
 			tickLower:       -100,
 			tickUpper:       100,
-			expectedAmount0: "100",
-			expectedAmount1: "200",
+			expectedAmount0: "49872720",
+			expectedAmount1: "49872720",
 		},
 		{
 			name:            "zero liquidity",
@@ -93,14 +104,6 @@ func TestBurn(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.name == "successful burn" {
-				t.Skip("skipping until find better way to test this")
-			}
-
-			// setup position for this test
-			posKey := getPositionKey(mockCaller, tt.tickLower, tt.tickUpper)
-			mockPool.positions.Set(posKey, mockPosition)
-
 			if tt.expectPanic {
 				defer func() {
 					if r := recover(); r == nil {
@@ -109,10 +112,11 @@ func TestBurn(t *testing.T) {
 				}()
 			}
 
+			std.TestSetRealm(std.NewCodeRealm(consts.POSITION_PATH))
 			amount0, amount1 := Burn(
-				"token0",
-				"token1",
-				3000,
+				barPath,
+				bazPath,
+				fee100,
 				tt.tickLower,
 				tt.tickUpper,
 				tt.liquidityAmount,
@@ -126,7 +130,9 @@ func TestBurn(t *testing.T) {
 					t.Errorf("expected amount1 %s, got %s", tt.expectedAmount1, amount1)
 				}
 
-				newPosition := mockPool.mustGetPosition(posKey)
+				pool := GetPool(barPath, bazPath, fee100)
+				posKey := getPositionKey(consts.POSITION_ADDR, tt.tickLower, tt.tickUpper)
+				newPosition := pool.mustGetPosition(posKey)
 				if newPosition.tokensOwed0.IsZero() {
 					t.Error("expected tokensOwed0 to be updated")
 				}

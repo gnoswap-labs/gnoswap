@@ -139,7 +139,7 @@ func CreateExternalIncentive(
 		"depositGnsAmount", formatUint(depositGnsAmount),
 		"currentHeight", formatInt(std.GetHeight()),
 		"currentTime", formatInt(time.Now().Unix()),
-		"avgBlockTimeInMs", formatUint(gns.GetAvgBlockTimeInMs()),
+		"avgBlockTimeInMs", formatInt(gns.GetAvgBlockTimeInMs()),
 	)
 }
 
@@ -217,8 +217,8 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 		"refundToken", rewardToken,
 		"refundAmount", formatUint(refund),
 		"refundGnsAmount", formatUint(ictv.depositGnsAmount),
-		"isRequestUnwrap", ictv.rewardToken == consts.WUGNOT_PATH,
-		"externalIncentiveEndBy", getPrevAddr(),
+		"isRequestUnwrap", formatBool(ictv.rewardToken == consts.WUGNOT_PATH),
+		"externalIncentiveEndBy", prevAddr,
 	)
 }
 
