@@ -333,13 +333,26 @@ func SetAvgBlockTimeInMsByAdmin(ms int64) {
 	prevAvgBlockTimeInMs := GetAvgBlockTimeInMs()
 	setAvgBlockTimeInMs(ms)
 
+	halvingData := GetEmissionState().getHalvingData()
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"SetAvgBlockTimeInMsByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"prevAvgBlockTimeInMs", formatInt(prevAvgBlockTimeInMs),
-		"avgBlockTimeInMs", formatInt(ms),
+		"prevAvgBlockTimeMs", formatInt(prevAvgBlockTimeInMs),
+		"newAvgBlockTimeMs", formatInt(ms),
+		"endBlock1Year", formatInt(halvingData.getEndBlockHeight(1)),
+		"endBlock2Year", formatInt(halvingData.getEndBlockHeight(2)),
+		"endBlock3Year", formatInt(halvingData.getEndBlockHeight(3)),
+		"endBlock4Year", formatInt(halvingData.getEndBlockHeight(4)),
+		"endBlock5Year", formatInt(halvingData.getEndBlockHeight(4)),
+		"endBlock6Year", formatInt(halvingData.getEndBlockHeight(5)),
+		"endBlock7Year", formatInt(halvingData.getEndBlockHeight(6)),
+		"endBlock8Year", formatInt(halvingData.getEndBlockHeight(7)),
+		"endBlock9Year", formatInt(halvingData.getEndBlockHeight(8)),
+		"endBlock10Year", formatInt(halvingData.getEndBlockHeight(9)),
+		"endBlock11Year", formatInt(halvingData.getEndBlockHeight(10)),
+		"endBlock12Year", formatInt(halvingData.getEndBlockHeight(11)),
 	)
 }
 
@@ -351,13 +364,26 @@ func SetAvgBlockTimeInMs(ms int64) {
 	prevAvgBlockTimeInMs := GetAvgBlockTimeInMs()
 	setAvgBlockTimeInMs(ms)
 
+	halvingData := GetEmissionState().getHalvingData()
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"SetAvgBlockTimeInMs",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"prevAvgBlockTimeInMs", formatInt(prevAvgBlockTimeInMs),
-		"avgBlockTimeInMs", formatInt(ms),
+		"prevAvgBlockTimeMs", formatInt(prevAvgBlockTimeInMs),
+		"newAvgBlockTimeMs", formatInt(ms),
+		"endBlock1Year", formatInt(halvingData.getEndBlockHeight(1)),
+		"endBlock2Year", formatInt(halvingData.getEndBlockHeight(2)),
+		"endBlock3Year", formatInt(halvingData.getEndBlockHeight(3)),
+		"endBlock4Year", formatInt(halvingData.getEndBlockHeight(4)),
+		"endBlock5Year", formatInt(halvingData.getEndBlockHeight(4)),
+		"endBlock6Year", formatInt(halvingData.getEndBlockHeight(5)),
+		"endBlock7Year", formatInt(halvingData.getEndBlockHeight(6)),
+		"endBlock8Year", formatInt(halvingData.getEndBlockHeight(7)),
+		"endBlock9Year", formatInt(halvingData.getEndBlockHeight(8)),
+		"endBlock10Year", formatInt(halvingData.getEndBlockHeight(9)),
+		"endBlock11Year", formatInt(halvingData.getEndBlockHeight(10)),
+		"endBlock12Year", formatInt(halvingData.getEndBlockHeight(11)),
 	)
 }
 

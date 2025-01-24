@@ -237,8 +237,8 @@ func Mint(
 		"Mint",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"tickLower", formatInt(processedInput.tickLower),
-		"tickUpper", formatInt(processedInput.tickUpper),
+		"tickLower", formatInt(int64(processedInput.tickLower)),
+		"tickUpper", formatInt(int64(processedInput.tickUpper)),
 		"poolPath", processedInput.poolPath,
 		"mintTo", mintTo.String(),
 		"caller", caller.String(),
@@ -615,6 +615,8 @@ func IncreaseLiquidity(
 	}
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(poolPath)
+	token0Balance := pl.PoolGetBalanceToken0(poolPath)
+	token1Balance := pl.PoolGetBalanceToken1(poolPath)
 
 	prevAddr, prevPkgPath := getPrevAsString()
 
@@ -629,6 +631,9 @@ func IncreaseLiquidity(
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"sqrtPriceX96", poolSqrtPriceX96,
+		"positionLiquidity", position.liquidity.ToString(),
+		"token0Balance", token0Balance.ToString(),
+		"token1Balance", token1Balance.ToString(),
 	)
 
 	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
@@ -776,6 +781,8 @@ func DecreaseLiquidity(
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(poolPath)
+	token0Balance := pl.PoolGetBalanceToken0(poolPath)
+	token1Balance := pl.PoolGetBalanceToken1(poolPath)
 
 	prevAddr, prevPkgPath := getPrevAsString()
 
@@ -784,15 +791,17 @@ func DecreaseLiquidity(
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"lpTokenId", formatUint(tokenId),
-		"removeLiquidity", liquidityStr,
-		"internal_poolPath", poolPath,
-		"internal_liquidity", liquidity.ToString(),
-		"internal_fee0", fee0.ToString(),
-		"internal_fee1", fee1.ToString(),
-		"internal_amount0", amount0.ToString(),
-		"internal_amount1", amount1.ToString(),
-		"internal_unwrapResult", formatBool(unwrapResult),
-		"internal_sqrtPriceX96", poolSqrtPriceX96,
+		"poolPath", poolPath,
+		"decreasedLiquidity", liquidity.ToString(),
+		"feeAmount0", fee0.ToString(),
+		"feeAmount1", fee1.ToString(),
+		"amount0", amount0.ToString(),
+		"amount1", amount1.ToString(),
+		"unwrapResult", formatBool(unwrapResult),
+		"sqrtPriceX96", poolSqrtPriceX96,
+		"positionLiquidity", PositionGetPositionLiquidityStr(tokenId),
+		"token0Balance", token0Balance.ToString(),
+		"token1Balance", token1Balance.ToString(),
 	)
 
 	return tokenId, liquidity.ToString(), fee0.ToString(), fee1.ToString(), amount0.ToString(), amount1.ToString(), poolPath
@@ -986,8 +995,8 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"lpTokenId", formatUint(tokenId),
-		"fee0", withoutFee0,
-		"fee1", withoutFee1,
+		"feeAmount0", withoutFee0,
+		"feeAmount1", withoutFee1,
 		"poolPath", position.poolKey,
 		"unwrapResult", formatBool(unwrapResult),
 	)
@@ -1099,6 +1108,8 @@ func Reposition(
 	mustUpdatePosition(tokenId, position)
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(position.poolKey)
+	token0Balance := pl.PoolGetBalanceToken0(poolPath)
+	token1Balance := pl.PoolGetBalanceToken1(poolPath)
 	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(
@@ -1106,15 +1117,18 @@ func Reposition(
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"lpTokenId", formatUint(tokenId),
-		"tickLower", formatInt(tickLower),
-		"tickUpper", formatInt(tickUpper),
+		"tickLower", formatInt(int64(tickLower)),
+		"tickUpper", formatInt(int64(tickUpper)),
 		"liquidity", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
-		"oldTickLower", formatInt(oldTickLower),
-		"oldTickUpper", formatInt(oldTickUpper),
+		"prevTickLower", formatInt(int64(oldTickLower)),
+		"prevTickUpper", formatInt(int64(oldTickUpper)),
 		"poolPath", position.poolKey,
 		"sqrtPriceX96", poolSqrtPriceX96,
+		"positionLiquidity", PositionGetPositionLiquidityStr(tokenId),
+		"token0Balance", token0Balance.ToString(),
+		"token1Balance", token1Balance.ToString(),
 	)
 
 	return tokenId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
