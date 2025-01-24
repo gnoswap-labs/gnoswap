@@ -1,5 +1,11 @@
 package launchpad
 
+import (
+	"strings"
+
+	"gno.land/p/demo/json"
+)
+
 type TimeInfo struct {
 	height uint64
 	time   uint64
@@ -17,6 +23,12 @@ func NewTimeInfo(height, time uint64) TimeInfo {
 
 func (t *TimeInfo) isEnded(current uint64) bool {
 	return t.Height() < current
+}
+
+func (t *TimeInfo) JSON(b *json.NodeBuilder, prefix string) *json.NodeBuilder {
+	return b.
+		WriteString(prefix+"Height", formatUint64(t.height)).
+		WriteString(prefix+"Time", formatUint64(t.time))
 }
 
 type RefundInfo struct {
@@ -37,6 +49,13 @@ func NewRefundInfo(amount, height, time uint64) RefundInfo {
 	return RefundInfo{amount, height, time}
 }
 
+func (r *RefundInfo) JSON(b *json.NodeBuilder) *json.NodeBuilder {
+	return b.
+		WriteString("amount", formatUint64(r.amount)).
+		WriteString("height", formatUint64(r.height)).
+		WriteString("time", formatUint64(r.time))
+}
+
 type Condition struct {
 	tokenPath string
 	minAmount uint64
@@ -50,4 +69,25 @@ func (c *Condition) SetMinAmount(v uint64) { c.minAmount = v }
 // NewCondition create a new Condition instance.
 func NewCondition(tokenPath string, minAmount uint64) Condition {
 	return Condition{tokenPath, minAmount}
+}
+
+func (c *Condition) JSON(b *json.NodeBuilder) *json.NodeBuilder {
+	panic("not implemented yet")
+}
+
+func makeConditionsToStr(conditions map[string]Condition) (string, string) {
+	var tokenPathList string
+	var amountList string
+
+	for tokenPath, condition := range conditions {
+		// append with *PAD*, except last one
+		tokenPathList += tokenPath + PAD_SEP
+		amountList += formatUint64(condition.minAmount) + PAD_SEP
+	}
+
+	// remove last *PAD*
+	tokenPathList = strings.TrimSuffix(tokenPathList, PAD_SEP)
+	amountList = strings.TrimSuffix(amountList, PAD_SEP)
+
+	return tokenPathList, amountList
 }
