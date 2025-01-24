@@ -19,8 +19,10 @@ var (
 	quxPath string = "gno.land/r/onbloc/qux"
 
 	oblPath string = "gno.land/r/onbloc/obl"
-	// wugnotPath string = "gno.land/r/demo/wugnot" // from consts
-	// gnsPath string = "gno.land/r/gnoswap/v1/gns" // from consts
+
+	ugnotDenom string = "ugnot"
+	ugnotPath  string = "ugnot"
+	wugnotPath string = "gno.land/r/demo/wugnot"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500
