@@ -157,6 +157,7 @@ func assertValidProjectId(projectId string) {
 }
 
 // convertTimeToHeight converts the given timestamp to block height based on the average block time.
+// DEPRECATED: use estimateTimeToHeight instead
 func convertTimeToHeight(timestamp uint64) uint64 {
 	avgBlockTimeMs := uint64(gns.GetAvgBlockTimeInMs())
 	if avgBlockTimeMs == 0 {

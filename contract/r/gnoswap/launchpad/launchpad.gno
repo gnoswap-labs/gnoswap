@@ -4,7 +4,6 @@ import (
 	"errors"
 	"std"
 	"strconv"
-	"strings"
 	"time"
 
 	"gno.land/p/demo/ufmt"
@@ -12,13 +11,13 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/gns"
 	en "gno.land/r/gnoswap/v1/emission"
-
 	ppad "gno.land/p/gnoswap/v1/launchpad"
 )
 
 var (
-	projects = make(map[string]Project) // projectId -> project
+	projects = make(map[string]ppad.Project) // projectId -> project
 
 	// project tier should distribute project token if deposit ever happened
 	// therefore we need to keep track of project tiers without deposit
@@ -29,323 +28,6 @@ var (
 
 func init() {
 	q128 = u256.MustFromDecimal(consts.Q128)
-}
-
-// ProjectInput defines the input parameters required to create a project.
-//
-// Fields:
-// - Name (string): The name of the project.
-// - TokenPath (string): The token path for the deposit token.
-// - Recipient (std.Address): The recipient address for the project's rewards.
-// - DepositAmount (uint64): The total deposit amount for the project.
-// - ConditionsToken (string): A string containing token paths separated by `*PAD*`.
-// - ConditionsAmount (string): A string containing corresponding amounts separated by `*PAD*`.
-// - Tier30Ratio (uint64): The percentage of the deposit allocated to the 30-day tier.
-// - Tier90Ratio (uint64): The percentage of the deposit allocated to the 90-day tier.
-// - Tier180Ratio (uint64): The percentage of the deposit allocated to the 180-day tier.
-// - StartTime (uint64): The start time of the project in Unix timestamp.
-//
-// TODO: remove
-type ProjectInput struct {
-	Name             string
-	TokenPath        string
-	Recipient        std.Address
-	DepositAmount    uint64
-	ConditionsToken  string // separated by PAD_SEP (`*PAD*`)
-	ConditionsAmount string // separated by PAD_SEP (`*PAD*`)
-	Tier30Ratio      uint64
-	Tier90Ratio      uint64
-	Tier180Ratio     uint64
-	StartTime        uint64
-}
-
-// NewProjectInput creates and returns a new `ProjectInput` object.
-//
-// Parameters:
-// - name (string): The name of the project.
-// - tokenPath (string): The token path for the deposit token.
-// - recipient (std.Address): The recipient address for the project's rewards.
-// - depositAmount (uint64): The total deposit amount for the project.
-// - conditionsToken (string): Token paths separated by `*PAD*`.
-// - conditionsAmount (string): Corresponding amounts separated by `*PAD*`.
-// - tier30Ratio (uint64): Allocation percentage for the 30-day tier.
-// - tier90Ratio (uint64): Allocation percentage for the 90-day tier.
-// - tier180Ratio (uint64): Allocation percentage for the 180-day tier.
-// - startTime (uint64): The project's start time in Unix timestamp.
-//
-// Returns:
-// - ProjectInput: The initialized `ProjectInput` object.
-//
-// TODO: remove
-func NewProjectInput(
-	name string,
-	tokenPath string,
-	recipient std.Address,
-	depositAmount uint64,
-	conditionsToken string,
-	conditionsAmount string,
-	tier30Ratio uint64,
-	tier90Ratio uint64,
-	tier180Ratio uint64,
-	startTime uint64,
-) ProjectInput {
-	return ProjectInput{
-		Name:             name,
-		TokenPath:        tokenPath,
-		Recipient:        recipient,
-		DepositAmount:    depositAmount,
-		ConditionsToken:  conditionsToken,
-		ConditionsAmount: conditionsAmount,
-		Tier30Ratio:      tier30Ratio,
-		Tier90Ratio:      tier90Ratio,
-		Tier180Ratio:     tier180Ratio,
-		StartTime:        startTime,
-	}
-}
-
-// ValidateName checks if the project name is valid.
-//
-// Returns:
-// - error: If the name is empty, returns an error.
-//
-// DEPRECATED: use `CheckName` (p/launchpad) instead.
-func (in ProjectInput) ValidateName() error {
-	if in.Name == "" {
-		return errors.New(addDetailToError(
-			errInvalidInput, "project name cannot be empty"))
-	}
-	if len(in.Name) > 100 {
-		return errors.New(addDetailToError(errInvalidInput, "project name is too long"))
-	}
-	return nil
-}
-
-// ValidateTokenPath validates the token path.
-//
-// Ensures that the token path is not empty and is registered.
-//
-// Returns:
-// - error: If the token path is invalid or unregistered, returns an error.
-//
-// NOTE: cannot move this function to `p` package level.
-// because it connected with realm via `IsRegistered`
-func (in ProjectInput) ValidateTokenPath() error {
-	if in.TokenPath == "" {
-		return errors.New(addDetailToError(
-			errInvalidInput, "tokenPath cannot be empty"))
-	}
-	if err := common.IsRegistered(in.TokenPath); err != nil {
-		return errors.New(addDetailToError(
-			errInvalidInput, ufmt.Sprintf("tokenPath(%s) not registered", in.TokenPath)))
-	}
-	return nil
-}
-
-// ValidateRecipient checks if the recipient address is valid.
-//
-// Returns:
-// - error: If the recipient address is invalid, returns an error.
-//
-// NOTE: Seems unnecessary. Remove it.
-func (in ProjectInput) ValidateRecipient() error {
-	if !in.Recipient.IsValid() {
-		return errors.New(addDetailToError(
-			errInvalidAddress, ufmt.Sprintf("recipient address(%s)", in.Recipient.String())))
-	}
-	return nil
-}
-
-// ValidateDepositAmount ensures that the deposit amount is greater than zero.
-//
-// Returns:
-// - error: If the deposit amount is zero, returns an error.
-//
-// NOTE: Seems unnecessary. Remove it.
-func (in ProjectInput) ValidateDepositAmount() error {
-	if in.DepositAmount == 0 {
-		return errors.New(addDetailToError(
-			errInvalidInput, "deposit amount cannot be 0"))
-	}
-	return nil
-}
-
-// ValidateRatio checks if the sum of the tier ratios equals 100.
-//
-// Returns:
-// - error: If the sum of `Tier30Ratio`, `Tier90Ratio`, and `Tier180Ratio` is not 100, returns an error.
-//
-// DEPRECATED: use `VerifyRatio` (p/launchpad) instead.
-func (in ProjectInput) ValidateRatio() error {
-	sum := in.Tier30Ratio + in.Tier90Ratio + in.Tier180Ratio
-	if sum != 100 {
-		return errors.New(addDetailToError(
-			errInvalidInput, ufmt.Sprintf("invalid ratio, sum of all tiers(30:%d, 90:%d, 180:%d) should be 100",
-				in.Tier30Ratio, in.Tier90Ratio, in.Tier180Ratio)))
-	}
-	return nil
-}
-
-// ValidateStartTime checks if the start time is in the future.
-//
-// Parameters:
-// - now (uint64): The current time in Unix timestamp.
-//
-// Returns:
-// - error: If the start time is in the past or equal to `now`, returns an error.
-//
-// DEPRECATED: use `ValidateStartTime` (p/launchpad) instead.
-func (in ProjectInput) ValidateStartTime(now uint64) error {
-	if in.StartTime <= now {
-		return errors.New(addDetailToError(
-			errInvalidInput, ufmt.Sprintf("start time(%d) must be greater than now(%d)", in.StartTime, now)))
-	}
-	return nil
-}
-
-// ParseConditions parses the conditions from `ConditionsToken` and `ConditionsAmount`.
-//
-// Splits the token and amount strings using `*PAD*`, validates each token path, and converts
-// the amounts to integers. Returns a map of token paths to their corresponding conditions.
-//
-// Returns:
-// - map[string]Condition: A map of token paths to `Condition` objects.
-// - error: If the tokens and amounts are mismatched, invalid, or unregistered, returns an error.
-//
-// NOTE: cannot move this function to `p` package level.
-// because it connected with realm via `IsRegistered`
-// DEPRECATED: use `ParseConditions2` (r/launchpad) instead.
-func (in ProjectInput) ParseConditions() (map[string]Condition, error) {
-	if in.ConditionsToken == "" || in.ConditionsAmount == "" {
-		return nil, errors.New(addDetailToError(
-			errInvalidInput, "conditionsToken or conditionsAmount cannot be empty"))
-	}
-
-	tokens := strings.Split(in.ConditionsToken, PAD_SEP)
-	amounts := strings.Split(in.ConditionsAmount, PAD_SEP)
-	if len(tokens) != len(amounts) {
-		return nil, errors.New(addDetailToError(
-			errInvalidLength, ufmt.Sprintf("invalid conditions(numTokens(%d) != numAmounts(%d))", len(tokens), len(amounts))))
-	}
-
-	condition := make(map[string]Condition)
-	for i, token := range tokens {
-		if token == "" {
-			return nil, errors.New(addDetailToError(
-				errInvalidInput, ufmt.Sprintf("invalid token(%s)", token)))
-		}
-		if err := common.IsRegistered(token); err != nil {
-			return nil, errors.New(addDetailToError(
-				errInvalidInput, ufmt.Sprintf("token(%s) not registered", token)))
-		}
-		if _, exists := condition[token]; exists {
-			return nil, errors.New(addDetailToError(
-				errInvalidInput, ufmt.Sprintf("duplicated condition token(%s)", token)))
-		}
-
-		amtStr := amounts[i]
-		amtVal, err := strconv.ParseUint(amtStr, 10, 64)
-		if err != nil {
-			return nil, errors.New(addDetailToError(
-				errConvertFail, err.Error()))
-		}
-
-		condition[token] = Condition{
-			tokenPath: token,
-			minAmount: amtVal,
-		}
-	}
-	return condition, nil
-}
-
-func ParseConditions2(condToken string, condAmount string) (map[string]Condition, error) {
-	tokens, amounts, err := trySplitConditions(condToken, condAmount)
-	if err != nil {
-		return nil, err
-	}
-
-	return buildTokenConditions(tokens, amounts)
-}
-
-func trySplitConditions(tokenStr, amountStr string) (tokens, amounts []string, err error) {
-	if tokenStr == "" || amountStr == "" {
-		return nil, nil, errors.New("conditionsToken or conditionsAmount cannot be empty")
-	}
-
-	tokens = strings.Split(tokenStr, PAD_SEP)
-	amounts = strings.Split(amountStr, PAD_SEP)
-	if len(tokens) != len(amounts) {
-		return nil, nil, ufmt.Errorf("length of tokens(%d) and amounts(%d) are not same", len(tokens), len(amounts))
-	}
-	return tokens, amounts, nil
-}
-
-type tokenConditionMap map[string]Condition
-
-func buildTokenConditions(tokens, amounts []string) (tokenConditionMap, error) {
-	condition := make(tokenConditionMap)
-
-	for i, tok := range tokens {
-		if tok == "" {
-			return nil, ufmt.Errorf("invalid token(%s)", tok)
-		}
-		if err := common.IsRegistered(tok); err != nil {
-			return nil, ufmt.Errorf("token(%s) not registered", tok)
-		}
-		if _, exists := condition[tok]; exists {
-			return nil, ufmt.Errorf("duplicated condition token(%s)", tok)
-		}
-
-		amtv, err := strconv.ParseUint(amounts[i], 10, 64)
-		if err != nil {
-			return nil, ufmt.Errorf("invalid amount(%s)", amounts[i])
-		}
-
-		condition[tok] = Condition{
-			tokenPath: tok,
-			minAmount: amtv,
-		}
-	}
-	return condition, nil
-}
-
-
-// ValidateAll validates all the fields of the `ProjectInput`.
-//
-// Calls individual validation methods for the name, token path, recipient, deposit amount,
-// tier ratios, and start time. Also parses the conditions.
-//
-// Parameters:
-// - now (uint64): The current time in Unix timestamp.
-//
-// Returns:
-// - map[string]Condition: The parsed conditions map.
-// - error: If any validation fails, returns an error.
-func (in ProjectInput) ValidateAll(now uint64) (map[string]Condition, error) {
-	if err := in.ValidateName(); err != nil {
-		return nil, err
-	}
-	if err := in.ValidateTokenPath(); err != nil {
-		return nil, err
-	}
-	if err := in.ValidateRecipient(); err != nil {
-		return nil, err
-	}
-	if err := in.ValidateDepositAmount(); err != nil {
-		return nil, err
-	}
-	if err := in.ValidateRatio(); err != nil {
-		return nil, err
-	}
-	if err := in.ValidateStartTime(now); err != nil {
-		return nil, err
-	}
-
-	// TODO: use `ParseConditions2` instead
-	condMap, err := in.ParseConditions()
-	if err != nil {
-		return nil, err
-	}
-	return condMap, nil
 }
 
 // ProjectCalculationResult middle result of project params calculation
@@ -390,63 +72,65 @@ func CreateProject(
 	assertOnlyNotHalted()
 	assertOnlyAdmin()
 
-	input := NewProjectInput(name, tokenPath, recipient, depositAmount, conditionsToken, conditionsAmount, tier30Ratio, tier90Ratio, tier180Ratio, startTime)
+	input := ppad.NewProjectInput(name, tokenPath, recipient, depositAmount, conditionsToken, conditionsAmount, tier30Ratio, tier90Ratio, tier180Ratio, startTime)
 	now := uint64(time.Now().Unix())
-	conditions, err := input.ValidateAll(now)
+	conditions, err := input.CheckAll(now, common.IsRegistered)
 	if err != nil {
 		panic(err.Error())
 	}
 
 	en.MintAndDistributeGns()
 
-	projectId := generateProjectId(input.TokenPath)
+	projectId := generateProjectId(input.TokenPath())
 	if _, exists := projects[projectId]; exists {
 		panic(addDetailToError(
 			errDuplicateProject,
 			ufmt.Sprintf("project(%s) already exists", projectId)))
 	}
 
-	calcResult, err := calculateProjectParams(input, now)
+	// calcResult, err := calculateProjectParams(input, now)
+	avgBlockTimeMs := uint64(gns.GetAvgBlockTimeInMs())
+	calcResult, err := ppad.NewProjectCalculationResult(input, now, avgBlockTimeMs)
 	if err != nil {
 		panic(addDetailToError(errInvalidInput, err.Error()))
 	}
 
 	startHeight := calcResult.StartHeight
-	tier30 := createTier(projectId, 30, calcResult.Tier30Amount, startHeight, input.StartTime, convertTimeToHeight(TIMESTAMP_3DAYS))
-	tier90 := createTier(projectId, 90, calcResult.Tier90Amount, startHeight, input.StartTime, convertTimeToHeight(TIMESTAMP_7DAYS))
-	tier180 := createTier(projectId, 180, calcResult.Tier180Amount, startHeight, input.StartTime, convertTimeToHeight(TIMESTAMP_14DAYS))
-	tierMap := map[uint64]Tier{
+	inputStartTime := input.StartTime()
+	tier30, err := ppad.CreateTier(projectId, 30, calcResult.Tier30Amount, startHeight, inputStartTime, convertTimeToHeight(TIMESTAMP_3DAYS), avgBlockTimeMs, &rewardStates)
+	if err != nil {
+		panic(err.Error())
+	}
+	tier90, err := ppad.CreateTier(projectId, 90, calcResult.Tier90Amount, startHeight, inputStartTime, convertTimeToHeight(TIMESTAMP_7DAYS), avgBlockTimeMs, &rewardStates)
+	if err != nil {
+		panic(err.Error())
+	}
+	tier180, err := ppad.CreateTier(projectId, 180, calcResult.Tier180Amount, startHeight, inputStartTime, convertTimeToHeight(TIMESTAMP_14DAYS), avgBlockTimeMs, &rewardStates)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	tierMap := map[uint64]ppad.Tier{
 		TIER30:  tier30,
 		TIER90:  tier90,
 		TIER180: tier180,
 	}
 
 	tierRatioMap := map[uint64]uint64{
-		TIER30:  input.Tier30Ratio,
-		TIER90:  input.Tier90Ratio,
-		TIER180: input.Tier180Ratio,
+		TIER30:  input.Tier30Ratio(),
+		TIER90:  input.Tier90Ratio(),
+		TIER180: input.Tier180Ratio(),
 	}
 
-	projectCreated := TimeInfo{
-		height: uint64(std.GetHeight()),
-		time:   now,
-	}
+	projectCreated := ppad.NewTimeInfo(uint64(std.GetHeight()), now)
+	projectStarted := ppad.NewTimeInfo(startHeight, inputStartTime)
+	projectEnded := ppad.NewTimeInfo(tier180.Ended().Height(), tier180.Ended().Time())
 
-	projectStarted := TimeInfo{
-		height: startHeight,
-		time:   input.StartTime,
-	}
+	projectStats := ppad.NewProjectStats(0, 0, 0, 0, 0)
 
-	projectEnded := TimeInfo{
-		height: tier180.ended.height,
-		time:   tier180.ended.time,
-	}
+	refundInfo := ppad.NewRefundInfo(0, 0, 0)
 
-	projectStats := NewProjectStats(0, 0, 0, 0, 0)
-
-	refundInfo := NewRefundInfo(0, 0, 0)
-
-	project := NewProject(
+	project := ppad.NewProject(
 		projectId,
 		name,
 		tokenPath,
@@ -490,11 +174,11 @@ func CreateProject(
 		"startHeight", formatUint(startHeight),
 		"projectId", projectId,
 		"tier30Amount", formatUint(calcResult.Tier30Amount),
-		"tier30EndHeight", formatUint(tier30.ended.height),
+		"tier30EndHeight", formatUint(tier30.Ended().Height()),
 		"tier90Amount", formatUint(calcResult.Tier90Amount),
-		"tier90EndHeight", formatUint(tier90.ended.height),
+		"tier90EndHeight", formatUint(tier90.Ended().Height()),
 		"tier180Amount", formatUint(calcResult.Tier180Amount),
-		"tier180EndHeight", formatUint(tier180.ended.height),
+		"tier180EndHeight", formatUint(tier180.Ended().Height()),
 	)
 
 	return projectId
@@ -536,7 +220,7 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 	accumCollectedReward := uint64(0)
 	tierMap := project.Tiers()
 	for _, tier := range tierMap {
-		if !tier.isEnded(currentHeight) {
+		if !tier.IsEnded(currentHeight) {
 			panic(addDetailToError(
 				errActiveProject, ufmt.Sprintf("tier(%d) is not ended", tier.ID())))
 		}
@@ -544,7 +228,7 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 			panic(addDetailToError(
 				errTierHasParticipants, ufmt.Sprintf("tier(%d) has (%d) participants", tier.ID(), tier.ActualParticipant())))
 		}
-		leftReward := tier.calculateLeftReward()
+		leftReward := tier.LeftReward()
 		accumLeftReward += leftReward
 		accumCollectedReward += tier.UserCollectedAmount()
 		accumTotalReward += tier.TierAmount()
@@ -555,17 +239,14 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 			errInvalidRewardState, ufmt.Sprintf("accumTotalReward(%d) != accumCollectedReward(%d)+accumLeftReward(%d)", accumTotalReward, accumCollectedReward, accumLeftReward)))
 	}
 
-	projectLeftReward := project.calculateLeftReward()
-	project.refund = RefundInfo{
-		amount: projectLeftReward,
-		height: currentHeight,
-		time:   uint64(time.Now().Unix()),
-	}
+	projectLeftReward := project.LeftReward()
+	refundInfo := ppad.NewRefundInfo(projectLeftReward, currentHeight, uint64(time.Now().Unix()))
+	project.SetRefund(refundInfo)
 
 	projects[projectId] = project
 
 	if projectLeftReward > 0 {
-		tokenTeller := common.GetTokenTeller(project.tokenPath)
+		tokenTeller := common.GetTokenTeller(project.TokenPath())
 		tokenTeller.Transfer(recipient, projectLeftReward)
 	}
 
@@ -573,62 +254,17 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 		"TransferLeftFromProjectByAdmin",
 		"projectId", projectId,
 		"recipient", recipient.String(),
-		"tokenPath", project.tokenPath,
+		"tokenPath", project.TokenPath(),
 		"leftReward", formatUint(projectLeftReward),
-		"tier30Full", formatUint(project.tiers[30].tierAmount),
-		"tier30Left", formatUint(project.tiers[30].tierAmount-project.tiers[30].calculatedAmount),
-		"tier90Full", formatUint(project.tiers[90].tierAmount),
-		"tier90Left", formatUint(project.tiers[90].tierAmount-project.tiers[90].calculatedAmount),
-		"tier180Full", formatUint(project.tiers[180].tierAmount),
-		"tier180Left", formatUint(project.tiers[180].tierAmount-project.tiers[180].calculatedAmount),
+		"tier30Full", formatUint(project.Tiers()[30].TierAmount()),
+		"tier30Left", formatUint(project.Tiers()[30].TierAmount()-project.Tiers()[30].CalculatedAmount()),
+		"tier90Full", formatUint(project.Tiers()[90].TierAmount()),
+		"tier90Left", formatUint(project.Tiers()[90].TierAmount()-project.Tiers()[90].CalculatedAmount()),
+		"tier180Full", formatUint(project.Tiers()[180].TierAmount()),
+		"tier180Left", formatUint(project.Tiers()[180].TierAmount()-project.Tiers()[180].CalculatedAmount()),
 	)
 
 	return projectLeftReward
-}
-
-// calculateProjectParams calculates project-related parameters based on the input and current time.
-//
-// This function computes the amounts for three tiers (30, 90, and 180), as well as the block height
-// when the project starts based on the provided start time.
-//
-// Parameters:
-// - input (ProjectInput): The input parameters for the project.
-//   - DepositAmount (uint64): The total deposit amount.
-//   - Tier30Ratio (uint64): The percentage of the deposit allocated to the 30-day tier.
-//   - Tier90Ratio (uint64): The percentage of the deposit allocated to the 90-day tier.
-//   - Tier180Ratio (uint64): The percentage of the deposit allocated to the 180-day tier.
-//   - StartTime (uint64): The project start time in Unix timestamp (seconds).
-//
-// - now (uint64): The current time in Unix timestamp (seconds).
-//
-// Returns:
-// - *ProjectCalculationResult: A pointer to the calculated results, including tier amounts and start height.
-// - error: Returns an error if the start time is earlier than the current time or if the average block time is unavailable.
-//
-// DEPRECATED: use `NewProjectCalculationResult` instead
-func calculateProjectParams(input ProjectInput, now uint64) (*ProjectCalculationResult, error) {
-	if input.StartTime <= now {
-		return nil, errors.New(addDetailToError(
-			errInvalidInput, ufmt.Sprintf("start time(%d) must be greater than now(%d)", input.StartTime, now)))
-	}
-
-	// TODO: use `TierAmount` instead
-	tier30Amount := input.DepositAmount * input.Tier30Ratio / 100
-	tier90Amount := input.DepositAmount * input.Tier90Ratio / 100
-	tier180Amount := input.DepositAmount * input.Tier180Ratio / 100
-
-	// calculate when the block starts
-	timeUntilStart := input.StartTime - now
-	blockDurationToStart := convertTimeToHeight(timeUntilStart)
-	currentHeight := uint64(std.GetHeight())
-	startHeight := currentHeight + blockDurationToStart
-
-	return &ProjectCalculationResult{
-		Tier30Amount:  tier30Amount,
-		Tier90Amount:  tier90Amount,
-		Tier180Amount: tier180Amount,
-		StartHeight:   startHeight,
-	}, nil
 }
 
 // generateProjectId generates a unique project ID based on the given token path and the current block height.
@@ -726,19 +362,19 @@ func createTier(
 }
 
 // validateTransferLeft validates the transfer of remaining tokens
-func validateTransferLeft(project Project, recipient std.Address, height uint64) error {
+func validateTransferLeft(project ppad.Project, recipient std.Address, height uint64) error {
 	if !recipient.IsValid() {
 		return errors.New(ufmt.Sprintf("invalid recipient address(%s)", recipient.String()))
 	}
 
-	if height < project.Ended().height {
+	if height < project.Ended().Height() {
 		return errors.New(ufmt.Sprintf("project not ended yet(current:%d, endHeight: %d)",
-			height, project.ended.height))
+			height, project.Ended().Height()))
 	}
 
-	if project.Refund().height != 0 {
+	if project.Refund().Height() != 0 {
 		return errors.New(ufmt.Sprintf("project already refunded(height:%d)",
-			project.Refund().height))
+			project.Refund().Height()))
 	}
 
 	return nil
@@ -757,10 +393,10 @@ func calculateLeftReward(project Project) uint64 {
 }
 
 // getProject returns the project with the given project ID
-func getProject(projectId string) (Project, error) {
+func getProject(projectId string) (ppad.Project, error) {
 	project, exists := projects[projectId]
 	if !exists {
-		return Project{}, errors.New(addDetailToError(
+		return ppad.Project{}, errors.New(addDetailToError(
 			errDataNotFound, ufmt.Sprintf("projectId(%s) not found", projectId)))
 	}
 	return project, nil

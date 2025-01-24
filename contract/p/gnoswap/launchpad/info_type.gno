@@ -13,10 +13,8 @@ type TimeInfo struct {
 	time   uint64
 }
 
-func (t *TimeInfo) Height() uint64     { return t.height }
-func (t *TimeInfo) SetHeight(v uint64) { t.height = v }
-func (t *TimeInfo) Time() uint64       { return t.time }
-func (t *TimeInfo) SetTime(v uint64)   { t.time = v }
+func (t TimeInfo) Height() uint64     { return t.height }
+func (t TimeInfo) Time() uint64       { return t.time }
 
 // NewTimeInfo create a new TimeInfo instance.
 func NewTimeInfo(height, time uint64) TimeInfo {
@@ -41,12 +39,9 @@ type RefundInfo struct {
 	time   uint64
 }
 
-func (r *RefundInfo) Amount() uint64     { return r.amount }
-func (r *RefundInfo) SetAmount(v uint64) { r.amount = v }
-func (r *RefundInfo) Height() uint64     { return r.height }
-func (r *RefundInfo) SetHeight(v uint64) { r.height = v }
-func (r *RefundInfo) Time() uint64       { return r.time }
-func (r *RefundInfo) SetTime(v uint64)   { r.time = v }
+func (r RefundInfo) Amount() uint64     { return r.amount }
+func (r RefundInfo) Height() uint64     { return r.height }
+func (r RefundInfo) Time() uint64       { return r.time }
 
 // NewRefundInfo create a new RefundInfo instance.
 func NewRefundInfo(amount, height, time uint64) RefundInfo {

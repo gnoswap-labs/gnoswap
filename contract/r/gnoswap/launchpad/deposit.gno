@@ -135,10 +135,10 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 	}
 	updateDeposit(deposit)
 
-	if tier.isFirstDeposit() {
+	if tier.IsFirstDeposit() {
 		// update StartHeight, StartTime, TierAmountPerBlockX128
-		tier.updateStarted(info.CurrentHeight, info.CurrentTime)
-		duration := tier.Ended().height - info.CurrentHeight
+		tier.UpdateStarted(info.CurrentHeight, info.CurrentTime)
+		duration := tier.Ended().Height() - info.CurrentHeight
 		tier.SetTierAmountPerBlockX128(calcRewardPerBlockX128(tier.TierAmount(), duration))
 
 		prevAddr, prevPkgPath := getPrev()
@@ -154,16 +154,16 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 			"tierAmountPerBlockX128", tier.TierAmountPerBlockX128().ToString(),
 		)
 
-		rewardState := ppad.NewRewardState(tier.tierAmountPerBlockX128, tier.started.height, tier.ended.height)
+		rewardState := ppad.NewRewardState(tier.TierAmountPerBlockX128(), tier.Started().Height(), tier.Ended().Height())
 		rewardStates.Set(info.Project.id, info.TierType, rewardState)
 	}
 
 	reward := tier.Reward()
-	rewardPerDeposit, err := reward.calculateRewardPerDeposit(tier.TierAmountPerBlockX128(), tier.ActualDepositAmount())
+	rewardPerDeposit, err := reward.CalculateRewardPerDeposit(tier.TierAmountPerBlockX128(), tier.ActualDepositAmount())
 	if err != nil {
 		panic(err.Error())
 	}
-	reward.addRewardPerDeposit(rewardPerDeposit)
+	reward.AddRewardPerDeposit(rewardPerDeposit)
 	reward.SetLastHeight(currentHeight)
 
 	rewardInfo := NewRewardInfo(
@@ -197,7 +197,7 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 	rewardState.AddStake(uint64(std.GetHeight()), deposit.id, amount)
 
 	// Update gov_staker to calculate project's recipient's reward
-	gs.SetAmountByProjectWallet(project.recipient, amount, true)
+	gs.SetAmountByProjectWallet(project.Recipient(), amount, true)
 
 	// gns will be locked in `launchpad` contract
 	gns.TransferFrom(
@@ -506,10 +506,10 @@ func convertTierTypeStrToUint64(tierType string) uint64 {
 //
 // Panics:
 // - If the tierStr is invalid, an error is raised.
-func getTier(project Project, tierStr string) Tier {
+func getTier(project Project, tierStr string) ppad.Tier {
 	switch tierStr {
 	case "30":
-		return project.tiers[TIER30]
+		return project.Tiers()[ppad.TIER30]
 	case "90":
 		return project.tiers[TIER90]
 	case "180":
@@ -775,11 +775,11 @@ func processDepositCollection(
 		}
 
 		project, exists := projects[deposit.projectId]
-		if !exists || projectId != "" && project.id != projectId {
+		if !exists || projectId != "" && project.ID() != projectId {
 			continue
 		}
 
-		if currentHeight < project.Ended().height {
+		if currentHeight < project.Ended().Height() {
 			continue
 		}
 
@@ -797,7 +797,7 @@ func processDepositCollection(
 
 		totalAmount += deposit.amount
 
-		gs.SetAmountByProjectWallet(project.recipient, deposit.amount, false)
+		gs.SetAmountByProjectWallet(project.Recipient, deposit.amount, false)
 
 		tier.SetActualDepositAmount(tier.ActualDepositAmount() - deposit.amount)
 		tier.SetActualParticipant(tier.ActualParticipant() - 1)

@@ -141,7 +141,7 @@ func (ps *projectStats) TotalCollected() uint64        { return ps.totalCollecte
 func (ps *projectStats) SetTotalCollected(v uint64)    { ps.totalCollected = v }
 
 // newProjectStats returns a pointer to a new ProjectStats with the given values.
-func newProjectStats(
+func NewProjectStats(
 	totalDeposit, actualDeposit, totalParticipant, actualParticipant, totalCollected uint64,
 ) *projectStats {
 	return &projectStats{
