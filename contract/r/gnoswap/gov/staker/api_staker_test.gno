@@ -115,6 +115,11 @@ func TestGetClaimableRewardByAddress(t *testing.T) {
 			t.Errorf("unexpected tokenPath: %s", tokenPath)
 		}
 	})
+
+	// clear test data
+	currentGNSBalance = 0
+	currentProtocolFeeBalance = make(map[string]uint64)
+	rewardState = NewRewardState()
 }
 
 func TestGetClaimableRewardByAddress_NoRewards(t *testing.T) {

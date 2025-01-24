@@ -56,8 +56,6 @@ func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
 
 func ugnotMint(t *testing.T, addr std.Address, denom string, amount int64) {
 	t.Helper()
-	banker := std.GetBanker(std.BankerTypeRealmIssue)
-	banker.IssueCoin(addr, ugnotDenom, amount)
 	std.TestIssueCoins(addr, std.Coins{{ugnotDenom, int64(amount)}})
 }
 
@@ -428,7 +426,7 @@ func TestRedelegate(t *testing.T) {
 
 	std.TestSetOrigCaller(userRealm.Addr())
 	gns.Approve(consts.GOV_STAKER_ADDR, amount)
-	Delegate(to, amount)
+	Delegate(from, amount)
 
 	std.TestSetOrigCaller(userRealm.Addr())
 	gns.Approve(consts.GOV_STAKER_ADDR, amount)
@@ -544,8 +542,6 @@ func TestCollectUndelegatedGns(t *testing.T) {
 }
 
 func TestCollectReward(t *testing.T) {
-	t.Skip("minting ugnot is not working")
-
 	std.TestSetRealm(user2Realm)
 	{
 		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
@@ -589,8 +585,8 @@ func TestCollectReward(t *testing.T) {
 	if claimableAmount != 0 {
 		t.Errorf("Expected userEmissionReward to be 0 after collect, got %d", claimableAmount)
 	}
-	if len(protocolFeeClaimable) != 1 {
-		t.Errorf("Expected size=1, but let's check the actual value = 0?")
+	if len(protocolFeeClaimable) != 0 {
+		t.Errorf("Expected protocolFeeClaimable to be empty after collect, got %d", len(protocolFeeClaimable))
 	}
 	for _, amount := range protocolFeeClaimable {
 		if amount != 0 {

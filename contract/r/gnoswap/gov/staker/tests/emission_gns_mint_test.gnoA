@@ -44,31 +44,37 @@ func delegateAdmin(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.GOV_STAKER_ADDR, uint64(1000001))
-	Delegate(dummyAddr, 1000001)
+	gns.Approve(consts.GOV_STAKER_ADDR, uint64(1000000))
+	Delegate(dummyAddr, 1000000)
+	println("CALLER", adminRealm.Addr())
+	println("TO", dummyAddr)
 
 	uassert.Equal(t, gns.BalanceOf(consts.STAKER_ADDR), uint64(10702054))
 	uassert.Equal(t, gns.BalanceOf(consts.DEV_OPS), uint64(2853881))
 	uassert.Equal(t, gns.BalanceOf(consts.COMMUNITY_POOL_ADDR), uint64(713470))
-	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR), uint64(1000001))
+	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR), uint64(1000000))
 	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR)-xgns.TotalSupply(), uint64(0))
 }
 
 func redelegateAdmin(t *testing.T) {
-	uassert.Equal(t, delegatedFromTo[admin][dummyAddr], uint64(1000001))
-	uassert.Equal(t, delegatedTo[dummyAddr], uint64(1000001))
-	uassert.Equal(t, gns.BalanceOf(admin), uint64(99999998999999))
-	uassert.Equal(t, xgns.BalanceOf(admin), uint64(1000001))
+	uassert.Equal(t, GetDelegationAmountFromTo(admin, dummyAddr), uint64(1000000))
+	uassert.Equal(t, GetTotalDelegatedTo(dummyAddr), uint64(1000000))
+	uassert.Equal(t, gns.BalanceOf(admin), uint64(99999999000000))
+	uassert.Equal(t, xgns.BalanceOf(admin), uint64(1000000))
 
 	std.TestSetRealm(adminRealm)
-	Redelegate(dummyAddr, reDelegate, 1000001)
+	println()
+	println("CALLER", adminRealm.Addr())
+	println("FROM", dummyAddr)
+	println("TO", reDelegate)
+	Redelegate(dummyAddr, reDelegate, 1000000)
 
-	uassert.Equal(t, gns.BalanceOf(admin), uint64(99999998999999))
-	uassert.Equal(t, xgns.BalanceOf(admin), uint64(1000001))
+	uassert.Equal(t, gns.BalanceOf(admin), uint64(99999999000000))
+	uassert.Equal(t, xgns.BalanceOf(admin), uint64(1000000))
 
-	uassert.Equal(t, delegatedFromTo[admin][dummyAddr], uint64(0))
-	uassert.Equal(t, delegatedTo[dummyAddr], uint64(0))
+	uassert.Equal(t, GetDelegationAmountFromTo(admin, dummyAddr), uint64(0))
+	uassert.Equal(t, GetTotalDelegatedTo(dummyAddr), uint64(0))
 
-	uassert.Equal(t, delegatedFromTo[admin][reDelegate], uint64(1000001))
-	uassert.Equal(t, delegatedTo[reDelegate], uint64(1000001))
+	uassert.Equal(t, GetDelegationAmountFromTo(admin, reDelegate), uint64(1000000))
+	uassert.Equal(t, GetTotalDelegatedTo(reDelegate), uint64(1000000))
 }
