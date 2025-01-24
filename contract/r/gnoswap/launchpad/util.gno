@@ -1,7 +1,6 @@
 package launchpad
 
 import (
-	b64 "encoding/base64"
 	"std"
 	"strconv"
 
@@ -9,8 +8,8 @@ import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -44,10 +43,6 @@ func marshal(data *json.Node) string {
 	}
 
 	return string(b)
-}
-
-func b64Encode(data string) string {
-	return string(b64.StdEncoding.EncodeToString([]byte(data)))
 }
 
 func minU64(x, y uint64) uint64 {

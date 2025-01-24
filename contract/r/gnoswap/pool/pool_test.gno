@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 func TestMint(t *testing.T) {

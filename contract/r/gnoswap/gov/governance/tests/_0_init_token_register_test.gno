@@ -17,7 +17,7 @@ import (
 
 	"gno.land/r/gnoswap/v1/gns"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 type FooToken struct{}

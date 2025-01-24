@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 func TestWrap(t *testing.T) {

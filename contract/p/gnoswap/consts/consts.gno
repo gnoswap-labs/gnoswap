@@ -135,18 +135,3 @@ const (
 	// REF: https://github.com/gnolang/gno/pull/2401#discussion_r1648064219
 	ZERO_ADDRESS std.Address = "g100000000000000000000000000000000dnmcnx"
 )
-
-// EMISSION
-// TODO:
-// This is a temporary solution to prevent the emission from being refactored.
-// 1. After refactoring, remove this var
-var (
-	EMISSION_REFACTORED bool = true
-)
-
-func setEmissionRefactored(value bool) {
-	caller := std.PrevRealm().Addr()
-	if caller == ADMIN {
-		EMISSION_REFACTORED = value
-	}
-}

@@ -3,7 +3,7 @@ package referral
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 // validCallers is a lookup table of addresses that are authorized to modify referral data.

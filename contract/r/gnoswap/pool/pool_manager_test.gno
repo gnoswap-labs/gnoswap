@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 func TestNewPoolParams(t *testing.T) {

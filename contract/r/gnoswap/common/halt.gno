@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/gnoswap/consts"
 )
 
 // halted is a global flag that indicates whether the GnoSwap is currently halted.
