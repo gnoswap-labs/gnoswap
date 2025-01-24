@@ -148,6 +148,21 @@ func TestXGNSHelpers(t *testing.T) {
 	xgnsCheckVotingSupply(t, token, 500) // Only testUser's balance counts
 }
 
+// Mock data structs
+type MockTokenTeller struct {
+	balance uint64
+	addr    std.Address
+}
+
+func (m *MockTokenTeller) TransferFrom(from std.Address, to std.Address, amount uint64) {
+	m.balance = amount
+	m.addr = to
+}
+
+func (m *MockTokenTeller) BalanceOf(addr std.Address) uint64 {
+	return m.balance
+}
+
 // Additional helper that combines with existing TokenTeller mock
 func createMockXGNSTeller() *MockTokenTeller {
 	return &MockTokenTeller{

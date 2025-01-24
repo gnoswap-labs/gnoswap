@@ -15,21 +15,6 @@ import (
 	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
-// Mock data structs
-type MockTokenTeller struct {
-	balance uint64
-	addr    std.Address
-}
-
-func (m *MockTokenTeller) TransferFrom(from std.Address, to std.Address, amount uint64) {
-	m.balance = amount
-	m.addr = to
-}
-
-func (m *MockTokenTeller) BalanceOf(addr std.Address) uint64 {
-	return m.balance
-}
-
 func setupTestDeposit(t *testing.T) (*MockTokenTeller, std.Address) {
 	t.Helper()
 	projects = make(map[string]Project)
