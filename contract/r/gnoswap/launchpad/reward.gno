@@ -226,6 +226,8 @@ func validateRewardOwner(depositId string, caller std.Address) error {
 
 // validateRewardClaimable checks if reward can be claimed
 // e.g. deposit.claimableHeight, deposit.claimableTime
+//
+// TODO: deprecate this and use `Deposit.RewardClaimable` (p//launchpad) instead
 func validateRewardClaimable(deposit Deposit, currentHeight uint64) error {
 	if deposit.rewardCollectTime == 0 {
 		if currentHeight < deposit.claimableHeight {

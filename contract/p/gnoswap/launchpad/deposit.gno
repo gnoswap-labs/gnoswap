@@ -1,10 +1,15 @@
 package launchpad
 
 import (
+	"errors"
 	"std"
 	"strings"
 
 	"gno.land/p/demo/ufmt"
+)
+
+var (
+	errNotYetClaimable = errors.New("not yet claimable")
 )
 
 // region: types
@@ -64,6 +69,23 @@ func (d *DepositState2) AddDeposit(deposit Deposit) {
 	d.indices.byProject[deposit.projectId] = append(d.indices.byProject[deposit.projectId], idx)
 	d.indices.byTier[deposit.tier] = append(d.indices.byTier[deposit.tier], idx)
 	d.indices.byID[deposit.id] = idx
+}
+
+// Index returns the index of the deposit in the deposits array.
+func (d *DepositState2) Index(id string) (int, error) {
+	idx, ok := d.indices.byID[id]
+	if !ok {
+		return 0, ufmt.Errorf("deposit not found: %s", id)
+	}
+	return idx, nil
+}
+
+func (d *DepositState2) GetDeposit(id string) (Deposit, bool) {
+	idx, err := d.Index(id)
+	if err != nil {
+		return Deposit{}, false
+	}
+	return d.deposits[idx], true
 }
 
 // getters and setters
@@ -178,6 +200,16 @@ func NewDeposit(
 	}
 }
 
+// RewardClaimable checks if the reward is claimable
+func (d *Deposit) RewardClaimable(currentHeight uint64) error {
+	if d.rewardCollectTime == 0 {
+		if currentHeight < d.claimableHeight {
+			return errNotYetClaimable
+		}
+	}
+	return nil
+}
+
 // region: utils
 
 // splitProjectIdAndTier extracts the project ID and tier from a given tier ID.
@@ -193,12 +225,10 @@ func NewDeposit(
 // - string: The tier derived from the third part of the `tierId`.
 // - error: If the tier ID is invalid, an error is returned.
 func SplitProjectIdAndTier(tierId string) (string, string, error) {
-	res := strings.Split(tierId, ":")
-	if len(res) != 3 {
-		return "", "", ufmt.Errorf("invalid tierId: %s", tierId)
+	if parts := strings.SplitN(tierId, ":", 3); len(parts) == 3 {
+		return createId(parts[0], parts[1]), parts[2], nil
 	}
-
-	return createId(res[0], res[2]), res[2], nil
+	return "", "", ufmt.Errorf("invalid tierId: %s", tierId)
 }
 
 // ParseTierDuration converts a tier type string to its corresponding uint64 value.
