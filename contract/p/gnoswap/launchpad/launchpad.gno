@@ -3,8 +3,16 @@ package launchpad
 import (
 	"errors"
 	"std"
+	"strconv"
+	"strings"
 
 	"gno.land/p/demo/ufmt"
+)
+
+var (
+	errEmptyTokenPath    = errors.New("token path cannot be empty")
+	errInvalidAddress    = errors.New("invalid address")
+	errZeroDepositAmount = errors.New("deposit amount cannot be 0")
 )
 
 // region: projectInput
@@ -87,8 +95,37 @@ func NewProjectInput(
 	}
 }
 
-// CheckName checks if the project name is valid.
-func (p *projectInput) CheckName() error {
+// CheckAll checks all the project input fields.
+// need to pass `IsRegistered` function as a callback parameter to check if the token is registered.
+func (p *projectInput) CheckAll(now uint64, f func(string) error) (tokenConditionMap, error) {
+	if err := p.checkName(); err != nil {
+		return nil, err
+	}
+	if err := p.checkTokenPath(f); err != nil {
+		return nil, err
+	}
+	if err := p.checkRecipient(); err != nil {
+		return nil, err
+	}
+	if err := p.checkDepositAmount(); err != nil {
+		return nil, err
+	}
+	if err := p.checkRatio(); err != nil {
+		return nil, err
+	}
+	if err := p.checkStartTime(now); err != nil {
+		return nil, err
+	}
+
+	conds, err := p.parseConditions(f)
+	if err != nil {
+		return nil, err
+	}
+	return conds, nil
+}
+
+// checkName checks if the project name is valid.
+func (p *projectInput) checkName() error {
 	if p.name == "" {
 		return errors.New("project name cannot be empty")
 	}
@@ -98,8 +135,8 @@ func (p *projectInput) CheckName() error {
 	return nil
 }
 
-// VerifyRatio checks if the sum of the tier ratios equals 100.
-func (p *projectInput) VerifyRatio() error {
+// checkRatio checks if the sum of the tier ratios equals 100.
+func (p *projectInput) checkRatio() error {
 	if p.tierSum() != 100 {
 		return ufmt.Errorf(
 			"invalid ratio, sum of all tiers(30:%d, 90:%d, 180:%d) should be 100",
@@ -113,12 +150,99 @@ func (p *projectInput) tierSum() uint64 {
 	return p.Tier30Ratio() + p.Tier90Ratio() + p.Tier180Ratio()
 }
 
-// ValidateStartTime checks if the start time is in the future.
-func (p *projectInput) ValidateStartTime(now uint64) error {
+// checkStartTime checks if the start time is in the future.
+func (p *projectInput) checkStartTime(now uint64) error {
 	if p.startTime <= now {
 		return errors.New("start time must be greater than now")
 	}
 	return nil
+}
+
+func (p *projectInput) checkTokenPath(f func(string) error) error {
+	path := p.TokenPath()
+	if path == "" {
+		return errEmptyTokenPath
+	}
+	if err := f(path); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *projectInput) checkRecipient() error {
+	if !p.Recipient().IsValid() {
+		return errInvalidAddress
+	}
+	return nil
+}
+
+func (p *projectInput) checkDepositAmount() error {
+	if p.DepositAmount() == 0 {
+		return errZeroDepositAmount
+	}
+	return nil
+}
+
+// ParseConditions parses the conditions from `ConditionsToken` and `ConditionsAmount`.
+//
+// Splits the token and amount strings using `*PAD*`, validates each token path, and converts
+// the amounts to integers. Returns a map of token paths to their corresponding conditions.
+func (p *projectInput) parseConditions(f func(string) error) (tokenConditionMap, error) {
+	if p.ConditionsToken() == "" || p.ConditionsAmount() == "" {
+		return nil, nil
+	}
+
+	return parseConditions(p.ConditionsToken(), p.ConditionsAmount(), f)
+}
+
+func parseConditions(condToken, condAmount string, f func(string) error) (tokenConditionMap, error) {
+	tokens, amounts, err := trySplitConditions(condToken, condAmount)
+	if err != nil {
+		return nil, err
+	}
+
+	return buildTokenConditions(tokens, amounts, f)
+}
+
+func trySplitConditions(tokenStr, amountStr string) (tokens, amounts []string, err error) {
+	if tokenStr == "" || amountStr == "" {
+		return nil, nil, errors.New("conditionsToken or conditionsAmount cannot be empty")
+	}
+
+	tokens = strings.Split(tokenStr, PAD_SEP)
+	amounts = strings.Split(amountStr, PAD_SEP)
+	if len(tokens) != len(amounts) {
+		return nil, nil, ufmt.Errorf("length of tokens(%d) and amounts(%d) are not same", len(tokens), len(amounts))
+	}
+
+	return tokens, amounts, nil
+}
+
+func buildTokenConditions(tokens, amounts []string, f func(string) error) (tokenConditionMap, error) {
+	condition := make(tokenConditionMap)
+
+	for i, tok := range tokens {
+		if tok == "" {
+			return nil, ufmt.Errorf("invalid token(%s)", tok)
+		}
+		if err := f(tok); err != nil {
+			return nil, ufmt.Errorf("token(%s) not registered", tok)
+		}
+		if _, exists := condition[tok]; exists {
+			return nil, ufmt.Errorf("duplicated condition token(%s)", tok)
+		}
+
+		amtv, err := strconv.ParseUint(amounts[i], 10, 64)
+		if err != nil {
+			return nil, ufmt.Errorf("invalid amount(%s)", amounts[i])
+		}
+
+		condition[tok] = Condition{
+			tokenPath: tok,
+			minAmount: amtv,
+		}
+	}
+	return condition, nil
 }
 
 // region: ProjectCalculationResult

@@ -62,6 +62,8 @@ func (r *RefundInfo) JSON(b *json.NodeBuilder) *json.NodeBuilder {
 
 // region: Condition
 
+type tokenConditionMap map[string]Condition
+
 type Condition struct {
 	tokenPath string
 	minAmount uint64
