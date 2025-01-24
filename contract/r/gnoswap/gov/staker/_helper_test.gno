@@ -28,11 +28,6 @@ var (
 
 	max_timeout int64 = 9999999999
 
-	userRealm   = std.NewUserRealm(testutils.TestAddress("alice"))
-	user2Realm  = std.NewUserRealm(testutils.TestAddress("bob"))
-	user3Realm  = std.NewUserRealm(testutils.TestAddress("charlie"))
-	invalidAddr = testutils.TestAddress("invalid")
-
 	realmPrefix = "/gno.land/r/gnoswap/v1/gov/staker"
 )
 
