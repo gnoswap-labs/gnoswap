@@ -140,7 +140,7 @@ func setWarmUp(pct, blockDuration int64) {
 		"SetWarmUp",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"pct", formatUint(pct),
+		"pct", formatInt(pct),
 		"blockDuration", formatInt(blockDuration),
 	)
 }
