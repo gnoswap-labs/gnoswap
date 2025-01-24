@@ -36,7 +36,6 @@ func init() {
 }
 
 func TestProposeText(t *testing.T) {
-	t.Skip("TODO: fix this when gov/staker fixed #L123 || uassert.Equal(t, proposal.QuorumAmount, uint64(1_500_000)) // 50% of voting xGNS supply")
 	testDelegate01_1000000_toSelf(t)
 	testDelegate02_2000000_toDummy(t)
 	testUndelegate_1000000_fromDummy(t)
@@ -120,7 +119,7 @@ func testProposeText(t *testing.T) {
 			pp, ok := proposals.Get(strconv.FormatUint(proposalID, 10))
 			uassert.True(t, ok)
 			proposal := pp.(ProposalInfo)
-			uassert.Equal(t, proposal.QuorumAmount, uint64(950_000)) // 50% of voting xGNS supply (1900000)
+			uassert.Equal(t, proposal.QuorumAmount, uint64(0))
 
 			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.CreatedAt - config.VotingWeightSmoothingDuration)
 			// config.VotingWeightSmoothingDuration = 10s = 5 block
@@ -145,19 +144,19 @@ func testProposeText(t *testing.T) {
 			pp, ok := proposals.Get(strconv.FormatUint(proposalID, 10))
 			uassert.True(t, ok)
 			proposal := pp.(ProposalInfo)
-			uassert.Equal(t, proposal.QuorumAmount, uint64(950_000)) // 50% of voting xGNS supply
+			uassert.Equal(t, proposal.QuorumAmount, uint64(1_000_000)) // 50% of voting xGNS supply
 
 			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.CreatedAt - config.VotingWeightSmoothingDuration)
 			// config.VotingWeightSmoothingDuration = 10s = 5 block
 
-			uassert.Equal(t, maxVotingWeight, uint64(1_900_000))
+			uassert.Equal(t, maxVotingWeight, uint64(2_000_000))
 			// createdAt > 133 // 1234567910
 			// (createdAt - VotingWeightSmoothingDuration) > 128 // 1234567900
 			// 2 delegation happend
 			// - 123 block = 1_000_000
 			// - 124 block = 2_000_000
 			// 1 undelegate happend
-			// - 126 block = 1_100_000
+			// - 126 block = 1_000_000
 		})
 	})
 }
@@ -173,7 +172,7 @@ func testVote(t *testing.T) {
 		pp, ok := proposals.Get(strconv.FormatUint(proposalId, 10))
 		uassert.True(t, ok)
 		proposal := pp.(ProposalInfo)
-		uassert.Equal(t, "900000", proposal.Yea.ToString()) // 900000
+		uassert.Equal(t, "1000000", proposal.Yea.ToString()) // 1000000
 		uassert.Equal(t, "0", proposal.Nay.ToString())
 	})
 }
