@@ -7,7 +7,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
 )
 
 // wrap converts `ugnot` tokens into `wugnot` tokens.
