@@ -63,8 +63,8 @@ func delegateFromAdminToDummy(t *testing.T) {
 	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR), uint64(0))
 
 	std.TestSkipHeights(1)
-	gns.Approve(consts.GOV_STAKER_ADDR, uint64(1000001))
-	Delegate(dummyToAddr, 1000001)
+	gns.Approve(consts.GOV_STAKER_ADDR, uint64(1000000))
+	Delegate(dummyToAddr, 1000000)
 
 	// gns emission after adjustment & delegate
 	// 1 block gns 14269406
@@ -75,7 +75,7 @@ func delegateFromAdminToDummy(t *testing.T) {
 	uassert.Equal(t, gns.BalanceOf(consts.STAKER_ADDR), uint64(10702054))
 	uassert.Equal(t, gns.BalanceOf(consts.DEV_OPS), uint64(2853881))
 	uassert.Equal(t, gns.BalanceOf(consts.COMMUNITY_POOL_ADDR), uint64(713470))
-	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR), uint64(1000001))
+	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR), uint64(1000000))
 	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR)-xgns.TotalSupply(), uint64(0))
 }
 
@@ -91,7 +91,7 @@ func delegetFromDummyToDummy(t *testing.T) {
 	uassert.Equal(t, gns.BalanceOf(consts.STAKER_ADDR), uint64(21404109))
 	uassert.Equal(t, gns.BalanceOf(consts.DEV_OPS), uint64(5707762))
 	uassert.Equal(t, gns.BalanceOf(consts.COMMUNITY_POOL_ADDR), uint64(1426940))
-	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR), uint64(6000001))
+	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR), uint64(6000000))
 	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR)-xgns.TotalSupply(), uint64(0))
 }
 
