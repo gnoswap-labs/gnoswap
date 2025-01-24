@@ -6,6 +6,8 @@ import (
 	"gno.land/p/demo/json"
 )
 
+// region: TimeInfo
+
 type TimeInfo struct {
 	height uint64
 	time   uint64
@@ -30,6 +32,8 @@ func (t *TimeInfo) JSON(b *json.NodeBuilder, prefix string) *json.NodeBuilder {
 		WriteString(prefix+"Height", formatUint64(t.height)).
 		WriteString(prefix+"Time", formatUint64(t.time))
 }
+
+// region: RefundInfo
 
 type RefundInfo struct {
 	amount uint64
@@ -56,6 +60,8 @@ func (r *RefundInfo) JSON(b *json.NodeBuilder) *json.NodeBuilder {
 		WriteString("time", formatUint64(r.time))
 }
 
+// region: Condition
+
 type Condition struct {
 	tokenPath string
 	minAmount uint64
@@ -74,6 +80,8 @@ func NewCondition(tokenPath string, minAmount uint64) Condition {
 func (c *Condition) JSON(b *json.NodeBuilder) *json.NodeBuilder {
 	panic("not implemented yet")
 }
+
+// region: utils
 
 func makeConditionsToStr(conditions map[string]Condition) (string, string) {
 	var tokenPathList string

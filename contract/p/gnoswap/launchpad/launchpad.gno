@@ -7,6 +7,8 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+// region: projectInput
+
 // ProjectInput defines the input parameters required to create a project.
 //
 // Fields:
@@ -119,21 +121,7 @@ func (p *projectInput) ValidateStartTime(now uint64) error {
 	return nil
 }
 
-func TierAmount(amount, ratio uint64) uint64 {
-	return amount * ratio / 100
-}
-
-func calculateStartHeight(
-	avgBlockTimeMs, now, start uint64,
-) (uint64, error) {
-	timeUntilStart := start - now
-	blockDurationToStart, err := estimateTimeToHeight(avgBlockTimeMs, timeUntilStart)
-	if err != nil {
-		return 0, err
-	}
-
-	return uint64(std.GetHeight()) + blockDurationToStart, nil
-}
+// region: ProjectCalculationResult
 
 // ProjectCalculationResult middle result of project params calculation
 //
@@ -167,8 +155,4 @@ func NewProjectCalculationResult(
 		Tier180Amount: TierAmount(amount, input.Tier180Ratio()),
 		StartHeight:   startHeight,
 	}, nil
-}
-
-func CreateId(prefix, suffix string) string {
-	return ufmt.Sprintf("%s:%s", prefix, suffix)
 }

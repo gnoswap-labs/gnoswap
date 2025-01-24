@@ -14,6 +14,7 @@ import (
 // TODO: p/reward?
 type RewardCalculator interface {
 	Finalize(currentHeight, totalStaked uint64, rewardPerBlock *u256.Uint) (*u256.Uint, error)
+	// Deprecated: use Deduct2 instead
 	Deduct(depositId string, currentHeight uint64, depositState *DepositState) (uint64, error)
 }
 
@@ -131,12 +132,48 @@ func (r *Reward) Finalize(
 	return r.CalculateRewardPerDeposit(rewardPerBlock, totalStaked)
 }
 
+// TODO: Deprecate this function after run test
 func (r *Reward) Deduct(depositId string, currentHeight uint64, depositState *DepositState) (uint64, error) {
 	if currentHeight < r.LastHeight() {
 		return 0, ufmt.Errorf("currentHeight(%d) < lastHeight(%d)", currentHeight, r.LastHeight())
 	}
 
 	deposit := depositState.MustGetDeposit(depositId)
+	if currentHeight < deposit.ClaimableHeight() {
+		return 0, ufmt.Errorf("currentHeight(%d) < claimableHeight(%d)", currentHeight, deposit.ClaimableHeight())
+	}
+
+	info, err := r.InfoOf(depositId)
+	if err != nil {
+		return 0, err
+	}
+
+	if currentHeight < info.StartHeight() {
+		return 0, ufmt.Errorf("currentHeight(%d) < startHeight(%d)", currentHeight, info.StartHeight())
+	}
+
+	reward64 := info.reward(r.AccumRewardPerDeposit())
+	if reward64 == 0 {
+		return 0, nil
+	}
+
+	info.SetClaimed(info.Claimed() + reward64)
+	r.info.Set(depositId, info)
+
+	return reward64, nil
+}
+
+func (r *Reward) Deduct2(depositId string, currentHeight uint64, depositState *DepositState2) (uint64, error) {
+	if currentHeight < r.LastHeight() {
+		return 0, ufmt.Errorf("currentHeight(%d) < lastHeight(%d)", currentHeight, r.LastHeight())
+	}
+
+	idx, exists := depositState.indices.byID[depositId]
+	if !exists {
+		return 0, ufmt.Errorf("deposit not found: %s", depositId)
+	}
+	deposit := depositState.deposits[idx]
+
 	if currentHeight < deposit.ClaimableHeight() {
 		return 0, ufmt.Errorf("currentHeight(%d) < claimableHeight(%d)", currentHeight, deposit.ClaimableHeight())
 	}
@@ -180,7 +217,7 @@ func (i *RewardInfo) RewardAmount() uint64      { return i.rewardAmount }
 func (i *RewardInfo) SetRewardAmount(v uint64)  { i.rewardAmount = v }
 func (i *RewardInfo) Claimed() uint64           { return i.claimed }
 func (i *RewardInfo) SetClaimed(v uint64)       { i.claimed = v }
-func (i *RewardInfo) StartHeight() uint64      { return i.startHeight }
+func (i *RewardInfo) StartHeight() uint64       { return i.startHeight }
 
 func NewRewardInfo(
 	priceDebt *u256.Uint,
