@@ -220,7 +220,7 @@ func testCollectReward() {
 
 func testUnstakeTokenPos02() {
 	std.TestSetRealm(adminRealm)
-	sr.UnstakeToken(2, false) // position 02 is unstaked, position 01 the only staked position
+	sr.UnStakeToken(2, false) // position 02 is unstaked, position 01 the only staked position
 }
 
 func testCollectRewardAfterUnstake() {

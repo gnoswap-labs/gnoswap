@@ -125,7 +125,7 @@ func SetUnStakingFeeByAdmin(fee uint64) {
 func SetUnStakingFee(fee uint64) {
 	caller := getPrevAddr()
 	if err := common.GovernanceOnly(caller); err != nil {
-		panic(addDetailToError(err.Error()))
+		panic(err.Error())
 	}
 
 	prevUnStakingFee := getUnStakingFee()

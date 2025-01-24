@@ -12,8 +12,8 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/common"
 
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -632,8 +632,8 @@ func IncreaseLiquidity(
 		"amount1", amount1.ToString(),
 		"sqrtPriceX96", poolSqrtPriceX96,
 		"positionLiquidity", position.liquidity.ToString(),
-		"token0Balance", token0Balance.ToString(),
-		"token1Balance", token1Balance.ToString(),
+		"token0Balance", token0Balance,
+		"token1Balance", token1Balance,
 	)
 
 	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
@@ -800,8 +800,8 @@ func DecreaseLiquidity(
 		"unwrapResult", formatBool(unwrapResult),
 		"sqrtPriceX96", poolSqrtPriceX96,
 		"positionLiquidity", PositionGetPositionLiquidityStr(tokenId),
-		"token0Balance", token0Balance.ToString(),
-		"token1Balance", token1Balance.ToString(),
+		"token0Balance", token0Balance,
+		"token1Balance", token1Balance,
 	)
 
 	return tokenId, liquidity.ToString(), fee0.ToString(), fee1.ToString(), amount0.ToString(), amount1.ToString(), poolPath
@@ -1104,8 +1104,8 @@ func Reposition(
 	mustUpdatePosition(tokenId, position)
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(position.poolKey)
-	token0Balance := pl.PoolGetBalanceToken0(poolPath)
-	token1Balance := pl.PoolGetBalanceToken1(poolPath)
+	token0Balance := pl.PoolGetBalanceToken0(position.poolKey)
+	token1Balance := pl.PoolGetBalanceToken1(position.poolKey)
 	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(
@@ -1123,8 +1123,8 @@ func Reposition(
 		"poolPath", position.poolKey,
 		"sqrtPriceX96", poolSqrtPriceX96,
 		"positionLiquidity", PositionGetPositionLiquidityStr(tokenId),
-		"token0Balance", token0Balance.ToString(),
-		"token1Balance", token1Balance.ToString(),
+		"token0Balance", token0Balance,
+		"token1Balance", token1Balance,
 	)
 
 	return tokenId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()

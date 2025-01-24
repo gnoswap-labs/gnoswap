@@ -606,8 +606,8 @@ func applyUnStake(tokenId uint64) {
 		"amount0", token0Amount,
 		"amount1", token1Amount,
 		"liquidity", deposit.liquidity.ToString(),
-		"positionUpperTick", formatInt(upperTick),
-		"positionLowerTick", formatInt(lowerTick),
+		"positionUpperTick", formatInt(deposit.tickUpper),
+		"positionLowerTick", formatInt(deposit.tickLower),
 		"currentTick", formatInt(currentTick),
 	)
 }

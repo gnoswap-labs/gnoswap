@@ -451,7 +451,7 @@ func LPTokenStake(t *testing.T, owner std.Address, tokenId uint64) {
 func LPTokenUnStake(t *testing.T, owner std.Address, tokenId uint64, unwrap bool) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(owner))
-	sr.UnstakeToken(tokenId, unwrap)
+	sr.UnStakeToken(tokenId, unwrap)
 }
 
 func getPoolFromLpTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {

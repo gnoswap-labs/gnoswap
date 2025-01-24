@@ -179,7 +179,7 @@ func testCollectReward() {
 func testUnstakeTokenPos02() {
 	std.TestSetRealm(adminRealm)
 
-	sr.UnstakeToken(2, false)
+	sr.UnStakeToken(2, false)
 }
 
 func testCollectRewardAfterUnstake() {

@@ -174,7 +174,7 @@ func testUnstakeTokenPos01() {
 	std.TestSkipHeights(1)
 
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.UnstakeToken(1, false)
+	sr.UnStakeToken(1, false)
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 
