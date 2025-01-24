@@ -67,6 +67,7 @@ type RewardState struct {
 	PriceAccumulation            *u256.Uint            // claimable GNS per xGNS stake, Q128
 	ProtocolFeePriceAccumulation map[string]*u256.Uint // protocol fee debt per xGNS stake, Q128
 	TotalStake                   uint64                // total xGNS staked
+	LastHeight                   uint64                // last height when the reward was calculated,
 
 	info *avl.Tree // address -> StakerRewardInfo
 }
@@ -135,15 +136,13 @@ func (self *RewardState) PriceAccumulationUint64() uint64 {
 func (self *RewardState) deductReward(staker std.Address, currentBalance uint64) (uint64, map[string]uint64) {
 	info := self.Info(staker)
 	stakerPrice := u256.Zero().Sub(self.PriceAccumulation, info.PriceDebt)
-	reward := stakerPrice.Mul(stakerPrice, u256.NewUint(info.Amount))
+	reward := u256.Zero().Mul(stakerPrice, u256.NewUint(info.Amount))
 	reward = reward.Rsh(reward, 128)
 	reward64 := reward.Uint64()
+	reward64 -= info.Claimed
 	info.Claimed += reward64
 
 	protocolFeeRewards := make(map[string]uint64)
-	println("protocolfeeaccumulation", self.ProtocolFeePriceAccumulation)
-	println("protocolfeepricedebt", info.ProtocolFeePriceDebt)
-	println("protocolfeeclaimed", info.ProtocolFeeClaimed)
 	for tokenPath, protocolFeePriceAccumulation := range self.ProtocolFeePriceAccumulation {
 		protocolFeePriceDebt, ok := info.ProtocolFeePriceDebt[tokenPath]
 		if !ok {
@@ -243,16 +242,15 @@ func (self *RewardState) Claim(staker std.Address, currentBalance uint64, curren
 		return 0, make(map[string]uint64)
 	}
 
-	println("Claim", staker.String())
+	if self.LastHeight == uint64(std.GetHeight()) {
+		return 0, make(map[string]uint64)
+	}
 
 	self.finalize(currentBalance, currentProtocolFeeBalances)
 
-	println("Claim2", staker.String())
-
 	reward, protocolFeeRewards := self.deductReward(staker, currentBalance)
 
-	println("Claim3", staker.String())
-
+	self.LastHeight = uint64(std.GetHeight())
 	return reward, protocolFeeRewards
 }
 
