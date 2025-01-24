@@ -14,7 +14,7 @@ deploy-libraries: deploy-uint256 deploy-int256 deploy-math
 deploy-base-tokens: deploy-gns deploy-gnft
 
 .PHONY: deploy-gnoswap-realms
-deploy-gnoswap-realms: deploy-gov-xgns deploy-emission deploy-protocol-fee deploy-pool deploy-position deploy-router deploy-staker deploy-community-pool deploy-gov-staker deploy-gov-governance deploy-launchpad 
+deploy-gnoswap-realms: deploy-gov-xgns deploy-emission deploy-protocol-fee deploy-pool deploy-position deploy-router deploy-staker deploy-community-pool deploy-gov-staker deploy-gov-governance deploy-launchpad deploy-referral
 
 
 # send ugnot to necessary accounts
@@ -114,6 +114,10 @@ deploy-launchpad:
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/launchpad -pkgpath gno.land/r/gnoswap/v1/launchpad -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 	@echo
 
+deploy-referral:
+	$(info ************ deploy referral ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/referral -pkgpath gno.land/r/gnoswap/v1/referral -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+	@echo
 
 deploy-usdc:
 	$(info ************ deploy usdc ************)
