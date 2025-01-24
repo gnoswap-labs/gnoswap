@@ -148,7 +148,7 @@ func Redelegate(from, to std.Address, amount uint64) {
 		))
 	}
 
-	undelegate(to, amount)
+	undelegate(from, amount)
 	delegate(to, amount)
 
 	prevAddr, prevPkgPath := getPrev()
