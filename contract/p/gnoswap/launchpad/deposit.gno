@@ -7,14 +7,85 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+// region: types
+
+// TODO: Deprecate this types
+type (
+	Deposits              map[string]Deposit
+	DepositsByUser        map[std.Address][]string
+	DepositsByProject     map[string]map[string][]string
+	DepositsByUserProject map[std.Address]map[string][]string
+)
+
 // DepositState represents the state of the deposits
 // TODO: This state type will control global deposit state.
+// Deprecated: use `DepositState2` instead.
 type DepositState struct {
-	deposits              map[string]Deposit
-	depositsByUser        map[std.Address][]string
-	depositsByProject     map[string]map[string][]string
-	depositsByUserProject map[std.Address]map[string][]string
+	deposits              Deposits
+	depositsByUser        DepositsByUser
+	depositsByProject     DepositsByProject
+	depositsByUserProject DepositsByUserProject
 }
+
+// ver 2
+
+type DepositState2 struct {
+	deposits []Deposit
+	indices  struct {
+		byUser    map[std.Address][]int // user address -> deposit index
+		byProject map[string][]int      // project id -> deposit index
+		byTier    map[string][]int      // tier -> deposit index
+		byID      map[string]int        // deposit id -> deposit index
+	}
+}
+
+func NewDepositState2() *DepositState2 {
+	return &DepositState2{
+		deposits: make([]Deposit, 0),
+		indices: struct {
+			byUser    map[std.Address][]int
+			byProject map[string][]int
+			byTier    map[string][]int
+			byID      map[string]int
+		}{
+			byUser:    make(map[std.Address][]int),
+			byProject: make(map[string][]int),
+			byTier:    make(map[string][]int),
+			byID:      make(map[string]int),
+		},
+	}
+}
+
+func (d *DepositState2) AddDeposit(deposit Deposit) {
+	idx := len(d.deposits)
+	d.deposits = append(d.deposits, deposit)
+
+	d.indices.byUser[deposit.depositor] = append(d.indices.byUser[deposit.depositor], idx)
+	d.indices.byProject[deposit.projectId] = append(d.indices.byProject[deposit.projectId], idx)
+	d.indices.byTier[deposit.tier] = append(d.indices.byTier[deposit.tier], idx)
+	d.indices.byID[deposit.id] = idx
+}
+
+// getters and setters
+
+func (d *DepositState) Deposits() Deposits     { return d.deposits }
+func (d *DepositState) SetDeposits(v Deposits) { d.deposits = v }
+
+func (d *DepositState) DepositsByUser() DepositsByUser     { return d.depositsByUser }
+func (d *DepositState) SetDepositsByUser(v DepositsByUser) { d.depositsByUser = v }
+
+func (d *DepositState) DepositsByProject() DepositsByProject     { return d.depositsByProject }
+func (d *DepositState) SetDepositsByProject(v DepositsByProject) { d.depositsByProject = v }
+
+func (d *DepositState) DepositsByUserProject() DepositsByUserProject {
+	return d.depositsByUserProject
+}
+
+func (d *DepositState) SetDepositsByUserProject(v DepositsByUserProject) {
+	d.depositsByUserProject = v
+}
+
+// query functions
 
 func (d *DepositState) GetDeposit(id string) (Deposit, bool) {
 	deposit, exists := d.deposits[id]
@@ -37,6 +108,8 @@ func NewDepositState() *DepositState {
 		depositsByUserProject: make(map[std.Address]map[string][]string),
 	}
 }
+
+// region: Deposit
 
 type Deposit struct {
 	id        string // 'projectId:tier:depositor:height'
@@ -105,6 +178,8 @@ func NewDeposit(
 	}
 }
 
+// region: utils
+
 // splitProjectIdAndTier extracts the project ID and tier from a given tier ID.
 //
 // This function splits the provided `tierId` into three parts using the `:` separator and
@@ -123,7 +198,7 @@ func SplitProjectIdAndTier(tierId string) (string, string, error) {
 		return "", "", ufmt.Errorf("invalid tierId: %s", tierId)
 	}
 
-	return ufmt.Sprintf("%s:%s", res[0], res[1]), res[2], nil
+	return createId(res[0], res[2]), res[2], nil
 }
 
 // ParseTierDuration converts a tier type string to its corresponding uint64 value.
