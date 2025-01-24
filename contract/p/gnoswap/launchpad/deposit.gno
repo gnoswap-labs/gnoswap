@@ -1,10 +1,109 @@
 package launchpad
 
 import (
+	"std"
 	"strings"
 
 	"gno.land/p/demo/ufmt"
 )
+
+// DepositState represents the state of the deposits
+// TODO: This state type will control global deposit state.
+type DepositState struct {
+	deposits              map[string]Deposit
+	depositsByUser        map[std.Address][]string
+	depositsByProject     map[string]map[string][]string
+	depositsByUserProject map[std.Address]map[string][]string
+}
+
+func (d *DepositState) GetDeposit(id string) (Deposit, bool) {
+	deposit, exists := d.deposits[id]
+	return deposit, exists
+}
+
+func (d *DepositState) MustGetDeposit(id string) Deposit {
+	deposit, exists := d.GetDeposit(id)
+	if !exists {
+		panic(ufmt.Sprintf("deposit not found: %s", id))
+	}
+	return deposit
+}
+
+func NewDepositState() *DepositState {
+	return &DepositState{
+		deposits:              make(map[string]Deposit),
+		depositsByProject:     make(map[string]map[string][]string),
+		depositsByUser:        make(map[std.Address][]string),
+		depositsByUserProject: make(map[std.Address]map[string][]string),
+	}
+}
+
+type Deposit struct {
+	id        string // 'projectId:tier:depositor:height'
+	projectId string
+	tier      string // 30, 60, 180 // instead of tierId
+	depositor std.Address
+	amount    uint64
+
+	depositHeight        uint64
+	depositTime          uint64
+	depositCollectHeight uint64 // withdraw deposited gns height
+	depositCollectTime   uint64 // withdraw deposited gns timestamp
+
+	claimableHeight uint64 // claimable reward block height
+	claimableTime   uint64 // claimable reward timestamp
+
+	rewardAmount        uint64 // calculated, not collected
+	rewardCollected     uint64 // accu, collected
+	rewardCollectHeight uint64 // last collected height
+	rewardCollectTime   uint64 // last collected time
+}
+
+var _ DepositInfo = (*Deposit)(nil)
+
+// getters and setters
+// TODO: remove unused getters and setters
+func (d *Deposit) ID() string                 { return d.id }
+func (d *Deposit) SetID(v string)             { d.id = v }
+func (d *Deposit) ProjectID() string          { return d.projectId }
+func (d *Deposit) SetProjectID(v string)      { d.projectId = v }
+func (d *Deposit) Tier() string               { return d.tier }
+func (d *Deposit) SetTier(v string)           { d.tier = v }
+func (d *Deposit) Depositor() std.Address     { return d.depositor }
+func (d *Deposit) SetDepositor(v std.Address) { d.depositor = v }
+func (d *Deposit) Amount() uint64             { return d.amount }
+func (d *Deposit) SetAmount(v uint64)         { d.amount = v }
+
+func (d *Deposit) ClaimableHeight() uint64 { return d.claimableHeight }
+func (d *Deposit) ClaimableTime() uint64   { return d.claimableTime }
+
+func NewDeposit(
+	id, projectId, tier string,
+	depositor std.Address,
+	amount, depositHeight, depositTime uint64,
+	depositCollectHeight, depositCollectTime uint64,
+	claimableHeight, claimableTime uint64,
+	rewardAmount, rewardCollected uint64,
+	rewardCollectHeight, rewardCollectTime uint64,
+) *Deposit {
+	return &Deposit{
+		id:                   id,
+		projectId:            projectId,
+		tier:                 tier,
+		depositor:            depositor,
+		amount:               amount,
+		depositHeight:        depositHeight,
+		depositTime:          depositTime,
+		depositCollectHeight: depositCollectHeight,
+		depositCollectTime:   depositCollectTime,
+		claimableHeight:      claimableHeight,
+		claimableTime:        claimableTime,
+		rewardAmount:         rewardAmount,
+		rewardCollected:      rewardCollected,
+		rewardCollectHeight:  rewardCollectHeight,
+		rewardCollectTime:    rewardCollectTime,
+	}
+}
 
 // splitProjectIdAndTier extracts the project ID and tier from a given tier ID.
 //
