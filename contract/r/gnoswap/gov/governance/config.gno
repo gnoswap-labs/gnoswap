@@ -97,7 +97,8 @@ func reconfigure(
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
-	newVersion := getLatestVersion() + 1
+	prevVersion := getLatestVersion()
+	newVersion := prevVersion + 1
 
 	config = Config{
 		VotingStartDelay:              votingStartDelay,
@@ -121,8 +122,9 @@ func reconfigure(
 		"quorum", formatUint(config.Quorum),
 		"proposalCreationThreshold", formatUint(config.ProposalCreationThreshold),
 		"executionDelay", formatUint(config.ExecutionDelay),
-		"executionWindow", formatUint(config.ExecutionWindow),
+		"executionPeriod", formatUint(config.ExecutionWindow),
 		"newConfigVersion", formatUint(newVersion),
+		"prevConfigVersion", formatUint(prevVersion),
 	)
 
 	return newVersion

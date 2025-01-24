@@ -1,9 +1,8 @@
 package pool
 
 import (
-	"std"
-
 	"gno.land/p/demo/ufmt"
+	"std"
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
@@ -267,11 +266,11 @@ func setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8, eventName string) 
 		eventName,
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"feeProtocol0Old", formatUint(feeProtocol0Old),
-		"feeProtocol1Old", formatUint(feeProtocol1Old),
-		"feeProtocol0", formatUint(feeProtocol0),
-		"feeProtocol1", formatUint(feeProtocol1),
-		"internal_newFee", formatUint(newFee),
+		"prevFeeProtocol0", formatUint(uint64(feeProtocol0Old)),
+		"prevFeeProtocol1", formatUint(uint64(feeProtocol1Old)),
+		"feeProtocol0", formatUint(uint64(feeProtocol0)),
+		"feeProtocol1", formatUint(uint64(feeProtocol1)),
+		"newFee", formatUint(uint64(newFee)),
 	)
 }
 
@@ -385,8 +384,8 @@ func CollectProtocolByAdmin(
 		"token1Path", token1Path,
 		"fee", formatUint(fee),
 		"recipient", recipient.String(),
-		"internal_amount0", amount0,
-		"internal_amount1", amount1,
+		"collectedAmount0", amount0,
+		"collectedAmount1", amount1,
 	)
 
 	return amount0, amount1

@@ -25,9 +25,7 @@ func CreateExternalIncentive(
 	startTimestamp int64,
 	endTimestamp int64,
 ) {
-	common.IsHalted()
-
-	en.MintAndDistributeGns()
+	assertOnlyNotHalted()
 
 	if common.GetLimitCaller() {
 		prev := std.PrevRealm()
@@ -44,6 +42,8 @@ func CreateExternalIncentive(
 		))
 	}
 
+	en.MintAndDistributeGns()
+
 	// check token can be used as reward
 	if err := isAllowedForExternalReward(targetPoolPath, rewardToken); err != nil {
 		panic(err.Error())
@@ -57,7 +57,7 @@ func CreateExternalIncentive(
 		if ugnotSent != rewardAmount {
 			panic(addDetailToError(
 				errInvalidInput,
-				ufmt.Sprintf("staker.gno__CreateExternalIncentive() || user(%s) sent ugnot(%d) amount not equal to rewardAmount(%d)", std.PrevRealm().Addr(), ugnotSent, rewardAmount),
+				ufmt.Sprintf("user(%s) sent ugnot(%d) amount not equal to rewardAmount(%d)", getPrevAddr(), ugnotSent, rewardAmount),
 			))
 		}
 
@@ -81,7 +81,7 @@ func CreateExternalIncentive(
 		))
 	}
 
-	caller := std.PrevRealm().Addr()
+	caller := getPrevAddr()
 
 	// incentiveId := incentiveIdCompute(std.PrevRealm().Addr(), targetPoolPath, rewardToken, startTimestamp, endTimestamp, std.GetHeight())
 	incentiveId := incentiveIdByTime(startTimestamp, endTimestamp, caller, rewardToken)
@@ -125,26 +125,28 @@ func CreateExternalIncentive(
 
 	pool.incentives.create(caller, incentive)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"CreateExternalIncentive",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"poolPath", targetPoolPath,
+		"prevRealm", prevPkgPath,
+		"incentiveId", incentiveId,
+		"targetPoolPath", targetPoolPath,
 		"rewardToken", rewardToken,
 		"rewardAmount", formatUint(rewardAmount),
 		"startTimestamp", formatInt(startTimestamp),
 		"endTimestamp", formatInt(endTimestamp),
-		"internal_incentiveId", incentiveId,
-		"internal_depositGnsAmount", formatUint(depositGnsAmount),
-		"internal_external", "created",
+		"depositGnsAmount", formatUint(depositGnsAmount),
+		"currentHeight", formatInt(std.GetHeight()),
+		"currentTime", formatInt(time.Now().Unix()),
+		"avgBlockTimeInMs", formatUint(gns.GetAvgBlockTimeInMs()),
 	)
 }
 
 // EndExternalIncentive ends the external incentive and refunds the remaining reward
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#endexternalincentive
 func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken string, startTimestamp, endTimestamp, height int64) {
-	common.IsHalted()
+	assertOnlyNotHalted()
 
 	pool, exists := pools.Get(targetPoolPath)
 	if !exists {
@@ -158,25 +160,25 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	if !exists {
 		panic(addDetailToError(
 			errCannotEndIncentive,
-			ufmt.Sprintf("staker.gno__EndExternalIncentive() || cannot end non existent incentive(%d:%d:%s:%s)", startTimestamp, endTimestamp, refundee, rewardToken),
+			ufmt.Sprintf("cannot end non existent incentive(%d:%d:%s:%s)", startTimestamp, endTimestamp, refundee, rewardToken),
 		))
 	}
 
-	now := std.GetHeight()
-	if now < ictv.endHeight {
+	currentHeight := std.GetHeight()
+	if currentHeight < ictv.endHeight {
 		panic(addDetailToError(
 			errCannotEndIncentive,
-			ufmt.Sprintf("staker.gno__EndExternalIncentive() || cannot end incentive before endHeight(%d), current(%d)", ictv.endHeight, now),
+			ufmt.Sprintf("cannot end incentive before endHeight(%d), current(%d)", ictv.endHeight, currentHeight),
 		))
 	}
 
 	// when incentive end time is over
 	// admin or refundee can end incentive ( left amount will be refunded )
-	caller := std.PrevRealm().Addr()
+	caller := getPrevAddr()
 	if caller != consts.ADMIN && caller != refundee {
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("staker.gno__EndExternalIncentive() || only refundee(%s) or admin(%s) can end incentive, but called from %s", refundee, consts.ADMIN, caller),
+			ufmt.Sprintf("only refundee(%s) or admin(%s) can end incentive, but called from %s", refundee, consts.ADMIN, caller),
 		))
 	}
 
@@ -204,18 +206,19 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	// also refund deposit gns amount
 	gns.Transfer(ictv.refundee, ictv.depositGnsAmount)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"EndExternalIncentive",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"poolPath", targetPoolPath,
-		"rewardToken", rewardToken,
+		"prevRealm", prevPkgPath,
+		"incentiveId", ictv.incentiveId,
+		"targetPoolPath", targetPoolPath,
 		"refundee", refundee.String(),
-		"internal_endBy", ictv.refundee.String(),
-		"internal_refundAmount", formatUint(refund),
-		"internal_refundGnsAmount", formatUint(ictv.depositGnsAmount),
-		"internal_incentiveId", ufmt.Sprintf("%d:%d:%s:%s", startTimestamp, endTimestamp, refundee, rewardToken),
+		"refundToken", rewardToken,
+		"refundAmount", formatUint(refund),
+		"refundGnsAmount", formatUint(ictv.depositGnsAmount),
+		"isRequestUnwrap", ictv.rewardToken == consts.WUGNOT_PATH,
+		"externalIncentiveEndBy", getPrevAddr(),
 	)
 }
 

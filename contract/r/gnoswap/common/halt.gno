@@ -90,11 +90,11 @@ func SetHalt(halt bool) {
 func setHalt(halt bool) {
 	halted = halt
 
-	prevAddr, prevRealm := getPrevAsString()
+	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
 		"setHalt",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"halt", strconv.FormatBool(halt),
 	)
 }
