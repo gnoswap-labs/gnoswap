@@ -139,7 +139,7 @@ func CreateExternalIncentive(
 		"depositGnsAmount", formatUint(depositGnsAmount),
 		"currentHeight", formatInt(std.GetHeight()),
 		"currentTime", formatInt(time.Now().Unix()),
-		"avgBlockTimeInMs", formatUint(gns.GetAvgBlockTimeInMs()),
+		"avgBlockTimeInMs", formatInt(gns.GetAvgBlockTimeInMs()),
 	)
 }
 
