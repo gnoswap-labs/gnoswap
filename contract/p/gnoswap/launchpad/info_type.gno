@@ -15,6 +15,10 @@ func NewTimeInfo(height, time uint64) TimeInfo {
 	return TimeInfo{height, time}
 }
 
+func (t *TimeInfo) isEnded(current uint64) bool {
+	return t.Height() < current
+}
+
 type RefundInfo struct {
 	amount uint64
 	height uint64
