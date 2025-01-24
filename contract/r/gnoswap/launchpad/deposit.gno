@@ -833,7 +833,7 @@ func processCollectedDeposits(depositList []string, pid string) uint64 {
 
 	amount, err := processDepositCollection(depositList, pid)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	if amount > 0 {
