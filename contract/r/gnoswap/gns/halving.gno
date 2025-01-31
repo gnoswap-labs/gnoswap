@@ -162,6 +162,8 @@ func (h *HalvingData) setAmountPerBlock(year int64, amount uint64) {
 	h.amountPerBlock[year-1] = amount
 }
 
+// initialize initializes the halving data based on release schedule
+// ref: https://docs.gnoswap.io/gnoswap-token/release-schedule
 func (h *HalvingData) initialize(startHeight, startTimestamp int64) {
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		// set max emission amount per year

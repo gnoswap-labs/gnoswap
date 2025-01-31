@@ -270,23 +270,23 @@ func adjustRatio(ratio, msb *u256.Uint) *u256.Uint {
 //
 // This function iteratively squares the ratio and adjusts the result to compute the log base 2, which will determine the tick value.
 func calculateLog2(msb, ratio *u256.Uint) *i256.Int {
-	_msb := i256.FromUint256(msb)
-	_128 := i256.NewInt(128)
+	msbInt := i256.FromUint256(msb)
+	constant128 := i256.NewInt(128)
 
-	log_2 := i256.Zero().Sub(_msb, _128)
-	log_2 = log_2.Lsh(log_2, 64)
+	log2Result := i256.Zero().Sub(msbInt, constant128)
+	log2Result = log2Result.Lsh(log2Result, 64)
 
-	for i := 63; i >= 51; i-- {
+	for bitPosition := 63; bitPosition >= 51; bitPosition-- {
 		ratio = new(u256.Uint).Mul(ratio, ratio)
 		ratio = ratio.Rsh(ratio, 127)
 
-		f := i256.FromUint256(new(u256.Uint).Rsh(ratio, 128))
+		shiftFactor := i256.FromUint256(new(u256.Uint).Rsh(ratio, 128))
 
-		// log_2 = log_2 | (f << i)
-		log_2 = i256.Zero().Or(log_2, i256.Zero().Lsh(f, uint(i)))
+		// log2Result = log2Result | (shiftFactor << bitPosition)
+		log2Result = i256.Zero().Or(log2Result, i256.Zero().Lsh(shiftFactor, uint(bitPosition)))
 
-		// ratio = ratio >> uint64(f)
-		ratio = ratio.Rsh(ratio, uint(f.Uint64()))
+		// ratio = ratio >> uint64(shiftFactor)
+		ratio = ratio.Rsh(ratio, uint(shiftFactor.Uint64()))
 	}
 
 	// handle the remaining bits
@@ -295,12 +295,12 @@ func calculateLog2(msb, ratio *u256.Uint) *i256.Int {
 		ratio = new(u256.Uint).Mul(ratio, ratio)
 		ratio = new(u256.Uint).Rsh(ratio, 127)
 
-		f := i256.FromUint256(new(u256.Uint).Rsh(ratio, 128))
+		shiftFactor := i256.FromUint256(new(u256.Uint).Rsh(ratio, 128))
 
-		log_2 = i256.Zero().Or(log_2, i256.Zero().Lsh(f, 50))
+		log2Result = i256.Zero().Or(log2Result, i256.Zero().Lsh(shiftFactor, 50))
 	}
 
-	return log_2
+	return log2Result
 }
 
 // getTickValue determines the tick value corresponding to a given sqrtPriveX96.
@@ -310,17 +310,17 @@ func calculateLog2(msb, ratio *u256.Uint) *i256.Int {
 func getTickValue(log2 *i256.Int, sqrtPriceX96 *u256.Uint) int32 {
 	// ref: https://github.com/Uniswap/v3-core/issues/500
 	// 2^64 / log2 (√1.0001) = 255738958999603826347141
-	log_sqrt10001 := i256.Zero().Mul(log2, i256.MustFromDecimal("255738958999603826347141"))
+	logSqrtRatioMultiplier := i256.Zero().Mul(log2, i256.MustFromDecimal("255738958999603826347141"))
 
 	// ref: https://ethereum.stackexchange.com/questions/113844/how-does-uniswap-v3s-logarithm-library-tickmath-sol-work/113912#113912
 	// 0.010000497 x 2^128 = 3402992956809132418596140100660247210
-	tickLow256 := i256.Zero().Sub(log_sqrt10001, i256.MustFromDecimal("3402992956809132418596140100660247210"))
+	tickLow256 := i256.Zero().Sub(logSqrtRatioMultiplier, i256.MustFromDecimal("3402992956809132418596140100660247210"))
 	tickLow256 = tickLow256.Rsh(tickLow256, 128)
 	tickLow := int32(tickLow256.Int64())
 
 	// ref: https://ethereum.stackexchange.com/questions/113844/how-does-uniswap-v3s-logarithm-library-tickmath-sol-work/113912#113912
 	// 0.856 x 2^128 = 291339464771989622907027621153398088495
-	tickHi256 := i256.Zero().Add(log_sqrt10001, i256.MustFromDecimal("291339464771989622907027621153398088495"))
+	tickHi256 := i256.Zero().Add(logSqrtRatioMultiplier, i256.MustFromDecimal("291339464771989622907027621153398088495"))
 	tickHi256 = tickHi256.Rsh(tickHi256, 128)
 	tickHi := int32(tickHi256.Int64())
 

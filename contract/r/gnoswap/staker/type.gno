@@ -73,6 +73,7 @@ func (self *ExternalIncentive) RewardLeft(currentHeight uint64) uint64 {
 	return rewardLeft
 }
 
+// NewExternalIncentive creates a new external incentive
 func NewExternalIncentive(
 	incentiveId string,
 	targetPoolPath string,
@@ -97,18 +98,18 @@ func NewExternalIncentive(
 	endHeight := std.GetHeight() + blocksLeftUntilEndHeight
 
 	return &ExternalIncentive{
-		incentiveId:      incentiveId,
-		targetPoolPath:   targetPoolPath,
-		rewardToken:      rewardToken,
-		rewardAmount:     rewardAmount,
-		startTimestamp:   startTimestamp,
-		endTimestamp:     endTimestamp,
-		startHeight:      startHeight,
-		endHeight:        endHeight,
-		rewardPerBlock:   rewardPerBlock,
-		refundee:         refundee,
-		createdHeight:    createdHeight,
-		depositGnsAmount: depositGnsAmount,
+		incentiveId:         incentiveId,
+		targetPoolPath:      targetPoolPath,
+		rewardToken:         rewardToken,
+		rewardAmount:        rewardAmount,
+		startTimestamp:      startTimestamp,
+		endTimestamp:        endTimestamp,
+		startHeight:         startHeight,
+		endHeight:           endHeight,
+		rewardPerBlock:      rewardPerBlock,
+		refundee:            refundee,
+		createdHeight:       createdHeight,
+		depositGnsAmount:    depositGnsAmount,
 		unclaimableRefunded: false,
 	}
 }
@@ -121,7 +122,6 @@ type Deposit struct {
 	tickLower         int32       // tick lower
 	tickUpper         int32       // tick upper
 	liquidity         *u256.Uint  // liquidity
-	lastCollectHeight int64      // last collect block height
-	warmups           []Warmup    // warmup information	
+	lastCollectHeight int64       // last collect block height
+	warmups           []Warmup    // warmup information
 }
-

@@ -632,7 +632,7 @@ func createTier(
 		time:   startTime,
 	}
 
-	durationSecond := duration * consts.SECONDS_PER_DAY
+	durationSecond := duration * SECONDS_PER_DAY
 	endTime := startTime + durationSecond
 	durationHeight := convertTimeToHeight(durationSecond)
 	endHeight := startHeight + durationHeight

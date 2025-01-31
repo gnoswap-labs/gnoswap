@@ -25,11 +25,11 @@ var (
 	privateLedger *grc20.PrivateLedger
 	UserTeller    grc20.Teller
 
-	leftEmissionAmount   uint64
-	mintedEmissionAmount uint64
-	lastMintedHeight     int64
+	leftEmissionAmount   uint64 // amount of GNS can be minted for emission
+	mintedEmissionAmount uint64 // amount of GNS that has been minted for emission
+	lastMintedHeight     int64  // last block height that gns was minted for emission
 
-	burnAmount uint64
+	burnAmount uint64 // amount of GNS that has been burned
 )
 
 func init() {
