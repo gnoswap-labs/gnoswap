@@ -73,7 +73,7 @@ func SwapMathComputeSwapStepStr(
 	if zeroForOne {
 		// If isMax && exactIn, we already have the correct amountIn
 		if !(isMax && exactIn) {
-			amountIn = sqrtPriceMathGetAmount0DeltaHelper(
+			amountIn = getAmount0DeltaHelper(
 				sqrtRatioNextX96.Clone(),
 				sqrtRatioCurrentX96.Clone(),
 				liquidity.Clone(),
@@ -82,7 +82,7 @@ func SwapMathComputeSwapStepStr(
 		}
 		// If isMax && !exactIn, we already have the correct amountOut
 		if !(isMax && !exactIn) {
-			amountOut = sqrtPriceMathGetAmount1DeltaHelper(
+			amountOut = getAmount1DeltaHelper(
 				sqrtRatioNextX96.Clone(),
 				sqrtRatioCurrentX96.Clone(),
 				liquidity.Clone(),
@@ -91,7 +91,7 @@ func SwapMathComputeSwapStepStr(
 		}
 	} else {
 		if !(isMax && exactIn) {
-			amountIn = sqrtPriceMathGetAmount1DeltaHelper(
+			amountIn = getAmount1DeltaHelper(
 				sqrtRatioCurrentX96.Clone(),
 				sqrtRatioNextX96.Clone(),
 				liquidity.Clone(),
@@ -99,7 +99,7 @@ func SwapMathComputeSwapStepStr(
 			)
 		}
 		if !(isMax && !exactIn) {
-			amountOut = sqrtPriceMathGetAmount0DeltaHelper(
+			amountOut = getAmount0DeltaHelper(
 				sqrtRatioCurrentX96.Clone(),
 				sqrtRatioNextX96.Clone(),
 				liquidity.Clone(),
@@ -146,14 +146,14 @@ func handleExactIn(
 	// If we fully move to the target, how much would 'amountIn' be?
 	var amountIn *u256.Uint
 	if zeroForOne {
-		amountIn = sqrtPriceMathGetAmount0DeltaHelper(
+		amountIn = getAmount0DeltaHelper(
 			sqrtRatioTargetX96, // from lower to current
 			sqrtRatioCurrentX96,
 			liquidity,
 			true,
 		)
 	} else {
-		amountIn = sqrtPriceMathGetAmount1DeltaHelper(
+		amountIn = getAmount1DeltaHelper(
 			sqrtRatioCurrentX96,
 			sqrtRatioTargetX96,
 			liquidity,
@@ -166,7 +166,7 @@ func handleExactIn(
 	}
 
 	// We don't reach target price; use partial move
-	nextSqrt := sqrtPriceMathGetNextSqrtPriceFromInput(
+	nextSqrt := getNextSqrtPriceFromInput(
 		sqrtRatioCurrentX96,
 		liquidity,
 		amountRemainingLessFee,
@@ -185,14 +185,14 @@ func handleExactOut(
 ) (*u256.Uint, *u256.Uint) {
 	var amountOut *u256.Uint
 	if zeroForOne {
-		amountOut = sqrtPriceMathGetAmount1DeltaHelper(
+		amountOut = getAmount1DeltaHelper(
 			sqrtRatioTargetX96,
 			sqrtRatioCurrentX96,
 			liquidity,
 			false,
 		)
 	} else {
-		amountOut = sqrtPriceMathGetAmount0DeltaHelper(
+		amountOut = getAmount0DeltaHelper(
 			sqrtRatioCurrentX96,
 			sqrtRatioTargetX96,
 			liquidity,
@@ -204,7 +204,7 @@ func handleExactOut(
 		return sqrtRatioTargetX96, amountOut
 	}
 
-	nextSqrt := sqrtPriceMathGetNextSqrtPriceFromOutput(
+	nextSqrt := getNextSqrtPriceFromOutput(
 		sqrtRatioCurrentX96,
 		liquidity,
 		amountRemainingAbs,
