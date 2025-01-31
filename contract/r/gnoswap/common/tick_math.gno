@@ -15,7 +15,6 @@ var (
 	binaryLogTree = NewBinaryLogTree()
 
 	shift1By32Left = u256.MustFromDecimal("4294967296") // (1 << 32)
-	maxTick        = int32(887272)
 )
 
 // TreeValue wraps u256.Uint to implement custom value type for avl.Tree
@@ -356,7 +355,7 @@ func abs(x int32) int32 {
 
 // assertValidTickRange validates that the absolute tick value is within the acceptable range.
 func assertValidTickRange(absTick int32) {
-	if absTick > maxTick {
+	if absTick > consts.MAX_TICK {
 		panic(newErrorWithDetail(
 			errOutOfRange,
 			ufmt.Sprintf("abs tick is out of range (larger than 887272), abs tick: %d", absTick),

@@ -44,9 +44,9 @@ var (
 
 var (
 	blockPerYear = consts.TIMESTAMP_YEAR / consts.BLOCK_GENERATION_INTERVAL
-	blockPerDay  = consts.TIMESTAMP_DAY / consts.BLOCK_GENERATION_INTERVAL
+	blockPerDay  = consts.SECONDS_PER_DAY / consts.BLOCK_GENERATION_INTERVAL
 
-	avgBlockTimeMs int64 = consts.SECOND_IN_MILLISECOND * consts.BLOCK_GENERATION_INTERVAL
+	avgBlockTimeMs int64 = consts.MILLISECONDS_PER_SECOND * consts.BLOCK_GENERATION_INTERVAL
 	perBlockMint         = avl.NewTree() // height => uint64
 )
 
@@ -425,7 +425,7 @@ func setAvgBlockTimeInMs(ms int64) {
 
 		yearEndTimestamp := GetHalvingYearTimestamp(year) + consts.TIMESTAMP_YEAR
 		timeLeftForYear := yearEndTimestamp - now
-		numBlock := (timeLeftForYear * consts.SECOND_IN_MILLISECOND) / ms
+		numBlock := (timeLeftForYear * consts.MILLISECONDS_PER_SECOND) / ms
 		yearEndHeight := height + numBlock
 
 		if year == currentYear {

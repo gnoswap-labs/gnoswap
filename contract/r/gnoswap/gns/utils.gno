@@ -58,7 +58,7 @@ func i64Min(x, y int64) int64 {
 }
 
 func secToMs(sec int64) int64 {
-	return sec * consts.SECOND_IN_MILLISECOND
+	return sec * consts.MILLISECONDS_PER_SECOND
 }
 
 func formatUint(v interface{}) string {
