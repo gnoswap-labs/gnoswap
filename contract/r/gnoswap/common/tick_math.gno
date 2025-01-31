@@ -4,6 +4,8 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/p/gnoswap/consts"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -164,7 +166,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 	absTick := abs(tick)
 	assertValidTickRange(absTick)
 
-	ratio := u256.MustFromDecimal("340282366920938463463374607431768211456") // consts.Q128
+	ratio := u256.MustFromDecimal(consts.Q128)
 	initialBit := int32(0x1)
 
 	if val, exists := tickRatioTree.GetRatio(initialBit); exists && (absTick&initialBit) != 0 {
@@ -186,7 +188,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 	}
 
 	if tick > 0 {
-		maxUint256 := u256.MustFromDecimal(MAX_UINT256) // consts.MAX_UINT256
+		maxUint256 := u256.MustFromDecimal(consts.MAX_UINT256)
 		if ratio.IsZero() {
 			return u256.Zero()
 		}
@@ -207,8 +209,8 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 }
 
 func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
-	cond1 := sqrtPriceX96.Gte(u256.MustFromDecimal("4295128739"))                                       // MIN_SQRT_RATIO
-	cond2 := sqrtPriceX96.Lt(u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")) // MAX_SQRT_RATIO
+	cond1 := sqrtPriceX96.Gte(u256.MustFromDecimal(consts.MIN_SQRT_RATIO))
+	cond2 := sqrtPriceX96.Lt(u256.MustFromDecimal(consts.MAX_SQRT_RATIO))
 	if !(cond1 && cond2) {
 		panic(newErrorWithDetail(
 			errOutOfRange,

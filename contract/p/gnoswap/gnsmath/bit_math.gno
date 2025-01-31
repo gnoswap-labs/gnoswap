@@ -26,9 +26,9 @@ var (
 	max_uint32  = u256.MustFromDecimal(MAX_UINT32)
 	max_uint16  = u256.MustFromDecimal(MAX_UINT16)
 	max_uint8   = u256.MustFromDecimal(MAX_UINT8)
-	num_15      = u256.MustFromDecimal(0xf)
-	num_3       = u256.MustFromDecimal(0x3)
-	num_1       = u256.MustFromDecimal(0x1)
+	num_15      = u256.NewUint(0xf)
+	num_3       = u256.NewUint(0x3)
+	num_1       = u256.NewUint(0x1)
 )
 
 // BitMathMostSignificantBit returns the index of the most significant bit set to 1 in the given Uint.
