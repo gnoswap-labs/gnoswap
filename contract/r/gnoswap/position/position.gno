@@ -1035,14 +1035,13 @@ func getCurrentFeeGrowth(postion Position, token0, token1 string, fee uint32) (F
 	return feeGrowthInside, nil
 }
 
-// Repositiomn adjusts the position of an existing liquidity token
-// by changing its price range and liquidity amount.
-// It only increase liquidity to existing position without
-// decreasing liquidity even function does reposition.
-// This is because, amount of each token for new position can be
-// different from the amount of each token for previous position.
-// Therefore as describe in the reference docs, we use multi msg to
-// decrease liquidity -> swap -> add liquidity to reposition.
+// Reposition adjusts the price range and liquidity of an existing position.
+// Reposition is executed via multiple messages as follows:
+//
+// 1. Decrease the liquidity of the existing position.
+// 2. Swap tokens as needed to reach the desired token ratio.
+// 3. Add new liquidity with the desired price range and amount.
+//
 // Returns tokenId, liquidity, tickLower, tickUpper, amount0, amount1
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#reposition
 func Reposition(
