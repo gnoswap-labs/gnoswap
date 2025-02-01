@@ -63,10 +63,10 @@ func ChangeDistributionPctByAdmin(
 	target04 int, pct04 uint64,
 ) {
 	assertOnlyAdmin()
-	assertDistributionTarget(target01)
-	assertDistributionTarget(target02)
-	assertDistributionTarget(target03)
-	assertDistributionTarget(target04)
+	targets := []int{target01, target02, target03, target04}
+	for _, target := range targets {
+		assertDistributionTarget(target)
+	}
 	assertSumDistributionPct(pct01, pct02, pct03, pct04)
 	assertOnlyNotHalted()
 
@@ -91,10 +91,10 @@ func ChangeDistributionPct(
 	target04 int, pct04 uint64,
 ) {
 	assertOnlyGovernance()
-	assertDistributionTarget(target01)
-	assertDistributionTarget(target02)
-	assertDistributionTarget(target03)
-	assertDistributionTarget(target04)
+	targets := []int{target01, target02, target03, target04}
+	for _, target := range targets {
+		assertDistributionTarget(target)
+	}
 	assertSumDistributionPct(pct01, pct02, pct03, pct04)
 	assertOnlyNotHalted()
 
