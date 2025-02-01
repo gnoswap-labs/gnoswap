@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 )
 
@@ -58,7 +57,7 @@ func i64Min(x, y int64) int64 {
 }
 
 func secToMs(sec int64) int64 {
-	return sec * consts.MILLISECONDS_PER_SECOND
+	return sec * MILLISECONDS_PER_SECOND
 }
 
 func formatUint(v interface{}) string {
