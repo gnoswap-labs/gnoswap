@@ -117,6 +117,10 @@ const (
 
 // BLOCK TIME
 const (
+	// Using this value contract does calculate
+	// how many block will be minted in a certain time range.
+	// However due to chain status, it can be different.
+	// So we use this value as initial value, and update by calling setter through governance.
 	BLOCK_GENERATION_INTERVAL int64 = 2 // seconds
 )
 
