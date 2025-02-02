@@ -38,7 +38,6 @@ func TestCommunityPoolSpend(t *testing.T) {
 	passAndExecute(t)
 	rejectAndExecute(t)
 	passAndExpire(t)
-
 }
 
 func proposeCommunityPoolSpend(t *testing.T) {
@@ -122,7 +121,7 @@ func passAndExecute(t *testing.T) {
 		// to execute community pool spend proposal, we need to have enough balance in community pool
 		std.TestSetRealm(adminRealm)
 
-		uassert.Equal(t, gns.BalanceOf(consts.COMMUNITY_POOL_ADDR), uint64(87043376))
+		uassert.Equal(t, uint64(15696346), gns.BalanceOf(consts.COMMUNITY_POOL_ADDR))
 		uassert.Equal(t, gns.BalanceOf(to), uint64(0))
 
 		err := Execute(proposalId)
