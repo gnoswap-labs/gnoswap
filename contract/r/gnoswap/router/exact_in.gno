@@ -23,6 +23,8 @@ func NewExactInSwapOperation(pp ExactInParams) *ExactInSwapOperation {
 	}
 }
 
+// ExactInSwapRoute is a function that performs an exact-in swap operation.
+// exact-in swap means that the user wants to swap an exact amount of input tokens for output tokens.
 func ExactInSwapRoute(
 	inputToken string,
 	outputToken string,

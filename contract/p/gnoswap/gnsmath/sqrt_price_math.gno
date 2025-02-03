@@ -58,22 +58,21 @@ func sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
 		divValue := new(u256.Uint).Div(numerator1, sqrtPX96)
 		addValue := new(u256.Uint).Add(divValue, amount)
 		return u256.DivRoundingUp(numerator1, addValue)
-	} else {
-		cond1 := new(u256.Uint).Div(product, amount).Eq(sqrtPX96)
-		cond2 := numerator1.Gt(product)
-
-		if !(cond1 && cond2) {
-			panic("invalid pool sqrt price calculation: product/amount != sqrtPX96 or numerator1 <= product")
-		}
-
-		denominator := new(u256.Uint).Sub(numerator1, product)
-		nextSqrtPrice := u256.MulDivRoundingUp(numerator1, sqrtPX96, denominator)
-		max160 := u256.MustFromDecimal(MAX_UINT160)
-		if nextSqrtPrice.Gt(max160) {
-			panic("nextSqrtPrice overflows uint160")
-		}
-		return nextSqrtPrice
 	}
+
+	isProductDivAmountEqualSqrtPX96 := new(u256.Uint).Div(product, amount).Eq(sqrtPX96)
+	isNumeratorGreaterThanProduct := numerator1.Gt(product)
+	if !(isProductDivAmountEqualSqrtPX96 && isNumeratorGreaterThanProduct) {
+		panic("invalid pool sqrt price calculation: product/amount != sqrtPX96 or numerator1 <= product")
+	}
+
+	denominator := new(u256.Uint).Sub(numerator1, product)
+	nextSqrtPrice := u256.MulDivRoundingUp(numerator1, sqrtPX96, denominator)
+	max160 := u256.MustFromDecimal(MAX_UINT160)
+	if nextSqrtPrice.Gt(max160) {
+		panic("nextSqrtPrice overflows uint160")
+	}
+	return nextSqrtPrice
 }
 
 // sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown calculates the next square root price
@@ -121,26 +120,25 @@ func sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(
 			panic("GetNextSqrtPriceFromAmount1RoundingDown sqrtPx96 + quotient overflow uint160")
 		}
 		return res
-	} else {
-		if amount.Lte(u256.MustFromDecimal(MAX_UINT160)) {
-			value := new(u256.Uint).Lsh(amount, Q96_RESOLUTION)
-			quotient = u256.DivRoundingUp(value, liquidity)
-		} else {
-			quotient = u256.MulDivRoundingUp(amount, u256.MustFromDecimal(Q96), liquidity)
-		}
-
-		if !(sqrtPX96.Gt(quotient)) {
-			panic("sqrt price exceeds calculated quotient")
-		}
-
-		res := new(u256.Uint).Sub(sqrtPX96, quotient)
-		if res.Gt(max160) {
-			mask := new(u256.Uint).Lsh(u256.One(), Q160_RESOLUTION)
-			mask = mask.Sub(mask, u256.One())
-			res = res.And(res, mask)
-		}
-		return res
 	}
+	if amount.Lte(u256.MustFromDecimal(MAX_UINT160)) {
+		value := new(u256.Uint).Lsh(amount, Q96_RESOLUTION)
+		quotient = u256.DivRoundingUp(value, liquidity)
+	} else {
+		quotient = u256.MulDivRoundingUp(amount, u256.MustFromDecimal(Q96), liquidity)
+	}
+
+	if !(sqrtPX96.Gt(quotient)) {
+		panic("sqrt price exceeds calculated quotient")
+	}
+
+	res := new(u256.Uint).Sub(sqrtPX96, quotient)
+	if res.Gt(max160) {
+		mask := new(u256.Uint).Lsh(u256.One(), Q160_RESOLUTION)
+		mask = mask.Sub(mask, u256.One())
+		res = res.And(res, mask)
+	}
+	return res
 }
 
 // sqrtPriceMathGetNextSqrtPriceFromInput calculates the next square root price
@@ -175,9 +173,9 @@ func sqrtPriceMathGetNextSqrtPriceFromInput(
 
 	if zeroForOne {
 		return sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountIn, true)
-	} else {
-		return sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountIn, true)
 	}
+
+	return sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountIn, true)
 }
 
 // sqrtPriceMathGetNextSqrtPriceFromOutput calculates the next square root price
@@ -222,9 +220,9 @@ func sqrtPriceMathGetNextSqrtPriceFromOutput(
 
 	if zeroForOne {
 		return sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountOut, false)
-	} else {
-		return sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountOut, false)
 	}
+
+	return sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountOut, false)
 }
 
 // sqrtPriceMathGetAmount0DeltaHelper calculates the absolute difference between the amounts of token0 in two
@@ -256,20 +254,20 @@ func sqrtPriceMathGetAmount0DeltaHelper(
 		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
 	}
 
-	numerator1 := new(u256.Uint).Lsh(liquidity, Q96_RESOLUTION)
-	numerator2 := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
+	scaledLiquidity := new(u256.Uint).Lsh(liquidity, Q96_RESOLUTION)
+	ratioDiff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
 	if !(sqrtRatioAX96.Gt(u256.Zero())) {
 		panic("sqrtRatioAX96 must be greater than zero")
 	}
 
 	if roundUp {
-		value := u256.MulDivRoundingUp(numerator1, numerator2, sqrtRatioBX96)
+		value := u256.MulDivRoundingUp(scaledLiquidity, ratioDiff, sqrtRatioBX96)
 		return u256.DivRoundingUp(value, sqrtRatioAX96)
-	} else {
-		value := u256.MulDiv(numerator1, numerator2, sqrtRatioBX96)
-		return new(u256.Uint).Div(value, sqrtRatioAX96)
 	}
+
+	value := u256.MulDiv(scaledLiquidity, ratioDiff, sqrtRatioBX96)
+	return new(u256.Uint).Div(value, sqrtRatioAX96)
 }
 
 // sqrtPriceMathGetAmount1DeltaHelper calculates the absolute difference between the amounts of token1 in two
@@ -303,9 +301,9 @@ func sqrtPriceMathGetAmount1DeltaHelper(
 	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 	if roundUp {
 		return u256.MulDivRoundingUp(liquidity, diff, u256.MustFromDecimal(Q96))
-	} else {
-		return u256.MulDiv(liquidity, diff, u256.MustFromDecimal(Q96))
 	}
+
+	return u256.MulDiv(liquidity, diff, u256.MustFromDecimal(Q96))
 }
 
 // SqrtPriceMathGetAmount0DeltaStr calculates the difference in the amount of token0
@@ -344,14 +342,14 @@ func SqrtPriceMathGetAmount0DeltaStr(
 		}
 		i := i256.FromUint256(u)
 		return i256.Zero().Neg(i).ToString()
-	} else {
-		u := sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)
-		if u.Gt(u256.MustFromDecimal(MAX_INT256)) {
-			// if u > (2**255 - 1), cannot cast to int256
-			panic("SqrtPriceMathGetAmount0DeltaStr: overflow")
-		}
-		return i256.FromUint256(u).ToString()
 	}
+
+	u := sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)
+	if u.Gt(u256.MustFromDecimal(MAX_INT256)) {
+		// if u > (2**255 - 1), cannot cast to int256
+		panic("SqrtPriceMathGetAmount0DeltaStr: overflow")
+	}
+	return i256.FromUint256(u).ToString()
 }
 
 // SqrtPriceMathGetAmount1DeltaStr calculates the difference in the amount of token1
@@ -387,12 +385,12 @@ func SqrtPriceMathGetAmount1DeltaStr(
 		}
 		i := i256.FromUint256(u)
 		return i256.Zero().Neg(i).ToString()
-	} else {
-		u := sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)
-		if u.Gt(u256.MustFromDecimal(MAX_INT256)) {
-			// if u > (2**255 - 1), cannot cast to int256
-			panic("SqrtPriceMathGetAmount1DeltaStr: overflow")
-		}
-		return i256.FromUint256(u).ToString()
 	}
+
+	u := sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)
+	if u.Gt(u256.MustFromDecimal(MAX_INT256)) {
+		// if u > (2**255 - 1), cannot cast to int256
+		panic("SqrtPriceMathGetAmount1DeltaStr: overflow")
+	}
+	return i256.FromUint256(u).ToString()
 }

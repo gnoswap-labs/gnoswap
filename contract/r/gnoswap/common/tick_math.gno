@@ -4,23 +4,10 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/p/gnoswap/consts"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-)
-
-const (
-	MAX_UINT8   string = "255"
-	MAX_UINT16  string = "65535"
-	MAX_UINT32  string = "4294967295"
-	MAX_UINT64  string = "18446744073709551615"
-	MAX_UINT128 string = "340282366920938463463374607431768211455"
-	MAX_UINT160 string = "1461501637330902918203684832716283019655932542975"
-	MAX_UINT256 string = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-	MAX_INT256  string = "57896044618658097711785492504343953926634992332820282019728792003956564819967"
-
-	Q64  string = "18446744073709551616"                    // 2 ** 64
-	Q96  string = "79228162514264337593543950336"           // 2 ** 96
-	Q128 string = "340282366920938463463374607431768211456" // 2 ** 128
 )
 
 var (
@@ -28,7 +15,6 @@ var (
 	binaryLogTree = NewBinaryLogTree()
 
 	shift1By32Left = u256.MustFromDecimal("4294967296") // (1 << 32)
-	maxTick        = int32(887272)
 )
 
 // TreeValue wraps u256.Uint to implement custom value type for avl.Tree
@@ -179,7 +165,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 	absTick := abs(tick)
 	assertValidTickRange(absTick)
 
-	ratio := u256.MustFromDecimal("340282366920938463463374607431768211456") // consts.Q128
+	ratio := u256.MustFromDecimal(consts.Q128)
 	initialBit := int32(0x1)
 
 	if val, exists := tickRatioTree.GetRatio(initialBit); exists && (absTick&initialBit) != 0 {
@@ -201,7 +187,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 	}
 
 	if tick > 0 {
-		maxUint256 := u256.MustFromDecimal(MAX_UINT256) // consts.MAX_UINT256
+		maxUint256 := u256.MustFromDecimal(consts.MAX_UINT256)
 		if ratio.IsZero() {
 			return u256.Zero()
 		}
@@ -222,8 +208,8 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 }
 
 func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
-	cond1 := sqrtPriceX96.Gte(u256.MustFromDecimal("4295128739"))                                       // MIN_SQRT_RATIO
-	cond2 := sqrtPriceX96.Lt(u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")) // MAX_SQRT_RATIO
+	cond1 := sqrtPriceX96.Gte(u256.MustFromDecimal(consts.MIN_SQRT_RATIO))
+	cond2 := sqrtPriceX96.Lt(u256.MustFromDecimal(consts.MAX_SQRT_RATIO))
 	if !(cond1 && cond2) {
 		panic(newErrorWithDetail(
 			errOutOfRange,
@@ -284,23 +270,23 @@ func adjustRatio(ratio, msb *u256.Uint) *u256.Uint {
 //
 // This function iteratively squares the ratio and adjusts the result to compute the log base 2, which will determine the tick value.
 func calculateLog2(msb, ratio *u256.Uint) *i256.Int {
-	_msb := i256.FromUint256(msb)
-	_128 := i256.NewInt(128)
+	msbInt := i256.FromUint256(msb)
+	constant128 := i256.NewInt(128)
 
-	log_2 := i256.Zero().Sub(_msb, _128)
-	log_2 = log_2.Lsh(log_2, 64)
+	log2Result := i256.Zero().Sub(msbInt, constant128)
+	log2Result = log2Result.Lsh(log2Result, 64)
 
-	for i := 63; i >= 51; i-- {
+	for bitPosition := 63; bitPosition >= 51; bitPosition-- {
 		ratio = new(u256.Uint).Mul(ratio, ratio)
 		ratio = ratio.Rsh(ratio, 127)
 
-		f := i256.FromUint256(new(u256.Uint).Rsh(ratio, 128))
+		shiftFactor := i256.FromUint256(new(u256.Uint).Rsh(ratio, 128))
 
-		// log_2 = log_2 | (f << i)
-		log_2 = i256.Zero().Or(log_2, i256.Zero().Lsh(f, uint(i)))
+		// log2Result = log2Result | (shiftFactor << bitPosition)
+		log2Result = i256.Zero().Or(log2Result, i256.Zero().Lsh(shiftFactor, uint(bitPosition)))
 
-		// ratio = ratio >> uint64(f)
-		ratio = ratio.Rsh(ratio, uint(f.Uint64()))
+		// ratio = ratio >> uint64(shiftFactor)
+		ratio = ratio.Rsh(ratio, uint(shiftFactor.Uint64()))
 	}
 
 	// handle the remaining bits
@@ -309,12 +295,12 @@ func calculateLog2(msb, ratio *u256.Uint) *i256.Int {
 		ratio = new(u256.Uint).Mul(ratio, ratio)
 		ratio = new(u256.Uint).Rsh(ratio, 127)
 
-		f := i256.FromUint256(new(u256.Uint).Rsh(ratio, 128))
+		shiftFactor := i256.FromUint256(new(u256.Uint).Rsh(ratio, 128))
 
-		log_2 = i256.Zero().Or(log_2, i256.Zero().Lsh(f, 50))
+		log2Result = i256.Zero().Or(log2Result, i256.Zero().Lsh(shiftFactor, 50))
 	}
 
-	return log_2
+	return log2Result
 }
 
 // getTickValue determines the tick value corresponding to a given sqrtPriveX96.
@@ -324,17 +310,17 @@ func calculateLog2(msb, ratio *u256.Uint) *i256.Int {
 func getTickValue(log2 *i256.Int, sqrtPriceX96 *u256.Uint) int32 {
 	// ref: https://github.com/Uniswap/v3-core/issues/500
 	// 2^64 / log2 (√1.0001) = 255738958999603826347141
-	log_sqrt10001 := i256.Zero().Mul(log2, i256.MustFromDecimal("255738958999603826347141"))
+	logSqrtRatioMultiplier := i256.Zero().Mul(log2, i256.MustFromDecimal("255738958999603826347141"))
 
 	// ref: https://ethereum.stackexchange.com/questions/113844/how-does-uniswap-v3s-logarithm-library-tickmath-sol-work/113912#113912
 	// 0.010000497 x 2^128 = 3402992956809132418596140100660247210
-	tickLow256 := i256.Zero().Sub(log_sqrt10001, i256.MustFromDecimal("3402992956809132418596140100660247210"))
+	tickLow256 := i256.Zero().Sub(logSqrtRatioMultiplier, i256.MustFromDecimal("3402992956809132418596140100660247210"))
 	tickLow256 = tickLow256.Rsh(tickLow256, 128)
 	tickLow := int32(tickLow256.Int64())
 
 	// ref: https://ethereum.stackexchange.com/questions/113844/how-does-uniswap-v3s-logarithm-library-tickmath-sol-work/113912#113912
 	// 0.856 x 2^128 = 291339464771989622907027621153398088495
-	tickHi256 := i256.Zero().Add(log_sqrt10001, i256.MustFromDecimal("291339464771989622907027621153398088495"))
+	tickHi256 := i256.Zero().Add(logSqrtRatioMultiplier, i256.MustFromDecimal("291339464771989622907027621153398088495"))
 	tickHi256 = tickHi256.Rsh(tickHi256, 128)
 	tickHi := int32(tickHi256.Int64())
 
@@ -369,7 +355,7 @@ func abs(x int32) int32 {
 
 // assertValidTickRange validates that the absolute tick value is within the acceptable range.
 func assertValidTickRange(absTick int32) {
-	if absTick > maxTick {
+	if absTick > consts.MAX_TICK {
 		panic(newErrorWithDetail(
 			errOutOfRange,
 			ufmt.Sprintf("abs tick is out of range (larger than 887272), abs tick: %d", absTick),

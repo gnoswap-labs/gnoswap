@@ -66,13 +66,15 @@ func MustRegistered(path string) {
 
 // ListRegisteredTokens returns the list of registered tokens
 // NOTE:
-// - Unfortunate, grc20reg doesn't support this.
+// - Unfortunately, grc20reg doesn't support this.
 // - We need to parse the rendered grc20reg page to get the list of registered tokens.
 func ListRegisteredTokens() []string {
 	render := grc20reg.Render("")
 	return extractTokenPathsFromRender(render)
 }
 
+// extractTokenPathsFromRender extracts the token paths from the rendered grc20reg realm.
+// It returns the list of token paths.
 func extractTokenPathsFromRender(render string) []string {
 	matches := re.FindAllString(render, -1)
 
