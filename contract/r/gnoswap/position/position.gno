@@ -626,7 +626,7 @@ func IncreaseLiquidity(
 		"prevRealm", prevPkgPath,
 		"poolPath", poolPath,
 		"caller", caller.String(),
-		"lpTokenId", formatUint(positionId),
+		"lpPositionId", formatUint(positionId),
 		"liquidity", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
