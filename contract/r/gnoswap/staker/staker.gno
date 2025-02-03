@@ -21,6 +21,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+// list of staked positions
 type Deposits struct {
 	tree *avl.Tree
 }

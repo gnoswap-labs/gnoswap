@@ -6,14 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/r/demo/wugnot"
-
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 )
-
 
 func TestDelegate(t *testing.T) {
 	std.TestSetOrigCaller(consts.ADMIN)
@@ -434,7 +430,7 @@ func TestCollectUndelegatedGns(t *testing.T) {
 	now := uint64(time.Now().Unix())
 	locked := lockedGNS{
 		amount: 100_000,
-		unlock: now + TIMESTAMP_7_DAYS,
+		unlock: now + SECONDS_IN_7_DAYS,
 	}
 	addrLockedGns.Set(userRealm.Addr().String(), []lockedGNS{locked})
 	lockedAmount = 100_000

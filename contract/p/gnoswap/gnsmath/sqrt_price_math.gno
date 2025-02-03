@@ -99,6 +99,7 @@ func getNextSqrtPriceFromAmount0RoundingUp(
 	return getNextPriceAmount0Remove(sqrtPX96, liquidity, amount)
 }
 
+
 // getNextPriceAmount1Add calculates the next sqrt price when adding token1.
 // Preserves rounding-down logic for the final result.
 func getNextPriceAmount1Add(
@@ -287,19 +288,19 @@ func getAmount0DeltaHelper(
 		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
 	}
 
-	numerator1 := new(u256.Uint).Lsh(liquidity, Q96_RESOLUTION)
-	numerator2 := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
+	scaledLiquidity := new(u256.Uint).Lsh(liquidity, Q96_RESOLUTION)
+	ratioDiff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
 	if !(sqrtRatioAX96.Gt(u256.Zero())) {
 		panic(errSqrtRatioAX96NotPositive)
 	}
 
 	if roundUp {
-		value := u256.MulDivRoundingUp(numerator1, numerator2, sqrtRatioBX96)
+		value := u256.MulDivRoundingUp(scaledLiquidity, ratioDiff, sqrtRatioBX96)
 		return u256.DivRoundingUp(value, sqrtRatioAX96)
 	}
 
-	value := u256.MulDiv(numerator1, numerator2, sqrtRatioBX96)
+	value := u256.MulDiv(scaledLiquidity, ratioDiff, sqrtRatioBX96)
 	return new(u256.Uint).Div(value, sqrtRatioAX96)
 }
 

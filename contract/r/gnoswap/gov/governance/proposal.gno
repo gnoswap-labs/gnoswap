@@ -22,6 +22,9 @@ var (
 	latestProposalByProposer = avl.NewTree() // proposer -> proposalId
 )
 
+// Governance can execute multiple messages in a single proposal
+// To separate the messages, we use this separator
+// Look for ProposeParameterChange() for more details
 const (
 	GOV_SPLIT = "*GOV*"
 )
@@ -175,6 +178,10 @@ func ProposeCommunityPoolSpend(
 
 // ProposeParameterChange creates a new parameter change with the given data
 // It checks if the proposer is eligible to create a proposal and if they don't have an active proposal.
+// Through gnoswap interface, following string will be passed in for executions:
+// <pkgPath>*EXE*<function>*EXE*<params>*GOV*<pkgPath>*EXE*<function>*EXE*<params>
+// *GOV* is used to separate the messages
+//
 // Returns the proposal ID
 // ref: https://docs.gnoswap.io/contracts/governance/proposal.gno#proposeparameterchange
 func ProposeParameterChange(
@@ -392,6 +399,9 @@ func (u *proposalStateUpdater) updateExecutionState() {
 	}
 }
 
+// checkEnoughXGnsToPropose checks if the proposer has enough xGNS to propose a proposal.
+// ref: https://docs.gnoswap.io/core-concepts/governance#scope-of-proposals-5
+// It returns a boolean indicating if the proposer has enough xGNS, the balance of xGNS, and the threshold of xGNS.
 func checkEnoughXGnsToPropose(proposer std.Address) (bool, uint64, uint64) {
 	xGNSBalance := xgns.BalanceOf(proposer)
 

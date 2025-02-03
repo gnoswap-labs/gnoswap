@@ -4,8 +4,8 @@ package uint256
 
 import (
 	"errors"
-	"strconv"
 	"math/bits"
+	"strconv"
 )
 
 const (
@@ -53,8 +53,6 @@ func (z *Uint) SetOne() *Uint {
 	return z
 }
 
-const twoPow256Sub1 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-
 // SetFromDecimal sets z from the given string, interpreted as a decimal number.
 // OBS! This method is _not_ strictly identical to the (*big.Uint).SetString(..., 10) method.
 // Notable differences:
@@ -77,11 +75,11 @@ func (z *Uint) SetFromDecimal(s string) (err error) {
 		}
 		s = s[i:]
 	}
-	if len(s) < len(twoPow256Sub1) {
+	if len(s) < len(MAX_UINT256) {
 		return z.fromDecimal(s)
 	}
-	if len(s) == len(twoPow256Sub1) {
-		if s > twoPow256Sub1 {
+	if len(s) == len(MAX_UINT256) {
+		if s > MAX_UINT256 {
 			return ErrBig256Range
 		}
 		return z.fromDecimal(s)
