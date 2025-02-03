@@ -430,7 +430,7 @@ func setAvgBlockTimeInMs(ms int64) {
 
 		yearEndTimestamp := GetHalvingYearTimestamp(year) + SECONDS_IN_YEAR
 		timeLeftForYear := yearEndTimestamp - now
-		numBlock := (timeLeftForYear * MILLISECONDS_PER_SECOND) / ms
+		numBlock := (timeLeftForYear * consts.MILLISECONDS_PER_SECOND) / ms
 		yearEndHeight := height + numBlock
 
 		if year == currentYear {
