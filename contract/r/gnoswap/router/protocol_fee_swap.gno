@@ -91,6 +91,8 @@ func setSwapFee(fee uint64) error {
 	return nil
 }
 
+// handleSwapFee deducts the protocol fee from the amount and sends it to the protocol_fee contract
+// and returns the amount after deducting the protocol fee
 func handleSwapFee(
 	outputToken string,
 	amount *u256.Uint,

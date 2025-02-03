@@ -40,6 +40,8 @@ var (
 // - DevOps: 20%
 // - Community Pool: 5%
 // - Governance Stakers: 0%
+//
+// ref: https://docs.gnoswap.io/gnoswap-token/emission
 func init() {
 	distributionBpsPct = avl.NewTree()
 	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), uint64(7500))
@@ -61,10 +63,10 @@ func ChangeDistributionPctByAdmin(
 	target04 int, pct04 uint64,
 ) {
 	assertOnlyAdmin()
-	assertDistributionTarget(target01)
-	assertDistributionTarget(target02)
-	assertDistributionTarget(target03)
-	assertDistributionTarget(target04)
+	targets := []int{target01, target02, target03, target04}
+	for _, target := range targets {
+		assertDistributionTarget(target)
+	}
 	assertSumDistributionPct(pct01, pct02, pct03, pct04)
 	assertOnlyNotHalted()
 
@@ -89,10 +91,10 @@ func ChangeDistributionPct(
 	target04 int, pct04 uint64,
 ) {
 	assertOnlyGovernance()
-	assertDistributionTarget(target01)
-	assertDistributionTarget(target02)
-	assertDistributionTarget(target03)
-	assertDistributionTarget(target04)
+	targets := []int{target01, target02, target03, target04}
+	for _, target := range targets {
+		assertDistributionTarget(target)
+	}
 	assertSumDistributionPct(pct01, pct02, pct03, pct04)
 	assertOnlyNotHalted()
 
@@ -258,6 +260,7 @@ func ClearDistributedToGovStaker() {
 	distributedToGovStaker = 0
 }
 
+// setDistributionBpsPct changes percentage of each target for how much gns it will get by emission.
 func setDistributionBpsPct(target int, pct uint64) {
 	if target == LIQUIDITY_STAKER {
 		oldPct, exist := distributionBpsPct.Get(strconv.Itoa(target))

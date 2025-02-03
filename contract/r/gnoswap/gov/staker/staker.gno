@@ -18,13 +18,14 @@ import (
 	en "gno.land/r/gnoswap/v1/emission"
 )
 
+// lockedGNS represents a locked GNS with its amount, unlock time, and collected status
 type lockedGNS struct {
 	amount    uint64
 	unlock    uint64
 	collected bool
 }
 
-const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
+const SECONDS_IN_7_DAYS = uint64(604800)
 
 var (
 	addrLockedGns = avl.NewTree() // address -> []lockedGNS
@@ -217,7 +218,7 @@ func Undelegate(from std.Address, amount uint64) {
 	// lock up
 	userLocked := lockedGNS{
 		amount: amount,
-		unlock: uint64(time.Now().Unix()) + TIMESTAMP_7_DAYS, // after 7 days, call Collect() to receive GNS
+		unlock: uint64(time.Now().Unix()) + SECONDS_IN_7_DAYS, // after 7 days, call Collect() to receive GNS
 	}
 
 	var lockedList []lockedGNS

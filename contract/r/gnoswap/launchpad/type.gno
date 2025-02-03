@@ -14,9 +14,9 @@ import (
 )
 
 type ProjectStats struct {
-	totalDeposit      uint64 // won't be decreased
+	totalDeposit      uint64 // won't be decreased  (for statistics)
 	actualDeposit     uint64 // will be decreased if deposit collected 'CollectDepositGns()'
-	totalParticipant  uint64 // accu, won't be decreased
+	totalParticipant  uint64 // accu, won't be decreased (for statistics)
 	actualParticipant uint64 // will be decreased if deposit collected 'CollectDepositGns()'
 	totalCollected    uint64 // collect reward amount
 }

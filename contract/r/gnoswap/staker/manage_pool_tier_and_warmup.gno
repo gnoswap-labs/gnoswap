@@ -15,6 +15,7 @@ const (
 	NOT_EMISSION_TARGET_TIER uint64 = 0
 )
 
+// SetPoolTierByAdmin sets the tier of a pool by an admin
 func SetPoolTierByAdmin(poolPath string, tier uint64) {
 	assertOnlyAdmin()
 	assertMustNotHalted()
@@ -23,6 +24,7 @@ func SetPoolTierByAdmin(poolPath string, tier uint64) {
 	setPoolTier(poolPath, tier)
 }
 
+// SetPoolTier sets the tier of a pool by governance
 func SetPoolTier(poolPath string, tier uint64) {
 	assertOnlyGovernance()
 	assertMustNotHalted()
@@ -49,6 +51,7 @@ func setPoolTier(poolPath string, tier uint64) {
 	)
 }
 
+// ChangePoolTierByAdmin changes the tier of a pool by an admin
 func ChangePoolTierByAdmin(poolPath string, tier uint64) {
 	assertOnlyAdmin()
 	assertMustNotHalted()
@@ -57,6 +60,7 @@ func ChangePoolTierByAdmin(poolPath string, tier uint64) {
 	changePoolTier(poolPath, tier)
 }
 
+// ChangePoolTier changes the tier of a pool by governance
 func ChangePoolTier(poolPath string, tier uint64) {
 	assertOnlyGovernance()
 	assertMustNotHalted()
@@ -84,6 +88,7 @@ func changePoolTier(poolPath string, tier uint64) {
 	)
 }
 
+// RemovePoolTierByAdmin removes the tier of a pool by an admin
 func RemovePoolTierByAdmin(poolPath string) {
 	assertOnlyAdmin()
 	assertMustNotHalted()
@@ -92,6 +97,7 @@ func RemovePoolTierByAdmin(poolPath string) {
 	removePoolTier(poolPath)
 }
 
+// RemovePoolTier removes the tier of a pool by governance
 func RemovePoolTier(poolPath string) {
 	assertOnlyGovernance()
 	assertMustNotHalted()
@@ -116,6 +122,7 @@ func removePoolTier(poolPath string) {
 	)
 }
 
+// SetWarmUpByAdmin sets the warmup percentage and block duration by an admin
 func SetWarmUpByAdmin(pct, blockDuration int64) {
 	assertOnlyAdmin()
 	assertMustNotHalted()
@@ -123,6 +130,7 @@ func SetWarmUpByAdmin(pct, blockDuration int64) {
 	setWarmUp(pct, blockDuration)
 }
 
+// SetWarmUp sets the warmup percentage and block duration by governance
 func SetWarmUp(pct, blockDuration int64) {
 	assertOnlyGovernance()
 	assertMustNotHalted()
