@@ -117,10 +117,12 @@ const (
 
 // BLOCK TIME
 const (
-	// Using this value contract does calculate
-	// how many block will be minted in a certain time range.
-	// However due to chain status, it can be different.
-	// So we use this value as initial value, and update by calling setter through governance.
+	// Default block generation interval, in seconds, used to estimate
+	// how many blocks will be produced over a given timeframe.
+	// GnoSwap’s emission logic relies on this as an initial value,
+	// but actual block times may vary (e.g. due to network conditions).
+	// Governance or an admin can adjust it dynamically by calling
+	// [SetAvgBlockTimeInMs](https://github.com/gnoswap-labs/gnoswap/blob/a29e0f994466430618548ae992cca11a52f5102a/contract/r/gnoswap/gns/halving.gno#L359) to keep emission schedules accurate.
 	BLOCK_GENERATION_INTERVAL int64 = 2 // seconds
 )
 
