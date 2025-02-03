@@ -201,7 +201,7 @@ func testMakeExternalBarAndQuxStart() {
 	nowTime := time.Now().Unix()
 	timeLeft := externalStartTime - nowTime
 
-	blockAvgTime := (consts.BLOCK_GENERATION_INTERVAL / consts.MILLISECONDS_PER_SECOND)
+	blockAvgTime := milliToSec(consts.BLOCK_GENERATION_INTERVAL)
 	blockLeft := timeLeft / blockAvgTime
 
 	std.TestSkipHeights(int64(blockLeft)) // skip until external bar starts
@@ -258,4 +258,8 @@ func extractReward(tokenId uint64) uint64 {
 
 	rewardTokenAmountInt, _ := strconv.ParseUint(rewardTokenAmount.String(), 10, 64)
 	return rewardTokenAmountInt
+}
+
+func milliToSec(ms int64) int64 {
+	return ms / consts.MILLISECONDS_PER_SECOND
 }

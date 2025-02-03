@@ -189,7 +189,7 @@ func testMakeExternalBarStart() {
 
 	timeLeft := externalStartTime - nowTime
 
-	blockAvgTime := (consts.BLOCK_GENERATION_INTERVAL / consts.MILLISECONDS_PER_SECOND)
+	blockAvgTime := milliToSec(consts.BLOCK_GENERATION_INTERVAL)
 	blockLeft := timeLeft / blockAvgTime
 	std.TestSkipHeights(int64(blockLeft)) // skip until external bar starts
 	std.TestSkipHeights(10)               // skip bit more to see reward calculation
@@ -259,4 +259,8 @@ func isInErrorRange(expected uint64, actual uint64) bool {
 	lowerBound := expected * 999999 / 1000000
 	upperBound := expected * 1000001 / 1000000
 	return actual >= lowerBound && actual <= upperBound
+}
+
+func milliToSec(ms int64) int64 {
+	return ms / consts.MILLISECONDS_PER_SECOND
 }

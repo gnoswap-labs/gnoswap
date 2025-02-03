@@ -46,8 +46,8 @@ var (
 )
 
 var (
-	blockPerYear = SECONDS_IN_YEAR / (consts.BLOCK_GENERATION_INTERVAL / consts.MILLISECONDS_PER_SECOND)
-	blockPerDay  = consts.SECONDS_PER_DAY / (consts.BLOCK_GENERATION_INTERVAL / consts.MILLISECONDS_PER_SECOND)
+	blockPerYear = SECONDS_IN_YEAR / milliToSec(consts.BLOCK_GENERATION_INTERVAL)
+	blockPerDay  = consts.SECONDS_PER_DAY / milliToSec(consts.BLOCK_GENERATION_INTERVAL)
 
 	avgBlockTimeMs int64 = consts.BLOCK_GENERATION_INTERVAL
 	perBlockMint         = avl.NewTree() // height => uint64
@@ -259,7 +259,7 @@ func GetEmissionState() *EmissionState {
 }
 
 func NewEmissionState() *EmissionState {
-	now := time.Now().Unix() + (consts.BLOCK_GENERATION_INTERVAL / consts.MILLISECONDS_PER_SECOND)
+	now := time.Now().Unix() + milliToSec(consts.BLOCK_GENERATION_INTERVAL)
 	emissionEndTime := now + SECONDS_IN_YEAR*HALVING_END_YEAR
 
 	return &EmissionState{

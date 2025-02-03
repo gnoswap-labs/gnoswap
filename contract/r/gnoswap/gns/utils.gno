@@ -61,6 +61,10 @@ func secToMs(sec int64) int64 {
 	return sec * consts.MILLISECONDS_PER_SECOND
 }
 
+func milliToSec(ms int64) int64 {
+	return ms / consts.MILLISECONDS_PER_SECOND
+}
+
 func formatUint(v interface{}) string {
 	switch v := v.(type) {
 	case uint8:
