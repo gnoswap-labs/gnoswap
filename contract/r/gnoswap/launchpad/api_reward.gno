@@ -6,7 +6,7 @@ import (
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 )
 
-// protocol_fee reward for project's recipient
+// ApiGetProjectRecipientRewardByProjectId retrieves the claimable reward for a project recipient by project ID.
 func ApiGetProjectRecipientRewardByProjectId(projectId string) string {
 	project, exist := projects[projectId]
 	if !exist {
@@ -16,6 +16,7 @@ func ApiGetProjectRecipientRewardByProjectId(projectId string) string {
 	return gs.GetClaimableRewardByAddress(project.recipient)
 }
 
+// ApiGetProjectRecipientRewardByAddress retrieves the claimable reward for a recipient by address.
 func ApiGetProjectRecipientRewardByAddress(address std.Address) string {
 	if !address.IsValid() {
 		return "0"
@@ -24,7 +25,7 @@ func ApiGetProjectRecipientRewardByAddress(address std.Address) string {
 	return gs.GetClaimableRewardByAddress(address)
 }
 
-// project reward for deposit
+// ApiGetDepositRewardByDepositId calculates the reward for a deposit by its ID.
 func ApiGetDepositRewardByDepositId(depositId string) uint64 {
 	deposit, exist := deposits[depositId]
 	if !exist {
@@ -39,6 +40,7 @@ func ApiGetDepositRewardByDepositId(depositId string) uint64 {
 	return rewardState.CalculateReward(depositId)
 }
 
+// ApiGetDepositRewardByAddress calculates the total reward for all deposits associated with a given address.
 func ApiGetDepositRewardByAddress(address std.Address) uint64 {
 	if !address.IsValid() {
 		return 0

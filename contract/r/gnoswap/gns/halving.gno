@@ -21,6 +21,9 @@ import (
 */
 
 const (
+	DAY_PER_YEAR    = 365
+	SECONDS_IN_YEAR = 31536000
+
 	HALVING_START_YEAR = int64(1)
 	HALVING_END_YEAR   = int64(12)
 )
@@ -43,10 +46,10 @@ var (
 )
 
 var (
-	blockPerYear = consts.TIMESTAMP_YEAR / consts.BLOCK_GENERATION_INTERVAL
-	blockPerDay  = consts.TIMESTAMP_DAY / consts.BLOCK_GENERATION_INTERVAL
+	blockPerYear = SECONDS_IN_YEAR / milliToSec(consts.BLOCK_GENERATION_INTERVAL)
+	blockPerDay  = consts.SECONDS_PER_DAY / milliToSec(consts.BLOCK_GENERATION_INTERVAL)
 
-	avgBlockTimeMs int64 = consts.SECOND_IN_MILLISECOND * consts.BLOCK_GENERATION_INTERVAL
+	avgBlockTimeMs int64 = consts.BLOCK_GENERATION_INTERVAL
 	perBlockMint         = avl.NewTree() // height => uint64
 )
 
@@ -162,6 +165,8 @@ func (h *HalvingData) setAmountPerBlock(year int64, amount uint64) {
 	h.amountPerBlock[year-1] = amount
 }
 
+// initialize initializes the halving data based on release schedule
+// ref: https://docs.gnoswap.io/gnoswap-token/release-schedule
 func (h *HalvingData) initialize(startHeight, startTimestamp int64) {
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		// set max emission amount per year
@@ -184,9 +189,9 @@ func (h *HalvingData) initialize(startHeight, startTimestamp int64) {
 			h.setEndBlockHeight(year, h.getStartBlockHeight(year)+blockPerYear-1)
 		}
 
-		h.setStartTimestamp(year, startTimestamp+(consts.TIMESTAMP_YEAR*(year-1)))
+		h.setStartTimestamp(year, startTimestamp+(SECONDS_IN_YEAR*(year-1)))
 
-		amountPerDay := currentYearMaxAmount / consts.DAY_PER_YEAR
+		amountPerDay := currentYearMaxAmount / DAY_PER_YEAR
 		amountPerBlock := amountPerDay / uint64(blockPerDay)
 		h.setAmountPerBlock(year, uint64(amountPerBlock))
 		h.setMintedAmount(year, uint64(0))
@@ -254,8 +259,8 @@ func GetEmissionState() *EmissionState {
 }
 
 func NewEmissionState() *EmissionState {
-	now := time.Now().Unix() + consts.BLOCK_GENERATION_INTERVAL
-	emissionEndTime := now + consts.TIMESTAMP_YEAR*HALVING_END_YEAR
+	now := time.Now().Unix() + milliToSec(consts.BLOCK_GENERATION_INTERVAL)
+	emissionEndTime := now + SECONDS_IN_YEAR*HALVING_END_YEAR
 
 	return &EmissionState{
 		startHeight:    std.GetHeight() + 1,
@@ -392,7 +397,7 @@ func setAvgBlockTimeInMs(ms int64) {
 	height := std.GetHeight()
 
 	// update block per year
-	yearByMilliSec := secToMs(consts.TIMESTAMP_YEAR)
+	yearByMilliSec := secToMs(SECONDS_IN_YEAR)
 	blockPerYear = yearByMilliSec / ms
 
 	// get the halving year and end timestamp of current time
@@ -423,9 +428,9 @@ func setAvgBlockTimeInMs(ms int64) {
 			continue
 		}
 
-		yearEndTimestamp := GetHalvingYearTimestamp(year) + consts.TIMESTAMP_YEAR
+		yearEndTimestamp := GetHalvingYearTimestamp(year) + SECONDS_IN_YEAR
 		timeLeftForYear := yearEndTimestamp - now
-		numBlock := (timeLeftForYear * consts.SECOND_IN_MILLISECOND) / ms
+		numBlock := (timeLeftForYear * consts.MILLISECONDS_PER_SECOND) / ms
 		yearEndHeight := height + numBlock
 
 		if year == currentYear {
@@ -625,8 +630,8 @@ func getHalvingYearAndEndTimestamp(timestamp int64) (int64, int64) {
 
 	timestamp -= startTimestamp
 
-	year := timestamp / consts.TIMESTAMP_YEAR
+	year := timestamp / SECONDS_IN_YEAR
 	year += 1 // since we subtract startTimestamp at line 215, we need to add 1 to get the correct year
 
-	return year, startTimestamp + (consts.TIMESTAMP_YEAR * year)
+	return year, startTimestamp + (SECONDS_IN_YEAR * year)
 }

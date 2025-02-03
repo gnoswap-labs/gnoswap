@@ -23,6 +23,8 @@ func NewExactOutSwapOperation(pp ExactOutParams) *ExactOutSwapOperation {
 	}
 }
 
+// ExactOutSwapRoute is a function that performs an exact-out swap operation.
+// exact-out swap means that the user wants to swap an exact amount of output tokens for input tokens.
 func ExactOutSwapRoute(
 	inputToken string,
 	outputToken string,
