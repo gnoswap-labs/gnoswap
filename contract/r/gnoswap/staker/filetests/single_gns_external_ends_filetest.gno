@@ -178,7 +178,7 @@ func testMakeExternalStart() {
 	nowTime := time.Now().Unix()
 	timeLeft := externalStartTime - nowTime
 
-	blockAvgTime := consts.BLOCK_GENERATION_INTERVAL
+	blockAvgTime := (consts.BLOCK_GENERATION_INTERVAL / consts.MILLISECONDS_PER_SECOND)
 	blockLeft := timeLeft / blockAvgTime
 
 	std.TestSkipHeights(int64(blockLeft)) // skip until external bar starts
@@ -214,7 +214,7 @@ func testEndExternalGns() {
 	nowTime := time.Now().Unix()
 	timeLeft := externalEndTime - nowTime
 
-	blockAvgTime := consts.BLOCK_GENERATION_INTERVAL
+	blockAvgTime := (consts.BLOCK_GENERATION_INTERVAL / consts.MILLISECONDS_PER_SECOND)
 	blockLeft := timeLeft / blockAvgTime
 
 	std.TestSkipHeights(int64(blockLeft)) // skip until external gns ends

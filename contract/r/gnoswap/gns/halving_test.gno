@@ -16,7 +16,7 @@ var (
 	adminRealm = std.NewUserRealm(consts.ADMIN)
 
 	startHeight    int64 = std.GetHeight()
-	startTimestamp int64 = time.Now().Unix() + consts.BLOCK_GENERATION_INTERVAL
+	startTimestamp int64 = time.Now().Unix() + (consts.BLOCK_GENERATION_INTERVAL / consts.MILLISECONDS_PER_SECOND)
 )
 
 var FIRST_BLOCK_OF_YEAR = []int64{

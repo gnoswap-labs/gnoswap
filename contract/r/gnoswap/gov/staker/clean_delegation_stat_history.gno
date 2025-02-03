@@ -7,7 +7,7 @@ import (
 )
 
 // default one day
-var thresholdVotingWeightBlockHeight = consts.SECONDS_PER_DAY / consts.BLOCK_GENERATION_INTERVAL
+var thresholdVotingWeightBlockHeight = consts.SECONDS_PER_DAY / (consts.BLOCK_GENERATION_INTERVAL / consts.MILLISECONDS_PER_SECOND)
 
 var (
 	lastCleanedHeight uint64 = 0
