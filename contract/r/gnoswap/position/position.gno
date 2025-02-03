@@ -24,38 +24,38 @@ const (
 )
 
 var (
-	positions = avl.NewTree() // tokenId[uint64] -> Position
+	positions = avl.NewTree() // positionId[uint64] -> Position
 	nextId    = uint64(1)
 )
 
-// MustGetPosition returns a position for a given tokenId
+// MustGetPosition returns a position for a given position ID.
 // panics if position doesn't exist
-func MustGetPosition(tokenId uint64) Position {
-	position, exist := GetPosition(tokenId)
+func MustGetPosition(id uint64) Position {
+	position, exist := GetPosition(id)
 	if !exist {
 		panic(newErrorWithDetail(
 			errPositionDoesNotExist,
-			ufmt.Sprintf("position with tokenId(%d) doesn't exist", tokenId),
+			ufmt.Sprintf("position with position ID(%d) doesn't exist", id),
 		))
 	}
 	return position
 }
 
-// mustUpdatePosition updates a position for a given tokenId
-func mustUpdatePosition(tokenId uint64, position Position) {
-	update := setPosition(tokenId, position)
+// mustUpdatePosition updates a position for a given position ID.
+func mustUpdatePosition(id uint64, position Position) {
+	update := setPosition(id, position)
 	if !update {
 		panic(newErrorWithDetail(
 			errPositionDoesNotExist,
-			ufmt.Sprintf("position with tokenId(%d) doesn't exist", tokenId),
+			ufmt.Sprintf("position with position ID(%d) doesn't exist", id),
 		))
 	}
 }
 
-// GetPosition returns a position for a given tokenId
+// GetPosition returns a position for a given position ID.
 // Returns false if position doesn't exist
-func GetPosition(tokenId uint64) (Position, bool) {
-	tokenIdStr := strconv.FormatUint(tokenId, 10)
+func GetPosition(id uint64) (Position, bool) {
+	tokenIdStr := strconv.FormatUint(id, 10)
 	iPosition, exist := positions.Get(tokenIdStr)
 	if !exist {
 		return Position{}, false
@@ -64,21 +64,21 @@ func GetPosition(tokenId uint64) (Position, bool) {
 	return iPosition.(Position), true
 }
 
-// setPosition sets a position for a given tokenId
+// setPosition sets a position for a given position ID.
 // Returns true if position is newly created, false if position already exists and just updated.
-func setPosition(tokenId uint64, position Position) bool {
-	tokenIdStr := strconv.FormatUint(tokenId, 10)
-	return positions.Set(tokenIdStr, position)
+func setPosition(id uint64, position Position) bool {
+	posIdStr := strconv.FormatUint(id, 10)
+	return positions.Set(posIdStr, position)
 }
 
-// removePosition removes a position for a given tokenId
-func removePosition(tokenId uint64) {
-	tokenIdStr := strconv.FormatUint(tokenId, 10)
-	positions.Remove(tokenIdStr)
+// removePosition removes a position for a given position ID
+func removePosition(id uint64) {
+	posIdStr := strconv.FormatUint(id, 10)
+	positions.Remove(posIdStr)
 }
 
-func existPosition(tokenId uint64) bool {
-	_, exist := GetPosition(tokenId)
+func existPosition(id uint64) bool {
+	_, exist := GetPosition(id)
 	return exist
 }
 
@@ -110,12 +110,12 @@ func computePositionKey(
 	return encoded
 }
 
-// nextId is the next tokenId to be minted
+// nextId is the next position ID to be minted
 func getNextId() uint64 {
 	return nextId
 }
 
-// incrementNextId increments the next tokenId to be minted
+// incrementNextId increments the next position ID to be minted
 func incrementNextId() {
 	nextId++
 }
@@ -215,7 +215,7 @@ func Mint(
 	}
 
 	mintParams := newMintParams(processedInput, mintInput)
-	tokenId, liquidity, amount0, amount1 := mint(mintParams)
+	id, liquidity, amount0, amount1 := mint(mintParams)
 	if processedInput.tokenPair.token0IsNative && processedInput.tokenPair.wrappedAmount > amount0.Uint64() {
 		// unwrap leftover wugnot
 		err = unwrap(processedInput.tokenPair.wrappedAmount-amount0.Uint64(), caller)
@@ -242,14 +242,14 @@ func Mint(
 		"poolPath", processedInput.poolPath,
 		"mintTo", mintTo.String(),
 		"caller", caller.String(),
-		"lpTokenId", formatUint(tokenId),
+		"lpPositionId", formatUint(id),
 		"liquidity", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"sqrtPriceX96", poolSqrtPriceX96,
 	)
 
-	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString()
+	return id, liquidity.ToString(), amount0.ToString(), amount1.ToString()
 }
 
 // processMintInput processes and validates user input for minting liquidity.
@@ -490,13 +490,13 @@ func computePoolPath(token0, token1 string, fee uint32) string {
 //   - *u256.Uint: The actual amount of token1 used in the liquidity addition.
 //
 // Panics:
-//   - If the liquidity position (tokenId) already exists.
+//   - If the liquidity position (position ID) already exists.
 //   - If adding liquidity fails due to insufficient amounts or invalid tick ranges.
 //
 // Notes:
 //   - This function relies on `addLiquidity` to perform the liquidity calculation and ensure proper slippage checks.
 //   - The NFT minted is critical for tracking the user's liquidity in the pool.
-//   - Position state management is handled by `setPosition`, ensuring the uniqueness of the tokenId.
+//   - Position state management is handled by `setPosition`, ensuring the uniqueness of the position ID.
 func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	poolKey := pl.GetPoolPath(params.token0, params.token1, params.fee)
 	liquidity, amount0, amount1 := addLiquidity(
@@ -519,8 +519,8 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 		))
 	}
 
-	tokenId := getNextId()
-	gnft.Mint(params.mintTo, tokenIdFrom(tokenId)) // owner, tokenId
+	id := getNextId()
+	gnft.Mint(params.mintTo, tokenIdFrom(id)) // owner, position ID
 
 	pool := pl.GetPoolFromPoolPath(poolKey)
 	positionKey := computePositionKey(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
@@ -539,24 +539,24 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 		burned:                   false,
 	}
 
-	// The tokenId should not exist at the time of minting
-	updated := setPosition(tokenId, position)
+	// The position ID should not exist at the time of minting
+	updated := setPosition(id, position)
 	if updated {
 		panic(newErrorWithDetail(
 			errPositionExist,
-			ufmt.Sprintf("tokenId(%d) already exists", tokenId),
+			ufmt.Sprintf("position ID(%d) already exists", id),
 		))
 	}
 	incrementNextId()
 
-	return tokenId, liquidity, amount0, amount1
+	return id, liquidity, amount0, amount1
 }
 
 // IncreaseLiquidity increases liquidity of the existing position
-// Returns tokenId, liquidity, amount0, amount1, poolPath
+// Returns position ID, liquidity, amount0, amount1, poolPath
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#increaseliquidity
 func IncreaseLiquidity(
-	tokenId uint64,
+	positionId uint64,
 	amount0DesiredStr string,
 	amount1DesiredStr string,
 	amount0MinStr string,
@@ -572,7 +572,7 @@ func IncreaseLiquidity(
 
 	en.MintAndDistributeGns()
 
-	position := MustGetPosition(tokenId)
+	position := MustGetPosition(positionId)
 	token0, token1, _ := splitOf(position.poolKey)
 	err := validateTokenPath(token0, token1)
 	if err != nil {
@@ -589,7 +589,7 @@ func IncreaseLiquidity(
 
 	amount0Desired, amount1Desired, amount0Min, amount1Min := parseAmounts(amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr)
 	increaseLiquidityParams := IncreaseLiquidityParams{
-		tokenId:        tokenId,
+		tokenId:        positionId,
 		amount0Desired: amount0Desired,
 		amount1Desired: amount1Desired,
 		amount0Min:     amount0Min,
@@ -626,7 +626,7 @@ func IncreaseLiquidity(
 		"prevRealm", prevPkgPath,
 		"poolPath", poolPath,
 		"caller", caller.String(),
-		"lpTokenId", formatUint(tokenId),
+		"lpTokenId", formatUint(positionId),
 		"liquidity", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
@@ -636,7 +636,7 @@ func IncreaseLiquidity(
 		"token1Balance", token1Balance,
 	)
 
-	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
+	return positionId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
 }
 
 // FeeGrowthInside represents fee growth inside ticks
@@ -753,7 +753,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 // Returns tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#decreaseliquidity
 func DecreaseLiquidity(
-	tokenId uint64,
+	positionId uint64,
 	liquidityStr string,
 	amount0MinStr string,
 	amount1MinStr string,
@@ -761,7 +761,7 @@ func DecreaseLiquidity(
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
 	assertOnlyNotHalted()
-	isAuthorizedForToken(tokenId)
+	isAuthorizedForToken(positionId)
 	checkDeadline(deadline)
 	assertValidLiquidityAmount(liquidityStr)
 
@@ -770,7 +770,7 @@ func DecreaseLiquidity(
 	amount0Min := u256.MustFromDecimal(amount0MinStr)
 	amount1Min := u256.MustFromDecimal(amount1MinStr)
 	decreaseLiquidityParams := DecreaseLiquidityParams{
-		tokenId:      tokenId,
+		tokenId:      positionId,
 		liquidity:    liquidityStr,
 		amount0Min:   amount0Min,
 		amount1Min:   amount1Min,
@@ -778,7 +778,7 @@ func DecreaseLiquidity(
 		unwrapResult: unwrapResult,
 	}
 
-	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
+	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(poolPath)
 	token0Balance := pl.PoolGetBalanceToken0(poolPath)
@@ -790,7 +790,7 @@ func DecreaseLiquidity(
 		"DecreaseLiquidity",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpTokenId", formatUint(tokenId),
+		"lpPositionId", formatUint(positionId),
 		"poolPath", poolPath,
 		"decreasedLiquidity", liquidity.ToString(),
 		"feeAmount0", fee0.ToString(),
@@ -799,18 +799,18 @@ func DecreaseLiquidity(
 		"amount1", amount1.ToString(),
 		"unwrapResult", formatBool(unwrapResult),
 		"sqrtPriceX96", poolSqrtPriceX96,
-		"positionLiquidity", PositionGetPositionLiquidityStr(tokenId),
+		"positionLiquidity", PositionGetPositionLiquidityStr(positionId),
 		"token0Balance", token0Balance,
 		"token1Balance", token1Balance,
 	)
 
-	return tokenId, liquidity.ToString(), fee0.ToString(), fee1.ToString(), amount0.ToString(), amount1.ToString(), poolPath
+	return positionId, liquidity.ToString(), fee0.ToString(), fee1.ToString(), amount0.ToString(), amount1.ToString(), poolPath
 }
 
 // decreaseLiquidity reduces the liquidity of a given position and collects the corresponding tokens.
 // If unwrapResult is true and the position involves WUGNOT, any leftover WUGNOT will be
 // unwrapped to GNOT at the end of the operation.
-// Returns tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
+// Returns position ID, liquidity, fee0, fee1, amount0, amount1, poolPath
 func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string) {
 	verifyTokenIdAndOwnership(params.tokenId)
 
@@ -824,7 +824,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	if positionLiquidity.IsZero() {
 		panic(newErrorWithDetail(
 			errZeroLiquidity,
-			ufmt.Sprintf("position(tokenId:%d) has 0 liquidity", params.tokenId),
+			ufmt.Sprintf("position(position ID:%d) has 0 liquidity", params.tokenId),
 		))
 	}
 
@@ -918,17 +918,17 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 }
 
 // CollectFee collects swap fee from the position
-// Returns tokenId, afterFee0, afterFee1, poolPath, origFee0, origFee1
+// Returns position ID, afterFee0, afterFee1, poolPath, origFee0, origFee1
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#collectfee
-func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, string, string, string) {
+func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, string, string, string) {
 	assertOnlyNotHalted()
-	assertTokenExists(tokenId)
-	isAuthorizedForToken(tokenId)
+	assertTokenExists(postionId)
+	isAuthorizedForToken(postionId)
 
 	en.MintAndDistributeGns()
 
 	// verify position
-	position := MustGetPosition(tokenId)
+	position := MustGetPosition(postionId)
 	token0, token1, fee := splitOf(position.poolKey)
 
 	pl.Burn(
@@ -940,7 +940,7 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 		ZERO_LIQUIDITY_FOR_FEE_COLLECTION, // burn '0' liquidity to collect fee
 	)
 
-	currentFeeGrowth, err := getCurrentFeeGrowth(position, token0, token1, fee)
+	currentFeeGrowth, err := getCurrentFeeGrowth(position)
 	if err != nil {
 		panic(newErrorWithDetail(err, "failed to get current fee growth"))
 	}
@@ -967,11 +967,11 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 	// instead of the actual amount so we can burn the token
 	position.tokensOwed0 = new(u256.Uint).Sub(tokensOwed0, u256.MustFromDecimal(amount0))
 	position.tokensOwed1 = new(u256.Uint).Sub(tokensOwed1, u256.MustFromDecimal(amount1))
-	mustUpdatePosition(tokenId, position)
+	mustUpdatePosition(postionId, position)
 
 	// handle withdrawal fee
 	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(
-		tokenId,
+		postionId,
 		token0,
 		amount0,
 		token1,
@@ -990,14 +990,14 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 		"CollectSwapFee",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpTokenId", formatUint(tokenId),
+		"lpPositionId", formatUint(postionId),
 		"feeAmount0", withoutFee0,
 		"feeAmount1", withoutFee1,
 		"poolPath", position.poolKey,
 		"unwrapResult", formatBool(unwrapResult),
 	)
 
-	return tokenId, withoutFee0, withoutFee1, position.poolKey, amount0, amount1
+	return postionId, withoutFee0, withoutFee1, position.poolKey, amount0, amount1
 }
 
 // calculateFees calculates the fees for the current position.
@@ -1020,7 +1020,7 @@ func calculateFees(position Position, currentFeeGrowth FeeGrowthInside) (*u256.U
 	return tokensOwed0, tokensOwed1
 }
 
-func getCurrentFeeGrowth(postion Position, token0, token1 string, fee uint32) (FeeGrowthInside, error) {
+func getCurrentFeeGrowth(postion Position) (FeeGrowthInside, error) {
 	pool := pl.GetPoolFromPoolPath(postion.poolKey)
 	positionKey := computePositionKey(GetOrigPkgAddr(), postion.tickLower, postion.tickUpper)
 
@@ -1040,7 +1040,7 @@ func getCurrentFeeGrowth(postion Position, token0, token1 string, fee uint32) (F
 // Returns tokenId, liquidity, tickLower, tickUpper, amount0, amount1
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#reposition
 func Reposition(
-	tokenId uint64,
+	positionId uint64,
 	tickLower int32,
 	tickUpper int32,
 	amount0DesiredStr string,
@@ -1049,24 +1049,30 @@ func Reposition(
 	amount1MinStr string,
 ) (uint64, string, int32, int32, string, string) {
 	assertOnlyNotHalted()
-	verifyTokenIdAndOwnership(tokenId)
+	verifyTokenIdAndOwnership(positionId)
 
 	en.MintAndDistributeGns()
 
 	// position should be burned to reposition
-	position := MustGetPosition(tokenId)
+	position := MustGetPosition(positionId)
 	oldTickLower := position.tickLower
 	oldTickUpper := position.tickUpper
 
 	if !(position.isClear()) {
 		panic(newErrorWithDetail(
 			errNotClear,
-			ufmt.Sprintf("position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)", tokenId, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()),
+			ufmt.Sprintf(
+				"position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)",
+				positionId,
+				position.liquidity.ToString(),
+				position.tokensOwed0.ToString(),
+				position.tokensOwed1.ToString(),
+			),
 		))
 	}
 
 	caller := getPrevAddr()
-	token0, token1, fee := splitOf(position.poolKey)
+	token0, token1, _ := splitOf(position.poolKey)
 	token0, token1, _, _, _ = processTokens(token0, token1, amount0DesiredStr, amount1DesiredStr, caller)
 
 	liquidity, amount0, amount1 := addLiquidity(
@@ -1087,7 +1093,7 @@ func Reposition(
 	position.tickLower = tickLower
 	position.tickUpper = tickUpper
 
-	currentFeeGrowth, err := getCurrentFeeGrowth(position, token0, token1, fee)
+	currentFeeGrowth, err := getCurrentFeeGrowth(position)
 	if err != nil {
 		panic(newErrorWithDetail(err, "failed to get current fee growth"))
 	}
@@ -1101,7 +1107,7 @@ func Reposition(
 	position.tokensOwed0 = u256.Zero()
 	position.tokensOwed1 = u256.Zero()
 	position.burned = false
-	mustUpdatePosition(tokenId, position)
+	mustUpdatePosition(positionId, position)
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(position.poolKey)
 	token0Balance := pl.PoolGetBalanceToken0(position.poolKey)
@@ -1112,7 +1118,7 @@ func Reposition(
 		"Reposition",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpTokenId", formatUint(tokenId),
+		"lpPositionId", formatUint(positionId),
 		"tickLower", formatInt(int64(tickLower)),
 		"tickUpper", formatInt(int64(tickUpper)),
 		"liquidity", liquidity.ToString(),
@@ -1122,12 +1128,12 @@ func Reposition(
 		"prevTickUpper", formatInt(int64(oldTickUpper)),
 		"poolPath", position.poolKey,
 		"sqrtPriceX96", poolSqrtPriceX96,
-		"positionLiquidity", PositionGetPositionLiquidityStr(tokenId),
+		"positionLiquidity", PositionGetPositionLiquidityStr(positionId),
 		"token0Balance", token0Balance,
 		"token1Balance", token1Balance,
 	)
 
-	return tokenId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
+	return positionId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
 }
 
 func calculateTokensOwed(
@@ -1151,17 +1157,17 @@ func updateTokensOwed(
 	return new(u256.Uint).Add(tokensOwed, add)
 }
 
-func burnPosition(tokenId uint64) {
-	position := MustGetPosition(tokenId)
+func burnPosition(id uint64) {
+	position := MustGetPosition(id)
 	if !(position.isClear()) {
 		panic(newErrorWithDetail(
 			errNotClear,
-			ufmt.Sprintf("position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)", tokenId, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()),
+			ufmt.Sprintf("position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)", id, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()),
 		))
 	}
 
 	position.burned = true
-	mustUpdatePosition(tokenId, position)
+	mustUpdatePosition(id, position)
 }
 
 func calculateLiquidityToRemove(positionLiquidity *u256.Uint, liquidityRatio uint64) *u256.Uint {
@@ -1173,7 +1179,7 @@ func calculateLiquidityToRemove(positionLiquidity *u256.Uint, liquidityRatio uin
 	return liquidityToRemove
 }
 
-func SetPositionOperator(tokenId uint64, operator std.Address) {
+func SetPositionOperator(id uint64, operator std.Address) {
 	caller := getPrevRealm().PkgPath()
 	if caller != consts.STAKER_PATH {
 		panic(newErrorWithDetail(
@@ -1182,7 +1188,7 @@ func SetPositionOperator(tokenId uint64, operator std.Address) {
 		))
 	}
 
-	position := MustGetPosition(tokenId)
+	position := MustGetPosition(id)
 	position.operator = operator
-	mustUpdatePosition(tokenId, position)
+	mustUpdatePosition(id, position)
 }

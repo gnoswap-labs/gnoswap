@@ -77,7 +77,7 @@ func TestMustGetPosition(t *testing.T) {
 
 	t.Run("Fail - Non-existent position", func(t *testing.T) {
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-POSITION-013] position does not exist || position with tokenId(999) doesn't exist",
+			"[GNOSWAP-POSITION-013] position does not exist || position with position ID(999) doesn't exist",
 			func() {
 				MustGetPosition(999)
 			})
@@ -978,7 +978,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 			amount1Min:       "900000",
 			deadline:         time.Now().Add(10 * time.Minute).Unix(),
 			expectPanic:      true,
-			expectedErrorMsg: "[GNOSWAP-POSITION-013] position does not exist || position with tokenId(999) doesn't exist",
+			expectedErrorMsg: "[GNOSWAP-POSITION-013] position does not exist || position with position ID(999) doesn't exist",
 		},
 	}
 
