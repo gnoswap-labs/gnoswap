@@ -99,7 +99,6 @@ func getNextSqrtPriceFromAmount0RoundingUp(
 	return getNextPriceAmount0Remove(sqrtPX96, liquidity, amount)
 }
 
-
 // getNextPriceAmount1Add calculates the next sqrt price when adding token1.
 // Preserves rounding-down logic for the final result.
 func getNextPriceAmount1Add(
