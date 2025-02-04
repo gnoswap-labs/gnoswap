@@ -93,39 +93,6 @@ func getUint64FromTree(tree *avl.Tree, key string) uint64 {
 	return value.(uint64)
 }
 
-// updateUint64InTree updates the uint64 value in the tree
-func updateUint64InTree(tree *avl.Tree, key string, delta uint64, add bool) uint64 {
-	current := getUint64FromTree(tree, key)
-	var newValue uint64
-	if add {
-		newValue = current + delta
-	} else {
-		if current < delta {
-			panic(addDetailToError(
-				errNotEnoughBalance,
-				ufmt.Sprintf("not enough balance: current(%d) < requested(%d)", current, delta),
-			))
-		}
-		newValue = current - delta
-	}
-
-	tree.Set(key, newValue)
-
-	return newValue
-}
-
-// getOrCreateInnerTree returns the inner tree for the given key
-func getOrCreateInnerTree(tree *avl.Tree, key string) *avl.Tree {
-	value, exists := tree.Get(key)
-	if !exists {
-		innerTree := avl.NewTree()
-		tree.Set(key, innerTree)
-		return innerTree
-	}
-
-	return value.(*avl.Tree)
-}
-
 // milliToSec converts milliseconds to seconds
 func milliToSec(ms int64) int64 {
 	return ms / consts.MILLISECONDS_PER_SECOND

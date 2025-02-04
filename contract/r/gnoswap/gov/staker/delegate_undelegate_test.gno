@@ -8,7 +8,6 @@ import (
 )
 
 func TestDelegateInternal(t *testing.T) {
-	t.Skip("Must running separately. because this test depends on TestUndelegate's state")
 	std.TestSetOrigCaller(testAddr1)
 	resetState()
 
@@ -17,16 +16,16 @@ func TestDelegateInternal(t *testing.T) {
 	t.Run("success - first delegation", func(t *testing.T) {
 		delegate(addr1, 100)
 
-		if totalDelegated != 100 {
-			t.Errorf("expected totalDelegated 100, got %d", totalDelegated)
+		if state.TotalDelegated() != 100 {
+			t.Errorf("expected totalDelegated 100, got %d", state.TotalDelegated())
 		}
 
-		value, exists := delegatorAmount.Get(addr1.String())
+		value, exists := state.DelegatorAmount().Get(addr1.String())
 		if !exists || value.(uint64) != 100 {
 			t.Error("delegator amount not updated correctly")
 		}
 
-		innerTree, exists := delegatedFromTo.Get(addr1.String())
+		innerTree, exists := state.DelegatedFromTo().Get(addr1.String())
 		if !exists {
 			t.Error("delegatedFromTo not updated")
 		}
@@ -47,14 +46,13 @@ func TestDelegateInternal(t *testing.T) {
 		delegate(addr1, 100)
 		delegate(addr1, 50)
 
-		if totalDelegated != 150 {
-			t.Errorf("expected totalDelegated 150, got %d", totalDelegated)
+		if state.TotalDelegated() != 150 {
+			t.Errorf("expected totalDelegated 150, got %d", state.TotalDelegated())
 		}
 	})
 }
 
 func TestUndelegateInternal(t *testing.T) {
-	t.Skip("Must running separately. because this test depends on TestUndelegate's state")
 	addr1 := testAddr1
 	std.TestSetOrigCaller(addr1)
 	resetState()
@@ -84,8 +82,8 @@ func TestUndelegateInternal(t *testing.T) {
 		delegate(addr1, 100)
 		undelegate(addr1, 30)
 
-		if totalDelegated != 70 {
-			t.Errorf("expected totalDelegated 70, got %d", totalDelegated)
+		if state.TotalDelegated() != 70 {
+			t.Errorf("expected totalDelegated 70, got %d", state.TotalDelegated())
 		}
 	})
 
@@ -94,17 +92,12 @@ func TestUndelegateInternal(t *testing.T) {
 		delegate(addr1, 100)
 		undelegate(addr1, 100)
 
-		if totalDelegated != 0 {
-			t.Errorf("expected totalDelegated 0, got %d", totalDelegated)
+		if state.TotalDelegated() != 0 {
+			t.Errorf("expected totalDelegated 0, got %d", state.TotalDelegated())
 		}
 	})
 }
 
 func resetState() {
-	totalDelegated = 0
-	delegatorAmount = avl.NewTree()
-	delegatedFromTo = avl.NewTree()
-	delegatedTo = avl.NewTree()
-	delegationHistory = avl.NewTree()
-	delegationSnapShotHistory = avl.NewTree()
+	state = newStakerState()
 }

@@ -17,12 +17,30 @@ type DelegationHistory struct {
 	add       bool
 }
 
+func newDelegationHistory(to std.Address, amount uint64, timestamp uint64, height uint64, add bool) DelegationHistory {
+	return DelegationHistory{
+		to:        to,
+		amount:    amount,
+		timestamp: timestamp,
+		height:    height,
+	}
+}
+
 // DelegationSnapShotHistory represents delegation stat for to address
 type DelegationSnapShotHistory struct {
 	to           std.Address
 	amount       uint64
 	updatedBlock uint64
 	updatedAt    uint64
+}
+
+func newDelegationSnapShotHistory(to std.Address, amount uint64, updatedBlock uint64, updatedAt uint64) DelegationSnapShotHistory {
+	return DelegationSnapShotHistory{
+		to:           to,
+		amount:       amount,
+		updatedBlock: updatedBlock,
+		updatedAt:    updatedAt,
+	}
 }
 
 var (
