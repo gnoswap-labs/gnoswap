@@ -1,1 +1,1 @@
-module emission
+module gno.land/r/gnoswap/v1/emission

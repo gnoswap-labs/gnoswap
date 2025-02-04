@@ -1,1 +1,1 @@
-module gnft
+module gno.land/r/gnoswap/v1/gnft

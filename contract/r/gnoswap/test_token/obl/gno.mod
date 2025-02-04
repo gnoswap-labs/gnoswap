@@ -1,1 +1,1 @@
-module obl
+module gno.land/r/onbloc/obl

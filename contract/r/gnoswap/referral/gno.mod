@@ -1,1 +1,1 @@
-module referral
+module gno.land/r/gnoswap/v1/referral

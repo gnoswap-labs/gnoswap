@@ -1,1 +1,1 @@
-module launchpad
+module gno.land/r/gnoswap/v1/launchpad

@@ -1,1 +1,1 @@
-module bar
+module gno.land/r/onbloc/bar

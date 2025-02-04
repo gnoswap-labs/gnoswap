@@ -1,1 +1,1 @@
-module baz
+module gno.land/r/onbloc/baz

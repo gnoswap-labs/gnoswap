@@ -1,1 +1,1 @@
-module usdc
+module gno.land/r/onbloc/usdc

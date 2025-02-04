@@ -1,1 +1,1 @@
-module qux
+module gno.land/r/onbloc/qux

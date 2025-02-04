@@ -1,1 +1,1 @@
-module protocol_fee
+module gno.land/r/gnoswap/v1/protocol_fee
