@@ -36,7 +36,7 @@ type PositionsResponse struct {
 func (pr *PositionsResponse) JSON() *json.Node {
 	rsps := json.ArrayNode("", []*json.Node{})
 	for _, position := range pr.Positions {
-		owner, err := gnft.OwnerOf(tokenIdFrom(position.LpPositionId))
+		owner, err := gnft.OwnerOf(positionIdFrom(position.LpPositionId))
 		if err != nil {
 			owner = consts.ZERO_ADDRESS
 		}

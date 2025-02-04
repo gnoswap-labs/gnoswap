@@ -520,7 +520,7 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	}
 
 	id := getNextId()
-	gnft.Mint(params.mintTo, tokenIdFrom(id)) // owner, position ID
+	gnft.Mint(params.mintTo, positionIdFrom(id)) // owner, position ID
 
 	pool := pl.GetPoolFromPoolPath(poolKey)
 	positionKey := computePositionKey(GetOrigPkgAddr(), params.tickLower, params.tickUpper)

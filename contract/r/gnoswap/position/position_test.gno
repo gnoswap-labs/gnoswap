@@ -614,7 +614,7 @@ func TestMintInternal(t *testing.T) {
 		expectedAmount1   string
 		expectPanic       bool
 		expectedError     string
-		tokenId           uint64
+		positionId        uint64
 	}{
 		{
 			name: "Successful Mint",
@@ -654,7 +654,7 @@ func TestMintInternal(t *testing.T) {
 			},
 			expectPanic:   true,
 			expectedError: "token id already exists",
-			tokenId:       1,
+			positionId:    1,
 		},
 		{
 			name: "Zero Liquidity Mint",
@@ -678,14 +678,14 @@ func TestMintInternal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.tokenId != 0 {
-				nextId = tt.tokenId
+			if tt.positionId != 0 {
+				nextId = tt.positionId
 			}
 
 			if !tt.expectPanic {
 				std.TestSetRealm(std.NewUserRealm(tt.params.mintTo))
-				tokenId, liquidity, amount0, amount1 := mint(tt.params)
-				uassert.Equal(t, tt.expectedTokenId, tokenId)
+				positionId, liquidity, amount0, amount1 := mint(tt.params)
+				uassert.Equal(t, tt.expectedTokenId, positionId)
 				uassert.Equal(t, tt.expectedLiquidity, liquidity.ToString())
 				uassert.Equal(t, tt.expectedAmount0, amount0.ToString())
 				uassert.Equal(t, tt.expectedAmount1, amount1.ToString())
@@ -819,7 +819,7 @@ func TestMint(t *testing.T) {
 						)
 					})
 			} else {
-				tokenId, liquidity, amount0, amount1 := Mint(
+				positionId, liquidity, amount0, amount1 := Mint(
 					tc.token0,
 					tc.token1,
 					tc.fee,
@@ -834,7 +834,7 @@ func TestMint(t *testing.T) {
 					tc.caller,
 				)
 
-				uassert.Equal(t, uint64(5), tokenId)
+				uassert.Equal(t, uint64(5), positionId)
 				uassert.NotEmpty(t, liquidity)
 				t0, _ := strconv.ParseUint(amount0, 10, 64)
 				t1, _ := strconv.ParseUint(amount1, 10, 64)
@@ -876,7 +876,7 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 		{
 			name: "Fail - Position Does Not Exist",
 			params: IncreaseLiquidityParams{
-				positionId:    999,
+				positionId:     999,
 				amount0Desired: u256.NewUint(1000000),
 				amount1Desired: u256.NewUint(2000000),
 				amount0Min:     u256.NewUint(900000),
@@ -884,12 +884,12 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 				deadline:       time.Now().Add(10 * time.Minute).Unix(),
 			},
 			expectPanic:      true,
-			expectedErrorMsg: "[GNOSWAP-POSITION-006] requested data not found || tokenId(999) doesn't exist",
+			expectedErrorMsg: "[GNOSWAP-POSITION-006] requested data not found || positionId(999) doesn't exist",
 		},
 		{
 			name: "Fail - Zero Liquidity",
 			params: IncreaseLiquidityParams{
-				positionId:        7,
+				positionId:     7,
 				amount0Desired: u256.Zero(),
 				amount1Desired: u256.Zero(),
 				amount0Min:     u256.NewUint(900000),
@@ -910,8 +910,8 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 						increaseLiquidity(tc.params)
 					})
 			} else {
-				tokenId, liquidity, amount0, amount1, _ := increaseLiquidity(tc.params)
-				uassert.Equal(t, tc.params.positionId, tokenId)
+				positionId, liquidity, amount0, amount1, _ := increaseLiquidity(tc.params)
+				uassert.Equal(t, tc.params.positionId, positionId)
 				uassert.Equal(t, tc.expectedLiquidity, liquidity.ToString())
 				uassert.Equal(t, tc.expectedAmount0, amount0.ToString())
 				uassert.Equal(t, tc.expectedAmount1, amount1.ToString())
@@ -924,7 +924,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 	std.TestSetRealm(std.NewUserRealm(admin))
 	tests := []struct {
 		name             string
-		tokenId          uint64
+		positionId       uint64
 		amount0Desired   string
 		amount1Desired   string
 		amount0Min       string
@@ -937,7 +937,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 	}{
 		{
 			name:            "Success - Valid Increase",
-			tokenId:         7,
+			positionId:      7,
 			amount0Desired:  "1000000",
 			amount1Desired:  "2000000",
 			amount0Min:      "950000",
@@ -949,7 +949,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 		},
 		{
 			name:             "Fail - Deadline Exceeded",
-			tokenId:          7,
+			positionId:       7,
 			amount0Desired:   "1000000",
 			amount1Desired:   "2000000",
 			amount0Min:       "950000",
@@ -960,7 +960,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 		},
 		{
 			name:             "Fail - Invalid Amount String",
-			tokenId:          7,
+			positionId:       7,
 			amount0Desired:   "invalid_amount",
 			amount1Desired:   "2000000",
 			amount0Min:       "950000",
@@ -971,7 +971,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 		},
 		{
 			name:             "Fail - Position Does Not Exist",
-			tokenId:          999,
+			positionId:       999,
 			amount0Desired:   "1000000",
 			amount1Desired:   "2000000",
 			amount0Min:       "950000",
@@ -989,7 +989,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 					tc.expectedErrorMsg,
 					func() {
 						IncreaseLiquidity(
-							tc.tokenId,
+							tc.positionId,
 							tc.amount0Desired,
 							tc.amount1Desired,
 							tc.amount0Min,
@@ -998,15 +998,15 @@ func TestIncreaseLiquidity(t *testing.T) {
 						)
 					})
 			} else {
-				tokenId, _, amount0, amount1, _ := IncreaseLiquidity(
-					tc.tokenId,
+				positionId, _, amount0, amount1, _ := IncreaseLiquidity(
+					tc.positionId,
 					tc.amount0Desired,
 					tc.amount1Desired,
 					tc.amount0Min,
 					tc.amount1Min,
 					tc.deadline,
 				)
-				uassert.Equal(t, tc.tokenId, tokenId)
+				uassert.Equal(t, tc.positionId, positionId)
 				uassert.Equal(t, tc.expectedAmount0, amount0)
 				uassert.Equal(t, tc.expectedAmount1, amount1)
 			}
@@ -1107,7 +1107,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 	std.TestSetRealm(std.NewUserRealm(admin))
 	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
 	TokenApprove(t, fooPath, admin, pool, consts.UINT64_MAX)
-	tokenId, _, _, _ := Mint(
+	positionId, _, _, _ := Mint(
 		barPath,
 		fooPath,
 		fee500,
@@ -1136,7 +1136,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			deadline := time.Now().Add(tc.deadlineOffset).Unix()
 			if tc.beforeIncrease {
 				_, _, _, _, _ = IncreaseLiquidity(
-					tokenId,
+					positionId,
 					tc.increaseAmount0,
 					tc.increaseAmount1,
 					"0",
@@ -1147,7 +1147,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 
 			if tc.expectPanic {
 				DecreaseLiquidity(
-					tokenId,
+					positionId,
 					tc.liquidityToRemove,
 					tc.amount0Min,
 					tc.amount1Min,
@@ -1156,7 +1156,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 				)
 			} else {
 				_, liquidity, fee0, fee1, _, _, _ := DecreaseLiquidity(
-					tokenId,
+					positionId,
 					tc.liquidityToRemove,
 					tc.amount0Min,
 					tc.amount1Min,
@@ -1230,7 +1230,7 @@ func TestCollectFees(t *testing.T) {
 	TokenApprove(t, fooPath, admin, pool, consts.UINT64_MAX)
 
 	// Mint liquidity
-	tokenId, _, _, _ := Mint(
+	positionId, _, _, _ := Mint(
 		barPath,
 		fooPath,
 		fee500,
@@ -1260,7 +1260,7 @@ func TestCollectFees(t *testing.T) {
 			// Increase liquidity if specified
 			if tt.increaseAmount0 != "" && tt.increaseAmount1 != "" {
 				_, _, _, _, _ = IncreaseLiquidity(
-					tokenId,
+					positionId,
 					tt.increaseAmount0,
 					tt.increaseAmount1,
 					"0",
@@ -1271,7 +1271,7 @@ func TestCollectFees(t *testing.T) {
 
 			// Decrease liquidity
 			_, _, _, _, _, _, _ = DecreaseLiquidity(
-				tokenId,
+				positionId,
 				tt.liquidityToRemove,
 				"0",
 				"0",
@@ -1281,10 +1281,10 @@ func TestCollectFees(t *testing.T) {
 
 			if tt.expectPanic {
 				uassert.PanicsWithMessage(t, tt.expectedPanicError, func() {
-					CollectFee(tokenId, tt.unwrapResult)
+					CollectFee(positionId, tt.unwrapResult)
 				})
 			} else {
-				_, fee0, fee1, _, amount0, amount1 := CollectFee(tokenId, tt.unwrapResult)
+				_, fee0, fee1, _, amount0, amount1 := CollectFee(positionId, tt.unwrapResult)
 				uassert.Equal(t, tt.expectedFee0, fee0)
 				uassert.Equal(t, tt.expectedFee1, fee1)
 				uassert.Equal(t, tt.expectedAmount0, amount0)
@@ -1332,7 +1332,7 @@ func TestReposition(t *testing.T) {
 			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(10) isn't clear(liquidity:5083034, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
-			name:               "Fail - Reposition on non-existent tokenId",
+			name:               "Fail - Reposition on non-existent positionId",
 			mintAmount0:        "1000000",
 			mintAmount1:        "2000000",
 			liquidityToRemove:  "10",
@@ -1349,7 +1349,7 @@ func TestReposition(t *testing.T) {
 	TokenApprove(t, fooPath, admin, pool, consts.UINT64_MAX)
 
 	// Step 1: Mint a position
-	tokenId, _, _, _ := Mint(
+	positionId, _, _, _ := Mint(
 		barPath,
 		fooPath,
 		fee500,
@@ -1369,7 +1369,7 @@ func TestReposition(t *testing.T) {
 			// Step 2: Increase liquidity
 			if tt.increaseAmount0 != "" && tt.increaseAmount1 != "" {
 				_, _, _, _, _ = IncreaseLiquidity(
-					tokenId,
+					positionId,
 					tt.increaseAmount0,
 					tt.increaseAmount1,
 					"0",
@@ -1380,7 +1380,7 @@ func TestReposition(t *testing.T) {
 
 			// Step 3: Decrease liquidity to clear the position
 			_, _, _, _, _, _, _ = DecreaseLiquidity(
-				tokenId,
+				positionId,
 				tt.liquidityToRemove,
 				"0",
 				"0",
@@ -1392,7 +1392,7 @@ func TestReposition(t *testing.T) {
 			if tt.expectPanic {
 				uassert.PanicsWithMessage(t, tt.expectedPanicError, func() {
 					Reposition(
-						tokenId,
+						positionId,
 						tt.tickLower,
 						tt.tickUpper,
 						tt.mintAmount0,
@@ -1402,9 +1402,9 @@ func TestReposition(t *testing.T) {
 					)
 				})
 			} else {
-				//tokenId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
+				//positionId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
 				tid, _, tickL, tickH, _, _ := Reposition(
-					tokenId,
+					positionId,
 					tt.tickLower,
 					tt.tickUpper,
 					tt.mintAmount0,
@@ -1412,7 +1412,7 @@ func TestReposition(t *testing.T) {
 					"0",
 					"0",
 				)
-				uassert.Equal(t, tid, tokenId)
+				uassert.Equal(t, tid, positionId)
 				uassert.Equal(t, tickL, tt.tickLower)
 				uassert.Equal(t, tickH, tt.tickUpper)
 			}

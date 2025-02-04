@@ -107,7 +107,7 @@ func testMintPosition01InRange(t *testing.T) {
 		adminOldWugnotBalance := wugnot.BalanceOf(adminAddr)
 		uassert.Equal(t, adminOldWugnotBalance, uint64(0))
 
-		tokenId, liquidity, amount0, amount1 := Mint(
+		positionId, liquidity, amount0, amount1 := Mint(
 			consts.GNOT,
 			consts.GNS_PATH,
 			fee500,
@@ -123,12 +123,12 @@ func testMintPosition01InRange(t *testing.T) {
 		)
 		std.TestSetOrigSend(std.Coins{{"ugnot", 0}}, nil)
 
-		uassert.Equal(t, tokenId, uint64(1))
+		uassert.Equal(t, positionId, uint64(1))
 		uassert.Equal(t, getNextId(), uint64(2))
 		uassert.Equal(t, amount0, "18394892")
 		uassert.Equal(t, amount1, "50000000")
 
-		position := MustGetPosition(tokenId)
+		position := MustGetPosition(positionId)
 		uassert.Equal(t, position.nonce.ToString(), "0")
 		uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
@@ -196,8 +196,8 @@ func testCollectFee01(t *testing.T) {
 	t.Run("collect fee 01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		tokenId, tokensOwed0, tokensOwed1, poolPath, fee0, fee1 := CollectFee(1, false)
-		position := MustGetPosition(tokenId)
+		positionId, tokensOwed0, tokensOwed1, poolPath, fee0, fee1 := CollectFee(1, false)
+		position := MustGetPosition(positionId)
 		uassert.Equal(t, position.tokensOwed0.ToString(), "0")
 		uassert.Equal(t, position.tokensOwed1.ToString(), "0")
 	})
@@ -207,17 +207,17 @@ func testDecreaseLiquidityInPosition(t *testing.T) {
 	t.Run("decrease liquidity in position", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		lpTokenId := uint64(1)
+		positionId := uint64(1)
 
-		ownerOfPosition, _ := gnft.OwnerOf(tokenIdFrom(lpTokenId))
+		ownerOfPosition, _ := gnft.OwnerOf(positionIdFrom(positionId))
 		uassert.Equal(t, ownerOfPosition, adminAddr)
 
 		// approve fee0, fee1 to pool
 		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-		tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
-			lpTokenId,
+		resultPositionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
+			positionId,
 			"318704392",
 			"0",
 			"0",
@@ -225,14 +225,14 @@ func testDecreaseLiquidityInPosition(t *testing.T) {
 			false,
 		)
 
-		uassert.Equal(t, tokenId, lpTokenId)
+		uassert.Equal(t, resultPositionId, positionId)
 		uassert.Equal(t, amount0, "17941988")
 		uassert.Equal(t, amount1, "51233948")
 
-		ownerOfPosition, _ = gnft.OwnerOf(tokenIdFrom(lpTokenId))
+		ownerOfPosition, _ = gnft.OwnerOf(positionIdFrom(resultPositionId))
 		uassert.Equal(t, ownerOfPosition, adminAddr)
 
-		position := MustGetPosition(lpTokenId)
+		position := MustGetPosition(resultPositionId)
 		uassert.Equal(t, position.nonce.ToString(), "0")
 		uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
@@ -251,10 +251,10 @@ func testReposition(t *testing.T) {
 	t.Run("reposition", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		lpTokenId := uint64(1)
+		positionId := uint64(1)
 
 		// check current state
-		position := MustGetPosition(lpTokenId)
+		position := MustGetPosition(positionId)
 		uassert.Equal(t, position.nonce.ToString(), "0")
 		uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
@@ -278,13 +278,13 @@ func testReposition(t *testing.T) {
 
 		std.TestSetRealm(adminRealm)
 		Reposition(
-			lpTokenId, // tokenId
-			-1000,     // tickLower
-			1000,      // tickUpper
-			"5000",    // amount0Desired
-			"5000",    // amount1Desired
-			"0",       // amount0Min
-			"0",       // amount1Min
+			positionId, // positionId
+			-1000,      // tickLower
+			1000,       // tickUpper
+			"5000",     // amount0Desired
+			"5000",     // amount1Desired
+			"0",        // amount0Min
+			"0",        // amount1Min
 		)
 
 		// user ugnot

@@ -69,7 +69,7 @@ func ApiGetPositionsByAddress(address std.Address) string {
 	rpcPositions := []RpcPosition{}
 	for lpPositionId := uint64(1); lpPositionId < nextId; lpPositionId++ {
 		position := MustGetPosition(lpPositionId)
-		owner, err := gnft.OwnerOf(tokenIdFrom(lpPositionId))
+		owner, err := gnft.OwnerOf(positionIdFrom(lpPositionId))
 		if err != nil {
 			panic(ufmt.Sprintf("owner not found for positionId: %d", lpPositionId))
 		}
@@ -89,7 +89,7 @@ func ApiGetPositionsByAddress(address std.Address) string {
 	// RESPONSE (ARRAY) NODE
 	rsps := json.ArrayNode("", []*json.Node{})
 	for _, position := range r.Response {
-		owner, err := gnft.OwnerOf(tokenIdFrom(position.LpPositionId))
+		owner, err := gnft.OwnerOf(positionIdFrom(position.LpPositionId))
 		if err != nil {
 			owner = consts.ZERO_ADDRESS
 		}
@@ -146,7 +146,7 @@ func rpcMakePosition(positionId uint64) RpcPosition {
 		unclaimedFee0, unclaimedFee1 = unclaimedFee(positionId)
 	}
 
-	owner, err := gnft.OwnerOf(tokenIdFrom(positionId))
+	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
 	if err != nil {
 		owner = consts.ZERO_ADDRESS
 	}

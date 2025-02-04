@@ -649,7 +649,7 @@ type ApiReward struct {
 
 // Stake represents a single stake
 type ApiStake struct {
-	TokenId        uint64      `json:"tokenId"`        // The ID of the staked LP token
+	PositionId     uint64      `json:"positionId"`     // The ID of the staked LP token
 	Owner          std.Address `json:"owner"`          // The address of the owner of the staked LP token
 	NumberOfStakes uint64      `json:"numberOfStakes"` // The number of times this LP token has been staked
 	StakeTimestamp int64       `json:"stakeTimestamp"` // The timestamp when the LP token was staked
@@ -767,10 +767,10 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 
 	lpTokenRewards := []LpTokenReward{}
 
-	stakers.IterateAll(std.Address(targetAddress), func(tokenId uint64, deposit *Deposit) bool {
+	stakers.IterateAll(std.Address(targetAddress), func(positionId uint64, deposit *Deposit) bool {
 		rewards := []ApiReward{}
 
-		reward := calcPositionReward(std.GetHeight(), tokenId)
+		reward := calcPositionReward(std.GetHeight(), positionId)
 
 		// get internal gns reward
 		if reward.Internal > 0 {
@@ -800,7 +800,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 			})
 		}
 		lpTokenReward := LpTokenReward{
-			LpTokenId: tokenId,
+			LpTokenId: positionId,
 			Address:   deposit.owner.String(),
 			Rewards:   rewards,
 		}
@@ -853,9 +853,9 @@ func ApiGetStakes() string {
 	en.MintAndDistributeGns()
 
 	stakes := []ApiStake{}
-	deposits.Iterate(0, math.MaxUint64, func(tokenId uint64, deposit *Deposit) bool {
+	deposits.Iterate(0, math.MaxUint64, func(positionId uint64, deposit *Deposit) bool {
 		stakes = append(stakes, ApiStake{
-			TokenId:        tokenId,
+			PositionId:     positionId,
 			Owner:          deposit.owner,
 			StakeTimestamp: deposit.stakeTimestamp,
 			StakeHeight:    deposit.stakeHeight,
@@ -884,7 +884,7 @@ func ApiGetStakes() string {
 	responses := json.ArrayNode("", []*json.Node{})
 	for _, stake := range r.Response {
 		_stakeNode := json.ObjectNode("", map[string]*json.Node{
-			"tokenId":        json.NumberNode("tokenId", float64(stake.TokenId)),
+			"positionId":     json.NumberNode("positionId", float64(stake.PositionId)),
 			"owner":          json.StringNode("owner", stake.Owner.String()),
 			"stakeTimestamp": json.NumberNode("stakeTimestamp", float64(stake.StakeTimestamp)),
 			"stakeHeight":    json.NumberNode("stakeHeight", float64(stake.StakeHeight)),
@@ -913,7 +913,7 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 
 	deposit := deposits.Get(targetLpTokenId)
 	stakes = append(stakes, ApiStake{
-		TokenId:        targetLpTokenId,
+		PositionId:     targetLpTokenId,
 		Owner:          deposit.owner,
 		StakeTimestamp: deposit.stakeTimestamp,
 		StakeHeight:    deposit.stakeHeight,
@@ -940,7 +940,7 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 	responses := json.ArrayNode("", []*json.Node{})
 	for _, stake := range r.Response {
 		_stakeNode := json.ObjectNode("", map[string]*json.Node{
-			"tokenId":        json.NumberNode("tokenId", float64(stake.TokenId)),
+			"positionId":     json.NumberNode("positionId", float64(stake.PositionId)),
 			"owner":          json.StringNode("owner", stake.Owner.String()),
 			"numberOfStakes": json.NumberNode("numberOfStakes", float64(stake.NumberOfStakes)),
 			"stakeTimestamp": json.NumberNode("stakeTimestamp", float64(stake.StakeTimestamp)),
@@ -968,9 +968,9 @@ func ApiGetStakesByAddress(targetAddress string) string {
 
 	stakes := []ApiStake{}
 
-	stakers.IterateAll(std.Address(targetAddress), func(tokenId uint64, deposit *Deposit) bool {
+	stakers.IterateAll(std.Address(targetAddress), func(positionId uint64, deposit *Deposit) bool {
 		stakes = append(stakes, ApiStake{
-			TokenId:        tokenId,
+			PositionId:     positionId,
 			Owner:          deposit.owner,
 			StakeTimestamp: deposit.stakeTimestamp,
 			StakeHeight:    deposit.stakeHeight,
@@ -1000,7 +1000,7 @@ func ApiGetStakesByAddress(targetAddress string) string {
 	responses := json.ArrayNode("", []*json.Node{})
 	for _, stake := range r.Response {
 		_stakeNode := json.ObjectNode("", map[string]*json.Node{
-			"tokenId":        json.NumberNode("tokenId", float64(stake.TokenId)),
+			"positionId":     json.NumberNode("positionId", float64(stake.PositionId)),
 			"owner":          json.StringNode("owner", stake.Owner.String()),
 			"stakeTimestamp": json.NumberNode("stakeTimestamp", float64(stake.StakeTimestamp)),
 			"stakeHeight":    json.NumberNode("stakeHeight", float64(stake.StakeHeight)),
@@ -1023,8 +1023,8 @@ func ApiGetStakesByAddress(targetAddress string) string {
 }
 
 // for off chain to check if lpTokenId is staked via RPC
-func IsStaked(tokenId uint64) bool {
-	return deposits.Has(tokenId)
+func IsStaked(positionId uint64) bool {
+	return deposits.Has(positionId)
 }
 
 func makeRewardsArray(rewards []ApiReward) []*json.Node {

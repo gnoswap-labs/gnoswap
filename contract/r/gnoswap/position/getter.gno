@@ -70,7 +70,7 @@ func PositionIsInRange(positionId uint64) bool {
 }
 
 func PositionGetPositionOwner(positionId uint64) std.Address {
-	owner, err := gnft.OwnerOf(tokenIdFrom(positionId))
+	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
 	if err != nil {
 		panic(newErrorWithDetail(
 			errDataNotFound, err.Error()))

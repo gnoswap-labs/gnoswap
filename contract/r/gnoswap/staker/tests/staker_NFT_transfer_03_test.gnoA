@@ -173,7 +173,7 @@ func testCollectReward01(t *testing.T) {
 	t.Run("admin can not collect reward(not a owner)", func(t *testing.T) {
 		uassert.PanicsWithMessage(
 			t,
-			`[GNOSWAP-STAKER-001] caller has no permission || caller is not owner of tokenId(1)`,
+			`[GNOSWAP-STAKER-001] caller has no permission || caller is not owner of positionId(1)`,
 			func() {
 				std.TestSetRealm(adminRealm)
 				CollectReward(1, false)

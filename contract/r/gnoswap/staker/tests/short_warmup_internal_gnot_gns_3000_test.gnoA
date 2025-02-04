@@ -81,7 +81,7 @@ func testMintWugnotGnsPos01(t *testing.T) {
 		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-		tokenId, liquidity, amount0, amount1 := pn.Mint(
+		positionId, liquidity, amount0, amount1 := pn.Mint(
 			wugnotPath,   // token0
 			gnsPath,      // token1
 			fee3000,      // fee
@@ -96,8 +96,8 @@ func testMintWugnotGnsPos01(t *testing.T) {
 			adminAddr,
 		)
 
-		uassert.Equal(t, tokenId, uint64(1))
-		uassert.Equal(t, gnft.MustOwnerOf(tid(tokenId)), adminAddr)
+		uassert.Equal(t, positionId, uint64(1))
+		uassert.Equal(t, gnft.MustOwnerOf(tid(positionId)), adminAddr)
 
 		std.TestSkipHeights(1)
 		// 1 block minted

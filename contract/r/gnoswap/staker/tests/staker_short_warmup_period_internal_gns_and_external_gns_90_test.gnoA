@@ -77,7 +77,7 @@ func testMintBarQux100_1(t *testing.T) {
 		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 		qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-		tokenId, liquidity, amount0, amount1 := pn.Mint(
+		positionId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,      // token0
 			quxPath,      // token1
 			fee100,       // fee
@@ -92,8 +92,8 @@ func testMintBarQux100_1(t *testing.T) {
 			adminAddr,
 		)
 
-		uassert.Equal(t, tokenId, uint64(1))
-		owner, err := gnft.OwnerOf(tid(tokenId))
+		uassert.Equal(t, positionId, uint64(1))
+		owner, err := gnft.OwnerOf(tid(positionId))
 		uassert.NoError(t, err)
 		uassert.Equal(t, owner, admin)
 
