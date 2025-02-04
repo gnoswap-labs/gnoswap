@@ -1,1 +1,1 @@
-module gno.land/p/gnoswap/gnsmath
+module gnsmath
