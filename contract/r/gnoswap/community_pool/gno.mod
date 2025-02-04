@@ -1,1 +1,1 @@
-module gno.land/r/gnoswap/v1/community_pool
+module community_pool

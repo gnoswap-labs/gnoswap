@@ -1,1 +1,1 @@
-module gno.land/r/onbloc/foo
+module foo

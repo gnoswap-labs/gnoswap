@@ -1,1 +1,1 @@
-module gno.land/p/gnoswap/consts
+module consts
