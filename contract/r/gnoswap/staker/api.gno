@@ -3,40 +3,12 @@ package staker
 import (
 	"math"
 	"std"
-	"strconv"
-	"time"
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
 )
-
-type RewardToken struct {
-	PoolPath         string   `json:"poolPath"`
-	RewardsTokenList []string `json:"rewardsTokenList"`
-}
-
-type ApiExternalIncentive struct {
-	IncentiveId      string `json:"incentiveId"`
-	PoolPath         string `json:"poolPath"`
-	RewardToken      string `json:"rewardToken"`
-	RewardAmount     uint64 `json:"rewardAmount"`
-	RewardLeft       uint64 `json:"rewardLeft"`
-	StartTimestamp   int64  `json:"startTimestamp"`
-	EndTimestamp     int64  `json:"endTimestamp"`
-	Active           bool   `json:"active"`
-	Refundee         string `json:"refundee"`
-	CreatedHeight    int64  `json:"createdHeight"`
-	DepositGnsAmount uint64 `json:"depositGnsAmount"`
-}
-
-type ApiInternalIncentive struct {
-	PoolPath       string `json:"poolPath"`
-	Tier           uint64 `json:"tier"`
-	StartTimestamp int64  `json:"startTimestamp"`
-	RewardPerBlock string `json:"rewardPerBlock"`
-}
 
 func ApiGetRewardTokens() string {
 	rewardTokens := []RewardToken{}
@@ -65,40 +37,17 @@ func ApiGetRewardTokens() string {
 			return false
 		}
 
-		rewardTokens = append(rewardTokens, RewardToken{
-			PoolPath:         pool.poolPath,
-			RewardsTokenList: thisPoolRewardTokens,
-		})
+		rt := newRewardToken(pool.poolPath, thisPoolRewardTokens)
+		rewardTokens = append(rewardTokens, rt)
 		return false
 	})
 
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
-
-	// RESPONSE (ARRAY) NODE
-	responses := json.ArrayNode("", []*json.Node{})
-	for _, rewardToken := range rewardTokens {
-		_rewardTokenNode := json.ObjectNode("", map[string]*json.Node{
-			"poolPath": json.StringNode("poolPath", rewardToken.PoolPath),
-			"tokens":   json.ArrayNode("tokens", makeRewardTokensArray(rewardToken.RewardsTokenList)),
-		})
-		responses.AppendArray(_rewardTokenNode)
+	rsps := make([]JsonResponse, len(rewardTokens))
+	for i := range rewardTokens {
+		rsps[i] = rewardTokens[i]
 	}
 
-	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
-		"response": responses,
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
+	return makeApiResponse(rsps)
 }
 
 func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
@@ -128,38 +77,15 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 		})
 	}
 
-	rewardTokens = append(rewardTokens, RewardToken{
-		PoolPath:         pool.poolPath,
-		RewardsTokenList: thisPoolRewardTokens,
-	})
+	rt := newRewardToken(pool.poolPath, thisPoolRewardTokens)
+	rewardTokens = append(rewardTokens, rt)
 
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
-
-	// RESPONSE (ARRAY) NODE
-	responses := json.ArrayNode("", []*json.Node{})
-	for _, rewardToken := range rewardTokens {
-		_rewardTokenNode := json.ObjectNode("", map[string]*json.Node{
-			"poolPath": json.StringNode("poolPath", rewardToken.PoolPath),
-			"tokens":   json.ArrayNode("tokens", makeRewardTokensArray(rewardToken.RewardsTokenList)),
-		})
-		responses.AppendArray(_rewardTokenNode)
+	rsps := make([]JsonResponse, len(rewardTokens))
+	for i := range rewardTokens {
+		rsps[i] = rewardTokens[i]
 	}
 
-	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
-		"response": responses,
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
+	return makeApiResponse(rsps)
 }
 
 func ApiGetExternalIncentives() string {
@@ -169,64 +95,19 @@ func ApiGetExternalIncentives() string {
 		pool := value.(*Pool)
 		pool.incentives.byTime.Iterate("", "", func(key string, value interface{}) bool {
 			ictv := value.(*ExternalIncentive)
-			apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
-				IncentiveId:      ictv.incentiveId,
-				PoolPath:         ictv.targetPoolPath,
-				RewardToken:      ictv.rewardToken,
-				RewardAmount:     ictv.rewardAmount,
-				RewardLeft:       ictv.rewardLeft,
-				StartTimestamp:   ictv.startTimestamp,
-				EndTimestamp:     ictv.endTimestamp,
-				Refundee:         ictv.refundee.String(),
-				CreatedHeight:    ictv.createdHeight,
-				DepositGnsAmount: ictv.depositGnsAmount,
-			})
+			externalIctv := newApiExternalIncentive(ictv)
+			apiExternalIncentives = append(apiExternalIncentives, externalIctv)
 			return false
 		})
 		return false
 	})
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
 
-	// RESPONSE (ARRAY) NODE
-	responses := json.ArrayNode("", []*json.Node{})
-	for _, incentive := range apiExternalIncentives {
-		active := false
-		if time.Now().Unix() >= incentive.StartTimestamp && time.Now().Unix() <= incentive.EndTimestamp {
-			active = true
-		}
-
-		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
-			"incentiveId":      json.StringNode("incentiveId", incentive.IncentiveId),
-			"poolPath":         json.StringNode("poolPath", incentive.PoolPath),
-			"rewardToken":      json.StringNode("rewardToken", incentive.RewardToken),
-			"rewardAmount":     json.StringNode("rewardAmount", strconv.FormatUint(incentive.RewardAmount, 10)),
-			"rewardLeft":       json.StringNode("rewardLeft", strconv.FormatUint(incentive.RewardLeft, 10)),
-			"startTimestamp":   json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
-			"endTimestamp":     json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
-			"active":           json.BoolNode("active", active),
-			"refundee":         json.StringNode("refundee", incentive.Refundee),
-			"createdHeight":    json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
-			"depositGnsAmount": json.NumberNode("depositGnsAmount", float64(incentive.DepositGnsAmount)),
-		})
-		responses.AppendArray(_incentiveNode)
+	rsps := make([]JsonResponse, len(apiExternalIncentives))
+	for i := range apiExternalIncentives {
+		rsps[i] = apiExternalIncentives[i]
 	}
 
-	// RETURN
-	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
-		"response": responses,
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
+	return makeApiResponse(rsps)
 }
 
 func ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
@@ -248,61 +129,15 @@ func ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
 		))
 	}
 
-	apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
-		IncentiveId:      incentiveId,
-		PoolPath:         poolPath,
-		RewardToken:      incentive.rewardToken,
-		RewardAmount:     incentive.rewardAmount,
-		RewardLeft:       incentive.rewardLeft,
-		StartTimestamp:   incentive.startTimestamp,
-		EndTimestamp:     incentive.endTimestamp,
-		Refundee:         incentive.refundee.String(),
-		CreatedHeight:    incentive.createdHeight,
-		DepositGnsAmount: incentive.depositGnsAmount,
-	})
+	externalictv := newApiExternalIncentive(incentive)
+	apiExternalIncentives = append(apiExternalIncentives, externalictv)
 
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
-
-	// RESPONSE (ARRAY) NODE
-	responses := json.ArrayNode("", []*json.Node{})
-	for _, incentive := range apiExternalIncentives {
-		active := false
-		if time.Now().Unix() >= incentive.StartTimestamp && time.Now().Unix() <= incentive.EndTimestamp {
-			active = true
-		}
-
-		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
-			"incentiveId":      json.StringNode("incentiveId", incentive.IncentiveId),
-			"poolPath":         json.StringNode("poolPath", incentive.PoolPath),
-			"rewardToken":      json.StringNode("rewardToken", incentive.RewardToken),
-			"rewardAmount":     json.StringNode("rewardAmount", strconv.FormatUint(incentive.RewardAmount, 10)),
-			"rewardLeft":       json.StringNode("rewardLeft", strconv.FormatUint(incentive.RewardLeft, 10)),
-			"startTimestamp":   json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
-			"endTimestamp":     json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
-			"active":           json.BoolNode("active", active),
-			"refundee":         json.StringNode("refundee", incentive.Refundee),
-			"createdHeight":    json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
-			"depositGnsAmount": json.NumberNode("depositGnsAmount", float64(incentive.DepositGnsAmount)),
-		})
-		responses.AppendArray(_incentiveNode)
+	rsps := make([]JsonResponse, len(apiExternalIncentives))
+	for i := range apiExternalIncentives {
+		rsps[i] = apiExternalIncentives[i]
 	}
 
-	// RETURN
-	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
-		"response": responses,
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
+	return makeApiResponse(rsps)
 }
 
 func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
@@ -322,63 +157,18 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 			return false
 		}
 
-		apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
-			IncentiveId:      incentive.incentiveId,
-			PoolPath:         incentive.targetPoolPath,
-			RewardToken:      incentive.rewardToken,
-			RewardAmount:     incentive.rewardAmount,
-			RewardLeft:       incentive.rewardLeft,
-			StartTimestamp:   incentive.startTimestamp,
-			EndTimestamp:     incentive.endTimestamp,
-			Refundee:         incentive.refundee.String(),
-			CreatedHeight:    incentive.createdHeight,
-			DepositGnsAmount: incentive.depositGnsAmount,
-		})
+		externalIctv := newApiExternalIncentive(incentive)
+		apiExternalIncentives = append(apiExternalIncentives, externalIctv)
+
 		return false
 	})
 
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
-
-	// RESPONSE (ARRAY) NODE
-	responses := json.ArrayNode("", []*json.Node{})
-	for _, incentive := range apiExternalIncentives {
-		active := false
-		if time.Now().Unix() >= incentive.StartTimestamp && time.Now().Unix() <= incentive.EndTimestamp {
-			active = true
-		}
-
-		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
-			"incentiveId":      json.StringNode("incentiveId", incentive.IncentiveId),
-			"poolPath":         json.StringNode("poolPath", incentive.PoolPath),
-			"rewardToken":      json.StringNode("rewardToken", incentive.RewardToken),
-			"rewardAmount":     json.StringNode("rewardAmount", strconv.FormatUint(incentive.RewardAmount, 10)),
-			"rewardLeft":       json.StringNode("rewardLeft", strconv.FormatUint(incentive.RewardLeft, 10)),
-			"startTimestamp":   json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
-			"endTimestamp":     json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
-			"active":           json.BoolNode("active", active),
-			"refundee":         json.StringNode("refundee", incentive.Refundee),
-			"createdHeight":    json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
-			"depositGnsAmount": json.NumberNode("depositGnsAmount", float64(incentive.DepositGnsAmount)),
-		})
-		responses.AppendArray(_incentiveNode)
+	rsps := make([]JsonResponse, len(apiExternalIncentives))
+	for i := range apiExternalIncentives {
+		rsps[i] = apiExternalIncentives[i]
 	}
 
-	// RETURN
-	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
-		"response": responses,
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
+	return makeApiResponse(rsps)
 }
 
 func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
@@ -392,65 +182,20 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 				return false
 			}
 
-			apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
-				IncentiveId:      incentive.incentiveId,
-				PoolPath:         pool.poolPath,
-				RewardToken:      incentive.rewardToken,
-				RewardAmount:     incentive.rewardAmount,
-				RewardLeft:       incentive.rewardLeft,
-				StartTimestamp:   incentive.startTimestamp,
-				EndTimestamp:     incentive.endTimestamp,
-				Refundee:         incentive.refundee.String(),
-				CreatedHeight:    incentive.createdHeight,
-				DepositGnsAmount: incentive.depositGnsAmount,
-			})
+			externalIctv := newApiExternalIncentive(incentive)
+			apiExternalIncentives = append(apiExternalIncentives, externalIctv)
+
 			return false
 		})
 		return false
 	})
 
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
-
-	// RESPONSE (ARRAY) NODE
-	responses := json.ArrayNode("", []*json.Node{})
-	for _, incentive := range apiExternalIncentives {
-		active := false
-		if time.Now().Unix() >= incentive.StartTimestamp && time.Now().Unix() <= incentive.EndTimestamp {
-			active = true
-		}
-
-		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
-			"incentiveId":      json.StringNode("incentiveId", incentive.IncentiveId),
-			"poolPath":         json.StringNode("poolPath", incentive.PoolPath),
-			"rewardToken":      json.StringNode("rewardToken", incentive.RewardToken),
-			"rewardAmount":     json.StringNode("rewardAmount", strconv.FormatUint(incentive.RewardAmount, 10)),
-			"rewardLeft":       json.StringNode("rewardLeft", strconv.FormatUint(incentive.RewardLeft, 10)),
-			"startTimestamp":   json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
-			"endTimestamp":     json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
-			"active":           json.BoolNode("active", active),
-			"refundee":         json.StringNode("refundee", incentive.Refundee),
-			"createdHeight":    json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
-			"depositGnsAmount": json.NumberNode("depositGnsAmount", float64(incentive.DepositGnsAmount)),
-		})
-		responses.AppendArray(_incentiveNode)
+	rsps := make([]JsonResponse, len(apiExternalIncentives))
+	for i := range apiExternalIncentives {
+		rsps[i] = apiExternalIncentives[i]
 	}
 
-	// RETURN
-	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
-		"response": responses,
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
+	return makeApiResponse(rsps)
 }
 
 func ApiGetInternalIncentives() string {
@@ -459,44 +204,17 @@ func ApiGetInternalIncentives() string {
 	poolTier.membership.Iterate("", "", func(key string, value interface{}) bool {
 		poolPath := key
 		internalTier := value.(uint64)
-		apiInternalIncentives = append(apiInternalIncentives, ApiInternalIncentive{
-			PoolPath:       poolPath,
-			Tier:           internalTier,
-			RewardPerBlock: calculateInternalRewardPerBlockByPoolPath(poolPath),
-		})
+		internalIctv := newApiInternalIncentive(poolPath, internalTier)
+		apiInternalIncentives = append(apiInternalIncentives, internalIctv)
 		return false
 	})
 
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
-
-	// RESPONSE (ARRAY) NODE
-	responses := json.ArrayNode("", []*json.Node{})
-	for _, incentive := range apiInternalIncentives {
-		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
-			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
-			"rewardToken":    json.StringNode("rewardToken", consts.GNS_PATH),
-			"tier":           json.NumberNode("tier", float64(incentive.Tier)),
-			"rewardPerBlock": json.StringNode("rewardPerBlock", incentive.RewardPerBlock),
-		})
-		responses.AppendArray(_incentiveNode)
+	rsps := make([]JsonResponse, len(apiInternalIncentives))
+	for i := range apiInternalIncentives {
+		rsps[i] = apiInternalIncentives[i]
 	}
 
-	// RETURN
-	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
-		"response": responses,
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
+	return makeApiResponse(rsps)
 }
 
 func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
@@ -507,42 +225,15 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 		return ""
 	}
 
-	apiInternalIncentives = append(apiInternalIncentives, ApiInternalIncentive{
-		PoolPath:       targetPoolPath,
-		Tier:           tier,
-		RewardPerBlock: calculateInternalRewardPerBlockByPoolPath(targetPoolPath),
-	})
+	internalIctv := newApiInternalIncentive(targetPoolPath, tier)
+	apiInternalIncentives = append(apiInternalIncentives, internalIctv)
 
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
-
-	// RESPONSE (ARRAY) NODE
-	responses := json.ArrayNode("", []*json.Node{})
-	for _, incentive := range apiInternalIncentives {
-		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
-			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
-			"rewardToken":    json.StringNode("rewardToken", consts.GNS_PATH),
-			"tier":           json.NumberNode("tier", float64(incentive.Tier)),
-			"rewardPerBlock": json.StringNode("rewardPerBlock", incentive.RewardPerBlock),
-		})
-		responses.AppendArray(_incentiveNode)
+	rsps := make([]JsonResponse, len(apiInternalIncentives))
+	for i := range apiInternalIncentives {
+		rsps[i] = apiInternalIncentives[i]
 	}
 
-	// RETURN
-	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
-		"response": responses,
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
+	return makeApiResponse(rsps)
 }
 
 func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
@@ -555,45 +246,18 @@ func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
 			return false
 		}
 
-		apiInternalIncentives = append(apiInternalIncentives, ApiInternalIncentive{
-			PoolPath:       poolPath,
-			Tier:           internalTier,
-			RewardPerBlock: calculateInternalRewardPerBlockByPoolPath(poolPath),
-		})
+		internalIctv := newApiInternalIncentive(poolPath, internalTier)
+		apiInternalIncentives = append(apiInternalIncentives, internalIctv)
 
 		return false
 	})
 
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
-
-	// RESPONSE (ARRAY) NODE
-	responses := json.ArrayNode("", []*json.Node{})
-	for _, incentive := range apiInternalIncentives {
-		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
-			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
-			"rewardToken":    json.StringNode("rewardToken", consts.GNS_PATH),
-			"tier":           json.NumberNode("tier", float64(incentive.Tier)),
-			"rewardPerBlock": json.StringNode("rewardPerBlock", incentive.RewardPerBlock),
-		})
-		responses.AppendArray(_incentiveNode)
+	rsps := make([]JsonResponse, len(apiInternalIncentives))
+	for i := range apiInternalIncentives {
+		rsps[i] = apiInternalIncentives[i]
 	}
 
-	// RETURN
-	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
-		"response": responses,
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
+	return makeApiResponse(rsps)
 }
 
 func makeRewardTokensArray(rewardsTokenList []string) []*json.Node {
@@ -607,35 +271,6 @@ func makeRewardTokensArray(rewardsTokenList []string) []*json.Node {
 func calculateInternalRewardPerBlockByPoolPath(poolPath string) string {
 	reward := poolTier.CurrentRewardPerPool(poolPath)
 	return ufmt.Sprintf("%d", reward)
-}
-
-// LpTokenReward represents the rewards associated with a specific LP token
-type LpTokenReward struct {
-	LpTokenId uint64      `json:"lpTokenId"` // The ID of the LP token
-	Address   string      `json:"address"`   // The address associated with the LP token
-	Rewards   []ApiReward `json:"rewards"`
-}
-
-// Reward represents a single reward for a staked LP token
-type ApiReward struct {
-	IncentiveType     string `json:"incentiveType"`     // The type of incentive (INTERNAL or EXTERNAL)
-	IncentiveId       string `json:"incentiveId"`       // The unique identifier of the incentive
-	TargetPoolPath    string `json:"targetPoolPath"`    // The path of the target pool for the reward
-	RewardTokenPath   string `json:"rewardTokenPath"`   // The pathe of the reward token
-	RewardTokenAmount uint64 `json:"rewardTokenAmount"` // The amount of the reward token
-	StakeTimestamp    int64  `json:"stakeTimestamp"`    // The timestamp when the LP token was staked
-	StakeHeight       int64  `json:"stakeHeight"`       // The block height when the LP token was staked
-	IncentiveStart    int64  `json:"incentiveStart"`    // The timestamp when the incentive started
-}
-
-// Stake represents a single stake
-type ApiStake struct {
-	TokenId        uint64      `json:"tokenId"`        // The ID of the staked LP token
-	Owner          std.Address `json:"owner"`          // The address of the owner of the staked LP token
-	NumberOfStakes uint64      `json:"numberOfStakes"` // The number of times this LP token has been staked
-	StakeTimestamp int64       `json:"stakeTimestamp"` // The timestamp when the LP token was staked
-	StakeHeight    int64       `json:"stakeHeight"`    // The block height when the LP token was staked
-	TargetPoolPath string      `json:"targetPoolPath"` // The path of the target pool for the stake
 }
 
 // ResponseQueryBase contains basic information about a query response.
@@ -654,12 +289,6 @@ type ResponseApiGetRewards struct {
 type ResponseApiGetRewardByLpTokenId struct {
 	Stat     ResponseQueryBase `json:"stat"`     // Basic query information
 	Response LpTokenReward     `json:"response"` // The LpTokenReward for the specified LP token
-}
-
-// ResponseApiGetStakes represents the API response for getting stakes.
-type ResponseApiGetStakes struct {
-	Stat     ResponseQueryBase `json:"stat"`     // Basic query information
-	Response []ApiStake        `json:"response"` // A slice of Stake structs
 }
 
 func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
@@ -695,50 +324,12 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 		})
 	}
 
-	qb := ResponseQueryBase{
-		Height:    std.GetHeight(),
-		Timestamp: time.Now().Unix(),
+	rsps := make([]JsonResponse, len(rewards))
+	for i := range rewards {
+		rsps[i] = rewards[i]
 	}
 
-	r := ResponseApiGetRewards{
-		Stat: qb,
-		Response: []LpTokenReward{
-			{
-				LpTokenId: targetLpTokenId,
-				Address:   deposit.owner.String(),
-				Rewards:   rewards,
-			},
-		},
-	}
-
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
-
-	// RESPONSE (ARRAY) NODE
-	responses := json.ArrayNode("", []*json.Node{})
-	for _, reward := range r.Response {
-		_rewardNode := json.ObjectNode("", map[string]*json.Node{
-			"lpTokenId": json.NumberNode("lpTokenId", float64(reward.LpTokenId)),
-			"address":   json.StringNode("address", reward.Address),
-			"rewards":   json.ArrayNode("rewards", makeRewardsArray(reward.Rewards)),
-		})
-		responses.AppendArray(_rewardNode)
-	}
-
-	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
-		"response": responses,
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
+	return makeApiResponse(rsps)
 }
 
 func ApiGetRewardsByAddress(targetAddress string) string {
@@ -776,242 +367,71 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 				IncentiveStart:    deposit.stakeTimestamp,
 			})
 		}
-		lpTokenReward := LpTokenReward{
-			LpTokenId: tokenId,
-			Address:   deposit.owner.String(),
-			Rewards:   rewards,
-		}
+
+		lpTokenReward := newLpTokenReward(tokenId, deposit.owner.String(), rewards)
 		lpTokenRewards = append(lpTokenRewards, lpTokenReward)
 
 		return false
 	})
 
-	qb := ResponseQueryBase{
-		Height:    std.GetHeight(),
-		Timestamp: time.Now().Unix(),
+	rsps := make([]JsonResponse, len(lpTokenRewards))
+	for i := range lpTokenRewards {
+		rsps[i] = lpTokenRewards[i]
 	}
 
-	r := ResponseApiGetRewards{
-		Stat:     qb,
-		Response: lpTokenRewards,
-	}
-
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
-
-	// RESPONSE (ARRAY) NODE
-	responses := json.ArrayNode("", []*json.Node{})
-	for _, reward := range r.Response {
-		_rewardNode := json.ObjectNode("", map[string]*json.Node{
-			"lpTokenId": json.NumberNode("lpTokenId", float64(reward.LpTokenId)),
-			"address":   json.StringNode("address", reward.Address),
-			"rewards":   json.ArrayNode("rewards", makeRewardsArray(reward.Rewards)),
-		})
-		responses.AppendArray(_rewardNode)
-	}
-
-	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
-		"response": responses,
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
+	return makeApiResponse(rsps)
 }
 
 func ApiGetStakes() string {
 	stakes := []ApiStake{}
 	deposits.Iterate(0, math.MaxUint64, func(tokenId uint64, deposit *Deposit) bool {
-		stakes = append(stakes, ApiStake{
-			TokenId:        tokenId,
-			Owner:          deposit.owner,
-			StakeTimestamp: deposit.stakeTimestamp,
-			StakeHeight:    deposit.stakeHeight,
-			TargetPoolPath: deposit.targetPoolPath,
-		})
+		stk := newApiStake(tokenId, deposit)
+		stakes = append(stakes, stk)
 		return false
 	})
 
-	qb := ResponseQueryBase{
-		Height:    std.GetHeight(),
-		Timestamp: time.Now().Unix(),
+	rsps := make([]JsonResponse, len(stakes))
+	for i := range stakes {
+		rsps[i] = stakes[i]
 	}
 
-	r := ResponseApiGetStakes{
-		Stat:     qb,
-		Response: stakes,
-	}
-
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
-
-	// RESPONSE (ARRAY) NODE
-	responses := json.ArrayNode("", []*json.Node{})
-	for _, stake := range r.Response {
-		_stakeNode := json.ObjectNode("", map[string]*json.Node{
-			"tokenId":        json.NumberNode("tokenId", float64(stake.TokenId)),
-			"owner":          json.StringNode("owner", stake.Owner.String()),
-			"stakeTimestamp": json.NumberNode("stakeTimestamp", float64(stake.StakeTimestamp)),
-			"stakeHeight":    json.NumberNode("stakeHeight", float64(stake.StakeHeight)),
-			"targetPoolPath": json.StringNode("targetPoolPath", stake.TargetPoolPath),
-		})
-		responses.AppendArray(_stakeNode)
-	}
-
-	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
-		"response": responses,
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
+	return makeApiResponse(rsps)
 }
 
 func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 	stakes := []ApiStake{}
 
 	deposit := deposits.Get(targetLpTokenId)
-	stakes = append(stakes, ApiStake{
-		TokenId:        targetLpTokenId,
-		Owner:          deposit.owner,
-		StakeTimestamp: deposit.stakeTimestamp,
-		StakeHeight:    deposit.stakeHeight,
-		TargetPoolPath: deposit.targetPoolPath,
-	})
+	stk := newApiStake(targetLpTokenId, deposit)
+	stakes = append(stakes, stk)
 
-	qb := ResponseQueryBase{
-		Height:    std.GetHeight(),
-		Timestamp: time.Now().Unix(),
+	rsps := make([]JsonResponse, len(stakes))
+	for i := range stakes {
+		rsps[i] = stakes[i]
 	}
 
-	r := ResponseApiGetStakes{
-		Stat:     qb,
-		Response: stakes,
-	}
-
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
-
-	// RESPONSE (ARRAY) NODE
-	responses := json.ArrayNode("", []*json.Node{})
-	for _, stake := range r.Response {
-		_stakeNode := json.ObjectNode("", map[string]*json.Node{
-			"tokenId":        json.NumberNode("tokenId", float64(stake.TokenId)),
-			"owner":          json.StringNode("owner", stake.Owner.String()),
-			"numberOfStakes": json.NumberNode("numberOfStakes", float64(stake.NumberOfStakes)),
-			"stakeTimestamp": json.NumberNode("stakeTimestamp", float64(stake.StakeTimestamp)),
-			"stakeHeight":    json.NumberNode("stakeHeight", float64(stake.StakeHeight)),
-			"targetPoolPath": json.StringNode("targetPoolPath", stake.TargetPoolPath),
-		})
-		responses.AppendArray(_stakeNode)
-	}
-
-	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
-		"response": responses,
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
+	return makeApiResponse(rsps)
 }
 
 func ApiGetStakesByAddress(targetAddress string) string {
 	stakes := []ApiStake{}
 
 	stakers.IterateAll(std.Address(targetAddress), func(tokenId uint64, deposit *Deposit) bool {
-		stakes = append(stakes, ApiStake{
-			TokenId:        tokenId,
-			Owner:          deposit.owner,
-			StakeTimestamp: deposit.stakeTimestamp,
-			StakeHeight:    deposit.stakeHeight,
-			TargetPoolPath: deposit.targetPoolPath,
-		})
+		stk := newApiStake(tokenId, deposit)
+		stakes = append(stakes, stk)
 
 		return false
 	})
 
-	qb := ResponseQueryBase{
-		Height:    std.GetHeight(),
-		Timestamp: time.Now().Unix(),
+	rsps := make([]JsonResponse, len(stakes))
+	for i := range stakes {
+		rsps[i] = stakes[i]
 	}
 
-	r := ResponseApiGetStakes{
-		Stat:     qb,
-		Response: stakes,
-	}
-
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
-
-	// RESPONSE (ARRAY) NODE
-	responses := json.ArrayNode("", []*json.Node{})
-	for _, stake := range r.Response {
-		_stakeNode := json.ObjectNode("", map[string]*json.Node{
-			"tokenId":        json.NumberNode("tokenId", float64(stake.TokenId)),
-			"owner":          json.StringNode("owner", stake.Owner.String()),
-			"stakeTimestamp": json.NumberNode("stakeTimestamp", float64(stake.StakeTimestamp)),
-			"stakeHeight":    json.NumberNode("stakeHeight", float64(stake.StakeHeight)),
-			"targetPoolPath": json.StringNode("targetPoolPath", stake.TargetPoolPath),
-		})
-		responses.AppendArray(_stakeNode)
-	}
-
-	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
-		"response": responses,
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
+	return makeApiResponse(rsps)
 }
 
 // for off chain to check if lpTokenId is staked via RPC
 func IsStaked(tokenId uint64) bool {
 	return deposits.Has(tokenId)
-}
-
-func makeRewardsArray(rewards []ApiReward) []*json.Node {
-	rewardsArray := make([]*json.Node, len(rewards))
-
-	for i, reward := range rewards {
-		rewardsArray[i] = json.ObjectNode("", map[string]*json.Node{
-			"incentiveType":     json.StringNode("incentiveType", reward.IncentiveType),
-			"incentiveId":       json.StringNode("incentiveId", reward.IncentiveId),
-			"targetPoolPath":    json.StringNode("targetPoolPath", reward.TargetPoolPath),
-			"rewardTokenPath":   json.StringNode("rewardTokenPath", reward.RewardTokenPath),
-			"rewardTokenAmount": json.NumberNode("rewardTokenAmount", float64(reward.RewardTokenAmount)),
-			"stakeTimestamp":    json.NumberNode("stakeTimestamp", float64(reward.StakeTimestamp)),
-			"stakeHeight":       json.NumberNode("stakeHeight", float64(reward.StakeHeight)),
-			"incentiveStart":    json.NumberNode("incentiveStart", float64(reward.IncentiveStart)),
-		})
-	}
-	return rewardsArray
 }
