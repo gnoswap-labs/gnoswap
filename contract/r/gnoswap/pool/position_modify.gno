@@ -76,12 +76,12 @@ func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.
 }
 
 func calculateToken0Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityDelta *i256.Int) *i256.Int {
-	res := plp.SqrtPriceMathGetAmount0DeltaStr(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
+	res := plp.GetAmount0DeltaStr(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
 	return i256.MustFromDecimal(res)
 }
 
 func calculateToken1Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityDelta *i256.Int) *i256.Int {
-	res := plp.SqrtPriceMathGetAmount1DeltaStr(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
+	res := plp.GetAmount1DeltaStr(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
 	return i256.MustFromDecimal(res)
 }
 

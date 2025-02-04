@@ -10,7 +10,6 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
-	en "gno.land/r/gnoswap/v1/emission"
 )
 
 type RewardToken struct {
@@ -40,8 +39,6 @@ type ApiInternalIncentive struct {
 }
 
 func ApiGetRewardTokens() string {
-	en.MintAndDistributeGns()
-
 	rewardTokens := []RewardToken{}
 
 	pools.IterateAll(func(key string, pool *Pool) bool {
@@ -105,8 +102,6 @@ func ApiGetRewardTokens() string {
 }
 
 func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
-	en.MintAndDistributeGns()
-
 	rewardTokens := []RewardToken{}
 
 	pool, ok := pools.Get(targetPoolPath)
@@ -168,8 +163,6 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 }
 
 func ApiGetExternalIncentives() string {
-	en.MintAndDistributeGns()
-
 	apiExternalIncentives := []ApiExternalIncentive{}
 
 	pools.tree.Iterate("", "", func(key string, value interface{}) bool {
@@ -237,8 +230,6 @@ func ApiGetExternalIncentives() string {
 }
 
 func ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
-	en.MintAndDistributeGns()
-
 	apiExternalIncentives := []ApiExternalIncentive{}
 
 	pool, ok := pools.Get(poolPath)
@@ -315,8 +306,6 @@ func ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
 }
 
 func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
-	en.MintAndDistributeGns()
-
 	apiExternalIncentives := []ApiExternalIncentive{}
 
 	pool, ok := pools.Get(targetPoolPath)
@@ -393,8 +382,6 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 }
 
 func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
-	en.MintAndDistributeGns()
-
 	apiExternalIncentives := []ApiExternalIncentive{}
 
 	pools.tree.Iterate("", "", func(key string, value interface{}) bool {
@@ -467,8 +454,6 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 }
 
 func ApiGetInternalIncentives() string {
-	en.MintAndDistributeGns()
-
 	apiInternalIncentives := []ApiInternalIncentive{}
 
 	poolTier.membership.Iterate("", "", func(key string, value interface{}) bool {
@@ -515,8 +500,6 @@ func ApiGetInternalIncentives() string {
 }
 
 func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
-	en.MintAndDistributeGns()
-
 	apiInternalIncentives := []ApiInternalIncentive{}
 
 	tier := poolTier.CurrentTier(targetPoolPath)
@@ -563,8 +546,6 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 }
 
 func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
-	en.MintAndDistributeGns()
-
 	apiInternalIncentives := []ApiInternalIncentive{}
 
 	poolTier.membership.Iterate("", "", func(key string, value interface{}) bool {
@@ -682,8 +663,6 @@ type ResponseApiGetStakes struct {
 }
 
 func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
-	en.MintAndDistributeGns()
-
 	deposit := deposits.Get(targetLpTokenId)
 
 	reward := calcPositionReward(std.GetHeight(), targetLpTokenId)
@@ -763,8 +742,6 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 }
 
 func ApiGetRewardsByAddress(targetAddress string) string {
-	en.MintAndDistributeGns()
-
 	lpTokenRewards := []LpTokenReward{}
 
 	stakers.IterateAll(std.Address(targetAddress), func(positionId uint64, deposit *Deposit) bool {
@@ -850,8 +827,6 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 }
 
 func ApiGetStakes() string {
-	en.MintAndDistributeGns()
-
 	stakes := []ApiStake{}
 	deposits.Iterate(0, math.MaxUint64, func(positionId uint64, deposit *Deposit) bool {
 		stakes = append(stakes, ApiStake{
@@ -907,8 +882,6 @@ func ApiGetStakes() string {
 }
 
 func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
-	en.MintAndDistributeGns()
-
 	stakes := []ApiStake{}
 
 	deposit := deposits.Get(targetLpTokenId)
@@ -964,8 +937,6 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 }
 
 func ApiGetStakesByAddress(targetAddress string) string {
-	en.MintAndDistributeGns()
-
 	stakes := []ApiStake{}
 
 	stakers.IterateAll(std.Address(targetAddress), func(positionId uint64, deposit *Deposit) bool {

@@ -178,7 +178,7 @@ func testMakeExternalStart() {
 	nowTime := time.Now().Unix()
 	timeLeft := externalStartTime - nowTime
 
-	blockAvgTime := consts.BLOCK_GENERATION_INTERVAL
+	blockAvgTime := milliToSec(consts.BLOCK_GENERATION_INTERVAL)
 	blockLeft := timeLeft / blockAvgTime
 
 	std.TestSkipHeights(int64(blockLeft)) // skip until external bar starts
@@ -214,7 +214,7 @@ func testEndExternalGns() {
 	nowTime := time.Now().Unix()
 	timeLeft := externalEndTime - nowTime
 
-	blockAvgTime := consts.BLOCK_GENERATION_INTERVAL
+	blockAvgTime := milliToSec(consts.BLOCK_GENERATION_INTERVAL)
 	blockLeft := timeLeft / blockAvgTime
 
 	std.TestSkipHeights(int64(blockLeft)) // skip until external gns ends
@@ -269,4 +269,8 @@ func positionIdFrom(positionId interface{}) grc721.TokenID {
 	default:
 		panic("unsupported positionId type")
 	}
+}
+
+func milliToSec(ms int64) int64 {
+	return ms / consts.MILLISECONDS_PER_SECOND
 }

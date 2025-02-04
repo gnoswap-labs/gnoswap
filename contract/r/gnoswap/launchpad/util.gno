@@ -13,20 +13,23 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 )
 
+// Converts a string to an integer. Panics if the conversion fails.
 func strToInt(str string) int {
 	res, err := strconv.Atoi(str)
 	if err != nil {
 		panic(err.Error())
 	}
-
 	return res
 }
 
+// Converts a string to a uint64 using a decimal representation.
 func strToU256U64(str string) uint64 {
 	strValue := u256.MustFromDecimal(str)
 	return strValue.Uint64()
 }
 
+// Checks if a string is present in a slice of strings.
+// Returns true if the string is found, otherwise false.
 func contains(slice []string, str string) bool {
 	for _, v := range slice {
 		if v == str {
@@ -36,15 +39,16 @@ func contains(slice []string, str string) bool {
 	return false
 }
 
+// Marshals a JSON node into a string. Panics if the marshalling fails.
 func marshal(data *json.Node) string {
 	b, err := json.Marshal(data)
 	if err != nil {
 		panic(err.Error())
 	}
-
 	return string(b)
 }
 
+// Returns the minimum of two uint64 values.
 func minU64(x, y uint64) uint64 {
 	if x < y {
 		return x

@@ -11,6 +11,7 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+// Retrieves a proposal by its ID
 func mustGetProposal(proposalId uint64) ProposalInfo {
 	result, exists := proposals.Get(formatUint(proposalId))
 	if !exists {
@@ -23,6 +24,7 @@ func mustGetProposal(proposalId uint64) ProposalInfo {
 	return result.(ProposalInfo)
 }
 
+// Retrieves a vote by its key
 func mustGetVote(key string) bool {
 	vote, exists := votes.Get(key)
 	if !exists {
@@ -38,8 +40,10 @@ func mustGetVote(key string) bool {
 func getVoteInfoFromKey(voteKey string) (voteWithWeight, bool) {
 	mustGetVote(voteKey)
 
+	// Splits the vote key into proposal ID and user address
 	pid, addr := divideVoteKeyToProposalIdAndUser(voteKey)
 
+	// Retrieves user vote information
 	voteInfo, exists := getUserVote(addr, pid)
 	if !exists {
 		panic(addDetailToError(
@@ -51,15 +55,18 @@ func getVoteInfoFromKey(voteKey string) (voteWithWeight, bool) {
 	return voteInfo, true
 }
 
+// Retrieves vote information by key
 func mustGetVoteInfo(voteKey string) voteWithWeight {
 	voteInfo, _ := getVoteInfoFromKey(voteKey)
 	return voteInfo
 }
 
+// Iterates over an AVL tree and applies a callback function to each element
 func iterTree(tree *avl.Tree, cb func(key string, value interface{}) bool) {
 	tree.Iterate("", "", cb)
 }
 
+// Converts a string to an integer, panics if conversion fails
 func strToInt(str string) int {
 	res, err := strconv.Atoi(str)
 	if err != nil {
@@ -69,6 +76,7 @@ func strToInt(str string) int {
 	return res
 }
 
+// Converts a boolean vote to a string representation
 func voteToString(b bool) string {
 	if b {
 		return "yes"
@@ -76,6 +84,7 @@ func voteToString(b bool) string {
 	return "no"
 }
 
+// Marshals a JSON node to a string, panics if marshalling fails
 func marshal(data *json.Node) string {
 	b, err := json.Marshal(data)
 	if err != nil {
@@ -85,10 +94,12 @@ func marshal(data *json.Node) string {
 	return string(b)
 }
 
+// Encodes a string to base64
 func b64Encode(data string) string {
 	return string(base64.StdEncoding.EncodeToString([]byte(data)))
 }
 
+// Decodes a base64 string, panics if decoding fails
 func b64Decode(data string) string {
 	decoded, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
@@ -97,15 +108,18 @@ func b64Decode(data string) string {
 	return string(decoded)
 }
 
+// Returns the package path of the previous realm
 func prevRealm() string {
 	return std.PrevRealm().PkgPath()
 }
 
+// Returns the address and package path of the previous realm
 func getPrev() (string, string) {
 	prev := std.PrevRealm()
 	return prev.Addr().String(), prev.PkgPath()
 }
 
+// Formats an unsigned integer to a string
 func formatUint(v interface{}) string {
 	switch v := v.(type) {
 	case uint8:
@@ -119,10 +133,12 @@ func formatUint(v interface{}) string {
 	}
 }
 
+// Formats a boolean to a string
 func formatBool(v bool) string {
 	return strconv.FormatBool(v)
 }
 
+// Parses a string to an integer, panics if parsing fails
 func parseInt(s string) int {
 	num, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
@@ -131,6 +147,7 @@ func parseInt(s string) int {
 	return int(num)
 }
 
+// Parses a string to an unsigned 64-bit integer, panics if parsing fails
 func parseUint64(s string) uint64 {
 	num, err := strconv.ParseUint(s, 10, 64)
 	if err != nil {
@@ -139,6 +156,7 @@ func parseUint64(s string) uint64 {
 	return num
 }
 
+// Parses a string to a boolean, panics if parsing fails
 func parseBool(s string) bool {
 	switch s {
 	case "true":

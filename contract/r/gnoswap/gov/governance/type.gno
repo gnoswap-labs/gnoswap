@@ -7,6 +7,7 @@ import (
 )
 
 // Config represents the configuration of the governor contract
+// ref: https://docs.gnoswap.io/core-concepts/governance#scope-of-proposals-5
 type Config struct {
 	// How long after a proposal is created does voting starrt
 	VotingStartDelay uint64
