@@ -2,10 +2,8 @@ module github.com/gnoswap-labs/gnoswap
 
 go 1.23.5
 
-replace github.com/gnolang/gno => github.com/gnolang/gno v0.0.0-20250202132600-01abd50bb5ec
-
 require (
-	github.com/gnolang/gno v0.0.0-20250202132600-01abd50bb5ec
+	github.com/gnolang/gno v0.0.0-20250204100358-df14762147e9
 	github.com/rogpeppe/go-internal v1.13.1
 	github.com/stretchr/testify v1.10.0
 )
