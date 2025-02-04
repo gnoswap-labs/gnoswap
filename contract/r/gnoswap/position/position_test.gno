@@ -39,9 +39,9 @@ func IsRegistered(t *testing.T, tokenPath string) error {
 	return errInvalidTokenPath
 }
 
-func newDummyPosition(tokenId uint64) Position {
+func newDummyPosition(id uint64) Position {
 	return Position{
-		nonce:                    u256.NewUint(tokenId),
+		nonce:                    u256.NewUint(id),
 		operator:                 "user1",
 		poolKey:                  "poolKey1",
 		tickLower:                -500,
@@ -56,12 +56,12 @@ func newDummyPosition(tokenId uint64) Position {
 }
 
 func TestMustGetPosition(t *testing.T) {
-	tokenId := uint64(1)
-	position := newDummyPosition(tokenId)
-	setPosition(tokenId, position)
+	id := uint64(1)
+	position := newDummyPosition(id)
+	setPosition(id, position)
 
 	t.Run("Success - Get existing position", func(t *testing.T) {
-		result := MustGetPosition(tokenId)
+		result := MustGetPosition(id)
 		uassert.Equal(t, position.nonce.ToString(), result.nonce.ToString())
 		uassert.Equal(t, position.operator, result.operator)
 		uassert.Equal(t, position.poolKey, result.poolKey)
@@ -85,10 +85,10 @@ func TestMustGetPosition(t *testing.T) {
 }
 
 func TestGetPosition(t *testing.T) {
-	tokenId := uint64(1)
-	position := newDummyPosition(tokenId)
+	id := uint64(1)
+	position := newDummyPosition(id)
 	t.Run("Success - Get existing position", func(t *testing.T) {
-		result := MustGetPosition(tokenId)
+		result := MustGetPosition(id)
 		uassert.Equal(t, position.nonce.ToString(), result.nonce.ToString())
 		uassert.Equal(t, position.operator, result.operator)
 		uassert.Equal(t, position.poolKey, result.poolKey)
@@ -100,19 +100,19 @@ func TestGetPosition(t *testing.T) {
 		uassert.Equal(t, position.tokensOwed0.ToString(), result.tokensOwed0.ToString())
 		uassert.Equal(t, position.tokensOwed1.ToString(), result.tokensOwed1.ToString())
 		uassert.Equal(t, position.burned, result.burned)
-		removePosition(tokenId)
+		removePosition(id)
 	})
 }
 
 func TestSetPosition(t *testing.T) {
-	tokenId := uint64(300)
-	position := newDummyPosition(tokenId)
+	id := uint64(300)
+	position := newDummyPosition(id)
 
 	t.Run("Success - Create new position", func(t *testing.T) {
-		isNew := setPosition(tokenId, position)
+		isNew := setPosition(id, position)
 		uassert.False(t, isNew)
 
-		storedPosition, _ := GetPosition(tokenId)
+		storedPosition, _ := GetPosition(id)
 		uassert.Equal(t, position.nonce.ToString(), storedPosition.nonce.ToString())
 		uassert.Equal(t, position.operator, storedPosition.operator)
 		uassert.Equal(t, position.poolKey, storedPosition.poolKey)
@@ -128,44 +128,44 @@ func TestSetPosition(t *testing.T) {
 
 	t.Run("Success - Update existing position", func(t *testing.T) {
 		position.tickUpper = 1000
-		isNew := setPosition(tokenId, position)
+		isNew := setPosition(id, position)
 		uassert.True(t, isNew)
 
-		updatedPosition, _ := GetPosition(tokenId)
+		updatedPosition, _ := GetPosition(id)
 		uassert.Equal(t, int32(1000), updatedPosition.tickUpper)
 	})
 }
 
 func TestRemovePosition(t *testing.T) {
-	tokenId := uint64(2)
-	position := newDummyPosition(tokenId)
+	id := uint64(2)
+	position := newDummyPosition(id)
 
 	t.Run("Success - Remove existing position", func(t *testing.T) {
-		setPosition(tokenId, position)
-		removePosition(tokenId)
-		_, found := GetPosition(tokenId)
+		setPosition(id, position)
+		removePosition(id)
+		_, found := GetPosition(id)
 		uassert.False(t, found)
 	})
 
 	t.Run("Success - Remove non-existent position", func(t *testing.T) {
-		removePosition(tokenId)
-		_, found := GetPosition(tokenId)
+		removePosition(id)
+		_, found := GetPosition(id)
 		uassert.False(t, found)
 	})
 }
 
 func TestExistPosition(t *testing.T) {
-	tokenId := uint64(2)
-	position := newDummyPosition(tokenId)
+	id := uint64(2)
+	position := newDummyPosition(id)
 
 	t.Run("False - Position does not exist", func(t *testing.T) {
-		uassert.False(t, existPosition(tokenId))
+		uassert.False(t, existPosition(id))
 	})
 
 	t.Run("True - Position exists", func(t *testing.T) {
-		setPosition(tokenId, position)
-		uassert.True(t, existPosition(tokenId))
-		removePosition(tokenId)
+		setPosition(id, position)
+		uassert.True(t, existPosition(id))
+		removePosition(id)
 	})
 }
 
@@ -876,7 +876,7 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 		{
 			name: "Fail - Position Does Not Exist",
 			params: IncreaseLiquidityParams{
-				tokenId:        999,
+				positionId:    999,
 				amount0Desired: u256.NewUint(1000000),
 				amount1Desired: u256.NewUint(2000000),
 				amount0Min:     u256.NewUint(900000),
@@ -889,7 +889,7 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 		{
 			name: "Fail - Zero Liquidity",
 			params: IncreaseLiquidityParams{
-				tokenId:        7,
+				positionId:        7,
 				amount0Desired: u256.Zero(),
 				amount1Desired: u256.Zero(),
 				amount0Min:     u256.NewUint(900000),
@@ -911,7 +911,7 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 					})
 			} else {
 				tokenId, liquidity, amount0, amount1, _ := increaseLiquidity(tc.params)
-				uassert.Equal(t, tc.params.tokenId, tokenId)
+				uassert.Equal(t, tc.params.positionId, tokenId)
 				uassert.Equal(t, tc.expectedLiquidity, liquidity.ToString())
 				uassert.Equal(t, tc.expectedAmount0, amount0.ToString())
 				uassert.Equal(t, tc.expectedAmount1, amount1.ToString())

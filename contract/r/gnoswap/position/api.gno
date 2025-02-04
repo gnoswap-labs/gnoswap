@@ -24,25 +24,25 @@ func ApiGetPositions() string {
 	return makeJsonResponse(&baseStat, &PositionsResponse{Positions: rpcPositions})
 }
 
-func ApiGetPosition(lpTokenId uint64) string {
-	_, exist := GetPosition(lpTokenId)
+func ApiGetPosition(id uint64) string {
+	_, exist := GetPosition(id)
 	if !exist {
 		return ""
 	}
 
-	rpcPosition := rpcMakePosition(lpTokenId)
+	rpcPosition := rpcMakePosition(id)
 	baseStat := NewResponseQueryBase(std.GetHeight(), time.Now().Unix())
 	return makeJsonResponse(&baseStat, &PositionsResponse{Positions: []RpcPosition{rpcPosition}})
 }
 
 func ApiGetPositionsByPoolPath(poolPath string) string {
 	rpcPositions := []RpcPosition{}
-	for lpTokenId := uint64(1); lpTokenId < nextId; lpTokenId++ {
-		position := MustGetPosition(lpTokenId)
+	for id := uint64(1); id < nextId; id++ {
+		position := MustGetPosition(id)
 		if position.poolKey != poolPath {
 			continue
 		}
-		rpcPosition := rpcMakePosition(lpTokenId)
+		rpcPosition := rpcMakePosition(id)
 		rpcPositions = append(rpcPositions, rpcPosition)
 	}
 
@@ -52,10 +52,10 @@ func ApiGetPositionsByPoolPath(poolPath string) string {
 
 func ApiGetPositionsUnclaimedFee() string {
 	rpcUnclaimedFee := []RpcUnclaimedFee{}
-	for lpTokenId := uint64(1); lpTokenId < nextId; lpTokenId++ {
-		unclaimedFee0, unclaimedFee1 := unclaimedFee(lpTokenId)
+	for id := uint64(1); id < nextId; id++ {
+		unclaimedFee0, unclaimedFee1 := unclaimedFee(id)
 		rpcUnclaimedFee = append(rpcUnclaimedFee, RpcUnclaimedFee{
-			LpPositionId: lpTokenId,
+			LpPositionId: id,
 			Fee0:         unclaimedFee0.ToString(),
 			Fee1:         unclaimedFee1.ToString(),
 		})
@@ -123,10 +123,10 @@ func ApiGetPositionUnclaimedFeeByLpPositionId(lpPositionId uint64) string {
 	})
 }
 
-func rpcMakePosition(lpTokenId uint64) RpcPosition {
-	position := MustGetPosition(lpTokenId)
+func rpcMakePosition(positionId uint64) RpcPosition {
+	position := MustGetPosition(positionId)
 
-	burned := isBurned(lpTokenId)
+	burned := isBurned(positionId)
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	currentX96 := pool.Slot0SqrtPriceX96()
@@ -143,16 +143,16 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 	unclaimedFee0 := i256.Zero()
 	unclaimedFee1 := i256.Zero()
 	if !burned {
-		unclaimedFee0, unclaimedFee1 = unclaimedFee(lpTokenId)
+		unclaimedFee0, unclaimedFee1 = unclaimedFee(positionId)
 	}
 
-	owner, err := gnft.OwnerOf(tokenIdFrom(lpTokenId))
+	owner, err := gnft.OwnerOf(tokenIdFrom(positionId))
 	if err != nil {
 		owner = consts.ZERO_ADDRESS
 	}
 
 	return RpcPosition{
-		LpPositionId:             lpTokenId,
+		LpPositionId:             positionId,
 		Burned:                   burned,
 		Owner:                    owner.String(),
 		Operator:                 position.operator.String(),

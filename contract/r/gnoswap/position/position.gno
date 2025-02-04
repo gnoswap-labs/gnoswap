@@ -55,8 +55,8 @@ func mustUpdatePosition(id uint64, position Position) {
 // GetPosition returns a position for a given position ID.
 // Returns false if position doesn't exist
 func GetPosition(id uint64) (Position, bool) {
-	tokenIdStr := strconv.FormatUint(id, 10)
-	iPosition, exist := positions.Get(tokenIdStr)
+	idStr := strconv.FormatUint(id, 10)
+	iPosition, exist := positions.Get(idStr)
 	if !exist {
 		return Position{}, false
 	}
@@ -589,7 +589,7 @@ func IncreaseLiquidity(
 
 	amount0Desired, amount1Desired, amount0Min, amount1Min := parseAmounts(amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr)
 	increaseLiquidityParams := IncreaseLiquidityParams{
-		tokenId:        positionId,
+		positionId:     positionId,
 		amount0Desired: amount0Desired,
 		amount1Desired: amount1Desired,
 		amount0Min:     amount0Min,
@@ -694,12 +694,12 @@ func updatePosition(
 }
 
 func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, string) {
-	// verify tokenId exists
-	assertTokenExists(params.tokenId)
+	// verify position ID exists
+	assertTokenExists(params.positionId)
 	caller := getPrevAddr()
-	assertOnlyOwnerOfToken(params.tokenId, caller)
+	assertOnlyOwnerOfToken(params.positionId, caller)
 
-	position := MustGetPosition(params.tokenId)
+	position := MustGetPosition(params.positionId)
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
 			poolKey:        position.poolKey,
@@ -737,20 +737,20 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	position.liquidity = new(u256.Uint).Add(new(u256.Uint).Set(position.liquidity), liquidity)
 	position.burned = false
 
-	updated := setPosition(params.tokenId, position)
+	updated := setPosition(params.positionId, position)
 	if !updated {
 		panic(newErrorWithDetail(
 			errPositionDoesNotExist,
-			ufmt.Sprintf("can not increase liquidity for non-existent position(%d)", params.tokenId),
+			ufmt.Sprintf("can not increase liquidity for non-existent position(%d)", params.positionId),
 		))
 	}
 
-	return params.tokenId, liquidity, amount0, amount1, position.poolKey
+	return params.positionId, liquidity, amount0, amount1, position.poolKey
 }
 
 // DecreaseLiquidity decreases liquidity of the existing position
 // It also handles the conversion between GNOT and WUGNOT transparently for the user.
-// Returns tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
+// Returns position ID, liquidity, fee0, fee1, amount0, amount1, poolPath
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#decreaseliquidity
 func DecreaseLiquidity(
 	positionId uint64,
@@ -770,7 +770,7 @@ func DecreaseLiquidity(
 	amount0Min := u256.MustFromDecimal(amount0MinStr)
 	amount1Min := u256.MustFromDecimal(amount1MinStr)
 	decreaseLiquidityParams := DecreaseLiquidityParams{
-		tokenId:      positionId,
+		positionId:   positionId,
 		liquidity:    liquidityStr,
 		amount0Min:   amount0Min,
 		amount1Min:   amount1Min,
@@ -812,19 +812,19 @@ func DecreaseLiquidity(
 // unwrapped to GNOT at the end of the operation.
 // Returns position ID, liquidity, fee0, fee1, amount0, amount1, poolPath
 func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string) {
-	verifyTokenIdAndOwnership(params.tokenId)
+	verifyTokenIdAndOwnership(params.positionId)
 
 	// BEFORE DECREASE LIQUIDITY, COLLECT FEE FIRST
-	_, fee0Str, fee1Str, _, _, _ := CollectFee(params.tokenId, params.unwrapResult)
+	_, fee0Str, fee1Str, _, _, _ := CollectFee(params.positionId, params.unwrapResult)
 	fee0 := u256.MustFromDecimal(fee0Str)
 	fee1 := u256.MustFromDecimal(fee1Str)
 
-	position := MustGetPosition(params.tokenId)
+	position := MustGetPosition(params.positionId)
 	positionLiquidity := position.liquidity
 	if positionLiquidity.IsZero() {
 		panic(newErrorWithDetail(
 			errZeroLiquidity,
-			ufmt.Sprintf("position(position ID:%d) has 0 liquidity", params.tokenId),
+			ufmt.Sprintf("position(position ID:%d) has 0 liquidity", params.positionId),
 		))
 	}
 
@@ -870,7 +870,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 	position.liquidity = new(u256.Uint).Sub(positionLiquidity, liquidityToRemove)
-	mustUpdatePosition(params.tokenId, position)
+	mustUpdatePosition(params.positionId, position)
 
 	collect0, collect1 := pl.Collect(
 		pToken0,
@@ -901,20 +901,20 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 			"tokensOwed1 underflow",
 		))
 	}
-	mustUpdatePosition(params.tokenId, position)
+	mustUpdatePosition(params.positionId, position)
 
 	if position.isClear() {
-		burnPosition(params.tokenId) // just update flag (we don't want to burn actual position)
+		burnPosition(params.positionId) // just update flag (we don't want to burn actual position)
 	}
 
 	// NO UNWRAP
 	if !params.unwrapResult {
-		return params.tokenId, liquidityToRemove, fee0, fee1, collectAmount0, collectAmount1, position.poolKey
+		return params.positionId, liquidityToRemove, fee0, fee1, collectAmount0, collectAmount1, position.poolKey
 	}
 
 	handleUnwrap(pToken0, pToken1, params.unwrapResult, beforeWugnotBalance, caller)
 
-	return params.tokenId, liquidityToRemove, fee0, fee1, collectAmount0, collectAmount1, position.poolKey
+	return params.positionId, liquidityToRemove, fee0, fee1, collectAmount0, collectAmount1, position.poolKey
 }
 
 // CollectFee collects swap fee from the position
@@ -1037,7 +1037,7 @@ func getCurrentFeeGrowth(postion Position) (FeeGrowthInside, error) {
 
 // Repositiomn adjusts the position of an existing liquidity token
 // by changing its price range and liquidity amount.
-// Returns tokenId, liquidity, tickLower, tickUpper, amount0, amount1
+// Returns Position ID, liquidity, tickLower, tickUpper, amount0, amount1
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#reposition
 func Reposition(
 	positionId uint64,

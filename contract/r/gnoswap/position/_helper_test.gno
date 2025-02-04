@@ -454,10 +454,9 @@ func LPTokenUnStake(t *testing.T, owner std.Address, tokenId uint64, unwrap bool
 	sr.UnStakeToken(tokenId, unwrap)
 }
 
-func getPoolFromLpTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {
+func getPoolFromTokenId(t *testing.T, tokenId uint64) *pl.Pool {
 	t.Helper()
-
-	position := MustGetPosition(lpTokenId)
+	position := MustGetPosition(tokenId)
 	return pl.GetPoolFromPoolPath(position.poolKey)
 }
 
