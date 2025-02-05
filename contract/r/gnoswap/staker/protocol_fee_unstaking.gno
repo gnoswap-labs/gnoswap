@@ -104,7 +104,7 @@ func SetUnStakingFeeByAdmin(fee uint64) {
 		panic(err.Error())
 	}
 
-	prevUnStakingFee := getUnStakingFee()
+	prevUnStakingFee := GetUnstakingFee()
 
 	setUnStakingFee(fee)
 
@@ -128,7 +128,7 @@ func SetUnStakingFee(fee uint64) {
 		panic(err.Error())
 	}
 
-	prevUnStakingFee := getUnStakingFee()
+	prevUnStakingFee := GetUnstakingFee()
 
 	setUnStakingFee(fee)
 
@@ -153,8 +153,4 @@ func setUnStakingFee(fee uint64) {
 	}
 
 	unstakingFee = fee
-}
-
-func getUnStakingFee() uint64 {
-	return unstakingFee
 }
