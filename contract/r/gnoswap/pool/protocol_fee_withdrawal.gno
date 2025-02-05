@@ -28,9 +28,9 @@ const (
 // Input:
 // - positionId: the id of the LP token
 // - token0Path: the path of the token0
-// - _amount0: the amount of token0
+// - amount0: the amount of token0
 // - token1Path: the path of the token1
-// - _amount1: the amount of token1
+// - amount1: the amount of token1
 // - poolPath: the path of the pool
 // - positionCaller: the original caller of the position contract
 // Output:

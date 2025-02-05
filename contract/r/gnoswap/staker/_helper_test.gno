@@ -623,7 +623,7 @@ type ApiEmissionDebugPosition struct {
 
 func getRewardRatio(t *testing.T, height int64) uint64 {
 	t.Helper()
-	warmups := InstantiateWarmup(height)
+	warmups := instantiateWarmup(height)
 
 	for _, warmup := range warmups {
 		if height < warmup.NextWarmupHeight {
