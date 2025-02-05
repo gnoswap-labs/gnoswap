@@ -80,7 +80,7 @@ func Delegate(to std.Address, amount uint64) {
 		))
 	}
 
-	rewardState.AddStake(uint64(std.GetHeight()), caller, amount, getCurrentBalance(), getCurrentProtocolFeeBalance())
+	rewardState.AddStake(uint64(std.GetHeight()), caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
 	// GNS // caller -> GovStaker
 	gns.TransferFrom(caller, std.CurrentRealm().Addr(), amount)
@@ -201,7 +201,7 @@ func Undelegate(from std.Address, amount uint64) {
 		))
 	}
 
-	reward, protocolFeeRewards := rewardState.RemoveStake(caller, amount, getCurrentBalance(), getCurrentProtocolFeeBalance())
+	reward, protocolFeeRewards := rewardState.RemoveStake(caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
 	// burn equivalent amount of xGNS
 	xgns.Burn(caller, amount)
@@ -306,7 +306,7 @@ func CollectReward() {
 	prevAddr, prevPkgPath := getPrev()
 	caller := std.PrevRealm().Addr()
 
-	reward, protocolFeeRewards := rewardState.Claim(caller, getCurrentBalance(), getCurrentProtocolFeeBalance())
+	reward, protocolFeeRewards := rewardState.Claim(caller, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
 	// XXX (@notJoon): There could be cases where the reward pool is empty, In such case,
 	// it seems appropriate to return 0 and continue processing.
@@ -372,7 +372,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 
 	prevAddr, prevPkgPath := getPrev()
 
-	emissionReward, protocolFeeRewards := rewardState.Claim(to, getCurrentBalance(), getCurrentProtocolFeeBalance())
+	emissionReward, protocolFeeRewards := rewardState.Claim(to, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	if emissionReward > 0 {
 		gns.Transfer(to, emissionReward)
 		std.Emit(
