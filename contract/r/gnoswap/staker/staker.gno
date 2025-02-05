@@ -539,7 +539,7 @@ func UnStakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	deposit := deposits.Get(tokenId)
 	poolPath := deposit.targetPoolPath
 
-	// Claim All Rewards
+	// claim All Rewards
 	CollectReward(tokenId, unwrapResult)
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(poolPath, tokenId)
 

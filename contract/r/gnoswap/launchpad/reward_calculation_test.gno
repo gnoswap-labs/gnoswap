@@ -185,10 +185,10 @@ func TestRewardState_ClaimAtEndHeight(t *testing.T) {
 
 	state.AddStake(150, "deposit1", 100)
 
-	// Claim exactly at endHeight
+	// claim exactly at endHeight
 	reward1 := state.Claim("deposit1", endHeight)
 
-	// Claim after endHeight
+	// claim after endHeight
 	reward2 := state.Claim("deposit1", endHeight+50)
 
 	uassert.NotEqual(t, reward1, uint64(0),
