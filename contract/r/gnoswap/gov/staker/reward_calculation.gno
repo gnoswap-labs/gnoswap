@@ -319,7 +319,7 @@ func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
 		rewardState.addStake(uint64(std.GetHeight()), caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	} else {
 		amountByProjectWallet.Set(addr.String(), currentAmount-amount)
-		rewardState.removeStake(caller, amount, getCurrentBalance(), getCurrentProtocolFeeBalance())
+		rewardState.removeStake(caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	}
 }
 
