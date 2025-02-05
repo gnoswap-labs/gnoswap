@@ -335,10 +335,10 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 func ApiGetRewardsByAddress(targetAddress string) string {
 	lpTokenRewards := []LpTokenReward{}
 
-	stakers.IterateAll(std.Address(targetAddress), func(tokenId uint64, deposit *Deposit) bool {
+	stakers.IterateAll(std.Address(targetAddress), func(positionId uint64, deposit *Deposit) bool {
 		rewards := []ApiReward{}
 
-		reward := calcPositionReward(std.GetHeight(), tokenId)
+		reward := calcPositionReward(std.GetHeight(), positionId)
 
 		// get internal gns reward
 		if reward.Internal > 0 {
@@ -368,7 +368,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 			})
 		}
 
-		lpTokenReward := newLpTokenReward(tokenId, deposit.owner.String(), rewards)
+		lpTokenReward := newLpTokenReward(positionId, deposit.owner.String(), rewards)
 		lpTokenRewards = append(lpTokenRewards, lpTokenReward)
 
 		return false
@@ -384,8 +384,8 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 
 func ApiGetStakes() string {
 	stakes := []ApiStake{}
-	deposits.Iterate(0, math.MaxUint64, func(tokenId uint64, deposit *Deposit) bool {
-		stk := newApiStake(tokenId, deposit)
+	deposits.Iterate(0, math.MaxUint64, func(positionId uint64, deposit *Deposit) bool {
+		stk := newApiStake(positionId, deposit)
 		stakes = append(stakes, stk)
 		return false
 	})
@@ -416,10 +416,9 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 func ApiGetStakesByAddress(targetAddress string) string {
 	stakes := []ApiStake{}
 
-	stakers.IterateAll(std.Address(targetAddress), func(tokenId uint64, deposit *Deposit) bool {
-		stk := newApiStake(tokenId, deposit)
+	stakers.IterateAll(std.Address(targetAddress), func(positionId uint64, deposit *Deposit) bool {
+		stk := newApiStake(positionId, deposit)
 		stakes = append(stakes, stk)
-
 		return false
 	})
 
@@ -432,6 +431,6 @@ func ApiGetStakesByAddress(targetAddress string) string {
 }
 
 // for off chain to check if lpTokenId is staked via RPC
-func IsStaked(tokenId uint64) bool {
-	return deposits.Has(tokenId)
+func IsStaked(positionId uint64) bool {
+	return deposits.Has(positionId)
 }
