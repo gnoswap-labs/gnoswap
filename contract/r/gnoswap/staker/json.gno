@@ -134,7 +134,7 @@ func (r LpTokenReward) JSON() *json.Node {
 
 // Stake represents a single stake
 type ApiStake struct {
-	TokenId        uint64      `json:"tokenId"`        // The ID of the staked LP token
+	PositionId     uint64      `json:"positionId"`     // The ID of the staked LP token
 	Owner          std.Address `json:"owner"`          // The address of the owner of the staked LP token
 	NumberOfStakes uint64      `json:"numberOfStakes"` // The number of times this LP token has been staked
 	StakeTimestamp int64       `json:"stakeTimestamp"` // The timestamp when the LP token was staked
@@ -144,7 +144,7 @@ type ApiStake struct {
 
 func newApiStake(tokenId uint64, deposit *Deposit) ApiStake {
 	return ApiStake{
-		TokenId:        tokenId,
+		PositionId:     tokenId,
 		Owner:          deposit.owner,
 		StakeTimestamp: deposit.stakeTimestamp,
 		StakeHeight:    deposit.stakeHeight,
@@ -154,7 +154,7 @@ func newApiStake(tokenId uint64, deposit *Deposit) ApiStake {
 
 func (s ApiStake) JSON() *json.Node {
 	return json.ObjectNode("", map[string]*json.Node{
-		"tokenId":        json.NumberNode("tokenId", float64(s.TokenId)),
+		"positionId":     json.NumberNode("positionId", float64(s.PositionId)),
 		"owner":          json.StringNode("owner", s.Owner.String()),
 		"stakeTimestamp": json.NumberNode("stakeTimestamp", float64(s.StakeTimestamp)),
 		"stakeHeight":    json.NumberNode("stakeHeight", float64(s.StakeHeight)),
@@ -238,8 +238,6 @@ func makeApiResponse(rs []JsonResponse) string {
 
 	return string(b)
 }
-
-///////////////////// utils /////////////////////
 
 func makeRewardsArray(rewards []ApiReward) []*json.Node {
 	rewardsArray := make([]*json.Node, len(rewards))
