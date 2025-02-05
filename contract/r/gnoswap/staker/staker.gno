@@ -45,7 +45,7 @@ func (self *Deposits) Get(positionId uint64) *Deposit {
 }
 
 func (self *Deposits) set(positionId uint64, deposit *Deposit) {
-	self.tree.Set(EncodeUint(tokenId), deposit)
+	self.tree.Set(EncodeUint(positionId), deposit)
 }
 
 func (self *Deposits) Has(positionId uint64) bool {
