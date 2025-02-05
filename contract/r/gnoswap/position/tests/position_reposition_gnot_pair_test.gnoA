@@ -58,13 +58,6 @@ func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
 	return uint64(coins.AmountOf("ugnot"))
 }
 
-func getPoolFromTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {
-	t.Helper()
-
-	position := MustGetPosition(lpTokenId)
-	return pl.GetPoolFromPoolPath(position.poolKey)
-}
-
 func TestRepositionCoinPair(t *testing.T) {
 	testPoolInitCreatePool(t)
 	testMintPosition01InRange(t)
@@ -290,7 +283,7 @@ func testReposition(t *testing.T) {
 		// user ugnot
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(81600118))
 
-		position = MustGetPosition(lpTokenId)
+		position = MustGetPosition(positionId)
 		uassert.Equal(t, position.nonce.ToString(), "0")
 		uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
@@ -303,7 +296,7 @@ func testReposition(t *testing.T) {
 		uassert.Equal(t, position.tokensOwed1.ToString(), "0")
 		uassert.Equal(t, position.burned, false)
 
-		unclaimedFee0, unclaimedFee1 := unclaimedFee(lpTokenId)
+		unclaimedFee0, unclaimedFee1 := unclaimedFee(positionId)
 		uassert.Equal(t, unclaimedFee0.ToString(), "0")
 		uassert.Equal(t, unclaimedFee1.ToString(), "0")
 	})

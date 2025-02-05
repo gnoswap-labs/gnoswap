@@ -47,13 +47,6 @@ var (
 	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
 )
 
-func getPoolFromTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {
-	t.Helper()
-
-	position := MustGetPosition(lpTokenId)
-	return pl.GetPoolFromPoolPath(position.poolKey)
-}
-
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 

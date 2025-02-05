@@ -100,7 +100,7 @@ func testIncreaseLiquidity(t *testing.T) {
 
 		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // WRAP
 
-		pool := getPoolFromTokenId(t, uint64(1))
+		pool := getPoolFromPositionId(t, uint64(1))
 		oldLiquidity := pool.Liquidity()
 
 		// prepare 10000005ugnot (5 for refund test)
@@ -147,7 +147,7 @@ func testDecreaseLiquidityWrapped(t *testing.T) {
 	t.Run("decrease liquidity wrapped", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		oldLiquidity := getPoolFromTokenId(t, uint64(1)).Liquidity()
+		oldLiquidity := getPoolFromPositionId(t, uint64(1)).Liquidity()
 
 		userWugnotBalance := wugnot.BalanceOf(adminAddr)
 		uassert.Equal(t, userWugnotBalance, uint64(0))
@@ -170,7 +170,7 @@ func testDecreaseLiquidityWrapped(t *testing.T) {
 		userUgnotBalance = ugnotBalanceOf(t, adminAddr) // wrapped result, so ugnot didn't change
 		uassert.Equal(t, uint64(10), userUgnotBalance)
 
-		newLiquidity := getPoolFromTokenId(t, uint64(1)).Liquidity()
+		newLiquidity := getPoolFromPositionId(t, uint64(1)).Liquidity()
 		uassert.Equal(t, true, newLiquidity.Lt(oldLiquidity))
 
 		// check fee left
@@ -186,7 +186,7 @@ func testDecreaseLiquidityUnwrapped(t *testing.T) {
 	t.Run("decrease liquidity unwrapped", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		oldLiquidity := getPoolFromTokenId(t, uint64(1)).Liquidity()
+		oldLiquidity := getPoolFromPositionId(t, uint64(1)).Liquidity()
 		println("oldLiquidity ", oldLiquidity.ToString())
 
 		userWugnotBalance := wugnot.BalanceOf(adminAddr)
@@ -210,7 +210,7 @@ func testDecreaseLiquidityUnwrapped(t *testing.T) {
 		userUgnotBalance = ugnotBalanceOf(t, adminAddr) // unwrapped result, so ugnot decreased
 		uassert.Equal(t, userUgnotBalance, uint64(24000009))
 
-		newLiquidity := getPoolFromTokenId(t, uint64(1)).Liquidity()
+		newLiquidity := getPoolFromPositionId(t, uint64(1)).Liquidity()
 		uassert.Equal(t, true, newLiquidity.Lt(oldLiquidity))
 
 		// check fee left
