@@ -190,7 +190,7 @@ func TestDecreaseLiquidityInPosition(t *testing.T) {
 	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-	resultPositionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(lpTokenId, "318704392", "0", "0", max_timeout, false)
+	resultPositionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(positionId, "318704392", "0", "0", max_timeout, false)
 
 	uassert.Equal(t, resultPositionId, positionId)
 	uassert.Equal(t, amount0, "19628840")

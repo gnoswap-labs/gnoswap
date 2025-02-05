@@ -304,7 +304,7 @@ func TestDecreaseLiquidityPosition02(t *testing.T) {
 	uassert.Equal(t, unclaimedFee0.ToString(), "0")
 	uassert.Equal(t, unclaimedFee1.ToString(), "0")
 
-	// approve fee0, fee1, lpTokenId to pool
+	// approve fee0, fee1, positionID to pool
 	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
