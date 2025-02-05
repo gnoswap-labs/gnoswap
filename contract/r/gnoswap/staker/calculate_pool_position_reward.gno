@@ -27,26 +27,26 @@ type Reward struct {
 }
 
 // calculate position reward by each warmup
-func calcPositionRewardByWarmups(currentHeight int64, tokenId uint64) []Reward {
+func calcPositionRewardByWarmups(currentHeight int64, positionId uint64) []Reward {
 	rewards := calculatePositionReward(CalcPositionRewardParam{
 		CurrentHeight: currentHeight,
 		Deposits:      deposits,
 		Pools:         pools,
 		PoolTier:      poolTier,
-		TokenId:       tokenId,
+		PositionId:    positionId,
 	})
 
 	return rewards
 }
 
 // calculate total position rewards and penalties
-func calcPositionReward(currentHeight int64, tokenId uint64) Reward {
+func calcPositionReward(currentHeight int64, positionId uint64) Reward {
 	rewards := calculatePositionReward(CalcPositionRewardParam{
 		CurrentHeight: currentHeight,
 		Deposits:      deposits,
 		Pools:         pools,
 		PoolTier:      poolTier,
-		TokenId:       tokenId,
+		PositionId:    positionId,
 	})
 
 	internal := uint64(0)
@@ -94,14 +94,14 @@ type CalcPositionRewardParam struct {
 	PoolTier      *PoolTier
 
 	// Position variables
-	TokenId uint64
+	PositionId uint64
 }
 
 func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	// cache per-pool rewards in the internal incentive(tiers)
 	param.PoolTier.cacheReward(param.CurrentHeight, param.Pools)
 
-	deposit := param.Deposits.Get(param.TokenId)
+	deposit := param.Deposits.Get(param.PositionId)
 	poolPath := deposit.targetPoolPath
 
 	pool, ok := param.Pools.Get(poolPath)
