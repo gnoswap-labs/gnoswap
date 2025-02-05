@@ -6,7 +6,7 @@ import (
 	"gno.land/p/demo/grc/grc721"
 )
 
-func TestTokenIdFrom(t *testing.T) {
+func TestPositionIdFrom(t *testing.T) {
 	tests := []struct {
 		name      string
 		input     interface{}
@@ -50,14 +50,14 @@ func TestTokenIdFrom(t *testing.T) {
 			if tt.wantPanic {
 				defer func() {
 					if r := recover(); r == nil {
-						t.Errorf("TokenIdFrom() should have panicked")
+						t.Errorf("PositionIdFrom() should have panicked")
 					}
 				}()
 			}
 
-			got := TokenIdFrom(tt.input)
+			got := PositionIdFrom(tt.input)
 			if got != tt.want {
-				t.Errorf("TokenIdFrom() = %v, want %v", got, tt.want)
+				t.Errorf("PositionIdFrom() = %v, want %v", got, tt.want)
 			}
 		})
 	}
