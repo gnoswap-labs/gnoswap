@@ -47,7 +47,7 @@ var (
 	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
 )
 
-func getPoolFromLpTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {
+func getPoolFromTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {
 	t.Helper()
 
 	position := MustGetPosition(lpTokenId)

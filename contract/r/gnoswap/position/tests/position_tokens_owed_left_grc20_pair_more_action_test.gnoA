@@ -16,7 +16,7 @@ import (
 	"gno.land/r/onbloc/foo"
 )
 
-func getPoolFromLpTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {
+func getPoolFromTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {
 	t.Helper()
 
 	position := MustGetPosition(lpTokenId)
@@ -278,7 +278,7 @@ func TestIncreaseLiquidity02(t *testing.T) {
 	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-	pool := getPoolFromLpTokenId(t, uint64(2))
+	pool := getPoolFromTokenId(t, uint64(2))
 	oldLiquidity := pool.Liquidity()
 
 	_, _, m0, m1, _ := IncreaseLiquidity(

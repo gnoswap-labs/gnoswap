@@ -54,7 +54,7 @@ var (
 	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
 )
 
-func getPoolFromLpTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {
+func getPoolFromTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {
 	t.Helper()
 
 	position := MustGetPosition(lpTokenId)
@@ -320,7 +320,7 @@ func TestIncreaseLiquidity02(t *testing.T) {
 	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-	pool := getPoolFromLpTokenId(t, uint64(2))
+	pool := getPoolFromTokenId(t, uint64(2))
 	oldLiquidity := pool.Liquidity()
 
 	_, _, m0, m1, _ := IncreaseLiquidity(
@@ -352,7 +352,7 @@ func TestDecreaseLiquidityPosition02(t *testing.T) {
 	// approve fee0, feelpTokenId to pool
 	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	oldLiquidities := getPoolFromLpTokenId(t, positionId).Liquidity()
+	oldLiquidities := getPoolFromTokenId(t, positionId).Liquidity()
 
 	resultPositionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 		positionId,
@@ -401,7 +401,7 @@ func TestDecreaseLiquidityPosition02All(t *testing.T) {
 	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-	oldLiquidities := getPoolFromLpTokenId(t, positionId).Liquidity()
+	oldLiquidities := getPoolFromTokenId(t, positionId).Liquidity()
 
 	resultPositionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 		positionId,

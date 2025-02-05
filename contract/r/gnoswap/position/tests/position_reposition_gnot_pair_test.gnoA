@@ -58,7 +58,7 @@ func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
 	return uint64(coins.AmountOf("ugnot"))
 }
 
-func getPoolFromLpTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {
+func getPoolFromTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {
 	t.Helper()
 
 	position := MustGetPosition(lpTokenId)
