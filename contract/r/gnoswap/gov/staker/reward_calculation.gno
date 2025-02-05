@@ -174,7 +174,7 @@ func (self *RewardState) deductReward(staker std.Address, currentBalance uint64)
 	return reward64, protocolFeeRewards
 }
 
-// This function MUST be called as a part of AddStake or RemoveStake
+// This function MUST be called as a part of addStake or removeStake
 // CurrentBalance / StakeChange / IsRemoveStake will be updated in those functions
 func (self *RewardState) finalize(currentBalance uint64, currentProtocolFeeBalances map[string]uint64) {
 	if self.TotalStake == uint64(0) {
@@ -207,7 +207,7 @@ func (self *RewardState) finalize(currentBalance uint64, currentProtocolFeeBalan
 	}
 }
 
-func (self *RewardState) AddStake(currentHeight uint64, staker std.Address, amount uint64, currentBalance uint64, currentProtocolFeeBalances map[string]uint64) {
+func (self *RewardState) addStake(currentHeight uint64, staker std.Address, amount uint64, currentBalance uint64, currentProtocolFeeBalances map[string]uint64) {
 	self.finalize(currentBalance, currentProtocolFeeBalances)
 
 	self.TotalStake += amount
@@ -249,7 +249,7 @@ func (self *RewardState) AddStake(currentHeight uint64, staker std.Address, amou
 	self.info.Set(staker.String(), info)
 }
 
-func (self *RewardState) Claim(staker std.Address, currentBalance uint64, currentProtocolFeeBalances map[string]uint64) (uint64, map[string]uint64) {
+func (self *RewardState) claim(staker std.Address, currentBalance uint64, currentProtocolFeeBalances map[string]uint64) (uint64, map[string]uint64) {
 	if !self.info.Has(staker.String()) {
 		return 0, make(map[string]uint64)
 	}
@@ -266,7 +266,7 @@ func (self *RewardState) Claim(staker std.Address, currentBalance uint64, curren
 	return reward, protocolFeeRewards
 }
 
-func (self *RewardState) RemoveStake(staker std.Address, amount uint64, currentBalance uint64, currentProtocolFeeBalances map[string]uint64) (uint64, map[string]uint64) {
+func (self *RewardState) removeStake(staker std.Address, amount uint64, currentBalance uint64, currentProtocolFeeBalances map[string]uint64) (uint64, map[string]uint64) {
 	self.finalize(currentBalance, currentProtocolFeeBalances)
 
 	reward, protocolFeeRewards := self.deductReward(staker, currentBalance)
@@ -316,10 +316,10 @@ func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
 	currentAmount := getAmountByProjectWallet(addr)
 	if add {
 		amountByProjectWallet.Set(addr.String(), currentAmount+amount)
-		rewardState.AddStake(uint64(std.GetHeight()), caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
+		rewardState.addStake(uint64(std.GetHeight()), caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	} else {
 		amountByProjectWallet.Set(addr.String(), currentAmount-amount)
-		rewardState.RemoveStake(caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
+		rewardState.removeStake(caller, amount, getCurrentBalance(), getCurrentProtocolFeeBalance())
 	}
 }
 

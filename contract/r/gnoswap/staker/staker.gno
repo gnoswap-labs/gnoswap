@@ -44,7 +44,7 @@ func (self *Deposits) Get(tokenId uint64) *Deposit {
 	return deposit
 }
 
-func (self *Deposits) Set(tokenId uint64, deposit *Deposit) {
+func (self *Deposits) set(tokenId uint64, deposit *Deposit) {
 	self.tree.Set(EncodeUint(tokenId), deposit)
 }
 
@@ -52,7 +52,7 @@ func (self *Deposits) Has(tokenId uint64) bool {
 	return self.tree.Has(EncodeUint(tokenId))
 }
 
-func (self *Deposits) Remove(tokenId uint64) {
+func (self *Deposits) remove(tokenId uint64) {
 	self.tree.Remove(EncodeUint(tokenId))
 }
 
@@ -89,7 +89,7 @@ func (self *ExternalIncentives) Get(incentiveId string) *ExternalIncentive {
 	return incentive
 }
 
-func (self *ExternalIncentives) Set(incentiveId string, incentive *ExternalIncentive) {
+func (self *ExternalIncentives) set(incentiveId string, incentive *ExternalIncentive) {
 	self.tree.Set(incentiveId, incentive)
 }
 
@@ -97,7 +97,7 @@ func (self *ExternalIncentives) Has(incentiveId string) bool {
 	return self.tree.Has(incentiveId)
 }
 
-func (self *ExternalIncentives) Remove(incentiveId string) {
+func (self *ExternalIncentives) remove(incentiveId string) {
 	self.tree.Remove(incentiveId)
 }
 
@@ -127,7 +127,7 @@ func (self *Stakers) IterateAll(address std.Address, fn func(depositId uint64, d
 	})
 }
 
-func (self *Stakers) AddDeposit(address std.Address, depositId uint64, deposit *Deposit) {
+func (self *Stakers) addDeposit(address std.Address, depositId uint64, deposit *Deposit) {
 	depositTreeI, ok := self.tree.Get(address.String())
 	if !ok {
 		depositTree := avl.NewTree()
@@ -138,7 +138,7 @@ func (self *Stakers) AddDeposit(address std.Address, depositId uint64, deposit *
 	depositTree.Set(EncodeUint(depositId), deposit)
 }
 
-func (self *Stakers) RemoveDeposit(address std.Address, depositId uint64) {
+func (self *Stakers) removeDeposit(address std.Address, depositId uint64) {
 	depositTreeI, ok := self.tree.Get(address.String())
 	if !ok {
 		return
@@ -257,13 +257,13 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		tickUpper:         tickUpper,
 		liquidity:         liquidity,
 		lastCollectHeight: currentHeight,
-		warmups:           InstantiateWarmup(currentHeight),
+		warmups:           instantiateWarmup(currentHeight),
 	}
 
 	currentTick := pl.PoolGetSlot0Tick(poolPath)
 
-	deposits.Set(tokenId, deposit)
-	stakers.AddDeposit(caller, tokenId, deposit)
+	deposits.set(tokenId, deposit)
+	stakers.addDeposit(caller, tokenId, deposit)
 
 	if caller == owner { // if caller is owner, transfer NFT ownership to staker contract
 		if err := transferDeposit(tokenId, owner, caller, consts.STAKER_ADDR); err != nil {
@@ -284,7 +284,7 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		pool.modifyDeposit(signedLiquidity, currentHeight, currentTick)
 	}
 	// historical tick must be set regardless of the deposit's range
-	pool.historicalTick.Set(currentHeight, currentTick)
+	pool.historicalTick.set(currentHeight, currentTick)
 
 	// this could happen because of how position stores the ticks.
 	// ticks are negated if the token1 < token0
@@ -435,7 +435,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 			))
 		}
 		incentive.rewardAmount -= amount
-		externalIncentives.Set(incentiveId, incentive)
+		externalIncentives.set(incentiveId, incentive)
 
 		toUser := handleUnStakingFee(rewardToken, amount, false, tokenId, incentive.targetPoolPath)
 
@@ -479,7 +479,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) (string, string) {
 		gns.Transfer(consts.COMMUNITY_POOL_ADDR, reward.InternalPenalty)
 	}
 
-	unClaimableInternal := ProcessUnClaimableReward(deposit.targetPoolPath, currentHeight)
+	unClaimableInternal := processUnClaimableReward(deposit.targetPoolPath, currentHeight)
 	if unClaimableInternal > 0 {
 		// internal unClaimable to community pool
 		totalEmissionSent += unClaimableInternal
@@ -539,7 +539,7 @@ func UnStakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	deposit := deposits.Get(tokenId)
 	poolPath := deposit.targetPoolPath
 
-	// Claim All Rewards
+	// claim All Rewards
 	CollectReward(tokenId, unwrapResult)
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(poolPath, tokenId)
 
@@ -589,8 +589,8 @@ func applyUnStake(tokenId uint64) {
 	upperTick.modifyDepositUpper(currentHeight, currentTick, signedLiquidity)
 	lowerTick.modifyDepositLower(currentHeight, currentTick, signedLiquidity)
 
-	deposits.Remove(tokenId)
-	stakers.RemoveDeposit(deposit.owner, tokenId)
+	deposits.remove(tokenId)
+	stakers.removeDeposit(deposit.owner, tokenId)
 
 	owner := gnft.MustOwnerOf(tid(tokenId))
 	caller := getPrevAddr()
