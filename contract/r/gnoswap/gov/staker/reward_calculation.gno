@@ -19,9 +19,9 @@ var (
 	currentProtocolFeeBalance map[string]uint64 = make(map[string]uint64) // protocol fee balance of gov/staker (tokenPath -> balance)
 )
 
-// getCurrentBalance gets the acuumulated GNS balance from emission to gov/staker
+// collectAndGetGNSBalance gets the acuumulated GNS balance from emission to gov/staker
 // Need to clear the distributed GNS to gov/staker in emission to get the latest accumulated GNS balance
-func getCurrentBalance() uint64 {
+func collectAndGetGNSBalance() uint64 {
 	gotGnsForEmission := en.GetDistributedToGovStaker()
 	en.ClearDistributedToGovStaker()
 
@@ -30,9 +30,9 @@ func getCurrentBalance() uint64 {
 	return currentGNSBalance
 }
 
-// getCurrentProtocolFeeBalance gets the accumulated protocol fee balance from protocol_fee to gov/staker
+// updateAndGetProtocolFeeBalance gets the accumulated protocol fee balance from protocol_fee to gov/staker
 // Need to clear the accumulated protocol fee to gov/staker in protocol fee to get the latest accumulated protocol fee balance
-func getCurrentProtocolFeeBalance() map[string]uint64 {
+func updateAndGetProtocolFeeBalance() map[string]uint64 {
 	pf.DistributeProtocolFee()
 	gotAccuProtocolFee := pf.GetAccuTransferToGovStaker()
 
@@ -316,10 +316,10 @@ func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
 	currentAmount := getAmountByProjectWallet(addr)
 	if add {
 		amountByProjectWallet.Set(addr.String(), currentAmount+amount)
-		rewardState.addStake(uint64(std.GetHeight()), caller, amount, getCurrentBalance(), getCurrentProtocolFeeBalance())
+		rewardState.addStake(uint64(std.GetHeight()), caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	} else {
 		amountByProjectWallet.Set(addr.String(), currentAmount-amount)
-		rewardState.removeStake(caller, amount, getCurrentBalance(), getCurrentProtocolFeeBalance())
+		rewardState.removeStake(caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	}
 }
 
