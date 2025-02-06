@@ -208,16 +208,16 @@ func CreatePool(t *testing.T,
 	}
 }
 
-func LPTokenStake(t *testing.T, owner std.Address, tokenId uint64) {
+func LPTokenStake(t *testing.T, owner std.Address, positionId uint64) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(owner))
-	sr.StakeToken(tokenId)
+	sr.StakeToken(positionId)
 }
 
-func LPTokenUnStake(t *testing.T, owner std.Address, tokenId uint64, unwrap bool) {
+func LPTokenUnStake(t *testing.T, owner std.Address, positionId uint64, unwrap bool) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(owner))
-	sr.UnStakeToken(tokenId, unwrap)
+	sr.UnStakeToken(positionId, unwrap)
 }
 
 func wugnotApprove(t *testing.T, owner, spender std.Address, amount uint64) {

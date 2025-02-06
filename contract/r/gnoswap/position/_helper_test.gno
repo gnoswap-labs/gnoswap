@@ -436,28 +436,27 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 	)
 }
 
-func LPTokenApprove(t *testing.T, owner, operator std.Address, tokenId uint64) {
+func LPTokenApprove(t *testing.T, owner, operator std.Address, positionId uint64) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(owner))
-	gnft.Approve(operator, tokenIdFrom(tokenId))
+	gnft.Approve(operator, positionIdFrom(positionId))
 }
 
-func LPTokenStake(t *testing.T, owner std.Address, tokenId uint64) {
+func LPTokenStake(t *testing.T, owner std.Address, positionId uint64) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(owner))
-	sr.StakeToken(tokenId)
+	sr.StakeToken(positionId)
 }
 
-func LPTokenUnStake(t *testing.T, owner std.Address, tokenId uint64, unwrap bool) {
+func LPTokenUnStake(t *testing.T, owner std.Address, positionId uint64, unwrap bool) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(owner))
-	sr.UnStakeToken(tokenId, unwrap)
+	sr.UnStakeToken(positionId, unwrap)
 }
 
-func getPoolFromLpTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {
+func getPoolFromPositionId(t *testing.T, positionId uint64) *pl.Pool {
 	t.Helper()
-
-	position := MustGetPosition(lpTokenId)
+	position := MustGetPosition(positionId)
 	return pl.GetPoolFromPoolPath(position.poolKey)
 }
 
@@ -658,7 +657,7 @@ func burnAllNFT(t *testing.T) {
 
 	std.TestSetRealm(std.NewCodeRealm(consts.POSITION_PATH))
 	for i := uint64(1); i <= gnft.TotalSupply(); i++ {
-		gnft.Burn(tokenIdFrom(i))
+		gnft.Burn(positionIdFrom(i))
 	}
 }
 
@@ -667,8 +666,8 @@ func TestBeforeResetPositionObject(t *testing.T) {
 	// make actual data to test resetting not only position's state but also pool's state
 	std.TestSetRealm(adminRealm)
 
-	tokenId, liquidity, amount0, amount1 := MakeMintPositionWithoutFee(t)
-	uassert.Equal(t, tokenId, uint64(1), "tokenId should be 1")
+	positionId, liquidity, amount0, amount1 := MakeMintPositionWithoutFee(t)
+	uassert.Equal(t, positionId, uint64(1), "positionId should be 1")
 	uassert.Equal(t, liquidity, "50000", "liquidity should be 50000")
 	uassert.Equal(t, amount0, "50000", "amount0 should be 50000")
 	uassert.Equal(t, amount1, "50000", "amount1 should be 50000")
