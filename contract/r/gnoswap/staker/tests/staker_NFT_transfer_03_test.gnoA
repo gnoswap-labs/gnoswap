@@ -152,7 +152,7 @@ func testStakeToken01(t *testing.T) {
 			`[GNOSWAP-STAKER-001] caller has no permission`,
 			func() {
 				std.TestSetRealm(adminRealm)
-				StakeToken(1)
+				StakeToken(1, "")
 			})
 	})
 
@@ -163,7 +163,7 @@ func testStakeToken01(t *testing.T) {
 		uassert.NotPanics(
 			t,
 			func() {
-				StakeToken(1)
+				StakeToken(1, "")
 			},
 			`should not panic`,
 		)

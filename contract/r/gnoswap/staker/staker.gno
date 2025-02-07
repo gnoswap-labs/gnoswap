@@ -19,6 +19,8 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/referral"
 )
 
 // list of staked positions
@@ -219,7 +221,7 @@ func RegisterCallbackStakerEmissionChange() {
 //   - token1Amount (string): The amount of token1 in the LP token
 //
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#staketoken
-func StakeToken(positionId uint64) (string, string, string) {
+func StakeToken(positionId uint64, referrer string) (string, string, string) {
 	assertOnlyNotHalted()
 	assertOnlyNotStaked(positionId)
 
@@ -227,6 +229,8 @@ func StakeToken(positionId uint64) (string, string, string) {
 
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := getPrevAddr()
+
+	referral.TryRegister(caller, referrer)
 
 	token0Amount, token1Amount, err := calculateStakeTokenAmount(positionId, owner, caller)
 	if err != nil {
@@ -309,6 +313,7 @@ func StakeToken(positionId uint64) (string, string, string) {
 		"positionLowerTick", formatInt(tickLower),
 		"currentTick", formatInt(currentTick),
 		"isInRange", formatBool(isInRange),
+		"referrer", referrer,
 	)
 
 	// positionsInternalWarmUpAmount[positionId] = warmUpAmount{}

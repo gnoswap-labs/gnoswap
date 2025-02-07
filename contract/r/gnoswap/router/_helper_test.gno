@@ -211,7 +211,7 @@ func CreatePool(t *testing.T,
 func LPTokenStake(t *testing.T, owner std.Address, positionId uint64) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(owner))
-	sr.StakeToken(positionId)
+	sr.StakeToken(positionId, "")
 }
 
 func LPTokenUnStake(t *testing.T, owner std.Address, positionId uint64, unwrap bool) {
