@@ -9,12 +9,12 @@ import (
 
 const (
 	// MinTimeBetweenUpdates represents minimum duration between operations
-    MinTimeBetweenUpdates int64 = 24 * 60 * 60
+	MinTimeBetweenUpdates int64 = 24 * 60 * 60
 )
 
 // keeper implements the `ReferralKeeper` interface using an AVL tree for storage.
 type keeper struct {
-	store *avl.Tree
+	store   *avl.Tree
 	lastOps map[string]int64
 }
 
@@ -25,7 +25,7 @@ var _ ReferralKeeper = &keeper{}
 // The keeper is initialized with an empty AVL tree for storing referral relationships.
 func NewKeeper() ReferralKeeper {
 	return &keeper{
-		store: avl.NewTree(),
+		store:   avl.NewTree(),
 		lastOps: make(map[string]int64),
 	}
 }
@@ -152,26 +152,26 @@ func (k *keeper) get(addr std.Address) (std.Address, error) {
 }
 
 func (k *keeper) isEmpty() bool {
-    empty := true
-    k.store.Iterate("", "", func(key string, value interface{}) bool {
-        empty = false
-        return true // stop iteration on first item
-    })
-    return empty
+	empty := true
+	k.store.Iterate("", "", func(key string, value interface{}) bool {
+		empty = false
+		return true // stop iteration on first item
+	})
+	return empty
 }
 
 // checkRateLimit verifies if enough time has passed since the last operation
 func (k *keeper) checkRateLimit(addr string) error {
-    now := time.Now().Unix()
-    
-    if lastOpTime, exists := k.lastOps[addr]; exists {
-        timeSinceLastOp := now - lastOpTime
-        
-        if timeSinceLastOp < MinTimeBetweenUpdates {
-            return ErrTooManyRequests
-        }
-    }
-    
-    k.lastOps[addr] = now
-    return nil
+	now := time.Now().Unix()
+
+	if lastOpTime, exists := k.lastOps[addr]; exists {
+		timeSinceLastOp := now - lastOpTime
+
+		if timeSinceLastOp < MinTimeBetweenUpdates {
+			return ErrTooManyRequests
+		}
+	}
+
+	k.lastOps[addr] = now
+	return nil
 }
