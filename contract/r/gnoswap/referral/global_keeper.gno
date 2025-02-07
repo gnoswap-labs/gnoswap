@@ -6,7 +6,9 @@ import "std"
 var gReferralKeeper ReferralKeeper
 
 func init() {
-	gReferralKeeper = NewKeeper()
+	if gReferralKeeper == nil {
+		gReferralKeeper = NewKeeper()
+	}
 }
 
 // GetKeeper returns the global instance of the referral keeper

@@ -17,6 +17,8 @@ import (
 
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
+
+	"gno.land/r/gnoswap/v1/referral"
 )
 
 const (
@@ -181,19 +183,46 @@ func Mint(
 	deadline int64,
 	mintTo std.Address,
 	caller std.Address,
-	referrerAddr std.Address,
+	referrer string,
 ) (uint64, string, string, string) {
 	assertOnlyNotHalted()
 	prevCaller := getPrevRealm()
 	assertOnlyUserOrStaker(prevCaller)
-
-	positionKeeper.TryRegisterReferral(caller, referrerAddr)
 	if isUserCall() {
 		// if user called, validate the prev address and input addresses(mintTo, caller)
 		assertOnlyValidAddressWith(prevCaller.Addr(), mintTo)
 		assertOnlyValidAddressWith(prevCaller.Addr(), caller)
 	}
 	checkDeadline(deadline)
+
+	if referrer != "" {
+		refAddr := std.Address(referrer)
+		// validate referral address
+		if !refAddr.IsValid() {
+			std.Emit("ReferralInvalid",
+				"caller", caller.String(),
+				"referral", referrer,
+			)
+		} else {
+			r := referral.NewReferral()
+
+			if !r.Has(caller) {
+				err := r.Register(caller, refAddr)
+				if err != nil {
+					std.Emit("ReferralRegistrationFailed",
+						"caller", caller.String(),
+						"referral", referrer,
+						"error", err.Error(),
+					)
+				} else {
+					std.Emit("ReferralRegistered",
+						"caller", caller.String(),
+						"referral", referrer,
+					)
+				}
+			}
+		}
+	}
 
 	en.MintAndDistributeGns()
 

@@ -61,11 +61,12 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 		return err
 	}
 
-	if err := k.checkRateLimit(addr.String()); err != nil {
-		// XXX: because of the weird type-related errors, this is the only
-		// part where we need to use `ufmt.Errorf` to build error message.
-		return ufmt.Errorf("too many requests")
-	}
+	// TODO: change error handler
+	// if err := k.checkRateLimit(addr.String()); err != nil {
+	// 	// XXX: because of the weird type-related errors, this is the only
+	// 	// part where we need to use `ufmt.Errorf` to build error message.
+	// 	return nil
+	// }
 
 	if refAddr == zeroAddress {
 		std.Emit(
