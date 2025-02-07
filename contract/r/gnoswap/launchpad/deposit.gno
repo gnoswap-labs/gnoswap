@@ -57,6 +57,7 @@ type ProjectTierInfo struct {
 // Parameters:
 // - targetProjectTierId (string): The ID of the target project and tier in the format "{projectId}:{tierType}".
 // - amount (uint64): The amount to deposit.
+// - referral (std.Address): The referral address.
 //
 // Returns:
 // - string: The ID of the newly created deposit.
@@ -90,9 +91,12 @@ type ProjectTierInfo struct {
 //   - Emit events for both the deposit and the first deposit for the tier (if applicable).
 //
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_deposit.gno#depositgns
-func DepositGns(targetProjectTierId string, amount uint64) string {
+func DepositGns(targetProjectTierId string, amount uint64, referral std.Address) string {
 	assertOnlyNotHalted()
 	assertValidAmount(amount)
+
+	caller := getPrevAddr()
+	launchpadKeeper.TryRegisterReferral(caller, referral)
 
 	projectId, tierType := splitProjectIdAndTier(targetProjectTierId)
 	project, err := getProject(projectId)
@@ -104,7 +108,6 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 	if !project.isActivated(currentHeight) {
 		panic(addDetailToError(errInactiveProject, projectId))
 	}
-	caller := getPrevAddr()
 	project.checkDepositConditions(caller)
 
 	tier, err := project.Tier(convertTierTypeStrToUint64(tierType))
