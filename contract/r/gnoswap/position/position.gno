@@ -187,7 +187,7 @@ func Mint(
 	prevCaller := getPrevRealm()
 	assertOnlyUserOrStaker(prevCaller)
 
-	positionKeeper.tryRegisterReferral(caller, referrerAddr)
+	positionKeeper.TryRegisterReferral(caller, referrerAddr)
 	if isUserCall() {
 		// if user called, validate the prev address and input addresses(mintTo, caller)
 		assertOnlyValidAddressWith(prevCaller.Addr(), mintTo)
