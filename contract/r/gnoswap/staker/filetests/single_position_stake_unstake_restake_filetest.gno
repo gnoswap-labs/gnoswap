@@ -164,8 +164,8 @@ func testStakeTokenPos01AndPos02() {
 	gnft.Approve(stakerAddr, positionIdFrom(2))
 
 	std.TestSkipHeights(1)
-	sr.StakeToken(1)
-	sr.StakeToken(2)
+	sr.StakeToken(1, "")
+	sr.StakeToken(2, "")
 }
 
 func testUnstakeTokenPos01() {
@@ -188,7 +188,7 @@ func testStakeTokenPos01Again() {
 
 	std.TestSkipHeights(1)
 	gnft.Approve(stakerAddr, positionIdFrom(1))
-	sr.StakeToken(1)
+	sr.StakeToken(1, "")
 
 	// reward check for staked > unstaked > staked position
 	std.TestSkipHeights(1)

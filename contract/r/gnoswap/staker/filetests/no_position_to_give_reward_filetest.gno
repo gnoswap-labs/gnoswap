@@ -136,7 +136,7 @@ func testStakeTokenPos01() {
 
 	// stake
 	gnft.Approve(consts.STAKER_ADDR, positionIdFrom(1))
-	sr.StakeToken(1)
+	sr.StakeToken(1, "")
 }
 
 func testUnstakePos01() {

@@ -139,7 +139,7 @@ func testMintAndStakeWugnotGnsPos01() {
 	)
 
 	gnft.Approve(stakerAddr, positionIdFrom(1))
-	sr.StakeToken(1)
+	sr.StakeToken(1, "")
 
 	// check reward for position 01 (gnot:gns:3000 tier 01)
 	std.TestSetRealm(adminRealm)
@@ -181,7 +181,7 @@ func testMintAndStakeBarBazPos02() {
 	)
 
 	gnft.Approve(stakerAddr, positionIdFrom(2))
-	sr.StakeToken(2)
+	sr.StakeToken(2, "")
 	std.TestSkipHeights(1)
 
 	{
