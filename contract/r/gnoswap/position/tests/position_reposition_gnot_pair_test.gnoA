@@ -113,6 +113,7 @@ func testMintPosition01InRange(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		std.TestSetOrigSend(std.Coins{{"ugnot", 0}}, nil)
 

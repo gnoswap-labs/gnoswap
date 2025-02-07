@@ -73,6 +73,7 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 			time.Now().Unix()+1000, // deadline int64,
 			user1Adderss,           // mintTo string
 			user1Adderss,
+			"",
 		)
 
 		std.TestSetRealm(user2Realm)
@@ -94,6 +95,7 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 			time.Now().Unix()+1000, // deadline int64,
 			user2Adderss,           // mintTo string
 			user2Adderss,
+			"",
 		)
 
 		// ====== Swap to accrue fees ======

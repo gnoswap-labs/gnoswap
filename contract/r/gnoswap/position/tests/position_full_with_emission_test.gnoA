@@ -74,6 +74,7 @@ func testMintPositionFullInRange(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		std.TestSkipHeights(1)
 

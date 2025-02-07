@@ -77,6 +77,7 @@ func TestOneSideOnlyGrc20WithoutSend(t *testing.T) {
 				max_timeout,     // deadline
 				fresh01,         // operator
 				fresh01,
+				"",
 			)
 		},
 	)
@@ -113,6 +114,7 @@ func TestOneSideOnlyGrc20WithSend0Coin(t *testing.T) {
 				max_timeout,     // deadline
 				fresh01,         // operator
 				fresh01,
+				"",
 			)
 		},
 	)
@@ -145,6 +147,7 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 		max_timeout,     // deadline
 		fresh01,         // operator
 		fresh01,
+		"",
 	)
 	// send 100000000
 	// mint 90000000
@@ -180,6 +183,7 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 // 		max_timeout,     // deadline
 // 		fresh02,         // operator
 // 		fresh02,
+// 		"",
 // 	)
 
 // 	// send 100_000_000
@@ -205,7 +209,7 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 // 		t,
 // 		`insufficient balance`,
 // 		func() {
-// 			Mint(consts.GNS_PATH, consts.GNOT, fee500, 6000, 16000, "70000000", "70000000", "0", "0", max_timeout, fresh02, fresh02)
+// 			Mint(consts.GNS_PATH, consts.GNOT, fee500, 6000, 16000, "70000000", "70000000", "0", "0", max_timeout, fresh02, fresh02, "")
 // 		},
 // 	)
 // }
