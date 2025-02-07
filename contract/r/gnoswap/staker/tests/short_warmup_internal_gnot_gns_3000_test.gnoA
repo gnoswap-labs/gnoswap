@@ -94,6 +94,7 @@ func testMintWugnotGnsPos01(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 
 		uassert.Equal(t, positionId, uint64(1))

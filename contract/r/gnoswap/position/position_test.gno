@@ -12,6 +12,7 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/v1/referral"
 )
 
 var (
@@ -718,9 +719,10 @@ func TestMint(t *testing.T) {
 		expectedError   string
 		expectedAmount0 uint64
 		expectedAmount1 uint64
+		referrer        string
 	}{
 		{
-			name:            "Success - Valid mint request",
+			name:            "Success - With valid referral",
 			token0:          barPath,
 			token1:          fooPath,
 			fee:             fee500,
@@ -736,6 +738,7 @@ func TestMint(t *testing.T) {
 			expectPanic:     false,
 			expectedAmount0: 1000000,
 			expectedAmount1: 1000000,
+			referrer:        testutils.TestAddress("carol").String(),
 		},
 		{
 			name:            "Fail - Deadline exceeded",
@@ -816,6 +819,7 @@ func TestMint(t *testing.T) {
 							tc.deadline,
 							tc.mintTo,
 							tc.caller,
+							tc.referrer,
 						)
 					})
 			} else {
@@ -832,6 +836,7 @@ func TestMint(t *testing.T) {
 					tc.deadline,
 					tc.mintTo,
 					tc.caller,
+					tc.referrer,
 				)
 
 				uassert.Equal(t, uint64(5), positionId)
@@ -840,6 +845,10 @@ func TestMint(t *testing.T) {
 				t1, _ := strconv.ParseUint(amount1, 10, 64)
 				uassert.Equal(t, tc.expectedAmount0, t0)
 				uassert.Equal(t, tc.expectedAmount1, t1)
+			}
+
+			if tc.referrer != "" {
+				uassert.Equal(t, tc.referrer, referral.GetReferral(tc.caller.String()))
 			}
 		})
 	}
@@ -1120,6 +1129,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 		time.Now().Add(time.Hour).Unix(),
 		admin,
 		admin,
+		"",
 	)
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1243,6 +1253,7 @@ func TestCollectFees(t *testing.T) {
 		time.Now().Add(time.Hour).Unix(),
 		admin,
 		admin,
+		"",
 	)
 
 	for _, tt := range tests {
@@ -1362,6 +1373,7 @@ func TestReposition(t *testing.T) {
 		time.Now().Add(time.Hour).Unix(),
 		admin,
 		admin,
+		"",
 	)
 
 	for _, tt := range tests {

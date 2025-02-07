@@ -84,6 +84,7 @@ func testMintBarQux100_1(t *testing.T) {
 			max_timeout,
 			admin,
 			admin,
+			"",
 		)
 
 		uassert.Equal(t, positionId, uint64(1))
@@ -116,6 +117,7 @@ func testMintBarQux100_2(t *testing.T) {
 			max_timeout,
 			admin,
 			admin,
+			"",
 		)
 
 		uassert.Equal(t, positionId, uint64(2))

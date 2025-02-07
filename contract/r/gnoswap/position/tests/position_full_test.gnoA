@@ -45,6 +45,7 @@ func TestMintPositionFullInRange(t *testing.T) {
 		max_timeout,
 		adminAddr,
 		adminAddr,
+		"",
 	)
 }
 

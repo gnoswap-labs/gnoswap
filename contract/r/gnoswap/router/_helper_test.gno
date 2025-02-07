@@ -409,6 +409,7 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 		max_timeout,
 		admin,
 		admin,
+		"",
 	)
 }
 
@@ -433,6 +434,7 @@ func MakeSecondMintPositionWithoutFee(t *testing.T) (uint64, string, string, str
 		max_timeout,
 		admin,
 		admin,
+		"",
 	)
 }
 
@@ -457,6 +459,7 @@ func MakeThirdMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 		max_timeout,
 		admin,
 		admin,
+		"",
 	)
 }
 
@@ -483,5 +486,6 @@ func MakeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 		max_timeout,
 		admin,
 		admin,
+		"",
 	)
 }
