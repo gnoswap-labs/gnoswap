@@ -62,6 +62,8 @@ func MintAndStake(
 		deadline,
 		consts.STAKER_ADDR,
 		std.PrevRealm().Addr(),
+		// TODO: need to add referrer address here?
+		"",
 	)
 
 	// at this point, staker has minted token

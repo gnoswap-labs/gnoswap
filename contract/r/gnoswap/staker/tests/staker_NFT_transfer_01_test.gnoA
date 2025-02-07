@@ -106,6 +106,7 @@ func testPositionMint01(t *testing.T) {
 			max_timeout,  // deadline
 			admin,
 			admin,
+			"",
 		)
 
 		std.TestSkipHeights(1)

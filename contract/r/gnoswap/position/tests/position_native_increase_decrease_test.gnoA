@@ -70,6 +70,7 @@ func testMintPosition(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 
 		uassert.Equal(t, positionId, uint64(1))
