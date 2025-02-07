@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/avl"
-	"gno.land/p/demo/ufmt"
 )
 
 const (
@@ -89,10 +88,10 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 // validateAddresses checks if the given addresses are valid for referral
 func (k *keeper) validateAddresses(addr, refAddr std.Address) error {
 	if !addr.IsValid() || (refAddr != zeroAddress && !refAddr.IsValid()) {
-		return NewError(ErrInvalidAddress)
+		return ErrInvalidAddress
 	}
 	if addr == refAddr {
-		return NewError(ErrSelfReferral)
+		return ErrSelfReferral
 	}
 	return nil
 }
@@ -107,7 +106,7 @@ func (k *keeper) remove(target std.Address) error {
 	}
 
 	if !target.IsValid() {
-		return NewError(ErrInvalidAddress)
+		return ErrInvalidAddress
 	}
 
 	if err := k.checkRateLimit(target.String()); err != nil {
@@ -136,17 +135,17 @@ func (k *keeper) has(addr std.Address) bool {
 // It retrieves the referral address for a given address.
 func (k *keeper) get(addr std.Address) (std.Address, error) {
 	if !addr.IsValid() {
-		return zeroAddress, NewError(ErrInvalidAddress)
+		return zeroAddress, ErrInvalidAddress
 	}
 
 	val, ok := k.store.Get(addr.String())
 	if !ok {
-		return zeroAddress, NewError(ErrNotFound)
+		return zeroAddress, ErrNotFound
 	}
 
 	refAddr, ok := val.(string)
 	if !ok {
-		return zeroAddress, NewError(ErrInvalidAddress)
+		return zeroAddress, ErrInvalidAddress
 	}
 
 	return std.Address(refAddr), nil
@@ -169,7 +168,7 @@ func (k *keeper) checkRateLimit(addr string) error {
         timeSinceLastOp := now - lastOpTime
         
         if timeSinceLastOp < MinTimeBetweenUpdates {
-            return NewError(ErrTooManyRequests)
+            return ErrTooManyRequests
         }
     }
     
