@@ -195,34 +195,7 @@ func Mint(
 	}
 	checkDeadline(deadline)
 
-	if referrer != "" {
-		refAddr := std.Address(referrer)
-		// validate referral address
-		if !refAddr.IsValid() {
-			std.Emit("ReferralInvalid",
-				"caller", caller.String(),
-				"referral", referrer,
-			)
-		} else {
-			r := referral.NewReferral()
-
-			if !r.Has(caller) {
-				err := r.Register(caller, refAddr)
-				if err != nil {
-					std.Emit("ReferralRegistrationFailed",
-						"caller", caller.String(),
-						"referral", referrer,
-						"error", err.Error(),
-					)
-				} else {
-					std.Emit("ReferralRegistered",
-						"caller", caller.String(),
-						"referral", referrer,
-					)
-				}
-			}
-		}
-	}
+	referral.TryRegister(caller, referrer)
 
 	en.MintAndDistributeGns()
 

@@ -5,6 +5,12 @@ import "std"
 // gReferralKeeper is the global instance of the referral keeper
 var gReferralKeeper ReferralKeeper
 
+const (
+	EventReferralInvalid = "ReferralInvalid"
+	EventRegisterFailed  = "ReferralRegistrationFailed"
+	EventRegisterSuccess = "ReferralRegistrationSuccess"
+)
+
 func init() {
 	if gReferralKeeper == nil {
 		gReferralKeeper = NewKeeper()
@@ -40,4 +46,41 @@ func HasReferral(addr string) bool {
 
 func IsEmpty() bool {
 	return gReferralKeeper.isEmpty()
+}
+
+// TryRegister attempts to register a new referral for an address.
+func TryRegister(addr std.Address, referral string) bool {
+	if referral == "" {
+		return false
+	}
+
+	refAddr := std.Address(referral)
+	if !refAddr.IsValid() {
+		std.Emit(
+			EventReferralInvalid,
+			"referral", referral,
+		)
+		return false
+	}
+
+	r := NewReferral()
+	if r.Has(addr) {
+		return false
+	}
+
+	err := r.Register(addr, refAddr)
+	if err != nil {
+		std.Emit(
+			EventRegisterFailed,
+			"address", addr.String(),
+		)
+		return false
+	}
+
+	std.Emit(
+		EventRegisterSuccess,
+		"address", addr.String(),
+		"referral", referral,
+	)
+	return true
 }
