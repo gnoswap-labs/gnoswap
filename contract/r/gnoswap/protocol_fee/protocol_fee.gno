@@ -130,10 +130,6 @@ func ClearAccuTransferToGovStaker() {
 	assertOnlyNotHalted()
 
 	caller := std.PrevRealm().Addr()
-	if err := common.GovStakerOnly(caller); err != nil {
-		panic(err)
-	}
-
 	accuToGovStaker = avl.NewTree()
 }
 

@@ -13,10 +13,6 @@ import (
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 
-	en "gno.land/r/gnoswap/v1/emission"
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -186,7 +182,14 @@ func init() {
 	// ONLY GNOT:GNS 0.3%
 
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1)
-	poolTier = NewPoolTier(pools, std.GetHeight(), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange)
+	poolTier = NewPoolTier(pools, std.GetHeight(), MUST_EXISTS_IN_TIER_1, 
+		func() uint64 {
+			return en.GetEmission()
+		},
+		func(start, end int64) ([]int64, []uint64) {
+			return en.GetHalvingBlocksInRange(start, end)
+		},
+	)
 	RegisterCallbackStakerEmissionChange()
 }
 

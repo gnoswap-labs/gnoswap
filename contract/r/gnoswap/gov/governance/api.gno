@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/json"
-
-	en "gno.land/r/gnoswap/v1/emission"
 )
 
 func createProposalJsonNode(id uint64, proposal ProposalInfo) *json.Node {
