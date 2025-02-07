@@ -98,6 +98,7 @@ func testMintBarQux100_1(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 
 		uassert.Equal(t, tokenId, uint64(1))
@@ -127,6 +128,7 @@ func testMintBarBaz100_2(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 
 		uassert.Equal(t, tokenId, uint64(2))

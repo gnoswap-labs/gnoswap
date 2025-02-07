@@ -816,6 +816,7 @@ func TestMint(t *testing.T) {
 							tc.deadline,
 							tc.mintTo,
 							tc.caller,
+							"",
 						)
 					})
 			} else {
@@ -832,6 +833,7 @@ func TestMint(t *testing.T) {
 					tc.deadline,
 					tc.mintTo,
 					tc.caller,
+					"",
 				)
 
 				uassert.Equal(t, uint64(5), tokenId)
@@ -1120,6 +1122,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 		time.Now().Add(time.Hour).Unix(),
 		admin,
 		admin,
+		"",
 	)
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1243,6 +1246,7 @@ func TestCollectFees(t *testing.T) {
 		time.Now().Add(time.Hour).Unix(),
 		admin,
 		admin,
+		"",
 	)
 
 	for _, tt := range tests {
@@ -1362,6 +1366,7 @@ func TestReposition(t *testing.T) {
 		time.Now().Add(time.Hour).Unix(),
 		admin,
 		admin,
+		"",
 	)
 
 	for _, tt := range tests {

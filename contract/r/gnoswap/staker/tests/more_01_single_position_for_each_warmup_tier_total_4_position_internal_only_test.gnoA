@@ -88,6 +88,7 @@ func testMintBarBaz100Pos01(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		std.TestSkipHeights(1)
 	})
@@ -113,6 +114,7 @@ func testMintBarBaz100Pos02(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		std.TestSkipHeights(1)
 	})
@@ -138,6 +140,7 @@ func testMintBarBaz100Pos03(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		std.TestSkipHeights(1)
 	})
@@ -163,6 +166,7 @@ func testMintBarBaz100Pos04(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		std.TestSkipHeights(1)
 	})

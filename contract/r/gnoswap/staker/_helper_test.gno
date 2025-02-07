@@ -160,6 +160,7 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 		max_timeout,
 		admin,
 		admin,
+		"",
 	)
 }
 
@@ -283,7 +284,9 @@ func MintPosition(t *testing.T,
 		amount1Min,
 		deadline,
 		mintTo,
-		caller)
+		caller,
+		"",
+	)
 }
 
 func wugnotApprove(t *testing.T, owner, spender std.Address, amount uint64) {

@@ -59,7 +59,7 @@ func testPositionMint(t *testing.T) {
 			std.TestSetRealm(adminRealm)
 			bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 			baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-			tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr)
+			tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 			uassert.Equal(t, tokenId, uint64(1))
 			uassert.Equal(t, amount0, "36790")  // bar
@@ -71,7 +71,7 @@ func testPositionMint(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 		qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		tokenId, liquidity, amount0, amount1 := pn.Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr)
+		tokenId, liquidity, amount0, amount1 := pn.Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 		uassert.Equal(t, tokenId, uint64(2))
 		uassert.Equal(t, amount0, "36790")
@@ -89,7 +89,7 @@ func testPositionMint(t *testing.T) {
 		std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 1000009}}) // without issuing, it will fail `source address g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5 does not exist`
 		std.TestSetOrigSend(std.Coins{{"ugnot", 1000009}}, nil)
 
-		tokenId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.GNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr)
+		tokenId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.GNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 		uassert.Equal(t, tokenId, uint64(3))
 		uassert.Equal(t, amount0, "100000")

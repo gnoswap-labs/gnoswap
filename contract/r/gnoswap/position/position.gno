@@ -181,10 +181,13 @@ func Mint(
 	deadline int64,
 	mintTo std.Address,
 	caller std.Address,
+	referrerAddr std.Address,
 ) (uint64, string, string, string) {
 	assertOnlyNotHalted()
 	prevCaller := getPrevRealm()
 	assertOnlyUserOrStaker(prevCaller)
+
+	positionKeeper.tryRegisterReferral(caller, referrerAddr)
 	if isUserCall() {
 		// if user called, validate the prev address and input addresses(mintTo, caller)
 		assertOnlyValidAddressWith(prevCaller.Addr(), mintTo)

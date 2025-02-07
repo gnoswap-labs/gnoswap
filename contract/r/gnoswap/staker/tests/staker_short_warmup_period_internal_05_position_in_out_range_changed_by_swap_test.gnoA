@@ -83,6 +83,7 @@ func testMintBarQux100_1(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		println(tokenId, liquidity)
 
@@ -111,6 +112,7 @@ func testMintBarQux100_2(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		println(tokenId, liquidity)
 

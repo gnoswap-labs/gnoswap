@@ -185,6 +185,7 @@ func testMintPos01InRange(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
@@ -227,6 +228,7 @@ func testMintPos02InRange(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
@@ -253,6 +255,7 @@ func testMintPos03OutRange(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
@@ -279,6 +282,7 @@ func testMintPos04OutRange(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
@@ -305,6 +309,7 @@ func testMintPos05OutRange(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
@@ -331,6 +336,7 @@ func testMintPos06OutRange(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
@@ -998,6 +1004,7 @@ func testMintPos08InRange(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 
 		checkGnsBalance(t, depositGnsAmount)

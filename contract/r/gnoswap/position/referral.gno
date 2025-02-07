@@ -31,32 +31,32 @@ func (k *keeper) Disable() {
 	k.referralConfig.Disable()
 }
 
-// tryRegisterReferral attempts to register a referral relationship if enabled and not already existing.
-// This is a non-blocking operation - failures will be logged but won't stop the main flow.
-func (k *keeper) tryRegisterReferral(caller std.Address, referralAddr *std.Address) {
-	if referralAddr == nil || !k.referralConfig.IsEnabled() {
+// tryRegisterReferral attempts to register a referral relationship if conditions are met.
+// This is a no-op if:
+//  - Referral system is disabled
+//  - Referrer address is empty
+//  - User already has a referrer
+func (k *keeper) tryRegisterReferral(user, referral std.Address) {
+	// skip if referral is disabled or referrer address is empty
+	if !k.referralConfig.IsEnabled() || referral.String() == "" {
 		return
 	}
 
 	ref := k.referralConfig.Referral()
-	if ref.Has(caller) {
+	if ref.Has(user) {
 		return
 	}
 
-	err := ref.Register(caller, *referralAddr)
+	emitParams := []string{
+		"user", user.String(),
+		"referral", referral.String(),
+	}
+
+	err := ref.Register(user, referral)
 	if err != nil {
-		// for logging purposes
-		std.Emit(
-			referralRegisterFailed,
-			"caller", caller.String(),
-			"referrer", referralAddr.String(),
-		)
+		std.Emit(referralRegisterFailed, emitParams...)
 		return
 	}
 
-	std.Emit(
-		referralRegistered,
-		"caller", caller.String(),
-		"referrer", referralAddr.String(),
-	)
+	std.Emit(referralRegistered, emitParams...)
 }

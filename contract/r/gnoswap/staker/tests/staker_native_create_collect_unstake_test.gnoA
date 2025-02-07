@@ -109,6 +109,7 @@ func testPositionMintNative01(t *testing.T) {
 			max_timeout,     // deadline
 			adminAddr,
 			adminAddr,
+			"",
 		)
 
 		std.TestSkipHeights(1)
@@ -159,6 +160,7 @@ func testPositionMintNative02(t *testing.T) {
 			max_timeout,     // deadline
 			adminAddr,
 			adminAddr,
+			"",
 		)
 
 		std.TestSkipHeights(1)
