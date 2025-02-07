@@ -60,7 +60,7 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 		bar.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
 		baz.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
 
-		tokenId_res1, liquidity_res1, amount0_res1, amount1_res1 := Mint(
+		positionId_res1, liquidity_res1, amount0_res1, amount1_res1 := Mint(
 			barPath,                // token0 string,
 			bazPath,                // token1 string,
 			3000,                   // fee uint32,
@@ -74,7 +74,6 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 			user1Adderss,           // mintTo string
 			user1Adderss,
 		)
-		println("tokenId_res1:", tokenId_res1)
 
 		std.TestSetRealm(user2Realm)
 		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
@@ -82,7 +81,7 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 		bar.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
 		baz.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
 
-		tokenId_res2, liquidity_res2, amount0_res2, amount1_res2 := Mint(
+		positionId_res2, liquidity_res2, amount0_res2, amount1_res2 := Mint(
 			barPath,                // token0 string,
 			bazPath,                // token1 string,
 			3000,                   // fee uint32,
@@ -96,7 +95,6 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 			user2Adderss,           // mintTo string
 			user2Adderss,
 		)
-		// println("tokenId_res2:", tokenId_res2)
 
 		// ====== Swap to accrue fees ======
 		// pr.SwapRoute(

@@ -61,7 +61,7 @@ func testMintPositionFullInRange(t *testing.T) {
 		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 		foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-		tokenId, liquidity, amount0, amount1 := Mint(
+		positionId, liquidity, amount0, amount1 := Mint(
 			barPath,
 			fooPath,
 			fee500,
@@ -90,7 +90,7 @@ func testIncreaseLiquidity(t *testing.T) {
 		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 		foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-		tokenId, liquidity, amount0, amount1, poolPath := IncreaseLiquidity(
+		positionId, liquidity, amount0, amount1, poolPath := IncreaseLiquidity(
 			uint64(1),
 			"50000",
 			"50000",
@@ -113,7 +113,7 @@ func testDecreaseLiquidity(t *testing.T) {
 		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 		foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-		tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
+		positionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 			uint64(1),
 			"50",
 			"0",
@@ -136,7 +136,7 @@ func testCollectFee(t *testing.T) {
 		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 		foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
-		tokenId, fee0, fee1, poolPath, _, _ := CollectFee(uint64(1), false)
+		positionId, fee0, fee1, poolPath, _, _ := CollectFee(uint64(1), false)
 		std.TestSkipHeights(1)
 
 		uassert.Equal(t, gns.TotalSupply(), uint64(100001484018224))

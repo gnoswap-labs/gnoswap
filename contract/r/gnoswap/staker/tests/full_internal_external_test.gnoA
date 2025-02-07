@@ -135,7 +135,7 @@ func testCreatePoolWugnotGns3000Tier01(t *testing.T) {
 
 		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 		pl.CreatePool(wugnotPath, gnsPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // current tick 0
-		println("[", std.GetHeight(), "] Already Set PoolTier 1")
+		println("[", std.GetHeight(), "] Already set PoolTier 1")
 
 		uassert.Equal(t, uint64(100000000000000), gns.TotalSupply())
 		uassert.Equal(t, uint64(0), gnsBalance(consts.EMISSION_ADDR))
@@ -200,7 +200,7 @@ func testCreateBarBaz500Tier02(t *testing.T) {
 		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 		pl.CreatePool(barPath, bazPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
-		println("[", std.GetHeight(), "] (gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500) Set PoolTier 2")
+		println("[", std.GetHeight(), "] (gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500) set PoolTier 2")
 		SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 2)
 
 		checkGnsBalance(t, 0)
@@ -348,7 +348,7 @@ func testStakeToken01(t *testing.T) {
 		println("[", std.GetHeight(), "][****** Reward Available ******] [stake token 01]")
 		std.TestSetRealm(adminRealm)
 
-		gnft.Approve(stakerAddr, common.TokenIdFrom(1))
+		gnft.Approve(stakerAddr, common.PositionIdFrom(1))
 		StakeToken(1)
 
 		checkGnsBalance(t, 0)
@@ -361,7 +361,7 @@ func testStakeToken02(t *testing.T) {
 		println("[", std.GetHeight(), "][****** Reward Available ******] [stake token 02]")
 		std.TestSetRealm(adminRealm)
 
-		gnft.Approve(stakerAddr, common.TokenIdFrom(2))
+		gnft.Approve(stakerAddr, common.PositionIdFrom(2))
 		StakeToken(2)
 
 		checkGnsBalance(t, 0)
@@ -374,7 +374,7 @@ func testStakeToken03(t *testing.T) {
 		println("[", std.GetHeight(), "][****** Reward No OutRange ******] [stake token 03]")
 		std.TestSetRealm(adminRealm)
 
-		gnft.Approve(stakerAddr, common.TokenIdFrom(3))
+		gnft.Approve(stakerAddr, common.PositionIdFrom(3))
 		StakeToken(3)
 
 		checkGnsBalance(t, 0)
@@ -387,7 +387,7 @@ func testStakeToken04(t *testing.T) {
 		println("[", std.GetHeight(), "][****** Reward No OutRange ******] [stake token 04]")
 		std.TestSetRealm(adminRealm)
 
-		gnft.Approve(stakerAddr, common.TokenIdFrom(4))
+		gnft.Approve(stakerAddr, common.PositionIdFrom(4))
 		StakeToken(4)
 
 		checkGnsBalance(t, 0)
@@ -400,7 +400,7 @@ func testStakeToken05(t *testing.T) {
 		println("[", std.GetHeight(), "][****** Reward No OutRange ******] [stake token 05]")
 		std.TestSetRealm(adminRealm)
 
-		gnft.Approve(stakerAddr, common.TokenIdFrom(5))
+		gnft.Approve(stakerAddr, common.PositionIdFrom(5))
 		StakeToken(5)
 
 		checkGnsBalance(t, 0)
@@ -413,7 +413,7 @@ func testStakeToken06(t *testing.T) {
 		println("[", std.GetHeight(), "][****** Reward No OutRange ******] [stake token 06]")
 		std.TestSetRealm(adminRealm)
 
-		gnft.Approve(stakerAddr, common.TokenIdFrom(6))
+		gnft.Approve(stakerAddr, common.PositionIdFrom(6))
 		StakeToken(6)
 
 		checkGnsBalance(t, 0)
@@ -1015,7 +1015,7 @@ func testMintPos08InRange(t *testing.T) {
 func testStakeToken08(t *testing.T) {
 	t.Run("stake token 08", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		gnft.Approve(stakerAddr, common.TokenIdFrom(8))
+		gnft.Approve(stakerAddr, common.PositionIdFrom(8))
 		StakeToken(8)
 
 		checkGnsBalance(t, depositGnsAmount)
@@ -1121,7 +1121,7 @@ func testEndExternalIncentiveBaz(t *testing.T) {
 func testReStakeTokenPos01(t *testing.T) {
 	t.Run("re-stake token 01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		gnft.Approve(stakerAddr, common.TokenIdFrom(1))
+		gnft.Approve(stakerAddr, common.PositionIdFrom(1))
 		StakeToken(1)
 
 		checkGnsBalance(t, 0)
