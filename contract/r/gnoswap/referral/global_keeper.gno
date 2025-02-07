@@ -64,10 +64,6 @@ func TryRegister(addr std.Address, referral string) bool {
 	}
 
 	r := NewReferral()
-	if r.Has(addr) {
-		return false
-	}
-
 	err := r.Register(addr, refAddr)
 	if err != nil {
 		std.Emit(
