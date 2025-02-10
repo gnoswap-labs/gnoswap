@@ -147,7 +147,7 @@ func testStakeToken(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		gnft.Approve(consts.STAKER_ADDR, "1")
 
-		sr.StakeToken(1)
+		sr.StakeToken(1, "")
 
 		checkProtocolFeeBalance()
 		// (still) gns 300_000_000

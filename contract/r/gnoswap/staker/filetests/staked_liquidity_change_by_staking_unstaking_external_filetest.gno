@@ -173,14 +173,14 @@ func testStakeTokenPos01() {
 	std.TestSkipHeights(1)
 
 	gnft.Approve(stakerAddr, positionIdFrom(1))
-	sr.StakeToken(1)
+	sr.StakeToken(1, "")
 }
 
 func testStakeTokenPos02() {
 	std.TestSetRealm(adminRealm)
 
 	gnft.Approve(stakerAddr, positionIdFrom(2))
-	sr.StakeToken(2)
+	sr.StakeToken(2, "")
 }
 
 func testMakeExternalBarStart() {

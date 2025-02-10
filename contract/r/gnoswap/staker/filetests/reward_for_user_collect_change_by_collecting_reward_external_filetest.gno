@@ -167,7 +167,7 @@ func testMintAndStakeBarQuxPos01() {
 	)
 
 	gnft.Approve(stakerAddr, positionIdFrom(1))
-	sr.StakeToken(1)
+	sr.StakeToken(1, "")
 }
 
 func testMintAndStakeBarQuxPos02() {
@@ -193,7 +193,7 @@ func testMintAndStakeBarQuxPos02() {
 	)
 
 	gnft.Approve(stakerAddr, positionIdFrom(2))
-	sr.StakeToken(2)
+	sr.StakeToken(2, "")
 }
 
 func testMakeExternalBarAndQuxStart() {

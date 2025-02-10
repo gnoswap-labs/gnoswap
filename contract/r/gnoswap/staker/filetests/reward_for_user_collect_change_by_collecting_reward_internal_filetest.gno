@@ -131,7 +131,7 @@ func testMintAndStakeWugnotGnsPos01() {
 	)
 
 	gnft.Approve(stakerAddr, positionIdFrom(1))
-	sr.StakeToken(1)
+	sr.StakeToken(1, "")
 }
 
 func testMintAndStakeWugnotGnsPos02() {
@@ -157,7 +157,7 @@ func testMintAndStakeWugnotGnsPos02() {
 	)
 
 	gnft.Approve(stakerAddr, positionIdFrom(2))
-	sr.StakeToken(2)
+	sr.StakeToken(2, "")
 }
 
 func testCollectRewardPos01() {

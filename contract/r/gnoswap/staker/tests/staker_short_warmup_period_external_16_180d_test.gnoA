@@ -122,16 +122,16 @@ func testStakeToken_1_4(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		gnft.Approve(GetOrigPkgAddr(), positionIdFrom(1))
-		StakeToken(1)
+		StakeToken(1, "")
 
 		gnft.Approve(GetOrigPkgAddr(), positionIdFrom(2))
-		StakeToken(2)
+		StakeToken(2, "")
 
 		gnft.Approve(GetOrigPkgAddr(), positionIdFrom(3))
-		StakeToken(3)
+		StakeToken(3, "")
 
 		gnft.Approve(GetOrigPkgAddr(), positionIdFrom(4))
-		StakeToken(4)
+		StakeToken(4, "")
 
 		std.TestSkipHeights(1)
 	})

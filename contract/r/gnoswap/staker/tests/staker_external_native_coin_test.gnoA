@@ -96,7 +96,7 @@ func testStakeToken(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		gnft.Approve(consts.STAKER_ADDR, "1")
-		StakeToken(1)
+		StakeToken(1, "")
 	})
 }
 

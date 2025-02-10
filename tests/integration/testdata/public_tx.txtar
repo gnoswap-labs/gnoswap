@@ -203,11 +203,11 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func IsStaked -args 1 
 stdout false
 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gnft -func Approve -args g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func StakeToken -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
-stdout OK
 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func IsStaked -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout true
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func StakeToken -args 1 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 
 # collect staking reward
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func CollectReward -args 1 -args false -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
