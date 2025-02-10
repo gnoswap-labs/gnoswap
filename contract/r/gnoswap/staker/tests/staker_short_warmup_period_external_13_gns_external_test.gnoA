@@ -84,6 +84,7 @@ func testMintBarQux100_1(t *testing.T) {
 			max_timeout,
 			admin,
 			admin,
+			"",
 		)
 
 		uassert.Equal(t, positionId, uint64(1))
@@ -135,7 +136,7 @@ func testStakeToken_1(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		gnft.Approve(GetOrigPkgAddr(), positionIdFrom(1))
-		StakeToken(1)
+		StakeToken(1, "")
 
 		std.TestSkipHeights(1)
 	})

@@ -48,7 +48,7 @@ func GetLockedInfoByAddress(addr std.Address) string {
 }
 
 func GetClaimableRewardByAddress(addr std.Address) string {
-	rewardState.finalize(getCurrentBalance(), getCurrentProtocolFeeBalance())
+	rewardState.finalize(collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
 	emissionReward, protocolFeeRewards := rewardState.CalculateReward(addr)
 

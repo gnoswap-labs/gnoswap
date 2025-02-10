@@ -79,6 +79,7 @@ func TestMintPosition01InRange(t *testing.T) {
 		max_timeout,
 		adminAddr,
 		adminAddr,
+		"",
 	)
 	std.TestSkipHeights(1)
 
@@ -159,6 +160,7 @@ func TestMintPosition02InRange(t *testing.T) {
 		max_timeout,
 		adminAddr,
 		adminAddr,
+		"",
 	)
 	std.TestSkipHeights(1)
 

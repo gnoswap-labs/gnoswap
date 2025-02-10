@@ -106,6 +106,7 @@ func testPositionMint01(t *testing.T) {
 			max_timeout,  // deadline
 			admin,
 			admin,
+			"",
 		)
 
 		std.TestSkipHeights(1)
@@ -126,7 +127,7 @@ func testStakeToken01(t *testing.T) {
 		gnft.Approve(consts.STAKER_ADDR, positionIdFrom(uint64(1)))
 		std.TestSkipHeights(1)
 
-		StakeToken(uint64(1)) // GNFT tokenId
+		StakeToken(uint64(1), "") // GNFT tokenId
 		std.TestSkipHeights(1)
 
 		owner, _ := gnft.OwnerOf(positionIdFrom(1))

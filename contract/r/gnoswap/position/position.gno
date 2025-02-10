@@ -17,6 +17,8 @@ import (
 
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
+
+	"gno.land/r/gnoswap/v1/referral"
 )
 
 const (
@@ -181,6 +183,7 @@ func Mint(
 	deadline int64,
 	mintTo std.Address,
 	caller std.Address,
+	referrer string,
 ) (uint64, string, string, string) {
 	assertOnlyNotHalted()
 	prevCaller := getPrevRealm()
@@ -191,6 +194,8 @@ func Mint(
 		assertOnlyValidAddressWith(prevCaller.Addr(), caller)
 	}
 	checkDeadline(deadline)
+
+	referral.TryRegister(caller, referrer)
 
 	en.MintAndDistributeGns()
 

@@ -94,6 +94,7 @@ func testMintWugnotGnsPos01(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 
 		uassert.Equal(t, positionId, uint64(1))
@@ -110,7 +111,7 @@ func testStakeToken01(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		gnft.Approve(consts.STAKER_ADDR, positionIdFrom(1))
-		StakeToken(1)
+		StakeToken(1, "")
 		std.TestSkipHeights(1)
 		// 1 block staked
 		// 75% of emission to staker (it is unclaimable amount, because we don't have any staked position)

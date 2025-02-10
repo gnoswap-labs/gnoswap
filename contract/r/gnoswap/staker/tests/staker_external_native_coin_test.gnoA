@@ -60,6 +60,7 @@ func testMintBarBaz100(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		std.TestSkipHeights(1)
 	})
@@ -95,7 +96,7 @@ func testStakeToken(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		gnft.Approve(consts.STAKER_ADDR, "1")
-		StakeToken(1)
+		StakeToken(1, "")
 	})
 }
 

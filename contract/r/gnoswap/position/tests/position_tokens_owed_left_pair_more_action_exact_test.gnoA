@@ -81,6 +81,7 @@ func TestMintPosition01(t *testing.T) {
 		max_timeout,
 		adminAddr,
 		adminAddr,
+		"",
 	)
 	std.TestSkipHeights(10)
 
@@ -159,6 +160,7 @@ func TestMintPosition02(t *testing.T) {
 		max_timeout,
 		adminAddr,
 		adminAddr,
+		"",
 	)
 	std.TestSkipHeights(10)
 
@@ -199,6 +201,7 @@ func TestMintPosition03(t *testing.T) {
 		max_timeout,
 		adminAddr,
 		adminAddr,
+		"",
 	)
 	std.TestSkipHeights(10)
 
@@ -262,6 +265,7 @@ func TestMintPosition04(t *testing.T) {
 		max_timeout,
 		adminAddr,
 		adminAddr,
+		"",
 	)
 	std.TestSkipHeights(10)
 

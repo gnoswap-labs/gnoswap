@@ -72,6 +72,7 @@ func TestMintPosition01InRange(t *testing.T) {
 		max_timeout,
 		adminAddr,
 		adminAddr,
+		"",
 	)
 
 	uassert.Equal(t, positionId, uint64(1))
@@ -98,6 +99,7 @@ func TestMintPosition02LowerRange(t *testing.T) {
 		max_timeout,
 		adminAddr,
 		adminAddr,
+		"",
 	)
 
 	uassert.Equal(t, positionId, uint64(2))
@@ -124,6 +126,7 @@ func TestMintPosition03UpperRange(t *testing.T) {
 		max_timeout,
 		adminAddr,
 		adminAddr,
+		"",
 	)
 
 	uassert.Equal(t, positionId, uint64(3))
