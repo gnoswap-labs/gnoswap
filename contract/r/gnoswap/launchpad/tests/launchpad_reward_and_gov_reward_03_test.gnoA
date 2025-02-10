@@ -258,7 +258,7 @@ func testGovStakerDelegate(t *testing.T) {
 	t.Run("gov delegate", func(t *testing.T) {
 		std.TestSetRealm(govDelegateRealm)
 		gns.Approve(consts.GOV_STAKER_ADDR, uint64(1_000_000))
-		gs.Delegate(govDelegateAddr, uint64(1_000_000))
+		gs.Delegate(govDelegateAddr, uint64(1_000_000), "")
 
 		checkProtocolFeeBalance()
 		// (still) none

@@ -108,7 +108,7 @@ func testEarlyGovDelegateAndReward(t *testing.T) {
 	t.Run("early gov delegate and reward", func(t *testing.T) {
 		std.TestSetRealm(dummyRealm)
 		gns.Approve(consts.GOV_STAKER_ADDR, uint64(1_000_000))
-		gs.Delegate(dummyAddr, uint64(1_000_000))
+		gs.Delegate(dummyAddr, uint64(1_000_000), "")
 		std.TestSkipHeights(1)
 
 		rewardJson := gs.GetClaimableRewardByAddress(dummyAddr)
@@ -175,7 +175,7 @@ func testGovDelegate(t *testing.T) {
 	t.Run("gov delegate", func(t *testing.T) {
 		std.TestSetRealm(govDelegateRealm)
 		gns.Approve(consts.GOV_STAKER_ADDR, uint64(1_000_000_000))
-		gs.Delegate(govDelegateAddr, uint64(1_000_000_000))
+		gs.Delegate(govDelegateAddr, uint64(1_000_000_000), "")
 		std.TestSkipHeights(1)
 	})
 }
