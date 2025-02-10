@@ -88,6 +88,7 @@ func testMintBarBaz100Pos01(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		std.TestSkipHeights(1)
 	})
@@ -113,6 +114,7 @@ func testMintBarBaz100Pos02(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		std.TestSkipHeights(1)
 	})
@@ -138,6 +140,7 @@ func testMintBarBaz100Pos03(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		std.TestSkipHeights(1)
 	})
@@ -163,6 +166,7 @@ func testMintBarBaz100Pos04(t *testing.T) {
 			max_timeout,
 			adminAddr,
 			adminAddr,
+			"",
 		)
 		std.TestSkipHeights(1)
 	})
@@ -173,7 +177,7 @@ func testStakeTokenPos01(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		gnft.Approve(consts.STAKER_ADDR, positionIdFrom(1))
-		StakeToken(1)
+		StakeToken(1, "")
 		std.TestSkipHeights(1)
 	})
 
@@ -284,14 +288,14 @@ func testStakeTokenPos02To04(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		gnft.Approve(consts.STAKER_ADDR, positionIdFrom(2))
-		StakeToken(2)
+		StakeToken(2, "")
 	})
 
 	t.Run("stake position 03", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		gnft.Approve(consts.STAKER_ADDR, positionIdFrom(3))
-		StakeToken(3)
+		StakeToken(3, "")
 		std.TestSkipHeights(1)
 	})
 
@@ -299,7 +303,7 @@ func testStakeTokenPos02To04(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		gnft.Approve(consts.STAKER_ADDR, positionIdFrom(4))
-		StakeToken(4)
+		StakeToken(4, "")
 		std.TestSkipHeights(1)
 	})
 }

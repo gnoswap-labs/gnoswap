@@ -109,6 +109,7 @@ func testPositionMintNative01(t *testing.T) {
 			max_timeout,     // deadline
 			adminAddr,
 			adminAddr,
+			"",
 		)
 
 		std.TestSkipHeights(1)
@@ -159,6 +160,7 @@ func testPositionMintNative02(t *testing.T) {
 			max_timeout,     // deadline
 			adminAddr,
 			adminAddr,
+			"",
 		)
 
 		std.TestSkipHeights(1)
@@ -218,7 +220,7 @@ func testStakeToken01(t *testing.T) {
 		gnft.Approve(consts.STAKER_ADDR, positionIdFrom(1))
 		std.TestSkipHeights(1)
 
-		StakeToken(1) // GNFT tokenId
+		StakeToken(1, "") // GNFT tokenId
 
 		std.TestSkipHeights(1)
 
@@ -234,7 +236,7 @@ func testStakeToken02(t *testing.T) {
 		gnft.Approve(consts.STAKER_ADDR, positionIdFrom(2))
 		std.TestSkipHeights(1)
 
-		StakeToken(2) // GNFT tokenId
+		StakeToken(2, "") // GNFT tokenId
 
 		std.TestSkipHeights(1)
 

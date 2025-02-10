@@ -242,7 +242,9 @@ func MintPosition(t *testing.T,
 		amount1Min,
 		deadline,
 		mintTo,
-		caller)
+		caller,
+		"",
+	)
 }
 
 func MintPositionAll(t *testing.T, caller std.Address) {
@@ -433,6 +435,7 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 		max_timeout,
 		admin,
 		admin,
+		"",
 	)
 }
 
@@ -445,7 +448,7 @@ func LPTokenApprove(t *testing.T, owner, operator std.Address, positionId uint64
 func LPTokenStake(t *testing.T, owner std.Address, positionId uint64) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(owner))
-	sr.StakeToken(positionId)
+	sr.StakeToken(positionId, "")
 }
 
 func LPTokenUnStake(t *testing.T, owner std.Address, positionId uint64, unwrap bool) {

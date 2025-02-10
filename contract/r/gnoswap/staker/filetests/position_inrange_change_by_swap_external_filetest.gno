@@ -174,8 +174,8 @@ func testStakeTokenPos01AndPos02() {
 	gnft.Approve(stakerAddr, positionIdFrom(2))
 
 	std.TestSkipHeights(1)
-	sr.StakeToken(1)
-	sr.StakeToken(2)
+	sr.StakeToken(1, "")
+	sr.StakeToken(2, "")
 }
 
 func testMakeExternalBarStart() {
