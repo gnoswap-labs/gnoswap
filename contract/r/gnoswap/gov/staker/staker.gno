@@ -73,7 +73,7 @@ func Delegate(to std.Address, amount uint64, referrer std.Address) {
 	}
 
 	caller := std.PrevRealm().Addr()
-	referral.TryRegister(caller, referrer)
+	referral.TryRegister(caller, referrer.String())
 
 	gnsBalance := gns.BalanceOf(caller)
 	if gnsBalance < amount {
