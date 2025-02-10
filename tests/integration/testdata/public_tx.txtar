@@ -124,12 +124,12 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func DecreaseLiquidi
 # swap exact in 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gns -func Approve -args g148tjamj80yyrm309z7rk690an22thd2l3z8ank -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 gnokey maketx call -pkgpath gno.land/r/demo/wugnot -func Approve -args g1lm2l7tf49h3mykesct7rhfml30yx8dw5xrval7 -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/router -func ExactInSwapRoute -args "gno.land/r/gnoswap/v1/gns" -args "gno.land/r/demo/wugnot" -args 50000 -args "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:3000" -args "100" -args "0" -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/router -func ExactInSwapRoute -args "gno.land/r/gnoswap/v1/gns" -args "gno.land/r/demo/wugnot" -args 50000 -args "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:3000" -args "100" -args "0" -args 9999999999 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 
 # swap exact out
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gns -func Approve -args g148tjamj80yyrm309z7rk690an22thd2l3z8ank -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 gnokey maketx call -pkgpath gno.land/r/demo/wugnot -func Approve -args g1lm2l7tf49h3mykesct7rhfml30yx8dw5xrval7 -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/router -func ExactOutSwapRoute -args "gno.land/r/gnoswap/v1/gns" -args "gno.land/r/demo/wugnot" -args 50000 -args "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:3000" -args "100" -args "60000" -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/router -func ExactOutSwapRoute -args "gno.land/r/gnoswap/v1/gns" -args "gno.land/r/demo/wugnot" -args 50000 -args "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:3000" -args "100" -args "60000" -args 9999999999 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 
 # stake position
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gnft -func Approve -args g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1

@@ -121,6 +121,7 @@ func TestSwap1(t *testing.T) {
 		"100",
 		"6550809",
 		max_timeout,
+		"", // referrer
 	)
 	println("amount0, amount1:", amount0, amount1)
 	uassert.Equal(t, amount0, "6508448")
@@ -241,6 +242,7 @@ func TestSwap2(t *testing.T) {
 		"100",
 		"2866635",
 		max_timeout,
+		"", // referrer
 	)
 	uassert.Equal(t, amount0, "5000000")
 	uassert.Equal(t, amount1, "-2881042") // -2881041.945
@@ -305,6 +307,7 @@ func TestSwap3(t *testing.T) {
 		"100",
 		"559130",
 		max_timeout,
+		"", // referrer
 	)
 	// 1000000,-559976
 	uassert.Equal(t, amount0, "1000000")
