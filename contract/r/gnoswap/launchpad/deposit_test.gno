@@ -318,7 +318,7 @@ func TestDepositGns(t *testing.T) {
 			}
 		}()
 
-		DepositGns(project.id+":30", 1000)
+		DepositGns(project.id+":30", 1000, "")
 		std.TestSkipHeights(1)
 	})
 
@@ -331,7 +331,7 @@ func TestDepositGns(t *testing.T) {
 		gns.Approve(consts.LAUNCHPAD_ADDR, 1000000)
 
 		std.TestSkipHeights(10)
-		depositId := DepositGns(project.id+":30", 1000000)
+		depositId := DepositGns(project.id+":30", 1000000, "")
 		deposit := deposits[depositId]
 
 		uassert.Equal(t, deposit.amount, uint64(1000000))

@@ -13,6 +13,7 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 	"gno.land/r/gnoswap/v1/gov/xgns"
+	"gno.land/r/gnoswap/v1/referral"
 )
 
 var (
@@ -57,6 +58,7 @@ type ProjectTierInfo struct {
 // Parameters:
 // - targetProjectTierId (string): The ID of the target project and tier in the format "{projectId}:{tierType}".
 // - amount (uint64): The amount to deposit.
+// - referrer (string): The referrer address.
 //
 // Returns:
 // - string: The ID of the newly created deposit.
@@ -90,7 +92,7 @@ type ProjectTierInfo struct {
 //   - Emit events for both the deposit and the first deposit for the tier (if applicable).
 //
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_deposit.gno#depositgns
-func DepositGns(targetProjectTierId string, amount uint64) string {
+func DepositGns(targetProjectTierId string, amount uint64, referrer string) string {
 	assertOnlyNotHalted()
 	assertValidAmount(amount)
 
@@ -105,6 +107,7 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 		panic(addDetailToError(errInactiveProject, projectId))
 	}
 	caller := getPrevAddr()
+	referral.TryRegister(caller, referrer)
 	project.checkDepositConditions(caller)
 
 	tier, err := project.Tier(convertTierTypeStrToUint64(tierType))
@@ -215,6 +218,7 @@ func DepositGns(targetProjectTierId string, amount uint64) string {
 		"depositId", deposit.id,
 		"claimableHeight", strconv.FormatUint(deposit.claimableHeight, 10),
 		"claimableTime", strconv.FormatUint(deposit.claimableTime, 10),
+		"referrer", referrer,
 	)
 
 	return deposit.id
