@@ -37,7 +37,7 @@ var minimumAmount = uint64(1_000_000)
 
 // Delegate delegates GNS tokens to a specified address.
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#delegate
-func Delegate(to std.Address, amount uint64, referrer std.Address) {
+func Delegate(to std.Address, amount uint64, referrer string) {
 	if running {
 		cleanDelegationStatHistory()
 	}
@@ -73,7 +73,7 @@ func Delegate(to std.Address, amount uint64, referrer std.Address) {
 	}
 
 	caller := std.PrevRealm().Addr()
-	referral.TryRegister(caller, referrer.String())
+	referral.TryRegister(caller, referrer)
 
 	gnsBalance := gns.BalanceOf(caller)
 	if gnsBalance < amount {
@@ -102,7 +102,7 @@ func Delegate(to std.Address, amount uint64, referrer std.Address) {
 		"from", caller.String(),
 		"to", to.String(),
 		"amount", formatUint(amount),
-		"referrer", referrer.String(),
+		"referrer", referrer,
 	)
 }
 
@@ -402,7 +402,6 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			"collectedAmount", formatUint(amount),
 		)
 	}
-
 }
 
 func transferProtocolFee(tokenPath string, to std.Address, amount uint64) {
