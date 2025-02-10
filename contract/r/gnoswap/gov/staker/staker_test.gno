@@ -351,7 +351,7 @@ func TestRedelegate(t *testing.T) {
 
 	std.TestSetOrigCaller(userRealm.Addr())
 	gns.Approve(consts.GOV_STAKER_ADDR, amount)
-	Delegate(from, amount)
+	Delegate(from, amount, "")
 
 	std.TestSetOrigCaller(userRealm.Addr())
 	gns.Approve(consts.GOV_STAKER_ADDR, amount)
@@ -381,7 +381,7 @@ func TestUndelegate(t *testing.T) {
 
 	std.TestSetOrigCaller(user3Realm.Addr())
 	gns.Approve(consts.GOV_STAKER_ADDR, amount)
-	Delegate(to, amount)
+	Delegate(to, amount, "")
 	Undelegate(to, amount)
 
 	if xgns.BalanceOf(user3Realm.Addr()) == 1_000_000 {
