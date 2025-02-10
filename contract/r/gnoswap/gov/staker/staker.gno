@@ -16,6 +16,7 @@ import (
 	"gno.land/r/gnoswap/v1/gov/xgns"
 
 	en "gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/v1/referral"
 )
 
 // lockedGNS represents a locked GNS with its amount, unlock time, and collected status
@@ -36,7 +37,7 @@ var minimumAmount = uint64(1_000_000)
 
 // Delegate delegates GNS tokens to a specified address.
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#delegate
-func Delegate(to std.Address, amount uint64) {
+func Delegate(to std.Address, amount uint64, referrer std.Address) {
 	if running {
 		cleanDelegationStatHistory()
 	}
@@ -72,6 +73,8 @@ func Delegate(to std.Address, amount uint64) {
 	}
 
 	caller := std.PrevRealm().Addr()
+	referral.TryRegister(caller, referrer)
+
 	gnsBalance := gns.BalanceOf(caller)
 	if gnsBalance < amount {
 		panic(addDetailToError(
@@ -99,6 +102,7 @@ func Delegate(to std.Address, amount uint64) {
 		"from", caller.String(),
 		"to", to.String(),
 		"amount", formatUint(amount),
+		"referrer", referrer.String(),
 	)
 }
 
