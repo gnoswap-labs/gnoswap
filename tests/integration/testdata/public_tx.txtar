@@ -102,10 +102,42 @@ gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/launchpad -pkgpath gno.lan
 ### deploy referral
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/referral -pkgpath gno.land/r/gnoswap/v1/referral -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 
+
 # create pool
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gns -func Approve -args g148tjamj80yyrm309z7rk690an22thd2l3z8ank -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/pool -func CreatePool -args "gno.land/r/demo/wugnot" -args "gno.land/r/gnoswap/v1/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout '{"key":"poolPath","value":"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"}'
+
+# check created pool 
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/pool -func DoesPoolPathExist -args "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout true
+
+# create another pool
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gns -func Approve -args g148tjamj80yyrm309z7rk690an22thd2l3z8ank -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/pool -func CreatePool -args "gno.land/r/gnoswap/v1/test_token/bar" -args "gno.land/r/gnoswap/v1/test_token/baz" -args 3000 -args 79228162514264337593543950337 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout '{"key":"poolPath","value":"gno.land/r/gnoswap/v1/test_token/bar:gno.land/r/gnoswap/v1/test_token/baz:3000"}'
+
+
+# pool creation fee getter & setter
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/pool -func GetPoolCreationFee -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout 100000000
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/pool -func SetPoolCreationFeeByAdmin -args 0 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout OK
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/pool -func GetPoolCreationFee -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout 0
+
+
+# withdrawal fee getter & setter
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/pool -func GetWithdrawalFee -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout 100
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/pool -func SetWithdrawalFeeByAdmin -args 0 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout OK
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/pool -func GetWithdrawalFee -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout 0
 
 
 # mint new position
@@ -114,29 +146,156 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gns -func Approve -args g148tj
 gnokey maketx call -pkgpath gno.land/r/demo/wugnot -func Approve -args g148tjamj80yyrm309z7rk690an22thd2l3z8ank -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 gnokey maketx call -pkgpath gno.land/r/demo/wugnot -func Approve -args g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5 -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/v1/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 1 -args 1 -args 9999999999 -args g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -args g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout '(1 uint64)'
 
-# increase liquidity
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func PositionGetPositionLiquidityStr -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout '("21790703" string)'
+
+
+# increase liquditiy
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func IncreaseLiquidity -send "20000000ugnot" -args 1 -args 20000000 -args 20000000 -args 1 -args 1 -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout OK
 
-# decrease liquditiy
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func DecreaseLiquidity -args 1 -args 12345678 -args 0 -args 0 -args 9999999999 -args "false" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func PositionGetPositionLiquidityStr -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout '("43581406" string')
+
+
+# decrease rliquditiy
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func DecreaseLiquidity -args 1 -args 81406 -args 0 -args 0 -args 9999999999 -args "false" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout OK
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func PositionGetPositionLiquidityStr -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout '("43500000" string')
+
 
 # swap exact in 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gns -func Approve -args g148tjamj80yyrm309z7rk690an22thd2l3z8ank -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 gnokey maketx call -pkgpath gno.land/r/demo/wugnot -func Approve -args g1lm2l7tf49h3mykesct7rhfml30yx8dw5xrval7 -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/router -func ExactInSwapRoute -args "gno.land/r/gnoswap/v1/gns" -args "gno.land/r/demo/wugnot" -args 50000 -args "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:3000" -args "100" -args "0" -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout OK
+
 
 # swap exact out
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gns -func Approve -args g148tjamj80yyrm309z7rk690an22thd2l3z8ank -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 gnokey maketx call -pkgpath gno.land/r/demo/wugnot -func Approve -args g1lm2l7tf49h3mykesct7rhfml30yx8dw5xrval7 -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/router -func ExactOutSwapRoute -args "gno.land/r/gnoswap/v1/gns" -args "gno.land/r/demo/wugnot" -args 50000 -args "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:3000" -args "100" -args "60000" -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout OK
+
+
+# collect swap fee
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func CollectFee -args 1 -args false -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout '("300" string)'
+
+
+# swap fee getter & setter
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/router -func GetSwapFee -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout 15
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/router -func SetSwapFeeByAdmin -args 0 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout OK
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/router -func GetSwapFee -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout 0
+
 
 # stake position
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func IsStaked -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout false
+
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gnft -func Approve -args g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func IsStaked -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout true
+
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func StakeToken -args 1 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 
 # collect staking reward
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func CollectReward -args 1 -args false -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 
+
 # unstake token
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func UnStakeToken -args 1 -args true -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func IsStaked -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout false
+
+
+# deposit gns amount getter & setter
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func GetDepositGnsAmount -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout 100000000
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func SetDepositGnsAmountByAdmin -args 0 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout OK
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func GetDepositGnsAmount -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout 0
+
+
+## unstaking fee getter & setter
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func GetUnstakingFee -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout 100
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func SetUnStakingFeeByAdmin -args 0 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout OK
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func GetUnstakingFee -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout 0
+
+
+## staker pool tier
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func GetPoolTier -args "gno.land/r/gnoswap/v1/test_token/bar:gno.land/r/gnoswap/v1/test_token/baz:3000" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout '(0 uint64)'
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func SetPoolTierByAdmin -args "gno.land/r/gnoswap/v1/test_token/bar:gno.land/r/gnoswap/v1/test_token/baz:3000" -args 2 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func GetPoolTier -args "gno.land/r/gnoswap/v1/test_token/bar:gno.land/r/gnoswap/v1/test_token/baz:3000" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout '(2 uint64)'
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func ChangePoolTierByAdmin -args "gno.land/r/gnoswap/v1/test_token/bar:gno.land/r/gnoswap/v1/test_token/baz:3000" -args 3 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func GetPoolTier -args "gno.land/r/gnoswap/v1/test_token/bar:gno.land/r/gnoswap/v1/test_token/baz:3000" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout '(3 uint64)'
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func RemovePoolTierByAdmin -args "gno.land/r/gnoswap/v1/test_token/bar:gno.land/r/gnoswap/v1/test_token/baz:3000" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func GetPoolTier -args "gno.land/r/gnoswap/v1/test_token/bar:gno.land/r/gnoswap/v1/test_token/baz:3000" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout '(0 uint64)'
+
+
+# avg blocktime getter & setter
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gns -func GetAvgBlockTimeInMs -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout 2000
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gns -func SetAvgBlockTimeInMsByAdmin -args 4000 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout OK
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gns -func GetAvgBlockTimeInMs -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout 4000
+
+
+## change emission reward distribution pct
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/emission -func GetDistributionBpsPct -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout '(7500 uint64)'
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/emission -func ChangeDistributionPctByAdmin -args 1 -args 10000 -args 2 -args 0 -args 3 -args 0 -args 4 -args 0 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/emission -func GetDistributionBpsPct -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout '(10000 uint64)'
+
+
+## delegate to user2
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gns -func Approve -args g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/staker -func Delegate -args ${user2_user_addr} -args 5000000000 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/staker -func GetDelegationAmountFromTo -args ${test1_user_addr} -args ${user2_user_addr} -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout '(5000000000 uint64)'
+
+
+## redelegate partial from user2 to user3
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/staker -func Redelegate -args ${user2_user_addr} -args ${user3_user_addr} -args 200000000 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/staker -func GetDelegationAmountFromTo -args ${test1_user_addr} -args ${user3_user_addr} -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout '(200000000 uint64)'
+
+
+# propose proposal
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/governance -func ProposeText -args "title01" -args "description01" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/governance -func GetProposalById -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout 'title01'
+
+# cancel proposal
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/governance -func Cancel -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+stdout OK
