@@ -76,7 +76,7 @@ func ExactInSwapRoute(
 	)
 
 	prevAddr, prevPkgPath := getPrev()
-	referral.TryRegister(prevAddr, referrer)
+	referral.TryRegister(std.Address(prevAddr), referrer)
 
 	std.Emit(
 		"ExactInSwap",
