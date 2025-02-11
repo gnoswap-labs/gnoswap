@@ -1,5 +1,5 @@
 #!usr/bin/env ruby
-# .github/script/generate_matrix.rb
+# .github/scripts/generate_matrix.rb
 
 require 'json'
 
