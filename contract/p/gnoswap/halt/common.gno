@@ -1,9 +1,13 @@
 package halt
 
+type baseOp interface {
+	Name() string
+	Desc() string
+}
+
 // baseInfo contains common fields for named entities.
 type baseInfo struct {
-	name string
-	desc string
+	name, desc string
 }
 
 func (b baseInfo) Name() string { return b.name }

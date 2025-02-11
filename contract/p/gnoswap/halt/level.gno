@@ -1,6 +1,9 @@
 package halt
 
 import (
+	"sort"
+	"strings"
+
 	"gno.land/p/demo/ufmt"
 )
 
@@ -9,26 +12,79 @@ var (
 	_ HaltLevel = (*CompositeHaltLevel)(nil)
 )
 
+// LevelID represents a unique halt level identifier.
+type LevelID uint8
+
+const (
+	_               LevelID = iota // undefined
+	LvNoHalt                       // normal operation
+	LvSwapHalt                     // swap operations halted
+	LvLiquidityHalt                // no swaps, no liquidity ops
+	LvEmergencyHalt                // only withdrawals allowed
+	LvCompleteHalt                 // all ops disabled
+)
+
+// Nth returns the numeric value of the LevelID.
+func (lv LevelID) Nth() uint8 { return uint8(lv) }
+
+// String returns the string representation of the LevelID.
+func (lv LevelID) String() string {
+	switch lv {
+	case LvNoHalt:
+		return "NoHalt"
+	case LvSwapHalt:
+		return "SwapHalt"
+	case LvLiquidityHalt:
+		return "LiquidityHalt"
+	case LvEmergencyHalt:
+		return "EmergencyHalt"
+	case LvCompleteHalt:
+		return "CompleteHalt"
+	default:
+		return "Unknown"
+	}
+}
+
 // allowedOps is a map that tracks which operation types are allowed.
 type allowedOps map[OpType]bool
 
 // HaltLevel represents a protocol halt level with its configuration.
 // It defines what operations are allowed at a specific halt level.
 type HaltLevel interface {
-	Level() uint8
-	Name() string
-	Desc() string
+	baseOp
+	Level() LevelID
 	IsOperationAllowed(op Operation) bool
+}
+
+// HaltLevels represents a collection of halt levels.
+// It implements sort.Interface to allow sorting by LevelID.
+type HaltLevels []HaltLevel
+
+var _ sort.Interface = (HaltLevels)(nil)
+
+func (ll HaltLevels) Len() int           { return len(ll) }
+func (ll HaltLevels) Swap(i, j int)      { ll[i], ll[j] = ll[j], ll[i] }
+func (ll HaltLevels) Less(i, j int) bool { return ll[i].Level() < ll[j].Level() }
+
+// Iter iterates through all halt levels and applies the given callback function.
+// Returns true if the callback returns true for any iteration, false otherwise.
+func (ll HaltLevels) Iter(fn func(HaltLevel) bool) bool {
+	for _, lv := range ll {
+		if fn(lv) {
+			return true
+		}
+	}
+	return false
 }
 
 // BasicHaltLevel implements the `HaltLevel` interface.
 type BasicHaltLevel struct {
 	baseInfo
-	level      uint8
+	level      LevelID
 	allowedOps allowedOps
 }
 
-func (h BasicHaltLevel) Level() uint8 { return h.level }
+func (h BasicHaltLevel) Level() LevelID { return h.level }
 
 // IsOperationAllowed checks if a given operation is allowed at this halt level.
 // Returns true if the operation type exists in allowedOps and is marked as allowed.
@@ -38,40 +94,50 @@ func (h BasicHaltLevel) IsOperationAllowed(op Operation) bool {
 }
 
 // NewHaltLevel creates a new HaltLevel instance with the specified configuration.
-func NewHaltLevel(level uint8, name, desc string, allowedOps allowedOps) HaltLevel {
+func NewHaltLevel(level LevelID, name, desc string, allowedOps allowedOps) HaltLevel {
 	return BasicHaltLevel{baseInfo{name, desc}, level, allowedOps}
 }
 
 // CompositeOp represents the type of operation to be performed
 // when combining multiple halt levels.
-type CompositeOp string
+type CompositeOp uint8
 
 // Available composite operations.
-// TODO: add more operators if needed.
 const (
-	CompositeOpAnd CompositeOp = "and" // All conditions must be met
-	CompositeOpOr  CompositeOp = "or"  // At least one condition must be met
+	_              CompositeOp = iota // undefined
+	CompositeOpAnd                    // All conditions must be met
+	CompositeOpOr                     // At least one condition must be met
+)
+
+const (
+	rawAnd    = "and"
+	rawOr     = "or"
+	undefined = "undefined"
 )
 
 // CompositeOpFromString converts a string to a CompositeOp.
 // Returns an error if the string is not a valid operator.
 func CompositeOpFromString(s string) (CompositeOp, error) {
-	switch s {
-	case "and":
+	switch strings.ToLower(s) {
+	case rawAnd:
 		return CompositeOpAnd, nil
-	case "or":
+	case rawOr:
 		return CompositeOpOr, nil
 	default:
-		return "", ufmt.Errorf("unknown composite operator: %s", s)
+		return 0, ufmt.Errorf("unknown composite operator: %s", s)
 	}
 }
 
 func (o CompositeOp) String() string {
-	return string(o)
+	switch o {
+	case CompositeOpAnd:
+		return rawAnd
+	case CompositeOpOr:
+		return rawOr
+	default:
+		return undefined
+	}
 }
-
-// HaltLevels represents a collection of halt levels.
-type HaltLevels []HaltLevel
 
 // CompositeHaltLevel combines multiple halt levels with a logical operator.
 type CompositeHaltLevel struct {
@@ -80,7 +146,7 @@ type CompositeHaltLevel struct {
 	operator CompositeOp
 }
 
-func (c *CompositeHaltLevel) Level() uint8 { return 0 /* Placeholder value */ }
+func (c *CompositeHaltLevel) Level() LevelID { return 0 /* Placeholder value */ }
 
 // IsOperationAllowed checks if an operation is allowed based on the composite configuration.
 //   - AND (CompositeOpAnd): all levels must allow the operation.
@@ -88,19 +154,13 @@ func (c *CompositeHaltLevel) Level() uint8 { return 0 /* Placeholder value */ }
 func (c *CompositeHaltLevel) IsOperationAllowed(op Operation) bool {
 	switch c.operator {
 	case CompositeOpAnd:
-		for _, level := range c.levels {
-			if !level.IsOperationAllowed(op) {
-				return false
-			}
-		}
-		return true
+		return !c.levels.Iter(func(lv HaltLevel) bool {
+			return !lv.IsOperationAllowed(op)
+		})
 	case CompositeOpOr:
-		for _, level := range c.levels {
-			if level.IsOperationAllowed(op) {
-				return true
-			}
-		}
-		return false
+		return c.levels.Iter(func(lv HaltLevel) bool {
+			return lv.IsOperationAllowed(op)
+		})
 	default:
 		return false
 	}

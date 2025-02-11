@@ -4,11 +4,17 @@ import "gno.land/p/demo/ufmt"
 
 var _ Operation = (*basicOperation)(nil)
 
+const (
+	rawSwap       = "swap"
+	rawLiquidity  = "liquidity"
+	rawWithdraw   = "withdraw"
+	rawGovernance = "governance"
+)
+
 // Operation represents a protocol operation that can be halted.
 type Operation interface {
+	baseOp
 	Type() OpType
-	Name() string
-	Desc() string
 }
 
 // OpType represents the type of operation.
@@ -16,10 +22,10 @@ type OpType string
 
 // Predefined operation types in the protocol.
 const (
-	OpTypeSwap       OpType = "swap"
-	OpTypeLiquidity  OpType = "liquidity"
-	OpTypeWithdraw   OpType = "withdraw"
-	OpTypeGovernance OpType = "governance"
+	OpTypeSwap       OpType = rawSwap
+	OpTypeLiquidity  OpType = rawLiquidity
+	OpTypeWithdraw   OpType = rawWithdraw
+	OpTypeGovernance OpType = rawGovernance
 )
 
 func (o OpType) String() string { return string(o) }
@@ -27,13 +33,13 @@ func (o OpType) String() string { return string(o) }
 // OpTypeFromString converts a string to an `OpType`.
 func OpTypeFromString(s string) (OpType, error) {
 	switch s {
-	case "swap":
+	case rawSwap:
 		return OpTypeSwap, nil
-	case "liquidity":
+	case rawLiquidity:
 		return OpTypeLiquidity, nil
-	case "withdraw":
+	case rawWithdraw:
 		return OpTypeWithdraw, nil
-	case "governance":
+	case rawGovernance:
 		return OpTypeGovernance, nil
 	default:
 		return "", ufmt.Errorf("invalid operation type: %s", s)
@@ -48,7 +54,7 @@ type basicOperation struct {
 
 func (o basicOperation) Type() OpType { return o.opType }
 
-// newOperation creates a new `BasicOperation` instance.
-func newOperation(opType OpType, name, desc string) Operation {
+// NewOperation creates a new `BasicOperation` instance.
+func NewOperation(opType OpType, name, desc string) Operation {
 	return basicOperation{newBaseInfo(name, desc), opType}
 }

@@ -15,7 +15,7 @@ func TestBasicHaltLevel_IsOperationAllowed(t *testing.T) {
 			name: "should allow swap operation when configured",
 			level: BasicHaltLevel{
 				baseInfo:   baseInfo{name: "test", desc: "test level"},
-				level:      1,
+				level:     1,
 				allowedOps: allowedOps{OpTypeSwap: true},
 			},
 			operation:   NewOperation(OpTypeSwap, "test swap", "swap operation"),
@@ -25,7 +25,7 @@ func TestBasicHaltLevel_IsOperationAllowed(t *testing.T) {
 			name: "should not allow swap operation when not configured",
 			level: BasicHaltLevel{
 				baseInfo:   baseInfo{name: "test", desc: "test level"},
-				level:      1,
+				level:     1,
 				allowedOps: allowedOps{OpTypeLiquidity: true},
 			},
 			operation:   NewOperation(OpTypeSwap, "test swap", "swap operation"),
@@ -35,7 +35,7 @@ func TestBasicHaltLevel_IsOperationAllowed(t *testing.T) {
 			name: "should not allow operation when allowed is false",
 			level: BasicHaltLevel{
 				baseInfo:   baseInfo{name: "test", desc: "test level"},
-				level:      1,
+				level:     1,
 				allowedOps: allowedOps{OpTypeSwap: false},
 			},
 			operation:   NewOperation(OpTypeSwap, "test swap", "swap operation"),
@@ -44,8 +44,8 @@ func TestBasicHaltLevel_IsOperationAllowed(t *testing.T) {
 		{
 			name: "should handle multiple operations correctly",
 			level: BasicHaltLevel{
-				baseInfo: baseInfo{name: "test", desc: "test level"},
-				level:    1,
+				baseInfo:   baseInfo{name: "test", desc: "test level"},
+				level:     1,
 				allowedOps: allowedOps{
 					OpTypeSwap:      true,
 					OpTypeLiquidity: true,
@@ -70,12 +70,12 @@ func TestCompositeHaltLevel_IsOperationAllowed(t *testing.T) {
 	// basic levels
 	level1 := BasicHaltLevel{
 		baseInfo:   baseInfo{name: "level1", desc: "test level 1"},
-		level:      1,
+		level:     1,
 		allowedOps: allowedOps{OpTypeSwap: true, OpTypeLiquidity: false},
 	}
 	level2 := BasicHaltLevel{
 		baseInfo:   baseInfo{name: "level2", desc: "test level 2"},
-		level:      2,
+		level:     2,
 		allowedOps: allowedOps{OpTypeSwap: false, OpTypeLiquidity: true},
 	}
 
@@ -88,12 +88,12 @@ func TestCompositeHaltLevel_IsOperationAllowed(t *testing.T) {
 		{
 			name: "AND operator - should return true when all levels allow",
 			composite: CompositeHaltLevel{
-				baseInfo: baseInfo{name: "composite and", desc: "test composite and"},
-				levels: HaltLevels{
+				baseInfo:  baseInfo{name: "composite and", desc: "test composite and"},
+				levels:   HaltLevels{
 					level1,
 					BasicHaltLevel{
 						baseInfo:   baseInfo{name: "level3", desc: "test level 3"},
-						level:      3,
+						level:     3,
 						allowedOps: allowedOps{OpTypeSwap: true},
 					},
 				},
@@ -105,7 +105,7 @@ func TestCompositeHaltLevel_IsOperationAllowed(t *testing.T) {
 		{
 			name: "AND operator - should return false when any level denies",
 			composite: CompositeHaltLevel{
-				baseInfo: baseInfo{name: "composite and", desc: "test composite and"},
+				baseInfo:  baseInfo{name: "composite and", desc: "test composite and"},
 				levels:   HaltLevels{level1, level2},
 				operator: CompositeOpAnd,
 			},
@@ -115,7 +115,7 @@ func TestCompositeHaltLevel_IsOperationAllowed(t *testing.T) {
 		{
 			name: "OR operator - should return true when any level allows",
 			composite: CompositeHaltLevel{
-				baseInfo: baseInfo{name: "composite or", desc: "test composite or"},
+				baseInfo:  baseInfo{name: "composite or", desc: "test composite or"},
 				levels:   HaltLevels{level1, level2},
 				operator: CompositeOpOr,
 			},
@@ -125,7 +125,7 @@ func TestCompositeHaltLevel_IsOperationAllowed(t *testing.T) {
 		{
 			name: "OR operator - should return false when all levels deny",
 			composite: CompositeHaltLevel{
-				baseInfo: baseInfo{name: "composite or", desc: "test composite or"},
+				baseInfo:  baseInfo{name: "composite or", desc: "test composite or"},
 				levels:   HaltLevels{level1, level2},
 				operator: CompositeOpOr,
 			},
@@ -165,13 +165,13 @@ func TestCompositeOpFromString(t *testing.T) {
 		{
 			name:    "should return error for invalid operator",
 			input:   "invalid",
-			want:    "",
+			want:    0,
 			wantErr: true,
 		},
 		{
 			name:    "should return error for empty string",
 			input:   "",
-			want:    "",
+			want:    0,
 			wantErr: true,
 		},
 	}
