@@ -7,6 +7,7 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+// ApiGetClaimableDepositByAddress calculates the total claimable deposit for a given address.
 func ApiGetClaimableDepositByAddress(address std.Address) uint64 {
 	if !address.IsValid() {
 		return 0
@@ -31,7 +32,7 @@ func ApiGetClaimableDepositByAddress(address std.Address) uint64 {
 		}
 
 		rwd, _ := rewardStates.Get(deposit.projectId, deposit.tier)
-		reward := rwd.Claim(depositId, uint64(std.GetHeight()))
+		reward := rwd.claim(depositId, uint64(std.GetHeight()))
 
 		gnsToUser += reward
 	}
@@ -39,6 +40,7 @@ func ApiGetClaimableDepositByAddress(address std.Address) uint64 {
 	return gnsToUser
 }
 
+// ApiGetDepositByDepositId retrieves deposit information by deposit ID.
 func ApiGetDepositByDepositId(depositId string) string {
 	deposit, exist := deposits[depositId]
 	if !exist {
@@ -52,6 +54,7 @@ func ApiGetDepositByDepositId(depositId string) string {
 	return marshal(builder.Node())
 }
 
+// ApiGetDepositFullByDepositId retrieves full deposit information including project and tier details.
 func ApiGetDepositFullByDepositId(depositId string) string {
 	deposit, exist := deposits[depositId]
 	if !exist {
@@ -88,6 +91,7 @@ func ApiGetDepositFullByDepositId(depositId string) string {
 	return marshal(builder.Node())
 }
 
+// makeConditionsToStr converts a map of conditions to two strings: token paths and amounts.
 func makeConditionsToStr(conditions map[string]Condition) (string, string) {
 	var tokenPathList string
 	var amountList string

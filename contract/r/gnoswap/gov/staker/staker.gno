@@ -16,15 +16,17 @@ import (
 	"gno.land/r/gnoswap/v1/gov/xgns"
 
 	en "gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/v1/referral"
 )
 
+// lockedGNS represents a locked GNS with its amount, unlock time, and collected status
 type lockedGNS struct {
 	amount    uint64
 	unlock    uint64
 	collected bool
 }
 
-const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
+const SECONDS_IN_7_DAYS = uint64(604800)
 
 var (
 	addrLockedGns = avl.NewTree() // address -> []lockedGNS
@@ -35,7 +37,7 @@ var minimumAmount = uint64(1_000_000)
 
 // Delegate delegates GNS tokens to a specified address.
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#delegate
-func Delegate(to std.Address, amount uint64) {
+func Delegate(to std.Address, amount uint64, referrer string) {
 	if running {
 		cleanDelegationStatHistory()
 	}
@@ -71,6 +73,8 @@ func Delegate(to std.Address, amount uint64) {
 	}
 
 	caller := std.PrevRealm().Addr()
+	referral.TryRegister(caller, referrer)
+
 	gnsBalance := gns.BalanceOf(caller)
 	if gnsBalance < amount {
 		panic(addDetailToError(
@@ -79,7 +83,7 @@ func Delegate(to std.Address, amount uint64) {
 		))
 	}
 
-	rewardState.AddStake(uint64(std.GetHeight()), caller, amount, getCurrentBalance(), getCurrentProtocolFeeBalance())
+	rewardState.addStake(uint64(std.GetHeight()), caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
 	// GNS // caller -> GovStaker
 	gns.TransferFrom(caller, std.CurrentRealm().Addr(), amount)
@@ -98,6 +102,7 @@ func Delegate(to std.Address, amount uint64) {
 		"from", caller.String(),
 		"to", to.String(),
 		"amount", formatUint(amount),
+		"referrer", referrer,
 	)
 }
 
@@ -200,7 +205,7 @@ func Undelegate(from std.Address, amount uint64) {
 		))
 	}
 
-	reward, protocolFeeRewards := rewardState.RemoveStake(caller, amount, getCurrentBalance(), getCurrentProtocolFeeBalance())
+	reward, protocolFeeRewards := rewardState.removeStake(caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
 	// burn equivalent amount of xGNS
 	xgns.Burn(caller, amount)
@@ -217,7 +222,7 @@ func Undelegate(from std.Address, amount uint64) {
 	// lock up
 	userLocked := lockedGNS{
 		amount: amount,
-		unlock: uint64(time.Now().Unix()) + TIMESTAMP_7_DAYS, // after 7 days, call Collect() to receive GNS
+		unlock: uint64(time.Now().Unix()) + SECONDS_IN_7_DAYS, // after 7 days, call Collect() to receive GNS
 	}
 
 	var lockedList []lockedGNS
@@ -305,7 +310,7 @@ func CollectReward() {
 	prevAddr, prevPkgPath := getPrev()
 	caller := std.PrevRealm().Addr()
 
-	reward, protocolFeeRewards := rewardState.Claim(caller, getCurrentBalance(), getCurrentProtocolFeeBalance())
+	reward, protocolFeeRewards := rewardState.claim(caller, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
 	// XXX (@notJoon): There could be cases where the reward pool is empty, In such case,
 	// it seems appropriate to return 0 and continue processing.
@@ -371,7 +376,8 @@ func CollectRewardFromLaunchPad(to std.Address) {
 
 	prevAddr, prevPkgPath := getPrev()
 
-	emissionReward, protocolFeeRewards := rewardState.Claim(to, getCurrentBalance(), getCurrentProtocolFeeBalance())
+	emissionReward, protocolFeeRewards := rewardState.claim(to, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
+
 	if emissionReward > 0 {
 		gns.Transfer(to, emissionReward)
 		std.Emit(
@@ -396,7 +402,6 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			"collectedAmount", formatUint(amount),
 		)
 	}
-
 }
 
 func transferProtocolFee(tokenPath string, to std.Address, amount uint64) {

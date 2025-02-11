@@ -6,14 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/r/demo/wugnot"
-
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 )
-
 
 func TestDelegate(t *testing.T) {
 	std.TestSetOrigCaller(consts.ADMIN)
@@ -30,7 +26,7 @@ func TestDelegate(t *testing.T) {
 		amount := uint64(1_000_000)
 
 		gns.Approve(consts.GOV_STAKER_ADDR, amount)
-		Delegate(to, amount)
+		Delegate(to, amount, "")
 
 		minted := xgns.BalanceOf(userRealm.Addr())
 		if minted != amount {
@@ -49,7 +45,7 @@ func TestDelegate(t *testing.T) {
 				t.Errorf("Expected panic when delegating below minimumAmount")
 			}
 		}()
-		Delegate(to, amount)
+		Delegate(to, amount, "")
 	}
 
 	// 5) invalid to address
@@ -62,7 +58,7 @@ func TestDelegate(t *testing.T) {
 				t.Errorf("Expected panic with invalid 'to' address")
 			}
 		}()
-		Delegate(to, amount)
+		Delegate(to, amount, "")
 	}
 
 	// 6) not enough GNS balance user
@@ -76,7 +72,7 @@ func TestDelegate(t *testing.T) {
 				t.Errorf("Expected panic due to not enough GNS balance in user address")
 			}
 		}()
-		Delegate(to, amount)
+		Delegate(to, amount, "")
 	}
 
 	// 7) running = false => optional check
@@ -101,7 +97,7 @@ func TestDelegate(t *testing.T) {
 				t.Errorf("Expected panic when delegating below minimumAmount")
 			}
 		}()
-		Delegate(to, amount)
+		Delegate(to, amount, "")
 	}
 
 	{
@@ -113,7 +109,7 @@ func TestDelegate(t *testing.T) {
 				t.Errorf("Expected panic when delegating below minimumAmount")
 			}
 		}()
-		Delegate(to, amount)
+		Delegate(to, amount, "")
 	}
 }
 
@@ -168,7 +164,7 @@ func TestDelegate_Boundary_Values(t *testing.T) {
 				}()
 			}
 
-			Delegate(tt.to, tt.amount)
+			Delegate(tt.to, tt.amount, "")
 		})
 	}
 }
@@ -355,7 +351,7 @@ func TestRedelegate(t *testing.T) {
 
 	std.TestSetOrigCaller(userRealm.Addr())
 	gns.Approve(consts.GOV_STAKER_ADDR, amount)
-	Delegate(from, amount)
+	Delegate(from, amount, "")
 
 	std.TestSetOrigCaller(userRealm.Addr())
 	gns.Approve(consts.GOV_STAKER_ADDR, amount)
@@ -385,7 +381,7 @@ func TestUndelegate(t *testing.T) {
 
 	std.TestSetOrigCaller(user3Realm.Addr())
 	gns.Approve(consts.GOV_STAKER_ADDR, amount)
-	Delegate(to, amount)
+	Delegate(to, amount, "")
 	Undelegate(to, amount)
 
 	if xgns.BalanceOf(user3Realm.Addr()) == 1_000_000 {
@@ -434,7 +430,7 @@ func TestCollectUndelegatedGns(t *testing.T) {
 	now := uint64(time.Now().Unix())
 	locked := lockedGNS{
 		amount: 100_000,
-		unlock: now + TIMESTAMP_7_DAYS,
+		unlock: now + SECONDS_IN_7_DAYS,
 	}
 	addrLockedGns.Set(userRealm.Addr().String(), []lockedGNS{locked})
 	lockedAmount = 100_000
@@ -487,7 +483,7 @@ func TestCollectReward(t *testing.T) {
 	std.TestSetRealm(user2Realm)
 	user := user2Realm.Addr().String()
 
-	rewardState.AddStake(uint64(std.GetHeight()), std.Address(user), 10, 0, make(map[string]uint64))
+	rewardState.addStake(uint64(std.GetHeight()), std.Address(user), 10, 0, make(map[string]uint64))
 
 	// set a fake emission reward
 	//userEmissionReward.Set(user, uint64(50_000))

@@ -16,7 +16,7 @@ var (
 	adminRealm = std.NewUserRealm(consts.ADMIN)
 
 	startHeight    int64 = std.GetHeight()
-	startTimestamp int64 = time.Now().Unix() + consts.BLOCK_GENERATION_INTERVAL
+	startTimestamp int64 = time.Now().Unix() + milliToSec(consts.BLOCK_GENERATION_INTERVAL)
 )
 
 var FIRST_BLOCK_OF_YEAR = []int64{
@@ -35,33 +35,33 @@ var FIRST_BLOCK_OF_YEAR = []int64{
 }
 
 var FIRST_TIMESTAMP_OF_YEAR = []int64{
-	startTimestamp + consts.TIMESTAMP_YEAR*0,
-	startTimestamp + consts.TIMESTAMP_YEAR*1,
-	startTimestamp + consts.TIMESTAMP_YEAR*2,
-	startTimestamp + consts.TIMESTAMP_YEAR*3,
-	startTimestamp + consts.TIMESTAMP_YEAR*4,
-	startTimestamp + consts.TIMESTAMP_YEAR*5,
-	startTimestamp + consts.TIMESTAMP_YEAR*6,
-	startTimestamp + consts.TIMESTAMP_YEAR*7,
-	startTimestamp + consts.TIMESTAMP_YEAR*8,
-	startTimestamp + consts.TIMESTAMP_YEAR*9,
-	startTimestamp + consts.TIMESTAMP_YEAR*10,
-	startTimestamp + consts.TIMESTAMP_YEAR*11,
+	startTimestamp + SECONDS_IN_YEAR*0,
+	startTimestamp + SECONDS_IN_YEAR*1,
+	startTimestamp + SECONDS_IN_YEAR*2,
+	startTimestamp + SECONDS_IN_YEAR*3,
+	startTimestamp + SECONDS_IN_YEAR*4,
+	startTimestamp + SECONDS_IN_YEAR*5,
+	startTimestamp + SECONDS_IN_YEAR*6,
+	startTimestamp + SECONDS_IN_YEAR*7,
+	startTimestamp + SECONDS_IN_YEAR*8,
+	startTimestamp + SECONDS_IN_YEAR*9,
+	startTimestamp + SECONDS_IN_YEAR*10,
+	startTimestamp + SECONDS_IN_YEAR*11,
 }
 
 var END_TIMESTAMP_OF_YEAR = []int64{
-	startTimestamp + consts.TIMESTAMP_YEAR*1,
-	startTimestamp + consts.TIMESTAMP_YEAR*2,
-	startTimestamp + consts.TIMESTAMP_YEAR*3,
-	startTimestamp + consts.TIMESTAMP_YEAR*4,
-	startTimestamp + consts.TIMESTAMP_YEAR*5,
-	startTimestamp + consts.TIMESTAMP_YEAR*6,
-	startTimestamp + consts.TIMESTAMP_YEAR*7,
-	startTimestamp + consts.TIMESTAMP_YEAR*8,
-	startTimestamp + consts.TIMESTAMP_YEAR*9,
-	startTimestamp + consts.TIMESTAMP_YEAR*10,
-	startTimestamp + consts.TIMESTAMP_YEAR*11,
-	startTimestamp + consts.TIMESTAMP_YEAR*12,
+	startTimestamp + SECONDS_IN_YEAR*1,
+	startTimestamp + SECONDS_IN_YEAR*2,
+	startTimestamp + SECONDS_IN_YEAR*3,
+	startTimestamp + SECONDS_IN_YEAR*4,
+	startTimestamp + SECONDS_IN_YEAR*5,
+	startTimestamp + SECONDS_IN_YEAR*6,
+	startTimestamp + SECONDS_IN_YEAR*7,
+	startTimestamp + SECONDS_IN_YEAR*8,
+	startTimestamp + SECONDS_IN_YEAR*9,
+	startTimestamp + SECONDS_IN_YEAR*10,
+	startTimestamp + SECONDS_IN_YEAR*11,
+	startTimestamp + SECONDS_IN_YEAR*12,
 }
 
 func TestGetAmountByHeight(t *testing.T) {

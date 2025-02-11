@@ -4,15 +4,10 @@ import (
 	"std"
 )
 
-// GNOSWAP SERVICE
+// ADDRESS
 const (
-	ADMIN          std.Address = "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"
-	DEV_OPS        std.Address = "g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9"
-	TOKEN_REGISTER std.Address = "g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5"
-
-	TOKEN_REGISTER_NAMESPACE string = "gno.land/r/g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5"
-
-	BLOCK_GENERATION_INTERVAL int64 = 2 // seconds
+	ADMIN   std.Address = "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"
+	DEV_OPS std.Address = "g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9"
 )
 
 // WRAP & UNWRAP
@@ -71,8 +66,6 @@ const (
 
 	LAUNCHPAD_PATH string      = "gno.land/r/gnoswap/v1/launchpad"
 	LAUNCHPAD_ADDR std.Address = "g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3"
-
-	INIT_REGISTER_PATH string = "gno.land/r/g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5/v2/register_gnodev"
 )
 
 // NUMBER
@@ -117,17 +110,21 @@ const (
 	Q160_RESOLUTION uint = 160
 )
 
-// TIMESTAMP & DAY
+// TIME
 const (
-	SECOND_IN_MILLISECOND = 1000
+	SECONDS_PER_DAY = 86400
+)
 
-	// in seconds
-	TIMESTAMP_MINUTE = 60
-	TIMESTAMP_HOUR   = 3600
-	TIMESTAMP_DAY    = 86400
-	TIMESTAMP_YEAR   = 31536000
-
-	DAY_PER_YEAR = 365
+// BLOCK TIME
+const (
+	// Default block generation interval, in milliseconds, used to estimate
+	// how many blocks will be produced over a given timeframe.
+	// GnoSwap’s emission logic relies on this as an initial value,
+	// but actual block times may vary (e.g. due to network conditions).
+	// Governance or an admin can adjust it dynamically by calling
+	// [SetAvgBlockTimeInMs](https://github.com/gnoswap-labs/gnoswap/blob/a29e0f994466430618548ae992cca11a52f5102a/contract/r/gnoswap/gns/halving.gno#L359) to keep emission schedules accurate.
+	BLOCK_GENERATION_INTERVAL int64 = 2000
+	MILLISECONDS_PER_SECOND   int64 = 1000
 )
 
 // ETCs

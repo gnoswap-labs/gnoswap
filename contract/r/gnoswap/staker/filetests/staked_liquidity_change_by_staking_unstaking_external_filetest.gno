@@ -172,15 +172,15 @@ func testStakeTokenPos01() {
 
 	std.TestSkipHeights(1)
 
-	gnft.Approve(stakerAddr, tokenIdFrom(1))
-	sr.StakeToken(1)
+	gnft.Approve(stakerAddr, positionIdFrom(1))
+	sr.StakeToken(1, "")
 }
 
 func testStakeTokenPos02() {
 	std.TestSetRealm(adminRealm)
 
-	gnft.Approve(stakerAddr, tokenIdFrom(2))
-	sr.StakeToken(2)
+	gnft.Approve(stakerAddr, positionIdFrom(2))
+	sr.StakeToken(2, "")
 }
 
 func testMakeExternalBarStart() {
@@ -189,7 +189,7 @@ func testMakeExternalBarStart() {
 
 	timeLeft := externalStartTime - nowTime
 
-	blockAvgTime := consts.BLOCK_GENERATION_INTERVAL
+	blockAvgTime := milliToSec(consts.BLOCK_GENERATION_INTERVAL)
 	blockLeft := timeLeft / blockAvgTime
 	std.TestSkipHeights(int64(blockLeft)) // skip until external bar starts
 	std.TestSkipHeights(10)               // skip bit more to see reward calculation
@@ -236,22 +236,22 @@ func testCollectRewardAfterUnstake() {
 	}
 }
 
-func tokenIdFrom(tokenId interface{}) grc721.TokenID {
-	if tokenId == nil {
-		panic("tokenId is nil")
+func positionIdFrom(positionId interface{}) grc721.TokenID {
+	if positionId == nil {
+		panic("positionId is nil")
 	}
 
-	switch tokenId.(type) {
+	switch positionId.(type) {
 	case string:
-		return grc721.TokenID(tokenId.(string))
+		return grc721.TokenID(positionId.(string))
 	case int:
-		return grc721.TokenID(strconv.Itoa(tokenId.(int)))
+		return grc721.TokenID(strconv.Itoa(positionId.(int)))
 	case uint64:
-		return grc721.TokenID(strconv.Itoa(int(tokenId.(uint64))))
+		return grc721.TokenID(strconv.Itoa(int(positionId.(uint64))))
 	case grc721.TokenID:
-		return tokenId.(grc721.TokenID)
+		return positionId.(grc721.TokenID)
 	default:
-		panic("unsupported tokenId type")
+		panic("unsupported positionId type")
 	}
 }
 
@@ -259,4 +259,8 @@ func isInErrorRange(expected uint64, actual uint64) bool {
 	lowerBound := expected * 999999 / 1000000
 	upperBound := expected * 1000001 / 1000000
 	return actual >= lowerBound && actual <= upperBound
+}
+
+func milliToSec(ms int64) int64 {
+	return ms / consts.MILLISECONDS_PER_SECOND
 }

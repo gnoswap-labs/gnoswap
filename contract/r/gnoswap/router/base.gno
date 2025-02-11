@@ -21,6 +21,8 @@ const (
 	INITIAL_WUGNOT_BALANCE uint64 = 0
 )
 
+// swap can be done by multiple pools
+// to separate each pool, we use POOL_SEPARATOR
 const (
 	POOL_SEPARATOR = "*POOL*"
 )

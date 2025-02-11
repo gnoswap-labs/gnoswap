@@ -27,10 +27,15 @@ var (
 	accumNoVotes  = make(map[uint64]uint64) // proposalId -> no
 )
 
+// createVoteKey creates a vote key for a given proposal ID and voter address
 func createVoteKey(pid uint64, voter string) string {
 	return ufmt.Sprintf("%d:%s", pid, voter)
 }
 
+// getVote gets a vote for a given proposal ID and voter address
+// Returns:
+// - vote: the vote for the given proposal ID and voter address
+// - exists: a boolean indicating if user has voted on the proposal
 func getVote(pid uint64, voter string) (bool, bool) {
 	value, exists := votes.Get(createVoteKey(pid, voter))
 	if !exists {
@@ -44,6 +49,7 @@ func setVote(pid uint64, voter string, vote bool) {
 	votes.Set(voteKey, vote)
 }
 
+// createUserVoteKey creates a user vote key for a given voter address and proposal ID
 func createUserVoteKey(voter std.Address, pid uint64) string {
 	return ufmt.Sprintf("%s:%d", voter.String(), pid)
 }

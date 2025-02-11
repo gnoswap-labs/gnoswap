@@ -25,7 +25,6 @@ func createProposalJsonNode(id uint64, proposal ProposalInfo) *json.Node {
 
 // GetProposals returns all proposals with necessary information.
 func GetProposals() string {
-	en.MintAndDistributeGns()
 	updateProposalsState()
 
 	if proposals.Size() == 0 {
@@ -48,7 +47,6 @@ func GetProposals() string {
 
 // GetProposalById returns a single proposal with necessary information.
 func GetProposalById(id uint64) string {
-	en.MintAndDistributeGns()
 	updateProposalsState()
 
 	_, exists := proposals.Get(formatUint(id))
@@ -73,7 +71,6 @@ func getProposalById(id uint64) *json.Node {
 
 // GetVoteStatusFromProposalById returns the vote status(max, yes, no) of a proposal.
 func GetVoteStatusFromProposalById(id uint64) string {
-	en.MintAndDistributeGns()
 	updateProposalsState()
 
 	_, exists := proposals.Get(formatUint(id))
@@ -96,7 +93,6 @@ func GetVoteStatusFromProposalById(id uint64) string {
 // - height
 // - timestamp
 func GetVotesByAddress(addr std.Address) string {
-	en.MintAndDistributeGns()
 	updateProposalsState()
 
 	votesObj := metaNode()
@@ -118,7 +114,6 @@ func GetVotesByAddress(addr std.Address) string {
 
 // GetVoteByAddressFromProposalById returns the vote of an address from a certain proposal.
 func GetVoteByAddressFromProposalById(addr std.Address, id uint64) string {
-	en.MintAndDistributeGns()
 	updateProposalsState()
 
 	vote, exists := getUserVote(addr, id)

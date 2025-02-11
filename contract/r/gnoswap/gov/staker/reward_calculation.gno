@@ -15,12 +15,14 @@ import (
 )
 
 var (
-	currentGNSBalance         uint64            = 0
-	currentProtocolFeeBalance map[string]uint64 = make(map[string]uint64)
+	currentGNSBalance         uint64            = 0                       // GNS balance of gov/staker minted by emission
+	currentProtocolFeeBalance map[string]uint64 = make(map[string]uint64) // protocol fee balance of gov/staker (tokenPath -> balance)
 )
 
-func getCurrentBalance() uint64 {
-	gotGnsForEmission = en.GetDistributedToGovStaker()
+// collectAndGetGNSBalance gets the acuumulated GNS balance from emission to gov/staker
+// Need to clear the distributed GNS to gov/staker in emission to get the latest accumulated GNS balance
+func collectAndGetGNSBalance() uint64 {
+	gotGnsForEmission := en.GetDistributedToGovStaker()
 	en.ClearDistributedToGovStaker()
 
 	currentGNSBalance += gotGnsForEmission
@@ -28,7 +30,9 @@ func getCurrentBalance() uint64 {
 	return currentGNSBalance
 }
 
-func getCurrentProtocolFeeBalance() map[string]uint64 {
+// updateAndGetProtocolFeeBalance gets the accumulated protocol fee balance from protocol_fee to gov/staker
+// Need to clear the accumulated protocol fee to gov/staker in protocol fee to get the latest accumulated protocol fee balance
+func updateAndGetProtocolFeeBalance() map[string]uint64 {
 	pf.DistributeProtocolFee()
 	gotAccuProtocolFee := pf.GetAccuTransferToGovStaker()
 
@@ -62,7 +66,7 @@ func (self *StakerRewardInfo) PriceDebtUint64() uint64 {
 
 type RewardState struct {
 	// CurrentBalance is sum of all the previous balances, including the reward distribution.
-	CurrentBalance               uint64                // current balance of gov_staker, used to calculate RewardAccumulation
+	CurrentBalance               uint64                // current balance of gov/staker, used to calculate RewardAccumulation
 	CurrentProtocolFeeBalance    map[string]uint64     // current protocol fee balance per token
 	PriceAccumulation            *u256.Uint            // claimable GNS per xGNS stake, Q128
 	ProtocolFeePriceAccumulation map[string]*u256.Uint // protocol fee debt per xGNS stake, Q128
@@ -170,7 +174,7 @@ func (self *RewardState) deductReward(staker std.Address, currentBalance uint64)
 	return reward64, protocolFeeRewards
 }
 
-// This function MUST be called as a part of AddStake or RemoveStake
+// This function MUST be called as a part of addStake or removeStake
 // CurrentBalance / StakeChange / IsRemoveStake will be updated in those functions
 func (self *RewardState) finalize(currentBalance uint64, currentProtocolFeeBalances map[string]uint64) {
 	if self.TotalStake == uint64(0) {
@@ -203,7 +207,7 @@ func (self *RewardState) finalize(currentBalance uint64, currentProtocolFeeBalan
 	}
 }
 
-func (self *RewardState) AddStake(currentHeight uint64, staker std.Address, amount uint64, currentBalance uint64, currentProtocolFeeBalances map[string]uint64) {
+func (self *RewardState) addStake(currentHeight uint64, staker std.Address, amount uint64, currentBalance uint64, currentProtocolFeeBalances map[string]uint64) {
 	self.finalize(currentBalance, currentProtocolFeeBalances)
 
 	self.TotalStake += amount
@@ -245,7 +249,7 @@ func (self *RewardState) AddStake(currentHeight uint64, staker std.Address, amou
 	self.info.Set(staker.String(), info)
 }
 
-func (self *RewardState) Claim(staker std.Address, currentBalance uint64, currentProtocolFeeBalances map[string]uint64) (uint64, map[string]uint64) {
+func (self *RewardState) claim(staker std.Address, currentBalance uint64, currentProtocolFeeBalances map[string]uint64) (uint64, map[string]uint64) {
 	if !self.info.Has(staker.String()) {
 		return 0, make(map[string]uint64)
 	}
@@ -262,7 +266,7 @@ func (self *RewardState) Claim(staker std.Address, currentBalance uint64, curren
 	return reward, protocolFeeRewards
 }
 
-func (self *RewardState) RemoveStake(staker std.Address, amount uint64, currentBalance uint64, currentProtocolFeeBalances map[string]uint64) (uint64, map[string]uint64) {
+func (self *RewardState) removeStake(staker std.Address, amount uint64, currentBalance uint64, currentProtocolFeeBalances map[string]uint64) (uint64, map[string]uint64) {
 	self.finalize(currentBalance, currentProtocolFeeBalances)
 
 	reward, protocolFeeRewards := self.deductReward(staker, currentBalance)
@@ -275,17 +279,7 @@ func (self *RewardState) RemoveStake(staker std.Address, amount uint64, currentB
 }
 
 var (
-	q96                  = u256.MustFromDecimal(consts.Q96)
-	lastCalculatedHeight uint64 // flag to prevent same block calculation
-)
-
-var (
-	gotGnsForEmission            uint64
-	leftGnsEmissionFromLast      uint64
-	alreadyCalculatedGnsEmission uint64
-
-	leftProtocolFeeFromLast      = avl.NewTree() // tokenPath -> tokenAmount
-	alreadyCalculatedProtocolFee = avl.NewTree() // tokenPath -> tokenAmount
+	q96 = u256.MustFromDecimal(consts.Q96)
 )
 
 // === LAUNCHPAD DEPOSIT
@@ -322,10 +316,10 @@ func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
 	currentAmount := getAmountByProjectWallet(addr)
 	if add {
 		amountByProjectWallet.Set(addr.String(), currentAmount+amount)
-		rewardState.AddStake(uint64(std.GetHeight()), caller, amount, getCurrentBalance(), getCurrentProtocolFeeBalance())
+		rewardState.addStake(uint64(std.GetHeight()), caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	} else {
 		amountByProjectWallet.Set(addr.String(), currentAmount-amount)
-		rewardState.RemoveStake(caller, amount, getCurrentBalance(), getCurrentProtocolFeeBalance())
+		rewardState.removeStake(caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	}
 }
 

@@ -248,12 +248,7 @@ func SetApprovalForAll(operator std.Address, approved bool) error {
 //   - std.Address: The address approved to manage the token. Returns an empty address if no approval exists.
 //   - error: Returns an error if the lookup fails or the token ID is invalid.
 func GetApproved(tid grc721.TokenID) (std.Address, error) {
-	addr, err := gnft.GetApproved(tid)
-	if err != nil {
-		return "", err
-	}
-
-	return addr, nil
+	return gnft.GetApproved(tid)
 }
 
 // IsApprovedForAll checks if an operator is approved to manage all tokens of an owner.

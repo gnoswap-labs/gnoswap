@@ -4,6 +4,7 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+// ApiGetProjectAndTierStatisticsByProjectId retrieves project and tier statistics by project ID.
 func ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
 	project, exist := projects[projectId]
 	if !exist {
@@ -17,6 +18,7 @@ func ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
 	return marshal(builder.Node())
 }
 
+// ApiGetProjectStatisticsByProjectId retrieves project statistics by project ID.
 func ApiGetProjectStatisticsByProjectId(projectId string) string {
 	project, exist := projects[projectId]
 	if !exist {
@@ -30,6 +32,7 @@ func ApiGetProjectStatisticsByProjectId(projectId string) string {
 	return marshal(builder.Node())
 }
 
+// ApiGetProjectStatisticsByProjectTierId retrieves project statistics by project tier ID.
 func ApiGetProjectStatisticsByProjectTierId(tierId string) string {
 	projectId, tierStr := splitProjectIdAndTier(tierId)
 	project, exist := projects[projectId]

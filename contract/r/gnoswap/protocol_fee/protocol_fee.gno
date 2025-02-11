@@ -12,10 +12,14 @@ import (
 )
 
 var (
-	devOpsPct      uint64 = 0 // 0%
+	// by default, devOps will get 0% of the protocol fee (which means gov/staker will get 100% of the protocol fee)
+	devOpsPct uint64 = 0 // 0%
+
+	// gns amount distributed to devOps and gov/staker
 	gnsToDevOps    uint64
 	gnsToGovStaker uint64
 
+	// accumulated amount distributed to gov/staker by token path
 	accuToGovStaker = avl.NewTree()
 )
 
@@ -126,6 +130,9 @@ func GetAccuTransferToGovStakerByTokenPath(path string) uint64 {
 
 // ClearAccuTransferToGovStaker clears the accuToGovStaker.
 // Only gov/staker can execute this function.
+// protocol_fee just sends the accumulated amount to gov/staker
+// which means gov/staker doesn't known how much protocol_fee has been distributed from last time
+// Therefore, gov/staker calls GetAccuTransferToGovStaker to get the accumulated amount and clear it
 func ClearAccuTransferToGovStaker() {
 	assertOnlyNotHalted()
 

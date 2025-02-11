@@ -632,7 +632,7 @@ func createTier(
 		time:   startTime,
 	}
 
-	durationSecond := duration * TIMESTAMP_DAY
+	durationSecond := duration * consts.SECONDS_PER_DAY
 	endTime := startTime + durationSecond
 	durationHeight := convertTimeToHeight(durationSecond)
 	endHeight := startHeight + durationHeight
@@ -663,7 +663,7 @@ func createTier(
 	}
 
 	rewardState := NewRewardState(tier.tierAmountPerBlockX128, startHeight, endHeight)
-	rewardStates.Set(projectId, strconv.FormatUint(duration, 10), rewardState)
+	rewardStates.set(projectId, strconv.FormatUint(duration, 10), rewardState)
 
 	projectTiersWithoutDeposit[tierId] = true
 	return tier
