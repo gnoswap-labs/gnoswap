@@ -10,8 +10,10 @@ type Manager struct {
 	operations   map[OpType]Operation
 }
 
+// ManagerOption is a function type for configuring the `Manager`
 type ManagerOption func(*Manager)
 
+// WithOperations sets the initial Operations
 func WithOperations(ops []Operation) ManagerOption {
 	return func(m *Manager) {
 		for _, op := range ops {
@@ -20,7 +22,8 @@ func WithOperations(ops []Operation) ManagerOption {
 	}
 }
 
-func WithLevels(lvs HaltLevels) ManagerOption {
+// WithLevels sets the initial Levels
+func WithLevels(lvs []HaltLevel) ManagerOption {
 	return func(m *Manager) {
 		for _, lv := range lvs {
 			m.RegisterHaltLevel(lv)
@@ -28,6 +31,7 @@ func WithLevels(lvs HaltLevels) ManagerOption {
 	}
 }
 
+// WithInitialLevel sets the initial Level
 func WithInitialLevel(lv LevelID) ManagerOption {
 	return func(m *Manager) {
 		if err := m.SetCurrentLevel(lv); err != nil {
@@ -36,6 +40,8 @@ func WithInitialLevel(lv LevelID) ManagerOption {
 	}
 }
 
+// NewManager creates a new `Manager` instance.
+// especially, it should used to add custom halt-related operations and levels in a realm.
 func NewManager(opts ...ManagerOption) *Manager {
 	m := &Manager{
 		levels:     make(map[LevelID]HaltLevel),
@@ -96,6 +102,16 @@ var (
 				OpTypeWithdraw:  true,
 			},
 		},
+		{
+			LvCompleteHalt,
+			rawCompleteHalt,
+			"All operations disabled",
+			map[OpType]bool{
+				OpTypeSwap:      false,
+				OpTypeLiquidity: false,
+				OpTypeWithdraw:  false,
+			},
+		},
 	}
 )
 
@@ -139,14 +155,17 @@ func (m *Manager) RegisterOperation(op Operation) {
 	m.operations[op.Type()] = op
 }
 
+// RegisterHaltLevel adds a new halt level to the manager.
 func (m *Manager) RegisterHaltLevel(lv HaltLevel) {
 	m.levels[lv.Level()] = lv
 }
 
+// Status returns the current halt level name.
 func (m *Manager) Status(o OpType) string {
 	return m.currentLevel.Name()
 }
 
+// Level returns the current halt level.
 func (m *Manager) Level() HaltLevel {
 	return m.currentLevel
 }

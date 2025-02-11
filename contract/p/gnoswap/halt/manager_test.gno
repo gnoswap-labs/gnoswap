@@ -23,6 +23,42 @@ func TestDefaultManager(t *testing.T) {
 	}
 }
 
+func TestNewManagerWithOptions(t *testing.T) {
+	customOp := NewOperation(OpType("customOp"), "Custom Op", "Custom operation")
+
+	customLevel := NewHaltLevel(LevelID(10), "CustomLevel", "Custom level", map[OpType]bool{
+		OpType("customOp"): true,
+	})
+
+	mgr := NewManager(
+		WithOperations([]Operation{customOp}),
+		WithLevels([]HaltLevel{customLevel}),
+		WithInitialLevel(LevelID(10)),
+	)
+
+	if _, exists := mgr.operations[OpType("customOp")]; !exists {
+		t.Error("Expected custom operation to be registered")
+	}
+
+	if _, exists := mgr.levels[LevelID(10)]; !exists {
+		t.Error("Expected custom level to be registered")
+	}
+
+	if mgr.currentLevel.Name() != "CustomLevel" {
+		t.Errorf("Expected current level to be 'CustomLevel', got '%s'", mgr.currentLevel.Name())
+	}
+}
+
+func TestWithOperationsPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("Expected panic with invalid initial level, but got none")
+		}
+	}()
+
+	NewManager(WithInitialLevel(LevelID(9)))
+}
+
 func TestSetCurrentLevel(t *testing.T) {
 	mgr := DefaultManager()
 
