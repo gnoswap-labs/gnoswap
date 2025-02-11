@@ -1,8 +1,11 @@
 package staker
 
 import (
+	"std"
+
 	"gno.land/p/demo/avl"
 	"gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/v1/gov/governance"
 	"gno.land/r/gnoswap/v1/protocol_fee"
 )
 
@@ -32,4 +35,22 @@ var pf ProtocolFeeI = ProtocolFeeI{
 	DistributeProtocolFee:        protocol_fee.DistributeProtocolFee,
 	GetAccuTransferToGovStaker:   protocol_fee.GetAccuTransferToGovStaker,
 	ClearAccuTransferToGovStaker: protocol_fee.ClearAccuTransferToGovStaker,
+}
+
+// SetEmissionRealm replaces the emission interface implementation
+func SetEmissionRealm(newEn EmissionI) {
+	caller := std.PrevRealm().Addr()
+	if !governance.IsPermittedSetter(caller) {
+		panic("caller not permitted to set realm implementation")
+	}
+	en = newEn
+}
+
+// SetProtocolFeeRealm replaces the protocol fee interface implementation
+func SetProtocolFeeRealm(newPf ProtocolFeeI) {
+	caller := std.PrevRealm().Addr()
+	if !governance.IsPermittedSetter(caller) {
+		panic("caller not permitted to set realm implementation")
+	}
+	pf = newPf
 }
