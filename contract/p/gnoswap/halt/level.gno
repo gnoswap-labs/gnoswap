@@ -24,6 +24,15 @@ const (
 	LvCompleteHalt                 // all ops disabled
 )
 
+const (
+	rawNoHalt        = "NoHalt"
+	rawSwapHalt      = "SwapHalt"
+	rawLiquidityHalt = "LiquidityHalt"
+	rawEmergencyHalt = "EmergencyHalt"
+	rawCompleteHalt  = "CompleteHalt"
+	rawUnknown       = "Unknown"
+)
+
 // Nth returns the numeric value of the LevelID.
 func (lv LevelID) Nth() uint8 { return uint8(lv) }
 
@@ -31,17 +40,17 @@ func (lv LevelID) Nth() uint8 { return uint8(lv) }
 func (lv LevelID) String() string {
 	switch lv {
 	case LvNoHalt:
-		return "NoHalt"
+		return rawNoHalt
 	case LvSwapHalt:
-		return "SwapHalt"
+		return rawSwapHalt
 	case LvLiquidityHalt:
-		return "LiquidityHalt"
+		return rawLiquidityHalt
 	case LvEmergencyHalt:
-		return "EmergencyHalt"
+		return rawEmergencyHalt
 	case LvCompleteHalt:
-		return "CompleteHalt"
+		return rawCompleteHalt
 	default:
-		return "Unknown"
+		return rawUnknown
 	}
 }
 
@@ -59,12 +68,6 @@ type HaltLevel interface {
 // HaltLevels represents a collection of halt levels.
 // It implements sort.Interface to allow sorting by LevelID.
 type HaltLevels []HaltLevel
-
-var _ sort.Interface = (HaltLevels)(nil)
-
-func (ll HaltLevels) Len() int           { return len(ll) }
-func (ll HaltLevels) Swap(i, j int)      { ll[i], ll[j] = ll[j], ll[i] }
-func (ll HaltLevels) Less(i, j int) bool { return ll[i].Level() < ll[j].Level() }
 
 // Iter iterates through all halt levels and applies the given callback function.
 // Returns true if the callback returns true for any iteration, false otherwise.

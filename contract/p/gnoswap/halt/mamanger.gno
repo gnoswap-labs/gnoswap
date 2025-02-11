@@ -10,43 +10,118 @@ type Manager struct {
 	operations   map[OpType]Operation
 }
 
-// DefaultManager creates a new default halt manager.
-// Call this function in a realm-level contract to create global state.
-func DefaultManager() *Manager {
-	manager := &Manager{
+type ManagerOption func(*Manager)
+
+func WithOperations(ops []Operation) ManagerOption {
+	return func(m *Manager) {
+		for _, op := range ops {
+			m.RegisterOperation(op)
+		}
+	}
+}
+
+func WithLevels(lvs HaltLevels) ManagerOption {
+	return func(m *Manager) {
+		for _, lv := range lvs {
+			m.RegisterHaltLevel(lv)
+		}
+	}
+}
+
+func WithInitialLevel(lv LevelID) ManagerOption {
+	return func(m *Manager) {
+		if err := m.SetCurrentLevel(lv); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func NewManager(opts ...ManagerOption) *Manager {
+	m := &Manager{
 		levels:     make(map[LevelID]HaltLevel),
 		operations: make(map[OpType]Operation),
 	}
 
-	// basic operations
-	manager.RegisterOperation(NewOperation(OpTypeSwap, "Swap", "Token swap operation"))
-	manager.RegisterOperation(NewOperation(OpTypeLiquidity, "Liquidity", "Liquidity provision operations"))
-	manager.RegisterOperation(NewOperation(OpTypeWithdraw, "Withdraw", "Withdrawal operations"))
+	for _, opt := range opts {
+		opt(m)
+	}
 
-	// basic halt level registry
-	manager.RegisterHaltLevel(NewHaltLevel(LvNoHalt, "NoHalt", "Normal operation", map[OpType]bool{
-		OpTypeSwap:      true,
-		OpTypeLiquidity: true,
-		OpTypeWithdraw:  true,
-	}))
+	return m
+}
 
-	manager.RegisterHaltLevel(NewHaltLevel(LvSwapHalt, "SwapHalt", "Swaps disabled", map[OpType]bool{
-		OpTypeSwap:      false,
-		OpTypeLiquidity: true,
-		OpTypeWithdraw:  true,
-	}))
+var (
+	defaultOperations = []struct {
+		opType OpType
+		name   string
+		desc   string
+	}{
+		{OpTypeSwap, rawSwap, "Token swap operation"},
+		{OpTypeLiquidity, rawLiquidity, "Liquidity provision operations"},
+		{OpTypeWithdraw, rawWithdraw, "Withdrawal operations"},
+	}
 
-	manager.RegisterHaltLevel(NewHaltLevel(LvEmergencyHalt, "EmergencyHalt", "Only withdrawals allowed", map[OpType]bool{
-		OpTypeSwap:      false,
-		OpTypeLiquidity: false,
-		OpTypeWithdraw:  true,
-	}))
+	defaultLevels = []struct {
+		id      LevelID
+		name    string
+		desc    string
+		allowed map[OpType]bool
+	}{
+		{
+			LvNoHalt,
+			rawNoHalt,
+			"Normal operation",
+			map[OpType]bool{
+				OpTypeSwap:      true,
+				OpTypeLiquidity: true,
+				OpTypeWithdraw:  true,
+			},
+		},
+		{
+			LvSwapHalt,
+			rawSwapHalt,
+			"Swaps disabled",
+			map[OpType]bool{
+				OpTypeSwap:      false,
+				OpTypeLiquidity: true,
+				OpTypeWithdraw:  true,
+			},
+		},
+		{
+			LvEmergencyHalt,
+			rawEmergencyHalt,
+			"Only withdrawals allowed",
+			map[OpType]bool{
+				OpTypeSwap:      false,
+				OpTypeLiquidity: false,
+				OpTypeWithdraw:  true,
+			},
+		},
+	}
+)
 
-	if err := manager.SetCurrentLevel(LvNoHalt); err != nil {
+// DefaultManager creates a new default halt manager.
+// Call this function in a realm-level contract to create global state.
+func DefaultManager() *Manager {
+	m := &Manager{
+		levels:     make(map[LevelID]HaltLevel),
+		operations: make(map[OpType]Operation),
+	}
+
+	// register default operations
+	for _, op := range defaultOperations {
+		m.RegisterOperation(NewOperation(op.opType, op.name, op.desc))
+	}
+
+	// register default halt levels
+	for _, level := range defaultLevels {
+		m.RegisterHaltLevel(NewHaltLevel(level.id, level.name, level.desc, level.allowed))
+	}
+
+	if err := m.SetCurrentLevel(LvNoHalt); err != nil {
 		panic(err)
 	}
 
-	return manager
+	return m
 }
 
 // SetCurrentLevel adds a new halt level to the manager.
