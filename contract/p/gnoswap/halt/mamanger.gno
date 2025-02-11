@@ -6,38 +6,54 @@ import (
 
 type Manager struct {
 	currentLevel HaltLevel
-	levels       map[uint8]HaltLevel
+	levels       map[LevelID]HaltLevel
 	operations   map[OpType]Operation
 }
 
-func NewManager() *Manager {
-	// TODO: Initialize with default levels
-	// TODO: p? r?
-	return &Manager{
-		levels:     make(map[uint8]HaltLevel),
+// DefaultManager creates a new default halt manager.
+// Call this function in a realm-level contract to create global state.
+func DefaultManager() *Manager {
+	manager := &Manager{
+		levels:     make(map[LevelID]HaltLevel),
 		operations: make(map[OpType]Operation),
 	}
-}
 
-func (m *Manager) validateTransition(newLevel uint8) error {
-	current := m.currentLevel.Level()
-	if current == newLevel {
-		return nil
+	// basic operations
+	manager.RegisterOperation(NewOperation(OpTypeSwap, "Swap", "Token swap operation"))
+	manager.RegisterOperation(NewOperation(OpTypeLiquidity, "Liquidity", "Liquidity provision operations"))
+	manager.RegisterOperation(NewOperation(OpTypeWithdraw, "Withdraw", "Withdrawal operations"))
+
+	// basic halt level registry
+	manager.RegisterHaltLevel(NewHaltLevel(LvNoHalt, "NoHalt", "Normal operation", map[OpType]bool{
+		OpTypeSwap:      true,
+		OpTypeLiquidity: true,
+		OpTypeWithdraw:  true,
+	}))
+
+	manager.RegisterHaltLevel(NewHaltLevel(LvSwapHalt, "SwapHalt", "Swaps disabled", map[OpType]bool{
+		OpTypeSwap:      false,
+		OpTypeLiquidity: true,
+		OpTypeWithdraw:  true,
+	}))
+
+	manager.RegisterHaltLevel(NewHaltLevel(LvEmergencyHalt, "EmergencyHalt", "Only withdrawals allowed", map[OpType]bool{
+		OpTypeSwap:      false,
+		OpTypeLiquidity: false,
+		OpTypeWithdraw:  true,
+	}))
+
+	if err := manager.SetCurrentLevel(LvNoHalt); err != nil {
+		panic(err)
 	}
 
-	// TODO: add halt-related checks (policy-related things)
-
-	return nil
+	return manager
 }
 
 // SetCurrentLevel adds a new halt level to the manager.
-func (m *Manager) SetCurrentLevel(lv uint8) error {
+func (m *Manager) SetCurrentLevel(lv LevelID) error {
 	newLevel, ok := m.levels[lv]
 	if !ok {
 		return ufmt.Errorf("invalid halt level: %d", lv)
-	}
-	if err := m.validateTransition(lv); err != nil {
-		return err
 	}
 	m.currentLevel = newLevel
 	return nil
@@ -46,4 +62,16 @@ func (m *Manager) SetCurrentLevel(lv uint8) error {
 // RegisterOperation adds a new operation to the manager.
 func (m *Manager) RegisterOperation(op Operation) {
 	m.operations[op.Type()] = op
+}
+
+func (m *Manager) RegisterHaltLevel(lv HaltLevel) {
+	m.levels[lv.Level()] = lv
+}
+
+func (m *Manager) Status(o OpType) string {
+	return m.currentLevel.Name()
+}
+
+func (m *Manager) Level() HaltLevel {
+	return m.currentLevel
 }
