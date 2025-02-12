@@ -1,24 +1,56 @@
 #!/usr/bin/env ruby
 require 'json'
+require 'pathname'
 
-BASE_PATH = 'gno/examples/gno.land'
-PATTERNS = [
-  '*/p/gnoswap/*',
-  '*/r/gnoswap/*'
-]
+class GnoModule
+  def initialize
+    @base_path = 'contract'
+  end
 
-# Find all matching directories
-folders = Dir.glob("#{BASE_PATH}/**/*")
-  .select { |f| File.directory?(f) }
-  .select { |f| PATTERNS.any? { |p| File.fnmatch(p, f) } }
+  def extract_module_path(file_path)
+    content = File.read(file_path)
+    content.match(/module\s+([\w.\/]+)/)&.captures&.first
+  rescue
+    nil
+  end
 
-# Generate matrix data
-matrix = {
-  'include' => folders.map { |f| {
-    'name' => f.split('/')[-2..-1].join('/'),  # Get last two parts of path
-    'folder' => f
-  }}
-}
+  def find_gno_modules
+    modules = []
+    
+    Dir.glob("#{@base_path}/**/*.mod").each do |mod_file|
+      next unless File.basename(mod_file) == 'gno.mod'
 
-# Output JSON to stdout
+      module_path = extract_module_path(mod_file)
+      next unless module_path&.start_with?('gno.land/')
+
+      dir_path = File.dirname(mod_file)
+      relative_path = module_path.sub('gno.land/', '')
+
+      # Determine correct name based on the module path
+      name_parts = relative_path.split('/')
+      name = if name_parts.size >= 3 && ['p', 'r'].include?(name_parts[0])
+        [name_parts[0], name_parts[2]].join('/')
+      else
+        File.basename(dir_path)
+      end
+
+      modules << {
+        'name' => name,
+        'folder' => "gno/examples/#{module_path}"
+      }
+    end
+
+    modules
+  end
+
+  def generate_matrix
+    {
+      'include' => find_gno_modules
+    }
+  end
+end
+
+# Generate and output matrix
+module_finder = GnoModule.new
+matrix = module_finder.generate_matrix
 puts JSON.generate(matrix)
