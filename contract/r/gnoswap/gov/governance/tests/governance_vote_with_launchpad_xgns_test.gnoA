@@ -103,6 +103,7 @@ func testLaunchpad(t *testing.T) {
 		lp.DepositGns(
 			`gno.land/r/onbloc/obl:123:30`,
 			uint64(1_000_000), // this xGNS can not be used for voting
+			"", // referrer
 		)
 
 		// after
