@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-    
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -73,9 +73,18 @@ jobs:
           cd tmp/gnoswap
           python3 setup.py -w /home/runner/work/gnoswap/gnoswap
 
+      - name: Restore test cache
+        uses: actions/cache@v3
+        with:
+          path: .test-cache.json
+          key: test-cache-${{ hashFiles('contract/**/*.gno', 'contract/**/*.gnoA') }}
+          restore-keys: |
+            test-cache-
+
       - name: "Run tests for ${{ matrix.name }}"
         run: |
           chmod +x .github/scripts/run_tests.rb
           ruby .github/scripts/run_tests.rb \
             -f "${{ matrix.folder }}" \
             -r "/home/runner/work/gnoswap/gnoswap/gno"
+            -c ".test-cache.json"
