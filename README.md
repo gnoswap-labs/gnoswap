@@ -62,15 +62,14 @@ Options:
 
 The script will perform all necessary steps to set up the GnoSwap contracts in the specified directory.
 
-### Setting Up GnoSwap Contracts Manually
+<details>
+<summary><h3>Setting Up GnoSwap Contracts Manually</h3></summary>
+
+> Important: This manual setup method is not recommended and should only be used as a last resort. If the setup script is not working properly, please create an issue in the repository.
 
 This section guides you through the process of setting up GnoSwap contracts. The process involves three main steps: cloning the `gnoswap` repository, copying the contracts to the `gno` directory, and moving test cases to their respective directories.
 
-To set up GnoSwap contracts in Gno Core, follow these steps:
-
-1. Clone the `gnoswap` contracts repository:
-
-   > Tip: If `$WORKDIR` is home directory, then `$WORKDIR` is `~/`.
+1. Clone the repository:
 
    ```bash
    cd $WORKDIR
@@ -78,43 +77,84 @@ To set up GnoSwap contracts in Gno Core, follow these steps:
    cd gnoswap
    ```
 
-2. Copy the `gnoswap` contracts into the cloned `gno` repository:
+2. Understand the directory structure pattern:
 
-   ```bash
-   # make some directory
-   mkdir -p $WORKDIR/gno/examples/gno.land/r/gnoswap/v1
-   mkdir -p $WORKDIR/gno/examples/gno.land/p/gnoswap
-
-   # copy grc20 tokens
-   cp -R __local/grc20_tokens/* $WORKDIR/gno/examples/gno.land/r/
-
-   # copy gnoswap base packages ( includes uint256, int256 and bit of pool calculation )
-   cp -R _deploy/p/gnoswap/* $WORKDIR/gno/examples/gno.land/p/gnoswap
-
-   # copy gnoswap base realms ( includes common logic, variables and consts )
-   cp -R _deploy/r/gnoswap/* $WORKDIR/gno/examples/gno.land/r/gnoswap/v1
-
-   # copy gnoswap realms
-   cp -R community_pool emission pool position protocol_fee router staker $WORKDIR/gno/examples/gno.land/r/gnoswap/v1
+   ```tree
+   contract/
+   ├── p/  # Packages directory
+   │   └── gnoswap/
+   │       ├── consts/
+   │       ├── gnsmath/
+   │       └── ...
+   └── r/  # Realms directory
+       └── gnoswap/
+           ├── common/
+           ├── pool/
+           └── ...
    ```
 
-3. Move all test cases into its own directory:
+3. Create the base directories:
 
-Move the test cases for each contract to their respective directories. It's not necessary to move all tests; you can selectively move only the tests you need. However, files containing `VARS_HELPERS` in their name must be moved.
+   ```bash
+   # Create directories for packages and realms
+   mkdir -p $WORKDIR/gno/examples/gno.land/p/gnoswap
+   mkdir -p $WORKDIR/gno/examples/gno.land/r/gnoswap/v1
+   ```
 
-```bash
-cd $WORKDIR/gno/examples/gno.land/r/gnoswap/v1/{name}
-mv tests/* .
-```
+4. Copy files following these patterns:
 
-For example, to move all tests for the `pool` realm:
+   For packages:
 
-```bash
-cd $WORKDIR/gno/examples/gno.land/r/gnoswap/v1/pool
-mv tests/* .
-```
+   ```bash
+   # Pattern:
+   cp -R contract/p/gnoswap/<package_name> $WORKDIR/gno/examples/gno.land/p/gnoswap/
 
-Other realms can be moved in a similar way.
+   # Examples:
+   cp -R contract/p/gnoswap/consts $WORKDIR/gno/examples/gno.land/p/gnoswap/
+   cp -R contract/p/gnoswap/gnsmath $WORKDIR/gno/examples/gno.land/p/gnoswap/
+   ```
+
+   For realm modules:
+
+   ```bash
+   # Pattern:
+   cp -R contract/r/gnoswap/<module_name> $WORKDIR/gno/examples/gno.land/r/gnoswap/v1/
+
+   # Examples:
+   cp -R contract/r/gnoswap/pool $WORKDIR/gno/examples/gno.land/r/gnoswap/v1/
+   cp -R contract/r/gnoswap/router $WORKDIR/gno/examples/gno.land/r/gnoswap/v1/
+   ```
+
+   For test tokens:
+
+   ```bash
+   # Pattern:
+   cp -R contract/r/gnoswap/test_token/<token_name> $WORKDIR/gno/examples/gno.land/r/
+
+   # Example:
+   cp -R contract/r/gnoswap/test_token/usdc $WORKDIR/gno/examples/gno.land/r/
+   ```
+
+5. Verify the setup:
+
+   ```bash
+   cd $WORKDIR/gno/examples
+   gno test -root-dir $WORKDIR/gno -v=false ./gno.land/r/gnoswap/v1/pool
+   ```
+
+> Note: The setup maintains the original directory structure, including test files which are now part of their respective packages.
+
+</details>
+
+### Directory Structure Overview
+
+Key directories and their purposes:
+
+- `p/gnoswap/`: Core packages including math utilities and constants
+- `r/gnoswap/v1/`: Protocol realms (pool, router, position, etc.)
+- `r/gnoswap/test_token/`: Test tokens for development
+
+Once you understand these patterns, you can copy any additional modules using the same structure.
 
 ### Running Tests
 
