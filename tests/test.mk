@@ -193,7 +193,7 @@ create-launchpad-project:
 # deposit to project
 deposit-to-project:
 	$(info ************ deposit to project ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/launchpad -func DepositGns -args "gno.land/r/gnoswap/v1/test_token/obl:4215:30" -args 1000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/launchpad -func DepositGns -args "gno.land/r/gnoswap/v1/test_token/obl:4215:30" -args 1000000 -args "" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 
