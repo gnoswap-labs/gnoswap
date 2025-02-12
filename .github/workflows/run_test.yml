@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  prepare-matrix:
+  generate-matrix:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -24,16 +24,14 @@ jobs:
         id: set-matrix
         run: |
           chmod +x .github/scripts/generate_matrix.rb
-          matrix=$(.github/scripts/generate_matrix.rb)
-          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+          echo "matrix=$(ruby .github/scripts/generate_matrix.rb contract)" >> $GITHUB_OUTPUT
 
   test-gnoswap:
-    needs: prepare-matrix
+    needs: generate-matrix
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        include: ${{fromJson(needs.prepare-matrix.outputs.matrix)}}
+      matrix: ${{fromJson(needs.generate-matrix.outputs.matrix)}}
 
     steps:
       - name: Check out gnoswap repo

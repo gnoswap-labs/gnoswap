@@ -2,55 +2,63 @@
 require 'json'
 require 'pathname'
 
-class GnoModule
-  def initialize
-    @base_path = 'contract'
+class GnoModuleManager
+  def initialize(contract_dir)
+    @contract_dir = contract_dir
   end
 
   def extract_module_path(file_path)
     content = File.read(file_path)
-    content.match(/module\s+([\w.\/]+)/)&.captures&.first
+    if content =~ /module\s+([\w.\/]+)/
+      $1
+    end
   rescue
+    puts "Error reading file: #{file_path}"
     nil
   end
 
-  def find_gno_modules
-    modules = []
+  def generate_matrix
+    matrix = { include: [] }
     
-    Dir.glob("#{@base_path}/**/*.mod").each do |mod_file|
-      next unless File.basename(mod_file) == 'gno.mod'
+    Dir.glob(File.join(@contract_dir, "**", "gno.mod")).each do |mod_file|
+      if module_path = extract_module_path(mod_file)
+        next unless module_path.start_with?("gno.land/")
 
-      module_path = extract_module_path(mod_file)
-      next unless module_path&.start_with?('gno.land/')
+        # Extract relative path after gno.land/
+        relative_path = module_path.sub("gno.land/", "")
+        folder = "gno/examples/gno.land/#{relative_path}"
 
-      dir_path = File.dirname(mod_file)
-      relative_path = module_path.sub('gno.land/', '')
+        # Generate name from the last component of the path
+        name = relative_path.split('/')[-1]
+        if relative_path.include?('gov/')
+          # Special handling for governance modules to match the format in the example
+          name = "gov/#{name}"
+        end
 
-      # Determine correct name based on the module path
-      name_parts = relative_path.split('/')
-      name = if name_parts.size >= 3 && ['p', 'r'].include?(name_parts[0])
-        [name_parts[0], name_parts[2]].join('/')
-      else
-        File.basename(dir_path)
+        matrix[:include] << {
+          name: name,
+          folder: folder
+        }
       end
-
-      modules << {
-        'name' => name,
-        'folder' => "gno/examples/#{module_path}"
-      }
     end
 
-    modules
-  end
-
-  def generate_matrix
-    {
-      'include' => find_gno_modules
-    }
+    # Sort by folder path for consistency
+    matrix[:include].sort_by! { |entry| entry[:folder] }
+    matrix
   end
 end
 
-# Generate and output matrix
-module_finder = GnoModule.new
-matrix = module_finder.generate_matrix
-puts JSON.generate(matrix)
+if __FILE__ == $0
+  contract_dir = ARGV[0] || File.join(Dir.pwd, "contract")
+
+  unless Dir.exist?(contract_dir)
+    puts "Error: Contract directory '#{contract_dir}' does not exist"
+    exit 1
+  end
+
+  manager = GnoModuleManager.new(contract_dir)
+  matrix = manager.generate_matrix
+
+  # Output in GitHub Actions matrix format
+  puts JSON.generate(matrix)
+end
