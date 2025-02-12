@@ -61,27 +61,27 @@ var pn PositionI = PositionI{
 
 // SetEmissionRealm replaces the emission interface implementation
 func SetEmissionRealm(newEn EmissionI) {
-	caller := std.PrevRealm().Addr()
-	if !governance.IsPermittedSetter(caller) {
-		panic("caller not permitted to set realm implementation")
-	}
+	// caller := std.PrevRealm().Addr()
+	// if !governance.IsPermittedSetter(caller) {
+	// 	panic("caller not permitted to set realm implementation")
+	// }
 	en = newEn
 }
 
 // SetPoolRealm replaces the pool interface implementation
 func SetPoolRealm(newPl PoolI) {
-	caller := std.PrevRealm().Addr()
-	if !governance.IsPermittedSetter(caller) {
-		panic("caller not permitted to set realm implementation")
-	}
+	// caller := std.PrevRealm().Addr()
+	// if !governance.IsPermittedSetter(caller) {
+	// 	panic("caller not permitted to set realm implementation")
+	// }
 	pl = newPl
 }
 
 // SetPositionRealm replaces the position interface implementation
 func SetPositionRealm(newPn PositionI) {
-	caller := std.PrevRealm().Addr()
-	if !governance.IsPermittedSetter(caller) {
-		panic("caller not permitted to set realm implementation")
-	}
+	// caller := std.PrevRealm().Addr()
+	// if !governance.IsPermittedSetter(caller) {
+	// 	panic("caller not permitted to set realm implementation")
+	// }
 	pn = newPn
 }
