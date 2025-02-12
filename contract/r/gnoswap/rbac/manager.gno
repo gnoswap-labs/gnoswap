@@ -3,12 +3,12 @@ package rbac
 import (
 	"std"
 
-	rrbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac"
 )
 
 // globalManager is the single RBAC manager instance created internally in the package.
 // This instance is used to manage global role and permission information.
-var globalManager = rrbac.New()
+var globalManager = prbac.New()
 
 // RegisterRole globally registers a role with the given name.
 // Returns an error if the role already exists.
@@ -18,7 +18,7 @@ func RegisterRole(roleName string) error {
 
 // RegisterPermission globally registers a permission on a role.
 // If the role does not exist, an error is returned.
-func RegisterPermission(roleName, permissionName string, checker rrbac.PermissionChecker) error {
+func RegisterPermission(roleName, permissionName string, checker prbac.PermissionChecker) error {
 	return globalManager.RegisterPermission(roleName, permissionName, checker)
 }
 
@@ -31,7 +31,7 @@ func CheckPermission(roleName, permissionName string, caller std.Address) error 
 
 // UpdatePermission globally updates the permission checker for a role's permission.
 // An error is returned if the role or permission does not exist.
-func UpdatePermission(roleName, permissionName string, newChecker rrbac.PermissionChecker) error {
+func UpdatePermission(roleName, permissionName string, newChecker prbac.PermissionChecker) error {
 	return globalManager.UpdatePermission(roleName, permissionName, newChecker)
 }
 
@@ -44,12 +44,12 @@ func RemovePermission(roleName, permissionName string) error {
 // DeclareRole globally declares a role using the Functional Option pattern.
 // This allows declarative registration of roles along with their permissions.
 // Returns an error if the role already exists.
-func DeclareRole(roleName string, opts ...rrbac.RoleOption) error {
+func DeclareRole(roleName string, opts ...prbac.RoleOption) error {
 	return globalManager.DeclareRole(roleName, opts...)
 }
 
 // GlobalManager returns the underlying global RBAC manager instance.
 // This can be used if direct access to the RBAC manager is needed.
-func GlobalManager() *rrbac.RBAC {
+func GlobalManager() *prbac.RBAC {
 	return globalManager
 }

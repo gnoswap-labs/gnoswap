@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	rrbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac"
 )
 
 var (
@@ -98,7 +98,7 @@ func TestDeclareRole(t *testing.T) {
 	}
 
 	err := DeclareRole(roleName,
-		rrbac.WithPermission(permissionName, checker))
+		prbac.WithPermission(permissionName, checker))
 	uassert.NoError(t, err)
 
 	// check permission
