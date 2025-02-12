@@ -75,5 +75,7 @@ jobs:
 
       - name: "Run tests for ${{ matrix.name }}"
         run: |
-          chmod +x .github/scripts/run_tests.sh
-          .github/scripts/run_tests.sh "${{ matrix.folder }}" "/home/runner/work/gnoswap/gnoswap/gno"
+          chmod +x .github/scripts/run_tests.rb
+          ruby .github/scripts/run_tests.rb \
+            -f "${{ matrix.folder }}" \
+            -r "/home/runner/work/gnoswap/gnoswap/gno"
