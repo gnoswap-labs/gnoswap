@@ -223,6 +223,7 @@ func testMakePosition1OutRangeBySwap() {
 		"100",       // quoteArr
 		"0",         // amountOutMin
 		max_timeout, // timeout
+		"",         // referrer
 	)
 	std.TestSkipHeights(1)
 
@@ -264,6 +265,7 @@ func testMakePosition1InRangeBySwap() {
 		"100",
 		"0",
 		max_timeout,
+		"",
 	)
 
 	newPoolTick := pl.PoolGetSlot0Tick(poolPath)

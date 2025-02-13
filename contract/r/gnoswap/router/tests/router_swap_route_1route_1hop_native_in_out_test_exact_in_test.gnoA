@@ -123,6 +123,7 @@ func testPositionMint(t *testing.T) {
 // 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/demo/wugnot:500", // strRouteArr
 // 			"100", // quoteArr
 // 			"0",   // tokenAmountLimit
+// 			"",    // referrer
 // 		)
 
 // 		uassert.Equal(t, amountIn, "1000")
@@ -165,7 +166,8 @@ func testPositionMint(t *testing.T) {
 // 			"5000",      // amountSpecified
 // 			"gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
 // 			"100", // quoteArr
-// 			"0",
+// 			"0",   // tokenAmountLimit
+// 			"",    // referrer
 // 		)
 // 		std.TestSetOrigSend(std.Coins{{}}, nil)
 
