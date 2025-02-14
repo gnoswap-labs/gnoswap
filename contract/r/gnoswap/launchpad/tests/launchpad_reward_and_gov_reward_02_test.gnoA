@@ -98,6 +98,7 @@ func testRouterSwapRoute(t *testing.T) {
 			"100",
 			"1",
 			time.Now().Unix()+10,
+			"",
 		)
 		uassert.Equal(t, amountIn, "100000")
 		uassert.Equal(t, amountOut, "-99800")
@@ -108,7 +109,7 @@ func testEarlyGovDelegateAndReward(t *testing.T) {
 	t.Run("early gov delegate and reward", func(t *testing.T) {
 		std.TestSetRealm(dummyRealm)
 		gns.Approve(consts.GOV_STAKER_ADDR, uint64(1_000_000))
-		gs.Delegate(dummyAddr, uint64(1_000_000))
+		gs.Delegate(dummyAddr, uint64(1_000_000), "")
 		std.TestSkipHeights(1)
 
 		rewardJson := gs.GetClaimableRewardByAddress(dummyAddr)
@@ -165,7 +166,7 @@ func testDepositGnsToTier30(t *testing.T) {
 
 		// skip some blocks to make project active
 		std.TestSkipHeights(4)
-		depositId := DepositGns("gno.land/r/onbloc/obl:126:30", uint64(1_000_000_000)) // 1000000
+		depositId := DepositGns("gno.land/r/onbloc/obl:126:30", uint64(1_000_000_000), "") // 1000000
 		uassert.Equal(t, depositId, `gno.land/r/onbloc/obl:126:30:g1d3sh2mnrdpcxzezyv4cx7umfw3047h6l29lj5t:131`)
 		std.TestSkipHeights(1)
 	})
@@ -175,7 +176,7 @@ func testGovDelegate(t *testing.T) {
 	t.Run("gov delegate", func(t *testing.T) {
 		std.TestSetRealm(govDelegateRealm)
 		gns.Approve(consts.GOV_STAKER_ADDR, uint64(1_000_000_000))
-		gs.Delegate(govDelegateAddr, uint64(1_000_000_000))
+		gs.Delegate(govDelegateAddr, uint64(1_000_000_000), "")
 		std.TestSkipHeights(1)
 	})
 }
