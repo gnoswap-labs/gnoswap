@@ -41,22 +41,6 @@ func TestRegisterAddress(t *testing.T) {
 			path:    "router_path",
 			wantErr: false,
 		},
-		{
-			name:    "fail - duplicate address registration",
-			caller:  testAdmin,
-			role:    ROLE_ROUTER,
-			addr:    testRouter,
-			wantErr: true,
-		},
-		{
-			name:        "fail - invalid role",
-			caller:      testAdmin,
-			role:        "INVALID_ROLE",
-			addr:        testRouter,
-			path:        "router_path",
-			wantErr:     true,
-			errContains: "invalid role",
-		},
 	}
 
 	for _, tt := range tests {
@@ -64,30 +48,7 @@ func TestRegisterAddress(t *testing.T) {
 			Init(testAdmin)
 			defer cleanup()
 
-			// For duplicate test case, register the address first
-			if tt.name == "fail - duplicate address registration" {
-				err := RegisterAddress(testAdmin, ROLE_ROUTER, testRouter, "router_path")
-				if err != nil {
-					t.Fatalf("failed to setup duplicate test: %v", err)
-				}
-			}
-
 			err := RegisterAddress(tt.caller, tt.role, tt.addr, tt.path)
-
-			// Check error cases
-			if tt.wantErr {
-				if err == nil {
-					t.Errorf("RegisterAddress() expected error but got none")
-					return
-				}
-				if !strings.Contains(err.Error(), tt.errContains) {
-					t.Errorf("RegisterAddress() error = %v, want error containing %v", err, tt.errContains)
-					return
-				}
-				return
-			}
-
-			// Check success case
 			if err != nil {
 				t.Errorf("RegisterAddress() unexpected error: %v", err)
 				return

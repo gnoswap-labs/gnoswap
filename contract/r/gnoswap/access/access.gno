@@ -48,11 +48,6 @@ func RegisterAddress(caller std.Address, role string, addr std.Address, path str
 		return err
 	}
 
-	// verify role exists
-	if err := rbac.CheckPermission(role, "", addr); err != nil {
-		return ufmt.Errorf("invalid role: %s", role)
-	}
-
 	addrStr := addr.String()
 	// check if address is already registered
 	if addressRegistry.Has(addrStr) {
