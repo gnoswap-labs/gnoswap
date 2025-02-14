@@ -153,32 +153,32 @@ func getPermissionChecker(info RoleChangeInfo) prbac.PermissionChecker {
 // The action and checkerType parameters should be case-insensitive strings matching their respective types.
 // The addresses parameter should be a colon-separated string of addresses.
 func ProposeRoleChange(
-    title string,
-    description string,
-    roleName string,
-    permissionName string,
-    action string,
-    checkerType string,
-    addresses string,
-    tokenPath string,
-    minAmount uint64,
+	title string,
+	description string,
+	roleName string,
+	permissionName string,
+	action string,
+	checkerType string,
+	addresses string,
+	tokenPath string,
+	minAmount uint64,
 ) uint64 {
-    // Convert string parameters to their respective types
-    roleChangeAction := RoleChangeActionFromString(action)
-    checkerTypeEnum := checkerTypeFromString(checkerType)
-    addressList := parseAddresses(addresses)
+	// Convert string parameters to their respective types
+	roleChangeAction := RoleChangeActionFromString(action)
+	checkerTypeEnum := checkerTypeFromString(checkerType)
+	addressList := parseAddresses(addresses)
 
-    return proposeRoleChange(
-        title,
-        description,
-        roleName,
-        permissionName,
-        roleChangeAction,
-        checkerTypeEnum,
-        addressList,
-        tokenPath,
-        minAmount,
-    )
+	return proposeRoleChange(
+		title,
+		description,
+		roleName,
+		permissionName,
+		roleChangeAction,
+		checkerTypeEnum,
+		addressList,
+		tokenPath,
+		minAmount,
+	)
 }
 
 // proposeRoleChange creates a new role change proposal
@@ -269,22 +269,22 @@ func proposeRoleChange(
 // parseAddresses parses a colon-separated string of addresses into an array of std.Address.
 // Example input: "addr1:addr2:addr3"
 func parseAddresses(addressStr string) []std.Address {
-    if addressStr == "" {
-        return []std.Address{}
-    }
+	if addressStr == "" {
+		return []std.Address{}
+	}
 
-    addrStrings := strings.Split(addressStr, ":")
-    addresses := make([]std.Address, 0, len(addrStrings))
+	addrStrings := strings.Split(addressStr, ":")
+	addresses := make([]std.Address, 0, len(addrStrings))
 
-    for _, addr := range addrStrings {
-        addr = strings.TrimSpace(addr)
-        if addr == "" {
-            continue
-        }
+	for _, addr := range addrStrings {
+		addr = strings.TrimSpace(addr)
+		if addr == "" {
+			continue
+		}
 
-        address := std.Address(addr)
-        addresses = append(addresses, address)
-    }
+		address := std.Address(addr)
+		addresses = append(addresses, address)
+	}
 
-    return addresses
+	return addresses
 }

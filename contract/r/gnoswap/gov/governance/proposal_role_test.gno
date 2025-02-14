@@ -117,121 +117,121 @@ func TestProposeRoleChange(t *testing.T) {
 }
 
 func TestProposeRoleChangeWithStringParams(t *testing.T) {
-    t.Skip("The proposal needs to be modified to ensure it has sufficient xGNS.")
-    resetGlobalStateProposal(t)
+	t.Skip("The proposal needs to be modified to ensure it has sufficient xGNS.")
+	resetGlobalStateProposal(t)
 
-    testAddr1 := testutils.TestAddress("test1")
-    testAddr2 := testutils.TestAddress("test2")
+	testAddr1 := testutils.TestAddress("test1")
+	testAddr2 := testutils.TestAddress("test2")
 
-    tests := []struct {
-        name           string
-        title         string
-        description   string
-        roleName      string
-        permissionName string
-        action        string
-        checkerType   string
-        addresses     string
-        tokenPath     string
-        minAmount     uint64
-        expectError   bool
-        expectedAddrs []std.Address
-    }{
-        {
-            name:           "Add role with single address checker",
-            title:         "Add Admin Role",
-            description:   "Create new admin role with single address permission",
-            roleName:      "admin",
-            permissionName: "can_manage",
-            action:        "AddRole",
-            checkerType:   "SingleAddressChecker",
-            addresses:     testAddr1.String(),
-            tokenPath:     "",
-            minAmount:     0,
-            expectError:   false,
-            expectedAddrs: []std.Address{testAddr1},
-        },
-        {
-            name:           "Add role with multiple address checker",
-            title:         "Add Moderator Role",
-            description:   "Create new moderator role with multiple addresses",
-            roleName:      "moderator",
-            permissionName: "can_moderate",
-            action:        "AddRole",
-            checkerType:   "MultiAddressChecker",
-            addresses:     testAddr1.String() + ":" + testAddr2.String(),
-            tokenPath:     "",
-            minAmount:     0,
-            expectError:   false,
-            expectedAddrs: []std.Address{testAddr1, testAddr2},
-        },
-        {
-            name:           "Invalid action type",
-            title:         "Invalid Action",
-            description:   "Test with invalid action type",
-            roleName:      "test",
-            permissionName: "test_perm",
-            action:        "InvalidAction",
-            checkerType:   "AlwaysAllowChecker",
-            addresses:     "",
-            tokenPath:     "",
-            minAmount:     0,
-            expectError:   true,
-            expectedAddrs: nil,
-        },
-    }
+	tests := []struct {
+		name           string
+		title          string
+		description    string
+		roleName       string
+		permissionName string
+		action         string
+		checkerType    string
+		addresses      string
+		tokenPath      string
+		minAmount      uint64
+		expectError    bool
+		expectedAddrs  []std.Address
+	}{
+		{
+			name:           "Add role with single address checker",
+			title:          "Add Admin Role",
+			description:    "Create new admin role with single address permission",
+			roleName:       "admin",
+			permissionName: "can_manage",
+			action:         "AddRole",
+			checkerType:    "SingleAddressChecker",
+			addresses:      testAddr1.String(),
+			tokenPath:      "",
+			minAmount:      0,
+			expectError:    false,
+			expectedAddrs:  []std.Address{testAddr1},
+		},
+		{
+			name:           "Add role with multiple address checker",
+			title:          "Add Moderator Role",
+			description:    "Create new moderator role with multiple addresses",
+			roleName:       "moderator",
+			permissionName: "can_moderate",
+			action:         "AddRole",
+			checkerType:    "MultiAddressChecker",
+			addresses:      testAddr1.String() + ":" + testAddr2.String(),
+			tokenPath:      "",
+			minAmount:      0,
+			expectError:    false,
+			expectedAddrs:  []std.Address{testAddr1, testAddr2},
+		},
+		{
+			name:           "Invalid action type",
+			title:          "Invalid Action",
+			description:    "Test with invalid action type",
+			roleName:       "test",
+			permissionName: "test_perm",
+			action:         "InvalidAction",
+			checkerType:    "AlwaysAllowChecker",
+			addresses:      "",
+			tokenPath:      "",
+			minAmount:      0,
+			expectError:    true,
+			expectedAddrs:  nil,
+		},
+	}
 
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            resetGlobalStateProposal(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetGlobalStateProposal(t)
 
-            var pid uint64
-            didPanic := false
+			var pid uint64
+			didPanic := false
 
-            func() {
-                defer func() {
-                    if r := recover(); r != nil {
-                        didPanic = true
-                    }
-                }()
-                pid = ProposeRoleChange(
-                    tt.title,
-                    tt.description,
-                    tt.roleName,
-                    tt.permissionName,
-                    tt.action,
-                    tt.checkerType,
-                    tt.addresses,
-                    tt.tokenPath,
-                    tt.minAmount,
-                )
-            }()
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						didPanic = true
+					}
+				}()
+				pid = ProposeRoleChange(
+					tt.title,
+					tt.description,
+					tt.roleName,
+					tt.permissionName,
+					tt.action,
+					tt.checkerType,
+					tt.addresses,
+					tt.tokenPath,
+					tt.minAmount,
+				)
+			}()
 
-            if tt.expectError {
-                uassert.True(t, didPanic)
-                return
-            }
+			if tt.expectError {
+				uassert.True(t, didPanic)
+				return
+			}
 
-            uassert.False(t, didPanic)
+			uassert.False(t, didPanic)
 
-            prop, exists := proposals.Get(formatUint(pid))
-            uassert.True(t, exists)
+			prop, exists := proposals.Get(formatUint(pid))
+			uassert.True(t, exists)
 
-            proposal := prop.(ProposalInfo)
+			proposal := prop.(ProposalInfo)
 
-            uassert.Equal(t, tt.title, proposal.Title)
-            uassert.Equal(t, tt.description, proposal.Description)
-            uassert.Equal(t, tt.roleName, proposal.RoleChange.RoleName)
-            uassert.Equal(t, tt.permissionName, proposal.RoleChange.PermissionName)
+			uassert.Equal(t, tt.title, proposal.Title)
+			uassert.Equal(t, tt.description, proposal.Description)
+			uassert.Equal(t, tt.roleName, proposal.RoleChange.RoleName)
+			uassert.Equal(t, tt.permissionName, proposal.RoleChange.PermissionName)
 
-            if tt.expectedAddrs != nil {
-                uassert.Equal(t, len(tt.expectedAddrs), len(proposal.RoleChange.Addresses))
-                for i, addr := range tt.expectedAddrs {
-                    uassert.Equal(t, addr, proposal.RoleChange.Addresses[i])
-                }
-            }
-        })
-    }
+			if tt.expectedAddrs != nil {
+				uassert.Equal(t, len(tt.expectedAddrs), len(proposal.RoleChange.Addresses))
+				for i, addr := range tt.expectedAddrs {
+					uassert.Equal(t, addr, proposal.RoleChange.Addresses[i])
+				}
+			}
+		})
+	}
 }
 
 func TestGetPermissionChecker(t *testing.T) {
