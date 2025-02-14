@@ -26,6 +26,21 @@ const (
 	AlwaysDenyChecker
 )
 
+func checkerTypeFromString(s string) CheckerType {
+	switch strings.ToLower(s) {
+	case "singleaddresschecker":
+		return SingleAddressChecker
+	case "multiaddresschecker":
+		return MultiAddressChecker
+	case "alwaysallowchecker":
+		return AlwaysAllowChecker
+	case "alwaysdenychecker":
+		return AlwaysDenyChecker
+	default:
+		panic("unknown checker type: " + s)
+	}
+}
+
 func (c CheckerType) String() string {
 	switch c {
 	case SingleAddressChecker:
@@ -134,8 +149,40 @@ func getPermissionChecker(info RoleChangeInfo) prbac.PermissionChecker {
 	}
 }
 
-// ProposeRoleChange creates a new role change proposal
+// proposeRoleChange creates a new role change proposal with string parameters.
+// The action and checkerType parameters should be case-insensitive strings matching their respective types.
+// The addresses parameter should be a colon-separated string of addresses.
 func ProposeRoleChange(
+    title string,
+    description string,
+    roleName string,
+    permissionName string,
+    action string,
+    checkerType string,
+    addresses string,
+    tokenPath string,
+    minAmount uint64,
+) uint64 {
+    // Convert string parameters to their respective types
+    roleChangeAction := RoleChangeActionFromString(action)
+    checkerTypeEnum := checkerTypeFromString(checkerType)
+    addressList := parseAddresses(addresses)
+
+    return proposeRoleChange(
+        title,
+        description,
+        roleName,
+        permissionName,
+        roleChangeAction,
+        checkerTypeEnum,
+        addressList,
+        tokenPath,
+        minAmount,
+    )
+}
+
+// proposeRoleChange creates a new role change proposal
+func proposeRoleChange(
 	title string,
 	description string,
 	roleName string,
@@ -217,4 +264,27 @@ func ProposeRoleChange(
 	)
 
 	return proposalId
+}
+
+// parseAddresses parses a colon-separated string of addresses into an array of std.Address.
+// Example input: "addr1:addr2:addr3"
+func parseAddresses(addressStr string) []std.Address {
+    if addressStr == "" {
+        return []std.Address{}
+    }
+
+    addrStrings := strings.Split(addressStr, ":")
+    addresses := make([]std.Address, 0, len(addrStrings))
+
+    for _, addr := range addrStrings {
+        addr = strings.TrimSpace(addr)
+        if addr == "" {
+            continue
+        }
+
+        address := std.Address(addr)
+        addresses = append(addresses, address)
+    }
+
+    return addresses
 }
