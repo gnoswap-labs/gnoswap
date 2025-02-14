@@ -201,6 +201,7 @@ func testMakePosition1OutRangeBySwap() {
 		"100",      // quoteArr
 		"0",        // amountOutMin
 		max_timeout,
+		"",         // referrer
 	)
 
 	newPoolTick := pl.PoolGetSlot0Tick(poolPath)
@@ -242,6 +243,7 @@ func testMakePosition1InRangeBySwap() {
 		"100",
 		"0",
 		max_timeout,
+		"", // referrer
 	)
 
 	newPoolTick := pl.PoolGetSlot0Tick(poolPath)
