@@ -132,20 +132,42 @@ run_test() {
     fi
 
     cd "$folder"
-    TESTFILES=($(ls *_test.gnoA 2>/dev/null || true))
+    # shellcheck disable=SC2207
+    UNITTESTS=($(ls *_test.gno 2>/dev/null || true))
+    for testfile in "${UNITTESTS[@]}"; do
+      if [[ ${testfile} == "_helper_test.gno" ]]; then
+        continue
+      fi
+      base="${testfile%.gno}"
+      mv "$testfile" "$base.gnoA"
+    done
 
+    TESTFILES=()
+    if [[ -d "./tests" ]]; then
+        TESTFILES=($(ls ./tests/*_test.gnoA 2>/dev/null || true))
+    fi
+
+    LENGTH=${#TESTFILES[@]}
     for testfile in "${TESTFILES[@]}"; do
-        base="${testfile%.gnoA}"
-        mv "$testfile" "$base.gno"
+      base_path="${testfile%.gnoA}"
+      base_name="${base_path##*/}"
+      mv "$testfile" "$base_name.gno"
 
-        if ! gno test "$folder" -root-dir "$GNO_PATH" -v; then
-            echo "❌ Test failed for [$folder] file: $base.gno"
-            FAILED_TESTS+=("[$folder] file: $base.gno test failed")
-        else
-            echo "✅ Test passed for [$folder] file: $base.gno"
-        fi
+      if ! gno test "$folder" -root-dir "$GNO_PATH" -v; then
+        echo "❌ Test failed for $folder file: $base_name.gno"
+        FAILED_TESTS+=("$folder file: $base_name.gno test failed")
+      else
+        echo "✅ Test passed for $folder file: $base_name.gno"
+      fi
+      mv "$base_name.gno" "$testfile"
+    done
 
-        mv "$base.gno" "$testfile"
+    for testfile in "${UNITTESTS[@]}"; do
+      if [[ ${testfile} == "_helper_test.gno" ]]; then
+        continue
+      fi
+      base="${testfile%.gno}"
+      mv "$base.gnoA" "$base.gno"
     done
 
     cd "$PROJECT_ROOT"
@@ -153,52 +175,24 @@ run_test() {
 
 # ✅ run total folder test
 run_all_tests() {
-    echo "🔍 Running all tests... $TEST_VALUES"
-#    for folder in "${TEST_VALUES[@]}"; do
-#      echo "🚀 Running tests for $folder..."
-#        run_test "$folder"
-#    done
+  echo "🔍 Running all tests... $TEST_VALUES"
 
-    FAILED_TESTS=()
-    LENGTH=${#TEST_KEYS[@]}
-    for ((i=0; i<LENGTH; i++)); do
-        FOLDER="$TMP_PATH/${TEST_VALUES[$i]}"
-        echo "🚀 Running tests for $FOLDER..."
+  FAILED_TESTS=()
+  ALL_TEST_LENGTH=${#TEST_VALUES[@]}
+  for ((i=0; i<ALL_TEST_LENGTH; i++)); do
+    run_test "${TEST_VALUES[$i]}"
+  done
 
-        # Check if folder exists
-        if [[ ! -d "$FOLDER" ]]; then
-            echo "❌ Error: Test folder $FOLDER does not exist! Skipping..."
-            FAILED_TESTS+=("$FOLDER")
-            continue
-        fi
-
-        # 1) Run unit tests
-        if ! gno test "$FOLDER" -root-dir "$GNO_PATH" -v 2>&1 | tee ${TMP_PATH}/test_output.log; then
-            FAILED_TESTS+=("$FOLDER")
-        fi
-
-        # 2) Remove all *_test.gno except _helper_test.gno
-        find "$FOLDER" -type f -name "*_test.gno" ! -name "_helper_test.gno" -exec rm -f {} +
-
-        # 3) Run gnoA tests
-        cd "$FOLDER"
-        TESTFILES=($(ls *_test.gnoA 2>/dev/null || true))
-
-        for ((j=0; j<${#TESTFILES[@]}; j++)); do
-            testfile="${TESTFILES[$j]}"
-            base="${testfile%.gnoA}"
-
-            mv "$testfile" "$base.gno"
-
-            if ! gno test "$FOLDER" -root-dir "$GNO_PATH" -v 2>&1 | tee ${TMP_PATH}/test_output.log; then
-                FAILED_TESTS+=("[$FOLDER] file: $base.gno test failed")
-            fi
-
-            mv "$base.gno" "$testfile"
-        done
-
-        cd "$PROJECT_ROOT"
-    done
+  # 테스트 실패 여부 출력
+  if [[ ${#FAILED_TESTS[@]} -ne 0 ]]; then
+      echo "❌ Some tests failed:"
+      for fail in "${FAILED_TESTS[@]}"; do
+          echo "   - $fail"
+      done
+      exit 1
+  else
+      echo "✅ All tests passed successfully!"
+  fi
 }
 
 # ✅ Branch operation according to the execution command

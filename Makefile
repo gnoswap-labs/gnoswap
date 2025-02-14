@@ -13,18 +13,22 @@ all: help
 
 # 📌 Run the entire test if executed without a specific folder
 .PHONY: test
-test:
+test: reset
 	@DEBUG=$(DEBUG) bash $(SCRIPT) test
 
 # 📌 Run tests on specific folders only
 .PHONY: test-folder
-test-folder:
+test-folder: reset
 	@if [ -z "$(FOLDER)" ]; then \
 		echo "❌ Error: Please specify a folder using 'make test-folder FOLDER=<path>'"; \
 		exit 1; \
 	else \
 		DEBUG=$(DEBUG) bash $(SCRIPT) test-folder $(FOLDER); \
 	fi
+
+# 📌 Reset the test environment
+.PHONY: reset
+reset: clean clone setup
 
 # 📌 Initial setup (Go, Python installation & GnoVM setup)
 .PHONY: setup
@@ -58,3 +62,4 @@ help:
 	@echo "  make help            Show this help message"
 	@echo "  make clean           Delete the temporary folder"
 	@echo "  make search          Find test files"
+	@echo "  make reset           Reset the test environment"
