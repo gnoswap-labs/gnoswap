@@ -98,6 +98,7 @@ func testRouterSwapRoute(t *testing.T) {
 			"100",
 			"1",
 			time.Now().Unix()+10,
+			"",
 		)
 		uassert.Equal(t, amountIn, "100000")
 		uassert.Equal(t, amountOut, "-99800")
