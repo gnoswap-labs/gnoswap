@@ -231,3 +231,50 @@ func TestMultiRoleValidation(t *testing.T) {
 		}
 	})
 }
+
+func TestCreateRole(t *testing.T) {
+	testNewRoleAddr := testutils.TestAddress("test_new_role")
+	testAnotherAddr := testutils.TestAddress("test_another_role")
+
+	t.Run("create new role success", func(t *testing.T) {
+		cfg := DefaultConfig()
+		err := Initialize(cfg)
+		uassert.NoError(t, err)
+
+		err = CreateRole("custom_role", testNewRoleAddr)
+		uassert.NoError(t, err)
+
+		// verify role was created correctly
+		actual := GetCurrentConfig()
+		roleAddr := actual.Roles["custom_role"]
+		uassert.Equal(t, testNewRoleAddr, roleAddr)
+
+		// verify permission is set correctly
+		err = rbac.CheckPermission("custom_role", PERM_ACCESS, testNewRoleAddr)
+		uassert.NoError(t, err)
+
+		// verify different address cannot access the role
+		err = rbac.CheckPermission("custom_role", PERM_ACCESS, testAnotherAddr)
+		uassert.Error(t, err)
+	})
+
+	t.Run("create role fails while uninitialized", func(t *testing.T) {
+		currentConfig = nil
+		err := CreateRole("failed_role", testNewRoleAddr)
+		uassert.Error(t, err)
+	})
+
+	t.Run("create duplicate role fails", func(t *testing.T) {
+		cfg := DefaultConfig()
+		err := Initialize(cfg)
+		uassert.NoError(t, err)
+
+		// create first role
+		err = CreateRole("duplicate_role", testNewRoleAddr)
+		uassert.NoError(t, err)
+
+		// attempt to create same role again
+		err = CreateRole("duplicate_role", testAnotherAddr)
+		uassert.Error(t, err)
+	})
+}

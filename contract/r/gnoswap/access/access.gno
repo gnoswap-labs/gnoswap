@@ -69,3 +69,24 @@ func UpdateRoleAddress(roleName string, newAddress std.Address) error {
 	newChecker := createAddressChecker(newAddress, roleName)
 	return rbac.UpdatePermission(roleName, PERM_ACCESS, newChecker)
 }
+
+func CreateRole(roleName string, address std.Address) error {
+	if currentConfig == nil {
+		return ufmt.Errorf("access control not initialized")
+	}
+
+	// Check if role already exists
+	if _, exists := currentConfig.Roles[roleName]; exists {
+		return ufmt.Errorf("role %s already exists", roleName)
+	}
+
+	// Create new role with permission
+	checker := createAddressChecker(address, roleName)
+	err := rbac.DeclareRole(roleName, prbac.WithPermission(PERM_ACCESS, checker))
+	if err != nil {
+		return ufmt.Errorf("failed to declare role %s: %v", roleName, err)
+	}
+
+	currentConfig.Roles[roleName] = address
+	return nil
+}
