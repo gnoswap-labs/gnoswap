@@ -49,6 +49,10 @@ clean:
 .PHONY: search
 search:
 	@DEBUG=$(DEBUG) bash $(SCRIPT) search $(FOLDER) $(EXTENSION)
+  
+.PHONY: fmt
+fmt:
+	find . -name "*.gno" -type f -exec gofumpt -w {} \;
 
 # 📌 Help message
 .PHONY: help
@@ -63,3 +67,6 @@ help:
 	@echo "  make clean           Delete the temporary folder"
 	@echo "  make search          Find test files"
 	@echo "  make reset           Reset the test environment"
+  @echo "  make fmt             "
+
+
