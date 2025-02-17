@@ -35,19 +35,25 @@ type Config struct {
 
 // Create default configuration
 func DefaultConfig() *Config
+
+// Set configuration
+func SetConfig(cfg *Config) error
+
+// Get current configuration
+func GetCurrentConfig() *Config
 ```
 
-### Core Functions
+### Role Management
 
 ```go
-// Initialize access control with configuration
-func Initialize(cfg *Config) error
+// Set or update a role with address
+func SetRole(roleName string, address std.Address) error
+
+// Create a new role with address
+func CreateRole(roleName string, address std.Address) error
 
 // Update address for a specific role
 func UpdateRoleAddress(roleName string, newAddress std.Address) error
-
-// Create a new role with associated address
-func CreateRole(roleName string, address std.Address) error
 
 // Check if a role exists
 func RoleExists(roleName string) bool
@@ -63,7 +69,60 @@ func GetRoles() []string
 func AdminOnly(caller std.Address) error
 func GovernanceOnly(caller std.Address) error
 func RouterOnly(caller std.Address) error
-// ... and more
+func PoolOnly(caller std.Address) error
+func PositionOnly(caller std.Address) error
+func StakerOnly(caller std.Address) error
+func LaunchpadOnly(caller std.Address) error
+func EmissionOnly(caller std.Address) error
+```
+
+## Usage Example
+
+```go
+// Create and set configuration
+cfg := access.DefaultConfig()
+cfg.Roles["admin"] = adminAddr
+err := access.SetConfig(cfg)
+if err != nil {
+    panic(err)
+}
+
+// Initialize system
+err = access.Initialize(cfg)
+if err != nil {
+    panic(err)
+}
+
+// Set or update role
+err = access.SetRole("custom_role", customAddr)
+if err != nil {
+    panic(err)
+}
+
+// Create new role
+err = access.CreateRole("new_role", newAddr)
+if err != nil {
+    panic(err)
+}
+
+// Update role address
+err = access.UpdateRoleAddress("custom_role", newCustomAddr)
+if err != nil {
+    panic(err)
+}
+
+// Check if role exists
+exists := access.RoleExists("custom_role")
+
+// Get all roles
+roles := access.GetRoles()
+
+// Check permissions
+if err := access.AdminOnly(callerAddr); err != nil {
+    println("Access denied:", err)
+} else {
+    println("Admin access granted")
+}
 ```
 
 ## Implementation Details
