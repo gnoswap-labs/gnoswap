@@ -18,7 +18,7 @@ test: reset
 
 # 📌 Run tests on specific folders only
 .PHONY: test-folder
-test-folder: reset
+test-folder: 
 	@if [ -z "$(FOLDER)" ]; then \
 		echo "❌ Error: Please specify a folder using 'make test-folder FOLDER=<path>'"; \
 		exit 1; \
@@ -33,7 +33,7 @@ reset: clean clone setup
 # 📌 Initial setup (Go, Python installation & GnoVM setup)
 .PHONY: setup
 setup:
-	@DEBUG=$(DEBUG) bash $(SCRIPT) setup
+	@DEBUG=$(DEBUG) bash $(SCRIPT) setup $(GNOSWAP_PATH)
 
 # 📌 Project Clone (GnoVM & Gnoswap)
 .PHONY: clone

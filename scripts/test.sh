@@ -8,7 +8,7 @@ if [[ "$DEBUG" == "true" ]]; then
   set -x # Print commands and their arguments
 fi
 
-# 프로젝트 경로 설정
+# Project path setup
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 TMP_PATH="$PROJECT_ROOT/tmp"
@@ -16,7 +16,6 @@ GNO_PATH="$TMP_PATH/gno"
 GNOSWAP_PATH="$TMP_PATH/gnoswap"
 
 source "$SCRIPT_DIR"/test_values.sh
-
 
 # ✅ Clone Gnolang & Gnoswap project
 clone_repos() {
@@ -198,6 +197,10 @@ run_all_tests() {
 # ✅ Branch operation according to the execution command
 case "$1" in
     setup)
+        if [[ -n "$2" ]]; then
+            GNOSWAP_PATH="$2"
+        fi
+        
         setup_env
         ;;
     clone)
