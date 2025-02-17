@@ -352,3 +352,85 @@ func TestGetRoles(t *testing.T) {
 		uassert.Equal(t, 0, len(roles))
 	})
 }
+
+func TestSetConfig(t *testing.T) {
+	testManagerAddr := testutils.TestAddress("test_manager")
+	testAnalystAddr := testutils.TestAddress("test_analyst")
+
+	t.Run("success with valid config", func(t *testing.T) {
+		cfg := DefaultConfig()
+		cfg.Roles["test_manager"] = testManagerAddr
+		cfg.Roles["test_analyst"] = testAnalystAddr
+
+		err := SetConfig(cfg)
+		uassert.NoError(t, err)
+
+		actual := GetCurrentConfig()
+		uassert.Equal(t, testManagerAddr, actual.Roles["test_manager"])
+		uassert.Equal(t, testAnalystAddr, actual.Roles["test_analyst"])
+	})
+
+	t.Run("fail with nil config", func(t *testing.T) {
+		err := SetConfig(nil)
+		uassert.Error(t, err)
+	})
+}
+
+func TestSetRole(t *testing.T) {
+	testAuditorAddr := testutils.TestAddress("test_auditor")
+	testReviewerAddr := testutils.TestAddress("test_reviewer")
+
+	t.Run("success with new role", func(t *testing.T) {
+		cfg := DefaultConfig()
+		err := Initialize(cfg)
+		uassert.NoError(t, err)
+
+		err = SetRole("test_auditor", testAuditorAddr)
+		uassert.NoError(t, err)
+
+		actual := GetCurrentConfig()
+		uassert.Equal(t, testAuditorAddr, actual.Roles["test_auditor"])
+
+		// verify permission is set correctly
+		err = rbac.CheckPermission("test_auditor", PERM_ACCESS, testAuditorAddr)
+		uassert.NoError(t, err)
+	})
+
+	t.Run("success updating existing role", func(t *testing.T) {
+		cfg := DefaultConfig()
+		cfg.Roles["test_reviewer"] = testReviewerAddr
+		err := Initialize(cfg)
+		uassert.NoError(t, err)
+
+		newReviewerAddr := testutils.TestAddress("test_reviewer_new")
+		err = SetRole("test_reviewer", newReviewerAddr)
+		uassert.NoError(t, err)
+
+		// verify address was updated
+		actual := GetCurrentConfig()
+		uassert.Equal(t, newReviewerAddr, actual.Roles["test_reviewer"])
+
+		// verify old address cannot access anymore
+		err = rbac.CheckPermission("test_reviewer", PERM_ACCESS, testReviewerAddr)
+		uassert.Error(t, err)
+
+		// verify new address can access
+		err = rbac.CheckPermission("test_reviewer", PERM_ACCESS, newReviewerAddr)
+		uassert.NoError(t, err)
+	})
+
+	t.Run("fail with empty role name", func(t *testing.T) {
+		cfg := DefaultConfig()
+		err := Initialize(cfg)
+		uassert.NoError(t, err)
+
+		err = SetRole("", testAuditorAddr)
+		uassert.Error(t, err)
+	})
+
+	t.Run("fail while uninitialized", func(t *testing.T) {
+		currentConfig = nil
+		err := SetRole("test_auditor", testAuditorAddr)
+		uassert.Error(t, err)
+	})
+}

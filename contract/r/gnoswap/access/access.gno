@@ -23,34 +23,66 @@ func DefaultConfig() *Config {
 	}
 }
 
+// validateConfig checks if the configuration state is valid
+func validateConfig() error {
+	if currentConfig == nil {
+		return ufmt.Errorf(errNotInitialized)
+	}
+	return nil
+}
+
+// validateRoleName checks if the role name is valid
+func validateRoleName(roleName string) error {
+	if roleName == "" {
+		return ufmt.Errorf(errEmptyRole)
+	}
+	return nil
+}
+
 // createAddressChecker creates a permission checker for a specific address
 func createAddressChecker(addr std.Address, roleName string) prbac.PermissionChecker {
 	return func(caller std.Address) error {
 		if caller != addr {
-			return ufmt.Errorf("caller(%s) is not authorized for role %s", caller.String(), roleName)
+			return ufmt.Errorf(errUnauthorized, caller.String(), roleName)
 		}
 		return nil
 	}
 }
 
-// Initialize registers all roles and permissions to the global RBAC manager
-func Initialize(cfg *Config) error {
+// SetConfig sets the current configuration
+func SetConfig(cfg *Config) error {
 	if cfg == nil {
-		return ufmt.Errorf("config cannot be nil")
+		return ufmt.Errorf(errConfigNil)
 	}
-
-	for rn, addr := range cfg.Roles {
-		checker := createAddressChecker(addr, rn)
-		err := rbac.DeclareRole(rn, prbac.WithPermission(PERM_ACCESS, checker))
-		if err != nil {
-			return ufmt.Errorf("failed to declare role %s: %v", rn, err)
-		}
-	}
-
 	currentConfig = cfg
 	return nil
 }
 
+// Initialize registers all roles and permissions to the global RBAC manager
+func Initialize(cfg *Config) error {
+	if cfg == nil {
+		return ufmt.Errorf(errConfigNil)
+	}
+
+	for roleName, addr := range cfg.Roles {
+		if err := declareNewRole(roleName, addr); err != nil {
+			return err
+		}
+	}
+
+	return SetConfig(cfg)
+}
+
+// declareNewRole declares a new role with permissions
+func declareNewRole(roleName string, addr std.Address) error {
+	checker := createAddressChecker(addr, roleName)
+	if err := rbac.DeclareRole(roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
+		return ufmt.Errorf(errDeclareRole, roleName, err)
+	}
+	return nil
+}
+
+// GetCurrentConfig returns the current configuration
 func GetCurrentConfig() *Config {
 	if currentConfig == nil {
 		return nil
@@ -58,39 +90,66 @@ func GetCurrentConfig() *Config {
 	return currentConfig
 }
 
-// UpdateRoleAddress updates the address for a specific role's permission checker
-func UpdateRoleAddress(roleName string, newAddress std.Address) error {
-	if currentConfig == nil {
-		return ufmt.Errorf("access control not initialized")
+// SetRole sets or updates a role with the given address
+func SetRole(roleName string, address std.Address) error {
+	if err := validateConfig(); err != nil {
+		return err
 	}
 
-	currentConfig.Roles[roleName] = newAddress
-
-	newChecker := createAddressChecker(newAddress, roleName)
-	return rbac.UpdatePermission(roleName, PERM_ACCESS, newChecker)
-}
-
-func CreateRole(roleName string, address std.Address) error {
-	if currentConfig == nil {
-		return ufmt.Errorf("access control not initialized")
+	if err := validateRoleName(roleName); err != nil {
+		return err
 	}
 
-	// Check if role already exists
-	if _, exists := currentConfig.Roles[roleName]; exists {
-		return ufmt.Errorf("role %s already exists", roleName)
-	}
-
-	// Create new role with permission
 	checker := createAddressChecker(address, roleName)
-	err := rbac.DeclareRole(roleName, prbac.WithPermission(PERM_ACCESS, checker))
-	if err != nil {
-		return ufmt.Errorf("failed to declare role %s: %v", roleName, err)
+
+	if RoleExists(roleName) {
+		if err := rbac.UpdatePermission(roleName, PERM_ACCESS, checker); err != nil {
+			return err
+		}
+	} else {
+		if err := rbac.DeclareRole(roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
+			return err
+		}
 	}
 
 	currentConfig.Roles[roleName] = address
 	return nil
 }
 
+// UpdateRoleAddress updates the address for a specific role's permission checker
+func UpdateRoleAddress(roleName string, newAddress std.Address) error {
+	if err := validateConfig(); err != nil {
+		return err
+	}
+
+	currentConfig.Roles[roleName] = newAddress
+	newChecker := createAddressChecker(newAddress, roleName)
+	return rbac.UpdatePermission(roleName, PERM_ACCESS, newChecker)
+}
+
+// CreateRole creates a new role with the given address
+func CreateRole(roleName string, address std.Address) error {
+	if err := validateConfig(); err != nil {
+		return err
+	}
+
+	if err := validateRoleName(roleName); err != nil {
+		return err
+	}
+
+	if RoleExists(roleName) {
+		return ufmt.Errorf(errRoleExists, roleName)
+	}
+
+	if err := declareNewRole(roleName, address); err != nil {
+		return err
+	}
+
+	currentConfig.Roles[roleName] = address
+	return nil
+}
+
+// RoleExists checks if a role exists in the current configuration
 func RoleExists(roleName string) bool {
 	if currentConfig == nil {
 		return false
@@ -99,6 +158,7 @@ func RoleExists(roleName string) bool {
 	return exists
 }
 
+// GetRoles returns all registered role names
 func GetRoles() []string {
 	if currentConfig == nil {
 		return []string{}
