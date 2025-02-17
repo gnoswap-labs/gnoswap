@@ -7,19 +7,22 @@ include _info.mk
 
 ## INIT
 .PHONY: init
-init: send-ugnot-must deploy-test-tokens deploy-libraries deploy-base-tokens deploy-gnoswap-realms
+init: send-ugnot-must deploy-test-tokens deploy-libraries deploy-base-contracts deploy-base-tokens deploy-gnoswap-realms
 
 .PHONY: deploy-test-tokens
 deploy-test-tokens: deploy-bar deploy-baz deploy-foo deploy-obl deploy-qux deploy-usdc
 
 .PHONY: deploy-libraries
-deploy-libraries: deploy-consts deploy-gnsmath deploy-int256 deploy-rbac deploy-uint256
+deploy-libraries: deploy-consts deploy-uint256 deploy-int256 deploy-rbac deploy-gnsmath
+
+.PHONY: deploy-base-contracts
+deploy-base-contracts: deploy-common deploy-rbac-realm deploy-referral
 
 .PHONY: deploy-base-tokens
 deploy-base-tokens: deploy-gnft deploy-gns
 
 .PHONY: deploy-gnoswap-realms
-deploy-gnoswap-realms: deploy-common deploy-community_pool deploy-emission deploy-governance deploy-staker deploy-xgns deploy-launchpad deploy-pool deploy-position deploy-protocol_fee deploy-rbac deploy-referral deploy-router deploy-staker
+deploy-gnoswap-realms: deploy-community_pool deploy-emission deploy-protocol_fee deploy-pool deploy-position deploy-router deploy-staker deploy-xgns deploy-gov-staker deploy-governance deploy-launchpad
 
 # send ugnot to necessary accounts
 send-ugnot-must:
@@ -82,7 +85,7 @@ deploy-governance:
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/gov/governance -pkgpath gno.land/r/gnoswap/v1/gov/governance -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 	@echo
 
-deploy-staker:
+deploy-gov-staker:
 	$(info ************ deploy staker ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/gov/staker -pkgpath gno.land/r/gnoswap/v1/gov/staker -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 	@echo
@@ -112,7 +115,7 @@ deploy-protocol_fee:
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/protocol_fee -pkgpath gno.land/r/gnoswap/v1/protocol_fee -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 	@echo
 
-deploy-rbac:
+deploy-rbac-realm:
 	$(info ************ deploy rbac ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/rbac -pkgpath gno.land/r/gnoswap/v1/rbac -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 	@echo
