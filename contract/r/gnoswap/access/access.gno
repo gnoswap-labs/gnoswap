@@ -9,6 +9,13 @@ import (
 	"gno.land/r/gnoswap/v1/rbac"
 )
 
+// event types
+const (
+	roleSet     = "RoleSet"
+	roleUpdated = "RoleUpdated"
+	roleCreated = "RoleCreated"
+)
+
 var currentConfig *Config
 
 // Config contains all the addresses needed for access control
@@ -100,6 +107,7 @@ func SetRole(roleName string, address std.Address) error {
 		return err
 	}
 
+	prevAddress := currentConfig.Roles[roleName]
 	checker := createAddressChecker(address, roleName)
 
 	if RoleExists(roleName) {
@@ -113,6 +121,13 @@ func SetRole(roleName string, address std.Address) error {
 	}
 
 	currentConfig.Roles[roleName] = address
+
+	std.Emit(
+		roleSet,
+		"roleName", roleName,
+		"prevAddress", prevAddress.String(),
+		"newAddress", address.String(),
+	)
 	return nil
 }
 
@@ -122,8 +137,16 @@ func UpdateRoleAddress(roleName string, newAddress std.Address) error {
 		return err
 	}
 
+	prevAddress := currentConfig.Roles[roleName]
 	currentConfig.Roles[roleName] = newAddress
 	newChecker := createAddressChecker(newAddress, roleName)
+
+	std.Emit(
+		roleUpdated,
+		"roleName", roleName,
+		"prevAddress", prevAddress.String(),
+		"newAddress", newAddress.String(),
+	)
 	return rbac.UpdatePermission(roleName, PERM_ACCESS, newChecker)
 }
 
@@ -146,6 +169,12 @@ func CreateRole(roleName string, address std.Address) error {
 	}
 
 	currentConfig.Roles[roleName] = address
+
+	std.Emit(
+		roleCreated,
+		"roleName", roleName,
+		"address", address.String(),
+	)
 	return nil
 }
 
