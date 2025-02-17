@@ -67,6 +67,6 @@ help:
 	@echo "  make clean           Delete the temporary folder"
 	@echo "  make search          Find test files"
 	@echo "  make reset           Reset the test environment"
-  @echo "  make fmt             "
+	@echo "  make fmt             Format all .gno files"
 
 

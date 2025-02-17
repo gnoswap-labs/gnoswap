@@ -76,7 +76,7 @@ func CreatePool(
 	pool := newPool(poolInfo)
 	pools.Set(poolPath, pool)
 
-	currentTick := common.TickMathGetTickAtSqrtRatio(u256.MustFromDecimal(sqrtPriceX96))
+	currentTick := common.TickMathGetTickAtSqrtRatio(poolInfo.SqrtPriceX96())
 
 	std.Emit(
 		"CreatePool",
