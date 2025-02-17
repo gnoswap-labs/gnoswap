@@ -278,3 +278,77 @@ func TestCreateRole(t *testing.T) {
 		uassert.Error(t, err)
 	})
 }
+
+func TestRoleExists(t *testing.T) {
+	testRoleAddr := testutils.TestAddress("test_role_exists")
+
+	t.Run("check existing role", func(t *testing.T) {
+		cfg := DefaultConfig()
+		cfg.Roles["existing_role"] = testRoleAddr
+		err := Initialize(cfg)
+		uassert.NoError(t, err)
+
+		exists := RoleExists("existing_role")
+		uassert.Equal(t, true, exists)
+	})
+
+	t.Run("check non-existing role", func(t *testing.T) {
+		cfg := DefaultConfig()
+		err := Initialize(cfg)
+		uassert.NoError(t, err)
+
+		exists := RoleExists("non_existing_role")
+		uassert.Equal(t, false, exists)
+	})
+
+	t.Run("check while uninitialized", func(t *testing.T) {
+		currentConfig = nil
+		exists := RoleExists("any_role")
+		uassert.Equal(t, false, exists)
+	})
+}
+
+func TestGetRoles(t *testing.T) {
+	testRole1Addr := testutils.TestAddress("test_role1_get")
+	testRole2Addr := testutils.TestAddress("test_role2_get")
+
+	t.Run("get roles from initialized config", func(t *testing.T) {
+		cfg := DefaultConfig()
+		cfg.Roles["role1"] = testRole1Addr
+		cfg.Roles["role2"] = testRole2Addr
+		err := Initialize(cfg)
+		uassert.NoError(t, err)
+
+		roles := GetRoles()
+		uassert.Equal(t, 2, len(roles))
+
+		// check if both roles exist in the result
+		foundRole1 := false
+		foundRole2 := false
+		for _, role := range roles {
+			if role == "role1" {
+				foundRole1 = true
+			}
+			if role == "role2" {
+				foundRole2 = true
+			}
+		}
+		uassert.Equal(t, true, foundRole1)
+		uassert.Equal(t, true, foundRole2)
+	})
+
+	t.Run("get roles from empty config", func(t *testing.T) {
+		cfg := DefaultConfig()
+		err := Initialize(cfg)
+		uassert.NoError(t, err)
+
+		roles := GetRoles()
+		uassert.Equal(t, 0, len(roles))
+	})
+
+	t.Run("get roles while uninitialized", func(t *testing.T) {
+		currentConfig = nil
+		roles := GetRoles()
+		uassert.Equal(t, 0, len(roles))
+	})
+}

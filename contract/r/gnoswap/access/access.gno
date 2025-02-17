@@ -90,3 +90,22 @@ func CreateRole(roleName string, address std.Address) error {
 	currentConfig.Roles[roleName] = address
 	return nil
 }
+
+func RoleExists(roleName string) bool {
+	if currentConfig == nil {
+		return false
+	}
+	_, exists := currentConfig.Roles[roleName]
+	return exists
+}
+
+func GetRoles() []string {
+	if currentConfig == nil {
+		return []string{}
+	}
+	roles := make([]string, 0, len(currentConfig.Roles))
+	for role := range currentConfig.Roles {
+		roles = append(roles, role)
+	}
+	return roles
+}
