@@ -33,9 +33,6 @@ func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.
 	// update position state
 	position := p.updatePosition(params, tick)
 	liqDelta := params.liquidityDelta
-	if liqDelta.IsZero() {
-		return position, u256.Zero(), u256.Zero()
-	}
 
 	amount0, amount1 := i256.Zero(), i256.Zero()
 
@@ -110,7 +107,7 @@ func assertValidTickLower(tickLower int32) {
 }
 
 func assertValidTickUpper(tickUpper int32) {
-	if tickUpper > consts.MAX_TICK {
+	if tickUpper >= consts.MAX_TICK {
 		panic(addDetailToError(
 			errTickUpperInvalid,
 			ufmt.Sprintf("tickUpper(%d) > MAX_TICK(%d)", tickUpper, consts.MAX_TICK),

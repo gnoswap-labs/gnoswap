@@ -254,8 +254,8 @@ func TestAssertValidTickUpper(t *testing.T) {
 			name:        "tickUpper equals MAX_TICK",
 			tickLower:   consts.MIN_TICK,
 			tickUpper:   consts.MAX_TICK,
-			shouldPanic: false,
-			expected:    "",
+			shouldPanic: true,
+			expected:    "[GNOSWAP-POOL-029] tickUpper is invalid || tickUpper(887272) > MAX_TICK(887272)",
 		},
 		{
 			name:        "tickUpper less than MAX_TICK",

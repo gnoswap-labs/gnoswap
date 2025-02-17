@@ -52,6 +52,7 @@ func Mint(
 	if common.GetLimitCaller() {
 		assertOnlyPositionContract()
 	}
+	assertOnlyValidAddress(positionCaller)
 
 	liquidity := u256.MustFromDecimal(liquidityAmount)
 	if liquidity.IsZero() {
@@ -60,8 +61,12 @@ func Mint(
 
 	pool := GetPool(token0Path, token1Path, fee)
 	liquidityDelta := safeConvertToInt128(liquidity)
-	position := newModifyPositionParams(recipient, tickLower, tickUpper, liquidityDelta)
-	_, amount0, amount1 := pool.modifyPosition(position)
+	if liquidityDelta.IsZero() {
+		return u256.Zero().ToString(), u256.Zero().ToString()
+	}
+
+	positionParam := newModifyPositionParams(recipient, tickLower, tickUpper, liquidityDelta)
+	_, amount0, amount1 := pool.modifyPosition(positionParam)
 
 	if amount0.Gt(u256.Zero()) {
 		pool.safeTransferFrom(positionCaller, consts.POOL_ADDR, pool.token0Path, amount0, true)
