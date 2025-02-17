@@ -13,20 +13,14 @@ var currentConfig *Config
 
 // Config contains all the addresses needed for access control
 type Config struct {
-	AdminAddr      std.Address
-	GovernanceAddr std.Address
-	GovStakerAddr  std.Address
-	RouterAddr     std.Address
-	PoolAddr       std.Address
-	PositionAddr   std.Address
-	StakerAddr     std.Address
-	LaunchpadAddr  std.Address
-	EmissionAddr   std.Address
+	Roles map[string]std.Address
 }
 
 // DefaultConfig returns an empty config with zero addresses
 func DefaultConfig() *Config {
-	return &Config{}
+	return &Config{
+		Roles: make(map[string]std.Address),
+	}
 }
 
 // createAddressChecker creates a permission checker for a specific address
@@ -45,33 +39,15 @@ func Initialize(cfg *Config) error {
 		return ufmt.Errorf("config cannot be nil")
 	}
 
-	// Define role configurations
-	roles := []struct {
-		name    string
-		address std.Address
-	}{
-		{ROLE_ADMIN, cfg.AdminAddr},
-		{ROLE_GOVERNANCE, cfg.GovernanceAddr},
-		{ROLE_GOV_STAKER, cfg.GovStakerAddr},
-		{ROLE_ROUTER, cfg.RouterAddr},
-		{ROLE_POOL, cfg.PoolAddr},
-		{ROLE_POSITION, cfg.PositionAddr},
-		{ROLE_STAKER, cfg.StakerAddr},
-		{ROLE_LAUNCHPAD, cfg.LaunchpadAddr},
-		{ROLE_EMISSION, cfg.EmissionAddr},
-	}
-
-	// Register roles with their respective permission checkers
-	for _, role := range roles {
-		checker := createAddressChecker(role.address, role.name)
-		err := rbac.DeclareRole(role.name, prbac.WithPermission(PERM_ACCESS, checker))
+	for rn, addr := range cfg.Roles {
+		checker := createAddressChecker(addr, rn)
+		err := rbac.DeclareRole(rn, prbac.WithPermission(PERM_ACCESS, checker))
 		if err != nil {
-			return ufmt.Errorf("failed to declare role %s: %v", role.name, err)
+			return ufmt.Errorf("failed to declare role %s: %v", rn, err)
 		}
 	}
 
 	currentConfig = cfg
-
 	return nil
 }
 
@@ -79,17 +55,7 @@ func GetCurrentConfig() *Config {
 	if currentConfig == nil {
 		return nil
 	}
-	return &Config{
-		AdminAddr:      currentConfig.AdminAddr,
-		GovernanceAddr: currentConfig.GovernanceAddr,
-		GovStakerAddr:  currentConfig.GovStakerAddr,
-		RouterAddr:     currentConfig.RouterAddr,
-		PoolAddr:       currentConfig.PoolAddr,
-		PositionAddr:   currentConfig.PositionAddr,
-		StakerAddr:     currentConfig.StakerAddr,
-		LaunchpadAddr:  currentConfig.LaunchpadAddr,
-		EmissionAddr:   currentConfig.EmissionAddr,
-	}
+	return currentConfig
 }
 
 // UpdateRoleAddress updates the address for a specific role's permission checker
@@ -98,31 +64,8 @@ func UpdateRoleAddress(roleName string, newAddress std.Address) error {
 		return ufmt.Errorf("access control not initialized")
 	}
 
-	// Update the config
-	switch roleName {
-	case ROLE_ADMIN:
-		currentConfig.AdminAddr = newAddress
-	case ROLE_GOVERNANCE:
-		currentConfig.GovernanceAddr = newAddress
-	case ROLE_GOV_STAKER:
-		currentConfig.GovStakerAddr = newAddress
-	case ROLE_ROUTER:
-		currentConfig.RouterAddr = newAddress
-	case ROLE_POOL:
-		currentConfig.PoolAddr = newAddress
-	case ROLE_POSITION:
-		currentConfig.PositionAddr = newAddress
-	case ROLE_STAKER:
-		currentConfig.StakerAddr = newAddress
-	case ROLE_LAUNCHPAD:
-		currentConfig.LaunchpadAddr = newAddress
-	case ROLE_EMISSION:
-		currentConfig.EmissionAddr = newAddress
-	default:
-		return ufmt.Errorf("unknown role: %s", roleName)
-	}
+	currentConfig.Roles[roleName] = newAddress
 
-	// Update the permission checker
 	newChecker := createAddressChecker(newAddress, roleName)
 	return rbac.UpdatePermission(roleName, PERM_ACCESS, newChecker)
 }

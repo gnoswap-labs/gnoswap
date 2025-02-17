@@ -6,156 +6,96 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/ufmt"
 
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/rbac"
 )
 
 var (
-	addr01 = testutils.TestAddress("addr01")
-	addr02 = testutils.TestAddress("addr02")
-	addr03 = testutils.TestAddress("addr03")
+	testAdminAddr  = testutils.TestAddress("test_admin")
+	testRouterAddr = testutils.TestAddress("test_router")
+
+	testRealm1Addr = testutils.TestAddress("test_realm1")
+	testRealm2Addr = testutils.TestAddress("test_realm2")
 )
 
-func resetTestState(t *testing.T) {
-	t.Helper()
-	currentConfig = nil
-}
-
-func createTestConfig() *Config {
-	return &Config{
-		AdminAddr:      addr01,
-		GovernanceAddr: addr01,
-		GovStakerAddr:  addr01,
-		RouterAddr:     addr01,
-		PoolAddr:       addr01,
-		PositionAddr:   addr01,
-		StakerAddr:     addr01,
-		LaunchpadAddr:  addr01,
-		EmissionAddr:   addr01,
-	}
-}
-
 func TestInitialize(t *testing.T) {
-	t.Skip()
 	t.Run("success with valid config", func(t *testing.T) {
-		cfg := createTestConfig()
+		cfg := DefaultConfig()
+		cfg.Roles["test_admin"] = testAdminAddr
+		cfg.Roles["test_router"] = testRouterAddr
+
 		err := Initialize(cfg)
 		uassert.NoError(t, err)
-		resetTestState(t)
+
+		actual := GetCurrentConfig()
+
+		// retrieve the config informations
+		adminAddr := actual.Roles["test_admin"]
+		routerAddr := actual.Roles["test_router"]
+
+		uassert.Equal(t, testAdminAddr, adminAddr)
+		uassert.Equal(t, testRouterAddr, routerAddr)
 	})
 
-	t.Run("error with nil config", func(t *testing.T) {
+	t.Run("initialize with nil config", func(t *testing.T) {
 		err := Initialize(nil)
 		uassert.Error(t, err)
-		resetTestState(t)
 	})
-}
-
-func TestRolePermissions(t *testing.T) {
-	cfg := &Config{
-		AdminAddr:      addr01,
-		GovernanceAddr: addr02,
-		GovStakerAddr:  addr03,
-	}
-	err := Initialize(cfg)
-	uassert.NoError(t, err)
-
-	tests := []struct {
-		name        string
-		checkFunc   func(std.Address) error
-		validAddr   std.Address
-		invalidAddr std.Address
-	}{
-		{
-			name:        "AdminOnly",
-			checkFunc:   AdminOnly,
-			validAddr:   addr01,
-			invalidAddr: addr02,
-		},
-		{
-			name:        "GovernanceOnly",
-			checkFunc:   GovernanceOnly,
-			validAddr:   addr02,
-			invalidAddr: addr01,
-		},
-		{
-			name:        "GovStakerOnly",
-			checkFunc:   GovStakerOnly,
-			validAddr:   addr03,
-			invalidAddr: addr01,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name+" with valid address", func(t *testing.T) {
-			err := tt.checkFunc(tt.validAddr)
-			uassert.NoError(t, err)
-		})
-
-		t.Run(tt.name+" with invalid address", func(t *testing.T) {
-			err := tt.checkFunc(tt.invalidAddr)
-			uassert.Error(t, err)
-		})
-	}
 }
 
 func TestUpdateRoleAddress(t *testing.T) {
-	t.Skip()
-	// Setup initial configuration
-	cfg := createTestConfig()
-	err := Initialize(cfg)
-	uassert.NoError(t, err)
-
-	t.Run("update admin role address", func(t *testing.T) {
-		// Initially addr01 should have admin access
-		err := AdminOnly(addr01)
+	t.Run("update success", func(t *testing.T) {
+		cfg := DefaultConfig()
+		cfg.Roles[ROLE_ADMIN] = testAdminAddr
+		err := Initialize(cfg)
 		uassert.NoError(t, err)
 
-		// Update admin address to addr02
-		err = UpdateRoleAddress(ROLE_ADMIN, addr02)
+		err = UpdateRoleAddress(ROLE_ADMIN, testRealm1Addr)
 		uassert.NoError(t, err)
 
-		// Now addr01 should not have access
-		err = AdminOnly(addr01)
-		uassert.Error(t, err)
+		actual := GetCurrentConfig()
+		adminAddr := actual.Roles[ROLE_ADMIN]
+		uassert.Equal(t, testRealm1Addr, adminAddr, ufmt.Sprintf("expected %s, got %s", testRealm1Addr, adminAddr))
 
-		// But addr02 should have access
-		err = AdminOnly(addr02)
+		err = rbac.CheckPermission(ROLE_ADMIN, PERM_ACCESS, adminAddr)
 		uassert.NoError(t, err)
 	})
 
-	t.Run("update non-existent role", func(t *testing.T) {
-		err := UpdateRoleAddress("non_existent_role", addr01)
+	t.Run("update fails while uninitialized", func(t *testing.T) {
+		currentConfig = nil
+		err := UpdateRoleAddress(ROLE_ADMIN, testRealm1Addr)
 		uassert.Error(t, err)
 	})
-}
 
-func TestMultipleInitialize(t *testing.T) {
-	t.Skip()
-	// First initialization
-	cfg1 := createTestConfig()
-	err := Initialize(cfg1)
-	uassert.NoError(t, err)
+	t.Run("update fails while update non-existent role", func(t *testing.T) {
+		cfg := DefaultConfig()
+		err := Initialize(cfg)
+		uassert.NoError(t, err)
 
-	// Second initialization with different addresses
-	cfg2 := &Config{
-		AdminAddr:      addr02,
-		GovernanceAddr: addr02,
-		GovStakerAddr:  addr02,
-	}
-	err = Initialize(cfg2)
-	uassert.Error(t, err) // Should fail because roles are already registered
+		err = UpdateRoleAddress("non_existent_role", testRealm1Addr)
+		uassert.Error(t, err)
+	})
 }
 
 func TestUserRealm(t *testing.T) {
-	t.Skip()
-	cfg := createTestConfig()
+	testAdminAddr2 := testutils.TestAddress("test_admin2")
+	testGovAddr := testutils.TestAddress("test_governance")
+	otherAddr := testutils.TestAddress("other")
+	testOperatorAddr := testutils.TestAddress("test_operator")
+	testValidatorAddr := testutils.TestAddress("test_validator")
+	testUserAddr := testutils.TestAddress("test_user")
+
+	cfg := DefaultConfig()
+	cfg.Roles["test_admin2"] = testAdminAddr2
+	cfg.Roles["test_governance"] = testGovAddr
+	cfg.Roles["test_operator"] = testOperatorAddr
+	cfg.Roles["test_validator"] = testValidatorAddr
+
 	err := Initialize(cfg)
 	uassert.NoError(t, err)
 
-	t.Run("test user role permissions", func(t *testing.T) {
-		// Test with different types of realms and addresses
+	t.Run("Role Permission Tests", func(t *testing.T) {
 		tests := []struct {
 			name      string
 			role      string
@@ -163,21 +103,57 @@ func TestUserRealm(t *testing.T) {
 			shouldErr bool
 		}{
 			{
-				name:      "admin address accessing admin role",
-				role:      ROLE_ADMIN,
-				addr:      addr01,
+				name:      "test_admin2 address accessing test_admin2 role",
+				role:      "test_admin2",
+				addr:      testAdminAddr2,
 				shouldErr: false,
 			},
 			{
-				name:      "non-admin address accessing admin role",
-				role:      ROLE_ADMIN,
-				addr:      addr02,
+				name:      "non-test_admin2 address accessing test_admin2 role",
+				role:      "test_admin2",
+				addr:      otherAddr,
 				shouldErr: true,
 			},
 			{
-				name:      "governance address accessing governance role",
-				role:      ROLE_GOVERNANCE,
-				addr:      addr01,
+				name:      "test_governance address accessing test_governance role",
+				role:      "test_governance",
+				addr:      testGovAddr,
+				shouldErr: false,
+			},
+			{
+				name:      "non-test_governance address accessing test_governance role",
+				role:      "test_governance",
+				addr:      otherAddr,
+				shouldErr: true,
+			},
+			{
+				name:      "empty address accessing admin role",
+				role:      "test_admin2",
+				addr:      std.Address(""),
+				shouldErr: true,
+			},
+			{
+				name:      "operator address accessing validator role",
+				role:      "test_validator",
+				addr:      testOperatorAddr,
+				shouldErr: true,
+			},
+			{
+				name:      "regular user address accessing operator role",
+				role:      "test_operator",
+				addr:      testUserAddr,
+				shouldErr: true,
+			},
+			{
+				name:      "accessing non-existent role",
+				role:      "non_existent_role",
+				addr:      testUserAddr,
+				shouldErr: true,
+			},
+			{
+				name:      "validator address accessing own role",
+				role:      "test_validator",
+				addr:      testValidatorAddr,
 				shouldErr: false,
 			},
 		}
@@ -189,6 +165,67 @@ func TestUserRealm(t *testing.T) {
 					uassert.Error(t, err)
 				} else {
 					uassert.NoError(t, err)
+				}
+			})
+		}
+	})
+}
+
+func TestMultiRoleValidation(t *testing.T) {
+	testLiquidityAddr := testutils.TestAddress("test_liquidity")
+	testStakerAddr := testutils.TestAddress("test_staker")
+	testMultiRoleAddr := testutils.TestAddress("test_multi_role")
+
+	cfg := DefaultConfig()
+	cfg.Roles["test_liquidity"] = testLiquidityAddr
+	cfg.Roles["test_staker"] = testStakerAddr
+
+	// add multiple roles to one address
+	cfg.Roles["test_liquidity_multi"] = testMultiRoleAddr
+	cfg.Roles["test_staker_multi"] = testMultiRoleAddr
+
+	err := Initialize(cfg)
+	uassert.NoError(t, err)
+
+	t.Run("Multiple Role Assignment Validation", func(t *testing.T) {
+		tests := []struct {
+			name      string
+			addr      std.Address
+			roles     []string
+			perms     []string
+			shouldErr bool
+		}{
+			{
+				name:      "address with correct multiple roles",
+				addr:      testMultiRoleAddr,
+				roles:     []string{"test_liquidity_multi", "test_staker_multi"},
+				perms:     []string{PERM_ACCESS, PERM_ACCESS},
+				shouldErr: false,
+			},
+			{
+				name:      "address with single role trying multiple access",
+				addr:      testLiquidityAddr,
+				roles:     []string{"test_liquidity", "test_staker"},
+				perms:     []string{PERM_ACCESS, PERM_ACCESS},
+				shouldErr: true,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				var lastErr error
+				for i, role := range tt.roles {
+					err := rbac.CheckPermission(role, tt.perms[i], tt.addr)
+					if err != nil {
+						lastErr = err
+						break
+					}
+				}
+
+				if tt.shouldErr {
+					uassert.Error(t, lastErr)
+				} else {
+					uassert.NoError(t, lastErr)
 				}
 			})
 		}
