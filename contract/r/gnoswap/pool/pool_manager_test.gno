@@ -14,6 +14,7 @@ func TestNewPoolParams(t *testing.T) {
 		"token1",
 		500,       // 0.05% fee
 		"1000000", // example sqrt price
+		GetFeeAmountTickSpacing(500),
 	)
 
 	if params.Token0Path() != "token0" {
@@ -33,6 +34,7 @@ func TestNewPoolParams(t *testing.T) {
 		"token1",
 		500,
 		"1000000",
+		GetFeeAmountTickSpacing(500),
 	)
 	token0, token1 := params.wrap()
 	if token0 != consts.WRAPPED_WUGNOT {
@@ -44,6 +46,7 @@ func TestNewPoolParams(t *testing.T) {
 		"token0",
 		500,
 		"1000000",
+		GetFeeAmountTickSpacing(500),
 	)
 	if !params.isSameTokenPath() {
 		t.Errorf("Expected token0Path(token0) == token1Path(token0)")
@@ -115,7 +118,7 @@ func TestCreatePool(t *testing.T) {
 			token0Path:  fooPath,
 			token1Path:  bazPath,
 			fee:         3000,
-			sqrtPrice:   "4295128740",
+			sqrtPrice:   "4295343490",
 			shouldPanic: false,
 			panicMsg:    "[GNOSWAP-POOL-012] tokens must be in lexicographical order || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/baz)",
 			inOrder:     true,

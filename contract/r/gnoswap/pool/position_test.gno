@@ -57,6 +57,7 @@ func TestPositionUpdateWithKey(t *testing.T) {
 			"token1",
 			100,
 			common.TickMathGetSqrtRatioAtTick(0).ToString(),
+			GetFeeAmountTickSpacing(100),
 		)
 		dummyPool = newPool(poolParams)
 

@@ -32,102 +32,6 @@ func init() {
 	setFeeAmountTickSpacing(10000, 200) // 1%
 }
 
-// createPoolParams holds the essential parameters for creating a new pool.
-type createPoolParams struct {
-	token0Path, token1Path string
-	fee                    uint32
-	sqrtPriceX96           *u256.Uint
-	tickSpacing            int32
-}
-
-// newPoolParams defines the essential parameters for creating a new pool.
-func newPoolParams(
-	token0Path string,
-	token1Path string,
-	fee uint32,
-	sqrtPriceX96 string,
-) *createPoolParams {
-	price := u256.MustFromDecimal(sqrtPriceX96)
-	tickSpacing := GetFeeAmountTickSpacing(fee)
-	return &createPoolParams{
-		token0Path:   token0Path,
-		token1Path:   token1Path,
-		fee:          fee,
-		sqrtPriceX96: price,
-		tickSpacing:  tickSpacing,
-	}
-}
-
-func (p *createPoolParams) updateWithWrapping() *createPoolParams {
-	token0Path, token1Path := p.wrap()
-
-	if !p.isInOrder() {
-		token0Path, token1Path = token1Path, token0Path
-
-		oldTick := common.TickMathGetTickAtSqrtRatio(p.sqrtPriceX96)
-		if oldTick > consts.MAX_TICK || oldTick < consts.MIN_TICK {
-			panic(addDetailToError(
-				errInvalidTickRange,
-				ufmt.Sprintf("expected tick(%d) to be within range", oldTick),
-			))
-		}
-		newPrice := common.TickMathGetSqrtRatioAtTick(oldTick * int32(-1))
-		if newPrice.IsZero() {
-			panic(addDetailToError(
-				errOverFlow,
-				ufmt.Sprintf("expected newPrice(%s) to be non-zero", newPrice.ToString()),
-			))
-		}
-		p.sqrtPriceX96 = new(u256.Uint).Set(newPrice)
-	}
-
-	return newPoolParams(token0Path, token1Path, p.fee, p.sqrtPriceX96.ToString())
-}
-
-func (p *createPoolParams) isSameTokenPath() bool {
-	return p.token0Path == p.token1Path
-}
-
-// isInOrder checks if token paths are in lexicographical (or, alphabetical) order
-func (p *createPoolParams) isInOrder() bool {
-	if strings.Compare(p.token0Path, p.token1Path) < 0 {
-		return true
-	}
-
-	return false
-}
-
-func (p *createPoolParams) wrap() (string, string) {
-	if p.token0Path == consts.GNOT {
-		p.token0Path = consts.WRAPPED_WUGNOT
-	}
-	if p.token1Path == consts.GNOT {
-		p.token1Path = consts.WRAPPED_WUGNOT
-	}
-
-	return p.token0Path, p.token1Path
-}
-
-func (p *createPoolParams) Token0Path() string {
-	return p.token0Path
-}
-
-func (p *createPoolParams) Token1Path() string {
-	return p.token1Path
-}
-
-func (p *createPoolParams) Fee() uint32 {
-	return p.fee
-}
-
-func (p *createPoolParams) TickSpacing() int32 {
-	return p.tickSpacing
-}
-
-func (p *createPoolParams) SqrtPriceX96() *u256.Uint {
-	return p.sqrtPriceX96
-}
-
 // CreatePool creates a new concentrated liquidity pool with the given parameters.
 // It mints and distributes GNS tokens, validates the input parameters, and creates a new pool.
 // If GNOT is used as one of the tokens, it is automatically wrapped to WUGNOT.
@@ -141,54 +45,19 @@ func CreatePool(
 ) {
 	assertOnlyNotHalted()
 
-	poolInfo := newPoolParams(token0Path, token1Path, fee, sqrtPriceX96)
-	poolInfo = poolInfo.updateWithWrapping()
-	if poolInfo.isSameTokenPath() {
-		panic(addDetailToError(
-			errDuplicateTokenInPool,
-			ufmt.Sprintf(
-				"expected token0Path(%s) != token1Path(%s)",
-				poolInfo.token0Path, poolInfo.token1Path,
-			),
-		))
-	}
+	poolInfo := createPool(token0Path, token1Path, fee, sqrtPriceX96, GetFeeAmountTickSpacing(fee))
 	en.MintAndDistributeGns()
 
-	// wrap first
-	token0Path, token1Path = poolInfo.wrap()
-	poolPath := GetPoolPath(token0Path, token1Path, fee)
-
-	// reinitialize poolInfo with wrapped tokens
-	poolInfo = newPoolParams(token0Path, token1Path, fee, sqrtPriceX96)
-
-	// then check if token0Path == token1Path
-	if poolInfo.isSameTokenPath() {
-		panic(addDetailToError(
-			errDuplicateTokenInPool,
-			ufmt.Sprintf(
-				"expected token0Path(%s) != token1Path(%s)",
-				token0Path, token1Path,
-			),
-		))
-	}
-
-	if !poolInfo.isInOrder() {
-		panic(addDetailToError(
-			errTokenSortOrder,
-			ufmt.Sprintf("expected token0Path(%s) < token1Path(%s)", token0Path, token1Path),
-		))
-	}
-
-	prevAddr, prevRealm := getPrevAsString()
-
+	poolPath := poolInfo.generatePoolPath()
 	// check whether the pool already exist
-	pool, exist := pools.Get(poolPath)
-	if exist {
+	if DoesPoolPathExist(poolPath) {
 		panic(addDetailToError(
 			errPoolAlreadyExists,
 			ufmt.Sprintf("expected poolPath(%s) not to exist", poolPath),
 		))
 	}
+
+	prevAddr, prevRealm := getPrevAsString()
 
 	if poolCreationFee > 0 {
 		gns.TransferFrom(std.PrevRealm().Addr(), consts.PROTOCOL_FEE_ADDR, poolCreationFee)
@@ -204,7 +73,7 @@ func CreatePool(
 		)
 	}
 
-	pool = newPool(poolInfo)
+	pool := newPool(poolInfo)
 	pools.Set(poolPath, pool)
 
 	currentTick := common.TickMathGetTickAtSqrtRatio(u256.MustFromDecimal(sqrtPriceX96))
