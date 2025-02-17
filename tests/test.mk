@@ -1,5 +1,53 @@
 include _info.mk
 
+GNS_PATH := gno.land/r/gnoswap/v1/gns
+USDC_PATH := gno.land/r/gnoswap/v1/usdc
+BAZ_PATH := gno.land/r/gnoswap/v1/baz
+BAR_PATH := gno.land/r/gnoswap/v1/bar
+OBL_PATH := gno.land/r/gnoswap/v1/obl
+QUX_PATH := gno.land/r/gnoswap/v1/qux
+FOO_PATH := gno.land/r/gnoswap/v1/foo
+ADDR_TEST_ADMIN := g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c
+
+.PHONY: transfer-base-token
+transfer-base-token: transfer-gns transfer-usdc transfer-baz transfer-bar transfer-obl transfer-qux transfer-foo
+
+# Default Token Transfer
+transfer-gns:
+	$(info ************ transfer 1_000_000_000 GNS to $(ADDR_GNOSWAP) ************)
+	@echo "" | gnokey maketx call -pkgpath $(GNS_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS to $(ADDR_GNOSWAP)" gnoswap_admin
+	@echo
+
+transfer-usdc:
+	$(info ************ transfer 1_000_000_000 USDC to $(ADDR_GNOSWAP) ************)
+	@echo "" | gnokey maketx call -pkgpath $(USDC_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS to $(ADDR_GNOSWAP)" gnoswap_admin
+	@echo
+
+transfer-baz:
+	$(info ************ transfer 1_000_000_000 BAZ to $(ADDR_GNOSWAP) ************)
+	@echo "" | gnokey maketx call -pkgpath $(BAZ_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS to $(ADDR_GNOSWAP)" gnoswap_admin
+	@echo
+
+transfer-bar:
+	$(info ************ transfer 1_000_000_000 BAR to $(ADDR_GNOSWAP) ************)
+	@echo "" | gnokey maketx call -pkgpath $(BAR_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS to $(ADDR_GNOSWAP)" gnoswap_admin
+	@echo
+
+transfer-obl:
+	$(info ************ transfer 1_000_000_000 OBL to $(ADDR_GNOSWAP) ************)
+	@echo "" | gnokey maketx call -pkgpath $(OBL_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS to $(ADDR_GNOSWAP)" gnoswap_admin
+	@echo
+
+transfer-qux:
+	$(info ************ transfer 1_000_000_000 QUX to $(ADDR_GNOSWAP) ************)
+	@echo "" | gnokey maketx call -pkgpath $(QUX_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS to $(ADDR_GNOSWAP)" gnoswap_admin
+	@echo
+
+transfer-foo:
+	$(info ************ transfer 1_000_000_000 FOO to $(ADDR_GNOSWAP) ************)
+	@echo "" | gnokey maketx call -pkgpath $(FOO_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS to $(ADDR_GNOSWAP)" gnoswap_admin
+	@echo
+
 # pool create
 pool-create-gns-wugnot-default:
 	$(info ************ create default pool (GNS:WUGNOT:0.03%) ************)
