@@ -22,10 +22,10 @@ const (
 	PERM_ACCESS = "access" // Permission name for access control
 )
 
-// InitializeDefaultRoles initializes the default roles with their corresponding addresses from consts
+// initializeDefaultRoles initializes the default roles with their corresponding addresses from consts
 // dependent with the gnoswap contracts.
-func InitializeDefaultRoles() (*Config, error) {
-	cfg := DefaultConfig()
+func initializeDefaultRoles() (*config, error) {
+	cfg := newConfig()
 
 	// Set up roles with their corresponding addresses from consts
 	defaultRoles := map[string]std.Address{
@@ -40,6 +40,6 @@ func InitializeDefaultRoles() (*Config, error) {
 		ROLE_EMISSION:   consts.EMISSION_ADDR,
 	}
 
-	cfg.Roles = defaultRoles
-	return cfg, Initialize(cfg)
+	cfg.roles = defaultRoles
+	return cfg, initialize(cfg)
 }

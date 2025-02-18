@@ -22,41 +22,41 @@ var (
 
 func TestInitialize(t *testing.T) {
 	t.Run("success with valid config", func(t *testing.T) {
-		cfg := DefaultConfig()
-		cfg.Roles["test_admin"] = testAdminAddr
-		cfg.Roles["test_router"] = testRouterAddr
+		cfg := newConfig()
+		cfg.roles["test_admin"] = testAdminAddr
+		cfg.roles["test_router"] = testRouterAddr
 
-		err := Initialize(cfg)
+		err := initialize(cfg)
 		uassert.NoError(t, err)
 
 		actual := GetCurrentConfig()
 
 		// retrieve the config informations
-		adminAddr := actual.Roles["test_admin"]
-		routerAddr := actual.Roles["test_router"]
+		adminAddr := actual.roles["test_admin"]
+		routerAddr := actual.roles["test_router"]
 
 		uassert.Equal(t, testAdminAddr, adminAddr)
 		uassert.Equal(t, testRouterAddr, routerAddr)
 	})
 
 	t.Run("initialize with nil config", func(t *testing.T) {
-		err := Initialize(nil)
+		err := initialize(nil)
 		uassert.Error(t, err)
 	})
 }
 
 func TestUpdateRoleAddress(t *testing.T) {
 	t.Run("update success", func(t *testing.T) {
-		cfg := DefaultConfig()
-		cfg.Roles["another_test_admin"] = testAdminAddr
-		err := Initialize(cfg)
+		cfg := newConfig()
+		cfg.roles["another_test_admin"] = testAdminAddr
+		err := initialize(cfg)
 		uassert.NoError(t, err)
 
 		err = UpdateRoleAddress("another_test_admin", testRealm1Addr)
 		uassert.NoError(t, err)
 
 		actual := GetCurrentConfig()
-		adminAddr := actual.Roles["another_test_admin"]
+		adminAddr := actual.roles["another_test_admin"]
 		uassert.Equal(t, testRealm1Addr, adminAddr, ufmt.Sprintf("expected %s, got %s", testRealm1Addr, adminAddr))
 
 		err = rbac.CheckPermission("another_test_admin", PERM_ACCESS, adminAddr)
@@ -70,8 +70,8 @@ func TestUpdateRoleAddress(t *testing.T) {
 	})
 
 	t.Run("update fails while update non-existent role", func(t *testing.T) {
-		cfg := DefaultConfig()
-		err := Initialize(cfg)
+		cfg := newConfig()
+		err := initialize(cfg)
 		uassert.NoError(t, err)
 
 		err = UpdateRoleAddress("non_existent_role", testRealm1Addr)
@@ -87,13 +87,13 @@ func TestUserRealm(t *testing.T) {
 	testValidatorAddr := testutils.TestAddress("test_validator")
 	testUserAddr := testutils.TestAddress("test_user")
 
-	cfg := DefaultConfig()
-	cfg.Roles["test_admin2"] = testAdminAddr2
-	cfg.Roles["test_governance"] = testGovAddr
-	cfg.Roles["test_operator"] = testOperatorAddr
-	cfg.Roles["test_validator"] = testValidatorAddr
+	cfg := newConfig()
+	cfg.roles["test_admin2"] = testAdminAddr2
+	cfg.roles["test_governance"] = testGovAddr
+	cfg.roles["test_operator"] = testOperatorAddr
+	cfg.roles["test_validator"] = testValidatorAddr
 
-	err := Initialize(cfg)
+	err := initialize(cfg)
 	uassert.NoError(t, err)
 
 	t.Run("Role Permission Tests", func(t *testing.T) {
@@ -177,15 +177,15 @@ func TestMultiRoleValidation(t *testing.T) {
 	testStakerAddr := testutils.TestAddress("test_staker")
 	testMultiRoleAddr := testutils.TestAddress("test_multi_role")
 
-	cfg := DefaultConfig()
-	cfg.Roles["test_liquidity"] = testLiquidityAddr
-	cfg.Roles["test_staker"] = testStakerAddr
+	cfg := newConfig()
+	cfg.roles["test_liquidity"] = testLiquidityAddr
+	cfg.roles["test_staker"] = testStakerAddr
 
 	// add multiple roles to one address
-	cfg.Roles["test_liquidity_multi"] = testMultiRoleAddr
-	cfg.Roles["test_staker_multi"] = testMultiRoleAddr
+	cfg.roles["test_liquidity_multi"] = testMultiRoleAddr
+	cfg.roles["test_staker_multi"] = testMultiRoleAddr
 
-	err := Initialize(cfg)
+	err := initialize(cfg)
 	uassert.NoError(t, err)
 
 	t.Run("Multiple Role Assignment Validation", func(t *testing.T) {
@@ -238,8 +238,8 @@ func TestCreateRole(t *testing.T) {
 	testAnotherAddr := testutils.TestAddress("test_another_role")
 
 	t.Run("create new role success", func(t *testing.T) {
-		cfg := DefaultConfig()
-		err := Initialize(cfg)
+		cfg := newConfig()
+		err := initialize(cfg)
 		uassert.NoError(t, err)
 
 		err = CreateRole("custom_role", testNewRoleAddr)
@@ -247,7 +247,7 @@ func TestCreateRole(t *testing.T) {
 
 		// verify role was created correctly
 		actual := GetCurrentConfig()
-		roleAddr := actual.Roles["custom_role"]
+		roleAddr := actual.roles["custom_role"]
 		uassert.Equal(t, testNewRoleAddr, roleAddr)
 
 		// verify permission is set correctly
@@ -266,8 +266,8 @@ func TestCreateRole(t *testing.T) {
 	})
 
 	t.Run("create duplicate role fails", func(t *testing.T) {
-		cfg := DefaultConfig()
-		err := Initialize(cfg)
+		cfg := newConfig()
+		err := initialize(cfg)
 		uassert.NoError(t, err)
 
 		// create first role
@@ -284,9 +284,9 @@ func TestRoleExists(t *testing.T) {
 	testRoleAddr := testutils.TestAddress("test_role_exists")
 
 	t.Run("check existing role", func(t *testing.T) {
-		cfg := DefaultConfig()
-		cfg.Roles["existing_role"] = testRoleAddr
-		err := Initialize(cfg)
+		cfg := newConfig()
+		cfg.roles["existing_role"] = testRoleAddr
+		err := initialize(cfg)
 		uassert.NoError(t, err)
 
 		exists := RoleExists("existing_role")
@@ -294,8 +294,8 @@ func TestRoleExists(t *testing.T) {
 	})
 
 	t.Run("check non-existing role", func(t *testing.T) {
-		cfg := DefaultConfig()
-		err := Initialize(cfg)
+		cfg := newConfig()
+		err := initialize(cfg)
 		uassert.NoError(t, err)
 
 		exists := RoleExists("non_existing_role")
@@ -314,10 +314,10 @@ func TestGetRoles(t *testing.T) {
 	testRole2Addr := testutils.TestAddress("test_role2_get")
 
 	t.Run("get roles from initialized config", func(t *testing.T) {
-		cfg := DefaultConfig()
-		cfg.Roles["role1"] = testRole1Addr
-		cfg.Roles["role2"] = testRole2Addr
-		err := Initialize(cfg)
+		cfg := newConfig()
+		cfg.roles["role1"] = testRole1Addr
+		cfg.roles["role2"] = testRole2Addr
+		err := initialize(cfg)
 		uassert.NoError(t, err)
 
 		roles := GetRoles()
@@ -339,8 +339,8 @@ func TestGetRoles(t *testing.T) {
 	})
 
 	t.Run("get roles from empty config", func(t *testing.T) {
-		cfg := DefaultConfig()
-		err := Initialize(cfg)
+		cfg := newConfig()
+		err := initialize(cfg)
 		uassert.NoError(t, err)
 
 		roles := GetRoles()
@@ -359,16 +359,16 @@ func TestSetConfig(t *testing.T) {
 	testAnalystAddr := testutils.TestAddress("test_analyst")
 
 	t.Run("success with valid config", func(t *testing.T) {
-		cfg := DefaultConfig()
-		cfg.Roles["test_manager"] = testManagerAddr
-		cfg.Roles["test_analyst"] = testAnalystAddr
+		cfg := newConfig()
+		cfg.roles["test_manager"] = testManagerAddr
+		cfg.roles["test_analyst"] = testAnalystAddr
 
 		err := SetConfig(cfg)
 		uassert.NoError(t, err)
 
 		actual := GetCurrentConfig()
-		uassert.Equal(t, testManagerAddr, actual.Roles["test_manager"])
-		uassert.Equal(t, testAnalystAddr, actual.Roles["test_analyst"])
+		uassert.Equal(t, testManagerAddr, actual.roles["test_manager"])
+		uassert.Equal(t, testAnalystAddr, actual.roles["test_analyst"])
 	})
 
 	t.Run("fail with nil config", func(t *testing.T) {
@@ -382,15 +382,15 @@ func TestSetRole(t *testing.T) {
 	testReviewerAddr := testutils.TestAddress("test_reviewer")
 
 	t.Run("success with new role", func(t *testing.T) {
-		cfg := DefaultConfig()
-		err := Initialize(cfg)
+		cfg := newConfig()
+		err := initialize(cfg)
 		uassert.NoError(t, err)
 
 		err = SetRole("test_auditor", testAuditorAddr)
 		uassert.NoError(t, err)
 
 		actual := GetCurrentConfig()
-		uassert.Equal(t, testAuditorAddr, actual.Roles["test_auditor"])
+		uassert.Equal(t, testAuditorAddr, actual.roles["test_auditor"])
 
 		// verify permission is set correctly
 		err = rbac.CheckPermission("test_auditor", PERM_ACCESS, testAuditorAddr)
@@ -398,9 +398,9 @@ func TestSetRole(t *testing.T) {
 	})
 
 	t.Run("success updating existing role", func(t *testing.T) {
-		cfg := DefaultConfig()
-		cfg.Roles["test_reviewer"] = testReviewerAddr
-		err := Initialize(cfg)
+		cfg := newConfig()
+		cfg.roles["test_reviewer"] = testReviewerAddr
+		err := initialize(cfg)
 		uassert.NoError(t, err)
 
 		newReviewerAddr := testutils.TestAddress("test_reviewer_new")
@@ -409,7 +409,7 @@ func TestSetRole(t *testing.T) {
 
 		// verify address was updated
 		actual := GetCurrentConfig()
-		uassert.Equal(t, newReviewerAddr, actual.Roles["test_reviewer"])
+		uassert.Equal(t, newReviewerAddr, actual.roles["test_reviewer"])
 
 		// verify old address cannot access anymore
 		err = rbac.CheckPermission("test_reviewer", PERM_ACCESS, testReviewerAddr)
@@ -421,8 +421,8 @@ func TestSetRole(t *testing.T) {
 	})
 
 	t.Run("fail with empty role name", func(t *testing.T) {
-		cfg := DefaultConfig()
-		err := Initialize(cfg)
+		cfg := newConfig()
+		err := initialize(cfg)
 		uassert.NoError(t, err)
 
 		err = SetRole("", testAuditorAddr)
@@ -458,7 +458,7 @@ func TestInitializeDefaultRoles(t *testing.T) {
 		}
 
 		for role, expectedAddr := range expectedRoles {
-			actualAddr, exists := actual.Roles[role]
+			actualAddr, exists := actual.roles[role]
 			uassert.Equal(t, true, exists, ufmt.Sprintf("Role %s should exist", role))
 			uassert.Equal(t, expectedAddr, actualAddr, ufmt.Sprintf("Role %s should have address %s, got %s", role, expectedAddr, actualAddr))
 		}
@@ -495,6 +495,6 @@ func TestAdminOnly(t *testing.T) {
 }
 
 func setupRoles(t *testing.T) {
-	_, err := InitializeDefaultRoles()
+	_, err := initializeDefaultRoles()
 	uassert.NoError(t, err)
 }

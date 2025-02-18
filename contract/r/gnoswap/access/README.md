@@ -33,9 +33,6 @@ type Config struct {
     Roles map[string]std.Address
 }
 
-// Create default configuration
-func DefaultConfig() *Config
-
 // Set configuration
 func SetConfig(cfg *Config) error
 
@@ -91,55 +88,6 @@ if err := access.AdminOnly(callerAddr); err != nil {
 // Check permission and update role address
 if err := access.AdminOnly(currentAdmin, newAdminAddr); err != nil {
     return err
-}
-```
-
-## Usage Example
-
-```go
-// Create and set configuration
-cfg := access.DefaultConfig()
-cfg.Roles["admin"] = adminAddr
-err := access.SetConfig(cfg)
-if err != nil {
-    panic(err)
-}
-
-// Initialize system
-err = access.Initialize(cfg)
-if err != nil {
-    panic(err)
-}
-
-// Set or update role
-err = access.SetRole("custom_role", customAddr)
-if err != nil {
-    panic(err)
-}
-
-// Create new role
-err = access.CreateRole("new_role", newAddr)
-if err != nil {
-    panic(err)
-}
-
-// Update role address
-err = access.UpdateRoleAddress("custom_role", newCustomAddr)
-if err != nil {
-    panic(err)
-}
-
-// Check if role exists
-exists := access.RoleExists("custom_role")
-
-// Get all roles
-roles := access.GetRoles()
-
-// Check permissions
-if err := access.AdminOnly(callerAddr); err != nil {
-    println("Access denied:", err)
-} else {
-    println("Admin access granted")
 }
 ```
 

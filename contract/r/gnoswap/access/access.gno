@@ -16,26 +16,26 @@ const (
 	roleCreated = "RoleCreated"
 )
 
-var currentConfig *Config
+var currentConfig *config
 
 // set up the default roles and current config
 func init() {
-	cfg, err := InitializeDefaultRoles()
+	cfg, err := initializeDefaultRoles()
 	if err != nil {
 		panic(err)
 	}
 	currentConfig = cfg
 }
 
-// Config contains all the addresses needed for access control
-type Config struct {
-	Roles map[string]std.Address
+// config contains all the addresses needed for access control
+type config struct {
+	roles map[string]std.Address
 }
 
-// DefaultConfig returns an empty config with zero addresses
-func DefaultConfig() *Config {
-	return &Config{
-		Roles: make(map[string]std.Address),
+// newConfig returns an empty config with zero addresses
+func newConfig() *config {
+	return &config{
+		roles: make(map[string]std.Address),
 	}
 }
 
@@ -66,7 +66,7 @@ func createAddressChecker(addr std.Address, roleName string) prbac.PermissionChe
 }
 
 // SetConfig sets the current configuration
-func SetConfig(cfg *Config) error {
+func SetConfig(cfg *config) error {
 	if cfg == nil {
 		return ufmt.Errorf(errConfigNil)
 	}
@@ -74,13 +74,13 @@ func SetConfig(cfg *Config) error {
 	return nil
 }
 
-// Initialize registers all roles and permissions to the global RBAC manager
-func Initialize(cfg *Config) error {
+// initialize registers all roles and permissions to the global RBAC manager
+func initialize(cfg *config) error {
 	if cfg == nil {
 		return ufmt.Errorf(errConfigNil)
 	}
 
-	for roleName, addr := range cfg.Roles {
+	for roleName, addr := range cfg.roles {
 		if err := declareNewRole(roleName, addr); err != nil {
 			return err
 		}
@@ -99,7 +99,7 @@ func declareNewRole(roleName string, addr std.Address) error {
 }
 
 // GetCurrentConfig returns the current configuration
-func GetCurrentConfig() *Config {
+func GetCurrentConfig() *config {
 	if currentConfig == nil {
 		return nil
 	}
@@ -116,7 +116,7 @@ func SetRole(roleName string, address std.Address) error {
 		return err
 	}
 
-	prevAddress := currentConfig.Roles[roleName]
+	prevAddress := currentConfig.roles[roleName]
 	checker := createAddressChecker(address, roleName)
 
 	if RoleExists(roleName) {
@@ -129,7 +129,7 @@ func SetRole(roleName string, address std.Address) error {
 		}
 	}
 
-	currentConfig.Roles[roleName] = address
+	currentConfig.roles[roleName] = address
 
 	std.Emit(
 		roleSet,
@@ -146,8 +146,8 @@ func UpdateRoleAddress(roleName string, newAddress std.Address) error {
 		return err
 	}
 
-	prevAddress := currentConfig.Roles[roleName]
-	currentConfig.Roles[roleName] = newAddress
+	prevAddress := currentConfig.roles[roleName]
+	currentConfig.roles[roleName] = newAddress
 	newChecker := createAddressChecker(newAddress, roleName)
 
 	std.Emit(
@@ -177,7 +177,7 @@ func CreateRole(roleName string, address std.Address) error {
 		return err
 	}
 
-	currentConfig.Roles[roleName] = address
+	currentConfig.roles[roleName] = address
 
 	std.Emit(
 		roleCreated,
@@ -192,7 +192,7 @@ func RoleExists(roleName string) bool {
 	if currentConfig == nil {
 		return false
 	}
-	_, exists := currentConfig.Roles[roleName]
+	_, exists := currentConfig.roles[roleName]
 	return exists
 }
 
@@ -201,8 +201,8 @@ func GetRoles() []string {
 	if currentConfig == nil {
 		return []string{}
 	}
-	roles := make([]string, 0, len(currentConfig.Roles))
-	for role := range currentConfig.Roles {
+	roles := make([]string, 0, len(currentConfig.roles))
+	for role := range currentConfig.roles {
 		roles = append(roles, role)
 	}
 	return roles
