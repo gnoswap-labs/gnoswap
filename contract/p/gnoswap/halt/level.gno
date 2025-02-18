@@ -1,7 +1,6 @@
 package halt
 
 import (
-	"sort"
 	"strings"
 
 	"gno.land/p/demo/ufmt"
