@@ -10,6 +10,13 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
+const (
+	FeeTier100   uint32 = 100
+	FeeTier500   uint32 = 500
+	FeeTier3000  uint32 = 3000
+	FeeTier10000 uint32 = 10000
+)
+
 // createPoolParams holds the essential parameters for creating a new pool.
 type createPoolParams struct {
 	token0Path   string
@@ -105,11 +112,17 @@ func (p *createPoolParams) wrap() (string, string) {
 }
 
 func (p *createPoolParams) generatePoolPath() string {
-	common.MustRegistered(p.token0Path)
-	common.MustRegistered(p.token1Path)
-
 	if !p.isInOrder() {
 		p.token0Path, p.token1Path = p.token1Path, p.token0Path
 	}
+
 	return ufmt.Sprintf("%s:%s:%d", p.token0Path, p.token1Path, p.fee)
+}
+
+func (p *createPoolParams) isSupportedFee(feeTier uint32) bool {
+	switch feeTier {
+	case FeeTier100, FeeTier500, FeeTier3000, FeeTier10000:
+		return true
+	}
+	return false
 }

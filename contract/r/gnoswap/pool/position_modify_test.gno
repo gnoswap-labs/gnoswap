@@ -56,7 +56,7 @@ func TestModifyPosition(t *testing.T) {
 			poolParams := newPoolParams(
 				barPath,
 				fooPath,
-				fee500,
+				FeeTier500,
 				sqrtPrice.ToString(),
 				GetFeeAmountTickSpacing(fee500),
 			)
@@ -85,7 +85,7 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 		poolParams := newPoolParams(
 			barPath,
 			fooPath,
-			fee500,
+			FeeTier500,
 			sqrtPrice,
 			GetFeeAmountTickSpacing(fee500),
 		)
@@ -115,7 +115,7 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 		poolParams := newPoolParams(
 			barPath,
 			fooPath,
-			fee500,
+			FeeTier500,
 			sqrtPrice,
 			GetFeeAmountTickSpacing(fee500),
 		)

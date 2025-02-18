@@ -39,6 +39,7 @@ var (
 	errTickUpperInvalid          = errors.New("[GNOSWAP-POOL-029] tickUpper is invalid")
 	errTickLowerGtTickUpper      = errors.New("[GNOSWAP-POOL-030] tickLower is greater than tickUpper")
 	errInvalidTickMinMaxRange    = errors.New("[GNOSWAP-POOL-031] tickLower and tickUpper are not within the valid range")
+	errUnsupportedFeeTier        = errors.New("[GNOSWAP-POOL-032] unsupported fee tier")
 )
 
 // addDetailToError adds detail to an error message
