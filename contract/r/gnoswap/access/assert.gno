@@ -6,47 +6,59 @@ import (
 	"gno.land/r/gnoswap/v1/rbac"
 )
 
-// AdminOnly checks if the caller has admin role permission
-func AdminOnly(caller std.Address) error {
-	return rbac.CheckPermission(ROLE_ADMIN, PERM_ACCESS, caller)
+// checkAndUpdateRole checks if the caller has the given role and optionally updates the role address
+func checkAndUpdateRole(roleName string, caller std.Address, newAddress ...std.Address) error {
+	if err := rbac.CheckPermission(roleName, PERM_ACCESS, caller); err != nil {
+		return err
+	}
+	
+	if len(newAddress) > 0 {
+		return UpdateRoleAddress(roleName, newAddress[0])
+	}
+	return nil
 }
 
-// GovernanceOnly checks if the caller has governance role permission
-func GovernanceOnly(caller std.Address) error {
-	return rbac.CheckPermission(ROLE_GOVERNANCE, PERM_ACCESS, caller)
+// AdminOnly checks if the caller is the admin and optionally updates the admin address
+func AdminOnly(caller std.Address, newAdmin ...std.Address) error {
+	return checkAndUpdateRole(ROLE_ADMIN, caller, newAdmin...)
 }
 
-// GovStakerOnly checks if the caller has gov staker role permission
-func GovStakerOnly(caller std.Address) error {
-	return rbac.CheckPermission(ROLE_GOV_STAKER, PERM_ACCESS, caller)
+// GovernanceOnly checks if the caller is the governance and optionally updates the governance address
+func GovernanceOnly(caller std.Address, newGovernance ...std.Address) error {
+	return checkAndUpdateRole(ROLE_GOVERNANCE, caller, newGovernance...)
 }
 
-// RouterOnly checks if the caller has router role permission
-func RouterOnly(caller std.Address) error {
-	return rbac.CheckPermission(ROLE_ROUTER, PERM_ACCESS, caller)
+// GovStakerOnly checks if the caller is the gov staker and optionally updates the gov staker address
+func GovStakerOnly(caller std.Address, newGovStaker ...std.Address) error {
+	return checkAndUpdateRole(ROLE_GOV_STAKER, caller, newGovStaker...)
 }
 
-// PoolOnly checks if the caller has pool role permission
-func PoolOnly(caller std.Address) error {
-	return rbac.CheckPermission(ROLE_POOL, PERM_ACCESS, caller)
+// RouterOnly checks if the caller is the router and optionally updates the router address
+func RouterOnly(caller std.Address, newRouter ...std.Address) error {
+	return checkAndUpdateRole(ROLE_ROUTER, caller, newRouter...)
 }
 
-// PositionOnly checks if the caller has position role permission
-func PositionOnly(caller std.Address) error {
-	return rbac.CheckPermission(ROLE_POSITION, PERM_ACCESS, caller)
+// PoolOnly checks if the caller is the pool and optionally updates the pool address
+func PoolOnly(caller std.Address, newPool ...std.Address) error {
+	return checkAndUpdateRole(ROLE_POOL, caller, newPool...)
 }
 
-// StakerOnly checks if the caller has staker role permission
-func StakerOnly(caller std.Address) error {
-	return rbac.CheckPermission(ROLE_STAKER, PERM_ACCESS, caller)
+// PositionOnly checks if the caller is the position and optionally updates the position address
+func PositionOnly(caller std.Address, newPosition ...std.Address) error {
+	return checkAndUpdateRole(ROLE_POSITION, caller, newPosition...)
 }
 
-// LaunchpadOnly checks if the caller has launchpad role permission
-func LaunchpadOnly(caller std.Address) error {
-	return rbac.CheckPermission(ROLE_LAUNCHPAD, PERM_ACCESS, caller)
+// StakerOnly checks if the caller is the staker and optionally updates the staker address
+func StakerOnly(caller std.Address, newStaker ...std.Address) error {
+	return checkAndUpdateRole(ROLE_STAKER, caller, newStaker...)
 }
 
-// EmissionOnly checks if the caller has emission role permission
-func EmissionOnly(caller std.Address) error {
-	return rbac.CheckPermission(ROLE_EMISSION, PERM_ACCESS, caller)
+// LaunchpadOnly checks if the caller is the launchpad and optionally updates the launchpad address
+func LaunchpadOnly(caller std.Address, newLaunchpad ...std.Address) error {
+	return checkAndUpdateRole(ROLE_LAUNCHPAD, caller, newLaunchpad...)
+}
+
+// EmissionOnly checks if the caller is the emission and optionally updates the emission address
+func EmissionOnly(caller std.Address, newEmission ...std.Address) error {
+	return checkAndUpdateRole(ROLE_EMISSION, caller, newEmission...)
 }

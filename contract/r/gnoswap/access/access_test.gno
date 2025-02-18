@@ -8,6 +8,7 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/rbac"
 )
 
@@ -47,24 +48,24 @@ func TestInitialize(t *testing.T) {
 func TestUpdateRoleAddress(t *testing.T) {
 	t.Run("update success", func(t *testing.T) {
 		cfg := DefaultConfig()
-		cfg.Roles[ROLE_ADMIN] = testAdminAddr
+		cfg.Roles["another_test_admin"] = testAdminAddr
 		err := Initialize(cfg)
 		uassert.NoError(t, err)
 
-		err = UpdateRoleAddress(ROLE_ADMIN, testRealm1Addr)
+		err = UpdateRoleAddress("another_test_admin", testRealm1Addr)
 		uassert.NoError(t, err)
 
 		actual := GetCurrentConfig()
-		adminAddr := actual.Roles[ROLE_ADMIN]
+		adminAddr := actual.Roles["another_test_admin"]
 		uassert.Equal(t, testRealm1Addr, adminAddr, ufmt.Sprintf("expected %s, got %s", testRealm1Addr, adminAddr))
 
-		err = rbac.CheckPermission(ROLE_ADMIN, PERM_ACCESS, adminAddr)
+		err = rbac.CheckPermission("another_test_admin", PERM_ACCESS, adminAddr)
 		uassert.NoError(t, err)
 	})
 
 	t.Run("update fails while uninitialized", func(t *testing.T) {
 		currentConfig = nil
-		err := UpdateRoleAddress(ROLE_ADMIN, testRealm1Addr)
+		err := UpdateRoleAddress("another_test_admin", testRealm1Addr)
 		uassert.Error(t, err)
 	})
 
@@ -433,4 +434,66 @@ func TestSetRole(t *testing.T) {
 		err := SetRole("test_auditor", testAuditorAddr)
 		uassert.Error(t, err)
 	})
+}
+
+func TestInitializeDefaultRoles(t *testing.T) {
+	t.Run("success initialize default roles", func(t *testing.T) {
+		setupRoles(t)
+
+		actual := GetCurrentConfig()
+
+		expectedRoles := map[string]std.Address{
+			ROLE_ADMIN:      consts.ADMIN,
+			ROLE_GOVERNANCE: consts.GOV_GOVERNANCE_ADDR,
+			ROLE_GOV_STAKER: consts.GOV_STAKER_ADDR,
+			ROLE_ROUTER:     consts.ROUTER_ADDR,
+			ROLE_POOL:       consts.POOL_ADDR,
+			ROLE_POSITION:   consts.POSITION_ADDR,
+			ROLE_STAKER:     consts.STAKER_ADDR,
+			ROLE_LAUNCHPAD:  consts.LAUNCHPAD_ADDR,
+			ROLE_EMISSION:   consts.EMISSION_ADDR,
+		}
+
+		for role, expectedAddr := range expectedRoles {
+			actualAddr, exists := actual.Roles[role]
+			uassert.Equal(t, true, exists, ufmt.Sprintf("Role %s should exist", role))
+			uassert.Equal(t, expectedAddr, actualAddr, ufmt.Sprintf("Role %s should have address %s, got %s", role, expectedAddr, actualAddr))
+		}
+	})
+}
+
+// The tests for XXXOnly functions are affected by the state of TestInitializeDefaultRoles.
+// Once the test environment of gno is improved, the tests should be modified to call the setupRoles function in each test.
+
+func TestAdminOnly(t *testing.T) {
+	t.Run("success with admin address", func(t *testing.T) {
+		err := AdminOnly(consts.ADMIN)
+		uassert.NoError(t, err)
+	})
+
+	t.Run("fail with non-admin address", func(t *testing.T) {
+		nonAdmin := testutils.TestAddress("non_admin")
+		err := AdminOnly(nonAdmin)
+		uassert.Error(t, err)
+	})
+
+	t.Run("success update admin address", func(t *testing.T) {
+		newAdmin := testutils.TestAddress("new_admin")
+		// set new admin address with the current admin address
+		err := AdminOnly(consts.ADMIN, newAdmin)
+		uassert.NoError(t, err)
+
+		// check permission with the new admin address
+		err = AdminOnly(newAdmin)
+		uassert.NoError(t, err)
+
+		// previous admin address cannot access anymore
+		err = AdminOnly(consts.ADMIN)
+		uassert.Error(t, err)
+	})
+}
+
+func setupRoles(t *testing.T) {
+	err := InitializeDefaultRoles()
+	uassert.NoError(t, err)
 }

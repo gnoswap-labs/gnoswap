@@ -64,16 +64,34 @@ func GetRoles() []string
 
 ### Permission Checks
 
+`XXXOnly` functions are used to check if the caller has the given role.
+
+It follows the pattern of `XXXOnly(caller std.Address, newXXX ...std.Address) error`.
+
+For example, `AdminOnly` function is defined as follows:
+
 ```go
-// Role-specific permission checks
-func AdminOnly(caller std.Address) error
-func GovernanceOnly(caller std.Address) error
-func RouterOnly(caller std.Address) error
-func PoolOnly(caller std.Address) error
-func PositionOnly(caller std.Address) error
-func StakerOnly(caller std.Address) error
-func LaunchpadOnly(caller std.Address) error
-func EmissionOnly(caller std.Address) error
+// Check if caller has admin role
+func AdminOnly(caller std.Address, newAdmin ...std.Address) error
+```
+
+Parameters:
+
+- `caller`: The address to check for role permission
+- `newAddress` (optional): New address to update the role with
+
+Example usage:
+
+```go
+// Simple permission check
+if err := access.AdminOnly(callerAddr); err != nil {
+    return err
+}
+
+// Check permission and update role address
+if err := access.AdminOnly(currentAdmin, newAdminAddr); err != nil {
+    return err
+}
 ```
 
 ## Usage Example
