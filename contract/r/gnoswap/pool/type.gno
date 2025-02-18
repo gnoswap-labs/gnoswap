@@ -13,6 +13,24 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+type PositionInfo struct {
+	liquidity *u256.Uint // amount of liquidity owned by this position
+
+	// Fee growth per unit of liquidity as of the last update
+	// Used to calculate uncollected fees for token0
+	feeGrowthInside0LastX128 *u256.Uint
+
+	// Fee growth per unit of liquidity as of the last update
+	// Used to calculate uncollected fees for token1
+	feeGrowthInside1LastX128 *u256.Uint
+
+	// accumulated fees in token0 waiting to be collected
+	tokensOwed0 *u256.Uint
+
+	// accumulated fees in token1 waiting to be collected
+	tokensOwed1 *u256.Uint
+}
+
 // ModifyPositionParams repersents the parameters for modifying a liquidity position.
 // This structure is used internally both `Mint` and `Burn` operation to manage
 // the liquidity positions.
@@ -161,24 +179,6 @@ func (step *StepComputations) clampTickNext() {
 	} else if step.tickNext > consts.MAX_TICK {
 		step.tickNext = consts.MAX_TICK
 	}
-}
-
-type PositionInfo struct {
-	liquidity *u256.Uint // amount of liquidity owned by this position
-
-	// Fee growth per unit of liquidity as of the last update
-	// Used to calculate uncollected fees for token0
-	feeGrowthInside0LastX128 *u256.Uint
-
-	// Fee growth per unit of liquidity as of the last update
-	// Used to calculate uncollected fees for token1
-	feeGrowthInside1LastX128 *u256.Uint
-
-	// accumulated fees in token0 waiting to be collected
-	tokensOwed0 *u256.Uint
-
-	// accumulated fees in token1 waiting to be collected
-	tokensOwed1 *u256.Uint
 }
 
 // valueOrZero initializes nil fields in PositionInfo to zero.
