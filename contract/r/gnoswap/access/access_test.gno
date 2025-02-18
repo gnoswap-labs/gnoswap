@@ -436,10 +436,11 @@ func TestSetRole(t *testing.T) {
 	})
 }
 
+// The below tests are affected by the state of global variable.
+// Once the test environment of gno is improved, the tests should be modified to call the setupRoles function in each test.
+
 func TestInitializeDefaultRoles(t *testing.T) {
 	t.Run("success initialize default roles", func(t *testing.T) {
-		setupRoles(t)
-
 		actual := GetCurrentConfig()
 
 		expectedRoles := map[string]std.Address{
@@ -461,9 +462,6 @@ func TestInitializeDefaultRoles(t *testing.T) {
 		}
 	})
 }
-
-// The tests for XXXOnly functions are affected by the state of TestInitializeDefaultRoles.
-// Once the test environment of gno is improved, the tests should be modified to call the setupRoles function in each test.
 
 func TestAdminOnly(t *testing.T) {
 	t.Run("success with admin address", func(t *testing.T) {
@@ -494,6 +492,6 @@ func TestAdminOnly(t *testing.T) {
 }
 
 func setupRoles(t *testing.T) {
-	err := InitializeDefaultRoles()
+	_, err := InitializeDefaultRoles()
 	uassert.NoError(t, err)
 }

@@ -24,7 +24,7 @@ const (
 
 // InitializeDefaultRoles initializes the default roles with their corresponding addresses from consts
 // dependent with the gnoswap contracts.
-func InitializeDefaultRoles() error {
+func InitializeDefaultRoles() (*Config, error) {
 	cfg := DefaultConfig()
 
 	// Set up roles with their corresponding addresses from consts
@@ -41,5 +41,5 @@ func InitializeDefaultRoles() error {
 	}
 
 	cfg.Roles = defaultRoles
-	return Initialize(cfg)
+	return cfg, Initialize(cfg)
 }

@@ -18,6 +18,15 @@ const (
 
 var currentConfig *Config
 
+// set up the default roles and current config
+func init() {
+	cfg, err := InitializeDefaultRoles()
+	if err != nil {
+		panic(err)
+	}
+	currentConfig = cfg
+}
+
 // Config contains all the addresses needed for access control
 type Config struct {
 	Roles map[string]std.Address
