@@ -75,11 +75,8 @@ func assertCallerIsAdmin() {
 // assertCallerIsLaunchpad panics if the caller is not the launchpad
 func assertCallerIsLaunchpad() {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.LAUNCHPAD_ADDR {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("only launchpad can call CollectRewardFromLaunchPad(), called from %s", caller.String()),
-		))
+	if err := common.LaunchpadOnly(caller); err != nil {
+		panic(err)
 	}
 }
 
