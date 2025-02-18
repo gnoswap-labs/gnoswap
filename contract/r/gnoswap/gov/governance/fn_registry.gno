@@ -6,13 +6,6 @@ import (
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 
-	cp "gno.land/r/gnoswap/v1/community_pool"
-	en "gno.land/r/gnoswap/v1/emission"
-	pl "gno.land/r/gnoswap/v1/pool"
-	pf "gno.land/r/gnoswap/v1/protocol_fee"
-	rr "gno.land/r/gnoswap/v1/router"
-	sr "gno.land/r/gnoswap/v1/staker"
-
 	"gno.land/r/gnoswap/v1/common"
 )
 

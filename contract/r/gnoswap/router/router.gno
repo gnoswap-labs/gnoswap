@@ -10,8 +10,7 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/demo/wugnot"
-
-	en "gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/v1/emission"
 )
 
 // commonSwapSetup Common validation and setup logic extracted from SwapRoute
@@ -19,7 +18,7 @@ func commonSwapSetup() {
 	assertOnlyNotHalted()
 	assertDirectCallOnly()
 
-	en.MintAndDistributeGns()
+	emission.MintAndDistributeGns()
 }
 
 // handleSingleSwap handles a single swap operation.
