@@ -6,6 +6,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 )
 
@@ -30,7 +31,7 @@ func getPrevAsString() (string, string) {
 // assertOnlyAdmin panics if the caller is not the admin.
 func assertOnlyAdmin() {
 	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
+	if err := access.AdminOnly(caller); err != nil {
 		panic(err.Error())
 	}
 }
@@ -38,7 +39,7 @@ func assertOnlyAdmin() {
 // assertStakerOnly panics if the caller is not the staker.
 func assertStakerOnly() {
 	caller := getPrevAddr()
-	if err := common.StakerOnly(caller); err != nil {
+	if err := access.StakerOnly(caller); err != nil {
 		panic(err.Error())
 	}
 }
@@ -46,7 +47,7 @@ func assertStakerOnly() {
 // assertOnlyGovernance panics if the caller is not the governance.
 func assertOnlyGovernance() {
 	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
+	if err := access.GovernanceOnly(caller); err != nil {
 		panic(err.Error())
 	}
 }
@@ -54,7 +55,7 @@ func assertOnlyGovernance() {
 // assertOnlyGovStaker panics if the caller is not the gov staker.
 func assertOnlyGovStaker() {
 	caller := getPrevAddr()
-	if err := common.GovStakerOnly(caller); err != nil {
+	if err := access.GovStakerOnly(caller); err != nil {
 		panic(err.Error())
 	}
 }
