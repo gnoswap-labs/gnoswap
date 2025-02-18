@@ -21,6 +21,9 @@ func TestMint(t *testing.T) {
 	tickLower := int32(-100)
 	tickUpper := int32(100)
 	liquidityAmount := "100000"
+	authorized := consts.POSITION_ADDR
+	barTokenPath := "gno.land/r/onbloc/bar"
+	bazTokenPath := "gno.land/r/onbloc/baz"
 
 	t.Run("unauthorized caller mint should fail", func(t *testing.T) {
 		unauthorized := testutils.TestAddress("unauthorized")
@@ -34,7 +37,6 @@ func TestMint(t *testing.T) {
 	})
 
 	t.Run("mint with 0 liquidity should fail", func(t *testing.T) {
-		authorized := consts.POSITION_ADDR
 		defer func() {
 			if r := recover(); r == nil {
 				t.Error("mint with 0 liquidity should fail")
@@ -44,14 +46,41 @@ func TestMint(t *testing.T) {
 		Mint(token0Path, token1Path, fee, recipient, tickLower, tickUpper, "0", authorized)
 	})
 
+	t.Run("invalid tick range should fail", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("invalid tick range should fail")
+			}
+		}()
+		Mint(token0Path, token1Path, fee, recipient, 100, 100, liquidityAmount, authorized)
+	})
+
+	t.Run("invalid fee amount should fail", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("invalid fee amount should fail")
+			}
+		}()
+		Mint(token0Path, token1Path, 2000, recipient, -100, 100, liquidityAmount, authorized)
+	})
+
+	t.Run("non-existent pool should fail", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("non-existent pool should fail")
+			}
+		}()
+		Mint("nonexistent_token0", "nonexistent_token1", fee, recipient, -100, 100, liquidityAmount, authorized)
+	})
+
 	t.Run("successful mint", func(t *testing.T) {
 		// create pool first
 		std.TestSetRealm(adminRealm)
 		SetPoolCreationFeeByAdmin(0)
 		CreatePool(
-			"gno.land/r/onbloc/bar",
-			"gno.land/r/onbloc/baz",
-			fee100,
+			barTokenPath,
+			bazTokenPath,
+			FeeTier100,
 			"79228162514264337593543950336",
 		)
 
@@ -61,9 +90,9 @@ func TestMint(t *testing.T) {
 
 		std.TestSetRealm(std.NewCodeRealm(consts.POSITION_PATH))
 		mintAmount0, mintAmount1 := Mint(
-			"gno.land/r/onbloc/bar",
-			"gno.land/r/onbloc/baz",
-			fee100,
+			barTokenPath,
+			bazTokenPath,
+			FeeTier100,
 			consts.POSITION_ADDR,
 			int32(-100),
 			int32(100),
