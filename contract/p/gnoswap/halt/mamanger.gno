@@ -90,6 +90,25 @@ func (m *Manager) SetCurrentLevel(lv LevelID) error {
 	return nil
 }
 
+// Enable or disable a specific operation type at the current halt level
+// Related issue: https://github.com/gnoswap-labs/gnoswap/issues/517
+func (m *Manager) SetOperationStatus(opType OpType, allowed bool) error {
+	// Get current level
+	level, ok := m.levels[m.currentLevel.Level()]
+	if !ok {
+		return ufmt.Errorf("invalid current halt level")
+	}
+
+	// Update operation status
+	if basicLevel, ok := level.(BasicHaltLevel); ok {
+		basicLevel.allowedOps[opType] = allowed
+		m.levels[m.currentLevel.Level()] = basicLevel
+		return nil
+	}
+
+	return ufmt.Errorf("cannot modify composite halt levels directly")
+}
+
 // RegisterOperation adds a new operation to the manager.
 func (m *Manager) RegisterOperation(op Operation) {
 	m.operations[op.Type()] = op
