@@ -3,6 +3,8 @@ package pool
 import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/common"
 )
 
 func createPool(
@@ -12,6 +14,9 @@ func createPool(
 	sqrtPriceX96 string,
 	tickSpacing int32,
 ) *createPoolParams {
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
+
 	poolInfo := newPoolParams(token0Path, token1Path, fee, sqrtPriceX96, tickSpacing)
 	// check if token0Path == token1Path
 	if poolInfo.isSameTokenPath() {
@@ -23,6 +28,13 @@ func createPool(
 			),
 		))
 	}
+	if !poolInfo.isSupportedFee(fee) {
+		panic(addDetailToError(
+			errUnsupportedFeeTier,
+			ufmt.Sprintf("expected fee(%d) to be one of %d, %d, %d, %d", fee, FeeTier100, FeeTier500, FeeTier3000, FeeTier10000),
+		))
+	}
+
 	poolInfo = poolInfo.updateWithWrapping()
 
 	if !poolInfo.isInOrder() {
