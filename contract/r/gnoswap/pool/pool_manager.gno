@@ -224,3 +224,28 @@ func setFeeAmountTickSpacing(fee uint32, tickSpacing int32) {
 	feeStr := strconv.FormatUint(uint64(fee), 10)
 	feeAmountTickSpacing.Set(feeStr, tickSpacing)
 }
+
+// mustGetPool retrieves a pool instance by its path and ensures it exists.
+//
+// This function attempts to fetch the pool using GetPoolFromPoolPath().
+// If the pool does not exist, it panics with a detailed error message.
+//
+// Parameters:
+//   - poolPath: The unique identifier for the pool.
+//
+// Returns:
+//   - *Pool: A valid Pool instance.
+//
+// Panics:
+//   - If the pool does not exist, an error is thrown with the message
+//     "expected poolPath(<poolPath>) to exist".
+func mustGetPool(poolPath string) *Pool {
+	pool := GetPoolFromPoolPath(poolPath)
+	if pool == nil {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("expected poolPath(%s) to exist", poolPath),
+		))
+	}
+	return pool
+}
