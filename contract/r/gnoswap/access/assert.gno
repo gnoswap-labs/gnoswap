@@ -11,7 +11,7 @@ func checkAndUpdateRole(roleName string, caller std.Address, newAddress ...std.A
 	if err := rbac.CheckPermission(roleName, PERM_ACCESS, caller); err != nil {
 		return err
 	}
-	
+
 	if len(newAddress) > 0 {
 		return UpdateRoleAddress(roleName, newAddress[0])
 	}
