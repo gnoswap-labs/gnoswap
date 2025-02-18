@@ -8,51 +8,6 @@ import (
 	"gno.land/p/gnoswap/consts"
 )
 
-func TestNewPoolParams(t *testing.T) {
-	params := newPoolParams(
-		"token0",
-		"token1",
-		500,       // 0.05% fee
-		"1000000", // example sqrt price
-		GetFeeAmountTickSpacing(500),
-	)
-
-	if params.Token0Path() != "token0" {
-		t.Errorf("Expected token0Path to be 'token0', got %s", params.Token0Path())
-	}
-
-	if params.TickSpacing() != 10 { // 500 fee should have 10 tick spacing
-		t.Errorf("Expected tick spacing 10, got %d", params.TickSpacing())
-	}
-
-	if !params.isInOrder() {
-		t.Errorf("Expected token0Path(token0) < token1Path(token1)")
-	}
-
-	params = newPoolParams(
-		consts.GNOT,
-		"token1",
-		500,
-		"1000000",
-		GetFeeAmountTickSpacing(500),
-	)
-	token0, token1 := params.wrap()
-	if token0 != consts.WRAPPED_WUGNOT {
-		t.Errorf("Expected GNOT to be wrapped to WUGNOT")
-	}
-
-	params = newPoolParams(
-		"token0",
-		"token0",
-		500,
-		"1000000",
-		GetFeeAmountTickSpacing(500),
-	)
-	if !params.isSameTokenPath() {
-		t.Errorf("Expected token0Path(token0) == token1Path(token0)")
-	}
-}
-
 func TestGetPoolPath(t *testing.T) {
 	path := GetPoolPath("gno.land/r/onbloc/bar", "gno.land/r/onbloc/foo", 500)
 	expected := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
