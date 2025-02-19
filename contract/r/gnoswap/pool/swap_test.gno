@@ -1007,8 +1007,6 @@ func TestSwap_FeeTier100(t *testing.T) {
 					"3945129629379410362911094632",
 					consts.ADMIN,
 				)
-				println("actualAmount0: ", actualAmount0)
-				println("actualAmount1: ", actualAmount1)
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
