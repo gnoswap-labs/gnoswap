@@ -6,9 +6,12 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-
 	"gno.land/p/gnoswap/consts"
 
+	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/gns"
+	pn "gno.land/r/gnoswap/v1/position"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 )
@@ -210,6 +213,191 @@ func TestBurn(t *testing.T) {
 	}
 }
 
+func TestCollect(t *testing.T) {
+	const wugnotTokenPath = "gno.land/r/demo/wugnot"
+	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
+	const routerContract = consts.ROUTER_ADDR
+	const poolContract = consts.POOL_ADDR
+
+	positionOwner := consts.ADMIN
+
+	tests := []struct {
+		name             string
+		tokenPath0       string
+		tokenPath1       string
+		feeTier          uint32
+		recipient        std.Address
+		tickLower        int32
+		tickUpper        int32
+		amount0Requested string
+		amount1Requested string
+		expectedAmount0  string
+		expectedAmount1  string
+		expectPanic      bool
+	}{
+		{
+			name:             "successful collect full amount",
+			tokenPath0:       wugnotTokenPath,
+			tokenPath1:       gnsTokenPath,
+			feeTier:          FeeTier10000,
+			recipient:        positionOwner,
+			tickLower:        -200,
+			tickUpper:        200,
+			amount0Requested: "100",
+			amount1Requested: "100",
+			expectedAmount0:  "0",
+			expectedAmount1:  "0",
+		},
+		{
+			name:             "partial collect due to pool balance",
+			tokenPath0:       wugnotTokenPath,
+			tokenPath1:       gnsTokenPath,
+			feeTier:          FeeTier10000,
+			recipient:        positionOwner,
+			tickLower:        -200,
+			tickUpper:        200,
+			amount0Requested: "1000",
+			amount1Requested: "0",
+			expectedAmount0:  "1000",
+			expectedAmount1:  "0",
+		},
+		{
+			name:             "partial collect due to tokensOwed limit",
+			tokenPath0:       wugnotTokenPath,
+			tokenPath1:       gnsTokenPath,
+			feeTier:          FeeTier10000,
+			recipient:        positionOwner,
+			tickLower:        -200,
+			tickUpper:        200,
+			amount0Requested: "18998",
+			amount1Requested: "600",
+			expectedAmount0:  "18998",
+			expectedAmount1:  "0",
+		},
+		{
+			name:             "collect with zero requested amount",
+			tokenPath0:       wugnotTokenPath,
+			tokenPath1:       gnsTokenPath,
+			feeTier:          FeeTier10000,
+			recipient:        positionOwner,
+			tickLower:        -200,
+			tickUpper:        200,
+			amount0Requested: "0",
+			amount1Requested: "0",
+			expectedAmount0:  "0",
+			expectedAmount1:  "0",
+		},
+		{
+			name:             "panic when position does not exist",
+			tokenPath0:       wugnotTokenPath,
+			tokenPath1:       gnsTokenPath,
+			feeTier:          FeeTier10000,
+			recipient:        positionOwner,
+			tickLower:        -400,
+			tickUpper:        400,
+			amount0Requested: "500",
+			amount1Requested: "300",
+			expectPanic:      true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Pool Creation
+			std.TestSetRealm(std.NewUserRealm(positionOwner))
+			SetPoolCreationFeeByAdmin(0)
+			if !DoesPoolPathExist(GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
+				CreatePool(tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
+			}
+
+			if !tt.expectPanic {
+				std.TestSetOrigCaller(positionOwner)
+				newCoins := std.Coins{{"ugnot", int64(10000000000)}}
+				std.TestIssueCoins(positionOwner, newCoins)
+				std.TestSetOrigSend(newCoins, nil)
+				banker := std.GetBanker(std.BankerTypeRealmSend)
+				banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
+				wugnot.Deposit()
+
+				wugnot.Approve(poolContract, maxApprove)
+				gns.Approve(poolContract, maxApprove)
+
+				teller := common.GetTokenTeller(wugnotTokenPath)
+				teller.Approve(poolContract, maxApprove)
+
+				std.TestSetRealm(std.NewUserRealm(positionOwner))
+				// Position Creation
+				pn.Mint(
+					tt.tokenPath0,
+					tt.tokenPath1,
+					tt.feeTier,
+					tt.tickLower,
+					tt.tickUpper,
+					"10000000",
+					"10000000",
+					"0",
+					"0",
+					max_timeout,
+					tt.recipient,
+					tt.recipient,
+					"",
+				)
+
+				pool := GetPool(tt.tokenPath0, tt.tokenPath1, tt.feeTier)
+				posKey := getPositionKey(consts.POSITION_ADDR, tt.tickLower, tt.tickUpper)
+				pool.mustGetPosition(posKey)
+
+				std.TestSkipHeights(1)
+
+				// Swap
+				std.TestSetOrigCaller(positionOwner)
+				wugnot.Transfer(routerContract, 20000000)
+				gns.Transfer(routerContract, 20000000)
+
+				std.TestSetRealm(std.NewCodeRealm(consts.ROUTER_PATH))
+				wugnot.Approve(poolContract, maxApprove)
+
+				amount0, amount1 := Swap(
+					tt.tokenPath0,
+					tt.tokenPath1,
+					tt.feeTier,
+					tt.recipient,
+					true,
+					"1000000",
+					"3945129629379410362911094632",
+					tt.recipient,
+				)
+				std.TestSkipHeights(1)
+			}
+
+			defer func() {
+				if tt.expectPanic {
+					if r := recover(); r == nil {
+						t.Errorf("expected panic but got none")
+					}
+				}
+			}()
+
+			// Collect
+			std.TestSetRealm(std.NewCodeRealm(consts.POSITION_PATH))
+			collectedAmount0, collectedAmount1 := Collect(
+				tt.tokenPath0,
+				tt.tokenPath1,
+				tt.feeTier,
+				tt.recipient,
+				tt.tickLower,
+				tt.tickUpper,
+				tt.amount0Requested,
+				tt.amount1Requested,
+			)
+			if !tt.expectPanic {
+				uassert.Equal(t, tt.expectedAmount0, collectedAmount0)
+				uassert.Equal(t, tt.expectedAmount1, collectedAmount1)
+			}
+		})
+	}
+}
+
 func TestSetFeeProtocolInternal(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -228,7 +416,7 @@ func TestSetFeeProtocolInternal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run("set fee protocol by admin", func(t *testing.T) {
 			InitialisePoolTest(t)
-			pool := GetPool(wugnotPath, gnsPath, fee3000)
+			pool := GetPool(wugnotPath, gnsPath, FeeTier3000)
 			SetFeeProtocolByAdmin(tt.feeProtocol0, tt.feeProtocol1)
 			uassert.Equal(t, tt.feeProtocol0, pool.Slot0FeeProtocol()%16)
 			uassert.Equal(t, tt.feeProtocol1, pool.Slot0FeeProtocol()>>4)
