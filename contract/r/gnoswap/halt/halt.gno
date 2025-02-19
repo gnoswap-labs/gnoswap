@@ -68,7 +68,7 @@ func GetHalt() bool {
 }
 
 // IsHalted checks if the requested operation is allowed in the current halt level.
-// If not allowed, it panics with an appropriate error message.
+// If not allowed, it returns an error.
 //
 // Parameters:
 // - opType (halt.OpType): Optional operation type to check. If not provided, checks if system is completely halted.
@@ -95,6 +95,9 @@ func IsHalted(opType ...phalt.OpType) error {
 //
 // Parameters:
 // - haltLevel (halt.LevelID): The new halt level to set.
+//
+// Returns:
+// - error: nil if successful, otherwise an error.
 func SetHaltLevelByAdmin(haltLevel phalt.LevelID) error {
 	caller := std.PrevRealm().Addr()
 	if err := access.AdminOnly(caller); err != nil {
@@ -108,6 +111,9 @@ func SetHaltLevelByAdmin(haltLevel phalt.LevelID) error {
 //
 // Parameters:
 // - halt (bool): true to halt, false to unhalt.
+//
+// Returns:
+// - error: nil if successful, otherwise an error.
 func SetHaltByAdmin(halt bool) error {
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {
@@ -125,6 +131,9 @@ func SetHaltByAdmin(halt bool) error {
 //
 // Parameters:
 // - halt (bool): true to halt, false to unhalt.
+//
+// Returns:
+// - error: nil if successful, otherwise an error.
 func SetHalt(halt bool) error {
 	caller := getPrevAddr()
 	if err := access.GovernanceOnly(caller); err != nil {
@@ -142,6 +151,9 @@ func SetHalt(halt bool) error {
 //
 // Parameters:
 // - haltLevel (halt.LevelID): The new halt level to set.
+//
+// Returns:
+// - error: nil if successful, otherwise an error.
 func SetHaltLevel(haltLevel phalt.LevelID) error {
 	caller := getPrevAddr()
 	if err := access.GovernanceOnly(caller); err != nil {
@@ -155,6 +167,9 @@ func SetHaltLevel(haltLevel phalt.LevelID) error {
 //
 // Parameters:
 // - haltLevel (halt.LevelID): The new halt level to set.
+//
+// Returns:
+// - error: nil if successful, otherwise an error.
 func setHaltLevel(haltLevel phalt.LevelID) error {
 	if err := haltManager.SetCurrentLevel(haltLevel); err != nil {
 		return ufmt.Errorf("invalid halt level: %v", err)
@@ -177,6 +192,9 @@ func setHaltLevel(haltLevel phalt.LevelID) error {
 // Parameters:
 // - opType (halt.OpType): The operation type to configure.
 // - allowed (bool): Whether the operation should be allowed.
+//
+// Returns:
+// - error: nil if successful, otherwise an error.
 func SetOperationStatus(opType phalt.OpType, allowed bool) error {
 	caller := getPrevAddr()
 	if err := access.GovernanceOnly(caller); err != nil {
@@ -190,6 +208,9 @@ func SetOperationStatus(opType phalt.OpType, allowed bool) error {
 // Parameters:
 // - opType (halt.OpType): The operation type to configure.
 // - allowed (bool): Whether the operation should be allowed.
+//
+// Returns:
+// - error: nil if successful, otherwise an error.
 func SetOperationStatusByAdmin(opType phalt.OpType, allowed bool) error {
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {
@@ -205,6 +226,9 @@ func SetOperationStatusByAdmin(opType phalt.OpType, allowed bool) error {
 // Parameters:
 // - opType (halt.OpType): The operation type to configure.
 // - allowed (bool): Whether the operation should be allowed.
+//
+// Returns:
+// - error: nil if successful, otherwise an error.
 func setOperationStatus(opType phalt.OpType, allowed bool) error {
 	if err := haltManager.SetOperationStatus(opType, allowed); err != nil {
 		return ufmt.Errorf("failed to set operation status: %v", err)
@@ -223,6 +247,9 @@ func setOperationStatus(opType phalt.OpType, allowed bool) error {
 
 // EnableWithdrawalsForTestnet enables withdrawals in TestnetSafeMode.
 // This should be called after ensuring stability on beta mainnet.
+//
+// Returns:
+// - error: nil if successful, otherwise an error.
 func EnableWithdrawalsForTestnet() error {
 	caller := getPrevAddr()
 	// TODO: no need to check governance?
@@ -253,8 +280,8 @@ func EnableWithdrawalsForTestnet() error {
 // EnableSwapsForTestnet enables swaps in TestnetSafeMode.
 // This should be called after ensuring stability on beta mainnet.
 //
-// Panics:
-// - If the caller is not an admin or governance contract.
+// Returns:
+// - error: nil if successful, otherwise an error.
 func EnableSwapsForTestnet() error {
 	caller := getPrevAddr()
 	// TODO: no need to check governance?
@@ -285,8 +312,8 @@ func EnableSwapsForTestnet() error {
 // EnableLiquidityForTestnet enables liquidity operations in TestnetSafeMode.
 // This should be called after ensuring stability on beta mainnet.
 //
-// Panics:
-// - If the caller is not an admin or governance contract.
+// Returns:
+// - error: nil if successful, otherwise an error.
 func EnableLiquidityForTestnet() error {
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {
