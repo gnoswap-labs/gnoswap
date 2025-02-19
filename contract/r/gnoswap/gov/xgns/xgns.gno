@@ -10,6 +10,7 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/access"
 )
 
 var (
@@ -97,16 +98,17 @@ func Mint(to std.Address, amount uint64) {
 
 	// only (gov staker) or (launchpad) contract can call Mint
 	caller := std.PrevRealm().Addr()
-	govstaker := common.GovStakerOnly(caller)
-	launchpad := common.LaunchpadOnly(caller)
-	if govstaker != nil && launchpad != nil {
+
+	govAddress, _ := access.GetAddress(access.ROLE_GOV_STAKER)
+	launchpadAddress, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+	if govAddress == caller || launchpadAddress == caller {
+		checkErr(ledger.Mint(to, amount))
+	} else {
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("only gov/staker(%s) or launchpad(%s) contract can call Mint, called from %s", consts.GOV_STAKER_ADDR.String(), consts.LAUNCHPAD_ADDR.String(), caller.String()),
+			ufmt.Sprintf("only gov/staker(%s) or launchpad(%s) contract can call Mint, called from %s", govAddress.String(), launchpadAddress.String(), caller.String()),
 		))
 	}
-
-	checkErr(ledger.Mint(to, amount))
 }
 
 // MintByLaunchPad increases the balance of a specified address by a given amount.
@@ -127,10 +129,11 @@ func MintByLaunchPad(to std.Address, amount uint64) {
 	common.IsHalted()
 
 	caller := std.PrevRealm().Addr()
-	if err := common.LaunchpadOnly(caller); err != nil {
+	launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+	if err := access.LaunchpadOnly(caller); err != nil {
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("only launchpad(%s) contract can call MintByLaunchPad, called from %s", consts.LAUNCHPAD_ADDR.String(), caller.String()),
+			ufmt.Sprintf("only launchpad(%s) contract can call MintByLaunchPad, called from %s", launchpadAddr.String(), caller.String()),
 		))
 	}
 
@@ -163,23 +166,23 @@ func Burn(from std.Address, amount uint64) {
 	// only (gov staker) or (launchpad) contract can call Mint
 	caller := std.PrevRealm().Addr()
 
-	govstaker := common.GovStakerOnly(caller)
-	launchpad := common.LaunchpadOnly(caller)
-	if govstaker != nil || launchpad != nil {
+	gsAddr, _ := access.GetAddress(access.ROLE_GOV_STAKER)
+	launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+	if gsAddr == caller || launchpadAddr == caller {
+		burn(from, amount)
+	} else {
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("only gov/staker(%s) or launchpad(%s) contract can call Burn, called from %s", consts.GOV_STAKER_ADDR.String(), consts.LAUNCHPAD_ADDR.String(), caller.String()),
+			ufmt.Sprintf("only gov/staker(%s) or launchpad(%s) contract can call Burn, called from %s", gsAddr.String(), launchpadAddr.String(), caller.String()),
 		))
 	}
-
-	burn(from, amount)
 }
 
 func BurnByLaunchPad(from std.Address, amount uint64) {
 	common.IsHalted()
 
 	caller := std.PrevRealm().Addr()
-	if err := common.LaunchpadOnly(caller); err != nil {
+	if err := access.LaunchpadOnly(caller); err != nil {
 		panic(addDetailToError(
 			errNoPermission,
 			ufmt.Sprintf("only launchpad(%s) contract can call BurnByLaunchPad, called from %s", consts.LAUNCHPAD_ADDR.String(), caller.String()),
