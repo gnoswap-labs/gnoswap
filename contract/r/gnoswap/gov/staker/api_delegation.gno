@@ -21,7 +21,7 @@ func GetTotalVoteWeight() uint64 {
 
 // GetTotalDelegated returns the total amount of xGNS delegated.
 func GetTotalDelegated() uint64 {
-	return totalDelegated
+	return state.TotalDelegated()
 }
 
 // GetTotalLockedAmount returns the total amount of locked GNS.
@@ -31,7 +31,7 @@ func GetTotalLockedAmount() uint64 {
 
 // GetTotalDelegatedFrom returns the total amount of xGNS delegated by given address.
 func GetTotalDelegatedFrom(from std.Address) uint64 {
-	amount, exist := delegatorAmount.Get(from.String())
+	amount, exist := state.DelegatorAmount().Get(from.String())
 	if !exist {
 		return 0
 	}
@@ -40,7 +40,7 @@ func GetTotalDelegatedFrom(from std.Address) uint64 {
 
 // GetTotalDelegatedTo returns the total amount of xGNS delegated to given address.
 func GetTotalDelegatedTo(to std.Address) uint64 {
-	amount, exist := delegatedTo.Get(to.String())
+	amount, exist := state.DelegatedTo().Get(to.String())
 	if !exist {
 		return 0
 	}
@@ -49,7 +49,7 @@ func GetTotalDelegatedTo(to std.Address) uint64 {
 
 // GetDelegationAmountFromTo returns the amount of xGNS delegated by given address to given address.
 func GetDelegationAmountFromTo(from, to std.Address) uint64 {
-	toAmount, exist := delegatedFromTo.Get(from.String())
+	toAmount, exist := state.DelegatedFromTo().Get(from.String())
 	if !exist {
 		return 0
 	}
