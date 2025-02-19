@@ -11,10 +11,14 @@ import (
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
 
-// withdrawalFeeBPS is the fee that is charged when a user withdraws their collected fees
-// The fee is denominated in BPS (Basis Points)
-// Example: 100 BPS = 1%
 var (
+	// poolCreationFee is the fee that is charged when a user creates a pool.
+	// The fee is denominated in GNS tokens.
+	poolCreationFee = uint64(100_000_000) // 100_GNS
+
+	// withdrawalFeeBPS is the fee that is charged when a user withdraws their collected fees
+	// The fee is denominated in BPS (Basis Points)
+	// Example: 100 BPS = 1%
 	withdrawalFeeBPS = uint64(100) // 1%
 )
 
@@ -23,7 +27,63 @@ const (
 	ZeroBps     = uint64(0)
 )
 
-// HandleWithdrawalFee withdraws the fee from the user and returns the amount after the fee
+// GetPoolCreationFee returns the poolCreationFee
+// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#getpoolcreationfee
+func GetPoolCreationFee() uint64 {
+	return poolCreationFee
+}
+
+// SetPoolCreationFee sets the poolCreationFee.
+// Only governance contract can execute this function via proposal
+// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#setpoolcreationfee
+func SetPoolCreationFee(fee uint64) {
+	assertOnlyNotHalted()
+	caller := getPrevAddr()
+	if err := common.GovernanceOnly(caller); err != nil {
+		panic(err.Error())
+	}
+	prevPoolCreationFee := poolCreationFee
+	setPoolCreationFee(fee)
+
+	prevAddr, prevPkgPath := getPrevAsString()
+	std.Emit(
+		"SetPoolCreationFee",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"prevFee", formatUint(prevPoolCreationFee),
+		"newFee", formatUint(fee),
+	)
+}
+
+// SetPoolCreationFeeByAdmin sets the poolCreationFee by Admin.
+// Only admin can execute this function.
+func SetPoolCreationFeeByAdmin(fee uint64) {
+	assertOnlyNotHalted()
+
+	caller := getPrevAddr()
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err.Error())
+	}
+	prevPoolCreationFee := poolCreationFee
+	setPoolCreationFee(fee)
+
+	prevAddr, prevPkgPath := getPrevAsString()
+	std.Emit(
+		"SetPoolCreationFeeByAdmin",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"prevFee", formatUint(prevPoolCreationFee),
+		"newFee", formatUint(fee),
+	)
+}
+
+// setPoolCreationFee this function is internal function called by SetPoolCreationFee
+// And SetPoolCreationFeeByAdmin
+func setPoolCreationFee(fee uint64) {
+	poolCreationFee = fee
+}
+
+// CollectWithdrawalFee withdraws the fee from the user and returns the amount after the fee
 // Only position contract can call this function
 // Input:
 // - positionId: the id of the LP token
@@ -38,7 +98,7 @@ const (
 // - the amount of token1 after the fee
 //
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_withdrawal.gno#handlewithdrawalfee
-func HandleWithdrawalFee(
+func CollectWithdrawalFee(
 	positionId uint64,
 	token0Path string,
 	amount0 string, // uint256
@@ -56,7 +116,7 @@ func HandleWithdrawalFee(
 	if err := common.PositionOnly(caller); err != nil {
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("withdrawal_fee.gno__HandleWithdrawalFee() || only position(%s) can call this function, called from %s", consts.POSITION_ADDR, caller.String()),
+			ufmt.Sprintf("only position(%s) can call this function, called from %s", consts.POSITION_ADDR, caller.String()),
 		))
 	}
 

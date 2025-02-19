@@ -405,3 +405,40 @@ func (p *Pool) mustGetTick(tick int32) TickInfo {
 
 	return iTickInfo.(TickInfo)
 }
+
+// checkTicks validates the tick range for a liquidity position.
+//
+// This function performs three essential checks to ensure the provided
+// tick values are valid before creating or modifying a liquidity position.
+func checkTicks(tickLower, tickUpper int32) {
+	assertTickLowerLessThanUpper(tickLower, tickUpper)
+	assertValidTickLower(tickLower)
+	assertValidTickUpper(tickUpper)
+}
+
+func assertTickLowerLessThanUpper(tickLower, tickUpper int32) {
+	if tickLower >= tickUpper {
+		panic(addDetailToError(
+			errInvalidTickRange,
+			ufmt.Sprintf("tickLower(%d), tickUpper(%d)", tickLower, tickUpper),
+		))
+	}
+}
+
+func assertValidTickLower(tickLower int32) {
+	if tickLower < consts.MIN_TICK {
+		panic(addDetailToError(
+			errTickLowerInvalid,
+			ufmt.Sprintf("tickLower(%d) < MIN_TICK(%d)", tickLower, consts.MIN_TICK),
+		))
+	}
+}
+
+func assertValidTickUpper(tickUpper int32) {
+	if tickUpper >= consts.MAX_TICK {
+		panic(addDetailToError(
+			errTickUpperInvalid,
+			ufmt.Sprintf("tickUpper(%d) > MAX_TICK(%d)", tickUpper, consts.MAX_TICK),
+		))
+	}
+}
