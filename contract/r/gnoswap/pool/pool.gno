@@ -61,10 +61,6 @@ func Mint(
 
 	pool := GetPool(token0Path, token1Path, fee)
 	liquidityDelta := safeConvertToInt128(liquidity)
-	if liquidityDelta.IsZero() {
-		return u256.Zero().ToString(), u256.Zero().ToString()
-	}
-
 	positionParam := newModifyPositionParams(recipient, tickLower, tickUpper, liquidityDelta)
 	_, amount0, amount1 := pool.modifyPosition(positionParam)
 
@@ -129,6 +125,9 @@ func Burn(
 
 	positionKey := getPositionKey(caller, tickLower, tickUpper)
 	pool.setPosition(positionKey, position)
+
+	// mustGetPosition() is called to ensure the position exists
+	pool.mustGetPosition(positionKey)
 
 	// actual token transfer happens in Collect()
 	return amount0.ToString(), amount1.ToString()

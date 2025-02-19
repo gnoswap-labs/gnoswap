@@ -88,6 +88,9 @@ func TestMint(t *testing.T) {
 		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
 
+		beforeBalance0 := bar.BalanceOf(consts.POOL_ADDR)
+		beforeBalance1 := baz.BalanceOf(consts.POOL_ADDR)
+
 		std.TestSetRealm(std.NewCodeRealm(consts.POSITION_PATH))
 		mintAmount0, mintAmount1 := Mint(
 			barTokenPath,
@@ -101,15 +104,24 @@ func TestMint(t *testing.T) {
 		)
 		uassert.Equal(t, mintAmount0, "49872721")
 		uassert.Equal(t, mintAmount1, "49872721")
+
+		afterBalance0 := bar.BalanceOf(consts.POOL_ADDR)
+		afterBalance1 := baz.BalanceOf(consts.POOL_ADDR)
+		uassert.Equal(t, uint64(49872721), afterBalance0-beforeBalance0)
+		uassert.Equal(t, uint64(49872721), afterBalance1-beforeBalance1)
 	})
 }
 
 func TestBurn(t *testing.T) {
+	barTokenPath := "gno.land/r/onbloc/bar"
+	bazTokenPath := "gno.land/r/onbloc/baz"
+
 	tests := []struct {
 		name            string
 		liquidityAmount string
 		tickLower       int32
 		tickUpper       int32
+		fee             uint32
 		expectedAmount0 string
 		expectedAmount1 string
 		expectPanic     bool
@@ -119,6 +131,7 @@ func TestBurn(t *testing.T) {
 			liquidityAmount: "10000000000", // burn all liquidity
 			tickLower:       -100,
 			tickUpper:       100,
+			fee:             FeeTier100,
 			expectedAmount0: "49872720",
 			expectedAmount1: "49872720",
 		},
@@ -127,6 +140,30 @@ func TestBurn(t *testing.T) {
 			liquidityAmount: "0",
 			tickLower:       -100,
 			tickUpper:       100,
+			fee:             FeeTier100,
+			expectPanic:     true,
+		},
+		{
+			name:            "invalid tick range",
+			liquidityAmount: "100000",
+			tickLower:       200,
+			tickUpper:       100,
+			expectPanic:     true,
+		},
+		{
+			name:            "invalid fee amount",
+			liquidityAmount: "100000",
+			tickLower:       -100,
+			tickUpper:       100,
+			fee:             2000,
+			expectPanic:     true,
+		},
+		{
+			name:            "non-existent pool",
+			liquidityAmount: "100000",
+			tickLower:       -100,
+			tickUpper:       100,
+			fee:             FeeTier500,
 			expectPanic:     true,
 		},
 	}
@@ -143,9 +180,9 @@ func TestBurn(t *testing.T) {
 
 			std.TestSetRealm(std.NewCodeRealm(consts.POSITION_PATH))
 			amount0, amount1 := Burn(
-				barPath,
-				bazPath,
-				fee100,
+				barTokenPath,
+				bazTokenPath,
+				tt.fee,
 				tt.tickLower,
 				tt.tickUpper,
 				tt.liquidityAmount,
@@ -159,7 +196,7 @@ func TestBurn(t *testing.T) {
 					t.Errorf("expected amount1 %s, got %s", tt.expectedAmount1, amount1)
 				}
 
-				pool := GetPool(barPath, bazPath, fee100)
+				pool := GetPool(barTokenPath, bazTokenPath, FeeTier100)
 				posKey := getPositionKey(consts.POSITION_ADDR, tt.tickLower, tt.tickUpper)
 				newPosition := pool.mustGetPosition(posKey)
 				if newPosition.tokensOwed0.IsZero() {

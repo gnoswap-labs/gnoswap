@@ -11,6 +11,10 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/gnoswap/consts"
+
+	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/gns"
+	pn "gno.land/r/gnoswap/v1/position"
 )
 
 func TestSaveProtocolFees(t *testing.T) {
@@ -390,7 +394,6 @@ func TestDrySwap_Failures(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 	SetPoolCreationFeeByAdmin(0)
 	CreatePool(barPath, bazPath, fee100, "79228162514264337593543950336")
-
 
 	tests := []struct {
 		name              string
@@ -905,6 +908,116 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 			resetObject(t)
 			burnTokens(t)
 
+			if tt.setupFn != nil {
+				tt.setupFn(t)
+			}
+
+			if tt.shouldPanic {
+				tt.action(t)
+			} else {
+				amount0, amount1 := tt.action(t)
+				uassert.Equal(t, tt.expected[0], amount0)
+				uassert.Equal(t, tt.expected[1], amount1)
+			}
+		})
+	}
+}
+
+func TestSwap_FeeTier100(t *testing.T) {
+	const routerContract = consts.ROUTER_ADDR
+	const poolContract = consts.POOL_ADDR
+	const wugnotTokenPath = "gno.land/r/demo/wugnot"
+	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
+
+	tests := []struct {
+		name        string
+		setupFn     func(t *testing.T)
+		action      func(t *testing.T) (string, string)
+		shouldPanic bool
+		expected    []string
+	}{
+		{
+			name: "EXACT IN - zeroForOne = true, feeTier=100",
+			setupFn: func(t *testing.T) {
+				std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
+				wugnot.Approve(poolContract, maxApprove)
+				gns.Approve(poolContract, maxApprove)
+				CreatePool(wugnotTokenPath, gnsTokenPath, FeeTier100, "79228162514264337593543950336")
+				wugnot.Approve(routerContract, maxApprove)
+				gns.Approve(routerContract, maxApprove)
+
+				faucetAddress := consts.ADMIN
+				std.TestSetOrigCaller(faucetAddress)
+				newCoins := std.Coins{{"ugnot", int64(10000000000)}}
+				std.TestIssueCoins(consts.ADMIN, newCoins)
+				std.TestSetOrigSend(newCoins, nil)
+				banker := std.GetBanker(std.BankerTypeRealmSend)
+				banker.SendCoins(consts.ADMIN, consts.WUGNOT_ADDR, newCoins)
+				wugnot.Deposit()
+
+				pn.Mint(
+					wugnotTokenPath,
+					gnsTokenPath,
+					FeeTier100,
+					-100,
+					100,
+					"10000000",
+					"10000000",
+					"0",
+					"0",
+					max_timeout,
+					admin,
+					admin,
+					"",
+				)
+
+				pn.Mint(
+					wugnotTokenPath,
+					gnsTokenPath,
+					FeeTier100,
+					-100,
+					100,
+					"10000000",
+					"10000000",
+					"0",
+					"0",
+					max_timeout,
+					admin,
+					admin,
+					"",
+				)
+				std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
+				gns.Transfer(consts.POOL_ADDR, 20000000)
+			},
+			action: func(t *testing.T) (string, string) {
+				std.TestSetOrigCaller(consts.ADMIN)
+				wugnot.Transfer(consts.ROUTER_ADDR, 20000000)
+				gns.Transfer(consts.ROUTER_ADDR, 20000000)
+
+				std.TestSetOrigCaller(consts.ROUTER_ADDR)
+				wugnot.Approve(poolContract, maxApprove)
+
+				actualAmount0, actualAmount1 := Swap(
+					wugnotTokenPath,
+					gnsTokenPath,
+					FeeTier100,
+					consts.ADMIN,
+					true,
+					"40012000",
+					"3945129629379410362911094632",
+					consts.ADMIN,
+				)
+				println("actualAmount0: ", actualAmount0)
+				println("actualAmount1: ", actualAmount1)
+				return actualAmount0, actualAmount1
+			},
+			shouldPanic: false,
+			expected:    []string{"20102257", "-19999999"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn(t)
 			}
