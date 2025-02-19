@@ -20,7 +20,8 @@ var (
 )
 
 func init() {
-	admin = ownable.NewWithAddress(std.DerivePkgAddr(consts.GOV_STAKER_PATH))
+	gsAddr := getContractAddress(access.ROLE_GOV_STAKER)
+	admin = ownable.NewWithAddress(std.DerivePkgAddr(gsAddr.String()))
 
 	token, ledger = grc20.NewToken("XGNS", "xGNS", 6)
 }
@@ -44,7 +45,8 @@ func VotingSupply() uint64 {
 
 	// this is amount of xGNS held by launchpad
 	// this xGNS doesn't participate in voting
-	launchpad := token.BalanceOf(consts.LAUNCHPAD_ADDR)
+	launchpadAddr := getContractAddress(access.ROLE_LAUNCHPAD)
+	launchpad := token.BalanceOf(launchpadAddr)
 	return total - launchpad
 }
 
@@ -99,8 +101,8 @@ func Mint(to std.Address, amount uint64) {
 	// only (gov staker) or (launchpad) contract can call Mint
 	caller := std.PrevRealm().Addr()
 
-	govAddress, _ := access.GetAddress(access.ROLE_GOV_STAKER)
-	launchpadAddress, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+	govAddress := getContractAddress(access.ROLE_GOV_STAKER)
+	launchpadAddress := getContractAddress(access.ROLE_LAUNCHPAD)
 	if govAddress == caller || launchpadAddress == caller {
 		checkErr(ledger.Mint(to, amount))
 	} else {
@@ -129,7 +131,7 @@ func MintByLaunchPad(to std.Address, amount uint64) {
 	common.IsHalted()
 
 	caller := std.PrevRealm().Addr()
-	launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+	launchpadAddr := getContractAddress(access.ROLE_LAUNCHPAD)
 	if err := access.LaunchpadOnly(caller); err != nil {
 		panic(addDetailToError(
 			errNoPermission,
@@ -166,8 +168,8 @@ func Burn(from std.Address, amount uint64) {
 	// only (gov staker) or (launchpad) contract can call Mint
 	caller := std.PrevRealm().Addr()
 
-	gsAddr, _ := access.GetAddress(access.ROLE_GOV_STAKER)
-	launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+	gsAddr := getContractAddress(access.ROLE_GOV_STAKER)
+	launchpadAddr := getContractAddress(access.ROLE_LAUNCHPAD)
 	if gsAddr == caller || launchpadAddr == caller {
 		burn(from, amount)
 	} else {
@@ -193,4 +195,10 @@ func BurnByLaunchPad(from std.Address, amount uint64) {
 
 func burn(from std.Address, amount uint64) {
 	checkErr(ledger.Burn(from, amount))
+}
+
+// getContractAddress retrieves the address which registered the role
+func getContractAddress(roleName string) std.Address {
+	addr, _ := access.GetAddress(roleName)
+	return addr
 }
