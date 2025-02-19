@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	phalt "gno.land/p/gnoswap/halt"
 
 	"gno.land/r/gnoswap/v1/access"
