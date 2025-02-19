@@ -55,66 +55,6 @@ func NewManager(opts ...ManagerOption) *Manager {
 	return m
 }
 
-var (
-	defaultOperations = []struct {
-		opType OpType
-		name   string
-		desc   string
-	}{
-		{OpTypeSwap, rawSwap, "Token swap operation"},
-		{OpTypeLiquidity, rawLiquidity, "Liquidity provision operations"},
-		{OpTypeWithdraw, rawWithdraw, "Withdrawal operations"},
-	}
-
-	defaultLevels = []struct {
-		id      LevelID
-		name    string
-		desc    string
-		allowed map[OpType]bool
-	}{
-		{
-			LvNoHalt,
-			rawNoHalt,
-			"Normal operation",
-			map[OpType]bool{
-				OpTypeSwap:      true,
-				OpTypeLiquidity: true,
-				OpTypeWithdraw:  true,
-			},
-		},
-		{
-			LvSwapHalt,
-			rawSwapHalt,
-			"Swaps disabled",
-			map[OpType]bool{
-				OpTypeSwap:      false,
-				OpTypeLiquidity: true,
-				OpTypeWithdraw:  true,
-			},
-		},
-		{
-			LvEmergencyHalt,
-			rawEmergencyHalt,
-			"Only withdrawals allowed",
-			map[OpType]bool{
-				OpTypeSwap:      false,
-				OpTypeLiquidity: false,
-				OpTypeWithdraw:  true,
-			},
-		},
-		{
-			LvCompleteHalt,
-			rawCompleteHalt,
-			"All operations disabled",
-			map[OpType]bool{
-				OpTypeSwap:      false,
-				OpTypeLiquidity: false,
-				OpTypeWithdraw:  false,
-			},
-		},
-	}
-)
-
 // DefaultManager creates a new default halt manager.
 // Call this function in a realm-level contract to create global state.
 func DefaultManager() *Manager {
@@ -148,6 +88,25 @@ func (m *Manager) SetCurrentLevel(lv LevelID) error {
 	}
 	m.currentLevel = newLevel
 	return nil
+}
+
+// Enable or disable a specific operation type at the current halt level
+// Related issue: https://github.com/gnoswap-labs/gnoswap/issues/517
+func (m *Manager) SetOperationStatus(opType OpType, allowed bool) error {
+	// Get current level
+	level, ok := m.levels[m.currentLevel.Level()]
+	if !ok {
+		return ufmt.Errorf("invalid current halt level")
+	}
+
+	// Update operation status
+	if basicLevel, ok := level.(BasicHaltLevel); ok {
+		basicLevel.allowedOps[opType] = allowed
+		m.levels[m.currentLevel.Level()] = basicLevel
+		return nil
+	}
+
+	return ufmt.Errorf("cannot modify composite halt levels directly")
 }
 
 // RegisterOperation adds a new operation to the manager.
