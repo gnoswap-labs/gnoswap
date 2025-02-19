@@ -354,6 +354,29 @@ func TestGetRoles(t *testing.T) {
 	})
 }
 
+func TestGetAddress(t *testing.T) {
+	testRoleFooAddr := testutils.TestAddress("role_foo")
+	testRoleBarAddr := testutils.TestAddress("role_bar")
+
+	t.Run("get address from initialized config", func(t *testing.T) {
+		cfg := newConfig()
+		cfg.roles["role_foo"] = testRoleFooAddr
+		cfg.roles["role_bar"] = testRoleBarAddr
+		err := initialize(cfg)
+		uassert.NoError(t, err)
+
+		addr, err := GetAddress("role_foo")
+		uassert.NoError(t, err)
+		uassert.Equal(t, testRoleFooAddr, addr)
+	})
+
+	t.Run("get address from uninitialized config", func(t *testing.T) {
+		currentConfig = nil
+		addr, err := GetAddress("role_foo")
+		uassert.Error(t, err)
+	})
+}
+
 func TestSetConfig(t *testing.T) {
 	testManagerAddr := testutils.TestAddress("test_manager")
 	testAnalystAddr := testutils.TestAddress("test_analyst")

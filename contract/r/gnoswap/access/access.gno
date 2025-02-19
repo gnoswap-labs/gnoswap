@@ -140,6 +140,13 @@ func SetRole(roleName string, address std.Address) error {
 	return nil
 }
 
+func GetAddress(roleName string) (std.Address, error) {
+	if currentConfig == nil {
+		return std.Address(""), ufmt.Errorf(errNotInitialized)
+	}
+	return currentConfig.roles[roleName], nil
+}
+
 // UpdateRoleAddress updates the address for a specific role's permission checker
 func UpdateRoleAddress(roleName string, newAddress std.Address) error {
 	if err := validateConfig(); err != nil {
