@@ -1,7 +1,5 @@
 package halt
 
-import "gno.land/p/demo/ufmt"
-
 var _ Operation = (*basicOperation)(nil)
 
 const (
@@ -42,7 +40,8 @@ func OpTypeFromString(s string) (OpType, error) {
 	case rawGovernance:
 		return OpTypeGovernance, nil
 	default:
-		return "", ufmt.Errorf("invalid operation type: %s", s)
+		// handle user-defined operation types
+		return OpType(s), nil
 	}
 }
 
