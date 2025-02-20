@@ -6,4 +6,4 @@ PrevRealm: PreviousRealm
 GetChainID: ChainID
 GetBanker: NewBanker
 GetChainDomain: ChainDomain
-GetHeight: Height
+Height: ChainHeight

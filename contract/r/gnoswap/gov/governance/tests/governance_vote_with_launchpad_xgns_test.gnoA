@@ -127,7 +127,7 @@ func testDelegate01_2000000_toDummy(t *testing.T) {
 		uassert.Equal(t, xgns.TotalSupply(), uint64(1_000_000))
 		uassert.Equal(t, xgns.VotingSupply(), uint64(0))
 
-		uassert.Equal(t, std.Height(), int64(134))
+		uassert.Equal(t, std.ChainHeight(), int64(134))
 
 		std.TestSetRealm(adminRealm)
 		gns.Approve(consts.GOV_STAKER_ADDR, uint64(2_000_000))
@@ -147,7 +147,7 @@ func testProposeText(t *testing.T) {
 		std.TestSkipHeights(10)
 
 		// text proposal
-		uassert.Equal(t, std.Height(), int64(145))
+		uassert.Equal(t, std.ChainHeight(), int64(145))
 
 		std.TestSetRealm(adminRealm)
 		proposalID := ProposeText("test_title", "test_description")

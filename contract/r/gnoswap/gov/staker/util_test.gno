@@ -16,7 +16,7 @@ import (
 
 func TestMarshal(t *testing.T) {
 	fakeNode := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.Height())),
+		"height":    json.NumberNode("height", float64(std.ChainHeight())),
 		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
 	})
 

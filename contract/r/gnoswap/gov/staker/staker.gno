@@ -83,7 +83,7 @@ func Delegate(to std.Address, amount uint64, referrer string) {
 		))
 	}
 
-	rewardState.addStake(uint64(std.Height()), caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
+	rewardState.addStake(uint64(std.ChainHeight()), caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
 	// GNS // caller -> GovStaker
 	gns.TransferFrom(caller, std.CurrentRealm().Address(), amount)

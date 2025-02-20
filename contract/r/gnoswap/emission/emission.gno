@@ -20,7 +20,7 @@ var (
 func MintAndDistributeGns() uint64 {
 	assertOnlyNotHalted()
 
-	currentHeight := std.Height()
+	currentHeight := std.ChainHeight()
 	lastMintedHeight := gns.GetLastMintedHeight()
 	if lastMintedHeight >= currentHeight {
 		// Skip if we've already minted tokens at this height

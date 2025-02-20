@@ -443,7 +443,7 @@ func burnAllNFT(t *testing.T) {
 func deletePoolTier(t *testing.T, poolPath string) {
 	t.Helper()
 	if poolTier != nil {
-		poolTier.changeTier(std.Height(), pools, poolPath, 0)
+		poolTier.changeTier(std.ChainHeight(), pools, poolPath, 0)
 	} else {
 		panic("poolTier is nil")
 	}
@@ -458,11 +458,11 @@ func addPoolTier(t *testing.T, poolPath string, tier uint64) {
 			panic(addDetailToError(
 				errPoolNotFound, ufmt.Sprintf("unknown error - pools is nil")))
 		}
-		poolTier.changeTier(std.Height(), pools, poolPath, tier)
+		poolTier.changeTier(std.ChainHeight(), pools, poolPath, tier)
 	} else {
-		poolTier = NewPoolTier(pools, std.Height(), poolPath, en.GetEmission, en.GetHalvingBlocksInRange)
+		poolTier = NewPoolTier(pools, std.ChainHeight(), poolPath, en.GetEmission, en.GetHalvingBlocksInRange)
 		pools.GetOrCreate(poolPath) // must update pools tree
-		poolTier.changeTier(std.Height(), pools, poolPath, tier)
+		poolTier.changeTier(std.ChainHeight(), pools, poolPath, tier)
 	}
 }
 
@@ -493,7 +493,7 @@ func gnsBalanceCheck(t *testing.T, beforeBalance gnsBalanceTracker, printChange 
 	t.Helper()
 
 	caller := std.PreviousRealm().Address()
-	height := std.Height()
+	height := std.ChainHeight()
 	stakerBalance := gns.BalanceOf(consts.STAKER_ADDR)
 	devOpsBalance := gns.BalanceOf(consts.DEV_OPS)
 	communityPoolBalance := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
@@ -523,7 +523,7 @@ func getPrintInfo(t *testing.T) string {
 	en.MintAndDistributeGns()
 
 	emissionDebug := ApiEmissionDebugInfo{}
-	emissionDebug.Height = std.Height()
+	emissionDebug.Height = std.ChainHeight()
 	emissionDebug.Time = time.Now().Unix()
 	emissionDebug.GnsStaker = gns.BalanceOf(consts.STAKER_ADDR)
 	emissionDebug.GnsDevOps = gns.BalanceOf(consts.DEV_OPS)
@@ -679,10 +679,10 @@ func makePositionsNode(t *testing.T, poolPath string) []*json.Node {
 		deposit := value.(*Deposit)
 
 		if deposit.targetPoolPath == poolPath {
-			stakedDuration := std.Height() - deposit.stakeHeight
+			stakedDuration := std.ChainHeight() - deposit.stakeHeight
 			ratio := getRewardRatio(t, stakedDuration)
 
-			rewardByWarmup := calcPositionRewardByWarmups(std.Height(), positionId)
+			rewardByWarmup := calcPositionRewardByWarmups(std.ChainHeight(), positionId)
 			if len(rewardByWarmup) != 4 {
 				panic("len(rewardByWarmup) != 4")
 			}

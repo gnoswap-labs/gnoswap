@@ -247,7 +247,7 @@ type statNode struct {
 
 func newStatNode() statNode {
 	return statNode{
-		height:    std.Height(),
+		height:    std.ChainHeight(),
 		timestamp: time.Now().Unix(),
 	}
 }

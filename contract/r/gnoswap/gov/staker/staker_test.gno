@@ -483,7 +483,7 @@ func TestCollectReward(t *testing.T) {
 	std.TestSetRealm(user2Realm)
 	user := user2Realm.Address().String()
 
-	rewardState.addStake(uint64(std.Height()), std.Address(user), 10, 0, make(map[string]uint64))
+	rewardState.addStake(uint64(std.ChainHeight()), std.Address(user), 10, 0, make(map[string]uint64))
 
 	// set a fake emission reward
 	//userEmissionReward.Set(user, uint64(50_000))

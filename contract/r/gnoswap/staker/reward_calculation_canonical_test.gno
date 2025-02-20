@@ -1526,7 +1526,7 @@ func TestCanonicalSimulation_0(t *testing.T) {
 					break
 				}
 			}
-			println("=======HEIGHT : ", std.Height(), "========")
+			println("=======HEIGHT : ", std.ChainHeight(), "========")
 			println("	", eventId, " : ", event.String())
 			event.Apply(canonical)
 			canonical.NextBlock()

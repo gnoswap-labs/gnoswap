@@ -101,7 +101,7 @@ func CreateExternalIncentive(
 		startTimestamp,
 		endTimestamp,
 		caller,
-		std.Height(),
+		std.ChainHeight(),
 		depositGnsAmount,
 		time.Now().Unix(),
 		gns.GetAvgBlockTimeInMs(),
@@ -137,7 +137,7 @@ func CreateExternalIncentive(
 		"startTimestamp", formatInt(startTimestamp),
 		"endTimestamp", formatInt(endTimestamp),
 		"depositGnsAmount", formatUint(depositGnsAmount),
-		"currentHeight", formatInt(std.Height()),
+		"currentHeight", formatInt(std.ChainHeight()),
 		"currentTime", formatInt(time.Now().Unix()),
 		"avgBlockTimeInMs", formatInt(gns.GetAvgBlockTimeInMs()),
 	)
@@ -164,7 +164,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 		))
 	}
 
-	currentHeight := std.Height()
+	currentHeight := std.ChainHeight()
 	if currentHeight < ictv.endHeight {
 		panic(addDetailToError(
 			errCannotEndIncentive,

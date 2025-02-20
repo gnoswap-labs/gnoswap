@@ -20,7 +20,7 @@ func ApiGetPositions() string {
 		rpcPositions = append(rpcPositions, rpcPosition)
 	}
 
-	baseStat := NewResponseQueryBase(std.Height(), time.Now().Unix())
+	baseStat := NewResponseQueryBase(std.ChainHeight(), time.Now().Unix())
 	return makeJsonResponse(&baseStat, &PositionsResponse{Positions: rpcPositions})
 }
 
@@ -31,7 +31,7 @@ func ApiGetPosition(id uint64) string {
 	}
 
 	rpcPosition := rpcMakePosition(id)
-	baseStat := NewResponseQueryBase(std.Height(), time.Now().Unix())
+	baseStat := NewResponseQueryBase(std.ChainHeight(), time.Now().Unix())
 	return makeJsonResponse(&baseStat, &PositionsResponse{Positions: []RpcPosition{rpcPosition}})
 }
 
@@ -46,7 +46,7 @@ func ApiGetPositionsByPoolPath(poolPath string) string {
 		rpcPositions = append(rpcPositions, rpcPosition)
 	}
 
-	baseStat := NewResponseQueryBase(std.Height(), time.Now().Unix())
+	baseStat := NewResponseQueryBase(std.ChainHeight(), time.Now().Unix())
 	return makeJsonResponse(&baseStat, &PositionsResponse{Positions: rpcPositions})
 }
 
@@ -61,7 +61,7 @@ func ApiGetPositionsUnclaimedFee() string {
 		})
 	}
 
-	baseStat := NewResponseQueryBase(std.Height(), time.Now().Unix())
+	baseStat := NewResponseQueryBase(std.ChainHeight(), time.Now().Unix())
 	return makeJsonResponse(&baseStat, &UnclaimedFeesResponse{Fees: rpcUnclaimedFee})
 }
 
@@ -82,7 +82,7 @@ func ApiGetPositionsByAddress(address std.Address) string {
 		rpcPositions = append(rpcPositions, rpcPosition)
 	}
 
-	baseStat := NewResponseQueryBase(std.Height(), time.Now().Unix())
+	baseStat := NewResponseQueryBase(std.ChainHeight(), time.Now().Unix())
 	r := NewResponseApiGetPositions(baseStat, rpcPositions)
 	stat := baseStat.JSON()
 
@@ -117,7 +117,7 @@ func ApiGetPositionUnclaimedFeeByLpPositionId(lpPositionId uint64) string {
 		Fee1:         unclaimedFee1.ToString(),
 	}
 
-	baseStat := NewResponseQueryBase(std.Height(), time.Now().Unix())
+	baseStat := NewResponseQueryBase(std.ChainHeight(), time.Now().Unix())
 	return makeJsonResponse(&baseStat, &UnclaimedFeesResponse{
 		Fees: []RpcUnclaimedFee{fee},
 	})

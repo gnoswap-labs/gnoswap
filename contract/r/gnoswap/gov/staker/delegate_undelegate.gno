@@ -40,7 +40,7 @@ func delegate(to std.Address, amount uint64) {
 		to:        to,
 		amount:    amount,
 		timestamp: timeStamp,
-		height:    uint64(std.Height()),
+		height:    uint64(std.ChainHeight()),
 		add:       true, // if true, delegation
 	}
 
@@ -65,7 +65,7 @@ func delegate(to std.Address, amount uint64) {
 	snapShotHistory = append(snapShotHistory, DelegationSnapShotHistory{
 		to:           to,
 		amount:       updateAmount,
-		updatedBlock: uint64(std.Height()),
+		updatedBlock: uint64(std.ChainHeight()),
 		updatedAt:    timeStamp,
 	})
 	delegationSnapShotHistory.Set(toStr, snapShotHistory)
@@ -143,7 +143,7 @@ func undelegate(to std.Address, amount uint64) {
 		to:        to,
 		amount:    amount,
 		timestamp: uint64(time.Now().Unix()),
-		height:    uint64(std.Height()),
+		height:    uint64(std.ChainHeight()),
 		add:       false,
 	}
 	var history []DelegationHistory

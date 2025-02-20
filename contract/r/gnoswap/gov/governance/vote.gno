@@ -110,7 +110,7 @@ func Vote(pid uint64, yes bool) string {
 	setUserVote(voter, pid, voteWithWeight{
 		Yes:         yes,
 		Weight:      state.userWeight,
-		VotedHeight: uint64(std.Height()),
+		VotedHeight: uint64(std.ChainHeight()),
 		VotedAt:     now,
 	})
 
