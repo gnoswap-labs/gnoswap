@@ -192,7 +192,7 @@ func testMintBarBaz100Pos05(t *testing.T) {
 			bazPath,                   // token1
 			fee100,                    // fee
 			int32(consts.MAX_TICK-10), // tickLower
-			int32(consts.MAX_TICK-10), // tickUpper
+			int32(consts.MAX_TICK-1),  // tickUpper
 			"50",                      // amount0Desired
 			"50",                      // amount1Desired
 			"0",                       // amount0Min
