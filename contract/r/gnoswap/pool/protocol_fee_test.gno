@@ -9,8 +9,178 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
+
 	pn "gno.land/r/gnoswap/v1/position"
 )
+
+func TestSetPoolCreationFee(t *testing.T) {
+	var (
+		admin = std.Address("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
+	)
+
+	tests := []struct {
+		name        string
+		action      func()
+		verify      func() string
+		expected    string
+		shouldPanic bool
+	}{
+		{
+			name: "Panic call by non-governance",
+			action: func() {
+				const newFee = 2_000_000_000
+				std.TestSetOrigCaller(admin)
+				SetPoolCreationFee(newFee)
+			},
+			verify:      nil,
+			expected:    "caller(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) has no permission",
+			shouldPanic: true,
+		},
+		{
+			name: "Success call by governance",
+			action: func() {
+				const newFee = 2_000_000_000
+				govRealm := std.NewUserRealm(consts.GOV_GOVERNANCE_ADDR)
+				std.TestSetRealm(govRealm)
+				SetPoolCreationFee(newFee)
+			},
+			verify: func() string {
+				return strconv.FormatUint(GetPoolCreationFee(), 10)
+			},
+			expected:    strconv.FormatUint(2_000_000_000, 10),
+			shouldPanic: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				r := recover()
+				if r == nil {
+					if tc.shouldPanic {
+						t.Errorf(">>> %s: expected panic but got none", tc.name)
+						return
+					}
+				} else {
+					if r.(string) != tc.expected {
+						t.Errorf(">>> %s: got panic %v, want %v", tc.name, r, tc.expected)
+					}
+				}
+			}()
+
+			if !tc.shouldPanic {
+				tc.action()
+				if tc.verify != nil {
+					got := tc.verify()
+					uassert.Equal(t, got, tc.expected)
+				}
+			} else {
+				tc.action()
+			}
+		})
+	}
+}
+
+func TestSetPoolCreationFeeByAdmin(t *testing.T) {
+	var (
+		admin = consts.ADMIN
+		alice = testutils.TestAddress("alice")
+	)
+
+	tests := []struct {
+		name        string
+		action      func()
+		verify      func() string
+		expected    string
+		shouldPanic bool
+	}{
+		{
+			name: "Panic call by non-admin (gov contract)",
+			action: func() {
+				const newFee = 2_000_000_000
+				govRealm := std.NewUserRealm(consts.GOV_GOVERNANCE_ADDR)
+				std.TestSetRealm(govRealm)
+				{
+					SetPoolCreationFeeByAdmin(newFee)
+				}
+			},
+			verify:      nil,
+			expected:    "caller(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) has no permission",
+			shouldPanic: true,
+		},
+		{
+			name: "Panic call by non-admin (user)",
+			action: func() {
+				const newFee = 2_000_000_000
+				std.TestSetOrigCaller(alice)
+				{
+					SetPoolCreationFeeByAdmin(newFee)
+				}
+			},
+			verify:      nil,
+			expected:    "caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) has no permission",
+			shouldPanic: true,
+		},
+		{
+			name: "Success call by admin",
+			action: func() {
+				const newFee = 2_000_000_000
+				std.TestSetOrigCaller(admin)
+				{
+					SetPoolCreationFeeByAdmin(newFee)
+				}
+			},
+			verify: func() string {
+				return strconv.FormatUint(GetPoolCreationFee(), 10)
+			},
+			expected:    strconv.FormatUint(2_000_000_000, 10),
+			shouldPanic: false,
+		},
+		{
+			name: "Success call by admin (rollback)",
+			action: func() {
+				const newFee = 1_000_000_000
+				std.TestSetOrigCaller(admin)
+				{
+					SetPoolCreationFeeByAdmin(newFee)
+				}
+			},
+			verify: func() string {
+				return strconv.FormatUint(GetPoolCreationFee(), 10)
+			},
+			expected:    strconv.FormatUint(1_000_000_000, 10),
+			shouldPanic: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				r := recover()
+				if r == nil {
+					if tc.shouldPanic {
+						t.Errorf(">>> %s: expected panic but got none", tc.name)
+						return
+					}
+				} else {
+					if r.(string) != tc.expected {
+						t.Errorf(">>> %s: got panic %v, want %v", tc.name, r, tc.expected)
+					}
+				}
+			}()
+
+			if !tc.shouldPanic {
+				tc.action()
+				if tc.verify != nil {
+					got := tc.verify()
+					uassert.Equal(t, got, tc.expected)
+				}
+			} else {
+				tc.action()
+			}
+		})
+	}
+}
 
 func TestHandleWithdrawalFee(t *testing.T) {
 	var (
@@ -31,17 +201,17 @@ func TestHandleWithdrawalFee(t *testing.T) {
 			name: "Panic if caller is not position contract",
 			action: func(t *testing.T) {
 				std.TestSetOrigCaller(admin)
-				HandleWithdrawalFee(0, "gno.land/r/onbloc/foo", "0", "gno.land/r/onbloc/foo", "0", "", admin)
+				CollectWithdrawalFee(0, "gno.land/r/onbloc/foo", "0", "gno.land/r/onbloc/foo", "0", "", admin)
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-POOL-001] caller has no permission || withdrawal_fee.gno__HandleWithdrawalFee() || only position(g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5) can call this function, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
+			expected:    "[GNOSWAP-POOL-001] caller has no permission || only position(g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5) can call this function, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
 			shouldPanic: true,
 		},
 		{
 			name: "Panic if pkgPath is not registered",
 			action: func(t *testing.T) {
 				std.TestSetRealm(std.NewUserRealm(position))
-				HandleWithdrawalFee(0, "pkgPath", "1000", "pkgPath", "1000", "poolPath", admin)
+				CollectWithdrawalFee(0, "pkgPath", "1000", "pkgPath", "1000", "poolPath", admin)
 			},
 			verify:      nil,
 			expected:    "[GNOSWAP-COMMON-004] token is not registered || token(pkgPath)",
@@ -58,7 +228,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				}
 				TokenApprove(t, wugnotPath, alice, protocolFee, uint64(0))
 				TokenApprove(t, gnsPath, alice, protocolFee, uint64(0))
-				HandleWithdrawalFee(1, wugnotPath, "1000", gnsPath, "1000", poolPath, alice)
+				CollectWithdrawalFee(1, wugnotPath, "1000", gnsPath, "1000", poolPath, alice)
 			},
 			verify:      nil,
 			expected:    "[GNOSWAP-POOL-021] token transfer failed || insufficient allowance",
@@ -93,7 +263,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				TokenApprove(t, gnsPath, alice, pool, uint64(1000000000))
 				std.TestSetRealm(std.NewUserRealm(position))
 				poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
-				return HandleWithdrawalFee(2, wugnotPath, "1000", gnsPath, "1000", poolPath, alice)
+				return CollectWithdrawalFee(2, wugnotPath, "1000", gnsPath, "1000", poolPath, alice)
 			},
 			expected:    "990,990",
 			shouldPanic: false,
