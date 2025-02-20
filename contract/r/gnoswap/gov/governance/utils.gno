@@ -116,7 +116,7 @@ func prevRealm() string {
 // Returns the address and package path of the previous realm
 func getPrev() (string, string) {
 	prev := std.PreviousRealm()
-	return prev.Addr().String(), prev.PkgPath()
+	return prev.Address().String(), prev.PkgPath()
 }
 
 // Formats an unsigned integer to a string

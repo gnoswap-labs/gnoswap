@@ -19,7 +19,7 @@ func TestDelegate(t *testing.T) {
 	{
 		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 		std.TestSkipHeights(100)
-		gns.MintGns(userRealm.Addr()) // 2M gns
+		gns.MintGns(userRealm.Address()) // 2M gns
 
 		std.TestSetRealm(userRealm)
 		to := makeFakeAddress("validator_1")
@@ -28,7 +28,7 @@ func TestDelegate(t *testing.T) {
 		gns.Approve(consts.GOV_STAKER_ADDR, amount)
 		Delegate(to, amount, "")
 
-		minted := xgns.BalanceOf(userRealm.Addr())
+		minted := xgns.BalanceOf(userRealm.Address())
 		if minted != amount {
 			t.Errorf("Delegate minted xGNS = %d, want %d", minted, amount)
 		}
@@ -340,20 +340,20 @@ func TestProtocolFee(t *testing.T) {
 func TestRedelegate(t *testing.T) {
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	std.TestSkipHeights(100)
-	gns.MintGns(userRealm.Addr()) // 2M gns
+	gns.MintGns(userRealm.Address()) // 2M gns
 
 	// user has xGNS from previous test (some minted)
 	// try re-delegating
 	std.TestSetRealm(userRealm)
-	from := userRealm.Addr()
+	from := userRealm.Address()
 	to := makeFakeAddress("validator_1")
 	amount := uint64(1_000_000)
 
-	std.TestSetOrigCaller(userRealm.Addr())
+	std.TestSetOrigCaller(userRealm.Address())
 	gns.Approve(consts.GOV_STAKER_ADDR, amount)
 	Delegate(from, amount, "")
 
-	std.TestSetOrigCaller(userRealm.Addr())
+	std.TestSetOrigCaller(userRealm.Address())
 	gns.Approve(consts.GOV_STAKER_ADDR, amount)
 	Redelegate(from, to, amount)
 
@@ -373,23 +373,23 @@ func TestRedelegate(t *testing.T) {
 func TestUndelegate(t *testing.T) {
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	std.TestSkipHeights(101)
-	gns.MintGns(user3Realm.Addr()) // 2M gns
+	gns.MintGns(user3Realm.Address()) // 2M gns
 
 	std.TestSetRealm(user3Realm)
 	to := makeFakeAddress("validator_1")
 	amount := uint64(1_000_000)
 
-	std.TestSetOrigCaller(user3Realm.Addr())
+	std.TestSetOrigCaller(user3Realm.Address())
 	gns.Approve(consts.GOV_STAKER_ADDR, amount)
 	Delegate(to, amount, "")
 	Undelegate(to, amount)
 
-	if xgns.BalanceOf(user3Realm.Addr()) == 1_000_000 {
+	if xgns.BalanceOf(user3Realm.Address()) == 1_000_000 {
 		t.Errorf("Expected user xGNS to be 0 after undelegating 1_000_000, got %d",
-			xgns.BalanceOf(user3Realm.Addr()))
+			xgns.BalanceOf(user3Realm.Address()))
 	}
 
-	lockedList, exist := addrLockedGns.Get(user3Realm.Addr().String())
+	lockedList, exist := addrLockedGns.Get(user3Realm.Address().String())
 	if !exist {
 		t.Errorf("Expected lockedGNS to be created after Undelegate")
 	}
@@ -420,7 +420,7 @@ func TestCollectUndelegatedGns(t *testing.T) {
 	std.TestSetRealm(userRealm)
 
 	// 1) no locked => expect 0
-	addrLockedGns.Remove(userRealm.Addr().String()) // ensure no locked
+	addrLockedGns.Remove(userRealm.Address().String()) // ensure no locked
 	collected := CollectUndelegatedGns()
 	if collected != 0 {
 		t.Errorf("Expected 0 when no locked gns, got %d", collected)
@@ -432,7 +432,7 @@ func TestCollectUndelegatedGns(t *testing.T) {
 		amount: 100_000,
 		unlock: now + SECONDS_IN_7_DAYS,
 	}
-	addrLockedGns.Set(userRealm.Addr().String(), []lockedGNS{locked})
+	addrLockedGns.Set(userRealm.Address().String(), []lockedGNS{locked})
 	lockedAmount = 100_000
 
 	collected = CollectUndelegatedGns()
@@ -440,7 +440,7 @@ func TestCollectUndelegatedGns(t *testing.T) {
 		t.Errorf("Expected 0 if 7days not passed, got %d", collected)
 	}
 	// verify still in locked
-	lockedList, exist := addrLockedGns.Get(userRealm.Addr().String())
+	lockedList, exist := addrLockedGns.Get(userRealm.Address().String())
 	if !exist {
 		t.Errorf("Expected lockedGNS to remain after CollectUndelegatedGns")
 	}
@@ -451,14 +451,14 @@ func TestCollectUndelegatedGns(t *testing.T) {
 
 	// 3) set time => unlocked
 	locked.unlock = uint64(time.Now().Unix()) - 1 // forcibly make it past time
-	addrLockedGns.Set(userRealm.Addr().String(), []lockedGNS{locked})
+	addrLockedGns.Set(userRealm.Address().String(), []lockedGNS{locked})
 
 	collected = CollectUndelegatedGns()
 	if collected != 100_000 {
 		t.Errorf("Expected 100_000 collected, got %d", collected)
 	}
 	// check locked removed from the tree
-	if _, exists := addrLockedGns.Get(userRealm.Addr().String()); exists {
+	if _, exists := addrLockedGns.Get(userRealm.Address().String()); exists {
 		t.Errorf("Expected addrLockedGns key to be removed if empty after collecting all locked gns")
 	}
 	if lockedAmount != 0 {
@@ -477,11 +477,11 @@ func TestCollectReward(t *testing.T) {
 		ugnotFaucet(t, consts.GOV_STAKER_ADDR, 1_000_000)
 		ugnotDeposit(t, consts.GOV_STAKER_ADDR, 1_000_000)
 		ugnotFaucet(t, derivePkgAddr(wugnotPath), 1_000_000)
-		ugnotFaucet(t, user2Realm.Addr(), 1_000_000)
+		ugnotFaucet(t, user2Realm.Address(), 1_000_000)
 	}
 
 	std.TestSetRealm(user2Realm)
-	user := user2Realm.Addr().String()
+	user := user2Realm.Address().String()
 
 	rewardState.addStake(uint64(std.Height()), std.Address(user), 10, 0, make(map[string]uint64))
 
@@ -496,13 +496,13 @@ func TestCollectReward(t *testing.T) {
 
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	std.TestSkipHeights(100)
-	gns.MintGns(user2Realm.Addr())
+	gns.MintGns(user2Realm.Address())
 
 	std.TestSetRealm(user2Realm)
 	std.TestSkipHeights(100)
 
 	// call CollectReward
-	std.TestSetOrigCaller(user2Realm.Addr())
+	std.TestSetOrigCaller(user2Realm.Address())
 	CollectReward()
 
 	// expect user emissionReward = 0
@@ -534,7 +534,7 @@ func TestCollectRewardFromLaunchPad(t *testing.T) {
 				t.Errorf("Expected panic, because caller is not launchpad")
 			}
 		}()
-		CollectRewardFromLaunchPad(userRealm.Addr())
+		CollectRewardFromLaunchPad(userRealm.Address())
 	}
 
 	// Then set realm to a custom "launchpadRealm" whose .Addr() == consts.LAUNCHPAD_ADDR

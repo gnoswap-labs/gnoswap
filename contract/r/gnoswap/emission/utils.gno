@@ -25,7 +25,7 @@ func getPrevAddr() std.Address {
 // getPrev returns the address and package path of the previous realm.
 func getPrevAsString() (string, string) {
 	prev := std.PreviousRealm()
-	return prev.Addr().String(), prev.PkgPath()
+	return prev.Address().String(), prev.PkgPath()
 }
 
 // assertOnlyAdmin panics if the caller is not the admin.

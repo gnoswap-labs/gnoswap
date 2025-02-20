@@ -77,5 +77,5 @@ func getPrevAddr() std.Address {
 // getPrevAsString returns the address and realm of the caller as a string.
 func getPrevAsString() (string, string) {
 	prev := std.PreviousRealm()
-	return prev.Addr().String(), prev.PkgPath()
+	return prev.Address().String(), prev.PkgPath()
 }
