@@ -1,7 +1,6 @@
 package pool
 
 import (
-	"gno.land/p/demo/ufmt"
 	"std"
 
 	"gno.land/p/gnoswap/consts"
