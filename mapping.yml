@@ -1,0 +1,9 @@
+GetCallerAt: CallerAt
+GetOrigSend: OriginSend
+GetOrigCaller: OriginCaller
+Addr: Address
+PrevRealm: PreviousRealm
+GetChainID: ChainID
+GetBanker: NewBanker
+GetChainDomain: ChainDomain
+GetHeight: Height
