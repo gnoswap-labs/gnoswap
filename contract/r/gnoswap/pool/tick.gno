@@ -11,116 +11,44 @@ import (
 	"gno.land/p/gnoswap/consts"
 )
 
-// calculateMaxLiquidityPerTick calculates the maximum liquidity
-// per tick for a given tick spacing.
-func calculateMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
-	minTick := (consts.MIN_TICK / tickSpacing) * tickSpacing
-	maxTick := (consts.MAX_TICK / tickSpacing) * tickSpacing
-	numTicks := uint64((maxTick-minTick)/tickSpacing) + 1
-
-	return new(u256.Uint).Div(u256.MustFromDecimal(consts.MAX_UINT128), u256.NewUint(numTicks))
+// GetTickLiquidityGross returns the gross liquidity for the specified tick.
+func (p *Pool) GetTickLiquidityGross(tick int32) *u256.Uint {
+	return p.mustGetTick(tick).liquidityGross
 }
 
-// getFeeGrowthBelowX128 calculates the fee growth below a specified tick.
-//
-// This function computes the fee growth for token 0 and token 1 below a given tick (`tickLower`)
-// relative to the current tick (`tickCurrent`). The fee growth values are adjusted based on whether
-// the `tickCurrent` is above or below the `tickLower`.
-//
-// Parameters:
-//   - tickLower: int32, the lower tick boundary for fee calculation.
-//   - tickCurrent: int32, the current tick index.
-//   - feeGrowthGlobal0X128: *u256.Uint, the global fee growth for token 0 in X128 precision.
-//   - feeGrowthGlobal1X128: *u256.Uint, the global fee growth for token 1 in X128 precision.
-//   - lowerTick: TickInfo, the fee growth and liquidity details for the lower tick.
-//
-// Returns:
-//   - *u256.Uint: Fee growth below `tickLower` for token 0.
-//   - *u256.Uint: Fee growth below `tickLower` for token 1.
-//
-// Workflow:
-//  1. If `tickCurrent` is greater than or equal to `tickLower`:
-//     - Return the `feeGrowthOutside0X128` and `feeGrowthOutside1X128` values of the `lowerTick`.
-//  2. If `tickCurrent` is below `tickLower`:
-//     - Compute the fee growth below the lower tick by subtracting `feeGrowthOutside` values
-//     from the global fee growth values (`feeGrowthGlobal0X128` and `feeGrowthGlobal1X128`).
-//  3. Return the calculated fee growth values for both tokens.
-//
-// Behavior:
-//   - If `tickCurrent >= tickLower`, the fee growth outside the lower tick is returned as-is.
-//   - If `tickCurrent < tickLower`, the fee growth is calculated as:
-//     feeGrowthBelow = feeGrowthGlobal - feeGrowthOutside
-//
-// Example:
-//
-//	feeGrowth0, feeGrowth1 := getFeeGrowthBelowX128(
-//	    100, 150, globalFeeGrowth0, globalFeeGrowth1, lowerTickInfo,
-//	)
-//	fmt.Println("Fee Growth Below:", feeGrowth0, feeGrowth1)
-func getFeeGrowthBelowX128(
-	tickLower, tickCurrent int32,
-	feeGrowthGlobal0X128, feeGrowthGlobal1X128 *u256.Uint,
-	lowerTick TickInfo,
-) (*u256.Uint, *u256.Uint) {
-	if tickCurrent >= tickLower {
-		return lowerTick.feeGrowthOutside0X128, lowerTick.feeGrowthOutside1X128
-	}
-
-	feeGrowthBelow0X128 := new(u256.Uint).Sub(feeGrowthGlobal0X128, lowerTick.feeGrowthOutside0X128)
-	feeGrowthBelow1X128 := new(u256.Uint).Sub(feeGrowthGlobal1X128, lowerTick.feeGrowthOutside1X128)
-
-	return feeGrowthBelow0X128, feeGrowthBelow1X128
+// GetTickLiquidityNet returns the net liquidity for the specified tick.
+func (p *Pool) GetTickLiquidityNet(tick int32) *i256.Int {
+	return p.mustGetTick(tick).liquidityNet
 }
 
-// getFeeGrowthAboveX128 calculates the fee growth above a specified tick.
-//
-// This function computes the fee growth for token 0 and token 1 above a given tick (`tickUpper`)
-// relative to the current tick (`tickCurrent`). The fee growth values are adjusted based on whether
-// the `tickCurrent` is above or below the `tickUpper`.
-//
-// Parameters:
-//   - tickUpper: int32, the upper tick boundary for fee calculation.
-//   - tickCurrent: int32, the current tick index.
-//   - feeGrowthGlobal0X128: *u256.Uint, the global fee growth for token 0 in X128 precision.
-//   - feeGrowthGlobal1X128: *u256.Uint, the global fee growth for token 1 in X128 precision.
-//   - upperTick: TickInfo, the fee growth and liquidity details for the upper tick.
-//
-// Returns:
-//   - *u256.Uint: Fee growth above `tickUpper` for token 0.
-//   - *u256.Uint: Fee growth above `tickUpper` for token 1.
-//
-// Workflow:
-//  1. If `tickCurrent` is less than `tickUpper`:
-//     - Return the `feeGrowthOutside0X128` and `feeGrowthOutside1X128` values of the `upperTick`.
-//  2. If `tickCurrent` is greater than or equal to `tickUpper`:
-//     - Compute the fee growth above the upper tick by subtracting `feeGrowthOutside` values
-//     from the global fee growth values (`feeGrowthGlobal0X128` and `feeGrowthGlobal1X128`).
-//  3. Return the calculated fee growth values for both tokens.
-//
-// Behavior:
-//   - If `tickCurrent < tickUpper`, the fee growth outside the upper tick is returned as-is.
-//   - If `tickCurrent >= tickUpper`, the fee growth is calculated as:
-//     feeGrowthAbove = feeGrowthGlobal - feeGrowthOutside
-//
-// Example:
-//
-//	feeGrowth0, feeGrowth1 := getFeeGrowthAboveX128(
-//	    200, 150, globalFeeGrowth0, globalFeeGrowth1, upperTickInfo,
-//	)
-//	fmt.Println("Fee Growth Above:", feeGrowth0, feeGrowth1)
-func getFeeGrowthAboveX128(
-	tickUpper, tickCurrent int32,
-	feeGrowthGlobal0X128, feeGrowthGlobal1X128 *u256.Uint,
-	upperTick TickInfo,
-) (*u256.Uint, *u256.Uint) {
-	if tickCurrent < tickUpper {
-		return upperTick.feeGrowthOutside0X128, upperTick.feeGrowthOutside1X128
-	}
+// GetTickFeeGrowthOutside0X128 returns the fee growth outside the tick for token 0.
+func (p *Pool) GetTickFeeGrowthOutside0X128(tick int32) *u256.Uint {
+	return p.mustGetTick(tick).feeGrowthOutside0X128
+}
 
-	feeGrowthAbove0X128 := new(u256.Uint).Sub(feeGrowthGlobal0X128, upperTick.feeGrowthOutside0X128)
-	feeGrowthAbove1X128 := new(u256.Uint).Sub(feeGrowthGlobal1X128, upperTick.feeGrowthOutside1X128)
+// GetTickFeeGrowthOutside1X128 returns the fee growth outside the tick for token 1.
+func (p *Pool) GetTickFeeGrowthOutside1X128(tick int32) *u256.Uint {
+	return p.mustGetTick(tick).feeGrowthOutside1X128
+}
 
-	return feeGrowthAbove0X128, feeGrowthAbove1X128
+// GetTickCumulativeOutside returns the cumulative liquidity outside the tick.
+func (p *Pool) GetTickCumulativeOutside(tick int32) int64 {
+	return p.mustGetTick(tick).tickCumulativeOutside
+}
+
+// GetTickSecondsPerLiquidityOutsideX128 returns the seconds per liquidity outside the tick.
+func (p *Pool) GetTickSecondsPerLiquidityOutsideX128(tick int32) *u256.Uint {
+	return p.mustGetTick(tick).secondsPerLiquidityOutsideX128
+}
+
+// GetTickSecondsOutside returns the seconds outside the tick.
+func (p *Pool) GetTickSecondsOutside(tick int32) uint32 {
+	return p.mustGetTick(tick).secondsOutside
+}
+
+// GetTickInitialized returns whether the tick is initialized.
+func (p *Pool) GetTickInitialized(tick int32) bool {
+	return p.mustGetTick(tick).initialized
 }
 
 // getFeeGrowthInside calculates the fee growth within a specified tick range.
@@ -330,46 +258,6 @@ func (p *Pool) getTick(tick int32) TickInfo {
 	return iTickInfo.(TickInfo)
 }
 
-// GetTickLiquidityGross returns the gross liquidity for the specified tick.
-func (p *Pool) GetTickLiquidityGross(tick int32) *u256.Uint {
-	return p.mustGetTick(tick).liquidityGross
-}
-
-// GetTickLiquidityNet returns the net liquidity for the specified tick.
-func (p *Pool) GetTickLiquidityNet(tick int32) *i256.Int {
-	return p.mustGetTick(tick).liquidityNet
-}
-
-// GetTickFeeGrowthOutside0X128 returns the fee growth outside the tick for token 0.
-func (p *Pool) GetTickFeeGrowthOutside0X128(tick int32) *u256.Uint {
-	return p.mustGetTick(tick).feeGrowthOutside0X128
-}
-
-// GetTickFeeGrowthOutside1X128 returns the fee growth outside the tick for token 1.
-func (p *Pool) GetTickFeeGrowthOutside1X128(tick int32) *u256.Uint {
-	return p.mustGetTick(tick).feeGrowthOutside1X128
-}
-
-// GetTickCumulativeOutside returns the cumulative liquidity outside the tick.
-func (p *Pool) GetTickCumulativeOutside(tick int32) int64 {
-	return p.mustGetTick(tick).tickCumulativeOutside
-}
-
-// GetTickSecondsPerLiquidityOutsideX128 returns the seconds per liquidity outside the tick.
-func (p *Pool) GetTickSecondsPerLiquidityOutsideX128(tick int32) *u256.Uint {
-	return p.mustGetTick(tick).secondsPerLiquidityOutsideX128
-}
-
-// GetTickSecondsOutside returns the seconds outside the tick.
-func (p *Pool) GetTickSecondsOutside(tick int32) uint32 {
-	return p.mustGetTick(tick).secondsOutside
-}
-
-// GetTickInitialized returns whether the tick is initialized.
-func (p *Pool) GetTickInitialized(tick int32) bool {
-	return p.mustGetTick(tick).initialized
-}
-
 // mustGetTick retrieves the TickInfo for a specific tick, panicking if the tick does not exist.
 //
 // This function ensures that the requested tick data exists in the pool's tick mapping.
@@ -404,6 +292,118 @@ func (p *Pool) mustGetTick(tick int32) TickInfo {
 	}
 
 	return iTickInfo.(TickInfo)
+}
+
+// calculateMaxLiquidityPerTick calculates the maximum liquidity
+// per tick for a given tick spacing.
+func calculateMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
+	minTick := (consts.MIN_TICK / tickSpacing) * tickSpacing
+	maxTick := (consts.MAX_TICK / tickSpacing) * tickSpacing
+	numTicks := uint64((maxTick-minTick)/tickSpacing) + 1
+
+	return new(u256.Uint).Div(u256.MustFromDecimal(consts.MAX_UINT128), u256.NewUint(numTicks))
+}
+
+// getFeeGrowthBelowX128 calculates the fee growth below a specified tick.
+//
+// This function computes the fee growth for token 0 and token 1 below a given tick (`tickLower`)
+// relative to the current tick (`tickCurrent`). The fee growth values are adjusted based on whether
+// the `tickCurrent` is above or below the `tickLower`.
+//
+// Parameters:
+//   - tickLower: int32, the lower tick boundary for fee calculation.
+//   - tickCurrent: int32, the current tick index.
+//   - feeGrowthGlobal0X128: *u256.Uint, the global fee growth for token 0 in X128 precision.
+//   - feeGrowthGlobal1X128: *u256.Uint, the global fee growth for token 1 in X128 precision.
+//   - lowerTick: TickInfo, the fee growth and liquidity details for the lower tick.
+//
+// Returns:
+//   - *u256.Uint: Fee growth below `tickLower` for token 0.
+//   - *u256.Uint: Fee growth below `tickLower` for token 1.
+//
+// Workflow:
+//  1. If `tickCurrent` is greater than or equal to `tickLower`:
+//     - Return the `feeGrowthOutside0X128` and `feeGrowthOutside1X128` values of the `lowerTick`.
+//  2. If `tickCurrent` is below `tickLower`:
+//     - Compute the fee growth below the lower tick by subtracting `feeGrowthOutside` values
+//     from the global fee growth values (`feeGrowthGlobal0X128` and `feeGrowthGlobal1X128`).
+//  3. Return the calculated fee growth values for both tokens.
+//
+// Behavior:
+//   - If `tickCurrent >= tickLower`, the fee growth outside the lower tick is returned as-is.
+//   - If `tickCurrent < tickLower`, the fee growth is calculated as:
+//     feeGrowthBelow = feeGrowthGlobal - feeGrowthOutside
+//
+// Example:
+//
+//	feeGrowth0, feeGrowth1 := getFeeGrowthBelowX128(
+//	    100, 150, globalFeeGrowth0, globalFeeGrowth1, lowerTickInfo,
+//	)
+//	fmt.Println("Fee Growth Below:", feeGrowth0, feeGrowth1)
+func getFeeGrowthBelowX128(
+	tickLower, tickCurrent int32,
+	feeGrowthGlobal0X128, feeGrowthGlobal1X128 *u256.Uint,
+	lowerTick TickInfo,
+) (*u256.Uint, *u256.Uint) {
+	if tickCurrent >= tickLower {
+		return lowerTick.feeGrowthOutside0X128, lowerTick.feeGrowthOutside1X128
+	}
+
+	feeGrowthBelow0X128 := new(u256.Uint).Sub(feeGrowthGlobal0X128, lowerTick.feeGrowthOutside0X128)
+	feeGrowthBelow1X128 := new(u256.Uint).Sub(feeGrowthGlobal1X128, lowerTick.feeGrowthOutside1X128)
+
+	return feeGrowthBelow0X128, feeGrowthBelow1X128
+}
+
+// getFeeGrowthAboveX128 calculates the fee growth above a specified tick.
+//
+// This function computes the fee growth for token 0 and token 1 above a given tick (`tickUpper`)
+// relative to the current tick (`tickCurrent`). The fee growth values are adjusted based on whether
+// the `tickCurrent` is above or below the `tickUpper`.
+//
+// Parameters:
+//   - tickUpper: int32, the upper tick boundary for fee calculation.
+//   - tickCurrent: int32, the current tick index.
+//   - feeGrowthGlobal0X128: *u256.Uint, the global fee growth for token 0 in X128 precision.
+//   - feeGrowthGlobal1X128: *u256.Uint, the global fee growth for token 1 in X128 precision.
+//   - upperTick: TickInfo, the fee growth and liquidity details for the upper tick.
+//
+// Returns:
+//   - *u256.Uint: Fee growth above `tickUpper` for token 0.
+//   - *u256.Uint: Fee growth above `tickUpper` for token 1.
+//
+// Workflow:
+//  1. If `tickCurrent` is less than `tickUpper`:
+//     - Return the `feeGrowthOutside0X128` and `feeGrowthOutside1X128` values of the `upperTick`.
+//  2. If `tickCurrent` is greater than or equal to `tickUpper`:
+//     - Compute the fee growth above the upper tick by subtracting `feeGrowthOutside` values
+//     from the global fee growth values (`feeGrowthGlobal0X128` and `feeGrowthGlobal1X128`).
+//  3. Return the calculated fee growth values for both tokens.
+//
+// Behavior:
+//   - If `tickCurrent < tickUpper`, the fee growth outside the upper tick is returned as-is.
+//   - If `tickCurrent >= tickUpper`, the fee growth is calculated as:
+//     feeGrowthAbove = feeGrowthGlobal - feeGrowthOutside
+//
+// Example:
+//
+//	feeGrowth0, feeGrowth1 := getFeeGrowthAboveX128(
+//	    200, 150, globalFeeGrowth0, globalFeeGrowth1, upperTickInfo,
+//	)
+//	fmt.Println("Fee Growth Above:", feeGrowth0, feeGrowth1)
+func getFeeGrowthAboveX128(
+	tickUpper, tickCurrent int32,
+	feeGrowthGlobal0X128, feeGrowthGlobal1X128 *u256.Uint,
+	upperTick TickInfo,
+) (*u256.Uint, *u256.Uint) {
+	if tickCurrent < tickUpper {
+		return upperTick.feeGrowthOutside0X128, upperTick.feeGrowthOutside1X128
+	}
+
+	feeGrowthAbove0X128 := new(u256.Uint).Sub(feeGrowthGlobal0X128, upperTick.feeGrowthOutside0X128)
+	feeGrowthAbove1X128 := new(u256.Uint).Sub(feeGrowthGlobal1X128, upperTick.feeGrowthOutside1X128)
+
+	return feeGrowthAbove0X128, feeGrowthAbove1X128
 }
 
 // checkTicks validates the tick range for a liquidity position.

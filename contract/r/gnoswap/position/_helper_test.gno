@@ -84,7 +84,7 @@ func InitialisePoolTest(t *testing.T) {
 		pl.CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
 	}
 
-	//2. create position
+	// 2. create position
 	std.TestSetOriginCaller(alice)
 	TokenFaucet(t, wugnotPath, alice)
 	TokenFaucet(t, gnsPath, alice)
@@ -202,7 +202,8 @@ func CreatePool(t *testing.T,
 	token1 string,
 	fee uint32,
 	sqrtPriceX96 string,
-	caller std.Address) {
+	caller std.Address,
+) {
 	t.Helper()
 
 	std.TestSetRealm(std.NewUserRealm(caller))
@@ -398,7 +399,6 @@ func MintPositionAll(t *testing.T, caller std.Address) {
 			caller,
 			caller)
 	}
-
 }
 
 func CreatePoolWithoutFee(t *testing.T) {

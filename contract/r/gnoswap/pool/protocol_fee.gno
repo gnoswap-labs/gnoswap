@@ -27,62 +27,6 @@ const (
 	ZeroBps     = uint64(0)
 )
 
-// GetPoolCreationFee returns the poolCreationFee
-// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#getpoolcreationfee
-func GetPoolCreationFee() uint64 {
-	return poolCreationFee
-}
-
-// SetPoolCreationFee sets the poolCreationFee.
-// Only governance contract can execute this function via proposal
-// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#setpoolcreationfee
-func SetPoolCreationFee(fee uint64) {
-	assertOnlyNotHalted()
-	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err.Error())
-	}
-	prevPoolCreationFee := poolCreationFee
-	setPoolCreationFee(fee)
-
-	prevAddr, prevPkgPath := getPrevAsString()
-	std.Emit(
-		"SetPoolCreationFee",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
-		"prevFee", formatUint(prevPoolCreationFee),
-		"newFee", formatUint(fee),
-	)
-}
-
-// SetPoolCreationFeeByAdmin sets the poolCreationFee by Admin.
-// Only admin can execute this function.
-func SetPoolCreationFeeByAdmin(fee uint64) {
-	assertOnlyNotHalted()
-
-	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err.Error())
-	}
-	prevPoolCreationFee := poolCreationFee
-	setPoolCreationFee(fee)
-
-	prevAddr, prevPkgPath := getPrevAsString()
-	std.Emit(
-		"SetPoolCreationFeeByAdmin",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
-		"prevFee", formatUint(prevPoolCreationFee),
-		"newFee", formatUint(fee),
-	)
-}
-
-// setPoolCreationFee this function is internal function called by SetPoolCreationFee
-// And SetPoolCreationFeeByAdmin
-func setPoolCreationFee(fee uint64) {
-	poolCreationFee = fee
-}
-
 // CollectWithdrawalFee withdraws the fee from the user and returns the amount after the fee
 // Only position contract can call this function
 // Input:
@@ -150,6 +94,56 @@ func CollectWithdrawalFee(
 	return afterAmount0.ToString(), afterAmount1.ToString()
 }
 
+// GetPoolCreationFee returns the poolCreationFee
+// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#getpoolcreationfee
+func GetPoolCreationFee() uint64 {
+	return poolCreationFee
+}
+
+// SetPoolCreationFee sets the poolCreationFee.
+// Only governance contract can execute this function via proposal
+// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#setpoolcreationfee
+func SetPoolCreationFee(fee uint64) {
+	assertOnlyNotHalted()
+	caller := getPrevAddr()
+	if err := common.GovernanceOnly(caller); err != nil {
+		panic(err.Error())
+	}
+	prevPoolCreationFee := poolCreationFee
+	setPoolCreationFee(fee)
+
+	prevAddr, prevPkgPath := getPrevAsString()
+	std.Emit(
+		"SetPoolCreationFee",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"prevFee", formatUint(prevPoolCreationFee),
+		"newFee", formatUint(fee),
+	)
+}
+
+// SetPoolCreationFeeByAdmin sets the poolCreationFee by Admin.
+// Only admin can execute this function.
+func SetPoolCreationFeeByAdmin(fee uint64) {
+	assertOnlyNotHalted()
+
+	caller := getPrevAddr()
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err.Error())
+	}
+	prevPoolCreationFee := poolCreationFee
+	setPoolCreationFee(fee)
+
+	prevAddr, prevPkgPath := getPrevAsString()
+	std.Emit(
+		"SetPoolCreationFeeByAdmin",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"prevFee", formatUint(prevPoolCreationFee),
+		"newFee", formatUint(fee),
+	)
+}
+
 // GetWithdrawalFee returns the withdrawal fee
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_withdrawal.gno#getwithdrawalfee
 func GetWithdrawalFee() uint64 {
@@ -203,19 +197,6 @@ func SetWithdrawalFeeByAdmin(fee uint64) {
 	)
 }
 
-// setWithdrawalFee this function is internal function called by SetWithdrawalFee
-// function and SetWithdrawalFeeByAdmin function
-func setWithdrawalFee(fee uint64) {
-	// 10000 (bps) = 100%
-	if fee > MaxBpsValue {
-		panic(addDetailToError(
-			errInvalidWithdrawalFeePct,
-			ufmt.Sprintf("withdrawal_fee.gno__setWithdrawalFee() || fee(%d) must be in range 0 ~ 10000", fee),
-		))
-	}
-	withdrawalFeeBPS = fee
-}
-
 // calculateAmountWithFee calculates the fee amount and the amount after the fee
 //
 // Inputs:
@@ -230,4 +211,23 @@ func calculateAmountWithFee(amount *u256.Uint, fee *u256.Uint) (*u256.Uint, *u25
 	feeAmount = new(u256.Uint).Div(feeAmount, u256.NewUint(MaxBpsValue))
 	afterAmount := new(u256.Uint).Sub(amount, feeAmount)
 	return feeAmount, afterAmount
+}
+
+// setPoolCreationFee this function is internal function called by SetPoolCreationFee
+// And SetPoolCreationFeeByAdmin
+func setPoolCreationFee(fee uint64) {
+	poolCreationFee = fee
+}
+
+// setWithdrawalFee this function is internal function called by SetWithdrawalFee
+// function and SetWithdrawalFeeByAdmin function
+func setWithdrawalFee(fee uint64) {
+	// 10000 (bps) = 100%
+	if fee > MaxBpsValue {
+		panic(addDetailToError(
+			errInvalidWithdrawalFeePct,
+			ufmt.Sprintf("withdrawal_fee.gno__setWithdrawalFee() || fee(%d) must be in range 0 ~ 10000", fee),
+		))
+	}
+	withdrawalFeeBPS = fee
 }

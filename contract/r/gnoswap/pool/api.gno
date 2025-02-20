@@ -2,11 +2,10 @@ package pool
 
 import (
 	b64 "encoding/base64"
-
-	"gno.land/p/demo/json"
-
 	"strconv"
 	"strings"
+
+	"gno.land/p/demo/json"
 
 	"gno.land/p/demo/ufmt"
 )

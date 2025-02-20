@@ -36,9 +36,7 @@ type SwapComputation struct {
 	Cache             SwapCache
 }
 
-var (
-	fixedPointQ128 = u256.MustFromDecimal(consts.Q128)
-)
+var fixedPointQ128 = u256.MustFromDecimal(consts.Q128)
 
 // Swap swaps token0 for token1, or token1 for token0
 // Returns swapped amount0, amount1 in string

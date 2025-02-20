@@ -80,7 +80,7 @@ func TestAssertOnlyOwnerOfToken(t *testing.T) {
 	mockTokenId := uint64(1)
 	mockOwner := admin
 	mockCaller := alice
-	//MakeMintPositionWithoutFee(t)
+	// MakeMintPositionWithoutFee(t)
 
 	t.Run("Token Owned by Caller - No Panic", func(t *testing.T) {
 		defer func() {
@@ -615,7 +615,7 @@ func TestIsOwner(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			//MakeMintPositionWithoutFee(t)
+			// MakeMintPositionWithoutFee(t)
 			got := isOwner(tc.positionId, tc.addr)
 			uassert.Equal(t, tc.expected, got)
 		})

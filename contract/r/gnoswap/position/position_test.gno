@@ -15,9 +15,7 @@ import (
 	"gno.land/r/gnoswap/v1/referral"
 )
 
-var (
-	mockRegistry = make(map[string]bool)
-)
+var mockRegistry = make(map[string]bool)
 
 // MockRegister registers a token path in the mock registry.
 func MockRegister(t *testing.T, tokenPath string) {
@@ -1414,7 +1412,7 @@ func TestReposition(t *testing.T) {
 					)
 				})
 			} else {
-				//positionId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
+				// positionId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
 				tid, _, tickL, tickH, _, _ := Reposition(
 					positionId,
 					tt.tickLower,

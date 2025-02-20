@@ -13,9 +13,7 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
-var (
-	Q128 = u256.MustFromDecimal(consts.Q128)
-)
+var Q128 = u256.MustFromDecimal(consts.Q128)
 
 // getPositionKey generates a unique, encoded key for a liquidity position.
 //

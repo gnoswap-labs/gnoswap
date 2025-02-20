@@ -80,10 +80,10 @@ func TestGetClaimableRewardByAddress(t *testing.T) {
 
 	currentProtocolFeeBalance["token1:token2"] = 500
 	currentProtocolFeeBalance["token2:token3"] = 300
-	//pfTree := avl.NewTree()
-	//pfTree.Set("token1:token2", uint64(500))
-	//pfTree.Set("token2:token3", uint64(300))
-	//userProtocolFeeReward.Set(addr.String(), pfTree)
+	// pfTree := avl.NewTree()
+	// pfTree.Set("token1:token2", uint64(500))
+	// pfTree.Set("token2:token3", uint64(300))
+	// userProtocolFeeReward.Set(addr.String(), pfTree)
 
 	result := GetClaimableRewardByAddress(addr)
 

@@ -12,9 +12,7 @@ import (
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
 
-var (
-	unstakingFee = uint64(100) // 1%
-)
+var unstakingFee = uint64(100) // 1%
 
 // handleUnStakingFee calculates and applies the unstaking fee.
 //

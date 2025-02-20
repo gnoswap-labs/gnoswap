@@ -32,8 +32,8 @@ func createPool(
 
 	poolInfo = poolInfo.updateWithWrapping()
 
-	common.MustRegistered(poolInfo.token0Path)
-	common.MustRegistered(poolInfo.token1Path)
+	assertOnlyRegistered(poolInfo.token0Path)
+	assertOnlyRegistered(poolInfo.token1Path)
 
 	if !poolInfo.isInOrder() {
 		panic(addDetailToError(

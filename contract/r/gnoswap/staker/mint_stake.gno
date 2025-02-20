@@ -29,7 +29,6 @@ func MintAndStake(
 	amount1Min string, // *u256.Uint
 	deadline int64,
 ) (uint64, string, string, string, string) {
-
 	// if one click native
 	if token0 == consts.GNOT || token1 == consts.GNOT {
 		// check sent ugnot

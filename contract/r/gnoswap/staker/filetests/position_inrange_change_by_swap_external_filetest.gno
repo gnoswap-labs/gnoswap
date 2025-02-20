@@ -188,7 +188,6 @@ func testMakeExternalBarStart() {
 
 	std.TestSkipHeights(int64(blockLeft)) // skip until external bar starts
 	std.TestSkipHeights(10)               // skip bit more to see reward calculation
-
 }
 
 func testCheckReward01() {

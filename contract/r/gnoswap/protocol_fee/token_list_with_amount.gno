@@ -10,9 +10,7 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
-var (
-	tokenListWithAmount = make(map[string]uint64) // tokenPath -> amount
-)
+var tokenListWithAmount = make(map[string]uint64) // tokenPath -> amount
 
 // TokenList returns only the list of token path.
 // If positive is true, it returns only the token path with amount > 0.
