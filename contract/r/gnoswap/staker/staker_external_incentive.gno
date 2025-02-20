@@ -83,7 +83,7 @@ func CreateExternalIncentive(
 
 	caller := getPrevAddr()
 
-	// incentiveId := incentiveIdCompute(std.PrevRealm().Addr(), targetPoolPath, rewardToken, startTimestamp, endTimestamp, std.GetHeight())
+	// incentiveId := incentiveIdCompute(std.PrevRealm().Address(), targetPoolPath, rewardToken, startTimestamp, endTimestamp, std.GetHeight())
 	incentiveId := incentiveIdByTime(startTimestamp, endTimestamp, caller, rewardToken)
 
 	externalDuration := uint64(endTimestamp - startTimestamp)

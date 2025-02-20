@@ -17,5 +17,5 @@ func getPrevAddr() std.Address {
 // getPrevAsString returns the address and package path of the previous realm.
 func getPrevAsString() (string, string) {
 	prev := getPrevRealm()
-	return prev.Addr().String(), prev.PkgPath()
+	return prev.Address().String(), prev.PkgPath()
 }

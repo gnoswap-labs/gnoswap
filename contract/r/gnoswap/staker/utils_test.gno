@@ -193,7 +193,7 @@ func TestGetPrevRealm(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			std.TestSetOrigCaller(std.Address(tc.originCaller))
 			got := getPrevRealm()
-			uassert.Equal(t, got.Addr().String(), tc.expected[0])
+			uassert.Equal(t, got.Address().String(), tc.expected[0])
 			uassert.Equal(t, got.PkgPath(), tc.expected[1])
 		})
 	}

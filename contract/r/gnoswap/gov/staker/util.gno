@@ -46,7 +46,7 @@ func isUserCall() bool {
 // getPrev returns the previous realm's address and package path
 func getPrev() (string, string) {
 	prev := getPrevRealm()
-	return prev.Addr().String(), prev.PkgPath()
+	return prev.Address().String(), prev.PkgPath()
 }
 
 // derivePkgAddr derives the Realm address from it's pkgPath parameter

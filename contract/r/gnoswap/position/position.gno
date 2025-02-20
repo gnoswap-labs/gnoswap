@@ -190,8 +190,8 @@ func Mint(
 	assertOnlyUserOrStaker(prevCaller)
 	if isUserCall() {
 		// if user called, validate the prev address and input addresses(mintTo, caller)
-		assertOnlyValidAddressWith(prevCaller.Addr(), mintTo)
-		assertOnlyValidAddressWith(prevCaller.Addr(), caller)
+		assertOnlyValidAddressWith(prevCaller.Address(), mintTo)
+		assertOnlyValidAddressWith(prevCaller.Address(), caller)
 	}
 	checkDeadline(deadline)
 

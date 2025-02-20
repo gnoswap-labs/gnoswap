@@ -181,11 +181,11 @@ func TestEmptyRewardPool(t *testing.T) {
 		{
 			name: "collect with empty reward pool",
 			setupFn: func() {
-				//userEmissionReward.Remove(userRealm.Addr().String())
+				//userEmissionReward.Remove(userRealm.Address().String())
 			},
 			expectPanic: false,
 			checkFn: func(t *testing.T) {
-				if v, exists := userEmissionReward.Get(userRealm.Addr().String()); exists {
+				if v, exists := userEmissionReward.Get(userRealm.Address().String()); exists {
 					t.Errorf("Expected userEmissionReward to be removed, but got %d", v.(uint64))
 				}
 			},
@@ -193,11 +193,11 @@ func TestEmptyRewardPool(t *testing.T) {
 		{
 			name: "collect with empty protocol fee rewards",
 			setupFn: func() {
-				//userProtocolFeeReward.Remove(userRealm.Addr().String())
+				//userProtocolFeeReward.Remove(userRealm.Address().String())
 			},
 			expectPanic: false,
 			checkFn: func(t *testing.T) {
-				if v, exists := userProtocolFeeReward.Get(userRealm.Addr().String()); exists {
+				if v, exists := userProtocolFeeReward.Get(userRealm.Address().String()); exists {
 					t.Errorf("Expected userProtocolFeeReward to be removed, but got %d", v.(uint64))
 				}
 			},
@@ -206,7 +206,7 @@ func TestEmptyRewardPool(t *testing.T) {
 			name: "collect with empty staker GNS balance",
 			setupFn: func() {
 				std.TestSetRealm(std.NewCodeRealm(consts.GOV_STAKER_PATH))
-				userEmissionReward.Set(userRealm.Addr().String(), uint64(1000))
+				userEmissionReward.Set(userRealm.Address().String(), uint64(1000))
 			},
 			expectPanic:    true,
 			expectPanicMsg: "not enough GNS",
@@ -261,7 +261,7 @@ func TestProtocolFee(t *testing.T) {
 			setupFn: func() {
 				//tree := avl.NewTree()
 				//tree.Set(consts.WUGNOT_PATH, uint64(^uint64(0)))
-				//userProtocolFeeReward.Set(userRealm.Addr().String(), tree)
+				//userProtocolFeeReward.Set(userRealm.Address().String(), tree)
 				currentProtocolFeeBalance[consts.WUGNOT_PATH] = ^uint64(0)
 			},
 			expectPanic: true,
@@ -273,7 +273,7 @@ func TestProtocolFee(t *testing.T) {
 				//tree := avl.NewTree()
 				//tree.Set(consts.WUGNOT_PATH, uint64(1000))
 				//tree.Set("some/other/token", uint64(2000))
-				//userProtocolFeeReward.Set(userRealm.Addr().String(), tree)
+				//userProtocolFeeReward.Set(userRealm.Address().String(), tree)
 				currentProtocolFeeBalance[consts.WUGNOT_PATH] = 1000
 				currentProtocolFeeBalance["some/other/token"] = 2000
 			},
@@ -286,13 +286,13 @@ func TestProtocolFee(t *testing.T) {
 				//tree := avl.NewTree()
 				//tree.Set(consts.WUGNOT_PATH, uint64(0))
 				//tree.Set("some/other/token", uint64(0))
-				//userProtocolFeeReward.Set(userRealm.Addr().String(), tree)
+				//userProtocolFeeReward.Set(userRealm.Address().String(), tree)
 				currentProtocolFeeBalance[consts.WUGNOT_PATH] = 0
 				currentProtocolFeeBalance["some/other/token"] = 0
 			},
 			expectPanic: false,
 			checkFn: func(t *testing.T) {
-				val, exists := userProtocolFeeReward.Get(userRealm.Addr().String())
+				val, exists := userProtocolFeeReward.Get(userRealm.Address().String())
 				if !exists {
 					t.Errorf("Expected protocol fee reward entry to exist")
 					return
@@ -537,6 +537,6 @@ func TestCollectRewardFromLaunchPad(t *testing.T) {
 		CollectRewardFromLaunchPad(userRealm.Address())
 	}
 
-	// Then set realm to a custom "launchpadRealm" whose .Addr() == consts.LAUNCHPAD_ADDR
+	// Then set realm to a custom "launchpadRealm" whose .Address() == consts.LAUNCHPAD_ADDR
 	// => call normal and see if distribution works
 }
