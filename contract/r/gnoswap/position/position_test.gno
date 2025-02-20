@@ -158,12 +158,12 @@ func TestExistPosition(t *testing.T) {
 	position := newDummyPosition(id)
 
 	t.Run("False - Position does not exist", func(t *testing.T) {
-		uassert.False(t, existPosition(id))
+		uassert.False(t, ExistPosition(id))
 	})
 
 	t.Run("True - Position exists", func(t *testing.T) {
 		setPosition(id, position)
-		uassert.True(t, existPosition(id))
+		uassert.True(t, ExistPosition(id))
 		removePosition(id)
 	})
 }
@@ -221,31 +221,31 @@ func TestNextIdFunctions(t *testing.T) {
 	nextId = uint64(1)
 
 	t.Run("Initial nextId should return 1", func(t *testing.T) {
-		uassert.Equal(t, uint64(1), getNextId(), "expected nextId to start at 1")
+		uassert.Equal(t, uint64(1), GetNextId(), "expected nextId to start at 1")
 	})
 
 	t.Run("After mint nextId should return 2", func(t *testing.T) {
 		incrementNextId()
-		uassert.Equal(t, getNextId(), uint64(2), "expected nextId to be 2 after mint")
+		uassert.Equal(t, GetNextId(), uint64(2), "expected nextId to be 2 after mint")
 	})
 
 	t.Run("Increment nextId once", func(t *testing.T) {
 		incrementNextId()
-		uassert.Equal(t, uint64(3), getNextId(), "expected nextId to increment to 3")
+		uassert.Equal(t, uint64(3), GetNextId(), "expected nextId to increment to 3")
 	})
 
 	t.Run("Increment nextId multiple times", func(t *testing.T) {
 		for i := 0; i < 2; i++ {
 			incrementNextId()
 		}
-		uassert.Equal(t, uint64(5), getNextId(), "expected nextId to increment to 5 after 3 more increments")
+		uassert.Equal(t, uint64(5), GetNextId(), "expected nextId to increment to 5 after 3 more increments")
 	})
 
 	t.Run("Ensure no overflow on normal increments", func(t *testing.T) {
 		for i := uint64(5); i < 100; i++ {
 			incrementNextId()
 		}
-		uassert.Equal(t, uint64(100), getNextId(), "expected nextId to reach 100 after continuous increments")
+		uassert.Equal(t, uint64(100), GetNextId(), "expected nextId to reach 100 after continuous increments")
 	})
 }
 
@@ -865,7 +865,7 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 		tokensOwed1:              u256.Zero(),
 		burned:                   false,
 	}
-	id := getNextId()
+	id := GetNextId()
 	setPosition(id, position)
 	incrementNextId()
 
