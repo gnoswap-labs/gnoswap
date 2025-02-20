@@ -37,11 +37,11 @@ jobs:
       - name: Check out gnoswap repo
         uses: actions/checkout@v4
 
-      - name: Check out gno(master)
+      - name: Check out gno(master - before change std prefix)
         uses: actions/checkout@v4
         with:
           repository: gnolang/gno
-          ref: main
+          ref: ec696d40ae44eee809e3ca2c7cdb2ce4c6eece04
           path: ./gno
 
       - name: Set up Go
