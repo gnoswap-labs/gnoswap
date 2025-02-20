@@ -315,8 +315,8 @@ func TestCollect(t *testing.T) {
 				std.TestSetOriginCaller(positionOwner)
 				newCoins := std.Coins{{"ugnot", int64(10000000000)}}
 				std.TestIssueCoins(positionOwner, newCoins)
-				std.TestSetOrigSend(newCoins, nil)
-				banker := std.GetBanker(std.BankerTypeRealmSend)
+				std.TestSetOriginSend(newCoins, nil)
+				banker := std.NewBanker(std.BankerTypeRealmSend)
 				banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
 				wugnot.Deposit()
 
@@ -499,8 +499,8 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 			std.TestSetOriginCaller(positionOwner)
 			newCoins := std.Coins{{"ugnot", int64(10000000000)}}
 			std.TestIssueCoins(positionOwner, newCoins)
-			std.TestSetOrigSend(newCoins, nil)
-			banker := std.GetBanker(std.BankerTypeRealmSend)
+			std.TestSetOriginSend(newCoins, nil)
+			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
 			wugnot.Deposit()
 			if tt.recipient != positionOwner {

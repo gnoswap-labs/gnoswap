@@ -950,8 +950,8 @@ func TestSwap_FeeTier100(t *testing.T) {
 				std.TestSetOriginCaller(faucetAddress)
 				newCoins := std.Coins{{"ugnot", int64(10000000000)}}
 				std.TestIssueCoins(consts.ADMIN, newCoins)
-				std.TestSetOrigSend(newCoins, nil)
-				banker := std.GetBanker(std.BankerTypeRealmSend)
+				std.TestSetOriginSend(newCoins, nil)
+				banker := std.NewBanker(std.BankerTypeRealmSend)
 				banker.SendCoins(consts.ADMIN, consts.WUGNOT_ADDR, newCoins)
 				wugnot.Deposit()
 
