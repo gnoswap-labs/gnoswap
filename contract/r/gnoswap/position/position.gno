@@ -975,7 +975,7 @@ func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, st
 	mustUpdatePosition(postionId, position)
 
 	// handle withdrawal fee
-	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(
+	withoutFee0, withoutFee1 := pl.CollectWithdrawalFee(
 		postionId,
 		token0,
 		amount0,
