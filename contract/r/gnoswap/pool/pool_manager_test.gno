@@ -167,7 +167,6 @@ func TestGetPool(t *testing.T) {
 				if r := recover(); r == nil {
 					if tt.shouldPanic {
 						t.Errorf(">>> %s: expected panic but got none", tt.name)
-						return
 					}
 				} else {
 					switch r.(type) {
