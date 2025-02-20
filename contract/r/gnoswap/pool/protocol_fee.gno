@@ -58,7 +58,7 @@ func CollectWithdrawalFee(
 	// only position contract can call this function
 	caller := getPrevAddr()
 	if err := common.PositionOnly(caller); err != nil {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errNoPermission,
 			ufmt.Sprintf("only position(%s) can call this function, called from %s", consts.POSITION_ADDR, caller.String()),
 		))
@@ -224,7 +224,7 @@ func setPoolCreationFee(fee uint64) {
 func setWithdrawalFee(fee uint64) {
 	// 10000 (bps) = 100%
 	if fee > MaxBpsValue {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errInvalidWithdrawalFeePct,
 			ufmt.Sprintf("withdrawal_fee.gno__setWithdrawalFee() || fee(%d) must be in range 0 ~ 10000", fee),
 		))

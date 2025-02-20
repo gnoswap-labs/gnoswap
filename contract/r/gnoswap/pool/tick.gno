@@ -170,7 +170,7 @@ func (p *Pool) tickUpdate(
 	liquidityGrossAfter := liquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
 
 	if !(liquidityGrossAfter.Lte(maxLiquidity)) {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errLiquidityCalculation,
 			ufmt.Sprintf("liquidityGrossAfter(%s) overflows maxLiquidity(%s)", liquidityGrossAfter.ToString(), maxLiquidity.ToString()),
 		))
@@ -285,7 +285,7 @@ func (p *Pool) mustGetTick(tick int32) TickInfo {
 	tickStr := strconv.Itoa(int(tick))
 	iTickInfo, exist := p.ticks.Get(tickStr)
 	if !exist {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errDataNotFound,
 			ufmt.Sprintf("tick(%d) does not exist", tick),
 		))
@@ -418,7 +418,7 @@ func checkTicks(tickLower, tickUpper int32) {
 
 func assertTickLowerLessThanUpper(tickLower, tickUpper int32) {
 	if tickLower >= tickUpper {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errInvalidTickRange,
 			ufmt.Sprintf("tickLower(%d), tickUpper(%d)", tickLower, tickUpper),
 		))
@@ -427,7 +427,7 @@ func assertTickLowerLessThanUpper(tickLower, tickUpper int32) {
 
 func assertValidTickLower(tickLower int32) {
 	if tickLower < consts.MIN_TICK {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errTickLowerInvalid,
 			ufmt.Sprintf("tickLower(%d) < MIN_TICK(%d)", tickLower, consts.MIN_TICK),
 		))
@@ -436,7 +436,7 @@ func assertValidTickLower(tickLower int32) {
 
 func assertValidTickUpper(tickUpper int32) {
 	if tickUpper >= consts.MAX_TICK {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errTickUpperInvalid,
 			ufmt.Sprintf("tickUpper(%d) > MAX_TICK(%d)", tickUpper, consts.MAX_TICK),
 		))

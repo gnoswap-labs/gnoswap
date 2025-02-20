@@ -15,7 +15,7 @@ func createPool(
 	poolInfo := newPoolParams(token0Path, token1Path, fee, sqrtPriceX96, tickSpacing)
 	// check if token0Path == token1Path
 	if poolInfo.isSameTokenPath() {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errDuplicateTokenInPool,
 			ufmt.Sprintf(
 				"expected token0Path(%s) != token1Path(%s)",
@@ -24,7 +24,7 @@ func createPool(
 		))
 	}
 	if !poolInfo.isSupportedFee(fee) {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errUnsupportedFeeTier,
 			ufmt.Sprintf("expected fee(%d) to be one of %d, %d, %d, %d", fee, FeeTier100, FeeTier500, FeeTier3000, FeeTier10000),
 		))
@@ -36,7 +36,7 @@ func createPool(
 	assertOnlyRegistered(poolInfo.token1Path)
 
 	if !poolInfo.isInOrder() {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errTokenSortOrder,
 			ufmt.Sprintf("expected token0Path(%s) < token1Path(%s)", token0Path, token1Path),
 		))

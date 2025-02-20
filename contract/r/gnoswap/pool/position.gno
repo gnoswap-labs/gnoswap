@@ -75,7 +75,7 @@ func positionUpdate(
 	var liquidityNext *u256.Uint
 	if liquidityDelta.IsZero() {
 		if position.liquidity.IsZero() {
-			panic(addDetailToError(
+			panic(newErrorWithDetail(
 				errZeroLiquidity,
 				"both liquidityDelta and current position's liquidity are zero",
 			))
@@ -184,7 +184,7 @@ func (p *Pool) setPosition(posKey string, positionInfo PositionInfo) {
 func (p *Pool) mustGetPosition(positionKey string) PositionInfo {
 	positionInfo, exist := p.GetPosition(positionKey)
 	if !exist {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errDataNotFound,
 			ufmt.Sprintf("positionKey(%s) does not exist", positionKey),
 		))

@@ -51,7 +51,7 @@ func posKeyDivide(posKey string) (string, int32, int32) {
 
 	res := strings.Split(posKey, "__")
 	if len(res) != 3 {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errInvalidPositionKey,
 			ufmt.Sprintf("invalid posKey(%s)", posKey),
 		))

@@ -90,7 +90,7 @@ func (p *Pool) getTickBitmap(wordPos int16) *u256.Uint {
 
 	iU256, exist := p.tickBitmaps.Get(wordPosStr)
 	if !exist {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errDataNotFound,
 			ufmt.Sprintf("tickBitmap(%d) does not exist", wordPos),
 		))
