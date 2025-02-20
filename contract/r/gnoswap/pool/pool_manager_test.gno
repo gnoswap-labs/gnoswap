@@ -99,7 +99,6 @@ func TestCreatePool(t *testing.T) {
 					r := recover()
 					if r == nil {
 						t.Errorf("expected panic but got none")
-						return
 					}
 					errMsg := r.(string)
 					if !strings.Contains(errMsg, tt.panicMsg) {
