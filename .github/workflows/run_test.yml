@@ -41,7 +41,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: gnolang/gno
-          ref: ec696d40ae44eee809e3ca2c7cdb2ce4c6eece04
+          ref: master
           path: ./gno
 
       - name: Set up Go
