@@ -9,8 +9,8 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 var (
@@ -99,7 +99,7 @@ func Mint(to std.Address, amount uint64) {
 	common.IsHalted()
 
 	// only (gov staker) or (launchpad) contract can call Mint
-	caller := std.PrevRealm().Addr()
+	caller := std.PreviousRealm().Address()
 
 	govAddress := getContractAddress(access.ROLE_GOV_STAKER)
 	launchpadAddress := getContractAddress(access.ROLE_LAUNCHPAD)
@@ -130,7 +130,7 @@ func Mint(to std.Address, amount uint64) {
 func MintByLaunchPad(to std.Address, amount uint64) {
 	common.IsHalted()
 
-	caller := std.PrevRealm().Addr()
+	caller := std.PreviousRealm().Address()
 	launchpadAddr := getContractAddress(access.ROLE_LAUNCHPAD)
 	if err := access.LaunchpadOnly(caller); err != nil {
 		panic(addDetailToError(
@@ -166,7 +166,7 @@ func Burn(from std.Address, amount uint64) {
 	common.IsHalted()
 
 	// only (gov staker) or (launchpad) contract can call Mint
-	caller := std.PrevRealm().Addr()
+	caller := std.PreviousRealm().Address()
 
 	gsAddr := getContractAddress(access.ROLE_GOV_STAKER)
 	launchpadAddr := getContractAddress(access.ROLE_LAUNCHPAD)
@@ -183,7 +183,7 @@ func Burn(from std.Address, amount uint64) {
 func BurnByLaunchPad(from std.Address, amount uint64) {
 	common.IsHalted()
 
-	caller := std.PrevRealm().Addr()
+	caller := std.PreviousRealm().Address()
 	if err := access.LaunchpadOnly(caller); err != nil {
 		panic(addDetailToError(
 			errNoPermission,

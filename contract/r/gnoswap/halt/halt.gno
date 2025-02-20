@@ -99,7 +99,7 @@ func IsHalted(opType ...phalt.OpType) error {
 // Returns:
 // - error: nil if successful, otherwise an error.
 func SetHaltLevelByAdmin(haltLevel phalt.LevelID) error {
-	caller := std.PrevRealm().Addr()
+	caller := std.PreviousRealm().Address()
 	if err := access.AdminOnly(caller); err != nil {
 		return ufmt.Errorf("only admin can set halt level, called from %s", caller)
 	}

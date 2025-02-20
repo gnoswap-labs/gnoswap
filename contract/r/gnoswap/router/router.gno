@@ -94,7 +94,7 @@ func finalizeSwap(
 
 	afterFee := handleSwapFee(outputToken, resultAmountOut)
 
-	userNewWugnotBalance := wugnot.BalanceOf(std.PrevRealm().Addr())
+	userNewWugnotBalance := wugnot.BalanceOf(std.PreviousRealm().Address())
 	if inputToken == consts.GNOT {
 		totalBefore := userBeforeWugnotBalance + userWrappedWugnot
 		spend := totalBefore - userNewWugnotBalance

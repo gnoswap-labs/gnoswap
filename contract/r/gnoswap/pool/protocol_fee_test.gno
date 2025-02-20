@@ -29,7 +29,7 @@ func TestSetPoolCreationFee(t *testing.T) {
 			name: "Panic call by non-governance",
 			action: func() {
 				const newFee = 2_000_000_000
-				std.TestSetOrigCaller(admin)
+				std.TestSetOriginCaller(admin)
 				SetPoolCreationFee(newFee)
 			},
 			verify:      nil,
@@ -112,7 +112,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			name: "Panic call by non-admin (user)",
 			action: func() {
 				const newFee = 2_000_000_000
-				std.TestSetOrigCaller(alice)
+				std.TestSetOriginCaller(alice)
 				{
 					SetPoolCreationFeeByAdmin(newFee)
 				}
@@ -125,7 +125,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			name: "Success call by admin",
 			action: func() {
 				const newFee = 2_000_000_000
-				std.TestSetOrigCaller(admin)
+				std.TestSetOriginCaller(admin)
 				{
 					SetPoolCreationFeeByAdmin(newFee)
 				}
@@ -140,7 +140,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			name: "Success call by admin (rollback)",
 			action: func() {
 				const newFee = 1_000_000_000
-				std.TestSetOrigCaller(admin)
+				std.TestSetOriginCaller(admin)
 				{
 					SetPoolCreationFeeByAdmin(newFee)
 				}
@@ -200,7 +200,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 		{
 			name: "Panic if caller is not position contract",
 			action: func(t *testing.T) {
-				std.TestSetOrigCaller(admin)
+				std.TestSetOriginCaller(admin)
 				CollectWithdrawalFee(0, "gno.land/r/onbloc/foo", "0", "gno.land/r/onbloc/foo", "0", "", admin)
 			},
 			verify:      nil,

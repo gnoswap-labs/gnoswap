@@ -268,7 +268,7 @@ func TestCollectRewardByDepositId_FailCases(t *testing.T) {
 		deposits[depositId] = Deposit{
 			id:              depositId,
 			projectId:       projectId,
-			claimableHeight: uint64(std.GetHeight()) + 1000,
+			claimableHeight: uint64(std.ChainHeight()) + 1000,
 		}
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-024] not yet claim reward || need block >= 1123, current=123", func() {

@@ -509,7 +509,7 @@ func (r *Reward) InfoOf(depositId string) *RewardInfo {
 }
 func (r *Reward) calculateRewardPerDeposit(rewardPerBlock *u256.Uint, totalStaked uint64) (*u256.Uint, error) {
 	// blockDuration * rewardPerBlock / totalStaked
-	currentHeight := uint64(std.GetHeight())
+	currentHeight := uint64(std.ChainHeight())
 	lastUpdateHeight := r.GetLastHeight()
 	if currentHeight == lastUpdateHeight {
 		return u256.Zero(), nil

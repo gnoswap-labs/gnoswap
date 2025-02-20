@@ -231,9 +231,9 @@ func TestGetPrevRealm(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			std.TestSetOrigCaller(std.Address(tc.originCaller))
+			std.TestSetOriginCaller(std.Address(tc.originCaller))
 			got := getPrevRealm()
-			uassert.Equal(t, got.Addr().String(), tc.expected[0])
+			uassert.Equal(t, got.Address().String(), tc.expected[0])
 			uassert.Equal(t, got.PkgPath(), tc.expected[1])
 		})
 	}
@@ -253,7 +253,7 @@ func TestGetPrevAddr(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			std.TestSetOrigCaller(std.Address(tc.originCaller))
+			std.TestSetOriginCaller(std.Address(tc.originCaller))
 			got := getPrevAddr()
 			uassert.Equal(t, got.String(), tc.expected.String())
 		})

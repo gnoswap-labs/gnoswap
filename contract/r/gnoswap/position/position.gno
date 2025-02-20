@@ -190,8 +190,8 @@ func Mint(
 	assertOnlyUserOrStaker(prevCaller)
 	if isUserCall() {
 		// if user called, validate the prev address and input addresses(mintTo, caller)
-		assertOnlyValidAddressWith(prevCaller.Addr(), mintTo)
-		assertOnlyValidAddressWith(prevCaller.Addr(), caller)
+		assertOnlyValidAddressWith(prevCaller.Address(), mintTo)
+		assertOnlyValidAddressWith(prevCaller.Address(), caller)
 	}
 	checkDeadline(deadline)
 
@@ -982,7 +982,7 @@ func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, st
 		token1,
 		amount1,
 		position.poolKey,
-		std.PrevRealm().Addr(),
+		std.PreviousRealm().Address(),
 	)
 
 	// UNWRAP
