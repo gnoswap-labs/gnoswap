@@ -312,7 +312,7 @@ func TestCollect(t *testing.T) {
 			}
 
 			if !tt.expectPanic {
-				std.TestSetOrigCaller(positionOwner)
+				std.TestSetOriginCaller(positionOwner)
 				newCoins := std.Coins{{"ugnot", int64(10000000000)}}
 				std.TestIssueCoins(positionOwner, newCoins)
 				std.TestSetOrigSend(newCoins, nil)
@@ -351,7 +351,7 @@ func TestCollect(t *testing.T) {
 				std.TestSkipHeights(1)
 
 				// Swap
-				std.TestSetOrigCaller(positionOwner)
+				std.TestSetOriginCaller(positionOwner)
 				wugnot.Transfer(routerContract, 20000000)
 				gns.Transfer(routerContract, 20000000)
 
@@ -496,7 +496,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 				uassert.Equal(t, tt.feeProtocol0, pool.Slot0FeeProtocol()%16)
 				uassert.Equal(t, tt.feeProtocol1, pool.Slot0FeeProtocol()>>4)
 			}
-			std.TestSetOrigCaller(positionOwner)
+			std.TestSetOriginCaller(positionOwner)
 			newCoins := std.Coins{{"ugnot", int64(10000000000)}}
 			std.TestIssueCoins(positionOwner, newCoins)
 			std.TestSetOrigSend(newCoins, nil)
@@ -538,7 +538,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 			std.TestSkipHeights(1)
 
 			// Swap
-			std.TestSetOrigCaller(tt.recipient)
+			std.TestSetOriginCaller(tt.recipient)
 			wugnot.Transfer(routerContract, 20000000)
 			gns.Transfer(routerContract, 20000000)
 

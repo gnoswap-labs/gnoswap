@@ -947,7 +947,7 @@ func TestSwap_FeeTier100(t *testing.T) {
 				gns.Approve(routerContract, maxApprove)
 
 				faucetAddress := consts.ADMIN
-				std.TestSetOrigCaller(faucetAddress)
+				std.TestSetOriginCaller(faucetAddress)
 				newCoins := std.Coins{{"ugnot", int64(10000000000)}}
 				std.TestIssueCoins(consts.ADMIN, newCoins)
 				std.TestSetOrigSend(newCoins, nil)
@@ -990,11 +990,11 @@ func TestSwap_FeeTier100(t *testing.T) {
 				gns.Transfer(consts.POOL_ADDR, 20000000)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOrigCaller(consts.ADMIN)
+				std.TestSetOriginCaller(consts.ADMIN)
 				wugnot.Transfer(consts.ROUTER_ADDR, 20000000)
 				gns.Transfer(consts.ROUTER_ADDR, 20000000)
 
-				std.TestSetOrigCaller(consts.ROUTER_ADDR)
+				std.TestSetOriginCaller(consts.ROUTER_ADDR)
 				wugnot.Approve(poolContract, maxApprove)
 
 				actualAmount0, actualAmount1 := Swap(
