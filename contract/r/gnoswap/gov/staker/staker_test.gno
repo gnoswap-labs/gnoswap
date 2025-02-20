@@ -12,7 +12,7 @@ import (
 )
 
 func TestDelegate(t *testing.T) {
-	std.TestSetOrigCaller(consts.ADMIN)
+	std.TestSetOriginCaller(consts.ADMIN)
 	SetRunning(true)
 
 	std.TestSetRealm(userRealm)
@@ -77,14 +77,14 @@ func TestDelegate(t *testing.T) {
 
 	// 7) running = false => optional check
 	{
-		std.TestSetOrigCaller(consts.ADMIN)
+		std.TestSetOriginCaller(consts.ADMIN)
 		SetRunning(false)
 		// delegate?
 		// depending on code logic, might skip cleanDelegationStatHistory() or do something else
 		// if there's logic that forbids delegation when not running, test that
 		// For now, assume it still works but doesn't clean.
 		// Restore running to true for subsequent tests.
-		std.TestSetOrigCaller(consts.ADMIN)
+		std.TestSetOriginCaller(consts.ADMIN)
 		SetRunning(true)
 	}
 
@@ -146,7 +146,7 @@ func TestDelegate_Boundary_Values(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetOrigCaller(consts.ADMIN)
+			std.TestSetOriginCaller(consts.ADMIN)
 			SetRunning(true)
 			std.TestSetRealm(userRealm)
 
@@ -349,11 +349,11 @@ func TestRedelegate(t *testing.T) {
 	to := makeFakeAddress("validator_1")
 	amount := uint64(1_000_000)
 
-	std.TestSetOrigCaller(userRealm.Address())
+	std.TestSetOriginCaller(userRealm.Address())
 	gns.Approve(consts.GOV_STAKER_ADDR, amount)
 	Delegate(from, amount, "")
 
-	std.TestSetOrigCaller(userRealm.Address())
+	std.TestSetOriginCaller(userRealm.Address())
 	gns.Approve(consts.GOV_STAKER_ADDR, amount)
 	Redelegate(from, to, amount)
 
@@ -379,7 +379,7 @@ func TestUndelegate(t *testing.T) {
 	to := makeFakeAddress("validator_1")
 	amount := uint64(1_000_000)
 
-	std.TestSetOrigCaller(user3Realm.Address())
+	std.TestSetOriginCaller(user3Realm.Address())
 	gns.Approve(consts.GOV_STAKER_ADDR, amount)
 	Delegate(to, amount, "")
 	Undelegate(to, amount)
@@ -502,7 +502,7 @@ func TestCollectReward(t *testing.T) {
 	std.TestSkipHeights(100)
 
 	// call CollectReward
-	std.TestSetOrigCaller(user2Realm.Address())
+	std.TestSetOriginCaller(user2Realm.Address())
 	CollectReward()
 
 	// expect user emissionReward = 0

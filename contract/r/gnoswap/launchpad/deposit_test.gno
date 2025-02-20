@@ -756,7 +756,7 @@ func TestCollectDepositGnsByDepositId_ExactClaimable(t *testing.T) {
 	token, _ := setupXGNSTest(t)
 
 	std.TestSetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
-	std.TestSetOrigCaller(std.Address(consts.LAUNCHPAD_PATH))
+	std.TestSetOriginCaller(std.Address(consts.LAUNCHPAD_PATH))
 	xgnsMint(t, token, consts.LAUNCHPAD_ADDR, 1000)
 
 	std.TestSetRealm(std.NewUserRealm(consts.LAUNCHPAD_ADDR))

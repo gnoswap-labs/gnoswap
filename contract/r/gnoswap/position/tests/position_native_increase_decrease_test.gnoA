@@ -50,7 +50,7 @@ func testMintPosition(t *testing.T) {
 		// send & set orig send
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
 		banker.SendCoins(adminAddr, consts.POSITION_ADDR, std.Coins{{"ugnot", 50000005}})
-		std.TestSetOrigSend(std.Coins{{"ugnot", 50000005}}, nil)
+		std.TestSetOriginSend(std.Coins{{"ugnot", 50000005}}, nil)
 
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(0))
 
@@ -112,7 +112,7 @@ func testIncreaseLiquidity(t *testing.T) {
 		// send & set orig send
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
 		banker.SendCoins(adminAddr, consts.POSITION_ADDR, std.Coins{{"ugnot", 10000005}})
-		std.TestSetOrigSend(std.Coins{{"ugnot", 10000005}}, nil)
+		std.TestSetOriginSend(std.Coins{{"ugnot", 10000005}}, nil)
 
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(5))
 		uassert.Equal(t, wugnot.BalanceOf(adminAddr), uint64(0))

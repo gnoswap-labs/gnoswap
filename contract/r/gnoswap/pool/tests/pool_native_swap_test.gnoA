@@ -41,7 +41,7 @@ func TestMint(t *testing.T) {
 	testBanker := std.NewBanker(std.BankerTypeRealmIssue)
 
 	// simulate transfer
-	std.TestSetOrigSend(std.Coins{{"ugnot", 1_000_000}}, nil)
+	std.TestSetOriginSend(std.Coins{{"ugnot", 1_000_000}}, nil)
 
 	// Deposit(wrap)
 	std.TestSetRealm(adminRealm)

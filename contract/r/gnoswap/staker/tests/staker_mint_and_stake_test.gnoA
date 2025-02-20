@@ -66,7 +66,7 @@ func testMintAndStakeNative(t *testing.T) {
 		// send & set orig send
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
 		banker.SendCoins(adminAddr, consts.STAKER_ADDR, std.Coins{{"ugnot", 100005}})
-		std.TestSetOrigSend(std.Coins{{"ugnot", 100005}}, nil)
+		std.TestSetOriginSend(std.Coins{{"ugnot", 100005}}, nil)
 
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(0))
 

@@ -357,7 +357,7 @@ func TestSwap_Failures(t *testing.T) {
 				tt.setupFn(t)
 			}
 
-			std.TestSetOrigCaller(tt.payer)
+			std.TestSetOriginCaller(tt.payer)
 
 			if tt.expectError {
 				defer func() {
@@ -521,7 +521,7 @@ func TestSwapAndDrySwapComparison(t *testing.T) {
 				tt.sqrtPriceLimitX96,
 			)
 
-			std.TestSetOrigCaller(consts.ROUTER_ADDR)
+			std.TestSetOriginCaller(consts.ROUTER_ADDR)
 			actualAmount0, actualAmount1 := Swap(
 				tt.token0Path,
 				tt.token1Path,
@@ -591,7 +591,7 @@ func TestSwapAndDrySwapComparison_amount_zero(t *testing.T) {
 				TokenApprove(t, gnsPath, addr, pool, uint64(1000))
 			},
 			action: func(t *testing.T) {
-				std.TestSetOrigCaller(consts.ROUTER_ADDR)
+				std.TestSetOriginCaller(consts.ROUTER_ADDR)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,
@@ -668,7 +668,7 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 				TokenApprove(t, gnsPath, addr, pool, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOrigCaller(consts.ROUTER_ADDR)
+				std.TestSetOriginCaller(consts.ROUTER_ADDR)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,
@@ -693,7 +693,7 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 				TokenApprove(t, gnsPath, addr, pool, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOrigCaller(consts.ROUTER_ADDR)
+				std.TestSetOriginCaller(consts.ROUTER_ADDR)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,
@@ -719,7 +719,7 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 				TokenApprove(t, wugnotPath, addr, pool, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOrigCaller(consts.ROUTER_ADDR)
+				std.TestSetOriginCaller(consts.ROUTER_ADDR)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,
@@ -746,7 +746,7 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 				TokenApprove(t, wugnotPath, addr, pool, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOrigCaller(consts.ROUTER_ADDR)
+				std.TestSetOriginCaller(consts.ROUTER_ADDR)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,
@@ -803,7 +803,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 				TokenApprove(t, gnsPath, addr, pool, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOrigCaller(consts.ROUTER_ADDR)
+				std.TestSetOriginCaller(consts.ROUTER_ADDR)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,
@@ -828,7 +828,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 				TokenApprove(t, gnsPath, addr, pool, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOrigCaller(consts.ROUTER_ADDR)
+				std.TestSetOriginCaller(consts.ROUTER_ADDR)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,
@@ -854,7 +854,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 				TokenApprove(t, wugnotPath, addr, pool, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOrigCaller(consts.ROUTER_ADDR)
+				std.TestSetOriginCaller(consts.ROUTER_ADDR)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,
@@ -881,7 +881,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 				TokenApprove(t, wugnotPath, addr, pool, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOrigCaller(consts.ROUTER_ADDR)
+				std.TestSetOriginCaller(consts.ROUTER_ADDR)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,

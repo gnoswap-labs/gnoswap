@@ -30,7 +30,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 		{
 			name: "Panic if caller is not position contract",
 			action: func(t *testing.T) {
-				std.TestSetOrigCaller(admin)
+				std.TestSetOriginCaller(admin)
 				HandleWithdrawalFee(0, "gno.land/r/onbloc/foo", "0", "gno.land/r/onbloc/foo", "0", "", admin)
 			},
 			verify:      nil,
