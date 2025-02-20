@@ -33,7 +33,7 @@ func MintAndStake(
 	// if one click native
 	if token0 == consts.GNOT || token1 == consts.GNOT {
 		// check sent ugnot
-		sent := std.GetOrigSend()
+		sent := std.OriginSend()
 		ugnotSent := uint64(sent.AmountOf("ugnot"))
 
 		// not enough ugnot sent
@@ -45,7 +45,7 @@ func MintAndStake(
 		}
 
 		// send it over to position to wrap
-		banker := std.GetBanker(std.BankerTypeRealmSend)
+		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(consts.STAKER_ADDR, consts.POSITION_ADDR, std.Coins{{Denom: "ugnot", Amount: int64(ugnotSent)}})
 	}
 
@@ -61,7 +61,7 @@ func MintAndStake(
 		amount1Min,
 		deadline,
 		consts.STAKER_ADDR,
-		std.PrevRealm().Addr(),
+		std.PreviousRealm().Address(),
 		// TODO: need to add referrer address here?
 		"",
 	)

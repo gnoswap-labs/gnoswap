@@ -381,14 +381,14 @@ func ugnotTransfer(t *testing.T, from, to std.Address, amount uint64) {
 
 	std.TestSetRealm(std.NewUserRealm(from))
 	std.TestSetOrigSend(std.Coins{{ugnotDenom, int64(amount)}}, nil)
-	banker := std.GetBanker(std.BankerTypeRealmSend)
+	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(from, to, std.Coins{{ugnotDenom, int64(amount)}})
 }
 
 func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
 	t.Helper()
 
-	banker := std.GetBanker(std.BankerTypeRealmIssue)
+	banker := std.NewBanker(std.BankerTypeRealmIssue)
 	coins := banker.GetCoins(addr)
 	if len(coins) == 0 {
 		return 0
@@ -404,7 +404,7 @@ func ugnotMint(t *testing.T, addr std.Address, denom string, amount int64) {
 
 func ugnotBurn(t *testing.T, addr std.Address, denom string, amount int64) {
 	t.Helper()
-	banker := std.GetBanker(std.BankerTypeRealmIssue)
+	banker := std.NewBanker(std.BankerTypeRealmIssue)
 	banker.RemoveCoin(addr, denom, amount)
 }
 
@@ -425,7 +425,7 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(addr))
 	wugnotAddr := consts.WUGNOT_ADDR
-	banker := std.GetBanker(std.BankerTypeRealmSend)
+	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
 	wugnot.Deposit()
 }
@@ -443,7 +443,7 @@ func burnAllNFT(t *testing.T) {
 func deletePoolTier(t *testing.T, poolPath string) {
 	t.Helper()
 	if poolTier != nil {
-		poolTier.changeTier(std.GetHeight(), pools, poolPath, 0)
+		poolTier.changeTier(std.Height(), pools, poolPath, 0)
 	} else {
 		panic("poolTier is nil")
 	}
@@ -458,11 +458,11 @@ func addPoolTier(t *testing.T, poolPath string, tier uint64) {
 			panic(addDetailToError(
 				errPoolNotFound, ufmt.Sprintf("unknown error - pools is nil")))
 		}
-		poolTier.changeTier(std.GetHeight(), pools, poolPath, tier)
+		poolTier.changeTier(std.Height(), pools, poolPath, tier)
 	} else {
-		poolTier = NewPoolTier(pools, std.GetHeight(), poolPath, en.GetEmission, en.GetHalvingBlocksInRange)
+		poolTier = NewPoolTier(pools, std.Height(), poolPath, en.GetEmission, en.GetHalvingBlocksInRange)
 		pools.GetOrCreate(poolPath) // must update pools tree
-		poolTier.changeTier(std.GetHeight(), pools, poolPath, tier)
+		poolTier.changeTier(std.Height(), pools, poolPath, tier)
 	}
 }
 
@@ -492,8 +492,8 @@ type gnsBalanceTracker struct {
 func gnsBalanceCheck(t *testing.T, beforeBalance gnsBalanceTracker, printChange bool) gnsBalanceTracker {
 	t.Helper()
 
-	caller := std.PrevRealm().Addr()
-	height := std.GetHeight()
+	caller := std.PreviousRealm().Address()
+	height := std.Height()
 	stakerBalance := gns.BalanceOf(consts.STAKER_ADDR)
 	devOpsBalance := gns.BalanceOf(consts.DEV_OPS)
 	communityPoolBalance := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
@@ -523,7 +523,7 @@ func getPrintInfo(t *testing.T) string {
 	en.MintAndDistributeGns()
 
 	emissionDebug := ApiEmissionDebugInfo{}
-	emissionDebug.Height = std.GetHeight()
+	emissionDebug.Height = std.Height()
 	emissionDebug.Time = time.Now().Unix()
 	emissionDebug.GnsStaker = gns.BalanceOf(consts.STAKER_ADDR)
 	emissionDebug.GnsDevOps = gns.BalanceOf(consts.DEV_OPS)
@@ -679,10 +679,10 @@ func makePositionsNode(t *testing.T, poolPath string) []*json.Node {
 		deposit := value.(*Deposit)
 
 		if deposit.targetPoolPath == poolPath {
-			stakedDuration := std.GetHeight() - deposit.stakeHeight
+			stakedDuration := std.Height() - deposit.stakeHeight
 			ratio := getRewardRatio(t, stakedDuration)
 
-			rewardByWarmup := calcPositionRewardByWarmups(std.GetHeight(), positionId)
+			rewardByWarmup := calcPositionRewardByWarmups(std.Height(), positionId)
 			if len(rewardByWarmup) != 4 {
 				panic("len(rewardByWarmup) != 4")
 			}

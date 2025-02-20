@@ -94,8 +94,8 @@ func NewExternalIncentive(
 	blocksLeftUntilStartHeight := (startTimestamp - currentTime) * 1000 / msPerBlock
 	blocksLeftUntilEndHeight := (endTimestamp - currentTime) * 1000 / msPerBlock
 
-	startHeight := std.GetHeight() + blocksLeftUntilStartHeight
-	endHeight := std.GetHeight() + blocksLeftUntilEndHeight
+	startHeight := std.Height() + blocksLeftUntilStartHeight
+	endHeight := std.Height() + blocksLeftUntilEndHeight
 
 	return &ExternalIncentive{
 		incentiveId:         incentiveId,

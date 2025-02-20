@@ -115,8 +115,8 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 
 	result.SetEmissionUpdate(1000000000)
 
-	if std.GetHeight() != result.CurrentHeight() {
-		panic(ufmt.Sprintf("height mismatch: %d != %d", std.GetHeight(), result.CurrentHeight()))
+	if std.Height() != result.CurrentHeight() {
+		panic(ufmt.Sprintf("height mismatch: %d != %d", std.Height(), result.CurrentHeight()))
 	}
 
 	return result
@@ -228,8 +228,8 @@ func (self *canonicalRewardState) NextBlock() {
 	self.Reward = append(self.Reward, self.CalculateCanonicalReward())
 	self.CurrentTimestamp += self.MsPerBlock
 	std.TestSkipHeights(1)
-	if int64(self.CurrentHeight()) != std.GetHeight() {
-		panic(ufmt.Sprintf("height mismatch: %d != %d", self.CurrentHeight(), std.GetHeight()))
+	if int64(self.CurrentHeight()) != std.Height() {
+		panic(ufmt.Sprintf("height mismatch: %d != %d", self.CurrentHeight(), std.Height()))
 	}
 }
 
@@ -237,8 +237,8 @@ func (self *canonicalRewardState) NextBlockNoCanonical() {
 	self.Reward = append(self.Reward, nil) // just placeholder
 	self.CurrentTimestamp += self.MsPerBlock
 	std.TestSkipHeights(1)
-	if int64(self.CurrentHeight()) != std.GetHeight() {
-		panic(ufmt.Sprintf("height mismatch: %d != %d", self.CurrentHeight(), std.GetHeight()))
+	if int64(self.CurrentHeight()) != std.Height() {
+		panic(ufmt.Sprintf("height mismatch: %d != %d", self.CurrentHeight(), std.Height()))
 	}
 }
 

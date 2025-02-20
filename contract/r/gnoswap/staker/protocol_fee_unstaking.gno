@@ -99,7 +99,7 @@ func GetUnstakingFee() uint64 {
 // Panics:
 // - If the caller is not an admin.
 func SetUnStakingFeeByAdmin(fee uint64) {
-	caller := std.PrevRealm().Addr()
+	caller := std.PreviousRealm().Address()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err.Error())
 	}

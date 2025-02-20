@@ -11,12 +11,12 @@ import (
 )
 
 func getPrev() (string, string) {
-	prev := std.PrevRealm()
+	prev := std.PreviousRealm()
 	return prev.Addr().String(), prev.PkgPath()
 }
 
 func getPrevAddr() std.Address {
-	return std.PrevRealm().Addr()
+	return std.PreviousRealm().Address()
 }
 
 func assertShouldNotBeHalted() {

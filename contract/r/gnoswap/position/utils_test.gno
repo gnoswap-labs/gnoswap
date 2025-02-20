@@ -140,7 +140,7 @@ func TestAssertOnlyUserOrStaker(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			std.TestSetOrigCaller(tc.originCaller)
-			assertOnlyUserOrStaker(std.PrevRealm())
+			assertOnlyUserOrStaker(std.PreviousRealm())
 		})
 	}
 }

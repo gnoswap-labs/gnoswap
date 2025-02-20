@@ -230,7 +230,7 @@ func GetHalvingBlocksInRange(startHeight, endHeight int64) ([]int64, []uint64) {
 // height MUST be smaller than the current height(we don't read future emissions)
 func GetEmission() uint64 {
 	halvingData := GetEmissionState().getHalvingData()
-	height := std.GetHeight()
+	height := std.Height()
 
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		startBlock := halvingData.getStartBlockHeight(year)
@@ -263,7 +263,7 @@ func NewEmissionState() *EmissionState {
 	emissionEndTime := now + SECONDS_IN_YEAR*HALVING_END_YEAR
 
 	return &EmissionState{
-		startHeight:    std.GetHeight() + 1,
+		startHeight:    std.Height() + 1,
 		startTimestamp: now,
 		endTimestamp:   emissionEndTime,
 		halvingData: HalvingData{
@@ -394,7 +394,7 @@ func setAvgBlockTimeInMs(ms int64) {
 	assertShouldNotBeHalted()
 
 	now := time.Now().Unix()
-	height := std.GetHeight()
+	height := std.Height()
 
 	// update block per year
 	yearByMilliSec := secToMs(SECONDS_IN_YEAR)
@@ -584,7 +584,7 @@ func setEndTimestamp(timestamp int64) {
 }
 
 func GetHalvingInfo() string {
-	height := std.GetHeight()
+	height := std.Height()
 	now := time.Now().Unix()
 
 	halvings := make([]*json.Node, 0)

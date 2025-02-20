@@ -14,17 +14,17 @@ const MAX_BPS_PCT uint64 = 10000
 
 // getPrevRealm returns object of the previous realm.
 func getPrevRealm() std.Realm {
-	return std.PrevRealm()
+	return std.PreviousRealm()
 }
 
 // getPrevAddr returns the address of the previous realm.
 func getPrevAddr() std.Address {
-	return std.PrevRealm().Addr()
+	return std.PreviousRealm().Address()
 }
 
 // getPrev returns the address and package path of the previous realm.
 func getPrevAsString() (string, string) {
-	prev := std.PrevRealm()
+	prev := std.PreviousRealm()
 	return prev.Addr().String(), prev.PkgPath()
 }
 

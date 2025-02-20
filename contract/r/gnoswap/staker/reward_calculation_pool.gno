@@ -49,7 +49,7 @@ func (self *Pools) Get(poolPath string) (*Pool, bool) {
 func (self *Pools) GetOrCreate(poolPath string) *Pool {
 	pool, ok := self.Get(poolPath)
 	if !ok {
-		pool = NewPool(poolPath, std.GetHeight())
+		pool = NewPool(poolPath, std.Height())
 		self.set(poolPath, pool)
 	}
 	return pool

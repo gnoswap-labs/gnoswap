@@ -102,7 +102,7 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 		panic(err.Error())
 	}
 
-	currentHeight := uint64(std.GetHeight())
+	currentHeight := uint64(std.Height())
 	if !project.isActivated(currentHeight) {
 		panic(addDetailToError(errInactiveProject, projectId))
 	}
@@ -194,7 +194,7 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 		panic(addDetailToError(
 			errInvalidRewardState, err.Error()))
 	}
-	rewardState.addStake(uint64(std.GetHeight()), deposit.id, amount)
+	rewardState.addStake(uint64(std.Height()), deposit.id, amount)
 
 	// Update gov_staker to calculate project's recipient's reward
 	gs.SetAmountByProjectWallet(project.recipient, amount, true)
@@ -317,7 +317,7 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 	project = projects[deposit.projectId]
 
 	// Process deposit collection
-	height := uint64(std.GetHeight())
+	height := uint64(std.Height())
 	amount, err := processDeposit(&deposit, &project, height)
 	if err != nil {
 		panic(err.Error())
@@ -376,7 +376,7 @@ func validateProjectTier(projectId string, tierStr string) (Project, Tier, error
 		return Project{}, Tier{}, errors.New(ufmt.Sprintf("project(%s) not found", projectId))
 	}
 
-	currentHeight := uint64(std.GetHeight())
+	currentHeight := uint64(std.Height())
 
 	project.Tiers()
 
@@ -453,7 +453,7 @@ func checkDepositConditions(project Project) {
 // Returns:
 // - bool: True if the tier is active, otherwise false.
 func checkTierActive(project Project, tier Tier) bool {
-	if tier.ended.height < uint64(std.GetHeight()) {
+	if tier.ended.height < uint64(std.Height()) {
 		return false
 	}
 
@@ -759,7 +759,7 @@ func processDepositCollection(
 	projectId string,
 ) (uint64, error) {
 	totalAmount := uint64(0) // gnsToUser
-	currentHeight := uint64(std.GetHeight())
+	currentHeight := uint64(std.Height())
 	now := uint64(time.Now().Unix())
 	prevAddr, prevPkgPath := getPrev()
 
@@ -874,7 +874,7 @@ func validateDepositCollection(depositId string, caller std.Address) (Deposit, P
 		return Deposit{}, Project{}, errors.New("user has no deposit with this id")
 	}
 
-	currentHeight := uint64(std.GetHeight())
+	currentHeight := uint64(std.Height())
 
 	if !isPassedClaimableHeight(deposit, currentHeight) {
 		return Deposit{}, Project{}, errors.New("not passed claimable block height yet")

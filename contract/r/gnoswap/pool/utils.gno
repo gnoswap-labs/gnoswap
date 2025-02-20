@@ -137,12 +137,12 @@ func derivePkgAddr(pkgPath string) std.Address {
 
 // getPrevRealm returns object of the previous realm.
 func getPrevRealm() std.Realm {
-	return std.PrevRealm()
+	return std.PreviousRealm()
 }
 
 // getPrevAddr returns the address of the previous realm.
 func getPrevAddr() std.Address {
-	return std.PrevRealm().Addr()
+	return std.PreviousRealm().Address()
 }
 
 // getPrevAsString returns the address and package path of the previous realm.
@@ -153,7 +153,7 @@ func getPrevAsString() (string, string) {
 
 // isUserCall returns true if the caller is a user.
 func isUserCall() bool {
-	return std.PrevRealm().IsUser()
+	return std.PreviousRealm().IsUser()
 }
 
 // checkTransferError checks transfer error.

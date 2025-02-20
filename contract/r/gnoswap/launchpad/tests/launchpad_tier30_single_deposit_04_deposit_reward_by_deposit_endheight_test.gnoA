@@ -91,7 +91,7 @@ func collectRewardByDepositId(t *testing.T) {
 		std.TestSkipHeights(5)
 
 		tier30EndHeight := projects[`gno.land/r/onbloc/obl:124`].tiers[30].ended.height
-		currHeight := uint64(std.GetHeight())
+		currHeight := uint64(std.Height())
 		uassert.Equal(t, bool(tier30EndHeight < currHeight), true)
 
 		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:1025`)

@@ -7,7 +7,7 @@ import (
 )
 
 func getPrev() (string, string) {
-	prev := std.PrevRealm()
+	prev := std.PreviousRealm()
 	return prev.Addr().String(), prev.PkgPath()
 }
 

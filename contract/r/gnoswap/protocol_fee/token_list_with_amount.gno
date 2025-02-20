@@ -113,7 +113,7 @@ func clearTokenListWithAmount() {
 
 // assertOnlyPoolRouterStaker panics if the caller is not the pool, router, or staker contract.
 func assertOnlyPoolRouterStaker() {
-	caller := std.PrevRealm().Addr()
+	caller := std.PreviousRealm().Address()
 
 	poolOnlyErr := common.PoolOnly(caller)
 	routerOnlyErr := common.RouterOnly(caller)
@@ -126,7 +126,7 @@ func assertOnlyPoolRouterStaker() {
 
 // assertOnlyGovStaker panics if the caller is not the gov/staker contract.
 func assertOnlyGovStaker() {
-	caller := std.PrevRealm().Addr()
+	caller := std.PreviousRealm().Address()
 	if err := common.GovStakerOnly(caller); err != nil {
 		panic(err.Error())
 	}

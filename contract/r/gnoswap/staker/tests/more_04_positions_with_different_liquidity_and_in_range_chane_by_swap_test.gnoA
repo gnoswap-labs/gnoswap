@@ -239,7 +239,7 @@ func testStakeTokenPos02ToWarmUp70_Pos03ToWarmUp50_Pos04ToWarmUp30_Pos05(t *test
 		std.TestSetRealm(adminRealm)
 
 		gnft.Approve(consts.STAKER_ADDR, positionIdFrom(4))
-		StakeToken(4, "")          //  (out of range, will become in-range by swap)
+		StakeToken(4, "")      //  (out of range, will become in-range by swap)
 		std.TestSkipHeights(1) // 30%
 	})
 
@@ -247,7 +247,7 @@ func testStakeTokenPos02ToWarmUp70_Pos03ToWarmUp50_Pos04ToWarmUp30_Pos05(t *test
 		std.TestSetRealm(adminRealm)
 
 		gnft.Approve(consts.STAKER_ADDR, positionIdFrom(5))
-		StakeToken(5, "")          //  (out of range forever)
+		StakeToken(5, "")      //  (out of range forever)
 		std.TestSkipHeights(1) // 30%
 	})
 

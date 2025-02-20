@@ -223,7 +223,7 @@ func testMakePosition1OutRangeBySwap() {
 		"100",       // quoteArr
 		"0",         // amountOutMin
 		max_timeout, // timeout
-		"",         // referrer
+		"",          // referrer
 	)
 	std.TestSkipHeights(1)
 

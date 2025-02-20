@@ -40,7 +40,7 @@ func SetThresholdVotingWeightBlockHeightByAdmin(height uint64) {
 }
 
 func cleanDelegationStatHistory() {
-	height := uint64(std.GetHeight())
+	height := uint64(std.Height())
 	sinceLast := height - lastCleanedHeight
 
 	if sinceLast < uint64(thresholdVotingWeightBlockHeight) {

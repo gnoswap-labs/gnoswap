@@ -13,8 +13,8 @@ import (
 func TestGetOrigPkgAddr(t *testing.T) {
 	std.TestSetOrigCaller(consts.STAKER_ADDR)
 	origPkgAddr := GetOrigPkgAddr()
-	if origPkgAddr != std.GetOrigCaller() {
-		t.Errorf("Expected %v, got %v", std.GetOrigCaller(), origPkgAddr)
+	if origPkgAddr != std.OriginCaller() {
+		t.Errorf("Expected %v, got %v", std.OriginCaller(), origPkgAddr)
 	}
 }
 

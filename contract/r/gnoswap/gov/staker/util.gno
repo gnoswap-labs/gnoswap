@@ -30,17 +30,17 @@ func b64Encode(data string) string {
 
 // getPrevRealm returns the previous realm's package path
 func getPrevRealm() std.Realm {
-	return std.PrevRealm()
+	return std.PreviousRealm()
 }
 
 // getPrevAddr returns the address of the previous realm.
 func getPrevAddr() std.Address {
-	return std.PrevRealm().Addr()
+	return std.PreviousRealm().Address()
 }
 
 // isUserCall returns true if the previous realm is a user
 func isUserCall() bool {
-	return std.PrevRealm().IsUser()
+	return std.PreviousRealm().IsUser()
 }
 
 // getPrev returns the previous realm's address and package path
@@ -74,7 +74,7 @@ func assertCallerIsAdmin() {
 
 // assertCallerIsLaunchpad panics if the caller is not the launchpad
 func assertCallerIsLaunchpad() {
-	caller := std.PrevRealm().Addr()
+	caller := std.PreviousRealm().Address()
 	if err := common.LaunchpadOnly(caller); err != nil {
 		panic(err)
 	}

@@ -61,7 +61,7 @@ func TestPositionMintGnotBar(t *testing.T) {
 	// send
 	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100000}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 100000}}, nil)
-	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+	testBanker := std.NewBanker(std.BankerTypeRealmIssue)
 
 	// Deposit(wrap)
 	std.TestSetRealm(adminRealm)

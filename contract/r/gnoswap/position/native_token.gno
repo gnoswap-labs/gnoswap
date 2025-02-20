@@ -77,7 +77,7 @@ func transferUGNOT(from, to std.Address, amount uint64) {
 		return
 	}
 
-	banker := std.GetBanker(std.BankerTypeRealmSend)
+	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(from, to, std.Coins{
 		{Denom: consts.UGNOT, Amount: int64(amount)},
 	})
@@ -121,7 +121,7 @@ func isWrappedToken(tokenPath string) bool {
 //   - If there is a mismatch between the expected wrapped token amount and the user's balance after wrapping.
 func safeWrapNativeToken(amountDesired string, userAddress std.Address) uint64 {
 	beforeWugnotBalance := wugnot.BalanceOf(userAddress)
-	sentNative := std.GetOrigSend()
+	sentNative := std.OriginSend()
 	sentUgnotAmount := uint64(sentNative.AmountOf(consts.UGNOT))
 
 	if sentUgnotAmount <= 0 {

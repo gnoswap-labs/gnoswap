@@ -982,7 +982,7 @@ func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, st
 		token1,
 		amount1,
 		position.poolKey,
-		std.PrevRealm().Addr(),
+		std.PreviousRealm().Address(),
 	)
 
 	// UNWRAP

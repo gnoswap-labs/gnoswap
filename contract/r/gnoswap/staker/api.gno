@@ -294,7 +294,7 @@ type ResponseApiGetRewardByLpTokenId struct {
 func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 	deposit := deposits.Get(targetLpTokenId)
 
-	reward := calcPositionReward(std.GetHeight(), targetLpTokenId)
+	reward := calcPositionReward(std.Height(), targetLpTokenId)
 
 	rewards := []ApiReward{}
 
@@ -338,7 +338,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 	stakers.IterateAll(std.Address(targetAddress), func(positionId uint64, deposit *Deposit) bool {
 		rewards := []ApiReward{}
 
-		reward := calcPositionReward(std.GetHeight(), positionId)
+		reward := calcPositionReward(std.Height(), positionId)
 
 		// get internal gns reward
 		if reward.Internal > 0 {

@@ -28,7 +28,7 @@ func mockTimeNow() time.Time {
 func setupKeeper() *keeper { return NewKeeper().(*keeper) }
 
 func mockValidCaller() func() {
-	origCaller := std.GetOrigCaller()
+	origCaller := std.OriginCaller()
 	std.TestSetOrigCaller(consts.ROUTER_ADDR)
 	return func() {
 		std.TestSetOrigCaller(origCaller)
@@ -55,7 +55,7 @@ func TestRegister(t *testing.T) {
 			addr:    validAddr1,
 			refAddr: validAddr2,
 			setupCaller: func() func() {
-				origCaller := std.GetOrigCaller()
+				origCaller := std.OriginCaller()
 				std.TestSetOrigCaller(std.Address("unauthorized"))
 				return func() {
 					std.TestSetOrigCaller(origCaller)

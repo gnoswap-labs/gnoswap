@@ -71,11 +71,11 @@ func assertOnlyGovernance() {
 
 // getPrevAddr returns the address of the caller.
 func getPrevAddr() std.Address {
-	return std.PrevRealm().Addr()
+	return std.PreviousRealm().Address()
 }
 
 // getPrevAsString returns the address and realm of the caller as a string.
 func getPrevAsString() (string, string) {
-	prev := std.PrevRealm()
+	prev := std.PreviousRealm()
 	return prev.Addr().String(), prev.PkgPath()
 }

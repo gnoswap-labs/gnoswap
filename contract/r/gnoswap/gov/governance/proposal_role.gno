@@ -198,7 +198,7 @@ func proposeRoleChange(
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
-	proposer := std.PrevRealm().Addr()
+	proposer := std.PreviousRealm().Address()
 
 	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
 	if !enough {
