@@ -23,9 +23,9 @@ func TestHalts(t *testing.T) {
 	})
 
 	t.Run("Operation specific checks in MainnetSafeMode", func(t *testing.T) {
-		// Withdrawals should be disabled in MainnetSafeMode
-		err = IsHalted(OpTypeWithdraw)
-		uassert.Error(t, err)
+		// Withdrawals should be enabled in MainnetSafeMode
+		err := IsHalted(OpTypeWithdraw)
+		uassert.NoError(t, err)
 
 		// Swaps should be disabled in MainnetSafeMode
 		err = IsHalted(OpTypeSwap)
@@ -91,7 +91,7 @@ type haltTestCases struct {
 	wantError bool
 }
 
-func TestEnableOperationsForTestnet(t *testing.T) {
+func TestEnableOperationsForPostMainnet(t *testing.T) {
 	// Setup test with admin privileges
 	std.TestSetRealm(adminRealm)
 
@@ -104,10 +104,11 @@ func TestEnableOperationsForTestnet(t *testing.T) {
 
 	// Verify initially all operations except governance are disabled
 	isHaltedTests := []haltTestCases{
-		{phalt.OpTypeWithdraw, true},
+		{phalt.OpTypeWithdraw, false},
 		{phalt.OpTypeSwap, true},
 		{phalt.OpTypeLiquidity, true},
-		{phalt.OpTypeGovernance, false},
+		// OpTypeGovernance is implicitly disabled (not added in map)
+		{phalt.OpTypeGovernance, true},
 	}
 
 	for _, tt := range isHaltedTests {
