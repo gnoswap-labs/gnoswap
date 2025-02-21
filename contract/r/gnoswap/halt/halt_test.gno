@@ -18,20 +18,20 @@ var (
 
 func TestHalts(t *testing.T) {
 	t.Run("GetHalt() initial value", func(t *testing.T) {
-		// Initially we're in TestnetSafeMode which should report as halted
+		// Initially we're in MainnetSafeMode which should report as halted
 		uassert.True(t, GetHalt())
 	})
 
-	t.Run("Operation specific checks in TestnetSafeMode", func(t *testing.T) {
-		// Governance operations should be allowed in TestnetSafeMode
+	t.Run("Operation specific checks in MainnetSafeMode", func(t *testing.T) {
+		// Governance operations should be allowed in MainnetSafeMode
 		err := IsHalted(OpTypeGovernance)
 		uassert.NoError(t, err)
 
-		// Withdrawals should be disabled in TestnetSafeMode
+		// Withdrawals should be disabled in MainnetSafeMode
 		err = IsHalted(OpTypeWithdraw)
 		uassert.Error(t, err)
 
-		// Swaps should be disabled in TestnetSafeMode
+		// Swaps should be disabled in MainnetSafeMode
 		err = IsHalted(OpTypeSwap)
 		uassert.Error(t, err)
 	})
@@ -47,10 +47,10 @@ func TestSetHaltLevelByAdmin(t *testing.T) {
 	t.Run("with admin privilege, success", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		// Initially we're in TestnetSafeMode
+		// Initially we're in MainnetSafeMode
 		uassert.True(t, GetHalt())
-		if GetCurrentHaltLevel() != LvTestnetSafeMode {
-			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvTestnetSafeMode)
+		if GetCurrentHaltLevel() != LvMainnetSafeMode {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvMainnetSafeMode)
 		}
 
 		// Change to NoHalt
@@ -99,10 +99,10 @@ func TestEnableOperationsForTestnet(t *testing.T) {
 	// Setup test with admin privileges
 	std.TestSetRealm(adminRealm)
 
-	// First set to TestnetSafeMode
-	err := SetHaltLevelByAdmin(LvTestnetSafeMode)
+	// First set to MainnetSafeMode
+	err := SetHaltLevelByAdmin(LvMainnetSafeMode)
 	uassert.NoError(t, err)
-	if GetCurrentHaltLevel() != LvTestnetSafeMode {
+	if GetCurrentHaltLevel() != LvMainnetSafeMode {
 		t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvTestnetSafeMode)
 	}
 
@@ -182,7 +182,7 @@ func TestEnableOperationsForTestnet(t *testing.T) {
 			uassert.NoError(t, err)
 		}
 
-		// Despite all operations being enabled, we're still in TestnetSafeMode
+		// Despite all operations being enabled, we're still in MainnetSafeMode
 		// So `GetHalt()` should still return true.
 		uassert.True(t, GetHalt())
 	})

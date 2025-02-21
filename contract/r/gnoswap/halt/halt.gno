@@ -26,7 +26,7 @@ const (
 const (
 	// Special mode for beta mainnet (no withdrawals)
 	// Issue: https://github.com/gnoswap-labs/gnoswap/issues/517
-	LvTestnetSafeMode phalt.LevelID = 10
+	LvMainnetSafeMode phalt.LevelID = 10
 )
 
 var haltManager *phalt.Manager
@@ -39,24 +39,24 @@ func init() {
 	haltManager.RegisterOperation(phalt.NewOperation(OpTypePool, "Pool", "Pool management operations"))
 	haltManager.RegisterOperation(phalt.NewOperation(OpTypeGovernance, "Governance", "Governance operations"))
 
-	// Create custom TestnetSafeMode level that disables withdrawals for beta mainnet
-	testnetSafeMode := phalt.NewHaltLevel(
-		LvTestnetSafeMode,
-		"TestnetSafeMode",
-		"Safe mode for beta mainnet (no withdrawals)",
+	// Create custom MainnetSafeMode level that disables withdrawals for beta mainnet
+	mainnetSafeMode := phalt.NewHaltLevel(
+		LvMainnetSafeMode,
+		"MainnetSafeMode",
+		"Safe mode for post-mainnet (no withdrawals)",
 		map[phalt.OpType]bool{
 			OpTypeSwap:       false, // Disable swaps initially
 			OpTypeLiquidity:  false, // Disable liquidity initially
-			OpTypeWithdraw:   false, // Disable withdrawals initially
+			OpTypeWithdraw:   true,  // Enable withdrawals initially
 			OpTypePool:       false, // Disable pool operations initially
-			OpTypeGovernance: true,  // Allow governance operations
+			OpTypeGovernance: false, // Disable governance operations initially
 		},
 	)
 
-	haltManager.RegisterHaltLevel(testnetSafeMode)
+	haltManager.RegisterHaltLevel(mainnetSafeMode)
 
-	// Set initial level to TestnetSafeMode for beta mainnet
-	if err := haltManager.SetCurrentLevel(LvTestnetSafeMode); err != nil {
+	// Set initial level to MainnetSafeMode for right after mainnet
+	if err := haltManager.SetCurrentLevel(LvMainnetSafeMode); err != nil {
 		panic(ufmt.Sprintf("Failed to set initial halt level: %v", err))
 	}
 }
@@ -64,7 +64,7 @@ func init() {
 // GetHalt returns the current halt status.
 func GetHalt() bool {
 	currentLevel := haltManager.Level().Level()
-	return currentLevel == phalt.LvCompleteHalt || currentLevel == LvTestnetSafeMode
+	return currentLevel == phalt.LvCompleteHalt || currentLevel == LvMainnetSafeMode
 }
 
 // IsHalted checks if the requested operation is allowed in the current halt level.
@@ -245,7 +245,7 @@ func setOperationStatus(opType phalt.OpType, allowed bool) error {
 	return nil
 }
 
-// EnableWithdrawalsForTestnet enables withdrawals in TestnetSafeMode.
+// EnableWithdrawalsForTestnet enables withdrawals in MainnetSafeMode.
 // This should be called after ensuring stability on beta mainnet.
 //
 // Returns:
@@ -257,8 +257,8 @@ func EnableWithdrawalsForTestnet() error {
 		return ufmt.Errorf("only admin can enable withdrawals, called from %s", caller)
 	}
 
-	// Only proceed if we're in TestnetSafeMode
-	if haltManager.Level().Level() != LvTestnetSafeMode {
+	// Only proceed if we're in MainnetSafeMode
+	if haltManager.Level().Level() != LvMainnetSafeMode {
 		return nil
 	}
 
@@ -277,7 +277,7 @@ func EnableWithdrawalsForTestnet() error {
 	return nil
 }
 
-// EnableSwapsForTestnet enables swaps in TestnetSafeMode.
+// EnableSwapsForTestnet enables swaps in MainnetSafeMode.
 // This should be called after ensuring stability on beta mainnet.
 //
 // Returns:
@@ -289,8 +289,8 @@ func EnableSwapsForTestnet() error {
 		return ufmt.Errorf("only admin can enable swaps, called from %s", caller)
 	}
 
-	// Only proceed if we're in TestnetSafeMode
-	if haltManager.Level().Level() != LvTestnetSafeMode {
+	// Only proceed if we're in MainnetSafeMode
+	if haltManager.Level().Level() != LvMainnetSafeMode {
 		return nil
 	}
 
@@ -309,7 +309,7 @@ func EnableSwapsForTestnet() error {
 	return nil
 }
 
-// EnableLiquidityForTestnet enables liquidity operations in TestnetSafeMode.
+// EnableLiquidityForTestnet enables liquidity operations in MainnetSafeMode.
 // This should be called after ensuring stability on beta mainnet.
 //
 // Returns:
@@ -320,8 +320,8 @@ func EnableLiquidityForTestnet() error {
 		return ufmt.Errorf("only admin can enable liquidity, called from %s", caller)
 	}
 
-	// Only proceed if we're in TestnetSafeMode
-	if haltManager.Level().Level() != LvTestnetSafeMode {
+	// Only proceed if we're in MainnetSafeMode
+	if haltManager.Level().Level() != LvMainnetSafeMode {
 		return nil
 	}
 
