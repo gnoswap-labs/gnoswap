@@ -103,7 +103,7 @@ func TestEnableOperationsForTestnet(t *testing.T) {
 	err := SetHaltLevelByAdmin(LvMainnetSafeMode)
 	uassert.NoError(t, err)
 	if GetCurrentHaltLevel() != LvMainnetSafeMode {
-		t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvTestnetSafeMode)
+		t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvMainnetSafeMode)
 	}
 
 	// Verify initially all operations except governance are disabled
