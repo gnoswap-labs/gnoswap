@@ -67,8 +67,18 @@ func GetHalt() bool {
 	return currentLevel == phalt.LvCompleteHalt || currentLevel == LvMainnetSafeMode
 }
 
-// IsHalted checks if the requested operation is allowed in the current halt level.
+// IsHalted checks if the requested operations are allowed in the current halt level.
 // If not allowed, it returns an error.
+//
+// Example Usage:
+//
+// For checking if only one operation is halted:
+//
+//	err := halt.IsHalted(halt.OpTypeSwap)
+//
+// For checking if multiple operations are halted:
+//
+//	err := halt.IsHalted(halt.OpTypeSwap, halt.OpTypeLiquidity /* and more */)
 //
 // Parameters:
 // - opType (halt.OpType): Optional operation type to check. If not provided, checks if system is completely halted.
@@ -81,10 +91,12 @@ func IsHalted(opType ...phalt.OpType) error {
 		return nil
 	}
 
-	// Check specific operation
-	op := phalt.NewOperation(opType[0], string(opType[0]), string(opType[0])+" operation")
-	if !haltManager.Level().IsOperationAllowed(op) {
-		return ufmt.Errorf("Operation '%s' is currently disabled in halt level: %s", opType[0], haltManager.Status(opType[0]))
+	// check each operation(s)
+	for _, oo := range opType {
+		op := phalt.NewOperation(oo, string(oo), string(oo)+" operation")
+		if !haltManager.Level().IsOperationAllowed(op) {
+			return ufmt.Errorf("Operation '%s' is currently disabled in halt level: %s", oo, haltManager.Status(oo))
+		}
 	}
 
 	return nil
@@ -109,11 +121,17 @@ func SetHaltLevelByAdmin(haltLevel phalt.LevelID) error {
 // SetHaltByAdmin maintains backward compatibility with the old API.
 // It maps true to CompleteHalt and false to NoHalt.
 //
+// While the halt mechanism should fundamentally be controlled by governance,
+// there needs to be functionality that allows admin intervention
+// in special cases such as emergencies.
+//
 // Parameters:
 // - halt (bool): true to halt, false to unhalt.
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
+//
+// TODO: Should we only allow EmergencyHalt or CompleteHalt?
 func SetHaltByAdmin(halt bool) error {
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {

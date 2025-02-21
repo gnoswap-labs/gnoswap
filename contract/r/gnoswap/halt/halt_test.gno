@@ -2,6 +2,7 @@ package halt
 
 import (
 	"std"
+	"strings"
 	"testing"
 
 	"gno.land/p/demo/uassert"
@@ -91,7 +92,7 @@ type haltTestCases struct {
 	wantError bool
 }
 
-func TestEnableOperationsForPostMainnet(t *testing.T) {
+func TestEnableOperationsForTestnet(t *testing.T) {
 	// Setup test with admin privileges
 	std.TestSetRealm(adminRealm)
 
@@ -107,7 +108,6 @@ func TestEnableOperationsForPostMainnet(t *testing.T) {
 		{phalt.OpTypeWithdraw, false},
 		{phalt.OpTypeSwap, true},
 		{phalt.OpTypeLiquidity, true},
-		// OpTypeGovernance is implicitly disabled (not added in map)
 		{phalt.OpTypeGovernance, true},
 	}
 
@@ -194,6 +194,96 @@ func TestEnableOperationsForPostMainnet(t *testing.T) {
 
 		if GetCurrentHaltLevel() != phalt.LvNoHalt {
 			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvNoHalt)
+		}
+	})
+}
+
+func TestMultipleOperationHalts(t *testing.T) {
+	// Setup test with admin privileges
+	std.TestSetRealm(adminRealm)
+
+	// First set to MainnetSafeMode
+	err := SetHaltLevelByAdmin(LvMainnetSafeMode)
+	uassert.NoError(t, err)
+
+	t.Run("Check multiple operations in MainnetSafeMode", func(t *testing.T) {
+		// Only Withdraw is enabled in MainnetSafeMode, so this should fail
+		err := IsHalted(OpTypeWithdraw, OpTypeSwap)
+		uassert.Error(t, err)
+
+		// Both operations are disabled in MainnetSafeMode
+		err = IsHalted(OpTypeSwap, OpTypeLiquidity)
+		uassert.Error(t, err)
+	})
+
+	t.Run("Check multiple operations after enabling some", func(t *testing.T) {
+		// Enable withdrawals and swaps
+		err := EnableWithdrawalsForTestnet()
+		uassert.NoError(t, err)
+		err = EnableSwapsForTestnet()
+		uassert.NoError(t, err)
+
+		// Now both Withdraw and Swap should be enabled
+		err = IsHalted(OpTypeWithdraw, OpTypeSwap)
+		uassert.NoError(t, err)
+
+		// But Liquidity is still disabled
+		err = IsHalted(OpTypeWithdraw, OpTypeSwap, OpTypeLiquidity)
+		uassert.Error(t, err)
+	})
+
+	t.Run("Check all operations after enabling everything", func(t *testing.T) {
+		// Enable all operations
+		err := EnableLiquidityForTestnet()
+		uassert.NoError(t, err)
+
+		// Now all operations should be enabled
+		err = IsHalted(OpTypeWithdraw, OpTypeSwap, OpTypeLiquidity)
+		uassert.NoError(t, err)
+	})
+}
+
+func TestCustomOperationHalts(t *testing.T) {
+	// Setup test with admin privileges
+	std.TestSetRealm(adminRealm)
+
+	// Define custom operation types for testing
+	customOp1 := phalt.OpType("CUSTOM_OP_1")
+	customOp2 := phalt.OpType("CUSTOM_OP_2")
+	invalidOp := phalt.OpType("INVALID_OP")
+
+	t.Run("Check undefined custom operations", func(t *testing.T) {
+		// Set to NoHalt first
+		err := SetHaltLevelByAdmin(phalt.LvNoHalt)
+		uassert.NoError(t, err)
+
+		// Even in NoHalt, undefined operations should be considered halted
+		err = IsHalted(customOp1)
+		uassert.Error(t, err)
+
+		// Multiple operations including undefined ones
+		err = IsHalted(OpTypeWithdraw, customOp1, OpTypeSwap)
+		uassert.Error(t, err)
+	})
+
+	t.Run("Check multiple custom operations", func(t *testing.T) {
+		// Test with multiple custom operations
+		err := IsHalted(customOp1, customOp2, invalidOp)
+		uassert.Error(t, err)
+
+		// Mix of valid and custom operations
+		err = IsHalted(OpTypeWithdraw, customOp1, OpTypeSwap, customOp2)
+		uassert.Error(t, err)
+	})
+
+	t.Run("Check operation type string representation", func(t *testing.T) {
+		err := IsHalted(customOp1)
+		if err == nil {
+			t.Fatal("expected error for custom operation")
+		}
+		// Verify error message contains the custom operation name
+		if !strings.Contains(err.Error(), string(customOp1)) {
+			t.Fatalf("error message should contain operation name '%s', got: %s", customOp1, err.Error())
 		}
 	})
 }

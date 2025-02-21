@@ -50,10 +50,13 @@ import "gno.land/r/gnoswap/v1/halt"
 func YourFunction() {
     // Check if swaps are allowed
     if err := halt.IsHalted(halt.OpTypeSwap); err != nil {
-        panic(err) // or handle the error appropriately
+        panic(err)
     }
 
-    // ...
+    // Or, you cancheck multiple operations at once
+    if err := halt.IsHalted(halt.OpTypeSwap, halt.OpTypeLiquidity); err != nil {
+        panic(err)
+    }
 }
 ```
 
