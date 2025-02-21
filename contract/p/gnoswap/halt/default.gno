@@ -22,9 +22,10 @@ var (
 			rawNoHalt,
 			"Normal operation",
 			map[OpType]bool{
-				OpTypeSwap:      true,
-				OpTypeLiquidity: true,
-				OpTypeWithdraw:  true,
+				OpTypeSwap:       true,
+				OpTypeLiquidity:  true,
+				OpTypeWithdraw:   true,
+				OpTypeGovernance: true,
 			},
 		},
 		{
@@ -32,9 +33,10 @@ var (
 			rawSwapHalt,
 			"Swaps disabled",
 			map[OpType]bool{
-				OpTypeSwap:      false,
-				OpTypeLiquidity: true,
-				OpTypeWithdraw:  true,
+				OpTypeSwap:       false,
+				OpTypeLiquidity:  true,
+				OpTypeWithdraw:   true,
+				OpTypeGovernance: true,
 			},
 		},
 		{
@@ -42,9 +44,10 @@ var (
 			rawEmergencyHalt,
 			"Only withdrawals allowed",
 			map[OpType]bool{
-				OpTypeSwap:      false,
-				OpTypeLiquidity: false,
-				OpTypeWithdraw:  true,
+				OpTypeSwap:       false,
+				OpTypeLiquidity:  false,
+				OpTypeWithdraw:   true,
+				OpTypeGovernance: true,
 			},
 		},
 		{
@@ -52,9 +55,10 @@ var (
 			rawCompleteHalt,
 			"All operations disabled",
 			map[OpType]bool{
-				OpTypeSwap:      false,
-				OpTypeLiquidity: false,
-				OpTypeWithdraw:  false,
+				OpTypeSwap:       false,
+				OpTypeLiquidity:  false,
+				OpTypeWithdraw:   false,
+				OpTypeGovernance: false,
 			},
 		},
 	}
