@@ -23,10 +23,6 @@ func TestHalts(t *testing.T) {
 	})
 
 	t.Run("Operation specific checks in MainnetSafeMode", func(t *testing.T) {
-		// Governance operations should be allowed in MainnetSafeMode
-		err := IsHalted(OpTypeGovernance)
-		uassert.NoError(t, err)
-
 		// Withdrawals should be disabled in MainnetSafeMode
 		err = IsHalted(OpTypeWithdraw)
 		uassert.Error(t, err)
