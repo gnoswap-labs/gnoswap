@@ -287,3 +287,394 @@ func TestCustomOperationHalts(t *testing.T) {
 		}
 	})
 }
+
+func TestOperationStatusEdgeCases(t *testing.T) {
+	// Setup test with admin privileges
+	std.TestSetRealm(adminRealm)
+
+	t.Run("EnableOperations in non-MainnetSafeMode", func(t *testing.T) {
+		// First set to NoHalt
+		err := SetHaltLevelByAdmin(phalt.LvNoHalt)
+		uassert.NoError(t, err)
+
+		// Try to enable operations in NoHalt mode - should return nil without changing state
+		err = EnableWithdrawalsForTestnet()
+		uassert.NoError(t, err)
+
+		err = EnableSwapsForTestnet()
+		uassert.NoError(t, err, "EnableSwapsForTestnet should not change state in NoHalt")
+
+		err = EnableLiquidityForTestnet()
+		uassert.NoError(t, err, "should not change state in NoHalt")
+
+		// Verify operations maintain their NoHalt state
+		err = IsHalted(OpTypeWithdraw)
+		uassert.NoError(t, err, "should not change state in NoHalt")
+
+		err = IsHalted(OpTypeSwap)
+		uassert.NoError(t, err, "should not change state in NoHalt")
+
+		err = IsHalted(OpTypeLiquidity)
+		uassert.NoError(t, err, "should not change state in NoHalt")
+	})
+
+	t.Run("Operation state transitions during halt level changes", func(t *testing.T) {
+		// Set to MainnetSafeMode
+		err := SetHaltLevelByAdmin(LvMainnetSafeMode)
+		uassert.NoError(t, err)
+
+		// Enable all operations in MainnetSafeMode
+		err = EnableWithdrawalsForTestnet()
+		uassert.NoError(t, err)
+		err = EnableSwapsForTestnet()
+		uassert.NoError(t, err)
+		err = EnableLiquidityForTestnet()
+		uassert.NoError(t, err)
+
+		// Change to EmergencyHalt - should override previous settings
+		err = SetHaltLevelByAdmin(phalt.LvEmergencyHalt)
+		uassert.NoError(t, err)
+
+		// In EmergencyHalt, only withdrawals should be allowed
+		err = IsHalted(OpTypeWithdraw)
+		uassert.NoError(t, err)
+
+		err = IsHalted(OpTypeSwap)
+		uassert.Error(t, err)
+
+		err = IsHalted(OpTypeLiquidity)
+		uassert.Error(t, err)
+
+		// // Change back to MainnetSafeMode
+		err = SetHaltLevelByAdmin(LvMainnetSafeMode)
+		uassert.NoError(t, err)
+
+		// Check if operations return to their MainnetSafeMode defaults
+		err = IsHalted(OpTypeWithdraw)
+		uassert.NoError(t, err)
+	})
+
+	t.Run("Operation dependencies in MainnetSafeMode", func(t *testing.T) {
+		// Set to MainnetSafeMode
+		err := SetHaltLevelByAdmin(LvMainnetSafeMode)
+		uassert.NoError(t, err)
+
+		// Try to enable liquidity before enabling swaps
+		err = EnableLiquidityForTestnet()
+		uassert.NoError(t, err)
+
+		// Enable swaps and verify all states
+		err = EnableSwapsForTestnet()
+		uassert.NoError(t, err)
+
+		// Check final states of all operations
+		operations := []struct {
+			opType    phalt.OpType
+			wantError bool
+		}{
+			{OpTypeWithdraw, false},
+			{OpTypeSwap, false},
+			{OpTypeLiquidity, false},
+			{OpTypeGovernance, true},
+		}
+
+		for _, op := range operations {
+			err := IsHalted(op.opType)
+			if op.wantError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		}
+	})
+
+	t.Run("Operation status after complete cycle", func(t *testing.T) {
+		// Start with MainnetSafeMode
+		err := SetHaltLevelByAdmin(LvMainnetSafeMode)
+		uassert.NoError(t, err)
+
+		// Go through complete cycle of modes
+		modes := []phalt.LevelID{
+			phalt.LvNoHalt,
+			phalt.LvSwapHalt,
+			phalt.LvEmergencyHalt,
+			phalt.LvCompleteHalt,
+			LvMainnetSafeMode,
+		}
+
+		for _, mode := range modes {
+			err = SetHaltLevelByAdmin(mode)
+			uassert.NoError(t, err)
+
+			// Verify expected operation states for each mode
+			switch mode {
+			case phalt.LvNoHalt:
+				err = IsHalted(OpTypeWithdraw, OpTypeSwap, OpTypeLiquidity)
+				uassert.NoError(t, err)
+			case phalt.LvSwapHalt:
+				err = IsHalted(OpTypeSwap)
+				uassert.Error(t, err)
+				err = IsHalted(OpTypeWithdraw)
+				uassert.NoError(t, err)
+			case phalt.LvEmergencyHalt:
+				err = IsHalted(OpTypeWithdraw)
+				uassert.NoError(t, err)
+				err = IsHalted(OpTypeSwap, OpTypeLiquidity)
+				uassert.Error(t, err)
+			case phalt.LvCompleteHalt:
+				err = IsHalted(OpTypeWithdraw, OpTypeSwap, OpTypeLiquidity)
+				uassert.Error(t, err)
+			case LvMainnetSafeMode:
+				err = IsHalted(OpTypeWithdraw)
+				uassert.NoError(t, err)
+			}
+		}
+	})
+}
+
+func TestModeTransitions(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+
+	t.Run("MainnetSafeMode to NoHalt transition", func(t *testing.T) {
+		// Set initial state to MainnetSafeMode
+		err := SetHaltLevelByAdmin(LvMainnetSafeMode)
+		uassert.NoError(t, err)
+
+		// Enable all operations in MainnetSafeMode
+		err = EnableWithdrawalsForTestnet()
+		uassert.NoError(t, err)
+		err = EnableSwapsForTestnet()
+		uassert.NoError(t, err)
+		err = EnableLiquidityForTestnet()
+		uassert.NoError(t, err)
+
+		// Verify current state in MainnetSafeMode
+		initialState := map[phalt.OpType]bool{
+			OpTypeWithdraw:   true,
+			OpTypeSwap:       true,
+			OpTypeLiquidity:  true,
+			OpTypeGovernance: false,
+		}
+
+		for op, shouldBeEnabled := range initialState {
+			err := IsHalted(op)
+			if shouldBeEnabled {
+				uassert.NoError(t, err)
+			} else {
+				uassert.Error(t, err)
+			}
+		}
+
+		// Transition to NoHalt
+		err = SetHaltLevelByAdmin(phalt.LvNoHalt)
+		uassert.NoError(t, err)
+		uassert.False(t, GetHalt())
+		currentHaltLevel := GetCurrentHaltLevel()
+		if currentHaltLevel != phalt.LvNoHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", currentHaltLevel, phalt.LvNoHalt)
+		}
+
+		// All operations should be enabled in NoHalt
+		err = IsHalted(OpTypeWithdraw, OpTypeSwap, OpTypeLiquidity, OpTypeGovernance)
+		uassert.NoError(t, err)
+	})
+
+	t.Run("Emergency Mode transitions", func(t *testing.T) {
+		// default state: NoHalt
+		err := SetHaltLevelByAdmin(phalt.LvNoHalt)
+		uassert.NoError(t, err)
+
+		// NoHalt -> EmergencyHalt
+		err = SetHaltLevelByAdmin(phalt.LvEmergencyHalt)
+		uassert.NoError(t, err)
+
+		// only withdrawals should be allowed
+		err = IsHalted(OpTypeWithdraw)
+		uassert.NoError(t, err)
+		err = IsHalted(OpTypeSwap, OpTypeLiquidity)
+		uassert.Error(t, err)
+
+		// EmergencyHalt -> CompleteHalt
+		err = SetHaltLevelByAdmin(phalt.LvCompleteHalt)
+		uassert.NoError(t, err)
+
+		// all operations should be halted
+		err = IsHalted(OpTypeWithdraw, OpTypeSwap, OpTypeLiquidity)
+		uassert.Error(t, err)
+	})
+
+	t.Run("Mode transition ordering", func(t *testing.T) {
+		// Define transition sequence
+		transitions := []struct {
+			mode         phalt.LevelID
+			enabledOps   []phalt.OpType
+			disabledOps  []phalt.OpType
+			expectHalted bool
+		}{
+			{
+				mode:         phalt.LvNoHalt,
+				enabledOps:   []phalt.OpType{OpTypeWithdraw, OpTypeSwap, OpTypeLiquidity},
+				disabledOps:  []phalt.OpType{},
+				expectHalted: false,
+			},
+			{
+				mode:         phalt.LvSwapHalt,
+				enabledOps:   []phalt.OpType{OpTypeWithdraw, OpTypeLiquidity},
+				disabledOps:  []phalt.OpType{OpTypeSwap},
+				expectHalted: false,
+			},
+			{
+				mode:         phalt.LvEmergencyHalt,
+				enabledOps:   []phalt.OpType{OpTypeWithdraw},
+				disabledOps:  []phalt.OpType{OpTypeSwap, OpTypeLiquidity},
+				expectHalted: false,
+			},
+			{
+				mode:         phalt.LvCompleteHalt,
+				enabledOps:   []phalt.OpType{},
+				disabledOps:  []phalt.OpType{OpTypeWithdraw, OpTypeSwap, OpTypeLiquidity},
+				expectHalted: true,
+			},
+			{
+				mode:         LvMainnetSafeMode,
+				enabledOps:   []phalt.OpType{OpTypeWithdraw},
+				disabledOps:  []phalt.OpType{},
+				expectHalted: true,
+			},
+		}
+
+		for _, transition := range transitions {
+			err := SetHaltLevelByAdmin(transition.mode)
+			uassert.NoError(t, err)
+
+			uassert.Equal(t, transition.expectHalted, GetHalt())
+
+			for _, op := range transition.enabledOps {
+				err = IsHalted(op)
+				uassert.NoError(t, err)
+			}
+
+			for _, op := range transition.disabledOps {
+				err = IsHalted(op)
+				uassert.Error(t, err)
+			}
+		}
+	})
+
+	t.Run("Mode transition edge cases", func(t *testing.T) {
+		// transition to same mode
+		err := SetHaltLevelByAdmin(LvMainnetSafeMode)
+		uassert.NoError(t, err)
+		err = SetHaltLevelByAdmin(LvMainnetSafeMode)
+		uassert.NoError(t, err)
+
+		// rapid mode transitions
+		modes := []phalt.LevelID{
+			phalt.LvNoHalt,
+			LvMainnetSafeMode,
+			phalt.LvEmergencyHalt,
+			phalt.LvCompleteHalt,
+			phalt.LvNoHalt,
+		}
+
+		for _, mode := range modes {
+			err = SetHaltLevelByAdmin(mode)
+			uassert.NoError(t, err)
+			if mode != GetCurrentHaltLevel() {
+				t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), mode)
+			}
+		}
+
+		// operation status preservation after mode cycle
+		err = SetHaltLevelByAdmin(LvMainnetSafeMode)
+		uassert.NoError(t, err)
+
+		// enable all operations
+		err = EnableWithdrawalsForTestnet()
+		uassert.NoError(t, err)
+		err = EnableSwapsForTestnet()
+		uassert.NoError(t, err)
+		err = EnableLiquidityForTestnet()
+		uassert.NoError(t, err)
+
+		// cycle through modes and back
+		err = SetHaltLevelByAdmin(phalt.LvEmergencyHalt)
+		uassert.NoError(t, err)
+		err = SetHaltLevelByAdmin(LvMainnetSafeMode)
+		uassert.NoError(t, err)
+
+		// check operation states are reset to MainnetSafeMode defaults
+		err = IsHalted(OpTypeWithdraw)
+		uassert.NoError(t, err)
+	})
+}
+
+func TestHaltErrorHandling(t *testing.T) {
+	t.Run("Permission error handling", func(t *testing.T) {
+		// Test with non-admin/non-governance realm
+		std.TestSetRealm(userRealm)
+
+		// Try to set halt level
+		err := SetHaltLevelByAdmin(phalt.LvNoHalt)
+		uassert.Error(t, err)
+		if !strings.Contains(err.Error(), "only admin") {
+			t.Errorf("Error message should mention admin permission requirement")
+		}
+
+		// Try to set operation status
+		err = SetOperationStatus(OpTypeSwap, true)
+		uassert.Error(t, err)
+		if !strings.Contains(err.Error(), "only governance") {
+			t.Errorf("Error message should mention governance permission requirement")
+		}
+
+		// Verify state remains unchanged after failed attempts
+		std.TestSetRealm(adminRealm)
+		currentLevel := GetCurrentHaltLevel()
+		if currentLevel == phalt.LvNoHalt {
+			t.Errorf("Halt level should not have changed after failed attempt")
+		}
+	})
+
+	t.Run("Error handling in EnableForTestnet functions", func(t *testing.T) {
+		// Set to NoHalt first
+		std.TestSetRealm(adminRealm)
+		err := SetHaltLevelByAdmin(phalt.LvNoHalt)
+		uassert.NoError(t, err)
+
+		// Try EnableForTestnet functions in wrong mode
+		err = EnableWithdrawalsForTestnet()
+		uassert.NoError(t, err) // Should return nil without effect
+
+		err = EnableSwapsForTestnet()
+		uassert.NoError(t, err) // Should return nil without effect
+
+		err = EnableLiquidityForTestnet()
+		uassert.NoError(t, err) // Should return nil without effect
+
+		// Switch to MainnetSafeMode
+		err = SetHaltLevelByAdmin(LvMainnetSafeMode)
+		uassert.NoError(t, err)
+
+		// Try with non-admin privileges
+		std.TestSetRealm(userRealm)
+
+		err = EnableWithdrawalsForTestnet()
+		uassert.Error(t, err)
+		if !strings.Contains(err.Error(), "only admin") {
+			t.Errorf("Error message should mention admin permission requirement")
+		}
+
+		err = EnableSwapsForTestnet()
+		uassert.Error(t, err)
+		if !strings.Contains(err.Error(), "only admin") {
+			t.Errorf("Error message should mention admin permission requirement")
+		}
+
+		err = EnableLiquidityForTestnet()
+		uassert.Error(t, err)
+		if !strings.Contains(err.Error(), "only admin") {
+			t.Errorf("Error message should mention admin permission requirement")
+		}
+	})
+}

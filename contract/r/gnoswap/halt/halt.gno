@@ -31,6 +31,11 @@ const (
 
 var haltManager *phalt.Manager
 
+const (
+	enabled  = true
+	disabled = false
+)
+
 func init() {
 	// Create a default manager first
 	haltManager = phalt.DefaultManager()
@@ -45,11 +50,10 @@ func init() {
 		"MainnetSafeMode",
 		"Safe mode for post-mainnet (no withdrawals)",
 		map[phalt.OpType]bool{
-			OpTypeSwap:       false, // Disable swaps initially
-			OpTypeLiquidity:  false, // Disable liquidity initially
-			OpTypeWithdraw:   true,  // Enable withdrawals initially
-			OpTypePool:       false, // Disable pool operations initially
-			OpTypeGovernance: false, // Disable governance operations initially
+			OpTypeSwap:      disabled,
+			OpTypeLiquidity: disabled,
+			OpTypeWithdraw:  enabled,
+			OpTypePool:      disabled,
 		},
 	)
 
