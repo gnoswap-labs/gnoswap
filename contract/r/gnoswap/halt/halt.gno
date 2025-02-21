@@ -11,6 +11,9 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 )
 
+// TODO: 상태 변경 관련 함수에 이벤트 추가
+// TODO: prevAddr => prevCaller
+
 var errHalted = errors.New("halted")
 
 var govAddr, _ = access.GetAddress(access.ROLE_GOVERNANCE)
@@ -50,10 +53,10 @@ func init() {
 		"MainnetSafeMode",
 		"Safe mode for post-mainnet (no withdrawals)",
 		map[phalt.OpType]bool{
-			OpTypeSwap:      disabled,
-			OpTypeLiquidity: disabled,
-			OpTypeWithdraw:  enabled,
-			OpTypePool:      disabled,
+			OpTypeSwap:      enabled,
+			OpTypeLiquidity: enabled,
+			OpTypeWithdraw:  disabled,
+			OpTypePool:      enabled,
 		},
 	)
 
