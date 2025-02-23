@@ -55,12 +55,19 @@ func newDummyPosition(id uint64) Position {
 }
 
 func TestMustGetPosition(t *testing.T) {
-	id := uint64(1)
-	position := newDummyPosition(id)
-	setPosition(id, position)
+	var newId uint64
+	id := GetNextId()
+	nftId := gnft.TotalSupply()
+	if id > nftId {
+		newId = id
+	} else {
+		newId = nftId
+	}
+	position := newDummyPosition(newId)
+	createNewPosition(newId, position)
 
 	t.Run("Success - Get existing position", func(t *testing.T) {
-		result := MustGetPosition(id)
+		result := MustGetPosition(newId)
 		uassert.Equal(t, position.nonce.ToString(), result.nonce.ToString())
 		uassert.Equal(t, position.operator, result.operator)
 		uassert.Equal(t, position.poolKey, result.poolKey)
@@ -84,7 +91,7 @@ func TestMustGetPosition(t *testing.T) {
 }
 
 func TestGetPosition(t *testing.T) {
-	id := uint64(1)
+	id := GetNextId() - 1
 	position := newDummyPosition(id)
 	t.Run("Success - Get existing position", func(t *testing.T) {
 		result := MustGetPosition(id)
@@ -104,12 +111,13 @@ func TestGetPosition(t *testing.T) {
 }
 
 func TestSetPosition(t *testing.T) {
-	id := uint64(300)
+	id := GetNextId()
 	position := newDummyPosition(id)
 
 	t.Run("Success - Create new position", func(t *testing.T) {
 		isNew := setPosition(id, position)
 		uassert.False(t, isNew)
+		incrementNextId()
 
 		storedPosition, _ := GetPosition(id)
 		uassert.Equal(t, position.nonce.ToString(), storedPosition.nonce.ToString())
@@ -136,11 +144,11 @@ func TestSetPosition(t *testing.T) {
 }
 
 func TestRemovePosition(t *testing.T) {
-	id := uint64(2)
+	id := GetNextId()
 	position := newDummyPosition(id)
 
 	t.Run("Success - Remove existing position", func(t *testing.T) {
-		setPosition(id, position)
+		createNewPosition(id, position)
 		removePosition(id)
 		_, found := GetPosition(id)
 		uassert.False(t, found)
@@ -154,7 +162,7 @@ func TestRemovePosition(t *testing.T) {
 }
 
 func TestExistPosition(t *testing.T) {
-	id := uint64(2)
+	id := GetNextId()
 	position := newDummyPosition(id)
 
 	t.Run("False - Position does not exist", func(t *testing.T) {
@@ -162,7 +170,7 @@ func TestExistPosition(t *testing.T) {
 	})
 
 	t.Run("True - Position exists", func(t *testing.T) {
-		setPosition(id, position)
+		createNewPosition(id, position)
 		uassert.True(t, ExistPosition(id))
 		removePosition(id)
 	})
@@ -218,6 +226,7 @@ func TestComputePositionKey(t *testing.T) {
 }
 
 func TestNextIdFunctions(t *testing.T) {
+	prevNextId := GetNextId()
 	nextId = uint64(1)
 
 	t.Run("Initial nextId should return 1", func(t *testing.T) {
@@ -247,6 +256,7 @@ func TestNextIdFunctions(t *testing.T) {
 		}
 		uassert.Equal(t, uint64(100), GetNextId(), "expected nextId to reach 100 after continuous increments")
 	})
+	nextId = prevNextId
 }
 
 func TestIsValidTokenPath(t *testing.T) {
@@ -630,11 +640,12 @@ func TestMintInternal(t *testing.T) {
 				caller:         alice,
 				mintTo:         alice,
 			},
-			expectedTokenId:   101,
+			expectedTokenId:   GetNextId(),
 			expectedLiquidity: "2005104",
 			expectedAmount0:   "10000",
 			expectedAmount1:   "10000",
 			expectPanic:       false,
+			positionId:        0,
 		},
 		{
 			name: "Position Exists",
@@ -652,7 +663,7 @@ func TestMintInternal(t *testing.T) {
 				mintTo:         alice,
 			},
 			expectPanic:   true,
-			expectedError: "token id already exists",
+			expectedError: "[GNOSWAP-POSITION-011] position with same positionId already exists || positionId(1)",
 			positionId:    1,
 		},
 		{
@@ -672,11 +683,13 @@ func TestMintInternal(t *testing.T) {
 			},
 			expectPanic:   true,
 			expectedError: "[GNOSWAP-POOL-010] zero liquidity",
+			positionId:    0,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			prevNextId := nextId
 			if tt.positionId != 0 {
 				nextId = tt.positionId
 			}
@@ -693,12 +706,15 @@ func TestMintInternal(t *testing.T) {
 					mint(tt.params)
 				})
 			}
+
+			if tt.positionId != 0 {
+				nextId = prevNextId
+			}
 		})
 	}
 }
 
 func TestMint(t *testing.T) {
-	nextId = gnft.TotalSupply() + 1
 	tests := []struct {
 		name            string
 		token0          string
@@ -837,7 +853,7 @@ func TestMint(t *testing.T) {
 					tc.referrer,
 				)
 
-				uassert.Equal(t, uint64(5), positionId)
+				uassert.Equal(t, uint64(31), positionId)
 				uassert.NotEmpty(t, liquidity)
 				t0, _ := strconv.ParseUint(amount0, 10, 64)
 				t1, _ := strconv.ParseUint(amount1, 10, 64)
@@ -866,8 +882,15 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 		burned:                   false,
 	}
 	id := GetNextId()
-	setPosition(id, position)
-	incrementNextId()
+	nftId := gnft.TotalSupply()
+	if id > nftId {
+		diff := id - nftId
+		for i := uint64(1); i < diff; i++ {
+			removePosition(nftId + i)
+		}
+	}
+	nextId = nftId + 1
+	id = GetNextId()
 
 	MakeMintPositionWithoutFee(t)
 
@@ -896,7 +919,7 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 		{
 			name: "Fail - Zero Liquidity",
 			params: IncreaseLiquidityParams{
-				positionId:     7,
+				positionId:     id,
 				amount0Desired: u256.Zero(),
 				amount1Desired: u256.Zero(),
 				amount0Min:     u256.NewUint(900000),
@@ -928,6 +951,7 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 }
 
 func TestIncreaseLiquidity(t *testing.T) {
+	id := GetNextId() - 1
 	std.TestSetRealm(std.NewUserRealm(admin))
 	tests := []struct {
 		name             string
@@ -944,7 +968,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 	}{
 		{
 			name:            "Success - Valid Increase",
-			positionId:      7,
+			positionId:      id,
 			amount0Desired:  "1000000",
 			amount1Desired:  "2000000",
 			amount0Min:      "950000",
@@ -956,7 +980,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 		},
 		{
 			name:             "Fail - Deadline Exceeded",
-			positionId:       7,
+			positionId:       id,
 			amount0Desired:   "1000000",
 			amount1Desired:   "2000000",
 			amount0Min:       "950000",
@@ -967,7 +991,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 		},
 		{
 			name:             "Fail - Invalid Amount String",
-			positionId:       7,
+			positionId:       id,
 			amount0Desired:   "invalid_amount",
 			amount1Desired:   "2000000",
 			amount0Min:       "950000",
@@ -1326,7 +1350,7 @@ func TestReposition(t *testing.T) {
 			tickLower:          -5000,
 			tickUpper:          5000,
 			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(10) isn't clear(liquidity:3812288, tokensOwed0:0, tokensOwed1:0)",
+			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(11) isn't clear(liquidity:3812288, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
 			name:               "Fail - Reposition with partial liquidity removal",
@@ -1338,7 +1362,7 @@ func TestReposition(t *testing.T) {
 			tickLower:          -3000,
 			tickUpper:          3000,
 			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(10) isn't clear(liquidity:5083034, tokensOwed0:0, tokensOwed1:0)",
+			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(11) isn't clear(liquidity:5083034, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
 			name:               "Fail - Reposition on non-existent positionId",
@@ -1348,7 +1372,7 @@ func TestReposition(t *testing.T) {
 			tickLower:          -4000,
 			tickUpper:          4000,
 			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(10) isn't clear(liquidity:5083024, tokensOwed0:0, tokensOwed1:0)",
+			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(11) isn't clear(liquidity:5083024, tokensOwed0:0, tokensOwed1:0)",
 		},
 	}
 
