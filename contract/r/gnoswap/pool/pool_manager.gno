@@ -50,7 +50,7 @@ func CreatePool(
 	poolPath := poolInfo.generatePoolPath()
 	// check whether the pool already exist
 	if DoesPoolPathExist(poolPath) {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errPoolAlreadyExists,
 			ufmt.Sprintf("expected poolPath(%s) not to exist", poolPath),
 		))
@@ -144,7 +144,7 @@ func GetPool(token0Path, token1Path string, fee uint32) *Pool {
 func GetPoolFromPoolPath(poolPath string) *Pool {
 	iPool, exist := pools.Get(poolPath)
 	if !exist {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errDataNotFound,
 			ufmt.Sprintf("expected poolPath(%s) to exist", poolPath),
 		))
@@ -201,7 +201,7 @@ func GetFeeAmountTickSpacing(fee uint32) int32 {
 	feeStr := strconv.FormatUint(uint64(fee), 10)
 	iTickSpacing, exist := feeAmountTickSpacing.Get(feeStr)
 	if !exist {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errDataNotFound,
 			ufmt.Sprintf("expected feeAmountTickSpacing(%s) to exist", feeStr),
 		))
@@ -260,7 +260,7 @@ func setFeeAmountTickSpacing(fee uint32, tickSpacing int32) {
 func mustGetPool(poolPath string) *Pool {
 	pool := GetPoolFromPoolPath(poolPath)
 	if pool == nil {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errDataNotFound,
 			ufmt.Sprintf("expected poolPath(%s) to exist", poolPath),
 		))
@@ -337,7 +337,7 @@ func setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8, eventName string) 
 func setFeeProtocol(feeProtocol0, feeProtocol1 uint8) uint8 {
 	assertOnlyNotHalted()
 	if err := validateFeeProtocol(feeProtocol0, feeProtocol1); err != nil {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			err,
 			ufmt.Sprintf("expected (feeProtocol0(%d) == 0 || (feeProtocol0(%d) >= 4 && feeProtocol0(%d) <= 10)) && (feeProtocol1(%d) == 0 || (feeProtocol1(%d) >= 4 && feeProtocol1(%d) <= 10))", feeProtocol0, feeProtocol0, feeProtocol0, feeProtocol1, feeProtocol1, feeProtocol1),
 		))

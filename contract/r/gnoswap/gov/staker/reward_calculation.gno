@@ -280,9 +280,7 @@ func (self *RewardState) removeStake(staker std.Address, amount uint64, currentB
 	return reward, protocolFeeRewards
 }
 
-var (
-	q96 = u256.MustFromDecimal(consts.Q96)
-)
+var q96 = u256.MustFromDecimal(consts.Q96)
 
 // === LAUNCHPAD DEPOSIT
 var (

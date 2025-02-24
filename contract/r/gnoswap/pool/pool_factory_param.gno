@@ -72,14 +72,14 @@ func (p *createPoolParams) updateWithWrapping() *createPoolParams {
 
 		oldTick := common.TickMathGetTickAtSqrtRatio(p.sqrtPriceX96)
 		if oldTick > consts.MAX_TICK || oldTick <= consts.MIN_TICK {
-			panic(addDetailToError(
+			panic(newErrorWithDetail(
 				errInvalidTickMinMaxRange,
 				ufmt.Sprintf("The tick value(%d) is out of range due to reverse", oldTick),
 			))
 		}
 		newPrice := common.TickMathGetSqrtRatioAtTick(oldTick * int32(-1))
 		if newPrice.IsZero() {
-			panic(addDetailToError(
+			panic(newErrorWithDetail(
 				errOverFlow,
 				ufmt.Sprintf("expected newPrice(%s) to be non-zero", newPrice.ToString()),
 			))

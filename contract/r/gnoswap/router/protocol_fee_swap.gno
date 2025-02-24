@@ -19,9 +19,7 @@ const (
 	defaultSwapFeeBPS = uint64(15) // 0.15%
 )
 
-var (
-	swapFee = defaultSwapFeeBPS
-)
+var swapFee = defaultSwapFeeBPS
 
 // GetSwapFee returns current rate of swap fee
 // ref: https://docs.gnoswap.io/contracts/router/protocol_fee_swap.gno#getswapfee

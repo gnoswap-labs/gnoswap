@@ -623,8 +623,8 @@ func createTier(
 	amount uint64,
 	startHeight uint64,
 	startTime uint64,
-	collectWaitDuration uint64) Tier {
-
+	collectWaitDuration uint64,
+) Tier {
 	tierId := generateTierId(projectId, duration)
 
 	tierStart := TimeInfo{

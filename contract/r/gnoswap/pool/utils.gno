@@ -161,7 +161,7 @@ func isUserCall() bool {
 // checkTransferError checks transfer error.
 func checkTransferError(err error) {
 	if err != nil {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errTransferFailed,
 			err.Error(),
 		))
@@ -180,7 +180,7 @@ func checkOverFlowInt128(value *i256.Int) {
 // checkTickSpacing checks if the tick is divisible by the tickSpacing.
 func checkTickSpacing(tick, tickSpacing int32) {
 	if tick%tickSpacing != 0 {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errInvalidTickAndTickSpacing,
 			ufmt.Sprintf("tick(%d) MOD tickSpacing(%d) != 0(%d)", tick, tickSpacing, tick%tickSpacing),
 		))
@@ -190,7 +190,7 @@ func checkTickSpacing(tick, tickSpacing int32) {
 // assertOnlyValidAddress panics if the address is invalid.
 func assertOnlyValidAddress(addr std.Address) {
 	if !addr.IsValid() {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errInvalidAddress,
 			ufmt.Sprintf("(%s)", addr),
 		))
@@ -218,7 +218,7 @@ func assertOnlyPositionContract() {
 // assertOnlyInitializedUint256 panics if the value is nil.
 func assertOnlyInitializedUint256(value *u256.Uint) {
 	if value == nil {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errInvalidInput,
 			"value is nil",
 		))
