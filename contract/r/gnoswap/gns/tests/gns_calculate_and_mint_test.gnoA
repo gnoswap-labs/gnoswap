@@ -8,6 +8,7 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (
@@ -54,12 +55,12 @@ func TestMintGns(t *testing.T) {
 	t.Run("panic for swap is halted", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		std.TestSkipHeights(123)    // pass some block to bypass last block check
-		common.SetHaltByAdmin(true) // set halt
-		uassert.PanicsWithMessage(t, "[GNOSWAP-COMMON-002] halted || GnoSwap is halted", func() {
+		halt.SetHaltByAdmin(true) // set halt
+		uassert.PanicsWithMessage(t, "halted", func() {
 			MintGns(consts.ADMIN)
 		})
 
-		common.SetHaltByAdmin(false) // unset halt
+		halt.SetHaltByAdmin(false) // unset halt
 	})
 
 	t.Run("panic if caller is not emission contract", func(t *testing.T) {
