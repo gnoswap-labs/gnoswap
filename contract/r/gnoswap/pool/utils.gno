@@ -9,7 +9,9 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 // safeConvertToUint64 safely converts a *u256.Uint value to a uint64, ensuring no overflow.
@@ -197,13 +199,15 @@ func assertOnlyValidAddress(addr std.Address) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 }
 
 // assertOnlyPositionContract panics if the caller is not the position contract.
 func assertOnlyPositionContract() {
 	caller := getPrevAddr()
-	if err := common.PositionOnly(caller); err != nil {
+	if err := access.PositionOnly(caller); err != nil {
 		panic(addDetailToError(
 			errNoPermission,
 			ufmt.Sprintf("only position(%s) can call, called from %s", consts.POSITION_ADDR, caller.String()),
@@ -232,7 +236,7 @@ func assertOnlyAdmin() {
 // assertOnlyGovernance panics if the caller is not the governance.
 func assertOnlyGovernance() {
 	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
+	if err := access.GovernanceOnly(caller); err != nil {
 		panic(err)
 	}
 }
