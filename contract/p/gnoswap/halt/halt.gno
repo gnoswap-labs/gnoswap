@@ -3,10 +3,14 @@ package halt
 var _ Operation = (*basicOperation)(nil)
 
 const (
-	rawSwap       = "swap"
-	rawLiquidity  = "liquidity"
-	rawWithdraw   = "withdraw"
-	rawGovernance = "governance"
+	rawPool        = "pool"
+	rawPosition    = "position"
+	rawProtocolFee = "protocol_fee"
+	rawRouter      = "router" // handle swap related operations
+	rawStaker      = "staker" // handle liquidity related operations
+	rawLaunchpad   = "launchpad"
+	rawGovernance  = "governance"
+	rawWithdraw    = "withdraw"
 )
 
 // Operation represents a protocol operation that can be halted.
@@ -20,18 +24,15 @@ type OpType string
 
 // Predefined operation types in the protocol.
 const (
-	OpTypePool       OpType = "pool"
-	OpTypePosition   OpType = "position"
-	OpTypeProtocolFee OpType = "protocol_fee"
-	OpTypeRouter     OpType = "router"
-	OpTypeStaker     OpType = "staker"
-	OpTypeLaunchpad  OpType = "launchpad"
-	OpTypeGovernance OpType = rawGovernance
+	OpTypePool        OpType = rawPool
+	OpTypePosition    OpType = rawPosition
+	OpTypeProtocolFee OpType = rawProtocolFee
+	OpTypeRouter      OpType = rawRouter
+	OpTypeStaker      OpType = rawStaker
+	OpTypeLaunchpad   OpType = rawLaunchpad
+	OpTypeGovernance  OpType = rawGovernance
 
 	OpTypeWithdraw OpType = rawWithdraw
-	OpTypeDeposit OpType = "deposit"
-	OpTypeSwap OpType = rawSwap
-	OpTypeLiquidity = rawLiquidity
 )
 
 func (o OpType) String() string { return string(o) }

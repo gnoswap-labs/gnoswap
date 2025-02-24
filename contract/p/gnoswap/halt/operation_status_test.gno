@@ -7,32 +7,32 @@ import (
 func TestSetOperationStatus(t *testing.T) {
 	t.Run("Basic operation toggling", func(t *testing.T) {
 		mgr := DefaultManager()
-		// Initially swap should be allowed at NoHalt level
-		swapOp := NewOperation(OpTypeSwap, "Swap", "Token swap operation")
-		if !mgr.Level().IsOperationAllowed(swapOp) {
-			t.Errorf("Expected swap operation to be allowed initially")
+		// Initially pool should be allowed at NoHalt level
+		poolOp := NewOperation(OpTypePool, "Pool", "Pool management operations")
+		if !mgr.Level().IsOperationAllowed(poolOp) {
+			t.Errorf("Expected pool operation to be allowed initially")
 		}
 
 		// Disable swap operation
-		err := mgr.SetOperationStatus(OpTypeSwap, false)
+		err := mgr.SetOperationStatus(OpTypePool, false)
 		if err != nil {
 			t.Errorf("Failed to set operation status: %v", err)
 		}
 
-		// Verify swap is now disabled
-		if mgr.Level().IsOperationAllowed(swapOp) {
-			t.Errorf("Expected swap operation to be disabled after SetOperationStatus(false)")
+		// Verify pool is now disabled
+		if mgr.Level().IsOperationAllowed(poolOp) {
+			t.Errorf("Expected pool operation to be disabled after SetOperationStatus(false)")
 		}
 
 		// Re-enable swap operation
-		err = mgr.SetOperationStatus(OpTypeSwap, true)
+		err = mgr.SetOperationStatus(OpTypePool, true)
 		if err != nil {
 			t.Errorf("Failed to re-enable operation: %v", err)
 		}
 
-		// Verify swap is enabled again
-		if !mgr.Level().IsOperationAllowed(swapOp) {
-			t.Errorf("Expected swap operation to be re-enabled after SetOperationStatus(true)")
+		// Verify pool is enabled again
+		if !mgr.Level().IsOperationAllowed(poolOp) {
+			t.Errorf("Expected pool operation to be re-enabled after SetOperationStatus(true)")
 		}
 	})
 
@@ -95,14 +95,14 @@ func TestSetOperationStatus(t *testing.T) {
 	t.Run("Preservation across level changes", func(t *testing.T) {
 		mgr := DefaultManager()
 
-		// Modify NoHalt level to disallow swaps
-		err := mgr.SetOperationStatus(OpTypeSwap, false)
+		// Modify NoHalt level to disallow pools
+		err := mgr.SetOperationStatus(OpTypePool, false)
 		if err != nil {
-			t.Errorf("Failed to disable swap: %v", err)
+			t.Errorf("Failed to disable pool: %v", err)
 		}
 
 		// Change level and then switch back
-		if err := mgr.SetCurrentLevel(LvSwapHalt); err != nil {
+		if err := mgr.SetCurrentLevel(LvContractHalt); err != nil {
 			t.Errorf("Failed to change level: %v", err)
 		}
 		if err := mgr.SetCurrentLevel(LvNoHalt); err != nil {
@@ -110,19 +110,19 @@ func TestSetOperationStatus(t *testing.T) {
 		}
 
 		// Verify the modification persisted
-		swapOp := NewOperation(OpTypeSwap, "Swap", "Token swap operation")
-		if mgr.Level().IsOperationAllowed(swapOp) {
-			t.Errorf("Expected swap to remain disabled after level change and back")
+		poolOp := NewOperation(OpTypePool, "Pool", "Pool management operations")
+		if mgr.Level().IsOperationAllowed(poolOp) {
+			t.Errorf("Expected pool to remain disabled after level change and back")
 		}
 	})
 
 	t.Run("Composite halt level should return error", func(t *testing.T) {
 		// Create basic levels for the composite
 		level1 := NewHaltLevel(LevelID(100), "Level1", "Test level 1", map[OpType]bool{
-			OpTypeSwap: true,
+			OpTypePool: true,
 		})
 		level2 := NewHaltLevel(LevelID(101), "Level2", "Test level 2", map[OpType]bool{
-			OpTypeSwap: false,
+			OpTypePool: false,
 		})
 
 		// Create a composite level
@@ -140,7 +140,7 @@ func TestSetOperationStatus(t *testing.T) {
 		}
 
 		// Attempt to modify composite level should fail
-		err := mgr.SetOperationStatus(OpTypeSwap, true)
+		err := mgr.SetOperationStatus(OpTypePool, true)
 		if err == nil {
 			t.Error("Expected error when trying to modify composite halt level, got nil")
 		}
@@ -177,39 +177,19 @@ func TestSetOperationStatus_ToggleOperations(t *testing.T) {
 			name: "enable swap in SwapHalt level",
 			setupFn: func() *Manager {
 				mgr := DefaultManager()
-				if err := mgr.SetCurrentLevel(LvSwapHalt); err != nil {
+				if err := mgr.SetCurrentLevel(LvContractHalt); err != nil {
 					t.Fatalf("Failed to set up test: %v", err)
 				}
-				// SwapHalt level should have swap disabled by default
+				// ContractHalt level should have swap disabled by default
 				return mgr
 			},
-			opType:    OpTypeSwap,
+			opType:    OpTypePool,
 			newStatus: true,
 			wantErr:   false,
 			verifyFn: func(t *testing.T, mgr *Manager) {
-				swapOp := NewOperation(OpTypeSwap, "test swap", "swap operation")
-				if !mgr.Level().IsOperationAllowed(swapOp) {
-					t.Error("Expected swap to be enabled, but it's still disallowed")
-				}
-			},
-		},
-		{
-			name: "disable liquidity in EmergencyHalt level",
-			setupFn: func() *Manager {
-				mgr := DefaultManager()
-				if err := mgr.SetCurrentLevel(LvEmergencyHalt); err != nil {
-					t.Fatalf("Failed to set up test: %v", err)
-				}
-				// EmergencyHalt level should already have liquidity disabled
-				return mgr
-			},
-			opType:    OpTypeLiquidity,
-			newStatus: false,
-			wantErr:   false,
-			verifyFn: func(t *testing.T, mgr *Manager) {
-				liquidityOp := NewOperation(OpTypeLiquidity, "test liquidity", "liquidity operation")
-				if mgr.Level().IsOperationAllowed(liquidityOp) {
-					t.Error("Expected liquidity to remain disabled, but it's allowed")
+				poolOp := NewOperation(OpTypePool, "test pool", "pool management operations")
+				if !mgr.Level().IsOperationAllowed(poolOp) {
+					t.Error("Expected pool to be enabled, but it's still disallowed")
 				}
 			},
 		},
@@ -219,24 +199,14 @@ func TestSetOperationStatus_ToggleOperations(t *testing.T) {
 				mgr := DefaultManager()
 				return mgr
 			},
-			opType:    OpTypeSwap, // We'll toggle multiple in verifyFn
-			newStatus: false,      // Initial change for swap
+			opType:    OpTypePool, // We'll toggle multiple in verifyFn
+			newStatus: false,      // Initial change for pool
 			wantErr:   false,
 			verifyFn: func(t *testing.T, mgr *Manager) {
-				// First verify swap was disabled
-				swapOp := NewOperation(OpTypeSwap, "test swap", "swap operation")
-				if mgr.Level().IsOperationAllowed(swapOp) {
-					t.Error("Expected swap to be disabled, but it's still allowed")
-				}
-
-				// Now toggle liquidity and verify
-				if err := mgr.SetOperationStatus(OpTypeLiquidity, false); err != nil {
-					t.Errorf("Unexpected error toggling liquidity: %v", err)
-				}
-
-				liquidityOp := NewOperation(OpTypeLiquidity, "test liquidity", "liquidity operation")
-				if mgr.Level().IsOperationAllowed(liquidityOp) {
-					t.Error("Expected liquidity to be disabled, but it's still allowed")
+				// First verify pool was disabled
+				poolOp := NewOperation(OpTypePool, "test pool", "pool management operations")
+				if mgr.Level().IsOperationAllowed(poolOp) {
+					t.Error("Expected pool to be disabled, but it's still allowed")
 				}
 
 				// Toggle withdraw and verify
@@ -276,13 +246,13 @@ func TestSetOperationStatus_ToggleOperations(t *testing.T) {
 				level1 := BasicHaltLevel{
 					baseInfo:   baseInfo{name: "level1", desc: "test level 1"},
 					level:      LevelID(100),
-					allowedOps: allowedOps{OpTypeSwap: true, OpTypeLiquidity: false},
+					allowedOps: allowedOps{OpTypePool: true, OpTypePosition: false},
 				}
 
 				level2 := BasicHaltLevel{
 					baseInfo:   baseInfo{name: "level2", desc: "test level 2"},
 					level:      LevelID(101),
-					allowedOps: allowedOps{OpTypeSwap: false, OpTypeLiquidity: true},
+					allowedOps: allowedOps{OpTypePool: false, OpTypePosition: true},
 				}
 
 				composite := &CompositeHaltLevel{
@@ -295,7 +265,7 @@ func TestSetOperationStatus_ToggleOperations(t *testing.T) {
 
 				return mgr
 			},
-			opType:    OpTypeSwap,
+			opType:    OpTypePool,
 			newStatus: true,
 			wantErr:   true, // Should error on composite level
 			verifyFn:  nil,  // No verification needed for error case
@@ -327,49 +297,42 @@ func TestSetOperationStatusScenarios(t *testing.T) {
 		}
 
 		withdrawOp := createOperation(OpTypeWithdraw)
-		assertOperationStatus(t, mgr, withdrawOp, false)
-
-		setOperationStatusOrFail(t, mgr, OpTypeWithdraw, true)
 		assertOperationStatus(t, mgr, withdrawOp, true)
 
 		// Other operations should remain disabled
-		swapOp := createOperation(OpTypeSwap)
-		liquidityOp := createOperation(OpTypeLiquidity)
-		assertOperationStatus(t, mgr, swapOp, false)
-		assertOperationStatus(t, mgr, liquidityOp, false)
+		poolOp := createOperation(OpTypePool)
+		positionOp := createOperation(OpTypePosition)
+		assertOperationStatus(t, mgr, poolOp, false)
+		assertOperationStatus(t, mgr, positionOp, false)
 	})
 
 	t.Run("maintenance_scenario", func(t *testing.T) {
 		mgr := DefaultManager()
 
 		// enable all operations
-		setOperationStatusOrFail(t, mgr, OpTypeSwap, true)
+		setOperationStatusOrFail(t, mgr, OpTypePool, true)
 		setOperationStatusOrFail(t, mgr, OpTypeWithdraw, true)
-		setOperationStatusOrFail(t, mgr, OpTypeLiquidity, true)
 
-		swapOp := createOperation(OpTypeSwap)
-		assertOperationStatus(t, mgr, swapOp, true)
+		poolOp := createOperation(OpTypePool)
+		assertOperationStatus(t, mgr, poolOp, true)
 
-		setOperationStatusOrFail(t, mgr, OpTypeSwap, false)
-		assertOperationStatus(t, mgr, swapOp, false)
+		setOperationStatusOrFail(t, mgr, OpTypePool, false)
+		assertOperationStatus(t, mgr, poolOp, false)
 
 		// Other operations should remain enabled
 		withdrawOp := createOperation(OpTypeWithdraw)
-		liquidityOp := createOperation(OpTypeLiquidity)
 		assertOperationStatus(t, mgr, withdrawOp, true)
-		assertOperationStatus(t, mgr, liquidityOp, true)
 
-		setOperationStatusOrFail(t, mgr, OpTypeSwap, true)
-		assertOperationStatus(t, mgr, swapOp, true)
+		setOperationStatusOrFail(t, mgr, OpTypePool, true)
+		assertOperationStatus(t, mgr, poolOp, true)
 	})
 
 	t.Run("custom_operation_scenario", func(t *testing.T) {
 		mgr := DefaultManager()
 
 		// enable all operations
-		setOperationStatusOrFail(t, mgr, OpTypeSwap, true)
+		setOperationStatusOrFail(t, mgr, OpTypePool, true)
 		setOperationStatusOrFail(t, mgr, OpTypeWithdraw, true)
-		setOperationStatusOrFail(t, mgr, OpTypeLiquidity, true)
 
 		const OpTypeStake = OpType("stake")
 		stakeOp := createOperation(OpTypeStake)
@@ -379,8 +342,8 @@ func TestSetOperationStatusScenarios(t *testing.T) {
 		setOperationStatusOrFail(t, mgr, OpTypeStake, true)
 		assertOperationStatus(t, mgr, stakeOp, true)
 
-		swapOp := createOperation(OpTypeSwap)
-		assertOperationStatus(t, mgr, swapOp, true)
+		poolOp := createOperation(OpTypePool)
+		assertOperationStatus(t, mgr, poolOp, true)
 	})
 }
 

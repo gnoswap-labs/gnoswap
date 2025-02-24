@@ -17,7 +17,7 @@ type LevelID uint8
 const (
 	_               LevelID = iota // undefined
 	LvNoHalt                       // normal operation
-	LvSwapHalt                     // swap operations halted
+	LvContractHalt                 // swap operations halted
 	LvLiquidityHalt                // no swaps, no liquidity ops
 	LvEmergencyHalt                // only withdrawals allowed
 	LvCompleteHalt                 // all ops disabled
@@ -25,7 +25,7 @@ const (
 
 const (
 	rawNoHalt        = "NoHalt"
-	rawSwapHalt      = "SwapHalt"
+	rawContractHalt  = "ContractHalt"
 	rawLiquidityHalt = "LiquidityHalt"
 	rawEmergencyHalt = "EmergencyHalt"
 	rawCompleteHalt  = "CompleteHalt"
@@ -40,8 +40,8 @@ func (lv LevelID) String() string {
 	switch lv {
 	case LvNoHalt:
 		return rawNoHalt
-	case LvSwapHalt:
-		return rawSwapHalt
+	case LvContractHalt:
+		return rawContractHalt
 	case LvLiquidityHalt:
 		return rawLiquidityHalt
 	case LvEmergencyHalt:

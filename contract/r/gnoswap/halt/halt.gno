@@ -23,48 +23,11 @@ type OperationType struct {
 	IsContract  bool
 }
 
-// Operation types table
-var operationTypes = []OperationType{
-	// Contract operations
-	{Type: "pool", Name: "Pool", Description: "Pool contract operations", IsContract: true},
-	{Type: "position", Name: "Position", Description: "Position contract operations", IsContract: true},
-	{Type: "protocol_fee", Name: "ProtocolFee", Description: "Protocol fee contract operations", IsContract: true},
-	{Type: "router", Name: "Router", Description: "Router contract operations", IsContract: true},
-	{Type: "staker", Name: "Staker", Description: "Staker contract operations", IsContract: true},
-	{Type: "launchpad", Name: "Launchpad", Description: "Launchpad contract operations", IsContract: true},
-	{Type: "governance", Name: "Governance", Description: "Governance contract operations", IsContract: true},
-
-	// Global actions
-	{Type: "withdraw", Name: "Withdraw", Description: "Withdrawal operations", IsContract: false},
-	{Type: "deposit", Name: "Deposit", Description: "Deposit operations", IsContract: false},
-	{Type: "swap", Name: "Swap", Description: "Swap operations", IsContract: false},
-	{Type: "liquidity", Name: "Liquidity", Description: "Liquidity operations", IsContract: false},
-}
-
-// Contract-specific operation types
-const (
-	OpTypePool       phalt.OpType = "pool"
-	OpTypePosition   phalt.OpType = "position" 
-	OpTypeProtocolFee phalt.OpType = "protocol_fee"
-	OpTypeRouter     phalt.OpType = "router"
-	OpTypeStaker     phalt.OpType = "staker"
-	OpTypeLaunchpad  phalt.OpType = "launchpad"
-	OpTypeGovernance phalt.OpType = "governance"
-
-	// Contract actions
-	OpTypeWithdraw   phalt.OpType = "withdraw"   // Global withdraw operation
-	OpTypeDeposit    phalt.OpType = "deposit"    // Global deposit operation
-	OpTypeSwap       phalt.OpType = "swap"       // Global swap operation
-	OpTypeLiquidity  phalt.OpType = "liquidity"  // Global liquidity operation
-)
-
 const (
 	// Special mode for beta mainnet (no withdrawals)
 	// Issue: https://github.com/gnoswap-labs/gnoswap/issues/517
 	LvMainnetSafeMode phalt.LevelID = 10
 
-	// Halt handler for contract-specific operations
-	LvContractSafeMode phalt.LevelID = 20
 )
 
 var haltManager *phalt.Manager
@@ -78,20 +41,20 @@ func init() {
 	// Create a default manager first
 	haltManager = phalt.DefaultManager()
 
-	// Register GnoSwap-specific operations
-	haltManager.RegisterOperation(phalt.NewOperation(OpTypePool, "Pool", "Pool management operations"))
-	haltManager.RegisterOperation(phalt.NewOperation(OpTypeGovernance, "Governance", "Governance operations"))
-
 	// Create custom MainnetSafeMode level that disables withdrawals for beta mainnet
 	mainnetSafeMode := phalt.NewHaltLevel(
 		LvMainnetSafeMode,
 		"MainnetSafeMode",
 		"Safe mode for post-mainnet (no withdrawals)",
 		map[phalt.OpType]bool{
-			phalt.OpTypeSwap:      enabled,
-			phalt.OpTypeLiquidity: enabled,
-			phalt.OpTypeWithdraw:  disabled,
-			phalt.OpTypePool:      enabled,
+			phalt.OpTypePool:        true,
+			phalt.OpTypePosition:    true,
+			phalt.OpTypeProtocolFee: true,
+			phalt.OpTypeRouter:      true,
+			phalt.OpTypeStaker:      true,
+			phalt.OpTypeLaunchpad:   true,
+			phalt.OpTypeGovernance:  true,
+			phalt.OpTypeWithdraw:   false,
 		},
 	)
 
@@ -100,35 +63,6 @@ func init() {
 	// Set initial level to MainnetSafeMode for right after mainnet
 	if err := haltManager.SetCurrentLevel(LvMainnetSafeMode); err != nil {
 		panic(ufmt.Sprintf("Failed to set initial halt level: %v", err))
-	}
-
-	for _, op := range operationTypes {
-		haltManager.RegisterOperation(phalt.NewOperation(op.Type, op.Name, op.Description))
-
-		// Create ContractSafeMode level with all contracts enabled by default
-		contractSafeMode := phalt.NewHaltLevel(
-			LvContractSafeMode,
-			"ContractSafeMode",
-			"Safe mode with contract-specific controls, all enabled by default",
-			map[phalt.OpType]bool{
-				// Contract states - all enabled by default
-				phalt.OpTypePool:        true,
-				phalt.OpTypePosition:    true,
-				phalt.OpTypeProtocolFee: true,
-				phalt.OpTypeRouter:      true,
-				phalt.OpTypeStaker:      true,
-				phalt.OpTypeLaunchpad:   true,
-				phalt.OpTypeGovernance:  true,
-
-				// Global actions - also enabled by default
-				phalt.OpTypeWithdraw:   true, // Must be enabled
-				phalt.OpTypeDeposit:    true,
-				phalt.OpTypeSwap:       true,
-				phalt.OpTypeLiquidity:  true,
-			},
-		)
-
-		haltManager.RegisterHaltLevel(contractSafeMode)
 	}
 }
 
@@ -351,7 +285,7 @@ func EnableWithdrawalsForTestnet() error {
 		return nil
 	}
 
-	err := setOperationStatus(OpTypeWithdraw, true)
+	err := setOperationStatus(phalt.OpTypeWithdraw, true)
 	if err != nil {
 		return err
 	}
@@ -359,69 +293,6 @@ func EnableWithdrawalsForTestnet() error {
 	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
 		"enableWithdrawals",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
-	)
-
-	return nil
-}
-
-// EnableSwapsForTestnet enables swaps in MainnetSafeMode.
-// This should be called after ensuring stability on beta mainnet.
-//
-// Returns:
-// - error: nil if successful, otherwise an error.
-func EnableSwapsForTestnet() error {
-	caller := getPrevAddr()
-	// TODO: no need to check governance?
-	if err := access.AdminOnly(caller); err != nil {
-		return ufmt.Errorf("only admin can enable swaps, called from %s", caller)
-	}
-
-	// Only proceed if we're in MainnetSafeMode
-	if haltManager.Level().Level() != LvMainnetSafeMode {
-		return nil
-	}
-
-	err := setOperationStatus(OpTypeSwap, true)
-	if err != nil {
-		return err
-	}
-
-	prevAddr, prevPkgPath := getPrevAsString()
-	std.Emit(
-		"enableSwaps",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
-	)
-
-	return nil
-}
-
-// EnableLiquidityForTestnet enables liquidity operations in MainnetSafeMode.
-// This should be called after ensuring stability on beta mainnet.
-//
-// Returns:
-// - error: nil if successful, otherwise an error.
-func EnableLiquidityForTestnet() error {
-	caller := getPrevAddr()
-	if err := access.AdminOnly(caller); err != nil {
-		return ufmt.Errorf("only admin can enable liquidity, called from %s", caller)
-	}
-
-	// Only proceed if we're in MainnetSafeMode
-	if haltManager.Level().Level() != LvMainnetSafeMode {
-		return nil
-	}
-
-	err := setOperationStatus(OpTypeLiquidity, true)
-	if err != nil {
-		return err
-	}
-
-	prevAddr, prevPkgPath := getPrevAsString()
-	std.Emit(
-		"enableLiquidity",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 	)
@@ -461,7 +332,7 @@ func EnableContractOperations(contract phalt.OpType) error {
 	}
 
 	// Only proceed if we're in ContractSafeMode
-	if haltManager.Level().Level() != LvContractSafeMode {
+	if haltManager.Level().Level() != phalt.LvContractHalt{
 		return nil
 	}
 

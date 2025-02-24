@@ -55,7 +55,7 @@ During normal functioning, all operations are permitted. The protocol operates a
 
 ### Scenario 2: High Market Volatility
 
-During periods of extreme volatility, swaps might be temporarily disabled to prevent exploits or unfair trades. The protocol switches to `LvSwapHalt` level, allowing only liquidity and withdrawal operations.
+During periods of extreme volatility, swaps might be temporarily disabled to prevent exploits or unfair trades. The protocol switches to `LvContractHalt` level, allowing only liquidity and withdrawal operations.
 
 ### Scenario 3: Critical Vulnerability Found
 
