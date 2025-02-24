@@ -89,6 +89,8 @@ func CollectWithdrawalFee(
 		"poolPath", poolPath,
 		"feeAmount0", feeAmount0.ToString(),
 		"feeAmount1", feeAmount1.ToString(),
+		"amount0WithoutFee", afterAmount0.ToString(),
+		"amount1WithoutFee", afterAmount1.ToString(),
 	)
 
 	return afterAmount0.ToString(), afterAmount1.ToString()
@@ -109,7 +111,7 @@ func SetPoolCreationFee(fee uint64) {
 	if err := common.GovernanceOnly(caller); err != nil {
 		panic(err.Error())
 	}
-	prevPoolCreationFee := poolCreationFee
+	prevPoolCreationFee := GetPoolCreationFee()
 	setPoolCreationFee(fee)
 
 	prevAddr, prevPkgPath := getPrevAsString()
@@ -131,7 +133,7 @@ func SetPoolCreationFeeByAdmin(fee uint64) {
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err.Error())
 	}
-	prevPoolCreationFee := poolCreationFee
+	prevPoolCreationFee := GetPoolCreationFee()
 	setPoolCreationFee(fee)
 
 	prevAddr, prevPkgPath := getPrevAsString()
@@ -160,7 +162,7 @@ func SetWithdrawalFee(fee uint64) {
 		panic(err.Error())
 	}
 
-	prevWithdrawalFee := withdrawalFeeBPS
+	prevWithdrawalFee := GetWithdrawalFee()
 
 	setWithdrawalFee(fee)
 
@@ -183,7 +185,7 @@ func SetWithdrawalFeeByAdmin(fee uint64) {
 		panic(err.Error())
 	}
 
-	prevWithdrawalFee := withdrawalFeeBPS
+	prevWithdrawalFee := GetWithdrawalFee()
 
 	setWithdrawalFee(fee)
 

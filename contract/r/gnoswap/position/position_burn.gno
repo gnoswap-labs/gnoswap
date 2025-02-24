@@ -75,6 +75,8 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 	position.liquidity = new(u256.Uint).Sub(positionLiquidity, liquidityToRemove)
+	position.token0Balance = new(u256.Uint).Sub(position.token0Balance, burnedAmount0)
+	position.token1Balance = new(u256.Uint).Sub(position.token1Balance, burnedAmount1)
 	mustUpdatePosition(params.positionId, position)
 
 	collect0, collect1 := pl.Collect(
@@ -109,6 +111,8 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	mustUpdatePosition(params.positionId, position)
 
 	if position.isClear() {
+		// TODO:
+		// 1. deprecated burnPosition
 		burnPosition(params.positionId) // just update flag (we don't want to burn actual position)
 	}
 

@@ -24,6 +24,9 @@ type Position struct {
 	tokensOwed0 *u256.Uint
 	tokensOwed1 *u256.Uint
 
+	token0Balance *u256.Uint // token0 balance of the position
+	token1Balance *u256.Uint // token1 balance of the position
+
 	burned bool // whether the position has been burned(≈ actuall we don't burn lp token even its empty, just update flag)
 }
 

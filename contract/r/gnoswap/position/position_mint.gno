@@ -90,6 +90,8 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 		feeGrowthInside1LastX128: new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey)),
 		tokensOwed0:              u256.Zero(),
 		tokensOwed1:              u256.Zero(),
+		token0Balance:            amount0,
+		token1Balance:            amount1,
 		burned:                   false,
 	}
 
@@ -296,6 +298,8 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 	position.liquidity = new(u256.Uint).Add(new(u256.Uint).Set(position.liquidity), liquidity)
+	position.token0Balance = new(u256.Uint).Add(new(u256.Uint).Set(position.token0Balance), amount0)
+	position.token1Balance = new(u256.Uint).Add(new(u256.Uint).Set(position.token1Balance), amount1)
 	position.burned = false
 
 	updated := setPosition(params.positionId, position)
