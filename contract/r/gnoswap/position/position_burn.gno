@@ -108,13 +108,11 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 			"tokensOwed1 underflow",
 		))
 	}
-	mustUpdatePosition(params.positionId, position)
 
 	if position.isClear() {
-		// TODO:
-		// 1. deprecated burnPosition
-		burnPosition(params.positionId) // just update flag (we don't want to burn actual position)
+		position.burned = true // just update flag (we don't want to burn actual position)
 	}
+	mustUpdatePosition(params.positionId, position)
 
 	// NO UNWRAP
 	if !params.unwrapResult {
@@ -124,19 +122,6 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	handleUnwrap(pToken0, pToken1, params.unwrapResult, beforeWugnotBalance, caller)
 
 	return params.positionId, liquidityToRemove, fee0, fee1, collectAmount0, collectAmount1, position.poolKey
-}
-
-func burnPosition(id uint64) {
-	position := MustGetPosition(id)
-	if !(position.isClear()) {
-		panic(newErrorWithDetail(
-			errNotClear,
-			ufmt.Sprintf("positionId(%d) (liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)", id, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()),
-		))
-	}
-
-	position.burned = true
-	mustUpdatePosition(id, position)
 }
 
 func updateTokensOwed(
