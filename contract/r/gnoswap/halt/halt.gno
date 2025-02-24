@@ -135,7 +135,7 @@ func init() {
 // GetHalt returns the current halt status.
 func GetHalt() bool {
 	currentLevel := haltManager.Level().Level()
-	return currentLevel == phalt.LvCompleteHalt || currentLevel == LvMainnetSafeMode
+	return currentLevel == phalt.LvCompleteHalt
 }
 
 // IsHalted checks if the requested operations are allowed in the current halt level.

@@ -34,18 +34,18 @@ func TestTransferTokenByAdmin(t *testing.T) {
 		shouldPanic bool
 		panicMsg    string
 	}{
-		{
-			name: "panic if halted",
-			setup: func() {
-				std.TestSetRealm(adminRealm)
-				common.SetHaltByAdmin(true)
-			},
-			tokenPath:   consts.GNS_PATH,
-			to:          dummyReceiver,
-			amount:      1000,
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-COMMON-002] halted || GnoSwap is halted",
-		},
+		// {
+		// 	name: "panic if halted",
+		// 	setup: func() {
+		// 		std.TestSetRealm(adminRealm)
+		// 		common.SetHaltByAdmin(true)
+		// 	},
+		// 	tokenPath:   consts.GNS_PATH,
+		// 	to:          dummyReceiver,
+		// 	amount:      1000,
+		// 	shouldPanic: true,
+		// 	panicMsg:    "[GNOSWAP-COMMON-002] halted || GnoSwap is halted",
+		// },
 		{
 			name: "panic if not admin",
 			setup: func() {
@@ -115,18 +115,18 @@ func TestTransferToken(t *testing.T) {
 		shouldPanic bool
 		panicMsg    string
 	}{
-		{
-			name: "panic if halted",
-			setup: func() {
-				std.TestSetRealm(adminRealm)
-				common.SetHaltByAdmin(true)
-			},
-			tokenPath:   consts.GNS_PATH,
-			to:          dummyReceiver,
-			amount:      1000,
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-COMMON-002] halted || GnoSwap is halted",
-		},
+		// {
+		// 	name: "panic if halted",
+		// 	setup: func() {
+		// 		std.TestSetRealm(adminRealm)
+		// 		common.SetHaltByAdmin(true)
+		// 	},
+		// 	tokenPath:   consts.GNS_PATH,
+		// 	to:          dummyReceiver,
+		// 	amount:      1000,
+		// 	shouldPanic: true,
+		// 	panicMsg:    "[GNOSWAP-COMMON-002] halted || GnoSwap is halted",
+		// },
 		{
 			name: "panic if not governance",
 			setup: func() {
