@@ -13,7 +13,7 @@ import (
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 
-	en "gno.land/r/gnoswap/v1/emission" // TODO: 이 import 제거
+	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
@@ -184,7 +184,7 @@ const (
 )
 
 func init() {
-	// init pool tier녇
+	// init pool tier
 	// tier 1
 	// ONLY GNOT:GNS 0.3%
 
@@ -194,11 +194,6 @@ func init() {
 }
 
 func RegisterCallbackStakerEmissionChange() {
-	// TODO: issue
-	// import로 emission 주소를 인식하기 때문에 컨트랙트가 변해도 이전 emission만 인식함.
-	// callback으로 호출하도록 변경?
-	//
-	// 더 좋은 구조를 찾아야 함 역참도 되지 않게.
 	en.SetCallbackStakerEmissionChange(callbackStakerEmissionChange)
 	en.RegisterGnsChangeCallback()
 }
