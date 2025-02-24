@@ -11,6 +11,7 @@ import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 func assertPanic(t *testing.T, expectedMsg string, fn func()) {
@@ -154,7 +155,7 @@ func TestAssertOnlyNotHalted(t *testing.T) {
 		{
 			name:     "Failure - Halted",
 			expected: false,
-			panicMsg: "[GNOSWAP-COMMON-002] halted || GnoSwap is halted",
+			panicMsg: "halted",
 		},
 		{
 			name:     "Success - Not Halted",
@@ -169,11 +170,11 @@ func TestAssertOnlyNotHalted(t *testing.T) {
 				})
 			} else {
 				std.TestSetRealm(std.NewUserRealm(admin))
-				common.SetHaltByAdmin(true)
+				halt.SetHaltByAdmin(true)
 				uassert.PanicsWithMessage(t, tc.panicMsg, func() {
 					assertOnlyNotHalted()
 				})
-				common.SetHaltByAdmin(false)
+				halt.SetHaltByAdmin(false)
 			}
 		})
 	}

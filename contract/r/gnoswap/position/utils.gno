@@ -11,6 +11,7 @@ import (
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/v1/halt"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -85,7 +86,9 @@ func assertOnlyUserOrStaker(caller std.Realm) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 }
 
 // assertOnlyValidAddress panics if the address is invalid.
