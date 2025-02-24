@@ -13,7 +13,7 @@ import (
 	rr "gno.land/r/gnoswap/v1/router"
 	sr "gno.land/r/gnoswap/v1/staker"
 
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 func createParameterHandlers() *ParameterRegistry {
@@ -24,7 +24,7 @@ func createParameterHandlers() *ParameterRegistry {
 		if err := hasDesiredParams(params, 1); err != nil {
 			return err
 		}
-		common.SetHalt(parseBool(params[0])) // halt
+		halt.SetHalt(parseBool(params[0])) // halt
 		return nil
 	})
 
