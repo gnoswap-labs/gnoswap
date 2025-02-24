@@ -13,10 +13,10 @@ init: send-ugnot-must deploy-test-tokens deploy-libraries deploy-base-contracts 
 deploy-test-tokens: deploy-bar deploy-baz deploy-foo deploy-obl deploy-qux deploy-usdc
 
 .PHONY: deploy-libraries
-deploy-libraries: deploy-consts deploy-uint256 deploy-int256 deploy-rbac deploy-gnsmath
+deploy-libraries: deploy-consts deploy-uint256 deploy-int256 deploy-rbac deploy-gnsmath deploy-halt
 
 .PHONY: deploy-base-contracts
-deploy-base-contracts: deploy-common deploy-rbac-realm deploy-referral
+deploy-base-contracts: deploy-common deploy-access deploy-halt deploy-halt-realm deploy-rbac-realm deploy-referral
 
 .PHONY: deploy-base-tokens
 deploy-base-tokens: deploy-gnft deploy-gns
@@ -53,6 +53,21 @@ deploy-rbac:
 deploy-uint256:
 	$(info ************ deploy uint256 ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/uint256 -pkgpath gno.land/p/gnoswap/uint256 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+	@echo
+
+deploy-halt:
+	$(info ************ deploy p/halt ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/halt -pkgpath gno.land/p/gnoswap/halt -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+	@echo
+
+deploy-rbac-realm:
+	$(info ************ deploy rbac ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/rbac -pkgpath gno.land/r/gnoswap/v1/rbac -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+	@echo
+
+deploy-access:
+	$(info ************ deploy access ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/access -pkgpath gno.land/r/gnoswap/v1/access -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 	@echo
 
 deploy-common:
@@ -115,14 +130,14 @@ deploy-protocol_fee:
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/protocol_fee -pkgpath gno.land/r/gnoswap/v1/protocol_fee -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 	@echo
 
-deploy-rbac-realm:
-	$(info ************ deploy rbac ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/rbac -pkgpath gno.land/r/gnoswap/v1/rbac -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
-	@echo
-
 deploy-referral:
 	$(info ************ deploy referral ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/referral -pkgpath gno.land/r/gnoswap/v1/referral -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+	@echo
+
+deploy-halt-realm:
+	$(info ************ deploy r/halt ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/halt -pkgpath gno.land/r/gnoswap/v1/halt -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 	@echo
 
 deploy-router:
