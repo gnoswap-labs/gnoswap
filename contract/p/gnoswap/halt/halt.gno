@@ -20,30 +20,21 @@ type OpType string
 
 // Predefined operation types in the protocol.
 const (
-	OpTypeSwap       OpType = rawSwap
-	OpTypeLiquidity  OpType = rawLiquidity
-	OpTypeWithdraw   OpType = rawWithdraw
+	OpTypePool       OpType = "pool"
+	OpTypePosition   OpType = "position"
+	OpTypeProtocolFee OpType = "protocol_fee"
+	OpTypeRouter     OpType = "router"
+	OpTypeStaker     OpType = "staker"
+	OpTypeLaunchpad  OpType = "launchpad"
 	OpTypeGovernance OpType = rawGovernance
+
+	OpTypeWithdraw OpType = rawWithdraw
+	OpTypeDeposit OpType = "deposit"
+	OpTypeSwap OpType = rawSwap
+	OpTypeLiquidity = rawLiquidity
 )
 
 func (o OpType) String() string { return string(o) }
-
-// OpTypeFromString converts a string to an `OpType`.
-func OpTypeFromString(s string) (OpType, error) {
-	switch s {
-	case rawSwap:
-		return OpTypeSwap, nil
-	case rawLiquidity:
-		return OpTypeLiquidity, nil
-	case rawWithdraw:
-		return OpTypeWithdraw, nil
-	case rawGovernance:
-		return OpTypeGovernance, nil
-	default:
-		// handle user-defined operation types
-		return OpType(s), nil
-	}
-}
 
 // basicOperation implements the `Operation` interface.
 type basicOperation struct {

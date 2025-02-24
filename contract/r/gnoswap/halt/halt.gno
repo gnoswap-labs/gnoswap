@@ -88,10 +88,10 @@ func init() {
 		"MainnetSafeMode",
 		"Safe mode for post-mainnet (no withdrawals)",
 		map[phalt.OpType]bool{
-			OpTypeSwap:      enabled,
-			OpTypeLiquidity: enabled,
-			OpTypeWithdraw:  disabled,
-			OpTypePool:      enabled,
+			phalt.OpTypeSwap:      enabled,
+			phalt.OpTypeLiquidity: enabled,
+			phalt.OpTypeWithdraw:  disabled,
+			phalt.OpTypePool:      enabled,
 		},
 	)
 
@@ -112,19 +112,19 @@ func init() {
 			"Safe mode with contract-specific controls, all enabled by default",
 			map[phalt.OpType]bool{
 				// Contract states - all enabled by default
-				OpTypePool:        true,
-				OpTypePosition:    true,
-				OpTypeProtocolFee: true,
-				OpTypeRouter:      true,
-				OpTypeStaker:      true,
-				OpTypeLaunchpad:   true,
-				OpTypeGovernance:  true,
+				phalt.OpTypePool:        true,
+				phalt.OpTypePosition:    true,
+				phalt.OpTypeProtocolFee: true,
+				phalt.OpTypeRouter:      true,
+				phalt.OpTypeStaker:      true,
+				phalt.OpTypeLaunchpad:   true,
+				phalt.OpTypeGovernance:  true,
 
 				// Global actions - also enabled by default
-				OpTypeWithdraw:   true, // Must be enabled
-				OpTypeDeposit:    true,
-				OpTypeSwap:       true,
-				OpTypeLiquidity:  true,
+				phalt.OpTypeWithdraw:   true, // Must be enabled
+				phalt.OpTypeDeposit:    true,
+				phalt.OpTypeSwap:       true,
+				phalt.OpTypeLiquidity:  true,
 			},
 		)
 

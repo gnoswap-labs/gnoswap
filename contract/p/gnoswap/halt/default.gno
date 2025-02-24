@@ -21,22 +21,40 @@ var (
 			LvNoHalt,
 			rawNoHalt,
 			"Normal operation",
+			// enabling all operations
 			map[OpType]bool{
-				OpTypeSwap:       true,
-				OpTypeLiquidity:  true,
-				OpTypeWithdraw:   true,
+				OpTypePool: true,
+				OpTypePosition: true,
+				OpTypeProtocolFee: true,
+				OpTypeRouter: true,
+				OpTypeStaker: true,
+				OpTypeLaunchpad: true,
 				OpTypeGovernance: true,
+
+				OpTypeWithdraw: true,
+				OpTypeDeposit: true,
+				OpTypeSwap: true,
+				OpTypeLiquidity: true,
 			},
 		},
 		{
 			LvSwapHalt,
 			rawSwapHalt,
 			"Swaps disabled",
+			// only disable the swap, rest => enable
 			map[OpType]bool{
-				OpTypeSwap:       false,
-				OpTypeLiquidity:  true,
-				OpTypeWithdraw:   true,
+				OpTypePool: true,
+				OpTypePosition: true,
+				OpTypeProtocolFee: true,
+				OpTypeRouter: true,
+				OpTypeStaker: true,
+				OpTypeLaunchpad: true,
 				OpTypeGovernance: true,
+
+				OpTypeWithdraw: true,
+				OpTypeDeposit: true,
+				OpTypeSwap: false,
+				OpTypeLiquidity: true,
 			},
 		},
 		{
@@ -44,10 +62,8 @@ var (
 			rawEmergencyHalt,
 			"Only withdrawals allowed",
 			map[OpType]bool{
-				OpTypeSwap:       false,
-				OpTypeLiquidity:  false,
-				OpTypeWithdraw:   true,
 				OpTypeGovernance: true,
+				OpTypeWithdraw: true,
 			},
 		},
 		{
@@ -55,10 +71,7 @@ var (
 			rawCompleteHalt,
 			"All operations disabled",
 			map[OpType]bool{
-				OpTypeSwap:       false,
-				OpTypeLiquidity:  false,
-				OpTypeWithdraw:   false,
-				OpTypeGovernance: false,
+				OpTypeWithdraw:   true,
 			},
 		},
 	}
