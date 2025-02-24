@@ -132,6 +132,9 @@ func safeWrapNativeToken(amountDesired string, userAddress std.Address) uint64 {
 	if err != nil {
 		panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
 	}
+	if amount == 0 {
+		panic(newErrorWithDetail(errZeroWrappedAmount, "amount requested to wrap is zero"))
+	}
 
 	if sentUgnotAmount < amount {
 		panic(newErrorWithDetail(errInsufficientUGNOT, "amount of ugnot is less than desired amount"))
@@ -165,7 +168,9 @@ func handleUnwrap(pToken0, pToken1 string, unwrapResult bool, userOldWugnotBalan
 		userNewWugnotBalance := wugnot.BalanceOf(to)
 		leftOver := userNewWugnotBalance - userOldWugnotBalance
 		if leftOver > 0 {
-			unwrap(leftOver, to)
+			if err := unwrap(leftOver, to); err != nil {
+				panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
+			}
 		}
 	}
 }
