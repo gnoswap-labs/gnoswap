@@ -9,8 +9,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -228,7 +228,7 @@ func assertOnlyInitializedUint256(value *u256.Uint) {
 // assertOnlyAdmin panics if the caller is not the admin.
 func assertOnlyAdmin() {
 	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
+	if err := access.AdminOnly(caller); err != nil {
 		panic(err)
 	}
 }

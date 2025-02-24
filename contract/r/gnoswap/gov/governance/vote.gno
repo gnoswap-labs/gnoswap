@@ -13,6 +13,8 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 type voteWithWeight struct {
@@ -79,7 +81,10 @@ func setUserVote(voter std.Address, pid uint64, vote voteWithWeight) {
 // The user's voting weight is determined by their accumulated delegated stake until proposal creation time.
 // ref: https://docs.gnoswap.io/contracts/governance/vote.gno#vote
 func Vote(pid uint64, yes bool) string {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
+
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
@@ -211,7 +216,9 @@ func safeVoteSum(collected *u256.Uint, weight uint64) *u256.Uint {
 // Only callable by the proposer or if the proposer's stake has fallen below the threshold others can call.
 // ref: https://docs.gnoswap.io/contracts/governance/vote.gno#cancel
 func Cancel(proposalId uint64) {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 
 	en.MintAndDistributeGns()
 	updateProposalsState()

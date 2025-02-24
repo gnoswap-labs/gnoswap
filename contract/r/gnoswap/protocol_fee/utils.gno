@@ -3,7 +3,7 @@ package protocol_fee
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 func getPrev() (string, string) {
@@ -13,5 +13,7 @@ func getPrev() (string, string) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 }

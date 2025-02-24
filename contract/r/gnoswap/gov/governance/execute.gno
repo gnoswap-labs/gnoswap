@@ -12,6 +12,7 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 
 	en "gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 // Governance can execute multiple messages in a single proposal
@@ -187,7 +188,9 @@ func prepareExecution(proposalId uint64) (*ExecutionContext, error) {
 }
 
 func validateInitialState() {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 
 	en.MintAndDistributeGns()
 	updateProposalsState()

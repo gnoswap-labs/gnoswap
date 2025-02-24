@@ -17,6 +17,7 @@ import (
 
 	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/referral"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 // lockedGNS represents a locked GNS with its amount, unlock time, and collected status
@@ -247,7 +248,10 @@ func Undelegate(from std.Address, amount uint64) {
 // CollectUndelegatedGns collects the amount of the undelegated GNS.
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#collectundelegatedgns
 func CollectUndelegatedGns() uint64 {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
+
 	en.MintAndDistributeGns()
 
 	caller := std.PreviousRealm().Address()
@@ -304,7 +308,10 @@ func CollectUndelegatedGns() uint64 {
 // CollectReward collects the rewards from the protocol fee contract based on the holdings of xGNS.
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#collectreward
 func CollectReward() {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
+
 	en.MintAndDistributeGns()
 
 	prevAddr, prevPkgPath := getPrev()
@@ -371,7 +378,10 @@ func CollectReward() {
 func CollectRewardFromLaunchPad(to std.Address) {
 	assertCallerIsLaunchpad()
 
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
+
 	en.MintAndDistributeGns()
 
 	prevAddr, prevPkgPath := getPrev()

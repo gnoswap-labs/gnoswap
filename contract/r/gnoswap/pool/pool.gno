@@ -31,7 +31,7 @@ import (
 //   - string: The amount of token 1 transferred to the pool as a string.
 //
 // Panic Conditions:
-//   - The system is halted (`common.IsHalted()`).
+//   - The system is halted (`halt.IsHalted()`).
 //   - Caller lacks permission to mint a position when `common.GetLimitCaller()` is enforced.
 //   - The provided `liquidityAmount` is zero.
 //   - Any failure during token transfers or position modifications.

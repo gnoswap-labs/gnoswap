@@ -14,6 +14,8 @@ import (
 
 	en "gno.land/r/gnoswap/v1/emission"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
+
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (
@@ -37,7 +39,9 @@ func ProposeText(
 	title string,
 	description string,
 ) uint64 { // proposalId
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 
 	en.MintAndDistributeGns()
 	updateProposalsState()
@@ -108,7 +112,9 @@ func ProposeCommunityPoolSpend(
 	tokenPath string,
 	amount uint64,
 ) uint64 { // proposalId
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 
 	en.MintAndDistributeGns()
 	updateProposalsState()
@@ -190,7 +196,9 @@ func ProposeParameterChange(
 	numToExecute uint64,
 	executions string,
 ) uint64 { // proposalId
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 
 	en.MintAndDistributeGns()
 	updateProposalsState()
