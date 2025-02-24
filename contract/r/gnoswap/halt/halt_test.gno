@@ -677,3 +677,111 @@ func TestHaltErrorHandling(t *testing.T) {
 		}
 	})
 }
+
+func TestContractSpecificHalt(t *testing.T) {
+	// Setup test with admin privileges
+	std.TestSetRealm(adminRealm)
+
+	t.Run("Initial ContractSafeMode state", func(t *testing.T) {
+		err := SetHaltLevelByAdmin(LvContractSafeMode)
+		uassert.NoError(t, err, "ContractSafeMode should be set")
+
+		// all contracts are initially enabled
+		contracts := []phalt.OpType{
+			OpTypePool,
+			OpTypePosition,
+			OpTypeProtocolFee,
+			OpTypeRouter,
+			OpTypeStaker,
+			OpTypeLaunchpad,
+			OpTypeGovernance,
+		}
+
+		for _, contract := range contracts {
+			err = IsContractHalted(contract)
+			uassert.NoError(t, err)
+		}
+
+		// all global operations are enabled
+		err = IsHalted(OpTypeWithdraw)
+		uassert.NoError(t, err)
+		err = IsHalted(OpTypeDeposit)
+		uassert.NoError(t, err)
+		err = IsHalted(OpTypeSwap)
+		uassert.NoError(t, err)
+		err = IsHalted(OpTypeLiquidity)
+		uassert.NoError(t, err)
+	})
+
+	t.Run("Enable/Disable individual contracts", func(t *testing.T) {
+		err := EnableContractOperations(OpTypePool)
+		uassert.NoError(t, err)
+
+		err = IsContractHalted(OpTypePool)
+		uassert.NoError(t, err, "Contract pool should be enabled")
+
+		err = DisableContractOperations(OpTypePool)
+		uassert.NoError(t, err)
+
+		err = IsContractHalted(OpTypePool)
+		uassert.Error(t, err, "Contract pool should be disabled")
+	})
+
+	t.Run("Contract operation permission check", func(t *testing.T) {
+		// non-admin realm
+		std.TestSetRealm(userRealm)
+
+		// enable/disable are not allowed for non-admin realm
+		err := EnableContractOperations(OpTypePool)
+		uassert.Error(t, err)
+		if !strings.Contains(err.Error(), "only admin") {
+			t.Errorf("Error should mention admin permission requirement")
+		}
+
+		err = DisableContractOperations(OpTypePool)
+		uassert.Error(t, err)
+		if !strings.Contains(err.Error(), "only admin") {
+			t.Errorf("Error should mention admin permission requirement")
+		}
+	})
+
+	t.Run("Enable all contracts progressively", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		contracts := []phalt.OpType{
+			OpTypePool,
+			OpTypePosition,
+			OpTypeProtocolFee,
+			OpTypeRouter,
+			OpTypeStaker,
+			OpTypeLaunchpad,
+		}
+
+		for _, contract := range contracts {
+			err := EnableContractOperations(contract)
+			uassert.NoError(t, err)
+
+			err = IsContractHalted(contract)
+			uassert.NoError(t, err)
+
+			err = IsHalted(OpTypeWithdraw)
+			uassert.NoError(t, err)
+		}
+	})
+
+	t.Run("Contract status query", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		err := EnableContractOperations(OpTypePool)
+		uassert.NoError(t, err)
+
+		status := GetContractStatus(OpTypePool)
+		uassert.True(t, status)
+
+		err = DisableContractOperations(OpTypePool)
+		uassert.NoError(t, err)
+
+		status = GetContractStatus(OpTypePool)
+		uassert.False(t, status)
+	})
+}

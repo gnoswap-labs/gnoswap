@@ -11,25 +11,60 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 )
 
-// TODO: 상태 변경 관련 함수에 이벤트 추가
-// TODO: prevAddr => prevCaller
-
 var errHalted = errors.New("halted")
 
 var govAddr, _ = access.GetAddress(access.ROLE_GOVERNANCE)
 
+// OperationType defines the structure for operation configuration
+type OperationType struct {
+	Type        phalt.OpType
+	Name        string
+	Description string
+	IsContract  bool
+}
+
+// Operation types table
+var operationTypes = []OperationType{
+	// Contract operations
+	{Type: "pool", Name: "Pool", Description: "Pool contract operations", IsContract: true},
+	{Type: "position", Name: "Position", Description: "Position contract operations", IsContract: true},
+	{Type: "protocol_fee", Name: "ProtocolFee", Description: "Protocol fee contract operations", IsContract: true},
+	{Type: "router", Name: "Router", Description: "Router contract operations", IsContract: true},
+	{Type: "staker", Name: "Staker", Description: "Staker contract operations", IsContract: true},
+	{Type: "launchpad", Name: "Launchpad", Description: "Launchpad contract operations", IsContract: true},
+	{Type: "governance", Name: "Governance", Description: "Governance contract operations", IsContract: true},
+
+	// Global actions
+	{Type: "withdraw", Name: "Withdraw", Description: "Withdrawal operations", IsContract: false},
+	{Type: "deposit", Name: "Deposit", Description: "Deposit operations", IsContract: false},
+	{Type: "swap", Name: "Swap", Description: "Swap operations", IsContract: false},
+	{Type: "liquidity", Name: "Liquidity", Description: "Liquidity operations", IsContract: false},
+}
+
+// Contract-specific operation types
 const (
-	OpTypeSwap                    = phalt.OpTypeSwap
-	OpTypeLiquidity               = phalt.OpTypeLiquidity
-	OpTypeWithdraw                = phalt.OpTypeWithdraw
 	OpTypePool       phalt.OpType = "pool"
+	OpTypePosition   phalt.OpType = "position" 
+	OpTypeProtocolFee phalt.OpType = "protocol_fee"
+	OpTypeRouter     phalt.OpType = "router"
+	OpTypeStaker     phalt.OpType = "staker"
+	OpTypeLaunchpad  phalt.OpType = "launchpad"
 	OpTypeGovernance phalt.OpType = "governance"
+
+	// Contract actions
+	OpTypeWithdraw   phalt.OpType = "withdraw"   // Global withdraw operation
+	OpTypeDeposit    phalt.OpType = "deposit"    // Global deposit operation
+	OpTypeSwap       phalt.OpType = "swap"       // Global swap operation
+	OpTypeLiquidity  phalt.OpType = "liquidity"  // Global liquidity operation
 )
 
 const (
 	// Special mode for beta mainnet (no withdrawals)
 	// Issue: https://github.com/gnoswap-labs/gnoswap/issues/517
 	LvMainnetSafeMode phalt.LevelID = 10
+
+	// Halt handler for contract-specific operations
+	LvContractSafeMode phalt.LevelID = 20
 )
 
 var haltManager *phalt.Manager
@@ -65,6 +100,35 @@ func init() {
 	// Set initial level to MainnetSafeMode for right after mainnet
 	if err := haltManager.SetCurrentLevel(LvMainnetSafeMode); err != nil {
 		panic(ufmt.Sprintf("Failed to set initial halt level: %v", err))
+	}
+
+	for _, op := range operationTypes {
+		haltManager.RegisterOperation(phalt.NewOperation(op.Type, op.Name, op.Description))
+
+		// Create ContractSafeMode level with all contracts enabled by default
+		contractSafeMode := phalt.NewHaltLevel(
+			LvContractSafeMode,
+			"ContractSafeMode",
+			"Safe mode with contract-specific controls, all enabled by default",
+			map[phalt.OpType]bool{
+				// Contract states - all enabled by default
+				OpTypePool:        true,
+				OpTypePosition:    true,
+				OpTypeProtocolFee: true,
+				OpTypeRouter:      true,
+				OpTypeStaker:      true,
+				OpTypeLaunchpad:   true,
+				OpTypeGovernance:  true,
+
+				// Global actions - also enabled by default
+				OpTypeWithdraw:   true, // Must be enabled
+				OpTypeDeposit:    true,
+				OpTypeSwap:       true,
+				OpTypeLiquidity:  true,
+			},
+		)
+
+		haltManager.RegisterHaltLevel(contractSafeMode)
 	}
 }
 
@@ -380,4 +444,78 @@ func GetHaltManager() *phalt.Manager {
 // - halt.LevelID: The current halt level ID.
 func GetCurrentHaltLevel() phalt.LevelID {
 	return haltManager.Level().Level()
+}
+
+// EnableContractOperations allows enabling contract-specific operations.
+// Only an admin can execute this function.
+//
+// Parameters:
+// - contract (halt.OpType): The contract operation type to enable.
+//
+// Returns:
+// - error: nil if successful, otherwise an error.
+func EnableContractOperations(contract phalt.OpType) error {
+	caller := getPrevAddr()
+	if err := access.AdminOnly(caller); err != nil {
+		return ufmt.Errorf("only admin can enable contract operations, called from %s", caller)
+	}
+
+	// Only proceed if we're in ContractSafeMode
+	if haltManager.Level().Level() != LvContractSafeMode {
+		return nil
+	}
+
+	err := setOperationStatus(contract, true)
+	if err != nil {
+		return err
+	}
+
+	prevAddr, prevPkgPath := getPrevAsString()
+	std.Emit(
+		"enableContract",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"contract", string(contract),
+	)
+
+	return nil
+}
+
+// DisableContractOperations allows disabling contract-specific operations.
+// Only an admin can execute this function.
+//
+// Parameters:
+// - contract (halt.OpType): The contract operation type to disable.
+//
+// Returns:
+func DisableContractOperations(contract phalt.OpType) error {
+	caller := getPrevAddr()
+	if err := access.AdminOnly(caller); err != nil {
+		return ufmt.Errorf("only admin can disable contract operations, called from %s", caller)
+	}
+
+	err := setOperationStatus(contract, false)
+	if err != nil {
+		return err
+	}
+
+	prevAddr, prevPkgPath := getPrevAsString()
+	std.Emit(
+		"disableContract",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"contract", string(contract),
+	)
+
+	return nil
+}
+
+// IsContractHalted checks if specific contract operations are halted
+func IsContractHalted(contract phalt.OpType) error {
+	return IsHalted(contract)
+}
+
+// GetContractStatus returns the current status for a specific contract
+func GetContractStatus(contract phalt.OpType) bool {
+	return haltManager.Level().IsOperationAllowed(phalt.NewOperation(contract, string(contract), ""))
 }
