@@ -35,18 +35,18 @@ func TestTransferTokenByAdmin(t *testing.T) {
 		shouldPanic bool
 		panicMsg    string
 	}{
-		// {
-		// 	name: "panic if halted",
-		// 	setup: func() {
-		// 		std.TestSetRealm(adminRealm)
-		// 		common.SetHaltByAdmin(true)
-		// 	},
-		// 	tokenPath:   consts.GNS_PATH,
-		// 	to:          dummyReceiver,
-		// 	amount:      1000,
-		// 	shouldPanic: true,
-		// 	panicMsg:    "[GNOSWAP-COMMON-002] halted || GnoSwap is halted",
-		// },
+		{
+			name: "panic if halted",
+			setup: func() {
+				std.TestSetRealm(adminRealm)
+				halt.SetHaltByAdmin(true)
+			},
+			tokenPath:   consts.GNS_PATH,
+			to:          dummyReceiver,
+			amount:      1000,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-COMMUNITY_POOL-005] halted || community pool is currently halted",
+		},
 		{
 			name: "panic if not admin",
 			setup: func() {
