@@ -8,6 +8,8 @@ import (
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
+
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 const MAX_BPS_PCT uint64 = 10000
@@ -72,7 +74,9 @@ func assertDistributionTarget(target int) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 }
 
 // assertSumDistributionPct ensures the sum of all distribution percentages is 100%
