@@ -4,6 +4,7 @@ import (
 	"std"
 	"strconv"
 
+	"gno.land/r/gnoswap/v1/halt"
 	"gno.land/r/gnoswap/v1/common"
 )
 
@@ -50,7 +51,9 @@ func checkErr(err error) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 }
 
 // assertOnlyAdmin panics if the caller is not the admin.
