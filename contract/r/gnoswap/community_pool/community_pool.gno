@@ -4,8 +4,8 @@ import (
 	"std"
 	"strconv"
 
-	"gno.land/r/gnoswap/v1/halt"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 // TransferTokenByAdmin transfers token to the given address.
@@ -52,7 +52,7 @@ func checkErr(err error) {
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
 	if err := halt.IsHalted(); err != nil {
-		panic(err)
+		panic(addDetailToError(errHalted, "community pool is currently halted"))
 	}
 }
 
