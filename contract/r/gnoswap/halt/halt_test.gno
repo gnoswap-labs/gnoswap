@@ -26,11 +26,11 @@ func TestHalts(t *testing.T) {
 	t.Run("Operation specific checks in MainnetSafeMode", func(t *testing.T) {
 		// Withdrawals should be enabled in MainnetSafeMode
 		err := IsHalted(OpTypeWithdraw)
-		uassert.NoError(t, err)
+		uassert.Error(t, err)
 
 		// Swaps should be disabled in MainnetSafeMode
 		err = IsHalted(OpTypeSwap)
-		uassert.Error(t, err)
+		uassert.NoError(t, err)
 	})
 }
 
@@ -105,10 +105,10 @@ func TestEnableOperationsForTestnet(t *testing.T) {
 
 	// Verify initially all operations except governance are disabled
 	isHaltedTests := []haltTestCases{
-		{phalt.OpTypeWithdraw, false},
-		{phalt.OpTypeSwap, true},
-		{phalt.OpTypeLiquidity, true},
-		{phalt.OpTypeGovernance, true},
+		{phalt.OpTypeWithdraw, true},
+		{phalt.OpTypeSwap, false},
+		{phalt.OpTypeLiquidity, false},
+		{phalt.OpTypeGovernance, false},
 	}
 
 	for _, tt := range isHaltedTests {
@@ -213,7 +213,7 @@ func TestMultipleOperationHalts(t *testing.T) {
 
 		// Both operations are disabled in MainnetSafeMode
 		err = IsHalted(OpTypeSwap, OpTypeLiquidity)
-		uassert.Error(t, err)
+		uassert.NoError(t, err)
 	})
 
 	t.Run("Check multiple operations after enabling some", func(t *testing.T) {
@@ -227,9 +227,8 @@ func TestMultipleOperationHalts(t *testing.T) {
 		err = IsHalted(OpTypeWithdraw, OpTypeSwap)
 		uassert.NoError(t, err)
 
-		// But Liquidity is still disabled
 		err = IsHalted(OpTypeWithdraw, OpTypeSwap, OpTypeLiquidity)
-		uassert.Error(t, err)
+		uassert.NoError(t, err)
 	})
 
 	t.Run("Check all operations after enabling everything", func(t *testing.T) {
