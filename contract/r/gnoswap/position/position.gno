@@ -271,10 +271,6 @@ func DecreaseLiquidity(
 
 	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
 
-	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(poolPath)
-	token0Balance := pl.PoolGetBalanceToken0(poolPath)
-	token1Balance := pl.PoolGetBalanceToken1(poolPath)
-
 	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(
@@ -289,10 +285,10 @@ func DecreaseLiquidity(
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"unwrapResult", formatBool(unwrapResult),
-		"sqrtPriceX96", poolSqrtPriceX96,
+		"sqrtPriceX96", pl.PoolGetSlot0SqrtPriceX96(poolPath),
 		"positionLiquidity", PositionGetPositionLiquidityStr(positionId),
-		"token0Balance", token0Balance,
-		"token1Balance", token1Balance,
+		"token0Balance", pl.PoolGetBalanceToken0(poolPath),
+		"token1Balance", pl.PoolGetBalanceToken1(poolPath),
 	)
 
 	return positionId, liquidity.ToString(), fee0.ToString(), fee1.ToString(), amount0.ToString(), amount1.ToString(), poolPath
@@ -423,9 +419,9 @@ func computePositionKey(
 	return encoded
 }
 
-func getCurrentFeeGrowth(postion Position) (FeeGrowthInside, error) {
-	pool := pl.GetPoolFromPoolPath(postion.poolKey)
-	positionKey := computePositionKey(GetOrigPkgAddr(), postion.tickLower, postion.tickUpper)
+func getCurrentFeeGrowth(position Position) (FeeGrowthInside, error) {
+	pool := pl.GetPoolFromPoolPath(position.poolKey)
+	positionKey := computePositionKey(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 
 	feeGrowthInside0 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
 	feeGrowthInside1 := new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey))
@@ -436,61 +432,4 @@ func getCurrentFeeGrowth(postion Position) (FeeGrowthInside, error) {
 	}
 
 	return feeGrowthInside, nil
-}
-
-// PositionFeeUpdate represents fee update calculation result
-type PositionFeeUpdate struct {
-	tokensOwed0              *u256.Uint
-	tokensOwed1              *u256.Uint
-	feeGrowthInside0LastX128 *u256.Uint
-	feeGrowthInside1LastX128 *u256.Uint
-}
-
-func calculateLiquidityToRemove(positionLiquidity *u256.Uint, liquidityRatio uint64) *u256.Uint {
-	liquidityToRemove := new(u256.Uint).Mul(positionLiquidity, u256.NewUint(liquidityRatio))
-	liquidityToRemove = new(u256.Uint).Div(liquidityToRemove, u256.NewUint(100))
-	if positionLiquidity.Lt(liquidityToRemove) || liquidityRatio == 100 {
-		return positionLiquidity
-	}
-	return liquidityToRemove
-}
-
-// updatePosition updates the position with new liquidity and fee data
-func updatePosition(
-	position Position,
-	feeUpdate PositionFeeUpdate,
-	newLiquidity *u256.Uint,
-) Position {
-	position.tokensOwed0 = feeUpdate.tokensOwed0
-	position.tokensOwed1 = feeUpdate.tokensOwed1
-	position.feeGrowthInside0LastX128 = feeUpdate.feeGrowthInside0LastX128
-	position.feeGrowthInside1LastX128 = feeUpdate.feeGrowthInside1LastX128
-	position.liquidity = new(u256.Uint).Add(position.liquidity, newLiquidity)
-	position.burned = false
-
-	return position
-}
-
-func calculatePositionFeeUpdate(
-	position Position,
-	currentFeeGrowth FeeGrowthInside,
-) PositionFeeUpdate {
-	tokensOwed0 := calculateTokensOwed(
-		currentFeeGrowth.feeGrowthInside0LastX128,
-		position.feeGrowthInside0LastX128,
-		position.liquidity,
-	)
-
-	tokensOwed1 := calculateTokensOwed(
-		currentFeeGrowth.feeGrowthInside1LastX128,
-		position.feeGrowthInside1LastX128,
-		position.liquidity,
-	)
-
-	return PositionFeeUpdate{
-		tokensOwed0:              new(u256.Uint).Add(position.tokensOwed0, tokensOwed0),
-		tokensOwed1:              new(u256.Uint).Add(position.tokensOwed1, tokensOwed1),
-		feeGrowthInside0LastX128: new(u256.Uint).Set(currentFeeGrowth.feeGrowthInside0LastX128),
-		feeGrowthInside1LastX128: new(u256.Uint).Set(currentFeeGrowth.feeGrowthInside1LastX128),
-	}
 }
