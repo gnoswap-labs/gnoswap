@@ -16,7 +16,7 @@ deploy-test-tokens: deploy-bar deploy-baz deploy-foo deploy-obl deploy-qux deplo
 deploy-libraries: deploy-consts deploy-uint256 deploy-int256 deploy-rbac deploy-gnsmath deploy-halt
 
 .PHONY: deploy-base-contracts
-deploy-base-contracts: deploy-common deploy-access deploy-halt deploy-halt-realm deploy-rbac-realm deploy-referral
+deploy-base-contracts: deploy-common deploy-access deploy-halt-realm deploy-rbac-realm deploy-referral
 
 .PHONY: deploy-base-tokens
 deploy-base-tokens: deploy-gnft deploy-gns
