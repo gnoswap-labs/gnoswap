@@ -2,7 +2,6 @@ package staker
 
 import (
 	"std"
-
 	"strconv"
 	"strings"
 

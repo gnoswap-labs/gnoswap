@@ -134,7 +134,7 @@ func TestProcessDepositReward(t *testing.T) {
 			name: "Normal reward calculation",
 			deposit: Deposit{
 				amount: 1000,
-				//rewardAmount: 0,
+				// rewardAmount: 0,
 			},
 			rewardX128:     u256.NewUint(1000).Mul(u256.NewUint(1000), q128),
 			tierAmount:     2000,
@@ -145,7 +145,7 @@ func TestProcessDepositReward(t *testing.T) {
 			name: "Zero tier amount",
 			deposit: Deposit{
 				amount: 1000,
-				//rewardAmount: 0,
+				// rewardAmount: 0,
 			},
 			rewardX128:     u256.NewUint(1000).Mul(u256.NewUint(1000), q128),
 			tierAmount:     0,
@@ -156,7 +156,7 @@ func TestProcessDepositReward(t *testing.T) {
 			name: "Reward is accumulated",
 			deposit: Deposit{
 				amount: 1000,
-				//rewardAmount: 100,
+				// rewardAmount: 100,
 			},
 			rewardX128:     u256.NewUint(1000).Mul(u256.NewUint(1000), q128),
 			tierAmount:     2000,

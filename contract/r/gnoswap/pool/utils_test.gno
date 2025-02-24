@@ -195,9 +195,7 @@ func TestSafeConvertToInt128(t *testing.T) {
 }
 
 func TestDerivePkgAddr(t *testing.T) {
-	var (
-		pkgPath = "gno.land/r/gnoswap/v1/position"
-	)
+	pkgPath := "gno.land/r/gnoswap/v1/position"
 	tests := []struct {
 		name     string
 		input    string

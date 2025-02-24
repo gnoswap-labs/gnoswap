@@ -328,6 +328,9 @@ func collectProtocol(
 
 	amount0Req := u256.MustFromDecimal(amount0Requested)
 	amount1Req := u256.MustFromDecimal(amount1Requested)
+	if amount0Req.IsZero() && amount1Req.IsZero() {
+		return u256.Zero().ToString(), u256.Zero().ToString()
+	}
 
 	amount0 := u256Min(amount0Req, pool.ProtocolFeesToken0())
 	amount1 := u256Min(amount1Req, pool.ProtocolFeesToken1())

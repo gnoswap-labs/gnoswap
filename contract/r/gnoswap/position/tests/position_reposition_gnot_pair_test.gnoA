@@ -118,7 +118,7 @@ func testMintPosition01InRange(t *testing.T) {
 		std.TestSetOriginSend(std.Coins{{"ugnot", 0}}, nil)
 
 		uassert.Equal(t, positionId, uint64(1))
-		uassert.Equal(t, getNextId(), uint64(2))
+		uassert.Equal(t, GetNextId(), uint64(2))
 		uassert.Equal(t, amount0, "18394892")
 		uassert.Equal(t, amount1, "50000000")
 

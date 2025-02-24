@@ -486,12 +486,12 @@ func TestCollectReward(t *testing.T) {
 	rewardState.addStake(uint64(std.ChainHeight()), std.Address(user), 10, 0, make(map[string]uint64))
 
 	// set a fake emission reward
-	//userEmissionReward.Set(user, uint64(50_000))
+	// userEmissionReward.Set(user, uint64(50_000))
 	currentGNSBalance = 50_000
 	// set a fake protocol fee reward
-	//tree := avl.NewTree()
-	//tree.Set(consts.WUGNOT_PATH, uint64(10_000))
-	//userProtocolFeeReward.Set(user, tree)
+	// tree := avl.NewTree()
+	// tree.Set(consts.WUGNOT_PATH, uint64(10_000))
+	// userProtocolFeeReward.Set(user, tree)
 	currentProtocolFeeBalance[consts.WUGNOT_PATH] = 10_000
 
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))

@@ -28,10 +28,7 @@ clone_repos() {
 
   # Clone gno repository into $TMP_PATH
   echo "✅ Cloning gno repository into tmp/gno..."
-  git clone --depth 30 --branch master https://github.com/gnolang/gno.git "$GNO_PATH"
-  cd "$GNO_PATH"
-  git checkout ec696d40ae44eee809e3ca2c7cdb2ce4c6eece04
-  cd "$PROJECT_ROOT"
+  git clone --depth 1 --branch master https://github.com/gnolang/gno.git "$GNO_PATH"
 }
 
 # ✅ env setup(Go, Python install)

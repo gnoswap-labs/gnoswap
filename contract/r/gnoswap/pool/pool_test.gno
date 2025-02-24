@@ -467,6 +467,19 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 			expectPanic:      true,
 		},
 		{
+			name:             "failure - collect fee amount is zero",
+			tokenPath0:       wugnotTokenPath,
+			tokenPath1:       gnsTokenPath,
+			feeTier:          FeeTier500,
+			recipient:        positionOwner,
+			tickLower:        -200,
+			tickUpper:        200,
+			amount0Requested: "0",
+			amount1Requested: "0",
+			expectedAmount0:  "0",
+			expectedAmount1:  "0",
+		},
+		{
 			name:             "successful collect fee amount",
 			tokenPath0:       wugnotTokenPath,
 			tokenPath1:       gnsTokenPath,
@@ -476,7 +489,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 			tickUpper:        200,
 			amount0Requested: "100",
 			amount1Requested: "100",
-			expectedAmount0:  "99",
+			expectedAmount0:  "100",
 			expectedAmount1:  "0",
 		},
 	}
@@ -555,8 +568,6 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 				"3945129629379410362911094632",
 				tt.recipient,
 			)
-			println("swap in amount0", amount0)
-			println("swap out amount1", amount1)
 			std.TestSkipHeights(1)
 
 			defer func() {

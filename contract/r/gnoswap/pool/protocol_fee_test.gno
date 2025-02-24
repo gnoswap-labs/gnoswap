@@ -14,9 +14,7 @@ import (
 )
 
 func TestSetPoolCreationFee(t *testing.T) {
-	var (
-		admin = std.Address("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
-	)
+	admin := std.Address("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
 
 	tests := []struct {
 		name        string

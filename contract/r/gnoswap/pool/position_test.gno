@@ -383,7 +383,7 @@ func TestAssertValidTickLower(t *testing.T) {
 			tickLower:   consts.MIN_TICK - 1,
 			tickUpper:   100,
 			shouldPanic: true,
-			expected:    "[GNOSWAP-POOL-028] tickLower is invalid || tickLower(-887273) < MIN_TICK(-887272)",
+			expected:    "[GNOSWAP-POOL-013] tickLower is invalid || tickLower(-887273) < MIN_TICK(-887272)",
 		},
 	}
 
@@ -421,7 +421,7 @@ func TestAssertValidTickUpper(t *testing.T) {
 			tickLower:   consts.MIN_TICK,
 			tickUpper:   consts.MAX_TICK,
 			shouldPanic: true,
-			expected:    "[GNOSWAP-POOL-029] tickUpper is invalid || tickUpper(887272) > MAX_TICK(887272)",
+			expected:    "[GNOSWAP-POOL-014] tickUpper is invalid || tickUpper(887272) > MAX_TICK(887272)",
 		},
 		{
 			name:        "tickUpper less than MAX_TICK",
@@ -435,7 +435,7 @@ func TestAssertValidTickUpper(t *testing.T) {
 			tickLower:   consts.MIN_TICK - 1,
 			tickUpper:   consts.MAX_TICK + 1,
 			shouldPanic: true,
-			expected:    "[GNOSWAP-POOL-029] tickUpper is invalid || tickUpper(887273) > MAX_TICK(887272)",
+			expected:    "[GNOSWAP-POOL-014] tickUpper is invalid || tickUpper(887273) > MAX_TICK(887272)",
 		},
 	}
 

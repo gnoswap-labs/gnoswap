@@ -81,7 +81,7 @@ func InitialisePoolTest(t *testing.T) {
 		CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
 	}
 
-	//2. create position
+	// 2. create position
 	std.TestSetOriginCaller(alice)
 	TokenFaucet(t, wugnotPath, alice)
 	TokenFaucet(t, gnsPath, alice)
@@ -379,7 +379,6 @@ func MintPositionAll(t *testing.T, caller std.Address) {
 			caller,
 			caller)
 	}
-
 }
 
 func wugnotApprove(t *testing.T, owner, spender std.Address, amount uint64) {

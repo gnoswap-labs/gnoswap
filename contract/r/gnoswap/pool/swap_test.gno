@@ -608,7 +608,7 @@ func TestSwapAndDrySwapComparison_amount_zero(t *testing.T) {
 				)
 			},
 			shouldPanic: true,
-			expected:    "[GNOSWAP-POOL-014] invalid swap amount || amountSpecified == 0",
+			expected:    "[GNOSWAP-POOL-015] invalid swap amount || amountSpecified == 0",
 		},
 	}
 
