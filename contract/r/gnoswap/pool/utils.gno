@@ -208,7 +208,7 @@ func assertOnlyNotHalted() {
 func assertOnlyPositionContract() {
 	caller := getPrevAddr()
 	if err := access.PositionOnly(caller); err != nil {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errNoPermission,
 			ufmt.Sprintf("only position(%s) can call, called from %s", consts.POSITION_ADDR, caller.String()),
 		))
