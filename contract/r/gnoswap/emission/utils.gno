@@ -9,6 +9,7 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 
+	phalt "gno.land/p/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -74,8 +75,15 @@ func assertDistributionTarget(target int) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
+
+		if halt.IsContractHalted(phalt.OpTypeEmission) {
+			panic("emission contract operations are currently disabled")
+		}
 	}
 }
 
