@@ -19,9 +19,16 @@ var (
 
 func TestHalts(t *testing.T) {
 	t.Run("Operation specific checks in MainnetSafeMode", func(t *testing.T) {
-		// Withdrawals should be enabled in MainnetSafeMode
+		// Withdrawals should be disabled in MainnetSafeMode
 		err := IsHalted(phalt.OpTypeWithdraw)
+		panic(err)
 		uassert.Error(t, err)
+	})
+
+	t.Run("Operation specific checks in EmergencyHalt", func(t *testing.T) {
+		// Withdrawals should be enabled in EmergencyHalt
+		err := IsHalted(phalt.OpTypePool, phalt.OpTypePosition, phalt.OpTypeProtocolFee, phalt.OpTypeRouter, phalt.OpTypeStaker, phalt.OpTypeLaunchpad, phalt.OpTypeGovernance)
+		uassert.NoError(t, err)
 	})
 }
 

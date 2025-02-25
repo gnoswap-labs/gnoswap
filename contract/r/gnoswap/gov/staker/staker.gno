@@ -18,6 +18,7 @@ import (
 	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/referral"
 	"gno.land/r/gnoswap/v1/halt"
+	phalt "gno.land/p/gnoswap/halt"
 )
 
 // lockedGNS represents a locked GNS with its amount, unlock time, and collected status
@@ -248,8 +249,12 @@ func Undelegate(from std.Address, amount uint64) {
 // CollectUndelegatedGns collects the amount of the undelegated GNS.
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#collectundelegatedgns
 func CollectUndelegatedGns() uint64 {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err)
+		}
 	}
 
 	en.MintAndDistributeGns()
@@ -308,8 +313,12 @@ func CollectUndelegatedGns() uint64 {
 // CollectReward collects the rewards from the protocol fee contract based on the holdings of xGNS.
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#collectreward
 func CollectReward() {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err)
+		}
 	}
 
 	en.MintAndDistributeGns()
@@ -378,8 +387,12 @@ func CollectReward() {
 func CollectRewardFromLaunchPad(to std.Address) {
 	assertCallerIsLaunchpad()
 
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err)
+		}
 	}
 
 	en.MintAndDistributeGns()
