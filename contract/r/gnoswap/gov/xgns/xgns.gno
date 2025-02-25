@@ -10,6 +10,8 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/access"
+
+	phalt "gno.land/p/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -96,8 +98,12 @@ func Render(path string) string {
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Mint function.
 func Mint(to std.Address, amount uint64) {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
 	}
 
 	// only (gov staker) or (launchpad) contract can call Mint
@@ -130,8 +136,12 @@ func Mint(to std.Address, amount uint64) {
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Mint function.
 func MintByLaunchPad(to std.Address, amount uint64) {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
 	}
 
 	caller := std.PreviousRealm().Address()
@@ -167,8 +177,12 @@ func mint(to std.Address, amount uint64) {
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Burn function.
 func Burn(from std.Address, amount uint64) {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
 	}
 
 	// only (gov staker) or (launchpad) contract can call Mint
@@ -187,8 +201,12 @@ func Burn(from std.Address, amount uint64) {
 }
 
 func BurnByLaunchPad(from std.Address, amount uint64) {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
 	}
 
 	caller := std.PreviousRealm().Address()
