@@ -77,6 +77,100 @@ func TestSetHalt(t *testing.T) {
 	})
 }
 
+func TestSetHaltWithLevel(t *testing.T) {
+	t.Run("with non-privileged user, should fail", func(t *testing.T) {
+		std.TestSetRealm(userRealm)
+		err := SetHalt(true, phalt.LvEmergencyHalt)
+		uassert.Error(t, err)
+	})
+
+	t.Run("admin can set EmergencyHalt and CompleteHalt", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		// Set EmergencyHalt
+		err := SetHalt(true, phalt.LvEmergencyHalt)
+		uassert.NoError(t, err)
+		if GetCurrentHaltLevel() != phalt.LvEmergencyHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvEmergencyHalt)
+		}
+
+		// In EmergencyHalt, only withdrawals should be allowed
+		err = IsHalted(phalt.OpTypeWithdraw)
+		uassert.NoError(t, err)
+		err = IsHalted(phalt.OpTypePool)
+		uassert.Error(t, err)
+
+		// Set CompleteHalt
+		err = SetHalt(true, phalt.LvCompleteHalt)
+		uassert.NoError(t, err)
+		if GetCurrentHaltLevel() != phalt.LvCompleteHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvCompleteHalt)
+		}
+
+		// In CompleteHalt, all operations should be halted
+		err = IsHalted(phalt.OpTypeWithdraw)
+		uassert.NoError(t, err)
+		err = IsHalted(phalt.OpTypePool)
+		uassert.Error(t, err)
+	})
+
+	t.Run("governance can set EmergencyHalt and CompleteHalt", func(t *testing.T) {
+		std.TestSetRealm(govRealm)
+
+		// Set EmergencyHalt
+		err := SetHalt(true, phalt.LvEmergencyHalt)
+		uassert.NoError(t, err)
+		if GetCurrentHaltLevel() != phalt.LvEmergencyHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvEmergencyHalt)
+		}
+
+		// Set CompleteHalt
+		err = SetHalt(true, phalt.LvCompleteHalt)
+		uassert.NoError(t, err)
+		if GetCurrentHaltLevel() != phalt.LvCompleteHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvCompleteHalt)
+		}
+	})
+
+	t.Run("invalid halt levels should fail", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		// Try to set ContractHalt (not allowed)
+		err := SetHalt(true, phalt.LvContractHalt)
+		uassert.Error(t, err)
+
+		// Try to set MainnetSafeMode (not allowed)
+		err = SetHalt(true, LvMainnetSafeMode)
+		uassert.Error(t, err)
+	})
+
+	t.Run("unhalt should always set to NoHalt", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		// First set to EmergencyHalt
+		err := SetHalt(true, phalt.LvEmergencyHalt)
+		uassert.NoError(t, err)
+
+		// Unhalt should set to NoHalt regardless of current level
+		err = SetHalt(false)
+		uassert.NoError(t, err)
+		if GetCurrentHaltLevel() != phalt.LvNoHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvNoHalt)
+		}
+	})
+
+	t.Run("default halt level should be CompleteHalt", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		// Set halt without specifying level
+		err := SetHalt(true)
+		uassert.NoError(t, err)
+		if GetCurrentHaltLevel() != phalt.LvCompleteHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvCompleteHalt)
+		}
+	})
+}
+
 type haltTestCases struct {
 	opType    phalt.OpType
 	wantError bool

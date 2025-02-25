@@ -27,7 +27,6 @@ const (
 	// Special mode for beta mainnet (no withdrawals)
 	// Issue: https://github.com/gnoswap-labs/gnoswap/issues/517
 	LvMainnetSafeMode phalt.LevelID = 10
-
 )
 
 var haltManager *phalt.Manager
@@ -149,15 +148,16 @@ func SetHaltByAdmin(halt bool) error {
 	return setHaltLevel(phalt.LvNoHalt)
 }
 
-// SetHalt allows the governance contract to set the halt status of GnoSwap.
-// Only the governance contract can execute this function.
+// SetHalt allows both admin and governance to set the halt status of GnoSwap.
+// If no specific level is provided, it defaults to CompleteHalt when halting.
 //
 // Parameters:
 // - halt (bool): true to halt, false to unhalt.
+// - level (halt.LevelID): Optional halt level. Only EmergencyHalt and CompleteHalt are allowed.
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
-func SetHalt(halt bool) error {
+func SetHalt(halt bool, level ...phalt.LevelID) error {
 	caller := getPrevAddr()
 	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
@@ -165,10 +165,22 @@ func SetHalt(halt bool) error {
 		return ufmt.Errorf("only admin or governance can set halt, called from %s", caller)
 	}
 
-	if halt {
+	if !halt {
+		return setHaltLevel(phalt.LvNoHalt)
+	}
+
+	// If no level specified, default to CompleteHalt
+	if len(level) == 0 {
 		return setHaltLevel(phalt.LvCompleteHalt)
 	}
-	return setHaltLevel(phalt.LvNoHalt)
+
+	// Validate the specified level
+	haltLevel := level[0]
+	if haltLevel != phalt.LvEmergencyHalt && haltLevel != phalt.LvCompleteHalt {
+		return ufmt.Errorf("only EmergencyHalt and CompleteHalt levels are allowed")
+	}
+
+	return setHaltLevel(haltLevel)
 }
 
 // SetHaltLevel allows the governance contract to set the halt level of GnoSwap.
@@ -336,7 +348,7 @@ func EnableContractOperations(contract phalt.OpType) error {
 	}
 
 	// Only proceed if we're in ContractSafeMode
-	if haltManager.Level().Level() != phalt.LvContractHalt{
+	if haltManager.Level().Level() != phalt.LvContractHalt {
 		return nil
 	}
 
