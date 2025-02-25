@@ -25,8 +25,8 @@ func TestHalts(t *testing.T) {
 	})
 }
 
-func TestSetHaltLevelByAdmin(t *testing.T) {
-	t.Run("with non-admin privilege, panics", func(t *testing.T) {
+func TestSetHaltLevelByAdminAndGovernance(t *testing.T) {
+	t.Run("with non-admin or non-governance privilege, should fail", func(t *testing.T) {
 		std.TestSetRealm(userRealm)
 		err := SetHaltLevelByAdmin(phalt.LvNoHalt)
 		uassert.Error(t, err)
@@ -57,10 +57,10 @@ func TestSetHaltLevelByAdmin(t *testing.T) {
 }
 
 func TestSetHalt(t *testing.T) {
-	t.Run("with admin (non-governance) privilege, should fail", func(t *testing.T) {
+	t.Run("with admin privilege, success", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		err := SetHalt(false)
-		uassert.Error(t, err)
+		err := SetHalt(true)
+		uassert.NoError(t, err)
 	})
 
 	t.Run("with governance privilege, success", func(t *testing.T) {

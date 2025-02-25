@@ -159,8 +159,10 @@ func SetHaltByAdmin(halt bool) error {
 // - error: nil if successful, otherwise an error.
 func SetHalt(halt bool) error {
 	caller := getPrevAddr()
-	if err := access.GovernanceOnly(caller); err != nil {
-		return ufmt.Errorf("only governance(%s) can set halt, called from %s", govAddr, caller)
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+	if caller != adminAddr && caller != govAddr {
+		return ufmt.Errorf("only admin or governance can set halt, called from %s", caller)
 	}
 
 	if halt {
@@ -179,10 +181,12 @@ func SetHalt(halt bool) error {
 // - error: nil if successful, otherwise an error.
 func SetHaltLevel(haltLevel phalt.LevelID) error {
 	caller := getPrevAddr()
-	if err := access.GovernanceOnly(caller); err != nil {
-		return ufmt.Errorf("only governance(%s) can set halt level, called from %s", govAddr, caller)
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+	if caller == adminAddr || caller == govAddr {
+		return setHaltLevel(haltLevel)
 	}
-	return setHaltLevel(haltLevel)
+	return ufmt.Errorf("only admin or governance can set halt level, called from %s", caller)
 }
 
 // setHaltLevel updates the halt level to the specified value.
