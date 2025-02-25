@@ -1481,8 +1481,6 @@ func TestCanonicalSimulation_0(t *testing.T) {
 	eventId := 0
 
 	for i := 0; i < 10; i++ {
-		println("=======ITERATION : ", i, "========")
-
 		canonicalRewardMap := make(map[uint64]uint64)
 		for j := 0; j < 100; j++ {
 			var event SimulationEvent
@@ -1493,8 +1491,6 @@ func TestCanonicalSimulation_0(t *testing.T) {
 					break
 				}
 			}
-			println("=======HEIGHT : ", std.ChainHeight(), "========")
-			println("	", eventId, " : ", event.String())
 			event.Apply(canonical)
 			canonical.NextBlock()
 			for i := 0; i < 12; i++ {
@@ -1506,10 +1502,6 @@ func TestCanonicalSimulation_0(t *testing.T) {
 			}
 		}
 
-		println("======ASSERTING========")
-		for k, v := range canonicalRewardMap {
-			println("	", k, " : ", v)
-		}
 		canonical.AssertEmulatedRewardMap(canonicalRewardMap)
 	}
 }

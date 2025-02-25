@@ -188,7 +188,6 @@ func testDecreaseLiquidityUnwrapped(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		oldLiquidity := getPoolFromPositionId(t, uint64(1)).Liquidity()
-		println("oldLiquidity ", oldLiquidity.ToString())
 
 		userWugnotBalance := wugnot.BalanceOf(adminAddr)
 		uassert.Equal(t, userWugnotBalance, uint64(11999999))
