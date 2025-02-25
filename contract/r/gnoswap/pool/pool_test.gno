@@ -25,7 +25,7 @@ func TestMint(t *testing.T) {
 	tickLower := int32(-100)
 	tickUpper := int32(100)
 	liquidityAmount := "100000"
-	authorized := consts.POSITION_ADDR
+	authorized := positionAddr
 	barTokenPath := "gno.land/r/onbloc/bar"
 	bazTokenPath := "gno.land/r/onbloc/baz"
 
@@ -100,11 +100,11 @@ func TestMint(t *testing.T) {
 			barTokenPath,
 			bazTokenPath,
 			FeeTier100,
-			consts.POSITION_ADDR,
+			positionAddr,
 			int32(-100),
 			int32(100),
 			"10000000000",
-			consts.ADMIN,
+			adminAddr,
 		)
 		uassert.Equal(t, mintAmount0, "49872721")
 		uassert.Equal(t, mintAmount1, "49872721")
@@ -201,7 +201,7 @@ func TestBurn(t *testing.T) {
 				}
 
 				pool := GetPool(barTokenPath, bazTokenPath, FeeTier100)
-				posKey := getPositionKey(consts.POSITION_ADDR, tt.tickLower, tt.tickUpper)
+				posKey := getPositionKey(positionAddr, tt.tickLower, tt.tickUpper)
 				newPosition := pool.mustGetPosition(posKey)
 				if newPosition.tokensOwed0.IsZero() {
 					t.Error("expected tokensOwed0 to be updated")
@@ -217,10 +217,11 @@ func TestBurn(t *testing.T) {
 func TestCollect(t *testing.T) {
 	const wugnotTokenPath = "gno.land/r/demo/wugnot"
 	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
-	const routerContract = consts.ROUTER_ADDR
-	const poolContract = consts.POOL_ADDR
 
-	positionOwner := consts.ADMIN
+	routerContract := router
+	poolContract := pool
+
+	positionOwner := adminAddr
 
 	tests := []struct {
 		name             string
@@ -345,7 +346,7 @@ func TestCollect(t *testing.T) {
 				)
 
 				pool := GetPool(tt.tokenPath0, tt.tokenPath1, tt.feeTier)
-				posKey := getPositionKey(consts.POSITION_ADDR, tt.tickLower, tt.tickUpper)
+				posKey := getPositionKey(positionAddr, tt.tickLower, tt.tickUpper)
 				pool.mustGetPosition(posKey)
 
 				std.TestSkipHeights(1)
@@ -428,11 +429,11 @@ func TestSetFeeProtocolInternal(t *testing.T) {
 func TestCollectProtocolByAdmin(t *testing.T) {
 	const wugnotTokenPath = "gno.land/r/demo/wugnot"
 	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
-	const routerContract = consts.ROUTER_ADDR
-	const poolContract = consts.POOL_ADDR
+	routerContract := router
+	poolContract := pool
 
 	alice := testutils.TestAddress("alice")
-	positionOwner := consts.ADMIN
+	positionOwner := adminAddr
 
 	tests := []struct {
 		name             string
@@ -545,7 +546,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 			)
 
 			pool := GetPool(tt.tokenPath0, tt.tokenPath1, tt.feeTier)
-			posKey := getPositionKey(consts.POSITION_ADDR, tt.tickLower, tt.tickUpper)
+			posKey := getPositionKey(positionAddr, tt.tickLower, tt.tickUpper)
 			pool.mustGetPosition(posKey)
 
 			std.TestSkipHeights(1)

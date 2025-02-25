@@ -4,10 +4,12 @@ import (
 	"std"
 
 	"gno.land/p/gnoswap/consts"
+
+	"gno.land/r/gnoswap/v1/access"
 )
 
 var (
-	admin std.Address = consts.ADMIN
+	admin, _ = access.GetAddress(access.ROLE_ADMIN)
 
 	fooPath string = "gno.land/r/onbloc/foo"
 	barPath string = "gno.land/r/onbloc/bar"

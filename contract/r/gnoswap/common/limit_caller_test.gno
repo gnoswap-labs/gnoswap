@@ -6,6 +6,8 @@ import (
 
 	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
+
+	"gno.land/r/gnoswap/v1/access"
 )
 
 func TestSetLimitCaller(t *testing.T) {
@@ -21,7 +23,8 @@ func TestSetLimitCaller(t *testing.T) {
 	})
 
 	t.Run("with admin privilege, success", func(t *testing.T) {
-		std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
+		adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+		std.TestSetRealm(std.NewUserRealm(adminAddr))
 		SetLimitCaller(false)
 		uassert.False(t, GetLimitCaller())
 	})

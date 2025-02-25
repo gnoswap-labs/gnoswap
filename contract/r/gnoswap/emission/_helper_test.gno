@@ -8,11 +8,13 @@ import (
 	"gno.land/p/demo/avl"
 
 	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
 var (
-	adminRealm     = std.NewUserRealm(consts.ADMIN)
+	adminAddr, _   = access.GetAddress(access.ROLE_ADMIN)
+	adminRealm     = std.NewUserRealm(adminAddr)
 	stakerRealm    = std.NewCodeRealm(consts.STAKER_PATH)
 	govRealm       = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
 	govStakerRealm = std.NewCodeRealm(consts.GOV_STAKER_PATH)

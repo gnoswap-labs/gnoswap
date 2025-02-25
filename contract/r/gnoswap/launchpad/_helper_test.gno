@@ -7,12 +7,15 @@ import (
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/gnoswap/consts"
+
+	"gno.land/r/gnoswap/v1/access"
 )
 
 var (
-	admin     = consts.ADMIN
-	adminAddr = consts.ADMIN
+	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
 	adminUser = adminAddr
+
+	launchpadAddr, _ = access.GetAddress(access.ROLE_LAUNCHPAD)
 
 	fooPath string = "gno.land/r/onbloc/foo"
 	barPath string = "gno.land/r/onbloc/bar"
@@ -29,7 +32,7 @@ var (
 
 // Realms to mock frames
 var (
-	adminRealm = std.NewUserRealm(admin)
+	adminRealm = std.NewUserRealm(adminAddr)
 	posRealm   = std.NewCodeRealm(consts.POSITION_PATH)
 	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
 )
@@ -54,7 +57,7 @@ func (m *MockXGNSToken) TotalSupply() uint64 {
 
 func (m *MockXGNSToken) VotingSupply() uint64 {
 	total := m.token.TotalSupply()
-	launchpad := m.token.BalanceOf(consts.LAUNCHPAD_ADDR)
+	launchpad := m.token.BalanceOf(launchpadAddr)
 	return total - launchpad
 }
 

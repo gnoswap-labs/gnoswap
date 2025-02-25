@@ -494,7 +494,7 @@ func TestSwapAndDrySwapComparison(t *testing.T) {
 			name: "swap - request to swap amount over total liquidty",
 			setupFn: func(t *testing.T) {
 				InitialisePoolTest(t)
-				MintPositionAll(t, admin)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, gnsPath, addr)
 				TokenApprove(t, gnsPath, addr, pool, maxApprove)
 			},
@@ -667,7 +667,7 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 			name: "amount over liquidity - zeroForOne = false, token0:20000",
 			setupFn: func(t *testing.T) {
 				InitialisePoolTest(t)
-				MintPositionAll(t, admin)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, gnsPath, addr)
 				TokenApprove(t, gnsPath, addr, pool, maxApprove)
 			},
@@ -692,7 +692,7 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 			name: "amount over liquidity - zeroForOne = false, token1:-20000",
 			setupFn: func(t *testing.T) {
 				InitialisePoolTest(t)
-				MintPositionAll(t, admin)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, gnsPath, addr)
 				TokenApprove(t, gnsPath, addr, pool, maxApprove)
 			},
@@ -717,7 +717,7 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 			name: "amount over liquidity - zeroForOne = true, token0:20000",
 			setupFn: func(t *testing.T) {
 				InitialisePoolTest(t)
-				MintPositionAll(t, admin)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, gnsPath, addr)
 				TokenApprove(t, gnsPath, addr, pool, maxApprove)
 				TokenApprove(t, wugnotPath, addr, pool, maxApprove)
@@ -743,7 +743,7 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 			name: "amount over liquidity - zeroForOne = true, token1:-20000",
 			setupFn: func(t *testing.T) {
 				InitialisePoolTest(t)
-				MintPositionAll(t, admin)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, gnsPath, addr)
 				TokenFaucet(t, wugnotPath, addr)
 				TokenApprove(t, gnsPath, addr, pool, maxApprove)
@@ -802,7 +802,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 			name: "EXACT IN - zeroForOne = false, token1:200",
 			setupFn: func(t *testing.T) {
 				InitialisePoolTest(t)
-				MintPositionAll(t, admin)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, gnsPath, addr)
 				TokenApprove(t, gnsPath, addr, pool, maxApprove)
 			},
@@ -827,7 +827,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 			name: "EXACT OUT - zeroForOne = false, token0:-200",
 			setupFn: func(t *testing.T) {
 				InitialisePoolTest(t)
-				MintPositionAll(t, admin)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, gnsPath, addr)
 				TokenApprove(t, gnsPath, addr, pool, maxApprove)
 			},
@@ -852,7 +852,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 			name: "EXACT IN - zeroForOne = true, token0:200",
 			setupFn: func(t *testing.T) {
 				InitialisePoolTest(t)
-				MintPositionAll(t, admin)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, gnsPath, addr)
 				TokenApprove(t, gnsPath, addr, pool, maxApprove)
 				TokenApprove(t, wugnotPath, addr, pool, maxApprove)
@@ -878,7 +878,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 			name: "EXACT OUT - zeroForOne = true, token1:-200",
 			setupFn: func(t *testing.T) {
 				InitialisePoolTest(t)
-				MintPositionAll(t, admin)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, gnsPath, addr)
 				TokenFaucet(t, wugnotPath, addr)
 				TokenApprove(t, gnsPath, addr, pool, maxApprove)
@@ -966,8 +966,8 @@ func TestSwap_FeeTier100(t *testing.T) {
 					"0",
 					"0",
 					max_timeout,
-					admin,
-					admin,
+					adminAddr,
+					adminAddr,
 					"",
 				)
 
@@ -982,8 +982,8 @@ func TestSwap_FeeTier100(t *testing.T) {
 					"0",
 					"0",
 					max_timeout,
-					admin,
-					admin,
+					adminAddr,
+					adminAddr,
 					"",
 				)
 				std.TestSetRealm(std.NewUserRealm(consts.ADMIN))

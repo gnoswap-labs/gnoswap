@@ -8,10 +8,12 @@ import (
 	"gno.land/r/demo/wugnot"
 
 	"gno.land/p/gnoswap/consts"
+
+	"gno.land/r/gnoswap/v1/access"
 )
 
 var (
-	admin std.Address = consts.ADMIN
+	admin, _ = access.GetAddress(access.ROLE_ADMIN)
 
 	fooPath string = "gno.land/r/onbloc/foo"
 	barPath string = "gno.land/r/onbloc/bar"
@@ -85,14 +87,14 @@ func ugnotBurn(t *testing.T, addr std.Address, denom string, amount int64) {
 
 func ugnotFaucet(t *testing.T, to std.Address, amount uint64) {
 	t.Helper()
-	faucetAddress := consts.ADMIN
-	std.TestSetOriginCaller(faucetAddress)
+	// faucet address is admin
+	std.TestSetOriginCaller(admin)
 
-	if ugnotBalanceOf(t, faucetAddress) < amount {
-		ugnotMint(t, faucetAddress, ugnotPath, int64(amount))
+	if ugnotBalanceOf(t, admin) < amount {
+		ugnotMint(t, admin, ugnotPath, int64(amount))
 		std.TestSetOriginSend(std.Coins{{ugnotPath, int64(amount)}}, nil)
 	}
-	ugnotTransfer(t, faucetAddress, to, amount)
+	ugnotTransfer(t, admin, to, amount)
 }
 
 func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {

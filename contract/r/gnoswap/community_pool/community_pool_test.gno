@@ -11,11 +11,12 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/v1/access"
 )
 
 var (
-	adminAddr  = consts.ADMIN
-	adminRealm = std.NewUserRealm(adminAddr)
+	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminRealm   = std.NewUserRealm(adminAddr)
 
 	govRealm = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
 

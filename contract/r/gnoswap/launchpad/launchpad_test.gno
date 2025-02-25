@@ -79,7 +79,7 @@ func TestValidateRecipient(t *testing.T) {
 		recipient std.Address
 		wantErr   bool
 	}{
-		{"ValidRecipient", std.Address(consts.ADMIN), false},
+		{"ValidRecipient", std.Address(adminAddr), false},
 		{"InvalidRecipient", std.Address("xyz..."), true},
 	}
 
@@ -242,7 +242,7 @@ func TestValidateAll(t *testing.T) {
 			input: ProjectInput{
 				Name:             "ProjectName",
 				TokenPath:        "gno.land/r/gnoswap/v1/gns",
-				Recipient:        std.Address(consts.ADMIN),
+				Recipient:        adminAddr,
 				DepositAmount:    1000,
 				ConditionsToken:  "gno.land/r/demo/wugnot",
 				ConditionsAmount: "10",
@@ -1042,7 +1042,7 @@ func TestMakeConditions(t *testing.T) {
 			input := ProjectInput{
 				Name:             tt.name,
 				TokenPath:        "gno.land/r/gnoswap/v1/gns",
-				Recipient:        std.Address(consts.ADMIN),
+				Recipient:        adminAddr,
 				DepositAmount:    1000000,
 				ConditionsToken:  tt.conditionsToken,
 				ConditionsAmount: tt.conditionsAmount,
