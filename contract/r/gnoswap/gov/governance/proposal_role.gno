@@ -10,7 +10,6 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 	"gno.land/r/gnoswap/v1/halt"
