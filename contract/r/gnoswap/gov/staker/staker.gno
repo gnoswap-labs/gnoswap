@@ -256,8 +256,8 @@ func CollectUndelegatedGns() uint64 {
 			panic(err)
 		}
 
-		if halt.IsContractHalted(phalt.OpTypeGovernance) {
-			panic("governance contract operations are currently disabled")
+		if halt.IsContractHalted(phalt.OpTypeGovStaker) {
+			panic("gov/staker contract operations are currently disabled")
 		}
 	}
 
@@ -324,8 +324,8 @@ func CollectReward() {
 			panic(err)
 		}
 
-		if halt.IsContractHalted(phalt.OpTypeGovernance) {
-			panic("governance contract operations are currently disabled")
+		if halt.IsContractHalted(phalt.OpTypeGovStaker) {
+			panic("gov/staker contract operations are currently disabled")
 		}
 	}
 
@@ -402,8 +402,8 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			panic(err)
 		}
 
-		if halt.IsContractHalted(phalt.OpTypeGovernance) {
-			panic("governance contract operations are currently disabled")
+		if halt.IsContractHalted(phalt.OpTypeGovStaker) {
+			panic("gov/staker contract operations are currently disabled")
 		}
 	}
 

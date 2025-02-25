@@ -198,7 +198,7 @@ func validateInitialState() {
 		}
 
 		if halt.IsContractHalted(phalt.OpTypeGovernance) {
-			panic("governance contract operations are currently disabled")
+			panic("gov/governance contract operations are currently disabled")
 		}
 	}
 

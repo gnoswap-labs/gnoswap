@@ -105,8 +105,8 @@ func Mint(to std.Address, amount uint64) {
 			panic(err.Error())
 		}
 
-		if halt.IsContractHalted(phalt.OpTypeGovernance) {
-			panic("governance contract operations are currently disabled")
+		if halt.IsContractHalted(phalt.OpTypeXGns) {
+			panic("xGNS contract operations are currently disabled")
 		}
 	}
 
@@ -147,8 +147,8 @@ func MintByLaunchPad(to std.Address, amount uint64) {
 			panic(err.Error())
 		}
 
-		if halt.IsContractHalted(phalt.OpTypeGovernance) {
-			panic("governance contract operations are currently disabled")
+		if halt.IsContractHalted(phalt.OpTypeXGns) {
+			panic("xGNS contract operations are currently disabled")
 		}
 	}
 
@@ -192,8 +192,8 @@ func Burn(from std.Address, amount uint64) {
 			panic(err.Error())
 		}
 
-		if halt.IsContractHalted(phalt.OpTypeGovernance) {
-			panic("governance contract operations are currently disabled")
+		if halt.IsContractHalted(phalt.OpTypeXGns) {
+			panic("xGNS contract operations are currently disabled")
 		}
 	}
 
@@ -220,8 +220,8 @@ func BurnByLaunchPad(from std.Address, amount uint64) {
 			panic(err.Error())
 		}
 
-		if halt.IsContractHalted(phalt.OpTypeGovernance) {
-			panic("governance contract operations are currently disabled")
+		if halt.IsContractHalted(phalt.OpTypeXGns) {
+			panic("xGNS contract operations are currently disabled")
 		}
 	}
 

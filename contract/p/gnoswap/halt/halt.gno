@@ -9,7 +9,9 @@ const (
 	rawRouter        = "router" // handle swap related operations
 	rawStaker        = "staker" // handle liquidity related operations
 	rawLaunchpad     = "launchpad"
-	rawGovernance    = "governance"
+	rawGovernance    = "governance" // gov/governance
+	rawGovStaker     = "gov_staker" // gov/staker
+	rawXGns          = "xgns" // gov/xgns
 	rawCommunityPool = "community_pool"
 	rawEmission      = "emission"
 	rawWithdraw      = "withdraw"
@@ -33,6 +35,8 @@ const (
 	OpTypeStaker        OpType = rawStaker
 	OpTypeLaunchpad     OpType = rawLaunchpad
 	OpTypeGovernance    OpType = rawGovernance
+	OpTypeGovStaker     OpType = rawGovStaker
+	OpTypeXGns          OpType = rawXGns
 	OpTypeCommunityPool OpType = rawCommunityPool
 	OpTypeEmission      OpType = rawEmission
 	OpTypeWithdraw      OpType = rawWithdraw
