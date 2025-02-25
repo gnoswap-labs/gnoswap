@@ -34,6 +34,10 @@ func DistributeProtocolFee() {
 		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
 			panic(err)
 		}
+
+		if halt.IsContractHalted(phalt.OpTypeProtocolFee) {
+			panic("protocol fee contract operations are currently disabled")
+		}
 	}
 
 	tokens := common.ListRegisteredTokens()

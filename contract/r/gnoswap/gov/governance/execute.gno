@@ -196,6 +196,10 @@ func validateInitialState() {
 		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
 			panic(err.Error())
 		}
+
+		if halt.IsContractHalted(phalt.OpTypeGovernance) {
+			panic("governance contract operations are currently disabled")
+		}
 	}
 
 	en.MintAndDistributeGns()

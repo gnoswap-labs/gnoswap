@@ -25,6 +25,10 @@ func commonSwapSetup() {
 		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
 			panic(err.Error())
 		}
+
+		if halt.IsContractHalted(phalt.OpTypeRouter) {
+			panic("router contract operations are currently disabled")
+		}
 	}
 	assertDirectCallOnly()
 

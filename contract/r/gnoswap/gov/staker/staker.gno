@@ -255,6 +255,10 @@ func CollectUndelegatedGns() uint64 {
 		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
 			panic(err)
 		}
+
+		if halt.IsContractHalted(phalt.OpTypeGovernance) {
+			panic("governance contract operations are currently disabled")
+		}
 	}
 
 	en.MintAndDistributeGns()
@@ -318,6 +322,10 @@ func CollectReward() {
 		// Check if withdrawals are specifically halted, not just if the system is halted
 		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
 			panic(err)
+		}
+
+		if halt.IsContractHalted(phalt.OpTypeGovernance) {
+			panic("governance contract operations are currently disabled")
 		}
 	}
 
@@ -392,6 +400,10 @@ func CollectRewardFromLaunchPad(to std.Address) {
 		// Check if withdrawals are specifically halted, not just if the system is halted
 		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
 			panic(err)
+		}
+
+		if halt.IsContractHalted(phalt.OpTypeGovernance) {
+			panic("governance contract operations are currently disabled")
 		}
 	}
 

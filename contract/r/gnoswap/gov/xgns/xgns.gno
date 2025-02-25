@@ -104,6 +104,10 @@ func Mint(to std.Address, amount uint64) {
 		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
 			panic(err.Error())
 		}
+
+		if halt.IsContractHalted(phalt.OpTypeGovernance) {
+			panic("governance contract operations are currently disabled")
+		}
 	}
 
 	// only (gov staker) or (launchpad) contract can call Mint
@@ -141,6 +145,10 @@ func MintByLaunchPad(to std.Address, amount uint64) {
 		// Check if withdrawals are specifically halted, not just if the system is halted
 		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
 			panic(err.Error())
+		}
+
+		if halt.IsContractHalted(phalt.OpTypeGovernance) {
+			panic("governance contract operations are currently disabled")
 		}
 	}
 
@@ -183,6 +191,10 @@ func Burn(from std.Address, amount uint64) {
 		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
 			panic(err.Error())
 		}
+
+		if halt.IsContractHalted(phalt.OpTypeGovernance) {
+			panic("governance contract operations are currently disabled")
+		}
 	}
 
 	// only (gov staker) or (launchpad) contract can call Mint
@@ -206,6 +218,10 @@ func BurnByLaunchPad(from std.Address, amount uint64) {
 		// Check if withdrawals are specifically halted, not just if the system is halted
 		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
 			panic(err.Error())
+		}
+
+		if halt.IsContractHalted(phalt.OpTypeGovernance) {
+			panic("governance contract operations are currently disabled")
 		}
 	}
 

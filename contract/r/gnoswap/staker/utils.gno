@@ -180,6 +180,10 @@ func assertOnlyNotHalted() {
 		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
 			panic(err.Error())
 		}
+
+		if halt.IsContractHalted(phalt.OpTypeStaker) {
+			panic("staker contract operations are currently disabled")
+		}
 	}
 }
 

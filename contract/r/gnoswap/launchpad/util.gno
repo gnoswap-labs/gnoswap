@@ -128,6 +128,10 @@ func assertOnlyNotHalted() {
 		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
 			panic(err)
 		}
+
+		if halt.IsContractHalted(phalt.OpTypeLaunchpad) {
+			panic("launchpad contract operations are currently disabled")
+		}
 	}
 }
 
