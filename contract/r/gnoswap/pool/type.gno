@@ -202,7 +202,7 @@ func (step *StepComputations) clampTickNext() {
 //
 //	position := &PositionInfo{}
 //	position.valueOrZero()
-//	fmt.Println(position.liquidity) // Output: 0
+//	println(position.liquidity) // Output: 0
 //
 // Notes:
 //   - This function is useful for ensuring numeric fields are properly initialized

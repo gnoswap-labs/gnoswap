@@ -84,11 +84,13 @@ func (p *Pool) GetTickInitialized(tick int32) bool {
 //
 // Example:
 //
+// ```gno
 //	feeGrowth0, feeGrowth1 := pool.getFeeGrowthInside(
 //	    100, 200, 150, globalFeeGrowth0, globalFeeGrowth1,
 //	)
-//	fmt.Println("Fee Growth Inside (Token 0):", feeGrowth0)
-//	fmt.Println("Fee Growth Inside (Token 1):", feeGrowth1)
+//	println("Fee Growth Inside (Token 0):", feeGrowth0)
+//	println("Fee Growth Inside (Token 1):", feeGrowth1)
+// ```
 func (p *Pool) getFeeGrowthInside(
 	tickLower int32,
 	tickUpper int32,
@@ -149,8 +151,10 @@ func (p *Pool) getFeeGrowthInside(
 //
 // Example:
 //
+// ```gno
 //	flipped := pool.tickUpdate(10, 5, liquidityDelta, feeGrowth0, feeGrowth1, true, maxLiquidity)
-//	fmt.Println("Tick flipped:", flipped)
+//	println("Tick flipped:", flipped)
+// ```
 func (p *Pool) tickUpdate(
 	tick int32,
 	tickCurrent int32,
@@ -279,8 +283,10 @@ func (p *Pool) getTick(tick int32) TickInfo {
 //
 // Example:
 //
+// ```gno
 //	tickInfo := pool.mustGetTick(10)
-//	fmt.Println("Tick Info:", tickInfo)
+//	ufmt.Println("Tick Info:", tickInfo)
+// ```
 func (p *Pool) mustGetTick(tick int32) TickInfo {
 	tickStr := strconv.Itoa(int(tick))
 	iTickInfo, exist := p.ticks.Get(tickStr)
@@ -336,10 +342,11 @@ func calculateMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 //
 // Example:
 //
+// ```gno
 //	feeGrowth0, feeGrowth1 := getFeeGrowthBelowX128(
 //	    100, 150, globalFeeGrowth0, globalFeeGrowth1, lowerTickInfo,
 //	)
-//	fmt.Println("Fee Growth Below:", feeGrowth0, feeGrowth1)
+//	println("Fee Growth Below:", feeGrowth0, feeGrowth1)
 func getFeeGrowthBelowX128(
 	tickLower, tickCurrent int32,
 	feeGrowthGlobal0X128, feeGrowthGlobal1X128 *u256.Uint,
@@ -390,7 +397,8 @@ func getFeeGrowthBelowX128(
 //	feeGrowth0, feeGrowth1 := getFeeGrowthAboveX128(
 //	    200, 150, globalFeeGrowth0, globalFeeGrowth1, upperTickInfo,
 //	)
-//	fmt.Println("Fee Growth Above:", feeGrowth0, feeGrowth1)
+//	println("Fee Growth Above:", feeGrowth0, feeGrowth1)
+// ```
 func getFeeGrowthAboveX128(
 	tickUpper, tickCurrent int32,
 	feeGrowthGlobal0X128, feeGrowthGlobal1X128 *u256.Uint,
