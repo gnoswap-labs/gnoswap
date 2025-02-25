@@ -9,6 +9,7 @@ import (
 var (
 	_ HaltLevel = (*BasicHaltLevel)(nil)
 	_ HaltLevel = (*CompositeHaltLevel)(nil)
+	_ HaltLevel = (*LevelID)(nil)
 )
 
 // LevelID represents a unique halt level identifier.
@@ -51,6 +52,27 @@ func (lv LevelID) String() string {
 	default:
 		return rawUnknown
 	}
+}
+
+// Name returns the name of the level.
+func (lv LevelID) Name() string {
+	return lv.String()
+}
+
+// Desc returns the description of the level.
+func (lv LevelID) Desc() string {
+	return "Level " + lv.String()
+}
+
+// Level returns the LevelID itself.
+func (lv LevelID) Level() LevelID {
+	return lv
+}
+
+// IsOperationAllowed always returns true for LevelID.
+// This is a default implementation and should be overridden by specific halt levels.
+func (lv LevelID) IsOperationAllowed(op Operation) bool {
+	return true
 }
 
 // allowedOps is a map that tracks which operation types are allowed.

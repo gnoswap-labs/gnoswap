@@ -382,8 +382,11 @@ func DisableContractOperations(contract phalt.OpType) error {
 }
 
 // IsContractHalted checks if specific contract operations are halted
-func IsContractHalted(contract phalt.OpType) error {
-	return IsHalted(contract)
+func IsContractHalted(contract phalt.OpType) bool {
+	// if contract is halted, IsHalted will return an error
+	// so we need to check if the error is not nil
+	err := IsHalted(contract)
+	return err != nil
 }
 
 // GetContractStatus returns the current status for a specific contract
