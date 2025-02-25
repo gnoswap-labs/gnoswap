@@ -153,7 +153,7 @@ func SetHaltByAdmin(halt bool) error {
 //
 // Parameters:
 // - halt (bool): true to halt, false to unhalt.
-// - level (halt.LevelID): Optional halt level. Only EmergencyHalt and CompleteHalt are allowed.
+// - level (halt.LevelID): Optional halt level. Only NoHalt, EmergencyHalt and CompleteHalt are allowed.
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
@@ -165,22 +165,22 @@ func SetHalt(halt bool, level ...phalt.LevelID) error {
 		return ufmt.Errorf("only admin or governance can set halt, called from %s", caller)
 	}
 
-	if !halt {
-		return setHaltLevel(phalt.LvNoHalt)
-	}
-
-	// If no level specified, default to CompleteHalt
+	// If no level specified, use defaults
 	if len(level) == 0 {
+		if !halt {
+			return setHaltLevel(phalt.LvNoHalt)
+		}
 		return setHaltLevel(phalt.LvCompleteHalt)
 	}
 
 	// Validate the specified level
 	haltLevel := level[0]
-	if haltLevel != phalt.LvEmergencyHalt && haltLevel != phalt.LvCompleteHalt {
-		return ufmt.Errorf("only EmergencyHalt and CompleteHalt levels are allowed")
+	switch haltLevel {
+	case phalt.LvNoHalt, phalt.LvEmergencyHalt, phalt.LvCompleteHalt:
+		return setHaltLevel(haltLevel)
+	default:
+		return ufmt.Errorf("only NoHalt, EmergencyHalt and CompleteHalt levels are allowed")
 	}
-
-	return setHaltLevel(haltLevel)
 }
 
 // SetHaltLevel allows the governance contract to set the halt level of GnoSwap.

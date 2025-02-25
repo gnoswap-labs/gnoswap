@@ -169,6 +169,21 @@ func TestSetHaltWithLevel(t *testing.T) {
 			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvCompleteHalt)
 		}
 	})
+
+	t.Run("explicit NoHalt setting should work", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		// First set to EmergencyHalt
+		err := SetHalt(true, phalt.LvEmergencyHalt)
+		uassert.NoError(t, err)
+
+		// Explicitly set to NoHalt
+		err = SetHalt(true, phalt.LvNoHalt)
+		uassert.NoError(t, err)
+		if GetCurrentHaltLevel() != phalt.LvNoHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvNoHalt)
+		}
+	})
 }
 
 type haltTestCases struct {
