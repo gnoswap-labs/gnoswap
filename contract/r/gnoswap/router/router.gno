@@ -12,11 +12,20 @@ import (
 	"gno.land/r/demo/wugnot"
 
 	en "gno.land/r/gnoswap/v1/emission"
+
+	phalt "gno.land/p/gnoswap/halt"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 // commonSwapSetup Common validation and setup logic extracted from SwapRoute
 func commonSwapSetup() {
-	assertOnlyNotHalted()
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
+	}
 	assertDirectCallOnly()
 
 	en.MintAndDistributeGns()

@@ -11,6 +11,8 @@ import (
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
+
+	phalt "gno.land/p/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/halt"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -86,8 +88,12 @@ func assertOnlyUserOrStaker(caller std.Realm) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
 	}
 }
 

@@ -12,6 +12,8 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 
 	en "gno.land/r/gnoswap/v1/emission"
+
+	phalt "gno.land/p/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -188,8 +190,12 @@ func prepareExecution(proposalId uint64) (*ExecutionContext, error) {
 }
 
 func validateInitialState() {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
 	}
 
 	en.MintAndDistributeGns()

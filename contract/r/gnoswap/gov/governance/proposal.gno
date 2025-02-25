@@ -14,6 +14,7 @@ import (
 	en "gno.land/r/gnoswap/v1/emission"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 
+	phalt "gno.land/p/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -111,8 +112,13 @@ func ProposeCommunityPoolSpend(
 	tokenPath string,
 	amount uint64,
 ) uint64 { // proposalId
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
+	// Skip halt check if current level is MainnetSafeMode
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
 	}
 
 	en.MintAndDistributeGns()
