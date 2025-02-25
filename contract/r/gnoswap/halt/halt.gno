@@ -53,6 +53,9 @@ func init() {
 			phalt.OpTypeStaker:      enabled,
 			phalt.OpTypeLaunchpad:   enabled,
 			phalt.OpTypeGovernance:  enabled,
+			phalt.OpTypeGovStaker:   enabled,
+			phalt.OpTypeXGns:        enabled,
+			phalt.OpTypeEmission:    enabled,
 			phalt.OpTypeWithdraw:    disabled,
 		},
 	)
