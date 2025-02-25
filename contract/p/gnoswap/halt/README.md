@@ -44,8 +44,8 @@ The Manager orchestrates the halt system by:
 |----------|------|-------------|-------------------|
 | 1 | `NoHalt` | Normal operation | All operations enabled by default |
 | 2 | `ContractHalt` | Specific contract operations disabled | All operations enabled by default, can be selectively disabled |
-| 4 | `EmergencyHalt` | Only withdrawals allowed | Only `OpTypeWithdraw` and `OpTypeGovernance` |
-| 5 | `CompleteHalt` | All ops disabled | Only `OpTypeWithdraw` |
+| 3 | `EmergencyHalt` | Only withdrawals allowed | Only `OpTypeWithdraw` and `OpTypeGovernance` |
+| 4 | `CompleteHalt` | All ops disabled | Only `OpTypeWithdraw` |
 
 ## Operation Types
 

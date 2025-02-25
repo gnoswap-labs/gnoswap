@@ -60,7 +60,7 @@ var (
 		{
 			LvCompleteHalt,
 			rawCompleteHalt,
-			"All operations disabled",
+			"All contract disabled",
 			map[OpType]bool{
 				OpTypeWithdraw: true,
 			},
