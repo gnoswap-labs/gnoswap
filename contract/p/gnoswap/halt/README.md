@@ -56,8 +56,10 @@ The package defines several default operation types:
 - `OpTypeProtocolFee`: Fee-related operations
 - `OpTypeRouter`: Swap-related operations
 - `OpTypeStaker`: Liquidity-related operations
-- `OpTypeLaunchpad`: Launchpad operations
-- `OpTypeGovernance`: Governance operations
+- `OpTypeLaunchpad`: Launchpad operation
+- `OpTypeGovernance`: `gov/governance` operation
+- `OpTypeGovStaker`: `gov/staker` operation
+- `OpTypeXGns`: `gov/xgns` contract operation
 - `OpTypeCommunityPool`: Community pool operations
 - `OpTypeEmission`: Emission operations
 - `OpTypeWithdraw`: Withdrawal operations
