@@ -47,14 +47,14 @@ func init() {
 		"MainnetSafeMode",
 		"Safe mode for post-mainnet (no withdrawals)",
 		map[phalt.OpType]bool{
-			phalt.OpTypePool:        true,
-			phalt.OpTypePosition:    true,
-			phalt.OpTypeProtocolFee: true,
-			phalt.OpTypeRouter:      true,
-			phalt.OpTypeStaker:      true,
-			phalt.OpTypeLaunchpad:   true,
-			phalt.OpTypeGovernance:  true,
-			phalt.OpTypeWithdraw:   false,
+			phalt.OpTypePool:        enabled,
+			phalt.OpTypePosition:    enabled,
+			phalt.OpTypeProtocolFee: enabled,
+			phalt.OpTypeRouter:      enabled,
+			phalt.OpTypeStaker:      enabled,
+			phalt.OpTypeLaunchpad:   enabled,
+			phalt.OpTypeGovernance:  enabled,
+			phalt.OpTypeWithdraw:    disabled,
 		},
 	)
 

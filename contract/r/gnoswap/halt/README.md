@@ -16,28 +16,10 @@ The protocol is initially deployed in `MainnetSafeMode`, which disables most ope
 - **Multiple Halt Levels**: Supports various protocol states from fully operational to completely halted
 - **Admin & Governance Management**: Controlled by authorized addresses only
 
-## Supported Operations
-
-TODO: update this list
-
-| Operation Type | Description |
-|---------------|-------------|
-| `OpTypeSwap` | Token swap operations |
-| `OpTypeLiquidity` | Liquidity provision operations |
-| `OpTypeWithdraw` | Withdrawal operations |
-| `OpTypePool` | Pool management operations |
-| `OpTypeGovernance` | Governance operations |
-
 ## Halt Levels
-
-TODO: update this list
 
 | Level | Description | Initial State |
 |-------|-------------|--------------|
-| `NoHalt` | Normal operation, all features enabled | - |
-| `SwapHalt` | Swaps disabled, other operations allowed | - |
-| `EmergencyHalt` | Only withdrawals allowed | - |
-| `CompleteHalt` | All operations disabled | - |
 | **`MainnetSafeMode`** | Special mode for beta mainnet with governance-only operations | ✓ Current |
 
 ## Usage
@@ -48,13 +30,13 @@ TODO: update this list
 import "gno.land/r/gnoswap/v1/halt"
 
 func YourFunction() {
-    // Check if swaps are allowed
-    if err := halt.IsHalted(halt.OpTypeSwap); err != nil {
+    // Check if pool contract are allowed
+    if err := halt.IsHalted(halt.OpTypePool); err != nil {
         panic(err)
     }
 
     // Or, you cancheck multiple operations at once
-    if err := halt.IsHalted(halt.OpTypeSwap, halt.OpTypeLiquidity); err != nil {
+    if err := halt.IsHalted(halt.OpTypePool, halt.OpTypeRouter); err != nil {
         panic(err)
     }
 }

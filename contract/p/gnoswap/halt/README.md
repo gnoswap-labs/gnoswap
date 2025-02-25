@@ -39,13 +39,12 @@ The Manager orchestrates the halt system by:
 
 ## Default Halt Levels
 
-| Level ID | Name | Description | Swap | Liquidity | Withdraw |
-|----------|------|-------------|------|-----------|----------|
-| 1 | `NoHalt` | Normal operation | ✅ | ✅ | ✅ |
-| 2 | `SwapHalt` | Swaps disabled | ❌ | ✅ | ✅ |
-| 3 | `LiquidityHalt` | No swaps, no liquidity ops | ❌ | ❌ | ✅ |
-| 4 | `EmergencyHalt` | Only withdrawals allowed | ❌ | ❌ | ✅ |
-| 5 | `CompleteHalt` | All ops disabled | ❌ | ❌ | ❌ |
+| Level ID | Name | Description | Withdraw |
+|----------|------|-------------|------|
+| 1 | `NoHalt` | Normal operation | ✅ |
+| 2 | `ContractHalt` | Specific contract has halted | ✅ |
+| 4 | `EmergencyHalt` | Only withdrawals allowed | ✅ |
+| 5 | `CompleteHalt` | All ops disabled | ❌ |
 
 ## Usage Scenarios
 
@@ -128,8 +127,8 @@ customLevel := halt.NewHaltLevel(
     "Only staking operations allowed",
     map[halt.OpType]bool{
         halt.OpTypeSwap:      false,
-        halt.OpTypeLiquidity: false,
-        halt.OpTypeWithdraw:  false,
+        halt.OpTypeLiquidity: false, // test-purpose optype
+        halt.OpTypeWithdraw:  false, // test-purpose optype
         OpTypeStake:          true,
     },
 )
