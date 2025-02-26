@@ -508,7 +508,7 @@ func gnsBalanceCheck(t *testing.T, beforeBalance gnsBalanceTracker, printChange 
 
 	caller := std.PreviousRealm().Address()
 	height := std.ChainHeight()
-	stakerBalance := gns.BalanceOf(consts.STAKER_ADDR)
+	stakerBalance := gns.BalanceOf(stakerAddr)
 	devOpsBalance := gns.BalanceOf(consts.DEV_OPS)
 	communityPoolBalance := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
 	govStakerBalance := gns.BalanceOf(consts.GOV_STAKER_ADDR)
