@@ -10,6 +10,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/gnoswap/consts"
+
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -706,11 +708,19 @@ func getCurrentInfo() currentInfo {
 	return currentInfo{
 		height:           std.ChainHeight(),
 		time:             time.Now().Unix(),
-		gnsStaker:        gns.BalanceOf(consts.STAKER_ADDR),
-		gnsDevOps:        gns.BalanceOf(consts.DEV_OPS),
-		gnsCommunityPool: gns.BalanceOf(consts.COMMUNITY_POOL_ADDR),
-		gnsGovStaker:     gns.BalanceOf(consts.GOV_STAKER_ADDR),
-		gnsProtocolFee:   gns.BalanceOf(consts.PROTOCOL_FEE_ADDR),
-		gnsADMIN:         gns.BalanceOf(consts.ADMIN),
+		gnsStaker:        gns.BalanceOf(getAddress(access.ROLE_STAKER)),
+		gnsDevOps:        gns.BalanceOf(getAddress(access.ROLE_DEV_OPS)),
+		gnsCommunityPool: gns.BalanceOf(getAddress(access.ROLE_COMMUNITY_POOL)),
+		gnsGovStaker:     gns.BalanceOf(getAddress(access.ROLE_GOV_STAKER)),
+		gnsProtocolFee:   gns.BalanceOf(getAddress(access.ROLE_PROTOCOL_FEE)),
+		gnsADMIN:         gns.BalanceOf(getAddress(access.ROLE_ADMIN)),
 	}
+}
+
+func getAddress(roleName string) std.Address {
+	address, err := access.GetAddress(roleName)
+	if err != nil {
+		panic(err)
+	}
+	return address
 }
