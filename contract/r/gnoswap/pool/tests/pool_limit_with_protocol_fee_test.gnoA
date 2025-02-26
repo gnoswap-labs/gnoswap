@@ -93,6 +93,7 @@ func TestLimitOrderThru_Positive_1_WithFee(t *testing.T) {
 }
 
 func TestLimitOrderThru_Negative_1_WithFee(t *testing.T) {
+	t.Skip("need to run separately")
 	std.TestSetRealm(adminRealm)
 	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
