@@ -184,7 +184,7 @@ const (
 )
 
 func init() {
-	// init pool tiers
+	// init pool tier
 	// tier 1
 	// ONLY GNOT:GNS 0.3%
 
@@ -225,7 +225,7 @@ func StakeToken(positionId uint64, referrer string) (string, string, string) {
 	assertOnlyNotHalted()
 	assertOnlyNotStaked(positionId)
 
-	en.MintAndDistributeGns()
+	en.MintAndDistributeGns() // en으로 묶이지 않게 callback으로 호출 => 등록된 function이 call 되야 함.
 
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := getPrevAddr()

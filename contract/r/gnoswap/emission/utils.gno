@@ -8,6 +8,9 @@ import (
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
+
+	phalt "gno.land/p/gnoswap/halt"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 const MAX_BPS_PCT uint64 = 10000
@@ -72,7 +75,16 @@ func assertDistributionTarget(target int) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	common.IsHalted()
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
+
+		if halt.IsContractHalted(phalt.OpTypeEmission) {
+			panic("emission contract operations are currently disabled")
+		}
+	}
 }
 
 // assertSumDistributionPct ensures the sum of all distribution percentages is 100%
