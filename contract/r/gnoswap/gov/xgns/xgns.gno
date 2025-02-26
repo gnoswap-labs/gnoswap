@@ -10,7 +10,9 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/common"
+
+	phalt "gno.land/p/gnoswap/halt"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (
@@ -96,7 +98,17 @@ func Render(path string) string {
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Mint function.
 func Mint(to std.Address, amount uint64) {
-	common.IsHalted()
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
+
+		if halt.IsContractHalted(phalt.OpTypeXGns) {
+			panic("xGNS contract operations are currently disabled")
+		}
+	}
 
 	// only (gov staker) or (launchpad) contract can call Mint
 	caller := std.PreviousRealm().Address()
@@ -128,7 +140,17 @@ func Mint(to std.Address, amount uint64) {
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Mint function.
 func MintByLaunchPad(to std.Address, amount uint64) {
-	common.IsHalted()
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
+
+		if halt.IsContractHalted(phalt.OpTypeXGns) {
+			panic("xGNS contract operations are currently disabled")
+		}
+	}
 
 	caller := std.PreviousRealm().Address()
 	launchpadAddr := getContractAddress(access.ROLE_LAUNCHPAD)
@@ -163,7 +185,17 @@ func mint(to std.Address, amount uint64) {
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Burn function.
 func Burn(from std.Address, amount uint64) {
-	common.IsHalted()
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
+
+		if halt.IsContractHalted(phalt.OpTypeXGns) {
+			panic("xGNS contract operations are currently disabled")
+		}
+	}
 
 	// only (gov staker) or (launchpad) contract can call Mint
 	caller := std.PreviousRealm().Address()
@@ -181,7 +213,17 @@ func Burn(from std.Address, amount uint64) {
 }
 
 func BurnByLaunchPad(from std.Address, amount uint64) {
-	common.IsHalted()
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
+
+		if halt.IsContractHalted(phalt.OpTypeXGns) {
+			panic("xGNS contract operations are currently disabled")
+		}
+	}
 
 	caller := std.PreviousRealm().Address()
 	if err := access.LaunchpadOnly(caller); err != nil {

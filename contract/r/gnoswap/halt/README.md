@@ -8,7 +8,7 @@ This package uses the core halt framework (`gno.land/p/gnoswap/halt`) and adapts
 
 ## For Mainnet
 
-The protocol is initially deployed in `TestnetSafeMode`, which disables most operations for safety during the right after mainnet launch. Operations will be gradually enabled as stability is confirmed.
+The protocol is initially deployed in `MainnetSafeMode`, which disables most operations for safety during the right after mainnet launch. Operations will be gradually enabled as stability is confirmed.
 
 ## Features
 
@@ -16,29 +16,11 @@ The protocol is initially deployed in `TestnetSafeMode`, which disables most ope
 - **Multiple Halt Levels**: Supports various protocol states from fully operational to completely halted
 - **Admin & Governance Management**: Controlled by authorized addresses only
 
-## Supported Operations
-
-TODO: update this list
-
-| Operation Type | Description |
-|---------------|-------------|
-| `OpTypeSwap` | Token swap operations |
-| `OpTypeLiquidity` | Liquidity provision operations |
-| `OpTypeWithdraw` | Withdrawal operations |
-| `OpTypePool` | Pool management operations |
-| `OpTypeGovernance` | Governance operations |
-
 ## Halt Levels
-
-TODO: update this list
 
 | Level | Description | Initial State |
 |-------|-------------|--------------|
-| `NoHalt` | Normal operation, all features enabled | - |
-| `SwapHalt` | Swaps disabled, other operations allowed | - |
-| `EmergencyHalt` | Only withdrawals allowed | - |
-| `CompleteHalt` | All operations disabled | - |
-| **`TestnetSafeMode`** | Special mode for beta mainnet with governance-only operations | ✓ Current |
+| **`MainnetSafeMode`** | Special mode for beta mainnet with governance-only operations | ✓ Current |
 
 ## Usage
 
@@ -48,12 +30,15 @@ TODO: update this list
 import "gno.land/r/gnoswap/v1/halt"
 
 func YourFunction() {
-    // Check if swaps are allowed
-    if err := halt.IsHalted(halt.OpTypeSwap); err != nil {
-        panic(err) // or handle the error appropriately
+    // Check if pool contract are allowed
+    if err := halt.IsHalted(halt.OpTypePool); err != nil {
+        panic(err)
     }
 
-    // ...
+    // Or, you cancheck multiple operations at once
+    if err := halt.IsHalted(halt.OpTypePool, halt.OpTypeRouter); err != nil {
+        panic(err)
+    }
 }
 ```
 
@@ -109,7 +94,7 @@ halt.SetOperationStatus(halt.OpTypeSwap, false)
 
 For the beta mainnet deployment, operations will be enabled in this sequence:
 
-1. Deploy with `TestnetSafeMode` (current state)
+1. Deploy with `MainnetSafeMode` (current state)
 2. Enable withdrawals after stability confirmation
 3. Enable swaps after further testing
 4. Enable liquidity operations
@@ -119,4 +104,4 @@ For the beta mainnet deployment, operations will be enabled in this sequence:
 
 - Core halt protocol: `gno.land/p/gnoswap/halt`
 - Access control: `gno.land/r/gnoswap/v1/access`
-- Issue tracking TestnetSafeMode: [GitHub #517](https://github.com/gnoswap-labs/gnoswap/issues/517)
+- Issue tracking MainnetSafeMode: [GitHub #517](https://github.com/gnoswap-labs/gnoswap/issues/517)

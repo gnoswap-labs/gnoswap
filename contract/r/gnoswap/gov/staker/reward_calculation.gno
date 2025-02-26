@@ -11,6 +11,8 @@ import (
 
 	"gno.land/p/demo/avl"
 	ufmt "gno.land/p/demo/ufmt"
+
+	"gno.land/r/gnoswap/v1/halt"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -308,7 +310,9 @@ func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
 		panic(err)
 	}
 
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 	en.MintAndDistributeGns()
 
 	currentAmount := getAmountByProjectWallet(addr)

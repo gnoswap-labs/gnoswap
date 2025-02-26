@@ -313,7 +313,7 @@ func TestSetFeeProtocolByAdmin(t *testing.T) {
 	// non admin call
 	uassert.PanicsWithMessage(
 		t,
-		`caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission`,
+		`caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) is not authorized for role admin`,
 		func() { SetFeeProtocolByAdmin(2, 2) },
 	)
 

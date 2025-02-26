@@ -16,7 +16,7 @@ To use this package, add the following import path:
 
 Operations represent actions that can be performed within a protocol. Each operation has:
 
-- **Type**: A unique identifier (e.g., `OpTypeSwap`, `OpTypeLiquidity`)
+- **Type**: A unique identifier (e.g., `OpTypePool`, `OpTypePosition`)
 - **Name**: Human-readable name
 - **Description**: Detailed explanation
 
@@ -24,8 +24,8 @@ Operations represent actions that can be performed within a protocol. Each opera
 
 Halt levels define which operations are allowed at specific protocol states. Each level has:
 
-- **ID**: A unique identifier (e.g., `LvNoHalt`, `LvEmergencyHalt`)
-- **Name**: Human-readable name (e.g., `"NoHalt"`, `"EmergencyHalt"`)
+- **ID**: A unique identifier (e.g., `LvNoHalt`, `LvContractHalt`, `LvEmergencyHalt`)
+- **Name**: Human-readable name (e.g., `"NoHalt"`, `"ContractHalt"`)
 - **Description**: Explanation of the halt level's purpose
 - **Allowed Operations**: Map of operation types to boolean permissions
 
@@ -36,16 +36,33 @@ The Manager orchestrates the halt system by:
 - Maintaining a registry of operations and halt levels
 - Tracking the current halt level
 - Determining if operations are allowed based on the current level
+- Enabling/disabling specific operations at the current halt level
 
 ## Default Halt Levels
 
-| Level ID | Name | Description | Swap | Liquidity | Withdraw |
-|----------|------|-------------|------|-----------|----------|
-| 1 | `NoHalt` | Normal operation | ✅ | ✅ | ✅ |
-| 2 | `SwapHalt` | Swaps disabled | ❌ | ✅ | ✅ |
-| 3 | `LiquidityHalt` | No swaps, no liquidity ops | ❌ | ❌ | ✅ |
-| 4 | `EmergencyHalt` | Only withdrawals allowed | ❌ | ❌ | ✅ |
-| 5 | `CompleteHalt` | All ops disabled | ❌ | ❌ | ❌ |
+| Level ID | Name | Description | Allowed Operations |
+|----------|------|-------------|-------------------|
+| 1 | `NoHalt` | Normal operation | All operations enabled by default |
+| 2 | `ContractHalt` | Specific contract operations disabled | All operations enabled by default, can be selectively disabled |
+| 3 | `EmergencyHalt` | Only withdrawals allowed | Only `OpTypeWithdraw` and `OpTypeGovernance` |
+| 4 | `CompleteHalt` | All ops disabled | Only `OpTypeWithdraw` |
+
+## Operation Types
+
+The package defines several default operation types:
+
+- `OpTypePool`: Pool management operations
+- `OpTypePosition`: Position management operations
+- `OpTypeProtocolFee`: Fee-related operations
+- `OpTypeRouter`: Swap-related operations
+- `OpTypeStaker`: Liquidity-related operations
+- `OpTypeLaunchpad`: Launchpad operation
+- `OpTypeGovernance`: `gov/governance` operation
+- `OpTypeGovStaker`: `gov/staker` operation
+- `OpTypeXGns`: `gov/xgns` contract operation
+- `OpTypeCommunityPool`: Community pool operations
+- `OpTypeEmission`: Emission operations
+- `OpTypeWithdraw`: Withdrawal operations
 
 ## Usage Scenarios
 
@@ -53,17 +70,29 @@ The Manager orchestrates the halt system by:
 
 During normal functioning, all operations are permitted. The protocol operates at `LvNoHalt` level.
 
-### Scenario 2: High Market Volatility
+### Scenario 2: Contract-Specific Halt
 
-During periods of extreme volatility, swaps might be temporarily disabled to prevent exploits or unfair trades. The protocol switches to `LvSwapHalt` level, allowing only liquidity and withdrawal operations.
+The `LvContractHalt` level allows for fine-grained control over which specific contract operations are allowed. This enables targeted maintenance or emergency responses for individual components without affecting the entire protocol.
+
+For example, if issues are detected in the pool contract, you can set the system to `LvContractHalt` and then disable only pool operations:
+
+```go
+// Set to contract halt level
+manager.SetCurrentLevel(halt.LvContractHalt)
+
+// Disable only pool operations
+manager.SetOperationStatus(halt.OpTypePool, false)
+
+// Other operations like positions, withdrawals, etc. remain enabled
+```
 
 ### Scenario 3: Critical Vulnerability Found
 
-If a critical vulnerability is discovered in the liquidity provision logic, the protocol can switch to `LvEmergencyHalt`, allowing only withdrawals until the issue is resolved.
+If a critical vulnerability is discovered, the protocol can switch to `LvEmergencyHalt`, allowing only withdrawals and governance operations until the issue is resolved.
 
 ### Scenario 4: Complete System Upgrade
 
-During a major system upgrade, all operations may need to be halted temporarily. The protocol switches to `LvCompleteHalt` until the upgrade is complete.
+During a major system upgrade, all operations except withdrawals may need to be halted temporarily. The protocol switches to `LvCompleteHalt` until the upgrade is complete.
 
 ## Basic Usage
 
@@ -81,17 +110,22 @@ manager := halt.DefaultManager()
 currentLevel := manager.Level()
 println("Current level:", currentLevel.Name()) // "NoHalt"
 
-// Change the halt level during an emergency
-if err := manager.SetCurrentLevel(halt.LvEmergencyHalt); err != nil {
-    // ...
+// Change the halt level for contract-specific halts
+if err := manager.SetCurrentLevel(halt.LvContractHalt); err != nil {
+    // Handle error
+}
+
+// Disable specific operations while in ContractHalt level
+if err := manager.SetOperationStatus(halt.OpTypePool, false); err != nil {
+    // Handle error
 }
 
 // Check if a specific operation is allowed
-swapOp := halt.NewOperation(halt.OpTypeSwap, "Token Swap", "Swap tokens")
-if manager.Level().IsOperationAllowed(swapOp) {
-    // ...
+poolOp := halt.NewOperation(halt.OpTypePool, "Pool Operations", "Manage liquidity pools")
+if manager.Level().IsOperationAllowed(poolOp) {
+    // Perform pool operation
 } else {
-    return ufmt.Errorf("swap operations are currently disabled: %s", manager.Status(halt.OpTypeSwap))
+    return ufmt.Errorf("pool operations are currently disabled: %s", manager.Status(halt.OpTypePool))
 }
 ```
 
@@ -127,10 +161,10 @@ customLevel := halt.NewHaltLevel(
     "StakeOnly", 
     "Only staking operations allowed",
     map[halt.OpType]bool{
-        halt.OpTypeSwap:      false,
-        halt.OpTypeLiquidity: false,
-        halt.OpTypeWithdraw:  false,
-        OpTypeStake:          true,
+        halt.OpTypePool:       false,
+        halt.OpTypePosition:   false,
+        halt.OpTypeWithdraw:   false,
+        OpTypeStake:           true,
     },
 )
 
@@ -142,6 +176,24 @@ manager := halt.NewManager(
 )
 ```
 
+## Managing Operation Status
+
+The `SetOperationStatus` method allows for granular control over operations at the current halt level:
+
+```go
+// Enable a specific operation
+if err := manager.SetOperationStatus(halt.OpTypePool, true); err != nil {
+    // Handle error
+}
+
+// Disable a specific operation
+if err := manager.SetOperationStatus(halt.OpTypePool, false); err != nil {
+    // Handle error
+}
+```
+
+This is particularly useful with the `LvContractHalt` level, which is designed to allow selective enabling/disabling of operations for specific contracts.
+
 ## Composite Halt Levels
 
 For complex scenarios, you can create composite halt levels that combine multiple levels with logical operators:
@@ -149,26 +201,29 @@ For complex scenarios, you can create composite halt levels that combine multipl
 ```go
 // Create a composite level that requires BOTH level1 AND level2 conditions to be met
 compositeLevel := &halt.CompositeHaltLevel{
-    Levels:   halt.HaltLevels{level1, level2},
-    Operator: halt.CompositeOpAnd,
+    baseInfo: halt.baseInfo{name: "Composite", desc: "Composite level"},
+    levels:   halt.HaltLevels{level1, level2},
+    operator: halt.CompositeOpAnd,
 }
 
 // Check if an operation is allowed based on composite rules
-if compositeLevel.IsOperationAllowed(swapOp) {
-    // ...
+if compositeLevel.IsOperationAllowed(poolOp) {
+    // Perform pool operation
 }
 ```
 
 ## Best Practices
 
 1. **Centralize Management**: Maintain a single halt manager instance at the protocol level
-2. **Clear Communication**: Provide clear error messages or event messages when operations are halted
-3. **Access Control**: Restrict the ability to change halt levels to authorized entities
-4. **Graceful Degradation**: Design halt levels to prioritize user funds safety
+2. **Use Contract-Specific Halts**: When possible, use `LvContractHalt` with `SetOperationStatus` to minimize disruption
+3. **Clear Communication**: Provide clear error messages or event messages when operations are halted
+4. **Access Control**: Restrict the ability to change halt levels to authorized entities
+5. **Graceful Degradation**: Design halt levels to prioritize user funds safety
 
 ## Halt Level Transition Guidelines
 
 - **Admin-Only Access**: It is strongly recommended to restrict halt level adjustments to addresses registered as admins in your system
+- **Operation Status Management**: Use `SetOperationStatus` to fine-tune which operations are allowed at the current halt level
 - **Emergency Response**: Have clear procedures for who can trigger emergency halt levels
 - **Gradual Recovery**: When recovering from an incident, move gradually through halt levels
-- **Temporary Restrictions**: Use intermediate halt levels for maintenance or minor issues
+- **Temporary Restrictions**: Use `LvContractHalt` with selective operation disabling for maintenance or minor issues

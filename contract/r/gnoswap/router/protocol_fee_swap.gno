@@ -4,7 +4,9 @@ import (
 	"std"
 
 	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 
 	"gno.land/p/demo/ufmt"
 
@@ -29,7 +31,7 @@ func GetSwapFee() uint64 {
 // Only admin can execute this function
 func SetSwapFeeByAdmin(fee uint64) {
 	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
+	if err := access.AdminOnly(caller); err != nil {
 		panic(err)
 	}
 
@@ -54,7 +56,7 @@ func SetSwapFeeByAdmin(fee uint64) {
 // ref: https://docs.gnoswap.io/contracts/router/protocol_fee_swap.gno#setswapfee
 func SetSwapFee(fee uint64) {
 	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
+	if err := access.GovernanceOnly(caller); err != nil {
 		panic(err)
 	}
 
@@ -75,7 +77,9 @@ func SetSwapFee(fee uint64) {
 }
 
 func setSwapFee(fee uint64) error {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 
 	// 10000 (bps) = 100%
 	if fee > 10000 {

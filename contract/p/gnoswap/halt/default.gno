@@ -6,8 +6,6 @@ var (
 		name   string
 		desc   string
 	}{
-		{OpTypeSwap, rawSwap, "Token swap operation"},
-		{OpTypeLiquidity, rawLiquidity, "Liquidity provision operations"},
 		{OpTypeWithdraw, rawWithdraw, "Withdrawal operations"},
 	}
 
@@ -21,20 +19,39 @@ var (
 			LvNoHalt,
 			rawNoHalt,
 			"Normal operation",
+			// enabling all operations
 			map[OpType]bool{
-				OpTypeSwap:      true,
-				OpTypeLiquidity: true,
-				OpTypeWithdraw:  true,
+				OpTypePool:          true,
+				OpTypePosition:      true,
+				OpTypeProtocolFee:   true,
+				OpTypeRouter:        true,
+				OpTypeStaker:        true,
+				OpTypeLaunchpad:     true,
+				OpTypeGovernance:    true,
+				OpTypeGovStaker:     true,
+				OpTypeXGns:          true,
+				OpTypeCommunityPool: true,
+				OpTypeEmission:      true,
+				OpTypeWithdraw:      true,
 			},
 		},
 		{
-			LvSwapHalt,
-			rawSwapHalt,
-			"Swaps disabled",
+			LvContractHalt,
+			rawContractHalt,
+			"Specific contract operations disabled",
 			map[OpType]bool{
-				OpTypeSwap:      false,
-				OpTypeLiquidity: true,
-				OpTypeWithdraw:  true,
+				OpTypePool:          true,
+				OpTypePosition:      true,
+				OpTypeProtocolFee:   true,
+				OpTypeRouter:        true,
+				OpTypeStaker:        true,
+				OpTypeLaunchpad:     true,
+				OpTypeGovernance:    true,
+				OpTypeGovStaker:     true,
+				OpTypeXGns:          true,
+				OpTypeCommunityPool: true,
+				OpTypeEmission:      true,
+				OpTypeWithdraw:      true,
 			},
 		},
 		{
@@ -42,19 +59,16 @@ var (
 			rawEmergencyHalt,
 			"Only withdrawals allowed",
 			map[OpType]bool{
-				OpTypeSwap:      false,
-				OpTypeLiquidity: false,
-				OpTypeWithdraw:  true,
+				OpTypeGovernance: true,
+				OpTypeWithdraw:   true,
 			},
 		},
 		{
 			LvCompleteHalt,
 			rawCompleteHalt,
-			"All operations disabled",
+			"All contract disabled",
 			map[OpType]bool{
-				OpTypeSwap:      false,
-				OpTypeLiquidity: false,
-				OpTypeWithdraw:  false,
+				OpTypeWithdraw: true,
 			},
 		},
 	}

@@ -9,7 +9,7 @@ import (
 	"gno.land/p/gnoswap/consts"
 	gns "gno.land/r/gnoswap/v1/gns"
 
-	cn "gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 	en "gno.land/r/gnoswap/v1/emission"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -305,6 +305,6 @@ func TestProposeParameterChange_Common_SetHalt(t *testing.T) {
 		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
-		uassert.True(t, cn.GetHalt())
+		uassert.True(t, halt.GetHalt())
 	})
 }
