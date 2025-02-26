@@ -16,6 +16,7 @@ var (
 	adminUser = adminAddr
 
 	launchpadAddr, _ = access.GetAddress(access.ROLE_LAUNCHPAD)
+	govStakerAddr, _ = access.GetAddress(access.ROLE_GOV_STAKER)
 
 	fooPath string = "gno.land/r/onbloc/foo"
 	barPath string = "gno.land/r/onbloc/bar"
@@ -146,7 +147,6 @@ func TestXGNSHelpers(t *testing.T) {
 	xgnsCheckTotalSupply(t, token, 500)
 
 	// Test Voting Supply
-	launchpadAddr := consts.LAUNCHPAD_ADDR
 	xgnsMint(t, token, launchpadAddr, 200)
 	xgnsCheckVotingSupply(t, token, 500) // Only testUser's balance counts
 }

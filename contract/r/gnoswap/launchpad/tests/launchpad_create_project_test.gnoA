@@ -76,7 +76,7 @@ func depositTier30(t *testing.T) {
 		std.TestSkipHeights(10) // start project
 
 		std.TestSetRealm(user01Realm)
-		gns.Approve(consts.GOV_STAKER_ADDR, xGnsAmount)
+		gns.Approve(govStakerAddr, xGnsAmount)
 		gs.Delegate(user01, xGnsAmount, "") // make xGNS required amount
 
 		gns.Approve(launchpadAddr, gnsAmount)
