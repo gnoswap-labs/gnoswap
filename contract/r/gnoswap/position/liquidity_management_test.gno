@@ -15,7 +15,7 @@ func InitialSetup(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
 	pl.SetPoolCreationFeeByAdmin(0)
-	CreatePool(t, gnsPath, barPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
+	CreatePool(t, gnsPath, barPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
 	TokenFaucet(t, gnsPath, alice)
 	TokenFaucet(t, barPath, alice)
 }

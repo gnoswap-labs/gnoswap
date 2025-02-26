@@ -79,7 +79,7 @@ func TestAssertTokenExists(t *testing.T) {
 func TestAssertOnlyOwnerOfToken(t *testing.T) {
 	// Mock token ownership
 	mockTokenId := uint64(1)
-	mockOwner := admin
+	mockOwner := adminAddr
 	mockCaller := alice
 	// MakeMintPositionWithoutFee(t)
 
@@ -170,7 +170,7 @@ func TestAssertOnlyNotHalted(t *testing.T) {
 					assertOnlyNotHalted()
 				})
 			} else {
-				std.TestSetRealm(std.NewUserRealm(admin))
+				std.TestSetRealm(std.NewUserRealm(adminAddr))
 				halt.SetHaltByAdmin(true)
 				uassert.PanicsWithMessage(t, tc.panicMsg, func() {
 					assertOnlyNotHalted()
@@ -611,7 +611,7 @@ func TestIsOwner(t *testing.T) {
 		{
 			name:       "Success - is owner",
 			positionId: 1,
-			addr:       admin,
+			addr:       adminAddr,
 			expected:   true,
 		},
 	}
@@ -647,7 +647,7 @@ func TestIsOperator(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.expected {
-				LPTokenApprove(t, admin, tc.addr, tc.positionId)
+				LPTokenApprove(t, adminAddr, tc.addr, tc.positionId)
 			}
 			got := isOperator(tc.positionId, tc.addr)
 			uassert.Equal(t, tc.expected, got)
@@ -672,15 +672,15 @@ func TestIsStaked(t *testing.T) {
 		},
 		{
 			name:       "Fail - is not exist positionId",
-			owner:      admin,
+			owner:      adminAddr,
 			operator:   bob,
 			positionId: 100,
 			expected:   false,
 		},
 		{
 			name:       "Success - is staked",
-			owner:      admin,
-			operator:   admin,
+			owner:      adminAddr,
+			operator:   adminAddr,
 			positionId: 11,
 			expected:   true,
 		},
@@ -711,22 +711,22 @@ func TestIsOwnerOrOperator(t *testing.T) {
 	}{
 		{
 			name:       "Fail - is not owner or operator",
-			owner:      admin,
+			owner:      adminAddr,
 			operator:   alice,
 			positionId: 1,
 			expected:   false,
 		},
 		{
 			name:       "Success - is operator",
-			owner:      admin,
+			owner:      adminAddr,
 			operator:   bob,
 			positionId: 1,
 			expected:   true,
 		},
 		{
 			name:       "Success - is owner",
-			owner:      admin,
-			operator:   admin,
+			owner:      adminAddr,
+			operator:   adminAddr,
 			positionId: 1,
 			expected:   true,
 		},
@@ -758,7 +758,7 @@ func TestIsOwnerOrOperatorWithStake(t *testing.T) {
 	}{
 		{
 			name:       "Fail - is not token staked",
-			owner:      admin,
+			owner:      adminAddr,
 			operator:   alice,
 			positionId: 10,
 			isStake:    false,
@@ -766,8 +766,8 @@ func TestIsOwnerOrOperatorWithStake(t *testing.T) {
 		},
 		{
 			name:       "Success - is token staked (position operator)",
-			owner:      admin,
-			operator:   admin,
+			owner:      adminAddr,
+			operator:   adminAddr,
 			positionId: 10,
 			isStake:    true,
 			expected:   true,
