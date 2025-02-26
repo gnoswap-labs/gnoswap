@@ -29,7 +29,7 @@ func singleSwap(params SingleSwapParams) (*u256.Uint, *u256.Uint) { // amountIn,
 
 	amountIn, amountOut := swapInner(
 		params.amountSpecified,
-		getPrevAddr(), // if single swap => user will recieve
+		getPrevAddr(), // if single swap => user will receive
 		u256.Zero(),   // sqrtPriceLimitX96
 		SwapCallbackData{
 			params.tokenIn,

@@ -78,6 +78,12 @@ func transferUGNOT(from, to std.Address, amount uint64) {
 	}
 
 	banker := std.NewBanker(std.BankerTypeRealmSend)
+	fromBalance := banker.GetCoins(from).AmountOf(consts.UGNOT)
+	if fromBalance < int64(amount) {
+		panic(newErrorWithDetail(
+			errInsufficientUGNOT,
+			ufmt.Sprintf("from(%s) balance(%d) is less than amount(%d)", from, fromBalance, amount)))
+	}
 	banker.SendCoins(from, to, std.Coins{
 		{Denom: consts.UGNOT, Amount: int64(amount)},
 	})
