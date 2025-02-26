@@ -33,7 +33,7 @@ func testPoolCreatePool(t *testing.T) {
 	t.Run("pool create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee()*3)
+		gns.Approve(poolAddr, pl.GetPoolCreationFee()*3)
 
 		pl.CreatePool(barPath, bazPath, 100, "79228162514264337593543950337") // will be external
 		std.TestSkipHeights(1)
@@ -43,8 +43,8 @@ func testPoolCreatePool(t *testing.T) {
 func testMintBarBaz100(t *testing.T) {
 	t.Run("mint position 01, bar:baz:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		bar.Approve(poolAddr, consts.UINT64_MAX)
+		baz.Approve(poolAddr, consts.UINT64_MAX)
 		std.TestSkipHeights(2)
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(
@@ -71,12 +71,12 @@ func testCreateExternalIncentive(t *testing.T) {
 
 		std.TestSetRealm(adminRealm)
 
-		wugnot.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.STAKER_ADDR, depositGnsAmount)
+		wugnot.Approve(stakerAddr, consts.UINT64_MAX)
+		gns.Approve(stakerAddr, depositGnsAmount)
 
 		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 		banker := std.NewBanker(std.BankerTypeRealmSend)
-		banker.SendCoins(adminAddr, consts.STAKER_ADDR, std.Coins{{"ugnot", 100_000_000}})
+		banker.SendCoins(adminAddr, stakerAddr, std.Coins{{"ugnot", 100_000_000}})
 		std.TestSetOriginSend(std.Coins{{"ugnot", 100_000_000}}, nil)
 
 		CreateExternalIncentive(
@@ -95,7 +95,7 @@ func testStakeToken(t *testing.T) {
 	t.Run("stake token 01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gnft.Approve(consts.STAKER_ADDR, "1")
+		gnft.Approve(stakerAddr, "1")
 		StakeToken(1, "")
 	})
 }

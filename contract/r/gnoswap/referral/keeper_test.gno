@@ -7,7 +7,8 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+
+	"gno.land/r/gnoswap/v1/access"
 )
 
 const STRESS_TEST_NUM = 10000 // arbitrary number
@@ -29,7 +30,8 @@ func setupKeeper() *keeper { return NewKeeper().(*keeper) }
 
 func mockValidCaller() func() {
 	origCaller := std.OriginCaller()
-	std.TestSetOriginCaller(consts.ROUTER_ADDR)
+	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+	std.TestSetOriginCaller(routerAddr)
 	return func() {
 		std.TestSetOriginCaller(origCaller)
 	}

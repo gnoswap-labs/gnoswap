@@ -22,12 +22,12 @@ func TestExactInputSinglePool1_to_0(t *testing.T) {
 	// ================================ Pool Setup & Add Liquidity================================================
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
+	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 
 	token0Path := "gno.land/r/onbloc/foo"
 
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
 	pl.CreatePool(barPath, token0Path, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
@@ -38,14 +38,14 @@ func TestExactInputSinglePool1_to_0(t *testing.T) {
 
 	// 1 -> 0
 
-	bar.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+	bar.Approve(routerAddr, consts.UINT64_MAX)
+	foo.Approve(routerAddr, consts.UINT64_MAX)
 
-	poolToken0Before := bar.BalanceOf(consts.POOL_ADDR)
-	poolToken1Before := foo.BalanceOf(consts.POOL_ADDR)
+	poolToken0Before := bar.BalanceOf(poolAddr)
+	poolToken1Before := foo.BalanceOf(poolAddr)
 
-	user1Token0Before := bar.BalanceOf(consts.ADMIN)
-	user1Token1Before := foo.BalanceOf(consts.ADMIN)
+	user1Token0Before := bar.BalanceOf(adminAddr)
+	user1Token1Before := foo.BalanceOf(adminAddr)
 
 	amountIn, amountOut := ExactInSwapRoute(
 		barPath, // inputToken
@@ -61,11 +61,11 @@ func TestExactInputSinglePool1_to_0(t *testing.T) {
 	uassert.Equal(t, amountIn, "3")
 	uassert.Equal(t, amountOut, "-1")
 
-	poolToken0After := bar.BalanceOf(consts.POOL_ADDR)
-	poolToken1After := foo.BalanceOf(consts.POOL_ADDR)
+	poolToken0After := bar.BalanceOf(poolAddr)
+	poolToken1After := foo.BalanceOf(poolAddr)
 
-	user1Token0After := bar.BalanceOf(consts.ADMIN)
-	user1Token1After := foo.BalanceOf(consts.ADMIN)
+	user1Token0After := bar.BalanceOf(adminAddr)
+	user1Token1After := foo.BalanceOf(adminAddr)
 
 	uassert.Equal(t, user1Token0After, user1Token0Before+1) // bar
 	uassert.Equal(t, user1Token1After, user1Token1Before-3) // foo

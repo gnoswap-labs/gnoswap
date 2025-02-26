@@ -78,8 +78,8 @@ func testMintWugnotGnsPos01(t *testing.T) {
 	t.Run("mint wugnot gns 3000", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(
 			wugnotPath,   // token0
@@ -110,7 +110,7 @@ func testStakeToken01(t *testing.T) {
 	t.Run("stake token 1", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gnft.Approve(consts.STAKER_ADDR, positionIdFrom(1))
+		gnft.Approve(stakerAddr, positionIdFrom(1))
 		StakeToken(1, "")
 		std.TestSkipHeights(1)
 		// 1 block staked

@@ -89,7 +89,7 @@ func TestCreatePool(t *testing.T) {
 		},
 	}
 
-	std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
+	std.TestSetRealm(std.NewUserRealm(adminAddr))
 	SetPoolCreationFeeByAdmin(0)
 
 	for _, tt := range tests {

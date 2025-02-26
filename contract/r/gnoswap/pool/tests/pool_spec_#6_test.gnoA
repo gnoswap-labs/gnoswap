@@ -22,18 +22,18 @@ var (
 
 func TestPositionsProtected(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
 
 	std.TestSetRealm(posRealm)
 	Mint(
 		barPath,
 		fooPath,
 		fee500,
-		consts.POSITION_ADDR,
+		positionAddr,
 		-887160,
 		887160,
 		test_liquidityExpectStr,
@@ -72,7 +72,7 @@ func TestPositionsProtected(t *testing.T) {
 
 func TestPokeIsNotAllowedOnUninitializedPosition(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // tick 0
 
 	std.TestSetRealm(posRealm)
@@ -94,19 +94,19 @@ func TestPokeIsNotAllowedOnUninitializedPosition(t *testing.T) {
 
 func TestWorkAccross(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	gns.Approve(poolAddr, poolCreationFee)
 	// CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 	CreatePool(barPath, fooPath, fee100, "79228162514264337593543950336")
 
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
 	std.TestSetRealm(posRealm)
 	Mint(
 		barPath,
 		fooPath,
 		fee100,
-		consts.POSITION_ADDR,
+		positionAddr,
 		-887270,
 		887270,
 		"100000000000",
@@ -130,7 +130,7 @@ func TestWorkAccross(t *testing.T) {
 	)
 
 	// tokensOwed
-	thisPositionKey := getPositionKey(consts.POSITION_ADDR, -887270, 887270)
+	thisPositionKey := getPositionKey(positionAddr, -887270, 887270)
 	thisPosition := thisPool.mustGetPosition(thisPositionKey)
 
 	tokensOwed0 := thisPosition.tokensOwed0

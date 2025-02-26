@@ -69,11 +69,6 @@ func TestNewPoolParams(t *testing.T) {
 }
 
 func TestNewPoolParam(t *testing.T) {
-	const (
-		gnsTokenPath    = "gno.land/r/gnoswap/v1/gns"
-		wugnotTokenPath = "gno.land/r/gnoswap/v1/wugnot"
-	)
-
 	testCases := []struct {
 		name            string
 		token0Path      string
@@ -87,8 +82,8 @@ func TestNewPoolParam(t *testing.T) {
 	}{
 		{
 			name:            "success - normal token pair",
-			token0Path:      gnsTokenPath,
-			token1Path:      wugnotTokenPath,
+			token0Path:      gnsPath,
+			token1Path:      wugnotPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "79228162514264337593543950337",
 			sqrtPriceX96:    u256.MustFromDecimal("79228162514264337593543950337"),
@@ -100,8 +95,8 @@ func TestNewPoolParam(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			params := newPoolParams(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96Str, tt.tickSpacing)
-			uassert.Equal(t, params.token0Path, gnsTokenPath, "Token0Path should match")
-			uassert.Equal(t, params.token1Path, wugnotTokenPath, "Token1Path should match")
+			uassert.Equal(t, params.token0Path, gnsPath, "Token0Path should match")
+			uassert.Equal(t, params.token1Path, wugnotPath, "Token1Path should match")
 			uassert.Equal(t, params.fee, FeeTier3000, "Fee should match")
 			uassert.Equal(t, params.tickSpacing, params.TickSpacing(), "TickSpacing should match")
 			uassert.Equal(t, params.SqrtPriceX96().ToString(), u256.MustFromDecimal(tt.sqrtPriceX96Str).ToString(), "SqrtPriceX96 should match")
@@ -111,8 +106,8 @@ func TestNewPoolParam(t *testing.T) {
 
 func TestIsInOrder(t *testing.T) {
 	const (
-		gnsTokenPath    = "gno.land/r/gnoswap/v1/gns"
-		wugnotTokenPath = "gno.land/r/gnoswap/v1/wugnot"
+		gnsPath    = "gno.land/r/gnoswap/v1/gns"
+		wugnotPath = "gno.land/r/gnoswap/v1/wugnot"
 	)
 
 	testCases := []struct {
@@ -128,8 +123,8 @@ func TestIsInOrder(t *testing.T) {
 	}{
 		{
 			name:            "success - normal token pair",
-			token0Path:      gnsTokenPath,
-			token1Path:      wugnotTokenPath,
+			token0Path:      gnsPath,
+			token1Path:      wugnotPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "79228162514264337593543950337",
 			sqrtPriceX96:    u256.MustFromDecimal("79228162514264337593543950337"),
@@ -150,8 +145,8 @@ func TestIsInOrder(t *testing.T) {
 
 func TestUpdateWithWrapping(t *testing.T) {
 	const (
-		gnsTokenPath    = "gno.land/r/gnoswap/v1/gns"
-		wugnotTokenPath = "gno.land/r/gnoswap/v1/wugnot"
+		gnsPath    = "gno.land/r/gnoswap/v1/gns"
+		wugnotPath = "gno.land/r/gnoswap/v1/wugnot"
 	)
 
 	testCases := []struct {
@@ -167,8 +162,8 @@ func TestUpdateWithWrapping(t *testing.T) {
 	}{
 		{
 			name:            "success - update with wrapping",
-			token0Path:      wugnotTokenPath,
-			token1Path:      gnsTokenPath,
+			token0Path:      wugnotPath,
+			token1Path:      gnsPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "79228162514264337593543950337",
 			sqrtPriceX96:    u256.MustFromDecimal("79228162514264337593543950337"),
@@ -195,11 +190,6 @@ func TestUpdateWithWrapping(t *testing.T) {
 }
 
 func TestWrap(t *testing.T) {
-	const (
-		gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
-		ugnotPath    = "ugnot"
-	)
-
 	testCases := []struct {
 		name            string
 		token0Path      string
@@ -214,7 +204,7 @@ func TestWrap(t *testing.T) {
 		{
 			name:            "success - native token wrapped wugnot token",
 			token0Path:      ugnotPath,
-			token1Path:      gnsTokenPath,
+			token1Path:      gnsPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "79228162514264337593543950337",
 			sqrtPriceX96:    u256.MustFromDecimal("79228162514264337593543950337"),
@@ -245,11 +235,6 @@ func TestWrap(t *testing.T) {
 }
 
 func TestGeneratePoolPath(t *testing.T) {
-	const (
-		gnsTokenPath    = "gno.land/r/gnoswap/v1/gns"
-		wugnotTokenPath = "gno.land/r/gnoswap/v1/wugnot"
-	)
-
 	testCases := []struct {
 		name            string
 		token0Path      string
@@ -263,8 +248,8 @@ func TestGeneratePoolPath(t *testing.T) {
 	}{
 		{
 			name:            "success - pool path generated correctly",
-			token0Path:      gnsTokenPath,
-			token1Path:      wugnotTokenPath,
+			token0Path:      gnsPath,
+			token1Path:      wugnotPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "79228162514264337593543950337",
 			sqrtPriceX96:    u256.MustFromDecimal("79228162514264337593543950337"),

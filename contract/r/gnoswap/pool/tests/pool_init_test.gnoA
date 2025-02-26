@@ -23,11 +23,11 @@ var (
 
 func TestMintPostInit(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-1).ToString())
 
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
 
 	thisPool := GetPool(barPath, fooPath, fee500)
 
@@ -37,7 +37,7 @@ func TestMintPostInit(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			consts.POSITION_ADDR,
+			positionAddr,
 			-1000,
 			1000,
 			test_liquidityExpectStr,
@@ -52,7 +52,7 @@ func TestMintPostInit(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			consts.POSITION_ADDR,
+			positionAddr,
 			-2000,
 			-1000,
 			test_liquidityExpectStr,
@@ -69,7 +69,7 @@ func TestMintPostInit(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			consts.POSITION_ADDR,
+			positionAddr,
 			1000,
 			2000,
 			test_liquidityExpectStr,
@@ -88,7 +88,7 @@ func TestMintPostInit(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			consts.POSITION_ADDR,
+			positionAddr,
 			0,
 			10,
 			test_liquidityExpectStr,
@@ -120,7 +120,7 @@ func TestMintPostInit(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			consts.POSITION_ADDR,
+			positionAddr,
 			-10,
 			0,
 			test_liquidityExpectStr,

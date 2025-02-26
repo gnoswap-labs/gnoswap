@@ -25,7 +25,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 	// call gns faucet to get creation fee
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(consts.WRAPPED_WUGNOT, fooPath, fee500, "130621891405341611593710811006") // x2.7
 }
 
@@ -48,8 +48,8 @@ func TestMint(t *testing.T) {
 	wugnot.Deposit()
 
 	std.TestSetRealm(adminRealm)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
+	wugnot.Approve(poolAddr, consts.UINT64_MAX)
 
 	// Mint
 	std.TestSetRealm(posRealm)
@@ -57,7 +57,7 @@ func TestMint(t *testing.T) {
 		fooPath,
 		consts.WRAPPED_WUGNOT,
 		fee500,
-		consts.POSITION_ADDR,
+		positionAddr,
 		test_tickLower,
 		test_tickUpper,
 		"10000000",
@@ -77,7 +77,7 @@ func TestSwapBuyNative(t *testing.T) {
 	uassert.Equal(t, adminOldT1Bal, uint64(99999899195968))
 
 	std.TestSetRealm(adminRealm)
-	foo.Approve(consts.POOL_ADDR, 10000)
+	foo.Approve(poolAddr, 10000)
 
 	std.TestSetRealm(rouRealm)
 	amount0, amount1 := Swap(
@@ -109,7 +109,7 @@ func TestSwapSellNative(t *testing.T) {
 	uassert.Equal(t, adminOldT1Bal, uint64(99999899223091)) // wugnot
 
 	std.TestSetRealm(adminRealm)
-	wugnot.Approve(consts.POOL_ADDR, 27123)
+	wugnot.Approve(poolAddr, 27123)
 
 	std.TestSetRealm(rouRealm)
 	amount0, amount1 := Swap( // ugnot 10_000 > foo ??

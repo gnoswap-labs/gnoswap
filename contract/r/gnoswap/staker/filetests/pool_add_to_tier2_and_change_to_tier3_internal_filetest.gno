@@ -19,15 +19,16 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/grc/grc721"
+	"gno.land/p/demo/testutils"
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
 
+	"gno.land/r/gnoswap/v1/access"
+
+	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gnft"
 
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -36,37 +37,28 @@ import (
 )
 
 var (
-	adminAddr  = consts.ADMIN
+	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
 	adminUser  = adminAddr
 	adminRealm = std.NewUserRealm(adminAddr)
 
-	stakerAddr  = consts.STAKER_ADDR
-	stakerUser  = stakerAddr
-	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
+	// g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup
+	externalCreatorAddr  = testutils.TestAddress("externalCreator")
+
+	stakerAddr, _  = access.GetAddress(access.ROLE_STAKER)
+	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
 
 	wugnotAddr = consts.WUGNOT_ADDR
 
-	fooPath = "gno.land/r/onbloc/foo"
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
-	oblPath = "gno.land/r/onbloc/obl"
 
 	gnsPath    = "gno.land/r/gnoswap/v1/gns"
 	wugnotPath = "gno.land/r/demo/wugnot"
 
 	fee100  uint32 = 100
-	fee500  uint32 = 500
 	fee3000 uint32 = 3000
 
 	max_timeout int64 = 9999999999
-
-	// external incentive deposit fee
-	depositGnsAmount uint64 = 1_000_000_000 // 1_000 GNS
-
-	TIMESTAMP_90DAYS  int64 = 90 * 24 * 60 * 60
-	TIMESTAMP_180DAYS int64 = 180 * 24 * 60 * 60
-	TIMESTAMP_365DAYS int64 = 365 * 24 * 60 * 60
 )
 
 func main() {
@@ -119,8 +111,8 @@ func testCreatePool() {
 func testMintAndStakeWugnotGnsPos01() {
 	std.TestSetRealm(adminRealm)
 
-	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	wugnot.Approve(poolAddr, consts.UINT64_MAX)
+	gns.Approve(poolAddr, consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	pn.Mint(
@@ -165,8 +157,8 @@ func testSetPoolTier2() {
 func testMintAndStakeBarBazPos02() {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	baz.Approve(poolAddr, consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	pn.Mint(

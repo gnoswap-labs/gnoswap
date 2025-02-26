@@ -12,7 +12,7 @@ import (
 )
 
 func TestInitTwoPools(t *testing.T) {
-	std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
+	std.TestSetRealm(std.NewUserRealm(adminAddr))
 	SetPoolCreationFeeByAdmin(0)
 
 	// foo:bar

@@ -12,6 +12,12 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/gnoswap/consts"
+
+	"gno.land/r/gnoswap/v1/access"
+)
+
+var (
+	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
 )
 
 func TestMarshal(t *testing.T) {
@@ -154,7 +160,6 @@ func TestFormatInt(t *testing.T) {
 }
 
 func TestAssertCallerIsAdmin(t *testing.T) {
-	adminAddr := consts.ADMIN
 	nonAdminAddr := std.Address("user456")
 
 	std.TestSetOriginCaller(adminAddr)

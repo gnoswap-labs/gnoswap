@@ -3,8 +3,6 @@ package staker
 import (
 	"std"
 	"testing"
-
-	"gno.land/p/gnoswap/consts"
 )
 
 func TestGetDepositGnsAmount(t *testing.T) {
@@ -25,7 +23,7 @@ func TestSetDepositGnsAmountByAdmin(t *testing.T) {
 	}{
 		{
 			name:        "Success - Admin sets deposit amount",
-			caller:      consts.ADMIN,
+			caller:      adminAddr,
 			newAmount:   2_000_000_000,
 			shouldPanic: false,
 		},
@@ -73,7 +71,7 @@ func TestSetDepositGnsAmount(t *testing.T) {
 	}{
 		{
 			name:        "Success - Governance sets deposit amount",
-			caller:      consts.GOV_GOVERNANCE_ADDR,
+			caller:      govGovernanceAddr,
 			newAmount:   3_000_000_000,
 			shouldPanic: false,
 		},

@@ -9,10 +9,17 @@ import (
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
+
+	"gno.land/r/gnoswap/v1/access"
+)
+
+var (
+	admin, _ = access.GetAddress(access.ROLE_ADMIN)
+	govStaker, _ = access.GetAddress(access.ROLE_GOV_STAKER)
 )
 
 func TestDelegate(t *testing.T) {
-	std.TestSetOriginCaller(consts.ADMIN)
+	std.TestSetOriginCaller(admin)
 	SetRunning(true)
 
 	std.TestSetRealm(userRealm)
@@ -25,7 +32,7 @@ func TestDelegate(t *testing.T) {
 		to := makeFakeAddress("validator_1")
 		amount := uint64(1_000_000)
 
-		gns.Approve(consts.GOV_STAKER_ADDR, amount)
+		gns.Approve(govStaker, amount)
 		Delegate(to, amount, "")
 
 		minted := xgns.BalanceOf(userRealm.Address())
@@ -77,14 +84,14 @@ func TestDelegate(t *testing.T) {
 
 	// 7) running = false => optional check
 	{
-		std.TestSetOriginCaller(consts.ADMIN)
+		std.TestSetOriginCaller(admin)
 		SetRunning(false)
 		// delegate?
 		// depending on code logic, might skip cleanDelegationStatHistory() or do something else
 		// if there's logic that forbids delegation when not running, test that
 		// For now, assume it still works but doesn't clean.
 		// Restore running to true for subsequent tests.
-		std.TestSetOriginCaller(consts.ADMIN)
+		std.TestSetOriginCaller(admin)
 		SetRunning(true)
 	}
 
@@ -146,7 +153,7 @@ func TestDelegate_Boundary_Values(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetOriginCaller(consts.ADMIN)
+			std.TestSetOriginCaller(admin)
 			SetRunning(true)
 			std.TestSetRealm(userRealm)
 
@@ -350,11 +357,11 @@ func TestRedelegate(t *testing.T) {
 	amount := uint64(1_000_000)
 
 	std.TestSetOriginCaller(userRealm.Address())
-	gns.Approve(consts.GOV_STAKER_ADDR, amount)
+	gns.Approve(govStaker, amount)
 	Delegate(from, amount, "")
 
 	std.TestSetOriginCaller(userRealm.Address())
-	gns.Approve(consts.GOV_STAKER_ADDR, amount)
+	gns.Approve(govStaker, amount)
 	Redelegate(from, to, amount)
 
 	// check data: user xGNS must remain the same, but from-> to shift in staker structure?
@@ -380,7 +387,7 @@ func TestUndelegate(t *testing.T) {
 	amount := uint64(1_000_000)
 
 	std.TestSetOriginCaller(user3Realm.Address())
-	gns.Approve(consts.GOV_STAKER_ADDR, amount)
+	gns.Approve(govStaker, amount)
 	Delegate(to, amount, "")
 	Undelegate(to, amount)
 
@@ -471,11 +478,11 @@ func TestCollectReward(t *testing.T) {
 	{
 		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 		std.TestSkipHeights(100)
-		gns.MintGns(consts.GOV_STAKER_ADDR)
+		gns.MintGns(govStaker)
 
-		std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
-		ugnotFaucet(t, consts.GOV_STAKER_ADDR, 1_000_000)
-		ugnotDeposit(t, consts.GOV_STAKER_ADDR, 1_000_000)
+		std.TestSetRealm(std.NewUserRealm(admin))
+		ugnotFaucet(t, govStaker, 1_000_000)
+		ugnotDeposit(t, govStaker, 1_000_000)
 		ugnotFaucet(t, derivePkgAddr(wugnotPath), 1_000_000)
 		ugnotFaucet(t, user2Realm.Address(), 1_000_000)
 	}

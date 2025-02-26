@@ -23,18 +23,18 @@ var (
 
 func TestDoesNotClear(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
 
 	std.TestSetRealm(posRealm)
 	Mint(
 		barPath,
 		fooPath,
 		fee500,
-		consts.POSITION_ADDR,
+		positionAddr,
 		-887160,
 		887160,
 		test_liquidityExpectStr,
@@ -81,7 +81,7 @@ func TestDoesNotClear(t *testing.T) {
 	uassert.Equal(t, liq.ToString(), "0")
 
 	// tokensOwed
-	thisPositionKey := getPositionKey(consts.POSITION_ADDR, -887160, 887160)
+	thisPositionKey := getPositionKey(positionAddr, -887160, 887160)
 	thisPosition := thisPool.mustGetPosition(thisPositionKey)
 
 	tokensOwed0 := thisPosition.tokensOwed0
@@ -98,18 +98,18 @@ func TestDoesNotClear(t *testing.T) {
 
 func TestClearOnlyLowTick(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
 
 	std.TestSetRealm(posRealm)
 	Mint(
 		barPath,
 		fooPath,
 		fee3000,
-		consts.POSITION_ADDR,
+		positionAddr,
 		-887160,
 		887160,
 		"1",
@@ -120,7 +120,7 @@ func TestClearOnlyLowTick(t *testing.T) {
 		barPath,
 		fooPath,
 		fee3000,
-		consts.POSITION_ADDR,
+		positionAddr,
 		-887100,
 		887160,
 		"1",
@@ -162,18 +162,18 @@ func TestClearOnlyLowTick(t *testing.T) {
 
 func TestClearOnlyUpperTick(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
 
 	std.TestSetRealm(posRealm)
 	Mint(
 		barPath,
 		fooPath,
 		fee100,
-		consts.POSITION_ADDR,
+		positionAddr,
 		-887160,
 		887160,
 		"1",
@@ -184,7 +184,7 @@ func TestClearOnlyUpperTick(t *testing.T) {
 		barPath,
 		fooPath,
 		fee100,
-		consts.POSITION_ADDR,
+		positionAddr,
 		-887160,
 		887100,
 		"1",

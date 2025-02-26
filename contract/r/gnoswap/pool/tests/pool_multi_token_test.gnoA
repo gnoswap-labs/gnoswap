@@ -31,7 +31,7 @@ func TestCreateFooBarPool(t *testing.T) {
 	// call gns faucet to get creation fee
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	gns.Approve(poolAddr, poolCreationFee)
 
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 	uassert.Equal(t, pools.Size(), 1)
@@ -42,7 +42,7 @@ func TestCreateBarBazPool(t *testing.T) {
 	// call gns faucet to get creation fee
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	gns.Approve(poolAddr, poolCreationFee)
 
 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006")
 	uassert.Equal(t, pools.Size(), 2)
@@ -51,15 +51,15 @@ func TestCreateBarBazPool(t *testing.T) {
 // Mint Foo:Bar Liquidity by admin
 func TestMintFooBarLiquidity(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
 
 	std.TestSetRealm(posRealm)
 	amount0, amount1 := Mint(
 		fooPath,
 		barPath,
 		fee500,
-		consts.POSITION_ADDR,
+		positionAddr,
 		-test_tickUpper,
 		-test_tickLower,
 		test_liquidityExpectStr,
@@ -72,15 +72,15 @@ func TestMintFooBarLiquidity(t *testing.T) {
 // Mint Bar:Baz Liquidity by admin
 func TestMintBarBazLiquidity(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	baz.Approve(poolAddr, consts.UINT64_MAX)
 
 	std.TestSetRealm(posRealm)
 	amount0, amount1 := Mint(
 		barPath,
 		bazPath,
 		fee500,
-		consts.POSITION_ADDR,
+		positionAddr,
 		test_tickLower,
 		test_tickUpper,
 		test_liquidityExpectStr,
@@ -95,11 +95,11 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 	oldTest1Bar := barToken.BalanceOf(adminAddr)
 	oldTest1Foo := fooToken.BalanceOf(adminAddr)
 
-	oldPoolBar := barToken.BalanceOf(consts.POOL_ADDR)
-	oldPoolFoo := fooToken.BalanceOf(consts.POOL_ADDR)
+	oldPoolBar := barToken.BalanceOf(poolAddr)
+	oldPoolFoo := fooToken.BalanceOf(poolAddr)
 
 	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, 16000)
+	bar.Approve(poolAddr, 16000)
 
 	std.TestSetRealm(rouRealm)
 	poolIn, poolOut := Swap(
@@ -118,8 +118,8 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 	newTest1Bar := barToken.BalanceOf(adminAddr)
 	newTest1Foo := fooToken.BalanceOf(adminAddr)
 
-	newPoolBar := barToken.BalanceOf(consts.POOL_ADDR)
-	newPoolFoo := fooToken.BalanceOf(consts.POOL_ADDR)
+	newPoolBar := barToken.BalanceOf(poolAddr)
+	newPoolFoo := fooToken.BalanceOf(poolAddr)
 
 	uassert.Equal(t, oldTest1Bar-newTest1Bar, uint64(16000))
 	uassert.Equal(t, newTest1Foo-oldTest1Foo, uint64(5882))
@@ -132,11 +132,11 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 func TestSwapBarBazBarToBaz(t *testing.T) {
 	oldTest1Token0Balance := barToken.BalanceOf(adminAddr)
 	oldadminBazBalance := bazToken.BalanceOf(adminAddr)
-	oldPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
-	oldPoolBazBalance := bazToken.BalanceOf(consts.POOL_ADDR)
+	oldPoolToken0Balance := barToken.BalanceOf(poolAddr)
+	oldPoolBazBalance := bazToken.BalanceOf(poolAddr)
 
 	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, 16000)
+	bar.Approve(poolAddr, 16000)
 
 	std.TestSetRealm(rouRealm)
 	poolIn, poolOut := Swap(
@@ -155,8 +155,8 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 
 	newTest1Token0Balance := barToken.BalanceOf(adminAddr)
 	newadminBazBalance := bazToken.BalanceOf(adminAddr)
-	newPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
-	newPoolBazBalance := bazToken.BalanceOf(consts.POOL_ADDR)
+	newPoolToken0Balance := barToken.BalanceOf(poolAddr)
+	newPoolBazBalance := bazToken.BalanceOf(poolAddr)
 
 	uassert.Equal(t, oldTest1Token0Balance-newTest1Token0Balance, uint64(16000))
 	uassert.Equal(t, newadminBazBalance-oldadminBazBalance, uint64(43457))
@@ -170,8 +170,8 @@ func TestCollectFooBarFees(t *testing.T) {
 
 	oldTest1Token1Balance := fooToken.BalanceOf(adminAddr)
 	oldTest1Token0Balance := barToken.BalanceOf(adminAddr)
-	oldPoolToken1Balance := fooToken.BalanceOf(consts.POOL_ADDR)
-	oldPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
+	oldPoolToken1Balance := fooToken.BalanceOf(poolAddr)
+	oldPoolToken0Balance := barToken.BalanceOf(poolAddr)
 
 	// burn 0 to collect swap fees
 	Burn(fooPath, barPath, fee500, -test_tickUpper, -test_tickLower, "0")
@@ -192,8 +192,8 @@ func TestCollectFooBarFees(t *testing.T) {
 
 	newTest1Token1Balance := fooToken.BalanceOf(adminAddr)
 	newTest1Token0Balance := barToken.BalanceOf(adminAddr)
-	newPoolToken1Balance := fooToken.BalanceOf(consts.POOL_ADDR)
-	newPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
+	newPoolToken1Balance := fooToken.BalanceOf(poolAddr)
+	newPoolToken0Balance := barToken.BalanceOf(poolAddr)
 
 	uassert.Equal(t, newTest1Token1Balance-oldTest1Token1Balance, strToUint64(c1))
 	uassert.Equal(t, newTest1Token0Balance-oldTest1Token0Balance, strToUint64(c0))
@@ -207,8 +207,8 @@ func TestCollectBarBazFees(t *testing.T) {
 
 	oldTest1Token0Balance := barToken.BalanceOf(adminAddr)
 	oldadminBazBalance := bazToken.BalanceOf(adminAddr)
-	oldPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
-	oldPoolBazBalance := bazToken.BalanceOf(consts.POOL_ADDR)
+	oldPoolToken0Balance := barToken.BalanceOf(poolAddr)
+	oldPoolBazBalance := bazToken.BalanceOf(poolAddr)
 
 	// burn 0 to collect swap fees
 	Burn(barPath, bazPath, fee500, test_tickLower, test_tickUpper, "0")
@@ -229,8 +229,8 @@ func TestCollectBarBazFees(t *testing.T) {
 
 	newTest1Token0Balance := barToken.BalanceOf(adminAddr)
 	newadminBazBalance := bazToken.BalanceOf(adminAddr)
-	newPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
-	newPoolBazBalance := bazToken.BalanceOf(consts.POOL_ADDR)
+	newPoolToken0Balance := barToken.BalanceOf(poolAddr)
+	newPoolBazBalance := bazToken.BalanceOf(poolAddr)
 
 	uassert.Equal(t, newTest1Token0Balance-oldTest1Token0Balance, strToUint64(c0))
 	uassert.Equal(t, newadminBazBalance-oldadminBazBalance, strToUint64(c1))
@@ -292,8 +292,8 @@ func TestCollectFooBarLiquidity(t *testing.T) {
 
 	oldTest1Token1Balance := fooToken.BalanceOf(adminAddr)
 	oldTest1Token0Balance := barToken.BalanceOf(adminAddr)
-	oldPoolToken1Balance := fooToken.BalanceOf(consts.POOL_ADDR)
-	oldPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
+	oldPoolToken1Balance := fooToken.BalanceOf(poolAddr)
+	oldPoolToken0Balance := barToken.BalanceOf(poolAddr)
 
 	c0, c1 := Collect(
 		fooPath,
@@ -311,8 +311,8 @@ func TestCollectFooBarLiquidity(t *testing.T) {
 
 	newTest1Token1Balance := fooToken.BalanceOf(adminAddr)
 	newTest1Token0Balance := barToken.BalanceOf(adminAddr)
-	newPoolToken1Balance := fooToken.BalanceOf(consts.POOL_ADDR)
-	newPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
+	newPoolToken1Balance := fooToken.BalanceOf(poolAddr)
+	newPoolToken0Balance := barToken.BalanceOf(poolAddr)
 
 	uassert.Equal(t, newTest1Token1Balance-oldTest1Token1Balance, strToUint64(c0))
 	uassert.Equal(t, newTest1Token0Balance-oldTest1Token0Balance, strToUint64(c1))
@@ -326,8 +326,8 @@ func TestCollectBarBazLiquidity(t *testing.T) {
 
 	oldTest1Token0Balance := barToken.BalanceOf(adminAddr)
 	oldadminBazBalance := bazToken.BalanceOf(adminAddr)
-	oldPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
-	oldPoolBazBalance := bazToken.BalanceOf(consts.POOL_ADDR)
+	oldPoolToken0Balance := barToken.BalanceOf(poolAddr)
+	oldPoolBazBalance := bazToken.BalanceOf(poolAddr)
 
 	c0, c1 := Collect(
 		barPath,
@@ -345,8 +345,8 @@ func TestCollectBarBazLiquidity(t *testing.T) {
 
 	newTest1Token0Balance := barToken.BalanceOf(adminAddr)
 	newadminBazBalance := bazToken.BalanceOf(adminAddr)
-	newPoolToken0Balance := barToken.BalanceOf(consts.POOL_ADDR)
-	newPoolBazBalance := bazToken.BalanceOf(consts.POOL_ADDR)
+	newPoolToken0Balance := barToken.BalanceOf(poolAddr)
+	newPoolBazBalance := bazToken.BalanceOf(poolAddr)
 
 	uassert.Equal(t, newTest1Token0Balance-oldTest1Token0Balance, strToUint64(c0))
 	uassert.Equal(t, newadminBazBalance-oldadminBazBalance, strToUint64(c1))

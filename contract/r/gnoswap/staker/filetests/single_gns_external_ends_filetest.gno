@@ -14,7 +14,6 @@ package staker_test
 import (
 	"std"
 	"strconv"
-	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/testutils"
@@ -22,10 +21,11 @@ import (
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/r/gnoswap/v1/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/demo/wugnot"
 
+	"gno.land/r/gnoswap/v1/access"
+
+	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gnft"
 
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -34,7 +34,7 @@ import (
 )
 
 var (
-	adminAddr  = consts.ADMIN
+	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
 	adminUser  = adminAddr
 	adminRealm = std.NewUserRealm(adminAddr)
 
@@ -43,22 +43,15 @@ var (
 	externalCreatorUser  = externalCreatorAddr
 	externalCreatorRealm = std.NewUserRealm(externalCreatorAddr)
 
-	stakerAddr  = consts.STAKER_ADDR
-	stakerUser  = stakerAddr
-	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerAddr, _  = access.GetAddress(access.ROLE_STAKER)
+	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
 
-	fooPath = "gno.land/r/onbloc/foo"
 	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
 	quxPath = "gno.land/r/onbloc/qux"
-	oblPath = "gno.land/r/onbloc/obl"
 
 	gnsPath    = "gno.land/r/gnoswap/v1/gns"
-	wugnotPath = "gno.land/r/demo/wugnot"
 
 	fee100  uint32 = 100
-	fee500  uint32 = 500
-	fee3000 uint32 = 3000
 
 	max_timeout int64 = 9999999999
 
@@ -66,10 +59,6 @@ var (
 	depositGnsAmount uint64 = 1_000_000_000 // 1_000 GNS
 
 	TIMESTAMP_90DAYS  int64 = 90 * 24 * 60 * 60
-	TIMESTAMP_180DAYS int64 = 180 * 24 * 60 * 60
-	TIMESTAMP_365DAYS int64 = 365 * 24 * 60 * 60
-
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"
 )
 
 func main() {
@@ -112,8 +101,8 @@ func testCreatePool() {
 func testMintBarQuxPos01() {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	qux.Approve(poolAddr, consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	pn.Mint(
@@ -135,8 +124,8 @@ func testMintBarQuxPos01() {
 func testMintBarQuxPos02() {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	qux.Approve(poolAddr, consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	pn.Mint(
@@ -161,7 +150,7 @@ func testCreateExternalIncentiveGns() {
 	gns.Transfer(externalCreatorUser, depositGnsAmount)
 
 	std.TestSetRealm(externalCreatorRealm) // creator
-	gns.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
+	gns.Approve(stakerAddr, consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	sr.CreateExternalIncentive(

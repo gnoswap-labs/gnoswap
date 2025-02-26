@@ -10,7 +10,7 @@ import (
 
 	"gno.land/r/demo/grc20reg"
 
-	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 )
 
 const (
@@ -30,10 +30,12 @@ var (
 	lastMintedHeight     int64  // last block height that gns was minted for emission
 
 	burnAmount uint64 // amount of GNS that has been burned
+
+	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
 )
 
 func init() {
-	owner = ownable.NewWithAddress(consts.ADMIN)
+	owner = ownable.NewWithAddress(adminAddr)
 	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
 	UserTeller = token.CallerTeller()
 

@@ -11,7 +11,7 @@ import (
 )
 
 func TestGetOrigPkgAddr(t *testing.T) {
-	std.TestSetOriginCaller(consts.STAKER_ADDR)
+	std.TestSetOriginCaller(stakerAddr)
 	origPkgAddr := GetOrigPkgAddr()
 	if origPkgAddr != std.OriginCaller() {
 		t.Errorf("Expected %v, got %v", std.OriginCaller(), origPkgAddr)
@@ -185,7 +185,7 @@ func TestGetPrevRealm(t *testing.T) {
 	}{
 		{
 			name:         "Success - prevRealm is User",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     []string{"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", ""},
 		},
 	}
@@ -207,7 +207,7 @@ func TestGetPrevAddr(t *testing.T) {
 	}{
 		{
 			name:         "Success - prev Address is User",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
 		},
 	}
@@ -228,7 +228,7 @@ func TestGetPrevAsString(t *testing.T) {
 	}{
 		{
 			name:         "Success - prev Realm of user info as string",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     []string{"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", ""},
 		},
 	}
@@ -251,12 +251,12 @@ func TestIsUserCall(t *testing.T) {
 	}{
 		{
 			name:         "Success - User Call",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     true,
 		},
 		{
 			name:          "Failure - Not User Call",
-			originCaller:  consts.ROUTER_ADDR,
+			originCaller:  routerAddr,
 			originPkgPath: consts.ROUTER_PATH,
 			expected:      false,
 		},

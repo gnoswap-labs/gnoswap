@@ -15,54 +15,17 @@ import (
 	"gno.land/r/onbloc/foo"
 )
 
-const (
-	ugnotDenom string = "ugnot"
-	ugnotPath  string = "ugnot"
-	wugnotPath string = "gno.land/r/demo/wugnot"
-	gnsPath    string = "gno.land/r/gnoswap/v1/gns"
-	barPath    string = "gno.land/r/onbloc/bar"
-	bazPath    string = "gno.land/r/onbloc/baz"
-	fooPath    string = "gno.land/r/onbloc/foo"
-	oblPath    string = "gno.land/r/onbloc/obl"
-	quxPath    string = "gno.land/r/onbloc/qux"
-
-	fee100               uint32 = 100
-	fee500               uint32 = 500
-	fee3000              uint32 = 3000
-	fee10000             uint32 = 10000
-	maxApprove           uint64 = 18446744073709551615
-	max_timeout          int64  = 9999999999
-	maxSqrtPriceLimitX96 string = "1461446703485210103287273052203988822378723970341"
-
-	TIER_1 uint64 = 1
-	TIER_2 uint64 = 2
-	TIER_3 uint64 = 3
-)
-
-var (
-	// define addresses to use in tests
-	addr01 = testutils.TestAddress("addr01")
-	addr02 = testutils.TestAddress("addr02")
-)
-
-var (
-	adminAddr  = std.Address(consts.ADMIN)
-	admin      = adminAddr
-	adminRealm = std.NewUserRealm(admin)
-	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
-)
-
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
+	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestMintPosition01WideInRange(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, 18394892)
-	foo.Approve(consts.POOL_ADDR, 50000000)
+	bar.Approve(poolAddr, 18394892)
+	foo.Approve(poolAddr, 50000000)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -89,8 +52,8 @@ func TestMintPosition01WideInRange(t *testing.T) {
 
 func TestMintPositionTightInRange(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, 18394892)
-	foo.Approve(consts.POOL_ADDR, 50000000)
+	bar.Approve(poolAddr, 18394892)
+	foo.Approve(poolAddr, 50000000)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -137,7 +100,7 @@ func TestCollectFeeBeforeSwapPos2(t *testing.T) {
 
 func TestSwap(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, 1234567)
+	bar.Approve(poolAddr, 1234567)
 
 	std.TestSetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
@@ -156,8 +119,8 @@ func TestSwap(t *testing.T) {
 // FYI, IF POSITION 2 DOESN'T EXIST, POSITION 1 WILL EARN '617' as fee
 func TestCollectFeeAfterSwapPos1(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // COLLECT_FEE
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // COLLECT_FEE
+	foo.Approve(poolAddr, consts.UINT64_MAX) // COLLECT_FEE
+	bar.Approve(poolAddr, consts.UINT64_MAX) // COLLECT_FEE
 
 	positionId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 
