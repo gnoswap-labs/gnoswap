@@ -9,6 +9,7 @@ import (
 // Pre-defined role kinds (follows the each contract's name)
 const (
 	ROLE_ADMIN      = "admin"
+	ROLE_COMMUNITY_POOL = "community_pool"
 	ROLE_DEVOPS     = "devops"
 	ROLE_GOVERNANCE = "governance"
 	ROLE_GOV_STAKER = "gov_staker"
@@ -19,6 +20,7 @@ const (
 	ROLE_LAUNCHPAD  = "launchpad"
 	ROLE_EMISSION   = "emission"
 	ROLE_PROTOCOL_FEE = "protocol_fee"
+
 	ROLE_USER       = "user"
 	PERM_ACCESS = "access" // Permission name for access control
 )
@@ -34,6 +36,7 @@ func initializeDefaultRoles() (*config, error) {
 	// another appropriate method instead of const initially.
 	defaultRoles := map[string]std.Address{
 		ROLE_ADMIN:      consts.ADMIN,
+		ROLE_COMMUNITY_POOL: consts.COMMUNITY_POOL_ADDR,
 		ROLE_DEVOPS:     consts.DEV_OPS,
 		ROLE_GOVERNANCE: consts.GOV_GOVERNANCE_ADDR,
 		ROLE_GOV_STAKER: consts.GOV_STAKER_ADDR,

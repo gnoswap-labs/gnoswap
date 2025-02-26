@@ -52,20 +52,22 @@ var (
 )
 
 var (
-	adminAddr, _   = access.GetAddress(access.ROLE_ADMIN)
-	admin       = adminAddr
-	adminRealm  = std.NewUserRealm(admin)
+	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	admin        = adminAddr
+	adminRealm   = std.NewUserRealm(admin)
 
-	alice       = testutils.TestAddress("alice")
+	alice = testutils.TestAddress("alice")
 
 	govGovernanceAddr, _ = access.GetAddress(access.ROLE_GOVERNANCE)
-	poolAddr, _        = access.GetAddress(access.ROLE_POOL)
-	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
-	routerAddr, _      = access.GetAddress(access.ROLE_ROUTER)
-	stakerAddr, _      = access.GetAddress(access.ROLE_STAKER)
+	poolAddr, _          = access.GetAddress(access.ROLE_POOL)
+	protocolFeeAddr, _   = access.GetAddress(access.ROLE_PROTOCOL_FEE)
+	routerAddr, _        = access.GetAddress(access.ROLE_ROUTER)
+	stakerAddr, _        = access.GetAddress(access.ROLE_STAKER)
+	emissionAddr, _      = access.GetAddress(access.ROLE_EMISSION)
+	communityPoolAddr, _ = access.GetAddress(access.ROLE_COMMUNITY_POOL)
 
-	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm    = std.NewCodeRealm(consts.ROUTER_PATH)
+	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
