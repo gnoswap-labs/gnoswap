@@ -82,7 +82,7 @@ func finalizeSwap(
 ) (string, string) {
 	if swapType == ExactOut {
 		// If the pool's raw output is less than user wants, fail fast.
-		// (Optional: some designs skip this, and only check afterFee.)
+		// (Optional: some designs skip this, and only check resultAmountOutWithoutFee.)
 		if resultAmountOut.Lt(amountSpecified) {
 			panic(addDetailToError(
 				errSlippage,
@@ -91,7 +91,7 @@ func finalizeSwap(
 		}
 	}
 
-	afterFee := handleSwapFee(outputToken, resultAmountOut)
+	resultAmountOutWithoutFee := handleSwapFee(outputToken, resultAmountOut)
 
 	userNewWugnotBalance := wugnot.BalanceOf(std.PreviousRealm().Address())
 	if inputToken == consts.GNOT {
@@ -116,11 +116,11 @@ func finalizeSwap(
 
 	if swapType == ExactIn {
 		// The user gave a fixed input => we must ensure final out >= tokenAmountLimit
-		// afterFee is the actual tokens user receives
-		if afterFee.Lt(tokenAmountLimit) {
+		// resultAmountOutWithoutFee is the actual tokens user receives
+		if resultAmountOutWithoutFee.Lt(tokenAmountLimit) {
 			panic(addDetailToError(
 				errSlippage,
-				ufmt.Sprintf("ExactIn: too few received (min:%s, got:%s)", tokenAmountLimit.ToString(), afterFee.ToString()),
+				ufmt.Sprintf("ExactIn: too few received (min:%s, got:%s)", tokenAmountLimit.ToString(), resultAmountOutWithoutFee.ToString()),
 			))
 		}
 	} else {
@@ -134,7 +134,7 @@ func finalizeSwap(
 		}
 	}
 
-	intAmountOut := i256.FromUint256(afterFee) // final user out
+	intAmountOut := i256.FromUint256(resultAmountOutWithoutFee) // final user out
 	negativeOut := i256.Zero().Neg(intAmountOut).ToString()
 
 	return resultAmountIn.ToString(), negativeOut

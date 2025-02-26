@@ -99,6 +99,10 @@ func handleSwapFee(
 		return amount
 	}
 
+	if outputToken == consts.GNOT {
+		outputToken = consts.WRAPPED_WUGNOT
+	}
+
 	feeAmount := new(u256.Uint).Mul(amount, u256.NewUint(swapFee))
 	feeAmount.Div(feeAmount, u256.NewUint(10000))
 	feeAmountUint64 := feeAmount.Uint64()
