@@ -36,7 +36,7 @@ func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
+		gns.Approve(poolAddr, pl.GetPoolCreationFee())
 		std.TestSkipHeights(1)
 
 		pl.CreatePool(consts.GNOT, consts.GNS_PATH, 3000, "79228162514264337593543950337") //x1
@@ -52,20 +52,20 @@ func testMintAndStakeNative(t *testing.T) {
 	t.Run("mint and stake native", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // MINT
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // MINT
+		gns.Approve(poolAddr, consts.UINT64_MAX)    // MINT
+		wugnot.Approve(poolAddr, consts.UINT64_MAX) // MINT
 
-		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // WRAP
+		wugnot.Approve(positionAddr, consts.UINT64_MAX) // WRAP
 
 		std.TestSkipHeights(2)
 
 		// prepare 100005ugnot (5 for refund test)
 		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100005}})
-		uassert.Equal(t, ugnotBalanceOf(t, consts.POSITION_ADDR), uint64(0))
+		uassert.Equal(t, ugnotBalanceOf(t, positionAddr), uint64(0))
 
 		// send & set orig send
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
-		banker.SendCoins(adminAddr, consts.STAKER_ADDR, std.Coins{{"ugnot", 100005}})
+		banker.SendCoins(adminAddr, stakerAddr, std.Coins{{"ugnot", 100005}})
 		std.TestSetOriginSend(std.Coins{{"ugnot", 100005}}, nil)
 
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(0))
@@ -100,8 +100,8 @@ func testMintAndStakeNative(t *testing.T) {
 func testMintAndStakeGRC20Pair(t *testing.T) {
 	t.Run("mint and stake grc20 pair", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		bar.Approve(poolAddr, consts.UINT64_MAX)
+		qux.Approve(poolAddr, consts.UINT64_MAX)
 		std.TestSkipHeights(2)
 
 		lpTokenId, liquidity, amount0, amount1, poolPath := MintAndStake(

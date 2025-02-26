@@ -71,6 +71,9 @@ var (
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
+
+	dummyAddr  = testutils.TestAddress("dummy")
+	dummyRealm = std.NewUserRealm(dummyAddr)
 )
 
 func CreatePool(t *testing.T,
