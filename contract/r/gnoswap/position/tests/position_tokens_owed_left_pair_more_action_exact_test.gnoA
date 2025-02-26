@@ -123,9 +123,10 @@ func TestSwap1(t *testing.T) {
 		max_timeout,
 		"", // referrer
 	)
-	println("amount0, amount1:", amount0, amount1)
+
 	uassert.Equal(t, amount0, "6508448")
 	uassert.Equal(t, amount1, "-4992500") // -5000000 * 99.85%
+
 	std.TestSkipHeights(10)
 
 	// swap really doesn't update the position

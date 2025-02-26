@@ -62,10 +62,6 @@ func TestMintInternal(t *testing.T) {
 			}
 
 			id, liquidity, amount0, amount1 := mint(tt.params)
-			println("id", id)
-			println("liquidity", liquidity)
-			println("amount0", amount0)
-			println("amount1", amount1)
 
 			if tt.expectedSuccess {
 				uassert.Equal(t, id, "Position ID should be generated")
