@@ -60,6 +60,7 @@ var (
 
 	govGovernanceAddr, _ = access.GetAddress(access.ROLE_GOVERNANCE)
 	poolAddr, _          = access.GetAddress(access.ROLE_POOL)
+	positionAddr, _      = access.GetAddress(access.ROLE_POSITION)
 	protocolFeeAddr, _   = access.GetAddress(access.ROLE_PROTOCOL_FEE)
 	routerAddr, _        = access.GetAddress(access.ROLE_ROUTER)
 	stakerAddr, _        = access.GetAddress(access.ROLE_STAKER)
