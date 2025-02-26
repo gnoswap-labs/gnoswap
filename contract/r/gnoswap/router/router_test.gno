@@ -500,7 +500,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 	const poolContract = consts.POOL_ADDR
 	const positionContract = consts.POSITION_ADDR
 	const maxTimeout int64 = 9999999999
-	const wugnotGnsPoolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500"
+	const wugnotGnsPoolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100"
 
 	alice := testutils.TestAddress("alice")
 	positionOwner := consts.ADMIN
@@ -531,7 +531,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			name:             "success - gnot -> gns",
 			tokenPath0:       wugnotTokenPath,
 			tokenPath1:       gnsTokenPath,
-			feeTier:          pl.FeeTier500,
+			feeTier:          pl.FeeTier100,
 			recipient:        alice,
 			tickLower:        -100,
 			tickUpper:        100,
@@ -545,8 +545,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			routeArr:         wugnotGnsPoolPath,
 			quoteArr:         "100",
 			amountOutMin:     "850000",
-			expectedAmount0:  "50527748",
-			expectedAmount1:  "-49925000",
+			expectedAmount0:  "10000000",
+			expectedAmount1:  "-9977782",
 			expectPanic:      true,
 		},
 	}
@@ -643,7 +643,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 				tt.quoteArr,
 				tt.amountOutMin,
 			)
-			
+
 			amountIn, amountOut := ExactInSwapRoute(
 				tt.inputToken,
 				tt.outputToken,
