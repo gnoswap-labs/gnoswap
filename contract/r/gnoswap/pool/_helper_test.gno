@@ -57,11 +57,17 @@ var (
 
 var (
 	adminAddr, _    = access.GetAddress(access.ROLE_ADMIN)
+	devOpsAddr, _   = access.GetAddress(access.ROLE_DEVOPS)
+
 	positionAddr, _ = access.GetAddress(access.ROLE_POSITION)
+	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
+	govAddr, _ = access.GetAddress(access.ROLE_GOVERNANCE)
+	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
+	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	emissionAddr, _ = access.GetAddress(access.ROLE_EMISSION)
+
 	alice           = testutils.TestAddress("alice")
-	pool, _         = access.GetAddress(access.ROLE_POOL)
-	protocolFee     = consts.PROTOCOL_FEE_ADDR
-	router, _       = access.GetAddress(access.ROLE_ROUTER)
 	adminRealm      = std.NewUserRealm(adminAddr)
 	posRealm        = std.NewCodeRealm(consts.POSITION_PATH)
 	rouRealm        = std.NewCodeRealm(consts.ROUTER_PATH)
@@ -77,7 +83,7 @@ func InitialisePoolTest(t *testing.T) {
 	ugnotDeposit(t, adminAddr, 100_000_000_000_000)
 
 	std.TestSetOriginCaller(adminAddr)
-	TokenApprove(t, gnsPath, adminAddr, pool, maxApprove)
+	TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
 	poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
 	if !DoesPoolPathExist(poolPath) {
 		CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
@@ -87,8 +93,8 @@ func InitialisePoolTest(t *testing.T) {
 	std.TestSetOriginCaller(alice)
 	TokenFaucet(t, wugnotPath, alice)
 	TokenFaucet(t, gnsPath, alice)
-	TokenApprove(t, wugnotPath, alice, pool, uint64(1000))
-	TokenApprove(t, gnsPath, alice, pool, uint64(1000))
+	TokenApprove(t, wugnotPath, alice, poolAddr, uint64(1000))
+	TokenApprove(t, gnsPath, alice, poolAddr, uint64(1000))
 	MintPosition(t,
 		wugnotPath,
 		gnsPath,
@@ -233,10 +239,10 @@ func MintPosition(t *testing.T,
 func MintPositionAll(t *testing.T, caller std.Address) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(caller))
-	TokenApprove(t, gnsPath, caller, pool, maxApprove)
-	TokenApprove(t, gnsPath, caller, router, maxApprove)
-	TokenApprove(t, wugnotPath, caller, pool, maxApprove)
-	TokenApprove(t, wugnotPath, caller, router, maxApprove)
+	TokenApprove(t, gnsPath, caller, poolAddr, maxApprove)
+	TokenApprove(t, gnsPath, caller, routerAddr, maxApprove)
+	TokenApprove(t, wugnotPath, caller, poolAddr, maxApprove)
+	TokenApprove(t, wugnotPath, caller, routerAddr, maxApprove)
 
 	params := []struct {
 		tickLower int32
