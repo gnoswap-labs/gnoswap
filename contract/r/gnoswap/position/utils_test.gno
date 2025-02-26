@@ -129,7 +129,7 @@ func TestAssertOnlyUserOrStaker(t *testing.T) {
 		},
 		{
 			name:         "Success - User Call",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     true,
 		},
 		{
@@ -190,7 +190,7 @@ func TestAssertOnlyValidAddress(t *testing.T) {
 	}{
 		{
 			name:     "Success - valid address",
-			addr:     consts.ADMIN,
+			addr:     adminAddr,
 			expected: true,
 		},
 		{
@@ -225,7 +225,7 @@ func TestAssertOnlyValidAddressWith(t *testing.T) {
 	}{
 		{
 			name:     "Success - validation address check to compare with other address",
-			addr:     consts.ADMIN,
+			addr:     adminAddr,
 			other:    std.Address("g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"),
 			expected: true,
 		},
@@ -362,7 +362,7 @@ func TestGetPrevRealm(t *testing.T) {
 	}{
 		{
 			name:         "Success - prevRealm is User",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     []string{"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", ""},
 		},
 	}
@@ -384,7 +384,7 @@ func TestGetPrevAddr(t *testing.T) {
 	}{
 		{
 			name:         "Success - prev Address is User",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
 		},
 	}
@@ -405,7 +405,7 @@ func TestGetPrevAsString(t *testing.T) {
 	}{
 		{
 			name:         "Success - prev Realm of user info as string",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     []string{"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", ""},
 		},
 	}
@@ -428,12 +428,12 @@ func TestIsUserCall(t *testing.T) {
 	}{
 		{
 			name:         "Success - User Call",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     true,
 		},
 		{
 			name:          "Failure - Not User Call",
-			originCaller:  consts.ROUTER_ADDR,
+			originCaller:  routerAddr,
 			originPkgPath: consts.ROUTER_PATH,
 			expected:      false,
 		},

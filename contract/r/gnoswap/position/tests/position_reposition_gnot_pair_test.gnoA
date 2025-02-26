@@ -38,13 +38,6 @@ const (
 	TIER_3 uint64 = 3
 )
 
-var (
-	adminAddr  = std.Address(consts.ADMIN)
-	admin      = adminAddr
-	adminRealm = std.NewUserRealm(admin)
-	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
-)
-
 func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
 	t.Helper()
 
@@ -72,7 +65,7 @@ func testPoolInitCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
+		gns.Approve(poolAddr, pl.GetPoolCreationFee())
 		pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // x2.71814592682522526700950038502924144268035888671875
 	})
 }
@@ -81,19 +74,19 @@ func testMintPosition01InRange(t *testing.T) {
 	t.Run("mint position 01 in range", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // FOR WRAP
+		wugnot.Approve(positionAddr, consts.UINT64_MAX) // FOR WRAP
 
 		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(50000005))
 
-		std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 200000000}})
-		uassert.Equal(t, ugnotBalanceOf(t, consts.POSITION_ADDR), uint64(200000000))
+		std.TestIssueCoins(positionAddr, std.Coins{{"ugnot", 200000000}})
+		uassert.Equal(t, ugnotBalanceOf(t, positionAddr), uint64(200000000))
 
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
-		banker.SendCoins(adminAddr, consts.POSITION_ADDR, std.Coins{{"ugnot", 50000005}})
+		banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 50000005}})
 		std.TestSetOriginSend(std.Coins{{"ugnot", 50000005}}, nil)
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(0))
 
@@ -145,7 +138,7 @@ func testSwap(t *testing.T) {
 	t.Run("swap", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // amountIn
+		gns.Approve(poolAddr, consts.UINT64_MAX) // amountIn
 
 		std.TestSetRealm(rouRealm)
 		amount0, amount1 := pl.Swap(
@@ -207,8 +200,8 @@ func testDecreaseLiquidityInPosition(t *testing.T) {
 		uassert.Equal(t, ownerOfPosition, adminAddr)
 
 		// approve fee0, fee1 to pool
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 
 		resultPositionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 			positionId,
@@ -267,7 +260,7 @@ func testReposition(t *testing.T) {
 
 		std.TestSetRealm(adminRealm)
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
-		banker.SendCoins(adminAddr, consts.POSITION_ADDR, std.Coins{{"ugnot", 5000}})
+		banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 5000}})
 		std.TestSetOriginSend(std.Coins{{"ugnot", 5000}}, nil)
 
 		std.TestSetRealm(adminRealm)
