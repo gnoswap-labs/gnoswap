@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	"gno.land/p/gnoswap/consts"
 	pl "gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -20,9 +19,9 @@ func TestTierRatioFromCounts(t *testing.T) {
 	user1Realm := std.NewUserRealm(user1Addr)
 
 	std.TestSetRealm(user1Realm)
-	bar.Approve(consts.ROUTER_ADDR, maxApprove)
-	baz.Approve(consts.ROUTER_ADDR, maxApprove)
-	qux.Approve(consts.ROUTER_ADDR, maxApprove)
+	bar.Approve(routerAddr, maxApprove)
+	baz.Approve(routerAddr, maxApprove)
+	qux.Approve(routerAddr, maxApprove)
 	TokenFaucet(t, barPath, user1Addr)
 
 	tests := []struct {
@@ -94,39 +93,3 @@ func SetupPoolTier(t *testing.T) *PoolTier {
 	poolTier.changeTier(1, pools, test_gnousdc, 1)
 	return poolTier
 }
-
-/*
-func TestPoolTierSimple(t *testing.T) {
-	poolTier := SetupPoolTier(t)
-
-	currentHeight := uint64(1)
-
-	emissionUpdate := EmissionUpdate {
-		LastEmissionUpdate: 10000,
-		EmissionUpdateHeights: []uint64{currentHeight},
-		EmissionUpdates: []uint64{10000},
-	}
-
-	currentHeight = 2
-
-	poolTier.cacheReward(currentHeight, pools)
-	uassert.Equal(t, uint64(1), poolTier.CurrentTier(test_gnousdc, currentHeight))
-	uassert.Equal(t, uint64(10000), poolTier.CurrentReward(1, currentHeight))
-
-	currentHeight = 3
-
-	emissionUpdate.LastEmissionUpdate = 10000
-	emissionUpdate.EmissionUpdateHeights = append(emissionUpdate.EmissionUpdateHeights, currentHeight)
-	emissionUpdate.EmissionUpdates = append(emissionUpdate.EmissionUpdates, 20000)
-
-	gnousdc2 := pl.GetPoolPath("gno.land/r/demo/wugnot", "gno.land/r/gnoswap/v1/gns", 5000)
-	poolTier.changeTier(currentHeight, gnousdc2, 2)
-
-	currentHeight = 4
-
-	poolTier.cacheReward(currentHeight, emissionUpdate)
-	uassert.Equal(t, uint64(1), poolTier.CurrentTier(test_gnousdc, currentHeight))
-	uassert.Equal(t, uint64(14000), poolTier.CurrentReward(1, currentHeight))
-	uassert.Equal(t, uint64(6000), poolTier.CurrentReward(2, currentHeight))
-}
-*/

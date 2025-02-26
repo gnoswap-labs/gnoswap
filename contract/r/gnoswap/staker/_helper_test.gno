@@ -10,6 +10,8 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
+
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -50,12 +52,18 @@ var (
 )
 
 var (
-	adminAddr   = consts.ADMIN
-	admin       = consts.ADMIN
-	alice       = testutils.TestAddress("alice")
-	pool        = consts.POOL_ADDR
-	protocolFee = consts.PROTOCOL_FEE_ADDR
+	adminAddr, _   = access.GetAddress(access.ROLE_ADMIN)
+	admin       = adminAddr
 	adminRealm  = std.NewUserRealm(admin)
+
+	alice       = testutils.TestAddress("alice")
+
+	govGovernanceAddr, _ = access.GetAddress(access.ROLE_GOVERNANCE)
+	poolAddr, _        = access.GetAddress(access.ROLE_POOL)
+	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
+	routerAddr, _      = access.GetAddress(access.ROLE_ROUTER)
+	stakerAddr, _      = access.GetAddress(access.ROLE_STAKER)
+
 	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
 	rouRealm    = std.NewCodeRealm(consts.ROUTER_PATH)
 
@@ -97,7 +105,7 @@ func InitialisePoolTest(t *testing.T) {
 	TokenFaucet(t, gnsPath, admin)
 
 	std.TestSetOriginCaller(admin)
-	TokenApprove(t, gnsPath, admin, pool, maxApprove)
+	TokenApprove(t, gnsPath, admin, poolAddr, maxApprove)
 	poolPath := pl.GetPoolPath(wugnotPath, gnsPath, fee3000)
 	if !pl.DoesPoolPathExist(poolPath) {
 		pl.CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
@@ -106,8 +114,8 @@ func InitialisePoolTest(t *testing.T) {
 	std.TestSetOriginCaller(alice)
 	TokenFaucet(t, wugnotPath, alice)
 	TokenFaucet(t, gnsPath, alice)
-	TokenApprove(t, wugnotPath, alice, pool, uint64(1000))
-	TokenApprove(t, gnsPath, alice, pool, uint64(1000))
+	TokenApprove(t, wugnotPath, alice, poolAddr, uint64(1000))
+	TokenApprove(t, gnsPath, alice, poolAddr, uint64(1000))
 	MintPosition(t,
 		wugnotPath,
 		gnsPath,
@@ -143,8 +151,8 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 	// make actual data to test resetting not only position's state but also pool's state
 	std.TestSetRealm(adminRealm)
 
-	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
-	TokenApprove(t, bazPath, admin, pool, consts.UINT64_MAX)
+	TokenApprove(t, barPath, admin, poolAddr, consts.UINT64_MAX)
+	TokenApprove(t, bazPath, admin, poolAddr, consts.UINT64_MAX)
 
 	// mint position
 	return pn.Mint(
