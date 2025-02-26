@@ -13,13 +13,7 @@ import (
 	_ "gno.land/r/onbloc/foo"
 )
 
-var (
-	dummyRealm = std.NewCodeRealm("gno.land/r/dummy")
-
-	adminAddr  = consts.ADMIN
-	adminUser  = adminAddr
-	adminRealm = std.NewUserRealm(adminAddr)
-)
+var dummyRealm = std.NewCodeRealm("gno.land/r/dummy")
 
 func TestTokenList(t *testing.T) {
 	tokenListWithAmount = map[string]uint64{
