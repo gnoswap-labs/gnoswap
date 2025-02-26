@@ -11,11 +11,14 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 
 	i256 "gno.land/p/gnoswap/int256"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 }
 
 // assertDirectCallOnly panics if the caller is not the user.

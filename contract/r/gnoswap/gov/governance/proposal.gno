@@ -9,11 +9,13 @@ import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 
 	en "gno.land/r/gnoswap/v1/emission"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
+
+	phalt "gno.land/p/gnoswap/halt"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (
@@ -37,7 +39,9 @@ func ProposeText(
 	title string,
 	description string,
 ) uint64 { // proposalId
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 
 	en.MintAndDistributeGns()
 	updateProposalsState()
@@ -108,7 +112,18 @@ func ProposeCommunityPoolSpend(
 	tokenPath string,
 	amount uint64,
 ) uint64 { // proposalId
-	common.IsHalted()
+	// Skip halt check if current level is MainnetSafeMode
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
+
+		if halt.IsContractHalted(phalt.OpTypeGovernance) {
+			panic("gov/governance contract operations are currently disabled")
+		}
+	}
 
 	en.MintAndDistributeGns()
 	updateProposalsState()
@@ -190,7 +205,9 @@ func ProposeParameterChange(
 	numToExecute uint64,
 	executions string,
 ) uint64 { // proposalId
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 
 	en.MintAndDistributeGns()
 	updateProposalsState()

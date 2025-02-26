@@ -9,8 +9,11 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
+
+	phalt "gno.land/p/gnoswap/halt"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 // Converts a string to an integer. Panics if the conversion fails.
@@ -119,13 +122,23 @@ func formatInt(value int64) string {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	common.IsHalted()
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err)
+		}
+
+		if halt.IsContractHalted(phalt.OpTypeLaunchpad) {
+			panic("launchpad contract operations are currently disabled")
+		}
+	}
 }
 
 // assertOnlyAdmin panics if the caller is not an admin.
 func assertOnlyAdmin() {
 	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
+	if err := access.AdminOnly(caller); err != nil {
 		panic(addDetailToError(errInvalidAddress, err.Error()))
 	}
 }

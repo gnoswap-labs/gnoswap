@@ -8,6 +8,7 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 func getPrev() (string, string) {
@@ -20,7 +21,9 @@ func getPrevAddr() std.Address {
 }
 
 func assertShouldNotBeHalted() {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 }
 
 func assertCallerIsEmission() {

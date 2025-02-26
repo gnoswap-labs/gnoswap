@@ -11,6 +11,7 @@ import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 var gnft = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
@@ -475,7 +476,9 @@ func assertCallerIsOwnerOfToken(tid grc721.TokenID) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 }
 
 // assertValidAddr panics if the address is invalid.s

@@ -10,6 +10,10 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/access"
+
+	phalt "gno.land/p/gnoswap/halt"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 // safeConvertToUint64 safely converts a *u256.Uint value to a uint64, ensuring no overflow.
@@ -197,13 +201,23 @@ func assertOnlyValidAddress(addr std.Address) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	common.IsHalted()
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
+
+		if halt.IsContractHalted(phalt.OpTypePool) {
+			panic("pool contract operations are currently disabled")
+		}
+	}
 }
 
 // assertOnlyPositionContract panics if the caller is not the position contract.
 func assertOnlyPositionContract() {
 	caller := getPrevAddr()
-	if err := common.PositionOnly(caller); err != nil {
+	if err := access.PositionOnly(caller); err != nil {
 		panic(newErrorWithDetail(
 			errNoPermission,
 			ufmt.Sprintf("only position(%s) can call, called from %s", consts.POSITION_ADDR, caller.String()),
@@ -224,7 +238,7 @@ func assertOnlyInitializedUint256(value *u256.Uint) {
 // assertOnlyAdmin panics if the caller is not the admin.
 func assertOnlyAdmin() {
 	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
+	if err := access.AdminOnly(caller); err != nil {
 		panic(err)
 	}
 }
@@ -232,7 +246,7 @@ func assertOnlyAdmin() {
 // assertOnlyGovernance panics if the caller is not the governance.
 func assertOnlyGovernance() {
 	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
+	if err := access.GovernanceOnly(caller); err != nil {
 		panic(err)
 	}
 }

@@ -5,7 +5,8 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/halt"
 
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -178,13 +179,15 @@ func assertPoolMustExist(poolPath string) {
 }
 
 func assertOnlyAdmin() {
-	common.AdminOnly(getPrevAddr())
+	access.AdminOnly(getPrevAddr())
 }
 
 func assertOnlyGovernance() {
-	common.GovernanceOnly(getPrevAddr())
+	access.GovernanceOnly(getPrevAddr())
 }
 
 func assertMustNotHalted() {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 }

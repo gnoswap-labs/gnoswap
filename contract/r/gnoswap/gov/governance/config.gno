@@ -8,6 +8,8 @@ import (
 
 	"gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
+
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (
@@ -92,7 +94,9 @@ func reconfigure(
 	executionDelay uint64,
 	executionWindow uint64,
 ) uint64 {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 
 	en.MintAndDistributeGns()
 	updateProposalsState()
