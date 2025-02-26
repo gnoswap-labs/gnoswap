@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/gnoswap/v1/access"
 )

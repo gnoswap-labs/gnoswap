@@ -18,6 +18,8 @@ var (
 	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
 	adminRealm   = std.NewUserRealm(adminAddr)
 
+	communityPoolAddr, _ = access.GetAddress(access.ROLE_COMMUNITY_POOL)
+
 	govRealm = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
 
 	dummyCaller   = std.NewUserRealm(testutils.TestAddress("dummyCaller"))
@@ -63,7 +65,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 			name: "panic if not enough balance",
 			setup: func() {
 				std.TestSetRealm(adminRealm)
-				gns.Transfer(consts.COMMUNITY_POOL_ADDR, 10_000)
+				gns.Transfer(communityPoolAddr, 10_000)
 			},
 			caller:      adminRealm,
 			tokenPath:   consts.GNS_PATH,
