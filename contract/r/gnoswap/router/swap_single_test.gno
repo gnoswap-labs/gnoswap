@@ -6,8 +6,6 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 
-	"gno.land/p/gnoswap/consts"
-
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 
@@ -32,8 +30,8 @@ func TestSingleSwap(t *testing.T) {
 				MakeMintPositionWithoutFee(t)
 
 				std.TestSetRealm(user1Realm)
-				bar.Approve(consts.ROUTER_ADDR, maxApprove)
-				baz.Approve(consts.ROUTER_ADDR, maxApprove)
+				bar.Approve(routerAddr, maxApprove)
+				baz.Approve(routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SingleSwapParams{
@@ -53,8 +51,8 @@ func TestSingleSwap(t *testing.T) {
 				MakeMintPositionWithoutFee(t)
 
 				std.TestSetRealm(user1Realm)
-				bar.Approve(consts.ROUTER_ADDR, maxApprove)
-				baz.Approve(consts.ROUTER_ADDR, maxApprove)
+				bar.Approve(routerAddr, maxApprove)
+				baz.Approve(routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SingleSwapParams{

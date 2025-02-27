@@ -6,8 +6,6 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 
-	"gno.land/p/gnoswap/consts"
-
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/qux"
@@ -36,8 +34,8 @@ func TestMultiSwap(t *testing.T) {
 				MakeMintPositionWithoutFee(t)
 
 				std.TestSetRealm(user1Realm)
-				bar.Approve(consts.ROUTER_ADDR, maxApprove)
-				baz.Approve(consts.ROUTER_ADDR, maxApprove)
+				bar.Approve(routerAddr, maxApprove)
+				baz.Approve(routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{
@@ -66,9 +64,9 @@ func TestMultiSwap(t *testing.T) {
 				MakeSecondMintPositionWithoutFee(t)
 
 				std.TestSetRealm(user1Realm)
-				bar.Approve(consts.ROUTER_ADDR, maxApprove)
-				baz.Approve(consts.ROUTER_ADDR, maxApprove)
-				qux.Approve(consts.ROUTER_ADDR, maxApprove)
+				bar.Approve(routerAddr, maxApprove)
+				baz.Approve(routerAddr, maxApprove)
+				qux.Approve(routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{
@@ -95,9 +93,9 @@ func TestMultiSwap(t *testing.T) {
 				MakeSecondMintPositionWithoutFee(t)
 
 				std.TestSetRealm(user1Realm)
-				bar.Approve(consts.ROUTER_ADDR, maxApprove)
-				baz.Approve(consts.ROUTER_ADDR, maxApprove)
-				qux.Approve(consts.ROUTER_ADDR, maxApprove)
+				bar.Approve(routerAddr, maxApprove)
+				baz.Approve(routerAddr, maxApprove)
+				qux.Approve(routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{

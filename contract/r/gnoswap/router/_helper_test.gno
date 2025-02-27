@@ -75,10 +75,6 @@ var (
 	alice       = testutils.TestAddress("alice")
 	bob         = testutils.TestAddress("bob")
 
-	poolAddr, _        = access.GetAddress(access.ROLE_POOL)
-	positionAddr, _    = access.GetAddress(access.ROLE_POSITION)
-	routerAddr, _      = access.GetAddress(access.ROLE_ROUTER)
-	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
 	adminRealm     = std.NewUserRealm(admin)
 	posRealm       = std.NewCodeRealm(consts.POSITION_PATH)
 

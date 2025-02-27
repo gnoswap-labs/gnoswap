@@ -96,7 +96,7 @@ func TestSwapRouteGnsBarExactIn(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
 	gns.Approve(poolAddr, 1000)   // swap input amount
-	bar.Approve(consts.ROUTER_ADDR, 7325) // 0.15% fee
+	bar.Approve(routerAddr, 7325) // 0.15% fee
 
 	amountIn, amountOut := ExactInSwapRoute(
 		consts.GNS_PATH, // inputToken
