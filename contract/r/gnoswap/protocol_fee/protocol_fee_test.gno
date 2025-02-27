@@ -7,12 +7,8 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/gnoswap/consts"
-
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
-
-	"gno.land/r/gnoswap/v1/access"
 )
 
 var (
@@ -20,9 +16,7 @@ var (
 	adminRealm   = std.NewUserRealm(adminAddr)
 	adminUser    = adminAddr
 
-	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
-	devOpsAddr, _      = access.GetAddress(access.ROLE_DEVOPS)
-	govStakerAddr, _   = access.GetAddress(access.ROLE_GOV_STAKER)
+	devOpsAddr, _ = access.GetAddress(access.ROLE_DEVOPS)
 )
 
 func TestDistributeProtocolFee(t *testing.T) {
@@ -46,7 +40,7 @@ func TestDistributeProtocolFee(t *testing.T) {
 	uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))
 	uassert.Equal(t, bar.BalanceOf(govStakerAddr), uint64(1000))
 
-	uassert.Equal(t, qux.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(protocolFeeAddr), uint64(0))
 	uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
 	uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(1000))
 }

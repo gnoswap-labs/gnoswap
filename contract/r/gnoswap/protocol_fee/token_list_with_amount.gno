@@ -59,7 +59,7 @@ func TransferProtocolFee() map[string]uint64 {
 	toReturn := map[string]uint64{}
 
 	for token, amount := range tokenListWithAmount {
-		balance := common.BalanceOf(token, consts.PROTOCOL_FEE_ADDR)
+		balance := common.BalanceOf(token, protocolFeeAddr)
 
 		// anyone can just send certain grc20 token to `protocol_fee` contract
 		// therefore, we don't need any guard logic to check whether protocol_fee's xxx token balance is equal to `amount`
@@ -82,7 +82,7 @@ func TransferProtocolFee() map[string]uint64 {
 			}
 
 			if toGovStaker > 0 {
-				tokenTeller.Transfer(consts.GOV_STAKER_ADDR, toGovStaker)
+				tokenTeller.Transfer(govStakerAddr, toGovStaker)
 				sentToGovStaker = append(sentToGovStaker, makeEventString(token, toGovStaker))
 
 				toReturn[token] = toGovStaker
