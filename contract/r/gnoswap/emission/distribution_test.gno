@@ -6,12 +6,7 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
-)
-
-var (
-	emissionAddr, _ = access.GetAddress(access.ROLE_EMISSION)
 )
 
 func TestChangeDistributionPctByAdmin(t *testing.T) {
