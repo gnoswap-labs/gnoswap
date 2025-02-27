@@ -470,15 +470,15 @@ func TestProcessTokens(t *testing.T) {
 
 			if tt.token0 == consts.GNOT {
 				amount, _ := strconv.ParseUint(tt.amount0Desired, 10, 64)
-				ugnotFaucet(t, consts.POSITION_ADDR, amount)
-				std.TestSetRealm(std.NewUserRealm(consts.POSITION_ADDR))
-				transferUGNOT(consts.POSITION_ADDR, consts.POSITION_ADDR, amount)
+				ugnotFaucet(t, positionAddr, amount)
+				std.TestSetRealm(std.NewUserRealm(positionAddr))
+				transferUGNOT(positionAddr, positionAddr, amount)
 			}
 			if tt.token1 == consts.GNOT {
 				amount, _ := strconv.ParseUint(tt.amount1Desired, 10, 64)
-				ugnotFaucet(t, consts.POSITION_ADDR, amount)
-				std.TestSetRealm(std.NewUserRealm(consts.POSITION_ADDR))
-				transferUGNOT(consts.POSITION_ADDR, consts.POSITION_ADDR, amount)
+				ugnotFaucet(t, positionAddr, amount)
+				std.TestSetRealm(std.NewUserRealm(positionAddr))
+				transferUGNOT(positionAddr, positionAddr, amount)
 			}
 
 			if !tt.expectPanic {

@@ -62,8 +62,8 @@ var (
 	alice       = testutils.TestAddress("alice")
 	bob         = testutils.TestAddress("bob")
 
+	emissionAddr, _ = access.GetAddress(access.ROLE_EMISSION)
 	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
-	positionAddr, _ = access.GetAddress(access.ROLE_POSITION)
 	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
 	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
 

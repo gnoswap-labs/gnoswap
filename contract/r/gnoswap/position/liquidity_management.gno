@@ -6,7 +6,6 @@ import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
@@ -92,7 +91,7 @@ func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint
 		token0,
 		token1,
 		fee,
-		consts.POSITION_ADDR,
+		positionAddr,
 		params.tickLower,
 		params.tickUpper,
 		liquidity.ToString(),

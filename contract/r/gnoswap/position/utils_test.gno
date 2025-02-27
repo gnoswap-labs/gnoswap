@@ -10,7 +10,6 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -34,7 +33,7 @@ func TestGetOrigPkgAddr(t *testing.T) {
 	}{
 		{
 			name:     "Success - getOrigPkgAddr",
-			expected: consts.POSITION_ADDR,
+			expected: positionAddr,
 		},
 	}
 	for _, tc := range tests {
@@ -124,7 +123,7 @@ func TestAssertOnlyUserOrStaker(t *testing.T) {
 	}{
 		{
 			name:         "Failure - Not User or Staker",
-			originCaller: consts.ROUTER_ADDR,
+			originCaller: routerAddr,
 			expected:     false,
 		},
 		{
@@ -134,7 +133,7 @@ func TestAssertOnlyUserOrStaker(t *testing.T) {
 		},
 		{
 			name:         "Success - Staker Call",
-			originCaller: consts.STAKER_ADDR,
+			originCaller: stakerAddr,
 			expected:     true,
 		},
 	}
@@ -689,7 +688,7 @@ func TestIsStaked(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.expected && tc.owner == tc.operator {
 				MakeMintPositionWithoutFee(t)
-				LPTokenApprove(t, tc.owner, consts.STAKER_ADDR, tc.positionId)
+				LPTokenApprove(t, tc.owner, stakerAddr, tc.positionId)
 				LPTokenStake(t, tc.owner, tc.positionId)
 			}
 			got := isStaked(positionIdFrom(tc.positionId))
@@ -777,7 +776,7 @@ func TestIsOwnerOrOperatorWithStake(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.isStake {
 				positionId, _, _, _ := MakeMintPositionWithoutFee(t)
-				LPTokenApprove(t, tc.owner, consts.STAKER_ADDR, tc.positionId)
+				LPTokenApprove(t, tc.owner, stakerAddr, tc.positionId)
 				LPTokenStake(t, tc.owner, tc.positionId)
 			}
 			got := isOwnerOrOperator(tc.operator, tc.positionId)
