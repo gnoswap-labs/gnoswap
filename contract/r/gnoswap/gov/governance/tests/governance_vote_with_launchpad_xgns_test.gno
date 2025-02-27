@@ -11,8 +11,6 @@ import (
 
 	"gno.land/r/onbloc/obl"
 
-	"gno.land/p/gnoswap/consts"
-
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 
@@ -72,7 +70,7 @@ func testLaunchpad(t *testing.T) {
 	t.Run("launchpad project create", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		obl.Approve(consts.LAUNCHPAD_ADDR, 1_000_000_000)
+		obl.Approve(launchpadAddr, 1_000_000_000)
 		projectId := lp.CreateProject(
 			"OBL PROTOCOL",
 			oblPath,
@@ -94,7 +92,7 @@ func testLaunchpad(t *testing.T) {
 		gns.Transfer(user01, uint64(1_000_000)) // to deposit
 
 		std.TestSetRealm(user01Realm)
-		gns.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000))
+		gns.Approve(launchpadAddr, uint64(1_000_000))
 
 		// before
 		uassert.Equal(t, xgns.TotalSupply(), uint64(0))
@@ -130,7 +128,7 @@ func testDelegate01_2000000_toDummy(t *testing.T) {
 		uassert.Equal(t, std.ChainHeight(), int64(134))
 
 		std.TestSetRealm(adminRealm)
-		gns.Approve(consts.GOV_STAKER_ADDR, uint64(2_000_000))
+		gns.Approve(govStakerAddr, uint64(2_000_000))
 		gs.Delegate(dummyAddr, uint64(2_000_000), "") // delegate to dummy
 
 		// after delegate 01

@@ -33,6 +33,10 @@ var (
 	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
 	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
 	govRealm = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
+
+	govStakerAddr, _ = access.GetAddress(access.ROLE_GOV_STAKER)
+	communityPoolAddr, _ = access.GetAddress(access.ROLE_COMMUNITY_POOL)
+	launchpadAddr, _ = access.GetAddress(access.ROLE_LAUNCHPAD)
 )
 
 /* HELPER */
