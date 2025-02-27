@@ -15,7 +15,7 @@ import (
 
 func TestMultiSwap(t *testing.T) {
 	user1Realm := std.NewUserRealm(user1Addr)
-	routerAddr := access.GetAddress(access.ROLE_ROUTER)
+	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
 
 	tests := []struct {
 		name             string
