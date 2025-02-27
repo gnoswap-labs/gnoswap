@@ -14,6 +14,11 @@ import (
 
 var (
 	admin, _ = access.GetAddress(access.ROLE_ADMIN)
+	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	communityPoolAddr, _ = access.GetAddress(access.ROLE_COMMUNITY_POOL)
+	govStakerAddr, _ = access.GetAddress(access.ROLE_GOV_STAKER)
+	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
+	launchpadAddr, _ = access.GetAddress(access.ROLE_LAUNCHPAD)
 
 	fooPath string = "gno.land/r/onbloc/foo"
 	barPath string = "gno.land/r/onbloc/bar"

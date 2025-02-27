@@ -36,22 +36,22 @@ func initial(t *testing.T) {
 
 func delegateAdmin(t *testing.T) {
 	// gns before emission
-	uassert.Equal(t, gns.BalanceOf(consts.STAKER_ADDR), uint64(0))
+	uassert.Equal(t, gns.BalanceOf(stakerAddr), uint64(0))
 	uassert.Equal(t, gns.BalanceOf(consts.DEV_OPS), uint64(0))
-	uassert.Equal(t, gns.BalanceOf(consts.COMMUNITY_POOL_ADDR), uint64(0))
-	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR), uint64(0))
+	uassert.Equal(t, gns.BalanceOf(communityPoolAddr), uint64(0))
+	uassert.Equal(t, gns.BalanceOf(govStakerAddr), uint64(0))
 
 	std.TestSkipHeights(1)
 
 	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.GOV_STAKER_ADDR, uint64(1000000))
+	gns.Approve(govStakerAddr, uint64(1000000))
 	Delegate(dummyAddr, 1000000, "")
 
-	uassert.Equal(t, gns.BalanceOf(consts.STAKER_ADDR), uint64(10702054))
+	uassert.Equal(t, gns.BalanceOf(stakerAddr), uint64(10702054))
 	uassert.Equal(t, gns.BalanceOf(consts.DEV_OPS), uint64(2853881))
-	uassert.Equal(t, gns.BalanceOf(consts.COMMUNITY_POOL_ADDR), uint64(713470))
-	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR), uint64(1000000))
-	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR)-xgns.TotalSupply(), uint64(0))
+	uassert.Equal(t, gns.BalanceOf(communityPoolAddr), uint64(713470))
+	uassert.Equal(t, gns.BalanceOf(govStakerAddr), uint64(1000000))
+	uassert.Equal(t, gns.BalanceOf(govStakerAddr)-xgns.TotalSupply(), uint64(0))
 }
 
 func redelegateAdmin(t *testing.T) {

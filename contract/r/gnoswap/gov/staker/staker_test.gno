@@ -9,12 +9,6 @@ import (
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
-
-	"gno.land/r/gnoswap/v1/access"
-)
-
-var (
-	admin, _ = access.GetAddress(access.ROLE_ADMIN)
 )
 
 func TestDelegate(t *testing.T) {
