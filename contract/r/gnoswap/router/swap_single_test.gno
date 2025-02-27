@@ -4,18 +4,17 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
 	i256 "gno.land/p/gnoswap/int256"
 
-	"gno.land/p/gnoswap/consts"
-
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
-
-	"gno.land/p/demo/uassert"
 )
 
 func TestSingleSwap(t *testing.T) {
 	user1Realm := std.NewUserRealm(user1Addr)
+	routerAddr := access.GetAddress(access.ROLE_ROUTER)
 
 	tests := []struct {
 		name        string
@@ -32,8 +31,8 @@ func TestSingleSwap(t *testing.T) {
 				MakeMintPositionWithoutFee(t)
 
 				std.TestSetRealm(user1Realm)
-				bar.Approve(consts.ROUTER_ADDR, maxApprove)
-				baz.Approve(consts.ROUTER_ADDR, maxApprove)
+				bar.Approve(routerAddr, maxApprove)
+				baz.Approve(routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SingleSwapParams{
@@ -53,8 +52,8 @@ func TestSingleSwap(t *testing.T) {
 				MakeMintPositionWithoutFee(t)
 
 				std.TestSetRealm(user1Realm)
-				bar.Approve(consts.ROUTER_ADDR, maxApprove)
-				baz.Approve(consts.ROUTER_ADDR, maxApprove)
+				bar.Approve(routerAddr, maxApprove)
+				baz.Approve(routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SingleSwapParams{

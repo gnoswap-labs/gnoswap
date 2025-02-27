@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 )
@@ -93,6 +94,9 @@ func TestExactInSwapRouteOperation_Validate(t *testing.T) {
 }
 
 func TestExactInSwapRoute(t *testing.T) {
+	routerAddr := access.GetAddress(access.ROLE_ROUTER)
+	poolAddr := access.GetAddress(access.ROLE_POOL)
+
 	CreatePoolWithoutFee(t)
 	MakeMintPositionWithoutFee(t)
 
@@ -114,8 +118,8 @@ func TestExactInSwapRoute(t *testing.T) {
 		{
 			name: "BAR -> BAZ",
 			setup: func() {
-				bar.Approve(consts.ROUTER_ADDR, maxApprove)
-				baz.Approve(consts.ROUTER_ADDR, maxApprove)
+				bar.Approve(routerAddr, maxApprove)
+				baz.Approve(routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			inputToken:   barPath,
@@ -131,10 +135,10 @@ func TestExactInSwapRoute(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			std.TestSetRealm(user1Realm)
-			bar.Approve(consts.ROUTER_ADDR, maxApprove)
-			baz.Approve(consts.ROUTER_ADDR, maxApprove)
-			bar.Approve(consts.POOL_ADDR, maxApprove)
-			baz.Approve(consts.POOL_ADDR, maxApprove)
+			bar.Approve(routerAddr, maxApprove)
+			baz.Approve(routerAddr, maxApprove)
+			bar.Approve(poolAddr, maxApprove)
+			baz.Approve(poolAddr, maxApprove)
 			if tt.setup != nil {
 				tt.setup()
 			}
