@@ -21,7 +21,6 @@ const (
 	ROLE_EMISSION   = "emission"
 	ROLE_PROTOCOL_FEE = "protocol_fee"
 
-	ROLE_USER       = "user"
 	PERM_ACCESS = "access" // Permission name for access control
 )
 
