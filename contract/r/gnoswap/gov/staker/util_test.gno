@@ -176,7 +176,7 @@ func TestAssertCallerIsAdmin(t *testing.T) {
 }
 
 func TestAssertCallerIsLaunchpad(t *testing.T) {
-	launchpadAddr := consts.LAUNCHPAD_ADDR
+	launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
 	otherAddr := std.Address("other123")
 
 	// Test valid launchpad
