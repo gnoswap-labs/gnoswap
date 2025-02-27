@@ -9,6 +9,8 @@ import (
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
+
+	"gno.land/r/gnoswap/v1/access"
 )
 
 var (
