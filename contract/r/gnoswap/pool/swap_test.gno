@@ -282,7 +282,7 @@ func TestComputeSwap(t *testing.T) {
 }
 
 func TestSwap_Failures(t *testing.T) {
-	const addr = routerAddr
+	var addr = routerAddr
 
 	tests := []struct {
 		name              string
@@ -464,7 +464,7 @@ func TestDrySwap_Failures(t *testing.T) {
 }
 
 func TestSwapAndDrySwapComparison(t *testing.T) {
-	const addr = routerAddr
+	var addr = routerAddr
 
 	tests := []struct {
 		name              string
@@ -555,7 +555,7 @@ func TestSwapAndDrySwapComparison(t *testing.T) {
 }
 
 func TestSwapAndDrySwapComparison_amount_zero(t *testing.T) {
-	const addr = routerAddr
+	var addr = routerAddr
 
 	tests := []struct {
 		name        string
@@ -654,7 +654,7 @@ func TestSwapAndDrySwapComparison_amount_zero(t *testing.T) {
 }
 
 func TestSwap_amount_over_liquidity(t *testing.T) {
-	const addr = routerAddr
+	var addr = routerAddr
 
 	tests := []struct {
 		name        string
@@ -789,7 +789,7 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 }
 
 func TestSwap_EXACTIN_OUT(t *testing.T) {
-	const addr = routerAddr
+	var addr = routerAddr
 
 	tests := []struct {
 		name        string
