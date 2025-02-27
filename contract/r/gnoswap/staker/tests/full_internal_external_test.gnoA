@@ -15,6 +15,7 @@ import (
 	pn "gno.land/r/gnoswap/v1/position"
 	rr "gno.land/r/gnoswap/v1/router"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 
@@ -47,7 +48,6 @@ const (
 
 var (
 	wugnotAddr = consts.WUGNOT_ADDR
-	stakerAddr = stakerAddr
 
 	externalCreator = testutils.TestAddress("externalCreator")
 )
