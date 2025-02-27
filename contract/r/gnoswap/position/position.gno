@@ -231,7 +231,7 @@ func IncreaseLiquidity(
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"sqrtPriceX96", pl.PoolGetSlot0SqrtPriceX96(poolPath),
-		"positionLiquidity", position.liquidity.ToString(),
+		"positionLiquidity", PositionGetPositionLiquidityStr(positionId),
 		"token0Balance", pl.PoolGetBalanceToken0(poolPath),
 		"token1Balance", pl.PoolGetBalanceToken1(poolPath),
 	)
