@@ -24,7 +24,7 @@ func resetGlobalStateProposal(t *testing.T) {
 	t.Helper()
 	proposalId = 0
 	proposals = avl.NewTree()
-	latestProposalByProposer = avl.NewTree()
+	proposalIdListByProposer = avl.NewTree()
 }
 
 func mockCheckEnoughXGnsToPropose(proposer std.Address) (bool, uint64, uint64) {
