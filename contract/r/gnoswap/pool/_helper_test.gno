@@ -59,11 +59,7 @@ var (
 	adminAddr, _    = access.GetAddress(access.ROLE_ADMIN)
 	devOpsAddr, _   = access.GetAddress(access.ROLE_DEVOPS)
 
-	positionAddr, _ = access.GetAddress(access.ROLE_POSITION)
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
-	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
 	govAddr, _ = access.GetAddress(access.ROLE_GOVERNANCE)
-	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
 	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
 	emissionAddr, _ = access.GetAddress(access.ROLE_EMISSION)
 

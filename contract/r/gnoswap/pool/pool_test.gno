@@ -89,11 +89,11 @@ func TestMint(t *testing.T) {
 		)
 
 		// approve enough token to mint position
-		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		bar.Approve(poolAddr, consts.UINT64_MAX)
+		baz.Approve(poolAddr, consts.UINT64_MAX)
 
-		beforeBalance0 := bar.BalanceOf(consts.POOL_ADDR)
-		beforeBalance1 := baz.BalanceOf(consts.POOL_ADDR)
+		beforeBalance0 := bar.BalanceOf(poolAddr)
+		beforeBalance1 := baz.BalanceOf(poolAddr)
 
 		std.TestSetRealm(std.NewCodeRealm(consts.POSITION_PATH))
 		mintAmount0, mintAmount1 := Mint(
@@ -109,8 +109,8 @@ func TestMint(t *testing.T) {
 		uassert.Equal(t, mintAmount0, "49872721")
 		uassert.Equal(t, mintAmount1, "49872721")
 
-		afterBalance0 := bar.BalanceOf(consts.POOL_ADDR)
-		afterBalance1 := baz.BalanceOf(consts.POOL_ADDR)
+		afterBalance0 := bar.BalanceOf(poolAddr)
+		afterBalance1 := baz.BalanceOf(poolAddr)
 		uassert.Equal(t, uint64(49872721), afterBalance0-beforeBalance0)
 		uassert.Equal(t, uint64(49872721), afterBalance1-beforeBalance1)
 	})

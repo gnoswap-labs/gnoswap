@@ -6,9 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 
 	pn "gno.land/r/gnoswap/v1/position"
 )
@@ -38,7 +36,7 @@ func TestSetPoolCreationFee(t *testing.T) {
 			name: "Success call by governance",
 			action: func() {
 				const newFee = 2_000_000_000
-				govRealm := std.NewUserRealm(consts.GOV_GOVERNANCE_ADDR)
+				govRealm := std.NewUserRealm(govAddr)
 				std.TestSetRealm(govRealm)
 				SetPoolCreationFee(newFee)
 			},
@@ -91,7 +89,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			name: "Panic call by non-admin (gov contract)",
 			action: func() {
 				const newFee = 2_000_000_000
-				govRealm := std.NewUserRealm(consts.GOV_GOVERNANCE_ADDR)
+				govRealm := std.NewUserRealm(govAddr)
 				std.TestSetRealm(govRealm)
 				{
 					SetPoolCreationFeeByAdmin(newFee)

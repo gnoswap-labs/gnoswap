@@ -229,7 +229,7 @@ func TestModifyPosition(t *testing.T) {
 			pool := newPool(poolParams)
 
 			params := ModifyPositionParams{
-				owner:          consts.POSITION_ADDR,
+				owner:          positionAddr,
 				tickLower:      tt.tickLower,
 				tickUpper:      tt.tickUpper,
 				liquidityDelta: new(i256.Int).SetInt64(test_liquidityDelta),
@@ -257,7 +257,7 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 		)
 		pool := newPool(poolParams)
 		params := ModifyPositionParams{
-			owner:          consts.POSITION_ADDR,
+			owner:          positionAddr,
 			tickLower:      -11000,
 			tickUpper:      -9000,
 			liquidityDelta: i256.Zero(),
@@ -287,7 +287,7 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 		)
 		pool := newPool(poolParams)
 		params := ModifyPositionParams{
-			owner:          consts.POSITION_ADDR,
+			owner:          positionAddr,
 			tickLower:      -11000,
 			tickUpper:      -9000,
 			liquidityDelta: i256.MustFromDecimal("100000000"),
@@ -478,7 +478,7 @@ func TestUpdatePosition(t *testing.T) {
 		{
 			name: "add new position",
 			positionParams: ModifyPositionParams{
-				owner:          consts.POSITION_ADDR,
+				owner:          positionAddr,
 				tickLower:      -100,
 				tickUpper:      100,
 				liquidityDelta: i256.MustFromDecimal("1000000"),
@@ -488,7 +488,7 @@ func TestUpdatePosition(t *testing.T) {
 		{
 			name: "add liquidity to existing position",
 			positionParams: ModifyPositionParams{
-				owner:          consts.POSITION_ADDR,
+				owner:          positionAddr,
 				tickLower:      -100,
 				tickUpper:      100,
 				liquidityDelta: i256.MustFromDecimal("500000"),
@@ -498,7 +498,7 @@ func TestUpdatePosition(t *testing.T) {
 		{
 			name: "remove liquidity from position",
 			positionParams: ModifyPositionParams{
-				owner:          consts.POSITION_ADDR,
+				owner:          positionAddr,
 				tickLower:      -100,
 				tickUpper:      100,
 				liquidityDelta: i256.MustFromDecimal("-500000"),

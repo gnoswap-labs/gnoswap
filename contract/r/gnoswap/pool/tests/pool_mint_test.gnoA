@@ -43,7 +43,7 @@ func TestMintMiscellaneous(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			consts.POSITION_ADDR,
+			positionAddr,
 			1000,
 			2000,
 			test_liquidityExpectStr,

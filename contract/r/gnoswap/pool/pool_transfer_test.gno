@@ -7,8 +7,6 @@ import (
 	"gno.land/p/demo/testutils"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-
-	"gno.land/p/gnoswap/consts"
 )
 
 func TestTransferAndVerify(t *testing.T) {
@@ -163,7 +161,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 		negativeAmount := i256.NewInt(-500)
 
 		TokenFaucet(t, fooPath, testutils.TestAddress("from_addr"))
-		TokenApprove(t, fooPath, testutils.TestAddress("from_addr"), consts.POOL_ADDR, u256.MustFromDecimal(negativeAmount.Abs().ToString()).Uint64())
+		TokenApprove(t, fooPath, testutils.TestAddress("from_addr"), poolAddr, u256.MustFromDecimal(negativeAmount.Abs().ToString()).Uint64())
 		pool.safeTransferFrom(
 			testutils.TestAddress("from_addr"),
 			testutils.TestAddress("to_addr"),
