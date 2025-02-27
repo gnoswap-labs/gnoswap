@@ -60,12 +60,8 @@ var (
 
 	govGovernanceAddr, _ = access.GetAddress(access.ROLE_GOVERNANCE)
 	poolAddr, _          = access.GetAddress(access.ROLE_POOL)
-	positionAddr, _      = access.GetAddress(access.ROLE_POSITION)
-	protocolFeeAddr, _   = access.GetAddress(access.ROLE_PROTOCOL_FEE)
 	routerAddr, _        = access.GetAddress(access.ROLE_ROUTER)
-	stakerAddr, _        = access.GetAddress(access.ROLE_STAKER)
 	emissionAddr, _      = access.GetAddress(access.ROLE_EMISSION)
-	communityPoolAddr, _ = access.GetAddress(access.ROLE_COMMUNITY_POOL)
 
 	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
 	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
@@ -510,9 +506,9 @@ func gnsBalanceCheck(t *testing.T, beforeBalance gnsBalanceTracker, printChange 
 	height := std.ChainHeight()
 	stakerBalance := gns.BalanceOf(stakerAddr)
 	devOpsBalance := gns.BalanceOf(consts.DEV_OPS)
-	communityPoolBalance := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
+	communityPoolBalance := gns.BalanceOf(communityPoolAddr)
 	govStakerBalance := gns.BalanceOf(consts.GOV_STAKER_ADDR)
-	protocolFeeBalance := gns.BalanceOf(consts.PROTOCOL_FEE_ADDR)
+	protocolFeeBalance := gns.BalanceOf(protocolFeeAddr)
 	callerBalance := gns.BalanceOf(caller)
 
 	return gnsBalanceTracker{
@@ -539,11 +535,11 @@ func getPrintInfo(t *testing.T) string {
 	emissionDebug := ApiEmissionDebugInfo{}
 	emissionDebug.Height = std.ChainHeight()
 	emissionDebug.Time = time.Now().Unix()
-	emissionDebug.GnsStaker = gns.BalanceOf(consts.STAKER_ADDR)
+	emissionDebug.GnsStaker = gns.BalanceOf(stakerAddr)
 	emissionDebug.GnsDevOps = gns.BalanceOf(consts.DEV_OPS)
-	emissionDebug.GnsCommunityPool = gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
+	emissionDebug.GnsCommunityPool = gns.BalanceOf(communityPoolAddr)
 	emissionDebug.GnsGovStaker = gns.BalanceOf(consts.GOV_STAKER_ADDR)
-	emissionDebug.GnsProtocolFee = gns.BalanceOf(consts.PROTOCOL_FEE_ADDR)
+	emissionDebug.GnsProtocolFee = gns.BalanceOf(protocolFeeAddr)
 	emissionDebug.GnsADMIN = gns.BalanceOf(consts.ADMIN)
 
 	poolTiers := make(map[string]uint64)

@@ -48,7 +48,7 @@ func handleUnStakingFee(
 
 	if internal {
 		// staker contract has fee
-		gns.Transfer(consts.PROTOCOL_FEE_ADDR, feeAmount)
+		gns.Transfer(protocolFeeAddr, feeAmount)
 		pf.AddToProtocolFee(consts.GNS_PATH, feeAmount)
 
 		std.Emit(
@@ -63,7 +63,7 @@ func handleUnStakingFee(
 	} else {
 		// external contract has fee
 		teller := common.GetTokenTeller(tokenPath)
-		teller.Transfer(consts.PROTOCOL_FEE_ADDR, feeAmount)
+		teller.Transfer(protocolFeeAddr, feeAmount)
 		pf.AddToProtocolFee(tokenPath, feeAmount)
 
 		std.Emit(

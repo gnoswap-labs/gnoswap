@@ -7,7 +7,6 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	phalt "gno.land/p/gnoswap/halt"
@@ -17,7 +16,7 @@ import (
 // GetOrigPkgAddr returns the original package address.
 // In staker contract, original package address is the staker address.
 func GetOrigPkgAddr() std.Address {
-	return consts.STAKER_ADDR
+	return stakerAddr
 }
 
 // poolPathAlign ensures that a pool path is formatted with tokens in lexicographical order.
