@@ -21,7 +21,7 @@ import (
 func TestcreatePool(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
+	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, bazPath, FEE_MEDIUM, "79228162514264337593543950336")
 
 	bar.Transfer(user1Addr, 10000)
@@ -30,8 +30,8 @@ func TestcreatePool(t *testing.T) {
 func TestPositionMint(t *testing.T) {
 	// bar_baz_3000 by admin
 	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, 100000000)
-	baz.Approve(consts.POOL_ADDR, 100000000)
+	bar.Approve(poolAddr, 100000000)
+	baz.Approve(poolAddr, 100000000)
 
 	// Mint
 	positionId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, FEE_MEDIUM, int32(-887220), int32(887220), "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
@@ -57,11 +57,11 @@ func TestExactInputSinglePool(t *testing.T) {
 	user1Realm := std.NewUserRealm(user1Addr)
 	std.TestSetRealm(user1Realm)
 
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	baz.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	baz.Approve(routerAddr, consts.UINT64_MAX)
 
-	poolToken0Before := bar.BalanceOf(consts.POOL_ADDR)
-	poolToken1Before := baz.BalanceOf(consts.POOL_ADDR)
+	poolToken0Before := bar.BalanceOf(poolAddr)
+	poolToken1Before := baz.BalanceOf(poolAddr)
 
 	user1Token0Before := bar.BalanceOf(user1Addr)
 	user1Token1Before := baz.BalanceOf(user1Addr)
@@ -83,8 +83,8 @@ func TestExactInputSinglePool(t *testing.T) {
 	uassert.Equal(t, amountIn, "3")
 	uassert.Equal(t, amountOut, "-1")
 
-	poolToken0After := bar.BalanceOf(consts.POOL_ADDR)
-	poolToken1After := baz.BalanceOf(consts.POOL_ADDR)
+	poolToken0After := bar.BalanceOf(poolAddr)
+	poolToken1After := baz.BalanceOf(poolAddr)
 
 	user1Token0After := bar.BalanceOf(user1Addr)
 	user1Token1After := baz.BalanceOf(user1Addr)

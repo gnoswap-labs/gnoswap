@@ -16,7 +16,7 @@ func setupPositions(t *testing.T) {
 
 func TestApiGetPositions(t *testing.T) {
 	setupPositions(t)
-	std.TestSetRealm(std.NewUserRealm(admin))
+	std.TestSetRealm(std.NewUserRealm(adminAddr))
 
 	result := ApiGetPositions()
 
@@ -256,8 +256,7 @@ func TestApiGetPositionsByPoolPath(t *testing.T) {
 }
 
 func TestApiGetPositionsByAddress(t *testing.T) {
-	address := admin
-	result := ApiGetPositionsByAddress(address)
+	result := ApiGetPositionsByAddress(adminAddr)
 
 	root, err := json.Unmarshal([]byte(result))
 	if err != nil {

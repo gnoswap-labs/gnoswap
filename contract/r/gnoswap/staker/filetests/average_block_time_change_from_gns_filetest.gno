@@ -23,8 +23,10 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/gns"
 
+	"gno.land/r/gnoswap/v1/access"
+
+	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gnft"
 
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -33,7 +35,7 @@ import (
 )
 
 var (
-	adminAddr  = consts.ADMIN
+	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
 	adminUser  = adminAddr
 	adminRealm = std.NewUserRealm(adminAddr)
 
@@ -42,9 +44,11 @@ var (
 	externalCreatorUser  = externalCreatorAddr
 	externalCreatorRealm = std.NewUserRealm(externalCreatorAddr)
 
-	stakerAddr  = consts.STAKER_ADDR
+	stakerAddr, _  = access.GetAddress(access.ROLE_STAKER)
 	stakerUser  = stakerAddr
 	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
+
+	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
 
 	wugnotAddr = consts.WUGNOT_ADDR
 
@@ -113,8 +117,8 @@ func testCreatePool() {
 func testMintWugnotGnsPos01() {
 	std.TestSetRealm(adminRealm)
 
-	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	wugnot.Approve(poolAddr, consts.UINT64_MAX)
+	gns.Approve(poolAddr, consts.UINT64_MAX)
 
 	std.TestSkipHeights(1)
 	pn.Mint(
@@ -137,7 +141,7 @@ func testStakeTokenPos01() {
 	std.TestSetRealm(adminRealm)
 
 	// stake
-	gnft.Approve(consts.STAKER_ADDR, positionIdFrom(1))
+	gnft.Approve(stakerAddr, positionIdFrom(1))
 	sr.StakeToken(1, "")
 
 	before := gns.BalanceOf(adminUser)

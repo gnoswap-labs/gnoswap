@@ -15,10 +15,15 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 
+	"gno.land/r/gnoswap/v1/access"
 	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/referral"
 	"gno.land/r/gnoswap/v1/halt"
 	phalt "gno.land/p/gnoswap/halt"
+)
+
+var (
+	govStaker, _ = access.GetAddress(access.ROLE_GOV_STAKER)
 )
 
 // lockedGNS represents a locked GNS with its amount, unlock time, and collected status
@@ -305,7 +310,7 @@ func CollectUndelegatedGns() uint64 {
 			"CollectUndelegatedGns",
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
-			"from", consts.GOV_STAKER_ADDR.String(),
+			"from", govStaker.String(),
 			"to", caller.String(),
 			"collectedAmount", formatUint(collected),
 		)
@@ -352,7 +357,7 @@ func CollectReward() {
 			"CollectEmissionReward",
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
-			"from", consts.GOV_STAKER_ADDR.String(),
+			"from", govStaker.String(),
 			"to", caller.String(),
 			"emissionRewardAmount", formatUint(reward),
 		)
@@ -370,7 +375,7 @@ func CollectReward() {
 				currentProtocolFeeBalance[tokenPath] -= amount
 				wugnot.Withdraw(amount)
 				banker := std.NewBanker(std.BankerTypeRealmSend)
-				banker.SendCoins(consts.GOV_STAKER_ADDR, caller, std.Coins{{"ugnot", int64(amount)}})
+				banker.SendCoins(govStaker, caller, std.Coins{{"ugnot", int64(amount)}})
 
 			}
 		} else {
@@ -382,7 +387,7 @@ func CollectReward() {
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
 			"tokenPath", tokenPath,
-			"from", consts.GOV_STAKER_ADDR.String(),
+			"from", govStaker.String(),
 			"to", caller.String(),
 			"collectedAmount", formatUint(amount),
 		)
@@ -419,7 +424,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			"CollectEmissionFromLaunchPad",
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
-			"from", consts.GOV_STAKER_ADDR.String(),
+			"from", govStaker.String(),
 			"to", to.String(),
 			"emissionRewardAmount", formatUint(emissionReward),
 		)
@@ -432,7 +437,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			"prevAddr", prevAddr,
 			"prevRealm", prevPkgPath,
 			"tokenPath", tokenPath,
-			"from", consts.GOV_STAKER_ADDR.String(),
+			"from", govStaker.String(),
 			"to", to.String(),
 			"collectedAmount", formatUint(amount),
 		)

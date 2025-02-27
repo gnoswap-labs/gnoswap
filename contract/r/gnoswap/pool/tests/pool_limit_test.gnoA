@@ -21,11 +21,11 @@ var (
 
 func TestLimitOrderThru_Positive_1(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
 
 	thisPool := GetPool(barPath, fooPath, fee100)
 
@@ -36,7 +36,7 @@ func TestLimitOrderThru_Positive_1(t *testing.T) {
 			barPath,
 			fooPath,
 			fee100,
-			consts.POSITION_ADDR,
+			positionAddr,
 			0,
 			120,
 			test_liquidityExpectStr,
@@ -89,11 +89,11 @@ func TestLimitOrderThru_Positive_1(t *testing.T) {
 
 func TestLimitOrderThru_Negative_1(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
 
 	thisPool := GetPool(barPath, fooPath, fee500)
 
@@ -104,7 +104,7 @@ func TestLimitOrderThru_Negative_1(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			consts.POSITION_ADDR,
+			positionAddr,
 			-120,
 			0,
 			test_liquidityExpectStr,

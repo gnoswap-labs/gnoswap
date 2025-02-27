@@ -10,7 +10,6 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -34,7 +33,7 @@ func TestGetOrigPkgAddr(t *testing.T) {
 	}{
 		{
 			name:     "Success - getOrigPkgAddr",
-			expected: consts.POSITION_ADDR,
+			expected: positionAddr,
 		},
 	}
 	for _, tc := range tests {
@@ -79,7 +78,7 @@ func TestAssertTokenExists(t *testing.T) {
 func TestAssertOnlyOwnerOfToken(t *testing.T) {
 	// Mock token ownership
 	mockTokenId := uint64(1)
-	mockOwner := admin
+	mockOwner := adminAddr
 	mockCaller := alice
 	// MakeMintPositionWithoutFee(t)
 
@@ -124,17 +123,17 @@ func TestAssertOnlyUserOrStaker(t *testing.T) {
 	}{
 		{
 			name:         "Failure - Not User or Staker",
-			originCaller: consts.ROUTER_ADDR,
+			originCaller: routerAddr,
 			expected:     false,
 		},
 		{
 			name:         "Success - User Call",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     true,
 		},
 		{
 			name:         "Success - Staker Call",
-			originCaller: consts.STAKER_ADDR,
+			originCaller: stakerAddr,
 			expected:     true,
 		},
 	}
@@ -170,7 +169,7 @@ func TestAssertOnlyNotHalted(t *testing.T) {
 					assertOnlyNotHalted()
 				})
 			} else {
-				std.TestSetRealm(std.NewUserRealm(admin))
+				std.TestSetRealm(std.NewUserRealm(adminAddr))
 				halt.SetHaltByAdmin(true)
 				uassert.PanicsWithMessage(t, tc.panicMsg, func() {
 					assertOnlyNotHalted()
@@ -190,7 +189,7 @@ func TestAssertOnlyValidAddress(t *testing.T) {
 	}{
 		{
 			name:     "Success - valid address",
-			addr:     consts.ADMIN,
+			addr:     adminAddr,
 			expected: true,
 		},
 		{
@@ -225,7 +224,7 @@ func TestAssertOnlyValidAddressWith(t *testing.T) {
 	}{
 		{
 			name:     "Success - validation address check to compare with other address",
-			addr:     consts.ADMIN,
+			addr:     adminAddr,
 			other:    std.Address("g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"),
 			expected: true,
 		},
@@ -362,7 +361,7 @@ func TestGetPrevRealm(t *testing.T) {
 	}{
 		{
 			name:         "Success - prevRealm is User",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     []string{"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", ""},
 		},
 	}
@@ -384,7 +383,7 @@ func TestGetPrevAddr(t *testing.T) {
 	}{
 		{
 			name:         "Success - prev Address is User",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
 		},
 	}
@@ -405,7 +404,7 @@ func TestGetPrevAsString(t *testing.T) {
 	}{
 		{
 			name:         "Success - prev Realm of user info as string",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     []string{"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", ""},
 		},
 	}
@@ -428,12 +427,12 @@ func TestIsUserCall(t *testing.T) {
 	}{
 		{
 			name:         "Success - User Call",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     true,
 		},
 		{
 			name:          "Failure - Not User Call",
-			originCaller:  consts.ROUTER_ADDR,
+			originCaller:  routerAddr,
 			originPkgPath: consts.ROUTER_PATH,
 			expected:      false,
 		},
@@ -611,7 +610,7 @@ func TestIsOwner(t *testing.T) {
 		{
 			name:       "Success - is owner",
 			positionId: 1,
-			addr:       admin,
+			addr:       adminAddr,
 			expected:   true,
 		},
 	}
@@ -647,7 +646,7 @@ func TestIsOperator(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.expected {
-				LPTokenApprove(t, admin, tc.addr, tc.positionId)
+				LPTokenApprove(t, adminAddr, tc.addr, tc.positionId)
 			}
 			got := isOperator(tc.positionId, tc.addr)
 			uassert.Equal(t, tc.expected, got)
@@ -672,15 +671,15 @@ func TestIsStaked(t *testing.T) {
 		},
 		{
 			name:       "Fail - is not exist positionId",
-			owner:      admin,
+			owner:      adminAddr,
 			operator:   bob,
 			positionId: 100,
 			expected:   false,
 		},
 		{
 			name:       "Success - is staked",
-			owner:      admin,
-			operator:   admin,
+			owner:      adminAddr,
+			operator:   adminAddr,
 			positionId: 11,
 			expected:   true,
 		},
@@ -689,7 +688,7 @@ func TestIsStaked(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.expected && tc.owner == tc.operator {
 				MakeMintPositionWithoutFee(t)
-				LPTokenApprove(t, tc.owner, consts.STAKER_ADDR, tc.positionId)
+				LPTokenApprove(t, tc.owner, stakerAddr, tc.positionId)
 				LPTokenStake(t, tc.owner, tc.positionId)
 			}
 			got := isStaked(positionIdFrom(tc.positionId))
@@ -711,22 +710,22 @@ func TestIsOwnerOrOperator(t *testing.T) {
 	}{
 		{
 			name:       "Fail - is not owner or operator",
-			owner:      admin,
+			owner:      adminAddr,
 			operator:   alice,
 			positionId: 1,
 			expected:   false,
 		},
 		{
 			name:       "Success - is operator",
-			owner:      admin,
+			owner:      adminAddr,
 			operator:   bob,
 			positionId: 1,
 			expected:   true,
 		},
 		{
 			name:       "Success - is owner",
-			owner:      admin,
-			operator:   admin,
+			owner:      adminAddr,
+			operator:   adminAddr,
 			positionId: 1,
 			expected:   true,
 		},
@@ -758,7 +757,7 @@ func TestIsOwnerOrOperatorWithStake(t *testing.T) {
 	}{
 		{
 			name:       "Fail - is not token staked",
-			owner:      admin,
+			owner:      adminAddr,
 			operator:   alice,
 			positionId: 10,
 			isStake:    false,
@@ -766,8 +765,8 @@ func TestIsOwnerOrOperatorWithStake(t *testing.T) {
 		},
 		{
 			name:       "Success - is token staked (position operator)",
-			owner:      admin,
-			operator:   admin,
+			owner:      adminAddr,
+			operator:   adminAddr,
 			positionId: 10,
 			isStake:    true,
 			expected:   true,
@@ -777,7 +776,7 @@ func TestIsOwnerOrOperatorWithStake(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.isStake {
 				positionId, _, _, _ := MakeMintPositionWithoutFee(t)
-				LPTokenApprove(t, tc.owner, consts.STAKER_ADDR, tc.positionId)
+				LPTokenApprove(t, tc.owner, stakerAddr, tc.positionId)
 				LPTokenStake(t, tc.owner, tc.positionId)
 			}
 			got := isOwnerOrOperator(tc.operator, tc.positionId)

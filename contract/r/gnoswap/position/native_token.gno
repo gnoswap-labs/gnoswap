@@ -32,7 +32,7 @@ func wrap(ugnotAmount uint64, to std.Address) error {
 	}
 
 	wugnotAddr := std.DerivePkgAddr(consts.WRAPPED_WUGNOT)
-	transferUGNOT(consts.POSITION_ADDR, wugnotAddr, ugnotAmount)
+	transferUGNOT(positionAddr, wugnotAddr, ugnotAmount)
 
 	wugnot.Deposit()                 // POSITION HAS WUGNOT
 	wugnot.Transfer(to, ugnotAmount) // SEND WUGNOT: POSITION -> USER
@@ -55,9 +55,9 @@ func unwrap(wugnotAmount uint64, to std.Address) error {
 		return ufmt.Errorf("amount(%d) is zero", wugnotAmount)
 	}
 
-	wugnot.TransferFrom(to, consts.POSITION_ADDR, wugnotAmount) // SEND WUGNOT: USER -> POSITION
-	wugnot.Withdraw(wugnotAmount)                               // POSITION HAS UGNOT
-	transferUGNOT(consts.POSITION_ADDR, to, wugnotAmount)       // SEND UGNOT: POSITION -> USER
+	wugnot.TransferFrom(to, positionAddr, wugnotAmount) // SEND WUGNOT: USER -> POSITION
+	wugnot.Withdraw(wugnotAmount)                       // POSITION HAS UGNOT
+	transferUGNOT(positionAddr, to, wugnotAmount)       // SEND UGNOT: POSITION -> USER
 	return nil
 }
 
@@ -97,7 +97,7 @@ func transferUGNOT(from, to std.Address, amount uint64) {
 // - `to`: The recipient's address (std.Address) who will receive the refund.
 // - `amount`: The amount of `UGNOT` tokens to refund (uint64).
 func refundUGNOT(to std.Address, amount uint64) {
-	transferUGNOT(consts.POSITION_ADDR, to, amount)
+	transferUGNOT(positionAddr, to, amount)
 }
 
 // isNative checks whether the given token is a native token.

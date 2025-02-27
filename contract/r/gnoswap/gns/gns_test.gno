@@ -19,7 +19,7 @@ const (
 
 var (
 	emissionRealm = std.NewCodeRealm(consts.EMISSION_PATH)
-	adminRealm    = std.NewUserRealm(consts.ADMIN)
+	adminRealm    = std.NewUserRealm(adminAddr)
 )
 
 var (
@@ -48,7 +48,7 @@ func TestTotalSupply(t *testing.T) {
 }
 
 func TestBalanceOf(t *testing.T) {
-	uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(consts.ADMIN))
+	uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(adminAddr))
 }
 
 func TestAssertTooManyEmission(t *testing.T) {
@@ -204,7 +204,7 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "BalanceOf(admin)",
 			fn: func() {
-				uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(consts.ADMIN))
+				uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(adminAddr))
 			},
 		},
 		{
@@ -216,21 +216,21 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "Allowance(admin, alice)",
 			fn: func() {
-				uassert.Equal(t, uint64(0), Allowance(consts.ADMIN, alice))
+				uassert.Equal(t, uint64(0), Allowance(adminAddr, alice))
 			},
 		},
 		{
 			name: "MintGns success",
 			fn: func() {
 				std.TestSetRealm(emissionRealm)
-				MintGns(consts.ADMIN)
+				MintGns(adminAddr)
 			},
 		},
 		{
 			name: "MintGns without permission should panic",
 			fn: func() {
 				std.TestSkipHeights(1)
-				MintGns(consts.ADMIN)
+				MintGns(adminAddr)
 			},
 			shouldPanic: true,
 			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission`,
@@ -239,13 +239,13 @@ func TestGrc20Methods(t *testing.T) {
 			name: "Burn success",
 			fn: func() {
 				std.TestSetRealm(adminRealm)
-				Burn(consts.ADMIN, uint64(1))
+				Burn(adminAddr, uint64(1))
 			},
 		},
 		{
 			name: "Burn without permission should panic",
 			fn: func() {
-				Burn(consts.ADMIN, uint64(1))
+				Burn(adminAddr, uint64(1))
 			},
 			shouldPanic: true,
 			panicMsg:    `ownable: caller is not owner`,
@@ -270,7 +270,7 @@ func TestGrc20Methods(t *testing.T) {
 			name: "Transfer to self should panic",
 			fn: func() {
 				std.TestSetRealm(adminRealm)
-				Transfer(consts.ADMIN, uint64(1))
+				Transfer(adminAddr, uint64(1))
 			},
 			shouldPanic: true,
 			panicMsg:    `cannot send transfer to self`,
@@ -284,7 +284,7 @@ func TestGrc20Methods(t *testing.T) {
 
 				// alice transfer admin's balance to bob
 				std.TestSetRealm(std.NewUserRealm(alice))
-				TransferFrom(consts.ADMIN, bob, uint64(1))
+				TransferFrom(adminAddr, bob, uint64(1))
 			},
 		},
 		{
@@ -294,7 +294,7 @@ func TestGrc20Methods(t *testing.T) {
 				Approve(alice, uint64(1))
 
 				std.TestSetRealm(std.NewUserRealm(alice))
-				TransferFrom(consts.ADMIN, bob, uint64(2))
+				TransferFrom(adminAddr, bob, uint64(2))
 			},
 			shouldPanic: true,
 			panicMsg:    `insufficient allowance`,

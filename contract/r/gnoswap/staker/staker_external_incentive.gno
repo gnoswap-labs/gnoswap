@@ -117,11 +117,11 @@ func CreateExternalIncentive(
 	externalIncentives.set(incentiveId, incentive)
 
 	// deposit gns amount
-	gns.TransferFrom(caller, consts.STAKER_ADDR, depositGnsAmount)
+	gns.TransferFrom(caller, stakerAddr, depositGnsAmount)
 
 	// transfer reward token from user to staker
 	teller := common.GetTokenTeller(rewardToken)
-	teller.TransferFrom(caller, consts.STAKER_ADDR, rewardAmount)
+	teller.TransferFrom(caller, stakerAddr, rewardAmount)
 
 	pool.incentives.create(caller, incentive)
 
@@ -190,7 +190,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 		ictv.unclaimableRefunded = true
 	}
 
-	poolLeftExternalRewardAmount := common.BalanceOf(ictv.rewardToken, consts.STAKER_ADDR)
+	poolLeftExternalRewardAmount := common.BalanceOf(ictv.rewardToken, stakerAddr)
 	if poolLeftExternalRewardAmount < refund {
 		refund = poolLeftExternalRewardAmount
 	}

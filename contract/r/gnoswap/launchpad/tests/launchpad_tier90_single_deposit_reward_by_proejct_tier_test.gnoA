@@ -36,7 +36,7 @@ func testCreateProject(t *testing.T) {
 	t.Run("create project", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		obl.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000_000))
+		obl.Approve(launchpadAddr, uint64(1_000_000_000))
 		std.TestSkipHeights(1)
 
 		projectId := CreateProject(
@@ -65,7 +65,7 @@ func testDepositGnsTier90(t *testing.T) {
 		bar.Transfer(user01, uint64(10))
 
 		std.TestSetRealm(user01Realm)
-		gns.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000))
+		gns.Approve(launchpadAddr, uint64(1_000_000))
 
 		// skip some blocks to make project active
 		std.TestSkipHeights(4)

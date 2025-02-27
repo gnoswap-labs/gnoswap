@@ -44,8 +44,8 @@ func swapInner(
 	// ROUTER approves POOL as spender
 	tokenIn := common.GetTokenTeller(data.tokenIn)
 	tokenOut := common.GetTokenTeller(data.tokenOut)
-	tokenIn.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	tokenOut.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	tokenIn.Approve(poolAddr, consts.UINT64_MAX)
+	tokenOut.Approve(poolAddr, consts.UINT64_MAX)
 
 	amount0Str, amount1Str := pl.Swap( // int256, int256
 		data.tokenIn,

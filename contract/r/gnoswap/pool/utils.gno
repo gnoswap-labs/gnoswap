@@ -9,8 +9,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/common"
 
 	phalt "gno.land/p/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/halt"
@@ -220,7 +220,7 @@ func assertOnlyPositionContract() {
 	if err := access.PositionOnly(caller); err != nil {
 		panic(newErrorWithDetail(
 			errNoPermission,
-			ufmt.Sprintf("only position(%s) can call, called from %s", consts.POSITION_ADDR, caller.String()),
+			ufmt.Sprintf("only position(%s) can call, called from %s", positionAddr, caller.String()),
 		))
 	}
 }

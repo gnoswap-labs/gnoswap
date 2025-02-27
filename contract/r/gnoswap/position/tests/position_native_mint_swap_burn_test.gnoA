@@ -31,7 +31,7 @@ func testPoolInitCreatePool(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		pl.SetPoolCreationFeeByAdmin(0)
 
-		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
+		gns.Approve(poolAddr, pl.GetPoolCreationFee())
 		pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
 	})
 }
@@ -40,19 +40,19 @@ func testMintPosition(t *testing.T) {
 	t.Run("mint position", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // FOR WRAP
+		wugnot.Approve(positionAddr, consts.UINT64_MAX) // FOR WRAP
 
 		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(50000005))
 
-		std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 200000000}})
-		uassert.Equal(t, ugnotBalanceOf(t, consts.POSITION_ADDR), uint64(200000000))
+		std.TestIssueCoins(positionAddr, std.Coins{{"ugnot", 200000000}})
+		uassert.Equal(t, ugnotBalanceOf(t, positionAddr), uint64(200000000))
 
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
-		banker.SendCoins(adminAddr, consts.POSITION_ADDR, std.Coins{{"ugnot", 50000005}})
+		banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 50000005}})
 		std.TestSetOriginSend(std.Coins{{"ugnot", 50000005}}, nil)
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(0))
 
@@ -117,9 +117,9 @@ func testSwap(t *testing.T) {
 		std.TestSetOriginSend(std.Coins{{"ugnot", 1234567}}, nil)
 		wugnot.Deposit()
 
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX)
-		wugnot.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		wugnot.Approve(positionAddr, consts.UINT64_MAX)
+		wugnot.Approve(routerAddr, consts.UINT64_MAX)
 
 		std.TestSetRealm(rouRealm)
 		amount0, amount1 := pl.Swap(

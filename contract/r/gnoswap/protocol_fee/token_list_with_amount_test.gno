@@ -13,13 +13,7 @@ import (
 	_ "gno.land/r/onbloc/foo"
 )
 
-var (
-	dummyRealm = std.NewCodeRealm("gno.land/r/dummy")
-
-	adminAddr  = consts.ADMIN
-	adminUser  = adminAddr
-	adminRealm = std.NewUserRealm(adminAddr)
-)
+var dummyRealm = std.NewCodeRealm("gno.land/r/dummy")
 
 func TestTokenList(t *testing.T) {
 	tokenListWithAmount = map[string]uint64{
@@ -126,8 +120,8 @@ func TestTransferProtocolFee(t *testing.T) {
 
 	devOpsOldFoo := common.BalanceOf("gno.land/r/onbloc/foo", consts.DEV_OPS)
 	devOpsOldBaz := common.BalanceOf("gno.land/r/onbloc/baz", consts.DEV_OPS)
-	govStkaerOldFoo := common.BalanceOf("gno.land/r/onbloc/foo", consts.GOV_STAKER_ADDR)
-	govStkaerOldBaz := common.BalanceOf("gno.land/r/onbloc/baz", consts.GOV_STAKER_ADDR)
+	govStkaerOldFoo := common.BalanceOf("gno.land/r/onbloc/foo", govStakerAddr)
+	govStkaerOldBaz := common.BalanceOf("gno.land/r/onbloc/baz", govStakerAddr)
 	uassert.Equal(t, devOpsOldFoo, uint64(0))
 	uassert.Equal(t, devOpsOldBaz, uint64(0))
 	uassert.Equal(t, govStkaerOldFoo, uint64(0))
@@ -150,8 +144,8 @@ func TestTransferProtocolFee(t *testing.T) {
 	uassert.Equal(t, devOpsNewFoo, uint64(49))
 	uassert.Equal(t, devOpsNewBaz, uint64(98))
 
-	govStkaerNewFoo := common.BalanceOf("gno.land/r/onbloc/foo", consts.GOV_STAKER_ADDR)
-	govStkaerNewBaz := common.BalanceOf("gno.land/r/onbloc/baz", consts.GOV_STAKER_ADDR)
+	govStkaerNewFoo := common.BalanceOf("gno.land/r/onbloc/foo", govStakerAddr)
+	govStkaerNewBaz := common.BalanceOf("gno.land/r/onbloc/baz", govStakerAddr)
 	uassert.Equal(t, govStkaerNewFoo, uint64(51))
 	uassert.Equal(t, govStkaerNewBaz, uint64(103))
 
@@ -231,7 +225,7 @@ func transferToProtocolFee(t *testing.T, tokenPath string, amount uint64) {
 	std.TestSetRealm(adminRealm)
 
 	tokenTeller := common.GetTokenTeller(tokenPath)
-	tokenTeller.Transfer(consts.PROTOCOL_FEE_ADDR, amount)
+	tokenTeller.Transfer(protocolFeeAddr, amount)
 
 	tokenListWithAmount[tokenPath] += amount
 }

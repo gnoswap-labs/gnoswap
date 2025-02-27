@@ -223,7 +223,7 @@ func TestGetPrevRealm(t *testing.T) {
 	}{
 		{
 			name:         "Success - prevRealm is User",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     []string{"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", ""},
 		},
 	}
@@ -245,7 +245,7 @@ func TestGetPrevAddr(t *testing.T) {
 	}{
 		{
 			name:         "Success - prev Address is User",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
 		},
 	}
@@ -361,7 +361,7 @@ func TestAssertOnlyValidAddress(t *testing.T) {
 	}{
 		{
 			name:     "Success - valid address",
-			addr:     consts.ADMIN,
+			addr:     adminAddr,
 			expected: true,
 		},
 		{

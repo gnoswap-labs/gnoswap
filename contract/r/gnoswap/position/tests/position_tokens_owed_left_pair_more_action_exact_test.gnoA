@@ -17,47 +17,10 @@ import (
 	"gno.land/r/onbloc/foo"
 )
 
-const (
-	ugnotDenom string = "ugnot"
-	ugnotPath  string = "ugnot"
-	wugnotPath string = "gno.land/r/demo/wugnot"
-	gnsPath    string = "gno.land/r/gnoswap/v1/gns"
-	barPath    string = "gno.land/r/onbloc/bar"
-	bazPath    string = "gno.land/r/onbloc/baz"
-	fooPath    string = "gno.land/r/onbloc/foo"
-	oblPath    string = "gno.land/r/onbloc/obl"
-	quxPath    string = "gno.land/r/onbloc/qux"
-
-	fee100               uint32 = 100
-	fee500               uint32 = 500
-	fee3000              uint32 = 3000
-	fee10000             uint32 = 10000
-	maxApprove           uint64 = 18446744073709551615
-	max_timeout          int64  = 9999999999
-	maxSqrtPriceLimitX96 string = "1461446703485210103287273052203988822378723970341"
-
-	TIER_1 uint64 = 1
-	TIER_2 uint64 = 2
-	TIER_3 uint64 = 3
-)
-
-var (
-	// define addresses to use in tests
-	addr01 = testutils.TestAddress("addr01")
-	addr02 = testutils.TestAddress("addr02")
-)
-
-var (
-	adminAddr  = std.Address(consts.ADMIN)
-	admin      = adminAddr
-	adminRealm = std.NewUserRealm(admin)
-	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
-)
-
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
+	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee3000, "79228162514264337593543950337")
 	std.TestSkipHeights(10)
 }
@@ -65,8 +28,8 @@ func TestPoolInitCreatePool(t *testing.T) {
 func TestMintPosition01(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -107,11 +70,11 @@ func TestMintPosition01(t *testing.T) {
 func TestSwap1(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
-	bar.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+	bar.Approve(routerAddr, consts.UINT64_MAX)
+	foo.Approve(routerAddr, consts.UINT64_MAX)
 
 	amount0, amount1 := rr.ExactOutSwapRoute(
 		barPath,
@@ -146,8 +109,8 @@ func TestSwap1(t *testing.T) {
 
 func TestMintPosition02(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -187,8 +150,8 @@ func TestMintPosition02(t *testing.T) {
 
 func TestMintPosition03(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -229,11 +192,11 @@ func TestMintPosition03(t *testing.T) {
 func TestSwap2(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
-	bar.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+	bar.Approve(routerAddr, consts.UINT64_MAX)
+	foo.Approve(routerAddr, consts.UINT64_MAX)
 
 	amount0, amount1 := rr.ExactInSwapRoute(
 		barPath,
@@ -252,8 +215,8 @@ func TestSwap2(t *testing.T) {
 
 func TestMintPosition04(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -294,11 +257,11 @@ func TestMintPosition04(t *testing.T) {
 func TestSwap3(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
-	bar.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+	bar.Approve(routerAddr, consts.UINT64_MAX)
+	foo.Approve(routerAddr, consts.UINT64_MAX)
 
 	amount0, amount1 := rr.ExactInSwapRoute(
 		barPath,
@@ -318,8 +281,8 @@ func TestSwap3(t *testing.T) {
 
 func TestIncreaseLiquidity02(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
 	pool := getPoolFromPositionId(t, uint64(2))
 	oldLiquidity := pool.Liquidity()
@@ -351,8 +314,8 @@ func TestDecreaseLiquidityPosition02(t *testing.T) {
 	uassert.Equal(t, ownerOfPosition, adminAddr)
 
 	// approve fee0, feelpTokenId to pool
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 	oldLiquidities := getPoolFromPositionId(t, positionId).Liquidity()
 
 	resultPositionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
@@ -399,8 +362,8 @@ func TestDecreaseLiquidityPosition02All(t *testing.T) {
 	uassert.Equal(t, ownerOfPosition, adminAddr)
 
 	// approve fee0, feelpTokenId to pool
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
 	oldLiquidities := getPoolFromPositionId(t, positionId).Liquidity()
 

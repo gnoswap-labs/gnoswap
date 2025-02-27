@@ -17,7 +17,6 @@ const (
 )
 
 var (
-	positionAddr  = consts.POSITION_ADDR
 	positionRealm = std.NewCodeRealm(consts.POSITION_PATH)
 
 	addr01      = testutils.TestAddress("addr01")

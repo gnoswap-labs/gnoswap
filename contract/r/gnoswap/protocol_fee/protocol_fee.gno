@@ -12,6 +12,8 @@ import (
 
 	phalt "gno.land/p/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/halt"
+
+	"gno.land/r/gnoswap/v1/access"
 )
 
 var (
@@ -24,6 +26,9 @@ var (
 
 	// accumulated amount distributed to gov/staker by token path
 	accuToGovStaker = avl.NewTree()
+
+	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
+	govStakerAddr, _   = access.GetAddress(access.ROLE_GOV_STAKER)
 )
 
 // DistributeProtocolFee distributes the protocol fee to devOps and gov/staker.
@@ -50,7 +55,7 @@ func DistributeProtocolFee() {
 		// govStaker 100%
 		// ...
 
-		balance := common.BalanceOf(token, consts.PROTOCOL_FEE_ADDR)
+		balance := common.BalanceOf(token, protocolFeeAddr)
 		if balance > 0 {
 			toDevOps := balance * devOpsPct / 10000 // default 0%
 			toGovStaker := balance - toDevOps       // default 100%
@@ -68,7 +73,7 @@ func DistributeProtocolFee() {
 			}
 
 			if toGovStaker > 0 {
-				tokenTeller.Transfer(consts.GOV_STAKER_ADDR, toGovStaker)
+				tokenTeller.Transfer(govStakerAddr, toGovStaker)
 			}
 		}
 	}

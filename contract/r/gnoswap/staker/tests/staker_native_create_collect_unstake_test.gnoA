@@ -60,7 +60,7 @@ func testInit_NativeCreateCollectUnstake(t *testing.T) {
 func testCreatePool_NativeCreateCollectUnstake(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
+		gns.Approve(poolAddr, pl.GetPoolCreationFee())
 		std.TestSkipHeights(1)
 
 		pl.CreatePool(barPath, fooPath, uint32(500), common.TickMathGetSqrtRatioAtTick(0).ToString())
@@ -75,23 +75,23 @@ func testPositionMintNative01(t *testing.T) {
 	t.Run("position mint native 01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // MINT
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // MINT
+		gns.Approve(poolAddr, consts.UINT64_MAX)    // MINT
+		wugnot.Approve(poolAddr, consts.UINT64_MAX) // MINT
 
-		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // WRAP
+		wugnot.Approve(positionAddr, consts.UINT64_MAX) // WRAP
 		std.TestSkipHeights(3)
 
 		// prepare 50000005ugnot (5 for refund test)
 		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(50000005))
-		uassert.Equal(t, ugnotBalanceOf(t, consts.POSITION_ADDR), uint64(0))
+		uassert.Equal(t, ugnotBalanceOf(t, positionAddr), uint64(0))
 
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
-		banker.SendCoins(adminAddr, consts.POSITION_ADDR, std.Coins{{"ugnot", 50000005}})
+		banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 50000005}})
 		std.TestSetOriginSend(std.Coins{{"ugnot", 50000005}}, nil)
 
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(0))
-		uassert.Equal(t, ugnotBalanceOf(t, consts.POSITION_ADDR), uint64(50000005))
+		uassert.Equal(t, ugnotBalanceOf(t, positionAddr), uint64(50000005))
 
 		adminOldWugnotBalance := wugnot.BalanceOf(admin)
 		uassert.Equal(t, adminOldWugnotBalance, uint64(0))
@@ -125,24 +125,24 @@ func testPositionMintNative02(t *testing.T) {
 	t.Run("position mint native 02", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // MINT
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // MINT
+		gns.Approve(poolAddr, consts.UINT64_MAX)    // MINT
+		wugnot.Approve(poolAddr, consts.UINT64_MAX) // MINT
 
-		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // WRAP
+		wugnot.Approve(positionAddr, consts.UINT64_MAX) // WRAP
 		std.TestSkipHeights(3)
 
 		// prepare 50000005ugnot (5 for refund test)
 		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(99999010))
-		uassert.Equal(t, ugnotBalanceOf(t, consts.POSITION_ADDR), uint64(0))
+		uassert.Equal(t, ugnotBalanceOf(t, positionAddr), uint64(0))
 
 		// send & set orig send
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
-		banker.SendCoins(adminAddr, consts.POSITION_ADDR, std.Coins{{"ugnot", 50000005}})
+		banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 50000005}})
 		std.TestSetOriginSend(std.Coins{{"ugnot", 50000005}}, nil)
 
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(49999005))
-		uassert.Equal(t, ugnotBalanceOf(t, consts.POSITION_ADDR), uint64(50000005))
+		uassert.Equal(t, ugnotBalanceOf(t, positionAddr), uint64(50000005))
 
 		adminOldWugnotBalance := wugnot.BalanceOf(admin)
 		uassert.Equal(t, adminOldWugnotBalance, uint64(0))
@@ -179,23 +179,23 @@ func testCreateExternalIncentive(t *testing.T) {
 		// prepare 10000000000 ugnot
 		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 10_000_000_000}})
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(10099998010))
-		uassert.Equal(t, ugnotBalanceOf(t, consts.STAKER_ADDR), uint64(0))
+		uassert.Equal(t, ugnotBalanceOf(t, stakerAddr), uint64(0))
 
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
-		banker.SendCoins(adminAddr, consts.STAKER_ADDR, std.Coins{{"ugnot", 10_000_000_000}})
+		banker.SendCoins(adminAddr, stakerAddr, std.Coins{{"ugnot", 10_000_000_000}})
 		std.TestSetOriginSend(std.Coins{{"ugnot", 10_000_000_000}}, nil)
 
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(99998010))
-		uassert.Equal(t, ugnotBalanceOf(t, consts.STAKER_ADDR), uint64(10_000_000_000))
+		uassert.Equal(t, ugnotBalanceOf(t, stakerAddr), uint64(10_000_000_000))
 
 		adminOldWugnotBalance := wugnot.BalanceOf(admin)
 		// uassert.Equal(t, adminOldWugnotBalance, uint64(0))
 
-		wugnot.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(stakerAddr, consts.UINT64_MAX)
 		std.TestSkipHeights(1)
 
 		AddToken(oblPath)
-		gns.Approve(consts.STAKER_ADDR, depositGnsAmount)
+		gns.Approve(stakerAddr, depositGnsAmount)
 
 		CreateExternalIncentive(
 			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500", // targetPoolPath
@@ -217,14 +217,14 @@ func testStakeToken01(t *testing.T) {
 	t.Run("stake token 01", func(t *testing.T) {
 		// approve nft to staker for staking
 		std.TestSetRealm(adminRealm)
-		gnft.Approve(consts.STAKER_ADDR, positionIdFrom(1))
+		gnft.Approve(stakerAddr, positionIdFrom(1))
 		std.TestSkipHeights(1)
 
 		StakeToken(1, "") // GNFT tokenId
 
 		std.TestSkipHeights(1)
 
-		uassert.Equal(t, gnft.MustOwnerOf(positionIdFrom(1)), consts.STAKER_ADDR)
+		uassert.Equal(t, gnft.MustOwnerOf(positionIdFrom(1)), stakerAddr)
 		uassert.Equal(t, deposits.Size(), 1)
 	})
 }
@@ -233,14 +233,14 @@ func testStakeToken02(t *testing.T) {
 	t.Run("stake token 02", func(t *testing.T) {
 		// approve nft to staker for staking
 		std.TestSetRealm(adminRealm)
-		gnft.Approve(consts.STAKER_ADDR, positionIdFrom(2))
+		gnft.Approve(stakerAddr, positionIdFrom(2))
 		std.TestSkipHeights(1)
 
 		StakeToken(2, "") // GNFT tokenId
 
 		std.TestSkipHeights(1)
 
-		uassert.Equal(t, gnft.MustOwnerOf(positionIdFrom(2)), consts.STAKER_ADDR)
+		uassert.Equal(t, gnft.MustOwnerOf(positionIdFrom(2)), stakerAddr)
 		uassert.Equal(t, deposits.Size(), 2)
 	})
 }
@@ -283,7 +283,7 @@ func testUnstakeToken02(t *testing.T) {
 
 func testEndExternalIncentive(t *testing.T) {
 	t.Run("end external incentive", func(t *testing.T) {
-		wugnot.Approve(consts.STAKER_ADDR, consts.UINT64_MAX) // UNWRAP
+		wugnot.Approve(stakerAddr, consts.UINT64_MAX) // UNWRAP
 		uassert.Equal(t, wugnot.BalanceOf(admin), uint64(622937))
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(99998010))
 

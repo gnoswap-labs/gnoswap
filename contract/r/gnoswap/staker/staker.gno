@@ -270,7 +270,7 @@ func StakeToken(positionId uint64, referrer string) (string, string, string) {
 	stakers.addDeposit(caller, positionId, deposit)
 
 	if caller == owner { // if caller is owner, transfer NFT ownership to staker contract
-		if err := transferDeposit(positionId, owner, caller, consts.STAKER_ADDR); err != nil {
+		if err := transferDeposit(positionId, owner, caller, stakerAddr); err != nil {
 			panic(err.Error())
 		}
 	}
@@ -481,14 +481,14 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string) {
 
 		// internal penalty to community pool
 		totalEmissionSent += reward.InternalPenalty
-		gns.Transfer(consts.COMMUNITY_POOL_ADDR, reward.InternalPenalty)
+		gns.Transfer(communityPoolAddr, reward.InternalPenalty)
 	}
 
 	unClaimableInternal := processUnClaimableReward(deposit.targetPoolPath, currentHeight)
 	if unClaimableInternal > 0 {
 		// internal unClaimable to community pool
 		totalEmissionSent += unClaimableInternal
-		gns.Transfer(consts.COMMUNITY_POOL_ADDR, unClaimableInternal)
+		gns.Transfer(communityPoolAddr, unClaimableInternal)
 	}
 
 	std.Emit(
@@ -551,7 +551,7 @@ func UnStakeToken(positionId uint64, unwrapResult bool) (string, string, string)
 	applyUnStake(positionId)
 
 	// transfer NFT ownership to origin owner
-	gnft.TransferFrom(consts.STAKER_ADDR, deposit.owner, positionIdFrom(positionId))
+	gnft.TransferFrom(stakerAddr, deposit.owner, positionIdFrom(positionId))
 	pn.SetPositionOperator(positionId, consts.ZERO_ADDRESS)
 
 	prevAddr, prevPkgPath := getPrev()
@@ -562,7 +562,7 @@ func UnStakeToken(positionId uint64, unwrapResult bool) (string, string, string)
 		"positionId", formatUint(positionId),
 		"poolPath", poolPath,
 		"isRequestUnwrap", formatBool(unwrapResult),
-		"from", consts.STAKER_ADDR.String(),
+		"from", stakerAddr.String(),
 		"to", deposit.owner.String(),
 		"amount0", token0Amount,
 		"amount1", token1Amount,
@@ -626,7 +626,7 @@ func applyUnStake(positionId uint64) {
 // requireTokenOwnership validates that the caller has permission to operate the token.
 func requireTokenOwnership(owner, caller std.Address) error {
 	callerIsOwner := owner == caller
-	stakerIsOwner := owner == consts.STAKER_ADDR
+	stakerIsOwner := owner == stakerAddr
 
 	if err := common.SatisfyCond(callerIsOwner || stakerIsOwner); err != nil {
 		return errNoPermission

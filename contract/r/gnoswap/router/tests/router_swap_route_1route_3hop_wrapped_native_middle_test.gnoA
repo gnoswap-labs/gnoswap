@@ -21,7 +21,7 @@ import (
 func TestCreatePool(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee()*2)
+	gns.Approve(poolAddr, pl.GetPoolCreationFee()*2)
 
 	pl.CreatePool(consts.WRAPPED_WUGNOT, consts.GNS_PATH, fee100, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
@@ -45,8 +45,8 @@ func TestPositionMintGnsGnot(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 	wugnot.Deposit()
 
-	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	gns.Approve(poolAddr, consts.UINT64_MAX)
+	wugnot.Approve(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(consts.GNS_PATH, consts.WRAPPED_WUGNOT, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
@@ -67,8 +67,8 @@ func TestPositionMintGnotBar(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 	wugnot.Deposit()
 
-	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	wugnot.Approve(poolAddr, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(consts.WRAPPED_WUGNOT, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
@@ -95,8 +95,8 @@ func TestDrySwapRouteGnsBarExactIn(t *testing.T) {
 func TestSwapRouteGnsBarExactIn(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(consts.POOL_ADDR, 1000)   // swap input amount
-	bar.Approve(consts.ROUTER_ADDR, 7325) // 0.15% fee
+	gns.Approve(poolAddr, 1000)   // swap input amount
+	bar.Approve(routerAddr, 7325) // 0.15% fee
 
 	amountIn, amountOut := ExactInSwapRoute(
 		consts.GNS_PATH, // inputToken

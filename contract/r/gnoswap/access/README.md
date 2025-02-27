@@ -22,7 +22,6 @@ The `access` package provides a configuration-based wrapper around the `p/rbac` 
 | `ROLE_STAKER` | `staker` | Staker role |
 | `ROLE_LAUNCHPAD` | `launchpad` | Launchpad role |
 | `ROLE_EMISSION` | `emission` | Emission role |
-| `ROLE_USER` | `user` | User role |
 
 ## API Overview
 

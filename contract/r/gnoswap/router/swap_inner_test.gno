@@ -7,7 +7,6 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/onbloc/bar"
@@ -86,8 +85,8 @@ func TestSwapInner(t *testing.T) {
 				MakeMintPositionWithoutFee(t)
 
 				std.TestSetRealm(user1Realm)
-				bar.Approve(consts.ROUTER_ADDR, maxApprove)
-				baz.Approve(consts.ROUTER_ADDR, maxApprove)
+				bar.Approve(routerAddr, maxApprove)
+				baz.Approve(routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 				TokenFaucet(t, bazPath, user1Addr)
 			},
@@ -98,7 +97,7 @@ func TestSwapInner(t *testing.T) {
 				tokenIn:  barPath,
 				tokenOut: bazPath,
 				fee:      3000,
-				payer:    consts.ROUTER_ADDR,
+				payer:    routerAddr,
 			},
 			expectedRecv: "100",
 			expectedOut:  "98",
@@ -108,11 +107,11 @@ func TestSwapInner(t *testing.T) {
 
 	for _, tt := range tests {
 		std.TestSetRealm(user1Realm)
-		bar.Approve(consts.ROUTER_ADDR, maxApprove)
-		baz.Approve(consts.ROUTER_ADDR, maxApprove)
-		bar.Approve(consts.POOL_ADDR, maxApprove)
-		baz.Approve(consts.POOL_ADDR, maxApprove)
-		TokenFaucet(t, barPath, consts.ROUTER_ADDR)
+		bar.Approve(routerAddr, maxApprove)
+		baz.Approve(routerAddr, maxApprove)
+		bar.Approve(poolAddr, maxApprove)
+		baz.Approve(poolAddr, maxApprove)
+		TokenFaucet(t, barPath, routerAddr)
 
 		if tt.setupFn != nil {
 			tt.setupFn(t)
