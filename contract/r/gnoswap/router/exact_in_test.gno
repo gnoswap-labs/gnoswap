@@ -11,6 +11,7 @@ import (
 	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -101,6 +102,9 @@ func TestExactInSwapRouteOperation_Validate(t *testing.T) {
 }
 
 func TestExactInSwapRoute(t *testing.T) {
+	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+	poolAddr, _ := access.GetAddress(access.ROLE_POOL)
+
 	CreatePoolWithoutFee(t)
 	MakeMintPositionWithoutFee(t)
 

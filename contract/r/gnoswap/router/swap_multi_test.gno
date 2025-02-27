@@ -4,17 +4,18 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
 	i256 "gno.land/p/gnoswap/int256"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/qux"
-
-	"gno.land/p/demo/uassert"
 )
 
 func TestMultiSwap(t *testing.T) {
 	user1Realm := std.NewUserRealm(user1Addr)
+	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
 
 	tests := []struct {
 		name             string
