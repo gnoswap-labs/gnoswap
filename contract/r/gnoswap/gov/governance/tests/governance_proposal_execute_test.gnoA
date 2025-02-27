@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/gnoswap/consts"
 	gns "gno.land/r/gnoswap/v1/gns"
 
 	"gno.land/r/gnoswap/v1/halt"
@@ -35,7 +34,7 @@ func init() {
 func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(consts.GOV_STAKER_ADDR, uint64(1_000_000))
+	gns.Approve(govStakerAddr, uint64(1_000_000))
 	gs.Delegate(admin, uint64(1_000_000), "")
 	std.TestSkipHeights(5) // VotingWeightSmoothingDuration
 

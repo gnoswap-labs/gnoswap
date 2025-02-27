@@ -8,7 +8,6 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
 
@@ -21,7 +20,7 @@ import (
 // GetOrigPkgAddr returns the original package address.
 // In position contract, original package address is the position address.
 func GetOrigPkgAddr() std.Address {
-	return consts.POSITION_ADDR
+	return positionAddr
 }
 
 // assertTokenExists checks if a token with the specified positionId exists in the system.
@@ -293,7 +292,7 @@ func isStaked(positionId grc721.TokenID) bool {
 	exist := gnft.Exists(positionId)
 	if exist {
 		owner, err := gnft.OwnerOf(positionId)
-		if err == nil && owner == consts.STAKER_ADDR {
+		if err == nil && owner == stakerAddr {
 			return true
 		}
 	}

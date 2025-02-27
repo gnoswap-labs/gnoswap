@@ -34,7 +34,7 @@ func wrap(ugnotAmount uint64) {
 
 	// WRAP IT
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(consts.STAKER_ADDR, consts.WUGNOT_ADDR, std.Coins{{Denom: "ugnot", Amount: int64(ugnotAmount)}})
+	banker.SendCoins(stakerAddr, consts.WUGNOT_ADDR, std.Coins{{Denom: "ugnot", Amount: int64(ugnotAmount)}})
 	wugnot.Deposit() // STAKER HAS WUGNOT
 
 	// SEND WUGNOT: STAKER -> USER
@@ -54,12 +54,12 @@ func unwrap(wugnotAmount uint64) {
 	}
 
 	// SEND WUGNOT: USER -> STAKER
-	wugnot.TransferFrom(std.PreviousRealm().Address(), consts.STAKER_ADDR, wugnotAmount)
+	wugnot.TransferFrom(std.PreviousRealm().Address(), stakerAddr, wugnotAmount)
 
 	// UNWRAP IT
 	wugnot.Withdraw(wugnotAmount)
 
 	// SEND GNOT: STAKER -> USER
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(consts.STAKER_ADDR, std.PreviousRealm().Address(), std.Coins{{Denom: "ugnot", Amount: int64(wugnotAmount)}})
+	banker.SendCoins(stakerAddr, std.PreviousRealm().Address(), std.Coins{{Denom: "ugnot", Amount: int64(wugnotAmount)}})
 }

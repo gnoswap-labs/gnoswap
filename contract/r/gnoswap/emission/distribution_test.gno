@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -264,7 +263,7 @@ func TestTransferToTarget(t *testing.T) {
 			target: LIQUIDITY_STAKER,
 			setup: func() {
 				std.TestSetRealm(adminRealm)
-				gns.Transfer(consts.EMISSION_ADDR, 100000) // give enough balance for emission
+				gns.Transfer(emissionAddr, 100000) // give enough balance for emission
 			},
 			amount: 100,
 			verify: func() {

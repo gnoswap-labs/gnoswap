@@ -78,7 +78,7 @@ func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee()*3)
+		gns.Approve(poolAddr, pl.GetPoolCreationFee()*3)
 
 		pl.CreatePool(barPath, quxPath, 100, "79228162514264337593543950337")
 		SetPoolTierByAdmin(`gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100`, 1)
@@ -93,8 +93,8 @@ func testMintBarQux100_1(t *testing.T) {
 	t.Run("mint position 01, bar:qux:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		bar.Approve(poolAddr, consts.UINT64_MAX)
+		qux.Approve(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,      // token0
@@ -123,8 +123,8 @@ func testMintBarBaz100_2(t *testing.T) {
 	t.Run("mint position 02, bar:baz:3000", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		bar.Approve(poolAddr, consts.UINT64_MAX)
+		baz.Approve(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,      // token0
@@ -161,7 +161,7 @@ func testStakeToken_1(t *testing.T) {
 	t.Run("stake token 01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gnft.Approve(consts.STAKER_ADDR, positionIdFrom(1))
+		gnft.Approve(stakerAddr, positionIdFrom(1))
 		StakeToken(1, "")
 
 		std.TestSkipHeights(1)
@@ -183,7 +183,7 @@ func testStakeToken_2(t *testing.T) {
 	t.Run("stake token 02", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gnft.Approve(consts.STAKER_ADDR, positionIdFrom(2))
+		gnft.Approve(stakerAddr, positionIdFrom(2))
 		StakeToken(2, "")
 
 		std.TestSkipHeights(1)

@@ -10,10 +10,17 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/demo/wugnot"
+
+	"gno.land/r/gnoswap/v1/access"
 	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gnft"
 	pl "gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/referral"
+)
+
+var (
+	positionAddr, _ = access.GetAddress(access.ROLE_POSITION)
+	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
 )
 
 const (
@@ -231,7 +238,7 @@ func IncreaseLiquidity(
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"sqrtPriceX96", pl.PoolGetSlot0SqrtPriceX96(poolPath),
-		"positionLiquidity", position.liquidity.ToString(),
+		"positionLiquidity", PositionGetPositionLiquidityStr(positionId),
 		"token0Balance", pl.PoolGetBalanceToken0(poolPath),
 		"token1Balance", pl.PoolGetBalanceToken1(poolPath),
 	)

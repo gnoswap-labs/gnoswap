@@ -3,8 +3,6 @@ package router
 import (
 	"std"
 
-	"gno.land/p/gnoswap/consts"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -19,7 +17,7 @@ func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath strin
 		currentPoolIndex++
 
 		if currentPoolIndex < numPools {
-			recipient = consts.ROUTER_ADDR
+			recipient = routerAddr
 		} else {
 			recipient = params.recipient
 		}
@@ -44,7 +42,7 @@ func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath strin
 			return firstAmountIn, amountOut
 		}
 
-		payer = consts.ROUTER_ADDR
+		payer = routerAddr
 
 		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
 		params.tokenIn = nextInput
@@ -102,7 +100,7 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.
 		if currentPoolIndex == 0 {
 			recipient = params.recipient // params.recipient ≈ user
 		} else {
-			recipient = consts.ROUTER_ADDR
+			recipient = routerAddr
 		}
 
 		amountIn, amountOut := swapInner(
@@ -127,7 +125,7 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.
 		}
 
 		swapInfo[currentPoolIndex-1].amountSpecified = i256.FromUint256(amountOut)
-		payer = consts.ROUTER_ADDR
+		payer = routerAddr
 		currentPoolIndex--
 	}
 	return firstAmountIn, u256.Zero()
@@ -160,7 +158,7 @@ func multiDrySwap(params SwapParams, currentPoolIndex, numPool int, swapPath str
 			return firstAmountIn, amountOut
 		}
 
-		payer = consts.ROUTER_ADDR
+		payer = routerAddr
 
 		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
 		params.tokenIn = nextInput
@@ -172,7 +170,7 @@ func multiDrySwap(params SwapParams, currentPoolIndex, numPool int, swapPath str
 
 func multiDrySwapNegative(params SwapParams, currentPoolIndex int, swapPath string) (*u256.Uint, *u256.Uint) {
 	firstAmountIn := u256.Zero()
-	payer := consts.ROUTER_ADDR
+	payer := routerAddr
 
 	for {
 		amountIn, amountOut := swapDryInner(

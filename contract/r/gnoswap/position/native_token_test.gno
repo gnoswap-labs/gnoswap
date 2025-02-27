@@ -42,7 +42,7 @@ func TestTransferUGNOT(t *testing.T) {
 			verify: func(t *testing.T, to std.Address) uint64 {
 				return ugnotBalanceOf(t, to)
 			},
-			from:        consts.POSITION_ADDR,
+			from:        positionAddr,
 			to:          bob,
 			expected:    "100",
 			shouldPanic: false,
@@ -128,7 +128,7 @@ func TestWrapInPosition(t *testing.T) {
 			verify: func(t *testing.T, to std.Address) uint64 {
 				return TokenBalance(t, wugnotPath, to)
 			},
-			from:        consts.POSITION_ADDR,
+			from:        positionAddr,
 			to:          bob,
 			expected:    "1000",
 			shouldPanic: false,
@@ -206,7 +206,7 @@ func TestUnWrap(t *testing.T) {
 			verify: func(t *testing.T, to std.Address) uint64 {
 				return TokenBalance(t, wugnotPath, to)
 			},
-			from:        consts.POSITION_ADDR,
+			from:        positionAddr,
 			to:          bob,
 			expected:    "1000",
 			shouldPanic: false,
@@ -417,11 +417,11 @@ func TestSafeWrapNativeToken(t *testing.T) {
 				panic("can not parse amount")
 			}
 			if amount > 0 {
-				ugnotFaucet(t, consts.POSITION_ADDR, amount)
+				ugnotFaucet(t, positionAddr, amount)
 			}
-			std.TestSetRealm(std.NewUserRealm(consts.POSITION_ADDR))
+			std.TestSetRealm(std.NewUserRealm(positionAddr))
 
-			transferUGNOT(consts.POSITION_ADDR, consts.POSITION_ADDR, amount)
+			transferUGNOT(positionAddr, positionAddr, amount)
 
 			// Perform wrapping
 			wrappedAmount := safeWrapNativeToken(tt.amountDesired, tt.userAddress)

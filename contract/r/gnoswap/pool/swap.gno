@@ -57,7 +57,7 @@ func Swap(
 		if err := common.RouterOnly(caller); err != nil {
 			panic(newErrorWithDetail(
 				errNoPermission,
-				ufmt.Sprintf("only router(%s) can call pool swap(), called from %s", consts.ROUTER_ADDR, caller.String()),
+				ufmt.Sprintf("only router(%s) can call pool swap(), called from %s", routerAddr, caller.String()),
 			))
 		}
 	}
@@ -522,12 +522,12 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 func (p *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amount0, amount1 *i256.Int) {
 	if zeroForOne {
 		// payer > POOL
-		p.safeTransferFrom(payer, consts.POOL_ADDR, p.token0Path, amount0.Abs(), true)
+		p.safeTransferFrom(payer, poolAddr, p.token0Path, amount0.Abs(), true)
 		// POOL > recipient
 		p.safeTransfer(recipient, p.token1Path, amount1, false)
 	} else {
 		// payer > POOL
-		p.safeTransferFrom(payer, consts.POOL_ADDR, p.token1Path, amount1.Abs(), false)
+		p.safeTransferFrom(payer, poolAddr, p.token1Path, amount1.Abs(), false)
 		// POOL > recipient
 		p.safeTransfer(recipient, p.token0Path, amount0, true)
 	}

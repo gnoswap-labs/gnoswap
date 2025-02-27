@@ -60,7 +60,7 @@ func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee()*3)
+		gns.Approve(poolAddr, pl.GetPoolCreationFee()*3)
 
 		pl.CreatePool(barPath, quxPath, 100, "79228162514264337593543950337")
 		SetPoolTierByAdmin(`gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100`, 1)
@@ -74,8 +74,8 @@ func testMintBarQux100_1(t *testing.T) {
 	t.Run("mint position 01, bar:qux:100", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		bar.Approve(poolAddr, consts.UINT64_MAX)
+		qux.Approve(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,      // token0
@@ -106,8 +106,8 @@ func testCreateExternalIncentiveBar(t *testing.T) {
 	t.Run("create external incentive bar", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.STAKER_ADDR, depositGnsAmount)
+		bar.Approve(stakerAddr, consts.UINT64_MAX)
+		gns.Approve(stakerAddr, depositGnsAmount)
 
 		CreateExternalIncentive(
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
@@ -125,7 +125,7 @@ func testCreateExternalIncentiveGns(t *testing.T) {
 	t.Run("create external incentive gns", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
+		gns.Approve(stakerAddr, consts.UINT64_MAX)
 
 		CreateExternalIncentive(
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
@@ -142,7 +142,7 @@ func testStakeToken_1(t *testing.T) {
 	t.Run("stake token 01", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gnft.Approve(consts.STAKER_ADDR, positionIdFrom(1))
+		gnft.Approve(stakerAddr, positionIdFrom(1))
 		StakeToken(1, "")
 
 		std.TestSkipHeights(1)

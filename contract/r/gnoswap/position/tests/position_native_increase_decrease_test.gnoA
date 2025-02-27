@@ -26,7 +26,7 @@ func testPoolInitCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
+		gns.Approve(poolAddr, pl.GetPoolCreationFee())
 		pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 	})
 }
@@ -35,21 +35,21 @@ func testMintPosition(t *testing.T) {
 	t.Run("mint position", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // WRAP
+		wugnot.Approve(positionAddr, consts.UINT64_MAX) // WRAP
 
 		// prepare 50000005ugnot (5 for refund test)
 		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(50000005))
 
-		std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 200000000}})
-		uassert.Equal(t, ugnotBalanceOf(t, consts.POSITION_ADDR), uint64(200000000))
+		std.TestIssueCoins(positionAddr, std.Coins{{"ugnot", 200000000}})
+		uassert.Equal(t, ugnotBalanceOf(t, positionAddr), uint64(200000000))
 
 		// send & set orig send
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
-		banker.SendCoins(adminAddr, consts.POSITION_ADDR, std.Coins{{"ugnot", 50000005}})
+		banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 50000005}})
 		std.TestSetOriginSend(std.Coins{{"ugnot", 50000005}}, nil)
 
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(0))
@@ -96,10 +96,10 @@ func testIncreaseLiquidity(t *testing.T) {
 	t.Run("increase liquidity", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // WRAP
+		wugnot.Approve(positionAddr, consts.UINT64_MAX) // WRAP
 
 		pool := getPoolFromPositionId(t, uint64(1))
 		oldLiquidity := pool.Liquidity()
@@ -107,11 +107,11 @@ func testIncreaseLiquidity(t *testing.T) {
 		// prepare 10000005ugnot (5 for refund test)
 		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 10000005}})
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(10000010))
-		uassert.Equal(t, ugnotBalanceOf(t, consts.POSITION_ADDR), uint64(200000000))
+		uassert.Equal(t, ugnotBalanceOf(t, positionAddr), uint64(200000000))
 
 		// send & set orig send
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
-		banker.SendCoins(adminAddr, consts.POSITION_ADDR, std.Coins{{"ugnot", 10000005}})
+		banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 10000005}})
 		std.TestSetOriginSend(std.Coins{{"ugnot", 10000005}}, nil)
 
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(5))

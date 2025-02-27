@@ -45,7 +45,7 @@ func MintAndStake(
 
 		// send it over to position to wrap
 		banker := std.NewBanker(std.BankerTypeRealmSend)
-		banker.SendCoins(consts.STAKER_ADDR, consts.POSITION_ADDR, std.Coins{{Denom: "ugnot", Amount: int64(ugnotSent)}})
+		banker.SendCoins(stakerAddr, positionAddr, std.Coins{{Denom: "ugnot", Amount: int64(ugnotSent)}})
 	}
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(
@@ -59,7 +59,7 @@ func MintAndStake(
 		amount0Min,
 		amount1Min,
 		deadline,
-		consts.STAKER_ADDR,
+		stakerAddr,
 		std.PreviousRealm().Address(),
 		// TODO: need to add referrer address here?
 		"",

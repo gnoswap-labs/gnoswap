@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -13,10 +12,10 @@ func setupPositionGetter(t *testing.T) {
 	t.Helper()
 
 	CreatePoolWithoutFee(t)
-	std.TestSetRealm(std.NewUserRealm(admin))
+	std.TestSetRealm(std.NewUserRealm(adminAddr))
 	position := Position{
 		nonce:                    u256.Zero(),
-		operator:                 consts.POSITION_ADDR,
+		operator:                 positionAddr,
 		poolKey:                  "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
 		tickLower:                -10000,
 		tickUpper:                10000,
@@ -57,7 +56,7 @@ func TestPositionGetPositionOperator(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	operator := PositionGetPositionOperator(positionId)
-	uassert.Equal(t, consts.POSITION_ADDR, operator)
+	uassert.Equal(t, positionAddr, operator)
 }
 
 func TestPositionGetPositionPoolKey(t *testing.T) {
@@ -141,7 +140,7 @@ func TestPositionGetPositionOperatorStr(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	operator := PositionGetPositionOperatorStr(positionId)
-	uassert.Equal(t, string(consts.POSITION_ADDR), operator)
+	uassert.Equal(t, string(positionAddr), operator)
 }
 
 func TestPositionGetPositionLiquidityStr(t *testing.T) {

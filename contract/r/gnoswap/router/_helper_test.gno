@@ -17,6 +17,8 @@ import (
 	"gno.land/r/onbloc/foo"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
+
+	"gno.land/r/gnoswap/v1/access"
 )
 
 const (
@@ -67,16 +69,14 @@ var (
 )
 
 var (
-	admin       = consts.ADMIN
+	admin, _       = access.GetAddress(access.ROLE_ADMIN)
 	adminAddr   = admin
+
 	alice       = testutils.TestAddress("alice")
 	bob         = testutils.TestAddress("bob")
-	pool        = consts.POOL_ADDR
-	position    = consts.POSITION_ADDR
-	router      = consts.ROUTER_ADDR
-	protocolFee = consts.PROTOCOL_FEE_ADDR
-	adminRealm  = std.NewUserRealm(admin)
-	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
+
+	adminRealm     = std.NewUserRealm(admin)
+	posRealm       = std.NewCodeRealm(consts.POSITION_PATH)
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
@@ -89,15 +89,15 @@ func InitialisePoolTest(t *testing.T) {
 	ugnotDeposit(t, admin, 100_000_000_000_000)
 
 	std.TestSetOriginCaller(admin)
-	TokenApprove(t, gnsPath, admin, pool, maxApprove)
+	TokenApprove(t, gnsPath, admin, poolAddr, maxApprove)
 	CreatePool(t, wugnotPath, gnsPath, fee3000, "79228162514264337593543950336", admin)
 
 	// 2. create position
 	std.TestSetOriginCaller(alice)
 	TokenFaucet(t, wugnotPath, alice)
 	TokenFaucet(t, gnsPath, alice)
-	TokenApprove(t, wugnotPath, alice, pool, uint64(1000))
-	TokenApprove(t, gnsPath, alice, pool, uint64(1000))
+	TokenApprove(t, wugnotPath, alice, poolAddr, uint64(1000))
+	TokenApprove(t, gnsPath, alice, poolAddr, uint64(1000))
 }
 
 func TokenFaucet(t *testing.T, tokenPath string, to std.Address) {
@@ -392,8 +392,8 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 	// make actual data to test resetting not only position's state but also pool's state
 	std.TestSetRealm(adminRealm)
 
-	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
-	TokenApprove(t, bazPath, admin, pool, consts.UINT64_MAX)
+	TokenApprove(t, barPath, admin, poolAddr, consts.UINT64_MAX)
+	TokenApprove(t, bazPath, admin, poolAddr, consts.UINT64_MAX)
 
 	// mint position
 	return pn.Mint(
@@ -418,8 +418,8 @@ func MakeSecondMintPositionWithoutFee(t *testing.T) (uint64, string, string, str
 
 	std.TestSetRealm(adminRealm)
 
-	TokenApprove(t, bazPath, admin, pool, consts.UINT64_MAX)
-	TokenApprove(t, quxPath, admin, pool, consts.UINT64_MAX)
+	TokenApprove(t, bazPath, admin, poolAddr, consts.UINT64_MAX)
+	TokenApprove(t, quxPath, admin, poolAddr, consts.UINT64_MAX)
 
 	return pn.Mint(
 		bazPath,
@@ -443,8 +443,8 @@ func MakeThirdMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 
 	std.TestSetRealm(adminRealm)
 
-	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
-	TokenApprove(t, fooPath, admin, pool, consts.UINT64_MAX)
+	TokenApprove(t, barPath, admin, poolAddr, consts.UINT64_MAX)
+	TokenApprove(t, fooPath, admin, poolAddr, consts.UINT64_MAX)
 
 	return pn.Mint(
 		barPath,
@@ -469,8 +469,8 @@ func MakeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 	// make actual data to test resetting not only position's state but also pool's state
 	std.TestSetRealm(adminRealm)
 
-	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
-	TokenApprove(t, bazPath, admin, pool, consts.UINT64_MAX)
+	TokenApprove(t, barPath, admin, poolAddr, consts.UINT64_MAX)
+	TokenApprove(t, bazPath, admin, poolAddr, consts.UINT64_MAX)
 
 	// mint position
 	return pn.Mint(

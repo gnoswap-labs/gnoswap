@@ -10,6 +10,8 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
+
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -50,17 +52,25 @@ var (
 )
 
 var (
-	adminAddr   = consts.ADMIN
-	admin       = consts.ADMIN
-	alice       = testutils.TestAddress("alice")
-	pool        = consts.POOL_ADDR
-	protocolFee = consts.PROTOCOL_FEE_ADDR
-	adminRealm  = std.NewUserRealm(admin)
-	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm    = std.NewCodeRealm(consts.ROUTER_PATH)
+	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	admin        = adminAddr
+	adminRealm   = std.NewUserRealm(admin)
+
+	alice = testutils.TestAddress("alice")
+
+	govGovernanceAddr, _ = access.GetAddress(access.ROLE_GOVERNANCE)
+	poolAddr, _          = access.GetAddress(access.ROLE_POOL)
+	routerAddr, _        = access.GetAddress(access.ROLE_ROUTER)
+	emissionAddr, _      = access.GetAddress(access.ROLE_EMISSION)
+
+	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
+
+	dummyAddr  = testutils.TestAddress("dummy")
+	dummyRealm = std.NewUserRealm(dummyAddr)
 )
 
 func CreatePool(t *testing.T,
@@ -97,7 +107,7 @@ func InitialisePoolTest(t *testing.T) {
 	TokenFaucet(t, gnsPath, admin)
 
 	std.TestSetOriginCaller(admin)
-	TokenApprove(t, gnsPath, admin, pool, maxApprove)
+	TokenApprove(t, gnsPath, admin, poolAddr, maxApprove)
 	poolPath := pl.GetPoolPath(wugnotPath, gnsPath, fee3000)
 	if !pl.DoesPoolPathExist(poolPath) {
 		pl.CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
@@ -106,8 +116,8 @@ func InitialisePoolTest(t *testing.T) {
 	std.TestSetOriginCaller(alice)
 	TokenFaucet(t, wugnotPath, alice)
 	TokenFaucet(t, gnsPath, alice)
-	TokenApprove(t, wugnotPath, alice, pool, uint64(1000))
-	TokenApprove(t, gnsPath, alice, pool, uint64(1000))
+	TokenApprove(t, wugnotPath, alice, poolAddr, uint64(1000))
+	TokenApprove(t, gnsPath, alice, poolAddr, uint64(1000))
 	MintPosition(t,
 		wugnotPath,
 		gnsPath,
@@ -143,8 +153,8 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 	// make actual data to test resetting not only position's state but also pool's state
 	std.TestSetRealm(adminRealm)
 
-	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
-	TokenApprove(t, bazPath, admin, pool, consts.UINT64_MAX)
+	TokenApprove(t, barPath, admin, poolAddr, consts.UINT64_MAX)
+	TokenApprove(t, bazPath, admin, poolAddr, consts.UINT64_MAX)
 
 	// mint position
 	return pn.Mint(
@@ -494,11 +504,11 @@ func gnsBalanceCheck(t *testing.T, beforeBalance gnsBalanceTracker, printChange 
 
 	caller := std.PreviousRealm().Address()
 	height := std.ChainHeight()
-	stakerBalance := gns.BalanceOf(consts.STAKER_ADDR)
+	stakerBalance := gns.BalanceOf(stakerAddr)
 	devOpsBalance := gns.BalanceOf(consts.DEV_OPS)
-	communityPoolBalance := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
+	communityPoolBalance := gns.BalanceOf(communityPoolAddr)
 	govStakerBalance := gns.BalanceOf(consts.GOV_STAKER_ADDR)
-	protocolFeeBalance := gns.BalanceOf(consts.PROTOCOL_FEE_ADDR)
+	protocolFeeBalance := gns.BalanceOf(protocolFeeAddr)
 	callerBalance := gns.BalanceOf(caller)
 
 	return gnsBalanceTracker{
@@ -525,11 +535,11 @@ func getPrintInfo(t *testing.T) string {
 	emissionDebug := ApiEmissionDebugInfo{}
 	emissionDebug.Height = std.ChainHeight()
 	emissionDebug.Time = time.Now().Unix()
-	emissionDebug.GnsStaker = gns.BalanceOf(consts.STAKER_ADDR)
+	emissionDebug.GnsStaker = gns.BalanceOf(stakerAddr)
 	emissionDebug.GnsDevOps = gns.BalanceOf(consts.DEV_OPS)
-	emissionDebug.GnsCommunityPool = gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
+	emissionDebug.GnsCommunityPool = gns.BalanceOf(communityPoolAddr)
 	emissionDebug.GnsGovStaker = gns.BalanceOf(consts.GOV_STAKER_ADDR)
-	emissionDebug.GnsProtocolFee = gns.BalanceOf(consts.PROTOCOL_FEE_ADDR)
+	emissionDebug.GnsProtocolFee = gns.BalanceOf(protocolFeeAddr)
 	emissionDebug.GnsADMIN = gns.BalanceOf(consts.ADMIN)
 
 	poolTiers := make(map[string]uint64)

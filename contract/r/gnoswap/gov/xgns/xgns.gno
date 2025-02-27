@@ -41,7 +41,7 @@ func TotalSupply() uint64 { return token.TotalSupply() }
 //
 // Notes:
 // - `TotalSupply`: Represents the total amount of xGNS tokens minted.
-// - `BalanceOf(consts.LAUNCHPAD_ADDR)`: Retrieves the amount of xGNS tokens held by the launchpad contract.
+// - `BalanceOf(launchpadAddr)`: Retrieves the amount of xGNS tokens held by the launchpad contract.
 func VotingSupply() uint64 {
 	total := token.TotalSupply() // this is entire amount of xGNS minted
 
@@ -227,9 +227,10 @@ func BurnByLaunchPad(from std.Address, amount uint64) {
 
 	caller := std.PreviousRealm().Address()
 	if err := access.LaunchpadOnly(caller); err != nil {
+		launchpadAddr := getContractAddress(access.ROLE_LAUNCHPAD)
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("only launchpad(%s) contract can call BurnByLaunchPad, called from %s", consts.LAUNCHPAD_ADDR.String(), caller.String()),
+			ufmt.Sprintf("only launchpad(%s) contract can call BurnByLaunchPad, called from %s", launchpadAddr.String(), caller.String()),
 		))
 	}
 	burn(from, amount)

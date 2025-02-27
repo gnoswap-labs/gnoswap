@@ -34,7 +34,7 @@ func TestInitCreatePool(t *testing.T) {
 	// call gns faucet to get creation fee
 	std.TestSetRealm(adminRealm)
 
-	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // x2.7
 }
 
@@ -42,15 +42,15 @@ func TestInitCreatePool(t *testing.T) {
 func TestMint(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
 	std.TestSetRealm(posRealm)
 	amount0, amount1 := Mint(
 		fooPath,
 		barPath,
 		fee500,
-		consts.POSITION_ADDR,
+		positionAddr,
 		test_tickLower,
 		test_tickUpper,
 		test_liquidityExpectStr,
@@ -63,16 +63,16 @@ func TestMint(t *testing.T) {
 	test_liquidity := pool.Liquidity()
 	uassert.Equal(t, test_liquidity.Dec(), test_liquidityExpectStr)
 
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 
-	m81, m82 := Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	m101, m102 := Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	m81, m82 := Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	m101, m102 := Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 
 	uassert.NotEqual(t, m81, "0")
 	uassert.NotEqual(t, m82, "0")
@@ -83,27 +83,27 @@ func TestMint(t *testing.T) {
 	uassert.Equal(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))))
 
 	// tickLower > currentTick == don't add to current liquidity
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower2, test_tickUpper2, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower2, test_tickUpper2, test_liquidityExpectStr, adminAddr)
 
 	// tickUpper < current tick == don't add to current liquidity
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, -test_tickUpper2, -test_tickLower2, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, -test_tickUpper2, -test_tickLower2, test_liquidityExpectStr, adminAddr)
 
 	// tickUpper < tickLower == don't add to current liquidity
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, -test_tickUpper, -test_tickLower, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, -test_tickUpper, -test_tickLower, test_liquidityExpectStr, adminAddr)
 
 	// test_liquidity = pool.Liquidity()
 	uassert.Equal(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))))
 
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 
 	test_liquidity = pool.Liquidity()
 	uassert.Equal(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20))))
@@ -152,18 +152,18 @@ func TestCollect(t *testing.T) {
 	test_liquidity := pool.Liquidity()
 	uassert.Equal(t, test_liquidity.ToString(), "0")
 
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString())
 	c11, c12 := Collect(barPath, fooPath, fee500, adminAddr, test_tickLower, test_tickUpper, "50000000", "50000000")
 
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString())
 	c21, c22 := Collect(barPath, fooPath, fee500, adminAddr, test_tickLower, test_tickUpper, "50000000", "50000000")
 
 	uassert.Equal(t, c11, c21) // 443
 	uassert.Equal(t, c12, c22) // 1206
 
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString())
 	c31, c32 := Collect(barPath, fooPath, fee500, adminAddr, test_tickLower, test_tickUpper, "100", "100")
 	uassert.Equal(t, c31, "100")
@@ -174,7 +174,7 @@ func TestCollect(t *testing.T) {
 	uassert.Equal(t, c42, "1106") // 1106 = c22 - 100
 
 	// Mint > No Burn => nothing to collect
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
 	// Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr*15)
 	c51, c52 := Collect(barPath, fooPath, fee500, adminAddr, test_tickLower, test_tickUpper, "50000000", "50000000")
 	uassert.Equal(t, c51, "0")
@@ -194,14 +194,14 @@ func TestSwap(t *testing.T) {
 	uassert.Equal(t, test_liquidity.ToString(), "0")
 
 	std.TestSetRealm(posRealm)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20000)).ToString(), adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20000)).ToString(), adminAddr)
 
 	// Swap several times
 	std.TestSetRealm(rouRealm)
 	test_price := consts.MIN_PRICE
 	{
-		poolOldToken0Bal := common.GetToken(pool.token0Path).BalanceOf(consts.POOL_ADDR)
-		poolOldToken1Bal := common.GetToken(pool.token1Path).BalanceOf(consts.POOL_ADDR)
+		poolOldToken0Bal := common.GetToken(pool.token0Path).BalanceOf(poolAddr)
+		poolOldToken1Bal := common.GetToken(pool.token1Path).BalanceOf(poolAddr)
 
 		userOldToken0Bal := common.GetToken(pool.token0Path).BalanceOf(adminAddr)
 		userOldToken1Bal := common.GetToken(pool.token1Path).BalanceOf(adminAddr)
@@ -222,8 +222,8 @@ func TestSwap(t *testing.T) {
 		intAmount0, _ := strconv.Atoi(amount0)
 		intAmount1, _ := strconv.Atoi(amount1)
 
-		poolNewToken0Bal := common.GetToken(pool.token0Path).BalanceOf(consts.POOL_ADDR)
-		poolNewToken1Bal := common.GetToken(pool.token1Path).BalanceOf(consts.POOL_ADDR)
+		poolNewToken0Bal := common.GetToken(pool.token0Path).BalanceOf(poolAddr)
+		poolNewToken1Bal := common.GetToken(pool.token1Path).BalanceOf(poolAddr)
 
 		userNewToken0Bal := common.GetToken(pool.token0Path).BalanceOf(adminAddr)
 		userNewToken1Bal := common.GetToken(pool.token1Path).BalanceOf(adminAddr)
@@ -235,8 +235,8 @@ func TestSwap(t *testing.T) {
 	}
 
 	{
-		poolOldToken0Bal := common.GetToken(pool.token0Path).BalanceOf(consts.POOL_ADDR)
-		poolOldToken1Bal := common.GetToken(pool.token1Path).BalanceOf(consts.POOL_ADDR)
+		poolOldToken0Bal := common.GetToken(pool.token0Path).BalanceOf(poolAddr)
+		poolOldToken1Bal := common.GetToken(pool.token1Path).BalanceOf(poolAddr)
 
 		userOldToken0Bal := common.GetToken(pool.token0Path).BalanceOf(adminAddr)
 		userOldToken1Bal := common.GetToken(pool.token1Path).BalanceOf(adminAddr)
@@ -246,8 +246,8 @@ func TestSwap(t *testing.T) {
 		intAmount0, _ := strconv.Atoi(amount0)
 		intAmount1, _ := strconv.Atoi(amount1)
 
-		poolNewToken0Bal := common.GetToken(pool.token0Path).BalanceOf(consts.POOL_ADDR)
-		poolNewToken1Bal := common.GetToken(pool.token1Path).BalanceOf(consts.POOL_ADDR)
+		poolNewToken0Bal := common.GetToken(pool.token0Path).BalanceOf(poolAddr)
+		poolNewToken1Bal := common.GetToken(pool.token1Path).BalanceOf(poolAddr)
 
 		userNewToken0Bal := common.GetToken(pool.token0Path).BalanceOf(adminAddr)
 		userNewToken1Bal := common.GetToken(pool.token1Path).BalanceOf(adminAddr)
@@ -259,8 +259,8 @@ func TestSwap(t *testing.T) {
 	}
 
 	{
-		poolOldToken0Bal := common.GetToken(pool.token0Path).BalanceOf(consts.POOL_ADDR)
-		poolOldToken1Bal := common.GetToken(pool.token1Path).BalanceOf(consts.POOL_ADDR)
+		poolOldToken0Bal := common.GetToken(pool.token0Path).BalanceOf(poolAddr)
+		poolOldToken1Bal := common.GetToken(pool.token1Path).BalanceOf(poolAddr)
 
 		userOldToken0Bal := common.GetToken(pool.token0Path).BalanceOf(adminAddr)
 		userOldToken1Bal := common.GetToken(pool.token1Path).BalanceOf(adminAddr)
@@ -270,8 +270,8 @@ func TestSwap(t *testing.T) {
 		intAmount0, _ := strconv.Atoi(amount0)
 		intAmount1, _ := strconv.Atoi(amount1)
 
-		poolNewToken0Bal := common.GetToken(pool.token0Path).BalanceOf(consts.POOL_ADDR)
-		poolNewToken1Bal := common.GetToken(pool.token1Path).BalanceOf(consts.POOL_ADDR)
+		poolNewToken0Bal := common.GetToken(pool.token0Path).BalanceOf(poolAddr)
+		poolNewToken1Bal := common.GetToken(pool.token1Path).BalanceOf(poolAddr)
 
 		userNewToken0Bal := common.GetToken(pool.token0Path).BalanceOf(adminAddr)
 		userNewToken1Bal := common.GetToken(pool.token1Path).BalanceOf(adminAddr)
@@ -284,8 +284,8 @@ func TestSwap(t *testing.T) {
 
 	// Swap token1 -> token0
 	{
-		poolOldToken0Bal := common.GetToken(pool.token0Path).BalanceOf(consts.POOL_ADDR)
-		poolOldToken1Bal := common.GetToken(pool.token1Path).BalanceOf(consts.POOL_ADDR)
+		poolOldToken0Bal := common.GetToken(pool.token0Path).BalanceOf(poolAddr)
+		poolOldToken1Bal := common.GetToken(pool.token1Path).BalanceOf(poolAddr)
 
 		userOldToken0Bal := common.GetToken(pool.token0Path).BalanceOf(adminAddr)
 		userOldToken1Bal := common.GetToken(pool.token1Path).BalanceOf(adminAddr)
@@ -295,8 +295,8 @@ func TestSwap(t *testing.T) {
 		intAmount0, _ := strconv.Atoi(amount0)
 		intAmount1, _ := strconv.Atoi(amount1)
 
-		poolNewToken0Bal := common.GetToken(pool.token0Path).BalanceOf(consts.POOL_ADDR)
-		poolNewToken1Bal := common.GetToken(pool.token1Path).BalanceOf(consts.POOL_ADDR)
+		poolNewToken0Bal := common.GetToken(pool.token0Path).BalanceOf(poolAddr)
+		poolNewToken1Bal := common.GetToken(pool.token1Path).BalanceOf(poolAddr)
 
 		userNewToken0Bal := common.GetToken(pool.token0Path).BalanceOf(adminAddr)
 		userNewToken1Bal := common.GetToken(pool.token1Path).BalanceOf(adminAddr)

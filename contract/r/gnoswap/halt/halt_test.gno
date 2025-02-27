@@ -8,13 +8,15 @@ import (
 	"gno.land/p/demo/uassert"
 
 	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 	phalt "gno.land/p/gnoswap/halt"
 )
 
 var (
-	adminRealm = std.NewUserRealm(consts.ADMIN)
-	govRealm   = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
-	userRealm  = std.NewCodeRealm("gno.land/r/demo/users") // for testing non-governance, non-admin caller
+	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminRealm   = std.NewUserRealm(adminAddr)
+	govRealm     = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
+	userRealm    = std.NewCodeRealm("gno.land/r/demo/users") // for testing non-governance, non-admin caller
 )
 
 func TestHalts(t *testing.T) {
