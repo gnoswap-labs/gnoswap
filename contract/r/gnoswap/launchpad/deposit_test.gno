@@ -328,7 +328,7 @@ func TestDepositGns(t *testing.T) {
 		gns.Transfer(testAddr, 1000000)
 
 		std.TestSetRealm(std.NewUserRealm(testAddr))
-		gns.Approve(consts.LAUNCHPAD_ADDR, 1000000)
+		gns.Approve(launchpadAddr, 1000000)
 
 		std.TestSkipHeights(10)
 		depositId := DepositGns(project.id+":30", 1000000, "")
@@ -594,7 +594,7 @@ func TestProcessCollectedDeposits_TransactionFail(t *testing.T) {
 	deposit, _ := createDeposit(info, 1000)
 	deposits[deposit.id] = deposit
 
-	xgnsMint(t, mockXGNS, consts.LAUNCHPAD_ADDR, 500)
+	xgnsMint(t, mockXGNS, launchpadAddr, 500)
 
 	std.TestSetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
 
@@ -608,7 +608,7 @@ func TestProcessCollectedDeposits_BalanceChanges(t *testing.T) {
 	projects[project.id] = project
 
 	depositAmount := uint64(1000)
-	xgnsMint(t, mockXGNS, consts.LAUNCHPAD_ADDR, depositAmount)
+	xgnsMint(t, mockXGNS, launchpadAddr, depositAmount)
 
 	info := ProjectTierInfo{
 		Project:       project,
@@ -748,20 +748,20 @@ func TestCollectDepositGnsByDepositId_ExactClaimable(t *testing.T) {
 
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	std.TestSkipHeights(int64(10))
-	gns.MintGns(consts.LAUNCHPAD_ADDR)
+	gns.MintGns(launchpadAddr)
 	std.TestSkipHeights(int64(10))
 
 	std.TestSetRealm(std.NewUserRealm(userA))
-	gns.Approve(consts.LAUNCHPAD_ADDR, 1000)
+	gns.Approve(launchpadAddr, 1000)
 	token, _ := setupXGNSTest(t)
 
 	std.TestSetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
 	std.TestSetOriginCaller(std.Address(consts.LAUNCHPAD_PATH))
-	xgnsMint(t, token, consts.LAUNCHPAD_ADDR, 1000)
+	xgnsMint(t, token, launchpadAddr, 1000)
 
-	std.TestSetRealm(std.NewUserRealm(consts.LAUNCHPAD_ADDR))
+	std.TestSetRealm(std.NewUserRealm(launchpadAddr))
 	xgns.Mint(
-		consts.LAUNCHPAD_ADDR,
+		launchpadAddr,
 		1000,
 	)
 

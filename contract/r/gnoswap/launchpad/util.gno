@@ -72,7 +72,7 @@ func containsString(arr []string, val string) bool {
 // GetOrigPkgAddr returns the original package address.
 // In position contract, original package address is the position address.
 func GetOrigPkgAddr() std.Address {
-	return consts.LAUNCHPAD_ADDR
+	return launchpadAddr
 }
 
 // isUserCall returns true if the caller is a user.

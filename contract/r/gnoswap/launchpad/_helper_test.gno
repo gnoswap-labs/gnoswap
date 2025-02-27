@@ -15,8 +15,11 @@ var (
 	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
 	adminUser = adminAddr
 
-	launchpadAddr, _ = access.GetAddress(access.ROLE_LAUNCHPAD)
 	govStakerAddr, _ = access.GetAddress(access.ROLE_GOV_STAKER)
+	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
+	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
+	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
 
 	fooPath string = "gno.land/r/onbloc/foo"
 	barPath string = "gno.land/r/onbloc/bar"
