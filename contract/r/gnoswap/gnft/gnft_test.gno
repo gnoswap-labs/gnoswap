@@ -10,7 +10,6 @@ import (
 	"gno.land/p/demo/uassert"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/access"
 )
 
 const (
@@ -18,7 +17,6 @@ const (
 )
 
 var (
-	positionAddr, _ = access.GetAddress(access.ROLE_POSITION)
 	positionRealm = std.NewCodeRealm(consts.POSITION_PATH)
 
 	addr01      = testutils.TestAddress("addr01")
