@@ -1,14 +1,11 @@
 package position
 
 import (
-	"std"
-
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/demo/wugnot"
-	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 

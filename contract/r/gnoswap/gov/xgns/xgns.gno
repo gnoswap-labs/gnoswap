@@ -8,7 +8,6 @@ import (
 	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/access"
 
 	phalt "gno.land/p/gnoswap/halt"

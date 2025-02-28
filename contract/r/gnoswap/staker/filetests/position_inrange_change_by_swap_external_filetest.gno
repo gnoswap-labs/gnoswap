@@ -17,12 +17,9 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/testutils"
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-
-	"gno.land/r/demo/wugnot"
 
 	"gno.land/r/gnoswap/v1/access"
 

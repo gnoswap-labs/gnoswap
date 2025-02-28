@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"std"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -12,8 +11,7 @@ import (
 	"gno.land/r/demo/wugnot"
 
 	"gno.land/r/gnoswap/v1/access"
-	en "gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/gnft"
+	en "gno.land/r/gnoswap/v1/emission""gno.land/r/gnoswap/v1/gnft"
 	pl "gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/referral"
 )
