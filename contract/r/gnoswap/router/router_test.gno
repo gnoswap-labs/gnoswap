@@ -18,8 +18,6 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
 )
 
 func TestFinalizeSwap(t *testing.T) {
