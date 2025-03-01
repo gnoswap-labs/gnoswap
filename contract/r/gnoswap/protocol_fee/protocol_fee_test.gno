@@ -17,8 +17,6 @@ var (
 	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
 	adminRealm   = std.NewUserRealm(adminAddr)
 	adminUser    = adminAddr
-
-	devOpsAddr, _ = access.GetAddress(access.ROLE_DEVOPS)
 )
 
 func TestDistributeProtocolFee(t *testing.T) {
