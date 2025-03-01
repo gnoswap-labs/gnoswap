@@ -134,7 +134,7 @@ func testCreatePoolWugnotGns3000Tier01(t *testing.T) {
 		uassert.Equal(t, uint64(100000000000000), gns.TotalSupply())
 		uassert.Equal(t, uint64(0), gnsBalance(emissionAddr))
 		uassert.Equal(t, uint64(0), gnsBalance(stakerAddr))
-		uassert.Equal(t, uint64(0), gnsBalance(consts.DEV_OPS))
+		uassert.Equal(t, uint64(0), gnsBalance(devOpsAddr))
 		std.TestSkipHeights(3)
 	})
 }
@@ -1221,7 +1221,7 @@ func checkGnsBalance(t *testing.T, adjustAmount uint64) {
 	uassert.True(t, isNear(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(stakerAddr)+totalEmissionSent))
 
 	expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((blockPassedFromGenesis - 3) * oneBlockDevOpsAmount)
-	uassert.True(t, isNear(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS)))
+	uassert.True(t, isNear(t, expectedDevOpsBalance, gnsBalance(devOpsAddr)))
 }
 
 // check whether the actual value is within 99.999% of the expected value

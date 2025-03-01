@@ -59,17 +59,18 @@ var (
 var (
 	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
 
-	alice       = testutils.TestAddress("alice")
-	bob         = testutils.TestAddress("bob")
+	alice = testutils.TestAddress("alice")
+	bob   = testutils.TestAddress("bob")
 
-	emissionAddr, _ = access.GetAddress(access.ROLE_EMISSION)
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+	emissionAddr, _    = access.GetAddress(access.ROLE_EMISSION)
+	poolAddr, _        = access.GetAddress(access.ROLE_POOL)
 	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
-	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
+	routerAddr, _      = access.GetAddress(access.ROLE_ROUTER)
+	devOpsAddr, _      = access.GetAddress(access.ROLE_DEVOPS)
 
-	adminRealm  = std.NewUserRealm(adminAddr)
-	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm    = std.NewCodeRealm(consts.ROUTER_PATH)
+	adminRealm = std.NewUserRealm(adminAddr)
+	posRealm   = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}

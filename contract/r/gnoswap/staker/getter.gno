@@ -9,8 +9,6 @@ import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/p/gnoswap/consts"
-
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 )
@@ -709,7 +707,7 @@ func getCurrentInfo() currentInfo {
 		height:           std.ChainHeight(),
 		time:             time.Now().Unix(),
 		gnsStaker:        gns.BalanceOf(getAddress(access.ROLE_STAKER)),
-		gnsDevOps:        gns.BalanceOf(consts.DEV_OPS),
+		gnsDevOps:        gns.BalanceOf(devOpsAddr),
 		gnsCommunityPool: gns.BalanceOf(getAddress(access.ROLE_COMMUNITY_POOL)),
 		gnsGovStaker:     gns.BalanceOf(getAddress(access.ROLE_GOV_STAKER)),
 		gnsProtocolFee:   gns.BalanceOf(getAddress(access.ROLE_PROTOCOL_FEE)),

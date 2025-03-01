@@ -58,7 +58,7 @@ func initial(t *testing.T) {
 func delegateAdmin(t *testing.T) {
 	// gns before emission
 	uassert.Equal(t, gns.BalanceOf(stakerAddr), uint64(0))
-	uassert.Equal(t, gns.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, gns.BalanceOf(devOpsAddr), uint64(0))
 	uassert.Equal(t, gns.BalanceOf(communityPoolAddr), uint64(0))
 	uassert.Equal(t, gns.BalanceOf(govStakerAddr), uint64(0))
 
@@ -75,7 +75,7 @@ func delegateAdmin(t *testing.T) {
 	// 5% ≈ 713470.3
 
 	uassert.Equal(t, gns.BalanceOf(stakerAddr), uint64(9988584))
-	uassert.Equal(t, gns.BalanceOf(consts.DEV_OPS), uint64(2853881))
+	uassert.Equal(t, gns.BalanceOf(devOpsAddr), uint64(2853881))
 	uassert.Equal(t, gns.BalanceOf(communityPoolAddr), uint64(713470))
 	uassert.Equal(t, gns.BalanceOf(govStakerAddr), uint64(1713470))
 	// 1713470 (gov staker gns) - 1000000 (delegated gns) = 713470
@@ -92,7 +92,7 @@ func delegateAnother(t *testing.T) {
 	Delegate(dummyAddr, delegateAmount, "")
 
 	uassert.Equal(t, gns.BalanceOf(stakerAddr), uint64(19977168))
-	uassert.Equal(t, gns.BalanceOf(consts.DEV_OPS), uint64(5707762))
+	uassert.Equal(t, gns.BalanceOf(devOpsAddr), uint64(5707762))
 	uassert.Equal(t, gns.BalanceOf(communityPoolAddr), uint64(1426940))
 	uassert.Equal(t, gns.BalanceOf(govStakerAddr), uint64(7426940))
 	uassert.Equal(t, gns.BalanceOf(govStakerAddr)-xgns.TotalSupply(), uint64(1426940))
