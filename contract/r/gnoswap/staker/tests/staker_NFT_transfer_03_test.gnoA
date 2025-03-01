@@ -10,7 +10,6 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
 	"gno.land/p/gnoswap/consts"
@@ -86,7 +85,6 @@ func testPositionMint01(t *testing.T) {
 
 func testTransferNft(t *testing.T) {
 	t.Run("transfer nft", func(t *testing.T) {
-
 		t.Run("transfer nft to another address", func(t *testing.T) {
 			uassert.NotPanics(
 				t,
@@ -105,7 +103,6 @@ func testTransferNft(t *testing.T) {
 
 func testStakeToken01(t *testing.T) {
 	t.Run("admin can not stake(not a owner)", func(t *testing.T) {
-
 		uassert.PanicsWithMessage(
 			t,
 			`[GNOSWAP-STAKER-001] caller has no permission`,
