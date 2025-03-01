@@ -69,14 +69,15 @@ var (
 )
 
 var (
-	admin, _       = access.GetAddress(access.ROLE_ADMIN)
-	adminAddr   = admin
+	admin, _  = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr = admin
 
-	alice       = testutils.TestAddress("alice")
-	bob         = testutils.TestAddress("bob")
+	alice = testutils.TestAddress("alice")
+	bob   = testutils.TestAddress("bob")
 
-	adminRealm     = std.NewUserRealm(admin)
-	posRealm       = std.NewCodeRealm(consts.POSITION_PATH)
+	adminRealm  = std.NewUserRealm(admin)
+	routerRealm = std.NewUserRealm(routerAddr)
+	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
