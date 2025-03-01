@@ -29,6 +29,7 @@ var (
 
 	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
 	govStakerAddr, _   = access.GetAddress(access.ROLE_GOV_STAKER)
+	devOpsAddr, _      = access.GetAddress(access.ROLE_DEVOPS)
 )
 
 // DistributeProtocolFee distributes the protocol fee to devOps and gov/staker.
@@ -69,7 +70,7 @@ func DistributeProtocolFee() {
 
 			tokenTeller := common.GetTokenTeller(token)
 			if toDevOps > 0 {
-				tokenTeller.Transfer(consts.DEV_OPS, toDevOps)
+				tokenTeller.Transfer(devOpsAddr, toDevOps)
 			}
 
 			if toGovStaker > 0 {
