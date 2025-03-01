@@ -23,8 +23,8 @@ import (
 
 	"gno.land/r/gnoswap/v1/access"
 
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -32,31 +32,31 @@ import (
 )
 
 var (
-	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
-	adminUser  = adminAddr
-	adminRealm = std.NewUserRealm(adminAddr)
+	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminUser    = adminAddr
+	adminRealm   = std.NewUserRealm(adminAddr)
 
 	// g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup
 	externalCreatorAddr  = testutils.TestAddress("externalCreator")
 	externalCreatorUser  = externalCreatorAddr
 	externalCreatorRealm = std.NewUserRealm(externalCreatorAddr)
 
-	stakerAddr, _  = access.GetAddress(access.ROLE_STAKER)
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	poolAddr, _   = access.GetAddress(access.ROLE_POOL)
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
 
-	gnsPath    = "gno.land/r/gnoswap/v1/gns"
+	gnsPath = "gno.land/r/gnoswap/v1/gns"
 
-	fee100  uint32 = 100
+	fee100 uint32 = 100
 
 	max_timeout int64 = 9999999999
 
 	// external incentive deposit fee
 	depositGnsAmount uint64 = 1_000_000_000 // 1_000 GNS
 
-	TIMESTAMP_90DAYS  int64 = 90 * 24 * 60 * 60
+	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 )
 
 func main() {

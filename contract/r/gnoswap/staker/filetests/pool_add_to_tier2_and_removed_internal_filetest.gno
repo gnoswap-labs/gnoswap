@@ -27,20 +27,20 @@ import (
 
 	"gno.land/r/gnoswap/v1/access"
 
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 )
 
 var (
-	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
-	adminUser  = adminAddr
-	adminRealm = std.NewUserRealm(adminAddr)
+	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminUser    = adminAddr
+	adminRealm   = std.NewUserRealm(adminAddr)
 
-	stakerAddr, _  = access.GetAddress(access.ROLE_STAKER)
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	poolAddr, _   = access.GetAddress(access.ROLE_POOL)
 
 	wugnotAddr = consts.WUGNOT_ADDR
 
