@@ -7,7 +7,6 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -183,7 +182,7 @@ func transferToTarget(target int, amount uint64) {
 		accuDistributedToStaker += amount
 
 	case DEVOPS:
-		gns.Transfer(consts.DEV_OPS, amount)
+		gns.Transfer(devOpsAddr, amount)
 		distributedToDevOps += amount
 		accuDistributedToDevOps += amount
 

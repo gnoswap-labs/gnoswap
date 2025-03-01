@@ -59,7 +59,7 @@ func delegateFromAdminToDummy(t *testing.T) {
 
 	// gns before emission
 	uassert.Equal(t, gns.BalanceOf(stakerAddr), uint64(0))
-	uassert.Equal(t, gns.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, gns.BalanceOf(devOpsAddr), uint64(0))
 	uassert.Equal(t, gns.BalanceOf(communityPoolAddr), uint64(0))
 	uassert.Equal(t, gns.BalanceOf(govStakerAddr), uint64(0))
 
@@ -74,7 +74,7 @@ func delegateFromAdminToDummy(t *testing.T) {
 	// 5% ≈ 713470.3
 
 	uassert.Equal(t, gns.BalanceOf(stakerAddr), uint64(10702054))
-	uassert.Equal(t, gns.BalanceOf(consts.DEV_OPS), uint64(2853881))
+	uassert.Equal(t, gns.BalanceOf(devOpsAddr), uint64(2853881))
 	uassert.Equal(t, gns.BalanceOf(communityPoolAddr), uint64(713470))
 	uassert.Equal(t, gns.BalanceOf(govStakerAddr), uint64(1000000))
 	uassert.Equal(t, gns.BalanceOf(govStakerAddr)-xgns.TotalSupply(), uint64(0))
@@ -90,7 +90,7 @@ func delegetFromDummyToDummy(t *testing.T) {
 	Delegate(dummyAddr, 5000000, "")
 
 	uassert.Equal(t, gns.BalanceOf(stakerAddr), uint64(21404109))
-	uassert.Equal(t, gns.BalanceOf(consts.DEV_OPS), uint64(5707762))
+	uassert.Equal(t, gns.BalanceOf(devOpsAddr), uint64(5707762))
 	uassert.Equal(t, gns.BalanceOf(communityPoolAddr), uint64(1426940))
 	uassert.Equal(t, gns.BalanceOf(govStakerAddr), uint64(6000000))
 	uassert.Equal(t, gns.BalanceOf(govStakerAddr)-xgns.TotalSupply(), uint64(0))
@@ -104,11 +104,11 @@ func mockProtocolFee(t *testing.T) {
 	qux.Transfer(protocolFeeAddr, 2500)
 
 	uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), uint64(1000))
-	uassert.Equal(t, bar.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))
 	uassert.Equal(t, bar.BalanceOf(govStakerAddr), uint64(0))
 
 	uassert.Equal(t, qux.BalanceOf(protocolFeeAddr), uint64(2500))
-	uassert.Equal(t, qux.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
 	uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(0))
 }
 
@@ -154,11 +154,11 @@ func skipDummyBlocks(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), uint64(0))
-	uassert.Equal(t, bar.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))
 	uassert.Equal(t, bar.BalanceOf(govStakerAddr), uint64(1000))
 
 	uassert.Equal(t, qux.BalanceOf(protocolFeeAddr), uint64(0))
-	uassert.Equal(t, qux.BalanceOf(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
 	uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(2500))
 }
 
