@@ -64,7 +64,7 @@ func RemoveToken(tokenPath string) {
 	if isDefault {
 		panic(addDetailToError(
 			errDefaultExternalToken,
-			ufmt.Sprintf("external_token_list.gno__RemoveToken() || can not remove default token(%s)", tokenPath),
+			ufmt.Sprintf("can not remove default token(%s)", tokenPath),
 		))
 	}
 

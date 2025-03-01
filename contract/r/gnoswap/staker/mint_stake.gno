@@ -3,15 +3,13 @@ package staker
 import (
 	"std"
 
-	pn "gno.land/r/gnoswap/v1/position"
-
+	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
-
 	"gno.land/r/gnoswap/v1/gnft"
 
-	"gno.land/p/demo/grc/grc721"
+	pn "gno.land/r/gnoswap/v1/position"
 )
 
 // MintAndStake mints LP tokens and stakes them in a single transaction.
