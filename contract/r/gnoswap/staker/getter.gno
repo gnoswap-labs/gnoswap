@@ -579,8 +579,8 @@ func GetPrintExternalInfo() string {
 					EndTimestamp:      incentive.endTimestamp,
 					RewardPerBlock:    strconv.FormatUint(incentive.rewardPerBlock, 10),
 					Refundee:          incentive.refundee,
-					tokenAmountFull:   incentive.depositGnsAmount,
-					tokenAmountToGive: incentive.RewardSpent(uint64(std.ChainHeight())),
+					TokenAmountFull:   incentive.depositGnsAmount,
+					TokenAmountToGive: incentive.RewardSpent(uint64(std.ChainHeight())),
 					StartHeight:       incentive.startHeight,
 					EndHeight:         incentive.endHeight,
 				}
@@ -629,8 +629,8 @@ func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Nod
 				"endTimestamp":             json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
 				"rewardPerBlock":           json.StringNode("rewardPerBlock", incentive.RewardPerBlock),
 				"stakedOrExternalDuration": json.NumberNode("stakedOrExternalDuration", float64(stakedOrExternalDuration)),
-				"tokenAmountFull":          json.NumberNode("tokenAmountFull", float64(incentive.tokenAmountFull)),
-				"tokenAmountToGive":        json.NumberNode("tokenAmountToGive", float64(incentive.tokenAmountToGive)),
+				"tokenAmountFull":          json.NumberNode("tokenAmountFull", float64(incentive.TokenAmountFull)),
+				"tokenAmountToGive":        json.NumberNode("tokenAmountToGive", float64(incentive.TokenAmountToGive)),
 			}))
 		}
 
@@ -678,18 +678,18 @@ type ApiExternalDebugIncentive struct {
 	StartHeight       int64       `json:"startHeight"`
 	EndHeight         int64       `json:"endHeight"`
 	// FROM positionExternal -> externalRewards
-	tokenAmountX96    *u256.Uint `json:"tokenAmountX96"`
-	tokenAmount       uint64     `json:"tokenAmount"`
-	tokenAmountFull   uint64     `json:"tokenAmountFull"`
-	tokenAmountToGive uint64     `json:"tokenAmountToGive"`
+	TokenAmountX96    *u256.Uint `json:"tokenAmountX96"`
+	TokenAmount       uint64     `json:"tokenAmount"`
+	TokenAmountFull   uint64     `json:"tokenAmountFull"`
+	TokenAmountToGive uint64     `json:"tokenAmountToGive"`
 	// FROM externalWarmUpAmount
-	full30  uint64 `json:"full30"`
-	give30  uint64 `json:"give30"`
-	full50  uint64 `json:"full50"`
-	give50  uint64 `json:"give50"`
-	full70  uint64 `json:"full70"`
-	give70  uint64 `json:"give70"`
-	full100 uint64 `json:"full100"`
+	Full30  uint64 `json:"full30"`
+	Give30  uint64 `json:"give30"`
+	Full50  uint64 `json:"full50"`
+	Give50  uint64 `json:"give50"`
+	Full70  uint64 `json:"full70"`
+	Give70  uint64 `json:"give70"`
+	Full100 uint64 `json:"full100"`
 }
 
 // DEBUG INTERNAL (GNS EMISSION)
