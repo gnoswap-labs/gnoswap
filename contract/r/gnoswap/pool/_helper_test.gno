@@ -40,7 +40,7 @@ const (
 	maxApprove  uint64 = 18446744073709551615
 	max_timeout int64  = 9999999999
 
-	maxSqrtPriceLimitX96 string = "1461446703485210103287273052203988822378723970341"
+	maxSqrtPriceLimitX96 string = "1461373636630004318706518188784493106690254656249"
 )
 
 var (
@@ -56,17 +56,17 @@ var (
 )
 
 var (
-	adminAddr, _    = access.GetAddress(access.ROLE_ADMIN)
-	devOpsAddr, _   = access.GetAddress(access.ROLE_DEVOPS)
+	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
+	devOpsAddr, _ = access.GetAddress(access.ROLE_DEVOPS)
 
-	govAddr, _ = access.GetAddress(access.ROLE_GOVERNANCE)
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	govAddr, _      = access.GetAddress(access.ROLE_GOVERNANCE)
+	stakerAddr, _   = access.GetAddress(access.ROLE_STAKER)
 	emissionAddr, _ = access.GetAddress(access.ROLE_EMISSION)
 
-	alice           = testutils.TestAddress("alice")
-	adminRealm      = std.NewUserRealm(adminAddr)
-	posRealm        = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm        = std.NewCodeRealm(consts.ROUTER_PATH)
+	alice      = testutils.TestAddress("alice")
+	adminRealm = std.NewUserRealm(adminAddr)
+	posRealm   = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
@@ -375,8 +375,8 @@ func MintPositionAll(t *testing.T, caller std.Address) {
 			fee3000,
 			p.tickLower,
 			p.tickUpper,
-			"100",
-			"100",
+			"100000000",
+			"100000000",
 			"0",
 			"0",
 			max_timeout,

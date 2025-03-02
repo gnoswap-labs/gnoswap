@@ -52,7 +52,7 @@ func TestCreateFooBarPool_Should_be_failed_if_price_is_too_low(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-COMMON-003] value out of range || sqrtPriceX96 is out of range, sqrtPriceX96: 1`,
+		`[GNOSWAP-COMMON-003] value out of range || sqrtPriceX96(1) is out of range`,
 		func() {
 			CreatePool(fooPath, barPath, 3000, "1")
 		},
@@ -66,7 +66,7 @@ func TestCreateFooBarPool_Should_be_failed_if_price_is_too_high(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-COMMON-003] value out of range || sqrtPriceX96 is out of range, sqrtPriceX96: 1461446703485210103287273052203988822378723970342`,
+		`[GNOSWAP-COMMON-003] value out of range || sqrtPriceX96(1461446703485210103287273052203988822378723970342) is out of range`,
 		func() {
 			CreatePool(fooPath, barPath, 3000, "1461446703485210103287273052203988822378723970342")
 		},
