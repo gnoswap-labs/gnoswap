@@ -162,11 +162,8 @@ func (t *BinaryLogTree) GetLog(idx int) (*u256.Uint, bool) {
 //   - The function relies on a precomputed map `tickRatioMap` to optimize calculations.
 //   - Handles rounding by adding 1 if the remainder of the division is non-zero.
 func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
+	assertValidTickRange(tick)
 	absTick := abs(tick)
-	if absTick == consts.MIN_TICK || absTick == consts.MAX_TICK {
-		absTick = absTick - 1
-	}
-	assertValidTickRange(absTick)
 
 	ratio := u256.MustFromDecimal(consts.Q128)
 	initialBit := int32(0x1)
@@ -211,7 +208,6 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 }
 
 func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
-	//sqrtPrice := u256.MustFromDecimal(sqrtPriceX96.ToString())
 	sqrtPrice := new(u256.Uint).Set(sqrtPriceX96)
 	isAboveMin := sqrtPrice.Gte(u256.MustFromDecimal(consts.MIN_SQRT_RATIO))
 	isBelowMax := sqrtPrice.Lt(u256.MustFromDecimal(consts.MAX_SQRT_RATIO))
@@ -361,13 +357,13 @@ func assertValidTickRange(absTick int32) {
 	if absTick >= consts.MAX_TICK {
 		panic(newErrorWithDetail(
 			errOutOfRange,
-			ufmt.Sprintf("abs tick is out of range (larger than 887272), abs tick: %d", absTick),
+			ufmt.Sprintf("tick is out of range (larger than 887272), tick: %d", absTick),
 		))
 	}
 	if absTick < consts.MIN_TICK {
 		panic(newErrorWithDetail(
 			errOutOfRange,
-			ufmt.Sprintf("abs tick is out of range (smaller than -887272), abs tick: %d", absTick),
+			ufmt.Sprintf("tick is out of range (smaller than -887272), tick: %d", absTick),
 		))
 	}
 }

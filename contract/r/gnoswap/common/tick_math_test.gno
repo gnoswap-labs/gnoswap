@@ -22,7 +22,7 @@ func TestTickMathGetSqrtRatioAtTick(t *testing.T) {
 
 		uassert.PanicsWithMessage(
 			t,
-			"[GNOSWAP-COMMON-003] value out of range || abs tick is out of range (larger than 887272), abs tick: 887273",
+			"[GNOSWAP-COMMON-003] value out of range || tick is out of range (smaller than -887272), tick: -887273",
 			func() {
 				TickMathGetSqrtRatioAtTick(tick)
 			},
@@ -34,7 +34,7 @@ func TestTickMathGetSqrtRatioAtTick(t *testing.T) {
 
 		uassert.PanicsWithMessage(
 			t,
-			"[GNOSWAP-COMMON-003] value out of range || abs tick is out of range (larger than 887272), abs tick: 887273",
+			"[GNOSWAP-COMMON-003] value out of range || tick is out of range (larger than 887272), tick: 887273",
 			func() {
 				TickMathGetSqrtRatioAtTick(tick)
 			},
@@ -54,20 +54,23 @@ func TestTickMathGetSqrtRatioAtTick(t *testing.T) {
 	})
 
 	t.Run("min tick ratio is less than js implementation", func(t *testing.T) {
-		// encodePriceSqrt(1, BigNumber.from(2).pow(127)) = 6085630636
 		sqrtPriceX96 := TickMathGetSqrtRatioAtTick(MIN_TICK)
-		uassert.False(t, sqrtPriceX96.Cmp(u256.MustFromDecimal("6085630636")) > 0, "should be less than 6085630636")
+		uassert.False(t, sqrtPriceX96.Cmp(u256.MustFromDecimal("6085630636")) >= 0, "should be less than 6085630636")
 	})
 
 	t.Run("max tick ratio is greater than js implementation", func(t *testing.T) {
-		// encodePriceSqrt(BigNumber.from(2).pow(127),1) = 1033437718471923706666374484006904511252097097914
-		sqrtPriceX96 := TickMathGetSqrtRatioAtTick(MAX_TICK)
+		sqrtPriceX96 := TickMathGetSqrtRatioAtTick(MAX_TICK - int32(1))
 		uassert.False(t, sqrtPriceX96.Cmp(u256.MustFromDecimal("1033437718471923706666374484006904511252097097914")) < 0, "should be greater than 1033437718471923706666374484006904511252097097914")
 	})
 
 	t.Run("max tick ratio is equal to js implementation", func(t *testing.T) {
-		sqrtPriceX96 := TickMathGetSqrtRatioAtTick(MAX_TICK)
-		uassert.Equal(t, "1461446703485210103287273052203988822378723970342", sqrtPriceX96.ToString())
+		uassert.PanicsWithMessage(
+			t,
+			"[GNOSWAP-COMMON-003] value out of range || tick is out of range (larger than 887272), tick: 887272",
+			func() {
+				TickMathGetSqrtRatioAtTick(MAX_TICK)
+			},
+		)
 	})
 
 	t.Run("multiple ticks", func(t *testing.T) {
@@ -116,9 +119,9 @@ func TestTickMathGetSqrtRatioAtTick(t *testing.T) {
 		uassert.Equal(t, "4295128739", sqrtPriceX96.ToString())
 	})
 
-	t.Run("max_sqrt_ratio", func(t *testing.T) {
-		sqrtPriceX96 := TickMathGetSqrtRatioAtTick(MAX_TICK)
-		uassert.Equal(t, MAX_SQRT_RATIO, sqrtPriceX96.ToString())
+	t.Run("max_sqrt_ratio-1", func(t *testing.T) {
+		sqrtPriceX96 := TickMathGetSqrtRatioAtTick(MAX_TICK - int32(1))
+		uassert.Equal(t, "1461373636630004318706518188784493106690254656249", sqrtPriceX96.ToString())
 	})
 
 	t.Run("throws for too low sqrt_ratio", func(t *testing.T) {
@@ -127,7 +130,7 @@ func TestTickMathGetSqrtRatioAtTick(t *testing.T) {
 
 		uassert.PanicsWithMessage(
 			t,
-			"[GNOSWAP-COMMON-003] value out of range || sqrtPriceX96 is out of range, sqrtPriceX96: 4295128738",
+			"[GNOSWAP-COMMON-003] value out of range || sqrtPriceX96(4295128738) is out of range",
 			func() {
 				TickMathGetTickAtSqrtRatio(sqrtPriceX96)
 			},
@@ -140,7 +143,7 @@ func TestTickMathGetSqrtRatioAtTick(t *testing.T) {
 
 		uassert.PanicsWithMessage(
 			t,
-			"[GNOSWAP-COMMON-003] value out of range || sqrtPriceX96 is out of range, sqrtPriceX96: 1461446703485210103287273052203988822378723970343",
+			"[GNOSWAP-COMMON-003] value out of range || sqrtPriceX96(1461446703485210103287273052203988822378723970343) is out of range",
 			func() {
 				TickMathGetTickAtSqrtRatio(sqrtPriceX96)
 			},
@@ -171,7 +174,7 @@ func TestTickMathGetSqrtRatioAtTick(t *testing.T) {
 			"633825300114114700748351602688",
 			"79228162514264337593543950",
 			"79228162514264337593543",
-			"1461446703485210103287273052203988822378723970341",
+			"1461373636630004318706518188784493106690254656249",
 		}
 		expectedResults := []int32{
 			-887272,
@@ -191,19 +194,18 @@ func TestTickMathGetSqrtRatioAtTick(t *testing.T) {
 
 		for i, ratio := range ratios {
 			sqrtPriceX96 := u256.MustFromDecimal(ratio)
-			rst := TickMathGetTickAtSqrtRatio(sqrtPriceX96)
-			uassert.Equal(t, expectedResults[i], rst)
+			tick := TickMathGetTickAtSqrtRatio(sqrtPriceX96)
+			uassert.Equal(t, expectedResults[i], tick)
 		}
 	})
 
 	t.Run("ratio closest to max tick", func(t *testing.T) {
 		maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
-		maxSqrtRatioSub1 := maxSqrtRatio.Sub(maxSqrtRatio, u256.One())
+		gapSqrtRatio := u256.MustFromDecimal("73066855205784580754863419495715688469314093")
+		maxSqrtRatioSubGap := u256.Zero().Sub(maxSqrtRatio, gapSqrtRatio)
+		maxTickSub1 := MAX_TICK - int32(1)
 
-		maxTick := MAX_TICK
-		maxTickSub1 := maxTick - 1
-
-		rst := TickMathGetTickAtSqrtRatio(maxSqrtRatioSub1)
+		rst := TickMathGetTickAtSqrtRatio(maxSqrtRatioSubGap)
 		uassert.Equal(t, maxTickSub1, rst)
 	})
 }
