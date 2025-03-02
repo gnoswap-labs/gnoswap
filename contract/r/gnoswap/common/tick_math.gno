@@ -353,17 +353,17 @@ func abs(x int32) int32 {
 }
 
 // assertValidTickRange validates that the absolute tick value is within the acceptable range.
-func assertValidTickRange(absTick int32) {
-	if absTick >= consts.MAX_TICK {
+func assertValidTickRange(tick int32) {
+	if tick > consts.MAX_TICK {
 		panic(newErrorWithDetail(
 			errOutOfRange,
-			ufmt.Sprintf("tick is out of range (larger than 887272), tick: %d", absTick),
+			ufmt.Sprintf("tick is out of range (larger than 887272), tick: %d", tick),
 		))
 	}
-	if absTick < consts.MIN_TICK {
+	if tick < consts.MIN_TICK {
 		panic(newErrorWithDetail(
 			errOutOfRange,
-			ufmt.Sprintf("tick is out of range (smaller than -887272), tick: %d", absTick),
+			ufmt.Sprintf("tick is out of range (smaller than -887272), tick: %d", tick),
 		))
 	}
 }

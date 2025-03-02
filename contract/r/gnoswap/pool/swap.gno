@@ -408,7 +408,6 @@ func computeSwapStepInit(state SwapState, pool *Pool, zeroForOne bool) StepCompu
 
 	// prevent overshoot the min/max tick
 	step.clampTickNext()
-
 	// get the price for the next tick
 	sqrtPrice := common.TickMathGetSqrtRatioAtTick(step.tickNext).ToString()
 	step.sqrtPriceNextX96 = u256.MustFromDecimal(sqrtPrice)

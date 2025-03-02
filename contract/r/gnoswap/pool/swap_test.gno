@@ -6,13 +6,12 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/uassert"
-
+	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/p/gnoswap/consts"
-
 	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gns"
 	pn "gno.land/r/gnoswap/v1/position"
 )
@@ -680,13 +679,13 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 					alice,
 					false,
 					"20000",
-					consts.MAX_PRICE,
+					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
 					addr,
 				)
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
-			expected:    []string{"-1989", "2404"},
+			expected:    []string{"-19939", "20000"},
 		},
 		{
 			name: "amount over liquidity - zeroForOne = false, token1:-20000",
@@ -705,13 +704,13 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 					alice,
 					false,
 					"-20000",
-					consts.MAX_PRICE,
+					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
 					addr,
 				)
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
-			expected:    []string{"-1989", "2404"},
+			expected:    []string{"-20000", "20062"},
 		},
 		{
 			name: "amount over liquidity - zeroForOne = true, token0:20000",
@@ -737,7 +736,7 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
-			expected:    []string{"1045", "-990"},
+			expected:    []string{"20000", "-19939"},
 		},
 		{
 			name: "amount over liquidity - zeroForOne = true, token1:-20000",
@@ -764,7 +763,7 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
-			expected:    []string{"1045", "-990"},
+			expected:    []string{"20062", "-20000"},
 		},
 	}
 
@@ -815,13 +814,13 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 					alice,
 					false,
 					"200",
-					consts.MAX_PRICE,
+					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
 					addr,
 				)
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
-			expected:    []string{"-195", "200"},
+			expected:    []string{"-198", "200"},
 		},
 		{
 			name: "EXACT OUT - zeroForOne = false, token0:-200",
@@ -840,13 +839,13 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 					alice,
 					false,
 					"-200",
-					consts.MAX_PRICE,
+					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
 					addr,
 				)
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
-			expected:    []string{"-200", "208"},
+			expected:    []string{"-200", "202"},
 		},
 		{
 			name: "EXACT IN - zeroForOne = true, token0:200",
@@ -872,7 +871,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
-			expected:    []string{"200", "-195"},
+			expected:    []string{"200", "-198"},
 		},
 		{
 			name: "EXACT OUT - zeroForOne = true, token1:-200",
@@ -899,7 +898,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
-			expected:    []string{"208", "-200"},
+			expected:    []string{"202", "-200"},
 		},
 	}
 
@@ -1002,7 +1001,7 @@ func TestSwap_FeeTier100(t *testing.T) {
 					adminAddr,
 					true,
 					"40012000",
-					"3945129629379410362911094632",
+					common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
 					adminAddr,
 				)
 				return actualAmount0, actualAmount1

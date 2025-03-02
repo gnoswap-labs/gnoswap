@@ -64,13 +64,8 @@ func TestTickMathGetSqrtRatioAtTick(t *testing.T) {
 	})
 
 	t.Run("max tick ratio is equal to js implementation", func(t *testing.T) {
-		uassert.PanicsWithMessage(
-			t,
-			"[GNOSWAP-COMMON-003] value out of range || tick is out of range (larger than 887272), tick: 887272",
-			func() {
-				TickMathGetSqrtRatioAtTick(MAX_TICK)
-			},
-		)
+		sqrtPriceX96 := TickMathGetSqrtRatioAtTick(MAX_TICK)
+		uassert.Equal(t, "1461446703485210103287273052203988822378723970342", sqrtPriceX96.ToString())
 	})
 
 	t.Run("multiple ticks", func(t *testing.T) {
