@@ -7,17 +7,18 @@ import (
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
-
-	"gno.land/r/gnoswap/v1/access"
-
 	phalt "gno.land/p/gnoswap/halt"
+
+	"gno.land/r/demo/grc20reg"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (
-	token  *grc20.Token
-	ledger *grc20.PrivateLedger
-	admin  *ownable.Ownable
+	admin         *ownable.Ownable
+	token         *grc20.Token
+	privateLedger *grc20.PrivateLedger
+	UserTeller    grc20.Teller
 
 	govStakerAddr = getContractAddress(access.ROLE_GOV_STAKER)
 	launchpadAddr = getContractAddress(access.ROLE_LAUNCHPAD)
@@ -25,7 +26,11 @@ var (
 
 func init() {
 	admin = ownable.NewWithAddress(std.DerivePkgAddr(govStakerAddr.String()))
-	token, ledger = grc20.NewToken("XGNS", "xGNS", 6)
+	token, privateLedger = grc20.NewToken("XGNS", "xGNS", 6)
+	UserTeller = token.CallerTeller()
+
+	getter := func() *grc20.Token { return token }
+	grc20reg.Register(getter, "")
 }
 
 func TotalSupply() uint64 { return token.TotalSupply() }
@@ -113,7 +118,7 @@ func Mint(to std.Address, amount uint64) {
 	caller := std.PreviousRealm().Address()
 
 	if govStakerAddr == caller || launchpadAddr == caller {
-		checkErr(ledger.Mint(to, amount))
+		checkErr(privateLedger.Mint(to, amount))
 	} else {
 		panic(addDetailToError(
 			errNoPermission,
@@ -162,7 +167,7 @@ func MintByLaunchPad(to std.Address, amount uint64) {
 
 // mint increases the balance of a specified address by a given amount.
 func mint(to std.Address, amount uint64) {
-	checkErr(ledger.Mint(to, amount))
+	checkErr(privateLedger.Mint(to, amount))
 }
 
 // Burn reduces the balance of a specified address by a given amount.
@@ -230,7 +235,7 @@ func BurnByLaunchPad(from std.Address, amount uint64) {
 }
 
 func burn(from std.Address, amount uint64) {
-	checkErr(ledger.Burn(from, amount))
+	checkErr(privateLedger.Burn(from, amount))
 }
 
 // getContractAddress retrieves the address which registered the role
