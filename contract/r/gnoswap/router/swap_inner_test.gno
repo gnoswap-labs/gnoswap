@@ -34,8 +34,8 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 			zeroForOne:        true,
 			fee:               500,
 			sqrtPriceLimitX96: u256.Zero(),
-			expected: common.TickMathGetSqrtRatioAtTick(getMinTick(500)).Add(
-				common.TickMathGetSqrtRatioAtTick(getMinTick(500)),
+			expected: u256.Zero().Add(
+				common.TickMathGetSqrtRatioAtTick(getMinTick(500)+1),
 				u256.One(),
 			),
 		},
@@ -44,8 +44,8 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 			zeroForOne:        false,
 			fee:               500,
 			sqrtPriceLimitX96: u256.Zero(),
-			expected: common.TickMathGetSqrtRatioAtTick(getMaxTick(500)).Sub(
-				common.TickMathGetSqrtRatioAtTick(getMaxTick(500)),
+			expected: u256.Zero().Sub(
+				common.TickMathGetSqrtRatioAtTick(getMaxTick(500)-1),
 				u256.One(),
 			),
 		},

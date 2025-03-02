@@ -18,6 +18,8 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
 )
 
 func TestFinalizeSwap(t *testing.T) {
@@ -357,11 +359,11 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			feeProtocol1:     10,
 			inputToken:       wugnotTokenPath,
 			outputToken:      gnsTokenPath,
-			amountIn:         "100000000",
+			amountIn:         "50000000",
 			routeArr:         wugnotGnsPoolPath,
 			quoteArr:         "100",
-			amountOutMin:     "85",
-			expectedAmount0:  "100000000",
+			amountOutMin:     "20000000",
+			expectedAmount0:  "50000000",
 			expectedAmount1:  "-21340516",
 			expectPanic:      true,
 		},
@@ -498,7 +500,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 	const poolContract = consts.POOL_ADDR
 	const positionContract = consts.POSITION_ADDR
 	const maxTimeout int64 = 9999999999
-	const wugnotGnsPoolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100"
+	const wugnotGnsPoolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:10000"
 
 	alice := testutils.TestAddress("alice")
 	positionOwner := consts.ADMIN
@@ -529,10 +531,10 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			name:             "success - gnot -> gns",
 			tokenPath0:       wugnotTokenPath,
 			tokenPath1:       gnsTokenPath,
-			feeTier:          pl.FeeTier100,
+			feeTier:          pl.FeeTier10000,
 			recipient:        alice,
-			tickLower:        -100,
-			tickUpper:        100,
+			tickLower:        -200,
+			tickUpper:        200,
 			amount0Requested: "100000000",
 			amount1Requested: "100000000",
 			feeProtocol0:     10,
@@ -544,7 +546,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			quoteArr:         "100",
 			amountOutMin:     "850000",
 			expectedAmount0:  "10000000",
-			expectedAmount1:  "-9977782",
+			expectedAmount1:  "-9872994",
 			expectPanic:      true,
 		},
 	}
@@ -670,6 +672,170 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			uassert.Equal(t, tt.expectedAmount0, amountIn)
 			uassert.Equal(t, tt.expectedAmount1, amountOut)
 			uassert.Equal(t, tt.expectedAmount0, strconv.FormatInt(int64(beforeWugnotBalance-afterWugnotBalance), 10))
+		})
+	}
+}
+
+func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
+	const wugnotTokenPath = "gno.land/r/demo/wugnot"
+	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
+	const routerContract = consts.ROUTER_ADDR
+	const routerPath = consts.ROUTER_PATH
+	const poolContract = consts.POOL_ADDR
+	const maxTimeout int64 = 9999999999
+	const gnsWugnotPoolPath = "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:10000"
+
+	alice := testutils.TestAddress("alice")
+	positionOwner := consts.ADMIN
+
+	tests := []struct {
+		name             string
+		tokenPath0       string
+		tokenPath1       string
+		feeTier          uint32
+		recipient        std.Address
+		tickLower        int32
+		tickUpper        int32
+		amount0Requested string
+		amount1Requested string
+		feeProtocol0     uint8
+		feeProtocol1     uint8
+		inputToken       string
+		outputToken      string
+		amountIn         string
+		routeArr         string
+		quoteArr         string
+		amountOutMin     string
+		expectedAmount0  string
+		expectedAmount1  string
+		expectPanic      bool
+	}{
+		{
+			name:             "success - gns -> gnot",
+			tokenPath0:       wugnotTokenPath,
+			tokenPath1:       gnsTokenPath,
+			feeTier:          pl.FeeTier10000,
+			recipient:        alice,
+			tickLower:        -200,
+			tickUpper:        200,
+			amount0Requested: "100000000",
+			amount1Requested: "100000000",
+			feeProtocol0:     10,
+			feeProtocol1:     10,
+			inputToken:       gnsTokenPath,
+			outputToken:      wugnotTokenPath,
+			amountIn:         "10000000",
+			routeArr:         gnsWugnotPoolPath,
+			quoteArr:         "100",
+			amountOutMin:     "850000",
+			expectedAmount0:  "10000000",
+			expectedAmount1:  "-9903728",
+			expectPanic:      true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Pool Creation
+			std.TestSetRealm(std.NewUserRealm(positionOwner))
+			pl.SetPoolCreationFeeByAdmin(0)
+			if !pl.DoesPoolPathExist(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
+				pl.CreatePool(tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
+			}
+
+			if tt.feeProtocol0 != 0 || tt.feeProtocol1 != 0 {
+				pool := pl.GetPool(tt.tokenPath0, tt.tokenPath1, tt.feeTier)
+				pl.SetFeeProtocolByAdmin(tt.feeProtocol0, tt.feeProtocol1)
+				uassert.Equal(t, tt.feeProtocol0, pool.Slot0FeeProtocol()%16)
+				uassert.Equal(t, tt.feeProtocol1, pool.Slot0FeeProtocol()>>4)
+			}
+
+			std.TestSetOriginCaller(positionOwner)
+			newCoins := std.Coins{{"ugnot", int64(20000000000)}}
+			std.TestIssueCoins(positionOwner, newCoins)
+			std.TestSetOriginSend(newCoins, nil)
+			banker := std.NewBanker(std.BankerTypeRealmSend)
+			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, std.Coins{{"ugnot", int64(10000000000)}})
+			wugnot.Deposit()
+			if tt.recipient != positionOwner {
+				wugnot.Transfer(tt.recipient, 10000000000)
+			}
+			banker.SendCoins(positionOwner, tt.recipient, std.Coins{{"ugnot", int64(10000000000)}})
+			gns.Transfer(tt.recipient, 10000000000)
+
+			std.TestSetRealm(std.NewUserRealm(tt.recipient))
+			wugnot.Approve(poolContract, maxApprove)
+			gns.Approve(poolContract, maxApprove)
+
+			teller := common.GetTokenTeller(wugnotTokenPath)
+			teller.Approve(poolContract, maxApprove)
+			// Position Creation
+			positionId, liquidity, amount0, amount1 := pn.Mint(
+				tt.tokenPath0,
+				tt.tokenPath1,
+				tt.feeTier,
+				tt.tickLower,
+				tt.tickUpper,
+				tt.amount0Requested,
+				tt.amount1Requested,
+				"0",
+				"0",
+				maxTimeout,
+				tt.recipient,
+				tt.recipient,
+				"",
+			)
+			std.TestSkipHeights(1)
+
+			// Swap
+			std.TestSetOriginCaller(tt.recipient)
+			wugnot.Transfer(routerContract, 20000000)
+			gns.Transfer(routerContract, 20000000)
+			wugnot.Approve(routerContract, maxApprove)
+			gns.Approve(routerContract, maxApprove)
+			beforeWugnotBalance := wugnot.BalanceOf(tt.recipient)
+
+			std.TestSetRealm(std.NewCodeRealm(routerPath))
+			wugnot.Approve(poolContract, maxApprove)
+
+			drySwapAmountOut := DrySwapRoute(
+				tt.inputToken,
+				tt.outputToken,
+				tt.amountIn,
+				"EXACT_IN",
+				tt.routeArr,
+				tt.quoteArr,
+				tt.amountOutMin,
+			)
+			withoutFee := handleSwapFee(tt.outputToken, u256.MustFromDecimal(drySwapAmountOut))
+
+			amountIn, amountOut := ExactInSwapRoute(
+				tt.inputToken,
+				tt.outputToken,
+				tt.amountIn,
+				tt.routeArr,
+				tt.quoteArr,
+				tt.amountOutMin,
+				time.Now().Add(time.Hour).Unix(),
+				"", // referrer
+			)
+			std.TestSkipHeights(1)
+			afterWugnotBalance := wugnot.BalanceOf(tt.recipient)
+
+			defer func() {
+				if r := recover(); r != nil {
+					if tt.expectPanic {
+						if errMsg, ok := r.(string); ok {
+							uassert.Equal(t, "not authorized", errMsg)
+						}
+					} else {
+						t.Errorf("expected panic but got none")
+					}
+				}
+			}()
+
+			uassert.Equal(t, tt.expectedAmount0, amountIn)
+			uassert.Equal(t, tt.expectedAmount1, amountOut)
 		})
 	}
 }

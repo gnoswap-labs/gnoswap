@@ -163,6 +163,9 @@ func (t *BinaryLogTree) GetLog(idx int) (*u256.Uint, bool) {
 //   - Handles rounding by adding 1 if the remainder of the division is non-zero.
 func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 	absTick := abs(tick)
+	if absTick == consts.MIN_TICK || absTick == consts.MAX_TICK {
+		absTick = absTick - 1
+	}
 	assertValidTickRange(absTick)
 
 	ratio := u256.MustFromDecimal(consts.Q128)
@@ -208,24 +211,24 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 }
 
 func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
-	cond1 := sqrtPriceX96.Gte(u256.MustFromDecimal(consts.MIN_SQRT_RATIO))
-	cond2 := sqrtPriceX96.Lt(u256.MustFromDecimal(consts.MAX_SQRT_RATIO))
-	if !(cond1 && cond2) {
+	//sqrtPrice := u256.MustFromDecimal(sqrtPriceX96.ToString())
+	sqrtPrice := new(u256.Uint).Set(sqrtPriceX96)
+	isAboveMin := sqrtPrice.Gte(u256.MustFromDecimal(consts.MIN_SQRT_RATIO))
+	isBelowMax := sqrtPrice.Lt(u256.MustFromDecimal(consts.MAX_SQRT_RATIO))
+	if !(isAboveMin && isBelowMax) {
 		panic(newErrorWithDetail(
 			errOutOfRange,
-			ufmt.Sprintf("sqrtPriceX96 is out of range, sqrtPriceX96: %s", sqrtPriceX96.ToString()),
+			ufmt.Sprintf("sqrtPriceX96(%s) is out of range", sqrtPrice.ToString()),
 		))
 	}
 
-	ratio := new(u256.Uint).Lsh(sqrtPriceX96, 32)
+	scaledPrice := new(u256.Uint).Lsh(sqrtPrice, 32)
+	leadingBitPosition, normalizedPrice := findMSB(scaledPrice)
+	normalizedPrice = adjustRatio(scaledPrice, leadingBitPosition)
+	logBase2Value := calculateLog2(leadingBitPosition, normalizedPrice)
+	tickValue := getTickValue(logBase2Value, sqrtPrice)
 
-	msb, adjustedRatio := findMSB(ratio)
-	adjustedRatio = adjustRatio(ratio, msb)
-
-	log2 := calculateLog2(msb, adjustedRatio)
-	tick := getTickValue(log2, sqrtPriceX96)
-
-	return tick
+	return tickValue
 }
 
 // findMSB computes the MSB (most significant bit) of the given ratio.
@@ -355,10 +358,16 @@ func abs(x int32) int32 {
 
 // assertValidTickRange validates that the absolute tick value is within the acceptable range.
 func assertValidTickRange(absTick int32) {
-	if absTick > consts.MAX_TICK {
+	if absTick >= consts.MAX_TICK {
 		panic(newErrorWithDetail(
 			errOutOfRange,
 			ufmt.Sprintf("abs tick is out of range (larger than 887272), abs tick: %d", absTick),
+		))
+	}
+	if absTick < consts.MIN_TICK {
+		panic(newErrorWithDetail(
+			errOutOfRange,
+			ufmt.Sprintf("abs tick is out of range (smaller than -887272), abs tick: %d", absTick),
 		))
 	}
 }

@@ -85,7 +85,7 @@ func Swap(
 	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
 	cache := newSwapCache(feeProtocol, pool.liquidity.Clone())
-	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart, slot0Start)
+	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart.Clone(), slot0Start)
 
 	comp := SwapComputation{
 		AmountSpecified:   amounts,
@@ -247,12 +247,12 @@ func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 		if state.protocolFee.Gt(u256.Zero()) {
 			result.NewProtocolFees.token0 = new(u256.Uint).Add(result.NewProtocolFees.token0, state.protocolFee)
 		}
-		result.FeeGrowthGlobal0X128 = state.feeGrowthGlobalX128
+		result.FeeGrowthGlobal0X128 = state.feeGrowthGlobalX128.Clone()
 	} else {
 		if state.protocolFee.Gt(u256.Zero()) {
 			result.NewProtocolFees.token1 = new(u256.Uint).Add(result.NewProtocolFees.token1, state.protocolFee)
 		}
-		result.FeeGrowthGlobal1X128 = state.feeGrowthGlobalX128
+		result.FeeGrowthGlobal1X128 = state.feeGrowthGlobalX128.Clone()
 	}
 
 	return result, nil
@@ -344,7 +344,7 @@ func computeSwapStep(
 	step := computeSwapStepInit(state, pool, zeroForOne)
 
 	// determining the price target for this step
-	sqrtRatioTargetX96 := computeTargetSqrtRatio(step, sqrtPriceLimitX96, zeroForOne)
+	sqrtRatioTargetX96 := computeTargetSqrtRatio(step, sqrtPriceLimitX96, zeroForOne).Clone()
 
 	// computing the amounts to be swapped at this step
 	var newState SwapState
@@ -410,7 +410,8 @@ func computeSwapStepInit(state SwapState, pool *Pool, zeroForOne bool) StepCompu
 	step.clampTickNext()
 
 	// get the price for the next tick
-	step.sqrtPriceNextX96 = common.TickMathGetSqrtRatioAtTick(step.tickNext)
+	sqrtPrice := common.TickMathGetSqrtRatioAtTick(step.tickNext).ToString()
+	step.sqrtPriceNextX96 = u256.MustFromDecimal(sqrtPrice)
 	return step
 }
 
