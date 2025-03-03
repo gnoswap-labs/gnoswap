@@ -79,9 +79,11 @@ func (t *TickRatioTree) GetRatio(key int32) (*u256.Uint, bool) {
 		return nil, false
 	}
 
-	if tv, ok := value.(TreeValue); ok {
+	tv, ok := value.(TreeValue)
+	if ok {
 		return tv.value, true
 	}
+	println("[TickRatioTree.GetRatio] value is not TreeValue")
 
 	return nil, false
 }
@@ -173,11 +175,14 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 	}
 
 	calculateRatio := func(mask int32) *u256.Uint {
-		if value, exists := tickRatioTree.GetRatio(mask); exists && absTick&mask != 0 {
+		value, exists := tickRatioTree.GetRatio(mask)
+		if exists && absTick&mask != 0 {
 			return new(u256.Uint).Rsh(
 				new(u256.Uint).Mul(ratio, value),
 				128,
 			)
+		} else if exists == false {
+			println("[TickMathGetSqrtRatioAtTick] ratio not found for mask:", mask)
 		}
 		return ratio
 	}
@@ -189,6 +194,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 	if tick > 0 {
 		maxUint256 := u256.MustFromDecimal(consts.MAX_UINT256)
 		if ratio.IsZero() {
+			println("[TickMathGetSqrtRatioAtTick] ratio is zero")
 			return u256.Zero()
 		}
 		ratio = new(u256.Uint).Div(maxUint256, ratio)

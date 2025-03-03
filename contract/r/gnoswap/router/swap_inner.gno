@@ -150,11 +150,17 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 	if zeroForOne {
 		minTick := getMinTick(fee) + 1
 		sqrtPriceLimitX96 = new(u256.Uint).Set(common.TickMathGetSqrtRatioAtTick(minTick))
+		if sqrtPriceLimitX96.IsZero() {
+			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
+		}
 		return new(u256.Uint).Add(sqrtPriceLimitX96, u256.One())
 	}
 
 	maxTick := getMaxTick(fee) - 1
 	sqrtPriceLimitX96 = new(u256.Uint).Set(common.TickMathGetSqrtRatioAtTick(maxTick))
+	if sqrtPriceLimitX96.IsZero() {
+		sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
+	}
 	return new(u256.Uint).Sub(sqrtPriceLimitX96, u256.One())
 }
 
