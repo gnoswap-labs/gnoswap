@@ -15,16 +15,14 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 
+	phalt "gno.land/p/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/access"
 	en "gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/referral"
 	"gno.land/r/gnoswap/v1/halt"
-	phalt "gno.land/p/gnoswap/halt"
+	"gno.land/r/gnoswap/v1/referral"
 )
 
-var (
-	govStaker, _ = access.GetAddress(access.ROLE_GOV_STAKER)
-)
+var govStaker, _ = access.GetAddress(access.ROLE_GOV_STAKER)
 
 // lockedGNS represents a locked GNS with its amount, unlock time, and collected status
 type lockedGNS struct {

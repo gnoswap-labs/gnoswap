@@ -40,11 +40,13 @@ var Q128 = u256.MustFromDecimal(consts.Q128)
 // Example:
 //
 // ```gno
+//
 //	owner := std.Address("0x123456789")
 //	positionKey := getPositionKey(owner, 100, 200)
 //	println("Position Key:", positionKey)
 //
 //	// Output: base64-encoded string representing "0x123456789__100__200"
+//
 // ```
 //
 // Notes:
@@ -291,8 +293,10 @@ func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.
 // Example Usage:
 //
 // ```gno
+//
 //	updatedPosition := pool.updatePosition(positionParams, currentTick)
-// 	println("Updated Position Info:", updatedPosition)
+//	println("Updated Position Info:", updatedPosition)
+//
 // ```
 func (p *Pool) updatePosition(positionParams ModifyPositionParams, tick int32) PositionInfo {
 	feeGrowthGlobal0X128 := p.FeeGrowthGlobal0X128().Clone()

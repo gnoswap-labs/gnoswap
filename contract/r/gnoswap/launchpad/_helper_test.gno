@@ -13,19 +13,19 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
-	adminUser = adminAddr
+	adminUser    = adminAddr
 
-	govStakerAddr, _ = access.GetAddress(access.ROLE_GOV_STAKER)
-	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
-	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
-	devOpsAddr, _ = access.GetAddress(access.ROLE_DEVOPS)
-	fooPath string = "gno.land/r/onbloc/foo"
-	barPath string = "gno.land/r/onbloc/bar"
-	bazPath string = "gno.land/r/onbloc/baz"
-	quxPath string = "gno.land/r/onbloc/qux"
-	oblPath string = "gno.land/r/onbloc/obl"
+	govStakerAddr, _          = access.GetAddress(access.ROLE_GOV_STAKER)
+	protocolFeeAddr, _        = access.GetAddress(access.ROLE_PROTOCOL_FEE)
+	poolAddr, _               = access.GetAddress(access.ROLE_POOL)
+	routerAddr, _             = access.GetAddress(access.ROLE_ROUTER)
+	stakerAddr, _             = access.GetAddress(access.ROLE_STAKER)
+	devOpsAddr, _             = access.GetAddress(access.ROLE_DEVOPS)
+	fooPath            string = "gno.land/r/onbloc/foo"
+	barPath            string = "gno.land/r/onbloc/bar"
+	bazPath            string = "gno.land/r/onbloc/baz"
+	quxPath            string = "gno.land/r/onbloc/qux"
+	oblPath            string = "gno.land/r/onbloc/obl"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500

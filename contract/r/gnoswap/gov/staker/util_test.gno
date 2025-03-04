@@ -15,9 +15,7 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 )
 
-var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
-)
+var adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
 
 func TestMarshal(t *testing.T) {
 	fakeNode := json.ObjectNode("", map[string]*json.Node{
