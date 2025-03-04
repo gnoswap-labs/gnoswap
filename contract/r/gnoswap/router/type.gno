@@ -9,16 +9,21 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+const (
+	rawExactIn  = "EXACT_IN"
+	rawExactOut = "EXACT_OUT"
+)
+
 type SwapType string
 
 const (
 	// ExactIn represents a swap type where the input amount is exact and the output amount may vary.
 	// Used when a user wants to swap a specific amount of input tokens.
-	ExactIn SwapType = "EXACT_IN"
+	ExactIn SwapType = rawExactIn
 
 	// ExactOut represents a swap type where the output amount is exact and the input amount may vary.
 	// Used when a user wants to swap a specific amount of output tokens.
-	ExactOut SwapType = "EXACT_OUT"
+	ExactOut SwapType = rawExactOut
 )
 
 // trySwapTypeFromStr attempts to convert a string into a `SwapType`.
@@ -27,9 +32,9 @@ const (
 // into their corresponding `SwapType` enum values.
 func trySwapTypeFromStr(swapType string) (SwapType, error) {
 	switch swapType {
-	case "EXACT_IN":
+	case rawExactIn:
 		return ExactIn, nil
-	case "EXACT_OUT":
+	case rawExactOut:
 		return ExactOut, nil
 	default:
 		return "", ufmt.Errorf("unknown swapType: expected ExactIn or ExactOut, got %s", swapType)
@@ -39,9 +44,9 @@ func trySwapTypeFromStr(swapType string) (SwapType, error) {
 func (s SwapType) String() string {
 	switch s {
 	case ExactIn:
-		return "EXACT_IN"
+		return rawExactIn
 	case ExactOut:
-		return "EXACT_OUT"
+		return rawExactOut
 	default:
 		return ""
 	}

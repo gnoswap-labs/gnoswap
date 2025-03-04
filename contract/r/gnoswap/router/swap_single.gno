@@ -2,7 +2,6 @@ package router
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
-
 	"gno.land/r/gnoswap/v1/common"
 )
 
@@ -23,11 +22,15 @@ import (
 //
 // The function uses swapInner for the core swap logic and sets the proce limit to 0,
 // allowing the swap to execute at any price point within slippage bounds.
-func singleSwap(params SingleSwapParams) (*u256.Uint, *u256.Uint) { // amountIn, amountOut
+func singleSwap(params SingleSwapParams) (amountIn *u256.Uint, amountOut *u256.Uint) {
+	if params.tokenIn == params.tokenOut {
+		panic(errSameTokenSwap.Error())
+	}
+
 	common.MustRegistered(params.tokenIn)
 	common.MustRegistered(params.tokenOut)
 
-	amountIn, amountOut := swapInner(
+	amountIn, amountOut = swapInner(
 		params.amountSpecified,
 		getPrevAddr(), // if single swap => user will receive
 		u256.Zero(),   // sqrtPriceLimitX96
@@ -58,11 +61,15 @@ func singleSwap(params SingleSwapParams) (*u256.Uint, *u256.Uint) { // amountIn,
 //
 // Notes:
 // - This function performs a simulation and does not alter the state or execute the actual swap.
-func singleDrySwap(params SingleSwapParams) (*u256.Uint, *u256.Uint) {
+func singleDrySwap(params SingleSwapParams) (amountIn *u256.Uint, amountOut *u256.Uint) {
+	if params.tokenIn == params.tokenOut {
+		panic(errSameTokenSwap.Error())
+	}
+
 	common.MustRegistered(params.tokenIn)
 	common.MustRegistered(params.tokenOut)
 
-	amountIn, amountOut := swapDryInner(
+	amountIn, amountOut = swapDryInner(
 		params.amountSpecified,
 		u256.Zero(),
 		SwapCallbackData{
