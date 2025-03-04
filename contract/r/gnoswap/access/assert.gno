@@ -63,3 +63,8 @@ func LaunchpadOnly(caller std.Address, newLaunchpad ...std.Address) error {
 func EmissionOnly(caller std.Address, newEmission ...std.Address) error {
 	return checkAndUpdateRole(ROLE_EMISSION, caller, newEmission...)
 }
+
+// ProtocolFeeOnly checks if the caller is the protocol fee and optionally updates the protocol fee address
+func ProtocolFeeOnly(caller std.Address, newProtocolFee ...std.Address) error {
+	return checkAndUpdateRole(ROLE_PROTOCOL_FEE, caller, newProtocolFee...)
+}

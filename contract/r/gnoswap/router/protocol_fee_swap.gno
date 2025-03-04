@@ -103,12 +103,16 @@ func handleSwapFee(
 		return amount
 	}
 
+	if outputToken == consts.GNOT {
+		outputToken = consts.WRAPPED_WUGNOT
+	}
+
 	feeAmount := new(u256.Uint).Mul(amount, u256.NewUint(swapFee))
 	feeAmount.Div(feeAmount, u256.NewUint(10000))
 	feeAmountUint64 := feeAmount.Uint64()
 
 	outputTeller := common.GetTokenTeller(outputToken)
-	outputTeller.TransferFrom(std.PreviousRealm().Address(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64)
+	outputTeller.TransferFrom(std.PreviousRealm().Address(), protocolFeeAddr, feeAmountUint64)
 	pf.AddToProtocolFee(outputToken, feeAmountUint64)
 
 	prevAddr, prevPkgPath := getPrev()

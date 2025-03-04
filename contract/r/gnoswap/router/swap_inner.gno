@@ -44,8 +44,8 @@ func swapInner(
 	// ROUTER approves POOL as spender
 	tokenIn := common.GetTokenTeller(data.tokenIn)
 	tokenOut := common.GetTokenTeller(data.tokenOut)
-	tokenIn.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	tokenOut.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	tokenIn.Approve(poolAddr, consts.UINT64_MAX)
+	tokenOut.Approve(poolAddr, consts.UINT64_MAX)
 
 	amount0Str, amount1Str := pl.Swap( // int256, int256
 		data.tokenIn,
@@ -87,14 +87,7 @@ func swapDryInner(
 	data SwapCallbackData,
 ) (*u256.Uint, *u256.Uint) { // poolRecv, poolOut
 	zeroForOne := data.tokenIn < data.tokenOut
-
-	if sqrtPriceLimitX96.IsZero() {
-		if zeroForOne {
-			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MIN_PRICE)
-		} else {
-			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MAX_PRICE)
-		}
-	}
+	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
 	// check possible
 	amount0Str, amount1Str, ok := pl.DrySwap(
@@ -155,13 +148,19 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 	}
 
 	if zeroForOne {
-		minTick := getMinTick(fee)
-		sqrtPriceLimitX96 = common.TickMathGetSqrtRatioAtTick(minTick)
+		minTick := getMinTick(fee) + 1
+		sqrtPriceLimitX96 = new(u256.Uint).Set(common.TickMathGetSqrtRatioAtTick(minTick))
+		if sqrtPriceLimitX96.IsZero() {
+			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
+		}
 		return new(u256.Uint).Add(sqrtPriceLimitX96, u256.One())
 	}
 
-	maxTick := getMaxTick(fee)
-	sqrtPriceLimitX96 = common.TickMathGetSqrtRatioAtTick(maxTick)
+	maxTick := getMaxTick(fee) - 1
+	sqrtPriceLimitX96 = new(u256.Uint).Set(common.TickMathGetSqrtRatioAtTick(maxTick))
+	if sqrtPriceLimitX96.IsZero() {
+		sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
+	}
 	return new(u256.Uint).Sub(sqrtPriceLimitX96, u256.One())
 }
 

@@ -47,7 +47,6 @@ const (
 
 var (
 	wugnotAddr = consts.WUGNOT_ADDR
-	stakerAddr = consts.STAKER_ADDR
 
 	externalCreator = testutils.TestAddress("externalCreator")
 )
@@ -128,23 +127,22 @@ func testCreatePoolWugnotGns3000Tier01(t *testing.T) {
 	t.Run("create pool gnot:gns:0.3%", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
 		pl.CreatePool(wugnotPath, gnsPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // current tick 0
 
 		uassert.Equal(t, uint64(100000000000000), gns.TotalSupply())
-		uassert.Equal(t, uint64(0), gnsBalance(consts.EMISSION_ADDR))
-		uassert.Equal(t, uint64(0), gnsBalance(consts.STAKER_ADDR))
-		uassert.Equal(t, uint64(0), gnsBalance(consts.DEV_OPS))
+		uassert.Equal(t, uint64(0), gnsBalance(emissionAddr))
+		uassert.Equal(t, uint64(0), gnsBalance(stakerAddr))
+		uassert.Equal(t, uint64(0), gnsBalance(devOpsAddr))
 		std.TestSkipHeights(3)
 	})
 }
 
 func testCreateExternalIncentiveGns(t *testing.T) {
 	t.Run("create external incentive gns for gnot:gns:0.3% pool", func(t *testing.T) {
-
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.STAKER_ADDR, consts.UINT64_MAX) // this includes depositGnsAmount
+		gns.Approve(stakerAddr, consts.UINT64_MAX) // this includes depositGnsAmount
 		CreateExternalIncentive(
 			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000",
 			consts.GNS_PATH,
@@ -162,8 +160,8 @@ func testMintPos01InRange(t *testing.T) {
 	t.Run("mint position 01 in range", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
 		pn.Mint(
 			wugnotPath,
 			gnsPath,
@@ -188,7 +186,7 @@ func testCreateBarBaz500Tier02(t *testing.T) {
 	t.Run("create bar:baz:500 pool, and set internal emission tier #2", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
 		pl.CreatePool(barPath, bazPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 		SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 2)
@@ -202,8 +200,8 @@ func testMintPos02InRange(t *testing.T) {
 	t.Run("mint position 02 in range", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		bar.Approve(poolAddr, consts.UINT64_MAX)
+		baz.Approve(poolAddr, consts.UINT64_MAX)
 		pn.Mint(
 			barPath,
 			bazPath,
@@ -228,8 +226,8 @@ func testMintPos03OutRange(t *testing.T) {
 	t.Run("mint position 03 out range", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
 		pn.Mint(
 			wugnotPath,
 			gnsPath,
@@ -254,8 +252,8 @@ func testMintPos04OutRange(t *testing.T) {
 	t.Run("mint position 04 out range", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
 		pn.Mint(
 			barPath,
 			bazPath,
@@ -280,8 +278,8 @@ func testMintPos05OutRange(t *testing.T) {
 	t.Run("mint position 05 out range", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
 		pn.Mint(
 			wugnotPath,
 			gnsPath,
@@ -306,8 +304,8 @@ func testMintPos06OutRange(t *testing.T) {
 	t.Run("mint position 06 out range", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
 		pn.Mint(
 			barPath,
 			bazPath,
@@ -529,11 +527,11 @@ func testCollectRewardAllForWarmUp100(t *testing.T) {
 func testSwapExactIn(t *testing.T) {
 	t.Run("swap token0 to token1 500 // swap #1", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		gns.Approve(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactInSwapRoute(
 			wugnotPath, // inputToken
@@ -567,11 +565,11 @@ func testSwapExactIn(t *testing.T) {
 
 	t.Run("swap token0 to token1 500 // swap #2", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		gns.Approve(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactInSwapRoute(
 			wugnotPath, // inputToken
@@ -605,11 +603,11 @@ func testSwapExactIn(t *testing.T) {
 
 	t.Run("swap token0 to token1 500 // swap #3", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		gns.Approve(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactInSwapRoute(
 			wugnotPath, // inputToken
@@ -649,11 +647,11 @@ func testSwapExactIn(t *testing.T) {
 
 	t.Run("swap token0 to token1 500 // swap #4", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		gns.Approve(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactInSwapRoute(
 			wugnotPath, // inputToken
@@ -684,11 +682,11 @@ func testSwapExactIn(t *testing.T) {
 func testSwapExactOut(t *testing.T) {
 	t.Run("swap token1 to token1 0 // swap #1", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		gns.Approve(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactOutSwapRoute(
 			gnsPath,    // inputToken
@@ -721,11 +719,11 @@ func testSwapExactOut(t *testing.T) {
 
 	t.Run("swap token1 to token1 0 // swap #2", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		gns.Approve(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactOutSwapRoute(
 			gnsPath,    // inputToken
@@ -758,11 +756,11 @@ func testSwapExactOut(t *testing.T) {
 
 	t.Run("swap token1 to token1 0 // swap #3", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		gns.Approve(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactOutSwapRoute(
 			gnsPath,    // inputToken
@@ -795,11 +793,11 @@ func testSwapExactOut(t *testing.T) {
 
 	t.Run("swap token1 to token1 0 // swap #4", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		gns.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
-		gns.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		gns.Approve(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactOutSwapRoute(
 			gnsPath,    // inputToken
@@ -849,8 +847,8 @@ func testCreatePoolBarFoo100Tier03(t *testing.T) {
 func testOneClickStakingPos07OutRange(t *testing.T) {
 	t.Run("mint and stake grc20 pair (pos #7)", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		bar.Approve(poolAddr, consts.UINT64_MAX)
+		foo.Approve(poolAddr, consts.UINT64_MAX)
 
 		lpTokenId, liquidity, amount0, amount1, poolPath := MintAndStake(
 			barPath,    // token0
@@ -873,11 +871,11 @@ func testOneClickStakingPos07OutRange(t *testing.T) {
 	t.Run("collect reward for position 07", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		oldCommunityPool := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
+		oldCommunityPool := gns.BalanceOf(communityPoolAddr)
 		CollectReward(7, false)
 		// height 1944167
 
-		newCommunityPool := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
+		newCommunityPool := gns.BalanceOf(communityPoolAddr)
 		uassert.Equal(t, uint64(4280820), newCommunityPool-oldCommunityPool)
 		// all internal tier exists
 		// staker's emission reward per block 10702054
@@ -913,14 +911,13 @@ func testUnstakeToken01(t *testing.T) {
 		// this pool may have mulitple staked position, but nothing is inrange
 		// therefore reward for this pool(5351027) goes to community_pool as unclaimable
 
-		oldCommuGns := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
+		oldCommuGns := gns.BalanceOf(communityPoolAddr)
 		CollectReward(3, false) // dummy claim
-		newCommuGns := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
+		newCommuGns := gns.BalanceOf(communityPoolAddr)
 		uassert.Equal(t, uint64(5351027), newCommuGns-oldCommuGns)
 
 		checkGnsBalance(t, 0)
 		std.TestSkipHeights(1)
-
 	})
 }
 
@@ -942,8 +939,8 @@ func testCreateExternalIncentiveBaz(t *testing.T) {
 		gns.Transfer(externalCreator, depositGnsAmount) // for deposit
 
 		std.TestSetRealm(std.NewUserRealm(externalCreator))
-		baz.Approve(consts.STAKER_ADDR, 20000000)
-		gns.Approve(consts.STAKER_ADDR, depositGnsAmount)
+		baz.Approve(stakerAddr, 20000000)
+		gns.Approve(stakerAddr, depositGnsAmount)
 
 		CreateExternalIncentive(
 			"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
@@ -967,8 +964,8 @@ func testMintPos08InRange(t *testing.T) {
 	t.Run("mint position 08 in range", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		baz.Approve(poolAddr, consts.UINT64_MAX)
+		qux.Approve(poolAddr, consts.UINT64_MAX)
 
 		std.TestSkipHeights(1)
 		pn.Mint(
@@ -1217,13 +1214,13 @@ func checkGnsBalance(t *testing.T, adjustAmount uint64) {
 
 	uassert.Equal(t, uint64(100000000000000)+(blockPassedFromGenesis*oneBlockEmissionAmount), gns.TotalSupply())
 
-	uassert.True(t, isNear(t, uint64(0), gnsBalance(consts.EMISSION_ADDR)))
+	uassert.True(t, isNear(t, uint64(0), gnsBalance(emissionAddr)))
 
 	expectStakerBalance := uint64(0) + initialStakerAmount + ((blockPassedFromGenesis - 3) * oneBlockStakerAmount) + externalIncentiveDeposit + adjustAmount
-	uassert.True(t, isNear(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(consts.STAKER_ADDR)+totalEmissionSent))
+	uassert.True(t, isNear(t, expectStakerBalance+(uint64((currentHeight-126))*gnsPer2Block), gnsBalance(stakerAddr)+totalEmissionSent))
 
 	expectedDevOpsBalance := uint64(0) + initialDevOpsAmount + ((blockPassedFromGenesis - 3) * oneBlockDevOpsAmount)
-	uassert.True(t, isNear(t, expectedDevOpsBalance, gnsBalance(consts.DEV_OPS)))
+	uassert.True(t, isNear(t, expectedDevOpsBalance, gnsBalance(devOpsAddr)))
 }
 
 // check whether the actual value is within 99.999% of the expected value

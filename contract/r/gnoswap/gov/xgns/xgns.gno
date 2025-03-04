@@ -7,25 +7,30 @@ import (
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
-
-	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/access"
-
 	phalt "gno.land/p/gnoswap/halt"
+
+	"gno.land/r/demo/grc20reg"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (
-	token  *grc20.Token
-	ledger *grc20.PrivateLedger
-	admin  *ownable.Ownable
+	admin         *ownable.Ownable
+	token         *grc20.Token
+	privateLedger *grc20.PrivateLedger
+	UserTeller    grc20.Teller
+
+	govStakerAddr = getContractAddress(access.ROLE_GOV_STAKER)
+	launchpadAddr = getContractAddress(access.ROLE_LAUNCHPAD)
 )
 
 func init() {
-	gsAddr := getContractAddress(access.ROLE_GOV_STAKER)
-	admin = ownable.NewWithAddress(std.DerivePkgAddr(gsAddr.String()))
+	admin = ownable.NewWithAddress(std.DerivePkgAddr(govStakerAddr.String()))
+	token, privateLedger = grc20.NewToken("XGNS", "xGNS", 6)
+	UserTeller = token.CallerTeller()
 
-	token, ledger = grc20.NewToken("XGNS", "xGNS", 6)
+	getter := func() *grc20.Token { return token }
+	grc20reg.Register(getter, "")
 }
 
 func TotalSupply() uint64 { return token.TotalSupply() }
@@ -41,13 +46,12 @@ func TotalSupply() uint64 { return token.TotalSupply() }
 //
 // Notes:
 // - `TotalSupply`: Represents the total amount of xGNS tokens minted.
-// - `BalanceOf(consts.LAUNCHPAD_ADDR)`: Retrieves the amount of xGNS tokens held by the launchpad contract.
+// - `BalanceOf(launchpadAddr)`: Retrieves the amount of xGNS tokens held by the launchpad contract.
 func VotingSupply() uint64 {
 	total := token.TotalSupply() // this is entire amount of xGNS minted
 
 	// this is amount of xGNS held by launchpad
 	// this xGNS doesn't participate in voting
-	launchpadAddr := getContractAddress(access.ROLE_LAUNCHPAD)
 	launchpad := token.BalanceOf(launchpadAddr)
 	return total - launchpad
 }
@@ -113,14 +117,12 @@ func Mint(to std.Address, amount uint64) {
 	// only (gov staker) or (launchpad) contract can call Mint
 	caller := std.PreviousRealm().Address()
 
-	govAddress := getContractAddress(access.ROLE_GOV_STAKER)
-	launchpadAddress := getContractAddress(access.ROLE_LAUNCHPAD)
-	if govAddress == caller || launchpadAddress == caller {
-		checkErr(ledger.Mint(to, amount))
+	if govStakerAddr == caller || launchpadAddr == caller {
+		checkErr(privateLedger.Mint(to, amount))
 	} else {
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("only gov/staker(%s) or launchpad(%s) contract can call Mint, called from %s", govAddress.String(), launchpadAddress.String(), caller.String()),
+			ufmt.Sprintf("only gov/staker(%s) or launchpad(%s) contract can call Mint, called from %s", govStakerAddr.String(), launchpadAddr.String(), caller.String()),
 		))
 	}
 }
@@ -153,7 +155,6 @@ func MintByLaunchPad(to std.Address, amount uint64) {
 	}
 
 	caller := std.PreviousRealm().Address()
-	launchpadAddr := getContractAddress(access.ROLE_LAUNCHPAD)
 	if err := access.LaunchpadOnly(caller); err != nil {
 		panic(addDetailToError(
 			errNoPermission,
@@ -166,7 +167,7 @@ func MintByLaunchPad(to std.Address, amount uint64) {
 
 // mint increases the balance of a specified address by a given amount.
 func mint(to std.Address, amount uint64) {
-	checkErr(ledger.Mint(to, amount))
+	checkErr(privateLedger.Mint(to, amount))
 }
 
 // Burn reduces the balance of a specified address by a given amount.
@@ -200,14 +201,12 @@ func Burn(from std.Address, amount uint64) {
 	// only (gov staker) or (launchpad) contract can call Mint
 	caller := std.PreviousRealm().Address()
 
-	gsAddr := getContractAddress(access.ROLE_GOV_STAKER)
-	launchpadAddr := getContractAddress(access.ROLE_LAUNCHPAD)
-	if gsAddr == caller || launchpadAddr == caller {
+	if govStakerAddr == caller || launchpadAddr == caller {
 		burn(from, amount)
 	} else {
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("only gov/staker(%s) or launchpad(%s) contract can call Burn, called from %s", gsAddr.String(), launchpadAddr.String(), caller.String()),
+			ufmt.Sprintf("only gov/staker(%s) or launchpad(%s) contract can call Burn, called from %s", govStakerAddr.String(), launchpadAddr.String(), caller.String()),
 		))
 	}
 }
@@ -229,14 +228,14 @@ func BurnByLaunchPad(from std.Address, amount uint64) {
 	if err := access.LaunchpadOnly(caller); err != nil {
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("only launchpad(%s) contract can call BurnByLaunchPad, called from %s", consts.LAUNCHPAD_ADDR.String(), caller.String()),
+			ufmt.Sprintf("only launchpad(%s) contract can call BurnByLaunchPad, called from %s", launchpadAddr.String(), caller.String()),
 		))
 	}
 	burn(from, amount)
 }
 
 func burn(from std.Address, amount uint64) {
-	checkErr(ledger.Burn(from, amount))
+	checkErr(privateLedger.Burn(from, amount))
 }
 
 // getContractAddress retrieves the address which registered the role

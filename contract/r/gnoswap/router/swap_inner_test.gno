@@ -4,16 +4,14 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
-
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
-
-	"gno.land/p/demo/uassert"
 )
 
 func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
@@ -36,8 +34,8 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 			zeroForOne:        true,
 			fee:               500,
 			sqrtPriceLimitX96: u256.Zero(),
-			expected: common.TickMathGetSqrtRatioAtTick(getMinTick(500)).Add(
-				common.TickMathGetSqrtRatioAtTick(getMinTick(500)),
+			expected: u256.Zero().Add(
+				common.TickMathGetSqrtRatioAtTick(getMinTick(500)+1),
 				u256.One(),
 			),
 		},
@@ -46,8 +44,8 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 			zeroForOne:        false,
 			fee:               500,
 			sqrtPriceLimitX96: u256.Zero(),
-			expected: common.TickMathGetSqrtRatioAtTick(getMaxTick(500)).Sub(
-				common.TickMathGetSqrtRatioAtTick(getMaxTick(500)),
+			expected: u256.Zero().Sub(
+				common.TickMathGetSqrtRatioAtTick(getMaxTick(500)-1),
 				u256.One(),
 			),
 		},
@@ -67,6 +65,8 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 
 func TestSwapInner(t *testing.T) {
 	user1Realm := std.NewUserRealm(user1Addr)
+	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+	poolAddr, _ := access.GetAddress(access.ROLE_POOL)
 
 	tests := []struct {
 		name              string
@@ -86,8 +86,8 @@ func TestSwapInner(t *testing.T) {
 				MakeMintPositionWithoutFee(t)
 
 				std.TestSetRealm(user1Realm)
-				bar.Approve(consts.ROUTER_ADDR, maxApprove)
-				baz.Approve(consts.ROUTER_ADDR, maxApprove)
+				bar.Approve(routerAddr, maxApprove)
+				baz.Approve(routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 				TokenFaucet(t, bazPath, user1Addr)
 			},
@@ -98,7 +98,7 @@ func TestSwapInner(t *testing.T) {
 				tokenIn:  barPath,
 				tokenOut: bazPath,
 				fee:      3000,
-				payer:    consts.ROUTER_ADDR,
+				payer:    routerAddr,
 			},
 			expectedRecv: "100",
 			expectedOut:  "98",
@@ -108,11 +108,11 @@ func TestSwapInner(t *testing.T) {
 
 	for _, tt := range tests {
 		std.TestSetRealm(user1Realm)
-		bar.Approve(consts.ROUTER_ADDR, maxApprove)
-		baz.Approve(consts.ROUTER_ADDR, maxApprove)
-		bar.Approve(consts.POOL_ADDR, maxApprove)
-		baz.Approve(consts.POOL_ADDR, maxApprove)
-		TokenFaucet(t, barPath, consts.ROUTER_ADDR)
+		bar.Approve(routerAddr, maxApprove)
+		baz.Approve(routerAddr, maxApprove)
+		bar.Approve(poolAddr, maxApprove)
+		baz.Approve(poolAddr, maxApprove)
+		TokenFaucet(t, barPath, routerAddr)
 
 		if tt.setupFn != nil {
 			tt.setupFn(t)

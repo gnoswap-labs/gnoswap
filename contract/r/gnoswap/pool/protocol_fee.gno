@@ -6,7 +6,6 @@ import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
@@ -60,7 +59,7 @@ func CollectWithdrawalFee(
 	if err := common.PositionOnly(caller); err != nil {
 		panic(newErrorWithDetail(
 			errNoPermission,
-			ufmt.Sprintf("only position(%s) can call this function, called from %s", consts.POSITION_ADDR, caller.String()),
+			ufmt.Sprintf("only position(%s) can call this function, called from %s", positionAddr, caller.String()),
 		))
 	}
 
@@ -73,11 +72,11 @@ func CollectWithdrawalFee(
 	feeAmount1, afterAmount1 := calculateAmountWithFee(u256.MustFromDecimal(amount1), u256.NewUint(fee))
 
 	token0Teller := common.GetTokenTeller(token0Path)
-	checkTransferError(token0Teller.TransferFrom(positionCaller, consts.PROTOCOL_FEE_ADDR, feeAmount0.Uint64()))
+	checkTransferError(token0Teller.TransferFrom(positionCaller, protocolFeeAddr, feeAmount0.Uint64()))
 	pf.AddToProtocolFee(token0Path, feeAmount0.Uint64())
 
 	token1Teller := common.GetTokenTeller(token1Path)
-	checkTransferError(token1Teller.TransferFrom(positionCaller, consts.PROTOCOL_FEE_ADDR, feeAmount1.Uint64()))
+	checkTransferError(token1Teller.TransferFrom(positionCaller, protocolFeeAddr, feeAmount1.Uint64()))
 	pf.AddToProtocolFee(token1Path, feeAmount1.Uint64())
 
 	prevAddr, prevPkgPath := getPrevAsString()

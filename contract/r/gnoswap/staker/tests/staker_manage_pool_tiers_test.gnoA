@@ -4,12 +4,9 @@ import (
 	"std"
 	"testing"
 
-	pl "gno.land/r/gnoswap/v1/pool"
-
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-
 	"gno.land/r/gnoswap/v1/gns"
+	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 func TestManagePoolTiers(t *testing.T) {
@@ -24,7 +21,7 @@ func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee()*2)
+		gns.Approve(poolAddr, pl.GetPoolCreationFee()*2)
 		std.TestSkipHeights(1)
 
 		pl.CreatePool(barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())

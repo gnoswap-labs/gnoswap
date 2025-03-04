@@ -9,7 +9,6 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/obl"
 
@@ -79,7 +78,7 @@ func TestValidateRecipient(t *testing.T) {
 		recipient std.Address
 		wantErr   bool
 	}{
-		{"ValidRecipient", std.Address(consts.ADMIN), false},
+		{"ValidRecipient", std.Address(adminAddr), false},
 		{"InvalidRecipient", std.Address("xyz..."), true},
 	}
 
@@ -242,7 +241,7 @@ func TestValidateAll(t *testing.T) {
 			input: ProjectInput{
 				Name:             "ProjectName",
 				TokenPath:        "gno.land/r/gnoswap/v1/gns",
-				Recipient:        std.Address(consts.ADMIN),
+				Recipient:        adminAddr,
 				DepositAmount:    1000,
 				ConditionsToken:  "gno.land/r/demo/wugnot",
 				ConditionsAmount: "10",
@@ -868,7 +867,7 @@ func TestCreateProject(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			std.TestSetRealm(adminRealm)
-			obl.Approve(consts.LAUNCHPAD_ADDR, tt.totalAmount)
+			obl.Approve(launchpadAddr, tt.totalAmount)
 			if !tt.duplicateTest {
 				std.TestSkipHeights(1)
 			}
@@ -945,7 +944,7 @@ func TestCreateProject_TierAndBalance(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			std.TestSetRealm(adminRealm)
-			obl.Approve(consts.LAUNCHPAD_ADDR, tt.totalAmount)
+			obl.Approve(launchpadAddr, tt.totalAmount)
 			std.TestSkipHeights(1)
 
 			defer func() {
@@ -1042,7 +1041,7 @@ func TestMakeConditions(t *testing.T) {
 			input := ProjectInput{
 				Name:             tt.name,
 				TokenPath:        "gno.land/r/gnoswap/v1/gns",
-				Recipient:        std.Address(consts.ADMIN),
+				Recipient:        adminAddr,
 				DepositAmount:    1000000,
 				ConditionsToken:  tt.conditionsToken,
 				ConditionsAmount: tt.conditionsAmount,

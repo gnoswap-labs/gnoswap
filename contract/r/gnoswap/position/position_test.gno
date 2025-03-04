@@ -470,15 +470,15 @@ func TestProcessTokens(t *testing.T) {
 
 			if tt.token0 == consts.GNOT {
 				amount, _ := strconv.ParseUint(tt.amount0Desired, 10, 64)
-				ugnotFaucet(t, consts.POSITION_ADDR, amount)
-				std.TestSetRealm(std.NewUserRealm(consts.POSITION_ADDR))
-				transferUGNOT(consts.POSITION_ADDR, consts.POSITION_ADDR, amount)
+				ugnotFaucet(t, positionAddr, amount)
+				std.TestSetRealm(std.NewUserRealm(positionAddr))
+				transferUGNOT(positionAddr, positionAddr, amount)
 			}
 			if tt.token1 == consts.GNOT {
 				amount, _ := strconv.ParseUint(tt.amount1Desired, 10, 64)
-				ugnotFaucet(t, consts.POSITION_ADDR, amount)
-				std.TestSetRealm(std.NewUserRealm(consts.POSITION_ADDR))
-				transferUGNOT(consts.POSITION_ADDR, consts.POSITION_ADDR, amount)
+				ugnotFaucet(t, positionAddr, amount)
+				std.TestSetRealm(std.NewUserRealm(positionAddr))
+				transferUGNOT(positionAddr, positionAddr, amount)
 			}
 
 			if !tt.expectPanic {
@@ -611,8 +611,8 @@ func TestMintInternal(t *testing.T) {
 	MakeMintPositionWithoutFee(t)
 	TokenFaucet(t, fooPath, alice)
 	TokenFaucet(t, barPath, alice)
-	TokenApprove(t, fooPath, alice, pool, maxApprove)
-	TokenApprove(t, barPath, alice, pool, maxApprove)
+	TokenApprove(t, fooPath, alice, poolAddr, maxApprove)
+	TokenApprove(t, barPath, alice, poolAddr, maxApprove)
 
 	tests := []struct {
 		name              string
@@ -804,7 +804,7 @@ func TestMint(t *testing.T) {
 			minAmount0:      "950000",
 			minAmount1:      "1900000",
 			deadline:        time.Now().Add(10 * time.Minute).Unix(),
-			mintTo:          admin,
+			mintTo:          adminAddr,
 			caller:          alice,
 			expectPanic:     true,
 			expectedError:   "[GNOSWAP-POSITION-012] invalid address || (g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh, g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d)",
@@ -869,7 +869,7 @@ func TestMint(t *testing.T) {
 }
 
 func TestIncreaseLiquidityInternal(t *testing.T) {
-	std.TestSetRealm(std.NewUserRealm(admin))
+	std.TestSetRealm(std.NewUserRealm(adminAddr))
 	position := Position{
 		poolKey:                  "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
 		tickLower:                -10000,
@@ -952,7 +952,7 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 
 func TestIncreaseLiquidity(t *testing.T) {
 	id := GetNextId() - 1
-	std.TestSetRealm(std.NewUserRealm(admin))
+	std.TestSetRealm(std.NewUserRealm(adminAddr))
 	tests := []struct {
 		name             string
 		positionId       uint64
@@ -1135,9 +1135,9 @@ func TestDecreaseLiquidity(t *testing.T) {
 	}
 
 	CreatePoolWithoutFee(t)
-	std.TestSetRealm(std.NewUserRealm(admin))
-	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
-	TokenApprove(t, fooPath, admin, pool, consts.UINT64_MAX)
+	std.TestSetRealm(std.NewUserRealm(adminAddr))
+	TokenApprove(t, barPath, adminAddr, poolAddr, consts.UINT64_MAX)
+	TokenApprove(t, fooPath, adminAddr, poolAddr, consts.UINT64_MAX)
 	positionId, _, _, _ := Mint(
 		barPath,
 		fooPath,
@@ -1149,8 +1149,8 @@ func TestDecreaseLiquidity(t *testing.T) {
 		"0",
 		"0",
 		time.Now().Add(time.Hour).Unix(),
-		admin,
-		admin,
+		adminAddr,
+		adminAddr,
 		"",
 	)
 	for _, tc := range tests {
@@ -1257,9 +1257,9 @@ func TestCollectFees(t *testing.T) {
 	}
 
 	CreatePoolWithoutFee(t)
-	std.TestSetRealm(std.NewUserRealm(admin))
-	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
-	TokenApprove(t, fooPath, admin, pool, consts.UINT64_MAX)
+	std.TestSetRealm(std.NewUserRealm(adminAddr))
+	TokenApprove(t, barPath, adminAddr, poolAddr, consts.UINT64_MAX)
+	TokenApprove(t, fooPath, adminAddr, poolAddr, consts.UINT64_MAX)
 
 	// Mint liquidity
 	positionId, _, _, _ := Mint(
@@ -1273,8 +1273,8 @@ func TestCollectFees(t *testing.T) {
 		"0",
 		"0",
 		time.Now().Add(time.Hour).Unix(),
-		admin,
-		admin,
+		adminAddr,
+		adminAddr,
 		"",
 	)
 
@@ -1377,9 +1377,9 @@ func TestReposition(t *testing.T) {
 	}
 
 	CreatePoolWithoutFee(t)
-	std.TestSetRealm(std.NewUserRealm(admin))
-	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
-	TokenApprove(t, fooPath, admin, pool, consts.UINT64_MAX)
+	std.TestSetRealm(std.NewUserRealm(adminAddr))
+	TokenApprove(t, barPath, adminAddr, poolAddr, consts.UINT64_MAX)
+	TokenApprove(t, fooPath, adminAddr, poolAddr, consts.UINT64_MAX)
 
 	// Step 1: Mint a position
 	positionId, _, _, _ := Mint(
@@ -1393,8 +1393,8 @@ func TestReposition(t *testing.T) {
 		"0",
 		"0",
 		time.Now().Add(time.Hour).Unix(),
-		admin,
-		admin,
+		adminAddr,
+		adminAddr,
 		"",
 	)
 

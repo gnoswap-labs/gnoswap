@@ -7,7 +7,6 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -35,7 +34,7 @@ func testCreateProject(t *testing.T) {
 	t.Run("create project", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		obl.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000_000))
+		obl.Approve(launchpadAddr, uint64(1_000_000_000))
 		std.TestSkipHeights(1)
 
 		projectId := CreateProject(
@@ -64,7 +63,7 @@ func depositGnsTier(t *testing.T) {
 		bar.Transfer(user01, uint64(10))
 
 		std.TestSetRealm(user01Realm)
-		gns.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000))
+		gns.Approve(launchpadAddr, uint64(1_000_000))
 
 		// skip some blocks to make project active(= few block before tier end height)
 		// > tier30 will end `1029` // tier30 end height

@@ -4,7 +4,6 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -27,7 +26,7 @@ func MintAndDistributeGns() uint64 {
 		return 0
 	}
 	// Mint new tokens and add any leftover amounts from previous distribution
-	mintedEmissionRewardAmount := gns.MintGns(consts.EMISSION_ADDR)
+	mintedEmissionRewardAmount := gns.MintGns(emissionAddr)
 
 	distributableAmount := mintedEmissionRewardAmount
 	prevLeftAmount := GetLeftGNSAmount()

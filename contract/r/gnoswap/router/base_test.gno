@@ -194,10 +194,10 @@ func TestValidateRouteQuote(t *testing.T) {
 }
 
 func TestProcessRoute(t *testing.T) {
-	std.TestSetRealm(adminRealm)
 	op := &baseSwapOperation{}
 
 	t.Run("Single hop route", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
 		CreatePoolWithoutFee(t)
 		MakeThirdMintPositionWithoutFee(t)
 		route := "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"

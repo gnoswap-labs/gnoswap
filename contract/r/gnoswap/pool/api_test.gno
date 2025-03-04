@@ -7,12 +7,11 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 )
 
 func TestInitTwoPools(t *testing.T) {
-	std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
+	std.TestSetRealm(std.NewUserRealm(adminAddr))
 	SetPoolCreationFeeByAdmin(0)
 
 	// foo:bar

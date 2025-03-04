@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	adminRealm     = std.NewUserRealm(consts.ADMIN)
+	adminRealm     = std.NewUserRealm(adminAddr)
 	stakerRealm    = std.NewCodeRealm(consts.STAKER_PATH)
 	govRealm       = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
 	govStakerRealm = std.NewCodeRealm(consts.GOV_STAKER_PATH)

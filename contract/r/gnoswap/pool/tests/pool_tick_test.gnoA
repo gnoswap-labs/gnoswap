@@ -38,7 +38,7 @@ func init() {
 func TestInitCreatePool(t *testing.T) {
 	//================ Create Pool =================
 	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
+	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, 500, "130621891405341611593710811006")
 	std.TestSkipHeights(1)
 }
@@ -46,7 +46,7 @@ func TestInitCreatePool(t *testing.T) {
 func DeployPool(token0 string, token1 string) {
 	pools = avl.NewTree()
 	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	gns.Approve(poolAddr, poolCreationFee)
 	std.TestSetRealm(adminRealm)
 	CreatePool(token0, token1, 500, "130621891405341611593710811006") // tick 10000
 	std.TestSkipHeights(1)

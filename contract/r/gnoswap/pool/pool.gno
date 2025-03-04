@@ -3,11 +3,19 @@ package pool
 import (
 	"std"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/access"
+)
+
+var (
+	positionAddr, _    = access.GetAddress(access.ROLE_POSITION)
+	poolAddr, _        = access.GetAddress(access.ROLE_POOL)
+	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
+	routerAddr, _      = access.GetAddress(access.ROLE_ROUTER)
 )
 
 // Mint adds liquidity to a pool by minting a new position.
@@ -64,11 +72,11 @@ func Mint(
 	_, amount0, amount1 := pool.modifyPosition(positionParam)
 
 	if amount0.Gt(u256.Zero()) {
-		pool.safeTransferFrom(positionCaller, consts.POOL_ADDR, pool.token0Path, amount0, true)
+		pool.safeTransferFrom(positionCaller, poolAddr, pool.token0Path, amount0, true)
 	}
 
 	if amount1.Gt(u256.Zero()) {
-		pool.safeTransferFrom(positionCaller, consts.POOL_ADDR, pool.token1Path, amount1, false)
+		pool.safeTransferFrom(positionCaller, poolAddr, pool.token1Path, amount1, false)
 	}
 
 	return amount0.ToString(), amount1.ToString()

@@ -8,7 +8,6 @@ import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 
@@ -72,7 +71,7 @@ func containsString(arr []string, val string) bool {
 // GetOrigPkgAddr returns the original package address.
 // In position contract, original package address is the position address.
 func GetOrigPkgAddr() std.Address {
-	return consts.LAUNCHPAD_ADDR
+	return launchpadAddr
 }
 
 // isUserCall returns true if the caller is a user.

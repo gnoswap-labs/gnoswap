@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 )
 
@@ -59,7 +58,7 @@ func TransferProtocolFee() map[string]uint64 {
 	toReturn := map[string]uint64{}
 
 	for token, amount := range tokenListWithAmount {
-		balance := common.BalanceOf(token, consts.PROTOCOL_FEE_ADDR)
+		balance := common.BalanceOf(token, protocolFeeAddr)
 
 		// anyone can just send certain grc20 token to `protocol_fee` contract
 		// therefore, we don't need any guard logic to check whether protocol_fee's xxx token balance is equal to `amount`
@@ -77,12 +76,12 @@ func TransferProtocolFee() map[string]uint64 {
 
 			tokenTeller := common.GetTokenTeller(token)
 			if toDevOps > 0 {
-				tokenTeller.Transfer(consts.DEV_OPS, toDevOps)
+				tokenTeller.Transfer(devOpsAddr, toDevOps)
 				sentToDevOps = append(sentToDevOps, makeEventString(token, toDevOps))
 			}
 
 			if toGovStaker > 0 {
-				tokenTeller.Transfer(consts.GOV_STAKER_ADDR, toGovStaker)
+				tokenTeller.Transfer(govStakerAddr, toGovStaker)
 				sentToGovStaker = append(sentToGovStaker, makeEventString(token, toGovStaker))
 
 				toReturn[token] = toGovStaker

@@ -14,6 +14,11 @@ import (
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 	"gno.land/r/gnoswap/v1/referral"
+	"gno.land/r/gnoswap/v1/access"
+)
+
+var (
+	launchpadAddr, _ = access.GetAddress(access.ROLE_LAUNCHPAD)
 )
 
 var (
@@ -202,10 +207,10 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 	// gns will be locked in `launchpad` contract
 	gns.TransferFrom(
 		getPrevAddr(),
-		consts.LAUNCHPAD_ADDR,
+		launchpadAddr,
 		amount,
 	)
-	xgns.Mint(consts.LAUNCHPAD_ADDR, amount)
+	xgns.Mint(launchpadAddr, amount)
 
 	// Emit deposit event
 	prevAddr, prevPkgPath := getPrev()
@@ -338,7 +343,7 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 
 	// Process token transfers if amount > 0
 	if amount > 0 {
-		xgns.Burn(consts.LAUNCHPAD_ADDR, amount)
+		xgns.Burn(launchpadAddr, amount)
 		gns.Transfer(caller, amount)
 		return amount
 	}
@@ -842,7 +847,7 @@ func processCollectedDeposits(depositList []string, pid string) uint64 {
 
 	if amount > 0 {
 		caller := getPrevAddr()
-		xgns.Burn(consts.LAUNCHPAD_ADDR, amount)
+		xgns.Burn(launchpadAddr, amount)
 		gns.Transfer(caller, amount)
 	}
 

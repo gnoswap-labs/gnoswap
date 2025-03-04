@@ -7,13 +7,12 @@ import (
 	"gno.land/p/demo/uassert"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (
 	emissionRealm = std.NewCodeRealm(consts.EMISSION_PATH)
-	adminRealm    = std.NewUserRealm(consts.ADMIN)
+	adminRealm    = std.NewUserRealm(adminAddr)
 )
 
 func TestCalculateAmountToMint(t *testing.T) {
@@ -57,7 +56,7 @@ func TestMintGns(t *testing.T) {
 		std.TestSkipHeights(123)    // pass some block to bypass last block check
 		halt.SetHaltByAdmin(true) // set halt
 		uassert.PanicsWithMessage(t, "halted", func() {
-			MintGns(consts.ADMIN)
+			MintGns(adminAddr)
 		})
 
 		halt.SetHaltByAdmin(false) // unset halt
@@ -65,14 +64,14 @@ func TestMintGns(t *testing.T) {
 
 	t.Run("panic if caller is not emission contract", func(t *testing.T) {
 		uassert.PanicsWithMessage(t, "caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission", func() {
-			MintGns(consts.ADMIN)
+			MintGns(adminAddr)
 		})
 	})
 
 	t.Run("do not mint for same block", func(t *testing.T) {
 		std.TestSetRealm(emissionRealm)
 		std.TestSkipHeights(-123) // revert height to get caught by last block check
-		mintedAmount := MintGns(consts.ADMIN)
+		mintedAmount := MintGns(adminAddr)
 		uassert.Equal(t, uint64(0), mintedAmount)
 	})
 }

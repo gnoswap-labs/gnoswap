@@ -12,7 +12,7 @@ import (
 )
 
 func TestDelegate(t *testing.T) {
-	std.TestSetOriginCaller(consts.ADMIN)
+	std.TestSetOriginCaller(admin)
 	SetRunning(true)
 
 	std.TestSetRealm(userRealm)
@@ -25,7 +25,7 @@ func TestDelegate(t *testing.T) {
 		to := makeFakeAddress("validator_1")
 		amount := uint64(1_000_000)
 
-		gns.Approve(consts.GOV_STAKER_ADDR, amount)
+		gns.Approve(govStaker, amount)
 		Delegate(to, amount, "")
 
 		minted := xgns.BalanceOf(userRealm.Address())
@@ -77,14 +77,14 @@ func TestDelegate(t *testing.T) {
 
 	// 7) running = false => optional check
 	{
-		std.TestSetOriginCaller(consts.ADMIN)
+		std.TestSetOriginCaller(admin)
 		SetRunning(false)
 		// delegate?
 		// depending on code logic, might skip cleanDelegationStatHistory() or do something else
 		// if there's logic that forbids delegation when not running, test that
 		// For now, assume it still works but doesn't clean.
 		// Restore running to true for subsequent tests.
-		std.TestSetOriginCaller(consts.ADMIN)
+		std.TestSetOriginCaller(admin)
 		SetRunning(true)
 	}
 
@@ -146,7 +146,7 @@ func TestDelegate_Boundary_Values(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetOriginCaller(consts.ADMIN)
+			std.TestSetOriginCaller(admin)
 			SetRunning(true)
 			std.TestSetRealm(userRealm)
 
@@ -169,174 +169,6 @@ func TestDelegate_Boundary_Values(t *testing.T) {
 	}
 }
 
-/*
-func TestEmptyRewardPool(t *testing.T) {
-	tests := []struct {
-		name           string
-		setupFn        func()
-		expectPanic    bool
-		expectPanicMsg string
-		checkFn        func(t *testing.T)
-	}{
-		{
-			name: "collect with empty reward pool",
-			setupFn: func() {
-				//userEmissionReward.Remove(userRealm.Address().String())
-			},
-			expectPanic: false,
-			checkFn: func(t *testing.T) {
-				if v, exists := userEmissionReward.Get(userRealm.Address().String()); exists {
-					t.Errorf("Expected userEmissionReward to be removed, but got %d", v.(uint64))
-				}
-			},
-		},
-		{
-			name: "collect with empty protocol fee rewards",
-			setupFn: func() {
-				//userProtocolFeeReward.Remove(userRealm.Address().String())
-			},
-			expectPanic: false,
-			checkFn: func(t *testing.T) {
-				if v, exists := userProtocolFeeReward.Get(userRealm.Address().String()); exists {
-					t.Errorf("Expected userProtocolFeeReward to be removed, but got %d", v.(uint64))
-				}
-			},
-		},
-		{
-			name: "collect with empty staker GNS balance",
-			setupFn: func() {
-				std.TestSetRealm(std.NewCodeRealm(consts.GOV_STAKER_PATH))
-				userEmissionReward.Set(userRealm.Address().String(), uint64(1000))
-			},
-			expectPanic:    true,
-			expectPanicMsg: "not enough GNS",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.name == "collect with empty staker GNS balance" {
-				t.Skip("run this test separately")
-			}
-			std.TestSetRealm(userRealm)
-
-			if tt.setupFn != nil {
-				tt.setupFn()
-			}
-
-			if tt.expectPanic {
-				defer func() {
-					r := recover()
-					if r == nil {
-						t.Errorf("Expected panic but got none")
-					}
-					if tt.expectPanicMsg != "" && r != nil {
-						if msg, ok := r.(string); !ok || !strings.Contains(msg, tt.expectPanicMsg) {
-							t.Errorf("Expected panic message containing '%s', got '%v'", tt.expectPanicMsg, r)
-						}
-					}
-				}()
-			}
-
-			CollectReward()
-
-			if tt.checkFn != nil {
-				tt.checkFn(t)
-			}
-		})
-	}
-}
-*/
-/*
-func TestProtocolFee(t *testing.T) {
-	tests := []struct {
-		name        string
-		setupFn     func()
-		expectPanic bool
-		panicMsg    string
-		checkFn     func(t *testing.T)
-	}{
-		{
-			name: "collect max uint64 protocol fee",
-			setupFn: func() {
-				//tree := avl.NewTree()
-				//tree.Set(consts.WUGNOT_PATH, uint64(^uint64(0)))
-				//userProtocolFeeReward.Set(userRealm.Address().String(), tree)
-				currentProtocolFeeBalance[consts.WUGNOT_PATH] = ^uint64(0)
-			},
-			expectPanic: true,
-			panicMsg:    "insufficient balance",
-		},
-		{
-			name: "collect multiple empty token balances",
-			setupFn: func() {
-				//tree := avl.NewTree()
-				//tree.Set(consts.WUGNOT_PATH, uint64(1000))
-				//tree.Set("some/other/token", uint64(2000))
-				//userProtocolFeeReward.Set(userRealm.Address().String(), tree)
-				currentProtocolFeeBalance[consts.WUGNOT_PATH] = 1000
-				currentProtocolFeeBalance["some/other/token"] = 2000
-			},
-			expectPanic: true,
-			panicMsg:    "insufficient balance",
-		},
-		{
-			name: "collect with zero amounts",
-			setupFn: func() {
-				//tree := avl.NewTree()
-				//tree.Set(consts.WUGNOT_PATH, uint64(0))
-				//tree.Set("some/other/token", uint64(0))
-				//userProtocolFeeReward.Set(userRealm.Address().String(), tree)
-				currentProtocolFeeBalance[consts.WUGNOT_PATH] = 0
-				currentProtocolFeeBalance["some/other/token"] = 0
-			},
-			expectPanic: false,
-			checkFn: func(t *testing.T) {
-				val, exists := userProtocolFeeReward.Get(userRealm.Address().String())
-				if !exists {
-					t.Errorf("Expected protocol fee reward entry to exist")
-					return
-				}
-				tree := val.(*avl.Tree)
-				wugnotAmt, _ := tree.Get(consts.WUGNOT_PATH)
-				if wugnotAmt.(uint64) != 0 {
-					t.Errorf("Expected WUGNOT amount to be 0, got %d", wugnotAmt)
-				}
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetRealm(userRealm)
-
-			if tt.setupFn != nil {
-				tt.setupFn()
-			}
-
-			if tt.expectPanic {
-				defer func() {
-					r := recover()
-					if r == nil {
-						t.Errorf("Expected panic but got none")
-					}
-					if tt.panicMsg != "" && r != nil {
-						if msg, ok := r.(string); !ok || !strings.Contains(strings.ToLower(msg), strings.ToLower(tt.panicMsg)) {
-							t.Errorf("Expected panic message containing '%s', got '%v'", tt.panicMsg, r)
-						}
-					}
-				}()
-			}
-
-			CollectReward()
-
-			if tt.checkFn != nil {
-				tt.checkFn(t)
-			}
-		})
-	}
-}
-*/
 func TestRedelegate(t *testing.T) {
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	std.TestSkipHeights(100)
@@ -350,11 +182,11 @@ func TestRedelegate(t *testing.T) {
 	amount := uint64(1_000_000)
 
 	std.TestSetOriginCaller(userRealm.Address())
-	gns.Approve(consts.GOV_STAKER_ADDR, amount)
+	gns.Approve(govStaker, amount)
 	Delegate(from, amount, "")
 
 	std.TestSetOriginCaller(userRealm.Address())
-	gns.Approve(consts.GOV_STAKER_ADDR, amount)
+	gns.Approve(govStaker, amount)
 	Redelegate(from, to, amount)
 
 	// check data: user xGNS must remain the same, but from-> to shift in staker structure?
@@ -380,7 +212,7 @@ func TestUndelegate(t *testing.T) {
 	amount := uint64(1_000_000)
 
 	std.TestSetOriginCaller(user3Realm.Address())
-	gns.Approve(consts.GOV_STAKER_ADDR, amount)
+	gns.Approve(govStaker, amount)
 	Delegate(to, amount, "")
 	Undelegate(to, amount)
 
@@ -471,11 +303,11 @@ func TestCollectReward(t *testing.T) {
 	{
 		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 		std.TestSkipHeights(100)
-		gns.MintGns(consts.GOV_STAKER_ADDR)
+		gns.MintGns(govStaker)
 
-		std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
-		ugnotFaucet(t, consts.GOV_STAKER_ADDR, 1_000_000)
-		ugnotDeposit(t, consts.GOV_STAKER_ADDR, 1_000_000)
+		std.TestSetRealm(std.NewUserRealm(admin))
+		ugnotFaucet(t, govStaker, 1_000_000)
+		ugnotDeposit(t, govStaker, 1_000_000)
 		ugnotFaucet(t, derivePkgAddr(wugnotPath), 1_000_000)
 		ugnotFaucet(t, user2Realm.Address(), 1_000_000)
 	}
@@ -486,12 +318,7 @@ func TestCollectReward(t *testing.T) {
 	rewardState.addStake(uint64(std.ChainHeight()), std.Address(user), 10, 0, make(map[string]uint64))
 
 	// set a fake emission reward
-	// userEmissionReward.Set(user, uint64(50_000))
 	currentGNSBalance = 50_000
-	// set a fake protocol fee reward
-	// tree := avl.NewTree()
-	// tree.Set(consts.WUGNOT_PATH, uint64(10_000))
-	// userProtocolFeeReward.Set(user, tree)
 	currentProtocolFeeBalance[consts.WUGNOT_PATH] = 10_000
 
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))

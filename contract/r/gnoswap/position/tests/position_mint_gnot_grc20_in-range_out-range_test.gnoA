@@ -24,7 +24,7 @@ var (
 
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
+	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
 	singlePool := pl.GetPoolFromPoolPath("gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
@@ -52,10 +52,10 @@ func TestOneSideOnlyGrc20WithoutSend(t *testing.T) {
 	fresh01Realm := std.NewUserRealm(fresh01)
 	std.TestSetRealm(fresh01Realm)
 
-	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // POOL FOR MINT
-	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // POOL FOR MINT
+	gns.Approve(poolAddr, consts.UINT64_MAX)    // POOL FOR MINT
+	wugnot.Approve(poolAddr, consts.UINT64_MAX) // POOL FOR MINT
 
-	wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // POSITION FOR WRAP
+	wugnot.Approve(positionAddr, consts.UINT64_MAX) // POSITION FOR WRAP
 
 	// should panic
 	// user is trying to mint position with native coin, but didn't send any native coin
@@ -87,10 +87,10 @@ func TestOneSideOnlyGrc20WithSend0Coin(t *testing.T) {
 	fresh01Realm := std.NewUserRealm(fresh01)
 	std.TestSetRealm(fresh01Realm)
 
-	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // POOL FOR MINT
-	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // POOL FOR MINT
+	gns.Approve(poolAddr, consts.UINT64_MAX)    // POOL FOR MINT
+	wugnot.Approve(poolAddr, consts.UINT64_MAX) // POOL FOR MINT
 
-	wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // POSITION FOR WRAP
+	wugnot.Approve(positionAddr, consts.UINT64_MAX) // POSITION FOR WRAP
 
 	std.TestSetOriginSend(std.Coins{{"ugnot", 0}}, nil)
 
@@ -124,13 +124,13 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 	fresh01Realm := std.NewUserRealm(fresh01)
 	std.TestSetRealm(fresh01Realm)
 
-	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // POOL FOR MINT
-	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // POOL FOR MINT
+	gns.Approve(poolAddr, consts.UINT64_MAX)    // POOL FOR MINT
+	wugnot.Approve(poolAddr, consts.UINT64_MAX) // POOL FOR MINT
 
-	wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // POSITION FOR WRAP
+	wugnot.Approve(positionAddr, consts.UINT64_MAX) // POSITION FOR WRAP
 
 	std.TestSetOriginSend(std.Coins{{"ugnot", 100_000_000}}, nil)
-	std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 100_000_000}})
+	std.TestIssueCoins(positionAddr, std.Coins{{"ugnot", 100_000_000}})
 	uassert.Equal(t, ugnotBalanceOf(t, fresh01), uint64(0))
 
 	std.TestSetRealm(fresh01Realm)
@@ -160,12 +160,12 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 // 	fresh02Realm := std.NewUserRealm(fresh02)
 // 	std.TestSetRealm(fresh02Realm)
 
-// 	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // POOL FOR MINT
-// 	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // POOL FOR MINT
+// 	gns.Approve(poolAddr, consts.UINT64_MAX)    // POOL FOR MINT
+// 	wugnot.Approve(poolAddr, consts.UINT64_MAX) // POOL FOR MINT
 
-// 	wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // POSITION FOR WRAP
+// 	wugnot.Approve(positionAddr, consts.UINT64_MAX) // POSITION FOR WRAP
 
-// 	std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 100_000_000}})
+// 	std.TestIssueCoins(positionAddr, std.Coins{{"ugnot", 100_000_000}})
 // 	std.TestSetOrigSend(std.Coins{{"ugnot", 100_000_000}}, nil)
 // 	uassert.Equal(t, ugnotBalanceOf(t, fresh02), uint64(0))
 
@@ -197,10 +197,10 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 // 	fresh02Realm := std.NewUserRealm(fresh02)
 // 	std.TestSetRealm(fresh02Realm)
 
-// 	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)    // POOL FOR MINT
-// 	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // POOL FOR MINT
+// 	gns.Approve(poolAddr, consts.UINT64_MAX)    // POOL FOR MINT
+// 	wugnot.Approve(poolAddr, consts.UINT64_MAX) // POOL FOR MINT
 
-// 	wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // POSITION FOR WRAP
+// 	wugnot.Approve(positionAddr, consts.UINT64_MAX) // POSITION FOR WRAP
 
 // 	std.TestSetOrigSend(std.Coins{{"ugnot", 0}}, nil)
 

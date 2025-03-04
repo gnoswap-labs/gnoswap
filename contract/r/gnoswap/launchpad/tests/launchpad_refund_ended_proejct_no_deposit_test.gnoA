@@ -8,8 +8,6 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/gnoswap/consts"
-
 	"gno.land/r/onbloc/obl"
 )
 
@@ -35,7 +33,7 @@ func testCreateProject(t *testing.T) {
 	t.Run("create project", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		obl.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000_000))
+		obl.Approve(launchpadAddr, uint64(1_000_000_000))
 		std.TestSkipHeights(1)
 
 		{

@@ -37,29 +37,29 @@ func testInit(t *testing.T) {
 func testPoolInitCreatePool(t *testing.T) {
 	t.Run("init pool contract, and create one pool", func(t *testing.T) {
 		uassert.Equal(t, gns.TotalSupply(), uint64(100000000000000))
-		uassert.Equal(t, gnsBalance(consts.EMISSION_ADDR), uint64(0))
-		uassert.Equal(t, gnsBalance(consts.STAKER_ADDR), uint64(0))
-		uassert.Equal(t, gnsBalance(consts.DEV_OPS), uint64(0))
+		uassert.Equal(t, gnsBalance(emissionAddr), uint64(0))
+		uassert.Equal(t, gnsBalance(stakerAddr), uint64(0))
+		uassert.Equal(t, gnsBalance(devOpsAddr), uint64(0))
 		std.TestSkipHeights(100)
 
 		std.TestSetRealm(adminRealm)
 
-		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
+		gns.Approve(poolAddr, pl.GetPoolCreationFee())
 		pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
 		std.TestSkipHeights(1)
 
 		uassert.Equal(t, gns.TotalSupply(), uint64(100001426940600))
-		uassert.Equal(t, gnsBalance(consts.EMISSION_ADDR), uint64(0))
-		uassert.Equal(t, gnsBalance(consts.STAKER_ADDR), uint64(1070205450))
-		uassert.Equal(t, gnsBalance(consts.DEV_OPS), uint64(285388120))
+		uassert.Equal(t, gnsBalance(emissionAddr), uint64(0))
+		uassert.Equal(t, gnsBalance(stakerAddr), uint64(1070205450))
+		uassert.Equal(t, gnsBalance(devOpsAddr), uint64(285388120))
 	})
 }
 
 func testMintPositionFullInRange(t *testing.T) {
 	t.Run("mint position full in range", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		bar.Approve(poolAddr, consts.UINT64_MAX)
+		foo.Approve(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, amount0, amount1 := Mint(
 			barPath,
@@ -79,17 +79,17 @@ func testMintPositionFullInRange(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		uassert.Equal(t, gns.TotalSupply(), uint64(100001441210006))
-		uassert.Equal(t, gnsBalance(consts.EMISSION_ADDR), uint64(1))
-		uassert.Equal(t, gnsBalance(consts.STAKER_ADDR), uint64(1080907504))
-		uassert.Equal(t, gnsBalance(consts.DEV_OPS), uint64(288242001))
+		uassert.Equal(t, gnsBalance(emissionAddr), uint64(1))
+		uassert.Equal(t, gnsBalance(stakerAddr), uint64(1080907504))
+		uassert.Equal(t, gnsBalance(devOpsAddr), uint64(288242001))
 	})
 }
 
 func testIncreaseLiquidity(t *testing.T) {
 	t.Run("increase liquidity", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		bar.Approve(poolAddr, consts.UINT64_MAX)
+		foo.Approve(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, amount0, amount1, poolPath := IncreaseLiquidity(
 			uint64(1),
@@ -102,17 +102,17 @@ func testIncreaseLiquidity(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		uassert.Equal(t, gns.TotalSupply(), uint64(100001455479412))
-		uassert.Equal(t, gnsBalance(consts.EMISSION_ADDR), uint64(1))
-		uassert.Equal(t, gnsBalance(consts.STAKER_ADDR), uint64(1091609559))
-		uassert.Equal(t, gnsBalance(consts.DEV_OPS), uint64(291095882))
+		uassert.Equal(t, gnsBalance(emissionAddr), uint64(1))
+		uassert.Equal(t, gnsBalance(stakerAddr), uint64(1091609559))
+		uassert.Equal(t, gnsBalance(devOpsAddr), uint64(291095882))
 	})
 }
 
 func testDecreaseLiquidity(t *testing.T) {
 	t.Run("decrease liquidity", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		bar.Approve(poolAddr, consts.UINT64_MAX)
+		foo.Approve(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 			uint64(1),
@@ -125,25 +125,25 @@ func testDecreaseLiquidity(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		uassert.Equal(t, gns.TotalSupply(), uint64(100001469748818))
-		uassert.Equal(t, gnsBalance(consts.EMISSION_ADDR), uint64(1))
-		uassert.Equal(t, gnsBalance(consts.STAKER_ADDR), uint64(1102311614))
-		uassert.Equal(t, gnsBalance(consts.DEV_OPS), uint64(293949763))
+		uassert.Equal(t, gnsBalance(emissionAddr), uint64(1))
+		uassert.Equal(t, gnsBalance(stakerAddr), uint64(1102311614))
+		uassert.Equal(t, gnsBalance(devOpsAddr), uint64(293949763))
 	})
 }
 
 func testCollectFee(t *testing.T) {
 	t.Run("collect fee", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		bar.Approve(poolAddr, consts.UINT64_MAX)
+		foo.Approve(poolAddr, consts.UINT64_MAX)
 
 		positionId, fee0, fee1, poolPath, _, _ := CollectFee(uint64(1), false)
 		std.TestSkipHeights(1)
 
 		uassert.Equal(t, gns.TotalSupply(), uint64(100001484018224))
-		uassert.Equal(t, gnsBalance(consts.EMISSION_ADDR), uint64(1))
-		uassert.Equal(t, gnsBalance(consts.STAKER_ADDR), uint64(1113013669))
-		uassert.Equal(t, gnsBalance(consts.DEV_OPS), uint64(296803644))
+		uassert.Equal(t, gnsBalance(emissionAddr), uint64(1))
+		uassert.Equal(t, gnsBalance(stakerAddr), uint64(1113013669))
+		uassert.Equal(t, gnsBalance(devOpsAddr), uint64(296803644))
 	})
 }
 

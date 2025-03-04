@@ -77,7 +77,7 @@ func CreateExternalIncentive(
 	if endTimestamp >= MAX_UNIX_EPOCH_TIME {
 		panic(addDetailToError(
 			errInvalidIncentiveEndTime,
-			ufmt.Sprintf("staker.gno__CreateExternalIncentive() || endTimestamp(%d) cannot be later than 253402300799 (9999-12-31 23:59:59)", endTimestamp),
+			ufmt.Sprintf("endTimestamp(%d) cannot be later than 253402300799 (9999-12-31 23:59:59)", endTimestamp),
 		))
 	}
 
@@ -117,11 +117,11 @@ func CreateExternalIncentive(
 	externalIncentives.set(incentiveId, incentive)
 
 	// deposit gns amount
-	gns.TransferFrom(caller, consts.STAKER_ADDR, depositGnsAmount)
+	gns.TransferFrom(caller, stakerAddr, depositGnsAmount)
 
 	// transfer reward token from user to staker
 	teller := common.GetTokenTeller(rewardToken)
-	teller.TransferFrom(caller, consts.STAKER_ADDR, rewardAmount)
+	teller.TransferFrom(caller, stakerAddr, rewardAmount)
 
 	pool.incentives.create(caller, incentive)
 
@@ -152,7 +152,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	if !exists {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("staker.gno__EndExternalIncentive() || targetPoolPath(%s) does not exist", targetPoolPath),
+			ufmt.Sprintf("targetPoolPath(%s) does not exist", targetPoolPath),
 		))
 	}
 
@@ -190,7 +190,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 		ictv.unclaimableRefunded = true
 	}
 
-	poolLeftExternalRewardAmount := common.BalanceOf(ictv.rewardToken, consts.STAKER_ADDR)
+	poolLeftExternalRewardAmount := common.BalanceOf(ictv.rewardToken, stakerAddr)
 	if poolLeftExternalRewardAmount < refund {
 		refund = poolLeftExternalRewardAmount
 	}
