@@ -93,15 +93,6 @@ func swapDryInner(
 	data SwapCallbackData,
 ) (poolRecv *u256.Uint, poolOut *u256.Uint) { // poolRecv, poolOut
 	zeroForOne := data.tokenIn < data.tokenOut
-  /*
-	if sqrtPriceLimitX96.IsZero() {
-		if zeroForOne {
-			sqrtPriceLimitX96 = minPrice
-		} else {
-			sqrtPriceLimitX96 = maxPrice
-		}
-	}
-  */
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
 	// check possible
