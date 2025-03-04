@@ -39,6 +39,24 @@ func TestEmissionCallback(t *testing.T) {
                 }
             },
         },
+		{
+            name: "Success - Multiple callback updates",
+            setupFn: func(t *testing.T) {
+                mockEmissionCalled = false
+                mockEmissionValue = 1000
+            },
+            callback: func() uint64 {
+                mockEmissionCalled = true
+                return mockEmissionValue
+            },
+            expectedValue: 1000,
+            expectPanic:   false,
+            verifyCallback: func(t *testing.T) {
+                if !mockEmissionCalled {
+                    t.Error("Expected callback to be called")
+                }
+            },
+        },
 	}
 
 	for _, tt := range tests {
@@ -62,12 +80,10 @@ func TestEmissionCallback(t *testing.T) {
                 }()
             }
 
-            // 테스트 설정
             if tt.setupFn != nil {
                 tt.setupFn(t)
             }
 
-            // 콜백 등록
             if tt.callback != nil {
                 RegisterEmissionCallback(tt.callback)
             }
