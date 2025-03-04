@@ -68,3 +68,8 @@ func EmissionOnly(caller std.Address, newEmission ...std.Address) error {
 func ProtocolFeeOnly(caller std.Address, newProtocolFee ...std.Address) error {
 	return checkAndUpdateRole(ROLE_PROTOCOL_FEE, caller, newProtocolFee...)
 }
+
+// GovXGNSOnly checks if the caller is the gov xgns and optionally updates the gov xgns address
+func GovXGNSOnly(caller std.Address, newGovXGNS ...std.Address) error {
+	return checkAndUpdateRole(ROLE_GOV_XGNS, caller, newGovXGNS...)
+}

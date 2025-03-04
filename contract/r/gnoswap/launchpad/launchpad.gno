@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
@@ -211,10 +212,16 @@ func (in ProjectInput) ParseConditions() (map[string]Condition, error) {
 			return nil, errors.New(addDetailToError(
 				errInvalidInput, ufmt.Sprintf("invalid token(%s)", token)))
 		}
-		if err := common.IsRegistered(token); err != nil {
-			return nil, errors.New(addDetailToError(
-				errInvalidInput, ufmt.Sprintf("token(%s) not registered", token)))
+
+		// If the address of the token has acquired the XGNS Role, nil is returned.
+		tokenIsXGns := access.GovXGNSOnly(std.DerivePkgAddr(token))
+		if tokenIsXGns != nil {
+			if err := common.IsRegistered(token); err != nil {
+				return nil, errors.New(addDetailToError(
+					errInvalidInput, ufmt.Sprintf("token(%s) not registered", token)))
+			}
 		}
+
 		if _, exists := condition[token]; exists {
 			return nil, errors.New(addDetailToError(
 				errInvalidInput, ufmt.Sprintf("duplicated condition token(%s)", token)))

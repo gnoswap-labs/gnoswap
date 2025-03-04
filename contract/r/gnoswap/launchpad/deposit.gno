@@ -8,18 +8,17 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
+	
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 	"gno.land/r/gnoswap/v1/referral"
-	"gno.land/r/gnoswap/v1/access"
 )
 
-var (
-	launchpadAddr, _ = access.GetAddress(access.ROLE_LAUNCHPAD)
-)
+var launchpadAddr, _ = access.GetAddress(access.ROLE_LAUNCHPAD)
 
 var (
 	// depositId -> deposit
