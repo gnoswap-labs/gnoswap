@@ -13,8 +13,6 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-
-	en "gno.land/r/gnoswap/v1/emission"
 )
 
 type canonicalPool struct {

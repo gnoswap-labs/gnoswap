@@ -105,7 +105,6 @@ func TestTickFlip_2(t *testing.T) {
 		uassert.Equal(t, bool_res_1, true)
 		nextTick_res_2, bool_res_2 := IsInitialized_Helper(int32(-229), tickSpacing)
 		uassert.Equal(t, bool_res_2, false)
-
 	})
 }
 
@@ -545,15 +544,11 @@ func TickBitmapNextInitializedTickWithInOneWord_Helper(
 
 	initialized := !(masked.IsZero())
 	if initialized {
-
 		next := (compress + 1 + int32(plp.BitMathLeastSignificantBit(masked)-bitPos)) * tickSpacing
 		return next, initialized
-	} else {
-
-		next := (compress + 1 + int32(255-bitPos)) * tickSpacing
-
-		return next, initialized
 	}
+	next := (compress + 1 + int32(255-bitPos)) * tickSpacing
+	return next, initialized
 }
 
 // bitwiseNotForUint256BitmapIndexing performs a bitwise NsOT operation on the uint256 value.
@@ -584,7 +579,6 @@ func IsInitialized_Helper(tick int32, ts int32) (int32, bool) {
 	nextTick, init := TickBitmapNextInitializedTickWithInOneWord_Helper(tick, ts, true)
 	if nextTick == tick {
 		return nextTick, init
-	} else {
-		return nextTick, false
 	}
+	return nextTick, false
 }

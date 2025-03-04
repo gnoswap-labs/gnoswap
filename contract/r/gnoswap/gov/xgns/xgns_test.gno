@@ -4,17 +4,13 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/p/demo/uassert"
+	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/gnoswap/v1/access"
 )
 
-var (
-	adminAddr = getContractAddress(access.ROLE_ADMIN)
-	govStakerAddr = getContractAddress(access.ROLE_GOV_STAKER)
-	launchpadAddr = getContractAddress(access.ROLE_LAUNCHPAD)
-)
+var adminAddr = getContractAddress(access.ROLE_ADMIN)
 
 func TestTotalSupply(t *testing.T) {
 	expectedSupply := uint64(0)

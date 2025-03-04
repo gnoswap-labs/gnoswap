@@ -4,8 +4,6 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
-
 	"gno.land/r/gnoswap/v1/access"
 )
 

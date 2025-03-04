@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 )
 
@@ -77,7 +76,7 @@ func TransferProtocolFee() map[string]uint64 {
 
 			tokenTeller := common.GetTokenTeller(token)
 			if toDevOps > 0 {
-				tokenTeller.Transfer(consts.DEV_OPS, toDevOps)
+				tokenTeller.Transfer(devOpsAddr, toDevOps)
 				sentToDevOps = append(sentToDevOps, makeEventString(token, toDevOps))
 			}
 

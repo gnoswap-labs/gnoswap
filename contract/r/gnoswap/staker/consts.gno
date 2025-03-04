@@ -9,4 +9,5 @@ var (
 	stakerAddr, _        = access.GetAddress(access.ROLE_STAKER)
 	positionAddr, _      = access.GetAddress(access.ROLE_POSITION)
 	protocolFeeAddr, _   = access.GetAddress(access.ROLE_PROTOCOL_FEE)
+	devOpsAddr, _        = access.GetAddress(access.ROLE_DEVOPS)
 )

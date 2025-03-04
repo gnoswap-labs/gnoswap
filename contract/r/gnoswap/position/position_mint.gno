@@ -8,10 +8,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/common"
-	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gnft"
 	pl "gno.land/r/gnoswap/v1/pool"
-	"gno.land/r/gnoswap/v1/referral"
 )
 
 // mint creates a new liquidity position by adding liquidity to a pool and minting an NFT representing the position.

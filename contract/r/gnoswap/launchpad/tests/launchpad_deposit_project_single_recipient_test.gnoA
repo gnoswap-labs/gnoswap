@@ -68,11 +68,11 @@ func testMockProtocolFee(t *testing.T) {
 		qux.Transfer(protocolFeeAddr, 2500)
 
 		uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), uint64(1000))
-		uassert.Equal(t, bar.BalanceOf(consts.DEV_OPS), uint64(0))
+		uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))
 		uassert.Equal(t, bar.BalanceOf(govStakerAddr), uint64(0))
 
 		uassert.Equal(t, qux.BalanceOf(protocolFeeAddr), uint64(2500))
-		uassert.Equal(t, qux.BalanceOf(consts.DEV_OPS), uint64(0))
+		uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
 		uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(0))
 	})
 }

@@ -109,7 +109,7 @@ func (self *Incentives) create(
 	if self.byTime.Has(byTimeId) {
 		panic(addDetailToError(
 			errIncentiveAlreadyExists,
-			ufmt.Sprintf("staker.gno__addExternalIncentive() || incentiveId(%s) already exists", byTimeId),
+			ufmt.Sprintf("incentiveId(%s) already exists", byTimeId),
 		))
 	}
 

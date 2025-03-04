@@ -316,7 +316,6 @@ func StakeToken(positionId uint64, referrer string) (string, string, string) {
 		"referrer", referrer,
 	)
 
-	// positionsInternalWarmUpAmount[positionId] = warmUpAmount{}
 	return poolPath, token0Amount, token1Amount
 }
 

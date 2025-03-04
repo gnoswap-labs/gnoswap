@@ -20,7 +20,7 @@ var (
 	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
 	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
 	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
-
+	devOpsAddr, _ = access.GetAddress(access.ROLE_DEVOPS)
 	fooPath string = "gno.land/r/onbloc/foo"
 	barPath string = "gno.land/r/onbloc/bar"
 	bazPath string = "gno.land/r/onbloc/baz"

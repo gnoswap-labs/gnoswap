@@ -118,8 +118,8 @@ func TestTransferProtocolFee(t *testing.T) {
 	// call TransferProtocolFee
 	std.TestSetRealm(std.NewCodeRealm(consts.GOV_STAKER_PATH))
 
-	devOpsOldFoo := common.BalanceOf("gno.land/r/onbloc/foo", consts.DEV_OPS)
-	devOpsOldBaz := common.BalanceOf("gno.land/r/onbloc/baz", consts.DEV_OPS)
+	devOpsOldFoo := common.BalanceOf("gno.land/r/onbloc/foo", devOpsAddr)
+	devOpsOldBaz := common.BalanceOf("gno.land/r/onbloc/baz", devOpsAddr)
 	govStkaerOldFoo := common.BalanceOf("gno.land/r/onbloc/foo", govStakerAddr)
 	govStkaerOldBaz := common.BalanceOf("gno.land/r/onbloc/baz", govStakerAddr)
 	uassert.Equal(t, devOpsOldFoo, uint64(0))
@@ -139,8 +139,8 @@ func TestTransferProtocolFee(t *testing.T) {
 	// emitted event
 	// EVENTS: [{"type":"TransferProtocolFee","attrs":[{"key":"prevAddr","value":"g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa"},{"key":"prevRealm","value":"gno.land/r/gnoswap/v1/gov/staker"},{"key":"toDevOps","value":"gno.land/r/onbloc/foo*FEE*49,gno.land/r/onbloc/baz*FEE*98"},{"key":"toGovStaker","value":"gno.land/r/onbloc/foo*FEE*51,gno.land/r/onbloc/baz*FEE*103"}],"pkg_path":"gno.land/r/gnoswap/v1/protocol_fee","func":"TransferProtocolFee"}]
 
-	devOpsNewFoo := common.BalanceOf("gno.land/r/onbloc/foo", consts.DEV_OPS)
-	devOpsNewBaz := common.BalanceOf("gno.land/r/onbloc/baz", consts.DEV_OPS)
+	devOpsNewFoo := common.BalanceOf("gno.land/r/onbloc/foo", devOpsAddr)
+	devOpsNewBaz := common.BalanceOf("gno.land/r/onbloc/baz", devOpsAddr)
 	uassert.Equal(t, devOpsNewFoo, uint64(49))
 	uassert.Equal(t, devOpsNewBaz, uint64(98))
 
