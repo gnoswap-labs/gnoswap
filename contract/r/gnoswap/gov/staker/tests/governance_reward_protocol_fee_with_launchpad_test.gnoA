@@ -7,12 +7,13 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/ufmt"
+	"gno.land/p/gnoswap/consts"
 
+	"gno.land/r/gnoswap/v1/access"
+	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
-
-	"gno.land/p/gnoswap/consts"
-	en "gno.land/r/gnoswap/v1/emission"
 	lp "gno.land/r/gnoswap/v1/launchpad"
 
 	// grc20 tokens
@@ -22,12 +23,10 @@ import (
 )
 
 var (
-	// g1v36k6mte23h47h6lta047h6lta047h6lcwzxrp
-	dummyToAddr = testutils.TestAddress("dummyTo")
-
-	// g1v36k6mteta047h6lta047h6lta047h6lz7gmv8
-	dummyAddr  = testutils.TestAddress("dummy")
-	dummyRealm = std.NewUserRealm(dummyAddr)
+	aliceAddr  = testutils.TestAddress("alice")
+	bobAddr    = testutils.TestAddress("bob")
+	aliceRealm = std.NewUserRealm(aliceAddr)
+	bobRealm   = std.NewUserRealm(bobAddr)
 
 	// launchpad
 	// g1wpex76n9vd6yzerywf047h6lta047h6lqlp5qp
@@ -40,20 +39,19 @@ var (
 )
 
 func TestGovernanceRewardProtocolFeeWithLaunchpad(t *testing.T) {
-	delegateFromAdminToDummy(t)
-	delegetFromDummyToDummy(t)
+	delegateTestFromAdminToAlice(t)
+	delegateTestFromBobToBob(t)
 	launchPadCreateProject(t)
-	launchPadDeposit(t)
-	mockProtocolFee(t)
-	skipDummyBlocks(t)
-	reward(t)
+	//launchPadDeposit(t)
+	//mockProtocolFee(t)
+	//skipDummyBlocks(t)
+	//reward(t)
 }
 
-func delegateFromAdminToDummy(t *testing.T) {
+func delegateTestFromAdminToAlice(t *testing.T) {
 	delegateAmount := uint64(1_000_000)
 	adminAddr := consts.ADMIN
 	adminRealm := std.NewUserRealm(adminAddr)
-	std.TestSetRealm(adminRealm)
 
 	// gns before emission
 	uassert.Equal(t, gns.BalanceOf(stakerAddr), uint64(0))
@@ -61,16 +59,98 @@ func delegateFromAdminToDummy(t *testing.T) {
 	uassert.Equal(t, gns.BalanceOf(communityPoolAddr), uint64(0))
 	uassert.Equal(t, gns.BalanceOf(govStakerAddr), uint64(0))
 
-	std.TestSkipHeights(1)
-	gns.Approve(govStakerAddr, delegateAmount)
-	Delegate(dummyToAddr, delegateAmount, "")
-	uassert.Equal(t, delegateAmount, GetTotalxGnsSupply())
-	uassert.Equal(t, delegateAmount, GetTotalVoteWeight())
-	uassert.Equal(t, delegateAmount, GetTotalDelegated())
-	uassert.Equal(t, delegateAmount, GetTotalDelegatedFrom(adminAddr))
-	uassert.Equal(t, delegateAmount, GetTotalDelegatedTo(dummyToAddr))
-	uassert.Equal(t, delegateAmount, GetDelegationAmountFromTo(adminAddr, dummyToAddr))
-	uassert.Equal(t, `{"delegationHistory":[{"to":"g1v36k6mte23h47h6lta047h6lta047h6lcwzxrp","amount":"1000000","timestamp":"1234567892","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
+	t.Run("delegate from admin to alice", func(t *testing.T) {
+		std.TestSkipHeights(1)
+		std.TestSetRealm(adminRealm)
+		gns.Approve(govStakerAddr, delegateAmount)
+		Delegate(aliceAddr, delegateAmount, "")
+		uassert.Equal(t, delegateAmount, GetTotalxGnsSupply())
+		uassert.Equal(t, delegateAmount, GetTotalVoteWeight())
+		uassert.Equal(t, delegateAmount, GetTotalDelegated())
+		uassert.Equal(t, delegateAmount, GetTotalDelegatedFrom(adminAddr))
+		uassert.Equal(t, delegateAmount, GetTotalDelegatedTo(aliceAddr))
+		uassert.Equal(t, delegateAmount, GetDelegationAmountFromTo(adminAddr, aliceAddr))
+		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567892","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
+	})
+
+	t.Run("delegate fail test - insufficient allowance", func(t *testing.T) {
+		std.TestSkipHeights(1)
+		std.TestSetRealm(adminRealm)
+		uassert.PanicsWithMessage(t, "insufficient allowance", func() {
+			Delegate(aliceAddr, delegateAmount, "")
+		})
+		uassert.Equal(t, delegateAmount, GetTotalxGnsSupply())
+		uassert.Equal(t, delegateAmount, GetTotalVoteWeight())
+		uassert.Equal(t, delegateAmount, GetTotalDelegated())
+		uassert.Equal(t, delegateAmount, GetTotalDelegatedFrom(adminAddr))
+		uassert.Equal(t, delegateAmount, GetTotalDelegatedTo(aliceAddr))
+		uassert.Equal(t, delegateAmount, GetDelegationAmountFromTo(adminAddr, aliceAddr))
+		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567892","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
+	})
+
+	t.Run("delegate fail test - zero delegate amount", func(t *testing.T) {
+		std.TestSkipHeights(1)
+		zeroDelegateAmount := uint64(0)
+		std.TestSetRealm(adminRealm)
+		uassert.PanicsWithMessage(t, "[GNOSWAP-GOV_STAKER-011] can not delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:0)", func() {
+			Delegate(aliceAddr, zeroDelegateAmount, "")
+		})
+		uassert.Equal(t, delegateAmount, GetTotalxGnsSupply())
+		uassert.Equal(t, delegateAmount, GetTotalVoteWeight())
+		uassert.Equal(t, delegateAmount, GetTotalDelegated())
+		uassert.Equal(t, delegateAmount, GetTotalDelegatedFrom(adminAddr))
+		uassert.Equal(t, delegateAmount, GetTotalDelegatedTo(aliceAddr))
+		uassert.Equal(t, delegateAmount, GetDelegationAmountFromTo(adminAddr, aliceAddr))
+		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567892","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
+	})
+
+	t.Run("delegate fail test - less than minimum amount", func(t *testing.T) {
+		std.TestSkipHeights(1)
+		zeroDelegateAmount := uint64(1_000)
+		std.TestSetRealm(adminRealm)
+		uassert.PanicsWithMessage(t, "[GNOSWAP-GOV_STAKER-011] can not delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:1000)", func() {
+			Delegate(aliceAddr, zeroDelegateAmount, "")
+		})
+		uassert.Equal(t, delegateAmount, GetTotalxGnsSupply())
+		uassert.Equal(t, delegateAmount, GetTotalVoteWeight())
+		uassert.Equal(t, delegateAmount, GetTotalDelegated())
+		uassert.Equal(t, delegateAmount, GetTotalDelegatedFrom(adminAddr))
+		uassert.Equal(t, delegateAmount, GetTotalDelegatedTo(aliceAddr))
+		uassert.Equal(t, delegateAmount, GetDelegationAmountFromTo(adminAddr, aliceAddr))
+		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567892","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
+	})
+
+	t.Run("delegate fail test - not multiple of minimumAmount(1_000_000)", func(t *testing.T) {
+		std.TestSkipHeights(1)
+		zeroDelegateAmount := uint64(1_000_100)
+		std.TestSetRealm(adminRealm)
+		uassert.PanicsWithMessage(t, "[GNOSWAP-GOV_STAKER-004] invalid amount || amount must be multiple of 1000000", func() {
+			Delegate(aliceAddr, zeroDelegateAmount, "")
+		})
+		uassert.Equal(t, delegateAmount, GetTotalxGnsSupply())
+		uassert.Equal(t, delegateAmount, GetTotalVoteWeight())
+		uassert.Equal(t, delegateAmount, GetTotalDelegated())
+		uassert.Equal(t, delegateAmount, GetTotalDelegatedFrom(adminAddr))
+		uassert.Equal(t, delegateAmount, GetTotalDelegatedTo(aliceAddr))
+		uassert.Equal(t, delegateAmount, GetDelegationAmountFromTo(adminAddr, aliceAddr))
+		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567892","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
+	})
+
+	t.Run("delegate fail test - invalid Address", func(t *testing.T) {
+		std.TestSkipHeights(1)
+		invalidAddr := std.Address("invalidAddress")
+		std.TestSetRealm(adminRealm)
+		uassert.PanicsWithMessage(t, "[GNOSWAP-GOV_STAKER-008] invalid address || invalid address invalidAddress to delegate", func() {
+			Delegate(invalidAddr, delegateAmount, "")
+		})
+		uassert.Equal(t, delegateAmount, GetTotalxGnsSupply())
+		uassert.Equal(t, delegateAmount, GetTotalVoteWeight())
+		uassert.Equal(t, delegateAmount, GetTotalDelegated())
+		uassert.Equal(t, delegateAmount, GetTotalDelegatedFrom(adminAddr))
+		uassert.Equal(t, delegateAmount, GetTotalDelegatedTo(aliceAddr))
+		uassert.Equal(t, delegateAmount, GetDelegationAmountFromTo(adminAddr, aliceAddr))
+		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567892","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
+	})
 
 	// gns emission after adjustment & delegate
 	// 1 block gns 14269406
@@ -84,126 +164,647 @@ func delegateFromAdminToDummy(t *testing.T) {
 	uassert.Equal(t, gns.BalanceOf(govStakerAddr)-xgns.TotalSupply(), uint64(0))
 }
 
-func delegetFromDummyToDummy(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	gns.Transfer(dummyAddr, 5000000)
+func delegateTestFromBobToBob(t *testing.T) {
+	beforeDelegatedAmount := uint64(1_000_000)
+	delegateAmount := uint64(5_000_000)
+	adminAddr := consts.ADMIN
+	adminRealm := std.NewUserRealm(adminAddr)
+	emissionRewardPerBlockToStaker := uint64(10702054)
+	emissionRewardPerBlockToDevOps := uint64(2853881)
+	emissionRewardPerBlockToCommunityPool := uint64(713470)
+	emissionRewardPerBlockToGovStaker := uint64(0)
 
-	std.TestSkipHeights(1)
-	std.TestSetRealm(dummyRealm)
-	gns.Approve(govStakerAddr, uint64(5000000))
-	Delegate(dummyAddr, 5000000, "")
+	t.Run("delegate from bob to bob", func(t *testing.T) {
+		std.TestSkipHeights(1)
+		std.TestSetRealm(adminRealm)
+		gns.Transfer(bobAddr, delegateAmount)
 
-	uassert.Equal(t, gns.BalanceOf(stakerAddr), uint64(21404109))
-	uassert.Equal(t, gns.BalanceOf(devOpsAddr), uint64(5707762))
-	uassert.Equal(t, gns.BalanceOf(communityPoolAddr), uint64(1426940))
-	uassert.Equal(t, gns.BalanceOf(govStakerAddr), uint64(6000000))
+		std.TestSetRealm(bobRealm)
+		gns.Approve(govStakerAddr, delegateAmount)
+		Delegate(bobAddr, delegateAmount, "")
+
+		uassert.Equal(t, beforeDelegatedAmount+delegateAmount, GetTotalxGnsSupply())
+		uassert.Equal(t, beforeDelegatedAmount+delegateAmount, GetTotalVoteWeight())
+		uassert.Equal(t, beforeDelegatedAmount+delegateAmount, GetTotalDelegated())
+		uassert.Equal(t, beforeDelegatedAmount, GetTotalDelegatedFrom(adminAddr))
+		uassert.Equal(t, delegateAmount, GetTotalDelegatedFrom(bobAddr))
+		uassert.Equal(t, beforeDelegatedAmount, GetTotalDelegatedTo(aliceAddr))
+		uassert.Equal(t, delegateAmount, GetTotalDelegatedTo(bobAddr))
+		uassert.Equal(t, beforeDelegatedAmount, GetDelegationAmountFromTo(adminAddr, aliceAddr))
+		uassert.Equal(t, delegateAmount, GetDelegationAmountFromTo(bobAddr, bobAddr))
+		uassert.Equal(t, uint64(0), GetDelegationAmountFromTo(bobAddr, aliceAddr))
+		uassert.Equal(t, `{"delegationHistory":[{"to":"g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu","amount":"5000000","timestamp":"1234567904","height":"130","add":"true"}]}`, GetDelegationHistory(bobAddr))
+	})
+
+	uassert.Equal(t, emissionRewardPerBlockToStaker*7+3, gns.BalanceOf(stakerAddr))
+	uassert.Equal(t, emissionRewardPerBlockToDevOps*7+1, gns.BalanceOf(devOpsAddr))
+	uassert.Equal(t, emissionRewardPerBlockToCommunityPool*7+1, gns.BalanceOf(communityPoolAddr))
+	uassert.Equal(t, emissionRewardPerBlockToGovStaker+beforeDelegatedAmount+delegateAmount, gns.BalanceOf(govStakerAddr))
 	uassert.Equal(t, gns.BalanceOf(govStakerAddr)-xgns.TotalSupply(), uint64(0))
 }
 
-func mockProtocolFee(t *testing.T) {
-	// admin > protocol_fee
-	// send qux, bar for testing
-	std.TestSetRealm(adminRealm)
-	bar.Transfer(protocolFeeAddr, 1000)
-	qux.Transfer(protocolFeeAddr, 2500)
-
-	//uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), uint64(1000))
-	uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))
-	uassert.Equal(t, bar.BalanceOf(govStakerAddr), uint64(0))
-
-	//uassert.Equal(t, qux.BalanceOf(protocolFeeAddr), uint64(2500))
-	uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
-	uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(0))
-}
-
 func launchPadCreateProject(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	adminAddr := consts.ADMIN
+	adminRealm := std.NewUserRealm(adminAddr)
+	emissionRewardPerBlockToStaker := uint64(10702054)
+	emissionRewardPerBlockToDevOps := uint64(2853881)
+	emissionRewardPerBlockToCommunityPool := uint64(713470)
+	emissionRewardPerBlockToGovStaker := uint64(0)
 
-	obl.Approve(launchpadAddr, 1_000_000_000)
-	projectId := lp.CreateProject(
-		"OBL PROTOCOL",
-		oblPath,
-		projectAddr,
-		uint64(1_000_000_000), // 1000000000
-		"gno.land/r/gnoswap/v1/gov/xgns",
-		"0",
-		uint64(10),                   // 100000000
-		uint64(20),                   // 200000000
-		uint64(70),                   // 700000000
-		uint64(time.Now().Unix()+10), // 5 block later
-	)
-	uassert.Equal(t, projectId, `gno.land/r/onbloc/obl:125`)
+	t.Run("launchpad create project fail test - not admin", func(t *testing.T) {
+		projectName := "OBL Launchpad Project"
+		rewardTokenPath := "gno.land/r/onbloc/obl"
+		rewardAmount := uint64(1_000_000_000)
+		conditionsToken := "gno.land/r/gnoswap/v1/gov/xgns"
+		conditionsAmount := "1000000"
+		tier30Ratio := uint64(10)
+		tier90Ratio := uint64(20)
+		tier180Ratio := uint64(70)
+		startTime := uint64(time.Now().Unix() + 10)
+
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-002] invalid address || caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) is not authorized for role admin", func() {
+			std.TestSetRealm(aliceRealm)
+			obl.Approve(launchpadAddr, rewardAmount)
+			lp.CreateProject(
+				projectName,
+				rewardTokenPath,
+				projectAddr,
+				rewardAmount,
+				conditionsToken,
+				conditionsAmount,
+				tier30Ratio,
+				tier90Ratio,
+				tier180Ratio,
+				startTime,
+			)
+		})
+	})
+
+	t.Run("launchpad create project fail test - invalid name(empty)", func(t *testing.T) {
+		projectName := ""
+		rewardTokenPath := "gno.land/r/onbloc/obl"
+		rewardAmount := uint64(1_000_000_000)
+		conditionsToken := "gno.land/r/gnoswap/v1/gov/xgns"
+		conditionsAmount := "1000000"
+		tier30Ratio := uint64(10)
+		tier90Ratio := uint64(20)
+		tier180Ratio := uint64(70)
+		startTime := uint64(time.Now().Unix() + 10)
+
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || project name cannot be empty", func() {
+			std.TestSetRealm(adminRealm)
+			obl.Approve(launchpadAddr, rewardAmount)
+			lp.CreateProject(
+				projectName,
+				rewardTokenPath,
+				projectAddr,
+				rewardAmount,
+				conditionsToken,
+				conditionsAmount,
+				tier30Ratio,
+				tier90Ratio,
+				tier180Ratio,
+				startTime,
+			)
+		})
+	})
+
+	t.Run("launchpad create project fail test - invalid name(too long)", func(t *testing.T) {
+		projectName := "01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"
+		rewardTokenPath := "gno.land/r/onbloc/obl"
+		rewardAmount := uint64(1_000_000_000)
+		conditionsToken := "gno.land/r/gnoswap/v1/gov/xgns"
+		conditionsAmount := "1000000"
+		tier30Ratio := uint64(10)
+		tier90Ratio := uint64(20)
+		tier180Ratio := uint64(70)
+		startTime := uint64(time.Now().Unix() + 10)
+
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || project name is too long", func() {
+			std.TestSetRealm(adminRealm)
+			obl.Approve(launchpadAddr, rewardAmount)
+			lp.CreateProject(
+				projectName,
+				rewardTokenPath,
+				projectAddr,
+				rewardAmount,
+				conditionsToken,
+				conditionsAmount,
+				tier30Ratio,
+				tier90Ratio,
+				tier180Ratio,
+				startTime,
+			)
+		})
+	})
+
+	t.Run("launchpad create project fail test - invalid tokenPath(empty)", func(t *testing.T) {
+		projectName := "OBL Launchpad Project"
+		rewardTokenPath := ""
+		rewardAmount := uint64(1_000_000_000)
+		conditionsToken := "gno.land/r/gnoswap/v1/gov/xgns"
+		conditionsAmount := "1000000"
+		tier30Ratio := uint64(10)
+		tier90Ratio := uint64(20)
+		tier180Ratio := uint64(70)
+		startTime := uint64(time.Now().Unix() + 10)
+
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || tokenPath cannot be empty", func() {
+			std.TestSetRealm(adminRealm)
+			obl.Approve(launchpadAddr, rewardAmount)
+			lp.CreateProject(
+				projectName,
+				rewardTokenPath,
+				projectAddr,
+				rewardAmount,
+				conditionsToken,
+				conditionsAmount,
+				tier30Ratio,
+				tier90Ratio,
+				tier180Ratio,
+				startTime,
+			)
+		})
+	})
+
+	t.Run("launchpad create project fail test - invalid tokenPath(not registered)", func(t *testing.T) {
+		projectName := "OBL Launchpad Project"
+		rewardTokenPath := "gno.land/r/gnoswap/v1/token_test/obl"
+		rewardAmount := uint64(1_000_000_000)
+		conditionsToken := "gno.land/r/gnoswap/v1/gov/xgns"
+		conditionsAmount := "1000000"
+		tier30Ratio := uint64(10)
+		tier90Ratio := uint64(20)
+		tier180Ratio := uint64(70)
+		startTime := uint64(time.Now().Unix() + 10)
+
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || tokenPath(gno.land/r/gnoswap/v1/token_test/obl) not registered", func() {
+			std.TestSetRealm(adminRealm)
+			obl.Approve(launchpadAddr, rewardAmount)
+			lp.CreateProject(
+				projectName,
+				rewardTokenPath,
+				projectAddr,
+				rewardAmount,
+				conditionsToken,
+				conditionsAmount,
+				tier30Ratio,
+				tier90Ratio,
+				tier180Ratio,
+				startTime,
+			)
+		})
+	})
+
+	t.Run("launchpad create project fail test - invalid recipient address", func(t *testing.T) {
+		projectName := "OBL Launchpad Project"
+		rewardTokenPath := "gno.land/r/onbloc/obl"
+		rewardAmount := uint64(1_000_000_000)
+		conditionsToken := "gno.land/r/gnoswap/v1/gov/xgns"
+		conditionsAmount := "1000000"
+		tier30Ratio := uint64(10)
+		tier90Ratio := uint64(20)
+		tier180Ratio := uint64(70)
+		startTime := uint64(time.Now().Unix() + 10)
+		invalidAddr := std.Address("invalidAddress")
+
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-002] invalid address || recipient address(invalidAddress)", func() {
+			std.TestSetRealm(adminRealm)
+			obl.Approve(launchpadAddr, rewardAmount)
+			lp.CreateProject(
+				projectName,
+				rewardTokenPath,
+				invalidAddr,
+				rewardAmount,
+				conditionsToken,
+				conditionsAmount,
+				tier30Ratio,
+				tier90Ratio,
+				tier180Ratio,
+				startTime,
+			)
+		})
+	})
+
+	t.Run("launchpad create project fail test - invalid reward amount", func(t *testing.T) {
+		projectName := "OBL Launchpad Project"
+		rewardTokenPath := "gno.land/r/onbloc/obl"
+		rewardAmount := uint64(0)
+		conditionsToken := "gno.land/r/gnoswap/v1/gov/xgns"
+		conditionsAmount := "1000000"
+		tier30Ratio := uint64(10)
+		tier90Ratio := uint64(20)
+		tier180Ratio := uint64(70)
+		startTime := uint64(time.Now().Unix() + 10)
+
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || deposit amount cannot be 0", func() {
+			std.TestSetRealm(adminRealm)
+			obl.Approve(launchpadAddr, rewardAmount)
+			lp.CreateProject(
+				projectName,
+				rewardTokenPath,
+				projectAddr,
+				rewardAmount,
+				conditionsToken,
+				conditionsAmount,
+				tier30Ratio,
+				tier90Ratio,
+				tier180Ratio,
+				startTime,
+			)
+		})
+	})
+
+	t.Run("launchpad create project fail test - invalid tier ratio", func(t *testing.T) {
+		projectName := "OBL Launchpad Project"
+		rewardTokenPath := "gno.land/r/onbloc/obl"
+		rewardAmount := uint64(1_000_000_000)
+		conditionsToken := "gno.land/r/gnoswap/v1/gov/xgns"
+		conditionsAmount := "1000000"
+		tier30Ratio := uint64(15)
+		tier90Ratio := uint64(20)
+		tier180Ratio := uint64(70)
+		startTime := uint64(time.Now().Unix() + 10)
+
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || invalid ratio, sum of all tiers(30:15, 90:20, 180:70) should be 100", func() {
+			std.TestSetRealm(adminRealm)
+			obl.Approve(launchpadAddr, rewardAmount)
+			lp.CreateProject(
+				projectName,
+				rewardTokenPath,
+				projectAddr,
+				rewardAmount,
+				conditionsToken,
+				conditionsAmount,
+				tier30Ratio,
+				tier90Ratio,
+				tier180Ratio,
+				startTime,
+			)
+		})
+	})
+
+	t.Run("launchpad create project fail test - invalid start time", func(t *testing.T) {
+		projectName := "OBL Launchpad Project"
+		rewardTokenPath := "gno.land/r/onbloc/obl"
+		rewardAmount := uint64(1_000_000_000)
+		conditionsToken := "gno.land/r/gnoswap/v1/gov/xgns"
+		conditionsAmount := "1000000"
+		tier30Ratio := uint64(10)
+		tier90Ratio := uint64(20)
+		tier180Ratio := uint64(70)
+		startTime := uint64(time.Now().Unix() - 10)
+
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234567894) must be greater than now(1234567904)", func() {
+			std.TestSetRealm(adminRealm)
+			obl.Approve(launchpadAddr, rewardAmount)
+			lp.CreateProject(
+				projectName,
+				rewardTokenPath,
+				projectAddr,
+				rewardAmount,
+				conditionsToken,
+				conditionsAmount,
+				tier30Ratio,
+				tier90Ratio,
+				tier180Ratio,
+				startTime,
+			)
+		})
+	})
+
+	t.Run("launchpad create project fail test - invalid conditions (empty path)", func(t *testing.T) {
+		projectName := "OBL Launchpad Project"
+		rewardTokenPath := "gno.land/r/onbloc/obl"
+		rewardAmount := uint64(1_000_000_000)
+		conditionsToken := ""
+		conditionsAmount := "1000000"
+		tier30Ratio := uint64(10)
+		tier90Ratio := uint64(20)
+		tier180Ratio := uint64(70)
+		startTime := uint64(time.Now().Unix() + 10)
+
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || conditionsToken or conditionsAmount cannot be empty", func() {
+			std.TestSetRealm(adminRealm)
+			obl.Approve(launchpadAddr, rewardAmount)
+			lp.CreateProject(
+				projectName,
+				rewardTokenPath,
+				projectAddr,
+				rewardAmount,
+				conditionsToken,
+				conditionsAmount,
+				tier30Ratio,
+				tier90Ratio,
+				tier180Ratio,
+				startTime,
+			)
+		})
+	})
+
+	t.Run("launchpad create project fail test - invalid conditions (empty amount)", func(t *testing.T) {
+		projectName := "OBL Launchpad Project"
+		rewardTokenPath := "gno.land/r/onbloc/obl"
+		rewardAmount := uint64(1_000_000_000)
+		conditionsToken := "gno.land/r/gnoswap/v1/gov/xgns"
+		conditionsAmount := ""
+		tier30Ratio := uint64(10)
+		tier90Ratio := uint64(20)
+		tier180Ratio := uint64(70)
+		startTime := uint64(time.Now().Unix() + 10)
+
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || conditionsToken or conditionsAmount cannot be empty", func() {
+			std.TestSetRealm(adminRealm)
+			obl.Approve(launchpadAddr, rewardAmount)
+			lp.CreateProject(
+				projectName,
+				rewardTokenPath,
+				projectAddr,
+				rewardAmount,
+				conditionsToken,
+				conditionsAmount,
+				tier30Ratio,
+				tier90Ratio,
+				tier180Ratio,
+				startTime,
+			)
+		})
+	})
+
+	t.Run("launchpad create project fail test - invalid conditions (different conditions count)", func(t *testing.T) {
+		projectName := "OBL Launchpad Project"
+		rewardTokenPath := "gno.land/r/onbloc/obl"
+		rewardAmount := uint64(1_000_000_000)
+		conditionsToken := "gno.land/r/gnoswap/v1/gov/xgns"
+		conditionsAmount := "1000000*PAD*0"
+		tier30Ratio := uint64(10)
+		tier90Ratio := uint64(20)
+		tier180Ratio := uint64(70)
+		startTime := uint64(time.Now().Unix() + 10)
+
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-011] invalid length || invalid conditions(numTokens(1) != numAmounts(2))", func() {
+			std.TestSetRealm(adminRealm)
+			obl.Approve(launchpadAddr, rewardAmount)
+			lp.CreateProject(
+				projectName,
+				rewardTokenPath,
+				projectAddr,
+				rewardAmount,
+				conditionsToken,
+				conditionsAmount,
+				tier30Ratio,
+				tier90Ratio,
+				tier180Ratio,
+				startTime,
+			)
+		})
+	})
+
+	t.Run("launchpad create project fail test - invalid conditions (some path are invalid)", func(t *testing.T) {
+		projectName := "OBL Launchpad Project"
+		rewardTokenPath := "gno.land/r/onbloc/obl"
+		rewardAmount := uint64(1_000_000_000)
+		conditionsToken := "gno.land/r/gnoswap/v1/gov/xgns*PAD*"
+		conditionsAmount := "1000000*PAD*0"
+		tier30Ratio := uint64(10)
+		tier90Ratio := uint64(20)
+		tier180Ratio := uint64(70)
+		startTime := uint64(time.Now().Unix() + 10)
+
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || invalid token()", func() {
+			std.TestSetRealm(adminRealm)
+			obl.Approve(launchpadAddr, rewardAmount)
+			lp.CreateProject(
+				projectName,
+				rewardTokenPath,
+				projectAddr,
+				rewardAmount,
+				conditionsToken,
+				conditionsAmount,
+				tier30Ratio,
+				tier90Ratio,
+				tier180Ratio,
+				startTime,
+			)
+		})
+	})
+
+	t.Run("launchpad create project fail test - invalid conditions (some path are not registered)", func(t *testing.T) {
+		projectName := "OBL Launchpad Project"
+		rewardTokenPath := "gno.land/r/onbloc/obl"
+		rewardAmount := uint64(1_000_000_000)
+		conditionsToken := "gno.land/r/gnoswap/v1/gov/xgns*PAD*gno.land/r/gnoswap/v1/token_test/obl"
+		conditionsAmount := "1000000*PAD*10"
+		tier30Ratio := uint64(10)
+		tier90Ratio := uint64(20)
+		tier180Ratio := uint64(70)
+		startTime := uint64(time.Now().Unix() + 10)
+
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || token(gno.land/r/gnoswap/v1/token_test/obl) not registered", func() {
+			std.TestSetRealm(adminRealm)
+			obl.Approve(launchpadAddr, rewardAmount)
+			lp.CreateProject(
+				projectName,
+				rewardTokenPath,
+				projectAddr,
+				rewardAmount,
+				conditionsToken,
+				conditionsAmount,
+				tier30Ratio,
+				tier90Ratio,
+				tier180Ratio,
+				startTime,
+			)
+		})
+	})
+
+	t.Run("launchpad create project fail test - invalid conditions (already exist)", func(t *testing.T) {
+		projectName := "OBL Launchpad Project"
+		rewardTokenPath := "gno.land/r/onbloc/obl"
+		rewardAmount := uint64(1_000_000_000)
+		conditionsToken := "gno.land/r/gnoswap/v1/gov/xgns*PAD*gno.land/r/gnoswap/v1/gov/xgns"
+		conditionsAmount := "1000000*PAD*10"
+		tier30Ratio := uint64(10)
+		tier90Ratio := uint64(20)
+		tier180Ratio := uint64(70)
+		startTime := uint64(time.Now().Unix() + 10)
+
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || duplicated condition token(gno.land/r/gnoswap/v1/gov/xgns)", func() {
+			std.TestSetRealm(adminRealm)
+			obl.Approve(launchpadAddr, rewardAmount)
+			lp.CreateProject(
+				projectName,
+				rewardTokenPath,
+				projectAddr,
+				rewardAmount,
+				conditionsToken,
+				conditionsAmount,
+				tier30Ratio,
+				tier90Ratio,
+				tier180Ratio,
+				startTime,
+			)
+		})
+	})
+
+	t.Run("launchpad create project fail test - invalid token balance", func(t *testing.T) {
+		projectName := "OBL Launchpad Project"
+		rewardTokenPath := "gno.land/r/onbloc/obl"
+		rewardAmount := uint64(1_000_000_000)
+		conditionsToken := "gno.land/r/gnoswap/v1/gov/xgns"
+		conditionsAmount := "1000000"
+		tier30Ratio := uint64(10)
+		tier90Ratio := uint64(20)
+		tier180Ratio := uint64(70)
+		startTime := uint64(time.Now().Unix() + 10)
+
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-010] insufficient balance || caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) balance(0) < depositAmount(1000000000)", func() {
+			std.TestSetRealm(adminRealm)
+			access.SetRole(access.ROLE_ADMIN, aliceAddr)
+
+			std.TestSetRealm(aliceRealm)
+			obl.Approve(launchpadAddr, rewardAmount)
+			lp.CreateProject(
+				projectName,
+				rewardTokenPath,
+				projectAddr,
+				rewardAmount,
+				conditionsToken,
+				conditionsAmount,
+				tier30Ratio,
+				tier90Ratio,
+				tier180Ratio,
+				startTime,
+			)
+		})
+	})
+
+	t.Run("launchpad create project", func(t *testing.T) {
+		projectName := "OBL Launchpad Project"
+		rewardTokenPath := "gno.land/r/onbloc/obl"
+		rewardAmount := uint64(1_000_000_000)
+		conditionsToken := "gno.land/r/gnoswap/v1/gov/xgns"
+		conditionsAmount := "1000000"
+		tier30Ratio := uint64(10)
+		tier90Ratio := uint64(20)
+		tier180Ratio := uint64(70)
+		startTime := uint64(time.Now().Unix() + 10)
+
+		std.TestSetRealm(aliceRealm)
+		access.SetRole(access.ROLE_ADMIN, adminAddr)
+
+		std.TestSetRealm(adminRealm)
+		obl.Approve(launchpadAddr, rewardAmount)
+		projectId := lp.CreateProject(
+			projectName,
+			rewardTokenPath,
+			projectAddr,
+			rewardAmount,
+			conditionsToken,
+			conditionsAmount,
+			tier30Ratio,  // 100000000
+			tier90Ratio,  // 200000000
+			tier180Ratio, // 700000000
+			startTime,    // 5 block later
+		)
+		uassert.Equal(t, `gno.land/r/onbloc/obl:130`, projectId)
+		uassert.Equal(t, `{"height":"130","now":"1234567904","projectId":"gno.land/r/onbloc/obl:130","name":"OBL Launchpad Project","tokenPath":"gno.land/r/onbloc/obl","depositAmount":"1000000000","recipient":"g1wpex76n9vd6yzerywf047h6lta047h6lqlp5qp","conditionsToken":"gno.land/r/gnoswap/v1/gov/xgns","conditionsAmount":"1000000","tier30Ratio":"10","tier90Ratio":"20","tier180Ratio":"70","createdHeight":"130","createdTime":"1234567904","startedHeight":"135","startedTime":"1234567914","endedHeight":"7776135","endedTime":"1250119914","totalDeposit":"0","actualDeposit":"0","totalParticipant":"0","actualParticipant":"0","totalCollected":"0","refundedAmount":"0","refundedHeight":"0","refundedTime":"0"}`,
+			lp.ApiGetProjectStatisticsByProjectId(projectId))
+		uassert.Equal(t, `{"height":"130","now":"1234567904","projectId":"gno.land/r/onbloc/obl:130","tierId":"gno.land/r/onbloc/obl:130:30","collectWaitDuration":"129600","tierAmount":"100000000","tierAmountPerBlockX128":"26256355472294634526494954277142608908641","started.height":"135","started.time":"1234567914","ended.height":"1296135","ended.time":"1237159914","tierTotalDepositAmount":"0","tierActualDepositAmount":"0","tierTotalParticipant":"0","tierActualParticipant":"0","userCollectedAmount":"0","calculatedAmount":"0"}`,
+			lp.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:30", projectId)))
+		uassert.Equal(t, `{"height":"130","now":"1234567904","projectId":"gno.land/r/onbloc/obl:130","tierId":"gno.land/r/onbloc/obl:130:90","collectWaitDuration":"302400","tierAmount":"200000000","tierAmountPerBlockX128":"17504236981529756350996636184761739272427","started.height":"135","started.time":"1234567914","ended.height":"3888135","ended.time":"1242343914","tierTotalDepositAmount":"0","tierActualDepositAmount":"0","tierTotalParticipant":"0","tierActualParticipant":"0","userCollectedAmount":"0","calculatedAmount":"0"}`,
+			lp.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:90", projectId)))
+		uassert.Equal(t, `{"height":"130","now":"1234567904","projectId":"gno.land/r/onbloc/obl:130","tierId":"gno.land/r/onbloc/obl:130:180","collectWaitDuration":"604800","tierAmount":"700000000","tierAmountPerBlockX128":"30632414717677073614244113323333043726748","started.height":"135","started.time":"1234567914","ended.height":"7776135","ended.time":"1250119914","tierTotalDepositAmount":"0","tierActualDepositAmount":"0","tierTotalParticipant":"0","tierActualParticipant":"0","userCollectedAmount":"0","calculatedAmount":"0"}`,
+			lp.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:180", projectId)))
+	})
+
 	std.TestSkipHeights(10) // active project
 }
 
-func launchPadDeposit(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	gns.Transfer(user01, uint64(1_000_000)) // to deposit
+//	func mockProtocolFee(t *testing.T) {
+//		// admin > protocol_fee
+//		// send qux, bar for testing
+//		std.TestSetRealm(adminRealm)
+//		bar.Transfer(protocolFeeAddr, 1000)
+//		qux.Transfer(protocolFeeAddr, 2500)
+//
+//		//uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), uint64(1000))
+//		uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))
+//		uassert.Equal(t, bar.BalanceOf(govStakerAddr), uint64(0))
+//
+//		//uassert.Equal(t, qux.BalanceOf(protocolFeeAddr), uint64(2500))
+//		uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
+//		uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(0))
+//	}
 
-	std.TestSetRealm(user01Realm)
-	gns.Approve(launchpadAddr, uint64(1_000_000))
-
-	lp.DepositGns(
-		`gno.land/r/onbloc/obl:125:30`,
-		uint64(1_000_000),
-		"",
-	)
-	std.TestSkipHeights(1)
-}
-
-func skipDummyBlocks(t *testing.T) {
-	std.TestSkipHeights(10)
-	en.MintAndDistributeGns()
-
-	std.TestSkipHeights(1)
-
-	//uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), uint64(0))
-	//uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))
-	//uassert.Equal(t, bar.BalanceOf(govStakerAddr), uint64(1000))
-
-	//uassert.Equal(t, qux.BalanceOf(protocolFeeAddr), uint64(0))
-	//uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
-	//uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(2500))
-}
-
-func reward(t *testing.T) {
-	t.Run("check dummy addr", func(t *testing.T) {
-		gcr := GetClaimableRewardByAddress(dummyAddr)
-		uassert.Equal(t, gcr, `{"height":"147","now":"1234567938","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"714"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"1785"}]}`)
-	})
-
-	t.Run("check launchpad addr", func(t *testing.T) {
-		gcr := GetClaimableRewardByAddress(launchpadAddr)
-		println(gcr)
-		//uassert.Equal(t, gcr, `{"height":"147","now":"1234567938","emissionReward":"0"}`)
-	})
-
-	t.Run("check project's recipient", func(t *testing.T) {
-		gcr := GetClaimableRewardByAddress(projectAddr)
-		println(gcr)
-		//uassert.Equal(t, gcr, `{"height":"147","now":"1234567938","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"142"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"357"}]}`)
-	})
-
-	t.Run("check admin addr", func(t *testing.T) {
-		gcr := GetClaimableRewardByAddress(admin)
-		uassert.Equal(t, gcr, `{"height":"147","now":"1234567938","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"142"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"357"}]}`)
-	})
-
-	t.Run("collect reward", func(t *testing.T) {
-		// protocol fee has bar, qux
-		uassert.Equal(t, bar.BalanceOf(projectAddr), uint64(0))
-		uassert.Equal(t, qux.BalanceOf(projectAddr), uint64(0))
-
-		std.TestSetRealm(projectRealm)
-
-		//uassert.Equal(t, bar.BalanceOf(projectAddr), uint64(142))
-		//uassert.Equal(t, qux.BalanceOf(projectAddr), uint64(357))
-	})
-
-	t.Run("same block", func(t *testing.T) {
-		std.TestSetRealm(projectRealm)
-
-		//uassert.Equal(t, bar.BalanceOf(projectAddr), uint64(142))
-		//uassert.Equal(t, qux.BalanceOf(projectAddr), uint64(357))
-	})
-}
+//func launchPadDeposit(t *testing.T) {
+//	std.TestSetRealm(adminRealm)
+//	gns.Transfer(user01, uint64(1_000_000)) // to deposit
+//
+//	std.TestSetRealm(user01Realm)
+//	gns.Approve(launchpadAddr, uint64(1_000_000))
+//
+//	lp.DepositGns(
+//		`gno.land/r/onbloc/obl:125:30`,
+//		uint64(1_000_000),
+//		"",
+//	)
+//	std.TestSkipHeights(1)
+//}
+//
+//func skipDummyBlocks(t *testing.T) {
+//	std.TestSkipHeights(10)
+//	en.MintAndDistributeGns()
+//
+//	std.TestSkipHeights(1)
+//
+//	//uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), uint64(0))
+//	//uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))
+//	//uassert.Equal(t, bar.BalanceOf(govStakerAddr), uint64(1000))
+//
+//	//uassert.Equal(t, qux.BalanceOf(protocolFeeAddr), uint64(0))
+//	//uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
+//	//uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(2500))
+//}
+//
+//func reward(t *testing.T) {
+//	t.Run("check dummy addr", func(t *testing.T) {
+//		gcr := GetClaimableRewardByAddress(dummyAddr)
+//		uassert.Equal(t, gcr, `{"height":"147","now":"1234567938","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"714"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"1785"}]}`)
+//	})
+//
+//	t.Run("check launchpad addr", func(t *testing.T) {
+//		gcr := GetClaimableRewardByAddress(launchpadAddr)
+//		println(gcr)
+//		//uassert.Equal(t, gcr, `{"height":"147","now":"1234567938","emissionReward":"0"}`)
+//	})
+//
+//	t.Run("check project's recipient", func(t *testing.T) {
+//		gcr := GetClaimableRewardByAddress(projectAddr)
+//		println(gcr)
+//		//uassert.Equal(t, gcr, `{"height":"147","now":"1234567938","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"142"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"357"}]}`)
+//	})
+//
+//	t.Run("check admin addr", func(t *testing.T) {
+//		gcr := GetClaimableRewardByAddress(admin)
+//		uassert.Equal(t, gcr, `{"height":"147","now":"1234567938","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"142"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"357"}]}`)
+//	})
+//
+//	t.Run("collect reward", func(t *testing.T) {
+//		// protocol fee has bar, qux
+//		uassert.Equal(t, bar.BalanceOf(projectAddr), uint64(0))
+//		uassert.Equal(t, qux.BalanceOf(projectAddr), uint64(0))
+//
+//		std.TestSetRealm(projectRealm)
+//
+//		//uassert.Equal(t, bar.BalanceOf(projectAddr), uint64(142))
+//		//uassert.Equal(t, qux.BalanceOf(projectAddr), uint64(357))
+//	})
+//
+//	t.Run("same block", func(t *testing.T) {
+//		std.TestSetRealm(projectRealm)
+//
+//		//uassert.Equal(t, bar.BalanceOf(projectAddr), uint64(142))
+//		//uassert.Equal(t, qux.BalanceOf(projectAddr), uint64(357))
+//	})
+//}

@@ -359,7 +359,14 @@ func CreateProject(
 		panic(err.Error())
 	}
 
-	en.MintAndDistributeGns()
+	// token Balance Check
+	tokenTeller := common.GetTokenTeller(tokenPath)
+	caller := getPrevAddr()
+	if tokenTeller.BalanceOf(caller) < depositAmount {
+		panic(addDetailToError(
+			errInsufficientBalance,
+			ufmt.Sprintf("caller(%s) balance(%d) < depositAmount(%d)", caller, tokenTeller.BalanceOf(caller), depositAmount)))
+	}
 
 	projectId := generateProjectId(input.TokenPath)
 	if _, exists := projects[projectId]; exists {
@@ -367,6 +374,8 @@ func CreateProject(
 			errDuplicateProject,
 			ufmt.Sprintf("project(%s) already exists", projectId)))
 	}
+
+	en.MintAndDistributeGns()
 
 	calcResult, err := calculateProjectParams(input, now)
 	if err != nil {
@@ -427,7 +436,7 @@ func CreateProject(
 	projects[projectId] = *project
 
 	// Transfer tokens
-	tokenTeller := common.GetTokenTeller(tokenPath)
+
 	tokenTeller.TransferFrom(
 		getPrevAddr(),
 		std.Address(GetOrigPkgAddr()),

@@ -37,8 +37,10 @@ type lockedGNS struct {
 // 1 day : 5 minutes = 86400 : 300
 // 86400 : 300 = 604800 : x
 // x = 300 * 604800 / 86400 = 2100
-const SECONDS_IN_7_DAYS = uint64(604800)
-const SECONDS_IN_7_DAYS_TEST = uint64(2100)
+const (
+	SECONDS_IN_7_DAYS      = uint64(604800)
+	SECONDS_IN_7_DAYS_TEST = uint64(2100)
+)
 
 var (
 	addrLockedGns = avl.NewTree() // address -> []lockedGNS
@@ -49,10 +51,6 @@ var (
 // Delegate delegates GNS tokens to a specified address.
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#delegate
 func Delegate(to std.Address, amount uint64, referrer string) {
-	if running {
-		cleanDelegationStatHistory()
-	}
-
 	if !to.IsValid() {
 		panic(addDetailToError(
 			errInvalidAddress,
@@ -83,16 +81,20 @@ func Delegate(to std.Address, amount uint64, referrer string) {
 		))
 	}
 
+	// Transfer the caller's GNS to GovStaker
+	gns.TransferFrom(caller, std.CurrentRealm().Address(), amount)
+
 	referral.TryRegister(caller, referrer)
 	en.MintAndDistributeGns()
+
+	if running {
+		cleanDelegationStatHistory()
+	}
 
 	rewardState.addStake(uint64(std.ChainHeight()), caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
 	// actual delegate
 	delegate(to, amount)
-
-	// Transfer the caller's GNS to GovStaker
-	gns.TransferFrom(caller, std.CurrentRealm().Address(), amount)
 
 	// xGNS mint to caller
 	xgns.Mint(caller, amount)

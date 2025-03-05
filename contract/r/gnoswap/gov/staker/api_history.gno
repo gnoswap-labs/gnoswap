@@ -68,7 +68,7 @@ func GetPossibleVotingAddressWithWeightJSON(endTimestamp uint64) (uint64, string
 // It returns a JSON-formatted string containing the delegation records.
 // Each record includes the delegated address, amount, timestamp, block height, and whether it was an addition or removal.
 func GetDelegationHistory(caller std.Address) string {
-	historyList := GetDelegateHistory(caller)
+	historyList := GetDelegateHistoryOf(caller)
 	historyRootNode := json.ObjectNode("", nil)
 	historyArrNode := json.ArrayNode("delegationHistory", nil)
 	for _, history := range historyList {
@@ -81,6 +81,26 @@ func GetDelegationHistory(caller std.Address) string {
 		historyArrNode.AppendArray(historyObj)
 	}
 	historyRootNode.AppendObject("delegationHistory", historyArrNode)
+
+	return marshal(historyRootNode)
+}
+
+// GetDelegationSnapShotStatHistory retrieves the delegation snapshot history of a given caller address.
+// It returns a JSON-formatted string containing the snapshot records.
+// Each record includes the delegated address, delegated amount, last updated block, and timestamp.
+func GetDelegationSnapShotStatHistory(caller std.Address) string {
+	historyList := GetDelegationSnapShotHistoryOf(caller)
+	historyRootNode := json.ObjectNode("", nil)
+	historyArrNode := json.ArrayNode("delegationSnapShotHistory", nil)
+	for _, history := range historyList {
+		historyObj := json.ObjectNode("", nil)
+		historyObj.AppendObject("to", json.StringNode("to", history.to.String()))
+		historyObj.AppendObject("amount", json.StringNode("amount", ufmt.Sprintf("%d", history.amount)))
+		historyObj.AppendObject("updatedBlock", json.StringNode("updatedBlock", ufmt.Sprintf("%d", history.updatedBlock)))
+		historyObj.AppendObject("updatedAt", json.StringNode("updatedAt", ufmt.Sprintf("%d", history.updatedAt)))
+		historyArrNode.AppendArray(historyObj)
+	}
+	historyRootNode.AppendObject("delegationSnapShotHistory", historyArrNode)
 
 	return marshal(historyRootNode)
 }
