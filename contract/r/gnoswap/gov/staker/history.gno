@@ -66,3 +66,20 @@ func GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
 
 	return 0
 }
+
+// GetDelegateHistory returns the delegation history for a delegator.
+func GetDelegateHistory(delegator std.Address) []DelegationHistory {
+	if !delegator.IsValid() {
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("invalid delegator address: %s", delegator.String()),
+		))
+	}
+
+	history := make([]DelegationHistory, 0)
+	if value, exists := delegationHistory.Get(delegator.String()); exists {
+		history = value.([]DelegationHistory)
+	}
+
+	return history
+}

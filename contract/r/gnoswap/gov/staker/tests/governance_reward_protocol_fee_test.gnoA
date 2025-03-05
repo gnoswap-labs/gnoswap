@@ -24,13 +24,9 @@ import (
 )
 
 var (
-	dummyToAddr  = testutils.TestAddress("dummyTo")
-	dummyToRealm = std.NewUserRealm(dummyToAddr)
-
-	dummyAddr  = testutils.TestAddress("dummy")
-	dummyRealm = std.NewUserRealm(dummyAddr)
-
-	reDelegate = testutils.TestAddress("reDelegate")
+	dummyToAddr = testutils.TestAddress("dummyTo")
+	dummyAddr   = testutils.TestAddress("dummy")
+	dummyRealm  = std.NewUserRealm(dummyAddr)
 )
 
 func TestGovernanceRewardProtocolFee(t *testing.T) {
