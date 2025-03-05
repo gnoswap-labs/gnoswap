@@ -2,7 +2,11 @@ package emission
 
 import (
 	"gno.land/r/gnoswap/v1/gns"
+
+	br "gno.land/r/gnoswap/v1/brigde"
 )
+
+// upgradable pattern
 
 var callbackStakerEmissionChange func(amount uint64)
 
@@ -23,4 +27,18 @@ func callbackEmissionChange(amount uint64) {
 func RegisterGnsChangeCallback() {
 	assertStakerOnly()
 	gns.SetCallbackEmissionChange(callbackEmissionChange)
+}
+
+// contract path proxy pattern
+
+func registerCallbackInBridge() {
+	br.RegisterEmissionCallbacks(
+		br.EmissionCallbacks{
+            MintAndDistributeGns: MintAndDistributeGns, // function pointer for v1
+        },
+	)
+}
+
+func init() {
+	registerCallbackInBridge()
 }

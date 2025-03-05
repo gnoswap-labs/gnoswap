@@ -23,21 +23,6 @@ import (
 	"gno.land/r/gnoswap/v1/referral"
 )
 
-type EmissionCallback func() uint64
-
-var (
-	emissionCallback EmissionCallback
-)
-
-func RegisterEmissionCallback(cb EmissionCallback) {
-	assertOnlyAdmin()
-	emissionCallback = cb
-}
-
-func GetEmissionCallback() EmissionCallback {
-	return emissionCallback
-}
-
 // list of staked positions
 type Deposits struct {
 	tree *avl.Tree
