@@ -11,7 +11,7 @@ import (
 	"gno.land/r/demo/wugnot"
 
 	"gno.land/r/gnoswap/v1/access"
-	en "gno.land/r/gnoswap/v1/emission"
+	br "gno.land/r/gnoswap/v1/brigde"
 	pl "gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/referral"
 )
@@ -100,7 +100,7 @@ func Mint(
 
 	referral.TryRegister(caller, referrer)
 
-	en.MintAndDistributeGns()
+	br.MintAndDistributeGnsCallback()
 
 	mintInput := MintInput{
 		token0:         token0,
@@ -180,7 +180,7 @@ func IncreaseLiquidity(
 	assertValidNumberString(amount1MinStr)
 	checkDeadline(deadline)
 
-	en.MintAndDistributeGns()
+	br.MintAndDistributeGnsCallback()
 
 	position := MustGetPosition(positionId)
 	token0, token1, _ := splitOf(position.poolKey)
@@ -261,7 +261,7 @@ func DecreaseLiquidity(
 	checkDeadline(deadline)
 	assertValidLiquidityAmount(liquidityStr)
 
-	en.MintAndDistributeGns()
+	br.MintAndDistributeGnsCallback()
 
 	amount0Min := u256.MustFromDecimal(amount0MinStr)
 	amount1Min := u256.MustFromDecimal(amount1MinStr)
@@ -306,8 +306,7 @@ func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, st
 	assertOnlyNotHalted()
 	assertTokenExists(postionId)
 	isAuthorizedForToken(postionId)
-
-	en.MintAndDistributeGns()
+	br.MintAndDistributeGnsCallback()
 
 	// verify position
 	position := MustGetPosition(postionId)
