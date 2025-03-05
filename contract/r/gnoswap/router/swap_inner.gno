@@ -14,6 +14,11 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+var (
+	minPrice = u256.MustFromDecimal(consts.MIN_PRICE)
+	maxPrice = u256.MustFromDecimal(consts.MAX_PRICE)
+)
+
 // swapInner executes the core swap logic by interacting with the pool contract.
 // This is the main implementation of token swapping that handles both exact input and output swaps.
 //
@@ -36,7 +41,7 @@ func swapInner(
 	recipient std.Address,
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
-) (*u256.Uint, *u256.Uint) { // poolRecv, poolOut
+) (poolRecv *u256.Uint, poolOut *u256.Uint) { // poolRecv, poolOut
 	zeroForOne := data.tokenIn < data.tokenOut
 
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
@@ -44,6 +49,7 @@ func swapInner(
 	// ROUTER approves POOL as spender
 	tokenIn := common.GetTokenTeller(data.tokenIn)
 	tokenOut := common.GetTokenTeller(data.tokenOut)
+
 	tokenIn.Approve(poolAddr, consts.UINT64_MAX)
 	tokenOut.Approve(poolAddr, consts.UINT64_MAX)
 
@@ -61,10 +67,10 @@ func swapInner(
 	amount0 := i256.MustFromDecimal(amount0Str)
 	amount1 := i256.MustFromDecimal(amount1Str)
 
-	poolRecv := i256Max(amount0, amount1)
-	poolOut := i256Min(amount0, amount1)
+	poolRecv = i256Max(amount0, amount1).Abs()
+	poolOut = i256Min(amount0, amount1).Abs()
 
-	return poolRecv.Abs(), poolOut.Abs()
+	return poolRecv, poolOut
 }
 
 // swapDryInner performs a dry-run of a swap operation, calculating the potential
@@ -85,7 +91,7 @@ func swapDryInner(
 	amountSpecified *i256.Int,
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
-) (*u256.Uint, *u256.Uint) { // poolRecv, poolOut
+) (poolRecv *u256.Uint, poolOut *u256.Uint) { // poolRecv, poolOut
 	zeroForOne := data.tokenIn < data.tokenOut
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
@@ -105,10 +111,10 @@ func swapDryInner(
 	amount0 := i256.MustFromDecimal(amount0Str)
 	amount1 := i256.MustFromDecimal(amount1Str)
 
-	poolRecv := i256Max(amount0, amount1)
-	poolOut := i256Min(amount0, amount1)
+	poolRecv = i256Max(amount0, amount1).Abs()
+	poolOut = i256Min(amount0, amount1).Abs()
 
-	return poolRecv.Abs(), poolOut.Abs()
+	return poolRecv, poolOut
 }
 
 // calculateSqrtPriceLimitForSwap calculates the price limit for a swap operation.
