@@ -28,7 +28,8 @@ var (
 // To separate the messages, we use this separator
 // Look for ProposeParameterChange() for more details
 const (
-	GOV_SPLIT = "*GOV*"
+	GOV_SPLIT   = "*GOV*"
+	ROLE_PREFIX = "ROLE_CHANGE:"
 )
 
 // ProposeText creates a new text proposal with the given data
@@ -229,6 +230,10 @@ func ProposeParameterChange(
 		))
 	}
 
+	if strings.HasPrefix(executions, ROLE_PREFIX) {
+		return handleRoleChangeProposal(title, description, proposer, executions)
+	}
+
 	// check if numToExecute is a valid number
 	splitGov := strings.Split(executions, GOV_SPLIT)
 	if uint64(len(splitGov)) != numToExecute {
@@ -427,4 +432,101 @@ func checkEnoughXGnsToPropose(proposer std.Address) (bool, uint64, uint64) {
 	}
 
 	return true, xGNSBalance, config.ProposalCreationThreshold
+}
+
+////////////// ROLE CHANGE //////////////
+
+func handleRoleChangeProposal(
+	title string,
+	desc string,
+	proposer std.Address,
+	execution string,
+) uint64 {
+	roleChangeData := strings.TrimPrefix(execution, ROLE_PREFIX)
+
+	parts := strings.Split(roleChangeData, ":")
+	if len(parts) < 5 {
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("invalid role change data: %s", roleChangeData),
+		))
+	}
+
+	roleName := parts[0]
+	permissionName := parts[1]
+	action := RoleChangeActionFromString(parts[2])
+	checkerType := checkerTypeFromString(parts[3])
+	addr := ""
+	if len(parts) > 4 {
+		addr = parts[4]
+	}
+
+	tokenPath := ""
+	if len(parts) > 5 {
+		tokenPath = parts[5]
+	}
+
+	minAmount := uint64(0)
+	if len(parts) > 6 {
+		minAmount = parseUint64(parts[6])
+	}
+
+	addresses := parseAddresses(addr)
+
+	now := uint64(time.Now().Unix())
+	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
+
+	maxVotingWeight := u256.NewUint(votingMax)
+	quorumAmount := maxVotingWeight.Uint64() * config.Quorum / 100
+
+	proposal := ProposalInfo{
+		Proposer:     proposer,
+		ProposalType: RoleChange,
+		State: ProposalState{
+			Created:   true,
+			CreatedAt: now,
+			Upcoming:  true,
+		},
+		Yea:                       u256.Zero(),
+		Nay:                       u256.Zero(),
+		MaxVotingWeight:           maxVotingWeight,
+		PossibleAddressWithWeight: possibleAddressWithWeight,
+		ConfigVersion:             uint64(configVersions.Size()),
+		QuorumAmount:              quorumAmount,
+		Title:                     title,
+		Description:               desc,
+		RoleChange: RoleChangeInfo{
+			RoleName:       roleName,
+			PermissionName: permissionName,
+			Action:         action,
+			CheckerType:    checkerType,
+			Addresses:      addresses,
+			TokenPath:      tokenPath,
+			MinAmount:      minAmount,
+		},
+	}
+
+	proposalId++
+	proposals.Set(formatUint(proposalId), proposal)
+	latestProposalByProposer.Set(proposer.String(), proposalId)
+
+	prevAddr, prevPkgPath := getPrev()
+	std.Emit(
+		"ProposeRoleChange",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"title", title,
+		"description", desc,
+		"roleName", roleName,
+		"permissionName", permissionName,
+		"action", action.String(),
+		"checkerType", checkerType.String(),
+		"proposalId", formatUint(proposalId),
+		"quorumAmount", formatUint(proposal.QuorumAmount),
+		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
+		"configVersion", formatUint(proposal.ConfigVersion),
+		"createdAt", formatUint(proposal.State.CreatedAt),
+	)
+
+	return proposalId
 }
