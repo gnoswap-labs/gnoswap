@@ -1,22 +1,28 @@
 package bridge
 
-type EmissionCallbacks struct {
-	MintAndDistributeGns func() uint64
+import (
+	"gno.land/p/demo/avl"
+)
+
+var callbackTree *avl.Tree
+
+func init() {
+	callbackTree = avl.NewTree()
 }
 
-var emissionCallbacks EmissionCallbacks
+const (
+	MINT_AND_DISTRIBUTE_GNS_KEY = "gno.land/r/gnoswap/v1/emission/MintAndDistributeGns"
+)
 
-func RegisterEmissionCallbacks(cb EmissionCallbacks) {
-	emissionCallbacks = cb
+// RegisterCallback registers a callback function with the given key
+func RegisterCallback(key string, callback any) {
+	if callbackTree.Has(key) {
+		panic("callback already registered for key: " + key)
+	}
+	callbackTree.Set(key, callback)
 }
 
-func GetEmissionCallbacks() EmissionCallbacks {
-	return emissionCallbacks
-}
-
-func MintAndDistributeGnsCallback() uint64 {
-    if emissionCallbacks.MintAndDistributeGns == nil {
-        panic("MintAndDistributeGns callback is not set!")
-    }
-    return emissionCallbacks.MintAndDistributeGns()
+// GetCallback retrieves a callback function by key
+func GetCallback(key string) (any, bool) {
+	return callbackTree.Get(key)
 }

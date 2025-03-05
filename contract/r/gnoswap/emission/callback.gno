@@ -31,14 +31,6 @@ func RegisterGnsChangeCallback() {
 
 // contract path proxy pattern
 
-func registerCallbackInBridge() {
-	br.RegisterEmissionCallbacks(
-		br.EmissionCallbacks{
-            MintAndDistributeGns: MintAndDistributeGns, // function pointer for v1
-        },
-	)
-}
-
 func init() {
-	registerCallbackInBridge()
+	br.RegisterCallback(br.MINT_AND_DISTRIBUTE_GNS_KEY, MintAndDistributeGns)
 }

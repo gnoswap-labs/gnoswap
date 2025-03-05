@@ -6,7 +6,6 @@ import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	br "gno.land/r/gnoswap/v1/brigde"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
@@ -30,7 +29,7 @@ func Reposition(
 ) (uint64, string, int32, int32, string, string) {
 	assertOnlyNotHalted()
 	verifyTokenIdAndOwnership(positionId)
-	br.MintAndDistributeGnsCallback()
+	mintAndDistributeGnsCallback()
 
 	// position should be burned to reposition
 	position := MustGetPosition(positionId)
