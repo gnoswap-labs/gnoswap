@@ -42,7 +42,7 @@ func TestGovernanceRewardProtocolFeeWithLaunchpad(t *testing.T) {
 	delegateTestFromAdminToAlice(t)
 	delegateTestFromBobToBob(t)
 	launchPadCreateProject(t)
-	//launchPadDeposit(t)
+	launchPadDepositTest(t)
 	//mockProtocolFee(t)
 	//skipDummyBlocks(t)
 	//reward(t)
@@ -718,7 +718,226 @@ func launchPadCreateProject(t *testing.T) {
 			lp.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:180", projectId)))
 	})
 
-	std.TestSkipHeights(10) // active project
+	std.TestSkipHeights(4) // active project
+}
+
+func launchPadDepositTest(t *testing.T) {
+	adminAddr := consts.ADMIN
+	adminRealm := std.NewUserRealm(adminAddr)
+	emissionRewardPerBlockToStaker := uint64(10702054)
+	emissionRewardPerBlockToDevOps := uint64(2853881)
+	emissionRewardPerBlockToCommunityPool := uint64(713470)
+	emissionRewardPerBlockToGovStaker := uint64(0)
+
+	t.Run("launchpad deposit fail test - invalid amount (less than minimum deposit amount)", func(t *testing.T) {
+		depositAmount := uint64(100_000)
+		projectTier30Id := "gno.land/r/onbloc/obl:130:30"
+
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-LAUNCHPAD-017] invalid amount || amount(100000) should greater than minimum deposit amount(1000000)",
+			func() {
+				std.TestSetRealm(adminRealm)
+				gns.Transfer(bobAddr, depositAmount) // to deposit
+
+				std.TestSetRealm(bobRealm)
+				gns.Approve(launchpadAddr, depositAmount)
+
+				lp.DepositGns(
+					projectTier30Id,
+					depositAmount,
+					"",
+				)
+			})
+	})
+
+	t.Run("launchpad deposit fail test - invalid amount (not multiple minimum deposit amount)", func(t *testing.T) {
+		depositAmount := uint64(1_000_100)
+		projectTier30Id := "gno.land/r/onbloc/obl:130:30"
+
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-LAUNCHPAD-017] invalid amount || amount(1000100) must be a multiple of 1_000_000",
+			func() {
+				std.TestSetRealm(adminRealm)
+				gns.Transfer(bobAddr, depositAmount) // to deposit
+
+				std.TestSetRealm(bobRealm)
+				gns.Approve(launchpadAddr, depositAmount)
+
+				lp.DepositGns(
+					projectTier30Id,
+					depositAmount,
+					"",
+				)
+			})
+	})
+
+	t.Run("launchpad deposit fail test - invalid tierId", func(t *testing.T) {
+		depositAmount := uint64(1_000_000)
+		projectTier30Id := "gno.land/r/onbloc/obl:130:30:90"
+
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-LAUNCHPAD-009] invalid pool || invalid tierId: gno.land/r/onbloc/obl:130:30:90",
+			func() {
+				std.TestSetRealm(adminRealm)
+				gns.Transfer(bobAddr, depositAmount) // to deposit
+
+				std.TestSetRealm(bobRealm)
+				gns.Approve(launchpadAddr, depositAmount)
+
+				lp.DepositGns(
+					projectTier30Id,
+					depositAmount,
+					"",
+				)
+			})
+	})
+
+	t.Run("launchpad deposit fail test - invalid tierId", func(t *testing.T) {
+		depositAmount := uint64(1_000_000)
+		projectTier30Id := "gno.land/r/onbloc/obl:130"
+
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-LAUNCHPAD-009] invalid pool || invalid tierId: gno.land/r/onbloc/obl:130",
+			func() {
+				std.TestSetRealm(adminRealm)
+				gns.Transfer(bobAddr, depositAmount) // to deposit
+
+				std.TestSetRealm(bobRealm)
+				gns.Approve(launchpadAddr, depositAmount)
+
+				lp.DepositGns(
+					projectTier30Id,
+					depositAmount,
+					"",
+				)
+			})
+	})
+
+	t.Run("launchpad deposit fail test - invalid tierId", func(t *testing.T) {
+		depositAmount := uint64(1_000_000)
+		projectTier30Id := "gno.land/r/onbloc/obl:130:"
+
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-LAUNCHPAD-009] invalid pool || invalid tierType: ",
+			func() {
+				std.TestSetRealm(adminRealm)
+				gns.Transfer(bobAddr, depositAmount) // to deposit
+
+				std.TestSetRealm(bobRealm)
+				gns.Approve(launchpadAddr, depositAmount)
+
+				lp.DepositGns(
+					projectTier30Id,
+					depositAmount,
+					"",
+				)
+			})
+	})
+
+	t.Run("launchpad deposit fail test - invalid tierId", func(t *testing.T) {
+		depositAmount := uint64(1_000_000)
+		projectTier30Id := "gno.land/r/onbloc/obl:130:40"
+
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-LAUNCHPAD-009] invalid pool || invalid tierType: 40",
+			func() {
+				std.TestSetRealm(adminRealm)
+				gns.Transfer(bobAddr, depositAmount) // to deposit
+
+				std.TestSetRealm(bobRealm)
+				gns.Approve(launchpadAddr, depositAmount)
+
+				lp.DepositGns(
+					projectTier30Id,
+					depositAmount,
+					"",
+				)
+			})
+	})
+
+	t.Run("launchpad deposit fail test - invalid projectId", func(t *testing.T) {
+		depositAmount := uint64(1_000_000)
+		projectTier30Id := "gno.land/r/onbloc/obl:125:40"
+
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-LAUNCHPAD-003] requested data not found || projectId(gno.land/r/onbloc/obl:125) not found",
+			func() {
+				std.TestSetRealm(adminRealm)
+				gns.Transfer(bobAddr, depositAmount) // to deposit
+
+				std.TestSetRealm(bobRealm)
+				gns.Approve(launchpadAddr, depositAmount)
+
+				lp.DepositGns(
+					projectTier30Id,
+					depositAmount,
+					"",
+				)
+			})
+	})
+
+	t.Run("launchpad deposit fail test - deposit condition error", func(t *testing.T) {
+		depositAmount := uint64(1_000_000)
+		projectTier30Id := "gno.land/r/onbloc/obl:130:30"
+
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-LAUNCHPAD-012] not enough balance || insufficient balance(0) for condition token(gno.land/r/gnoswap/v1/gov/xgns)",
+			func() {
+				std.TestSetRealm(adminRealm)
+				gns.Transfer(aliceAddr, depositAmount) // to deposit
+
+				std.TestSetRealm(aliceRealm)
+				gns.Approve(launchpadAddr, depositAmount)
+
+				lp.DepositGns(
+					projectTier30Id,
+					depositAmount,
+					"",
+				)
+			})
+	})
+
+	t.Run("launchpad deposit fail test - inactive project", func(t *testing.T) {
+		depositAmount := uint64(1_000_000)
+		projectTier30Id := "gno.land/r/onbloc/obl:130:180"
+
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-LAUNCHPAD-005] project is inactive || gno.land/r/onbloc/obl:130",
+			func() {
+				std.TestSetRealm(adminRealm)
+				gns.Transfer(bobAddr, depositAmount) // to deposit
+
+				std.TestSetRealm(bobRealm)
+				gns.Approve(launchpadAddr, depositAmount)
+
+				lp.DepositGns(
+					projectTier30Id,
+					depositAmount,
+					"",
+				)
+			})
+	})
+
+	t.Run("launchpad deposit success test", func(t *testing.T) {
+		depositAmount := uint64(1_000_000)
+		projectTier30Id := "gno.land/r/onbloc/obl:130:30"
+
+		std.TestSkipHeights(1)
+		std.TestSetRealm(adminRealm)
+		gns.Transfer(bobAddr, depositAmount) // to deposit
+
+		std.TestSetRealm(bobRealm)
+		gns.Approve(launchpadAddr, depositAmount)
+
+		depositId := lp.DepositGns(
+			projectTier30Id,
+			depositAmount,
+			"",
+		)
+		uassert.Equal(t, "gno.land/r/onbloc/obl:130:30:g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu:135", depositId)
+
+		std.TestSkipHeights(1)
+	})
 }
 
 //	func mockProtocolFee(t *testing.T) {
@@ -737,21 +956,6 @@ func launchPadCreateProject(t *testing.T) {
 //		uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(0))
 //	}
 
-//func launchPadDeposit(t *testing.T) {
-//	std.TestSetRealm(adminRealm)
-//	gns.Transfer(user01, uint64(1_000_000)) // to deposit
-//
-//	std.TestSetRealm(user01Realm)
-//	gns.Approve(launchpadAddr, uint64(1_000_000))
-//
-//	lp.DepositGns(
-//		`gno.land/r/onbloc/obl:125:30`,
-//		uint64(1_000_000),
-//		"",
-//	)
-//	std.TestSkipHeights(1)
-//}
-//
 //func skipDummyBlocks(t *testing.T) {
 //	std.TestSkipHeights(10)
 //	en.MintAndDistributeGns()

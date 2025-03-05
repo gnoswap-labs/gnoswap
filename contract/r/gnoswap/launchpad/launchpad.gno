@@ -383,9 +383,9 @@ func CreateProject(
 	}
 
 	startHeight := calcResult.StartHeight
-	tier30 := createTier(projectId, 30, calcResult.Tier30Amount, startHeight, input.StartTime, convertTimeToHeight(TIMESTAMP_3DAYS))
-	tier90 := createTier(projectId, 90, calcResult.Tier90Amount, startHeight, input.StartTime, convertTimeToHeight(TIMESTAMP_7DAYS))
-	tier180 := createTier(projectId, 180, calcResult.Tier180Amount, startHeight, input.StartTime, convertTimeToHeight(TIMESTAMP_14DAYS))
+	tier30 := createTier(projectId, TIER30, calcResult.Tier30Amount, startHeight, input.StartTime, convertTimeToHeight(TIMESTAMP_3DAYS))
+	tier90 := createTier(projectId, TIER90, calcResult.Tier90Amount, startHeight, input.StartTime, convertTimeToHeight(TIMESTAMP_7DAYS))
+	tier180 := createTier(projectId, TIER180, calcResult.Tier180Amount, startHeight, input.StartTime, convertTimeToHeight(TIMESTAMP_14DAYS))
 	tierMap := map[uint64]Tier{
 		TIER30:  tier30,
 		TIER90:  tier90,
@@ -648,7 +648,7 @@ func createTier(
 		time:   startTime,
 	}
 
-	durationSecond := duration * consts.SECONDS_PER_DAY
+	durationSecond := getSecondForDuration(duration)
 	endTime := startTime + durationSecond
 	durationHeight := convertTimeToHeight(durationSecond)
 	endHeight := startHeight + durationHeight
@@ -706,14 +706,28 @@ func validateTransferLeft(project Project, recipient std.Address, height uint64)
 
 // calculateLeftReward calculates the remaining reward amount for each tier
 func calculateLeftReward(project Project) uint64 {
-	tier30 := project.tiers[30]
-	tier90 := project.tiers[90]
-	tier180 := project.tiers[180]
+	tier30 := project.tiers[TIER30]
+	tier90 := project.tiers[TIER90]
+	tier180 := project.tiers[TIER180]
 
 	left30 := tier30.tierAmount - tier30.calculatedAmount
 	left90 := tier90.tierAmount - tier90.calculatedAmount
 	left180 := tier180.tierAmount - tier180.calculatedAmount
 	return left30 + left90 + left180
+}
+
+// getSecondForDuration returns the duration in seconds for the given tier
+func getSecondForDuration(duration uint64) uint64 {
+	switch duration {
+	case TIER30:
+		return TIMESTAMP_30DAYS
+	case TIER90:
+		return TIMESTAMP_90DAYS
+	case TIER180:
+		return TIMESTAMP_180DAYS
+	default:
+		panic(addDetailToError(errInvalidTier, ufmt.Sprintf("invalid duration(%d)", duration)))
+	}
 }
 
 // getProject returns the project with the given project ID
