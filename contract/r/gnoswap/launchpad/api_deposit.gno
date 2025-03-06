@@ -17,24 +17,33 @@ func ApiGetClaimableDepositByAddress(address std.Address) uint64 {
 	for _, depositId := range depositsByUser[address] {
 		deposit := deposits[depositId]
 
-		project, exist := projects[deposit.projectId]
-		if !exist {
+		currentHeight := uint64(std.ChainHeight())
+		if (deposit.depositCollectHeight != 0) || (!deposit.isClaimable(currentHeight)) {
 			continue
 		}
 
-		tier := getTier(project, deposit.tier)
-		if checkTierActive(project, tier) {
+		project, err := getProject(deposit.projectId)
+		if err != nil {
 			continue
 		}
 
-		if deposit.depositCollectHeight != 0 {
+		tier, err := project.Tier(convertTierTypeStrToUint64(deposit.Tier()))
+		if err != nil {
+			continue
+		}
+		reward := tier.Reward()
+		rewardPerDeposit, err := reward.finalize(currentHeight, tier.ActualDepositAmount(), tier.TierAmountPerBlockX128())
+		if err != nil {
+			panic(err.Error())
+		}
+		reward.addRewardPerDeposit(rewardPerDeposit)
+		reward.setLastHeight(currentHeight)
+		rewardAmount := reward.deductReward(depositId, currentHeight)
+		if rewardAmount == 0 {
 			continue
 		}
 
-		rwd, _ := rewardStates.Get(deposit.projectId, deposit.tier)
-		reward := rwd.claim(depositId, uint64(std.ChainHeight()))
-
-		gnsToUser += reward
+		gnsToUser += rewardAmount
 	}
 
 	return gnsToUser
@@ -47,8 +56,7 @@ func ApiGetDepositByDepositId(depositId string) string {
 		return ""
 	}
 
-	builder := MetaBuilder().
-		WriteString("depositId", depositId)
+	builder := MetaBuilder()
 	DepositBuilder(builder, deposit)
 
 	return marshal(builder.Node())
@@ -76,8 +84,7 @@ func ApiGetDepositFullByDepositId(depositId string) string {
 		tier = project.tiers[180]
 	}
 
-	builder := MetaBuilder().
-		WriteString("depositId", depositId)
+	builder := MetaBuilder()
 
 	// Add project info
 	ProjectBuilder(builder, project)
