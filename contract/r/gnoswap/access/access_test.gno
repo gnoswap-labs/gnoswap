@@ -465,6 +465,12 @@ func TestSetRole(t *testing.T) {
 		err := SetRole("test_auditor", testAuditorAddr)
 		uassert.Error(t, err)
 	})
+
+	t.Run("fail with non-admin address", func(t *testing.T) {
+		std.TestSetRealm(std.NewUserRealm(testutils.TestAddress("non_admin")))
+		err := SetRole("test_auditor", testAuditorAddr)
+		uassert.Error(t, err)
+	})
 }
 
 func TestDeleteRole(t *testing.T) {
