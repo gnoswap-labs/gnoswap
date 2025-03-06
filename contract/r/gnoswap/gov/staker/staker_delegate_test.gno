@@ -53,7 +53,7 @@ func TestDelegateInternal(t *testing.T) {
 	})
 }
 
-func TestUndelegateInternal(t *testing.T) {
+func TestUnDelegateInternal(t *testing.T) {
 	t.Skip("Must running separately. because this test depends on TestUndelegate's state")
 	addr1 := testAddr1
 	std.TestSetOriginCaller(addr1)
@@ -65,7 +65,7 @@ func TestUndelegateInternal(t *testing.T) {
 				t.Error("expected panic for no delegation")
 			}
 		}()
-		undelegate(addr1, 100)
+		unDelegate(addr1, 100)
 	})
 
 	t.Run("fail - insufficient amount", func(t *testing.T) {
@@ -76,13 +76,13 @@ func TestUndelegateInternal(t *testing.T) {
 				t.Error("expected panic for insufficient amount")
 			}
 		}()
-		undelegate(addr1, 100)
+		unDelegate(addr1, 100)
 	})
 
 	t.Run("success - partial undelegate", func(t *testing.T) {
 		resetState()
 		delegate(addr1, 100)
-		undelegate(addr1, 30)
+		unDelegate(addr1, 30)
 
 		if totalDelegated != 70 {
 			t.Errorf("expected totalDelegated 70, got %d", totalDelegated)
@@ -92,7 +92,7 @@ func TestUndelegateInternal(t *testing.T) {
 	t.Run("success - full undelegate", func(t *testing.T) {
 		resetState()
 		delegate(addr1, 100)
-		undelegate(addr1, 100)
+		unDelegate(addr1, 100)
 
 		if totalDelegated != 0 {
 			t.Errorf("expected totalDelegated 0, got %d", totalDelegated)
