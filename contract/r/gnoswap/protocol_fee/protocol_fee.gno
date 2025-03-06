@@ -53,9 +53,9 @@ func DistributeProtocolFee() map[string]uint64 {
 	}
 
 	assertOnlyGovStaker()
-	sentToDevOpsForEvent := []string{}
-	sentToGovStakerForEvent := []string{}
-	toReturnDistributedToGovStaker := map[string]uint64{}
+	sentToDevOpsForEvent := make([]string, 0)
+	sentToGovStakerForEvent := make([]string, 0)
+	toReturnDistributedToGovStaker := make(map[string]uint64)
 
 	for token, amount := range tokenListWithAmount {
 		balance := common.BalanceOf(token, protocolFeeAddr)
