@@ -365,3 +365,101 @@ func TestProposeParameterChange(t *testing.T) {
 		})
 	}
 }
+
+func TestIntegratedProposeParameterChange(t *testing.T) {
+	t.Skip("The proposal needs to be modified to ensure it has sufficient xGNS.")
+	resetGlobalStateProposal(t)
+
+	tests := []struct {
+		name          string
+		proposer      std.Address
+		title         string
+		description   string
+		numToExecute  uint64
+		executions    string
+		expectError   bool
+		errorContains string
+		isRoleChange  bool
+		roleName      string
+		permissionName string
+		action        RoleChangeAction
+	}{
+		{
+			name:         "Valid parameter change proposal",
+			proposer:     proposalAddr,
+			title:        "Change Voting Period",
+			description:  "Update voting period to 14 days",
+			numToExecute: 2,
+			executions:   "gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*123*GOV*gno.land/r/gnoswap/v1/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/v1/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905",
+			expectError:  false,
+			isRoleChange: false,
+		},
+		{
+			name:           "Valid role change proposal",
+			proposer:       proposalAddr,
+			title:          "Add Admin Role",
+			description:    "Create new admin role with single address permission",
+			numToExecute:   1,
+			executions:     "ROLE_CHANGE:admin:can_manage:AddRole:SingleAddressChecker:g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d::0",
+			expectError:    false,
+			isRoleChange:   true,
+			roleName:       "admin",
+			permissionName: "can_manage",
+			action:         AddRole,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetGlobalStateProposal(t)
+
+			var pid uint64
+			var err error
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						t.Errorf("Unexpected error: %v", r)
+					}
+				}()
+				pid = ProposeParameterChange(
+					tt.title,
+					tt.description,
+					tt.numToExecute,
+					tt.executions,
+				)
+			}()
+
+			if tt.expectError {
+				uassert.Error(t, err)
+				return
+			}
+			uassert.NoError(t, err)
+
+			prop, exists := proposals.Get(formatUint(pid))
+			uassert.True(t, exists)
+
+			proposal := prop.(ProposalInfo)
+
+			uassert.Equal(t, proposal.Title, tt.title)
+			uassert.Equal(t, proposal.Description, tt.description)
+			
+			if tt.isRoleChange {
+				uassert.Equal(t, proposal.ProposalType.String(), RoleChange.String())
+				uassert.Equal(t, proposal.RoleChange.RoleName, tt.roleName)
+				uassert.Equal(t, proposal.RoleChange.PermissionName, tt.permissionName)
+				if tt.action != proposal.RoleChange.Action {
+					t.Errorf("Expected action: %v, got: %v", tt.action, proposal.RoleChange.Action)
+				}
+			} else {
+				uassert.Equal(t, proposal.ProposalType.String(), ParameterChange.String())
+				uassert.Equal(t, proposal.Execution.Num, tt.numToExecute)
+			}
+
+			uassert.True(t, proposal.State.Created)
+			uassert.True(t, proposal.State.Upcoming)
+			uassert.False(t, proposal.State.Active)
+			uassert.True(t, proposal.Yea.IsZero())
+			uassert.True(t, proposal.Nay.IsZero())
+		})
+	}
+}
