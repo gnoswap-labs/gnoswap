@@ -52,7 +52,6 @@ func GetClaimableRewardByAddress(addr std.Address) string {
 	rewardState.finalize(collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
 	emissionReward, protocolFeeRewards := rewardState.CalculateReward(addr)
-
 	if emissionReward == 0 && len(protocolFeeRewards) == 0 {
 		return ""
 	}

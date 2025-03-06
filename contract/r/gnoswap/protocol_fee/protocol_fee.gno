@@ -184,28 +184,6 @@ func ClearAccuTransferToGovStaker() {
 	accuToGovStaker = avl.NewTree()
 }
 
-// TokenList returns only the list of token path.
-// If positive is true, it returns only the token path with amount > 0.
-// If positive is false, it returns all the token path.
-func TokenList(positive bool) []string {
-	tokens := []string{}
-
-	for tokenPath, amount := range tokenListWithAmount {
-		if positive && amount == 0 {
-			continue
-		}
-
-		tokens = append(tokens, tokenPath)
-	}
-
-	return tokens
-}
-
-// TokenListWithAmount returns the token path and amount.
-func TokenListWithAmount() map[string]uint64 {
-	return tokenListWithAmount
-}
-
 // addAccuToGovStaker adds the amount to the accuToGovStaker by token path.
 func addAccuToGovStaker(tokenPath string, amount uint64) {
 	before := GetAccuTransferToGovStakerByTokenPath(tokenPath)

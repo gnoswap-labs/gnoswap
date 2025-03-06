@@ -6,18 +6,15 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
+	"gno.land/p/gnoswap/consts"
+	phalt "gno.land/p/gnoswap/halt"
 
 	"gno.land/r/demo/wugnot"
-
-	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
-
+	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
-
-	phalt "gno.land/p/gnoswap/halt"
-	"gno.land/r/gnoswap/v1/access"
-	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/halt"
 	"gno.land/r/gnoswap/v1/referral"
 )
@@ -114,10 +111,6 @@ func Delegate(to std.Address, amount uint64, referrer string) {
 // Redelegate redelegates xGNS from existing delegate to another.
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#redelegate
 func Redelegate(from, to std.Address, amount uint64) {
-	if running {
-		cleanDelegationStatHistory()
-	}
-
 	if !from.IsValid() {
 		panic(addDetailToError(
 			errInvalidAddress,
@@ -155,9 +148,14 @@ func Redelegate(from, to std.Address, amount uint64) {
 		))
 	}
 
-	CollectReward()
+	en.MintAndDistributeGns()
 
-	undelegate(from, amount)
+	if running {
+		cleanDelegationStatHistory()
+	}
+
+	CollectReward()
+	unDelegate(from, amount)
 	delegate(to, amount)
 
 	prevAddr, prevPkgPath := getPrev()
@@ -174,10 +172,6 @@ func Redelegate(from, to std.Address, amount uint64) {
 // Undelegate undelegates xGNS from the existing delegate.
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#undelegate
 func Undelegate(from std.Address, amount uint64) {
-	if running {
-		cleanDelegationStatHistory()
-	}
-
 	if !from.IsValid() {
 		panic(addDetailToError(
 			errInvalidAddress,
@@ -208,6 +202,12 @@ func Undelegate(from std.Address, amount uint64) {
 		))
 	}
 
+	en.MintAndDistributeGns()
+
+	if running {
+		cleanDelegationStatHistory()
+	}
+
 	reward, protocolFeeRewards := rewardState.removeStake(caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	gns.Transfer(caller, reward)
 
@@ -215,8 +215,8 @@ func Undelegate(from std.Address, amount uint64) {
 		transferProtocolFee(tokenPath, from, amount)
 	}
 
-	// actual undelegate
-	undelegate(from, amount)
+	// actual unDelegate
+	unDelegate(from, amount)
 	// burn equivalent amount of xGNS
 	xgns.Burn(caller, amount)
 
@@ -263,7 +263,6 @@ func CollectUndelegatedGns() uint64 {
 	en.MintAndDistributeGns()
 
 	caller := std.PreviousRealm().Address()
-
 	value, exists := addrLockedGns.Get(caller.String())
 	if !exists {
 		return 0
@@ -345,6 +344,13 @@ func CollectReward() {
 	// still, this is a tangled with the policy issue, so should be discussed.
 
 	if reward > 0 {
+		if currentGNSBalance < reward {
+			panic(addDetailToError(
+				errNotEnoughBalance,
+				ufmt.Sprintf("not enough GNS balance(%d) to collect(%d)", currentGNSBalance, reward),
+			))
+		}
+
 		currentGNSBalance -= reward
 		gns.Transfer(caller, reward)
 		std.Emit(
@@ -396,6 +402,14 @@ func CollectRewardFromLaunchPad(to std.Address) {
 	prevAddr, prevPkgPath := getPrev()
 	emissionReward, protocolFeeRewards := rewardState.claim(to, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	if emissionReward > 0 {
+		if currentGNSBalance < emissionReward {
+			panic(addDetailToError(
+				errNotEnoughBalance,
+				ufmt.Sprintf("not enough GNS balance(%d) to collect(%d)", currentGNSBalance, emissionReward),
+			))
+		}
+
+		currentGNSBalance -= emissionReward
 		gns.Transfer(to, emissionReward)
 		std.Emit(
 			"CollectEmissionFromLaunchPad",

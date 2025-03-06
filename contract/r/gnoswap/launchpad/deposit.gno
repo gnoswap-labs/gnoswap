@@ -158,8 +158,8 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 			"tierAmountPerBlockX128", tier.TierAmountPerBlockX128().ToString(),
 		)
 
-		//rewardState := NewRewardState(tier.tierAmountPerBlockX128, tier.started.height, tier.ended.height)
-		//rewardStates.set(info.Project.id, info.TierType, rewardState)
+		// rewardState := NewRewardState(tier.tierAmountPerBlockX128, tier.started.height, tier.ended.height)
+		// rewardStates.set(info.Project.id, info.TierType, rewardState)
 	}
 
 	reward := tier.Reward()
