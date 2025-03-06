@@ -34,6 +34,52 @@ func (rb *RBAC) RegisterRole(roleName string) error {
 	return nil
 }
 
+func (rb *RBAC) RemoveRole(roleName string) error {
+	if !rb.hasRole(roleName) {
+		return ufmt.Errorf("role %s does not exist", roleName)
+	}
+
+	if isSystemRole(roleName) {
+		return ufmt.Errorf("cannot remove system role %s", roleName)
+	}
+
+	role := rb.roles[roleName]
+	for permName := range role.permissions {
+		if err := rb.RemovePermission(roleName, permName); err != nil {
+			return ufmt.Errorf("failed to remove permission %s from role %s: %v", permName, roleName, err)
+		}
+	}
+
+	delete(rb.roles, roleName)
+	return nil
+}
+
+var systemRoles = map[string]bool {
+	"admin": true,
+	"community_pool": true,
+	"devops": true,
+	"governance": true,
+	"gov_staker": true,
+	"router": true,
+	"pool": true,
+	"position": true,
+	"staker": true,
+	"launchpad": true,
+	"emission": true,
+	"protocol_fee": true,
+	"xgns": true,
+}
+
+func GetSystemRoles() map[string]bool {
+	return systemRoles
+}
+
+// isSystemRole checks if the role is a system-critical role
+// role defined in contract/r/gnoswap/access/consts.gno
+func isSystemRole(roleName string) bool {
+	return systemRoles[roleName]
+}
+
 // RegisterPermission registers a permission name and checker
 // for the specific role.
 func (rb *RBAC) RegisterPermission(

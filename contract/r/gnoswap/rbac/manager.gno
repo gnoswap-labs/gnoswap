@@ -41,6 +41,10 @@ func RemovePermission(roleName, permissionName string) error {
 	return globalManager.RemovePermission(roleName, permissionName)
 }
 
+func RemoveRole(roleName string) error {
+	return globalManager.RemoveRole(roleName)
+}
+
 // DeclareRole globally declares a role using the Functional Option pattern.
 // This allows declarative registration of roles along with their permissions.
 // Returns an error if the role already exists.
