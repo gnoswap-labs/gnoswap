@@ -15,6 +15,7 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 	lp "gno.land/r/gnoswap/v1/launchpad"
+	pf "gno.land/r/gnoswap/v1/protocol_fee"
 
 	// grc20 tokens
 	"gno.land/r/onbloc/bar"
@@ -43,7 +44,7 @@ func TestGovernanceRewardProtocolFeeWithLaunchpad(t *testing.T) {
 	delegateTestFromBobToBob(t)
 	launchPadCreateProject(t)
 	launchPadDepositTest(t)
-	//mockProtocolFee(t)
+	mockProtocolFeeTest(t)
 	//skipDummyBlocks(t)
 	//reward(t)
 }
@@ -935,26 +936,27 @@ func launchPadDepositTest(t *testing.T) {
 			"",
 		)
 		uassert.Equal(t, "gno.land/r/onbloc/obl:130:30:g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu:135", depositId)
+		uassert.Equal(t, `{"height":"135","now":"1234567914","depositId":"gno.land/r/onbloc/obl:130:30:g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu:135","projectId":"gno.land/r/onbloc/obl:130","tier":"30","depositor":"g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu","amount":"1000000","depositHeight":"135","depositTime":"1234567914","depositCollectHeight":"0","depositCollectTime":"0","claimableHeight":"129735","claimableTime":"1234827114","claimableRewardAmount":"0","rewardCollected":"0","rewardCollectHeight":"0","rewardCollectTime":"0"}`,
+			lp.ApiGetDepositByDepositId(depositId))
 
 		std.TestSkipHeights(1)
 	})
 }
 
-//	func mockProtocolFee(t *testing.T) {
-//		// admin > protocol_fee
-//		// send qux, bar for testing
-//		std.TestSetRealm(adminRealm)
-//		bar.Transfer(protocolFeeAddr, 1000)
-//		qux.Transfer(protocolFeeAddr, 2500)
-//
-//		//uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), uint64(1000))
-//		uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))
-//		uassert.Equal(t, bar.BalanceOf(govStakerAddr), uint64(0))
-//
-//		//uassert.Equal(t, qux.BalanceOf(protocolFeeAddr), uint64(2500))
-//		uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
-//		uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(0))
-//	}
+func mockProtocolFeeTest(t *testing.T) {
+	// admin > protocol_fee
+	// send qux, bar for testing
+	std.TestSetRealm(adminRealm)
+	bar.Transfer(protocolFeeAddr, 1000)
+	qux.Transfer(protocolFeeAddr, 2500)
+	std.TestSetRealm(stakerRealm)
+	pf.AddToProtocolFee(barPath, 1000)
+	pf.AddToProtocolFee(quxPath, 2500)
+	std.TestSkipHeights(1)
+
+	uassert.Equal(t, uint64(1000), bar.BalanceOf(protocolFeeAddr))
+	uassert.Equal(t, uint64(2500), qux.BalanceOf(protocolFeeAddr))
+}
 
 //func skipDummyBlocks(t *testing.T) {
 //	std.TestSkipHeights(10)

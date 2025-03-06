@@ -3,6 +3,7 @@ package protocol_fee
 import (
 	"std"
 	"strconv"
+	"strings"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
@@ -20,20 +21,25 @@ var (
 	// by default, devOps will get 0% of the protocol fee (which means gov/staker will get 100% of the protocol fee)
 	devOpsPct uint64 = 0 // 0%
 
-	// gns amount distributed to devOps and gov/staker
-	gnsToDevOps    uint64
-	gnsToGovStaker uint64
-
 	// accumulated amount distributed to gov/staker by token path
 	accuToGovStaker = avl.NewTree()
+	accuToDevOps    = avl.NewTree()
+
+	// distributedToDevOpsHistory and distributedToGovStakerHistory are used to keep track of the distribution history
+	distributedToGovStakerHistory = avl.NewTree()
+	distributedToDevOpsHistory    = avl.NewTree()
 
 	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
 	govStakerAddr, _   = access.GetAddress(access.ROLE_GOV_STAKER)
 	devOpsAddr, _      = access.GetAddress(access.ROLE_DEVOPS)
+
+	tokenListWithAmount = make(map[string]uint64) // tokenPath -> amount
 )
 
 // DistributeProtocolFee distributes the protocol fee to devOps and gov/staker.
-func DistributeProtocolFee() {
+// only `gov/staker` can execute this function.
+// It returns list of token with amount has been sent to gov/staker.
+func DistributeProtocolFee() map[string]uint64 {
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
@@ -46,38 +52,59 @@ func DistributeProtocolFee() {
 		}
 	}
 
-	tokens := common.ListRegisteredTokens()
-	if len(tokens) == 0 {
-		return
-	}
+	assertOnlyGovStaker()
+	sentToDevOpsForEvent := []string{}
+	sentToGovStakerForEvent := []string{}
+	toReturnDistributedToGovStaker := map[string]uint64{}
 
-	for _, token := range tokens {
-		// default distribute protocol fee percent
-		// govStaker 100%
-		// ...
-
+	for token, amount := range tokenListWithAmount {
 		balance := common.BalanceOf(token, protocolFeeAddr)
-		if balance > 0 {
-			toDevOps := balance * devOpsPct / 10000 // default 0%
-			toGovStaker := balance - toDevOps       // default 100%
 
-			if token == consts.GNS_PATH {
-				gnsToDevOps = toDevOps
-				gnsToGovStaker = toGovStaker
-			}
+		// anyone can just send certain grc20 token to `protocol_fee` contract
+		// therefore, we don't need any guard logic to check whether protocol_fee's xxx token balance is equal to `amount`
+		// however, amount always should be less than or equal to balance
+		if amount > balance {
+			panic(addDetailToError(
+				errInvalidAmount,
+				ufmt.Sprintf("amount: %d should be less than or equal to balance: %d", amount, balance),
+			))
+		}
 
-			addAccuToGovStaker(token, toGovStaker)
+		if amount > 0 {
+			toDevOpsAmount := balance * devOpsPct / 10000 // default 0%
+			toGovStakerAmount := balance - toDevOpsAmount // default 100%
 
 			tokenTeller := common.GetTokenTeller(token)
-			if toDevOps > 0 {
-				tokenTeller.Transfer(devOpsAddr, toDevOps)
+			if toDevOpsAmount > 0 {
+				addAccuToDevOps(token, toDevOpsAmount)
+				updateDistributedToDevOpsHistory(token, toDevOpsAmount)
+				sentToDevOpsForEvent = append(sentToDevOpsForEvent, makeEventString(token, toDevOpsAmount))
+				tokenTeller.Transfer(devOpsAddr, toDevOpsAmount)
 			}
 
-			if toGovStaker > 0 {
-				tokenTeller.Transfer(govStakerAddr, toGovStaker)
+			if toGovStakerAmount > 0 {
+				addAccuToGovStaker(token, toGovStakerAmount)
+				updateDistributedToGovStakerHistory(token, toGovStakerAmount)
+				sentToGovStakerForEvent = append(sentToGovStakerForEvent, makeEventString(token, toGovStakerAmount))
+				tokenTeller.Transfer(govStakerAddr, toGovStakerAmount)
+
+				toReturnDistributedToGovStaker[token] = toGovStakerAmount
 			}
 		}
 	}
+
+	clearTokenListWithAmount()
+
+	prevAddr, prevRealm := getPrev()
+	std.Emit(
+		"TransferProtocolFee",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"toDevOps", strings.Join(sentToDevOpsForEvent, ","),
+		"toGovStaker", strings.Join(sentToGovStakerForEvent, ","),
+	)
+
+	return toReturnDistributedToGovStaker
 }
 
 func GetDevOpsPct() uint64 {
@@ -127,24 +154,18 @@ func setDevOpsPct(pct uint64) {
 	)
 }
 
-// GetLastTransferToDevOps returns the last transfer to devOps.
-func GetLastTransferToDevOps() uint64 {
-	return gnsToDevOps
+// AddToProtocolFee adds the amount to the tokenListWithAmount
+// Only `pool + router + staker` can execute this function.
+func AddToProtocolFee(tokenPath string, amount uint64) {
+	assertOnlyPoolRouterStaker()
+	tokenListWithAmount[tokenPath] += amount
 }
 
-// GetAccuTransferToGovStaker returns the accuToGovStaker.
-func GetAccuTransferToGovStaker() *avl.Tree {
-	return accuToGovStaker
-}
-
-// GetAccuTransferToGovStakerByTokenPath returns the accumulated transfer to gov/staker by token path.
-func GetAccuTransferToGovStakerByTokenPath(path string) uint64 {
-	amountI, exists := accuToGovStaker.Get(path)
-	if !exists {
-		return 0
-	}
-
-	return amountI.(uint64)
+// ClearTokenListWithAmount clears the tokenListWithAmount.
+// only `gov/staker` can execute this function.
+func ClearTokenListWithAmount() {
+	assertOnlyGovStaker()
+	clearTokenListWithAmount()
 }
 
 // ClearAccuTransferToGovStaker clears the accuToGovStaker.
@@ -163,9 +184,75 @@ func ClearAccuTransferToGovStaker() {
 	accuToGovStaker = avl.NewTree()
 }
 
+// TokenList returns only the list of token path.
+// If positive is true, it returns only the token path with amount > 0.
+// If positive is false, it returns all the token path.
+func TokenList(positive bool) []string {
+	tokens := []string{}
+
+	for tokenPath, amount := range tokenListWithAmount {
+		if positive && amount == 0 {
+			continue
+		}
+
+		tokens = append(tokens, tokenPath)
+	}
+
+	return tokens
+}
+
+// TokenListWithAmount returns the token path and amount.
+func TokenListWithAmount() map[string]uint64 {
+	return tokenListWithAmount
+}
+
 // addAccuToGovStaker adds the amount to the accuToGovStaker by token path.
-func addAccuToGovStaker(path string, amount uint64) {
-	before := GetAccuTransferToGovStakerByTokenPath(path)
+func addAccuToGovStaker(tokenPath string, amount uint64) {
+	before := GetAccuTransferToGovStakerByTokenPath(tokenPath)
 	after := before + amount
-	accuToGovStaker.Set(path, after)
+	accuToGovStaker.Set(tokenPath, after)
+}
+
+// addAccuToDevOps adds the amount to the accuToDevOps by token path.
+func addAccuToDevOps(tokenPath string, amount uint64) {
+	before := GetAccuTransferToDevOpsByTokenPath(tokenPath)
+	after := before + amount
+	accuToDevOps.Set(tokenPath, after)
+}
+
+// updateDistributedToGovStakerHistory updates the distributedToGovStakerHistory.
+func updateDistributedToGovStakerHistory(tokenPath string, amount uint64) {
+	// get the previous amount
+	prevAmountI, exists := distributedToGovStakerHistory.Get(tokenPath)
+	prevAmount := uint64(0)
+	if exists {
+		prevAmount = prevAmountI.(uint64)
+	}
+
+	// update the amount
+	afterAmount := prevAmount + amount
+	distributedToGovStakerHistory.Set(tokenPath, afterAmount)
+}
+
+// updateDistributedToDevOpsHistory updates the distributedToDevOpsHistory.
+func updateDistributedToDevOpsHistory(tokenPath string, amount uint64) {
+	// get the previous amount
+	prevAmountI, exists := distributedToDevOpsHistory.Get(tokenPath)
+	prevAmount := uint64(0)
+	if exists {
+		prevAmount = prevAmountI.(uint64)
+	}
+
+	// update the amount
+	afterAmount := prevAmount + amount
+	distributedToDevOpsHistory.Set(tokenPath, afterAmount)
+}
+
+// clearTokenListWithAmount clears the tokenListWithAmount.
+func clearTokenListWithAmount() {
+	tokenListWithAmount = map[string]uint64{}
+}
+
+func makeEventString(tokenPath string, amount uint64) string {
+	return tokenPath + "*FEE*" + ufmt.Sprintf("%d", amount)
 }
