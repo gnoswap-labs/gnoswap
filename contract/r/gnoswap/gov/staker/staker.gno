@@ -332,13 +332,6 @@ func CollectReward() {
 	prevAddr, prevPkgPath := getPrev()
 	caller := std.PreviousRealm().Address()
 
-	if isLaunchpadProjectWallet(caller) {
-		panic(addDetailToError(
-			errInvalidAddress,
-			ufmt.Sprintf("%s is project wallet from launchpad", caller.String()),
-		))
-	}
-
 	en.MintAndDistributeGns()
 
 	reward, protocolFeeRewards := rewardState.claim(caller, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
