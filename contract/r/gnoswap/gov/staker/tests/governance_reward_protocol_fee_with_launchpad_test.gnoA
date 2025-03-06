@@ -52,6 +52,7 @@ func TestGovernanceRewardProtocolFeeWithLaunchpad(t *testing.T) {
 	mockProtocolFeeTest(t)
 	skipDummyBlocksTest(t)
 	rewardTest(t)
+	undelegateTestFromBob(t)
 }
 
 func delegateTestFromAdminToAlice(t *testing.T) {
@@ -1038,5 +1039,41 @@ func rewardTest(t *testing.T) {
 
 		uassert.Equal(t, uint64(142), bar.BalanceOf(projectAddr))
 		uassert.Equal(t, uint64(357), qux.BalanceOf(projectAddr))
+	})
+}
+
+func undelegateTestFromBob(t *testing.T) {
+	t.Run("undelegate fail test - invalid amount", func(t *testing.T) {
+		undelegateAmount := uint64(0)
+		uassert.PanicsWithMessage(t, "[GNOSWAP-GOV_STAKER-011] can not delegate less than minimum amount || minimum amount to undelegate is 1000000 (requested:0)", func() {
+			std.TestSetRealm(bobRealm)
+			Undelegate(bobAddr, undelegateAmount)
+		})
+	})
+
+	t.Run("undelegate fail test - invalid amount", func(t *testing.T) {
+		undelegateAmount := uint64(1_000_100)
+		uassert.PanicsWithMessage(t, "[GNOSWAP-GOV_STAKER-004] invalid amount || amount must be multiple of 1000000", func() {
+			std.TestSetRealm(bobRealm)
+			Undelegate(bobAddr, undelegateAmount)
+		})
+	})
+
+	t.Run("undelegate success test - and collect gns deposit", func(t *testing.T) {
+		undelegateAmount := uint64(5_000_000)
+		std.TestSetRealm(bobRealm)
+		uassert.Equal(t, undelegateAmount, xgns.BalanceOf(bobAddr))
+		beforeGnsBalance := gns.BalanceOf(bobAddr)
+		Undelegate(bobAddr, undelegateAmount)
+
+		uassert.Equal(t, uint64(0), xgns.BalanceOf(bobAddr))
+		uassert.Equal(t, beforeGnsBalance, gns.BalanceOf(bobAddr))
+		uassert.Equal(t, `{"height":"147","now":"1234567938","totalLocked":"5000000","claimableAmount":"0","nextClaimableTime":"1235172738"}`, GetLockedInfoByAddress(bobAddr))
+		std.TestSkipHeights((60 * 60 * 24 * 7 / 2) + 1)
+		uassert.Equal(t, `{"height":"302548","now":"1235172740","totalLocked":"5000000","claimableAmount":"5000000","nextClaimableTime":"0"}`, GetLockedInfoByAddress(bobAddr))
+
+		CollectUndelegatedGns()
+		uassert.Equal(t, beforeGnsBalance+undelegateAmount, gns.BalanceOf(bobAddr))
+		uassert.Equal(t, "", GetLockedInfoByAddress(bobAddr))
 	})
 }

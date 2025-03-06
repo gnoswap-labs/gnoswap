@@ -23,7 +23,6 @@ var (
 	// For Launchpad deposit
 	q96                   = u256.MustFromDecimal(consts.Q96)
 	amountByProjectWallet = avl.NewTree() // recipient wallet => amount
-	rewardByProjectWallet = avl.NewTree() // recipient wallet => reward
 )
 
 // collectAndGetGNSBalance gets the acuumulated GNS balance from emission to gov/staker
@@ -291,15 +290,10 @@ func (self *RewardState) removeStake(staker std.Address, amount uint64, currentB
 }
 
 // GetRewardByProjectWallet returns the amount of reward for the project wallet
-func GetRewardByProjectWallet(addr std.Address) uint64 {
-	// launchpad 의 reward를 계산
-	// getAmountByProjectWallet(addr) 로 value를 가져옴
-	// reward에서 value만큼 처리 ?
-	value, exists := rewardByProjectWallet.Get(addr.String())
-	if !exists {
-		return 0
-	}
-	return value.(uint64)
+func GetRewardByProjectWallet(addr std.Address) (uint64, map[string]uint64) {
+	rewardState.finalize(collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
+	emissionReward, protocolFeeRewards := rewardState.CalculateReward(addr)
+	return emissionReward, protocolFeeRewards
 }
 
 // SetAmountByProjectWallet sets the amount of reward for the project wallet
@@ -322,6 +316,14 @@ func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
 		amountByProjectWallet.Set(addr.String(), currentAmount-amount)
 		rewardState.removeStake(addr, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	}
+}
+
+// isLaunchpadProjectWallet returns true if the address is a project wallet
+func isLaunchpadProjectWallet(addr std.Address) bool {
+	if amountByProjectWallet.Has(addr.String()) {
+		return true
+	}
+	return false
 }
 
 // getAmountByProjectWallet returns the amount of xGNS staked by the project wallet

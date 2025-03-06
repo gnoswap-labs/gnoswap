@@ -211,8 +211,10 @@ func Undelegate(from std.Address, amount uint64) {
 	reward, protocolFeeRewards := rewardState.removeStake(caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	gns.Transfer(caller, reward)
 
-	for tokenPath, amount := range protocolFeeRewards {
-		transferProtocolFee(tokenPath, from, amount)
+	for tokenPath, rewardAmount := range protocolFeeRewards {
+		if rewardAmount > 0 {
+			transferProtocolFee(tokenPath, from, rewardAmount)
+		}
 	}
 
 	// actual unDelegate
@@ -327,10 +329,17 @@ func CollectReward() {
 		}
 	}
 
-	en.MintAndDistributeGns()
-
 	prevAddr, prevPkgPath := getPrev()
 	caller := std.PreviousRealm().Address()
+
+	if isLaunchpadProjectWallet(caller) {
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("%s is project wallet from launchpad", caller.String()),
+		))
+	}
+
+	en.MintAndDistributeGns()
 
 	reward, protocolFeeRewards := rewardState.claim(caller, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
@@ -395,6 +404,12 @@ func CollectRewardFromLaunchPad(to std.Address) {
 		if halt.IsContractHalted(phalt.OpTypeGovStaker) {
 			panic("gov/staker contract operations are currently disabled")
 		}
+	}
+	if !isLaunchpadProjectWallet(to) {
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("%s is not project wallet from launchpad", to.String()),
+		))
 	}
 
 	en.MintAndDistributeGns()
