@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/gnoswap/v1/access"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/v1/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	en "gno.land/r/gnoswap/v1/emission"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
-	"gno.land/r/gnoswap/v1/halt"
 )
 
 // CheckerType defines available predefined permission checker types
@@ -265,4 +266,46 @@ func parseAddresses(addressStr string) []std.Address {
 	}
 
 	return addresses
+}
+
+/////////// EXECUTE PROPOSAL ///////////
+
+func executeAddRole(roleInfo RoleChangeInfo) error {
+	if roleInfo.CheckerType == SingleAddressChecker && len(roleInfo.Addresses) == 1 {
+		return access.CreateRole(roleInfo.RoleName, roleInfo.Addresses[0])
+	}
+
+	return errors.New("invalid checker type or addresses for role creation")
+}
+
+func executeRemoveRole(info RoleChangeInfo) error {
+	panic("TODO")
+}
+
+func executeAddPermission(roleInfo RoleChangeInfo) error {
+	if !access.RoleExists(roleInfo.RoleName) {
+		return ufmt.Errorf("role %s does not exist", roleInfo.RoleName)
+	}
+
+	// Create and add the permission checker
+	checker := getPermissionChecker(roleInfo)
+	return rbac.AddPermission(roleInfo.RoleName, roleInfo.PermissionName, checker)
+}
+
+func executeRemovePermission(roleInfo RoleChangeInfo) error {
+	if !access.RoleExists(roleInfo.RoleName) {
+		return ufmt.Errorf("role %s does not exist", roleInfo.RoleName)
+	}
+	
+	return rbac.RemovePermission(roleInfo.RoleName, roleInfo.PermissionName)
+}
+
+func executeUpdatePermission(roleInfo RoleChangeInfo) error {
+	if !access.RoleExists(roleInfo.RoleName) {
+		return ufmt.Errorf("role %s does not exist", roleInfo.RoleName)
+	}
+
+	// Update the permission checker
+	checker := getPermissionChecker(roleInfo)
+	return rbac.UpdatePermission(roleInfo.RoleName, roleInfo.PermissionName, checker)
 }

@@ -6,6 +6,7 @@ import (
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 
+	"gno.land/r/gnoswap/v1/access"
 	cp "gno.land/r/gnoswap/v1/community_pool"
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -187,6 +188,38 @@ func createParameterHandlers() *ParameterRegistry {
 			int64(parseInt(params[1])), // block
 		)
 		return nil
+	})
+
+	// region: Access
+	registry.Register(consts.ACCESS_PATH, "CreateRole", func(params []string) error {
+		if err := hasDesiredParams(params, 2); err != nil {
+			return err
+		}
+		access.CreateRole(
+			params[0], // roleName
+			std.Address(params[1]), // address
+		)
+		return nil
+	})
+
+	registry.Register(consts.ACCESS_PATH, "SetRole", func(params []string) error {
+		if err := hasDesiredParams(params, 2); err != nil {
+			return err
+		}
+		return access.SetRole(
+			params[0],              // roleName
+			std.Address(params[1]), // address
+		)
+	})
+
+	registry.Register(consts.ACCESS_PATH, "UpdateRoleAddress", func(params []string) error {
+		if err := hasDesiredParams(params, 2); err != nil {
+			return err
+		}
+		return access.UpdateRoleAddress(
+			params[0],              // roleName
+			std.Address(params[1]), // newAddress
+		)
 	})
 
 	return registry
