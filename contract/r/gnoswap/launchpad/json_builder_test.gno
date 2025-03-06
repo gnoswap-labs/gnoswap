@@ -67,11 +67,11 @@ func TestTierBuilder(t *testing.T) {
 	TierBuilder(b, "test", tier)
 
 	result := b.Node()
-	expected := `{"testCollectWaitDuration":"100","testTierAmount":"5000","testTierAmountPerBlockX128":"1000000","testStartedHeight":"100","testStartedTime":"1234567890","testEndedHeight":"200","testEndedTime":"1234567899","testTotalDepositAmount":"1000","testActualDepositAmount":"800","testTotalParticipant":"50","testActualParticipant":"40","testUserCollectedAmount":"300","testCalculatedAmount":"400"}`
+	expected := `{"testId":"","testCollectWaitDuration":"100","testTierAmount":"5000","testTierAmountPerBlockX128":"1000000","testStartedHeight":"100","testStartedTime":"1234567890","testEndedHeight":"200","testEndedTime":"1234567899","testTotalDepositAmount":"1000","testActualDepositAmount":"800","testTotalParticipant":"50","testActualParticipant":"40","testUserCollectedAmount":"300","testCalculatedAmount":"400"}`
 
 	res, err := json.Marshal(result)
 	uassert.NoError(t, err)
-	uassert.Equal(t, string(res), expected)
+	uassert.Equal(t, expected, string(res))
 }
 
 func TestProjectBuilder(t *testing.T) {

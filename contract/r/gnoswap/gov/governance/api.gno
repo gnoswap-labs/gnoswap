@@ -63,12 +63,6 @@ func GetProposalById(id uint64) string {
 	return marshal(proposalsObj)
 }
 
-// helper function for GetProposals and GetProposalById
-func getProposalById(id uint64) *json.Node {
-	proposal := mustGetProposal(id)
-	return createProposalJsonNode(id, proposal)
-}
-
 // GetVoteStatusFromProposalById returns the vote status(max, yes, no) of a proposal.
 func GetVoteStatusFromProposalById(id uint64) string {
 	updateProposalsState()
@@ -128,6 +122,12 @@ func GetVoteByAddressFromProposalById(addr std.Address, id uint64) string {
 	votesObj.AppendObject("votes", voteArr)
 
 	return marshal(votesObj)
+}
+
+// helper function for GetProposals and GetProposalById
+func getProposalById(id uint64) *json.Node {
+	proposal := mustGetProposal(id)
+	return createProposalJsonNode(id, proposal)
 }
 
 func createVoteJsonNode(addr std.Address, id uint64, vote voteWithWeight) *json.Node {

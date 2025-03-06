@@ -8,8 +8,8 @@ import (
 	"gno.land/p/demo/uassert"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/access"
 	phalt "gno.land/p/gnoswap/halt"
+	"gno.land/r/gnoswap/v1/access"
 )
 
 var (

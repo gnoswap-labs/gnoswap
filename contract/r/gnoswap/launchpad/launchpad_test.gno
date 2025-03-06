@@ -1195,6 +1195,8 @@ func TestCreateTier(t *testing.T) {
 		collectWaitDuration uint64
 		want                Tier
 		description         string
+		shouldPanic         bool
+		expectedError       string
 	}{
 		{
 			name:                "30-day tier creation",
@@ -1270,12 +1272,22 @@ func TestCreateTier(t *testing.T) {
 					time:   1900000000,
 				},
 			},
-			description: "Should handle zero duration correctly",
+			description:   "Should handle zero duration correctly",
+			shouldPanic:   true,
+			expectedError: "[GNOSWAP-LAUNCHPAD-009] invalid pool || invalid duration(0)",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r != nil {
+						uassert.Equal(t, r.(string), tt.expectedError)
+					}
+				}()
+			}
+
 			projectTiersWithoutDeposit = make(map[string]bool)
 
 			got := createTier(

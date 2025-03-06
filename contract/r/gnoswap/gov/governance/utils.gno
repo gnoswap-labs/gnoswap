@@ -66,7 +66,7 @@ func iterTree(tree *avl.Tree, cb func(key string, value interface{}) bool) {
 	tree.Iterate("", "", cb)
 }
 
-// Converts a string to an integer, panics if conversion fails
+// strToInt Converts a string to an integer, panics if conversion fails
 func strToInt(str string) int {
 	res, err := strconv.Atoi(str)
 	if err != nil {
