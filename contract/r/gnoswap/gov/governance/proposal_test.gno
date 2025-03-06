@@ -371,18 +371,18 @@ func TestIntegratedProposeParameterChange(t *testing.T) {
 	resetGlobalStateProposal(t)
 
 	tests := []struct {
-		name          string
-		proposer      std.Address
-		title         string
-		description   string
-		numToExecute  uint64
-		executions    string
-		expectError   bool
-		errorContains string
-		isRoleChange  bool
-		roleName      string
+		name           string
+		proposer       std.Address
+		title          string
+		description    string
+		numToExecute   uint64
+		executions     string
+		expectError    bool
+		errorContains  string
+		isRoleChange   bool
+		roleName       string
 		permissionName string
-		action        RoleChangeAction
+		action         RoleChangeAction
 	}{
 		{
 			name:         "Valid parameter change proposal",
@@ -442,7 +442,7 @@ func TestIntegratedProposeParameterChange(t *testing.T) {
 
 			uassert.Equal(t, proposal.Title, tt.title)
 			uassert.Equal(t, proposal.Description, tt.description)
-			
+
 			if tt.isRoleChange {
 				uassert.Equal(t, proposal.ProposalType.String(), RoleChange.String())
 				uassert.Equal(t, proposal.RoleChange.RoleName, tt.roleName)
