@@ -90,14 +90,14 @@ func TestRegisterCustomHaltLevel(t *testing.T) {
 	const CustomHaltLevel = LevelID(5)
 
 	customLevel := NewHaltLevel(CustomHaltLevel, "CustomHalt", "Custom halt level", map[OpType]bool{
-		OpTypePool:      false,
-		OpTypePosition:  false,
+		OpTypePool:        false,
+		OpTypePosition:    false,
 		OpTypeProtocolFee: false,
-		OpTypeRouter: false,
-		OpTypeStaker: false,
-		OpTypeLaunchpad: false,
-		OpTypeGovernance: false,
-		OpTypeWithdraw:  false,
+		OpTypeRouter:      false,
+		OpTypeStaker:      false,
+		OpTypeLaunchpad:   false,
+		OpTypeGovernance:  false,
+		OpTypeWithdraw:    false,
 	})
 	mgr.RegisterHaltLevel(customLevel)
 

@@ -12,8 +12,8 @@ import (
 	"gno.land/p/demo/avl"
 	ufmt "gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/halt"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (

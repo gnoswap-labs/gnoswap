@@ -35,6 +35,8 @@ func RefundInfoBuilder(b *json.NodeBuilder, info RefundInfo) *json.NodeBuilder {
 
 // TierBuilder adds Tier fields to JSON
 func TierBuilder(b *json.NodeBuilder, prefix string, tier Tier) *json.NodeBuilder {
+	// Add tiers info
+	b.WriteString(prefix+"Id", tier.id)
 	b.WriteString(prefix+"CollectWaitDuration", ufmt.Sprintf("%d", tier.collectWaitDuration))
 	b.WriteString(prefix+"TierAmount", ufmt.Sprintf("%d", tier.tierAmount))
 	if tier.tierAmountPerBlockX128 != nil {
@@ -78,13 +80,6 @@ func ProjectBuilder(b *json.NodeBuilder, project Project) *json.NodeBuilder {
 
 	// Add refund info
 	RefundInfoBuilder(b, project.refund)
-
-	// Add tiers info
-	for _, duration := range []uint64{30, 90, 180} {
-		if tier, exists := project.tiers[duration]; exists {
-			TierBuilder(b, ufmt.Sprintf("tier%d", duration), tier)
-		}
-	}
 
 	return b
 }

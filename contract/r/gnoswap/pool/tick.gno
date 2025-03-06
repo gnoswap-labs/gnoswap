@@ -85,11 +85,13 @@ func (p *Pool) GetTickInitialized(tick int32) bool {
 // Example:
 //
 // ```gno
+//
 //	feeGrowth0, feeGrowth1 := pool.getFeeGrowthInside(
 //	    100, 200, 150, globalFeeGrowth0, globalFeeGrowth1,
 //	)
 //	println("Fee Growth Inside (Token 0):", feeGrowth0)
 //	println("Fee Growth Inside (Token 1):", feeGrowth1)
+//
 // ```
 func (p *Pool) getFeeGrowthInside(
 	tickLower int32,
@@ -152,8 +154,10 @@ func (p *Pool) getFeeGrowthInside(
 // Example:
 //
 // ```gno
+//
 //	flipped := pool.tickUpdate(10, 5, liquidityDelta, feeGrowth0, feeGrowth1, true, maxLiquidity)
 //	println("Tick flipped:", flipped)
+//
 // ```
 func (p *Pool) tickUpdate(
 	tick int32,
@@ -284,8 +288,10 @@ func (p *Pool) getTick(tick int32) TickInfo {
 // Example:
 //
 // ```gno
+//
 //	tickInfo := pool.mustGetTick(10)
 //	ufmt.Println("Tick Info:", tickInfo)
+//
 // ```
 func (p *Pool) mustGetTick(tick int32) TickInfo {
 	tickStr := strconv.Itoa(int(tick))
@@ -343,6 +349,7 @@ func calculateMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 // Example:
 //
 // ```gno
+//
 //	feeGrowth0, feeGrowth1 := getFeeGrowthBelowX128(
 //	    100, 150, globalFeeGrowth0, globalFeeGrowth1, lowerTickInfo,
 //	)
@@ -398,6 +405,7 @@ func getFeeGrowthBelowX128(
 //	    200, 150, globalFeeGrowth0, globalFeeGrowth1, upperTickInfo,
 //	)
 //	println("Fee Growth Above:", feeGrowth0, feeGrowth1)
+//
 // ```
 func getFeeGrowthAboveX128(
 	tickUpper, tickCurrent int32,

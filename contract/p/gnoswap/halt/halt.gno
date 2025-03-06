@@ -11,7 +11,7 @@ const (
 	rawLaunchpad     = "launchpad"
 	rawGovernance    = "governance" // gov/governance
 	rawGovStaker     = "gov_staker" // gov/staker
-	rawXGns          = "xgns" // gov/xgns
+	rawXGns          = "xgns"       // gov/xgns
 	rawCommunityPool = "community_pool"
 	rawEmission      = "emission"
 	rawWithdraw      = "withdraw"

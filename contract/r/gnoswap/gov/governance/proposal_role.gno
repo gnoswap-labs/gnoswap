@@ -152,121 +152,119 @@ func getPermissionChecker(info RoleChangeInfo) prbac.PermissionChecker {
 // proposeRoleChange creates a new role change proposal with string parameters.
 // The action and checkerType parameters should be case-insensitive strings matching their respective types.
 // The addresses parameter should be a colon-separated string of addresses.
-// func ProposeRoleChange(
-// 	title string,
-// 	description string,
-// 	roleName string,
-// 	permissionName string,
-// 	action string,
-// 	checkerType string,
-// 	addresses string,
-// 	tokenPath string,
-// 	minAmount uint64,
-// ) uint64 {
-// 	// Convert string parameters to their respective types
-// 	roleChangeAction := RoleChangeActionFromString(action)
-// 	checkerTypeEnum := checkerTypeFromString(checkerType)
-// 	addressList := parseAddresses(addresses)
+func ProposeRoleChange(
+	title string,
+	description string,
+	roleName string,
+	permissionName string,
+	action string,
+	checkerType string,
+	addresses string,
+	tokenPath string,
+	minAmount uint64,
+) uint64 {
+	// Convert string parameters to their respective types
+	roleChangeAction := RoleChangeActionFromString(action)
+	checkerTypeEnum := checkerTypeFromString(checkerType)
+	addressList := parseAddresses(addresses)
 
-// 	return proposeRoleChange(
-// 		title,
-// 		description,
-// 		roleName,
-// 		permissionName,
-// 		roleChangeAction,
-// 		checkerTypeEnum,
-// 		addressList,
-// 		tokenPath,
-// 		minAmount,
-// 	)
-// }
+	return proposeRoleChange(
+		title,
+		description,
+		roleName,
+		permissionName,
+		roleChangeAction,
+		checkerTypeEnum,
+		addressList,
+		tokenPath,
+		minAmount,
+	)
+}
 
-// // proposeRoleChange creates a new role change proposal
-// func proposeRoleChange(
-// 	title string,
-// 	description string,
-// 	roleName string,
-// 	permissionName string,
-// 	action RoleChangeAction,
-// 	checkerType CheckerType,
-// 	addresses []std.Address,
-// 	tokenPath string,
-// 	minAmount uint64,
-// ) uint64 {
-// 	if err := halt.IsHalted(); err != nil {
-// 		panic(err)
-// 	}
+// proposeRoleChange creates a new role change proposal
+func proposeRoleChange(
+	title string,
+	description string,
+	roleName string,
+	permissionName string,
+	action RoleChangeAction,
+	checkerType CheckerType,
+	addresses []std.Address,
+	tokenPath string,
+	minAmount uint64,
+) uint64 {
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
+	proposer := std.PreviousRealm().Address()
+	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
+	if !enough {
+		panic(addDetailToError(
+			errNotEnoughBalance,
+			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
+		))
+	}
 
-// 	en.MintAndDistributeGns()
-// 	updateProposalsState()
+	en.MintAndDistributeGns()
+	updateProposalsState()
 
-// 	proposer := std.PreviousRealm().Address()
+	now := uint64(time.Now().Unix())
+	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
 
-// 	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
-// 	if !enough {
-// 		panic(addDetailToError(
-// 			errNotEnoughBalance,
-// 			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
-// 		))
-// 	}
+	maxVotingWeight := u256.NewUint(votingMax)
+	quorumAmount := maxVotingWeight.Uint64() * config.Quorum / 100
 
-// 	now := uint64(time.Now().Unix())
-// 	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
+	proposal := ProposalInfo{
+		Proposer:     proposer,
+		ProposalType: RoleChange,
+		State: ProposalState{
+			Created:   true,
+			CreatedAt: now,
+			Upcoming:  true,
+		},
+		Yea:                       u256.Zero(),
+		Nay:                       u256.Zero(),
+		MaxVotingWeight:           maxVotingWeight,
+		PossibleAddressWithWeight: possibleAddressWithWeight,
+		ConfigVersion:             uint64(configVersions.Size()),
+		QuorumAmount:              quorumAmount,
+		Title:                     title,
+		Description:               description,
+		RoleChange: RoleChangeInfo{
+			RoleName:       roleName,
+			PermissionName: permissionName,
+			Action:         action,
+			CheckerType:    checkerType,
+			Addresses:      addresses,
+			TokenPath:      tokenPath,
+			MinAmount:      minAmount,
+		},
+	}
 
-// 	maxVotingWeight := u256.NewUint(votingMax)
-// 	quorumAmount := maxVotingWeight.Uint64() * config.Quorum / 100
+	proposalId++
+	proposals.Set(formatUint(proposalId), proposal)
+	proposalIdListByProposer.Set(proposer.String(), proposalId)
 
-// 	proposal := ProposalInfo{
-// 		Proposer:     proposer,
-// 		ProposalType: RoleChange,
-// 		State: ProposalState{
-// 			Created:   true,
-// 			CreatedAt: now,
-// 			Upcoming:  true,
-// 		},
-// 		Yea:                       u256.Zero(),
-// 		Nay:                       u256.Zero(),
-// 		MaxVotingWeight:           maxVotingWeight,
-// 		PossibleAddressWithWeight: possibleAddressWithWeight,
-// 		ConfigVersion:             uint64(configVersions.Size()),
-// 		QuorumAmount:              quorumAmount,
-// 		Title:                     title,
-// 		Description:               description,
-// 		RoleChange: RoleChangeInfo{
-// 			RoleName:       roleName,
-// 			PermissionName: permissionName,
-// 			Action:         action,
-// 			CheckerType:    checkerType,
-// 			Addresses:      addresses,
-// 			TokenPath:      tokenPath,
-// 			MinAmount:      minAmount,
-// 		},
-// 	}
+	prevAddr, prevPkgPath := getPrev()
+	std.Emit(
+		"ProposeRoleChange",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"title", title,
+		"description", description,
+		"roleName", roleName,
+		"permissionName", permissionName,
+		"action", action.String(),
+		"checkerType", checkerType.String(),
+		"proposalId", formatUint(proposalId),
+		"quorumAmount", formatUint(proposal.QuorumAmount),
+		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
+		"configVersion", formatUint(proposal.ConfigVersion),
+		"createdAt", formatUint(proposal.State.CreatedAt),
+	)
 
-// 	proposalId++
-// 	proposals.Set(formatUint(proposalId), proposal)
-// 	latestProposalByProposer.Set(proposer.String(), proposalId)
-
-// 	prevAddr, prevPkgPath := getPrev()
-// 	std.Emit(
-// 		"ProposeRoleChange",
-// 		"prevAddr", prevAddr,
-// 		"prevRealm", prevPkgPath,
-// 		"title", title,
-// 		"description", description,
-// 		"roleName", roleName,
-// 		"permissionName", permissionName,
-// 		"action", action.String(),
-// 		"checkerType", checkerType.String(),
-// 		"proposalId", formatUint(proposalId),
-// 		"quorumAmount", formatUint(proposal.QuorumAmount),
-// 		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
-// 		"configVersion", formatUint(proposal.ConfigVersion),
-// 		"createdAt", formatUint(proposal.State.CreatedAt),
-// 	)
-
-// 	return proposalId
-// }
+	return proposalId
+}
 
 // parseAddresses parses a colon-separated string of addresses into an array of std.Address.
 // Example input: "addr1:addr2:addr3"

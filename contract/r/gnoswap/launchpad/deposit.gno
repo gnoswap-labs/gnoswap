@@ -8,18 +8,17 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
+
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 	"gno.land/r/gnoswap/v1/referral"
-	"gno.land/r/gnoswap/v1/access"
 )
 
-var (
-	launchpadAddr, _ = access.GetAddress(access.ROLE_LAUNCHPAD)
-)
+var launchpadAddr, _ = access.GetAddress(access.ROLE_LAUNCHPAD)
 
 var (
 	// depositId -> deposit
@@ -107,12 +106,7 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 		panic(err.Error())
 	}
 
-	currentHeight := uint64(std.ChainHeight())
-	if !project.isActivated(currentHeight) {
-		panic(addDetailToError(errInactiveProject, projectId))
-	}
 	caller := getPrevAddr()
-	referral.TryRegister(caller, referrer)
 	project.checkDepositConditions(caller)
 
 	tier, err := project.Tier(convertTierTypeStrToUint64(tierType))
@@ -120,10 +114,15 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 		panic(err.Error())
 	}
 
+	currentHeight := uint64(std.ChainHeight())
+	if !project.isActivated(currentHeight) {
+		panic(addDetailToError(errInactiveProject, projectId))
+	}
 	if !tier.isActivated(currentHeight) {
 		panic(addDetailToError(errInactiveTier, tierType))
 	}
 
+	referral.TryRegister(caller, referrer)
 	en.MintAndDistributeGns()
 
 	now := uint64(time.Now().Unix())
@@ -159,8 +158,8 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 			"tierAmountPerBlockX128", tier.TierAmountPerBlockX128().ToString(),
 		)
 
-		rewardState := NewRewardState(tier.tierAmountPerBlockX128, tier.started.height, tier.ended.height)
-		rewardStates.set(info.Project.id, info.TierType, rewardState)
+		//rewardState := NewRewardState(tier.tierAmountPerBlockX128, tier.started.height, tier.ended.height)
+		//rewardStates.set(info.Project.id, info.TierType, rewardState)
 	}
 
 	reward := tier.Reward()
@@ -194,12 +193,12 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 
 	projects[projectId] = project
 
-	rewardState, err := rewardStates.Get(projectId, tierType)
-	if err != nil {
-		panic(addDetailToError(
-			errInvalidRewardState, err.Error()))
-	}
-	rewardState.addStake(uint64(std.ChainHeight()), deposit.id, amount)
+	//rewardState, err := rewardStates.Get(projectId, tierType)
+	//if err != nil {
+	//	panic(addDetailToError(
+	//		errInvalidRewardState, err.Error()))
+	//}
+	//rewardState.addStake(uint64(std.ChainHeight()), deposit.id, amount)
 
 	// Update gov_staker to calculate project's recipient's reward
 	gs.SetAmountByProjectWallet(project.recipient, amount, true)
