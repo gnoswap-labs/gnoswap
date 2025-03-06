@@ -87,6 +87,7 @@ func ProjectBuilder(b *json.NodeBuilder, project Project) *json.NodeBuilder {
 // DepositBuilder adds Deposit fields to JSON
 func DepositBuilder(b *json.NodeBuilder, deposit Deposit) *json.NodeBuilder {
 	return b.
+		WriteString("depositId", deposit.id).
 		WriteString("projectId", deposit.projectId).
 		WriteString("tier", deposit.tier).
 		WriteString("depositor", deposit.depositor.String()).
@@ -97,6 +98,7 @@ func DepositBuilder(b *json.NodeBuilder, deposit Deposit) *json.NodeBuilder {
 		WriteString("depositCollectTime", ufmt.Sprintf("%d", deposit.depositCollectTime)).
 		WriteString("claimableHeight", ufmt.Sprintf("%d", deposit.claimableHeight)).
 		WriteString("claimableTime", ufmt.Sprintf("%d", deposit.claimableTime)).
+		WriteString("claimableRewardAmount", ufmt.Sprintf("%d", deposit.rewardAmount)).
 		WriteString("rewardCollected", ufmt.Sprintf("%d", deposit.rewardCollected)).
 		WriteString("rewardCollectHeight", ufmt.Sprintf("%d", deposit.rewardCollectHeight)).
 		WriteString("rewardCollectTime", ufmt.Sprintf("%d", deposit.rewardCollectTime))
