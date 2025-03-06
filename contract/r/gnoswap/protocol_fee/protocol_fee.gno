@@ -254,5 +254,5 @@ func clearTokenListWithAmount() {
 }
 
 func makeEventString(tokenPath string, amount uint64) string {
-	return tokenPath + "*FEE*" + ufmt.Sprintf("%d", amount)
+	return tokenPath + "*FEE*" + strconv.FormatUint(amount, 10)
 }
