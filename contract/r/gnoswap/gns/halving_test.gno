@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	govRealm   = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
+	govRealm = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
 
 	startHeight    int64 = std.ChainHeight()
 	startTimestamp int64 = time.Now().Unix() + milliToSec(consts.BLOCK_GENERATION_INTERVAL)

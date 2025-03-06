@@ -9,8 +9,8 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/halt"
 )
 

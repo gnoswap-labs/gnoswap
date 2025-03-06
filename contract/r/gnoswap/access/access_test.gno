@@ -478,6 +478,7 @@ func TestInitializeDefaultRoles(t *testing.T) {
 			ROLE_STAKER:     consts.STAKER_ADDR,
 			ROLE_LAUNCHPAD:  consts.LAUNCHPAD_ADDR,
 			ROLE_EMISSION:   consts.EMISSION_ADDR,
+			ROLE_GOV_XGNS:   consts.GOV_XGNS_ADDR,
 		}
 
 		for role, expectedAddr := range expectedRoles {

@@ -24,13 +24,9 @@ import (
 )
 
 var (
-	dummyToAddr  = testutils.TestAddress("dummyTo")
-	dummyToRealm = std.NewUserRealm(dummyToAddr)
-
-	dummyAddr  = testutils.TestAddress("dummy")
-	dummyRealm = std.NewUserRealm(dummyAddr)
-
-	reDelegate = testutils.TestAddress("reDelegate")
+	dummyToAddr = testutils.TestAddress("dummyTo")
+	dummyAddr   = testutils.TestAddress("dummy")
+	dummyRealm  = std.NewUserRealm(dummyAddr)
 )
 
 func TestGovernanceRewardProtocolFee(t *testing.T) {
@@ -103,8 +99,12 @@ func mockProtocolFee(t *testing.T) {
 	std.TestSetOriginSend(std.Coins{{"ugnot", 10000}}, nil)
 	std.TestIssueCoins(consts.WUGNOT_ADDR, std.Coins{{"ugnot", 10000}})
 	wugnot.Deposit()
-
 	wugnot.Transfer(protocolFeeAddr, 10000)
+
+	std.TestSetRealm(stakerRealm)
+	pf.AddToProtocolFee(barPath, 1000)
+	pf.AddToProtocolFee(quxPath, 2500)
+	pf.AddToProtocolFee(wugnotPath, 10000)
 
 	uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), uint64(1000))
 	uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))

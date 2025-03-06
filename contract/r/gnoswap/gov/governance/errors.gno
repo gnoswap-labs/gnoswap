@@ -23,6 +23,7 @@ var (
 	errUnableToVoteOutOfPeriod                        = errors.New("[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period")
 	errInvalidMessageFormat                           = errors.New("[GNOSWAP-GOVERNANCE-015] invalid message format")
 	errProposalNotPassed                              = errors.New("[GNOSWAP-GOVERNANCE-016] proposal not passed")
+	errInvalidAddress                                 = errors.New("[GNOSWAP-GOVERNANCE-017] invalid address")
 )
 
 func addDetailToError(err error, detail string) string {

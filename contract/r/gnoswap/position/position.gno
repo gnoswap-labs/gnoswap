@@ -17,7 +17,7 @@ import (
 
 var (
 	positionAddr, _ = access.GetAddress(access.ROLE_POSITION)
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	stakerAddr, _   = access.GetAddress(access.ROLE_STAKER)
 )
 
 const (

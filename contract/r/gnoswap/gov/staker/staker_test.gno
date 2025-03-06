@@ -126,7 +126,7 @@ func TestDelegate_Boundary_Values(t *testing.T) {
 			to:          makeFakeAddress("validator_1"),
 			amount:      0,
 			expectPanic: true,
-			panicMsg:    "delegation amount cannot be 0",
+			panicMsg:    "[GNOSWAP-GOV_STAKER-011] can not delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:0)",
 		},
 		{
 			name:        "delegate max uint64",

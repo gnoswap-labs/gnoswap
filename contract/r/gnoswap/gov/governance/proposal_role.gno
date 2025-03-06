@@ -196,12 +196,7 @@ func proposeRoleChange(
 	if err := halt.IsHalted(); err != nil {
 		panic(err)
 	}
-
-	en.MintAndDistributeGns()
-	updateProposalsState()
-
 	proposer := std.PreviousRealm().Address()
-
 	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
 	if !enough {
 		panic(addDetailToError(
@@ -209,6 +204,9 @@ func proposeRoleChange(
 			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
 		))
 	}
+
+	en.MintAndDistributeGns()
+	updateProposalsState()
 
 	now := uint64(time.Now().Unix())
 	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
@@ -245,7 +243,7 @@ func proposeRoleChange(
 
 	proposalId++
 	proposals.Set(formatUint(proposalId), proposal)
-	latestProposalByProposer.Set(proposer.String(), proposalId)
+	proposalIdListByProposer.Set(proposer.String(), proposalId)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(

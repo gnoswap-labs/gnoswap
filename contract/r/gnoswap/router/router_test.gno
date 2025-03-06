@@ -146,14 +146,15 @@ func TestFinalizeSwap(t *testing.T) {
 func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 	const wugnotTokenPath = "gno.land/r/demo/wugnot"
 	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
-	const routerContract = consts.ROUTER_ADDR
 	const routerPath = consts.ROUTER_PATH
-	const poolContract = consts.POOL_ADDR
 	const maxTimeout int64 = 9999999999
 	const wugnotGnsPoolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500"
 
+	routerContract := routerAddr
+	poolContract := poolAddr
+
 	alice := testutils.TestAddress("alice")
-	positionOwner := consts.ADMIN
+	positionOwner := admin
 
 	tests := []struct {
 		name             string
@@ -314,14 +315,15 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 	const wugnotTokenPath = "gno.land/r/demo/wugnot"
 	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
-	const routerContract = consts.ROUTER_ADDR
 	const routerPath = consts.ROUTER_PATH
-	const poolContract = consts.POOL_ADDR
 	const maxTimeout int64 = 9999999999
 	const wugnotGnsPoolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500"
 
+	routerContract := routerAddr
+	poolContract := poolAddr
+
 	alice := testutils.TestAddress("alice")
-	positionOwner := consts.ADMIN
+	positionOwner := admin
 
 	tests := []struct {
 		name             string
@@ -431,7 +433,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			newCoinsForAdd := std.Coins{{"ugnot", addAmount}}
 			std.TestSetOriginSend(newCoinsForAdd, nil)
 			banker = std.NewBanker(std.BankerTypeRealmSend)
-			banker.SendCoins(tt.recipient, consts.POSITION_ADDR, newCoinsForAdd)
+			banker.SendCoins(tt.recipient, positionAddr, newCoinsForAdd)
 			std.TestSetRealm(std.NewUserRealm(tt.recipient))
 			wugnot.Approve(poolContract, maxApprove)
 			gns.Approve(poolContract, maxApprove)
@@ -495,15 +497,16 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T) {
 	const wugnotTokenPath = "gno.land/r/demo/wugnot"
 	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
-	const routerContract = consts.ROUTER_ADDR
 	const routerPath = consts.ROUTER_PATH
-	const poolContract = consts.POOL_ADDR
-	const positionContract = consts.POSITION_ADDR
 	const maxTimeout int64 = 9999999999
 	const wugnotGnsPoolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:10000"
 
+	routerContract := routerAddr
+	poolContract := poolAddr
+	positionContract := positionAddr
+
 	alice := testutils.TestAddress("alice")
-	positionOwner := consts.ADMIN
+	positionOwner := admin
 
 	tests := []struct {
 		name             string
@@ -679,14 +682,15 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 	const wugnotTokenPath = "gno.land/r/demo/wugnot"
 	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
-	const routerContract = consts.ROUTER_ADDR
 	const routerPath = consts.ROUTER_PATH
-	const poolContract = consts.POOL_ADDR
 	const maxTimeout int64 = 9999999999
 	const gnsWugnotPoolPath = "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:10000"
 
+	routerContract := routerAddr
+	poolContract := poolAddr
+
 	alice := testutils.TestAddress("alice")
-	positionOwner := consts.ADMIN
+	positionOwner := admin
 
 	tests := []struct {
 		name             string

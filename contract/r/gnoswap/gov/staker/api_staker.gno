@@ -47,6 +47,7 @@ func GetLockedInfoByAddress(addr std.Address) string {
 	return marshal(data)
 }
 
+// GetClaimableRewardByAddress gets the claimable reward of an address.
 func GetClaimableRewardByAddress(addr std.Address) string {
 	rewardState.finalize(collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
