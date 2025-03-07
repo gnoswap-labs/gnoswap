@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"math"
 	"std"
 	"testing"
 	"time"
