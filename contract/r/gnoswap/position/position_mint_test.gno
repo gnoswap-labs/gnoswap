@@ -6,9 +6,10 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+	pl "gno.land/r/gnoswap/v1/pool"
 )
 
-func TestMintInternal(t *testing.T) {
+func TestMintInternal_PositionMint(t *testing.T) {
 	tests := []struct {
 		name            string
 		params          MintParams
@@ -59,6 +60,10 @@ func TestMintInternal(t *testing.T) {
 						t.Errorf("expected panic but got none")
 					}
 				}()
+			}
+			poolPath := GetPoolPath(tt.token0, tt.token1, tt.fee)
+			if !DoesPoolPathExist(poolPath) {
+				CreatePool(tt.token0, tt.token1, tt.fee, "79228162514264337593543950336")
 			}
 
 			id, liquidity, amount0, amount1 := mint(tt.params)
