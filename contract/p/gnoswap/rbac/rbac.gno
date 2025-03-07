@@ -28,6 +28,17 @@ func NewRBACWithAddress(addr std.Address) *RBAC {
 	}
 }
 
+func (rb *RBAC) Owner() std.Address { return rb.ownable.Owner() }
+
+// PendingOwner returns the pending owner address
+func (rb *RBAC) PendingOwner() std.Address { return rb.ownable.PendingOwner() }
+
+// AcceptOwnership completes the ownership transfer process
+func (rb *RBAC) AcceptOwnership() error { return rb.ownable.AcceptOwnership() }
+
+// DropOwnership removes the owner, effectively disabling owner-only actions
+func (rb *RBAC) DropOwnership() error { return rb.ownable.DropOwnership() }
+
 // HasRole checks if an address has a specific role
 func (rb *RBAC) HasRole(roleName string, addr std.Address) bool {
 	role, exists := rb.roles[roleName]
@@ -206,28 +217,9 @@ func (rb *RBAC) RevokeRole(roleName string, addr std.Address) error {
 	return nil
 }
 
-func (rb *RBAC) Owner() std.Address {
-	return rb.ownable.Owner()
-}
-
-// PendingOwner returns the pending owner address
-func (rb *RBAC) PendingOwner() std.Address {
-	return rb.ownable.PendingOwner()
-}
-
 // ChangeOwner2Step initiates the two-step ownership transfer process
 func (rb *RBAC) ChangeOwner2Step(newOwner std.Address) error {
 	return rb.ownable.TransferOwnership(newOwner)
-}
-
-// AcceptOwnership completes the ownership transfer process
-func (rb *RBAC) AcceptOwnership() error {
-	return rb.ownable.AcceptOwnership()
-}
-
-// DropOwnership removes the owner, effectively disabling owner-only actions
-func (rb *RBAC) DropOwnership() error {
-	return rb.ownable.DropOwnership()
 }
 
 // GetAddressesByRole returns all addresses with a specific role

@@ -4,11 +4,16 @@ import (
 	"std"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/v1/access"
 )
 
-// globalManager is the single RBAC manager instance created internally in the package.
-// This instance is used to manage global role and permission information.
-var globalManager = prbac.New()
+var (
+	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+
+	// globalManager is the single RBAC manager instance created internally in the package.
+	// This instance is used to manage global role and permission information.
+	globalManager = prbac.NewRBACWithAddress(adminAddr)
+)
 
 // RegisterRole globally registers a role with the given name.
 // Returns an error if the role already exists.
