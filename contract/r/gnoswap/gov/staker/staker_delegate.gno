@@ -16,6 +16,9 @@ var (
 	delegatedTo     = avl.NewTree() // to => amount
 )
 
+// delegate assigns a specified amount of tokens to a given address (`to`).
+// It updates various states, including total delegation amount, delegation history,
+// and delegation snapshot history.
 func delegate(to std.Address, amount uint64) {
 	caller := std.PreviousRealm().Address().String()
 	toStr := to.String()
@@ -43,7 +46,6 @@ func delegate(to std.Address, amount uint64) {
 		height:    uint64(std.ChainHeight()),
 		add:       true, // if true, delegation
 	}
-
 	history := make([]DelegationHistory, 0)
 	if value, exists := delegationHistory.Get(caller); exists {
 		history = value.([]DelegationHistory)
@@ -61,7 +63,6 @@ func delegate(to std.Address, amount uint64) {
 	} else {
 		updateAmount = amount
 	}
-
 	snapShotHistory = append(snapShotHistory, DelegationSnapShotHistory{
 		to:           to,
 		amount:       updateAmount,
@@ -71,7 +72,9 @@ func delegate(to std.Address, amount uint64) {
 	delegationSnapShotHistory.Set(toStr, snapShotHistory)
 }
 
-func undelegate(to std.Address, amount uint64) {
+// unDelegate removes a specified amount of delegated tokens from the given address (`to`).
+// It verifies the delegation status, updates delegation records, and modifies historical data.
+func unDelegate(to std.Address, amount uint64) {
 	caller := std.PreviousRealm().Address().String()
 	toStr := to.String()
 
@@ -161,7 +164,6 @@ func undelegate(to std.Address, amount uint64) {
 			ufmt.Sprintf("caller(%s) has no delegation stat history", caller),
 		))
 	}
-
 	stat := statValue.([]DelegationSnapShotHistory)
 	remainingAmount := amount
 	for i := 0; i < len(stat); i++ {

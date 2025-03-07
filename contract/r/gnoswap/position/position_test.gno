@@ -853,7 +853,7 @@ func TestMint(t *testing.T) {
 					tc.referrer,
 				)
 
-				uassert.Equal(t, uint64(31), positionId)
+				uassert.Equal(t, uint64(30), positionId)
 				uassert.NotEmpty(t, liquidity)
 				t0, _ := strconv.ParseUint(amount0, 10, 64)
 				t1, _ := strconv.ParseUint(amount1, 10, 64)
@@ -1350,7 +1350,7 @@ func TestReposition(t *testing.T) {
 			tickLower:          -5000,
 			tickUpper:          5000,
 			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(11) isn't clear(liquidity:3812288, tokensOwed0:0, tokensOwed1:0)",
+			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(10) isn't clear(liquidity:3812288, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
 			name:               "Fail - Reposition with partial liquidity removal",
@@ -1362,7 +1362,7 @@ func TestReposition(t *testing.T) {
 			tickLower:          -3000,
 			tickUpper:          3000,
 			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(11) isn't clear(liquidity:5083034, tokensOwed0:0, tokensOwed1:0)",
+			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(10) isn't clear(liquidity:5083034, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
 			name:               "Fail - Reposition on non-existent positionId",
@@ -1372,7 +1372,7 @@ func TestReposition(t *testing.T) {
 			tickLower:          -4000,
 			tickUpper:          4000,
 			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(11) isn't clear(liquidity:5083024, tokensOwed0:0, tokensOwed1:0)",
+			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(10) isn't clear(liquidity:5083024, tokensOwed0:0, tokensOwed1:0)",
 		},
 	}
 

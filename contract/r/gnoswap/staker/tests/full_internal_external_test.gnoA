@@ -30,8 +30,7 @@ const (
 )
 
 var (
-	wugnotAddr = consts.WUGNOT_ADDR
-
+	wugnotAddr      = consts.WUGNOT_ADDR
 	externalCreator = testutils.TestAddress("externalCreator")
 )
 
