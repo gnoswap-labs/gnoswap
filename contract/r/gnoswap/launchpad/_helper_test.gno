@@ -12,33 +12,39 @@ import (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
-	adminUser    = adminAddr
+	adminAddr, _       = access.GetAddress(access.ROLE_ADMIN)
+	govStakerAddr, _   = access.GetAddress(access.ROLE_GOV_STAKER)
+	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
+	poolAddr, _        = access.GetAddress(access.ROLE_POOL)
+	routerAddr, _      = access.GetAddress(access.ROLE_ROUTER)
+	stakerAddr, _      = access.GetAddress(access.ROLE_STAKER)
+	devOpsAddr, _      = access.GetAddress(access.ROLE_DEVOPS)
+	aliceAddr          = testutils.TestAddress("alice")
+	bobAddr            = testutils.TestAddress("bob")
+	charlieAddr        = testutils.TestAddress("charlie")
+	projectAddr        = testutils.TestAddress("projectAddr")
 
-	govStakerAddr, _          = access.GetAddress(access.ROLE_GOV_STAKER)
-	protocolFeeAddr, _        = access.GetAddress(access.ROLE_PROTOCOL_FEE)
-	poolAddr, _               = access.GetAddress(access.ROLE_POOL)
-	routerAddr, _             = access.GetAddress(access.ROLE_ROUTER)
-	stakerAddr, _             = access.GetAddress(access.ROLE_STAKER)
-	devOpsAddr, _             = access.GetAddress(access.ROLE_DEVOPS)
-	fooPath            string = "gno.land/r/onbloc/foo"
-	barPath            string = "gno.land/r/onbloc/bar"
-	bazPath            string = "gno.land/r/onbloc/baz"
-	quxPath            string = "gno.land/r/onbloc/qux"
-	oblPath            string = "gno.land/r/onbloc/obl"
+	adminRealm   = std.NewUserRealm(adminAddr)
+	posRealm     = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm     = std.NewCodeRealm(consts.ROUTER_PATH)
+	stakerRealm  = std.NewCodeRealm(consts.STAKER_PATH)
+	aliceRealm   = std.NewUserRealm(aliceAddr)
+	bobRealm     = std.NewUserRealm(bobAddr)
+	charlieRealm = std.NewUserRealm(charlieAddr)
+	projectRealm = std.NewUserRealm(projectAddr)
+
+	fooPath  string = "gno.land/r/onbloc/foo"
+	barPath  string = "gno.land/r/onbloc/bar"
+	bazPath  string = "gno.land/r/onbloc/baz"
+	quxPath  string = "gno.land/r/onbloc/qux"
+	oblPath  string = "gno.land/r/onbloc/obl"
+	usdcPath string = "gno.land/r/onbloc/usdc"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500
 	fee3000 uint32 = 3000
 
 	maxApprove uint64 = 18446744073709551615
-)
-
-// Realms to mock frames
-var (
-	adminRealm = std.NewUserRealm(adminAddr)
-	posRealm   = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
 )
 
 // MockXGNSToken implements basic functionality for testing xgns token

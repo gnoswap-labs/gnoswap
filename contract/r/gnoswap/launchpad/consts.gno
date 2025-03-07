@@ -9,10 +9,9 @@ const (
 	TIMESTAMP_90DAYS  = TIMESTAMP_DAY * uint64(90)  // 7776000
 	TIMESTAMP_180DAYS = TIMESTAMP_DAY * uint64(180) // 15552000
 
-	TIER30      = uint64(30)
-	TIER90      = uint64(90)
-	TIER180     = uint64(180)
-	TOTAL_TIERS = 3
+	TIER30  = uint64(30)
+	TIER90  = uint64(90)
+	TIER180 = uint64(180)
 
 	PAD_SEP = "*PAD*"
 

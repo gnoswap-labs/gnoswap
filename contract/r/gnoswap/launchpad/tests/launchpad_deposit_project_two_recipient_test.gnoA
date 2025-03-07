@@ -7,24 +7,19 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-
 	"gno.land/p/gnoswap/consts"
+	
 	gs "gno.land/r/gnoswap/v1/gov/staker"
-
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
-
 	"gno.land/r/gnoswap/v1/gns"
 )
 
 var (
-	projectAddr   = testutils.TestAddress("projectAddr")
-	projectAddr02 = testutils.TestAddress("projectAddr02")
-	user01        = testutils.TestAddress("user01")
-
-	projectRealm   = std.NewUserRealm(projectAddr)
+	projectAddr02  = testutils.TestAddress("projectAddr02")
+	user01         = testutils.TestAddress("user01")
 	projectRealm02 = std.NewUserRealm(projectAddr02)
 	user01Realm    = std.NewUserRealm(user01)
 )

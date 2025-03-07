@@ -28,15 +28,8 @@ type lockedGNS struct {
 	collected bool
 }
 
-// 86400 seconds = 1 day
-// 604800 seconds = 7 days
-// 300 seconds = 5 minutes
-// 1 day : 5 minutes = 86400 : 300
-// 86400 : 300 = 604800 : x
-// x = 300 * 604800 / 86400 = 2100
 const (
-	SECONDS_IN_7_DAYS      = uint64(604800)
-	SECONDS_IN_7_DAYS_TEST = uint64(2100)
+	SECONDS_IN_7_DAYS = uint64(604800)
 )
 
 var (

@@ -17,17 +17,6 @@ import (
 	"gno.land/r/onbloc/usdc"
 )
 
-var (
-	aliceAddr    = testutils.TestAddress("alice")
-	bobAddr      = testutils.TestAddress("bob")
-	charlieAddr  = testutils.TestAddress("charlie")
-	projectAddr  = testutils.TestAddress("projectAddr")
-	aliceRealm   = std.NewUserRealm(aliceAddr)
-	bobRealm     = std.NewUserRealm(bobAddr)
-	charlieRealm = std.NewUserRealm(charlieAddr)
-	projectRealm = std.NewUserRealm(projectAddr)
-)
-
 func TestCreateProject(t *testing.T) {
 	createProjectTest(t)
 }

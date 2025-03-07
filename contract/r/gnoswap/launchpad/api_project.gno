@@ -1,6 +1,7 @@
 package launchpad
 
 import (
+	"std"
 	"strconv"
 
 	"gno.land/p/demo/ufmt"
@@ -93,5 +94,20 @@ func ApiGetProjectStatisticsByProjectTierId(tierId string) string {
 		WriteString("userCollectedAmount", strconv.FormatUint(tier.userCollectedAmount, 10)).
 		WriteString("calculatedAmount", strconv.FormatUint(tier.calculatedAmount, 10))
 
+	return marshal(builder.Node())
+}
+
+// ApiGetProjectActiveOf retrieves project active status by project ID.
+func ApiGetProjectActiveOf(projectId string) string {
+	project, err := getProject(projectId)
+	if err != nil {
+		return ""
+	}
+	projectActiveResult := isProjectActive(project, uint64(std.ChainHeight()))
+	builder := (MetaBuilder().
+		WriteString("projectId", project.id).
+		WriteString("isActive", strconv.FormatBool(projectActiveResult)).
+		WriteString("currentHeight", strconv.FormatInt(std.ChainHeight(), 10))).
+		WriteString("started.height", strconv.FormatUint(project.started.height, 10))
 	return marshal(builder.Node())
 }

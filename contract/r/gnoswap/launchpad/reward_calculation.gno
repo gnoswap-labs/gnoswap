@@ -185,6 +185,7 @@ func (self *RewardState) finalize(currentHeight uint64) {
 }
 
 func (self *RewardState) addStake(currentHeight uint64, depositId string, amount uint64) {
+	// check depositId is already exist
 	if self.info.Has(depositId) {
 		panic(addDetailToError(
 			errAlreadyExistDeposit,
