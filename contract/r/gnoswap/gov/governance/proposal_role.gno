@@ -8,10 +8,10 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/access"
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/v1/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/rbac"
 
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 )
@@ -296,7 +296,7 @@ func executeRemovePermission(roleInfo RoleChangeInfo) error {
 	if !access.RoleExists(roleInfo.RoleName) {
 		return ufmt.Errorf("role %s does not exist", roleInfo.RoleName)
 	}
-	
+
 	return rbac.RemovePermission(roleInfo.RoleName, roleInfo.PermissionName)
 }
 
