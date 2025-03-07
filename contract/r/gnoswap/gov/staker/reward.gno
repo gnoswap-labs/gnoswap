@@ -194,7 +194,7 @@ func (self *RewardState) finalize(currentBalance uint64, currentProtocolFeeBalan
 	deltaU256 := u256.NewUint(delta)
 	deltaU256Q128 := deltaU256.Lsh(deltaU256, 128)
 	emissionRewardPerOneStakedQ128 := u256.Zero().Div(deltaU256Q128, u256.NewUint(self.TotalXGNSStake))
-	self.GNSPriceAccumulation.Add(self.GNSPriceAccumulation, emissionRewardPerOneStakedQ128)
+	self.GNSPriceAccumulation = u256.Zero().Add(self.GNSPriceAccumulation, emissionRewardPerOneStakedQ128)
 	self.CurrentGNSBalance = currentBalance
 
 	// protocol fee reward
@@ -305,10 +305,11 @@ func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
 		panic(err)
 	}
 
-	en.MintAndDistributeGns()
-
 	currentAmount := getAmountByProjectWallet(addr)
 	if add {
+		if currentAmount == 0 {
+			CollectReward()
+		}
 		amountByProjectWallet.Set(addr.String(), currentAmount+amount)
 		rewardState.addStake(uint64(std.ChainHeight()), addr, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	} else {
