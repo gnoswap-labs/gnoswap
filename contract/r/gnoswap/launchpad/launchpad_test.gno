@@ -602,7 +602,7 @@ func TestRewardInfo_GetSet(t *testing.T) {
 		222, 333, 444, 555, 666, 777,
 	)
 	if ri.PriceDebt().ToString() != "111" {
-		t.Errorf("PriceDebt mismatch, got=%s", ri.PriceDebt().ToString())
+		t.Errorf("RewardDebt mismatch, got=%s", ri.PriceDebt().ToString())
 	}
 	if ri.DepositAmount() != 222 {
 		t.Errorf("DepositAmount mismatch, got=%d", ri.DepositAmount())

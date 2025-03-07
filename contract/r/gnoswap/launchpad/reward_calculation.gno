@@ -15,7 +15,7 @@ type StakerRewardInfo struct {
 }
 
 func (self *StakerRewardInfo) Debug() string {
-	return ufmt.Sprintf("{ StartHeight: %d, PriceDebt: %d, Amount: %d, Claimed: %d }", self.StartHeight, self.PriceDebtUint64(), self.Amount, self.Claimed)
+	return ufmt.Sprintf("{ StartHeight: %d, RewardDebt: %d, Amount: %d, Claimed: %d }", self.StartHeight, self.PriceDebtUint64(), self.Amount, self.Claimed)
 }
 
 func (self *StakerRewardInfo) PriceDebtUint64() uint64 {
