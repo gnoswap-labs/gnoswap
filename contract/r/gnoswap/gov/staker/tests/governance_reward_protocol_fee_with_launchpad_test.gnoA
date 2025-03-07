@@ -33,8 +33,6 @@ var (
 	// g1wpex76n9vd6yzerywf047h6lta047h6lqlp5qp
 	projectAddr  = testutils.TestAddress("projectAddr")
 	projectRealm = std.NewUserRealm(projectAddr)
-
-	launchpadAddr, _ = access.GetAddress(access.ROLE_LAUNCHPAD)
 )
 
 // Admin -> Alice : 1_000_000
@@ -721,7 +719,7 @@ func launchPadCreateProject(t *testing.T) {
 			lp.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:180", projectId)))
 	})
 
-	std.TestSkipHeights(4) // active project
+	std.TestSkipHeights(4)
 }
 
 func launchPadDepositTest(t *testing.T) {

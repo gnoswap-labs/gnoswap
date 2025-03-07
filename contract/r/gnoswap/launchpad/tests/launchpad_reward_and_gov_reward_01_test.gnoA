@@ -18,17 +18,11 @@ import (
 )
 
 var (
-	launchpadRecipientAddr  = testutils.TestAddress("launchpadRecipient")
-	launchpadRecipientRealm = std.NewUserRealm(launchpadRecipientAddr)
-	// g1d3sh2mnrdpcxzezjv43kjurfv4h8gh6lduqj5v
-
-	launchpadDepositAddr  = testutils.TestAddress("launchpadDeposit")
-	launchpadDepositRealm = std.NewUserRealm(launchpadDepositAddr)
-	// g1d3sh2mnrdpcxzezyv4cx7umfw3047h6l29lj5t
-
-	govDelegateAddr  = testutils.TestAddress("govDelegate")
-	govDelegateRealm = std.NewUserRealm(govDelegateAddr)
-	// g1vahhv3r9d3jkwct5v4047h6lta047h6lnv8wwm
+	launchpadRecipientAddr = testutils.TestAddress("launchpadRecipient")
+	launchpadDepositAddr   = testutils.TestAddress("launchpadDeposit")
+	launchpadDepositRealm  = std.NewUserRealm(launchpadDepositAddr)
+	govDelegateAddr        = testutils.TestAddress("govDelegate")
+	govDelegateRealm       = std.NewUserRealm(govDelegateAddr)
 )
 
 func init() {

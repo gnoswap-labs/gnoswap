@@ -16,6 +16,9 @@ import (
 	"std"
 	"strconv"
 
+	"github.com/gnoswap-labs/gnoswap/contract/r/gnoswap/test_token/bar"
+	"github.com/gnoswap-labs/gnoswap/contract/r/gnoswap/test_token/qux"
+
 	"gno.land/p/demo/grc/grc721"
 
 	"gno.land/p/gnoswap/consts"
@@ -233,12 +236,6 @@ func positionIdFrom(positionId interface{}) grc721.TokenID {
 	default:
 		panic("unsupported positionId type")
 	}
-}
-
-func isInErrorRange(expected uint64, actual uint64) bool {
-	lowerBound := expected * 999999 / 1000000
-	upperBound := expected * 1000001 / 1000000
-	return actual >= lowerBound && actual <= upperBound
 }
 
 func milliToSec(ms int64) int64 {
