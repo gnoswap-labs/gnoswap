@@ -2,19 +2,19 @@
 
 ## Overview
 
-Protocol fee manages how trading fees collected from the protocol are split between the `gov/staker` and the `DevOps` team.
+The Protocol Fee contract manages assets collected as protocol fees across the platform and distributes them to xGNS holders via the `gov/staker` contract.
 
 ## Fee
 
 ### Collection
 
-- Accumulates protocol fees from various operation (swaps, liquidity provision, etc.)
-- Track collected fees by token type
-- Only pool, router, and staker contracts can add fees to the collection
+- Accumulates protocol fees from various operations ([details](https://docs.gnoswap.io/core-concepts/fees#protocol-fees)).
+- Tracks collected fees by token type.
+- Only the **pool**, **router**, and **staker** contracts can contribute fees to the collection.
 
 ### Distribution
 
-- Distributes collected fees between governance stakers and DevOps
-- Default distribution: 100% to `gov/stakers`, 0% to `DevOps` initially
-- Distribution percentages are configurable
-- Only `gov/staker` contract can trigger fee distribution
+- Distributes collected fees between governance stakers and DevOps.
+- Default distribution: **100% to `gov/stakers`, 0% to `DevOps`** (initially).
+- Distribution percentages are configurable by governance.
+- Only the `gov/staker` contract can trigger fee distribution.
