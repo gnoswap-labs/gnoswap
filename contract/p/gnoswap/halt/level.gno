@@ -31,6 +31,23 @@ const (
 	rawUnknown       = "Unknown"
 )
 
+// LevelIDFromString converts a string to a LevelID.
+// Returns an error if the string is not a valid halt level.
+func LevelIDFromString(s string) (LevelID, error) {
+	switch s {
+	case rawNoHalt:
+		return LvNoHalt, nil
+	case rawContractHalt:
+		return LvContractHalt, nil
+	case rawEmergencyHalt:
+		return LvEmergencyHalt, nil
+	case rawCompleteHalt:
+		return LvCompleteHalt, nil
+	default:
+		return 0, ufmt.Errorf("unknown halt level: %s", s)
+	}
+}
+
 // Nth returns the numeric value of the LevelID.
 func (lv LevelID) Nth() uint8 { return uint8(lv) }
 

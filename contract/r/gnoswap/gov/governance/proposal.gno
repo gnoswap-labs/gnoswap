@@ -27,7 +27,8 @@ var (
 // To separate the messages, we use this separator
 // Look for ProposeParameterChange() for more details
 const (
-	GOV_SPLIT = "*GOV*"
+	GOV_SPLIT   = "*GOV*"
+	ROLE_PREFIX = "ROLE_CHANGE:"
 )
 
 func init() {
@@ -236,6 +237,11 @@ func ProposeParameterChange(
 			ufmt.Sprintf("numToExecute is 0"),
 		))
 	}
+
+	if strings.HasPrefix(executions, ROLE_PREFIX) {
+		return handleRoleChangeProposal(title, description, proposer, executions)
+	}
+
 	// check if numToExecute is a valid number
 	splitGov := strings.Split(executions, GOV_SPLIT)
 	if uint64(len(splitGov)) != numToExecute {
