@@ -721,7 +721,7 @@ func launchPadCreateProject(t *testing.T) {
 			lp.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:180", projectId)))
 	})
 
-	std.TestSkipHeights(4) // active project
+	std.TestSkipHeights(4)
 }
 
 func launchPadDepositTest(t *testing.T) {

@@ -37,6 +37,8 @@ var (
 	depositState DepositState
 )
 
+// TODO:
+// 1. 주석 추가
 // DepositState represents the state of the deposits
 type DepositState struct {
 	Deposits              map[string]Deposit
@@ -45,6 +47,8 @@ type DepositState struct {
 	DepositsByUserProject map[std.Address]map[string][]string
 }
 
+// TODO:
+// 1. 주석 추가
 // ProjectTierInfo contains information about a project tier
 type ProjectTierInfo struct {
 	Project       Project
