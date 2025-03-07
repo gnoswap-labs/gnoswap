@@ -2,29 +2,28 @@
 
 ## Overview
 
-Emission implements the token emission and distribution system for `GNS` tokens on the `gnoswap` protocol. It handles the minting and fair distribution of tokens to various stakeholders according to predefined ratios.
+The emission contract manages minting and distributing the `GNS` token.
 
 ## Features
 
 ### Token Emission and Distribution
 
-- Mints new `GNS` tokens at regular interval based on block height.
-- Distributes tokens accroding to configurable ratios to multiple stakeholders
-- Tracks undistributed tokens for inclusion in future distribution cycles
+- Mints `GNS` tokens on a block generation time basis (initially set [here](https://github.com/gnoswap-labs/gnoswap/blob/main/contract/p/gnoswap/consts/consts.gno#L126), but can be changed by governance)
+- Distributes tokens to the set targets
+- Tracks undistributed tokens and include it in future distribution cycles
 
 ### Distribution Targets
 
-Tokens are distributed to four main stakeholder groups:
+Tokens are distributed to four main targets as follows by default:
 
-- **Liquidity Staker**: 75% (default)
-- **DevOps Team**: 20% (default)
-- **Community Pool**: 5% (default)
-- **Governance Stakers**: 0% (default)
+- **Liquidity Staker**: 75%
+- **DevOps Team**: 20%
+- **Community Pool**: 5%
+- **Governance Stakers**: 0%
 
 ### Distribution Ratio Management
 
-- Administrators can adjust token distribution ratios
-- Governance processes can modify distribution ratios
+- Governance or admin can adjust token distribution ratio
 - Distribution percentages are tracked in basis points (1 bp = 0.01%)
 - Total distribution must always equal 100% (10,000 basis points)
 
@@ -35,8 +34,10 @@ Tokens are distributed to four main stakeholder groups:
 
 ### Halving
 
-Adjusts distribution amounts appropriately during halving periods
+There is a halving mechanism that reduces the issuance amount by half every two years
 
 ### Callback Mechanisms
 
-Provides callback function for inter-contract commication. This will notifies relevant components when distribution ratios change.
+Provides callback function for inter-contract communication. This will notify relevant components when distribution ratios change. Details to be found on our [bridge contract](https://github.com/gnoswap-labs/gnoswap/tree/main/contract/r/gnoswap/bridge#bridge).
+
+For more details about the emission, check out the [GnoSwap docs](https://docs.gnoswap.io/gnoswap-token/emission).
