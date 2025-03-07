@@ -2,6 +2,7 @@ package governance
 
 import (
 	"std"
+	"strings"
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
@@ -14,6 +15,7 @@ import (
 	rr "gno.land/r/gnoswap/v1/router"
 	sr "gno.land/r/gnoswap/v1/staker"
 
+	phalt "gno.land/p/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -196,7 +198,7 @@ func createParameterHandlers() *ParameterRegistry {
 			return err
 		}
 		access.CreateRole(
-			params[0], // roleName
+			params[0],              // roleName
 			std.Address(params[1]), // address
 		)
 		return nil
@@ -220,6 +222,80 @@ func createParameterHandlers() *ParameterRegistry {
 			params[0],              // roleName
 			std.Address(params[1]), // newAddress
 		)
+	})
+
+	// region: halt
+	registry.Register(consts.HALT_PATH, "SetHalt", func(params []string) error {
+		if err := hasDesiredParams(params, 1); err != nil {
+			return err
+		}
+		halt.SetHalt(parseBool(params[0])) // true = halt, false = unhalt
+		return nil
+	})
+
+	registry.Register(consts.HALT_PATH, "SetHaltWithLevel", func(params []string) error {
+		if err := hasDesiredParams(params, 2); err != nil {
+			return err
+		}
+		haltStatus := parseBool(params[0])
+		levels := make([]phalt.LevelID, 0)
+		for _, level := range strings.Split(params[1], ",") {
+			levelID, err := phalt.LevelIDFromString(level)
+			if err != nil {
+				return err
+			}
+			levels = append(levels, levelID)
+		}
+
+		return halt.SetHalt(haltStatus, levels...)
+	})
+
+	registry.Register(consts.HALT_PATH, "SetHaltLevel", func(params []string) error {
+		if err := hasDesiredParams(params, 1); err != nil {
+			return err
+		}
+		haltLevel, err := phalt.LevelIDFromString(params[0])
+		if err != nil {
+			return err
+		}
+		return halt.SetHaltLevel(haltLevel)
+	})
+
+	registry.Register(consts.HALT_PATH, "SetOperationStatus", func(params []string) error {
+		if err := hasDesiredParams(params, 2); err != nil {
+			return err
+		}
+
+		opType := phalt.OpType(params[0])
+		allowed := parseBool(params[1])
+
+		return halt.SetOperationStatus(opType, allowed)
+	})
+
+	registry.Register(consts.HALT_PATH, "EnableWithdrawals", func(params []string) error {
+		if err := hasDesiredParams(params, 0); err != nil {
+			return err
+		}
+
+		return halt.EnableWithdrawalsForTestnet()
+	})
+
+	registry.Register(consts.HALT_PATH, "EnableContractOperations", func(params []string) error {
+		if err := hasDesiredParams(params, 1); err != nil {
+			return err
+		}
+
+		contract := phalt.OpType(params[0])
+
+		return halt.EnableContractOperations(contract)
+	})
+
+	registry.Register(consts.HALT_PATH, "DisableContractOperations", func(params []string) error {
+		if err := hasDesiredParams(params, 1); err != nil {
+			return err
+		}
+		contract := phalt.OpType(params[0])
+		return halt.DisableContractOperations(contract)
 	})
 
 	return registry
