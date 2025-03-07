@@ -32,6 +32,9 @@ import (
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
 )
 
 var (
@@ -244,10 +247,4 @@ func positionIdFrom(positionId interface{}) grc721.TokenID {
 	default:
 		panic("unsupported positionId type")
 	}
-}
-
-func isInErrorRange(expected uint64, actual uint64) bool {
-	lowerBound := expected * 999999 / 1000000
-	upperBound := expected * 1000001 / 1000000
-	return actual >= lowerBound && actual <= upperBound
 }

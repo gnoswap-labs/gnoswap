@@ -28,15 +28,8 @@ type lockedGNS struct {
 	collected bool
 }
 
-// 86400 seconds = 1 day
-// 604800 seconds = 7 days
-// 300 seconds = 5 minutes
-// 1 day : 5 minutes = 86400 : 300
-// 86400 : 300 = 604800 : x
-// x = 300 * 604800 / 86400 = 2100
 const (
-	SECONDS_IN_7_DAYS      = uint64(604800)
-	SECONDS_IN_7_DAYS_TEST = uint64(2100)
+	SECONDS_IN_7_DAYS = uint64(604800)
 )
 
 var (
@@ -87,7 +80,6 @@ func Delegate(to std.Address, amount uint64, referrer string) {
 	if running {
 		cleanDelegationStatHistory()
 	}
-
 	rewardState.addStake(uint64(std.ChainHeight()), caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
 	// actual delegate
@@ -335,15 +327,6 @@ func CollectReward() {
 	en.MintAndDistributeGns()
 
 	reward, protocolFeeRewards := rewardState.claim(caller, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
-
-	// XXX (@notJoon): There could be cases where the reward pool is empty, In such case,
-	// it seems appropriate to return 0 and continue processing.
-	//
-	// This isn't necessarily an abnormal situation, particularly
-	// since it could be because rewards haven't occurred yet or
-	// have already been fully collected.
-	//
-	// still, this is a tangled with the policy issue, so should be discussed.
 
 	if reward > 0 {
 		if currentGNSBalance < reward {

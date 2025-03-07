@@ -15,14 +15,9 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 )
 
-// var proejctAddr = testutils.TestAddress("proejctAddr")
-// var projectRealm = std.NewUserRealm(proejctAddr)
 var (
-	projectAddr = testutils.TestAddress("projectAddr")
 	user01      = testutils.TestAddress("user01")
-
-	projectRealm = std.NewUserRealm(projectAddr)
-	user01Realm  = std.NewUserRealm(user01)
+	user01Realm = std.NewUserRealm(user01)
 )
 
 func TestCollectRewardByProject(t *testing.T) {
