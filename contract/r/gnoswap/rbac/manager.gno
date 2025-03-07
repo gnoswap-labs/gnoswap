@@ -3,16 +3,14 @@ package rbac
 import (
 	"std"
 
+	"gno.land/p/gnoswap/consts" // need to remove this import
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/v1/access"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
-
 	// globalManager is the single RBAC manager instance created internally in the package.
 	// This instance is used to manage global role and permission information.
-	globalManager = prbac.NewRBACWithAddress(adminAddr)
+	globalManager = prbac.NewRBACWithAddress(consts.ADMIN)
 )
 
 // RegisterRole globally registers a role with the given name.
