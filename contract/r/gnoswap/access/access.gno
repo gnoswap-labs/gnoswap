@@ -14,6 +14,7 @@ const (
 	roleSet     = "RoleSet"
 	roleUpdated = "RoleUpdated"
 	roleCreated = "RoleCreated"
+	roleDeleted = "RoleDeleted"
 )
 
 var currentConfig *config
@@ -65,8 +66,8 @@ func createAddressChecker(addr std.Address, roleName string) prbac.PermissionChe
 	}
 }
 
-// SetConfig sets the current configuration
-func SetConfig(cfg *config) error {
+// setConfig sets the current configuration
+func setConfig(cfg *config) error {
 	if cfg == nil {
 		return ufmt.Errorf(errConfigNil)
 	}
@@ -86,7 +87,7 @@ func initialize(cfg *config) error {
 		}
 	}
 
-	return SetConfig(cfg)
+	return setConfig(cfg)
 }
 
 // declareNewRole declares a new role with permissions
@@ -114,6 +115,11 @@ func SetRole(roleName string, address std.Address) error {
 
 	if err := validateRoleName(roleName); err != nil {
 		return err
+	}
+
+	// only admin can set roles
+	if !isAdmin() {
+		return ufmt.Errorf("only admin can set roles")
 	}
 
 	prevAddress := currentConfig.roles[roleName]
@@ -149,6 +155,10 @@ func GetAddress(roleName string) (std.Address, error) {
 
 // UpdateRoleAddress updates the address for a specific role's permission checker
 func UpdateRoleAddress(roleName string, newAddress std.Address) error {
+	if !isAdmin() {
+		return ufmt.Errorf("only admin can update roles")
+	}
+
 	if err := validateConfig(); err != nil {
 		return err
 	}
@@ -168,6 +178,10 @@ func UpdateRoleAddress(roleName string, newAddress std.Address) error {
 
 // CreateRole creates a new role with the given address
 func CreateRole(roleName string, address std.Address) error {
+	if !isAdmin() {
+		return ufmt.Errorf("only admin can create roles")
+	}
+
 	if err := validateConfig(); err != nil {
 		return err
 	}
@@ -213,4 +227,51 @@ func GetRoles() []string {
 		roles = append(roles, role)
 	}
 	return roles
+}
+
+// DeleteRole deletes a role and its associated permissions
+func DeleteRole(roleName string) error {
+	if !isAdmin() {
+		return ufmt.Errorf("only admin can delete roles")
+	}
+
+	if err := validateConfig(); err != nil {
+		return err
+	}
+
+	if err := validateRoleName(roleName); err != nil {
+		return err
+	}
+
+	if !RoleExists(roleName) {
+		return ufmt.Errorf("role %s does not exist", roleName)
+	}
+
+	// Prevent deletion of critical roles
+	if roleName == ROLE_ADMIN {
+		return ufmt.Errorf("cannot delete admin role")
+	}
+
+	// Store the address before deletion for event emission
+	deletedAddress := currentConfig.roles[roleName]
+
+	// Remove the role from RBAC
+	if err := rbac.RemoveRole(roleName); err != nil {
+		return ufmt.Errorf("failed to remove role from RBAC: %v", err)
+	}
+
+	// Remove the role from current config
+	delete(currentConfig.roles, roleName)
+
+	std.Emit(
+		roleDeleted,
+		"roleName", roleName,
+		"address", deletedAddress.String(),
+	)
+	return nil
+}
+
+func isAdmin() bool {
+	caller := std.PreviousRealm().Address()
+	return rbac.CheckPermission("admin", PERM_ACCESS, caller) == nil
 }
