@@ -27,6 +27,9 @@ func TestCreateProjectSingleRecipient(t *testing.T) {
 	depositGnsToOblProjectTier30Test(t)
 	mockProtocolFeeTest2(t)
 	collectProtocolFeeForOblProjectRecipient(t)
+	depositAgainGnsToOblProjectTier30Test(t)
+	mockProtocolFeeTest3(t)
+	collectProtocolFeeForOblProjectRecipient2(t)
 }
 
 func createOblLaunchpadProjectTest(t *testing.T) {
@@ -185,5 +188,96 @@ func collectProtocolFeeForOblProjectRecipient(t *testing.T) {
 		// 2500 / 2 * 1 = 1250
 		uassert.Equal(t, uint64(499), bar.BalanceOf(projectAddr))
 		uassert.Equal(t, uint64(1249), qux.BalanceOf(projectAddr))
+	})
+}
+
+func depositAgainGnsToOblProjectTier30Test(t *testing.T) {
+	adminAddr := consts.ADMIN
+	adminRealm := std.NewUserRealm(adminAddr)
+
+	t.Run("launchpad deposit to tier 30 success test2", func(t *testing.T) {
+		depositAmount := uint64(1_000_000)
+		delegateAmount := depositAmount
+		projectId := "gno.land/r/onbloc/obl:123"
+		projectTier30Id := "gno.land/r/onbloc/obl:123:30"
+
+		uassert.Equal(t, `{"height":"132","now":"1234567908"}`,
+			pf.ApiGetTokenListWithAmountOverZero())
+
+		std.TestSetRealm(adminRealm)
+		gns.Transfer(aliceAddr, depositAmount*2) // to deposit
+
+		// delegate gns to gov staker
+		std.TestSetRealm(aliceRealm)
+		gns.Approve(govStakerAddr, delegateAmount)
+		gs.Delegate(aliceAddr, delegateAmount, "") // bob has xgns 1_000_000
+
+		project, _ := getProject(projectId)
+		uassert.Equal(t, "true", strconv.FormatBool(isProjectActive(project, uint64(std.ChainHeight()))))
+
+		gns.Approve(launchpadAddr, depositAmount)
+		depositId := DepositGns(
+			projectTier30Id,
+			depositAmount,
+			"",
+		)
+		uassert.Equal(t, `gno.land/r/onbloc/obl:123:30:g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh:132`, depositId)
+		uassert.Equal(t, `{"height":"132","now":"1234567908","depositId":"gno.land/r/onbloc/obl:123:30:g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh:132","projectId":"gno.land/r/onbloc/obl:123","tier":"30","depositor":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","depositHeight":"132","depositTime":"1234567908","depositCollectHeight":"0","depositCollectTime":"0","claimableHeight":"129732","claimableTime":"1234827108","claimableRewardAmount":"0","rewardCollected":"0","rewardCollectHeight":"0","rewardCollectTime":"0"}`,
+			ApiGetDepositByDepositId(depositId))
+		uassert.Equal(t, `{"height":"132","now":"1234567908"}`, pf.ApiGetTokenListWithAmountOverZero())
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func mockProtocolFeeTest3(t *testing.T) {
+	t.Run("mock protocol fee3", func(t *testing.T) {
+		// admin > protocol_fee
+		// send qux, bar for testing
+		std.TestSetRealm(adminRealm)
+		bar.Transfer(protocolFeeAddr, 1000)
+		qux.Transfer(protocolFeeAddr, 2500)
+
+		std.TestSetRealm(stakerRealm)
+		pf.AddToProtocolFee(barPath, 1000)
+		pf.AddToProtocolFee(quxPath, 2500)
+		std.TestSkipHeights(1)
+
+		uassert.Equal(t, uint64(1000), bar.BalanceOf(protocolFeeAddr))
+		uassert.Equal(t, uint64(2500), qux.BalanceOf(protocolFeeAddr))
+		uassert.Equal(t, uint64(1000), pf.GetAmountOfToken(barPath))
+		uassert.Equal(t, uint64(2500), pf.GetAmountOfToken(quxPath))
+		uassert.Equal(t, `{"height":"134","now":"1234567912","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2500"}`,
+			pf.ApiGetTokenListWithAmountOverZero())
+		uassert.Equal(t, uint64(0), pf.GetAccuTransferToGovStakerByTokenPath(barPath))
+		uassert.Equal(t, uint64(0), pf.GetAccuTransferToGovStakerByTokenPath(quxPath))
+		std.TestSkipHeights(1)
+	})
+}
+
+func collectProtocolFeeForOblProjectRecipient2(t *testing.T) {
+	t.Run("collect protocol fee", func(t *testing.T) {
+		uassert.Equal(t, `{"height":"135","now":"1234567914","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2500"}`,
+			pf.ApiGetTokenListWithAmountOverZero())
+
+		std.TestSetRealm(projectRealm)
+
+		// protocol fee has bar, qux
+		uassert.Equal(t, uint64(1000), bar.BalanceOf(protocolFeeAddr))
+		uassert.Equal(t, uint64(2500), qux.BalanceOf(protocolFeeAddr))
+		std.TestSkipHeights(1)
+
+		std.TestSetRealm(projectRealm)
+		CollectProtocolFee()
+
+		// 1501 + 1000 = 2501
+		// 3751 + 2500 = 6251
+		uassert.Equal(t, uint64(2501), bar.BalanceOf(govStakerAddr))
+		uassert.Equal(t, uint64(6251), qux.BalanceOf(govStakerAddr))
+
+		uassert.Equal(t, uint64(499), bar.BalanceOf(projectAddr))
+		uassert.Equal(t, uint64(1249), qux.BalanceOf(projectAddr))
+
+		std.TestSkipHeights(1)
 	})
 }
