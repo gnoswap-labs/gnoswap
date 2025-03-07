@@ -57,9 +57,6 @@ func (rb *RBAC) hasRole(name string) bool {
 // RegisterRole registers a role with the given role name.
 // Returns an error if the role already exists.
 func (rb *RBAC) RegisterRole(roleName string) error {
-	if !rb.ownable.CallerIsOwner() {
-		return ErrUnauthorized
-	}
 	if rb.hasRole(roleName) {
 		return ufmt.Errorf("role %s already exists", roleName)
 	}
@@ -119,9 +116,6 @@ func (rb *RBAC) RegisterPermission(
 	roleName, permissionName string,
 	checker PermissionChecker,
 ) error {
-	if !rb.ownable.CallerIsOwner() {
-		return ErrUnauthorized
-	}
 	role, exists := rb.roles[roleName]
 	if !exists {
 		return ufmt.Errorf("role %s does not exist", roleName)
@@ -138,10 +132,6 @@ func (rb *RBAC) CheckPermission(
 	role, exists := rb.roles[roleName]
 	if !exists {
 		return ufmt.Errorf("role %s does not exist", roleName)
-	}
-	_, hasRole := role.addresses[caller]
-	if !hasRole {
-		return ufmt.Errorf("caller %s does not have role %s", caller.String(), roleName)
 	}
 	checker, exists := role.permissions[permissionName]
 	if !exists {
@@ -171,9 +161,6 @@ func (rb *RBAC) UpdatePermission(
 func (rb *RBAC) RemovePermission(
 	roleName, permissionName string,
 ) error {
-	if !rb.ownable.CallerIsOwner() {
-		return ErrUnauthorized
-	}
 	role, exists := rb.roles[roleName]
 	if !exists {
 		return ufmt.Errorf("cannot remove permission from non-existent role %s", roleName)
