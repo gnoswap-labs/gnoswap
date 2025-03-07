@@ -78,7 +78,7 @@ type RewardState struct {
 	GNSPriceAccumulation         *u256.Uint            // accumulated claimable GNS per xGNS stake, Q128 format
 	ProtocolFeePriceAccumulation map[string]*u256.Uint // accumulated claimable protocol fee per xGNS stake, Q128 format
 	TotalXGNSStake               uint64                // total xGNS staked in the system
-	stakerInfos *avl.Tree // address -> StakerRewardInfo
+	stakerInfos                  *avl.Tree             // address -> StakerRewardInfo
 }
 
 func NewRewardState() *RewardState {
