@@ -2,7 +2,7 @@
 
 ## Overview
 
-Emission implements the token emission and distribution systwm for `GNS` tokens on the `gnoswap` protocol. It handles the minting and fair distribution of tokens to various stakeholders according to predefined ratios.
+Emission implements the token emission and distribution system for `GNS` tokens on the `gnoswap` protocol. It handles the minting and fair distribution of tokens to various stakeholders according to predefined ratios.
 
 ## Features
 
