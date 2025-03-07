@@ -4,7 +4,7 @@ import (
 	"std"
 )
 
-// Initial ADDRESSES
+// INITIAL ADDRESSES
 const (
 	ADMIN   std.Address = "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"
 	DEV_OPS std.Address = "g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9"
