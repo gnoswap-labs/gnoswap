@@ -9,6 +9,26 @@ import (
 	"gno.land/p/demo/json"
 )
 
+func ApiGetTokenListWithAmountOverZero() string {
+	tokenList := GetTokenListWithAmount()
+	if tokenList == nil {
+		return ""
+	}
+
+	data := json.Builder().
+		WriteString("height", formatInt(std.ChainHeight())).
+		WriteString("now", formatInt(time.Now().Unix()))
+
+	for token, amount := range tokenList {
+		if amount == 0 {
+			continue
+		}
+		data.WriteString(token, formatUint(amount))
+	}
+
+	return marshal(data.Node())
+}
+
 func ApiGetAccuTransferToGovStaker() string {
 	distributedAmountList := GetAccuTransferToGovStaker()
 	if distributedAmountList == nil {
