@@ -230,9 +230,3 @@ func positionIdFrom(positionId interface{}) grc721.TokenID {
 		panic("unsupported positionId type")
 	}
 }
-
-func isInErrorRange(expected uint64, actual uint64) bool {
-	lowerBound := expected * 999999 / 1000000
-	upperBound := expected * 1000001 / 1000000
-	return actual >= lowerBound && actual <= upperBound
-}

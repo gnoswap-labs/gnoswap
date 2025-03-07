@@ -19,13 +19,9 @@ import (
 )
 
 var (
-	projectAddr   = testutils.TestAddress("projectAddr")
 	projectAddr02 = testutils.TestAddress("projectAddr02")
 	user01        = testutils.TestAddress("user01")
-
-	projectRealm   = std.NewUserRealm(projectAddr)
-	projectRealm02 = std.NewUserRealm(projectAddr02)
-	user01Realm    = std.NewUserRealm(user01)
+	user01Realm   = std.NewUserRealm(user01)
 )
 
 func TestLaunchpadAPIs(t *testing.T) {

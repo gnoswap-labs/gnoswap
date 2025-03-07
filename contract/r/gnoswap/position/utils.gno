@@ -174,15 +174,6 @@ func assertValidLiquidityAmount(liquidity string) {
 	}
 }
 
-func assertValidLiquidityRatio(ratio uint64) {
-	if !(ratio >= 1 && ratio <= 100) {
-		panic(newErrorWithDetail(
-			errInvalidLiquidityRatio,
-			ufmt.Sprintf("liquidity ratio must in range 1 ~ 100(contain), got %d", ratio),
-		))
-	}
-}
-
 // derivePkgAddr derives the Realm address from it's pkgpath parameter
 func derivePkgAddr(pkgPath string) std.Address {
 	return std.DerivePkgAddr(pkgPath)

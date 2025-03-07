@@ -21,12 +21,12 @@ var (
 	launchpadAddr, _     = access.GetAddress(access.ROLE_LAUNCHPAD)
 	devOpsAddr, _        = access.GetAddress(access.ROLE_DEVOPS)
 
-	fooPath string = "gno.land/r/onbloc/foo"
-	barPath string = "gno.land/r/onbloc/bar"
-	bazPath string = "gno.land/r/onbloc/baz"
-	quxPath string = "gno.land/r/onbloc/qux"
-
-	oblPath string = "gno.land/r/onbloc/obl"
+	fooPath  string = "gno.land/r/onbloc/foo"
+	barPath  string = "gno.land/r/onbloc/bar"
+	bazPath  string = "gno.land/r/onbloc/baz"
+	quxPath  string = "gno.land/r/onbloc/qux"
+	oblPath  string = "gno.land/r/onbloc/obl"
+	usdcPath string = "gno.land/r/onbloc/usdc"
 
 	ugnotDenom string = "ugnot"
 	ugnotPath  string = "ugnot"
