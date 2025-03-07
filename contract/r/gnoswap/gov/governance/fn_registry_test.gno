@@ -222,3 +222,44 @@ func TestCreateParameterHandlers(t *testing.T) {
 		})
 	}
 }
+
+func TestRoleChangeParameterHandlers(t *testing.T) {
+	registry := createParameterHandlers()
+
+	tests := []struct {
+		name        string
+		pkgPath     string
+		function    string
+		params      []string
+		expectError bool
+	}{
+		{
+			name:        "CreateRole handler",
+			pkgPath:     consts.ACCESS_PATH,
+			function:    "CreateRole",
+			params:      []string{"test_role", testutils.TestAddress("test_role").String()},
+			expectError: false,
+		},
+		{
+			name:        "Invalid parameter count for CreateRole",
+			pkgPath:     consts.ACCESS_PATH,
+			function:    "CreateRole",
+			params:      []string{"missing_address"},
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler, err := registry.Handler(tt.pkgPath, tt.function)
+			uassert.NoError(t, err)
+
+			err = handler(tt.params)
+			if tt.expectError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
