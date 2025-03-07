@@ -26,8 +26,6 @@ import (
 	sr "gno.land/r/gnoswap/v1/staker"
 )
 
-//! TODO: may need to change deadline param in `ExactInSwapRoute` function
-
 var (
 	launchpadProject01Addr  = testutils.TestAddress("launchpadProject01")
 	launchpadProject01Realm = std.NewUserRealm(launchpadProject01Addr)

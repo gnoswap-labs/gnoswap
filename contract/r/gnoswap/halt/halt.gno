@@ -137,8 +137,6 @@ func SetHaltLevelByAdmin(haltLevel phalt.LevelID) error {
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
-//
-// TODO: Should we only allow EmergencyHalt or CompleteHalt?
 func SetHaltByAdmin(halt bool) error {
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {
@@ -294,7 +292,6 @@ func setOperationStatus(opType phalt.OpType, allowed bool) error {
 // - error: nil if successful, otherwise an error.
 func EnableWithdrawalsForTestnet() error {
 	caller := getPrevAddr()
-	// TODO: no need to check governance?
 	if err := access.AdminOnly(caller); err != nil {
 		return ufmt.Errorf("only admin can enable withdrawals, called from %s", caller)
 	}

@@ -59,8 +59,7 @@ func MintAndStake(
 		deadline,
 		stakerAddr,
 		std.PreviousRealm().Address(),
-		// TODO: need to add referrer address here?
-		"",
+		"", // referral
 	)
 
 	// at this point, staker has minted token

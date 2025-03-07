@@ -249,7 +249,6 @@ func TestValidateProposalState(t *testing.T) {
 }
 
 func TestCheckProposalValidation(t *testing.T) {
-	// TODO: change error message after error code is defined
 	tests := []struct {
 		name      string
 		validator ExecutionValidator
