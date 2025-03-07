@@ -522,13 +522,6 @@ func gnsBalanceCheck(t *testing.T, beforeBalance gnsBalanceTracker, printChange 
 	}
 }
 
-// returns true if actual is within 0.0001% of expected
-func isInErrorRange(expected uint64, actual uint64) bool {
-	lowerBound := expected * 999999 / 1000000
-	upperBound := expected * 1000001 / 1000000
-	return actual >= lowerBound && actual <= upperBound
-}
-
 func getPrintInfo(t *testing.T) string {
 	en.MintAndDistributeGns()
 

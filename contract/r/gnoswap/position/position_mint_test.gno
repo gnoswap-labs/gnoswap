@@ -8,7 +8,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func TestMintInternal(t *testing.T) {
+func TestMintInternal_PositionMint(t *testing.T) {
 	tests := []struct {
 		name            string
 		params          MintParams
