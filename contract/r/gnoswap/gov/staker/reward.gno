@@ -128,8 +128,12 @@ func (self *RewardState) CalculateReward(staker std.Address) (uint64, map[string
 		protocolFeeReward := u256.Zero().Mul(protocolFeePrice, u256.NewUint(info.StakedAmount))
 		protocolFeeReward = protocolFeeReward.Rsh(protocolFeeReward, q128)
 		protocolFeeReward64 := protocolFeeReward.Uint64()
+		pendingReward, exist := info.PendingProtocolFeeReward[tokenPath]
+		if exist {
+			protocolFeeReward64 += pendingReward
+		}
 		if protocolFeeReward64 > 0 {
-			protocolFeeRewards[tokenPath] = protocolFeeReward64 + info.PendingProtocolFeeReward[tokenPath]
+			protocolFeeRewards[tokenPath] = protocolFeeReward64
 		}
 	}
 	return calcReward, protocolFeeRewards
