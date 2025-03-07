@@ -1,23 +1,38 @@
-# Launchpad
+# GnoSwap Launchpad Module
 
-The **GnoSwap Launchpad** is a decentralized token launching platform built on **gno.land**, enabling new projects to launch tokens in a **fair, transparent, and trustless** manner.
+The GnoSwap Launchpad is a decentralized fundraising platform that allows users to participate in early-stage projects by staking $GNS tokens. Users contribute by locking their tokens for a fixed duration, earning project tokens as rewards while retaining their principal $GNS stake.
 
-## Key Concepts
+## Overview
 
-1. "Lossless" Exposure to Early-Stage Projects
-GnoSwap Launchpad allows **$GNS holders** to acquire new project tokens **without spending their principal $GNS**. Users lock their **$GNS tokens** in a Launchpad Pool for a fixed period and receive project tokens **pro-rata** while their staked $GNS remains secured in the **xGNS Governance Contract**. After maturity, the same amount of $GNS is returned, ensuring a **"lossless" participation model**.
+The Launchpad module enables fair and transparent fundraising while ensuring users do not lose their principal investment. It operates on a staking model where the yield generated from locked tokens is used to support projects.
 
-2. Pool Diversity
-Users can choose from **three different pools**, each with varying lock-up periods and reward structures:
-- **1 Month** – Short-term commitment, moderate rewards.
-- **3 Months** – Balanced duration and rewards.
-- **6 Months** – Longer commitment, higher token rewards.
+## Key Components
 
-While $GNS remains locked, **project token rewards are liquid** and can be claimed at any time.
+### Launchpad Initialization (`launchpad_init.gno`)
+- **Project Creation**: Allows project teams to create launchpad pools, setting parameters like reward allocation, duration, and deposit limits.
+- **Pool Management**: Handles the configuration of launchpad pools, defining participation rules and reward structures.
 
-3. Yield-Redirection-Based Funding
-GnoSwap Launchpad uses a **yield-redirection mechanism** to fund project token rewards.  
-- Users' **$GNS deposits** are **staked** in the [xGNS Governance Contract](https://github.com/gnoswap-labs/gnoswap/tree/main/contract/r/gnoswap/gov), earning **Protocol Fee Rewards**.  
-- Instead of being returned to users, these **rewards are redirected** to the **Project Owner** in exchange for **newly launching project tokens**.  
+### Launchpad Deposit (`launchpad_deposit.gno`)
+- **Deposit Function**: Enables users to lock $GNS tokens in a project’s launchpad pool.
+- **Staking Mechanism**: The deposited tokens are staked in the governance contract, generating yield that funds project development.
 
-For more information about the launchpad feature, refer to: https://docs.gnoswap.io/core-concepts/launchpad
+### Launchpad Reward (`launchpad_reward.gno`)
+- **Reward Distribution**: Allocates project tokens to participants based on their staked $GNS.
+- **Reward Claiming**: Users can claim their project tokens during or after the pool duration.
+
+## Interaction Flow
+
+1. **Project Creation**: Project teams initialize launchpad pools with defined parameters.
+2. **User Participation**: Users deposit $GNS into a launchpad pool.
+3. **Reward Accumulation**: Participants earn project tokens over time based on their staked amount.
+4. **Reward Claiming**: Users claim their earned tokens during or after the event.
+5. **Principal Return**: Once the launchpad period ends, users retrieve their original $GNS deposit.
+
+## Important Notes for Participants
+
+- **Deposit Lock-up**: Deposited $GNS is locked until the pool reaches maturity.
+- **Yield Usage**: Yield from deposited $GNS is used to support project development.
+- **Reward Type**: Participants earn project tokens, distributed based on their share of deposits.
+- **Governance Power**: Deposited $GNS does not grant additional governance influence.
+
+For more details, visit the [GnoSwap Launchpad Documentation](https://docs.gnoswap.io/core-concepts/launchpad).
