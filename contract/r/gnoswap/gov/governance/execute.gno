@@ -124,6 +124,8 @@ func executeProposal(ctx *ExecutionContext, registry *ParameterRegistry) error {
 	switch ctx.Proposal.ProposalType {
 	case ParameterChange, CommunityPoolSpend:
 		return executeParameterChange(ctx.Proposal.Execution.Msgs, registry)
+	case RoleChange:
+		return executeRoleChange(ctx.Proposal)
 	default:
 		return errUnsupportedProposalType
 	}
@@ -147,6 +149,25 @@ func executeParameterChange(msgs []string, registry *ParameterRegistry) error {
 	}
 
 	return nil
+}
+
+func executeRoleChange(proposal *ProposalInfo) error {
+	roleInfo := proposal.RoleChange
+
+	switch roleInfo.Action {
+	case AddRole:
+		return executeAddRole(roleInfo)
+	case RemoveRole:
+		return executeRemoveRole(roleInfo)
+	case AddPermission:
+		return executeAddPermission(roleInfo)
+	case RemovePermission:
+		return executeRemovePermission(roleInfo)
+	case UpdatePermission:
+		return executeUpdatePermission(roleInfo)
+	default:
+		return ufmt.Errorf("unsupported role change action: %s", roleInfo.Action.String())
+	}
 }
 
 func parseMessage(msg string) (pkgPath string, function string, params []string, err error) {

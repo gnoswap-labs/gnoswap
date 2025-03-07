@@ -66,6 +66,12 @@ const (
 
 	LAUNCHPAD_PATH string      = "gno.land/r/gnoswap/v1/launchpad"
 	LAUNCHPAD_ADDR std.Address = "g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3"
+
+	ACCESS_PATH string      = "gno.land/r/gnoswap/v1/access"
+	ACCESS_ADDR std.Address = "g1yyw4t7pywpgpq6z2p745y05qejwur97xud4arw"
+
+	HALT_PATH string      = "gno.land/r/gnoswap/v1/halt"
+	HALT_ADDR std.Address = "g1q67vstyzqycl75yv7ern98n4u8qrgc8hxkmsxt"
 )
 
 // NUMBER
