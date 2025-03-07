@@ -571,20 +571,6 @@ func (self *canonicalRewardState) AssertCanonicalInternalRewardPerPool(poolPath 
 	}
 }
 
-// returns true if actual is within 0.0001% of expected
-//func isInErrorRange(expected uint64, actual uint64) bool {
-//	maxSafeValue := uint64(math.MaxUint64 / 100001)
-//	var lowerBound, upperBound uint64
-//	if expected > maxSafeValue {
-//		lowerBound = expected / 1000000 * 999999
-//		upperBound = expected / 1000000 * 1000001
-//	} else {
-//		lowerBound = expected * 999999 / 1000000
-//		upperBound = expected * 1000001 / 1000000
-//	}
-//	return actual >= lowerBound && actual <= upperBound
-//}
-
 func (self *canonicalRewardState) AssertEmulatedRewardOf(depositId uint64, expected uint64) {
 	reward := self.EmulatedRewardOf(depositId)
 	if !isInErrorRange(expected, reward.Internal) {
