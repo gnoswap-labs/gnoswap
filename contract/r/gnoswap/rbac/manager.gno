@@ -2,13 +2,15 @@ package rbac
 
 import (
 	"std"
-
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-// globalManager is the single RBAC manager instance created internally in the package.
-// This instance is used to manage global role and permission information.
-var globalManager = prbac.New()
+var (
+	// globalManager is the single RBAC manager instance created internally in the package.
+	// This instance is used to manage global role and permission information.
+	// globalManager = prbac.NewRBACWithAddress(consts.ADMIN)
+	globalManager = prbac.New()
+)
 
 // RegisterRole globally registers a role with the given name.
 // Returns an error if the role already exists.
@@ -39,6 +41,10 @@ func UpdatePermission(roleName, permissionName string, newChecker prbac.Permissi
 // An error is returned if the role or permission does not exist.
 func RemovePermission(roleName, permissionName string) error {
 	return globalManager.RemovePermission(roleName, permissionName)
+}
+
+func RemoveRole(roleName string) error {
+	return globalManager.RemoveRole(roleName)
 }
 
 // DeclareRole globally declares a role using the Functional Option pattern.

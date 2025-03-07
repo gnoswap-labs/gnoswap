@@ -18,6 +18,9 @@ var (
 
 	testRealm1Addr = testutils.TestAddress("test_realm1")
 	testRealm2Addr = testutils.TestAddress("test_realm2")
+
+	adminAddr, _ = GetAddress(ROLE_ADMIN)
+	adminRealm   = std.NewUserRealm(adminAddr)
 )
 
 func TestInitialize(t *testing.T) {
@@ -46,6 +49,8 @@ func TestInitialize(t *testing.T) {
 }
 
 func TestUpdateRoleAddress(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+
 	t.Run("update success", func(t *testing.T) {
 		cfg := newConfig()
 		cfg.roles["another_test_admin"] = testAdminAddr
@@ -234,6 +239,7 @@ func TestMultiRoleValidation(t *testing.T) {
 }
 
 func TestCreateRole(t *testing.T) {
+	std.TestSetRealm(adminRealm)
 	testNewRoleAddr := testutils.TestAddress("test_new_role")
 	testAnotherAddr := testutils.TestAddress("test_another_role")
 
@@ -386,7 +392,7 @@ func TestSetConfig(t *testing.T) {
 		cfg.roles["test_manager"] = testManagerAddr
 		cfg.roles["test_analyst"] = testAnalystAddr
 
-		err := SetConfig(cfg)
+		err := setConfig(cfg)
 		uassert.NoError(t, err)
 
 		actual := GetCurrentConfig()
@@ -395,12 +401,14 @@ func TestSetConfig(t *testing.T) {
 	})
 
 	t.Run("fail with nil config", func(t *testing.T) {
-		err := SetConfig(nil)
+		err := setConfig(nil)
 		uassert.Error(t, err)
 	})
 }
 
 func TestSetRole(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+
 	testAuditorAddr := testutils.TestAddress("test_auditor")
 	testReviewerAddr := testutils.TestAddress("test_reviewer")
 
@@ -455,6 +463,69 @@ func TestSetRole(t *testing.T) {
 	t.Run("fail while uninitialized", func(t *testing.T) {
 		currentConfig = nil
 		err := SetRole("test_auditor", testAuditorAddr)
+		uassert.Error(t, err)
+	})
+
+	t.Run("fail with non-admin address", func(t *testing.T) {
+		std.TestSetRealm(std.NewUserRealm(testutils.TestAddress("non_admin")))
+		err := SetRole("test_auditor", testAuditorAddr)
+		uassert.Error(t, err)
+	})
+}
+
+func TestDeleteRole(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+	testRoleAddr := testutils.TestAddress("test_role_to_delete")
+
+	t.Run("success delete existing role", func(t *testing.T) {
+		cfg := newConfig()
+		cfg.roles["test_role_to_delete"] = testRoleAddr
+		err := initialize(cfg)
+		uassert.NoError(t, err)
+
+		// Verify role exists before deletion
+		exists := RoleExists("test_role_to_delete")
+		uassert.Equal(t, true, exists)
+
+		// Delete the role
+		err = DeleteRole("test_role_to_delete")
+		uassert.NoError(t, err)
+
+		// Verify role no longer exists
+		exists = RoleExists("test_role_to_delete")
+		uassert.Equal(t, false, exists)
+
+		// Verify permission is removed
+		err = rbac.CheckPermission("test_role_to_delete", PERM_ACCESS, testRoleAddr)
+		uassert.Error(t, err)
+	})
+
+	t.Run("fail to delete non-existent role", func(t *testing.T) {
+		cfg := newConfig()
+		err := initialize(cfg)
+		uassert.NoError(t, err)
+
+		err = DeleteRole("non_existent_role")
+		uassert.Error(t, err)
+	})
+
+	t.Run("fail to delete admin role", func(t *testing.T) {
+		err := DeleteRole(ROLE_ADMIN)
+		uassert.Error(t, err)
+	})
+
+	t.Run("fail while uninitialized", func(t *testing.T) {
+		currentConfig = nil
+		err := DeleteRole("any_role")
+		uassert.Error(t, err)
+	})
+
+	t.Run("fail with empty role name", func(t *testing.T) {
+		cfg := newConfig()
+		err := initialize(cfg)
+		uassert.NoError(t, err)
+
+		err = DeleteRole("")
 		uassert.Error(t, err)
 	})
 }
