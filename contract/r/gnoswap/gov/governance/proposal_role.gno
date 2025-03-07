@@ -289,7 +289,7 @@ func executeAddPermission(roleInfo RoleChangeInfo) error {
 
 	// Create and add the permission checker
 	checker := getPermissionChecker(roleInfo)
-	return rbac.AddPermission(roleInfo.RoleName, roleInfo.PermissionName, checker)
+	return rbac.RegisterPermission(roleInfo.RoleName, roleInfo.PermissionName, checker)
 }
 
 func executeRemovePermission(roleInfo RoleChangeInfo) error {
