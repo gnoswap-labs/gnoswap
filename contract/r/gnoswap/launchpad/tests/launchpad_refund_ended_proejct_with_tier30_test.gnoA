@@ -16,14 +16,9 @@ import (
 )
 
 var (
-	projectAddr = testutils.TestAddress("projectAddr")
 	user01      = testutils.TestAddress("user01")
-
-	projectRealm = std.NewUserRealm(projectAddr)
-	user01Realm  = std.NewUserRealm(user01)
-
+	user01Realm = std.NewUserRealm(user01)
 	refundAddr  = testutils.TestAddress("refundAddr")
-	refundRealm = std.NewUserRealm(refundAddr)
 )
 
 func TestRefundEndedProjectWithTier30(t *testing.T) {
