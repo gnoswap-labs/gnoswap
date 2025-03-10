@@ -228,7 +228,7 @@ func updateDistributedToDevOpsHistory(tokenPath string, amount uint64) {
 
 // clearTokenListWithAmount clears the tokenListWithAmount.
 func clearTokenListWithAmount() {
-	tokenListWithAmount = map[string]uint64{}
+	tokenListWithAmount = make(map[string]uint64)
 }
 
 func makeEventString(tokenPath string, amount uint64) string {
