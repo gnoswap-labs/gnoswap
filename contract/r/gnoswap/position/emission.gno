@@ -1,7 +1,7 @@
 package position
 
 import (
-	br "gno.land/r/gnoswap/v1/brigde"
+	br "gno.land/r/gnoswap/v1/bridge"
 )
 
 // mintAndDistributeGnsCallback executes the MintAndDistributeGns callback

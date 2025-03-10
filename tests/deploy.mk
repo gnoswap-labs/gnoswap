@@ -16,7 +16,7 @@ deploy-test-tokens: deploy-bar deploy-baz deploy-foo deploy-obl deploy-qux deplo
 deploy-libraries: deploy-consts deploy-uint256 deploy-int256 deploy-rbac deploy-gnsmath deploy-halt
 
 .PHONY: deploy-base-contracts
-deploy-base-contracts: deploy-common deploy-access deploy-halt-realm deploy-rbac-realm deploy-referral
+deploy-base-contracts: deploy-bridge deploy-rbac-realm deploy-access deploy-common deploy-halt-realm deploy-referral
 
 .PHONY: deploy-base-tokens
 deploy-base-tokens: deploy-gnft deploy-gns
@@ -28,6 +28,8 @@ deploy-gnoswap-realms: deploy-community_pool deploy-emission deploy-protocol_fee
 send-ugnot-must:
 	$(info ************ send ugnot to necessary accounts ************)
 	@echo "" | gnokey maketx send -send 10000000000ugnot -to $(ADDR_GNOSWAP) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
+	@echo "" | gnokey maketx send -send 10000000000ugnot -to $(ADDR_ADMIN) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
+	@echo "" | gnokey maketx send -send 10000000000ugnot -to $(ADDR_TEST) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
 	@echo
 
 deploy-consts:
@@ -58,6 +60,11 @@ deploy-uint256:
 deploy-halt:
 	$(info ************ deploy p/halt ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/halt -pkgpath gno.land/p/gnoswap/halt -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+	@echo
+
+deploy-bridge:
+	$(info ************ deploy brideg ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/bridge -pkgpath gno.land/r/gnoswap/v1/bridge -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 	@echo
 
 deploy-rbac-realm:
