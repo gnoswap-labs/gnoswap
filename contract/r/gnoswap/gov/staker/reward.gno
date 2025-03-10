@@ -252,13 +252,14 @@ func (self *RewardState) addStake(currentHeight uint64, staker std.Address, amou
 	}
 
 	info := StakerRewardInfo{
-		StartHeight:        currentHeight,
-		RewardDebt:         self.accumulatedGNSRewardPerStake.Clone(),
-		StakedAmount:       amount,
-		GnsRewardClaimed:   0,
-		ProtocolFeeClaimed: make(map[string]uint64),
-		ProtocolFeeDebt:    make(map[string]*u256.Uint),
-		LastClaimedHeight:  0,
+		StartHeight:              currentHeight,
+		RewardDebt:               self.accumulatedGNSRewardPerStake.Clone(),
+		StakedAmount:             amount,
+		GnsRewardClaimed:         0,
+		ProtocolFeeClaimed:       make(map[string]uint64),
+		ProtocolFeeDebt:          make(map[string]*u256.Uint),
+		PendingProtocolFeeReward: make(map[string]uint64),
+		LastClaimedHeight:        0,
 	}
 
 	for tokenPath, protocolFeePriceAccumulation := range self.accumulatedProtocolFeePerStake {
