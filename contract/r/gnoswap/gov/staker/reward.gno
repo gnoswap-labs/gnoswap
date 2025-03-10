@@ -3,17 +3,14 @@ package staker
 import (
 	"std"
 
-	en "gno.land/r/gnoswap/v1/emission"
-	pf "gno.land/r/gnoswap/v1/protocol_fee"
-
-	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
-
 	"gno.land/p/demo/avl"
-	ufmt "gno.land/p/demo/ufmt"
-
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/common"
+	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/halt"
+	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
 
 var (

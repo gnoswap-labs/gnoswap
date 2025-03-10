@@ -1,1 +1,1 @@
-module gno.land/r/gnoswap/v1/brigde
+module gno.land/r/gnoswap/v1/bridge

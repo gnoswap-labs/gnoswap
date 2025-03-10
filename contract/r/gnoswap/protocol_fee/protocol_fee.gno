@@ -7,14 +7,11 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-
-	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
-
 	phalt "gno.land/p/gnoswap/halt"
-	"gno.land/r/gnoswap/v1/halt"
 
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (
