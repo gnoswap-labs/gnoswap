@@ -1,6 +1,6 @@
-# GnoSwap Governance Module
+# GnoSwap Governance
 
-This module empowers $GNS token holders to participate in the decentralized governance of the GnoSwap protocol. Through staking, delegation, proposal creation, and voting mechanisms, the community can influence the platform's evolution.
+The GnoSwap governance contract allows $GNS holders to participate in protocol decision-making through staking, delegation, proposal creation, and voting. By staking GNS, users receive xGNS, which represents voting power and enables them to propose and vote on governance changes. Additionally, xGNS holders earn a share of [protocol fees](../protocol_fee/README.md), providing an incentive for active participation. The governance system is designed to be transparent, decentralized, and fully on-chain.
 
 ## Overview
 
@@ -20,8 +20,8 @@ The governance system comprises several key realms:
   - `Undelegate(from std.Address, amount uint64)`: Retract delegated voting power.
 
 - **Reward Functions:**
-  - `CollectReward()`: Collect accumulated rewards based on staked tokens.
-  - `CollectRewardFromLaunchPad(to std.Address)`: Collect rewards associated with the launchpad contract.
+  - `CollectReward()`: Collect accumulated rewards based on delegated tokens.
+  - `CollectUndelegatedGns()`: Collect undelegated GNS tokens after a lock period (7 days).
 
 ### Proposal Realm (`proposal.gno`)
 

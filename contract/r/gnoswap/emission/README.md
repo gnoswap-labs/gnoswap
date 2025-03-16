@@ -2,15 +2,15 @@
 
 ## Overview
 
-The emission contract manages minting and distributing the `GNS` token.
+The emission contract manages minting and distributing the `GNS` token. The GNS tokens are minted and distributed through the `MintAndDistributeGns()` function, which is a public function that can be called by anyone. This mechanism ensures that token distribution is executed dynamically as user interactions occur in the GnoSwap protocol.
 
 ## Features
 
 ### Token Emission and Distribution
 
-- Mints `GNS` tokens on a block generation time basis (initially set [here](https://github.com/gnoswap-labs/gnoswap/blob/main/contract/p/gnoswap/consts/consts.gno#L126), but can be changed by governance)
-- Distributes tokens to the set targets
-- Tracks undistributed tokens and include it in future distribution cycles
+- **Block-Time-Based Distribution**: The GNS distribution is designed to follow the network’s block generation time, initially set [here](https://github.com/gnoswap-labs/gnoswap/blob/main/contract/p/gnoswap/consts/consts.gno#L126). This value can be adjusted through governance if needed, such as in response to network delays.
+- **Triggering Mechanism**: The MintAndDistributeGns() function is integrated into key user transaction entry points. This means that whenever users interact with GnoSwap through transactions, the function is triggered, making it appear as though GNS is minted and distributed on a per-block basis, as long as GnoSwap remains active.
+- **Distribution to Defined Targets**: Each call to MintAndDistributeGns() mints new tokens and distributes them to predefined targets, ensuring continuous and fair token emission.
 
 ### Distribution Targets
 
@@ -23,18 +23,18 @@ Tokens are distributed to four main targets as follows by default:
 
 ### Distribution Ratio Management
 
-- Governance or admin can adjust token distribution ratio
-- Distribution percentages are tracked in basis points (1 bp = 0.01%)
-- Total distribution must always equal 100% (10,000 basis points)
+- Governance or admin can adjust the distribution ratio.
+- Distribution percentages are tracked in basis points (1 bp = 0.01%).
+- Total distribution must always equal 100% (10,000 basis points).
 
 ### Undistributed Token Handling
 
-- Any tokens not distributed in a cycle are tracked
-- Undistributed tokens are included in the next distribution cycle
+- Any tokens not distributed due to skipped or delayed calls, they are tracked.
+- Undistributed tokens are included in future distribution cycles, ensuring no loss of allocation.
 
 ### Halving
 
-There is a halving mechanism that reduces the issuance amount by half every two years
+There is a halving mechanism that reduces the issuance amount by half every two years. For details, refer to [halving.gno](../gns/halving.gno).
 
 ### Callback Mechanisms
 
