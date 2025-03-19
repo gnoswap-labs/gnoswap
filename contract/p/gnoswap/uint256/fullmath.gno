@@ -12,92 +12,40 @@ const (
 func MulDiv(
 	a, b, denominator *Uint,
 ) *Uint {
-	prod0 := Zero()
-	prod1 := Zero()
+	hi, lo := mul256(a, b)
 
-	{
-		mm := new(Uint).MulMod(a, b, new(Uint).Not(Zero()))
-		prod0 = new(Uint).Mul(a, b)
-
-		ltBool := mm.Lt(prod0)
-		ltUint := Zero()
-		if ltBool {
-			ltUint = One()
-		}
-		prod1 = new(Uint).Sub(new(Uint).Sub(mm, prod0), ltUint)
-	}
-
-	// Handle non-overflow cases, 256 by 256 division
-	if prod1.IsZero() {
+	if hi.IsZero() {
 		if !(denominator.Gt(Zero())) { // require(denominator > 0);
-			panic(ufmt.Sprintf("uint256_MulDiv()__denominator(%s) > 0", denominator.ToString()))
+			panic(ufmt.Sprintf("denominator must be greater than 0. got %s", denominator.ToString()))
 		}
-
-		result := new(Uint).Div(prod0, denominator)
-		return result
+		// overflow cannot happen here
+		return new(Uint).Div(lo, denominator)
 	}
 
-	// Make sure the result is less than 2**256.
-	// Also prevents denominator == 0
-	if !(denominator.Gt(prod1)) { // require(denominator > prod1)
-		panic(ufmt.Sprintf("uint256_MulDiv()__denominator(%s) > prod1(%s)", denominator.ToString(), prod1.ToString()))
+	if !(denominator.Gt(hi)) { // require(denominator > prod1)
+		panic(ufmt.Sprintf("denominator(%s) must be greater than hi(%s)", denominator.ToString(), hi.ToString()))
 	}
 
-	///////////////////////////////////////////////
-	// 512 by 256 division.
-	///////////////////////////////////////////////
+	remainder := new(Uint).MulMod(a, b, denominator)
 
-	// Make division exact by subtracting the remainder from [prod1 prod0]
-	// Compute remainder using mulmod
-	remainder := Zero()
-	remainder = new(Uint).MulMod(a, b, denominator)
-
-	// Subtract 256 bit number from 512 bit number
-	gtBool := remainder.Gt(prod0)
-	gtUint := Zero()
-	if gtBool {
-		gtUint = One()
+	// Subtract remainder from [hi, lo] to make it divisible
+	// borrow(=1) if remainder > lo
+	if remainder.Gt(lo) {
+		hi = new(Uint).Sub(hi, One())
 	}
-	prod1 = new(Uint).Sub(prod1, gtUint)
-	prod0 = new(Uint).Sub(prod0, remainder)
+	lo = new(Uint).Sub(lo, remainder)
 
-	// Factor powers of two out of denominator
-	// Compute largest power of two divisor of denominator.
-	// Always >= 1.
-	twos := Zero()
-	twos = new(Uint).And(new(Uint).Neg(denominator), denominator)
-
-	// Divide denominator by power of two
+	// factor out how many powers of 2 the denominator has
+	twos := new(Uint).And(new(Uint).Neg(denominator), denominator)
 	denominator = new(Uint).Div(denominator, twos)
+	lo = new(Uint).Div(lo, twos)
 
-	// Divide [prod1 prod0] by the factors of two
-	prod0 = new(Uint).Div(prod0, twos)
-
-	// Shift in bits from prod1 into prod0. For this we need
-	// to flip `twos` such that it is 2**256 / twos.
-	// If twos is zero, then it becomes one
-	twos = new(Uint).Add(
-		new(Uint).Div(
-			new(Uint).Sub(Zero(), twos),
-			twos,
-		),
-		One(),
-	)
-	prod0 = new(Uint).Or(prod0, new(Uint).Mul(prod1, twos))
-
-	// Invert denominator mod 2**256
-	// Now that denominator is an odd number, it has an inverse
-	// modulo 2**256 such that denominator * inv = 1 mod 2**256.
-	// Compute the inverse by starting with a seed that is correct
-	// correct for four bits. That is, denominator * inv = 1 mod 2**4
+	// denominator is now odd, so find its inverse mod 2^256 using Newton-Raphson
 	inv := Zero()
 	inv = new(Uint).Mul(NewUint(3), denominator)
 	inv = new(Uint).Xor(inv, NewUint(2))
 
-	// Now use Newton-Raphson iteration to improve the precision.
-	// Thanks to Hensel's lifting lemma, this also works in modular
-	// arithmetic, doubling the correct bits in each step.
-
+	// Newton-Raphson iteration
 	inv = new(Uint).Mul(inv, new(Uint).Sub(NewUint(2), new(Uint).Mul(denominator, inv))) // inverse mod 2**8
 	inv = new(Uint).Mul(inv, new(Uint).Sub(NewUint(2), new(Uint).Mul(denominator, inv))) // inverse mod 2**16
 	inv = new(Uint).Mul(inv, new(Uint).Sub(NewUint(2), new(Uint).Mul(denominator, inv))) // inverse mod 2**32
@@ -105,13 +53,18 @@ func MulDiv(
 	inv = new(Uint).Mul(inv, new(Uint).Sub(NewUint(2), new(Uint).Mul(denominator, inv))) // inverse mod 2**128
 	inv = new(Uint).Mul(inv, new(Uint).Sub(NewUint(2), new(Uint).Mul(denominator, inv))) // inverse mod 2**256
 
-	// Because the division is now exact we can divide by multiplying
-	// with the modular inverse of denominator. This will give us the
-	// correct result modulo 2**256. Since the precoditions guarantee
-	// that the outcome is less than 2**256, this is the final result.
-	// We don't need to compute the high bits of the result and prod1
-	// is no longer required.
-	result := new(Uint).Mul(prod0, inv)
+	// multiply [hi, lo] with inv in mod 2^256 -> final quotient
+	// flip twos to 2^256/twos and multiply + shift hi and or with lo
+	twos = new(Uint).Add(
+		new(Uint).Div(
+			new(Uint).Sub(Zero(), twos),
+			twos,
+		),
+		One(),
+	)
+	lo = new(Uint).Or(lo, new(Uint).Mul(hi, twos))
+
+	result := new(Uint).Mul(lo, inv)
 	return result
 }
 
@@ -148,4 +101,62 @@ func gt(x, y *Uint) *Uint {
 		return One()
 	}
 	return Zero()
+}
+
+// mul256 returns the 512-bit product of a * b in two 256-bit parts: (hi, lo).
+// a, b, hi, lo are all assumed to be little-endian [4]uint64.
+func mul256(a, b *Uint) (hi, lo *Uint) {
+	var p [8]uint64
+
+	for i := 0; i < 4; i++ {
+		carry := uint64(0)
+		ai := a.arr[i]
+		for j := 0; j < 4; j++ {
+			// Perform 64-bit × 64-bit = 128-bit multiplication
+			hi64, lo64 := bits_mul64(ai, b.arr[j])
+
+			// Add p[i+j] and carry
+			sum1, c1 := bits_add64(lo64, p[i+j], 0)
+			sum2, c2 := bits_add64(sum1, carry, 0)
+
+			p[i+j] = sum2
+
+			// Move upper 64 bits and carries to next position
+			carry = hi64 + c1 + c2
+		}
+		p[i+4] += carry
+	}
+
+	lo = &Uint{arr: [4]uint64{p[0], p[1], p[2], p[3]}}
+	hi = &Uint{arr: [4]uint64{p[4], p[5], p[6], p[7]}}
+	return hi, lo
+}
+
+// multiply two 64-bit numbers and return 128-bit result
+func bits_mul64(x, y uint64) (hi, lo uint64) {
+	const mask32 = 1<<32 - 1
+
+	x0 := x & mask32
+	x1 := x >> 32
+	y0 := y & mask32
+	y1 := y >> 32
+
+	w0 := x0 * y0
+	t := x1*y0 + (w0 >> 32)
+	w1 := t & mask32
+	w2 := t >> 32
+	w1 += x0 * y1
+	hi = x1*y1 + w2 + (w1 >> 32)
+	lo = x * y
+	return
+}
+
+// 64-bit addition with carry
+func bits_add64(x, y, carry uint64) (sum, carryOut uint64) {
+	sum = x + y + carry
+	// Carry out occurs when:
+	// 1) Overflow in x + y
+	// 2) Overflow in (x + y) + carry
+	carryOut = ((x & y) | ((x | y) & ^sum)) >> 63
+	return
 }

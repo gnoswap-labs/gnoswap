@@ -250,3 +250,24 @@ func TestMulDivRoundingUp(t *testing.T) {
 		}
 	})
 }
+
+func TestMulDiv_Issue1(t *testing.T) {
+	expected := MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819967")
+
+	x := TwoToThe255()
+	y := NewUint(2)
+	z := NewUint(4)
+
+	got := MulDiv(x, y, z)
+
+	rst := got.Eq(expected)
+	if !rst {
+		t.Errorf("got: %s", got.ToString())
+		t.Errorf("expected: %s", expected.ToString())
+	}
+}
+
+func TwoToThe255() *Uint {
+	u := &Uint{arr: [4]uint64{0, 0, 0, 1 << 63}}
+	return u
+}
