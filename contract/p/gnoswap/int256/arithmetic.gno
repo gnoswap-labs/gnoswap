@@ -3,7 +3,7 @@ package int256
 import "gno.land/p/gnoswap/uint256"
 
 func (z *Int) Add(x, y *Int) *Int {
-	z.initiateAbs()
+	z = z.initiateAbs()
 
 	if x.neg == y.neg {
 		// If both numbers have the same sign, add their absolute values
@@ -67,7 +67,7 @@ func AddDeltaOverflow(z, x *uint256.Uint, y *Int) bool {
 
 // Sub sets z to the difference x-y and returns z.
 func (z *Int) Sub(x, y *Int) *Int {
-	z.initiateAbs()
+	z = z.initiateAbs()
 
 	if x.neg != y.neg {
 		// If sign are different, add the absolute values
@@ -110,7 +110,7 @@ func (z *Int) SubUint256(x *Int, y *uint256.Uint) *Int {
 
 // Mul sets z to the product x*y and returns z.
 func (z *Int) Mul(x, y *Int) *Int {
-	z.initiateAbs()
+	z = z.initiateAbs()
 
 	z.abs = z.abs.Mul(x.abs, y.abs)
 	z.neg = x.neg != y.neg && !z.abs.IsZero() // 0 has no sign
@@ -130,7 +130,7 @@ func (z *Int) MulUint256(x *Int, y *uint256.Uint) *Int {
 
 // Div sets z to the quotient x/y for y != 0 and returns z.
 func (z *Int) Div(x, y *Int) *Int {
-	z.initiateAbs()
+	z = z.initiateAbs()
 
 	if y.abs.IsZero() {
 		panic("division by zero")
@@ -163,7 +163,7 @@ func (z *Int) Quo(x, y *Int) *Int {
 		panic("division by zero")
 	}
 
-	z.initiateAbs()
+	z = z.initiateAbs()
 
 	z.abs = z.abs.Div(x.abs, y.abs)
 	z.neg = !(z.abs.IsZero()) && x.neg != y.neg // 0 has no sign
@@ -179,7 +179,7 @@ func (z *Int) Rem(x, y *Int) *Int {
 		panic("division by zero")
 	}
 
-	z.initiateAbs()
+	z = z.initiateAbs()
 
 	z.abs.Mod(x.abs, y.abs)
 	z.neg = z.abs.Sign() > 0 && x.neg // 0 has no sign

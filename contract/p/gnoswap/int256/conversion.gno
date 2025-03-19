@@ -6,7 +6,7 @@ import (
 
 // SetInt64 sets z to x and returns z.
 func (z *Int) SetInt64(x int64) *Int {
-	z.initiateAbs()
+	z = z.initiateAbs()
 
 	neg := false
 	if x < 0 {
@@ -23,7 +23,7 @@ func (z *Int) SetInt64(x int64) *Int {
 
 // SetUint64 sets z to x and returns z.
 func (z *Int) SetUint64(x uint64) *Int {
-	z.initiateAbs()
+	z = z.initiateAbs()
 
 	if z.abs == nil {
 		panic("int256_SetUint64()__abs is nil")

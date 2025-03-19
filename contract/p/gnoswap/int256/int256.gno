@@ -178,8 +178,12 @@ func (z *Int) NilToZero() *Int {
 
 // initiateAbs sets default value for `z` or `z.abs` value if is nil
 // OBS: differs from mempooler int256. It checks not only `z.abs` but also `z`
-func (z *Int) initiateAbs() {
-	if z == nil || z.abs == nil {
+func (z *Int) initiateAbs() *Int {
+	if z == nil {
+		return NewInt(0)
+	}
+	if z.abs == nil {
 		z.abs = new(uint256.Uint)
 	}
+	return z
 }
