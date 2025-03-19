@@ -30,6 +30,8 @@ func (z *Int) Add(x, y *Int) *Int {
 
 // AddUint256 set z to the sum x + y, where y is a uint256, and returns z
 func (z *Int) AddUint256(x *Int, y *uint256.Uint) *Int {
+	z = z.initiateAbs()
+
 	if x.neg {
 		if x.abs.Gt(y) {
 			z.abs.Sub(x.abs, y)
@@ -93,6 +95,8 @@ func (z *Int) Sub(x, y *Int) *Int {
 
 // SubUint256 set z to the difference x - y, where y is a uint256, and returns z
 func (z *Int) SubUint256(x *Int, y *uint256.Uint) *Int {
+	z = z.initiateAbs()
+
 	if x.neg {
 		z.abs.Add(x.abs, y)
 		z.neg = true
@@ -119,6 +123,8 @@ func (z *Int) Mul(x, y *Int) *Int {
 
 // MulUint256 sets z to the product x*y, where y is a uint256, and returns z
 func (z *Int) MulUint256(x *Int, y *uint256.Uint) *Int {
+	z = z.initiateAbs()
+
 	z.abs.Mul(x.abs, y)
 	if z.abs.IsZero() {
 		z.neg = false
@@ -145,6 +151,8 @@ func (z *Int) Div(x, y *Int) *Int {
 // DivUint256 sets z to the quotient x/y, where y is a uint256, and returns z
 // If y == 0, z is set to 0
 func (z *Int) DivUint256(x *Int, y *uint256.Uint) *Int {
+	z = z.initiateAbs()
+
 	z.abs.Div(x.abs, y)
 	if z.abs.IsZero() {
 		z.neg = false
@@ -189,6 +197,8 @@ func (z *Int) Rem(x, y *Int) *Int {
 // Mod sets z to the modulus x%y for y != 0 and returns z.
 // If y == 0, z is set to 0 (OBS: differs from the big.Int)
 func (z *Int) Mod(x, y *Int) *Int {
+	z = z.initiateAbs()
+
 	if x.neg {
 		z.abs.Div(x.abs, y.abs)
 		z.abs.Add(z.abs, one)

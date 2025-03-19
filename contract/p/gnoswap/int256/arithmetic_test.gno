@@ -569,3 +569,88 @@ func TestMod(t *testing.T) {
 		}
 	}
 }
+
+func TestNilInitialization(t *testing.T) {
+	tests := []struct {
+		name     string
+		setup    func() (*Int, error)
+		wantStr  string
+	}{
+		{
+			name: "AddUint256 with nil abs",
+			setup: func() (*Int, error) {
+				z := new(Int)
+				x := uint256.NewUint(5)
+				return z.AddUint256(z, x), nil
+			},
+			wantStr: "5",
+		},
+		{
+			name: "SubUint256 with nil abs",
+			setup: func() (*Int, error) {
+				z := new(Int)
+				x := uint256.NewUint(5)
+				return z.SubUint256(z, x), nil
+			},
+			wantStr: "-5",
+		},
+		{
+			name: "MulUint256 with nil abs",
+			setup: func() (*Int, error) {
+				z := new(Int)
+				x := uint256.NewUint(5)
+				return z.MulUint256(z, x), nil
+			},
+			wantStr: "0",
+		},
+		{
+			name: "DivUint256 with nil abs",
+			setup: func() (*Int, error) {
+				z := new(Int)
+				x := uint256.NewUint(5)
+				return z.DivUint256(z, x), nil
+			},
+			wantStr: "0",
+		},
+		{
+			name: "Mod with nil abs",
+			setup: func() (*Int, error) {
+				z := new(Int)
+				x := MustFromDecimal("5")
+				defer func() {
+					if r := recover(); r != nil {
+						t.Errorf("Mod with nil abs panicked: %v", r)
+					}
+				}()
+				return z.Mod(z, x), nil
+			},
+			wantStr: "0",
+		},
+		{
+			name: "Chained operations with nil abs",
+			setup: func() (*Int, error) {
+				z := new(Int)
+				x := uint256.NewUint(5)
+				y := uint256.NewUint(3)
+				// (0 + 5) * 3
+				return z.AddUint256(z, x).MulUint256(z, y), nil
+			},
+			wantStr: "15",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := tt.setup()
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+				return
+			}
+
+			got := result.ToString()
+			if got != tt.wantStr {
+				t.Errorf("%s: got %v, want %v", tt.name, got, tt.wantStr)
+			}
+		})
+	}
+}
