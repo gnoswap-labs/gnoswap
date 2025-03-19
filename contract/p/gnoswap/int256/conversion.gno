@@ -40,12 +40,26 @@ func (z *Int) Uint64() uint64 {
 
 // Int64 returns the lower 64-bits of z
 func (z *Int) Int64() int64 {
-	_abs := z.abs.Clone()
+	u := z.abs.Uint64()
 
-	if z.neg {
-		return -int64(_abs.Uint64())
+	if u == 1<<63 {
+		return -1 << 63 // always return int64 min value
 	}
-	return int64(_abs.Uint64())
+
+	if u < 1<<63 {
+		if z.neg {
+			return -int64(u)
+		}
+		return int64(u)
+	}
+
+	// convert uint64 to int64 safely using two's complement
+	// when the number is greater than 2^63
+	res := -int64(^u + 1)
+	if z.neg {
+		return -res
+	}
+	return res
 }
 
 // Neg sets z to -x and returns z.)
