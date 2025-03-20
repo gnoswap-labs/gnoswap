@@ -32,29 +32,27 @@ func (z *Int) AddOverflow(x, y *Int) (*Int, bool) {
 	z = z.initiateAbs()
 
 	if x.neg == y.neg {
-		// 같은 부호일 때
+		// same sign
 		var overflow bool
 		z.abs, overflow = z.abs.AddOverflow(x.abs, y.abs)
 		z.neg = x.neg
-
+		
 		if overflow {
 			return z, true
 		}
 
-		// int256의 범위 체크
+		// check int256 range
 		if z.neg {
-			// 음수일 때: 결과가 MinInt256보다 작은지 확인
 			if z.abs.Cmp(MinInt256().abs) > 0 {
 				return z, true
 			}
 		} else {
-			// 양수일 때: 결과가 MaxInt256보다 큰지 확인
 			if z.abs.Cmp(MaxInt256().abs) > 0 {
 				return z, true
 			}
 		}
 	} else {
-		// 다른 부호일 때는 절대값의 뺄셈으로 처리
+		// handle different sign by subtracting absolute values
 		if x.abs.Cmp(y.abs) >= 0 {
 			z.abs.Sub(x.abs, y.abs)
 			z.neg = x.neg
@@ -64,7 +62,7 @@ func (z *Int) AddOverflow(x, y *Int) (*Int, bool) {
 		}
 	}
 
-	// 결과가 0인 경우 항상 양수로 처리
+	// overflow can be happen when result is 0
 	if z.abs.IsZero() {
 		z.neg = false
 	}
