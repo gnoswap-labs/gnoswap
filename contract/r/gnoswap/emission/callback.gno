@@ -29,8 +29,12 @@ func RegisterGnsChangeCallback() {
 	gns.SetCallbackEmissionChange(callbackEmissionChange)
 }
 
+func RegisterMintAndDistributeGnsCallback() {
+	br.RegisterCallback(br.MINT_AND_DISTRIBUTE_GNS_KEY, MintAndDistributeGns)
+}
+
 // contract path proxy pattern
 
 func init() {
-	br.RegisterCallback(br.MINT_AND_DISTRIBUTE_GNS_KEY, MintAndDistributeGns)
+	RegisterMintAndDistributeGnsCallback()
 }
