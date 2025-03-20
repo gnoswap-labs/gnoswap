@@ -9,6 +9,21 @@ const (
 	MAX_UINT256 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 )
 
+// MulDiv multiplies two numbers and divides the result by a third number.
+// It performs multiplication and division while handling overflow checking.
+// The calculation is performed with full precision and rounding down.
+//
+// Parameters:
+//   - a: First multiplicand
+//   - b: Second multiplicand
+//   - denominator: The divisor (must be greater than 0)
+//
+// Returns:
+//   - The result of (a * b) / denominator, rounded down
+//
+// Panics:
+//   - If denominator is 0
+//   - If the intermediate product's high 256 bits are greater than or equal to denominator
 func MulDiv(
 	a, b, denominator *Uint,
 ) *Uint {
@@ -71,6 +86,21 @@ func MulDiv(
 	return result
 }
 
+// MulDivRoundingUp multiplies two numbers and divides the result by a third number,
+// rounding up the result if there is any remainder.
+//
+// Parameters:
+//   - a: First multiplicand
+//   - b: Second multiplicand
+//   - denominator: The divisor (must be greater than 0)
+//
+// Returns:
+//   - The result of (a * b) / denominator, rounded up if there is any remainder
+//
+// Panics:
+//   - If the result would overflow uint256
+//   - If denominator is 0
+//   - If the intermediate product's high 256 bits are greater than or equal to denominator
 func MulDivRoundingUp(
 	a, b, denominator *Uint,
 ) *Uint {
@@ -87,8 +117,21 @@ func MulDivRoundingUp(
 	return new(Uint).Add(result, one)
 }
 
-// UnsafeMath
-// https://github.com/Uniswap/v3-core/blob/d8b1c635c275d2a9450bd6a78f3fa2484fef73eb/contracts/libraries/UnsafeMath.sol
+// DivRoundingUp performs division of two numbers, rounding up the result
+// if there is any remainder.
+//
+// Parameters:
+//   - x: Dividend
+//   - y: Divisor (must be greater than 0)
+//
+// Returns:
+//   - The result of x / y, rounded up if there is any remainder
+//
+// Note:
+//   - This is an unsafe math operation and does not perform overflow checks
+//
+// Reference:
+//   - https://github.com/Uniswap/v3-core/blob/d8b1c635c275d2a9450bd6a78f3fa2484fef73eb/contracts/libraries/UnsafeMath.sol
 func DivRoundingUp(
 	x, y *Uint,
 ) *Uint {
@@ -99,6 +142,15 @@ func DivRoundingUp(
 	return z
 }
 
+// gt returns one if x is greater than y, zero otherwise.
+// This is a helper function for DivRoundingUp.
+//
+// Parameters:
+//   - x: First number to compare
+//   - y: Second number to compare
+//
+// Returns:
+//   - one if x > y, zero otherwise
 func gt(x, y *Uint) *Uint {
 	if x.Gt(y) {
 		return one
