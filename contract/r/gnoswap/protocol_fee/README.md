@@ -1,6 +1,6 @@
-# Protocol Fee Contract
+# Protocol Fee
 
-The GnoSwap Protocol Fee Contract manages fees collected from various platform interactions, ensuring proper distribution to $xGNS holders. This contract encompasses fees from swaps, pool creations, liquidity withdrawals, and staking reward claims.
+The Protocol Fee Contract manages fees collected from various platform interactions, ensuring proper distribution to $xGNS holders. This contract encompasses fees from swaps, pool creations, liquidity withdrawals, and staking reward claims.
 
 ## Overview
 

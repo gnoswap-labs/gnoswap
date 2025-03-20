@@ -1,10 +1,6 @@
-# GnoSwap Launchpad Module
+# GnoSwap Launchpad
 
-The GnoSwap Launchpad is a decentralized fundraising platform that allows users to participate in early-stage projects by staking $GNS tokens. Users contribute by locking their tokens for a fixed duration, earning project tokens as rewards while retaining their principal $GNS stake.
-
-## Overview
-
-The Launchpad module enables fair and transparent fundraising while ensuring users do not lose their principal investment. It operates on a staking model where the yield generated from locked tokens is used to support projects.
+GnoSwap Launchpad is a decentralized platform for launching early-stage GRC20 projects. Users participate by staking $GNS tokens for a fixed period, earning project tokens as rewards while keeping their principal stake intact. The staked tokens generate yield via the [xGNS Governance Contract](../gov/README.md), which powers project launches. This ensures a fair, transparent, and risk-minimized way to engage in the gno.land ecosystem.
 
 ## Key Components
 
