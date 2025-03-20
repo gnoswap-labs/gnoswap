@@ -251,7 +251,7 @@ func TestMulDivRoundingUp(t *testing.T) {
 	})
 }
 
-func TestMulDiv_Issue1(t *testing.T) {
+func TestMulDiv_PowerOfTwo_DivisionByFour(t *testing.T) {
 	// calculated by hand
 	expected := MustFromDecimal("28948022309329048855892746252171976963317496166410141009864396001978282409984")
 
