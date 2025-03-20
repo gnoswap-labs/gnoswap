@@ -14,19 +14,15 @@ func MulDiv(
 ) *Uint {
 	hi, lo := mul256(a, b)
 
-	one := One()
-	two := NewUint(2)
-	three := NewUint(3)
-
 	if hi.IsZero() {
-		if !(denominator.Gt(Zero())) { // require(denominator > 0);
+		if denominator.IsZero() {
 			panic(ufmt.Sprintf("denominator must be greater than 0. got %s", denominator.ToString()))
 		}
 		// overflow cannot happen here
 		return new(Uint).Div(lo, denominator)
 	}
 
-	if !(denominator.Gt(hi)) { // require(denominator > prod1)
+	if denominator.Lte(hi) {
 		panic(ufmt.Sprintf("denominator(%s) must be greater than hi(%s)", denominator.ToString(), hi.ToString()))
 	}
 
@@ -45,7 +41,7 @@ func MulDiv(
 	lo = new(Uint).Div(lo, twos)
 
 	// denominator is now odd, so find its inverse mod 2^256 using Newton-Raphson
-	inv := Zero()
+	inv := zero
 	inv = new(Uint).Mul(three, denominator)
 	inv = new(Uint).Xor(inv, two)
 
@@ -61,7 +57,7 @@ func MulDiv(
 	// flip twos to 2^256/twos and multiply + shift hi and or with lo
 	twos = new(Uint).Add(
 		new(Uint).Div(
-			new(Uint).Sub(Zero(), twos),
+			new(Uint).Sub(zero, twos),
 			twos,
 		),
 		one,
@@ -77,15 +73,15 @@ func MulDivRoundingUp(
 ) *Uint {
 	result := MulDiv(a, b, denominator)
 
-	if new(Uint).MulMod(a, b, denominator).Gt(Zero()) {
-		if !(result.Lt(MustFromDecimal(MAX_UINT256))) { // require(result < MAX_UINT256)
-			panic(ufmt.Sprintf("result(%s) < MAX_UINT256", result.ToString()))
-		}
-
-		result = new(Uint).Add(result, One())
+	if new(Uint).MulMod(a, b, denominator).Lte(zero) {
+		return result
 	}
 
-	return result
+	if result.Gte(MustFromDecimal(MAX_UINT256)) {
+		panic(ufmt.Sprintf("result(%s) < MAX_UINT256", result.ToString()))
+	}
+
+	return new(Uint).Add(result, one)
 }
 
 // UnsafeMath
@@ -96,15 +92,15 @@ func DivRoundingUp(
 	div := new(Uint).Div(x, y)
 	mod := new(Uint).Mod(x, y)
 
-	z := new(Uint).Add(div, gt(mod, Zero()))
+	z := new(Uint).Add(div, gt(mod, zero))
 	return z
 }
 
 func gt(x, y *Uint) *Uint {
 	if x.Gt(y) {
-		return One()
+		return one
 	}
-	return Zero()
+	return zero
 }
 
 // mul256 returns the 512-bit product of a * b in two 256-bit parts: (hi, lo).

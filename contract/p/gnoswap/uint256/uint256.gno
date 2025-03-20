@@ -12,6 +12,13 @@ const (
 	MaxUint64 = 1<<64 - 1
 )
 
+var (
+	zero  = Zero()
+	one   = One()
+	two   = NewUint(2)
+	three = NewUint(3)
+)
+
 // Uint is represented as an array of 4 uint64, in little-endian order,
 // so that Uint[3] is the most significant, and Uint[0] is the least significant
 type Uint struct {
@@ -20,8 +27,7 @@ type Uint struct {
 
 // NewUint returns a new initialized Uint.
 func NewUint(val uint64) *Uint {
-	z := &Uint{arr: [4]uint64{val, 0, 0, 0}}
-	return z
+	return &Uint{arr: [4]uint64{val, 0, 0, 0}}
 }
 
 // Zero returns a new Uint initialized to zero.
