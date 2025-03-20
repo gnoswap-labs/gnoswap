@@ -12,7 +12,10 @@ const (
 func MulDiv(
 	a, b, denominator *Uint,
 ) *Uint {
-	hi, lo := mul256(a, b)
+	p := umul(a, b) // 512-bit product of a * b
+
+	lo := &Uint{arr: [4]uint64{p[0], p[1], p[2], p[3]}}
+	hi := &Uint{arr: [4]uint64{p[4], p[5], p[6], p[7]}}
 
 	if hi.IsZero() {
 		if denominator.IsZero() {
@@ -101,62 +104,4 @@ func gt(x, y *Uint) *Uint {
 		return one
 	}
 	return zero
-}
-
-// mul256 returns the 512-bit product of a * b in two 256-bit parts: (hi, lo).
-// a, b, hi, lo are all assumed to be little-endian [4]uint64.
-func mul256(a, b *Uint) (hi, lo *Uint) {
-	var p [8]uint64 // 512 bits
-
-	for i := 0; i < 4; i++ {
-		carry := uint64(0)
-		ai := a.arr[i]
-		for j := 0; j < 4; j++ {
-			// Perform 64-bit × 64-bit = 128-bit multiplication
-			hi64, lo64 := bits_mul64(ai, b.arr[j])
-
-			// Add p[i+j] and carry
-			sum1, c1 := bits_add64(lo64, p[i+j], 0)
-			sum2, c2 := bits_add64(sum1, carry, 0)
-
-			p[i+j] = sum2
-
-			// Move upper 64 bits and carries to next position
-			carry = hi64 + c1 + c2
-		}
-		p[i+4] += carry
-	}
-
-	lo = &Uint{arr: [4]uint64{p[0], p[1], p[2], p[3]}}
-	hi = &Uint{arr: [4]uint64{p[4], p[5], p[6], p[7]}}
-	return hi, lo
-}
-
-// multiply two 64-bit numbers and return 128-bit result
-func bits_mul64(x, y uint64) (hi, lo uint64) {
-	const mask32 = 1<<32 - 1
-
-	x0 := x & mask32
-	x1 := x >> 32
-	y0 := y & mask32
-	y1 := y >> 32
-
-	w0 := x0 * y0
-	t := x1*y0 + (w0 >> 32)
-	w1 := t & mask32
-	w2 := t >> 32
-	w1 += x0 * y1
-	hi = x1*y1 + w2 + (w1 >> 32)
-	lo = x * y
-	return
-}
-
-// 64-bit addition with carry
-func bits_add64(x, y, carry uint64) (sum, carryOut uint64) {
-	sum = x + y + carry
-	// Carry out occurs when:
-	// 1) Overflow in x + y
-	// 2) Overflow in (x + y) + carry
-	carryOut = ((x & y) | ((x | y) & ^sum)) >> 63
-	return
 }
