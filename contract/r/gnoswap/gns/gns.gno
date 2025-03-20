@@ -34,14 +34,18 @@ var (
 	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
 )
 
+func registerGnsTokenToGrc20Reg() {
+	getter := func() *grc20.Token { return token }
+	grc20reg.Register(getter, "")
+}
+
 func init() {
 	owner = ownable.NewWithAddress(adminAddr)
 	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
 	UserTeller = token.CallerTeller()
 
 	privateLedger.Mint(owner.Owner(), INITIAL_MINT_AMOUNT)
-	getter := func() *grc20.Token { return token }
-	grc20reg.Register(getter, "")
+	registerGnsTokenToGrc20Reg()
 
 	// Initial amount set to 900_000_000_000_000 (MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT).
 	// leftEmissionAmount will decrease as tokens are minted.
