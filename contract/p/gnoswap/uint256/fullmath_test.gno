@@ -252,8 +252,10 @@ func TestMulDivRoundingUp(t *testing.T) {
 }
 
 func TestMulDiv_Issue1(t *testing.T) {
-	expected := MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819967")
+	// calculated by hand
+	expected := MustFromDecimal("28948022309329048855892746252171976963317496166410141009864396001978282409984")
 
+	// (57896044618658097711785492504343953926634992332820282019728792003956564819968 * 2) / 4
 	x := TwoToThe255()
 	y := NewUint(2)
 	z := NewUint(4)
@@ -268,6 +270,6 @@ func TestMulDiv_Issue1(t *testing.T) {
 }
 
 func TwoToThe255() *Uint {
-	u := &Uint{arr: [4]uint64{0, 0, 0, 1 << 63}}
-	return u
+    u := &Uint{arr: [4]uint64{0, 0, 0, 1 << 63}}
+    return u
 }
