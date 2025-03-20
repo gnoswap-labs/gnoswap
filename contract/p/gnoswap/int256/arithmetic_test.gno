@@ -697,7 +697,6 @@ func TestInt_MulOverflow(t *testing.T) {
 				}
 			}
 
-			// 곱셈의 교환법칙 테스트 (오버플로우가 없는 경우만)
 			if !tt.wantOverflow {
 				reverseResult, reverseOverflow := z.MulOverflow(tt.y, tt.x)
 				if reverseOverflow != gotOverflow {
