@@ -14,6 +14,10 @@ func MulDiv(
 ) *Uint {
 	hi, lo := mul256(a, b)
 
+	one := One()
+	two := NewUint(2)
+	three := NewUint(3)
+
 	if hi.IsZero() {
 		if !(denominator.Gt(Zero())) { // require(denominator > 0);
 			panic(ufmt.Sprintf("denominator must be greater than 0. got %s", denominator.ToString()))
@@ -31,7 +35,7 @@ func MulDiv(
 	// Subtract remainder from [hi, lo] to make it divisible
 	// borrow(=1) if remainder > lo
 	if remainder.Gt(lo) {
-		hi = new(Uint).Sub(hi, One())
+		hi = new(Uint).Sub(hi, one)
 	}
 	lo = new(Uint).Sub(lo, remainder)
 
@@ -42,16 +46,16 @@ func MulDiv(
 
 	// denominator is now odd, so find its inverse mod 2^256 using Newton-Raphson
 	inv := Zero()
-	inv = new(Uint).Mul(NewUint(3), denominator)
-	inv = new(Uint).Xor(inv, NewUint(2))
+	inv = new(Uint).Mul(three, denominator)
+	inv = new(Uint).Xor(inv, two)
 
 	// Newton-Raphson iteration
-	inv = new(Uint).Mul(inv, new(Uint).Sub(NewUint(2), new(Uint).Mul(denominator, inv))) // inverse mod 2**8
-	inv = new(Uint).Mul(inv, new(Uint).Sub(NewUint(2), new(Uint).Mul(denominator, inv))) // inverse mod 2**16
-	inv = new(Uint).Mul(inv, new(Uint).Sub(NewUint(2), new(Uint).Mul(denominator, inv))) // inverse mod 2**32
-	inv = new(Uint).Mul(inv, new(Uint).Sub(NewUint(2), new(Uint).Mul(denominator, inv))) // inverse mod 2**64
-	inv = new(Uint).Mul(inv, new(Uint).Sub(NewUint(2), new(Uint).Mul(denominator, inv))) // inverse mod 2**128
-	inv = new(Uint).Mul(inv, new(Uint).Sub(NewUint(2), new(Uint).Mul(denominator, inv))) // inverse mod 2**256
+	inv = new(Uint).Mul(inv, new(Uint).Sub(two, new(Uint).Mul(denominator, inv))) // inverse mod 2**8
+	inv = new(Uint).Mul(inv, new(Uint).Sub(two, new(Uint).Mul(denominator, inv))) // inverse mod 2**16
+	inv = new(Uint).Mul(inv, new(Uint).Sub(two, new(Uint).Mul(denominator, inv))) // inverse mod 2**32
+	inv = new(Uint).Mul(inv, new(Uint).Sub(two, new(Uint).Mul(denominator, inv))) // inverse mod 2**64
+	inv = new(Uint).Mul(inv, new(Uint).Sub(two, new(Uint).Mul(denominator, inv))) // inverse mod 2**128
+	inv = new(Uint).Mul(inv, new(Uint).Sub(two, new(Uint).Mul(denominator, inv))) // inverse mod 2**256
 
 	// multiply [hi, lo] with inv in mod 2^256 -> final quotient
 	// flip twos to 2^256/twos and multiply + shift hi and or with lo
@@ -60,7 +64,7 @@ func MulDiv(
 			new(Uint).Sub(Zero(), twos),
 			twos,
 		),
-		One(),
+		one,
 	)
 	lo = new(Uint).Or(lo, new(Uint).Mul(hi, twos))
 
@@ -75,7 +79,7 @@ func MulDivRoundingUp(
 
 	if new(Uint).MulMod(a, b, denominator).Gt(Zero()) {
 		if !(result.Lt(MustFromDecimal(MAX_UINT256))) { // require(result < MAX_UINT256)
-			panic(ufmt.Sprintf("uint256_MulDivRoundingUp()__result(%s) < MAX_UINT256", result.ToString()))
+			panic(ufmt.Sprintf("result(%s) < MAX_UINT256", result.ToString()))
 		}
 
 		result = new(Uint).Add(result, One())
@@ -106,7 +110,7 @@ func gt(x, y *Uint) *Uint {
 // mul256 returns the 512-bit product of a * b in two 256-bit parts: (hi, lo).
 // a, b, hi, lo are all assumed to be little-endian [4]uint64.
 func mul256(a, b *Uint) (hi, lo *Uint) {
-	var p [8]uint64
+	var p [8]uint64 // 512 bits
 
 	for i := 0; i < 4; i++ {
 		carry := uint64(0)
