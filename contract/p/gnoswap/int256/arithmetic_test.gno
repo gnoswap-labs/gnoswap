@@ -181,7 +181,7 @@ func TestAddDeltaOverflow(t *testing.T) {
 	}
 }
 
-func TestInt_AddOverflow(t *testing.T) {
+func TestAddOverflow(t *testing.T) {
 	maxInt256 := MaxInt256()
 	minInt256 := MinInt256()
 
@@ -422,6 +422,113 @@ func TestMul(t *testing.T) {
 	}
 }
 
+func TestInt_SubOverflow(t *testing.T) {
+	maxInt256 := MaxInt256()
+	minInt256 := MinInt256()
+
+	tests := []struct {
+		name         string
+		x            *Int
+		y            *Int
+		wantResult   string
+		wantOverflow bool
+	}{
+		{
+			name:         "positive - positive (no overflow)",
+			x:            NewInt(200),
+			y:            NewInt(100),
+			wantResult:   "100",
+			wantOverflow: false,
+		},
+		{
+			name:         "negative - negative (no overflow)",
+			x:            NewInt(-200),
+			y:            NewInt(-300),
+			wantResult:   "100",
+			wantOverflow: false,
+		},
+		{
+			name:         "positive - negative (no overflow)",
+			x:            NewInt(200),
+			y:            NewInt(-100),
+			wantResult:   "300",
+			wantOverflow: false,
+		},
+		{
+			name:         "max_int256 - 0",
+			x:            maxInt256,
+			y:            Zero(),
+			wantResult:   maxInt256.ToString(),
+			wantOverflow: false,
+		},
+		{
+			name:         "min_int256 - 0",
+			x:            minInt256,
+			y:            Zero(),
+			wantResult:   minInt256.ToString(),
+			wantOverflow: false,
+		},
+		{
+			name:         "max_int256 - (-1)", // max_int256 + 1 -> overflow
+			x:            maxInt256,
+			y:            NewInt(-1),
+			wantResult:   "",
+			wantOverflow: true,
+		},
+		{
+			name:         "min_int256 - 1", // min_int256 - 1 -> overflow
+			x:            minInt256,
+			y:            One(),
+			wantResult:   "",
+			wantOverflow: true,
+		},
+		{
+			name:         "0 - 0",
+			x:            Zero(),
+			y:            Zero(),
+			wantResult:   "0",
+			wantOverflow: false,
+		},
+		{
+			name:         "min_int256 - min_int256",
+			x:            minInt256,
+			y:            minInt256,
+			wantResult:   "0",
+			wantOverflow: false,
+		},
+		{
+			name:         "max_int256 - max_int256",
+			x:            maxInt256,
+			y:            maxInt256,
+			wantResult:   "0",
+			wantOverflow: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// z := new(Int)
+			z := New()
+			gotResult, gotOverflow := z.SubOverflow(tt.x, tt.y)
+
+			if gotOverflow != tt.wantOverflow {
+				t.Errorf("overflow = %v, want %v", gotOverflow, tt.wantOverflow)
+				return
+			}
+
+			if !gotOverflow {
+				if gotResult == nil {
+					t.Error("unexpected nil result for non-overflow case")
+					return
+				}
+				if gotResult.ToString() != tt.wantResult {
+					t.Errorf("result = %v, want %v", gotResult.ToString(), tt.wantResult)
+				}
+			}
+		})
+	}
+}
+
 func TestMulUint256(t *testing.T) {
 	tests := []struct {
 		x, y, want string
@@ -463,6 +570,144 @@ func TestMulUint256(t *testing.T) {
 		if got.Neq(want) {
 			t.Errorf("MulUint256(%s, %s) = %v, want %v", tc.x, tc.y, got.ToString(), want.ToString())
 		}
+	}
+}
+
+func TestInt_MulOverflow(t *testing.T) {
+	maxInt256 := MaxInt256()
+	minInt256 := MinInt256()
+
+	tests := []struct {
+		name         string
+		x            *Int
+		y            *Int
+		wantResult   string
+		wantOverflow bool
+	}{
+		{
+			name:         "positive * positive (no overflow)",
+			x:            NewInt(100),
+			y:            NewInt(100),
+			wantResult:   "10000",
+			wantOverflow: false,
+		},
+		{
+			name:         "negative * negative (no overflow)",
+			x:            NewInt(-100),
+			y:            NewInt(-100),
+			wantResult:   "10000",
+			wantOverflow: false,
+		},
+		{
+			name:         "positive * negative (no overflow)",
+			x:            NewInt(100),
+			y:            NewInt(-100),
+			wantResult:   "-10000",
+			wantOverflow: false,
+		},
+		{
+			name:         "0 * positive",
+			x:            Zero(),
+			y:            NewInt(100),
+			wantResult:   "0",
+			wantOverflow: false,
+		},
+		{
+			name:         "positive * 0",
+			x:            NewInt(100),
+			y:            Zero(),
+			wantResult:   "0",
+			wantOverflow: false,
+		},
+		{
+			name:         "0 * 0",
+			x:            Zero(),
+			y:            Zero(),
+			wantResult:   "0",
+			wantOverflow: false,
+		},
+		{
+			name:         "max_int256 * 1",
+			x:            maxInt256,
+			y:            One(),
+			wantResult:   maxInt256.ToString(),
+			wantOverflow: false,
+		},
+		{
+			name:         "min_int256 * 1",
+			x:            minInt256,
+			y:            One(),
+			wantResult:   minInt256.ToString(),
+			wantOverflow: false,
+		},
+		{
+			name:         "min_int256 * -1",
+			x:            minInt256,
+			y:            NewInt(-1),
+			wantResult:   "", // overflow because abs(min_int256) > max_int256
+			wantOverflow: true,
+		},
+		{
+			name:         "max_int256 * 2",
+			x:            maxInt256,
+			y:            NewInt(2),
+			wantResult:   "",
+			wantOverflow: true,
+		},
+		{
+			name:         "min_int256 * 2",
+			x:            minInt256,
+			y:            NewInt(2),
+			wantResult:   "",
+			wantOverflow: true,
+		},
+		{
+			name:         "half_max * 2",
+			x:            MustFromDecimal("28948022309329048855892746252171976963317496332820282019728792003956564819983"), // (2^255-1)/2
+			y:            NewInt(2),
+			wantResult:   "",
+			wantOverflow: true,
+		},
+		{
+			name:         "(half_max + 1) * 2",
+			x:            new(Int).Add(new(Int).Div(maxInt256, NewInt(2)), One()),
+			y:            NewInt(2),
+			wantResult:   "",
+			wantOverflow: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			z := new(Int)
+			gotResult, gotOverflow := z.MulOverflow(tt.x, tt.y)
+
+			if gotOverflow != tt.wantOverflow {
+				t.Errorf("overflow = %v, want %v", gotOverflow, tt.wantOverflow)
+				return
+			}
+
+			if !gotOverflow {
+				if gotResult == nil {
+					t.Error("unexpected nil result for non-overflow case")
+					return
+				}
+				if gotResult.ToString() != tt.wantResult {
+					t.Errorf("result = %v, want %v", gotResult.ToString(), tt.wantResult)
+				}
+			}
+
+			// 곱셈의 교환법칙 테스트 (오버플로우가 없는 경우만)
+			if !tt.wantOverflow {
+				reverseResult, reverseOverflow := z.MulOverflow(tt.y, tt.x)
+				if reverseOverflow != gotOverflow {
+					t.Error("multiplication is not commutative for overflow")
+				}
+				if reverseResult.ToString() != gotResult.ToString() {
+					t.Error("multiplication is not commutative for result")
+				}
+			}
+		})
 	}
 }
 

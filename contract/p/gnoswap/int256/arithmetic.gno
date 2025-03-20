@@ -36,7 +36,7 @@ func (z *Int) AddOverflow(x, y *Int) (*Int, bool) {
 		var overflow bool
 		z.abs, overflow = z.abs.AddOverflow(x.abs, y.abs)
 		z.neg = x.neg
-		
+
 		if overflow {
 			return z, true
 		}
@@ -154,6 +154,21 @@ func (z *Int) SubUint256(x *Int, y *uint256.Uint) *Int {
 	return z
 }
 
+// SubOverflow returns z = x - y, and true if overflow occurs.
+//
+// The overflow can be happen when subtracting a positive number from
+// a minimum or a negative number from a maximum.
+func (z *Int) SubOverflow(x, y *Int) (*Int, bool) {
+	z = z.initiateAbs()
+
+	// must keep the original value of y
+	negY := y.Clone()
+	negY.neg = !y.neg && !y.IsZero() // reverse sign if y is not zero
+
+	// x + (-y)
+	return z.AddOverflow(x, negY)
+}
+
 // Mul sets z to the product x*y and returns z.
 func (z *Int) Mul(x, y *Int) *Int {
 	z = z.initiateAbs()
@@ -174,6 +189,45 @@ func (z *Int) MulUint256(x *Int, y *uint256.Uint) *Int {
 		z.neg = x.neg
 	}
 	return z
+}
+
+// MulOverflow calculates z = x * y, and returns z and true if overflow occurs.
+//
+// In general, multiplication is more likely to overflow frequently, especially
+// when multiplying large numbers or when the result of the product
+// of a negative and a positive number exceeds the range.
+func (z *Int) MulOverflow(x, y *Int) (*Int, bool) {
+	z = z.initiateAbs()
+
+	// always 0. no need to check overflow
+	if x.IsZero() || y.IsZero() {
+		z.abs.Clear()
+		z.neg = false
+		return z, false
+	}
+
+	// multiply with absolute values
+	absResult, overflow := z.abs.MulOverflow(x.abs, y.abs)
+	z.abs = absResult
+
+	// calculate the result's sign
+	z.neg = x.neg != y.neg
+
+	if overflow {
+		return z, true
+	}
+
+	if z.neg {
+		if z.abs.Cmp(MinInt256().abs) > 0 {
+			return z, true
+		}
+	} else {
+		if z.abs.Cmp(MaxInt256().abs) > 0 {
+			return z, true
+		}
+	}
+
+	return z, false
 }
 
 // Div sets z to the quotient x/y for y != 0 and returns z.
