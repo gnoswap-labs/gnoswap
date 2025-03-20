@@ -1,0 +1,385 @@
+package position
+
+import (
+	"std"
+	"strconv"
+	"testing"
+	"time"
+
+	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
+	"gno.land/p/gnoswap/consts"
+
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/gns"
+	pl "gno.land/r/gnoswap/v1/pool"
+	rr "gno.land/r/gnoswap/v1/router"
+)
+
+func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
+	aliceAddr := testutils.TestAddress("alice")
+	bobAddr := testutils.TestAddress("bob")
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+	poolAddr, _ := access.GetAddress(access.ROLE_POOL)
+	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+
+	aliceRealm := std.NewUserRealm(aliceAddr)
+	bobRealm := std.NewUserRealm(bobAddr)
+	adminRealm := std.NewUserRealm(adminAddr)
+
+	defaultTick := int32(1)
+	token0Path := "gno.land/r/demo/wugnot"
+	token1Path := "gno.land/r/gnoswap/v1/gns"
+	fee := uint32(3000)
+
+	t.Run("distribute gns token ", func(t *testing.T) {
+		//println("============ Distribute GNS Token ============")
+		tokenAmountForDistribute := uint64(1000000000000)
+		// 0. Set realm to admin
+		std.TestSetRealm(adminRealm)
+		// 1. transfer gns
+		gns.Transfer(aliceAddr, tokenAmountForDistribute)
+		gns.Transfer(bobAddr, tokenAmountForDistribute)
+		uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(aliceAddr))
+		uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(bobAddr))
+	})
+
+	t.Run("distribute wugnot token ", func(t *testing.T) {
+		//println("============ Distribute wugnot Token ============")
+		tokenAmountForDistribute := int64(1000000000000)
+		fullTokenAmount := tokenAmountForDistribute * 1000000
+
+		// 0. Set realm to admin
+		std.TestSetRealm(adminRealm)
+
+		// 1. transfer gns
+		std.TestSetOriginCaller(adminAddr)
+		newCoins := std.Coins{{"ugnot", fullTokenAmount}}
+		std.TestIssueCoins(adminAddr, newCoins)
+		std.TestSetOriginSend(newCoins, nil)
+		banker := std.NewBanker(std.BankerTypeRealmSend)
+		banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
+		wugnot.Deposit()
+		wugnot.Transfer(aliceAddr, uint64(tokenAmountForDistribute))
+		wugnot.Transfer(bobAddr, uint64(tokenAmountForDistribute))
+
+		uassert.Equal(t, uint64(tokenAmountForDistribute), wugnot.BalanceOf(aliceAddr))
+		uassert.Equal(t, uint64(tokenAmountForDistribute), wugnot.BalanceOf(bobAddr))
+	})
+
+	t.Run("create pool - wugnot-gns-3000", func(t *testing.T) {
+		//println("============ CreatePool (wugnot:gns:3000) ============")
+		// 0. Set realm to admin
+		std.TestSetRealm(adminRealm)
+		// 1. Approve gns
+		gns.Approve(poolAddr, consts.UINT64_MAX)
+		// 2. Create pool
+		pl.CreatePool(token0Path, token1Path, fee, common.TickMathGetSqrtRatioAtTick(defaultTick).ToString())
+		poolPath := pl.GetPoolPath(token0Path, token1Path, fee)
+		pool := pl.GetPoolFromPoolPath(poolPath)
+		uassert.Equal(t, poolPath, pool.PoolPath())
+		uassert.Equal(t, token0Path, pool.Token0Path())
+		uassert.Equal(t, token1Path, pool.Token1Path())
+		uassert.Equal(t, fee, pool.Fee())
+		uassert.Equal(t, "0", pool.BalanceToken0().ToString())
+		uassert.Equal(t, "0", pool.BalanceToken1().ToString())
+		uassert.Equal(t, int32(60), pool.TickSpacing())
+		uassert.Equal(t, "11505743598341114571880798222544994", pool.MaxLiquidityPerTick().ToString())
+		uassert.Equal(t, "79232123823359799118286999568", pool.Slot0SqrtPriceX96().ToString())
+		uassert.Equal(t, int32(1), common.TickMathGetTickAtSqrtRatio(pool.Slot0SqrtPriceX96()))
+		uassert.Equal(t, int32(1), pool.Slot0Tick())
+		uassert.Equal(t, uint8(0), pool.Slot0FeeProtocol())
+		uassert.Equal(t, true, pool.Slot0Unlocked())
+		uassert.Equal(t, "0", pool.FeeGrowthGlobal0X128().ToString())
+		uassert.Equal(t, "0", pool.FeeGrowthGlobal1X128().ToString())
+		uassert.Equal(t, "0", pool.ProtocolFeesToken0().ToString())
+		uassert.Equal(t, "0", pool.ProtocolFeesToken1().ToString())
+		uassert.Equal(t, "0", pool.Liquidity().ToString())
+
+		poolInfo := pl.ApiGetPool(pl.GetPoolPath(token0Path, token1Path, fee))
+		uassert.Equal(t, `{"stat":{"height":123,"timestamp":1234567890},"response":{"poolPath":"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000","token0Path":"gno.land/r/demo/wugnot","token1Path":"gno.land/r/gnoswap/v1/gns","token0Balance":"0","token1Balance":"0","fee":3000,"tickSpacing":60,"maxLiquidityPerTick":"11505743598341114571880798222544994","sqrtPriceX96":"79232123823359799118286999568","tick":1,"feeProtocol":0,"unlocked":true,"feeGrowthGlobal0X128":"0","feeGrowthGlobal1X128":"0","token0ProtocolFee":"0","token1ProtocolFee":"0","liquidity":"0","ticks":{},"tickBitmaps":{},"positions":[]}}`,
+			poolInfo)
+	})
+
+	t.Run("Distribute Gns Token", func(t *testing.T) {
+		//println("============ Distribute GNS Token ============")
+		tokenAmountForDistribute := uint64(1000000000)
+		// 0. Set realm to admin
+		std.TestSetRealm(adminRealm)
+		// 1. transfer gns
+		gns.Transfer(aliceAddr, tokenAmountForDistribute)
+		gns.Transfer(bobAddr, tokenAmountForDistribute)
+	})
+
+	t.Run("Mint New Position", func(t *testing.T) {
+		//println("============ Mint Position (to wugnot:gns:3000, token0:50000000, token1: 50000000) ============")
+		lowerTick := int32(-6960)
+		upperTick := int32(6960)
+		amount0Desired := "50000000"
+		amount1Desired := "50000000"
+		amount0Min := "0"
+		amount1Min := "0"
+		maxTimeout := time.Now().Add(time.Hour).Unix()
+		referrerAddr := ""
+
+		// 0. Set realm to alice
+		std.TestSetRealm(aliceRealm)
+		// 1. Approve wugnot
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		// 2. Approve gns
+		gns.Approve(poolAddr, consts.UINT64_MAX)
+		// 3. Mint position
+		beforeWugnotBalance := wugnot.BalanceOf(aliceAddr)
+		beforeGnsBalance := gns.BalanceOf(aliceAddr)
+		id, liquidityStr, amount0Str, amount1Str := Mint(token0Path,
+			token1Path,
+			fee,
+			lowerTick,
+			upperTick,
+			amount0Desired,
+			amount1Desired,
+			amount0Min,
+			amount1Min,
+			maxTimeout,
+			aliceAddr,
+			aliceAddr,
+			referrerAddr)
+		uassert.Equal(t, uint64(1), id)
+		uassert.Equal(t, "49982991", amount0Str)
+		uassert.Equal(t, amount1Desired, amount1Str)
+		uassert.Equal(t, "170103415", liquidityStr)
+
+		pool := pl.GetPool(token0Path, token1Path, fee)
+		sqrtPriceX96 := new(u256.Uint).Set(pool.Slot0SqrtPriceX96())
+		sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(lowerTick)
+		sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(upperTick)
+		amount0U256 := u256.MustFromDecimal(amount0Desired)
+		amount1U256 := u256.MustFromDecimal(amount1Desired)
+		calculatedLiquidity := common.GetLiquidityForAmounts(
+			sqrtPriceX96,
+			sqrtRatioAX96,
+			sqrtRatioBX96,
+			amount0U256,
+			amount1U256,
+		)
+		//println("calculatedLiquidity (sqrtPriceX96(", sqrtPriceX96.ToString(), "),"+
+		//	"sqrtRatioAX96(", sqrtRatioAX96.ToString(), "),"+
+		//	"sqrtRatioBX96(", sqrtRatioBX96.ToString(), "),"+
+		//	"amount0Desired(", amount0U256.ToString(), "),"+
+		//	"amount1Desired(", amount1U256.ToString(), ") : ", calculatedLiquidity.ToString())
+		uassert.Equal(t, calculatedLiquidity.ToString(), liquidityStr)
+		liquidityFroPositionOne := u256.MustFromDecimal(liquidityStr)
+		calculatedAmount0, calculatedAmount1 := common.GetAmountsForLiquidity(sqrtPriceX96, sqrtRatioAX96, sqrtRatioBX96, liquidityFroPositionOne)
+		//println("calculated Amounts (liquidityForPositionOne(", liquidityFroPositionOne.ToString(), ") : ",
+		//	"calculatedAmount0(", calculatedAmount0, ") : ",
+		//	"calculatedAmount1(", calculatedAmount1, ")")
+		afterWugnotBalance := wugnot.BalanceOf(aliceAddr)
+		afterGnsBalance := gns.BalanceOf(aliceAddr)
+		//println("beforeWugnotBalance : ", beforeWugnotBalance, ", afterWugnotBalance : ", afterWugnotBalance)
+		//println("beforeGnsBalance : ", beforeGnsBalance, ", afterGnsBalance : ", afterGnsBalance)
+		//println("diff wugnot : ", beforeWugnotBalance-afterWugnotBalance)
+		//println("diff gns : ", beforeGnsBalance-afterGnsBalance)
+		uassert.Equal(t, strconv.FormatUint(beforeWugnotBalance-afterWugnotBalance, 10), amount0Str)
+		uassert.Equal(t, strconv.FormatUint(beforeGnsBalance-afterGnsBalance, 10), amount1Str)
+
+		posIdOne := ApiGetPosition(id)
+		uassert.Equal(t, `{"stat":{"height":123,"timestamp":1234567890},"response":[{"lpPositionId":1,"burned":false,"owner":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","operator":"g100000000000000000000000000000000dnmcnx","poolKey":"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000","tickLower":-6960,"tickUpper":6960,"liquidity":"170103415","feeGrowthInside0LastX128":"0","feeGrowthInside1LastX128":"0","token0Owed":"0","token1Owed":"0","token0Balance":"49982991","token1Balance":"50000000","calculatedToken0Balance":"49982990","calculatedToken1Balance":"49999999","fee0Unclaimed":"0","fee1Unclaimed":"0"}]}`,
+			posIdOne)
+
+		poolInfo := pl.ApiGetPool(pool.PoolPath())
+		uassert.Equal(t, `{"stat":{"height":123,"timestamp":1234567890},"response":{"poolPath":"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000","token0Path":"gno.land/r/demo/wugnot","token1Path":"gno.land/r/gnoswap/v1/gns","token0Balance":"49982991","token1Balance":"50000000","fee":3000,"tickSpacing":60,"maxLiquidityPerTick":"11505743598341114571880798222544994","sqrtPriceX96":"79232123823359799118286999568","tick":1,"feeProtocol":0,"unlocked":true,"feeGrowthGlobal0X128":"0","feeGrowthGlobal1X128":"0","token0ProtocolFee":"0","token1ProtocolFee":"0","liquidity":"170103415","ticks":{"-6960":{"liquidityGross":"170103415","liquidityNet":"170103415","feeGrowthOutside0X128":"0","feeGrowthOutside1X128":"0","tickCumulativeOutside":0,"secondsPerLiquidityOutsideX":"0","secondsOutside":0,"initialized":true},"6960":{"liquidityGross":"170103415","liquidityNet":"-170103415","feeGrowthOutside0X128":"0","feeGrowthOutside1X128":"0","tickCumulativeOutside":0,"secondsPerLiquidityOutsideX":"0","secondsOutside":0,"initialized":true}},"tickBitmaps":{},"positions":[{"owner":"g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5","tickLower":-6960,"tickUpper":6960,"liquidity":"170103415","token0Owed":"0","token1Owed":"0"}]}}`,
+			poolInfo)
+	})
+
+	t.Run("Mint New Position - 2", func(t *testing.T) {
+		//println("============ Mint Position (to wugnot:gns:3000, token0: 99999999, token1: 23027406) ============")
+		lowerTick := int32(-2160)
+		upperTick := int32(11760)
+		amount0Desired := "99999999"
+		amount1Desired := "23027406"
+		amount0Min := "0"
+		amount1Min := "0"
+		maxTimeout := time.Now().Add(time.Hour).Unix()
+		referrerAddr := ""
+
+		// 0. Set realm to bob
+		std.TestSetRealm(bobRealm)
+		// 1. Approve wugnot
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		// 2. Approve gns
+		gns.Approve(poolAddr, consts.UINT64_MAX)
+		// 3. Mint position
+		beforeWugnotBalance := wugnot.BalanceOf(bobAddr)
+		beforeGnsBalance := gns.BalanceOf(bobAddr)
+		id, liquidityStr, amount0Str, amount1Str := Mint(token0Path,
+			token1Path,
+			fee,
+			lowerTick,
+			upperTick,
+			amount0Desired,
+			amount1Desired,
+			amount0Min,
+			amount1Min,
+			maxTimeout,
+			bobAddr,
+			bobAddr,
+			referrerAddr)
+		uassert.Equal(t, uint64(2), id)
+		uassert.Equal(t, "99939940", amount0Str)
+		uassert.Equal(t, amount1Desired, amount1Str)
+		uassert.Equal(t, "224838465", liquidityStr)
+		pool := pl.GetPool(token0Path, token1Path, fee)
+		sqrtPriceX96 := new(u256.Uint).Set(pool.Slot0SqrtPriceX96())
+		sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(lowerTick)
+		sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(upperTick)
+		amount0U256 := u256.MustFromDecimal(amount0Desired)
+		amount1U256 := u256.MustFromDecimal(amount1Desired)
+		calculatedLiquidity := common.GetLiquidityForAmounts(
+			sqrtPriceX96,
+			sqrtRatioAX96,
+			sqrtRatioBX96,
+			amount0U256,
+			amount1U256,
+		)
+		//println("calculatedLiquidity : ", calculatedLiquidity.ToString())
+		uassert.Equal(t, calculatedLiquidity.ToString(), liquidityStr)
+		liquidityFroPositionOne := u256.MustFromDecimal(liquidityStr)
+		calculatedAmount0, calculatedAmount1 := common.GetAmountsForLiquidity(sqrtPriceX96, sqrtRatioAX96, sqrtRatioBX96, liquidityFroPositionOne)
+		//println("sqrtPriceX96 : ", sqrtPriceX96.ToString())
+		//println("sqrtRatioAX96 : ", sqrtRatioAX96.ToString())
+		//println("sqrtRatioBX96 : ", sqrtRatioBX96.ToString())
+		//println("liquidityFroPositionOne : ", liquidityFroPositionOne.ToString())
+
+		//println("calculatedAmount0 : ", calculatedAmount0)
+		//println("calculatedAmount1 : ", calculatedAmount1)
+		afterWugnotBalance := wugnot.BalanceOf(bobAddr)
+		afterGnsBalance := gns.BalanceOf(bobAddr)
+		//println("beforeWugnotBalance : ", beforeWugnotBalance, ", afterWugnotBalance : ", afterWugnotBalance)
+		//println("beforeGnsBalance : ", beforeGnsBalance, ", afterGnsBalance : ", afterGnsBalance)
+		//println("diff wugnot : ", beforeWugnotBalance-afterWugnotBalance)
+		//println("diff gns : ", beforeGnsBalance-afterGnsBalance)
+		uassert.Equal(t, strconv.FormatUint(beforeWugnotBalance-afterWugnotBalance, 10), amount0Str)
+		uassert.Equal(t, strconv.FormatUint(beforeGnsBalance-afterGnsBalance, 10), amount1Str)
+
+		posIdTwo := ApiGetPosition(id)
+		uassert.Equal(t, `{"stat":{"height":123,"timestamp":1234567890},"response":[{"lpPositionId":2,"burned":false,"owner":"g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu","operator":"g100000000000000000000000000000000dnmcnx","poolKey":"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000","tickLower":-2160,"tickUpper":11760,"liquidity":"224838465","feeGrowthInside0LastX128":"0","feeGrowthInside1LastX128":"0","token0Owed":"0","token1Owed":"0","token0Balance":"99939940","token1Balance":"23027406","calculatedToken0Balance":"99939939","calculatedToken1Balance":"23027405","fee0Unclaimed":"0","fee1Unclaimed":"0"}]}`,
+			posIdTwo)
+		poolInfo := pl.ApiGetPool(pool.PoolPath())
+		uassert.Equal(t, `{"stat":{"height":123,"timestamp":1234567890},"response":{"poolPath":"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000","token0Path":"gno.land/r/demo/wugnot","token1Path":"gno.land/r/gnoswap/v1/gns","token0Balance":"149922931","token1Balance":"73027406","fee":3000,"tickSpacing":60,"maxLiquidityPerTick":"11505743598341114571880798222544994","sqrtPriceX96":"79232123823359799118286999568","tick":1,"feeProtocol":0,"unlocked":true,"feeGrowthGlobal0X128":"0","feeGrowthGlobal1X128":"0","token0ProtocolFee":"0","token1ProtocolFee":"0","liquidity":"394941880","ticks":{"-2160":{"liquidityGross":"224838465","liquidityNet":"224838465","feeGrowthOutside0X128":"0","feeGrowthOutside1X128":"0","tickCumulativeOutside":0,"secondsPerLiquidityOutsideX":"0","secondsOutside":0,"initialized":true},"-6960":{"liquidityGross":"170103415","liquidityNet":"170103415","feeGrowthOutside0X128":"0","feeGrowthOutside1X128":"0","tickCumulativeOutside":0,"secondsPerLiquidityOutsideX":"0","secondsOutside":0,"initialized":true},"11760":{"liquidityGross":"224838465","liquidityNet":"-224838465","feeGrowthOutside0X128":"0","feeGrowthOutside1X128":"0","tickCumulativeOutside":0,"secondsPerLiquidityOutsideX":"0","secondsOutside":0,"initialized":true},"6960":{"liquidityGross":"170103415","liquidityNet":"-170103415","feeGrowthOutside0X128":"0","feeGrowthOutside1X128":"0","tickCumulativeOutside":0,"secondsPerLiquidityOutsideX":"0","secondsOutside":0,"initialized":true}},"tickBitmaps":{},"positions":[{"owner":"g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5","tickLower":-2160,"tickUpper":11760,"liquidity":"224838465","token0Owed":"0","token1Owed":"0"},{"owner":"g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5","tickLower":-6960,"tickUpper":6960,"liquidity":"170103415","token0Owed":"0","token1Owed":"0"}]}}`,
+			poolInfo)
+	})
+
+	t.Run("Swap gns -> wugnot", func(t *testing.T) {
+		//println("============ Swap (gns -> wugnot) ============")
+		inputToken := "gno.land/r/gnoswap/v1/gns"
+		outputToken := "gno.land/r/demo/wugnot"
+		amountIn := "20000000"
+		routePath := "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:3000"
+		quote := "100"
+		amountOutMin := "15000000"
+		deadline := time.Now().Add(time.Hour).Unix()
+		referrerAddr := ""
+
+		// 0. Set realm to admin
+		std.TestSetRealm(adminRealm)
+		// 1. Approve wugnot
+		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		// 2. Approve gns
+		gns.Approve(routerAddr, consts.UINT64_MAX)
+		// 3. Mint position
+		beforeWugnotBalance := wugnot.BalanceOf(adminAddr)
+		beforeGnsBalance := gns.BalanceOf(adminAddr)
+
+		amountIn, amountOut := rr.ExactInSwapRoute(
+			inputToken,
+			outputToken,
+			amountIn,
+			routePath,
+			quote,
+			amountOutMin,
+			deadline,
+			referrerAddr,
+		)
+		//println("amountIn : ", amountIn)
+		//println("amountOut : ", amountOut)
+		afterWugnotBalance := wugnot.BalanceOf(adminAddr)
+		afterGnsBalance := gns.BalanceOf(adminAddr)
+		//println("beforeWugnotBalance : ", beforeWugnotBalance, ", afterWugnotBalance : ", afterWugnotBalance)
+		//println("beforeGnsBalance : ", beforeGnsBalance, ", afterGnsBalance : ", afterGnsBalance)
+		//println("diff wugnot : ", afterWugnotBalance-beforeWugnotBalance)
+		//println("diff gns : ", beforeGnsBalance-afterGnsBalance)
+		uassert.Equal(t, strconv.FormatUint(beforeGnsBalance-afterGnsBalance, 10), amountIn)
+		num, _ := strconv.ParseInt(amountOut, 10, 64)
+		if num < 0 {
+			num = num * (-1)
+		}
+		uassert.Equal(t, strconv.FormatUint(afterWugnotBalance-beforeWugnotBalance, 10), strconv.FormatInt(num, 10))
+
+		posIdOne := MustGetPosition(uint64(1))
+		poolForOne := pl.GetPoolFromPoolPath(posIdOne.poolKey)
+		calculatedToken0BalanceForOne, calculatedToken1BalanceForOne := common.GetAmountsForLiquidity(
+			poolForOne.Slot0SqrtPriceX96(),
+			common.TickMathGetSqrtRatioAtTick(posIdOne.tickLower),
+			common.TickMathGetSqrtRatioAtTick(posIdOne.tickUpper),
+			posIdOne.liquidity,
+		)
+		unclaimedFee0ForOne := i256.Zero()
+		unclaimedFee1ForOne := i256.Zero()
+		burned := isBurned(uint64(1))
+		if !burned {
+			unclaimedFee0ForOne, unclaimedFee1ForOne = unclaimedFee(uint64(1))
+		}
+		//println("unClaimedFee for position #1 : Fee0(", unclaimedFee0ForOne.ToString(), "), Fee1(", unclaimedFee1ForOne.ToString(), ")")
+
+		posIdTwo := MustGetPosition(uint64(2))
+		poolForTwo := pl.GetPoolFromPoolPath(posIdTwo.poolKey)
+		calculatedToken0BalanceForTwo, calculatedToken1BalanceForTwo := common.GetAmountsForLiquidity(
+			poolForTwo.Slot0SqrtPriceX96(),
+			common.TickMathGetSqrtRatioAtTick(posIdTwo.tickLower),
+			common.TickMathGetSqrtRatioAtTick(posIdTwo.tickUpper),
+			posIdTwo.liquidity,
+		)
+		unclaimedFee0ForTwo := i256.Zero()
+		unclaimedFee1ForTwo := i256.Zero()
+		burned = isBurned(uint64(2))
+		if !burned {
+			unclaimedFee0ForTwo, unclaimedFee1ForTwo = unclaimedFee(uint64(2))
+		}
+		//println("unClaimedFee for position #2 : Fee0(", unclaimedFee0ForTwo.ToString(), "), Fee1(", unclaimedFee1ForTwo.ToString(), ")")
+
+		token0BalanceForOne := i256.MustFromDecimal(calculatedToken0BalanceForOne)
+		token1BalanceForOne := i256.MustFromDecimal(calculatedToken1BalanceForOne)
+		token0BalanceForTwo := i256.MustFromDecimal(calculatedToken0BalanceForTwo)
+		token1BalanceForTwo := i256.MustFromDecimal(calculatedToken1BalanceForTwo)
+		sumOfToken0BalanceByPosition := i256.Zero().Add(token0BalanceForOne, token0BalanceForTwo)
+		sumOfToken1BalanceByPosition := i256.Zero().Add(token1BalanceForOne, token1BalanceForTwo)
+		sumOfToken0UnClaimed := i256.Zero().Add(unclaimedFee0ForOne, unclaimedFee0ForTwo)
+		sumOfToken1UnClaimed := i256.Zero().Add(unclaimedFee1ForOne, unclaimedFee1ForTwo)
+
+		sumOfToken0Balance := i256.Zero().Add(sumOfToken0BalanceByPosition, sumOfToken0UnClaimed)
+		sumOfToken1Balance := i256.Zero().Add(sumOfToken1BalanceByPosition, sumOfToken1UnClaimed)
+
+		//println("sum of token0 balance : ", sumOfToken0Balance.ToString())
+		//println("sum of token1 balance : ", sumOfToken1Balance.ToString())
+		pool := pl.GetPool(outputToken, inputToken, fee)
+		//println("token0Balance by pool : ", pool.BalanceToken0().ToString())
+		//println("token1Balance by pool : ", pool.BalanceToken1().ToString())
+
+		poolBalanceToken0 := pool.BalanceToken0()
+		poolBalanceToken1 := pool.BalanceToken1()
+
+		diffToken0 := i256.Zero().Sub(i256.FromUint256(poolBalanceToken0), sumOfToken0Balance)
+		diffToken1 := i256.Zero().Sub(i256.FromUint256(poolBalanceToken1), sumOfToken1Balance)
+		uassert.Equal(t, true, diffToken0.Lt(i256.NewInt(10)))
+		uassert.Equal(t, true, diffToken1.Lt(i256.NewInt(10)))
+		//println("(1)", ApiGetPosition(uint64(1)))
+		//println("")
+		//println("(2)", ApiGetPosition(uint64(2)))
+		//println("")
+		//println("pool ", pl.ApiGetPool(pool.PoolPath()))
+	})
+}
