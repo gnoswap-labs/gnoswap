@@ -73,6 +73,29 @@ func (z *Int) Neg(x *Int) *Int {
 	return z
 }
 
+// NegOverflow returns z = -x, and true if overflow occurs.
+//
+// The overflow can be happen when negating a minimum or a maximum value.
+func (z *Int) NegOverflow(x *Int) (*Int, bool) {
+	z = z.initiateAbs()
+
+	if x.IsZero() {
+		z.abs.Clear()
+		z.neg = false
+		return z, false
+	}
+
+	if x.neg && x.abs.Eq(MinInt256().abs) {
+		z.Set(x) // must preserve the original value
+		return z, true
+	}
+
+	z.abs.Set(x.abs)
+	z.neg = !x.neg
+
+	return z, false
+}
+
 // Set sets z to x and returns z.
 func (z *Int) Set(x *Int) *Int {
 	z.abs.Set(x.abs)

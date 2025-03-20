@@ -128,6 +128,100 @@ func TestNeg(t *testing.T) {
 	}
 }
 
+func TestInt_NegOverflow(t *testing.T) {
+	maxInt256 := MaxInt256()
+	minInt256 := MinInt256()
+
+	negMaxInt256 := New().Neg(maxInt256)
+
+	tests := []struct {
+		name         string
+		x            *Int
+		wantResult   string
+		wantOverflow bool
+	}{
+		{
+			name:         "negate zero",
+			x:            Zero(),
+			wantResult:   "0",
+			wantOverflow: false,
+		},
+		{
+			name:         "negate positive",
+			x:            NewInt(100),
+			wantResult:   "-100",
+			wantOverflow: false,
+		},
+		{
+			name:         "negate negative",
+			x:            NewInt(-100),
+			wantResult:   "100",
+			wantOverflow: false,
+		},
+		{
+			name:         "negate max_int256",
+			x:            maxInt256,
+			wantResult:   negMaxInt256.ToString(),
+			wantOverflow: false,
+		},
+		{
+			name:         "negate min_int256",
+			x:            minInt256,
+			wantResult:   minInt256.ToString(), // must preserve the original value
+			wantOverflow: true,
+		},
+		{
+			name:         "negate (min_int256 + 1)",
+			x:            new(Int).Add(minInt256, One()),
+			wantResult:   new(Int).Sub(maxInt256, Zero()).ToString(),
+			wantOverflow: false,
+		},
+		{
+			name:         "negate (max_int256 - 1)",
+			x:            MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819966"), // max_int256 - 1
+			wantResult:   "-57896044618658097711785492504343953926634992332820282019728792003956564819966",
+			wantOverflow: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			z := new(Int)
+			gotResult, gotOverflow := z.NegOverflow(tt.x)
+
+			if gotOverflow != tt.wantOverflow {
+				t.Errorf("overflow = %v, want %v", gotOverflow, tt.wantOverflow)
+				return
+			}
+
+			if gotResult == nil {
+				t.Error("unexpected nil result")
+				return
+			}
+
+			if gotResult.ToString() != tt.wantResult {
+				// use almost equal comparison to handle the precision issue
+				diff := new(Int).Sub(gotResult, MustFromDecimal(tt.wantResult))
+				if diff.Abs().Cmp(uint256.NewUint(1)) > 0 {
+					t.Errorf("result = %v, want %v", gotResult.ToString(), tt.wantResult)
+				}
+			}
+
+			// double negation test (only if there is no overflow)
+			if !tt.wantOverflow {
+				doubleNegResult, doubleNegOverflow := new(Int).NegOverflow(gotResult)
+				if doubleNegOverflow {
+					t.Error("unexpected overflow in double negation")
+				}
+				if doubleNegResult.ToString() != tt.x.ToString() {
+					t.Errorf("double negation result = %v, want %v",
+						doubleNegResult.ToString(), tt.x.ToString())
+				}
+			}
+		})
+	}
+}
+
 func TestSet(t *testing.T) {
 	tests := []struct {
 		x    string
