@@ -181,6 +181,122 @@ func TestAddDeltaOverflow(t *testing.T) {
 	}
 }
 
+func TestInt_AddOverflow(t *testing.T) {
+	maxInt256 := MaxInt256()
+	minInt256 := MinInt256()
+
+	tests := []struct {
+		name         string
+		x            *Int
+		y            *Int
+		wantResult   string
+		wantOverflow bool
+	}{
+		// Basic cases (no overflow)
+		{
+			name:         "positive + positive (no overflow)",
+			x:            NewInt(100),
+			y:            NewInt(200),
+			wantResult:   "300",
+			wantOverflow: false,
+		},
+		{
+			name:         "negative + negative (no overflow)",
+			x:            NewInt(-100),
+			y:            NewInt(-200),
+			wantResult:   "-300",
+			wantOverflow: false,
+		},
+		// Boundary cases - near maximum value
+		{
+			name:         "max_int256 + 0",
+			x:            maxInt256,
+			y:            Zero(),
+			wantResult:   maxInt256.ToString(),
+			wantOverflow: false,
+		},
+		{
+			name:         "max_int256 - 1 + 1",
+			x:            new(Int).Sub(maxInt256, One()),
+			y:            One(),
+			wantResult:   maxInt256.ToString(),
+			wantOverflow: false,
+		},
+		{
+			name:         "max_int256 + 1",
+			x:            maxInt256,
+			y:            One(),
+			wantResult:   "", // overflow
+			wantOverflow: true,
+		},
+
+		// Boundary cases - near minimum value
+		{
+			name:         "min_int256 + 0",
+			x:            minInt256,
+			y:            Zero(),
+			wantResult:   minInt256.ToString(),
+			wantOverflow: false,
+		},
+		{
+			name:         "min_int256 + 1 - 1",
+			x:            new(Int).Add(minInt256, One()),
+			y:            NewInt(-1),
+			wantResult:   minInt256.ToString(),
+			wantOverflow: false,
+		},
+		{
+			name:         "min_int256 + (-1)",
+			x:            minInt256,
+			y:            NewInt(-1),
+			wantResult:   "", // overflow
+			wantOverflow: true,
+		},
+
+		// Special cases
+		{
+			name:         "max_int256 + min_int256",
+			x:            maxInt256,
+			y:            minInt256,
+			wantResult:   "-1",
+			wantOverflow: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			z := new(Int)
+			gotResult, gotOverflow := z.AddOverflow(tt.x, tt.y)
+
+			if gotOverflow != tt.wantOverflow {
+				t.Errorf("overflow = %v, want %v", gotOverflow, tt.wantOverflow)
+				return
+			}
+
+			if !gotOverflow {
+				if gotResult == nil {
+					t.Error("unexpected nil result for non-overflow case")
+					return
+				}
+				if gotResult.ToString() != tt.wantResult {
+					t.Errorf("result = %v, want %v", gotResult.ToString(), tt.wantResult)
+				}
+			}
+
+			// Commutativity test only for non-overflow cases
+			if !tt.wantOverflow {
+				reverseResult, reverseOverflow := z.AddOverflow(tt.y, tt.x)
+				if reverseOverflow != gotOverflow {
+					t.Error("addition is not commutative for overflow")
+				}
+				if reverseResult.ToString() != gotResult.ToString() {
+					t.Error("addition is not commutative for result")
+				}
+			}
+		})
+	}
+}
+
 func TestSub(t *testing.T) {
 	tests := []struct {
 		x, y, want string
@@ -572,9 +688,9 @@ func TestMod(t *testing.T) {
 
 func TestNilInitialization(t *testing.T) {
 	tests := []struct {
-		name     string
-		setup    func() (*Int, error)
-		wantStr  string
+		name    string
+		setup   func() (*Int, error)
+		wantStr string
 	}{
 		{
 			name: "AddUint256 with nil abs",
