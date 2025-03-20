@@ -9,13 +9,13 @@ The `GNS` token is the governance and main utility token of the GnoSwap protocol
 - Decimals: 6
 - Max Supply: 1_000_000_000 (1B)
 
-You can find the detailed tokenomics of GNS [here](https://docs.gnoswap.io/gnoswap-token/whats-gns).
+See the details on the GNS tokenomics [here](https://docs.gnoswap.io/gnoswap-token/whats-gns).
 
 ## Emission Mechanism
 
-- Block-based token emission with predefined schedule
-- Token emission follows a halving model over 12 years
-- Each halving period adjusts the amounts of tokens minted per block
+- Block-based token emission with predefined schedule.
+- Token emission follows a halving model over 12 years.
+- Each halving period adjusts the amounts of tokens minted per block.
 
 ## Halving Schedule
 
