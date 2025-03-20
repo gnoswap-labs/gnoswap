@@ -9,11 +9,8 @@ This repository contains smart contracts (realms) for GnoSwap.
   - [Setting Up GnoSwap Contracts](#setting-up-gnoswap-contracts)
   - [Running Tests](#running-tests)
 - [Realms](#realms)
-  - [Core Realms Deployed on Testnet4](#core-realms-deployed-on-testnet4)
-  - [Pool](#pool)
-  - [Position](#position)
-  - [Router](#router)
-  - [Staker](#staker)
+  - [Core Realms Deployed on Testnet5](#core-realms-deployed-on-testnet5)
+
 
 ## Setting Up and Testing GnoSwap Contracts
 
@@ -174,11 +171,9 @@ gno test -root-dir $WORKDIR/gno -v=false ./gno.land/r/gnoswap/v1/pool
 
 ## Realms
 
-This section provides information about the core realms of GnoSwap that have been deployed.
+### Core Realms Deployed on Testnet5
 
-### Core Realms Deployed on Testnet4
-
-- pool: [gno.land/r/gnoswap/v1/pool](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fv2%2Fpool)
-- position: [gno.land/r/gnoswap/v1/position](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fv2%2Fposition)
-- router: [gno.land/r/gnoswap/v1/router](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fv2%2Frouter)
-- staker: [gno.land/r/gnoswap/v1/staker](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fv2%2Fstaker)
+- pool: [gno.land/r/gnoswap/v1/pool](https://gnoscan.io/realms/details?path=gno.land/r/gnoswap/v1/pool)
+- position: [gno.land/r/gnoswap/v1/position](https://gnoscan.io/realms/details?path=gno.land/r/gnoswap/v1/position)
+- router: [gno.land/r/gnoswap/v1/router](https://gnoscan.io/realms/details?path=gno.land/r/gnoswap/v1/router)
+- staker: [gno.land/r/gnoswap/v1/staker](https://gnoscan.io/realms/details?path=gno.land/r/gnoswap/v1/staker)
