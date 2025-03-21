@@ -279,6 +279,18 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	feeGrowthInside0LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
 	feeGrowthInside1LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey))
 
+	currentSqrtPriceX96 := pool.Slot0SqrtPriceX96()
+	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickLower)
+	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickUpper)
+	calculatedToken0BalanceStr, calculatedToken1BalanceStr := common.GetAmountsForLiquidity(
+		currentSqrtPriceX96,
+		lowerTickSqrtPriceX96,
+		upperTickSqrtPriceX96,
+		position.liquidity,
+	)
+	calculatedToken0Balance := u256.MustFromDecimal(calculatedToken0BalanceStr)
+	calculatedToken1Balance := u256.MustFromDecimal(calculatedToken1BalanceStr)
+
 	{
 		diff := new(u256.Uint).Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
 		mulDiv := u256.MulDiv(diff, new(u256.Uint).Set(position.liquidity), u256.MustFromDecimal(consts.Q128))
@@ -296,8 +308,8 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 	position.liquidity = new(u256.Uint).Add(new(u256.Uint).Set(position.liquidity), liquidity)
-	position.token0Balance = new(u256.Uint).Add(new(u256.Uint).Set(position.token0Balance), amount0)
-	position.token1Balance = new(u256.Uint).Add(new(u256.Uint).Set(position.token1Balance), amount1)
+	position.token0Balance = new(u256.Uint).Add(new(u256.Uint).Set(calculatedToken0Balance), amount0)
+	position.token1Balance = new(u256.Uint).Add(new(u256.Uint).Set(calculatedToken1Balance), amount1)
 	position.burned = false
 
 	updated := setPosition(params.positionId, position)
