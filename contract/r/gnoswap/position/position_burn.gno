@@ -6,6 +6,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
@@ -53,6 +54,18 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	feeGrowthInside0LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
 	feeGrowthInside1LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey))
 
+	currentSqrtPriceX96 := pool.Slot0SqrtPriceX96()
+	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickLower)
+	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickUpper)
+	calculatedToken0BalanceStr, calculatedToken1BalanceStr := common.GetAmountsForLiquidity(
+		currentSqrtPriceX96,
+		lowerTickSqrtPriceX96,
+		upperTickSqrtPriceX96,
+		position.liquidity,
+	)
+	calculatedToken0Balance := u256.MustFromDecimal(calculatedToken0BalanceStr)
+	calculatedToken1Balance := u256.MustFromDecimal(calculatedToken1BalanceStr)
+
 	position.tokensOwed0 = updateTokensOwed(
 		feeGrowthInside0LastX128,
 		position.feeGrowthInside0LastX128,
@@ -72,8 +85,8 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 	position.liquidity = new(u256.Uint).Sub(positionLiquidity, liquidityToRemove)
-	position.token0Balance = new(u256.Uint).Sub(position.token0Balance, burnedAmount0)
-	position.token1Balance = new(u256.Uint).Sub(position.token1Balance, burnedAmount1)
+	position.token0Balance = new(u256.Uint).Sub(calculatedToken0Balance, burnedAmount0)
+	position.token1Balance = new(u256.Uint).Sub(calculatedToken1Balance, burnedAmount1)
 	mustUpdatePosition(params.positionId, position)
 
 	collect0, collect1 := pl.Collect(
