@@ -1,11 +1,9 @@
 package int256
 
 import (
-	"gno.land/p/gnoswap/uint256"
-)
-
-import (
 	"testing"
+
+	"gno.land/p/gnoswap/uint256"
 )
 
 func TestOr(t *testing.T) {
@@ -182,6 +180,11 @@ func TestLsh(t *testing.T) {
 		{"-2", 0, "-2"},
 		{"-4", 0, "-4"},
 		{"-8", 0, "-8"},
+		{"-1", 255, "-57896044618658097711785492504343953926634992332820282019728792003956564819968"},
+		{"-1", 256, "0"},
+		{"-2", 255, "0"},
+		{"-4", 254, "0"},
+		{"-8", 253, "0"},
 	}
 
 	for _, tc := range tests {
