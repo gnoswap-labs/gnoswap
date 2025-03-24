@@ -76,7 +76,7 @@ func testDelegate02_2000000(t *testing.T) {
 		gs.Delegate(dummyAddr, uint64(2_000_000), "") // delegate to dummy
 
 		uassert.Equal(t, int64(124), std.ChainHeight())
-		uassert.Equal(t, int64(1234567892), time.Now().Unix())
+		uassert.Equal(t, int64(1234567895), time.Now().Unix())
 
 		// after delegate 02
 		uassert.Equal(t, xgns.TotalSupply(), uint64(3_000_000))

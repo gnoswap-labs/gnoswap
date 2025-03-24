@@ -92,7 +92,7 @@ func mockProtocolFeeTest(t *testing.T) {
 		uassert.Equal(t, uint64(2500), qux.BalanceOf(protocolFeeAddr))
 		uassert.Equal(t, uint64(1000), pf.GetAmountOfToken(barPath))
 		uassert.Equal(t, uint64(2500), pf.GetAmountOfToken(quxPath))
-		uassert.Equal(t, `{"height":"124","now":"1234567892","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2500"}`,
+		uassert.Equal(t, `{"height":"124","now":"1234567895","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2500"}`,
 			pf.ApiGetTokenListWithAmountOverZero())
 		uassert.Equal(t, uint64(0), pf.GetAccuTransferToGovStakerByTokenPath(barPath))
 		uassert.Equal(t, uint64(0), pf.GetAccuTransferToGovStakerByTokenPath(quxPath))

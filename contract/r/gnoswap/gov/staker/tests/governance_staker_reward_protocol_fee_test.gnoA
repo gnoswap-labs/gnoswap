@@ -55,7 +55,7 @@ func TestGovernanceStakerRewardProtocolFee(t *testing.T) {
 		uassert.Equal(t, delegateAmountFromAdminToAlice, GetTotalDelegatedFrom(adminAddr))
 		uassert.Equal(t, delegateAmountFromAdminToAlice, GetTotalDelegatedTo(aliceAddr))
 		uassert.Equal(t, delegateAmountFromAdminToAlice, GetDelegationAmountFromTo(adminAddr, aliceAddr))
-		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567892","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
+		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567895","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
 	})
 
 	t.Run("mock protocol fee test", func(t *testing.T) {

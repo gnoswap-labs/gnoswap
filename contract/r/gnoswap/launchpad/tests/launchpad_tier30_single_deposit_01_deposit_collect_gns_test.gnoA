@@ -99,7 +99,7 @@ func testCreateProject(t *testing.T) {
 		uassert.Equal(t, tier180.actualParticipant, uint64(0))
 
 		uassert.Equal(t, project.created.height, uint64(124))
-		uassert.Equal(t, project.created.time, uint64(1234567892))
+		uassert.Equal(t, project.created.time, uint64(1234567895))
 
 		uassert.Equal(t, project.started.time, uint64(1234567902))
 		uassert.Equal(t, project.stats.totalDeposit, uint64(0))

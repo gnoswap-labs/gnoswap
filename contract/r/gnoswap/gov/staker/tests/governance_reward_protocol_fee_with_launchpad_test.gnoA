@@ -75,7 +75,7 @@ func delegateTestFromAdminToAlice(t *testing.T) {
 		uassert.Equal(t, delegateAmount, GetTotalDelegatedFrom(adminAddr))
 		uassert.Equal(t, delegateAmount, GetTotalDelegatedTo(aliceAddr))
 		uassert.Equal(t, delegateAmount, GetDelegationAmountFromTo(adminAddr, aliceAddr))
-		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567892","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
+		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567895","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
 	})
 
 	t.Run("delegate fail test - insufficient allowance", func(t *testing.T) {
@@ -90,7 +90,7 @@ func delegateTestFromAdminToAlice(t *testing.T) {
 		uassert.Equal(t, delegateAmount, GetTotalDelegatedFrom(adminAddr))
 		uassert.Equal(t, delegateAmount, GetTotalDelegatedTo(aliceAddr))
 		uassert.Equal(t, delegateAmount, GetDelegationAmountFromTo(adminAddr, aliceAddr))
-		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567892","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
+		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567895","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
 	})
 
 	t.Run("delegate fail test - zero delegate amount", func(t *testing.T) {
@@ -106,7 +106,7 @@ func delegateTestFromAdminToAlice(t *testing.T) {
 		uassert.Equal(t, delegateAmount, GetTotalDelegatedFrom(adminAddr))
 		uassert.Equal(t, delegateAmount, GetTotalDelegatedTo(aliceAddr))
 		uassert.Equal(t, delegateAmount, GetDelegationAmountFromTo(adminAddr, aliceAddr))
-		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567892","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
+		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567895","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
 	})
 
 	t.Run("delegate fail test - less than minimum amount", func(t *testing.T) {
@@ -122,7 +122,7 @@ func delegateTestFromAdminToAlice(t *testing.T) {
 		uassert.Equal(t, delegateAmount, GetTotalDelegatedFrom(adminAddr))
 		uassert.Equal(t, delegateAmount, GetTotalDelegatedTo(aliceAddr))
 		uassert.Equal(t, delegateAmount, GetDelegationAmountFromTo(adminAddr, aliceAddr))
-		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567892","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
+		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567895","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
 	})
 
 	t.Run("delegate fail test - not multiple of minimumAmount(1_000_000)", func(t *testing.T) {
@@ -138,7 +138,7 @@ func delegateTestFromAdminToAlice(t *testing.T) {
 		uassert.Equal(t, delegateAmount, GetTotalDelegatedFrom(adminAddr))
 		uassert.Equal(t, delegateAmount, GetTotalDelegatedTo(aliceAddr))
 		uassert.Equal(t, delegateAmount, GetDelegationAmountFromTo(adminAddr, aliceAddr))
-		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567892","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
+		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567895","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
 	})
 
 	t.Run("delegate fail test - invalid Address", func(t *testing.T) {
@@ -154,7 +154,7 @@ func delegateTestFromAdminToAlice(t *testing.T) {
 		uassert.Equal(t, delegateAmount, GetTotalDelegatedFrom(adminAddr))
 		uassert.Equal(t, delegateAmount, GetTotalDelegatedTo(aliceAddr))
 		uassert.Equal(t, delegateAmount, GetDelegationAmountFromTo(adminAddr, aliceAddr))
-		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567892","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
+		uassert.Equal(t, `{"delegationHistory":[{"to":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","timestamp":"1234567895","height":"124","add":"true"}]}`, GetDelegationHistory(adminAddr))
 	})
 
 	// gns emission after adjustment & delegate

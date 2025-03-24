@@ -27,16 +27,16 @@ func TestApiGetHistoryTransferToGovStaker(t *testing.T) {
 	updateDistributedToGovStakerHistory("gno.land/r/onbloc/bar", 1000)
 	updateDistributedToGovStakerHistory("gno.land/r/onbloc/qux", 2000)
 	resultHistory := ApiGetHistoryTransferToGovStaker()
-	uassert.Equal(t, `{"height":"124","now":"1234567892","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2000"}`, resultHistory)
+	uassert.Equal(t, `{"height":"124","now":"1234567895","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2000"}`, resultHistory)
 	resultAccu := ApiGetAccuTransferToGovStaker()
-	uassert.Equal(t, `{"height":"124","now":"1234567892","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2000"}`, resultAccu)
+	uassert.Equal(t, `{"height":"124","now":"1234567895","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2000"}`, resultAccu)
 
 	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
 	ClearAccuTransferToGovStaker()
 	resultHistory = ApiGetHistoryTransferToGovStaker()
-	uassert.Equal(t, `{"height":"124","now":"1234567892","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2000"}`, resultHistory)
+	uassert.Equal(t, `{"height":"124","now":"1234567895","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2000"}`, resultHistory)
 	resultAccu = ApiGetAccuTransferToGovStaker()
-	uassert.Equal(t, `{"height":"124","now":"1234567892"}`, resultAccu)
+	uassert.Equal(t, `{"height":"124","now":"1234567895"}`, resultAccu)
 }
 
 func TestApiGetAccuTransferToDevOps(t *testing.T) {
@@ -45,7 +45,7 @@ func TestApiGetAccuTransferToDevOps(t *testing.T) {
 	addAccuToDevOps("gno.land/r/onbloc/qux", 2000)
 
 	result := ApiGetAccuTransferToDevOps()
-	uassert.Equal(t, `{"height":"124","now":"1234567892","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2000"}`, result)
+	uassert.Equal(t, `{"height":"124","now":"1234567895","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2000"}`, result)
 }
 
 func TestApiGetHistoryTransferToDevOps(t *testing.T) {
@@ -55,7 +55,7 @@ func TestApiGetHistoryTransferToDevOps(t *testing.T) {
 	updateDistributedToDevOpsHistory("gno.land/r/onbloc/bar", 1000)
 	updateDistributedToDevOpsHistory("gno.land/r/onbloc/qux", 2000)
 	resultHistory := ApiGetHistoryTransferToDevOps()
-	uassert.Equal(t, `{"height":"124","now":"1234567892","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2000"}`, resultHistory)
+	uassert.Equal(t, `{"height":"124","now":"1234567895","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2000"}`, resultHistory)
 	resultAccu := ApiGetAccuTransferToDevOps()
-	uassert.Equal(t, `{"height":"124","now":"1234567892","gno.land/r/onbloc/bar":"2000","gno.land/r/onbloc/qux":"4000"}`, resultAccu)
+	uassert.Equal(t, `{"height":"124","now":"1234567895","gno.land/r/onbloc/bar":"2000","gno.land/r/onbloc/qux":"4000"}`, resultAccu)
 }

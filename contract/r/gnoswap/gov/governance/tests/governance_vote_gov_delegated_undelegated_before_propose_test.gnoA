@@ -74,7 +74,7 @@ func testDelegate02_2000000_toDummy(t *testing.T) {
 		gns.Approve(govStakerAddr, uint64(2_000_000))
 
 		uassert.Equal(t, int64(124), std.ChainHeight())
-		uassert.Equal(t, int64(1234567892), time.Now().Unix())
+		uassert.Equal(t, int64(1234567895), time.Now().Unix())
 
 		gs.Delegate(dummyAddr, uint64(2_000_000), "") // delegate to dummy
 
