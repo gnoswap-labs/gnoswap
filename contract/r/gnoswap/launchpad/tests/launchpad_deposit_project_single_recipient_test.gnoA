@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/demo/json"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
@@ -62,15 +63,29 @@ func createOblLaunchpadProjectTest(t *testing.T) {
 				tier180Ratio, // 700000000
 				startTime,    // 5 block later
 			)
-			uassert.Equal(t, `gno.land/r/onbloc/obl:123`, projectId)
-			uassert.Equal(t, `{"height":"123","now":"1234567890","projectId":"gno.land/r/onbloc/obl:123","name":"OBL Launchpad Project","tokenPath":"gno.land/r/onbloc/obl","depositAmount":"1000000000","recipient":"g1wpex76n9vd6yzerywf047h6lta047h6lqlp5qp","conditionsToken":"gno.land/r/gnoswap/v1/gov/xgns","conditionsAmount":"1000000","tier30Ratio":"10","tier90Ratio":"20","tier180Ratio":"70","createdHeight":"123","createdTime":"1234567890","startedHeight":"128","startedTime":"1234567900","endedHeight":"7776128","endedTime":"1250119900","totalDeposit":"0","actualDeposit":"0","totalParticipant":"0","actualParticipant":"0","totalCollected":"0","refundedAmount":"0","refundedHeight":"0","refundedTime":"0"}`,
-				ApiGetProjectStatisticsByProjectId(projectId))
-			uassert.Equal(t, `{"height":"123","now":"1234567890","projectId":"gno.land/r/onbloc/obl:123","tierId":"gno.land/r/onbloc/obl:123:30","collectWaitDuration":"129600","tierAmount":"100000000","tierAmountPerBlockX128":"26256355472294634526494954277142608908641","started.height":"128","started.time":"1234567900","ended.height":"1296128","ended.time":"1237159900","tierTotalDepositAmount":"0","tierActualDepositAmount":"0","tierTotalParticipant":"0","tierActualParticipant":"0","userCollectedAmount":"0","calculatedAmount":"0"}`,
-				ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:30", projectId)))
-			uassert.Equal(t, `{"height":"123","now":"1234567890","projectId":"gno.land/r/onbloc/obl:123","tierId":"gno.land/r/onbloc/obl:123:90","collectWaitDuration":"302400","tierAmount":"200000000","tierAmountPerBlockX128":"17504236981529756350996636184761739272427","started.height":"128","started.time":"1234567900","ended.height":"3888128","ended.time":"1242343900","tierTotalDepositAmount":"0","tierActualDepositAmount":"0","tierTotalParticipant":"0","tierActualParticipant":"0","userCollectedAmount":"0","calculatedAmount":"0"}`,
-				ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:90", projectId)))
-			uassert.Equal(t, `{"height":"123","now":"1234567890","projectId":"gno.land/r/onbloc/obl:123","tierId":"gno.land/r/onbloc/obl:123:180","collectWaitDuration":"604800","tierAmount":"700000000","tierAmountPerBlockX128":"30632414717677073614244113323333043726748","started.height":"128","started.time":"1234567900","ended.height":"7776128","ended.time":"1250119900","tierTotalDepositAmount":"0","tierActualDepositAmount":"0","tierTotalParticipant":"0","tierActualParticipant":"0","userCollectedAmount":"0","calculatedAmount":"0"}`,
-				ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:180", projectId)))
+			uassert.Equal(t, "gno.land/r/onbloc/obl:123", projectId)
+
+			// validate project info
+			projectStats := unmarshal(ApiGetProjectStatisticsByProjectId(projectId))
+			uassert.Equal(t, "OBL Launchpad Project", projectStats.MustKey("name").MustString())
+			uassert.Equal(t, "gno.land/r/onbloc/obl", projectStats.MustKey("tokenPath").MustString())
+			uassert.Equal(t, "1000000000", projectStats.MustKey("depositAmount").MustString())
+			uassert.Equal(t, "10", projectStats.MustKey("tier30Ratio").MustString())
+			uassert.Equal(t, "20", projectStats.MustKey("tier90Ratio").MustString())
+			uassert.Equal(t, "70", projectStats.MustKey("tier180Ratio").MustString())
+
+			// validate tier info
+			tier30Stats := unmarshal(ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:30", projectId)))
+			uassert.Equal(t, "100000000", tier30Stats.MustKey("tierAmount").MustString())
+			uassert.Equal(t, "129600", tier30Stats.MustKey("collectWaitDuration").MustString())
+
+			tier90Stats := unmarshal(ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:90", projectId)))
+			uassert.Equal(t, "200000000", tier90Stats.MustKey("tierAmount").MustString())
+			uassert.Equal(t, "302400", tier90Stats.MustKey("collectWaitDuration").MustString())
+
+			tier180Stats := unmarshal(ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:180", projectId)))
+			uassert.Equal(t, "700000000", tier180Stats.MustKey("tierAmount").MustString())
+			uassert.Equal(t, "604800", tier180Stats.MustKey("collectWaitDuration").MustString())
 		})
 	})
 }
@@ -92,8 +107,13 @@ func mockProtocolFeeTest(t *testing.T) {
 		uassert.Equal(t, uint64(2500), qux.BalanceOf(protocolFeeAddr))
 		uassert.Equal(t, uint64(1000), pf.GetAmountOfToken(barPath))
 		uassert.Equal(t, uint64(2500), pf.GetAmountOfToken(quxPath))
-		uassert.Equal(t, `{"height":"124","now":"1234567895","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2500"}`,
-			pf.ApiGetTokenListWithAmountOverZero())
+
+		data := unmarshal(pf.ApiGetTokenListWithAmountOverZero())
+		uassert.Equal(t, "124", data.MustKey("height").MustString())
+		uassert.Equal(t, "1234567895", data.MustKey("now").MustString())
+		uassert.Equal(t, "1000", data.MustKey("gno.land/r/onbloc/bar").MustString())
+		uassert.Equal(t, "2500", data.MustKey("gno.land/r/onbloc/qux").MustString())
+
 		uassert.Equal(t, uint64(0), pf.GetAccuTransferToGovStakerByTokenPath(barPath))
 		uassert.Equal(t, uint64(0), pf.GetAccuTransferToGovStakerByTokenPath(quxPath))
 		testing.SkipHeights(1)
@@ -110,8 +130,9 @@ func depositGnsToOblProjectTier30Test(t *testing.T) {
 		projectId := "gno.land/r/onbloc/obl:123"
 		projectTier30Id := "gno.land/r/onbloc/obl:123:30"
 
-		uassert.Equal(t, `{"height":"125","now":"1234567894","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2500"}`,
-			pf.ApiGetTokenListWithAmountOverZero())
+		data := unmarshal(pf.ApiGetTokenListWithAmountOverZero())
+		uassert.Equal(t, "1000", data.MustKey("gno.land/r/onbloc/bar").MustString())
+		uassert.Equal(t, "2500", data.MustKey("gno.land/r/onbloc/qux").MustString())
 
 		testing.SetRealm(adminRealm)
 		gns.Transfer(bobAddr, depositAmount*2) // to deposit
@@ -132,9 +153,16 @@ func depositGnsToOblProjectTier30Test(t *testing.T) {
 			"",
 		)
 		uassert.Equal(t, "gno.land/r/onbloc/obl:123:30:g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu:129", depositId)
-		uassert.Equal(t, `{"height":"129","now":"1234567902","depositId":"gno.land/r/onbloc/obl:123:30:g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu:129","projectId":"gno.land/r/onbloc/obl:123","tier":"30","depositor":"g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu","amount":"1000000","depositHeight":"129","depositTime":"1234567902","depositCollectHeight":"0","depositCollectTime":"0","claimableHeight":"129729","claimableTime":"1234827102","claimableRewardAmount":"0","rewardCollected":"0","rewardCollectHeight":"0","rewardCollectTime":"0"}`,
-			ApiGetDepositByDepositId(depositId))
-		uassert.Equal(t, `{"height":"129","now":"1234567902"}`, pf.ApiGetTokenListWithAmountOverZero())
+
+		// validate deposit
+		depositStats := unmarshal(ApiGetDepositByDepositId(depositId))
+		uassert.Equal(t, "1000000", depositStats.MustKey("amount").MustString())
+		uassert.Equal(t, "30", depositStats.MustKey("tier").MustString())
+		uassert.Equal(t, "g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu", depositStats.MustKey("depositor").MustString())
+
+		// validate protocol fee
+		protocolFeeStats := unmarshal(pf.ApiGetTokenListWithAmountOverZero())
+		uassert.Equal(t, "129", protocolFeeStats.MustKey("height").MustString())
 
 		testing.SkipHeights(1)
 	})
@@ -157,18 +185,26 @@ func mockProtocolFeeTest2(t *testing.T) {
 		uassert.Equal(t, uint64(2500), qux.BalanceOf(protocolFeeAddr))
 		uassert.Equal(t, uint64(1000), pf.GetAmountOfToken(barPath))
 		uassert.Equal(t, uint64(2500), pf.GetAmountOfToken(quxPath))
-		uassert.Equal(t, `{"height":"131","now":"1234567906","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2500"}`,
-			pf.ApiGetTokenListWithAmountOverZero())
+
+		data := unmarshal(pf.ApiGetTokenListWithAmountOverZero())
+		uassert.Equal(t, "131", data.MustKey("height").MustString())
+		uassert.Equal(t, "1234567930", data.MustKey("now").MustString())
+		uassert.Equal(t, "1000", data.MustKey("gno.land/r/onbloc/bar").MustString())
+		uassert.Equal(t, "2500", data.MustKey("gno.land/r/onbloc/qux").MustString())
 		uassert.Equal(t, uint64(0), pf.GetAccuTransferToGovStakerByTokenPath(barPath))
 		uassert.Equal(t, uint64(0), pf.GetAccuTransferToGovStakerByTokenPath(quxPath))
+
 		testing.SkipHeights(1)
 	})
 }
 
 func collectProtocolFeeForOblProjectRecipient(t *testing.T) {
 	t.Run("collect protocol fee", func(t *testing.T) {
-		uassert.Equal(t, `{"height":"132","now":"1234567908","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2500"}`,
-			pf.ApiGetTokenListWithAmountOverZero())
+		data := unmarshal(pf.ApiGetTokenListWithAmountOverZero())
+		uassert.Equal(t, "132", data.MustKey("height").MustString())
+		uassert.Equal(t, "1234567935", data.MustKey("now").MustString())
+		uassert.Equal(t, "1000", data.MustKey("gno.land/r/onbloc/bar").MustString())
+		uassert.Equal(t, "2500", data.MustKey("gno.land/r/onbloc/qux").MustString())
 
 		testing.SetRealm(projectRealm)
 
@@ -201,8 +237,9 @@ func depositAgainGnsToOblProjectTier30Test(t *testing.T) {
 		projectId := "gno.land/r/onbloc/obl:123"
 		projectTier30Id := "gno.land/r/onbloc/obl:123:30"
 
-		uassert.Equal(t, `{"height":"132","now":"1234567908"}`,
-			pf.ApiGetTokenListWithAmountOverZero())
+		data := unmarshal(pf.ApiGetTokenListWithAmountOverZero())
+		uassert.Equal(t, "132", data.MustKey("height").MustString())
+		uassert.Equal(t, "1234567935", data.MustKey("now").MustString())
 
 		testing.SetRealm(adminRealm)
 		gns.Transfer(aliceAddr, depositAmount*2) // to deposit
@@ -221,10 +258,17 @@ func depositAgainGnsToOblProjectTier30Test(t *testing.T) {
 			depositAmount,
 			"",
 		)
-		uassert.Equal(t, `gno.land/r/onbloc/obl:123:30:g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh:132`, depositId)
-		uassert.Equal(t, `{"height":"132","now":"1234567908","depositId":"gno.land/r/onbloc/obl:123:30:g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh:132","projectId":"gno.land/r/onbloc/obl:123","tier":"30","depositor":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","amount":"1000000","depositHeight":"132","depositTime":"1234567908","depositCollectHeight":"0","depositCollectTime":"0","claimableHeight":"129732","claimableTime":"1234827108","claimableRewardAmount":"0","rewardCollected":"0","rewardCollectHeight":"0","rewardCollectTime":"0"}`,
-			ApiGetDepositByDepositId(depositId))
-		uassert.Equal(t, `{"height":"132","now":"1234567908"}`, pf.ApiGetTokenListWithAmountOverZero())
+		uassert.Equal(t, "gno.land/r/onbloc/obl:123:30:g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh:132", depositId)
+
+		// validate deposits
+		depositStats := unmarshal(ApiGetDepositByDepositId(depositId))
+		uassert.Equal(t, "1000000", depositStats.MustKey("amount").MustString())
+		uassert.Equal(t, "30", depositStats.MustKey("tier").MustString())
+		uassert.Equal(t, "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh", depositStats.MustKey("depositor").MustString())
+
+		// check protocol fee
+		protocolFeeStats := json.Must(json.Unmarshal([]byte(pf.ApiGetTokenListWithAmountOverZero())))
+		uassert.Equal(t, "132", protocolFeeStats.MustKey("height").MustString())
 
 		testing.SkipHeights(1)
 	})
@@ -247,8 +291,13 @@ func mockProtocolFeeTest3(t *testing.T) {
 		uassert.Equal(t, uint64(2500), qux.BalanceOf(protocolFeeAddr))
 		uassert.Equal(t, uint64(1000), pf.GetAmountOfToken(barPath))
 		uassert.Equal(t, uint64(2500), pf.GetAmountOfToken(quxPath))
-		uassert.Equal(t, `{"height":"134","now":"1234567912","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2500"}`,
-			pf.ApiGetTokenListWithAmountOverZero())
+
+		data := unmarshal(pf.ApiGetTokenListWithAmountOverZero())
+		uassert.Equal(t, "134", data.MustKey("height").MustString())
+		uassert.Equal(t, "1234567945", data.MustKey("now").MustString())
+		uassert.Equal(t, "1000", data.MustKey("gno.land/r/onbloc/bar").MustString())
+		uassert.Equal(t, "2500", data.MustKey("gno.land/r/onbloc/qux").MustString())
+
 		uassert.Equal(t, uint64(0), pf.GetAccuTransferToGovStakerByTokenPath(barPath))
 		uassert.Equal(t, uint64(0), pf.GetAccuTransferToGovStakerByTokenPath(quxPath))
 		testing.SkipHeights(1)
@@ -257,8 +306,11 @@ func mockProtocolFeeTest3(t *testing.T) {
 
 func collectProtocolFeeForOblProjectRecipient2(t *testing.T) {
 	t.Run("collect protocol fee", func(t *testing.T) {
-		uassert.Equal(t, `{"height":"135","now":"1234567914","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2500"}`,
-			pf.ApiGetTokenListWithAmountOverZero())
+		data := unmarshal(pf.ApiGetTokenListWithAmountOverZero())
+		uassert.Equal(t, "135", data.MustKey("height").MustString())
+		uassert.Equal(t, "1234567950", data.MustKey("now").MustString())
+		uassert.Equal(t, "1000", data.MustKey("gno.land/r/onbloc/bar").MustString())
+		uassert.Equal(t, "2500", data.MustKey("gno.land/r/onbloc/qux").MustString())
 
 		testing.SetRealm(projectRealm)
 

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/grc/grc20"
+	"gno.land/p/demo/json"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/gnoswap/consts"
 
@@ -193,4 +194,8 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 	}
 
 	return uint64(coins.AmountOf("ugnot"))
+}
+
+func unmarshal(data string) *json.Node {
+	return json.Must(json.Unmarshal([]byte(data)))
 }
