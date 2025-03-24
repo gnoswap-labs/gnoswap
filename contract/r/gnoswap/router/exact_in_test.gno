@@ -257,7 +257,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			testing.SetOriginCaller(positionOwner)
 			newCoins := std.Coins{{"ugnot", int64(10000000000)}}
 			testing.IssueCoins(positionOwner, newCoins)
-			std.TestSetOriginSend(newCoins, nil)
+			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
 			wugnot.Deposit()

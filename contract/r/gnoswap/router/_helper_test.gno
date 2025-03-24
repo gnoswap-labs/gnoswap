@@ -312,7 +312,7 @@ func ugnotTransfer(t *testing.T, from, to std.Address, amount uint64) {
 	t.Helper()
 
 	testing.SetRealm(std.NewUserRealm(from))
-	std.TestSetOriginSend(std.Coins{{ugnotDenom, int64(amount)}}, nil)
+	testing.SetOriginSend(std.Coins{{ugnotDenom, int64(amount)}})
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(from, to, std.Coins{{ugnotDenom, int64(amount)}})
 }
@@ -350,7 +350,7 @@ func ugnotFaucet(t *testing.T, to std.Address, amount uint64) {
 	if ugnotBalanceOf(t, faucetAddress) < amount {
 		newCoins := std.Coins{{ugnotDenom, int64(amount)}}
 		ugnotMint(t, faucetAddress, newCoins[0].Denom, newCoins[0].Amount)
-		std.TestSetOriginSend(newCoins, nil)
+		testing.SetOriginSend(newCoins)
 	}
 	ugnotTransfer(t, faucetAddress, to, amount)
 }

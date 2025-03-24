@@ -219,7 +219,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			testing.SetOriginCaller(positionOwner)
 			newCoins := std.Coins{{"ugnot", int64(10000000000)}}
 			testing.IssueCoins(positionOwner, newCoins)
-			std.TestSetOriginSend(newCoins, nil)
+			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
 			wugnot.Deposit()
@@ -388,7 +388,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			testing.SetOriginCaller(positionOwner)
 			newCoins := std.Coins{{"ugnot", int64(20000000000)}}
 			testing.IssueCoins(positionOwner, newCoins)
-			std.TestSetOriginSend(newCoins, nil)
+			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, std.Coins{{"ugnot", int64(10000000000)}})
 			wugnot.Deposit()
@@ -429,7 +429,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 				t.Errorf("failed to parse amount0Requested: %v", err)
 			}
 			newCoinsForAdd := std.Coins{{"ugnot", addAmount}}
-			std.TestSetOriginSend(newCoinsForAdd, nil)
+			testing.SetOriginSend(newCoinsForAdd)
 			banker = std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(tt.recipient, positionAddr, newCoinsForAdd)
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
@@ -571,7 +571,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			testing.SetOriginCaller(positionOwner)
 			newCoins := std.Coins{{"ugnot", int64(20000000000)}}
 			testing.IssueCoins(positionOwner, newCoins)
-			std.TestSetOriginSend(newCoins, nil)
+			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, std.Coins{{"ugnot", int64(10000000000)}})
 			wugnot.Deposit()
@@ -755,7 +755,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			testing.SetOriginCaller(positionOwner)
 			newCoins := std.Coins{{"ugnot", int64(20000000000)}}
 			testing.IssueCoins(positionOwner, newCoins)
-			std.TestSetOriginSend(newCoins, nil)
+			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, std.Coins{{"ugnot", int64(10000000000)}})
 			wugnot.Deposit()

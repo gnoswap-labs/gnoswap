@@ -88,7 +88,7 @@ func testPositionMintNative01(t *testing.T) {
 
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
 		banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 50000005}})
-		std.TestSetOriginSend(std.Coins{{"ugnot", 50000005}}, nil)
+		testing.SetOriginSend(std.Coins{{"ugnot", 50000005}})
 
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(0))
 		uassert.Equal(t, ugnotBalanceOf(t, positionAddr), uint64(50000005))
@@ -139,7 +139,7 @@ func testPositionMintNative02(t *testing.T) {
 		// send & set orig send
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
 		banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 50000005}})
-		std.TestSetOriginSend(std.Coins{{"ugnot", 50000005}}, nil)
+		testing.SetOriginSend(std.Coins{{"ugnot", 50000005}})
 
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(49999005))
 		uassert.Equal(t, ugnotBalanceOf(t, positionAddr), uint64(50000005))
@@ -183,7 +183,7 @@ func testCreateExternalIncentive(t *testing.T) {
 
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
 		banker.SendCoins(adminAddr, stakerAddr, std.Coins{{"ugnot", 10_000_000_000}})
-		std.TestSetOriginSend(std.Coins{{"ugnot", 10_000_000_000}}, nil)
+		testing.SetOriginSend(std.Coins{{"ugnot", 10_000_000_000}})
 
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(99998010))
 		uassert.Equal(t, ugnotBalanceOf(t, stakerAddr), uint64(10_000_000_000))

@@ -50,7 +50,7 @@ func testMintPosition01InRange(t *testing.T) {
 
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
 		banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 50000005}})
-		std.TestSetOriginSend(std.Coins{{"ugnot", 50000005}}, nil)
+		testing.SetOriginSend(std.Coins{{"ugnot", 50000005}})
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(0))
 
 		adminOldWugnotBalance := wugnot.BalanceOf(adminAddr)
@@ -71,7 +71,7 @@ func testMintPosition01InRange(t *testing.T) {
 			adminAddr,
 			"",
 		)
-		std.TestSetOriginSend(std.Coins{{"ugnot", 0}}, nil)
+		testing.SetOriginSend(std.Coins{{"ugnot", 0}})
 
 		uassert.Equal(t, positionId, uint64(1))
 		uassert.Equal(t, GetNextId(), uint64(2))
@@ -224,7 +224,7 @@ func testReposition(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
 		banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 5000}})
-		std.TestSetOriginSend(std.Coins{{"ugnot", 5000}}, nil)
+		testing.SetOriginSend(std.Coins{{"ugnot", 5000}})
 
 		testing.SetRealm(adminRealm)
 		Reposition(

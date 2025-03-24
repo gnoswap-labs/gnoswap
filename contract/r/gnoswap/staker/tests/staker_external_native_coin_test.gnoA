@@ -77,7 +77,7 @@ func testCreateExternalIncentive(t *testing.T) {
 		testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(adminAddr, stakerAddr, std.Coins{{"ugnot", 100_000_000}})
-		std.TestSetOriginSend(std.Coins{{"ugnot", 100_000_000}}, nil)
+		testing.SetOriginSend(std.Coins{{"ugnot", 100_000_000}})
 
 		CreateExternalIncentive(
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", // targetPoolPath

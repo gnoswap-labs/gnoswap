@@ -46,7 +46,7 @@ func TestSwapRouteWugnotquxExactIn(t *testing.T) {
 
 	wugnot.Approve(routerAddr, 1000000)
 	qux.Approve(routerAddr, 1000000)
-	std.TestSetOriginSend(std.Coins{{"ugnot", 12345}}, nil) // sented ugnot amount
+	testing.SetOriginSend(std.Coins{{"ugnot", 12345}}) // sented ugnot amount
 
 	uassert.PanicsWithMessage(
 		t,

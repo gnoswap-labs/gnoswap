@@ -115,7 +115,7 @@ func testCreatePool(t *testing.T) {
 func testMint(t *testing.T) {
 	t.Run("mint", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		std.TestSetOriginSend(std.Coins{{"ugnot", 100000000000000}}, nil)
+		testing.SetOriginSend(std.Coins{{"ugnot", 100000000000000}})
 		wugnot.Deposit()
 		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)

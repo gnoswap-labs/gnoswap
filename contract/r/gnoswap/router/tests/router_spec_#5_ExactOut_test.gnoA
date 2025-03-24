@@ -88,7 +88,7 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 	wugnot.Approve(routerAddr, 1000000)
 	qux.Approve(routerAddr, 1000000)
 
-	std.TestSetOriginSend(std.Coins{{"ugnot", 12345}}, nil)
+	testing.SetOriginSend(std.Coins{{"ugnot", 12345}})
 
 	uassert.PanicsWithMessage(
 		t,

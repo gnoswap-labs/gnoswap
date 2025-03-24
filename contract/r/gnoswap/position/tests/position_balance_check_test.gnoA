@@ -59,7 +59,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		newCoins := std.Coins{{"ugnot", fullTokenAmount}}
 		distributeCoins := std.Coins{{"ugnot", tokenAmountForDistribute}}
 		testing.IssueCoins(adminAddr, newCoins)
-		std.TestSetOriginSend(newCoins, nil)
+		testing.SetOriginSend(newCoins)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, distributeCoins)
 		banker.SendCoins(adminAddr, aliceAddr, distributeCoins)
@@ -378,7 +378,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 			testing.SetOriginCaller(adminAddr)
 			newCoins := std.Coins{{"ugnot", fullTokenAmount}}
 			testing.IssueCoins(adminAddr, newCoins)
-			std.TestSetOriginSend(newCoins, nil)
+			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
 			wugnot.Deposit()
@@ -389,7 +389,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 			testing.SetOriginCaller(adminAddr)
 			newCoins := std.Coins{{"ugnot", fullTokenAmount}}
 			testing.IssueCoins(adminAddr, newCoins)
-			std.TestSetOriginSend(newCoins, nil)
+			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
 			wugnot.Deposit()
@@ -726,7 +726,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		newCoins := std.Coins{{"ugnot", fullTokenAmount}}
 		distributeCoins := std.Coins{{"ugnot", tokenAmountForDistribute}}
 		testing.IssueCoins(adminAddr, newCoins)
-		std.TestSetOriginSend(newCoins, nil)
+		testing.SetOriginSend(newCoins)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(adminAddr, aliceAddr, distributeCoins)
 		banker.SendCoins(adminAddr, bobAddr, distributeCoins)
@@ -749,7 +749,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 			t.Errorf("failed to parse amount0Requested: %v", err)
 		}
 		newCoinsForAdd := std.Coins{{"ugnot", addAmount}}
-		std.TestSetOriginSend(newCoinsForAdd, nil)
+		testing.SetOriginSend(newCoinsForAdd)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(aliceAddr, positionAddr, newCoinsForAdd)
 		testing.SetRealm(aliceRealm)
@@ -807,7 +807,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 			testing.SetOriginCaller(adminAddr)
 			newCoins := std.Coins{{"ugnot", fullTokenAmount}}
 			testing.IssueCoins(adminAddr, newCoins)
-			std.TestSetOriginSend(newCoins, nil)
+			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
 			wugnot.Deposit()
@@ -818,7 +818,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 			testing.SetOriginCaller(adminAddr)
 			newCoins := std.Coins{{"ugnot", fullTokenAmount}}
 			testing.IssueCoins(adminAddr, newCoins)
-			std.TestSetOriginSend(newCoins, nil)
+			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
 			wugnot.Deposit()
@@ -1123,7 +1123,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		newCoins := std.Coins{{"ugnot", fullTokenAmount}}
 		distributeCoins := std.Coins{{"ugnot", tokenAmountForDistribute}}
 		testing.IssueCoins(adminAddr, newCoins)
-		std.TestSetOriginSend(newCoins, nil)
+		testing.SetOriginSend(newCoins)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(adminAddr, aliceAddr, distributeCoins)
 		banker.SendCoins(adminAddr, bobAddr, distributeCoins)
@@ -1146,7 +1146,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 			t.Errorf("failed to parse amount0Requested: %v", err)
 		}
 		newCoinsForAdd := std.Coins{{"ugnot", addAmount}}
-		std.TestSetOriginSend(newCoinsForAdd, nil)
+		testing.SetOriginSend(newCoinsForAdd)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(aliceAddr, positionAddr, newCoinsForAdd)
 		testing.SetRealm(aliceRealm)
