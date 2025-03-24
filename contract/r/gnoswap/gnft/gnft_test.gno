@@ -402,7 +402,7 @@ func TestBurn(t *testing.T) {
 
 func TestSetTokenURIByImageURI(t *testing.T) {
 	testAddr := testutils.TestAddress("testAddr")
-	tokenID := grc721.TokenID("1")
+	tokenID := grc721.TokenID("10")
 
 	positionAddr, _ := access.GetAddress(access.ROLE_POSITION)
 
