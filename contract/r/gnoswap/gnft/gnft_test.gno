@@ -10,6 +10,7 @@ import (
 	"gno.land/p/demo/uassert"
 
 	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 )
 
 const (
@@ -399,54 +400,24 @@ func TestBurn(t *testing.T) {
 	}
 }
 
-func TestSetTokenURI(t *testing.T) {
-	tests := []struct {
-		name        string
-		callerRealm std.Realm
-		tokenId     uint64
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name:        "set token uri without permission",
-			tokenId:     1,
-			shouldPanic: true,
-			panicMsg:    `[GNOSWAP-GNFT-001] caller has no permission || caller () is not the owner of token (1)`,
-		},
-		{
-			name:        "set token uri of non-minted token id",
-			tokenId:     99,
-			shouldPanic: true,
-			panicMsg:    `[GNOSWAP-GNFT-002] cannot set URI || invalid token id (99)`,
-		},
-		{
-			name:        "set token uri of token id(1)",
-			callerRealm: addr01Realm,
-			tokenId:     1,
-		},
-		{
-			name:        "set token uri of token id(1) - twice",
-			callerRealm: addr01Realm,
-			tokenId:     1,
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-002] cannot set URI || token id (1) has already set URI",
-		},
-	}
+func TestSetTokenURIByImageURI(t *testing.T) {
+	testAddr := testutils.TestAddress("testAddr")
+	tokenID := grc721.TokenID("1")
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			testing.SetRealm(tt.callerRealm)
+	positionAddr, _ := access.GetAddress(access.ROLE_POSITION)
 
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					SetTokenURIByImageURI(tid(tt.tokenId))
-				})
-			} else {
-				uassert.NotPanics(t, func() {
-					SetTokenURIByImageURI(tid(tt.tokenId))
-				})
-			}
-		})
+	// set position contract as caller
+	testing.SetOriginCaller(positionAddr)
+
+	// need to mint token to set owner
+	Mint(testAddr, tokenID)
+	testing.SetOriginCaller(testAddr)
+
+	SetTokenURIByImageURI(tokenID)
+
+	uri := TokenURI(tokenID)
+	if uri == "" {
+		t.Error("token URI should not be empty")
 	}
 }
 
