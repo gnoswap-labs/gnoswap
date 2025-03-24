@@ -1,18 +1,12 @@
 package gns
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/demo/uassert"
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/halt"
-)
-
-var (
-	emissionRealm = std.NewCodeRealm(consts.EMISSION_PATH)
-	adminRealm    = std.NewUserRealm(adminAddr)
 )
 
 func TestCalculateAmountToMint(t *testing.T) {
@@ -63,7 +57,8 @@ func TestMintGns(t *testing.T) {
 	})
 
 	t.Run("panic if caller is not emission contract", func(t *testing.T) {
-		uassert.PanicsWithMessage(t, "caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission", func() {
+		testing.SetRealm(userRealm)
+		uassert.PanicsWithMessage(t, "caller(g1w4ek2ujlta047h6lta047h6lta047h6lkvk347) has no permission", func() {
 			MintGns(adminAddr)
 		})
 	})
