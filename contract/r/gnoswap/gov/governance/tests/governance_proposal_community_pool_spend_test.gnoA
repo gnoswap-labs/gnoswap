@@ -203,7 +203,7 @@ func passAndExpire(t *testing.T) {
 		uassert.True(t, proposal.State.Expired)
 
 		uassert.PanicsWithMessage(t,
-			"execution window over (now(1234570602) >= windowEnd(1234569438))",
+			"execution window over (now(1234574670) >= windowEnd(1234570140))",
 			func() {
 				Execute(proposalId)
 			})
