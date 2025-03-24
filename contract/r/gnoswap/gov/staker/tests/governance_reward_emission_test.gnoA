@@ -106,7 +106,7 @@ func skipDummyBlocks(t *testing.T) {
 func reward(t *testing.T) {
 	t.Run("check reward", func(t *testing.T) {
 		gcr := GetClaimableRewardByAddress(dummyAddr)
-		uassert.Equal(t, gcr, `{"height":"135","now":"1234567914","emissionReward":"5945585"}`)
+		uassert.Equal(t, gcr, `{"height":"135","now":"1234567950","emissionReward":"5945585"}`)
 	})
 
 	t.Run("collect reward", func(t *testing.T) {
