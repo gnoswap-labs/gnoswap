@@ -25,6 +25,8 @@ var (
 var (
 	alice = testutils.TestAddress("alice")
 	bob   = testutils.TestAddress("bob")
+
+	userRealm = std.NewUserRealm(testutils.TestAddress("user"))
 )
 
 func TestGetName(t *testing.T) {
@@ -229,11 +231,12 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "MintGns without permission should panic",
 			fn: func() {
+				testing.SetRealm(userRealm)
 				testing.SkipHeights(1)
 				MintGns(adminAddr)
 			},
 			shouldPanic: true,
-			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission`,
+			panicMsg:    `caller(g1w4ek2ujlta047h6lta047h6lta047h6lkvk347) has no permission`,
 		},
 		{
 			name: "Burn success",
