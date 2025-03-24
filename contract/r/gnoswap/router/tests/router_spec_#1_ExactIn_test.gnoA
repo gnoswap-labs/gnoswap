@@ -19,7 +19,7 @@ import (
 )
 
 func TestcreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, bazPath, FEE_MEDIUM, "79228162514264337593543950336")
@@ -29,7 +29,7 @@ func TestcreatePool(t *testing.T) {
 
 func TestPositionMint(t *testing.T) {
 	// bar_baz_3000 by admin
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, 100000000)
 	baz.Approve(poolAddr, 100000000)
 
@@ -55,7 +55,7 @@ func TestExactInputSinglePool(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
 
 	user1Realm := std.NewUserRealm(user1Addr)
-	std.TestSetRealm(user1Realm)
+	testing.SetRealm(user1Realm)
 
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	baz.Approve(routerAddr, consts.UINT64_MAX)

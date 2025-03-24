@@ -21,7 +21,7 @@ import (
 //=================================Test for SwapRouter exactInput 0 ->1 -> 2 in multi pool=================================
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Approve(poolAddr, pl.GetPoolCreationFee()*2)
 
 	pl.CreatePool(barPath, bazPath, 3000, "79228162514264337593543950336")
@@ -35,7 +35,7 @@ func TestCreatePool(t *testing.T) {
 
 func TestPositionMint(t *testing.T) {
 	// bar_baz_3000 by admin
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	baz.Approve(poolAddr, consts.UINT64_MAX)
@@ -47,7 +47,7 @@ func TestPositionMint(t *testing.T) {
 }
 
 func TestSwapRouteBarfooExactIn(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	bar.Approve(routerAddr, 1000000)
 	foo.Approve(routerAddr, 1000000)

@@ -30,7 +30,7 @@ func TestSwapRouteSingleRouteSinlgeHopWithNativeInAndOut(t *testing.T) {
 
 func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		gns.Approve(poolAddr, pl.GetPoolCreationFee()*3)
 
 		pl.CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006")                         // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
@@ -56,7 +56,7 @@ func testCreatePool(t *testing.T) {
 func testPositionMint(t *testing.T) {
 	t.Run("position mint", func(t *testing.T) {
 		t.Run("bar:baz:500", func(t *testing.T) {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			bar.Approve(poolAddr, consts.UINT64_MAX)
 			baz.Approve(poolAddr, consts.UINT64_MAX)
 			positionId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
@@ -68,7 +68,7 @@ func testPositionMint(t *testing.T) {
 	})
 
 	t.Run("baz:qux:500", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		baz.Approve(poolAddr, consts.UINT64_MAX)
 		qux.Approve(poolAddr, consts.UINT64_MAX)
 		positionId, liquidity, amount0, amount1 := pn.Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
@@ -79,14 +79,14 @@ func testPositionMint(t *testing.T) {
 	})
 
 	t.Run("qux:gnot:500", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		qux.Approve(poolAddr, consts.UINT64_MAX)
 		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 
 		wugnot.Approve(positionAddr, consts.UINT64_MAX) // wrap / unwrap
 
 		// send coin
-		std.TestIssueCoins(positionAddr, std.Coins{{"ugnot", 1000009}}) // without issuing, it will fail `source address g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5 does not exist`
+		testing.IssueCoins(positionAddr, std.Coins{{"ugnot", 1000009}}) // without issuing, it will fail `source address g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5 does not exist`
 		std.TestSetOriginSend(std.Coins{{"ugnot", 1000009}}, nil)
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.GNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
@@ -103,7 +103,7 @@ func testPositionMint(t *testing.T) {
 
 // func testBuyNative(t *testing.T) {
 // 	t.Run("swap, buy native, bar > gnot", func(t *testing.T) {
-// 		std.TestSetRealm(adminRealm)
+// 		testing.SetRealm(adminRealm)
 
 // 		bar.Approve(poolAddr, consts.UINT64_MAX)      // input
 // 		wugnot.Approve(routerAddr, consts.UINT64_MAX) // output fee ≈ 0.15%
@@ -145,7 +145,7 @@ func testPositionMint(t *testing.T) {
 
 // func testSellNative(t *testing.T) {
 // 	t.Run("swap, sell native, gnot > bar", func(t *testing.T) {
-// 		std.TestSetRealm(adminRealm)
+// 		testing.SetRealm(adminRealm)
 
 // 		wugnot.Approve(poolAddr, consts.UINT64_MAX) // input
 // 		bar.Approve(routerAddr, consts.UINT64_MAX)  // output fee ≈ 0.15%
@@ -159,7 +159,7 @@ func testPositionMint(t *testing.T) {
 // 		uassert.Equal(t, ugnotBalanceOf(protocolFeeAddr), uint64(29))
 
 // 		std.TestSetOrigSend(std.Coins{{"ugnot", 5000}}, nil)
-// 		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", -5000}})
+// 		testing.IssueCoins(adminAddr, std.Coins{{"ugnot", -5000}})
 // 		amountIn, amountOut := ExactInSwapRoute(
 // 			consts.GNOT, // intputToken
 // 			barPath,     // outputToken

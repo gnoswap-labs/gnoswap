@@ -61,7 +61,7 @@ func makeFakeAddress(name string) std.Address {
 func ugnotTransfer(t *testing.T, from, to std.Address, amount uint64) {
 	t.Helper()
 
-	std.TestSetRealm(std.NewUserRealm(from))
+	testing.SetRealm(std.NewUserRealm(from))
 	std.TestSetOriginSend(std.Coins{{ugnotDenom, int64(amount)}}, nil)
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 
@@ -82,7 +82,7 @@ func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
 
 func ugnotMint(t *testing.T, addr std.Address, denom string, amount int64) {
 	t.Helper()
-	std.TestIssueCoins(addr, std.Coins{{ugnotDenom, int64(amount)}})
+	testing.IssueCoins(addr, std.Coins{{ugnotDenom, int64(amount)}})
 }
 
 func ugnotBurn(t *testing.T, addr std.Address, denom string, amount int64) {
@@ -94,7 +94,7 @@ func ugnotBurn(t *testing.T, addr std.Address, denom string, amount int64) {
 func ugnotFaucet(t *testing.T, to std.Address, amount uint64) {
 	t.Helper()
 	// faucet address is admin
-	std.TestSetOriginCaller(admin)
+	testing.SetOriginCaller(admin)
 
 	if ugnotBalanceOf(t, admin) < amount {
 		ugnotMint(t, admin, ugnotPath, int64(amount))
@@ -105,7 +105,7 @@ func ugnotFaucet(t *testing.T, to std.Address, amount uint64) {
 
 func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 	t.Helper()
-	std.TestSetRealm(std.NewUserRealm(addr))
+	testing.SetRealm(std.NewUserRealm(addr))
 	wugnotAddr := consts.WUGNOT_ADDR
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})

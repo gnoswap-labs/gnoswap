@@ -15,14 +15,14 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestMintPosition01InRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, 18394892)
 	foo.Approve(poolAddr, 50000000)
 
@@ -62,7 +62,7 @@ func TestMintPosition01InRange(t *testing.T) {
 }
 
 func TestMintPosition02InRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, 18394892)
 	foo.Approve(poolAddr, 50000000)
 
@@ -102,10 +102,10 @@ func TestMintPosition02InRange(t *testing.T) {
 }
 
 func TestSwap1(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, 1234567)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		fooPath,
@@ -128,7 +128,7 @@ func TestUnclaimedFee01(t *testing.T) {
 	uassert.Equal(t, unclaimedFee1.ToString(), "0")
 
 	{
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		bar.Approve(poolAddr, consts.UINT64_MAX)
 		foo.Approve(poolAddr, consts.UINT64_MAX)
 
@@ -148,7 +148,7 @@ func TestUnclaimedFee02(t *testing.T) {
 	uassert.Equal(t, unclaimedFee1.ToString(), "0")
 
 	{
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		bar.Approve(poolAddr, consts.UINT64_MAX)
 		foo.Approve(poolAddr, consts.UINT64_MAX)
 

@@ -79,7 +79,7 @@ func TestMint(t *testing.T) {
 
 	t.Run("successful mint", func(t *testing.T) {
 		// create pool first
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		SetPoolCreationFeeByAdmin(0)
 		CreatePool(
 			barTokenPath,
@@ -95,7 +95,7 @@ func TestMint(t *testing.T) {
 		beforeBalance0 := bar.BalanceOf(poolAddr)
 		beforeBalance1 := baz.BalanceOf(poolAddr)
 
-		std.TestSetRealm(std.NewCodeRealm(consts.POSITION_PATH))
+		testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
 		mintAmount0, mintAmount1 := Mint(
 			barTokenPath,
 			bazTokenPath,
@@ -182,7 +182,7 @@ func TestBurn(t *testing.T) {
 				}()
 			}
 
-			std.TestSetRealm(std.NewCodeRealm(consts.POSITION_PATH))
+			testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
 			amount0, amount1 := Burn(
 				barTokenPath,
 				bazTokenPath,
@@ -300,16 +300,16 @@ func TestCollect(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Pool Creation
-			std.TestSetRealm(std.NewUserRealm(positionOwner))
+			testing.SetRealm(std.NewUserRealm(positionOwner))
 			SetPoolCreationFeeByAdmin(0)
 			if !DoesPoolPathExist(GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
 				CreatePool(tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
 			}
 
 			if !tt.expectPanic {
-				std.TestSetOriginCaller(positionOwner)
+				testing.SetOriginCaller(positionOwner)
 				newCoins := std.Coins{{"ugnot", int64(10000000000)}}
-				std.TestIssueCoins(positionOwner, newCoins)
+				testing.IssueCoins(positionOwner, newCoins)
 				std.TestSetOriginSend(newCoins, nil)
 				banker := std.NewBanker(std.BankerTypeRealmSend)
 				banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
@@ -321,7 +321,7 @@ func TestCollect(t *testing.T) {
 				teller := common.GetTokenTeller(wugnotPath)
 				teller.Approve(poolAddr, maxApprove)
 
-				std.TestSetRealm(std.NewUserRealm(positionOwner))
+				testing.SetRealm(std.NewUserRealm(positionOwner))
 				// Position Creation
 				pn.Mint(
 					tt.tokenPath0,
@@ -343,14 +343,14 @@ func TestCollect(t *testing.T) {
 				posKey := getPositionKey(positionAddr, tt.tickLower, tt.tickUpper)
 				pool.mustGetPosition(posKey)
 
-				std.TestSkipHeights(1)
+				testing.SkipHeights(1)
 
 				// Swap
-				std.TestSetOriginCaller(positionOwner)
+				testing.SetOriginCaller(positionOwner)
 				wugnot.Transfer(routerAddr, 20000000)
 				gns.Transfer(routerAddr, 20000000)
 
-				std.TestSetRealm(rouRealm)
+				testing.SetRealm(rouRealm)
 				wugnot.Approve(poolAddr, maxApprove)
 
 				amount0, amount1 := Swap(
@@ -363,7 +363,7 @@ func TestCollect(t *testing.T) {
 					"3945129629379410362911094632",
 					tt.recipient,
 				)
-				std.TestSkipHeights(1)
+				testing.SkipHeights(1)
 			}
 
 			defer func() {
@@ -375,7 +375,7 @@ func TestCollect(t *testing.T) {
 			}()
 
 			// Collect
-			std.TestSetRealm(posRealm)
+			testing.SetRealm(posRealm)
 			collectedAmount0, collectedAmount1 := Collect(
 				tt.tokenPath0,
 				tt.tokenPath1,
@@ -486,7 +486,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Pool Creation
-			std.TestSetRealm(std.NewUserRealm(positionOwner))
+			testing.SetRealm(std.NewUserRealm(positionOwner))
 			SetPoolCreationFeeByAdmin(0)
 			if !DoesPoolPathExist(GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
 				CreatePool(tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
@@ -498,9 +498,9 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 				uassert.Equal(t, tt.feeProtocol0, pool.Slot0FeeProtocol()%16)
 				uassert.Equal(t, tt.feeProtocol1, pool.Slot0FeeProtocol()>>4)
 			}
-			std.TestSetOriginCaller(positionOwner)
+			testing.SetOriginCaller(positionOwner)
 			newCoins := std.Coins{{"ugnot", int64(10000000000)}}
-			std.TestIssueCoins(positionOwner, newCoins)
+			testing.IssueCoins(positionOwner, newCoins)
 			std.TestSetOriginSend(newCoins, nil)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
@@ -509,7 +509,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 				wugnot.Transfer(tt.recipient, 10000000000)
 			}
 
-			std.TestSetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			wugnot.Approve(poolAddr, maxApprove)
 			gns.Approve(poolAddr, maxApprove)
 
@@ -537,14 +537,14 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 			posKey := getPositionKey(positionAddr, tt.tickLower, tt.tickUpper)
 			pool.mustGetPosition(posKey)
 
-			std.TestSkipHeights(1)
+			testing.SkipHeights(1)
 
 			// Swap
-			std.TestSetOriginCaller(tt.recipient)
+			testing.SetOriginCaller(tt.recipient)
 			wugnot.Transfer(routerAddr, 20000000)
 			gns.Transfer(routerAddr, 20000000)
 
-			std.TestSetRealm(rouRealm)
+			testing.SetRealm(rouRealm)
 			wugnot.Approve(poolAddr, maxApprove)
 
 			amount0, amount1 := Swap(
@@ -557,7 +557,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 				"3945129629379410362911094632",
 				tt.recipient,
 			)
-			std.TestSkipHeights(1)
+			testing.SkipHeights(1)
 
 			defer func() {
 				if r := recover(); r != nil {
@@ -575,7 +575,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 			pool = GetPool(tt.tokenPath0, tt.tokenPath1, tt.feeTier)
 			beforePoolBalance0 := pool.BalanceToken0()
 			beforePoolBalance1 := pool.BalanceToken1()
-			std.TestSetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			collectedAmount0, collectedAmount1 := CollectProtocolByAdmin(
 				tt.tokenPath0,
 				tt.tokenPath1,

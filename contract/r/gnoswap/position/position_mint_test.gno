@@ -8,7 +8,6 @@ import (
 	"gno.land/p/demo/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -66,21 +65,21 @@ func TestMintInternal_PositionMint(t *testing.T) {
 					}
 				}()
 			}
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			TokenApprove(t, gnsPath, alice, poolAddr, maxApprove)
 			poolPath := pl.GetPoolPath(tt.params.token0, tt.params.token1, tt.params.fee)
 			if !pl.DoesPoolPathExist(poolPath) {
 				pl.CreatePool(tt.params.token0, tt.params.token1, tt.params.fee, "79228162514264337593543950336")
 			}
 
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			TokenFaucet(t, tt.params.token0, alice)
 			TokenFaucet(t, tt.params.token1, alice)
 
-			std.TestSetRealm(std.NewUserRealm(alice))
+			testing.SetRealm(std.NewUserRealm(alice))
 			bar.Approve(poolAddr, maxApprove)
 			baz.Approve(poolAddr, maxApprove)
-			std.TestSetOriginCaller(alice)
+			testing.SetOriginCaller(alice)
 			id, liquidity, amount0, amount1 := mint(tt.params)
 
 			if tt.expectedSuccess {

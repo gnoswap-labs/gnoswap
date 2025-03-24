@@ -72,10 +72,10 @@ func main() {
 }
 
 func testInit() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// prepare wugnot
-	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
 	std.TestSetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}}, nil)
@@ -87,11 +87,11 @@ func testInit() {
 }
 
 func testCreatePool() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	pl.SetPoolCreationFeeByAdmin(0)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pl.CreatePool(
 		wugnotPath,
 		gnsPath,
@@ -107,12 +107,12 @@ func testCreatePool() {
 }
 
 func testMintAndStakeWugnotGnsPos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	wugnot.Approve(poolAddr, consts.UINT64_MAX)
 	gns.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pn.Mint(
 		wugnotPath,
 		gnsPath,
@@ -132,8 +132,8 @@ func testMintAndStakeWugnotGnsPos01() {
 	sr.StakeToken(1, "")
 
 	// check reward for position 01 (gnot:gns:3000 tier 01)
-	std.TestSetRealm(adminRealm)
-	std.TestSkipHeights(1)
+	testing.SetRealm(adminRealm)
+	testing.SkipHeights(1)
 	beforeGns := gns.BalanceOf(adminUser)
 	sr.CollectReward(1, false)
 	afterGns := gns.BalanceOf(adminUser)
@@ -144,13 +144,13 @@ func testMintAndStakeWugnotGnsPos01() {
 }
 
 func testSetPoolTier2() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	sr.SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", 2)
 }
 
 func testMintAndStakeBarBazPos02() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	baz.Approve(poolAddr, consts.UINT64_MAX)
@@ -172,11 +172,11 @@ func testMintAndStakeBarBazPos02() {
 
 	gnft.Approve(stakerAddr, positionIdFrom(2))
 	sr.StakeToken(2, "")
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
 	{
 		// check reward for position 01 (gnot:gns:3000 tier 01)
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		beforeGns := gns.BalanceOf(adminUser)
 		sr.CollectReward(1, false)
 		afterGns := gns.BalanceOf(adminUser)
@@ -188,7 +188,7 @@ func testMintAndStakeBarBazPos02() {
 
 	{
 		// check reward for position 02 (bar:baz:100 tier 02)
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		beforeGns := gns.BalanceOf(adminUser)
 		sr.CollectReward(2, false)
 		afterGns := gns.BalanceOf(adminUser)
@@ -200,14 +200,14 @@ func testMintAndStakeBarBazPos02() {
 }
 
 func testRemovePoolTier() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	sr.RemovePoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100")
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
 	{
 		// check reward for position 01 (gnot:gns:3000 tier 01)
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		beforeGns := gns.BalanceOf(adminUser)
 		sr.CollectReward(1, false)
 		afterGns := gns.BalanceOf(adminUser)
@@ -219,7 +219,7 @@ func testRemovePoolTier() {
 
 	{
 		// check reward for position 02 (bar:baz:100 tier 02)
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		beforeGns := gns.BalanceOf(adminUser)
 		sr.CollectReward(2, false)
 		afterGns := gns.BalanceOf(adminUser)

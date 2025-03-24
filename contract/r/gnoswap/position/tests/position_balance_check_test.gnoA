@@ -39,7 +39,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 	t.Run("distribute gns token ", func(t *testing.T) {
 		tokenAmountForDistribute := uint64(1000000000000)
 		// 0. Set realm to admin
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		// 1. transfer gns
 		gns.Transfer(aliceAddr, tokenAmountForDistribute)
 		gns.Transfer(bobAddr, tokenAmountForDistribute)
@@ -52,13 +52,13 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		fullTokenAmount := tokenAmountForDistribute * 1000000
 
 		// 0. Set realm to admin
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		// 1. transfer ugnot
-		std.TestSetOriginCaller(adminAddr)
+		testing.SetOriginCaller(adminAddr)
 		newCoins := std.Coins{{"ugnot", fullTokenAmount}}
 		distributeCoins := std.Coins{{"ugnot", tokenAmountForDistribute}}
-		std.TestIssueCoins(adminAddr, newCoins)
+		testing.IssueCoins(adminAddr, newCoins)
 		std.TestSetOriginSend(newCoins, nil)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, distributeCoins)
@@ -74,7 +74,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 
 	t.Run("create pool - wugnot-gns-3000", func(t *testing.T) {
 		// 0. Set realm to admin
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		// 1. Approve gns
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 		// 2. Create pool
@@ -108,7 +108,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 	t.Run("Distribute Gns Token", func(t *testing.T) {
 		tokenAmountForDistribute := uint64(1000000000)
 		// 0. Set realm to admin
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		// 1. transfer gns
 		gns.Transfer(aliceAddr, tokenAmountForDistribute)
 		gns.Transfer(bobAddr, tokenAmountForDistribute)
@@ -125,7 +125,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		referrerAddr := ""
 
 		// 0. Set realm to alice
-		std.TestSetRealm(aliceRealm)
+		testing.SetRealm(aliceRealm)
 		// 1. Approve wugnot
 		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 		// 2. Approve gns
@@ -192,7 +192,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		referrerAddr := ""
 
 		// 0. Set realm to bob
-		std.TestSetRealm(bobRealm)
+		testing.SetRealm(bobRealm)
 		// 1. Approve wugnot
 		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 		// 2. Approve gns
@@ -257,7 +257,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		referrerAddr := ""
 
 		// 0. Set realm to admin
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		// 1. Approve wugnot
 		wugnot.Approve(routerAddr, consts.UINT64_MAX)
 		// 2. Approve gns
@@ -359,13 +359,13 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 	t.Run("distribute gns token ", func(t *testing.T) {
 		tokenAmountForDistribute := uint64(1000000000000)
 		if gns.BalanceOf(aliceAddr) < tokenAmountForDistribute {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			gns.Transfer(aliceAddr, tokenAmountForDistribute)
 			uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(aliceAddr))
 		}
 
 		if gns.BalanceOf(bobAddr) < tokenAmountForDistribute {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			gns.Transfer(bobAddr, tokenAmountForDistribute)
 			uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(bobAddr))
 		}
@@ -375,9 +375,9 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		tokenAmountForDistribute := int64(1000000000000)
 		fullTokenAmount := tokenAmountForDistribute * 1000000
 		if wugnot.BalanceOf(aliceAddr) == uint64(0) {
-			std.TestSetOriginCaller(adminAddr)
+			testing.SetOriginCaller(adminAddr)
 			newCoins := std.Coins{{"ugnot", fullTokenAmount}}
-			std.TestIssueCoins(adminAddr, newCoins)
+			testing.IssueCoins(adminAddr, newCoins)
 			std.TestSetOriginSend(newCoins, nil)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
@@ -386,9 +386,9 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 			uassert.Equal(t, uint64(tokenAmountForDistribute), wugnot.BalanceOf(aliceAddr))
 		}
 		if wugnot.BalanceOf(bobAddr) == uint64(0) {
-			std.TestSetOriginCaller(adminAddr)
+			testing.SetOriginCaller(adminAddr)
 			newCoins := std.Coins{{"ugnot", fullTokenAmount}}
-			std.TestIssueCoins(adminAddr, newCoins)
+			testing.IssueCoins(adminAddr, newCoins)
 			std.TestSetOriginSend(newCoins, nil)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
@@ -402,7 +402,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		poolPath := pl.GetPoolPath(token0Path, token1Path, fee)
 		if !pl.DoesPoolPathExist(poolPath) {
 			// 0. Set realm to admin
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			// 1. Approve gns
 			gns.Approve(poolAddr, consts.UINT64_MAX)
 			// 2. Create pool
@@ -438,13 +438,13 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		tokenAmountForDistribute := uint64(1000000000)
 		if gns.BalanceOf(aliceAddr) > tokenAmountForDistribute {
 			// 0. Set realm to admin
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			// 1. transfer gns
 			gns.Transfer(aliceAddr, tokenAmountForDistribute)
 		}
 		if gns.BalanceOf(bobAddr) > tokenAmountForDistribute {
 			// 0. Set realm to admin
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			// 1. transfer gns
 			gns.Transfer(bobAddr, tokenAmountForDistribute)
 		}
@@ -464,7 +464,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		_, exist := GetPosition(positionId)
 		if !exist {
 			// 0. Set realm to alice
-			std.TestSetRealm(aliceRealm)
+			testing.SetRealm(aliceRealm)
 			// 1. Approve wugnot
 			wugnot.Approve(poolAddr, consts.UINT64_MAX)
 			// 2. Approve gns
@@ -535,7 +535,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		_, exist := GetPosition(positionId)
 		if !exist {
 			// 0. Set realm to bob
-			std.TestSetRealm(bobRealm)
+			testing.SetRealm(bobRealm)
 			// 1. Approve wugnot
 			wugnot.Approve(poolAddr, consts.UINT64_MAX)
 			// 2. Approve gns
@@ -601,7 +601,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		referrerAddr := ""
 
 		// 0. Set realm to admin
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		// 1. Approve wugnot
 		wugnot.Approve(routerAddr, consts.UINT64_MAX)
 		// 2. Approve gns
@@ -684,7 +684,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 
 	t.Run("Burn position #1 ", func(t *testing.T) {
 		// 0. Set realm to alice
-		std.TestSetRealm(aliceRealm)
+		testing.SetRealm(aliceRealm)
 
 		beforeWugnotBalance := wugnot.BalanceOf(aliceAddr)
 		beforeGnsBalance := gns.BalanceOf(aliceAddr)
@@ -719,13 +719,13 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		fullTokenAmount := tokenAmountForDistribute * 1000000
 
 		// 0. Set realm to admin
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		// 1. transfer ugnot
-		std.TestSetOriginCaller(adminAddr)
+		testing.SetOriginCaller(adminAddr)
 		newCoins := std.Coins{{"ugnot", fullTokenAmount}}
 		distributeCoins := std.Coins{{"ugnot", tokenAmountForDistribute}}
-		std.TestIssueCoins(adminAddr, newCoins)
+		testing.IssueCoins(adminAddr, newCoins)
 		std.TestSetOriginSend(newCoins, nil)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(adminAddr, aliceAddr, distributeCoins)
@@ -742,8 +742,8 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		positionId := uint64(1)
 
 		// Add Liquidity
-		std.TestSetRealm(aliceRealm)
-		std.TestSetOriginCaller(aliceAddr)
+		testing.SetRealm(aliceRealm)
+		testing.SetOriginCaller(aliceAddr)
 		addAmount, err := strconv.ParseInt(amount0Desired, 10, 64)
 		if err != nil {
 			t.Errorf("failed to parse amount0Requested: %v", err)
@@ -752,12 +752,12 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		std.TestSetOriginSend(newCoinsForAdd, nil)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(aliceAddr, positionAddr, newCoinsForAdd)
-		std.TestSetRealm(aliceRealm)
+		testing.SetRealm(aliceRealm)
 		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 		wugnot.Approve(positionAddr, consts.UINT64_MAX)
 
-		std.TestSetRealm(aliceRealm)
+		testing.SetRealm(aliceRealm)
 		positionId, liquidity, amount0Str, amount1Str, poolPath := IncreaseLiquidity(positionId, amount0Desired, amount1Desired, amount0Min, amount1Min, maxTimeout)
 		position, _ := GetPosition(positionId)
 		uassert.Equal(t, "25591774", amount0Str)
@@ -788,13 +788,13 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 	t.Run("distribute gns token ", func(t *testing.T) {
 		tokenAmountForDistribute := uint64(1000000000000)
 		if gns.BalanceOf(aliceAddr) < tokenAmountForDistribute {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			gns.Transfer(aliceAddr, tokenAmountForDistribute)
 			uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(aliceAddr))
 		}
 
 		if gns.BalanceOf(bobAddr) < tokenAmountForDistribute {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			gns.Transfer(bobAddr, tokenAmountForDistribute)
 			uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(bobAddr))
 		}
@@ -804,9 +804,9 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		tokenAmountForDistribute := int64(1000000000000)
 		fullTokenAmount := tokenAmountForDistribute * 1000000
 		if wugnot.BalanceOf(aliceAddr) == uint64(0) {
-			std.TestSetOriginCaller(adminAddr)
+			testing.SetOriginCaller(adminAddr)
 			newCoins := std.Coins{{"ugnot", fullTokenAmount}}
-			std.TestIssueCoins(adminAddr, newCoins)
+			testing.IssueCoins(adminAddr, newCoins)
 			std.TestSetOriginSend(newCoins, nil)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
@@ -815,9 +815,9 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 			uassert.Equal(t, uint64(tokenAmountForDistribute), wugnot.BalanceOf(aliceAddr))
 		}
 		if wugnot.BalanceOf(bobAddr) == uint64(0) {
-			std.TestSetOriginCaller(adminAddr)
+			testing.SetOriginCaller(adminAddr)
 			newCoins := std.Coins{{"ugnot", fullTokenAmount}}
-			std.TestIssueCoins(adminAddr, newCoins)
+			testing.IssueCoins(adminAddr, newCoins)
 			std.TestSetOriginSend(newCoins, nil)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
@@ -831,7 +831,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		poolPath := pl.GetPoolPath(token0Path, token1Path, fee)
 		if !pl.DoesPoolPathExist(poolPath) {
 			// 0. Set realm to admin
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			// 1. Approve gns
 			gns.Approve(poolAddr, consts.UINT64_MAX)
 			// 2. Create pool
@@ -867,13 +867,13 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		tokenAmountForDistribute := uint64(1000000000)
 		if gns.BalanceOf(aliceAddr) > tokenAmountForDistribute {
 			// 0. Set realm to admin
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			// 1. transfer gns
 			gns.Transfer(aliceAddr, tokenAmountForDistribute)
 		}
 		if gns.BalanceOf(bobAddr) > tokenAmountForDistribute {
 			// 0. Set realm to admin
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			// 1. transfer gns
 			gns.Transfer(bobAddr, tokenAmountForDistribute)
 		}
@@ -893,7 +893,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		_, exist := GetPosition(positionId)
 		if !exist {
 			// 0. Set realm to alice
-			std.TestSetRealm(aliceRealm)
+			testing.SetRealm(aliceRealm)
 			// 1. Approve wugnot
 			wugnot.Approve(poolAddr, consts.UINT64_MAX)
 			// 2. Approve gns
@@ -964,7 +964,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		_, exist := GetPosition(positionId)
 		if !exist {
 			// 0. Set realm to bob
-			std.TestSetRealm(bobRealm)
+			testing.SetRealm(bobRealm)
 			// 1. Approve wugnot
 			wugnot.Approve(poolAddr, consts.UINT64_MAX)
 			// 2. Approve gns
@@ -1030,7 +1030,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		referrerAddr := ""
 
 		// 0. Set realm to admin
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		// 1. Approve wugnot
 		wugnot.Approve(routerAddr, consts.UINT64_MAX)
 		// 2. Approve gns
@@ -1116,13 +1116,13 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		fullTokenAmount := tokenAmountForDistribute * 1000000
 
 		// 0. Set realm to admin
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		// 1. transfer ugnot
-		std.TestSetOriginCaller(adminAddr)
+		testing.SetOriginCaller(adminAddr)
 		newCoins := std.Coins{{"ugnot", fullTokenAmount}}
 		distributeCoins := std.Coins{{"ugnot", tokenAmountForDistribute}}
-		std.TestIssueCoins(adminAddr, newCoins)
+		testing.IssueCoins(adminAddr, newCoins)
 		std.TestSetOriginSend(newCoins, nil)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(adminAddr, aliceAddr, distributeCoins)
@@ -1139,8 +1139,8 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		positionId := uint64(1)
 
 		// Add Liquidity
-		std.TestSetRealm(aliceRealm)
-		std.TestSetOriginCaller(aliceAddr)
+		testing.SetRealm(aliceRealm)
+		testing.SetOriginCaller(aliceAddr)
 		addAmount, err := strconv.ParseInt(amount0Desired, 10, 64)
 		if err != nil {
 			t.Errorf("failed to parse amount0Requested: %v", err)
@@ -1149,12 +1149,12 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		std.TestSetOriginSend(newCoinsForAdd, nil)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(aliceAddr, positionAddr, newCoinsForAdd)
-		std.TestSetRealm(aliceRealm)
+		testing.SetRealm(aliceRealm)
 		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 		wugnot.Approve(positionAddr, consts.UINT64_MAX)
 
-		std.TestSetRealm(aliceRealm)
+		testing.SetRealm(aliceRealm)
 
 		position, _ := GetPosition(positionId)
 		pool := pl.GetPoolFromPoolPath(position.poolKey)

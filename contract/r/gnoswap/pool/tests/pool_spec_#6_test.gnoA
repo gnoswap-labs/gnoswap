@@ -21,14 +21,14 @@ var (
 )
 
 func TestPositionsProtected(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	Mint(
 		barPath,
 		fooPath,
@@ -40,7 +40,7 @@ func TestPositionsProtected(t *testing.T) {
 		adminAddr,
 	)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	Swap(
 		barPath,
 		fooPath,
@@ -71,11 +71,11 @@ func TestPositionsProtected(t *testing.T) {
 }
 
 func TestPokeIsNotAllowedOnUninitializedPosition(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // tick 0
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	uassert.PanicsWithMessage(
 		t,
 		`[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero`,
@@ -93,7 +93,7 @@ func TestPokeIsNotAllowedOnUninitializedPosition(t *testing.T) {
 }
 
 func TestWorkAccross(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Approve(poolAddr, poolCreationFee)
 	// CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 	CreatePool(barPath, fooPath, fee100, "79228162514264337593543950336")
@@ -101,7 +101,7 @@ func TestWorkAccross(t *testing.T) {
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	Mint(
 		barPath,
 		fooPath,
@@ -119,7 +119,7 @@ func TestWorkAccross(t *testing.T) {
 	thisPool := GetPool(barPath, fooPath, fee100)
 	thisPool.feeGrowthGlobal0X128 = magicNumber.Clone()
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	Burn(
 		barPath,
 		fooPath,

@@ -52,8 +52,8 @@ func TestCalculateAmountToMint(t *testing.T) {
 
 func TestMintGns(t *testing.T) {
 	t.Run("panic for swap is halted", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		std.TestSkipHeights(123)    // pass some block to bypass last block check
+		testing.SetRealm(adminRealm)
+		testing.SkipHeights(123)    // pass some block to bypass last block check
 		halt.SetHaltByAdmin(true) // set halt
 		uassert.PanicsWithMessage(t, "halted", func() {
 			MintGns(adminAddr)
@@ -69,8 +69,8 @@ func TestMintGns(t *testing.T) {
 	})
 
 	t.Run("do not mint for same block", func(t *testing.T) {
-		std.TestSetRealm(emissionRealm)
-		std.TestSkipHeights(-123) // revert height to get caught by last block check
+		testing.SetRealm(emissionRealm)
+		testing.SkipHeights(-123) // revert height to get caught by last block check
 		mintedAmount := MintGns(adminAddr)
 		uassert.Equal(t, uint64(0), mintedAmount)
 	})

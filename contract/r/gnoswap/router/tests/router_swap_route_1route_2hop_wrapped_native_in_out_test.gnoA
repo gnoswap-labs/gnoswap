@@ -20,7 +20,7 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, pl.GetPoolCreationFee()*3)
 
@@ -38,7 +38,7 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestPositionMintBarBaz(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	baz.Approve(poolAddr, consts.UINT64_MAX)
 	positionId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
@@ -49,7 +49,7 @@ func TestPositionMintBarBaz(t *testing.T) {
 }
 
 func TestPositionMintBazQux(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	baz.Approve(poolAddr, consts.UINT64_MAX)
 	qux.Approve(poolAddr, consts.UINT64_MAX)
 
@@ -61,14 +61,14 @@ func TestPositionMintBazQux(t *testing.T) {
 }
 
 func TestPositionMintQuxGnot(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// send
-	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 1000009}})
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 1000009}})
 	std.TestSetOriginSend(std.Coins{{"ugnot", 1000009}}, nil)
 
 	// Deposit(wrap)
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	wugnot.Deposit()
 
 	qux.Approve(poolAddr, consts.UINT64_MAX)
@@ -82,7 +82,7 @@ func TestPositionMintQuxGnot(t *testing.T) {
 }
 
 func TestDrySwapRouteBarGnotExactIn(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	dryResult := DrySwapRoute(
 		barPath,               // inputToken
@@ -97,7 +97,7 @@ func TestDrySwapRouteBarGnotExactIn(t *testing.T) {
 }
 
 func TestDrySwapRouteBarGnotExactOut(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	dryResult := DrySwapRoute(
 		barPath,               // inputToken
@@ -112,7 +112,7 @@ func TestDrySwapRouteBarGnotExactOut(t *testing.T) {
 }
 
 func TestDrySwapRouteGnotBarExactIn(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	dryResult := DrySwapRoute(
 		consts.WRAPPED_WUGNOT, // intputToken
@@ -127,7 +127,7 @@ func TestDrySwapRouteGnotBarExactIn(t *testing.T) {
 }
 
 func TestDrySwapRouteGnotBarExactOut(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	dryResult := DrySwapRoute(
 		consts.WRAPPED_WUGNOT, // intputToken

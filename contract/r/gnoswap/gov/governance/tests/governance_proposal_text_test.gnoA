@@ -34,7 +34,7 @@ func TestProposeText(t *testing.T) {
 
 func proposeText(t *testing.T) {
 	t.Run("ProposeText with insufficient delegation", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-004] not enough balance || proposer(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) has not enough xGNS, balance(0), wanted(100)",
 			func() {
@@ -43,14 +43,14 @@ func proposeText(t *testing.T) {
 	})
 
 	t.Run("Successful text proposal", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		proposalsJson := GetProposals()
 		uassert.Equal(t, proposalsJson, ``)
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		gns.Approve(govStakerAddr, uint64(1_000_000))
 		gs.Delegate(admin, uint64(1_000_000), "")
-		std.TestSkipHeights(11) // VotingWeightSmoothingDuration is 10 block
+		testing.SkipHeights(11) // VotingWeightSmoothingDuration is 10 block
 
 		proposalID := ProposeText("test_title", "test_description")
 		uassert.Equal(t, proposalID, uint64(1))
@@ -79,7 +79,7 @@ func proposeText(t *testing.T) {
 
 func vote(t *testing.T) {
 	t.Run("Vote non existent proposal", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-003] requested data not found || proposalId(123) not found",
 			func() {
@@ -90,7 +90,7 @@ func vote(t *testing.T) {
 	proposalId := uint64(1) // text proposal id
 
 	t.Run("Vote before voting period", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period",
 			func() {
@@ -99,8 +99,8 @@ func vote(t *testing.T) {
 	})
 
 	t.Run("Successful vote YES", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		std.TestSkipHeights(5)
+		testing.SetRealm(adminRealm)
+		testing.SkipHeights(5)
 
 		voteKey := Vote(proposalId, true)
 		voted := GetVoteByVoteKey(voteKey)
@@ -128,7 +128,7 @@ func vote(t *testing.T) {
 	})
 
 	t.Run("Vote twice", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-006] can not vote twice",
 			func() {
@@ -137,8 +137,8 @@ func vote(t *testing.T) {
 	})
 
 	t.Run("Vote after voting period", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		std.TestSkipHeights(2001)
+		testing.SetRealm(adminRealm)
+		testing.SkipHeights(2001)
 
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period",
@@ -148,7 +148,7 @@ func vote(t *testing.T) {
 	})
 
 	t.Run("Proposal status after voting period", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		updateProposalsState()
 
 		// proposal := proposals[proposalId]
@@ -165,7 +165,7 @@ func vote(t *testing.T) {
 
 func cancel(t *testing.T) {
 	t.Run("Cancel non existent proposal", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-003] requested data not found || proposalId(123) not found",
 			func() {
@@ -174,14 +174,14 @@ func cancel(t *testing.T) {
 	})
 
 	t.Run("new text proposal", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		proposalId := ProposeText("test2_title", "test2_description")
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 
 	t.Run("Cancel new text proposal", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		std.TestSkipHeights(1)
+		testing.SetRealm(adminRealm)
+		testing.SkipHeights(1)
 		Cancel(proposalId)
 
 		pp, exists := proposals.Get(formatUint(proposalId))
@@ -194,7 +194,7 @@ func cancel(t *testing.T) {
 	})
 
 	t.Run("Cancel already canceled proposal", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-008] can not cancel already canceled proposal || proposalId(2) has already canceled",
 			func() {
@@ -203,9 +203,9 @@ func cancel(t *testing.T) {
 	})
 
 	t.Run("Cancel after voting period", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		proposalId = ProposeText("test3_title", "test3_description")
-		std.TestSkipHeights(11)
+		testing.SkipHeights(11)
 
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-009] unable to cancel voting proposal || voting has already started for proposalId(3)",
@@ -217,7 +217,7 @@ func cancel(t *testing.T) {
 
 func execute(t *testing.T) {
 	t.Run("Execute non existent proposal", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
 			"proposal 123 not found",
 			func() {
@@ -226,8 +226,8 @@ func execute(t *testing.T) {
 	})
 
 	t.Run("Execute text proposal", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		std.TestSkipHeights(11)
+		testing.SetRealm(adminRealm)
+		testing.SkipHeights(11)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-011] can not execute text proposal",
 			func() {

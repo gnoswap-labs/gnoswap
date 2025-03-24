@@ -14,8 +14,10 @@
 package staker_test
 
 import (
+	"encoding/json"
 	"std"
 	"strconv"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 
@@ -70,10 +72,10 @@ func main() {
 }
 
 func testInit() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// prepare wugnot
-	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
 	std.TestSetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}}, nil)
@@ -82,11 +84,11 @@ func testInit() {
 }
 
 func testCreatePool() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	pl.SetPoolCreationFeeByAdmin(0)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pl.CreatePool(
 		barPath,
 		quxPath,
@@ -96,12 +98,12 @@ func testCreatePool() {
 }
 
 func testCreateExternalIncentiveBar() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	bar.Approve(stakerAddr, consts.UINT64_MAX)
 	gns.Approve(stakerAddr, depositGnsAmount)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	sr.CreateExternalIncentive(
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		barPath,
@@ -112,12 +114,12 @@ func testCreateExternalIncentiveBar() {
 }
 
 func testCreateExternalIncentiveQux() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	qux.Approve(stakerAddr, consts.UINT64_MAX)
 	gns.Approve(stakerAddr, depositGnsAmount)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	sr.CreateExternalIncentive(
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		quxPath,
@@ -128,12 +130,12 @@ func testCreateExternalIncentiveQux() {
 }
 
 func testMintAndStakeBarQuxPos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	qux.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pn.Mint(
 		barPath,
 		quxPath,
@@ -154,12 +156,12 @@ func testMintAndStakeBarQuxPos01() {
 }
 
 func testMintAndStakeBarQuxPos02() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	qux.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pn.Mint(
 		barPath,
 		quxPath,
@@ -187,8 +189,8 @@ func testMakeExternalBarAndQuxStart() {
 	blockAvgTime := milliToSec(consts.BLOCK_GENERATION_INTERVAL)
 	blockLeft := timeLeft / blockAvgTime
 
-	std.TestSkipHeights(int64(blockLeft)) // skip until external bar starts
-	std.TestSkipHeights(10)               // skip bit more to see reward calculation
+	testing.SkipHeights(int64(blockLeft)) // skip until external bar starts
+	testing.SkipHeights(10)               // skip bit more to see reward calculation
 
 	if extractReward(1) != extractReward(2) {
 		panic("reward is not equal")
@@ -196,9 +198,9 @@ func testMakeExternalBarAndQuxStart() {
 }
 
 func testCollectRewardPos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	std.TestSkipHeights(10)
+	testing.SkipHeights(10)
 	sr.CollectReward(1, false)
 
 	reward01 := extractReward(1)

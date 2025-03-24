@@ -40,7 +40,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 		{
 			name: "panic if halted",
 			setup: func() {
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 				halt.SetHaltByAdmin(true)
 			},
 			tokenPath:   consts.GNS_PATH,
@@ -52,7 +52,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 		{
 			name: "panic if not admin",
 			setup: func() {
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 				halt.SetHaltByAdmin(false)
 			},
 			tokenPath:   consts.GNS_PATH,
@@ -64,7 +64,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 		{
 			name: "panic if not enough balance",
 			setup: func() {
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 				gns.Transfer(communityPoolAddr, 10_000)
 			},
 			caller:      adminRealm,
@@ -90,7 +90,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 			}
 
 			if tt.caller != (std.Realm{}) {
-				std.TestSetRealm(tt.caller)
+				testing.SetRealm(tt.caller)
 			}
 
 			if tt.shouldPanic {
@@ -121,7 +121,7 @@ func TestTransferToken(t *testing.T) {
 		{
 			name: "panic if halted",
 			setup: func() {
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 				halt.SetHaltByAdmin(true)
 			},
 			tokenPath:   consts.GNS_PATH,
@@ -133,7 +133,7 @@ func TestTransferToken(t *testing.T) {
 		{
 			name: "panic if not governance",
 			setup: func() {
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 				halt.SetHaltByAdmin(false)
 			},
 			tokenPath:   consts.GNS_PATH,
@@ -145,7 +145,7 @@ func TestTransferToken(t *testing.T) {
 		{
 			name: "governance can't transfer community pool token",
 			setup: func() {
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 			},
 			caller:      govRealm,
 			tokenPath:   consts.GNS_PATH,
@@ -170,7 +170,7 @@ func TestTransferToken(t *testing.T) {
 			}
 
 			if tt.caller != (std.Realm{}) {
-				std.TestSetRealm(tt.caller)
+				testing.SetRealm(tt.caller)
 			}
 
 			if tt.shouldPanic {

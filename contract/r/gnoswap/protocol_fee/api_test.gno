@@ -2,12 +2,8 @@ package protocol_fee
 
 import (
 	"std"
-	"strconv"
 	"testing"
-	"time"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/json"
 	"gno.land/p/demo/uassert"
 )
 
@@ -18,14 +14,14 @@ func TestApiGetAccuTransferToGovStaker(t *testing.T) {
 	result := ApiGetAccuTransferToGovStaker()
 	uassert.Equal(t, `{"height":"123","now":"1234567890","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2000"}`, result)
 
-	std.TestSetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
 	ClearAccuTransferToGovStaker()
 	result = ApiGetAccuTransferToGovStaker()
 	uassert.Equal(t, `{"height":"123","now":"1234567890"}`, result)
 }
 
 func TestApiGetHistoryTransferToGovStaker(t *testing.T) {
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	addAccuToGovStaker("gno.land/r/onbloc/bar", 1000)
 	addAccuToGovStaker("gno.land/r/onbloc/qux", 2000)
 	updateDistributedToGovStakerHistory("gno.land/r/onbloc/bar", 1000)
@@ -35,7 +31,7 @@ func TestApiGetHistoryTransferToGovStaker(t *testing.T) {
 	resultAccu := ApiGetAccuTransferToGovStaker()
 	uassert.Equal(t, `{"height":"124","now":"1234567892","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2000"}`, resultAccu)
 
-	std.TestSetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
 	ClearAccuTransferToGovStaker()
 	resultHistory = ApiGetHistoryTransferToGovStaker()
 	uassert.Equal(t, `{"height":"124","now":"1234567892","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2000"}`, resultHistory)
@@ -44,7 +40,7 @@ func TestApiGetHistoryTransferToGovStaker(t *testing.T) {
 }
 
 func TestApiGetAccuTransferToDevOps(t *testing.T) {
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	addAccuToDevOps("gno.land/r/onbloc/bar", 1000)
 	addAccuToDevOps("gno.land/r/onbloc/qux", 2000)
 
@@ -53,7 +49,7 @@ func TestApiGetAccuTransferToDevOps(t *testing.T) {
 }
 
 func TestApiGetHistoryTransferToDevOps(t *testing.T) {
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	addAccuToDevOps("gno.land/r/onbloc/bar", 1000)
 	addAccuToDevOps("gno.land/r/onbloc/qux", 2000)
 	updateDistributedToDevOpsHistory("gno.land/r/onbloc/bar", 1000)

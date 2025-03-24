@@ -20,7 +20,7 @@ import (
 
 func TestExactInputSinglePool1_to_0(t *testing.T) {
 	// ================================ Pool Setup & Add Liquidity================================================
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 

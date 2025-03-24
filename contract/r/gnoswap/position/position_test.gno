@@ -471,13 +471,13 @@ func TestProcessTokens(t *testing.T) {
 			if tt.token0 == consts.GNOT {
 				amount, _ := strconv.ParseUint(tt.amount0Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
-				std.TestSetRealm(std.NewUserRealm(positionAddr))
+				testing.SetRealm(std.NewUserRealm(positionAddr))
 				transferUGNOT(positionAddr, positionAddr, amount)
 			}
 			if tt.token1 == consts.GNOT {
 				amount, _ := strconv.ParseUint(tt.amount1Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
-				std.TestSetRealm(std.NewUserRealm(positionAddr))
+				testing.SetRealm(std.NewUserRealm(positionAddr))
 				transferUGNOT(positionAddr, positionAddr, amount)
 			}
 
@@ -695,7 +695,7 @@ func TestMintInternal(t *testing.T) {
 			}
 
 			if !tt.expectPanic {
-				std.TestSetRealm(std.NewUserRealm(tt.params.mintTo))
+				testing.SetRealm(std.NewUserRealm(tt.params.mintTo))
 				positionId, liquidity, amount0, amount1 := mint(tt.params)
 				uassert.Equal(t, tt.expectedTokenId, positionId)
 				uassert.Equal(t, tt.expectedLiquidity, liquidity.ToString())
@@ -815,7 +815,7 @@ func TestMint(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			std.TestSetRealm(std.NewUserRealm(tc.caller))
+			testing.SetRealm(std.NewUserRealm(tc.caller))
 			if tc.expectPanic {
 				uassert.PanicsWithMessage(t,
 					tc.expectedError,
@@ -869,7 +869,7 @@ func TestMint(t *testing.T) {
 }
 
 func TestIncreaseLiquidityInternal(t *testing.T) {
-	std.TestSetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(std.NewUserRealm(adminAddr))
 	position := Position{
 		poolKey:                  "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
 		tickLower:                -10000,
@@ -952,7 +952,7 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 
 func TestIncreaseLiquidity(t *testing.T) {
 	id := GetNextId() - 1
-	std.TestSetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(std.NewUserRealm(adminAddr))
 	tests := []struct {
 		name             string
 		positionId       uint64
@@ -1135,7 +1135,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 	}
 
 	CreatePoolWithoutFee(t)
-	std.TestSetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(std.NewUserRealm(adminAddr))
 	TokenApprove(t, barPath, adminAddr, poolAddr, consts.UINT64_MAX)
 	TokenApprove(t, fooPath, adminAddr, poolAddr, consts.UINT64_MAX)
 	positionId, _, _, _ := Mint(
@@ -1257,7 +1257,7 @@ func TestCollectFees(t *testing.T) {
 	}
 
 	CreatePoolWithoutFee(t)
-	std.TestSetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(std.NewUserRealm(adminAddr))
 	TokenApprove(t, barPath, adminAddr, poolAddr, consts.UINT64_MAX)
 	TokenApprove(t, fooPath, adminAddr, poolAddr, consts.UINT64_MAX)
 
@@ -1377,7 +1377,7 @@ func TestReposition(t *testing.T) {
 	}
 
 	CreatePoolWithoutFee(t)
-	std.TestSetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(std.NewUserRealm(adminAddr))
 	TokenApprove(t, barPath, adminAddr, poolAddr, consts.UINT64_MAX)
 	TokenApprove(t, fooPath, adminAddr, poolAddr, consts.UINT64_MAX)
 

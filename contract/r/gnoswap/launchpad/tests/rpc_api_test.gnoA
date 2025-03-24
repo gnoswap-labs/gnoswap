@@ -37,7 +37,7 @@ func testMockProtocolFee(t *testing.T) {
 	t.Run("mock protocol fee", func(t *testing.T) {
 		// admin > protocol_fee
 		// send qux, bar for testing
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		bar.Transfer(protocolFeeAddr, 1000)
 		qux.Transfer(protocolFeeAddr, 2500)
 
@@ -59,9 +59,9 @@ func testCreateProject(t *testing.T) {
 	})
 
 	t.Run("create project", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		obl.Approve(launchpadAddr, uint64(1_000_000_000))
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 
 		projectId := CreateProject(
 			"Obl Protocol",
@@ -76,7 +76,7 @@ func testCreateProject(t *testing.T) {
 			uint64(time.Now().Unix()+10), // 10s later
 		)
 		uassert.Equal(t, projectId, `gno.land/r/onbloc/obl:124`)
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 
 	t.Run("recipient protocol_fee reward after creating project", func(t *testing.T) {
@@ -86,10 +86,10 @@ func testCreateProject(t *testing.T) {
 	})
 
 	t.Run("create another project", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		bar.Approve(launchpadAddr, uint64(1_000_000_000))
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 
 		projectId := CreateProject(
 			"Bar Protocol",
@@ -104,27 +104,27 @@ func testCreateProject(t *testing.T) {
 			uint64(time.Now().Unix()+10), // 10s later
 		)
 		uassert.Equal(t, projectId, `gno.land/r/onbloc/bar:126`)
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testDepositGnsToTierProject01_Tier30(t *testing.T) {
 	t.Run("deposit to obl project, tier 30", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		gns.Transfer(user01, uint64(1_000_000)) // to deposit
 		// transfer some grc20 tokens to bypass project condition
 		foo.Transfer(user01, uint64(10))
 		bar.Transfer(user01, uint64(10))
 
 		// user01 makes deposit
-		std.TestSetRealm(user01Realm)
+		testing.SetRealm(user01Realm)
 		gns.Approve(launchpadAddr, uint64(1_000_000))
 
 		// skip some blocks to make project active
-		std.TestSkipHeights(4)
+		testing.SkipHeights(4)
 		depositId := DepositGns("gno.land/r/onbloc/obl:124:30", uint64(1_000_000), "") // 1000000
 		uassert.Equal(t, depositId, `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:131`)
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 
 	t.Run("check deposit's project token", func(t *testing.T) {
@@ -150,7 +150,7 @@ func testCollectProtocolFeeByProject01Recipient(t *testing.T) {
 	})
 
 	t.Run("claim protocol reward", func(t *testing.T) {
-		std.TestSetRealm(projectRealm)
+		testing.SetRealm(projectRealm)
 
 		oldBar := bar.BalanceOf(projectAddr)
 		oldQux := qux.BalanceOf(projectAddr)
@@ -170,7 +170,7 @@ func testCollectProtocolFeeByProject01Recipient(t *testing.T) {
 		uassert.Equal(t, newBar, uint64(1000))
 		uassert.Equal(t, newQux, uint64(2500))
 
-		std.TestSkipHeights(10) // pass some blocks
+		testing.SkipHeights(10) // pass some blocks
 	})
 
 	t.Run("check project's recipient protocol_fee reward after claiming it", func(t *testing.T) {
@@ -187,12 +187,12 @@ func testAPIs(t *testing.T) {
 		})
 
 		t.Run("tier 30days is over", func(t *testing.T) {
-			std.TestSkipHeights(int64(TIMESTAMP_30DAYS) / 2)
+			testing.SkipHeights(int64(TIMESTAMP_30DAYS) / 2)
 			got := ApiGetClaimableDepositByAddress(user01)
 			uassert.Equal(t, got, uint64(1_000_000))
 
 			// and actual collect
-			std.TestSetRealm(user01Realm)
+			testing.SetRealm(user01Realm)
 			claimed := CollectDepositGns()
 			uassert.Equal(t, claimed, uint64(1_000_000))
 		})
@@ -201,7 +201,7 @@ func testAPIs(t *testing.T) {
 			got := ApiGetClaimableDepositByAddress(user01)
 			uassert.Equal(t, got, uint64(0))
 
-			std.TestSetRealm(user01Realm)
+			testing.SetRealm(user01Realm)
 			claimed := CollectDepositGns()
 			uassert.Equal(t, claimed, uint64(0))
 		})

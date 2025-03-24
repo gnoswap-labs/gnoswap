@@ -309,7 +309,7 @@ func TestCollectRewardByDepositId_OwnerCheck(t *testing.T) {
 	updateDeposit(depositB)
 
 	t.Run("UserA tries depositB => panic", func(t *testing.T) {
-		std.TestSetRealm(std.NewUserRealm(userA))
+		testing.SetRealm(std.NewUserRealm(userA))
 		defer func() {
 			r := recover()
 			if r == nil {
@@ -322,7 +322,7 @@ func TestCollectRewardByDepositId_OwnerCheck(t *testing.T) {
 	})
 
 	t.Run("UserA depositA => not claimable yet", func(t *testing.T) {
-		std.TestSetRealm(std.NewUserRealm(userA))
+		testing.SetRealm(std.NewUserRealm(userA))
 		// height=0, depositA.claimableHeight=10
 		defer func() {
 			r := recover()
@@ -335,14 +335,14 @@ func TestCollectRewardByDepositId_OwnerCheck(t *testing.T) {
 		CollectRewardByDepositId("depA")
 	})
 
-	std.TestSkipHeights(11) // now height=11 >= depositA.claimableHeight=10
+	testing.SkipHeights(11) // now height=11 >= depositA.claimableHeight=10
 
 	depA := deposits["depA"]
 	depA.claimableTime = 0
 	deposits["depA"] = depA
 
 	t.Run("UserA depositA => claim success", func(t *testing.T) {
-		std.TestSetRealm(std.NewUserRealm(userA))
+		testing.SetRealm(std.NewUserRealm(userA))
 
 		rewardPerDeposit := u256.NewUint(1)
 		rewardPerDepositX128 := u256.Zero().Lsh(rewardPerDeposit, 128)

@@ -27,12 +27,12 @@ var (
 )
 
 func init() {
-	std.TestSkipHeights(100)
+	testing.SkipHeights(100)
 }
 
 func AfterTest(t *testing.T) {
 	poolRealm := std.NewUserRealm(poolAddr)
-	std.TestSetRealm(poolRealm)
+	testing.SetRealm(poolRealm)
 	barBal := bar.BalanceOf(poolAddr)
 	fooBal := foo.BalanceOf(poolAddr)
 	bar.Transfer(adminAddr, barBal)
@@ -42,7 +42,7 @@ func AfterTest(t *testing.T) {
 
 func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, poolCreationFee)
 
@@ -53,7 +53,7 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed(t *testing.T
 	pl.CreatePool(barPath, token0Path, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	pl.Mint(token0Path, barPath, 3000, positionAddr, minTick, maxTick, "3161", adminAddr)
 
 	// ===================== clears tick lower if last position is removed =====================
@@ -61,7 +61,7 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed(t *testing.T
 	pool := GetPool(token0Path, barPath, 3000)
 	tickSpacing := pool.tickSpacing
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	pl.Mint(token0Path, barPath, 3000, positionAddr, -240, 0, "100", adminAddr)
 	pl.Burn(token0Path, barPath, 3000, -240, 0, "100")
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, _, _, _, _, _ := pool.GetTicks(-240)
@@ -74,7 +74,7 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed(t *testing.T
 
 func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed2(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, poolCreationFee)
 
@@ -85,7 +85,7 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed2(t *testing.
 	pl.CreatePool(barPath, token0Path, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	pl.Mint(token0Path, barPath, 3000, positionAddr, minTick, maxTick, "3161", adminAddr)
 
 	// ===================== clears tick lower if last position is removed =====================
@@ -93,7 +93,7 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed2(t *testing.
 	pool := GetPool(token0Path, barPath, 3000)
 	tickSpacing := pool.tickSpacing
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	pl.Mint(token0Path, barPath, 3000, positionAddr, -240, 0, "100", adminAddr)
 	pl.Burn(token0Path, barPath, 3000, -240, 0, "100")
 
@@ -107,7 +107,7 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed2(t *testing.
 
 func TestSuccess_case_only_clears_the_tick_that_is_not_used_at_all(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, poolCreationFee)
 
@@ -118,7 +118,7 @@ func TestSuccess_case_only_clears_the_tick_that_is_not_used_at_all(t *testing.T)
 	pl.CreatePool(barPath, token0Path, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	pl.Mint(token0Path, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", adminAddr)
 
 	// ===================== only clears the tick that is not used at all =====================
@@ -126,7 +126,7 @@ func TestSuccess_case_only_clears_the_tick_that_is_not_used_at_all(t *testing.T)
 	pool := GetPool(token0Path, barPath, 3000)
 	tickSpacing := pool.tickSpacing
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	pl.Mint(token0Path, barPath, 3000, positionAddr, -240, 0, "100", adminAddr)
 	pl.Mint(token0Path, barPath, 3000, positionAddr, -240, 0, "250", adminAddr)
 	pl.Burn(token0Path, barPath, 3000, -240, 0, "100")

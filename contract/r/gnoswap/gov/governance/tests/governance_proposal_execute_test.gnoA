@@ -32,11 +32,11 @@ func init() {
 }
 
 func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(govStakerAddr, uint64(1_000_000))
 	gs.Delegate(admin, uint64(1_000_000), "")
-	std.TestSkipHeights(5) // VotingWeightSmoothingDuration
+	testing.SkipHeights(5) // VotingWeightSmoothingDuration
 
 	proposalId := ProposeParameterChange(
 		"test_title",
@@ -45,13 +45,13 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 		"gno.land/r/gnoswap/v1/emission*EXE*ChangeDistributionPct*EXE*1,7000,2,1500,3,1000,4,500",
 	)
 
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 	Vote(proposalId, true)
-	std.TestSkipHeights(16) // ends voting period
+	testing.SkipHeights(16) // ends voting period
 
 	t.Run("execute proposal", func(t *testing.T) {
-		std.TestSkipHeights(6)
-		std.TestSetRealm(govRealm)
+		testing.SkipHeights(6)
+		testing.SetRealm(govRealm)
 		Execute(proposalId)
 
 		uassert.Equal(t, en.GetDistributionBpsPct(1), uint64(7000))
@@ -62,9 +62,9 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 }
 
 func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
 		"test_description",
@@ -72,12 +72,12 @@ func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
 		"gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*5000",
 	)
 
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 	Vote(proposalId, true)
 
 	t.Run("execute proposal", func(t *testing.T) {
-		std.TestSkipHeights(20)
-		std.TestSetRealm(govRealm)
+		testing.SkipHeights(20)
+		testing.SetRealm(govRealm)
 		Execute(proposalId)
 
 		uassert.Equal(t, gns.GetAvgBlockTimeInMs(), int64(5000))
@@ -85,9 +85,9 @@ func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
 }
 
 func TestProposeParameterChange_GOV_reconfigure(t *testing.T) {
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
 		"test_description",
@@ -95,12 +95,12 @@ func TestProposeParameterChange_GOV_reconfigure(t *testing.T) {
 		"gno.land/r/gnoswap/v1/gov/governance*EXE*Reconfigure*EXE*123,456,789,1234,5678,12345,67890",
 	)
 
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 	Vote(proposalId, true)
 
 	t.Run("execute proposal", func(t *testing.T) {
-		std.TestSkipHeights(20)
-		std.TestSetRealm(govRealm)
+		testing.SkipHeights(20)
+		testing.SetRealm(govRealm)
 		Execute(proposalId)
 
 		uassert.Equal(t, GetConfigVersion(0).VotingStartDelay, uint64(123))
@@ -124,9 +124,9 @@ func TestProposeParameterChange_GOV_reconfigure(t *testing.T) {
 }
 
 func TestProposeParameterChange_Pool_SetFeeProtocol(t *testing.T) {
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
 		"test_description",
@@ -134,12 +134,12 @@ func TestProposeParameterChange_Pool_SetFeeProtocol(t *testing.T) {
 		"gno.land/r/gnoswap/v1/pool*EXE*SetFeeProtocol*EXE*4,4",
 	)
 
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 	Vote(proposalId, true)
 
 	t.Run("execute proposal", func(t *testing.T) {
-		std.TestSkipHeights(20)
-		std.TestSetRealm(govRealm)
+		testing.SkipHeights(20)
+		testing.SetRealm(govRealm)
 		Execute(proposalId)
 
 		uassert.Equal(t, gns.GetAvgBlockTimeInMs(), int64(5000))
@@ -147,9 +147,9 @@ func TestProposeParameterChange_Pool_SetFeeProtocol(t *testing.T) {
 }
 
 func TestProposeParameterChange_Pool_SetPoolCreationFee(t *testing.T) {
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
 		"test_description",
@@ -157,12 +157,12 @@ func TestProposeParameterChange_Pool_SetPoolCreationFee(t *testing.T) {
 		"gno.land/r/gnoswap/v1/pool*EXE*SetPoolCreationFee*EXE*500",
 	)
 
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 	Vote(proposalId, true)
 
 	t.Run("execute proposal", func(t *testing.T) {
-		std.TestSkipHeights(20)
-		std.TestSetRealm(govRealm)
+		testing.SkipHeights(20)
+		testing.SetRealm(govRealm)
 		Execute(proposalId)
 
 		uassert.Equal(t, pl.GetPoolCreationFee(), uint64(500))
@@ -170,9 +170,9 @@ func TestProposeParameterChange_Pool_SetPoolCreationFee(t *testing.T) {
 }
 
 func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
 		"test_description",
@@ -180,12 +180,12 @@ func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
 		"gno.land/r/gnoswap/v1/pool*EXE*SetWithdrawalFee*EXE*600",
 	)
 
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 	Vote(proposalId, true)
 
 	t.Run("execute proposal", func(t *testing.T) {
-		std.TestSkipHeights(20)
-		std.TestSetRealm(govRealm)
+		testing.SkipHeights(20)
+		testing.SetRealm(govRealm)
 		Execute(proposalId)
 
 		uassert.Equal(t, pl.GetWithdrawalFee(), uint64(600))
@@ -193,9 +193,9 @@ func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
 }
 
 func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
 		"test_description",
@@ -203,12 +203,12 @@ func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
 		"gno.land/r/gnoswap/v1/protocol_fee*EXE*SetDevOpsPct*EXE*900",
 	)
 
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 	Vote(proposalId, true)
 
 	t.Run("execute proposal", func(t *testing.T) {
-		std.TestSkipHeights(20)
-		std.TestSetRealm(govRealm)
+		testing.SkipHeights(20)
+		testing.SetRealm(govRealm)
 		Execute(proposalId)
 
 		uassert.Equal(t, pf.GetDevOpsPct(), uint64(900))
@@ -216,9 +216,9 @@ func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
 }
 
 func TestProposeParameterChange_Router_SetSwapFee(t *testing.T) {
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
 		"test_description",
@@ -226,12 +226,12 @@ func TestProposeParameterChange_Router_SetSwapFee(t *testing.T) {
 		"gno.land/r/gnoswap/v1/router*EXE*SetSwapFee*EXE*400",
 	)
 
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 	Vote(proposalId, true)
 
 	t.Run("execute proposal", func(t *testing.T) {
-		std.TestSkipHeights(20)
-		std.TestSetRealm(govRealm)
+		testing.SkipHeights(20)
+		testing.SetRealm(govRealm)
 		Execute(proposalId)
 
 		uassert.Equal(t, rr.GetSwapFee(), uint64(400))
@@ -239,9 +239,9 @@ func TestProposeParameterChange_Router_SetSwapFee(t *testing.T) {
 }
 
 func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
 		"test_description",
@@ -249,12 +249,12 @@ func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
 		"gno.land/r/gnoswap/v1/staker*EXE*SetDepositGnsAmount*EXE*400",
 	)
 
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 	Vote(proposalId, true)
 
 	t.Run("execute proposal", func(t *testing.T) {
-		std.TestSkipHeights(20)
-		std.TestSetRealm(govRealm)
+		testing.SkipHeights(20)
+		testing.SetRealm(govRealm)
 		Execute(proposalId)
 
 		uassert.Equal(t, sr.GetDepositGnsAmount(), uint64(400))
@@ -262,9 +262,9 @@ func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
 }
 
 func TestProposeParameterChange_Staker_SetUnStakingFee(t *testing.T) {
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
 		"test_description",
@@ -272,12 +272,12 @@ func TestProposeParameterChange_Staker_SetUnStakingFee(t *testing.T) {
 		"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*200",
 	)
 
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 	Vote(proposalId, true)
 
 	t.Run("execute proposal", func(t *testing.T) {
-		std.TestSkipHeights(20)
-		std.TestSetRealm(govRealm)
+		testing.SkipHeights(20)
+		testing.SetRealm(govRealm)
 
 		Execute(proposalId)
 
@@ -286,9 +286,9 @@ func TestProposeParameterChange_Staker_SetUnStakingFee(t *testing.T) {
 }
 
 func TestProposeParameterChange_Common_SetHalt(t *testing.T) {
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
 		"test_description",
@@ -296,12 +296,12 @@ func TestProposeParameterChange_Common_SetHalt(t *testing.T) {
 		"gno.land/r/gnoswap/v1/common*EXE*SetHalt*EXE*true",
 	)
 
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 	Vote(proposalId, true)
 
 	t.Run("execute proposal", func(t *testing.T) {
-		std.TestSkipHeights(20)
-		std.TestSetRealm(govRealm)
+		testing.SkipHeights(20)
+		testing.SetRealm(govRealm)
 		Execute(proposalId)
 
 		uassert.True(t, halt.GetHalt())

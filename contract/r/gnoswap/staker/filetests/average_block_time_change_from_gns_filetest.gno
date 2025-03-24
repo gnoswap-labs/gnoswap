@@ -86,10 +86,10 @@ func main() {
 }
 
 func testInit() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// prepare wugnot
-	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
 	std.TestSetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}}, nil)
@@ -101,11 +101,11 @@ func testInit() {
 }
 
 func testCreatePool() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	pl.SetPoolCreationFeeByAdmin(0)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pl.CreatePool(
 		wugnotPath,
 		gnsPath,
@@ -115,12 +115,12 @@ func testCreatePool() {
 }
 
 func testMintWugnotGnsPos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	wugnot.Approve(poolAddr, consts.UINT64_MAX)
 	gns.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pn.Mint(
 		wugnotPath,
 		gnsPath,
@@ -138,7 +138,7 @@ func testMintWugnotGnsPos01() {
 }
 
 func testStakeTokenPos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// stake
 	gnft.Approve(stakerAddr, positionIdFrom(1))
@@ -146,7 +146,7 @@ func testStakeTokenPos01() {
 
 	before := gns.BalanceOf(adminUser)
 
-	std.TestSkipHeights(100)
+	testing.SkipHeights(100)
 	sr.CollectReward(1, false)
 
 	after := gns.BalanceOf(adminUser)
@@ -158,10 +158,10 @@ func testStakeTokenPos01() {
 }
 
 func testGnsAvgBlockTime() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	before := gns.BalanceOf(adminUser)
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	sr.CollectReward(1, false)
 	after := gns.BalanceOf(adminUser)
 
@@ -174,7 +174,7 @@ func testGnsAvgBlockTime() {
 	sr.CollectReward(1, false)           // clear reward
 
 	before = gns.BalanceOf(adminUser)
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	sr.CollectReward(1, false) // actual reward for 1 block when avg block time was 4000ms(4s)
 	after = gns.BalanceOf(adminUser)
 	diff = after - before

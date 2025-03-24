@@ -28,7 +28,7 @@ func TestCoinMintSwapBurn(t *testing.T) {
 func testPoolInitCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		// set pool create fee to 0 for testing
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		pl.SetPoolCreationFeeByAdmin(0)
 
 		gns.Approve(poolAddr, pl.GetPoolCreationFee())
@@ -38,17 +38,17 @@ func testPoolInitCreatePool(t *testing.T) {
 
 func testMintPosition(t *testing.T) {
 	t.Run("mint position", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 
 		wugnot.Approve(positionAddr, consts.UINT64_MAX) // FOR WRAP
 
-		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
+		testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(50000005))
 
-		std.TestIssueCoins(positionAddr, std.Coins{{"ugnot", 200000000}})
+		testing.IssueCoins(positionAddr, std.Coins{{"ugnot", 200000000}})
 		uassert.Equal(t, ugnotBalanceOf(t, positionAddr), uint64(200000000))
 
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
@@ -111,7 +111,7 @@ func testUnclaimedFee(t *testing.T) {
 
 func testSwap(t *testing.T) {
 	t.Run("swap", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		// wrap some ugnot
 		std.TestSetOriginSend(std.Coins{{"ugnot", 1234567}}, nil)
@@ -121,7 +121,7 @@ func testSwap(t *testing.T) {
 		wugnot.Approve(positionAddr, consts.UINT64_MAX)
 		wugnot.Approve(routerAddr, consts.UINT64_MAX)
 
-		std.TestSetRealm(rouRealm)
+		testing.SetRealm(rouRealm)
 		amount0, amount1 := pl.Swap(
 			consts.WUGNOT_PATH,
 			consts.GNS_PATH,
@@ -169,7 +169,7 @@ func testDecreaseWithNoUnwrap(t *testing.T) {
 		uassert.Equal(t, oldWugnotBalance, uint64(0))
 		uassert.Equal(t, oldUgnotBalance, uint64(15168))
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		DecreaseLiquidity(
 			uint64(1),
 			"15164540",
@@ -196,7 +196,7 @@ func testDecreaseWithUnwrap(t *testing.T) {
 		uassert.Equal(t, oldWugnotBalance, uint64(5122489))
 		uassert.Equal(t, oldUgnotBalance, uint64(15168))
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		DecreaseLiquidity(
 			uint64(1),
 			"13648086",

@@ -15,6 +15,7 @@ package staker_test
 import (
 	"std"
 	"strconv"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 
@@ -72,15 +73,15 @@ func main() {
 }
 
 func testInit() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 }
 
 func testCreatePool() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	pl.SetPoolCreationFeeByAdmin(0)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pl.CreatePool(
 		barPath,
 		quxPath,
@@ -90,12 +91,12 @@ func testCreatePool() {
 }
 
 func testMintBarQuxPos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	qux.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pn.Mint(
 		barPath,
 		quxPath,
@@ -113,12 +114,12 @@ func testMintBarQuxPos01() {
 }
 
 func testMintBarQuxPos02() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	qux.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pn.Mint(
 		barPath,
 		quxPath,
@@ -136,12 +137,12 @@ func testMintBarQuxPos02() {
 }
 
 func testCreateExternalIncentive() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	bar.Approve(stakerAddr, consts.UINT64_MAX)
 	gns.Approve(stakerAddr, depositGnsAmount)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	sr.CreateExternalIncentive(
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		barPath,
@@ -152,12 +153,12 @@ func testCreateExternalIncentive() {
 }
 
 func testStakeTokenPos01AndPos02() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gnft.Approve(stakerAddr, positionIdFrom(1))
 	gnft.Approve(stakerAddr, positionIdFrom(2))
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	sr.StakeToken(1, "")
 	sr.StakeToken(2, "")
 }
@@ -170,12 +171,12 @@ func testMakeExternalBarStart() {
 	blockAvgTime := milliToSec(consts.BLOCK_GENERATION_INTERVAL)
 	blockLeft := timeLeft / blockAvgTime
 
-	std.TestSkipHeights(int64(blockLeft)) // skip until external bar starts
-	std.TestSkipHeights(10)               // skip bit more to see reward calculation
+	testing.SkipHeights(int64(blockLeft)) // skip until external bar starts
+	testing.SkipHeights(10)               // skip bit more to see reward calculation
 }
 
 func testCheckReward01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	oldBar := bar.BalanceOf(adminUser)
 	sr.CollectReward(1, false)
@@ -188,7 +189,7 @@ func testCheckReward01() {
 }
 
 func testMakePosition1OutRangeBySwap() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 
@@ -208,7 +209,7 @@ func testMakePosition1OutRangeBySwap() {
 		max_timeout, // timeout
 		"",          // referrer
 	)
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
 	newPoolTick := pl.PoolGetSlot0Tick(poolPath)
 	println("oldPoolTick", poolTick)
@@ -217,7 +218,7 @@ func testMakePosition1OutRangeBySwap() {
 }
 
 func testCheckReward02() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	oldBar := bar.BalanceOf(adminUser)
 	sr.CollectReward(1, false)
@@ -230,7 +231,7 @@ func testCheckReward02() {
 }
 
 func testMakePosition1InRangeBySwap() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 
@@ -258,9 +259,9 @@ func testMakePosition1InRangeBySwap() {
 }
 
 func testCheckReward03() {
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	oldBar := bar.BalanceOf(adminUser)
 	sr.CollectReward(1, false)

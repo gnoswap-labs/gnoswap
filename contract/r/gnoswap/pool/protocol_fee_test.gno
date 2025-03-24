@@ -25,7 +25,7 @@ func TestSetPoolCreationFee(t *testing.T) {
 			name: "Panic call by non-governance",
 			action: func() {
 				const newFee = 2_000_000_000
-				std.TestSetOriginCaller(admin)
+				testing.SetOriginCaller(admin)
 				SetPoolCreationFee(newFee)
 			},
 			verify:      nil,
@@ -37,7 +37,7 @@ func TestSetPoolCreationFee(t *testing.T) {
 			action: func() {
 				const newFee = 2_000_000_000
 				govRealm := std.NewUserRealm(govAddr)
-				std.TestSetRealm(govRealm)
+				testing.SetRealm(govRealm)
 				SetPoolCreationFee(newFee)
 			},
 			verify: func() string {
@@ -90,7 +90,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			action: func() {
 				const newFee = 2_000_000_000
 				govRealm := std.NewUserRealm(govAddr)
-				std.TestSetRealm(govRealm)
+				testing.SetRealm(govRealm)
 				{
 					SetPoolCreationFeeByAdmin(newFee)
 				}
@@ -103,7 +103,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			name: "Panic call by non-admin (user)",
 			action: func() {
 				const newFee = 2_000_000_000
-				std.TestSetOriginCaller(alice)
+				testing.SetOriginCaller(alice)
 				{
 					SetPoolCreationFeeByAdmin(newFee)
 				}
@@ -116,7 +116,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			name: "Success call by admin",
 			action: func() {
 				const newFee = 2_000_000_000
-				std.TestSetOriginCaller(adminAddr)
+				testing.SetOriginCaller(adminAddr)
 				{
 					SetPoolCreationFeeByAdmin(newFee)
 				}
@@ -131,7 +131,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			name: "Success call by admin (rollback)",
 			action: func() {
 				const newFee = 1_000_000_000
-				std.TestSetOriginCaller(adminAddr)
+				testing.SetOriginCaller(adminAddr)
 				{
 					SetPoolCreationFeeByAdmin(newFee)
 				}
@@ -184,7 +184,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 		{
 			name: "Panic if caller is not position contract",
 			action: func(t *testing.T) {
-				std.TestSetOriginCaller(adminAddr)
+				testing.SetOriginCaller(adminAddr)
 				CollectWithdrawalFee(0, "gno.land/r/onbloc/foo", "0", "gno.land/r/onbloc/foo", "0", "", adminAddr)
 			},
 			verify:      nil,
@@ -194,7 +194,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 		{
 			name: "Panic if pkgPath is not registered",
 			action: func(t *testing.T) {
-				std.TestSetRealm(std.NewUserRealm(positionAddr))
+				testing.SetRealm(std.NewUserRealm(positionAddr))
 				CollectWithdrawalFee(0, "pkgPath", "1000", "pkgPath", "1000", "poolPath", adminAddr)
 			},
 			verify:      nil,
@@ -205,7 +205,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 			name: "Panic if spender has no approved balance",
 			action: func(t *testing.T) {
 				InitialisePoolTest(t)
-				std.TestSetRealm(std.NewUserRealm(positionAddr))
+				testing.SetRealm(std.NewUserRealm(positionAddr))
 				poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
 				if !pools.Has(poolPath) {
 					panic("pool not found")
@@ -222,7 +222,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 			name: "Success call by position contract",
 			action: func(t *testing.T) {
 				InitialisePoolTest(t)
-				std.TestSetRealm(std.NewUserRealm(alice))
+				testing.SetRealm(std.NewUserRealm(alice))
 				TokenApprove(t, wugnotPath, alice, poolAddr, uint64(1000))
 				TokenApprove(t, gnsPath, alice, poolAddr, uint64(1000))
 				pn.Mint(
@@ -242,10 +242,10 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				)
 			},
 			verify: func(t *testing.T) (string, string) {
-				std.TestSetRealm(std.NewUserRealm(alice))
+				testing.SetRealm(std.NewUserRealm(alice))
 				TokenApprove(t, wugnotPath, alice, poolAddr, uint64(10000000000))
 				TokenApprove(t, gnsPath, alice, poolAddr, uint64(1000000000))
-				std.TestSetRealm(std.NewUserRealm(positionAddr))
+				testing.SetRealm(std.NewUserRealm(positionAddr))
 				poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
 				return CollectWithdrawalFee(2, wugnotPath, "1000", gnsPath, "1000", poolPath, alice)
 			},
@@ -307,7 +307,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 			action: func(t *testing.T) {
 				const newFee = uint64(200)
 				userRealm := std.NewUserRealm(alice)
-				std.TestSetRealm(userRealm)
+				testing.SetRealm(userRealm)
 				{
 					SetWithdrawalFee(newFee)
 				}
@@ -321,7 +321,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 			action: func(t *testing.T) {
 				const newFee = uint64(200)
 				adminRealm := std.NewUserRealm(adminAddr)
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 				{
 					SetWithdrawalFee(newFee)
 				}
@@ -335,7 +335,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 			action: func(t *testing.T) {
 				const newFee = uint64(200)
 				govRealm := std.NewUserRealm(govAddr)
-				std.TestSetRealm(govRealm)
+				testing.SetRealm(govRealm)
 				{
 					SetWithdrawalFee(newFee)
 				}
@@ -399,7 +399,7 @@ func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 			action: func(t *testing.T) {
 				const newFee = uint64(100)
 				userRealm := std.NewUserRealm(alice)
-				std.TestSetRealm(userRealm)
+				testing.SetRealm(userRealm)
 				{
 					SetWithdrawalFeeByAdmin(newFee)
 				}
@@ -413,7 +413,7 @@ func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 			action: func(t *testing.T) {
 				const newFee = uint64(100)
 				govRealm := std.NewUserRealm(govAddr)
-				std.TestSetRealm(govRealm)
+				testing.SetRealm(govRealm)
 				{
 					SetWithdrawalFeeByAdmin(newFee)
 				}
@@ -427,7 +427,7 @@ func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 			action: func(t *testing.T) {
 				const newFee = uint64(100)
 				adminRealm := std.NewUserRealm(adminAddr)
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 				{
 					SetWithdrawalFeeByAdmin(newFee)
 				}

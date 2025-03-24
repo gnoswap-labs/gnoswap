@@ -43,11 +43,11 @@ func TestGovernanceRewardProtocolFee(t *testing.T) {
 
 func initData(t *testing.T) {
 	// prevent `panic: source address g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6 does not exist`
-	std.TestIssueCoins(consts.WUGNOT_ADDR, std.Coins{{"ugnot", 1}})
+	testing.IssueCoins(consts.WUGNOT_ADDR, std.Coins{{"ugnot", 1}})
 }
 
 func delegateFromAdminToDummy(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// gns before emission
 	uassert.Equal(t, gns.BalanceOf(stakerAddr), uint64(0))
@@ -55,7 +55,7 @@ func delegateFromAdminToDummy(t *testing.T) {
 	uassert.Equal(t, gns.BalanceOf(communityPoolAddr), uint64(0))
 	uassert.Equal(t, gns.BalanceOf(govStakerAddr), uint64(0))
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	gns.Approve(govStakerAddr, uint64(1000000))
 	Delegate(dummyToAddr, 1000000, "")
 
@@ -73,11 +73,11 @@ func delegateFromAdminToDummy(t *testing.T) {
 }
 
 func delegetFromDummyToDummy(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Transfer(dummyAddr, 5000000)
 
-	std.TestSkipHeights(1)
-	std.TestSetRealm(dummyRealm)
+	testing.SkipHeights(1)
+	testing.SetRealm(dummyRealm)
 	gns.Approve(govStakerAddr, uint64(5000000))
 	Delegate(dummyAddr, 5000000, "")
 
@@ -91,17 +91,17 @@ func delegetFromDummyToDummy(t *testing.T) {
 func mockProtocolFee(t *testing.T) {
 	// admin > protocol_fee
 	// send qux, bar for testing
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Transfer(protocolFeeAddr, 1000)
 	qux.Transfer(protocolFeeAddr, 2500)
 
 	// wugnot
 	std.TestSetOriginSend(std.Coins{{"ugnot", 10000}}, nil)
-	std.TestIssueCoins(consts.WUGNOT_ADDR, std.Coins{{"ugnot", 10000}})
+	testing.IssueCoins(consts.WUGNOT_ADDR, std.Coins{{"ugnot", 10000}})
 	wugnot.Deposit()
 	wugnot.Transfer(protocolFeeAddr, 10000)
 
-	std.TestSetRealm(stakerRealm)
+	testing.SetRealm(stakerRealm)
 	pf.AddToProtocolFee(barPath, 1000)
 	pf.AddToProtocolFee(quxPath, 2500)
 	pf.AddToProtocolFee(wugnotPath, 10000)
@@ -120,9 +120,9 @@ func mockProtocolFee(t *testing.T) {
 }
 
 func skipDummyBlocks(t *testing.T) {
-	std.TestSkipHeights(10)
+	testing.SkipHeights(10)
 	en.MintAndDistributeGns()
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
 	uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), uint64(1000))
 	uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))
@@ -144,7 +144,7 @@ func reward(t *testing.T) {
 		uassert.Equal(t, qux.BalanceOf(dummyAddr), uint64(0))
 		uassert.Equal(t, ugnotBalanceOf(t, dummyAddr), uint64(0))
 
-		std.TestSetRealm(dummyRealm)
+		testing.SetRealm(dummyRealm)
 		CollectReward()
 		uassert.Equal(t, bar.BalanceOf(dummyAddr), uint64(833))
 		uassert.Equal(t, qux.BalanceOf(dummyAddr), uint64(2083))
@@ -152,7 +152,7 @@ func reward(t *testing.T) {
 	})
 
 	t.Run("same block", func(t *testing.T) {
-		std.TestSetRealm(dummyRealm)
+		testing.SetRealm(dummyRealm)
 		CollectReward()
 
 		uassert.Equal(t, bar.BalanceOf(dummyAddr), uint64(833))
@@ -161,7 +161,7 @@ func reward(t *testing.T) {
 	})
 
 	t.Run("more block", func(t *testing.T) {
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 		CollectReward() // even more block, protocol_fee didn't increase
 
 		uassert.Equal(t, bar.BalanceOf(dummyAddr), uint64(833))
@@ -181,13 +181,13 @@ func mockProtocolFee2(t *testing.T) {
 	uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
 	uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(417))
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Transfer(protocolFeeAddr, 2500)
 	qux.Transfer(protocolFeeAddr, 4000)
-	std.TestSetRealm(stakerRealm)
+	testing.SetRealm(stakerRealm)
 	pf.AddToProtocolFee(barPath, 2500)
 	pf.AddToProtocolFee(quxPath, 4000)
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
 	uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), uint64(2500))
 	uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))
@@ -199,8 +199,8 @@ func mockProtocolFee2(t *testing.T) {
 }
 
 func moreReward(t *testing.T) {
-	std.TestSkipHeights(1)
-	std.TestSetRealm(dummyRealm)
+	testing.SkipHeights(1)
+	testing.SetRealm(dummyRealm)
 
 	uassert.Equal(t, bar.BalanceOf(dummyAddr), uint64(833))
 	uassert.Equal(t, qux.BalanceOf(dummyAddr), uint64(2083))
@@ -212,7 +212,7 @@ func moreReward(t *testing.T) {
 }
 
 func undelegateAdmin(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	uassert.Equal(t, bar.BalanceOf(admin), uint64(99999999996500))
 	uassert.Equal(t, qux.BalanceOf(admin), uint64(99999999993500))

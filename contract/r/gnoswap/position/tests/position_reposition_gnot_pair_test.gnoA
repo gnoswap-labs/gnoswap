@@ -26,7 +26,7 @@ func TestRepositionCoinPair(t *testing.T) {
 
 func testPoolInitCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		gns.Approve(poolAddr, pl.GetPoolCreationFee())
 		pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // x2.71814592682522526700950038502924144268035888671875
@@ -35,17 +35,17 @@ func testPoolInitCreatePool(t *testing.T) {
 
 func testMintPosition01InRange(t *testing.T) {
 	t.Run("mint position 01 in range", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 
 		wugnot.Approve(positionAddr, consts.UINT64_MAX) // FOR WRAP
 
-		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
+		testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(50000005))
 
-		std.TestIssueCoins(positionAddr, std.Coins{{"ugnot", 200000000}})
+		testing.IssueCoins(positionAddr, std.Coins{{"ugnot", 200000000}})
 		uassert.Equal(t, ugnotBalanceOf(t, positionAddr), uint64(200000000))
 
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
@@ -99,11 +99,11 @@ func testMintPosition01InRange(t *testing.T) {
 
 func testSwap(t *testing.T) {
 	t.Run("swap", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		gns.Approve(poolAddr, consts.UINT64_MAX) // amountIn
 
-		std.TestSetRealm(rouRealm)
+		testing.SetRealm(rouRealm)
 		amount0, amount1 := pl.Swap(
 			consts.WUGNOT_PATH,
 			consts.GNS_PATH,
@@ -144,7 +144,7 @@ func testUnclaimedFee01(t *testing.T) {
 
 func testCollectFee01(t *testing.T) {
 	t.Run("collect fee 01", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		positionId, tokensOwed0, tokensOwed1, poolPath, fee0, fee1 := CollectFee(1, false)
 		position := MustGetPosition(positionId)
@@ -155,7 +155,7 @@ func testCollectFee01(t *testing.T) {
 
 func testDecreaseLiquidityInPosition(t *testing.T) {
 	t.Run("decrease liquidity in position", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		positionId := uint64(1)
 
@@ -199,7 +199,7 @@ func testDecreaseLiquidityInPosition(t *testing.T) {
 
 func testReposition(t *testing.T) {
 	t.Run("reposition", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		positionId := uint64(1)
 
@@ -218,15 +218,15 @@ func testReposition(t *testing.T) {
 		uassert.Equal(t, position.burned, true)
 
 		// user ugnot
-		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
+		testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(81605118))
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
 		banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 5000}})
 		std.TestSetOriginSend(std.Coins{{"ugnot", 5000}}, nil)
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		Reposition(
 			positionId, // positionId
 			-1000,      // tickLower

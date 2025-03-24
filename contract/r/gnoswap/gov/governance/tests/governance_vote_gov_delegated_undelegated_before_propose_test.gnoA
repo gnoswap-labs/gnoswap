@@ -48,7 +48,7 @@ func testDelegate01_1000000_toSelf(t *testing.T) {
 		uassert.Equal(t, xgns.TotalSupply(), uint64(0))
 		uassert.Equal(t, xgns.VotingSupply(), uint64(0))
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		gns.Approve(govStakerAddr, uint64(1_000_000))
 
 		uassert.Equal(t, int64(123), std.ChainHeight())
@@ -60,7 +60,7 @@ func testDelegate01_1000000_toSelf(t *testing.T) {
 		uassert.Equal(t, xgns.TotalSupply(), uint64(1_000_000))
 		uassert.Equal(t, xgns.VotingSupply(), uint64(1_000_000))
 
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
@@ -70,7 +70,7 @@ func testDelegate02_2000000_toDummy(t *testing.T) {
 		uassert.Equal(t, xgns.TotalSupply(), uint64(1_000_000))
 		uassert.Equal(t, xgns.VotingSupply(), uint64(1_000_000))
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		gns.Approve(govStakerAddr, uint64(2_000_000))
 
 		uassert.Equal(t, int64(124), std.ChainHeight())
@@ -82,14 +82,14 @@ func testDelegate02_2000000_toDummy(t *testing.T) {
 		uassert.Equal(t, xgns.TotalSupply(), uint64(3_000_000))
 		uassert.Equal(t, xgns.VotingSupply(), uint64(3_000_000))
 
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testUndelegate_1000000_fromDummy(t *testing.T) {
 	t.Run("undelegate from dummyAddr by admin", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		std.TestSkipHeights(1)
+		testing.SetRealm(adminRealm)
+		testing.SkipHeights(1)
 
 		uassert.Equal(t, int64(126), std.ChainHeight())
 		uassert.Equal(t, int64(1234567896), time.Now().Unix())
@@ -100,7 +100,7 @@ func testUndelegate_1000000_fromDummy(t *testing.T) {
 		uassert.Equal(t, xgns.TotalSupply(), uint64(2_000_000))  // 2000000
 		uassert.Equal(t, xgns.VotingSupply(), uint64(2_000_000)) // 2000000
 
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
@@ -111,7 +111,7 @@ func testProposeText(t *testing.T) {
 			uassert.Equal(t, int64(127), std.ChainHeight())
 			uassert.Equal(t, int64(1234567898), time.Now().Unix())
 
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			proposalID := ProposeText("test_title", "test_description")
 			uassert.Equal(t, proposalID, uint64(1))
 
@@ -130,13 +130,13 @@ func testProposeText(t *testing.T) {
 		})
 
 		t.Run("text proposal 02 // 6 more block passed(total 10)", func(t *testing.T) {
-			std.TestSkipHeights(6)
+			testing.SkipHeights(6)
 
 			// text proposal
 			uassert.Equal(t, int64(133), std.ChainHeight())
 			uassert.Equal(t, int64(1234567910), time.Now().Unix())
 
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			proposalID := ProposeText("test_title", "test_description")
 			uassert.Equal(t, proposalID, uint64(2))
 
@@ -163,9 +163,9 @@ func testProposeText(t *testing.T) {
 func testVote(t *testing.T) {
 	t.Run("vote (undelegated after propose, before vote)", func(t *testing.T) {
 		proposalId := uint64(2)
-		std.TestSkipHeights(5)
+		testing.SkipHeights(5)
 
-		std.TestSetRealm(dummyRealm)
+		testing.SetRealm(dummyRealm)
 		Vote(proposalId, true)
 
 		pp, ok := proposals.Get(strconv.FormatUint(proposalId, 10))

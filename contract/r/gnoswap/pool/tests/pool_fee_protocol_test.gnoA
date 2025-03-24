@@ -15,7 +15,7 @@ func TestProtocolFee(t *testing.T) {
 	})
 
 	t.Run("create first pool", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		SetPoolCreationFeeByAdmin(0)
 
 		t.Run("create pool", func(t *testing.T) {

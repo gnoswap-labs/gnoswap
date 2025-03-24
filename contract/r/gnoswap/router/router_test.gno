@@ -18,8 +18,6 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
 )
 
 func TestFinalizeSwap(t *testing.T) {
@@ -205,7 +203,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Pool Creation
-			std.TestSetRealm(std.NewUserRealm(positionOwner))
+			testing.SetRealm(std.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFeeByAdmin(0)
 			if !pl.DoesPoolPathExist(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
 				pl.CreatePool(tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
@@ -218,9 +216,9 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				uassert.Equal(t, tt.feeProtocol1, pool.Slot0FeeProtocol()>>4)
 			}
 
-			std.TestSetOriginCaller(positionOwner)
+			testing.SetOriginCaller(positionOwner)
 			newCoins := std.Coins{{"ugnot", int64(10000000000)}}
-			std.TestIssueCoins(positionOwner, newCoins)
+			testing.IssueCoins(positionOwner, newCoins)
 			std.TestSetOriginSend(newCoins, nil)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
@@ -230,7 +228,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			}
 			gns.Transfer(tt.recipient, 10000000000)
 
-			std.TestSetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			wugnot.Approve(poolContract, maxApprove)
 			gns.Approve(poolContract, maxApprove)
 
@@ -253,17 +251,17 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				tt.recipient,
 				"",
 			)
-			std.TestSkipHeights(1)
+			testing.SkipHeights(1)
 
 			// Swap
-			std.TestSetOriginCaller(tt.recipient)
+			testing.SetOriginCaller(tt.recipient)
 			wugnot.Transfer(routerContract, 20000000)
 			gns.Transfer(routerContract, 20000000)
 			wugnot.Approve(routerContract, maxApprove)
 			gns.Approve(routerContract, maxApprove)
 			beforeWugnotBalance := wugnot.BalanceOf(tt.recipient)
 
-			std.TestSetRealm(std.NewCodeRealm(routerPath))
+			testing.SetRealm(std.NewCodeRealm(routerPath))
 			wugnot.Approve(poolContract, maxApprove)
 
 			drySwapAmountOut := DrySwapRoute(
@@ -286,7 +284,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				time.Now().Add(time.Hour).Unix(),
 				"", // referrer
 			)
-			std.TestSkipHeights(1)
+			testing.SkipHeights(1)
 			afterWugnotBalance := wugnot.BalanceOf(tt.recipient)
 
 			defer func() {
@@ -374,7 +372,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Pool Creation
-			std.TestSetRealm(std.NewUserRealm(positionOwner))
+			testing.SetRealm(std.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFeeByAdmin(0)
 			if !pl.DoesPoolPathExist(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
 				pl.CreatePool(tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
@@ -387,9 +385,9 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 				uassert.Equal(t, tt.feeProtocol1, pool.Slot0FeeProtocol()>>4)
 			}
 
-			std.TestSetOriginCaller(positionOwner)
+			testing.SetOriginCaller(positionOwner)
 			newCoins := std.Coins{{"ugnot", int64(20000000000)}}
-			std.TestIssueCoins(positionOwner, newCoins)
+			testing.IssueCoins(positionOwner, newCoins)
 			std.TestSetOriginSend(newCoins, nil)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, std.Coins{{"ugnot", int64(10000000000)}})
@@ -400,7 +398,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			banker.SendCoins(positionOwner, tt.recipient, std.Coins{{"ugnot", int64(10000000000)}})
 			gns.Transfer(tt.recipient, 10000000000)
 
-			std.TestSetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			wugnot.Approve(poolContract, maxApprove)
 			gns.Approve(poolContract, maxApprove)
 
@@ -422,10 +420,10 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 				tt.recipient,
 				"",
 			)
-			std.TestSkipHeights(1)
+			testing.SkipHeights(1)
 
 			// Add Liquidity
-			std.TestSetOriginCaller(tt.recipient)
+			testing.SetOriginCaller(tt.recipient)
 			addAmount, err := strconv.ParseInt(tt.amount0Requested, 10, 64)
 			if err != nil {
 				t.Errorf("failed to parse amount0Requested: %v", err)
@@ -434,7 +432,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			std.TestSetOriginSend(newCoinsForAdd, nil)
 			banker = std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(tt.recipient, positionAddr, newCoinsForAdd)
-			std.TestSetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			wugnot.Approve(poolContract, maxApprove)
 			gns.Approve(poolContract, maxApprove)
 			pn.IncreaseLiquidity(
@@ -447,12 +445,12 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			)
 
 			// Swap
-			std.TestSetOriginCaller(tt.recipient)
+			testing.SetOriginCaller(tt.recipient)
 			wugnot.Transfer(routerContract, 20000000)
 			gns.Transfer(routerContract, 20000000)
 			wugnot.Approve(routerContract, maxApprove)
 			gns.Approve(routerContract, maxApprove)
-			std.TestSetRealm(std.NewCodeRealm(routerPath))
+			testing.SetRealm(std.NewCodeRealm(routerPath))
 			wugnot.Approve(poolContract, maxApprove)
 
 			drySwapAmountOut := DrySwapRoute(
@@ -475,7 +473,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 				time.Now().Add(time.Hour).Unix(),
 				"", // referrer
 			)
-			std.TestSkipHeights(1)
+			testing.SkipHeights(1)
 
 			defer func() {
 				if r := recover(); r != nil {
@@ -557,7 +555,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Pool Creation
-			std.TestSetRealm(std.NewUserRealm(positionOwner))
+			testing.SetRealm(std.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFeeByAdmin(0)
 			if !pl.DoesPoolPathExist(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
 				pl.CreatePool(tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
@@ -570,9 +568,9 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 				uassert.Equal(t, tt.feeProtocol1, pool.Slot0FeeProtocol()>>4)
 			}
 
-			std.TestSetOriginCaller(positionOwner)
+			testing.SetOriginCaller(positionOwner)
 			newCoins := std.Coins{{"ugnot", int64(20000000000)}}
-			std.TestIssueCoins(positionOwner, newCoins)
+			testing.IssueCoins(positionOwner, newCoins)
 			std.TestSetOriginSend(newCoins, nil)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, std.Coins{{"ugnot", int64(10000000000)}})
@@ -583,7 +581,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			banker.SendCoins(positionOwner, tt.recipient, std.Coins{{"ugnot", int64(10000000000)}})
 			gns.Transfer(tt.recipient, 10000000000)
 
-			std.TestSetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			wugnot.Approve(poolContract, maxApprove)
 			gns.Approve(poolContract, maxApprove)
 
@@ -605,10 +603,10 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 				tt.recipient,
 				"",
 			)
-			std.TestSkipHeights(1)
+			testing.SkipHeights(1)
 
 			// Decrease Liquidity
-			std.TestSetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			wugnot.Approve(poolContract, maxApprove)
 			gns.Approve(poolContract, maxApprove)
 			wugnot.Approve(positionContract, maxApprove)
@@ -627,14 +625,14 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			)
 
 			// Swap
-			std.TestSetOriginCaller(tt.recipient)
+			testing.SetOriginCaller(tt.recipient)
 			wugnot.Transfer(routerContract, 20000000)
 			gns.Transfer(routerContract, 20000000)
 			wugnot.Approve(routerContract, maxApprove)
 			gns.Approve(routerContract, maxApprove)
 			beforeWugnotBalance := wugnot.BalanceOf(tt.recipient)
 
-			std.TestSetRealm(std.NewCodeRealm(routerPath))
+			testing.SetRealm(std.NewCodeRealm(routerPath))
 			wugnot.Approve(poolContract, maxApprove)
 
 			drySwapAmountOut := DrySwapRoute(
@@ -657,7 +655,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 				time.Now().Add(time.Hour).Unix(),
 				"", // referrer
 			)
-			std.TestSkipHeights(1)
+			testing.SkipHeights(1)
 			afterWugnotBalance := wugnot.BalanceOf(tt.recipient)
 
 			defer func() {
@@ -741,7 +739,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Pool Creation
-			std.TestSetRealm(std.NewUserRealm(positionOwner))
+			testing.SetRealm(std.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFeeByAdmin(0)
 			if !pl.DoesPoolPathExist(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
 				pl.CreatePool(tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
@@ -754,9 +752,9 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 				uassert.Equal(t, tt.feeProtocol1, pool.Slot0FeeProtocol()>>4)
 			}
 
-			std.TestSetOriginCaller(positionOwner)
+			testing.SetOriginCaller(positionOwner)
 			newCoins := std.Coins{{"ugnot", int64(20000000000)}}
-			std.TestIssueCoins(positionOwner, newCoins)
+			testing.IssueCoins(positionOwner, newCoins)
 			std.TestSetOriginSend(newCoins, nil)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, std.Coins{{"ugnot", int64(10000000000)}})
@@ -767,7 +765,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			banker.SendCoins(positionOwner, tt.recipient, std.Coins{{"ugnot", int64(10000000000)}})
 			gns.Transfer(tt.recipient, 10000000000)
 
-			std.TestSetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			wugnot.Approve(poolContract, maxApprove)
 			gns.Approve(poolContract, maxApprove)
 
@@ -789,17 +787,17 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 				tt.recipient,
 				"",
 			)
-			std.TestSkipHeights(1)
+			testing.SkipHeights(1)
 
 			// Swap
-			std.TestSetOriginCaller(tt.recipient)
+			testing.SetOriginCaller(tt.recipient)
 			wugnot.Transfer(routerContract, 20000000)
 			gns.Transfer(routerContract, 20000000)
 			wugnot.Approve(routerContract, maxApprove)
 			gns.Approve(routerContract, maxApprove)
 			beforeWugnotBalance := wugnot.BalanceOf(tt.recipient)
 
-			std.TestSetRealm(std.NewCodeRealm(routerPath))
+			testing.SetRealm(std.NewCodeRealm(routerPath))
 			wugnot.Approve(poolContract, maxApprove)
 
 			drySwapAmountOut := DrySwapRoute(
@@ -823,7 +821,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 				time.Now().Add(time.Hour).Unix(),
 				"", // referrer
 			)
-			std.TestSkipHeights(1)
+			testing.SkipHeights(1)
 			afterWugnotBalance := wugnot.BalanceOf(tt.recipient)
 
 			defer func() {

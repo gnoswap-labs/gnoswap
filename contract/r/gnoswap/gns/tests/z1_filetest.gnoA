@@ -37,17 +37,17 @@ func main() {
 }
 
 func skip50Blocks() {
-	std.TestSkipHeights(50)
+	testing.SkipHeights(50)
 	uassert.Equal(t, std.ChainHeight(), int64(173))
 
-	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	mintedAmount := gns.MintGns(user01Addr)
 	uassert.Equal(t, uint64(713470300), mintedAmount) // 14269406 * 50
 	uassert.Equal(t, uint64(713470300), gns.GetMintedEmissionAmount())
 }
 
 func blockTime2500ms() {
-	std.TestSetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(std.NewUserRealm(adminAddr))
 	gns.SetAvgBlockTimeInMsByAdmin(2500)
 	// for block time 2.5s, amount per block is 17836759
 
@@ -67,8 +67,8 @@ func blockTime2500ms() {
 	// 225000000000000 - 713470300 = 224999286529700
 	// 224999286529700 / 12614360 = 17836759
 
-	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	std.TestSkipHeights(1)
+	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SkipHeights(1)
 	mintedAmount := gns.MintGns(user01Addr)
 	uassert.Equal(t, uint64(17836757), mintedAmount)
 	uassert.Equal(t, uint64(713470300+17836757), gns.GetMintedEmissionAmount()) // 731307057
@@ -79,8 +79,8 @@ func reachAlmostFirstHalving() {
 	firstEnds := gns.GetHalvingYearEndBlock(1)
 	blockLeftUntilEnd := firstEnds - std.ChainHeight()
 
-	std.TestSkipHeights(blockLeftUntilEnd - 1) // 1 block left until first halving year ends
-	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SkipHeights(blockLeftUntilEnd - 1) // 1 block left until first halving year ends
+	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	gns.MintGns(user01Addr)
 
 	uassert.Equal(t, uint64(224999969664063), gns.GetMintedEmissionAmount())
@@ -89,8 +89,8 @@ func reachAlmostFirstHalving() {
 }
 
 func reachExactFirstHalving() {
-	std.TestSkipHeights(1)
-	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SkipHeights(1)
+	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	gns.MintGns(user01Addr)
 
 	// minted all amount for first halving year
@@ -101,7 +101,7 @@ func reachExactFirstHalving() {
 }
 
 func startSecondHalving() {
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
 	year := gns.GetHalvingYearByHeight(std.ChainHeight())
 	uassert.Equal(t, int64(2), year)
@@ -109,7 +109,7 @@ func startSecondHalving() {
 	amount := gns.GetAmountByHeight(std.ChainHeight())
 	uassert.Equal(t, uint64(14269406), amount)
 
-	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	gns.MintGns(user01Addr)
 	uassert.Equal(t, uint64(225000000000000+14269406), gns.GetMintedEmissionAmount())
 }

@@ -41,7 +41,7 @@ func initial(t *testing.T) {
 	uassert.Equal(t, gns.BalanceOf(admin), uint64(100000000000000)) // admin has initial gns
 	uassert.Equal(t, xgns.BalanceOf(admin), uint64(0))
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	en.ChangeDistributionPctByAdmin(
 		int(1), 7000,
 		int(2), 2000,
@@ -62,9 +62,9 @@ func delegateAdmin(t *testing.T) {
 	uassert.Equal(t, gns.BalanceOf(communityPoolAddr), uint64(0))
 	uassert.Equal(t, gns.BalanceOf(govStakerAddr), uint64(0))
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Approve(govStakerAddr, uint64(minAmount))
 	Delegate(dummyToAddr, minAmount, "")
 
@@ -82,12 +82,12 @@ func delegateAdmin(t *testing.T) {
 }
 
 func delegateAnother(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	delegateAmount := uint64(5 * minAmount)
 	gns.Transfer(dummyAddr, delegateAmount)
 
-	std.TestSkipHeights(1)
-	std.TestSetRealm(dummyRealm)
+	testing.SkipHeights(1)
+	testing.SetRealm(dummyRealm)
 	gns.Approve(govStakerAddr, delegateAmount)
 	Delegate(dummyAddr, delegateAmount, "")
 
@@ -99,7 +99,7 @@ func delegateAnother(t *testing.T) {
 }
 
 func skipDummyBlocks(t *testing.T) {
-	std.TestSkipHeights(10)
+	testing.SkipHeights(10)
 	en.MintAndDistributeGns()
 }
 
@@ -124,14 +124,14 @@ func reward(t *testing.T) {
 
 		uassert.Equal(t, response.String(), `"5945585"`)
 
-		std.TestSetRealm(dummyRealm)
+		testing.SetRealm(dummyRealm)
 		CollectReward()
 
 		uassert.Equal(t, gns.BalanceOf(dummyAddr), uint64(5945585))
 	})
 
 	t.Run("same block", func(t *testing.T) {
-		std.TestSetRealm(dummyRealm)
+		testing.SetRealm(dummyRealm)
 
 		CollectReward()
 
@@ -139,8 +139,8 @@ func reward(t *testing.T) {
 	})
 
 	t.Run("more block", func(t *testing.T) {
-		std.TestSkipHeights(1)
-		std.TestSetRealm(dummyRealm)
+		testing.SkipHeights(1)
+		testing.SetRealm(dummyRealm)
 
 		CollectReward()
 

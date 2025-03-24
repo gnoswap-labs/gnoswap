@@ -21,12 +21,12 @@ import (
 
 func init() {
 	// set pool create fee to 0 for testing
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFeeByAdmin(0)
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
@@ -34,7 +34,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintFooBar(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 
@@ -46,7 +46,7 @@ func TestMintFooBar(t *testing.T) {
 }
 
 func TestMintBazQux(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	baz.Approve(poolAddr, consts.UINT64_MAX)
 	qux.Approve(poolAddr, consts.UINT64_MAX)
 
@@ -77,7 +77,7 @@ func TestApiGetPositionsUnclaimedFee(t *testing.T) {
 }
 
 func TestSwap(t *testing.T) {
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	pl.Swap(
 		fooPath,
 		barPath,
@@ -135,7 +135,7 @@ func TestApiGetPositionUnclaimedFeeByLpPositionId(t *testing.T) {
 }
 
 func TestCollectFeeAfterSwap(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// burn 0 to collect swap fee
 	tokneId, fee0, fee1, fromPath, _, _ := CollectFee(1, true)

@@ -16,7 +16,7 @@ func setupPositions(t *testing.T) {
 
 func TestApiGetPositions(t *testing.T) {
 	setupPositions(t)
-	std.TestSetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(std.NewUserRealm(adminAddr))
 
 	result := ApiGetPositions()
 

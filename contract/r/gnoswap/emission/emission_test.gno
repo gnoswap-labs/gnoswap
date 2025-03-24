@@ -1,7 +1,6 @@
 package emission
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/demo/uassert"
@@ -24,7 +23,7 @@ func TestMintAndDistributeGns(t *testing.T) {
 		{
 			name: "block passed",
 			setup: func() {
-				std.TestSkipHeights(123)
+				testing.SkipHeights(123)
 			},
 			verify: func(distributed uint64) {
 				uassert.True(t, distributed > 0)

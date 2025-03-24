@@ -37,7 +37,7 @@ func createProjectTest(t *testing.T) {
 		startTime := uint64(time.Now().Unix() + 10)
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-002] invalid address || caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) is not authorized for role admin", func() {
-			std.TestSetRealm(aliceRealm)
+			testing.SetRealm(aliceRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
 			CreateProject(
 				projectName,
@@ -66,7 +66,7 @@ func createProjectTest(t *testing.T) {
 		startTime := uint64(time.Now().Unix() + 10)
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || project name cannot be empty", func() {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
 			CreateProject(
 				projectName,
@@ -95,7 +95,7 @@ func createProjectTest(t *testing.T) {
 		startTime := uint64(time.Now().Unix() + 10)
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || project name is too long", func() {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
 			CreateProject(
 				projectName,
@@ -124,7 +124,7 @@ func createProjectTest(t *testing.T) {
 		startTime := uint64(time.Now().Unix() + 10)
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || tokenPath cannot be empty", func() {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
 			CreateProject(
 				projectName,
@@ -153,7 +153,7 @@ func createProjectTest(t *testing.T) {
 		startTime := uint64(time.Now().Unix() + 10)
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || tokenPath(gno.land/r/gnoswap/v1/token_test/obl) not registered", func() {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
 			CreateProject(
 				projectName,
@@ -183,7 +183,7 @@ func createProjectTest(t *testing.T) {
 		invalidAddr := std.Address("invalidAddress")
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-002] invalid address || recipient address(invalidAddress)", func() {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
 			CreateProject(
 				projectName,
@@ -212,7 +212,7 @@ func createProjectTest(t *testing.T) {
 		startTime := uint64(time.Now().Unix() + 10)
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || deposit amount cannot be 0", func() {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
 			CreateProject(
 				projectName,
@@ -241,7 +241,7 @@ func createProjectTest(t *testing.T) {
 		startTime := uint64(time.Now().Unix() + 10)
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || invalid ratio, sum of all tiers(30:15, 90:20, 180:70) should be 100", func() {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
 			CreateProject(
 				projectName,
@@ -270,7 +270,7 @@ func createProjectTest(t *testing.T) {
 		startTime := uint64(time.Now().Unix() - 10)
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234567880) must be greater than now(1234567890)", func() {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
 			CreateProject(
 				projectName,
@@ -299,7 +299,7 @@ func createProjectTest(t *testing.T) {
 		startTime := uint64(time.Now().Unix() + 10)
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || conditionsToken or conditionsAmount cannot be empty", func() {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
 			CreateProject(
 				projectName,
@@ -328,7 +328,7 @@ func createProjectTest(t *testing.T) {
 		startTime := uint64(time.Now().Unix() + 10)
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || conditionsToken or conditionsAmount cannot be empty", func() {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
 			CreateProject(
 				projectName,
@@ -357,7 +357,7 @@ func createProjectTest(t *testing.T) {
 		startTime := uint64(time.Now().Unix() + 10)
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-011] invalid length || invalid conditions(numTokens(1) != numAmounts(2))", func() {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
 			CreateProject(
 				projectName,
@@ -386,7 +386,7 @@ func createProjectTest(t *testing.T) {
 		startTime := uint64(time.Now().Unix() + 10)
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || invalid token()", func() {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
 			CreateProject(
 				projectName,
@@ -415,7 +415,7 @@ func createProjectTest(t *testing.T) {
 		startTime := uint64(time.Now().Unix() + 10)
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || token(gno.land/r/gnoswap/v1/token_test/obl) not registered", func() {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
 			CreateProject(
 				projectName,
@@ -444,7 +444,7 @@ func createProjectTest(t *testing.T) {
 		startTime := uint64(time.Now().Unix() + 10)
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || duplicated condition token(gno.land/r/gnoswap/v1/gov/xgns)", func() {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
 			CreateProject(
 				projectName,
@@ -473,10 +473,10 @@ func createProjectTest(t *testing.T) {
 		startTime := uint64(time.Now().Unix() + 10)
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-010] insufficient balance || caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) balance(0) < depositAmount(1000000000)", func() {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			access.SetRole(access.ROLE_ADMIN, aliceAddr)
 
-			std.TestSetRealm(aliceRealm)
+			testing.SetRealm(aliceRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
 			CreateProject(
 				projectName,
@@ -504,10 +504,10 @@ func createProjectTest(t *testing.T) {
 		tier180Ratio := uint64(70)
 		startTime := uint64(time.Now().Unix() + 10)
 
-		std.TestSetRealm(aliceRealm)
+		testing.SetRealm(aliceRealm)
 		access.SetRole(access.ROLE_ADMIN, adminAddr)
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		obl.Approve(launchpadAddr, rewardAmount)
 		projectId := CreateProject(
 			projectName,
@@ -543,9 +543,9 @@ func createProjectTest(t *testing.T) {
 		tier180Ratio := uint64(20)
 		startTime := uint64(time.Now().Unix() + 10)
 
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		usdc.Approve(launchpadAddr, rewardAmount)
 		projectId := CreateProject(
 			projectName,
@@ -570,5 +570,5 @@ func createProjectTest(t *testing.T) {
 			ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:180", projectId)))
 	})
 
-	std.TestSkipHeights(4)
+	testing.SkipHeights(4)
 }

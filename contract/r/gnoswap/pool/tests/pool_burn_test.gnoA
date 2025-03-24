@@ -22,14 +22,14 @@ var (
 )
 
 func TestDoesNotClear(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	Mint(
 		barPath,
 		fooPath,
@@ -41,7 +41,7 @@ func TestDoesNotClear(t *testing.T) {
 		adminAddr,
 	)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	Swap(
 		barPath,
 		fooPath,
@@ -66,7 +66,7 @@ func TestDoesNotClear(t *testing.T) {
 	// did swap t0 => t1 and t1 => t0
 
 	// burn all
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	Burn(
 		barPath,
 		fooPath,
@@ -97,14 +97,14 @@ func TestDoesNotClear(t *testing.T) {
 }
 
 func TestClearOnlyLowTick(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	Mint(
 		barPath,
 		fooPath,
@@ -127,7 +127,7 @@ func TestClearOnlyLowTick(t *testing.T) {
 		adminAddr,
 	)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	Swap(
 		barPath,
 		fooPath,
@@ -139,7 +139,7 @@ func TestClearOnlyLowTick(t *testing.T) {
 		adminAddr,
 	)
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	Burn(
 		barPath,
 		fooPath,
@@ -161,14 +161,14 @@ func TestClearOnlyLowTick(t *testing.T) {
 }
 
 func TestClearOnlyUpperTick(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	Mint(
 		barPath,
 		fooPath,
@@ -191,7 +191,7 @@ func TestClearOnlyUpperTick(t *testing.T) {
 		adminAddr,
 	)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	Swap(
 		barPath,
 		fooPath,
@@ -203,7 +203,7 @@ func TestClearOnlyUpperTick(t *testing.T) {
 		adminAddr,
 	)
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	Burn(
 		barPath,
 		fooPath,

@@ -108,9 +108,9 @@ func TestExactInSwapRoute(t *testing.T) {
 	CreatePoolWithoutFee(t)
 	MakeMintPositionWithoutFee(t)
 
-	std.TestSkipHeights(100)
+	testing.SkipHeights(100)
 	user1Realm := std.NewUserRealm(user1Addr)
-	std.TestSetRealm(user1Realm)
+	testing.SetRealm(user1Realm)
 
 	tests := []struct {
 		name         string
@@ -142,7 +142,7 @@ func TestExactInSwapRoute(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetRealm(user1Realm)
+			testing.SetRealm(user1Realm)
 			bar.Approve(routerAddr, maxApprove)
 			baz.Approve(routerAddr, maxApprove)
 			bar.Approve(poolAddr, maxApprove)
@@ -241,7 +241,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Pool Creation
-			std.TestSetRealm(std.NewUserRealm(positionOwner))
+			testing.SetRealm(std.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFeeByAdmin(0)
 			if !pl.DoesPoolPathExist(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
 				pl.CreatePool(tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
@@ -254,9 +254,9 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 				uassert.Equal(t, tt.feeProtocol1, pool.Slot0FeeProtocol()>>4)
 			}
 
-			std.TestSetOriginCaller(positionOwner)
+			testing.SetOriginCaller(positionOwner)
 			newCoins := std.Coins{{"ugnot", int64(10000000000)}}
-			std.TestIssueCoins(positionOwner, newCoins)
+			testing.IssueCoins(positionOwner, newCoins)
 			std.TestSetOriginSend(newCoins, nil)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
@@ -266,7 +266,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			}
 			gns.Transfer(tt.recipient, 10000000000)
 
-			std.TestSetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			wugnot.Approve(poolContract, maxApprove)
 			gns.Approve(poolContract, maxApprove)
 
@@ -289,17 +289,17 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 				tt.recipient,
 				"",
 			)
-			std.TestSkipHeights(1)
+			testing.SkipHeights(1)
 
 			// Swap
-			std.TestSetOriginCaller(tt.recipient)
+			testing.SetOriginCaller(tt.recipient)
 			wugnot.Transfer(routerContract, 20000000)
 			gns.Transfer(routerContract, 20000000)
 			wugnot.Approve(routerContract, maxApprove)
 			gns.Approve(routerContract, maxApprove)
 			beforeGnotBalance := uint64(banker.GetCoins(tt.recipient).AmountOf("ugnot"))
 
-			std.TestSetRealm(std.NewCodeRealm(routerPath))
+			testing.SetRealm(std.NewCodeRealm(routerPath))
 			wugnot.Approve(poolContract, maxApprove)
 
 			amountIn, amountOut := ExactInSwapRoute(
@@ -312,7 +312,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 				time.Now().Add(time.Hour).Unix(),
 				"", // referrer
 			)
-			std.TestSkipHeights(1)
+			testing.SkipHeights(1)
 			afterGnotBalance := uint64(banker.GetCoins(tt.recipient).AmountOf("ugnot"))
 
 			defer func() {

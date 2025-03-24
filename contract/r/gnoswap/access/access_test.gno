@@ -49,7 +49,7 @@ func TestInitialize(t *testing.T) {
 }
 
 func TestUpdateRoleAddress(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	t.Run("update success", func(t *testing.T) {
 		cfg := newConfig()
@@ -239,7 +239,7 @@ func TestMultiRoleValidation(t *testing.T) {
 }
 
 func TestCreateRole(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	testNewRoleAddr := testutils.TestAddress("test_new_role")
 	testAnotherAddr := testutils.TestAddress("test_another_role")
 
@@ -407,7 +407,7 @@ func TestSetConfig(t *testing.T) {
 }
 
 func TestSetRole(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	testAuditorAddr := testutils.TestAddress("test_auditor")
 	testReviewerAddr := testutils.TestAddress("test_reviewer")
@@ -467,14 +467,14 @@ func TestSetRole(t *testing.T) {
 	})
 
 	t.Run("fail with non-admin address", func(t *testing.T) {
-		std.TestSetRealm(std.NewUserRealm(testutils.TestAddress("non_admin")))
+		testing.SetRealm(std.NewUserRealm(testutils.TestAddress("non_admin")))
 		err := SetRole("test_auditor", testAuditorAddr)
 		uassert.Error(t, err)
 	})
 }
 
 func TestDeleteRole(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	testRoleAddr := testutils.TestAddress("test_role_to_delete")
 
 	t.Run("success delete existing role", func(t *testing.T) {

@@ -36,7 +36,7 @@ func TestTransferUGNOT(t *testing.T) {
 			name: "Success - Valid transfer",
 			action: func(t *testing.T, from, to std.Address) {
 				ugnotFaucet(t, from, 100)
-				std.TestSetRealm(std.NewUserRealm(from))
+				testing.SetRealm(std.NewUserRealm(from))
 				transferUGNOT(from, to, 100)
 			},
 			verify: func(t *testing.T, to std.Address) uint64 {
@@ -122,7 +122,7 @@ func TestWrapInPosition(t *testing.T) {
 			name: "Success - Valid amount",
 			action: func(t *testing.T, from, to std.Address) error {
 				ugnotFaucet(t, from, 1000)
-				std.TestSetRealm(std.NewUserRealm(from))
+				testing.SetRealm(std.NewUserRealm(from))
 				return wrap(1000, to)
 			},
 			verify: func(t *testing.T, to std.Address) uint64 {
@@ -197,9 +197,9 @@ func TestUnWrap(t *testing.T) {
 			name: "Success - Valid amount",
 			action: func(t *testing.T, from, to std.Address) error {
 				ugnotFaucet(t, from, 1000)
-				std.TestSetRealm(std.NewUserRealm(from))
+				testing.SetRealm(std.NewUserRealm(from))
 				wrap(1000, to)
-				std.TestSetRealm(std.NewUserRealm(to))
+				testing.SetRealm(std.NewUserRealm(to))
 				TokenApprove(t, wugnotPath, to, from, 1000)
 				return unwrap(1000, to)
 			},
@@ -419,7 +419,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			if amount > 0 {
 				ugnotFaucet(t, positionAddr, amount)
 			}
-			std.TestSetRealm(std.NewUserRealm(positionAddr))
+			testing.SetRealm(std.NewUserRealm(positionAddr))
 
 			transferUGNOT(positionAddr, positionAddr, amount)
 

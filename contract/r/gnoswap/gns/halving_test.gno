@@ -170,8 +170,8 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 		oldCallback := callbackEmissionChange
 		callbackEmissionChange = func(amount uint64) {}
 
-		std.TestSkipHeights(1)
-		std.TestSetRealm(std.NewUserRealm(adminAddr))
+		testing.SkipHeights(1)
+		testing.SetRealm(std.NewUserRealm(adminAddr))
 
 		SetAvgBlockTimeInMsByAdmin(2)
 		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(2))
@@ -196,8 +196,8 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 	t.Run("success if caller is governance contract", func(t *testing.T) {
 		oldCallback := callbackEmissionChange
 		callbackEmissionChange = func(amount uint64) {}
-		std.TestSkipHeights(3)
-		std.TestSetRealm(govRealm)
+		testing.SkipHeights(3)
+		testing.SetRealm(govRealm)
 		SetAvgBlockTimeInMs(4)
 		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(4))
 		callbackEmissionChange = oldCallback

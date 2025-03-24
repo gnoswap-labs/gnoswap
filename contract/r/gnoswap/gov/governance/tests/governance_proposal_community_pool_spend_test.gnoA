@@ -56,10 +56,10 @@ func proposeCommunityPoolSpend(t *testing.T) {
 			t.Errorf("Expected empty proposals, got %v", proposalsJson)
 		}
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		gns.Approve(govStakerAddr, uint64(1_000_000))
 		gs.Delegate(admin, uint64(1_000_000), "")
-		std.TestSkipHeights(11) // VotingWeightSmoothingDuration
+		testing.SkipHeights(11) // VotingWeightSmoothingDuration
 
 		proposalID := ProposeCommunityPoolSpend("test_title", "test_description", to, tokenPath, 100)
 		if proposalID != 1 {
@@ -92,20 +92,20 @@ func passAndExecute(t *testing.T) {
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-016] proposal not passed",
 			func() {
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 				Execute(proposalId)
 			})
 	})
 
 	t.Run("vote proposal to make it passed", func(t *testing.T) {
-		std.TestSkipHeights(11)
-		std.TestSetRealm(adminRealm)
+		testing.SkipHeights(11)
+		testing.SetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		v, _ := votes.Get(voteKey)
 	})
 
 	t.Run("check status before execution", func(t *testing.T) {
-		std.TestSkipHeights(100) // ends voting period + skip execution delay
+		testing.SkipHeights(100) // ends voting period + skip execution delay
 		updateProposalsState()
 
 		proposalsJson := GetProposals()
@@ -119,14 +119,14 @@ func passAndExecute(t *testing.T) {
 
 	t.Run("successful execute proposal", func(t *testing.T) {
 		// to execute community pool spend proposal, we need to have enough balance in community pool
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		uassert.Equal(t, uint64(15696346), gns.BalanceOf(communityPoolAddr))
 		uassert.Equal(t, gns.BalanceOf(to), uint64(0))
 
 		err := Execute(proposalId)
 		uassert.NoError(t, err)
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 
 		pp, exists := proposals.Get(strconv.FormatUint(proposalId, 10))
 		if !exists {
@@ -139,18 +139,18 @@ func passAndExecute(t *testing.T) {
 
 func rejectAndExecute(t *testing.T) {
 	t.Run("prpoose new community pool spend", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		proposalId := ProposeCommunityPoolSpend("test_title", "test_description", to, tokenPath, 50) // create new proposal
 	})
 
 	t.Run("vote to reject", func(t *testing.T) {
-		std.TestSkipHeights(11)
-		std.TestSetRealm(adminRealm)
+		testing.SkipHeights(11)
+		testing.SetRealm(adminRealm)
 		Vote(proposalId, false) // vote Nay
 	})
 
 	t.Run("check status after rejected", func(t *testing.T) {
-		std.TestSkipHeights(100) // ends voting period
+		testing.SkipHeights(100) // ends voting period
 
 		updateProposalsState() // proposal rejected
 		pp, exists := proposals.Get(strconv.FormatUint(proposalId, 10))
@@ -173,23 +173,23 @@ func rejectAndExecute(t *testing.T) {
 
 func passAndExpire(t *testing.T) {
 	t.Run("prpoose new community pool spend", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		proposalId := ProposeCommunityPoolSpend("test_title", "test_description", to, tokenPath, 50) // create new proposal
 	})
 
 	t.Run("vote to pass", func(t *testing.T) {
-		std.TestSkipHeights(11)
-		std.TestSetRealm(adminRealm)
+		testing.SkipHeights(11)
+		testing.SetRealm(adminRealm)
 		Vote(proposalId, true)
 	})
 
 	t.Run("check status after pass and expire", func(t *testing.T) {
-		std.TestSkipHeights(100) // ends voting period
+		testing.SkipHeights(100) // ends voting period
 		updateProposalsState()   // proposal passed
 
-		std.TestSkipHeights(10)   // execution delay
-		std.TestSkipHeights(1000) // execution window
-		std.TestSkipHeights(1)    // expired
+		testing.SkipHeights(10)   // execution delay
+		testing.SkipHeights(1000) // execution window
+		testing.SkipHeights(1)    // expired
 		updateProposalsState()
 
 		// proposal := proposals[proposalId]

@@ -22,7 +22,7 @@ var (
 )
 
 func TestMintPostInit(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-1).ToString())
 
@@ -32,7 +32,7 @@ func TestMintPostInit(t *testing.T) {
 	thisPool := GetPool(barPath, fooPath, fee500)
 
 	t.Run("returns in supply in range", func(t *testing.T) {
-		std.TestSetRealm(posRealm)
+		testing.SetRealm(posRealm)
 		Mint(
 			barPath,
 			fooPath,
@@ -47,7 +47,7 @@ func TestMintPostInit(t *testing.T) {
 	currentLiq := thisPool.liquidity.ToString()
 
 	t.Run("excludes supply at tick above current tick", func(t *testing.T) {
-		std.TestSetRealm(posRealm)
+		testing.SetRealm(posRealm)
 		Mint(
 			barPath,
 			fooPath,
@@ -64,7 +64,7 @@ func TestMintPostInit(t *testing.T) {
 	})
 
 	t.Run("excludes supply at tick below current tick", func(t *testing.T) {
-		std.TestSetRealm(posRealm)
+		testing.SetRealm(posRealm)
 		Mint(
 			barPath,
 			fooPath,
@@ -83,7 +83,7 @@ func TestMintPostInit(t *testing.T) {
 	t.Run("updates correctly when exiting range", func(t *testing.T) {
 		beforeLiq := thisPool.liquidity.ToString()
 
-		std.TestSetRealm(posRealm)
+		testing.SetRealm(posRealm)
 		Mint(
 			barPath,
 			fooPath,
@@ -96,7 +96,7 @@ func TestMintPostInit(t *testing.T) {
 		)
 		nowLiq := thisPool.liquidity.ToString()
 
-		std.TestSetRealm(rouRealm)
+		testing.SetRealm(rouRealm)
 		Swap(
 			barPath,
 			fooPath,
@@ -115,7 +115,7 @@ func TestMintPostInit(t *testing.T) {
 	t.Run("updates correctly when entering range", func(t *testing.T) {
 		beforeLiq := thisPool.liquidity.ToString()
 
-		std.TestSetRealm(posRealm)
+		testing.SetRealm(posRealm)
 		Mint(
 			barPath,
 			fooPath,
@@ -128,7 +128,7 @@ func TestMintPostInit(t *testing.T) {
 		)
 		nowLiq := thisPool.liquidity.ToString()
 
-		std.TestSetRealm(rouRealm)
+		testing.SetRealm(rouRealm)
 		Swap(
 			barPath,
 			fooPath,

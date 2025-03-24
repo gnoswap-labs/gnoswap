@@ -23,7 +23,7 @@ var (
 // 1. Init & Create Pool
 func TestPoolInitCreatePool(t *testing.T) {
 	// call gns faucet to get creation fee
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(consts.WRAPPED_WUGNOT, fooPath, fee500, "130621891405341611593710811006") // x2.7
@@ -37,22 +37,22 @@ func TestMint(t *testing.T) {
 	}
 
 	// prepare ugnot
-	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 1_000_000}})
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 1_000_000}})
 	testBanker := std.NewBanker(std.BankerTypeRealmIssue)
 
 	// simulate transfer
 	std.TestSetOriginSend(std.Coins{{"ugnot", 1_000_000}}, nil)
 
 	// Deposit(wrap)
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	wugnot.Deposit()
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 	wugnot.Approve(poolAddr, consts.UINT64_MAX)
 
 	// Mint
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	amount0, amount1 := Mint(
 		fooPath,
 		consts.WRAPPED_WUGNOT,
@@ -76,10 +76,10 @@ func TestSwapBuyNative(t *testing.T) {
 	uassert.Equal(t, adminOldT0Bal, uint64(704198))
 	uassert.Equal(t, adminOldT1Bal, uint64(99999899195968))
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	foo.Approve(poolAddr, 10000)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	amount0, amount1 := Swap(
 		fooPath,               // token0
 		consts.WRAPPED_WUGNOT, // token1
@@ -108,10 +108,10 @@ func TestSwapSellNative(t *testing.T) {
 	uassert.Equal(t, adminOldT0Bal, uint64(694198))         // foo
 	uassert.Equal(t, adminOldT1Bal, uint64(99999899223091)) // wugnot
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	wugnot.Approve(poolAddr, 27123)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	amount0, amount1 := Swap( // ugnot 10_000 > foo ??
 		fooPath,               // token0
 		consts.WRAPPED_WUGNOT, // token1

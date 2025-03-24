@@ -26,12 +26,12 @@ var (
 )
 
 func init() {
-	std.TestSkipHeights(100)
+	testing.SkipHeights(100)
 }
 
 func AfterTest(t *testing.T) {
 	poolRealm := std.NewUserRealm(poolAddr)
-	std.TestSetRealm(poolRealm)
+	testing.SetRealm(poolRealm)
 	barBal := bar.BalanceOf(poolAddr)
 	fooBal := foo.BalanceOf(poolAddr)
 	bar.Transfer(adminAddr, barBal)
@@ -41,7 +41,7 @@ func AfterTest(t *testing.T) {
 
 func TestSuccess_price_within_range_transfers_current_price_of_both_tokens(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, poolCreationFee)
 
@@ -52,14 +52,14 @@ func TestSuccess_price_within_range_transfers_current_price_of_both_tokens(t *te
 	pl.CreatePool(barPath, token0Path, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	pl.Mint(token0Path, barPath, 3000, positionAddr, minTick, maxTick, "3161", adminAddr)
 
 	// ===================== price within range: transfers current price of both tokens =====================
 	pool := GetPool(token0Path, barPath, 3000)
 	tickSpacing := pool.tickSpacing
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	pl.Mint(token0Path, barPath, 3000, positionAddr, minTick+tickSpacing, maxTick-tickSpacing, "100", adminAddr)
 
 	barBalance := bar.BalanceOf(poolAddr)
@@ -71,7 +71,7 @@ func TestSuccess_price_within_range_transfers_current_price_of_both_tokens(t *te
 
 func TestSuccess_initializes_lower_tick(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, poolCreationFee)
 
@@ -86,7 +86,7 @@ func TestSuccess_initializes_lower_tick(t *testing.T) {
 
 func TestSuccess_initializes_upper_tick(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, poolCreationFee)
 
@@ -105,7 +105,7 @@ func TestSuccess_initializes_upper_tick(t *testing.T) {
 
 func TestSuccess_works_for_min_max_tick(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, poolCreationFee)
 
@@ -116,7 +116,7 @@ func TestSuccess_works_for_min_max_tick(t *testing.T) {
 	pl.CreatePool(barPath, token0Path, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	pl.Mint(token0Path, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", adminAddr)
 
 	// ===================== only clears the tick that is not used at all =====================
@@ -136,7 +136,7 @@ func TestSuccess_works_for_min_max_tick(t *testing.T) {
 
 func TestSuccess_removing_works(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, poolCreationFee)
 
@@ -147,7 +147,7 @@ func TestSuccess_removing_works(t *testing.T) {
 	pl.CreatePool(barPath, token0Path, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	pl.Mint(token0Path, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", adminAddr)
 
 	// ===================== only clears the tick that is not used at all =====================
@@ -155,7 +155,7 @@ func TestSuccess_removing_works(t *testing.T) {
 	pool := GetPool(token0Path, barPath, 3000)
 	tickSpacing := pool.tickSpacing
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	pl.Mint(token0Path, barPath, 3000, positionAddr, minTick+tickSpacing, maxTick-tickSpacing, "10000", adminAddr)
 	pl.Burn(token0Path, barPath, 3000, minTick+tickSpacing, maxTick-tickSpacing, "100")
 

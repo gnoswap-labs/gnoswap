@@ -68,7 +68,7 @@ func testCheckInitialGnsAndXGns(t *testing.T) {
 
 func testLaunchpad(t *testing.T) {
 	t.Run("launchpad project create", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		obl.Approve(launchpadAddr, 1_000_000_000)
 		projectId := lp.CreateProject(
@@ -84,14 +84,14 @@ func testLaunchpad(t *testing.T) {
 			uint64(time.Now().Unix()+10), // 5 block later
 		)
 		uassert.Equal(t, projectId, `gno.land/r/onbloc/obl:123`)
-		std.TestSkipHeights(10) // active project
+		testing.SkipHeights(10) // active project
 	})
 
 	t.Run("deposit gns", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		gns.Transfer(user01, uint64(1_000_000)) // to deposit
 
-		std.TestSetRealm(user01Realm)
+		testing.SetRealm(user01Realm)
 		gns.Approve(launchpadAddr, uint64(1_000_000))
 
 		// before
@@ -108,7 +108,7 @@ func testLaunchpad(t *testing.T) {
 		uassert.Equal(t, xgns.TotalSupply(), uint64(1_000_000)) // launchpad supply => no voting
 		uassert.Equal(t, xgns.VotingSupply(), uint64(0))
 
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 
 	t.Run("check xGNS", func(t *testing.T) {
@@ -127,7 +127,7 @@ func testDelegate01_2000000_toDummy(t *testing.T) {
 
 		uassert.Equal(t, std.ChainHeight(), int64(134))
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		gns.Approve(govStakerAddr, uint64(2_000_000))
 		gs.Delegate(dummyAddr, uint64(2_000_000), "") // delegate to dummy
 
@@ -135,19 +135,19 @@ func testDelegate01_2000000_toDummy(t *testing.T) {
 		uassert.Equal(t, xgns.TotalSupply(), uint64(3_000_000))  // launchpad 2 + gov 1
 		uassert.Equal(t, xgns.VotingSupply(), uint64(2_000_000)) // gov 1
 
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testProposeText(t *testing.T) {
 	t.Run("Successful two text proposals ", func(t *testing.T) {
 		// pass some blocks
-		std.TestSkipHeights(10)
+		testing.SkipHeights(10)
 
 		// text proposal
 		uassert.Equal(t, std.ChainHeight(), int64(145))
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		proposalID := ProposeText("test_title", "test_description")
 		uassert.Equal(t, proposalID, uint64(1))
 
@@ -171,9 +171,9 @@ func testVote(t *testing.T) {
 	t.Run("vote", func(t *testing.T) {
 		proposalId := uint64(1)
 
-		std.TestSkipHeights(5)
+		testing.SkipHeights(5)
 
-		std.TestSetRealm(dummyRealm)
+		testing.SetRealm(dummyRealm)
 		Vote(proposalId, true)
 
 		// proposal := proposals[proposalId]

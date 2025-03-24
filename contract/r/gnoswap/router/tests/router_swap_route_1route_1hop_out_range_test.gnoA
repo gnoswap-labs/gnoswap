@@ -20,7 +20,7 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString())
@@ -41,7 +41,7 @@ func TestCreatePool(t *testing.T) {
 
 func TestPositionMint(t *testing.T) {
 	// bar_baz_500 by admin
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	baz.Approve(poolAddr, consts.UINT64_MAX)
 
@@ -58,7 +58,7 @@ func TestPositionMint(t *testing.T) {
 }
 
 func TestDrySwapRouteBazBarExactIn(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	dryResult := DrySwapRoute(
 		bazPath,    // inputToken
@@ -74,7 +74,7 @@ func TestDrySwapRouteBazBarExactIn(t *testing.T) {
 }
 
 func TestSwapRouteBazBarExactIn(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	uassert.PanicsWithMessage(
 		t,

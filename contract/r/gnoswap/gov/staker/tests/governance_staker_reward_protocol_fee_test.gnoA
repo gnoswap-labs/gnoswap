@@ -44,8 +44,8 @@ func TestGovernanceStakerRewardProtocolFee(t *testing.T) {
 	delegateAmountFromBobToBot := uint64(5_000_000)
 
 	t.Run("delegate from admin to alice", func(t *testing.T) {
-		std.TestSkipHeights(1)
-		std.TestSetRealm(adminRealm)
+		testing.SkipHeights(1)
+		testing.SetRealm(adminRealm)
 		gns.Approve(govStakerAddr, delegateAmountFromAdminToAlice)
 		// Delegate : 1, reward : x
 		Delegate(aliceAddr, delegateAmountFromAdminToAlice, "")
@@ -59,12 +59,12 @@ func TestGovernanceStakerRewardProtocolFee(t *testing.T) {
 	})
 
 	t.Run("mock protocol fee test", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		bar.Transfer(protocolFeeAddr, 1000)
 		qux.Transfer(protocolFeeAddr, 2500)
 
-		std.TestSkipHeights(1)
-		std.TestSetRealm(stakerRealm)
+		testing.SkipHeights(1)
+		testing.SetRealm(stakerRealm)
 		// bar -> 1000 : ( reward/1staked = 1000 / 6 )
 		pf.AddToProtocolFee(barPath, 1000)
 		// qux -> 2500 : ( reward/1staked = 2500 / 6 )
@@ -81,11 +81,11 @@ func TestGovernanceStakerRewardProtocolFee(t *testing.T) {
 	})
 
 	t.Run("delegate from bob to bob", func(t *testing.T) {
-		std.TestSkipHeights(1)
-		std.TestSetRealm(adminRealm)
+		testing.SkipHeights(1)
+		testing.SetRealm(adminRealm)
 		gns.Transfer(bobAddr, delegateAmountFromBobToBot)
 
-		std.TestSetRealm(bobRealm)
+		testing.SetRealm(bobRealm)
 		gns.Approve(govStakerAddr, delegateAmountFromBobToBot)
 		// previous compute : protocolFee distribution
 		// admin
@@ -108,12 +108,12 @@ func TestGovernanceStakerRewardProtocolFee(t *testing.T) {
 	})
 
 	t.Run("mock protocol fee test", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		bar.Transfer(protocolFeeAddr, 1000)
 		qux.Transfer(protocolFeeAddr, 2500)
 
-		std.TestSkipHeights(1)
-		std.TestSetRealm(stakerRealm)
+		testing.SkipHeights(1)
+		testing.SetRealm(stakerRealm)
 		// bar -> 1000 : ( reward/1staked = 1000 / 6 )
 		pf.AddToProtocolFee(barPath, 1000)
 		// qux -> 2500 : ( reward/1staked = 2500 / 6 )
@@ -130,7 +130,7 @@ func TestGovernanceStakerRewardProtocolFee(t *testing.T) {
 	})
 
 	t.Run("skip dummy block test", func(t *testing.T) {
-		std.TestSkipHeights(10)
+		testing.SkipHeights(10)
 		en.MintAndDistributeGns()
 
 		uassert.Equal(t, uint64(1000), bar.BalanceOf(protocolFeeAddr))
@@ -158,7 +158,7 @@ func TestGovernanceStakerRewardProtocolFee(t *testing.T) {
 		uassert.Equal(t, uint64(0), bar.BalanceOf(bobAddr))
 		uassert.Equal(t, uint64(0), qux.BalanceOf(bobAddr))
 
-		std.TestSetRealm(bobRealm)
+		testing.SetRealm(bobRealm)
 		CollectReward()
 
 		uassert.Equal(t, uint64(833), bar.BalanceOf(bobAddr))
@@ -169,7 +169,7 @@ func TestGovernanceStakerRewardProtocolFee(t *testing.T) {
 		uassert.Equal(t, uint64(833), bar.BalanceOf(bobAddr))
 		uassert.Equal(t, uint64(2083), qux.BalanceOf(bobAddr))
 
-		std.TestSetRealm(bobRealm)
+		testing.SetRealm(bobRealm)
 		CollectReward()
 
 		uassert.Equal(t, uint64(833), bar.BalanceOf(bobAddr))
@@ -180,7 +180,7 @@ func TestGovernanceStakerRewardProtocolFee(t *testing.T) {
 		beforeBarBalance := bar.BalanceOf(adminAddr)
 		beforeQuxBalance := qux.BalanceOf(adminAddr)
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		CollectReward()
 
 		uassert.Equal(t, uint64(1166), bar.BalanceOf(adminAddr)-beforeBarBalance)

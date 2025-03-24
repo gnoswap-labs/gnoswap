@@ -99,7 +99,7 @@ func setupXGNSTest(t *testing.T) (*MockXGNSToken, std.Address) {
 func xgnsMint(t *testing.T, token *MockXGNSToken, to std.Address, amount uint64) {
 	t.Helper()
 	// Set realm to gov/staker or launchpad to have permission
-	std.TestSetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
+	testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
 	err := token.Mint(to, amount)
 	if err != nil {
 		t.Fatalf("Failed to mint XGNS: %v", err)
@@ -109,7 +109,7 @@ func xgnsMint(t *testing.T, token *MockXGNSToken, to std.Address, amount uint64)
 func xgnsBurn(t *testing.T, token *MockXGNSToken, from std.Address, amount uint64) {
 	t.Helper()
 	// Set realm to gov/staker or launchpad to have permission
-	std.TestSetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
+	testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
 	err := token.Burn(from, amount)
 	if err != nil {
 		t.Fatalf("Failed to burn XGNS: %v", err)

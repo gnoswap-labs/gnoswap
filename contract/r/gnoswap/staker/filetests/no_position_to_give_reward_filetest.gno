@@ -66,10 +66,10 @@ func main() {
 }
 
 func testInit() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// prepare wugnot
-	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
 	std.TestSetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}}, nil)
@@ -78,11 +78,11 @@ func testInit() {
 }
 
 func testCreatePool() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	pl.SetPoolCreationFeeByAdmin(0)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pl.CreatePool(
 		wugnotPath,
 		gnsPath,
@@ -92,12 +92,12 @@ func testCreatePool() {
 }
 
 func testMintWugnotGnsPos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	wugnot.Approve(poolAddr, consts.UINT64_MAX)
 	gns.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pn.Mint(
 		wugnotPath,
 		gnsPath,
@@ -115,7 +115,7 @@ func testMintWugnotGnsPos01() {
 }
 
 func testStakeTokenPos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// stake
 	gnft.Approve(stakerAddr, positionIdFrom(1))
@@ -123,7 +123,7 @@ func testStakeTokenPos01() {
 }
 
 func testUnstakePos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	oldCommunityGns := gns.BalanceOf(communityPoolAddr)
 

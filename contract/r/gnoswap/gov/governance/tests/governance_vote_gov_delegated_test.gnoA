@@ -36,7 +36,7 @@ func TestProposeText(t *testing.T) {
 
 func proposeText(t *testing.T) {
 	t.Run("ProposeText with insufficient delegation", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-004] not enough balance || proposer(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) has not enough xGNS, balance(0), wanted(100)",
 			func() {
@@ -50,7 +50,7 @@ func proposeText(t *testing.T) {
 		proposalsJson := GetProposals()
 		uassert.Equal(t, proposalsJson, ``)
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		// before delegate
 		uassert.Equal(t, xgns.TotalSupply(), uint64(0))
@@ -59,7 +59,7 @@ func proposeText(t *testing.T) {
 		gns.Approve(govStakerAddr, uint64(1_000_000))
 		gs.Delegate(admin, uint64(1_000_000), "") // self delegate
 		uassert.Equal(t, int64(123), std.ChainHeight())
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 
 		// after delegate 01
 		uassert.Equal(t, xgns.TotalSupply(), uint64(1_000_000))
@@ -68,7 +68,7 @@ func proposeText(t *testing.T) {
 		gns.Approve(govStakerAddr, uint64(2_000_000))
 		gs.Delegate(dummyAddr, uint64(2_000_000), "") // delegate to dummy
 		uassert.Equal(t, int64(124), std.ChainHeight())
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 
 		// after delegate 02
 		uassert.Equal(t, xgns.TotalSupply(), uint64(3_000_000))
@@ -104,7 +104,7 @@ func proposeText(t *testing.T) {
 		})
 
 		t.Run("text proposal // 5 more block passed(total 7)", func(t *testing.T) {
-			std.TestSkipHeights(5)
+			testing.SkipHeights(5)
 
 			// text proposal
 			uassert.Equal(t, int64(130), std.ChainHeight())
@@ -144,7 +144,7 @@ func vote(t *testing.T) {
 	dummyRealm := std.NewUserRealm(dummyAddr)
 
 	t.Run("Vote non existent proposal", func(t *testing.T) {
-		std.TestSetRealm(dummyRealm)
+		testing.SetRealm(dummyRealm)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-003] requested data not found || proposalId(123) not found",
 			func() {
@@ -155,8 +155,8 @@ func vote(t *testing.T) {
 	t.Run("vote with only delegated", func(t *testing.T) {
 		proposalId := uint64(2)
 
-		std.TestSkipHeights(11)
-		std.TestSetRealm(dummyRealm)
+		testing.SkipHeights(11)
+		testing.SetRealm(dummyRealm)
 		Vote(proposalId, true)
 
 		pp, _ := proposals.Get(strconv.FormatUint(proposalId, 10))
