@@ -4,6 +4,7 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/json"
 	"gno.land/p/demo/testutils"
 	"gno.land/r/demo/wugnot"
 
@@ -110,4 +111,8 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
 	wugnot.Deposit()
+}
+
+func unmarshal(data string) *json.Node {
+	return json.Must(json.Unmarshal([]byte(data)))
 }

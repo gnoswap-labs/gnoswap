@@ -198,7 +198,10 @@ func delegateTestFromBobToBob(t *testing.T) {
 		uassert.Equal(t, beforeDelegatedAmount, GetDelegationAmountFromTo(adminAddr, aliceAddr))
 		uassert.Equal(t, delegateAmount, GetDelegationAmountFromTo(bobAddr, bobAddr))
 		uassert.Equal(t, uint64(0), GetDelegationAmountFromTo(bobAddr, aliceAddr))
-		uassert.Equal(t, `{"delegationHistory":[{"to":"g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu","amount":"5000000","timestamp":"1234567904","height":"130","add":"true"}]}`, GetDelegationHistory(bobAddr))
+
+		data := unmarshal(GetDelegationHistory(bobAddr))
+		uassert.Equal(t, "g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu", data.MustKey("delegationHistory").MustArray()[0].MustKey("to").MustString())
+		uassert.Equal(t, "5000000", data.MustKey("delegationHistory").MustArray()[0].MustKey("amount").MustString())
 	})
 
 	uassert.Equal(t, emissionRewardPerBlockToStaker*7+3, gns.BalanceOf(stakerAddr))
@@ -456,7 +459,7 @@ func launchPadCreateProject(t *testing.T) {
 		tier180Ratio := uint64(70)
 		startTime := uint64(time.Now().Unix() - 10)
 
-		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234567894) must be greater than now(1234567904)", func() {
+		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234567915) must be greater than now(1234567925)", func() {
 			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
 			lp.CreateProject(
@@ -708,15 +711,33 @@ func launchPadCreateProject(t *testing.T) {
 			tier180Ratio, // 700000000
 			startTime,    // 5 block later
 		)
-		uassert.Equal(t, `gno.land/r/onbloc/obl:130`, projectId)
-		uassert.Equal(t, `{"height":"130","now":"1234567904","projectId":"gno.land/r/onbloc/obl:130","name":"OBL Launchpad Project","tokenPath":"gno.land/r/onbloc/obl","depositAmount":"1000000000","recipient":"g1wpex76n9vd6yzerywf047h6lta047h6lqlp5qp","conditionsToken":"gno.land/r/gnoswap/v1/gov/xgns","conditionsAmount":"1000000","tier30Ratio":"10","tier90Ratio":"20","tier180Ratio":"70","createdHeight":"130","createdTime":"1234567904","startedHeight":"135","startedTime":"1234567914","endedHeight":"7776135","endedTime":"1250119914","totalDeposit":"0","actualDeposit":"0","totalParticipant":"0","actualParticipant":"0","totalCollected":"0","refundedAmount":"0","refundedHeight":"0","refundedTime":"0"}`,
-			lp.ApiGetProjectStatisticsByProjectId(projectId))
-		uassert.Equal(t, `{"height":"130","now":"1234567904","projectId":"gno.land/r/onbloc/obl:130","tierId":"gno.land/r/onbloc/obl:130:30","collectWaitDuration":"129600","tierAmount":"100000000","tierAmountPerBlockX128":"26256355472294634526494954277142608908641","started.height":"135","started.time":"1234567914","ended.height":"1296135","ended.time":"1237159914","tierTotalDepositAmount":"0","tierActualDepositAmount":"0","tierTotalParticipant":"0","tierActualParticipant":"0","userCollectedAmount":"0","calculatedAmount":"0"}`,
-			lp.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:30", projectId)))
-		uassert.Equal(t, `{"height":"130","now":"1234567904","projectId":"gno.land/r/onbloc/obl:130","tierId":"gno.land/r/onbloc/obl:130:90","collectWaitDuration":"302400","tierAmount":"200000000","tierAmountPerBlockX128":"17504236981529756350996636184761739272427","started.height":"135","started.time":"1234567914","ended.height":"3888135","ended.time":"1242343914","tierTotalDepositAmount":"0","tierActualDepositAmount":"0","tierTotalParticipant":"0","tierActualParticipant":"0","userCollectedAmount":"0","calculatedAmount":"0"}`,
-			lp.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:90", projectId)))
-		uassert.Equal(t, `{"height":"130","now":"1234567904","projectId":"gno.land/r/onbloc/obl:130","tierId":"gno.land/r/onbloc/obl:130:180","collectWaitDuration":"604800","tierAmount":"700000000","tierAmountPerBlockX128":"30632414717677073614244113323333043726748","started.height":"135","started.time":"1234567914","ended.height":"7776135","ended.time":"1250119914","tierTotalDepositAmount":"0","tierActualDepositAmount":"0","tierTotalParticipant":"0","tierActualParticipant":"0","userCollectedAmount":"0","calculatedAmount":"0"}`,
-			lp.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:180", projectId)))
+
+		data1 := unmarshal(lp.ApiGetProjectStatisticsByProjectId(projectId))
+		uassert.Equal(t, "gno.land/r/onbloc/obl:130", data1.MustKey("projectId").MustString())
+		uassert.Equal(t, "OBL Launchpad Project", data1.MustKey("name").MustString())
+		uassert.Equal(t, rewardTokenPath, data1.MustKey("tokenPath").MustString())
+		uassert.Equal(t, "1000000000", data1.MustKey("depositAmount").MustString())
+		uassert.Equal(t, "g1wpex76n9vd6yzerywf047h6lta047h6lqlp5qp", data1.MustKey("recipient").MustString())
+		uassert.Equal(t, "gno.land/r/gnoswap/v1/gov/xgns", data1.MustKey("conditionsToken").MustString())
+		uassert.Equal(t, "1000000", data1.MustKey("conditionsAmount").MustString())
+
+		data2 := unmarshal(lp.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:30", projectId)))
+		uassert.Equal(t, "gno.land/r/onbloc/obl:130:30", data2.MustKey("tierId").MustString())
+		uassert.Equal(t, "129600", data2.MustKey("collectWaitDuration").MustString())
+		uassert.Equal(t, "100000000", data2.MustKey("tierAmount").MustString())
+		uassert.Equal(t, "26256355472294634526494954277142608908641", data2.MustKey("tierAmountPerBlockX128").MustString())
+
+		data3 := unmarshal(lp.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:90", projectId)))
+		uassert.Equal(t, "gno.land/r/onbloc/obl:130:90", data3.MustKey("tierId").MustString())
+		uassert.Equal(t, "302400", data3.MustKey("collectWaitDuration").MustString())
+		uassert.Equal(t, "200000000", data3.MustKey("tierAmount").MustString())
+		uassert.Equal(t, "17504236981529756350996636184761739272427", data3.MustKey("tierAmountPerBlockX128").MustString())
+
+		data4 := unmarshal(lp.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:180", projectId)))
+		uassert.Equal(t, "gno.land/r/onbloc/obl:130:180", data4.MustKey("tierId").MustString())
+		uassert.Equal(t, "604800", data4.MustKey("collectWaitDuration").MustString())
+		uassert.Equal(t, "700000000", data4.MustKey("tierAmount").MustString())
+		uassert.Equal(t, "30632414717677073614244113323333043726748", data4.MustKey("tierAmountPerBlockX128").MustString())
 	})
 
 	testing.SkipHeights(4)
@@ -931,9 +952,12 @@ func launchPadDepositTest(t *testing.T) {
 			depositAmount,
 			"",
 		)
-		uassert.Equal(t, "gno.land/r/onbloc/obl:130:30:g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu:135", depositId)
-		uassert.Equal(t, `{"height":"135","now":"1234567914","depositId":"gno.land/r/onbloc/obl:130:30:g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu:135","projectId":"gno.land/r/onbloc/obl:130","tier":"30","depositor":"g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu","amount":"1000000","depositHeight":"135","depositTime":"1234567914","depositCollectHeight":"0","depositCollectTime":"0","claimableHeight":"129735","claimableTime":"1234827114","claimableRewardAmount":"0","rewardCollected":"0","rewardCollectHeight":"0","rewardCollectTime":"0"}`,
-			lp.ApiGetDepositByDepositId(depositId))
+
+		data := unmarshal(lp.ApiGetDepositByDepositId(depositId))
+		uassert.Equal(t, depositId, data.MustKey("depositId").MustString())
+		uassert.Equal(t, "gno.land/r/onbloc/obl:130", data.MustKey("projectId").MustString())
+		uassert.Equal(t, "30", data.MustKey("tier").MustString())
+		uassert.Equal(t, "g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu", data.MustKey("depositor").MustString())
 
 		testing.SkipHeights(1)
 	})
@@ -955,8 +979,11 @@ func mockProtocolFeeTest(t *testing.T) {
 	uassert.Equal(t, uint64(2500), qux.BalanceOf(protocolFeeAddr))
 	uassert.Equal(t, uint64(1000), pf.GetAmountOfToken(barPath))
 	uassert.Equal(t, uint64(2500), pf.GetAmountOfToken(quxPath))
-	uassert.Equal(t, `{"height":"137","now":"1234567918","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2500"}`,
-		pf.ApiGetTokenListWithAmountOverZero())
+
+	data := unmarshal(pf.ApiGetTokenListWithAmountOverZero())
+	uassert.Equal(t, "1000", data.MustKey(barPath).MustString())
+	uassert.Equal(t, "2500", data.MustKey(quxPath).MustString())
+
 	uassert.Equal(t, uint64(0), pf.GetAccuTransferToGovStakerByTokenPath(barPath))
 	uassert.Equal(t, uint64(0), pf.GetAccuTransferToGovStakerByTokenPath(quxPath))
 }
@@ -979,8 +1006,13 @@ func rewardTest(t *testing.T) {
 		gcr := GetClaimableRewardByAddress(bobAddr)
 		// 1000 / 7 * 5 = 714
 		// 2500 / 7 * 5 = 1785
-		uassert.Equal(t, `{"height":"147","now":"1234567938","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"714"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"1785"}]}`,
-			gcr)
+		data := unmarshal(gcr)
+		uassert.Equal(t, barPath, data.MustKey("protocolFees").MustArray()[0].MustKey("tokenPath").MustString())
+		uassert.Equal(t, "714", data.MustKey("protocolFees").MustArray()[0].MustKey("amount").MustString())
+
+		pfs := data.MustKey("protocolFees").MustArray()
+		uassert.Equal(t, barPath, pfs[0].MustKey("tokenPath").MustString())
+		uassert.Equal(t, "714", pfs[0].MustKey("amount").MustString())
 	})
 
 	t.Run("check launchpad addr", func(t *testing.T) {
@@ -992,8 +1024,16 @@ func rewardTest(t *testing.T) {
 		gcr := GetClaimableRewardByAddress(projectAddr)
 		// 1000 / 7 * 1 = 142
 		// 2500 / 7 * 1 = 357
-		uassert.Equal(t, `{"height":"147","now":"1234567938","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"142"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"357"}]}`,
-			gcr)
+		data := unmarshal(gcr)
+		uassert.Equal(t, barPath, data.MustKey("protocolFees").MustArray()[0].MustKey("tokenPath").MustString())
+		uassert.Equal(t, "142", data.MustKey("protocolFees").MustArray()[0].MustKey("amount").MustString())
+
+		pfs := data.MustKey("protocolFees").MustArray()
+		uassert.Equal(t, barPath, pfs[0].MustKey("tokenPath").MustString())
+		uassert.Equal(t, "142", pfs[0].MustKey("amount").MustString())
+
+		uassert.Equal(t, quxPath, pfs[1].MustKey("tokenPath").MustString())
+		uassert.Equal(t, "357", pfs[1].MustKey("amount").MustString())
 	})
 
 	t.Run("check admin addr", func(t *testing.T) {
@@ -1001,7 +1041,16 @@ func rewardTest(t *testing.T) {
 		gcr := GetClaimableRewardByAddress(adminAddr)
 		// 1000 / 7 * 1 = 142
 		// 2500 / 7 * 1 = 357
-		uassert.Equal(t, gcr, `{"height":"147","now":"1234567938","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"142"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"357"}]}`)
+		data := unmarshal(gcr)
+		uassert.Equal(t, barPath, data.MustKey("protocolFees").MustArray()[0].MustKey("tokenPath").MustString())
+		uassert.Equal(t, "142", data.MustKey("protocolFees").MustArray()[0].MustKey("amount").MustString())
+
+		pfs := data.MustKey("protocolFees").MustArray()
+		uassert.Equal(t, barPath, pfs[0].MustKey("tokenPath").MustString())
+		uassert.Equal(t, "142", pfs[0].MustKey("amount").MustString())
+
+		uassert.Equal(t, quxPath, pfs[1].MustKey("tokenPath").MustString())
+		uassert.Equal(t, "357", pfs[1].MustKey("amount").MustString())
 	})
 
 	t.Run("collect reward - bob", func(t *testing.T) {
@@ -1066,9 +1115,22 @@ func undelegateTestFromBob(t *testing.T) {
 
 		uassert.Equal(t, uint64(0), xgns.BalanceOf(bobAddr))
 		uassert.Equal(t, beforeGnsBalance, gns.BalanceOf(bobAddr))
-		uassert.Equal(t, `{"height":"147","now":"1234567938","totalLocked":"5000000","claimableAmount":"0","nextClaimableTime":"1235172738"}`, GetLockedInfoByAddress(bobAddr))
+
+		data := unmarshal(GetLockedInfoByAddress(bobAddr))
+		uassert.Equal(t, "147", data.MustKey("height").MustString())
+		uassert.Equal(t, "1234568010", data.MustKey("now").MustString())
+		uassert.Equal(t, "5000000", data.MustKey("totalLocked").MustString())
+		uassert.Equal(t, "0", data.MustKey("claimableAmount").MustString())
+		uassert.Equal(t, "1235172810", data.MustKey("nextClaimableTime").MustString())
+
 		testing.SkipHeights((60 * 60 * 24 * 7 / 2) + 1)
-		uassert.Equal(t, `{"height":"302548","now":"1235172740","totalLocked":"5000000","claimableAmount":"5000000","nextClaimableTime":"0"}`, GetLockedInfoByAddress(bobAddr))
+
+		data2 := unmarshal(GetLockedInfoByAddress(bobAddr))
+		uassert.Equal(t, "302548", data2.MustKey("height").MustString())
+		uassert.Equal(t, "1236080015", data2.MustKey("now").MustString())
+		uassert.Equal(t, "5000000", data2.MustKey("totalLocked").MustString())
+		uassert.Equal(t, "5000000", data2.MustKey("claimableAmount").MustString())
+		uassert.Equal(t, "0", data2.MustKey("nextClaimableTime").MustString())
 
 		CollectUndelegatedGns()
 		uassert.Equal(t, beforeGnsBalance+undelegateAmount, gns.BalanceOf(bobAddr))

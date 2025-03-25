@@ -37,7 +37,6 @@ func TestEmissionReward(t *testing.T) {
 }
 
 func initial(t *testing.T) {
-
 	uassert.Equal(t, gns.BalanceOf(admin), uint64(100000000000000)) // admin has initial gns
 	uassert.Equal(t, xgns.BalanceOf(admin), uint64(0))
 
