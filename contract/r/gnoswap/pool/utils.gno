@@ -256,7 +256,7 @@ func assertOnlyRegistered(tokenPath string) {
 	common.MustRegistered(tokenPath)
 }
 
-func formatUint(v interface{}) string {
+func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:
 		return strconv.FormatUint(uint64(v), 10)
@@ -269,7 +269,7 @@ func formatUint(v interface{}) string {
 	}
 }
 
-func formatInt(v interface{}) string {
+func formatInt(v any) string {
 	switch v := v.(type) {
 	case int32:
 		return strconv.FormatInt(int64(v), 10)

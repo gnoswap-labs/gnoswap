@@ -219,9 +219,9 @@ func checkDeadline(deadline int64) {
 // NOTE: input parameter positionId can be string, int, uint64, or grc721.TokenID
 // if positionId is nil or not supported, it will panic
 // if positionId is not found, it will panic
-// input: positionId interface{}
+// input: positionId any
 // output: grc721.TokenID
-func positionIdFrom(positionId interface{}) grc721.TokenID {
+func positionIdFrom(positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic(newErrorWithDetail(errInvalidInput, "positionId is nil"))
 	}
@@ -358,7 +358,7 @@ func verifySlippageAmounts(amount0, amount1, amount0Min, amount1Min *u256.Uint) 
 	}
 }
 
-func formatUint(v interface{}) string {
+func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:
 		return strconv.FormatUint(uint64(v), 10)
@@ -371,7 +371,7 @@ func formatUint(v interface{}) string {
 	}
 }
 
-func formatInt(v interface{}) string {
+func formatInt(v any) string {
 	switch v := v.(type) {
 	case int32:
 		return strconv.FormatInt(int64(v), 10)

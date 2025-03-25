@@ -153,7 +153,7 @@ func (k *keeper) get(addr std.Address) (std.Address, error) {
 
 func (k *keeper) isEmpty() bool {
 	empty := true
-	k.store.Iterate("", "", func(key string, value interface{}) bool {
+	k.store.Iterate("", "", func(key string, value any) bool {
 		empty = false
 		return true // stop iteration on first item
 	})

@@ -321,7 +321,7 @@ func TestSetFeeProtocolByAdmin(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	SetFeeProtocolByAdmin(6, 8)
 
-	pools.Iterate("", "", func(poolPath string, iPool interface{}) bool {
+	pools.Iterate("", "", func(poolPath string, iPool any) bool {
 		pool := iPool.(*Pool)
 		uassert.Equal(t, pool.Slot0FeeProtocol(), uint8(134))
 		return false

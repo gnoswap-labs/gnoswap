@@ -12,7 +12,7 @@ import (
 
 func ApiGetPools() string {
 	rpcPools := []RpcPool{}
-	pools.Iterate("", "", func(poolPath string, value interface{}) bool {
+	pools.Iterate("", "", func(poolPath string, value any) bool {
 		rpcPool := newRpcPool(poolPath)
 		rpcPools = append(rpcPools, rpcPool)
 

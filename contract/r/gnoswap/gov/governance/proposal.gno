@@ -317,7 +317,7 @@ type proposalStateUpdater struct {
 func updateProposalsState() {
 	now := uint64(time.Now().Unix())
 
-	proposals.Iterate("", "", func(key string, value interface{}) bool {
+	proposals.Iterate("", "", func(key string, value any) bool {
 		proposal := value.(ProposalInfo)
 		if proposal.State.Canceled || proposal.State.Expired || proposal.State.Executed {
 			return false

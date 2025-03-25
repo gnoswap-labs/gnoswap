@@ -69,7 +69,7 @@ func (self *Incentives) GetAllInHeights(startHeight, endHeight int64) map[string
 	self.byHeight.ReverseIterate(
 		"",
 		EncodeUint(uint64(endHeight)),
-		func(key string, value interface{}) bool {
+		func(key string, value any) bool {
 			incentive := value.(*ExternalIncentive)
 			if incentive.endHeight < startHeight {
 				// incentive is already ended
@@ -84,7 +84,7 @@ func (self *Incentives) GetAllInHeights(startHeight, endHeight int64) map[string
 	self.byEndHeight.Iterate(
 		EncodeUint(uint64(startHeight)),
 		"",
-		func(key string, value interface{}) bool {
+		func(key string, value any) bool {
 			incentive := value.(*ExternalIncentive)
 			if incentive.startHeight > endHeight {
 				// incentive is not started yet
@@ -131,7 +131,7 @@ func (self *Incentives) startUnclaimablePeriod(startHeight int64) {
 // ignores if currently not in unclaimable period
 func (self *Incentives) endUnclaimablePeriod(endHeight int64) {
 	startHeight := int64(0)
-	self.unclaimablePeriods.ReverseIterate(0, endHeight, func(key int64, value interface{}) bool {
+	self.unclaimablePeriods.ReverseIterate(0, endHeight, func(key int64, value any) bool {
 		if value.(int64) != 0 {
 			// Already ended, no need to update
 			// keeping startHeight as 0 to indicate this
@@ -162,7 +162,7 @@ func (self *Incentives) calculateUnclaimableReward(incentiveId string) uint64 {
 
 	blocks := int64(0)
 
-	self.unclaimablePeriods.ReverseIterate(0, incentive.startHeight, func(key int64, value interface{}) bool {
+	self.unclaimablePeriods.ReverseIterate(0, incentive.startHeight, func(key int64, value any) bool {
 		endHeight := value.(int64)
 		if endHeight == 0 {
 			endHeight = incentive.endHeight
@@ -174,7 +174,7 @@ func (self *Incentives) calculateUnclaimableReward(incentiveId string) uint64 {
 		return true
 	})
 
-	self.unclaimablePeriods.Iterate(incentive.startHeight, incentive.endHeight, func(key int64, value interface{}) bool {
+	self.unclaimablePeriods.Iterate(incentive.startHeight, incentive.endHeight, func(key int64, value any) bool {
 		startHeight := key
 		endHeight := value.(int64)
 		if endHeight == 0 {

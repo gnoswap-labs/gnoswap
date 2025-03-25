@@ -20,7 +20,7 @@ func GetPossibleVotingAddressWithWeight(endTimestamp uint64) (uint64, map[std.Ad
 	totalWeight := uint64(0)
 	addressWithWeight := make(map[std.Address]uint64)
 
-	delegationSnapShotHistory.Iterate("", "", func(key string, value interface{}) bool {
+	delegationSnapShotHistory.Iterate("", "", func(key string, value any) bool {
 		history := value.([]DelegationSnapShotHistory)
 		toAddr := std.Address(key)
 

@@ -69,7 +69,7 @@ func buildByAvlTree(tree *avl.Tree) *json.Node {
 		WriteString("height", formatInt(std.ChainHeight())).
 		WriteString("now", formatInt(time.Now().Unix()))
 
-	tree.Iterate("", "", func(key string, value interface{}) bool {
+	tree.Iterate("", "", func(key string, value any) bool {
 		data.WriteString(key, formatUint(value.(uint64)))
 		return false
 	})

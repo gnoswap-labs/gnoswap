@@ -139,7 +139,7 @@ func changeDistributionPcts(
 func distributeToTarget(amount uint64) uint64 {
 	totalSent := uint64(0)
 
-	distributionBpsPct.Iterate("", "", func(targetStr string, iPct interface{}) bool {
+	distributionBpsPct.Iterate("", "", func(targetStr string, iPct any) bool {
 		targetInt, err := strconv.Atoi(targetStr)
 		if err != nil {
 			panic(addDetailToError(

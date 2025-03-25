@@ -49,7 +49,7 @@ func GetPoolIncentiveIdList(poolPath string) []string {
 	pool := GetPoolByPoolPath(poolPath)
 
 	ids := []string{}
-	pool.incentives.byTime.Iterate("", "", func(key string, value interface{}) bool {
+	pool.incentives.byTime.Iterate("", "", func(key string, value any) bool {
 		ids = append(ids, key)
 		return true
 	})
@@ -538,7 +538,7 @@ func GetExternalIncentive(incentiveId string) *ExternalIncentive {
 // - []ExternalIncentive: A slice of `ExternalIncentive` objects associated with the specified pool path.
 func GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive {
 	incentives := []ExternalIncentive{}
-	externalIncentives.tree.Iterate("", "", func(key string, value interface{}) bool {
+	externalIncentives.tree.Iterate("", "", func(key string, value any) bool {
 		incentive := value.(*ExternalIncentive)
 		if incentive.targetPoolPath == poolPath {
 			incentives = append(incentives, *incentive)
@@ -564,7 +564,7 @@ func GetPrintExternalInfo() string {
 		}
 
 		externalIncentivesList := []ApiExternalDebugIncentive{}
-		externalIncentives.tree.Iterate("", "", func(key string, value interface{}) bool {
+		externalIncentives.tree.Iterate("", "", func(key string, value any) bool {
 			incentive := value.(*ExternalIncentive)
 			if incentive.targetPoolPath == deposit.targetPoolPath {
 				externalIncentive := ApiExternalDebugIncentive{

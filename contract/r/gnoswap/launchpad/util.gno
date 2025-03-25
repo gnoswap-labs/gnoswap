@@ -101,7 +101,7 @@ func getPrevPkgPath() string {
 }
 
 // formatUint returns the string representation of the uint64 value.
-func formatUint(v interface{}) string {
+func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:
 		return strconv.FormatUint(uint64(v), 10)

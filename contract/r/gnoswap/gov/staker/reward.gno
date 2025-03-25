@@ -43,7 +43,7 @@ func updateAndGetProtocolFeeBalance() map[string]uint64 {
 	pf.DistributeProtocolFee()
 	gotAccuProtocolFee := pf.GetAccuTransferToGovStaker()
 
-	gotAccuProtocolFee.Iterate("", "", func(key string, value interface{}) bool {
+	gotAccuProtocolFee.Iterate("", "", func(key string, value any) bool {
 		amount := value.(uint64)
 		currentProtocolFeeBalance[key] += amount
 		return false

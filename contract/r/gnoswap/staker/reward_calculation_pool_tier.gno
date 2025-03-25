@@ -139,7 +139,7 @@ func (self *PoolTier) CurrentReward(tier uint64) uint64 {
 // CurrentCount returns the current count of pools in the given tier.
 func (self *PoolTier) CurrentCount(tier uint64) int {
 	count := 0
-	self.membership.Iterate("", "", func(key string, value interface{}) bool {
+	self.membership.Iterate("", "", func(key string, value any) bool {
 		if value.(uint64) == tier {
 			count++
 		}
@@ -151,7 +151,7 @@ func (self *PoolTier) CurrentCount(tier uint64) int {
 // CurrentAllTierCounts returns the current count of pools in each tier.
 func (self *PoolTier) CurrentAllTierCounts() []uint64 {
 	count := make([]uint64, AllTierCount)
-	self.membership.Iterate("", "", func(key string, value interface{}) bool {
+	self.membership.Iterate("", "", func(key string, value any) bool {
 		count[value.(uint64)]++
 		return false
 	})
@@ -197,7 +197,7 @@ func (self *PoolTier) changeTier(currentHeight int64, pools *Pools, poolPath str
 	currentEmission := self.getEmission()
 
 	// Cache updated reward for each tiered pool
-	self.membership.Iterate("", "", func(key string, value interface{}) bool {
+	self.membership.Iterate("", "", func(key string, value any) bool {
 		pool, ok := pools.Get(key)
 		if !ok {
 			panic("changeTier: pool not found")
@@ -250,7 +250,7 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentBlock int64, emi
 	counts := self.CurrentAllTierCounts()
 
 	// apply cache to all pools
-	self.membership.Iterate("", "", func(key string, value interface{}) bool {
+	self.membership.Iterate("", "", func(key string, value any) bool {
 		tierNum := value.(uint64)
 		pool, ok := pools.Get(key)
 		if !ok {

@@ -101,7 +101,7 @@ func TestPoolPathDivide(t *testing.T) {
 func TestTid(t *testing.T) {
 	tests := []struct {
 		name        string
-		input       interface{}
+		input       any
 		expected    string
 		shouldPanic bool
 	}{

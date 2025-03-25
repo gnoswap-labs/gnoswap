@@ -83,7 +83,7 @@ func (states RewardStates) set(projectId string, tierStr string, state *RewardSt
 func (states RewardStates) deleteProject(projectId string) uint64 {
 	totalLeftover := uint64(0)
 	keys := []string{}
-	states.states.Iterate(projectId+":", projectId+";", func(key string, value interface{}) bool {
+	states.states.Iterate(projectId+":", projectId+";", func(key string, value any) bool {
 		state := value.(*RewardState)
 		totalEmptyBlock := state.TotalEmptyBlock
 		if state.TotalStake == 0 {
