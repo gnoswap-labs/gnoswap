@@ -101,7 +101,7 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 	result.global.poolTier = NewPoolTier(pools, 123, test_gnousdc, func() uint64 { return result.PerBlockEmission }, func(start, end int64) ([]int64, []uint64) {
 		heights := make([]int64, 0)
 		emissions := make([]uint64, 0)
-		result.emissionUpdates.Iterate(start, end, func(key int64, value interface{}) bool {
+		result.emissionUpdates.Iterate(start, end, func(key int64, value any) bool {
 			heights = append(heights, key)
 			emissions = append(emissions, value.(uint64))
 			return false

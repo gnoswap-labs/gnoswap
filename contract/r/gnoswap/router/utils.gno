@@ -206,7 +206,7 @@ func splitSingleChar(s string, sep byte) []string {
 	return result
 }
 
-func formatUint(v interface{}) string {
+func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:
 		return strconv.FormatUint(uint64(v), 10)

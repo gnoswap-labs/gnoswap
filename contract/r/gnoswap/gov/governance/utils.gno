@@ -62,7 +62,7 @@ func mustGetVoteInfo(voteKey string) voteWithWeight {
 }
 
 // Iterates over an AVL tree and applies a callback function to each element
-func iterTree(tree *avl.Tree, cb func(key string, value interface{}) bool) {
+func iterTree(tree *avl.Tree, cb func(key string, value any) bool) {
 	tree.Iterate("", "", cb)
 }
 
@@ -120,7 +120,7 @@ func getPrev() (string, string) {
 }
 
 // Formats an unsigned integer to a string
-func formatUint(v interface{}) string {
+func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:
 		return strconv.FormatUint(uint64(v), 10)

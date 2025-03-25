@@ -48,7 +48,7 @@ func getConfigByVersion(v uint64) (Config, bool) {
 
 func getLatestVersion() uint64 {
 	var maxVersion uint64
-	configVersions.ReverseIterate("", "", func(key string, value interface{}) bool {
+	configVersions.ReverseIterate("", "", func(key string, value any) bool {
 		maxVersion = parseUint64(key)
 		return true
 	})

@@ -59,7 +59,7 @@ func (self *Deposits) remove(positionId uint64) {
 }
 
 func (self *Deposits) Iterate(start uint64, end uint64, fn func(positionId uint64, deposit *Deposit) bool) {
-	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI interface{}) bool {
+	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI any) bool {
 		return fn(DecodeUint(positionId), depositI.(*Deposit))
 	})
 }
@@ -123,7 +123,7 @@ func (self *Stakers) IterateAll(address std.Address, fn func(depositId uint64, d
 		return
 	}
 	depositTree := depositTreeI.(*avl.Tree)
-	depositTree.Iterate("", "", func(depositId string, depositI interface{}) bool {
+	depositTree.Iterate("", "", func(depositId string, depositI any) bool {
 		deposit := depositI.(*Deposit)
 		return fn(DecodeUint(depositId), deposit)
 	})

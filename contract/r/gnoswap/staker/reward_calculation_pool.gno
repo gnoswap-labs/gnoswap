@@ -66,7 +66,7 @@ func (self *Pools) Has(poolPath string) bool {
 }
 
 func (self *Pools) IterateAll(fn func(key string, pool *Pool) bool) {
-	self.tree.Iterate("", "", func(key string, value interface{}) bool {
+	self.tree.Iterate("", "", func(key string, value any) bool {
 		return fn(key, value.(*Pool))
 	})
 }
@@ -156,7 +156,7 @@ func NewPool(poolPath string, currentHeight int64) *Pool {
 func (self *Pool) CurrentGlobalRewardRatioAccumulation(currentHeight int64) (int64, *u256.Uint) {
 	var height int64
 	var acc *u256.Uint
-	self.globalRewardRatioAccumulation.ReverseIterate(0, currentHeight, func(key int64, value interface{}) bool {
+	self.globalRewardRatioAccumulation.ReverseIterate(0, currentHeight, func(key int64, value any) bool {
 		height = key
 		acc = value.(*u256.Uint)
 		return true
@@ -171,7 +171,7 @@ func (self *Pool) CurrentGlobalRewardRatioAccumulation(currentHeight int64) (int
 // Returns the tick.
 func (self *Pool) CurrentTick(currentHeight int64) int32 {
 	var tick int32
-	self.historicalTick.ReverseIterate(0, currentHeight, func(key int64, value interface{}) bool {
+	self.historicalTick.ReverseIterate(0, currentHeight, func(key int64, value any) bool {
 		tick = value.(int32)
 		return true
 	})
@@ -180,7 +180,7 @@ func (self *Pool) CurrentTick(currentHeight int64) int32 {
 
 func (self *Pool) CurrentStakedLiquidity(currentHeight int64) *u256.Uint {
 	var liquidity *u256.Uint
-	self.stakedLiquidity.ReverseIterate(0, currentHeight, func(key int64, value interface{}) bool {
+	self.stakedLiquidity.ReverseIterate(0, currentHeight, func(key int64, value any) bool {
 		liquidity = value.(*u256.Uint)
 		return true
 	})
@@ -196,7 +196,7 @@ func (self *Pool) IsExternallyIncentivizedPool() bool {
 // Returns the reward.
 func (self *Pool) CurrentReward(currentHeight int64) uint64 {
 	var reward uint64
-	self.rewardCache.ReverseIterate(0, currentHeight, func(key int64, value interface{}) bool {
+	self.rewardCache.ReverseIterate(0, currentHeight, func(key int64, value any) bool {
 		reward = value.(uint64)
 		return true
 	})
@@ -289,7 +289,7 @@ func (self *Pool) RewardStateOf(deposit *Deposit) *RewardState {
 // It calls rewardPerWarmup for each rewardCache interval, applies warmup, and returns the rewards and penalties.
 func (self *RewardState) calculateInternalReward(startHeight, endHeight int64) ([]uint64, []uint64) {
 	currentReward := self.pool.CurrentReward(startHeight)
-	self.pool.rewardCache.Iterate(startHeight, endHeight, func(key int64, value interface{}) bool {
+	self.pool.rewardCache.Iterate(startHeight, endHeight, func(key int64, value any) bool {
 		// we calculate per-position reward
 		self.rewardPerWarmup(startHeight, int64(key), currentReward)
 		currentReward = value.(uint64)

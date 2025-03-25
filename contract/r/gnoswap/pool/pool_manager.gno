@@ -348,7 +348,7 @@ func setFeeProtocol(feeProtocol0, feeProtocol1 uint8) uint8 {
 	newFee := feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
 
 	// Update slot0 for each pool
-	pools.Iterate("", "", func(poolPath string, iPool interface{}) bool {
+	pools.Iterate("", "", func(poolPath string, iPool any) bool {
 		pool := iPool.(*Pool)
 		pool.slot0.feeProtocol = newFee
 

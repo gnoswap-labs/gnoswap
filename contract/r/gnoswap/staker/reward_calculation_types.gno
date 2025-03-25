@@ -60,7 +60,7 @@ func DecodeUint(s string) uint64 {
 // - Iterate: Iterates over keys and values in a range.
 // - ReverseIterate: Iterates in reverse order over keys and values in a range.
 type UintTree struct {
-	tree *avl.Tree // blockNumber -> interface{}
+	tree *avl.Tree // blockNumber -> any
 }
 
 // NewUintTree creates a new UintTree instance.
@@ -70,7 +70,7 @@ func NewUintTree() *UintTree {
 	}
 }
 
-func (self *UintTree) Get(key int64) (interface{}, bool) {
+func (self *UintTree) Get(key int64) (any, bool) {
 	v, ok := self.tree.Get(EncodeUint(uint64(key)))
 	if !ok {
 		return nil, false
@@ -78,7 +78,7 @@ func (self *UintTree) Get(key int64) (interface{}, bool) {
 	return v, true
 }
 
-func (self *UintTree) set(key int64, value interface{}) {
+func (self *UintTree) set(key int64, value any) {
 	self.tree.Set(EncodeUint(uint64(key)), value)
 }
 
@@ -90,14 +90,14 @@ func (self *UintTree) remove(key int64) {
 	self.tree.Remove(EncodeUint(uint64(key)))
 }
 
-func (self *UintTree) Iterate(start, end int64, fn func(key int64, value interface{}) bool) {
-	self.tree.Iterate(EncodeUint(uint64(start)), EncodeUint(uint64(end)), func(key string, value interface{}) bool {
+func (self *UintTree) Iterate(start, end int64, fn func(key int64, value any) bool) {
+	self.tree.Iterate(EncodeUint(uint64(start)), EncodeUint(uint64(end)), func(key string, value any) bool {
 		return fn(int64(DecodeUint(key)), value)
 	})
 }
 
-func (self *UintTree) ReverseIterate(start, end int64, fn func(key int64, value interface{}) bool) {
-	self.tree.ReverseIterate(EncodeUint(uint64(start)), EncodeUint(uint64(end)), func(key string, value interface{}) bool {
+func (self *UintTree) ReverseIterate(start, end int64, fn func(key int64, value any) bool) {
+	self.tree.ReverseIterate(EncodeUint(uint64(start)), EncodeUint(uint64(end)), func(key string, value any) bool {
 		return fn(int64(DecodeUint(key)), value)
 	})
 }

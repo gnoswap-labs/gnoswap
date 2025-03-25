@@ -89,7 +89,7 @@ func poolPathDivide(poolPath string) (string, string, string) {
 //
 // Output:
 //   - grc721.TokenID: the converted token ID
-func positionIdFrom(positionId interface{}) grc721.TokenID {
+func positionIdFrom(positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -186,7 +186,7 @@ func assertOnlyNotHalted() {
 	}
 }
 
-func formatUint(v interface{}) string {
+func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:
 		return strconv.FormatUint(uint64(v), 10)
@@ -199,7 +199,7 @@ func formatUint(v interface{}) string {
 	}
 }
 
-func formatInt(v interface{}) string {
+func formatInt(v any) string {
 	switch v := v.(type) {
 	case int32:
 		return strconv.FormatInt(int64(v), 10)

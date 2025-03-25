@@ -551,7 +551,7 @@ func getPrintInfo(t *testing.T) string {
 	emissionDebug.GnsADMIN = gns.BalanceOf(consts.ADMIN)
 
 	poolTiers := make(map[string]uint64)
-	pools.tree.Iterate("", "", func(poolPath string, iPool interface{}) bool {
+	pools.tree.Iterate("", "", func(poolPath string, iPool any) bool {
 		poolTier := poolTier.CurrentTier(poolPath)
 		poolTiers[poolPath] = poolTier
 		return false
@@ -571,7 +571,7 @@ func getPrintInfo(t *testing.T) string {
 			pool.NumPoolInSameTier = numTier3
 		}
 
-		deposits.tree.Iterate("", "", func(positionIdStr string, value interface{}) bool {
+		deposits.tree.Iterate("", "", func(positionIdStr string, value any) bool {
 			positionId := DecodeUint(positionIdStr)
 			deposit := value.(*Deposit)
 
@@ -660,7 +660,7 @@ func makePoolsNode(t *testing.T, emissionPool []ApiEmissionDebugPool) []*json.No
 	poolNodes := make([]*json.Node, 0)
 
 	poolTiers := make(map[string]uint64)
-	pools.tree.Iterate("", "", func(poolPath string, iPool interface{}) bool {
+	pools.tree.Iterate("", "", func(poolPath string, iPool any) bool {
 		poolTier := poolTier.CurrentTier(poolPath)
 		poolTiers[poolPath] = poolTier
 		return false
@@ -692,7 +692,7 @@ func makePoolsNode(t *testing.T, emissionPool []ApiEmissionDebugPool) []*json.No
 func makePositionsNode(t *testing.T, poolPath string) []*json.Node {
 	positions := make([]*json.Node, 0)
 
-	deposits.tree.Iterate("", "", func(positionIdStr string, value interface{}) bool {
+	deposits.tree.Iterate("", "", func(positionIdStr string, value any) bool {
 		positionId := DecodeUint(positionIdStr)
 		deposit := value.(*Deposit)
 

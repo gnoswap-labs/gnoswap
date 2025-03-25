@@ -34,7 +34,7 @@ func GetProposals() string {
 	proposalsObj := metaNode()
 	proposalArr := json.ArrayNode("", nil)
 
-	proposals.Iterate("", "", func(key string, value interface{}) bool {
+	proposals.Iterate("", "", func(key string, value any) bool {
 		proposalObj := getProposalById(proposalId)
 		proposalArr.AppendArray(proposalObj)
 		return false
@@ -94,7 +94,7 @@ func GetVotesByAddress(addr std.Address) string {
 
 	// sertUesrVote does add data to `userVotes` with key (voter_pid) as key
 	// therefore this function can not search for 'specific_address'
-	userVotes.Iterate("", "", func(key string, value interface{}) bool {
+	userVotes.Iterate("", "", func(key string, value any) bool {
 		if strings.HasPrefix(key, addr.String()) {
 			voteObj := createVoteJsonNode(addr, proposalId, value.(voteWithWeight))
 			votesArr.AppendArray(voteObj)

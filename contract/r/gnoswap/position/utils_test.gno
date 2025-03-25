@@ -493,7 +493,7 @@ func TestCheckDeadline(t *testing.T) {
 func TestPositionIdFrom(t *testing.T) {
 	tests := []struct {
 		name        string
-		input       interface{}
+		input       any
 		expected    string
 		shouldPanic bool
 	}{

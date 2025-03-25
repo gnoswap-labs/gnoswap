@@ -105,7 +105,7 @@ type Tick struct {
 // CurrentOutsideAccumulation returns the latest outside accumulation for the tick
 func (self *Tick) CurrentOutsideAccumulation(blockNumber int64) *u256.Uint {
 	var acc *u256.Uint
-	self.outsideAccumulation.ReverseIterate(0, blockNumber, func(key int64, value interface{}) bool {
+	self.outsideAccumulation.ReverseIterate(0, blockNumber, func(key int64, value any) bool {
 		acc = value.(*u256.Uint)
 		return true
 	})

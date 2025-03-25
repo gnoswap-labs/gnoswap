@@ -57,7 +57,7 @@ func cleanDelegationStatHistory() {
 	// delete history older than 1 day, but keep the latest one
 	keepFrom := height - uint64(thresholdVotingWeightBlockHeight)
 
-	delegationSnapShotHistory.Iterate("", "", func(key string, value interface{}) bool {
+	delegationSnapShotHistory.Iterate("", "", func(key string, value any) bool {
 		history := value.([]DelegationSnapShotHistory)
 
 		// reverse history
