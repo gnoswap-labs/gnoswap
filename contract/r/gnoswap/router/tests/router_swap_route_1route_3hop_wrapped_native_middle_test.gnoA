@@ -80,7 +80,7 @@ func TestPositionMintGnotBar(t *testing.T) {
 func TestDrySwapRouteGnsBarExactIn(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	dryResult := DrySwapRoute(
+	_, dryResult, _ := DrySwapRoute(
 		consts.GNS_PATH, // inputToken
 		barPath,         // outputToken
 		"1000",          // amountSpecified

@@ -47,7 +47,7 @@ func TestPositionMint(t *testing.T) {
 func TestDrySwapRouteBarQuxExactIn(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	dryResult := DrySwapRoute(
+	_, dryResult, _ := DrySwapRoute(
 		barPath,    // inputToken
 		quxPath,    // outputToken
 		"1000",     // amountSpecified

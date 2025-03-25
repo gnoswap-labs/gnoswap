@@ -17,6 +17,7 @@ func TestProcessResult(t *testing.T) {
 		resultAmountOut string
 		amountSpecified string
 		expected        string
+		expectedSwap    bool
 	}{
 		{
 			name:            "ExactIn - Normal",
@@ -25,6 +26,7 @@ func TestProcessResult(t *testing.T) {
 			resultAmountOut: "95",
 			amountSpecified: "100",
 			expected:        "95",
+			expectedSwap:    true,
 		},
 		{
 			name:            "ExactIn - Input Mismatch",
@@ -32,7 +34,8 @@ func TestProcessResult(t *testing.T) {
 			resultAmountIn:  "99",
 			resultAmountOut: "5",
 			amountSpecified: "100",
-			expected:        "-1",
+			expected:        "5",
+			expectedSwap:    false,
 		},
 		{
 			name:            "ExactOut - Normal",
@@ -41,6 +44,7 @@ func TestProcessResult(t *testing.T) {
 			resultAmountOut: "100",
 			amountSpecified: "100",
 			expected:        "105",
+			expectedSwap:    true,
 		},
 		{
 			name:            "ExactOut - Output Mismatch",
@@ -48,7 +52,8 @@ func TestProcessResult(t *testing.T) {
 			resultAmountIn:  "105",
 			resultAmountOut: "95",
 			amountSpecified: "100",
-			expected:        "-1",
+			expected:        "105",
+			expectedSwap:    false,
 		},
 	}
 
@@ -62,8 +67,16 @@ func TestProcessResult(t *testing.T) {
 				amountLimit, _ = i256.FromDecimal("500")
 			}
 
-			result := processResult(tt.swapType, resultAmountIn, resultAmountOut, amountSpecified, amountLimit)
-			uassert.Equal(t, result, tt.expected)
+			switch tt.swapType {
+			case ExactIn:
+				_, result, swapAvailable := processResult(tt.swapType, resultAmountIn, resultAmountOut, amountSpecified, amountLimit)
+				uassert.Equal(t, tt.expected, result)
+				uassert.Equal(t, tt.expectedSwap, swapAvailable)
+			case ExactOut:
+				result, _, swapAvailable := processResult(tt.swapType, resultAmountIn, resultAmountOut, amountSpecified, amountLimit)
+				uassert.Equal(t, tt.expected, result)
+				uassert.Equal(t, tt.expectedSwap, swapAvailable)
+			}
 		})
 	}
 }
