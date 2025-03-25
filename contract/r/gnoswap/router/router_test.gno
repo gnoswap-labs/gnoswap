@@ -264,7 +264,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			testing.SetRealm(std.NewCodeRealm(routerPath))
 			wugnot.Approve(poolContract, maxApprove)
 
-			drySwapAmountOut := DrySwapRoute(
+			drySwapAmountIn, drySwapAmountOut, swapAvaialbe := DrySwapRoute(
 				tt.inputToken,
 				tt.outputToken,
 				tt.amountIn,
@@ -453,7 +453,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			testing.SetRealm(std.NewCodeRealm(routerPath))
 			wugnot.Approve(poolContract, maxApprove)
 
-			drySwapAmountOut := DrySwapRoute(
+			drySwapAmountIn, drySwapAmountOut, swapAvailable := DrySwapRoute(
 				tt.inputToken,
 				tt.outputToken,
 				tt.amountIn,
@@ -635,7 +635,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			testing.SetRealm(std.NewCodeRealm(routerPath))
 			wugnot.Approve(poolContract, maxApprove)
 
-			drySwapAmountOut := DrySwapRoute(
+			drySwapAmountIn, drySwapAmountOut, swapAvailable := DrySwapRoute(
 				tt.inputToken,
 				tt.outputToken,
 				tt.amountIn,
@@ -800,7 +800,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			testing.SetRealm(std.NewCodeRealm(routerPath))
 			wugnot.Approve(poolContract, maxApprove)
 
-			drySwapAmountOut := DrySwapRoute(
+			drySwapAmountIn, drySwapAmountOut, swapAvailable := DrySwapRoute(
 				tt.inputToken,
 				tt.outputToken,
 				tt.amountIn,

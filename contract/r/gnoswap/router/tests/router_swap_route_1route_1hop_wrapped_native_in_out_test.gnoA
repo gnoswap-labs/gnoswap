@@ -48,7 +48,7 @@ func TestPositionMintQuxGnot(t *testing.T) {
 func TestDrySwapRouteQuxGnotExactIn(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	dryResult := DrySwapRoute(
+	_, dryResult, _ := DrySwapRoute(
 		quxPath,               // inputToken
 		consts.WRAPPED_WUGNOT, // outputToken
 		"1000",                // amountSpecified
@@ -63,7 +63,7 @@ func TestDrySwapRouteQuxGnotExactIn(t *testing.T) {
 func TestDrySwapRouteQuxGnotExactOut(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	dryResult := DrySwapRoute(
+	dryResult, _, _ := DrySwapRoute(
 		quxPath,               // inputToken
 		consts.WRAPPED_WUGNOT, // outputToken
 		"1000",                // amountSpecified

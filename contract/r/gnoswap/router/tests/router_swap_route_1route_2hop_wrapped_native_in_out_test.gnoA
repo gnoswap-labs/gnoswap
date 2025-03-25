@@ -84,7 +84,7 @@ func TestPositionMintQuxGnot(t *testing.T) {
 func TestDrySwapRouteBarGnotExactIn(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	dryResult := DrySwapRoute(
+	_, dryResult, _ := DrySwapRoute(
 		barPath,               // inputToken
 		consts.WRAPPED_WUGNOT, // outputToken
 		"1000",                // amountSpecified
@@ -99,7 +99,7 @@ func TestDrySwapRouteBarGnotExactIn(t *testing.T) {
 func TestDrySwapRouteBarGnotExactOut(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	dryResult := DrySwapRoute(
+	dryResult, _, _ := DrySwapRoute(
 		barPath,               // inputToken
 		consts.WRAPPED_WUGNOT, // outputToken
 		"20000",               // amountSpecified
@@ -114,7 +114,7 @@ func TestDrySwapRouteBarGnotExactOut(t *testing.T) {
 func TestDrySwapRouteGnotBarExactIn(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	dryResult := DrySwapRoute(
+	_, dryResult, _ := DrySwapRoute(
 		consts.WRAPPED_WUGNOT, // intputToken
 		barPath,               // outputToken
 		"5000",                // amountSpecified
@@ -129,7 +129,7 @@ func TestDrySwapRouteGnotBarExactIn(t *testing.T) {
 func TestDrySwapRouteGnotBarExactOut(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	dryResult := DrySwapRoute(
+	dryResult, _, _ := DrySwapRoute(
 		consts.WRAPPED_WUGNOT, // intputToken
 		barPath,               // outputToken
 		"100",                 // amountSpecified
