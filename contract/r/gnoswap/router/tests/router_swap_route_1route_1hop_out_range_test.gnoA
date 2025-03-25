@@ -60,7 +60,7 @@ func TestPositionMint(t *testing.T) {
 func TestDrySwapRouteBazBarExactIn(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	dryResult := DrySwapRoute(
+	_, dryResult, _ := DrySwapRoute(
 		bazPath,    // inputToken
 		barPath,    // outputToken
 		"1000",     // amountSpecified

@@ -14,24 +14,35 @@ import (
 
 // DrySwapRoute simulates a token swap route without actually executing the swap.
 // It calculates the expected outcome based on the current state of liquidity pools.
-// Returns the expected amount in or out
+// Parameters:
+// - inputToken: the symbol of the input token
+// - outputToken: the symbol of the output token
+// - specifiedAmount: the amount specified by the user (input or output, depending on swapKind)
+// - swapTypeStr: the type of swap ("exactIn" or "exactOut")
+// - strRouteArr: comma-separated swap route strings
+// - quoteArr: comma-separated quote percentages for each route
+// - tokenAmountLimit: a limit for token amount depending on swapKind
+// Returns:
+// - amountInStr: the calculated input amount as a string
+// - amountOutStr: the calculated output amount as a string
+// - success: true if the simulated swap meets all constraints
 func DrySwapRoute(
 	inputToken string,
 	outputToken string,
 	specifiedAmount string,
-	swapKind string,
+	swapTypeStr string,
 	strRouteArr string,
 	quoteArr string,
 	tokenAmountLimit string,
-) string {
+) (string, string, bool) {
 	common.MustRegistered(inputToken)
 	common.MustRegistered(outputToken)
 
-	swapType, err := trySwapTypeFromStr(swapKind)
+	swapType, err := trySwapTypeFromStr(swapTypeStr)
 	if err != nil {
 		panic(addDetailToError(
 			errInvalidSwapType,
-			ufmt.Sprintf("unknown swapType(%s)", swapKind),
+			ufmt.Sprintf("unknown swapType(%s)", swapTypeStr),
 		))
 	}
 
@@ -142,24 +153,25 @@ func handleMultiDrySwap(
 	}
 }
 
-func processResult(swapType SwapType, resultAmountIn, resultAmountOut *u256.Uint, amountSpecified, amountLimit *i256.Int) string {
+func processResult(swapType SwapType, resultAmountIn, resultAmountOut *u256.Uint, amountSpecified, amountLimit *i256.Int) (string, string, bool) {
 	switch swapType {
 	case ExactIn:
 		if i256.FromUint256(resultAmountIn).Gt(amountSpecified) {
-			return "-1"
+			return resultAmountIn.ToString(), resultAmountOut.ToString(), false
 		}
 		if i256.FromUint256(resultAmountOut).Lt(amountLimit) {
-			return "-1"
+			return resultAmountIn.ToString(), resultAmountOut.ToString(), false
 		}
-		return resultAmountOut.ToString()
+		return resultAmountIn.ToString(), resultAmountOut.ToString(), true
+
 	case ExactOut:
 		if i256.FromUint256(resultAmountOut).Lt(amountSpecified) {
-			return "-1"
+			return resultAmountIn.ToString(), resultAmountOut.ToString(), false
 		}
 		if i256.FromUint256(resultAmountIn).Gt(amountLimit) {
-			return "-1"
+			return resultAmountIn.ToString(), resultAmountOut.ToString(), false
 		}
-		return resultAmountIn.ToString()
+		return resultAmountIn.ToString(), resultAmountOut.ToString(), true
 	default:
 		panic(addDetailToError(
 			errInvalidSwapType,

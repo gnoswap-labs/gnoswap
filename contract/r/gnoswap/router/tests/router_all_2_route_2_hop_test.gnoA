@@ -43,7 +43,7 @@ func TestPositionMint(t *testing.T) {
 func TestDrySwapRouteBarQuxExactIn(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	dryResult := DrySwapRoute(
+	_, dryResult, _ := DrySwapRoute(
 		barPath,    // inputToken
 		quxPath,    // outputToken
 		"1000",     // amountSpecified
@@ -80,7 +80,7 @@ func TestSwapRouteBarQuxExactIn(t *testing.T) {
 func TestDrySwapRouteBarQuxExactOut(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	dryResult := DrySwapRoute(
+	dryResult, _, _ := DrySwapRoute(
 		barPath,     // inputToken
 		quxPath,     // outputToken
 		"1000",      // amountSpecified
@@ -114,7 +114,7 @@ func TestSwapRouteBarQuxExactOut(t *testing.T) {
 func TestDrySwapRouteQuxBarExactIn(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	dryResult := DrySwapRoute(
+	_, dryResult, _ := DrySwapRoute(
 		quxPath,    // inputToken
 		barPath,    // outputToken
 		"1000",     // amountSpecified
@@ -148,7 +148,7 @@ func TestSwapRouteQuxBarExactIn(t *testing.T) {
 func TestDrySwapRouteQuxBarExactOut(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	dryResult := DrySwapRoute(
+	dryResult, _, _ := DrySwapRoute(
 		quxPath,     // inputToken
 		barPath,     // outputToken
 		"1000",      // amountSpecified
