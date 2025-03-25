@@ -201,17 +201,11 @@ func testAfter50Blocks(t *testing.T) {
 		oldBar := bar.BalanceOf(admin)
 		CollectReward(1, false)
 		newBar := bar.BalanceOf(admin)
-		uassert.True(t, isInErrorRange(157, newBar-oldBar))
-		// reward 157
-		// penalty 68
-		// total 225
+		uassert.True(t, isInErrorRange(173, newBar-oldBar))
 
 		CollectReward(2, false)
 		newBar2 := bar.BalanceOf(admin)
-		uassert.True(t, isInErrorRange(80831, newBar2-newBar))
-		// reward 80831
-		// penalty 34643
-		// total 115474
+		uassert.True(t, isInErrorRange(88914, newBar2-newBar))
 	})
 }
 

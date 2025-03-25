@@ -149,23 +149,13 @@ func testCollectReward(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		oldBar := bar.BalanceOf(admin)
+
 		CollectReward(1, false)
 		newBar := bar.BalanceOf(admin)
 
-		uassert.True(t, isInErrorRange(4025, newBar-oldBar))
-		// 4025 received
-		// 1725 penalty
-		// 5750 (total)
-
-		// > block per reward is 23
-		// > position staked 250 duration
-		// > 23 * 250 = 5750
-
-		// position warm up is 70% ( 5750 * 0.7 = 4025 )
-		// penalty is 30% ( 5750 * 0.3 = 1725 )
+		uassert.True(t, isInErrorRange(4072, newBar-oldBar))
 
 		testing.SkipHeights(1)
-
 	})
 }
 

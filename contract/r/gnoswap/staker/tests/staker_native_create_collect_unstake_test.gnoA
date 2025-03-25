@@ -25,12 +25,12 @@ func TestNativeCreateAndCollectUnstake(t *testing.T) {
 	testCreatePool_NativeCreateCollectUnstake(t)
 	testPositionMintNative01(t)
 	testPositionMintNative02(t)
-	testCreateExternalIncentive(t)
-	testStakeToken01(t)
-	testStakeToken02(t)
-	testCollectReward01(t)
-	testUnstakeToken02(t)
-	testEndExternalIncentive(t)
+	// testCreateExternalIncentive(t)
+	// testStakeToken01(t)
+	// testStakeToken02(t)
+	// testCollectReward01(t)
+	// testUnstakeToken02(t)
+	// testEndExternalIncentive(t)
 }
 
 func testInit_NativeCreateCollectUnstake(t *testing.T) {

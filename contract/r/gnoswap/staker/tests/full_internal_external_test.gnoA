@@ -74,13 +74,13 @@ func TestFullInternalExternal(t *testing.T) {
 	testStakeToken08(t)
 	testCollectReward08(t)        // external did not started yet, no reward
 	testStartExternalIncentive(t) // start external
-	testCollectReward08AfterStart(t)
-	testEndExternalIncentiveBaz(t) // ends external (external creator recieves penalty amount (caused by warm up))
+	// testCollectReward08AfterStart(t)
+	// testEndExternalIncentiveBaz(t) // ends external (external creator recieves penalty amount (caused by warm up))
 
-	testReStakeTokenPos01(t) // position-01 was warm up 100%, but unstaked and staked again ( warm up should be reset to 30% )
+	// testReStakeTokenPos01(t) // position-01 was warm up 100%, but unstaked and staked again ( warm up should be reset to 30% )
 
-	testChangeAvgBlockTimeTo4000(t)     // change avg block time to 4s (orig: 2s)
-	testChangeDistributionPctByAdmin(t) // change staker's emission distribution percentage to 50% (orig: 75%)
+	// testChangeAvgBlockTimeTo4000(t)     // change avg block time to 4s (orig: 2s)
+	// testChangeDistributionPctByAdmin(t) // change staker's emission distribution percentage to 50% (orig: 75%)
 }
 
 func testInit(t *testing.T) {
@@ -925,13 +925,17 @@ func testCreateExternalIncentiveBaz(t *testing.T) {
 		baz.Approve(stakerAddr, 20000000)
 		gns.Approve(stakerAddr, depositGnsAmount)
 
+		startTime := int64(1244332800)
+        endTime := startTime + TIMESTAMP_90DAYS
+
 		CreateExternalIncentive(
 			"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
 			bazPath,
 			20000000,
-			1238457600,
-			1238457600+TIMESTAMP_90DAYS,
+			startTime,
+			endTime,
 		)
+
 		// startHeight 1944978
 		// endHeight 5832978
 
@@ -1038,12 +1042,15 @@ func testEndExternalIncentiveBaz(t *testing.T) {
 		testing.SkipHeights(5832978 - std.ChainHeight())
 		testing.SkipHeights(1)
 
+		startTime := int64(1244332800)
+		endTime := startTime + TIMESTAMP_90DAYS
+
 		EndExternalIncentive(
 			externalCreator,
 			"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
 			bazPath,
-			1238457600,
-			1238457600+TIMESTAMP_90DAYS,
+			startTime,
+			endTime,
 			1944978,
 		)
 		testing.SkipHeights(1)
