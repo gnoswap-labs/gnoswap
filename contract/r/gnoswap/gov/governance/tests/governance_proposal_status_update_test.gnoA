@@ -19,7 +19,7 @@ var (
 	nowTime   uint64
 )
 
-func TestProposeText(t *testing.T) {
+func TestProposeText_ProposalStatusUpdate(t *testing.T) {
 	t.Run("initial state", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		gns.Approve(govStakerAddr, uint64(1_000_000))
@@ -67,7 +67,7 @@ func TestProposeText(t *testing.T) {
 
 	t.Run("vote YES", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		testing.SkipHeights(11)
+		testing.SkipHeights(5)
 
 		nowHeight = uint64(std.ChainHeight())
 		nowTime = uint64(time.Now().Unix())

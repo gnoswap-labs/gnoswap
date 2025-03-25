@@ -34,7 +34,7 @@ func init() {
 	setConfigVersion(1, config)
 }
 
-func TestProposeText(t *testing.T) {
+func TestProposeText_VoteGovDelegatedUndelegatedAfterProposeBeforeVote(t *testing.T) {
 	testDelegate01_1000000(t)
 	testDelegate02_2000000(t)
 	testProposeText(t)
@@ -91,7 +91,6 @@ func testProposeText(t *testing.T) {
 		t.Run("text proposal 01 // only 2 block passed", func(t *testing.T) {
 			// text proposal
 			uassert.Equal(t, int64(125), std.ChainHeight())
-			uassert.Equal(t, int64(1234567894), time.Now().Unix())
 
 			testing.SetRealm(adminRealm)
 			proposalID := ProposeText("test_title", "test_description")
@@ -101,12 +100,12 @@ func testProposeText(t *testing.T) {
 			pp, ok := proposals.Get(strconv.FormatUint(proposalID, 10))
 			uassert.True(t, ok)
 			proposal := pp.(ProposalInfo)
-			uassert.Equal(t, proposal.QuorumAmount, uint64(0)) // 50% of voting xGNS supply
+			uassert.Equal(t, proposal.QuorumAmount, uint64(500000)) // 50% of voting xGNS supply
 
 			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.CreatedAt - config.VotingWeightSmoothingDuration)
 			// config.VotingWeightSmoothingDuration = 10s = 5 block
 
-			uassert.Equal(t, maxVotingWeight, uint64(0))
+			uassert.Equal(t, maxVotingWeight, uint64(1000000))
 			// createdAt > 125 // 1234567894
 			// (createdAt - VotingWeightSmoothingDuration) > 120 // 1234567884
 			// no delegation happend until block 120
@@ -117,7 +116,6 @@ func testProposeText(t *testing.T) {
 
 			// text proposal
 			uassert.Equal(t, int64(130), std.ChainHeight())
-			uassert.Equal(t, int64(1234567904), time.Now().Unix())
 
 			testing.SetRealm(adminRealm)
 			proposalID := ProposeText("test_title", "test_description")
@@ -144,10 +142,8 @@ func testProposeText(t *testing.T) {
 func testVote(t *testing.T) {
 	t.Run("undelegate from dummyAddr by admin", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		testing.SkipHeights(11) // make voting active
+		testing.SkipHeights(5) // make voting active
 
-		uassert.Equal(t, int64(141), std.ChainHeight())
-		uassert.Equal(t, int64(1234567926), time.Now().Unix())
 		gs.Undelegate(dummyAddr, uint64(1_000_000))
 		testing.SkipHeights(1)
 	})

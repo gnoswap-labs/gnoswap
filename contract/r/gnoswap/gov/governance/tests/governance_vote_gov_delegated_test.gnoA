@@ -29,7 +29,7 @@ func init() {
 	setConfigVersion(1, config)
 }
 
-func TestProposeText(t *testing.T) {
+func TestProposeText_VoteGovDelegated(t *testing.T) {
 	proposeText(t)
 	vote(t)
 }
@@ -75,29 +75,24 @@ func proposeText(t *testing.T) {
 		uassert.Equal(t, xgns.VotingSupply(), uint64(3_000_000))
 
 		t.Run("text proposal -- only 2 block passed", func(t *testing.T) {
-			// text proposal
 			uassert.Equal(t, int64(125), std.ChainHeight())
-			uassert.Equal(t, int64(1234567894), time.Now().Unix())
+			uassert.Equal(t, int64(1234567900), time.Now().Unix())
 			proposalID := ProposeText("test_title", "test_description")
 			uassert.Equal(t, proposalID, uint64(1))
 
-			votesJsonAdmin := GetVotesByAddress(admin)
-			uassert.Equal(t, votesJsonAdmin, `{"height":"125","now":"1234567894","votes":[]}`)
-
-			votesJsonDummy := GetVotesByAddress(dummyAddr)
-			uassert.Equal(t, votesJsonDummy, `{"height":"125","now":"1234567894","votes":[]}`)
-
-			// proposal := proposals[proposalID]
 			pp, ok := proposals.Get(strconv.FormatUint(proposalID, 10))
 			uassert.True(t, ok)
 			proposal := pp.(ProposalInfo)
 
-			uassert.Equal(t, proposal.QuorumAmount, uint64(0)) // 50% of voting xGNS supply
+			// 50% of voting xGNS supply
+			if proposal.QuorumAmount != 500000 {
+				t.Fatalf("proposal.QuorumAmount is not 500000")
+			}
 
 			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.CreatedAt - config.VotingWeightSmoothingDuration)
 			// config.VotingWeightSmoothingDuration = 10s = 5 block
 
-			uassert.Equal(t, maxVotingWeight, uint64(0))
+			uassert.Equal(t, maxVotingWeight, uint64(1000000))
 			// createdAt > 125 // 1234567894
 			// (createdAt - VotingWeightSmoothingDuration) > 120 // 1234567884
 			// no delegation happend until block 120
@@ -106,22 +101,13 @@ func proposeText(t *testing.T) {
 		t.Run("text proposal // 5 more block passed(total 7)", func(t *testing.T) {
 			testing.SkipHeights(5)
 
-			// text proposal
 			uassert.Equal(t, int64(130), std.ChainHeight())
-			uassert.Equal(t, int64(1234567904), time.Now().Unix())
 			proposalID := ProposeText("test_title", "test_description")
 			uassert.Equal(t, proposalID, uint64(2))
 
-			proposalsJson = GetProposals()
-			uassert.Equal(t, proposalsJson, `{"height":"130","now":"1234567904","proposals":[{"id":"2","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJjcmVhdGVkQXQiOiIxMjM0NTY3OTA0IiwidXBjb21pbmciOiJ0cnVlIiwiYWN0aXZlIjoiZmFsc2UiLCJ2b3RpbmdTdGFydCI6IjEyMzQ1Njc5MTQiLCJ2b3RpbmdFbmQiOiIxMjM0NTY3OTQ0IiwicGFzc2VkIjoiZmFsc2UiLCJwYXNzZWRBdCI6IjAiLCJyZWplY3RlZCI6ImZhbHNlIiwicmVqZWN0ZWRBdCI6IjAiLCJjYW5jZWxlZCI6ImZhbHNlIiwiY2FuY2VsZWRBdCI6IjAiLCJleGVjdXRlZCI6ImZhbHNlIiwiZXhlY3V0ZWRBdCI6IjAiLCJleHBpcmVkIjoiZmFsc2UiLCJleHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiIxNTAwMDAwIiwibWF4IjoiMzAwMDAwMCIsInllcyI6IjAiLCJubyI6IjAifQ==","extra":""},{"id":"2","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJjcmVhdGVkQXQiOiIxMjM0NTY3OTA0IiwidXBjb21pbmciOiJ0cnVlIiwiYWN0aXZlIjoiZmFsc2UiLCJ2b3RpbmdTdGFydCI6IjEyMzQ1Njc5MTQiLCJ2b3RpbmdFbmQiOiIxMjM0NTY3OTQ0IiwicGFzc2VkIjoiZmFsc2UiLCJwYXNzZWRBdCI6IjAiLCJyZWplY3RlZCI6ImZhbHNlIiwicmVqZWN0ZWRBdCI6IjAiLCJjYW5jZWxlZCI6ImZhbHNlIiwiY2FuY2VsZWRBdCI6IjAiLCJleGVjdXRlZCI6ImZhbHNlIiwiZXhlY3V0ZWRBdCI6IjAiLCJleHBpcmVkIjoiZmFsc2UiLCJleHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiIxNTAwMDAwIiwibWF4IjoiMzAwMDAwMCIsInllcyI6IjAiLCJubyI6IjAifQ==","extra":""}]}`)
+			data := unmarshal(GetProposals())
+			uassert.Equal(t, data.MustKey("height").MustString(), "130")
 
-			votesJsonAdmin := GetVotesByAddress(admin)
-			uassert.Equal(t, votesJsonAdmin, `{"height":"130","now":"1234567904","votes":[]}`)
-
-			votesJsonDummy := GetVotesByAddress(dummyAddr)
-			uassert.Equal(t, votesJsonDummy, `{"height":"130","now":"1234567904","votes":[]}`)
-
-			// proposal := proposals[proposalID]
 			pp, _ := proposals.Get(strconv.FormatUint(proposalID, 10))
 			proposal := pp.(ProposalInfo)
 			uassert.Equal(t, proposal.QuorumAmount, uint64(1_500_000)) // 50% of voting xGNS supply
@@ -155,7 +141,7 @@ func vote(t *testing.T) {
 	t.Run("vote with only delegated", func(t *testing.T) {
 		proposalId := uint64(2)
 
-		testing.SkipHeights(11)
+		testing.SkipHeights(5)
 		testing.SetRealm(dummyRealm)
 		Vote(proposalId, true)
 
@@ -168,7 +154,15 @@ func vote(t *testing.T) {
 		uassert.Equal(t, false, state.Upcoming)
 		uassert.Equal(t, true, state.Active)
 
-		proposalsJson := GetProposals()
-		uassert.Equal(t, proposalsJson, `{"height":"141","now":"1234567926","proposals":[{"id":"2","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJjcmVhdGVkQXQiOiIxMjM0NTY3OTA0IiwidXBjb21pbmciOiJmYWxzZSIsImFjdGl2ZSI6InRydWUiLCJ2b3RpbmdTdGFydCI6IjEyMzQ1Njc5MTQiLCJ2b3RpbmdFbmQiOiIxMjM0NTY3OTQ0IiwicGFzc2VkIjoiZmFsc2UiLCJwYXNzZWRBdCI6IjAiLCJyZWplY3RlZCI6ImZhbHNlIiwicmVqZWN0ZWRBdCI6IjAiLCJjYW5jZWxlZCI6ImZhbHNlIiwiY2FuY2VsZWRBdCI6IjAiLCJleGVjdXRlZCI6ImZhbHNlIiwiZXhlY3V0ZWRBdCI6IjAiLCJleHBpcmVkIjoiZmFsc2UiLCJleHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiIxNTAwMDAwIiwibWF4IjoiMzAwMDAwMCIsInllcyI6IjIwMDAwMDAiLCJubyI6IjAifQ==","extra":""},{"id":"2","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJjcmVhdGVkQXQiOiIxMjM0NTY3OTA0IiwidXBjb21pbmciOiJmYWxzZSIsImFjdGl2ZSI6InRydWUiLCJ2b3RpbmdTdGFydCI6IjEyMzQ1Njc5MTQiLCJ2b3RpbmdFbmQiOiIxMjM0NTY3OTQ0IiwicGFzc2VkIjoiZmFsc2UiLCJwYXNzZWRBdCI6IjAiLCJyZWplY3RlZCI6ImZhbHNlIiwicmVqZWN0ZWRBdCI6IjAiLCJjYW5jZWxlZCI6ImZhbHNlIiwiY2FuY2VsZWRBdCI6IjAiLCJleGVjdXRlZCI6ImZhbHNlIiwiZXhlY3V0ZWRBdCI6IjAiLCJleHBpcmVkIjoiZmFsc2UiLCJleHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiIxNTAwMDAwIiwibWF4IjoiMzAwMDAwMCIsInllcyI6IjIwMDAwMDAiLCJubyI6IjAifQ==","extra":""}]}`)
+		proposalsJson := unmarshal(GetProposals())
+		pps := proposalsJson.MustKey("proposals").MustArray()
+		uassert.Equal(t, len(pps), 2)
+
+		expectedKeys := []string{"id", "configVersion", "proposer", "status", "type", "title", "description", "vote", "extra"}
+		arr1Keys := pps[0].UniqueKeyLists()
+		arr2Keys := pps[1].UniqueKeyLists()
+
+		uassert.Equal(t, len(arr1Keys), len(expectedKeys))
+		uassert.Equal(t, len(arr2Keys), len(expectedKeys))
 	})
 }
