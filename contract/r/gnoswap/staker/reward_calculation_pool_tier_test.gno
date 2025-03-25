@@ -18,7 +18,7 @@ func TestTierRatioFromCounts(t *testing.T) {
 	user1Addr := testutils.TestAddress("user1")
 	user1Realm := std.NewUserRealm(user1Addr)
 
-	std.TestSetRealm(user1Realm)
+	testing.SetRealm(user1Realm)
 	bar.Approve(routerAddr, maxApprove)
 	baz.Approve(routerAddr, maxApprove)
 	qux.Approve(routerAddr, maxApprove)

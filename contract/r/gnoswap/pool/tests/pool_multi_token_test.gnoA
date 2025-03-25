@@ -29,7 +29,7 @@ var (
 // Create Foo:Bar Pool
 func TestCreateFooBarPool(t *testing.T) {
 	// call gns faucet to get creation fee
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, poolCreationFee)
 
@@ -40,7 +40,7 @@ func TestCreateFooBarPool(t *testing.T) {
 // Create Bar:Baz Pool
 func TestCreateBarBazPool(t *testing.T) {
 	// call gns faucet to get creation fee
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, poolCreationFee)
 
@@ -50,11 +50,11 @@ func TestCreateBarBazPool(t *testing.T) {
 
 // Mint Foo:Bar Liquidity by admin
 func TestMintFooBarLiquidity(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	amount0, amount1 := Mint(
 		fooPath,
 		barPath,
@@ -71,11 +71,11 @@ func TestMintFooBarLiquidity(t *testing.T) {
 
 // Mint Bar:Baz Liquidity by admin
 func TestMintBarBazLiquidity(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	baz.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	amount0, amount1 := Mint(
 		barPath,
 		bazPath,
@@ -98,10 +98,10 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 	oldPoolBar := barToken.BalanceOf(poolAddr)
 	oldPoolFoo := fooToken.BalanceOf(poolAddr)
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, 16000)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	poolIn, poolOut := Swap(
 		barPath,
 		fooPath,
@@ -135,10 +135,10 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 	oldPoolToken0Balance := barToken.BalanceOf(poolAddr)
 	oldPoolBazBalance := bazToken.BalanceOf(poolAddr)
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, 16000)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	poolIn, poolOut := Swap(
 		barPath,
 		bazPath,
@@ -166,7 +166,7 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 
 // Collect Foo:Bar Fees by admin
 func TestCollectFooBarFees(t *testing.T) {
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 
 	oldTest1Token1Balance := fooToken.BalanceOf(adminAddr)
 	oldTest1Token0Balance := barToken.BalanceOf(adminAddr)
@@ -203,7 +203,7 @@ func TestCollectFooBarFees(t *testing.T) {
 
 // Collect Bar:Baz Fees by admin
 func TestCollectBarBazFees(t *testing.T) {
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 
 	oldTest1Token0Balance := barToken.BalanceOf(adminAddr)
 	oldadminBazBalance := bazToken.BalanceOf(adminAddr)
@@ -240,7 +240,7 @@ func TestCollectBarBazFees(t *testing.T) {
 
 // Burn Foo:Bar Liquidity by admin
 func TestBurnFooBarLiquidity(t *testing.T) {
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 
 	pool := GetPool(fooPath, barPath, fee500)
 	poolOldLiquidity := pool.Liquidity()
@@ -264,7 +264,7 @@ func TestBurnFooBarLiquidity(t *testing.T) {
 
 // Burn Bar:Baz Liquidity by admin
 func TestBurnBarBazLiquidity(t *testing.T) {
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 
 	pool := GetPool(barPath, bazPath, fee500)
 	poolOldLiquidity := pool.Liquidity()
@@ -288,7 +288,7 @@ func TestBurnBarBazLiquidity(t *testing.T) {
 
 // Collect Foo:Bar burned Liquidity by admin
 func TestCollectFooBarLiquidity(t *testing.T) {
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 
 	oldTest1Token1Balance := fooToken.BalanceOf(adminAddr)
 	oldTest1Token0Balance := barToken.BalanceOf(adminAddr)
@@ -322,7 +322,7 @@ func TestCollectFooBarLiquidity(t *testing.T) {
 
 // Collect Bar:Baz burned Liquidity by admin
 func TestCollectBarBazLiquidity(t *testing.T) {
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 
 	oldTest1Token0Balance := barToken.BalanceOf(adminAddr)
 	oldadminBazBalance := bazToken.BalanceOf(adminAddr)

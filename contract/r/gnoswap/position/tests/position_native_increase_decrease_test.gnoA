@@ -24,7 +24,7 @@ func TestCoinIncreaseDecrease(t *testing.T) {
 
 func testPoolInitCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		gns.Approve(poolAddr, pl.GetPoolCreationFee())
 		pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
@@ -33,7 +33,7 @@ func testPoolInitCreatePool(t *testing.T) {
 
 func testMintPosition(t *testing.T) {
 	t.Run("mint position", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 		wugnot.Approve(poolAddr, consts.UINT64_MAX)
@@ -41,16 +41,16 @@ func testMintPosition(t *testing.T) {
 		wugnot.Approve(positionAddr, consts.UINT64_MAX) // WRAP
 
 		// prepare 50000005ugnot (5 for refund test)
-		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
+		testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(50000005))
 
-		std.TestIssueCoins(positionAddr, std.Coins{{"ugnot", 200000000}})
+		testing.IssueCoins(positionAddr, std.Coins{{"ugnot", 200000000}})
 		uassert.Equal(t, ugnotBalanceOf(t, positionAddr), uint64(200000000))
 
 		// send & set orig send
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
 		banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 50000005}})
-		std.TestSetOriginSend(std.Coins{{"ugnot", 50000005}}, nil)
+		testing.SetOriginSend(std.Coins{{"ugnot", 50000005}})
 
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(0))
 
@@ -94,7 +94,7 @@ func testMintPosition(t *testing.T) {
 
 func testIncreaseLiquidity(t *testing.T) {
 	t.Run("increase liquidity", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 		wugnot.Approve(poolAddr, consts.UINT64_MAX)
@@ -105,14 +105,14 @@ func testIncreaseLiquidity(t *testing.T) {
 		oldLiquidity := pool.Liquidity()
 
 		// prepare 10000005ugnot (5 for refund test)
-		std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 10000005}})
+		testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 10000005}})
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(10000010))
 		uassert.Equal(t, ugnotBalanceOf(t, positionAddr), uint64(200000000))
 
 		// send & set orig send
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
 		banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 10000005}})
-		std.TestSetOriginSend(std.Coins{{"ugnot", 10000005}}, nil)
+		testing.SetOriginSend(std.Coins{{"ugnot", 10000005}})
 
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(5))
 		uassert.Equal(t, wugnot.BalanceOf(adminAddr), uint64(0))
@@ -146,7 +146,7 @@ func testIncreaseLiquidity(t *testing.T) {
 
 func testDecreaseLiquidityWrapped(t *testing.T) {
 	t.Run("decrease liquidity wrapped", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		oldLiquidity := getPoolFromPositionId(t, uint64(1)).Liquidity()
 
@@ -185,7 +185,7 @@ func testDecreaseLiquidityWrapped(t *testing.T) {
 
 func testDecreaseLiquidityUnwrapped(t *testing.T) {
 	t.Run("decrease liquidity unwrapped", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		oldLiquidity := getPoolFromPositionId(t, uint64(1)).Liquidity()
 

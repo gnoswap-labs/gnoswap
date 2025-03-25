@@ -19,7 +19,7 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, pl.GetPoolCreationFee()*2)
 
@@ -35,14 +35,14 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestPositionMintGnsGnot(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// send
-	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100000}})
-	std.TestSetOriginSend(std.Coins{{"ugnot", 100000}}, nil)
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100000}})
+	testing.SetOriginSend(std.Coins{{"ugnot", 100000}})
 
 	// Deposit(wrap)
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	wugnot.Deposit()
 
 	gns.Approve(poolAddr, consts.UINT64_MAX)
@@ -56,15 +56,15 @@ func TestPositionMintGnsGnot(t *testing.T) {
 }
 
 func TestPositionMintGnotBar(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// send
-	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100000}})
-	std.TestSetOriginSend(std.Coins{{"ugnot", 100000}}, nil)
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100000}})
+	testing.SetOriginSend(std.Coins{{"ugnot", 100000}})
 	testBanker := std.NewBanker(std.BankerTypeRealmIssue)
 
 	// Deposit(wrap)
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	wugnot.Deposit()
 
 	wugnot.Approve(poolAddr, consts.UINT64_MAX)
@@ -78,7 +78,7 @@ func TestPositionMintGnotBar(t *testing.T) {
 }
 
 func TestDrySwapRouteGnsBarExactIn(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	dryResult := DrySwapRoute(
 		consts.GNS_PATH, // inputToken
@@ -93,7 +93,7 @@ func TestDrySwapRouteGnsBarExactIn(t *testing.T) {
 }
 
 func TestSwapRouteGnsBarExactIn(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, 1000)   // swap input amount
 	bar.Approve(routerAddr, 7325) // 0.15% fee

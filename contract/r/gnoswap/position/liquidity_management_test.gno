@@ -11,7 +11,7 @@ import (
 )
 
 func InitialSetup(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	pl.SetPoolCreationFeeByAdmin(0)
 	CreatePool(t, gnsPath, barPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
@@ -92,7 +92,7 @@ func TestAddLiquidity(t *testing.T) {
 			}()
 
 			InitialSetup(t)
-			std.TestSetRealm(std.NewUserRealm(alice))
+			testing.SetRealm(std.NewUserRealm(alice))
 			TokenApprove(t, gnsPath, alice, poolAddr, tt.params.amount0Desired.Uint64())
 			TokenApprove(t, barPath, alice, poolAddr, tt.params.amount1Desired.Uint64())
 

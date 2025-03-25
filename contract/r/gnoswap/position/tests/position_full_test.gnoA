@@ -16,19 +16,19 @@ import (
 
 func init() {
 	// set pool create fee to 0 for testing
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFeeByAdmin(0)
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
 }
 
 func TestMintPositionFullInRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 
@@ -50,7 +50,7 @@ func TestMintPositionFullInRange(t *testing.T) {
 }
 
 func TestIncreaseLiquidity(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 
@@ -65,7 +65,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 }
 
 func TestDecreaseLiquidity(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 
@@ -81,7 +81,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 }
 
 func TestCollectFee(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 

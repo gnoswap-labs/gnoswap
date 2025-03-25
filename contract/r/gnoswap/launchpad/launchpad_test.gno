@@ -866,10 +866,10 @@ func TestCreateProject(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, tt.totalAmount)
 			if !tt.duplicateTest {
-				std.TestSkipHeights(1)
+				testing.SkipHeights(1)
 			}
 
 			defer func() {
@@ -899,7 +899,7 @@ func TestCreateProject(t *testing.T) {
 				uassert.Equal(t, projectId, tt.expectedId)
 			}
 			if !tt.duplicateTest {
-				std.TestSkipHeights(1)
+				testing.SkipHeights(1)
 			}
 		})
 	}
@@ -943,9 +943,9 @@ func TestCreateProject_TierAndBalance(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, tt.totalAmount)
-			std.TestSkipHeights(1)
+			testing.SkipHeights(1)
 
 			defer func() {
 				if r := recover(); r != nil {
@@ -973,7 +973,7 @@ func TestCreateProject_TierAndBalance(t *testing.T) {
 			if tt.expectedError == "" {
 				uassert.Equal(t, projectId, tt.expectedId)
 			}
-			std.TestSkipHeights(1)
+			testing.SkipHeights(1)
 		})
 	}
 }
@@ -1419,7 +1419,7 @@ func TestGenerateProjectId(t *testing.T) {
 			heightBefore := std.ChainHeight()
 			skip := tt.mockHeight - heightBefore
 			if skip > 0 {
-				std.TestSkipHeights(skip)
+				testing.SkipHeights(skip)
 			}
 
 			got := generateProjectId(tt.tokenPath)
@@ -1521,7 +1521,7 @@ func TestCovertTimeToHeight(t *testing.T) {
 			}
 		}()
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		gns.SetAvgBlockTimeInMsByAdmin(0)
 		_ = convertTimeToHeight(1000)
 	})
@@ -1628,7 +1628,7 @@ func TestTransferLeftFromProjectByAdmin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			// set up
 			tt.setupFunc()
 
@@ -1636,7 +1636,7 @@ func TestTransferLeftFromProjectByAdmin(t *testing.T) {
 			currHeight := std.ChainHeight()
 			skip := int64(tt.mockHeight) - int64(currHeight)
 			if skip > 0 {
-				std.TestSkipHeights(skip)
+				testing.SkipHeights(skip)
 			}
 
 			defer func() {

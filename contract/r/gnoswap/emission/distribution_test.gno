@@ -70,7 +70,7 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 			}
 
 			if tt.callerRealm != (std.Realm{}) {
-				std.TestSetRealm(tt.callerRealm)
+				testing.SetRealm(tt.callerRealm)
 			}
 
 			target01, target02, target03, target04 := sliceToFourInt(t, tt.targets)
@@ -162,7 +162,7 @@ func TestChangeDistributionPct(t *testing.T) {
 			}
 
 			if tt.callerRealm != (std.Realm{}) {
-				std.TestSetRealm(tt.callerRealm)
+				testing.SetRealm(tt.callerRealm)
 			}
 
 			target01, target02, target03, target04 := sliceToFourInt(t, tt.targets)
@@ -262,7 +262,7 @@ func TestTransferToTarget(t *testing.T) {
 			name:   "transfer to LIQUIDITY_STAKER",
 			target: LIQUIDITY_STAKER,
 			setup: func() {
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 				gns.Transfer(emissionAddr, 100000) // give enough balance for emission
 			},
 			amount: 100,
@@ -399,7 +399,7 @@ func TestClearDistributedToStaker(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.callerRealm != (std.Realm{}) {
-				std.TestSetRealm(tt.callerRealm)
+				testing.SetRealm(tt.callerRealm)
 			}
 
 			if tt.shouldPanic {
@@ -439,7 +439,7 @@ func TestClearClearDistributedToGovStaker(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.callerRealm != (std.Realm{}) {
-				std.TestSetRealm(tt.callerRealm)
+				testing.SetRealm(tt.callerRealm)
 			}
 
 			if tt.shouldPanic {

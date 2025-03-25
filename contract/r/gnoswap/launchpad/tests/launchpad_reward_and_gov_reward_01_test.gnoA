@@ -26,7 +26,7 @@ var (
 )
 
 func init() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Transfer(launchpadDepositAddr, uint64(1_000_000_000))
 	gns.Transfer(govDelegateAddr, uint64(1_000_000_000))
 }
@@ -43,10 +43,10 @@ func TestLaunchPadAndGovernanceReward(t *testing.T) {
 
 func testCreateProject(t *testing.T) {
 	t.Run("create project", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		obl.Approve(launchpadAddr, uint64(1_000_000_000))
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 
 		projectId := CreateProject(
 			"Obl Protocol",
@@ -61,29 +61,29 @@ func testCreateProject(t *testing.T) {
 			uint64(time.Now().Unix()+10), // 10s later
 		)
 		uassert.Equal(t, projectId, `gno.land/r/onbloc/obl:124`)
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testDepositGnsToTier30(t *testing.T) {
 	t.Run("deposit gns to tier 30", func(t *testing.T) {
-		std.TestSetRealm(launchpadDepositRealm)
+		testing.SetRealm(launchpadDepositRealm)
 		gns.Approve(launchpadAddr, uint64(1_000_000_000))
 
 		// skip some blocks to make project active
-		std.TestSkipHeights(4)
+		testing.SkipHeights(4)
 		depositId := DepositGns("gno.land/r/onbloc/obl:124:30", uint64(1_000_000_000), "") // 1000000
 		uassert.Equal(t, depositId, `gno.land/r/onbloc/obl:124:30:g1d3sh2mnrdpcxzezyv4cx7umfw3047h6l29lj5t:129`)
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testGovDelegate(t *testing.T) {
 	t.Run("delegate to gov", func(t *testing.T) {
-		std.TestSetRealm(govDelegateRealm)
+		testing.SetRealm(govDelegateRealm)
 		gns.Approve(govStakerAddr, uint64(1_000_000_000))
 		gs.Delegate(govDelegateAddr, uint64(1_000_000_000), "")
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
@@ -91,7 +91,7 @@ func testMockProtocolFee(t *testing.T) {
 	t.Run("mock protocol fee", func(t *testing.T) {
 		// admin > protocol_fee
 		// send qux, bar for testing
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		bar.Transfer(protocolFeeAddr, 100_000)
 		qux.Transfer(protocolFeeAddr, 250_000)
 
@@ -102,7 +102,7 @@ func testMockProtocolFee(t *testing.T) {
 		uassert.Equal(t, qux.BalanceOf(protocolFeeAddr), uint64(250000))
 		uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
 		uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(0))
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 

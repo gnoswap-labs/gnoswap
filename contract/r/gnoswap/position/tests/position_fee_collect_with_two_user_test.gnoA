@@ -39,7 +39,7 @@ This test demonstrates a issue(Gnoswap-19) fee collection mechanism. The key ste
 · Compare the collected fees between the two users
 */
 func TestCollectFeeWithTwoUser(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	common.SetLimitCaller(true)
 	gns.Approve(poolAddr, poolCreationFee)
 
@@ -54,7 +54,7 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 	baz.Transfer(user2Adderss, 100_000_000)
 
 	t.Run("mint and swap fee should be distributed to user's liquidity", func(t *testing.T) {
-		std.TestSetRealm(user1Realm)
+		testing.SetRealm(user1Realm)
 		bar.Approve(poolAddr, consts.UINT64_MAX)
 		baz.Approve(poolAddr, consts.UINT64_MAX)
 		bar.Approve(routerAddr, consts.UINT64_MAX)
@@ -76,7 +76,7 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 			"",
 		)
 
-		std.TestSetRealm(user2Realm)
+		testing.SetRealm(user2Realm)
 		bar.Approve(poolAddr, consts.UINT64_MAX)
 		baz.Approve(poolAddr, consts.UINT64_MAX)
 		bar.Approve(routerAddr, consts.UINT64_MAX)
@@ -121,7 +121,7 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 
 		// ====== Collect fees and compare ======
 		// user1
-		// std.TestSetRealm(user1Realm)
+		// testing.SetRealm(user1Realm)
 		// bar.Approve(poolAddr, consts.UINT64_MAX)
 		// baz.Approve(poolAddr, consts.UINT64_MAX)
 		// userBarBalanceBeforeCollect_1 := bar.BalanceOf(user1Adderss)
@@ -131,7 +131,7 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 		// userBazBalanceAfterCollect_1 := baz.BalanceOf(user1Adderss)
 
 		// 	// user2
-		// 	std.TestSetRealm(user2Realm)
+		// 	testing.SetRealm(user2Realm)
 		// 	bar.Approve(poolAddr, consts.UINT64_MAX)
 		// 	baz.Approve(poolAddr, consts.UINT64_MAX)
 		// 	userBarBalanceBeforeCollect_2 := bar.BalanceOf(user2Adderss)
@@ -145,12 +145,12 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 }
 
 func TestCollectTwo(t *testing.T) {
-	std.TestSetRealm(user1Realm)
+	testing.SetRealm(user1Realm)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	baz.Approve(poolAddr, consts.UINT64_MAX)
 	CollectFee(uint64(1), false)
 
-	// std.TestSetRealm(user2Realm)
+	// testing.SetRealm(user2Realm)
 	// bar.Approve(poolAddr, consts.UINT64_MAX)
 	// baz.Approve(poolAddr, consts.UINT64_MAX)
 	// CollectFee(uint64(2), false)

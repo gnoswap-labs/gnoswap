@@ -13,6 +13,7 @@
 package staker_test
 
 import (
+	"encoding/json"
 	"std"
 	"strconv"
 
@@ -61,7 +62,7 @@ func main() {
 }
 
 func testInit() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// short warm-up period
 	sr.SetWarmUp(100, 901)
@@ -70,20 +71,20 @@ func testInit() {
 	sr.SetWarmUp(30, 1)
 
 	// prepare wugnot
-	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
-	std.TestSetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}}, nil)
+	testing.SetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}})
 	wugnot.Deposit()
-	std.TestSetOriginSend(nil, nil)
+	testing.SetOriginSend(nil)
 }
 
 func testCreatePool() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	pl.SetPoolCreationFeeByAdmin(0)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pl.CreatePool(
 		wugnotPath,
 		gnsPath,
@@ -93,12 +94,12 @@ func testCreatePool() {
 }
 
 func testMintAndStakeWugnotGnsPos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	wugnot.Approve(poolAddr, consts.UINT64_MAX)
 	gns.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pn.Mint(
 		wugnotPath,
 		gnsPath,
@@ -119,12 +120,12 @@ func testMintAndStakeWugnotGnsPos01() {
 }
 
 func testMintAndStakeWugnotGnsPos02() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	wugnot.Approve(poolAddr, consts.UINT64_MAX)
 	gns.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pn.Mint(
 		wugnotPath,
 		gnsPath,
@@ -145,8 +146,8 @@ func testMintAndStakeWugnotGnsPos02() {
 }
 
 func testCollectRewardPos01() {
-	std.TestSetRealm(adminRealm)
-	std.TestSkipHeights(1)
+	testing.SetRealm(adminRealm)
+	testing.SkipHeights(1)
 
 	apiRewardBefore := extractReward(1)
 	sr.CollectReward(1, false)

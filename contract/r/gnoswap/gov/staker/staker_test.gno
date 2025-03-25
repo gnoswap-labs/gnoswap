@@ -12,16 +12,16 @@ import (
 )
 
 func TestDelegate(t *testing.T) {
-	std.TestSetOriginCaller(admin)
+	testing.SetOriginCaller(admin)
 	SetRunning(true)
 
-	std.TestSetRealm(userRealm)
+	testing.SetRealm(userRealm)
 	{
-		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-		std.TestSkipHeights(100)
+		testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+		testing.SkipHeights(100)
 		gns.MintGns(userRealm.Address()) // 2M gns
 
-		std.TestSetRealm(userRealm)
+		testing.SetRealm(userRealm)
 		to := makeFakeAddress("validator_1")
 		amount := uint64(1_000_000)
 
@@ -77,14 +77,14 @@ func TestDelegate(t *testing.T) {
 
 	// 7) running = false => optional check
 	{
-		std.TestSetOriginCaller(admin)
+		testing.SetOriginCaller(admin)
 		SetRunning(false)
 		// delegate?
 		// depending on code logic, might skip cleanDelegationStatHistory() or do something else
 		// if there's logic that forbids delegation when not running, test that
 		// For now, assume it still works but doesn't clean.
 		// Restore running to true for subsequent tests.
-		std.TestSetOriginCaller(admin)
+		testing.SetOriginCaller(admin)
 		SetRunning(true)
 	}
 
@@ -146,9 +146,9 @@ func TestDelegate_Boundary_Values(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetOriginCaller(admin)
+			testing.SetOriginCaller(admin)
 			SetRunning(true)
-			std.TestSetRealm(userRealm)
+			testing.SetRealm(userRealm)
 
 			if tt.expectPanic {
 				defer func() {
@@ -170,22 +170,22 @@ func TestDelegate_Boundary_Values(t *testing.T) {
 }
 
 func TestRedelegate(t *testing.T) {
-	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	std.TestSkipHeights(100)
+	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SkipHeights(100)
 	gns.MintGns(userRealm.Address()) // 2M gns
 
 	// user has xGNS from previous test (some minted)
 	// try re-delegating
-	std.TestSetRealm(userRealm)
+	testing.SetRealm(userRealm)
 	from := userRealm.Address()
 	to := makeFakeAddress("validator_1")
 	amount := uint64(1_000_000)
 
-	std.TestSetOriginCaller(userRealm.Address())
+	testing.SetOriginCaller(userRealm.Address())
 	gns.Approve(govStaker, amount)
 	Delegate(from, amount, "")
 
-	std.TestSetOriginCaller(userRealm.Address())
+	testing.SetOriginCaller(userRealm.Address())
 	gns.Approve(govStaker, amount)
 	Redelegate(from, to, amount)
 
@@ -203,15 +203,15 @@ func TestRedelegate(t *testing.T) {
 }
 
 func TestUndelegate(t *testing.T) {
-	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	std.TestSkipHeights(101)
+	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SkipHeights(101)
 	gns.MintGns(user3Realm.Address()) // 2M gns
 
-	std.TestSetRealm(user3Realm)
+	testing.SetRealm(user3Realm)
 	to := makeFakeAddress("validator_1")
 	amount := uint64(1_000_000)
 
-	std.TestSetOriginCaller(user3Realm.Address())
+	testing.SetOriginCaller(user3Realm.Address())
 	gns.Approve(govStaker, amount)
 	Delegate(to, amount, "")
 	Undelegate(to, amount)
@@ -249,7 +249,7 @@ func TestUndelegate(t *testing.T) {
 }
 
 func TestCollectUndelegatedGns(t *testing.T) {
-	std.TestSetRealm(userRealm)
+	testing.SetRealm(userRealm)
 
 	// 1) no locked => expect 0
 	addrLockedGns.Remove(userRealm.Address().String()) // ensure no locked
@@ -299,20 +299,20 @@ func TestCollectUndelegatedGns(t *testing.T) {
 }
 
 func TestCollectReward(t *testing.T) {
-	std.TestSetRealm(user2Realm)
+	testing.SetRealm(user2Realm)
 	{
-		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-		std.TestSkipHeights(100)
+		testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+		testing.SkipHeights(100)
 		gns.MintGns(govStaker)
 
-		std.TestSetRealm(std.NewUserRealm(admin))
+		testing.SetRealm(std.NewUserRealm(admin))
 		ugnotFaucet(t, govStaker, 1_000_000)
 		ugnotDeposit(t, govStaker, 1_000_000)
 		ugnotFaucet(t, derivePkgAddr(wugnotPath), 1_000_000)
 		ugnotFaucet(t, user2Realm.Address(), 1_000_000)
 	}
 
-	std.TestSetRealm(user2Realm)
+	testing.SetRealm(user2Realm)
 	user := user2Realm.Address().String()
 
 	rewardState.addStake(uint64(std.ChainHeight()), std.Address(user), 10, 0, make(map[string]uint64))
@@ -321,15 +321,15 @@ func TestCollectReward(t *testing.T) {
 	currentGNSBalance = 50_000
 	currentProtocolFeeBalance[consts.WUGNOT_PATH] = 10_000
 
-	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	std.TestSkipHeights(100)
+	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SkipHeights(100)
 	gns.MintGns(user2Realm.Address())
 
-	std.TestSetRealm(user2Realm)
-	std.TestSkipHeights(100)
+	testing.SetRealm(user2Realm)
+	testing.SkipHeights(100)
 
 	// call CollectReward
-	std.TestSetOriginCaller(user2Realm.Address())
+	testing.SetOriginCaller(user2Realm.Address())
 	CollectReward()
 
 	// expect user emissionReward = 0
@@ -354,7 +354,7 @@ func TestCollectRewardFromLaunchPad(t *testing.T) {
 	// set realm to LAUNCHPAD_ADDR?
 	// or we do a quick scenario: if current caller != LAUNCHPAD_ADDR => panic
 	// => check it with a user realm to ensure panic
-	std.TestSetRealm(userRealm)
+	testing.SetRealm(userRealm)
 	{
 		defer func() {
 			if r := recover(); r == nil {

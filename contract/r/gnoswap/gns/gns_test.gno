@@ -25,6 +25,8 @@ var (
 var (
 	alice = testutils.TestAddress("alice")
 	bob   = testutils.TestAddress("bob")
+
+	userRealm = std.NewUserRealm(testutils.TestAddress("user"))
 )
 
 func TestGetName(t *testing.T) {
@@ -222,23 +224,24 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "MintGns success",
 			fn: func() {
-				std.TestSetRealm(emissionRealm)
+				testing.SetRealm(emissionRealm)
 				MintGns(adminAddr)
 			},
 		},
 		{
 			name: "MintGns without permission should panic",
 			fn: func() {
-				std.TestSkipHeights(1)
+				testing.SetRealm(userRealm)
+				testing.SkipHeights(1)
 				MintGns(adminAddr)
 			},
 			shouldPanic: true,
-			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission`,
+			panicMsg:    `caller(g1w4ek2ujlta047h6lta047h6lta047h6lkvk347) has no permission`,
 		},
 		{
 			name: "Burn success",
 			fn: func() {
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 				Burn(adminAddr, uint64(1))
 			},
 		},
@@ -253,14 +256,14 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "Transfer success",
 			fn: func() {
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 				Transfer(alice, uint64(1))
 			},
 		},
 		{
 			name: "Transfer without enough balance should panic",
 			fn: func() {
-				std.TestSetRealm(std.NewUserRealm(alice))
+				testing.SetRealm(std.NewUserRealm(alice))
 				Transfer(bob, uint64(1))
 			},
 			shouldPanic: true,
@@ -269,7 +272,7 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "Transfer to self should panic",
 			fn: func() {
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 				Transfer(adminAddr, uint64(1))
 			},
 			shouldPanic: true,
@@ -279,21 +282,21 @@ func TestGrc20Methods(t *testing.T) {
 			name: "TransferFrom success",
 			fn: func() {
 				// approve first
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 				Approve(alice, uint64(1))
 
 				// alice transfer admin's balance to bob
-				std.TestSetRealm(std.NewUserRealm(alice))
+				testing.SetRealm(std.NewUserRealm(alice))
 				TransferFrom(adminAddr, bob, uint64(1))
 			},
 		},
 		{
 			name: "TransferFrom without enough allowance should panic",
 			fn: func() {
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 				Approve(alice, uint64(1))
 
-				std.TestSetRealm(std.NewUserRealm(alice))
+				testing.SetRealm(std.NewUserRealm(alice))
 				TransferFrom(adminAddr, bob, uint64(2))
 			},
 			shouldPanic: true,

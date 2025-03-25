@@ -35,7 +35,7 @@ var (
 )
 
 func init() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Transfer(launchpadDepositAddr, uint64(1_000_000_000))
 	gns.Transfer(govDelegateAddr, uint64(1_000_000_000))
 	gns.Transfer(dummyAddr, uint64(1_000_000_000))
@@ -55,16 +55,16 @@ func TestLaunchPadAndGovernanceReward(t *testing.T) {
 
 func testPoolCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		gns.Approve(poolAddr, pl.GetPoolCreationFee())
 		pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString()) // x1
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testPositionMint(t *testing.T) {
 	t.Run("mint position", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		bar.Approve(poolAddr, consts.UINT64_MAX)
 		foo.Approve(poolAddr, consts.UINT64_MAX)
 
@@ -77,7 +77,7 @@ func testPositionMint(t *testing.T) {
 
 func testRouterSwapRoute(t *testing.T) {
 	t.Run("swap route", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		bar.Approve(routerAddr, uint64(100_000))
 		foo.Approve(routerAddr, uint64(100_000))
 
@@ -98,10 +98,10 @@ func testRouterSwapRoute(t *testing.T) {
 
 func testEarlyGovDelegateAndReward(t *testing.T) {
 	t.Run("early gov delegate and reward", func(t *testing.T) {
-		std.TestSetRealm(dummyRealm)
+		testing.SetRealm(dummyRealm)
 		gns.Approve(govStakerAddr, uint64(1_000_000))
 		gs.Delegate(dummyAddr, uint64(1_000_000), "")
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 
 		rewardJson := gs.GetClaimableRewardByAddress(dummyAddr)
 		uassert.Equal(t, rewardJson, `{"height":"125","now":"1234567894","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/foo","amount":"149"},{"tokenPath":"gno.land/r/gnoswap/v1/gns","amount":"100000000"}]}`)
@@ -128,10 +128,10 @@ func testEarlyGovDelegateAndReward(t *testing.T) {
 
 func testCreateProject(t *testing.T) {
 	t.Run("create project", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		obl.Approve(launchpadAddr, uint64(1_000_000_000))
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 
 		projectId := CreateProject(
 			"Obl Protocol",
@@ -146,29 +146,29 @@ func testCreateProject(t *testing.T) {
 			uint64(time.Now().Unix()+10), // 10s later
 		)
 		uassert.Equal(t, projectId, `gno.land/r/onbloc/obl:126`)
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testDepositGnsToTier30(t *testing.T) {
 	t.Run("deposit gns to tier 30", func(t *testing.T) {
-		std.TestSetRealm(launchpadDepositRealm)
+		testing.SetRealm(launchpadDepositRealm)
 		gns.Approve(launchpadAddr, uint64(1_000_000_000))
 
 		// skip some blocks to make project active
-		std.TestSkipHeights(4)
+		testing.SkipHeights(4)
 		depositId := DepositGns("gno.land/r/onbloc/obl:126:30", uint64(1_000_000_000), "") // 1000000
 		uassert.Equal(t, depositId, `gno.land/r/onbloc/obl:126:30:g1d3sh2mnrdpcxzezyv4cx7umfw3047h6l29lj5t:131`)
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testGovDelegate(t *testing.T) {
 	t.Run("gov delegate", func(t *testing.T) {
-		std.TestSetRealm(govDelegateRealm)
+		testing.SetRealm(govDelegateRealm)
 		gns.Approve(govStakerAddr, uint64(1_000_000_000))
 		gs.Delegate(govDelegateAddr, uint64(1_000_000_000), "")
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
@@ -176,7 +176,7 @@ func testMockProtocolFee(t *testing.T) {
 	t.Run("mock protocol fee", func(t *testing.T) {
 		// admin > protocol_fee
 		// send qux, bar for testing
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		bar.Transfer(protocolFeeAddr, 100_000)
 		qux.Transfer(protocolFeeAddr, 250_000)
 
@@ -187,7 +187,7 @@ func testMockProtocolFee(t *testing.T) {
 		uassert.Equal(t, qux.BalanceOf(protocolFeeAddr), uint64(250000))
 		uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
 		uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(0))
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
@@ -222,7 +222,7 @@ func testClaimableRewardForEarlyDummy(t *testing.T) {
 
 func testSkipFewBlock(t *testing.T) {
 	t.Run("skip few block", func(t *testing.T) {
-		std.TestSkipHeights(10)
+		testing.SkipHeights(10)
 	})
 }
 

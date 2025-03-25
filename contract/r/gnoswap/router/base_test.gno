@@ -113,8 +113,8 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 			op := &baseSwapOperation{}
 
 			testCoins := std.Coins{{"ugnot", tt.sentAmount}}
-			std.TestIssueCoins(std.CurrentRealm().Address(), testCoins)
-			std.TestSetOriginSend(testCoins, nil)
+			testing.IssueCoins(std.CurrentRealm().Address(), testCoins)
+			testing.SetOriginSend(testCoins)
 
 			err := op.handleNativeTokenWrapping(
 				tt.inputToken,
@@ -122,7 +122,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 				tt.swapType,
 				tt.specifiedAmount,
 			)
-			std.TestSetOriginSend(testCoins, nil)
+			testing.SetOriginSend(testCoins)
 
 			if tt.expectError && err == nil {
 				t.Errorf("expected an error but got nil")
@@ -197,7 +197,7 @@ func TestProcessRoute(t *testing.T) {
 	op := &baseSwapOperation{}
 
 	t.Run("Single hop route", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		CreatePoolWithoutFee(t)
 		MakeThirdMintPositionWithoutFee(t)
 		route := "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"

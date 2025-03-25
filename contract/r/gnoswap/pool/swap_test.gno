@@ -360,7 +360,7 @@ func TestSwap_Failures(t *testing.T) {
 				tt.setupFn(t)
 			}
 
-			std.TestSetOriginCaller(tt.payer)
+			testing.SetOriginCaller(tt.payer)
 
 			if tt.expectError {
 				defer func() {
@@ -390,7 +390,7 @@ func TestSwap_Failures(t *testing.T) {
 }
 
 func TestDrySwap_Failures(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	SetPoolCreationFeeByAdmin(0)
 	CreatePool(barPath, bazPath, fee100, "79228162514264337593543950336")
 
@@ -524,7 +524,7 @@ func TestSwapAndDrySwapComparison(t *testing.T) {
 				tt.sqrtPriceLimitX96,
 			)
 
-			std.TestSetOriginCaller(routerAddr)
+			testing.SetOriginCaller(routerAddr)
 			actualAmount0, actualAmount1 := Swap(
 				tt.token0Path,
 				tt.token1Path,
@@ -594,7 +594,7 @@ func TestSwapAndDrySwapComparison_amount_zero(t *testing.T) {
 				TokenApprove(t, gnsPath, addr, poolAddr, uint64(1000))
 			},
 			action: func(t *testing.T) {
-				std.TestSetOriginCaller(routerAddr)
+				testing.SetOriginCaller(routerAddr)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,
@@ -671,7 +671,7 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOriginCaller(routerAddr)
+				testing.SetOriginCaller(routerAddr)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,
@@ -696,7 +696,7 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOriginCaller(routerAddr)
+				testing.SetOriginCaller(routerAddr)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,
@@ -722,7 +722,7 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOriginCaller(routerAddr)
+				testing.SetOriginCaller(routerAddr)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,
@@ -749,7 +749,7 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOriginCaller(routerAddr)
+				testing.SetOriginCaller(routerAddr)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,
@@ -806,7 +806,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOriginCaller(routerAddr)
+				testing.SetOriginCaller(routerAddr)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,
@@ -831,7 +831,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOriginCaller(routerAddr)
+				testing.SetOriginCaller(routerAddr)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,
@@ -857,7 +857,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOriginCaller(routerAddr)
+				testing.SetOriginCaller(routerAddr)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,
@@ -884,7 +884,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOriginCaller(routerAddr)
+				testing.SetOriginCaller(routerAddr)
 				actualAmount0, actualAmount1 := Swap(
 					wugnotPath,
 					gnsPath,
@@ -936,7 +936,7 @@ func TestSwap_FeeTier100(t *testing.T) {
 		{
 			name: "EXACT IN - zeroForOne = true, feeTier=100",
 			setupFn: func(t *testing.T) {
-				std.TestSetRealm(std.NewUserRealm(adminAddr))
+				testing.SetRealm(std.NewUserRealm(adminAddr))
 				wugnot.Approve(poolAddr, maxApprove)
 				gns.Approve(poolAddr, maxApprove)
 				CreatePool(wugnotTokenPath, gnsTokenPath, FeeTier100, "79228162514264337593543950336")
@@ -944,10 +944,10 @@ func TestSwap_FeeTier100(t *testing.T) {
 				gns.Approve(routerAddr, maxApprove)
 
 				faucetAddress := adminAddr
-				std.TestSetOriginCaller(faucetAddress)
+				testing.SetOriginCaller(faucetAddress)
 				newCoins := std.Coins{{"ugnot", int64(10000000000)}}
-				std.TestIssueCoins(adminAddr, newCoins)
-				std.TestSetOriginSend(newCoins, nil)
+				testing.IssueCoins(adminAddr, newCoins)
+				testing.SetOriginSend(newCoins)
 				banker := std.NewBanker(std.BankerTypeRealmSend)
 				banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
 				wugnot.Deposit()
@@ -983,15 +983,15 @@ func TestSwap_FeeTier100(t *testing.T) {
 					adminAddr,
 					"",
 				)
-				std.TestSetRealm(std.NewUserRealm(adminAddr))
+				testing.SetRealm(std.NewUserRealm(adminAddr))
 				gns.Transfer(poolAddr, 20000000)
 			},
 			action: func(t *testing.T) (string, string) {
-				std.TestSetOriginCaller(adminAddr)
+				testing.SetOriginCaller(adminAddr)
 				wugnot.Transfer(routerAddr, 20000000)
 				gns.Transfer(routerAddr, 20000000)
 
-				std.TestSetOriginCaller(routerAddr)
+				testing.SetOriginCaller(routerAddr)
 				wugnot.Approve(poolAddr, maxApprove)
 
 				actualAmount0, actualAmount1 := Swap(

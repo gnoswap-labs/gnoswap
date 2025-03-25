@@ -85,7 +85,7 @@ func TestSwapInner(t *testing.T) {
 				CreatePoolWithoutFee(t)
 				MakeMintPositionWithoutFee(t)
 
-				std.TestSetRealm(user1Realm)
+				testing.SetRealm(user1Realm)
 				bar.Approve(routerAddr, maxApprove)
 				baz.Approve(routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
@@ -107,7 +107,7 @@ func TestSwapInner(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		std.TestSetRealm(user1Realm)
+		testing.SetRealm(user1Realm)
 		bar.Approve(routerAddr, maxApprove)
 		baz.Approve(routerAddr, maxApprove)
 		bar.Approve(poolAddr, maxApprove)

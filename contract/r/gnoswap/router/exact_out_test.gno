@@ -1,7 +1,6 @@
 package router
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -17,7 +16,7 @@ import (
 )
 
 func TestExactOutSwapOperation(t *testing.T) {
-	std.TestSetRealm(routerRealm)
+	testing.SetRealm(routerRealm)
 	setupTestPool(t)
 
 	t.Run("validate exact out params", func(t *testing.T) {
@@ -93,7 +92,7 @@ func TestExactOutSwapOperation(t *testing.T) {
 // Helper function to setup test pool
 func setupTestPool(t *testing.T) {
 	t.Helper()
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 
 	foo.Approve(poolAddr, consts.UINT64_MAX)

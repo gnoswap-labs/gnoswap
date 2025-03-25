@@ -57,7 +57,7 @@ func TestCalcPoolPositionRewardGetter(t *testing.T) {
 
 func testInit(t *testing.T) {
 	t.Run("initial", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		deletePoolTier(t, MUST_EXISTS_IN_TIER_1)
 
@@ -73,32 +73,32 @@ func testInit(t *testing.T) {
 		// no unstaking fee
 		SetUnStakingFeeByAdmin(0)
 
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testPoolCreatePoolOnlyInternalBarFoo(t *testing.T) {
 	t.Run("create bar:foo:100 pool for internal tier #1", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		pl.CreatePool(barPath, fooPath, 100, "79228162514264337593543950337")
 		SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", 1)
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testPoolCreatePoolOnlyExternalBarBaz(t *testing.T) {
 	t.Run("create pool bar:baz:100 for external", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		pl.CreatePool(barPath, bazPath, 100, "79228162514264337593543950337")
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testCreateExternalIncentiveBarAndBaz(t *testing.T) {
 	t.Run("create external incentive for bar:baz:100", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		bar.Approve(stakerAddr, consts.UINT64_MAX)
 		baz.Approve(stakerAddr, consts.UINT64_MAX)
@@ -120,23 +120,23 @@ func testCreateExternalIncentiveBarAndBaz(t *testing.T) {
 			1234569600+TIMESTAMP_90DAYS,
 		)
 
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testPoolCreatePoolBothInternalAndExternalBarQux(t *testing.T) {
 	t.Run("create pool bar:qux:100 for internal tier #1 and external", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		pl.CreatePool(barPath, quxPath, 100, "79228162514264337593543950337")
 		SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testCreateExternalIncentiveQux(t *testing.T) {
 	t.Run("create external incentive for bar:qux:100", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		qux.Approve(stakerAddr, consts.UINT64_MAX)
 		gns.Approve(stakerAddr, depositGnsAmount)
@@ -153,7 +153,7 @@ func testCreateExternalIncentiveQux(t *testing.T) {
 
 func testMintAndStakeOnlyInternal01And02(t *testing.T) {
 	t.Run("mint and stake position 01 and 02", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		// token to provide liquidity
 		bar.Approve(poolAddr, consts.UINT64_MAX)
@@ -173,7 +173,7 @@ func testMintAndStakeOnlyInternal01And02(t *testing.T) {
 			max_timeout,
 		)
 		uassert.Equal(t, lpTokenId, uint64(1))
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 
 		// position02
 		lpTokenId, _, _, _, _ = MintAndStake(
@@ -189,13 +189,13 @@ func testMintAndStakeOnlyInternal01And02(t *testing.T) {
 			max_timeout,
 		)
 		uassert.Equal(t, lpTokenId, uint64(2))
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testMintAndStakeOnlyExternal03And04(t *testing.T) {
 	t.Run("mint and stake position 03 and 04", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		// token to provide liquidity
 		bar.Approve(poolAddr, consts.UINT64_MAX)
@@ -215,7 +215,7 @@ func testMintAndStakeOnlyExternal03And04(t *testing.T) {
 			max_timeout,
 		)
 		uassert.Equal(t, lpTokenId, uint64(3))
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 
 		// position04
 		lpTokenId, _, _, _, _ = MintAndStake(
@@ -231,13 +231,13 @@ func testMintAndStakeOnlyExternal03And04(t *testing.T) {
 			max_timeout,
 		)
 		uassert.Equal(t, lpTokenId, uint64(4))
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testMintAndStakeBothInternalAndExternal05(t *testing.T) {
 	t.Run("mint and stake position 05", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		// token to provide liquidity
 		bar.Approve(poolAddr, consts.UINT64_MAX)
@@ -257,13 +257,13 @@ func testMintAndStakeBothInternalAndExternal05(t *testing.T) {
 			max_timeout,
 		)
 		uassert.Equal(t, lpTokenId, uint64(5))
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testMakeExternalIncentiveStart(t *testing.T) {
 	t.Run("make external incentive start", func(t *testing.T) {
-		std.TestSkipHeights(100000)
+		testing.SkipHeights(100000)
 	})
 }
 

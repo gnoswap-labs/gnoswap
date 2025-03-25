@@ -12,7 +12,7 @@ func setupPositionGetter(t *testing.T) {
 	t.Helper()
 
 	CreatePoolWithoutFee(t)
-	std.TestSetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(std.NewUserRealm(adminAddr))
 	position := Position{
 		nonce:                    u256.Zero(),
 		operator:                 positionAddr,

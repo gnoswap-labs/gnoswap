@@ -22,12 +22,12 @@ var (
 
 // turn protocol fee on
 func init() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	SetFeeProtocolByAdmin(4, 4)
 }
 
 func TestLimitOrderThru_Positive_1_WithFee(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
@@ -38,7 +38,7 @@ func TestLimitOrderThru_Positive_1_WithFee(t *testing.T) {
 
 	t.Run("limit selling 0 for 1 at tick 0 thru 1 with fee", func(t *testing.T) {
 		// MINT
-		std.TestSetRealm(posRealm)
+		testing.SetRealm(posRealm)
 		mint0, mint1 := Mint(
 			barPath,
 			fooPath,
@@ -51,7 +51,7 @@ func TestLimitOrderThru_Positive_1_WithFee(t *testing.T) {
 		)
 
 		// SWAP 1 -> 0
-		std.TestSetRealm(rouRealm)
+		testing.SetRealm(rouRealm)
 		swap0, swap1 := Swap(
 			barPath,
 			fooPath,
@@ -64,7 +64,7 @@ func TestLimitOrderThru_Positive_1_WithFee(t *testing.T) {
 		)
 
 		// BURN
-		std.TestSetRealm(posRealm)
+		testing.SetRealm(posRealm)
 		burn0, burn1 := Burn(
 			barPath,
 			fooPath,
@@ -75,7 +75,7 @@ func TestLimitOrderThru_Positive_1_WithFee(t *testing.T) {
 		)
 
 		// COLLECT
-		std.TestSetRealm(posRealm)
+		testing.SetRealm(posRealm)
 		collect0, collect1 := Collect(
 			barPath,
 			fooPath,
@@ -94,7 +94,7 @@ func TestLimitOrderThru_Positive_1_WithFee(t *testing.T) {
 
 func TestLimitOrderThru_Negative_1_WithFee(t *testing.T) {
 	t.Skip("need to run separately")
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
@@ -105,7 +105,7 @@ func TestLimitOrderThru_Negative_1_WithFee(t *testing.T) {
 
 	t.Run("limit selling 0 for 1 at tick 0 thru 1 with fee", func(t *testing.T) {
 		// MINT
-		std.TestSetRealm(posRealm)
+		testing.SetRealm(posRealm)
 		mint0, mint1 := Mint(
 			barPath,
 			fooPath,
@@ -120,7 +120,7 @@ func TestLimitOrderThru_Negative_1_WithFee(t *testing.T) {
 		uassert.Equal(t, mint1, "59817378")
 
 		// SWAP 0 -> 1
-		std.TestSetRealm(rouRealm)
+		testing.SetRealm(rouRealm)
 		swap0, swap1 := Swap(
 			barPath,
 			fooPath,
@@ -135,7 +135,7 @@ func TestLimitOrderThru_Negative_1_WithFee(t *testing.T) {
 		uassert.Equal(t, swap1, "-59817377")
 
 		// BURN
-		std.TestSetRealm(posRealm)
+		testing.SetRealm(posRealm)
 		burn0, burn1 := Burn(
 			barPath,
 			fooPath,
@@ -148,7 +148,7 @@ func TestLimitOrderThru_Negative_1_WithFee(t *testing.T) {
 		uassert.Equal(t, burn1, "0")
 
 		// COLLECT
-		std.TestSetRealm(posRealm)
+		testing.SetRealm(posRealm)
 		collect0, collect1 := Collect(
 			barPath,
 			fooPath,

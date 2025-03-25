@@ -28,17 +28,17 @@ var (
 func TestDistributeProtocolFee(t *testing.T) {
 	// admin > protocol_fee
 	// send qux, bar for testing
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Transfer(protocolFeeAddr, 1000)
 	qux.Transfer(protocolFeeAddr, 1000)
 
 	stakerRealm := std.NewCodeRealm(consts.STAKER_PATH)
-	std.TestSetRealm(stakerRealm)
+	testing.SetRealm(stakerRealm)
 	pf.AddToProtocolFee("gno.land/r/onbloc/bar", 1000)
 	pf.AddToProtocolFee("gno.land/r/onbloc/qux", 1000)
 
 	govStakerRealm := std.NewCodeRealm(consts.GOV_STAKER_PATH)
-	std.TestSetRealm(govStakerRealm)
+	testing.SetRealm(govStakerRealm)
 	uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), uint64(1000))
 	uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))
 	uassert.Equal(t, bar.BalanceOf(govStakerAddr), uint64(0))
@@ -61,7 +61,7 @@ func TestDistributeProtocolFee(t *testing.T) {
 func TestSetDevOpsPctByAdminNoPermission(t *testing.T) {
 	dummy := testutils.TestAddress("dummy")
 	dummyRealm := std.NewUserRealm(dummy)
-	std.TestSetRealm(dummyRealm)
+	testing.SetRealm(dummyRealm)
 
 	uassert.PanicsWithMessage(
 		t, `caller(g1v36k6mteta047h6lta047h6lta047h6lz7gmv8) has no permission`, func() { SetDevOpsPctByAdmin(123) },
@@ -69,7 +69,7 @@ func TestSetDevOpsPctByAdminNoPermission(t *testing.T) {
 }
 
 func TestSetDevOpsPctByAdminInvalidFee(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	uassert.PanicsWithMessage(
 		t,
@@ -81,7 +81,7 @@ func TestSetDevOpsPctByAdminInvalidFee(t *testing.T) {
 }
 
 func TestSetDevOpsPctByAdmin(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	uassert.Equal(t, GetDevOpsPct(), uint64(0))
 
@@ -131,7 +131,7 @@ func TestAddToProtocolFee(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			std.TestSetRealm(std.NewCodeRealm(consts.POOL_PATH))
+			testing.SetRealm(std.NewCodeRealm(consts.POOL_PATH))
 			AddToProtocolFee(test.tokenPath, test.amount)
 
 			uassert.Equal(t, tokenListWithAmount[test.tokenPath], test.want)
@@ -167,7 +167,7 @@ func TestClearTokenListWithAmount(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			std.TestSetRealm(test.prevRealm)
+			testing.SetRealm(test.prevRealm)
 
 			if test.shouldPanic {
 				uassert.PanicsWithMessage(t, test.panicMsg, func() {
@@ -190,7 +190,7 @@ func TestTransferProtocolFee(t *testing.T) {
 	transferToProtocolFee(t, "gno.land/r/onbloc/baz", 201)
 
 	// call TransferProtocolFee
-	std.TestSetRealm(std.NewCodeRealm(consts.GOV_STAKER_PATH))
+	testing.SetRealm(std.NewCodeRealm(consts.GOV_STAKER_PATH))
 
 	devOpsOldFoo := common.BalanceOf("gno.land/r/onbloc/foo", devOpsAddr)
 	devOpsOldBaz := common.BalanceOf("gno.land/r/onbloc/baz", devOpsAddr)
@@ -257,7 +257,7 @@ func TestAssertOnlyPoolRouterStaker(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			std.TestSetRealm(test.prevRealm)
+			testing.SetRealm(test.prevRealm)
 
 			if test.shouldPanic {
 				uassert.PanicsWithMessage(t, test.panicMsg, func() {
@@ -296,7 +296,7 @@ func TestAssertOnlyGovStaker(t *testing.T) {
 func transferToProtocolFee(t *testing.T, tokenPath string, amount uint64) {
 	t.Helper()
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	tokenTeller := common.GetTokenTeller(tokenPath)
 	tokenTeller.Transfer(protocolFeeAddr, amount)

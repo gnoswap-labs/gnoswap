@@ -16,15 +16,15 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 }
 
 func TestMintPosition01InRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 
@@ -43,7 +43,7 @@ func TestMintPosition01InRange(t *testing.T) {
 		adminAddr,
 		"",
 	)
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
 	uassert.Equal(t, positionId, uint64(1))
 	uassert.Equal(t, GetNextId(), uint64(2))
@@ -65,10 +65,10 @@ func TestMintPosition01InRange(t *testing.T) {
 }
 
 func TestSwap1(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		fooPath,
@@ -79,7 +79,7 @@ func TestSwap1(t *testing.T) {
 		consts.MIN_PRICE,
 		adminAddr,
 	)
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
 	uassert.Equal(t, amount0, "1234567")
 	uassert.Equal(t, amount1, "-3332779")
@@ -105,7 +105,7 @@ func TestSwap1(t *testing.T) {
 }
 
 func TestMintPosition02InRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 
@@ -124,7 +124,7 @@ func TestMintPosition02InRange(t *testing.T) {
 		adminAddr,
 		"",
 	)
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
 	uassert.Equal(t, positionId, uint64(2))
 	uassert.Equal(t, GetNextId(), uint64(3))
@@ -146,9 +146,9 @@ func TestMintPosition02InRange(t *testing.T) {
 }
 
 func TestSwap2(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		fooPath,
@@ -159,7 +159,7 @@ func TestSwap2(t *testing.T) {
 		consts.MIN_PRICE,
 		adminAddr,
 	)
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
 	uassert.Equal(t, amount0, "1234567")
 	uassert.Equal(t, amount1, "-3305175")
@@ -180,9 +180,9 @@ func TestSwap2(t *testing.T) {
 }
 
 func TestSwap3(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		fooPath,
@@ -193,7 +193,7 @@ func TestSwap3(t *testing.T) {
 		consts.MIN_PRICE,
 		adminAddr,
 	)
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
 	uassert.Equal(t, amount0, "1234567")
 	uassert.Equal(t, amount1, "-3292296")
@@ -231,7 +231,7 @@ func TestSwap3(t *testing.T) {
 }
 
 func TestIncreaseLiquidity02(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 
@@ -246,7 +246,7 @@ func TestIncreaseLiquidity02(t *testing.T) {
 		"0",         // amount1Min
 		max_timeout, // deadline
 	)
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
 	uassert.Equal(t, m0, "984790")
 	uassert.Equal(t, m1, "10000000")
@@ -257,7 +257,7 @@ func TestIncreaseLiquidity02(t *testing.T) {
 }
 
 func TestDecreaseLiquidityPosition02(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	positionId := uint64(2)
 

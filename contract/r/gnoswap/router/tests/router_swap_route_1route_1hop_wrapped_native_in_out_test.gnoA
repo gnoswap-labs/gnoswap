@@ -17,7 +17,7 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, pl.GetPoolCreationFee()*3)
 
@@ -25,14 +25,14 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestPositionMintQuxGnot(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// send
-	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 1000009}})
-	std.TestSetOriginSend(std.Coins{{"ugnot", 1000009}}, nil)
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 1000009}})
+	testing.SetOriginSend(std.Coins{{"ugnot", 1000009}})
 
 	// Deposit(wrap)
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	wugnot.Deposit()
 
 	qux.Approve(poolAddr, consts.UINT64_MAX)
@@ -46,7 +46,7 @@ func TestPositionMintQuxGnot(t *testing.T) {
 }
 
 func TestDrySwapRouteQuxGnotExactIn(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	dryResult := DrySwapRoute(
 		quxPath,               // inputToken
@@ -61,7 +61,7 @@ func TestDrySwapRouteQuxGnotExactIn(t *testing.T) {
 }
 
 func TestDrySwapRouteQuxGnotExactOut(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	dryResult := DrySwapRoute(
 		quxPath,               // inputToken

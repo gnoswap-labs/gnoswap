@@ -14,6 +14,7 @@ package staker_test
 import (
 	"std"
 	"strconv"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/testutils"
@@ -78,16 +79,16 @@ func main() {
 }
 
 func testInit() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	sr.SetUnStakingFeeByAdmin(0)
 }
 
 func testCreatePool() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	pl.SetPoolCreationFeeByAdmin(0)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pl.CreatePool(
 		barPath,
 		quxPath,
@@ -97,12 +98,12 @@ func testCreatePool() {
 }
 
 func testMintBarQuxPos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	qux.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pn.Mint(
 		barPath,
 		quxPath,
@@ -120,12 +121,12 @@ func testMintBarQuxPos01() {
 }
 
 func testMintBarQuxPos02() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	qux.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pn.Mint(
 		barPath,
 		quxPath,
@@ -143,14 +144,14 @@ func testMintBarQuxPos02() {
 }
 
 func testCreateExternalIncentiveGns() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Transfer(externalCreatorUser, 9000000000)
 	gns.Transfer(externalCreatorUser, depositGnsAmount)
 
-	std.TestSetRealm(externalCreatorRealm) // creator
+	testing.SetRealm(externalCreatorRealm) // creator
 	gns.Approve(stakerAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	sr.CreateExternalIncentive(
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		gnsPath,
@@ -168,30 +169,30 @@ func testMakeExternalStart() {
 	blockAvgTime := milliToSec(consts.BLOCK_GENERATION_INTERVAL)
 	blockLeft := timeLeft / blockAvgTime
 
-	std.TestSkipHeights(int64(blockLeft)) // skip until external bar starts
-	std.TestSkipHeights(10)               // skip bit more to see reward calculation
+	testing.SkipHeights(int64(blockLeft)) // skip until external bar starts
+	testing.SkipHeights(10)               // skip bit more to see reward calculation
 }
 
 func testStakeTokenPos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	gnft.Approve(stakerAddr, positionIdFrom(1))
 	sr.StakeToken(1, "")
 }
 
 func testStakeTokenPos02() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	gnft.Approve(stakerAddr, positionIdFrom(2))
 	sr.StakeToken(2, "")
 }
 
 func testCollectRewardPos01AndPos02() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	sr.CollectReward(1, false)
 	sr.CollectReward(2, false)
 }
@@ -204,10 +205,10 @@ func testEndExternalGns() {
 	blockAvgTime := milliToSec(consts.BLOCK_GENERATION_INTERVAL)
 	blockLeft := timeLeft / blockAvgTime
 
-	std.TestSkipHeights(int64(blockLeft)) // skip until external gns ends
-	std.TestSkipHeights(10)               // skip bit more to see reward calculation
+	testing.SkipHeights(int64(blockLeft)) // skip until external gns ends
+	testing.SkipHeights(10)               // skip bit more to see reward calculation
 
-	std.TestSetRealm(externalCreatorRealm)
+	testing.SetRealm(externalCreatorRealm)
 	gnsBalanceBeforeEnds := gns.BalanceOf(externalCreatorUser)
 	sr.EndExternalIncentive(
 		externalCreatorAddr,
@@ -226,8 +227,8 @@ func testEndExternalGns() {
 }
 
 func testCollectRewardPos01AndPos02AfterEnd() {
-	std.TestSetRealm(adminRealm)
-	std.TestSkipHeights(1)
+	testing.SetRealm(adminRealm)
+	testing.SkipHeights(1)
 
 	before := gns.BalanceOf(adminUser)
 	sr.CollectReward(1, false)

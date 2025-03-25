@@ -72,23 +72,23 @@ func main() {
 }
 
 func testInit() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// prepare wugnot
-	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
-	std.TestSetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}}, nil)
+	testing.SetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}})
 	wugnot.Deposit()
-	std.TestSetOriginSend(nil, nil)
+	testing.SetOriginSend(nil)
 }
 
 func testCreatePool() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	pl.SetPoolCreationFeeByAdmin(0)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pl.CreatePool(
 		wugnotPath,
 		gnsPath,
@@ -98,12 +98,12 @@ func testCreatePool() {
 }
 
 func testMintWugnotGnsPos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	wugnot.Approve(poolAddr, consts.UINT64_MAX)
 	gns.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pn.Mint(
 		wugnotPath,
 		gnsPath,
@@ -121,12 +121,12 @@ func testMintWugnotGnsPos01() {
 }
 
 func testMintWugnotGnsPos02() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	wugnot.Approve(poolAddr, consts.UINT64_MAX)
 	gns.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pn.Mint(
 		wugnotPath,
 		gnsPath,
@@ -144,19 +144,19 @@ func testMintWugnotGnsPos02() {
 }
 
 func testStakeTokenPos01AndPos02() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gnft.Approve(stakerAddr, positionIdFrom(1))
 	gnft.Approve(stakerAddr, positionIdFrom(2))
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	sr.StakeToken(1, "")
 	sr.StakeToken(2, "")
 }
 
 func testCheckReward01() {
-	std.TestSkipHeights(1)
-	std.TestSetRealm(adminRealm)
+	testing.SkipHeights(1)
+	testing.SetRealm(adminRealm)
 
 	oldGns := gns.BalanceOf(adminUser)
 	sr.CollectReward(1, false)
@@ -169,7 +169,7 @@ func testCheckReward01() {
 }
 
 func testMakePosition1OutRangeBySwap() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 
@@ -197,8 +197,8 @@ func testMakePosition1OutRangeBySwap() {
 }
 
 func testCheckReward02() {
-	std.TestSkipHeights(1)
-	std.TestSetRealm(adminRealm)
+	testing.SkipHeights(1)
+	testing.SetRealm(adminRealm)
 
 	oldGns := gns.BalanceOf(adminUser)
 	sr.CollectReward(1, false)
@@ -211,7 +211,7 @@ func testCheckReward02() {
 }
 
 func testMakePosition1InRangeBySwap() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 
@@ -239,8 +239,8 @@ func testMakePosition1InRangeBySwap() {
 }
 
 func testCheckReward03() {
-	std.TestSkipHeights(1)
-	std.TestSetRealm(adminRealm)
+	testing.SkipHeights(1)
+	testing.SetRealm(adminRealm)
 
 	oldGns := gns.BalanceOf(adminUser)
 	sr.CollectReward(1, false)

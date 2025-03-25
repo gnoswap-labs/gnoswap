@@ -25,7 +25,7 @@ func init() {
 	setConfigVersion(1, config)
 }
 
-func TestProposeText(t *testing.T) {
+func TestProposeText_Scenario(t *testing.T) {
 	proposeText(t)
 	vote(t)
 	cancel(t)
@@ -34,7 +34,7 @@ func TestProposeText(t *testing.T) {
 
 func proposeText(t *testing.T) {
 	t.Run("ProposeText with insufficient delegation", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-004] not enough balance || proposer(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) has not enough xGNS, balance(0), wanted(100)",
 			func() {
@@ -43,43 +43,72 @@ func proposeText(t *testing.T) {
 	})
 
 	t.Run("Successful text proposal", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		proposalsJson := GetProposals()
 		uassert.Equal(t, proposalsJson, ``)
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		gns.Approve(govStakerAddr, uint64(1_000_000))
 		gs.Delegate(admin, uint64(1_000_000), "")
-		std.TestSkipHeights(11) // VotingWeightSmoothingDuration is 10 block
+		testing.SkipHeights(11) // VotingWeightSmoothingDuration is 10 block
 
 		proposalID := ProposeText("test_title", "test_description")
 		uassert.Equal(t, proposalID, uint64(1))
 
+		// test proposal object
 		pp, exists := proposals.Get(formatUint(proposalID))
 		uassert.True(t, exists)
-
 		proposal := pp.(ProposalInfo)
-		uassert.Equal(t, proposal.Proposer, admin)
-		uassert.Equal(t, string(proposal.ProposalType), "TEXT")
-		uassert.True(t, proposal.State.Created)
-		uassert.True(t, proposal.State.Upcoming)
-		uassert.Equal(t, proposal.Yea.ToString(), "0")
-		uassert.Equal(t, proposal.Nay.ToString(), "0")
-		uassert.Equal(t, proposal.ConfigVersion, uint64(1))
-		uassert.Equal(t, proposal.Title, "test_title")
-		uassert.Equal(t, proposal.Description, "test_description")
 
-		proposalsJson = GetProposals()
-		uassert.Equal(t, proposalsJson, `{"height":"134","now":"1234567912","proposals":[{"id":"1","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJjcmVhdGVkQXQiOiIxMjM0NTY3OTEyIiwidXBjb21pbmciOiJ0cnVlIiwiYWN0aXZlIjoiZmFsc2UiLCJ2b3RpbmdTdGFydCI6IjEyMzQ1Njc5MjIiLCJ2b3RpbmdFbmQiOiIxMjM0NTY3OTUyIiwicGFzc2VkIjoiZmFsc2UiLCJwYXNzZWRBdCI6IjAiLCJyZWplY3RlZCI6ImZhbHNlIiwicmVqZWN0ZWRBdCI6IjAiLCJjYW5jZWxlZCI6ImZhbHNlIiwiY2FuY2VsZWRBdCI6IjAiLCJleGVjdXRlZCI6ImZhbHNlIiwiZXhlY3V0ZWRBdCI6IjAiLCJleHBpcmVkIjoiZmFsc2UiLCJleHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":""}]}`)
+		proposalTests := []struct {
+			name     string
+			actual   any
+			expected any
+		}{
+			{"Proposer", proposal.Proposer, admin},
+			{"ProposalType", string(proposal.ProposalType), "TEXT"},
+			{"Created", proposal.State.Created, true},
+			{"Upcoming", proposal.State.Upcoming, true},
+			{"Yea equals Nay", proposal.Yea.ToString(), proposal.Nay.ToString()},
+			{"ConfigVersion", proposal.ConfigVersion, uint64(1)},
+			{"Title", proposal.Title, "test_title"},
+			{"Description", proposal.Description, "test_description"},
+		}
 
-		votesJson := GetVotesByAddress(admin)
-		uassert.Equal(t, votesJson, `{"height":"134","now":"1234567912","votes":[]}`)
+		for _, tt := range proposalTests {
+			t.Run(tt.name, func(t *testing.T) {
+				uassert.Equal(t, tt.expected, tt.actual)
+			})
+		}
+
+		// test GetProposals API response
+		proposals := unmarshal(GetProposals())
+		pps := proposals.MustKey("proposals").MustArray()[0]
+
+		apiTests := []struct {
+			name     string
+			key      string
+			expected string
+		}{
+			{"ID", "id", "1"},
+			{"Type", "type", "TEXT"},
+			{"Title", "title", "test_title"},
+			{"Description", "description", "test_description"},
+			{"Proposer", "proposer", admin.String()},
+		}
+
+		for _, tt := range apiTests {
+			t.Run(tt.name, func(t *testing.T) {
+				actual := pps.MustKey(tt.key).MustString()
+				uassert.Equal(t, tt.expected, actual)
+			})
+		}
 	})
 }
 
 func vote(t *testing.T) {
 	t.Run("Vote non existent proposal", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-003] requested data not found || proposalId(123) not found",
 			func() {
@@ -90,7 +119,7 @@ func vote(t *testing.T) {
 	proposalId := uint64(1) // text proposal id
 
 	t.Run("Vote before voting period", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period",
 			func() {
@@ -99,36 +128,82 @@ func vote(t *testing.T) {
 	})
 
 	t.Run("Successful vote YES", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		std.TestSkipHeights(5)
+		testing.SetRealm(adminRealm)
+		testing.SkipHeights(5)
 
 		voteKey := Vote(proposalId, true)
 		voted := GetVoteByVoteKey(voteKey)
 		uassert.True(t, voted)
 
+		// validate proposal object
 		pp, exists := proposals.Get(formatUint(proposalId))
 		uassert.True(t, exists)
-
 		proposal := pp.(ProposalInfo)
 
-		uassert.Equal(t, proposal.Yea.Cmp(u256.NewUint(1_000_000)), 0)
-		uassert.Equal(t, proposal.Nay.ToString(), "0")
+		proposalTests := []struct {
+			name     string
+			actual   interface{}
+			expected interface{}
+		}{
+			{"Yea amount", proposal.Yea.Cmp(u256.NewUint(1_000_000)), 0},
+			{"Nay amount", proposal.Nay.ToString(), "0"},
+			{"Upcoming status", proposal.State.Upcoming, false},
+			{"Active status", proposal.State.Active, true},
+		}
 
-		uassert.False(t, proposal.State.Upcoming)
-		uassert.True(t, proposal.State.Active)
+		for _, tt := range proposalTests {
+			t.Run(tt.name, func(t *testing.T) {
+				uassert.Equal(t, tt.expected, tt.actual)
+			})
+		}
 
-		proposalsJson := GetProposals()
-		uassert.Equal(t, proposalsJson, `{"height":"139","now":"1234567922","proposals":[{"id":"1","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJjcmVhdGVkQXQiOiIxMjM0NTY3OTEyIiwidXBjb21pbmciOiJmYWxzZSIsImFjdGl2ZSI6InRydWUiLCJ2b3RpbmdTdGFydCI6IjEyMzQ1Njc5MjIiLCJ2b3RpbmdFbmQiOiIxMjM0NTY3OTUyIiwicGFzc2VkIjoiZmFsc2UiLCJwYXNzZWRBdCI6IjAiLCJyZWplY3RlZCI6ImZhbHNlIiwicmVqZWN0ZWRBdCI6IjAiLCJjYW5jZWxlZCI6ImZhbHNlIiwiY2FuY2VsZWRBdCI6IjAiLCJleGVjdXRlZCI6ImZhbHNlIiwiZXhlY3V0ZWRBdCI6IjAiLCJleHBpcmVkIjoiZmFsc2UiLCJleHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9","extra":""}]}`)
+		proposals := unmarshal(GetProposals())
 
-		votesJson := GetVotesByAddress(admin)
-		uassert.Equal(t, votesJson, `{"height":"139","now":"1234567922","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"139","voteTimestamp":"1234567922"}]}`)
+		pps := proposals.MustKey("proposals").MustArray()[0]
 
+		apiTests := []struct {
+			name     string
+			key      string
+			expected string
+		}{
+			{"ID", "id", "1"},
+			{"Type", "type", "TEXT"},
+			{"Title", "title", "test_title"},
+			{"Description", "description", "test_description"},
+		}
+
+		for _, tt := range apiTests {
+			t.Run(tt.name, func(t *testing.T) {
+				actual := pps.MustKey(tt.key).MustString()
+				uassert.Equal(t, tt.expected, actual)
+			})
+		}
+
+		votes := unmarshal(GetVotesByAddress(admin))
 		addrVoteJson := GetVoteByAddressFromProposalById(admin, proposalId)
-		uassert.Equal(t, addrVoteJson, `{"height":"139","now":"1234567922","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"139","voteTimestamp":"1234567922"}]}`)
+		data := unmarshal(addrVoteJson)
+
+		expectedFields := []struct {
+			key      string
+			expected string
+		}{
+			{"proposalId", "1"},
+			{"voteYes", "true"},
+			{"voteWeight", "1000000"},
+			{"voteHeight", "139"},
+		}
+
+		for _, field := range expectedFields {
+			votesValue := votes.MustKey("votes").MustArray()[0].MustKey(field.key).MustString()
+			dataValue := data.MustKey("votes").MustArray()[0].MustKey(field.key).MustString()
+
+			uassert.Equal(t, field.expected, votesValue)
+			uassert.Equal(t, votesValue, dataValue)
+		}
 	})
 
 	t.Run("Vote twice", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-006] can not vote twice",
 			func() {
@@ -137,8 +212,8 @@ func vote(t *testing.T) {
 	})
 
 	t.Run("Vote after voting period", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		std.TestSkipHeights(2001)
+		testing.SetRealm(adminRealm)
+		testing.SkipHeights(2001)
 
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period",
@@ -148,7 +223,7 @@ func vote(t *testing.T) {
 	})
 
 	t.Run("Proposal status after voting period", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		updateProposalsState()
 
 		// proposal := proposals[proposalId]
@@ -165,7 +240,7 @@ func vote(t *testing.T) {
 
 func cancel(t *testing.T) {
 	t.Run("Cancel non existent proposal", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-003] requested data not found || proposalId(123) not found",
 			func() {
@@ -174,14 +249,13 @@ func cancel(t *testing.T) {
 	})
 
 	t.Run("new text proposal", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		proposalId := ProposeText("test2_title", "test2_description")
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 
 	t.Run("Cancel new text proposal", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		std.TestSkipHeights(1)
+		testing.SetRealm(adminRealm)
 		Cancel(proposalId)
 
 		pp, exists := proposals.Get(formatUint(proposalId))
@@ -194,7 +268,7 @@ func cancel(t *testing.T) {
 	})
 
 	t.Run("Cancel already canceled proposal", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-008] can not cancel already canceled proposal || proposalId(2) has already canceled",
 			func() {
@@ -203,9 +277,9 @@ func cancel(t *testing.T) {
 	})
 
 	t.Run("Cancel after voting period", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		proposalId = ProposeText("test3_title", "test3_description")
-		std.TestSkipHeights(11)
+		testing.SkipHeights(11)
 
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-009] unable to cancel voting proposal || voting has already started for proposalId(3)",
@@ -217,7 +291,7 @@ func cancel(t *testing.T) {
 
 func execute(t *testing.T) {
 	t.Run("Execute non existent proposal", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
 			"proposal 123 not found",
 			func() {
@@ -226,8 +300,8 @@ func execute(t *testing.T) {
 	})
 
 	t.Run("Execute text proposal", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		std.TestSkipHeights(11)
+		testing.SetRealm(adminRealm)
+		testing.SkipHeights(11)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-011] can not execute text proposal",
 			func() {

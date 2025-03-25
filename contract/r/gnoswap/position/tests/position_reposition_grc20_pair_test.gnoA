@@ -16,14 +16,14 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestMintPosition01InRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, 18394892)
 	foo.Approve(poolAddr, 50000000)
 
@@ -63,10 +63,10 @@ func TestMintPosition01InRange(t *testing.T) {
 }
 
 func TestSwap1(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, 1234567)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		fooPath,
@@ -96,7 +96,7 @@ func TestSwap1(t *testing.T) {
 }
 
 func TestMintPosition02InRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 
@@ -150,7 +150,7 @@ func TestUnclaimedFee02(t *testing.T) {
 }
 
 func TestDecreaseLiquidityInPosition(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	positionId := uint64(1)
 
@@ -185,7 +185,7 @@ func TestDecreaseLiquidityInPosition(t *testing.T) {
 }
 
 func TestMintPosition03InRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 
@@ -225,7 +225,7 @@ func TestMintPosition03InRange(t *testing.T) {
 }
 
 func TestRepositionNotOwner(t *testing.T) {
-	std.TestSetRealm(std.NewUserRealm(addr02))
+	testing.SetRealm(std.NewUserRealm(addr02))
 	uassert.PanicsWithMessage(
 		t,
 		`[GNOSWAP-POSITION-001] caller has no permission || caller(g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at) is not owner(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) for positionId(1)`,
@@ -235,7 +235,7 @@ func TestRepositionNotOwner(t *testing.T) {
 }
 
 func TestRepositionOwnerButNowBurned(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	uassert.PanicsWithMessage(
 		t,
 		`[GNOSWAP-POSITION-009] position is not clear || position(2) isn't clear(liquidity:341464938, tokensOwed0:0, tokensOwed1:0)`,
@@ -245,7 +245,7 @@ func TestRepositionOwnerButNowBurned(t *testing.T) {
 }
 
 func TestRepositionSlippageTooLarge(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	uassert.PanicsWithMessage(
 		t,
 		`[GNOSWAP-POSITION-002] slippage failed || Price Slippage Check(amount0(0) >= amount0Min(100000000000), amount1(500) >= amount1Min(100000000000))`,
@@ -255,7 +255,7 @@ func TestRepositionSlippageTooLarge(t *testing.T) {
 }
 
 func TestReposition(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	positionId := uint64(1)
 

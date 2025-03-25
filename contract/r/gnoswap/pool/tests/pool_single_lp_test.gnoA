@@ -32,7 +32,7 @@ var (
 // 1. reate Pool using Factory Contract by admin
 func TestInitCreatePool(t *testing.T) {
 	// call gns faucet to get creation fee
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // x2.7
@@ -40,12 +40,12 @@ func TestInitCreatePool(t *testing.T) {
 
 // 2. Mint by admin
 func TestMint(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	amount0, amount1 := Mint(
 		fooPath,
 		barPath,
@@ -112,7 +112,7 @@ func TestMint(t *testing.T) {
 
 // 3. Burn by admin
 func TestBurn(t *testing.T) {
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 
 	b11, b12 := Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr)
 	b21, b22 := Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr)
@@ -142,7 +142,7 @@ func TestBurn(t *testing.T) {
 
 // 4. Collect
 func TestCollect(t *testing.T) {
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 
 	// withdraw all token before test `Collect`
 	Collect(barPath, fooPath, fee500, adminAddr, test_tickLower, test_tickUpper, "50000000", "50000000")
@@ -193,11 +193,11 @@ func TestSwap(t *testing.T) {
 	test_liquidity := pool.Liquidity()
 	uassert.Equal(t, test_liquidity.ToString(), "0")
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20000)).ToString(), adminAddr)
 
 	// Swap several times
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	test_price := consts.MIN_PRICE
 	{
 		poolOldToken0Bal := common.GetToken(pool.token0Path).BalanceOf(poolAddr)
@@ -318,7 +318,7 @@ func TestSetFeeProtocolByAdmin(t *testing.T) {
 	)
 
 	// admin call
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	SetFeeProtocolByAdmin(6, 8)
 
 	pools.Iterate("", "", func(poolPath string, iPool interface{}) bool {
@@ -331,7 +331,7 @@ func TestSetFeeProtocolByAdmin(t *testing.T) {
 
 // 7. CollectProtocol by admin
 func TestCollectProtocol(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	SetFeeProtocolByAdmin(6, 8)
 
 	pool := GetPool(barPath, fooPath, fee500)
@@ -339,14 +339,14 @@ func TestCollectProtocol(t *testing.T) {
 
 	// Make ProtocolFee via Swap by admin ( Mint by admin )
 	{
-		std.TestSetRealm(rouRealm)
+		testing.SetRealm(rouRealm)
 
 		Swap(barPath, fooPath, fee500, adminAddr, true, "200000", consts.MIN_PRICE, adminAddr) // swap token0 -> token1 => fee only in token0
 
 		adminOldToken0Bal := common.GetToken(pool.token0Path).BalanceOf(adminAddr)
 		adminOldToken1Bal := common.GetToken(pool.token1Path).BalanceOf(adminAddr)
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		amount0, amount1 := CollectProtocolByAdmin(barPath, fooPath, fee500, adminAddr, "100000", "100000")
 
 		adminNewToken0Bal := common.GetToken(pool.token0Path).BalanceOf(adminAddr)

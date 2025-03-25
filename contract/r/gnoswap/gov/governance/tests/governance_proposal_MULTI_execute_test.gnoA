@@ -11,10 +11,10 @@ import (
 )
 
 func init() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Approve(govStakerAddr, uint64(1_000_000))
 	gs.Delegate(admin, uint64(1_000_000), "")
-	std.TestSkipHeights(11) // VotingWeightSmoothingDuration is 10 block
+	testing.SkipHeights(11) // VotingWeightSmoothingDuration is 10 block
 
 	// overwrite config for testcase
 	config = Config{
@@ -33,10 +33,10 @@ func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *te
 	uassert.Equal(t, gns.BalanceOf(communityPoolAddr), uint64(0))
 	uassert.Equal(t, std.ChainHeight(), int64(123))
 
-	std.TestSkipHeights(5)
+	testing.SkipHeights(5)
 
 	t.Run("propose successful", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		proposalID := ProposeParameterChange(
 			"test_title",
@@ -53,7 +53,7 @@ func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *te
 	t.Run("vote => skip time => pass status", func(t *testing.T) {
 		t.Skip()
 		// vote to pass it
-		std.TestSkipHeights(11) // voting start delay
+		testing.SkipHeights(11) // voting start delay
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
@@ -65,7 +65,7 @@ func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *te
 		voted := GetVoteByVoteKey(voteKey)
 		uassert.Equal(t, voted, true)
 
-		std.TestSkipHeights(31) // ends voting period
+		testing.SkipHeights(31) // ends voting period
 		updateProposalsState()
 
 		uassert.Equal(t, gns.BalanceOf(communityPoolAddr), uint64(33533103))
@@ -74,7 +74,7 @@ func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *te
 
 	t.Run("execute proposal", func(t *testing.T) {
 		t.Skip()
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		uassert.Equal(t, gns.GetAvgBlockTimeInMs(), int64(2000))
 		uassert.Equal(t, gns.BalanceOf(communityPoolAddr), uint64(33533103))

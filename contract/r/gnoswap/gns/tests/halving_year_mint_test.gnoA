@@ -18,7 +18,7 @@ func TestMintGns(t *testing.T) {
 		for year := int64(1); year <= 12; year++ {
 			skipUntilLastHeightOfHalvingYear(t, year)
 
-			std.TestSetRealm(emissionRealm)
+			testing.SetRealm(emissionRealm)
 			mintedAmount := MintGns(adminAddr)
 			uassert.Equal(t, GetHalvingYearMaxAmount(year), mintedAmount)
 			uassert.Equal(t, GetHalvingYearMaxAmount(year), GetHalvingYearMintAmount(year))
@@ -27,9 +27,9 @@ func TestMintGns(t *testing.T) {
 	})
 
 	t.Run("no more emission after it ends", func(t *testing.T) {
-		std.TestSkipHeights(blockPerYear)
+		testing.SkipHeights(blockPerYear)
 
-		std.TestSetRealm(emissionRealm)
+		testing.SetRealm(emissionRealm)
 		mintedAmount := MintGns(adminAddr)
 		uassert.Equal(t, uint64(0), mintedAmount)
 	})
@@ -39,5 +39,5 @@ func skipUntilLastHeightOfHalvingYear(t *testing.T, year int64) {
 	t.Helper()
 
 	lastHeight := GetHalvingYearEndBlock(year)
-	std.TestSkipHeights(lastHeight - std.ChainHeight())
+	testing.SkipHeights(lastHeight - std.ChainHeight())
 }

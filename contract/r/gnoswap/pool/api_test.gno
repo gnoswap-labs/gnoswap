@@ -11,7 +11,7 @@ import (
 )
 
 func TestInitTwoPools(t *testing.T) {
-	std.TestSetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(std.NewUserRealm(adminAddr))
 	SetPoolCreationFeeByAdmin(0)
 
 	// foo:bar
@@ -63,7 +63,7 @@ func TestMakeStatNode(t *testing.T) {
 	})
 
 	t.Run("increase block height and timestamp", func(t *testing.T) {
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 
 		statNode := newStatNode().JSON()
 

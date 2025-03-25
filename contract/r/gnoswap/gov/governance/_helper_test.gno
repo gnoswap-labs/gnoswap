@@ -3,8 +3,9 @@ package governance
 import (
 	"std"
 
-	"gno.land/p/gnoswap/consts"
+	"gno.land/p/demo/json"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/access"
 )
 
@@ -49,4 +50,8 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 	}
 
 	return uint64(coins.AmountOf("ugnot"))
+}
+
+func unmarshal(data string) *json.Node {
+	return json.Must(json.Unmarshal([]byte(data)))
 }

@@ -287,16 +287,16 @@ func TestCollectDeposit(t *testing.T) {
 	})
 
 	t.Run("Cannot collect before claimable height", func(t *testing.T) {
-		std.TestSetRealm(std.NewUserRealm(testAddr))
+		testing.SetRealm(std.NewUserRealm(testAddr))
 		amount, _ := processDepositCollection([]string{deposit.id}, "")
 		uassert.Equal(t, uint64(0), amount)
 	})
 
 	t.Run("Can collect after claimable height", func(t *testing.T) {
 		// Skip to after claimable height
-		std.TestSkipHeights(int64(deposit.claimableHeight - height + 1))
+		testing.SkipHeights(int64(deposit.claimableHeight - height + 1))
 
-		std.TestSetRealm(std.NewUserRealm(testAddr))
+		testing.SetRealm(std.NewUserRealm(testAddr))
 		amount, errCode := processDepositCollection([]string{deposit.id}, "")
 		uassert.NoError(t, errCode)
 		uassert.Equal(t, uint64(100), amount)
@@ -309,7 +309,7 @@ func TestDepositGns(t *testing.T) {
 	projects[project.id] = project
 
 	t.Run("Fail with insufficient balance", func(t *testing.T) {
-		std.TestSetRealm(std.NewUserRealm(testAddr))
+		testing.SetRealm(std.NewUserRealm(testAddr))
 
 		defer func() {
 			r := recover()
@@ -319,18 +319,18 @@ func TestDepositGns(t *testing.T) {
 		}()
 
 		DepositGns(project.id+":30", 1000, "")
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 
 	t.Run("Success with sufficient balance", func(t *testing.T) {
 		// transfer enough gns
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		gns.Transfer(testAddr, 1000000)
 
-		std.TestSetRealm(std.NewUserRealm(testAddr))
+		testing.SetRealm(std.NewUserRealm(testAddr))
 		gns.Approve(launchpadAddr, 1000000)
 
-		std.TestSkipHeights(10)
+		testing.SkipHeights(10)
 		depositId := DepositGns(project.id+":30", 1000000, "")
 		deposit := deposits[depositId]
 
@@ -398,12 +398,12 @@ func TestMultipleDeposits(t *testing.T) {
 			CurrentTime:   uint64(time.Now().Unix()),
 		}
 
-		std.TestSetRealm(std.NewUserRealm(testAddr))
+		testing.SetRealm(std.NewUserRealm(testAddr))
 		deposit, _ := createDeposit(info, 100)
 		deposits[deposit.id] = deposit
 		updateDepositIndices(deposit, state)
 
-		std.TestSkipHeights(100) // Skip some blocks between deposits
+		testing.SkipHeights(100) // Skip some blocks between deposits
 	}
 
 	// Verify indices are correct
@@ -596,7 +596,7 @@ func TestProcessCollectedDeposits_TransactionFail(t *testing.T) {
 
 	xgnsMint(t, mockXGNS, launchpadAddr, 500)
 
-	std.TestSetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
+	testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
 
 	processCollectedDeposits([]string{deposit.id}, "")
 }
@@ -621,9 +621,9 @@ func TestProcessCollectedDeposits_BalanceChanges(t *testing.T) {
 	deposit, _ := createDeposit(info, depositAmount)
 	deposits[deposit.id] = deposit
 
-	std.TestSkipHeights(int64(deposit.claimableHeight - uint64(std.ChainHeight()) + 1))
+	testing.SkipHeights(int64(deposit.claimableHeight - uint64(std.ChainHeight()) + 1))
 
-	std.TestSetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
+	testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
 	amount := processCollectedDeposits([]string{deposit.id}, "")
 
 	xgnsCheckTotalSupply(t, mockXGNS, 1000)
@@ -631,7 +631,7 @@ func TestProcessCollectedDeposits_BalanceChanges(t *testing.T) {
 
 func TestCollectDepositGnsByDepositId_ClaimableCheck(t *testing.T) {
 	_, depositor := setupTestDeposit(t)
-	std.TestSkipHeights(10)
+	testing.SkipHeights(10)
 	project := createTestProject(t)
 	projects[project.id] = project
 
@@ -646,7 +646,7 @@ func TestCollectDepositGnsByDepositId_ClaimableCheck(t *testing.T) {
 		CurrentTime:   now,
 	}
 
-	std.TestSkipHeights(10)
+	testing.SkipHeights(10)
 	deposit, err := createDeposit(info, 100)
 	if err != nil {
 		t.Fatalf("failed create deposit: %v", err)
@@ -660,7 +660,7 @@ func TestCollectDepositGnsByDepositId_ClaimableCheck(t *testing.T) {
 	})
 
 	t.Run("Collect early => Should panic", func(t *testing.T) {
-		std.TestSetRealm(std.NewUserRealm(depositor))
+		testing.SetRealm(std.NewUserRealm(depositor))
 
 		defer func() {
 			if r := recover(); r == nil {
@@ -702,7 +702,7 @@ func TestCollectDepositGnsByDepositId_OtherOwner(t *testing.T) {
 	})
 
 	t.Run("UserB tries to collect userA's deposit => panic expected", func(t *testing.T) {
-		std.TestSetRealm(std.NewUserRealm(userB))
+		testing.SetRealm(std.NewUserRealm(userB))
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("expected panic but did not occur")
@@ -730,7 +730,7 @@ func TestCollectDepositGnsByDepositId_ExactClaimable(t *testing.T) {
 		CurrentTime:   now,
 	}
 
-	std.TestSetRealm(std.NewUserRealm(userA))
+	testing.SetRealm(std.NewUserRealm(userA))
 	// deposit
 	deposit, err := createDeposit(info, 200)
 	if err != nil {
@@ -746,20 +746,20 @@ func TestCollectDepositGnsByDepositId_ExactClaimable(t *testing.T) {
 		DepositsByUserProject: depositsByUserByProject,
 	})
 
-	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	std.TestSkipHeights(int64(10))
+	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SkipHeights(int64(10))
 	gns.MintGns(launchpadAddr)
-	std.TestSkipHeights(int64(10))
+	testing.SkipHeights(int64(10))
 
-	std.TestSetRealm(std.NewUserRealm(userA))
+	testing.SetRealm(std.NewUserRealm(userA))
 	gns.Approve(launchpadAddr, 1000)
 	token, _ := setupXGNSTest(t)
 
-	std.TestSetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
-	std.TestSetOriginCaller(std.Address(consts.LAUNCHPAD_PATH))
+	testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
+	testing.SetOriginCaller(std.Address(consts.LAUNCHPAD_PATH))
 	xgnsMint(t, token, launchpadAddr, 1000)
 
-	std.TestSetRealm(std.NewUserRealm(launchpadAddr))
+	testing.SetRealm(std.NewUserRealm(launchpadAddr))
 	xgns.Mint(
 		launchpadAddr,
 		1000,
@@ -767,10 +767,10 @@ func TestCollectDepositGnsByDepositId_ExactClaimable(t *testing.T) {
 
 	skipCount := deposit.claimableHeight - uint64(std.ChainHeight())
 	if skipCount > 0 {
-		std.TestSkipHeights(int64(skipCount))
+		testing.SkipHeights(int64(skipCount))
 	}
 
-	std.TestSetRealm(std.NewUserRealm(userA))
+	testing.SetRealm(std.NewUserRealm(userA))
 	collected := CollectDepositGnsByDepositId(deposit.id)
 	uassert.Equal(t, uint64(200), collected, "should collect the deposit fully after claimableHeight/time")
 }

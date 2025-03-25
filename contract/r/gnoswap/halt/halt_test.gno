@@ -35,13 +35,13 @@ func TestHalts(t *testing.T) {
 
 func TestSetHaltLevelByAdminAndGovernance(t *testing.T) {
 	t.Run("with non-admin or non-governance privilege, should fail", func(t *testing.T) {
-		std.TestSetRealm(userRealm)
+		testing.SetRealm(userRealm)
 		err := SetHaltLevelByAdmin(phalt.LvNoHalt)
 		uassert.Error(t, err)
 	})
 
 	t.Run("with admin privilege, success", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		// Initially we're in MainnetSafeMode
 		if GetCurrentHaltLevel() != LvMainnetSafeMode {
@@ -66,13 +66,13 @@ func TestSetHaltLevelByAdminAndGovernance(t *testing.T) {
 
 func TestSetHalt(t *testing.T) {
 	t.Run("with admin privilege, success", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		err := SetHalt(true)
 		uassert.NoError(t, err)
 	})
 
 	t.Run("with governance privilege, success", func(t *testing.T) {
-		std.TestSetRealm(govRealm)
+		testing.SetRealm(govRealm)
 
 		// Currently in CompleteHalt from previous test
 		uassert.True(t, GetHalt())
@@ -87,13 +87,13 @@ func TestSetHalt(t *testing.T) {
 
 func TestSetHaltWithLevel(t *testing.T) {
 	t.Run("with non-privileged user, should fail", func(t *testing.T) {
-		std.TestSetRealm(userRealm)
+		testing.SetRealm(userRealm)
 		err := SetHalt(true, phalt.LvEmergencyHalt)
 		uassert.Error(t, err)
 	})
 
 	t.Run("admin can set EmergencyHalt and CompleteHalt", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		// Set EmergencyHalt
 		err := SetHalt(true, phalt.LvEmergencyHalt)
@@ -123,7 +123,7 @@ func TestSetHaltWithLevel(t *testing.T) {
 	})
 
 	t.Run("governance can set EmergencyHalt and CompleteHalt", func(t *testing.T) {
-		std.TestSetRealm(govRealm)
+		testing.SetRealm(govRealm)
 
 		// Set EmergencyHalt
 		err := SetHalt(true, phalt.LvEmergencyHalt)
@@ -141,7 +141,7 @@ func TestSetHaltWithLevel(t *testing.T) {
 	})
 
 	t.Run("invalid halt levels should fail", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		// Try to set ContractHalt (not allowed)
 		err := SetHalt(true, phalt.LvContractHalt)
@@ -153,7 +153,7 @@ func TestSetHaltWithLevel(t *testing.T) {
 	})
 
 	t.Run("unhalt should always set to NoHalt", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		// First set to EmergencyHalt
 		err := SetHalt(true, phalt.LvEmergencyHalt)
@@ -168,7 +168,7 @@ func TestSetHaltWithLevel(t *testing.T) {
 	})
 
 	t.Run("default halt level should be CompleteHalt", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		// Set halt without specifying level
 		err := SetHalt(true)
@@ -179,7 +179,7 @@ func TestSetHaltWithLevel(t *testing.T) {
 	})
 
 	t.Run("explicit NoHalt setting should work", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		// First set to EmergencyHalt
 		err := SetHalt(true, phalt.LvEmergencyHalt)
@@ -201,7 +201,7 @@ type haltTestCases struct {
 
 func TestEnableOperationsForTestnet(t *testing.T) {
 	// Setup test with admin privileges
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// First set to MainnetSafeMode
 	err := SetHaltLevelByAdmin(LvMainnetSafeMode)
@@ -266,7 +266,7 @@ func TestEnableOperationsForTestnet(t *testing.T) {
 
 func TestCustomOperationHalts(t *testing.T) {
 	// Setup test with admin privileges
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// Define custom operation types for testing
 	customOp1 := phalt.OpType("CUSTOM_OP_1")
@@ -311,7 +311,7 @@ func TestCustomOperationHalts(t *testing.T) {
 
 func TestOperationStatusEdgeCases(t *testing.T) {
 	// Setup test with admin privileges
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	t.Run("EnableOperations in non-MainnetSafeMode", func(t *testing.T) {
 		// First set to NoHalt
@@ -355,7 +355,7 @@ func TestOperationStatusEdgeCases(t *testing.T) {
 }
 
 func TestModeTransitions(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	t.Run("MainnetSafeMode to NoHalt transition", func(t *testing.T) {
 		// Set initial state to MainnetSafeMode

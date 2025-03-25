@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/demo/avl"
@@ -9,7 +8,7 @@ import (
 
 func TestDelegateInternal(t *testing.T) {
 	t.Skip("Must running separately. because this test depends on TestUndelegate's state")
-	std.TestSetOriginCaller(testAddr1)
+	testing.SetOriginCaller(testAddr1)
 	resetState()
 
 	addr1 := testAddr1
@@ -56,7 +55,7 @@ func TestDelegateInternal(t *testing.T) {
 func TestUnDelegateInternal(t *testing.T) {
 	t.Skip("Must running separately. because this test depends on TestUndelegate's state")
 	addr1 := testAddr1
-	std.TestSetOriginCaller(addr1)
+	testing.SetOriginCaller(addr1)
 	resetState()
 
 	t.Run("fail - no delegation", func(t *testing.T) {

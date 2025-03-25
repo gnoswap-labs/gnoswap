@@ -65,7 +65,7 @@ func TestIsUserCall(t *testing.T) {
 			name: "called from user",
 			action: func() bool {
 				userRealm := std.NewUserRealm(std.Address("user"))
-				std.TestSetRealm(userRealm)
+				testing.SetRealm(userRealm)
 				return isUserCall()
 			},
 			expected: true,
@@ -74,7 +74,7 @@ func TestIsUserCall(t *testing.T) {
 			name: "called from realm",
 			action: func() bool {
 				fromRealm := std.NewCodeRealm("gno.land/r/realm")
-				std.TestSetRealm(fromRealm)
+				testing.SetRealm(fromRealm)
 				return isUserCall()
 			},
 			expected: false,
@@ -99,7 +99,7 @@ func TestGetPrevAsString(t *testing.T) {
 			name: "user call",
 			action: func() (string, string) {
 				userRealm := std.NewUserRealm(std.Address("user"))
-				std.TestSetRealm(userRealm)
+				testing.SetRealm(userRealm)
 				return getPrevAsString()
 			},
 			expectedAddr:    "user",
@@ -109,7 +109,7 @@ func TestGetPrevAsString(t *testing.T) {
 			name: "code call",
 			action: func() (string, string) {
 				codeRealm := std.NewCodeRealm("gno.land/r/demo/realm")
-				std.TestSetRealm(codeRealm)
+				testing.SetRealm(codeRealm)
 				return getPrevAsString()
 			},
 			expectedAddr:    std.DerivePkgAddr("gno.land/r/demo/realm").String(),
@@ -229,7 +229,7 @@ func TestGetPrevRealm(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			std.TestSetOriginCaller(std.Address(tc.originCaller))
+			testing.SetOriginCaller(std.Address(tc.originCaller))
 			got := getPrevRealm()
 			uassert.Equal(t, got.Address().String(), tc.expected[0])
 			uassert.Equal(t, got.PkgPath(), tc.expected[1])
@@ -251,7 +251,7 @@ func TestGetPrevAddr(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			std.TestSetOriginCaller(std.Address(tc.originCaller))
+			testing.SetOriginCaller(std.Address(tc.originCaller))
 			got := getPrevAddr()
 			uassert.Equal(t, got.String(), tc.expected.String())
 		})

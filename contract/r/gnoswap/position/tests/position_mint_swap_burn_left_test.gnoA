@@ -18,12 +18,12 @@ import (
 
 func init() {
 	// set pool create fee to 0 for testing
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFeeByAdmin(0)
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
@@ -38,7 +38,7 @@ func TestPoolBalanceInit(t *testing.T) {
 }
 
 func TestMintPosition01InRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 
@@ -73,7 +73,7 @@ func TestPoolBalanceMint01(t *testing.T) {
 }
 
 func TestMintPosition02InRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 
@@ -108,7 +108,7 @@ func TestPoolBalanceMint02(t *testing.T) {
 }
 
 func TestCollectFeeBeforeSwap(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	positionId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 
 	uassert.Equal(t, positionId, uint64(1))
@@ -129,10 +129,10 @@ func TestSwap1(t *testing.T) {
 	// token0: 22073871
 	// token1: 60000000
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, 1234567)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		fooPath,
@@ -153,7 +153,7 @@ func TestSwap1(t *testing.T) {
 }
 
 func TestUnclaimedFeePos01Swap01(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	amount0, amount1 := unclaimedFee(1)
 
 	uassert.Equal(t, amount0.ToString(), "444") // if only one position, this should be 617
@@ -172,10 +172,10 @@ func TestSwap2(t *testing.T) {
 	// token0: 23308438
 	// token1: 56661277
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		fooPath,
@@ -196,7 +196,7 @@ func TestSwap2(t *testing.T) {
 }
 
 func TestUnclaimedFeePos01Swap02(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	amount0, amount1 := unclaimedFee(1)
 
 	uassert.Equal(t, amount0.ToString(), "8683")
@@ -204,7 +204,7 @@ func TestUnclaimedFeePos01Swap02(t *testing.T) {
 }
 
 func TestUnclaimedFeePos02Swap02(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	amount0, amount1 := unclaimedFee(2)
 
 	uassert.Equal(t, amount0.ToString(), "1935")
@@ -216,7 +216,7 @@ func TestCollectFeePos01(t *testing.T) {
 	// token0: 43308438
 	// token1: 6709742
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	positionId, fee0, fee1, poolPath, _, _ := CollectFee(1, true)
 
 	uassert.Equal(t, positionId, uint64(1))
@@ -234,7 +234,7 @@ func TestDecreaseAllPos01(t *testing.T) {
 	// token0: 43299755
 	// token1: 6709742
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 		uint64(1),   // positionId
 		"318704392", // liquidity
@@ -262,7 +262,7 @@ func TestDecreaseAllPos02(t *testing.T) {
 	// token0: 7548510
 	// token1: 2
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 		uint64(2),   // positionId
 		"124373229", // liquidityRatio

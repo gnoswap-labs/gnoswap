@@ -31,9 +31,9 @@ func setupKeeper() *keeper { return NewKeeper().(*keeper) }
 func mockValidCaller() func() {
 	origCaller := std.OriginCaller()
 	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
-	std.TestSetOriginCaller(routerAddr)
+	testing.SetOriginCaller(routerAddr)
 	return func() {
-		std.TestSetOriginCaller(origCaller)
+		testing.SetOriginCaller(origCaller)
 	}
 }
 
@@ -58,9 +58,9 @@ func TestRegister(t *testing.T) {
 			refAddr: validAddr2,
 			setupCaller: func() func() {
 				origCaller := std.OriginCaller()
-				std.TestSetOriginCaller(std.Address("unauthorized"))
+				testing.SetOriginCaller(std.Address("unauthorized"))
 				return func() {
-					std.TestSetOriginCaller(origCaller)
+					testing.SetOriginCaller(origCaller)
 				}
 			},
 			wantErr: true,

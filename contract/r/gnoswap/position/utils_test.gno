@@ -139,7 +139,7 @@ func TestAssertOnlyUserOrStaker(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			std.TestSetOriginCaller(tc.originCaller)
+			testing.SetOriginCaller(tc.originCaller)
 			assertOnlyUserOrStaker(std.PreviousRealm())
 		})
 	}
@@ -169,7 +169,7 @@ func TestAssertOnlyNotHalted(t *testing.T) {
 					assertOnlyNotHalted()
 				})
 			} else {
-				std.TestSetRealm(std.NewUserRealm(adminAddr))
+				testing.SetRealm(std.NewUserRealm(adminAddr))
 				halt.SetHaltByAdmin(true)
 				uassert.PanicsWithMessage(t, tc.panicMsg, func() {
 					assertOnlyNotHalted()
@@ -367,7 +367,7 @@ func TestGetPrevRealm(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			std.TestSetOriginCaller(std.Address(tc.originCaller))
+			testing.SetOriginCaller(std.Address(tc.originCaller))
 			got := getPrevRealm()
 			uassert.Equal(t, got.Address().String(), tc.expected[0])
 			uassert.Equal(t, got.PkgPath(), tc.expected[1])
@@ -389,7 +389,7 @@ func TestGetPrevAddr(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			std.TestSetOriginCaller(std.Address(tc.originCaller))
+			testing.SetOriginCaller(std.Address(tc.originCaller))
 			got := getPrevAddr()
 			uassert.Equal(t, got.String(), tc.expected.String())
 		})
@@ -410,7 +410,7 @@ func TestGetPrevAsString(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			std.TestSetOriginCaller(std.Address(tc.originCaller))
+			testing.SetOriginCaller(std.Address(tc.originCaller))
 			got1, got2 := getPrevAsString()
 			uassert.Equal(t, got1, tc.expected[0])
 			uassert.Equal(t, got2, tc.expected[1])
@@ -439,9 +439,9 @@ func TestIsUserCall(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			std.TestSetOriginCaller(tc.originCaller)
+			testing.SetOriginCaller(tc.originCaller)
 			if !tc.expected {
-				std.TestSetRealm(std.NewCodeRealm(tc.originPkgPath))
+				testing.SetRealm(std.NewCodeRealm(tc.originPkgPath))
 			}
 			got := isUserCall()
 			uassert.Equal(t, got, tc.expected)
