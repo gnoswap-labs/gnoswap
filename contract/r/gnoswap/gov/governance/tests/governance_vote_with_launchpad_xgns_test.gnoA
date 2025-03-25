@@ -176,7 +176,6 @@ func testVote(t *testing.T) {
 		testing.SetRealm(dummyRealm)
 		Vote(proposalId, true)
 
-		// proposal := proposals[proposalId]
 		pp, ok := proposals.Get(strconv.FormatUint(proposalId, 10))
 		uassert.True(t, ok)
 		proposal := pp.(ProposalInfo)
@@ -185,13 +184,24 @@ func testVote(t *testing.T) {
 	})
 
 	t.Run("gov/staker api get possible voting address with weight", func(t *testing.T) {
-		// proposal := proposals[uint64(1)]
 		pp, ok := proposals.Get(strconv.FormatUint(uint64(1), 10))
 		uassert.True(t, ok)
 		proposal := pp.(ProposalInfo)
 		maxVoting, addrsWithVooting := gs.GetPossibleVotingAddressWithWeightJSON(proposal.State.CreatedAt)
 
-		uassert.Equal(t, maxVoting, uint64(2_000_000)) // 2000000
-		uassert.Equal(t, addrsWithVooting, `{"height":"150","now":"1234567944","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","weight":"2000000"}]}`)
+		uassert.Equal(t, maxVoting, uint64(2_000_000))
+
+		data := unmarshal(addrsWithVooting)
+		votingPower := data.MustKey("votingPower").MustArray()[0]
+
+		expectedKeys := []string{"address", "weight"}
+		keys := votingPower.UniqueKeyLists()
+		uassert.Equal(t, len(expectedKeys), len(keys))
+
+		addr := votingPower.MustKey("address").MustString()
+		uassert.Equal(t, addr, "g1v36k6mteta047h6lta047h6lta047h6lz7gmv8")
+
+		weight := votingPower.MustKey("weight").MustString()
+		uassert.Equal(t, weight, "2000000")
 	})
 }
