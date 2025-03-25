@@ -19,6 +19,20 @@ var (
 	nowTime   uint64
 )
 
+type proposalStateTest struct {
+	name     string
+	field    interface{}
+	expected interface{}
+}
+
+func assertProposalState(t *testing.T, stat ProposalState, tests []proposalStateTest) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			uassert.Equal(t, tt.expected, tt.field)
+		})
+	}
+}
+
 func TestProposeText_ProposalStatusUpdate(t *testing.T) {
 	t.Run("initial state", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
@@ -51,18 +65,21 @@ func TestProposeText_ProposalStatusUpdate(t *testing.T) {
 		updateProposalsState()
 		proposalStat := mustGetProposal(proposalId).State
 
-		uassert.True(t, proposalStat.Created)
-		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
-		uassert.True(t, proposalStat.Upcoming)
-		uassert.False(t, proposalStat.Active)
-		uassert.False(t, proposalStat.Passed)
-		uassert.Equal(t, proposalStat.PassedAt, uint64(0))
-		uassert.False(t, proposalStat.Rejected)
-		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
-		uassert.False(t, proposalStat.Canceled)
-		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
-		uassert.False(t, proposalStat.Executed)
-		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
+		tests := []proposalStateTest{
+			{"Created", proposalStat.Created, true},
+			{"CreatedAt", proposalStat.CreatedAt, oldTime},
+			{"Upcoming", proposalStat.Upcoming, true},
+			{"Active", proposalStat.Active, false},
+			{"Passed", proposalStat.Passed, false},
+			{"PassedAt", proposalStat.PassedAt, uint64(0)},
+			{"Rejected", proposalStat.Rejected, false},
+			{"RejectedAt", proposalStat.RejectedAt, uint64(0)},
+			{"Canceled", proposalStat.Canceled, false},
+			{"CanceledAt", proposalStat.CanceledAt, uint64(0)},
+			{"Executed", proposalStat.Executed, false},
+			{"ExecutedAt", proposalStat.ExecutedAt, uint64(0)},
+		}
+		assertProposalState(t, proposalStat, tests)
 	})
 
 	t.Run("vote YES", func(t *testing.T) {
@@ -80,18 +97,21 @@ func TestProposeText_ProposalStatusUpdate(t *testing.T) {
 		updateProposalsState()
 		proposalStat := mustGetProposal(proposalId).State
 
-		uassert.True(t, proposalStat.Created)
-		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
-		uassert.False(t, proposalStat.Upcoming)
-		uassert.True(t, proposalStat.Active)
-		uassert.False(t, proposalStat.Passed)
-		uassert.Equal(t, proposalStat.PassedAt, uint64(0))
-		uassert.False(t, proposalStat.Rejected)
-		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
-		uassert.False(t, proposalStat.Canceled)
-		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
-		uassert.False(t, proposalStat.Executed)
-		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
+		tests := []proposalStateTest{
+			{"Created", proposalStat.Created, true},
+			{"CreatedAt", proposalStat.CreatedAt, oldTime},
+			{"Upcoming", proposalStat.Upcoming, false},
+			{"Active", proposalStat.Active, true},
+			{"Passed", proposalStat.Passed, false},
+			{"PassedAt", proposalStat.PassedAt, uint64(0)},
+			{"Rejected", proposalStat.Rejected, false},
+			{"RejectedAt", proposalStat.RejectedAt, uint64(0)},
+			{"Canceled", proposalStat.Canceled, false},
+			{"CanceledAt", proposalStat.CanceledAt, uint64(0)},
+			{"Executed", proposalStat.Executed, false},
+			{"ExecutedAt", proposalStat.ExecutedAt, uint64(0)},
+		}
+		assertProposalState(t, proposalStat, tests)
 	})
 
 	t.Run("skip time to check proposal pass/reject", func(t *testing.T) {
@@ -104,18 +124,21 @@ func TestProposeText_ProposalStatusUpdate(t *testing.T) {
 		updateProposalsState()
 		proposalStat := mustGetProposal(proposalId).State
 
-		uassert.True(t, proposalStat.Created)
-		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
-		uassert.False(t, proposalStat.Upcoming)
-		uassert.False(t, proposalStat.Active)
-		uassert.True(t, proposalStat.Passed)
-		uassert.Equal(t, proposalStat.PassedAt, nowTime)
-		uassert.False(t, proposalStat.Rejected)
-		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
-		uassert.False(t, proposalStat.Canceled)
-		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
-		uassert.False(t, proposalStat.Executed)
-		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
+		tests := []proposalStateTest{
+			{"Created", proposalStat.Created, true},
+			{"CreatedAt", proposalStat.CreatedAt, oldTime},
+			{"Upcoming", proposalStat.Upcoming, false},
+			{"Active", proposalStat.Active, false},
+			{"Passed", proposalStat.Passed, true},
+			{"PassedAt", proposalStat.PassedAt, nowTime},
+			{"Rejected", proposalStat.Rejected, false},
+			{"RejectedAt", proposalStat.RejectedAt, uint64(0)},
+			{"Canceled", proposalStat.Canceled, false},
+			{"CanceledAt", proposalStat.CanceledAt, uint64(0)},
+			{"Executed", proposalStat.Executed, false},
+			{"ExecutedAt", proposalStat.ExecutedAt, uint64(0)},
+		}
+		assertProposalState(t, proposalStat, tests)
 	})
 
 	t.Run("skip long to check proposal status", func(t *testing.T) {
@@ -125,20 +148,21 @@ func TestProposeText_ProposalStatusUpdate(t *testing.T) {
 		updateProposalsState()
 		proposalStat := mustGetProposal(proposalId).State
 
-		uassert.True(t, proposalStat.Created)
-		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
-		uassert.False(t, proposalStat.Upcoming)
-		uassert.False(t, proposalStat.Active)
-		uassert.True(t, proposalStat.Passed)
-		uassert.Equal(t, proposalStat.PassedAt, nowTime)
-		uassert.Equal(t, proposalStat.PassedAt, nowTime)
-		uassert.False(t, proposalStat.Rejected)
-		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
-		uassert.False(t, proposalStat.Canceled)
-		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
-
-		uassert.False(t, proposalStat.Executed)
-		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
+		tests := []proposalStateTest{
+			{"Created", proposalStat.Created, true},
+			{"CreatedAt", proposalStat.CreatedAt, oldTime},
+			{"Upcoming", proposalStat.Upcoming, false},
+			{"Active", proposalStat.Active, false},
+			{"Passed", proposalStat.Passed, true},
+			{"PassedAt", proposalStat.PassedAt, nowTime},
+			{"Rejected", proposalStat.Rejected, false},
+			{"RejectedAt", proposalStat.RejectedAt, uint64(0)},
+			{"Canceled", proposalStat.Canceled, false},
+			{"CanceledAt", proposalStat.CanceledAt, uint64(0)},
+			{"Executed", proposalStat.Executed, false},
+			{"ExecutedAt", proposalStat.ExecutedAt, uint64(0)},
+		}
+		assertProposalState(t, proposalStat, tests)
 	})
 
 	t.Run("create new text proposal and cancel", func(t *testing.T) {
@@ -152,18 +176,21 @@ func TestProposeText_ProposalStatusUpdate(t *testing.T) {
 		nowHeight = uint64(std.ChainHeight())
 		nowTime = uint64(time.Now().Unix())
 
-		uassert.True(t, proposalStat.Created)
-		uassert.Equal(t, proposalStat.CreatedAt, nowTime)
-		uassert.False(t, proposalStat.Upcoming)
-		uassert.False(t, proposalStat.Active)
-		uassert.False(t, proposalStat.Passed)
-		uassert.Equal(t, proposalStat.PassedAt, uint64(0))
-		uassert.False(t, proposalStat.Rejected)
-		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
-		uassert.True(t, proposalStat.Canceled)
-		uassert.Equal(t, proposalStat.CanceledAt, nowTime)
-		uassert.False(t, proposalStat.Executed)
-		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
+		tests := []proposalStateTest{
+			{"Created", proposalStat.Created, true},
+			{"CreatedAt", proposalStat.CreatedAt, nowTime},
+			{"Upcoming", proposalStat.Upcoming, false},
+			{"Active", proposalStat.Active, false},
+			{"Passed", proposalStat.Passed, false},
+			{"PassedAt", proposalStat.PassedAt, uint64(0)},
+			{"Rejected", proposalStat.Rejected, false},
+			{"RejectedAt", proposalStat.RejectedAt, uint64(0)},
+			{"Canceled", proposalStat.Canceled, true},
+			{"CanceledAt", proposalStat.CanceledAt, nowTime},
+			{"Executed", proposalStat.Executed, false},
+			{"ExecutedAt", proposalStat.ExecutedAt, uint64(0)},
+		}
+		assertProposalState(t, proposalStat, tests)
 	})
 }
 
@@ -172,7 +199,7 @@ func TestParamaterChange(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		gns.Approve(govStakerAddr, uint64(1_000_000))
 		gs.Delegate(admin, uint64(1_000_000), "")
-		testing.SkipHeights(11) // VotingWeightSmoothingDuration is 10 block
+		testing.SkipHeights(5)
 
 		// overwrite config for testcase
 		config = Config{
@@ -199,23 +226,19 @@ func TestParamaterChange(t *testing.T) {
 		updateProposalsState()
 		proposalStat := mustGetProposal(proposalId).State
 
-		uassert.True(t, proposalStat.Created)
-		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
-		uassert.True(t, proposalStat.Upcoming)
-		uassert.False(t, proposalStat.Active)
-		uassert.False(t, proposalStat.Passed)
-		uassert.Equal(t, proposalStat.PassedAt, uint64(0))
-		uassert.False(t, proposalStat.Rejected)
-		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
-		uassert.False(t, proposalStat.Canceled)
-		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
-		uassert.False(t, proposalStat.Executed)
-		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
+		tests := []proposalStateTest{
+			{"Created", proposalStat.Created, true},
+			{"CreatedAt", proposalStat.CreatedAt, oldTime},
+			{"Upcoming", proposalStat.Upcoming, true},
+			{"Active", proposalStat.Active, false},
+			{"Passed", proposalStat.Passed, false},
+		}
+		assertProposalState(t, proposalStat, tests)
 	})
 
 	t.Run("vote YES", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		testing.SkipHeights(11)
+		testing.SkipHeights(5)
 
 		nowHeight = uint64(std.ChainHeight())
 		nowTime = uint64(time.Now().Unix())
@@ -227,18 +250,14 @@ func TestParamaterChange(t *testing.T) {
 		updateProposalsState()
 		proposalStat := mustGetProposal(proposalId).State
 
-		uassert.True(t, proposalStat.Created)
-		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
-		uassert.False(t, proposalStat.Upcoming)
-		uassert.True(t, proposalStat.Active)
-		uassert.False(t, proposalStat.Passed)
-		uassert.Equal(t, proposalStat.PassedAt, uint64(0))
-		uassert.False(t, proposalStat.Rejected)
-		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
-		uassert.False(t, proposalStat.Canceled)
-		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
-		uassert.False(t, proposalStat.Executed)
-		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
+		tests := []proposalStateTest{
+			{"Created", proposalStat.Created, true},
+			{"CreatedAt", proposalStat.CreatedAt, oldTime},
+			{"Upcoming", proposalStat.Upcoming, false},
+			{"Active", proposalStat.Active, true},
+			{"Passed", proposalStat.Passed, false},
+		}
+		assertProposalState(t, proposalStat, tests)
 	})
 
 	t.Run("skip time to check proposal pass/reject => pass", func(t *testing.T) {
@@ -251,18 +270,15 @@ func TestParamaterChange(t *testing.T) {
 		updateProposalsState()
 		proposalStat := mustGetProposal(proposalId).State
 
-		uassert.True(t, proposalStat.Created)
-		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
-		uassert.False(t, proposalStat.Upcoming)
-		uassert.False(t, proposalStat.Active)
-		uassert.True(t, proposalStat.Passed)
-		uassert.Equal(t, proposalStat.PassedAt, nowTime)
-		uassert.False(t, proposalStat.Rejected)
-		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
-		uassert.False(t, proposalStat.Canceled)
-		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
-		uassert.False(t, proposalStat.Executed)
-		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
+		tests := []proposalStateTest{
+			{"Created", proposalStat.Created, true},
+			{"CreatedAt", proposalStat.CreatedAt, oldTime},
+			{"Upcoming", proposalStat.Upcoming, false},
+			{"Active", proposalStat.Active, false},
+			{"Passed", proposalStat.Passed, true},
+			{"PassedAt", proposalStat.PassedAt, nowTime},
+		}
+		assertProposalState(t, proposalStat, tests)
 	})
 
 	t.Run("execute", func(t *testing.T) {
@@ -274,20 +290,20 @@ func TestParamaterChange(t *testing.T) {
 		nowHeight = uint64(std.ChainHeight())
 		nowTime = uint64(time.Now().Unix())
 
-		uassert.True(t, proposalStat.Created)
-		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
-		uassert.False(t, proposalStat.Upcoming)
-		uassert.False(t, proposalStat.Active)
-		uassert.True(t, proposalStat.Passed)
-		uassert.Equal(t, proposalStat.PassedAt, nowTime)
-		uassert.False(t, proposalStat.Rejected)
-		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
-		uassert.False(t, proposalStat.Canceled)
-		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
-		uassert.True(t, proposalStat.Executed)
-		uassert.Equal(t, proposalStat.ExecutedAt, nowTime)
-		uassert.False(t, proposalStat.Expired)
-		uassert.Equal(t, proposalStat.ExpiredAt, uint64(0))
+		tests := []proposalStateTest{
+			{"Created", proposalStat.Created, true},
+			{"CreatedAt", proposalStat.CreatedAt, oldTime},
+			{"Upcoming", proposalStat.Upcoming, false},
+			{"Active", proposalStat.Active, false},
+			{"Passed", proposalStat.Passed, true},
+			{"PassedAt", proposalStat.PassedAt, nowTime},
+			{"Rejected", proposalStat.Rejected, false},
+			{"Canceled", proposalStat.Canceled, false},
+			{"Executed", proposalStat.Executed, true},
+			{"ExecutedAt", proposalStat.ExecutedAt, nowTime},
+			{"Expired", proposalStat.Expired, false},
+		}
+		assertProposalState(t, proposalStat, tests)
 	})
 
 	t.Run("skip long time after execute", func(t *testing.T) {
@@ -296,20 +312,20 @@ func TestParamaterChange(t *testing.T) {
 		updateProposalsState()
 		proposalStat := mustGetProposal(proposalId).State
 
-		uassert.True(t, proposalStat.Created)
-		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
-		uassert.False(t, proposalStat.Upcoming)
-		uassert.False(t, proposalStat.Active)
-		uassert.True(t, proposalStat.Passed)
-		uassert.Equal(t, proposalStat.PassedAt, nowTime)
-		uassert.False(t, proposalStat.Rejected)
-		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
-		uassert.False(t, proposalStat.Canceled)
-		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
-		uassert.True(t, proposalStat.Executed)
-		uassert.Equal(t, proposalStat.ExecutedAt, nowTime)
-		uassert.False(t, proposalStat.Expired)
-		uassert.Equal(t, proposalStat.ExpiredAt, uint64(0))
+		tests := []proposalStateTest{
+			{"Created", proposalStat.Created, true},
+			{"CreatedAt", proposalStat.CreatedAt, oldTime},
+			{"Upcoming", proposalStat.Upcoming, false},
+			{"Active", proposalStat.Active, false},
+			{"Passed", proposalStat.Passed, true},
+			{"PassedAt", proposalStat.PassedAt, nowTime},
+			{"Rejected", proposalStat.Rejected, false},
+			{"Canceled", proposalStat.Canceled, false},
+			{"Executed", proposalStat.Executed, true},
+			{"ExecutedAt", proposalStat.ExecutedAt, nowTime},
+			{"Expired", proposalStat.Expired, false},
+		}
+		assertProposalState(t, proposalStat, tests)
 	})
 
 	t.Run("create new param change proposal and cancel", func(t *testing.T) {
@@ -324,18 +340,18 @@ func TestParamaterChange(t *testing.T) {
 		nowHeight = uint64(std.ChainHeight())
 		nowTime = uint64(time.Now().Unix())
 
-		uassert.True(t, proposalStat.Created)
-		uassert.Equal(t, proposalStat.CreatedAt, nowTime)
-		uassert.False(t, proposalStat.Upcoming)
-		uassert.False(t, proposalStat.Active)
-		uassert.False(t, proposalStat.Passed)
-		uassert.Equal(t, proposalStat.PassedAt, uint64(0))
-		uassert.False(t, proposalStat.Rejected)
-		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
-		uassert.True(t, proposalStat.Canceled)
-		uassert.Equal(t, proposalStat.CanceledAt, nowTime)
-		uassert.False(t, proposalStat.Executed)
-		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
+		tests := []proposalStateTest{
+			{"Created", proposalStat.Created, true},
+			{"CreatedAt", proposalStat.CreatedAt, nowTime},
+			{"Upcoming", proposalStat.Upcoming, false},
+			{"Active", proposalStat.Active, false},
+			{"Passed", proposalStat.Passed, false},
+			{"Rejected", proposalStat.Rejected, false},
+			{"Canceled", proposalStat.Canceled, true},
+			{"CanceledAt", proposalStat.CanceledAt, nowTime},
+			{"Executed", proposalStat.Executed, false},
+		}
+		assertProposalState(t, proposalStat, tests)
 	})
 
 	t.Run("skip long time after cancel", func(t *testing.T) {
@@ -350,20 +366,20 @@ func TestParamaterChange(t *testing.T) {
 		updateProposalsState()
 		proposalStat := mustGetProposal(proposalId).State
 
-		uassert.True(t, proposalStat.Created)
-		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
-		uassert.False(t, proposalStat.Upcoming)
-		uassert.False(t, proposalStat.Active)
-		uassert.False(t, proposalStat.Passed)
-		uassert.Equal(t, proposalStat.PassedAt, uint64(0))
-		uassert.False(t, proposalStat.Rejected)
-		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
-		uassert.True(t, proposalStat.Canceled)
-		uassert.Equal(t, proposalStat.CanceledAt, oldTime)
-		uassert.False(t, proposalStat.Executed)
-		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
-		uassert.False(t, proposalStat.Expired)
-		uassert.Equal(t, proposalStat.ExpiredAt, uint64(0))
+		tests := []proposalStateTest{
+			{"Created", proposalStat.Created, true},
+			{"CreatedAt", proposalStat.CreatedAt, oldTime},
+			{"Upcoming", proposalStat.Upcoming, false},
+			{"Active", proposalStat.Active, false},
+			{"Passed", proposalStat.Passed, false},
+			{"PassedAt", proposalStat.PassedAt, uint64(0)},
+			{"Rejected", proposalStat.Rejected, false},
+			{"Canceled", proposalStat.Canceled, true},
+			{"CanceledAt", proposalStat.CanceledAt, oldTime},
+			{"Executed", proposalStat.Executed, false},
+			{"Expired", proposalStat.Expired, false},
+		}
+		assertProposalState(t, proposalStat, tests)
 	})
 
 	t.Run("create new param change proposal and pass", func(t *testing.T) {
@@ -373,7 +389,7 @@ func TestParamaterChange(t *testing.T) {
 		oldHeight = uint64(std.ChainHeight())
 		oldTime = uint64(time.Now().Unix())
 
-		testing.SkipHeights(11) // voting start
+		testing.SkipHeights(5) // voting start
 		Vote(proposalId, true)
 		testing.SkipHeights(31) // finish voting
 
@@ -383,18 +399,18 @@ func TestParamaterChange(t *testing.T) {
 		updateProposalsState()
 		proposalStat := mustGetProposal(proposalId).State
 
-		uassert.True(t, proposalStat.Created)
-		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
-		uassert.False(t, proposalStat.Upcoming)
-		uassert.False(t, proposalStat.Active)
-		uassert.True(t, proposalStat.Passed)
-		uassert.Equal(t, proposalStat.PassedAt, nowTime)
-		uassert.False(t, proposalStat.Rejected)
-		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
-		uassert.False(t, proposalStat.Canceled)
-		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
-		uassert.False(t, proposalStat.Executed)
-		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
+		tests := []proposalStateTest{
+			{"Created", proposalStat.Created, true},
+			{"CreatedAt", proposalStat.CreatedAt, oldTime},
+			{"Upcoming", proposalStat.Upcoming, false},
+			{"Active", proposalStat.Active, false},
+			{"Passed", proposalStat.Passed, true},
+			{"PassedAt", proposalStat.PassedAt, nowTime},
+			{"Rejected", proposalStat.Rejected, false},
+			{"Canceled", proposalStat.Canceled, false},
+			{"Executed", proposalStat.Executed, false},
+		}
+		assertProposalState(t, proposalStat, tests)
 	})
 
 	t.Run("skip long time after passed => make expired", func(t *testing.T) {
@@ -410,20 +426,20 @@ func TestParamaterChange(t *testing.T) {
 		nowHeight = uint64(std.ChainHeight())
 
 		proposalStat := mustGetProposal(proposalId).State
-		uassert.True(t, proposalStat.Created)
-		uassert.Equal(t, proposalStat.CreatedAt, oldOldTime)
-		uassert.False(t, proposalStat.Upcoming)
-		uassert.False(t, proposalStat.Active)
-		uassert.True(t, proposalStat.Passed)
-		uassert.Equal(t, proposalStat.PassedAt, oldTime)
-		uassert.False(t, proposalStat.Rejected)
-		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
-		uassert.False(t, proposalStat.Canceled)
-		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
-		uassert.False(t, proposalStat.Executed)
-		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
-		uassert.True(t, proposalStat.Expired)
-		uassert.Equal(t, proposalStat.ExpiredAt, nowTime)
+		tests := []proposalStateTest{
+			{"Created", proposalStat.Created, true},
+			{"CreatedAt", proposalStat.CreatedAt, oldOldTime},
+			{"Upcoming", proposalStat.Upcoming, false},
+			{"Active", proposalStat.Active, false},
+			{"Passed", proposalStat.Passed, true},
+			{"PassedAt", proposalStat.PassedAt, oldTime},
+			{"Rejected", proposalStat.Rejected, false},
+			{"Canceled", proposalStat.Canceled, false},
+			{"Executed", proposalStat.Executed, false},
+			{"Expired", proposalStat.Expired, true},
+			{"ExpiredAt", proposalStat.ExpiredAt, nowTime},
+		}
+		assertProposalState(t, proposalStat, tests)
 	})
 
 	t.Run("skip long time after expired", func(t *testing.T) {
@@ -433,18 +449,18 @@ func TestParamaterChange(t *testing.T) {
 		updateProposalsState()
 
 		proposalStat := mustGetProposal(proposalId).State
-		uassert.True(t, proposalStat.Created)
-		uassert.False(t, proposalStat.Upcoming)
-		uassert.False(t, proposalStat.Active)
-		uassert.True(t, proposalStat.Passed)
-		uassert.Equal(t, proposalStat.PassedAt, oldTime)
-		uassert.False(t, proposalStat.Rejected)
-		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
-		uassert.False(t, proposalStat.Canceled)
-		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
-		uassert.False(t, proposalStat.Executed)
-		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
-		uassert.True(t, proposalStat.Expired)
-		uassert.Equal(t, proposalStat.ExpiredAt, nowTime)
+		tests := []proposalStateTest{
+			{"Created", proposalStat.Created, true},
+			{"Upcoming", proposalStat.Upcoming, false},
+			{"Active", proposalStat.Active, false},
+			{"Passed", proposalStat.Passed, true},
+			{"PassedAt", proposalStat.PassedAt, oldTime},
+			{"Rejected", proposalStat.Rejected, false},
+			{"Canceled", proposalStat.Canceled, false},
+			{"Executed", proposalStat.Executed, false},
+			{"Expired", proposalStat.Expired, true},
+			{"ExpiredAt", proposalStat.ExpiredAt, nowTime},
+		}
+		assertProposalState(t, proposalStat, tests)
 	})
 }
