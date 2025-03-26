@@ -312,15 +312,19 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 	}
 
 	for incentiveId, externalReward := range reward.External {
+		if externalReward == 0 {
+			continue
+		}
+		incentive := externalIncentives.Get(incentiveId)
 		rewards = append(rewards, ApiReward{
 			IncentiveType:     "EXTERNAL",
 			IncentiveId:       incentiveId,
-			TargetPoolPath:    deposit.targetPoolPath,
-			RewardTokenPath:   consts.GNS_PATH,
+			TargetPoolPath:    incentive.targetPoolPath,
+			RewardTokenPath:   incentive.rewardToken,
 			RewardTokenAmount: externalReward,
 			StakeTimestamp:    deposit.stakeTimestamp,
 			StakeHeight:       deposit.stakeHeight,
-			IncentiveStart:    deposit.stakeTimestamp,
+			IncentiveStart:    incentive.startTimestamp,
 		})
 	}
 
@@ -356,15 +360,19 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 
 		// find all external reward list for poolPath which lpTokenId is staked
 		for incentiveId, externalReward := range reward.External {
+			if externalReward == 0 {
+				continue
+			}
+			incentive := externalIncentives.Get(incentiveId)
 			rewards = append(rewards, ApiReward{
 				IncentiveType:     "EXTERNAL",
 				IncentiveId:       incentiveId,
-				TargetPoolPath:    deposit.targetPoolPath,
-				RewardTokenPath:   consts.GNS_PATH,
+				TargetPoolPath:    incentive.targetPoolPath,
+				RewardTokenPath:   incentive.rewardToken,
 				RewardTokenAmount: externalReward,
 				StakeTimestamp:    deposit.stakeTimestamp,
 				StakeHeight:       deposit.stakeHeight,
-				IncentiveStart:    deposit.stakeTimestamp,
+				IncentiveStart:    incentive.startTimestamp,
 			})
 		}
 

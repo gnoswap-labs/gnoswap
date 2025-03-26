@@ -407,7 +407,7 @@ func transferDeposit(positionId uint64, owner, caller, to std.Address) error {
 //   - poolPath (string): The path of the pool to which the LP token is staked
 //
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#collectreward
-func CollectReward(positionId uint64, unwrapResult bool) (string, string) {
+func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[string]uint64, map[string]uint64) {
 	assertOnlyNotHalted()
 
 	deposit := deposits.Get(positionId)
@@ -429,25 +429,35 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string) {
 
 	// transfer external rewards to user
 	externalReward := reward.External
-	for incentiveId, amount := range externalReward {
+	toUserExternalReward := make(map[string]uint64)
+	toUserExternalPenalty := make(map[string]uint64)
+	for incentiveId, rewardAmount := range externalReward {
 		incentive := externalIncentives.Get(incentiveId)
-		rewardToken := incentive.rewardToken
-		if incentive.rewardAmount < amount {
+		if incentive.rewardAmount < rewardAmount {
 			panic(addDetailToError(
 				errInsufficientReward,
-				ufmt.Sprintf("incentiveId(%s) has insufficient reward(%d)", incentiveId, amount),
+				ufmt.Sprintf("incentiveId(%s) has insufficient reward(%d)", incentiveId, rewardAmount),
 			))
 		}
-		incentive.rewardAmount -= amount
-		externalIncentives.set(incentiveId, incentive)
 
-		toUser := handleUnStakingFee(rewardToken, amount, false, positionId, incentive.targetPoolPath)
+		// process external reward to user
+		incentive.rewardAmount -= rewardAmount
+		rewardToken := incentive.rewardToken
+		toUserExternalReward[rewardToken] += rewardAmount
+		toUser := handleUnStakingFee(rewardToken, rewardAmount, false, positionId, incentive.targetPoolPath)
+		if toUser > 0 {
+			teller := common.GetTokenTeller(rewardToken)
+			teller.Transfer(deposit.owner, toUser)
+		}
 
-		teller := common.GetTokenTeller(rewardToken)
-		teller.Transfer(deposit.owner, toUser)
-
+		// process external penalty
 		externalPenalty := reward.ExternalPenalty[incentiveId]
+		incentive.rewardAmount -= externalPenalty
 		incentive.rewardLeft += externalPenalty
+		toUserExternalPenalty[rewardToken] += externalPenalty
+
+		// update
+		externalIncentives.set(incentiveId, incentive)
 
 		// unwrap if necessary
 		if unwrapResult && rewardToken == consts.WUGNOT_PATH {
@@ -462,9 +472,9 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string) {
 			"recipient", deposit.owner.String(),
 			"incentiveId", incentiveId,
 			"rewardToken", rewardToken,
-			"rewardAmount", formatUint(amount),
+			"rewardAmount", formatUint(rewardAmount),
 			"rewardToUser", formatUint(toUser),
-			"rewardToFee", formatUint(amount-toUser),
+			"rewardToFee", formatUint(rewardAmount-toUser),
 			"rewardPenalty", formatUint(externalPenalty),
 			"isRequestUnwrap", formatBool(unwrapResult),
 		)
@@ -472,7 +482,6 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string) {
 
 	// internal reward to user
 	toUser := handleUnStakingFee(consts.GNS_PATH, reward.Internal, true, positionId, deposit.targetPoolPath)
-
 	if toUser > 0 {
 		// internal reward to user
 		totalEmissionSent += toUser
@@ -505,7 +514,7 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string) {
 		"rewardUnClaimableAmount", formatUint(unClaimableInternal),
 	)
 
-	return formatUint(toUser), formatUint(reward.InternalPenalty)
+	return formatUint(toUser), formatUint(reward.InternalPenalty), toUserExternalReward, toUserExternalPenalty
 }
 
 // UnStakeToken withdraws an LP token from staking, collecting all pending rewards
