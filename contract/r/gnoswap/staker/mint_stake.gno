@@ -23,9 +23,10 @@ func MintAndStake(
 	tickUpper int32,
 	amount0Desired string, // *u256.Uint
 	amount1Desired string, // *u256.Uint
-	amount0Min string, // *u256.Uint
-	amount1Min string, // *u256.Uint
+	amount0Min string,     // *u256.Uint
+	amount1Min string,     // *u256.Uint
 	deadline int64,
+	referrer string,
 ) (uint64, string, string, string, string) {
 	// if one click native
 	if token0 == consts.GNOT || token1 == consts.GNOT {
@@ -59,8 +60,7 @@ func MintAndStake(
 		deadline,
 		stakerAddr,
 		std.PreviousRealm().Address(),
-		// TODO: need to add referrer address here?
-		"",
+		referrer,
 	)
 
 	// at this point, staker has minted token
