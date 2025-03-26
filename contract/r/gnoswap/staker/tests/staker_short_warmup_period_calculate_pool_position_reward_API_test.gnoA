@@ -171,6 +171,7 @@ func testMintAndStakeOnlyInternal01And02(t *testing.T) {
 			"1",
 			"1",
 			max_timeout,
+			"",
 		)
 		uassert.Equal(t, lpTokenId, uint64(1))
 		testing.SkipHeights(1)
@@ -187,6 +188,7 @@ func testMintAndStakeOnlyInternal01And02(t *testing.T) {
 			"1",
 			"1",
 			max_timeout,
+			"",
 		)
 		uassert.Equal(t, lpTokenId, uint64(2))
 		testing.SkipHeights(1)
@@ -213,6 +215,7 @@ func testMintAndStakeOnlyExternal03And04(t *testing.T) {
 			"1",
 			"1",
 			max_timeout,
+			"",
 		)
 		uassert.Equal(t, lpTokenId, uint64(3))
 		testing.SkipHeights(1)
@@ -229,6 +232,7 @@ func testMintAndStakeOnlyExternal03And04(t *testing.T) {
 			"1",
 			"1",
 			max_timeout,
+			"",
 		)
 		uassert.Equal(t, lpTokenId, uint64(4))
 		testing.SkipHeights(1)
@@ -255,6 +259,7 @@ func testMintAndStakeBothInternalAndExternal05(t *testing.T) {
 			"1",
 			"1",
 			max_timeout,
+			"",
 		)
 		uassert.Equal(t, lpTokenId, uint64(5))
 		testing.SkipHeights(1)

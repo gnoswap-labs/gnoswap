@@ -60,6 +60,7 @@ func testStakerMintAndStake(t *testing.T) {
 			"1",     // amount0Min
 			"1",     // amount1Min
 			max_timeout,
+			"", // referrer
 		)
 	})
 }

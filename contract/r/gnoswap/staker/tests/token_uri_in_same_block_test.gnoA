@@ -44,6 +44,7 @@ func TestMintPositionAndCheckURI(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
+		"",
 	)
 
 	otherPositionId, _, _, _, _ := MintAndStake(
@@ -57,6 +58,7 @@ func TestMintPositionAndCheckURI(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
+		"",
 	)
 
 	tid1 := grc721.TokenID(ufmt.Sprintf("%d", positionId))
