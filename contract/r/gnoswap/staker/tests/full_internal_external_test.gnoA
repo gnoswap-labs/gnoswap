@@ -844,6 +844,7 @@ func testOneClickStakingPos07OutRange(t *testing.T) {
 			"0",        // amount0Min
 			"0",        // amount1Min
 			max_timeout,
+			"",
 		)
 		uassert.Equal(t, lpTokenId, uint64(7))
 
@@ -926,7 +927,7 @@ func testCreateExternalIncentiveBaz(t *testing.T) {
 		gns.Approve(stakerAddr, depositGnsAmount)
 
 		startTime := int64(1244332800)
-        endTime := startTime + TIMESTAMP_90DAYS
+		endTime := startTime + TIMESTAMP_90DAYS
 
 		CreateExternalIncentive(
 			"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",

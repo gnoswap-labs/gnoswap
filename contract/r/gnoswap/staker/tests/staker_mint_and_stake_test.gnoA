@@ -85,6 +85,7 @@ func testMintAndStakeNative(t *testing.T) {
 			"1",             // amount0Min
 			"1",             // amount1Min
 			max_timeout,
+			"", // referrer
 		)
 
 		uassert.Equal(t, lpTokenId, uint64(1))
@@ -115,6 +116,7 @@ func testMintAndStakeGRC20Pair(t *testing.T) {
 			"1",          // amount0Min
 			"1",          // amount1Min
 			max_timeout,
+			"", // referrer
 		)
 		uassert.Equal(t, lpTokenId, uint64(2))
 
