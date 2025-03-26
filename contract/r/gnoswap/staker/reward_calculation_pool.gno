@@ -358,21 +358,18 @@ func (self *RewardState) rewardPerWarmup(startHeight, endHeight int64, rewardPer
 
 		if endHeight < warmup.NextWarmupHeight {
 			rewardAcc := self.pool.CalculateRewardForPosition(startHeight, self.pool.CurrentTick(startHeight), endHeight, self.pool.CurrentTick(endHeight), self.deposit)
-
-			rewardAcc = rewardAcc.Mul(rewardAcc, self.deposit.liquidity)
-			rewardAcc = rewardAcc.Mul(rewardAcc, u256.NewUint(rewardPerBlock))
-			rewardAcc = rewardAcc.Div(rewardAcc, q128)
+			rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.liquidity)
+			rewardAcc = u256.Zero().Mul(rewardAcc, u256.NewUint(rewardPerBlock))
+			rewardAcc = u256.Zero().Div(rewardAcc, q128)
 			self.rewards[i] += rewardAcc.Uint64()
-
 			// done
 			break
 		}
 
 		rewardAcc := self.pool.CalculateRewardForPosition(startHeight, self.pool.CurrentTick(startHeight), warmup.NextWarmupHeight, self.pool.CurrentTick(warmup.NextWarmupHeight), self.deposit)
-
-		rewardAcc = rewardAcc.Mul(rewardAcc, self.deposit.liquidity)
-		rewardAcc = rewardAcc.Mul(rewardAcc, u256.NewUint(rewardPerBlock))
-		rewardAcc = rewardAcc.Div(rewardAcc, q128)
+		rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.liquidity)
+		rewardAcc = u256.Zero().Mul(rewardAcc, u256.NewUint(rewardPerBlock))
+		rewardAcc = u256.Zero().Div(rewardAcc, q128)
 		self.rewards[i] += rewardAcc.Uint64()
 
 		startHeight = warmup.NextWarmupHeight

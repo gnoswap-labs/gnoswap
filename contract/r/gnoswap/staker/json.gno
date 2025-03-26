@@ -158,15 +158,22 @@ type ApiStake struct {
 	StakeTimestamp int64       `json:"stakeTimestamp"` // The timestamp when the LP token was staked
 	StakeHeight    int64       `json:"stakeHeight"`    // The block height when the LP token was staked
 	TargetPoolPath string      `json:"targetPoolPath"` // The path of the target pool for the stake
+	StakeDuration  uint64      `json:"stakeDuration"`  // The duration of the stake
 }
 
 func newApiStake(tokenId uint64, deposit *Deposit) ApiStake {
+	stakeDuration := uint64(0)
+	if std.ChainHeight() > deposit.stakeHeight {
+		stakeDuration = uint64(std.ChainHeight() - deposit.stakeHeight)
+	}
+
 	return ApiStake{
 		PositionId:     tokenId,
 		Owner:          deposit.owner,
 		StakeTimestamp: deposit.stakeTimestamp,
 		StakeHeight:    deposit.stakeHeight,
 		TargetPoolPath: deposit.targetPoolPath,
+		StakeDuration:  stakeDuration,
 	}
 }
 
@@ -177,6 +184,7 @@ func (s ApiStake) JSON() *json.Node {
 		"stakeTimestamp": json.NumberNode("stakeTimestamp", float64(s.StakeTimestamp)),
 		"stakeHeight":    json.NumberNode("stakeHeight", float64(s.StakeHeight)),
 		"targetPoolPath": json.StringNode("targetPoolPath", s.TargetPoolPath),
+		"stakeDuration":  json.NumberNode("stakeDuration", float64(s.StakeDuration)),
 	})
 }
 
