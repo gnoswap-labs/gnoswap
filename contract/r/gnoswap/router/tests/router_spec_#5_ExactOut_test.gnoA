@@ -49,12 +49,12 @@ func TestSwapRouteBarBazExactOut(t *testing.T) {
 	token1Before := baz.BalanceOf(adminAddr)
 
 	amountIn, amountOut := ExactOutSwapRoute(
-		barPath, // inputToken
-		bazPath, // outputToken
-		"1",     // amountSpecified
+		barPath,                                            // inputToken
+		bazPath,                                            // outputToken
+		"1",                                                // amountSpecified
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", // strRouteArr
-		"100", // quoteArr
-		"3",   // tokenAmountLimit
+		"100",                                              // quoteArr
+		"3",                                                // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
 		"", // referrer
 	)
@@ -88,19 +88,24 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 	wugnot.Approve(routerAddr, 1000000)
 	qux.Approve(routerAddr, 1000000)
 
-	testing.SetOriginSend(std.Coins{{"ugnot", 12345}})
+	testing.SetOriginCaller(adminAddr)
+	newCoins := std.Coins{{"ugnot", 12345}}
+	testing.IssueCoins(adminAddr, newCoins)
+	testing.SetOriginSend(newCoins)
+	banker := std.NewBanker(std.BankerTypeRealmSend)
+	banker.SendCoins(adminAddr, routerAddr, newCoins)
 
 	uassert.PanicsWithMessage(
 		t,
 		`[GNOSWAP-POOL-008] requested data not found || expected poolPath(gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:3000) to exist`,
 		func() {
 			ExactOutSwapRoute(
-				consts.GNOT, // inputToken
-				quxPath,     // outputToken
-				"3",         // amountSpecified
+				consts.GNOT,                                         // inputToken
+				quxPath,                                             // outputToken
+				"3",                                                 // amountSpecified
 				"gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:3000", // strRouteArr
-				"100", // quoteArr
-				"1",   // tokenAmountLimit
+				"100",                                               // quoteArr
+				"12345",                                             // tokenAmountLimit
 				time.Now().Add(time.Hour).Unix(),
 				"", // referrer
 			)
