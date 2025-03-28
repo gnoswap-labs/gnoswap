@@ -102,9 +102,7 @@ func (p *Pool) getTickBitmap(wordPos int16) *u256.Uint {
 // setTickBitmap sets the tick bitmap for the given word position
 func (p *Pool) setTickBitmap(wordPos int16, tickBitmap *u256.Uint) {
 	wordPosStr := strconv.Itoa(int(wordPos))
-	if updated := p.tickBitmaps.Set(wordPosStr, tickBitmap); !updated {
-		panic("failed to update tick bitmap")
-	}
+	p.tickBitmaps.Set(wordPosStr, tickBitmap)
 }
 
 // initTickBitmap initializes the tick bitmap for the given word position

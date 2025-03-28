@@ -184,14 +184,8 @@ func handleRoleChangeProposal(
 	}
 
 	proposalId++
-
-	if updated := proposals.Set(formatUint(proposalId), proposal); !updated {
-		panic("failed to update proposal")
-	}
-
-	if updated := proposalIdListByProposer.Set(proposer.String(), proposalId); !updated {
-		panic("failed to update proposal id list by proposer")
-	}
+	proposals.Set(formatUint(proposalId), proposal)
+	proposalIdListByProposer.Set(proposer.String(), proposalId)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(

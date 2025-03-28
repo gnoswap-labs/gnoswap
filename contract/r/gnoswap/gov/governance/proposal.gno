@@ -84,15 +84,9 @@ func ProposeText(
 	}
 
 	increaseProposalId()
-
 	newProposalId := getProposalId()
-	if updated := proposals.Set(formatUint(newProposalId), proposal); !updated {
-		panic("failed to update proposal")
-	}
-
-	if updated := proposalIdListByProposer.Set(proposer.String(), newProposalId); !updated {
-		panic("failed to update proposal id list by proposer")
-	}
+	proposals.Set(formatUint(newProposalId), proposal)
+	proposalIdListByProposer.Set(proposer.String(), newProposalId)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -189,14 +183,8 @@ func ProposeCommunityPoolSpend(
 	}
 
 	increaseProposalId()
-
-	if updated := proposals.Set(formatUint(proposalId), proposal); !updated {
-		panic("failed to update proposal")
-	}
-
-	if updated := proposalIdListByProposer.Set(proposer.String(), proposalId); !updated {
-		panic("failed to update proposal id list by proposer")
-	}
+	proposals.Set(formatUint(proposalId), proposal)
+	proposalIdListByProposer.Set(proposer.String(), proposalId)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -295,14 +283,8 @@ func ProposeParameterChange(
 	}
 
 	increaseProposalId()
-
-	if updated := proposals.Set(formatUint(proposalId), proposal); !updated {
-		panic("failed to update proposal")
-	}
-
-	if updated := proposalIdListByProposer.Set(proposer.String(), proposalId); !updated {
-		panic("failed to update proposal id list by proposer")
-	}
+	proposals.Set(formatUint(proposalId), proposal)
+	proposalIdListByProposer.Set(proposer.String(), proposalId)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -347,9 +329,7 @@ func updateProposalsState() {
 			updater.updateVotingResult()
 			updater.updateExecutionState()
 
-			if updated := proposals.Set(key, *updater.proposal); !updated {
-				panic("failed to update proposal")
-			}
+			proposals.Set(key, *updater.proposal)
 		}
 		return false
 	})

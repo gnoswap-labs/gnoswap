@@ -73,9 +73,7 @@ func CreatePool(
 	}
 
 	pool := newPool(poolInfo)
-	if updated := pools.Set(poolPath, pool); !updated {
-		panic("failed to update pool")
-	}
+	pools.Set(poolPath, pool)
 
 	currentTick := common.TickMathGetTickAtSqrtRatio(poolInfo.SqrtPriceX96())
 
@@ -242,9 +240,7 @@ func SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
 // computational overhead. Higher fee tiers typically use larger tick spacing.
 func setFeeAmountTickSpacing(fee uint32, tickSpacing int32) {
 	feeStr := strconv.FormatUint(uint64(fee), 10)
-	if updated := feeAmountTickSpacing.Set(feeStr, tickSpacing); !updated {
-		panic("failed to update fee amount tick spacing")
-	}
+	feeAmountTickSpacing.Set(feeStr, tickSpacing)
 }
 
 // mustGetPool retrieves a pool instance by its path and ensures it exists.

@@ -45,9 +45,7 @@ func (r *ParameterRegistry) Register(
 	hdlr ParameterHandler,
 ) {
 	key := makeHandlerKey(pkgPath, function)
-	if updated := r.handlers.Set(key, hdlr); !updated {
-		panic("failed to update handler")
-	}
+	r.handlers.Set(key, hdlr)
 }
 
 func (r *ParameterRegistry) Handler(pkgPath, function string) (ParameterHandler, error) {
@@ -336,10 +334,7 @@ func updateProposalState(ctx *ExecutionContext) {
 	ctx.Proposal.State.ExecutedAt = ctx.Now
 	ctx.Proposal.State.Upcoming = false
 	ctx.Proposal.State.Active = false
-
-	if updated := proposals.Set(strconv.Itoa(int(ctx.ProposalId)), *ctx.Proposal); !updated {
-		panic("failed to update proposal state")
-	}
+	proposals.Set(strconv.Itoa(int(ctx.ProposalId)), *ctx.Proposal)
 }
 
 func validateCommunityPoolToken(pp *ProposalInfo) error {

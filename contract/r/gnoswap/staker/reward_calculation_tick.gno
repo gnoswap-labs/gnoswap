@@ -63,9 +63,7 @@ func (self *Ticks) Get(tickId int32) *Tick {
 			stakedLiquidityDelta: i256.Zero(),
 			outsideAccumulation:  NewUintTree(),
 		}
-		if updated := self.tree.Set(EncodeInt(tickId), tick); !updated {
-			panic("failed to update tick")
-		}
+		self.tree.Set(EncodeInt(tickId), tick)
 		return tick
 	}
 	return v.(*Tick)
@@ -76,9 +74,7 @@ func (self *Ticks) set(tickId int32, tick *Tick) {
 		self.tree.Remove(EncodeInt(tickId))
 		return
 	}
-	if updated := self.tree.Set(EncodeInt(tickId), tick); !updated {
-		panic("failed to update tick")
-	}
+	self.tree.Set(EncodeInt(tickId), tick)
 }
 
 func (self *Ticks) Has(tickId int32) bool {

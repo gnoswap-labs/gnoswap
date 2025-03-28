@@ -185,18 +185,14 @@ func ClearAccuTransferToGovStaker() {
 func addAccuToGovStaker(tokenPath string, amount uint64) {
 	before := GetAccuTransferToGovStakerByTokenPath(tokenPath)
 	after := before + amount
-	if updated := accuToGovStaker.Set(tokenPath, after); !updated {
-		panic("failed to update accuToGovStaker")
-	}
+	accuToGovStaker.Set(tokenPath, after)
 }
 
 // addAccuToDevOps adds the amount to the accuToDevOps by token path.
 func addAccuToDevOps(tokenPath string, amount uint64) {
 	before := GetAccuTransferToDevOpsByTokenPath(tokenPath)
 	after := before + amount
-	if updated := accuToDevOps.Set(tokenPath, after); !updated {
-		panic("failed to update accuToDevOps")
-	}
+	accuToDevOps.Set(tokenPath, after)
 }
 
 // updateDistributedToGovStakerHistory updates the distributedToGovStakerHistory.
@@ -210,9 +206,7 @@ func updateDistributedToGovStakerHistory(tokenPath string, amount uint64) {
 
 	// update the amount
 	afterAmount := prevAmount + amount
-	if updated := distributedToGovStakerHistory.Set(tokenPath, afterAmount); !updated {
-		panic("failed to update distributedToGovStakerHistory")
-	}
+	distributedToGovStakerHistory.Set(tokenPath, afterAmount)
 }
 
 // updateDistributedToDevOpsHistory updates the distributedToDevOpsHistory.
@@ -226,9 +220,7 @@ func updateDistributedToDevOpsHistory(tokenPath string, amount uint64) {
 
 	// update the amount
 	afterAmount := prevAmount + amount
-	if updated := distributedToDevOpsHistory.Set(tokenPath, afterAmount); !updated {
-		panic("failed to update distributedToDevOpsHistory")
-	}
+	distributedToDevOpsHistory.Set(tokenPath, afterAmount)
 }
 
 // clearTokenListWithAmount clears the tokenListWithAmount.

@@ -429,10 +429,7 @@ func mustGetTokenList(addr std.Address) []grc721.TokenID {
 func appendTokenList(addr std.Address, tid grc721.TokenID) {
 	prevTokenList, _ := getTokenList(addr)
 	prevTokenList = append(prevTokenList, tid)
-
-	if updated := tokenList.Set(addr.String(), prevTokenList); !updated {
-		panic("failed to update token list")
-	}
+	tokenList.Set(addr.String(), prevTokenList)
 }
 
 // removeTokenList removes a token ID from the list of nft tokens
@@ -452,9 +449,7 @@ func removeTokenList(addr std.Address, tid grc721.TokenID) {
 		}
 	}
 
-	if updated := tokenList.Set(addr.String(), prevTokenList); !updated {
-		panic("failed to update token list")
-	}
+	tokenList.Set(addr.String(), prevTokenList)
 }
 
 // checkErr helper function to panic if an error occurs

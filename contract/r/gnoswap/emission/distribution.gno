@@ -43,18 +43,10 @@ var (
 // ref: https://docs.gnoswap.io/gnoswap-token/emission
 func init() {
 	distributionBpsPct = avl.NewTree()
-	if updated := distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), uint64(7500)); !updated {
-		panic("failed to update distribution bps pct")
-	}
-	if updated := distributionBpsPct.Set(strconv.Itoa(DEVOPS), uint64(2000)); !updated {
-		panic("failed to update distribution bps pct")
-	}
-	if updated := distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), uint64(500)); !updated {
-		panic("failed to update distribution bps pct")
-	}
-	if updated := distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), uint64(0)); !updated {
-		panic("failed to update distribution bps pct")
-	}
+	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), uint64(7500))
+	distributionBpsPct.Set(strconv.Itoa(DEVOPS), uint64(2000))
+	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), uint64(500))
+	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), uint64(0))
 }
 
 // ChangeDistributionPctByAdmin changes the distribution percentage for the given targets.
@@ -280,9 +272,7 @@ func setDistributionBpsPct(target int, pct uint64) {
 		}
 	}
 
-	if updated := distributionBpsPct.Set(strconv.Itoa(target), pct); !updated {
-		panic("failed to update distribution bps pct")
-	}
+	distributionBpsPct.Set(strconv.Itoa(target), pct)
 }
 
 func GetEmission() uint64 {

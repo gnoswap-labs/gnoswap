@@ -57,9 +57,7 @@ func (self *Pools) GetOrCreate(poolPath string) *Pool {
 
 // set sets the pool for the given poolPath
 func (self *Pools) set(poolPath string, pool *Pool) {
-	if updated := self.tree.Set(poolPath, pool); !updated {
-		panic("failed to update pool")
-	}
+	self.tree.Set(poolPath, pool)
 }
 
 // Has returns true if the pool exists for the given poolPath

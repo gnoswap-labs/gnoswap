@@ -116,18 +116,10 @@ func (self *Incentives) create(
 	byHeightId, byCreatorId := incentiveIdByHeight(incentive.startHeight, incentive.endHeight, creator, incentive.rewardToken)
 	byEndHeightId, _ := incentiveIdByHeight(incentive.endHeight, incentive.startHeight, creator, incentive.rewardToken)
 
-	if updated := self.byTime.Set(byTimeId, incentive); !updated {
-		panic("failed to update byTime")
-	}
-	if updated := self.byHeight.Set(byHeightId, incentive); !updated {
-		panic("failed to update byHeight")
-	}
-	if updated := self.byEndHeight.Set(byEndHeightId, incentive); !updated {
-		panic("failed to update byEndHeight")
-	}
-	if updated := self.byCreator.Set(byCreatorId, incentive); !updated {
-		panic("failed to update byCreator")
-	}
+	self.byTime.Set(byTimeId, incentive)
+	self.byHeight.Set(byHeightId, incentive)
+	self.byEndHeight.Set(byEndHeightId, incentive)
+	self.byCreator.Set(byCreatorId, incentive)
 }
 
 // starts incentive unclaimable period for this pool

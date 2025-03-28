@@ -188,9 +188,7 @@ func (self *PoolTier) changeTier(currentHeight int64, pools *Pools, poolPath str
 		// caching reward to 0
 		pool.cacheReward(currentHeight, 0)
 	} else {
-		if updated := self.membership.Set(poolPath, nextTier); !updated {
-			panic("failed to update membership")
-		}
+		self.membership.Set(poolPath, nextTier)
 	}
 
 	counts := self.CurrentAllTierCounts()

@@ -47,9 +47,7 @@ func (self *Deposits) Get(positionId uint64) *Deposit {
 }
 
 func (self *Deposits) set(positionId uint64, deposit *Deposit) {
-	if updated := self.tree.Set(EncodeUint(positionId), deposit); !updated {
-		panic("failed to update deposit")
-	}
+	self.tree.Set(EncodeUint(positionId), deposit)
 }
 
 func (self *Deposits) Has(positionId uint64) bool {
@@ -94,9 +92,7 @@ func (self *ExternalIncentives) Get(incentiveId string) *ExternalIncentive {
 }
 
 func (self *ExternalIncentives) set(incentiveId string, incentive *ExternalIncentive) {
-	if updated := self.tree.Set(incentiveId, incentive); !updated {
-		panic("failed to update external incentive")
-	}
+	self.tree.Set(incentiveId, incentive)
 }
 
 func (self *ExternalIncentives) Has(incentiveId string) bool {
@@ -137,15 +133,11 @@ func (self *Stakers) addDeposit(address std.Address, depositId uint64, deposit *
 	depositTreeI, ok := self.tree.Get(address.String())
 	if !ok {
 		depositTree := avl.NewTree()
-		if updated := self.tree.Set(address.String(), depositTree); !updated {
-			panic("failed to update deposit tree")
-		}
+		self.tree.Set(address.String(), depositTree)
 		depositTreeI = depositTree
 	}
 	depositTree := depositTreeI.(*avl.Tree)
-	if updated := depositTree.Set(EncodeUint(depositId), deposit); !updated {
-		panic("failed to update deposit")
-	}
+	depositTree.Set(EncodeUint(depositId), deposit)
 }
 
 func (self *Stakers) removeDeposit(address std.Address, depositId uint64) {

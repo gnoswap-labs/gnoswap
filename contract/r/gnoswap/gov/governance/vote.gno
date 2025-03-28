@@ -58,9 +58,7 @@ func Vote(pid uint64, yes bool) string {
 		panic(err)
 	}
 
-	if updated := proposals.Set(formatUint(pid), proposal); !updated {
-		panic("failed to update proposal")
-	}
+	proposals.Set(formatUint(pid), proposal)
 
 	setVote(pid, voter.String(), yes)
 	setUserVote(voter, pid, voteWithWeight{
@@ -135,9 +133,7 @@ func Cancel(proposalId uint64) {
 	proposal.State.Upcoming = false
 	proposal.State.Active = false
 
-	if updated := proposals.Set(formatUint(proposalId), proposal); !updated {
-		panic("failed to update proposal")
-	}
+	proposals.Set(formatUint(proposalId), proposal)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -167,9 +163,7 @@ func getVote(pid uint64, voter string) (bool, bool) {
 
 func setVote(pid uint64, voter string, vote bool) {
 	voteKey := createVoteKey(pid, voter)
-	if updated := votes.Set(voteKey, vote); !updated {
-		panic("failed to update vote")
-	}
+	votes.Set(voteKey, vote)
 }
 
 // createUserVoteKey creates a user vote key for a given voter address and proposal ID
@@ -191,9 +185,7 @@ func setUserVote(voter std.Address, pid uint64, vote voteWithWeight) {
 	} else {
 		accumNoVotes[pid] += vote.Weight
 	}
-	if updated := userVotes.Set(createUserVoteKey(voter, pid), vote); !updated {
-		panic("failed to update user vote")
-	}
+	userVotes.Set(createUserVoteKey(voter, pid), vote)
 }
 
 type VoteState struct {

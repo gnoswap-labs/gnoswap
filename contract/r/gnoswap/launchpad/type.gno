@@ -679,9 +679,7 @@ func (r *Reward) deductReward(depositId string, currentHeight uint64) uint64 {
 		return 0
 	}
 	info.setClaimed(info.Claimed() + reward64)
-	if updated := r.info.Set(depositId, info); !updated {
-		panic("failed to update reward info")
-	}
+	r.info.Set(depositId, info)
 
 	return reward64
 }

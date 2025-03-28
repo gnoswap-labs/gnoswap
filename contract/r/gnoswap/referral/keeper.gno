@@ -75,10 +75,7 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 		return k.remove(addr)
 	}
 
-	if updated := k.store.Set(addr.String(), refAddr.String()); !updated {
-		panic("failed to update referral")
-	}
-
+	k.store.Set(addr.String(), refAddr.String())
 	std.Emit(
 		eventType,
 		"myAddress", addr.String(),
