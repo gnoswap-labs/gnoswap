@@ -1,6 +1,7 @@
 package governance
 
 import (
+	"errors"
 	"std"
 	"strings"
 	"time"
@@ -46,13 +47,10 @@ func ProposeText(
 	if err := halt.IsHalted(); err != nil {
 		panic(err)
 	}
+
 	proposer := std.PreviousRealm().Address()
-	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
-	if !enough {
-		panic(addDetailToError(
-			errNotEnoughBalance,
-			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
-		))
+	if err := checkProposerEligibility(proposer); err != nil {
+		panic(err)
 	}
 
 	en.MintAndDistributeGns()
@@ -129,13 +127,10 @@ func ProposeCommunityPoolSpend(
 	}
 
 	proposer := std.PreviousRealm().Address()
-	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
-	if !enough {
-		panic(addDetailToError(
-			errNotEnoughBalance,
-			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
-		))
+	if err := checkProposerEligibility(proposer); err != nil {
+		panic(err)
 	}
+
 	if !to.IsValid() {
 		panic(addDetailToError(
 			errInvalidAddress,
@@ -223,14 +218,12 @@ func ProposeParameterChange(
 	if err := halt.IsHalted(); err != nil {
 		panic(err)
 	}
+
 	proposer := std.PreviousRealm().Address()
-	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
-	if !enough {
-		panic(addDetailToError(
-			errNotEnoughBalance,
-			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
-		))
+	if err := checkProposerEligibility(proposer); err != nil {
+		panic(err)
 	}
+
 	if numToExecute == 0 {
 		panic(addDetailToError(
 			errInvalidInput,
@@ -428,6 +421,41 @@ func (u *proposalStateUpdater) updateExecutionState() {
 		u.proposal.State.Expired = true
 		u.proposal.State.ExpiredAt = u.now
 	}
+}
+
+// hasActiveProposal checks if the proposer has any active proposals
+func hasActiveProposal(proposer std.Address) bool {
+	proposalIdRaw, exists := proposalIdListByProposer.Get(proposer.String())
+	if !exists {
+		return false
+	}
+
+	proposalId := proposalIdRaw.(uint64)
+	proposalRaw, exists := proposals.Get(formatUint(proposalId))
+	if !exists {
+		return false
+	}
+
+	proposal := proposalRaw.(ProposalInfo)
+	return proposal.State.Created &&
+		!proposal.State.Canceled &&
+		!proposal.State.Rejected &&
+		!proposal.State.Expired &&
+		!proposal.State.Executed
+}
+
+// checkProposerEligibility verifies if the proposer meets all requirements
+func checkProposerEligibility(proposer std.Address) error {
+	if hasActiveProposal(proposer) {
+		return errors.New("proposer has an active proposal")
+	}
+
+	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
+	if !enough {
+		return ufmt.Errorf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted)
+	}
+
+	return nil
 }
 
 // checkEnoughXGnsToPropose checks if the proposer has enough xGNS to propose a proposal.
