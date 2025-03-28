@@ -68,7 +68,9 @@ func cleanDelegationStatHistory() {
 
 			// save truncated history
 			newHistory := history[i:]
-			delegationSnapShotHistory.Set(key, newHistory)
+			if updated := delegationSnapShotHistory.Set(key, newHistory); !updated {
+				panic("failed to update delegation snap shot history")
+			}
 			break
 		}
 

@@ -106,7 +106,9 @@ func updateUint64InTree(tree *avl.Tree, key string, delta uint64, add bool) uint
 		newValue = current - delta
 	}
 
-	tree.Set(key, newValue)
+	if updated := tree.Set(key, newValue); !updated {
+		panic("failed to update tree")
+	}
 
 	return newValue
 }
@@ -116,7 +118,9 @@ func getOrCreateInnerTree(tree *avl.Tree, key string) *avl.Tree {
 	value, exists := tree.Get(key)
 	if !exists {
 		innerTree := avl.NewTree()
-		tree.Set(key, innerTree)
+		if updated := tree.Set(key, innerTree); !updated {
+			panic("failed to update tree")
+		}
 		return innerTree
 	}
 

@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"errors"
 	"std"
 
 	"gno.land/p/demo/avl"
@@ -12,6 +13,10 @@ import (
 	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/halt"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
+)
+
+var (
+	errFailedToUpdateStakerInfo = errors.New("failed to update staker info")
 )
 
 var (
@@ -195,7 +200,9 @@ func (self *RewardState) deductReward(staker std.Address) (uint64, map[string]ui
 	}
 
 	info.LastClaimedHeight = uint64(std.ChainHeight())
-	self.stakerInfos.Set(staker.String(), info)
+	if updated := self.stakerInfos.Set(staker.String(), info); !updated {
+		panic(errFailedToUpdateStakerInfo)
+	}
 
 	return collectableReward, protocolFeeRewards
 }
@@ -276,7 +283,9 @@ func (rs *RewardState) updateReward(staker std.Address) {
 		info.PendingProtocolFeeReward[tokenPath] = collectableProtocolFeeReward
 	}
 
-	rs.stakerInfos.Set(staker.String(), info)
+	if updated := rs.stakerInfos.Set(staker.String(), info); !updated {
+		panic(errFailedToUpdateStakerInfo)
+	}
 }
 
 // addStake adds the staker's stake to the reward state
@@ -299,7 +308,9 @@ func (self *RewardState) addStake(currentHeight uint64, staker std.Address, amou
 			info.ProtocolFeeDebt[tokenPath] = protocolFeePriceAccumulation.Clone()
 		}
 		info.StakedAmount += amount
-		self.stakerInfos.Set(staker.String(), info)
+		if updated := self.stakerInfos.Set(staker.String(), info); !updated {
+			panic(errFailedToUpdateStakerInfo)
+		}
 		return
 	}
 
@@ -319,7 +330,9 @@ func (self *RewardState) addStake(currentHeight uint64, staker std.Address, amou
 		info.ProtocolFeeDebt[tokenPath] = protocolFeePriceAccumulation.Clone()
 	}
 
-	self.stakerInfos.Set(staker.String(), info)
+	if updated := self.stakerInfos.Set(staker.String(), info); !updated {
+		panic(errFailedToUpdateStakerInfo)
+	}
 }
 
 func (self *RewardState) claim(staker std.Address, currentBalance uint64, currentProtocolFeeBalances map[string]uint64) (uint64, map[string]uint64) {
@@ -363,7 +376,9 @@ func (self *RewardState) removeStake(
 	} else {
 		// reduce the partial amount
 		stakerInfo.StakedAmount -= amount
-		self.stakerInfos.Set(stakerStr, stakerInfo)
+		if updated := self.stakerInfos.Set(stakerStr, stakerInfo); !updated {
+			panic(errFailedToUpdateStakerInfo)
+		}
 	}
 
 	self.totalXGNSStake -= amount
@@ -390,10 +405,14 @@ func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
 
 	currentAmount := getAmountByProjectWallet(addr)
 	if add {
-		amountByProjectWallet.Set(addr.String(), currentAmount+amount)
+		if updated := amountByProjectWallet.Set(addr.String(), currentAmount+amount); !updated {
+			panic("failed to update amount by project wallet")
+		}
 		rewardState.addStake(uint64(std.ChainHeight()), addr, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	} else {
-		amountByProjectWallet.Set(addr.String(), currentAmount-amount)
+		if updated := amountByProjectWallet.Set(addr.String(), currentAmount-amount); !updated {
+			panic("failed to update amount by project wallet")
+		}
 		rewardState.removeStake(addr, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	}
 }

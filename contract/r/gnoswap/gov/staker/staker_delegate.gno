@@ -51,7 +51,9 @@ func delegate(to std.Address, amount uint64) {
 		history = value.([]DelegationHistory)
 	}
 	history = append(history, delegation)
-	delegationHistory.Set(caller, history)
+	if updated := delegationHistory.Set(caller, history); !updated {
+		panic("failed to update delegation history")
+	}
 
 	// update delegation stat history
 	updateAmount := uint64(0)
@@ -69,7 +71,9 @@ func delegate(to std.Address, amount uint64) {
 		updatedBlock: uint64(std.ChainHeight()),
 		updatedAt:    timeStamp,
 	})
-	delegationSnapShotHistory.Set(toStr, snapShotHistory)
+	if updated := delegationSnapShotHistory.Set(toStr, snapShotHistory); !updated {
+		panic("failed to update delegation snap shot history")
+	}
 }
 
 // unDelegate removes a specified amount of delegated tokens from the given address (`to`).
@@ -101,8 +105,12 @@ func unDelegate(to std.Address, amount uint64) {
 			ufmt.Sprintf("caller(%s) has only %d delegated amount(request: %d) to %s", caller, delegatedAmount, amount, to),
 		))
 	}
-	innerTree.(*avl.Tree).Set(toStr, delegatedAmount-amount)
-	delegatedFromTo.Set(caller, innerTree)
+	if updated := innerTree.(*avl.Tree).Set(toStr, delegatedAmount-amount); !updated {
+		panic("failed to update delegatedFromTo")
+	}
+	if updated := delegatedFromTo.Set(caller, innerTree); !updated {
+		panic("failed to update delegatedFromTo")
+	}
 
 	// update total delegated amount
 	totalDelegated -= amount
@@ -122,7 +130,9 @@ func unDelegate(to std.Address, amount uint64) {
 			ufmt.Sprintf("caller(%s) has only %d delegated amount(request: %d)", caller, currentAmount, amount),
 		))
 	}
-	delegatorAmount.Set(caller, currentAmount-amount)
+	if updated := delegatorAmount.Set(caller, currentAmount-amount); !updated {
+		panic("failed to update delegator amount")
+	}
 
 	currentToAmount := uint64(0)
 	if value, exists := delegatedTo.Get(toStr); exists {
@@ -139,7 +149,9 @@ func unDelegate(to std.Address, amount uint64) {
 			ufmt.Sprintf("to(%s) has only %d delegated amount(request: %d)", toStr, currentToAmount, amount),
 		))
 	}
-	delegatedTo.Set(toStr, currentToAmount-amount)
+	if updated := delegatedTo.Set(toStr, currentToAmount-amount); !updated {
+		panic("failed to update delegatedTo")
+	}
 
 	// update delegation history
 	delegation := DelegationHistory{
@@ -154,7 +166,9 @@ func unDelegate(to std.Address, amount uint64) {
 		history = value.([]DelegationHistory)
 	}
 	history = append(history, delegation)
-	delegationHistory.Set(caller, history)
+	if updated := delegationHistory.Set(caller, history); !updated {
+		panic("failed to update delegation history")
+	}
 
 	// update delegation stat history
 	statValue, exists := delegationSnapShotHistory.Get(toStr)
@@ -178,5 +192,7 @@ func unDelegate(to std.Address, amount uint64) {
 			}
 		}
 	}
-	delegationSnapShotHistory.Set(to.String(), stat)
+	if updated := delegationSnapShotHistory.Set(to.String(), stat); !updated {
+		panic("failed to update delegation snap shot history")
+	}
 }
