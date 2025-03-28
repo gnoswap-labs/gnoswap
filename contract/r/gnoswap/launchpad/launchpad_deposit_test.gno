@@ -767,8 +767,14 @@ func TestCollectDepositGnsByDepositId_ExactClaimable(t *testing.T) {
 	)
 
 	// Skip to the end of tier period (30 days)
-	tierDuration := uint64(30)
-	blocksToSkip := (tierDuration * BLOCKS_PER_DAY) + 1 // +1 to ensure we're past the tier period
+	tier, err := project.Tier(30)
+	if err != nil {
+		t.Fatalf("failed to get tier: %v", err)
+	}
+
+	endHeight := tier.Ended().height
+	currentHeight := uint64(std.ChainHeight())
+	blocksToSkip := endHeight - currentHeight
 	testing.SkipHeights(int64(blocksToSkip))
 
 	testing.SetRealm(std.NewUserRealm(userA))

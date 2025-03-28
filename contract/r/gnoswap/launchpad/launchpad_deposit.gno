@@ -922,15 +922,17 @@ func validateDepositState(deposit Deposit) error {
 
 // validateTierPeriod checks if the tier lock period has ended
 func validateTierPeriod(deposit Deposit, currentHeight uint64) error {
-	tierDuration, err := strconv.ParseUint(deposit.tier, 10, 64)
-	if err != nil {
-		return errors.New("invalid tier duration")
+	project, exists := projects[deposit.projectId]
+	if !exists {
+		return errors.New("project not found")
 	}
 
-	// To prevent the withdrawal of deposits before the actual tier period ends,
-	// we need to verify that deposits can only be withdrawn after the tier period has completely ended.
-	tierEndHeight := deposit.depositHeight + (tierDuration * BLOCKS_PER_DAY)
-	if currentHeight < tierEndHeight {
+	tier, err := project.Tier(convertTierTypeStrToUint64(deposit.tier))
+	if err != nil {
+		return err
+	}
+
+	if currentHeight < tier.Ended().height {
 		return errors.New("tier lock period has not ended yet")
 	}
 
