@@ -18,6 +18,12 @@ import (
 	"gno.land/r/gnoswap/v1/referral"
 )
 
+const (
+	// BLOCKS_PER_DAY = SECONDS_PER_DAY * (MILLISECONDS_PER_SECOND / BLOCK_GENERATION_INTERVAL)
+	// = 86400 * (1000 / 2000) = 43200
+	BLOCKS_PER_DAY uint64 = uint64(consts.SECONDS_PER_DAY * consts.MILLISECONDS_PER_SECOND / consts.BLOCK_GENERATION_INTERVAL)
+)
+
 var launchpadAddr, _ = access.GetAddress(access.ROLE_LAUNCHPAD)
 
 var (
@@ -47,8 +53,6 @@ type DepositState struct {
 	DepositsByUserProject map[std.Address]map[string][]string
 }
 
-// TODO:
-// 1. 주석 추가
 // ProjectTierInfo contains information about a project tier
 type ProjectTierInfo struct {
 	Project       Project
@@ -883,6 +887,20 @@ func validateDepositCollection(depositId string, caller std.Address) (Deposit, P
 	}
 
 	currentHeight := uint64(std.ChainHeight())
+
+	tierDuration, err := strconv.ParseUint(deposit.tier, 10, 64)
+	if err != nil {
+		return Deposit{}, Project{}, errors.New("invalid tier duration")
+	}
+
+	// calculate tier end height (deposit height + tier duration in blocks)
+	tierEndHeight := deposit.depositHeight + (tierDuration * BLOCKS_PER_DAY)
+
+	// to prevent the withdrawal of deposits before the actual tier period ends,
+	// we need to verify that deposits can only be withdrawn after the tier period has completely ended.
+	if currentHeight < tierEndHeight {
+		return Deposit{}, Project{}, errors.New("tier lock period has not ended yet")
+	}
 
 	if !isPassedClaimableHeight(deposit, currentHeight) {
 		return Deposit{}, Project{}, errors.New("not passed claimable block height yet")

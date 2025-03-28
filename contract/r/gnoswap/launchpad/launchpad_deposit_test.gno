@@ -2,6 +2,7 @@ package launchpad
 
 import (
 	"std"
+	"strings"
 	"testing"
 	"time"
 
@@ -765,12 +766,65 @@ func TestCollectDepositGnsByDepositId_ExactClaimable(t *testing.T) {
 		1000,
 	)
 
+	// Skip to the end of tier period (30 days)
+	tierDuration := uint64(30)
+	blocksToSkip := (tierDuration * BLOCKS_PER_DAY) + 1 // +1 to ensure we're past the tier period
+	testing.SkipHeights(int64(blocksToSkip))
+
+	testing.SetRealm(std.NewUserRealm(userA))
+	collected := CollectDepositGnsByDepositId(deposit.id)
+	uassert.Equal(t, uint64(200), collected, "should collect the deposit fully after tier period ends")
+}
+
+func TestCollectDepositGnsByDepositId_BeforeTierEnds(t *testing.T) {
+	_, userA := setupTestDeposit(t)
+	project := createTestProject(t)
+	projects[project.id] = project
+
+	now := uint64(time.Now().Unix())
+	initialHeight := uint64(std.ChainHeight())
+
+	info := ProjectTierInfo{
+		Project:       project,
+		Tier:          project.tiers[30],
+		TierType:      "30",
+		CurrentHeight: initialHeight,
+		CurrentTime:   now,
+	}
+
+	testing.SetRealm(std.NewUserRealm(userA))
+	deposit, err := createDeposit(info, 200)
+	if err != nil {
+		t.Fatalf("failed create deposit: %v", err)
+	}
+	deposit.claimableHeight = initialHeight + 10
+	deposit.claimableTime = now + 60
+
+	updateDepositIndices(deposit, &DepositState{
+		Deposits:              deposits,
+		DepositsByProject:     depositsByProject,
+		DepositsByUser:        depositsByUser,
+		DepositsByUserProject: depositsByUserByProject,
+	})
+
+	// Skip only to claimable height (but before tier ends)
 	skipCount := deposit.claimableHeight - uint64(std.ChainHeight())
 	if skipCount > 0 {
 		testing.SkipHeights(int64(skipCount))
 	}
 
 	testing.SetRealm(std.NewUserRealm(userA))
-	collected := CollectDepositGnsByDepositId(deposit.id)
-	uassert.Equal(t, uint64(200), collected, "should collect the deposit fully after claimableHeight/time")
+
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Errorf("Expected panic but got none")
+		}
+		errMsg, ok := r.(string)
+		if !ok || !strings.Contains(errMsg, "tier lock period has not ended yet") {
+			t.Errorf("unexpected error: %v", r)
+		}
+	}()
+
+	CollectDepositGnsByDepositId(deposit.id)
 }
