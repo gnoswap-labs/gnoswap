@@ -791,11 +791,6 @@ func processDepositCollection(
 			panic(err.Error())
 		}
 
-		// skip if deposit is already collected
-		if isAlreadyCollected(deposit) {
-			continue
-		}
-
 		deposit.setDepositCollectHeight(currentHeight)
 		deposit.setDepositCollectTime(now)
 		deposits[deposit.id] = deposit
