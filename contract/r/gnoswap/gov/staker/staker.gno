@@ -226,7 +226,9 @@ func Undelegate(from std.Address, amount uint64) {
 	}
 
 	lockedList = append(lockedList, userLocked)
-	addrLockedGns.Set(caller.String(), lockedList)
+	if updated := addrLockedGns.Set(caller.String(), lockedList); !updated {
+		panic("failed to update locked GNS list")
+	}
 	lockedAmount += amount
 
 	prevAddr, prevPkgPath := getPrev()
@@ -284,7 +286,9 @@ func CollectUndelegatedGns() uint64 {
 	}
 
 	if len(newLockedList) > 0 {
-		addrLockedGns.Set(caller.String(), newLockedList)
+		if updated := addrLockedGns.Set(caller.String(), newLockedList); !updated {
+			panic("failed to update locked GNS list")
+		}
 	} else {
 		_, removed := addrLockedGns.Remove(caller.String())
 		if !removed {
