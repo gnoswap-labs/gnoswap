@@ -50,7 +50,10 @@ func ProposeText(
 
 	proposer := std.PreviousRealm().Address()
 	if err := checkProposerEligibility(proposer); err != nil {
-		panic(err)
+		panic(addDetailToError(
+			errNotEnoughBalance,
+			err.Error(),
+		))
 	}
 
 	en.MintAndDistributeGns()
@@ -128,7 +131,7 @@ func ProposeCommunityPoolSpend(
 
 	proposer := std.PreviousRealm().Address()
 	if err := checkProposerEligibility(proposer); err != nil {
-		panic(err)
+		panic(addDetailToError(errNotEnoughBalance, err.Error()))
 	}
 
 	if !to.IsValid() {
@@ -221,7 +224,7 @@ func ProposeParameterChange(
 
 	proposer := std.PreviousRealm().Address()
 	if err := checkProposerEligibility(proposer); err != nil {
-		panic(err)
+		panic(addDetailToError(errNotEnoughBalance, err.Error()))
 	}
 
 	if numToExecute == 0 {
