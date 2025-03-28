@@ -182,7 +182,9 @@ func (p *Pool) positionUpdateWithKey(
 
 // setPosition sets the position info for a given key.
 func (p *Pool) setPosition(posKey string, positionInfo PositionInfo) {
-	p.positions.Set(posKey, positionInfo)
+	if updated := p.positions.Set(posKey, positionInfo); !updated {
+		panic("failed to update position")
+	}
 }
 
 // mustGetPosition returns the position info for a given key.

@@ -19,7 +19,9 @@ func RegisterCallback(key string, callback any) {
 	if callbackTree.Has(key) {
 		panic("callback already registered for key: " + key)
 	}
-	callbackTree.Set(key, callback)
+	if updated := callbackTree.Set(key, callback); !updated {
+		panic("failed to update callback tree")
+	}
 }
 
 // GetCallback retrieves a callback function by key

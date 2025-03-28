@@ -161,9 +161,6 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 			"claimableTime", formatUint(deposit.claimableTime),
 			"tierAmountPerBlockX128", tier.TierAmountPerBlockX128().ToString(),
 		)
-
-		// rewardState := NewRewardState(tier.tierAmountPerBlockX128, tier.started.height, tier.ended.height)
-		// rewardStates.set(info.Project.id, info.TierType, rewardState)
 	}
 
 	reward := tier.Reward()
@@ -182,8 +179,13 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 		deposit.DepositHeight(),
 		tier.Ended().height,
 		currentHeight)
-	reward.Info().Set(deposit.ID(), rewardInfo)
+
+	if updated := reward.Info().Set(deposit.ID(), rewardInfo); !updated {
+		panic("failed to update reward info")
+	}
+
 	tier.setReward(reward)
+
 	tier.setTotalDepositAmount(tier.TotalDepositAmount() + amount)
 	tier.setActualDepositAmount(tier.ActualDepositAmount() + amount)
 	tier.setTotalParticipant(tier.TotalParticipant() + 1)
@@ -196,13 +198,6 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 	project.Stats().setActualParticipant(project.Stats().ActualParticipant() + 1)
 
 	projects[projectId] = project
-
-	//rewardState, err := rewardStates.Get(projectId, tierType)
-	//if err != nil {
-	//	panic(addDetailToError(
-	//		errInvalidRewardState, err.Error()))
-	//}
-	//rewardState.addStake(uint64(std.ChainHeight()), deposit.id, amount)
 
 	// Update gov_staker to calculate project's recipient's reward
 	gs.SetAmountByProjectWallet(project.recipient, amount, true)

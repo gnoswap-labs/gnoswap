@@ -35,7 +35,9 @@ func init() {
 }
 
 func setConfigVersion(v uint64, cfg Config) {
-	configVersions.Set(formatUint(v), cfg)
+	if updated := configVersions.Set(formatUint(v), cfg); !updated {
+		panic("failed to update config version")
+	}
 }
 
 func getConfigByVersion(v uint64) (Config, bool) {

@@ -56,7 +56,9 @@ func createNewPosition(id uint64, pos Position) uint64 {
 			ufmt.Sprintf("positionId(%d)", id),
 		))
 	}
-	setPosition(id, pos)
+	if updated := setPosition(id, pos); !updated {
+		panic("failed to update position")
+	}
 	incrementNextId()
 	return id
 }

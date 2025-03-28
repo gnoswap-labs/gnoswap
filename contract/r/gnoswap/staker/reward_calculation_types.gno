@@ -79,7 +79,9 @@ func (self *UintTree) Get(key int64) (any, bool) {
 }
 
 func (self *UintTree) set(key int64, value any) {
-	self.tree.Set(EncodeUint(uint64(key)), value)
+	if updated := self.tree.Set(EncodeUint(uint64(key)), value); !updated {
+		panic("failed to update uint tree")
+	}
 }
 
 func (self *UintTree) Has(key int64) bool {

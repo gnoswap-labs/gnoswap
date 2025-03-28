@@ -76,8 +76,10 @@ func (states RewardStates) Get(projectId string, tierStr string) (*RewardState, 
 }
 
 func (states RewardStates) set(projectId string, tierStr string, state *RewardState) {
-	key := projectId + ":" + tierStr
-	states.states.Set(key, state)
+	key := ufmt.Sprintf("%s:%s", projectId, tierStr)
+	if updated := states.states.Set(key, state); !updated {
+		panic("failed to update reward state")
+	}
 }
 
 func (states RewardStates) deleteProject(projectId string) uint64 {
@@ -149,7 +151,10 @@ func (self *RewardState) deductReward(depositId string, currentHeight uint64) ui
 	}
 
 	info.Claimed += reward64
-	self.info.Set(depositId, info)
+
+	if updated := self.info.Set(depositId, info); !updated {
+		panic("failed to update reward info")
+	}
 
 	return reward64
 }
@@ -198,11 +203,15 @@ func (self *RewardState) addStake(currentHeight uint64, depositId string, amount
 
 	if self.info.Has(depositId) {
 		info := self.Info(depositId)
+
 		info.PriceDebt.Add(info.PriceDebt, u256.NewUint(info.Amount))
 		info.PriceDebt.Add(info.PriceDebt, u256.Zero().Mul(self.PriceAccumulation, u256.NewUint(amount)))
 		info.PriceDebt.Div(info.PriceDebt, u256.NewUint(self.TotalStake))
 		info.Amount += amount
-		self.info.Set(depositId, info)
+
+		if updated := self.info.Set(depositId, info); !updated {
+			panic("failed to update reward info")
+		}
 		return
 	}
 
@@ -213,7 +222,9 @@ func (self *RewardState) addStake(currentHeight uint64, depositId string, amount
 		Claimed:     0,
 	}
 
-	self.info.Set(depositId, info)
+	if updated := self.info.Set(depositId, info); !updated {
+		panic("failed to update reward info")
+	}
 }
 
 func (self *RewardState) claim(depositId string, currentHeight uint64) uint64 {

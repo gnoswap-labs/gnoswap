@@ -228,7 +228,9 @@ func (p *Pool) tickCross(
 // setTick updates the tick data for the specified tick index in the pool.
 func (p *Pool) setTick(tick int32, newTickInfo TickInfo) {
 	tickStr := strconv.Itoa(int(tick))
-	p.ticks.Set(tickStr, newTickInfo)
+	if updated := p.ticks.Set(tickStr, newTickInfo); !updated {
+		panic("failed to update tick")
+	}
 }
 
 // deleteTick deletes the tick data for the specified tick index in the pool.
