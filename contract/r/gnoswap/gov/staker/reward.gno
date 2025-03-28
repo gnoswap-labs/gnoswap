@@ -340,12 +340,31 @@ func (self *RewardState) claim(staker std.Address, currentBalance uint64, curren
 	return reward, protocolFeeRewards
 }
 
-func (self *RewardState) removeStake(staker std.Address, amount uint64, currentBalance uint64, currentProtocolFeeBalances map[string]uint64) (uint64, map[string]uint64) {
+func (self *RewardState) removeStake(
+	staker std.Address,
+	amount uint64,
+	currentBalance uint64,
+	currentProtocolFeeBalances map[string]uint64,
+) (uint64, map[string]uint64) {
 	self.finalize(currentBalance, currentProtocolFeeBalances)
 
 	reward, protocolFeeRewards := self.deductReward(staker)
 
-	self.stakerInfos.Remove(staker.String())
+	stakerStr := staker.String()
+	stakerInfoValue, exists := self.stakerInfos.Get(stakerStr)
+	if !exists {
+		panic("staker info not found")
+	}
+	stakerInfo := stakerInfoValue.(StakerRewardInfo)
+
+	// remove completely only if the total stake amount is equal to the undelegate amount
+	if stakerInfo.StakedAmount == amount {
+		self.stakerInfos.Remove(stakerStr)
+	} else {
+		// reduce the partial amount
+		stakerInfo.StakedAmount -= amount
+		self.stakerInfos.Set(stakerStr, stakerInfo)
+	}
 
 	self.totalXGNSStake -= amount
 

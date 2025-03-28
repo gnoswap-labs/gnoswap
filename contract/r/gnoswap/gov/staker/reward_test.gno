@@ -104,3 +104,72 @@ func TestRewardCalculation_1_4(t *testing.T) {
 		t.Errorf("expected reward %d, got %d", 75+60+75, reward)
 	}
 }
+
+func TestRemoveStake(t *testing.T) {
+	state := NewRewardState()
+	staker := testutils.TestAddress("staker")
+
+	// set initial stake
+	initialStake := uint64(10000000) // 10 GNS
+	currentBalance := uint64(1000000000)
+	currentProtocolFeeBalances := make(map[string]uint64)
+
+	// add initial stake
+	state.addStake(1, staker, initialStake, currentBalance, currentProtocolFeeBalances)
+
+	t.Run("partial unstake test", func(t *testing.T) {
+		// unstake half of the initial stake
+		partialAmount := uint64(5000000) // 5 GNS
+
+		reward, protocolFeeRewards := state.removeStake(
+			staker,
+			partialAmount,
+			currentBalance,
+			currentProtocolFeeBalances,
+		)
+
+		// check if the staker info still exists
+		stakerInfoValue, exists := state.stakerInfos.Get(staker.String())
+		if !exists {
+			t.Error("staker info is completely deleted")
+		}
+
+		// check the remaining stake amount
+		stakerInfo := stakerInfoValue.(StakerRewardInfo)
+		expectedRemainingStake := initialStake - partialAmount
+		if stakerInfo.StakedAmount != expectedRemainingStake {
+			t.Errorf("wrong remaining stake amount: expected %d, got %d",
+				expectedRemainingStake, stakerInfo.StakedAmount)
+		}
+
+		// check the total stake amount
+		if state.totalXGNSStake != expectedRemainingStake {
+			t.Errorf("wrong total stake amount: expected %d, got %d",
+				expectedRemainingStake, state.totalXGNSStake)
+		}
+	})
+
+	t.Run("full unstake test", func(t *testing.T) {
+		// unstake the remaining amount
+		remainingAmount := uint64(5000000) // 5 GNS
+
+		reward, protocolFeeRewards := state.removeStake(
+			staker,
+			remainingAmount,
+			currentBalance,
+			currentProtocolFeeBalances,
+		)
+
+		// check if the staker info is deleted
+		_, exists := state.stakerInfos.Get(staker.String())
+		if exists {
+			t.Error("staker info is not deleted after full unstake")
+		}
+
+		// check if the total stake amount is 0
+		if state.totalXGNSStake != 0 {
+			t.Errorf("wrong total stake amount: expected 0, got %d",
+				state.totalXGNSStake)
+		}
+	})
+}
