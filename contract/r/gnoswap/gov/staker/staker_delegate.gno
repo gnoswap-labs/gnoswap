@@ -141,12 +141,15 @@ func unDelegate(to std.Address, amount uint64) {
 	}
 	delegatedTo.Set(toStr, currentToAmount-amount)
 
+	currentTime := uint64(time.Now().Unix())
+	currentHeight := uint64(std.ChainHeight())
+
 	// update delegation history
 	delegation := DelegationHistory{
 		to:        to,
 		amount:    amount,
-		timestamp: uint64(time.Now().Unix()),
-		height:    uint64(std.ChainHeight()),
+		timestamp: currentTime,
+		height:    currentHeight,
 		add:       false,
 	}
 	var history []DelegationHistory
@@ -165,18 +168,19 @@ func unDelegate(to std.Address, amount uint64) {
 		))
 	}
 	stat := statValue.([]DelegationSnapShotHistory)
-	remainingAmount := amount
-	for i := 0; i < len(stat); i++ {
-		if stat[i].amount > 0 {
-			if stat[i].amount < remainingAmount {
-				remainingAmount -= stat[i].amount
-				stat = append(stat[:i], stat[i+1:]...)
-			} else {
-				stat[i].amount -= remainingAmount
-				stat[i].updatedAt = uint64(time.Now().Unix())
-				break
-			}
-		}
+	lastAmount := stat[len(stat)-1].amount
+
+	// append new snapshot (set amount to current amount - amount)
+	newSnapshot := DelegationSnapShotHistory{
+		to:           to,
+		amount:       lastAmount - amount,
+		updatedBlock: currentHeight,
+		updatedAt:    currentTime,
 	}
+
+	if len(stat) > 0 && newSnapshot.updatedAt <= stat[len(stat)-1].updatedAt {
+		newSnapshot.updatedAt = stat[len(stat)-1].updatedAt + 1
+	}
+	stat = append(stat, newSnapshot)
 	delegationSnapShotHistory.Set(to.String(), stat)
 }
