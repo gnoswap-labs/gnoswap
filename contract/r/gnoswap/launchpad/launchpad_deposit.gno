@@ -18,12 +18,6 @@ import (
 	"gno.land/r/gnoswap/v1/referral"
 )
 
-const (
-	// BLOCKS_PER_DAY = SECONDS_PER_DAY * (MILLISECONDS_PER_SECOND / BLOCK_GENERATION_INTERVAL)
-	// = 86400 * (1000 / 2000) = 43200
-	BLOCKS_PER_DAY uint64 = uint64(consts.SECONDS_PER_DAY * consts.MILLISECONDS_PER_SECOND / consts.BLOCK_GENERATION_INTERVAL)
-)
-
 var launchpadAddr, _ = access.GetAddress(access.ROLE_LAUNCHPAD)
 
 var (
