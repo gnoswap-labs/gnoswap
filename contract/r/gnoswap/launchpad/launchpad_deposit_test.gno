@@ -834,3 +834,138 @@ func TestCollectDepositGnsByDepositId_BeforeTierEnds(t *testing.T) {
 
 	CollectDepositGnsByDepositId(deposit.id)
 }
+
+func TestProcessDepositCollection_ClaimableLogic(t *testing.T) {
+	_, testAddr := setupTestDeposit(t)
+	project := createTestProject(t)
+	projects[project.id] = project
+
+	baseHeight := uint64(std.ChainHeight())
+	baseTime := uint64(time.Now().Unix())
+
+	type testDeposit struct {
+		amount         uint64
+		claimableDelay uint64
+		expectedResult bool
+	}
+
+	tests := []testDeposit{
+		{100, 10, true},  // Claimable deposit (short waiting period)
+		{200, 50, false}, // Not yet claimable deposit (long waiting period)
+		{300, 5, true},   // Claimable deposit (very short waiting period)
+	}
+
+	depositIds := []string{}
+	totalClaimableAmount := uint64(0)
+
+	// create deposits with different heights and times
+	for i, tt := range tests {
+		// avoid creating deposits at the same height
+		// this may cause the test to duplicate the same id error
+		testing.SkipHeights(1)
+		currentHeight := uint64(std.ChainHeight())
+		currentTime := baseTime + uint64(i*100)
+
+		info := ProjectTierInfo{
+			Project:       project,
+			Tier:          project.tiers[30],
+			TierType:      "30",
+			CurrentHeight: currentHeight,
+			CurrentTime:   currentTime,
+		}
+
+		deposit, err := createDeposit(info, tt.amount)
+		if err != nil {
+			t.Fatalf("failed to create deposit: %v", err)
+		}
+
+		// Set claimable height
+		deposit.claimableHeight = currentHeight + tt.claimableDelay
+		deposits[deposit.id] = deposit
+		depositIds = append(depositIds, deposit.id)
+
+		if tt.expectedResult {
+			totalClaimableAmount += tt.amount
+		}
+
+		// Update deposit indices
+		updateDepositIndices(deposit, &DepositState{
+			Deposits:              make(map[string]Deposit),
+			DepositsByProject:     depositsByProject,
+			DepositsByUser:        depositsByUser,
+			DepositsByUserProject: depositsByUserByProject,
+		})
+	}
+
+	// Skip blocks until reaching claimable point
+	testing.SkipHeights(15)
+
+	// Execute processDepositCollection
+	amount, err := processDepositCollection(depositIds, "")
+	if err != nil {
+		t.Fatalf("processDepositCollection failed: %v", err)
+	}
+
+	uassert.Equal(t, totalClaimableAmount, amount, "collected amount should match expected claimable amount")
+
+	for i, tt := range tests {
+		deposit := deposits[depositIds[i]]
+		if tt.expectedResult {
+			// Verify claimable deposits
+			uassert.NotEqual(t, uint64(0), deposit.depositCollectHeight,
+				"claimable deposit should have been collected")
+			uassert.Equal(t, tt.amount, deposit.amount,
+				"collected amount should match deposit amount")
+		} else {
+			// Verify non-claimable deposits
+			uassert.Equal(t, uint64(0), deposit.depositCollectHeight,
+				"non-claimable deposit should not have been collected")
+		}
+	}
+}
+
+func TestProcessDepositCollection_ProjectEndCondition(t *testing.T) {
+	_, testAddr := setupTestDeposit(t)
+	project := createTestProject(t)
+
+	// Set project end height to future
+	currentHeight := uint64(std.ChainHeight())
+	project.ended.height = currentHeight + 100
+	projects[project.id] = project
+
+	// Create deposit
+	info := ProjectTierInfo{
+		Project:       project,
+		Tier:          project.tiers[30],
+		TierType:      "30",
+		CurrentHeight: currentHeight,
+		CurrentTime:   uint64(time.Now().Unix()),
+	}
+
+	deposit, err := createDeposit(info, 100)
+	if err != nil {
+		t.Fatalf("failed to create deposit: %v", err)
+	}
+
+	// Set claimable height to current height
+	deposit.claimableHeight = currentHeight
+	deposits[deposit.id] = deposit
+
+	updateDepositIndices(deposit, &DepositState{
+		Deposits:              make(map[string]Deposit),
+		DepositsByProject:     depositsByProject,
+		DepositsByUser:        depositsByUser,
+		DepositsByUserProject: depositsByUserByProject,
+	})
+
+	// Test if deposit can be claimed before project ends
+	amount, err := processDepositCollection([]string{deposit.id}, "")
+	if err != nil {
+		t.Fatalf("processDepositCollection failed: %v", err)
+	}
+
+	uassert.Equal(t, uint64(100), amount,
+		"should be able to collect deposit even before project end")
+	uassert.NotEqual(t, uint64(0), deposits[deposit.id].depositCollectHeight,
+		"deposit should have been collected")
+}
