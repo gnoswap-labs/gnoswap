@@ -178,6 +178,7 @@ func unDelegate(to std.Address, amount uint64) {
 		updatedAt:    currentTime,
 	}
 
+	// ensure new snapshot time is definitely later than the last snapshot
 	if len(stat) > 0 && newSnapshot.updatedAt <= stat[len(stat)-1].updatedAt {
 		newSnapshot.updatedAt = stat[len(stat)-1].updatedAt + 1
 	}
