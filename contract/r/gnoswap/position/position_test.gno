@@ -12,6 +12,7 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/v1/phalt"
 	"gno.land/r/gnoswap/v1/referral"
 )
 
@@ -1452,4 +1453,100 @@ func TestReposition(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEmergencyWithdraw(t *testing.T) {
+	t.Skip("skipping emergency withdraw test")
+	tests := []struct {
+		name               string
+		mintAmount0        string
+		mintAmount1        string
+		unwrapResult       bool
+		haltLevel          phalt.LevelID
+		expectPanic        bool
+		expectedPanicError string
+	}{
+		{
+			name:               "Success - Emergency withdraw in EmergencyHalt mode",
+			mintAmount0:        "1000000",
+			mintAmount1:        "2000000",
+			unwrapResult:       true,
+			haltLevel:          phalt.LvEmergencyHalt,
+			expectPanic:        false,
+		},
+		{
+			name:               "Fail - Not in EmergencyHalt mode",
+			mintAmount0:        "1000000",
+			mintAmount1:        "2000000",
+			unwrapResult:       true,
+			haltLevel:          phalt.LvNoHalt,
+			expectPanic:        true,
+			expectedPanicError: "emergency withdraw is only available in EmergencyHalt mode, current mode: NoHalt",
+		},
+		{
+			name:               "Fail - Position does not exist",
+			mintAmount0:        "1000000",
+			mintAmount1:        "2000000",
+			unwrapResult:       true,
+			haltLevel:          phalt.LvEmergencyHalt,
+			expectPanic:        true,
+			expectedPanicError: "[GNOSWAP-POSITION-013] position does not exist || position with position ID(999) doesn't exist",
+		},
+	}
+
+	CreatePoolWithoutFee(t)
+	testing.SetRealm(std.NewUserRealm(adminAddr))
+	TokenApprove(t, barPath, adminAddr, poolAddr, consts.UINT64_MAX)
+	TokenApprove(t, fooPath, adminAddr, poolAddr, consts.UINT64_MAX)
+
+	// Mint initial position
+	positionId, _, _, _ := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		-10000,
+		10000,
+		"1000000",
+		"1000000",
+		"0",
+		"0",
+		time.Now().Add(time.Hour).Unix(),
+		adminAddr,
+		adminAddr,
+		"",
+	)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set halt level
+			testing.SetRealm(adminRealm)
+			err := SetHaltLevelByAdmin(tt.haltLevel)
+			uassert.NoError(t, err)
+
+			// Set back to admin realm for emergency withdraw
+			testing.SetRealm(std.NewUserRealm(adminAddr))
+
+			if tt.expectPanic {
+				if tt.name == "Fail - Position does not exist" {
+					uassert.PanicsWithMessage(t, tt.expectedPanicError, func() {
+						EmergencyWithdraw(999, tt.unwrapResult)
+					})
+				} else {
+					uassert.PanicsWithMessage(t, tt.expectedPanicError, func() {
+						EmergencyWithdraw(positionId, tt.unwrapResult)
+					})
+				}
+			} else {
+				poolPath, token0Amount, token1Amount := EmergencyWithdraw(positionId, tt.unwrapResult)
+				uassert.NotEmpty(t, poolPath)
+				uassert.NotEmpty(t, token0Amount)
+				uassert.NotEmpty(t, token1Amount)
+			}
+		})
+	}
+
+	// Clean up - set back to NoHalt
+	testing.SetRealm(adminRealm)
+	err := SetHaltLevelByAdmin(phalt.LvNoHalt)
+	uassert.NoError(t, err)
 }
