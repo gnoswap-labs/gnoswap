@@ -3,6 +3,7 @@ package position
 import (
 	"std"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -1459,7 +1460,6 @@ func TestReposition(t *testing.T) {
 }
 
 func TestEmergencyWithdraw(t *testing.T) {
-	t.Skip("skipping emergency withdraw test")
 	tests := []struct {
 		name               string
 		mintAmount0        string
@@ -1493,7 +1493,7 @@ func TestEmergencyWithdraw(t *testing.T) {
 			unwrapResult:       true,
 			haltLevel:          phalt.LvEmergencyHalt,
 			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-013] position does not exist || position with position ID(999) doesn't exist",
+			expectedPanicError: "[GNOSWAP-POSITION-006] requested data not found || positionId(999) doesn't exist",
 		},
 	}
 
@@ -1523,11 +1523,12 @@ func TestEmergencyWithdraw(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set halt level
 			testing.SetRealm(adminRealm)
-			err := halt.SetHaltLevelByAdmin(tt.haltLevel)
-			uassert.NoError(t, err)
+			err := halt.SetHalt(true, tt.haltLevel)
 
-			// Set back to admin realm for emergency withdraw
-			testing.SetRealm(std.NewUserRealm(adminAddr))
+			uassert.NoError(t, err)
+			if halt.GetCurrentHaltLevel() != tt.haltLevel {
+				t.Fatalf("GetCurrentHaltLevel() = %d, want %d", halt.GetCurrentHaltLevel(), phalt.LvEmergencyHalt)
+			}
 
 			if tt.expectPanic {
 				if tt.name == "Fail - Position does not exist" {
@@ -1550,6 +1551,6 @@ func TestEmergencyWithdraw(t *testing.T) {
 
 	// Clean up - set back to NoHalt
 	testing.SetRealm(adminRealm)
-	err := halt.SetHaltLevelByAdmin(phalt.LvNoHalt)
+	err := halt.SetHalt(false, phalt.LvNoHalt)
 	uassert.NoError(t, err)
 }
