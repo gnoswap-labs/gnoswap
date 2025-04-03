@@ -12,7 +12,10 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/phalt"
+
+	phalt "gno.land/p/gnoswap/halt"
+	"gno.land/r/gnoswap/v1/halt"
+
 	"gno.land/r/gnoswap/v1/referral"
 )
 
@@ -1520,7 +1523,7 @@ func TestEmergencyWithdraw(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set halt level
 			testing.SetRealm(adminRealm)
-			err := SetHaltLevelByAdmin(tt.haltLevel)
+			err := halt.SetHaltLevelByAdmin(tt.haltLevel)
 			uassert.NoError(t, err)
 
 			// Set back to admin realm for emergency withdraw
@@ -1547,6 +1550,6 @@ func TestEmergencyWithdraw(t *testing.T) {
 
 	// Clean up - set back to NoHalt
 	testing.SetRealm(adminRealm)
-	err := SetHaltLevelByAdmin(phalt.LvNoHalt)
+	err := halt.SetHaltLevelByAdmin(phalt.LvNoHalt)
 	uassert.NoError(t, err)
 }
