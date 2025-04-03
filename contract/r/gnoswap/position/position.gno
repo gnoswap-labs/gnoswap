@@ -10,6 +10,10 @@ import (
 
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/access"
+
+	phalt "gno.land/p/gnoswap/halt"
+	"gno.land/r/gnoswap/v1/halt"
+
 	pl "gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/referral"
 )
@@ -434,4 +438,34 @@ func getCurrentFeeGrowth(position Position) (FeeGrowthInside, error) {
 	}
 
 	return feeGrowthInside, nil
+}
+
+func EmergencyWithdraw(positionId uint64, unwrap bool) (poolPath, token0Amount, token1Amount string) {
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != phalt.LvEmergencyHalt {
+		panic(ufmt.Sprintf("emergency withdraw is only available in EmergencyHalt mode, current mode: %s", currentLevel.String()))
+	}
+
+	// check position is exist
+	assertTokenExists(positionId)
+
+	// check caller is owner of position
+	caller := getPrevAddr()
+	assertOnlyOwnerOfToken(positionId, caller)
+
+	_, token0Amount, token1Amount, poolPath, _, _ = CollectFee(positionId, unwrap)
+
+	prevAddr, prevPkgPath := getPrevAsString()
+	std.Emit(
+		"EmergencyWithdraw",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"positionId", formatUint(positionId),
+		"poolPath", poolPath,
+		"token0Amount", token0Amount,
+		"token1Amount", token1Amount,
+		"unwrapResult", formatBool(unwrap),
+	)
+
+	return poolPath, token0Amount, token1Amount
 }
