@@ -123,7 +123,7 @@ func finalizeSwap(
 		toUnwrap := userWrappedWugnot - spend
 		unwrap(toUnwrap)
 	} else if outputToken == consts.GNOT {
-		userRecvWugnot := uint64(userNewWugnotBalance - userBeforeWugnotBalance - userWrappedWugnot)
+		userRecvWugnot := userNewWugnotBalance - userBeforeWugnotBalance - userWrappedWugnot
 		unwrap(userRecvWugnot)
 	}
 
