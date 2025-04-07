@@ -451,7 +451,7 @@ func assertValidTickLower(tickLower int32) {
 }
 
 func assertValidTickUpper(tickUpper int32) {
-	if tickUpper >= consts.MAX_TICK {
+	if tickUpper > consts.MAX_TICK {
 		panic(newErrorWithDetail(
 			errTickUpperInvalid,
 			ufmt.Sprintf("tickUpper(%d) > MAX_TICK(%d)", tickUpper, consts.MAX_TICK),
