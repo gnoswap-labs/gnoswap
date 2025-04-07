@@ -70,8 +70,6 @@ type Pool struct {
 	ticks                *avl.Tree  // tick(int32) -> TickInfo
 	tickBitmaps          *avl.Tree  // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
 	positions            *avl.Tree  // maps the key (caller, lower tick, upper tick) to a unique position
-
-	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool)
 }
 
 func (p *Pool) PoolPath() string {
