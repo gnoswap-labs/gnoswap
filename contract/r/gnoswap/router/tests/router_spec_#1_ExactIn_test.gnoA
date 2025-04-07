@@ -18,7 +18,13 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 )
 
-func TestcreatePool(t *testing.T) {
+func TestRunExactInSwapRoute_1(t *testing.T) {
+	testcreatePool(t)
+	testPositionMint(t)
+	testExactInputSinglePool(t)
+}
+
+func testcreatePool(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, pl.GetPoolCreationFee())
@@ -27,7 +33,7 @@ func TestcreatePool(t *testing.T) {
 	bar.Transfer(user1Addr, 10000)
 }
 
-func TestPositionMint(t *testing.T) {
+func testPositionMint(t *testing.T) {
 	// bar_baz_3000 by admin
 	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, 100000000)
@@ -49,7 +55,7 @@ func TestPositionMint(t *testing.T) {
 	// uassert.Equal(t, poolTick, int32(0)) // got -1, expected 0
 }
 
-func TestExactInputSinglePool(t *testing.T) {
+func testExactInputSinglePool(t *testing.T) {
 	// 0 -> 1
 	pool := pl.GetPool(barPath, bazPath, FEE_MEDIUM)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
