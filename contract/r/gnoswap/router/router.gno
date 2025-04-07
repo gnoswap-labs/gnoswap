@@ -17,6 +17,8 @@ import (
 	"gno.land/r/gnoswap/v1/halt"
 )
 
+var errExactOutAmountExceeded = "Received more than requested in [EXACT_OUT] requested=%s, actual=%s"
+
 // commonSwapSetup Common validation and setup logic extracted from SwapRoute
 func commonSwapSetup() {
 	currentLevel := halt.GetCurrentHaltLevel()
@@ -93,64 +95,94 @@ func finalizeSwap(
 	userBeforeWugnotBalance, userWrappedWugnot uint64,
 	amountSpecified *u256.Uint,
 ) (string, string) {
+	// Validate exact out amount if applicable
 	if swapType == ExactOut {
-		// If the pool's raw output is less than user wants, fail fast.
-		// (Optional: some designs skip this, and only check resultAmountOutWithoutFee.)
-		if resultAmountOut.Lt(amountSpecified) {
-			panic(addDetailToError(
-				errSlippage,
-				ufmt.Sprintf("Received more than requested in [EXACT_OUT] requested=%s, actual=%s", amountSpecified.ToString(), resultAmountOut.ToString()),
-			))
+		if err := validateExactOutAmount(resultAmountOut, amountSpecified); err != nil {
+			panic(addDetailToError(errSlippage, err.Error()))
 		}
 	}
 
+	// Handle swap fee
 	resultAmountOutWithoutFee := handleSwapFee(outputToken, resultAmountOut)
 
+	// Get current wugnot balance
 	userNewWugnotBalance := wugnot.BalanceOf(std.PreviousRealm().Address())
+
+	// Handle GNOT token unwrapping
 	if inputToken == consts.GNOT {
-		totalBefore := userBeforeWugnotBalance + userWrappedWugnot
-		spend := totalBefore - userNewWugnotBalance
-
-		if spend > userWrappedWugnot {
-			// used existing wugnot
-			panic(addDetailToError(
-				errSlippage,
-				ufmt.Sprintf("too much wugnot spent (wrapped: %d, spend: %d)", userWrappedWugnot, spend),
-			))
-		}
-
-		// unwrap left amount
-		toUnwrap := userWrappedWugnot - spend
-		unwrap(toUnwrap)
+		handleGnotInputSwap(userBeforeWugnotBalance, userWrappedWugnot, userNewWugnotBalance)
 	} else if outputToken == consts.GNOT {
-		userRecvWugnot := uint64(userNewWugnotBalance - userBeforeWugnotBalance - userWrappedWugnot)
-		unwrap(userRecvWugnot)
+		handleGnotOutputSwap(userBeforeWugnotBalance, userWrappedWugnot, userNewWugnotBalance)
 	}
 
-	if swapType == ExactIn {
-		// The user gave a fixed input => we must ensure final out >= tokenAmountLimit
-		// resultAmountOutWithoutFee is the actual tokens user receives
-		if resultAmountOutWithoutFee.Lt(tokenAmountLimit) {
-			panic(addDetailToError(
-				errSlippage,
-				ufmt.Sprintf("ExactIn: too few received (min:%s, got:%s)", tokenAmountLimit.ToString(), resultAmountOutWithoutFee.ToString()),
-			))
-		}
-	} else {
-		// swapType == ExactOut
-		// The user wants to get at least "amountSpecified" final tokens,
-		if resultAmountIn.Gt(tokenAmountLimit) {
-			panic(addDetailToError(
-				errSlippage,
-				ufmt.Sprintf("ExactOut: too much spent (max:%s, used:%s)", tokenAmountLimit.ToString(), resultAmountIn.ToString()),
-			))
-		}
-	}
+	// Validate slippage
+	validateSlippage(swapType, resultAmountIn, resultAmountOutWithoutFee, tokenAmountLimit)
 
-	intAmountOut := i256.FromUint256(resultAmountOutWithoutFee) // final user out
+	// Calculate final amounts
+	intAmountOut := i256.FromUint256(resultAmountOutWithoutFee)
 	negativeOut := i256.Zero().Neg(intAmountOut).ToString()
 
 	return resultAmountIn.ToString(), negativeOut
+}
+
+// validateExactOutAmount validates if the output amount meets the specified requirements
+func validateExactOutAmount(resultAmountOut, amountSpecified *u256.Uint) error {
+	if resultAmountOut.Gte(amountSpecified) {
+		return nil
+	}
+
+	diff := u256.Zero().Sub(amountSpecified, resultAmountOut)
+	if diff.Gt(u256.NewUint(1)) {
+		return ufmt.Errorf(errExactOutAmountExceeded, amountSpecified.ToString(), resultAmountOut.ToString())
+	}
+	return nil
+}
+
+// handleGnotInputSwap handles the unwrapping logic for GNOT input tokens
+func handleGnotInputSwap(userBeforeWugnotBalance, userWrappedWugnot, userNewWugnotBalance uint64) {
+	totalBefore := userBeforeWugnotBalance + userWrappedWugnot
+	spend := totalBefore - userNewWugnotBalance
+
+	if spend > userWrappedWugnot {
+		panic(addDetailToError(
+			errSlippage,
+			ufmt.Sprintf("too much wugnot spent (wrapped: %d, spend: %d)",
+				userWrappedWugnot, spend),
+		))
+	}
+
+	toUnwrap := userWrappedWugnot - spend
+	unwrap(toUnwrap)
+}
+
+// handleGnotOutputSwap handles the unwrapping logic for GNOT output tokens
+func handleGnotOutputSwap(userBeforeWugnotBalance, userWrappedWugnot, userNewWugnotBalance uint64) {
+	userRecvWugnot := uint64(userNewWugnotBalance - userBeforeWugnotBalance - userWrappedWugnot)
+	unwrap(userRecvWugnot)
+}
+
+// validateSlippage checks if the swap amounts meet the slippage requirements
+func validateSlippage(swapType SwapType, resultAmountIn, resultAmountOutWithoutFee, tokenAmountLimit *u256.Uint) {
+	switch swapType {
+	case ExactIn:
+		if resultAmountOutWithoutFee.Lt(tokenAmountLimit) {
+			panic(addDetailToError(
+				errSlippage,
+				ufmt.Sprintf("ExactIn: too few received (min:%s, got:%s)",
+					tokenAmountLimit.ToString(), resultAmountOutWithoutFee.ToString()),
+			))
+		}
+	case ExactOut:
+		if resultAmountIn.Gt(tokenAmountLimit) {
+			panic(addDetailToError(
+				errSlippage,
+				ufmt.Sprintf("ExactOut: too much spent (max:%s, used:%s)",
+					tokenAmountLimit.ToString(), resultAmountIn.ToString()),
+			))
+		}
+	default:
+		panic("should not happen")
+	}
 }
 
 // validateRoutesAndQuotes validates the routes and quotes slices based on specific criteria.

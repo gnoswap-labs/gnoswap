@@ -94,6 +94,19 @@ func TestFinalizeSwap(t *testing.T) {
 			expectError:             true,
 			errorMessage:            "too much wugnot spent",
 		},
+		{
+			name:                    "ExactOut: Real world slippage error",
+			inputToken:              barPath,
+			outputToken:             bazPath,
+			resultAmountIn:          newUint256("843455035"),
+			resultAmountOut:         newUint256("600901351"),
+			swapType:                ExactOut,
+			tokenAmountLimit:        newUint256("843455036"),
+			userBeforeWugnotBalance: 0,
+			userWrappedWugnot:       0,
+			amountSpecified:         newUint256("600901352"),
+			expectError:             false,
+		},
 	}
 
 	for _, tt := range tests {
