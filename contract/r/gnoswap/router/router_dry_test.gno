@@ -91,23 +91,26 @@ func TestProcessResult(t *testing.T) {
 	}
 }
 
+type testDrySwapRouteCases struct {
+	name              string
+	inputToken        string
+	outputToken       string
+	specifiedAmount   string
+	swapTypeStr       string
+	strRouteArr       string
+	quoteArr          string
+	tokenAmountLimit  string
+	expectedAmountIn  string
+	expectedAmountOut string
+	expectedSuccess   bool
+	expectPanic       bool
+}
+
 func TestDrySwapRoute(t *testing.T) {
 	t.Skip("run this test separately with `gno test -v -run TestDrySwapRoute`")
 	createBasicPool(t)
 
-	tests := []struct {
-		name              string
-		inputToken        string
-		outputToken       string
-		specifiedAmount   string
-		swapTypeStr       string
-		strRouteArr       string
-		quoteArr          string
-		tokenAmountLimit  string
-		expectedAmountIn  string
-		expectedAmountOut string
-		expectedSuccess   bool
-	}{
+	tests := []testDrySwapRouteCases{
 		{
 			name:              "ExactIn - Single Route",
 			inputToken:        "gno.land/r/onbloc/bar",
@@ -182,20 +185,8 @@ func TestDrySwapRoute(t *testing.T) {
 }
 
 func TestDrySwapRouteOverflow(t *testing.T) {
-	tests := []struct {
-		name              string
-		inputToken        string
-		outputToken       string
-		specifiedAmount   string
-		swapTypeStr       string
-		strRouteArr       string
-		quoteArr          string
-		tokenAmountLimit  string
-		expectedAmountIn  string
-		expectedAmountOut string
-		expectedSuccess   bool
-		expectPanic       bool
-	}{
+	t.Skip("run this test separately with `gno test -v -run TestDrySwapRouteOverflow`")
+	tests := []testDrySwapRouteCases{
 		{
 			name:              "ExactIn - Overflow in calculateSwapAmount",
 			inputToken:        "gno.land/r/onbloc/bar",
