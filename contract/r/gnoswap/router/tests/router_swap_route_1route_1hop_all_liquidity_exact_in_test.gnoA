@@ -19,20 +19,15 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 )
 
-func TestCreatePool(t *testing.T) {
+func TestAllLiquidityExactIn_1route_1hop(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
-}
 
-func TestPositionMint(t *testing.T) {
-	// bar_baz_500 by admin
-	testing.SetRealm(adminRealm)
 	bar.Approve(poolAddr, 100000)
 	baz.Approve(poolAddr, 100000)
 
-	// Mint
 	positionId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(-6000), int32(6000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	uassert.Equal(t, positionId, uint64(1))
@@ -46,10 +41,6 @@ func TestPositionMint(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 	uassert.Equal(t, poolTick, int32(1))
-}
-
-func TestSwapRouteBarBazExactIn(t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"
 
 	CreatePoolWithoutFee(t)
 	MakeForthMintPositionWithoutFee(t)
@@ -74,10 +65,10 @@ func TestSwapRouteBarBazExactIn(t *testing.T) {
 	uassert.Equal(t, amountIn, "140000")
 	uassert.Equal(t, amountOut, "-105765")
 
-	pool := pl.GetPool(barPath, bazPath, fee500)
-	poolLiq := pool.Liquidity()
+	pool = pl.GetPool(barPath, bazPath, fee500)
+	poolLiq = pool.Liquidity()
 	uassert.Equal(t, poolLiq.ToString(), "435768")
 
-	poolTick := pl.PoolGetSlot0Tick(poolPath)
+	poolTick = pl.PoolGetSlot0Tick(poolPath)
 	uassert.Equal(t, poolTick, int32(-5569))
 }
