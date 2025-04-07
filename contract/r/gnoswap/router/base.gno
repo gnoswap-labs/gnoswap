@@ -153,3 +153,41 @@ func (op *baseSwapOperation) processRoute(
 
 	return amountIn, amountOut, nil
 }
+
+// handleSingleSwap handles a single swap operation.
+func handleSingleSwap(route string, amountSpecified *i256.Int) (*u256.Uint, *u256.Uint) {
+	input, output, fee := getDataForSinglePath(route)
+	singleParams := SingleSwapParams{
+		tokenIn:         input,
+		tokenOut:        output,
+		fee:             fee,
+		amountSpecified: amountSpecified,
+	}
+
+	return singleSwap(singleParams)
+}
+
+func handleMultiSwap(
+	swapType SwapType,
+	route string,
+	numHops int,
+	amountSpecified *i256.Int,
+) (*u256.Uint, *u256.Uint) {
+	switch swapType {
+	case ExactIn:
+		input, output, fee := getDataForMultiPath(route, 0) // first data
+		sp := newSwapParams(input, output, fee, getPrevAddr(), amountSpecified)
+		return multiSwap(*sp, 0, numHops, route)
+	case ExactOut:
+		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
+		sp := newSwapParams(input, output, fee, getPrevAddr(), amountSpecified)
+		return multiSwapNegative(*sp, numHops-1, route)
+	default:
+		// Any invalid `SwapType` is caught in the `SwapRoute` function,
+		// so no invalid values can get in here.
+		panic(addDetailToError(
+			errInvalidSwapType,
+			ufmt.Sprintf("unknown swapType(%s)", swapType),
+		))
+	}
+}
