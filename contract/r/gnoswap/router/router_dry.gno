@@ -71,7 +71,20 @@ func DrySwapRoute(
 		}
 
 		resultAmountIn = new(u256.Uint).Add(resultAmountIn, amountIn)
+		if resultAmountIn.IsOverflow() {
+			panic(addDetailToError(
+				errInvalidInput,
+				"overflow in resultAmountIn",
+			))
+		}
+
 		resultAmountOut = new(u256.Uint).Add(resultAmountOut, amountOut)
+		if resultAmountOut.IsOverflow() {
+			panic(addDetailToError(
+				errInvalidInput,
+				"overflow in resultAmountOut",
+			))
+		}
 	}
 
 	return processDryswapResult(
@@ -114,7 +127,7 @@ func parseAmountLimit(amountLimit string) *i256.Int {
 }
 
 func parseRoutes(strRouteArr, quoteArr string) ([]string, []string) {
-	routes, quotes, err := tryParseRoutes(strRouteArr, quoteArr)
+	routes, quotes, err := validateRoutesAndQuotes(strRouteArr, quoteArr)
 	if err != nil {
 		panic(addDetailToError(
 			errInvalidRoutesAndQuotes,
@@ -137,6 +150,12 @@ func parseQuote(quote string) int {
 
 func calculateSwapAmount(amountSpecified *i256.Int, quote int) *i256.Int {
 	toSwap := i256.Zero().Mul(amountSpecified, i256.NewInt(int64(quote)))
+	if toSwap.IsOverflow() {
+		panic(addDetailToError(
+			errInvalidInput,
+			"overflow in calculateSwapAmount",
+		))
+	}
 	return new(i256.Int).Div(toSwap, i256.NewInt(100))
 }
 
