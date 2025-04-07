@@ -96,7 +96,9 @@ func finalizeSwap(
 	if swapType == ExactOut {
 		// If the pool's raw output is less than user wants, fail fast.
 		// (Optional: some designs skip this, and only check resultAmountOutWithoutFee.)
-		if resultAmountOut.Lt(amountSpecified) {
+		// Allow a tolerance of 1 unit to handle precision issues
+		diff := u256.Zero().Sub(amountSpecified, resultAmountOut)
+		if diff.Gt(u256.NewUint(1)) {
 			panic(addDetailToError(
 				errSlippage,
 				ufmt.Sprintf("Received more than requested in [EXACT_OUT] requested=%s, actual=%s", amountSpecified.ToString(), resultAmountOut.ToString()),
