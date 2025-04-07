@@ -94,6 +94,20 @@ func TestFinalizeSwap(t *testing.T) {
 			expectError:             true,
 			errorMessage:            "too much wugnot spent",
 		},
+		{
+			name:                    "ExactOut: issue #2213",
+			inputToken:              "gno.land/r/gnoswap/v1/gns",
+			outputToken:             "gno.land/r/gnoswap/v1/test_token/usdc",
+			resultAmountIn:          newUint256("843455035"),
+			resultAmountOut:         newUint256("600901351"),
+			swapType:                ExactOut,
+			tokenAmountLimit:        newUint256("843455036"),
+			userBeforeWugnotBalance: 0,
+			userWrappedWugnot:       0,
+			amountSpecified:         newUint256("600901352"),
+			expectError:             true,
+			errorMessage:            "[GNOSWAP-ROUTER-002] slippage check failed || Received more than requested in [EXACT_OUT] requested=600901352, actual=600901351",
+		},
 	}
 
 	for _, tt := range tests {
