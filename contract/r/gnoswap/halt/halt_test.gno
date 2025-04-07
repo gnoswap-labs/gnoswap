@@ -106,6 +106,12 @@ func TestSetHaltWithLevel(t *testing.T) {
 		err = IsHalted(phalt.OpTypeWithdraw)
 		uassert.NoError(t, err)
 		err = IsHalted(phalt.OpTypePool)
+		uassert.NoError(t, err)
+		err = IsHalted(phalt.OpTypePosition)
+		uassert.NoError(t, err)
+		err = IsHalted(phalt.OpTypeEmission)
+		uassert.NoError(t, err)
+		err = IsHalted(phalt.OpTypeRouter)
 		uassert.Error(t, err)
 
 		// Set CompleteHalt
@@ -118,7 +124,7 @@ func TestSetHaltWithLevel(t *testing.T) {
 		// In CompleteHalt, all operations should be halted
 		err = IsHalted(phalt.OpTypeWithdraw)
 		uassert.NoError(t, err)
-		err = IsHalted(phalt.OpTypePool)
+		err = IsHalted(phalt.OpTypeRouter)
 		uassert.Error(t, err)
 	})
 
