@@ -17,14 +17,16 @@ import (
 	"gno.land/r/gnoswap/v1/halt"
 )
 
+var one = u256.One()
+
 // ErrorMessages define all error message templates used throughout the router
 const (
-	ErrExactOutAmountExceeded = "Received more than requested in [EXACT_OUT] requested=%s, actual=%s"
-	ErrRouterHalted           = "router contract operations are currently disabled"
-	ErrInvalidRouteLength     = "route length(%d) must be 1~7"
-	ErrRoutesQuotesMismatch   = "mismatch between routes(%d) and quotes(%d) length"
-	ErrInvalidQuote           = "invalid quote(%s) at index(%d)"
-	ErrInvalidQuoteSum        = "quote sum(%d) must be 100"
+	errExactOutAmountExceeded = "Received more than requested in [EXACT_OUT] requested=%s, actual=%s"
+	errRouterHalted           = "router contract operations are currently disabled"
+	errInvalidRouteLength     = "route length(%d) must be 1~7"
+	errRoutesQuotesMismatch   = "mismatch between routes(%d) and quotes(%d) length"
+	errInvalidQuote           = "invalid quote(%s) at index(%d)"
+	errInvalidQuoteSum        = "quote sum(%d) must be 100"
 )
 
 // GnotSwapHandler encapsulates methods for handling GNOT token swaps
@@ -79,8 +81,8 @@ func (v *SwapValidator) ValidateExactOutAmount(resultAmount, specifiedAmount *u2
 	}
 
 	diff := u256.Zero().Sub(specifiedAmount, resultAmount)
-	if diff.Gt(u256.NewUint(1)) {
-		return ufmt.Errorf(ErrExactOutAmountExceeded, specifiedAmount.ToString(), resultAmount.ToString())
+	if diff.Gt(one) {
+		return ufmt.Errorf(errExactOutAmountExceeded, specifiedAmount.ToString(), resultAmount.ToString())
 	}
 	return nil
 }
@@ -129,11 +131,11 @@ func (p *RouteParser) ValidateRoutesAndQuotes(routes, quotes []string) error {
 	qq := len(quotes)
 
 	if rr < 1 || rr > 7 {
-		return ufmt.Errorf(ErrInvalidRouteLength, rr)
+		return ufmt.Errorf(errInvalidRouteLength, rr)
 	}
 
 	if rr != qq {
-		return ufmt.Errorf(ErrRoutesQuotesMismatch, rr, qq)
+		return ufmt.Errorf(errRoutesQuotesMismatch, rr, qq)
 	}
 
 	return p.ValidateQuoteSum(quotes)
@@ -146,42 +148,41 @@ func (p *RouteParser) ValidateQuoteSum(quotes []string) error {
 	for i, quote := range quotes {
 		intQuote, err := strconv.Atoi(quote)
 		if err != nil {
-			return ufmt.Errorf(ErrInvalidQuote, quote, i)
+			return ufmt.Errorf(errInvalidQuote, quote, i)
 		}
 
 		sum += intQuote
 	}
 
 	if sum != 100 {
-		return ufmt.Errorf(ErrInvalidQuoteSum, sum)
+		return ufmt.Errorf(errInvalidQuoteSum, sum)
 	}
 
 	return nil
 }
 
-// SecurityCheck performs security validations before any swap operation
-func SecurityCheck() error {
+// haltCheck performs security validations before any swap operation
+func haltCheck() error {
 	currentLevel := halt.GetCurrentHaltLevel()
 
-	// Skip checks in safe mode
 	if currentLevel != halt.LvMainnetSafeMode {
-		// Check for withdraw operation halt
+		// check for withdraw operation halt
 		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
 			return err
 		}
 
-		// Check for router contract halt
+		// check for router contract halt
 		if halt.IsContractHalted(phalt.OpTypeRouter) {
-			return ufmt.Errorf(ErrRouterHalted)
+			return ufmt.Errorf(errRouterHalted)
 		}
 	}
 
 	return nil
 }
 
-// SetupSwap performs all necessary validations and setup for a swap operation
+// commonSwapSetup performs all necessary validations and setup for a swap operation
 func commonSwapSetup() error {
-	if err := SecurityCheck(); err != nil {
+	if err := haltCheck(); err != nil {
 		return err
 	}
 
@@ -227,12 +228,11 @@ func finalizeSwap(
 		panic(addDetailToError(errSlippage, err.Error()))
 	}
 
-	// Validate slippage
 	if err := validator.ValidateSlippage(swapType, resultAmountIn, resultAmountOutWithoutFee, tokenAmountLimit); err != nil {
 		panic(addDetailToError(errSlippage, err.Error()))
 	}
 
-	// Calculate final amounts
+	// calculate final amounts
 	intAmountOut := i256.FromUint256(resultAmountOutWithoutFee)
 	negativeOut := i256.Zero().Neg(intAmountOut).ToString()
 
