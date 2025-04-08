@@ -71,15 +71,8 @@ type SingleSwapParams struct {
 // It extends the `SingleSwapParams` with recipient information for more complex swaps
 // that involve multiple pools.
 type SwapParams struct {
-	tokenIn   string      // token to being spent
-	tokenOut  string      // token to being received
-	fee       uint32      // fee of the pool used to swap
+	SingleSwapParams
 	recipient std.Address // address to receive the token
-
-	// Amount specified for the swap:
-	//  - Positive: exact input amount (tokenIn)
-	//  - Negative: exact output amount (tokenOut)
-	amountSpecified *i256.Int
 }
 
 // newSwapParams creates a new `SwapParams` instance with the provided parameters.
@@ -95,11 +88,13 @@ type SwapParams struct {
 //   - *SwapParams: new `SwapParams` instance
 func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient std.Address, amountSpecified *i256.Int) *SwapParams {
 	return &SwapParams{
-		tokenIn:         tokenIn,
-		tokenOut:        tokenOut,
-		fee:             fee,
-		recipient:       recipient,
-		amountSpecified: amountSpecified,
+		SingleSwapParams: SingleSwapParams{
+			tokenIn:         tokenIn,
+			tokenOut:        tokenOut,
+			fee:             fee,
+			amountSpecified: amountSpecified,
+		},
+		recipient: recipient,
 	}
 }
 

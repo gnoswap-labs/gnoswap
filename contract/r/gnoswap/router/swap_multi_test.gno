@@ -40,11 +40,13 @@ func TestMultiSwap(t *testing.T) {
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{
-				tokenIn:         barPath,
-				tokenOut:        bazPath,
-				fee:             3000,
 				recipient:       alice,
-				amountSpecified: i256.MustFromDecimal("100"),
+				SingleSwapParams: SingleSwapParams{
+					tokenIn:         barPath,
+					tokenOut:        bazPath,
+					fee:             3000,
+					amountSpecified: i256.MustFromDecimal("100"),
+				},
 			},
 			currentPoolIndex: 0,
 			numPools:         1,
@@ -71,11 +73,13 @@ func TestMultiSwap(t *testing.T) {
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{
-				tokenIn:         barPath,
-				tokenOut:        bazPath,
-				fee:             3000,
 				recipient:       alice,
-				amountSpecified: i256.MustFromDecimal("100"),
+				SingleSwapParams: SingleSwapParams{
+					tokenIn:         barPath,
+					tokenOut:        bazPath,
+					fee:             3000,
+					amountSpecified: i256.MustFromDecimal("100"),
+				},
 			},
 			currentPoolIndex: 0,
 			numPools:         2,
@@ -100,11 +104,13 @@ func TestMultiSwap(t *testing.T) {
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{
-				tokenIn:         barPath,
-				tokenOut:        bazPath,
-				fee:             3000,
 				recipient:       alice,
-				amountSpecified: i256.MustFromDecimal("-96"),
+				SingleSwapParams: SingleSwapParams{
+					tokenIn:         barPath,
+					tokenOut:        bazPath,
+					fee:             3000,
+					amountSpecified: i256.MustFromDecimal("-96"),
+				},
 			},
 			currentPoolIndex: 0,
 			numPools:         2,
