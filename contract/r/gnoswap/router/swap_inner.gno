@@ -73,6 +73,23 @@ func swapInner(
 	return poolRecv, poolOut
 }
 
+// RealSwapExecutor implements SwapExecutor for actual swaps
+type RealSwapExecutor struct{}
+
+func (e *RealSwapExecutor) execute(params SingleSwapParams) (amountIn *u256.Uint, amountOut *u256.Uint) {
+	return swapInner(
+		params.amountSpecified,
+		getPrevAddr(), // if single swap => user will receive
+		zero,          // sqrtPriceLimitX96
+		SwapCallbackData{
+			params.tokenIn,
+			params.tokenOut,
+			params.fee,
+			getPrevAddr(), // payer ==> msg.sender,
+		},
+	)
+}
+
 // swapDryInner performs a dry-run of a swap operation, calculating the potential
 // received and output amounts without actually executing the swap.
 //
@@ -115,6 +132,22 @@ func swapDryInner(
 	poolOut = i256Min(amount0, amount1).Abs()
 
 	return poolRecv, poolOut
+}
+
+// DrySwapExecutor implements SwapExecutor for dry swaps
+type DrySwapExecutor struct{}
+
+func (e *DrySwapExecutor) execute(params SingleSwapParams) (amountIn *u256.Uint, amountOut *u256.Uint) {
+	return swapDryInner(
+		params.amountSpecified,
+		zero,
+		SwapCallbackData{
+			params.tokenIn,
+			params.tokenOut,
+			params.fee,
+			getPrevAddr(),
+		},
+	)
 }
 
 // calculateSqrtPriceLimitForSwap calculates the price limit for a swap operation.

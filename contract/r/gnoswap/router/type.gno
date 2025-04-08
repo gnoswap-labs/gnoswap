@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	rawUnknown = "UNKNOWN"
 	rawExactIn  = "EXACT_IN"
 	rawExactOut = "EXACT_OUT"
 )
@@ -17,6 +18,7 @@ const (
 type SwapType string
 
 const (
+	Unknown SwapType = rawUnknown
 	// ExactIn represents a swap type where the input amount is exact and the output amount may vary.
 	// Used when a user wants to swap a specific amount of input tokens.
 	ExactIn SwapType = rawExactIn

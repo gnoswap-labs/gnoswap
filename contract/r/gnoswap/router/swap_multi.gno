@@ -131,7 +131,7 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.
 	return firstAmountIn, u256.Zero()
 }
 
-func multiDrySwap(params SwapParams, currentPoolIndex, numPool int, swapPath string) (*u256.Uint, *u256.Uint) { // firstAmountIn, lastAmountOut
+func multiDrySwap(params SwapParams, currentPoolIndex, numPool int, swapPath string) (*u256.Uint, *u256.Uint, error) { // firstAmountIn, lastAmountOut
 	firstAmountIn := u256.Zero()
 
 	payer := getPrevAddr() // user
@@ -155,7 +155,7 @@ func multiDrySwap(params SwapParams, currentPoolIndex, numPool int, swapPath str
 		}
 
 		if currentPoolIndex >= numPool {
-			return firstAmountIn, amountOut
+			return firstAmountIn, amountOut, nil
 		}
 
 		payer = routerAddr
@@ -168,7 +168,7 @@ func multiDrySwap(params SwapParams, currentPoolIndex, numPool int, swapPath str
 	}
 }
 
-func multiDrySwapNegative(params SwapParams, currentPoolIndex int, swapPath string) (*u256.Uint, *u256.Uint) {
+func multiDrySwapNegative(params SwapParams, currentPoolIndex int, swapPath string) (*u256.Uint, *u256.Uint, error) {
 	firstAmountIn := u256.Zero()
 	payer := routerAddr
 
@@ -191,7 +191,7 @@ func multiDrySwapNegative(params SwapParams, currentPoolIndex int, swapPath stri
 		currentPoolIndex--
 
 		if currentPoolIndex == -1 {
-			return firstAmountIn, amountOut
+			return firstAmountIn, amountOut, nil
 		}
 
 		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)

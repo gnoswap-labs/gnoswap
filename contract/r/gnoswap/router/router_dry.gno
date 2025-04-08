@@ -12,154 +12,44 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
+var PERCENTAGE_DENOMINATOR = i256.NewInt(100)
+
+// QuoteConstraints defines the valid range for swap quote percentages
 const (
-	MAX_QUOTE_PERCENTAGE = 100
-	MIN_QUOTE_PERCENTAGE = 0
+	MaxQuotePercentage = 100
+	MinQuotePercentage = 0
 )
 
-// DrySwapRoute simulates a token swap route without actually executing the swap.
-// It calculates the expected outcome based on the current state of liquidity pools.
-// Parameters:
-// - inputToken: the symbol of the input token
-// - outputToken: the symbol of the output token
-// - specifiedAmount: the amount specified by the user (input or output, depending on swapKind)
-// - swapTypeStr: the type of swap ("exactIn" or "exactOut")
-// - strRouteArr: comma-separated swap route strings
-// - quoteArr: comma-separated quote percentages for each route
-// - tokenAmountLimit: a limit for token amount depending on swapKind
-// Returns:
-// - amountInStr: the calculated input amount as a string
-// - amountOutStr: the calculated output amount as a string
-// - success: true if the simulated swap meets all constraints
-func DrySwapRoute(
-	inputToken string,
-	outputToken string,
-	specifiedAmount string,
-	swapTypeStr string,
-	strRouteArr string,
-	quoteArr string,
-	tokenAmountLimit string,
-) (string, string, bool) {
-	common.MustRegistered(inputToken)
-	common.MustRegistered(outputToken)
+// ErrorMessages for DrySwapRoute operations
+const (
+	ErrOverflowResultAmountIn      = "overflow in resultAmountIn"
+	ErrOverflowResultAmountOut     = "overflow in resultAmountOut"
+	ErrUnknownSwapType             = "unknown swapType(%s)"
+	ErrInvalidPositiveAmount       = "invalid amount(%s), must be positive"
+	ErrInvalidZeroAmountLimit      = "invalid amountLimit(%s), should not be zero"
+	ErrInvalidQuoteRange           = "quote(%d) must be %d~%d"
+	ErrOverflowCalculateSwapAmount = "overflow in calculateSwapAmount"
+)
 
-	swapType := parseSwapType(swapTypeStr)
-	amountSpecified := parseAmount(specifiedAmount)
-	amountLimit := parseAmountLimit(tokenAmountLimit)
-	routes, quotes := parseRoutes(strRouteArr, quoteArr)
+// SwapProcessor handles the execution of swap operations
+type SwapProcessor struct{}
 
-	if swapType == ExactOut {
-		amountSpecified = i256.Zero().Neg(amountSpecified)
+// ProcessSwapAmount calculates the exact amount to swap based on quote percentage
+func (p *SwapProcessor) ProcessSwapAmount(amountSpecified *i256.Int, quote int) (*i256.Int, error) {
+	if quote < MinQuotePercentage || quote > MaxQuotePercentage {
+		return nil, ufmt.Errorf(ErrInvalidQuoteRange, quote, MinQuotePercentage, MaxQuotePercentage)
 	}
 
-	zero := u256.Zero()
-
-	amountIn, amountOut := zero, zero
-	resultAmountIn, resultAmountOut := zero, zero
-
-	for i, route := range routes {
-		quote := parseQuote(quotes[i])
-		toSwap := calculateSwapAmount(amountSpecified, quote)
-
-		numHops := strings.Count(route, POOL_SEPARATOR) + 1
-		assertHopsInRange(numHops)
-
-		if numHops == 1 {
-			amountIn, amountOut = handleSingleDrySwap(route, toSwap)
-		} else {
-			amountIn, amountOut = handleMultiDrySwap(swapType, route, numHops, toSwap)
-		}
-
-		resultAmountIn = new(u256.Uint).Add(resultAmountIn, amountIn)
-		if resultAmountIn.IsOverflow() {
-			panic(addDetailToError(
-				errInvalidInput,
-				"overflow in resultAmountIn",
-			))
-		}
-
-		resultAmountOut = new(u256.Uint).Add(resultAmountOut, amountOut)
-		if resultAmountOut.IsOverflow() {
-			panic(addDetailToError(
-				errInvalidInput,
-				"overflow in resultAmountOut",
-			))
-		}
-	}
-
-	return processDryswapResult(
-		swapType, resultAmountIn, resultAmountOut,
-		amountSpecified, amountLimit,
-	)
-}
-
-func parseSwapType(swapTypeStr string) SwapType {
-	swapType, err := trySwapTypeFromStr(swapTypeStr)
-	if err != nil {
-		panic(addDetailToError(
-			errInvalidSwapType,
-			ufmt.Sprintf("unknown swapType(%s)", swapTypeStr),
-		))
-	}
-	return swapType
-}
-
-func parseAmount(amount string) *i256.Int {
-	parsedAmount := i256.MustFromDecimal(amount)
-	if parsedAmount.Lt(i256.Zero()) {
-		panic(addDetailToError(
-			errInvalidInput,
-			ufmt.Sprintf("invalid amount(%s), must be positive", amount),
-		))
-	}
-	return parsedAmount
-}
-
-func parseAmountLimit(amountLimit string) *i256.Int {
-	parsedLimit := i256.MustFromDecimal(amountLimit)
-	if parsedLimit.IsZero() {
-		panic(addDetailToError(
-			errInvalidInput,
-			ufmt.Sprintf("invalid amountLimit(%s), should not be zero", amountLimit),
-		))
-	}
-	return parsedLimit
-}
-
-func parseRoutes(strRouteArr, quoteArr string) ([]string, []string) {
-	routes, quotes, err := validateRoutesAndQuotes(strRouteArr, quoteArr)
-	if err != nil {
-		panic(addDetailToError(
-			errInvalidRoutesAndQuotes,
-			err.Error()),
-		)
-	}
-	return routes, quotes
-}
-
-func parseQuote(quote string) int {
-	quoteValue, _ := strconv.Atoi(quote)
-	if quoteValue < MIN_QUOTE_PERCENTAGE || quoteValue > MAX_QUOTE_PERCENTAGE {
-		panic(addDetailToError(
-			errInvalidInput,
-			ufmt.Sprintf("quote(%d) must be %d~%d", quoteValue, MIN_QUOTE_PERCENTAGE, MAX_QUOTE_PERCENTAGE),
-		))
-	}
-	return quoteValue
-}
-
-func calculateSwapAmount(amountSpecified *i256.Int, quote int) *i256.Int {
 	toSwap := i256.Zero().Mul(amountSpecified, i256.NewInt(int64(quote)))
 	if toSwap.IsOverflow() {
-		panic(addDetailToError(
-			errInvalidInput,
-			"overflow in calculateSwapAmount",
-		))
+		return nil, ufmt.Errorf(ErrOverflowCalculateSwapAmount)
 	}
-	return new(i256.Int).Div(toSwap, i256.NewInt(100))
+
+	return new(i256.Int).Div(toSwap, PERCENTAGE_DENOMINATOR), nil
 }
 
-func handleSingleDrySwap(route string, amountSpecified *i256.Int) (*u256.Uint, *u256.Uint) {
+// ProcessSingleSwap handles a single-hop swap simulation
+func (p *SwapProcessor) ProcessSingleSwap(route string, amountSpecified *i256.Int) (*u256.Uint, *u256.Uint, error) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
 		tokenIn:         input,
@@ -168,45 +58,39 @@ func handleSingleDrySwap(route string, amountSpecified *i256.Int) (*u256.Uint, *
 		amountSpecified: amountSpecified,
 	}
 
-	return singleDrySwap(singleParams)
+	amountIn, amountOut := singleDrySwap(singleParams)
+	return amountIn, amountOut, nil
 }
 
-func handleMultiDrySwap(
+// ProcessMultiSwap handles a multi-hop swap simulation
+func (p *SwapProcessor) ProcessMultiSwap(
 	swapType SwapType,
 	route string,
 	numHops int,
 	amountSpecified *i256.Int,
-) (*u256.Uint, *u256.Uint) {
+) (*u256.Uint, *u256.Uint, error) {
 	recipient := std.PreviousRealm().Address()
 	pathIndex := getPathIndex(swapType, numHops)
 
 	input, output, fee := getDataForMultiPath(route, pathIndex)
 	swapParams := newSwapParams(input, output, fee, recipient, amountSpecified)
 
-	return executeMultiSwap(swapType, swapParams, pathIndex, numHops, route)
-}
-
-func executeMultiSwap(
-	swapType SwapType,
-	params *SwapParams,
-	pathIndex int,
-	numHops int,
-	route string,
-) (*u256.Uint, *u256.Uint) {
 	switch swapType {
 	case ExactIn:
-		return multiDrySwap(*params, pathIndex, numHops, route)
+		return multiDrySwap(*swapParams, pathIndex, numHops, route)
 	case ExactOut:
-		return multiDrySwapNegative(*params, pathIndex, route)
+		return multiDrySwapNegative(*swapParams, pathIndex, route)
 	default:
-		panic(addDetailToError(
-			errInvalidSwapType,
-			ufmt.Sprintf("unknown swapType(%s)", swapType),
-		))
+		return nil, nil, ufmt.Errorf(ErrUnknownSwapType, swapType)
 	}
 }
 
-func processDryswapResult(swapType SwapType, resultAmountIn, resultAmountOut *u256.Uint, amountSpecified, amountLimit *i256.Int) (string, string, bool) {
+// ValidateSwapResults checks if the swap results meet the required constraints
+func (p *SwapProcessor) ValidateSwapResults(
+	swapType SwapType,
+	resultAmountIn, resultAmountOut *u256.Uint,
+	amountSpecified, amountLimit *i256.Int,
+) (string, string, bool) {
 	switch swapType {
 	case ExactIn:
 		if i256.FromUint256(resultAmountIn).Gt(amountSpecified) {
@@ -227,16 +111,137 @@ func processDryswapResult(swapType SwapType, resultAmountIn, resultAmountOut *u2
 		return resultAmountIn.ToString(), resultAmountOut.ToString(), true
 
 	default:
-		panic(addDetailToError(
-			errInvalidSwapType,
-			ufmt.Sprintf("unknown swapType(%s)", swapType),
-		))
+		// This should never happen since we validate the swap type earlier
+		return "", "", false
 	}
 }
 
-func getPathIndex(swapType SwapType, numHops int) int {
-	if swapType == ExactIn {
-		return 0 // first data
+// AddSwapResults safely adds swap result amounts, checking for overflow
+func (p *SwapProcessor) AddSwapResults(
+	resultAmountIn, resultAmountOut, amountIn, amountOut *u256.Uint,
+) (*u256.Uint, *u256.Uint, error) {
+	newAmountIn := new(u256.Uint).Add(resultAmountIn, amountIn)
+	if newAmountIn.IsOverflow() {
+		return nil, nil, ufmt.Errorf(ErrOverflowResultAmountIn)
 	}
-	return numHops - 1 // last data
+
+	newAmountOut := new(u256.Uint).Add(resultAmountOut, amountOut)
+	if newAmountOut.IsOverflow() {
+		return nil, nil, ufmt.Errorf(ErrOverflowResultAmountOut)
+	}
+
+	return newAmountIn, newAmountOut, nil
+}
+
+// DrySwapRoute simulates a token swap route without actually executing the swap.
+// It calculates the expected outcome based on the current state of liquidity pools.
+//
+// Parameters:
+//   - inputToken: the symbol of the input token
+//   - outputToken: the symbol of the output token
+//   - specifiedAmount: the amount specified by the user (input or output, depending on swapKind)
+//   - swapTypeStr: the type of swap ("exactIn" or "exactOut")
+//   - strRouteArr: comma-separated swap route strings
+//   - quoteArr: comma-separated quote percentages for each route
+//   - tokenAmountLimit: a limit for token amount depending on swapKind
+//
+// Returns:
+//   - amountInStr: the calculated input amount as a string
+//   - amountOutStr: the calculated output amount as a string
+//   - success: true if the simulated swap meets all constraints
+func DrySwapRoute(
+	inputToken, outputToken string,
+	specifiedAmount string,
+	swapTypeStr string,
+	strRouteArr, quoteArr string,
+	tokenAmountLimit string,
+) (string, string, bool) {
+	common.MustRegistered(inputToken, outputToken)
+
+	// initialize components
+	validator := &SwapValidator{}
+	processor := &SwapProcessor{}
+	parser := &RouteParser{}
+
+	// validate and parse inputs
+	swapType, err := validator.ValidateSwapType(swapTypeStr)
+	if err != nil {
+		panic(addDetailToError(errInvalidSwapType, err.Error()))
+	}
+
+	amountSpecified, err := validator.ValidateAmount(specifiedAmount)
+	if err != nil {
+		panic(addDetailToError(errInvalidInput, err.Error()))
+	}
+
+	amountLimit, err := validator.ValidateAmountLimit(tokenAmountLimit)
+	if err != nil {
+		panic(addDetailToError(errInvalidInput, err.Error()))
+	}
+
+	routes, quotes, err := parser.ParseRoutes(strRouteArr, quoteArr)
+	if err != nil {
+		panic(addDetailToError(errInvalidRoutesAndQuotes, err.Error()))
+	}
+
+	// adjust amount sign for exact out swaps
+	if swapType == ExactOut {
+		amountSpecified = i256.Zero().Neg(amountSpecified)
+	}
+
+	// initialize accumulators for swap results
+	zero := u256.Zero()
+	resultAmountIn, resultAmountOut := zero, zero
+
+	// Process each route
+	for i, route := range routes {
+		// calculate the amount to swap for this route
+		quoteValue, err := strconv.Atoi(quotes[i])
+		if err != nil {
+			panic(addDetailToError(errInvalidInput, err.Error()))
+		}
+
+		toSwap, err := processor.ProcessSwapAmount(amountSpecified, quoteValue)
+		if err != nil {
+			panic(addDetailToError(errInvalidInput, err.Error()))
+		}
+
+		// determine the number of hops and validate
+		numHops := strings.Count(route, POOL_SEPARATOR) + 1
+		assertHopsInRange(numHops)
+
+		// execute the appropriate swap type
+		var amountIn, amountOut *u256.Uint
+		if numHops == 1 {
+			amountIn, amountOut, err = processor.ProcessSingleSwap(route, toSwap)
+		} else {
+			amountIn, amountOut, err = processor.ProcessMultiSwap(swapType, route, numHops, toSwap)
+		}
+
+		if err != nil {
+			panic(addDetailToError(errInvalidSwapType, err.Error()))
+		}
+
+		// update accumulated results
+		resultAmountIn, resultAmountOut, err = processor.AddSwapResults(resultAmountIn, resultAmountOut, amountIn, amountOut)
+		if err != nil {
+			panic(addDetailToError(errInvalidInput, err.Error()))
+		}
+	}
+
+	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, amountSpecified, amountLimit)
+}
+
+// Helper function to get path index based on swap type and number of hops
+func getPathIndex(swapType SwapType, numHops int) int {
+	switch swapType {
+	case ExactIn:
+		// first data for exact input swaps
+		return 0
+	case ExactOut:
+		// last data for exact output swaps
+		return numHops - 1
+	default:
+		panic("should not happen")
+	}
 }
