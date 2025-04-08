@@ -7,11 +7,19 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// SwapDirection represents the direction of swap execution
+// SwapDirection represents the direction of swap execution in multi-hop swaps.
+// It determines whether swaps are processed in forward order (first to last pool)
+// or backward order (last to first pool).
 type SwapDirection int
 
 const (
+	// Forward indicates a swap processing direction from the first pool to the last pool.
+	// Used primarily for exactIn swaps where the input amount is known.
 	Forward SwapDirection = iota
+
+	// Backward indicates a swap processing direction from the last pool to the first pool.
+	// Used primarily for exactOut swaps where the output amount is known and input amounts
+	// need to be calculated in reverse order.
 	Backward
 )
 
