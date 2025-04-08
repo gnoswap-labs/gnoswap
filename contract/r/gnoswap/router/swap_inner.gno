@@ -81,12 +81,7 @@ func (e *RealSwapExecutor) execute(params SingleSwapParams) (amountIn *u256.Uint
 		params.amountSpecified,
 		getPrevAddr(), // if single swap => user will receive
 		zero,          // sqrtPriceLimitX96
-		SwapCallbackData{
-			params.tokenIn,
-			params.tokenOut,
-			params.fee,
-			getPrevAddr(), // payer ==> msg.sender,
-		},
+		newSwapCallbackData(params, getPrevAddr()),
 	)
 }
 
@@ -141,12 +136,7 @@ func (e *DrySwapExecutor) execute(params SingleSwapParams) (amountIn *u256.Uint,
 	return swapDryInner(
 		params.amountSpecified,
 		zero,
-		SwapCallbackData{
-			params.tokenIn,
-			params.tokenOut,
-			params.fee,
-			getPrevAddr(),
-		},
+		newSwapCallbackData(params, getPrevAddr()),
 	)
 }
 

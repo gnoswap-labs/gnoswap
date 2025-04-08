@@ -177,7 +177,7 @@ func handleMultiSwap(
 	case ExactIn:
 		input, output, fee := getDataForMultiPath(route, 0) // first data
 		sp := newSwapParams(input, output, fee, getPrevAddr(), amountSpecified)
-		return multiSwap(*sp, 0, numHops, route)
+		return multiSwap(*sp, numHops, route)
 	case ExactOut:
 		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
 		sp := newSwapParams(input, output, fee, getPrevAddr(), amountSpecified)

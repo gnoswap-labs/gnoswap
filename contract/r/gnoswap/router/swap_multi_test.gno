@@ -21,7 +21,6 @@ func TestMultiSwap(t *testing.T) {
 		name             string
 		setupFn          func(t *testing.T)
 		params           SwapParams
-		currentPoolIndex int
 		numPools         int
 		swapPath         string
 		expectedFirstIn  string
@@ -48,7 +47,6 @@ func TestMultiSwap(t *testing.T) {
 					amountSpecified: i256.MustFromDecimal("100"),
 				},
 			},
-			currentPoolIndex: 0,
 			numPools:         1,
 			swapPath:         "",
 			expectedFirstIn:  "100",
@@ -81,7 +79,6 @@ func TestMultiSwap(t *testing.T) {
 					amountSpecified: i256.MustFromDecimal("100"),
 				},
 			},
-			currentPoolIndex: 0,
 			numPools:         2,
 			swapPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
 			expectedFirstIn:  "100",
@@ -112,7 +109,6 @@ func TestMultiSwap(t *testing.T) {
 					amountSpecified: i256.MustFromDecimal("-96"),
 				},
 			},
-			currentPoolIndex: 0,
 			numPools:         2,
 			swapPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
 			expectedFirstIn:  "98",
@@ -129,7 +125,6 @@ func TestMultiSwap(t *testing.T) {
 
 			firstAmountIn, lastAmountOut := multiSwap(
 				tt.params,
-				tt.currentPoolIndex,
 				tt.numPools,
 				tt.swapPath,
 			)

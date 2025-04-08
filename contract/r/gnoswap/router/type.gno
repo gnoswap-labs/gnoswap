@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	rawUnknown = "UNKNOWN"
+	rawUnknown  = "UNKNOWN"
 	rawExactIn  = "EXACT_IN"
 	rawExactOut = "EXACT_OUT"
 )
@@ -67,6 +67,10 @@ type SingleSwapParams struct {
 	amountSpecified *i256.Int
 }
 
+func (p SingleSwapParams) TokenIn() string  { return p.tokenIn }
+func (p SingleSwapParams) TokenOut() string { return p.tokenOut }
+func (p SingleSwapParams) Fee() uint32      { return p.fee }
+
 // SwapParams contains parameters for executing a multi-hop swap opration.
 // It extends the `SingleSwapParams` with recipient information for more complex swaps
 // that involve multiple pools.
@@ -74,6 +78,11 @@ type SwapParams struct {
 	SingleSwapParams
 	recipient std.Address // address to receive the token
 }
+
+func (p SwapParams) TokenIn() string        { return p.tokenIn }
+func (p SwapParams) TokenOut() string       { return p.tokenOut }
+func (p SwapParams) Fee() uint32            { return p.fee }
+func (p SwapParams) Recipient() std.Address { return p.recipient }
 
 // newSwapParams creates a new `SwapParams` instance with the provided parameters.
 //
@@ -107,6 +116,13 @@ type SwapResult struct {
 	AmountSpecified *i256.Int
 }
 
+// SwapParamsInterface defines the common interface for swap parameters
+type SwapParamsI interface {
+	TokenIn() string
+	TokenOut() string
+	Fee() uint32
+}
+
 // SwapCallbackData contains the callback data required for swap execution.
 // This type is used to pass necessary information during the swap callback process,
 // ensuring proper token transfers and pool data updates.
@@ -115,6 +131,17 @@ type SwapCallbackData struct {
 	tokenOut string      // token to receive
 	fee      uint32      // fee of the pool used to swap
 	payer    std.Address // address to spend the token
+}
+
+// newSwapCallbackData creates a new SwapCallbackData from a SwapParamsInterface.
+// It takes a payer address as an additional parameter to specify who will pay for the swap.
+func newSwapCallbackData(params SwapParamsI, payer std.Address) SwapCallbackData {
+	return SwapCallbackData{
+		tokenIn:  params.TokenIn(),
+		tokenOut: params.TokenOut(),
+		fee:      params.Fee(),
+		payer:    payer,
+	}
 }
 
 type ExactInParams struct {

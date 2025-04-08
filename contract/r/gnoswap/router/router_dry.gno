@@ -77,7 +77,7 @@ func (p *SwapProcessor) ProcessMultiSwap(
 
 	switch swapType {
 	case ExactIn:
-		return multiDrySwap(*swapParams, pathIndex, numHops, route)
+		return multiDrySwap(*swapParams, numHops, route)
 	case ExactOut:
 		return multiDrySwapNegative(*swapParams, pathIndex, route)
 	default:
