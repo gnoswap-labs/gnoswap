@@ -95,7 +95,7 @@ func (op *ExactOutSwapOperation) Validate() error {
 	// when it's an ExactOut
 	op.amountSpecified = i256.Zero().Neg(amountOut)
 
-	routes, quotes, err := tryParseRoutes(op.params.RouteArr, op.params.QuoteArr)
+	routes, quotes, err := validateRoutesAndQuotes(op.params.RouteArr, op.params.QuoteArr)
 	if err != nil {
 		return err
 	}
