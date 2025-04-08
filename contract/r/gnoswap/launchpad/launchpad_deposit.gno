@@ -279,6 +279,14 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 			errNotExistDeposit, ufmt.Sprintf("no deposit list for project(%s)", projectId)))
 	}
 
+	// Validate each deposit to prevent early withdrawal
+	for _, depositId := range depositList {
+		_, _, err := validateDepositCollection(depositId, caller)
+		if err != nil {
+			panic(addDetailToError(errInvalidInput, err.Error()))
+		}
+	}
+
 	return processCollectedDeposits(depositList, projectId)
 }
 
@@ -436,20 +444,6 @@ func checkDepositConditions(project Project) {
 			))
 		}
 	}
-}
-
-// checkTierActive checks whether a specific tier in a project is active.
-//
-// This function verifies if the tier's end height is greater than or equal to the current block height.
-//
-// Parameters:
-// - project (Project): The project to which the tier belongs.
-// - tier (Tier): The tier to check.
-//
-// Returns:
-// - bool: True if the tier is active, otherwise false.
-func checkTierActive(project Project, tier Tier) bool {
-	return tier.ended.height >= uint64(std.ChainHeight())
 }
 
 // convertTierTypeStrToUint64 converts a tier type string to its corresponding uint64 value.
