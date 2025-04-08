@@ -5,6 +5,29 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
+var zero = u256.Zero()
+
+// SwapExecutor defines the interface for executing swaps
+type SwapExecutor interface {
+	execute(params SingleSwapParams) (amountIn, amountOut *u256.Uint)
+}
+
+// executeSwap is the common logic for both real and dry swaps
+func executeSwap(executor SwapExecutor, params SingleSwapParams) (amountIn *u256.Uint, amountOut *u256.Uint) {
+	if params.tokenIn == params.tokenOut {
+		panic(errSameTokenSwap.Error())
+	}
+
+	common.MustRegistered(params.tokenIn, params.tokenOut)
+
+	return executor.execute(params)
+}
+
+var (
+	_ SwapExecutor = (*RealSwapExecutor)(nil)
+	_ SwapExecutor = (*DrySwapExecutor)(nil)
+)
+
 // singleSwap execute a swap within a single pool using the provided parameters.
 // It processes a token swap within two assets using a specific fee tier and
 // automatically sets the recipient to the caller's address.
@@ -23,26 +46,7 @@ import (
 // The function uses swapInner for the core swap logic and sets the proce limit to 0,
 // allowing the swap to execute at any price point within slippage bounds.
 func singleSwap(params SingleSwapParams) (amountIn *u256.Uint, amountOut *u256.Uint) {
-	if params.tokenIn == params.tokenOut {
-		panic(errSameTokenSwap.Error())
-	}
-
-	common.MustRegistered(params.tokenIn)
-	common.MustRegistered(params.tokenOut)
-
-	amountIn, amountOut = swapInner(
-		params.amountSpecified,
-		getPrevAddr(), // if single swap => user will receive
-		u256.Zero(),   // sqrtPriceLimitX96
-		SwapCallbackData{
-			params.tokenIn,
-			params.tokenOut,
-			params.fee,
-			getPrevAddr(), // payer ==> msg.sender,
-		},
-	)
-
-	return amountIn, amountOut
+	return executeSwap(&RealSwapExecutor{}, params)
 }
 
 // singleDrySwap simulates a single-token swap operation without executing it,
@@ -62,23 +66,5 @@ func singleSwap(params SingleSwapParams) (amountIn *u256.Uint, amountOut *u256.U
 // Notes:
 // - This function performs a simulation and does not alter the state or execute the actual swap.
 func singleDrySwap(params SingleSwapParams) (amountIn *u256.Uint, amountOut *u256.Uint) {
-	if params.tokenIn == params.tokenOut {
-		panic(errSameTokenSwap.Error())
-	}
-
-	common.MustRegistered(params.tokenIn)
-	common.MustRegistered(params.tokenOut)
-
-	amountIn, amountOut = swapDryInner(
-		params.amountSpecified,
-		u256.Zero(),
-		SwapCallbackData{
-			params.tokenIn,
-			params.tokenOut,
-			params.fee,
-			getPrevAddr(),
-		},
-	)
-
-	return amountIn, amountOut
+	return executeSwap(&DrySwapExecutor{}, params)
 }
