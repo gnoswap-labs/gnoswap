@@ -13,9 +13,10 @@ import (
 type SwapDirection int
 
 const (
+	_ SwapDirection = iota
 	// Forward indicates a swap processing direction from the first pool to the last pool.
 	// Used primarily for exactIn swaps where the input amount is known.
-	Forward SwapDirection = iota
+	Forward
 
 	// Backward indicates a swap processing direction from the last pool to the first pool.
 	// Used primarily for exactOut swaps where the output amount is known and input amounts
