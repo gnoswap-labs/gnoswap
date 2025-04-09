@@ -83,7 +83,6 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 		name            string
 		inputToken      string
 		outputToken     string
-		swapType        SwapType
 		specifiedAmount *i256.Int
 		sentAmount      int64
 		expectError     bool
@@ -92,7 +91,6 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 			name:            "Pass: non-GNOT token swap",
 			inputToken:      "token1",
 			outputToken:     "token2",
-			swapType:        ExactIn,
 			specifiedAmount: i256.NewInt(100),
 			sentAmount:      0,
 			expectError:     false,
@@ -101,7 +99,6 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 			name:            "Pass: GNOT -> WGNOT exact amount",
 			inputToken:      consts.GNOT,
 			outputToken:     "token2",
-			swapType:        ExactIn,
 			specifiedAmount: i256.NewInt(1000),
 			sentAmount:      1000,
 			expectError:     false,
@@ -119,7 +116,6 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 			err := op.handleNativeTokenWrapping(
 				tt.inputToken,
 				tt.outputToken,
-				tt.swapType,
 				tt.specifiedAmount,
 			)
 			testing.SetOriginSend(testCoins)

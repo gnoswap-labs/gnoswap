@@ -139,7 +139,6 @@ func (op *ExactInSwapOperation) handleNativeTokenWrapping() error {
 	return op.baseSwapOperation.handleNativeTokenWrapping(
 		op.params.InputToken,
 		op.params.OutputToken,
-		ExactIn,
 		op.amountSpecified,
 	)
 }

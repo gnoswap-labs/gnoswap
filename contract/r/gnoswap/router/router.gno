@@ -68,7 +68,7 @@ func (h *GnotSwapHandler) HandleInputSwap() error {
 // HandleOutputSwap manages unwrapping logic for GNOT output tokens
 func (h *GnotSwapHandler) HandleOutputSwap() {
 	userRecvWugnot := h.NewBalance - h.BeforeBalance - h.WrappedAmount
-	unwrap(uint64(userRecvWugnot))
+	unwrap(userRecvWugnot)
 }
 
 // SwapValidator provides validation methods for swap operations
@@ -104,6 +104,33 @@ func (v *SwapValidator) ValidateSlippage(swapType SwapType, amountIn, amountOut,
 		return ufmt.Errorf("invalid swap type")
 	}
 	return nil
+}
+
+// ValidateSwapType ensures the swap type string is valid
+func (v *SwapValidator) ValidateSwapType(swapTypeStr string) (SwapType, error) {
+	swapType, err := trySwapTypeFromStr(swapTypeStr)
+	if err != nil {
+		return Unknown, ufmt.Errorf("unknown swapType(%s)", swapTypeStr)
+	}
+	return swapType, nil
+}
+
+// ValidateAmount ensures the amount is properly formatted and positive
+func (v *SwapValidator) ValidateAmount(amount string) (*i256.Int, error) {
+	parsedAmount := i256.MustFromDecimal(amount)
+	if parsedAmount.Lt(i256.Zero()) {
+		return nil, ufmt.Errorf(ErrInvalidPositiveAmount, amount)
+	}
+	return parsedAmount, nil
+}
+
+// ValidateAmountLimit ensures the amount limit is properly formatted and non-zero
+func (v *SwapValidator) ValidateAmountLimit(amountLimit string) (*i256.Int, error) {
+	parsedLimit := i256.MustFromDecimal(amountLimit)
+	if parsedLimit.IsZero() {
+		return nil, ufmt.Errorf(ErrInvalidZeroAmountLimit, amountLimit)
+	}
+	return parsedLimit, nil
 }
 
 // RouteParser handles parsing and validation of routes and quotes

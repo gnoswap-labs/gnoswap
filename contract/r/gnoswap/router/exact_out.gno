@@ -129,7 +129,6 @@ func (op *ExactOutSwapOperation) handleNativeTokenWrapping() error {
 	return op.baseSwapOperation.handleNativeTokenWrapping(
 		op.params.InputToken,
 		op.params.OutputToken,
-		ExactOut,
 		i256.MustFromDecimal(op.params.AmountInMax),
 	)
 }
