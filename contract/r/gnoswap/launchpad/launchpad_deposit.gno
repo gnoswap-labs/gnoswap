@@ -37,8 +37,6 @@ var (
 	depositState DepositState
 )
 
-// TODO:
-// 1. 주석 추가
 // DepositState represents the state of the deposits
 type DepositState struct {
 	Deposits              map[string]Deposit
@@ -47,8 +45,6 @@ type DepositState struct {
 	DepositsByUserProject map[std.Address]map[string][]string
 }
 
-// TODO:
-// 1. 주석 추가
 // ProjectTierInfo contains information about a project tier
 type ProjectTierInfo struct {
 	Project       Project
@@ -163,9 +159,6 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 			"claimableTime", formatUint(deposit.claimableTime),
 			"tierAmountPerBlockX128", tier.TierAmountPerBlockX128().ToString(),
 		)
-
-		// rewardState := NewRewardState(tier.tierAmountPerBlockX128, tier.started.height, tier.ended.height)
-		// rewardStates.set(info.Project.id, info.TierType, rewardState)
 	}
 
 	reward := tier.Reward()
@@ -173,6 +166,7 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 	if err != nil {
 		panic(err.Error())
 	}
+
 	reward.addRewardPerDeposit(rewardPerDeposit)
 	reward.setLastHeight(currentHeight)
 
@@ -184,6 +178,7 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 		deposit.DepositHeight(),
 		tier.Ended().height,
 		currentHeight)
+
 	reward.Info().Set(deposit.ID(), rewardInfo)
 	tier.setReward(reward)
 	tier.setTotalDepositAmount(tier.TotalDepositAmount() + amount)
@@ -198,13 +193,6 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 	project.Stats().setActualParticipant(project.Stats().ActualParticipant() + 1)
 
 	projects[projectId] = project
-
-	//rewardState, err := rewardStates.Get(projectId, tierType)
-	//if err != nil {
-	//	panic(addDetailToError(
-	//		errInvalidRewardState, err.Error()))
-	//}
-	//rewardState.addStake(uint64(std.ChainHeight()), deposit.id, amount)
 
 	// Update gov_staker to calculate project's recipient's reward
 	gs.SetAmountByProjectWallet(project.recipient, amount, true)
@@ -291,6 +279,14 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 			errNotExistDeposit, ufmt.Sprintf("no deposit list for project(%s)", projectId)))
 	}
 
+	// Validate each deposit to prevent early withdrawal
+	for _, depositId := range depositList {
+		_, _, err := validateDepositCollection(depositId, caller)
+		if err != nil {
+			panic(addDetailToError(errInvalidInput, err.Error()))
+		}
+	}
+
 	return processCollectedDeposits(depositList, projectId)
 }
 
@@ -336,7 +332,6 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 	// Update gov_staker contract
 	gs.SetAmountByProjectWallet(project.recipient, amount, false)
 
-	// Emit collection event
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"CollectDepositGnsByDepositId",
@@ -346,7 +341,6 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 		"amount", strconv.FormatUint(amount, 10),
 	)
 
-	// Process token transfers if amount > 0
 	if amount > 0 {
 		xgns.Burn(launchpadAddr, amount)
 		gns.Transfer(caller, amount)
@@ -450,20 +444,6 @@ func checkDepositConditions(project Project) {
 			))
 		}
 	}
-}
-
-// checkTierActive checks whether a specific tier in a project is active.
-//
-// This function verifies if the tier's end height is greater than or equal to the current block height.
-//
-// Parameters:
-// - project (Project): The project to which the tier belongs.
-// - tier (Tier): The tier to check.
-//
-// Returns:
-// - bool: True if the tier is active, otherwise false.
-func checkTierActive(project Project, tier Tier) bool {
-	return tier.ended.height >= uint64(std.ChainHeight())
 }
 
 // convertTierTypeStrToUint64 converts a tier type string to its corresponding uint64 value.
@@ -621,10 +601,10 @@ func isTierActive(tier Tier, height uint64) bool {
 func createDeposit(info ProjectTierInfo, amount uint64) (Deposit, error) {
 	// Validate input parameters
 	if amount == 0 {
-		return Deposit{}, errors.New(ufmt.Sprintf("deposit amount cannot be zero"))
+		return Deposit{}, errors.New("deposit amount cannot be zero")
 	}
 	if info.Project.id == "" || info.TierType == "" {
-		return Deposit{}, errors.New(ufmt.Sprintf("invalid project or tier information"))
+		return Deposit{}, errors.New("invalid project or tier information")
 	}
 
 	depositor := getPrevAddr()
@@ -853,7 +833,22 @@ func processCollectedDeposits(depositList []string, pid string) uint64 {
 	return amount
 }
 
+// validateDepositCollection validates if a deposit can be collected by the caller
 func validateDepositCollection(depositId string, caller std.Address) (Deposit, Project, error) {
+	deposit, project, err := validateDepositOwnership(depositId, caller)
+	if err != nil {
+		return Deposit{}, Project{}, err
+	}
+
+	if err := validateDepositState(deposit); err != nil {
+		return Deposit{}, Project{}, err
+	}
+
+	return deposit, project, nil
+}
+
+// validateDepositOwnership checks if the deposit exists and belongs to the caller
+func validateDepositOwnership(depositId string, caller std.Address) (Deposit, Project, error) {
 	deposit, exists := deposits[depositId]
 	if !exists {
 		return Deposit{}, Project{}, errors.New("deposit not found")
@@ -864,39 +859,72 @@ func validateDepositCollection(depositId string, caller std.Address) (Deposit, P
 		return Deposit{}, Project{}, errors.New("project not found")
 	}
 
-	projMap, userHasProject := depositsByUserByProject[caller]
-	if !userHasProject {
-		return Deposit{}, Project{}, errors.New("user has no deposits in any project")
-	}
-
-	depositIds, userHasDepositsInProject := projMap[deposit.projectId]
-	if !userHasDepositsInProject {
-		return Deposit{}, Project{}, errors.New("user has no deposits in this project")
-	}
-
-	if !containsString(depositIds, depositId) {
-		return Deposit{}, Project{}, errors.New("user has no deposit with this id")
-	}
-
-	currentHeight := uint64(std.ChainHeight())
-
-	if !isPassedClaimableHeight(deposit, currentHeight) {
-		return Deposit{}, Project{}, errors.New("not passed claimable block height yet")
-	}
-
-	if isAlreadyCollected(deposit) {
-		return Deposit{}, Project{}, errors.New("deposit already collected")
+	if err := validateUserDeposit(caller, deposit); err != nil {
+		return Deposit{}, Project{}, err
 	}
 
 	return deposit, project, nil
 }
 
+// validateUserDeposit verifies that the user owns the deposit
+func validateUserDeposit(caller std.Address, deposit Deposit) error {
+	projMap, exists := depositsByUserByProject[caller]
+	if !exists {
+		return errors.New("user has no deposits in any project")
+	}
+
+	depositIds, exists := projMap[deposit.projectId]
+	if !exists {
+		return errors.New("user has no deposits in this project")
+	}
+
+	if !containsString(depositIds, deposit.id) {
+		return errors.New("user has no deposit with this id")
+	}
+
+	return nil
+}
+
+// validateDepositState checks if the deposit can be collected based on its state
+func validateDepositState(deposit Deposit) error {
+	currentHeight := uint64(std.ChainHeight())
+
+	if err := validateTierPeriod(deposit, currentHeight); err != nil {
+		return err
+	}
+
+	if !isPassedClaimableHeight(deposit, currentHeight) {
+		return errors.New("not passed claimable block height yet")
+	}
+
+	if isAlreadyCollected(deposit) {
+		return errors.New("deposit already collected")
+	}
+
+	return nil
+}
+
+// validateTierPeriod checks if the tier lock period has ended
+func validateTierPeriod(deposit Deposit, currentHeight uint64) error {
+	project, exists := projects[deposit.projectId]
+	if !exists {
+		return errors.New("project not found")
+	}
+
+	tier, err := project.Tier(convertTierTypeStrToUint64(deposit.tier))
+	if err != nil {
+		return err
+	}
+
+	if currentHeight < tier.Ended().height {
+		return errors.New("tier lock period has not ended yet")
+	}
+
+	return nil
+}
+
 // receive deposit and project as a pointer to avoid copying
 func processDeposit(deposit *Deposit, project *Project, height uint64) (uint64, error) {
-	tier := getTier(*project, deposit.tier)
-	//if isTierActive(tier, height) {
-	//	return 0, errors.New(addDetailToError(errActiveProject, "tier is still active"))
-	//}
 	tier, err := project.Tier(convertTierTypeStrToUint64(deposit.tier))
 	if err != nil {
 		return 0, err
