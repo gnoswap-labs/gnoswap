@@ -20,15 +20,15 @@ const (
 	errExactOutAmountExceeded = "Received more than requested in [EXACT_OUT] requested=%s, actual=%s"
 
 	// route validation
-	errInvalidRouteLength     = "route length(%d) must be 1~7"
+	errInvalidRouteLength = "route length(%d) must be 1~7"
 
 	// quote validation
-	errRoutesQuotesMismatch   = "mismatch between routes(%d) and quotes(%d) length"
-	errInvalidQuote           = "invalid quote(%s) at index(%d)"
-	errInvalidQuoteValue      = "quote(%s) at index(%d) must be positive value"
-	errQuoteExceedsMax        = "quote(%s) at index(%d) must be less than or equal to %d"
-	errQuoteSumExceedsMax     = "quote sum exceeds 100 at index(%d)"
-	errInvalidQuoteSum        = "quote sum(%d) must be 100"
+	errRoutesQuotesMismatch = "mismatch between routes(%d) and quotes(%d) length"
+	errInvalidQuote         = "invalid quote(%s) at index(%d)"
+	errInvalidQuoteValue    = "quote(%s) at index(%d) must be positive value"
+	errQuoteExceedsMax      = "quote(%s) at index(%d) must be less than or equal to %d"
+	errQuoteSumExceedsMax   = "quote sum exceeds 100 at index(%d)"
+	errInvalidQuoteSum      = "quote sum(%d) must be 100"
 )
 
 // GnotSwapHandler encapsulates methods for handling GNOT token swaps
