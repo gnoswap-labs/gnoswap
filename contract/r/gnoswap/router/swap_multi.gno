@@ -26,7 +26,7 @@ const (
 
 // SwapExecutor defines the interface for swap operation execution
 type MultiSwapExecutor interface {
-	// Run performs the swap operation and returns input and output amounts
+	// Run performs the swap operation and returns pool received and pool output amounts
 	Run(params SwapParams, data SwapCallbackData, recipient std.Address) (*u256.Uint, *u256.Uint)
 }
 
@@ -76,7 +76,7 @@ func NewMultiSwapProcessor(isSimulate bool, direction SwapDirection) *MultiSwapP
 
 // processForwardSwap handles forward direction swaps (exactIn)
 func (p *MultiSwapProcessor) processForwardSwap(params SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint, error) {
-	firstAmountIn := u256.Zero()
+	firstAmountIn := zero
 	payer := getPrevAddr() // Initial payer is the user
 	currentPoolIndex := 0
 
@@ -172,23 +172,15 @@ func (p *MultiSwapProcessor) collectBackwardSwapInfo(params SwapParams, numPools
 	currentPoolIndex := numPools
 
 	for currentPoolIndex >= 0 {
-		// Dry simulation to calculate input amount
-		amountIn, _ := singleDrySwap(
-			SingleSwapParams{
-				tokenIn:         params.tokenIn,
-				tokenOut:        params.tokenOut,
-				fee:             params.fee,
-				amountSpecified: params.amountSpecified,
-			},
-		)
-
-		// Record this swap info
 		thisSwap := SingleSwapParams{
 			tokenIn:         params.tokenIn,
 			tokenOut:        params.tokenOut,
 			fee:             params.fee,
 			amountSpecified: params.amountSpecified,
 		}
+
+		// dry simulation to calculate input amount
+		amountIn, _ := singleDrySwap(&thisSwap)
 		swapInfo = append(swapInfo, thisSwap)
 
 		if currentPoolIndex == 0 {
@@ -198,12 +190,11 @@ func (p *MultiSwapProcessor) collectBackwardSwapInfo(params SwapParams, numPools
 
 		// Update parameters for the next simulation
 		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
-		intAmountIn := i256.FromUint256(amountIn)
 
 		params.tokenIn = nextInput
 		params.tokenOut = nextOutput
 		params.fee = nextFee
-		params.amountSpecified = i256.Zero().Neg(intAmountIn)
+		params.amountSpecified = i256.Zero().Neg(i256.FromUint256(amountIn))
 	}
 
 	return swapInfo
@@ -211,7 +202,7 @@ func (p *MultiSwapProcessor) collectBackwardSwapInfo(params SwapParams, numPools
 
 // executeCollectedSwaps performs the collected swaps in forward order
 func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, finalRecipient std.Address) (*u256.Uint, *u256.Uint, error) {
-	firstAmountIn := u256.Zero()
+	firstAmountIn := zero
 	currentPoolIndex := len(swapInfo) - 1
 	payer := getPrevAddr() // Initial payer is the user
 
@@ -248,7 +239,7 @@ func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, 
 		currentPoolIndex--
 	}
 
-	return firstAmountIn, u256.Zero(), nil
+	return firstAmountIn, zero, nil
 }
 
 // multiSwap performs a multi-hop swap in forward direction

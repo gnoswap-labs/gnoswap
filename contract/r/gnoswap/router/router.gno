@@ -10,22 +10,24 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/demo/wugnot"
-
-	en "gno.land/r/gnoswap/v1/emission"
-
-	phalt "gno.land/p/gnoswap/halt"
-	"gno.land/r/gnoswap/v1/halt"
 )
 
 var one = u256.One()
 
 // ErrorMessages define all error message templates used throughout the router
 const (
+	// slippage validation
 	errExactOutAmountExceeded = "Received more than requested in [EXACT_OUT] requested=%s, actual=%s"
-	errRouterHalted           = "router contract operations are currently disabled"
+
+	// route validation
 	errInvalidRouteLength     = "route length(%d) must be 1~7"
+
+	// quote validation
 	errRoutesQuotesMismatch   = "mismatch between routes(%d) and quotes(%d) length"
 	errInvalidQuote           = "invalid quote(%s) at index(%d)"
+	errInvalidQuoteValue      = "quote(%s) at index(%d) must be positive value"
+	errQuoteExceedsMax        = "quote(%s) at index(%d) must be less than or equal to %d"
+	errQuoteSumExceedsMax     = "quote sum exceeds 100 at index(%d)"
 	errInvalidQuoteSum        = "quote sum(%d) must be 100"
 )
 
@@ -75,7 +77,7 @@ func (h *GnotSwapHandler) HandleOutputSwap() {
 type SwapValidator struct{}
 
 // ValidateExactOutAmount checks if output amount meets specified requirements
-func (v *SwapValidator) ValidateExactOutAmount(resultAmount, specifiedAmount *u256.Uint) error {
+func (v *SwapValidator) exactOutAmount(resultAmount, specifiedAmount *u256.Uint) error {
 	if resultAmount.Gte(specifiedAmount) {
 		return nil
 	}
@@ -88,7 +90,7 @@ func (v *SwapValidator) ValidateExactOutAmount(resultAmount, specifiedAmount *u2
 }
 
 // ValidateSlippage ensures swap amounts meet slippage requirements
-func (v *SwapValidator) ValidateSlippage(swapType SwapType, amountIn, amountOut, limit *u256.Uint) error {
+func (v *SwapValidator) slippage(swapType SwapType, amountIn, amountOut, limit *u256.Uint) error {
 	switch swapType {
 	case ExactIn:
 		if amountOut.Lt(limit) {
@@ -101,22 +103,22 @@ func (v *SwapValidator) ValidateSlippage(swapType SwapType, amountIn, amountOut,
 				limit.ToString(), amountIn.ToString())
 		}
 	default:
-		return ufmt.Errorf("invalid swap type")
+		return errInvalidSwapType
 	}
 	return nil
 }
 
 // ValidateSwapType ensures the swap type string is valid
-func (v *SwapValidator) ValidateSwapType(swapTypeStr string) (SwapType, error) {
+func (v *SwapValidator) swapType(swapTypeStr string) (SwapType, error) {
 	swapType, err := trySwapTypeFromStr(swapTypeStr)
 	if err != nil {
-		return Unknown, ufmt.Errorf("unknown swapType(%s)", swapTypeStr)
+		return Unknown, errInvalidSwapType
 	}
 	return swapType, nil
 }
 
 // ValidateAmount ensures the amount is properly formatted and positive
-func (v *SwapValidator) ValidateAmount(amount string) (*i256.Int, error) {
+func (v *SwapValidator) amount(amount string) (*i256.Int, error) {
 	parsedAmount := i256.MustFromDecimal(amount)
 	if parsedAmount.Lt(i256.Zero()) {
 		return nil, ufmt.Errorf(ErrInvalidPositiveAmount, amount)
@@ -125,7 +127,7 @@ func (v *SwapValidator) ValidateAmount(amount string) (*i256.Int, error) {
 }
 
 // ValidateAmountLimit ensures the amount limit is properly formatted and non-zero
-func (v *SwapValidator) ValidateAmountLimit(amountLimit string) (*i256.Int, error) {
+func (v *SwapValidator) amountLimit(amountLimit string) (*i256.Int, error) {
 	parsedLimit := i256.MustFromDecimal(amountLimit)
 	if parsedLimit.IsZero() {
 		return nil, ufmt.Errorf(ErrInvalidZeroAmountLimit, amountLimit)
@@ -170,51 +172,43 @@ func (p *RouteParser) ValidateRoutesAndQuotes(routes, quotes []string) error {
 
 // ValidateQuoteSum ensures all quotes add up to 100%
 func (p *RouteParser) ValidateQuoteSum(quotes []string) error {
-	sum := 0
+	const (
+		maxQuote int32 = 100
+		minQuote int32 = 0
+	)
+
+	var sum int32
 
 	for i, quote := range quotes {
-		intQuote, err := strconv.Atoi(quote)
+		qt, err := strconv.ParseInt(quote, 10, 32)
 		if err != nil {
 			return ufmt.Errorf(errInvalidQuote, quote, i)
+		}
+		intQuote := int32(qt)
+
+		// Audit report: L-11
+		//
+		// Even if quoteArr itself contains 0, there's no problem as long as the sum equals 100,
+		// but since quote generally won't be 0, we check if it's less than or equal to minQuote.
+		if intQuote <= minQuote {
+			return ufmt.Errorf(errInvalidQuoteValue, quote, i)
+		}
+
+		if intQuote > maxQuote {
+			return ufmt.Errorf(errQuoteExceedsMax, quote, i, maxQuote)
+		}
+
+		if sum > maxQuote-intQuote {
+			return ufmt.Errorf(errQuoteSumExceedsMax, i)
 		}
 
 		sum += intQuote
 	}
 
-	if sum != 100 {
+	if sum != maxQuote {
 		return ufmt.Errorf(errInvalidQuoteSum, sum)
 	}
 
-	return nil
-}
-
-// haltCheck performs security validations before any swap operation
-func haltCheck() error {
-	currentLevel := halt.GetCurrentHaltLevel()
-
-	if currentLevel != halt.LvMainnetSafeMode {
-		// check for withdraw operation halt
-		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
-			return err
-		}
-
-		// check for router contract halt
-		if halt.IsContractHalted(phalt.OpTypeRouter) {
-			return ufmt.Errorf(errRouterHalted)
-		}
-	}
-
-	return nil
-}
-
-// commonSwapSetup performs all necessary validations and setup for a swap operation
-func commonSwapSetup() error {
-	if err := haltCheck(); err != nil {
-		return err
-	}
-
-	assertDirectCallOnly()
-	en.MintAndDistributeGns()
 	return nil
 }
 
@@ -232,7 +226,7 @@ func finalizeSwap(
 
 	// Validate exact out amount if applicable
 	if swapType == ExactOut {
-		if err := validator.ValidateExactOutAmount(resultAmountOut, amountSpecified); err != nil {
+		if err := validator.exactOutAmount(resultAmountOut, amountSpecified); err != nil {
 			panic(addDetailToError(errSlippage, err.Error()))
 		}
 	}
@@ -255,7 +249,7 @@ func finalizeSwap(
 		panic(addDetailToError(errSlippage, err.Error()))
 	}
 
-	if err := validator.ValidateSlippage(swapType, resultAmountIn, resultAmountOutWithoutFee, tokenAmountLimit); err != nil {
+	if err := validator.slippage(swapType, resultAmountIn, resultAmountOutWithoutFee, tokenAmountLimit); err != nil {
 		panic(addDetailToError(errSlippage, err.Error()))
 	}
 

@@ -76,12 +76,12 @@ func swapInner(
 // RealSwapExecutor implements SwapExecutor for actual swaps
 type RealSwapExecutor struct{}
 
-func (e *RealSwapExecutor) execute(params SingleSwapParams) (amountIn *u256.Uint, amountOut *u256.Uint) {
+func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
 	return swapInner(
-		params.amountSpecified,
+		p.amountSpecified,
 		getPrevAddr(), // if single swap => user will receive
 		zero,          // sqrtPriceLimitX96
-		newSwapCallbackData(params, getPrevAddr()),
+		newSwapCallbackData(p, getPrevAddr()),
 	)
 }
 
@@ -132,11 +132,11 @@ func swapDryInner(
 // DrySwapExecutor implements SwapExecutor for dry swaps
 type DrySwapExecutor struct{}
 
-func (e *DrySwapExecutor) execute(params SingleSwapParams) (amountIn *u256.Uint, amountOut *u256.Uint) {
+func (e *DrySwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
 	return swapDryInner(
-		params.amountSpecified,
+		p.amountSpecified,
 		zero,
-		newSwapCallbackData(params, getPrevAddr()),
+		newSwapCallbackData(p, getPrevAddr()),
 	)
 }
 

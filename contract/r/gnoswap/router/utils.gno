@@ -9,32 +9,26 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/emission"
 
 	i256 "gno.land/p/gnoswap/int256"
+
+	phalt "gno.land/p/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
-// assertOnlyNotHalted panics if the contract is halted.
-func assertOnlyNotHalted() {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
-	}
-}
-
-// assertDirectCallOnly panics if the caller is not the user.
-func assertDirectCallOnly() {
-	if common.GetLimitCaller() && std.PreviousRealm().PkgPath() != "" {
-		panic(addDetailToError(errNoPermission, "only user can call this function"))
-	}
-}
+var (
+	errRouterHalted = "router contract operations are currently disabled"
+	errTxExpired    = "transaction too old, now(%d) > deadline(%d)"
+)
 
 // assertHopsInRange panics if the number of hops is not in the range 1~3.
 func assertHopsInRange(hops int) {
-	if hops < 1 || hops > 3 {
-		panic(addDetailToError(
-			errInvalidInput,
-			ufmt.Sprintf("number of hops(%d) must be 1~3", hops),
-		))
+	switch hops {
+	case 1, 2, 3:
+		return
+	default:
+		panic(errHopsOutOfRange)
 	}
 }
 
@@ -76,34 +70,6 @@ func getDataForMultiPath(possiblePath string, poolIdx int) (string, string, uint
 	return token0, token1, fee
 }
 
-// isStringInStringArr checks if a string is in a string array.
-func isStringInStringArr(arr []string, str string) bool {
-	for _, a := range arr {
-		if a == str {
-			return true
-		}
-	}
-	return false
-}
-
-// removeStringFromStringArr removes a string from a string array.
-func removeStringFromStringArr(arr []string, str string) []string {
-	for i, a := range arr {
-		if a == str {
-			return append(arr[:i], arr[i+1:]...)
-		}
-	}
-	return arr
-}
-
-// min returns the smaller of two integers.
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 // i256Min returns the smaller of two i256.Int.
 func i256Min(x, y *i256.Int) *i256.Int {
 	if x.Lt(y) {
@@ -120,19 +86,9 @@ func i256Max(x, y *i256.Int) *i256.Int {
 	return y
 }
 
-// getPrevRealm returns object of the previous realm.
-func prevRealm() string {
-	return std.PreviousRealm().PkgPath()
-}
-
 // getPrevAddr returns the address of the previous realm.
 func getPrevAddr() std.Address {
 	return std.PreviousRealm().Address()
-}
-
-// isUserCall returns true if the caller is a user.
-func isUserCall() bool {
-	return std.PreviousRealm().IsUser()
 }
 
 // getPrev returns the address and package path of the previous realm.
@@ -141,19 +97,51 @@ func getPrev() (string, string) {
 	return prev.Address().String(), prev.PkgPath()
 }
 
+// haltCheck performs security validations before any swap operation
+func haltCheck() error {
+	currentLevel := halt.GetCurrentHaltLevel()
+
+	if currentLevel != halt.LvMainnetSafeMode {
+		// check for withdraw operation halt
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			return err
+		}
+
+		// check for router contract halt
+		if halt.IsContractHalted(phalt.OpTypeRouter) {
+			return ufmt.Errorf(errRouterHalted)
+		}
+	}
+
+	return nil
+}
+
+// commonSwapSetup performs all necessary validations and setup for a swap operation
+func commonSwapSetup() error {
+	if err := haltCheck(); err != nil {
+		return err
+	}
+
+	if common.GetLimitCaller() && std.PreviousRealm().PkgPath() != "" {
+		return ufmt.Errorf(errNoPermission.Error(), "only user can call this function")
+	}
+
+	emission.MintAndDistributeGns()
+	return nil
+}
+
 // checkDeadline checks if the deadline is expired.
 // If the deadline is expired, it panics.
 // The deadline is expired if the current time is greater than the deadline.
 // Input:
 //   - deadline: the deadline to check
-func checkDeadline(deadline int64) {
+func checkDeadline(deadline int64) error {
 	now := time.Now().Unix()
-	if now > deadline {
-		panic(addDetailToError(
-			errExpired,
-			ufmt.Sprintf("transaction too old, now(%d) > deadline(%d)", now, deadline),
-		))
+	if now <= deadline {
+		return nil
 	}
+
+	return ufmt.Errorf(errTxExpired, now, deadline)
 }
 
 // splitSingleChar splits a string by a single character separator.
