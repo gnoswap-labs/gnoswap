@@ -58,7 +58,7 @@ func (p *SwapProcessor) ProcessSingleSwap(route string, amountSpecified *i256.In
 		amountSpecified: amountSpecified,
 	}
 
-	amountIn, amountOut := singleDrySwap(singleParams)
+	amountIn, amountOut := singleDrySwap(&singleParams)
 	return amountIn, amountOut, nil
 }
 
@@ -164,17 +164,17 @@ func DrySwapRoute(
 	parser := &RouteParser{}
 
 	// validate and parse inputs
-	swapType, err := validator.ValidateSwapType(swapTypeStr)
+	swapType, err := validator.swapType(swapTypeStr)
 	if err != nil {
 		panic(addDetailToError(errInvalidSwapType, err.Error()))
 	}
 
-	amountSpecified, err := validator.ValidateAmount(specifiedAmount)
+	amountSpecified, err := validator.amount(specifiedAmount)
 	if err != nil {
 		panic(addDetailToError(errInvalidInput, err.Error()))
 	}
 
-	amountLimit, err := validator.ValidateAmountLimit(tokenAmountLimit)
+	amountLimit, err := validator.amountLimit(tokenAmountLimit)
 	if err != nil {
 		panic(addDetailToError(errInvalidInput, err.Error()))
 	}
@@ -190,7 +190,6 @@ func DrySwapRoute(
 	}
 
 	// initialize accumulators for swap results
-	zero := u256.Zero()
 	resultAmountIn, resultAmountOut := zero, zero
 
 	// Process each route

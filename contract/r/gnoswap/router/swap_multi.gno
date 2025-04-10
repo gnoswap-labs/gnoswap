@@ -26,24 +26,24 @@ const (
 
 // SwapExecutor defines the interface for swap operation execution
 type MultiSwapExecutor interface {
-	// Run performs the swap operation and returns input and output amounts
-	Run(params SwapParams, data SwapCallbackData, recipient std.Address) (*u256.Uint, *u256.Uint)
+	// Run performs the swap operation and returns pool received and pool output amounts
+	Run(p SwapParams, data SwapCallbackData, recipient std.Address) (*u256.Uint, *u256.Uint)
 }
 
 // DrySwapExecutor implements SwapExecutor for dry run simulations
 type DryMultiSwapExecutor struct{}
 
 // Execute performs a dry swap operation without changing state
-func (e *DryMultiSwapExecutor) Run(params SwapParams, data SwapCallbackData, _ std.Address) (*u256.Uint, *u256.Uint) {
-	return swapDryInner(params.amountSpecified, zero, data)
+func (e *DryMultiSwapExecutor) Run(p SwapParams, data SwapCallbackData, _ std.Address) (*u256.Uint, *u256.Uint) {
+	return swapDryInner(p.amountSpecified, zero, data)
 }
 
 // RealSwapExecutor implements SwapExecutor for actual swap operations
 type RealMultiSwapExecutor struct{}
 
 // Execute performs a real swap operation with state changes
-func (e *RealMultiSwapExecutor) Run(params SwapParams, data SwapCallbackData, recipient std.Address) (*u256.Uint, *u256.Uint) {
-	return swapInner(params.amountSpecified, recipient, zero, data)
+func (e *RealMultiSwapExecutor) Run(p SwapParams, data SwapCallbackData, recipient std.Address) (*u256.Uint, *u256.Uint) {
+	return swapInner(p.amountSpecified, recipient, zero, data)
 }
 
 // SwapProcessor handles the execution flow for multi-hop swaps
@@ -75,8 +75,8 @@ func NewMultiSwapProcessor(isSimulate bool, direction SwapDirection) *MultiSwapP
 }
 
 // processForwardSwap handles forward direction swaps (exactIn)
-func (p *MultiSwapProcessor) processForwardSwap(params SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint, error) {
-	firstAmountIn := u256.Zero()
+func (p *MultiSwapProcessor) processForwardSwap(sp SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint, error) {
+	firstAmountIn := zero
 	payer := getPrevAddr() // Initial payer is the user
 	currentPoolIndex := 0
 
@@ -88,12 +88,12 @@ func (p *MultiSwapProcessor) processForwardSwap(params SwapParams, numPools int,
 		if currentPoolIndex < numPools {
 			recipient = routerAddr
 		} else {
-			recipient = params.recipient
+			recipient = sp.recipient
 		}
 
 		// Execute the swap operation
-		callbackData := newSwapCallbackData(params, payer)
-		amountIn, amountOut := p.executor.Run(params, callbackData, recipient)
+		callbackData := newSwapCallbackData(sp, payer)
+		amountIn, amountOut := p.executor.Run(sp, callbackData, recipient)
 
 		// Record the first hop's input amount
 		if currentPoolIndex == 1 {
@@ -111,30 +111,30 @@ func (p *MultiSwapProcessor) processForwardSwap(params SwapParams, numPools int,
 		// Update parameters for the next hop
 		payer = routerAddr
 		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
-		params.tokenIn = nextInput
-		params.tokenOut = nextOutput
-		params.fee = nextFee
-		params.amountSpecified = i256.FromUint256(amountOut)
+		sp.tokenIn = nextInput
+		sp.tokenOut = nextOutput
+		sp.fee = nextFee
+		sp.amountSpecified = i256.FromUint256(amountOut)
 	}
 }
 
 // processBackwardSwap handles backward direction swaps (exactOut)
-func (p *MultiSwapProcessor) processBackwardSwap(params SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint, error) {
+func (p *MultiSwapProcessor) processBackwardSwap(sp SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint, error) {
 	if !p.isSimulate {
-		return p.processBackwardRealSwap(params, numPools, swapPath)
+		return p.processBackwardRealSwap(sp, numPools, swapPath)
 	}
-	return p.processBackwardDrySwap(params, numPools, swapPath)
+	return p.processBackwardDrySwap(sp, numPools, swapPath)
 }
 
 // processBackwardDrySwap handles backward simulated swaps
-func (p *MultiSwapProcessor) processBackwardDrySwap(params SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint, error) {
+func (p *MultiSwapProcessor) processBackwardDrySwap(sp SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint, error) {
 	firstAmountIn := u256.Zero()
 	currentPoolIndex := numPools - 1
 	payer := routerAddr
 
 	for {
-		callbackData := newSwapCallbackData(params, payer)
-		amountIn, amountOut := p.executor.Run(params, callbackData, params.recipient)
+		callbackData := newSwapCallbackData(sp, payer)
+		amountIn, amountOut := p.executor.Run(sp, callbackData, sp.recipient)
 
 		if currentPoolIndex == 0 {
 			firstAmountIn = amountIn
@@ -150,45 +150,37 @@ func (p *MultiSwapProcessor) processBackwardDrySwap(params SwapParams, numPools 
 		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
 		intAmountIn := i256.FromUint256(amountIn)
 
-		params.amountSpecified = i256.Zero().Neg(intAmountIn)
-		params.tokenIn = nextInput
-		params.tokenOut = nextOutput
-		params.fee = nextFee
+		sp.amountSpecified = i256.Zero().Neg(intAmountIn)
+		sp.tokenIn = nextInput
+		sp.tokenOut = nextOutput
+		sp.fee = nextFee
 	}
 }
 
 // processBackwardRealSwap handles backward real swaps
-func (p *MultiSwapProcessor) processBackwardRealSwap(params SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint, error) {
+func (p *MultiSwapProcessor) processBackwardRealSwap(sp SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint, error) {
 	// First collect all swap information by simulating backward
-	swapInfo := p.collectBackwardSwapInfo(params, numPools, swapPath)
+	swapInfo := p.collectBackwardSwapInfo(sp, numPools, swapPath)
 
 	// Then execute swaps in forward order
-	return p.executeCollectedSwaps(swapInfo, params.recipient)
+	return p.executeCollectedSwaps(swapInfo, sp.recipient)
 }
 
 // collectBackwardSwapInfo simulates swaps backward to collect parameters
-func (p *MultiSwapProcessor) collectBackwardSwapInfo(params SwapParams, numPools int, swapPath string) []SingleSwapParams {
+func (p *MultiSwapProcessor) collectBackwardSwapInfo(sp SwapParams, numPools int, swapPath string) []SingleSwapParams {
 	swapInfo := []SingleSwapParams{}
 	currentPoolIndex := numPools
 
 	for currentPoolIndex >= 0 {
-		// Dry simulation to calculate input amount
-		amountIn, _ := singleDrySwap(
-			SingleSwapParams{
-				tokenIn:         params.tokenIn,
-				tokenOut:        params.tokenOut,
-				fee:             params.fee,
-				amountSpecified: params.amountSpecified,
-			},
-		)
-
-		// Record this swap info
 		thisSwap := SingleSwapParams{
-			tokenIn:         params.tokenIn,
-			tokenOut:        params.tokenOut,
-			fee:             params.fee,
-			amountSpecified: params.amountSpecified,
+			tokenIn:         sp.tokenIn,
+			tokenOut:        sp.tokenOut,
+			fee:             sp.fee,
+			amountSpecified: sp.amountSpecified,
 		}
+
+		// dry simulation to calculate input amount
+		amountIn, _ := singleDrySwap(&thisSwap)
 		swapInfo = append(swapInfo, thisSwap)
 
 		if currentPoolIndex == 0 {
@@ -198,12 +190,11 @@ func (p *MultiSwapProcessor) collectBackwardSwapInfo(params SwapParams, numPools
 
 		// Update parameters for the next simulation
 		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
-		intAmountIn := i256.FromUint256(amountIn)
 
-		params.tokenIn = nextInput
-		params.tokenOut = nextOutput
-		params.fee = nextFee
-		params.amountSpecified = i256.Zero().Neg(intAmountIn)
+		sp.tokenIn = nextInput
+		sp.tokenOut = nextOutput
+		sp.fee = nextFee
+		sp.amountSpecified = i256.Zero().Neg(i256.FromUint256(amountIn))
 	}
 
 	return swapInfo
@@ -211,7 +202,7 @@ func (p *MultiSwapProcessor) collectBackwardSwapInfo(params SwapParams, numPools
 
 // executeCollectedSwaps performs the collected swaps in forward order
 func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, finalRecipient std.Address) (*u256.Uint, *u256.Uint, error) {
-	firstAmountIn := u256.Zero()
+	firstAmountIn := zero
 	currentPoolIndex := len(swapInfo) - 1
 	payer := getPrevAddr() // Initial payer is the user
 
@@ -229,7 +220,7 @@ func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, 
 		amountIn, amountOut := swapInner(
 			swapInfo[currentPoolIndex].amountSpecified,
 			recipient,
-			u256.Zero(),
+			zero,
 			callbackData,
 		)
 
@@ -248,31 +239,31 @@ func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, 
 		currentPoolIndex--
 	}
 
-	return firstAmountIn, u256.Zero(), nil
+	return firstAmountIn, zero, nil
 }
 
 // multiSwap performs a multi-hop swap in forward direction
-func multiSwap(params SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint) {
+func multiSwap(p SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint) {
 	result, output, _ := NewMultiSwapProcessor(false, Forward).
-		processForwardSwap(params, numPools, swapPath)
+		processForwardSwap(p, numPools, swapPath)
 	return result, output
 }
 
 // multiSwapNegative performs a multi-hop swap in backward direction
-func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint) {
+func multiSwapNegative(p SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint) {
 	result, output, _ := NewMultiSwapProcessor(false, Backward).
-		processBackwardSwap(params, numPools, swapPath)
+		processBackwardSwap(p, numPools, swapPath)
 	return result, output
 }
 
 // multiDrySwap simulates a multi-hop swap in forward direction
-func multiDrySwap(params SwapParams, numPool int, swapPath string) (*u256.Uint, *u256.Uint, error) {
+func multiDrySwap(p SwapParams, numPool int, swapPath string) (*u256.Uint, *u256.Uint, error) {
 	return NewMultiSwapProcessor(true, Forward).
-		processForwardSwap(params, numPool, swapPath)
+		processForwardSwap(p, numPool, swapPath)
 }
 
 // multiDrySwapNegative simulates a multi-hop swap in backward direction
-func multiDrySwapNegative(params SwapParams, currentPoolIndex int, swapPath string) (*u256.Uint, *u256.Uint, error) {
+func multiDrySwapNegative(p SwapParams, currentPoolIndex int, swapPath string) (*u256.Uint, *u256.Uint, error) {
 	return NewMultiSwapProcessor(true, Backward).
-		processBackwardSwap(params, currentPoolIndex+1, swapPath)
+		processBackwardSwap(p, currentPoolIndex+1, swapPath)
 }

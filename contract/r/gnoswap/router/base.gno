@@ -164,7 +164,7 @@ func handleSingleSwap(route string, amountSpecified *i256.Int) (*u256.Uint, *u25
 		amountSpecified: amountSpecified,
 	}
 
-	return singleSwap(singleParams)
+	return singleSwap(&singleParams)
 }
 
 func handleMultiSwap(
@@ -185,9 +185,6 @@ func handleMultiSwap(
 	default:
 		// Any invalid `SwapType` is caught in the `SwapRoute` function,
 		// so no invalid values can get in here.
-		panic(addDetailToError(
-			errInvalidSwapType,
-			ufmt.Sprintf("unknown swapType(%s)", swapType),
-		))
+		panic(errInvalidSwapType)
 	}
 }

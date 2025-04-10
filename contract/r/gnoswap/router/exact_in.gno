@@ -37,8 +37,13 @@ func ExactInSwapRoute(
 	deadline int64,
 	referrer string,
 ) (string, string) {
-	checkDeadline(deadline)
-	commonSwapSetup()
+	if err := checkDeadline(deadline); err != nil {
+		panic(addDetailToError(errExpired, err.Error()))
+	}
+
+	if err := commonSwapSetup(); err != nil {
+		panic(addDetailToError(errInvalidInput, err.Error()))
+	}
 
 	baseParams := BaseSwapParams{
 		InputToken:  inputToken,

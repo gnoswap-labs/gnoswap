@@ -58,7 +58,8 @@ var (
 )
 
 var (
-	user1Addr       std.Address = "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec"
+	user1Addr       std.Address = testutils.TestAddress("user1")
+	user2Addr       std.Address = testutils.TestAddress("user2")
 	singlePoolPath              = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
 	singlePoolPath2             = "gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000"
 )

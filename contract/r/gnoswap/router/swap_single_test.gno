@@ -75,7 +75,7 @@ func TestSingleSwap(t *testing.T) {
 				tt.setupFn(t)
 			}
 
-			amountIn, amountOut := singleSwap(tt.params)
+			amountIn, amountOut := singleSwap(&tt.params)
 
 			uassert.Equal(t, amountIn.ToString(), tt.expectedIn)
 			uassert.Equal(t, amountOut.ToString(), tt.expectedOut)
@@ -229,8 +229,13 @@ func TestSingleSwapInputValidation(t *testing.T) {
 						t.Errorf("Expected error but got none")
 						return
 					}
-					errorStr, ok := r.(string)
-					if !ok {
+					var errorStr string
+					switch v := r.(type) {
+					case string:
+						errorStr = v
+					case error:
+						errorStr = v.Error()
+					default:
 						t.Errorf("Expected error string but got %T: %v", r, r)
 						return
 					}
@@ -240,7 +245,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				}()
 			}
 
-			amountIn, amountOut := singleSwap(tt.params)
+			amountIn, amountOut := singleSwap(&tt.params)
 
 			if !tt.expectError {
 				if amountIn == nil || amountOut == nil {

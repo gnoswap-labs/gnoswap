@@ -5,18 +5,13 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	pl "gno.land/r/gnoswap/v1/pool"
-
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-)
 
-var (
-	minPrice = u256.MustFromDecimal(consts.MIN_PRICE)
-	maxPrice = u256.MustFromDecimal(consts.MAX_PRICE)
+	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 // swapInner executes the core swap logic by interacting with the pool contract.
@@ -41,19 +36,20 @@ func swapInner(
 	recipient std.Address,
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
-) (poolRecv *u256.Uint, poolOut *u256.Uint) { // poolRecv, poolOut
+) (poolRecv, poolOut *u256.Uint) {
 	zeroForOne := data.tokenIn < data.tokenOut
 
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
-	// ROUTER approves POOL as spender
-	tokenIn := common.GetTokenTeller(data.tokenIn)
-	tokenOut := common.GetTokenTeller(data.tokenOut)
+	// Audit report: L-10 Infinity Approval
+	// approve only the required amount
+	approveAmount := amountSpecified.Abs().Uint64()
 
-	tokenIn.Approve(poolAddr, consts.UINT64_MAX)
-	tokenOut.Approve(poolAddr, consts.UINT64_MAX)
+	// approves pool as spender
+	common.GetTokenTeller(data.tokenIn).Approve(poolAddr, approveAmount)
+	common.GetTokenTeller(data.tokenOut).Approve(poolAddr, approveAmount)
 
-	amount0Str, amount1Str := pl.Swap( // int256, int256
+	amount0Str, amount1Str := pl.Swap(
 		data.tokenIn,
 		data.tokenOut,
 		data.fee,
@@ -67,8 +63,7 @@ func swapInner(
 	amount0 := i256.MustFromDecimal(amount0Str)
 	amount1 := i256.MustFromDecimal(amount1Str)
 
-	poolRecv = i256Max(amount0, amount1).Abs()
-	poolOut = i256Min(amount0, amount1).Abs()
+	poolOut, poolRecv = i256MinMax(amount0, amount1)
 
 	return poolRecv, poolOut
 }
@@ -76,12 +71,12 @@ func swapInner(
 // RealSwapExecutor implements SwapExecutor for actual swaps
 type RealSwapExecutor struct{}
 
-func (e *RealSwapExecutor) execute(params SingleSwapParams) (amountIn *u256.Uint, amountOut *u256.Uint) {
+func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
 	return swapInner(
-		params.amountSpecified,
+		p.amountSpecified,
 		getPrevAddr(), // if single swap => user will receive
 		zero,          // sqrtPriceLimitX96
-		newSwapCallbackData(params, getPrevAddr()),
+		newSwapCallbackData(p, getPrevAddr()),
 	)
 }
 
@@ -103,7 +98,7 @@ func swapDryInner(
 	amountSpecified *i256.Int,
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
-) (poolRecv *u256.Uint, poolOut *u256.Uint) { // poolRecv, poolOut
+) (poolRecv, poolOut *u256.Uint) {
 	zeroForOne := data.tokenIn < data.tokenOut
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
@@ -117,14 +112,13 @@ func swapDryInner(
 		sqrtPriceLimitX96.ToString(),
 	)
 	if !ok {
-		return u256.Zero(), u256.Zero()
+		return zero, zero
 	}
 
 	amount0 := i256.MustFromDecimal(amount0Str)
 	amount1 := i256.MustFromDecimal(amount1Str)
 
-	poolRecv = i256Max(amount0, amount1).Abs()
-	poolOut = i256Min(amount0, amount1).Abs()
+	poolOut, poolRecv = i256MinMax(amount0, amount1)
 
 	return poolRecv, poolOut
 }
@@ -132,11 +126,11 @@ func swapDryInner(
 // DrySwapExecutor implements SwapExecutor for dry swaps
 type DrySwapExecutor struct{}
 
-func (e *DrySwapExecutor) execute(params SingleSwapParams) (amountIn *u256.Uint, amountOut *u256.Uint) {
+func (e *DrySwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
 	return swapDryInner(
-		params.amountSpecified,
+		p.amountSpecified,
 		zero,
-		newSwapCallbackData(params, getPrevAddr()),
+		newSwapCallbackData(p, getPrevAddr()),
 	)
 }
 
@@ -182,7 +176,7 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 		if sqrtPriceLimitX96.IsZero() {
 			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
 		}
-		return new(u256.Uint).Add(sqrtPriceLimitX96, u256.One())
+		return new(u256.Uint).Add(sqrtPriceLimitX96, one)
 	}
 
 	maxTick := getMaxTick(fee) - 1
@@ -190,7 +184,7 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 	if sqrtPriceLimitX96.IsZero() {
 		sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
 	}
-	return new(u256.Uint).Sub(sqrtPriceLimitX96, u256.One())
+	return new(u256.Uint).Sub(sqrtPriceLimitX96, one)
 }
 
 // getMinTick returns the minimum tick value for a given fee tier.

@@ -109,10 +109,10 @@ func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient std.Address, 
 
 // SwapResult encapsulates the outcome of a swap operation
 type SwapResult struct {
-	AmountIn        *u256.Uint
-	AmountOut       *u256.Uint
 	Routes          []string
 	Quotes          []string
+	AmountIn        *u256.Uint
+	AmountOut       *u256.Uint
 	AmountSpecified *i256.Int
 }
 

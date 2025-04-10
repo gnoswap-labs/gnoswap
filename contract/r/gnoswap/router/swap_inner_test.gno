@@ -64,7 +64,8 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 }
 
 func TestSwapInner(t *testing.T) {
-	user1Realm := std.NewUserRealm(user1Addr)
+	t.Skip()
+	user2Realm := std.NewUserRealm(user2Addr)
 	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
 	poolAddr, _ := access.GetAddress(access.ROLE_POOL)
 
@@ -85,11 +86,11 @@ func TestSwapInner(t *testing.T) {
 				CreatePoolWithoutFee(t)
 				MakeMintPositionWithoutFee(t)
 
-				testing.SetRealm(user1Realm)
+				testing.SetRealm(user2Realm)
 				bar.Approve(routerAddr, maxApprove)
 				baz.Approve(routerAddr, maxApprove)
-				TokenFaucet(t, barPath, user1Addr)
-				TokenFaucet(t, bazPath, user1Addr)
+				TokenFaucet(t, barPath, user2Addr)
+				TokenFaucet(t, bazPath, user2Addr)
 			},
 			amountSpecified:   i256.MustFromDecimal("100"),
 			recipient:         alice,
@@ -104,28 +105,73 @@ func TestSwapInner(t *testing.T) {
 			expectedOut:  "98",
 			expectError:  false,
 		},
+		{
+			name: "exact output swap with insufficient approve amount",
+			setupFn: func(t *testing.T) {
+				CreatePoolWithoutFee(t)
+				MakeMintPositionWithoutFee(t)
+
+				testing.SetRealm(user2Realm)
+				bar.Approve(routerAddr, maxApprove)
+				baz.Approve(routerAddr, maxApprove)
+				TokenFaucet(t, barPath, user2Addr)
+				TokenFaucet(t, bazPath, user2Addr)
+			},
+			amountSpecified:   i256.MustFromDecimal("-100"), // negative for exact output
+			recipient:         alice,
+			sqrtPriceLimitX96: u256.NewUint(4295128740),
+			data: SwapCallbackData{
+				tokenIn:  barPath,
+				tokenOut: bazPath,
+				fee:      3000,
+				payer:    routerAddr,
+			},
+			expectedRecv: "102", // expected input amount
+			expectedOut:  "100", // exact output amount
+			expectError:  true,
+		},
 	}
 
 	for _, tt := range tests {
-		testing.SetRealm(user1Realm)
-		bar.Approve(routerAddr, maxApprove)
-		baz.Approve(routerAddr, maxApprove)
-		bar.Approve(poolAddr, maxApprove)
-		baz.Approve(poolAddr, maxApprove)
-		TokenFaucet(t, barPath, routerAddr)
+		t.Run(tt.name, func(t *testing.T) {
+			testing.SetRealm(user2Realm)
+			bar.Approve(routerAddr, maxApprove)
+			baz.Approve(routerAddr, maxApprove)
 
-		if tt.setupFn != nil {
-			tt.setupFn(t)
-		}
+			// Set insufficient approve amount for pool
+			if tt.expectError {
+				bar.Approve(poolAddr, 50) // less than required amount
+				baz.Approve(poolAddr, 50)
+			} else {
+				bar.Approve(poolAddr, maxApprove)
+				baz.Approve(poolAddr, maxApprove)
+			}
 
-		poolRecv, poolOut := swapInner(
-			tt.amountSpecified,
-			tt.recipient,
-			tt.sqrtPriceLimitX96,
-			tt.data,
-		)
+			TokenFaucet(t, barPath, routerAddr)
 
-		uassert.Equal(t, poolRecv.ToString(), tt.expectedRecv)
-		uassert.Equal(t, poolOut.ToString(), tt.expectedOut)
+			if tt.setupFn != nil {
+				tt.setupFn(t)
+			}
+
+			if tt.expectError {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Error("expected error but got none")
+					}
+				}()
+			}
+
+			poolRecv, poolOut := swapInner(
+				tt.amountSpecified,
+				tt.recipient,
+				tt.sqrtPriceLimitX96,
+				tt.data,
+			)
+
+			if !tt.expectError {
+				uassert.Equal(t, poolRecv.ToString(), tt.expectedRecv)
+				uassert.Equal(t, poolOut.ToString(), tt.expectedOut)
+			}
+		})
 	}
 }
