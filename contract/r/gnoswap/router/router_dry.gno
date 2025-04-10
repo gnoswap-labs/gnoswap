@@ -190,7 +190,6 @@ func DrySwapRoute(
 	}
 
 	// initialize accumulators for swap results
-	zero := u256.Zero()
 	resultAmountIn, resultAmountOut := zero, zero
 
 	// Process each route

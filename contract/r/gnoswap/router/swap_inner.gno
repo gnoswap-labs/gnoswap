@@ -36,7 +36,7 @@ func swapInner(
 	recipient std.Address,
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
-) (poolRecv *u256.Uint, poolOut *u256.Uint) { // poolRecv, poolOut
+) (poolRecv, poolOut *u256.Uint) {
 	zeroForOne := data.tokenIn < data.tokenOut
 
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
@@ -98,7 +98,7 @@ func swapDryInner(
 	amountSpecified *i256.Int,
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
-) (poolRecv *u256.Uint, poolOut *u256.Uint) { // poolRecv, poolOut
+) (poolRecv, poolOut *u256.Uint) {
 	zeroForOne := data.tokenIn < data.tokenOut
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
@@ -112,7 +112,7 @@ func swapDryInner(
 		sqrtPriceLimitX96.ToString(),
 	)
 	if !ok {
-		return u256.Zero(), u256.Zero()
+		return zero, zero
 	}
 
 	amount0 := i256.MustFromDecimal(amount0Str)

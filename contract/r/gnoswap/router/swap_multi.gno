@@ -220,7 +220,7 @@ func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, 
 		amountIn, amountOut := swapInner(
 			swapInfo[currentPoolIndex].amountSpecified,
 			recipient,
-			u256.Zero(),
+			zero,
 			callbackData,
 		)
 

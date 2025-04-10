@@ -52,7 +52,7 @@ func getDataForSinglePath(poolPath string) (token0, token1 string, fee uint32) {
 
 // getDataForMultiPath extracts token0, token1, and fee from a multi path.
 func getDataForMultiPath(possiblePath string, poolIdx int) (token0, token1 string, fee uint32) {
-	pools := strings.Split(possiblePath, "*POOL*")
+	pools := strings.Split(possiblePath, POOL_SEPARATOR)
 
 	switch poolIdx {
 	case 0:
