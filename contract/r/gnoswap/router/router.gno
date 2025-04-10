@@ -173,18 +173,18 @@ func (p *RouteParser) ValidateRoutesAndQuotes(routes, quotes []string) error {
 // ValidateQuoteSum ensures all quotes add up to 100%
 func (p *RouteParser) ValidateQuoteSum(quotes []string) error {
 	const (
-		maxQuote int32 = 100
-		minQuote int32 = 0
+		maxQuote int8 = 100
+		minQuote int8 = 0
 	)
 
-	var sum int32
+	var sum int8
 
 	for i, quote := range quotes {
-		qt, err := strconv.ParseInt(quote, 10, 32)
+		qt, err := strconv.ParseInt(quote, 10, 8)
 		if err != nil {
 			return ufmt.Errorf(errInvalidQuote, quote, i)
 		}
-		intQuote := int32(qt)
+		intQuote := int8(qt)
 
 		// Audit report: L-11
 		//
