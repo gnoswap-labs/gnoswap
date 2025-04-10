@@ -12,7 +12,7 @@ import (
 	"gno.land/r/gnoswap/v1/emission"
 
 	i256 "gno.land/p/gnoswap/int256"
-
+	u256 "gno.land/p/gnoswap/uint256"
 	phalt "gno.land/p/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/halt"
 )
@@ -33,7 +33,7 @@ func assertHopsInRange(hops int) {
 }
 
 // getDataForSinglePath extracts token0, token1, and fee from a single path.
-func getDataForSinglePath(poolPath string) (string, string, uint32) {
+func getDataForSinglePath(poolPath string) (token0, token1 string, fee uint32) {
 	poolPathSplit, err := common.Split(poolPath, ":", 3)
 	if err != nil {
 		panic(addDetailToError(
@@ -42,48 +42,35 @@ func getDataForSinglePath(poolPath string) (string, string, uint32) {
 		))
 	}
 
-	token0 := poolPathSplit[0]
-	token1 := poolPathSplit[1]
-	fee, _ := strconv.Atoi(poolPathSplit[2])
+	f, err := strconv.Atoi(poolPathSplit[2])
+	if err != nil {
+		panic(ufmt.Sprintf("invalid fee: %s", poolPathSplit[2]))
+	}
 
-	return token0, token1, uint32(fee)
+	return poolPathSplit[0], poolPathSplit[1], uint32(f)
 }
 
 // getDataForMultiPath extracts token0, token1, and fee from a multi path.
-func getDataForMultiPath(possiblePath string, poolIdx int) (string, string, uint32) {
+func getDataForMultiPath(possiblePath string, poolIdx int) (token0, token1 string, fee uint32) {
 	pools := strings.Split(possiblePath, "*POOL*")
-
-	var token0, token1 string
-	var fee uint32
 
 	switch poolIdx {
 	case 0:
-		token0, token1, fee = getDataForSinglePath(pools[0])
+		return getDataForSinglePath(pools[0])
 	case 1:
-		token0, token1, fee = getDataForSinglePath(pools[1])
+		return getDataForSinglePath(pools[1])
 	case 2:
-		token0, token1, fee = getDataForSinglePath(pools[2])
+		return getDataForSinglePath(pools[2])
 	default:
 		return "", "", uint32(0)
 	}
-
-	return token0, token1, fee
 }
 
-// i256Min returns the smaller of two i256.Int.
-func i256Min(x, y *i256.Int) *i256.Int {
-	if x.Lt(y) {
-		return x
+func i256MinMax(x, y *i256.Int) (min, max *u256.Uint) {
+	if x.Lt(y) || x.Eq(y) {
+		return x.Abs(), y.Abs()
 	}
-	return y
-}
-
-// i256Max returns the larger of two i256.Int.
-func i256Max(x, y *i256.Int) *i256.Int {
-	if x.Gt(y) {
-		return x
-	}
-	return y
+	return y.Abs(), x.Abs()
 }
 
 // getPrevAddr returns the address of the previous realm.

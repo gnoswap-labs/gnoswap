@@ -186,7 +186,7 @@ func (p *RouteParser) ValidateQuoteSum(quotes []string) error {
 		}
 		intQuote := int8(qt)
 
-		// Audit report: L-11
+		// Audit report: L-11 Missing Validation in `validateRoutesAndQuotes`
 		//
 		// Even if quoteArr itself contains 0, there's no problem as long as the sum equals 100,
 		// but since quote generally won't be 0, we check if it's less than or equal to minQuote.
