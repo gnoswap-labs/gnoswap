@@ -50,10 +50,6 @@ func IsEmpty() bool {
 
 // TryRegister attempts to register a new referral for an address.
 func TryRegister(addr std.Address, referral string) bool {
-	if referral == "" {
-		return false
-	}
-
 	refAddr := std.Address(referral)
 	if !refAddr.IsValid() {
 		std.Emit(
