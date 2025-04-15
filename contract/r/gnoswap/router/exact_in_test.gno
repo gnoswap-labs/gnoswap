@@ -180,6 +180,7 @@ func TestExactInSwapRoute(t *testing.T) {
 }
 
 func TestExactInSwapRouteWithReferral(t *testing.T) {
+	t.Skip("Currently we don't have a way to test emitted events")
 	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
 	poolAddr, _ := access.GetAddress(access.ROLE_POOL)
 
