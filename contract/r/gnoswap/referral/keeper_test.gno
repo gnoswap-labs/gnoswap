@@ -463,6 +463,74 @@ func TestIsEmpty(t *testing.T) {
 	}
 }
 
+func TestValidateAddresses(t *testing.T) {
+	invalid1 := std.Address("000000000000")
+	invalidRef := std.Address("000000000001")
+
+	tests := []struct {
+		name    string
+		addr    std.Address
+		refAddr std.Address
+		wantErr error
+	}{
+		{
+			name:    "valid addresses",
+			addr:    validAddr1,
+			refAddr: validAddr2,
+			wantErr: nil,
+		},
+		{
+			name:    "invalid main address",
+			addr:    invalid1,
+			refAddr: validAddr2,
+			wantErr: ErrInvalidAddress,
+		},
+		{
+			name:    "invalid referral address",
+			addr:    validAddr1,
+			refAddr: invalid1,
+			wantErr: ErrInvalidAddress,
+		},
+		{
+			name:    "self referral",
+			addr:    validAddr1,
+			refAddr: validAddr1,
+			wantErr: ErrSelfReferral,
+		},
+		{
+			name:    "zero address referral",
+			addr:    validAddr1,
+			refAddr: zeroAddress,
+			wantErr: nil,
+		},
+		{
+			name:    "both addresses invalid",
+			addr:    invalid1,
+			refAddr: invalidRef,
+			wantErr: ErrInvalidAddress,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k := setupKeeper()
+			err := k.validateAddresses(tt.addr, tt.refAddr)
+
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Errorf("validateAddresses() error = %v, wantErr %v", err, tt.wantErr)
+				}
+			} else {
+				if err == nil {
+					t.Errorf("validateAddresses() error = nil, wantErr %v", tt.wantErr)
+				} else if err != tt.wantErr {
+					t.Errorf("validateAddresses() error = %v, wantErr %v", err, tt.wantErr)
+				}
+			}
+		})
+	}
+}
+
 /*             Getter Tests               */
 
 func TestGetReferral(t *testing.T) {
