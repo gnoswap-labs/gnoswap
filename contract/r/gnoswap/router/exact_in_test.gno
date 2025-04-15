@@ -192,7 +192,8 @@ func TestExactInSwapRouteWithReferral(t *testing.T) {
 	testing.SetRealm(user1Realm)
 
 	self := getPrevAddr().String()
-	println("self", self)
+	validReferral := testutils.TestAddress("validReferral")
+	println("validReferral", validReferral)
 
 	tests := []struct {
 		name         string
@@ -220,6 +221,22 @@ func TestExactInSwapRouteWithReferral(t *testing.T) {
 			quoteArr:     "100",
 			amountOutMin: "85",
 			referrer:     self,
+			wantErr:      false,
+		},
+		{
+			name: "change referral",
+			setup: func() {
+				bar.Approve(routerAddr, maxApprove)
+				baz.Approve(routerAddr, maxApprove)
+				TokenFaucet(t, barPath, user1Addr)
+			},
+			inputToken:   barPath,
+			outputToken:  bazPath,
+			amountIn:     "100",
+			routeArr:     singlePoolPath,
+			quoteArr:     "100",
+			amountOutMin: "85",
+			referrer:     validReferral.String(),
 			wantErr:      false,
 		},
 	}
