@@ -179,6 +179,75 @@ func TestExactInSwapRoute(t *testing.T) {
 	}
 }
 
+func TestExactInSwapRouteWithReferral(t *testing.T) {
+	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+	poolAddr, _ := access.GetAddress(access.ROLE_POOL)
+
+	CreatePoolWithoutFee(t)
+	MakeMintPositionWithoutFee(t)
+
+	testing.SkipHeights(100)
+	user1Realm := std.NewUserRealm(user1Addr)
+	testing.SetRealm(user1Realm)
+
+	self := getPrevAddr().String()
+	println("self", self)
+
+	tests := []struct {
+		name         string
+		setup        func()
+		inputToken   string
+		outputToken  string
+		amountIn     string
+		routeArr     string
+		quoteArr     string
+		amountOutMin string
+		referrer     string
+		wantErr      bool
+	}{
+		{
+			name: "self referral",
+			setup: func() {
+				bar.Approve(routerAddr, maxApprove)
+				baz.Approve(routerAddr, maxApprove)
+				TokenFaucet(t, barPath, user1Addr)
+			},
+			inputToken:   barPath,
+			outputToken:  bazPath,
+			amountIn:     "100",
+			routeArr:     singlePoolPath,
+			quoteArr:     "100",
+			amountOutMin: "85",
+			referrer:     self,
+			wantErr:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testing.SetRealm(user1Realm)
+			bar.Approve(routerAddr, maxApprove)
+			baz.Approve(routerAddr, maxApprove)
+			bar.Approve(poolAddr, maxApprove)
+			baz.Approve(poolAddr, maxApprove)
+			if tt.setup != nil {
+				tt.setup()
+			}
+
+			ExactInSwapRoute(
+				tt.inputToken,
+				tt.outputToken,
+				tt.amountIn,
+				tt.routeArr,
+				tt.quoteArr,
+				tt.amountOutMin,
+				time.Now().Add(time.Hour).Unix(),
+				tt.referrer,
+			)
+		})
+	}
+}
+
 func TestExactInZeroForOneFalse(t *testing.T) {
 	const wugnotTokenPath = "gno.land/r/demo/wugnot"
 	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
