@@ -854,3 +854,86 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateQuoteSum(t *testing.T) {
+	parser := NewRouteParser()
+
+	tests := []struct {
+		name      string
+		quotes    []string
+		wantError bool
+		errMsg    string
+	}{
+		{
+			name:      "Valid quotes summing to 100",
+			quotes:    []string{"30", "40", "30"},
+			wantError: false,
+		},
+		{
+			name:      "Single quote of 100",
+			quotes:    []string{"100"},
+			wantError: false,
+		},
+		{
+			name:      "Sum not equal to 100",
+			quotes:    []string{"30", "40", "20"},
+			wantError: true,
+			errMsg:    "quote sum(90) must be 100",
+		},
+		{
+			name:      "Negative quote",
+			quotes:    []string{"-10", "110"},
+			wantError: true,
+			errMsg:    "quote(-10) at index(0) must be positive value",
+		},
+		{
+			name:      "Zero quote",
+			quotes:    []string{"0", "100"},
+			wantError: true,
+			errMsg:    "quote(0) at index(0) must be positive value",
+		},
+		{
+			name:      "Quote exceeding 100",
+			quotes:    []string{"101", "-1"},
+			wantError: true,
+			errMsg:    "quote(101) at index(0) must be less than or equal to 100",
+		},
+		{
+			name:      "Invalid number format",
+			quotes:    []string{"abc", "100"},
+			wantError: true,
+			errMsg:    "invalid quote(abc) at index(0)",
+		},
+		{
+			name:      "Empty quotes",
+			quotes:    []string{},
+			wantError: true,
+			errMsg:    "quote sum(0) must be 100",
+		},
+		{
+			name:      "Overflow check",
+			quotes:    []string{"50", "60"},
+			wantError: true,
+			errMsg:    "quote sum exceeds 100 at index(1)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := parser.ValidateQuoteSum(tt.quotes)
+			if tt.wantError {
+				if err == nil {
+					t.Errorf("Expected error but got none")
+					return
+				}
+				if !strings.Contains(err.Error(), tt.errMsg) {
+					t.Errorf("Expected error message containing %q, got %q", tt.errMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+			}
+		})
+	}
+}
