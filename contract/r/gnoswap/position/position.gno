@@ -96,7 +96,11 @@ func Mint(
 	}
 	checkDeadline(deadline)
 
-	referral.TryRegister(caller, referrer)
+	success := referral.TryRegister(caller, referrer)
+	actualReferrer := referrer
+	if !success {
+		actualReferrer = referral.GetReferral(caller.String())
+	}
 
 	mintAndDistributeGnsCallback()
 
@@ -155,6 +159,7 @@ func Mint(
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"sqrtPriceX96", poolSqrtPriceX96,
+		"referrer", actualReferrer,
 	)
 
 	return id, liquidity.ToString(), amount0.ToString(), amount1.ToString()
