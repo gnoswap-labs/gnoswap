@@ -74,7 +74,11 @@ func Delegate(to std.Address, amount uint64, referrer string) {
 	// Transfer the caller's GNS to GovStaker
 	gns.TransferFrom(caller, std.CurrentRealm().Address(), amount)
 
-	referral.TryRegister(caller, referrer)
+	success := referral.TryRegister(caller, referrer)
+	actualReferrer := referrer
+	if !success {
+		actualReferrer = referral.GetReferral(caller.String())
+	}
 	en.MintAndDistributeGns()
 
 	if running {
@@ -96,7 +100,7 @@ func Delegate(to std.Address, amount uint64, referrer string) {
 		"from", caller.String(),
 		"to", to.String(),
 		"amount", formatUint(amount),
-		"referrer", referrer,
+		"referrer", actualReferrer,
 	)
 }
 

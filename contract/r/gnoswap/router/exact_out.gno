@@ -73,7 +73,11 @@ func ExactOutSwapRoute(
 	)
 
 	prevAddr, prevPkgPath := getPrev()
-	referral.TryRegister(std.Address(prevAddr), referrer)
+	success := referral.TryRegister(std.Address(prevAddr), referrer)
+	actualReferrer := referrer
+	if !success {
+		actualReferrer = referral.GetReferral(prevAddr)
+	}
 	std.Emit(
 		"ExactOutSwap",
 		"prevAddr", prevAddr,
@@ -85,6 +89,7 @@ func ExactOutSwapRoute(
 		"quote", pp.QuoteArr,
 		"resultInputAmount", inputAmount,
 		"resultOutputAmount", outputAmount,
+		"referrer", actualReferrer,
 	)
 
 	return inputAmount, outputAmount

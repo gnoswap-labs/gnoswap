@@ -230,7 +230,11 @@ func StakeToken(positionId uint64, referrer string) (string, string, string) {
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := getPrevAddr()
 
-	referral.TryRegister(caller, referrer)
+	success := referral.TryRegister(caller, referrer)
+	actualReferrer := referrer
+	if !success {
+		actualReferrer = referral.GetReferral(caller.String())
+	}
 
 	token0Amount, token1Amount, err := calculateStakeTokenAmount(positionId, owner, caller)
 	if err != nil {
@@ -313,7 +317,7 @@ func StakeToken(positionId uint64, referrer string) (string, string, string) {
 		"positionLowerTick", formatInt(tickLower),
 		"currentTick", formatInt(currentTick),
 		"isInRange", formatBool(isInRange),
-		"referrer", referrer,
+		"referrer", actualReferrer,
 	)
 
 	return poolPath, token0Amount, token1Amount
