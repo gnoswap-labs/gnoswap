@@ -126,6 +126,31 @@ func TokenFaucet(t *testing.T, tokenPath string, to std.Address) {
 	}
 }
 
+func TokenFaucet2(t *testing.T, tokenPath string, to std.Address) {
+	t.Helper()
+	testing.SetOriginCaller(admin)
+	defaultAmount := uint64(10_000_000_000)
+
+	switch tokenPath {
+	case wugnotPath:
+		wugnotTransfer(t, to, defaultAmount)
+	case gnsPath:
+		gnsTransfer(t, to, defaultAmount)
+	case barPath:
+		barTransfer(t, to, defaultAmount)
+	case bazPath:
+		bazTransfer(t, to, defaultAmount)
+	case fooPath:
+		fooTransfer(t, to, defaultAmount)
+	case oblPath:
+		oblTransfer(t, to, defaultAmount)
+	case quxPath:
+		quxTransfer(t, to, defaultAmount)
+	default:
+		panic("token not found")
+	}
+}
+
 func TokenBalance(t *testing.T, tokenPath string, owner std.Address) uint64 {
 	t.Helper()
 	switch tokenPath {
