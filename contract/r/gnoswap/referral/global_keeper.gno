@@ -31,7 +31,7 @@ func GetKeeper() ReferralKeeper {
 func GetReferral(addr string) string {
 	referral, err := gReferralKeeper.get(std.Address(addr))
 	if err != nil {
-		panic(err)
+		return ""
 	}
 	return referral.String()
 }

@@ -531,6 +531,133 @@ func TestValidateAddresses(t *testing.T) {
 	}
 }
 
+func TestSetReferral(t *testing.T) {
+	tests := []struct {
+		name        string
+		addr        std.Address
+		refAddr     std.Address
+		eventType   string
+		setupState  func(*keeper)
+		setupCaller func() func()
+		wantErr     bool
+		checkStore  func(*keeper) bool
+	}{
+		{
+			name:      "valid registration",
+			addr:      validAddr1,
+			refAddr:   validAddr2,
+			eventType: EventTypeRegister,
+			setupState: func(k *keeper) {},
+			setupCaller: mockValidCaller,
+			wantErr:   false,
+			checkStore: func(k *keeper) bool {
+				val, exists := k.store.Get(validAddr1.String())
+				return exists && val == validAddr2.String()
+			},
+		},
+		{
+			name:      "valid update",
+			addr:      validAddr1,
+			refAddr:   validAddr2,
+			eventType: EventTypeUpdate,
+			setupState: func(k *keeper) {
+				k.store.Set(validAddr1.String(), "old_ref_addr")
+			},
+			setupCaller: mockValidCaller,
+			wantErr:   false,
+			checkStore: func(k *keeper) bool {
+				val, exists := k.store.Get(validAddr1.String())
+				return exists && val == validAddr2.String()
+			},
+		},
+		{
+			name:      "remove referral with zero address",
+			addr:      validAddr1,
+			refAddr:   zeroAddress,
+			eventType: EventTypeRemove,
+			setupState: func(k *keeper) {
+				k.store.Set(validAddr1.String(), validAddr2.String())
+			},
+			setupCaller: mockValidCaller,
+			wantErr:   false,
+			checkStore: func(k *keeper) bool {
+				_, exists := k.store.Get(validAddr1.String())
+				return !exists
+			},
+		},
+		{
+			name:      "unauthorized caller",
+			addr:      validAddr1,
+			refAddr:   validAddr2,
+			eventType: EventTypeRegister,
+			setupState: func(k *keeper) {},
+			setupCaller: func() func() {
+				origCaller := std.OriginCaller()
+				testing.SetOriginCaller(std.Address("unauthorized"))
+				return func() {
+					testing.SetOriginCaller(origCaller)
+				}
+			},
+			wantErr:   true,
+			checkStore: func(k *keeper) bool {
+				_, exists := k.store.Get(validAddr1.String())
+				return !exists
+			},
+		},
+		{
+			name:      "self referral",
+			addr:      validAddr1,
+			refAddr:   validAddr1,
+			eventType: EventTypeRegister,
+			setupState: func(k *keeper) {},
+			setupCaller: mockValidCaller,
+			wantErr:   true,
+			checkStore: func(k *keeper) bool {
+				_, exists := k.store.Get(validAddr1.String())
+				return !exists
+			},
+		},
+		{
+			name:      "invalid address",
+			addr:      std.Address("000000000000"),
+			refAddr:   validAddr2,
+			eventType: EventTypeRegister,
+			setupState: func(k *keeper) {},
+			setupCaller: mockValidCaller,
+			wantErr:   true,
+			checkStore: func(k *keeper) bool {
+				_, exists := k.store.Get("000000000000")
+				return !exists
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k := setupKeeper()
+			tt.setupState(k)
+			cleanup := tt.setupCaller()
+			defer cleanup()
+
+			err := k.setReferral(tt.addr, tt.refAddr, tt.eventType)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("setReferral() error = nil, wantErr %v", tt.wantErr)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("setReferral() unexpected error = %v", err)
+				}
+			}
+
+			if !tt.checkStore(k) {
+				t.Errorf("setReferral() store state is incorrect")
+			}
+		})
+	}
+}
+
 /*             Getter Tests               */
 
 func TestGetReferral(t *testing.T) {
@@ -539,7 +666,6 @@ func TestGetReferral(t *testing.T) {
 		addr        string
 		setupState  func()
 		want        string
-		shouldPanic bool
 	}{
 		{
 			name: "retrieve existing referral",
@@ -551,7 +677,6 @@ func TestGetReferral(t *testing.T) {
 				gReferralKeeper.register(validAddr1, validAddr2)
 			},
 			want:        validAddr2.String(),
-			shouldPanic: false,
 		},
 		{
 			name: "retrieve non-existent referral",
@@ -559,7 +684,7 @@ func TestGetReferral(t *testing.T) {
 			setupState: func() {
 				gReferralKeeper = NewKeeper()
 			},
-			shouldPanic: true,
+			want: "",
 		},
 	}
 
@@ -567,17 +692,8 @@ func TestGetReferral(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupState()
 
-			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Error("GetReferral() function did not panic")
-					}
-				}()
-			}
-
-			got := GetReferral(tt.addr)
-			if !tt.shouldPanic && got != tt.want {
-				t.Errorf("GetReferral() = %v, want %v", got, tt.want)
+			if GetReferral(tt.addr) != tt.want {
+				t.Errorf("GetReferral() = %v, want %v", GetReferral(tt.addr), tt.want)
 			}
 		})
 	}
