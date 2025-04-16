@@ -118,7 +118,7 @@ func TestSwapInner(t *testing.T) {
 				TokenFaucet(t, barPath, user1Addr)
 				TokenFaucet(t, bazPath, user1Addr)
 			},
-			amountSpecified:   i256.MustFromDecimal("92267581029952440000000"), // 매우 큰 수량
+			amountSpecified:   i256.MustFromDecimal("92267581029952440000000"), // Large amount
 			recipient:         alice,
 			sqrtPriceLimitX96: u256.NewUint(4295128740),
 			data: SwapCallbackData{
