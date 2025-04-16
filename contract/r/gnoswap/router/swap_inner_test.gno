@@ -2,6 +2,7 @@ package router
 
 import (
 	"std"
+	"strings"
 	"testing"
 
 	"gno.land/p/demo/uassert"
@@ -104,28 +105,67 @@ func TestSwapInner(t *testing.T) {
 			expectedOut:  "98",
 			expectError:  false,
 		},
+		{
+			name: "overflow case - large amount",
+			setupFn: func(t *testing.T) {
+				CreatePoolWithoutFee(t)
+				MakeMintPositionWithoutFee(t)
+
+				testing.SetRealm(user1Realm)
+				bar.Approve(routerAddr, maxApprove)
+				baz.Approve(routerAddr, maxApprove)
+				TokenFaucet(t, barPath, user1Addr)
+				TokenFaucet(t, bazPath, user1Addr)
+			},
+			amountSpecified:   i256.MustFromDecimal("92267581029952440000000"),
+			recipient:         alice,
+			sqrtPriceLimitX96: u256.NewUint(4295128740),
+			data: SwapCallbackData{
+				tokenIn:  barPath,
+				tokenOut: bazPath,
+				fee:      3000,
+				payer:    routerAddr,
+			},
+			expectedRecv: "0",
+			expectedOut:  "0",
+			expectError:  true,
+		},
 	}
 
 	for _, tt := range tests {
-		testing.SetRealm(user1Realm)
-		bar.Approve(routerAddr, maxApprove)
-		baz.Approve(routerAddr, maxApprove)
-		bar.Approve(poolAddr, maxApprove)
-		baz.Approve(poolAddr, maxApprove)
-		TokenFaucet(t, barPath, routerAddr)
+		t.Run(tt.name, func(t *testing.T) {
+			testing.SetRealm(user1Realm)
+			bar.Approve(routerAddr, maxApprove)
+			baz.Approve(routerAddr, maxApprove)
+			bar.Approve(poolAddr, maxApprove)
+			baz.Approve(poolAddr, maxApprove)
+			TokenFaucet(t, barPath, routerAddr)
 
-		if tt.setupFn != nil {
-			tt.setupFn(t)
-		}
+			if tt.setupFn != nil {
+				tt.setupFn(t)
+			}
 
-		poolRecv, poolOut := swapInner(
-			tt.amountSpecified,
-			tt.recipient,
-			tt.sqrtPriceLimitX96,
-			tt.data,
-		)
+			if tt.expectError {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Error("Expected panic for overflow")
+					} else if !strings.Contains(r.(string), "overflow") {
+						t.Error("Expected panic for overflow")
+					}
+				}()
+			}
 
-		uassert.Equal(t, poolRecv.ToString(), tt.expectedRecv)
-		uassert.Equal(t, poolOut.ToString(), tt.expectedOut)
+			poolRecv, poolOut := swapInner(
+				tt.amountSpecified,
+				tt.recipient,
+				tt.sqrtPriceLimitX96,
+				tt.data,
+			)
+
+			if !tt.expectError {
+				uassert.Equal(t, poolRecv.ToString(), tt.expectedRecv)
+				uassert.Equal(t, poolOut.ToString(), tt.expectedOut)
+			}
+		})
 	}
 }
