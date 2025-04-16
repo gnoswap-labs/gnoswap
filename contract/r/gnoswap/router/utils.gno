@@ -11,9 +11,9 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/emission"
 
+	phalt "gno.land/p/gnoswap/halt"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-	phalt "gno.land/p/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -164,14 +164,13 @@ func checkDeadline(deadline int64) error {
 //
 //	[]string: slice containing the split string parts
 func splitSingleChar(s string, sep byte) []string {
-	l := len(s)
-	if l == 0 {
+	if s == "" {
 		return []string{""}
 	}
 
 	result := make([]string, 0, bytes.Count([]byte(s), []byte{sep})+1)
 	start := 0
-	for i := 0; i < l; i++ {
+	for i := range s {
 		if s[i] == sep {
 			result = append(result, s[start:i])
 			start = i + 1
