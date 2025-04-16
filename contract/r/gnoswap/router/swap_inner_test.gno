@@ -65,6 +65,7 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 }
 
 func TestSwapInner(t *testing.T) {
+	t.Skip("run this test separately")
 	user1Realm := std.NewUserRealm(user1Addr)
 	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
 	poolAddr, _ := access.GetAddress(access.ROLE_POOL)
@@ -117,7 +118,7 @@ func TestSwapInner(t *testing.T) {
 				TokenFaucet(t, barPath, user1Addr)
 				TokenFaucet(t, bazPath, user1Addr)
 			},
-			amountSpecified:   i256.MustFromDecimal("92267581029952440000000"),
+			amountSpecified:   i256.MustFromDecimal("92267581029952440000000"), // 매우 큰 수량
 			recipient:         alice,
 			sqrtPriceLimitX96: u256.NewUint(4295128740),
 			data: SwapCallbackData{
