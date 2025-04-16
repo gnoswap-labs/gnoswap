@@ -226,7 +226,8 @@ func TestExactOutSwapBoundary(t *testing.T) {
 			}
 		}()
 
-		inputAmount, outputAmount := ExactOutSwapRoute(
+		// request amount that slightly exceeds the pool balance
+		ExactOutSwapRoute(
 			barPath,
 			fooPath,
 			overflowAmount,
