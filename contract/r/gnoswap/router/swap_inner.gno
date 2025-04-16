@@ -41,7 +41,6 @@ func swapInner(
 
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
-	// Audit report: L-10 Infinity Approval
 	// approve only the required amount
 	approveAmount := amountSpecified.Abs().Uint64()
 
