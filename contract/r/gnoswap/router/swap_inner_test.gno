@@ -2,6 +2,7 @@ package router
 
 import (
 	"std"
+	"strings"
 	"testing"
 
 	"gno.land/p/demo/uassert"
@@ -64,8 +65,8 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 }
 
 func TestSwapInner(t *testing.T) {
-	t.Skip()
-	user2Realm := std.NewUserRealm(user2Addr)
+	t.Skip("run this test separately")
+	user1Realm := std.NewUserRealm(user1Addr)
 	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
 	poolAddr, _ := access.GetAddress(access.ROLE_POOL)
 
@@ -86,11 +87,11 @@ func TestSwapInner(t *testing.T) {
 				CreatePoolWithoutFee(t)
 				MakeMintPositionWithoutFee(t)
 
-				testing.SetRealm(user2Realm)
+				testing.SetRealm(user1Realm)
 				bar.Approve(routerAddr, maxApprove)
 				baz.Approve(routerAddr, maxApprove)
-				TokenFaucet(t, barPath, user2Addr)
-				TokenFaucet(t, bazPath, user2Addr)
+				TokenFaucet(t, barPath, user1Addr)
+				TokenFaucet(t, bazPath, user1Addr)
 			},
 			amountSpecified:   i256.MustFromDecimal("100"),
 			recipient:         alice,
@@ -106,18 +107,18 @@ func TestSwapInner(t *testing.T) {
 			expectError:  false,
 		},
 		{
-			name: "exact output swap with insufficient approve amount",
+			name: "overflow case - large amount",
 			setupFn: func(t *testing.T) {
 				CreatePoolWithoutFee(t)
 				MakeMintPositionWithoutFee(t)
 
-				testing.SetRealm(user2Realm)
+				testing.SetRealm(user1Realm)
 				bar.Approve(routerAddr, maxApprove)
 				baz.Approve(routerAddr, maxApprove)
-				TokenFaucet(t, barPath, user2Addr)
-				TokenFaucet(t, bazPath, user2Addr)
+				TokenFaucet(t, barPath, user1Addr)
+				TokenFaucet(t, bazPath, user1Addr)
 			},
-			amountSpecified:   i256.MustFromDecimal("-100"), // negative for exact output
+			amountSpecified:   i256.MustFromDecimal("92267581029952440000000"), // Large amount
 			recipient:         alice,
 			sqrtPriceLimitX96: u256.NewUint(4295128740),
 			data: SwapCallbackData{
@@ -126,27 +127,19 @@ func TestSwapInner(t *testing.T) {
 				fee:      3000,
 				payer:    routerAddr,
 			},
-			expectedRecv: "102", // expected input amount
-			expectedOut:  "100", // exact output amount
+			expectedRecv: "0",
+			expectedOut:  "0",
 			expectError:  true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testing.SetRealm(user2Realm)
+			testing.SetRealm(user1Realm)
 			bar.Approve(routerAddr, maxApprove)
 			baz.Approve(routerAddr, maxApprove)
-
-			// Set insufficient approve amount for pool
-			if tt.expectError {
-				bar.Approve(poolAddr, 50) // less than required amount
-				baz.Approve(poolAddr, 50)
-			} else {
-				bar.Approve(poolAddr, maxApprove)
-				baz.Approve(poolAddr, maxApprove)
-			}
-
+			bar.Approve(poolAddr, maxApprove)
+			baz.Approve(poolAddr, maxApprove)
 			TokenFaucet(t, barPath, routerAddr)
 
 			if tt.setupFn != nil {
@@ -156,7 +149,9 @@ func TestSwapInner(t *testing.T) {
 			if tt.expectError {
 				defer func() {
 					if r := recover(); r == nil {
-						t.Error("expected error but got none")
+						t.Error("Expected panic for overflow")
+					} else if !strings.Contains(r.(string), "overflow") {
+						t.Error("Expected panic for overflow")
 					}
 				}()
 			}

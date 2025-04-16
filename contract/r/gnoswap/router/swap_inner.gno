@@ -63,6 +63,9 @@ func swapInner(
 	amount1 := i256.MustFromDecimal(amount1Str)
 
 	poolOut, poolRecv = i256MinMax(amount0, amount1)
+	if poolRecv.IsOverflow() || poolOut.IsOverflow() {
+		panic("overflow in swapInner")
+	}
 
 	return poolRecv, poolOut
 }
@@ -118,6 +121,9 @@ func swapDryInner(
 	amount1 := i256.MustFromDecimal(amount1Str)
 
 	poolOut, poolRecv = i256MinMax(amount0, amount1)
+	if poolRecv.IsOverflow() || poolOut.IsOverflow() {
+		panic("overflow in swapDryInner")
+	}
 
 	return poolRecv, poolOut
 }
