@@ -1,12 +1,11 @@
 package bridge
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/demo/avl"
-	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 	"gno.land/r/gnoswap/v1/access"
 )
 
@@ -167,6 +166,14 @@ func TestCallbackUpdate(t *testing.T) {
 	})
 	uassert.NoError(t, err)
 
+	cb, exists := GetCallback2("test", "multiply")
+	uassert.True(t, exists)
+
+	multiplyFn, ok := cb.(func(int, int) int)
+	uassert.True(t, ok)
+	result := multiplyFn(3, 4)
+	uassert.Equal(t, result, 12) // 3 * 4 = 12
+
 	// update callback
 	err = UpdateCallback(adminAddr, "test", "multiply", func(a, b int) int {
 		return a * b * 2
@@ -174,12 +181,12 @@ func TestCallbackUpdate(t *testing.T) {
 	uassert.NoError(t, err)
 
 	// get callback and check the result
-	cb, exists := GetCallback2("test", "multiply")
+	cb, exists = GetCallback2("test", "multiply")
 	uassert.True(t, exists)
 
-	multiplyFn, ok := cb.(func(int, int) int)
+	multiplyFn, ok = cb.(func(int, int) int)
 	uassert.True(t, ok)
-	result := multiplyFn(3, 4)
+	result = multiplyFn(3, 4)
 	uassert.Equal(t, result, 24) // 3 * 4 * 2 = 24
 }
 
@@ -213,4 +220,117 @@ func TestCallbackUpdateErrors(t *testing.T) {
 
 	err = UpdateCallback(userAddr, "test", "update", func() {})
 	uassert.Error(t, err)
+}
+
+func TestUpgradablePattern(t *testing.T) {
+	t.Run("version Management", func(t *testing.T) {
+		callbackTree = avl.NewTree()
+		adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+
+		// v1
+		err := RegisterCallback2(adminAddr, "emission", "MintAndDistributeGns", func() uint64 {
+			return 100
+		})
+		uassert.NoError(t, err)
+
+		// v2
+		err = UpdateCallback(adminAddr, "emission", "MintAndDistributeGns", func() uint64 {
+			return 200
+		})
+		uassert.NoError(t, err)
+
+		// check version
+		cb, exists := GetCallback2("emission", "MintAndDistributeGns")
+		uassert.True(t, exists)
+		fn, ok := cb.(func() uint64)
+		uassert.True(t, ok)
+		result := fn()
+		uassert.Equal(t, result, uint64(200))
+	})
+
+	t.Run("Multiple Contract Callbacks", func(t *testing.T) {
+		callbackTree = avl.NewTree()
+		adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+
+		// Emission contract callback
+		err := RegisterCallback2(adminAddr, "emission", "MintAndDistributeGns", func() uint64 {
+			return 100
+		})
+		uassert.NoError(t, err)
+
+		// Position contract callback
+		err = RegisterCallback2(adminAddr, "position", "GetPosition", func(id uint64) string {
+			return "position"
+		})
+		uassert.NoError(t, err)
+
+		// check each callback is independent
+		cb1, exists := GetCallback2("emission", "MintAndDistributeGns")
+		uassert.True(t, exists)
+		cb2, exists := GetCallback2("position", "GetPosition")
+		uassert.True(t, exists)
+
+		fn1, ok := cb1.(func() uint64)
+		uassert.True(t, ok)
+		fn2, ok := cb2.(func(uint64) string)
+		uassert.True(t, ok)
+
+		uassert.Equal(t, fn1(), uint64(100))
+		uassert.Equal(t, fn2(1), "position")
+	})
+
+	t.Run("Rollback Scenario", func(t *testing.T) {
+		callbackTree = avl.NewTree()
+		adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+
+		// v1
+		originalCallback := func() uint64 {
+			return 100
+		}
+		err := RegisterCallback2(adminAddr, "emission", "MintAndDistributeGns", originalCallback)
+		uassert.NoError(t, err)
+
+		// buggy version
+		err = UpdateCallback(adminAddr, "emission", "MintAndDistributeGns", func() uint64 {
+			panic("buggy version")
+		})
+		uassert.NoError(t, err)
+
+		// rollback
+		err = UpdateCallback(adminAddr, "emission", "MintAndDistributeGns", originalCallback)
+		uassert.NoError(t, err)
+
+		// check rollback
+		cb, exists := GetCallback2("emission", "MintAndDistributeGns")
+		uassert.True(t, exists)
+		fn, ok := cb.(func() uint64)
+		uassert.True(t, ok)
+		result := fn()
+		uassert.Equal(t, result, uint64(100))
+	})
+
+	t.Run("Namespace Collision", func(t *testing.T) {
+		callbackTree = avl.NewTree()
+		adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+
+		// same namespace, different function
+		err := RegisterCallback2(adminAddr, "emission", "func1", func() int { return 1 })
+		uassert.NoError(t, err)
+		err = RegisterCallback2(adminAddr, "emission", "func2", func() int { return 2 })
+		uassert.NoError(t, err)
+
+		// check each function is independent
+		cb1, exists := GetCallback2("emission", "func1")
+		uassert.True(t, exists)
+		cb2, exists := GetCallback2("emission", "func2")
+		uassert.True(t, exists)
+
+		fn1, ok := cb1.(func() int)
+		uassert.True(t, ok)
+		fn2, ok := cb2.(func() int)
+		uassert.True(t, ok)
+
+		uassert.Equal(t, fn1(), 1)
+		uassert.Equal(t, fn2(), 2)
+	})
 }
