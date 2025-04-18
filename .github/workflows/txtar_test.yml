@@ -13,9 +13,10 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
+          cache: false
       - name: Run txtar tests
         run: |
           cd tests/integration
           export INMEMORY_TS=true
           export NO_SEQ_TS=true
-          go test -v . -run Testdata 
+          go test -v . -run Testdata -count=1 
