@@ -49,8 +49,6 @@ func (k *keeper) update(addr, newRefAddr std.Address) error {
 // simple reference relationships, cycles are not a significant issue. However, when introducing
 // a referral-based reward system in the future or adding business logic where cycles could cause problems,
 // it will be necessary to implement validation checks.
-//
-// TODO: need to discuss what values to emit as event
 func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error {
 	if err := isValidCaller(std.PreviousRealm().Address()); err != nil {
 		return err
@@ -68,11 +66,14 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 	// }
 
 	if refAddr == zeroAddress {
-		std.Emit(
-			EventTypeRemove,
-			"removedAddress", addr.String(),
-		)
-		return k.remove(addr)
+		if k.has(addr) {
+			err := k.remove(addr)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		refAddr = std.Address("")
 	}
 
 	k.store.Set(addr.String(), refAddr.String())
@@ -98,8 +99,6 @@ func (k *keeper) validateAddresses(addr, refAddr std.Address) error {
 
 // remove implements the `remove` method of the `ReferralKeeper` interface.
 // It validates the caller and address before removing the referral relationship.
-//
-// TODO: need to discuss what values to emit as event
 func (k *keeper) remove(target std.Address) error {
 	if err := isValidCaller(std.PreviousRealm().Address()); err != nil {
 		return err
@@ -109,16 +108,20 @@ func (k *keeper) remove(target std.Address) error {
 		return ErrInvalidAddress
 	}
 
-	if err := k.checkRateLimit(target.String()); err != nil {
+	tgt := target.String()
+
+	if err := k.checkRateLimit(tgt); err != nil {
 		return err
 	}
 
-	k.store.Remove(target.String())
+	_, ok := k.store.Remove(tgt)
+	if !ok {
+		return ErrNotFound
+	}
 
-	// TODO: update event
 	std.Emit(
 		EventTypeRemove,
-		"removedAddress", target.String(),
+		"removedAddress", tgt,
 	)
 
 	return nil

@@ -277,7 +277,7 @@ func TestRemove(t *testing.T) {
 			addr:        validAddr1,
 			setupState:  func(k *keeper) {},
 			setupCaller: mockValidCaller,
-			wantErr:     false,
+			wantErr:     true,
 		},
 	}
 
@@ -287,6 +287,8 @@ func TestRemove(t *testing.T) {
 			tt.setupState(k)
 			cleanup := tt.setupCaller()
 			defer cleanup()
+
+			println("addr: ", tt.addr.String())
 
 			err := k.remove(tt.addr)
 
@@ -581,8 +583,23 @@ func TestSetReferral(t *testing.T) {
 			setupCaller: mockValidCaller,
 			wantErr:   false,
 			checkStore: func(k *keeper) bool {
+				// GSW-2258:
+				// check the address is removed from the store
 				_, exists := k.store.Get(validAddr1.String())
-				return !exists
+				if exists {
+					return false
+				}
+
+				// double checks
+				if GetReferral(validAddr1.String()) != "" {
+					return false
+				}
+
+				if HasReferral(validAddr1.String()) {
+					return false
+				}
+
+				return true
 			},
 		},
 		{
