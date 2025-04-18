@@ -16,4 +16,6 @@ jobs:
       - name: Run txtar tests
         run: |
           cd tests/integration
+          export INMEMORY_TS=true
+          export NO_SEQ_TS=true
           go test -v . -run Testdata 
