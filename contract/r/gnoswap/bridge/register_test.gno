@@ -1,10 +1,13 @@
 package bridge
 
 import (
+	"std"
 	"testing"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/testutils"
+	"gno.land/r/gnoswap/v1/access"
 )
 
 func TestVariousFunctionCallbacks(t *testing.T) {
@@ -134,4 +137,80 @@ func TestNonExistentCallback(t *testing.T) {
 
 	_, exists := GetCallback("non/existent/key")
 	uassert.False(t, exists)
+}
+
+func TestCallbackRegistration2(t *testing.T) {
+	callbackTree = avl.NewTree()
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+
+	err := RegisterCallback2(adminAddr, "test", "add", func(a, b int) int {
+		return a + b
+	})
+	uassert.NoError(t, err)
+
+	cb, exists := GetCallback2("test", "add")
+	uassert.True(t, exists)
+
+	addFn, ok := cb.(func(int, int) int)
+	uassert.True(t, ok)
+	result := addFn(5, 3)
+	uassert.Equal(t, result, 8)
+}
+
+func TestCallbackUpdate(t *testing.T) {
+	callbackTree = avl.NewTree()
+
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+
+	err := RegisterCallback2(adminAddr, "test", "multiply", func(a, b int) int {
+		return a * b
+	})
+	uassert.NoError(t, err)
+
+	// update callback
+	err = UpdateCallback(adminAddr, "test", "multiply", func(a, b int) int {
+		return a * b * 2
+	})
+	uassert.NoError(t, err)
+
+	// get callback and check the result
+	cb, exists := GetCallback2("test", "multiply")
+	uassert.True(t, exists)
+
+	multiplyFn, ok := cb.(func(int, int) int)
+	uassert.True(t, ok)
+	result := multiplyFn(3, 4)
+	uassert.Equal(t, result, 24) // 3 * 4 * 2 = 24
+}
+
+func TestCallbackRegistrationErrors(t *testing.T) {
+	callbackTree = avl.NewTree()
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+	userAddr := testutils.TestAddress("user")
+
+	// duplicate registration test
+	err := RegisterCallback2(adminAddr, "test", "duplicate", func() {})
+	uassert.NoError(t, err)
+
+	err = RegisterCallback2(adminAddr, "test", "duplicate", func() {})
+	uassert.Error(t, err)
+
+	// unauthorized user registration test
+	err = RegisterCallback2(userAddr, "test", "unauthorized", func() {})
+	uassert.Error(t, err)
+}
+
+func TestCallbackUpdateErrors(t *testing.T) {
+	callbackTree = avl.NewTree()
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+	userAddr := testutils.TestAddress("user2")
+
+	err := UpdateCallback(adminAddr, "test", "nonexistent", func() {})
+	uassert.Error(t, err)
+
+	err = RegisterCallback2(adminAddr, "test", "update", func() {})
+	uassert.NoError(t, err)
+
+	err = UpdateCallback(userAddr, "test", "update", func() {})
+	uassert.Error(t, err)
 }
