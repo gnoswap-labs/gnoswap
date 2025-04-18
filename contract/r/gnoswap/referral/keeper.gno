@@ -58,18 +58,15 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 		return err
 	}
 
-	// TODO: change error handler
-	// if err := k.checkRateLimit(addr.String()); err != nil {
-	// 	// XXX: because of the weird type-related errors, this is the only
-	// 	// part where we need to use `ufmt.Errorf` to build error message.
-	// 	return nil
-	// }
-
 	if refAddr == zeroAddress {
 		if k.has(addr) {
 			return k.remove(addr)
 		}
 		refAddr = std.Address("")
+	} else {
+		if err := k.checkRateLimit(addr.String()); err != nil {
+			return err
+		}
 	}
 
 	k.store.Set(addr.String(), refAddr.String())

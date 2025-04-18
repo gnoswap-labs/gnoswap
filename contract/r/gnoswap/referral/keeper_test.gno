@@ -545,13 +545,13 @@ func TestSetReferral(t *testing.T) {
 		checkStore  func(*keeper) bool
 	}{
 		{
-			name:      "valid registration",
-			addr:      validAddr1,
-			refAddr:   validAddr2,
-			eventType: EventTypeRegister,
-			setupState: func(k *keeper) {},
+			name:        "valid registration",
+			addr:        validAddr1,
+			refAddr:     validAddr2,
+			eventType:   EventTypeRegister,
+			setupState:  func(k *keeper) {},
 			setupCaller: mockValidCaller,
-			wantErr:   false,
+			wantErr:     false,
 			checkStore: func(k *keeper) bool {
 				val, exists := k.store.Get(validAddr1.String())
 				return exists && val == validAddr2.String()
@@ -566,7 +566,7 @@ func TestSetReferral(t *testing.T) {
 				k.store.Set(validAddr1.String(), "old_ref_addr")
 			},
 			setupCaller: mockValidCaller,
-			wantErr:   false,
+			wantErr:     false,
 			checkStore: func(k *keeper) bool {
 				val, exists := k.store.Get(validAddr1.String())
 				return exists && val == validAddr2.String()
@@ -581,7 +581,7 @@ func TestSetReferral(t *testing.T) {
 				k.store.Set(validAddr1.String(), validAddr2.String())
 			},
 			setupCaller: mockValidCaller,
-			wantErr:   false,
+			wantErr:     false,
 			checkStore: func(k *keeper) bool {
 				// GSW-2258:
 				// check the address is removed from the store
@@ -603,10 +603,10 @@ func TestSetReferral(t *testing.T) {
 			},
 		},
 		{
-			name:      "unauthorized caller",
-			addr:      validAddr1,
-			refAddr:   validAddr2,
-			eventType: EventTypeRegister,
+			name:       "unauthorized caller",
+			addr:       validAddr1,
+			refAddr:    validAddr2,
+			eventType:  EventTypeRegister,
 			setupState: func(k *keeper) {},
 			setupCaller: func() func() {
 				origCaller := std.OriginCaller()
@@ -615,33 +615,33 @@ func TestSetReferral(t *testing.T) {
 					testing.SetOriginCaller(origCaller)
 				}
 			},
-			wantErr:   true,
+			wantErr: true,
 			checkStore: func(k *keeper) bool {
 				_, exists := k.store.Get(validAddr1.String())
 				return !exists
 			},
 		},
 		{
-			name:      "self referral",
-			addr:      validAddr1,
-			refAddr:   validAddr1,
-			eventType: EventTypeRegister,
-			setupState: func(k *keeper) {},
+			name:        "self referral",
+			addr:        validAddr1,
+			refAddr:     validAddr1,
+			eventType:   EventTypeRegister,
+			setupState:  func(k *keeper) {},
 			setupCaller: mockValidCaller,
-			wantErr:   true,
+			wantErr:     true,
 			checkStore: func(k *keeper) bool {
 				_, exists := k.store.Get(validAddr1.String())
 				return !exists
 			},
 		},
 		{
-			name:      "invalid address",
-			addr:      std.Address("000000000000"),
-			refAddr:   validAddr2,
-			eventType: EventTypeRegister,
-			setupState: func(k *keeper) {},
+			name:        "invalid address",
+			addr:        std.Address("000000000000"),
+			refAddr:     validAddr2,
+			eventType:   EventTypeRegister,
+			setupState:  func(k *keeper) {},
 			setupCaller: mockValidCaller,
-			wantErr:   true,
+			wantErr:     true,
 			checkStore: func(k *keeper) bool {
 				_, exists := k.store.Get("000000000000")
 				return !exists
@@ -679,10 +679,10 @@ func TestSetReferral(t *testing.T) {
 
 func TestGetReferral(t *testing.T) {
 	tests := []struct {
-		name        string
-		addr        string
-		setupState  func()
-		want        string
+		name       string
+		addr       string
+		setupState func()
+		want       string
 	}{
 		{
 			name: "retrieve existing referral",
@@ -693,7 +693,7 @@ func TestGetReferral(t *testing.T) {
 				defer cleanup()
 				gReferralKeeper.register(validAddr1, validAddr2)
 			},
-			want:        validAddr2.String(),
+			want: validAddr2.String(),
 		},
 		{
 			name: "retrieve non-existent referral",
