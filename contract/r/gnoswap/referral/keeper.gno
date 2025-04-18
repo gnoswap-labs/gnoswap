@@ -67,11 +67,7 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 
 	if refAddr == zeroAddress {
 		if k.has(addr) {
-			err := k.remove(addr)
-			if err != nil {
-				return err
-			}
-			return nil
+			return k.remove(addr)
 		}
 		refAddr = std.Address("")
 	}
@@ -104,8 +100,8 @@ func (k *keeper) remove(target std.Address) error {
 		return err
 	}
 
-	if !target.IsValid() {
-		return ErrInvalidAddress
+	if err := k.validateAddresses(target, zeroAddress); err != nil {
+		return err
 	}
 
 	tgt := target.String()
