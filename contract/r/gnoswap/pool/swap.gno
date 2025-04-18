@@ -130,6 +130,7 @@ func Swap(
 		"feeGrowthGlobal1X128", pool.FeeGrowthGlobal1X128().ToString(),
 		"balanceToken0", pool.BalanceToken0().ToString(),
 		"balanceToken1", pool.BalanceToken1().ToString(),
+		"ticks", pool.Ticks(),
 	)
 
 	return result.Amount0.ToString(), result.Amount1.ToString()
