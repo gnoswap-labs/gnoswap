@@ -46,7 +46,7 @@ import (
 
 func init() {
     adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-    err := bridge.RegisterCallback2(adminAddr, "calculator", "Add", Add)
+    err := bridge.RegisterCallback(adminAddr, "calculator", "Add", Add)
     if err != nil {
         panic(err)
     }
