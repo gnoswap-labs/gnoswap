@@ -6,12 +6,27 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/access"
 )
 
-var callbackTree *avl.Tree
+var (
+	callbackTree *avl.Tree
+	adminAddr    std.Address
+	govAddr      std.Address
+	err          error
+)
 
 func init() {
 	callbackTree = avl.NewTree()
+
+	adminAddr, err = access.GetAddress(access.ROLE_ADMIN)
+	if err != nil {
+		panic(err)
+	}
+	govAddr, err = access.GetAddress(access.ROLE_GOVERNANCE)
+	if err != nil {
+		panic(err)
+	}
 }
 
 const (
@@ -59,8 +74,9 @@ func UpdateCallback(caller std.Address, namespace, fname string, newCallback any
 		return ufmt.Errorf("invalid caller address: %s", caller)
 	}
 
-	if err := common.AdminOnly(caller); err != nil {
-		return err
+	// allow only admin and governance
+	if caller != adminAddr && caller != govAddr {
+		return ufmt.Errorf("unauthorized caller: %s", caller)
 	}
 
 	key := createKey(namespace, fname)
