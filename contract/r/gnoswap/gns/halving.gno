@@ -415,12 +415,19 @@ func setAvgBlockTimeInMs(ms int64) {
 
 	// how much reward should be minted per block for current halving year
 	adjustedAmountPerBlock := amountLeft / uint64(blockLeft)
-	// update it
-	setAmountPerBlockPerHalvingYear(currentYear, adjustedAmountPerBlock)
+
+	// Notify external modules (e.g., staker) about the upcoming emission change
+	// BEFORE mutating the halving data so that they can cache rewards using the
+	// previous emission value for the interval up to the current block.
 	if callbackEmissionChange == nil {
 		panic(errCallbackEmissionChangeIsNil.Error())
 	}
 	callbackEmissionChange(adjustedAmountPerBlock)
+
+	// After the callback caches reward up‑to‑date with the old emission, update
+	// the per‑block emission for the current halving year to the newly
+	// calculated value.
+	setAmountPerBlockPerHalvingYear(currentYear, adjustedAmountPerBlock)
 
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		if year < currentYear {
