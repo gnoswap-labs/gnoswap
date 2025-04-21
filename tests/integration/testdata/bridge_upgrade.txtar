@@ -4,26 +4,33 @@ loadpkg gno.land/r/gnoswap/v1/bridge
 
 gnoland start
 
-# v1
+# Deploy v1 package
 gnokey maketx addpkg -pkgdir $WORK/calculator/v1 -pkgpath gno.land/r/demo/v1/calculator -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 stdout 'OK!'
 
-# v1 function call test
+# deploy caller package
+gnokey maketx addpkg -pkgdir $WORK/calculator/caller -pkgpath gno.land/r/demo/calculator/caller -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'OK!'
+
+# Test v1 call
 gnokey maketx call -pkgpath gno.land/r/demo/v1/calculator -func Add -args 10 -args 20 -gas-fee 1000000ugnot -gas-wanted 2000000 -broadcast -chainid=tendermint_test test1
 stdout '30'
 
-gnokey maketx call -pkgpath gno.land/r/demo/v1/calculator -func Render -gas-fee 1000000ugnot -gas-wanted 2500000 -broadcast -chainid=tendermint_test test1
+# Call Add function pointer from caller
+gnokey maketx call -pkgpath gno.land/r/demo/calculator/caller -func CallAdd -args 10 -args 20 -gas-fee 1000000ugnot -gas-wanted 2500000 -broadcast -chainid=tendermint_test test1
 stdout '30'
 
-# v2
+# Deploy v2: Contract upgrade
 gnokey maketx addpkg -pkgdir $WORK/calculator/v2 -pkgpath gno.land/r/demo/v2/calculator -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 stdout 'OK!'
 
-# v2 function call
+# Test v2 call
 gnokey maketx call -pkgpath gno.land/r/demo/v2/calculator -func Add -args 10 -args 20 -gas-fee 1000000ugnot -gas-wanted 2000000 -broadcast -chainid=tendermint_test test1
 stdout '50'
 
-gnokey maketx call -pkgpath gno.land/r/demo/v2/calculator -func Render -gas-fee 1000000ugnot -gas-wanted 2500000 -broadcast -chainid=tendermint_test test1
+# Call Add function from caller again
+# At this point, it should be upgraded to v2 version.
+gnokey maketx call -pkgpath gno.land/r/demo/calculator/caller -func CallAdd -args 10 -args 20 -gas-fee 1000000ugnot -gas-wanted 2500000 -broadcast -chainid=tendermint_test test1
 stdout '50'
 
 -- calculator/v1/gno.mod --
@@ -33,7 +40,6 @@ module gno.land/r/demo/v1/calculator
 package calculator
 
 import (
-    "gno.land/p/demo/ufmt"
     "gno.land/r/gnoswap/v1/bridge"
     "gno.land/r/gnoswap/v1/access"
 )
@@ -50,21 +56,6 @@ func Add(a, b int) int {
     return a + b
 }
 
-func Render() string {
-    cb, exists := bridge.GetCallback2("calculator", "Add")
-    if !exists {
-        return "Add function not found"
-    }
-    
-    addFn, ok := cb.(func(int, int) int)
-    if !ok {
-        return "Invalid function type"
-    }
-    
-    result := addFn(10, 20)
-    return ufmt.Sprintf("Add(10, 20) = %d", result)
-}
-
 -- calculator/v2/gno.mod --
 module gno.land/r/demo/v2/calculator
 
@@ -72,7 +63,6 @@ module gno.land/r/demo/v2/calculator
 package calculator
 
 import (
-    "gno.land/p/demo/ufmt"
     "gno.land/r/gnoswap/v1/bridge"
     "gno.land/r/gnoswap/v1/access"
 )
@@ -89,7 +79,18 @@ func Add(a, b int) int {
     return a + b * 2
 }
 
-func Render() string {
+-- calculator/caller/gno.mod --
+module gno.land/r/demo/calculator/caller
+
+-- calculator/caller/caller.gno --
+package caller
+
+import (
+    "gno.land/p/demo/ufmt"
+    "gno.land/r/gnoswap/v1/bridge"
+)
+
+func CallAdd(a, b int) string {
     cb, exists := bridge.GetCallback2("calculator", "Add")
     if !exists {
         return "Add function not found"
@@ -100,6 +101,6 @@ func Render() string {
         return "Invalid function type"
     }
     
-    result := addFn(10, 20)
+    result := addFn(a, b)
     return ufmt.Sprintf("%d", result)
 }
