@@ -148,10 +148,10 @@ adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 err := bridge.UpdateCallback(adminAddr, "calculator", "Add", NewAdd)
 ```
 
-### GetCallback: Retrieve a stored function
+### LookupCallback: Retrieve a stored function
 
 ```go
-func GetCallback(namespace, name string) (any, bool)
+func LookupCallback(namespace, name string) (any, bool)
 ```
 
 - `namespace`: Namespace of the function to retrieve
@@ -161,7 +161,7 @@ func GetCallback(namespace, name string) (any, bool)
 Example:
 
 ```go
-cb, exists := bridge.GetCallback("calculator", "Add")
+cb, exists := bridge.LookupCallback("calculator", "Add")
 if !exists {
  return "Add function not found"
 }
@@ -218,7 +218,7 @@ func Add(a, b int) int {
 package otherpkg
 
 func UseCalculator(a, b int) int {
- cb, exists := bridge.GetCallback("calculator", "Add")
+ cb, exists := bridge.LookupCallback("calculator", "Add")
  if !exists {
      panic("Add function not found")
  }
@@ -269,7 +269,7 @@ Example:
 result := calculator.Add(10, 20)
 
 // Function call through bridge
-cb, exists := bridge.GetCallback("calculator", "Add")
+cb, exists := bridge.LookupCallback("calculator", "Add")
 if !exists {
  panic("Add function not found")
 }

@@ -5,13 +5,12 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/access"
 )
 
 var (
-	callbackTree *avl.Tree
-	err          error
+	callbackTree       *avl.Tree
+	err                error
 	adminAddr, govAddr std.Address
 )
 
@@ -28,14 +27,21 @@ func init() {
 	}
 }
 
+// RegisterCallback registers a callback function for a given namespace and function name.
+// Only admin and governance addresses are allowed to register callbacks.
 func RegisterCallback(caller std.Address, namespace, fname string, callback any) error {
 	if !caller.IsValid() {
 		return ufmt.Errorf("invalid caller address: %s", caller)
 	}
 
-	// TODO: governance?
-	if err := common.AdminOnly(caller); err != nil {
-		return err
+	// TODO: Currently, Register is only allowed for admin or governance,
+	// but for some contracts, the previous caller might not be that contract.
+	// Therefore, there is a need to expand permissions.
+	//
+	// Currently, admin addresses are directly inserted into the caller,
+	// but this part is planned to be modified after discussion.
+	if caller != adminAddr && caller != govAddr {
+		return ufmt.Errorf("unauthorized caller: %s", caller)
 	}
 
 	key := createKey(namespace, fname)
@@ -46,12 +52,15 @@ func RegisterCallback(caller std.Address, namespace, fname string, callback any)
 	return nil
 }
 
-// GetCallback retrieves a callback function by key
-func GetCallback(namespace, fname string) (any, bool) {
+// LookupCallback retrieves a callback function by namespace and function name.
+// Returns the callback and a boolean indicating if the callback exists.
+func LookupCallback(namespace, fname string) (any, bool) {
 	key := createKey(namespace, fname)
 	return callbackTree.Get(key)
 }
 
+// UpdateCallback updates an existing callback function for a given namespace and function name.
+// Only admin and governance addresses are allowed to update callbacks.
 func UpdateCallback(caller std.Address, namespace, fname string, newCallback any) error {
 	if !caller.IsValid() {
 		return ufmt.Errorf("invalid caller address: %s", caller)
@@ -70,6 +79,7 @@ func UpdateCallback(caller std.Address, namespace, fname string, newCallback any
 	return nil
 }
 
+// createKey creates a unique key by combining namespace and function name.
 func createKey(namespace, fname string) string {
 	return ufmt.Sprintf("%s/%s", namespace, fname)
 }

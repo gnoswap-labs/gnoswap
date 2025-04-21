@@ -91,7 +91,7 @@ import (
 )
 
 func CallAdd(a, b int) string {
-    cb, exists := bridge.GetCallback("calculator", "Add")
+    cb, exists := bridge.LookupCallback("calculator", "Add")
     if !exists {
         return "Add function not found"
     }

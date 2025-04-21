@@ -16,7 +16,7 @@ func TestCallbackRegistration(t *testing.T) {
 	})
 	uassert.NoError(t, err)
 
-	cb, exists := GetCallback("test", "add")
+	cb, exists := LookupCallback("test", "add")
 	uassert.True(t, exists)
 
 	addFn, ok := cb.(func(int, int) int)
@@ -33,7 +33,7 @@ func TestCallbackUpdate(t *testing.T) {
 	})
 	uassert.NoError(t, err)
 
-	cb, exists := GetCallback("test", "multiply")
+	cb, exists := LookupCallback("test", "multiply")
 	uassert.True(t, exists)
 
 	multiplyFn, ok := cb.(func(int, int) int)
@@ -48,7 +48,7 @@ func TestCallbackUpdate(t *testing.T) {
 	uassert.NoError(t, err)
 
 	// get callback and check the result
-	cb, exists = GetCallback("test", "multiply")
+	cb, exists = LookupCallback("test", "multiply")
 	uassert.True(t, exists)
 
 	multiplyFn, ok = cb.(func(int, int) int)
@@ -104,7 +104,7 @@ func TestUpgradablePattern(t *testing.T) {
 		uassert.NoError(t, err)
 
 		// check version
-		cb, exists := GetCallback("emission", "MintAndDistributeGns")
+		cb, exists := LookupCallback("emission", "MintAndDistributeGns")
 		uassert.True(t, exists)
 		fn, ok := cb.(func() uint64)
 		uassert.True(t, ok)
@@ -128,9 +128,9 @@ func TestUpgradablePattern(t *testing.T) {
 		uassert.NoError(t, err)
 
 		// check each callback is independent
-		cb1, exists := GetCallback("emission", "MintAndDistributeGns")
+		cb1, exists := LookupCallback("emission", "MintAndDistributeGns")
 		uassert.True(t, exists)
-		cb2, exists := GetCallback("position", "GetPosition")
+		cb2, exists := LookupCallback("position", "GetPosition")
 		uassert.True(t, exists)
 
 		fn1, ok := cb1.(func() uint64)
@@ -163,7 +163,7 @@ func TestUpgradablePattern(t *testing.T) {
 		uassert.NoError(t, err)
 
 		// check rollback
-		cb, exists := GetCallback("emission", "MintAndDistributeGns")
+		cb, exists := LookupCallback("emission", "MintAndDistributeGns")
 		uassert.True(t, exists)
 		fn, ok := cb.(func() uint64)
 		uassert.True(t, ok)
@@ -181,9 +181,9 @@ func TestUpgradablePattern(t *testing.T) {
 		uassert.NoError(t, err)
 
 		// check each function is independent
-		cb1, exists := GetCallback("emission", "func1")
+		cb1, exists := LookupCallback("emission", "func1")
 		uassert.True(t, exists)
-		cb2, exists := GetCallback("emission", "func2")
+		cb2, exists := LookupCallback("emission", "func2")
 		uassert.True(t, exists)
 
 		fn1, ok := cb1.(func() int)
