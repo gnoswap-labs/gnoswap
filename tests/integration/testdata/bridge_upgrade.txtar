@@ -1,0 +1,105 @@
+loadpkg gno.land/p/demo/ufmt
+loadpkg gno.land/r/gnoswap/v1/access
+loadpkg gno.land/r/gnoswap/v1/bridge
+
+gnoland start
+
+# v1
+gnokey maketx addpkg -pkgdir $WORK/calculator/v1 -pkgpath gno.land/r/demo/v1/calculator -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'OK!'
+
+# v1 function call test
+gnokey maketx call -pkgpath gno.land/r/demo/v1/calculator -func Add -args 10 -args 20 -gas-fee 1000000ugnot -gas-wanted 2000000 -broadcast -chainid=tendermint_test test1
+stdout '30'
+
+gnokey maketx call -pkgpath gno.land/r/demo/v1/calculator -func Render -gas-fee 1000000ugnot -gas-wanted 2500000 -broadcast -chainid=tendermint_test test1
+stdout '30'
+
+# v2
+gnokey maketx addpkg -pkgdir $WORK/calculator/v2 -pkgpath gno.land/r/demo/v2/calculator -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'OK!'
+
+# v2 function call
+gnokey maketx call -pkgpath gno.land/r/demo/v2/calculator -func Add -args 10 -args 20 -gas-fee 1000000ugnot -gas-wanted 2000000 -broadcast -chainid=tendermint_test test1
+stdout '50'
+
+gnokey maketx call -pkgpath gno.land/r/demo/v2/calculator -func Render -gas-fee 1000000ugnot -gas-wanted 2500000 -broadcast -chainid=tendermint_test test1
+stdout '50'
+
+-- calculator/v1/gno.mod --
+module gno.land/r/demo/v1/calculator
+
+-- calculator/v1/calculator.gno --
+package calculator
+
+import (
+    "gno.land/p/demo/ufmt"
+    "gno.land/r/gnoswap/v1/bridge"
+    "gno.land/r/gnoswap/v1/access"
+)
+
+func init() {
+    adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+    err := bridge.RegisterCallback2(adminAddr, "calculator", "Add", Add)
+    if err != nil {
+        panic(err)
+    }
+}
+
+func Add(a, b int) int {
+    return a + b
+}
+
+func Render() string {
+    cb, exists := bridge.GetCallback2("calculator", "Add")
+    if !exists {
+        return "Add function not found"
+    }
+    
+    addFn, ok := cb.(func(int, int) int)
+    if !ok {
+        return "Invalid function type"
+    }
+    
+    result := addFn(10, 20)
+    return ufmt.Sprintf("Add(10, 20) = %d", result)
+}
+
+-- calculator/v2/gno.mod --
+module gno.land/r/demo/v2/calculator
+
+-- calculator/v2/calculator.gno --
+package calculator
+
+import (
+    "gno.land/p/demo/ufmt"
+    "gno.land/r/gnoswap/v1/bridge"
+    "gno.land/r/gnoswap/v1/access"
+)
+
+func init() {
+    adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+    err := bridge.UpdateCallback(adminAddr, "calculator", "Add", Add)
+    if err != nil {
+        panic(err)
+    }
+}
+
+func Add(a, b int) int {
+    return a + b * 2
+}
+
+func Render() string {
+    cb, exists := bridge.GetCallback2("calculator", "Add")
+    if !exists {
+        return "Add function not found"
+    }
+    
+    addFn, ok := cb.(func(int, int) int)
+    if !ok {
+        return "Invalid function type"
+    }
+    
+    result := addFn(10, 20)
+    return ufmt.Sprintf("%d", result)
+}
