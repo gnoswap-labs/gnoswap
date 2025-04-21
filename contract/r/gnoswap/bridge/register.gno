@@ -11,9 +11,8 @@ import (
 
 var (
 	callbackTree *avl.Tree
-	adminAddr    std.Address
-	govAddr      std.Address
 	err          error
+	adminAddr, govAddr std.Address
 )
 
 func init() {
@@ -29,19 +28,7 @@ func init() {
 	}
 }
 
-const (
-	MINT_AND_DISTRIBUTE_GNS_KEY = "gno.land/r/gnoswap/v1/emission/MintAndDistributeGns"
-)
-
-// RegisterCallback registers a callback function with the given key
-func RegisterCallback(key string, callback any) {
-	if callbackTree.Has(key) {
-		panic("callback already registered for key: " + key)
-	}
-	callbackTree.Set(key, callback)
-}
-
-func RegisterCallback2(caller std.Address, namespace, fname string, callback any) error {
+func RegisterCallback(caller std.Address, namespace, fname string, callback any) error {
 	if !caller.IsValid() {
 		return ufmt.Errorf("invalid caller address: %s", caller)
 	}
@@ -60,11 +47,7 @@ func RegisterCallback2(caller std.Address, namespace, fname string, callback any
 }
 
 // GetCallback retrieves a callback function by key
-func GetCallback(key string) (any, bool) {
-	return callbackTree.Get(key)
-}
-
-func GetCallback2(namespace, fname string) (any, bool) {
+func GetCallback(namespace, fname string) (any, bool) {
 	key := createKey(namespace, fname)
 	return callbackTree.Get(key)
 }

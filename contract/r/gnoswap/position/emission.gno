@@ -17,7 +17,7 @@ import (
 // it will later be modified to directly call callbacks instead of using separate wrapper functions as it does now,
 // and other emission-dependent functions will also be handled with callbacks like this case.
 func mintAndDistributeGnsCallback() uint64 {
-	cb, exists := br.GetCallback(br.MINT_AND_DISTRIBUTE_GNS_KEY)
+	cb, exists := br.GetCallback("emission", "MintAndDistributeGns")
 	if !exists {
 		panic("MintAndDistributeGns callback is not set!")
 	}

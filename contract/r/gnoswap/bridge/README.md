@@ -218,7 +218,7 @@ func Add(a, b int) int {
 package otherpkg
 
 func UseCalculator(a, b int) int {
- cb, exists := bridge.GetCallback2("calculator", "Add")
+ cb, exists := bridge.GetCallback("calculator", "Add")
  if !exists {
      panic("Add function not found")
  }
@@ -250,7 +250,7 @@ Example:
 // Only register functions expected to need upgrades to bridge
 func init() {
  adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
- bridge.RegisterCallback2(adminAddr, "calculator", "Add", Add)
+ bridge.RegisterCallback(adminAddr, "calculator", "Add", Add)
  // Other functions like Sub, Mul, Div might also need upgrades
  // but if not predicted in advance, additional work will be needed later
 }
@@ -269,7 +269,7 @@ Example:
 result := calculator.Add(10, 20)
 
 // Function call through bridge
-cb, exists := bridge.GetCallback2("calculator", "Add")
+cb, exists := bridge.GetCallback("calculator", "Add")
 if !exists {
  panic("Add function not found")
 }

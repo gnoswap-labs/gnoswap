@@ -1,6 +1,7 @@
 package emission
 
 import (
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 
 	br "gno.land/r/gnoswap/v1/bridge"
@@ -30,7 +31,8 @@ func RegisterGnsChangeCallback() {
 }
 
 func RegisterMintAndDistributeGnsCallback() {
-	br.RegisterCallback(br.MINT_AND_DISTRIBUTE_GNS_KEY, MintAndDistributeGns)
+	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	br.RegisterCallback(adminAddr, "emission", "MintAndDistributeGns", MintAndDistributeGns)
 }
 
 // contract path proxy pattern
