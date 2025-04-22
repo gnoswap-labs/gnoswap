@@ -6,9 +6,9 @@ import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
-
-	"gno.land/r/gnoswap/v1/common"
 )
+
+var Q192 = new(u256.Uint).Lsh(u256.One(), 192)
 
 const (
 	FeeTier100   uint32 = 100
@@ -70,21 +70,16 @@ func (p *createPoolParams) updateWithWrapping() *createPoolParams {
 	if !p.isInOrder() {
 		token0Path, token1Path = token1Path, token0Path
 
-		oldTick := common.TickMathGetTickAtSqrtRatio(p.sqrtPriceX96)
-		if oldTick > consts.MAX_TICK || oldTick <= consts.MIN_TICK {
-			panic(newErrorWithDetail(
-				errInvalidTickMinMaxRange,
-				ufmt.Sprintf("The tick value(%d) is out of range due to reverse", oldTick),
-			))
-		}
-		newPrice := common.TickMathGetSqrtRatioAtTick(oldTick * int32(-1))
+		// newPrice = 2^192 / oldPrice
+		newPrice := u256.Zero().Div(Q192, p.sqrtPriceX96)
+
 		if newPrice.IsZero() {
 			panic(newErrorWithDetail(
 				errOverFlow,
 				ufmt.Sprintf("expected newPrice(%s) to be non-zero", newPrice.ToString()),
 			))
 		}
-		p.sqrtPriceX96 = new(u256.Uint).Set(newPrice)
+		p.sqrtPriceX96 = newPrice
 	}
 	return newPoolParams(token0Path, token1Path, p.fee, p.sqrtPriceX96.ToString(), GetFeeAmountTickSpacing(p.fee))
 }
