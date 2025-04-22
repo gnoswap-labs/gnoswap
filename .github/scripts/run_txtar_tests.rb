@@ -8,7 +8,7 @@ class TxtarTestRunner
   def initialize(source_dir, gno_dir)
     @source_dir = source_dir
     @gno_dir = gno_dir
-    @integration_dir = File.join(gno_dir, "gno.land/pkg/integration")
+    # @integration_dir = File.join(gno_dir, "gno.land/pkg/integration/testdata")
   end
 
   def run_command(command)
@@ -46,7 +46,8 @@ class TxtarTestRunner
     pattern_arg = patterns.join("|")
     
     Dir.chdir(@integration_dir) do
-      run_command("go test -v . -run Testdata/#{pattern_arg}")
+    #   run_command("go test -v . -run Testdata/#{pattern_arg}")
+    run_command("go test -v . -run Testdata")
     end
   end
 
