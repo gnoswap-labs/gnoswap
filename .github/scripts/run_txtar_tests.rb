@@ -8,7 +8,7 @@ class TxtarTestRunner
   def initialize(source_dir, gno_dir)
     @source_dir = source_dir
     @gno_dir = gno_dir
-    # @integration_dir = File.join(gno_dir, "gno.land/pkg/integration/testdata")
+    @integration_dir = File.join(gno_dir, "gno.land/pkg/integration/testdata")
   end
 
   def run_command(command)
