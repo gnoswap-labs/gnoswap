@@ -95,12 +95,6 @@ jobs:
             ~/go/pkg/mod/cache
           key: ${{ runner.os }}-gno-${{ hashFiles('./gno/**') }}
 
-      - name: Install gno stdlib
-        run: |
-          cd gno/examples
-          gno install std
-          gno install gno.land/p/demo/ufmt
-
       - name: Set up python
         uses: actions/setup-python@v4
         with:
