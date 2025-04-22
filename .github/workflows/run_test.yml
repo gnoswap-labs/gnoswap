@@ -5,15 +5,12 @@ on:
     branches:
       - main
 
-env:
-  GO_VERSION: "1.22"
-  GNOROOT: "/home/runner/work/gnoswap/gnoswap/gno"
-
 jobs:
-  setup:
+  generate-matrix:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -29,51 +26,18 @@ jobs:
           chmod +x .github/scripts/generate_matrix.rb
           echo "matrix=$(ruby .github/scripts/generate_matrix.rb contract)" >> $GITHUB_OUTPUT
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-
-      - name: Check out gno
-        uses: actions/checkout@v4
-        with:
-          repository: gnolang/gno
-          # TODO: change to `master` when the interrealm issue is fixed
-          ref: a3bffb2eb311cc27c419b519146a9906b5a82dba
-          path: ./gno
-
-      - name: Config gnovm
-        run: |
-          sed -i 's/ctx.Timestamp += (count \* 5)/ctx.Timestamp += (count \* 2)/g' ./gno/gnovm/tests/stdlibs/std/std.go
-
-      - name: Cache gno installation
-        id: cache-gno
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/go/bin/gno
-            ~/go/pkg/mod/cache
-          key: ${{ runner.os }}-gno-${{ hashFiles('./gno/**') }}
-
-      - name: Install gno
-        if: steps.cache-gno.outputs.cache-hit != 'true'
-        run: |
-          cd gno
-          make install.gno
-
   test-gnoswap:
-    needs: setup
+    needs: generate-matrix
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix: ${{fromJson(needs.setup.outputs.matrix)}}
+      matrix: ${{fromJson(needs.generate-matrix.outputs.matrix)}}
 
     steps:
       - name: Check out gnoswap repo
         uses: actions/checkout@v4
 
-      - name: Check out gno
+      - name: Check out gno(master - before change std prefix)
         uses: actions/checkout@v4
         with:
           repository: gnolang/gno
@@ -84,16 +48,16 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
+          go-version: "1.22"
 
-      - name: Restore gno installation
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            ~/go/bin/gno
-            ~/go/pkg/mod/cache
-          key: ${{ runner.os }}-gno-${{ hashFiles('./gno/**') }}
+      - name: Config gnovm
+        run: |
+          sed -i 's/ctx.Timestamp += (count \* 5)/ctx.Timestamp += (count \* 2)/g' ./gno/gnovm/tests/stdlibs/std/std.go
+
+      - name: Install gno
+        run: |
+          cd gno
+          make install.gno
 
       - name: Set up python
         uses: actions/setup-python@v4
@@ -111,8 +75,6 @@ jobs:
           python3 setup.py -w /home/runner/work/gnoswap/gnoswap
 
       - name: "Run tests for ${{ matrix.name }}"
-        env:
-          GNOROOT: ${{ env.GNOROOT }}
         run: |
           chmod +x .github/scripts/run_tests.rb
           ruby .github/scripts/run_tests.rb \
@@ -121,12 +83,12 @@ jobs:
 
   test-txtar:
     runs-on: ubuntu-latest
-    needs: [setup, test-gnoswap]
+    needs: test-gnoswap
     steps:
       - name: Check out gnoswap repo
         uses: actions/checkout@v4
 
-      - name: Check out gno
+      - name: Check out gno(master - before change std prefix)
         uses: actions/checkout@v4
         with:
           repository: gnolang/gno
@@ -137,16 +99,12 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
+          go-version: "1.22"
 
-      - name: Restore gno installation
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            ~/go/bin/gno
-            ~/go/pkg/mod/cache
-          key: ${{ runner.os }}-gno-${{ hashFiles('./gno/**') }}
+      - name: Install gno
+        run: |
+          cd gno
+          make install.gno
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -154,8 +112,6 @@ jobs:
           ruby-version: 3.4
 
       - name: Run txtar tests
-        env:
-          GNOROOT: ${{ env.GNOROOT }}
         run: |
           chmod +x .github/scripts/run_txtar_tests.rb
           ruby .github/scripts/run_txtar_tests.rb \
