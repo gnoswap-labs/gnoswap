@@ -81,23 +81,23 @@ func (p *Pool) Ticks() string {
 		return "[]"
 	}
 
-	var result []string
-	p.ticks.Iterate("", "", func(key string, value interface{}) bool {
-		tick, err := strconv.ParseInt(key, 10, 32)
-		if err != nil {
-			return true
-		}
-		tickInfo := value.(TickInfo)
-		result = append(result, ufmt.Sprintf(
+	tickInfoStrings := []string{}
+
+	p.ticks.Iterate("", "", func(tickKey string, tickValue any) bool {
+		tick, _ := strconv.Atoi(tickKey)
+		tickInfo := tickValue.(TickInfo)
+
+		tickInfoStrings = append(tickInfoStrings, ufmt.Sprintf(
 			`{"tick":%d,"feeGrowthOutside0X128":"%s","feeGrowthOutside1X128":"%s"}`,
 			tick,
 			tickInfo.feeGrowthOutside0X128.ToString(),
 			tickInfo.feeGrowthOutside1X128.ToString(),
 		))
-		return true
+
+		return false
 	})
 
-	return "[" + strings.Join(result, ",") + "]"
+	return "[" + strings.Join(tickInfoStrings, ",") + "]"
 }
 
 func (p *Pool) PoolPath() string {
