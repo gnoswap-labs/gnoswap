@@ -7,6 +7,7 @@ on:
 
 env:
   GO_VERSION: "1.22"
+  GNOROOT: "/home/runner/work/gnoswap/gnoswap/gno"
 
 jobs:
   setup:
@@ -72,6 +73,14 @@ jobs:
       - name: Check out gnoswap repo
         uses: actions/checkout@v4
 
+      - name: Check out gno
+        uses: actions/checkout@v4
+        with:
+          repository: gnolang/gno
+          # TODO: change to `master` when the interrealm issue is fixed
+          ref: a3bffb2eb311cc27c419b519146a9906b5a82dba
+          path: ./gno
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -85,6 +94,12 @@ jobs:
             ~/go/bin/gno
             ~/go/pkg/mod/cache
           key: ${{ runner.os }}-gno-${{ hashFiles('./gno/**') }}
+
+      - name: Install gno stdlib
+        run: |
+          cd gno/examples
+          gno install std
+          gno install gno.land/p/demo/ufmt
 
       - name: Set up python
         uses: actions/setup-python@v4
@@ -102,6 +117,8 @@ jobs:
           python3 setup.py -w /home/runner/work/gnoswap/gnoswap
 
       - name: "Run tests for ${{ matrix.name }}"
+        env:
+          GNOROOT: ${{ env.GNOROOT }}
         run: |
           chmod +x .github/scripts/run_tests.rb
           ruby .github/scripts/run_tests.rb \
@@ -114,6 +131,14 @@ jobs:
     steps:
       - name: Check out gnoswap repo
         uses: actions/checkout@v4
+
+      - name: Check out gno
+        uses: actions/checkout@v4
+        with:
+          repository: gnolang/gno
+          # TODO: change to `master` when the interrealm issue is fixed
+          ref: a3bffb2eb311cc27c419b519146a9906b5a82dba
+          path: ./gno
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -135,6 +160,8 @@ jobs:
           ruby-version: 3.4
 
       - name: Run txtar tests
+        env:
+          GNOROOT: ${{ env.GNOROOT }}
         run: |
           chmod +x .github/scripts/run_txtar_tests.rb
           ruby .github/scripts/run_txtar_tests.rb \
