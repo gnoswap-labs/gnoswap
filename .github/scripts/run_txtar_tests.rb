@@ -32,6 +32,10 @@ class TxtarTestRunner
     
     txtar_files.each do |file|
       dest = File.join(@integration_dir, File.basename(file))
+      
+      # Skip if source and destination are the same file
+      next if File.identical?(file, dest)
+      
       puts "Copying #{file} to #{dest}"
       FileUtils.cp(file, dest)
     end
