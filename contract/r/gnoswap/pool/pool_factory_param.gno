@@ -70,6 +70,17 @@ func (p *createPoolParams) updateWithWrapping() *createPoolParams {
 	if !p.isInOrder() {
 		token0Path, token1Path = token1Path, token0Path
 
+		// Check if initial price is within valid range
+		minSqrtRatio := u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
+		maxSqrtRatio := u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
+
+		if p.sqrtPriceX96.Lt(minSqrtRatio) || p.sqrtPriceX96.Gt(maxSqrtRatio) {
+			panic(newErrorWithDetail(
+				errOutOfRange,
+				ufmt.Sprintf("sqrtPriceX96(%s) is out of range", p.sqrtPriceX96.ToString()),
+			))
+		}
+
 		// newPrice = 2^192 / oldPrice
 		newPrice := u256.Zero().Div(Q192, p.sqrtPriceX96)
 
@@ -79,6 +90,15 @@ func (p *createPoolParams) updateWithWrapping() *createPoolParams {
 				ufmt.Sprintf("expected newPrice(%s) to be non-zero", newPrice.ToString()),
 			))
 		}
+
+		// Check if calculated price is within valid range
+		if newPrice.Lt(minSqrtRatio) || newPrice.Gt(maxSqrtRatio) {
+			panic(newErrorWithDetail(
+				errOutOfRange,
+				ufmt.Sprintf("sqrtPriceX96(%s) is out of range", newPrice.ToString()),
+			))
+		}
+
 		p.sqrtPriceX96 = newPrice
 	}
 	return newPoolParams(token0Path, token1Path, p.fee, p.sqrtPriceX96.ToString(), GetFeeAmountTickSpacing(p.fee))
