@@ -242,11 +242,11 @@ func encodePriceSqrtTest(t *testing.T, reserve1, reserve0 string) *u256.Uint {
 	}
 
 	// numerator = reserve1 * (2^192)
-	two192 := u256.Zero().Lsh(u256.NewUint(1), 192)
-	numerator := u256.Zero().Mul(reserve1Uint, two192)
+	two192 := new(u256.Uint).Lsh(u256.NewUint(1), 192)
+	numerator := new(u256.Uint).Mul(reserve1Uint, two192)
 
 	// ratioX192 = numerator / reserve0
-	ratioX192 := u256.Zero().Div(numerator, reserve0Uint)
+	ratioX192 := new(u256.Uint).Div(numerator, reserve0Uint)
 
 	// Return sqrt(ratioX192)
 	return sqrtTest(t, ratioX192)
@@ -260,10 +260,10 @@ func sqrtTest(t *testing.T, x *u256.Uint) *u256.Uint {
 		return u256.NewUint(0)
 	}
 
-	z := u256.Zero().Set(x)
-	y := u256.Zero().Rsh(z, 1) // Initial guess is x / 2
+	z := new(u256.Uint).Set(x)
+	y := new(u256.Uint).Rsh(z, 1) // Initial guess is x / 2
 
-	temp := u256.Zero()
+	temp := new(u256.Uint)
 	for y.Cmp(z) < 0 {
 		z.Set(y)
 		temp.Div(x, z)

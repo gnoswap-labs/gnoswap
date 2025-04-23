@@ -36,8 +36,8 @@ func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 func toUint128(value *u256.Uint) *u256.Uint {
 	assertOnlyNotNil(value)
 	if value.Gt(u256.MustFromDecimal(consts.MAX_UINT128)) {
-		mask := u256.Zero().Lsh(u256.One(), consts.Q128_RESOLUTION)
-		mask = u256.Zero().Sub(mask, u256.One())
+		mask := new(u256.Uint).Lsh(u256.One(), consts.Q128_RESOLUTION)
+		mask = new(u256.Uint).Sub(mask, u256.One())
 		value = value.And(value, mask)
 	}
 	return value
@@ -93,7 +93,7 @@ func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	intermediate := u256.MulDiv(sqrtRatioAX96, sqrtRatioBX96, u256.MustFromDecimal(consts.Q96))
 
-	diff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
+	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 	if diff.IsZero() {
 		panic(newErrorWithDetail(
 			errIdenticalTicks,
@@ -128,7 +128,7 @@ func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint
 func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint) *u256.Uint {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 
-	diff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
+	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 	if diff.IsZero() {
 		panic(newErrorWithDetail(
 			errIdenticalTicks,
@@ -205,11 +205,11 @@ func computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 		return u256.Zero()
 	}
 
-	val1 := u256.Zero().Lsh(liquidity, consts.Q96_RESOLUTION)
-	val2 := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
+	val1 := new(u256.Uint).Lsh(liquidity, consts.Q96_RESOLUTION)
+	val2 := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
 	res := u256.MulDiv(val1, val2, sqrtRatioBX96)
-	res = u256.Zero().Div(res, sqrtRatioAX96)
+	res = new(u256.Uint).Div(res, sqrtRatioAX96)
 
 	return res
 }
@@ -240,7 +240,7 @@ func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 		return u256.Zero()
 	}
 
-	diff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
+	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 	res := u256.MulDiv(liquidity, diff, u256.MustFromDecimal(consts.Q96))
 
 	return res

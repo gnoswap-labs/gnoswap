@@ -62,7 +62,7 @@ func TestTickTransaction(t *testing.T) {
 	)
 	uassert.Equal(t, thisPool.liquidity.ToString(), "10000000000")
 
-	testSqrtSubOne := u256.Zero().Sub(testSqrt, u256.One())
+	testSqrtSubOne := new(u256.Uint).Sub(testSqrt, u256.One())
 	{
 		sqrtQ, amountIn, amountOut, feeAmount := plp.SwapMathComputeSwapStepStr(
 			testSqrt,

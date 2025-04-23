@@ -207,9 +207,9 @@ func SetWithdrawalFeeByAdmin(fee uint64) {
 // - the fee amount
 // - the amount after the fee applied
 func calculateAmountWithFee(amount *u256.Uint, fee *u256.Uint) (*u256.Uint, *u256.Uint) {
-	feeAmount := u256.Zero().Mul(amount, fee)
-	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(MaxBpsValue))
-	afterAmount := u256.Zero().Sub(amount, feeAmount)
+	feeAmount := new(u256.Uint).Mul(amount, fee)
+	feeAmount = new(u256.Uint).Div(feeAmount, u256.NewUint(MaxBpsValue))
+	afterAmount := new(u256.Uint).Sub(amount, feeAmount)
 	return feeAmount, afterAmount
 }
 

@@ -177,19 +177,19 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 
 	if zeroForOne {
 		minTick := getMinTick(fee) + 1
-		sqrtPriceLimitX96 = u256.Zero().Set(common.TickMathGetSqrtRatioAtTick(minTick))
+		sqrtPriceLimitX96 = new(u256.Uint).Set(common.TickMathGetSqrtRatioAtTick(minTick))
 		if sqrtPriceLimitX96.IsZero() {
 			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
 		}
-		return u256.Zero().Add(sqrtPriceLimitX96, one)
+		return new(u256.Uint).Add(sqrtPriceLimitX96, one)
 	}
 
 	maxTick := getMaxTick(fee) - 1
-	sqrtPriceLimitX96 = u256.Zero().Set(common.TickMathGetSqrtRatioAtTick(maxTick))
+	sqrtPriceLimitX96 = new(u256.Uint).Set(common.TickMathGetSqrtRatioAtTick(maxTick))
 	if sqrtPriceLimitX96.IsZero() {
 		sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
 	}
-	return u256.Zero().Sub(sqrtPriceLimitX96, one)
+	return new(u256.Uint).Sub(sqrtPriceLimitX96, one)
 }
 
 // getMinTick returns the minimum tick value for a given fee tier.

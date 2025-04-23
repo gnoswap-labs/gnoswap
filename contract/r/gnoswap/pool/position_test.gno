@@ -232,7 +232,7 @@ func TestModifyPosition(t *testing.T) {
 				owner:          positionAddr,
 				tickLower:      tt.tickLower,
 				tickUpper:      tt.tickUpper,
-				liquidityDelta: i256.Zero().SetInt64(test_liquidityDelta),
+				liquidityDelta: new(i256.Int).SetInt64(test_liquidityDelta),
 			}
 
 			_, amount0, amount1 := pool.modifyPosition(params)

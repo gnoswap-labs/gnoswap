@@ -127,7 +127,7 @@ func (p *Pool) safeTransferFrom(
 	// update pool balances
 	if isToken0 {
 		beforeToken0 := p.balances.token0.Clone()
-		p.balances.token0 = u256.Zero().Add(p.balances.token0, amount)
+		p.balances.token0 = new(u256.Uint).Add(p.balances.token0, amount)
 		if p.balances.token0.Lt(beforeToken0) {
 			panic(ufmt.Sprintf(
 				"%v. token0(%s) < beforeToken0(%s)",
@@ -136,7 +136,7 @@ func (p *Pool) safeTransferFrom(
 		}
 	} else {
 		beforeToken1 := p.balances.token1.Clone()
-		p.balances.token1 = u256.Zero().Add(p.balances.token1, amount)
+		p.balances.token1 = new(u256.Uint).Add(p.balances.token1, amount)
 		if p.balances.token1.Lt(beforeToken1) {
 			panic(ufmt.Sprintf(
 				"%v. token1(%s) < beforeToken1(%s)",
@@ -177,7 +177,7 @@ func updatePoolBalance(
 	var newBalance *u256.Uint
 
 	if isToken0 {
-		newBalance, overflow = u256.Zero().SubOverflow(token0, amount)
+		newBalance, overflow = new(u256.Uint).SubOverflow(token0, amount)
 		if isBalanceOverflowOrNegative(overflow, newBalance) {
 			return nil, ufmt.Errorf(
 				"%v. cannot decrease, token0(%s) - amount(%s)",
@@ -187,7 +187,7 @@ func updatePoolBalance(
 		return newBalance, nil
 	}
 
-	newBalance, overflow = u256.Zero().SubOverflow(token1, amount)
+	newBalance, overflow = new(u256.Uint).SubOverflow(token1, amount)
 	if isBalanceOverflowOrNegative(overflow, newBalance) {
 		return nil, ufmt.Errorf(
 			"%v. cannot decrease, token1(%s) - amount(%s)",

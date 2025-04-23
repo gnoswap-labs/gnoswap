@@ -22,22 +22,22 @@ func getNextPriceAmount0Add(
 	currentSqrtPriceX96, liquidity, amountToAdd *u256.Uint,
 ) *u256.Uint {
 	// Shift liquidity left by Q96 bits to increase precision
-	liquidityShifted := u256.Zero().Lsh(liquidity, Q96_RESOLUTION)
+	liquidityShifted := new(u256.Uint).Lsh(liquidity, Q96_RESOLUTION)
 	// Multiply the amount to add by the current square root price
-	amountTimesSqrtPrice := u256.Zero().Mul(amountToAdd, currentSqrtPriceX96)
+	amountTimesSqrtPrice := new(u256.Uint).Mul(amountToAdd, currentSqrtPriceX96)
 
 	// Overflow check: Ensure (amountTimesSqrtPrice / amountToAdd) == currentSqrtPriceX96
-	if u256.Zero().Div(amountTimesSqrtPrice, amountToAdd).Eq(currentSqrtPriceX96) {
+	if new(u256.Uint).Div(amountTimesSqrtPrice, amountToAdd).Eq(currentSqrtPriceX96) {
 		// Compute denominator: liquidityShifted + (amountToAdd * currentSqrtPriceX96)
-		denominator := u256.Zero().Add(liquidityShifted, amountTimesSqrtPrice)
+		denominator := new(u256.Uint).Add(liquidityShifted, amountTimesSqrtPrice)
 		if denominator.Gte(liquidityShifted) {
 			return u256.MulDivRoundingUp(liquidityShifted, currentSqrtPriceX96, denominator)
 		}
 	}
 
 	// Alternative computation path: (liquidityShifted / currentSqrtPriceX96) + amountToAdd
-	divValue := u256.Zero().Div(liquidityShifted, currentSqrtPriceX96)
-	addValue := u256.Zero().Add(divValue, amountToAdd)
+	divValue := new(u256.Uint).Div(liquidityShifted, currentSqrtPriceX96)
+	addValue := new(u256.Uint).Add(divValue, amountToAdd)
 
 	// Compute the next square root price using division rounding up
 	return u256.DivRoundingUp(liquidityShifted, addValue)
@@ -49,19 +49,19 @@ func getNextPriceAmount0Remove(
 	currentSqrtPriceX96, liquidity, amountToRemove *u256.Uint,
 ) *u256.Uint {
 	// Shift liquidity left by Q96 bits to increase precision
-	liquidityShifted := u256.Zero().Lsh(liquidity, Q96_RESOLUTION)
+	liquidityShifted := new(u256.Uint).Lsh(liquidity, Q96_RESOLUTION)
 
 	// Multiply the amount to remove by the current square root price
-	amountTimesSqrtPrice := u256.Zero().Mul(amountToRemove, currentSqrtPriceX96)
+	amountTimesSqrtPrice := new(u256.Uint).Mul(amountToRemove, currentSqrtPriceX96)
 
 	// Conditions must hold: product/amount == sqrtPX96 and numerator1 > product
-	if !u256.Zero().Div(amountTimesSqrtPrice, amountToRemove).Eq(currentSqrtPriceX96) ||
+	if !new(u256.Uint).Div(amountTimesSqrtPrice, amountToRemove).Eq(currentSqrtPriceX96) ||
 		!liquidityShifted.Gt(amountTimesSqrtPrice) {
 		panic(errInvalidPoolSqrtPrice)
 	}
 
 	// Compute denominator: liquidityShifted - (amountToRemove * currentSqrtPriceX96)
-	denominator := u256.Zero().Sub(liquidityShifted, amountTimesSqrtPrice)
+	denominator := new(u256.Uint).Sub(liquidityShifted, amountTimesSqrtPrice)
 	// Calculate next square root price: (liquidityShifted * currentSqrtPriceX96) / denominator (with rounding up)
 	nextSqrtPrice := u256.MulDivRoundingUp(liquidityShifted, currentSqrtPriceX96, denominator)
 
@@ -126,7 +126,7 @@ func getNextPriceAmount1Add(
 		quotient = u256.MulDiv(amount, q96, liquidity)
 	}
 
-	res := u256.Zero().Add(sqrtPX96, quotient)
+	res := new(u256.Uint).Add(sqrtPX96, quotient)
 	if res.Gt(max160) {
 		panic(errSqrtPriceQuotientOverflow)
 	}
@@ -142,7 +142,7 @@ func getNextPriceAmount1Remove(
 	quotient := u256.Zero()
 
 	if amount.Lte(max160) {
-		value := u256.Zero().Lsh(amount, Q96_RESOLUTION)
+		value := new(u256.Uint).Lsh(amount, Q96_RESOLUTION)
 		quotient = u256.DivRoundingUp(value, liquidity)
 	} else {
 		quotient = u256.MulDivRoundingUp(amount, q96, liquidity)
@@ -152,10 +152,10 @@ func getNextPriceAmount1Remove(
 		panic(errSqrtPriceExceedsQuotient)
 	}
 
-	res := u256.Zero().Sub(sqrtPX96, quotient)
+	res := new(u256.Uint).Sub(sqrtPX96, quotient)
 	if res.Gt(max160) {
 		// Force mask into uint160
-		mask := u256.Zero().Lsh(u256.One(), Q160_RESOLUTION)
+		mask := new(u256.Uint).Lsh(u256.One(), Q160_RESOLUTION)
 		mask = mask.Sub(mask, u256.One())
 		res = res.And(res, mask)
 	}
@@ -307,8 +307,8 @@ func getAmount0DeltaHelper(
 		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
 	}
 
-	scaledLiquidity := u256.Zero().Lsh(liquidity, Q96_RESOLUTION)
-	ratioDiff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
+	scaledLiquidity := new(u256.Uint).Lsh(liquidity, Q96_RESOLUTION)
+	ratioDiff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
 	if !(sqrtRatioAX96.Gt(u256.Zero())) {
 		panic(errSqrtRatioAX96NotPositive)
@@ -320,7 +320,7 @@ func getAmount0DeltaHelper(
 	}
 
 	value := u256.MulDiv(scaledLiquidity, ratioDiff, sqrtRatioBX96)
-	return u256.Zero().Div(value, sqrtRatioAX96)
+	return new(u256.Uint).Div(value, sqrtRatioAX96)
 }
 
 // getAmount1DeltaHelper calculates the absolute difference between the amounts of token1 in two
@@ -349,7 +349,7 @@ func getAmount1DeltaHelper(
 		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
 	}
 
-	diff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
+	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 	if roundUp {
 		return u256.MulDivRoundingUp(liquidity, diff, q96)
 	}

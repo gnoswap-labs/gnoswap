@@ -74,7 +74,7 @@ type AddLiquidityParams struct {
 func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint) {
 	pool := pl.GetPoolFromPoolPath(params.poolKey)
 
-	sqrtPriceX96 := u256.Zero().Set(pool.Slot0SqrtPriceX96())
+	sqrtPriceX96 := new(u256.Uint).Set(pool.Slot0SqrtPriceX96())
 	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(params.tickLower)
 	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(params.tickUpper)
 

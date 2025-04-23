@@ -40,7 +40,7 @@ func liquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 	// Subtract or add based on the sign of y
 	if y.Lt(i256.Zero()) {
 		absDelta := y.Abs()
-		z = u256.Zero().Sub(x, absDelta)
+		z = new(u256.Uint).Sub(x, absDelta)
 		if z.Gte(x) {
 			panic(addDetailToError(
 				errCalculationError,
@@ -48,7 +48,7 @@ func liquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 			))
 		}
 	} else {
-		z = u256.Zero().Add(x, y.Abs())
+		z = new(u256.Uint).Add(x, y.Abs())
 		if z.Lt(x) {
 			panic(addDetailToError(
 				errCalculationError,

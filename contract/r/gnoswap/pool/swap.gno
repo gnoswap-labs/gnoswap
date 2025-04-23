@@ -247,6 +247,8 @@ func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 	if comp.ZeroForOne {
 		if state.protocolFee.Gt(zeroU256) {
 			result.NewProtocolFees.token0 = u256.Zero().Add(result.NewProtocolFees.token0, state.protocolFee)
+		if state.protocolFee.Gt(u256.Zero()) {
+			result.NewProtocolFees.token0 = new(u256.Uint).Add(result.NewProtocolFees.token0, state.protocolFee)
 		}
 		result.FeeGrowthGlobal0X128 = state.feeGrowthGlobalX128.Clone()
 		return result, nil
@@ -367,7 +369,7 @@ func computeSwapStep(
 	// update global fee tracker
 	if newState.liquidity.Gt(zeroU256) {
 		update := u256.MulDiv(step.feeAmount, fixedPointQ128, newState.liquidity)
-		newState.setFeeGrowthGlobalX128(u256.Zero().Add(newState.feeGrowthGlobalX128, update))
+		newState.setFeeGrowthGlobalX128(new(u256.Uint).Add(newState.feeGrowthGlobalX128, update))
 	}
 
 	// handling tick transitions
@@ -385,7 +387,7 @@ func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState
 	delta := step.feeAmount
 	delta.Div(delta, u256.NewUint(uint64(feeProtocol)))
 
-	newFeeAmount, overflow := u256.Zero().SubOverflow(step.feeAmount, delta)
+	newFeeAmount, overflow := new(u256.Uint).SubOverflow(step.feeAmount, delta)
 	if overflow {
 		return state, step, errUnderflow
 	}
@@ -462,7 +464,7 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 //   - Increments remaining output amount by amountOut
 //   - Increments calculated amount by (amountIn + feeAmount)
 func updateAmounts(step StepComputations, state SwapState, exactInput bool) SwapState {
-	amountInWithFeeU256 := u256.Zero().Add(step.amountIn, step.feeAmount)
+	amountInWithFeeU256 := new(u256.Uint).Add(step.amountIn, step.feeAmount)
 	if amountInWithFeeU256.Gt(u256.MustFromDecimal(consts.MAX_INT256)) {
 		panic("amountIn + feeAmount overflows int256")
 	}

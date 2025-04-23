@@ -84,8 +84,8 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 		tickLower:                params.tickLower,
 		tickUpper:                params.tickUpper,
 		liquidity:                liquidity,
-		feeGrowthInside0LastX128: u256.Zero().Set(pool.PositionFeeGrowthInside0LastX128(positionKey)),
-		feeGrowthInside1LastX128: u256.Zero().Set(pool.PositionFeeGrowthInside1LastX128(positionKey)),
+		feeGrowthInside0LastX128: new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey)),
+		feeGrowthInside1LastX128: new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey)),
 		tokensOwed0:              u256.Zero(),
 		tokensOwed1:              u256.Zero(),
 		token0Balance:            amount0,
@@ -186,10 +186,10 @@ func processMintInput(input MintInput) (ProcessedMintInput, error) {
 
 	result = ProcessedMintInput{
 		tokenPair:      pair,
-		amount0Desired: u256.Zero().Set(amount0Desired),
-		amount1Desired: u256.Zero().Set(amount1Desired),
-		amount0Min:     u256.Zero().Set(amount0Min),
-		amount1Min:     u256.Zero().Set(amount1Min),
+		amount0Desired: new(u256.Uint).Set(amount0Desired),
+		amount1Desired: new(u256.Uint).Set(amount1Desired),
+		amount0Min:     new(u256.Uint).Set(amount0Min),
+		amount1Min:     new(u256.Uint).Set(amount1Min),
 		tickLower:      tickLower,
 		tickUpper:      tickUpper,
 		poolPath:       poolPath,
@@ -276,8 +276,8 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := computePositionKey(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	feeGrowthInside0LastX128 := u256.Zero().Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
-	feeGrowthInside1LastX128 := u256.Zero().Set(pool.PositionFeeGrowthInside1LastX128(positionKey))
+	feeGrowthInside0LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
+	feeGrowthInside1LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey))
 
 	currentSqrtPriceX96 := pool.Slot0SqrtPriceX96()
 	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickLower)
@@ -292,24 +292,24 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	calculatedToken1Balance := u256.MustFromDecimal(calculatedToken1BalanceStr)
 
 	{
-		diff := u256.Zero().Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
-		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), u256.MustFromDecimal(consts.Q128))
+		diff := new(u256.Uint).Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
+		mulDiv := u256.MulDiv(diff, new(u256.Uint).Set(position.liquidity), u256.MustFromDecimal(consts.Q128))
 
-		position.tokensOwed0 = u256.Zero().Add(position.tokensOwed0, mulDiv)
+		position.tokensOwed0 = new(u256.Uint).Add(position.tokensOwed0, mulDiv)
 	}
 
 	{
-		diff := u256.Zero().Sub(feeGrowthInside1LastX128, position.feeGrowthInside1LastX128)
-		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), u256.MustFromDecimal(consts.Q128))
+		diff := new(u256.Uint).Sub(feeGrowthInside1LastX128, position.feeGrowthInside1LastX128)
+		mulDiv := u256.MulDiv(diff, new(u256.Uint).Set(position.liquidity), u256.MustFromDecimal(consts.Q128))
 
-		position.tokensOwed1 = u256.Zero().Add(position.tokensOwed1, mulDiv)
+		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, mulDiv)
 	}
 
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
-	position.liquidity = u256.Zero().Add(u256.Zero().Set(position.liquidity), liquidity)
-	position.token0Balance = u256.Zero().Add(u256.Zero().Set(calculatedToken0Balance), amount0)
-	position.token1Balance = u256.Zero().Add(u256.Zero().Set(calculatedToken1Balance), amount1)
+	position.liquidity = new(u256.Uint).Add(new(u256.Uint).Set(position.liquidity), liquidity)
+	position.token0Balance = new(u256.Uint).Add(new(u256.Uint).Set(calculatedToken0Balance), amount0)
+	position.token1Balance = new(u256.Uint).Add(new(u256.Uint).Set(calculatedToken1Balance), amount1)
 	position.burned = false
 
 	updated := setPosition(params.positionId, position)

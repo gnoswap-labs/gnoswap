@@ -254,7 +254,7 @@ func (e *VoteExecutor) execute(yes bool) error {
 }
 
 func safeVoteSum(collected *u256.Uint, weight uint64) *u256.Uint {
-	newSum, overflow := u256.Zero().AddOverflow(collected, u256.NewUint(weight))
+	newSum, overflow := new(u256.Uint).AddOverflow(collected, u256.NewUint(weight))
 	if overflow {
 		panic(errOutOfRange)
 	}

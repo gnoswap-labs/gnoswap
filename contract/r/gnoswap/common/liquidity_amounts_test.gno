@@ -191,7 +191,7 @@ func TestComputeLiquidityForAmount1(t *testing.T) {
 
 	t.Run("Basic liquidity calculation", func(t *testing.T) {
 		sqrtRatioAX96 := q96                                                // 2^96 (1 in Q96)
-		sqrtRatioBX96 := u256.Zero().Mul(q96, u256.MustFromDecimal("4")) // 4^96 (4 in Q96)
+		sqrtRatioBX96 := new(u256.Uint).Mul(q96, u256.MustFromDecimal("4")) // 4^96 (4 in Q96)
 
 		expected := u256.MustFromDecimal("333333") // Expected liquidity
 		result := computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1)
@@ -214,7 +214,7 @@ func TestComputeLiquidityForAmount1(t *testing.T) {
 
 	t.Run("Large liquidity calculation", func(t *testing.T) {
 		sqrtRatioAX96 := q96                                       // 1x
-		sqrtRatioBX96 := u256.Zero().Mul(q96, u256.NewUint(16)) // 16x
+		sqrtRatioBX96 := new(u256.Uint).Mul(q96, u256.NewUint(16)) // 16x
 		largeAmount := u256.MustFromDecimal("1000000000")
 
 		expected := u256.MustFromDecimal("66666666") // 1B / 16 = 62.5M
@@ -241,44 +241,44 @@ func TestGetLiquidityForAmounts(t *testing.T) {
 		{
 			name:          "Basic Liquidity Calculation - Token0 Dominant",
 			sqrtRatioX96:  q96.ToString(),
-			sqrtRatioAX96: (u256.Zero().Mul(q96, u256.NewUint(4))).ToString(),
-			sqrtRatioBX96: (u256.Zero().Mul(q96, u256.NewUint(16))).ToString(),
+			sqrtRatioAX96: (new(u256.Uint).Mul(q96, u256.NewUint(4))).ToString(),
+			sqrtRatioBX96: (new(u256.Uint).Mul(q96, u256.NewUint(16))).ToString(),
 			amount0:       "1000000",
 			amount1:       "1000000",
 			expected:      "5333333",
 		},
 		{
 			name:          "Within Range - Both Token0 and Token1",
-			sqrtRatioX96:  (u256.Zero().Mul(q96, u256.NewUint(2))).ToString(),
-			sqrtRatioAX96: (u256.Zero().Mul(q96, u256.NewUint(4))).ToString(),
-			sqrtRatioBX96: (u256.Zero().Mul(q96, u256.NewUint(16))).ToString(),
+			sqrtRatioX96:  (new(u256.Uint).Mul(q96, u256.NewUint(2))).ToString(),
+			sqrtRatioAX96: (new(u256.Uint).Mul(q96, u256.NewUint(4))).ToString(),
+			sqrtRatioBX96: (new(u256.Uint).Mul(q96, u256.NewUint(16))).ToString(),
 			amount0:       "2000000",
 			amount1:       "3000000",
 			expected:      "10666666",
 		},
 		{
 			name:          "Token1 Dominant - Price Above Upper Bound",
-			sqrtRatioX96:  (u256.Zero().Mul(q96, u256.NewUint(20))).ToString(),
-			sqrtRatioAX96: (u256.Zero().Mul(q96, u256.NewUint(4))).ToString(),
-			sqrtRatioBX96: (u256.Zero().Mul(q96, u256.NewUint(16))).ToString(),
+			sqrtRatioX96:  (new(u256.Uint).Mul(q96, u256.NewUint(20))).ToString(),
+			sqrtRatioAX96: (new(u256.Uint).Mul(q96, u256.NewUint(4))).ToString(),
+			sqrtRatioBX96: (new(u256.Uint).Mul(q96, u256.NewUint(16))).ToString(),
 			amount0:       "1500000",
 			amount1:       "3000000",
 			expected:      "250000",
 		},
 		{
 			name:          "Edge Case - sqrtRatioX96 = Lower Bound",
-			sqrtRatioX96:  (u256.Zero().Mul(q96, u256.NewUint(4))).ToString(),
-			sqrtRatioAX96: (u256.Zero().Mul(q96, u256.NewUint(4))).ToString(),
-			sqrtRatioBX96: (u256.Zero().Mul(q96, u256.NewUint(16))).ToString(),
+			sqrtRatioX96:  (new(u256.Uint).Mul(q96, u256.NewUint(4))).ToString(),
+			sqrtRatioAX96: (new(u256.Uint).Mul(q96, u256.NewUint(4))).ToString(),
+			sqrtRatioBX96: (new(u256.Uint).Mul(q96, u256.NewUint(16))).ToString(),
 			amount0:       "500000",
 			amount1:       "500000",
 			expected:      "2666666",
 		},
 		{
 			name:          "Edge Case - sqrtRatioX96 = Upper Bound",
-			sqrtRatioX96:  (u256.Zero().Mul(q96, u256.NewUint(16))).ToString(),
-			sqrtRatioAX96: (u256.Zero().Mul(q96, u256.NewUint(4))).ToString(),
-			sqrtRatioBX96: (u256.Zero().Mul(q96, u256.NewUint(16))).ToString(),
+			sqrtRatioX96:  (new(u256.Uint).Mul(q96, u256.NewUint(16))).ToString(),
+			sqrtRatioAX96: (new(u256.Uint).Mul(q96, u256.NewUint(4))).ToString(),
+			sqrtRatioBX96: (new(u256.Uint).Mul(q96, u256.NewUint(16))).ToString(),
 			amount0:       "1000000",
 			amount1:       "1000000",
 			expected:      "83333",
@@ -313,36 +313,36 @@ func TestComputeAmount0ForLiquidity(t *testing.T) {
 	}{
 		{
 			name:          "Basic Case - Small Range",
-			sqrtRatioAX96: u256.Zero().Mul(q96, u256.NewUint(4)).ToString(),
-			sqrtRatioBX96: u256.Zero().Mul(q96, u256.NewUint(8)).ToString(),
+			sqrtRatioAX96: new(u256.Uint).Mul(q96, u256.NewUint(4)).ToString(),
+			sqrtRatioBX96: new(u256.Uint).Mul(q96, u256.NewUint(8)).ToString(),
 			liquidity:     "1000000",
 			expected:      "125000",
 		},
 		{
 			name:          "Large Liquidity - Wide Range",
-			sqrtRatioAX96: u256.Zero().Mul(q96, u256.NewUint(2)).ToString(),
-			sqrtRatioBX96: u256.Zero().Mul(q96, u256.NewUint(16)).ToString(),
+			sqrtRatioAX96: new(u256.Uint).Mul(q96, u256.NewUint(2)).ToString(),
+			sqrtRatioBX96: new(u256.Uint).Mul(q96, u256.NewUint(16)).ToString(),
 			liquidity:     "5000000000",
 			expected:      "2187500000",
 		},
 		{
 			name:          "Edge Case - Equal Bounds",
-			sqrtRatioAX96: u256.Zero().Mul(q96, u256.NewUint(8)).ToString(),
-			sqrtRatioBX96: u256.Zero().Mul(q96, u256.NewUint(8)).ToString(),
+			sqrtRatioAX96: new(u256.Uint).Mul(q96, u256.NewUint(8)).ToString(),
+			sqrtRatioBX96: new(u256.Uint).Mul(q96, u256.NewUint(8)).ToString(),
 			liquidity:     "1000000",
 			expected:      "0",
 		},
 		{
 			name:          "Minimum Liquidity",
-			sqrtRatioAX96: u256.Zero().Mul(q96, u256.NewUint(5)).ToString(),
-			sqrtRatioBX96: u256.Zero().Mul(q96, u256.NewUint(10)).ToString(),
+			sqrtRatioAX96: new(u256.Uint).Mul(q96, u256.NewUint(5)).ToString(),
+			sqrtRatioBX96: new(u256.Uint).Mul(q96, u256.NewUint(10)).ToString(),
 			liquidity:     "1",
 			expected:      "0",
 		},
 		{
 			name:          "Max Liquidity",
-			sqrtRatioAX96: u256.Zero().Mul(q96, u256.NewUint(1)).ToString(),
-			sqrtRatioBX96: u256.Zero().Mul(q96, u256.NewUint(32)).ToString(),
+			sqrtRatioAX96: new(u256.Uint).Mul(q96, u256.NewUint(1)).ToString(),
+			sqrtRatioBX96: new(u256.Uint).Mul(q96, u256.NewUint(32)).ToString(),
 			liquidity:     "1000000000000000000",
 			expected:      "968750000000000000",
 		},
@@ -377,7 +377,7 @@ func TestComputeAmount1ForLiquidity(t *testing.T) {
 		{
 			name:           "Basic Case - Small Liquidity",
 			sqrtRatioAX96:  q96,
-			sqrtRatioBX96:  u256.Zero().Mul(q96, u256.NewUint(4)), // sqrtRatioBX96 = 4 * Q96
+			sqrtRatioBX96:  new(u256.Uint).Mul(q96, u256.NewUint(4)), // sqrtRatioBX96 = 4 * Q96
 			liquidity:      u256.NewUint(1000000000),
 			expectedAmount: "3000000000", // (4-1)*liquidity = 3 * 10^9
 		},
@@ -391,20 +391,20 @@ func TestComputeAmount1ForLiquidity(t *testing.T) {
 		{
 			name:           "Zero Liquidity",
 			sqrtRatioAX96:  q96,
-			sqrtRatioBX96:  u256.Zero().Mul(q96, u256.NewUint(2)),
+			sqrtRatioBX96:  new(u256.Uint).Mul(q96, u256.NewUint(2)),
 			liquidity:      u256.Zero(),
 			expectedAmount: "0",
 		},
 		{
 			name:           "Large Liquidity",
 			sqrtRatioAX96:  q96,
-			sqrtRatioBX96:  u256.Zero().Mul(q96, u256.NewUint(16)), // sqrtRatioBX96 = 16 * Q96
+			sqrtRatioBX96:  new(u256.Uint).Mul(q96, u256.NewUint(16)), // sqrtRatioBX96 = 16 * Q96
 			liquidity:      u256.NewUint(1000000000000000000),         // 1e18 liquidity
 			expectedAmount: "15000000000000000000",                    // (16-1) * 1e18 = 15 * 1e18
 		},
 		{
 			name:           "Descending Ratios (Order Correction)",
-			sqrtRatioAX96:  u256.Zero().Mul(q96, u256.NewUint(8)),
+			sqrtRatioAX96:  new(u256.Uint).Mul(q96, u256.NewUint(8)),
 			sqrtRatioBX96:  q96,
 			liquidity:      u256.NewUint(500000),
 			expectedAmount: "3500000", // (8-1)*500000
@@ -433,9 +433,9 @@ func TestGetAmountsForLiquidity(t *testing.T) {
 	}{
 		{
 			name:            "Basic Case - Within Range",
-			sqrtRatioX96:    u256.Zero().Mul(q96, u256.NewUint(2)), // Current price at 2 * Q96
+			sqrtRatioX96:    new(u256.Uint).Mul(q96, u256.NewUint(2)), // Current price at 2 * Q96
 			sqrtRatioAX96:   q96,                                      // Lower bound at 1 * Q96
-			sqrtRatioBX96:   u256.Zero().Mul(q96, u256.NewUint(4)), // Upper bound at 4 * Q96
+			sqrtRatioBX96:   new(u256.Uint).Mul(q96, u256.NewUint(4)), // Upper bound at 4 * Q96
 			liquidity:       u256.NewUint(1000000),
 			expectedAmount0: "250000",
 			expectedAmount1: "1000000",
@@ -444,34 +444,34 @@ func TestGetAmountsForLiquidity(t *testing.T) {
 			name:            "Edge Case - At Lower Bound (sqrtRatioX96 == sqrtRatioAX96)",
 			sqrtRatioX96:    q96,
 			sqrtRatioAX96:   q96,
-			sqrtRatioBX96:   u256.Zero().Mul(q96, u256.NewUint(8)),
+			sqrtRatioBX96:   new(u256.Uint).Mul(q96, u256.NewUint(8)),
 			liquidity:       u256.NewUint(1000000),
 			expectedAmount0: "875000",
 			expectedAmount1: "0",
 		},
 		{
 			name:            "Edge Case - At Upper Bound (sqrtRatioX96 == sqrtRatioBX96)",
-			sqrtRatioX96:    u256.Zero().Mul(q96, u256.NewUint(8)),
+			sqrtRatioX96:    new(u256.Uint).Mul(q96, u256.NewUint(8)),
 			sqrtRatioAX96:   q96,
-			sqrtRatioBX96:   u256.Zero().Mul(q96, u256.NewUint(8)),
+			sqrtRatioBX96:   new(u256.Uint).Mul(q96, u256.NewUint(8)),
 			liquidity:       u256.NewUint(1000000),
 			expectedAmount0: "0",
 			expectedAmount1: "7000000",
 		},
 		{
 			name:            "Out of Range - Below Lower Bound",
-			sqrtRatioX96:    u256.Zero().Div(q96, u256.NewUint(2)), // Current price at 0.5 * Q96
+			sqrtRatioX96:    new(u256.Uint).Div(q96, u256.NewUint(2)), // Current price at 0.5 * Q96
 			sqrtRatioAX96:   q96,
-			sqrtRatioBX96:   u256.Zero().Mul(q96, u256.NewUint(8)),
+			sqrtRatioBX96:   new(u256.Uint).Mul(q96, u256.NewUint(8)),
 			liquidity:       u256.NewUint(500000),
 			expectedAmount0: "437500",
 			expectedAmount1: "0",
 		},
 		{
 			name:            "Out of Range - Above Upper Bound",
-			sqrtRatioX96:    u256.Zero().Mul(q96, u256.NewUint(10)), // Current price at 10 * Q96
+			sqrtRatioX96:    new(u256.Uint).Mul(q96, u256.NewUint(10)), // Current price at 10 * Q96
 			sqrtRatioAX96:   q96,
-			sqrtRatioBX96:   u256.Zero().Mul(q96, u256.NewUint(8)),
+			sqrtRatioBX96:   new(u256.Uint).Mul(q96, u256.NewUint(8)),
 			liquidity:       u256.NewUint(2000000),
 			expectedAmount0: "0",
 			expectedAmount1: "14000000",
@@ -480,7 +480,7 @@ func TestGetAmountsForLiquidity(t *testing.T) {
 			name:            "Zero Liquidity",
 			sqrtRatioX96:    q96,
 			sqrtRatioAX96:   q96,
-			sqrtRatioBX96:   u256.Zero().Mul(q96, u256.NewUint(16)),
+			sqrtRatioBX96:   new(u256.Uint).Mul(q96, u256.NewUint(16)),
 			liquidity:       u256.Zero(),
 			expectedAmount0: "0",
 			expectedAmount1: "0",
@@ -488,7 +488,7 @@ func TestGetAmountsForLiquidity(t *testing.T) {
 		{
 			name:            "Descending Ratios (Order Correction)",
 			sqrtRatioX96:    q96,
-			sqrtRatioAX96:   u256.Zero().Mul(q96, u256.NewUint(8)),
+			sqrtRatioAX96:   new(u256.Uint).Mul(q96, u256.NewUint(8)),
 			sqrtRatioBX96:   q96,
 			liquidity:       u256.NewUint(1000000),
 			expectedAmount0: "875000",
