@@ -123,8 +123,8 @@ func (op *baseSwapOperation) processRoutes(swapType SwapType) (*u256.Uint, *u256
 			return nil, nil, err
 		}
 
-		resultAmountIn = new(u256.Uint).Add(resultAmountIn, amountIn)
-		resultAmountOut = new(u256.Uint).Add(resultAmountOut, amountOut)
+		resultAmountIn = u256.Zero().Add(resultAmountIn, amountIn)
+		resultAmountOut = u256.Zero().Add(resultAmountOut, amountOut)
 	}
 
 	return resultAmountIn, resultAmountOut, nil

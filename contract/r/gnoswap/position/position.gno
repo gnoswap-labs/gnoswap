@@ -326,8 +326,8 @@ func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, st
 
 	tokensOwed0, tokensOwed1 := calculateFees(position, currentFeeGrowth)
 
-	position.feeGrowthInside0LastX128 = new(u256.Uint).Set(currentFeeGrowth.feeGrowthInside0LastX128)
-	position.feeGrowthInside1LastX128 = new(u256.Uint).Set(currentFeeGrowth.feeGrowthInside1LastX128)
+	position.feeGrowthInside0LastX128 = u256.Zero().Set(currentFeeGrowth.feeGrowthInside0LastX128)
+	position.feeGrowthInside1LastX128 = u256.Zero().Set(currentFeeGrowth.feeGrowthInside1LastX128)
 
 	// check user wugnot amount
 	// need this value to unwrap fee
@@ -344,8 +344,8 @@ func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, st
 
 	// sometimes there will be a few less uBase amount than expected due to rounding down in core, but we just subtract the full amount expected
 	// instead of the actual amount so we can burn the token
-	position.tokensOwed0 = new(u256.Uint).Sub(tokensOwed0, u256.MustFromDecimal(amount0))
-	position.tokensOwed1 = new(u256.Uint).Sub(tokensOwed1, u256.MustFromDecimal(amount1))
+	position.tokensOwed0 = u256.Zero().Sub(tokensOwed0, u256.MustFromDecimal(amount0))
+	position.tokensOwed1 = u256.Zero().Sub(tokensOwed1, u256.MustFromDecimal(amount1))
 	mustUpdatePosition(postionId, position)
 
 	// handle withdrawal fee
@@ -425,8 +425,8 @@ func getCurrentFeeGrowth(position Position) (FeeGrowthInside, error) {
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := computePositionKey(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 
-	feeGrowthInside0 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
-	feeGrowthInside1 := new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey))
+	feeGrowthInside0 := u256.Zero().Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
+	feeGrowthInside1 := u256.Zero().Set(pool.PositionFeeGrowthInside1LastX128(positionKey))
 
 	feeGrowthInside := FeeGrowthInside{
 		feeGrowthInside0LastX128: feeGrowthInside0,

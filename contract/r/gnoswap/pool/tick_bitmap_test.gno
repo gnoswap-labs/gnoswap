@@ -92,7 +92,7 @@ func TestTickBitmapFlipTick(t *testing.T) {
 
 			if !tt.shouldPanic {
 				wordPos, bitPos := tickBitmapPosition(tt.tick / tt.tickSpacing)
-				expected := new(u256.Uint).Lsh(u256.NewUint(1), uint(bitPos))
+				expected := u256.Zero().Lsh(u256.NewUint(1), uint(bitPos))
 				if pool.getTickBitmap(wordPos).Cmp(expected) != 0 {
 					t.Errorf("bitmap not set correctly")
 				}

@@ -100,7 +100,7 @@ func safeConvertToInt128(value *u256.Uint) *i256.Int {
 func toUint128(value *u256.Uint) *u256.Uint {
 	assertOnlyInitializedUint256(value)
 	if value.Gt(u256.MustFromDecimal(consts.MAX_UINT128)) {
-		mask := new(u256.Uint).Lsh(u256.One(), consts.Q128_RESOLUTION)
+		mask := u256.Zero().Lsh(u256.One(), consts.Q128_RESOLUTION)
 		mask = mask.Sub(mask, u256.One())
 		value = value.And(value, mask)
 	}

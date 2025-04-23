@@ -769,7 +769,7 @@ func TickTickSpacingToMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 	numTicks := uint64((maxTick-minTick)/tickSpacing) + 1
 
 	_maxUint128 := u256.MustFromDecimal(consts.MAX_UINT128)
-	return new(u256.Uint).Div(_maxUint128, u256.NewUint(numTicks))
+	return u256.Zero().Div(_maxUint128, u256.NewUint(numTicks))
 }
 
 func (pool *Pool) TickGetFeeGrowthInside(
@@ -787,8 +787,8 @@ func (pool *Pool) TickGetFeeGrowthInside(
 		feeGrowthBelow0X128 = lower.feeGrowthOutside0X128
 		feeGrowthBelow1X128 = lower.feeGrowthOutside1X128
 	} else {
-		feeGrowthBelow0X128 = new(u256.Uint).Sub(feeGrowthGlobal0X128, lower.feeGrowthOutside0X128)
-		feeGrowthBelow1X128 = new(u256.Uint).Sub(feeGrowthGlobal1X128, lower.feeGrowthOutside1X128)
+		feeGrowthBelow0X128 = u256.Zero().Sub(feeGrowthGlobal0X128, lower.feeGrowthOutside0X128)
+		feeGrowthBelow1X128 = u256.Zero().Sub(feeGrowthGlobal1X128, lower.feeGrowthOutside1X128)
 	}
 
 	var feeGrowthAbove0X128, feeGrowthAbove1X128 *u256.Uint
@@ -796,12 +796,12 @@ func (pool *Pool) TickGetFeeGrowthInside(
 		feeGrowthAbove0X128 = upper.feeGrowthOutside0X128
 		feeGrowthAbove1X128 = upper.feeGrowthOutside1X128
 	} else {
-		feeGrowthAbove0X128 = new(u256.Uint).Sub(feeGrowthGlobal0X128, upper.feeGrowthOutside0X128)
-		feeGrowthAbove1X128 = new(u256.Uint).Sub(feeGrowthGlobal1X128, upper.feeGrowthOutside1X128)
+		feeGrowthAbove0X128 = u256.Zero().Sub(feeGrowthGlobal0X128, upper.feeGrowthOutside0X128)
+		feeGrowthAbove1X128 = u256.Zero().Sub(feeGrowthGlobal1X128, upper.feeGrowthOutside1X128)
 	}
 
-	feeGrowthInside0X128 := new(u256.Uint).Sub(new(u256.Uint).Sub(feeGrowthGlobal0X128, feeGrowthBelow0X128), feeGrowthAbove0X128)
-	feeGrowthInside1X128 := new(u256.Uint).Sub(new(u256.Uint).Sub(feeGrowthGlobal1X128, feeGrowthBelow1X128), feeGrowthAbove1X128)
+	feeGrowthInside0X128 := u256.Zero().Sub(u256.Zero().Sub(feeGrowthGlobal0X128, feeGrowthBelow0X128), feeGrowthAbove0X128)
+	feeGrowthInside1X128 := u256.Zero().Sub(u256.Zero().Sub(feeGrowthGlobal1X128, feeGrowthBelow1X128), feeGrowthAbove1X128)
 
 	return feeGrowthInside0X128, feeGrowthInside1X128
 }
@@ -900,8 +900,8 @@ func (pool *Pool) TickCross(
 ) *i256.Int {
 	info := pool.getTick(tick)
 
-	info.feeGrowthOutside0X128 = new(u256.Uint).Sub(feeGrowthGlobal0X128, info.feeGrowthOutside0X128)
-	info.feeGrowthOutside1X128 = new(u256.Uint).Sub(feeGrowthGlobal1X128, info.feeGrowthOutside1X128)
+	info.feeGrowthOutside0X128 = u256.Zero().Sub(feeGrowthGlobal0X128, info.feeGrowthOutside0X128)
+	info.feeGrowthOutside1X128 = u256.Zero().Sub(feeGrowthGlobal1X128, info.feeGrowthOutside1X128)
 
 	pool.setTick(tick, info)
 

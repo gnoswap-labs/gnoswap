@@ -45,7 +45,7 @@ func (p *SwapProcessor) ProcessSwapAmount(amountSpecified *i256.Int, quote int) 
 		return nil, ufmt.Errorf(ErrOverflowCalculateSwapAmount)
 	}
 
-	return new(i256.Int).Div(toSwap, PERCENTAGE_DENOMINATOR), nil
+	return i256.Zero().Div(toSwap, PERCENTAGE_DENOMINATOR), nil
 }
 
 // ProcessSingleSwap handles a single-hop swap simulation
@@ -120,12 +120,12 @@ func (p *SwapProcessor) ValidateSwapResults(
 func (p *SwapProcessor) AddSwapResults(
 	resultAmountIn, resultAmountOut, amountIn, amountOut *u256.Uint,
 ) (*u256.Uint, *u256.Uint, error) {
-	newAmountIn := new(u256.Uint).Add(resultAmountIn, amountIn)
+	newAmountIn := u256.Zero().Add(resultAmountIn, amountIn)
 	if newAmountIn.IsOverflow() {
 		return nil, nil, ufmt.Errorf(ErrOverflowResultAmountIn)
 	}
 
-	newAmountOut := new(u256.Uint).Add(resultAmountOut, amountOut)
+	newAmountOut := u256.Zero().Add(resultAmountOut, amountOut)
 	if newAmountOut.IsOverflow() {
 		return nil, nil, ufmt.Errorf(ErrOverflowResultAmountOut)
 	}

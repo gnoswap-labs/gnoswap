@@ -126,8 +126,8 @@ func Burn(
 	if amount0.Gt(u256.Zero()) || amount1.Gt(u256.Zero()) {
 		amount0 = toUint128(amount0)
 		amount1 = toUint128(amount1)
-		position.tokensOwed0 = new(u256.Uint).Add(position.tokensOwed0, amount0)
-		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, amount1)
+		position.tokensOwed0 = u256.Zero().Add(position.tokensOwed0, amount0)
+		position.tokensOwed1 = u256.Zero().Add(position.tokensOwed1, amount1)
 	}
 
 	positionKey := getPositionKey(caller, tickLower, tickUpper)
@@ -190,14 +190,14 @@ func Collect(
 	amount1 = collectToken(amount1Req, position.tokensOwed1, pool.BalanceToken1())
 
 	if amount0.Gt(u256.Zero()) {
-		position.tokensOwed0 = new(u256.Uint).Sub(position.tokensOwed0, amount0)
-		pool.balances.token0 = new(u256.Uint).Sub(pool.balances.token0, amount0)
+		position.tokensOwed0 = u256.Zero().Sub(position.tokensOwed0, amount0)
+		pool.balances.token0 = u256.Zero().Sub(pool.balances.token0, amount0)
 		token0 := common.GetTokenTeller(pool.token0Path)
 		checkTransferError(token0.Transfer(recipient, amount0.Uint64()))
 	}
 	if amount1.Gt(u256.Zero()) {
-		position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
-		pool.balances.token1 = new(u256.Uint).Sub(pool.balances.token1, amount1)
+		position.tokensOwed1 = u256.Zero().Sub(position.tokensOwed1, amount1)
+		pool.balances.token1 = u256.Zero().Sub(pool.balances.token1, amount1)
 		token1 := common.GetTokenTeller(pool.token1Path)
 		checkTransferError(token1.Transfer(recipient, amount1.Uint64()))
 	}
@@ -377,17 +377,17 @@ func (p *Pool) saveProtocolFees(amount0, amount1 *u256.Uint) (*u256.Uint, *u256.
 	cond01 := amount0.Gt(u256.Zero())
 	cond02 := amount0.Eq(p.ProtocolFeesToken0())
 	if cond01 && cond02 {
-		amount0 = new(u256.Uint).Sub(amount0, u256.One())
+		amount0 = u256.Zero().Sub(amount0, u256.One())
 	}
 
 	cond11 := amount1.Gt(u256.Zero())
 	cond12 := amount1.Eq(p.ProtocolFeesToken1())
 	if cond11 && cond12 {
-		amount1 = new(u256.Uint).Sub(amount1, u256.One())
+		amount1 = u256.Zero().Sub(amount1, u256.One())
 	}
 
-	p.protocolFees.token0 = new(u256.Uint).Sub(p.ProtocolFeesToken0(), amount0)
-	p.protocolFees.token1 = new(u256.Uint).Sub(p.ProtocolFeesToken1(), amount1)
+	p.protocolFees.token0 = u256.Zero().Sub(p.ProtocolFeesToken0(), amount0)
+	p.protocolFees.token1 = u256.Zero().Sub(p.ProtocolFeesToken1(), amount1)
 
 	// return rest fee
 	return amount0, amount1

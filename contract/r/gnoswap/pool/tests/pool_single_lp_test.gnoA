@@ -80,7 +80,7 @@ func TestMint(t *testing.T) {
 	uassert.Equal(t, m82, m102)
 
 	test_liquidity = pool.Liquidity()
-	uassert.Equal(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))))
+	uassert.Equal(t, true, test_liquidity.Eq(u256.Zero().Mul(test_liquidityExpect256, u256.NewUint(10))))
 
 	// tickLower > currentTick == don't add to current liquidity
 	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower2, test_tickUpper2, test_liquidityExpectStr, adminAddr)
@@ -92,7 +92,7 @@ func TestMint(t *testing.T) {
 	Mint(barPath, fooPath, fee500, positionAddr, -test_tickUpper, -test_tickLower, test_liquidityExpectStr, adminAddr)
 
 	// test_liquidity = pool.Liquidity()
-	uassert.Equal(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))))
+	uassert.Equal(t, true, test_liquidity.Eq(u256.Zero().Mul(test_liquidityExpect256, u256.NewUint(10))))
 
 	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
@@ -106,7 +106,7 @@ func TestMint(t *testing.T) {
 	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 
 	test_liquidity = pool.Liquidity()
-	uassert.Equal(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20))))
+	uassert.Equal(t, true, test_liquidity.Eq(u256.Zero().Mul(test_liquidityExpect256, u256.NewUint(20))))
 
 }
 
@@ -121,11 +121,11 @@ func TestBurn(t *testing.T) {
 
 	pool := GetPool(barPath, fooPath, fee500)
 	test_liquidity := pool.Liquidity()
-	uassert.Equal(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(18))))
+	uassert.Equal(t, true, test_liquidity.Eq(u256.Zero().Mul(test_liquidityExpect256, u256.NewUint(18))))
 
-	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(8)).ToString())
+	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, u256.Zero().Mul(test_liquidityExpect256, u256.NewUint(8)).ToString())
 	test_liquidity = pool.Liquidity()
-	uassert.Equal(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))))
+	uassert.Equal(t, true, test_liquidity.Eq(u256.Zero().Mul(test_liquidityExpect256, u256.NewUint(10))))
 
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, "1")
 	test_liquidity = pool.Liquidity()
@@ -133,9 +133,9 @@ func TestBurn(t *testing.T) {
 
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, "999")
 	test_liquidity = pool.Liquidity()
-	uassert.Equal(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(9))))
+	uassert.Equal(t, true, test_liquidity.Eq(u256.Zero().Mul(test_liquidityExpect256, u256.NewUint(9))))
 
-	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(9)).ToString())
+	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, u256.Zero().Mul(test_liquidityExpect256, u256.NewUint(9)).ToString())
 	test_liquidity = pool.Liquidity()
 	uassert.Equal(t, test_liquidity.ToString(), "0")
 }
@@ -152,19 +152,19 @@ func TestCollect(t *testing.T) {
 	test_liquidity := pool.Liquidity()
 	uassert.Equal(t, test_liquidity.ToString(), "0")
 
-	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
-	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString())
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, u256.Zero().Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
+	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, u256.Zero().Mul(test_liquidityExpect256, u256.NewUint(15)).ToString())
 	c11, c12 := Collect(barPath, fooPath, fee500, adminAddr, test_tickLower, test_tickUpper, "50000000", "50000000")
 
-	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
-	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString())
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, u256.Zero().Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
+	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, u256.Zero().Mul(test_liquidityExpect256, u256.NewUint(15)).ToString())
 	c21, c22 := Collect(barPath, fooPath, fee500, adminAddr, test_tickLower, test_tickUpper, "50000000", "50000000")
 
 	uassert.Equal(t, c11, c21) // 443
 	uassert.Equal(t, c12, c22) // 1206
 
-	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
-	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString())
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, u256.Zero().Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
+	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, u256.Zero().Mul(test_liquidityExpect256, u256.NewUint(15)).ToString())
 	c31, c32 := Collect(barPath, fooPath, fee500, adminAddr, test_tickLower, test_tickUpper, "100", "100")
 	uassert.Equal(t, c31, "100")
 	uassert.Equal(t, c32, "100")
@@ -174,14 +174,14 @@ func TestCollect(t *testing.T) {
 	uassert.Equal(t, c42, "1106") // 1106 = c22 - 100
 
 	// Mint > No Burn => nothing to collect
-	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, u256.Zero().Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
 	// Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr*15)
 	c51, c52 := Collect(barPath, fooPath, fee500, adminAddr, test_tickLower, test_tickUpper, "50000000", "50000000")
 	uassert.Equal(t, c51, "0")
 	uassert.Equal(t, c52, "0")
 
 	// Burn Now => something to collect
-	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString())
+	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, u256.Zero().Mul(test_liquidityExpect256, u256.NewUint(15)).ToString())
 	c61, c62 := Collect(barPath, fooPath, fee500, adminAddr, test_tickLower, test_tickUpper, "50000000", "50000000")
 	uassert.NotEqual(t, c61, "0")
 	uassert.NotEqual(t, c62, "0")
@@ -194,7 +194,7 @@ func TestSwap(t *testing.T) {
 	uassert.Equal(t, test_liquidity.ToString(), "0")
 
 	testing.SetRealm(posRealm)
-	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20000)).ToString(), adminAddr)
+	Mint(barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, u256.Zero().Mul(test_liquidityExpect256, u256.NewUint(20000)).ToString(), adminAddr)
 
 	// Swap several times
 	testing.SetRealm(rouRealm)

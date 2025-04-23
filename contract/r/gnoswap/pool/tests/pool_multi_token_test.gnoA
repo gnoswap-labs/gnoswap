@@ -259,7 +259,7 @@ func TestBurnFooBarLiquidity(t *testing.T) {
 
 	poolNewLiquidity := pool.Liquidity()
 
-	uassert.Equal(t, true, new(u256.Uint).Sub(poolOldLiquidity, poolNewLiquidity).Eq(test_liquidityExpect256))
+	uassert.Equal(t, true, u256.Zero().Sub(poolOldLiquidity, poolNewLiquidity).Eq(test_liquidityExpect256))
 }
 
 // Burn Bar:Baz Liquidity by admin

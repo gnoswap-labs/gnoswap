@@ -84,7 +84,7 @@ func (p *createPoolParams) updateWithWrapping() *createPoolParams {
 				ufmt.Sprintf("expected newPrice(%s) to be non-zero", newPrice.ToString()),
 			))
 		}
-		p.sqrtPriceX96 = new(u256.Uint).Set(newPrice)
+		p.sqrtPriceX96 = u256.Zero().Set(newPrice)
 	}
 	return newPoolParams(token0Path, token1Path, p.fee, p.sqrtPriceX96.ToString(), GetFeeAmountTickSpacing(p.fee))
 }

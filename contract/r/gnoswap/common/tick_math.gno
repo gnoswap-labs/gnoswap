@@ -177,8 +177,8 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 	calculateRatio := func(mask int32) *u256.Uint {
 		value, exists := tickRatioTree.GetRatio(mask)
 		if exists && absTick&mask != 0 {
-			return new(u256.Uint).Rsh(
-				new(u256.Uint).Mul(ratio, value),
+			return u256.Zero().Rsh(
+				u256.Zero().Mul(ratio, value),
 				128,
 			)
 		} else if exists == false {
@@ -197,10 +197,10 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 			println("[TickMathGetSqrtRatioAtTick] ratio is zero")
 			return u256.Zero()
 		}
-		ratio = new(u256.Uint).Div(maxUint256, ratio)
+		ratio = u256.Zero().Div(maxUint256, ratio)
 	}
 
-	upper128Bits := new(u256.Uint).Rsh(ratio, 32)   // ratio >> 32
+	upper128Bits := u256.Zero().Rsh(ratio, 32)   // ratio >> 32
 	lower32Bits := ratio.Mod(ratio, shift1By32Left) // ratio % (1 << 32)
 
 	var roundUp *u256.Uint
@@ -210,11 +210,11 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 		roundUp = u256.One()
 	}
 
-	return new(u256.Uint).Add(upper128Bits, roundUp)
+	return u256.Zero().Add(upper128Bits, roundUp)
 }
 
 func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
-	sqrtPrice := new(u256.Uint).Set(sqrtPriceX96)
+	sqrtPrice := u256.Zero().Set(sqrtPriceX96)
 	isAboveMin := sqrtPrice.Gte(u256.MustFromDecimal(consts.MIN_SQRT_RATIO))
 	isBelowMax := sqrtPrice.Lt(u256.MustFromDecimal(consts.MAX_SQRT_RATIO))
 	if !(isAboveMin && isBelowMax) {
@@ -224,7 +224,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 		))
 	}
 
-	scaledPrice := new(u256.Uint).Lsh(sqrtPrice, 32)
+	scaledPrice := u256.Zero().Lsh(sqrtPrice, 32)
 	leadingBitPosition, normalizedPrice := findMSB(scaledPrice)
 	normalizedPrice = adjustRatio(scaledPrice, leadingBitPosition)
 	logBase2Value := calculateLog2(leadingBitPosition, normalizedPrice)
@@ -239,9 +239,9 @@ func findMSB(ratio *u256.Uint) (*u256.Uint, *u256.Uint) {
 
 	calculateMSB := func(i int) (*u256.Uint, *u256.Uint) {
 		if logConst, exists := binaryLogTree.GetLog(i); exists {
-			f := new(u256.Uint).Lsh(gt(ratio, logConst), uint(i))
-			msb = new(u256.Uint).Or(msb, f)
-			ratio = new(u256.Uint).Rsh(ratio, uint(f.Uint64()))
+			f := u256.Zero().Lsh(gt(ratio, logConst), uint(i))
+			msb = u256.Zero().Or(msb, f)
+			ratio = u256.Zero().Rsh(ratio, uint(f.Uint64()))
 		}
 		return msb, ratio
 	}
@@ -254,7 +254,7 @@ func findMSB(ratio *u256.Uint) (*u256.Uint, *u256.Uint) {
 	{
 		f := gt(ratio, u256.One()) // 0x1
 		// msb = msb | f
-		msb = new(u256.Uint).Or(msb, f)
+		msb = u256.Zero().Or(msb, f)
 	}
 
 	return msb, ratio
@@ -265,10 +265,10 @@ func findMSB(ratio *u256.Uint) (*u256.Uint, *u256.Uint) {
 // This adjustment ensures that the ratio falls within the specific range.
 func adjustRatio(ratio, msb *u256.Uint) *u256.Uint {
 	if msb.Gte(u256.NewUint(128)) {
-		return new(u256.Uint).Rsh(ratio, uint(msb.Uint64()-127))
+		return u256.Zero().Rsh(ratio, uint(msb.Uint64()-127))
 	}
 
-	return new(u256.Uint).Lsh(ratio, uint(127-msb.Uint64()))
+	return u256.Zero().Lsh(ratio, uint(127-msb.Uint64()))
 }
 
 // calculateLog2 calculates the binary logarith, of the adjusted ratio using a fixed-point arithmetic.
@@ -282,10 +282,10 @@ func calculateLog2(msb, ratio *u256.Uint) *i256.Int {
 	log2Result = log2Result.Lsh(log2Result, 64)
 
 	for bitPosition := 63; bitPosition >= 51; bitPosition-- {
-		ratio = new(u256.Uint).Mul(ratio, ratio)
+		ratio = u256.Zero().Mul(ratio, ratio)
 		ratio = ratio.Rsh(ratio, 127)
 
-		shiftFactor := i256.FromUint256(new(u256.Uint).Rsh(ratio, 128))
+		shiftFactor := i256.FromUint256(u256.Zero().Rsh(ratio, 128))
 
 		// log2Result = log2Result | (shiftFactor << bitPosition)
 		log2Result = i256.Zero().Or(log2Result, i256.Zero().Lsh(shiftFactor, uint(bitPosition)))
@@ -297,10 +297,10 @@ func calculateLog2(msb, ratio *u256.Uint) *i256.Int {
 	// handle the remaining bits
 	{
 		// ratio = ratio * ratio >> 127
-		ratio = new(u256.Uint).Mul(ratio, ratio)
-		ratio = new(u256.Uint).Rsh(ratio, 127)
+		ratio = u256.Zero().Mul(ratio, ratio)
+		ratio = u256.Zero().Rsh(ratio, 127)
 
-		shiftFactor := i256.FromUint256(new(u256.Uint).Rsh(ratio, 128))
+		shiftFactor := i256.FromUint256(u256.Zero().Rsh(ratio, 128))
 
 		log2Result = i256.Zero().Or(log2Result, i256.Zero().Lsh(shiftFactor, 50))
 	}

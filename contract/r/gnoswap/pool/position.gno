@@ -92,11 +92,11 @@ func positionUpdate(
 	}
 
 	tokensOwed0 := u256.Zero()
-	diff0 := new(u256.Uint).Sub(feeGrowthInside0X128, position.feeGrowthInside0LastX128)
+	diff0 := u256.Zero().Sub(feeGrowthInside0X128, position.feeGrowthInside0LastX128)
 	tokensOwed0 = u256.MulDiv(diff0, position.liquidity, Q128)
 
 	tokensOwed1 := u256.Zero()
-	diff1 := new(u256.Uint).Sub(feeGrowthInside1X128, position.feeGrowthInside1LastX128)
+	diff1 := u256.Zero().Sub(feeGrowthInside1X128, position.feeGrowthInside1LastX128)
 	tokensOwed1 = u256.MulDiv(diff1, position.liquidity, Q128)
 
 	if !(liquidityDelta.IsZero()) {
