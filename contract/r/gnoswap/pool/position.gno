@@ -105,7 +105,7 @@ func positionUpdate(
 
 	position.feeGrowthInside0LastX128 = feeGrowthInside0X128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1X128
-	if tokensOwed0.Gt(u256.Zero()) || tokensOwed1.Gt(u256.Zero()) {
+	if tokensOwed0.Gt(zeroU256) || tokensOwed1.Gt(zeroU256) {
 		position.tokensOwed0 = position.tokensOwed0.Add(position.tokensOwed0, tokensOwed0)
 		position.tokensOwed1 = position.tokensOwed1.Add(position.tokensOwed1, tokensOwed1)
 	}
@@ -222,7 +222,7 @@ func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.
 	position := p.updatePosition(params, tick)
 	liqDelta := params.liquidityDelta
 
-	amount0, amount1 := i256.Zero(), i256.Zero()
+	amount0, amount1 := zeroI256, zeroI256
 
 	// covert ticks to sqrt price to use in amount calculations
 	// price = 1.0001^tick, but we use sqrtPriceX96

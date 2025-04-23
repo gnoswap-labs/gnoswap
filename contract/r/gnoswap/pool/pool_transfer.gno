@@ -39,7 +39,7 @@ func (p *Pool) safeTransfer(
 	amount *i256.Int,
 	isToken0 bool,
 ) {
-	if amount.Gt(i256.Zero()) {
+	if amount.Gt(zeroI256) {
 		panic(ufmt.Sprintf(
 			"%v. got: %s", errMustBeNegative, amount.ToString(),
 		))
@@ -199,5 +199,5 @@ func updatePoolBalance(
 
 // isBalanceOverflowOrNegative checks if the balance calculation resulted in an overflow or negative value.
 func isBalanceOverflowOrNegative(overflow bool, newBalance *u256.Uint) bool {
-	return overflow || newBalance.Lt(u256.Zero())
+	return overflow || newBalance.Lt(zeroU256)
 }

@@ -11,14 +11,13 @@ import (
 
 type Balances struct {
 	// current balance of the pool in token0/token1
-	token0 *u256.Uint
-	token1 *u256.Uint
+	token0, token1 *u256.Uint
 }
 
 func newBalances() Balances {
 	return Balances{
-		token0: u256.Zero(),
-		token1: u256.Zero(),
+		token0: zeroU256,
+		token1: zeroU256,
 	}
 }
 
@@ -51,8 +50,8 @@ type ProtocolFees struct {
 
 func newProtocolFees() ProtocolFees {
 	return ProtocolFees{
-		token0: u256.Zero(),
-		token1: u256.Zero(),
+		token0: zeroU256,
+		token1: zeroU256,
 	}
 }
 
