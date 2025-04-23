@@ -1,4 +1,4 @@
-package ownable2step
+package rbac
 
 import (
 	"testing"
