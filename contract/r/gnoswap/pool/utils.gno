@@ -16,6 +16,13 @@ import (
 	"gno.land/r/gnoswap/v1/halt"
 )
 
+var (
+	zeroU256 = u256.Zero()
+	oneU256  = u256.One()
+
+	zeroI256 = i256.Zero()
+)
+
 // safeConvertToUint64 safely converts a *u256.Uint value to a uint64, ensuring no overflow.
 //
 // This function attempts to convert the given *u256.Uint value to a uint64. If the value exceeds
@@ -100,8 +107,8 @@ func safeConvertToInt128(value *u256.Uint) *i256.Int {
 func toUint128(value *u256.Uint) *u256.Uint {
 	assertOnlyInitializedUint256(value)
 	if value.Gt(u256.MustFromDecimal(consts.MAX_UINT128)) {
-		mask := u256.Zero().Lsh(u256.One(), consts.Q128_RESOLUTION)
-		mask = mask.Sub(mask, u256.One())
+		mask := u256.Zero().Lsh(oneU256, consts.Q128_RESOLUTION)
+		mask = mask.Sub(mask, oneU256)
 		value = value.And(value, mask)
 	}
 	return value

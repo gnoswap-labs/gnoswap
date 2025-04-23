@@ -116,11 +116,11 @@ func newSwapState(
 ) SwapState {
 	return SwapState{
 		amountSpecifiedRemaining: amountSpecifiedRemaining,
-		amountCalculated:         i256.Zero(),
+		amountCalculated:         zeroI256,
 		sqrtPriceX96:             slot0.sqrtPriceX96,
 		tick:                     slot0.tick,
 		feeGrowthGlobalX128:      feeGrowthGlobalX128,
-		protocolFee:              u256.Zero(),
+		protocolFee:              zeroU256,
 		liquidity:                liquidity,
 	}
 }
@@ -279,10 +279,10 @@ func newPool(poolInfo *createPoolParams) *Pool {
 		tickSpacing:          poolInfo.TickSpacing(),
 		maxLiquidityPerTick:  maxLiquidityPerTick,
 		slot0:                slot0,
-		feeGrowthGlobal0X128: u256.Zero(),
-		feeGrowthGlobal1X128: u256.Zero(),
+		feeGrowthGlobal0X128: zeroU256,
+		feeGrowthGlobal1X128: zeroU256,
 		protocolFees:         newProtocolFees(),
-		liquidity:            u256.Zero(),
+		liquidity:            zeroU256,
 		ticks:                avl.NewTree(),
 		tickBitmaps:          avl.NewTree(),
 		positions:            avl.NewTree(),

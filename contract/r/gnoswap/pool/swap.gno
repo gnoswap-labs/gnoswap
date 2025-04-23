@@ -91,7 +91,7 @@ func Swap(
 		AmountSpecified:   amounts,
 		SqrtPriceLimitX96: sqrtPriceLimit,
 		ZeroForOne:        zeroForOne,
-		ExactInput:        amounts.Gt(i256.Zero()),
+		ExactInput:        amounts.Gt(zeroI256),
 		InitialState:      state,
 		Cache:             cache,
 	}
@@ -165,7 +165,7 @@ func DrySwap(
 		AmountSpecified:   amounts,
 		SqrtPriceLimitX96: sqrtPriceLimit,
 		ZeroForOne:        zeroForOne,
-		ExactInput:        amounts.Gt(i256.Zero()),
+		ExactInput:        amounts.Gt(zeroI256),
 		InitialState:      state,
 		Cache:             cache,
 	}
@@ -245,16 +245,17 @@ func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 
 	// Update protocol fees if necessary
 	if comp.ZeroForOne {
-		if state.protocolFee.Gt(u256.Zero()) {
+		if state.protocolFee.Gt(zeroU256) {
 			result.NewProtocolFees.token0 = u256.Zero().Add(result.NewProtocolFees.token0, state.protocolFee)
 		}
 		result.FeeGrowthGlobal0X128 = state.feeGrowthGlobalX128.Clone()
-	} else {
-		if state.protocolFee.Gt(u256.Zero()) {
-			result.NewProtocolFees.token1 = u256.Zero().Add(result.NewProtocolFees.token1, state.protocolFee)
-		}
-		result.FeeGrowthGlobal1X128 = state.feeGrowthGlobalX128.Clone()
+		return result, nil
 	}
+
+	if state.protocolFee.Gt(zeroU256) {
+		result.NewProtocolFees.token1 = u256.Zero().Add(result.NewProtocolFees.token1, state.protocolFee)
+	}
+	result.FeeGrowthGlobal1X128 = state.feeGrowthGlobalX128.Clone()
 
 	return result, nil
 }
@@ -364,7 +365,7 @@ func computeSwapStep(
 	}
 
 	// update global fee tracker
-	if newState.liquidity.Gt(u256.Zero()) {
+	if newState.liquidity.Gt(zeroU256) {
 		update := u256.MulDiv(step.feeAmount, fixedPointQ128, newState.liquidity)
 		newState.setFeeGrowthGlobalX128(u256.Zero().Add(newState.feeGrowthGlobalX128, update))
 	}
@@ -474,10 +475,10 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) Swap
 		state.amountSpecifiedRemaining = i256.Zero().Sub(state.amountSpecifiedRemaining, amountInWithFee)
 		state.amountCalculated = i256.Zero().Sub(state.amountCalculated, i256.FromUint256(step.amountOut))
 		return state
-	} else {
-		state.amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
-		state.amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
 	}
+
+	state.amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
+	state.amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
 
 	return state
 }

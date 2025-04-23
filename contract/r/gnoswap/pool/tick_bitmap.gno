@@ -54,7 +54,7 @@ func (p *Pool) tickBitmapFlipTick(
 	checkTickSpacing(tick, tickSpacing)
 	wordPos, bitPos := tickBitmapPosition(tick / tickSpacing)
 
-	mask := u256.Zero().Lsh(u256.One(), uint(bitPos))
+	mask := u256.Zero().Lsh(oneU256, uint(bitPos))
 	p.setTickBitmap(wordPos, u256.Zero().Xor(p.getTickBitmap(wordPos), mask))
 }
 
@@ -107,7 +107,7 @@ func (p *Pool) setTickBitmap(wordPos int16, tickBitmap *u256.Uint) {
 
 // initTickBitmap initializes the tick bitmap for the given word position
 func (p *Pool) initTickBitmap(wordPos int16) {
-	p.setTickBitmap(wordPos, u256.Zero())
+	p.setTickBitmap(wordPos, zeroU256)
 }
 
 // tickBitmapPosition calculates the word and bit position for a given tick
@@ -133,10 +133,10 @@ func getWordAndBitPos(tick int32, lte bool) (int16, uint8) {
 func getMaskBit(bitPos uint, lte bool) *u256.Uint {
 	// Shift the number 1 to the left by (bitPos + bMap[lte]) positions.
 	// If lte is true, the shift will be bitPos + 1; if false, it will be just bitPos.
-	shifted := u256.Zero().Lsh(u256.One(), bitPos+bMap[lte])
+	shifted := u256.Zero().Lsh(oneU256, bitPos+bMap[lte])
 
 	// Subtract 1 from the shifted value to create a mask.
-	mask := u256.Zero().Sub(shifted, u256.One())
+	mask := u256.Zero().Sub(shifted, oneU256)
 
 	// If lte is false, return the negation of the mask.
 	if !lte {
