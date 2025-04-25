@@ -282,14 +282,6 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 			errNotExistDeposit, ufmt.Sprintf("no deposit list for project(%s)", projectId)))
 	}
 
-	// Validate each deposit to prevent early withdrawal
-	for _, depositId := range depositList {
-		_, _, err := validateDepositCollection(depositId, caller)
-		if err != nil {
-			panic(addDetailToError(errInvalidInput, err.Error()))
-		}
-	}
-
 	return processCollectedDeposits(depositList, projectId)
 }
 
@@ -753,6 +745,12 @@ func processDepositCollection(
 	prevAddr, prevPkgPath := getPrev()
 
 	for _, depositId := range depositList {
+		// prevent early withdrawal
+		_, _, err := validateDepositCollection(depositId, std.Address(prevAddr))
+		if err != nil {
+			return 0, err
+		}
+
 		deposit := deposits[depositId]
 		// Skip if deposit is already collected
 		if deposit.depositCollectHeight != 0 {
