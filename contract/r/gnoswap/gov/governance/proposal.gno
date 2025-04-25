@@ -441,6 +441,7 @@ func hasActiveProposal(proposer std.Address) bool {
 
 	proposal := proposalRaw.(ProposalInfo)
 	return proposal.State.Created &&
+		proposal.State.Passed &&
 		!proposal.State.Canceled &&
 		!proposal.State.Rejected &&
 		!proposal.State.Expired &&
