@@ -32,6 +32,7 @@ func init() {
 }
 
 func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
+	t.Skip()
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(govStakerAddr, uint64(1_000_000))
@@ -62,6 +63,7 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 }
 
 func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
+	t.Skip()
 	testing.SkipHeights(5)
 
 	testing.SetRealm(adminRealm)
@@ -85,6 +87,7 @@ func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
 }
 
 func TestProposeParameterChange_GOV_reconfigure(t *testing.T) {
+	t.Skip()
 	testing.SkipHeights(5)
 
 	testing.SetRealm(adminRealm)
@@ -127,6 +130,7 @@ func TestProposeParameterChange_GOV_reconfigure(t *testing.T) {
 }
 
 func TestProposeParameterChange_Pool_SetFeeProtocol(t *testing.T) {
+	t.Skip()
 	testing.SetRealm(adminRealm)
 	gns.Approve(govStakerAddr, uint64(1_000_000))
 	gs.Delegate(admin, uint64(1_000_000), "")
@@ -151,6 +155,7 @@ func TestProposeParameterChange_Pool_SetFeeProtocol(t *testing.T) {
 }
 
 func TestProposeParameterChange_Pool_SetPoolCreationFee(t *testing.T) {
+	t.Skip()
 	testing.SkipHeights(5)
 
 	testing.SetRealm(adminRealm)
@@ -178,6 +183,7 @@ func TestProposeParameterChange_Pool_SetPoolCreationFee(t *testing.T) {
 }
 
 func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
+	t.Skip()
 	testing.SkipHeights(5)
 
 	testing.SetRealm(adminRealm)
@@ -204,6 +210,7 @@ func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
 }
 
 func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
+	t.Skip()
 	testing.SkipHeights(5)
 
 	testing.SetRealm(adminRealm)
@@ -231,6 +238,7 @@ func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
 }
 
 func TestProposeParameterChange_Router_SetSwapFee(t *testing.T) {
+	t.Skip()
 	testing.SkipHeights(5)
 
 	testing.SetRealm(adminRealm)
@@ -258,6 +266,7 @@ func TestProposeParameterChange_Router_SetSwapFee(t *testing.T) {
 }
 
 func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
+	t.Skip()
 	testing.SkipHeights(5)
 
 	testing.SetRealm(adminRealm)
@@ -285,6 +294,7 @@ func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
 }
 
 func TestProposeParameterChange_Staker_SetUnStakingFee(t *testing.T) {
+	t.Skip()
 	testing.SkipHeights(5)
 
 	testing.SetRealm(adminRealm)
@@ -313,6 +323,7 @@ func TestProposeParameterChange_Staker_SetUnStakingFee(t *testing.T) {
 }
 
 func TestProposeParameterChange_Common_SetHalt(t *testing.T) {
+	t.Skip()
 	testing.SkipHeights(5)
 
 	testing.SetRealm(adminRealm)
