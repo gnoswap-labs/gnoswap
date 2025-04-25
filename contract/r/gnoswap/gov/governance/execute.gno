@@ -103,10 +103,18 @@ func Execute(proposalId uint64) error {
 	}
 
 	registry := createParameterHandlers()
+
+	// 실행 전 상태 저장
+	originalState := *ctx.Proposal
+
+	// 실행 시도
 	if err := executeProposal(ctx, registry); err != nil {
+		// 실패 시 원래 상태로 복구
+		*ctx.Proposal = originalState
 		return err
 	}
 
+	// 성공 시에만 상태 업데이트
 	updateProposalState(ctx)
 
 	prevAddr, prevPkgPath := getPrev()
@@ -131,7 +139,7 @@ func executeProposal(ctx *ExecutionContext, registry *ParameterRegistry) error {
 	}
 }
 
-func executeParameterChange(msgs []string, registry *ParameterRegistry) error {
+func validateMessages(msgs []string, registry *ParameterRegistry) error {
 	for _, msg := range msgs {
 		pkgPath, function, params, err := parseMessage(msg)
 		if err != nil {
@@ -143,6 +151,24 @@ func executeParameterChange(msgs []string, registry *ParameterRegistry) error {
 			return err
 		}
 
+		// check the validity of the handler
+		if err := handler(params); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func executeParameterChange(msgs []string, registry *ParameterRegistry) error {
+	// check the validity of all messages
+	if err := validateMessages(msgs, registry); err != nil {
+		return err
+	}
+
+	// execute the messages
+	for _, msg := range msgs {
+		pkgPath, function, params, _ := parseMessage(msg)
+		handler, _ := registry.Handler(pkgPath, function)
 		if err := handler(params); err != nil {
 			return err
 		}
