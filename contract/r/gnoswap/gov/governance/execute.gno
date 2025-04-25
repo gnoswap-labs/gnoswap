@@ -104,17 +104,17 @@ func Execute(proposalId uint64) error {
 
 	registry := createParameterHandlers()
 
-	// 실행 전 상태 저장
+	// store the original state
 	originalState := *ctx.Proposal
 
-	// 실행 시도
+	// try to execute
 	if err := executeProposal(ctx, registry); err != nil {
-		// 실패 시 원래 상태로 복구
+		// rollback the original state
 		*ctx.Proposal = originalState
 		return err
 	}
 
-	// 성공 시에만 상태 업데이트
+	// update the proposal state when success
 	updateProposalState(ctx)
 
 	prevAddr, prevPkgPath := getPrev()
