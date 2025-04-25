@@ -37,8 +37,13 @@ func ExactInSwapRoute(
 	deadline int64,
 	referrer string,
 ) (string, string) {
-	checkDeadline(deadline)
-	commonSwapSetup()
+	if err := checkDeadline(deadline); err != nil {
+		panic(addDetailToError(errExpired, err.Error()))
+	}
+
+	if err := commonSwapSetup(); err != nil {
+		panic(addDetailToError(errInvalidInput, err.Error()))
+	}
 
 	baseParams := BaseSwapParams{
 		InputToken:  inputToken,
@@ -76,7 +81,13 @@ func ExactInSwapRoute(
 	)
 
 	prevAddr, prevPkgPath := getPrev()
-	referral.TryRegister(std.Address(prevAddr), referrer)
+	success := referral.TryRegister(std.Address(prevAddr), referrer)
+
+	// get the actual referral address that was used
+	actualReferrer := referrer
+	if !success {
+		actualReferrer = referral.GetReferral(prevAddr)
+	}
 
 	std.Emit(
 		"ExactInSwap",
@@ -89,7 +100,7 @@ func ExactInSwapRoute(
 		"quote", pp.QuoteArr,
 		"resultInputAmount", inputAmount,
 		"resultOutputAmount", outputAmount,
-		"referrer", referrer,
+		"referrer", actualReferrer,
 	)
 
 	return inputAmount, outputAmount

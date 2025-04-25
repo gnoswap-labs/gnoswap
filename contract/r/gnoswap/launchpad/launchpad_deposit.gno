@@ -122,7 +122,11 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 		panic(addDetailToError(errInactiveTier, tierType))
 	}
 
-	referral.TryRegister(caller, referrer)
+	success := referral.TryRegister(caller, referrer)
+	actualReferrer := referrer
+	if !success {
+		actualReferrer = referral.GetReferral(caller.String())
+	}
 	en.MintAndDistributeGns()
 
 	now := uint64(time.Now().Unix())
@@ -205,7 +209,6 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 	)
 	xgns.Mint(launchpadAddr, amount)
 
-	// Emit deposit event
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"DepositGns",
@@ -216,7 +219,7 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 		"depositId", deposit.id,
 		"claimableHeight", strconv.FormatUint(deposit.claimableHeight, 10),
 		"claimableTime", strconv.FormatUint(deposit.claimableTime, 10),
-		"referrer", referrer,
+		"referrer", actualReferrer,
 	)
 
 	return deposit.id

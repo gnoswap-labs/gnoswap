@@ -52,7 +52,6 @@ func testPositionMint(t *testing.T) {
 
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
-	// uassert.Equal(t, poolTick, int32(0)) // got -1, expected 0
 }
 
 func testExactInputSinglePool(t *testing.T) {
@@ -76,14 +75,14 @@ func testExactInputSinglePool(t *testing.T) {
 	swapFee = uint64(0)
 
 	amountIn, amountOut := ExactInSwapRoute(
-		barPath,  // inputToken
-		bazPath,  // outputToken
-		"3",      // amountSpecified
-		poolPath, // strRouteArr
-		"100",    // quoteArr
-		"1",      // tokenAmountLimit
+		barPath,
+		bazPath,
+		"3",
+		poolPath,
+		"100",
+		"1",
 		time.Now().Add(time.Hour).Unix(),
-		"", // referrer
+		"",
 	)
 
 	uassert.Equal(t, amountIn, "3")

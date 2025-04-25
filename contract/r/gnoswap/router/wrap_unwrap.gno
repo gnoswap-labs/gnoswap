@@ -9,18 +9,20 @@ import (
 	"gno.land/p/gnoswap/consts"
 )
 
+var (
+	errFailedToWrapZeroUgnot = "cannot wrap 0 ugnot"
+	errFailedToWrapBelowMin = "amount(%d) < minimum(%d)"
+)
+
 func wrap(ugnotAmount uint64) {
 	if ugnotAmount <= 0 {
-		panic(addDetailToError(
-			errWrapUnwrap,
-			ufmt.Sprintf("wrap.gno__wrap() || cannot wrap 0 ugnot"),
-		))
+		panic(addDetailToError(errWrapUnwrap, errFailedToWrapZeroUgnot))
 	}
 
 	if ugnotAmount < consts.UGNOT_MIN_DEPOSIT_TO_WRAP {
 		panic(addDetailToError(
 			errWugnotMinimum,
-			ufmt.Sprintf("wrap.gno__wrap() || amount(%d) < minimum(%d)", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP),
+			ufmt.Sprintf(errFailedToWrapBelowMin, ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP),
 		))
 	}
 

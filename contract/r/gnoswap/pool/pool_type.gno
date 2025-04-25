@@ -1,7 +1,11 @@
 package pool
 
 import (
+	"strconv"
+	"strings"
+
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -70,6 +74,30 @@ type Pool struct {
 	ticks                *avl.Tree  // tick(int32) -> TickInfo
 	tickBitmaps          *avl.Tree  // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
 	positions            *avl.Tree  // maps the key (caller, lower tick, upper tick) to a unique position
+}
+
+func (p *Pool) Ticks() string {
+	if p.ticks == nil {
+		return "[]"
+	}
+
+	tickInfoStrings := []string{}
+
+	p.ticks.Iterate("", "", func(tickKey string, tickValue any) bool {
+		tick, _ := strconv.Atoi(tickKey)
+		tickInfo := tickValue.(TickInfo)
+
+		tickInfoStrings = append(tickInfoStrings, ufmt.Sprintf(
+			`{"tick":%d,"feeGrowthOutside0X128":"%s","feeGrowthOutside1X128":"%s"}`,
+			tick,
+			tickInfo.feeGrowthOutside0X128.ToString(),
+			tickInfo.feeGrowthOutside1X128.ToString(),
+		))
+
+		return false
+	})
+
+	return "[" + strings.Join(tickInfoStrings, ",") + "]"
 }
 
 func (p *Pool) PoolPath() string {
