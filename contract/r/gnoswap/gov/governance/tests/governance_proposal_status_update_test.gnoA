@@ -164,34 +164,6 @@ func TestProposeText_ProposalStatusUpdate(t *testing.T) {
 		}
 		assertProposalState(t, proposalStat, tests)
 	})
-
-	t.Run("create new text proposal and cancel", func(t *testing.T) {
-		testing.SetRealm(adminRealm)
-		proposalId := ProposeText("test_title_2", "test_description_2")
-		Cancel(proposalId)
-
-		updateProposalsState()
-		proposalStat := mustGetProposal(proposalId).State
-
-		nowHeight = uint64(std.ChainHeight())
-		nowTime = uint64(time.Now().Unix())
-
-		tests := []proposalStateTest{
-			{"Created", proposalStat.Created, true},
-			{"CreatedAt", proposalStat.CreatedAt, nowTime},
-			{"Upcoming", proposalStat.Upcoming, false},
-			{"Active", proposalStat.Active, false},
-			{"Passed", proposalStat.Passed, false},
-			{"PassedAt", proposalStat.PassedAt, uint64(0)},
-			{"Rejected", proposalStat.Rejected, false},
-			{"RejectedAt", proposalStat.RejectedAt, uint64(0)},
-			{"Canceled", proposalStat.Canceled, true},
-			{"CanceledAt", proposalStat.CanceledAt, nowTime},
-			{"Executed", proposalStat.Executed, false},
-			{"ExecutedAt", proposalStat.ExecutedAt, uint64(0)},
-		}
-		assertProposalState(t, proposalStat, tests)
-	})
 }
 
 func TestParamaterChange(t *testing.T) {

@@ -1,0 +1,91 @@
+package governance
+
+import (
+	"testing"
+
+	"gno.land/p/demo/uassert"
+
+	"gno.land/r/gnoswap/v1/gns"
+	gs "gno.land/r/gnoswap/v1/gov/staker"
+
+	"gno.land/p/demo/ufmt"
+)
+
+func init() {
+	// overwrite config for testcase
+	config = Config{
+		VotingStartDelay:              uint64(10),   // 10s ≈ 5 block
+		VotingPeriod:                  uint64(30),   // 30s ≈ 15 block
+		VotingWeightSmoothingDuration: uint64(10),   // 10s ≈ 5 block
+		Quorum:                        uint64(50),   // 50% of total xGNS supply
+		ProposalCreationThreshold:     uint64(100),  //
+		ExecutionDelay:                uint64(10),   // 10s ≈ 5 block
+		ExecutionWindow:               uint64(1000), // 500 block
+	}
+	setConfigVersion(1, config)
+}
+
+func TestTextProposalCancel(t *testing.T) {
+	t.Run("Cancel non existent proposal", func(t *testing.T) {
+		testing.SetRealm(adminRealm)
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-GOVERNANCE-003] requested data not found || proposalId(123) not found",
+			func() {
+				Cancel(uint64(123))
+			})
+	})
+
+	t.Run("new text proposal", func(t *testing.T) {
+		testing.SetRealm(adminRealm)
+		testing.SkipHeights(25)
+
+		gns.Approve(govStakerAddr, uint64(1_000_000))
+		gs.Delegate(admin, uint64(1_000_000), "")
+		proposalId := ProposeText("test2_title", "test2_description")
+
+		testing.SkipHeights(1)
+	})
+
+	t.Run("Cancel new text proposal", func(t *testing.T) {
+		testing.SetRealm(adminRealm)
+		Cancel(proposalId)
+
+		pp, exists := proposals.Get(formatUint(proposalId))
+		uassert.True(t, exists)
+
+		proposal := pp.(ProposalInfo)
+		uassert.True(t, proposal.State.Canceled)
+		uassert.False(t, proposal.State.Active)
+		uassert.False(t, proposal.State.Upcoming)
+	})
+
+	t.Run("Cancel already canceled proposal", func(t *testing.T) {
+		testing.SetRealm(adminRealm)
+		errMsg := ufmt.Sprintf(
+			"[GNOSWAP-GOVERNANCE-008] can not cancel already canceled proposal || proposalId(%d) has already canceled",
+			proposalId,
+		)
+		uassert.PanicsWithMessage(t,
+			errMsg,
+			func() {
+				Cancel(proposalId)
+			})
+	})
+
+	t.Run("Cancel after voting period", func(t *testing.T) {
+		testing.SetRealm(adminRealm)
+		proposalId = ProposeText("test3_title", "test3_description")
+		testing.SkipHeights(11)
+
+		errMsg := ufmt.Sprintf(
+			"[GNOSWAP-GOVERNANCE-009] unable to cancel voting proposal || voting has already started for proposalId(%d)",
+			proposalId,
+		)
+
+		uassert.PanicsWithMessage(t,
+			errMsg,
+			func() {
+				Cancel(proposalId)
+			})
+	})
+}
