@@ -16,6 +16,8 @@ const STRESS_TEST_NUM = 10000 // arbitrary number
 var (
 	validAddr1  = testutils.TestAddress("valid1")
 	validAddr2  = testutils.TestAddress("valid2")
+	validAddr3  = testutils.TestAddress("valid3")
+	validAddr4  = testutils.TestAddress("valid4")
 	invalidAddr = testutils.TestAddress("invalid")
 )
 
@@ -805,31 +807,31 @@ func TestTryRegisterRetryAfterFailure(t *testing.T) {
 	defer cleanup()
 
 	invalidRef := "000000000001"
-	success := TryRegister(validAddr1, invalidRef)
+	success := TryRegister(validAddr3, invalidRef)
 	if success {
 		t.Error("should fail with invalid referral address")
 	}
 
-	validAddr2Str := validAddr2.String()
+	validAddrStr := validAddr4.String()
 
 	// trying to register with valid address
 	// should not check rate limit
-	success = TryRegister(validAddr1, validAddr2Str)
+	success = TryRegister(validAddr3, validAddrStr)
 	if !success {
 		t.Error("re-register should succeed with valid address")
 	}
 
 	// check if registration is successful
-	refAddr := GetReferral(validAddr1.String())
+	refAddr := GetReferral(validAddr3.String())
 	if refAddr == "" {
 		t.Error("should not be empty")
 	}
-	if refAddr != validAddr2Str {
-		t.Errorf("registered address is not correct: got %v, want %v", refAddr, validAddr2Str)
+	if refAddr != validAddrStr {
+		t.Errorf("registered address is not correct: got %v, want %v", refAddr, validAddrStr)
 	}
 
 	// check rate limit is applied
-	success = TryRegister(validAddr1, validAddr2Str)
+	success = TryRegister(validAddr3, validAddrStr)
 	if success {
 		t.Error("should fail due to rate limit")
 	}
