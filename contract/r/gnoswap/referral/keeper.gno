@@ -14,8 +14,9 @@ const (
 
 // keeper implements the `ReferralKeeper` interface using an AVL tree for storage.
 type keeper struct {
-	store   *avl.Tree
-	lastOps map[string]int64
+	store      *avl.Tree
+	lastOps    map[string]int64
+	lastSuccess map[string]bool
 }
 
 // check interface implementation at compile time
@@ -25,8 +26,9 @@ var _ ReferralKeeper = &keeper{}
 // The keeper is initialized with an empty AVL tree for storing referral relationships.
 func NewKeeper() ReferralKeeper {
 	return &keeper{
-		store:   avl.NewTree(),
-		lastOps: make(map[string]int64),
+		store:      avl.NewTree(),
+		lastOps:    make(map[string]int64),
+		lastSuccess: make(map[string]bool),
 	}
 }
 
@@ -58,27 +60,26 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 		return err
 	}
 
+	addrStr := addr.String()
+	refAddrStr := refAddr.String()
+
 	if refAddr == zeroAddress {
 		if k.has(addr) {
 			return k.remove(addr)
 		}
-		refAddr = std.Address("")
+		refAddr = zeroAddress
 	}
 
-	addrStr := addr.String()
-	refAddrStr := refAddr.String()
-	prevVal, prevExists := k.store.Get(addrStr)
+	// check rate limit if the previous operation was successful
+	if k.lastSuccess[addrStr] {
+		if err := k.checkRateLimit(addrStr); err != nil {
+			return err
+		}
+	}
 
 	k.store.Set(addrStr, refAddrStr)
-	if err := k.checkRateLimit(addrStr); err != nil {
-		// rollback: if there is a previous value, restore it, otherwise delete it
-		if prevExists {
-			k.store.Set(addrStr, prevVal)
-		} else {
-			k.store.Remove(addrStr)
-		}
-		return err
-	}
+	k.lastSuccess[addrStr] = true
+	k.lastOps[addrStr] = time.Now().Unix()
 
 	std.Emit(
 		eventType,
@@ -178,6 +179,5 @@ func (k *keeper) checkRateLimit(addr string) error {
 		}
 	}
 
-	k.lastOps[addr] = now
 	return nil
 }
