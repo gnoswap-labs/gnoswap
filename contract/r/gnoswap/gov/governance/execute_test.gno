@@ -3,6 +3,7 @@ package governance
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
@@ -363,6 +364,106 @@ func TestParameterRegistry2(t *testing.T) {
 			err = handler(tt.params)
 			if err != nil {
 				t.Errorf("handler returned error: %v", err)
+			}
+		})
+	}
+}
+
+func TestAtomicExecution(t *testing.T) {
+	tests := []struct {
+		name        string
+		msgs        []string
+		setupMock   func(*ParameterRegistry)
+		expectError bool
+		validate    func(*testing.T, *ProposalInfo)
+	}{
+		{
+			name: "Should rollback state when second message fails",
+			msgs: []string{
+				"gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*123",
+				"gno.land/r/gnoswap/v1/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/v1/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905",
+			},
+			setupMock: func(r *ParameterRegistry) {
+				// 1st message should succeed
+				r.Register("gno.land/r/gnoswap/v1/gns", "SetAvgBlockTimeInMs", func(params []string) error {
+					return nil
+				})
+				// 2nd message should fail
+				r.Register("gno.land/r/gnoswap/v1/community_pool", "TransferToken", func(params []string) error {
+					return errors.New("insufficient balance")
+				})
+			},
+			expectError: true,
+			validate: func(t *testing.T, proposal *ProposalInfo) {
+				// state should be rolled back
+				uassert.False(t, proposal.State.Executed)
+				uassert.True(t, proposal.State.Passed) // voting should still be passed
+			},
+		},
+		{
+			name: "Should execute all messages atomically when all succeed",
+			msgs: []string{
+				"gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*123",
+				"gno.land/r/gnoswap/v1/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/v1/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905",
+			},
+			setupMock: func(r *ParameterRegistry) {
+				// all messages should succeed
+				r.Register("gno.land/r/gnoswap/v1/gns", "SetAvgBlockTimeInMs", func(params []string) error {
+					return nil
+				})
+				r.Register("gno.land/r/gnoswap/v1/community_pool", "TransferToken", func(params []string) error {
+					return nil
+				})
+			},
+			expectError: false,
+			validate: func(t *testing.T, proposal *ProposalInfo) {
+				// all messages should succeed
+				uassert.True(t, proposal.State.Executed)
+				uassert.True(t, proposal.State.Passed)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// create a test proposal
+			proposal := &ProposalInfo{
+				ProposalType: ParameterChange,
+				State: ProposalState{
+					Passed: true,
+				},
+				Execution: ExecutionInfo{
+					Msgs: tt.msgs,
+				},
+			}
+
+			// setup registry
+			registry := NewParameterRegistry()
+			tt.setupMock(registry)
+
+			// save original state
+			originalState := *proposal
+
+			// try to execute
+			err := executeParameterChange(tt.msgs, registry)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+				// check if state is rolled back
+				uassert.Equal(t, proposal.State.Executed, originalState.State.Executed)
+				uassert.Equal(t, proposal.State.Canceled, originalState.State.Canceled)
+				uassert.Equal(t, proposal.State.Rejected, originalState.State.Rejected)
+				uassert.Equal(t, proposal.State.Passed, originalState.State.Passed)
+				uassert.Equal(t, proposal.State.ExecutedAt, originalState.State.ExecutedAt)
+			} else {
+				uassert.NoError(t, err)
+				// update proposal state when success
+				proposal.State.Executed = true
+				proposal.State.ExecutedAt = uint64(time.Now().Unix())
+			}
+
+			if tt.validate != nil {
+				tt.validate(t, proposal)
 			}
 		})
 	}
