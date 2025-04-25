@@ -63,17 +63,27 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 			return k.remove(addr)
 		}
 		refAddr = std.Address("")
-	} else {
-		if err := k.checkRateLimit(addr.String()); err != nil {
-			return err
-		}
 	}
 
-	k.store.Set(addr.String(), refAddr.String())
+	addrStr := addr.String()
+	refAddrStr := refAddr.String()
+	prevVal, prevExists := k.store.Get(addrStr)
+
+	k.store.Set(addrStr, refAddrStr)
+	if err := k.checkRateLimit(addrStr); err != nil {
+		// rollback: if there is a previous value, restore it, otherwise delete it
+		if prevExists {
+			k.store.Set(addrStr, prevVal)
+		} else {
+			k.store.Remove(addrStr)
+		}
+		return err
+	}
+
 	std.Emit(
 		eventType,
-		"myAddress", addr.String(),
-		"refAddress", refAddr.String(),
+		"myAddress", addrStr,
+		"refAddress", refAddrStr,
 	)
 
 	return nil
