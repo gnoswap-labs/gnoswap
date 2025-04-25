@@ -14,9 +14,8 @@ const (
 
 // keeper implements the `ReferralKeeper` interface using an AVL tree for storage.
 type keeper struct {
-	store      *avl.Tree
-	lastOps    map[string]int64
-	lastSuccess map[string]bool
+	store   *avl.Tree
+	lastOps map[string]int64
 }
 
 // check interface implementation at compile time
@@ -26,9 +25,8 @@ var _ ReferralKeeper = &keeper{}
 // The keeper is initialized with an empty AVL tree for storing referral relationships.
 func NewKeeper() ReferralKeeper {
 	return &keeper{
-		store:      avl.NewTree(),
-		lastOps:    make(map[string]int64),
-		lastSuccess: make(map[string]bool),
+		store:   avl.NewTree(),
+		lastOps: make(map[string]int64),
 	}
 }
 
@@ -68,17 +66,13 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 			return k.remove(addr)
 		}
 		refAddr = zeroAddress
-	}
-
-	// check rate limit if the previous operation was successful
-	if k.lastSuccess[addrStr] {
+	} else {
 		if err := k.checkRateLimit(addrStr); err != nil {
 			return err
 		}
 	}
 
 	k.store.Set(addrStr, refAddrStr)
-	k.lastSuccess[addrStr] = true
 	k.lastOps[addrStr] = time.Now().Unix()
 
 	std.Emit(

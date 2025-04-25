@@ -800,36 +800,37 @@ func TestGlobalIsEmpty(t *testing.T) {
 	}
 }
 
-func TestRetryAfterFailure(t *testing.T) {
-	k := setupKeeper()
+func TestTryRegisterRetryAfterFailure(t *testing.T) {
 	cleanup := mockValidCaller()
 	defer cleanup()
 
-	invalidRef := std.Address("000000000001")
-	err := k.register(validAddr1, invalidRef)
-	if err == nil {
-		t.Error("should fail")
+	invalidRef := "000000000001"
+	success := TryRegister(validAddr1, invalidRef)
+	if success {
+		t.Error("should fail with invalid referral address")
 	}
+
+	validAddr2Str := validAddr2.String()
 
 	// trying to register with valid address
 	// should not check rate limit
-	err = k.register(validAddr1, validAddr2)
-	if err != nil {
-		t.Errorf("re-register failed: %v", err)
+	success = TryRegister(validAddr1, validAddr2Str)
+	if !success {
+		t.Error("re-register should succeed with valid address")
 	}
 
 	// check if registration is successful
-	refAddr, err := k.get(validAddr1)
-	if err != nil {
-		t.Errorf("check registration failed: %v", err)
+	refAddr := GetReferral(validAddr1.String())
+	if refAddr == "" {
+		t.Error("should not be empty")
 	}
-	if refAddr != validAddr2 {
-		t.Errorf("registered address is not correct: got %v, want %v", refAddr, validAddr2)
+	if refAddr != validAddr2Str {
+		t.Errorf("registered address is not correct: got %v, want %v", refAddr, validAddr2Str)
 	}
 
 	// check rate limit is applied
-	err = k.register(validAddr1, validAddr2)
-	if err == nil {
-		t.Error("should fail")
+	success = TryRegister(validAddr1, validAddr2Str)
+	if success {
+		t.Error("should fail due to rate limit")
 	}
 }
