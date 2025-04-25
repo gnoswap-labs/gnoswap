@@ -19,28 +19,16 @@ import (
 	"gno.land/r/onbloc/qux"
 )
 
-//=================================Test for SwapRouter exactOut 0 ->1 in single pool=================================
-
-func TestCreatePool(t *testing.T) {
+func TestExactOutSwapRoute_5(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	gns.Approve(poolAddr, pl.GetPoolCreationFee()*2)
 
 	pl.CreatePool(barPath, bazPath, 3000, "79228162514264337593543950336")
-}
-
-func TestPositionMint(t *testing.T) {
-	// bar_baz_3000 by admin
-	testing.SetRealm(adminRealm)
 
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	baz.Approve(poolAddr, consts.UINT64_MAX)
 
-	// Mint
 	pn.Mint(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
-}
-
-func TestSwapRouteBarBazExactOut(t *testing.T) {
-	testing.SetRealm(adminRealm)
 
 	bar.Approve(routerAddr, 1000000)
 	baz.Approve(routerAddr, 1000000)

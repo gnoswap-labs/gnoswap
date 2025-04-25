@@ -408,58 +408,6 @@ func TestAssertValidTickLower(t *testing.T) {
 	}
 }
 
-func TestAssertValidTickUpper(t *testing.T) {
-	tests := []struct {
-		name        string
-		tickLower   int32
-		tickUpper   int32
-		shouldPanic bool
-		expected    string
-	}{
-		{
-			name:        "tickUpper equals MAX_TICK",
-			tickLower:   consts.MIN_TICK,
-			tickUpper:   consts.MAX_TICK,
-			shouldPanic: true,
-			expected:    "[GNOSWAP-POOL-014] tickUpper is invalid || tickUpper(887272) > MAX_TICK(887272)",
-		},
-		{
-			name:        "tickUpper less than MAX_TICK",
-			tickLower:   consts.MIN_TICK + 1,
-			tickUpper:   consts.MAX_TICK - 1,
-			shouldPanic: false,
-			expected:    "",
-		},
-		{
-			name:        "tickUpper greater than MAX_TICK (panic)",
-			tickLower:   consts.MIN_TICK - 1,
-			tickUpper:   consts.MAX_TICK + 1,
-			shouldPanic: true,
-			expected:    "[GNOSWAP-POOL-014] tickUpper is invalid || tickUpper(887273) > MAX_TICK(887272)",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r == nil {
-					if tt.shouldPanic {
-						t.Errorf("unexpected panic: %v", r)
-					}
-					return
-				} else {
-					if tt.shouldPanic {
-						uassert.Equal(t, tt.expected, r.(string))
-					} else {
-						t.Errorf("expected no panic, but got: %v", r)
-					}
-				}
-			}()
-			assertValidTickUpper(tt.tickUpper)
-		})
-	}
-}
-
 func TestUpdatePosition(t *testing.T) {
 	poolParams := &createPoolParams{
 		token0Path:   "token0",

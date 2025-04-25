@@ -126,7 +126,11 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 		panic(addDetailToError(errInactiveTier, tierType))
 	}
 
-	referral.TryRegister(caller, referrer)
+	success := referral.TryRegister(caller, referrer)
+	actualReferrer := referrer
+	if !success {
+		actualReferrer = referral.GetReferral(caller.String())
+	}
 	en.MintAndDistributeGns()
 
 	now := uint64(time.Now().Unix())
@@ -141,7 +145,9 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 	if err != nil {
 		panic(addDetailToError(errInvalidInput, err.Error()))
 	}
-	updateDeposit(deposit)
+	if err = updateDeposit(deposit); err != nil {
+		panic(err)
+	}
 
 	if tier.isFirstDeposit() {
 		// update StartHeight, StartTime, TierAmountPerBlockX128
@@ -161,9 +167,6 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 			"claimableTime", formatUint(deposit.claimableTime),
 			"tierAmountPerBlockX128", tier.TierAmountPerBlockX128().ToString(),
 		)
-
-		// rewardState := NewRewardState(tier.tierAmountPerBlockX128, tier.started.height, tier.ended.height)
-		// rewardStates.set(info.Project.id, info.TierType, rewardState)
 	}
 
 	reward := tier.Reward()
@@ -197,13 +200,6 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 
 	projects[projectId] = project
 
-	//rewardState, err := rewardStates.Get(projectId, tierType)
-	//if err != nil {
-	//	panic(addDetailToError(
-	//		errInvalidRewardState, err.Error()))
-	//}
-	//rewardState.addStake(uint64(std.ChainHeight()), deposit.id, amount)
-
 	// Update gov_staker to calculate project's recipient's reward
 	gs.SetAmountByProjectWallet(project.recipient, amount, true)
 
@@ -215,7 +211,6 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 	)
 	xgns.Mint(launchpadAddr, amount)
 
-	// Emit deposit event
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"DepositGns",
@@ -226,7 +221,7 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 		"depositId", deposit.id,
 		"claimableHeight", strconv.FormatUint(deposit.claimableHeight, 10),
 		"claimableTime", strconv.FormatUint(deposit.claimableTime, 10),
-		"referrer", referrer,
+		"referrer", actualReferrer,
 	)
 
 	return deposit.id
@@ -461,11 +456,7 @@ func checkDepositConditions(project Project) {
 // Returns:
 // - bool: True if the tier is active, otherwise false.
 func checkTierActive(project Project, tier Tier) bool {
-	if tier.ended.height < uint64(std.ChainHeight()) {
-		return false
-	}
-
-	return true
+	return tier.ended.height >= uint64(std.ChainHeight())
 }
 
 // convertTierTypeStrToUint64 converts a tier type string to its corresponding uint64 value.
@@ -671,16 +662,13 @@ func calculateClaimableTimes(info ProjectTierInfo) (uint64, uint64) {
 		minU64(calcTime, info.Tier.ended.time)
 }
 
-func updateDeposit(deposit Deposit) {
+func updateDeposit(deposit Deposit) error {
 	// Update deposits
 	_, ok := deposits[deposit.id]
 	if !ok {
 		deposits[deposit.id] = deposit
 	} else {
-		panic(addDetailToError(
-			errDuplicateDeposit,
-			ufmt.Sprintf("deposit(%s) already exists", deposit.id),
-		))
+		return errors.New(ufmt.Sprintf("deposit(%s) already exists", deposit.id))
 	}
 
 	// Update depositsByUser
@@ -712,9 +700,12 @@ func updateDeposit(deposit Deposit) {
 		depositsByUserByProject[deposit.depositor][deposit.projectId],
 		deposit.id,
 	)
+
+	return nil
 }
 
 // updateDepositIndices updates all deposit-related indices
+// testing only
 func updateDepositIndices(deposit Deposit, state *DepositState) {
 	// Update deposits
 	_, ok := state.Deposits[deposit.id]
@@ -783,16 +774,14 @@ func processDepositCollection(
 			continue
 		}
 
-		if currentHeight < project.Ended().height {
+		// determine when each deposit can be claimed
+		if !isPassedClaimableHeight(deposit, currentHeight) || isAlreadyCollected(deposit) {
 			continue
 		}
 
 		tier, err := project.Tier(convertTierTypeStrToUint64(deposit.tier))
 		if err != nil {
 			panic(err.Error())
-		}
-		if !isPassedClaimableHeight(deposit, currentHeight) || isAlreadyCollected(deposit) {
-			continue
 		}
 
 		deposit.setDepositCollectHeight(currentHeight)
