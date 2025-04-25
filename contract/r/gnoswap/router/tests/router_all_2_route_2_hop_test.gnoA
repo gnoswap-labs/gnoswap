@@ -18,29 +18,29 @@ import (
 	"gno.land/r/onbloc/qux"
 )
 
-func TestCreatePool(t *testing.T) {
+func TestRunAll2Route2Hop(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
+	// create pool
 	gns.Approve(poolAddr, pl.GetPoolCreationFee()*2)
 
 	pl.CreatePool(barPath, bazPath, uint32(500), "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 	pl.CreatePool(bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
-}
-
-func TestPositionMint(t *testing.T) {
-	// bar_baz_500 by admin
-	testing.SetRealm(adminRealm)
 
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	baz.Approve(poolAddr, consts.UINT64_MAX)
 	qux.Approve(poolAddr, consts.UINT64_MAX)
 
-	// Mint
 	positionId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 	positionId, liquidity, amount0, amount1 = pn.Mint(bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+
+	testDrySwapRouteBarQuxExactIn(t)
+	testSwapRouteBarQuxExactIn(t)
+	testDrySwapRouteBarQuxExactOut(t)
+	testSwapRouteBarQuxExactOut(t)
 }
 
-func TestDrySwapRouteBarQuxExactIn(t *testing.T) {
+func testDrySwapRouteBarQuxExactIn(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	_, dryResult, _ := DrySwapRoute(
@@ -56,7 +56,7 @@ func TestDrySwapRouteBarQuxExactIn(t *testing.T) {
 	uassert.Equal(t, dryResult, "7337")
 }
 
-func TestSwapRouteBarQuxExactIn(t *testing.T) {
+func testSwapRouteBarQuxExactIn(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	bar.Approve(poolAddr, 10000)
@@ -77,7 +77,7 @@ func TestSwapRouteBarQuxExactIn(t *testing.T) {
 	uassert.Equal(t, amountOut, "-7318")
 }
 
-func TestDrySwapRouteBarQuxExactOut(t *testing.T) {
+func testDrySwapRouteBarQuxExactOut(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	dryResult, _, _ := DrySwapRoute(
@@ -93,7 +93,7 @@ func TestDrySwapRouteBarQuxExactOut(t *testing.T) {
 	uassert.Equal(t, dryResult, "140")
 }
 
-func TestSwapRouteBarQuxExactOut(t *testing.T) {
+func testSwapRouteBarQuxExactOut(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	amountIn, amountOut := ExactOutSwapRoute(

@@ -49,8 +49,6 @@ func (k *keeper) update(addr, newRefAddr std.Address) error {
 // simple reference relationships, cycles are not a significant issue. However, when introducing
 // a referral-based reward system in the future or adding business logic where cycles could cause problems,
 // it will be necessary to implement validation checks.
-//
-// TODO: need to discuss what values to emit as event
 func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error {
 	if err := isValidCaller(std.PreviousRealm().Address()); err != nil {
 		return err
@@ -60,19 +58,15 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 		return err
 	}
 
-	// TODO: change error handler
-	// if err := k.checkRateLimit(addr.String()); err != nil {
-	// 	// XXX: because of the weird type-related errors, this is the only
-	// 	// part where we need to use `ufmt.Errorf` to build error message.
-	// 	return nil
-	// }
-
 	if refAddr == zeroAddress {
-		std.Emit(
-			EventTypeRemove,
-			"removedAddress", addr.String(),
-		)
-		return k.remove(addr)
+		if k.has(addr) {
+			return k.remove(addr)
+		}
+		refAddr = std.Address("")
+	} else {
+		if err := k.checkRateLimit(addr.String()); err != nil {
+			return err
+		}
 	}
 
 	k.store.Set(addr.String(), refAddr.String())
@@ -98,27 +92,29 @@ func (k *keeper) validateAddresses(addr, refAddr std.Address) error {
 
 // remove implements the `remove` method of the `ReferralKeeper` interface.
 // It validates the caller and address before removing the referral relationship.
-//
-// TODO: need to discuss what values to emit as event
 func (k *keeper) remove(target std.Address) error {
 	if err := isValidCaller(std.PreviousRealm().Address()); err != nil {
 		return err
 	}
 
-	if !target.IsValid() {
-		return ErrInvalidAddress
-	}
-
-	if err := k.checkRateLimit(target.String()); err != nil {
+	if err := k.validateAddresses(target, zeroAddress); err != nil {
 		return err
 	}
 
-	k.store.Remove(target.String())
+	tgt := target.String()
 
-	// TODO: update event
+	if err := k.checkRateLimit(tgt); err != nil {
+		return err
+	}
+
+	_, ok := k.store.Remove(tgt)
+	if !ok {
+		return ErrNotFound
+	}
+
 	std.Emit(
 		EventTypeRemove,
-		"removedAddress", target.String(),
+		"removedAddress", tgt,
 	)
 
 	return nil
