@@ -58,22 +58,27 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 		return err
 	}
 
+	addrStr := addr.String()
+	refAddrStr := refAddr.String()
+
 	if refAddr == zeroAddress {
 		if k.has(addr) {
 			return k.remove(addr)
 		}
-		refAddr = std.Address("")
+		refAddr = zeroAddress
 	} else {
-		if err := k.checkRateLimit(addr.String()); err != nil {
+		if err := k.checkRateLimit(addrStr); err != nil {
 			return err
 		}
 	}
 
-	k.store.Set(addr.String(), refAddr.String())
+	k.store.Set(addrStr, refAddrStr)
+	k.lastOps[addrStr] = time.Now().Unix()
+
 	std.Emit(
 		eventType,
-		"myAddress", addr.String(),
-		"refAddress", refAddr.String(),
+		"myAddress", addrStr,
+		"refAddress", refAddrStr,
 	)
 
 	return nil
@@ -168,6 +173,5 @@ func (k *keeper) checkRateLimit(addr string) error {
 		}
 	}
 
-	k.lastOps[addr] = now
 	return nil
 }
