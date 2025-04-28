@@ -442,7 +442,7 @@ func newExternalIncentiveByHeight(
 ) *ExternalIncentive {
 	rewardPerBlock := rewardAmount / uint64(endHeight-startHeight)
 
-	byTimeId := incentiveIdByTime(startTimestamp, endTimestamp, refundee, rewardToken)
+	byTimeId := incentiveIdByTime(startTimestamp, endTimestamp, refundee, rewardToken, targetPoolPath)
 
 	return &ExternalIncentive{
 		incentiveId:      byTimeId,
