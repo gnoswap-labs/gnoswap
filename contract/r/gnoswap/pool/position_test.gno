@@ -207,7 +207,7 @@ func TestPositionUpdateNegativeValues(t *testing.T) {
 			initialFeeGrowth0Last: u256.MustFromDecimal("50"),
 			initialFeeGrowth1Last: u256.MustFromDecimal("50"),
 			expectPanic:           true,
-			expectedError:         "[GNOSWAP-POOL-009] invalid liquidity calculated || Condition failed: (z must be < x) (x: 1000, y: -2000, z:115792089237316195423570985008687907853269984665640564039457584007913129638936)",
+			expectedError:         "[GNOSWAP-POOL-010] zero liquidity || liquidity delta(-2000) is greater than current liquidity(1000)",
 		},
 		{
 			name:                  "Zero Values",
@@ -253,7 +253,6 @@ func TestPositionUpdateNegativeValues(t *testing.T) {
 					t.Errorf("result contains negative values: tokensOwed0=%v, tokensOwed1=%v",
 						result.tokensOwed0, result.tokensOwed1)
 				}
-
 				if result.liquidity.Lt(u256.Zero()) {
 					t.Errorf("liquidity is negative: %v", result.liquidity)
 				}
