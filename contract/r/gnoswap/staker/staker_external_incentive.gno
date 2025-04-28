@@ -82,7 +82,7 @@ func CreateExternalIncentive(
 	caller := getPrevAddr()
 
 	// incentiveId := incentiveIdCompute(std.PrevRealm().Address(), targetPoolPath, rewardToken, startTimestamp, endTimestamp, std.GetHeight())
-	incentiveId := incentiveIdByTime(startTimestamp, endTimestamp, caller, rewardToken)
+	incentiveId := incentiveIdByTime(startTimestamp, endTimestamp, caller, rewardToken, targetPoolPath)
 
 	externalDuration := uint64(endTimestamp - startTimestamp)
 	if err := isValidIncentiveDuration(externalDuration); err != nil {
@@ -154,6 +154,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 		))
 	}
 
+	incentiveId := incentiveIdByTime(startTimestamp, endTimestamp, refundee, rewardToken, targetPoolPath)
 	ictv, exists := pool.incentives.Get(startTimestamp, endTimestamp, refundee, rewardToken)
 	if !exists {
 		panic(addDetailToError(
@@ -209,7 +210,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 		"EndExternalIncentive",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"incentiveId", ictv.incentiveId,
+		"incentiveId", incentiveId,
 		"targetPoolPath", targetPoolPath,
 		"refundee", refundee.String(),
 		"refundToken", rewardToken,
