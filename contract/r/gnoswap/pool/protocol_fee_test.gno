@@ -8,6 +8,7 @@ import (
 
 	"gno.land/p/demo/uassert"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	pn "gno.land/r/gnoswap/v1/position"
 )
 
@@ -474,6 +475,60 @@ func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 			} else {
 				tc.action(t)
 			}
+		})
+	}
+}
+
+func TestCalculateAmountWithFee(t *testing.T) {
+	tests := []struct {
+		name         string
+		amount       *u256.Uint
+		fee          *u256.Uint
+		expectedFee  *u256.Uint
+		expectedRest *u256.Uint
+	}{
+		{
+			name:         "normal case",
+			amount:       u256.NewUint(1000),
+			fee:          u256.NewUint(100), // 1%
+			expectedFee:  u256.NewUint(10),
+			expectedRest: u256.NewUint(990),
+		},
+		{
+			name:         "zero amount",
+			amount:       u256.NewUint(0),
+			fee:          u256.NewUint(100),
+			expectedFee:  u256.NewUint(0),
+			expectedRest: u256.NewUint(0),
+		},
+		{
+			name:         "zero fee",
+			amount:       u256.NewUint(1000),
+			fee:          u256.NewUint(0),
+			expectedFee:  u256.NewUint(0),
+			expectedRest: u256.NewUint(1000),
+		},
+		{
+			name:         "max fee",
+			amount:       u256.NewUint(1000),
+			fee:          u256.NewUint(10000), // 100%
+			expectedFee:  u256.NewUint(1000),
+			expectedRest: u256.NewUint(0),
+		},
+		{
+			name:         "large amount",
+			amount:       u256.MustFromDecimal("1000000000000000000"),
+			fee:          u256.NewUint(100),
+			expectedFee:  u256.MustFromDecimal("10000000000000000"),
+			expectedRest: u256.MustFromDecimal("990000000000000000"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			feeAmount, restAmount := calculateAmountWithFee(tt.amount, tt.fee)
+			uassert.Equal(t, feeAmount.ToString(), tt.expectedFee.ToString())
+			uassert.Equal(t, restAmount.ToString(), tt.expectedRest.ToString())
 		})
 	}
 }
