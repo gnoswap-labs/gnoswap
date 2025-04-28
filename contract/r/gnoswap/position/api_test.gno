@@ -53,21 +53,21 @@ func TestApiGetPositions(t *testing.T) {
 	if err != nil {
 		panic(err.Error())
 	}
-	ownerAddr := "\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\""
+	ownerAddr := `"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"`
 	uassert.Equal(t, ownerAddr, owner.String())
 
 	operator, err := response.GetKey("operator")
 	if err != nil {
 		panic(err.Error())
 	}
-	operatorAddr := "\"g100000000000000000000000000000000dnmcnx\""
+	operatorAddr := `"g100000000000000000000000000000000dnmcnx"`
 	uassert.Equal(t, operatorAddr, operator.String())
 
 	poolKey, err := response.GetKey("poolKey")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500\"", poolKey.String())
+	uassert.Equal(t, `"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"`, poolKey.String())
 
 	tickLower, err := response.GetKey("tickLower")
 	if err != nil {
@@ -85,55 +85,55 @@ func TestApiGetPositions(t *testing.T) {
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"50000\"", liquidity.String())
+	uassert.Equal(t, `"50000"`, liquidity.String())
 
 	feeGrowthInside0LastX128, err := response.GetKey("feeGrowthInside0LastX128")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", feeGrowthInside0LastX128.String())
+	uassert.Equal(t, `"0"`, feeGrowthInside0LastX128.String())
 
 	feeGrowthInside1LastX128, err := response.GetKey("feeGrowthInside1LastX128")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", feeGrowthInside1LastX128.String())
+	uassert.Equal(t, `"0"`, feeGrowthInside1LastX128.String())
 
 	token0Owed, err := response.GetKey("token0Owed")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", token0Owed.String())
+	uassert.Equal(t, `"0"`, token0Owed.String())
 
 	token1Owed, err := response.GetKey("token1Owed")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", token1Owed.String())
+	uassert.Equal(t, `"0"`, token1Owed.String())
 
 	token0Balance, err := response.GetKey("token0Balance")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"50000\"", token0Balance.String())
+	uassert.Equal(t, `"50000"`, token0Balance.String())
 
 	token1Balance, err := response.GetKey("token1Balance")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"50000\"", token1Balance.String())
+	uassert.Equal(t, `"50000"`, token1Balance.String())
 
 	fee0Unclaimed, err := response.GetKey("fee0Unclaimed")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", fee0Unclaimed.String())
+	uassert.Equal(t, `"0"`, fee0Unclaimed.String())
 
 	fee1Unclaimed, err := response.GetKey("fee1Unclaimed")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", fee1Unclaimed.String())
+	uassert.Equal(t, `"0"`, fee1Unclaimed.String())
 }
 
 func TestApiGetPositionsByPoolPath(t *testing.T) {
@@ -172,21 +172,21 @@ func TestApiGetPositionsByPoolPath(t *testing.T) {
 	if err != nil {
 		panic(err.Error())
 	}
-	ownerAddr := "\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\""
+	ownerAddr := `"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"`
 	uassert.Equal(t, ownerAddr, owner.String())
 
 	operator, err := response.GetKey("operator")
 	if err != nil {
 		panic(err.Error())
 	}
-	operatorAddr := "\"g100000000000000000000000000000000dnmcnx\""
+	operatorAddr := `"g100000000000000000000000000000000dnmcnx"`
 	uassert.Equal(t, operatorAddr, operator.String())
 
 	poolKey, err := response.GetKey("poolKey")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500\"", poolKey.String())
+	uassert.Equal(t, `"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"`, poolKey.String())
 
 	tickLower, err := response.GetKey("tickLower")
 	if err != nil {
@@ -204,55 +204,55 @@ func TestApiGetPositionsByPoolPath(t *testing.T) {
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"50000\"", liquidity.String())
+	uassert.Equal(t, `"50000"`, liquidity.String())
 
 	feeGrowthInside0LastX128, err := response.GetKey("feeGrowthInside0LastX128")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", feeGrowthInside0LastX128.String())
+	uassert.Equal(t, `"0"`, feeGrowthInside0LastX128.String())
 
 	feeGrowthInside1LastX128, err := response.GetKey("feeGrowthInside1LastX128")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", feeGrowthInside1LastX128.String())
+	uassert.Equal(t, `"0"`, feeGrowthInside1LastX128.String())
 
 	token0Owed, err := response.GetKey("token0Owed")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", token0Owed.String())
+	uassert.Equal(t, `"0"`, token0Owed.String())
 
 	token1Owed, err := response.GetKey("token1Owed")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", token1Owed.String())
+	uassert.Equal(t, `"0"`, token1Owed.String())
 
 	token0Balance, err := response.GetKey("token0Balance")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"50000\"", token0Balance.String())
+	uassert.Equal(t, `"50000"`, token0Balance.String())
 
 	token1Balance, err := response.GetKey("token1Balance")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"50000\"", token1Balance.String())
+	uassert.Equal(t, `"50000"`, token1Balance.String())
 
 	fee0Unclaimed, err := response.GetKey("fee0Unclaimed")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", fee0Unclaimed.String())
+	uassert.Equal(t, `"0"`, fee0Unclaimed.String())
 
 	fee1Unclaimed, err := response.GetKey("fee1Unclaimed")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", fee1Unclaimed.String())
+	uassert.Equal(t, `"0"`, fee1Unclaimed.String())
 }
 
 func TestApiGetPositionsByAddress(t *testing.T) {
@@ -291,21 +291,21 @@ func TestApiGetPositionsByAddress(t *testing.T) {
 	if err != nil {
 		panic(err.Error())
 	}
-	ownerAddr := "\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\""
+	ownerAddr := `"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"`
 	uassert.Equal(t, ownerAddr, owner.String())
 
 	operator, err := response.GetKey("operator")
 	if err != nil {
 		panic(err.Error())
 	}
-	operatorAddr := "\"g100000000000000000000000000000000dnmcnx\""
+	operatorAddr := `"g100000000000000000000000000000000dnmcnx"`
 	uassert.Equal(t, operatorAddr, operator.String())
 
 	poolKey, err := response.GetKey("poolKey")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500\"", poolKey.String())
+	uassert.Equal(t, `"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"`, poolKey.String())
 
 	tickLower, err := response.GetKey("tickLower")
 	if err != nil {
@@ -323,55 +323,55 @@ func TestApiGetPositionsByAddress(t *testing.T) {
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"50000\"", liquidity.String())
+	uassert.Equal(t, `"50000"`, liquidity.String())
 
 	feeGrowthInside0LastX128, err := response.GetKey("feeGrowthInside0LastX128")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", feeGrowthInside0LastX128.String())
+	uassert.Equal(t, `"0"`, feeGrowthInside0LastX128.String())
 
 	feeGrowthInside1LastX128, err := response.GetKey("feeGrowthInside1LastX128")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", feeGrowthInside1LastX128.String())
+	uassert.Equal(t, `"0"`, feeGrowthInside1LastX128.String())
 
 	token0Owed, err := response.GetKey("token0Owed")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", token0Owed.String())
+	uassert.Equal(t, `"0"`, token0Owed.String())
 
 	token1Owed, err := response.GetKey("token1Owed")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", token1Owed.String())
+	uassert.Equal(t, `"0"`, token1Owed.String())
 
 	token0Balance, err := response.GetKey("token0Balance")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"50000\"", token0Balance.String())
+	uassert.Equal(t, `"50000"`, token0Balance.String())
 
 	token1Balance, err := response.GetKey("token1Balance")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"50000\"", token1Balance.String())
+	uassert.Equal(t, `"50000"`, token1Balance.String())
 
 	fee0Unclaimed, err := response.GetKey("fee0Unclaimed")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", fee0Unclaimed.String())
+	uassert.Equal(t, `"0"`, fee0Unclaimed.String())
 
 	fee1Unclaimed, err := response.GetKey("fee1Unclaimed")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", fee1Unclaimed.String())
+	uassert.Equal(t, `"0"`, fee1Unclaimed.String())
 }
 
 func TestApiGetPositionsUnclaimedFee(t *testing.T) {
@@ -404,13 +404,13 @@ func TestApiGetPositionsUnclaimedFee(t *testing.T) {
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", fee0Unclaimed.String())
+	uassert.Equal(t, `"0"`, fee0Unclaimed.String())
 
 	fee1Unclaimed, err := response.GetKey("fee1")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", fee1Unclaimed.String())
+	uassert.Equal(t, `"0"`, fee1Unclaimed.String())
 }
 
 func TestApiGetPositionUnclaimedFeeByLpPositionId(t *testing.T) {
@@ -444,11 +444,11 @@ func TestApiGetPositionUnclaimedFeeByLpPositionId(t *testing.T) {
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", fee0Unclaimed.String())
+	uassert.Equal(t, `"0"`, fee0Unclaimed.String())
 
 	fee1Unclaimed, err := response.GetKey("fee1")
 	if err != nil {
 		panic(err.Error())
 	}
-	uassert.Equal(t, "\"0\"", fee1Unclaimed.String())
+	uassert.Equal(t, `"0"`, fee1Unclaimed.String())
 }
