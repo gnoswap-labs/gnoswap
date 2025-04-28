@@ -58,6 +58,7 @@ func TryRegister(addr std.Address, referral string) bool {
 		std.Emit(
 			EventRegisterFailed,
 			"address", addr.String(),
+			"error", err.Error(),
 		)
 		return false
 	}

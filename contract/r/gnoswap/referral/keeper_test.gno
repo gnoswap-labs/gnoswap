@@ -16,6 +16,8 @@ const STRESS_TEST_NUM = 10000 // arbitrary number
 var (
 	validAddr1  = testutils.TestAddress("valid1")
 	validAddr2  = testutils.TestAddress("valid2")
+	validAddr3  = testutils.TestAddress("valid3")
+	validAddr4  = testutils.TestAddress("valid4")
 	invalidAddr = testutils.TestAddress("invalid")
 )
 
@@ -797,5 +799,40 @@ func TestGlobalIsEmpty(t *testing.T) {
 				t.Errorf("IsEmpty() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestTryRegisterRetryAfterFailure(t *testing.T) {
+	cleanup := mockValidCaller()
+	defer cleanup()
+
+	invalidRef := "000000000001"
+	success := TryRegister(validAddr3, invalidRef)
+	if success {
+		t.Error("should fail with invalid referral address")
+	}
+
+	validAddrStr := validAddr4.String()
+
+	// trying to register with valid address
+	// should not check rate limit
+	success = TryRegister(validAddr3, validAddrStr)
+	if !success {
+		t.Error("re-register should succeed with valid address")
+	}
+
+	// check if registration is successful
+	refAddr := GetReferral(validAddr3.String())
+	if refAddr == "" {
+		t.Error("should not be empty")
+	}
+	if refAddr != validAddrStr {
+		t.Errorf("registered address is not correct: got %v, want %v", refAddr, validAddrStr)
+	}
+
+	// check rate limit is applied
+	success = TryRegister(validAddr3, validAddrStr)
+	if success {
+		t.Error("should fail due to rate limit")
 	}
 }
