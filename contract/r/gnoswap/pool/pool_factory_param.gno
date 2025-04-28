@@ -44,25 +44,11 @@ func newPoolParams(
 	}
 }
 
-func (p *createPoolParams) Token0Path() string {
-	return p.token0Path
-}
-
-func (p *createPoolParams) Token1Path() string {
-	return p.token1Path
-}
-
-func (p *createPoolParams) Fee() uint32 {
-	return p.fee
-}
-
-func (p *createPoolParams) TickSpacing() int32 {
-	return p.tickSpacing
-}
-
-func (p *createPoolParams) SqrtPriceX96() *u256.Uint {
-	return p.sqrtPriceX96
-}
+func (p *createPoolParams) SqrtPriceX96() *u256.Uint { return p.sqrtPriceX96 }
+func (p *createPoolParams) TickSpacing() int32       { return p.tickSpacing }
+func (p *createPoolParams) Token0Path() string       { return p.token0Path }
+func (p *createPoolParams) Token1Path() string       { return p.token1Path }
+func (p *createPoolParams) Fee() uint32              { return p.fee }
 
 func (p *createPoolParams) updateWithWrapping() *createPoolParams {
 	token0Path, token1Path := p.wrap()
