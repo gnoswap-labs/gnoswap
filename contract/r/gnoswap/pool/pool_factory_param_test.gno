@@ -8,6 +8,8 @@ import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/common"
 )
 
 func TestNewPoolParams(t *testing.T) {
@@ -150,6 +152,9 @@ func TestUpdateWithWrapping(t *testing.T) {
 		wugnotPath = "gno.land/r/gnoswap/v1/wugnot"
 	)
 
+	tick := int32(-11242)
+	sqrtPriceX96FromTick := common.TickMathGetSqrtRatioAtTick(tick)
+
 	tests := []struct {
 		name            string
 		token0Path      string
@@ -202,6 +207,16 @@ func TestUpdateWithWrapping(t *testing.T) {
 			tickSpacing:     GetFeeAmountTickSpacing(FeeTier3000),
 			expectedPanic:   true,
 			expectedMsg:     "out of range for numeric value",
+		},
+		{
+			name:            "success - update with wrapping",
+			token0Path:      wugnotPath,
+			token1Path:      gnsPath,
+			fee:             FeeTier3000,
+			sqrtPriceX96Str: ufmt.Sprintf("%d", sqrtPriceX96FromTick),
+			sqrtPriceX96:    sqrtPriceX96FromTick,
+			tickSpacing:     GetFeeAmountTickSpacing(FeeTier3000),
+			expectedPanic:   false,
 		},
 	}
 
