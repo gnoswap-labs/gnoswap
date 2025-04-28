@@ -213,7 +213,7 @@ func TestUpdateWithWrapping(t *testing.T) {
 			token0Path:      wugnotPath,
 			token1Path:      gnsPath,
 			fee:             FeeTier3000,
-			sqrtPriceX96Str: ufmt.Sprintf("%d", sqrtPriceX96FromTick),
+			sqrtPriceX96Str: sqrtPriceX96FromTick.ToString(),
 			sqrtPriceX96:    sqrtPriceX96FromTick,
 			tickSpacing:     GetFeeAmountTickSpacing(FeeTier3000),
 			expectedPanic:   false,
