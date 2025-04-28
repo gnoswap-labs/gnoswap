@@ -190,22 +190,22 @@ func TestPositionUpdateNegativeValues(t *testing.T) {
 	}{
 		{
 			name:                  "FeeGrowthInside less than Last",
-			initialLiquidity:      u256.FromUint64(1000),
+			initialLiquidity:      u256.MustFromDecimal("1000"),
 			liquidityDelta:        i256.Zero(),
-			feeGrowthInside0X128:  u256.FromUint64(50),
-			feeGrowthInside1X128:  u256.FromUint64(50),
-			initialFeeGrowth0Last: u256.FromUint64(100),
-			initialFeeGrowth1Last: u256.FromUint64(100),
+			feeGrowthInside0X128:  u256.MustFromDecimal("50"),
+			feeGrowthInside1X128:  u256.MustFromDecimal("50"),
+			initialFeeGrowth0Last: u256.MustFromDecimal("100"),
+			initialFeeGrowth1Last: u256.MustFromDecimal("100"),
 			expectPanic:           false,
 		},
 		{
 			name:                  "Negative Liquidity Delta",
-			initialLiquidity:      u256.FromUint64(1000),
+			initialLiquidity:      u256.MustFromDecimal("1000"),
 			liquidityDelta:        i256.MustFromDecimal("-2000"),
-			feeGrowthInside0X128:  u256.FromUint64(100),
-			feeGrowthInside1X128:  u256.FromUint64(100),
-			initialFeeGrowth0Last: u256.FromUint64(50),
-			initialFeeGrowth1Last: u256.FromUint64(50),
+			feeGrowthInside0X128:  u256.MustFromDecimal("100"),
+			feeGrowthInside1X128:  u256.MustFromDecimal("100"),
+			initialFeeGrowth0Last: u256.MustFromDecimal("50"),
+			initialFeeGrowth1Last: u256.MustFromDecimal("50"),
 			expectPanic:           true,
 			expectedError:         "[GNOSWAP-POOL-009] invalid liquidity calculated || Condition failed: (z must be < x) (x: 1000, y: -2000, z:115792089237316195423570985008687907853269984665640564039457584007913129638936)",
 		},
@@ -222,12 +222,12 @@ func TestPositionUpdateNegativeValues(t *testing.T) {
 		},
 		{
 			name:                  "Large Fee Growth Values",
-			initialLiquidity:      u256.FromUint64(1000),
+			initialLiquidity:      u256.MustFromDecimal("1000"),
 			liquidityDelta:        i256.Zero(),
 			feeGrowthInside0X128:  u256.MustFromDecimal("340282366920938463463374607431768211456"), // Q128
 			feeGrowthInside1X128:  u256.MustFromDecimal("340282366920938463463374607431768211456"), // Q128
-			initialFeeGrowth0Last: u256.FromUint64(100),
-			initialFeeGrowth1Last: u256.FromUint64(100),
+			initialFeeGrowth0Last: u256.MustFromDecimal("100"),
+			initialFeeGrowth1Last: u256.MustFromDecimal("100"),
 			expectPanic:           false,
 		},
 	}
@@ -249,12 +249,12 @@ func TestPositionUpdateNegativeValues(t *testing.T) {
 			} else {
 				result := positionUpdate(position, tt.liquidityDelta, tt.feeGrowthInside0X128, tt.feeGrowthInside1X128)
 
-				if result.tokensOwed0.IsNeg() || result.tokensOwed1.IsNeg() {
+				if result.tokensOwed0.Lt(u256.Zero()) || result.tokensOwed1.Lt(u256.Zero()) {
 					t.Errorf("result contains negative values: tokensOwed0=%v, tokensOwed1=%v",
 						result.tokensOwed0, result.tokensOwed1)
 				}
 
-				if result.liquidity.IsNeg() {
+				if result.liquidity.Lt(u256.Zero()) {
 					t.Errorf("liquidity is negative: %v", result.liquidity)
 				}
 			}
