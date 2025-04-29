@@ -10,7 +10,7 @@ func createPool(
 	fee uint32,
 	sqrtPriceX96 string,
 	tickSpacing int32,
-) *createPoolParams {
+) *poolSpecification {
 	poolInfo := newPoolParams(token0Path, token1Path, fee, sqrtPriceX96, tickSpacing)
 	// check if token0Path == token1Path
 	if poolInfo.isSameTokenPath() {
