@@ -164,16 +164,6 @@ func executeParameterChange(msgs []string, registry *ParameterRegistry) error {
 	if err := validateMessages(msgs, registry); err != nil {
 		return err
 	}
-
-	// execute the messages
-	for _, msg := range msgs {
-		pkgPath, function, params, _ := parseMessage(msg)
-		handler, _ := registry.Handler(pkgPath, function)
-		if err := handler(params); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
