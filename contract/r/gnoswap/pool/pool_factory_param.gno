@@ -70,13 +70,6 @@ func (p *poolSpecification) updateWithWrapping() *poolSpecification {
 		// newPrice = 2^192 / oldPrice
 		newPrice := u256.Zero().Div(Q192, p.sqrtPriceX96)
 
-		if newPrice.IsZero() {
-			panic(newErrorWithDetail(
-				errOverFlow,
-				ufmt.Sprintf("expected newPrice(%s) to be non-zero", newPrice.ToString()),
-			))
-		}
-
 		// Check if calculated price is within valid range
 		if newPrice.Lt(minSqrtRatio) || newPrice.Gt(maxSqrtRatio) {
 			panic(newErrorWithDetail(
