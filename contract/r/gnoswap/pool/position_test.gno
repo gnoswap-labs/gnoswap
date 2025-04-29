@@ -494,7 +494,7 @@ func TestAssertValidTickLower(t *testing.T) {
 }
 
 func TestUpdatePosition(t *testing.T) {
-	poolParams := &poolSpecification{
+	poolParams := &poolCreateConfig{
 		token0Path:   "token0",
 		token1Path:   "token1",
 		fee:          500,

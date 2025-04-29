@@ -266,7 +266,7 @@ func (t *TickInfo) valueOrZero() {
 	t.secondsPerLiquidityOutsideX128 = t.secondsPerLiquidityOutsideX128.NilToZero()
 }
 
-func newPool(poolInfo *poolSpecification) *Pool {
+func newPool(poolInfo *poolCreateConfig) *Pool {
 	maxLiquidityPerTick := calculateMaxLiquidityPerTick(poolInfo.tickSpacing)
 	tick := common.TickMathGetTickAtSqrtRatio(poolInfo.SqrtPriceX96())
 	slot0 := newSlot0(poolInfo.SqrtPriceX96(), tick, slot0FeeProtocol, true)
