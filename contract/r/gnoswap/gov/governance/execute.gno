@@ -27,7 +27,14 @@ const (
 )
 
 // Function signature for different parameter handlers
-type ParameterHandler func([]string) error
+type ParameterHandler interface {
+	// Execute processes the parameters
+	Execute(params []string) error
+	// GetState returns the current state (optional)
+	GetState() interface{}
+	// RestoreState restores the given state (optional)
+	RestoreState(state interface{}) error
+}
 
 // Registry for parameter handlers
 type ParameterRegistry struct {
@@ -54,16 +61,11 @@ func (r *ParameterRegistry) Handler(pkgPath, function string) (ParameterHandler,
 	if !exists {
 		return nil, ufmt.Errorf("handler not found for %s", key)
 	}
-	return hdlr.(ParameterHandler), nil
-}
-
-func (r *ParameterRegistry) Get(pkgPath, function string) (ParameterHandler, error) {
-	key := makeHandlerKey(pkgPath, function)
-	hdlr, exists := r.handlers.Get(key)
-	if !exists {
-		return nil, ufmt.Errorf("handler not found for %s", key)
+	paramHdlr, ok := hdlr.(ParameterHandler)
+	if !ok {
+		return nil, ufmt.Errorf("failed to cast handler %s to ParameterHandler", key)
 	}
-	return hdlr.(ParameterHandler), nil
+	return paramHdlr, nil
 }
 
 func makeHandlerKey(pkgPath, function string) string {
@@ -83,7 +85,14 @@ type ExecutionContext struct {
 
 func (e *ExecutionContext) String() string {
 	return ufmt.Sprintf(
-		"ProposalId: %d, Now: %d, Config: %v, Proposal: %v, WindowStart: %d, WindowEnd: %d",
+		`
+ProposalId: %d,
+Now: %d,
+Config: %v,
+Proposal: %v,
+WindowStart: %d,
+WindowEnd: %d
+`,
 		e.ProposalId, e.Now, e.Config, e.Proposal, e.WindowStart, e.WindowEnd,
 	)
 }
@@ -131,15 +140,22 @@ func Execute(proposalId uint64) error {
 func executeProposal(ctx *ExecutionContext, registry *ParameterRegistry) error {
 	switch ctx.Proposal.ProposalType {
 	case ParameterChange, CommunityPoolSpend:
-		return executeParameterChange(ctx.Proposal.Execution.Msgs, registry)
+		if err := executeParameterChange(ctx.Proposal.Execution.Msgs, registry); err != nil {
+			return err
+		}
+		// Update proposal state on success
+		updateProposalState(ctx)
+		return nil
 	case RoleChange:
-		return executeRoleChange(ctx.Proposal)
+		return dispatchRoleChange(ctx.Proposal)
 	default:
 		return errUnsupportedProposalType
 	}
 }
 
-func validateMessages(msgs []string, registry *ParameterRegistry) error {
+func executeParameterChange(msgs []string, registry *ParameterRegistry) error {
+	stateManager := newStateManager()
+
 	for _, msg := range msgs {
 		pkgPath, function, params, err := parseMessage(msg)
 		if err != nil {
@@ -151,23 +167,26 @@ func validateMessages(msgs []string, registry *ParameterRegistry) error {
 			return err
 		}
 
-		// check the validity of the handler
-		if err := handler(params); err != nil {
+		// Save state before execution
+		if err := stateManager.SaveState(pkgPath, function, handler); err != nil {
 			return err
 		}
+
+		// Execute the message
+		if err := handler.Execute(params); err != nil {
+			// restore the original state when failed
+			if rollbackErr := stateManager.RestoreStates(); rollbackErr != nil {
+				panic(rollbackErr)
+			}
+			return ufmt.Errorf("failed to execute message: %s, error: %v", msg, err)
+		}
 	}
+
 	return nil
 }
 
-func executeParameterChange(msgs []string, registry *ParameterRegistry) error {
-	// check the validity of all messages
-	if err := validateMessages(msgs, registry); err != nil {
-		return err
-	}
-	return nil
-}
-
-func executeRoleChange(proposal *ProposalInfo) error {
+// dispatchRoleChange function calls different functions depending on the type of role change
+func dispatchRoleChange(proposal *ProposalInfo) error {
 	roleInfo := proposal.RoleChange
 
 	switch roleInfo.Action {
@@ -248,7 +267,10 @@ func getProposal(proposalId uint64) (*ProposalInfo, error) {
 	if !exists {
 		return nil, ufmt.Errorf("proposal %d not found", proposalId)
 	}
-	proposal, exists := result.(ProposalInfo)
+	proposal, ok := result.(ProposalInfo)
+	if !ok {
+		return nil, ufmt.Errorf("failed to cast proposal %d to ProposalInfo", proposalId)
+	}
 	if !exists {
 		return nil, ufmt.Errorf("proposal %d not found", proposalId)
 	}
@@ -350,7 +372,7 @@ func updateProposalState(ctx *ExecutionContext) {
 	ctx.Proposal.State.ExecutedAt = ctx.Now
 	ctx.Proposal.State.Upcoming = false
 	ctx.Proposal.State.Active = false
-	proposals.Set(strconv.Itoa(int(ctx.ProposalId)), *ctx.Proposal)
+	proposals.Set(strconv.FormatUint(ctx.ProposalId, 10), *ctx.Proposal)
 }
 
 func validateCommunityPoolToken(pp *ProposalInfo) error {
@@ -369,3 +391,75 @@ func hasDesiredParams(params []string, expected int) error {
 	}
 	return nil
 }
+
+// StatefulHandler is an interface that can save and restore state
+type StatefulHandler interface {
+	// GetState returns the current state
+	GetState() interface{}
+	// RestoreState restores the given state
+	RestoreState(state interface{}) error
+}
+
+// handlerState stores the state information of the handler
+type handlerState struct {
+	pkgPath  string
+	function string
+	state    any
+	handler  ParameterHandler
+}
+
+// stateManager manages the state
+type stateManager struct {
+	states map[string]*handlerState
+}
+
+func newStateManager() *stateManager {
+	return &stateManager{
+		states: make(map[string]*handlerState),
+	}
+}
+
+func (sm *stateManager) SaveState(pkgPath, function string, handler ParameterHandler) error {
+	key := makeHandlerKey(pkgPath, function)
+
+	// check if the handler implements the StatefulHandler interface
+	if sh, ok := handler.(StatefulHandler); ok {
+		sm.states[key] = &handlerState{
+			pkgPath:  pkgPath,
+			function: function,
+			state:    sh.GetState(),
+			handler:  handler,
+		}
+		return nil
+	}
+
+	// handlers that do not implement the StatefulHandler interface do not need to save state
+	return nil
+}
+
+func (sm *stateManager) RestoreStates() error {
+	for _, state := range sm.states {
+		if sh, ok := state.handler.(StatefulHandler); ok {
+			if err := sh.RestoreState(state.state); err != nil {
+				return ufmt.Errorf("failed to restore state for %s: %v",
+					makeHandlerKey(state.pkgPath, state.function), err)
+			}
+		}
+	}
+	return nil
+}
+
+// FunctionHandler wraps existing functions as a ParameterHandler interface.
+type FunctionHandler struct {
+	fn func(params []string) error
+}
+
+func NewFunctionHandler(fn func(params []string) error) *FunctionHandler {
+	return &FunctionHandler{fn: fn}
+}
+
+var _ ParameterHandler = (*FunctionHandler)(nil)
+
+func (h *FunctionHandler) Execute(params []string) error        { return h.fn(params) }
+func (h *FunctionHandler) RestoreState(state interface{}) error { return nil }
+func (h *FunctionHandler) GetState() interface{}                { return nil }

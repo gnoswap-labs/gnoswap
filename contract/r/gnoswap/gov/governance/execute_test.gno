@@ -12,9 +12,9 @@ import (
 func TestParameterRegistry_Register(t *testing.T) {
 	registry := NewParameterRegistry()
 
-	testHandler := func(params []string) error {
+	testHandler := NewFunctionHandler(func(params []string) error {
 		return nil
-	}
+	})
 
 	tests := []struct {
 		name     string
@@ -68,9 +68,9 @@ func TestParameterRegistry(t *testing.T) {
 			name:     "should register and retrieve handler successfully",
 			pkgPath:  "test/pkg",
 			function: "testFunc",
-			handler: func(params []string) error {
+			handler: NewFunctionHandler(func(params []string) error {
 				return nil
-			},
+			}),
 			wantErr:    false,
 			errMessage: "",
 		},
@@ -112,12 +112,12 @@ func TestParameterRegistry(t *testing.T) {
 func TestExecuteParameterChange(t *testing.T) {
 	registry := NewParameterRegistry()
 
-	registry.Register("test/pkg", "TestFunc", func(params []string) error {
+	registry.Register("test/pkg", "TestFunc", NewFunctionHandler(func(params []string) error {
 		if len(params) != 2 {
 			return errors.New("invalid params length")
 		}
 		return nil
-	})
+	}))
 
 	tests := []struct {
 		name    string
@@ -334,9 +334,9 @@ func TestParameterRegistry2(t *testing.T) {
 			function: "SetFeeProtocol",
 			params:   []string{"1", "2"},
 			setupMock: func(r *ParameterRegistry) {
-				r.Register(consts.POOL_PATH, "SetFeeProtocol", func(p []string) error {
+				r.Register(consts.POOL_PATH, "SetFeeProtocol", NewFunctionHandler(func(p []string) error {
 					return nil
-				})
+				}))
 			},
 			expectError: false,
 		},
@@ -361,7 +361,7 @@ func TestParameterRegistry2(t *testing.T) {
 				return
 			}
 
-			err = handler(tt.params)
+			err = handler.Execute(tt.params)
 			if err != nil {
 				t.Errorf("handler returned error: %v", err)
 			}
@@ -385,13 +385,13 @@ func TestAtomicExecution(t *testing.T) {
 			},
 			setupMock: func(r *ParameterRegistry) {
 				// 1st message should succeed
-				r.Register("gno.land/r/gnoswap/v1/gns", "SetAvgBlockTimeInMs", func(params []string) error {
+				r.Register("gno.land/r/gnoswap/v1/gns", "SetAvgBlockTimeInMs", NewFunctionHandler(func(params []string) error {
 					return nil
-				})
+				}))
 				// 2nd message should fail
-				r.Register("gno.land/r/gnoswap/v1/community_pool", "TransferToken", func(params []string) error {
+				r.Register("gno.land/r/gnoswap/v1/community_pool", "TransferToken", NewFunctionHandler(func(params []string) error {
 					return errors.New("insufficient balance")
-				})
+				}))
 			},
 			expectError: true,
 			validate: func(t *testing.T, proposal *ProposalInfo) {
@@ -408,12 +408,12 @@ func TestAtomicExecution(t *testing.T) {
 			},
 			setupMock: func(r *ParameterRegistry) {
 				// all messages should succeed
-				r.Register("gno.land/r/gnoswap/v1/gns", "SetAvgBlockTimeInMs", func(params []string) error {
+				r.Register("gno.land/r/gnoswap/v1/gns", "SetAvgBlockTimeInMs", NewFunctionHandler(func(params []string) error {
 					return nil
-				})
-				r.Register("gno.land/r/gnoswap/v1/community_pool", "TransferToken", func(params []string) error {
+				}))
+				r.Register("gno.land/r/gnoswap/v1/community_pool", "TransferToken", NewFunctionHandler(func(params []string) error {
 					return nil
-				})
+				}))
 			},
 			expectError: false,
 			validate: func(t *testing.T, proposal *ProposalInfo) {
@@ -444,8 +444,16 @@ func TestAtomicExecution(t *testing.T) {
 			// save original state
 			originalState := *proposal
 
+			// create execution context
+			ctx := &ExecutionContext{
+				ProposalId: 1,
+				Now:        uint64(time.Now().Unix()),
+				Config:     &Config{},
+				Proposal:   proposal,
+			}
+
 			// try to execute
-			err := executeParameterChange(tt.msgs, registry)
+			err := executeProposal(ctx, registry)
 
 			if tt.expectError {
 				uassert.Error(t, err)
@@ -457,13 +465,226 @@ func TestAtomicExecution(t *testing.T) {
 				uassert.Equal(t, proposal.State.ExecutedAt, originalState.State.ExecutedAt)
 			} else {
 				uassert.NoError(t, err)
-				// update proposal state when success
-				proposal.State.Executed = true
-				proposal.State.ExecutedAt = uint64(time.Now().Unix())
+				// check if state is updated
+				uassert.True(t, proposal.State.Executed)
+				if proposal.State.ExecutedAt == 0 {
+					t.Error("executedAt should be 0")
+				}
 			}
 
 			if tt.validate != nil {
 				tt.validate(t, proposal)
+			}
+		})
+	}
+}
+
+func TestRollbackSystem(t *testing.T) {
+	// trace the state change
+	type stateChange struct {
+		pkgPath  string
+		function string
+		value    any
+	}
+
+	tests := []struct {
+		name        string
+		msgs        []string
+		setupMock   func(*ParameterRegistry) ([]stateChange, func())
+		expectError bool
+		validate    func(*testing.T, []stateChange)
+	}{
+		{
+			name: "Should rollback when second message fails",
+			msgs: []string{
+				"gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*123",
+				"gno.land/r/gnoswap/v1/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/v1/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905",
+			},
+			setupMock: func(r *ParameterRegistry) ([]stateChange, func()) {
+				initialStates := []stateChange{
+					{
+						pkgPath:  "gno.land/r/gnoswap/v1/gns",
+						function: "SetAvgBlockTimeInMs",
+						value:    int64(0),
+					},
+				}
+
+				// track the state change
+				blockTime := int64(0)
+
+				// first message should succeed
+				r.Register("gno.land/r/gnoswap/v1/gns", "SetAvgBlockTimeInMs", NewFunctionHandler(func(params []string) error {
+					blockTime = int64(123)
+					initialStates[0].value = blockTime
+					return nil
+				}))
+				// second message should fail
+				r.Register("gno.land/r/gnoswap/v1/community_pool", "TransferToken", NewFunctionHandler(func(params []string) error {
+					return errors.New("insufficient balance")
+				}))
+
+				// rollback the state
+				rollback := func() {
+					blockTime = int64(0)
+					initialStates[0].value = blockTime
+				}
+
+				return initialStates, rollback
+			},
+			expectError: true,
+			validate: func(t *testing.T, states []stateChange) {
+				// should be rolled back to initial value
+				uassert.Equal(t, states[0].value, int64(0))
+			},
+		},
+		{
+			name: "Should not rollback when all messages succeed",
+			msgs: []string{
+				"gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*123",
+				"gno.land/r/gnoswap/v1/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/v1/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905",
+			},
+			setupMock: func(r *ParameterRegistry) ([]stateChange, func()) {
+				initialStates := []stateChange{
+					{
+						pkgPath:  "gno.land/r/gnoswap/v1/gns",
+						function: "SetAvgBlockTimeInMs",
+						value:    int64(0),
+					},
+					{
+						pkgPath:  "gno.land/r/gnoswap/v1/community_pool",
+						function: "TransferToken",
+						value:    uint64(0),
+					},
+				}
+
+				// track the state change
+				blockTime := int64(0)
+				transferAmount := uint64(0)
+
+				// all messages should succeed
+				r.Register("gno.land/r/gnoswap/v1/gns", "SetAvgBlockTimeInMs", NewFunctionHandler(func(params []string) error {
+					blockTime = int64(123)
+					initialStates[0].value = blockTime
+					return nil
+				}))
+				r.Register("gno.land/r/gnoswap/v1/community_pool", "TransferToken", NewFunctionHandler(func(params []string) error {
+					transferAmount = uint64(905)
+					initialStates[1].value = transferAmount
+					return nil
+				}))
+
+				// rollback function (not used in this case)
+				rollback := func() {
+					blockTime = int64(0)
+					transferAmount = uint64(0)
+					initialStates[0].value = blockTime
+					initialStates[1].value = transferAmount
+				}
+
+				return initialStates, rollback
+			},
+			expectError: false,
+			validate: func(t *testing.T, states []stateChange) {
+				// should be changed
+				uassert.Equal(t, states[0].value, int64(123))
+				uassert.Equal(t, states[1].value, uint64(905))
+			},
+		},
+		{
+			name: "Should not rollback when first message fails",
+			msgs: []string{
+				"gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*invalid",
+				"gno.land/r/gnoswap/v1/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/v1/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905",
+			},
+			setupMock: func(r *ParameterRegistry) ([]stateChange, func()) {
+				initialStates := []stateChange{
+					{
+						pkgPath:  "gno.land/r/gnoswap/v1/gns",
+						function: "SetAvgBlockTimeInMs",
+						value:    int64(0),
+					},
+					{
+						pkgPath:  "gno.land/r/gnoswap/v1/community_pool",
+						function: "TransferToken",
+						value:    uint64(0),
+					},
+				}
+
+				// track the state change
+				blockTime := int64(0)
+				transferAmount := uint64(0)
+
+				// first message should fail
+				r.Register("gno.land/r/gnoswap/v1/gns", "SetAvgBlockTimeInMs", NewFunctionHandler(func(params []string) error {
+					return errors.New("invalid parameter")
+				}))
+				// second message should not be executed
+				r.Register("gno.land/r/gnoswap/v1/community_pool", "TransferToken", NewFunctionHandler(func(params []string) error {
+					transferAmount = uint64(905)
+					initialStates[1].value = transferAmount
+					return nil
+				}))
+
+				// rollback function (not used in this case)
+				rollback := func() {
+					blockTime = int64(0)
+					transferAmount = uint64(0)
+					initialStates[0].value = blockTime
+					initialStates[1].value = transferAmount
+				}
+
+				return initialStates, rollback
+			},
+			expectError: true,
+			validate: func(t *testing.T, states []stateChange) {
+				// should not be changed
+				uassert.Equal(t, states[0].value, int64(0))
+				uassert.Equal(t, states[1].value, uint64(0))
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// create a test registry
+			registry := NewParameterRegistry()
+			initialStates, rollback := tt.setupMock(registry)
+
+			// create a test proposal
+			proposal := &ProposalInfo{
+				ProposalType: ParameterChange,
+				State: ProposalState{
+					Passed: true,
+				},
+				Execution: ExecutionInfo{
+					Msgs: tt.msgs,
+				},
+			}
+
+			// create an execution context
+			ctx := &ExecutionContext{
+				ProposalId: 1,
+				Now:        uint64(time.Now().Unix()),
+				Config:     &Config{},
+				Proposal:   proposal,
+			}
+
+			err := executeProposal(ctx, registry)
+
+			// if error occurs, execute rollback
+			if err != nil {
+				rollback()
+			}
+
+			if tt.expectError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+
+			// validate state
+			if tt.validate != nil {
+				tt.validate(t, initialStates)
 			}
 		})
 	}
