@@ -70,10 +70,10 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 			}
 		}
 		return nil
-	} else {
-		if err := k.checkRateLimit(addrStr); err != nil {
-			return err
-		}
+	}
+
+	if err := k.checkRateLimit(addrStr); err != nil {
+		return err
 	}
 
 	k.store.Set(addrStr, refAddrStr)
