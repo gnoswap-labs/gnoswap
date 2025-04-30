@@ -112,11 +112,8 @@ func (k *keeper) remove(target std.Address) error {
 
 	tgt := target.String()
 
-	// do not check rate limit when removing with zeroAddress
-	if target != zeroAddress {
-		if err := k.checkRateLimit(tgt); err != nil {
-			return err
-		}
+	if err := k.checkRateLimit(tgt); err != nil {
+		return err
 	}
 
 	_, ok := k.store.Remove(tgt)

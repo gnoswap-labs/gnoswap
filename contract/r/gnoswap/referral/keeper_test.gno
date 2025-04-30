@@ -848,7 +848,7 @@ func TestRegisterWithEmptyRefAddrAndThenValidRefAddr(t *testing.T) {
 	// try to register with empty refAddr
 	success := TryRegister(validAddr5, "")
 	if !success {
-		t.Error("empty refAddr registration should succeed")
+		t.Error("empty refAddr registration should be bypassed")
 	}
 
 	// try to register with valid address
