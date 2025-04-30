@@ -18,6 +18,10 @@ var (
 	validAddr2  = testutils.TestAddress("valid2")
 	validAddr3  = testutils.TestAddress("valid3")
 	validAddr4  = testutils.TestAddress("valid4")
+	validAddr5  = testutils.TestAddress("valid5")
+	validAddr6  = testutils.TestAddress("valid6")
+	validAddr7  = testutils.TestAddress("valid7")
+	validAddr8  = testutils.TestAddress("valid8")
 	invalidAddr = testutils.TestAddress("invalid")
 )
 
@@ -834,5 +838,59 @@ func TestTryRegisterRetryAfterFailure(t *testing.T) {
 	success = TryRegister(validAddr3, validAddrStr)
 	if success {
 		t.Error("should fail due to rate limit")
+	}
+}
+
+func TestRegisterWithEmptyRefAddrAndThenValidRefAddr(t *testing.T) {
+	cleanup := mockValidCaller()
+	defer cleanup()
+
+	// try to register with empty refAddr
+	success := TryRegister(validAddr5, "")
+	if !success {
+		t.Error("empty refAddr registration should be bypassed")
+	}
+
+	// try to register with valid address
+	validAddr6Str := validAddr6.String()
+	success = TryRegister(validAddr5, validAddr6Str)
+	if !success {
+		t.Error("should succeed with valid address after empty refAddr")
+	}
+
+	// check registered address
+	refAddr := GetReferral(validAddr5.String())
+	if refAddr != validAddr6Str {
+		t.Errorf("registered address is not correct: got %v, want %v", refAddr, validAddr6Str)
+	}
+}
+
+func TestRegisterWithValidRefAddrAndThenRemoveWithEmptyRefAddr(t *testing.T) {
+	cleanup := mockValidCaller()
+	defer cleanup()
+
+	// register with valid address
+	validAddrStr := validAddr7.String()
+	success := TryRegister(validAddr8, validAddrStr)
+	if !success {
+		t.Error("should succeed with valid address")
+	}
+
+	// check registered address
+	refAddr := GetReferral(validAddr8.String())
+	if refAddr != validAddrStr {
+		t.Errorf("registered address is not correct: got %v, want %v", refAddr, validAddrStr)
+	}
+
+	// remove with empty refAddr
+	success = TryRegister(validAddr8, "")
+	if !success {
+		t.Error("should succeed with empty refAddr to remove")
+	}
+
+	// check removed
+	refAddr = GetReferral(validAddr8.String())
+	if refAddr != "" {
+		t.Error("referral should be removed")
 	}
 }
