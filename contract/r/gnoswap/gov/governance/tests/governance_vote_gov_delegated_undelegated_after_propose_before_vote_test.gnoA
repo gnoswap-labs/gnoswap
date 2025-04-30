@@ -100,12 +100,12 @@ func testProposeText(t *testing.T) {
 			pp, ok := proposals.Get(strconv.FormatUint(proposalID, 10))
 			uassert.True(t, ok)
 			proposal := pp.(ProposalInfo)
-			uassert.Equal(t, proposal.QuorumAmount, uint64(500000)) // 50% of voting xGNS supply
+			uassert.Equal(t, proposal.QuorumAmount, uint64(1500000)) // 50% of voting xGNS supply
 
 			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.CreatedAt - config.VotingWeightSmoothingDuration)
 			// config.VotingWeightSmoothingDuration = 10s = 5 block
 
-			uassert.Equal(t, maxVotingWeight, uint64(1000000))
+			uassert.Equal(t, maxVotingWeight, uint64(3000000))
 			// createdAt > 125 // 1234567894
 			// (createdAt - VotingWeightSmoothingDuration) > 120 // 1234567884
 			// no delegation happend until block 120
