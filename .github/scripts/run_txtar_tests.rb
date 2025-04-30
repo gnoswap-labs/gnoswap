@@ -25,24 +25,24 @@ class TxtarTestRunner
   end
 
   def copy_txtar_files
-    puts "Copying txtar files to integration test directory"
-    FileUtils.mkdir_p(@integration_dir)
+    # puts "Copying txtar files to integration test directory"
+    # FileUtils.mkdir_p(@integration_dir)
 
-    puts "Cleaning up existing files in #{@integration_dir}"
-    existing_files = Dir.glob(File.join(@integration_dir, "*.txtar"))
-    existing_files.each do |file|
-      puts "Removing #{file}"
-      FileUtils.rm(file)
-    end
+    # puts "Cleaning up existing files in #{@integration_dir}"
+    # existing_files = Dir.glob(File.join(@integration_dir, "*.txtar"))
+    # existing_files.each do |file|
+    #   puts "Removing #{file}"
+    #   FileUtils.rm(file)
+    # end
 
-    # Find all .txtar files in the source directory
-    txtar_files = Dir.glob(File.join(@source_dir, "**", "*.txtar"))
+    # # Find all .txtar files in the source directory
+    # txtar_files = Dir.glob(File.join(@source_dir, "**", "*.txtar"))
     
-    txtar_files.each do |file|
-      dest = File.join(@integration_dir, File.basename(file))
-      puts "Copying #{file} to #{dest}"
-      FileUtils.cp(file, dest)
-    end
+    # txtar_files.each do |file|
+    #   dest = File.join(@integration_dir, File.basename(file))
+    #   puts "Copying #{file} to #{dest}"
+    #   FileUtils.cp(file, dest)
+    # end
 
     txtar_files.map { |f| File.basename(f, ".txtar") }
   end
@@ -52,7 +52,7 @@ class TxtarTestRunner
 
     puts "Running txtar tests"
     pattern_arg = patterns.join("|")
-    
+
     Dir.chdir(@test_dir) do
       run_command("go test -v . -run Testdata")
     end
