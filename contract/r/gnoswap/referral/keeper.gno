@@ -63,13 +63,17 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 
 	if refAddr == zeroAddress {
 		if k.has(addr) {
-			return k.remove(addr)
+			// remove only if the address is already registered
+			_, ok := k.store.Remove(addrStr)
+			if !ok {
+				return ErrNotFound
+			}
 		}
-		refAddr = zeroAddress
-	} else {
-		if err := k.checkRateLimit(addrStr); err != nil {
-			return err
-		}
+		return nil
+	}
+
+	if err := k.checkRateLimit(addrStr); err != nil {
+		return err
 	}
 
 	k.store.Set(addrStr, refAddrStr)
