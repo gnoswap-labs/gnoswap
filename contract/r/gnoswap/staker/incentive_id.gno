@@ -56,57 +56,60 @@ func buildIncentiveId(components []string) string {
 }
 
 // incentiveIdByTime generates a unique incentive ID based on time intervals,
-// creator address, and reward token.
+// creator address, reward token, and target pool path.
 //
 // The generated ID is a plain string in the following format:
-// "startTime:endTime:creator:rewardToken".
+// "startTime:endTime:creator:rewardToken:targetPoolPath".
 //
 // Parameters:
 // - startTime (uint64): The starting time of the incentive.
 // - endTime (uint64): The ending time of the incentive.
 // - creator (std.Address): The address of the incentive creator.
 // - rewardToken (string): The reward token associated with the incentive.
+// - targetPoolPath (string): The target pool path for the incentive.
 //
 // Returns:
 // - string: A plain string representing the incentive ID.
 //
 // Example:
-// Input: startTime=12345, endTime=67890, creator="g1xyz", rewardToken="gns"
-// Output: "000000000000012345:000000000000067890:g1xyz:gns"
-func incentiveIdByTime(startTime, endTime int64, creator std.Address, rewardToken string) string {
+// Input: startTime=12345, endTime=67890, creator="g1xyz", rewardToken="gns", targetPoolPath="pool1"
+// Output: "000000000000012345:000000000000067890:g1xyz:gns:pool1"
+func incentiveIdByTime(startTime, endTime int64, creator std.Address, rewardToken string, targetPoolPath string) string {
 	components := []string{
 		EncodeUint(uint64(startTime)),
 		EncodeUint(uint64(endTime)),
 		creator.String(),
 		rewardToken,
+		targetPoolPath,
 	}
 
 	return buildIncentiveId(components)
 }
 
 // incentiveIdByHeight generates two unique incentive IDs based on height intervals,
-// creator address, and reward token.
+// creator address, reward token, and target pool path.
 //
 // The first ID (byHeightId) has the format:
-// "startHeight:endHeight:creator:rewardToken".
+// "startHeight:endHeight:creator:rewardToken:targetPoolPath".
 //
 // The second ID (byCreatorId) has the format:
-// "creator:startHeight:endHeight:rewardToken".
+// "creator:startHeight:endHeight:rewardToken:targetPoolPath".
 //
 // Parameters:
 // - startHeight (uint64): The starting blockchain height of the incentive.
 // - endHeight (uint64): The ending blockchain height of the incentive.
 // - creator (std.Address): The address of the incentive creator.
 // - rewardToken (string): The reward token associated with the incentive.
+// - targetPoolPath (string): The target pool path for the incentive.
 //
 // Returns:
 // - string: The first ID (byHeightId).
 // - string: The second ID (byCreatorId).
 //
 // Example:
-// Input: startHeight=123, endHeight=456, creator="g1xyz", rewardToken="gns"
-// Output: "000000000000000123:000000000000000456:g1xyz:gns", "g1xyz:000000000000000123:000000000000000456:gns"
-func incentiveIdByHeight(startHeight, endHeight int64, creator std.Address, rewardToken string) (string, string) {
+// Input: startHeight=123, endHeight=456, creator="g1xyz", rewardToken="gns", targetPoolPath="pool1"
+// Output: "000000000000000123:000000000000000456:g1xyz:gns:pool1", "g1xyz:000000000000000123:000000000000000456:gns:pool1"
+func incentiveIdByHeight(startHeight, endHeight int64, creator std.Address, rewardToken string, targetPoolPath string) (string, string) {
 	startHeightEncode := EncodeUint(uint64(startHeight))
 	endHeightEncode := EncodeUint(uint64(endHeight))
 	creatorEncode := creator.String()
@@ -117,6 +120,7 @@ func incentiveIdByHeight(startHeight, endHeight int64, creator std.Address, rewa
 		endHeightEncode,
 		creatorEncode,
 		rewardToken,
+		targetPoolPath,
 	}
 
 	// byCreatorId components
@@ -125,6 +129,7 @@ func incentiveIdByHeight(startHeight, endHeight int64, creator std.Address, rewa
 		startHeightEncode,
 		endHeightEncode,
 		rewardToken,
+		targetPoolPath,
 	}
 
 	return buildIncentiveId(heightComponents), buildIncentiveId(creatorComponents)

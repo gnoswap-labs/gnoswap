@@ -76,6 +76,7 @@ func (o *Ownable2Step) DropOwnership() error {
 
 	prevOwner := o.owner
 	o.owner = ""
+	o.pendingOwner = ""
 
 	std.Emit(
 		OwnershipTransferEvent,
