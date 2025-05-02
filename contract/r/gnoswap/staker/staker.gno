@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"errors"
 	"std"
 	"time"
 
@@ -225,7 +226,7 @@ func StakeToken(positionId uint64, referrer string) (string, string, string) {
 	assertOnlyNotHalted()
 	assertOnlyNotStaked(positionId)
 
-	en.MintAndDistributeGns() // en으로 묶이지 않게 callback으로 호출 => 등록된 function이 call 되야 함.
+	en.MintAndDistributeGns()
 
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := getPrevAddr()
@@ -552,8 +553,19 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[st
 func UnStakeToken(positionId uint64, unwrapResult bool) (string, string, string) { // poolPath, token0Amount, token1Amount
 	assertOnlyNotHalted()
 
-	// unStaked status
+	// onwer check
 	deposit := deposits.Get(positionId)
+	caller := getPrevAddr()
+	if deposit.owner != caller {
+		panic(addDetailToError(
+			errUnauthorized,
+			ufmt.Sprintf("caller(%s) is not the owner(%s)", 
+				caller.String(), 
+				deposit.owner.String()),
+		))
+	}
+
+	// unStaked status
 	poolPath := deposit.targetPoolPath
 
 	// claim All Rewards
