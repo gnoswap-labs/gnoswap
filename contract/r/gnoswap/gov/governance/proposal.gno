@@ -19,7 +19,8 @@ import (
 
 var (
 	proposalId               uint64
-	proposals                = avl.NewTree() // proposalId -> ProposalInfo
+	proposals                = avl.NewTree() // Only stores active proposals
+	archivedProposals        = avl.NewTree() // Stores terminated proposals
 	proposalIdListByProposer = avl.NewTree() // proposer -> proposalId
 )
 
@@ -314,25 +315,59 @@ type proposalStateUpdater struct {
 
 // updateProposalsState updates the state of all proposals based on current time.
 // It processes voting periods, results, and execution windows for each proposal.
+// Terminated proposals are moved to archivedProposals.
 func updateProposalsState() {
 	now := uint64(time.Now().Unix())
 
 	proposals.Iterate("", "", func(key string, value any) bool {
 		proposal := value.(ProposalInfo)
-		if proposal.State.Canceled || proposal.State.Expired || proposal.State.Executed {
-			return false
-		}
 
+		// Update proposal state
 		updater := newProposalStateUpdater(&proposal, now)
 		if updater.shouldUpdate() {
 			updater.updateVotingState()
 			updater.updateVotingResult()
 			updater.updateExecutionState()
+		}
 
+		// Handle terminated proposals
+		//
+		// We will keep the active proposals.
+		// If a proposal is terminated, it will be moved to archivedProposals.
+		if isProposalTerminated(*updater.proposal) {
+			archivedProposals.Set(key, *updater.proposal)
+			proposals.Remove(key)
+		} else {
+			// Keep active proposals
 			proposals.Set(key, *updater.proposal)
 		}
 		return false
 	})
+}
+
+// isProposalTerminated checks if a proposal is in a terminated state
+func isProposalTerminated(proposal ProposalInfo) bool {
+	return proposal.State.Executed ||
+		proposal.State.Rejected ||
+		proposal.State.Canceled ||
+		proposal.State.Expired
+}
+
+// GetProposal retrieves a proposal by ID, searching in both active and archived proposals
+func GetProposal(proposalId uint64) (ProposalInfo, bool) {
+	proposalIdStr := formatUint(proposalId)
+
+	// Search in active proposals first
+	if value, exists := proposals.Get(proposalIdStr); exists {
+		return value.(ProposalInfo), true
+	}
+
+	// Search in archived proposals
+	if value, exists := archivedProposals.Get(proposalIdStr); exists {
+		return value.(ProposalInfo), true
+	}
+
+	return ProposalInfo{}, false
 }
 
 // newProposalStateUpdater creates a new proposalStateUpdater.
