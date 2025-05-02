@@ -89,7 +89,7 @@ func proposeText(t *testing.T) {
 				t.Fatalf("proposal.QuorumAmount is not 500000")
 			}
 
-			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.CreatedAt - config.VotingWeightSmoothingDuration)
+			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.Timestamp - config.VotingWeightSmoothingDuration)
 			// config.VotingWeightSmoothingDuration = 10s = 5 block
 
 			uassert.Equal(t, maxVotingWeight, uint64(1000000))
@@ -112,7 +112,7 @@ func proposeText(t *testing.T) {
 			proposal := pp.(ProposalInfo)
 			uassert.Equal(t, proposal.QuorumAmount, uint64(1_500_000)) // 50% of voting xGNS supply
 
-			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.CreatedAt - config.VotingWeightSmoothingDuration)
+			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.Timestamp - config.VotingWeightSmoothingDuration)
 			// config.VotingWeightSmoothingDuration = 10s = 5 block
 
 			uassert.Equal(t, maxVotingWeight, uint64(3000000))
@@ -151,18 +151,16 @@ func vote(t *testing.T) {
 		uassert.Equal(t, "0", proposal.Nay.ToString())
 
 		state := proposal.State
-		uassert.Equal(t, false, state.Upcoming)
-		uassert.Equal(t, true, state.Active)
+		uassert.Equal(t, false, state.State.HasState(StateUpcoming))
+		uassert.Equal(t, true, state.State.HasState(StateActive))
 
 		proposalsJson := unmarshal(GetProposals())
 		pps := proposalsJson.MustKey("proposals").MustArray()
-		uassert.Equal(t, len(pps), 2)
+		uassert.Equal(t, len(pps), 1)
 
 		expectedKeys := []string{"id", "configVersion", "proposer", "status", "type", "title", "description", "vote", "extra"}
 		arr1Keys := pps[0].UniqueKeyLists()
-		arr2Keys := pps[1].UniqueKeyLists()
 
 		uassert.Equal(t, len(arr1Keys), len(expectedKeys))
-		uassert.Equal(t, len(arr2Keys), len(expectedKeys))
 	})
 }

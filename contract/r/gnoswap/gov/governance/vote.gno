@@ -128,13 +128,10 @@ func Cancel(proposalId uint64) {
 		}
 	}
 
-	state := proposal.State.State
-
-	// Clear previous states
-	state.ClearAnyStates(StateUpcoming, StateActive)
-
-	// Set canceled state with timestamp
-	state.SetState(StateCanceled, now)
+	// Clear previous states and set canceled state
+	proposal.State.State.ClearAnyStates(StateUpcoming, StateActive)
+	proposal.State.State.SetState(StateCanceled, now)
+	proposal.State.Timestamp = now
 
 	proposals.Set(formatUint(proposalId), proposal)
 

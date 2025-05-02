@@ -113,7 +113,7 @@ func testProposeText(t *testing.T) {
 			proposal := pp.(ProposalInfo)
 			uassert.Equal(t, proposal.QuorumAmount, uint64(500000))
 
-			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.CreatedAt - config.VotingWeightSmoothingDuration)
+			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.Timestamp - config.VotingWeightSmoothingDuration)
 			// config.VotingWeightSmoothingDuration = 10s = 5 block
 
 			uassert.Equal(t, maxVotingWeight, uint64(1000000))
@@ -135,7 +135,7 @@ func testProposeText(t *testing.T) {
 			proposal := pp.(ProposalInfo)
 			uassert.Equal(t, proposal.QuorumAmount, uint64(1_000_000)) // 50% of voting xGNS supply
 
-			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.CreatedAt - config.VotingWeightSmoothingDuration)
+			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.Timestamp - config.VotingWeightSmoothingDuration)
 			// config.VotingWeightSmoothingDuration = 10s = 5 block
 
 			uassert.Equal(t, maxVotingWeight, uint64(2_000_000))
