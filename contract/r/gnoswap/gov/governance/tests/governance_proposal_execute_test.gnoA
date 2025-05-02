@@ -64,9 +64,11 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 
 func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
 	t.Skip()
-	testing.SkipHeights(5)
-
 	testing.SetRealm(adminRealm)
+
+	gns.Approve(govStakerAddr, uint64(1_000_000))
+	gs.Delegate(admin, uint64(1_000_000), "")
+	testing.SkipHeights(5)
 	proposalId := ProposeParameterChange(
 		"test_title",
 		"test_description",
@@ -346,6 +348,6 @@ func TestProposeParameterChange_Common_SetHalt(t *testing.T) {
 		testing.SetRealm(govRealm)
 		Execute(proposalId)
 
-		uassert.True(t, halt.GetHalt())
+		uassert.(t, halt.GetHalt())
 	})
 }

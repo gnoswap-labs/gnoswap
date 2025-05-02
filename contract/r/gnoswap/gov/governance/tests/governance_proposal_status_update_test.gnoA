@@ -25,10 +25,29 @@ type proposalStateTest struct {
 	expected interface{}
 }
 
-func assertProposalState(t *testing.T, stat ProposalState, tests []proposalStateTest) {
+func assertProposalState(t *testing.T, stat ProposalStateInfo, tests []proposalStateTest) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			uassert.Equal(t, tt.expected, tt.field)
+			switch tt.name {
+			case "Created":
+				uassert.Equal(t, tt.expected, stat.State.HasState(StateCreated), "Created")
+			case "Upcoming":
+				uassert.Equal(t, tt.expected, stat.State.HasState(StateUpcoming), "Upcoming")
+			case "Active":
+				uassert.Equal(t, tt.expected, stat.State.HasState(StateActive), "Active")
+			case "Passed":
+				uassert.Equal(t, tt.expected, stat.State.HasState(StatePassed), "Passed")
+			case "Rejected":
+				uassert.Equal(t, tt.expected, stat.State.HasState(StateRejected), "Rejected")
+			case "Canceled":
+				uassert.Equal(t, tt.expected, stat.State.HasState(StateCanceled), "Canceled")
+			case "Executed":
+				uassert.Equal(t, tt.expected, stat.State.HasState(StateExecuted), "Executed")
+			case "Expired":
+				uassert.Equal(t, tt.expected, stat.State.HasState(StateExpired), "Expired")
+			case "CreatedAt":
+				uassert.Equal(t, tt.expected, stat.Timestamp, "CreatedAt")
+			}
 		})
 	}
 }
@@ -66,18 +85,14 @@ func TestProposeText_ProposalStatusUpdate(t *testing.T) {
 		proposalStat := mustGetProposal(proposalId).State
 
 		tests := []proposalStateTest{
-			{"Created", proposalStat.Created, true},
-			{"CreatedAt", proposalStat.CreatedAt, oldTime},
-			{"Upcoming", proposalStat.Upcoming, true},
-			{"Active", proposalStat.Active, false},
-			{"Passed", proposalStat.Passed, false},
-			{"PassedAt", proposalStat.PassedAt, uint64(0)},
-			{"Rejected", proposalStat.Rejected, false},
-			{"RejectedAt", proposalStat.RejectedAt, uint64(0)},
-			{"Canceled", proposalStat.Canceled, false},
-			{"CanceledAt", proposalStat.CanceledAt, uint64(0)},
-			{"Executed", proposalStat.Executed, false},
-			{"ExecutedAt", proposalStat.ExecutedAt, uint64(0)},
+			{"Created", true, true},
+			{"CreatedAt", oldTime, oldTime},
+			{"Upcoming", true, true},
+			{"Active", false, false},
+			{"Passed", false, false},
+			{"Rejected", false, false},
+			{"Canceled", false, false},
+			{"Executed", false, false},
 		}
 		assertProposalState(t, proposalStat, tests)
 	})
@@ -98,18 +113,14 @@ func TestProposeText_ProposalStatusUpdate(t *testing.T) {
 		proposalStat := mustGetProposal(proposalId).State
 
 		tests := []proposalStateTest{
-			{"Created", proposalStat.Created, true},
-			{"CreatedAt", proposalStat.CreatedAt, oldTime},
-			{"Upcoming", proposalStat.Upcoming, false},
-			{"Active", proposalStat.Active, true},
-			{"Passed", proposalStat.Passed, false},
-			{"PassedAt", proposalStat.PassedAt, uint64(0)},
-			{"Rejected", proposalStat.Rejected, false},
-			{"RejectedAt", proposalStat.RejectedAt, uint64(0)},
-			{"Canceled", proposalStat.Canceled, false},
-			{"CanceledAt", proposalStat.CanceledAt, uint64(0)},
-			{"Executed", proposalStat.Executed, false},
-			{"ExecutedAt", proposalStat.ExecutedAt, uint64(0)},
+			{"Created", true, true},
+			{"CreatedAt", oldTime, oldTime},
+			{"Upcoming", false, false},
+			{"Active", true, true},
+			{"Passed", false, false},
+			{"Rejected", false, false},
+			{"Canceled", false, false},
+			{"Executed", false, false},
 		}
 		assertProposalState(t, proposalStat, tests)
 	})
@@ -125,18 +136,14 @@ func TestProposeText_ProposalStatusUpdate(t *testing.T) {
 		proposalStat := mustGetProposal(proposalId).State
 
 		tests := []proposalStateTest{
-			{"Created", proposalStat.Created, true},
-			{"CreatedAt", proposalStat.CreatedAt, oldTime},
-			{"Upcoming", proposalStat.Upcoming, false},
-			{"Active", proposalStat.Active, false},
-			{"Passed", proposalStat.Passed, true},
-			{"PassedAt", proposalStat.PassedAt, nowTime},
-			{"Rejected", proposalStat.Rejected, false},
-			{"RejectedAt", proposalStat.RejectedAt, uint64(0)},
-			{"Canceled", proposalStat.Canceled, false},
-			{"CanceledAt", proposalStat.CanceledAt, uint64(0)},
-			{"Executed", proposalStat.Executed, false},
-			{"ExecutedAt", proposalStat.ExecutedAt, uint64(0)},
+			{"Created", true, true},
+			{"CreatedAt", oldTime, oldTime},
+			{"Upcoming", false, false},
+			{"Active", false, false},
+			{"Passed", true, true},
+			{"Rejected", false, false},
+			{"Canceled", false, false},
+			{"Executed", false, false},
 		}
 		assertProposalState(t, proposalStat, tests)
 	})
@@ -149,18 +156,14 @@ func TestProposeText_ProposalStatusUpdate(t *testing.T) {
 		proposalStat := mustGetProposal(proposalId).State
 
 		tests := []proposalStateTest{
-			{"Created", proposalStat.Created, true},
-			{"CreatedAt", proposalStat.CreatedAt, oldTime},
-			{"Upcoming", proposalStat.Upcoming, false},
-			{"Active", proposalStat.Active, false},
-			{"Passed", proposalStat.Passed, true},
-			{"PassedAt", proposalStat.PassedAt, nowTime},
-			{"Rejected", proposalStat.Rejected, false},
-			{"RejectedAt", proposalStat.RejectedAt, uint64(0)},
-			{"Canceled", proposalStat.Canceled, false},
-			{"CanceledAt", proposalStat.CanceledAt, uint64(0)},
-			{"Executed", proposalStat.Executed, false},
-			{"ExecutedAt", proposalStat.ExecutedAt, uint64(0)},
+			{"Created", true, true},
+			{"CreatedAt", oldTime, oldTime},
+			{"Upcoming", false, false},
+			{"Active", false, false},
+			{"Passed", true, true},
+			{"Rejected", false, false},
+			{"Canceled", false, false},
+			{"Executed", false, false},
 		}
 		assertProposalState(t, proposalStat, tests)
 	})
@@ -177,18 +180,14 @@ func TestProposeText_ProposalStatusUpdate(t *testing.T) {
 		nowTime = uint64(time.Now().Unix())
 
 		tests := []proposalStateTest{
-			{"Created", proposalStat.Created, true},
-			{"CreatedAt", proposalStat.CreatedAt, nowTime},
-			{"Upcoming", proposalStat.Upcoming, false},
-			{"Active", proposalStat.Active, false},
-			{"Passed", proposalStat.Passed, false},
-			{"PassedAt", proposalStat.PassedAt, uint64(0)},
-			{"Rejected", proposalStat.Rejected, false},
-			{"RejectedAt", proposalStat.RejectedAt, uint64(0)},
-			{"Canceled", proposalStat.Canceled, true},
-			{"CanceledAt", proposalStat.CanceledAt, nowTime},
-			{"Executed", proposalStat.Executed, false},
-			{"ExecutedAt", proposalStat.ExecutedAt, uint64(0)},
+			{"Created", true, true},
+			{"CreatedAt", nowTime, nowTime},
+			{"Upcoming", false, false},
+			{"Active", false, false},
+			{"Passed", false, false},
+			{"Rejected", false, false},
+			{"Canceled", true, true},
+			{"Executed", false, false},
 		}
 		assertProposalState(t, proposalStat, tests)
 	})
@@ -227,11 +226,11 @@ func TestParamaterChange(t *testing.T) {
 		proposalStat := mustGetProposal(proposalId).State
 
 		tests := []proposalStateTest{
-			{"Created", proposalStat.Created, true},
-			{"CreatedAt", proposalStat.CreatedAt, oldTime},
-			{"Upcoming", proposalStat.Upcoming, true},
-			{"Active", proposalStat.Active, false},
-			{"Passed", proposalStat.Passed, false},
+			{"Created", true, true},
+			{"CreatedAt", oldTime, oldTime},
+			{"Upcoming", true, true},
+			{"Active", false, false},
+			{"Passed", false, false},
 		}
 		assertProposalState(t, proposalStat, tests)
 	})
@@ -251,11 +250,11 @@ func TestParamaterChange(t *testing.T) {
 		proposalStat := mustGetProposal(proposalId).State
 
 		tests := []proposalStateTest{
-			{"Created", proposalStat.Created, true},
-			{"CreatedAt", proposalStat.CreatedAt, oldTime},
-			{"Upcoming", proposalStat.Upcoming, false},
-			{"Active", proposalStat.Active, true},
-			{"Passed", proposalStat.Passed, false},
+			{"Created", true, true},
+			{"CreatedAt", oldTime, oldTime},
+			{"Upcoming", false, false},
+			{"Active", true, true},
+			{"Passed", false, false},
 		}
 		assertProposalState(t, proposalStat, tests)
 	})
@@ -271,12 +270,11 @@ func TestParamaterChange(t *testing.T) {
 		proposalStat := mustGetProposal(proposalId).State
 
 		tests := []proposalStateTest{
-			{"Created", proposalStat.Created, true},
-			{"CreatedAt", proposalStat.CreatedAt, oldTime},
-			{"Upcoming", proposalStat.Upcoming, false},
-			{"Active", proposalStat.Active, false},
-			{"Passed", proposalStat.Passed, true},
-			{"PassedAt", proposalStat.PassedAt, nowTime},
+			{"Created", true, true},
+			{"CreatedAt", oldTime, oldTime},
+			{"Upcoming", false, false},
+			{"Active", false, false},
+			{"Passed", true, true},
 		}
 		assertProposalState(t, proposalStat, tests)
 	})
@@ -291,17 +289,16 @@ func TestParamaterChange(t *testing.T) {
 		nowTime = uint64(time.Now().Unix())
 
 		tests := []proposalStateTest{
-			{"Created", proposalStat.Created, true},
-			{"CreatedAt", proposalStat.CreatedAt, oldTime},
-			{"Upcoming", proposalStat.Upcoming, false},
-			{"Active", proposalStat.Active, false},
-			{"Passed", proposalStat.Passed, true},
-			{"PassedAt", proposalStat.PassedAt, nowTime},
-			{"Rejected", proposalStat.Rejected, false},
-			{"Canceled", proposalStat.Canceled, false},
-			{"Executed", proposalStat.Executed, true},
-			{"ExecutedAt", proposalStat.ExecutedAt, nowTime},
-			{"Expired", proposalStat.Expired, false},
+			{"Created", true, true},
+			{"CreatedAt", oldTime, oldTime},
+			{"Upcoming", false, false},
+			{"Active", false, false},
+			{"Passed", true, true},
+			{"Rejected", false, false},
+			{"Canceled", false, false},
+			{"Executed", true, true},
+			{"ExecutedAt", nowTime, nowTime},
+			{"Expired", false, false},
 		}
 		assertProposalState(t, proposalStat, tests)
 	})
@@ -313,17 +310,16 @@ func TestParamaterChange(t *testing.T) {
 		proposalStat := mustGetProposal(proposalId).State
 
 		tests := []proposalStateTest{
-			{"Created", proposalStat.Created, true},
-			{"CreatedAt", proposalStat.CreatedAt, oldTime},
-			{"Upcoming", proposalStat.Upcoming, false},
-			{"Active", proposalStat.Active, false},
-			{"Passed", proposalStat.Passed, true},
-			{"PassedAt", proposalStat.PassedAt, nowTime},
-			{"Rejected", proposalStat.Rejected, false},
-			{"Canceled", proposalStat.Canceled, false},
-			{"Executed", proposalStat.Executed, true},
-			{"ExecutedAt", proposalStat.ExecutedAt, nowTime},
-			{"Expired", proposalStat.Expired, false},
+			{"Created", true, true},
+			{"CreatedAt", oldTime, oldTime},
+			{"Upcoming", false, false},
+			{"Active", false, false},
+			{"Passed", true, true},
+			{"Rejected", false, false},
+			{"Canceled", false, false},
+			{"Executed", true, true},
+			{"ExecutedAt", nowTime, nowTime},
+			{"Expired", false, false},
 		}
 		assertProposalState(t, proposalStat, tests)
 	})
@@ -341,15 +337,14 @@ func TestParamaterChange(t *testing.T) {
 		nowTime = uint64(time.Now().Unix())
 
 		tests := []proposalStateTest{
-			{"Created", proposalStat.Created, true},
-			{"CreatedAt", proposalStat.CreatedAt, nowTime},
-			{"Upcoming", proposalStat.Upcoming, false},
-			{"Active", proposalStat.Active, false},
-			{"Passed", proposalStat.Passed, false},
-			{"Rejected", proposalStat.Rejected, false},
-			{"Canceled", proposalStat.Canceled, true},
-			{"CanceledAt", proposalStat.CanceledAt, nowTime},
-			{"Executed", proposalStat.Executed, false},
+			{"Created", true, true},
+			{"CreatedAt", nowTime, nowTime},
+			{"Upcoming", false, false},
+			{"Active", false, false},
+			{"Passed", false, false},
+			{"Rejected", false, false},
+			{"Canceled", true, true},
+			{"Executed", false, false},
 		}
 		assertProposalState(t, proposalStat, tests)
 	})
@@ -367,17 +362,17 @@ func TestParamaterChange(t *testing.T) {
 		proposalStat := mustGetProposal(proposalId).State
 
 		tests := []proposalStateTest{
-			{"Created", proposalStat.Created, true},
-			{"CreatedAt", proposalStat.CreatedAt, oldTime},
-			{"Upcoming", proposalStat.Upcoming, false},
-			{"Active", proposalStat.Active, false},
-			{"Passed", proposalStat.Passed, false},
-			{"PassedAt", proposalStat.PassedAt, uint64(0)},
-			{"Rejected", proposalStat.Rejected, false},
-			{"Canceled", proposalStat.Canceled, true},
-			{"CanceledAt", proposalStat.CanceledAt, oldTime},
-			{"Executed", proposalStat.Executed, false},
-			{"Expired", proposalStat.Expired, false},
+			{"Created", true, true},
+			{"CreatedAt", oldTime, oldTime},
+			{"Upcoming", false, false},
+			{"Active", false, false},
+			{"Passed", false, false},
+			{"PassedAt", uint64(0), uint64(0)},
+			{"Rejected", false, false},
+			{"Canceled", true, true},
+			{"CanceledAt", oldTime, oldTime},
+			{"Executed", false, false},
+			{"Expired", false, false},
 		}
 		assertProposalState(t, proposalStat, tests)
 	})
@@ -400,15 +395,15 @@ func TestParamaterChange(t *testing.T) {
 		proposalStat := mustGetProposal(proposalId).State
 
 		tests := []proposalStateTest{
-			{"Created", proposalStat.Created, true},
-			{"CreatedAt", proposalStat.CreatedAt, oldTime},
-			{"Upcoming", proposalStat.Upcoming, false},
-			{"Active", proposalStat.Active, false},
-			{"Passed", proposalStat.Passed, true},
-			{"PassedAt", proposalStat.PassedAt, nowTime},
-			{"Rejected", proposalStat.Rejected, false},
-			{"Canceled", proposalStat.Canceled, false},
-			{"Executed", proposalStat.Executed, false},
+			{"Created", true, true},
+			{"CreatedAt", oldTime, oldTime},
+			{"Upcoming", false, false},
+			{"Active", false, false},
+			{"Passed", true, true},
+			{"PassedAt", nowTime, nowTime},
+			{"Rejected", false, false},
+			{"Canceled", false, false},
+			{"Executed", false, false},
 		}
 		assertProposalState(t, proposalStat, tests)
 	})
@@ -427,17 +422,17 @@ func TestParamaterChange(t *testing.T) {
 
 		proposalStat := mustGetProposal(proposalId).State
 		tests := []proposalStateTest{
-			{"Created", proposalStat.Created, true},
-			{"CreatedAt", proposalStat.CreatedAt, oldOldTime},
-			{"Upcoming", proposalStat.Upcoming, false},
-			{"Active", proposalStat.Active, false},
-			{"Passed", proposalStat.Passed, true},
-			{"PassedAt", proposalStat.PassedAt, oldTime},
-			{"Rejected", proposalStat.Rejected, false},
-			{"Canceled", proposalStat.Canceled, false},
-			{"Executed", proposalStat.Executed, false},
-			{"Expired", proposalStat.Expired, true},
-			{"ExpiredAt", proposalStat.ExpiredAt, nowTime},
+			{"Created", true, true},
+			{"CreatedAt", oldOldTime, oldOldTime},
+			{"Upcoming", false, false},
+			{"Active", false, false},
+			{"Passed", true, true},
+			{"PassedAt", oldTime, oldTime},
+			{"Rejected", false, false},
+			{"Canceled", false, false},
+			{"Executed", false, false},
+			{"Expired", true, true},
+			{"ExpiredAt", nowTime, nowTime},
 		}
 		assertProposalState(t, proposalStat, tests)
 	})
@@ -450,16 +445,15 @@ func TestParamaterChange(t *testing.T) {
 
 		proposalStat := mustGetProposal(proposalId).State
 		tests := []proposalStateTest{
-			{"Created", proposalStat.Created, true},
-			{"Upcoming", proposalStat.Upcoming, false},
-			{"Active", proposalStat.Active, false},
-			{"Passed", proposalStat.Passed, true},
-			{"PassedAt", proposalStat.PassedAt, oldTime},
-			{"Rejected", proposalStat.Rejected, false},
-			{"Canceled", proposalStat.Canceled, false},
-			{"Executed", proposalStat.Executed, false},
-			{"Expired", proposalStat.Expired, true},
-			{"ExpiredAt", proposalStat.ExpiredAt, nowTime},
+			{"Upcoming", false, false},
+			{"Active", false, false},
+			{"Passed", true, true},
+			{"PassedAt", oldTime, oldTime},
+			{"Rejected", false, false},
+			{"Canceled", false, false},
+			{"Executed", false, false},
+			{"Expired", true, true},
+			{"ExpiredAt", nowTime, nowTime},
 		}
 		assertProposalState(t, proposalStat, tests)
 	})
