@@ -36,6 +36,7 @@ func init() {
 func TestCommunityPoolSpend(t *testing.T) {
 	proposeCommunityPoolSpend(t)
 	passAndExecute(t)
+	rejectAndExecute(t)
 	passAndExpire(t)
 }
 
@@ -133,6 +134,40 @@ func passAndExecute(t *testing.T) {
 		}
 		proposal := pp.(ProposalInfo)
 		uassert.True(t, proposal.State.Executed)
+	})
+}
+
+func rejectAndExecute(t *testing.T) {
+	t.Run("prpoose new community pool spend", func(t *testing.T) {
+		testing.SetRealm(adminRealm)
+		proposalId := ProposeCommunityPoolSpend("test_title", "test_description", to, tokenPath, 50) // create new proposal
+	})
+
+	t.Run("vote to reject", func(t *testing.T) {
+		testing.SkipHeights(11)
+		testing.SetRealm(adminRealm)
+		Vote(proposalId, false) // vote Nay
+	})
+
+	t.Run("check status after rejected", func(t *testing.T) {
+		testing.SkipHeights(100) // ends voting period
+
+		updateProposalsState() // proposal rejected
+		pp, exists := archivedProposals.Get(strconv.FormatUint(proposalId, 10))
+		if !exists {
+			t.Errorf("Proposal not found after creation")
+		}
+		proposal := pp.(ProposalInfo)
+
+		uassert.True(t, proposal.State.Rejected)
+	})
+
+	t.Run("execute rejected proposal", func(t *testing.T) {
+		uassert.PanicsWithMessage(t,
+			"proposal 2 not found",
+			func() {
+				Execute(proposalId)
+			})
 	})
 }
 
