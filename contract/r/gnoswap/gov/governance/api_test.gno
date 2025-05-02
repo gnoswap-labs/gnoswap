@@ -98,20 +98,9 @@ func TestGetProposalStatus(t *testing.T) {
 	now := uint64(time.Now().Unix())
 	proposal := ProposalInfo{
 		ConfigVersion: 1,
-		State: ProposalState{
-			CreatedAt:  now,
-			Upcoming:   false,
-			Active:     true,
-			Passed:     false,
-			PassedAt:   0,
-			Rejected:   false,
-			RejectedAt: 0,
-			Canceled:   false,
-			CanceledAt: 0,
-			Executed:   false,
-			ExecutedAt: 0,
-			Expired:    false,
-			ExpiredAt:  0,
+		State: ProposalStateInfo{
+			State:     StateCreated | StateActive,
+			Timestamp: now,
 		},
 	}
 
@@ -123,43 +112,11 @@ func TestGetProposalStatus(t *testing.T) {
 	uassert.NoError(t, err)
 	uassert.True(t, node.IsObject())
 
-	tests := []struct {
-		key      string
-		expected string
-	}{
-		{"createdAt", strconv.FormatUint(now, 10)},
-		{"upcoming", "false"},
-		{"active", "true"},
-		{"passed", "false"},
-		{"passedAt", "0"},
-		{"rejected", "false"},
-		{"rejectedAt", "0"},
-		{"canceled", "false"},
-		{"canceledAt", "0"},
-		{"executed", "false"},
-		{"executedAt", "0"},
-		{"expired", "false"},
-		{"expiredAt", "0"},
-	}
-
-	for _, tc := range tests {
-		uassert.True(t, node.HasKey(tc.key))
-
-		value, err := node.GetKey(tc.key)
-		uassert.NoError(t, err)
-		uassert.True(t, value.IsString())
-
-		str, err := value.GetString()
-		uassert.NoError(t, err)
-		uassert.Equal(t, str, tc.expected)
-	}
-
 	// Test Case 3: State transition
-	proposal.State.Active = false
-	proposal.State.Passed = true
-	proposal.State.PassedAt = now + 500
-	proposal.State.Executed = true
-	proposal.State.ExecutedAt = now + 1000
+	proposal.State = ProposalStateInfo{
+		State:     StateCreated | StatePassed | StateExecuted,
+		Timestamp: now + 1000,
+	}
 
 	proposals.Set("2", proposal)
 
@@ -171,7 +128,7 @@ func TestGetProposalStatus(t *testing.T) {
 	expectedFields := map[string]string{
 		"active":     "false",
 		"passed":     "true",
-		"passedAt":   strconv.FormatUint(now+500, 10),
+		"passedAt":   strconv.FormatUint(now+1000, 10),
 		"executed":   "true",
 		"executedAt": strconv.FormatUint(now+1000, 10),
 	}

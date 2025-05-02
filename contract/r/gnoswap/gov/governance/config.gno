@@ -20,13 +20,13 @@ var (
 func init() {
 	// https://docs.gnoswap.io/core-concepts/governance
 	config = Config{
-		VotingStartDelay:              uint64(86400),         // 1d
-		VotingPeriod:                  uint64(604800),        // 7d
-		VotingWeightSmoothingDuration: uint64(86400),         // 1d
-		Quorum:                        uint64(50),            // 50% of total xGNS supply
-		ProposalCreationThreshold:     uint64(1_000_000_000), // 1_000_000_000
-		ExecutionDelay:                uint64(86400),         // 1d
-		ExecutionWindow:               uint64(2592000),       // 30d
+		VotingStartDelay:              86400,         // 1d
+		VotingPeriod:                  604800,        // 7d
+		VotingWeightSmoothingDuration: 86400,         // 1d
+		Quorum:                        50,            // 50% of total xGNS supply
+		ProposalCreationThreshold:     1_000_000_000, // 1_000_000_000
+		ExecutionDelay:                86400,         // 1d
+		ExecutionWindow:               2592000,       // 30d
 	}
 
 	// config version 0 should return the current config
@@ -152,17 +152,17 @@ func GetConfigVersion(version uint64) Config {
 	return cfg
 }
 
-// GetLatestConfig() returns the latest configuration.
+// GetLatestConfig returns the latest configuration.
 func GetLatestConfig() Config {
 	return config
 }
 
-// GetLatestConfigVersion() returns the latest configuration version.
+// GetLatestConfigVersion returns the latest configuration version.
 func GetLatestConfigVersion() uint64 {
 	return getLatestVersion()
 }
 
-// GetProposalCreationThreshold() returns the current proposal creation threshold.
+// GetProposalCreationThreshold returns the current proposal creation threshold.
 func GetProposalCreationThreshold() uint64 {
 	return config.ProposalCreationThreshold
 }

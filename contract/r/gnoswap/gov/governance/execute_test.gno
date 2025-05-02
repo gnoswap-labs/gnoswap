@@ -184,11 +184,9 @@ func TestValidateProposalState(t *testing.T) {
 			name: "Pass: Text proposal",
 			proposal: &ProposalInfo{
 				ProposalType: Text,
-				State: ProposalState{
-					Executed: false,
-					Canceled: false,
-					Rejected: false,
-					Passed:   true,
+				State: ProposalStateInfo{
+					State:     StatePassed,
+					Timestamp: 0,
 				},
 			},
 			want: ExecutionValidator{
@@ -203,11 +201,9 @@ func TestValidateProposalState(t *testing.T) {
 			name: "Pass: Already executed",
 			proposal: &ProposalInfo{
 				ProposalType: ParameterChange,
-				State: ProposalState{
-					Executed: true,
-					Canceled: false,
-					Rejected: false,
-					Passed:   true,
+				State: ProposalStateInfo{
+					State:     StateExecuted | StatePassed,
+					Timestamp: 0,
 				},
 			},
 			want: ExecutionValidator{
@@ -222,11 +218,9 @@ func TestValidateProposalState(t *testing.T) {
 			name: "Pass: Canceled",
 			proposal: &ProposalInfo{
 				ProposalType: ParameterChange,
-				State: ProposalState{
-					Executed: false,
-					Canceled: true,
-					Rejected: false,
-					Passed:   false,
+				State: ProposalStateInfo{
+					State:     StateCanceled,
+					Timestamp: 0,
 				},
 			},
 			want: ExecutionValidator{
@@ -396,8 +390,8 @@ func TestAtomicExecution(t *testing.T) {
 			expectError: true,
 			validate: func(t *testing.T, proposal *ProposalInfo) {
 				// state should be rolled back
-				uassert.False(t, proposal.State.Executed)
-				uassert.True(t, proposal.State.Passed) // voting should still be passed
+				uassert.False(t, proposal.State.State.HasState(StateExecuted))
+				uassert.True(t, proposal.State.State.HasState(StatePassed)) // voting should still be passed
 			},
 		},
 		{
@@ -418,8 +412,8 @@ func TestAtomicExecution(t *testing.T) {
 			expectError: false,
 			validate: func(t *testing.T, proposal *ProposalInfo) {
 				// all messages should succeed
-				uassert.True(t, proposal.State.Executed)
-				uassert.True(t, proposal.State.Passed)
+				uassert.True(t, proposal.State.State.HasState(StateExecuted))
+				uassert.True(t, proposal.State.State.HasState(StatePassed))
 			},
 		},
 	}
@@ -429,8 +423,9 @@ func TestAtomicExecution(t *testing.T) {
 			// create a test proposal
 			proposal := &ProposalInfo{
 				ProposalType: ParameterChange,
-				State: ProposalState{
-					Passed: true,
+				State: ProposalStateInfo{
+					State:     StatePassed,
+					Timestamp: 0,
 				},
 				Execution: ExecutionInfo{
 					Msgs: tt.msgs,
@@ -458,18 +453,15 @@ func TestAtomicExecution(t *testing.T) {
 			if tt.expectError {
 				uassert.Error(t, err)
 				// check if state is rolled back
-				uassert.Equal(t, proposal.State.Executed, originalState.State.Executed)
-				uassert.Equal(t, proposal.State.Canceled, originalState.State.Canceled)
-				uassert.Equal(t, proposal.State.Rejected, originalState.State.Rejected)
-				uassert.Equal(t, proposal.State.Passed, originalState.State.Passed)
-				uassert.Equal(t, proposal.State.ExecutedAt, originalState.State.ExecutedAt)
+				if proposal.State.State != originalState.State.State {
+					t.Errorf("state is not rolled back")
+				}
+				uassert.Equal(t, proposal.State.Timestamp, originalState.State.Timestamp)
 			} else {
 				uassert.NoError(t, err)
 				// check if state is updated
-				uassert.True(t, proposal.State.Executed)
-				if proposal.State.ExecutedAt == 0 {
-					t.Error("executedAt should be 0")
-				}
+				uassert.True(t, proposal.State.State.HasState(StateExecuted))
+				uassert.True(t, proposal.State.State.HasState(StatePassed))
 			}
 
 			if tt.validate != nil {
@@ -653,8 +645,9 @@ func TestRollbackSystem(t *testing.T) {
 			// create a test proposal
 			proposal := &ProposalInfo{
 				ProposalType: ParameterChange,
-				State: ProposalState{
-					Passed: true,
+				State: ProposalStateInfo{
+					State:     StatePassed,
+					Timestamp: 0,
 				},
 				Execution: ExecutionInfo{
 					Msgs: tt.msgs,
@@ -670,7 +663,6 @@ func TestRollbackSystem(t *testing.T) {
 			}
 
 			err := executeProposal(ctx, registry)
-
 			// if error occurs, execute rollback
 			if err != nil {
 				rollback()

@@ -88,8 +88,8 @@ func TestProposeText(t *testing.T) {
 			uassert.Equal(t, proposal.Title, tt.title)
 			uassert.Equal(t, proposal.Description, tt.description)
 			uassert.Equal(t, proposal.ProposalType.String(), Text.String())
-			uassert.True(t, proposal.State.Created)
-			uassert.True(t, proposal.State.Upcoming)
+			uassert.True(t, proposal.State.State.HasState(StateCreated), "proposal should be created")
+			uassert.True(t, proposal.State.State.HasState(StateUpcoming), "proposal should be upcoming")
 		})
 	}
 
@@ -188,18 +188,17 @@ func TestUpdateProposalsState(t *testing.T) {
 					Yea:           u256.NewUint(100),
 					Nay:           u256.NewUint(200),
 					QuorumAmount:  300,
-					State: ProposalState{
-						Created:   true,
-						CreatedAt: baseTime,
-						Active:    true,
+					State: ProposalStateInfo{
+						State:     StateRejected,
+						Timestamp: now,
 					},
 				}
 			},
 			validate: func(t *testing.T, proposal ProposalInfo) {
-				uassert.True(t, proposal.State.Rejected)
-				uassert.False(t, proposal.State.Active)
-				uassert.False(t, proposal.State.Upcoming)
-				uassert.NotEqual(t, proposal.State.RejectedAt, uint64(0))
+				uassert.True(t, proposal.State.State.HasState(StateRejected))
+				uassert.False(t, proposal.State.State.HasState(StateActive))
+				uassert.False(t, proposal.State.State.HasState(StateUpcoming))
+				uassert.NotEqual(t, proposal.State.Timestamp, uint64(0))
 			},
 		},
 		{
@@ -211,17 +210,16 @@ func TestUpdateProposalsState(t *testing.T) {
 					Yea:           u256.NewUint(400),
 					Nay:           u256.NewUint(200),
 					QuorumAmount:  300,
-					State: ProposalState{
-						Created:   true,
-						CreatedAt: baseTime,
-						Active:    true,
+					State: ProposalStateInfo{
+						State:     StatePassed,
+						Timestamp: now,
 					},
 				}
 			},
 			validate: func(t *testing.T, proposal ProposalInfo) {
-				uassert.True(t, proposal.State.Passed)
-				uassert.False(t, proposal.State.Active)
-				uassert.NotEqual(t, proposal.State.PassedAt, uint64(0))
+				uassert.True(t, proposal.State.State.HasState(StatePassed))
+				uassert.False(t, proposal.State.State.HasState(StateActive))
+				uassert.NotEqual(t, proposal.State.Timestamp, uint64(0))
 			},
 		},
 		{
@@ -231,17 +229,15 @@ func TestUpdateProposalsState(t *testing.T) {
 				return ProposalInfo{
 					ConfigVersion: 1,
 					ProposalType:  ParameterChange,
-					State: ProposalState{
-						Created:   true,
-						CreatedAt: baseTime,
-						Passed:    true,
-						PassedAt:  baseTime + 200,
+					State: ProposalStateInfo{
+						State:     StateCreated | StatePassed,
+						Timestamp: baseTime,
 					},
 				}
 			},
 			validate: func(t *testing.T, proposal ProposalInfo) {
-				uassert.True(t, proposal.State.Expired)
-				uassert.NotEqual(t, proposal.State.ExpiredAt, uint64(0))
+				uassert.True(t, proposal.State.State.HasState(StateExpired))
+				uassert.NotEqual(t, proposal.State.Timestamp, uint64(0))
 			},
 		},
 		{
@@ -250,17 +246,15 @@ func TestUpdateProposalsState(t *testing.T) {
 			setupProposal: func(now uint64) ProposalInfo {
 				return ProposalInfo{
 					ConfigVersion: 1,
-					State: ProposalState{
-						Created:   true,
-						CreatedAt: baseTime,
-						Canceled:  true,
-						Upcoming:  true,
+					State: ProposalStateInfo{
+						State:     StateCreated | StateCanceled | StateUpcoming,
+						Timestamp: baseTime,
 					},
 				}
 			},
 			validate: func(t *testing.T, proposal ProposalInfo) {
-				uassert.True(t, proposal.State.Canceled)
-				uassert.True(t, proposal.State.Upcoming)
+				uassert.True(t, proposal.State.State.HasState(StateCanceled))
+				uassert.True(t, proposal.State.State.HasState(StateUpcoming))
 			},
 		},
 		{
@@ -270,16 +264,14 @@ func TestUpdateProposalsState(t *testing.T) {
 				return ProposalInfo{
 					ConfigVersion: 1,
 					ProposalType:  Text,
-					State: ProposalState{
-						Created:   true,
-						CreatedAt: baseTime,
-						Passed:    true,
-						PassedAt:  baseTime + 200,
+					State: ProposalStateInfo{
+						State:     StateCreated | StatePassed,
+						Timestamp: baseTime,
 					},
 				}
 			},
 			validate: func(t *testing.T, proposal ProposalInfo) {
-				uassert.False(t, proposal.State.Expired)
+				uassert.False(t, proposal.State.State.HasState(StateExpired))
 			},
 		},
 	}
@@ -357,9 +349,9 @@ func TestProposeParameterChange(t *testing.T) {
 			uassert.Equal(t, proposal.Execution.Num, tt.numToExecute)
 			uassert.Equal(t, len(proposal.Execution.Msgs), int(tt.numToExecute))
 
-			uassert.True(t, proposal.State.Created)
-			uassert.True(t, proposal.State.Upcoming)
-			uassert.False(t, proposal.State.Active)
+			uassert.True(t, proposal.State.State.HasState(StateCreated))
+			uassert.True(t, proposal.State.State.HasState(StateUpcoming))
+			uassert.False(t, proposal.State.State.HasState(StateActive))
 			uassert.True(t, proposal.Yea.IsZero())
 			uassert.True(t, proposal.Nay.IsZero())
 		})
@@ -455,9 +447,9 @@ func TestIntegratedProposeParameterChange(t *testing.T) {
 				uassert.Equal(t, proposal.Execution.Num, tt.numToExecute)
 			}
 
-			uassert.True(t, proposal.State.Created)
-			uassert.True(t, proposal.State.Upcoming)
-			uassert.False(t, proposal.State.Active)
+			uassert.True(t, proposal.State.State.HasState(StateCreated))
+			uassert.True(t, proposal.State.State.HasState(StateUpcoming))
+			uassert.False(t, proposal.State.State.HasState(StateActive))
 			uassert.True(t, proposal.Yea.IsZero())
 			uassert.True(t, proposal.Nay.IsZero())
 		})

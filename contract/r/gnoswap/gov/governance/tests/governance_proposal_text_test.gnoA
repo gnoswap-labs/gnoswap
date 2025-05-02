@@ -67,8 +67,8 @@ func proposeText(t *testing.T) {
 		}{
 			{"Proposer", proposal.Proposer, admin},
 			{"ProposalType", string(proposal.ProposalType), "TEXT"},
-			{"Created", proposal.State.Created, true},
-			{"Upcoming", proposal.State.Upcoming, true},
+			{"Created", proposal.State.State.HasState(StateCreated), true},
+			{"Upcoming", proposal.State.State.HasState(StateUpcoming), true},
 			{"Yea equals Nay", proposal.Yea.ToString(), proposal.Nay.ToString()},
 			{"ConfigVersion", proposal.ConfigVersion, uint64(1)},
 			{"Title", proposal.Title, "test_title"},
@@ -147,8 +147,8 @@ func vote(t *testing.T) {
 		}{
 			{"Yea amount", proposal.Yea.Cmp(u256.NewUint(1_000_000)), 0},
 			{"Nay amount", proposal.Nay.ToString(), "0"},
-			{"Upcoming status", proposal.State.Upcoming, false},
-			{"Active status", proposal.State.Active, true},
+			{"Upcoming status", proposal.State.State.HasState(StateUpcoming), false},
+			{"Active status", proposal.State.State.HasState(StateActive), true},
 		}
 
 		for _, tt := range proposalTests {
@@ -231,10 +231,9 @@ func vote(t *testing.T) {
 		uassert.True(t, exists)
 
 		proposal := pp.(ProposalInfo)
-		uassert.False(t, proposal.State.Active)
-
-		uassert.False(t, proposal.State.Rejected)
-		uassert.False(t, proposal.State.Executed)
+		uassert.False(t, proposal.State.State.HasState(StateActive))
+		uassert.False(t, proposal.State.State.HasState(StateRejected))
+		uassert.False(t, proposal.State.State.HasState(StateExecuted))
 	})
 }
 
@@ -262,9 +261,9 @@ func cancel(t *testing.T) {
 		uassert.True(t, exists)
 
 		proposal := pp.(ProposalInfo)
-		uassert.True(t, proposal.State.Canceled)
-		uassert.False(t, proposal.State.Active)
-		uassert.False(t, proposal.State.Upcoming)
+		uassert.True(t, proposal.State.State.HasState(StateCanceled))
+		uassert.False(t, proposal.State.State.HasState(StateActive))
+		uassert.False(t, proposal.State.State.HasState(StateUpcoming))
 	})
 
 	t.Run("Cancel already canceled proposal", func(t *testing.T) {

@@ -195,30 +195,30 @@ func getProposalStatus(id uint64) string {
 
 	config := GetConfigVersion(proposal.ConfigVersion)
 
-	votingStart := proposal.State.CreatedAt + config.VotingStartDelay
+	votingStart := proposal.State.Timestamp + config.VotingStartDelay
 	votingEnd := votingStart + config.VotingPeriod
 
 	node := createProposalStateNode(proposal.State, votingStart, votingEnd)
 	return marshal(node)
 }
 
-func createProposalStateNode(state ProposalState, votingStart, votingEnd uint64) *json.Node {
+func createProposalStateNode(state ProposalStateInfo, votingStart, votingEnd uint64) *json.Node {
 	return json.Builder().
-		WriteString("createdAt", formatUint(state.CreatedAt)).
-		WriteString("upcoming", formatBool(state.Upcoming)).
-		WriteString("active", formatBool(state.Active)).
+		WriteString("timestamp", formatUint(state.Timestamp)).
+		WriteString("upcoming", formatBool(state.State.HasState(StateUpcoming))).
+		WriteString("active", formatBool(state.State.HasState(StateActive))).
 		WriteString("votingStart", formatUint(votingStart)).
 		WriteString("votingEnd", formatUint(votingEnd)).
-		WriteString("passed", formatBool(state.Passed)).
-		WriteString("passedAt", formatUint(state.PassedAt)).
-		WriteString("rejected", formatBool(state.Rejected)).
-		WriteString("rejectedAt", formatUint(state.RejectedAt)).
-		WriteString("canceled", formatBool(state.Canceled)).
-		WriteString("canceledAt", formatUint(state.CanceledAt)).
-		WriteString("executed", formatBool(state.Executed)).
-		WriteString("executedAt", formatUint(state.ExecutedAt)).
-		WriteString("expired", formatBool(state.Expired)).
-		WriteString("expiredAt", formatUint(state.ExpiredAt)).
+		WriteString("passed", formatBool(state.State.HasState(StatePassed))).
+		WriteString("passedAt", formatUint(state.Timestamp)).
+		WriteString("rejected", formatBool(state.State.HasState(StateRejected))).
+		WriteString("rejectedAt", formatUint(state.Timestamp)).
+		WriteString("canceled", formatBool(state.State.HasState(StateCanceled))).
+		WriteString("canceledAt", formatUint(state.Timestamp)).
+		WriteString("executed", formatBool(state.State.HasState(StateExecuted))).
+		WriteString("executedAt", formatUint(state.Timestamp)).
+		WriteString("expired", formatBool(state.State.HasState(StateExpired))).
+		WriteString("expiredAt", formatUint(state.Timestamp)).
 		Node()
 }
 

@@ -67,18 +67,14 @@ func ProposeText(
 	quorumAmount := maxVotingWeight.Uint64() * config.Quorum / 100
 
 	proposal := ProposalInfo{
-		Proposer:     proposer,
-		ProposalType: Text,
-		State: ProposalState{
-			Created:   true,
-			CreatedAt: now,
-			Upcoming:  true,
-		},
-		Yea:                       u256.Zero(),
-		Nay:                       u256.Zero(),
+		Proposer:                  proposer,
+		ProposalType:              Text,
+		State:                     newProposalStateInfo(StateCreated, now),
+		Yea:                       u256Zero,
+		Nay:                       u256Zero,
 		MaxVotingWeight:           maxVotingWeight,
 		PossibleAddressWithWeight: possibleAddressWithWeight,
-		ConfigVersion:             uint64(configVersions.Size()), // use latest config version
+		ConfigVersion:             uint64(configVersions.Size()),
 		QuorumAmount:              quorumAmount,
 		Title:                     title,
 		Description:               description,
@@ -88,6 +84,10 @@ func ProposeText(
 	newProposalId := getProposalId()
 	proposals.Set(formatUint(newProposalId), proposal)
 	proposalIdListByProposer.Set(proposer.String(), newProposalId)
+
+	// Update proposal state to upcoming
+	proposal.State.State.SetState(StateUpcoming, now)
+	proposals.Set(formatUint(newProposalId), proposal)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -100,9 +100,9 @@ func ProposeText(
 		"quorumAmount", formatUint(proposal.QuorumAmount),
 		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
 		"configVersion", formatUint(proposal.ConfigVersion),
-		"createdAt", formatUint(proposal.State.CreatedAt),
+		"createdAt", formatUint(proposal.State.Timestamp),
 	)
-	return proposalId
+	return newProposalId
 }
 
 // ProposeCommunityPoolSpend creates a new community pool spend proposal with the given data
@@ -161,15 +161,11 @@ func ProposeCommunityPoolSpend(
 	quorumAmount := maxVotingWeight.Uint64() * config.Quorum / 100
 
 	proposal := ProposalInfo{
-		Proposer:     proposer,
-		ProposalType: CommunityPoolSpend,
-		State: ProposalState{
-			Created:   true,
-			CreatedAt: now,
-			Upcoming:  true,
-		},
-		Yea:                       u256.Zero(),
-		Nay:                       u256.Zero(),
+		Proposer:                  proposer,
+		ProposalType:              CommunityPoolSpend,
+		State:                     newProposalStateInfo(StateCreated, now),
+		Yea:                       u256Zero,
+		Nay:                       u256Zero,
 		MaxVotingWeight:           maxVotingWeight,
 		PossibleAddressWithWeight: possibleAddressWithWeight,
 		ConfigVersion:             uint64(configVersions.Size()),
@@ -201,7 +197,7 @@ func ProposeCommunityPoolSpend(
 		"quorumAmount", formatUint(proposal.QuorumAmount),
 		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
 		"configVersion", formatUint(proposal.ConfigVersion),
-		"createdAt", formatUint(proposal.State.CreatedAt),
+		"createdAt", formatUint(proposal.State.Timestamp),
 	)
 
 	return proposalId
@@ -262,15 +258,11 @@ func ProposeParameterChange(
 	quorumAmount := maxVotingWeight.Uint64() * config.Quorum / 100
 
 	proposal := ProposalInfo{
-		Proposer:     proposer,
-		ProposalType: ParameterChange,
-		State: ProposalState{
-			Created:   true,
-			CreatedAt: now,
-			Upcoming:  true,
-		},
-		Yea:                       u256.Zero(),
-		Nay:                       u256.Zero(),
+		Proposer:                  proposer,
+		ProposalType:              ParameterChange,
+		State:                     newProposalStateInfo(StateCreated, now),
+		Yea:                       u256Zero,
+		Nay:                       u256Zero,
 		MaxVotingWeight:           maxVotingWeight,
 		PossibleAddressWithWeight: possibleAddressWithWeight,
 		ConfigVersion:             uint64(configVersions.Size()),
@@ -300,7 +292,7 @@ func ProposeParameterChange(
 		"quorumAmount", formatUint(proposal.QuorumAmount),
 		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
 		"configVersion", formatUint(proposal.ConfigVersion),
-		"createdAt", formatUint(proposal.State.CreatedAt),
+		"createdAt", formatUint(proposal.State.Timestamp),
 	)
 
 	return proposalId
@@ -334,12 +326,12 @@ func updateProposalsState() {
 		//
 		// We will keep the active proposals.
 		// If a proposal is terminated, it will be moved to archivedProposals.
-		if isProposalTerminated(*updater.proposal) {
-			archivedProposals.Set(key, *updater.proposal)
+		if isProposalTerminated(proposal) {
+			archivedProposals.Set(key, proposal)
 			proposals.Remove(key)
 		} else {
 			// Keep active proposals
-			proposals.Set(key, *updater.proposal)
+			proposals.Set(key, proposal)
 		}
 		return false
 	})
@@ -347,10 +339,21 @@ func updateProposalsState() {
 
 // isProposalTerminated checks if a proposal is in a terminated state
 func isProposalTerminated(proposal ProposalInfo) bool {
-	return proposal.State.Executed ||
-		proposal.State.Rejected ||
-		proposal.State.Canceled ||
-		proposal.State.Expired
+	return proposal.State.State.HasState(StateTerminated)
+}
+
+// getProposalFromTree retrieves a proposal from the given tree and performs type assertion
+func getProposalFromTree(tree *avl.Tree, key string) (ProposalInfo, bool) {
+	value, exists := tree.Get(key)
+	if !exists {
+		return ProposalInfo{}, false
+	}
+
+	proposal, ok := value.(ProposalInfo)
+	if !ok {
+		return ProposalInfo{}, false
+	}
+	return proposal, true
 }
 
 // GetProposal retrieves a proposal by ID, searching in both active and archived proposals
@@ -358,16 +361,12 @@ func GetProposal(proposalId uint64) (ProposalInfo, bool) {
 	proposalIdStr := formatUint(proposalId)
 
 	// Search in active proposals first
-	if value, exists := proposals.Get(proposalIdStr); exists {
-		return value.(ProposalInfo), true
+	if proposal, exists := getProposalFromTree(proposals, proposalIdStr); exists {
+		return proposal, true
 	}
 
 	// Search in archived proposals
-	if value, exists := archivedProposals.Get(proposalIdStr); exists {
-		return value.(ProposalInfo), true
-	}
-
-	return ProposalInfo{}, false
+	return getProposalFromTree(archivedProposals, proposalIdStr)
 }
 
 // newProposalStateUpdater creates a new proposalStateUpdater.
@@ -380,18 +379,17 @@ func newProposalStateUpdater(proposal *ProposalInfo, now uint64) *proposalStateU
 }
 
 // shouldUpdate determines if the proposal state should be updated.
-// Returns true if the proposal is created, not canceled, and not executed.
+// Returns true if the proposal is created, not terminated, and not executed.
 func (u *proposalStateUpdater) shouldUpdate() bool {
-	return u.proposal.State.Created &&
-		!u.proposal.State.Canceled &&
-		!u.proposal.State.Executed
+	return u.proposal.State.State.HasState(StateCreated) &&
+		!u.proposal.State.State.HasState(StateTerminated)
 }
 
 // getVotingTimes returns the start and end timestamps of the voting period.
 // The start time is CreatedAt + VotingStartDelay.
 // The end time is start time + VotingPeriod.
 func (u *proposalStateUpdater) getVotingTimes() (start, end uint64) {
-	start = u.proposal.State.CreatedAt + u.config.VotingStartDelay
+	start = u.proposal.State.Timestamp + u.config.VotingStartDelay
 	end = start + u.config.VotingPeriod
 	return
 }
@@ -412,9 +410,9 @@ func (u *proposalStateUpdater) updateVotingState() {
 	votingStart, votingEnd := u.getVotingTimes()
 	isVotingPeriod := u.now >= votingStart && u.now <= votingEnd
 
-	if u.proposal.State.Upcoming && isVotingPeriod {
-		u.proposal.State.Upcoming = false
-		u.proposal.State.Active = true
+	if u.proposal.State.State.HasState(StateUpcoming) && isVotingPeriod {
+		u.proposal.State.State.ClearState(StateUpcoming)
+		u.proposal.State.State.SetState(StateActive, u.now)
 	}
 }
 
@@ -424,9 +422,7 @@ func (u *proposalStateUpdater) updateVotingState() {
 func (u *proposalStateUpdater) updateVotingResult() {
 	_, votingEnd := u.getVotingTimes()
 
-	hasNoResult := !u.proposal.State.Passed &&
-		!u.proposal.State.Rejected &&
-		!u.proposal.State.Canceled
+	hasNoResult := !u.proposal.State.State.HasAnyState(StatePassed, StateRejected, StateCanceled)
 
 	if u.now <= votingEnd || !hasNoResult {
 		return
@@ -436,32 +432,28 @@ func (u *proposalStateUpdater) updateVotingResult() {
 	nayUint := u.proposal.Nay.Uint64()
 
 	if yeaUint >= u.proposal.QuorumAmount && yeaUint > nayUint {
-		u.proposal.State.Passed = true
-		u.proposal.State.PassedAt = u.now
+		u.proposal.State.State.SetState(StatePassed, u.now)
 	} else {
-		u.proposal.State.Rejected = true
-		u.proposal.State.RejectedAt = u.now
+		u.proposal.State.State.SetState(StateRejected, u.now)
 	}
 
-	u.proposal.State.Upcoming = false
-	u.proposal.State.Active = false
+	u.proposal.State.State.ClearState(StateUpcoming)
+	u.proposal.State.State.ClearState(StateActive)
 }
 
 // updateExecutionState checks if a non-text proposal should expire.
 // It marks the proposal as expired if execution window has ended.
 func (u *proposalStateUpdater) updateExecutionState() {
 	if u.proposal.ProposalType == Text ||
-		!u.proposal.State.Passed ||
-		u.proposal.State.Executed ||
-		u.proposal.State.Expired {
+		!u.proposal.State.State.HasState(StatePassed) ||
+		u.proposal.State.State.HasAnyState(StateExecuted, StateExpired) {
 		return
 	}
 
 	_, executionEnd := u.getExecutionTimes()
 
 	if u.now >= executionEnd {
-		u.proposal.State.Expired = true
-		u.proposal.State.ExpiredAt = u.now
+		u.proposal.State.State.SetState(StateExpired, u.now)
 	}
 }
 

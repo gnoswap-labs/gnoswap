@@ -37,9 +37,9 @@ func TestVote(t *testing.T) {
 				pid := uint64(1)
 				proposals.Set(formatUint(pid), ProposalInfo{
 					ConfigVersion: 1,
-					State: ProposalState{
-						Created:   true,
-						CreatedAt: baseTime - 60, // Voting period started
+					State: ProposalStateInfo{
+						State:     StateCreated | StateActive,
+						Timestamp: baseTime - 60, // Voting period started
 					},
 					Yea: u256.NewUint(0),
 					Nay: u256.NewUint(0),
@@ -87,9 +87,9 @@ func TestVote(t *testing.T) {
 				pid := uint64(2)
 				proposals.Set(formatUint(pid), ProposalInfo{
 					ConfigVersion: 1,
-					State: ProposalState{
-						Created:   true,
-						CreatedAt: baseTime - 60,
+					State: ProposalStateInfo{
+						State:     StateCreated | StateActive,
+						Timestamp: baseTime - 60,
 					},
 					Yea: u256.NewUint(0),
 					Nay: u256.NewUint(0),
@@ -118,9 +118,9 @@ func TestVote(t *testing.T) {
 				pid := uint64(3)
 				proposals.Set(formatUint(pid), ProposalInfo{
 					ConfigVersion: 1,
-					State: ProposalState{
-						Created:   true,
-						CreatedAt: baseTime, // Just created, voting hasn't started
+					State: ProposalStateInfo{
+						State:     StateCreated | StateUpcoming,
+						Timestamp: baseTime, // Just created, voting hasn't started
 					},
 					PossibleAddressWithWeight: map[std.Address]uint64{
 						voter: 100,
@@ -136,10 +136,9 @@ func TestVote(t *testing.T) {
 				pid := uint64(5)
 				proposals.Set(formatUint(pid), ProposalInfo{
 					ConfigVersion: 1,
-					State: ProposalState{
-						Created:   true,
-						CreatedAt: baseTime - 60,
-						Canceled:  true,
+					State: ProposalStateInfo{
+						State:     StateCreated | StateCanceled,
+						Timestamp: baseTime - 60,
 					},
 					PossibleAddressWithWeight: map[std.Address]uint64{
 						voter: 100,
@@ -155,9 +154,9 @@ func TestVote(t *testing.T) {
 				pid := uint64(6)
 				proposals.Set(formatUint(pid), ProposalInfo{
 					ConfigVersion: 1,
-					State: ProposalState{
-						Created:   true,
-						CreatedAt: baseTime - 60,
+					State: ProposalStateInfo{
+						State:     StateCreated | StateActive,
+						Timestamp: baseTime - 60,
 					},
 					PossibleAddressWithWeight: map[std.Address]uint64{
 						voter: 100,
@@ -197,7 +196,7 @@ func TestVote(t *testing.T) {
 			}()
 
 			if tc.expectError {
-				uassert.Error(t, err)
+				uassert.Error(t, err, "error exepected but not occurred")
 				return
 			}
 		})
@@ -208,13 +207,6 @@ func TestNewVoteState(t *testing.T) {
 	voter := testutils.TestAddress("voter")
 	voteKey := createVoteKey(1, voter.String())
 
-	// test config
-	// configVersions = map[uint64]Config{
-	// 	1: {
-	// 		VotingStartDelay: 50,
-	// 		VotingPeriod:     100,
-	// 	},
-	// }
 	newConfig := Config{
 		VotingStartDelay: 50,
 		VotingPeriod:     100,
@@ -232,11 +224,10 @@ func TestNewVoteState(t *testing.T) {
 			name: "Valid propoal: in voting period",
 			proposal: ProposalInfo{
 				ConfigVersion: 1,
-				State: ProposalState{
+				State: ProposalStateInfo{
 					// voting start: 900 + 50 = 950
 					// voting end: 950 + 100 = 1050
-					CreatedAt: 900,
-					Canceled:  false,
+					Timestamp: 900,
 				},
 				PossibleAddressWithWeight: map[std.Address]uint64{
 					voter: 100,
@@ -255,9 +246,8 @@ func TestNewVoteState(t *testing.T) {
 			name: "Before voting start",
 			proposal: ProposalInfo{
 				ConfigVersion: 1,
-				State: ProposalState{
-					CreatedAt: 900,
-					Canceled:  false,
+				State: ProposalStateInfo{
+					Timestamp: 900,
 				},
 				PossibleAddressWithWeight: map[std.Address]uint64{
 					voter: 100,
@@ -276,9 +266,8 @@ func TestNewVoteState(t *testing.T) {
 			name: "After voting end",
 			proposal: ProposalInfo{
 				ConfigVersion: 1,
-				State: ProposalState{
-					CreatedAt: 900,
-					Canceled:  false,
+				State: ProposalStateInfo{
+					Timestamp: 900,
 				},
 				PossibleAddressWithWeight: map[std.Address]uint64{
 					voter: 100,
@@ -297,9 +286,9 @@ func TestNewVoteState(t *testing.T) {
 			name: "Canceled proposal",
 			proposal: ProposalInfo{
 				ConfigVersion: 1,
-				State: ProposalState{
-					CreatedAt: 900,
-					Canceled:  true,
+				State: ProposalStateInfo{
+					State:     StateCanceled,
+					Timestamp: 900,
 				},
 				PossibleAddressWithWeight: map[std.Address]uint64{
 					voter: 100,
@@ -318,9 +307,8 @@ func TestNewVoteState(t *testing.T) {
 			name: "No voting permmisions",
 			proposal: ProposalInfo{
 				ConfigVersion: 1,
-				State: ProposalState{
-					CreatedAt: 900,
-					Canceled:  false,
+				State: ProposalStateInfo{
+					Timestamp: 900,
 				},
 				PossibleAddressWithWeight: map[std.Address]uint64{},
 			},
@@ -337,9 +325,8 @@ func TestNewVoteState(t *testing.T) {
 			name: "Already voted",
 			proposal: ProposalInfo{
 				ConfigVersion: 1,
-				State: ProposalState{
-					CreatedAt: 900,
-					Canceled:  false,
+				State: ProposalStateInfo{
+					Timestamp: 900,
 				},
 				PossibleAddressWithWeight: map[std.Address]uint64{
 					voter: 100,
@@ -374,10 +361,10 @@ func TestNewVoteState(t *testing.T) {
 				uassert.NoError(t, err)
 			}
 
-			uassert.Equal(t, state.isVotingPeriod, tt.expectedState.isVotingPeriod)
-			uassert.Equal(t, state.isProposalValid, tt.expectedState.isProposalValid)
-			uassert.Equal(t, state.hasUserVoted, tt.expectedState.hasUserVoted)
-			uassert.Equal(t, state.userWeight, tt.expectedState.userWeight)
+			uassert.Equal(t, state.isVotingPeriod, tt.expectedState.isVotingPeriod, "isVotingPeriod")
+			uassert.Equal(t, state.isProposalValid, tt.expectedState.isProposalValid, "isProposalValid")
+			uassert.Equal(t, state.hasUserVoted, tt.expectedState.hasUserVoted, "hasUserVoted")
+			uassert.Equal(t, state.userWeight, tt.expectedState.userWeight, "userWeight")
 		})
 	}
 }

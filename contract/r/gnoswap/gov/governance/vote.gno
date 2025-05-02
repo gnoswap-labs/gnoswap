@@ -96,7 +96,7 @@ func Cancel(proposalId uint64) {
 	updateProposalsState()
 
 	proposal := mustGetProposal(proposalId)
-	if proposal.State.Canceled {
+	if proposal.State.State.HasState(StateCanceled) {
 		panic(addDetailToError(
 			errAlreadyCanceledProposal,
 			ufmt.Sprintf("proposalId(%d) has already canceled", proposalId),
@@ -105,7 +105,7 @@ func Cancel(proposalId uint64) {
 
 	config := GetConfigVersion(proposal.ConfigVersion)
 	now := uint64(time.Now().Unix())
-	if now >= (proposal.State.CreatedAt + config.VotingStartDelay) {
+	if now >= (proposal.State.Timestamp + config.VotingStartDelay) {
 		panic(addDetailToError(
 			errUnableToCancleVotingProposal,
 			ufmt.Sprintf("voting has already started for proposalId(%d)", proposalId),
@@ -128,10 +128,13 @@ func Cancel(proposalId uint64) {
 		}
 	}
 
-	proposal.State.Canceled = true
-	proposal.State.CanceledAt = now
-	proposal.State.Upcoming = false
-	proposal.State.Active = false
+	state := proposal.State.State
+
+	// Clear previous states
+	state.ClearAnyStates(StateUpcoming, StateActive)
+
+	// Set canceled state with timestamp
+	state.SetState(StateCanceled, now)
 
 	proposals.Set(formatUint(proposalId), proposal)
 
@@ -141,6 +144,7 @@ func Cancel(proposalId uint64) {
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"proposalId", formatUint(proposalId),
+		"canceledAt", formatUint(now),
 	)
 }
 
@@ -197,7 +201,7 @@ type VoteState struct {
 
 func newVoteState(proposal ProposalInfo, voteKey string, voter std.Address, now uint64) (*VoteState, error) {
 	cfg := GetConfigVersion(proposal.ConfigVersion)
-	votingStartTime := proposal.State.CreatedAt + cfg.VotingStartDelay
+	votingStartTime := proposal.State.Timestamp + cfg.VotingStartDelay
 	votingEndTime := votingStartTime + cfg.VotingPeriod
 
 	hasUserVoted := false
@@ -208,7 +212,7 @@ func newVoteState(proposal ProposalInfo, voteKey string, voter std.Address, now 
 
 	return &VoteState{
 		isVotingPeriod:  now >= votingStartTime && now < votingEndTime,
-		isProposalValid: !proposal.State.Canceled,
+		isProposalValid: !proposal.State.State.HasState(StateCanceled),
 		hasUserVoted:    hasUserVoted,
 		userWeight:      proposal.PossibleAddressWithWeight[voter],
 	}, nil
@@ -254,7 +258,7 @@ func (e *VoteExecutor) execute(yes bool) error {
 }
 
 func safeVoteSum(collected *u256.Uint, weight uint64) *u256.Uint {
-	newSum, overflow := new(u256.Uint).AddOverflow(collected, u256.NewUint(weight))
+	newSum, overflow := u256.Zero().AddOverflow(collected, u256.NewUint(weight))
 	if overflow {
 		panic(errOutOfRange)
 	}

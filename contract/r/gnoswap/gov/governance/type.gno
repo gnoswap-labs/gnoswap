@@ -32,28 +32,95 @@ type Config struct {
 }
 
 // ProposalState represents the state of a proposal's execution
-type ProposalState struct {
-	Created   bool
-	CreatedAt uint64
+type ProposalState uint8
 
-	Upcoming bool
-	Active   bool
+const (
+	// Basic states
+	StateCreated ProposalState = 1 << iota
+	StateUpcoming
+	StateActive
+	StatePassed
+	StateRejected
+	StateCanceled
+	StateExecuted
+	StateExpired
 
-	Passed   bool
-	PassedAt uint64
+	// Combined states
+	StateVotingInProgress = StateActive
+	StateVotingEnded      = StatePassed | StateRejected
+	StateTerminated       = StateExecuted | StateRejected | StateCanceled | StateExpired
+)
 
-	Rejected   bool
-	RejectedAt uint64
+// ProposalStateInfo contains both the state and its timestamp
+type ProposalStateInfo struct {
+	State     ProposalState
+	Timestamp uint64
+}
 
-	Canceled   bool
-	CanceledAt uint64
+func newProposalStateInfo(state ProposalState, timestamp uint64) ProposalStateInfo {
+	return ProposalStateInfo{
+		State:     state,
+		Timestamp: timestamp,
+	}
+}
 
-	// LABEL
-	Executed   bool
-	ExecutedAt uint64
+// HasState checks if the proposal has the given state
+func (s ProposalState) HasState(state ProposalState) bool {
+	return s&state != 0
+}
 
-	Expired   bool
-	ExpiredAt uint64
+// HasAnyState checks if the proposal has any of the given states
+func (s ProposalState) HasAnyState(states ...ProposalState) bool {
+	for _, state := range states {
+		if s.HasState(state) {
+			return true
+		}
+	}
+	return false
+}
+
+// HasAllStates checks if the proposal has all of the given states
+func (s ProposalState) HasAllStates(states ...ProposalState) bool {
+	for _, state := range states {
+		if !s.HasState(state) {
+			return false
+		}
+	}
+	return true
+}
+
+// SetState sets the given state and timestamp
+func (s *ProposalState) SetState(state ProposalState, timestamp uint64) {
+	*s |= state
+}
+
+// ClearState clears the given state
+func (s *ProposalState) ClearState(state ProposalState) {
+	*s &^= state
+}
+
+func (s *ProposalState) ClearAnyStates(states ...ProposalState) {
+	for _, state := range states {
+		s.ClearState(state)
+	}
+}
+
+// IsValidTransition checks if the state transition is valid
+func (s ProposalState) IsValidTransition(newState ProposalState) bool {
+	switch {
+	case s.HasState(StateCreated) && newState == StateUpcoming:
+		return true
+	case s.HasState(StateUpcoming) && newState == StateActive:
+		return true
+	case s.HasState(StateActive) && (newState == StatePassed || newState == StateRejected):
+		return true
+	case s.HasState(StatePassed) && newState == StateExecuted:
+		return true
+	case s.HasState(StatePassed) && newState == StateExpired:
+		return true
+	default:
+		return false
+	}
 }
 
 type CommunityPoolSpendInfo struct {
@@ -110,7 +177,7 @@ type ProposalInfo struct {
 	ProposalType ProposalType
 
 	// The execution state of the proposal
-	State ProposalState
+	State ProposalStateInfo
 
 	// How many yes votes have been collected
 	Yea *u256.Uint

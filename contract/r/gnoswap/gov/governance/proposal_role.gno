@@ -157,15 +157,11 @@ func handleRoleChangeProposal(
 	quorumAmount := maxVotingWeight.Uint64() * config.Quorum / 100
 
 	proposal := ProposalInfo{
-		Proposer:     proposer,
-		ProposalType: RoleChange,
-		State: ProposalState{
-			Created:   true,
-			CreatedAt: now,
-			Upcoming:  true,
-		},
-		Yea:                       u256.Zero(),
-		Nay:                       u256.Zero(),
+		Proposer:                  proposer,
+		ProposalType:              RoleChange,
+		State:                     newProposalStateInfo(StateCreated, now),
+		Yea:                       u256Zero,
+		Nay:                       u256Zero,
 		MaxVotingWeight:           maxVotingWeight,
 		PossibleAddressWithWeight: possibleAddressWithWeight,
 		ConfigVersion:             uint64(configVersions.Size()),
@@ -202,7 +198,7 @@ func handleRoleChangeProposal(
 		"quorumAmount", formatUint(proposal.QuorumAmount),
 		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
 		"configVersion", formatUint(proposal.ConfigVersion),
-		"createdAt", formatUint(proposal.State.CreatedAt),
+		"createdAt", formatUint(proposal.State.Timestamp),
 	)
 
 	return proposalId

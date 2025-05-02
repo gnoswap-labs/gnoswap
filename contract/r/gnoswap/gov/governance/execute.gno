@@ -31,9 +31,9 @@ type ParameterHandler interface {
 	// Execute processes the parameters
 	Execute(params []string) error
 	// GetState returns the current state (optional)
-	GetState() interface{}
+	GetState() any
 	// RestoreState restores the given state (optional)
-	RestoreState(state interface{}) error
+	RestoreState(state any) error
 }
 
 // Registry for parameter handlers
@@ -280,10 +280,10 @@ func getProposal(proposalId uint64) (*ProposalInfo, error) {
 func validateProposalState(proposal *ProposalInfo) ExecutionValidator {
 	return ExecutionValidator{
 		isTextProposal:    proposal.ProposalType == Text,
-		isAlreadyExecuted: proposal.State.Executed,
-		isAlreadyCanceled: proposal.State.Canceled,
-		isAlreadyRejected: proposal.State.Rejected,
-		hasPassed:         proposal.State.Passed,
+		isAlreadyExecuted: proposal.State.State.HasState(StateExecuted),
+		isAlreadyCanceled: proposal.State.State.HasState(StateCanceled),
+		isAlreadyRejected: proposal.State.State.HasState(StateRejected),
+		hasPassed:         proposal.State.State.HasState(StatePassed),
 	}
 }
 
@@ -326,7 +326,7 @@ func createExecutionContext(proposalId uint64, proposal *ProposalInfo) (*Executi
 }
 
 func calculateVotingEnd(proposal *ProposalInfo, config *Config) uint64 {
-	return proposal.State.CreatedAt +
+	return proposal.State.Timestamp +
 		config.VotingStartDelay +
 		config.VotingPeriod
 }
@@ -367,11 +367,16 @@ func validateVotes(pp *ProposalInfo) error {
 	return nil
 }
 
+// updateProposalState updates the proposal state after execution
 func updateProposalState(ctx *ExecutionContext) {
-	ctx.Proposal.State.Executed = true
-	ctx.Proposal.State.ExecutedAt = ctx.Now
-	ctx.Proposal.State.Upcoming = false
-	ctx.Proposal.State.Active = false
+	// Clear previous states
+	ctx.Proposal.State.State.ClearState(StateUpcoming)
+	ctx.Proposal.State.State.ClearState(StateActive)
+
+	// Set executed state with timestamp
+	ctx.Proposal.State.State.SetState(StateExecuted, ctx.Now)
+
+	// Update the proposal in storage
 	proposals.Set(strconv.FormatUint(ctx.ProposalId, 10), *ctx.Proposal)
 }
 
@@ -395,9 +400,9 @@ func hasDesiredParams(params []string, expected int) error {
 // StatefulHandler is an interface that can save and restore state
 type StatefulHandler interface {
 	// GetState returns the current state
-	GetState() interface{}
+	GetState() any
 	// RestoreState restores the given state
-	RestoreState(state interface{}) error
+	RestoreState(state any) error
 }
 
 // handlerState stores the state information of the handler
@@ -460,6 +465,6 @@ func NewFunctionHandler(fn func(params []string) error) *FunctionHandler {
 
 var _ ParameterHandler = (*FunctionHandler)(nil)
 
-func (h *FunctionHandler) Execute(params []string) error        { return h.fn(params) }
-func (h *FunctionHandler) RestoreState(state interface{}) error { return nil }
-func (h *FunctionHandler) GetState() interface{}                { return nil }
+func (h *FunctionHandler) Execute(params []string) error { return h.fn(params) }
+func (h *FunctionHandler) RestoreState(state any) error  { return nil }
+func (h *FunctionHandler) GetState() any                 { return nil }
