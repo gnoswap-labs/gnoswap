@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"errors"
 	"std"
 	"time"
 
