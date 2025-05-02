@@ -283,6 +283,10 @@ func ProposeParameterChange(
 	proposals.Set(formatUint(proposalId), proposal)
 	proposalIdListByProposer.Set(proposer.String(), proposalId)
 
+	// Update proposal state to upcoming
+	proposal.State.State.SetState(StateUpcoming, now)
+	proposals.Set(formatUint(proposalId), proposal)
+
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"ProposeParameterChange",
