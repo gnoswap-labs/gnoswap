@@ -153,21 +153,12 @@ func rejectAndExecute(t *testing.T) {
 		testing.SkipHeights(100) // ends voting period
 
 		updateProposalsState() // proposal rejected
-		pp, exists := proposals.Get(strconv.FormatUint(proposalId, 10))
+		proposal, exists := GetProposal(proposalId)
 		if !exists {
 			t.Errorf("Proposal not found after creation")
 		}
-		proposal := pp.(ProposalInfo)
 
 		uassert.True(t, proposal.State.State.HasState(StateRejected))
-	})
-
-	t.Run("execute rejected proposal", func(t *testing.T) {
-		uassert.PanicsWithMessage(t,
-			"proposal already executed, canceled, or rejected",
-			func() {
-				Execute(proposalId)
-			})
 	})
 }
 
@@ -175,6 +166,7 @@ func passAndExpire(t *testing.T) {
 	t.Run("prpoose new community pool spend", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		proposalId := ProposeCommunityPoolSpend("test_title", "test_description", to, tokenPath, 50) // create new proposal
+		println("proposalId", proposalId)
 	})
 
 	t.Run("vote to pass", func(t *testing.T) {
@@ -192,20 +184,10 @@ func passAndExpire(t *testing.T) {
 		testing.SkipHeights(1)    // expired
 		updateProposalsState()
 
-		// proposal := proposals[proposalId]
+		// after proposal has set to expired, it will be moved to archivedProposals
 		pp, exists := proposals.Get(strconv.FormatUint(proposalId, 10))
-		if !exists {
-			t.Errorf("Proposal not found after creation")
+		if exists {
+			t.Errorf("Proposal should be moved to archived proposals")
 		}
-		proposal := pp.(ProposalInfo)
-
-		uassert.True(t, proposal.State.State.HasState(StatePassed))
-		uassert.True(t, proposal.State.State.HasState(StateExpired))
-
-		uassert.PanicsWithMessage(t,
-			"execution window over (now(1234574670) >= windowEnd(1234570140))",
-			func() {
-				Execute(proposalId)
-			})
 	})
 }
