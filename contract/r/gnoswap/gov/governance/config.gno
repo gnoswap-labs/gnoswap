@@ -24,7 +24,7 @@ func init() {
 		VotingPeriod:                  604800,        // 7d
 		VotingWeightSmoothingDuration: 86400,         // 1d
 		Quorum:                        50,            // 50% of total xGNS supply
-		ProposalCreationThreshold:     1_000_000_000, // 1_000_000_000
+		ProposalCreationThreshold:     1_000_000_000,
 		ExecutionDelay:                86400,         // 1d
 		ExecutionWindow:               2592000,       // 30d
 	}
