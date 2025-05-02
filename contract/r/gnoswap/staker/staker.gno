@@ -552,7 +552,7 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[st
 func UnStakeToken(positionId uint64, unwrapResult bool) (string, string, string) { // poolPath, token0Amount, token1Amount
 	assertOnlyNotHalted()
 
-	// onwer check
+	// Verify that the caller is the actual owner of the deposit to prevent unauthorized unstaking
 	deposit := deposits.Get(positionId)
 	caller := getPrevAddr()
 	if deposit.owner != caller {
