@@ -348,6 +348,6 @@ func TestProposeParameterChange_Common_SetHalt(t *testing.T) {
 		testing.SetRealm(govRealm)
 		Execute(proposalId)
 
-		uassert.(t, halt.GetHalt())
+		uassert.Equal(t, halt.GetHalt(), true)
 	})
 }
