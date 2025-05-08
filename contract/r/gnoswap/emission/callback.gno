@@ -1,9 +1,9 @@
 package emission
 
 import (
-	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 
+	"gno.land/r/gnoswap/v1/access"
 	br "gno.land/r/gnoswap/v1/bridge"
 )
 
@@ -30,18 +30,16 @@ func RegisterGnsChangeCallback() {
 	gns.SetCallbackEmissionChange(callbackEmissionChange)
 }
 
-// RegisterMintAndDistributeGnsCallback upgrades the version of the function stored in the bridge contract.
-// When an upgrade is needed, you can manually call the function using gnokey.
-//
-// This function is only callable by admin or governance.
-func RegisterMintAndDistributeGnsCallback() {
+// registerMintAndDistributeGnsCallback upgrades the version of the function stored in the bridge contract.
+func registerMintAndDistributeGnsCallback() {
+	// When a contract is deployed, the init function runs immediately, and the caller is always fixed as the admin.
+	// Therefore, there is no need to separately check the caller in a function that applies upgrades,
+	// but in a test environment, since the admin address cannot be fixed as the default address,
+	// we use the admin address registered in the `access` contract instead.
 	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
-	caller := getPrevAddr()
+	br.RegisterCallback(adminAddr, "emission", "MintAndDistributeGns", MintAndDistributeGns)
+}
 
-	if caller == adminAddr || caller == govAddr {
-		br.RegisterCallback(caller, "emission", "MintAndDistributeGns", MintAndDistributeGns)
-	} else {
-		panic("caller is not admin or governance")
-	}
+func init() {
+	registerMintAndDistributeGnsCallback()
 }
