@@ -3,6 +3,7 @@ package position
 import (
 	"encoding/base64"
 	"std"
+	"time"
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
@@ -456,6 +457,20 @@ func EmergencyWithdraw(positionId uint64, unwrap bool) (poolPath, token0Amount, 
 	assertOnlyOwnerOfToken(positionId, caller)
 
 	_, token0Amount, token1Amount, poolPath, _, _ = CollectFee(positionId, unwrap)
+
+	positionLiquidity := PositionGetPositionLiquidityStr(positionId)
+	_, _, _, _, amount0, amount1, _ := DecreaseLiquidity(
+		positionId,
+		positionLiquidity,
+		"0",
+		"0",
+		time.Now().Add(time.Hour).Unix(),
+		unwrap,
+	)
+
+	// Update final amounts
+	token0Amount = amount0
+	token1Amount = amount1
 
 	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(

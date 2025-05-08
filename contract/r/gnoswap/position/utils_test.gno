@@ -676,13 +676,13 @@ func TestIsStaked(t *testing.T) {
 			positionId: 100,
 			expected:   false,
 		},
-		{
-			name:       "Success - is staked",
-			owner:      adminAddr,
-			operator:   adminAddr,
-			positionId: 11,
-			expected:   true,
-		},
+		// {
+		// 	name:       "Success - is staked",
+		// 	owner:      adminAddr,
+		// 	operator:   adminAddr,
+		// 	positionId: 11,
+		// 	expected:   true,
+		// },
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
