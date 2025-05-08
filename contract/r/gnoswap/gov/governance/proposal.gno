@@ -318,6 +318,7 @@ type proposalStateUpdater struct {
 // Terminated proposals are moved to archivedProposals.
 func updateProposalsState() {
 	now := uint64(time.Now().Unix())
+	var keysToArchive []string
 
 	proposals.Iterate("", "", func(key string, value any) bool {
 		proposal := value.(ProposalInfo)
@@ -330,23 +331,24 @@ func updateProposalsState() {
 			updater.updateExecutionState()
 		}
 
-		// Handle terminated proposals
-		//
-		// We will keep the active proposals.
-		// If a proposal is terminated, it will be moved to archivedProposals.
+		// Collect keys to archive
 		if isProposalTerminated(*updater.proposal) {
+			keysToArchive = append(keysToArchive, key)
 			archivedProposals.Set(key, *updater.proposal)
-			proposals.Remove(key)
-			// also remove from proposer index
-			archivedVal, _ := archivedProposals.Get(key)
-			proposer := archivedVal.(ProposalInfo).Proposer.String()
-			proposalIdListByProposer.Remove(proposer)
 		} else {
 			// Keep active proposals
 			proposals.Set(key, *updater.proposal)
 		}
 		return false
 	})
+
+	// Process archived proposals outside the iterator
+	for _, key := range keysToArchive {
+		proposals.Remove(key)
+		archivedVal, _ := archivedProposals.Get(key)
+		proposer := archivedVal.(ProposalInfo).Proposer.String()
+		proposalIdListByProposer.Remove(proposer)
+	}
 }
 
 // isProposalTerminated checks if a proposal is in a terminated state
