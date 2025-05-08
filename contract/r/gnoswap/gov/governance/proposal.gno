@@ -345,7 +345,7 @@ func updateProposalsState() {
 			// Keep active proposals
 			proposals.Set(key, *updater.proposal)
 		}
-		return true
+		return false
 	})
 }
 
