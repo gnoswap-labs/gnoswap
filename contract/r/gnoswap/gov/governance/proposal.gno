@@ -387,10 +387,11 @@ func newProposalStateUpdater(proposal *ProposalInfo, now uint64) *proposalStateU
 
 // shouldUpdate determines if the proposal state should be updated.
 // Returns true if the proposal is created, not canceled, and not executed.
+// shouldUpdate determines if the proposal state should be updated.
+// Returns true if the proposal is created, not canceled, and not executed.
 func (u *proposalStateUpdater) shouldUpdate() bool {
-	return u.proposal.State.Created &&
-		!u.proposal.State.Canceled &&
-		!u.proposal.State.Executed
+	return !isProposalTerminated(*u.proposal) &&
+		(u.proposal.State.Upcoming || u.proposal.State.Active || u.proposal.State.Passed)
 }
 
 // getVotingTimes returns the start and end timestamps of the voting period.
