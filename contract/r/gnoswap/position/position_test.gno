@@ -3,7 +3,6 @@ package position
 import (
 	"std"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
