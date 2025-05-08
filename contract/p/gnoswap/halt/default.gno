@@ -61,6 +61,9 @@ var (
 			map[OpType]bool{
 				OpTypeGovernance: true,
 				OpTypeWithdraw:   true,
+				OpTypePosition:   true,
+				OpTypeEmission:   true,
+				OpTypePool:       true,
 			},
 		},
 		{
