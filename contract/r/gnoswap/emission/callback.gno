@@ -30,13 +30,18 @@ func RegisterGnsChangeCallback() {
 	gns.SetCallbackEmissionChange(callbackEmissionChange)
 }
 
+// RegisterMintAndDistributeGnsCallback upgrades the version of the function stored in the bridge contract.
+// When an upgrade is needed, you can manually call the function using gnokey.
+//
+// This function is only callable by admin or governance.
 func RegisterMintAndDistributeGnsCallback() {
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
-	br.RegisterCallback(adminAddr, "emission", "MintAndDistributeGns", MintAndDistributeGns)
-}
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+	caller := getPrevAddr()
 
-// contract path proxy pattern
-
-func init() {
-	RegisterMintAndDistributeGnsCallback()
+	if caller == adminAddr || caller == govAddr {
+		br.RegisterCallback(caller, "emission", "MintAndDistributeGns", MintAndDistributeGns)
+	} else {
+		panic("caller is not admin or governance")
+	}
 }
