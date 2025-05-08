@@ -210,8 +210,8 @@ func TestCreateParameterHandlers(t *testing.T) {
 					t.Fatal("unexpected panic")
 				}
 			}()
-			handler, _ := registry.Get(tt.path, tt.function)
-			err := handler(tt.params)
+			handler, _ := registry.Handler(tt.path, tt.function)
+			err := handler.Execute(tt.params)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("unexpected error: %v", err)
@@ -255,7 +255,7 @@ func TestRoleChangeParameterHandlers(t *testing.T) {
 			handler, err := registry.Handler(tt.pkgPath, tt.function)
 			uassert.NoError(t, err)
 
-			err = handler(tt.params)
+			err = handler.Execute(tt.params)
 			if tt.expectError {
 				uassert.Error(t, err)
 			} else {

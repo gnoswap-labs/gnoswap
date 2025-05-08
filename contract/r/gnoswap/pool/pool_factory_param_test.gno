@@ -1,12 +1,15 @@
 package pool
 
 import (
+	"strings"
 	"testing"
 
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/common"
 )
 
 func TestNewPoolParams(t *testing.T) {
@@ -149,7 +152,10 @@ func TestUpdateWithWrapping(t *testing.T) {
 		wugnotPath = "gno.land/r/gnoswap/v1/wugnot"
 	)
 
-	testCases := []struct {
+	tick := int32(-11242)
+	sqrtPriceX96FromTick := common.TickMathGetSqrtRatioAtTick(tick)
+
+	tests := []struct {
 		name            string
 		token0Path      string
 		token1Path      string
@@ -170,21 +176,89 @@ func TestUpdateWithWrapping(t *testing.T) {
 			tickSpacing:     GetFeeAmountTickSpacing(FeeTier3000),
 			expectedPanic:   false,
 		},
+		{
+			name:            "success - near MIN_SQRT_RATIO",
+			token0Path:      wugnotPath,
+			token1Path:      gnsPath,
+			fee:             FeeTier3000,
+			sqrtPriceX96Str: "4295128740", // MIN_SQRT_RATIO + 1
+			sqrtPriceX96:    u256.MustFromDecimal("4295128740"),
+			tickSpacing:     GetFeeAmountTickSpacing(FeeTier3000),
+			expectedPanic:   false,
+		},
+		{
+			name:            "fail - below MIN_SQRT_RATIO",
+			token0Path:      wugnotPath,
+			token1Path:      gnsPath,
+			fee:             FeeTier3000,
+			sqrtPriceX96Str: "4295128738", // MIN_SQRT_RATIO - 1
+			sqrtPriceX96:    u256.MustFromDecimal("4295128739"),
+			tickSpacing:     GetFeeAmountTickSpacing(FeeTier3000),
+			expectedPanic:   true,
+			expectedMsg:     "out of range for numeric value",
+		},
+		{
+			name:            "fail - above MAX_SQRT_RATIO",
+			token0Path:      wugnotPath,
+			token1Path:      gnsPath,
+			fee:             FeeTier3000,
+			sqrtPriceX96Str: "1461446703485210103287273052203988822378723970342", // MAX_SQRT_RATIO + 1
+			sqrtPriceX96:    u256.MustFromDecimal("1461446703485210103287273052203988822378723970342"),
+			tickSpacing:     GetFeeAmountTickSpacing(FeeTier3000),
+			expectedPanic:   true,
+			expectedMsg:     "out of range for numeric value",
+		},
+		{
+			name:            "success - update with wrapping",
+			token0Path:      wugnotPath,
+			token1Path:      gnsPath,
+			fee:             FeeTier3000,
+			sqrtPriceX96Str: sqrtPriceX96FromTick.ToString(),
+			sqrtPriceX96:    sqrtPriceX96FromTick,
+			tickSpacing:     GetFeeAmountTickSpacing(FeeTier3000),
+			expectedPanic:   false,
+		},
 	}
 
-	for _, tt := range testCases {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectedPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Expected panic but got none")
+					} else if !strings.Contains(r.(string), tt.expectedMsg) {
+						t.Errorf("Expected panic message to contain %s, got %s", tt.expectedMsg, r)
+					}
+				}()
+			}
+
 			params := newPoolParams(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96Str, tt.tickSpacing)
 			updatedParams := params.updateWithWrapping()
 
-			expected0 := params.token0Path
-			expected1 := params.token1Path
-			if !params.isInOrder() {
-				expected0, expected1 = expected1, expected0
-			}
+			if !tt.expectedPanic {
+				expected0 := params.token0Path
+				expected1 := params.token1Path
+				if !params.isInOrder() {
+					expected0, expected1 = expected1, expected0
+				}
 
-			uassert.Equal(t, expected0, updatedParams.Token0Path(), "Token0Path should be swapped if needed")
-			uassert.Equal(t, expected1, updatedParams.Token1Path(), "Token1Path should be swapped if needed")
+				uassert.Equal(t, expected0, updatedParams.Token0Path(), "Token0Path should be swapped if needed")
+				uassert.Equal(t, expected1, updatedParams.Token1Path(), "Token1Path should be swapped if needed")
+
+				// Verify that the inverted price is within valid range
+				if !params.isInOrder() {
+					minSqrtRatio := u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
+					maxSqrtRatio := u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
+					newSqrtPriceX96 := updatedParams.SqrtPriceX96()
+
+					if newSqrtPriceX96.Lt(minSqrtRatio) || newSqrtPriceX96.Gt(maxSqrtRatio) {
+						t.Errorf("Inverted price %s is out of valid range [%s, %s]",
+							newSqrtPriceX96.ToString(),
+							minSqrtRatio.ToString(),
+							maxSqrtRatio.ToString())
+					}
+				}
+			}
 		})
 	}
 }

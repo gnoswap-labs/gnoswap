@@ -41,7 +41,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: gnolang/gno
-          ref: master
+          # TODO: change to `master` when the interrealm issue is fixed
+          ref: a3bffb2eb311cc27c419b519146a9906b5a82dba
           path: ./gno
 
       - name: Set up Go

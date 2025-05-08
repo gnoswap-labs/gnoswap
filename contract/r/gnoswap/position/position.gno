@@ -159,6 +159,8 @@ func Mint(
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"sqrtPriceX96", poolSqrtPriceX96,
+		"token0Balance", pl.PoolGetBalanceToken0(processedInput.poolPath),
+		"token1Balance", pl.PoolGetBalanceToken1(processedInput.poolPath),
 	)
 
 	return id, liquidity.ToString(), amount0.ToString(), amount1.ToString()

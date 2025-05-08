@@ -225,12 +225,16 @@ func StakeToken(positionId uint64, referrer string) (string, string, string) {
 	assertOnlyNotHalted()
 	assertOnlyNotStaked(positionId)
 
-	en.MintAndDistributeGns() // en으로 묶이지 않게 callback으로 호출 => 등록된 function이 call 되야 함.
+	en.MintAndDistributeGns()
 
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := getPrevAddr()
 
-	referral.TryRegister(caller, referrer)
+	success := referral.TryRegister(caller, referrer)
+	actualReferrer := referrer
+	if !success {
+		actualReferrer = referral.GetReferral(caller.String())
+	}
 
 	token0Amount, token1Amount, err := calculateStakeTokenAmount(positionId, owner, caller)
 	if err != nil {
@@ -313,7 +317,7 @@ func StakeToken(positionId uint64, referrer string) (string, string, string) {
 		"positionLowerTick", formatInt(tickLower),
 		"currentTick", formatInt(currentTick),
 		"isInRange", formatBool(isInRange),
-		"referrer", referrer,
+		"referrer", actualReferrer,
 	)
 
 	return poolPath, token0Amount, token1Amount
@@ -548,8 +552,19 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[st
 func UnStakeToken(positionId uint64, unwrapResult bool) (string, string, string) { // poolPath, token0Amount, token1Amount
 	assertOnlyNotHalted()
 
-	// unStaked status
+	// Verify that the caller is the actual owner of the deposit to prevent unauthorized unstaking
 	deposit := deposits.Get(positionId)
+	caller := getPrevAddr()
+	if deposit.owner != caller {
+		panic(addDetailToError(
+			errUnauthorized,
+			ufmt.Sprintf("caller(%s) is not the owner(%s)", 
+				caller.String(), 
+				deposit.owner.String()),
+		))
+	}
+
+	// unStaked status
 	poolPath := deposit.targetPoolPath
 
 	// claim All Rewards

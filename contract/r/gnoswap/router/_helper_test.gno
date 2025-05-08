@@ -58,7 +58,8 @@ var (
 )
 
 var (
-	user1Addr       std.Address = "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec"
+	user1Addr       std.Address = testutils.TestAddress("user1")
+	user2Addr       std.Address = testutils.TestAddress("user2")
 	singlePoolPath              = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
 	singlePoolPath2             = "gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000"
 )
@@ -105,6 +106,31 @@ func TokenFaucet(t *testing.T, tokenPath string, to std.Address) {
 	t.Helper()
 	testing.SetOriginCaller(admin)
 	defaultAmount := uint64(5_000_000_000)
+
+	switch tokenPath {
+	case wugnotPath:
+		wugnotTransfer(t, to, defaultAmount)
+	case gnsPath:
+		gnsTransfer(t, to, defaultAmount)
+	case barPath:
+		barTransfer(t, to, defaultAmount)
+	case bazPath:
+		bazTransfer(t, to, defaultAmount)
+	case fooPath:
+		fooTransfer(t, to, defaultAmount)
+	case oblPath:
+		oblTransfer(t, to, defaultAmount)
+	case quxPath:
+		quxTransfer(t, to, defaultAmount)
+	default:
+		panic("token not found")
+	}
+}
+
+func TokenFaucet2(t *testing.T, tokenPath string, to std.Address) {
+	t.Helper()
+	testing.SetOriginCaller(admin)
+	defaultAmount := uint64(10_000_000_000)
 
 	switch tokenPath {
 	case wugnotPath:

@@ -138,7 +138,7 @@ func NewPool(poolPath string, currentHeight int64) *Pool {
 		lastUnclaimableHeight:         currentHeight,
 		unclaimableAcc:                0,
 		rewardCache:                   NewUintTree(),
-		incentives:                    NewIncentives(),
+		incentives:                    NewIncentives(poolPath),
 		ticks:                         NewTicks(),
 		globalRewardRatioAccumulation: NewUintTree(),
 		historicalTick:                NewUintTree(),
