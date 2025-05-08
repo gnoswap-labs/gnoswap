@@ -337,6 +337,10 @@ func updateProposalsState() {
 		if isProposalTerminated(*updater.proposal) {
 			archivedProposals.Set(key, *updater.proposal)
 			proposals.Remove(key)
+			// also remove from proposer index
+			archivedVal, _ := archivedProposals.Get(key)
+			proposer := archivedVal.(ProposalInfo).Proposer.String()
+			proposalIdListByProposer.Remove(proposer)
 		} else {
 			// Keep active proposals
 			proposals.Set(key, *updater.proposal)
