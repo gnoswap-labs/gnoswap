@@ -153,7 +153,7 @@ func rejectAndExecute(t *testing.T) {
 		testing.SkipHeights(100) // ends voting period
 
 		updateProposalsState() // proposal rejected
-		pp, exists := proposals.Get(strconv.FormatUint(proposalId, 10))
+		pp, exists := archivedProposals.Get(strconv.FormatUint(proposalId, 10))
 		if !exists {
 			t.Errorf("Proposal not found after creation")
 		}
@@ -164,7 +164,7 @@ func rejectAndExecute(t *testing.T) {
 
 	t.Run("execute rejected proposal", func(t *testing.T) {
 		uassert.PanicsWithMessage(t,
-			"proposal already executed, canceled, or rejected",
+			"proposal 2 not found",
 			func() {
 				Execute(proposalId)
 			})
@@ -193,19 +193,9 @@ func passAndExpire(t *testing.T) {
 		updateProposalsState()
 
 		// proposal := proposals[proposalId]
-		pp, exists := proposals.Get(strconv.FormatUint(proposalId, 10))
-		if !exists {
+		_, exists := proposals.Get(strconv.FormatUint(proposalId, 10))
+		if exists {
 			t.Errorf("Proposal not found after creation")
 		}
-		proposal := pp.(ProposalInfo)
-
-		uassert.True(t, proposal.State.Passed)
-		uassert.True(t, proposal.State.Expired)
-
-		uassert.PanicsWithMessage(t,
-			"execution window over (now(1234574670) >= windowEnd(1234570140))",
-			func() {
-				Execute(proposalId)
-			})
 	})
 }

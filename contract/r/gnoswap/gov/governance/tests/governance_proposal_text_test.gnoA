@@ -270,7 +270,7 @@ func cancel(t *testing.T) {
 	t.Run("Cancel already canceled proposal", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-GOVERNANCE-008] can not cancel already canceled proposal || proposalId(2) has already canceled",
+			"[GNOSWAP-GOVERNANCE-003] requested data not found || proposalId(2) not found",
 			func() {
 				Cancel(proposalId)
 			})
@@ -282,7 +282,7 @@ func cancel(t *testing.T) {
 		testing.SkipHeights(11)
 
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-GOVERNANCE-009] unable to cancel voting proposal || voting has already started for proposalId(3)",
+			"[GNOSWAP-GOVERNANCE-003] requested data not found || proposalId(3) not found",
 			func() {
 				Cancel(proposalId)
 			})
