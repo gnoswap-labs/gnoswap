@@ -116,6 +116,7 @@ func filterActiveIncentives(pool *Pool, currentHeight int64) []string {
 				ictv.endHeight,
 				ictv.refundee,
 				ictv.rewardToken,
+				pool.poolPath,
 			)
 			ictvIds = append(ictvIds, ictvId)
 		}

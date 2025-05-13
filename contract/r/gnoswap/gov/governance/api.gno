@@ -63,6 +63,23 @@ func GetProposalById(id uint64) string {
 	return marshal(proposalsObj)
 }
 
+func GetArchivedProposalById(id uint64) string {
+	updateProposalsState()
+
+	_, exists := archivedProposals.Get(formatUint(id))
+	if !exists {
+		return ""
+	}
+
+	proposalsObj := metaNode()
+	proposalArr := json.ArrayNode("", nil)
+	proposalObj := getProposalById(id)
+	proposalArr.AppendArray(proposalObj)
+	proposalsObj.AppendObject("proposals", proposalArr)
+
+	return marshal(proposalsObj)
+}
+
 // GetVoteStatusFromProposalById returns the vote status(max, yes, no) of a proposal.
 func GetVoteStatusFromProposalById(id uint64) string {
 	updateProposalsState()

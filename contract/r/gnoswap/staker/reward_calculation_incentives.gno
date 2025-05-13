@@ -14,6 +14,7 @@ import (
 // - byHeight: ExternalIncentive primarily indexed by startHeight
 // - byEndHeight: ExternalIncentive primarily indexed by endHeight
 // - byCreator: ExternalIncentive primarily indexed by creator
+// - targetPoolPath: The target pool path for this incentive collection
 //
 //   - unclaimablePeriods:
 //     For each unclaimable period(start, end) for this pool,
@@ -25,16 +26,19 @@ type Incentives struct {
 	byEndHeight *avl.Tree // (endHeight, startHeight, creator, rewardToken) => ExternalIncentive
 	byCreator   *avl.Tree // (creator, startHeight, endHeight, rewardToken) => ExternalIncentive
 
+	targetPoolPath string // The target pool path for this incentive collection
+
 	unclaimablePeriods *UintTree // startHeight => endHeight
 }
 
 // NewIncentives creates a new Incentives instance.
-func NewIncentives() Incentives {
+func NewIncentives(targetPoolPath string) Incentives {
 	result := Incentives{
 		byTime:             avl.NewTree(),
 		byHeight:           avl.NewTree(),
 		byEndHeight:        avl.NewTree(),
 		byCreator:          avl.NewTree(),
+		targetPoolPath:     targetPoolPath,
 		unclaimablePeriods: NewUintTree(),
 	}
 
@@ -45,7 +49,7 @@ func NewIncentives() Incentives {
 
 // Get incentive by time
 func (self *Incentives) Get(startTime, endTime int64, creator std.Address, rewardToken string) (*ExternalIncentive, bool) {
-	byTimeId := incentiveIdByTime(startTime, endTime, creator, rewardToken)
+	byTimeId := incentiveIdByTime(startTime, endTime, creator, rewardToken, self.targetPoolPath)
 	value, ok := self.byTime.Get(byTimeId)
 	if !ok {
 		return nil, false
@@ -105,7 +109,7 @@ func (self *Incentives) create(
 	creator std.Address,
 	incentive *ExternalIncentive,
 ) {
-	byTimeId := incentiveIdByTime(incentive.startTimestamp, incentive.endTimestamp, creator, incentive.rewardToken)
+	byTimeId := incentiveIdByTime(incentive.startTimestamp, incentive.endTimestamp, creator, incentive.rewardToken, self.targetPoolPath)
 	if self.byTime.Has(byTimeId) {
 		panic(addDetailToError(
 			errIncentiveAlreadyExists,
@@ -113,8 +117,8 @@ func (self *Incentives) create(
 		))
 	}
 
-	byHeightId, byCreatorId := incentiveIdByHeight(incentive.startHeight, incentive.endHeight, creator, incentive.rewardToken)
-	byEndHeightId, _ := incentiveIdByHeight(incentive.endHeight, incentive.startHeight, creator, incentive.rewardToken)
+	byHeightId, byCreatorId := incentiveIdByHeight(incentive.startHeight, incentive.endHeight, creator, incentive.rewardToken, self.targetPoolPath)
+	byEndHeightId, _ := incentiveIdByHeight(incentive.endHeight, incentive.startHeight, creator, incentive.rewardToken, self.targetPoolPath)
 
 	self.byTime.Set(byTimeId, incentive)
 	self.byHeight.Set(byHeightId, incentive)
