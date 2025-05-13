@@ -38,9 +38,6 @@ func CheckPermission(roleName, permissionName string, caller std.Address) error 
 // UpdatePermission globally updates the permission checker for a role's permission.
 // An error is returned if the role or permission does not exist.
 func UpdatePermission(roleName, permissionName string, newChecker prbac.PermissionChecker) error {
-	if !callerIsOwner() {
-		return prbac.ErrUnauthorized
-	}
 	return globalManager.UpdatePermission(roleName, permissionName, newChecker)
 }
 
@@ -56,9 +53,6 @@ func RemovePermission(roleName, permissionName string) error {
 // RemoveRole globally removes a role.
 // An error is returned if the role does not exist.
 func RemoveRole(roleName string) error {
-	if !callerIsOwner() {
-		return prbac.ErrUnauthorized
-	}
 	return globalManager.RemoveRole(roleName)
 }
 
@@ -66,9 +60,6 @@ func RemoveRole(roleName string) error {
 // This allows declarative registration of roles along with their permissions.
 // Returns an error if the role already exists.
 func DeclareRole(roleName string, opts ...prbac.RoleOption) error {
-	if !callerIsOwner() {
-		return prbac.ErrUnauthorized
-	}
 	return globalManager.DeclareRole(roleName, opts...)
 }
 
