@@ -56,19 +56,21 @@ func TestUpdateAndRemovePermission(t *testing.T) {
 	roleName := "editor"
 	permissionName := "can_edit"
 
+	var errWrongCaller = errors.New("wrong caller")
+
 	// initial setup
 	RegisterRole(roleName)
 	originalChecker := func(addr std.Address) error {
 		if addr == testCaller {
 			return nil
 		}
-		return errors.New("wrong caller")
+		return errWrongCaller
 	}
 	RegisterPermission(roleName, permissionName, originalChecker)
 
 	// update permission
 	newChecker := func(addr std.Address) error {
-		return errors.New("wrong caller")
+		return errWrongCaller
 	}
 	err := UpdatePermission(roleName, permissionName, newChecker)
 	uassert.NoError(t, err)
@@ -90,11 +92,13 @@ func TestDeclareRole(t *testing.T) {
 	roleName := "supervisor"
 	permissionName := "can_supervise"
 
+	var errWrongCaller = errors.New("wrong caller")
+
 	checker := func(addr std.Address) error {
 		if addr == testCaller {
 			return nil
 		}
-		return errors.New("wrong caller")
+		return errWrongCaller
 	}
 
 	err := DeclareRole(roleName,
@@ -104,4 +108,28 @@ func TestDeclareRole(t *testing.T) {
 	// check permission
 	err = CheckPermission(roleName, permissionName, testCaller)
 	uassert.NoError(t, err)
+}
+
+func TestUnauthorizedAccess(t *testing.T) {
+	roleName := "test_role"
+	permissionName := "test_permission"
+	checker := func(addr std.Address) error { return nil }
+
+	t.Run("RegisterRole unauthorized", func(t *testing.T) {
+		testing.SetOriginCaller(wrongCaller)
+		err := RegisterRole(roleName)
+		uassert.ErrorContains(t, err, prbac.ErrUnauthorized.Error())
+	})
+
+	t.Run("RegisterPermission unauthorized", func(t *testing.T) {
+		testing.SetOriginCaller(wrongCaller)
+		err := RegisterPermission(roleName, permissionName, checker)
+		uassert.ErrorContains(t, err, prbac.ErrUnauthorized.Error())
+	})
+
+	t.Run("RemovePermission unauthorized", func(t *testing.T) {
+		testing.SetOriginCaller(wrongCaller)
+		err := RemovePermission(roleName, permissionName)
+		uassert.ErrorContains(t, err, prbac.ErrUnauthorized.Error())
+	})
 }
