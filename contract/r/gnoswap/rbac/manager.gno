@@ -8,18 +8,23 @@ import (
 
 // globalManager is the single RBAC manager instance created internally in the package.
 // This instance is used to manage global role and permission information.
-// globalManager = prbac.NewRBACWithAddress(consts.ADMIN)
 var globalManager = prbac.New()
 
 // RegisterRole globally registers a role with the given name.
 // Returns an error if the role already exists.
 func RegisterRole(roleName string) error {
+	if !callerIsOwner() {
+		return prbac.ErrUnauthorized
+	}
 	return globalManager.RegisterRole(roleName)
 }
 
 // RegisterPermission globally registers a permission on a role.
 // If the role does not exist, an error is returned.
 func RegisterPermission(roleName, permissionName string, checker prbac.PermissionChecker) error {
+	if !callerIsOwner() {
+		return prbac.ErrUnauthorized
+	}
 	return globalManager.RegisterPermission(roleName, permissionName, checker)
 }
 
@@ -39,9 +44,14 @@ func UpdatePermission(roleName, permissionName string, newChecker prbac.Permissi
 // RemovePermission globally removes a permission from a role.
 // An error is returned if the role or permission does not exist.
 func RemovePermission(roleName, permissionName string) error {
+	if !callerIsOwner() {
+		return prbac.ErrUnauthorized
+	}
 	return globalManager.RemovePermission(roleName, permissionName)
 }
 
+// RemoveRole globally removes a role.
+// An error is returned if the role does not exist.
 func RemoveRole(roleName string) error {
 	return globalManager.RemoveRole(roleName)
 }
@@ -57,4 +67,8 @@ func DeclareRole(roleName string, opts ...prbac.RoleOption) error {
 // This can be used if direct access to the RBAC manager is needed.
 func GlobalManager() *prbac.RBAC {
 	return globalManager
+}
+
+func callerIsOwner() bool {
+	return globalManager.Ownerable().CallerIsOwner()
 }
