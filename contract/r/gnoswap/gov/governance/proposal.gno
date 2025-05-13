@@ -454,9 +454,12 @@ func (u *proposalStateUpdater) updateVotingResult() {
 // It marks the proposal as expired if execution window has ended.
 func (u *proposalStateUpdater) updateExecutionState() {
 	if u.proposal.ProposalType == Text ||
+		// Do not update execution state for non-passed proposals
 		!u.proposal.State.Passed ||
 		u.proposal.State.Executed ||
-		u.proposal.State.Expired {
+		u.proposal.State.Expired ||
+		u.proposal.State.Rejected ||
+		u.proposal.State.Canceled {
 		return
 	}
 
