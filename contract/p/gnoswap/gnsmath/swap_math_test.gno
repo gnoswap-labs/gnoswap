@@ -198,6 +198,23 @@ func TestSwapMathComputeSwapStepStrFail(t *testing.T) {
 			shouldPanic:     true,
 			expectedMessage: "SwapMathComputeSwapStepStr: invalid input",
 		},
+		{
+			name:            "feePips exceeds maximum allowed value",
+			currentX96:      encodePriceSqrtTest(t, "1", "1"),
+			targetX96:       encodePriceSqrtTest(t, "101", "100"),
+			liquidity:       u256.MustFromDecimal("2000000000000000000"),
+			amountRemaining: i256.MustFromDecimal("1000000000000000000"),
+			feePips:         1000001,
+			sqrtNextX96:     encodePriceSqrtTest(t, "101", "100"),
+			chkSqrtNextX96: func(sqrtRatioNextX96, priceTarget *u256.Uint) {
+				uassert.True(t, sqrtRatioNextX96.Eq(priceTarget))
+			},
+			amountIn:        "9975124224178055",
+			amountOut:       "9925619580021728",
+			feeAmount:       "5988667735148",
+			shouldPanic:     true,
+			expectedMessage: "SwapMathComputeSwapStepStr: feePips must be less than or equal to 1000000",
+		},
 	}
 
 	for _, test := range tests {

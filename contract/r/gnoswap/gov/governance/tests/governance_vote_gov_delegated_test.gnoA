@@ -156,13 +156,11 @@ func vote(t *testing.T) {
 
 		proposalsJson := unmarshal(GetProposals())
 		pps := proposalsJson.MustKey("proposals").MustArray()
-		uassert.Equal(t, len(pps), 2)
+		uassert.Equal(t, len(pps), 1)
 
 		expectedKeys := []string{"id", "configVersion", "proposer", "status", "type", "title", "description", "vote", "extra"}
 		arr1Keys := pps[0].UniqueKeyLists()
-		arr2Keys := pps[1].UniqueKeyLists()
 
 		uassert.Equal(t, len(arr1Keys), len(expectedKeys))
-		uassert.Equal(t, len(arr2Keys), len(expectedKeys))
 	})
 }

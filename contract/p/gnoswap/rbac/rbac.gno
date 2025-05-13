@@ -28,7 +28,8 @@ func NewRBACWithAddress(addr std.Address) *RBAC {
 	}
 }
 
-func (rb *RBAC) Owner() std.Address { return rb.ownable.Owner() }
+func (rb *RBAC) Ownerable() *Ownable2Step { return rb.ownable }
+func (rb *RBAC) Owner() std.Address       { return rb.ownable.Owner() }
 
 // PendingOwner returns the pending owner address
 func (rb *RBAC) PendingOwner() std.Address { return rb.ownable.PendingOwner() }

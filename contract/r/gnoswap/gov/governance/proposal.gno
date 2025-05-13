@@ -19,7 +19,8 @@ import (
 
 var (
 	proposalId               uint64
-	proposals                = avl.NewTree() // proposalId -> ProposalInfo
+	proposals                = avl.NewTree() // Only stores active proposals
+	archivedProposals        = avl.NewTree() // Stores terminated proposals
 	proposalIdListByProposer = avl.NewTree() // proposer -> proposalId
 )
 
@@ -314,25 +315,65 @@ type proposalStateUpdater struct {
 
 // updateProposalsState updates the state of all proposals based on current time.
 // It processes voting periods, results, and execution windows for each proposal.
+// Terminated proposals are moved to archivedProposals.
 func updateProposalsState() {
 	now := uint64(time.Now().Unix())
+	var keysToArchive []string
 
 	proposals.Iterate("", "", func(key string, value any) bool {
 		proposal := value.(ProposalInfo)
-		if proposal.State.Canceled || proposal.State.Expired || proposal.State.Executed {
-			return false
-		}
 
+		// Update proposal state
 		updater := newProposalStateUpdater(&proposal, now)
 		if updater.shouldUpdate() {
 			updater.updateVotingState()
 			updater.updateVotingResult()
 			updater.updateExecutionState()
+		}
 
+		// Collect keys to archive
+		if isProposalTerminated(*updater.proposal) {
+			keysToArchive = append(keysToArchive, key)
+			archivedProposals.Set(key, *updater.proposal)
+		} else {
+			// Keep active proposals
 			proposals.Set(key, *updater.proposal)
 		}
 		return false
 	})
+
+	// Process archived proposals outside the iterator
+	for _, key := range keysToArchive {
+		proposals.Remove(key)
+		archivedVal, _ := archivedProposals.Get(key)
+		proposer := archivedVal.(ProposalInfo).Proposer.String()
+		proposalIdListByProposer.Remove(proposer)
+	}
+}
+
+// isProposalTerminated checks if a proposal is in a terminated state
+func isProposalTerminated(proposal ProposalInfo) bool {
+	return proposal.State.Executed ||
+		proposal.State.Rejected ||
+		proposal.State.Canceled ||
+		proposal.State.Expired
+}
+
+// GetProposal retrieves a proposal by ID, searching in both active and archived proposals
+func GetProposal(proposalId uint64) (ProposalInfo, bool) {
+	proposalIdStr := formatUint(proposalId)
+
+	// Search in active proposals first
+	if value, exists := proposals.Get(proposalIdStr); exists {
+		return value.(ProposalInfo), true
+	}
+
+	// Search in archived proposals
+	if value, exists := archivedProposals.Get(proposalIdStr); exists {
+		return value.(ProposalInfo), true
+	}
+
+	return ProposalInfo{}, false
 }
 
 // newProposalStateUpdater creates a new proposalStateUpdater.
@@ -346,10 +387,11 @@ func newProposalStateUpdater(proposal *ProposalInfo, now uint64) *proposalStateU
 
 // shouldUpdate determines if the proposal state should be updated.
 // Returns true if the proposal is created, not canceled, and not executed.
+// shouldUpdate determines if the proposal state should be updated.
+// Returns true if the proposal is created, not canceled, and not executed.
 func (u *proposalStateUpdater) shouldUpdate() bool {
-	return u.proposal.State.Created &&
-		!u.proposal.State.Canceled &&
-		!u.proposal.State.Executed
+	return !isProposalTerminated(*u.proposal) &&
+		(u.proposal.State.Upcoming || u.proposal.State.Active || u.proposal.State.Passed)
 }
 
 // getVotingTimes returns the start and end timestamps of the voting period.
