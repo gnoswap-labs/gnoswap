@@ -9,6 +9,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
+	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -182,7 +183,14 @@ func TestVote(t *testing.T) {
 			func() {
 				defer func() {
 					if r := recover(); r != nil {
-						err = r.(error)
+						switch v := r.(type) {
+						case error:
+							err = v
+						case string:
+							err = ufmt.Errorf(v)
+						default:
+							err = ufmt.Errorf("unknown error occurred")
+						}
 					}
 				}()
 				voteKey = Vote(pid, tc.yes)
