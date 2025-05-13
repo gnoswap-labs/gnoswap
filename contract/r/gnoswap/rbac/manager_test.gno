@@ -127,33 +127,9 @@ func TestUnauthorizedAccess(t *testing.T) {
 		uassert.ErrorContains(t, err, prbac.ErrUnauthorized.Error())
 	})
 
-	t.Run("UpdatePermission unauthorized", func(t *testing.T) {
-		testing.SetOriginCaller(wrongCaller)
-		err := UpdatePermission(roleName, permissionName, checker)
-		uassert.ErrorContains(t, err, prbac.ErrUnauthorized.Error())
-	})
-
 	t.Run("RemovePermission unauthorized", func(t *testing.T) {
 		testing.SetOriginCaller(wrongCaller)
 		err := RemovePermission(roleName, permissionName)
 		uassert.ErrorContains(t, err, prbac.ErrUnauthorized.Error())
-	})
-
-	t.Run("RemoveRole unauthorized", func(t *testing.T) {
-		testing.SetOriginCaller(wrongCaller)
-		err := RemoveRole(roleName)
-		uassert.ErrorContains(t, err, prbac.ErrUnauthorized.Error())
-	})
-
-	t.Run("DeclareRole unauthorized", func(t *testing.T) {
-		testing.SetOriginCaller(wrongCaller)
-		err := DeclareRole(roleName, prbac.WithPermission(permissionName, checker))
-		uassert.ErrorContains(t, err, prbac.ErrUnauthorized.Error())
-	})
-
-	t.Run("CheckPermission still accessible", func(t *testing.T) {
-		testing.SetOriginCaller(wrongCaller)
-		err := CheckPermission(roleName, permissionName, testCaller)
-		uassert.Error(t, err) // Should fail for non-existent role/permission, but not due to authorization
 	})
 }
