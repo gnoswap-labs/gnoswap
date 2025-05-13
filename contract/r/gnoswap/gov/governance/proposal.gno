@@ -472,6 +472,8 @@ func (u *proposalStateUpdater) updateExecutionState() {
 }
 
 // hasActiveProposal checks if the proposer has any active proposals
+// A proposal is considered active only if it has passed voting and is waiting for execution
+// This ensures that proposers can only have one proposal in the execution phase at a time
 func hasActiveProposal(proposer std.Address) bool {
 	proposalIdRaw, exists := proposalIdListByProposer.Get(proposer.String())
 	if !exists {
