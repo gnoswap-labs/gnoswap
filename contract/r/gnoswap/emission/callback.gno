@@ -3,6 +3,7 @@ package emission
 import (
 	"gno.land/r/gnoswap/v1/gns"
 
+	"gno.land/r/gnoswap/v1/access"
 	br "gno.land/r/gnoswap/v1/bridge"
 )
 
@@ -29,12 +30,16 @@ func RegisterGnsChangeCallback() {
 	gns.SetCallbackEmissionChange(callbackEmissionChange)
 }
 
-func RegisterMintAndDistributeGnsCallback() {
-	br.RegisterCallback(br.MINT_AND_DISTRIBUTE_GNS_KEY, MintAndDistributeGns)
+// registerMintAndDistributeGnsCallback upgrades the version of the function stored in the bridge contract.
+func registerMintAndDistributeGnsCallback() {
+	// When a contract is deployed, the init function runs immediately, and the caller is always fixed as the admin.
+	// Therefore, there is no need to separately check the caller in a function that applies upgrades,
+	// but in a test environment, since the admin address cannot be fixed as the default address,
+	// we use the admin address registered in the `access` contract instead.
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+	br.RegisterCallback(adminAddr, "emission", "MintAndDistributeGns", MintAndDistributeGns)
 }
 
-// contract path proxy pattern
-
 func init() {
-	RegisterMintAndDistributeGnsCallback()
+	registerMintAndDistributeGnsCallback()
 }
