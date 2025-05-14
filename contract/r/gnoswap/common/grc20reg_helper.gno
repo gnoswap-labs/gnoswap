@@ -36,6 +36,7 @@ func GetToken(path string) *grc20.Token {
 // - Approve
 // - TransferFrom
 func GetTokenTeller(path string) grc20.Teller {
+	crossing()
 	tokenGetter := grc20reg.MustGet(path) // if token is not registered, it will panic
 	token := tokenGetter()
 	return token.CallerTeller()
