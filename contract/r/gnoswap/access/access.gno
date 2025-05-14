@@ -109,6 +109,8 @@ func GetCurrentConfig() *config {
 
 // SetRole sets or updates a role with the given address
 func SetRole(roleName string, address std.Address) error {
+	crossing()
+
 	if err := validateConfig(); err != nil {
 		return err
 	}
@@ -155,6 +157,8 @@ func GetAddress(roleName string) (std.Address, error) {
 
 // UpdateRoleAddress updates the address for a specific role's permission checker
 func UpdateRoleAddress(roleName string, newAddress std.Address) error {
+	crossing()
+
 	if !isAdmin() {
 		return ufmt.Errorf("only admin can update roles")
 	}
@@ -178,6 +182,8 @@ func UpdateRoleAddress(roleName string, newAddress std.Address) error {
 
 // CreateRole creates a new role with the given address
 func CreateRole(roleName string, address std.Address) error {
+	crossing()
+
 	if !isAdmin() {
 		return ufmt.Errorf("only admin can create roles")
 	}
@@ -231,6 +237,8 @@ func GetRoles() []string {
 
 // DeleteRole deletes a role and its associated permissions
 func DeleteRole(roleName string) error {
+	crossing()
+
 	if !isAdmin() {
 		return ufmt.Errorf("only admin can delete roles")
 	}

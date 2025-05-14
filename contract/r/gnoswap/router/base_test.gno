@@ -116,7 +116,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 			op := &baseSwapOperation{}
 
 			testCoins := std.Coins{{"ugnot", tt.sentAmount}}
-			testing.IssueCoins(std.CurrentRealm().Address(), testCoins)
+			testing.IssueCoins(std.OriginCaller(), testCoins)
 			testing.SetOriginSend(testCoins)
 
 			err := op.handleNativeTokenWrapping(
