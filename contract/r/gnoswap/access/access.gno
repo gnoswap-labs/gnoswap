@@ -128,11 +128,11 @@ func SetRole(roleName string, address std.Address) error {
 	checker := createAddressChecker(address, roleName)
 
 	if RoleExists(roleName) {
-		if err := rbac.UpdatePermission(roleName, PERM_ACCESS, checker); err != nil {
+		if err := cross(rbac.UpdatePermission)(roleName, PERM_ACCESS, checker); err != nil {
 			return err
 		}
 	} else {
-		if err := rbac.DeclareRole(roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
+		if err := cross(rbac.DeclareRole)(roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
 			return err
 		}
 	}
@@ -177,7 +177,7 @@ func UpdateRoleAddress(roleName string, newAddress std.Address) error {
 		"prevAddress", prevAddress.String(),
 		"newAddress", newAddress.String(),
 	)
-	return rbac.UpdatePermission(roleName, PERM_ACCESS, newChecker)
+	return cross(rbac.UpdatePermission)(roleName, PERM_ACCESS, newChecker)
 }
 
 // CreateRole creates a new role with the given address
@@ -264,7 +264,7 @@ func DeleteRole(roleName string) error {
 	deletedAddress := currentConfig.roles[roleName]
 
 	// Remove the role from RBAC
-	if err := rbac.RemoveRole(roleName); err != nil {
+	if err := cross(rbac.RemoveRole)(roleName); err != nil {
 		return ufmt.Errorf("failed to remove role from RBAC: %v", err)
 	}
 

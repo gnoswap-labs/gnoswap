@@ -457,20 +457,20 @@ func TestSetRole(t *testing.T) {
 			err := initialize(cfg)
 			uassert.NoError(t, err)
 
-			err = cross(SetRole)("custom_role", testNewRoleAddr)
+			err = cross(SetRole)("custom_role_2", testNewRoleAddr)
 			uassert.NoError(t, err)
 
 			// verify role was set correctly
 			actual := GetCurrentConfig()
-			roleAddr := actual.roles["custom_role"]
+			roleAddr := actual.roles["custom_role_2"]
 			uassert.Equal(t, testNewRoleAddr, roleAddr)
 
 			// verify permission is set correctly
-			err = rbac.CheckPermission("custom_role", PERM_ACCESS, testNewRoleAddr)
+			err = rbac.CheckPermission("custom_role_2", PERM_ACCESS, testNewRoleAddr)
 			uassert.NoError(t, err)
 
 			// verify different address cannot access the role
-			err = rbac.CheckPermission("custom_role", PERM_ACCESS, testAnotherAddr)
+			err = rbac.CheckPermission("custom_role_2", PERM_ACCESS, testAnotherAddr)
 			uassert.Error(t, err)
 		}()
 	})
