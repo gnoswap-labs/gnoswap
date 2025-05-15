@@ -43,11 +43,11 @@ func TestTokenMethod(t *testing.T) {
 	})
 
 	t.Run("GetDecimals()", func(t *testing.T) {
-		uassert.Equal(t, uint(4), token.GetDecimals())
+		uassert.Equal(t, int(4), token.GetDecimals())
 	})
 
 	t.Run("TotalSupply()", func(t *testing.T) {
-		uassert.Equal(t, uint64(10000000000), token.TotalSupply())
+		uassert.Equal(t, int64(10000000000), token.TotalSupply())
 	})
 
 	t.Run("KnownAccounts()", func(t *testing.T) {
@@ -55,11 +55,11 @@ func TestTokenMethod(t *testing.T) {
 	})
 
 	t.Run("BalanceOf()", func(t *testing.T) {
-		uassert.Equal(t, uint64(10000000000), token.BalanceOf(std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")))
+		uassert.Equal(t, int64(10000000000), token.BalanceOf(std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")))
 	})
 
 	t.Run("Allowance()", func(t *testing.T) {
-		uassert.Equal(t, uint64(0), token.Allowance(std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"), std.Address("g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6")))
+		uassert.Equal(t, int64(0), token.Allowance(std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"), std.Address("g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6")))
 	})
 
 	t.Run("RenderHome()", func(t *testing.T) {

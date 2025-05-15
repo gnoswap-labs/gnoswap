@@ -93,7 +93,7 @@ func initialize(cfg *config) error {
 // declareNewRole declares a new role with permissions
 func declareNewRole(roleName string, addr std.Address) error {
 	checker := createAddressChecker(addr, roleName)
-	if err := rbac.DeclareRole(roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
+	if err := cross(rbac.DeclareRole)(roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
 		return ufmt.Errorf(errDeclareRole, roleName, err)
 	}
 	return nil
