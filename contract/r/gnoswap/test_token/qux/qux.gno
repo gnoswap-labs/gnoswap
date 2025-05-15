@@ -20,35 +20,35 @@ var (
 func init() {
 	privateLedger.Mint(owner.Owner(), 100_000_000_000_000)
 	getter := func() *grc20.Token { return Token }
-	grc20reg.Register(getter, "")
+	cross(grc20reg.Register)(getter, "")
 }
 
-func TotalSupply() uint64 {
+func TotalSupply() int64 {
 	return UserTeller.TotalSupply()
 }
 
-func BalanceOf(owner std.Address) uint64 {
+func BalanceOf(owner std.Address) int64 {
 	return UserTeller.BalanceOf(owner)
 }
 
-func Allowance(owner, spender std.Address) uint64 {
+func Allowance(owner, spender std.Address) int64 {
 	return UserTeller.Allowance(owner, spender)
 }
 
-func Transfer(to std.Address, amount uint64) {
+func Transfer(to std.Address, amount int64) {
 	checkErr(UserTeller.Transfer(to, amount))
 }
 
-func Approve(spender std.Address, amount uint64) {
+func Approve(spender std.Address, amount int64) {
 	checkErr(UserTeller.Approve(spender, amount))
 }
 
-func TransferFrom(from, to std.Address, amount uint64) {
+func TransferFrom(from, to std.Address, amount int64) {
 	checkErr(UserTeller.TransferFrom(from, to, amount))
 }
 
-func Burn(from std.Address, amount uint64) {
-	owner.AssertCallerIsOwner()
+func Burn(from std.Address, amount int64) {
+	owner.AssertOwnedByCurrent()
 	checkErr(privateLedger.Burn(from, amount))
 }
 
