@@ -299,7 +299,7 @@ func transferToProtocolFee(t *testing.T, tokenPath string, amount uint64) {
 	testing.SetRealm(adminRealm)
 
 	tokenTeller := common.GetTokenTeller(tokenPath)
-	tokenTeller.Transfer(protocolFeeAddr, amount)
+	tokenTeller.Transfer(protocolFeeAddr, int64(amount))
 
 	tokenListWithAmount[tokenPath] += amount
 }

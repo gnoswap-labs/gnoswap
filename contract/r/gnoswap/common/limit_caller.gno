@@ -30,6 +30,7 @@ func GetLimitCaller() bool {
 // Panics:
 // - If the caller is not an admin, the function panics with an errNoPermission error.
 func SetLimitCaller(v bool) {
+	crossing()
 	caller := getPrevAddr()
 	if err := AdminOnly(caller); err != nil {
 		panic(newErrorWithDetail(

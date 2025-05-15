@@ -11,7 +11,6 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
 
-	phalt "gno.land/p/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/halt"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -90,11 +89,11 @@ func assertOnlyNotHalted() {
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
 			panic(err.Error())
 		}
 
-		if halt.IsContractHalted(phalt.OpTypePosition) {
+		if halt.IsContractHalted(halt.OpTypePosition) {
 			panic("position contract operations are currently disabled")
 		}
 	}

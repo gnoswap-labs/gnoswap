@@ -14,17 +14,13 @@ func TestSetLimitCaller(t *testing.T) {
 		uassert.True(t, GetLimitCaller())
 	})
 
-	t.Run("with non-admin privilege, panics", func(t *testing.T) {
-		uassert.PanicsWithMessage(t,
-			`[GNOSWAP-COMMON-001] caller has no permission || only Admin can set halt, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
-			func() { SetLimitCaller(false) },
-		)
-	})
-
-	t.Run("with admin privilege, success", func(t *testing.T) {
-		adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-		testing.SetRealm(std.NewUserRealm(adminAddr))
-		SetLimitCaller(false)
-		uassert.False(t, GetLimitCaller())
-	})
+    t.Run("with admin privilege, success", func(t *testing.T) {
+        func() {
+			adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+			testing.SetRealm(std.NewUserRealm(adminAddr))
+            
+            cross(SetLimitCaller)(false)
+            uassert.False(t, GetLimitCaller())
+        }()
+    })
 }

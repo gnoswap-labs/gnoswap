@@ -16,7 +16,6 @@ import (
 	rr "gno.land/r/gnoswap/v1/router"
 	sr "gno.land/r/gnoswap/v1/staker"
 
-	phalt "gno.land/p/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/halt"
 
 	"gno.land/p/demo/ufmt"
@@ -312,9 +311,9 @@ func createParameterHandlers() *ParameterRegistry {
 			ParamCount: 2,
 			HandlerFunc: func(params []string) error {
 				haltStatus := parseBool(params[0])
-				levels := make([]phalt.LevelID, 0)
+				levels := make([]halt.LevelID, 0)
 				for _, level := range strings.Split(params[1], ",") {
-					levelID, err := phalt.LevelIDFromString(level)
+					levelID, err := halt.LevelIDFromString(level)
 					if err != nil {
 						return err
 					}
@@ -328,7 +327,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "SetHaltLevel",
 			ParamCount: 1,
 			HandlerFunc: func(params []string) error {
-				haltLevel, err := phalt.LevelIDFromString(params[0])
+				haltLevel, err := halt.LevelIDFromString(params[0])
 				if err != nil {
 					return err
 				}
@@ -340,7 +339,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "SetOperationStatus",
 			ParamCount: 2,
 			HandlerFunc: func(params []string) error {
-				opType := phalt.OpType(params[0])
+				opType := halt.OpType(params[0])
 				allowed := parseBool(params[1])
 				return halt.SetOperationStatus(opType, allowed)
 			},
@@ -358,7 +357,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "EnableContractOperations",
 			ParamCount: 1,
 			HandlerFunc: func(params []string) error {
-				contract := phalt.OpType(params[0])
+				contract := halt.OpType(params[0])
 				return halt.EnableContractOperations(contract)
 			},
 		},
@@ -367,7 +366,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "DisableContractOperations",
 			ParamCount: 1,
 			HandlerFunc: func(params []string) error {
-				contract := phalt.OpType(params[0])
+				contract := halt.OpType(params[0])
 				return halt.DisableContractOperations(contract)
 			},
 		},
