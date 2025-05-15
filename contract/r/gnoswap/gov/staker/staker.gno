@@ -7,7 +7,6 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
-	phalt "gno.land/p/gnoswap/halt"
 
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/access"
@@ -249,11 +248,11 @@ func CollectUndelegatedGns() uint64 {
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
 			panic(err)
 		}
 
-		if halt.IsContractHalted(phalt.OpTypeGovStaker) {
+		if halt.IsContractHalted(halt.OpTypeGovStaker) {
 			panic("gov/staker contract operations are currently disabled")
 		}
 	}
@@ -316,11 +315,11 @@ func CollectReward() {
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
 			panic(err)
 		}
 
-		if halt.IsContractHalted(phalt.OpTypeGovStaker) {
+		if halt.IsContractHalted(halt.OpTypeGovStaker) {
 			panic("gov/staker contract operations are currently disabled")
 		}
 	}
@@ -377,11 +376,11 @@ func CollectRewardFromLaunchPad(to std.Address) {
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
 			panic(err)
 		}
 
-		if halt.IsContractHalted(phalt.OpTypeGovStaker) {
+		if halt.IsContractHalted(halt.OpTypeGovStaker) {
 			panic("gov/staker contract operations are currently disabled")
 		}
 	}

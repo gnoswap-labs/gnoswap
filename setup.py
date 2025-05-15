@@ -20,7 +20,7 @@ class GnoModuleManager:
 
     def __init__(self, workdir: str):
         self.workdir = workdir
-        self.gno_dir = os.path.join(workdir, "gno", "examples", "gno.land")
+        self.gno_dir = os.path.join(workdir, "gno-core", "examples", "gno.land")
 
     def extract_module_path(self, file_path: str) -> Optional[str]:
         """Extract module path from gno.mod file."""

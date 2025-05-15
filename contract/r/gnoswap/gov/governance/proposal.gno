@@ -7,7 +7,6 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-	phalt "gno.land/p/gnoswap/halt"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -120,11 +119,11 @@ func ProposeCommunityPoolSpend(
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
 			panic(err.Error())
 		}
 
-		if halt.IsContractHalted(phalt.OpTypeGovernance) {
+		if halt.IsContractHalted(halt.OpTypeGovernance) {
 			panic("gov/governance contract operations are currently disabled")
 		}
 	}
