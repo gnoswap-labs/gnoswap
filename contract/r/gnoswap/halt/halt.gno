@@ -141,6 +141,7 @@ func SetHaltLevelByAdmin(haltLevel LevelID) error {
 //
 // TODO: Should we only allow EmergencyHalt or CompleteHalt?
 func SetHaltByAdmin(halt bool) error {
+	crossing()
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {
 		return ufmt.Errorf("only admin can set halt, called from %s", caller)
@@ -162,6 +163,7 @@ func SetHaltByAdmin(halt bool) error {
 // Returns:
 // - error: nil if successful, otherwise an error.
 func SetHalt(halt bool, level ...LevelID) error {
+	crossing()
 	caller := getPrevAddr()
 	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
@@ -196,6 +198,7 @@ func SetHalt(halt bool, level ...LevelID) error {
 // Returns:
 // - error: nil if successful, otherwise an error.
 func SetHaltLevel(haltLevel LevelID) error {
+	crossing()
 	caller := getPrevAddr()
 	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
@@ -239,6 +242,7 @@ func setHaltLevel(haltLevel LevelID) error {
 // Returns:
 // - error: nil if successful, otherwise an error.
 func SetOperationStatus(opType OpType, allowed bool) error {
+	crossing()
 	caller := getPrevAddr()
 	if err := access.GovernanceOnly(caller); err != nil {
 		return ufmt.Errorf("only governance(%s) can set operation status, called from %s", govAddr, caller)
@@ -255,6 +259,7 @@ func SetOperationStatus(opType OpType, allowed bool) error {
 // Returns:
 // - error: nil if successful, otherwise an error.
 func SetOperationStatusByAdmin(opType OpType, allowed bool) error {
+	crossing()
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {
 		return ufmt.Errorf("only admin can set operation status, called from %s", caller)
@@ -294,6 +299,7 @@ func setOperationStatus(opType OpType, allowed bool) error {
 // Returns:
 // - error: nil if successful, otherwise an error.
 func EnableWithdrawalsForTestnet() error {
+	crossing()
 	caller := getPrevAddr()
 	// TODO: no need to check governance?
 	if err := access.AdminOnly(caller); err != nil {
@@ -346,6 +352,7 @@ func GetCurrentHaltLevel() LevelID {
 // Returns:
 // - error: nil if successful, otherwise an error.
 func EnableContractOperations(contract OpType) error {
+	crossing()
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {
 		return ufmt.Errorf("only admin can enable contract operations, called from %s", caller)
@@ -380,6 +387,7 @@ func EnableContractOperations(contract OpType) error {
 //
 // Returns:
 func DisableContractOperations(contract OpType) error {
+	crossing()
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {
 		return ufmt.Errorf("only admin can disable contract operations, called from %s", caller)
@@ -403,6 +411,7 @@ func DisableContractOperations(contract OpType) error {
 
 // IsContractHalted checks if specific contract operations are halted
 func IsContractHalted(contract OpType) bool {
+	crossing()
 	// if contract is halted, IsHalted will return an error
 	// so we need to check if the error is not nil
 	err := IsHalted(contract)
