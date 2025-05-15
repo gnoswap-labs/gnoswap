@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/ufmt"
-	phalt "gno.land/p/gnoswap/halt"
 
 	"gno.land/r/gnoswap/v1/access"
 )
@@ -17,7 +16,7 @@ var govAddr, _ = access.GetAddress(access.ROLE_GOVERNANCE)
 
 // OperationType defines the structure for operation configuration
 type OperationType struct {
-	Type        phalt.OpType
+	Type        OpType
 	Name        string
 	Description string
 	IsContract  bool
@@ -26,10 +25,10 @@ type OperationType struct {
 const (
 	// Special mode for beta mainnet (no withdrawals)
 	// Issue: https://github.com/gnoswap-labs/gnoswap/issues/517
-	LvMainnetSafeMode phalt.LevelID = 10
+	LvMainnetSafeMode LevelID = 10
 )
 
-var haltManager *phalt.Manager
+var haltManager *Manager
 
 const (
 	enabled  = true
@@ -38,26 +37,27 @@ const (
 
 func init() {
 	// Create a default manager first
-	haltManager = phalt.DefaultManager()
+	haltManager = DefaultManager()
 
 	// Create custom MainnetSafeMode level that disables withdrawals for beta mainnet
-	mainnetSafeMode := phalt.NewHaltLevel(
+	operations := make(map[OpType]bool)
+	operations[OpTypePool] = enabled
+	operations[OpTypePosition] = enabled
+	operations[OpTypeProtocolFee] = enabled
+	operations[OpTypeRouter] = enabled
+	operations[OpTypeStaker] = enabled
+	operations[OpTypeLaunchpad] = enabled
+	operations[OpTypeGovernance] = enabled
+	operations[OpTypeGovStaker] = enabled
+	operations[OpTypeXGns] = enabled
+	operations[OpTypeEmission] = enabled
+	operations[OpTypeWithdraw] = disabled
+
+	mainnetSafeMode := NewHaltLevel(
 		LvMainnetSafeMode,
 		"MainnetSafeMode",
 		"Safe mode for post-mainnet (no withdrawals)",
-		map[phalt.OpType]bool{
-			phalt.OpTypePool:        enabled,
-			phalt.OpTypePosition:    enabled,
-			phalt.OpTypeProtocolFee: enabled,
-			phalt.OpTypeRouter:      enabled,
-			phalt.OpTypeStaker:      enabled,
-			phalt.OpTypeLaunchpad:   enabled,
-			phalt.OpTypeGovernance:  enabled,
-			phalt.OpTypeGovStaker:   enabled,
-			phalt.OpTypeXGns:        enabled,
-			phalt.OpTypeEmission:    enabled,
-			phalt.OpTypeWithdraw:    disabled,
-		},
+		operations,
 	)
 
 	haltManager.RegisterHaltLevel(mainnetSafeMode)
@@ -71,7 +71,7 @@ func init() {
 // GetHalt returns the current halt status.
 func GetHalt() bool {
 	currentLevel := haltManager.Level().Level()
-	return currentLevel == phalt.LvCompleteHalt
+	return currentLevel == LvCompleteHalt
 }
 
 // IsHalted checks if the requested operations are allowed in the current halt level.
@@ -89,7 +89,7 @@ func GetHalt() bool {
 //
 // Parameters:
 // - opType (halt.OpType): Optional operation type to check. If not provided, checks if system is completely halted.
-func IsHalted(opType ...phalt.OpType) error {
+func IsHalted(opType ...OpType) error {
 	// if no operation specified, check if system is completely halted
 	if len(opType) == 0 {
 		if GetHalt() {
@@ -100,7 +100,7 @@ func IsHalted(opType ...phalt.OpType) error {
 
 	// check each operation(s)
 	for _, oo := range opType {
-		op := phalt.NewOperation(oo, string(oo), string(oo)+" operation")
+		op := NewOperation(oo, string(oo), string(oo)+" operation")
 		if !haltManager.Level().IsOperationAllowed(op) {
 			return ufmt.Errorf("Operation '%s' is currently disabled in halt level: %s", oo, haltManager.Status(oo))
 		}
@@ -117,7 +117,8 @@ func IsHalted(opType ...phalt.OpType) error {
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
-func SetHaltLevelByAdmin(haltLevel phalt.LevelID) error {
+func SetHaltLevelByAdmin(haltLevel LevelID) error {
+	crossing()
 	caller := std.PreviousRealm().Address()
 	if err := access.AdminOnly(caller); err != nil {
 		return ufmt.Errorf("only admin can set halt level, called from %s", caller)
@@ -146,9 +147,9 @@ func SetHaltByAdmin(halt bool) error {
 	}
 
 	if halt {
-		return setHaltLevel(phalt.LvCompleteHalt)
+		return setHaltLevel(LvCompleteHalt)
 	}
-	return setHaltLevel(phalt.LvNoHalt)
+	return setHaltLevel(LvNoHalt)
 }
 
 // SetHalt allows both admin and governance to set the halt status of GnoSwap.
@@ -160,7 +161,7 @@ func SetHaltByAdmin(halt bool) error {
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
-func SetHalt(halt bool, level ...phalt.LevelID) error {
+func SetHalt(halt bool, level ...LevelID) error {
 	caller := getPrevAddr()
 	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
@@ -171,15 +172,15 @@ func SetHalt(halt bool, level ...phalt.LevelID) error {
 	// If no level specified, use defaults
 	if len(level) == 0 {
 		if !halt {
-			return setHaltLevel(phalt.LvNoHalt)
+			return setHaltLevel(LvNoHalt)
 		}
-		return setHaltLevel(phalt.LvCompleteHalt)
+		return setHaltLevel(LvCompleteHalt)
 	}
 
 	// Validate the specified level
 	haltLevel := level[0]
 	switch haltLevel {
-	case phalt.LvNoHalt, phalt.LvEmergencyHalt, phalt.LvCompleteHalt:
+	case LvNoHalt, LvEmergencyHalt, LvCompleteHalt:
 		return setHaltLevel(haltLevel)
 	default:
 		return ufmt.Errorf("only NoHalt, EmergencyHalt and CompleteHalt levels are allowed")
@@ -194,7 +195,7 @@ func SetHalt(halt bool, level ...phalt.LevelID) error {
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
-func SetHaltLevel(haltLevel phalt.LevelID) error {
+func SetHaltLevel(haltLevel LevelID) error {
 	caller := getPrevAddr()
 	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
@@ -212,7 +213,7 @@ func SetHaltLevel(haltLevel phalt.LevelID) error {
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
-func setHaltLevel(haltLevel phalt.LevelID) error {
+func setHaltLevel(haltLevel LevelID) error {
 	if err := haltManager.SetCurrentLevel(haltLevel); err != nil {
 		return ufmt.Errorf("invalid halt level: %v", err)
 	}
@@ -237,7 +238,7 @@ func setHaltLevel(haltLevel phalt.LevelID) error {
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
-func SetOperationStatus(opType phalt.OpType, allowed bool) error {
+func SetOperationStatus(opType OpType, allowed bool) error {
 	caller := getPrevAddr()
 	if err := access.GovernanceOnly(caller); err != nil {
 		return ufmt.Errorf("only governance(%s) can set operation status, called from %s", govAddr, caller)
@@ -253,7 +254,7 @@ func SetOperationStatus(opType phalt.OpType, allowed bool) error {
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
-func SetOperationStatusByAdmin(opType phalt.OpType, allowed bool) error {
+func SetOperationStatusByAdmin(opType OpType, allowed bool) error {
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {
 		return ufmt.Errorf("only admin can set operation status, called from %s", caller)
@@ -271,7 +272,7 @@ func SetOperationStatusByAdmin(opType phalt.OpType, allowed bool) error {
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
-func setOperationStatus(opType phalt.OpType, allowed bool) error {
+func setOperationStatus(opType OpType, allowed bool) error {
 	if err := haltManager.SetOperationStatus(opType, allowed); err != nil {
 		return ufmt.Errorf("failed to set operation status: %v", err)
 	}
@@ -304,7 +305,7 @@ func EnableWithdrawalsForTestnet() error {
 		return nil
 	}
 
-	err := setOperationStatus(phalt.OpTypeWithdraw, true)
+	err := setOperationStatus(OpTypeWithdraw, true)
 	if err != nil {
 		return err
 	}
@@ -324,7 +325,7 @@ func EnableWithdrawalsForTestnet() error {
 //
 // Returns:
 // - *halt.Manager: The halt manager instance.
-func GetHaltManager() *phalt.Manager {
+func GetHaltManager() *Manager {
 	return haltManager
 }
 
@@ -332,7 +333,7 @@ func GetHaltManager() *phalt.Manager {
 //
 // Returns:
 // - halt.LevelID: The current halt level ID.
-func GetCurrentHaltLevel() phalt.LevelID {
+func GetCurrentHaltLevel() LevelID {
 	return haltManager.Level().Level()
 }
 
@@ -344,14 +345,14 @@ func GetCurrentHaltLevel() phalt.LevelID {
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
-func EnableContractOperations(contract phalt.OpType) error {
+func EnableContractOperations(contract OpType) error {
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {
 		return ufmt.Errorf("only admin can enable contract operations, called from %s", caller)
 	}
 
 	// Only proceed if we're in ContractSafeMode
-	if haltManager.Level().Level() != phalt.LvContractHalt {
+	if haltManager.Level().Level() != LvContractHalt {
 		return nil
 	}
 
@@ -378,7 +379,7 @@ func EnableContractOperations(contract phalt.OpType) error {
 // - contract (halt.OpType): The contract operation type to disable.
 //
 // Returns:
-func DisableContractOperations(contract phalt.OpType) error {
+func DisableContractOperations(contract OpType) error {
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {
 		return ufmt.Errorf("only admin can disable contract operations, called from %s", caller)
@@ -401,7 +402,7 @@ func DisableContractOperations(contract phalt.OpType) error {
 }
 
 // IsContractHalted checks if specific contract operations are halted
-func IsContractHalted(contract phalt.OpType) bool {
+func IsContractHalted(contract OpType) bool {
 	// if contract is halted, IsHalted will return an error
 	// so we need to check if the error is not nil
 	err := IsHalted(contract)
@@ -409,6 +410,6 @@ func IsContractHalted(contract phalt.OpType) bool {
 }
 
 // GetContractStatus returns the current status for a specific contract
-func GetContractStatus(contract phalt.OpType) bool {
-	return haltManager.Level().IsOperationAllowed(phalt.NewOperation(contract, string(contract), ""))
+func GetContractStatus(contract OpType) bool {
+	return haltManager.Level().IsOperationAllowed(NewOperation(contract, string(contract), ""))
 }

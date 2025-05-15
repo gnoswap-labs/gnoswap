@@ -8,7 +8,6 @@ import (
 	"gno.land/p/demo/uassert"
 
 	"gno.land/p/gnoswap/consts"
-	phalt "gno.land/p/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/access"
 )
 
@@ -22,45 +21,49 @@ var (
 func TestHalts(t *testing.T) {
 	t.Run("Operation specific checks in MainnetSafeMode", func(t *testing.T) {
 		// Withdrawals should be disabled in MainnetSafeMode
-		err := IsHalted(phalt.OpTypeWithdraw)
+		err := IsHalted(OpTypeWithdraw)
 		uassert.Error(t, err)
 	})
 
 	t.Run("Operation specific checks in EmergencyHalt", func(t *testing.T) {
 		// Withdrawals should be enabled in EmergencyHalt
-		err := IsHalted(phalt.OpTypePool, phalt.OpTypePosition, phalt.OpTypeProtocolFee, phalt.OpTypeRouter, phalt.OpTypeStaker, phalt.OpTypeLaunchpad, phalt.OpTypeGovernance)
+		err := IsHalted(OpTypePool, OpTypePosition, OpTypeProtocolFee, OpTypeRouter, OpTypeStaker, OpTypeLaunchpad, OpTypeGovernance)
 		uassert.NoError(t, err)
 	})
 }
 
 func TestSetHaltLevelByAdminAndGovernance(t *testing.T) {
 	t.Run("with non-admin or non-governance privilege, should fail", func(t *testing.T) {
-		testing.SetRealm(userRealm)
-		err := SetHaltLevelByAdmin(phalt.LvNoHalt)
-		uassert.Error(t, err)
+		func() {
+			testing.SetRealm(userRealm)
+			err := SetHaltLevelByAdmin(LvNoHalt)
+			uassert.Error(t, err)
+		}()
 	})
 
 	t.Run("with admin privilege, success", func(t *testing.T) {
-		testing.SetRealm(adminRealm)
+		func() {
+			testing.SetRealm(adminRealm)
 
-		// Initially we're in MainnetSafeMode
-		if GetCurrentHaltLevel() != LvMainnetSafeMode {
-			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvMainnetSafeMode)
-		}
+			// Initially we're in MainnetSafeMode
+			if GetCurrentHaltLevel() != LvMainnetSafeMode {
+				t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvMainnetSafeMode)
+			}
 
-		// Change to NoHalt
-		err := SetHaltLevelByAdmin(phalt.LvNoHalt)
-		uassert.NoError(t, err)
-		if GetCurrentHaltLevel() != phalt.LvNoHalt {
-			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvNoHalt)
-		}
+			// Change to NoHalt
+			err := cross(SetHaltLevelByAdmin)(LvNoHalt)
+			uassert.NoError(t, err)
+			if GetCurrentHaltLevel() != LvNoHalt {
+				t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvNoHalt)
+			}
 
-		// Back to CompleteHalt
-		err = SetHaltLevelByAdmin(phalt.LvCompleteHalt)
-		uassert.NoError(t, err)
-		if GetCurrentHaltLevel() != phalt.LvCompleteHalt {
-			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvCompleteHalt)
-		}
+			// Back to CompleteHalt
+			err = cross(SetHaltLevelByAdmin)(LvCompleteHalt)
+			uassert.NoError(t, err)
+			if GetCurrentHaltLevel() != LvCompleteHalt {
+				t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvCompleteHalt)
+			}
+		}()
 	})
 }
 
@@ -79,8 +82,8 @@ func TestSetHalt(t *testing.T) {
 
 		err := SetHalt(false) // try to set to NoHalt
 		uassert.NoError(t, err)
-		if GetCurrentHaltLevel() != phalt.LvNoHalt {
-			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvNoHalt)
+		if GetCurrentHaltLevel() != LvNoHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvNoHalt)
 		}
 	})
 }
@@ -88,7 +91,7 @@ func TestSetHalt(t *testing.T) {
 func TestSetHaltWithLevel(t *testing.T) {
 	t.Run("with non-privileged user, should fail", func(t *testing.T) {
 		testing.SetRealm(userRealm)
-		err := SetHalt(true, phalt.LvEmergencyHalt)
+		err := SetHalt(true, LvEmergencyHalt)
 		uassert.Error(t, err)
 	})
 
@@ -96,29 +99,29 @@ func TestSetHaltWithLevel(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		// Set EmergencyHalt
-		err := SetHalt(true, phalt.LvEmergencyHalt)
+		err := SetHalt(true, LvEmergencyHalt)
 		uassert.NoError(t, err)
-		if GetCurrentHaltLevel() != phalt.LvEmergencyHalt {
-			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvEmergencyHalt)
+		if GetCurrentHaltLevel() != LvEmergencyHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvEmergencyHalt)
 		}
 
 		// In EmergencyHalt, only withdrawals should be allowed
-		err = IsHalted(phalt.OpTypeWithdraw)
+		err = IsHalted(OpTypeWithdraw)
 		uassert.NoError(t, err)
-		err = IsHalted(phalt.OpTypePool)
+		err = IsHalted(OpTypePool)
 		uassert.Error(t, err)
 
 		// Set CompleteHalt
-		err = SetHalt(true, phalt.LvCompleteHalt)
+		err = SetHalt(true, LvCompleteHalt)
 		uassert.NoError(t, err)
-		if GetCurrentHaltLevel() != phalt.LvCompleteHalt {
-			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvCompleteHalt)
+		if GetCurrentHaltLevel() != LvCompleteHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvCompleteHalt)
 		}
 
 		// In CompleteHalt, all operations should be halted
-		err = IsHalted(phalt.OpTypeWithdraw)
+		err = IsHalted(OpTypeWithdraw)
 		uassert.NoError(t, err)
-		err = IsHalted(phalt.OpTypePool)
+		err = IsHalted(OpTypePool)
 		uassert.Error(t, err)
 	})
 
@@ -126,17 +129,17 @@ func TestSetHaltWithLevel(t *testing.T) {
 		testing.SetRealm(govRealm)
 
 		// Set EmergencyHalt
-		err := SetHalt(true, phalt.LvEmergencyHalt)
+		err := SetHalt(true, LvEmergencyHalt)
 		uassert.NoError(t, err)
-		if GetCurrentHaltLevel() != phalt.LvEmergencyHalt {
-			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvEmergencyHalt)
+		if GetCurrentHaltLevel() != LvEmergencyHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvEmergencyHalt)
 		}
 
 		// Set CompleteHalt
-		err = SetHalt(true, phalt.LvCompleteHalt)
+		err = SetHalt(true, LvCompleteHalt)
 		uassert.NoError(t, err)
-		if GetCurrentHaltLevel() != phalt.LvCompleteHalt {
-			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvCompleteHalt)
+		if GetCurrentHaltLevel() != LvCompleteHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvCompleteHalt)
 		}
 	})
 
@@ -144,7 +147,7 @@ func TestSetHaltWithLevel(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		// Try to set ContractHalt (not allowed)
-		err := SetHalt(true, phalt.LvContractHalt)
+		err := SetHalt(true, LvContractHalt)
 		uassert.Error(t, err)
 
 		// Try to set MainnetSafeMode (not allowed)
@@ -156,14 +159,14 @@ func TestSetHaltWithLevel(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		// First set to EmergencyHalt
-		err := SetHalt(true, phalt.LvEmergencyHalt)
+		err := SetHalt(true, LvEmergencyHalt)
 		uassert.NoError(t, err)
 
 		// Unhalt should set to NoHalt regardless of current level
 		err = SetHalt(false)
 		uassert.NoError(t, err)
-		if GetCurrentHaltLevel() != phalt.LvNoHalt {
-			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvNoHalt)
+		if GetCurrentHaltLevel() != LvNoHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvNoHalt)
 		}
 	})
 
@@ -173,8 +176,8 @@ func TestSetHaltWithLevel(t *testing.T) {
 		// Set halt without specifying level
 		err := SetHalt(true)
 		uassert.NoError(t, err)
-		if GetCurrentHaltLevel() != phalt.LvCompleteHalt {
-			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvCompleteHalt)
+		if GetCurrentHaltLevel() != LvCompleteHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvCompleteHalt)
 		}
 	})
 
@@ -182,20 +185,20 @@ func TestSetHaltWithLevel(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		// First set to EmergencyHalt
-		err := SetHalt(true, phalt.LvEmergencyHalt)
+		err := SetHalt(true, LvEmergencyHalt)
 		uassert.NoError(t, err)
 
 		// Explicitly set to NoHalt
-		err = SetHalt(true, phalt.LvNoHalt)
+		err = SetHalt(true, LvNoHalt)
 		uassert.NoError(t, err)
-		if GetCurrentHaltLevel() != phalt.LvNoHalt {
-			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvNoHalt)
+		if GetCurrentHaltLevel() != LvNoHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvNoHalt)
 		}
 	})
 }
 
 type haltTestCases struct {
-	opType    phalt.OpType
+	opType    OpType
 	wantError bool
 }
 
@@ -212,8 +215,8 @@ func TestEnableOperationsForTestnet(t *testing.T) {
 
 	// Verify initially all operations except governance are disabled
 	isHaltedTests := []haltTestCases{
-		{phalt.OpTypeWithdraw, true},
-		{phalt.OpTypeGovernance, false},
+		{OpTypeWithdraw, true},
+		{OpTypeGovernance, false},
 	}
 
 	for _, tt := range isHaltedTests {
@@ -229,15 +232,15 @@ func TestEnableOperationsForTestnet(t *testing.T) {
 		err := EnableWithdrawalsForTestnet()
 		uassert.NoError(t, err)
 		tests := []haltTestCases{
-			{phalt.OpTypeWithdraw, false}, // now enabled
+			{OpTypeWithdraw, false}, // now enabled
 
 			// contract operations should be enabled
-			{phalt.OpTypePool, false},
-			{phalt.OpTypePosition, false},
-			{phalt.OpTypeProtocolFee, false},
-			{phalt.OpTypeRouter, false},
-			{phalt.OpTypeStaker, false},
-			{phalt.OpTypeLaunchpad, false},
+			{OpTypePool, false},
+			{OpTypePosition, false},
+			{OpTypeProtocolFee, false},
+			{OpTypeRouter, false},
+			{OpTypeStaker, false},
+			{OpTypeLaunchpad, false},
 		}
 
 		for _, tt := range tests {
@@ -252,14 +255,14 @@ func TestEnableOperationsForTestnet(t *testing.T) {
 
 	t.Run("Move to NoHalt after testing", func(t *testing.T) {
 		// Finally transition to NoHalt
-		err := SetHaltLevelByAdmin(phalt.LvNoHalt)
+		err := SetHaltLevelByAdmin(LvNoHalt)
 		uassert.NoError(t, err)
 
 		// Now GetHalt() should return false
 		uassert.False(t, GetHalt())
 
-		if GetCurrentHaltLevel() != phalt.LvNoHalt {
-			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), phalt.LvNoHalt)
+		if GetCurrentHaltLevel() != LvNoHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvNoHalt)
 		}
 	})
 }
@@ -269,13 +272,13 @@ func TestCustomOperationHalts(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	// Define custom operation types for testing
-	customOp1 := phalt.OpType("CUSTOM_OP_1")
-	customOp2 := phalt.OpType("CUSTOM_OP_2")
-	invalidOp := phalt.OpType("INVALID_OP")
+	customOp1 := OpType("CUSTOM_OP_1")
+	customOp2 := OpType("CUSTOM_OP_2")
+	invalidOp := OpType("INVALID_OP")
 
 	t.Run("Check undefined custom operations", func(t *testing.T) {
 		// Set to NoHalt first
-		err := SetHaltLevelByAdmin(phalt.LvNoHalt)
+		err := SetHaltLevelByAdmin(LvNoHalt)
 		uassert.NoError(t, err)
 
 		// Even in NoHalt, undefined operations should be considered halted
@@ -283,7 +286,7 @@ func TestCustomOperationHalts(t *testing.T) {
 		uassert.Error(t, err)
 
 		// Multiple operations including undefined ones
-		err = IsHalted(phalt.OpTypeWithdraw, customOp1)
+		err = IsHalted(OpTypeWithdraw, customOp1)
 		uassert.Error(t, err)
 	})
 
@@ -293,7 +296,7 @@ func TestCustomOperationHalts(t *testing.T) {
 		uassert.Error(t, err)
 
 		// Mix of valid and custom operations
-		err = IsHalted(phalt.OpTypeWithdraw, customOp1, customOp2)
+		err = IsHalted(OpTypeWithdraw, customOp1, customOp2)
 		uassert.Error(t, err)
 	})
 
@@ -315,7 +318,7 @@ func TestOperationStatusEdgeCases(t *testing.T) {
 
 	t.Run("EnableOperations in non-MainnetSafeMode", func(t *testing.T) {
 		// First set to NoHalt
-		err := SetHaltLevelByAdmin(phalt.LvNoHalt)
+		err := SetHaltLevelByAdmin(LvNoHalt)
 		uassert.NoError(t, err)
 
 		// Try to enable operations in NoHalt mode - should return nil without changing state
@@ -323,7 +326,7 @@ func TestOperationStatusEdgeCases(t *testing.T) {
 		uassert.NoError(t, err)
 
 		// Verify operations maintain their NoHalt state
-		err = IsHalted(phalt.OpTypeWithdraw)
+		err = IsHalted(OpTypeWithdraw)
 		uassert.NoError(t, err, "should not change state in NoHalt")
 	})
 
@@ -337,11 +340,11 @@ func TestOperationStatusEdgeCases(t *testing.T) {
 		uassert.NoError(t, err)
 
 		// Change to EmergencyHalt - should override previous settings
-		err = SetHaltLevelByAdmin(phalt.LvEmergencyHalt)
+		err = SetHaltLevelByAdmin(LvEmergencyHalt)
 		uassert.NoError(t, err)
 
 		// In EmergencyHalt, only withdrawals should be allowed
-		err = IsHalted(phalt.OpTypeWithdraw)
+		err = IsHalted(OpTypeWithdraw)
 		uassert.NoError(t, err)
 
 		// Change back to MainnetSafeMode
@@ -349,7 +352,7 @@ func TestOperationStatusEdgeCases(t *testing.T) {
 		uassert.NoError(t, err)
 
 		// Check if operations return to their MainnetSafeMode defaults
-		err = IsHalted(phalt.OpTypeWithdraw)
+		err = IsHalted(OpTypeWithdraw)
 		uassert.NoError(t, err)
 	})
 }
@@ -367,9 +370,9 @@ func TestModeTransitions(t *testing.T) {
 		uassert.NoError(t, err)
 
 		// Verify current state in MainnetSafeMode
-		initialState := map[phalt.OpType]bool{
-			phalt.OpTypeWithdraw:   true,
-			phalt.OpTypeGovernance: true,
+		initialState := map[OpType]bool{
+			OpTypeWithdraw:   true,
+			OpTypeGovernance: true,
 		}
 
 		for op, shouldBeEnabled := range initialState {
@@ -382,41 +385,41 @@ func TestModeTransitions(t *testing.T) {
 		}
 
 		// Transition to NoHalt
-		err = SetHaltLevelByAdmin(phalt.LvNoHalt)
+		err = SetHaltLevelByAdmin(LvNoHalt)
 		uassert.NoError(t, err)
 		uassert.False(t, GetHalt())
 		currentHaltLevel := GetCurrentHaltLevel()
-		if currentHaltLevel != phalt.LvNoHalt {
-			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", currentHaltLevel, phalt.LvNoHalt)
+		if currentHaltLevel != LvNoHalt {
+			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", currentHaltLevel, LvNoHalt)
 		}
 
 		// All operations should be enabled in NoHalt
-		err = IsHalted(phalt.OpTypeWithdraw)
+		err = IsHalted(OpTypeWithdraw)
 		uassert.NoError(t, err)
 	})
 
 	t.Run("Emergency Mode transitions", func(t *testing.T) {
 		// default state: NoHalt
-		err := SetHaltLevelByAdmin(phalt.LvNoHalt)
+		err := SetHaltLevelByAdmin(LvNoHalt)
 		uassert.NoError(t, err)
 
 		// NoHalt -> EmergencyHalt
-		err = SetHaltLevelByAdmin(phalt.LvEmergencyHalt)
+		err = SetHaltLevelByAdmin(LvEmergencyHalt)
 		uassert.NoError(t, err)
 
 		// only withdrawals should be allowed
-		err = IsHalted(phalt.OpTypeWithdraw)
+		err = IsHalted(OpTypeWithdraw)
 		uassert.NoError(t, err)
 
 		// EmergencyHalt -> CompleteHalt
-		err = SetHaltLevelByAdmin(phalt.LvCompleteHalt)
+		err = SetHaltLevelByAdmin(LvCompleteHalt)
 		uassert.NoError(t, err)
 
 		// all contract operations should be halted
-		err = IsHalted(phalt.OpTypePool, phalt.OpTypePosition, phalt.OpTypeProtocolFee, phalt.OpTypeRouter, phalt.OpTypeStaker, phalt.OpTypeLaunchpad, phalt.OpTypeGovernance)
+		err = IsHalted(OpTypePool, OpTypePosition, OpTypeProtocolFee, OpTypeRouter, OpTypeStaker, OpTypeLaunchpad, OpTypeGovernance)
 		uassert.Error(t, err)
 
-		err = IsHalted(phalt.OpTypeWithdraw)
+		err = IsHalted(OpTypeWithdraw)
 		uassert.NoError(t, err)
 	})
 
@@ -428,12 +431,12 @@ func TestModeTransitions(t *testing.T) {
 		uassert.NoError(t, err)
 
 		// rapid mode transitions
-		modes := []phalt.LevelID{
-			phalt.LvNoHalt,
+		modes := []LevelID{
+			LvNoHalt,
 			LvMainnetSafeMode,
-			phalt.LvEmergencyHalt,
-			phalt.LvCompleteHalt,
-			phalt.LvNoHalt,
+			LvEmergencyHalt,
+			LvCompleteHalt,
+			LvNoHalt,
 		}
 
 		for _, mode := range modes {
@@ -453,13 +456,13 @@ func TestModeTransitions(t *testing.T) {
 		uassert.NoError(t, err)
 
 		// cycle through modes and back
-		err = SetHaltLevelByAdmin(phalt.LvEmergencyHalt)
+		err = SetHaltLevelByAdmin(LvEmergencyHalt)
 		uassert.NoError(t, err)
 		err = SetHaltLevelByAdmin(LvMainnetSafeMode)
 		uassert.NoError(t, err)
 
 		// check operation states are reset to MainnetSafeMode defaults
-		err = IsHalted(phalt.OpTypeWithdraw)
+		err = IsHalted(OpTypeWithdraw)
 		uassert.NoError(t, err)
 	})
 }
