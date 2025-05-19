@@ -15,7 +15,10 @@ func TestApiGetAccuTransferToGovStaker(t *testing.T) {
 	uassert.Equal(t, `{"height":"123","now":"1234567890","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2000"}`, result)
 
 	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
-	ClearAccuTransferToGovStaker()
+	func() {
+		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
+		ClearAccuTransferToGovStaker()
+	}()
 	result = ApiGetAccuTransferToGovStaker()
 	uassert.Equal(t, `{"height":"123","now":"1234567890"}`, result)
 }
@@ -32,7 +35,10 @@ func TestApiGetHistoryTransferToGovStaker(t *testing.T) {
 	uassert.Equal(t, `{"height":"124","now":"1234567895","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2000"}`, resultAccu)
 
 	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
-	ClearAccuTransferToGovStaker()
+	func() {
+		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
+		ClearAccuTransferToGovStaker()
+	}()
 	resultHistory = ApiGetHistoryTransferToGovStaker()
 	uassert.Equal(t, `{"height":"124","now":"1234567895","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2000"}`, resultHistory)
 	resultAccu = ApiGetAccuTransferToGovStaker()
