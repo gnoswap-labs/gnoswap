@@ -3,6 +3,8 @@ package staker
 import (
 	"std"
 	"testing"
+
+	"gno.land/p/demo/ufmt"
 )
 
 func TestGetDepositGnsAmount(t *testing.T) {
@@ -150,11 +152,11 @@ func TestMinimumRewardAmountLogic(t *testing.T) {
 	t.Run("Setting specific minimum overrides default", func(t *testing.T) {
 		currentDefault := GetMinimumRewardAmount()
 		specificMin := currentDefault + 500 // Set a different value
-		paramsStr := token1 + ":" + std.Uint64ToString(specificMin)
+		paramStr := ufmt.Sprintf("%s:%d", token1, specificMin)
 
 		// Set specific minimum via governance
 		testing.SetOriginCaller(govGovernanceAddr)
-		SetTokenMinimumRewardAmount(paramsStr)
+		SetTokenMinimumRewardAmount(paramStr)
 
 		// Check specific token
 		actualSpecific := GetMinimumRewardAmountForToken(token1)
@@ -173,7 +175,7 @@ func TestMinimumRewardAmountLogic(t *testing.T) {
 		currentDefault := GetMinimumRewardAmount()
 		// First, ensure a specific minimum is set (building on previous test is risky, so set it again)
 		specificMin := currentDefault + 500
-		paramsSetStr := token1 + ":" + std.Uint64ToString(specificMin)
+		paramsSetStr := ufmt.Sprintf("%s:%d", token1, specificMin)
 		testing.SetOriginCaller(govGovernanceAddr)
 		SetTokenMinimumRewardAmount(paramsSetStr)
 		// Verify it's set
@@ -182,7 +184,7 @@ func TestMinimumRewardAmountLogic(t *testing.T) {
 		}
 
 		// Delete the specific minimum via governance (amount 0)
-		paramsDelStr := token1 + ":0"
+		paramsDelStr := ufmt.Sprintf("%s:0", token1)
 		SetTokenMinimumRewardAmount(paramsDelStr)
 
 		// Check the token reverts to default
@@ -203,9 +205,9 @@ func TestMinimumRewardAmountLogic(t *testing.T) {
 
 		// Set a specific minimum for token1 *before* changing default
 		specificMinToken1 := originalDefault + 500
-		paramsSetStr := token1 + ":" + std.Uint64ToString(specificMinToken1)
+		paramStr := ufmt.Sprintf("%s:%d", token1, specificMinToken1)
 		testing.SetOriginCaller(govGovernanceAddr)
-		SetTokenMinimumRewardAmount(paramsSetStr)
+		SetTokenMinimumRewardAmount(paramStr)
 
 		// Change the default minimum via governance
 		SetMinimumRewardAmount(newDefault)
