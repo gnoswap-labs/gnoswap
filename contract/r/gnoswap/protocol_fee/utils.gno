@@ -3,7 +3,6 @@ package protocol_fee
 import (
 	"std"
 
-	phalt "gno.land/p/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/halt"
 )
@@ -19,7 +18,7 @@ func assertOnlyNotHalted() {
 	// So, we only need to check if withdrawals are allowed here.
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
-		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
 			panic(err)
 		}
 	}

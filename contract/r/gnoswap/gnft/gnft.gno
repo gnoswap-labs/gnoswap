@@ -44,7 +44,7 @@ func Symbol() string {
 // TotalSupply returns the total number of NFTs minted
 // Returns:
 //   - uint64: The total number of tokens that have been minted
-func TotalSupply() uint64 {
+func TotalSupply() int64 {
 	return gnft.TokenCount()
 }
 
@@ -70,7 +70,7 @@ func TokenURI(tid grc721.TokenID) string {
 // Returns:
 //   - uint64: The number of NFTs owned by the address.
 //   - error: Returns an error if the balance retrieval fails.
-func BalanceOf(owner std.Address) (uint64, error) {
+func BalanceOf(owner std.Address) (int64, error) {
 	balance, err := gnft.BalanceOf(owner)
 	if err != nil {
 		panic(err.Error())
@@ -194,6 +194,7 @@ func SafeTransferFrom(from, to std.Address, tid grc721.TokenID) error {
 // Returns:
 //   - error: Returns `nil` if the transfer is successful; otherwise, returns an error.
 func TransferFrom(from, to std.Address, tid grc721.TokenID) error {
+	crossing()
 	return SafeTransferFrom(from, to, tid)
 }
 
@@ -211,6 +212,7 @@ func TransferFrom(from, to std.Address, tid grc721.TokenID) error {
 //   - If the caller is not the token owner.
 //   - If the `Approve` call fails.
 func Approve(approved std.Address, tid grc721.TokenID) error {
+	crossing()
 	assertOnlyNotHalted()
 	assertCallerIsOwnerOfToken(tid)
 
@@ -248,6 +250,7 @@ func SetApprovalForAll(operator std.Address, approved bool) error {
 //   - std.Address: The address approved to manage the token. Returns an empty address if no approval exists.
 //   - error: Returns an error if the lookup fails or the token ID is invalid.
 func GetApproved(tid grc721.TokenID) (std.Address, error) {
+	crossing()
 	return gnft.GetApproved(tid)
 }
 
@@ -273,6 +276,7 @@ func IsApprovedForAll(owner, operator std.Address) bool {
 //   - If the caller is not the owner of the token.
 //   - If the token URI cannot be set.
 func SetTokenURIByImageURI(tid grc721.TokenID) {
+	crossing()
 	assertOnlyNotHalted()
 	assertCallerIsOwnerOfToken(tid)
 
@@ -297,6 +301,7 @@ func SetTokenURIByImageURI(tid grc721.TokenID) {
 //   - If the caller does not own any tokens (empty token list).
 //   - If URI generation or assignment fails.
 func SetTokenURILast() {
+	crossing()
 	assertOnlyNotHalted()
 
 	caller := getPrevAddr()
@@ -321,7 +326,8 @@ func SetTokenURILast() {
 // Returns:
 //   - grc721.TokenID: The ID of the newly minted token
 func Mint(to std.Address, tid grc721.TokenID) grc721.TokenID {
-	owner.AssertCallerIsOwner()
+	crossing()
+	// owner.AssertOwnedByCurrent()
 	assertOnlyNotHalted()
 
 	checkErr(gnft.Mint(to, tid))
@@ -334,7 +340,8 @@ func Mint(to std.Address, tid grc721.TokenID) grc721.TokenID {
 // Parameters:
 //   - tid: The token ID to burn
 func Burn(tid grc721.TokenID) {
-	owner.AssertCallerIsOwner()
+	crossing()
+	// owner.AssertOwnedByCurrent()
 	assertOnlyNotHalted()
 
 	ownerAddr, err := OwnerOf(tid)
@@ -385,9 +392,9 @@ func setTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) error {
 // Returns:
 //   - *rand.Rand: A new random instance
 func generateRandInstance() *rand.Rand {
-	seed1 := uint64(time.Now().Unix()) + TotalSupply()
-	seed2 := uint64(time.Now().UnixNano()) + TotalSupply()
-	pcg := rand.NewPCG(seed1, seed2)
+	seed1 := time.Now().Unix() + TotalSupply()
+	seed2 := time.Now().UnixNano() + TotalSupply()
+	pcg := rand.NewPCG(uint64(seed1), uint64(seed2))
 	return rand.New(pcg)
 }
 

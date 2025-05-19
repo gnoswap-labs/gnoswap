@@ -7,7 +7,6 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-	phalt "gno.land/p/gnoswap/halt"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -40,11 +39,11 @@ func DistributeProtocolFee() map[string]uint64 {
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
 			panic(err)
 		}
 
-		if halt.IsContractHalted(phalt.OpTypeProtocolFee) {
+		if halt.IsContractHalted(halt.OpTypeProtocolFee) {
 			panic("protocol fee contract operations are currently disabled")
 		}
 	}
@@ -55,7 +54,7 @@ func DistributeProtocolFee() map[string]uint64 {
 	toReturnDistributedToGovStaker := make(map[string]uint64)
 
 	for token, amount := range tokenListWithAmount {
-		balance := common.BalanceOf(token, protocolFeeAddr)
+		balance := uint64(common.BalanceOf(token, protocolFeeAddr))
 
 		// anyone can just send certain grc20 token to `protocol_fee` contract
 		// therefore, we don't need any guard logic to check whether protocol_fee's xxx token balance is equal to `amount`
@@ -76,14 +75,14 @@ func DistributeProtocolFee() map[string]uint64 {
 				addAccuToDevOps(token, toDevOpsAmount)
 				updateDistributedToDevOpsHistory(token, toDevOpsAmount)
 				sentToDevOpsForEvent = append(sentToDevOpsForEvent, makeEventString(token, toDevOpsAmount))
-				tokenTeller.Transfer(devOpsAddr, toDevOpsAmount)
+				tokenTeller.Transfer(devOpsAddr, int64(toDevOpsAmount))
 			}
 
 			if toGovStakerAmount > 0 {
 				addAccuToGovStaker(token, toGovStakerAmount)
 				updateDistributedToGovStakerHistory(token, toGovStakerAmount)
 				sentToGovStakerForEvent = append(sentToGovStakerForEvent, makeEventString(token, toGovStakerAmount))
-				tokenTeller.Transfer(govStakerAddr, toGovStakerAmount)
+				tokenTeller.Transfer(govStakerAddr, int64(toGovStakerAmount))
 
 				toReturnDistributedToGovStaker[token] = toGovStakerAmount
 			}

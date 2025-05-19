@@ -87,16 +87,16 @@ func extractTokenPathsFromRender(render string) []string {
 }
 
 // TotalSupply returns the total supply of the token
-func TotalSupply(path string) uint64 {
+func TotalSupply(path string) int64 {
 	return GetToken(path).TotalSupply()
 }
 
 // BalanceOf returns the balance of the token for the given address
-func BalanceOf(path string, addr std.Address) uint64 {
+func BalanceOf(path string, addr std.Address) int64 {
 	return GetToken(path).BalanceOf(addr)
 }
 
 // Allowance returns the allowance of the token for the given owner and spender
-func Allowance(path string, owner, spender std.Address) uint64 {
+func Allowance(path string, owner, spender std.Address) int64 {
 	return GetToken(path).Allowance(owner, spender)
 }
