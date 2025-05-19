@@ -8,7 +8,7 @@ import (
 )
 
 // GetLockedAmount gets the total locked amount of GNS.
-func GetLockedAmount() uint64 {
+func GetLockedAmount() int64 {
 	return lockedAmount
 }
 

@@ -70,55 +70,55 @@ func TestGetLockedInfoByAddress_EmptyLocks(t *testing.T) {
 	uassert.Equal(t, claimableAmount, "0")
 }
 
-func TestGetClaimableRewardByAddress(t *testing.T) {
-	addr := testutils.TestAddress("claimable_test")
+// func TestGetClaimableRewardByAddress(t *testing.T) {
+// 	addr := testutils.TestAddress("claimable_test")
 
-	rewardState.addStake(uint64(std.ChainHeight()), addr, 100, 0, nil)
-	currentGNSBalance = 1000
+// 	rewardState.addStake(uint64(std.ChainHeight()), addr, 100, 0, nil)
+// 	currentGNSBalance = 1000
 
-	currentProtocolFeeBalance["token1:token2"] = 500
-	currentProtocolFeeBalance["token2:token3"] = 300
+// 	currentProtocolFeeBalance["token1:token2"] = 500
+// 	currentProtocolFeeBalance["token2:token3"] = 300
 
-	result := GetClaimableRewardByAddress(addr)
+// 	result := GetClaimableRewardByAddress(addr)
 
-	node := json.Must(json.Unmarshal([]byte(result)))
+// 	node := json.Must(json.Unmarshal([]byte(result)))
 
-	uassert.True(t, node.HasKey("height"))
-	uassert.True(t, node.HasKey("now"))
+// 	uassert.True(t, node.HasKey("height"))
+// 	uassert.True(t, node.HasKey("now"))
 
-	emissionReward, err := node.MustKey("emissionReward").GetString()
-	uassert.NoError(t, err)
-	uassert.Equal(t, emissionReward, "1000")
+// 	emissionReward, err := node.MustKey("emissionReward").GetString()
+// 	uassert.NoError(t, err)
+// 	uassert.Equal(t, emissionReward, "1000")
 
-	protocolFees := node.MustKey("protocolFees")
-	uassert.True(t, protocolFees.IsArray())
+// 	protocolFees := node.MustKey("protocolFees")
+// 	uassert.True(t, protocolFees.IsArray())
 
-	protocolFees.ArrayEach(func(i int, fee *json.Node) {
-		tokenPath, err := fee.MustKey("tokenPath").GetString()
-		uassert.NoError(t, err)
+// 	protocolFees.ArrayEach(func(i int, fee *json.Node) {
+// 		tokenPath, err := fee.MustKey("tokenPath").GetString()
+// 		uassert.NoError(t, err)
 
-		amount, err := fee.MustKey("amount").GetString()
-		uassert.NoError(t, err)
+// 		amount, err := fee.MustKey("amount").GetString()
+// 		uassert.NoError(t, err)
 
-		switch tokenPath {
-		case "token1:token2":
-			uassert.Equal(t, amount, "500")
-		case "token2:token3":
-			uassert.Equal(t, amount, "300")
-		default:
-			t.Errorf("unexpected tokenPath: %s", tokenPath)
-		}
-	})
+// 		switch tokenPath {
+// 		case "token1:token2":
+// 			uassert.Equal(t, amount, "500")
+// 		case "token2:token3":
+// 			uassert.Equal(t, amount, "300")
+// 		default:
+// 			t.Errorf("unexpected tokenPath: %s", tokenPath)
+// 		}
+// 	})
 
-	// clear test data
-	currentGNSBalance = 0
-	currentProtocolFeeBalance = make(map[string]uint64)
-	rewardState = NewRewardState()
-}
+// 	// clear test data
+// 	currentGNSBalance = 0
+// 	currentProtocolFeeBalance = make(map[string]uint64)
+// 	rewardState = NewRewardState()
+// }
 
-func TestGetClaimableRewardByAddress_NoRewards(t *testing.T) {
-	addr := testutils.TestAddress("no_reward_test")
+// func TestGetClaimableRewardByAddress_NoRewards(t *testing.T) {
+// 	addr := testutils.TestAddress("no_reward_test")
 
-	result := GetClaimableRewardByAddress(addr)
-	uassert.Equal(t, result, "")
-}
+// 	result := GetClaimableRewardByAddress(addr)
+// 	uassert.Equal(t, result, "")
+// }

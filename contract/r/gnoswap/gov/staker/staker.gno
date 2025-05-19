@@ -33,13 +33,17 @@ const (
 
 var (
 	addrLockedGns = avl.NewTree() // address -> []lockedGNS
-	lockedAmount  = uint64(0)
-	minimumAmount = uint64(1_000_000)
+	lockedAmount  = int64(0)
+	minimumAmount = int64(1_000_000)
 )
 
 // Delegate delegates GNS tokens to a specified address.
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#delegate
-func Delegate(to std.Address, amount uint64, referrer string) {
+func Delegate(to std.Address, amount int64, referrer string) {
+	if amount < 0 {
+		panic("amount cannot be negative")
+	}
+
 	if !to.IsValid() {
 		panic(addDetailToError(
 			errInvalidAddress,
@@ -63,7 +67,7 @@ func Delegate(to std.Address, amount uint64, referrer string) {
 
 	caller := std.PreviousRealm().Address()
 	gnsBalanceOfCaller := gns.BalanceOf(caller)
-	if gnsBalanceOfCaller < amount {
+	if gnsBalanceOfCaller < int64(amount) {
 		panic(addDetailToError(
 			errNotEnoughBalance,
 			ufmt.Sprintf("invalid GNS balance(%d) to delegate(%d)", gnsBalanceOfCaller, amount),
@@ -71,7 +75,7 @@ func Delegate(to std.Address, amount uint64, referrer string) {
 	}
 
 	// Transfer the caller's GNS to GovStaker
-	gns.TransferFrom(caller, std.OriginCaller(), amount)
+	gns.TransferFrom(caller, std.OriginCaller(), int64(amount))
 
 	success := referral.TryRegister(caller, referrer)
 	actualReferrer := referrer
@@ -83,10 +87,10 @@ func Delegate(to std.Address, amount uint64, referrer string) {
 	if running {
 		cleanDelegationStatHistory()
 	}
-	rewardState.addStake(uint64(std.ChainHeight()), caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
+	rewardState.addStake(uint64(std.ChainHeight()), caller, uint64(amount), collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
 	// actual delegate
-	delegate(to, amount)
+	delegate(to, uint64(amount))
 
 	// xGNS mint to caller
 	xgns.Mint(caller, amount)
@@ -98,14 +102,17 @@ func Delegate(to std.Address, amount uint64, referrer string) {
 		"prevRealm", prevPkgPath,
 		"from", caller.String(),
 		"to", to.String(),
-		"amount", formatUint(amount),
+		"amount", formatInt(amount),
 		"referrer", actualReferrer,
 	)
 }
 
 // Redelegate redelegates xGNS from existing delegate to another.
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#redelegate
-func Redelegate(from, to std.Address, amount uint64) {
+func Redelegate(from, to std.Address, amount int64) {
+	if amount < 0 {
+		panic("amount cannot be negative")
+	}
 	if !from.IsValid() {
 		panic(addDetailToError(
 			errInvalidAddress,
@@ -150,8 +157,8 @@ func Redelegate(from, to std.Address, amount uint64) {
 	}
 
 	CollectReward()
-	unDelegate(from, amount)
-	delegate(to, amount)
+	unDelegate(from, uint64(amount))
+	delegate(to, uint64(amount))
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -160,13 +167,17 @@ func Redelegate(from, to std.Address, amount uint64) {
 		"prevRealm", prevPkgPath,
 		"from", from.String(),
 		"to", to.String(),
-		"amount", formatUint(amount),
+		"amount", formatInt(amount),
 	)
 }
 
 // Undelegate undelegates xGNS from the existing delegate.
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#undelegate
-func Undelegate(from std.Address, amount uint64) {
+func Undelegate(from std.Address, amount int64) {
+	if amount < 0 {
+		panic("amount cannot be negative")
+	}
+
 	if !from.IsValid() {
 		panic(addDetailToError(
 			errInvalidAddress,
@@ -203,8 +214,8 @@ func Undelegate(from std.Address, amount uint64) {
 		cleanDelegationStatHistory()
 	}
 
-	reward, protocolFeeRewards := rewardState.removeStake(caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
-	gns.Transfer(caller, reward)
+	reward, protocolFeeRewards := rewardState.removeStake(caller, uint64(amount), collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
+	gns.Transfer(caller, int64(reward))
 
 	for tokenPath, rewardAmount := range protocolFeeRewards {
 		if rewardAmount > 0 {
@@ -213,13 +224,13 @@ func Undelegate(from std.Address, amount uint64) {
 	}
 
 	// actual unDelegate
-	unDelegate(from, amount)
+	unDelegate(from, uint64(amount))
 	// burn equivalent amount of xGNS
 	xgns.Burn(caller, amount)
 
 	// lock up
 	userLocked := lockedGNS{
-		amount: amount,
+		amount: uint64(amount),
 		unlock: uint64(time.Now().Unix()) + SECONDS_IN_7_DAYS, // after 7 days, call Collect() to receive GNS
 	}
 
@@ -238,7 +249,7 @@ func Undelegate(from std.Address, amount uint64) {
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"from", from.String(),
-		"amount", formatUint(amount),
+		"amount", formatInt(amount),
 	)
 }
 
@@ -278,8 +289,8 @@ func CollectUndelegatedGns() uint64 {
 	for _, locked := range lockedList {
 		if currentTime >= locked.unlock { // passed 7 days
 			// transfer GNS to caller
-			gns.Transfer(caller, locked.amount)
-			lockedAmount -= locked.amount
+			gns.Transfer(caller, int64(locked.amount))
+			lockedAmount -= int64(locked.amount)
 			collected += locked.amount
 		} else {
 			newLockedList = append(newLockedList, locked)
@@ -340,7 +351,7 @@ func CollectReward() {
 		}
 
 		currentGNSBalance -= reward
-		gns.Transfer(caller, reward)
+		gns.Transfer(caller, int64(reward))
 		std.Emit(
 			"CollectEmissionReward",
 			"prevAddr", prevAddr,
@@ -404,7 +415,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 		}
 
 		currentGNSBalance -= emissionReward
-		gns.Transfer(to, emissionReward)
+		gns.Transfer(to, int64(emissionReward))
 		std.Emit(
 			"CollectEmissionFromLaunchPad",
 			"prevAddr", prevAddr,
@@ -453,12 +464,13 @@ func transferProtocolFee(tokenPath string, to std.Address, amount uint64) {
 	}
 
 	currentProtocolFeeBalance[tokenPath] -= amount
+	amountInt64 := int64(amount)
 	if tokenPath == consts.WUGNOT_PATH {
-		wugnot.Withdraw(amount)
+		wugnot.Withdraw(amountInt64)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
-		banker.SendCoins(govStaker, to, std.Coins{{"ugnot", int64(amount)}})
+		banker.SendCoins(govStaker, to, std.Coins{{"ugnot", amountInt64}})
 	} else {
 		token := common.GetTokenTeller(tokenPath)
-		checkTransferError(token.Transfer(to, amount))
+		checkTransferError(token.Transfer(to, amountInt64))
 	}
 }

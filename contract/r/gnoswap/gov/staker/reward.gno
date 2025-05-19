@@ -30,9 +30,12 @@ var (
 // Need to clear the distributed GNS to gov/staker in emission to get the latest accumulated GNS balance
 func collectAndGetGNSBalance() uint64 {
 	gotGnsForEmission := en.GetDistributedToGovStaker()
+	if gotGnsForEmission < 0 {
+		panic("gns value cannot be negative")
+	}
 	en.ClearDistributedToGovStaker()
 
-	currentGNSBalance += gotGnsForEmission
+	currentGNSBalance += uint64(gotGnsForEmission)
 
 	return currentGNSBalance
 }
