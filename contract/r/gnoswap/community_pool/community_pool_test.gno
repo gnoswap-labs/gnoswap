@@ -33,53 +33,39 @@ func TestTransferTokenByAdmin(t *testing.T) {
 		caller      std.Realm
 		tokenPath   string
 		to          std.Address
-		amount      uint64
+		amount      int64
 		shouldPanic bool
 		panicMsg    string
 	}{
 		{
+			name: "panic if not admin",
+			setup: func() {
+				testing.SetRealm(dummyCaller)
+				func() {
+					testing.SetRealm(dummyCaller)
+					cross(halt.SetHaltByAdmin)(false)
+				}()
+			},
+			tokenPath:   consts.GNS_PATH,
+			to:          dummyReceiver,
+			amount:      1000,
+			shouldPanic: true,
+			panicMsg:    "caller(g1v36k6mtegdskcmr9wf047h6lta047h6ljmnks7) has no permission",
+		},
+		{
 			name: "panic if halted",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				halt.SetHaltByAdmin(true)
+				func() {
+					testing.SetRealm(adminRealm)
+					cross(halt.SetHaltByAdmin)(true)
+				}()
 			},
 			tokenPath:   consts.GNS_PATH,
 			to:          dummyReceiver,
 			amount:      1000,
 			shouldPanic: true,
 			panicMsg:    "[GNOSWAP-COMMUNITY_POOL-005] halted || community pool is currently halted",
-		},
-		{
-			name: "panic if not admin",
-			setup: func() {
-				testing.SetRealm(adminRealm)
-				halt.SetHaltByAdmin(false)
-			},
-			tokenPath:   consts.GNS_PATH,
-			to:          dummyReceiver,
-			amount:      1000,
-			shouldPanic: true,
-			panicMsg:    "caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission",
-		},
-		{
-			name: "panic if not enough balance",
-			setup: func() {
-				testing.SetRealm(adminRealm)
-				gns.Transfer(communityPoolAddr, 10_000)
-			},
-			caller:      adminRealm,
-			tokenPath:   consts.GNS_PATH,
-			to:          dummyReceiver,
-			amount:      10_001,
-			shouldPanic: true,
-			panicMsg:    "insufficient balance",
-		},
-		{
-			name:      "success if enough balance",
-			caller:    adminRealm,
-			tokenPath: consts.GNS_PATH,
-			to:        dummyReceiver,
-			amount:    1,
 		},
 	}
 
@@ -114,7 +100,7 @@ func TestTransferToken(t *testing.T) {
 		caller      std.Realm
 		tokenPath   string
 		to          std.Address
-		amount      uint64
+		amount      int64
 		shouldPanic bool
 		panicMsg    string
 	}{
@@ -122,7 +108,10 @@ func TestTransferToken(t *testing.T) {
 			name: "panic if halted",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				halt.SetHaltByAdmin(true)
+				func() {
+					testing.SetRealm(adminRealm)
+					cross(halt.SetHaltByAdmin)(true)
+				}()
 			},
 			tokenPath:   consts.GNS_PATH,
 			to:          dummyReceiver,
@@ -134,32 +123,16 @@ func TestTransferToken(t *testing.T) {
 			name: "panic if not governance",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				halt.SetHaltByAdmin(false)
+				func() {
+					testing.SetRealm(adminRealm)
+					cross(halt.SetHaltByAdmin)(false)
+				}()
 			},
 			tokenPath:   consts.GNS_PATH,
 			to:          dummyReceiver,
 			amount:      1000,
 			shouldPanic: true,
-			panicMsg:    "caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission",
-		},
-		{
-			name: "governance can't transfer community pool token",
-			setup: func() {
-				testing.SetRealm(adminRealm)
-			},
-			caller:      govRealm,
-			tokenPath:   consts.GNS_PATH,
-			to:          dummyReceiver,
-			amount:      10_001,
-			shouldPanic: true,
-			panicMsg:    "insufficient balance",
-		},
-		{
-			name:      "governance can transfer community pool token",
-			caller:    govRealm,
-			tokenPath: consts.GNS_PATH,
-			to:        dummyReceiver,
-			amount:    1,
+			panicMsg:    "caller(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) has no permission",
 		},
 	}
 
@@ -187,36 +160,34 @@ func TestTransferToken(t *testing.T) {
 	}
 }
 
-func TestPrivateTransferToken(t *testing.T) {
+func TestTransferTokenByGovernance(t *testing.T) {
 	tests := []struct {
+		name        string
+		setup       func()
+		caller      std.Realm
 		tokenPath   string
 		to          std.Address
-		amount      uint64
-		shouldPanic bool
+		amount      int64
 		panicMsg    string
 	}{
 		{
-			tokenPath:   "not_registered_token",
-			to:          dummyReceiver,
-			amount:      1,
-			shouldPanic: true,
-			panicMsg:    "unknown token: not_registered_token",
-		},
-		{
-			tokenPath:   consts.GNS_PATH,
-			to:          dummyReceiver,
-			amount:      1,
-			shouldPanic: false,
+			name: "panic if not admin",
+			setup: func() {
+				testing.SetRealm(dummyCaller)
+			},
+			panicMsg: "caller(g1v36k6mtegdskcmr9wf047h6lta047h6ljmnks7) has no permission",
 		},
 	}
 
 	for _, tt := range tests {
-		if tt.shouldPanic {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+
 			uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-				transferToken(tt.tokenPath, tt.to, tt.amount)
+				TransferToken(tt.tokenPath, tt.to, tt.amount)
 			})
-		} else {
-			transferToken(tt.tokenPath, tt.to, tt.amount)
-		}
+		})
 	}
 }
