@@ -13,9 +13,10 @@ type PermissionChecker func(caller std.Address) error
 // Role represents a role information structure.
 type Role struct {
 	// name represents the role's identifier
-	name        string
+	name string
 	// permissions maps permission names to their respective checker functions
 	permissions map[string]PermissionChecker
+	addresses   map[std.Address]struct{}
 }
 
 // NewRole creates a new `Role` instance with given name.
@@ -23,6 +24,7 @@ func NewRole(roleName string) *Role {
 	return &Role{
 		name:        roleName,
 		permissions: make(map[string]PermissionChecker),
+		addresses:   make(map[std.Address]struct{}),
 	}
 }
 

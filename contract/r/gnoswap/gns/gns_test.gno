@@ -19,12 +19,14 @@ const (
 
 var (
 	emissionRealm = std.NewCodeRealm(consts.EMISSION_PATH)
-	adminRealm    = std.NewUserRealm(consts.ADMIN)
+	adminRealm    = std.NewUserRealm(adminAddr)
 )
 
 var (
 	alice = testutils.TestAddress("alice")
 	bob   = testutils.TestAddress("bob")
+
+	userRealm = std.NewUserRealm(testutils.TestAddress("user"))
 )
 
 func TestGetName(t *testing.T) {
@@ -48,7 +50,7 @@ func TestTotalSupply(t *testing.T) {
 }
 
 func TestBalanceOf(t *testing.T) {
-	uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(consts.ADMIN))
+	uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(adminAddr))
 }
 
 func TestAssertTooManyEmission(t *testing.T) {
@@ -170,7 +172,7 @@ func TestSkipIfEmissionEnded(t *testing.T) {
 	})
 
 	t.Run("should not skip if emission has not ended", func(t *testing.T) {
-		uassert.False(t, skipIfEmissionEnded(std.GetHeight()))
+		uassert.False(t, skipIfEmissionEnded(std.ChainHeight()))
 	})
 }
 
@@ -204,7 +206,7 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "BalanceOf(admin)",
 			fn: func() {
-				uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(consts.ADMIN))
+				uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(adminAddr))
 			},
 		},
 		{
@@ -216,36 +218,37 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "Allowance(admin, alice)",
 			fn: func() {
-				uassert.Equal(t, uint64(0), Allowance(consts.ADMIN, alice))
+				uassert.Equal(t, uint64(0), Allowance(adminAddr, alice))
 			},
 		},
 		{
 			name: "MintGns success",
 			fn: func() {
-				std.TestSetRealm(emissionRealm)
-				MintGns(consts.ADMIN)
+				testing.SetRealm(emissionRealm)
+				MintGns(adminAddr)
 			},
 		},
 		{
 			name: "MintGns without permission should panic",
 			fn: func() {
-				std.TestSkipHeights(1)
-				MintGns(consts.ADMIN)
+				testing.SetRealm(userRealm)
+				testing.SkipHeights(1)
+				MintGns(adminAddr)
 			},
 			shouldPanic: true,
-			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission`,
+			panicMsg:    `caller(g1w4ek2ujlta047h6lta047h6lta047h6lkvk347) has no permission`,
 		},
 		{
 			name: "Burn success",
 			fn: func() {
-				std.TestSetRealm(adminRealm)
-				Burn(consts.ADMIN, uint64(1))
+				testing.SetRealm(adminRealm)
+				Burn(adminAddr, uint64(1))
 			},
 		},
 		{
 			name: "Burn without permission should panic",
 			fn: func() {
-				Burn(consts.ADMIN, uint64(1))
+				Burn(adminAddr, uint64(1))
 			},
 			shouldPanic: true,
 			panicMsg:    `ownable: caller is not owner`,
@@ -253,14 +256,14 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "Transfer success",
 			fn: func() {
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 				Transfer(alice, uint64(1))
 			},
 		},
 		{
 			name: "Transfer without enough balance should panic",
 			fn: func() {
-				std.TestSetRealm(std.NewUserRealm(alice))
+				testing.SetRealm(std.NewUserRealm(alice))
 				Transfer(bob, uint64(1))
 			},
 			shouldPanic: true,
@@ -269,8 +272,8 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "Transfer to self should panic",
 			fn: func() {
-				std.TestSetRealm(adminRealm)
-				Transfer(consts.ADMIN, uint64(1))
+				testing.SetRealm(adminRealm)
+				Transfer(adminAddr, uint64(1))
 			},
 			shouldPanic: true,
 			panicMsg:    `cannot send transfer to self`,
@@ -279,22 +282,22 @@ func TestGrc20Methods(t *testing.T) {
 			name: "TransferFrom success",
 			fn: func() {
 				// approve first
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 				Approve(alice, uint64(1))
 
 				// alice transfer admin's balance to bob
-				std.TestSetRealm(std.NewUserRealm(alice))
-				TransferFrom(consts.ADMIN, bob, uint64(1))
+				testing.SetRealm(std.NewUserRealm(alice))
+				TransferFrom(adminAddr, bob, uint64(1))
 			},
 		},
 		{
 			name: "TransferFrom without enough allowance should panic",
 			fn: func() {
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 				Approve(alice, uint64(1))
 
-				std.TestSetRealm(std.NewUserRealm(alice))
-				TransferFrom(consts.ADMIN, bob, uint64(2))
+				testing.SetRealm(std.NewUserRealm(alice))
+				TransferFrom(adminAddr, bob, uint64(2))
 			},
 			shouldPanic: true,
 			panicMsg:    `insufficient allowance`,

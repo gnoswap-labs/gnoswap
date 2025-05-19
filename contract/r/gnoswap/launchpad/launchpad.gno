@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
@@ -211,10 +212,16 @@ func (in ProjectInput) ParseConditions() (map[string]Condition, error) {
 			return nil, errors.New(addDetailToError(
 				errInvalidInput, ufmt.Sprintf("invalid token(%s)", token)))
 		}
-		if err := common.IsRegistered(token); err != nil {
-			return nil, errors.New(addDetailToError(
-				errInvalidInput, ufmt.Sprintf("token(%s) not registered", token)))
+
+		// If the address of the token has acquired the XGNS Role, nil is returned.
+		tokenIsXGns := access.GovXGNSOnly(std.DerivePkgAddr(token))
+		if tokenIsXGns != nil {
+			if err := common.IsRegistered(token); err != nil {
+				return nil, errors.New(addDetailToError(
+					errInvalidInput, ufmt.Sprintf("token(%s) not registered", token)))
+			}
 		}
+
 		if _, exists := condition[token]; exists {
 			return nil, errors.New(addDetailToError(
 				errInvalidInput, ufmt.Sprintf("duplicated condition token(%s)", token)))
@@ -299,7 +306,7 @@ func (in ProjectInput) ConvertStartTimeToHeight(now uint64) (uint64, error) {
 	}
 
 	diffBlockHeight := uint64(diffSec * 1000 / int64(avgBlockTimeMs))
-	currentHeight := uint64(std.GetHeight())
+	currentHeight := uint64(std.ChainHeight())
 	return currentHeight + diffBlockHeight, nil
 }
 
@@ -352,7 +359,14 @@ func CreateProject(
 		panic(err.Error())
 	}
 
-	en.MintAndDistributeGns()
+	// token Balance Check
+	tokenTeller := common.GetTokenTeller(tokenPath)
+	caller := getPrevAddr()
+	if tokenTeller.BalanceOf(caller) < depositAmount {
+		panic(addDetailToError(
+			errInsufficientBalance,
+			ufmt.Sprintf("caller(%s) balance(%d) < depositAmount(%d)", caller, tokenTeller.BalanceOf(caller), depositAmount)))
+	}
 
 	projectId := generateProjectId(input.TokenPath)
 	if _, exists := projects[projectId]; exists {
@@ -361,15 +375,17 @@ func CreateProject(
 			ufmt.Sprintf("project(%s) already exists", projectId)))
 	}
 
+	en.MintAndDistributeGns()
+
 	calcResult, err := calculateProjectParams(input, now)
 	if err != nil {
 		panic(addDetailToError(errInvalidInput, err.Error()))
 	}
 
 	startHeight := calcResult.StartHeight
-	tier30 := createTier(projectId, 30, calcResult.Tier30Amount, startHeight, input.StartTime, convertTimeToHeight(TIMESTAMP_3DAYS))
-	tier90 := createTier(projectId, 90, calcResult.Tier90Amount, startHeight, input.StartTime, convertTimeToHeight(TIMESTAMP_7DAYS))
-	tier180 := createTier(projectId, 180, calcResult.Tier180Amount, startHeight, input.StartTime, convertTimeToHeight(TIMESTAMP_14DAYS))
+	tier30 := createTier(projectId, TIER30, calcResult.Tier30Amount, startHeight, input.StartTime, convertTimeToHeight(TIMESTAMP_3DAYS))
+	tier90 := createTier(projectId, TIER90, calcResult.Tier90Amount, startHeight, input.StartTime, convertTimeToHeight(TIMESTAMP_7DAYS))
+	tier180 := createTier(projectId, TIER180, calcResult.Tier180Amount, startHeight, input.StartTime, convertTimeToHeight(TIMESTAMP_14DAYS))
 	tierMap := map[uint64]Tier{
 		TIER30:  tier30,
 		TIER90:  tier90,
@@ -383,7 +399,7 @@ func CreateProject(
 	}
 
 	projectCreated := TimeInfo{
-		height: uint64(std.GetHeight()),
+		height: uint64(std.ChainHeight()),
 		time:   now,
 	}
 
@@ -420,7 +436,7 @@ func CreateProject(
 	projects[projectId] = *project
 
 	// Transfer tokens
-	tokenTeller := common.GetTokenTeller(tokenPath)
+
 	tokenTeller.TransferFrom(
 		getPrevAddr(),
 		std.Address(GetOrigPkgAddr()),
@@ -478,7 +494,7 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 		panic(err.Error())
 	}
 
-	currentHeight := uint64(std.GetHeight())
+	currentHeight := uint64(std.ChainHeight())
 	if err := validateTransferLeft(project, recipient, currentHeight); err != nil {
 		panic(addDetailToError(
 			errInvalidCondition, err.Error()))
@@ -572,7 +588,7 @@ func calculateProjectParams(input ProjectInput, now uint64) (*ProjectCalculation
 	// calculate when the block starts
 	timeUntilStart := input.StartTime - now
 	blockDurationToStart := convertTimeToHeight(timeUntilStart)
-	currentHeight := uint64(std.GetHeight())
+	currentHeight := uint64(std.ChainHeight())
 	startHeight := currentHeight + blockDurationToStart
 
 	return &ProjectCalculationResult{
@@ -596,7 +612,7 @@ func calculateProjectParams(input ProjectInput, now uint64) (*ProjectCalculation
 func generateProjectId(tokenPath string) string {
 	// gno.land/r/gnoswap/gns:{height}
 	// gno.land/r/gnoswap/gns:30
-	return ufmt.Sprintf("%s:%d", tokenPath, std.GetHeight())
+	return ufmt.Sprintf("%s:%d", tokenPath, std.ChainHeight())
 }
 
 // generateTierId generates a unique tier ID based on the given project ID and the tier duration.
@@ -623,8 +639,8 @@ func createTier(
 	amount uint64,
 	startHeight uint64,
 	startTime uint64,
-	collectWaitDuration uint64) Tier {
-
+	collectWaitDuration uint64,
+) Tier {
 	tierId := generateTierId(projectId, duration)
 
 	tierStart := TimeInfo{
@@ -632,7 +648,7 @@ func createTier(
 		time:   startTime,
 	}
 
-	durationSecond := duration * consts.SECONDS_PER_DAY
+	durationSecond := getSecondForDuration(duration)
 	endTime := startTime + durationSecond
 	durationHeight := convertTimeToHeight(durationSecond)
 	endHeight := startHeight + durationHeight
@@ -690,14 +706,28 @@ func validateTransferLeft(project Project, recipient std.Address, height uint64)
 
 // calculateLeftReward calculates the remaining reward amount for each tier
 func calculateLeftReward(project Project) uint64 {
-	tier30 := project.tiers[30]
-	tier90 := project.tiers[90]
-	tier180 := project.tiers[180]
+	tier30 := project.tiers[TIER30]
+	tier90 := project.tiers[TIER90]
+	tier180 := project.tiers[TIER180]
 
 	left30 := tier30.tierAmount - tier30.calculatedAmount
 	left90 := tier90.tierAmount - tier90.calculatedAmount
 	left180 := tier180.tierAmount - tier180.calculatedAmount
 	return left30 + left90 + left180
+}
+
+// getSecondForDuration returns the duration in seconds for the given tier
+func getSecondForDuration(duration uint64) uint64 {
+	switch duration {
+	case TIER30:
+		return TIMESTAMP_30DAYS
+	case TIER90:
+		return TIMESTAMP_90DAYS
+	case TIER180:
+		return TIMESTAMP_180DAYS
+	default:
+		panic(addDetailToError(errInvalidTier, ufmt.Sprintf("invalid duration(%d)", duration)))
+	}
 }
 
 // getProject returns the project with the given project ID

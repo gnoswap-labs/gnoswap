@@ -1,13 +1,17 @@
 package governance
 
 import (
+	"errors"
 	"std"
 	"testing"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/gns"
+
+	gs "gno.land/r/gnoswap/v1/gov/staker"
 )
 
 var (
@@ -24,7 +28,7 @@ func resetGlobalStateProposal(t *testing.T) {
 	t.Helper()
 	proposalId = 0
 	proposals = avl.NewTree()
-	latestProposalByProposer = avl.NewTree()
+	proposalIdListByProposer = avl.NewTree()
 }
 
 func mockCheckEnoughXGnsToPropose(proposer std.Address) (bool, uint64, uint64) {
@@ -98,9 +102,15 @@ func TestProposeText(t *testing.T) {
 
 func TestProposeCommunityPoolSpend(t *testing.T) {
 	t.Skip("")
-	// checkEnoughXGnsToPropose = mockCheckEnoughXGnsToPropose
 
 	resetGlobalStateProposal(t)
+
+	testing.SetRealm(adminRealm)
+
+	// Setup xGNS for proposal creation
+	gns.Approve(govStakerAddr, uint64(2000000000))
+	gs.Delegate(proposalAddr, uint64(2000000000), "") // self delegate
+	testing.SkipHeights(1)
 
 	tests := []struct {
 		name        string
@@ -141,7 +151,14 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 			func() {
 				defer func() {
 					if r := recover(); r != nil {
-						err = r.(error)
+						switch r.(type) {
+						case string:
+							err = errors.New(r.(string))
+						case error:
+							err = r.(error)
+						default:
+							err = errors.New("unknown error")
+						}
 					}
 				}()
 				pid = ProposeCommunityPoolSpend(
@@ -162,157 +179,22 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 	}
 }
 
-func TestUpdateProposalsState(t *testing.T) {
-	t.Skip("")
-	baseTime := uint64(1000)
-	newConfig := Config{
-		VotingStartDelay: 50,
-		VotingPeriod:     100,
-		ExecutionDelay:   50,
-		ExecutionWindow:  100,
-	}
-	setConfigVersion(1, newConfig)
+func TestIntegratedProposeParameterChange(t *testing.T) {
+	// t.Skip("The proposal needs to be modified to ensure it has sufficient xGNS.")
 
 	tests := []struct {
-		name          string
-		currentTime   uint64
-		setupProposal func(uint64) ProposalInfo
-		validate      func(*testing.T, ProposalInfo)
-	}{
-		{
-			name:        "Should reject proposal when voting ends with insufficient votes",
-			currentTime: baseTime + 200,
-			setupProposal: func(now uint64) ProposalInfo {
-				return ProposalInfo{
-					ConfigVersion: 1,
-					Yea:           u256.NewUint(100),
-					Nay:           u256.NewUint(200),
-					QuorumAmount:  300,
-					State: ProposalState{
-						Created:   true,
-						CreatedAt: baseTime,
-						Active:    true,
-					},
-				}
-			},
-			validate: func(t *testing.T, proposal ProposalInfo) {
-				uassert.True(t, proposal.State.Rejected)
-				uassert.False(t, proposal.State.Active)
-				uassert.False(t, proposal.State.Upcoming)
-				uassert.NotEqual(t, proposal.State.RejectedAt, uint64(0))
-			},
-		},
-		{
-			name:        "Should pass proposal when voting ends with sufficient votes",
-			currentTime: baseTime + 200,
-			setupProposal: func(now uint64) ProposalInfo {
-				return ProposalInfo{
-					ConfigVersion: 1,
-					Yea:           u256.NewUint(400),
-					Nay:           u256.NewUint(200),
-					QuorumAmount:  300,
-					State: ProposalState{
-						Created:   true,
-						CreatedAt: baseTime,
-						Active:    true,
-					},
-				}
-			},
-			validate: func(t *testing.T, proposal ProposalInfo) {
-				uassert.True(t, proposal.State.Passed)
-				uassert.False(t, proposal.State.Active)
-				uassert.NotEqual(t, proposal.State.PassedAt, uint64(0))
-			},
-		},
-		{
-			name:        "Should expire non-text proposal when execution window ends",
-			currentTime: baseTime + 400,
-			setupProposal: func(now uint64) ProposalInfo {
-				return ProposalInfo{
-					ConfigVersion: 1,
-					ProposalType:  ParameterChange,
-					State: ProposalState{
-						Created:   true,
-						CreatedAt: baseTime,
-						Passed:    true,
-						PassedAt:  baseTime + 200,
-					},
-				}
-			},
-			validate: func(t *testing.T, proposal ProposalInfo) {
-				uassert.True(t, proposal.State.Expired)
-				uassert.NotEqual(t, proposal.State.ExpiredAt, uint64(0))
-			},
-		},
-		{
-			name:        "Should not update canceled proposal",
-			currentTime: baseTime + 60,
-			setupProposal: func(now uint64) ProposalInfo {
-				return ProposalInfo{
-					ConfigVersion: 1,
-					State: ProposalState{
-						Created:   true,
-						CreatedAt: baseTime,
-						Canceled:  true,
-						Upcoming:  true,
-					},
-				}
-			},
-			validate: func(t *testing.T, proposal ProposalInfo) {
-				uassert.True(t, proposal.State.Canceled)
-				uassert.True(t, proposal.State.Upcoming)
-			},
-		},
-		{
-			name:        "Should not expire text proposal",
-			currentTime: baseTime + 400,
-			setupProposal: func(now uint64) ProposalInfo {
-				return ProposalInfo{
-					ConfigVersion: 1,
-					ProposalType:  Text,
-					State: ProposalState{
-						Created:   true,
-						CreatedAt: baseTime,
-						Passed:    true,
-						PassedAt:  baseTime + 200,
-					},
-				}
-			},
-			validate: func(t *testing.T, proposal ProposalInfo) {
-				uassert.False(t, proposal.State.Expired)
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			proposals = avl.NewTree()
-
-			proposal := tt.setupProposal(tt.currentTime)
-			proposals.Set(formatUint(uint32(1)), proposal)
-
-			updateProposalsState()
-
-			updatedProposal, exists := proposals.Get(formatUint(uint32(1)))
-			uassert.True(t, exists)
-			tt.validate(t, updatedProposal.(ProposalInfo))
-		})
-	}
-}
-
-func TestProposeParameterChange(t *testing.T) {
-	t.Skip("")
-	resetGlobalStateProposal(t)
-
-	tests := []struct {
-		name          string
-		proposer      std.Address
-		title         string
-		description   string
-		numToExecute  uint64
-		executions    string
-		expectError   bool
-		errorContains string
+		name           string
+		proposer       std.Address
+		title          string
+		description    string
+		numToExecute   uint64
+		executions     string
+		expectError    bool
+		errorContains  string
+		isRoleChange   bool
+		roleName       string
+		permissionName string
+		action         RoleChangeAction
 	}{
 		{
 			name:         "Valid parameter change proposal",
@@ -322,6 +204,20 @@ func TestProposeParameterChange(t *testing.T) {
 			numToExecute: 2,
 			executions:   "gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*123*GOV*gno.land/r/gnoswap/v1/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/v1/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905",
 			expectError:  false,
+			isRoleChange: false,
+		},
+		{
+			name:           "Valid role change proposal",
+			proposer:       proposalAddr,
+			title:          "Add Admin Role",
+			description:    "Create new admin role with single address permission",
+			numToExecute:   1,
+			executions:     "ROLE_CHANGE:admin:can_manage:AddRole:SingleAddressChecker:g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d::0",
+			expectError:    false,
+			isRoleChange:   true,
+			roleName:       "admin",
+			permissionName: "can_manage",
+			action:         AddRole,
 		},
 	}
 
@@ -329,20 +225,33 @@ func TestProposeParameterChange(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			resetGlobalStateProposal(t)
 
+			testing.SetRealm(adminRealm)
+
+			// Setup xGNS for proposal creation
+			gns.Approve(govStakerAddr, uint64(2000000000))
+			gs.Delegate(proposalAddr, uint64(2000000000), "") // self delegate
+			testing.SkipHeights(1)
+
 			var pid uint64
 			var err error
-			defer func() {
-				if r := recover(); r != nil {
-					t.Errorf("Unexpected error: %v", r)
-				}
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						t.Errorf("Unexpected error: %v", r)
+					}
+				}()
+				pid = ProposeParameterChange(
+					tt.title,
+					tt.description,
+					tt.numToExecute,
+					tt.executions,
+				)
 			}()
-			pid = ProposeParameterChange(
-				tt.title,
-				tt.description,
-				tt.numToExecute,
-				tt.executions,
-			)
 
+			if tt.expectError {
+				uassert.Error(t, err)
+				return
+			}
 			uassert.NoError(t, err)
 
 			prop, exists := proposals.Get(formatUint(pid))
@@ -352,10 +261,18 @@ func TestProposeParameterChange(t *testing.T) {
 
 			uassert.Equal(t, proposal.Title, tt.title)
 			uassert.Equal(t, proposal.Description, tt.description)
-			uassert.Equal(t, proposal.ProposalType.String(), ParameterChange.String())
 
-			uassert.Equal(t, proposal.Execution.Num, tt.numToExecute)
-			uassert.Equal(t, len(proposal.Execution.Msgs), int(tt.numToExecute))
+			if tt.isRoleChange {
+				uassert.Equal(t, proposal.ProposalType.String(), RoleChange.String())
+				uassert.Equal(t, proposal.RoleChange.RoleName, tt.roleName)
+				uassert.Equal(t, proposal.RoleChange.PermissionName, tt.permissionName)
+				if tt.action != proposal.RoleChange.Action {
+					t.Errorf("Expected action: %v, got: %v", tt.action, proposal.RoleChange.Action)
+				}
+			} else {
+				uassert.Equal(t, proposal.ProposalType.String(), ParameterChange.String())
+				uassert.Equal(t, proposal.Execution.Num, tt.numToExecute)
+			}
 
 			uassert.True(t, proposal.State.Created)
 			uassert.True(t, proposal.State.Upcoming)

@@ -7,7 +7,6 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -140,7 +139,7 @@ func changeDistributionPcts(
 func distributeToTarget(amount uint64) uint64 {
 	totalSent := uint64(0)
 
-	distributionBpsPct.Iterate("", "", func(targetStr string, iPct interface{}) bool {
+	distributionBpsPct.Iterate("", "", func(targetStr string, iPct any) bool {
 		targetInt, err := strconv.Atoi(targetStr)
 		if err != nil {
 			panic(addDetailToError(
@@ -178,22 +177,22 @@ func calculateAmount(amount, bptPct uint64) uint64 {
 func transferToTarget(target int, amount uint64) {
 	switch target {
 	case LIQUIDITY_STAKER:
-		gns.Transfer(consts.STAKER_ADDR, amount)
+		gns.Transfer(stakerAddr, amount)
 		distributedToStaker += amount
 		accuDistributedToStaker += amount
 
 	case DEVOPS:
-		gns.Transfer(consts.DEV_OPS, amount)
+		gns.Transfer(devOpsAddr, amount)
 		distributedToDevOps += amount
 		accuDistributedToDevOps += amount
 
 	case COMMUNITY_POOL:
-		gns.Transfer(consts.COMMUNITY_POOL_ADDR, amount)
+		gns.Transfer(communityPoolAddr, amount)
 		distributedToCommunityPool += amount
 		accuDistributedToCommunityPool += amount
 
 	case GOV_STAKER:
-		gns.Transfer(consts.GOV_STAKER_ADDR, amount)
+		gns.Transfer(govStakerAddr, amount)
 		distributedToGovStaker += amount
 		accuDistributedToGovStaker += amount
 

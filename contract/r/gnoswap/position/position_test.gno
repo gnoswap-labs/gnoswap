@@ -15,9 +15,7 @@ import (
 	"gno.land/r/gnoswap/v1/referral"
 )
 
-var (
-	mockRegistry = make(map[string]bool)
-)
+var mockRegistry = make(map[string]bool)
 
 // MockRegister registers a token path in the mock registry.
 func MockRegister(t *testing.T, tokenPath string) {
@@ -57,12 +55,19 @@ func newDummyPosition(id uint64) Position {
 }
 
 func TestMustGetPosition(t *testing.T) {
-	id := uint64(1)
-	position := newDummyPosition(id)
-	setPosition(id, position)
+	var newId uint64
+	id := GetNextId()
+	nftId := gnft.TotalSupply()
+	if id > nftId {
+		newId = id
+	} else {
+		newId = nftId
+	}
+	position := newDummyPosition(newId)
+	createNewPosition(newId, position)
 
 	t.Run("Success - Get existing position", func(t *testing.T) {
-		result := MustGetPosition(id)
+		result := MustGetPosition(newId)
 		uassert.Equal(t, position.nonce.ToString(), result.nonce.ToString())
 		uassert.Equal(t, position.operator, result.operator)
 		uassert.Equal(t, position.poolKey, result.poolKey)
@@ -86,7 +91,7 @@ func TestMustGetPosition(t *testing.T) {
 }
 
 func TestGetPosition(t *testing.T) {
-	id := uint64(1)
+	id := GetNextId() - 1
 	position := newDummyPosition(id)
 	t.Run("Success - Get existing position", func(t *testing.T) {
 		result := MustGetPosition(id)
@@ -106,12 +111,13 @@ func TestGetPosition(t *testing.T) {
 }
 
 func TestSetPosition(t *testing.T) {
-	id := uint64(300)
+	id := GetNextId()
 	position := newDummyPosition(id)
 
 	t.Run("Success - Create new position", func(t *testing.T) {
 		isNew := setPosition(id, position)
 		uassert.False(t, isNew)
+		incrementNextId()
 
 		storedPosition, _ := GetPosition(id)
 		uassert.Equal(t, position.nonce.ToString(), storedPosition.nonce.ToString())
@@ -138,11 +144,11 @@ func TestSetPosition(t *testing.T) {
 }
 
 func TestRemovePosition(t *testing.T) {
-	id := uint64(2)
+	id := GetNextId()
 	position := newDummyPosition(id)
 
 	t.Run("Success - Remove existing position", func(t *testing.T) {
-		setPosition(id, position)
+		createNewPosition(id, position)
 		removePosition(id)
 		_, found := GetPosition(id)
 		uassert.False(t, found)
@@ -156,16 +162,16 @@ func TestRemovePosition(t *testing.T) {
 }
 
 func TestExistPosition(t *testing.T) {
-	id := uint64(2)
+	id := GetNextId()
 	position := newDummyPosition(id)
 
 	t.Run("False - Position does not exist", func(t *testing.T) {
-		uassert.False(t, existPosition(id))
+		uassert.False(t, ExistPosition(id))
 	})
 
 	t.Run("True - Position exists", func(t *testing.T) {
-		setPosition(id, position)
-		uassert.True(t, existPosition(id))
+		createNewPosition(id, position)
+		uassert.True(t, ExistPosition(id))
 		removePosition(id)
 	})
 }
@@ -220,35 +226,37 @@ func TestComputePositionKey(t *testing.T) {
 }
 
 func TestNextIdFunctions(t *testing.T) {
+	prevNextId := GetNextId()
 	nextId = uint64(1)
 
 	t.Run("Initial nextId should return 1", func(t *testing.T) {
-		uassert.Equal(t, uint64(1), getNextId(), "expected nextId to start at 1")
+		uassert.Equal(t, uint64(1), GetNextId(), "expected nextId to start at 1")
 	})
 
 	t.Run("After mint nextId should return 2", func(t *testing.T) {
 		incrementNextId()
-		uassert.Equal(t, getNextId(), uint64(2), "expected nextId to be 2 after mint")
+		uassert.Equal(t, GetNextId(), uint64(2), "expected nextId to be 2 after mint")
 	})
 
 	t.Run("Increment nextId once", func(t *testing.T) {
 		incrementNextId()
-		uassert.Equal(t, uint64(3), getNextId(), "expected nextId to increment to 3")
+		uassert.Equal(t, uint64(3), GetNextId(), "expected nextId to increment to 3")
 	})
 
 	t.Run("Increment nextId multiple times", func(t *testing.T) {
 		for i := 0; i < 2; i++ {
 			incrementNextId()
 		}
-		uassert.Equal(t, uint64(5), getNextId(), "expected nextId to increment to 5 after 3 more increments")
+		uassert.Equal(t, uint64(5), GetNextId(), "expected nextId to increment to 5 after 3 more increments")
 	})
 
 	t.Run("Ensure no overflow on normal increments", func(t *testing.T) {
 		for i := uint64(5); i < 100; i++ {
 			incrementNextId()
 		}
-		uassert.Equal(t, uint64(100), getNextId(), "expected nextId to reach 100 after continuous increments")
+		uassert.Equal(t, uint64(100), GetNextId(), "expected nextId to reach 100 after continuous increments")
 	})
+	nextId = prevNextId
 }
 
 func TestIsValidTokenPath(t *testing.T) {
@@ -462,15 +470,15 @@ func TestProcessTokens(t *testing.T) {
 
 			if tt.token0 == consts.GNOT {
 				amount, _ := strconv.ParseUint(tt.amount0Desired, 10, 64)
-				ugnotFaucet(t, consts.POSITION_ADDR, amount)
-				std.TestSetRealm(std.NewUserRealm(consts.POSITION_ADDR))
-				transferUGNOT(consts.POSITION_ADDR, consts.POSITION_ADDR, amount)
+				ugnotFaucet(t, positionAddr, amount)
+				testing.SetRealm(std.NewUserRealm(positionAddr))
+				transferUGNOT(positionAddr, positionAddr, amount)
 			}
 			if tt.token1 == consts.GNOT {
 				amount, _ := strconv.ParseUint(tt.amount1Desired, 10, 64)
-				ugnotFaucet(t, consts.POSITION_ADDR, amount)
-				std.TestSetRealm(std.NewUserRealm(consts.POSITION_ADDR))
-				transferUGNOT(consts.POSITION_ADDR, consts.POSITION_ADDR, amount)
+				ugnotFaucet(t, positionAddr, amount)
+				testing.SetRealm(std.NewUserRealm(positionAddr))
+				transferUGNOT(positionAddr, positionAddr, amount)
 			}
 
 			if !tt.expectPanic {
@@ -603,8 +611,8 @@ func TestMintInternal(t *testing.T) {
 	MakeMintPositionWithoutFee(t)
 	TokenFaucet(t, fooPath, alice)
 	TokenFaucet(t, barPath, alice)
-	TokenApprove(t, fooPath, alice, pool, maxApprove)
-	TokenApprove(t, barPath, alice, pool, maxApprove)
+	TokenApprove(t, fooPath, alice, poolAddr, maxApprove)
+	TokenApprove(t, barPath, alice, poolAddr, maxApprove)
 
 	tests := []struct {
 		name              string
@@ -632,11 +640,12 @@ func TestMintInternal(t *testing.T) {
 				caller:         alice,
 				mintTo:         alice,
 			},
-			expectedTokenId:   101,
+			expectedTokenId:   GetNextId(),
 			expectedLiquidity: "2005104",
 			expectedAmount0:   "10000",
 			expectedAmount1:   "10000",
 			expectPanic:       false,
+			positionId:        0,
 		},
 		{
 			name: "Position Exists",
@@ -654,7 +663,7 @@ func TestMintInternal(t *testing.T) {
 				mintTo:         alice,
 			},
 			expectPanic:   true,
-			expectedError: "token id already exists",
+			expectedError: "[GNOSWAP-POSITION-011] position with same positionId already exists || positionId(1)",
 			positionId:    1,
 		},
 		{
@@ -674,17 +683,19 @@ func TestMintInternal(t *testing.T) {
 			},
 			expectPanic:   true,
 			expectedError: "[GNOSWAP-POOL-010] zero liquidity",
+			positionId:    0,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			prevNextId := nextId
 			if tt.positionId != 0 {
 				nextId = tt.positionId
 			}
 
 			if !tt.expectPanic {
-				std.TestSetRealm(std.NewUserRealm(tt.params.mintTo))
+				testing.SetRealm(std.NewUserRealm(tt.params.mintTo))
 				positionId, liquidity, amount0, amount1 := mint(tt.params)
 				uassert.Equal(t, tt.expectedTokenId, positionId)
 				uassert.Equal(t, tt.expectedLiquidity, liquidity.ToString())
@@ -695,12 +706,15 @@ func TestMintInternal(t *testing.T) {
 					mint(tt.params)
 				})
 			}
+
+			if tt.positionId != 0 {
+				nextId = prevNextId
+			}
 		})
 	}
 }
 
 func TestMint(t *testing.T) {
-	nextId = gnft.TotalSupply() + 1
 	tests := []struct {
 		name            string
 		token0          string
@@ -790,7 +804,7 @@ func TestMint(t *testing.T) {
 			minAmount0:      "950000",
 			minAmount1:      "1900000",
 			deadline:        time.Now().Add(10 * time.Minute).Unix(),
-			mintTo:          admin,
+			mintTo:          adminAddr,
 			caller:          alice,
 			expectPanic:     true,
 			expectedError:   "[GNOSWAP-POSITION-012] invalid address || (g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh, g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d)",
@@ -801,7 +815,7 @@ func TestMint(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			std.TestSetRealm(std.NewUserRealm(tc.caller))
+			testing.SetRealm(std.NewUserRealm(tc.caller))
 			if tc.expectPanic {
 				uassert.PanicsWithMessage(t,
 					tc.expectedError,
@@ -839,7 +853,7 @@ func TestMint(t *testing.T) {
 					tc.referrer,
 				)
 
-				uassert.Equal(t, uint64(5), positionId)
+				uassert.Equal(t, uint64(30), positionId)
 				uassert.NotEmpty(t, liquidity)
 				t0, _ := strconv.ParseUint(amount0, 10, 64)
 				t1, _ := strconv.ParseUint(amount1, 10, 64)
@@ -855,7 +869,7 @@ func TestMint(t *testing.T) {
 }
 
 func TestIncreaseLiquidityInternal(t *testing.T) {
-	std.TestSetRealm(std.NewUserRealm(admin))
+	testing.SetRealm(std.NewUserRealm(adminAddr))
 	position := Position{
 		poolKey:                  "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
 		tickLower:                -10000,
@@ -867,9 +881,16 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 		tokensOwed1:              u256.Zero(),
 		burned:                   false,
 	}
-	id := getNextId()
-	setPosition(id, position)
-	incrementNextId()
+	id := GetNextId()
+	nftId := gnft.TotalSupply()
+	if id > nftId {
+		diff := id - nftId
+		for i := uint64(1); i < diff; i++ {
+			removePosition(nftId + i)
+		}
+	}
+	nextId = nftId + 1
+	id = GetNextId()
 
 	MakeMintPositionWithoutFee(t)
 
@@ -898,7 +919,7 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 		{
 			name: "Fail - Zero Liquidity",
 			params: IncreaseLiquidityParams{
-				positionId:     7,
+				positionId:     id,
 				amount0Desired: u256.Zero(),
 				amount1Desired: u256.Zero(),
 				amount0Min:     u256.NewUint(900000),
@@ -930,7 +951,8 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 }
 
 func TestIncreaseLiquidity(t *testing.T) {
-	std.TestSetRealm(std.NewUserRealm(admin))
+	id := GetNextId() - 1
+	testing.SetRealm(std.NewUserRealm(adminAddr))
 	tests := []struct {
 		name             string
 		positionId       uint64
@@ -946,7 +968,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 	}{
 		{
 			name:            "Success - Valid Increase",
-			positionId:      7,
+			positionId:      id,
 			amount0Desired:  "1000000",
 			amount1Desired:  "2000000",
 			amount0Min:      "950000",
@@ -958,7 +980,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 		},
 		{
 			name:             "Fail - Deadline Exceeded",
-			positionId:       7,
+			positionId:       id,
 			amount0Desired:   "1000000",
 			amount1Desired:   "2000000",
 			amount0Min:       "950000",
@@ -969,7 +991,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 		},
 		{
 			name:             "Fail - Invalid Amount String",
-			positionId:       7,
+			positionId:       id,
 			amount0Desired:   "invalid_amount",
 			amount1Desired:   "2000000",
 			amount0Min:       "950000",
@@ -1113,9 +1135,9 @@ func TestDecreaseLiquidity(t *testing.T) {
 	}
 
 	CreatePoolWithoutFee(t)
-	std.TestSetRealm(std.NewUserRealm(admin))
-	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
-	TokenApprove(t, fooPath, admin, pool, consts.UINT64_MAX)
+	testing.SetRealm(std.NewUserRealm(adminAddr))
+	TokenApprove(t, barPath, adminAddr, poolAddr, consts.UINT64_MAX)
+	TokenApprove(t, fooPath, adminAddr, poolAddr, consts.UINT64_MAX)
 	positionId, _, _, _ := Mint(
 		barPath,
 		fooPath,
@@ -1127,8 +1149,8 @@ func TestDecreaseLiquidity(t *testing.T) {
 		"0",
 		"0",
 		time.Now().Add(time.Hour).Unix(),
-		admin,
-		admin,
+		adminAddr,
+		adminAddr,
 		"",
 	)
 	for _, tc := range tests {
@@ -1235,9 +1257,9 @@ func TestCollectFees(t *testing.T) {
 	}
 
 	CreatePoolWithoutFee(t)
-	std.TestSetRealm(std.NewUserRealm(admin))
-	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
-	TokenApprove(t, fooPath, admin, pool, consts.UINT64_MAX)
+	testing.SetRealm(std.NewUserRealm(adminAddr))
+	TokenApprove(t, barPath, adminAddr, poolAddr, consts.UINT64_MAX)
+	TokenApprove(t, fooPath, adminAddr, poolAddr, consts.UINT64_MAX)
 
 	// Mint liquidity
 	positionId, _, _, _ := Mint(
@@ -1251,8 +1273,8 @@ func TestCollectFees(t *testing.T) {
 		"0",
 		"0",
 		time.Now().Add(time.Hour).Unix(),
-		admin,
-		admin,
+		adminAddr,
+		adminAddr,
 		"",
 	)
 
@@ -1355,9 +1377,9 @@ func TestReposition(t *testing.T) {
 	}
 
 	CreatePoolWithoutFee(t)
-	std.TestSetRealm(std.NewUserRealm(admin))
-	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
-	TokenApprove(t, fooPath, admin, pool, consts.UINT64_MAX)
+	testing.SetRealm(std.NewUserRealm(adminAddr))
+	TokenApprove(t, barPath, adminAddr, poolAddr, consts.UINT64_MAX)
+	TokenApprove(t, fooPath, adminAddr, poolAddr, consts.UINT64_MAX)
 
 	// Step 1: Mint a position
 	positionId, _, _, _ := Mint(
@@ -1371,8 +1393,8 @@ func TestReposition(t *testing.T) {
 		"0",
 		"0",
 		time.Now().Add(time.Hour).Unix(),
-		admin,
-		admin,
+		adminAddr,
+		adminAddr,
 		"",
 	)
 
@@ -1414,7 +1436,7 @@ func TestReposition(t *testing.T) {
 					)
 				})
 			} else {
-				//positionId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
+				// positionId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
 				tid, _, tickL, tickH, _, _ := Reposition(
 					positionId,
 					tt.tickLower,

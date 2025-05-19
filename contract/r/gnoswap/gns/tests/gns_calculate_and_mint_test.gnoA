@@ -4,15 +4,11 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
-)
-
-var (
-	emissionRealm = std.NewCodeRealm(consts.EMISSION_PATH)
-	adminRealm    = std.NewUserRealm(consts.ADMIN)
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 func TestCalculateAmountToMint(t *testing.T) {
@@ -52,26 +48,27 @@ func TestCalculateAmountToMint(t *testing.T) {
 
 func TestMintGns(t *testing.T) {
 	t.Run("panic for swap is halted", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		std.TestSkipHeights(123)    // pass some block to bypass last block check
-		common.SetHaltByAdmin(true) // set halt
-		uassert.PanicsWithMessage(t, "[GNOSWAP-COMMON-002] halted || GnoSwap is halted", func() {
-			MintGns(consts.ADMIN)
+		testing.SetRealm(std.NewUserRealm(adminAddr))
+		testing.SkipHeights(123)  // pass some block to bypass last block check
+		halt.SetHaltByAdmin(true) // set halt
+		uassert.PanicsWithMessage(t, "halted", func() {
+			MintGns(adminAddr)
 		})
 
-		common.SetHaltByAdmin(false) // unset halt
+		halt.SetHaltByAdmin(false) // unset halt
 	})
 
 	t.Run("panic if caller is not emission contract", func(t *testing.T) {
-		uassert.PanicsWithMessage(t, "caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission", func() {
-			MintGns(consts.ADMIN)
+		testing.SetRealm(std.NewUserRealm(testutils.TestAddress("user")))
+		uassert.PanicsWithMessage(t, "caller(g1w4ek2ujlta047h6lta047h6lta047h6lkvk347) has no permission", func() {
+			MintGns(adminAddr)
 		})
 	})
 
 	t.Run("do not mint for same block", func(t *testing.T) {
-		std.TestSetRealm(emissionRealm)
-		std.TestSkipHeights(-123) // revert height to get caught by last block check
-		mintedAmount := MintGns(consts.ADMIN)
+		testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+		testing.SkipHeights(-123) // revert height to get caught by last block check
+		mintedAmount := MintGns(adminAddr)
 		uassert.Equal(t, uint64(0), mintedAmount)
 	})
 }

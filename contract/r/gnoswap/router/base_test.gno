@@ -7,11 +7,17 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/demo/uassert"
 )
 
 var errDummy = errors.New("dummy error")
+
+const (
+	foobar500 = "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"
+	barbaz500 = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"
+)
 
 type mockOperation struct {
 	ValidateErr error
@@ -83,7 +89,6 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 		name            string
 		inputToken      string
 		outputToken     string
-		swapType        SwapType
 		specifiedAmount *i256.Int
 		sentAmount      int64
 		expectError     bool
@@ -92,7 +97,6 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 			name:            "Pass: non-GNOT token swap",
 			inputToken:      "token1",
 			outputToken:     "token2",
-			swapType:        ExactIn,
 			specifiedAmount: i256.NewInt(100),
 			sentAmount:      0,
 			expectError:     false,
@@ -101,7 +105,6 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 			name:            "Pass: GNOT -> WGNOT exact amount",
 			inputToken:      consts.GNOT,
 			outputToken:     "token2",
-			swapType:        ExactIn,
 			specifiedAmount: i256.NewInt(1000),
 			sentAmount:      1000,
 			expectError:     false,
@@ -113,16 +116,15 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 			op := &baseSwapOperation{}
 
 			testCoins := std.Coins{{"ugnot", tt.sentAmount}}
-			std.TestIssueCoins(std.CurrentRealm().Addr(), testCoins)
-			std.TestSetOrigSend(testCoins, nil)
+			testing.IssueCoins(std.CurrentRealm().Address(), testCoins)
+			testing.SetOriginSend(testCoins)
 
 			err := op.handleNativeTokenWrapping(
 				tt.inputToken,
 				tt.outputToken,
-				tt.swapType,
 				tt.specifiedAmount,
 			)
-			std.TestSetOrigSend(testCoins, nil)
+			testing.SetOriginSend(testCoins)
 
 			if tt.expectError && err == nil {
 				t.Errorf("expected an error but got nil")
@@ -194,13 +196,13 @@ func TestValidateRouteQuote(t *testing.T) {
 }
 
 func TestProcessRoute(t *testing.T) {
-	std.TestSetRealm(adminRealm)
 	op := &baseSwapOperation{}
 
 	t.Run("Single hop route", func(t *testing.T) {
+		testing.SetRealm(adminRealm)
 		CreatePoolWithoutFee(t)
 		MakeThirdMintPositionWithoutFee(t)
-		route := "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"
+		route := foobar500
 		toSwap := i256.NewInt(1000)
 		swapType := ExactIn
 
@@ -210,4 +212,66 @@ func TestProcessRoute(t *testing.T) {
 		uassert.Equal(t, amountIn.ToString(), "1000")
 		uassert.Equal(t, amountOut.ToString(), "979")
 	})
+}
+
+// Test reproducing report L-08 "Loss of Tokens in Swap Due to Truncation"
+func TestProcessRoutesWithRemainder(t *testing.T) {
+	oddAmount := i256.NewInt(101)
+	op := &baseSwapOperation{
+		// use odd amount to ensure remainder
+		amountSpecified: oddAmount,
+		routes:          []string{foobar500, barbaz500},
+		// allocate 50% to each route
+		quotes: []string{"50", "50"},
+	}
+
+	testing.SetRealm(adminRealm)
+	CreatePoolWithoutFee(t)
+	MakeThirdMintPositionWithoutFee(t)
+
+	// expected amounts for each route
+	expectedAmounts := []*i256.Int{
+		i256.NewInt(50), // 101 * 50 / 100 = 50
+		i256.NewInt(50), // 101 * 50 / 100 = 50
+	}
+
+	amountIn, amountOut, err := op.processRoutes(ExactIn)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// check actual swapped amounts for each route
+	for i, route := range op.routes {
+		toSwap, err := op.validateRouteQuote(op.quotes[i], i)
+		if err != nil {
+			t.Fatalf("unexpected error validating quote: %v", err)
+		}
+
+		if toSwap.Cmp(expectedAmounts[i]) != 0 {
+			t.Errorf("route %d: expected amount %s, got %s", i, expectedAmounts[i].ToString(), toSwap.ToString())
+		}
+	}
+
+	// check total input amount
+	totalExpected := oddAmount
+	if op.amountSpecified.Cmp(totalExpected) != 0 {
+		t.Errorf("total expected amount %s, got %s", totalExpected.ToString(), op.amountSpecified.ToString())
+	}
+
+	// check output amount is not zero
+	if amountOut.Cmp(u256.Zero()) == 0 {
+		t.Error("expected non-zero amountOut")
+	}
+
+	// check remainder
+	usedAmount := i256.NewInt(0)
+	for _, amount := range expectedAmounts {
+		usedAmount = usedAmount.Add(usedAmount, amount)
+	}
+	// Currently, this test succeeds.
+	// That is, we can observe that there is indeed a remainder.
+	remainder := totalExpected.Sub(totalExpected, usedAmount)
+	if remainder.Cmp(i256.NewInt(1)) != 0 {
+		t.Errorf("expected remainder of 1, got %s", remainder.ToString())
+	}
 }

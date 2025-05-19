@@ -22,51 +22,36 @@ import (
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
-	_ "gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/v1/access"
 
 	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
-	rr "gno.land/r/gnoswap/v1/router"
 	sr "gno.land/r/gnoswap/v1/staker"
 )
 
 var (
-	adminAddr  = consts.ADMIN
-	adminUser  = adminAddr
-	adminRealm = std.NewUserRealm(adminAddr)
+	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminUser    = adminAddr
+	adminRealm   = std.NewUserRealm(adminAddr)
 
-	stakerAddr  = consts.STAKER_ADDR
-	stakerUser  = stakerAddr
-	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	poolAddr, _   = access.GetAddress(access.ROLE_POOL)
+	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
 
-	fooPath = "gno.land/r/onbloc/foo"
 	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
 	quxPath = "gno.land/r/onbloc/qux"
-	oblPath = "gno.land/r/onbloc/obl"
 
-	gnsPath    = "gno.land/r/gnoswap/v1/gns"
-	wugnotPath = "gno.land/r/demo/wugnot"
-
-	fee100  uint32 = 100
-	fee500  uint32 = 500
-	fee3000 uint32 = 3000
-
-	max_timeout int64 = 9999999999
+	fee100      uint32 = 100
+	max_timeout int64  = 9999999999
 
 	// external incentive deposit fee
 	depositGnsAmount uint64 = 1_000_000_000 // 1_000 GNS
 
-	TIMESTAMP_90DAYS  int64 = 90 * 24 * 60 * 60
-	TIMESTAMP_180DAYS int64 = 180 * 24 * 60 * 60
-	TIMESTAMP_365DAYS int64 = 365 * 24 * 60 * 60
-
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"
+	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
+	poolPath               = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
 )
 
 func main() {
@@ -88,15 +73,15 @@ func main() {
 }
 
 func testInit() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 }
 
 func testCreatePool() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	pl.SetPoolCreationFeeByAdmin(0)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pl.CreatePool(
 		barPath,
 		quxPath,
@@ -106,12 +91,12 @@ func testCreatePool() {
 }
 
 func testMintBarQuxPos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	qux.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pn.Mint(
 		barPath,
 		quxPath,
@@ -129,12 +114,12 @@ func testMintBarQuxPos01() {
 }
 
 func testMintBarQuxPos02() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	qux.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pn.Mint(
 		barPath,
 		quxPath,
@@ -152,12 +137,12 @@ func testMintBarQuxPos02() {
 }
 
 func testCreateExternalIncentive() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	bar.Approve(consts.STAKER_ADDR, consts.UINT64_MAX)
-	gns.Approve(consts.STAKER_ADDR, depositGnsAmount)
+	bar.Approve(stakerAddr, consts.UINT64_MAX)
+	gns.Approve(stakerAddr, depositGnsAmount)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	sr.CreateExternalIncentive(
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		barPath,
@@ -168,12 +153,12 @@ func testCreateExternalIncentive() {
 }
 
 func testStakeTokenPos01AndPos02() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	gnft.Approve(stakerAddr, positionIdFrom(1))
 	gnft.Approve(stakerAddr, positionIdFrom(2))
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	sr.StakeToken(1, "")
 	sr.StakeToken(2, "")
 }
@@ -186,13 +171,12 @@ func testMakeExternalBarStart() {
 	blockAvgTime := milliToSec(consts.BLOCK_GENERATION_INTERVAL)
 	blockLeft := timeLeft / blockAvgTime
 
-	std.TestSkipHeights(int64(blockLeft)) // skip until external bar starts
-	std.TestSkipHeights(10)               // skip bit more to see reward calculation
-
+	testing.SkipHeights(int64(blockLeft)) // skip until external bar starts
+	testing.SkipHeights(10)               // skip bit more to see reward calculation
 }
 
 func testCheckReward01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	oldBar := bar.BalanceOf(adminUser)
 	sr.CollectReward(1, false)
@@ -205,15 +189,15 @@ func testCheckReward01() {
 }
 
 func testMakePosition1OutRangeBySwap() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	qux.Approve(poolAddr, consts.UINT64_MAX)
 
-	bar.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
-	qux.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+	bar.Approve(routerAddr, consts.UINT64_MAX)
+	qux.Approve(routerAddr, consts.UINT64_MAX)
 
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
 		barPath,     // inputToken
@@ -223,8 +207,9 @@ func testMakePosition1OutRangeBySwap() {
 		"100",       // quoteArr
 		"0",         // amountOutMin
 		max_timeout, // timeout
+		"",          // referrer
 	)
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
 	newPoolTick := pl.PoolGetSlot0Tick(poolPath)
 	println("oldPoolTick", poolTick)
@@ -233,7 +218,7 @@ func testMakePosition1OutRangeBySwap() {
 }
 
 func testCheckReward02() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	oldBar := bar.BalanceOf(adminUser)
 	sr.CollectReward(1, false)
@@ -246,15 +231,15 @@ func testCheckReward02() {
 }
 
 func testMakePosition1InRangeBySwap() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	qux.Approve(poolAddr, consts.UINT64_MAX)
 
-	bar.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
-	qux.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)
+	bar.Approve(routerAddr, consts.UINT64_MAX)
+	qux.Approve(routerAddr, consts.UINT64_MAX)
 
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
 		quxPath,
@@ -264,6 +249,7 @@ func testMakePosition1InRangeBySwap() {
 		"100",
 		"0",
 		max_timeout,
+		"",
 	)
 
 	newPoolTick := pl.PoolGetSlot0Tick(poolPath)
@@ -273,9 +259,9 @@ func testMakePosition1InRangeBySwap() {
 }
 
 func testCheckReward03() {
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	oldBar := bar.BalanceOf(adminUser)
 	sr.CollectReward(1, false)
@@ -287,7 +273,7 @@ func testCheckReward03() {
 	}
 }
 
-func positionIdFrom(positionId interface{}) grc721.TokenID {
+func positionIdFrom(positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

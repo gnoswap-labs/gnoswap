@@ -4,7 +4,6 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -20,14 +19,14 @@ var (
 func MintAndDistributeGns() uint64 {
 	assertOnlyNotHalted()
 
-	currentHeight := std.GetHeight()
+	currentHeight := std.ChainHeight()
 	lastMintedHeight := gns.GetLastMintedHeight()
 	if lastMintedHeight >= currentHeight {
 		// Skip if we've already minted tokens at this height
 		return 0
 	}
 	// Mint new tokens and add any leftover amounts from previous distribution
-	mintedEmissionRewardAmount := gns.MintGns(consts.EMISSION_ADDR)
+	mintedEmissionRewardAmount := gns.MintGns(emissionAddr)
 
 	distributableAmount := mintedEmissionRewardAmount
 	prevLeftAmount := GetLeftGNSAmount()

@@ -8,14 +8,17 @@ import (
 	"gno.land/p/demo/uassert"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (
-	adminAddr  = consts.ADMIN
-	adminRealm = std.NewUserRealm(adminAddr)
+	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminRealm   = std.NewUserRealm(adminAddr)
+
+	communityPoolAddr, _ = access.GetAddress(access.ROLE_COMMUNITY_POOL)
 
 	govRealm = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
 
@@ -37,20 +40,20 @@ func TestTransferTokenByAdmin(t *testing.T) {
 		{
 			name: "panic if halted",
 			setup: func() {
-				std.TestSetRealm(adminRealm)
-				common.SetHaltByAdmin(true)
+				testing.SetRealm(adminRealm)
+				halt.SetHaltByAdmin(true)
 			},
 			tokenPath:   consts.GNS_PATH,
 			to:          dummyReceiver,
 			amount:      1000,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-COMMON-002] halted || GnoSwap is halted",
+			panicMsg:    "[GNOSWAP-COMMUNITY_POOL-005] halted || community pool is currently halted",
 		},
 		{
 			name: "panic if not admin",
 			setup: func() {
-				std.TestSetRealm(adminRealm)
-				common.SetHaltByAdmin(false)
+				testing.SetRealm(adminRealm)
+				halt.SetHaltByAdmin(false)
 			},
 			tokenPath:   consts.GNS_PATH,
 			to:          dummyReceiver,
@@ -61,8 +64,8 @@ func TestTransferTokenByAdmin(t *testing.T) {
 		{
 			name: "panic if not enough balance",
 			setup: func() {
-				std.TestSetRealm(adminRealm)
-				gns.Transfer(consts.COMMUNITY_POOL_ADDR, 10_000)
+				testing.SetRealm(adminRealm)
+				gns.Transfer(communityPoolAddr, 10_000)
 			},
 			caller:      adminRealm,
 			tokenPath:   consts.GNS_PATH,
@@ -87,7 +90,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 			}
 
 			if tt.caller != (std.Realm{}) {
-				std.TestSetRealm(tt.caller)
+				testing.SetRealm(tt.caller)
 			}
 
 			if tt.shouldPanic {
@@ -118,20 +121,20 @@ func TestTransferToken(t *testing.T) {
 		{
 			name: "panic if halted",
 			setup: func() {
-				std.TestSetRealm(adminRealm)
-				common.SetHaltByAdmin(true)
+				testing.SetRealm(adminRealm)
+				halt.SetHaltByAdmin(true)
 			},
 			tokenPath:   consts.GNS_PATH,
 			to:          dummyReceiver,
 			amount:      1000,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-COMMON-002] halted || GnoSwap is halted",
+			panicMsg:    "[GNOSWAP-COMMUNITY_POOL-005] halted || community pool is currently halted",
 		},
 		{
 			name: "panic if not governance",
 			setup: func() {
-				std.TestSetRealm(adminRealm)
-				common.SetHaltByAdmin(false)
+				testing.SetRealm(adminRealm)
+				halt.SetHaltByAdmin(false)
 			},
 			tokenPath:   consts.GNS_PATH,
 			to:          dummyReceiver,
@@ -142,7 +145,7 @@ func TestTransferToken(t *testing.T) {
 		{
 			name: "governance can't transfer community pool token",
 			setup: func() {
-				std.TestSetRealm(adminRealm)
+				testing.SetRealm(adminRealm)
 			},
 			caller:      govRealm,
 			tokenPath:   consts.GNS_PATH,
@@ -167,7 +170,7 @@ func TestTransferToken(t *testing.T) {
 			}
 
 			if tt.caller != (std.Realm{}) {
-				std.TestSetRealm(tt.caller)
+				testing.SetRealm(tt.caller)
 			}
 
 			if tt.shouldPanic {

@@ -11,10 +11,10 @@ import (
 )
 
 func TestGetOrigPkgAddr(t *testing.T) {
-	std.TestSetOrigCaller(consts.STAKER_ADDR)
+	testing.SetOriginCaller(stakerAddr)
 	origPkgAddr := GetOrigPkgAddr()
-	if origPkgAddr != std.GetOrigCaller() {
-		t.Errorf("Expected %v, got %v", std.GetOrigCaller(), origPkgAddr)
+	if origPkgAddr != std.OriginCaller() {
+		t.Errorf("Expected %v, got %v", std.OriginCaller(), origPkgAddr)
 	}
 }
 
@@ -101,7 +101,7 @@ func TestPoolPathDivide(t *testing.T) {
 func TestTid(t *testing.T) {
 	tests := []struct {
 		name        string
-		input       interface{}
+		input       any
 		expected    string
 		shouldPanic bool
 	}{
@@ -185,15 +185,15 @@ func TestGetPrevRealm(t *testing.T) {
 	}{
 		{
 			name:         "Success - prevRealm is User",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     []string{"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", ""},
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			std.TestSetOrigCaller(std.Address(tc.originCaller))
+			testing.SetOriginCaller(std.Address(tc.originCaller))
 			got := getPrevRealm()
-			uassert.Equal(t, got.Addr().String(), tc.expected[0])
+			uassert.Equal(t, got.Address().String(), tc.expected[0])
 			uassert.Equal(t, got.PkgPath(), tc.expected[1])
 		})
 	}
@@ -207,13 +207,13 @@ func TestGetPrevAddr(t *testing.T) {
 	}{
 		{
 			name:         "Success - prev Address is User",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			std.TestSetOrigCaller(std.Address(tc.originCaller))
+			testing.SetOriginCaller(std.Address(tc.originCaller))
 			got := getPrevAddr()
 			uassert.Equal(t, got.String(), tc.expected.String())
 		})
@@ -228,13 +228,13 @@ func TestGetPrevAsString(t *testing.T) {
 	}{
 		{
 			name:         "Success - prev Realm of user info as string",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     []string{"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", ""},
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			std.TestSetOrigCaller(std.Address(tc.originCaller))
+			testing.SetOriginCaller(std.Address(tc.originCaller))
 			got1, got2 := getPrev()
 			uassert.Equal(t, got1, tc.expected[0])
 			uassert.Equal(t, got2, tc.expected[1])
@@ -251,21 +251,21 @@ func TestIsUserCall(t *testing.T) {
 	}{
 		{
 			name:         "Success - User Call",
-			originCaller: consts.ADMIN,
+			originCaller: adminAddr,
 			expected:     true,
 		},
 		{
 			name:          "Failure - Not User Call",
-			originCaller:  consts.ROUTER_ADDR,
+			originCaller:  routerAddr,
 			originPkgPath: consts.ROUTER_PATH,
 			expected:      false,
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			std.TestSetOrigCaller(tc.originCaller)
+			testing.SetOriginCaller(tc.originCaller)
 			if !tc.expected {
-				std.TestSetRealm(std.NewCodeRealm(tc.originPkgPath))
+				testing.SetRealm(std.NewCodeRealm(tc.originPkgPath))
 			}
 			got := isUserCall()
 			uassert.Equal(t, got, tc.expected)

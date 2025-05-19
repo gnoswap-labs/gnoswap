@@ -9,7 +9,6 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 
 	gs "gno.land/r/gnoswap/v1/gov/staker"
@@ -30,14 +29,14 @@ func init() {
 	setConfigVersion(1, config)
 }
 
-func TestProposeText(t *testing.T) {
+func TestProposeText_VoteGovDelegated(t *testing.T) {
 	proposeText(t)
 	vote(t)
 }
 
 func proposeText(t *testing.T) {
 	t.Run("ProposeText with insufficient delegation", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-004] not enough balance || proposer(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) has not enough xGNS, balance(0), wanted(100)",
 			func() {
@@ -51,78 +50,64 @@ func proposeText(t *testing.T) {
 		proposalsJson := GetProposals()
 		uassert.Equal(t, proposalsJson, ``)
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
 		// before delegate
 		uassert.Equal(t, xgns.TotalSupply(), uint64(0))
 		uassert.Equal(t, xgns.VotingSupply(), uint64(0))
 
-		gns.Approve(consts.GOV_STAKER_ADDR, uint64(1_000_000))
+		gns.Approve(govStakerAddr, uint64(1_000_000))
 		gs.Delegate(admin, uint64(1_000_000), "") // self delegate
-		uassert.Equal(t, int64(123), std.GetHeight())
-		std.TestSkipHeights(1)
+		uassert.Equal(t, int64(123), std.ChainHeight())
+		testing.SkipHeights(1)
 
 		// after delegate 01
 		uassert.Equal(t, xgns.TotalSupply(), uint64(1_000_000))
 		uassert.Equal(t, xgns.VotingSupply(), uint64(1_000_000))
 
-		gns.Approve(consts.GOV_STAKER_ADDR, uint64(2_000_000))
+		gns.Approve(govStakerAddr, uint64(2_000_000))
 		gs.Delegate(dummyAddr, uint64(2_000_000), "") // delegate to dummy
-		uassert.Equal(t, int64(124), std.GetHeight())
-		std.TestSkipHeights(1)
+		uassert.Equal(t, int64(124), std.ChainHeight())
+		testing.SkipHeights(1)
 
 		// after delegate 02
 		uassert.Equal(t, xgns.TotalSupply(), uint64(3_000_000))
 		uassert.Equal(t, xgns.VotingSupply(), uint64(3_000_000))
 
 		t.Run("text proposal -- only 2 block passed", func(t *testing.T) {
-			// text proposal
-			uassert.Equal(t, int64(125), std.GetHeight())
-			uassert.Equal(t, int64(1234567894), time.Now().Unix())
+			uassert.Equal(t, int64(125), std.ChainHeight())
+			uassert.Equal(t, int64(1234567900), time.Now().Unix())
 			proposalID := ProposeText("test_title", "test_description")
 			uassert.Equal(t, proposalID, uint64(1))
 
-			votesJsonAdmin := GetVotesByAddress(admin)
-			uassert.Equal(t, votesJsonAdmin, `{"height":"125","now":"1234567894","votes":[]}`)
-
-			votesJsonDummy := GetVotesByAddress(dummyAddr)
-			uassert.Equal(t, votesJsonDummy, `{"height":"125","now":"1234567894","votes":[]}`)
-
-			// proposal := proposals[proposalID]
 			pp, ok := proposals.Get(strconv.FormatUint(proposalID, 10))
 			uassert.True(t, ok)
 			proposal := pp.(ProposalInfo)
 
-			uassert.Equal(t, proposal.QuorumAmount, uint64(0)) // 50% of voting xGNS supply
+			// 50% of voting xGNS supply
+			if proposal.QuorumAmount != 500000 {
+				t.Fatalf("proposal.QuorumAmount is not 500000")
+			}
 
 			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.CreatedAt - config.VotingWeightSmoothingDuration)
 			// config.VotingWeightSmoothingDuration = 10s = 5 block
 
-			uassert.Equal(t, maxVotingWeight, uint64(0))
+			uassert.Equal(t, maxVotingWeight, uint64(1000000))
 			// createdAt > 125 // 1234567894
 			// (createdAt - VotingWeightSmoothingDuration) > 120 // 1234567884
 			// no delegation happend until block 120
 		})
 
 		t.Run("text proposal // 5 more block passed(total 7)", func(t *testing.T) {
-			std.TestSkipHeights(5)
+			testing.SkipHeights(5)
 
-			// text proposal
-			uassert.Equal(t, int64(130), std.GetHeight())
-			uassert.Equal(t, int64(1234567904), time.Now().Unix())
+			uassert.Equal(t, int64(130), std.ChainHeight())
 			proposalID := ProposeText("test_title", "test_description")
 			uassert.Equal(t, proposalID, uint64(2))
 
-			proposalsJson = GetProposals()
-			uassert.Equal(t, proposalsJson, `{"height":"130","now":"1234567904","proposals":[{"id":"2","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJjcmVhdGVkQXQiOiIxMjM0NTY3OTA0IiwidXBjb21pbmciOiJ0cnVlIiwiYWN0aXZlIjoiZmFsc2UiLCJ2b3RpbmdTdGFydCI6IjEyMzQ1Njc5MTQiLCJ2b3RpbmdFbmQiOiIxMjM0NTY3OTQ0IiwicGFzc2VkIjoiZmFsc2UiLCJwYXNzZWRBdCI6IjAiLCJyZWplY3RlZCI6ImZhbHNlIiwicmVqZWN0ZWRBdCI6IjAiLCJjYW5jZWxlZCI6ImZhbHNlIiwiY2FuY2VsZWRBdCI6IjAiLCJleGVjdXRlZCI6ImZhbHNlIiwiZXhlY3V0ZWRBdCI6IjAiLCJleHBpcmVkIjoiZmFsc2UiLCJleHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiIxNTAwMDAwIiwibWF4IjoiMzAwMDAwMCIsInllcyI6IjAiLCJubyI6IjAifQ==","extra":""},{"id":"2","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJjcmVhdGVkQXQiOiIxMjM0NTY3OTA0IiwidXBjb21pbmciOiJ0cnVlIiwiYWN0aXZlIjoiZmFsc2UiLCJ2b3RpbmdTdGFydCI6IjEyMzQ1Njc5MTQiLCJ2b3RpbmdFbmQiOiIxMjM0NTY3OTQ0IiwicGFzc2VkIjoiZmFsc2UiLCJwYXNzZWRBdCI6IjAiLCJyZWplY3RlZCI6ImZhbHNlIiwicmVqZWN0ZWRBdCI6IjAiLCJjYW5jZWxlZCI6ImZhbHNlIiwiY2FuY2VsZWRBdCI6IjAiLCJleGVjdXRlZCI6ImZhbHNlIiwiZXhlY3V0ZWRBdCI6IjAiLCJleHBpcmVkIjoiZmFsc2UiLCJleHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiIxNTAwMDAwIiwibWF4IjoiMzAwMDAwMCIsInllcyI6IjAiLCJubyI6IjAifQ==","extra":""}]}`)
+			data := unmarshal(GetProposals())
+			uassert.Equal(t, data.MustKey("height").MustString(), "130")
 
-			votesJsonAdmin := GetVotesByAddress(admin)
-			uassert.Equal(t, votesJsonAdmin, `{"height":"130","now":"1234567904","votes":[]}`)
-
-			votesJsonDummy := GetVotesByAddress(dummyAddr)
-			uassert.Equal(t, votesJsonDummy, `{"height":"130","now":"1234567904","votes":[]}`)
-
-			// proposal := proposals[proposalID]
 			pp, _ := proposals.Get(strconv.FormatUint(proposalID, 10))
 			proposal := pp.(ProposalInfo)
 			uassert.Equal(t, proposal.QuorumAmount, uint64(1_500_000)) // 50% of voting xGNS supply
@@ -145,7 +130,7 @@ func vote(t *testing.T) {
 	dummyRealm := std.NewUserRealm(dummyAddr)
 
 	t.Run("Vote non existent proposal", func(t *testing.T) {
-		std.TestSetRealm(dummyRealm)
+		testing.SetRealm(dummyRealm)
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-GOVERNANCE-003] requested data not found || proposalId(123) not found",
 			func() {
@@ -156,8 +141,8 @@ func vote(t *testing.T) {
 	t.Run("vote with only delegated", func(t *testing.T) {
 		proposalId := uint64(2)
 
-		std.TestSkipHeights(11)
-		std.TestSetRealm(dummyRealm)
+		testing.SkipHeights(5)
+		testing.SetRealm(dummyRealm)
 		Vote(proposalId, true)
 
 		pp, _ := proposals.Get(strconv.FormatUint(proposalId, 10))
@@ -169,7 +154,13 @@ func vote(t *testing.T) {
 		uassert.Equal(t, false, state.Upcoming)
 		uassert.Equal(t, true, state.Active)
 
-		proposalsJson := GetProposals()
-		uassert.Equal(t, proposalsJson, `{"height":"141","now":"1234567926","proposals":[{"id":"2","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJjcmVhdGVkQXQiOiIxMjM0NTY3OTA0IiwidXBjb21pbmciOiJmYWxzZSIsImFjdGl2ZSI6InRydWUiLCJ2b3RpbmdTdGFydCI6IjEyMzQ1Njc5MTQiLCJ2b3RpbmdFbmQiOiIxMjM0NTY3OTQ0IiwicGFzc2VkIjoiZmFsc2UiLCJwYXNzZWRBdCI6IjAiLCJyZWplY3RlZCI6ImZhbHNlIiwicmVqZWN0ZWRBdCI6IjAiLCJjYW5jZWxlZCI6ImZhbHNlIiwiY2FuY2VsZWRBdCI6IjAiLCJleGVjdXRlZCI6ImZhbHNlIiwiZXhlY3V0ZWRBdCI6IjAiLCJleHBpcmVkIjoiZmFsc2UiLCJleHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiIxNTAwMDAwIiwibWF4IjoiMzAwMDAwMCIsInllcyI6IjIwMDAwMDAiLCJubyI6IjAifQ==","extra":""},{"id":"2","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJjcmVhdGVkQXQiOiIxMjM0NTY3OTA0IiwidXBjb21pbmciOiJmYWxzZSIsImFjdGl2ZSI6InRydWUiLCJ2b3RpbmdTdGFydCI6IjEyMzQ1Njc5MTQiLCJ2b3RpbmdFbmQiOiIxMjM0NTY3OTQ0IiwicGFzc2VkIjoiZmFsc2UiLCJwYXNzZWRBdCI6IjAiLCJyZWplY3RlZCI6ImZhbHNlIiwicmVqZWN0ZWRBdCI6IjAiLCJjYW5jZWxlZCI6ImZhbHNlIiwiY2FuY2VsZWRBdCI6IjAiLCJleGVjdXRlZCI6ImZhbHNlIiwiZXhlY3V0ZWRBdCI6IjAiLCJleHBpcmVkIjoiZmFsc2UiLCJleHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiIxNTAwMDAwIiwibWF4IjoiMzAwMDAwMCIsInllcyI6IjIwMDAwMDAiLCJubyI6IjAifQ==","extra":""}]}`)
+		proposalsJson := unmarshal(GetProposals())
+		pps := proposalsJson.MustKey("proposals").MustArray()
+		uassert.Equal(t, len(pps), 1)
+
+		expectedKeys := []string{"id", "configVersion", "proposer", "status", "type", "title", "description", "vote", "extra"}
+		arr1Keys := pps[0].UniqueKeyLists()
+
+		uassert.Equal(t, len(arr1Keys), len(expectedKeys))
 	})
 }

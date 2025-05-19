@@ -23,9 +23,11 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/gns"
+
+	"gno.land/r/gnoswap/v1/access"
 
 	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -33,18 +35,20 @@ import (
 )
 
 var (
-	adminAddr  = consts.ADMIN
-	adminUser  = adminAddr
-	adminRealm = std.NewUserRealm(adminAddr)
+	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminUser    = adminAddr
+	adminRealm   = std.NewUserRealm(adminAddr)
 
 	// g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup
 	externalCreatorAddr  = testutils.TestAddress("externalCreator")
 	externalCreatorUser  = externalCreatorAddr
 	externalCreatorRealm = std.NewUserRealm(externalCreatorAddr)
 
-	stakerAddr  = consts.STAKER_ADDR
-	stakerUser  = stakerAddr
-	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	stakerUser    = stakerAddr
+	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+
+	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
 
 	wugnotAddr = consts.WUGNOT_ADDR
 
@@ -82,26 +86,26 @@ func main() {
 }
 
 func testInit() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// prepare wugnot
-	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
-	banker := std.GetBanker(std.BankerTypeRealmSend)
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
+	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
-	std.TestSetOrigSend(std.Coins{{"ugnot", 50_000_000_000_000}}, nil)
+	testing.SetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}})
 	wugnot.Deposit()
-	std.TestSetOrigSend(nil, nil)
+	testing.SetOriginSend(nil)
 
 	// set unstaking fee to 0
 	sr.SetUnStakingFeeByAdmin(0)
 }
 
 func testCreatePool() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	pl.SetPoolCreationFeeByAdmin(0)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pl.CreatePool(
 		wugnotPath,
 		gnsPath,
@@ -111,12 +115,12 @@ func testCreatePool() {
 }
 
 func testMintWugnotGnsPos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	wugnot.Approve(poolAddr, consts.UINT64_MAX)
+	gns.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pn.Mint(
 		wugnotPath,
 		gnsPath,
@@ -134,15 +138,15 @@ func testMintWugnotGnsPos01() {
 }
 
 func testStakeTokenPos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// stake
-	gnft.Approve(consts.STAKER_ADDR, positionIdFrom(1))
+	gnft.Approve(stakerAddr, positionIdFrom(1))
 	sr.StakeToken(1, "")
 
 	before := gns.BalanceOf(adminUser)
 
-	std.TestSkipHeights(100)
+	testing.SkipHeights(100)
 	sr.CollectReward(1, false)
 
 	after := gns.BalanceOf(adminUser)
@@ -154,10 +158,10 @@ func testStakeTokenPos01() {
 }
 
 func testGnsAvgBlockTime() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	before := gns.BalanceOf(adminUser)
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	sr.CollectReward(1, false)
 	after := gns.BalanceOf(adminUser)
 
@@ -170,7 +174,7 @@ func testGnsAvgBlockTime() {
 	sr.CollectReward(1, false)           // clear reward
 
 	before = gns.BalanceOf(adminUser)
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	sr.CollectReward(1, false) // actual reward for 1 block when avg block time was 4000ms(4s)
 	after = gns.BalanceOf(adminUser)
 	diff = after - before
@@ -179,7 +183,7 @@ func testGnsAvgBlockTime() {
 	}
 }
 
-func positionIdFrom(positionId interface{}) grc721.TokenID {
+func positionIdFrom(positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}
@@ -196,10 +200,4 @@ func positionIdFrom(positionId interface{}) grc721.TokenID {
 	default:
 		panic("unsupported positionId type")
 	}
-}
-
-func isInErrorRange(expected uint64, actual uint64) bool {
-	lowerBound := expected * 999999 / 1000000
-	upperBound := expected * 1000001 / 1000000
-	return actual >= lowerBound && actual <= upperBound
 }

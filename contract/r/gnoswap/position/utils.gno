@@ -8,9 +8,11 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
+
+	phalt "gno.land/p/gnoswap/halt"
+	"gno.land/r/gnoswap/v1/halt"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -18,7 +20,7 @@ import (
 // GetOrigPkgAddr returns the original package address.
 // In position contract, original package address is the position address.
 func GetOrigPkgAddr() std.Address {
-	return consts.POSITION_ADDR
+	return positionAddr
 }
 
 // assertTokenExists checks if a token with the specified positionId exists in the system.
@@ -74,10 +76,10 @@ func assertCallerIsOwner(positionId uint64, owner, caller std.Address) {
 // assertOnlyUserOrStaker panics if the caller is not a user or staker.
 func assertOnlyUserOrStaker(caller std.Realm) {
 	if !caller.IsUser() {
-		if err := common.StakerOnly(caller.Addr()); err != nil {
+		if err := common.StakerOnly(caller.Address()); err != nil {
 			panic(newErrorWithDetail(
 				errNoPermission,
-				ufmt.Sprintf("from (%s)", caller.Addr()),
+				ufmt.Sprintf("from (%s)", caller.Address()),
 			))
 		}
 	}
@@ -85,7 +87,17 @@ func assertOnlyUserOrStaker(caller std.Realm) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	common.IsHalted()
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
+
+		if halt.IsContractHalted(phalt.OpTypePosition) {
+			panic("position contract operations are currently disabled")
+		}
+	}
 }
 
 // assertOnlyValidAddress panics if the address is invalid.
@@ -162,15 +174,6 @@ func assertValidLiquidityAmount(liquidity string) {
 	}
 }
 
-func assertValidLiquidityRatio(ratio uint64) {
-	if !(ratio >= 1 && ratio <= 100) {
-		panic(newErrorWithDetail(
-			errInvalidLiquidityRatio,
-			ufmt.Sprintf("liquidity ratio must in range 1 ~ 100(contain), got %d", ratio),
-		))
-	}
-}
-
 // derivePkgAddr derives the Realm address from it's pkgpath parameter
 func derivePkgAddr(pkgPath string) std.Address {
 	return std.DerivePkgAddr(pkgPath)
@@ -178,23 +181,23 @@ func derivePkgAddr(pkgPath string) std.Address {
 
 // getPrevRealm returns object of the previous realm.
 func getPrevRealm() std.Realm {
-	return std.PrevRealm()
+	return std.PreviousRealm()
 }
 
 // getPrevAddr returns the address of the previous realm.
 func getPrevAddr() std.Address {
-	return std.PrevRealm().Addr()
+	return std.PreviousRealm().Address()
 }
 
 // getPrev returns the address and package path of the previous realm.
 func getPrevAsString() (string, string) {
 	prev := getPrevRealm()
-	return prev.Addr().String(), prev.PkgPath()
+	return prev.Address().String(), prev.PkgPath()
 }
 
 // isUserCall returns true if the caller is a user.
 func isUserCall() bool {
-	return std.PrevRealm().IsUser()
+	return std.PreviousRealm().IsUser()
 }
 
 // checkDeadline checks if the deadline is expired.
@@ -216,9 +219,9 @@ func checkDeadline(deadline int64) {
 // NOTE: input parameter positionId can be string, int, uint64, or grc721.TokenID
 // if positionId is nil or not supported, it will panic
 // if positionId is not found, it will panic
-// input: positionId interface{}
+// input: positionId any
 // output: grc721.TokenID
-func positionIdFrom(positionId interface{}) grc721.TokenID {
+func positionIdFrom(positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic(newErrorWithDetail(errInvalidInput, "positionId is nil"))
 	}
@@ -280,7 +283,7 @@ func isStaked(positionId grc721.TokenID) bool {
 	exist := gnft.Exists(positionId)
 	if exist {
 		owner, err := gnft.OwnerOf(positionId)
-		if err == nil && owner == consts.STAKER_ADDR {
+		if err == nil && owner == stakerAddr {
 			return true
 		}
 	}
@@ -355,7 +358,7 @@ func verifySlippageAmounts(amount0, amount1, amount0Min, amount1Min *u256.Uint) 
 	}
 }
 
-func formatUint(v interface{}) string {
+func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:
 		return strconv.FormatUint(uint64(v), 10)
@@ -368,7 +371,7 @@ func formatUint(v interface{}) string {
 	}
 }
 
-func formatInt(v interface{}) string {
+func formatInt(v any) string {
 	switch v := v.(type) {
 	case int32:
 		return strconv.FormatInt(int64(v), 10)

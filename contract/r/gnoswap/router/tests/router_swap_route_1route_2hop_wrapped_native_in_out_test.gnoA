@@ -20,9 +20,9 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee()*3)
+	gns.Approve(poolAddr, pl.GetPoolCreationFee()*3)
 
 	pl.CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 
@@ -38,9 +38,9 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestPositionMintBarBaz(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	testing.SetRealm(adminRealm)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	baz.Approve(poolAddr, consts.UINT64_MAX)
 	positionId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	uassert.Equal(t, positionId, uint64(1))
@@ -49,9 +49,9 @@ func TestPositionMintBarBaz(t *testing.T) {
 }
 
 func TestPositionMintBazQux(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	testing.SetRealm(adminRealm)
+	baz.Approve(poolAddr, consts.UINT64_MAX)
+	qux.Approve(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
@@ -61,18 +61,18 @@ func TestPositionMintBazQux(t *testing.T) {
 }
 
 func TestPositionMintQuxGnot(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// send
-	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 1000009}})
-	std.TestSetOrigSend(std.Coins{{"ugnot", 1000009}}, nil)
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 1000009}})
+	testing.SetOriginSend(std.Coins{{"ugnot", 1000009}})
 
 	// Deposit(wrap)
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	wugnot.Deposit()
 
-	qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	qux.Approve(poolAddr, consts.UINT64_MAX)
+	wugnot.Approve(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.WRAPPED_WUGNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
@@ -82,9 +82,9 @@ func TestPositionMintQuxGnot(t *testing.T) {
 }
 
 func TestDrySwapRouteBarGnotExactIn(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	dryResult := DrySwapRoute(
+	_, dryResult, _ := DrySwapRoute(
 		barPath,               // inputToken
 		consts.WRAPPED_WUGNOT, // outputToken
 		"1000",                // amountSpecified
@@ -97,9 +97,9 @@ func TestDrySwapRouteBarGnotExactIn(t *testing.T) {
 }
 
 func TestDrySwapRouteBarGnotExactOut(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	dryResult := DrySwapRoute(
+	dryResult, _, _ := DrySwapRoute(
 		barPath,               // inputToken
 		consts.WRAPPED_WUGNOT, // outputToken
 		"20000",               // amountSpecified
@@ -112,9 +112,9 @@ func TestDrySwapRouteBarGnotExactOut(t *testing.T) {
 }
 
 func TestDrySwapRouteGnotBarExactIn(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	dryResult := DrySwapRoute(
+	_, dryResult, _ := DrySwapRoute(
 		consts.WRAPPED_WUGNOT, // intputToken
 		barPath,               // outputToken
 		"5000",                // amountSpecified
@@ -127,9 +127,9 @@ func TestDrySwapRouteGnotBarExactIn(t *testing.T) {
 }
 
 func TestDrySwapRouteGnotBarExactOut(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	dryResult := DrySwapRoute(
+	dryResult, _, _ := DrySwapRoute(
 		consts.WRAPPED_WUGNOT, // intputToken
 		barPath,               // outputToken
 		"100",                 // amountSpecified

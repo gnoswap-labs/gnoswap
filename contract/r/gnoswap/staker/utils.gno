@@ -7,14 +7,16 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
+
+	phalt "gno.land/p/gnoswap/halt"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 // GetOrigPkgAddr returns the original package address.
 // In staker contract, original package address is the staker address.
 func GetOrigPkgAddr() std.Address {
-	return consts.STAKER_ADDR
+	return stakerAddr
 }
 
 // poolPathAlign ensures that a pool path is formatted with tokens in lexicographical order.
@@ -87,7 +89,7 @@ func poolPathDivide(poolPath string) (string, string, string) {
 //
 // Output:
 //   - grc721.TokenID: the converted token ID
-func positionIdFrom(positionId interface{}) grc721.TokenID {
+func positionIdFrom(positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -145,36 +147,46 @@ func derivePkgAddr(pkgPath string) std.Address {
 
 // getPrevRealm returns object of the previous realm.
 func getPrevRealm() std.Realm {
-	return std.PrevRealm()
+	return std.PreviousRealm()
 }
 
 // getPrevAddr returns the address of the previous realm.
 func getPrevAddr() std.Address {
-	return std.PrevRealm().Addr()
+	return std.PreviousRealm().Address()
 }
 
 // getPrevPkgPath returns the package path of the previous realm.
 func getPrevPkgPath() string {
-	return std.PrevRealm().PkgPath()
+	return std.PreviousRealm().PkgPath()
 }
 
 // getPrev returns the address and package path of the previous realm.
 func getPrev() (string, string) {
 	prev := getPrevRealm()
-	return prev.Addr().String(), prev.PkgPath()
+	return prev.Address().String(), prev.PkgPath()
 }
 
 // isUserCall returns true if the caller is a user.
 func isUserCall() bool {
-	return std.PrevRealm().IsUser()
+	return std.PreviousRealm().IsUser()
 }
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	common.IsHalted()
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
+
+		if halt.IsContractHalted(phalt.OpTypeStaker) {
+			panic("staker contract operations are currently disabled")
+		}
+	}
 }
 
-func formatUint(v interface{}) string {
+func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:
 		return strconv.FormatUint(uint64(v), 10)
@@ -187,7 +199,7 @@ func formatUint(v interface{}) string {
 	}
 }
 
-func formatInt(v interface{}) string {
+func formatInt(v any) string {
 	switch v := v.(type) {
 	case int32:
 		return strconv.FormatInt(int64(v), 10)

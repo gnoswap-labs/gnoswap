@@ -36,9 +36,7 @@ type SwapComputation struct {
 	Cache             SwapCache
 }
 
-var (
-	fixedPointQ128 = u256.MustFromDecimal(consts.Q128)
-)
+var fixedPointQ128 = u256.MustFromDecimal(consts.Q128)
 
 // Swap swaps token0 for token1, or token1 for token0
 // Returns swapped amount0, amount1 in string
@@ -57,15 +55,15 @@ func Swap(
 	if common.GetLimitCaller() {
 		caller := getPrevAddr()
 		if err := common.RouterOnly(caller); err != nil {
-			panic(addDetailToError(
+			panic(newErrorWithDetail(
 				errNoPermission,
-				ufmt.Sprintf("only router(%s) can call pool swap(), called from %s", consts.ROUTER_ADDR, caller.String()),
+				ufmt.Sprintf("only router(%s) can call pool swap(), called from %s", routerAddr, caller.String()),
 			))
 		}
 	}
 
 	if amountSpecified == "0" {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errInvalidSwapAmount,
 			ufmt.Sprintf("amountSpecified == 0"),
 		))
@@ -87,7 +85,7 @@ func Swap(
 	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
 	cache := newSwapCache(feeProtocol, pool.liquidity.Clone())
-	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart, slot0Start)
+	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart.Clone(), slot0Start)
 
 	comp := SwapComputation{
 		AmountSpecified:   amounts,
@@ -132,6 +130,7 @@ func Swap(
 		"feeGrowthGlobal1X128", pool.FeeGrowthGlobal1X128().ToString(),
 		"balanceToken0", pool.BalanceToken0().ToString(),
 		"balanceToken1", pool.BalanceToken1().ToString(),
+		"ticks", pool.Ticks(),
 	)
 
 	return result.Amount0.ToString(), result.Amount1.ToString()
@@ -249,12 +248,12 @@ func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 		if state.protocolFee.Gt(u256.Zero()) {
 			result.NewProtocolFees.token0 = new(u256.Uint).Add(result.NewProtocolFees.token0, state.protocolFee)
 		}
-		result.FeeGrowthGlobal0X128 = state.feeGrowthGlobalX128
+		result.FeeGrowthGlobal0X128 = state.feeGrowthGlobalX128.Clone()
 	} else {
 		if state.protocolFee.Gt(u256.Zero()) {
 			result.NewProtocolFees.token1 = new(u256.Uint).Add(result.NewProtocolFees.token1, state.protocolFee)
 		}
-		result.FeeGrowthGlobal1X128 = state.feeGrowthGlobalX128
+		result.FeeGrowthGlobal1X128 = state.feeGrowthGlobalX128.Clone()
 	}
 
 	return result, nil
@@ -287,7 +286,7 @@ func validatePriceLimits(slot0 Slot0, zeroForOne bool, sqrtPriceLimitX96 *u256.U
 		cond1 := sqrtPriceLimitX96.Lt(slot0.sqrtPriceX96)
 		cond2 := sqrtPriceLimitX96.Gt(minSqrtRatio)
 		if !(cond1 && cond2) {
-			panic(addDetailToError(
+			panic(newErrorWithDetail(
 				errPriceOutOfRange,
 				ufmt.Sprintf("sqrtPriceLimitX96(%s) < slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) > consts.MIN_SQRT_RATIO(%s)",
 					sqrtPriceLimitX96.ToString(),
@@ -302,7 +301,7 @@ func validatePriceLimits(slot0 Slot0, zeroForOne bool, sqrtPriceLimitX96 *u256.U
 		cond1 := sqrtPriceLimitX96.Gt(slot0.sqrtPriceX96)
 		cond2 := sqrtPriceLimitX96.Lt(maxSqrtRatio)
 		if !(cond1 && cond2) {
-			panic(addDetailToError(
+			panic(newErrorWithDetail(
 				errPriceOutOfRange,
 				ufmt.Sprintf("sqrtPriceLimitX96(%s) > slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) < consts.MAX_SQRT_RATIO(%s)",
 					sqrtPriceLimitX96.ToString(),
@@ -346,7 +345,7 @@ func computeSwapStep(
 	step := computeSwapStepInit(state, pool, zeroForOne)
 
 	// determining the price target for this step
-	sqrtRatioTargetX96 := computeTargetSqrtRatio(step, sqrtPriceLimitX96, zeroForOne)
+	sqrtRatioTargetX96 := computeTargetSqrtRatio(step, sqrtPriceLimitX96, zeroForOne).Clone()
 
 	// computing the amounts to be swapped at this step
 	var newState SwapState
@@ -410,9 +409,9 @@ func computeSwapStepInit(state SwapState, pool *Pool, zeroForOne bool) StepCompu
 
 	// prevent overshoot the min/max tick
 	step.clampTickNext()
-
 	// get the price for the next tick
-	step.sqrtPriceNextX96 = common.TickMathGetSqrtRatioAtTick(step.tickNext)
+	sqrtPrice := common.TickMathGetSqrtRatioAtTick(step.tickNext).ToString()
+	step.sqrtPriceNextX96 = u256.MustFromDecimal(sqrtPrice)
 	return step
 }
 
@@ -524,12 +523,12 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 func (p *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amount0, amount1 *i256.Int) {
 	if zeroForOne {
 		// payer > POOL
-		p.safeTransferFrom(payer, consts.POOL_ADDR, p.token0Path, amount0.Abs(), true)
+		p.safeTransferFrom(payer, poolAddr, p.token0Path, amount0.Abs(), true)
 		// POOL > recipient
 		p.safeTransfer(recipient, p.token1Path, amount1, false)
 	} else {
 		// payer > POOL
-		p.safeTransferFrom(payer, consts.POOL_ADDR, p.token1Path, amount1.Abs(), false)
+		p.safeTransferFrom(payer, poolAddr, p.token1Path, amount1.Abs(), false)
 		// POOL > recipient
 		p.safeTransfer(recipient, p.token0Path, amount0, true)
 	}

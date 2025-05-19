@@ -15,7 +15,7 @@ type StakerRewardInfo struct {
 }
 
 func (self *StakerRewardInfo) Debug() string {
-	return ufmt.Sprintf("{ StartHeight: %d, PriceDebt: %d, Amount: %d, Claimed: %d }", self.StartHeight, self.PriceDebtUint64(), self.Amount, self.Claimed)
+	return ufmt.Sprintf("{ StartHeight: %d, RewardDebt: %d, Amount: %d, Claimed: %d }", self.StartHeight, self.PriceDebtUint64(), self.Amount, self.Claimed)
 }
 
 func (self *StakerRewardInfo) PriceDebtUint64() uint64 {
@@ -83,7 +83,7 @@ func (states RewardStates) set(projectId string, tierStr string, state *RewardSt
 func (states RewardStates) deleteProject(projectId string) uint64 {
 	totalLeftover := uint64(0)
 	keys := []string{}
-	states.states.Iterate(projectId+":", projectId+";", func(key string, value interface{}) bool {
+	states.states.Iterate(projectId+":", projectId+";", func(key string, value any) bool {
 		state := value.(*RewardState)
 		totalEmptyBlock := state.TotalEmptyBlock
 		if state.TotalStake == 0 {
@@ -185,6 +185,7 @@ func (self *RewardState) finalize(currentHeight uint64) {
 }
 
 func (self *RewardState) addStake(currentHeight uint64, depositId string, amount uint64) {
+	// check depositId is already exist
 	if self.info.Has(depositId) {
 		panic(addDetailToError(
 			errAlreadyExistDeposit,

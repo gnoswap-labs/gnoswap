@@ -7,6 +7,8 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/referral"
 )
 
 type ExactOutSwapOperation struct {
@@ -33,9 +35,15 @@ func ExactOutSwapRoute(
 	quoteArr string,
 	amountInMax string,
 	deadline int64,
+	referrer string,
 ) (string, string) {
-	checkDeadline(deadline)
-	commonSwapSetup()
+	if err := checkDeadline(deadline); err != nil {
+		panic(addDetailToError(errExpired, err.Error()))
+	}
+
+	if err := commonSwapSetup(); err != nil {
+		panic(addDetailToError(errInvalidInput, err.Error()))
+	}
 
 	baseParams := BaseSwapParams{
 		InputToken:  inputToken,
@@ -65,7 +73,11 @@ func ExactOutSwapRoute(
 	)
 
 	prevAddr, prevPkgPath := getPrev()
-
+	success := referral.TryRegister(std.Address(prevAddr), referrer)
+	actualReferrer := referrer
+	if !success {
+		actualReferrer = referral.GetReferral(prevAddr)
+	}
 	std.Emit(
 		"ExactOutSwap",
 		"prevAddr", prevAddr,
@@ -77,6 +89,7 @@ func ExactOutSwapRoute(
 		"quote", pp.QuoteArr,
 		"resultInputAmount", inputAmount,
 		"resultOutputAmount", outputAmount,
+		"referrer", actualReferrer,
 	)
 
 	return inputAmount, outputAmount
@@ -92,7 +105,7 @@ func (op *ExactOutSwapOperation) Validate() error {
 	// when it's an ExactOut
 	op.amountSpecified = i256.Zero().Neg(amountOut)
 
-	routes, quotes, err := tryParseRoutes(op.params.RouteArr, op.params.QuoteArr)
+	routes, quotes, err := validateRoutesAndQuotes(op.params.RouteArr, op.params.QuoteArr)
 	if err != nil {
 		return err
 	}
@@ -126,7 +139,6 @@ func (op *ExactOutSwapOperation) handleNativeTokenWrapping() error {
 	return op.baseSwapOperation.handleNativeTokenWrapping(
 		op.params.InputToken,
 		op.params.OutputToken,
-		ExactOut,
-		op.amountSpecified,
+		i256.MustFromDecimal(op.params.AmountInMax),
 	)
 }

@@ -2,7 +2,6 @@ package staker
 
 import (
 	"std"
-
 	"strconv"
 	"strings"
 
@@ -106,7 +105,7 @@ type Tick struct {
 // CurrentOutsideAccumulation returns the latest outside accumulation for the tick
 func (self *Tick) CurrentOutsideAccumulation(blockNumber int64) *u256.Uint {
 	var acc *u256.Uint
-	self.outsideAccumulation.ReverseIterate(0, blockNumber, func(key int64, value interface{}) bool {
+	self.outsideAccumulation.ReverseIterate(0, blockNumber, func(key int64, value any) bool {
 		acc = value.(*u256.Uint)
 		return true
 	})
@@ -176,7 +175,11 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 	}
 }
 
-func init() {
+func setTickCrossHook() {
 	// Sets tick cross hook for pool contract
-	pl.SetTickCrossHook(TickCrossHook(pools, std.GetHeight))
+	pl.SetTickCrossHook(TickCrossHook(pools, std.ChainHeight))
+}
+
+func init() {
+	setTickCrossHook()
 }

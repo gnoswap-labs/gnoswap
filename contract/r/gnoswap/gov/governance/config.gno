@@ -8,6 +8,8 @@ import (
 
 	"gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
+
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (
@@ -46,7 +48,7 @@ func getConfigByVersion(v uint64) (Config, bool) {
 
 func getLatestVersion() uint64 {
 	var maxVersion uint64
-	configVersions.ReverseIterate("", "", func(key string, value interface{}) bool {
+	configVersions.ReverseIterate("", "", func(key string, value any) bool {
 		maxVersion = parseUint64(key)
 		return true
 	})
@@ -64,7 +66,7 @@ func ReconfigureByAdmin(
 	executionDelay uint64,
 	executionWindow uint64,
 ) uint64 {
-	caller := std.PrevRealm().Addr()
+	caller := std.PreviousRealm().Address()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err)
 	}
@@ -92,7 +94,9 @@ func reconfigure(
 	executionDelay uint64,
 	executionWindow uint64,
 ) uint64 {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 
 	en.MintAndDistributeGns()
 	updateProposalsState()

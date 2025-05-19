@@ -62,11 +62,11 @@ func mustGetVoteInfo(voteKey string) voteWithWeight {
 }
 
 // Iterates over an AVL tree and applies a callback function to each element
-func iterTree(tree *avl.Tree, cb func(key string, value interface{}) bool) {
+func iterTree(tree *avl.Tree, cb func(key string, value any) bool) {
 	tree.Iterate("", "", cb)
 }
 
-// Converts a string to an integer, panics if conversion fails
+// strToInt Converts a string to an integer, panics if conversion fails
 func strToInt(str string) int {
 	res, err := strconv.Atoi(str)
 	if err != nil {
@@ -110,17 +110,17 @@ func b64Decode(data string) string {
 
 // Returns the package path of the previous realm
 func prevRealm() string {
-	return std.PrevRealm().PkgPath()
+	return std.PreviousRealm().PkgPath()
 }
 
 // Returns the address and package path of the previous realm
 func getPrev() (string, string) {
-	prev := std.PrevRealm()
-	return prev.Addr().String(), prev.PkgPath()
+	prev := std.PreviousRealm()
+	return prev.Address().String(), prev.PkgPath()
 }
 
 // Formats an unsigned integer to a string
-func formatUint(v interface{}) string {
+func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:
 		return strconv.FormatUint(uint64(v), 10)

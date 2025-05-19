@@ -2,7 +2,6 @@ package staker
 
 import (
 	"math"
-	"std"
 	"testing"
 
 	"gno.land/p/demo/uassert"
@@ -314,7 +313,7 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 		// baseReward * number of blocks * warmupRatio
 		// 50 * (2 * blocksInDay) * 50% = expected reward for 2 days => 2160000
 		startHeight := int64(1000)
-		std.TestSkipHeights(startHeight)
+		testing.SkipHeights(startHeight)
 
 		deposit := &Deposit{
 			warmups: instantiateWarmup(startHeight),
@@ -341,7 +340,7 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 			ufmt.Sprintf("5 days reward mismatch: expected %d, got %d", expected5Days, reward5Days))
 
 		// WarmupRatio50 (50%) 2 days
-		std.TestSkipHeights(5 * blocksInDay)
+		testing.SkipHeights(5 * blocksInDay)
 		blocks2Days := uint64(2 * blocksInDay)
 		reward2Days, penalty2Days := deposit.warmups[1].apply(
 			baseReward*blocks2Days,
@@ -375,7 +374,7 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 		//
 		// Step 3: Total reward is sum of all period rewards
 		startHeight := int64(2000)
-		std.TestSkipHeights(startHeight)
+		testing.SkipHeights(startHeight)
 
 		deposit := &Deposit{
 			warmups: instantiateWarmup(startHeight),
@@ -412,7 +411,7 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 				ufmt.Sprintf("Period %d reward mismatch: expected %d, got %d",
 					i, expectedReward, reward))
 
-			std.TestSkipHeights(period.days * blocksInDay)
+			testing.SkipHeights(period.days * blocksInDay)
 			currentHeight += period.days * blocksInDay
 		}
 	})

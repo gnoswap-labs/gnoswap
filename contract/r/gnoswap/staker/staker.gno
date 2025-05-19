@@ -59,7 +59,7 @@ func (self *Deposits) remove(positionId uint64) {
 }
 
 func (self *Deposits) Iterate(start uint64, end uint64, fn func(positionId uint64, deposit *Deposit) bool) {
-	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI interface{}) bool {
+	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI any) bool {
 		return fn(DecodeUint(positionId), depositI.(*Deposit))
 	})
 }
@@ -123,7 +123,7 @@ func (self *Stakers) IterateAll(address std.Address, fn func(depositId uint64, d
 		return
 	}
 	depositTree := depositTreeI.(*avl.Tree)
-	depositTree.Iterate("", "", func(depositId string, depositI interface{}) bool {
+	depositTree.Iterate("", "", func(depositId string, depositI any) bool {
 		deposit := depositI.(*Deposit)
 		return fn(DecodeUint(depositId), deposit)
 	})
@@ -184,12 +184,12 @@ const (
 )
 
 func init() {
-	// init pool tiers
+	// init pool tier
 	// tier 1
 	// ONLY GNOT:GNS 0.3%
 
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1)
-	poolTier = NewPoolTier(pools, std.GetHeight(), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange)
+	poolTier = NewPoolTier(pools, std.ChainHeight(), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange)
 	RegisterCallbackStakerEmissionChange()
 }
 
@@ -230,7 +230,11 @@ func StakeToken(positionId uint64, referrer string) (string, string, string) {
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := getPrevAddr()
 
-	referral.TryRegister(caller, referrer)
+	success := referral.TryRegister(caller, referrer)
+	actualReferrer := referrer
+	if !success {
+		actualReferrer = referral.GetReferral(caller.String())
+	}
 
 	token0Amount, token1Amount, err := calculateStakeTokenAmount(positionId, owner, caller)
 	if err != nil {
@@ -246,7 +250,7 @@ func StakeToken(positionId uint64, referrer string) (string, string, string) {
 			ufmt.Sprintf("can not stake position to non existing pool(%s)", poolPath),
 		))
 	}
-	currentHeight := std.GetHeight()
+	currentHeight := std.ChainHeight()
 	liquidity := getLiquidity(positionId)
 
 	tickLower, tickUpper := getTickOf(positionId)
@@ -270,7 +274,7 @@ func StakeToken(positionId uint64, referrer string) (string, string, string) {
 	stakers.addDeposit(caller, positionId, deposit)
 
 	if caller == owner { // if caller is owner, transfer NFT ownership to staker contract
-		if err := transferDeposit(positionId, owner, caller, consts.STAKER_ADDR); err != nil {
+		if err := transferDeposit(positionId, owner, caller, stakerAddr); err != nil {
 			panic(err.Error())
 		}
 	}
@@ -313,10 +317,9 @@ func StakeToken(positionId uint64, referrer string) (string, string, string) {
 		"positionLowerTick", formatInt(tickLower),
 		"currentTick", formatInt(currentTick),
 		"isInRange", formatBool(isInRange),
-		"referrer", referrer,
+		"referrer", actualReferrer,
 	)
 
-	// positionsInternalWarmUpAmount[positionId] = warmUpAmount{}
 	return poolPath, token0Amount, token1Amount
 }
 
@@ -408,7 +411,7 @@ func transferDeposit(positionId uint64, owner, caller, to std.Address) error {
 //   - poolPath (string): The path of the pool to which the LP token is staked
 //
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#collectreward
-func CollectReward(positionId uint64, unwrapResult bool) (string, string) {
+func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[string]uint64, map[string]uint64) {
 	assertOnlyNotHalted()
 
 	deposit := deposits.Get(positionId)
@@ -419,7 +422,7 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string) {
 
 	en.MintAndDistributeGns()
 
-	currentHeight := std.GetHeight()
+	currentHeight := std.ChainHeight()
 	// get all internal and external rewards
 	reward := calcPositionReward(currentHeight, positionId)
 
@@ -430,25 +433,35 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string) {
 
 	// transfer external rewards to user
 	externalReward := reward.External
-	for incentiveId, amount := range externalReward {
+	toUserExternalReward := make(map[string]uint64)
+	toUserExternalPenalty := make(map[string]uint64)
+	for incentiveId, rewardAmount := range externalReward {
 		incentive := externalIncentives.Get(incentiveId)
-		rewardToken := incentive.rewardToken
-		if incentive.rewardAmount < amount {
+		if incentive.rewardAmount < rewardAmount {
 			panic(addDetailToError(
 				errInsufficientReward,
-				ufmt.Sprintf("incentiveId(%s) has insufficient reward(%d)", incentiveId, amount),
+				ufmt.Sprintf("incentiveId(%s) has insufficient reward(%d)", incentiveId, rewardAmount),
 			))
 		}
-		incentive.rewardAmount -= amount
-		externalIncentives.set(incentiveId, incentive)
 
-		toUser := handleUnStakingFee(rewardToken, amount, false, positionId, incentive.targetPoolPath)
+		// process external reward to user
+		incentive.rewardAmount -= rewardAmount
+		rewardToken := incentive.rewardToken
+		toUserExternalReward[rewardToken] += rewardAmount
+		toUser := handleUnStakingFee(rewardToken, rewardAmount, false, positionId, incentive.targetPoolPath)
+		if toUser > 0 {
+			teller := common.GetTokenTeller(rewardToken)
+			teller.Transfer(deposit.owner, toUser)
+		}
 
-		teller := common.GetTokenTeller(rewardToken)
-		teller.Transfer(deposit.owner, toUser)
-
+		// process external penalty
 		externalPenalty := reward.ExternalPenalty[incentiveId]
+		incentive.rewardAmount -= externalPenalty
 		incentive.rewardLeft += externalPenalty
+		toUserExternalPenalty[rewardToken] += externalPenalty
+
+		// update
+		externalIncentives.set(incentiveId, incentive)
 
 		// unwrap if necessary
 		if unwrapResult && rewardToken == consts.WUGNOT_PATH {
@@ -463,9 +476,9 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string) {
 			"recipient", deposit.owner.String(),
 			"incentiveId", incentiveId,
 			"rewardToken", rewardToken,
-			"rewardAmount", formatUint(amount),
+			"rewardAmount", formatUint(rewardAmount),
 			"rewardToUser", formatUint(toUser),
-			"rewardToFee", formatUint(amount-toUser),
+			"rewardToFee", formatUint(rewardAmount-toUser),
 			"rewardPenalty", formatUint(externalPenalty),
 			"isRequestUnwrap", formatBool(unwrapResult),
 		)
@@ -473,7 +486,6 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string) {
 
 	// internal reward to user
 	toUser := handleUnStakingFee(consts.GNS_PATH, reward.Internal, true, positionId, deposit.targetPoolPath)
-
 	if toUser > 0 {
 		// internal reward to user
 		totalEmissionSent += toUser
@@ -481,14 +493,14 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string) {
 
 		// internal penalty to community pool
 		totalEmissionSent += reward.InternalPenalty
-		gns.Transfer(consts.COMMUNITY_POOL_ADDR, reward.InternalPenalty)
+		gns.Transfer(communityPoolAddr, reward.InternalPenalty)
 	}
 
 	unClaimableInternal := processUnClaimableReward(deposit.targetPoolPath, currentHeight)
 	if unClaimableInternal > 0 {
 		// internal unClaimable to community pool
 		totalEmissionSent += unClaimableInternal
-		gns.Transfer(consts.COMMUNITY_POOL_ADDR, unClaimableInternal)
+		gns.Transfer(communityPoolAddr, unClaimableInternal)
 	}
 
 	std.Emit(
@@ -506,7 +518,7 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string) {
 		"rewardUnClaimableAmount", formatUint(unClaimableInternal),
 	)
 
-	return formatUint(toUser), formatUint(reward.InternalPenalty)
+	return formatUint(toUser), formatUint(reward.InternalPenalty), toUserExternalReward, toUserExternalPenalty
 }
 
 // UnStakeToken withdraws an LP token from staking, collecting all pending rewards
@@ -540,8 +552,19 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string) {
 func UnStakeToken(positionId uint64, unwrapResult bool) (string, string, string) { // poolPath, token0Amount, token1Amount
 	assertOnlyNotHalted()
 
-	// unStaked status
+	// Verify that the caller is the actual owner of the deposit to prevent unauthorized unstaking
 	deposit := deposits.Get(positionId)
+	caller := getPrevAddr()
+	if deposit.owner != caller {
+		panic(addDetailToError(
+			errUnauthorized,
+			ufmt.Sprintf("caller(%s) is not the owner(%s)", 
+				caller.String(), 
+				deposit.owner.String()),
+		))
+	}
+
+	// unStaked status
 	poolPath := deposit.targetPoolPath
 
 	// claim All Rewards
@@ -551,7 +574,7 @@ func UnStakeToken(positionId uint64, unwrapResult bool) (string, string, string)
 	applyUnStake(positionId)
 
 	// transfer NFT ownership to origin owner
-	gnft.TransferFrom(consts.STAKER_ADDR, deposit.owner, positionIdFrom(positionId))
+	gnft.TransferFrom(stakerAddr, deposit.owner, positionIdFrom(positionId))
 	pn.SetPositionOperator(positionId, consts.ZERO_ADDRESS)
 
 	prevAddr, prevPkgPath := getPrev()
@@ -562,7 +585,7 @@ func UnStakeToken(positionId uint64, unwrapResult bool) (string, string, string)
 		"positionId", formatUint(positionId),
 		"poolPath", poolPath,
 		"isRequestUnwrap", formatBool(unwrapResult),
-		"from", consts.STAKER_ADDR.String(),
+		"from", stakerAddr.String(),
 		"to", deposit.owner.String(),
 		"amount0", token0Amount,
 		"amount1", token1Amount,
@@ -581,7 +604,7 @@ func applyUnStake(positionId uint64) {
 		))
 	}
 
-	currentHeight := std.GetHeight()
+	currentHeight := std.ChainHeight()
 	currentTick := pl.PoolGetSlot0Tick(deposit.targetPoolPath)
 	signedLiquidity := i256.FromUint256(deposit.liquidity)
 	signedLiquidity = signedLiquidity.Neg(signedLiquidity)
@@ -626,7 +649,7 @@ func applyUnStake(positionId uint64) {
 // requireTokenOwnership validates that the caller has permission to operate the token.
 func requireTokenOwnership(owner, caller std.Address) error {
 	callerIsOwner := owner == caller
-	stakerIsOwner := owner == consts.STAKER_ADDR
+	stakerIsOwner := owner == stakerAddr
 
 	if err := common.SatisfyCond(callerIsOwner || stakerIsOwner); err != nil {
 		return errNoPermission

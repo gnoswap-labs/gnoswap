@@ -30,8 +30,8 @@ func TestSwapRouteSingleRouteSinlgeHopWithNativeInAndOut(t *testing.T) {
 
 func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee()*3)
+		testing.SetRealm(adminRealm)
+		gns.Approve(poolAddr, pl.GetPoolCreationFee()*3)
 
 		pl.CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006")                         // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 		pl.CreatePool(bazPath, quxPath, fee500, "130621891405341611593710811006")                         // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
@@ -56,9 +56,9 @@ func testCreatePool(t *testing.T) {
 func testPositionMint(t *testing.T) {
 	t.Run("position mint", func(t *testing.T) {
 		t.Run("bar:baz:500", func(t *testing.T) {
-			std.TestSetRealm(adminRealm)
-			bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-			baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+			testing.SetRealm(adminRealm)
+			bar.Approve(poolAddr, consts.UINT64_MAX)
+			baz.Approve(poolAddr, consts.UINT64_MAX)
 			positionId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 			uassert.Equal(t, positionId, uint64(1))
@@ -68,9 +68,9 @@ func testPositionMint(t *testing.T) {
 	})
 
 	t.Run("baz:qux:500", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		testing.SetRealm(adminRealm)
+		baz.Approve(poolAddr, consts.UINT64_MAX)
+		qux.Approve(poolAddr, consts.UINT64_MAX)
 		positionId, liquidity, amount0, amount1 := pn.Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 		uassert.Equal(t, positionId, uint64(2))
@@ -79,15 +79,15 @@ func testPositionMint(t *testing.T) {
 	})
 
 	t.Run("qux:gnot:500", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		qux.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+		testing.SetRealm(adminRealm)
+		qux.Approve(poolAddr, consts.UINT64_MAX)
+		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(consts.POSITION_ADDR, consts.UINT64_MAX) // wrap / unwrap
+		wugnot.Approve(positionAddr, consts.UINT64_MAX) // wrap / unwrap
 
 		// send coin
-		std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 1000009}}) // without issuing, it will fail `source address g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5 does not exist`
-		std.TestSetOrigSend(std.Coins{{"ugnot", 1000009}}, nil)
+		testing.IssueCoins(positionAddr, std.Coins{{"ugnot", 1000009}}) // without issuing, it will fail `source address g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5 does not exist`
+		testing.SetOriginSend(std.Coins{{"ugnot", 1000009}})
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.GNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
@@ -95,7 +95,7 @@ func testPositionMint(t *testing.T) {
 		uassert.Equal(t, amount0, "100000")
 		uassert.Equal(t, amount1, "36790")
 
-		std.TestSetOrigSend(std.Coins{{}}, nil) // reset context
+		testing.SetOriginSend(std.Coins{{}}) // reset context
 	})
 }
 
@@ -103,15 +103,15 @@ func testPositionMint(t *testing.T) {
 
 // func testBuyNative(t *testing.T) {
 // 	t.Run("swap, buy native, bar > gnot", func(t *testing.T) {
-// 		std.TestSetRealm(adminRealm)
+// 		testing.SetRealm(adminRealm)
 
-// 		bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)      // input
-// 		wugnot.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX) // output fee ≈ 0.15%
-// 		wugnot.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX) // output unwrap
+// 		bar.Approve(poolAddr, consts.UINT64_MAX)      // input
+// 		wugnot.Approve(routerAddr, consts.UINT64_MAX) // output fee ≈ 0.15%
+// 		wugnot.Approve(routerAddr, consts.UINT64_MAX) // output unwrap
 
 // 		// check protocol fee before swap
-// 		feeColUgnot := ugnotBalanceOf(t, consts.PROTOCOL_FEE_ADDR)
-// 		feeColWugnot := wugnotBalanceOf(t, consts.PROTOCOL_FEE_ADDR)
+// 		feeColUgnot := ugnotBalanceOf(t, protocolFeeAddr)
+// 		feeColWugnot := wugnotBalanceOf(t, protocolFeeAddr)
 // 		oldAdminWugnot := wugnotBalanceOf(t, adminAddr)
 // 		uassert.Equal(t, feeColUgnot, uint64(0))
 // 		uassert.Equal(t, feeColWugnot, uint64(0))
@@ -123,6 +123,7 @@ func testPositionMint(t *testing.T) {
 // 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/demo/wugnot:500", // strRouteArr
 // 			"100", // quoteArr
 // 			"0",   // tokenAmountLimit
+// 			"",    // referrer
 // 		)
 
 // 		uassert.Equal(t, amountIn, "1000")
@@ -135,8 +136,8 @@ func testPositionMint(t *testing.T) {
 // 		uassert.Equal(t, newUgnot, uint64(919720)) // 900009 + 19711
 
 // 		// check protocol fee after swap
-// 		feeColUgnot = ugnotBalanceOf(t, consts.PROTOCOL_FEE_ADDR)
-// 		feeColWugnot = wugnotBalanceOf(t, consts.PROTOCOL_FEE_ADDR)
+// 		feeColUgnot = ugnotBalanceOf(t, protocolFeeAddr)
+// 		feeColWugnot = wugnotBalanceOf(t, protocolFeeAddr)
 // 		uassert.Equal(t, feeColUgnot, uint64(29)) // UNWRAP RESULT
 // 		uassert.Equal(t, feeColWugnot, uint64(0))
 // 	})
@@ -144,28 +145,29 @@ func testPositionMint(t *testing.T) {
 
 // func testSellNative(t *testing.T) {
 // 	t.Run("swap, sell native, gnot > bar", func(t *testing.T) {
-// 		std.TestSetRealm(adminRealm)
+// 		testing.SetRealm(adminRealm)
 
-// 		wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // input
-// 		bar.Approve(consts.ROUTER_ADDR, consts.UINT64_MAX)  // output fee ≈ 0.15%
+// 		wugnot.Approve(poolAddr, consts.UINT64_MAX) // input
+// 		bar.Approve(routerAddr, consts.UINT64_MAX)  // output fee ≈ 0.15%
 
 // 		// check user balance
 // 		uassert.Equal(t, wugnotBalanceOf(admin), uint64(0))
 // 		uassert.Equal(t, ugnotBalanceOf(admin), uint64(919720))
 
 // 		// check protocol fee balance
-// 		uassert.Equal(t, wugnotBalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(0))
-// 		uassert.Equal(t, ugnotBalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(29))
+// 		uassert.Equal(t, wugnotBalanceOf(protocolFeeAddr), uint64(0))
+// 		uassert.Equal(t, ugnotBalanceOf(protocolFeeAddr), uint64(29))
 
 // 		std.TestSetOrigSend(std.Coins{{"ugnot", 5000}}, nil)
-// 		std.TestIssueCoins(consts.ADMIN, std.Coins{{"ugnot", -5000}})
+// 		testing.IssueCoins(adminAddr, std.Coins{{"ugnot", -5000}})
 // 		amountIn, amountOut := ExactInSwapRoute(
 // 			consts.GNOT, // intputToken
 // 			barPath,     // outputToken
 // 			"5000",      // amountSpecified
 // 			"gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
 // 			"100", // quoteArr
-// 			"0",
+// 			"0",   // tokenAmountLimit
+// 			"",    // referrer
 // 		)
 // 		std.TestSetOrigSend(std.Coins{{}}, nil)
 
@@ -177,7 +179,7 @@ func testPositionMint(t *testing.T) {
 // 		uassert.Equal(t, ugnotBalanceOf(admin), uint64(914720))
 
 // 		// check protocol fee balance
-// 		uassert.Equal(t, wugnotBalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(0))
-// 		uassert.Equal(t, ugnotBalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(29))
+// 		uassert.Equal(t, wugnotBalanceOf(protocolFeeAddr), uint64(0))
+// 		uassert.Equal(t, ugnotBalanceOf(protocolFeeAddr), uint64(29))
 // 	})
 // }

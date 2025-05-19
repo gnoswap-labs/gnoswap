@@ -4,25 +4,23 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
 	i256 "gno.land/p/gnoswap/int256"
 
-	"gno.land/p/gnoswap/consts"
-
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/qux"
-
-	"gno.land/p/demo/uassert"
 )
 
 func TestMultiSwap(t *testing.T) {
 	user1Realm := std.NewUserRealm(user1Addr)
+	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
 
 	tests := []struct {
 		name             string
 		setupFn          func(t *testing.T)
 		params           SwapParams
-		currentPoolIndex int
 		numPools         int
 		swapPath         string
 		expectedFirstIn  string
@@ -35,19 +33,20 @@ func TestMultiSwap(t *testing.T) {
 				CreatePoolWithoutFee(t)
 				MakeMintPositionWithoutFee(t)
 
-				std.TestSetRealm(user1Realm)
-				bar.Approve(consts.ROUTER_ADDR, maxApprove)
-				baz.Approve(consts.ROUTER_ADDR, maxApprove)
+				testing.SetRealm(user1Realm)
+				bar.Approve(routerAddr, maxApprove)
+				baz.Approve(routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{
-				tokenIn:         barPath,
-				tokenOut:        bazPath,
-				fee:             3000,
 				recipient:       alice,
-				amountSpecified: i256.MustFromDecimal("100"),
+				SingleSwapParams: SingleSwapParams{
+					tokenIn:         barPath,
+					tokenOut:        bazPath,
+					fee:             3000,
+					amountSpecified: i256.MustFromDecimal("100"),
+				},
 			},
-			currentPoolIndex: 0,
 			numPools:         1,
 			swapPath:         "",
 			expectedFirstIn:  "100",
@@ -65,20 +64,21 @@ func TestMultiSwap(t *testing.T) {
 				CreateSecondPoolWithoutFee(t)
 				MakeSecondMintPositionWithoutFee(t)
 
-				std.TestSetRealm(user1Realm)
-				bar.Approve(consts.ROUTER_ADDR, maxApprove)
-				baz.Approve(consts.ROUTER_ADDR, maxApprove)
-				qux.Approve(consts.ROUTER_ADDR, maxApprove)
+				testing.SetRealm(user1Realm)
+				bar.Approve(routerAddr, maxApprove)
+				baz.Approve(routerAddr, maxApprove)
+				qux.Approve(routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{
-				tokenIn:         barPath,
-				tokenOut:        bazPath,
-				fee:             3000,
 				recipient:       alice,
-				amountSpecified: i256.MustFromDecimal("100"),
+				SingleSwapParams: SingleSwapParams{
+					tokenIn:         barPath,
+					tokenOut:        bazPath,
+					fee:             3000,
+					amountSpecified: i256.MustFromDecimal("100"),
+				},
 			},
-			currentPoolIndex: 0,
 			numPools:         2,
 			swapPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
 			expectedFirstIn:  "100",
@@ -94,20 +94,21 @@ func TestMultiSwap(t *testing.T) {
 				CreateSecondPoolWithoutFee(t)
 				MakeSecondMintPositionWithoutFee(t)
 
-				std.TestSetRealm(user1Realm)
-				bar.Approve(consts.ROUTER_ADDR, maxApprove)
-				baz.Approve(consts.ROUTER_ADDR, maxApprove)
-				qux.Approve(consts.ROUTER_ADDR, maxApprove)
+				testing.SetRealm(user1Realm)
+				bar.Approve(routerAddr, maxApprove)
+				baz.Approve(routerAddr, maxApprove)
+				qux.Approve(routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{
-				tokenIn:         barPath,
-				tokenOut:        bazPath,
-				fee:             3000,
 				recipient:       alice,
-				amountSpecified: i256.MustFromDecimal("-96"),
+				SingleSwapParams: SingleSwapParams{
+					tokenIn:         barPath,
+					tokenOut:        bazPath,
+					fee:             3000,
+					amountSpecified: i256.MustFromDecimal("-96"),
+				},
 			},
-			currentPoolIndex: 0,
 			numPools:         2,
 			swapPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
 			expectedFirstIn:  "98",
@@ -124,7 +125,6 @@ func TestMultiSwap(t *testing.T) {
 
 			firstAmountIn, lastAmountOut := multiSwap(
 				tt.params,
-				tt.currentPoolIndex,
 				tt.numPools,
 				tt.swapPath,
 			)

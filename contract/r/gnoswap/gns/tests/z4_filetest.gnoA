@@ -34,10 +34,10 @@ func main() {
 
 func reachAlmostEndOfEmission() {
 	endHeight := gns.GetEndHeight()
-	untilEnds := endHeight - std.GetHeight()
-	std.TestSkipHeights(untilEnds - 10) // 10 blocks before end of emission
+	untilEnds := endHeight - std.ChainHeight()
+	testing.SkipHeights(untilEnds - 10) // 10 blocks before end of emission
 
-	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	minted := gns.MintGns(user01Addr)
 
 	// minted all amount for year 01 ~ 11
@@ -51,7 +51,7 @@ func reachAlmostEndOfEmission() {
 	}
 
 	// we're at the end of last halving year
-	year := gns.GetHalvingYearByHeight(std.GetHeight())
+	year := gns.GetHalvingYearByHeight(std.ChainHeight())
 	uassert.Equal(t, int64(12), year)
 }
 
@@ -60,8 +60,8 @@ func skip50Blocks() {
 	// skipping 50 blocks will reach the end of emission
 	// and it should mint for only 10 blocks
 
-	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	std.TestSkipHeights(50)
+	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SkipHeights(50)
 	gns.MintGns(user01Addr)
 
 	// total supply
@@ -74,8 +74,8 @@ func skip50Blocks() {
 }
 
 func moreBlocksAfterEmissionEnds() {
-	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	std.TestSkipHeights(10)
+	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SkipHeights(10)
 
 	// no gns will be minted after emission ends
 	minted := gns.MintGns(user01Addr)

@@ -13,8 +13,6 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-
-	en "gno.land/r/gnoswap/v1/emission"
 )
 
 type canonicalPool struct {
@@ -77,7 +75,7 @@ type canonicalRewardState struct {
 }
 
 func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tickCrossHook func(pools *Pools, height func() int64) func(poolPath string, tickId int32, zeroForOne bool)) *canonicalRewardState {
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
 	result := &canonicalRewardState{
 		t: t,
@@ -103,7 +101,7 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 	result.global.poolTier = NewPoolTier(pools, 123, test_gnousdc, func() uint64 { return result.PerBlockEmission }, func(start, end int64) ([]int64, []uint64) {
 		heights := make([]int64, 0)
 		emissions := make([]uint64, 0)
-		result.emissionUpdates.Iterate(start, end, func(key int64, value interface{}) bool {
+		result.emissionUpdates.Iterate(start, end, func(key int64, value any) bool {
 			heights = append(heights, key)
 			emissions = append(emissions, value.(uint64))
 			return false
@@ -115,8 +113,8 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 
 	result.SetEmissionUpdate(1000000000)
 
-	if std.GetHeight() != result.CurrentHeight() {
-		panic(ufmt.Sprintf("height mismatch: %d != %d", std.GetHeight(), result.CurrentHeight()))
+	if std.ChainHeight() != result.CurrentHeight() {
+		panic(ufmt.Sprintf("height mismatch: %d != %d", std.ChainHeight(), result.CurrentHeight()))
 	}
 
 	return result
@@ -227,18 +225,18 @@ func (self *canonicalRewardState) CalculateCanonicalReward() map[uint64]Reward {
 func (self *canonicalRewardState) NextBlock() {
 	self.Reward = append(self.Reward, self.CalculateCanonicalReward())
 	self.CurrentTimestamp += self.MsPerBlock
-	std.TestSkipHeights(1)
-	if int64(self.CurrentHeight()) != std.GetHeight() {
-		panic(ufmt.Sprintf("height mismatch: %d != %d", self.CurrentHeight(), std.GetHeight()))
+	testing.SkipHeights(1)
+	if int64(self.CurrentHeight()) != std.ChainHeight() {
+		panic(ufmt.Sprintf("height mismatch: %d != %d", self.CurrentHeight(), std.ChainHeight()))
 	}
 }
 
 func (self *canonicalRewardState) NextBlockNoCanonical() {
 	self.Reward = append(self.Reward, nil) // just placeholder
 	self.CurrentTimestamp += self.MsPerBlock
-	std.TestSkipHeights(1)
-	if int64(self.CurrentHeight()) != std.GetHeight() {
-		panic(ufmt.Sprintf("height mismatch: %d != %d", self.CurrentHeight(), std.GetHeight()))
+	testing.SkipHeights(1)
+	if int64(self.CurrentHeight()) != std.ChainHeight() {
+		panic(ufmt.Sprintf("height mismatch: %d != %d", self.CurrentHeight(), std.ChainHeight()))
 	}
 }
 
@@ -444,7 +442,7 @@ func newExternalIncentiveByHeight(
 ) *ExternalIncentive {
 	rewardPerBlock := rewardAmount / uint64(endHeight-startHeight)
 
-	byTimeId := incentiveIdByTime(startTimestamp, endTimestamp, refundee, rewardToken)
+	byTimeId := incentiveIdByTime(startTimestamp, endTimestamp, refundee, rewardToken, targetPoolPath)
 
 	return &ExternalIncentive{
 		incentiveId:      byTimeId,
@@ -571,20 +569,6 @@ func (self *canonicalRewardState) AssertCanonicalInternalRewardPerPool(poolPath 
 	if actual != expected {
 		panic(ufmt.Sprintf("internal reward per pool mismatch: expected %d, got %d", expected, actual))
 	}
-}
-
-// returns true if actual is within 0.0001% of expected
-func isInErrorRange(expected uint64, actual uint64) bool {
-	maxSafeValue := uint64(math.MaxUint64 / 100001)
-	var lowerBound, upperBound uint64
-	if expected > maxSafeValue {
-		lowerBound = expected / 1000000 * 999999
-		upperBound = expected / 1000000 * 1000001
-	} else {
-		lowerBound = expected * 999999 / 1000000
-		upperBound = expected * 1000001 / 1000000
-	}
-	return actual >= lowerBound && actual <= upperBound
 }
 
 func (self *canonicalRewardState) AssertEmulatedRewardOf(depositId uint64, expected uint64) {

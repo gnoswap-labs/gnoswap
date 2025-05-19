@@ -20,23 +20,23 @@ var (
 )
 
 func TestLimitOrderThru_Positive_1(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	testing.SetRealm(adminRealm)
+	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
 
 	thisPool := GetPool(barPath, fooPath, fee100)
 
 	t.Run("limit selling 0 for 1 at tick 0 thru 1", func(t *testing.T) {
 		// MINT
-		std.TestSetRealm(posRealm)
+		testing.SetRealm(posRealm)
 		mint0, mint1 := Mint(
 			barPath,
 			fooPath,
 			fee100,
-			consts.POSITION_ADDR,
+			positionAddr,
 			0,
 			120,
 			test_liquidityExpectStr,
@@ -44,7 +44,7 @@ func TestLimitOrderThru_Positive_1(t *testing.T) {
 		)
 
 		// SWAP 1 -> 0
-		std.TestSetRealm(rouRealm)
+		testing.SetRealm(rouRealm)
 		swap0, swap1 := Swap(
 			barPath,
 			fooPath,
@@ -57,7 +57,7 @@ func TestLimitOrderThru_Positive_1(t *testing.T) {
 		)
 
 		// BURN
-		std.TestSetRealm(posRealm)
+		testing.SetRealm(posRealm)
 		burn0, burn1 := Burn(
 			barPath,
 			fooPath,
@@ -68,7 +68,7 @@ func TestLimitOrderThru_Positive_1(t *testing.T) {
 		)
 
 		// COLLECT
-		std.TestSetRealm(posRealm)
+		testing.SetRealm(posRealm)
 		collect0, collect1 := Collect(
 			barPath,
 			fooPath,
@@ -88,23 +88,23 @@ func TestLimitOrderThru_Positive_1(t *testing.T) {
 }
 
 func TestLimitOrderThru_Negative_1(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	testing.SetRealm(adminRealm)
+	gns.Approve(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
 
 	thisPool := GetPool(barPath, fooPath, fee500)
 
 	t.Run("limit selling 0 for 1 at tick 0 thru 1", func(t *testing.T) {
 		// MINT
-		std.TestSetRealm(posRealm)
+		testing.SetRealm(posRealm)
 		mint0, mint1 := Mint(
 			barPath,
 			fooPath,
 			fee500,
-			consts.POSITION_ADDR,
+			positionAddr,
 			-120,
 			0,
 			test_liquidityExpectStr,
@@ -112,7 +112,7 @@ func TestLimitOrderThru_Negative_1(t *testing.T) {
 		)
 
 		// SWAP 0 -> 1
-		std.TestSetRealm(rouRealm)
+		testing.SetRealm(rouRealm)
 		swap0, swap1 := Swap(
 			barPath,
 			fooPath,
@@ -125,7 +125,7 @@ func TestLimitOrderThru_Negative_1(t *testing.T) {
 		)
 
 		// BURN
-		std.TestSetRealm(posRealm)
+		testing.SetRealm(posRealm)
 		burn0, burn1 := Burn(
 			barPath,
 			fooPath,
@@ -136,7 +136,7 @@ func TestLimitOrderThru_Negative_1(t *testing.T) {
 		)
 
 		// COLLECT
-		std.TestSetRealm(posRealm)
+		testing.SetRealm(posRealm)
 		collect0, collect1 := Collect(
 			barPath,
 			fooPath,

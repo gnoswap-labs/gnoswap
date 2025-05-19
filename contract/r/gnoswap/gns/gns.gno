@@ -10,7 +10,7 @@ import (
 
 	"gno.land/r/demo/grc20reg"
 
-	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 )
 
 const (
@@ -30,22 +30,28 @@ var (
 	lastMintedHeight     int64  // last block height that gns was minted for emission
 
 	burnAmount uint64 // amount of GNS that has been burned
+
+	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
 )
 
+func registerGnsTokenToGrc20Reg() {
+	getter := func() *grc20.Token { return token }
+	grc20reg.Register(getter, "")
+}
+
 func init() {
-	owner = ownable.NewWithAddress(consts.ADMIN)
+	owner = ownable.NewWithAddress(adminAddr)
 	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
 	UserTeller = token.CallerTeller()
 
 	privateLedger.Mint(owner.Owner(), INITIAL_MINT_AMOUNT)
-	getter := func() *grc20.Token { return token }
-	grc20reg.Register(getter, "")
+	registerGnsTokenToGrc20Reg()
 
 	// Initial amount set to 900_000_000_000_000 (MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT).
 	// leftEmissionAmount will decrease as tokens are minted.
 	setLeftEmissionAmount(MAX_EMISSION_AMOUNT)
 	setMintedEmissionAmount(uint64(0))
-	setLastMintedHeight(std.GetHeight())
+	setLastMintedHeight(std.ChainHeight())
 	burnAmount = uint64(0)
 }
 
@@ -79,7 +85,7 @@ func Allowance(owner, spender std.Address) uint64 {
 
 func MintGns(address std.Address) uint64 {
 	lastGNSMintedHeight := GetLastMintedHeight()
-	currentHeight := std.GetHeight()
+	currentHeight := std.ChainHeight()
 
 	// skip minting process if following conditions are met
 	// - if gns for current block is already minted
@@ -130,7 +136,7 @@ func Burn(from std.Address, amount uint64) {
 		"Burn",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"burnedBlockHeight", formatInt(std.GetHeight()),
+		"burnedBlockHeight", formatInt(std.ChainHeight()),
 		"burnFrom", from.String(),
 		"burnedGNSAmount", formatUint(amount),
 		"accumBurnedGNSAmount", formatUint(GetBurnAmount()),

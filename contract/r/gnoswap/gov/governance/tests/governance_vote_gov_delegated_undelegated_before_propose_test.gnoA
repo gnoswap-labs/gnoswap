@@ -9,7 +9,6 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 
 	gs "gno.land/r/gnoswap/v1/gov/staker"
@@ -35,7 +34,7 @@ func init() {
 	setConfigVersion(1, config)
 }
 
-func TestProposeText(t *testing.T) {
+func TestProposeText_VoteGovDelegatedUndelegatedBeforePropose(t *testing.T) {
 	testDelegate01_1000000_toSelf(t)
 	testDelegate02_2000000_toDummy(t)
 	testUndelegate_1000000_fromDummy(t)
@@ -49,10 +48,10 @@ func testDelegate01_1000000_toSelf(t *testing.T) {
 		uassert.Equal(t, xgns.TotalSupply(), uint64(0))
 		uassert.Equal(t, xgns.VotingSupply(), uint64(0))
 
-		std.TestSetRealm(adminRealm)
-		gns.Approve(consts.GOV_STAKER_ADDR, uint64(1_000_000))
+		testing.SetRealm(adminRealm)
+		gns.Approve(govStakerAddr, uint64(1_000_000))
 
-		uassert.Equal(t, int64(123), std.GetHeight())
+		uassert.Equal(t, int64(123), std.ChainHeight())
 		uassert.Equal(t, int64(1234567890), time.Now().Unix())
 
 		gs.Delegate(admin, uint64(1_000_000), "") // self delegate
@@ -61,7 +60,7 @@ func testDelegate01_1000000_toSelf(t *testing.T) {
 		uassert.Equal(t, xgns.TotalSupply(), uint64(1_000_000))
 		uassert.Equal(t, xgns.VotingSupply(), uint64(1_000_000))
 
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
@@ -71,11 +70,11 @@ func testDelegate02_2000000_toDummy(t *testing.T) {
 		uassert.Equal(t, xgns.TotalSupply(), uint64(1_000_000))
 		uassert.Equal(t, xgns.VotingSupply(), uint64(1_000_000))
 
-		std.TestSetRealm(adminRealm)
-		gns.Approve(consts.GOV_STAKER_ADDR, uint64(2_000_000))
+		testing.SetRealm(adminRealm)
+		gns.Approve(govStakerAddr, uint64(2_000_000))
 
-		uassert.Equal(t, int64(124), std.GetHeight())
-		uassert.Equal(t, int64(1234567892), time.Now().Unix())
+		uassert.Equal(t, int64(124), std.ChainHeight())
+		uassert.Equal(t, int64(1234567895), time.Now().Unix())
 
 		gs.Delegate(dummyAddr, uint64(2_000_000), "") // delegate to dummy
 
@@ -83,61 +82,51 @@ func testDelegate02_2000000_toDummy(t *testing.T) {
 		uassert.Equal(t, xgns.TotalSupply(), uint64(3_000_000))
 		uassert.Equal(t, xgns.VotingSupply(), uint64(3_000_000))
 
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testUndelegate_1000000_fromDummy(t *testing.T) {
 	t.Run("undelegate from dummyAddr by admin", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		std.TestSkipHeights(1)
+		testing.SetRealm(adminRealm)
+		testing.SkipHeights(1)
 
-		uassert.Equal(t, int64(126), std.GetHeight())
-		uassert.Equal(t, int64(1234567896), time.Now().Unix())
-
-		gs.Undelegate(dummyAddr, uint64(1_000_000)) // 1000000
+		gs.Undelegate(dummyAddr, uint64(1_000_000))
 
 		// after undelegate 01
-		uassert.Equal(t, xgns.TotalSupply(), uint64(2_000_000))  // 2000000
-		uassert.Equal(t, xgns.VotingSupply(), uint64(2_000_000)) // 2000000
+		uassert.Equal(t, xgns.TotalSupply(), uint64(2_000_000))
+		uassert.Equal(t, xgns.VotingSupply(), uint64(2_000_000))
 
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testProposeText(t *testing.T) {
 	t.Run("Successful two text proposals ", func(t *testing.T) {
 		t.Run("text proposal 01 // only 4 block passed", func(t *testing.T) {
-			// text proposal
-			uassert.Equal(t, int64(127), std.GetHeight())
-			uassert.Equal(t, int64(1234567898), time.Now().Unix())
-
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			proposalID := ProposeText("test_title", "test_description")
 			uassert.Equal(t, proposalID, uint64(1))
 
 			pp, ok := proposals.Get(strconv.FormatUint(proposalID, 10))
 			uassert.True(t, ok)
 			proposal := pp.(ProposalInfo)
-			uassert.Equal(t, proposal.QuorumAmount, uint64(0))
+			uassert.Equal(t, proposal.QuorumAmount, uint64(500000))
 
 			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.CreatedAt - config.VotingWeightSmoothingDuration)
 			// config.VotingWeightSmoothingDuration = 10s = 5 block
 
-			uassert.Equal(t, maxVotingWeight, uint64(0))
+			uassert.Equal(t, maxVotingWeight, uint64(1000000))
 			// createdAt > 127 // 1234567898
 			// (createdAt - VotingWeightSmoothingDuration) > 122 // 1234567888
 			// no delegation happend until block 122
 		})
 
 		t.Run("text proposal 02 // 6 more block passed(total 10)", func(t *testing.T) {
-			std.TestSkipHeights(6)
+			testing.SkipHeights(6)
+			uassert.Equal(t, int64(133), std.ChainHeight())
 
-			// text proposal
-			uassert.Equal(t, int64(133), std.GetHeight())
-			uassert.Equal(t, int64(1234567910), time.Now().Unix())
-
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			proposalID := ProposeText("test_title", "test_description")
 			uassert.Equal(t, proposalID, uint64(2))
 
@@ -164,9 +153,9 @@ func testProposeText(t *testing.T) {
 func testVote(t *testing.T) {
 	t.Run("vote (undelegated after propose, before vote)", func(t *testing.T) {
 		proposalId := uint64(2)
-		std.TestSkipHeights(5)
+		testing.SkipHeights(5)
 
-		std.TestSetRealm(dummyRealm)
+		testing.SetRealm(dummyRealm)
 		Vote(proposalId, true)
 
 		pp, ok := proposals.Get(strconv.FormatUint(proposalId, 10))

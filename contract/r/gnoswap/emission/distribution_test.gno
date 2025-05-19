@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -29,7 +28,7 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 		{
 			name:        "panic if caller is not admin",
 			shouldPanic: true,
-			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission`,
+			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) is not authorized for role admin`,
 			targets:     []int{1, 2, 3, 4},
 			pcts:        []uint64{1000, 2000, 3000, 4000},
 		},
@@ -71,7 +70,7 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 			}
 
 			if tt.callerRealm != (std.Realm{}) {
-				std.TestSetRealm(tt.callerRealm)
+				testing.SetRealm(tt.callerRealm)
 			}
 
 			target01, target02, target03, target04 := sliceToFourInt(t, tt.targets)
@@ -121,7 +120,7 @@ func TestChangeDistributionPct(t *testing.T) {
 		{
 			name:        "panic if caller is not governance",
 			shouldPanic: true,
-			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission`,
+			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) is not authorized for role governance`,
 			targets:     []int{1, 2, 3, 4},
 			pcts:        []uint64{1000, 2000, 3000, 4000},
 		},
@@ -163,7 +162,7 @@ func TestChangeDistributionPct(t *testing.T) {
 			}
 
 			if tt.callerRealm != (std.Realm{}) {
-				std.TestSetRealm(tt.callerRealm)
+				testing.SetRealm(tt.callerRealm)
 			}
 
 			target01, target02, target03, target04 := sliceToFourInt(t, tt.targets)
@@ -263,8 +262,8 @@ func TestTransferToTarget(t *testing.T) {
 			name:   "transfer to LIQUIDITY_STAKER",
 			target: LIQUIDITY_STAKER,
 			setup: func() {
-				std.TestSetRealm(adminRealm)
-				gns.Transfer(consts.EMISSION_ADDR, 100000) // give enough balance for emission
+				testing.SetRealm(adminRealm)
+				gns.Transfer(emissionAddr, 100000) // give enough balance for emission
 			},
 			amount: 100,
 			verify: func() {
@@ -388,7 +387,7 @@ func TestClearDistributedToStaker(t *testing.T) {
 		{
 			name:        "can not clear is caller is not staker",
 			shouldPanic: true,
-			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission`,
+			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) is not authorized for role staker`,
 		},
 		{
 			name:        "can clear if caller is staker",
@@ -400,7 +399,7 @@ func TestClearDistributedToStaker(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.callerRealm != (std.Realm{}) {
-				std.TestSetRealm(tt.callerRealm)
+				testing.SetRealm(tt.callerRealm)
 			}
 
 			if tt.shouldPanic {
@@ -413,7 +412,6 @@ func TestClearDistributedToStaker(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestClearClearDistributedToGovStaker(t *testing.T) {
@@ -429,7 +427,7 @@ func TestClearClearDistributedToGovStaker(t *testing.T) {
 		{
 			name:        "can not clear is caller is not gov/staker",
 			shouldPanic: true,
-			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission`,
+			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) is not authorized for role gov_staker`,
 		},
 		{
 			name:        "can clear if caller is gov/taker",
@@ -441,7 +439,7 @@ func TestClearClearDistributedToGovStaker(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.callerRealm != (std.Realm{}) {
-				std.TestSetRealm(tt.callerRealm)
+				testing.SetRealm(tt.callerRealm)
 			}
 
 			if tt.shouldPanic {
@@ -454,7 +452,6 @@ func TestClearClearDistributedToGovStaker(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func sliceToFourInt(t *testing.T, slice []int) (int, int, int, int) {

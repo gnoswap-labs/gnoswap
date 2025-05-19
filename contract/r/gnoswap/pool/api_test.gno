@@ -7,16 +7,15 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 )
 
 func TestInitTwoPools(t *testing.T) {
-	std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
+	testing.SetRealm(std.NewUserRealm(adminAddr))
 	SetPoolCreationFeeByAdmin(0)
 
 	// foo:bar
-	CreatePool("gno.land/r/onbloc/bar", "gno.land/r/onbloc/foo", uint32(500), common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+	CreatePool("gno.land/r/onbloc/bar", "gno.land/r/onbloc/foo", FeeTier500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
 	// bar:baz
 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000
@@ -64,7 +63,7 @@ func TestMakeStatNode(t *testing.T) {
 	})
 
 	t.Run("increase block height and timestamp", func(t *testing.T) {
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 
 		statNode := newStatNode().JSON()
 

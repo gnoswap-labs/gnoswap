@@ -20,8 +20,8 @@ import (
 )
 
 func TestTickTransaction(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.POOL_ADDR, poolCreationFee)
+	testing.SetRealm(adminRealm)
+	gns.Approve(poolAddr, poolCreationFee)
 
 	testSqrt := common.TickMathGetSqrtRatioAtTick(-24081)
 	testSqrt = testSqrt.Add(testSqrt, u256.One())
@@ -33,15 +33,15 @@ func TestTickTransaction(t *testing.T) {
 	uassert.Equal(t, thisPool.slot0.tick, int32(-24081))
 
 	liqToMint := "10000000000" // 10_000_000_000
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	Mint(
 		barPath,
 		fooPath,
 		fee100,
-		consts.POSITION_ADDR,
+		positionAddr,
 		-24082,
 		-24080,
 		liqToMint,
@@ -49,12 +49,12 @@ func TestTickTransaction(t *testing.T) {
 	)
 	uassert.Equal(t, thisPool.liquidity.ToString(), "10000000000")
 
-	std.TestSetRealm(posRealm)
+	testing.SetRealm(posRealm)
 	Mint(
 		barPath,
 		fooPath,
 		fee100,
-		consts.POSITION_ADDR,
+		positionAddr,
 		-24082,
 		-24081,
 		liqToMint,
@@ -78,7 +78,7 @@ func TestTickTransaction(t *testing.T) {
 		uassert.Equal(t, feeAmount, "1")
 	}
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	Swap(
 		barPath,
 		fooPath,

@@ -10,9 +10,7 @@ import (
 	"gno.land/r/demo/grc20reg"
 )
 
-var (
-	re = regexp.MustCompile(`\[gno\.land/r/[^\]]+\]`)
-)
+var re = regexp.MustCompile(`\[gno\.land/r/[^\]]+\]`)
 
 // GetToken returns a grc20.Token instance
 // if token is not registered, it will panic
@@ -55,12 +53,14 @@ func IsRegistered(path string) error {
 
 // MustRegistered is a helper function to check if token is registered to grc20reg
 // if token is not registered, it will panic
-func MustRegistered(path string) {
-	if err := IsRegistered(path); err != nil {
-		panic(newErrorWithDetail(
-			errNotRegistered,
-			ufmt.Sprintf("token(%s)", path),
-		))
+func MustRegistered(paths ...string) {
+	for _, path := range paths {
+		if err := IsRegistered(path); err != nil {
+			panic(newErrorWithDetail(
+				errNotRegistered,
+				ufmt.Sprintf("token(%s)", path),
+			))
+		}
 	}
 }
 

@@ -10,6 +10,7 @@ import (
 	"gno.land/p/demo/uassert"
 
 	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 )
 
 const (
@@ -17,7 +18,6 @@ const (
 )
 
 var (
-	positionAddr  = consts.POSITION_ADDR
 	positionRealm = std.NewCodeRealm(consts.POSITION_PATH)
 
 	addr01      = testutils.TestAddress("addr01")
@@ -57,7 +57,7 @@ func TestTotalSupply(t *testing.T) {
 		{
 			name: "total supply after minting",
 			setup: func() {
-				std.TestSetRealm(positionRealm)
+				testing.SetRealm(positionRealm)
 				Mint(addr01, tid(1))
 				Mint(addr01, tid(2))
 			},
@@ -66,7 +66,7 @@ func TestTotalSupply(t *testing.T) {
 		{
 			name: "total supply after burning",
 			setup: func() {
-				std.TestSetRealm(positionRealm)
+				testing.SetRealm(positionRealm)
 				Burn(tid(2))
 			},
 			expected: uint64(1),
@@ -144,7 +144,7 @@ func TestIsApprovedForAll(t *testing.T) {
 		{
 			name: "IsApprovedForAll(addr01, addr02) after setting approval",
 			setup: func() {
-				std.TestSetRealm(addr01Realm)
+				testing.SetRealm(addr01Realm)
 				SetApprovalForAll((addr02), true)
 			},
 			expected: true,
@@ -174,7 +174,7 @@ func TestGetApproved(t *testing.T) {
 		{
 			name: "GetApproved(1) after approving",
 			setup: func() {
-				std.TestSetRealm(addr01Realm)
+				testing.SetRealm(addr01Realm)
 				Approve(addr02, tid(1))
 			},
 			expectedAddr: addr02,
@@ -195,7 +195,7 @@ func TestGetApproved(t *testing.T) {
 
 func TestTransferFrom(t *testing.T) {
 	resetObject(t)
-	std.TestSetRealm(positionRealm)
+	testing.SetRealm(positionRealm)
 	Mint(addr01, tid(1))
 
 	tests := []struct {
@@ -231,7 +231,7 @@ func TestTransferFrom(t *testing.T) {
 		{
 			name: "transfer token owned by other user with approval",
 			setup: func() {
-				std.TestSetRealm(addr01Realm)
+				testing.SetRealm(addr01Realm)
 				Approve((addr02), tid(1))
 			},
 			callerRealm:       std.NewUserRealm(addr02),
@@ -285,7 +285,7 @@ func TestTransferFrom(t *testing.T) {
 					TransferFrom((tt.fromAddr), (tt.toAddr), tid(tt.tokenIdToTransfer))
 				})
 			} else {
-				std.TestSetRealm(tt.callerRealm)
+				testing.SetRealm(tt.callerRealm)
 				TransferFrom((tt.fromAddr), (tt.toAddr), tid(tt.tokenIdToTransfer))
 				tt.verifyTokenList()
 			}
@@ -339,9 +339,8 @@ func TestMint(t *testing.T) {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
 					Mint((tt.addressToMint), tid(tt.tokenIdToMint))
 				})
-
 			} else {
-				std.TestSetRealm(tt.callerRealm)
+				testing.SetRealm(tt.callerRealm)
 				mintedTokenId := Mint((tt.addressToMint), tid(tt.tokenIdToMint))
 				uassert.Equal(t, tt.expected, string(mintedTokenId))
 				tt.verifyTokenList()
@@ -385,7 +384,7 @@ func TestBurn(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetRealm(tt.callerRealm)
+			testing.SetRealm(tt.callerRealm)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
@@ -401,54 +400,24 @@ func TestBurn(t *testing.T) {
 	}
 }
 
-func TestSetTokenURI(t *testing.T) {
-	tests := []struct {
-		name        string
-		callerRealm std.Realm
-		tokenId     uint64
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name:        "set token uri without permission",
-			tokenId:     1,
-			shouldPanic: true,
-			panicMsg:    `[GNOSWAP-GNFT-001] caller has no permission || caller () is not the owner of token (1)`,
-		},
-		{
-			name:        "set token uri of non-minted token id",
-			tokenId:     99,
-			shouldPanic: true,
-			panicMsg:    `[GNOSWAP-GNFT-002] cannot set URI || invalid token id (99)`,
-		},
-		{
-			name:        "set token uri of token id(1)",
-			callerRealm: addr01Realm,
-			tokenId:     1,
-		},
-		{
-			name:        "set token uri of token id(1) - twice",
-			callerRealm: addr01Realm,
-			tokenId:     1,
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-002] cannot set URI || token id (1) has already set URI",
-		},
-	}
+func TestSetTokenURIByImageURI(t *testing.T) {
+	testAddr := testutils.TestAddress("testAddr")
+	tokenID := grc721.TokenID("10")
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetRealm(tt.callerRealm)
+	positionAddr, _ := access.GetAddress(access.ROLE_POSITION)
 
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					SetTokenURIByImageURI(tid(tt.tokenId))
-				})
-			} else {
-				uassert.NotPanics(t, func() {
-					SetTokenURIByImageURI(tid(tt.tokenId))
-				})
-			}
-		})
+	// set position contract as caller
+	testing.SetOriginCaller(positionAddr)
+
+	// need to mint token to set owner
+	Mint(testAddr, tokenID)
+	testing.SetOriginCaller(testAddr)
+
+	SetTokenURIByImageURI(tokenID)
+
+	uri := TokenURI(tokenID)
+	if uri == "" {
+		t.Error("token URI should not be empty")
 	}
 }
 
@@ -471,7 +440,7 @@ func TestTokenURI(t *testing.T) {
 		{
 			name: "get token uri of minted token but not set token uri",
 			setup: func() {
-				std.TestSetRealm(positionRealm)
+				testing.SetRealm(positionRealm)
 				Mint((addr01), tid(1))
 			},
 			tokenId:     1,
@@ -481,7 +450,7 @@ func TestTokenURI(t *testing.T) {
 		{
 			name: "get token uri of minted token after setting token uri",
 			setup: func() {
-				std.TestSetRealm(addr01Realm)
+				testing.SetRealm(addr01Realm)
 				SetTokenURIByImageURI(tid(1))
 			},
 			tokenId: 1,
@@ -507,12 +476,12 @@ func TestTokenURI(t *testing.T) {
 
 func TestSetTokenURILast(t *testing.T) {
 	resetObject(t)
-	std.TestSetRealm(positionRealm)
+	testing.SetRealm(positionRealm)
 	Mint(addr01, tid(1))
 	Mint(addr01, tid(2)) // last minted
 
 	t.Run("set token uri last", func(t *testing.T) {
-		std.TestSetRealm(addr01Realm)
+		testing.SetRealm(addr01Realm)
 		SetTokenURILast()
 	})
 

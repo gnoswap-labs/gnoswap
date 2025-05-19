@@ -23,9 +23,11 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/gns"
+
+	"gno.land/r/gnoswap/v1/access"
 
 	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -33,44 +35,25 @@ import (
 )
 
 var (
-	adminAddr  = consts.ADMIN
-	adminUser  = adminAddr
-	adminRealm = std.NewUserRealm(adminAddr)
+	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminRealm   = std.NewUserRealm(adminAddr)
 
 	// g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup
-	externalCreatorAddr  = testutils.TestAddress("externalCreator")
-	externalCreatorUser  = externalCreatorAddr
-	externalCreatorRealm = std.NewUserRealm(externalCreatorAddr)
+	externalCreatorAddr = testutils.TestAddress("externalCreator")
 
-	stakerAddr  = consts.STAKER_ADDR
-	stakerUser  = stakerAddr
-	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+
+	poolAddr, _          = access.GetAddress(access.ROLE_POOL)
+	communityPoolAddr, _ = access.GetAddress(access.ROLE_COMMUNITY_POOL)
 
 	wugnotAddr = consts.WUGNOT_ADDR
-
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
-	oblPath = "gno.land/r/onbloc/obl"
 
 	gnsPath    = "gno.land/r/gnoswap/v1/gns"
 	wugnotPath = "gno.land/r/demo/wugnot"
 
-	fee100  uint32 = 100
-	fee500  uint32 = 500
 	fee3000 uint32 = 3000
 
 	max_timeout int64 = 9999999999
-
-	// external incentive deposit fee
-	depositGnsAmount uint64 = 1_000_000_000 // 1_000 GNS
-
-	TIMESTAMP_90DAYS  int64 = 90 * 24 * 60 * 60
-	TIMESTAMP_180DAYS int64 = 180 * 24 * 60 * 60
-	TIMESTAMP_365DAYS int64 = 365 * 24 * 60 * 60
-
-	poolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
 )
 
 func main() {
@@ -83,23 +66,23 @@ func main() {
 }
 
 func testInit() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// prepare wugnot
-	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
-	banker := std.GetBanker(std.BankerTypeRealmSend)
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
+	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
-	std.TestSetOrigSend(std.Coins{{"ugnot", 50_000_000_000_000}}, nil)
+	testing.SetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}})
 	wugnot.Deposit()
-	std.TestSetOrigSend(nil, nil)
+	testing.SetOriginSend(nil)
 }
 
 func testCreatePool() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	pl.SetPoolCreationFeeByAdmin(0)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pl.CreatePool(
 		wugnotPath,
 		gnsPath,
@@ -109,12 +92,12 @@ func testCreatePool() {
 }
 
 func testMintWugnotGnsPos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	wugnot.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	gns.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	wugnot.Approve(poolAddr, consts.UINT64_MAX)
+	gns.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 	pn.Mint(
 		wugnotPath,
 		gnsPath,
@@ -132,22 +115,22 @@ func testMintWugnotGnsPos01() {
 }
 
 func testStakeTokenPos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	// stake
-	gnft.Approve(consts.STAKER_ADDR, positionIdFrom(1))
+	gnft.Approve(stakerAddr, positionIdFrom(1))
 	sr.StakeToken(1, "")
 }
 
 func testUnstakePos01() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	oldCommunityGns := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
+	oldCommunityGns := gns.BalanceOf(communityPoolAddr)
 
 	// this position-01 has been staked and staked same time
 	sr.UnStakeToken(1, false)
 
-	afterCommunityGns := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
+	afterCommunityGns := gns.BalanceOf(communityPoolAddr)
 
 	// therefore community pool should receive no-position-staked pool's reward
 	increased := afterCommunityGns - oldCommunityGns
@@ -156,7 +139,7 @@ func testUnstakePos01() {
 	}
 }
 
-func positionIdFrom(positionId interface{}) grc721.TokenID {
+func positionIdFrom(positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

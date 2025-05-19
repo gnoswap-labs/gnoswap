@@ -16,21 +16,21 @@ import (
 
 func init() {
 	// set pool create fee to 0 for testing
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFeeByAdmin(0)
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
+	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
 }
 
 func TestMintPositionFullInRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	testing.SetRealm(adminRealm)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -50,9 +50,9 @@ func TestMintPositionFullInRange(t *testing.T) {
 }
 
 func TestIncreaseLiquidity(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	testing.SetRealm(adminRealm)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1, poolPath := IncreaseLiquidity(
 		uint64(1),
@@ -65,9 +65,9 @@ func TestIncreaseLiquidity(t *testing.T) {
 }
 
 func TestDecreaseLiquidity(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	testing.SetRealm(adminRealm)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 		uint64(1),
@@ -81,9 +81,9 @@ func TestDecreaseLiquidity(t *testing.T) {
 }
 
 func TestCollectFee(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	testing.SetRealm(adminRealm)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
 	positionId, fee0, fee1, poolPath, _, _ := CollectFee(uint64(1), false)
 }

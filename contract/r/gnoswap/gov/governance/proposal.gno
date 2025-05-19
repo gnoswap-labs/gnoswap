@@ -7,27 +7,34 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
+	phalt "gno.land/p/gnoswap/halt"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gov/xgns"
-
 	en "gno.land/r/gnoswap/v1/emission"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
+	"gno.land/r/gnoswap/v1/gov/xgns"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (
 	proposalId               uint64
-	proposals                = avl.NewTree() // proposalId -> ProposalInfo
-	latestProposalByProposer = avl.NewTree() // proposer -> proposalId
+	proposals                = avl.NewTree() // Only stores active proposals
+	archivedProposals        = avl.NewTree() // Stores terminated proposals
+	proposalIdListByProposer = avl.NewTree() // proposer -> proposalId
 )
 
 // Governance can execute multiple messages in a single proposal
 // To separate the messages, we use this separator
 // Look for ProposeParameterChange() for more details
 const (
-	GOV_SPLIT = "*GOV*"
+	GOV_SPLIT   = "*GOV*"
+	ROLE_PREFIX = "ROLE_CHANGE:"
 )
+
+func init() {
+	proposalId = 0 // initialize proposalId
+}
 
 // ProposeText creates a new text proposal with the given data
 // It checks if the proposer is eligible to create a proposal and if they don't have an active proposal.
@@ -37,13 +44,10 @@ func ProposeText(
 	title string,
 	description string,
 ) uint64 { // proposalId
-	common.IsHalted()
-
-	en.MintAndDistributeGns()
-	updateProposalsState()
-
-	proposer := std.PrevRealm().Addr()
-
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
+	proposer := std.PreviousRealm().Address()
 	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
 	if !enough {
 		panic(addDetailToError(
@@ -51,6 +55,9 @@ func ProposeText(
 			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
 		))
 	}
+
+	en.MintAndDistributeGns()
+	updateProposalsState()
 
 	now := uint64(time.Now().Unix())
 	// votingMax does not include quantities delegated through Launchpad.
@@ -77,9 +84,10 @@ func ProposeText(
 		Description:               description,
 	}
 
-	proposalId++
-	proposals.Set(formatUint(proposalId), proposal)
-	latestProposalByProposer.Set(proposer.String(), proposalId)
+	increaseProposalId()
+	newProposalId := getProposalId()
+	proposals.Set(formatUint(newProposalId), proposal)
+	proposalIdListByProposer.Set(proposer.String(), newProposalId)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -88,7 +96,7 @@ func ProposeText(
 		"prevRealm", prevPkgPath,
 		"title", title,
 		"description", description,
-		"proposalId", formatUint(proposalId),
+		"proposalId", formatUint(newProposalId),
 		"quorumAmount", formatUint(proposal.QuorumAmount),
 		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
 		"configVersion", formatUint(proposal.ConfigVersion),
@@ -108,13 +116,20 @@ func ProposeCommunityPoolSpend(
 	tokenPath string,
 	amount uint64,
 ) uint64 { // proposalId
-	common.IsHalted()
+	// Skip halt check if current level is MainnetSafeMode
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err.Error())
+		}
 
-	en.MintAndDistributeGns()
-	updateProposalsState()
+		if halt.IsContractHalted(phalt.OpTypeGovernance) {
+			panic("gov/governance contract operations are currently disabled")
+		}
+	}
 
-	proposer := std.PrevRealm().Addr()
-
+	proposer := std.PreviousRealm().Address()
 	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
 	if !enough {
 		panic(addDetailToError(
@@ -122,6 +137,22 @@ func ProposeCommunityPoolSpend(
 			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
 		))
 	}
+	if !to.IsValid() {
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("address is %s", to.String()),
+		))
+	}
+	common.MustRegistered(tokenPath)
+	if amount == 0 {
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("amount is 0"),
+		))
+	}
+
+	en.MintAndDistributeGns()
+	updateProposalsState()
 
 	now := uint64(time.Now().Unix())
 	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
@@ -152,9 +183,9 @@ func ProposeCommunityPoolSpend(
 		},
 	}
 
-	proposalId++
+	increaseProposalId()
 	proposals.Set(formatUint(proposalId), proposal)
-	latestProposalByProposer.Set(proposer.String(), proposalId)
+	proposalIdListByProposer.Set(proposer.String(), proposalId)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -190,13 +221,10 @@ func ProposeParameterChange(
 	numToExecute uint64,
 	executions string,
 ) uint64 { // proposalId
-	common.IsHalted()
-
-	en.MintAndDistributeGns()
-	updateProposalsState()
-
-	proposer := std.PrevRealm().Addr()
-
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
+	proposer := std.PreviousRealm().Address()
 	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
 	if !enough {
 		panic(addDetailToError(
@@ -204,12 +232,15 @@ func ProposeParameterChange(
 			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
 		))
 	}
-
 	if numToExecute == 0 {
 		panic(addDetailToError(
 			errInvalidInput,
 			ufmt.Sprintf("numToExecute is 0"),
 		))
+	}
+
+	if strings.HasPrefix(executions, ROLE_PREFIX) {
+		return handleRoleChangeProposal(title, description, proposer, executions)
 	}
 
 	// check if numToExecute is a valid number
@@ -220,6 +251,9 @@ func ProposeParameterChange(
 			ufmt.Sprintf("numToExecute(%d) does not match the number of executions(%d)", numToExecute, len(splitGov)),
 		))
 	}
+
+	en.MintAndDistributeGns()
+	updateProposalsState()
 
 	now := uint64(time.Now().Unix())
 	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
@@ -249,9 +283,9 @@ func ProposeParameterChange(
 		},
 	}
 
-	proposalId++
+	increaseProposalId()
 	proposals.Set(formatUint(proposalId), proposal)
-	latestProposalByProposer.Set(proposer.String(), proposalId)
+	proposalIdListByProposer.Set(proposer.String(), proposalId)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -281,23 +315,65 @@ type proposalStateUpdater struct {
 
 // updateProposalsState updates the state of all proposals based on current time.
 // It processes voting periods, results, and execution windows for each proposal.
+// Terminated proposals are moved to archivedProposals.
 func updateProposalsState() {
 	now := uint64(time.Now().Unix())
+	var keysToArchive []string
 
-	proposals.Iterate("", "", func(key string, value interface{}) bool {
+	proposals.Iterate("", "", func(key string, value any) bool {
 		proposal := value.(ProposalInfo)
-		if proposal.State.Canceled || proposal.State.Expired || proposal.State.Executed {
-			return false
+
+		// Update proposal state
+		updater := newProposalStateUpdater(&proposal, now)
+		if updater.shouldUpdate() {
+			updater.updateVotingState()
+			updater.updateVotingResult()
+			updater.updateExecutionState()
 		}
 
-		updater := newProposalStateUpdater(&proposal, now)
-		updater.updateVotingState()
-		updater.updateVotingResult()
-		updater.updateExecutionState()
-
-		proposals.Set(key, *updater.proposal)
+		// Collect keys to archive
+		if isProposalTerminated(*updater.proposal) {
+			keysToArchive = append(keysToArchive, key)
+			archivedProposals.Set(key, *updater.proposal)
+		} else {
+			// Keep active proposals
+			proposals.Set(key, *updater.proposal)
+		}
 		return false
 	})
+
+	// Process archived proposals outside the iterator
+	for _, key := range keysToArchive {
+		proposals.Remove(key)
+		archivedVal, _ := archivedProposals.Get(key)
+		proposer := archivedVal.(ProposalInfo).Proposer.String()
+		proposalIdListByProposer.Remove(proposer)
+	}
+}
+
+// isProposalTerminated checks if a proposal is in a terminated state
+func isProposalTerminated(proposal ProposalInfo) bool {
+	return proposal.State.Executed ||
+		proposal.State.Rejected ||
+		proposal.State.Canceled ||
+		proposal.State.Expired
+}
+
+// GetProposal retrieves a proposal by ID, searching in both active and archived proposals
+func GetProposal(proposalId uint64) (ProposalInfo, bool) {
+	proposalIdStr := formatUint(proposalId)
+
+	// Search in active proposals first
+	if value, exists := proposals.Get(proposalIdStr); exists {
+		return value.(ProposalInfo), true
+	}
+
+	// Search in archived proposals
+	if value, exists := archivedProposals.Get(proposalIdStr); exists {
+		return value.(ProposalInfo), true
+	}
+
+	return ProposalInfo{}, false
 }
 
 // newProposalStateUpdater creates a new proposalStateUpdater.
@@ -311,10 +387,11 @@ func newProposalStateUpdater(proposal *ProposalInfo, now uint64) *proposalStateU
 
 // shouldUpdate determines if the proposal state should be updated.
 // Returns true if the proposal is created, not canceled, and not executed.
+// shouldUpdate determines if the proposal state should be updated.
+// Returns true if the proposal is created, not canceled, and not executed.
 func (u *proposalStateUpdater) shouldUpdate() bool {
-	return u.proposal.State.Created &&
-		!u.proposal.State.Canceled &&
-		!u.proposal.State.Executed
+	return !isProposalTerminated(*u.proposal) &&
+		(u.proposal.State.Upcoming || u.proposal.State.Active || u.proposal.State.Passed)
 }
 
 // getVotingTimes returns the start and end timestamps of the voting period.
@@ -339,10 +416,6 @@ func (u *proposalStateUpdater) getExecutionTimes() (start, end uint64) {
 // updateVotingState updates the voting state of the proposal.
 // It transitions from upcoming to active state when voting period starts.
 func (u *proposalStateUpdater) updateVotingState() {
-	if !u.shouldUpdate() {
-		return
-	}
-
 	votingStart, votingEnd := u.getVotingTimes()
 	isVotingPeriod := u.now >= votingStart && u.now <= votingEnd
 
@@ -410,4 +483,12 @@ func checkEnoughXGnsToPropose(proposer std.Address) (bool, uint64, uint64) {
 	}
 
 	return true, xGNSBalance, config.ProposalCreationThreshold
+}
+
+func increaseProposalId() {
+	proposalId++
+}
+
+func getProposalId() uint64 {
+	return proposalId
 }

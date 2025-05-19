@@ -4,7 +4,9 @@ import (
 	"std"
 
 	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 
 	"gno.land/p/demo/ufmt"
 
@@ -17,9 +19,7 @@ const (
 	defaultSwapFeeBPS = uint64(15) // 0.15%
 )
 
-var (
-	swapFee = defaultSwapFeeBPS
-)
+var swapFee = defaultSwapFeeBPS
 
 // GetSwapFee returns current rate of swap fee
 // ref: https://docs.gnoswap.io/contracts/router/protocol_fee_swap.gno#getswapfee
@@ -31,7 +31,7 @@ func GetSwapFee() uint64 {
 // Only admin can execute this function
 func SetSwapFeeByAdmin(fee uint64) {
 	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
+	if err := access.AdminOnly(caller); err != nil {
 		panic(err)
 	}
 
@@ -56,7 +56,7 @@ func SetSwapFeeByAdmin(fee uint64) {
 // ref: https://docs.gnoswap.io/contracts/router/protocol_fee_swap.gno#setswapfee
 func SetSwapFee(fee uint64) {
 	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
+	if err := access.GovernanceOnly(caller); err != nil {
 		panic(err)
 	}
 
@@ -77,7 +77,9 @@ func SetSwapFee(fee uint64) {
 }
 
 func setSwapFee(fee uint64) error {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 
 	// 10000 (bps) = 100%
 	if fee > 10000 {
@@ -101,12 +103,16 @@ func handleSwapFee(
 		return amount
 	}
 
+	if outputToken == consts.GNOT {
+		outputToken = consts.WRAPPED_WUGNOT
+	}
+
 	feeAmount := new(u256.Uint).Mul(amount, u256.NewUint(swapFee))
 	feeAmount.Div(feeAmount, u256.NewUint(10000))
 	feeAmountUint64 := feeAmount.Uint64()
 
 	outputTeller := common.GetTokenTeller(outputToken)
-	outputTeller.TransferFrom(std.PrevRealm().Addr(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64)
+	outputTeller.TransferFrom(std.PreviousRealm().Address(), protocolFeeAddr, feeAmountUint64)
 	pf.AddToProtocolFee(outputToken, feeAmountUint64)
 
 	prevAddr, prevPkgPath := getPrev()

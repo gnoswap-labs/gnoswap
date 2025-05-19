@@ -8,20 +8,13 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/gnoswap/consts"
-
 	"gno.land/r/onbloc/obl"
 )
 
 var (
-	projectAddr = testutils.TestAddress("projectAddr")
 	user01      = testutils.TestAddress("user01")
-
-	projectRealm = std.NewUserRealm(projectAddr)
-	user01Realm  = std.NewUserRealm(user01)
-
+	user01Realm = std.NewUserRealm(user01)
 	refundAddr  = testutils.TestAddress("refundAddr")
-	refundRealm = std.NewUserRealm(refundAddr)
 )
 
 func TestRefundEndedProjectWithNoDeposit(t *testing.T) {
@@ -33,10 +26,10 @@ func TestRefundEndedProjectWithNoDeposit(t *testing.T) {
 
 func testCreateProject(t *testing.T) {
 	t.Run("create project", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
-		obl.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000_000))
-		std.TestSkipHeights(1)
+		obl.Approve(launchpadAddr, uint64(1_000_000_000))
+		testing.SkipHeights(1)
 
 		{
 			// check before project create
@@ -59,7 +52,7 @@ func testCreateProject(t *testing.T) {
 			uint64(time.Now().Unix()+10), // 10s later
 		)
 		uassert.Equal(t, projectId, `gno.land/r/onbloc/obl:124`)
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
@@ -71,9 +64,9 @@ func testMakeProjectEnd(t *testing.T) {
 		refundOldOblBalance := obl.BalanceOf(refundAddr)
 		uassert.Equal(t, refundOldOblBalance, uint64(0))
 
-		std.TestSkipHeights(10)                           // make active
-		std.TestSkipHeights(int64(TIMESTAMP_180DAYS) / 2) // make end
-		std.TestSetRealm(adminRealm)
+		testing.SkipHeights(10)                           // make active
+		testing.SkipHeights(int64(TIMESTAMP_180DAYS) / 2) // make end
+		testing.SetRealm(adminRealm)
 		TransferLeftFromProjectByAdmin(`gno.land/r/onbloc/obl:124`, refundAddr)
 
 		user01NewOblBalance := obl.BalanceOf(user01)
@@ -85,12 +78,12 @@ func testMakeProjectEnd(t *testing.T) {
 }
 
 func testOneMoreBlock(t *testing.T) {
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
 	uassert.PanicsWithMessage(t,
 		"project already refunded(height:7776135)",
 		func() {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			TransferLeftFromProjectByAdmin(`gno.land/r/onbloc/obl:124`, refundAddr)
 		},
 	)

@@ -31,7 +31,7 @@ func GetKeeper() ReferralKeeper {
 func GetReferral(addr string) string {
 	referral, err := gReferralKeeper.get(std.Address(addr))
 	if err != nil {
-		panic(err)
+		return ""
 	}
 	return referral.String()
 }
@@ -50,18 +50,7 @@ func IsEmpty() bool {
 
 // TryRegister attempts to register a new referral for an address.
 func TryRegister(addr std.Address, referral string) bool {
-	if referral == "" {
-		return false
-	}
-
 	refAddr := std.Address(referral)
-	if !refAddr.IsValid() {
-		std.Emit(
-			EventReferralInvalid,
-			"referral", referral,
-		)
-		return false
-	}
 
 	r := NewReferral()
 	err := r.Register(addr, refAddr)
@@ -69,6 +58,7 @@ func TryRegister(addr std.Address, referral string) bool {
 		std.Emit(
 			EventRegisterFailed,
 			"address", addr.String(),
+			"error", err.Error(),
 		)
 		return false
 	}

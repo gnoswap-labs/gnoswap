@@ -6,6 +6,7 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/uassert"
 
+	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -341,7 +342,6 @@ func TestTickUpdate(t *testing.T) {
 				deleteTick(t, pool, 0)
 				pool.tickUpdate(0, 0, i256.NewInt(2), u256.Zero(), u256.Zero(), false, u256.NewUint(3))
 				pool.tickUpdate(0, 0, i256.One(), u256.Zero(), u256.Zero(), true, u256.NewUint(3))
-
 			},
 			tick:                 0,
 			tickCurrent:          0,
@@ -360,7 +360,6 @@ func TestTickUpdate(t *testing.T) {
 				pool.tickUpdate(0, 0, i256.One(), u256.Zero(), u256.Zero(), true, u256.NewUint(10))
 				pool.tickUpdate(0, 0, i256.NewInt(3), u256.Zero(), u256.Zero(), true, u256.NewUint(10))
 				pool.tickUpdate(0, 0, i256.One(), u256.Zero(), u256.Zero(), false, u256.NewUint(10))
-
 			},
 			tick:                 0,
 			tickCurrent:          0,
@@ -727,4 +726,92 @@ func setTick(
 func deleteTick(t *testing.T, pool *Pool, tick int32) {
 	t.Helper()
 	pool.deleteTick(tick)
+}
+
+func TestAssertValidTickUpper(t *testing.T) {
+	tests := []struct {
+		name        string
+		tickUpper   int32
+		shouldPanic bool
+	}{
+		{
+			name:        "valid tick upper (MAX_TICK)",
+			tickUpper:   consts.MAX_TICK,
+			shouldPanic: false,
+		},
+		{
+			name:        "valid tick upper (MAX_TICK - 1)",
+			tickUpper:   consts.MAX_TICK - 1,
+			shouldPanic: false,
+		},
+		{
+			name:        "invalid tick upper (MAX_TICK + 1)",
+			tickUpper:   consts.MAX_TICK + 1,
+			shouldPanic: true,
+		},
+		// Issue: GSW-2216
+		{
+			name:        "full range position tick upper",
+			tickUpper:   887272,
+			shouldPanic: false,
+		},
+		{
+			name:        "valid tick upper (MAX_TICK - 10)",
+			tickUpper:   consts.MAX_TICK - 10,
+			shouldPanic: false,
+		},
+		{
+			name:        "valid tick upper (MAX_TICK - 100)",
+			tickUpper:   consts.MAX_TICK - 100,
+			shouldPanic: false,
+		},
+		{
+			name:        "valid tick upper (MAX_TICK - 1000)",
+			tickUpper:   consts.MAX_TICK - 1000,
+			shouldPanic: false,
+		},
+		{
+			name:        "invalid tick upper (MAX_TICK + 10)",
+			tickUpper:   consts.MAX_TICK + 10,
+			shouldPanic: true,
+		},
+		{
+			name:        "invalid tick upper (MAX_TICK + 100)",
+			tickUpper:   consts.MAX_TICK + 100,
+			shouldPanic: true,
+		},
+		{
+			name:        "invalid tick upper (MAX_TICK + 1000)",
+			tickUpper:   consts.MAX_TICK + 1000,
+			shouldPanic: true,
+		},
+		{
+			name:        "valid tick upper (MAX_TICK - tickSpacing)",
+			tickUpper:   consts.MAX_TICK - 100,
+			shouldPanic: false,
+		},
+		{
+			name:        "valid tick upper (MAX_TICK - 2*tickSpacing)",
+			tickUpper:   consts.MAX_TICK - 200,
+			shouldPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("expected panic, but got nil")
+					}
+				}()
+			}
+
+			assertValidTickUpper(tt.tickUpper)
+
+			if tt.shouldPanic {
+				t.Errorf("expected panic, but got none")
+			}
+		})
+	}
 }

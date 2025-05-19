@@ -28,32 +28,30 @@ func TestEmission(t *testing.T) {
 }
 
 func initial(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	uassert.Equal(t, gns.BalanceOf(admin), uint64(100000000000000))
-	uassert.Equal(t, xgns.BalanceOf(admin), uint64(0))
+	uassert.Equal(t, uint64(100000000000000), gns.BalanceOf(admin))
+	uassert.Equal(t, uint64(0), xgns.BalanceOf(admin))
 }
 
 func delegateAdmin(t *testing.T) {
 	// gns before emission
-	uassert.Equal(t, gns.BalanceOf(consts.STAKER_ADDR), uint64(0))
-	uassert.Equal(t, gns.BalanceOf(consts.DEV_OPS), uint64(0))
-	uassert.Equal(t, gns.BalanceOf(consts.COMMUNITY_POOL_ADDR), uint64(0))
-	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR), uint64(0))
+	uassert.Equal(t, uint64(0), gns.BalanceOf(stakerAddr))
+	uassert.Equal(t, uint64(0), gns.BalanceOf(devOpsAddr))
+	uassert.Equal(t, uint64(0), gns.BalanceOf(communityPoolAddr))
+	uassert.Equal(t, uint64(0), gns.BalanceOf(govStakerAddr))
 
-	std.TestSkipHeights(1)
+	testing.SkipHeights(1)
 
-	std.TestSetRealm(adminRealm)
-	gns.Approve(consts.GOV_STAKER_ADDR, uint64(1000000))
+	testing.SetRealm(adminRealm)
+	gns.Approve(govStakerAddr, uint64(1000000))
 	Delegate(dummyAddr, 1000000, "")
-	println("CALLER", adminRealm.Addr())
-	println("TO", dummyAddr)
 
-	uassert.Equal(t, gns.BalanceOf(consts.STAKER_ADDR), uint64(10702054))
-	uassert.Equal(t, gns.BalanceOf(consts.DEV_OPS), uint64(2853881))
-	uassert.Equal(t, gns.BalanceOf(consts.COMMUNITY_POOL_ADDR), uint64(713470))
-	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR), uint64(1000000))
-	uassert.Equal(t, gns.BalanceOf(consts.GOV_STAKER_ADDR)-xgns.TotalSupply(), uint64(0))
+	uassert.Equal(t, uint64(10702054), gns.BalanceOf(stakerAddr))
+	uassert.Equal(t, uint64(2853881), gns.BalanceOf(devOpsAddr))
+	uassert.Equal(t, uint64(713470), gns.BalanceOf(communityPoolAddr))
+	uassert.Equal(t, uint64(1000000), gns.BalanceOf(govStakerAddr))
+	uassert.Equal(t, uint64(0), gns.BalanceOf(govStakerAddr)-xgns.TotalSupply())
 }
 
 func redelegateAdmin(t *testing.T) {
@@ -62,11 +60,7 @@ func redelegateAdmin(t *testing.T) {
 	uassert.Equal(t, gns.BalanceOf(admin), uint64(99999999000000))
 	uassert.Equal(t, xgns.BalanceOf(admin), uint64(1000000))
 
-	std.TestSetRealm(adminRealm)
-	println()
-	println("CALLER", adminRealm.Addr())
-	println("FROM", dummyAddr)
-	println("TO", reDelegate)
+	testing.SetRealm(adminRealm)
 	Redelegate(dummyAddr, reDelegate, 1000000)
 
 	uassert.Equal(t, gns.BalanceOf(admin), uint64(99999999000000))

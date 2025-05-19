@@ -34,7 +34,7 @@ func GetProposals() string {
 	proposalsObj := metaNode()
 	proposalArr := json.ArrayNode("", nil)
 
-	proposals.Iterate("", "", func(key string, value interface{}) bool {
+	proposals.Iterate("", "", func(key string, value any) bool {
 		proposalObj := getProposalById(proposalId)
 		proposalArr.AppendArray(proposalObj)
 		return false
@@ -63,10 +63,21 @@ func GetProposalById(id uint64) string {
 	return marshal(proposalsObj)
 }
 
-// helper function for GetProposals and GetProposalById
-func getProposalById(id uint64) *json.Node {
-	proposal := mustGetProposal(id)
-	return createProposalJsonNode(id, proposal)
+func GetArchivedProposalById(id uint64) string {
+	updateProposalsState()
+
+	_, exists := archivedProposals.Get(formatUint(id))
+	if !exists {
+		return ""
+	}
+
+	proposalsObj := metaNode()
+	proposalArr := json.ArrayNode("", nil)
+	proposalObj := getProposalById(id)
+	proposalArr.AppendArray(proposalObj)
+	proposalsObj.AppendObject("proposals", proposalArr)
+
+	return marshal(proposalsObj)
 }
 
 // GetVoteStatusFromProposalById returns the vote status(max, yes, no) of a proposal.
@@ -100,7 +111,7 @@ func GetVotesByAddress(addr std.Address) string {
 
 	// sertUesrVote does add data to `userVotes` with key (voter_pid) as key
 	// therefore this function can not search for 'specific_address'
-	userVotes.Iterate("", "", func(key string, value interface{}) bool {
+	userVotes.Iterate("", "", func(key string, value any) bool {
 		if strings.HasPrefix(key, addr.String()) {
 			voteObj := createVoteJsonNode(addr, proposalId, value.(voteWithWeight))
 			votesArr.AppendArray(voteObj)
@@ -128,6 +139,12 @@ func GetVoteByAddressFromProposalById(addr std.Address, id uint64) string {
 	votesObj.AppendObject("votes", voteArr)
 
 	return marshal(votesObj)
+}
+
+// helper function for GetProposals and GetProposalById
+func getProposalById(id uint64) *json.Node {
+	proposal := mustGetProposal(id)
+	return createProposalJsonNode(id, proposal)
 }
 
 func createVoteJsonNode(addr std.Address, id uint64, vote voteWithWeight) *json.Node {
@@ -243,7 +260,7 @@ func getProposalVotes(id uint64) string {
 }
 
 func metaNode() *json.Node {
-	height := std.GetHeight()
+	height := std.ChainHeight()
 	now := time.Now().Unix()
 
 	return json.Builder().

@@ -3,8 +3,6 @@ package staker
 import (
 	"std"
 	"testing"
-
-	"gno.land/p/gnoswap/consts"
 )
 
 func TestGetDepositGnsAmount(t *testing.T) {
@@ -25,7 +23,7 @@ func TestSetDepositGnsAmountByAdmin(t *testing.T) {
 	}{
 		{
 			name:        "Success - Admin sets deposit amount",
-			caller:      consts.ADMIN,
+			caller:      adminAddr,
 			newAmount:   2_000_000_000,
 			shouldPanic: false,
 		},
@@ -39,7 +37,7 @@ func TestSetDepositGnsAmountByAdmin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetOrigCaller(tt.caller)
+			testing.SetOriginCaller(tt.caller)
 
 			defer func() {
 				r := recover()
@@ -73,7 +71,7 @@ func TestSetDepositGnsAmount(t *testing.T) {
 	}{
 		{
 			name:        "Success - Governance sets deposit amount",
-			caller:      consts.GOV_GOVERNANCE_ADDR,
+			caller:      govGovernanceAddr,
 			newAmount:   3_000_000_000,
 			shouldPanic: false,
 		},
@@ -87,7 +85,7 @@ func TestSetDepositGnsAmount(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetOrigCaller(tt.caller)
+			testing.SetOriginCaller(tt.caller)
 
 			defer func() {
 				r := recover()

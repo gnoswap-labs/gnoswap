@@ -8,9 +8,11 @@ import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
+
+	phalt "gno.land/p/gnoswap/halt"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 // Converts a string to an integer. Panics if the conversion fails.
@@ -69,37 +71,37 @@ func containsString(arr []string, val string) bool {
 // GetOrigPkgAddr returns the original package address.
 // In position contract, original package address is the position address.
 func GetOrigPkgAddr() std.Address {
-	return consts.LAUNCHPAD_ADDR
+	return launchpadAddr
 }
 
 // isUserCall returns true if the caller is a user.
 func isUserCall() bool {
-	return std.PrevRealm().IsUser()
+	return std.PreviousRealm().IsUser()
 }
 
 // getPrev returns the address and package path of the previous realm.
 func getPrev() (string, string) {
-	prev := std.PrevRealm()
-	return prev.Addr().String(), prev.PkgPath()
+	prev := std.PreviousRealm()
+	return prev.Address().String(), prev.PkgPath()
 }
 
 // getPrevRealm returns object of the previous realm.
 func getPrevRealm() std.Realm {
-	return std.PrevRealm()
+	return std.PreviousRealm()
 }
 
 // getPrevAddr returns the address of the previous realm.
 func getPrevAddr() std.Address {
-	return std.PrevRealm().Addr()
+	return std.PreviousRealm().Address()
 }
 
 // getPrevPkgPath returns the package path of the previous realm.
 func getPrevPkgPath() string {
-	return std.PrevRealm().PkgPath()
+	return std.PreviousRealm().PkgPath()
 }
 
 // formatUint returns the string representation of the uint64 value.
-func formatUint(v interface{}) string {
+func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:
 		return strconv.FormatUint(uint64(v), 10)
@@ -119,13 +121,23 @@ func formatInt(value int64) string {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	common.IsHalted()
+	currentLevel := halt.GetCurrentHaltLevel()
+	if currentLevel != halt.LvMainnetSafeMode {
+		// Check if withdrawals are specifically halted, not just if the system is halted
+		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+			panic(err)
+		}
+
+		if halt.IsContractHalted(phalt.OpTypeLaunchpad) {
+			panic("launchpad contract operations are currently disabled")
+		}
+	}
 }
 
 // assertOnlyAdmin panics if the caller is not an admin.
 func assertOnlyAdmin() {
 	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
+	if err := access.AdminOnly(caller); err != nil {
 		panic(addDetailToError(errInvalidAddress, err.Error()))
 	}
 }

@@ -3,6 +3,7 @@ package governance
 import (
 	"testing"
 
+	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
 	"gno.land/p/gnoswap/consts"
@@ -209,8 +210,8 @@ func TestCreateParameterHandlers(t *testing.T) {
 					t.Fatal("unexpected panic")
 				}
 			}()
-			handler, _ := registry.Get(tt.path, tt.function)
-			err := handler(tt.params)
+			handler, _ := registry.Handler(tt.path, tt.function)
+			err := handler.Execute(tt.params)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("unexpected error: %v", err)
@@ -218,6 +219,47 @@ func TestCreateParameterHandlers(t *testing.T) {
 
 			if !tt.wantErr {
 				tt.validate(t)
+			}
+		})
+	}
+}
+
+func TestRoleChangeParameterHandlers(t *testing.T) {
+	registry := createParameterHandlers()
+
+	tests := []struct {
+		name        string
+		pkgPath     string
+		function    string
+		params      []string
+		expectError bool
+	}{
+		{
+			name:        "CreateRole handler",
+			pkgPath:     consts.ACCESS_PATH,
+			function:    "CreateRole",
+			params:      []string{"test_role", testutils.TestAddress("test_role").String()},
+			expectError: false,
+		},
+		{
+			name:        "Invalid parameter count for CreateRole",
+			pkgPath:     consts.ACCESS_PATH,
+			function:    "CreateRole",
+			params:      []string{"missing_address"},
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler, err := registry.Handler(tt.pkgPath, tt.function)
+			uassert.NoError(t, err)
+
+			err = handler.Execute(tt.params)
+			if tt.expectError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
 			}
 		})
 	}

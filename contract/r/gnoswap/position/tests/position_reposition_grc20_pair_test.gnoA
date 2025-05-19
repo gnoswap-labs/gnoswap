@@ -15,48 +15,17 @@ import (
 	"gno.land/r/onbloc/foo"
 )
 
-const (
-	ugnotDenom string = "ugnot"
-	ugnotPath  string = "ugnot"
-	wugnotPath string = "gno.land/r/demo/wugnot"
-	gnsPath    string = "gno.land/r/gnoswap/v1/gns"
-	barPath    string = "gno.land/r/onbloc/bar"
-	bazPath    string = "gno.land/r/onbloc/baz"
-	fooPath    string = "gno.land/r/onbloc/foo"
-	oblPath    string = "gno.land/r/onbloc/obl"
-	quxPath    string = "gno.land/r/onbloc/qux"
-
-	fee100               uint32 = 100
-	fee500               uint32 = 500
-	fee3000              uint32 = 3000
-	fee10000             uint32 = 10000
-	maxApprove           uint64 = 18446744073709551615
-	max_timeout          int64  = 9999999999
-	maxSqrtPriceLimitX96 string = "1461446703485210103287273052203988822378723970341"
-
-	TIER_1 uint64 = 1
-	TIER_2 uint64 = 2
-	TIER_3 uint64 = 3
-)
-
-var (
-	adminAddr  = std.Address(consts.ADMIN)
-	admin      = adminAddr
-	adminRealm = std.NewUserRealm(admin)
-	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
-)
-
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
+	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestMintPosition01InRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, 18394892)
-	foo.Approve(consts.POOL_ADDR, 50000000)
+	testing.SetRealm(adminRealm)
+	bar.Approve(poolAddr, 18394892)
+	foo.Approve(poolAddr, 50000000)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -75,7 +44,7 @@ func TestMintPosition01InRange(t *testing.T) {
 	)
 
 	uassert.Equal(t, positionId, uint64(1))
-	uassert.Equal(t, getNextId(), uint64(2))
+	uassert.Equal(t, GetNextId(), uint64(2))
 	uassert.Equal(t, amount0, "18394892")
 	uassert.Equal(t, amount1, "50000000")
 
@@ -94,10 +63,10 @@ func TestMintPosition01InRange(t *testing.T) {
 }
 
 func TestSwap1(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, 1234567)
+	testing.SetRealm(adminRealm)
+	bar.Approve(poolAddr, 1234567)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		fooPath,
@@ -127,9 +96,9 @@ func TestSwap1(t *testing.T) {
 }
 
 func TestMintPosition02InRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	testing.SetRealm(adminRealm)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -148,7 +117,7 @@ func TestMintPosition02InRange(t *testing.T) {
 	)
 
 	uassert.Equal(t, positionId, uint64(2))
-	uassert.Equal(t, getNextId(), uint64(3))
+	uassert.Equal(t, GetNextId(), uint64(3))
 	uassert.Equal(t, amount0, "21030652")
 	uassert.Equal(t, amount1, "50000000")
 
@@ -181,7 +150,7 @@ func TestUnclaimedFee02(t *testing.T) {
 }
 
 func TestDecreaseLiquidityInPosition(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	positionId := uint64(1)
 
@@ -189,8 +158,8 @@ func TestDecreaseLiquidityInPosition(t *testing.T) {
 	uassert.Equal(t, ownerOfPosition, adminAddr)
 
 	// approve fee0, fee1 positionId to pool
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
 	resultPositionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(positionId, "318704392", "0", "0", max_timeout, false)
 
@@ -216,9 +185,9 @@ func TestDecreaseLiquidityInPosition(t *testing.T) {
 }
 
 func TestMintPosition03InRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	testing.SetRealm(adminRealm)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -237,7 +206,7 @@ func TestMintPosition03InRange(t *testing.T) {
 	)
 
 	uassert.Equal(t, positionId, uint64(3))
-	uassert.Equal(t, getNextId(), uint64(4))
+	uassert.Equal(t, GetNextId(), uint64(4))
 	uassert.Equal(t, amount0, "21030652")
 	uassert.Equal(t, amount1, "50000000")
 
@@ -256,7 +225,7 @@ func TestMintPosition03InRange(t *testing.T) {
 }
 
 func TestRepositionNotOwner(t *testing.T) {
-	std.TestSetRealm(std.NewUserRealm(addr02))
+	testing.SetRealm(std.NewUserRealm(addr02))
 	uassert.PanicsWithMessage(
 		t,
 		`[GNOSWAP-POSITION-001] caller has no permission || caller(g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at) is not owner(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) for positionId(1)`,
@@ -266,7 +235,7 @@ func TestRepositionNotOwner(t *testing.T) {
 }
 
 func TestRepositionOwnerButNowBurned(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	uassert.PanicsWithMessage(
 		t,
 		`[GNOSWAP-POSITION-009] position is not clear || position(2) isn't clear(liquidity:341464938, tokensOwed0:0, tokensOwed1:0)`,
@@ -276,7 +245,7 @@ func TestRepositionOwnerButNowBurned(t *testing.T) {
 }
 
 func TestRepositionSlippageTooLarge(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	uassert.PanicsWithMessage(
 		t,
 		`[GNOSWAP-POSITION-002] slippage failed || Price Slippage Check(amount0(0) >= amount0Min(100000000000), amount1(500) >= amount1Min(100000000000))`,
@@ -286,7 +255,7 @@ func TestRepositionSlippageTooLarge(t *testing.T) {
 }
 
 func TestReposition(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	positionId := uint64(1)
 

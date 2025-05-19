@@ -20,9 +20,9 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee()*3)
+	gns.Approve(poolAddr, pl.GetPoolCreationFee()*3)
 
 	pl.CreatePool(consts.GNOT, quxPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 	// 1 bar ≈ 19.683 gnot
@@ -42,11 +42,11 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestSwapRouteWugnotquxExactIn(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	wugnot.Approve(consts.ROUTER_ADDR, 1000000)
-	qux.Approve(consts.ROUTER_ADDR, 1000000)
-	std.TestSetOrigSend(std.Coins{{"ugnot", 12345}}, nil) // sented ugnot amount
+	wugnot.Approve(routerAddr, 1000000)
+	qux.Approve(routerAddr, 1000000)
+	testing.SetOriginSend(std.Coins{{"ugnot", 12345}}) // sented ugnot amount
 
 	uassert.PanicsWithMessage(
 		t,
@@ -60,6 +60,7 @@ func TestSwapRouteWugnotquxExactIn(t *testing.T) {
 				"100", // quoteArr
 				"1",   // tokenAmountLimit
 				time.Now().Add(time.Hour).Unix(),
+				"", // referrer
 			)
 		},
 	)

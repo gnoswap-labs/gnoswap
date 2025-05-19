@@ -11,9 +11,7 @@ import (
 	"gno.land/r/demo/foo20"
 )
 
-var (
-	tokenPath = "gno.land/r/demo/foo20"
-)
+var tokenPath = "gno.land/r/demo/foo20"
 
 func TestGetToken(t *testing.T) {
 	t.Run("get regsitered token", func(t *testing.T) {
@@ -99,7 +97,7 @@ func TestTellerMethod(t *testing.T) {
 	addr01 := testutils.TestAddress("addr01")
 
 	t.Run("Transfer()", func(t *testing.T) {
-		std.TestSetRealm(std.NewUserRealm(defaultHolder))
+		testing.SetRealm(std.NewUserRealm(defaultHolder))
 
 		uassert.Equal(t, uint64(10000000000), token.BalanceOf(defaultHolder))
 
@@ -112,13 +110,13 @@ func TestTellerMethod(t *testing.T) {
 	})
 
 	t.Run("Approve()", func(t *testing.T) {
-		std.TestSetRealm(std.NewUserRealm(addr01))
+		testing.SetRealm(std.NewUserRealm(addr01))
 		uassert.NoError(t, teller.Approve(defaultHolder, uint64(500)))
 		uassert.Equal(t, uint64(500), token.Allowance(addr01, defaultHolder))
 	})
 
 	t.Run("TransferFrom()", func(t *testing.T) {
-		std.TestSetRealm(std.NewUserRealm(defaultHolder))
+		testing.SetRealm(std.NewUserRealm(defaultHolder))
 		uassert.NoError(t, teller.TransferFrom(addr01, defaultHolder, uint64(500)))
 		uassert.Equal(t, uint64(9999999500), token.BalanceOf(addr01))
 		uassert.Equal(t, uint64(500), token.BalanceOf(defaultHolder))

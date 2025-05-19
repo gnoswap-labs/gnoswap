@@ -11,12 +11,15 @@ import (
 	"gno.land/p/demo/uassert"
 
 	"gno.land/p/demo/avl"
-	"gno.land/p/gnoswap/consts"
+
+	"gno.land/r/gnoswap/v1/access"
 )
+
+var adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
 
 func TestMarshal(t *testing.T) {
 	fakeNode := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
+		"height":    json.NumberNode("height", float64(std.ChainHeight())),
 		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
 	})
 
@@ -55,7 +58,7 @@ func TestIsUserCall(t *testing.T) {
 			name: "called from user",
 			action: func() bool {
 				userRealm := std.NewUserRealm(std.Address("user"))
-				std.TestSetRealm(userRealm)
+				testing.SetRealm(userRealm)
 				return isUserCall()
 			},
 			expected: true,
@@ -64,7 +67,7 @@ func TestIsUserCall(t *testing.T) {
 			name: "called from realm",
 			action: func() bool {
 				fromRealm := std.NewCodeRealm("gno.land/r/realm")
-				std.TestSetRealm(fromRealm)
+				testing.SetRealm(fromRealm)
 				return isUserCall()
 			},
 			expected: false,
@@ -89,7 +92,7 @@ func TestGetPrev(t *testing.T) {
 			name: "user call",
 			action: func() (string, string) {
 				userRealm := std.NewUserRealm(std.Address("user"))
-				std.TestSetRealm(userRealm)
+				testing.SetRealm(userRealm)
 				return getPrev()
 			},
 			expectedAddr:    "user",
@@ -99,7 +102,7 @@ func TestGetPrev(t *testing.T) {
 			name: "code call",
 			action: func() (string, string) {
 				codeRealm := std.NewCodeRealm("gno.land/r/demo/realm")
-				std.TestSetRealm(codeRealm)
+				testing.SetRealm(codeRealm)
 				return getPrev()
 			},
 			expectedAddr:    std.DerivePkgAddr("gno.land/r/demo/realm").String(),
@@ -154,14 +157,13 @@ func TestFormatInt(t *testing.T) {
 }
 
 func TestAssertCallerIsAdmin(t *testing.T) {
-	adminAddr := consts.ADMIN
 	nonAdminAddr := std.Address("user456")
 
-	std.TestSetOrigCaller(adminAddr)
+	testing.SetOriginCaller(adminAddr)
 	assertCallerIsAdmin()
 
 	// Test non-admin
-	std.TestSetOrigCaller(nonAdminAddr)
+	testing.SetOriginCaller(nonAdminAddr)
 	defer func() {
 		if r := recover(); r == nil {
 			t.Errorf("assertCallerIsAdmin() did not panic for non-admin")
@@ -171,15 +173,14 @@ func TestAssertCallerIsAdmin(t *testing.T) {
 }
 
 func TestAssertCallerIsLaunchpad(t *testing.T) {
-	launchpadAddr := consts.LAUNCHPAD_ADDR
 	otherAddr := std.Address("other123")
 
 	// Test valid launchpad
-	std.TestSetOrigCaller(launchpadAddr)
+	testing.SetOriginCaller(launchpadAddr)
 	assertCallerIsLaunchpad()
 
 	// Test invalid caller
-	std.TestSetOrigCaller(otherAddr)
+	testing.SetOriginCaller(otherAddr)
 	defer func() {
 		if r := recover(); r == nil {
 			t.Errorf("assertCallerIsLaunchpad() did not panic for non-launchpad caller")

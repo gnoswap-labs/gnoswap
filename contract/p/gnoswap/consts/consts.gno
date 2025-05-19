@@ -4,7 +4,7 @@ import (
 	"std"
 )
 
-// ADDRESS
+// INITIAL ADDRESSES
 const (
 	ADMIN   std.Address = "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"
 	DEV_OPS std.Address = "g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9"
@@ -20,7 +20,7 @@ const (
 	UGNOT_MIN_DEPOSIT_TO_WRAP uint64 = 1000
 )
 
-// CONTRACT PATH & ADDRESS
+// INITIAL CONTRACT PATH & ADDRESS
 const (
 	POOL_PATH string      = "gno.land/r/gnoswap/v1/pool"
 	POOL_ADDR std.Address = "g148tjamj80yyrm309z7rk690an22thd2l3z8ank"
@@ -66,6 +66,12 @@ const (
 
 	LAUNCHPAD_PATH string      = "gno.land/r/gnoswap/v1/launchpad"
 	LAUNCHPAD_ADDR std.Address = "g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3"
+
+	ACCESS_PATH string      = "gno.land/r/gnoswap/v1/access"
+	ACCESS_ADDR std.Address = "g1yyw4t7pywpgpq6z2p745y05qejwur97xud4arw"
+
+	HALT_PATH string      = "gno.land/r/gnoswap/v1/halt"
+	HALT_ADDR std.Address = "g1q67vstyzqycl75yv7ern98n4u8qrgc8hxkmsxt"
 )
 
 // NUMBER

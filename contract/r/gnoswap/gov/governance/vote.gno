@@ -4,15 +4,12 @@ import (
 	"std"
 	"time"
 
+	"gno.land/p/demo/avl"
+	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/p/demo/avl"
-
 	en "gno.land/r/gnoswap/v1/emission"
-
-	"gno.land/r/gnoswap/v1/common"
-
-	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 type voteWithWeight struct {
@@ -28,6 +25,124 @@ var (
 	accumYesVotes = make(map[uint64]uint64) // proposalId -> yes
 	accumNoVotes  = make(map[uint64]uint64) // proposalId -> no
 )
+
+// Vote allows a user to vote on a given proposal.
+// The user's voting weight is determined by their accumulated delegated stake until proposal creation time.
+// ref: https://docs.gnoswap.io/contracts/governance/vote.gno#vote
+func Vote(pid uint64, yes bool) string {
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
+
+	en.MintAndDistributeGns()
+	updateProposalsState()
+
+	proposal := mustGetProposal(pid)
+
+	voter := std.PreviousRealm().Address()
+	now := uint64(time.Now().Unix())
+
+	voteKey := createVoteKey(pid, voter.String())
+
+	state, err := newVoteState(proposal, voteKey, voter, now)
+	if err != nil {
+		panic(err)
+	}
+
+	if err := state.validate(); err != nil {
+		panic(err)
+	}
+
+	executor := newVoteExecutor(&proposal, voter, state.userWeight)
+	if err := executor.execute(yes); err != nil {
+		panic(err)
+	}
+
+	proposals.Set(formatUint(pid), proposal)
+
+	setVote(pid, voter.String(), yes)
+	setUserVote(voter, pid, voteWithWeight{
+		Yes:         yes,
+		Weight:      state.userWeight,
+		VotedHeight: uint64(std.ChainHeight()),
+		VotedAt:     now,
+	})
+
+	prevAddr, prevPkgPath := getPrev()
+	std.Emit(
+		"Vote",
+		"prevAddr", prevAddr,
+		"prevPkgPath", prevPkgPath,
+		"proposalId", formatUint(pid),
+		"voter", voter.String(),
+		"yes", voteToString(yes),
+		"voteWeight", formatUint(state.userWeight),
+		"voteYes", formatUint(accumYesVotes[pid]),
+		"voteNo", formatUint(accumNoVotes[pid]),
+	)
+
+	return voteKey
+}
+
+// Cancel cancels the proposal with the given ID.
+// Only callable by the proposer or if the proposer's stake has fallen below the threshold others can call.
+// ref: https://docs.gnoswap.io/contracts/governance/vote.gno#cancel
+func Cancel(proposalId uint64) {
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
+
+	en.MintAndDistributeGns()
+	updateProposalsState()
+
+	proposal := mustGetProposal(proposalId)
+	if proposal.State.Canceled {
+		panic(addDetailToError(
+			errAlreadyCanceledProposal,
+			ufmt.Sprintf("proposalId(%d) has already canceled", proposalId),
+		))
+	}
+
+	config := GetConfigVersion(proposal.ConfigVersion)
+	now := uint64(time.Now().Unix())
+	if now >= (proposal.State.CreatedAt + config.VotingStartDelay) {
+		panic(addDetailToError(
+			errUnableToCancleVotingProposal,
+			ufmt.Sprintf("voting has already started for proposalId(%d)", proposalId),
+		))
+	}
+
+	caller := std.PreviousRealm().Address()
+	if caller != proposal.Proposer {
+		// If the caller is not the proposer, check if the proposer's stake has fallen below the threshold
+		enough, balance, wanted := checkEnoughXGnsToPropose(proposal.Proposer)
+		if enough {
+			panic(addDetailToError(
+				errUnableToCancelProposalWithVoterEnoughDelegated,
+				ufmt.Sprintf(
+					"caller(%s) is not the proposer(%s) and proposer's xgns balance(%d) is above the threshold(%d)",
+					caller, proposal.Proposer,
+					balance, wanted,
+				),
+			))
+		}
+	}
+
+	proposal.State.Canceled = true
+	proposal.State.CanceledAt = now
+	proposal.State.Upcoming = false
+	proposal.State.Active = false
+
+	proposals.Set(formatUint(proposalId), proposal)
+
+	prevAddr, prevPkgPath := getPrev()
+	std.Emit(
+		"Cancel",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"proposalId", formatUint(proposalId),
+	)
+}
 
 // createVoteKey creates a vote key for a given proposal ID and voter address
 func createVoteKey(pid uint64, voter string) string {
@@ -73,65 +188,6 @@ func setUserVote(voter std.Address, pid uint64, vote voteWithWeight) {
 	userVotes.Set(createUserVoteKey(voter, pid), vote)
 }
 
-///////////////////// Vote /////////////////////
-
-// Vote allows a user to vote on a given proposal.
-// The user's voting weight is determined by their accumulated delegated stake until proposal creation time.
-// ref: https://docs.gnoswap.io/contracts/governance/vote.gno#vote
-func Vote(pid uint64, yes bool) string {
-	common.IsHalted()
-	en.MintAndDistributeGns()
-	updateProposalsState()
-
-	proposal := mustGetProposal(pid)
-
-	voter := std.PrevRealm().Addr()
-	now := uint64(time.Now().Unix())
-
-	voteKey := createVoteKey(pid, voter.String())
-
-	state, err := newVoteState(proposal, voteKey, voter, now)
-	if err != nil {
-		panic(err)
-	}
-
-	if err := state.validate(); err != nil {
-		panic(err)
-	}
-
-	executor := newVoteExecutor(&proposal, voter, state.userWeight)
-	if err := executor.execute(yes); err != nil {
-		panic(err)
-	}
-
-	proposals.Set(formatUint(pid), proposal)
-
-	setVote(pid, voter.String(), yes)
-	setUserVote(voter, pid, voteWithWeight{
-		Yes:         yes,
-		Weight:      state.userWeight,
-		VotedHeight: uint64(std.GetHeight()),
-		VotedAt:     now,
-	})
-
-	prevAddr, prevPkgPath := getPrev()
-	std.Emit(
-		"Vote",
-		"prevAddr", prevAddr,
-		"prevPkgPath", prevPkgPath,
-		"proposalId", formatUint(pid),
-		"voter", voter.String(),
-		"yes", voteToString(yes),
-		"voteWeight", formatUint(state.userWeight),
-		"voteYes", formatUint(accumYesVotes[pid]),
-		"voteNo", formatUint(accumNoVotes[pid]),
-	)
-
-	return voteKey
-}
-
-///////////////////// Vote State /////////////////////
-
 type VoteState struct {
 	isVotingPeriod  bool
 	isProposalValid bool
@@ -174,8 +230,6 @@ func (s *VoteState) validate() error {
 	return nil
 }
 
-///////////////////// Vote Execution /////////////////////
-
 type VoteExecutor struct {
 	proposal *ProposalInfo
 	voter    std.Address
@@ -205,62 +259,4 @@ func safeVoteSum(collected *u256.Uint, weight uint64) *u256.Uint {
 		panic(errOutOfRange)
 	}
 	return newSum
-}
-
-// Cancel cancels the proposal with the given ID.
-// Only callable by the proposer or if the proposer's stake has fallen below the threshold others can call.
-// ref: https://docs.gnoswap.io/contracts/governance/vote.gno#cancel
-func Cancel(proposalId uint64) {
-	common.IsHalted()
-
-	en.MintAndDistributeGns()
-	updateProposalsState()
-
-	proposal := mustGetProposal(proposalId)
-	if proposal.State.Canceled {
-		panic(addDetailToError(
-			errAlreadyCanceledProposal,
-			ufmt.Sprintf("proposalId(%d) has already canceled", proposalId),
-		))
-	}
-
-	config := GetConfigVersion(proposal.ConfigVersion)
-	now := uint64(time.Now().Unix())
-	if now >= (proposal.State.CreatedAt + config.VotingStartDelay) {
-		panic(addDetailToError(
-			errUnableToCancleVotingProposal,
-			ufmt.Sprintf("voting has already started for proposalId(%d)", proposalId),
-		))
-	}
-
-	caller := std.PrevRealm().Addr()
-	if caller != proposal.Proposer {
-		// If the caller is not the proposer, check if the proposer's stake has fallen below the threshold
-		enough, balance, wanted := checkEnoughXGnsToPropose(proposal.Proposer)
-		if enough {
-			panic(addDetailToError(
-				errUnableToCancelProposalWithVoterEnoughDelegated,
-				ufmt.Sprintf(
-					"caller(%s) is not the proposer(%s) and proposer's xgns balance(%d) is above the threshold(%d)",
-					caller, proposal.Proposer,
-					balance, wanted,
-				),
-			))
-		}
-	}
-
-	proposal.State.Canceled = true
-	proposal.State.CanceledAt = now
-	proposal.State.Upcoming = false
-	proposal.State.Active = false
-
-	proposals.Set(formatUint(proposalId), proposal)
-
-	prevAddr, prevPkgPath := getPrev()
-	std.Emit(
-		"Cancel",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
-		"proposalId", formatUint(proposalId),
-	)
 }

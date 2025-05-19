@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	"gno.land/p/gnoswap/consts"
 )
 
 func TestWrap(t *testing.T) {
@@ -39,10 +38,10 @@ func TestWrap(t *testing.T) {
 		{
 			name: "Success - Valid amount",
 			action: func() {
-				std.TestSetRealm(std.NewUserRealm(user1Addr))
+				testing.SetRealm(std.NewUserRealm(user1Addr))
 				ugnotFaucet(t, user1Addr, 1_000)
-				ugnotFaucet(t, consts.STAKER_ADDR, 1_000)
-				std.TestSetRealm(std.NewUserRealm(user1Addr))
+				ugnotFaucet(t, stakerAddr, 1_000)
+				testing.SetRealm(std.NewUserRealm(user1Addr))
 				wrap(1_000)
 			},
 			verify: func() uint64 {
@@ -108,13 +107,13 @@ func TestUnwrap(t *testing.T) {
 		{
 			name: "Success - Valid amount",
 			action: func() {
-				std.TestSetRealm(std.NewUserRealm(user2Addr))
+				testing.SetRealm(std.NewUserRealm(user2Addr))
 				ugnotFaucet(t, user2Addr, 1_000)
-				ugnotFaucet(t, consts.STAKER_ADDR, 1_000)
-				std.TestSetRealm(std.NewUserRealm(user2Addr))
+				ugnotFaucet(t, stakerAddr, 1_000)
+				testing.SetRealm(std.NewUserRealm(user2Addr))
 				wrap(1_000)
-				std.TestSetRealm(std.NewUserRealm(user2Addr))
-				wugnotApprove(t, user2Addr, consts.STAKER_ADDR, 1_000)
+				testing.SetRealm(std.NewUserRealm(user2Addr))
+				wugnotApprove(t, user2Addr, stakerAddr, 1_000)
 				unwrap(1_000)
 			},
 			verify: func() uint64 {

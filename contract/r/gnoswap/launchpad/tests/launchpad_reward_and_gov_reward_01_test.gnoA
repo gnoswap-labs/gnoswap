@@ -18,21 +18,15 @@ import (
 )
 
 var (
-	launchpadRecipientAddr  = testutils.TestAddress("launchpadRecipient")
-	launchpadRecipientRealm = std.NewUserRealm(launchpadRecipientAddr)
-	// g1d3sh2mnrdpcxzezjv43kjurfv4h8gh6lduqj5v
-
-	launchpadDepositAddr  = testutils.TestAddress("launchpadDeposit")
-	launchpadDepositRealm = std.NewUserRealm(launchpadDepositAddr)
-	// g1d3sh2mnrdpcxzezyv4cx7umfw3047h6l29lj5t
-
-	govDelegateAddr  = testutils.TestAddress("govDelegate")
-	govDelegateRealm = std.NewUserRealm(govDelegateAddr)
-	// g1vahhv3r9d3jkwct5v4047h6lta047h6lnv8wwm
+	launchpadRecipientAddr = testutils.TestAddress("launchpadRecipient")
+	launchpadDepositAddr   = testutils.TestAddress("launchpadDeposit")
+	launchpadDepositRealm  = std.NewUserRealm(launchpadDepositAddr)
+	govDelegateAddr        = testutils.TestAddress("govDelegate")
+	govDelegateRealm       = std.NewUserRealm(govDelegateAddr)
 )
 
 func init() {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	gns.Transfer(launchpadDepositAddr, uint64(1_000_000_000))
 	gns.Transfer(govDelegateAddr, uint64(1_000_000_000))
 }
@@ -49,10 +43,10 @@ func TestLaunchPadAndGovernanceReward(t *testing.T) {
 
 func testCreateProject(t *testing.T) {
 	t.Run("create project", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
-		obl.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000_000))
-		std.TestSkipHeights(1)
+		obl.Approve(launchpadAddr, uint64(1_000_000_000))
+		testing.SkipHeights(1)
 
 		projectId := CreateProject(
 			"Obl Protocol",
@@ -67,29 +61,29 @@ func testCreateProject(t *testing.T) {
 			uint64(time.Now().Unix()+10), // 10s later
 		)
 		uassert.Equal(t, projectId, `gno.land/r/onbloc/obl:124`)
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testDepositGnsToTier30(t *testing.T) {
 	t.Run("deposit gns to tier 30", func(t *testing.T) {
-		std.TestSetRealm(launchpadDepositRealm)
-		gns.Approve(consts.LAUNCHPAD_ADDR, uint64(1_000_000_000))
+		testing.SetRealm(launchpadDepositRealm)
+		gns.Approve(launchpadAddr, uint64(1_000_000_000))
 
 		// skip some blocks to make project active
-		std.TestSkipHeights(4)
-		depositId := DepositGns("gno.land/r/onbloc/obl:124:30", uint64(1_000_000_000)) // 1000000
+		testing.SkipHeights(4)
+		depositId := DepositGns("gno.land/r/onbloc/obl:124:30", uint64(1_000_000_000), "") // 1000000
 		uassert.Equal(t, depositId, `gno.land/r/onbloc/obl:124:30:g1d3sh2mnrdpcxzezyv4cx7umfw3047h6l29lj5t:129`)
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
 func testGovDelegate(t *testing.T) {
 	t.Run("delegate to gov", func(t *testing.T) {
-		std.TestSetRealm(govDelegateRealm)
-		gns.Approve(consts.GOV_STAKER_ADDR, uint64(1_000_000_000))
+		testing.SetRealm(govDelegateRealm)
+		gns.Approve(govStakerAddr, uint64(1_000_000_000))
 		gs.Delegate(govDelegateAddr, uint64(1_000_000_000), "")
-		std.TestSkipHeights(1)
+		testing.SkipHeights(1)
 	})
 }
 
@@ -97,18 +91,18 @@ func testMockProtocolFee(t *testing.T) {
 	t.Run("mock protocol fee", func(t *testing.T) {
 		// admin > protocol_fee
 		// send qux, bar for testing
-		std.TestSetRealm(adminRealm)
-		bar.Transfer(consts.PROTOCOL_FEE_ADDR, 100_000)
-		qux.Transfer(consts.PROTOCOL_FEE_ADDR, 250_000)
+		testing.SetRealm(adminRealm)
+		bar.Transfer(protocolFeeAddr, 100_000)
+		qux.Transfer(protocolFeeAddr, 250_000)
 
-		uassert.Equal(t, bar.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(100000))
-		uassert.Equal(t, bar.BalanceOf(consts.DEV_OPS), uint64(0))
-		uassert.Equal(t, bar.BalanceOf(consts.GOV_STAKER_ADDR), uint64(0))
+		uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), uint64(100000))
+		uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))
+		uassert.Equal(t, bar.BalanceOf(govStakerAddr), uint64(0))
 
-		uassert.Equal(t, qux.BalanceOf(consts.PROTOCOL_FEE_ADDR), uint64(250000))
-		uassert.Equal(t, qux.BalanceOf(consts.DEV_OPS), uint64(0))
-		uassert.Equal(t, qux.BalanceOf(consts.GOV_STAKER_ADDR), uint64(0))
-		std.TestSkipHeights(1)
+		uassert.Equal(t, qux.BalanceOf(protocolFeeAddr), uint64(250000))
+		uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
+		uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(0))
+		testing.SkipHeights(1)
 	})
 }
 

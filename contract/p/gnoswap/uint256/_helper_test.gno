@@ -4,13 +4,13 @@ import (
 	"testing"
 )
 
-func shouldEQ(t *testing.T, got, expected interface{}) {
+func shouldEQ(t *testing.T, got, expected any) {
 	if got != expected {
 		t.Errorf("got %v, expected %v", got, expected)
 	}
 }
 
-func shouldNEQ(t *testing.T, got, expected interface{}) {
+func shouldNEQ(t *testing.T, got, expected any) {
 	if got == expected {
 		t.Errorf("got %v, didn't expected %v", got, expected)
 	}

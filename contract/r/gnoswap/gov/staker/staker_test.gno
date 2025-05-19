@@ -12,23 +12,23 @@ import (
 )
 
 func TestDelegate(t *testing.T) {
-	std.TestSetOrigCaller(consts.ADMIN)
+	testing.SetOriginCaller(admin)
 	SetRunning(true)
 
-	std.TestSetRealm(userRealm)
+	testing.SetRealm(userRealm)
 	{
-		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-		std.TestSkipHeights(100)
-		gns.MintGns(userRealm.Addr()) // 2M gns
+		testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+		testing.SkipHeights(100)
+		gns.MintGns(userRealm.Address()) // 2M gns
 
-		std.TestSetRealm(userRealm)
+		testing.SetRealm(userRealm)
 		to := makeFakeAddress("validator_1")
 		amount := uint64(1_000_000)
 
-		gns.Approve(consts.GOV_STAKER_ADDR, amount)
+		gns.Approve(govStaker, amount)
 		Delegate(to, amount, "")
 
-		minted := xgns.BalanceOf(userRealm.Addr())
+		minted := xgns.BalanceOf(userRealm.Address())
 		if minted != amount {
 			t.Errorf("Delegate minted xGNS = %d, want %d", minted, amount)
 		}
@@ -77,14 +77,14 @@ func TestDelegate(t *testing.T) {
 
 	// 7) running = false => optional check
 	{
-		std.TestSetOrigCaller(consts.ADMIN)
+		testing.SetOriginCaller(admin)
 		SetRunning(false)
 		// delegate?
 		// depending on code logic, might skip cleanDelegationStatHistory() or do something else
 		// if there's logic that forbids delegation when not running, test that
 		// For now, assume it still works but doesn't clean.
 		// Restore running to true for subsequent tests.
-		std.TestSetOrigCaller(consts.ADMIN)
+		testing.SetOriginCaller(admin)
 		SetRunning(true)
 	}
 
@@ -126,7 +126,7 @@ func TestDelegate_Boundary_Values(t *testing.T) {
 			to:          makeFakeAddress("validator_1"),
 			amount:      0,
 			expectPanic: true,
-			panicMsg:    "delegation amount cannot be 0",
+			panicMsg:    "[GNOSWAP-GOV_STAKER-011] can not delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:0)",
 		},
 		{
 			name:        "delegate max uint64",
@@ -146,9 +146,9 @@ func TestDelegate_Boundary_Values(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetOrigCaller(consts.ADMIN)
+			testing.SetOriginCaller(admin)
 			SetRunning(true)
-			std.TestSetRealm(userRealm)
+			testing.SetRealm(userRealm)
 
 			if tt.expectPanic {
 				defer func() {
@@ -169,192 +169,24 @@ func TestDelegate_Boundary_Values(t *testing.T) {
 	}
 }
 
-/*
-func TestEmptyRewardPool(t *testing.T) {
-	tests := []struct {
-		name           string
-		setupFn        func()
-		expectPanic    bool
-		expectPanicMsg string
-		checkFn        func(t *testing.T)
-	}{
-		{
-			name: "collect with empty reward pool",
-			setupFn: func() {
-				//userEmissionReward.Remove(userRealm.Addr().String())
-			},
-			expectPanic: false,
-			checkFn: func(t *testing.T) {
-				if v, exists := userEmissionReward.Get(userRealm.Addr().String()); exists {
-					t.Errorf("Expected userEmissionReward to be removed, but got %d", v.(uint64))
-				}
-			},
-		},
-		{
-			name: "collect with empty protocol fee rewards",
-			setupFn: func() {
-				//userProtocolFeeReward.Remove(userRealm.Addr().String())
-			},
-			expectPanic: false,
-			checkFn: func(t *testing.T) {
-				if v, exists := userProtocolFeeReward.Get(userRealm.Addr().String()); exists {
-					t.Errorf("Expected userProtocolFeeReward to be removed, but got %d", v.(uint64))
-				}
-			},
-		},
-		{
-			name: "collect with empty staker GNS balance",
-			setupFn: func() {
-				std.TestSetRealm(std.NewCodeRealm(consts.GOV_STAKER_PATH))
-				userEmissionReward.Set(userRealm.Addr().String(), uint64(1000))
-			},
-			expectPanic:    true,
-			expectPanicMsg: "not enough GNS",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.name == "collect with empty staker GNS balance" {
-				t.Skip("run this test separately")
-			}
-			std.TestSetRealm(userRealm)
-
-			if tt.setupFn != nil {
-				tt.setupFn()
-			}
-
-			if tt.expectPanic {
-				defer func() {
-					r := recover()
-					if r == nil {
-						t.Errorf("Expected panic but got none")
-					}
-					if tt.expectPanicMsg != "" && r != nil {
-						if msg, ok := r.(string); !ok || !strings.Contains(msg, tt.expectPanicMsg) {
-							t.Errorf("Expected panic message containing '%s', got '%v'", tt.expectPanicMsg, r)
-						}
-					}
-				}()
-			}
-
-			CollectReward()
-
-			if tt.checkFn != nil {
-				tt.checkFn(t)
-			}
-		})
-	}
-}
-*/
-/*
-func TestProtocolFee(t *testing.T) {
-	tests := []struct {
-		name        string
-		setupFn     func()
-		expectPanic bool
-		panicMsg    string
-		checkFn     func(t *testing.T)
-	}{
-		{
-			name: "collect max uint64 protocol fee",
-			setupFn: func() {
-				//tree := avl.NewTree()
-				//tree.Set(consts.WUGNOT_PATH, uint64(^uint64(0)))
-				//userProtocolFeeReward.Set(userRealm.Addr().String(), tree)
-				currentProtocolFeeBalance[consts.WUGNOT_PATH] = ^uint64(0)
-			},
-			expectPanic: true,
-			panicMsg:    "insufficient balance",
-		},
-		{
-			name: "collect multiple empty token balances",
-			setupFn: func() {
-				//tree := avl.NewTree()
-				//tree.Set(consts.WUGNOT_PATH, uint64(1000))
-				//tree.Set("some/other/token", uint64(2000))
-				//userProtocolFeeReward.Set(userRealm.Addr().String(), tree)
-				currentProtocolFeeBalance[consts.WUGNOT_PATH] = 1000
-				currentProtocolFeeBalance["some/other/token"] = 2000
-			},
-			expectPanic: true,
-			panicMsg:    "insufficient balance",
-		},
-		{
-			name: "collect with zero amounts",
-			setupFn: func() {
-				//tree := avl.NewTree()
-				//tree.Set(consts.WUGNOT_PATH, uint64(0))
-				//tree.Set("some/other/token", uint64(0))
-				//userProtocolFeeReward.Set(userRealm.Addr().String(), tree)
-				currentProtocolFeeBalance[consts.WUGNOT_PATH] = 0
-				currentProtocolFeeBalance["some/other/token"] = 0
-			},
-			expectPanic: false,
-			checkFn: func(t *testing.T) {
-				val, exists := userProtocolFeeReward.Get(userRealm.Addr().String())
-				if !exists {
-					t.Errorf("Expected protocol fee reward entry to exist")
-					return
-				}
-				tree := val.(*avl.Tree)
-				wugnotAmt, _ := tree.Get(consts.WUGNOT_PATH)
-				if wugnotAmt.(uint64) != 0 {
-					t.Errorf("Expected WUGNOT amount to be 0, got %d", wugnotAmt)
-				}
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetRealm(userRealm)
-
-			if tt.setupFn != nil {
-				tt.setupFn()
-			}
-
-			if tt.expectPanic {
-				defer func() {
-					r := recover()
-					if r == nil {
-						t.Errorf("Expected panic but got none")
-					}
-					if tt.panicMsg != "" && r != nil {
-						if msg, ok := r.(string); !ok || !strings.Contains(strings.ToLower(msg), strings.ToLower(tt.panicMsg)) {
-							t.Errorf("Expected panic message containing '%s', got '%v'", tt.panicMsg, r)
-						}
-					}
-				}()
-			}
-
-			CollectReward()
-
-			if tt.checkFn != nil {
-				tt.checkFn(t)
-			}
-		})
-	}
-}
-*/
 func TestRedelegate(t *testing.T) {
-	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	std.TestSkipHeights(100)
-	gns.MintGns(userRealm.Addr()) // 2M gns
+	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SkipHeights(100)
+	gns.MintGns(userRealm.Address()) // 2M gns
 
 	// user has xGNS from previous test (some minted)
 	// try re-delegating
-	std.TestSetRealm(userRealm)
-	from := userRealm.Addr()
+	testing.SetRealm(userRealm)
+	from := userRealm.Address()
 	to := makeFakeAddress("validator_1")
 	amount := uint64(1_000_000)
 
-	std.TestSetOrigCaller(userRealm.Addr())
-	gns.Approve(consts.GOV_STAKER_ADDR, amount)
+	testing.SetOriginCaller(userRealm.Address())
+	gns.Approve(govStaker, amount)
 	Delegate(from, amount, "")
 
-	std.TestSetOrigCaller(userRealm.Addr())
-	gns.Approve(consts.GOV_STAKER_ADDR, amount)
+	testing.SetOriginCaller(userRealm.Address())
+	gns.Approve(govStaker, amount)
 	Redelegate(from, to, amount)
 
 	// check data: user xGNS must remain the same, but from-> to shift in staker structure?
@@ -371,25 +203,25 @@ func TestRedelegate(t *testing.T) {
 }
 
 func TestUndelegate(t *testing.T) {
-	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	std.TestSkipHeights(101)
-	gns.MintGns(user3Realm.Addr()) // 2M gns
+	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SkipHeights(101)
+	gns.MintGns(user3Realm.Address()) // 2M gns
 
-	std.TestSetRealm(user3Realm)
+	testing.SetRealm(user3Realm)
 	to := makeFakeAddress("validator_1")
 	amount := uint64(1_000_000)
 
-	std.TestSetOrigCaller(user3Realm.Addr())
-	gns.Approve(consts.GOV_STAKER_ADDR, amount)
+	testing.SetOriginCaller(user3Realm.Address())
+	gns.Approve(govStaker, amount)
 	Delegate(to, amount, "")
 	Undelegate(to, amount)
 
-	if xgns.BalanceOf(user3Realm.Addr()) == 1_000_000 {
+	if xgns.BalanceOf(user3Realm.Address()) == 1_000_000 {
 		t.Errorf("Expected user xGNS to be 0 after undelegating 1_000_000, got %d",
-			xgns.BalanceOf(user3Realm.Addr()))
+			xgns.BalanceOf(user3Realm.Address()))
 	}
 
-	lockedList, exist := addrLockedGns.Get(user3Realm.Addr().String())
+	lockedList, exist := addrLockedGns.Get(user3Realm.Address().String())
 	if !exist {
 		t.Errorf("Expected lockedGNS to be created after Undelegate")
 	}
@@ -417,10 +249,10 @@ func TestUndelegate(t *testing.T) {
 }
 
 func TestCollectUndelegatedGns(t *testing.T) {
-	std.TestSetRealm(userRealm)
+	testing.SetRealm(userRealm)
 
 	// 1) no locked => expect 0
-	addrLockedGns.Remove(userRealm.Addr().String()) // ensure no locked
+	addrLockedGns.Remove(userRealm.Address().String()) // ensure no locked
 	collected := CollectUndelegatedGns()
 	if collected != 0 {
 		t.Errorf("Expected 0 when no locked gns, got %d", collected)
@@ -432,7 +264,7 @@ func TestCollectUndelegatedGns(t *testing.T) {
 		amount: 100_000,
 		unlock: now + SECONDS_IN_7_DAYS,
 	}
-	addrLockedGns.Set(userRealm.Addr().String(), []lockedGNS{locked})
+	addrLockedGns.Set(userRealm.Address().String(), []lockedGNS{locked})
 	lockedAmount = 100_000
 
 	collected = CollectUndelegatedGns()
@@ -440,7 +272,7 @@ func TestCollectUndelegatedGns(t *testing.T) {
 		t.Errorf("Expected 0 if 7days not passed, got %d", collected)
 	}
 	// verify still in locked
-	lockedList, exist := addrLockedGns.Get(userRealm.Addr().String())
+	lockedList, exist := addrLockedGns.Get(userRealm.Address().String())
 	if !exist {
 		t.Errorf("Expected lockedGNS to remain after CollectUndelegatedGns")
 	}
@@ -451,14 +283,14 @@ func TestCollectUndelegatedGns(t *testing.T) {
 
 	// 3) set time => unlocked
 	locked.unlock = uint64(time.Now().Unix()) - 1 // forcibly make it past time
-	addrLockedGns.Set(userRealm.Addr().String(), []lockedGNS{locked})
+	addrLockedGns.Set(userRealm.Address().String(), []lockedGNS{locked})
 
 	collected = CollectUndelegatedGns()
 	if collected != 100_000 {
 		t.Errorf("Expected 100_000 collected, got %d", collected)
 	}
 	// check locked removed from the tree
-	if _, exists := addrLockedGns.Get(userRealm.Addr().String()); exists {
+	if _, exists := addrLockedGns.Get(userRealm.Address().String()); exists {
 		t.Errorf("Expected addrLockedGns key to be removed if empty after collecting all locked gns")
 	}
 	if lockedAmount != 0 {
@@ -467,42 +299,37 @@ func TestCollectUndelegatedGns(t *testing.T) {
 }
 
 func TestCollectReward(t *testing.T) {
-	std.TestSetRealm(user2Realm)
+	testing.SetRealm(user2Realm)
 	{
-		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-		std.TestSkipHeights(100)
-		gns.MintGns(consts.GOV_STAKER_ADDR)
+		testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+		testing.SkipHeights(100)
+		gns.MintGns(govStaker)
 
-		std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
-		ugnotFaucet(t, consts.GOV_STAKER_ADDR, 1_000_000)
-		ugnotDeposit(t, consts.GOV_STAKER_ADDR, 1_000_000)
+		testing.SetRealm(std.NewUserRealm(admin))
+		ugnotFaucet(t, govStaker, 1_000_000)
+		ugnotDeposit(t, govStaker, 1_000_000)
 		ugnotFaucet(t, derivePkgAddr(wugnotPath), 1_000_000)
-		ugnotFaucet(t, user2Realm.Addr(), 1_000_000)
+		ugnotFaucet(t, user2Realm.Address(), 1_000_000)
 	}
 
-	std.TestSetRealm(user2Realm)
-	user := user2Realm.Addr().String()
+	testing.SetRealm(user2Realm)
+	user := user2Realm.Address().String()
 
-	rewardState.addStake(uint64(std.GetHeight()), std.Address(user), 10, 0, make(map[string]uint64))
+	rewardState.addStake(uint64(std.ChainHeight()), std.Address(user), 10, 0, make(map[string]uint64))
 
 	// set a fake emission reward
-	//userEmissionReward.Set(user, uint64(50_000))
 	currentGNSBalance = 50_000
-	// set a fake protocol fee reward
-	//tree := avl.NewTree()
-	//tree.Set(consts.WUGNOT_PATH, uint64(10_000))
-	//userProtocolFeeReward.Set(user, tree)
 	currentProtocolFeeBalance[consts.WUGNOT_PATH] = 10_000
 
-	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	std.TestSkipHeights(100)
-	gns.MintGns(user2Realm.Addr())
+	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SkipHeights(100)
+	gns.MintGns(user2Realm.Address())
 
-	std.TestSetRealm(user2Realm)
-	std.TestSkipHeights(100)
+	testing.SetRealm(user2Realm)
+	testing.SkipHeights(100)
 
 	// call CollectReward
-	std.TestSetOrigCaller(user2Realm.Addr())
+	testing.SetOriginCaller(user2Realm.Address())
 	CollectReward()
 
 	// expect user emissionReward = 0
@@ -527,16 +354,16 @@ func TestCollectRewardFromLaunchPad(t *testing.T) {
 	// set realm to LAUNCHPAD_ADDR?
 	// or we do a quick scenario: if current caller != LAUNCHPAD_ADDR => panic
 	// => check it with a user realm to ensure panic
-	std.TestSetRealm(userRealm)
+	testing.SetRealm(userRealm)
 	{
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("Expected panic, because caller is not launchpad")
 			}
 		}()
-		CollectRewardFromLaunchPad(userRealm.Addr())
+		CollectRewardFromLaunchPad(userRealm.Address())
 	}
 
-	// Then set realm to a custom "launchpadRealm" whose .Addr() == consts.LAUNCHPAD_ADDR
+	// Then set realm to a custom "launchpadRealm" whose .Address() == consts.LAUNCHPAD_ADDR
 	// => call normal and see if distribution works
 }

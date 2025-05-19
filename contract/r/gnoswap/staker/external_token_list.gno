@@ -54,7 +54,7 @@ func AddToken(tokenPath string) {
 // Panics:
 //   - If the caller is not the admin
 func RemoveToken(tokenPath string) {
-	caller := std.PrevRealm().Addr()
+	caller := std.PreviousRealm().Address()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err.Error())
 	}
@@ -64,7 +64,7 @@ func RemoveToken(tokenPath string) {
 	if isDefault {
 		panic(addDetailToError(
 			errDefaultExternalToken,
-			ufmt.Sprintf("external_token_list.gno__RemoveToken() || can not remove default token(%s)", tokenPath),
+			ufmt.Sprintf("can not remove default token(%s)", tokenPath),
 		))
 	}
 

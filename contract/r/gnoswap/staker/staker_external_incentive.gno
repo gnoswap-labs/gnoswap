@@ -6,13 +6,11 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
-
 	"gno.land/p/gnoswap/consts"
+
 	"gno.land/r/gnoswap/v1/common"
-
-	"gno.land/r/gnoswap/v1/gns"
-
 	en "gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
@@ -28,7 +26,7 @@ func CreateExternalIncentive(
 	assertOnlyNotHalted()
 
 	if common.GetLimitCaller() {
-		prev := std.PrevRealm()
+		prev := std.PreviousRealm()
 		if err := common.UserOnly(prev); err != nil {
 			panic(ufmt.Sprintf("%v: %v", errNoPermission, err))
 		}
@@ -51,7 +49,7 @@ func CreateExternalIncentive(
 
 	// native ugnot check
 	if rewardToken == consts.GNOT {
-		sent := std.GetOrigSend()
+		sent := std.OriginSend()
 		ugnotSent := uint64(sent.AmountOf("ugnot"))
 
 		if ugnotSent != rewardAmount {
@@ -77,14 +75,14 @@ func CreateExternalIncentive(
 	if endTimestamp >= MAX_UNIX_EPOCH_TIME {
 		panic(addDetailToError(
 			errInvalidIncentiveEndTime,
-			ufmt.Sprintf("staker.gno__CreateExternalIncentive() || endTimestamp(%d) cannot be later than 253402300799 (9999-12-31 23:59:59)", endTimestamp),
+			ufmt.Sprintf("endTimestamp(%d) cannot be later than 253402300799 (9999-12-31 23:59:59)", endTimestamp),
 		))
 	}
 
 	caller := getPrevAddr()
 
-	// incentiveId := incentiveIdCompute(std.PrevRealm().Addr(), targetPoolPath, rewardToken, startTimestamp, endTimestamp, std.GetHeight())
-	incentiveId := incentiveIdByTime(startTimestamp, endTimestamp, caller, rewardToken)
+	// incentiveId := incentiveIdCompute(std.PrevRealm().Address(), targetPoolPath, rewardToken, startTimestamp, endTimestamp, std.GetHeight())
+	incentiveId := incentiveIdByTime(startTimestamp, endTimestamp, caller, rewardToken, targetPoolPath)
 
 	externalDuration := uint64(endTimestamp - startTimestamp)
 	if err := isValidIncentiveDuration(externalDuration); err != nil {
@@ -101,7 +99,7 @@ func CreateExternalIncentive(
 		startTimestamp,
 		endTimestamp,
 		caller,
-		std.GetHeight(),
+		std.ChainHeight(),
 		depositGnsAmount,
 		time.Now().Unix(),
 		gns.GetAvgBlockTimeInMs(),
@@ -117,11 +115,11 @@ func CreateExternalIncentive(
 	externalIncentives.set(incentiveId, incentive)
 
 	// deposit gns amount
-	gns.TransferFrom(caller, consts.STAKER_ADDR, depositGnsAmount)
+	gns.TransferFrom(caller, stakerAddr, depositGnsAmount)
 
 	// transfer reward token from user to staker
 	teller := common.GetTokenTeller(rewardToken)
-	teller.TransferFrom(caller, consts.STAKER_ADDR, rewardAmount)
+	teller.TransferFrom(caller, stakerAddr, rewardAmount)
 
 	pool.incentives.create(caller, incentive)
 
@@ -137,7 +135,7 @@ func CreateExternalIncentive(
 		"startTimestamp", formatInt(startTimestamp),
 		"endTimestamp", formatInt(endTimestamp),
 		"depositGnsAmount", formatUint(depositGnsAmount),
-		"currentHeight", formatInt(std.GetHeight()),
+		"currentHeight", formatInt(std.ChainHeight()),
 		"currentTime", formatInt(time.Now().Unix()),
 		"avgBlockTimeInMs", formatInt(gns.GetAvgBlockTimeInMs()),
 	)
@@ -152,10 +150,11 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	if !exists {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("staker.gno__EndExternalIncentive() || targetPoolPath(%s) does not exist", targetPoolPath),
+			ufmt.Sprintf("targetPoolPath(%s) does not exist", targetPoolPath),
 		))
 	}
 
+	incentiveId := incentiveIdByTime(startTimestamp, endTimestamp, refundee, rewardToken, targetPoolPath)
 	ictv, exists := pool.incentives.Get(startTimestamp, endTimestamp, refundee, rewardToken)
 	if !exists {
 		panic(addDetailToError(
@@ -164,7 +163,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 		))
 	}
 
-	currentHeight := std.GetHeight()
+	currentHeight := std.ChainHeight()
 	if currentHeight < ictv.endHeight {
 		panic(addDetailToError(
 			errCannotEndIncentive,
@@ -190,7 +189,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 		ictv.unclaimableRefunded = true
 	}
 
-	poolLeftExternalRewardAmount := common.BalanceOf(ictv.rewardToken, consts.STAKER_ADDR)
+	poolLeftExternalRewardAmount := common.BalanceOf(ictv.rewardToken, stakerAddr)
 	if poolLeftExternalRewardAmount < refund {
 		refund = poolLeftExternalRewardAmount
 	}
@@ -211,7 +210,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 		"EndExternalIncentive",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"incentiveId", ictv.incentiveId,
+		"incentiveId", incentiveId,
 		"targetPoolPath", targetPoolPath,
 		"refundee", refundee.String(),
 		"refundToken", rewardToken,

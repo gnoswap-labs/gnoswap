@@ -161,10 +161,6 @@ func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint
 //   - The function ensures that liquidity calculations handle edge cases when the current price
 //     is outside the specified range by returning liquidity based on the dominant token.
 func GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0, amount1 *u256.Uint) *u256.Uint {
-	if amount0.IsZero() || amount1.IsZero() {
-		return u256.Zero()
-	}
-
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96.Clone(), sqrtRatioBX96.Clone())
 	var liquidity *u256.Uint
 
@@ -288,8 +284,11 @@ func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 //	u256.MustFromDecimal("1000000"),                        // Liquidity
 //
 // )
-// fmt.Println("Token0:", amount0, "Token1:", amount1)
-// // Example output: Token0: 500000, Token1: 250000
+//
+// println("Token0:", amount0, "Token1:", amount1)
+//
+// // Output:
+// Token0: 500000, Token1: 250000
 // ```
 func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) (string, string) {
 	if liquidity.IsZero() {

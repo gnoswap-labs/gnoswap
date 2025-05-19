@@ -11,7 +11,7 @@ import (
 
 var (
 	emissionRealm = std.NewCodeRealm(consts.EMISSION_PATH)
-	adminRealm    = std.NewUserRealm(consts.ADMIN)
+	adminRealm    = std.NewUserRealm(adminAddr)
 )
 
 func TestCheckInitialData(t *testing.T) {
@@ -37,9 +37,9 @@ func TestMintAndCheckRelativeData(t *testing.T) {
 	// mint
 	mintAmountFor10Blocks := uint64(142694060)
 	t.Run("mint for 10 blocks", func(t *testing.T) {
-		std.TestSetRealm(emissionRealm)
-		std.TestSkipHeights(10)
-		mintedAmount := MintGns(consts.ADMIN)
+		testing.SetRealm(emissionRealm)
+		testing.SkipHeights(10)
+		mintedAmount := MintGns(adminAddr)
 		uassert.Equal(t, mintAmountFor10Blocks, mintedAmount)
 	})
 
@@ -67,8 +67,8 @@ func TestBurnAndCheckRelativeData(t *testing.T) {
 	// burn
 	burnAmount := uint64(100000000)
 	t.Run("burn amount", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		Burn(consts.ADMIN, burnAmount)
+		testing.SetRealm(adminRealm)
+		Burn(adminAddr, burnAmount)
 	})
 
 	// after burn

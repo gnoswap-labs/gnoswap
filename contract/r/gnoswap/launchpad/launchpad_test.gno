@@ -9,7 +9,6 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/obl"
 
@@ -79,7 +78,7 @@ func TestValidateRecipient(t *testing.T) {
 		recipient std.Address
 		wantErr   bool
 	}{
-		{"ValidRecipient", std.Address(consts.ADMIN), false},
+		{"ValidRecipient", std.Address(adminAddr), false},
 		{"InvalidRecipient", std.Address("xyz..."), true},
 	}
 
@@ -242,7 +241,7 @@ func TestValidateAll(t *testing.T) {
 			input: ProjectInput{
 				Name:             "ProjectName",
 				TokenPath:        "gno.land/r/gnoswap/v1/gns",
-				Recipient:        std.Address(consts.ADMIN),
+				Recipient:        adminAddr,
 				DepositAmount:    1000,
 				ConditionsToken:  "gno.land/r/demo/wugnot",
 				ConditionsAmount: "10",
@@ -603,7 +602,7 @@ func TestRewardInfo_GetSet(t *testing.T) {
 		222, 333, 444, 555, 666, 777,
 	)
 	if ri.PriceDebt().ToString() != "111" {
-		t.Errorf("PriceDebt mismatch, got=%s", ri.PriceDebt().ToString())
+		t.Errorf("RewardDebt mismatch, got=%s", ri.PriceDebt().ToString())
 	}
 	if ri.DepositAmount() != 222 {
 		t.Errorf("DepositAmount mismatch, got=%d", ri.DepositAmount())
@@ -867,10 +866,10 @@ func TestCreateProject(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetRealm(adminRealm)
-			obl.Approve(consts.LAUNCHPAD_ADDR, tt.totalAmount)
+			testing.SetRealm(adminRealm)
+			obl.Approve(launchpadAddr, tt.totalAmount)
 			if !tt.duplicateTest {
-				std.TestSkipHeights(1)
+				testing.SkipHeights(1)
 			}
 
 			defer func() {
@@ -900,7 +899,7 @@ func TestCreateProject(t *testing.T) {
 				uassert.Equal(t, projectId, tt.expectedId)
 			}
 			if !tt.duplicateTest {
-				std.TestSkipHeights(1)
+				testing.SkipHeights(1)
 			}
 		})
 	}
@@ -944,9 +943,9 @@ func TestCreateProject_TierAndBalance(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetRealm(adminRealm)
-			obl.Approve(consts.LAUNCHPAD_ADDR, tt.totalAmount)
-			std.TestSkipHeights(1)
+			testing.SetRealm(adminRealm)
+			obl.Approve(launchpadAddr, tt.totalAmount)
+			testing.SkipHeights(1)
 
 			defer func() {
 				if r := recover(); r != nil {
@@ -974,7 +973,7 @@ func TestCreateProject_TierAndBalance(t *testing.T) {
 			if tt.expectedError == "" {
 				uassert.Equal(t, projectId, tt.expectedId)
 			}
-			std.TestSkipHeights(1)
+			testing.SkipHeights(1)
 		})
 	}
 }
@@ -1042,7 +1041,7 @@ func TestMakeConditions(t *testing.T) {
 			input := ProjectInput{
 				Name:             tt.name,
 				TokenPath:        "gno.land/r/gnoswap/v1/gns",
-				Recipient:        std.Address(consts.ADMIN),
+				Recipient:        adminAddr,
 				DepositAmount:    1000000,
 				ConditionsToken:  tt.conditionsToken,
 				ConditionsAmount: tt.conditionsAmount,
@@ -1196,6 +1195,8 @@ func TestCreateTier(t *testing.T) {
 		collectWaitDuration uint64
 		want                Tier
 		description         string
+		shouldPanic         bool
+		expectedError       string
 	}{
 		{
 			name:                "30-day tier creation",
@@ -1271,12 +1272,22 @@ func TestCreateTier(t *testing.T) {
 					time:   1900000000,
 				},
 			},
-			description: "Should handle zero duration correctly",
+			description:   "Should handle zero duration correctly",
+			shouldPanic:   true,
+			expectedError: "[GNOSWAP-LAUNCHPAD-009] invalid pool || invalid duration(0)",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r != nil {
+						uassert.Equal(t, r.(string), tt.expectedError)
+					}
+				}()
+			}
+
 			projectTiersWithoutDeposit = make(map[string]bool)
 
 			got := createTier(
@@ -1300,7 +1311,7 @@ func TestCreateTier(t *testing.T) {
 
 func TestCalculateProjectParams(t *testing.T) {
 	currentTime := uint64(time.Now().Unix())
-	baseHeight := uint64(std.GetHeight())
+	baseHeight := uint64(std.ChainHeight())
 
 	tests := []struct {
 		name    string
@@ -1381,7 +1392,7 @@ func TestCalculateProjectParams(t *testing.T) {
 func TestGenerateProjectId(t *testing.T) {
 	setupTest(t)
 
-	currentHeight := std.GetHeight()
+	currentHeight := std.ChainHeight()
 
 	tests := []struct {
 		name       string
@@ -1405,15 +1416,15 @@ func TestGenerateProjectId(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			heightBefore := std.GetHeight()
+			heightBefore := std.ChainHeight()
 			skip := tt.mockHeight - heightBefore
 			if skip > 0 {
-				std.TestSkipHeights(skip)
+				testing.SkipHeights(skip)
 			}
 
 			got := generateProjectId(tt.tokenPath)
 
-			want := ufmt.Sprintf("%s:%d", tt.tokenPath, std.GetHeight())
+			want := ufmt.Sprintf("%s:%d", tt.tokenPath, std.ChainHeight())
 
 			uassert.Equal(t, got, want)
 		})
@@ -1510,7 +1521,7 @@ func TestCovertTimeToHeight(t *testing.T) {
 			}
 		}()
 
-		std.TestSetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 		gns.SetAvgBlockTimeInMsByAdmin(0)
 		_ = convertTimeToHeight(1000)
 	})
@@ -1617,15 +1628,15 @@ func TestTransferLeftFromProjectByAdmin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			std.TestSetRealm(adminRealm)
+			testing.SetRealm(adminRealm)
 			// set up
 			tt.setupFunc()
 
 			// control block height
-			currHeight := std.GetHeight()
+			currHeight := std.ChainHeight()
 			skip := int64(tt.mockHeight) - int64(currHeight)
 			if skip > 0 {
-				std.TestSkipHeights(skip)
+				testing.SkipHeights(skip)
 			}
 
 			defer func() {

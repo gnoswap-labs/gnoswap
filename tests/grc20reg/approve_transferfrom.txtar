@@ -32,13 +32,13 @@ import (
 )
 
 func RelamAddr() string {
-  addr := std.CurrentRealm().Addr().String()
+  addr := std.CurrentRealm().Address().String()
   return addr
 }
 
 func TransferFromWithReg() {
-  caller := std.PrevRealm().Addr()
-  curr := std.CurrentRealm().Addr()
+  caller := std.PreviousRealm().Address()
+  curr := std.CurrentRealm().Address()
 
 
   // using import

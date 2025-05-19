@@ -9,13 +9,12 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
+
+	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
-var (
-	gnft = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
-)
+var gnft = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
 
 var (
 	owner     *ownable.Ownable
@@ -23,7 +22,8 @@ var (
 )
 
 func init() {
-	owner = ownable.NewWithAddress(consts.POSITION_ADDR) // deployed position contract
+	positionAddr, _ := access.GetAddress(access.ROLE_POSITION)
+	owner = ownable.NewWithAddress(positionAddr) // deployed position contract
 	tokenList = avl.NewTree()
 }
 
@@ -477,7 +477,9 @@ func assertCallerIsOwnerOfToken(tid grc721.TokenID) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	common.IsHalted()
+	if err := halt.IsHalted(); err != nil {
+		panic(err)
+	}
 }
 
 // assertValidAddr panics if the address is invalid.s

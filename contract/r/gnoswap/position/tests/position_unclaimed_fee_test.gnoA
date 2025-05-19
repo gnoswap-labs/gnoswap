@@ -16,48 +16,17 @@ import (
 	"gno.land/r/onbloc/foo"
 )
 
-const (
-	ugnotDenom string = "ugnot"
-	ugnotPath  string = "ugnot"
-	wugnotPath string = "gno.land/r/demo/wugnot"
-	gnsPath    string = "gno.land/r/gnoswap/v1/gns"
-	barPath    string = "gno.land/r/onbloc/bar"
-	bazPath    string = "gno.land/r/onbloc/baz"
-	fooPath    string = "gno.land/r/onbloc/foo"
-	oblPath    string = "gno.land/r/onbloc/obl"
-	quxPath    string = "gno.land/r/onbloc/qux"
-
-	fee100               uint32 = 100
-	fee500               uint32 = 500
-	fee3000              uint32 = 3000
-	fee10000             uint32 = 10000
-	maxApprove           uint64 = 18446744073709551615
-	max_timeout          int64  = 9999999999
-	maxSqrtPriceLimitX96 string = "1461446703485210103287273052203988822378723970341"
-
-	TIER_1 uint64 = 1
-	TIER_2 uint64 = 2
-	TIER_3 uint64 = 3
-)
-
-var (
-	adminAddr  = std.Address(consts.ADMIN)
-	admin      = adminAddr
-	adminRealm = std.NewUserRealm(admin)
-	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
-)
-
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
-	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
+	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestMintPosition01InRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, 18394892)
-	foo.Approve(consts.POOL_ADDR, 50000000)
+	testing.SetRealm(adminRealm)
+	bar.Approve(poolAddr, 18394892)
+	foo.Approve(poolAddr, 50000000)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -76,15 +45,15 @@ func TestMintPosition01InRange(t *testing.T) {
 	)
 
 	uassert.Equal(t, positionId, uint64(1))
-	uassert.Equal(t, getNextId(), uint64(2))
+	uassert.Equal(t, GetNextId(), uint64(2))
 	uassert.Equal(t, amount0, "18394892")
 	uassert.Equal(t, amount1, "50000000")
 }
 
 func TestMintPosition02LowerRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, 0)
-	foo.Approve(consts.POOL_ADDR, 50000000)
+	testing.SetRealm(adminRealm)
+	bar.Approve(poolAddr, 0)
+	foo.Approve(poolAddr, 50000000)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -103,15 +72,15 @@ func TestMintPosition02LowerRange(t *testing.T) {
 	)
 
 	uassert.Equal(t, positionId, uint64(2))
-	uassert.Equal(t, getNextId(), uint64(3))
+	uassert.Equal(t, GetNextId(), uint64(3))
 	uassert.Equal(t, amount0, "0")
 	uassert.Equal(t, amount1, "50000000")
 }
 
 func TestMintPosition03UpperRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, 50000000)
-	foo.Approve(consts.POOL_ADDR, 0)
+	testing.SetRealm(adminRealm)
+	bar.Approve(poolAddr, 50000000)
+	foo.Approve(poolAddr, 0)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -130,13 +99,13 @@ func TestMintPosition03UpperRange(t *testing.T) {
 	)
 
 	uassert.Equal(t, positionId, uint64(3))
-	uassert.Equal(t, getNextId(), uint64(4))
+	uassert.Equal(t, GetNextId(), uint64(4))
 	uassert.Equal(t, amount0, "50000000")
 	uassert.Equal(t, amount1, "0")
 }
 
 func TestCollectFeeBeforeSwap(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 	positionId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 
 	uassert.Equal(t, positionId, uint64(1))
@@ -153,10 +122,10 @@ func TestUnclaimedFee0(t *testing.T) {
 }
 
 func TestSwap1(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, 1234567)
+	testing.SetRealm(adminRealm)
+	bar.Approve(poolAddr, 1234567)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		fooPath,
@@ -180,10 +149,10 @@ func TestUnclaimedFee1(t *testing.T) {
 }
 
 func TestSwap2(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	testing.SetRealm(adminRealm)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		fooPath,
@@ -207,10 +176,10 @@ func TestUnclaimedFee2(t *testing.T) {
 }
 
 func TestSwap3(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	testing.SetRealm(adminRealm)
+	foo.Approve(poolAddr, consts.UINT64_MAX)
 
-	std.TestSetRealm(rouRealm)
+	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
 		fooPath,
 		barPath,
@@ -234,9 +203,9 @@ func TestUnclaimedFee3(t *testing.T) {
 }
 
 func TestCollectFeeAfterSwap(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	foo.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // COLLECT_FEE
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX) // COLLECT_FEE
+	testing.SetRealm(adminRealm)
+	foo.Approve(poolAddr, consts.UINT64_MAX) // COLLECT_FEE
+	bar.Approve(poolAddr, consts.UINT64_MAX) // COLLECT_FEE
 
 	positionId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 
@@ -247,7 +216,7 @@ func TestCollectFeeAfterSwap(t *testing.T) {
 }
 
 func TestDecreaseLiquidityUpperPosition(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	ownerOfPosition, _ := gnft.OwnerOf(positionIdFrom(3))
 	uassert.Equal(t, ownerOfPosition, adminAddr)

@@ -5,17 +5,16 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 func InitialSetup(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	testing.SetRealm(adminRealm)
 
 	pl.SetPoolCreationFeeByAdmin(0)
-	CreatePool(t, gnsPath, barPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
+	CreatePool(t, gnsPath, barPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
 	TokenFaucet(t, gnsPath, alice)
 	TokenFaucet(t, barPath, alice)
 }
@@ -93,9 +92,9 @@ func TestAddLiquidity(t *testing.T) {
 			}()
 
 			InitialSetup(t)
-			std.TestSetRealm(std.NewUserRealm(alice))
-			TokenApprove(t, gnsPath, alice, consts.POOL_ADDR, tt.params.amount0Desired.Uint64())
-			TokenApprove(t, barPath, alice, consts.POOL_ADDR, tt.params.amount1Desired.Uint64())
+			testing.SetRealm(std.NewUserRealm(alice))
+			TokenApprove(t, gnsPath, alice, poolAddr, tt.params.amount0Desired.Uint64())
+			TokenApprove(t, barPath, alice, poolAddr, tt.params.amount1Desired.Uint64())
 
 			_, amount0, amount1 := addLiquidity(tt.params)
 

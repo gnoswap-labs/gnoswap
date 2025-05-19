@@ -19,10 +19,10 @@ import (
 	"gno.land/r/onbloc/baz"
 )
 
-func TestCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+func TestSwapRouteOutRange_1route_1hop(t *testing.T) {
+	testing.SetRealm(adminRealm)
 
-	gns.Approve(consts.POOL_ADDR, pl.GetPoolCreationFee())
+	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString())
 
 	jsonStr := pl.ApiGetPools()
@@ -37,13 +37,9 @@ func TestCreatePool(t *testing.T) {
 	}
 
 	uassert.Equal(t, response.Size(), 1)
-}
 
-func TestPositionMint(t *testing.T) {
-	// bar_baz_500 by admin
-	std.TestSetRealm(adminRealm)
-	bar.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
-	baz.Approve(consts.POOL_ADDR, consts.UINT64_MAX)
+	bar.Approve(poolAddr, consts.UINT64_MAX)
+	baz.Approve(poolAddr, consts.UINT64_MAX)
 
 	// Mint
 	positionId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(8000), int32(12000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
@@ -55,12 +51,8 @@ func TestPositionMint(t *testing.T) {
 
 	// check pool liquidity
 	uassert.Equal(t, pl.PoolGetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"), "637408")
-}
 
-func TestDrySwapRouteBazBarExactIn(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-
-	dryResult := DrySwapRoute(
+	_, dryResult, _ := DrySwapRoute(
 		bazPath,    // inputToken
 		barPath,    // outputToken
 		"1000",     // amountSpecified
@@ -71,10 +63,6 @@ func TestDrySwapRouteBazBarExactIn(t *testing.T) {
 	)
 
 	uassert.Equal(t, dryResult, "367")
-}
-
-func TestSwapRouteBazBarExactIn(t *testing.T) {
-	std.TestSetRealm(adminRealm)
 
 	uassert.PanicsWithMessage(
 		t,
@@ -88,6 +76,7 @@ func TestSwapRouteBazBarExactIn(t *testing.T) {
 				"100",  // quoteArr
 				"2710", // tokenAmountLimit ( too few recieved (expected 2710, got 300))
 				time.Now().Add(time.Hour).Unix(),
+				"", // referrer
 			)
 		},
 	)

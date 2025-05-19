@@ -40,7 +40,7 @@ func QueryPoolData(poolPath string) (*PoolData, error) {
 		return nil, ufmt.Errorf("pool %s not found", poolPath)
 	}
 
-	currentHeight := std.GetHeight()
+	currentHeight := std.ChainHeight()
 	tier := poolTier.CurrentTier(poolPath)
 
 	ictvIds := filterActiveIncentives(pool, currentHeight)
@@ -49,7 +49,7 @@ func QueryPoolData(poolPath string) (*PoolData, error) {
 		PoolPath:         poolPath,
 		Tier:             tier,
 		ActiveIncentives: ictvIds,
-		StakedLiquidity:  pool.CurrentStakedLiquidity(std.GetHeight()),
+		StakedLiquidity:  pool.CurrentStakedLiquidity(std.ChainHeight()),
 	}, nil
 }
 
@@ -58,10 +58,10 @@ func QueryIncentiveData(incentiveId string) (*IncentiveData, error) {
 	var found bool
 	var data IncentiveData
 
-	pools.tree.Iterate("", "", func(key string, value interface{}) bool {
+	pools.tree.Iterate("", "", func(key string, value any) bool {
 		pool := value.(*Pool)
 
-		pool.incentives.byTime.Iterate("", "", func(key string, value interface{}) bool {
+		pool.incentives.byTime.Iterate("", "", func(key string, value any) bool {
 			if key == incentiveId {
 				ictv := value.(*ExternalIncentive)
 				data = IncentiveData{
@@ -108,7 +108,7 @@ func QueryDepositData(lpTokenId uint64) (*DepositData, error) {
 
 func filterActiveIncentives(pool *Pool, currentHeight int64) []string {
 	ictvIds := make([]string, 0)
-	pool.incentives.byHeight.Iterate("", "", func(key string, value interface{}) bool {
+	pool.incentives.byHeight.Iterate("", "", func(key string, value any) bool {
 		ictv := value.(*ExternalIncentive)
 		if ictv.startHeight <= currentHeight && currentHeight < ictv.endHeight {
 			ictvId := incentiveIdByTime(
@@ -116,6 +116,7 @@ func filterActiveIncentives(pool *Pool, currentHeight int64) []string {
 				ictv.endHeight,
 				ictv.refundee,
 				ictv.rewardToken,
+				pool.poolPath,
 			)
 			ictvIds = append(ictvIds, ictvId)
 		}
