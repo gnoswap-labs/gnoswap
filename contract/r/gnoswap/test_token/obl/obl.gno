@@ -19,8 +19,7 @@ var (
 
 func init() {
 	privateLedger.Mint(owner.Owner(), 100_000_000_000_000)
-	getter := func() *grc20.Token { return Token }
-	grc20reg.Register(getter, "")
+	grc20reg.Register(Token, "")
 }
 
 func TotalSupply() uint64 {

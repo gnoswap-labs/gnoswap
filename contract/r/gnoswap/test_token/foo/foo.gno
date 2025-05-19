@@ -57,7 +57,7 @@ func Render(path string) string {
 
 	switch {
 	case path == "":
-		return Token.RenderHome()
+		return token.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := std.Address(parts[1])
 		balance := userTeller.BalanceOf(owner)
