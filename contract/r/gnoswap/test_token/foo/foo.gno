@@ -12,39 +12,38 @@ import (
 )
 
 var (
-	Token, privateLedger = grc20.NewToken("Foo", "FOO", 6)
-	UserTeller           = Token.CallerTeller()
+	token, privateLedger = grc20.NewToken("Foo", "FOO", 6)
+	userTeller           = token.CallerTeller()
 	owner                = ownable.NewWithAddress("g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d") // ADMIN
 )
 
 func init() {
 	privateLedger.Mint(owner.Owner(), 100_000_000_000_000)
-	getter := func() *grc20.Token { return Token }
-	cross(grc20reg.Register)(getter, "")
+	cross(grc20reg.Register)(token, "")
 }
 
 func TotalSupply() int64 {
-	return UserTeller.TotalSupply()
+	return userTeller.TotalSupply()
 }
 
 func BalanceOf(owner std.Address) int64 {
-	return UserTeller.BalanceOf(owner)
+	return userTeller.BalanceOf(owner)
 }
 
 func Allowance(owner, spender std.Address) int64 {
-	return UserTeller.Allowance(owner, spender)
+	return userTeller.Allowance(owner, spender)
 }
 
 func Transfer(to std.Address, amount int64) {
-	checkErr(UserTeller.Transfer(to, amount))
+	checkErr(userTeller.Transfer(to, amount))
 }
 
 func Approve(spender std.Address, amount int64) {
-	checkErr(UserTeller.Approve(spender, amount))
+	checkErr(userTeller.Approve(spender, amount))
 }
 
 func TransferFrom(from, to std.Address, amount int64) {
-	checkErr(UserTeller.TransferFrom(from, to, amount))
+	checkErr(userTeller.TransferFrom(from, to, amount))
 }
 
 func Burn(from std.Address, amount int64) {
@@ -61,7 +60,7 @@ func Render(path string) string {
 		return Token.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := std.Address(parts[1])
-		balance := UserTeller.BalanceOf(owner)
+		balance := userTeller.BalanceOf(owner)
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"
