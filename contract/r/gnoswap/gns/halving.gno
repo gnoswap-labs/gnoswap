@@ -28,7 +28,7 @@ const (
 	HALVING_END_YEAR   = int64(12)
 )
 
-var halvingAmountsPerYear = [HALVING_END_YEAR]uint64{
+var halvingAmountsPerYear = [HALVING_END_YEAR]int64{
 	18_750_000_000_000 * 12, // Year 1:  225000000000000
 	18_750_000_000_000 * 12, // Year 2:  225000000000000
 	9_375_000_000_000 * 12,  // Year 3:  112500000000000
@@ -55,15 +55,15 @@ type HalvingData struct {
 	startBlockHeight []int64
 	endBlockHeight   []int64
 	startTimestamp   []int64
-	maxAmount        []uint64
-	mintedAmount     []uint64
-	leftAmount       []uint64
-	accumAmount      []uint64
-	amountPerBlock   []uint64
+	maxAmount        []int64
+	mintedAmount     []int64
+	leftAmount       []int64
+	accumAmount      []int64
+	amountPerBlock   []int64
 }
 
 func (h *HalvingData) getStartBlockHeight(year int64) int64 {
-	if year == 0 {
+	if year <= 0 {
 		return 0
 	}
 	return h.startBlockHeight[year-1]
@@ -98,67 +98,67 @@ func (h *HalvingData) setStartTimestamp(year int64, timestamp int64) {
 	h.startTimestamp[year-1] = timestamp
 }
 
-func (h *HalvingData) getMaxAmount(year int64) uint64 {
+func (h *HalvingData) getMaxAmount(year int64) int64 {
 	if year == 0 {
 		return 0
 	}
 	return h.maxAmount[year-1]
 }
 
-func (h *HalvingData) setMaxAmount(year int64, amount uint64) {
+func (h *HalvingData) setMaxAmount(year, amount int64) {
 	assertValidYear(year)
 	h.maxAmount[year-1] = amount
 }
 
-func (h *HalvingData) getMintedAmount(year int64) uint64 {
+func (h *HalvingData) getMintedAmount(year int64) int64 {
 	if year == 0 {
 		return 0
 	}
 	return h.mintedAmount[year-1]
 }
 
-func (h *HalvingData) setMintedAmount(year int64, amount uint64) {
+func (h *HalvingData) setMintedAmount(year, amount int64) {
 	assertValidYear(year)
 	h.mintedAmount[year-1] = amount
 }
 
-func (h *HalvingData) getLeftAmount(year int64) uint64 {
+func (h *HalvingData) getLeftAmount(year int64) int64 {
 	if year == 0 {
 		return 0
 	}
 	return h.leftAmount[year-1]
 }
 
-func (h *HalvingData) setLeftAmount(year int64, amount uint64) {
+func (h *HalvingData) setLeftAmount(year, amount int64) {
 	assertValidYear(year)
 	h.leftAmount[year-1] = amount
 }
 
-func (h *HalvingData) getAccumAmount(year int64) uint64 {
+func (h *HalvingData) getAccumAmount(year int64) int64 {
 	if year == 0 {
 		return 0
 	}
 	return h.accumAmount[year-1]
 }
 
-func (h *HalvingData) setAccumAmount(year int64, amount uint64) {
+func (h *HalvingData) setAccumAmount(year, amount int64) {
 	assertValidYear(year)
 	h.accumAmount[year-1] = amount
 }
 
-func (h *HalvingData) addAccumAmount(year int64, amount uint64) {
+func (h *HalvingData) addAccumAmount(year, amount int64) {
 	assertValidYear(year)
 	h.accumAmount[year-1] += amount
 }
 
-func (h *HalvingData) getAmountPerBlock(year int64) uint64 {
+func (h *HalvingData) getAmountPerBlock(year int64) int64 {
 	if year == 0 {
 		return 0
 	}
 	return h.amountPerBlock[year-1]
 }
 
-func (h *HalvingData) setAmountPerBlock(year int64, amount uint64) {
+func (h *HalvingData) setAmountPerBlock(year, amount int64) {
 	assertValidYear(year)
 	h.amountPerBlock[year-1] = amount
 }
@@ -190,16 +190,16 @@ func (h *HalvingData) initialize(startHeight, startTimestamp int64) {
 		h.setStartTimestamp(year, startTimestamp+(SECONDS_IN_YEAR*(year-1)))
 
 		amountPerDay := currentYearMaxAmount / DAY_PER_YEAR
-		amountPerBlock := amountPerDay / uint64(blockPerDay)
-		h.setAmountPerBlock(year, uint64(amountPerBlock))
-		h.setMintedAmount(year, uint64(0))
+		amountPerBlock := amountPerDay / blockPerDay
+		h.setAmountPerBlock(year, amountPerBlock)
+		h.setMintedAmount(year, 0)
 		h.setLeftAmount(year, currentYearMaxAmount)
 	}
 }
 
-var callbackEmissionChange func(amount uint64)
+var callbackEmissionChange func(amount int64)
 
-func SetCallbackEmissionChange(callback func(amount uint64)) {
+func SetCallbackEmissionChange(callback func(amount int64)) {
 	if callbackEmissionChange != nil {
 		panic("callbackEmissionChange already set")
 	}
@@ -207,10 +207,11 @@ func SetCallbackEmissionChange(callback func(amount uint64)) {
 }
 
 // endHeight MUST be smaller than the current height(we don't read future halving blocks with this function)
-func GetHalvingBlocksInRange(startHeight, endHeight int64) ([]int64, []uint64) {
+func GetHalvingBlocksInRange(startHeight, endHeight int64) ([]int64, []int64) {
 	halvingData := GetEmissionState().getHalvingData()
-	halvingBlocks := []int64{}
-	halvingEmissions := []uint64{}
+	halvingBlocks := make([]int64, 0)
+	halvingEmissions := make([]int64, 0)
+
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		startBlock := halvingData.getStartBlockHeight(year)
 		if startBlock < startHeight {
@@ -226,7 +227,7 @@ func GetHalvingBlocksInRange(startHeight, endHeight int64) ([]int64, []uint64) {
 }
 
 // height MUST be smaller than the current height(we don't read future emissions)
-func GetEmission() uint64 {
+func GetEmission() int64 {
 	halvingData := GetEmissionState().getHalvingData()
 	height := std.ChainHeight()
 
@@ -268,11 +269,11 @@ func NewEmissionState() *EmissionState {
 			startBlockHeight: make([]int64, HALVING_END_YEAR),
 			endBlockHeight:   make([]int64, HALVING_END_YEAR),
 			startTimestamp:   make([]int64, HALVING_END_YEAR),
-			maxAmount:        make([]uint64, HALVING_END_YEAR),
-			mintedAmount:     make([]uint64, HALVING_END_YEAR),
-			leftAmount:       make([]uint64, HALVING_END_YEAR),
-			accumAmount:      make([]uint64, HALVING_END_YEAR),
-			amountPerBlock:   make([]uint64, HALVING_END_YEAR),
+			maxAmount:        make([]int64, HALVING_END_YEAR),
+			mintedAmount:     make([]int64, HALVING_END_YEAR),
+			leftAmount:       make([]int64, HALVING_END_YEAR),
+			accumAmount:      make([]int64, HALVING_END_YEAR),
+			amountPerBlock:   make([]int64, HALVING_END_YEAR),
 		},
 	}
 }
@@ -412,7 +413,7 @@ func setAvgBlockTimeInMs(ms int64) {
 	amountLeft := GetHalvingYearAccuAmount(currentYear) - minted
 
 	// how much reward should be minted per block for current halving year
-	adjustedAmountPerBlock := amountLeft / uint64(blockLeft)
+	adjustedAmountPerBlock := amountLeft / blockLeft
 
 	// Notify external modules (e.g., staker) about the upcoming emission change
 	// BEFORE mutating the halving data so that they can cache rewards using the
@@ -456,7 +457,7 @@ func setAvgBlockTimeInMs(ms int64) {
 }
 
 // GetAmountByHeight returns the amount of gns to mint by height
-func GetAmountByHeight(height int64) uint64 {
+func GetAmountByHeight(height int64) int64 {
 	if isEmissionEnded(height) {
 		return 0
 	}
@@ -514,62 +515,62 @@ func setHalvingYearTimestamp(year int64, timestamp int64) {
 	GetEmissionState().setHalvingData(halvingData)
 }
 
-func GetHalvingYearMaxAmount(year int64) uint64 {
+func GetHalvingYearMaxAmount(year int64) int64 {
 	halvingData := GetEmissionState().getHalvingData()
 	return halvingData.getMaxAmount(year)
 }
 
-func setHalvingYearMaxAmount(year int64, amount uint64) {
+func setHalvingYearMaxAmount(year, amount int64) {
 	halvingData := GetEmissionState().getHalvingData()
 	halvingData.setMaxAmount(year, amount)
 	GetEmissionState().setHalvingData(halvingData)
 }
 
-func GetHalvingYearMintAmount(year int64) uint64 {
+func GetHalvingYearMintAmount(year int64) int64 {
 	halvingData := GetEmissionState().getHalvingData()
 	return halvingData.getMintedAmount(year)
 }
 
-func setHalvingYearMintAmount(year int64, amount uint64) {
+func setHalvingYearMintAmount(year, amount int64) {
 	halvingData := GetEmissionState().getHalvingData()
 	halvingData.setMintedAmount(year, amount)
 	GetEmissionState().setHalvingData(halvingData)
 }
 
-func GetHalvingYearLeftAmount(year int64) uint64 {
+func GetHalvingYearLeftAmount(year int64) int64 {
 	halvingData := GetEmissionState().getHalvingData()
 	return halvingData.getLeftAmount(year)
 }
 
-func setHalvingYearLeftAmount(year int64, amount uint64) {
+func setHalvingYearLeftAmount(year, amount int64) {
 	halvingData := GetEmissionState().getHalvingData()
 	halvingData.setLeftAmount(year, amount)
 	GetEmissionState().setHalvingData(halvingData)
 }
 
-func GetHalvingYearAccuAmount(year int64) uint64 {
+func GetHalvingYearAccuAmount(year int64) int64 {
 	halvingData := GetEmissionState().getHalvingData()
 	return halvingData.getAccumAmount(year)
 }
 
-func setHalvingYearAccuAmount(year int64, amount uint64) {
+func setHalvingYearAccuAmount(year, amount int64) {
 	halvingData := GetEmissionState().getHalvingData()
 	halvingData.setAccumAmount(year, amount)
 	GetEmissionState().setHalvingData(halvingData)
 }
 
-func GetAmountPerBlockPerHalvingYear(year int64) uint64 {
+func GetAmountPerBlockPerHalvingYear(year int64) int64 {
 	halvingData := GetEmissionState().getHalvingData()
 	return halvingData.getAmountPerBlock(year)
 }
 
-func setAmountPerBlockPerHalvingYear(year int64, amount uint64) {
+func setAmountPerBlockPerHalvingYear(year, amount int64) {
 	halvingData := GetEmissionState().getHalvingData()
 	halvingData.setAmountPerBlock(year, amount)
 	GetEmissionState().setHalvingData(halvingData)
 }
 
-func GetHalvingAmountsPerYear(year int64) uint64 {
+func GetHalvingAmountsPerYear(year int64) int64 {
 	return halvingAmountsPerYear[year-1]
 }
 

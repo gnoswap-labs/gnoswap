@@ -24,9 +24,7 @@ var re = regexp.MustCompile(`\[gno\.land/r/[^\]]+\]`)
 // - Allowance
 // - RenderHome
 func GetToken(path string) *grc20.Token {
-	tokenGetter := grc20reg.MustGet(path) // if token is not registered, it will panic
-
-	return tokenGetter()
+	return grc20reg.MustGet(path)
 }
 
 // GetTokenTeller returns a grc20.Teller instance
@@ -36,9 +34,7 @@ func GetToken(path string) *grc20.Token {
 // - Approve
 // - TransferFrom
 func GetTokenTeller(path string) grc20.Teller {
-	tokenGetter := grc20reg.MustGet(path) // if token is not registered, it will panic
-	token := tokenGetter()
-	return token.CallerTeller()
+	return grc20reg.MustGet(path).CallerTeller()
 }
 
 // IsRegistered returns nil if token is registered to grc20reg

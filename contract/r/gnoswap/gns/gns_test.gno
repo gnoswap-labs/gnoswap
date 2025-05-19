@@ -56,7 +56,7 @@ func TestBalanceOf(t *testing.T) {
 func TestAssertTooManyEmission(t *testing.T) {
 	tests := []struct {
 		name        string
-		amount      uint64
+		amount      int64
 		shouldPanic bool
 		panicMsg    string
 	}{
@@ -125,16 +125,16 @@ func TestHandleLeftEmissionAmount(t *testing.T) {
 	tests := make([]struct {
 		name   string
 		year   int64
-		amount uint64
-		want   uint64
+		amount int64
+		want   int64
 	}, 0, 24)
 
 	for i := int64(1); i <= 12; i++ {
 		tests = append(tests, struct {
 			name   string
 			year   int64
-			amount uint64
-			want   uint64
+			amount int64
+			want   int64
 		}{
 			name:   fmt.Sprintf("handle left emission amount for year %d, non minted", i),
 			year:   i,
@@ -145,13 +145,13 @@ func TestHandleLeftEmissionAmount(t *testing.T) {
 		tests = append(tests, struct {
 			name   string
 			year   int64
-			amount uint64
-			want   uint64
+			amount int64
+			want   int64
 		}{
 			name:   fmt.Sprintf("handle left emission amount for year %d, minted", i),
 			year:   i,
-			amount: uint64(123456),
-			want:   GetHalvingYearMaxAmount(i) - uint64(123456),
+			amount: int64(123456),
+			want:   GetHalvingYearMaxAmount(i) - int64(123456),
 		})
 	}
 }
@@ -184,7 +184,7 @@ func TestGetterSetter(t *testing.T) {
 	})
 
 	t.Run("left emission amount", func(t *testing.T) {
-		value := uint64(0)
+		value := int64(0)
 		setLeftEmissionAmount(value)
 		uassert.Equal(t, value, GetLeftEmissionAmount())
 	})
@@ -212,13 +212,13 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "BalanceOf(alice)",
 			fn: func() {
-				uassert.Equal(t, uint64(0), BalanceOf(alice))
+				uassert.Equal(t, int64(0), BalanceOf(alice))
 			},
 		},
 		{
 			name: "Allowance(admin, alice)",
 			fn: func() {
-				uassert.Equal(t, uint64(0), Allowance(adminAddr, alice))
+				uassert.Equal(t, int64(0), Allowance(adminAddr, alice))
 			},
 		},
 		{
@@ -231,24 +231,17 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "MintGns without permission should panic",
 			fn: func() {
-				testing.SetRealm(userRealm)
+				testing.SetRealm(emissionRealm)
 				testing.SkipHeights(1)
 				MintGns(adminAddr)
 			},
 			shouldPanic: true,
-			panicMsg:    `caller(g1w4ek2ujlta047h6lta047h6lta047h6lkvk347) has no permission`,
-		},
-		{
-			name: "Burn success",
-			fn: func() {
-				testing.SetRealm(adminRealm)
-				Burn(adminAddr, uint64(1))
-			},
+			panicMsg:    `caller(g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m) has no permission`,
 		},
 		{
 			name: "Burn without permission should panic",
 			fn: func() {
-				Burn(adminAddr, uint64(1))
+				Burn(adminAddr, int64(1))
 			},
 			shouldPanic: true,
 			panicMsg:    `ownable: caller is not owner`,
@@ -256,15 +249,23 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "Transfer success",
 			fn: func() {
+				testing.SetOriginCaller(adminAddr)
 				testing.SetRealm(adminRealm)
-				Transfer(alice, uint64(1))
+				func() {
+					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+					Transfer(alice, int64(1))
+				}()
 			},
 		},
 		{
 			name: "Transfer without enough balance should panic",
 			fn: func() {
+				testing.SetOriginCaller(alice)
 				testing.SetRealm(std.NewUserRealm(alice))
-				Transfer(bob, uint64(1))
+				func() {
+					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+					Transfer(bob, int64(1))
+				}()
 			},
 			shouldPanic: true,
 			panicMsg:    `insufficient balance`,
@@ -272,8 +273,12 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "Transfer to self should panic",
 			fn: func() {
+				testing.SetOriginCaller(adminAddr)
 				testing.SetRealm(adminRealm)
-				Transfer(adminAddr, uint64(1))
+				func() {
+					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+					Transfer(adminAddr, int64(1))
+				}()
 			},
 			shouldPanic: true,
 			panicMsg:    `cannot send transfer to self`,
@@ -283,21 +288,35 @@ func TestGrc20Methods(t *testing.T) {
 			fn: func() {
 				// approve first
 				testing.SetRealm(adminRealm)
-				Approve(alice, uint64(1))
+				func() {
+					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+					Approve(alice, int64(1))
+				}()
 
 				// alice transfer admin's balance to bob
+				testing.SetOriginCaller(alice)
 				testing.SetRealm(std.NewUserRealm(alice))
-				TransferFrom(adminAddr, bob, uint64(1))
+				func() {
+					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+					TransferFrom(adminAddr, bob, int64(1))
+				}()
 			},
 		},
 		{
 			name: "TransferFrom without enough allowance should panic",
 			fn: func() {
 				testing.SetRealm(adminRealm)
-				Approve(alice, uint64(1))
+				func() {
+					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+					Approve(alice, int64(1))
+				}()
 
+				testing.SetOriginCaller(alice)
 				testing.SetRealm(std.NewUserRealm(alice))
-				TransferFrom(adminAddr, bob, uint64(2))
+				func() {
+					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+					TransferFrom(adminAddr, bob, int64(2))
+				}()
 			},
 			shouldPanic: true,
 			panicMsg:    `insufficient allowance`,
