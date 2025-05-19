@@ -11,7 +11,7 @@ import (
 	"gno.land/r/gnoswap/v1/halt"
 )
 
-const MAX_BPS_PCT uint64 = 10000
+const MAX_BPS_PCT int64 = 10000
 
 // getPrevRealm returns object of the previous realm.
 func getPrevRealm() std.Realm {
@@ -62,7 +62,7 @@ func assertOnlyGovStaker() {
 }
 
 // assertDistributionTarget panics if the target is invalid.
-func assertDistributionTarget(target int) {
+func assertDistributionTarget(target int64) {
 	if target != LIQUIDITY_STAKER && target != DEVOPS && target != COMMUNITY_POOL && target != GOV_STAKER {
 		panic(addDetailToError(
 			errInvalidEmissionTarget,
@@ -86,7 +86,7 @@ func assertOnlyNotHalted() {
 }
 
 // assertSumDistributionPct ensures the sum of all distribution percentages is 100%
-func assertSumDistributionPct(pct01, pct02, pct03, pct04 uint64) {
+func assertSumDistributionPct(pct01, pct02, pct03, pct04 int64) {
 	sum := pct01 + pct02 + pct03 + pct04
 
 	if sum != MAX_BPS_PCT {
