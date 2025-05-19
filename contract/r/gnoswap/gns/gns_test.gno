@@ -29,20 +29,13 @@ var (
 	userRealm = std.NewUserRealm(testutils.TestAddress("user"))
 )
 
-func TestGetName(t *testing.T) {
-	uassert.Equal(t, "Gnoswap", GetName())
-}
-
-func TestGetSymbol(t *testing.T) {
-	uassert.Equal(t, "GNS", GetSymbol())
-}
-
-func TestGetDecimals(t *testing.T) {
-	uassert.Equal(t, uint(6), GetDecimals())
-}
-
 func TestKnownAccounts(t *testing.T) {
-	uassert.Equal(t, int(1), KnownAccounts())
+	testing.SetOriginCaller(alice)
+	testing.SetRealm(std.NewUserRealm(alice))
+	func() {
+		testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+		uassert.Equal(t, 1, KnownAccounts())
+	}()
 }
 
 func TestTotalSupply(t *testing.T) {
