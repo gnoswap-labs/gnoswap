@@ -40,6 +40,15 @@ func CreateExternalIncentive(
 		))
 	}
 
+	// Check if reward amount meets the minimum requirement for the specific token
+	minReward := GetMinimumRewardAmountForToken(rewardToken)
+	if rewardAmount < minReward {
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("rewardAmount(%d) is less than minimum required amount(%d)", rewardAmount, minReward),
+		))
+	}
+
 	en.MintAndDistributeGns()
 
 	// check token can be used as reward
