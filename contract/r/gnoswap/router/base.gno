@@ -16,7 +16,7 @@ import (
 const (
 	SINGLE_HOP_ROUTE int = 1
 
-	INITIAL_WUGNOT_BALANCE uint64 = 0
+	INITIAL_WUGNOT_BALANCE int64 = 0
 )
 
 // swap can be done by multiple pools
@@ -53,8 +53,8 @@ type BaseSwapParams struct {
 
 // common swap operation
 type baseSwapOperation struct {
-	userBeforeWugnotBalance uint64
-	userWrappedWugnot       uint64
+	userBeforeWugnotBalance int64
+	userWrappedWugnot       int64
 	routes                  []string
 	quotes                  []string
 	amountSpecified         *i256.Int
@@ -78,8 +78,8 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 	}
 
 	sent := std.OriginSend()
-	ugnotSentByUser := uint64(sent.AmountOf("ugnot"))
-	amountSpecified := specifiedAmount.Uint64()
+	ugnotSentByUser := sent.AmountOf("ugnot")
+	amountSpecified := specifiedAmount.Int64()
 
 	if ugnotSentByUser != amountSpecified {
 		return ufmt.Errorf("ugnot sent by user(%d) is not equal to amountSpecified(%d)", ugnotSentByUser, amountSpecified)

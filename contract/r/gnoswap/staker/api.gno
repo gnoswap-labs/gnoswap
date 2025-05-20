@@ -203,7 +203,7 @@ func ApiGetInternalIncentives() string {
 
 	poolTier.membership.Iterate("", "", func(key string, value any) bool {
 		poolPath := key
-		internalTier := value.(uint64)
+		internalTier := value.(int64) // TODO: need to check here if type is not correct
 		internalIctv := newApiInternalIncentive(poolPath, internalTier)
 		apiInternalIncentives = append(apiInternalIncentives, internalIctv)
 		return false
@@ -236,25 +236,25 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 	return makeApiResponse(rsps)
 }
 
-func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
-	apiInternalIncentives := []ApiInternalIncentive{}
+func ApiGetInternalIncentivesByTiers(targetTier int64) string {
+	ictvs := make([]ApiInternalIncentive, 0)
 
 	poolTier.membership.Iterate("", "", func(key string, value any) bool {
 		poolPath := key
-		internalTier := value.(uint64)
+		internalTier := value.(int64) // TODO: need to check here if type is not correct
 		if internalTier != targetTier {
 			return false
 		}
 
-		internalIctv := newApiInternalIncentive(poolPath, internalTier)
-		apiInternalIncentives = append(apiInternalIncentives, internalIctv)
+		ictv := newApiInternalIncentive(poolPath, internalTier)
+		ictvs = append(ictvs, ictv)
 
 		return false
 	})
 
-	rsps := make([]JsonResponse, len(apiInternalIncentives))
-	for i := range apiInternalIncentives {
-		rsps[i] = apiInternalIncentives[i]
+	rsps := make([]JsonResponse, len(ictvs))
+	for i := range ictvs {
+		rsps[i] = ictvs[i]
 	}
 
 	return makeApiResponse(rsps)

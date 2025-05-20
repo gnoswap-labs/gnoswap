@@ -13,7 +13,7 @@ type Warmup struct {
 	Index            int
 	BlockDuration    int64
 	NextWarmupHeight int64 // set to 0 for template
-	WarmupRatio      uint64
+	WarmupRatio      int64
 }
 
 var warmupTemplate []Warmup = DefaultWarmupTemplate()
@@ -84,15 +84,21 @@ func instantiateWarmup(currentHeight int64) []Warmup {
 }
 
 func (warmup *Warmup) apply(poolReward uint64, positionLiquidity, stakedLiquidity *u256.Uint) (uint64, uint64) {
+	warmupRatio := uint64(warmup.WarmupRatio)
 	poolRewardUint := u256.NewUint(poolReward)
+
 	perPositionReward := u256.Zero().Mul(poolRewardUint, positionLiquidity)
 	perPositionReward = u256.Zero().Div(perPositionReward, stakedLiquidity)
-	rewardRatio := u256.NewUint(warmup.WarmupRatio)
-	penaltyRatio := u256.NewUint(100 - warmup.WarmupRatio)
+
+	rewardRatio := u256.NewUint(warmupRatio)
+	penaltyRatio := u256.NewUint(100 - warmupRatio)
+
 	totalReward := u256.Zero().Mul(perPositionReward, rewardRatio)
 	totalReward = u256.Zero().Div(totalReward, u256.NewUint(100))
+
 	totalPenalty := u256.Zero().Mul(perPositionReward, penaltyRatio)
 	totalPenalty = u256.Zero().Div(totalPenalty, u256.NewUint(100))
+
 	return totalReward.Uint64(), totalPenalty.Uint64()
 }
 

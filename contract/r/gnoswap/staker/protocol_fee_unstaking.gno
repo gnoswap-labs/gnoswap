@@ -12,7 +12,7 @@ import (
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
 
-var unstakingFee = uint64(100) // 1%
+var unstakingFee = int64(100) // 1%
 
 // handleUnStakingFee calculates and applies the unstaking fee.
 //
@@ -30,11 +30,11 @@ var unstakingFee = uint64(100) // 1%
 // - uint64: The amount after deducting the unstaking fee.
 func handleUnStakingFee(
 	tokenPath string,
-	amount uint64,
+	amount int64,
 	internal bool,
 	positionId uint64,
 	poolPath string,
-) uint64 {
+) int64 {
 	if unstakingFee == 0 {
 		return amount
 	}
@@ -43,13 +43,14 @@ func handleUnStakingFee(
 	if feeAmount == 0 {
 		return amount
 	}
+	fee := feeAmount
 
 	prevAddr, prevPkgPath := getPrev()
 
 	if internal {
 		// staker contract has fee
-		cross(gns.Transfer)(protocolFeeAddr, feeAmount)
-		pf.AddToProtocolFee(consts.GNS_PATH, feeAmount)
+		cross(gns.Transfer)(protocolFeeAddr, fee)
+		pf.AddToProtocolFee(consts.GNS_PATH, fee)
 
 		std.Emit(
 			"ProtocolFeeInternalReward",
@@ -63,8 +64,8 @@ func handleUnStakingFee(
 	} else {
 		// external contract has fee
 		teller := common.GetTokenTeller(tokenPath)
-		teller.Transfer(protocolFeeAddr, feeAmount)
-		pf.AddToProtocolFee(tokenPath, feeAmount)
+		teller.Transfer(protocolFeeAddr, fee)
+		pf.AddToProtocolFee(tokenPath, fee)
 
 		std.Emit(
 			"ProtocolFeeExternalReward",
@@ -82,7 +83,7 @@ func handleUnStakingFee(
 
 // GetUnstakingFee returns current rate of unstaking fee
 // ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#getunstakingfee
-func GetUnstakingFee() uint64 {
+func GetUnstakingFee() int64 {
 	return unstakingFee
 }
 
@@ -92,11 +93,11 @@ func GetUnstakingFee() uint64 {
 // the input fee and emits an event indicating the change.
 //
 // Parameters:
-// - fee (uint64): The new unstaking fee rate in basis points (bps).
+// - fee (int64): The new unstaking fee rate in basis points (bps).
 //
 // Panics:
 // - If the caller is not an admin.
-func SetUnStakingFeeByAdmin(fee uint64) {
+func SetUnStakingFeeByAdmin(fee int64) {
 	caller := std.PreviousRealm().Address()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err.Error())
@@ -120,7 +121,7 @@ func SetUnStakingFeeByAdmin(fee uint64) {
 // SetUnStakingFee modifies the unstaking fee
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#setunstakingfee
-func SetUnStakingFee(fee uint64) {
+func SetUnStakingFee(fee int64) {
 	caller := getPrevAddr()
 	if err := common.GovernanceOnly(caller); err != nil {
 		panic(err.Error())
@@ -141,12 +142,12 @@ func SetUnStakingFee(fee uint64) {
 	)
 }
 
-func setUnStakingFee(fee uint64) {
+func setUnStakingFee(fee int64) {
 	// 10000 (bps) = 100%
 	if fee > 10000 {
 		panic(addDetailToError(
 			errInvalidUnstakingFee,
-			ufmt.Sprintf("reward_fee.gno__SetUnstakingFee() || fee(%d) must be in range 0 ~ 10000", fee),
+			ufmt.Sprintf("fee(%d) must be in range 0 ~ 10000", fee),
 		))
 	}
 

@@ -44,11 +44,11 @@ func wrap(ugnotAmount int64) {
 // unwrap converts `wugnot` tokens back into `ugnot` tokens.
 //
 // Parameters:
-// - wugnotAmount (uint64): The amount of `wugnot` to unwrap.
+// - wugnotAmount (int64): The amount of `wugnot` to unwrap.
 //
 // Note:
 // - If `wugnotAmount` is 0, the function simply returns without executing further steps.
-func unwrap(wugnotAmount uint64) {
+func unwrap(wugnotAmount int64) {
 	if wugnotAmount == 0 {
 		return
 	}

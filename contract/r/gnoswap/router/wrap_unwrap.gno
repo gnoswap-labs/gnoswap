@@ -36,7 +36,7 @@ func wrap(ugnotAmount int64) {
 	cross(wugnot.Transfer)(std.PreviousRealm().Address(), ugnotAmount)
 }
 
-func unwrap(wugnotAmount uint64) {
+func unwrap(wugnotAmount int64) {
 	if wugnotAmount == 0 {
 		return
 	}

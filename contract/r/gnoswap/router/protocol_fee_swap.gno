@@ -109,11 +109,11 @@ func handleSwapFee(
 
 	feeAmount := new(u256.Uint).Mul(amount, u256.NewUint(swapFee))
 	feeAmount.Div(feeAmount, u256.NewUint(10000))
-	feeAmountUint64 := feeAmount.Uint64()
+	feeAmountInt64 := feeAmount.Int64()
 
 	outputTeller := common.GetTokenTeller(outputToken)
-	outputTeller.TransferFrom(std.PreviousRealm().Address(), protocolFeeAddr, feeAmountUint64)
-	pf.AddToProtocolFee(outputToken, feeAmountUint64)
+	outputTeller.TransferFrom(std.PreviousRealm().Address(), protocolFeeAddr, feeAmountInt64)
+	pf.AddToProtocolFee(outputToken, feeAmountInt64)
 
 	prevAddr, prevPkgPath := getPrev()
 
@@ -122,7 +122,7 @@ func handleSwapFee(
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"tokenPath", outputToken,
-		"amount", formatUint(feeAmountUint64),
+		"amount", formatInt(feeAmountInt64),
 	)
 
 	toUserAfterProtocol := new(u256.Uint).Sub(amount, feeAmount)

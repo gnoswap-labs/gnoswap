@@ -9,7 +9,7 @@ import (
 
 type PoolData struct {
 	PoolPath         string
-	Tier             uint64
+	Tier             int64
 	ActiveIncentives []string
 	StakedLiquidity  *u256.Uint
 }
@@ -69,7 +69,7 @@ func QueryIncentiveData(incentiveId string) (*IncentiveData, error) {
 					StartTimestamp: ictv.startTimestamp,
 					EndTimestamp:   ictv.endTimestamp,
 					RewardToken:    ictv.rewardToken,
-					RewardAmount:   u256.NewUint(ictv.rewardAmount),
+					RewardAmount:   u256.NewUint(uint64(ictv.rewardAmount)),
 					Refundee:       ictv.refundee,
 					PoolPath:       pool.poolPath,
 				}

@@ -19,7 +19,7 @@ import (
 func CreateExternalIncentive(
 	targetPoolPath string,
 	rewardToken string, // token path should be registered
-	rewardAmount uint64,
+	rewardAmount int64,
 	startTimestamp int64,
 	endTimestamp int64,
 ) {
@@ -50,7 +50,7 @@ func CreateExternalIncentive(
 	// native ugnot check
 	if rewardToken == consts.GNOT {
 		sent := std.OriginSend()
-		ugnotSent := uint64(sent.AmountOf("ugnot"))
+		ugnotSent := sent.AmountOf("ugnot")
 
 		if ugnotSent != rewardAmount {
 			panic(addDetailToError(
@@ -276,7 +276,7 @@ func isMidnight(startTime time.Time) bool {
 	return hour == 0 && minute == 0 && second == 0
 }
 
-func gnsBalance(addr std.Address) uint64 {
+func gnsBalance(addr std.Address) int64 {
 	return gns.BalanceOf(addr)
 }
 

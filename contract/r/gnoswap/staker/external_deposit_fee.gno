@@ -6,13 +6,13 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
-var depositGnsAmount = uint64(1_000_000_000) // 1_000 GNS
+var depositGnsAmount = int64(1_000_000_000) // 1_000 GNS
 
 // GetDepositGnsAmount returns the current deposit amount in GNS.
 //
 // Returns:
-// - uint64: The deposit amount in GNS.
-func GetDepositGnsAmount() uint64 {
+// - int64: The deposit amount in GNS.
+func GetDepositGnsAmount() int64 {
 	return depositGnsAmount
 }
 
@@ -23,11 +23,11 @@ func GetDepositGnsAmount() uint64 {
 // of the change.
 //
 // Parameters:
-// - amount (uint64): The new deposit amount in GNS.
+// - amount (int64): The new deposit amount in GNS.
 //
 // Panics:
 // - If the caller is not an admin.
-func SetDepositGnsAmountByAdmin(amount uint64) {
+func SetDepositGnsAmountByAdmin(amount int64) {
 	caller := getPrevAddr()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err.Error())
@@ -50,7 +50,7 @@ func SetDepositGnsAmountByAdmin(amount uint64) {
 // SetDepositGnsAmount modifies the deposit gns amount
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/staker/external_deposit_fee.gno
-func SetDepositGnsAmount(amount uint64) {
+func SetDepositGnsAmount(amount int64) {
 	caller := getPrevAddr()
 	if err := common.GovernanceOnly(caller); err != nil {
 		panic(err.Error())
@@ -70,10 +70,10 @@ func SetDepositGnsAmount(amount uint64) {
 	)
 }
 
-func setDepositGnsAmount(amount uint64) {
+func setDepositGnsAmount(amount int64) {
 	depositGnsAmount = amount
 }
 
-func getDepositGnsAmount() uint64 {
+func getDepositGnsAmount() int64 {
 	return depositGnsAmount
 }

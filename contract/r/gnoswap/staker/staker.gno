@@ -167,7 +167,7 @@ var (
 	// 1. reward sent to user (which also includes protocol_fee)
 	// 2. penalty sent to community pool
 	// 3. unclaimable reward
-	totalEmissionSent uint64
+	totalEmissionSent int64
 )
 
 const (
@@ -411,7 +411,7 @@ func transferDeposit(positionId uint64, owner, caller, to std.Address) error {
 //   - poolPath (string): The path of the pool to which the LP token is staked
 //
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#collectreward
-func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[string]uint64, map[string]uint64) {
+func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[string]int64, map[string]int64) {
 	assertOnlyNotHalted()
 
 	deposit := deposits.Get(positionId)
@@ -433,8 +433,8 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[st
 
 	// transfer external rewards to user
 	externalReward := reward.External
-	toUserExternalReward := make(map[string]uint64)
-	toUserExternalPenalty := make(map[string]uint64)
+	toUserExternalReward := make(map[string]int64)
+	toUserExternalPenalty := make(map[string]int64)
 	for incentiveId, rewardAmount := range externalReward {
 		incentive := externalIncentives.Get(incentiveId)
 		if incentive.rewardAmount < rewardAmount {

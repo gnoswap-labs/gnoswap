@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	NOT_EMISSION_TARGET_TIER uint64 = 0
+	NOT_EMISSION_TARGET_TIER int64 = 0
 )
 
 // SetPoolTierByAdmin sets the tier of a pool by an admin
-func SetPoolTierByAdmin(poolPath string, tier uint64) {
+func SetPoolTierByAdmin(poolPath string, tier int64) {
 	assertOnlyAdmin()
 	assertMustNotHalted()
 	assertPoolMustExist(poolPath)
@@ -26,7 +26,7 @@ func SetPoolTierByAdmin(poolPath string, tier uint64) {
 }
 
 // SetPoolTier sets the tier of a pool by governance
-func SetPoolTier(poolPath string, tier uint64) {
+func SetPoolTier(poolPath string, tier int64) {
 	assertOnlyGovernance()
 	assertMustNotHalted()
 	assertPoolMustExist(poolPath)
@@ -34,7 +34,7 @@ func SetPoolTier(poolPath string, tier uint64) {
 	setPoolTier(poolPath, tier)
 }
 
-func setPoolTier(poolPath string, tier uint64) {
+func setPoolTier(poolPath string, tier int64) {
 	en.MintAndDistributeGns()
 
 	currentHeight := std.ChainHeight()
@@ -53,7 +53,7 @@ func setPoolTier(poolPath string, tier uint64) {
 }
 
 // ChangePoolTierByAdmin changes the tier of a pool by an admin
-func ChangePoolTierByAdmin(poolPath string, tier uint64) {
+func ChangePoolTierByAdmin(poolPath string, tier int64) {
 	assertOnlyAdmin()
 	assertMustNotHalted()
 	assertPoolMustExist(poolPath)
@@ -62,7 +62,7 @@ func ChangePoolTierByAdmin(poolPath string, tier uint64) {
 }
 
 // ChangePoolTier changes the tier of a pool by governance
-func ChangePoolTier(poolPath string, tier uint64) {
+func ChangePoolTier(poolPath string, tier int64) {
 	assertOnlyGovernance()
 	assertMustNotHalted()
 	assertPoolMustExist(poolPath)
@@ -70,7 +70,7 @@ func ChangePoolTier(poolPath string, tier uint64) {
 	changePoolTier(poolPath, tier)
 }
 
-func changePoolTier(poolPath string, tier uint64) {
+func changePoolTier(poolPath string, tier int64) {
 	en.MintAndDistributeGns()
 
 	prevTier := poolTier.CurrentTier(poolPath)

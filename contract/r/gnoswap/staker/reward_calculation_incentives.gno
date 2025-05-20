@@ -158,7 +158,7 @@ func (self *Incentives) endUnclaimablePeriod(endHeight int64) {
 }
 
 // calculate unclaimable reward by checking unclaimable periods
-func (self *Incentives) calculateUnclaimableReward(incentiveId string) uint64 {
+func (self *Incentives) calculateUnclaimableReward(incentiveId string) int64 {
 	incentive, ok := self.GetByIncentiveId(incentiveId)
 	if !ok {
 		return 0
@@ -188,5 +188,5 @@ func (self *Incentives) calculateUnclaimableReward(incentiveId string) uint64 {
 		return false
 	})
 
-	return uint64(blocks) * incentive.rewardPerBlock
+	return blocks * incentive.rewardPerBlock
 }

@@ -2,10 +2,8 @@ package staker
 
 import (
 	"std"
-	"strconv"
 	"time"
 
-	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -173,9 +171,9 @@ func GetIncentiveRewardToken(poolPath string, incentiveId string) string {
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
 func GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
-	incentive := GetIncentive(poolPath, incentiveId)
-
-	return u256.NewUint(incentive.rewardAmount)
+	ictv := GetIncentive(poolPath, incentiveId)
+	amount := uint64(ictv.rewardAmount)
+	return u256.NewUint(amount)
 }
 
 // GetIncentiveRewardAmountAsString returns the reward amount for a given incentive as a string
@@ -239,7 +237,7 @@ func GetIncentiveEndHeight(poolPath string, incentiveId string) int64 {
 //
 // Returns:
 // - uint64: The reward amount distributed per block for the specified incentive.
-func GetIncentiveRewardPerBlock(poolPath string, incentiveId string) uint64 {
+func GetIncentiveRewardPerBlock(poolPath string, incentiveId string) int64 {
 	incentive := GetIncentive(poolPath, incentiveId)
 
 	return incentive.rewardPerBlock
@@ -455,7 +453,7 @@ func GetDepositWarmUp(lpTokenId uint64) []Warmup {
 //
 // Panics:
 //   - If the pool tier does not exist for the given poolPath
-func GetPoolTier(poolPath string) uint64 {
+func GetPoolTier(poolPath string) int64 {
 	return poolTier.CurrentTier(poolPath)
 }
 
@@ -469,7 +467,7 @@ func GetPoolTier(poolPath string) uint64 {
 //
 // Returns:
 // - uint64: The current reward ratio for the specified pool tier.
-func GetPoolTierRatio(poolPath string) uint64 {
+func GetPoolTierRatio(poolPath string) int64 {
 	tier := GetPoolTier(poolPath)
 	return poolTier.tierRatio.Get(tier)
 }
@@ -484,11 +482,11 @@ func GetPoolTierRatio(poolPath string) uint64 {
 //
 // Returns:
 // - uint64: The current count of pools in the specified tier.
-func GetPoolTierCount(tier uint64) uint64 {
+func GetPoolTierCount(tier int64) int64 {
 	if tier == 0 {
 		return 0
 	}
-	return uint64(poolTier.CurrentCount(tier))
+	return poolTier.CurrentCount(tier)
 }
 
 // GetPoolReward retrieves the current reward amount for the specified pool tier.
@@ -500,7 +498,7 @@ func GetPoolTierCount(tier uint64) uint64 {
 //
 // Returns:
 // - uint64: The current reward amount for the specified tier.
-func GetPoolReward(tier uint64) uint64 {
+func GetPoolReward(tier int64) int64 {
 	return poolTier.CurrentReward(tier)
 }
 
@@ -549,157 +547,22 @@ func GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive {
 	return incentives
 }
 
-func GetPrintExternalInfo() string {
-	externalDebug := ApiExternalDebugInfo{
-		Height: std.ChainHeight(),
-		Time:   time.Now().Unix(),
-	}
-
-	externalPositions := []ApiExternalDebugPosition{}
-	deposits.Iterate(uint64(0), uint64(deposits.Size()), func(positionId uint64, deposit *Deposit) bool {
-		externalPosition := ApiExternalDebugPosition{
-			PositionId:      positionId,
-			StakedHeight:    deposit.stakeHeight,
-			StakedTimestamp: deposit.stakeTimestamp,
-		}
-
-		externalIncentivesList := []ApiExternalDebugIncentive{}
-		externalIncentives.tree.Iterate("", "", func(key string, value any) bool {
-			incentive := value.(*ExternalIncentive)
-			if incentive.targetPoolPath == deposit.targetPoolPath {
-				externalIncentive := ApiExternalDebugIncentive{
-					PoolPath:          incentive.targetPoolPath,
-					IncentiveId:       key,
-					RewardToken:       incentive.rewardToken,
-					RewardAmount:      strconv.FormatUint(incentive.rewardAmount, 10),
-					RewardLeft:        strconv.FormatUint(incentive.rewardLeft, 10),
-					StartTimestamp:    incentive.startTimestamp,
-					EndTimestamp:      incentive.endTimestamp,
-					RewardPerBlock:    strconv.FormatUint(incentive.rewardPerBlock, 10),
-					Refundee:          incentive.refundee,
-					TokenAmountFull:   incentive.depositGnsAmount,
-					TokenAmountToGive: incentive.RewardSpent(uint64(std.ChainHeight())),
-					StartHeight:       incentive.startHeight,
-					EndHeight:         incentive.endHeight,
-				}
-
-				externalIncentivesList = append(externalIncentivesList, externalIncentive)
-			}
-			return false
-		})
-
-		externalPosition.Incentive = externalIncentivesList
-		externalPositions = append(externalPositions, externalPosition)
-		return false
-	})
-
-	externalDebug.Position = externalPositions
-
-	// JSON Serialization
-	node := json.ObjectNode("", map[string]*json.Node{
-		"height":   json.NumberNode("", float64(externalDebug.Height)),
-		"time":     json.NumberNode("", float64(externalDebug.Time)),
-		"position": json.ArrayNode("", makeExternalPositionsNode(externalDebug.Position)),
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		return "JSON MARSHAL ERROR"
-	}
-
-	return string(b)
-}
-
-func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Node {
-	externalPositions := make([]*json.Node, 0)
-
-	for _, externalPosition := range positions {
-		incentives := make([]*json.Node, 0)
-		for _, incentive := range externalPosition.Incentive {
-			stakedOrExternalDuration := std.ChainHeight() - max(incentive.StartHeight, externalPosition.StakedHeight)
-
-			incentives = append(incentives, json.ObjectNode("", map[string]*json.Node{
-				"poolPath":                 json.StringNode("poolPath", incentive.PoolPath),
-				"rewardToken":              json.StringNode("rewardToken", incentive.RewardToken),
-				"rewardAmount":             json.StringNode("rewardAmount", incentive.RewardAmount),
-				"rewardLeft":               json.StringNode("rewardLeft", incentive.RewardLeft),
-				"startTimestamp":           json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
-				"endTimestamp":             json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
-				"rewardPerBlock":           json.StringNode("rewardPerBlock", incentive.RewardPerBlock),
-				"stakedOrExternalDuration": json.NumberNode("stakedOrExternalDuration", float64(stakedOrExternalDuration)),
-				"tokenAmountFull":          json.NumberNode("tokenAmountFull", float64(incentive.TokenAmountFull)),
-				"tokenAmountToGive":        json.NumberNode("tokenAmountToGive", float64(incentive.TokenAmountToGive)),
-			}))
-		}
-
-		externalPositions = append(externalPositions, json.ObjectNode("", map[string]*json.Node{
-			"lpTokenId":       json.NumberNode("lpTokenId", float64(externalPosition.PositionId)),
-			"stakedHeight":    json.NumberNode("stakedHeight", float64(externalPosition.StakedHeight)),
-			"stakedTimestamp": json.NumberNode("stakedTimestamp", float64(externalPosition.StakedTimestamp)),
-			"incentive":       json.ArrayNode("", incentives),
-		}))
-	}
-
-	return externalPositions
-}
-
 type currentExternalInfo struct {
 	height             int64
 	time               int64
 	externalIncentives []ExternalIncentive
 }
 
-type ApiExternalDebugInfo struct {
-	Height   int64                      `json:"height"`
-	Time     int64                      `json:"time"`
-	Position []ApiExternalDebugPosition `json:"pool"`
-}
-
-type ApiExternalDebugPosition struct {
-	PositionId      uint64                      `json:"positionId"`
-	StakedHeight    int64                       `json:"stakedHeight"`
-	StakedTimestamp int64                       `json:"stakedTimestamp"`
-	Incentive       []ApiExternalDebugIncentive `json:"incentive"`
-}
-
-type ApiExternalDebugIncentive struct {
-	PoolPath          string      `json:"poolPath"`
-	IncentiveId       string      `json:"incentiveId"`
-	RewardToken       string      `json:"rewardToken"`
-	RewardAmount      string      `json:"rewardAmount"`
-	RewardLeft        string      `json:"rewardLeft"`
-	StartTimestamp    int64       `json:"startTimestamp"`
-	EndTimestamp      int64       `json:"endTimestamp"`
-	RewardPerBlockX96 string      `json:"rewardPerBlockX96"`
-	RewardPerBlock    string      `json:"rewardPerBlock"`
-	Refundee          std.Address `json:"refundee"`
-	StartHeight       int64       `json:"startHeight"`
-	EndHeight         int64       `json:"endHeight"`
-	// FROM positionExternal -> externalRewards
-	TokenAmountX96    *u256.Uint `json:"tokenAmountX96"`
-	TokenAmount       uint64     `json:"tokenAmount"`
-	TokenAmountFull   uint64     `json:"tokenAmountFull"`
-	TokenAmountToGive uint64     `json:"tokenAmountToGive"`
-	// FROM externalWarmUpAmount
-	Full30  uint64 `json:"full30"`
-	Give30  uint64 `json:"give30"`
-	Full50  uint64 `json:"full50"`
-	Give50  uint64 `json:"give50"`
-	Full70  uint64 `json:"full70"`
-	Give70  uint64 `json:"give70"`
-	Full100 uint64 `json:"full100"`
-}
-
 // DEBUG INTERNAL (GNS EMISSION)
 type currentInfo struct {
 	height           int64
 	time             int64
-	gnsStaker        uint64
-	gnsDevOps        uint64
-	gnsCommunityPool uint64
-	gnsGovStaker     uint64
-	gnsProtocolFee   uint64
-	gnsADMIN         uint64
+	gnsStaker        int64
+	gnsDevOps        int64
+	gnsCommunityPool int64
+	gnsGovStaker     int64
+	gnsProtocolFee   int64
+	gnsADMIN         int64
 }
 
 func getCurrentInfo() currentInfo {
