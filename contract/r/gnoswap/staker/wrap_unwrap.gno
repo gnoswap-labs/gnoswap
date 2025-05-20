@@ -17,7 +17,7 @@ import (
 // Panics:
 // - If `ugnotAmount` is less than or equal to 0.
 // - If `ugnotAmount` is less than the minimum deposit required (`consts.UGNOT_MIN_DEPOSIT_TO_WRAP`).
-func wrap(ugnotAmount uint64) {
+func wrap(ugnotAmount int64) {
 	if ugnotAmount <= 0 {
 		panic(addDetailToError(
 			errWrapUnwrap,

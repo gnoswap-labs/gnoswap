@@ -152,9 +152,9 @@ func setDevOpsPct(pct uint64) {
 
 // AddToProtocolFee adds the amount to the tokenListWithAmount
 // Only `pool + router + staker` can execute this function.
-func AddToProtocolFee(tokenPath string, amount uint64) {
+func AddToProtocolFee(tokenPath string, amount int64) {
 	assertOnlyPoolRouterStaker()
-	tokenListWithAmount[tokenPath] += amount
+	tokenListWithAmount[tokenPath] += uint64(amount)
 }
 
 // ClearTokenListWithAmount clears the tokenListWithAmount.

@@ -15,6 +15,10 @@ func (z *Uint) Uint64() uint64 {
 	return z.arr[0]
 }
 
+func (z *Uint) Int64() int64 {
+	return int64(z.Uint64())
+}
+
 // Uint64WithOverflow returns the lower 64-bits of z and bool whether overflow occurred
 func (z *Uint) Uint64WithOverflow() (uint64, bool) {
 	return z.arr[0], (z.arr[1] | z.arr[2] | z.arr[3]) != 0

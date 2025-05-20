@@ -26,7 +26,7 @@ import (
 //
 // Errors:
 //   - Returns an error if `ugnotAmount` is zero or less than the minimum deposit threshold.
-func wrap(ugnotAmount uint64, to std.Address) error {
+func wrap(ugnotAmount int64, to std.Address) error {
 	if ugnotAmount == 0 || ugnotAmount < consts.UGNOT_MIN_DEPOSIT_TO_WRAP {
 		return ufmt.Errorf("amount(%d) < minimum(%d)", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP)
 	}

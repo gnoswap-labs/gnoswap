@@ -14,7 +14,7 @@ var (
 	errFailedToWrapBelowMin = "amount(%d) < minimum(%d)"
 )
 
-func wrap(ugnotAmount uint64) {
+func wrap(ugnotAmount int64) {
 	if ugnotAmount <= 0 {
 		panic(addDetailToError(errWrapUnwrap, errFailedToWrapZeroUgnot))
 	}
