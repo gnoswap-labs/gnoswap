@@ -103,8 +103,8 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	TokenFaucet2(t, barPath, routerAddr)
 
 	testing.SetRealm(std.NewUserRealm(routerAddr))
-	foo.Approve(poolAddr, consts.UINT64_MAX)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
 
 	// create position
 	// a. Position 1: (-50%+50%)
@@ -243,10 +243,10 @@ func TestExactOutSwapBoundary(t *testing.T) {
 func setupTestPool(t *testing.T) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
-	gns.Approve(poolAddr, pl.GetPoolCreationFee())
+	cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee())
 
-	foo.Approve(poolAddr, consts.UINT64_MAX)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
 
 	pl.CreatePool(barPath, fooPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 

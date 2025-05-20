@@ -18,15 +18,15 @@ import (
 func TestPoolInitCreatePool(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, pl.GetPoolCreationFee())
+	cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 	testing.SkipHeights(1)
 }
 
 func TestMintPosition01InRange(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	foo.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -66,7 +66,7 @@ func TestMintPosition01InRange(t *testing.T) {
 
 func TestSwap1(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
 
 	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
@@ -106,8 +106,8 @@ func TestSwap1(t *testing.T) {
 
 func TestMintPosition02InRange(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	foo.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -232,8 +232,8 @@ func TestSwap3(t *testing.T) {
 
 func TestIncreaseLiquidity02(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	foo.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
 
 	pool := getPoolFromPositionId(t, uint64(2))
 	oldLiquidity := pool.Liquidity()
@@ -269,8 +269,8 @@ func TestDecreaseLiquidityPosition02(t *testing.T) {
 	uassert.Equal(t, unclaimedFee1.ToString(), "0")
 
 	// approve fee0, fee1, positionID to pool
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	foo.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
 
 	resultPositionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 		positionId,

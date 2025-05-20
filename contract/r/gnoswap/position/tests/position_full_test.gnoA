@@ -23,14 +23,14 @@ func init() {
 func TestPoolInitCreatePool(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, pl.GetPoolCreationFee())
+	cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
 }
 
 func TestMintPositionFullInRange(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	foo.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -51,8 +51,8 @@ func TestMintPositionFullInRange(t *testing.T) {
 
 func TestIncreaseLiquidity(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	foo.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1, poolPath := IncreaseLiquidity(
 		uint64(1),
@@ -66,8 +66,8 @@ func TestIncreaseLiquidity(t *testing.T) {
 
 func TestDecreaseLiquidity(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	foo.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 		uint64(1),
@@ -82,8 +82,8 @@ func TestDecreaseLiquidity(t *testing.T) {
 
 func TestCollectFee(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	foo.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
 
 	positionId, fee0, fee1, poolPath, _, _ := CollectFee(uint64(1), false)
 }

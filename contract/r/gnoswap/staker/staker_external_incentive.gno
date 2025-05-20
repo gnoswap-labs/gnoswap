@@ -115,7 +115,7 @@ func CreateExternalIncentive(
 	externalIncentives.set(incentiveId, incentive)
 
 	// deposit gns amount
-	gns.TransferFrom(caller, stakerAddr, depositGnsAmount)
+	cross(gns.Transfer)From(caller, stakerAddr, depositGnsAmount)
 
 	// transfer reward token from user to staker
 	teller := common.GetTokenTeller(rewardToken)
@@ -203,7 +203,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	}
 
 	// also refund deposit gns amount
-	gns.Transfer(ictv.refundee, ictv.depositGnsAmount)
+	cross(gns.Transfer)(ictv.refundee, ictv.depositGnsAmount)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(

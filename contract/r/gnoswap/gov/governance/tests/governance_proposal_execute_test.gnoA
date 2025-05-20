@@ -35,7 +35,7 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 	t.Skip()
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(govStakerAddr, uint64(1_000_000))
+	cross(gns.Approve)(govStakerAddr, uint64(1_000_000))
 	gs.Delegate(admin, uint64(1_000_000), "")
 	testing.SkipHeights(5) // VotingWeightSmoothingDuration
 
@@ -91,7 +91,7 @@ func TestProposeParameterChange_GOV_reconfigure(t *testing.T) {
 	testing.SkipHeights(5)
 
 	testing.SetRealm(adminRealm)
-	gns.Approve(govStakerAddr, uint64(1_000_000))
+	cross(gns.Approve)(govStakerAddr, uint64(1_000_000))
 	gs.Delegate(admin, uint64(1_000_000), "")
 	testing.SkipHeights(5) // VotingWeightSmoothingDuration
 	proposalId := ProposeParameterChange(
@@ -132,7 +132,7 @@ func TestProposeParameterChange_GOV_reconfigure(t *testing.T) {
 func TestProposeParameterChange_Pool_SetFeeProtocol(t *testing.T) {
 	t.Skip()
 	testing.SetRealm(adminRealm)
-	gns.Approve(govStakerAddr, uint64(1_000_000))
+	cross(gns.Approve)(govStakerAddr, uint64(1_000_000))
 	gs.Delegate(admin, uint64(1_000_000), "")
 	testing.SkipHeights(5) // VotingWeightSmoothingDuration
 	proposalId := ProposeParameterChange(
@@ -159,7 +159,7 @@ func TestProposeParameterChange_Pool_SetPoolCreationFee(t *testing.T) {
 	testing.SkipHeights(5)
 
 	testing.SetRealm(adminRealm)
-	gns.Approve(govStakerAddr, uint64(1_000_000))
+	cross(gns.Approve)(govStakerAddr, uint64(1_000_000))
 	gs.Delegate(admin, uint64(1_000_000), "")
 	testing.SkipHeights(5) // VotingWeightSmoothingDuration
 
@@ -187,7 +187,7 @@ func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
 	testing.SkipHeights(5)
 
 	testing.SetRealm(adminRealm)
-	gns.Approve(govStakerAddr, uint64(1_000_000))
+	cross(gns.Approve)(govStakerAddr, uint64(1_000_000))
 	gs.Delegate(admin, uint64(1_000_000), "")
 	testing.SkipHeights(5) // VotingWeightSmoothingDuration
 	proposalId := ProposeParameterChange(
@@ -214,7 +214,7 @@ func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
 	testing.SkipHeights(5)
 
 	testing.SetRealm(adminRealm)
-	gns.Approve(govStakerAddr, uint64(1_000_000))
+	cross(gns.Approve)(govStakerAddr, uint64(1_000_000))
 	gs.Delegate(admin, uint64(1_000_000), "")
 	testing.SkipHeights(5) // VotingWeightSmoothingDuration
 
@@ -242,7 +242,7 @@ func TestProposeParameterChange_Router_SetSwapFee(t *testing.T) {
 	testing.SkipHeights(5)
 
 	testing.SetRealm(adminRealm)
-	gns.Approve(govStakerAddr, uint64(1_000_000))
+	cross(gns.Approve)(govStakerAddr, uint64(1_000_000))
 	gs.Delegate(admin, uint64(1_000_000), "")
 	testing.SkipHeights(5) // VotingWeightSmoothingDuration
 
@@ -270,7 +270,7 @@ func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
 	testing.SkipHeights(5)
 
 	testing.SetRealm(adminRealm)
-	gns.Approve(govStakerAddr, uint64(1_000_000))
+	cross(gns.Approve)(govStakerAddr, uint64(1_000_000))
 	gs.Delegate(admin, uint64(1_000_000), "")
 	testing.SkipHeights(5) // VotingWeightSmoothingDuration
 
@@ -298,7 +298,7 @@ func TestProposeParameterChange_Staker_SetUnStakingFee(t *testing.T) {
 	testing.SkipHeights(5)
 
 	testing.SetRealm(adminRealm)
-	gns.Approve(govStakerAddr, uint64(1_000_000))
+	cross(gns.Approve)(govStakerAddr, uint64(1_000_000))
 	gs.Delegate(admin, uint64(1_000_000), "")
 	testing.SkipHeights(5) // VotingWeightSmoothingDuration
 
@@ -327,7 +327,7 @@ func TestProposeParameterChange_Common_SetHalt(t *testing.T) {
 	testing.SkipHeights(5)
 
 	testing.SetRealm(adminRealm)
-	gns.Approve(govStakerAddr, uint64(1_000_000))
+	cross(gns.Approve)(govStakerAddr, uint64(1_000_000))
 	gs.Delegate(admin, uint64(1_000_000), "")
 	testing.SkipHeights(5) // VotingWeightSmoothingDuration
 

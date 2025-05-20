@@ -93,8 +93,8 @@ func testCreatePool() {
 func testMintBarQuxPos01() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	qux.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
 	pn.Mint(
@@ -116,8 +116,8 @@ func testMintBarQuxPos01() {
 func testMintBarQuxPos02() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	qux.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
 	pn.Mint(
@@ -139,8 +139,8 @@ func testMintBarQuxPos02() {
 func testCreateExternalIncentive() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(stakerAddr, consts.UINT64_MAX)
-	gns.Approve(stakerAddr, depositGnsAmount)
+	cross(bar.Approve)(stakerAddr, consts.UINT64_MAX)
+	cross(gns.Approve)(stakerAddr, depositGnsAmount)
 
 	testing.SkipHeights(1)
 	sr.CreateExternalIncentive(
@@ -178,9 +178,9 @@ func testMakeExternalBarStart() {
 func testCheckReward01() {
 	testing.SetRealm(adminRealm)
 
-	oldBar := bar.BalanceOf(adminUser)
+	oldBar := cross(bar.BalanceOf)(adminUser)
 	sr.CollectReward(1, false)
-	newBar := bar.BalanceOf(adminUser)
+	newBar := cross(bar.BalanceOf)(adminUser)
 	diff := newBar - oldBar
 
 	if diff == 0 {
@@ -193,11 +193,11 @@ func testMakePosition1OutRangeBySwap() {
 
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	qux.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
-	bar.Approve(routerAddr, consts.UINT64_MAX)
-	qux.Approve(routerAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(routerAddr, consts.UINT64_MAX)
+	cross(qux.Approve)(routerAddr, consts.UINT64_MAX)
 
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
 		barPath,     // inputToken
@@ -220,9 +220,9 @@ func testMakePosition1OutRangeBySwap() {
 func testCheckReward02() {
 	testing.SetRealm(adminRealm)
 
-	oldBar := bar.BalanceOf(adminUser)
+	oldBar := cross(bar.BalanceOf)(adminUser)
 	sr.CollectReward(1, false)
-	newBar := bar.BalanceOf(adminUser)
+	newBar := cross(bar.BalanceOf)(adminUser)
 	diff := newBar - oldBar
 
 	if diff != 0 {
@@ -235,11 +235,11 @@ func testMakePosition1InRangeBySwap() {
 
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	qux.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
-	bar.Approve(routerAddr, consts.UINT64_MAX)
-	qux.Approve(routerAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(routerAddr, consts.UINT64_MAX)
+	cross(qux.Approve)(routerAddr, consts.UINT64_MAX)
 
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
 		quxPath,
@@ -263,9 +263,9 @@ func testCheckReward03() {
 
 	testing.SetRealm(adminRealm)
 
-	oldBar := bar.BalanceOf(adminUser)
+	oldBar := cross(bar.BalanceOf)(adminUser)
 	sr.CollectReward(1, false)
-	newBar := bar.BalanceOf(adminUser)
+	newBar := cross(bar.BalanceOf)(adminUser)
 	diff := newBar - oldBar
 
 	if diff <= 0 {

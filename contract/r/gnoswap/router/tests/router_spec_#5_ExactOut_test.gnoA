@@ -21,20 +21,20 @@ import (
 
 func TestExactOutSwapRoute_5(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(poolAddr, pl.GetPoolCreationFee()*2)
+	cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee()*2)
 
 	pl.CreatePool(barPath, bazPath, 3000, "79228162514264337593543950336")
 
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	baz.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
 
 	pn.Mint(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
-	bar.Approve(routerAddr, 1000000)
-	baz.Approve(routerAddr, 1000000)
+	cross(bar.Approve)(routerAddr, 1000000)
+	cross(baz.Approve)(routerAddr, 1000000)
 
-	token0Before := bar.BalanceOf(adminAddr)
-	token1Before := baz.BalanceOf(adminAddr)
+	token0Before := cross(bar.BalanceOf)(adminAddr)
+	token1Before := cross(baz.BalanceOf)(adminAddr)
 
 	amountIn, amountOut := ExactOutSwapRoute(
 		barPath,                                            // inputToken
@@ -47,8 +47,8 @@ func TestExactOutSwapRoute_5(t *testing.T) {
 		"", // referrer
 	)
 
-	token0After := bar.BalanceOf(adminAddr)
-	token1After := baz.BalanceOf(adminAddr)
+	token0After := cross(bar.BalanceOf)(adminAddr)
+	token1After := cross(baz.BalanceOf)(adminAddr)
 
 	uassert.Equal(t, amountIn, "3")
 	uassert.Equal(t, amountOut, "-1")
@@ -74,7 +74,7 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	cross(wugnot.Approve)(routerAddr, 1000000)
-	qux.Approve(routerAddr, 1000000)
+	cross(qux.Approve)(routerAddr, 1000000)
 
 	testing.SetOriginCaller(adminAddr)
 	newCoins := std.Coins{{"ugnot", 12345}}

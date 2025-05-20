@@ -22,14 +22,14 @@ func TestRunAll2Route2Hop(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	// create pool
-	gns.Approve(poolAddr, pl.GetPoolCreationFee()*2)
+	cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee()*2)
 
 	pl.CreatePool(barPath, bazPath, uint32(500), "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 	pl.CreatePool(bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	baz.Approve(poolAddr, consts.UINT64_MAX)
-	qux.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 	positionId, liquidity, amount0, amount1 = pn.Mint(bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
@@ -59,8 +59,8 @@ func testDrySwapRouteBarQuxExactIn(t *testing.T) {
 func testSwapRouteBarQuxExactIn(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(poolAddr, 10000)
-	qux.Approve(routerAddr, 10000)
+	cross(bar.Approve)(poolAddr, 10000)
+	cross(qux.Approve)(routerAddr, 10000)
 
 	amountIn, amountOut := ExactInSwapRoute(
 		barPath, // inputToken
@@ -164,8 +164,8 @@ func TestDrySwapRouteQuxBarExactOut(t *testing.T) {
 func TestSwapRouteQuxBarExactOut(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	qux.Approve(poolAddr, 10000)
-	bar.Approve(routerAddr, 10000)
+	cross(qux.Approve)(poolAddr, 10000)
+	cross(bar.Approve)(routerAddr, 10000)
 
 	amountIn, amountOut := ExactOutSwapRoute(
 		quxPath, // inputToken

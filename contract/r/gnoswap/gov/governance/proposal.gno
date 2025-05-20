@@ -475,7 +475,7 @@ func (u *proposalStateUpdater) updateExecutionState() {
 // ref: https://docs.gnoswap.io/core-concepts/governance#scope-of-proposals-5
 // It returns a boolean indicating if the proposer has enough xGNS, the balance of xGNS, and the threshold of xGNS.
 func checkEnoughXGnsToPropose(proposer std.Address) (bool, uint64, uint64) {
-	xGNSBalance := xgns.BalanceOf(proposer)
+	xGNSBalance := cross(xgns.BalanceOf)(proposer)
 
 	if xGNSBalance < config.ProposalCreationThreshold {
 		return false, xGNSBalance, config.ProposalCreationThreshold

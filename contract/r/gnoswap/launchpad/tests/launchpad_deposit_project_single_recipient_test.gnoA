@@ -50,7 +50,7 @@ func createOblLaunchpadProjectTest(t *testing.T) {
 			access.SetRole(access.ROLE_ADMIN, adminAddr)
 
 			testing.SetRealm(adminRealm)
-			obl.Approve(launchpadAddr, rewardAmount)
+			cross(obl.Approve)(launchpadAddr, rewardAmount)
 			projectId := CreateProject(
 				projectName,
 				rewardTokenPath,
@@ -95,16 +95,16 @@ func mockProtocolFeeTest(t *testing.T) {
 		// admin > protocol_fee
 		// send qux, bar for testing
 		testing.SetRealm(adminRealm)
-		bar.Transfer(protocolFeeAddr, 1000)
-		qux.Transfer(protocolFeeAddr, 2500)
+		cross(bar.Transfer)(protocolFeeAddr, 1000)
+		cross(qux.Transfer)(protocolFeeAddr, 2500)
 
 		testing.SetRealm(stakerRealm)
 		pf.AddToProtocolFee(barPath, 1000)
 		pf.AddToProtocolFee(quxPath, 2500)
 		testing.SkipHeights(1)
 
-		uassert.Equal(t, uint64(1000), bar.BalanceOf(protocolFeeAddr))
-		uassert.Equal(t, uint64(2500), qux.BalanceOf(protocolFeeAddr))
+		uassert.Equal(t, uint64(1000), cross(bar.BalanceOf)(protocolFeeAddr))
+		uassert.Equal(t, uint64(2500), cross(qux.BalanceOf)(protocolFeeAddr))
 		uassert.Equal(t, uint64(1000), pf.GetAmountOfToken(barPath))
 		uassert.Equal(t, uint64(2500), pf.GetAmountOfToken(quxPath))
 
@@ -135,18 +135,18 @@ func depositGnsToOblProjectTier30Test(t *testing.T) {
 		uassert.Equal(t, "2500", data.MustKey("gno.land/r/onbloc/qux").MustString())
 
 		testing.SetRealm(adminRealm)
-		gns.Transfer(bobAddr, depositAmount*2) // to deposit
+		cross(gns.Transfer)(bobAddr, depositAmount*2) // to deposit
 
 		// delegate gns to gov staker
 		testing.SetRealm(bobRealm)
-		gns.Approve(govStakerAddr, delegateAmount)
+		cross(gns.Approve)(govStakerAddr, delegateAmount)
 		gs.Delegate(bobAddr, delegateAmount, "") // bob has xgns 1_000_000
 
 		project, _ := getProject(projectId)
 		uassert.Equal(t, "false", strconv.FormatBool(isProjectActive(project, uint64(std.ChainHeight()))))
 
 		testing.SkipHeights(4) // project is active
-		gns.Approve(launchpadAddr, depositAmount)
+		cross(gns.Approve)(launchpadAddr, depositAmount)
 		depositId := DepositGns(
 			projectTier30Id,
 			depositAmount,
@@ -173,16 +173,16 @@ func mockProtocolFeeTest2(t *testing.T) {
 		// admin > protocol_fee
 		// send qux, bar for testing
 		testing.SetRealm(adminRealm)
-		bar.Transfer(protocolFeeAddr, 1000)
-		qux.Transfer(protocolFeeAddr, 2500)
+		cross(bar.Transfer)(protocolFeeAddr, 1000)
+		cross(qux.Transfer)(protocolFeeAddr, 2500)
 
 		testing.SetRealm(stakerRealm)
 		pf.AddToProtocolFee(barPath, 1000)
 		pf.AddToProtocolFee(quxPath, 2500)
 		testing.SkipHeights(1)
 
-		uassert.Equal(t, uint64(1000), bar.BalanceOf(protocolFeeAddr))
-		uassert.Equal(t, uint64(2500), qux.BalanceOf(protocolFeeAddr))
+		uassert.Equal(t, uint64(1000), cross(bar.BalanceOf)(protocolFeeAddr))
+		uassert.Equal(t, uint64(2500), cross(qux.BalanceOf)(protocolFeeAddr))
 		uassert.Equal(t, uint64(1000), pf.GetAmountOfToken(barPath))
 		uassert.Equal(t, uint64(2500), pf.GetAmountOfToken(quxPath))
 
@@ -209,21 +209,21 @@ func collectProtocolFeeForOblProjectRecipient(t *testing.T) {
 		testing.SetRealm(projectRealm)
 
 		// protocol fee has bar, qux
-		uassert.Equal(t, uint64(1000), bar.BalanceOf(protocolFeeAddr))
-		uassert.Equal(t, uint64(2500), qux.BalanceOf(protocolFeeAddr))
+		uassert.Equal(t, uint64(1000), cross(bar.BalanceOf)(protocolFeeAddr))
+		uassert.Equal(t, uint64(2500), cross(qux.BalanceOf)(protocolFeeAddr))
 
 		testing.SetRealm(projectRealm)
 		CollectProtocolFee()
 
 		// 1000 + 1000 - 499 = 1501
 		// 2500 + 2500 - 1249 = 3751
-		uassert.Equal(t, uint64(1501), bar.BalanceOf(govStakerAddr))
-		uassert.Equal(t, uint64(3751), qux.BalanceOf(govStakerAddr))
+		uassert.Equal(t, uint64(1501), cross(bar.BalanceOf)(govStakerAddr))
+		uassert.Equal(t, uint64(3751), cross(qux.BalanceOf)(govStakerAddr))
 
 		// 1000 / 2 * 1 = 500
 		// 2500 / 2 * 1 = 1250
-		uassert.Equal(t, uint64(499), bar.BalanceOf(projectAddr))
-		uassert.Equal(t, uint64(1249), qux.BalanceOf(projectAddr))
+		uassert.Equal(t, uint64(499), cross(bar.BalanceOf)(projectAddr))
+		uassert.Equal(t, uint64(1249), cross(qux.BalanceOf)(projectAddr))
 	})
 }
 
@@ -242,17 +242,17 @@ func depositAgainGnsToOblProjectTier30Test(t *testing.T) {
 		uassert.Equal(t, "1234567935", data.MustKey("now").MustString())
 
 		testing.SetRealm(adminRealm)
-		gns.Transfer(aliceAddr, depositAmount*2) // to deposit
+		cross(gns.Transfer)(aliceAddr, depositAmount*2) // to deposit
 
 		// delegate gns to gov staker
 		testing.SetRealm(aliceRealm)
-		gns.Approve(govStakerAddr, delegateAmount)
+		cross(gns.Approve)(govStakerAddr, delegateAmount)
 		gs.Delegate(aliceAddr, delegateAmount, "") // bob has xgns 1_000_000
 
 		project, _ := getProject(projectId)
 		uassert.Equal(t, "true", strconv.FormatBool(isProjectActive(project, uint64(std.ChainHeight()))))
 
-		gns.Approve(launchpadAddr, depositAmount)
+		cross(gns.Approve)(launchpadAddr, depositAmount)
 		depositId := DepositGns(
 			projectTier30Id,
 			depositAmount,
@@ -279,16 +279,16 @@ func mockProtocolFeeTest3(t *testing.T) {
 		// admin > protocol_fee
 		// send qux, bar for testing
 		testing.SetRealm(adminRealm)
-		bar.Transfer(protocolFeeAddr, 1000)
-		qux.Transfer(protocolFeeAddr, 2500)
+		cross(bar.Transfer)(protocolFeeAddr, 1000)
+		cross(qux.Transfer)(protocolFeeAddr, 2500)
 
 		testing.SetRealm(stakerRealm)
 		pf.AddToProtocolFee(barPath, 1000)
 		pf.AddToProtocolFee(quxPath, 2500)
 		testing.SkipHeights(1)
 
-		uassert.Equal(t, uint64(1000), bar.BalanceOf(protocolFeeAddr))
-		uassert.Equal(t, uint64(2500), qux.BalanceOf(protocolFeeAddr))
+		uassert.Equal(t, uint64(1000), cross(bar.BalanceOf)(protocolFeeAddr))
+		uassert.Equal(t, uint64(2500), cross(qux.BalanceOf)(protocolFeeAddr))
 		uassert.Equal(t, uint64(1000), pf.GetAmountOfToken(barPath))
 		uassert.Equal(t, uint64(2500), pf.GetAmountOfToken(quxPath))
 
@@ -315,8 +315,8 @@ func collectProtocolFeeForOblProjectRecipient2(t *testing.T) {
 		testing.SetRealm(projectRealm)
 
 		// protocol fee has bar, qux
-		uassert.Equal(t, uint64(1000), bar.BalanceOf(protocolFeeAddr))
-		uassert.Equal(t, uint64(2500), qux.BalanceOf(protocolFeeAddr))
+		uassert.Equal(t, uint64(1000), cross(bar.BalanceOf)(protocolFeeAddr))
+		uassert.Equal(t, uint64(2500), cross(qux.BalanceOf)(protocolFeeAddr))
 		testing.SkipHeights(1)
 
 		testing.SetRealm(projectRealm)
@@ -324,11 +324,11 @@ func collectProtocolFeeForOblProjectRecipient2(t *testing.T) {
 
 		// 1501 + 1000 = 2501
 		// 3751 + 2500 = 6251
-		uassert.Equal(t, uint64(2501), bar.BalanceOf(govStakerAddr))
-		uassert.Equal(t, uint64(6251), qux.BalanceOf(govStakerAddr))
+		uassert.Equal(t, uint64(2501), cross(bar.BalanceOf)(govStakerAddr))
+		uassert.Equal(t, uint64(6251), cross(qux.BalanceOf)(govStakerAddr))
 
-		uassert.Equal(t, uint64(499), bar.BalanceOf(projectAddr))
-		uassert.Equal(t, uint64(1249), qux.BalanceOf(projectAddr))
+		uassert.Equal(t, uint64(499), cross(bar.BalanceOf)(projectAddr))
+		uassert.Equal(t, uint64(1249), cross(qux.BalanceOf)(projectAddr))
 
 		testing.SkipHeights(1)
 	})

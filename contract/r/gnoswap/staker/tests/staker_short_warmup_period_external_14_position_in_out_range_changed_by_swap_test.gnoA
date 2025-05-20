@@ -55,7 +55,7 @@ func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		gns.Approve(poolAddr, pl.GetPoolCreationFee()*3)
+		cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee()*3)
 
 		pl.CreatePool(barPath, quxPath, 100, "79228162514264337593543950337")
 		pl.CreatePool(barPath, bazPath, 3000, "79228162514264337593543950337")
@@ -68,8 +68,8 @@ func testMintBarQux100_1(t *testing.T) {
 	t.Run("mint position 01, bar:qux:100", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		qux.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,    // token0
@@ -101,8 +101,8 @@ func testMintBarQux100_2(t *testing.T) {
 	t.Run("mint position 02, bar:qux:100", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		qux.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,      // token0
@@ -134,8 +134,8 @@ func testCreateExternalIncentiveBar(t *testing.T) {
 	t.Run("create external incentive", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		bar.Approve(stakerAddr, consts.UINT64_MAX)
-		gns.Approve(stakerAddr, depositGnsAmount)
+		cross(bar.Approve)(stakerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(stakerAddr, depositGnsAmount)
 
 		CreateExternalIncentive(
 			poolPath,
@@ -167,12 +167,12 @@ func testBeforeActive(t *testing.T) {
 	t.Run("before active", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		oldBar := bar.BalanceOf(admin)
+		oldBar := cross(bar.BalanceOf)(admin)
 
 		CollectReward(1, false)
 		CollectReward(2, false)
 
-		newBar := bar.BalanceOf(admin)
+		newBar := cross(bar.BalanceOf)(admin)
 
 		uassert.Equal(t, uint64(0), newBar-oldBar) // incentive not started yet, no reward
 	})
@@ -198,13 +198,13 @@ func testAfter50Blocks(t *testing.T) {
 
 		// both of position is in warm up 70%
 
-		oldBar := bar.BalanceOf(admin)
+		oldBar := cross(bar.BalanceOf)(admin)
 		CollectReward(1, false)
-		newBar := bar.BalanceOf(admin)
+		newBar := cross(bar.BalanceOf)(admin)
 		uassert.True(t, isInErrorRange(173, newBar-oldBar))
 
 		CollectReward(2, false)
-		newBar2 := bar.BalanceOf(admin)
+		newBar2 := cross(bar.BalanceOf)(admin)
 		uassert.True(t, isInErrorRange(88914, newBar2-newBar))
 	})
 }
@@ -217,11 +217,11 @@ func testMakePosition1OutRange(t *testing.T) {
 		// ROUTER SWAP
 		testing.SetRealm(adminRealm)
 
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		qux.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
-		bar.Approve(routerAddr, consts.UINT64_MAX)
-		qux.Approve(routerAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(routerAddr, consts.UINT64_MAX)
+		cross(qux.Approve)(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactInSwapRoute(
 			barPath,  // inputToken
@@ -249,14 +249,14 @@ func testRewardNowAfter1Block(t *testing.T) {
 
 		testing.SkipHeights(1)
 
-		oldBar := bar.BalanceOf(admin)
+		oldBar := cross(bar.BalanceOf)(admin)
 		CollectReward(1, false) //
-		newBar := bar.BalanceOf(admin)
+		newBar := cross(bar.BalanceOf)(admin)
 		uassert.Equal(t, uint64(0), newBar-oldBar)
 		// out range, no reward
 
 		CollectReward(2, false)
-		newBar2 := bar.BalanceOf(admin)
+		newBar2 := cross(bar.BalanceOf)(admin)
 		uassert.True(t, isInErrorRange(1619, newBar2-newBar))
 		// 1619
 		// only in-range position

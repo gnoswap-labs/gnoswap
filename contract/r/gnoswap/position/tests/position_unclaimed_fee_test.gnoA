@@ -19,14 +19,14 @@ import (
 func TestPoolInitCreatePool(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, pl.GetPoolCreationFee())
+	cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestMintPosition01InRange(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, 18394892)
-	foo.Approve(poolAddr, 50000000)
+	cross(bar.Approve)(poolAddr, 18394892)
+	cross(foo.Approve)(poolAddr, 50000000)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -52,8 +52,8 @@ func TestMintPosition01InRange(t *testing.T) {
 
 func TestMintPosition02LowerRange(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, 0)
-	foo.Approve(poolAddr, 50000000)
+	cross(bar.Approve)(poolAddr, 0)
+	cross(foo.Approve)(poolAddr, 50000000)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -79,8 +79,8 @@ func TestMintPosition02LowerRange(t *testing.T) {
 
 func TestMintPosition03UpperRange(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, 50000000)
-	foo.Approve(poolAddr, 0)
+	cross(bar.Approve)(poolAddr, 50000000)
+	cross(foo.Approve)(poolAddr, 0)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -123,7 +123,7 @@ func TestUnclaimedFee0(t *testing.T) {
 
 func TestSwap1(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, 1234567)
+	cross(bar.Approve)(poolAddr, 1234567)
 
 	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
@@ -150,7 +150,7 @@ func TestUnclaimedFee1(t *testing.T) {
 
 func TestSwap2(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
 
 	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
@@ -177,7 +177,7 @@ func TestUnclaimedFee2(t *testing.T) {
 
 func TestSwap3(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	foo.Approve(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
 
 	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
@@ -204,8 +204,8 @@ func TestUnclaimedFee3(t *testing.T) {
 
 func TestCollectFeeAfterSwap(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	foo.Approve(poolAddr, consts.UINT64_MAX) // COLLECT_FEE
-	bar.Approve(poolAddr, consts.UINT64_MAX) // COLLECT_FEE
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX) // COLLECT_FEE
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX) // COLLECT_FEE
 
 	positionId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 

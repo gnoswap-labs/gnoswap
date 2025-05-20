@@ -5,8 +5,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-
-	"gno.land/r/gnoswap/v1/gns"
 )
 
 func TestChangeDistributionPctByAdmin(t *testing.T) {
@@ -265,7 +263,7 @@ func TestCalculateAmount(t *testing.T) {
 // 			target: LIQUIDITY_STAKER,
 // 			setup: func() {
 // 				testing.SetRealm(adminRealm)
-// 				gns.Transfer(emissionAddr, 100000) // give enough balance for emission
+// 				cross(gns.Transfer)(emissionAddr, 100000) // give enough balance for emission
 // 			},
 // 			amount: 100,
 // 			verify: func() {

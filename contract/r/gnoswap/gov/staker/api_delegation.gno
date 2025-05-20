@@ -11,12 +11,12 @@ import (
 
 // GetTotalxGnsSupply returns the total amount of xGNS supply.
 func GetTotalxGnsSupply() int64 {
-	return xgns.TotalSupply()
+	return cross(xgns.TotalSupply)()
 }
 
 // GetTotalVoteWeight returns the total amount of xGNS used for voting.
 func GetTotalVoteWeight() int64 {
-	return xgns.VotingSupply()
+	return cross(xgns.VotingSupply)()
 }
 
 // GetTotalDelegated returns the total amount of xGNS delegated.

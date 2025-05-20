@@ -36,9 +36,9 @@ var (
 
 func init() {
 	testing.SetRealm(adminRealm)
-	gns.Transfer(launchpadDepositAddr, uint64(1_000_000_000))
-	gns.Transfer(govDelegateAddr, uint64(1_000_000_000))
-	gns.Transfer(dummyAddr, uint64(1_000_000_000))
+	cross(gns.Transfer)(launchpadDepositAddr, uint64(1_000_000_000))
+	cross(gns.Transfer)(govDelegateAddr, uint64(1_000_000_000))
+	cross(gns.Transfer)(dummyAddr, uint64(1_000_000_000))
 }
 
 func TestLaunchPadAndGovernanceReward(t *testing.T) {
@@ -56,7 +56,7 @@ func TestLaunchPadAndGovernanceReward(t *testing.T) {
 func testPoolCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		gns.Approve(poolAddr, pl.GetPoolCreationFee())
+		cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee())
 		pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString()) // x1
 		testing.SkipHeights(1)
 	})
@@ -65,8 +65,8 @@ func testPoolCreatePool(t *testing.T) {
 func testPositionMint(t *testing.T) {
 	t.Run("mint position", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		foo.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(barPath, fooPath, fee500, int32(-8000), int32(8000), "10000000000", "10000000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 		uassert.Equal(t, positionId, uint64(1))
@@ -78,8 +78,8 @@ func testPositionMint(t *testing.T) {
 func testRouterSwapRoute(t *testing.T) {
 	t.Run("swap route", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		bar.Approve(routerAddr, uint64(100_000))
-		foo.Approve(routerAddr, uint64(100_000))
+		cross(bar.Approve)(routerAddr, uint64(100_000))
+		cross(foo.Approve)(routerAddr, uint64(100_000))
 
 		amountIn, amountOut := rr.ExactInSwapRoute(
 			barPath,
@@ -99,7 +99,7 @@ func testRouterSwapRoute(t *testing.T) {
 func testEarlyGovDelegateAndReward(t *testing.T) {
 	t.Run("early gov delegate and reward", func(t *testing.T) {
 		testing.SetRealm(dummyRealm)
-		gns.Approve(govStakerAddr, uint64(1_000_000))
+		cross(gns.Approve)(govStakerAddr, uint64(1_000_000))
 		gs.Delegate(dummyAddr, uint64(1_000_000), "")
 		testing.SkipHeights(1)
 
@@ -130,7 +130,7 @@ func testCreateProject(t *testing.T) {
 	t.Run("create project", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		obl.Approve(launchpadAddr, uint64(1_000_000_000))
+		cross(obl.Approve)(launchpadAddr, uint64(1_000_000_000))
 		testing.SkipHeights(1)
 
 		projectId := CreateProject(
@@ -153,7 +153,7 @@ func testCreateProject(t *testing.T) {
 func testDepositGnsToTier30(t *testing.T) {
 	t.Run("deposit gns to tier 30", func(t *testing.T) {
 		testing.SetRealm(launchpadDepositRealm)
-		gns.Approve(launchpadAddr, uint64(1_000_000_000))
+		cross(gns.Approve)(launchpadAddr, uint64(1_000_000_000))
 
 		// skip some blocks to make project active
 		testing.SkipHeights(4)
@@ -166,7 +166,7 @@ func testDepositGnsToTier30(t *testing.T) {
 func testGovDelegate(t *testing.T) {
 	t.Run("gov delegate", func(t *testing.T) {
 		testing.SetRealm(govDelegateRealm)
-		gns.Approve(govStakerAddr, uint64(1_000_000_000))
+		cross(gns.Approve)(govStakerAddr, uint64(1_000_000_000))
 		gs.Delegate(govDelegateAddr, uint64(1_000_000_000), "")
 		testing.SkipHeights(1)
 	})
@@ -177,16 +177,16 @@ func testMockProtocolFee(t *testing.T) {
 		// admin > protocol_fee
 		// send qux, bar for testing
 		testing.SetRealm(adminRealm)
-		bar.Transfer(protocolFeeAddr, 100_000)
-		qux.Transfer(protocolFeeAddr, 250_000)
+		cross(bar.Transfer)(protocolFeeAddr, 100_000)
+		cross(qux.Transfer)(protocolFeeAddr, 250_000)
 
-		uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), uint64(100000))
-		uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))
-		uassert.Equal(t, bar.BalanceOf(govStakerAddr), uint64(0))
+		uassert.Equal(t, cross(bar.BalanceOf)(protocolFeeAddr), uint64(100000))
+		uassert.Equal(t, cross(bar.BalanceOf)(devOpsAddr), uint64(0))
+		uassert.Equal(t, cross(bar.BalanceOf)(govStakerAddr), uint64(0))
 
-		uassert.Equal(t, qux.BalanceOf(protocolFeeAddr), uint64(250000))
-		uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
-		uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(0))
+		uassert.Equal(t, cross(qux.BalanceOf)(protocolFeeAddr), uint64(250000))
+		uassert.Equal(t, cross(qux.BalanceOf)(devOpsAddr), uint64(0))
+		uassert.Equal(t, cross(qux.BalanceOf)(govStakerAddr), uint64(0))
 		testing.SkipHeights(1)
 	})
 }

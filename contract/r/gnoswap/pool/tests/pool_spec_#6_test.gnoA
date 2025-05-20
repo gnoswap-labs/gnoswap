@@ -22,11 +22,11 @@ var (
 
 func TestPositionsProtected(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
-	foo.Approve(poolAddr, consts.UINT64_MAX)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
 
 	testing.SetRealm(posRealm)
 	Mint(
@@ -72,7 +72,7 @@ func TestPositionsProtected(t *testing.T) {
 
 func TestPokeIsNotAllowedOnUninitializedPosition(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // tick 0
 
 	testing.SetRealm(posRealm)
@@ -94,12 +94,12 @@ func TestPokeIsNotAllowedOnUninitializedPosition(t *testing.T) {
 
 func TestWorkAccross(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 	// CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 	CreatePool(barPath, fooPath, fee100, "79228162514264337593543950336")
 
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	foo.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
 
 	testing.SetRealm(posRealm)
 	Mint(

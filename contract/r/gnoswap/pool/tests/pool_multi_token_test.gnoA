@@ -31,7 +31,7 @@ func TestCreateFooBarPool(t *testing.T) {
 	// call gns faucet to get creation fee
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 	uassert.Equal(t, pools.Size(), 1)
@@ -42,7 +42,7 @@ func TestCreateBarBazPool(t *testing.T) {
 	// call gns faucet to get creation fee
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006")
 	uassert.Equal(t, pools.Size(), 2)
@@ -51,8 +51,8 @@ func TestCreateBarBazPool(t *testing.T) {
 // Mint Foo:Bar Liquidity by admin
 func TestMintFooBarLiquidity(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	foo.Approve(poolAddr, consts.UINT64_MAX)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
 
 	testing.SetRealm(posRealm)
 	amount0, amount1 := Mint(
@@ -72,8 +72,8 @@ func TestMintFooBarLiquidity(t *testing.T) {
 // Mint Bar:Baz Liquidity by admin
 func TestMintBarBazLiquidity(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	baz.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
 
 	testing.SetRealm(posRealm)
 	amount0, amount1 := Mint(
@@ -99,7 +99,7 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 	oldPoolFoo := fooToken.BalanceOf(poolAddr)
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, 16000)
+	cross(bar.Approve)(poolAddr, 16000)
 
 	testing.SetRealm(rouRealm)
 	poolIn, poolOut := Swap(
@@ -136,7 +136,7 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 	oldPoolBazBalance := bazToken.BalanceOf(poolAddr)
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, 16000)
+	cross(bar.Approve)(poolAddr, 16000)
 
 	testing.SetRealm(rouRealm)
 	poolIn, poolOut := Swap(

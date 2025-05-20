@@ -35,7 +35,7 @@ func TestRefundEndedProjectWithTier30(t *testing.T) {
 func testCreateProject(t *testing.T) {
 	t.Run("check before project create", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		obl.Approve(launchpadAddr, uint64(1_000_000_000))
+		cross(obl.Approve)(launchpadAddr, uint64(1_000_000_000))
 		testing.SkipHeights(1)
 
 		// check before project create
@@ -66,14 +66,14 @@ func testCreateProject(t *testing.T) {
 
 func testDepositGnsToTier30(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	gns.Transfer(user01, uint64(1_000_000)) // to deposit
+	cross(gns.Transfer)(user01, uint64(1_000_000)) // to deposit
 
 	// transfer some grc20 tokens to bypass project condition
-	foo.Transfer(user01, uint64(10))
-	bar.Transfer(user01, uint64(10))
+	cross(foo.Transfer)(user01, uint64(10))
+	cross(bar.Transfer)(user01, uint64(10))
 
 	testing.SetRealm(user01Realm)
-	gns.Approve(launchpadAddr, uint64(1_000_000))
+	cross(gns.Approve)(launchpadAddr, uint64(1_000_000))
 
 	t.Run("check before deposit", func(t *testing.T) {
 		// check before deposit
@@ -271,10 +271,10 @@ func testMoreBlocks(t *testing.T) {
 
 func testMakeProjectEnd(t *testing.T) {
 	t.Run("make project end", func(t *testing.T) {
-		user01OldOblBalance := obl.BalanceOf(user01)
+		user01OldOblBalance := cross(obl.BalanceOf)(user01)
 		uassert.Equal(t, user01OldOblBalance, uint64(21222222)) // already collected
 
-		refundOldOblBalance := obl.BalanceOf(refundAddr)
+		refundOldOblBalance := cross(obl.BalanceOf)(refundAddr)
 		uassert.Equal(t, refundOldOblBalance, uint64(0))
 
 		testing.SkipHeights(int64(TIMESTAMP_180DAYS) / 2)
@@ -282,10 +282,10 @@ func testMakeProjectEnd(t *testing.T) {
 		TransferLeftFromProjectByAdmin(`gno.land/r/onbloc/obl:124`, refundAddr)
 		testing.SkipHeights(1)
 
-		user01NewOblBalance := obl.BalanceOf(user01)
+		user01NewOblBalance := cross(obl.BalanceOf)(user01)
 		uassert.Equal(t, user01NewOblBalance, uint64(21222222))
 
-		refundNewOblBalance := obl.BalanceOf(refundAddr)
+		refundNewOblBalance := cross(obl.BalanceOf)(refundAddr)
 		uassert.Equal(t, refundNewOblBalance, uint64(900000001))
 	})
 }

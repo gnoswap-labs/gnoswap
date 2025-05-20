@@ -101,7 +101,7 @@ func testMintWugnotGnsPos01() {
 	testing.SetRealm(adminRealm)
 
 	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-	gns.Approve(poolAddr, consts.UINT64_MAX)
+	cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
 	pn.Mint(
@@ -124,7 +124,7 @@ func testMintWugnotGnsPos02() {
 	testing.SetRealm(adminRealm)
 
 	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-	gns.Approve(poolAddr, consts.UINT64_MAX)
+	cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
 	pn.Mint(
@@ -174,10 +174,10 @@ func testMakePosition1OutRangeBySwap() {
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 
 	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-	gns.Approve(poolAddr, consts.UINT64_MAX)
+	cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 
 	cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
-	gns.Approve(routerAddr, consts.UINT64_MAX)
+	cross(gns.Approve)(routerAddr, consts.UINT64_MAX)
 
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
 		wugnotPath, // inputToken
@@ -216,10 +216,10 @@ func testMakePosition1InRangeBySwap() {
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 
 	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-	gns.Approve(poolAddr, consts.UINT64_MAX)
+	cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 
 	cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
-	gns.Approve(routerAddr, consts.UINT64_MAX)
+	cross(gns.Approve)(routerAddr, consts.UINT64_MAX)
 
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
 		gnsPath,

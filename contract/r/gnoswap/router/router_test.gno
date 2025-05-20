@@ -239,11 +239,11 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			if tt.recipient != positionOwner {
 				cross(wugnot.Transfer)(tt.recipient, 10000000000)
 			}
-			gns.Transfer(tt.recipient, 10000000000)
+			cross(gns.Transfer)(tt.recipient, 10000000000)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			cross(wugnot.Approve)(poolContract, maxApprove)
-			gns.Approve(poolContract, maxApprove)
+			cross(gns.Approve)(poolContract, maxApprove)
 
 			teller := common.GetTokenTeller(wugnotTokenPath)
 			teller.Approve(poolContract, maxApprove)
@@ -269,9 +269,9 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
 			cross(wugnot.Transfer)(routerContract, 20000000)
-			gns.Transfer(routerContract, 20000000)
+			cross(gns.Transfer)(routerContract, 20000000)
 			cross(wugnot.Approve)(routerContract, maxApprove)
-			gns.Approve(routerContract, maxApprove)
+			cross(gns.Approve)(routerContract, maxApprove)
 			beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(tt.recipient)
 
 			testing.SetRealm(std.NewCodeRealm(routerPath))
@@ -409,11 +409,11 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 				cross(wugnot.Transfer)(tt.recipient, 10000000000)
 			}
 			banker.SendCoins(positionOwner, tt.recipient, std.Coins{{"ugnot", int64(10000000000)}})
-			gns.Transfer(tt.recipient, 10000000000)
+			cross(gns.Transfer)(tt.recipient, 10000000000)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			cross(wugnot.Approve)(poolContract, maxApprove)
-			gns.Approve(poolContract, maxApprove)
+			cross(gns.Approve)(poolContract, maxApprove)
 
 			teller := common.GetTokenTeller(wugnotTokenPath)
 			teller.Approve(poolContract, maxApprove)
@@ -447,7 +447,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			banker.SendCoins(tt.recipient, positionAddr, newCoinsForAdd)
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			cross(wugnot.Approve)(poolContract, maxApprove)
-			gns.Approve(poolContract, maxApprove)
+			cross(gns.Approve)(poolContract, maxApprove)
 			pn.IncreaseLiquidity(
 				positionId,
 				tt.amount0Requested,
@@ -460,9 +460,9 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
 			cross(wugnot.Transfer)(routerContract, 20000000)
-			gns.Transfer(routerContract, 20000000)
+			cross(gns.Transfer)(routerContract, 20000000)
 			cross(wugnot.Approve)(routerContract, maxApprove)
-			gns.Approve(routerContract, maxApprove)
+			cross(gns.Approve)(routerContract, maxApprove)
 			testing.SetRealm(std.NewCodeRealm(routerPath))
 			cross(wugnot.Approve)(poolContract, maxApprove)
 
@@ -592,11 +592,11 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 				cross(wugnot.Transfer)(tt.recipient, 10000000000)
 			}
 			banker.SendCoins(positionOwner, tt.recipient, std.Coins{{"ugnot", int64(10000000000)}})
-			gns.Transfer(tt.recipient, 10000000000)
+			cross(gns.Transfer)(tt.recipient, 10000000000)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			cross(wugnot.Approve)(poolContract, maxApprove)
-			gns.Approve(poolContract, maxApprove)
+			cross(gns.Approve)(poolContract, maxApprove)
 
 			teller := common.GetTokenTeller(wugnotTokenPath)
 			teller.Approve(poolContract, maxApprove)
@@ -621,9 +621,9 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			// Decrease Liquidity
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			cross(wugnot.Approve)(poolContract, maxApprove)
-			gns.Approve(poolContract, maxApprove)
+			cross(gns.Approve)(poolContract, maxApprove)
 			cross(wugnot.Approve)(positionContract, maxApprove)
-			gns.Approve(positionContract, maxApprove)
+			cross(gns.Approve)(positionContract, maxApprove)
 			liquidityUint64, _ := strconv.ParseUint(liquidity, 10, 64)
 			partialLiquidity := liquidityUint64 / 5
 			reqLiquidity := strconv.FormatUint(partialLiquidity, 10)
@@ -640,9 +640,9 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
 			cross(wugnot.Transfer)(routerContract, 20000000)
-			gns.Transfer(routerContract, 20000000)
+			cross(gns.Transfer)(routerContract, 20000000)
 			cross(wugnot.Approve)(routerContract, maxApprove)
-			gns.Approve(routerContract, maxApprove)
+			cross(gns.Approve)(routerContract, maxApprove)
 			beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(tt.recipient)
 
 			testing.SetRealm(std.NewCodeRealm(routerPath))
@@ -776,11 +776,11 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 				cross(wugnot.Transfer)(tt.recipient, 10000000000)
 			}
 			banker.SendCoins(positionOwner, tt.recipient, std.Coins{{"ugnot", int64(10000000000)}})
-			gns.Transfer(tt.recipient, 10000000000)
+			cross(gns.Transfer)(tt.recipient, 10000000000)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			cross(wugnot.Approve)(poolContract, maxApprove)
-			gns.Approve(poolContract, maxApprove)
+			cross(gns.Approve)(poolContract, maxApprove)
 
 			teller := common.GetTokenTeller(wugnotTokenPath)
 			teller.Approve(poolContract, maxApprove)
@@ -805,9 +805,9 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
 			cross(wugnot.Transfer)(routerContract, 20000000)
-			gns.Transfer(routerContract, 20000000)
+			cross(gns.Transfer)(routerContract, 20000000)
 			cross(wugnot.Approve)(routerContract, maxApprove)
-			gns.Approve(routerContract, maxApprove)
+			cross(gns.Approve)(routerContract, maxApprove)
 			beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(tt.recipient)
 
 			testing.SetRealm(std.NewCodeRealm(routerPath))

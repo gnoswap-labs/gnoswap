@@ -45,8 +45,8 @@ func testPoolCreatePool(t *testing.T) {
 func testStakerMintAndStake(t *testing.T) {
 	t.Run("mint and stake", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		qux.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 		testing.SkipHeights(2)
 
 		positionId, _, _, _, _ := MintAndStake(

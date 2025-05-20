@@ -22,7 +22,7 @@ import (
 func TestSwapRouteOutRange_1route_1hop(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, pl.GetPoolCreationFee())
+	cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString())
 
 	jsonStr := pl.ApiGetPools()
@@ -38,8 +38,8 @@ func TestSwapRouteOutRange_1route_1hop(t *testing.T) {
 
 	uassert.Equal(t, response.Size(), 1)
 
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	baz.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
 
 	// Mint
 	positionId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(8000), int32(12000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")

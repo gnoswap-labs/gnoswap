@@ -110,7 +110,7 @@ func testCreatePoolWugnotGns3000Tier01(t *testing.T) {
 	t.Run("create pool gnot:gns:0.3%", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		pl.CreatePool(wugnotPath, gnsPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // current tick 0
 
 		uassert.Equal(t, uint64(100000000000000), gns.TotalSupply())
@@ -125,7 +125,7 @@ func testCreateExternalIncentiveGns(t *testing.T) {
 	t.Run("create external incentive gns for gnot:gns:0.3% pool", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		gns.Approve(stakerAddr, consts.UINT64_MAX) // this includes depositGnsAmount
+		cross(gns.Approve)(stakerAddr, consts.UINT64_MAX) // this includes depositGnsAmount
 		CreateExternalIncentive(
 			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000",
 			consts.GNS_PATH,
@@ -144,7 +144,7 @@ func testMintPos01InRange(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		pn.Mint(
 			wugnotPath,
 			gnsPath,
@@ -169,7 +169,7 @@ func testCreateBarBaz500Tier02(t *testing.T) {
 	t.Run("create bar:baz:500 pool, and set internal emission tier #2", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		pl.CreatePool(barPath, bazPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 		SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 2)
@@ -183,8 +183,8 @@ func testMintPos02InRange(t *testing.T) {
 	t.Run("mint position 02 in range", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		baz.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
 		pn.Mint(
 			barPath,
 			bazPath,
@@ -210,7 +210,7 @@ func testMintPos03OutRange(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		pn.Mint(
 			wugnotPath,
 			gnsPath,
@@ -236,7 +236,7 @@ func testMintPos04OutRange(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		pn.Mint(
 			barPath,
 			bazPath,
@@ -262,7 +262,7 @@ func testMintPos05OutRange(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		pn.Mint(
 			wugnotPath,
 			gnsPath,
@@ -288,7 +288,7 @@ func testMintPos06OutRange(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		pn.Mint(
 			barPath,
 			bazPath,
@@ -511,10 +511,10 @@ func testSwapExactIn(t *testing.T) {
 	t.Run("swap token0 to token1 500 // swap #1", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 
 		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
-		gns.Approve(routerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactInSwapRoute(
 			wugnotPath, // inputToken
@@ -549,10 +549,10 @@ func testSwapExactIn(t *testing.T) {
 	t.Run("swap token0 to token1 500 // swap #2", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 
 		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
-		gns.Approve(routerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactInSwapRoute(
 			wugnotPath, // inputToken
@@ -587,10 +587,10 @@ func testSwapExactIn(t *testing.T) {
 	t.Run("swap token0 to token1 500 // swap #3", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 
 		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
-		gns.Approve(routerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactInSwapRoute(
 			wugnotPath, // inputToken
@@ -631,10 +631,10 @@ func testSwapExactIn(t *testing.T) {
 	t.Run("swap token0 to token1 500 // swap #4", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 
 		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
-		gns.Approve(routerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactInSwapRoute(
 			wugnotPath, // inputToken
@@ -666,10 +666,10 @@ func testSwapExactOut(t *testing.T) {
 	t.Run("swap token1 to token1 0 // swap #1", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 
 		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
-		gns.Approve(routerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactOutSwapRoute(
 			gnsPath,    // inputToken
@@ -703,10 +703,10 @@ func testSwapExactOut(t *testing.T) {
 	t.Run("swap token1 to token1 0 // swap #2", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 
 		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
-		gns.Approve(routerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactOutSwapRoute(
 			gnsPath,    // inputToken
@@ -740,10 +740,10 @@ func testSwapExactOut(t *testing.T) {
 	t.Run("swap token1 to token1 0 // swap #3", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 
 		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
-		gns.Approve(routerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactOutSwapRoute(
 			gnsPath,    // inputToken
@@ -777,10 +777,10 @@ func testSwapExactOut(t *testing.T) {
 	t.Run("swap token1 to token1 0 // swap #4", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 
 		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
-		gns.Approve(routerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactOutSwapRoute(
 			gnsPath,    // inputToken
@@ -830,8 +830,8 @@ func testCreatePoolBarFoo100Tier03(t *testing.T) {
 func testOneClickStakingPos07OutRange(t *testing.T) {
 	t.Run("mint and stake grc20 pair (pos #7)", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		foo.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
 
 		lpTokenId, liquidity, amount0, amount1, poolPath := MintAndStake(
 			barPath,    // token0
@@ -919,12 +919,12 @@ func testCreatePoolBazQux3000ExternalOnly(t *testing.T) {
 func testCreateExternalIncentiveBaz(t *testing.T) {
 	t.Run("create external incentive baz for baz:qux:0.3% pool", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		baz.Transfer(externalCreator, 20000000)         // for external incentive
-		gns.Transfer(externalCreator, depositGnsAmount) // for deposit
+		cross(baz.Transfer)(externalCreator, 20000000)         // for external incentive
+		cross(gns.Transfer)(externalCreator, depositGnsAmount) // for deposit
 
 		testing.SetRealm(std.NewUserRealm(externalCreator))
-		baz.Approve(stakerAddr, 20000000)
-		gns.Approve(stakerAddr, depositGnsAmount)
+		cross(baz.Approve)(stakerAddr, 20000000)
+		cross(gns.Approve)(stakerAddr, depositGnsAmount)
 
 		startTime := int64(1244332800)
 		endTime := startTime + TIMESTAMP_90DAYS
@@ -952,8 +952,8 @@ func testMintPos08InRange(t *testing.T) {
 	t.Run("mint position 08 in range", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		baz.Approve(poolAddr, consts.UINT64_MAX)
-		qux.Approve(poolAddr, consts.UINT64_MAX)
+		cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
 		testing.SkipHeights(1)
 		pn.Mint(
@@ -993,10 +993,10 @@ func testCollectReward08(t *testing.T) {
 		testing.SkipHeights(9)
 		testing.SetRealm(adminRealm)
 
-		oldBaz := baz.BalanceOf(adminAddr)
+		oldBaz := cross(baz.BalanceOf)(adminAddr)
 		CollectReward(8, false)
 
-		newBaz := baz.BalanceOf(adminAddr)
+		newBaz := cross(baz.BalanceOf)(adminAddr)
 		uassert.Equal(t, uint64(0), newBaz-oldBaz)
 		// extenral incentive not yet started
 
@@ -1016,9 +1016,9 @@ func testCollectReward08AfterStart(t *testing.T) {
 	t.Run("collect reward for 08 position", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		oldBaz := baz.BalanceOf(adminAddr)
+		oldBaz := cross(baz.BalanceOf)(adminAddr)
 		CollectReward(8, false)
-		newBaz := baz.BalanceOf(adminAddr)
+		newBaz := cross(baz.BalanceOf)(adminAddr)
 
 		uassert.True(t, isNear(t, uint64(15), newBaz-oldBaz))
 		// 5 * 10 * 30% = 15 // user receives
@@ -1036,9 +1036,9 @@ func testEndExternalIncentiveBaz(t *testing.T) {
 		testing.SetRealm(std.NewUserRealm(externalCreator))
 
 		oldGns := gns.BalanceOf(externalCreator)
-		oldBaz := baz.BalanceOf(externalCreator)
+		oldBaz := cross(baz.BalanceOf)(externalCreator)
 
-		lpOldBaz := baz.BalanceOf(adminAddr)
+		lpOldBaz := cross(baz.BalanceOf)(adminAddr)
 
 		testing.SkipHeights(5832978 - std.ChainHeight())
 		testing.SkipHeights(1)
@@ -1057,7 +1057,7 @@ func testEndExternalIncentiveBaz(t *testing.T) {
 		testing.SkipHeights(1)
 
 		newGns := gns.BalanceOf(externalCreator)
-		newBaz := baz.BalanceOf(externalCreator)
+		newBaz := cross(baz.BalanceOf)(externalCreator)
 
 		// 1. external creator recieves deposit gns amount
 		refundGns := newGns - oldGns
@@ -1073,13 +1073,13 @@ func testEndExternalIncentiveBaz(t *testing.T) {
 		CollectReward(8, false)
 		testing.SkipHeights(1)
 
-		lpNewBaz := baz.BalanceOf(adminAddr)
+		lpNewBaz := cross(baz.BalanceOf)(adminAddr)
 		uassert.True(t, lpNewBaz-lpOldBaz > 0)
 
 		// 4. after external ends, no reward can be made
 		testing.SkipHeights(123)
 		CollectReward(8, false)
-		lpNewBaz2 := baz.BalanceOf(adminAddr)
+		lpNewBaz2 := cross(baz.BalanceOf)(adminAddr)
 		uassert.Equal(t, lpNewBaz, lpNewBaz2)
 
 		checkGnsBalance(t, 0)

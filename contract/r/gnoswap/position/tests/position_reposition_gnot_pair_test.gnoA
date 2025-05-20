@@ -28,7 +28,7 @@ func testPoolInitCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		gns.Approve(poolAddr, pl.GetPoolCreationFee())
+		cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee())
 		pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // x2.71814592682522526700950038502924144268035888671875
 	})
 }
@@ -37,7 +37,7 @@ func testMintPosition01InRange(t *testing.T) {
 	t.Run("mint position 01 in range", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 
 		cross(wugnot.Approve)(positionAddr, consts.UINT64_MAX) // FOR WRAP
@@ -101,7 +101,7 @@ func testSwap(t *testing.T) {
 	t.Run("swap", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		gns.Approve(poolAddr, consts.UINT64_MAX) // amountIn
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX) // amountIn
 
 		testing.SetRealm(rouRealm)
 		amount0, amount1 := pl.Swap(
@@ -163,7 +163,7 @@ func testDecreaseLiquidityInPosition(t *testing.T) {
 		uassert.Equal(t, ownerOfPosition, adminAddr)
 
 		// approve fee0, fee1 to pool
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 
 		resultPositionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(

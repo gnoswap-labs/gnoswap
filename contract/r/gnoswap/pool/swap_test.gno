@@ -938,10 +938,10 @@ func TestSwap_FeeTier100(t *testing.T) {
 			setupFn: func(t *testing.T) {
 				testing.SetRealm(std.NewUserRealm(adminAddr))
 				cross(wugnot.Approve)(poolAddr, maxApprove)
-				gns.Approve(poolAddr, maxApprove)
+				cross(gns.Approve)(poolAddr, maxApprove)
 				CreatePool(wugnotTokenPath, gnsTokenPath, FeeTier100, "79228162514264337593543950336")
 				cross(wugnot.Approve)(routerAddr, maxApprove)
-				gns.Approve(routerAddr, maxApprove)
+				cross(gns.Approve)(routerAddr, maxApprove)
 
 				faucetAddress := adminAddr
 				testing.SetOriginCaller(faucetAddress)
@@ -984,12 +984,12 @@ func TestSwap_FeeTier100(t *testing.T) {
 					"",
 				)
 				testing.SetRealm(std.NewUserRealm(adminAddr))
-				gns.Transfer(poolAddr, 20000000)
+				cross(gns.Transfer)(poolAddr, 20000000)
 			},
 			action: func(t *testing.T) (string, string) {
 				testing.SetOriginCaller(adminAddr)
 				cross(wugnot.Transfer)(routerAddr, 20000000)
-				gns.Transfer(routerAddr, 20000000)
+				cross(gns.Transfer)(routerAddr, 20000000)
 
 				testing.SetOriginCaller(routerAddr)
 				cross(wugnot.Approve)(poolAddr, maxApprove)

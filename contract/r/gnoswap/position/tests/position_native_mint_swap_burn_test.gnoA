@@ -31,7 +31,7 @@ func testPoolInitCreatePool(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		pl.SetPoolCreationFeeByAdmin(0)
 
-		gns.Approve(poolAddr, pl.GetPoolCreationFee())
+		cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee())
 		pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
 	})
 }
@@ -40,7 +40,7 @@ func testMintPosition(t *testing.T) {
 	t.Run("mint position", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 
 		cross(wugnot.Approve)(positionAddr, consts.UINT64_MAX) // FOR WRAP

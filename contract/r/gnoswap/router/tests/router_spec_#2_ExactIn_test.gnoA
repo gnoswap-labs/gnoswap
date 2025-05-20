@@ -21,12 +21,12 @@ import (
 func TestExactInputSinglePool1_to_0(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, pl.GetPoolCreationFee())
+	cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee())
 
 	token0Path := "gno.land/r/onbloc/foo"
 
-	foo.Approve(poolAddr, consts.UINT64_MAX)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
 	pl.CreatePool(barPath, token0Path, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
@@ -37,14 +37,14 @@ func TestExactInputSinglePool1_to_0(t *testing.T) {
 
 	// 1 -> 0
 
-	bar.Approve(routerAddr, consts.UINT64_MAX)
-	foo.Approve(routerAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(routerAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(routerAddr, consts.UINT64_MAX)
 
-	poolToken0Before := bar.BalanceOf(poolAddr)
-	poolToken1Before := foo.BalanceOf(poolAddr)
+	poolToken0Before := cross(bar.BalanceOf)(poolAddr)
+	poolToken1Before := cross(foo.BalanceOf)(poolAddr)
 
-	user1Token0Before := bar.BalanceOf(adminAddr)
-	user1Token1Before := foo.BalanceOf(adminAddr)
+	user1Token0Before := cross(bar.BalanceOf)(adminAddr)
+	user1Token1Before := cross(foo.BalanceOf)(adminAddr)
 
 	amountIn, amountOut := ExactInSwapRoute(
 		barPath, // inputToken
@@ -60,11 +60,11 @@ func TestExactInputSinglePool1_to_0(t *testing.T) {
 	uassert.Equal(t, amountIn, "3")
 	uassert.Equal(t, amountOut, "-1")
 
-	poolToken0After := bar.BalanceOf(poolAddr)
-	poolToken1After := foo.BalanceOf(poolAddr)
+	poolToken0After := cross(bar.BalanceOf)(poolAddr)
+	poolToken1After := cross(foo.BalanceOf)(poolAddr)
 
-	user1Token0After := bar.BalanceOf(adminAddr)
-	user1Token1After := foo.BalanceOf(adminAddr)
+	user1Token0After := cross(bar.BalanceOf)(adminAddr)
+	user1Token1After := cross(foo.BalanceOf)(adminAddr)
 
 	uassert.Equal(t, user1Token0After, user1Token0Before+1) // bar
 	uassert.Equal(t, user1Token1After, user1Token1Before-3) // foo

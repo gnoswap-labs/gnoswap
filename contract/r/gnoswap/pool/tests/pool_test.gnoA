@@ -31,7 +31,7 @@ func TestCreateFooBarPool(t *testing.T) {
 
 	testing.SkipHeights(5)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 	testing.SkipHeights(1)
 
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
@@ -48,7 +48,7 @@ func TestCreateBarBazPool(t *testing.T) {
 
 	testing.SkipHeights(5)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 	testing.SkipHeights(1)
 
 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000
@@ -60,8 +60,8 @@ func TestCreateBarBazPool(t *testing.T) {
 // 3. Mint Foo:Bar Liquidity by admin
 func TestMintFooBarLiquidity(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	foo.Approve(poolAddr, consts.UINT64_MAX)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
 	testing.SkipHeights(4)
 
 	testing.SetRealm(posRealm)
@@ -83,8 +83,8 @@ func TestMintFooBarLiquidity(t *testing.T) {
 // 4. Mint Bar:Baz Liquidity by admin
 func TestMintBarBazLiquidity(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	baz.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
 	testing.SkipHeights(2)
 
 	testing.SetRealm(posRealm)

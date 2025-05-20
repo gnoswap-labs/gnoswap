@@ -26,8 +26,8 @@ var (
 // 	// send qux, bar for testing
 // 	func() {
 // 		testing.SetRealm(adminRealm)
-// 		bar.Transfer(protocolFeeAddr, 1000)
-// 		qux.Transfer(protocolFeeAddr, 1000)
+// 		cross(bar.Transfer)(protocolFeeAddr, 1000)
+// 		cross(qux.Transfer)(protocolFeeAddr, 1000)
 // 	}()
 
 // 	// Add protocol fees
@@ -42,13 +42,13 @@ var (
 // 	// func() {
 // 	// 	govStakerRealm := std.NewCodeRealm(consts.GOV_STAKER_PATH)
 // 	// 	testing.SetRealm(govStakerRealm)
-// 	// 	uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), uint64(1000))
-// 	// 	uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))
-// 	// 	uassert.Equal(t, bar.BalanceOf(govStakerAddr), uint64(0))
+// 	// 	uassert.Equal(t, cross(bar.BalanceOf)(protocolFeeAddr), uint64(1000))
+// 	// 	uassert.Equal(t, cross(bar.BalanceOf)(devOpsAddr), uint64(0))
+// 	// 	uassert.Equal(t, cross(bar.BalanceOf)(govStakerAddr), uint64(0))
 
-// 	// 	uassert.Equal(t, qux.BalanceOf(protocolFeeAddr), uint64(1000))
-// 	// 	uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
-// 	// 	uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(0))
+// 	// 	uassert.Equal(t, cross(qux.BalanceOf)(protocolFeeAddr), uint64(1000))
+// 	// 	uassert.Equal(t, cross(qux.BalanceOf)(devOpsAddr), uint64(0))
+// 	// 	uassert.Equal(t, cross(qux.BalanceOf)(govStakerAddr), uint64(0))
 // 	// }()
 
 // 	// // Distribute protocol fees
@@ -62,13 +62,13 @@ var (
 // 	// func() {
 // 	// 	govStakerRealm := std.NewCodeRealm(consts.GOV_STAKER_PATH)
 // 	// 	testing.SetRealm(govStakerRealm)
-// 	// 	uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), uint64(0))
-// 	// 	uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))
-// 	// 	uassert.Equal(t, bar.BalanceOf(govStakerAddr), uint64(1000))
+// 	// 	uassert.Equal(t, cross(bar.BalanceOf)(protocolFeeAddr), uint64(0))
+// 	// 	uassert.Equal(t, cross(bar.BalanceOf)(devOpsAddr), uint64(0))
+// 	// 	uassert.Equal(t, cross(bar.BalanceOf)(govStakerAddr), uint64(1000))
 
-// 	// 	uassert.Equal(t, qux.BalanceOf(protocolFeeAddr), uint64(0))
-// 	// 	uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
-// 	// 	uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(1000))
+// 	// 	uassert.Equal(t, cross(qux.BalanceOf)(protocolFeeAddr), uint64(0))
+// 	// 	uassert.Equal(t, cross(qux.BalanceOf)(devOpsAddr), uint64(0))
+// 	// 	uassert.Equal(t, cross(qux.BalanceOf)(govStakerAddr), uint64(1000))
 // 	// }()
 // }
 

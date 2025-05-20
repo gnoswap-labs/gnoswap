@@ -36,7 +36,7 @@ func assertProposalState(t *testing.T, stat ProposalState, tests []proposalState
 func TestProposeText_ProposalStatusUpdate(t *testing.T) {
 	t.Run("initial state", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		gns.Approve(govStakerAddr, uint64(1_000_000))
+		cross(gns.Approve)(govStakerAddr, uint64(1_000_000))
 		gs.Delegate(admin, uint64(1_000_000), "")
 		testing.SkipHeights(11) // VotingWeightSmoothingDuration is 10 block
 
@@ -188,7 +188,7 @@ func TestProposeText_ProposalStatusUpdate(t *testing.T) {
 func TestParamaterChange(t *testing.T) {
 	t.Run("initial state", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		gns.Approve(govStakerAddr, uint64(1_000_000))
+		cross(gns.Approve)(govStakerAddr, uint64(1_000_000))
 		gs.Delegate(admin, uint64(1_000_000), "")
 		testing.SkipHeights(5)
 

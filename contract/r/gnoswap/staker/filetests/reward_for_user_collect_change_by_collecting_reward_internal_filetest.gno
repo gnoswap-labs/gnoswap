@@ -97,7 +97,7 @@ func testMintAndStakeWugnotGnsPos01() {
 	testing.SetRealm(adminRealm)
 
 	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-	gns.Approve(poolAddr, consts.UINT64_MAX)
+	cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
 	pn.Mint(
@@ -123,7 +123,7 @@ func testMintAndStakeWugnotGnsPos02() {
 	testing.SetRealm(adminRealm)
 
 	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-	gns.Approve(poolAddr, consts.UINT64_MAX)
+	cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
 	pn.Mint(

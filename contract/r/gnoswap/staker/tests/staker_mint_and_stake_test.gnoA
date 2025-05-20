@@ -36,7 +36,7 @@ func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		gns.Approve(poolAddr, pl.GetPoolCreationFee())
+		cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee())
 		testing.SkipHeights(1)
 
 		pl.CreatePool(consts.GNOT, consts.GNS_PATH, 3000, "79228162514264337593543950337") //x1
@@ -52,7 +52,7 @@ func testMintAndStakeNative(t *testing.T) {
 	t.Run("mint and stake native", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		gns.Approve(poolAddr, consts.UINT64_MAX)    // MINT
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)    // MINT
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX) // MINT
 
 		cross(wugnot.Approve)(positionAddr, consts.UINT64_MAX) // WRAP
@@ -101,8 +101,8 @@ func testMintAndStakeNative(t *testing.T) {
 func testMintAndStakeGRC20Pair(t *testing.T) {
 	t.Run("mint and stake grc20 pair", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		qux.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 		testing.SkipHeights(2)
 
 		lpTokenId, liquidity, amount0, amount1, poolPath := MintAndStake(

@@ -57,7 +57,7 @@ func proposeCommunityPoolSpend(t *testing.T) {
 		}
 
 		testing.SetRealm(adminRealm)
-		gns.Approve(govStakerAddr, uint64(1_000_000))
+		cross(gns.Approve)(govStakerAddr, uint64(1_000_000))
 		gs.Delegate(admin, uint64(1_000_000), "")
 		testing.SkipHeights(11) // VotingWeightSmoothingDuration
 

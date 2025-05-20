@@ -89,11 +89,11 @@ func TestMint(t *testing.T) {
 		)
 
 		// approve enough token to mint position
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		baz.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
 
-		beforeBalance0 := bar.BalanceOf(poolAddr)
-		beforeBalance1 := baz.BalanceOf(poolAddr)
+		beforeBalance0 := cross(bar.BalanceOf)(poolAddr)
+		beforeBalance1 := cross(baz.BalanceOf)(poolAddr)
 
 		testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
 		mintAmount0, mintAmount1 := Mint(
@@ -109,8 +109,8 @@ func TestMint(t *testing.T) {
 		uassert.Equal(t, mintAmount0, "49872721")
 		uassert.Equal(t, mintAmount1, "49872721")
 
-		afterBalance0 := bar.BalanceOf(poolAddr)
-		afterBalance1 := baz.BalanceOf(poolAddr)
+		afterBalance0 := cross(bar.BalanceOf)(poolAddr)
+		afterBalance1 := cross(baz.BalanceOf)(poolAddr)
 		uassert.Equal(t, uint64(49872721), afterBalance0-beforeBalance0)
 		uassert.Equal(t, uint64(49872721), afterBalance1-beforeBalance1)
 	})
@@ -316,7 +316,7 @@ func TestCollect(t *testing.T) {
 				cross(wugnot.Deposit)()
 
 				cross(wugnot.Approve)(poolAddr, maxApprove)
-				gns.Approve(poolAddr, maxApprove)
+				cross(gns.Approve)(poolAddr, maxApprove)
 
 				teller := common.GetTokenTeller(wugnotPath)
 				teller.Approve(poolAddr, maxApprove)
@@ -348,7 +348,7 @@ func TestCollect(t *testing.T) {
 				// Swap
 				testing.SetOriginCaller(positionOwner)
 				cross(wugnot.Transfer)(routerAddr, 20000000)
-				gns.Transfer(routerAddr, 20000000)
+				cross(gns.Transfer)(routerAddr, 20000000)
 
 				testing.SetRealm(rouRealm)
 				cross(wugnot.Approve)(poolAddr, maxApprove)
@@ -511,7 +511,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			cross(wugnot.Approve)(poolAddr, maxApprove)
-			gns.Approve(poolAddr, maxApprove)
+			cross(gns.Approve)(poolAddr, maxApprove)
 
 			teller := common.GetTokenTeller(wugnotPath)
 			teller.Approve(poolAddr, maxApprove)
@@ -542,7 +542,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
 			cross(wugnot.Transfer)(routerAddr, 20000000)
-			gns.Transfer(routerAddr, 20000000)
+			cross(gns.Transfer)(routerAddr, 20000000)
 
 			testing.SetRealm(rouRealm)
 			cross(wugnot.Approve)(poolAddr, maxApprove)

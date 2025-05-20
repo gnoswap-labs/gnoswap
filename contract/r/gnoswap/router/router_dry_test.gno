@@ -205,14 +205,14 @@ func createBasicPool(t *testing.T) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, pl.GetPoolCreationFee()*2)
+	cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee()*2)
 
 	pl.CreatePool(barPath, bazPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
 	pl.CreatePool(bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
 
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	baz.Approve(poolAddr, consts.UINT64_MAX)
-	qux.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
 	pn.Mint(barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
 	pn.Mint(bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")

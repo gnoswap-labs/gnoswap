@@ -23,35 +23,43 @@ func init() {
 }
 
 func TotalSupply() int64 {
+	crossing()
 	return userTeller.TotalSupply()
 }
 
 func BalanceOf(owner std.Address) int64 {
+	crossing()
 	return userTeller.BalanceOf(owner)
 }
 
 func Allowance(owner, spender std.Address) int64 {
+	crossing()
 	return userTeller.Allowance(owner, spender)
 }
 
 func Transfer(to std.Address, amount int64) {
+	crossing()
 	checkErr(userTeller.Transfer(to, amount))
 }
 
 func Approve(spender std.Address, amount int64) {
+	crossing()
 	checkErr(userTeller.Approve(spender, amount))
 }
 
 func TransferFrom(from, to std.Address, amount int64) {
+	crossing()
 	checkErr(userTeller.TransferFrom(from, to, amount))
 }
 
 func Burn(from std.Address, amount int64) {
+	crossing()
 	owner.AssertOwnedByCurrent()
 	checkErr(privateLedger.Burn(from, amount))
 }
 
 func Render(path string) string {
+	crossing()
 	parts := strings.Split(path, "/")
 	c := len(parts)
 

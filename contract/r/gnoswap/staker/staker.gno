@@ -489,18 +489,18 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[st
 	if toUser > 0 {
 		// internal reward to user
 		totalEmissionSent += toUser
-		gns.Transfer(deposit.owner, toUser)
+		cross(gns.Transfer)(deposit.owner, toUser)
 
 		// internal penalty to community pool
 		totalEmissionSent += reward.InternalPenalty
-		gns.Transfer(communityPoolAddr, reward.InternalPenalty)
+		cross(gns.Transfer)(communityPoolAddr, reward.InternalPenalty)
 	}
 
 	unClaimableInternal := processUnClaimableReward(deposit.targetPoolPath, currentHeight)
 	if unClaimableInternal > 0 {
 		// internal unClaimable to community pool
 		totalEmissionSent += unClaimableInternal
-		gns.Transfer(communityPoolAddr, unClaimableInternal)
+		cross(gns.Transfer)(communityPoolAddr, unClaimableInternal)
 	}
 
 	std.Emit(

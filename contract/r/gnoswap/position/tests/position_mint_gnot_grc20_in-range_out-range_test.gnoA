@@ -24,7 +24,7 @@ var (
 
 func TestPoolInitCreatePool(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(poolAddr, pl.GetPoolCreationFee())
+	cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
 	singlePool := pl.GetPoolFromPoolPath("gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
@@ -35,8 +35,8 @@ func TestFreshUser(t *testing.T) {
 	testing.IssueCoins(fresh02, std.Coins{{"ugnot", 100_000_000}})
 
 	testing.SetRealm(adminRealm)
-	gns.Transfer(fresh01, 100_000_000)
-	gns.Transfer(fresh02, 100_000_000)
+	cross(gns.Transfer)(fresh01, 100_000_000)
+	cross(gns.Transfer)(fresh02, 100_000_000)
 
 	// fresh users will have...
 	// 100_000_000 ugnot
@@ -52,7 +52,7 @@ func TestOneSideOnlyGrc20WithoutSend(t *testing.T) {
 	fresh01Realm := std.NewUserRealm(fresh01)
 	testing.SetRealm(fresh01Realm)
 
-	gns.Approve(poolAddr, consts.UINT64_MAX)    // POOL FOR MINT
+	cross(gns.Approve)(poolAddr, consts.UINT64_MAX)    // POOL FOR MINT
 	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX) // POOL FOR MINT
 
 	cross(wugnot.Approve)(positionAddr, consts.UINT64_MAX) // POSITION FOR WRAP
@@ -87,7 +87,7 @@ func TestOneSideOnlyGrc20WithSend0Coin(t *testing.T) {
 	fresh01Realm := std.NewUserRealm(fresh01)
 	testing.SetRealm(fresh01Realm)
 
-	gns.Approve(poolAddr, consts.UINT64_MAX)    // POOL FOR MINT
+	cross(gns.Approve)(poolAddr, consts.UINT64_MAX)    // POOL FOR MINT
 	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX) // POOL FOR MINT
 
 	cross(wugnot.Approve)(positionAddr, consts.UINT64_MAX) // POSITION FOR WRAP
@@ -124,7 +124,7 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 	fresh01Realm := std.NewUserRealm(fresh01)
 	testing.SetRealm(fresh01Realm)
 
-	gns.Approve(poolAddr, consts.UINT64_MAX)    // POOL FOR MINT
+	cross(gns.Approve)(poolAddr, consts.UINT64_MAX)    // POOL FOR MINT
 	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX) // POOL FOR MINT
 
 	cross(wugnot.Approve)(positionAddr, consts.UINT64_MAX) // POSITION FOR WRAP
@@ -160,7 +160,7 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 // 	fresh02Realm := std.NewUserRealm(fresh02)
 // 	testing.SetRealm(fresh02Realm)
 
-// 	gns.Approve(poolAddr, consts.UINT64_MAX)    // POOL FOR MINT
+// 	cross(gns.Approve)(poolAddr, consts.UINT64_MAX)    // POOL FOR MINT
 // 	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX) // POOL FOR MINT
 
 // 	cross(wugnot.Approve)(positionAddr, consts.UINT64_MAX) // POSITION FOR WRAP
@@ -197,7 +197,7 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 // 	fresh02Realm := std.NewUserRealm(fresh02)
 // 	testing.SetRealm(fresh02Realm)
 
-// 	gns.Approve(poolAddr, consts.UINT64_MAX)    // POOL FOR MINT
+// 	cross(gns.Approve)(poolAddr, consts.UINT64_MAX)    // POOL FOR MINT
 // 	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX) // POOL FOR MINT
 
 // 	cross(wugnot.Approve)(positionAddr, consts.UINT64_MAX) // POSITION FOR WRAP

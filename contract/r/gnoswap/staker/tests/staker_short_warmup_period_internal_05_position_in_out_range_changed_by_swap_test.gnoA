@@ -54,7 +54,7 @@ func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		gns.Approve(poolAddr, pl.GetPoolCreationFee()*3)
+		cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee()*3)
 
 		pl.CreatePool(barPath, quxPath, 100, "79228162514264337593543950337")
 		SetPoolTierByAdmin(poolPath, 1)
@@ -67,8 +67,8 @@ func testMintBarQux100_1(t *testing.T) {
 	t.Run("mint position 01, bar:qux:100", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		qux.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,    // token0
@@ -95,8 +95,8 @@ func testMintBarQux100_2(t *testing.T) {
 	t.Run("mint position 02, bar:qux:100", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		qux.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,      // token0
@@ -184,11 +184,11 @@ func testMakePosition1OutRange(t *testing.T) {
 		// ROUTER SWAP
 		testing.SetRealm(adminRealm)
 
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		qux.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
-		bar.Approve(routerAddr, consts.UINT64_MAX)
-		qux.Approve(routerAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(routerAddr, consts.UINT64_MAX)
+		cross(qux.Approve)(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := rr.ExactInSwapRoute(
 			barPath,

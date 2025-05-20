@@ -19,7 +19,7 @@ import (
 func TestCreatePool(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, pl.GetPoolCreationFee()*3)
+	cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee()*3)
 
 	pl.CreatePool(consts.WRAPPED_WUGNOT, quxPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 }
@@ -35,7 +35,7 @@ func TestPositionMintQuxGnot(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	cross(wugnot.Deposit)()
 
-	qux.Approve(poolAddr, consts.UINT64_MAX)
+	cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.WRAPPED_WUGNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")

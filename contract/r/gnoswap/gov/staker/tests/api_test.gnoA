@@ -45,12 +45,12 @@ func delegateAdmin(t *testing.T) {
 	t.Run("delegateAdmin", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		gns.Approve(govStaker, uint64(1000000))
+		cross(gns.Approve)(govStaker, uint64(1000000))
 		Delegate(dummyAddr, 1000000, "")
 
 		uassert.Equal(t, GetTotalDelegated(), uint64(1000000))
-		uassert.Equal(t, xgns.VotingSupply(), uint64(1000000))
-		uassert.Equal(t, xgns.TotalSupply(), uint64(1000000))
+		uassert.Equal(t, cross(xgns.VotingSupply)(), uint64(1000000))
+		uassert.Equal(t, cross(xgns.TotalSupply)(), uint64(1000000))
 
 		uassert.Equal(t, GetTotalDelegatedFrom(admin), uint64(1000000))
 		uassert.Equal(t, GetDelegationAmountFromTo(admin, dummyAddr), uint64(1000000))

@@ -100,8 +100,8 @@ func testCreatePool() {
 func testCreateExternalIncentiveBar() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(stakerAddr, consts.UINT64_MAX)
-	gns.Approve(stakerAddr, depositGnsAmount)
+	cross(bar.Approve)(stakerAddr, consts.UINT64_MAX)
+	cross(gns.Approve)(stakerAddr, depositGnsAmount)
 
 	testing.SkipHeights(1)
 	sr.CreateExternalIncentive(
@@ -116,8 +116,8 @@ func testCreateExternalIncentiveBar() {
 func testCreateExternalIncentiveQux() {
 	testing.SetRealm(adminRealm)
 
-	qux.Approve(stakerAddr, consts.UINT64_MAX)
-	gns.Approve(stakerAddr, depositGnsAmount)
+	cross(qux.Approve)(stakerAddr, consts.UINT64_MAX)
+	cross(gns.Approve)(stakerAddr, depositGnsAmount)
 
 	testing.SkipHeights(1)
 	sr.CreateExternalIncentive(
@@ -132,8 +132,8 @@ func testCreateExternalIncentiveQux() {
 func testMintAndStakeBarQuxPos01() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	qux.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
 	pn.Mint(
@@ -158,8 +158,8 @@ func testMintAndStakeBarQuxPos01() {
 func testMintAndStakeBarQuxPos02() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	qux.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
 	pn.Mint(

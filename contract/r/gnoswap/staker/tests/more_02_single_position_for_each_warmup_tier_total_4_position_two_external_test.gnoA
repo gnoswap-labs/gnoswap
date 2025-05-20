@@ -70,8 +70,8 @@ func testMintBarBaz100Pos01(t *testing.T) {
 	t.Run("mint position 01, bar:baz:100", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		baz.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,    // token0
@@ -96,8 +96,8 @@ func testMintBarBaz100Pos02(t *testing.T) {
 	t.Run("mint position 02, bar:baz:100", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		baz.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,    // token0
@@ -122,8 +122,8 @@ func testMintBarBaz100Pos03(t *testing.T) {
 	t.Run("mint position 03, bar:baz:100", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		baz.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,    // token0
@@ -148,8 +148,8 @@ func testMintBarBaz100Pos04(t *testing.T) {
 	t.Run("mint position 04, bar:baz:100", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		baz.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(
 			barPath,    // token0
@@ -174,8 +174,8 @@ func testCreateBarExternal(t *testing.T) {
 	t.Run("create external incentive bar 365 days", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		bar.Approve(stakerAddr, consts.UINT64_MAX)
-		gns.Approve(stakerAddr, depositGnsAmount)
+		cross(bar.Approve)(stakerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(stakerAddr, depositGnsAmount)
 
 		CreateExternalIncentive(
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
@@ -192,8 +192,8 @@ func testCreateBazExternal(t *testing.T) {
 	t.Run("create external incentive baz 365 days", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		baz.Approve(stakerAddr, consts.UINT64_MAX)
-		gns.Approve(stakerAddr, depositGnsAmount)
+		cross(baz.Approve)(stakerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(stakerAddr, depositGnsAmount)
 
 		CreateExternalIncentive(
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
@@ -226,13 +226,13 @@ func testStakeTokenPos01ToWarmUp100(t *testing.T) {
 	t.Run("collect reward for 01 block", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		userOldBar := bar.BalanceOf(admin)
-		userOldBaz := baz.BalanceOf(admin)
+		userOldBar := cross(bar.BalanceOf)(admin)
+		userOldBaz := cross(baz.BalanceOf)(admin)
 
 		CollectReward(1, false)
 
-		userNewBar := bar.BalanceOf(admin)
-		userNewBaz := baz.BalanceOf(admin)
+		userNewBar := cross(bar.BalanceOf)(admin)
+		userNewBaz := cross(baz.BalanceOf)(admin)
 		uassert.True(t, isInErrorRange(uint64(6944), userNewBar-userOldBar))
 		// increased 6944
 		// position 01 is in 30% warm up period
@@ -255,13 +255,13 @@ func testStakeTokenPos01ToWarmUp100(t *testing.T) {
 
 		testing.SkipHeights(1) // 1 block for 50% warm up
 
-		userOldBar := bar.BalanceOf(admin)
-		userOldBaz := baz.BalanceOf(admin)
+		userOldBar := cross(bar.BalanceOf)(admin)
+		userOldBaz := cross(baz.BalanceOf)(admin)
 
 		CollectReward(1, false)
 
-		userNewBar := bar.BalanceOf(admin)
-		userNewBaz := baz.BalanceOf(admin)
+		userNewBar := cross(bar.BalanceOf)(admin)
+		userNewBaz := cross(baz.BalanceOf)(admin)
 		uassert.True(t, isInErrorRange(uint64(11574), userNewBar-userOldBar))
 		// increased 11573
 		// position 01 is in 50% warm up period
@@ -284,13 +284,13 @@ func testStakeTokenPos01ToWarmUp100(t *testing.T) {
 
 		testing.SkipHeights(1) // 1 block for 70% warm up
 
-		userOldBar := bar.BalanceOf(admin)
-		userOldBaz := baz.BalanceOf(admin)
+		userOldBar := cross(bar.BalanceOf)(admin)
+		userOldBaz := cross(baz.BalanceOf)(admin)
 
 		CollectReward(1, false)
 
-		userNewBar := bar.BalanceOf(admin)
-		userNewBaz := baz.BalanceOf(admin)
+		userNewBar := cross(bar.BalanceOf)(admin)
+		userNewBaz := cross(baz.BalanceOf)(admin)
 
 		uassert.True(t, isInErrorRange(uint64(16204), userNewBar-userOldBar))
 		// increased 16203
@@ -314,13 +314,13 @@ func testStakeTokenPos01ToWarmUp100(t *testing.T) {
 
 		testing.SkipHeights(1) // 1 block for 100% warm up
 
-		userOldBar := bar.BalanceOf(admin)
-		userOldBaz := baz.BalanceOf(admin)
+		userOldBar := cross(bar.BalanceOf)(admin)
+		userOldBaz := cross(baz.BalanceOf)(admin)
 
 		CollectReward(1, false)
 
-		userNewBar := bar.BalanceOf(admin)
-		userNewBaz := baz.BalanceOf(admin)
+		userNewBar := cross(bar.BalanceOf)(admin)
+		userNewBaz := cross(baz.BalanceOf)(admin)
 		uassert.True(t, isInErrorRange(uint64(23148), userNewBar-userOldBar))
 		// increased 23147
 		// position 01 is in 100% warm up period
@@ -385,13 +385,13 @@ func testSkip1BlockAndCollectReward(t *testing.T) {
 	t.Run("collect reward for position 01", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		oldBar := bar.BalanceOf(admin)
-		oldBaz := baz.BalanceOf(admin)
+		oldBar := cross(bar.BalanceOf)(admin)
+		oldBaz := cross(baz.BalanceOf)(admin)
 
 		CollectReward(1, false)
 
-		newBar := bar.BalanceOf(admin)
-		newBaz := baz.BalanceOf(admin)
+		newBar := cross(bar.BalanceOf)(admin)
+		newBaz := cross(baz.BalanceOf)(admin)
 		uassert.True(t, isInErrorRange(uint64(5787), newBar-oldBar))
 		// 5786
 		// position 01 is in 100% warm up period
@@ -406,13 +406,13 @@ func testSkip1BlockAndCollectReward(t *testing.T) {
 	t.Run("collect reward for position 02", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		oldBar := bar.BalanceOf(admin)
-		oldBaz := baz.BalanceOf(admin)
+		oldBar := cross(bar.BalanceOf)(admin)
+		oldBaz := cross(baz.BalanceOf)(admin)
 
 		CollectReward(2, false)
 
-		newBar := bar.BalanceOf(admin)
-		newBaz := baz.BalanceOf(admin)
+		newBar := cross(bar.BalanceOf)(admin)
+		newBaz := cross(baz.BalanceOf)(admin)
 		uassert.True(t, isInErrorRange(uint64(4050), newBar-oldBar))
 		// 4050
 		// position 02 is in 70% warm up period
@@ -427,13 +427,13 @@ func testSkip1BlockAndCollectReward(t *testing.T) {
 	t.Run("collect reward for position 03", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		oldBar := bar.BalanceOf(admin)
-		oldBaz := baz.BalanceOf(admin)
+		oldBar := cross(bar.BalanceOf)(admin)
+		oldBaz := cross(baz.BalanceOf)(admin)
 
 		CollectReward(3, false)
 
-		newBar := bar.BalanceOf(admin)
-		newBaz := baz.BalanceOf(admin)
+		newBar := cross(bar.BalanceOf)(admin)
+		newBaz := cross(baz.BalanceOf)(admin)
 		uassert.True(t, isInErrorRange(uint64(2893), newBar-oldBar))
 		// 2893
 		// position 03 is in 50% warm up period
@@ -448,13 +448,13 @@ func testSkip1BlockAndCollectReward(t *testing.T) {
 	t.Run("collect reward for position 04", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		oldBar := bar.BalanceOf(admin)
-		oldBaz := baz.BalanceOf(admin)
+		oldBar := cross(bar.BalanceOf)(admin)
+		oldBaz := cross(baz.BalanceOf)(admin)
 
 		CollectReward(4, false)
 
-		newBar := bar.BalanceOf(admin)
-		newBaz := baz.BalanceOf(admin)
+		newBar := cross(bar.BalanceOf)(admin)
+		newBaz := cross(baz.BalanceOf)(admin)
 		uassert.True(t, isInErrorRange(uint64(1736), newBar-oldBar))
 		// 1736
 		// position 04 is in 30% warm up period

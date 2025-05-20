@@ -21,7 +21,7 @@ func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		gns.Approve(poolAddr, pl.GetPoolCreationFee()*2)
+		cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee()*2)
 		testing.SkipHeights(1)
 
 		pl.CreatePool(barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())

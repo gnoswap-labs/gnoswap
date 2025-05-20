@@ -41,8 +41,8 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		// 0. Set realm to admin
 		testing.SetRealm(adminRealm)
 		// 1. transfer gns
-		gns.Transfer(aliceAddr, tokenAmountForDistribute)
-		gns.Transfer(bobAddr, tokenAmountForDistribute)
+		cross(gns.Transfer)(aliceAddr, tokenAmountForDistribute)
+		cross(gns.Transfer)(bobAddr, tokenAmountForDistribute)
 		uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(aliceAddr))
 		uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(bobAddr))
 	})
@@ -76,7 +76,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		// 0. Set realm to admin
 		testing.SetRealm(adminRealm)
 		// 1. Approve gns
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		// 2. Create pool
 		pl.CreatePool(token0Path, token1Path, fee, common.TickMathGetSqrtRatioAtTick(defaultTick).ToString())
 		poolPath := pl.GetPoolPath(token0Path, token1Path, fee)
@@ -110,8 +110,8 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		// 0. Set realm to admin
 		testing.SetRealm(adminRealm)
 		// 1. transfer gns
-		gns.Transfer(aliceAddr, tokenAmountForDistribute)
-		gns.Transfer(bobAddr, tokenAmountForDistribute)
+		cross(gns.Transfer)(aliceAddr, tokenAmountForDistribute)
+		cross(gns.Transfer)(bobAddr, tokenAmountForDistribute)
 	})
 
 	t.Run("Mint New Position", func(t *testing.T) {
@@ -129,7 +129,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		// 1. Approve wugnot
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 		// 2. Approve gns
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		// 3. Mint position
 		beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(aliceAddr)
 		beforeGnsBalance := gns.BalanceOf(aliceAddr)
@@ -196,7 +196,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		// 1. Approve wugnot
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 		// 2. Approve gns
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		// 3. Mint position
 		beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(bobAddr)
 		beforeGnsBalance := gns.BalanceOf(bobAddr)
@@ -261,7 +261,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		// 1. Approve wugnot
 		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
 		// 2. Approve gns
-		gns.Approve(routerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(routerAddr, consts.UINT64_MAX)
 		// 3. Mint position
 		beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(adminAddr)
 		beforeGnsBalance := gns.BalanceOf(adminAddr)
@@ -360,13 +360,13 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		tokenAmountForDistribute := uint64(1000000000000)
 		if gns.BalanceOf(aliceAddr) < tokenAmountForDistribute {
 			testing.SetRealm(adminRealm)
-			gns.Transfer(aliceAddr, tokenAmountForDistribute)
+			cross(gns.Transfer)(aliceAddr, tokenAmountForDistribute)
 			uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(aliceAddr))
 		}
 
 		if gns.BalanceOf(bobAddr) < tokenAmountForDistribute {
 			testing.SetRealm(adminRealm)
-			gns.Transfer(bobAddr, tokenAmountForDistribute)
+			cross(gns.Transfer)(bobAddr, tokenAmountForDistribute)
 			uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(bobAddr))
 		}
 	})
@@ -404,7 +404,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 			// 0. Set realm to admin
 			testing.SetRealm(adminRealm)
 			// 1. Approve gns
-			gns.Approve(poolAddr, consts.UINT64_MAX)
+			cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 			// 2. Create pool
 			pl.CreatePool(token0Path, token1Path, fee, common.TickMathGetSqrtRatioAtTick(defaultTick).ToString())
 			poolPath := pl.GetPoolPath(token0Path, token1Path, fee)
@@ -440,13 +440,13 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 			// 0. Set realm to admin
 			testing.SetRealm(adminRealm)
 			// 1. transfer gns
-			gns.Transfer(aliceAddr, tokenAmountForDistribute)
+			cross(gns.Transfer)(aliceAddr, tokenAmountForDistribute)
 		}
 		if gns.BalanceOf(bobAddr) > tokenAmountForDistribute {
 			// 0. Set realm to admin
 			testing.SetRealm(adminRealm)
 			// 1. transfer gns
-			gns.Transfer(bobAddr, tokenAmountForDistribute)
+			cross(gns.Transfer)(bobAddr, tokenAmountForDistribute)
 		}
 	})
 
@@ -468,7 +468,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 			// 1. Approve wugnot
 			cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 			// 2. Approve gns
-			gns.Approve(poolAddr, consts.UINT64_MAX)
+			cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 			// 3. Mint position
 			beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(aliceAddr)
 			beforeGnsBalance := gns.BalanceOf(aliceAddr)
@@ -539,7 +539,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 			// 1. Approve wugnot
 			cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 			// 2. Approve gns
-			gns.Approve(poolAddr, consts.UINT64_MAX)
+			cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 			// 3. Mint position
 			beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(bobAddr)
 			beforeGnsBalance := gns.BalanceOf(bobAddr)
@@ -605,7 +605,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		// 1. Approve wugnot
 		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
 		// 2. Approve gns
-		gns.Approve(routerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(routerAddr, consts.UINT64_MAX)
 		// 3. Mint position
 		beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(adminAddr)
 		beforeGnsBalance := gns.BalanceOf(adminAddr)
@@ -754,7 +754,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		banker.SendCoins(aliceAddr, positionAddr, newCoinsForAdd)
 		testing.SetRealm(aliceRealm)
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		cross(wugnot.Approve)(positionAddr, consts.UINT64_MAX)
 
 		testing.SetRealm(aliceRealm)
@@ -789,13 +789,13 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		tokenAmountForDistribute := uint64(1000000000000)
 		if gns.BalanceOf(aliceAddr) < tokenAmountForDistribute {
 			testing.SetRealm(adminRealm)
-			gns.Transfer(aliceAddr, tokenAmountForDistribute)
+			cross(gns.Transfer)(aliceAddr, tokenAmountForDistribute)
 			uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(aliceAddr))
 		}
 
 		if gns.BalanceOf(bobAddr) < tokenAmountForDistribute {
 			testing.SetRealm(adminRealm)
-			gns.Transfer(bobAddr, tokenAmountForDistribute)
+			cross(gns.Transfer)(bobAddr, tokenAmountForDistribute)
 			uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(bobAddr))
 		}
 	})
@@ -833,7 +833,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 			// 0. Set realm to admin
 			testing.SetRealm(adminRealm)
 			// 1. Approve gns
-			gns.Approve(poolAddr, consts.UINT64_MAX)
+			cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 			// 2. Create pool
 			pl.CreatePool(token0Path, token1Path, fee, common.TickMathGetSqrtRatioAtTick(defaultTick).ToString())
 			poolPath := pl.GetPoolPath(token0Path, token1Path, fee)
@@ -869,13 +869,13 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 			// 0. Set realm to admin
 			testing.SetRealm(adminRealm)
 			// 1. transfer gns
-			gns.Transfer(aliceAddr, tokenAmountForDistribute)
+			cross(gns.Transfer)(aliceAddr, tokenAmountForDistribute)
 		}
 		if gns.BalanceOf(bobAddr) > tokenAmountForDistribute {
 			// 0. Set realm to admin
 			testing.SetRealm(adminRealm)
 			// 1. transfer gns
-			gns.Transfer(bobAddr, tokenAmountForDistribute)
+			cross(gns.Transfer)(bobAddr, tokenAmountForDistribute)
 		}
 	})
 
@@ -897,7 +897,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 			// 1. Approve wugnot
 			cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 			// 2. Approve gns
-			gns.Approve(poolAddr, consts.UINT64_MAX)
+			cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 			// 3. Mint position
 			beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(aliceAddr)
 			beforeGnsBalance := gns.BalanceOf(aliceAddr)
@@ -968,7 +968,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 			// 1. Approve wugnot
 			cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 			// 2. Approve gns
-			gns.Approve(poolAddr, consts.UINT64_MAX)
+			cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 			// 3. Mint position
 			beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(bobAddr)
 			beforeGnsBalance := gns.BalanceOf(bobAddr)
@@ -1034,7 +1034,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		// 1. Approve wugnot
 		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
 		// 2. Approve gns
-		gns.Approve(routerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(routerAddr, consts.UINT64_MAX)
 		// 3. Mint position
 		beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(adminAddr)
 		beforeGnsBalance := gns.BalanceOf(adminAddr)
@@ -1151,7 +1151,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		banker.SendCoins(aliceAddr, positionAddr, newCoinsForAdd)
 		testing.SetRealm(aliceRealm)
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		cross(wugnot.Approve)(positionAddr, consts.UINT64_MAX)
 
 		testing.SetRealm(aliceRealm)

@@ -31,7 +31,7 @@ func TestSwapRouteSingleRouteSinlgeHopWithNativeInAndOut(t *testing.T) {
 func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		gns.Approve(poolAddr, pl.GetPoolCreationFee()*3)
+		cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee()*3)
 
 		pl.CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006")                         // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 		pl.CreatePool(bazPath, quxPath, fee500, "130621891405341611593710811006")                         // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
@@ -57,8 +57,8 @@ func testPositionMint(t *testing.T) {
 	t.Run("position mint", func(t *testing.T) {
 		t.Run("bar:baz:500", func(t *testing.T) {
 			testing.SetRealm(adminRealm)
-			bar.Approve(poolAddr, consts.UINT64_MAX)
-			baz.Approve(poolAddr, consts.UINT64_MAX)
+			cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+			cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
 			positionId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 			uassert.Equal(t, positionId, uint64(1))
@@ -69,8 +69,8 @@ func testPositionMint(t *testing.T) {
 
 	t.Run("baz:qux:500", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		baz.Approve(poolAddr, consts.UINT64_MAX)
-		qux.Approve(poolAddr, consts.UINT64_MAX)
+		cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 		positionId, liquidity, amount0, amount1 := pn.Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 		uassert.Equal(t, positionId, uint64(2))
@@ -80,7 +80,7 @@ func testPositionMint(t *testing.T) {
 
 	t.Run("qux:gnot:500", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		qux.Approve(poolAddr, consts.UINT64_MAX)
+		cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 
 		cross(wugnot.Approve)(positionAddr, consts.UINT64_MAX) // wrap / unwrap
@@ -105,7 +105,7 @@ func testPositionMint(t *testing.T) {
 // 	t.Run("swap, buy native, bar > gnot", func(t *testing.T) {
 // 		testing.SetRealm(adminRealm)
 
-// 		bar.Approve(poolAddr, consts.UINT64_MAX)      // input
+// 		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)      // input
 // 		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX) // output fee ≈ 0.15%
 // 		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX) // output unwrap
 
@@ -148,7 +148,7 @@ func testPositionMint(t *testing.T) {
 // 		testing.SetRealm(adminRealm)
 
 // 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX) // input
-// 		bar.Approve(routerAddr, consts.UINT64_MAX)  // output fee ≈ 0.15%
+// 		cross(bar.Approve)(routerAddr, consts.UINT64_MAX)  // output fee ≈ 0.15%
 
 // 		// check user balance
 // 		uassert.Equal(t, wugnotBalanceOf(admin), uint64(0))

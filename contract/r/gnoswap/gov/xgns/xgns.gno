@@ -27,7 +27,10 @@ func init() {
 	token, ledger = grc20.NewToken("XGNS", "xGNS", 6)
 }
 
-func TotalSupply() int64 { return token.TotalSupply() }
+func TotalSupply() int64 {
+	crossing()
+	return token.TotalSupply()
+}
 
 // VotingSupply calculates the total supply of tokens eligible for voting.
 //
@@ -42,6 +45,7 @@ func TotalSupply() int64 { return token.TotalSupply() }
 // - `TotalSupply`: Represents the total amount of xGNS tokens minted.
 // - `BalanceOf(launchpadAddr)`: Retrieves the amount of xGNS tokens held by the launchpad contract.
 func VotingSupply() int64 {
+	crossing()
 	total := token.TotalSupply() // this is entire amount of xGNS minted
 
 	// this is amount of xGNS held by launchpad
@@ -61,12 +65,14 @@ func VotingSupply() int64 {
 // Returns:
 // - uint64: The current token balance of the specified address.
 func BalanceOf(owner std.Address) int64 {
+	crossing()
 	return token.BalanceOf(owner)
 }
 
 // xGNS is non-transferable
 // Therefore it doesn't have transfer and transferFrom functions
 func Render(path string) string {
+	crossing()
 	parts := strings.Split(path, "/")
 	c := len(parts)
 
@@ -96,6 +102,7 @@ func Render(path string) string {
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Mint function.
 func Mint(to std.Address, amount int64) {
+	crossing()
 	if amount < 0 {
 		panic("amount cannot be negative")
 	}
@@ -139,6 +146,7 @@ func Mint(to std.Address, amount int64) {
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Mint function.
 func MintByLaunchPad(to std.Address, amount int64) {
+	crossing()
 	if amount < 0 {
 		panic("amount cannot be negative")
 	}
@@ -186,6 +194,7 @@ func mint(to std.Address, amount int64) {
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Burn function.
 func Burn(from std.Address, amount int64) {
+	crossing()
 	if amount < 0 {
 		panic("amount cannot be negative")
 	}
@@ -215,6 +224,7 @@ func Burn(from std.Address, amount int64) {
 }
 
 func BurnByLaunchPad(from std.Address, amount int64) {
+	crossing()
 	if amount < 0 {
 		panic("amount cannot be negative")
 	}

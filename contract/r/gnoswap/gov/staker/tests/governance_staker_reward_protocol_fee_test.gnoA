@@ -44,7 +44,7 @@ func TestGovernanceStakerRewardProtocolFee(t *testing.T) {
 	t.Run("delegate from admin to alice", func(t *testing.T) {
 		testing.SkipHeights(1)
 		testing.SetRealm(adminRealm)
-		gns.Approve(govStakerAddr, delegateAmountFromAdminToAlice)
+		cross(gns.Approve)(govStakerAddr, delegateAmountFromAdminToAlice)
 		// Delegate : 1, reward : x
 		Delegate(aliceAddr, delegateAmountFromAdminToAlice, "")
 		uassert.Equal(t, delegateAmountFromAdminToAlice, GetTotalxGnsSupply())
@@ -62,8 +62,8 @@ func TestGovernanceStakerRewardProtocolFee(t *testing.T) {
 
 	t.Run("mock protocol fee test", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		bar.Transfer(protocolFeeAddr, 1000)
-		qux.Transfer(protocolFeeAddr, 2500)
+		cross(bar.Transfer)(protocolFeeAddr, 1000)
+		cross(qux.Transfer)(protocolFeeAddr, 2500)
 
 		testing.SkipHeights(1)
 		testing.SetRealm(stakerRealm)
@@ -72,8 +72,8 @@ func TestGovernanceStakerRewardProtocolFee(t *testing.T) {
 		// qux -> 2500 : ( reward/1staked = 2500 / 6 )
 		pf.AddToProtocolFee(quxPath, 2500)
 
-		uassert.Equal(t, uint64(1000), bar.BalanceOf(protocolFeeAddr))
-		uassert.Equal(t, uint64(2500), qux.BalanceOf(protocolFeeAddr))
+		uassert.Equal(t, uint64(1000), cross(bar.BalanceOf)(protocolFeeAddr))
+		uassert.Equal(t, uint64(2500), cross(qux.BalanceOf)(protocolFeeAddr))
 		uassert.Equal(t, uint64(1000), pf.GetAmountOfToken(barPath))
 		uassert.Equal(t, uint64(2500), pf.GetAmountOfToken(quxPath))
 
@@ -89,10 +89,10 @@ func TestGovernanceStakerRewardProtocolFee(t *testing.T) {
 	t.Run("delegate from bob to bob", func(t *testing.T) {
 		testing.SkipHeights(1)
 		testing.SetRealm(adminRealm)
-		gns.Transfer(bobAddr, delegateAmountFromBobToBot)
+		cross(gns.Transfer)(bobAddr, delegateAmountFromBobToBot)
 
 		testing.SetRealm(bobRealm)
-		gns.Approve(govStakerAddr, delegateAmountFromBobToBot)
+		cross(gns.Approve)(govStakerAddr, delegateAmountFromBobToBot)
 		// previous compute : protocolFee distribution
 		// admin
 		// - bar : 1000 / 1 * 1 = 1000
@@ -122,8 +122,8 @@ func TestGovernanceStakerRewardProtocolFee(t *testing.T) {
 
 	t.Run("mock protocol fee test", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		bar.Transfer(protocolFeeAddr, 1000)
-		qux.Transfer(protocolFeeAddr, 2500)
+		cross(bar.Transfer)(protocolFeeAddr, 1000)
+		cross(qux.Transfer)(protocolFeeAddr, 2500)
 
 		testing.SkipHeights(1)
 		testing.SetRealm(stakerRealm)
@@ -132,8 +132,8 @@ func TestGovernanceStakerRewardProtocolFee(t *testing.T) {
 		// qux -> 2500 : ( reward/1staked = 2500 / 6 )
 		pf.AddToProtocolFee(quxPath, 2500)
 
-		uassert.Equal(t, uint64(1000), bar.BalanceOf(protocolFeeAddr))
-		uassert.Equal(t, uint64(2500), qux.BalanceOf(protocolFeeAddr))
+		uassert.Equal(t, uint64(1000), cross(bar.BalanceOf)(protocolFeeAddr))
+		uassert.Equal(t, uint64(2500), cross(qux.BalanceOf)(protocolFeeAddr))
 
 		uassert.Equal(t, uint64(1000), pf.GetAmountOfToken(barPath))
 		uassert.Equal(t, uint64(2500), pf.GetAmountOfToken(quxPath))
@@ -151,8 +151,8 @@ func TestGovernanceStakerRewardProtocolFee(t *testing.T) {
 		testing.SkipHeights(10)
 		en.MintAndDistributeGns()
 
-		uassert.Equal(t, uint64(1000), bar.BalanceOf(protocolFeeAddr))
-		uassert.Equal(t, uint64(2500), qux.BalanceOf(protocolFeeAddr))
+		uassert.Equal(t, uint64(1000), cross(bar.BalanceOf)(protocolFeeAddr))
+		uassert.Equal(t, uint64(2500), cross(qux.BalanceOf)(protocolFeeAddr))
 	})
 
 	t.Run("check bob addr", func(t *testing.T) {
@@ -179,35 +179,35 @@ func TestGovernanceStakerRewardProtocolFee(t *testing.T) {
 
 	t.Run("collect reward - bob", func(t *testing.T) {
 		// protocol fee has bar, qux
-		uassert.Equal(t, uint64(0), bar.BalanceOf(bobAddr))
-		uassert.Equal(t, uint64(0), qux.BalanceOf(bobAddr))
+		uassert.Equal(t, uint64(0), cross(bar.BalanceOf)(bobAddr))
+		uassert.Equal(t, uint64(0), cross(qux.BalanceOf)(bobAddr))
 
 		testing.SetRealm(bobRealm)
 		CollectReward()
 
-		uassert.Equal(t, uint64(833), bar.BalanceOf(bobAddr))
-		uassert.Equal(t, uint64(2083), qux.BalanceOf(bobAddr))
+		uassert.Equal(t, uint64(833), cross(bar.BalanceOf)(bobAddr))
+		uassert.Equal(t, uint64(2083), cross(qux.BalanceOf)(bobAddr))
 	})
 
 	t.Run("same block - should not duplicated deduct reward", func(t *testing.T) {
-		uassert.Equal(t, uint64(833), bar.BalanceOf(bobAddr))
-		uassert.Equal(t, uint64(2083), qux.BalanceOf(bobAddr))
+		uassert.Equal(t, uint64(833), cross(bar.BalanceOf)(bobAddr))
+		uassert.Equal(t, uint64(2083), cross(qux.BalanceOf)(bobAddr))
 
 		testing.SetRealm(bobRealm)
 		CollectReward()
 
-		uassert.Equal(t, uint64(833), bar.BalanceOf(bobAddr))
-		uassert.Equal(t, uint64(2083), qux.BalanceOf(bobAddr))
+		uassert.Equal(t, uint64(833), cross(bar.BalanceOf)(bobAddr))
+		uassert.Equal(t, uint64(2083), cross(qux.BalanceOf)(bobAddr))
 	})
 
 	t.Run("collect reward - admin", func(t *testing.T) {
-		beforeBarBalance := bar.BalanceOf(adminAddr)
-		beforeQuxBalance := qux.BalanceOf(adminAddr)
+		beforeBarBalance := cross(bar.BalanceOf)(adminAddr)
+		beforeQuxBalance := cross(qux.BalanceOf)(adminAddr)
 
 		testing.SetRealm(adminRealm)
 		CollectReward()
 
-		uassert.Equal(t, uint64(1166), bar.BalanceOf(adminAddr)-beforeBarBalance)
-		uassert.Equal(t, uint64(2916), qux.BalanceOf(adminAddr)-beforeQuxBalance)
+		uassert.Equal(t, uint64(1166), cross(bar.BalanceOf)(adminAddr)-beforeBarBalance)
+		uassert.Equal(t, uint64(2916), cross(qux.BalanceOf)(adminAddr)-beforeQuxBalance)
 	})
 }

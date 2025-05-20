@@ -45,11 +45,11 @@ func TestProposeText_VoteGovDelegatedUndelegatedBeforePropose(t *testing.T) {
 func testDelegate01_1000000_toSelf(t *testing.T) {
 	t.Run("first delegation", func(t *testing.T) {
 		// before delegate
-		uassert.Equal(t, xgns.TotalSupply(), uint64(0))
-		uassert.Equal(t, xgns.VotingSupply(), uint64(0))
+		uassert.Equal(t, cross(xgns.TotalSupply)(), uint64(0))
+		uassert.Equal(t, cross(xgns.VotingSupply)(), uint64(0))
 
 		testing.SetRealm(adminRealm)
-		gns.Approve(govStakerAddr, uint64(1_000_000))
+		cross(gns.Approve)(govStakerAddr, uint64(1_000_000))
 
 		uassert.Equal(t, int64(123), std.ChainHeight())
 		uassert.Equal(t, int64(1234567890), time.Now().Unix())
@@ -57,8 +57,8 @@ func testDelegate01_1000000_toSelf(t *testing.T) {
 		gs.Delegate(admin, uint64(1_000_000), "") // self delegate
 
 		// after delegate 01
-		uassert.Equal(t, xgns.TotalSupply(), uint64(1_000_000))
-		uassert.Equal(t, xgns.VotingSupply(), uint64(1_000_000))
+		uassert.Equal(t, cross(xgns.TotalSupply)(), uint64(1_000_000))
+		uassert.Equal(t, cross(xgns.VotingSupply)(), uint64(1_000_000))
 
 		testing.SkipHeights(1)
 	})
@@ -67,11 +67,11 @@ func testDelegate01_1000000_toSelf(t *testing.T) {
 func testDelegate02_2000000_toDummy(t *testing.T) {
 	t.Run("first delegation", func(t *testing.T) {
 		// before delegate 02
-		uassert.Equal(t, xgns.TotalSupply(), uint64(1_000_000))
-		uassert.Equal(t, xgns.VotingSupply(), uint64(1_000_000))
+		uassert.Equal(t, cross(xgns.TotalSupply)(), uint64(1_000_000))
+		uassert.Equal(t, cross(xgns.VotingSupply)(), uint64(1_000_000))
 
 		testing.SetRealm(adminRealm)
-		gns.Approve(govStakerAddr, uint64(2_000_000))
+		cross(gns.Approve)(govStakerAddr, uint64(2_000_000))
 
 		uassert.Equal(t, int64(124), std.ChainHeight())
 		uassert.Equal(t, int64(1234567895), time.Now().Unix())
@@ -79,8 +79,8 @@ func testDelegate02_2000000_toDummy(t *testing.T) {
 		gs.Delegate(dummyAddr, uint64(2_000_000), "") // delegate to dummy
 
 		// after delegate 02
-		uassert.Equal(t, xgns.TotalSupply(), uint64(3_000_000))
-		uassert.Equal(t, xgns.VotingSupply(), uint64(3_000_000))
+		uassert.Equal(t, cross(xgns.TotalSupply)(), uint64(3_000_000))
+		uassert.Equal(t, cross(xgns.VotingSupply)(), uint64(3_000_000))
 
 		testing.SkipHeights(1)
 	})
@@ -94,8 +94,8 @@ func testUndelegate_1000000_fromDummy(t *testing.T) {
 		gs.Undelegate(dummyAddr, uint64(1_000_000))
 
 		// after undelegate 01
-		uassert.Equal(t, xgns.TotalSupply(), uint64(2_000_000))
-		uassert.Equal(t, xgns.VotingSupply(), uint64(2_000_000))
+		uassert.Equal(t, cross(xgns.TotalSupply)(), uint64(2_000_000))
+		uassert.Equal(t, cross(xgns.VotingSupply)(), uint64(2_000_000))
 
 		testing.SkipHeights(1)
 	})

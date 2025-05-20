@@ -28,15 +28,15 @@ func init() {
 func TestPoolInitCreatePool(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, pl.GetPoolCreationFee())
+	cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 	pl.CreatePool(bazPath, quxPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestMintFooBar(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	foo.Approve(poolAddr, consts.UINT64_MAX)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
 
 	// admin mints => will get tid 1 nft
 	Mint(fooPath, barPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, adminAddr, adminAddr, "")
@@ -47,8 +47,8 @@ func TestMintFooBar(t *testing.T) {
 
 func TestMintBazQux(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	baz.Approve(poolAddr, consts.UINT64_MAX)
-	qux.Approve(poolAddr, consts.UINT64_MAX)
+	cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
 	// admin mints => will get tid 3 nft
 	Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, adminAddr, adminAddr, "")

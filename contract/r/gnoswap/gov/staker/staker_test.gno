@@ -24,10 +24,10 @@ func TestDelegate(t *testing.T) {
 		to := makeFakeAddress("validator_1")
 		amount := uint64(1_000_000)
 
-		gns.Approve(govStaker, int64(amount))
+		cross(gns.Approve)(govStaker, int64(amount))
 		Delegate(to, int64(amount), "")
 
-		minted := xgns.BalanceOf(userRealm.Address())
+		minted := cross(xgns.BalanceOf)(userRealm.Address())
 		if minted != int64(amount) {
 			t.Errorf("Delegate minted xGNS = %d, want %d", minted, amount)
 		}
@@ -125,11 +125,11 @@ func TestRedelegate(t *testing.T) {
 	amount := int64(1_000_000)
 
 	testing.SetOriginCaller(userRealm.Address())
-	gns.Approve(govStaker, amount)
+	cross(gns.Approve)(govStaker, amount)
 	Delegate(from, amount, "")
 
 	testing.SetOriginCaller(userRealm.Address())
-	gns.Approve(govStaker, amount)
+	cross(gns.Approve)(govStaker, amount)
 	Redelegate(from, to, amount)
 
 	// check data: user xGNS must remain the same, but from-> to shift in staker structure?
@@ -155,13 +155,13 @@ func TestUndelegate(t *testing.T) {
 	amount := int64(1_000_000)
 
 	testing.SetOriginCaller(user3Realm.Address())
-	gns.Approve(govStaker, amount)
+	cross(gns.Approve)(govStaker, amount)
 	Delegate(to, amount, "")
 	Undelegate(to, amount)
 
-	if xgns.BalanceOf(user3Realm.Address()) == 1_000_000 {
+	if cross(xgns.BalanceOf)(user3Realm.Address()) == 1_000_000 {
 		t.Errorf("Expected user xGNS to be 0 after undelegating 1_000_000, got %d",
-			xgns.BalanceOf(user3Realm.Address()))
+			cross(xgns.BalanceOf)(user3Realm.Address()))
 	}
 
 	lockedList, exist := addrLockedGns.Get(user3Realm.Address().String())

@@ -27,17 +27,17 @@ func TestRunExactInSwapRoute_1(t *testing.T) {
 func testcreatePool(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, pl.GetPoolCreationFee())
+	cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, bazPath, FEE_MEDIUM, "79228162514264337593543950336")
 
-	bar.Transfer(user1Addr, 10000)
+	cross(bar.Transfer)(user1Addr, 10000)
 }
 
 func testPositionMint(t *testing.T) {
 	// bar_baz_3000 by admin
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, 100000000)
-	baz.Approve(poolAddr, 100000000)
+	cross(bar.Approve)(poolAddr, 100000000)
+	cross(baz.Approve)(poolAddr, 100000000)
 
 	// Mint
 	positionId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, FEE_MEDIUM, int32(-887220), int32(887220), "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
@@ -62,14 +62,14 @@ func testExactInputSinglePool(t *testing.T) {
 	user1Realm := std.NewUserRealm(user1Addr)
 	testing.SetRealm(user1Realm)
 
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	baz.Approve(routerAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(baz.Approve)(routerAddr, consts.UINT64_MAX)
 
-	poolToken0Before := bar.BalanceOf(poolAddr)
-	poolToken1Before := baz.BalanceOf(poolAddr)
+	poolToken0Before := cross(bar.BalanceOf)(poolAddr)
+	poolToken1Before := cross(baz.BalanceOf)(poolAddr)
 
-	user1Token0Before := bar.BalanceOf(user1Addr)
-	user1Token1Before := baz.BalanceOf(user1Addr)
+	user1Token0Before := cross(bar.BalanceOf)(user1Addr)
+	user1Token1Before := cross(baz.BalanceOf)(user1Addr)
 
 	// set router protocol fee to 0%
 	swapFee = uint64(0)
@@ -88,11 +88,11 @@ func testExactInputSinglePool(t *testing.T) {
 	uassert.Equal(t, amountIn, "3")
 	uassert.Equal(t, amountOut, "-1")
 
-	poolToken0After := bar.BalanceOf(poolAddr)
-	poolToken1After := baz.BalanceOf(poolAddr)
+	poolToken0After := cross(bar.BalanceOf)(poolAddr)
+	poolToken1After := cross(baz.BalanceOf)(poolAddr)
 
-	user1Token0After := bar.BalanceOf(user1Addr)
-	user1Token1After := baz.BalanceOf(user1Addr)
+	user1Token0After := cross(bar.BalanceOf)(user1Addr)
+	user1Token1After := cross(baz.BalanceOf)(user1Addr)
 
 	uassert.Equal(t, user1Token0After, user1Token0Before-3)
 	uassert.Equal(t, user1Token1After, user1Token1Before+1)

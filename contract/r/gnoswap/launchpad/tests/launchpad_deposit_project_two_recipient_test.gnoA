@@ -38,16 +38,16 @@ func testMockProtocolFee(t *testing.T) {
 		// admin > protocol_fee
 		// send qux, bar for testing
 		testing.SetRealm(adminRealm)
-		bar.Transfer(protocolFeeAddr, 1000)
-		qux.Transfer(protocolFeeAddr, 2500)
+		cross(bar.Transfer)(protocolFeeAddr, 1000)
+		cross(qux.Transfer)(protocolFeeAddr, 2500)
 
-		uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), uint64(1000))
-		uassert.Equal(t, bar.BalanceOf(devOpsAddr), uint64(0))
-		uassert.Equal(t, bar.BalanceOf(govStakerAddr), uint64(0))
+		uassert.Equal(t, cross(bar.BalanceOf)(protocolFeeAddr), uint64(1000))
+		uassert.Equal(t, cross(bar.BalanceOf)(devOpsAddr), uint64(0))
+		uassert.Equal(t, cross(bar.BalanceOf)(govStakerAddr), uint64(0))
 
-		uassert.Equal(t, qux.BalanceOf(protocolFeeAddr), uint64(2500))
-		uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
-		uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(0))
+		uassert.Equal(t, cross(qux.BalanceOf)(protocolFeeAddr), uint64(2500))
+		uassert.Equal(t, cross(qux.BalanceOf)(devOpsAddr), uint64(0))
+		uassert.Equal(t, cross(qux.BalanceOf)(govStakerAddr), uint64(0))
 	})
 }
 
@@ -55,7 +55,7 @@ func testCreateProject(t *testing.T) {
 	t.Run("create project 01", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		obl.Approve(launchpadAddr, uint64(1_000_000_000))
+		cross(obl.Approve)(launchpadAddr, uint64(1_000_000_000))
 		testing.SkipHeights(1)
 
 		projectId := CreateProject(
@@ -77,7 +77,7 @@ func testCreateProject(t *testing.T) {
 	t.Run("create project 02", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		bar.Approve(launchpadAddr, uint64(1_000_000_000))
+		cross(bar.Approve)(launchpadAddr, uint64(1_000_000_000))
 		testing.SkipHeights(1)
 
 		projectId := CreateProject(
@@ -100,13 +100,13 @@ func testCreateProject(t *testing.T) {
 func testDepositGns(t *testing.T) {
 	t.Run("deposit project01, tier30", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		gns.Transfer(user01, uint64(1_000_000)) // to deposit
+		cross(gns.Transfer)(user01, uint64(1_000_000)) // to deposit
 		// transfer some grc20 tokens to bypass project condition
-		foo.Transfer(user01, uint64(10))
-		bar.Transfer(user01, uint64(10))
+		cross(foo.Transfer)(user01, uint64(10))
+		cross(bar.Transfer)(user01, uint64(10))
 
 		testing.SetRealm(user01Realm)
-		gns.Approve(launchpadAddr, uint64(1_000_000))
+		cross(gns.Approve)(launchpadAddr, uint64(1_000_000))
 
 		// skip some blocks to make project active
 		testing.SkipHeights(4)
@@ -117,10 +117,10 @@ func testDepositGns(t *testing.T) {
 
 	t.Run("deposit project02, tier180", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		gns.Transfer(user01, uint64(9_000_000)) // to deposit
+		cross(gns.Transfer)(user01, uint64(9_000_000)) // to deposit
 
 		testing.SetRealm(user01Realm)
-		gns.Approve(launchpadAddr, uint64(9_000_000))
+		cross(gns.Approve)(launchpadAddr, uint64(9_000_000))
 
 		// skip some blocks to make project active
 		testing.SkipHeights(4)
@@ -134,8 +134,8 @@ func testCollectProtocolFee(t *testing.T) {
 	t.Run("from project01", func(t *testing.T) {
 		testing.SetRealm(projectRealm)
 
-		oldBar := bar.BalanceOf(projectAddr)
-		oldQux := qux.BalanceOf(projectAddr)
+		oldBar := cross(bar.BalanceOf)(projectAddr)
+		oldQux := cross(qux.BalanceOf)(projectAddr)
 		uassert.Equal(t, oldBar, uint64(0))
 		uassert.Equal(t, oldQux, uint64(0))
 
@@ -145,8 +145,8 @@ func testCollectProtocolFee(t *testing.T) {
 
 		CollectProtocolFee()
 
-		newBar := bar.BalanceOf(projectAddr)
-		newQux := qux.BalanceOf(projectAddr)
+		newBar := cross(bar.BalanceOf)(projectAddr)
+		newQux := cross(qux.BalanceOf)(projectAddr)
 		uassert.Equal(t, newBar, uint64(1000))
 		uassert.Equal(t, newQux, uint64(2500))
 
@@ -156,8 +156,8 @@ func testCollectProtocolFee(t *testing.T) {
 	t.Run("from project02", func(t *testing.T) {
 		testing.SetRealm(projectRealm02)
 
-		oldBar := bar.BalanceOf(projectAddr02)
-		oldQux := qux.BalanceOf(projectAddr02)
+		oldBar := cross(bar.BalanceOf)(projectAddr02)
+		oldQux := cross(qux.BalanceOf)(projectAddr02)
 		uassert.Equal(t, oldBar, uint64(0))
 		uassert.Equal(t, oldQux, uint64(0))
 
@@ -167,8 +167,8 @@ func testCollectProtocolFee(t *testing.T) {
 
 		CollectProtocolFee()
 
-		newBar := bar.BalanceOf(projectAddr02)
-		newQux := qux.BalanceOf(projectAddr02)
+		newBar := cross(bar.BalanceOf)(projectAddr02)
+		newQux := cross(qux.BalanceOf)(projectAddr02)
 		uassert.Equal(t, newBar, uint64(0))
 		uassert.Equal(t, newQux, uint64(0))
 

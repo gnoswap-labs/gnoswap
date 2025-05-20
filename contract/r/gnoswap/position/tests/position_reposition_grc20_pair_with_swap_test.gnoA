@@ -18,14 +18,14 @@ import (
 func TestPoolInitCreatePool(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, pl.GetPoolCreationFee())
+	cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestMintPosition01InRange(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, 18394892)
-	foo.Approve(poolAddr, 50000000)
+	cross(bar.Approve)(poolAddr, 18394892)
+	cross(foo.Approve)(poolAddr, 50000000)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -64,8 +64,8 @@ func TestMintPosition01InRange(t *testing.T) {
 
 func TestMintPosition02InRange(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, 18394892)
-	foo.Approve(poolAddr, 50000000)
+	cross(bar.Approve)(poolAddr, 18394892)
+	cross(foo.Approve)(poolAddr, 50000000)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -104,8 +104,8 @@ func TestMintPosition02InRange(t *testing.T) {
 
 func TestMintPosition03InRange(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	foo.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -144,7 +144,7 @@ func TestMintPosition03InRange(t *testing.T) {
 
 func TestSwap1(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, 1234567)
+	cross(bar.Approve)(poolAddr, 1234567)
 
 	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
@@ -205,8 +205,8 @@ func TestDecreaseLiquidity03(t *testing.T) {
 	uassert.Equal(t, ownerOfPosition, adminAddr)
 
 	// approve fee0, fee1 to pool ( for withdrawal protocol fee )
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	foo.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
 
 	resultPositionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(positionId, "167312775", "0", "0", max_timeout, false)
 
@@ -286,7 +286,7 @@ func TestAfterReposition03UnclaimedFee(t *testing.T) {
 
 func TestSwap2(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, 1234567)
+	cross(bar.Approve)(poolAddr, 1234567)
 
 	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
@@ -340,8 +340,8 @@ func TestUnclaimedFee03_AfterSwap2(t *testing.T) {
 	{
 
 		testing.SetRealm(adminRealm)
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		foo.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
 
 		positionId, afterFee0, afterFee1, poolPath, fee0, fee1 := CollectFee(3, true)
 		position := MustGetPosition(positionId)

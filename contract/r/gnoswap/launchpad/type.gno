@@ -251,7 +251,7 @@ func (p *Project) checkDepositConditions(caller std.Address) {
 
 		var balance uint64
 		if condition.TokenPath() == consts.GOV_XGNS_PATH {
-			balance = xgns.BalanceOf(caller)
+			balance = cross(xgns.BalanceOf)(caller)
 		} else {
 			balance = common.BalanceOf(condition.TokenPath(), caller)
 		}

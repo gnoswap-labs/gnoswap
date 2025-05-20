@@ -19,9 +19,9 @@ func TestTierRatioFromCounts(t *testing.T) {
 	user1Realm := std.NewUserRealm(user1Addr)
 
 	testing.SetRealm(user1Realm)
-	bar.Approve(routerAddr, maxApprove)
-	baz.Approve(routerAddr, maxApprove)
-	qux.Approve(routerAddr, maxApprove)
+	cross(bar.Approve)(routerAddr, maxApprove)
+	cross(baz.Approve)(routerAddr, maxApprove)
+	cross(qux.Approve)(routerAddr, maxApprove)
 	TokenFaucet(t, barPath, user1Addr)
 
 	tests := []struct {

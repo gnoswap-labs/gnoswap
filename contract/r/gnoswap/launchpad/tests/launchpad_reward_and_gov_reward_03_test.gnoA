@@ -74,13 +74,13 @@ var (
 
 func init() {
 	testing.SetRealm(adminRealm)
-	gns.Transfer(launchpadDeposit01Addr, uint64(1_000_000_000))
-	gns.Transfer(launchpadDeposit02Addr, uint64(1_000_000_000))
-	gns.Transfer(launchpadDeposit03Addr, uint64(1_000_000_000))
-	gns.Transfer(govDelegateAddr, uint64(1_000_000_000))
-	gns.Transfer(dummy01Addr, uint64(1_000_000_000))
-	gns.Transfer(dummy02Addr, uint64(1_000_000_000))
-	gns.Transfer(dummy03Addr, uint64(1_000_000_000))
+	cross(gns.Transfer)(launchpadDeposit01Addr, uint64(1_000_000_000))
+	cross(gns.Transfer)(launchpadDeposit02Addr, uint64(1_000_000_000))
+	cross(gns.Transfer)(launchpadDeposit03Addr, uint64(1_000_000_000))
+	cross(gns.Transfer)(govDelegateAddr, uint64(1_000_000_000))
+	cross(gns.Transfer)(dummy01Addr, uint64(1_000_000_000))
+	cross(gns.Transfer)(dummy02Addr, uint64(1_000_000_000))
+	cross(gns.Transfer)(dummy03Addr, uint64(1_000_000_000))
 }
 
 func TestLaunchPadAndGovernanceReward(t *testing.T) {
@@ -100,7 +100,7 @@ func TestLaunchPadAndGovernanceReward(t *testing.T) {
 func testCreatePool(t *testing.T) {
 	t.Run("create three pools", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		gns.Approve(poolAddr, pl.GetPoolCreationFee()*3)
+		cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee()*3)
 		pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())                     // x1
 		pl.CreatePool(barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())                     // x1
 		pl.CreatePool(consts.WUGNOT_PATH, consts.GNS_PATH, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // x1
@@ -118,7 +118,7 @@ func testMint(t *testing.T) {
 		testing.SetOriginSend(std.Coins{{"ugnot", 100000000000000}})
 		cross(wugnot.Deposit)()
 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(consts.WUGNOT_PATH, consts.GNS_PATH, fee3000, int32(-8040), int32(8040), "10000000000", "10000000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 		uassert.Equal(t, positionId, uint64(1))
@@ -126,13 +126,13 @@ func testMint(t *testing.T) {
 		uassert.Equal(t, amount1, "10000000000")
 
 		testing.SetRealm(adminRealm)
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		foo.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
 		pn.Mint(barPath, fooPath, fee500, int32(-8000), int32(8000), "10000000000", "10000000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 		testing.SetRealm(adminRealm)
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		baz.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
 		pn.Mint(barPath, bazPath, fee500, int32(-8000), int32(8000), "10000000000", "10000000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 		checkProtocolFeeBalance()
@@ -160,7 +160,7 @@ func testCreateProject(t *testing.T) {
 	t.Run("create project 01", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		foo.Approve(launchpadAddr, uint64(1_000_000_000))
+		cross(foo.Approve)(launchpadAddr, uint64(1_000_000_000))
 		testing.SkipHeights(1)
 
 		projectId := CreateProject(
@@ -186,7 +186,7 @@ func testCreateProject(t *testing.T) {
 	t.Run("create project 02", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		bar.Approve(launchpadAddr, uint64(1_000_000_000))
+		cross(bar.Approve)(launchpadAddr, uint64(1_000_000_000))
 		testing.SkipHeights(1)
 
 		projectId := CreateProject(
@@ -217,7 +217,7 @@ func testDepositGns(t *testing.T) {
 
 	t.Run("deposit to project01 tier30", func(t *testing.T) {
 		testing.SetRealm(launchpadDeposit01Realm)
-		gns.Approve(launchpadAddr, uint64(1_000_000))
+		cross(gns.Approve)(launchpadAddr, uint64(1_000_000))
 		depositId := DepositGns("gno.land/r/onbloc/foo:127:30", uint64(1_000_000), "")
 		uassert.Equal(t, depositId, `gno.land/r/onbloc/foo:127:30:g1d3sh2mnrdpcxzezyv4cx7umfwscrzh6lzr9g7u:140`)
 
@@ -228,7 +228,7 @@ func testDepositGns(t *testing.T) {
 	t.Run("deposit to project01 tier30 another 1 gns", func(t *testing.T) {
 		testing.SkipHeights(1)
 		testing.SetRealm(launchpadDeposit02Realm)
-		gns.Approve(launchpadAddr, uint64(1_000_000))
+		cross(gns.Approve)(launchpadAddr, uint64(1_000_000))
 		depositId := DepositGns("gno.land/r/onbloc/foo:127:30", uint64(1_000_000), "")
 		uassert.Equal(t, depositId, `gno.land/r/onbloc/foo:127:30:g1d3sh2mnrdpcxzezyv4cx7umfwscryh6llz2xdm:141`)
 	})
@@ -245,7 +245,7 @@ func testDepositGns(t *testing.T) {
 		testing.SkipHeights(1)
 
 		testing.SetRealm(launchpadDeposit03Realm)
-		gns.Approve(launchpadAddr, uint64(1_000_000))
+		cross(gns.Approve)(launchpadAddr, uint64(1_000_000))
 		depositId := DepositGns("gno.land/r/onbloc/bar:129:30", uint64(1_000_000), "") // 1 GNS
 		uassert.Equal(t, depositId, `gno.land/r/onbloc/bar:129:30:g1d3sh2mnrdpcxzezyv4cx7umfwscrxh6l560mmp:142`)
 
@@ -257,7 +257,7 @@ func testDepositGns(t *testing.T) {
 func testGovStakerDelegate(t *testing.T) {
 	t.Run("gov delegate", func(t *testing.T) {
 		testing.SetRealm(govDelegateRealm)
-		gns.Approve(govStakerAddr, uint64(1_000_000))
+		cross(gns.Approve)(govStakerAddr, uint64(1_000_000))
 		gs.Delegate(govDelegateAddr, uint64(1_000_000), "")
 
 		checkProtocolFeeBalance()
@@ -270,7 +270,7 @@ func testGovStakerDelegate(t *testing.T) {
 func testCreatePool_4(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, pl.GetPoolCreationFee())
+	cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, quxPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // x1
 
 	checkProtocolFeeBalance()
@@ -288,8 +288,8 @@ func testCreatePool_4(t *testing.T) {
 func testSwapRoute(t *testing.T) {
 	t.Run("swap route 01 (bar > foo)", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		bar.Approve(routerAddr, uint64(1_000_000))
-		foo.Approve(routerAddr, uint64(1_000_000))
+		cross(bar.Approve)(routerAddr, uint64(1_000_000))
+		cross(foo.Approve)(routerAddr, uint64(1_000_000))
 
 		amountIn, amountOut := rr.ExactInSwapRoute(
 			barPath,
@@ -315,8 +315,8 @@ func testSwapRoute(t *testing.T) {
 
 	t.Run("swap route 02 (baz > bar)", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		bar.Approve(routerAddr, uint64(1_000_000))
-		baz.Approve(routerAddr, uint64(1_000_000))
+		cross(bar.Approve)(routerAddr, uint64(1_000_000))
+		cross(baz.Approve)(routerAddr, uint64(1_000_000))
 
 		amountIn, amountOut := rr.ExactInSwapRoute(
 			bazPath,
@@ -343,8 +343,8 @@ func testSwapRoute(t *testing.T) {
 
 	t.Run("swap route 03 (wugnot > gns)", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		gns.Approve(routerAddr, consts.UINT64_MAX)
-		gns.Approve(poolAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(routerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
 
 		amountIn, amountOut := rr.ExactInSwapRoute(
@@ -374,7 +374,7 @@ func testSwapRoute(t *testing.T) {
 
 func testXgnsData(t *testing.T) {
 	t.Run("xgns data", func(t *testing.T) {
-		totalSupply := xgns.TotalSupply()
+		totalSupply := cross(xgns.TotalSupply)()
 		uassert.Equal(t, totalSupply, uint64(4_000_000))
 		// project01 (first deposit)	1_000_000
 		// project01 (second deposit) 1_000_000

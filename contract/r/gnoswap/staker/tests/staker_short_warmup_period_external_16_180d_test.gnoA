@@ -53,7 +53,7 @@ func testCreatePool(t *testing.T) {
 	t.Run("create pool", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		gns.Approve(poolAddr, pl.GetPoolCreationFee()*3)
+		cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee()*3)
 
 		pl.CreatePool(barPath, bazPath, 3000, "79228162514264337593543950337")
 
@@ -65,8 +65,8 @@ func testMintBarQux3000_1_4(t *testing.T) {
 	t.Run("mint bar qux 3000 1 4", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		baz.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
 
 		anoAdmin := admin
 
@@ -102,8 +102,8 @@ func testCreateExternalIncentiveQux180(t *testing.T) {
 	t.Run("create external incentive qux 180", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		qux.Approve(stakerAddr, consts.UINT64_MAX)
-		gns.Approve(stakerAddr, depositGnsAmount)
+		cross(qux.Approve)(stakerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(stakerAddr, depositGnsAmount)
 
 		AddToken(quxPath)
 		CreateExternalIncentive(
@@ -173,9 +173,9 @@ func testRewardFor1Block(t *testing.T) {
 		t.Run("collect reward position 01", func(t *testing.T) {
 			testing.SetRealm(adminRealm)
 
-			oldQux := qux.BalanceOf(admin)
+			oldQux := cross(qux.BalanceOf)(admin)
 			CollectReward(1, false)
-			newQux := qux.BalanceOf(admin)
+			newQux := cross(qux.BalanceOf)(admin)
 			uassert.True(t, isInErrorRange(newQux-oldQux, uint64(122713)))
 			// reward 122713
 			// penalty 52592
@@ -186,9 +186,9 @@ func testRewardFor1Block(t *testing.T) {
 		t.Run("collect reward position 02", func(t *testing.T) {
 			testing.SetRealm(adminRealm)
 
-			oldQux := qux.BalanceOf(admin)
+			oldQux := cross(qux.BalanceOf)(admin)
 			CollectReward(2, false)
-			newQux := qux.BalanceOf(admin)
+			newQux := cross(qux.BalanceOf)(admin)
 			uassert.True(t, isInErrorRange(newQux-oldQux, uint64(759511)))
 			// reward 759511
 			// penalty 325506
@@ -199,9 +199,9 @@ func testRewardFor1Block(t *testing.T) {
 		t.Run("collect reward position 03", func(t *testing.T) {
 			testing.SetRealm(adminRealm)
 
-			oldQux := qux.BalanceOf(admin)
+			oldQux := cross(qux.BalanceOf)(admin)
 			CollectReward(3, false)
-			newQux := qux.BalanceOf(admin)
+			newQux := cross(qux.BalanceOf)(admin)
 			uassert.True(t, isInErrorRange(newQux-oldQux, uint64(17915)))
 			// reward 17915
 			// penalty 7679
@@ -212,9 +212,9 @@ func testRewardFor1Block(t *testing.T) {
 		t.Run("collect reward position 04", func(t *testing.T) {
 			testing.SetRealm(adminRealm)
 
-			oldQux := qux.BalanceOf(admin)
+			oldQux := cross(qux.BalanceOf)(admin)
 			CollectReward(4, false)
-			newQux := qux.BalanceOf(admin)
+			newQux := cross(qux.BalanceOf)(admin)
 			uassert.True(t, isInErrorRange(newQux-oldQux, uint64(62)))
 			// reward 62
 			// penalty 27

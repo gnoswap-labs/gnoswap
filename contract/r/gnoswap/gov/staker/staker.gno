@@ -75,7 +75,7 @@ func Delegate(to std.Address, amount int64, referrer string) {
 	}
 
 	// Transfer the caller's GNS to GovStaker
-	gns.TransferFrom(caller, std.OriginCaller(), int64(amount))
+	cross(gns.Transfer)From(caller, std.OriginCaller(), int64(amount))
 
 	success := referral.TryRegister(caller, referrer)
 	actualReferrer := referrer
@@ -93,7 +93,7 @@ func Delegate(to std.Address, amount int64, referrer string) {
 	delegate(to, uint64(amount))
 
 	// xGNS mint to caller
-	xgns.Mint(caller, amount)
+	cross(xgns.Mint)(caller, amount)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -142,7 +142,7 @@ func Redelegate(from, to std.Address, amount int64) {
 	}
 
 	caller := std.PreviousRealm().Address()
-	delegatedBalanceOfCaller := xgns.BalanceOf(caller)
+	delegatedBalanceOfCaller := cross(xgns.BalanceOf)(caller)
 	if delegatedBalanceOfCaller < amount {
 		panic(addDetailToError(
 			errNotEnoughBalance,
@@ -200,7 +200,7 @@ func Undelegate(from std.Address, amount int64) {
 	}
 
 	caller := std.PreviousRealm().Address()
-	delegatedBalanceOfCaller := xgns.BalanceOf(caller)
+	delegatedBalanceOfCaller := cross(xgns.BalanceOf)(caller)
 	if delegatedBalanceOfCaller < amount {
 		panic(addDetailToError(
 			errNotEnoughBalance,
@@ -215,7 +215,7 @@ func Undelegate(from std.Address, amount int64) {
 	}
 
 	reward, protocolFeeRewards := rewardState.removeStake(caller, uint64(amount), collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
-	gns.Transfer(caller, int64(reward))
+	cross(gns.Transfer)(caller, int64(reward))
 
 	for tokenPath, rewardAmount := range protocolFeeRewards {
 		if rewardAmount > 0 {
@@ -226,7 +226,7 @@ func Undelegate(from std.Address, amount int64) {
 	// actual unDelegate
 	unDelegate(from, uint64(amount))
 	// burn equivalent amount of xGNS
-	xgns.Burn(caller, amount)
+	cross(xgns.Burn)(caller, amount)
 
 	// lock up
 	userLocked := lockedGNS{
@@ -289,7 +289,7 @@ func CollectUndelegatedGns() uint64 {
 	for _, locked := range lockedList {
 		if currentTime >= locked.unlock { // passed 7 days
 			// transfer GNS to caller
-			gns.Transfer(caller, int64(locked.amount))
+			cross(gns.Transfer)(caller, int64(locked.amount))
 			lockedAmount -= int64(locked.amount)
 			collected += locked.amount
 		} else {
@@ -351,7 +351,7 @@ func CollectReward() {
 		}
 
 		currentGNSBalance -= reward
-		gns.Transfer(caller, int64(reward))
+		cross(gns.Transfer)(caller, int64(reward))
 		std.Emit(
 			"CollectEmissionReward",
 			"prevAddr", prevAddr,
@@ -415,7 +415,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 		}
 
 		currentGNSBalance -= emissionReward
-		gns.Transfer(to, int64(emissionReward))
+		cross(gns.Transfer)(to, int64(emissionReward))
 		std.Emit(
 			"CollectEmissionFromLaunchPad",
 			"prevAddr", prevAddr,

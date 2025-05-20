@@ -53,8 +53,8 @@ func testPoolCreatePool(t *testing.T) {
 func testPositionMint01(t *testing.T) {
 	t.Run("mint position 01, bar:qux:500", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		qux.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 		testing.SkipHeights(2)
 
 		lpTokenId, liquidity, amount0, amount1 := pn.Mint(

@@ -187,22 +187,22 @@ func calculateAmount(amount, bptPct int64) int64 {
 func transferToTarget(target, amount int64) {
 	switch target {
 	case LIQUIDITY_STAKER:
-		gns.Transfer(stakerAddr, amount)
+		cross(gns.Transfer)(stakerAddr, amount)
 		distributedToStaker += amount
 		accuDistributedToStaker += amount
 
 	case DEVOPS:
-		gns.Transfer(devOpsAddr, amount)
+		cross(gns.Transfer)(devOpsAddr, amount)
 		distributedToDevOps += amount
 		accuDistributedToDevOps += amount
 
 	case COMMUNITY_POOL:
-		gns.Transfer(communityPoolAddr, amount)
+		cross(gns.Transfer)(communityPoolAddr, amount)
 		distributedToCommunityPool += amount
 		accuDistributedToCommunityPool += amount
 
 	case GOV_STAKER:
-		gns.Transfer(govStakerAddr, amount)
+		cross(gns.Transfer)(govStakerAddr, amount)
 		distributedToGovStaker += amount
 		accuDistributedToGovStaker += amount
 

@@ -80,9 +80,9 @@ func testCreateExternalIncentiveBarAndBaz(t *testing.T) {
 	t.Run("create external incentive for bar:baz:100", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		bar.Approve(stakerAddr, consts.UINT64_MAX)
-		baz.Approve(stakerAddr, consts.UINT64_MAX)
-		gns.Approve(stakerAddr, depositGnsAmount*2)
+		cross(bar.Approve)(stakerAddr, consts.UINT64_MAX)
+		cross(baz.Approve)(stakerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(stakerAddr, depositGnsAmount*2)
 
 		CreateExternalIncentive(
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
@@ -118,8 +118,8 @@ func testCreateExternalIncentiveQux(t *testing.T) {
 	t.Run("create external incentive for bar:qux:100", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		qux.Approve(stakerAddr, consts.UINT64_MAX)
-		gns.Approve(stakerAddr, depositGnsAmount)
+		cross(qux.Approve)(stakerAddr, consts.UINT64_MAX)
+		cross(gns.Approve)(stakerAddr, depositGnsAmount)
 
 		CreateExternalIncentive(
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
@@ -136,8 +136,8 @@ func testMintAndStakeOnlyInternal01And02(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		// token to provide liquidity
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		foo.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(foo.Approve)(poolAddr, consts.UINT64_MAX)
 
 		// position01
 		lpTokenId, _, _, _, _ := MintAndStake(
@@ -180,8 +180,8 @@ func testMintAndStakeOnlyExternal03And04(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		// token to provide liquidity
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		baz.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
 
 		// position03
 		lpTokenId, _, _, _, _ := MintAndStake(
@@ -224,8 +224,8 @@ func testMintAndStakeBothInternalAndExternal05(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		// token to provide liquidity
-		bar.Approve(poolAddr, consts.UINT64_MAX)
-		qux.Approve(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
 		// position05
 		lpTokenId, _, _, _, _ := MintAndStake(

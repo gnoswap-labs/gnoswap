@@ -17,14 +17,14 @@ import (
 func TestPoolInitCreatePool(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, pl.GetPoolCreationFee())
+	cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestMintPosition01WideInRange(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, 18394892)
-	foo.Approve(poolAddr, 50000000)
+	cross(bar.Approve)(poolAddr, 18394892)
+	cross(foo.Approve)(poolAddr, 50000000)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -51,8 +51,8 @@ func TestMintPosition01WideInRange(t *testing.T) {
 
 func TestMintPositionTightInRange(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, 18394892)
-	foo.Approve(poolAddr, 50000000)
+	cross(bar.Approve)(poolAddr, 18394892)
+	cross(foo.Approve)(poolAddr, 50000000)
 
 	positionId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -99,7 +99,7 @@ func TestCollectFeeBeforeSwapPos2(t *testing.T) {
 
 func TestSwap(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(poolAddr, 1234567)
+	cross(bar.Approve)(poolAddr, 1234567)
 
 	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
@@ -118,8 +118,8 @@ func TestSwap(t *testing.T) {
 // FYI, IF POSITION 2 DOESN'T EXIST, POSITION 1 WILL EARN '617' as fee
 func TestCollectFeeAfterSwapPos1(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	foo.Approve(poolAddr, consts.UINT64_MAX) // COLLECT_FEE
-	bar.Approve(poolAddr, consts.UINT64_MAX) // COLLECT_FEE
+	cross(foo.Approve)(poolAddr, consts.UINT64_MAX) // COLLECT_FEE
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX) // COLLECT_FEE
 
 	positionId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 

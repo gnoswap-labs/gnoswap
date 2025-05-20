@@ -38,7 +38,7 @@ func TestEmissionReward(t *testing.T) {
 
 func initial(t *testing.T) {
 	uassert.Equal(t, gns.BalanceOf(admin), uint64(100000000000000)) // admin has initial gns
-	uassert.Equal(t, xgns.BalanceOf(admin), uint64(0))
+	uassert.Equal(t, cross(xgns.BalanceOf)(admin), uint64(0))
 
 	testing.SetRealm(adminRealm)
 	en.ChangeDistributionPctByAdmin(
@@ -64,7 +64,7 @@ func delegateAdmin(t *testing.T) {
 	testing.SkipHeights(1)
 
 	testing.SetRealm(adminRealm)
-	gns.Approve(govStakerAddr, uint64(minAmount))
+	cross(gns.Approve)(govStakerAddr, uint64(minAmount))
 	Delegate(dummyToAddr, minAmount, "")
 
 	// gns emission after adjustment & delegate
@@ -83,18 +83,18 @@ func delegateAdmin(t *testing.T) {
 func delegateAnother(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	delegateAmount := uint64(5 * minAmount)
-	gns.Transfer(dummyAddr, delegateAmount)
+	cross(gns.Transfer)(dummyAddr, delegateAmount)
 
 	testing.SkipHeights(1)
 	testing.SetRealm(dummyRealm)
-	gns.Approve(govStakerAddr, delegateAmount)
+	cross(gns.Approve)(govStakerAddr, delegateAmount)
 	Delegate(dummyAddr, delegateAmount, "")
 
 	uassert.Equal(t, gns.BalanceOf(stakerAddr), uint64(19977168))
 	uassert.Equal(t, gns.BalanceOf(devOpsAddr), uint64(5707762))
 	uassert.Equal(t, gns.BalanceOf(communityPoolAddr), uint64(1426940))
 	uassert.Equal(t, gns.BalanceOf(govStakerAddr), uint64(7426940))
-	uassert.Equal(t, gns.BalanceOf(govStakerAddr)-xgns.TotalSupply(), uint64(1426940))
+	uassert.Equal(t, gns.BalanceOf(govStakerAddr)-cross(xgns.TotalSupply)(), uint64(1426940))
 }
 
 func skipDummyBlocks(t *testing.T) {

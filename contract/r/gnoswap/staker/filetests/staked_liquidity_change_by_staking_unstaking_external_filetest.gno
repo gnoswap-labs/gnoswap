@@ -92,8 +92,8 @@ func testCreatePool() {
 func testMintBarQuxPos01() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	qux.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
 	pn.Mint(
@@ -115,8 +115,8 @@ func testMintBarQuxPos01() {
 func testMintBarQuxPos02() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	qux.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(qux.Approve)(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
 	pn.Mint(
@@ -138,8 +138,8 @@ func testMintBarQuxPos02() {
 func testCreateExternalIncentive() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(stakerAddr, consts.UINT64_MAX)
-	gns.Approve(stakerAddr, depositGnsAmount)
+	cross(bar.Approve)(stakerAddr, consts.UINT64_MAX)
+	cross(gns.Approve)(stakerAddr, depositGnsAmount)
 
 	testing.SkipHeights(1)
 	sr.CreateExternalIncentive(
@@ -180,9 +180,9 @@ func testMakeExternalBarStart() {
 
 	// check reward for position 01 (in-range)
 	testing.SetRealm(adminRealm)
-	beforeBar := bar.BalanceOf(adminUser)
+	beforeBar := cross(bar.BalanceOf)(adminUser)
 	sr.CollectReward(1, false)
-	afterBar := bar.BalanceOf(adminUser)
+	afterBar := cross(bar.BalanceOf)(adminUser)
 	diff := afterBar - beforeBar
 	if diff == 0 {
 		panic("position 01 in-range, should have reward")
@@ -192,10 +192,10 @@ func testMakeExternalBarStart() {
 func testCollectReward() {
 	testing.SetRealm(adminRealm)
 
-	oldBar := bar.BalanceOf(adminUser)
+	oldBar := cross(bar.BalanceOf)(adminUser)
 	testing.SkipHeights(1)
 	sr.CollectReward(1, false)
-	newBar := bar.BalanceOf(adminUser)
+	newBar := cross(bar.BalanceOf)(adminUser)
 	diff := newBar - oldBar
 	if !isInErrorRange(diff, 347) { // 2314(rewardPerBlock) * 50%(position01Ratio) * 30%(warmUp)
 		panic("expected about 347")
@@ -210,10 +210,10 @@ func testUnstakeTokenPos02() {
 func testCollectRewardAfterUnstake() {
 	testing.SetRealm(adminRealm)
 
-	oldBar := bar.BalanceOf(adminUser)
+	oldBar := cross(bar.BalanceOf)(adminUser)
 	testing.SkipHeights(1)
 	sr.CollectReward(1, false)
-	newBar := bar.BalanceOf(adminUser)
+	newBar := cross(bar.BalanceOf)(adminUser)
 	diff := newBar - oldBar
 	if !isInErrorRange(diff, 693) { // 2314(rewardPerBlock) * 30%(warmUp)
 		panic("expected about 693")

@@ -26,11 +26,11 @@ const (
 func TestSwapRoute_1route_1hop(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, pl.GetPoolCreationFee())
+	cross(gns.Approve)(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 
-	bar.Approve(poolAddr, 36790)
-	baz.Approve(poolAddr, 100000)
+	cross(bar.Approve)(poolAddr, 36790)
+	cross(baz.Approve)(poolAddr, 100000)
 
 	// Mint
 	positionId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
@@ -51,8 +51,8 @@ func TestSwapRoute_1route_1hop(t *testing.T) {
 
 	uassert.Equal(t, dryResult, "2711")
 
-	bar.Approve(poolAddr, uint64(1000))
-	baz.Approve(routerAddr, consts.UINT64_MAX) // ITS FOR 0.15% fee
+	cross(bar.Approve)(poolAddr, uint64(1000))
+	cross(baz.Approve)(routerAddr, consts.UINT64_MAX) // ITS FOR 0.15% fee
 
 	amountIn, amountOut := ExactInSwapRoute(
 		barPath,
@@ -68,8 +68,8 @@ func TestSwapRoute_1route_1hop(t *testing.T) {
 	uassert.Equal(t, amountIn, "1000")
 	uassert.Equal(t, amountOut, "-2707")
 
-	bar.Approve(poolAddr, uint64(1000))
-	baz.Approve(routerAddr, consts.UINT64_MAX) // ITS FOR 0.15% fee
+	cross(bar.Approve)(poolAddr, uint64(1000))
+	cross(baz.Approve)(routerAddr, consts.UINT64_MAX) // ITS FOR 0.15% fee
 
 	amountIn, amountOut = ExactOutSwapRoute(
 		barPath,
@@ -85,8 +85,8 @@ func TestSwapRoute_1route_1hop(t *testing.T) {
 	uassert.Equal(t, amountIn, "371")
 	uassert.Equal(t, amountOut, "-999")
 
-	baz.Approve(poolAddr, consts.UINT64_MAX)
-	bar.Approve(routerAddr, consts.UINT64_MAX) // ITS FOR 0.15% fee
+	cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(routerAddr, consts.UINT64_MAX) // ITS FOR 0.15% fee
 
 	amountIn, amountOut = ExactInSwapRoute(
 		bazPath,
@@ -102,7 +102,7 @@ func TestSwapRoute_1route_1hop(t *testing.T) {
 	uassert.Equal(t, amountIn, "1000")
 	uassert.Equal(t, amountOut, "-368")
 
-	bar.Approve(routerAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(routerAddr, consts.UINT64_MAX)
 
 	amountIn, amountOut = ExactOutSwapRoute(
 		bazPath,

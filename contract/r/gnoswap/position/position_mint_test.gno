@@ -77,8 +77,8 @@ func TestMintInternal_PositionMint(t *testing.T) {
 			TokenFaucet(t, tt.params.token1, alice)
 
 			testing.SetRealm(std.NewUserRealm(alice))
-			bar.Approve(poolAddr, maxApprove)
-			baz.Approve(poolAddr, maxApprove)
+			cross(bar.Approve)(poolAddr, maxApprove)
+			cross(baz.Approve)(poolAddr, maxApprove)
 			testing.SetOriginCaller(alice)
 			id, liquidity, amount0, amount1 := mint(tt.params)
 

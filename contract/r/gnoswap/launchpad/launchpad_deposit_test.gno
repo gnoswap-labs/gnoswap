@@ -325,10 +325,10 @@ func TestDepositGns(t *testing.T) {
 	t.Run("Success with sufficient balance", func(t *testing.T) {
 		// transfer enough gns
 		testing.SetRealm(adminRealm)
-		gns.Transfer(testAddr, 1000000)
+		cross(gns.Transfer)(testAddr, 1000000)
 
 		testing.SetRealm(std.NewUserRealm(testAddr))
-		gns.Approve(launchpadAddr, 1000000)
+		cross(gns.Approve)(launchpadAddr, 1000000)
 
 		testing.SkipHeights(10)
 		depositId := DepositGns(project.id+":30", 1000000, "")
@@ -748,11 +748,11 @@ func TestCollectDepositGnsByDepositId_ExactClaimable(t *testing.T) {
 
 	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	testing.SkipHeights(int64(10))
-	gns.MintGns(launchpadAddr)
+	cross(gns.MintGns)(launchpadAddr)
 	testing.SkipHeights(int64(10))
 
 	testing.SetRealm(std.NewUserRealm(userA))
-	gns.Approve(launchpadAddr, 1000)
+	cross(gns.Approve)(launchpadAddr, 1000)
 	token, _ := setupXGNSTest(t)
 
 	testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
@@ -760,7 +760,7 @@ func TestCollectDepositGnsByDepositId_ExactClaimable(t *testing.T) {
 	xgnsMint(t, token, launchpadAddr, 1000)
 
 	testing.SetRealm(std.NewUserRealm(launchpadAddr))
-	xgns.Mint(
+	cross(xgns.Mint)(
 		launchpadAddr,
 		1000,
 	)
