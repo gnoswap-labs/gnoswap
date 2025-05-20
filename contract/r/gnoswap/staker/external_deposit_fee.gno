@@ -228,7 +228,7 @@ func SetTokenMinimumRewardAmount(paramsStr string) {
 	)
 }
 
-func setDepositGnsAmount(amount uint64) {
+func setDepositGnsAmount(amount int64) {
 	depositGnsAmount = amount
 }
 
