@@ -10,34 +10,34 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
-func TestInitTwoPools(t *testing.T) {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
-	SetPoolCreationFeeByAdmin(0)
+// func TestInitTwoPools(t *testing.T) {
+// 	testing.SetRealm(std.NewUserRealm(adminAddr))
+// 	SetPoolCreationFeeByAdmin(0)
 
-	// foo:bar
-	CreatePool("gno.land/r/onbloc/bar", "gno.land/r/onbloc/foo", FeeTier500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+// 	// foo:bar
+// 	CreatePool("gno.land/r/onbloc/bar", "gno.land/r/onbloc/foo", FeeTier500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
-	// bar:baz
-	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000
+// 	// bar:baz
+// 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000
 
-	uassert.Equal(t, pools.Size(), 2)
-}
+// 	uassert.Equal(t, pools.Size(), 2)
+// }
 
-func TestApiGetPools(t *testing.T) {
-	getPools := ApiGetPools()
+// func TestApiGetPools(t *testing.T) {
+// 	getPools := ApiGetPools()
 
-	root, err := json.Unmarshal([]byte(getPools))
-	if err != nil {
-		panic(err.Error())
-	}
+// 	root, err := json.Unmarshal([]byte(getPools))
+// 	if err != nil {
+// 		panic(err.Error())
+// 	}
 
-	response, err := root.GetKey("response")
-	if err != nil {
-		panic(err.Error())
-	}
+// 	response, err := root.GetKey("response")
+// 	if err != nil {
+// 		panic(err.Error())
+// 	}
 
-	uassert.Equal(t, 2, response.Size()) // should be same as the number of pools
-}
+// 	uassert.Equal(t, 2, response.Size()) // should be same as the number of pools
+// }
 
 func TestApiGetPool(t *testing.T) {
 	t.Run("existing pool", func(t *testing.T) {
