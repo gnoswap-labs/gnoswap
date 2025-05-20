@@ -79,7 +79,7 @@ func testInit() {
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
 	testing.SetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}})
-	wugnot.Deposit()
+	cross(wugnot.Deposit)()
 	testing.SetOriginSend(nil)
 }
 

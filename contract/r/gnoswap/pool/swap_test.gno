@@ -937,10 +937,10 @@ func TestSwap_FeeTier100(t *testing.T) {
 			name: "EXACT IN - zeroForOne = true, feeTier=100",
 			setupFn: func(t *testing.T) {
 				testing.SetRealm(std.NewUserRealm(adminAddr))
-				wugnot.Approve(poolAddr, maxApprove)
+				cross(wugnot.Approve)(poolAddr, maxApprove)
 				gns.Approve(poolAddr, maxApprove)
 				CreatePool(wugnotTokenPath, gnsTokenPath, FeeTier100, "79228162514264337593543950336")
-				wugnot.Approve(routerAddr, maxApprove)
+				cross(wugnot.Approve)(routerAddr, maxApprove)
 				gns.Approve(routerAddr, maxApprove)
 
 				faucetAddress := adminAddr
@@ -950,7 +950,7 @@ func TestSwap_FeeTier100(t *testing.T) {
 				testing.SetOriginSend(newCoins)
 				banker := std.NewBanker(std.BankerTypeRealmSend)
 				banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
-				wugnot.Deposit()
+				cross(wugnot.Deposit)()
 
 				pn.Mint(
 					wugnotTokenPath,
@@ -988,11 +988,11 @@ func TestSwap_FeeTier100(t *testing.T) {
 			},
 			action: func(t *testing.T) (string, string) {
 				testing.SetOriginCaller(adminAddr)
-				wugnot.Transfer(routerAddr, 20000000)
+				cross(wugnot.Transfer)(routerAddr, 20000000)
 				gns.Transfer(routerAddr, 20000000)
 
 				testing.SetOriginCaller(routerAddr)
-				wugnot.Approve(poolAddr, maxApprove)
+				cross(wugnot.Approve)(poolAddr, maxApprove)
 
 				actualAmount0, actualAmount1 := Swap(
 					wugnotTokenPath,

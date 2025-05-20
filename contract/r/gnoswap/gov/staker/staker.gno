@@ -466,7 +466,7 @@ func transferProtocolFee(tokenPath string, to std.Address, amount uint64) {
 	currentProtocolFeeBalance[tokenPath] -= amount
 	amountInt64 := int64(amount)
 	if tokenPath == consts.WUGNOT_PATH {
-		wugnot.Withdraw(amountInt64)
+		cross(wugnot.Withdraw)(amountInt64)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(govStaker, to, std.Coins{{"ugnot", amountInt64}})
 	} else {

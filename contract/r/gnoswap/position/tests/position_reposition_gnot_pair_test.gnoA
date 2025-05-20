@@ -38,9 +38,9 @@ func testMintPosition01InRange(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		gns.Approve(poolAddr, consts.UINT64_MAX)
-		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(positionAddr, consts.UINT64_MAX) // FOR WRAP
+		cross(wugnot.Approve)(positionAddr, consts.UINT64_MAX) // FOR WRAP
 
 		testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(50000005))
@@ -53,7 +53,7 @@ func testMintPosition01InRange(t *testing.T) {
 		testing.SetOriginSend(std.Coins{{"ugnot", 50000005}})
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(0))
 
-		adminOldWugnotBalance := wugnot.BalanceOf(adminAddr)
+		adminOldWugnotBalance := cross(cross(wugnot.BalanceOf))(adminAddr)
 		uassert.Equal(t, adminOldWugnotBalance, uint64(0))
 
 		positionId, liquidity, amount0, amount1 := Mint(
@@ -92,7 +92,7 @@ func testMintPosition01InRange(t *testing.T) {
 		uassert.Equal(t, position.burned, false)
 
 		// SPEND ALL WUGNOT
-		uassert.Equal(t, wugnot.BalanceOf(adminAddr), uint64(0))
+		uassert.Equal(t, cross(cross(wugnot.BalanceOf))(adminAddr), uint64(0))
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(31605113)) // 81605113 - 31605113  = 50000000
 	})
 }
@@ -164,7 +164,7 @@ func testDecreaseLiquidityInPosition(t *testing.T) {
 
 		// approve fee0, fee1 to pool
 		gns.Approve(poolAddr, consts.UINT64_MAX)
-		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 
 		resultPositionId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 			positionId,

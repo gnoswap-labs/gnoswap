@@ -334,7 +334,7 @@ func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, st
 	// check user wugnot amount
 	// need this value to unwrap fee
 	caller := getPrevAddr()
-	userWugnot := wugnot.BalanceOf(caller)
+	userWugnot := cross(cross(wugnot.BalanceOf))(caller)
 
 	// collect fee
 	amount0, amount1 := pl.Collect(

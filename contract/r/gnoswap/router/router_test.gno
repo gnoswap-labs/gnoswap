@@ -235,14 +235,14 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
-			wugnot.Deposit()
+			cross(wugnot.Deposit)()
 			if tt.recipient != positionOwner {
-				wugnot.Transfer(tt.recipient, 10000000000)
+				cross(wugnot.Transfer)(tt.recipient, 10000000000)
 			}
 			gns.Transfer(tt.recipient, 10000000000)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			wugnot.Approve(poolContract, maxApprove)
+			cross(wugnot.Approve)(poolContract, maxApprove)
 			gns.Approve(poolContract, maxApprove)
 
 			teller := common.GetTokenTeller(wugnotTokenPath)
@@ -268,14 +268,14 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			wugnot.Transfer(routerContract, 20000000)
+			cross(wugnot.Transfer)(routerContract, 20000000)
 			gns.Transfer(routerContract, 20000000)
-			wugnot.Approve(routerContract, maxApprove)
+			cross(wugnot.Approve)(routerContract, maxApprove)
 			gns.Approve(routerContract, maxApprove)
-			beforeWugnotBalance := wugnot.BalanceOf(tt.recipient)
+			beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(tt.recipient)
 
 			testing.SetRealm(std.NewCodeRealm(routerPath))
-			wugnot.Approve(poolContract, maxApprove)
+			cross(wugnot.Approve)(poolContract, maxApprove)
 
 			drySwapAmountIn, drySwapAmountOut, swapAvaialbe := DrySwapRoute(
 				tt.inputToken,
@@ -298,7 +298,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				"", // referrer
 			)
 			testing.SkipHeights(1)
-			afterWugnotBalance := wugnot.BalanceOf(tt.recipient)
+			afterWugnotBalance := cross(cross(wugnot.BalanceOf))(tt.recipient)
 
 			defer func() {
 				if r := recover(); r != nil {
@@ -404,15 +404,15 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, std.Coins{{"ugnot", int64(10000000000)}})
-			wugnot.Deposit()
+			cross(wugnot.Deposit)()
 			if tt.recipient != positionOwner {
-				wugnot.Transfer(tt.recipient, 10000000000)
+				cross(wugnot.Transfer)(tt.recipient, 10000000000)
 			}
 			banker.SendCoins(positionOwner, tt.recipient, std.Coins{{"ugnot", int64(10000000000)}})
 			gns.Transfer(tt.recipient, 10000000000)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			wugnot.Approve(poolContract, maxApprove)
+			cross(wugnot.Approve)(poolContract, maxApprove)
 			gns.Approve(poolContract, maxApprove)
 
 			teller := common.GetTokenTeller(wugnotTokenPath)
@@ -446,7 +446,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			banker = std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(tt.recipient, positionAddr, newCoinsForAdd)
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			wugnot.Approve(poolContract, maxApprove)
+			cross(wugnot.Approve)(poolContract, maxApprove)
 			gns.Approve(poolContract, maxApprove)
 			pn.IncreaseLiquidity(
 				positionId,
@@ -459,12 +459,12 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			wugnot.Transfer(routerContract, 20000000)
+			cross(wugnot.Transfer)(routerContract, 20000000)
 			gns.Transfer(routerContract, 20000000)
-			wugnot.Approve(routerContract, maxApprove)
+			cross(wugnot.Approve)(routerContract, maxApprove)
 			gns.Approve(routerContract, maxApprove)
 			testing.SetRealm(std.NewCodeRealm(routerPath))
-			wugnot.Approve(poolContract, maxApprove)
+			cross(wugnot.Approve)(poolContract, maxApprove)
 
 			drySwapAmountIn, drySwapAmountOut, swapAvailable := DrySwapRoute(
 				tt.inputToken,
@@ -587,15 +587,15 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, std.Coins{{"ugnot", int64(10000000000)}})
-			wugnot.Deposit()
+			cross(wugnot.Deposit)()
 			if tt.recipient != positionOwner {
-				wugnot.Transfer(tt.recipient, 10000000000)
+				cross(wugnot.Transfer)(tt.recipient, 10000000000)
 			}
 			banker.SendCoins(positionOwner, tt.recipient, std.Coins{{"ugnot", int64(10000000000)}})
 			gns.Transfer(tt.recipient, 10000000000)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			wugnot.Approve(poolContract, maxApprove)
+			cross(wugnot.Approve)(poolContract, maxApprove)
 			gns.Approve(poolContract, maxApprove)
 
 			teller := common.GetTokenTeller(wugnotTokenPath)
@@ -620,9 +620,9 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 
 			// Decrease Liquidity
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			wugnot.Approve(poolContract, maxApprove)
+			cross(wugnot.Approve)(poolContract, maxApprove)
 			gns.Approve(poolContract, maxApprove)
-			wugnot.Approve(positionContract, maxApprove)
+			cross(wugnot.Approve)(positionContract, maxApprove)
 			gns.Approve(positionContract, maxApprove)
 			liquidityUint64, _ := strconv.ParseUint(liquidity, 10, 64)
 			partialLiquidity := liquidityUint64 / 5
@@ -639,14 +639,14 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			wugnot.Transfer(routerContract, 20000000)
+			cross(wugnot.Transfer)(routerContract, 20000000)
 			gns.Transfer(routerContract, 20000000)
-			wugnot.Approve(routerContract, maxApprove)
+			cross(wugnot.Approve)(routerContract, maxApprove)
 			gns.Approve(routerContract, maxApprove)
-			beforeWugnotBalance := wugnot.BalanceOf(tt.recipient)
+			beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(tt.recipient)
 
 			testing.SetRealm(std.NewCodeRealm(routerPath))
-			wugnot.Approve(poolContract, maxApprove)
+			cross(wugnot.Approve)(poolContract, maxApprove)
 
 			drySwapAmountIn, drySwapAmountOut, swapAvailable := DrySwapRoute(
 				tt.inputToken,
@@ -669,7 +669,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 				"", // referrer
 			)
 			testing.SkipHeights(1)
-			afterWugnotBalance := wugnot.BalanceOf(tt.recipient)
+			afterWugnotBalance := cross(cross(wugnot.BalanceOf))(tt.recipient)
 
 			defer func() {
 				if r := recover(); r != nil {
@@ -771,15 +771,15 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, std.Coins{{"ugnot", int64(10000000000)}})
-			wugnot.Deposit()
+			cross(wugnot.Deposit)()
 			if tt.recipient != positionOwner {
-				wugnot.Transfer(tt.recipient, 10000000000)
+				cross(wugnot.Transfer)(tt.recipient, 10000000000)
 			}
 			banker.SendCoins(positionOwner, tt.recipient, std.Coins{{"ugnot", int64(10000000000)}})
 			gns.Transfer(tt.recipient, 10000000000)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			wugnot.Approve(poolContract, maxApprove)
+			cross(wugnot.Approve)(poolContract, maxApprove)
 			gns.Approve(poolContract, maxApprove)
 
 			teller := common.GetTokenTeller(wugnotTokenPath)
@@ -804,14 +804,14 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			wugnot.Transfer(routerContract, 20000000)
+			cross(wugnot.Transfer)(routerContract, 20000000)
 			gns.Transfer(routerContract, 20000000)
-			wugnot.Approve(routerContract, maxApprove)
+			cross(wugnot.Approve)(routerContract, maxApprove)
 			gns.Approve(routerContract, maxApprove)
-			beforeWugnotBalance := wugnot.BalanceOf(tt.recipient)
+			beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(tt.recipient)
 
 			testing.SetRealm(std.NewCodeRealm(routerPath))
-			wugnot.Approve(poolContract, maxApprove)
+			cross(wugnot.Approve)(poolContract, maxApprove)
 
 			drySwapAmountIn, drySwapAmountOut, swapAvailable := DrySwapRoute(
 				tt.inputToken,
@@ -835,7 +835,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 				"", // referrer
 			)
 			testing.SkipHeights(1)
-			afterWugnotBalance := wugnot.BalanceOf(tt.recipient)
+			afterWugnotBalance := cross(cross(wugnot.BalanceOf))(tt.recipient)
 
 			defer func() {
 				if r := recover(); r != nil {

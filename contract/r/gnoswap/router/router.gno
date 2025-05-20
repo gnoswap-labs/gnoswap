@@ -48,7 +48,7 @@ func newGnotSwapHandler(beforeBalance, wrappedAmount uint64) *GnotSwapHandler {
 
 // UpdateNewBalance updates the current balance after swap operations
 func (h *GnotSwapHandler) UpdateNewBalance() {
-	h.NewBalance = wugnot.BalanceOf(std.PreviousRealm().Address())
+	h.NewBalance = cross(cross(wugnot.BalanceOf))(std.PreviousRealm().Address())
 }
 
 // HandleInputSwap manages unwrapping logic for GNOT input tokens

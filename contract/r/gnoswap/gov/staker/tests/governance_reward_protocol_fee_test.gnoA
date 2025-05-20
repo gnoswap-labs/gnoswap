@@ -98,8 +98,8 @@ func mockProtocolFee(t *testing.T) {
 	// wugnot
 	testing.SetOriginSend(std.Coins{{"ugnot", 10000}})
 	testing.IssueCoins(consts.WUGNOT_ADDR, std.Coins{{"ugnot", 10000}})
-	wugnot.Deposit()
-	wugnot.Transfer(protocolFeeAddr, 10000)
+	cross(wugnot.Deposit)()
+	cross(wugnot.Transfer)(protocolFeeAddr, 10000)
 
 	testing.SetRealm(stakerRealm)
 	pf.AddToProtocolFee(barPath, 1000)
@@ -114,9 +114,9 @@ func mockProtocolFee(t *testing.T) {
 	uassert.Equal(t, qux.BalanceOf(devOpsAddr), uint64(0))
 	uassert.Equal(t, qux.BalanceOf(govStakerAddr), uint64(0))
 
-	uassert.Equal(t, wugnot.BalanceOf(protocolFeeAddr), uint64(10000))
-	uassert.Equal(t, wugnot.BalanceOf(devOpsAddr), uint64(0))
-	uassert.Equal(t, wugnot.BalanceOf(govStakerAddr), uint64(0))
+	uassert.Equal(t, cross(cross(wugnot.BalanceOf))(protocolFeeAddr), uint64(10000))
+	uassert.Equal(t, cross(cross(wugnot.BalanceOf))(devOpsAddr), uint64(0))
+	uassert.Equal(t, cross(cross(wugnot.BalanceOf))(govStakerAddr), uint64(0))
 }
 
 func skipDummyBlocks(t *testing.T) {

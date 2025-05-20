@@ -136,7 +136,7 @@ func TokenBalance(t *testing.T, tokenPath string, owner std.Address) uint64 {
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
-		return wugnot.BalanceOf(owner)
+		return cross(cross(wugnot.BalanceOf))(owner)
 	case gnsPath:
 		return gns.BalanceOf(owner)
 	case barPath:
@@ -158,7 +158,7 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender std.Address) 
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
-		return wugnot.Allowance(owner, spender)
+		return cross(wugnot.Allowance)(owner, spender)
 	case gnsPath:
 		return gns.Allowance(owner, spender)
 	case barPath:
@@ -388,7 +388,7 @@ func MintPositionAll(t *testing.T, caller std.Address) {
 func wugnotApprove(t *testing.T, owner, spender std.Address, amount uint64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	wugnot.Approve(spender, amount)
+	cross(wugnot.Approve)(spender, amount)
 }
 
 func gnsApprove(t *testing.T, owner, spender std.Address, amount uint64) {
@@ -430,7 +430,7 @@ func quxApprove(t *testing.T, owner, spender std.Address, amount uint64) {
 func wugnotTransfer(t *testing.T, to std.Address, amount uint64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	wugnot.Transfer(to, amount)
+	cross(wugnot.Transfer)(to, amount)
 }
 
 func gnsTransfer(t *testing.T, to std.Address, amount uint64) {
@@ -523,7 +523,7 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 	wugnotAddr := consts.WUGNOT_ADDR
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
-	wugnot.Deposit()
+	cross(wugnot.Deposit)()
 }
 
 // resetObject resets the object state(clear or make it default values)

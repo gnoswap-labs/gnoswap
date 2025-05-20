@@ -93,7 +93,7 @@ func testInit() {
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
 	testing.SetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}})
-	wugnot.Deposit()
+	cross(wugnot.Deposit)()
 	testing.SetOriginSend(nil)
 
 	// set unstaking fee to 0
@@ -117,7 +117,7 @@ func testCreatePool() {
 func testMintWugnotGnsPos01() {
 	testing.SetRealm(adminRealm)
 
-	wugnot.Approve(poolAddr, consts.UINT64_MAX)
+	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 	gns.Approve(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)

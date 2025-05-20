@@ -69,10 +69,10 @@ func TestPositionMintQuxGnot(t *testing.T) {
 
 	// Deposit(wrap)
 	testing.SetRealm(adminRealm)
-	wugnot.Deposit()
+	cross(wugnot.Deposit)()
 
 	qux.Approve(poolAddr, consts.UINT64_MAX)
-	wugnot.Approve(poolAddr, consts.UINT64_MAX)
+	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.WRAPPED_WUGNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 

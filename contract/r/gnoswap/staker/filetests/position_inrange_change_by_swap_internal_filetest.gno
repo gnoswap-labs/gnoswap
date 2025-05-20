@@ -79,7 +79,7 @@ func testInit() {
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
 	testing.SetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}})
-	wugnot.Deposit()
+	cross(wugnot.Deposit)()
 	testing.SetOriginSend(nil)
 }
 
@@ -100,7 +100,7 @@ func testCreatePool() {
 func testMintWugnotGnsPos01() {
 	testing.SetRealm(adminRealm)
 
-	wugnot.Approve(poolAddr, consts.UINT64_MAX)
+	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 	gns.Approve(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
@@ -123,7 +123,7 @@ func testMintWugnotGnsPos01() {
 func testMintWugnotGnsPos02() {
 	testing.SetRealm(adminRealm)
 
-	wugnot.Approve(poolAddr, consts.UINT64_MAX)
+	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 	gns.Approve(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
@@ -173,10 +173,10 @@ func testMakePosition1OutRangeBySwap() {
 
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 
-	wugnot.Approve(poolAddr, consts.UINT64_MAX)
+	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 	gns.Approve(poolAddr, consts.UINT64_MAX)
 
-	wugnot.Approve(routerAddr, consts.UINT64_MAX)
+	cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
 	gns.Approve(routerAddr, consts.UINT64_MAX)
 
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
@@ -215,10 +215,10 @@ func testMakePosition1InRangeBySwap() {
 
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 
-	wugnot.Approve(poolAddr, consts.UINT64_MAX)
+	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 	gns.Approve(poolAddr, consts.UINT64_MAX)
 
-	wugnot.Approve(routerAddr, consts.UINT64_MAX)
+	cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
 	gns.Approve(routerAddr, consts.UINT64_MAX)
 
 	tokenIn, tokenOut := rr.ExactInSwapRoute(

@@ -71,7 +71,7 @@ func testCreateExternalIncentive(t *testing.T) {
 
 		testing.SetRealm(adminRealm)
 
-		wugnot.Approve(stakerAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(stakerAddr, consts.UINT64_MAX)
 		gns.Approve(stakerAddr, depositGnsAmount)
 
 		testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
@@ -112,12 +112,12 @@ func testCollectExternalReward_1_Unwrap(t *testing.T) {
 		testing.SkipHeights(1)
 
 		oldUgnotBal := ugnotBalanceOf(t, adminAddr)
-		oldWugnotBal := wugnot.BalanceOf(admin)
+		oldWugnotBal := cross(cross(wugnot.BalanceOf))(admin)
 
 		CollectReward(1, true)
 
 		newUgnotBal := ugnotBalanceOf(t, adminAddr)
-		newWugnotBal := wugnot.BalanceOf(admin)
+		newWugnotBal := cross(cross(wugnot.BalanceOf))(admin)
 
 		uassert.True(t, newUgnotBal > oldUgnotBal)    // unwrapping true increases ugnot balance
 		uassert.True(t, newWugnotBal == oldWugnotBal) // wugnot stays
@@ -129,13 +129,13 @@ func testCollectExternalReward_1_NoUnWrap(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		oldUgnotBal := ugnotBalanceOf(t, adminAddr)
-		oldWugnotBal := wugnot.BalanceOf(admin)
+		oldWugnotBal := cross(cross(wugnot.BalanceOf))(admin)
 
 		testing.SkipHeights(1)
 		CollectReward(1, false)
 
 		newUgnotBal := ugnotBalanceOf(t, adminAddr)
-		newWugnotBal := wugnot.BalanceOf(admin)
+		newWugnotBal := cross(cross(wugnot.BalanceOf))(admin)
 
 		uassert.True(t, newWugnotBal > oldWugnotBal) // unwrapping false increases wugnot balance
 		uassert.True(t, newUgnotBal == oldUgnotBal)  // ugnot stays

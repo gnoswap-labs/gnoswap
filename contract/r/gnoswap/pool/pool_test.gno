@@ -313,9 +313,9 @@ func TestCollect(t *testing.T) {
 				testing.SetOriginSend(newCoins)
 				banker := std.NewBanker(std.BankerTypeRealmSend)
 				banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
-				wugnot.Deposit()
+				cross(wugnot.Deposit)()
 
-				wugnot.Approve(poolAddr, maxApprove)
+				cross(wugnot.Approve)(poolAddr, maxApprove)
 				gns.Approve(poolAddr, maxApprove)
 
 				teller := common.GetTokenTeller(wugnotPath)
@@ -347,11 +347,11 @@ func TestCollect(t *testing.T) {
 
 				// Swap
 				testing.SetOriginCaller(positionOwner)
-				wugnot.Transfer(routerAddr, 20000000)
+				cross(wugnot.Transfer)(routerAddr, 20000000)
 				gns.Transfer(routerAddr, 20000000)
 
 				testing.SetRealm(rouRealm)
-				wugnot.Approve(poolAddr, maxApprove)
+				cross(wugnot.Approve)(poolAddr, maxApprove)
 
 				amount0, amount1 := Swap(
 					tt.tokenPath0,
@@ -504,13 +504,13 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
-			wugnot.Deposit()
+			cross(wugnot.Deposit)()
 			if tt.recipient != positionOwner {
-				wugnot.Transfer(tt.recipient, 10000000000)
+				cross(wugnot.Transfer)(tt.recipient, 10000000000)
 			}
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			wugnot.Approve(poolAddr, maxApprove)
+			cross(wugnot.Approve)(poolAddr, maxApprove)
 			gns.Approve(poolAddr, maxApprove)
 
 			teller := common.GetTokenTeller(wugnotPath)
@@ -541,11 +541,11 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			wugnot.Transfer(routerAddr, 20000000)
+			cross(wugnot.Transfer)(routerAddr, 20000000)
 			gns.Transfer(routerAddr, 20000000)
 
 			testing.SetRealm(rouRealm)
-			wugnot.Approve(poolAddr, maxApprove)
+			cross(wugnot.Approve)(poolAddr, maxApprove)
 
 			amount0, amount1 := Swap(
 				tt.tokenPath0,
