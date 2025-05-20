@@ -115,7 +115,7 @@ func CreateExternalIncentive(
 	externalIncentives.set(incentiveId, incentive)
 
 	// deposit gns amount
-	cross(gns.Transfer)From(caller, stakerAddr, depositGnsAmount)
+	cross(gns.TransferFrom)(caller, stakerAddr, depositGnsAmount)
 
 	// transfer reward token from user to staker
 	teller := common.GetTokenTeller(rewardToken)

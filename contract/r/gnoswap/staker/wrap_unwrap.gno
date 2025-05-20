@@ -54,7 +54,7 @@ func unwrap(wugnotAmount uint64) {
 	}
 
 	// SEND WUGNOT: USER -> STAKER
-	cross(wugnot.Transfer)From(std.PreviousRealm().Address(), stakerAddr, wugnotAmount)
+	cross(wugnot.TransferFrom)(std.PreviousRealm().Address(), stakerAddr, wugnotAmount)
 
 	// UNWRAP IT
 	cross(wugnot.Withdraw)(wugnotAmount)

@@ -55,7 +55,7 @@ func unwrap(wugnotAmount uint64, to std.Address) error {
 		return ufmt.Errorf("amount(%d) is zero", wugnotAmount)
 	}
 
-	cross(wugnot.Transfer)From(to, positionAddr, wugnotAmount) // SEND WUGNOT: USER -> POSITION
+	cross(wugnot.TransferFrom)(to, positionAddr, wugnotAmount) // SEND WUGNOT: USER -> POSITION
 	cross(wugnot.Withdraw)(wugnotAmount)                       // POSITION HAS UGNOT
 	transferUGNOT(positionAddr, to, wugnotAmount)       // SEND UGNOT: POSITION -> USER
 	return nil

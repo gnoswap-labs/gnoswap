@@ -204,7 +204,7 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 	gs.SetAmountByProjectWallet(project.recipient, amount, true)
 
 	// gns will be locked in `launchpad` contract
-	cross(gns.Transfer)From(
+	cross(gns.TransferFrom)(
 		getPrevAddr(),
 		launchpadAddr,
 		amount,

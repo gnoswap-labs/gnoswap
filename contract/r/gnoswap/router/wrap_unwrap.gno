@@ -42,7 +42,7 @@ func unwrap(wugnotAmount uint64) {
 	}
 
 	// SEND WUGNOT: USER -> ROUTER
-	cross(wugnot.Transfer)From(std.PreviousRealm().Address(), routerAddr, wugnotAmount)
+	cross(wugnot.TransferFrom)(std.PreviousRealm().Address(), routerAddr, wugnotAmount)
 
 	// UNWRAP IT
 	cross(wugnot.Withdraw)(wugnotAmount)
