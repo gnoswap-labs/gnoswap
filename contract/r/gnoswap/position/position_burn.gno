@@ -40,7 +40,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	}
 
 	caller := getPrevAddr()
-	beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(caller) // before unwrap
+	beforeWugnotBalance := cross(wugnot.BalanceOf)(caller) // before unwrap
 
 	pToken0, pToken1, pFee := splitOf(position.poolKey)
 	burn0, burn1 := pl.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, liquidityToRemove.ToString())

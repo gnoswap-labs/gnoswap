@@ -68,8 +68,8 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		cross(wugnot.Transfer)(aliceAddr, uint64(tokenAmountForDistribute))
 		cross(wugnot.Transfer)(bobAddr, uint64(tokenAmountForDistribute))
 
-		uassert.Equal(t, uint64(tokenAmountForDistribute), cross(cross(wugnot.BalanceOf))(aliceAddr))
-		uassert.Equal(t, uint64(tokenAmountForDistribute), cross(cross(wugnot.BalanceOf))(bobAddr))
+		uassert.Equal(t, uint64(tokenAmountForDistribute), cross(wugnot.BalanceOf)(aliceAddr))
+		uassert.Equal(t, uint64(tokenAmountForDistribute), cross(wugnot.BalanceOf)(bobAddr))
 	})
 
 	t.Run("create pool - wugnot-gns-3000", func(t *testing.T) {
@@ -131,7 +131,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		// 2. Approve gns
 		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		// 3. Mint position
-		beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(aliceAddr)
+		beforeWugnotBalance := cross(wugnot.BalanceOf)(aliceAddr)
 		beforeGnsBalance := gns.BalanceOf(aliceAddr)
 		id, liquidityStr, amount0Str, amount1Str := Mint(token0Path,
 			token1Path,
@@ -167,7 +167,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		uassert.Equal(t, calculatedLiquidity.ToString(), liquidityStr)
 		liquidityFroPositionOne := u256.MustFromDecimal(liquidityStr)
 		calculatedAmount0, calculatedAmount1 := common.GetAmountsForLiquidity(sqrtPriceX96, sqrtRatioAX96, sqrtRatioBX96, liquidityFroPositionOne)
-		afterWugnotBalance := cross(cross(wugnot.BalanceOf))(aliceAddr)
+		afterWugnotBalance := cross(wugnot.BalanceOf)(aliceAddr)
 		afterGnsBalance := gns.BalanceOf(aliceAddr)
 		uassert.Equal(t, strconv.FormatUint(beforeWugnotBalance-afterWugnotBalance, 10), amount0Str)
 		uassert.Equal(t, strconv.FormatUint(beforeGnsBalance-afterGnsBalance, 10), amount1Str)
@@ -198,7 +198,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		// 2. Approve gns
 		cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 		// 3. Mint position
-		beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(bobAddr)
+		beforeWugnotBalance := cross(wugnot.BalanceOf)(bobAddr)
 		beforeGnsBalance := gns.BalanceOf(bobAddr)
 		id, liquidityStr, amount0Str, amount1Str := Mint(token0Path,
 			token1Path,
@@ -233,7 +233,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		uassert.Equal(t, calculatedLiquidity.ToString(), liquidityStr)
 		liquidityFroPositionOne := u256.MustFromDecimal(liquidityStr)
 		calculatedAmount0, calculatedAmount1 := common.GetAmountsForLiquidity(sqrtPriceX96, sqrtRatioAX96, sqrtRatioBX96, liquidityFroPositionOne)
-		afterWugnotBalance := cross(cross(wugnot.BalanceOf))(bobAddr)
+		afterWugnotBalance := cross(wugnot.BalanceOf)(bobAddr)
 		afterGnsBalance := gns.BalanceOf(bobAddr)
 		uassert.Equal(t, strconv.FormatUint(beforeWugnotBalance-afterWugnotBalance, 10), amount0Str)
 		uassert.Equal(t, strconv.FormatUint(beforeGnsBalance-afterGnsBalance, 10), amount1Str)
@@ -263,7 +263,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		// 2. Approve gns
 		cross(gns.Approve)(routerAddr, consts.UINT64_MAX)
 		// 3. Mint position
-		beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(adminAddr)
+		beforeWugnotBalance := cross(wugnot.BalanceOf)(adminAddr)
 		beforeGnsBalance := gns.BalanceOf(adminAddr)
 
 		amountIn, amountOut := rr.ExactInSwapRoute(
@@ -276,7 +276,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 			deadline,
 			referrerAddr,
 		)
-		afterWugnotBalance := cross(cross(wugnot.BalanceOf))(adminAddr)
+		afterWugnotBalance := cross(wugnot.BalanceOf)(adminAddr)
 		afterGnsBalance := gns.BalanceOf(adminAddr)
 		uassert.Equal(t, strconv.FormatUint(beforeGnsBalance-afterGnsBalance, 10), amountIn)
 		num, _ := strconv.ParseInt(amountOut, 10, 64)
@@ -374,7 +374,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 	t.Run("distribute wugnot token ", func(t *testing.T) {
 		tokenAmountForDistribute := int64(1000000000000)
 		fullTokenAmount := tokenAmountForDistribute * 1000000
-		if cross(cross(wugnot.BalanceOf))(aliceAddr) == uint64(0) {
+		if cross(wugnot.BalanceOf)(aliceAddr) == uint64(0) {
 			testing.SetOriginCaller(adminAddr)
 			newCoins := std.Coins{{"ugnot", fullTokenAmount}}
 			testing.IssueCoins(adminAddr, newCoins)
@@ -383,9 +383,9 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 			banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
 			cross(wugnot.Deposit)()
 			cross(wugnot.Transfer)(aliceAddr, uint64(tokenAmountForDistribute))
-			uassert.Equal(t, uint64(tokenAmountForDistribute), cross(cross(wugnot.BalanceOf))(aliceAddr))
+			uassert.Equal(t, uint64(tokenAmountForDistribute), cross(wugnot.BalanceOf)(aliceAddr))
 		}
-		if cross(cross(wugnot.BalanceOf))(bobAddr) == uint64(0) {
+		if cross(wugnot.BalanceOf)(bobAddr) == uint64(0) {
 			testing.SetOriginCaller(adminAddr)
 			newCoins := std.Coins{{"ugnot", fullTokenAmount}}
 			testing.IssueCoins(adminAddr, newCoins)
@@ -394,7 +394,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 			banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
 			cross(wugnot.Deposit)()
 			cross(wugnot.Transfer)(bobAddr, uint64(tokenAmountForDistribute))
-			uassert.Equal(t, uint64(tokenAmountForDistribute), cross(cross(wugnot.BalanceOf))(aliceAddr))
+			uassert.Equal(t, uint64(tokenAmountForDistribute), cross(wugnot.BalanceOf)(aliceAddr))
 		}
 	})
 
@@ -470,7 +470,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 			// 2. Approve gns
 			cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 			// 3. Mint position
-			beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(aliceAddr)
+			beforeWugnotBalance := cross(wugnot.BalanceOf)(aliceAddr)
 			beforeGnsBalance := gns.BalanceOf(aliceAddr)
 			id, liquidityStr, amount0Str, amount1Str := Mint(token0Path,
 				token1Path,
@@ -506,7 +506,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 			uassert.Equal(t, calculatedLiquidity.ToString(), liquidityStr)
 			liquidityFroPositionOne := u256.MustFromDecimal(liquidityStr)
 			calculatedAmount0, calculatedAmount1 := common.GetAmountsForLiquidity(sqrtPriceX96, sqrtRatioAX96, sqrtRatioBX96, liquidityFroPositionOne)
-			afterWugnotBalance := cross(cross(wugnot.BalanceOf))(aliceAddr)
+			afterWugnotBalance := cross(wugnot.BalanceOf)(aliceAddr)
 			afterGnsBalance := gns.BalanceOf(aliceAddr)
 			uassert.Equal(t, strconv.FormatUint(beforeWugnotBalance-afterWugnotBalance, 10), amount0Str)
 			uassert.Equal(t, strconv.FormatUint(beforeGnsBalance-afterGnsBalance, 10), amount1Str)
@@ -541,7 +541,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 			// 2. Approve gns
 			cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 			// 3. Mint position
-			beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(bobAddr)
+			beforeWugnotBalance := cross(wugnot.BalanceOf)(bobAddr)
 			beforeGnsBalance := gns.BalanceOf(bobAddr)
 			id, liquidityStr, amount0Str, amount1Str := Mint(token0Path,
 				token1Path,
@@ -576,7 +576,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 			uassert.Equal(t, calculatedLiquidity.ToString(), liquidityStr)
 			liquidityFroPositionOne := u256.MustFromDecimal(liquidityStr)
 			calculatedAmount0, calculatedAmount1 := common.GetAmountsForLiquidity(sqrtPriceX96, sqrtRatioAX96, sqrtRatioBX96, liquidityFroPositionOne)
-			afterWugnotBalance := cross(cross(wugnot.BalanceOf))(bobAddr)
+			afterWugnotBalance := cross(wugnot.BalanceOf)(bobAddr)
 			afterGnsBalance := gns.BalanceOf(bobAddr)
 			uassert.Equal(t, strconv.FormatUint(beforeWugnotBalance-afterWugnotBalance, 10), amount0Str)
 			uassert.Equal(t, strconv.FormatUint(beforeGnsBalance-afterGnsBalance, 10), amount1Str)
@@ -607,7 +607,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		// 2. Approve gns
 		cross(gns.Approve)(routerAddr, consts.UINT64_MAX)
 		// 3. Mint position
-		beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(adminAddr)
+		beforeWugnotBalance := cross(wugnot.BalanceOf)(adminAddr)
 		beforeGnsBalance := gns.BalanceOf(adminAddr)
 
 		amountIn, amountOut := rr.ExactInSwapRoute(
@@ -620,7 +620,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 			deadline,
 			referrerAddr,
 		)
-		afterWugnotBalance := cross(cross(wugnot.BalanceOf))(adminAddr)
+		afterWugnotBalance := cross(wugnot.BalanceOf)(adminAddr)
 		afterGnsBalance := gns.BalanceOf(adminAddr)
 		uassert.Equal(t, strconv.FormatUint(beforeGnsBalance-afterGnsBalance, 10), amountIn)
 		num, _ := strconv.ParseInt(amountOut, 10, 64)
@@ -686,7 +686,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		// 0. Set realm to alice
 		testing.SetRealm(aliceRealm)
 
-		beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(aliceAddr)
+		beforeWugnotBalance := cross(wugnot.BalanceOf)(aliceAddr)
 		beforeGnsBalance := gns.BalanceOf(aliceAddr)
 		liquidity := "170103415"
 		amount0Min := "0"
@@ -698,7 +698,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		uassert.Equal(t, "50000000", position.token1Balance.ToString())
 
 		positionId, liquidityStr, fee0, fee1, amount0Str, amount1Str, poolPath := DecreaseLiquidity(uint64(1), liquidity, amount0Min, amount1Min, maxTimeout, false)
-		afterWugnotBalance := cross(cross(wugnot.BalanceOf))(aliceAddr)
+		afterWugnotBalance := cross(wugnot.BalanceOf)(aliceAddr)
 		afterGnsBalance := gns.BalanceOf(aliceAddr)
 		amount0, _ := strconv.ParseUint(amount0Str, 10, 64)
 		amount0Fee, _ := strconv.ParseUint(fee0, 10, 64)
@@ -803,7 +803,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 	t.Run("distribute wugnot token ", func(t *testing.T) {
 		tokenAmountForDistribute := int64(1000000000000)
 		fullTokenAmount := tokenAmountForDistribute * 1000000
-		if cross(cross(wugnot.BalanceOf))(aliceAddr) == uint64(0) {
+		if cross(wugnot.BalanceOf)(aliceAddr) == uint64(0) {
 			testing.SetOriginCaller(adminAddr)
 			newCoins := std.Coins{{"ugnot", fullTokenAmount}}
 			testing.IssueCoins(adminAddr, newCoins)
@@ -812,9 +812,9 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 			banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
 			cross(wugnot.Deposit)()
 			cross(wugnot.Transfer)(aliceAddr, uint64(tokenAmountForDistribute))
-			uassert.Equal(t, uint64(tokenAmountForDistribute), cross(cross(wugnot.BalanceOf))(aliceAddr))
+			uassert.Equal(t, uint64(tokenAmountForDistribute), cross(wugnot.BalanceOf)(aliceAddr))
 		}
-		if cross(cross(wugnot.BalanceOf))(bobAddr) == uint64(0) {
+		if cross(wugnot.BalanceOf)(bobAddr) == uint64(0) {
 			testing.SetOriginCaller(adminAddr)
 			newCoins := std.Coins{{"ugnot", fullTokenAmount}}
 			testing.IssueCoins(adminAddr, newCoins)
@@ -823,7 +823,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 			banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
 			cross(wugnot.Deposit)()
 			cross(wugnot.Transfer)(bobAddr, uint64(tokenAmountForDistribute))
-			uassert.Equal(t, uint64(tokenAmountForDistribute), cross(cross(wugnot.BalanceOf))(aliceAddr))
+			uassert.Equal(t, uint64(tokenAmountForDistribute), cross(wugnot.BalanceOf)(aliceAddr))
 		}
 	})
 
@@ -899,7 +899,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 			// 2. Approve gns
 			cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 			// 3. Mint position
-			beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(aliceAddr)
+			beforeWugnotBalance := cross(wugnot.BalanceOf)(aliceAddr)
 			beforeGnsBalance := gns.BalanceOf(aliceAddr)
 			id, liquidityStr, amount0Str, amount1Str := Mint(token0Path,
 				token1Path,
@@ -935,7 +935,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 			uassert.Equal(t, calculatedLiquidity.ToString(), liquidityStr)
 			liquidityFroPositionOne := u256.MustFromDecimal(liquidityStr)
 			calculatedAmount0, calculatedAmount1 := common.GetAmountsForLiquidity(sqrtPriceX96, sqrtRatioAX96, sqrtRatioBX96, liquidityFroPositionOne)
-			afterWugnotBalance := cross(cross(wugnot.BalanceOf))(aliceAddr)
+			afterWugnotBalance := cross(wugnot.BalanceOf)(aliceAddr)
 			afterGnsBalance := gns.BalanceOf(aliceAddr)
 			uassert.Equal(t, strconv.FormatUint(beforeWugnotBalance-afterWugnotBalance, 10), amount0Str)
 			uassert.Equal(t, strconv.FormatUint(beforeGnsBalance-afterGnsBalance, 10), amount1Str)
@@ -970,7 +970,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 			// 2. Approve gns
 			cross(gns.Approve)(poolAddr, consts.UINT64_MAX)
 			// 3. Mint position
-			beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(bobAddr)
+			beforeWugnotBalance := cross(wugnot.BalanceOf)(bobAddr)
 			beforeGnsBalance := gns.BalanceOf(bobAddr)
 			id, liquidityStr, amount0Str, amount1Str := Mint(token0Path,
 				token1Path,
@@ -1005,7 +1005,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 			uassert.Equal(t, calculatedLiquidity.ToString(), liquidityStr)
 			liquidityFroPositionOne := u256.MustFromDecimal(liquidityStr)
 			calculatedAmount0, calculatedAmount1 := common.GetAmountsForLiquidity(sqrtPriceX96, sqrtRatioAX96, sqrtRatioBX96, liquidityFroPositionOne)
-			afterWugnotBalance := cross(cross(wugnot.BalanceOf))(bobAddr)
+			afterWugnotBalance := cross(wugnot.BalanceOf)(bobAddr)
 			afterGnsBalance := gns.BalanceOf(bobAddr)
 			uassert.Equal(t, strconv.FormatUint(beforeWugnotBalance-afterWugnotBalance, 10), amount0Str)
 			uassert.Equal(t, strconv.FormatUint(beforeGnsBalance-afterGnsBalance, 10), amount1Str)
@@ -1036,7 +1036,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		// 2. Approve gns
 		cross(gns.Approve)(routerAddr, consts.UINT64_MAX)
 		// 3. Mint position
-		beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(adminAddr)
+		beforeWugnotBalance := cross(wugnot.BalanceOf)(adminAddr)
 		beforeGnsBalance := gns.BalanceOf(adminAddr)
 
 		amountIn, amountOut := rr.ExactInSwapRoute(
@@ -1049,7 +1049,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 			deadline,
 			referrerAddr,
 		)
-		afterWugnotBalance := cross(cross(wugnot.BalanceOf))(adminAddr)
+		afterWugnotBalance := cross(wugnot.BalanceOf)(adminAddr)
 		afterGnsBalance := gns.BalanceOf(adminAddr)
 		uassert.Equal(t, strconv.FormatUint(beforeGnsBalance-afterGnsBalance, 10), amountIn)
 		num, _ := strconv.ParseInt(amountOut, 10, 64)

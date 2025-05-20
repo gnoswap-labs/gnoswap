@@ -480,7 +480,7 @@ func TestSwapAndDrySwapComparison(t *testing.T) {
 			setupFn: func(t *testing.T) {
 				InitialisePoolTest(t)
 				TokenFaucet(t, gnsPath, addr)
-				TokenApprove(t, gnsPath, addr, poolAddr, uint64(1000))
+				TokenApprove(t, gnsPath, addr, poolAddr, int64(1000))
 			},
 			token0Path:        wugnotPath,
 			token1Path:        gnsPath,
@@ -568,7 +568,7 @@ func TestSwapAndDrySwapComparison_amount_zero(t *testing.T) {
 			setupFn: func(t *testing.T) {
 				InitialisePoolTest(t)
 				TokenFaucet(t, gnsPath, addr)
-				TokenApprove(t, gnsPath, addr, poolAddr, uint64(1000))
+				TokenApprove(t, gnsPath, addr, poolAddr, int64(1000))
 			},
 			action: func(t *testing.T) {
 				dryAmount0, dryAmount1, drySuccess := DrySwap(
@@ -591,7 +591,7 @@ func TestSwapAndDrySwapComparison_amount_zero(t *testing.T) {
 			setupFn: func(t *testing.T) {
 				InitialisePoolTest(t)
 				TokenFaucet(t, gnsPath, addr)
-				TokenApprove(t, gnsPath, addr, poolAddr, uint64(1000))
+				TokenApprove(t, gnsPath, addr, poolAddr, int64(1000))
 			},
 			action: func(t *testing.T) {
 				testing.SetOriginCaller(routerAddr)

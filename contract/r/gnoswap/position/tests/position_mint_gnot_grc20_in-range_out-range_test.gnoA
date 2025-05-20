@@ -153,7 +153,7 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 	// mint 90000000
 	// => remain 10000000
 	uassert.Equal(t, ugnotBalanceOf(t, fresh01), uint64(10000000))
-	uassert.Equal(t, cross(cross(wugnot.BalanceOf))(fresh01), uint64(0)) // position will unwrap remaining wugnot to ugnot, so wugnot balance should be 0
+	uassert.Equal(t, cross(wugnot.BalanceOf)(fresh01), uint64(0)) // position will unwrap remaining wugnot to ugnot, so wugnot balance should be 0
 }
 
 // func TestBothWithFresh(t *testing.T) {
@@ -190,7 +190,7 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 // 	// mint 70_000_000
 // 	// => remain 30_000_000
 // 	uassert.Equal(t, ugnotBalanceOf(t, fresh02), uint64(30_000_000))
-// 	uassert.Equal(t, cross(cross(wugnot.BalanceOf))(fresh02), uint64(0)) // position will unwrap remaining wugnot to ugnot, so wugnot balance should be 0
+// 	uassert.Equal(t, cross(wugnot.BalanceOf)(fresh02), uint64(0)) // position will unwrap remaining wugnot to ugnot, so wugnot balance should be 0
 // }
 
 // func TestBothWithFreshButNoSend(t *testing.T) {

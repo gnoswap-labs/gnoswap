@@ -114,9 +114,9 @@ func mockProtocolFee(t *testing.T) {
 	uassert.Equal(t, cross(qux.BalanceOf)(devOpsAddr), uint64(0))
 	uassert.Equal(t, cross(qux.BalanceOf)(govStakerAddr), uint64(0))
 
-	uassert.Equal(t, cross(cross(wugnot.BalanceOf))(protocolFeeAddr), uint64(10000))
-	uassert.Equal(t, cross(cross(wugnot.BalanceOf))(devOpsAddr), uint64(0))
-	uassert.Equal(t, cross(cross(wugnot.BalanceOf))(govStakerAddr), uint64(0))
+	uassert.Equal(t, cross(wugnot.BalanceOf)(protocolFeeAddr), uint64(10000))
+	uassert.Equal(t, cross(wugnot.BalanceOf)(devOpsAddr), uint64(0))
+	uassert.Equal(t, cross(wugnot.BalanceOf)(govStakerAddr), uint64(0))
 }
 
 func skipDummyBlocks(t *testing.T) {

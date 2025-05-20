@@ -89,8 +89,8 @@ func TestMint(t *testing.T) {
 		)
 
 		// approve enough token to mint position
-		cross(bar.Approve)(poolAddr, consts.UINT64_MAX)
-		cross(baz.Approve)(poolAddr, consts.UINT64_MAX)
+		cross(bar.Approve)(poolAddr, maxApprove)
+		cross(baz.Approve)(poolAddr, maxApprove)
 
 		beforeBalance0 := cross(bar.BalanceOf)(poolAddr)
 		beforeBalance1 := cross(baz.BalanceOf)(poolAddr)

@@ -229,7 +229,7 @@ func processTokens(
 	amount0Desired string,
 	amount1Desired string,
 	caller std.Address,
-) (string, string, bool, bool, uint64) {
+) (string, string, bool, bool, int64) {
 	err := validateTokenPath(token0, token1)
 	if err != nil {
 		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
@@ -237,7 +237,7 @@ func processTokens(
 
 	token0IsNative := false
 	token1IsNative := false
-	wrappedAmount := uint64(0)
+	wrappedAmount := int64(0)
 
 	if isNative(token0) {
 		token0 = consts.WRAPPED_WUGNOT

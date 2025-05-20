@@ -272,7 +272,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			cross(gns.Transfer)(routerContract, 20000000)
 			cross(wugnot.Approve)(routerContract, maxApprove)
 			cross(gns.Approve)(routerContract, maxApprove)
-			beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(tt.recipient)
+			beforeWugnotBalance := cross(wugnot.BalanceOf)(tt.recipient)
 
 			testing.SetRealm(std.NewCodeRealm(routerPath))
 			cross(wugnot.Approve)(poolContract, maxApprove)
@@ -298,7 +298,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				"", // referrer
 			)
 			testing.SkipHeights(1)
-			afterWugnotBalance := cross(cross(wugnot.BalanceOf))(tt.recipient)
+			afterWugnotBalance := cross(wugnot.BalanceOf)(tt.recipient)
 
 			defer func() {
 				if r := recover(); r != nil {
@@ -643,7 +643,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			cross(gns.Transfer)(routerContract, 20000000)
 			cross(wugnot.Approve)(routerContract, maxApprove)
 			cross(gns.Approve)(routerContract, maxApprove)
-			beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(tt.recipient)
+			beforeWugnotBalance := cross(wugnot.BalanceOf)(tt.recipient)
 
 			testing.SetRealm(std.NewCodeRealm(routerPath))
 			cross(wugnot.Approve)(poolContract, maxApprove)
@@ -669,7 +669,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 				"", // referrer
 			)
 			testing.SkipHeights(1)
-			afterWugnotBalance := cross(cross(wugnot.BalanceOf))(tt.recipient)
+			afterWugnotBalance := cross(wugnot.BalanceOf)(tt.recipient)
 
 			defer func() {
 				if r := recover(); r != nil {
@@ -808,7 +808,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			cross(gns.Transfer)(routerContract, 20000000)
 			cross(wugnot.Approve)(routerContract, maxApprove)
 			cross(gns.Approve)(routerContract, maxApprove)
-			beforeWugnotBalance := cross(cross(wugnot.BalanceOf))(tt.recipient)
+			beforeWugnotBalance := cross(wugnot.BalanceOf)(tt.recipient)
 
 			testing.SetRealm(std.NewCodeRealm(routerPath))
 			cross(wugnot.Approve)(poolContract, maxApprove)
@@ -835,7 +835,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 				"", // referrer
 			)
 			testing.SkipHeights(1)
-			afterWugnotBalance := cross(cross(wugnot.BalanceOf))(tt.recipient)
+			afterWugnotBalance := cross(wugnot.BalanceOf)(tt.recipient)
 
 			defer func() {
 				if r := recover(); r != nil {

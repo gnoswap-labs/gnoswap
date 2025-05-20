@@ -101,7 +101,7 @@ func testInit(t *testing.T) {
 		testing.SetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}})
 		cross(wugnot.Deposit)()
 		testing.SetOriginSend(nil)
-		uassert.Equal(t, uint64(50_000_000_000_000), cross(cross(wugnot.BalanceOf))(adminAddr))
+		uassert.Equal(t, uint64(50_000_000_000_000), cross(wugnot.BalanceOf)(adminAddr))
 		uassert.Equal(t, "50000000000000ugnot", (banker.GetCoins(adminAddr).String()))
 	})
 }

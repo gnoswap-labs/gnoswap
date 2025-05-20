@@ -140,7 +140,7 @@ func TokenBalance(t *testing.T, tokenPath string, owner std.Address) uint64 {
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
-		return cross(cross(wugnot.BalanceOf))(owner)
+		return cross(wugnot.BalanceOf)(owner)
 	case gnsPath:
 		return gns.BalanceOf(owner)
 	case barPath:
