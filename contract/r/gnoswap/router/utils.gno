@@ -11,7 +11,6 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/emission"
 
-	phalt "gno.land/p/gnoswap/halt"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v1/halt"
@@ -90,12 +89,12 @@ func haltCheck() error {
 
 	if currentLevel != halt.LvMainnetSafeMode {
 		// check for withdraw operation halt
-		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
 			return err
 		}
 
 		// check for router contract halt
-		if halt.IsContractHalted(phalt.OpTypeRouter) {
+		if halt.IsContractHalted(halt.OpTypeRouter) {
 			return ufmt.Errorf(errRouterHalted)
 		}
 	}

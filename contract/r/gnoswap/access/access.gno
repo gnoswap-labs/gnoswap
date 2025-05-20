@@ -93,7 +93,7 @@ func initialize(cfg *config) error {
 // declareNewRole declares a new role with permissions
 func declareNewRole(roleName string, addr std.Address) error {
 	checker := createAddressChecker(addr, roleName)
-	if err := rbac.DeclareRole(roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
+	if err := cross(rbac.DeclareRole)(roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
 		return ufmt.Errorf(errDeclareRole, roleName, err)
 	}
 	return nil
@@ -109,6 +109,8 @@ func GetCurrentConfig() *config {
 
 // SetRole sets or updates a role with the given address
 func SetRole(roleName string, address std.Address) error {
+	crossing()
+
 	if err := validateConfig(); err != nil {
 		return err
 	}
@@ -126,11 +128,11 @@ func SetRole(roleName string, address std.Address) error {
 	checker := createAddressChecker(address, roleName)
 
 	if RoleExists(roleName) {
-		if err := rbac.UpdatePermission(roleName, PERM_ACCESS, checker); err != nil {
+		if err := cross(rbac.UpdatePermission)(roleName, PERM_ACCESS, checker); err != nil {
 			return err
 		}
 	} else {
-		if err := rbac.DeclareRole(roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
+		if err := cross(rbac.DeclareRole)(roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
 			return err
 		}
 	}
@@ -155,6 +157,8 @@ func GetAddress(roleName string) (std.Address, error) {
 
 // UpdateRoleAddress updates the address for a specific role's permission checker
 func UpdateRoleAddress(roleName string, newAddress std.Address) error {
+	crossing()
+
 	if !isAdmin() {
 		return ufmt.Errorf("only admin can update roles")
 	}
@@ -173,11 +177,13 @@ func UpdateRoleAddress(roleName string, newAddress std.Address) error {
 		"prevAddress", prevAddress.String(),
 		"newAddress", newAddress.String(),
 	)
-	return rbac.UpdatePermission(roleName, PERM_ACCESS, newChecker)
+	return cross(rbac.UpdatePermission)(roleName, PERM_ACCESS, newChecker)
 }
 
 // CreateRole creates a new role with the given address
 func CreateRole(roleName string, address std.Address) error {
+	crossing()
+
 	if !isAdmin() {
 		return ufmt.Errorf("only admin can create roles")
 	}
@@ -231,6 +237,8 @@ func GetRoles() []string {
 
 // DeleteRole deletes a role and its associated permissions
 func DeleteRole(roleName string) error {
+	crossing()
+
 	if !isAdmin() {
 		return ufmt.Errorf("only admin can delete roles")
 	}
@@ -256,7 +264,7 @@ func DeleteRole(roleName string) error {
 	deletedAddress := currentConfig.roles[roleName]
 
 	// Remove the role from RBAC
-	if err := rbac.RemoveRole(roleName); err != nil {
+	if err := cross(rbac.RemoveRole)(roleName); err != nil {
 		return ufmt.Errorf("failed to remove role from RBAC: %v", err)
 	}
 

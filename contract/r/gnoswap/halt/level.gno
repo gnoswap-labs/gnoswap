@@ -132,7 +132,12 @@ func (h BasicHaltLevel) IsOperationAllowed(op Operation) bool {
 
 // NewHaltLevel creates a new HaltLevel instance with the specified configuration.
 func NewHaltLevel(level LevelID, name, desc string, allowedOps allowedOps) HaltLevel {
-	return BasicHaltLevel{baseInfo{name, desc}, level, allowedOps}
+	// Create a new map to avoid readonly issues
+	ops := make(map[OpType]bool)
+	for k, v := range allowedOps {
+		ops[k] = v
+	}
+	return BasicHaltLevel{baseInfo{name, desc}, level, ops}
 }
 
 // CompositeOp represents the type of operation to be performed

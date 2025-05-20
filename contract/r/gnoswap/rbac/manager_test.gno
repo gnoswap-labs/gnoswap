@@ -117,19 +117,19 @@ func TestUnauthorizedAccess(t *testing.T) {
 
 	t.Run("RegisterRole unauthorized", func(t *testing.T) {
 		testing.SetOriginCaller(wrongCaller)
-		err := RegisterRole(roleName)
+		err := cross(RegisterRole)(roleName)
 		uassert.ErrorContains(t, err, prbac.ErrUnauthorized.Error())
 	})
 
 	t.Run("RegisterPermission unauthorized", func(t *testing.T) {
 		testing.SetOriginCaller(wrongCaller)
-		err := RegisterPermission(roleName, permissionName, checker)
+		err := cross(RegisterPermission)(roleName, permissionName, checker)
 		uassert.ErrorContains(t, err, prbac.ErrUnauthorized.Error())
 	})
 
 	t.Run("RemovePermission unauthorized", func(t *testing.T) {
 		testing.SetOriginCaller(wrongCaller)
-		err := RemovePermission(roleName, permissionName)
+		err := cross(RemovePermission)(roleName, permissionName)
 		uassert.ErrorContains(t, err, prbac.ErrUnauthorized.Error())
 	})
 }
