@@ -13,23 +13,23 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 	poolPath := "test_pool"
 	account1 := testutils.TestAddress("account1")
 	account2 := testutils.TestAddress("account2")
-	
+
 	// create pool
 	pool := NewPool(poolPath, 100)
 	pools.set(poolPath, pool)
-	
+
 	// allowed tokens
 	allowedTokens := []string{
-		consts.GNS_PATH,      // GNS
-		consts.WUGNOT_PATH,   // GNOT (wrapped)
-		"token0_path",        // pool's first token
-		"token1_path",        // pool's second token
+		consts.GNS_PATH,    // GNS
+		consts.WUGNOT_PATH, // GNOT (wrapped)
+		"token0_path",      // pool's first token
+		"token1_path",      // pool's second token
 	}
-	
+
 	currentTime := time.Now().Unix()
-	startTime := currentTime + 86400    // 1 day later
-	endTime := startTime + (86400 * 7)  // 7 days after start
-	
+	startTime := currentTime + 86400   // 1 day later
+	endTime := startTime + (86400 * 7) // 7 days after start
+
 	tests := []struct {
 		name        string
 		creator     std.Address
@@ -80,7 +80,7 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 			shouldPass:  true,
 		},
 	}
-	
+
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// create incentive
@@ -93,24 +93,24 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 				rewardAmount:   tc.amount,
 				refundee:       tc.creator,
 			}
-			
+
 			// add incentive
 			pool.incentives.create(tc.creator, incentive)
-			
+
 			if tc.shouldPass {
 				// check if incentive was actually created
 				ictv, exists := pool.incentives.Get(startTime, endTime, tc.creator, tc.rewardToken)
 				if !exists {
 					t.Error("incentive was not created")
 				}
-				
+
 				if ictv.rewardAmount != tc.amount {
 					t.Errorf("expected reward amount %d, got %d", tc.amount, ictv.rewardAmount)
 				}
 			}
 		})
 	}
-	
+
 	// clean up after test
 	pools.tree.Remove(poolPath)
 }
