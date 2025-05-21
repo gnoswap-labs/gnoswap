@@ -168,7 +168,7 @@ func (h *HalvingData) initialize(startHeight, startTimestamp int64) {
 		if year == HALVING_START_YEAR {
 			h.setAccumAmount(year, currentYearMaxAmount)
 			h.setStartBlockHeight(year, startHeight)
-			h.setEndBlockHeight(year, startHeight+(blockPerYear*year)-1)
+			h.setEndBlockHeight(year, startHeight+(blockPerYear)-1)
 		} else {
 			// Add current year's max amount to previous year's accumulated amount
 			h.setAccumAmount(year, currentYearMaxAmount+h.getAccumAmount(year-1))
@@ -274,6 +274,9 @@ func GetAvgBlockTimeInMs() int64 {
 
 // SetAvgBlockTimeInMsByAdmin admin sets average block time
 func SetAvgBlockTimeInMsByAdmin(ms int64) {
+	if ms <= 0 {
+		panic(errInvalidAvgBlockTimeInMs)
+	}
 	assertCallerIsAdmin()
 
 	prevAvgBlockTimeInMs := GetAvgBlockTimeInMs()
@@ -310,7 +313,7 @@ func emitBlockTimeChangeEvent(eventName, prevAddr, prevPkgPath string, prevTime,
 		"newAvgBlockTimeMs", formatInt(newTime),
 	}
 
-	// Add end block heights for all years
+	// add end block heights for all years
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		eventParams = append(eventParams,
 			ufmt.Sprintf("endBlock%dYear", year),
@@ -318,68 +321,43 @@ func emitBlockTimeChangeEvent(eventName, prevAddr, prevPkgPath string, prevTime,
 	}
 }
 
-// setAvgBlockTimeInMs sets average block time and updates halving data
+// setAvgBlockTimeInMs sets the new average block time (ms) and updates all halving schedules.
 func setAvgBlockTimeInMs(ms int64) {
-	assertShouldNotBeHalted()
+    assertShouldNotBeHalted()
 
-	now := time.Now().Unix()
-	height := std.ChainHeight()
+    if ms <= 0 {
+        panic("invalid block time interval")
+    }
 
-	// Update blocks per year
-	yearByMilliSec := secToMs(SECONDS_IN_YEAR)
-	blockPerYear = yearByMilliSec / ms
+    now := time.Now().Unix()
 
-	// Get current halving year and end timestamp
-	currentYear, currentYearEndTimestamp := getHalvingYearAndEndTimestamp(now)
+	// sync blockPerYear, blockPerDay
+    // SECONDS_IN_YEAR, consts.SECONDS_PER_DAY must be in seconds
+    blockPerYear = secToMs(SECONDS_IN_YEAR) / ms
+    blockPerDay  = secToMs(consts.SECONDS_PER_DAY) / ms
 
-	// Calculate remaining time for current halving year
-	timeLeft := currentYearEndTimestamp - now
-	timeLeftMs := secToMs(timeLeft)
+    // recalculate all remaining years (amountPerBlock)
+    es := GetEmissionState()
+    hd := &es.halvingData
+    for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
+        maxAmt := hd.getMaxAmount(year)
+        // divide the annual issuance amount by the number of days
+		// and then by the number of blocks
+        dailyAmt := maxAmt / DAY_PER_YEAR
+        newAmtPerBlock := dailyAmt / blockPerDay
+        hd.setAmountPerBlock(year, newAmtPerBlock)
+    }
 
-	// Calculate remaining blocks and rewards for current halving year
-	blockLeft := timeLeftMs / ms
-	minted := GetMintedEmissionAmount()
-	amountLeft := GetHalvingYearAccuAmount(currentYear) - minted
+    // adjust the current year's amount per block
+    currentYear, _ := getHalvingYearAndEndTimestamp(now)
+    adjusted := hd.getAmountPerBlock(currentYear)
+    if callbackEmissionChange == nil {
+        panic(errCallbackEmissionChangeIsNil.Error())
+    }
+    callbackEmissionChange(adjusted)
 
-	// Adjust reward per block for current halving year
-	adjustedAmountPerBlock := amountLeft / blockLeft
-
-	// Execute emission change notification callback
-	if callbackEmissionChange == nil {
-		panic(errCallbackEmissionChangeIsNil.Error())
-	}
-	callbackEmissionChange(adjustedAmountPerBlock)
-
-	// Update emission per block for current halving year
-	setAmountPerBlockPerHalvingYear(currentYear, adjustedAmountPerBlock)
-
-	// Recalculate block heights for all halving years
-	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
-		if year < currentYear {
-			// Skip past halving years
-			continue
-		}
-
-		yearEndTimestamp := GetHalvingYearTimestamp(year) + SECONDS_IN_YEAR
-		timeLeftForYear := yearEndTimestamp - now
-		numBlock := (timeLeftForYear * consts.MILLISECONDS_PER_SECOND) / ms
-		yearEndHeight := height + numBlock
-
-		if year == currentYear {
-			// Only update end block for current year
-			setHalvingYearEndBlock(year, yearEndHeight)
-		} else {
-			// Update both start and end blocks for next years
-			prevYearEnd := GetHalvingYearEndBlock(year - 1)
-			nextYearStart := prevYearEnd + 1
-			nextYearEnd := nextYearStart + blockPerYear
-
-			setHalvingYearStartBlock(year, nextYearStart)
-			setHalvingYearEndBlock(year, nextYearEnd)
-		}
-	}
-
-	avgBlockTimeMs = ms
+    // final update of global variables
+    avgBlockTimeMs = ms
 }
 
 // GetAmountByHeight returns emission amount based on block height

@@ -28,21 +28,35 @@ func GetHalvingBlocksInRange(startHeight, endHeight int64) ([]int64, []int64) {
 	return halvingBlocks, halvingEmissions
 }
 
-// GetEmission returns emission amount for the current block
+// GetEmission returns the emission amount for the current block,
+// **and** updates that year's mintedAmount and leftAmount.
 func GetEmission() int64 {
-	halvingData := GetEmissionState().getHalvingData()
-	height := std.ChainHeight()
+    es := GetEmissionState()
+    hd := &es.halvingData
+    height := std.ChainHeight()
 
-	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
-		startBlock := halvingData.getStartBlockHeight(year)
-		endBlock := halvingData.getEndBlockHeight(year)
-		if startBlock <= height && height < endBlock {
-			return halvingData.getAmountPerBlock(year)
-		}
-	}
+    for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
+        startBlock := hd.getStartBlockHeight(year)
+        endBlock   := hd.getEndBlockHeight(year)
 
-	return 0
+        // include both startBlock and endBlock
+        if startBlock <= height && height <= endBlock {
+            amount := hd.getAmountPerBlock(year)
+
+			// update mintedAmount and leftAmount
+            prevMinted := hd.getMintedAmount(year)
+            hd.setMintedAmount(year, prevMinted + amount)
+
+            prevLeft := hd.getLeftAmount(year)
+            hd.setLeftAmount(year, prevLeft - amount)
+
+            return amount
+        }
+    }
+
+    return 0
 }
+
 
 // GetHalvingYearStartBlock returns the starting block height for a specific halving year
 func GetHalvingYearStartBlock(year int64) int64 {
