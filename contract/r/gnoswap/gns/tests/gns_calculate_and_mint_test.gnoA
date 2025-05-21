@@ -49,12 +49,25 @@ func TestCalculateAmountToMint(t *testing.T) {
 		amount := calculateAmountToMint(GetHalvingYearStartBlock(12), GetHalvingYearEndBlock(12)+1)
 		uassert.Equal(t, int64(0), amount)
 	})
+
+	t.Run("handles invalid block range - fromHeight > toHeight", func(t *testing.T) {
+		// Test when fromHeight is greater than toHeight
+		amount := calculateAmountToMint(GetLastMintedHeight()+10, GetLastMintedHeight()+5)
+		uassert.Equal(t, int64(0), amount)
+	})
+
+	t.Run("handles negative block heights correctly", func(t *testing.T) {
+		// Negative heights should be before emission start, so should return 0
+		negativeStart := GetHalvingYearStartBlock(1) - 100
+		amount := calculateAmountToMint(negativeStart, GetHalvingYearStartBlock(1)-1)
+		uassert.Equal(t, int64(0), amount)
+	})
 }
 
 func TestMintGns(t *testing.T) {
 	t.Run("panic for swap is halted", func(t *testing.T) {
 		testing.SetRealm(std.NewUserRealm(adminAddr))
-		testing.SkipHeights(123)  // pass some block to bypass last block check
+		testing.SkipHeights(123)         // pass some block to bypass last block check
 		cross(halt.SetHaltByAdmin)(true) // set halt
 		uassert.AbortsWithMessage(t, "halted", func() {
 			cross(MintGns)(adminAddr)

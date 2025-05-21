@@ -82,7 +82,8 @@ func BalanceOf(owner std.Address) int64 {
 
 func Allowance(owner, spender std.Address) int64 {
 	crossing()
-	return token.Allowance(owner, spender) }
+	return token.Allowance(owner, spender)
+}
 
 func MintGns(address std.Address) int64 {
 	crossing()
@@ -198,8 +199,22 @@ func calculateAmountToMint(fromHeight, toHeight int64) int64 {
 		return 0
 	}
 
+	// handle negative block height or block height before emission start
+	startHeight := GetEmissionState().getStartHeight()
+	if fromHeight < startHeight {
+		fromHeight = startHeight
+	}
+	if toHeight < startHeight {
+		return 0
+	}
+
 	fromYear := GetHalvingYearByHeight(fromHeight)
 	toYear := GetHalvingYearByHeight(toHeight)
+
+	// if invalid halving year is returned, return 0
+	if fromYear == 0 || toYear == 0 {
+		return 0
+	}
 
 	totalAmountToMint := int64(0)
 
