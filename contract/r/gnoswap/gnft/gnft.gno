@@ -125,6 +125,7 @@ func MustOwnerOf(tid grc721.TokenID) std.Address {
 //   - If the caller is not the token owner, the function panics.
 //   - If the URI update fails, the function panics with the associated error.
 func SetTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
+	crossing()
 	assertOnlyNotHalted()
 	assertCallerIsOwnerOfToken(tid)
 
@@ -237,6 +238,7 @@ func Approve(approved std.Address, tid grc721.TokenID) error {
 //   - If the contract is halted.
 //   - If the `SetApprovalForAll` operation fails.
 func SetApprovalForAll(operator std.Address, approved bool) error {
+	crossing()
 	assertOnlyNotHalted()
 	checkErr(gnft.SetApprovalForAll(operator, approved))
 	return nil
@@ -361,6 +363,7 @@ func Burn(tid grc721.TokenID) {
 // Returns:
 //   - string: HTML representation of the NFT or 404 if path is invalid
 func Render(path string) string {
+	crossing()
 	switch {
 	case path == "":
 		return gnft.RenderHome()
@@ -371,6 +374,7 @@ func Render(path string) string {
 
 // setTokenURI sets the metadata URI for a specific token ID
 func setTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) error {
+	crossing()
 	assertOnlyEmptyTokenURI(tid)
 	_, err := gnft.SetTokenURI(tid, tURI)
 	if err != nil {
