@@ -56,7 +56,7 @@ func TestUpdateAndRemovePermission(t *testing.T) {
 	roleName := "editor"
 	permissionName := "can_edit"
 
-	var errWrongCaller = errors.New("wrong caller")
+	errWrongCaller := errors.New("wrong caller")
 
 	// initial setup
 	RegisterRole(roleName)
@@ -92,7 +92,7 @@ func TestDeclareRole(t *testing.T) {
 	roleName := "supervisor"
 	permissionName := "can_supervise"
 
-	var errWrongCaller = errors.New("wrong caller")
+	errWrongCaller := errors.New("wrong caller")
 
 	checker := func(addr std.Address) error {
 		if addr == testCaller {
