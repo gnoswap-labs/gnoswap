@@ -48,7 +48,7 @@ func TransferFrom(from, to std.Address, amount int64) {
 }
 
 func Burn(from std.Address, amount int64) {
-	owner.AssertOwnedByCurrent()
+	owner.AssertOwnedByPrevious()
 	checkErr(privateLedger.Burn(from, amount))
 }
 

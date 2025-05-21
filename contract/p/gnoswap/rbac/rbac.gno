@@ -23,7 +23,7 @@ func New() *RBAC {
 
 func NewRBACWithAddress(addr std.Address) *RBAC {
 	return &RBAC{
-		ownable: NewOwnable2StepWithAddress(addr),
+		ownable: NewWithAddress(addr),
 		roles:   make(map[string]*Role),
 	}
 }
@@ -175,7 +175,7 @@ func (rb *RBAC) RemovePermission(
 
 // GrantRoleAndSetAddressByOwner assigns a role to an address
 func (rb *RBAC) GrantRoleAndSetAddressByOwner(roleName string, addr std.Address) error {
-	if !rb.ownable.CallerIsOwner() {
+	if !rb.ownable.OwnedByPrevious() {
 		return ErrUnauthorized
 	}
 	role, exists := rb.roles[roleName]
@@ -191,7 +191,7 @@ func (rb *RBAC) GrantRoleAndSetAddressByOwner(roleName string, addr std.Address)
 
 // RevokeRole removes a role from an address
 func (rb *RBAC) RevokeRole(roleName string, addr std.Address) error {
-	if !rb.ownable.CallerIsOwner() {
+	if !rb.ownable.OwnedByPrevious() {
 		return ErrUnauthorized
 	}
 	role, exists := rb.roles[roleName]
@@ -226,7 +226,7 @@ func (rb *RBAC) GetAddressesByRole(roleName string) ([]std.Address, error) {
 
 // RemoveAddressFromRole removes a specific address from a role
 func (rb *RBAC) RemoveAddressFromRole(roleName string, addr std.Address) error {
-	if !rb.ownable.CallerIsOwner() {
+	if !rb.ownable.OwnedByPrevious() {
 		return ErrUnauthorized
 	}
 	role, exists := rb.roles[roleName]
@@ -243,7 +243,7 @@ func (rb *RBAC) RemoveAddressFromRole(roleName string, addr std.Address) error {
 }
 
 func (rb *RBAC) RemoveAllAddressesFromRole(roleName string) error {
-	if !rb.ownable.CallerIsOwner() {
+	if !rb.ownable.OwnedByPrevious() {
 		return ErrUnauthorized
 	}
 	role, exists := rb.roles[roleName]

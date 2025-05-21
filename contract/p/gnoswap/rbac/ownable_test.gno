@@ -65,17 +65,6 @@ func TestTransferOwnership(t *testing.T) {
 	uassert.Equal(t, pendingOwner.String(), "")
 }
 
-func TestCallerIsOwner(t *testing.T) {
-	testing.SetOriginCaller(alice)
-
-	o := NewOwnable2Step()
-	unauthorizedCaller := bob
-
-	testing.SetOriginCaller(unauthorizedCaller)
-
-	uassert.False(t, o.CallerIsOwner())
-}
-
 func TestDropOwnership(t *testing.T) {
 	testing.SetOriginCaller(alice)
 

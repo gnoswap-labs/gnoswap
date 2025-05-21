@@ -327,7 +327,7 @@ func SetTokenURILast() {
 //   - grc721.TokenID: The ID of the newly minted token
 func Mint(to std.Address, tid grc721.TokenID) grc721.TokenID {
 	crossing()
-	// owner.AssertOwnedByCurrent()
+	owner.AssertOwnedByPrevious()
 	assertOnlyNotHalted()
 
 	checkErr(gnft.Mint(to, tid))
@@ -341,7 +341,7 @@ func Mint(to std.Address, tid grc721.TokenID) grc721.TokenID {
 //   - tid: The token ID to burn
 func Burn(tid grc721.TokenID) {
 	crossing()
-	// owner.AssertOwnedByCurrent()
+	owner.AssertOwnedByPrevious()
 	assertOnlyNotHalted()
 
 	ownerAddr, err := OwnerOf(tid)
