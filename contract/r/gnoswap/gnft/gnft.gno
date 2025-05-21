@@ -71,6 +71,7 @@ func TokenURI(tid grc721.TokenID) string {
 //   - uint64: The number of NFTs owned by the address.
 //   - error: Returns an error if the balance retrieval fails.
 func BalanceOf(owner std.Address) (int64, error) {
+	crossing()
 	balance, err := gnft.BalanceOf(owner)
 	if err != nil {
 		panic(err.Error())
@@ -124,6 +125,7 @@ func MustOwnerOf(tid grc721.TokenID) std.Address {
 //   - If the caller is not the token owner, the function panics.
 //   - If the URI update fails, the function panics with the associated error.
 func SetTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
+	crossing()
 	assertOnlyNotHalted()
 	assertCallerIsOwnerOfToken(tid)
 
@@ -236,6 +238,7 @@ func Approve(approved std.Address, tid grc721.TokenID) error {
 //   - If the contract is halted.
 //   - If the `SetApprovalForAll` operation fails.
 func SetApprovalForAll(operator std.Address, approved bool) error {
+	crossing()
 	assertOnlyNotHalted()
 	checkErr(gnft.SetApprovalForAll(operator, approved))
 	return nil
@@ -327,7 +330,7 @@ func SetTokenURILast() {
 //   - grc721.TokenID: The ID of the newly minted token
 func Mint(to std.Address, tid grc721.TokenID) grc721.TokenID {
 	crossing()
-	// owner.AssertOwnedByCurrent()
+	owner.AssertOwnedByPrevious()
 	assertOnlyNotHalted()
 
 	checkErr(gnft.Mint(to, tid))
@@ -341,7 +344,7 @@ func Mint(to std.Address, tid grc721.TokenID) grc721.TokenID {
 //   - tid: The token ID to burn
 func Burn(tid grc721.TokenID) {
 	crossing()
-	// owner.AssertOwnedByCurrent()
+	owner.AssertOwnedByPrevious()
 	assertOnlyNotHalted()
 
 	ownerAddr, err := OwnerOf(tid)
@@ -360,6 +363,7 @@ func Burn(tid grc721.TokenID) {
 // Returns:
 //   - string: HTML representation of the NFT or 404 if path is invalid
 func Render(path string) string {
+	crossing()
 	switch {
 	case path == "":
 		return gnft.RenderHome()
@@ -370,6 +374,7 @@ func Render(path string) string {
 
 // setTokenURI sets the metadata URI for a specific token ID
 func setTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) error {
+	crossing()
 	assertOnlyEmptyTokenURI(tid)
 	_, err := gnft.SetTokenURI(tid, tURI)
 	if err != nil {

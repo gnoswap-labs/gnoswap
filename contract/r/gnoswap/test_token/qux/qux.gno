@@ -19,8 +19,7 @@ var (
 
 func init() {
 	privateLedger.Mint(owner.Owner(), 100_000_000_000_000)
-	getter := func() *grc20.Token { return Token }
-	cross(grc20reg.Register)(getter, "")
+	cross(grc20reg.Register)(Token, "")
 }
 
 func TotalSupply() int64 {
@@ -48,7 +47,7 @@ func TransferFrom(from, to std.Address, amount int64) {
 }
 
 func Burn(from std.Address, amount int64) {
-	owner.AssertOwnedByCurrent()
+	owner.AssertOwnedByPrevious()
 	checkErr(privateLedger.Burn(from, amount))
 }
 

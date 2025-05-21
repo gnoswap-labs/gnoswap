@@ -78,5 +78,5 @@ func GlobalManager() *prbac.RBAC {
 }
 
 func callerIsOwner() bool {
-	return globalManager.Ownerable().CallerIsOwner()
+	return globalManager.Ownable().OwnedByPrevious()
 }
