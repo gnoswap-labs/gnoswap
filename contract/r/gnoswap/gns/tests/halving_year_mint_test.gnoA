@@ -8,18 +8,13 @@ import (
 	"gno.land/p/gnoswap/consts"
 )
 
-var (
-	emissionRealm = std.NewCodeRealm(consts.EMISSION_PATH)
-	adminRealm    = std.NewUserRealm(adminAddr)
-)
-
 func TestMintGns(t *testing.T) {
 	t.Run("mint by year, until emission ends", func(t *testing.T) {
 		for year := int64(1); year <= 12; year++ {
 			skipUntilLastHeightOfHalvingYear(t, year)
 
 			testing.SetRealm(emissionRealm)
-			mintedAmount := MintGns(adminAddr)
+			mintedAmount := cross(MintGns)(adminAddr)
 			uassert.Equal(t, GetHalvingYearMaxAmount(year), mintedAmount)
 			uassert.Equal(t, GetHalvingYearMaxAmount(year), GetHalvingYearMintAmount(year))
 			uassert.Equal(t, GetHalvingYearAccuAmount(year), GetMintedEmissionAmount())
@@ -30,8 +25,8 @@ func TestMintGns(t *testing.T) {
 		testing.SkipHeights(blockPerYear)
 
 		testing.SetRealm(emissionRealm)
-		mintedAmount := MintGns(adminAddr)
-		uassert.Equal(t, uint64(0), mintedAmount)
+		mintedAmount := cross(MintGns)(adminAddr)
+		uassert.Equal(t, int64(0), mintedAmount)
 	})
 }
 
