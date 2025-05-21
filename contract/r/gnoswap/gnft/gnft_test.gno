@@ -44,7 +44,30 @@ func TestMetadata(t *testing.T) {
 	}
 }
 
+func TestBalanceOf(t *testing.T) {
+	resetObject(t)
+	testing.SetRealm(positionRealm)
+	cross(Mint)(addr01, tid(100))
+
+	tests := []struct {
+		name     string
+		addr     std.Address
+		expected int64
+	}{
+		{"BalanceOf(addr01)", addr01, 1},
+		{"BalanceOf(addr02)", addr02, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			balance, _ := BalanceOf(tt.addr)
+			uassert.Equal(t, tt.expected, balance)
+		})
+	}
+}
+
 func TestTotalSupply(t *testing.T) {
+	resetObject(t)
 	tests := []struct {
 		name     string
 		setup    func()
