@@ -71,6 +71,7 @@ func TokenURI(tid grc721.TokenID) string {
 //   - uint64: The number of NFTs owned by the address.
 //   - error: Returns an error if the balance retrieval fails.
 func BalanceOf(owner std.Address) (int64, error) {
+	crossing()
 	balance, err := gnft.BalanceOf(owner)
 	if err != nil {
 		panic(err.Error())
