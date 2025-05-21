@@ -325,41 +325,43 @@ func emitBlockTimeChangeEvent(eventName, prevAddr, prevPkgPath string, prevTime,
 
 // setAvgBlockTimeInMs sets the new average block time (ms) and updates all halving schedules.
 func setAvgBlockTimeInMs(ms int64) {
-    assertShouldNotBeHalted()
+	assertShouldNotBeHalted()
 
-    if ms <= 0 {
-        panic("invalid block time interval")
-    }
+	// prevent division errors due to very large values or zero.
+	// block time values outside of practical range are blocked
+	if ms <= 0 || ms >= 1e9 {
+		panic("invalid block time interval")
+	}
 
-    now := time.Now().Unix()
+	now := time.Now().Unix()
 
 	// sync blockPerYear, blockPerDay
-    // SECONDS_IN_YEAR, consts.SECONDS_PER_DAY must be in seconds
-    blockPerYear = secToMs(SECONDS_IN_YEAR) / ms
-    blockPerDay  = secToMs(consts.SECONDS_PER_DAY) / ms
+	// SECONDS_IN_YEAR, consts.SECONDS_PER_DAY must be in seconds
+	blockPerYear = secToMs(SECONDS_IN_YEAR) / ms
+	blockPerDay = secToMs(consts.SECONDS_PER_DAY) / ms
 
-    // recalculate all remaining years (amountPerBlock)
-    es := GetEmissionState()
-    hd := &es.halvingData
-    for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
-        maxAmt := hd.getMaxAmount(year)
-        // divide the annual issuance amount by the number of days
+	// recalculate all remaining years (amountPerBlock)
+	es := GetEmissionState()
+	hd := &es.halvingData
+	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
+		maxAmt := hd.getMaxAmount(year)
+		// divide the annual issuance amount by the number of days
 		// and then by the number of blocks
-        dailyAmt := maxAmt / DAY_PER_YEAR
-        newAmtPerBlock := dailyAmt / blockPerDay
-        hd.setAmountPerBlock(year, newAmtPerBlock)
-    }
+		dailyAmt := maxAmt / DAY_PER_YEAR
+		newAmtPerBlock := dailyAmt / blockPerDay
+		hd.setAmountPerBlock(year, newAmtPerBlock)
+	}
 
-    // adjust the current year's amount per block
-    currentYear, _ := getHalvingYearAndEndTimestamp(now)
-    adjusted := hd.getAmountPerBlock(currentYear)
-    if callbackEmissionChange == nil {
-        panic(errCallbackEmissionChangeIsNil.Error())
-    }
-    callbackEmissionChange(adjusted)
+	// adjust the current year's amount per block
+	currentYear, _ := getHalvingYearAndEndTimestamp(now)
+	adjusted := hd.getAmountPerBlock(currentYear)
+	if callbackEmissionChange == nil {
+		panic(errCallbackEmissionChangeIsNil.Error())
+	}
+	callbackEmissionChange(adjusted)
 
-    // final update of global variables
-    avgBlockTimeMs = ms
+	// final update of global variables
+	avgBlockTimeMs = ms
 }
 
 // GetAmountByHeight returns emission amount based on block height

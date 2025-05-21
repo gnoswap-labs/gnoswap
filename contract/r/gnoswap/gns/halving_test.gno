@@ -174,7 +174,7 @@ func TestSetAvgBlockTime_InvalidIntervalPanics(t *testing.T) {
 func TestSetAvgBlockTime_CallbackInvocation(t *testing.T) {
 	/*
 		Test that the function registered with callbackEmissionChange
-		accepts the amountPerBlock value of the “current year” as an argument,
+		accepts the amountPerBlock value of the "current year" as an argument,
 		and only once.
 	*/
 	called := 0
@@ -199,7 +199,7 @@ func TestSetAvgBlockTime_CallbackInvocation(t *testing.T) {
 
 func TestSetAvgBlockTime_RecalculatesAllYears(t *testing.T) {
 	/*
-		Test that the “issuance per block” is actually reallocated
+		Test that the "issuance per block" is actually reallocated
 		by comparing the value of the amountPerBlock array before and after the call.
 	*/
 	es := GetEmissionState()
@@ -275,6 +275,40 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 
 		callbackEmissionChange = oldCallback
 	})
+
+	t.Run("panic with negative block time", func(t *testing.T) {
+		oldCallback := callbackEmissionChange
+		callbackEmissionChange = func(amount int64) {}
+		testing.SkipHeights(1)
+		testing.SetRealm(std.NewUserRealm(adminAddr))
+		uassert.PanicsWithMessage(t,
+			errInvalidAvgBlockTimeInMs.Error(),
+			func() {
+				func() {
+					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+					SetAvgBlockTimeInMsByAdmin(-1)
+				}()
+			},
+		)
+		callbackEmissionChange = oldCallback
+	})
+
+	t.Run("panic with extremely large block time", func(t *testing.T) {
+		oldCallback := callbackEmissionChange
+		callbackEmissionChange = func(amount int64) {}
+		testing.SkipHeights(1)
+		testing.SetRealm(std.NewUserRealm(adminAddr))
+		uassert.PanicsWithMessage(t,
+			"invalid block time interval",
+			func() {
+				func() {
+					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+					SetAvgBlockTimeInMsByAdmin(1e9)
+				}()
+			},
+		)
+		callbackEmissionChange = oldCallback
+	})
 }
 
 func TestSetAvgBlockTimeInMs(t *testing.T) {
@@ -300,6 +334,40 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 			SetAvgBlockTimeInMs(4)
 		}()
 		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(4))
+		callbackEmissionChange = oldCallback
+	})
+
+	t.Run("panic with negative block time", func(t *testing.T) {
+		oldCallback := callbackEmissionChange
+		callbackEmissionChange = func(amount int64) {}
+		testing.SkipHeights(1)
+		testing.SetRealm(govRealm)
+		uassert.PanicsWithMessage(t,
+			"invalid block time interval",
+			func() {
+				func() {
+					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+					SetAvgBlockTimeInMs(-1)
+				}()
+			},
+		)
+		callbackEmissionChange = oldCallback
+	})
+
+	t.Run("panic with extremely large block time", func(t *testing.T) {
+		oldCallback := callbackEmissionChange
+		callbackEmissionChange = func(amount int64) {}
+		testing.SkipHeights(1)
+		testing.SetRealm(govRealm)
+		uassert.PanicsWithMessage(t,
+			"invalid block time interval",
+			func() {
+				func() {
+					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+					SetAvgBlockTimeInMs(1e9)
+				}()
+			},
+		)
 		callbackEmissionChange = oldCallback
 	})
 }
