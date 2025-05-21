@@ -8,6 +8,11 @@ import (
 	"gno.land/p/gnoswap/consts"
 )
 
+var (
+	emissionRealm = std.NewCodeRealm(consts.EMISSION_PATH)
+	adminRealm    = std.NewUserRealm(adminAddr)
+)
+
 func TestMintGns(t *testing.T) {
 	t.Run("mint by year, until emission ends", func(t *testing.T) {
 		for year := int64(1); year <= 12; year++ {

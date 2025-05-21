@@ -11,6 +11,11 @@ import (
 	"gno.land/r/gnoswap/v1/halt"
 )
 
+var (
+	emissionRealm = std.NewCodeRealm(consts.EMISSION_PATH)
+	adminRealm    = std.NewUserRealm(adminAddr)
+)
+
 func TestCalculateAmountToMint(t *testing.T) {
 	t.Run("1 block for same year 01", func(t *testing.T) {
 		amount := calculateAmountToMint(GetLastMintedHeight()+1, GetLastMintedHeight()+1)
