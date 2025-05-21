@@ -159,16 +159,6 @@ func TestSkipIfSameHeight(t *testing.T) {
 	})
 }
 
-func TestSkipIfEmissionEnded(t *testing.T) {
-	t.Run("should skip if emission has ended", func(t *testing.T) {
-		uassert.True(t, skipIfEmissionEnded(GetEndHeight()+1))
-	})
-
-	t.Run("should not skip if emission has not ended", func(t *testing.T) {
-		uassert.False(t, skipIfEmissionEnded(std.ChainHeight()))
-	})
-}
-
 func TestGetterSetter(t *testing.T) {
 	t.Run("last minted height", func(t *testing.T) {
 		value := int64(123)

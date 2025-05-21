@@ -245,11 +245,6 @@ func skipIfSameHeight(lastMintedHeight, currentHeight int64) bool {
 	return lastMintedHeight == currentHeight
 }
 
-// skipIfEmissionEnded returns true if the emission has ended.
-func skipIfEmissionEnded(height int64) bool {
-	return isEmissionEnded(height)
-}
-
 // GetLastMintedHeight returns the last block height that gns was minted.
 func GetLastMintedHeight() int64 {
 	return lastMintedHeight
