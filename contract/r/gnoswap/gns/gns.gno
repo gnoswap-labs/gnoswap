@@ -50,13 +50,39 @@ func init() {
 	burnAmount = 0
 }
 
-func GetName() string                            { return token.GetName() }
-func GetSymbol() string                          { return token.GetSymbol() }
-func GetDecimals() int                           { return token.GetDecimals() }
-func TotalSupply() int64                         { return token.TotalSupply() }
-func KnownAccounts() int                         { return token.KnownAccounts() }
-func BalanceOf(owner std.Address) int64          { return token.BalanceOf(owner) }
-func Allowance(owner, spender std.Address) int64 { return token.Allowance(owner, spender) }
+func GetName() string {
+	crossing()
+	return token.GetName()
+}
+
+func GetSymbol() string {
+	crossing()
+	return token.GetSymbol()
+}
+
+func GetDecimals() int {
+	crossing()
+	return token.GetDecimals()
+}
+
+func TotalSupply() int64 {
+	crossing()
+	return token.TotalSupply()
+}
+
+func KnownAccounts() int {
+	crossing()
+	return token.KnownAccounts()
+}
+
+func BalanceOf(owner std.Address) int64 {
+	crossing()
+	return token.BalanceOf(owner)
+}
+
+func Allowance(owner, spender std.Address) int64 {
+	crossing()
+	return token.Allowance(owner, spender) }
 
 func MintGns(address std.Address) int64 {
 	crossing()

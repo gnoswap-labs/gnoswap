@@ -274,6 +274,7 @@ func GetAvgBlockTimeInMs() int64 {
 
 // SetAvgBlockTimeInMsByAdmin admin sets average block time
 func SetAvgBlockTimeInMsByAdmin(ms int64) {
+	crossing()
 	if ms <= 0 {
 		panic(errInvalidAvgBlockTimeInMs)
 	}
@@ -291,6 +292,7 @@ func SetAvgBlockTimeInMsByAdmin(ms int64) {
 
 // SetAvgBlockTimeInMs sets average block time through governance proposal
 func SetAvgBlockTimeInMs(ms int64) {
+	crossing()
 	assertCallerIsGovernance()
 
 	prevAvgBlockTimeInMs := GetAvgBlockTimeInMs()
