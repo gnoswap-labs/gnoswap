@@ -13,7 +13,7 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 	resetObject(t)
 
 	originCallback := callbackStakerEmissionChange
-	callbackStakerEmissionChange = func(amount uint64) {}
+	callbackStakerEmissionChange = func(amount int64) {}
 
 	tests := []struct {
 		name        string
@@ -22,7 +22,7 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 		setup       func()
 		callerRealm std.Realm
 		targets     []int
-		pcts        []uint64
+		pcts        []int64
 		verify      func()
 	}{
 		{
@@ -30,7 +30,7 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 			shouldPanic: true,
 			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) is not authorized for role admin`,
 			targets:     []int{1, 2, 3, 4},
-			pcts:        []uint64{1000, 2000, 3000, 4000},
+			pcts:        []int64{1000, 2000, 3000, 4000},
 		},
 		{
 			name:        "panic if target is invalid",
@@ -38,7 +38,7 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(9)",
 			callerRealm: adminRealm,
 			targets:     []int{1, 2, 3, 9},
-			pcts:        []uint64{1000, 2000, 3000, 4000},
+			pcts:        []int64{1000, 2000, 3000, 4000},
 		},
 		{
 			name:        "panic if sum of percentages is not 100%",
@@ -46,19 +46,19 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 			panicMsg:    "[GNOSWAP-EMISSION-003] invalid emission percentage || sum of all pct should be 100% (10000 bps), got 10001",
 			callerRealm: adminRealm,
 			targets:     []int{1, 2, 3, 4},
-			pcts:        []uint64{1000, 2000, 3000, 4001},
+			pcts:        []int64{1000, 2000, 3000, 4001},
 		},
 		{
 			name:        "success if admin",
 			shouldPanic: false,
 			callerRealm: adminRealm,
 			targets:     []int{1, 2, 3, 4},
-			pcts:        []uint64{1000, 2000, 3000, 4000},
+			pcts:        []int64{1000, 2000, 3000, 4000},
 			verify: func() {
-				uassert.Equal(t, uint64(1000), GetDistributionBpsPct(int(1)))
-				uassert.Equal(t, uint64(2000), GetDistributionBpsPct(int(2)))
-				uassert.Equal(t, uint64(3000), GetDistributionBpsPct(int(3)))
-				uassert.Equal(t, uint64(4000), GetDistributionBpsPct(int(4)))
+				uassert.Equal(t, int64(1000), GetDistributionBpsPct(int(1)))
+				uassert.Equal(t, int64(2000), GetDistributionBpsPct(int(2)))
+				uassert.Equal(t, int64(3000), GetDistributionBpsPct(int(3)))
+				uassert.Equal(t, int64(4000), GetDistributionBpsPct(int(4)))
 			},
 		},
 	}
@@ -74,7 +74,7 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 			}
 
 			target01, target02, target03, target04 := sliceToFourInt(t, tt.targets)
-			pct01, pct02, pct03, pct04 := sliceToFourUint64(t, tt.pcts)
+			pct01, pct02, pct03, pct04 := sliceToFourInt64(t, tt.pcts)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
@@ -105,7 +105,7 @@ func TestChangeDistributionPct(t *testing.T) {
 	resetObject(t)
 
 	originCallback := callbackStakerEmissionChange
-	callbackStakerEmissionChange = func(amount uint64) {}
+	callbackStakerEmissionChange = func(amount int64) {}
 
 	tests := []struct {
 		name        string
@@ -114,7 +114,7 @@ func TestChangeDistributionPct(t *testing.T) {
 		setup       func()
 		callerRealm std.Realm
 		targets     []int
-		pcts        []uint64
+		pcts        []int64
 		verify      func()
 	}{
 		{
@@ -122,7 +122,7 @@ func TestChangeDistributionPct(t *testing.T) {
 			shouldPanic: true,
 			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) is not authorized for role governance`,
 			targets:     []int{1, 2, 3, 4},
-			pcts:        []uint64{1000, 2000, 3000, 4000},
+			pcts:        []int64{1000, 2000, 3000, 4000},
 		},
 		{
 			name:        "panic if target is invalid",
@@ -130,7 +130,7 @@ func TestChangeDistributionPct(t *testing.T) {
 			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(9)",
 			callerRealm: govRealm,
 			targets:     []int{1, 2, 3, 9},
-			pcts:        []uint64{1000, 2000, 3000, 4000},
+			pcts:        []int64{1000, 2000, 3000, 4000},
 		},
 		{
 			name:        "panic if sum of percentages is not 100%",
@@ -138,19 +138,19 @@ func TestChangeDistributionPct(t *testing.T) {
 			panicMsg:    "[GNOSWAP-EMISSION-003] invalid emission percentage || sum of all pct should be 100% (10000 bps), got 10001",
 			callerRealm: govRealm,
 			targets:     []int{1, 2, 3, 4},
-			pcts:        []uint64{1000, 2000, 3000, 4001},
+			pcts:        []int64{1000, 2000, 3000, 4001},
 		},
 		{
 			name:        "success if governance",
 			shouldPanic: false,
 			callerRealm: govRealm,
 			targets:     []int{1, 2, 3, 4},
-			pcts:        []uint64{1000, 2000, 3000, 4000},
+			pcts:        []int64{1000, 2000, 3000, 4000},
 			verify: func() {
-				uassert.Equal(t, uint64(1000), GetDistributionBpsPct(1))
-				uassert.Equal(t, uint64(2000), GetDistributionBpsPct(2))
-				uassert.Equal(t, uint64(3000), GetDistributionBpsPct(3))
-				uassert.Equal(t, uint64(4000), GetDistributionBpsPct(4))
+				uassert.Equal(t, int64(1000), GetDistributionBpsPct(1))
+				uassert.Equal(t, int64(2000), GetDistributionBpsPct(2))
+				uassert.Equal(t, int64(3000), GetDistributionBpsPct(3))
+				uassert.Equal(t, int64(4000), GetDistributionBpsPct(4))
 			},
 		},
 	}
@@ -166,7 +166,7 @@ func TestChangeDistributionPct(t *testing.T) {
 			}
 
 			target01, target02, target03, target04 := sliceToFourInt(t, tt.targets)
-			pct01, pct02, pct03, pct04 := sliceToFourUint64(t, tt.pcts)
+			pct01, pct02, pct03, pct04 := sliceToFourInt64(t, tt.pcts)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
@@ -197,7 +197,7 @@ func TestChangeDistributionPcts(t *testing.T) {
 	resetObject(t)
 
 	originCallback := callbackStakerEmissionChange
-	callbackStakerEmissionChange = func(amount uint64) {}
+	callbackStakerEmissionChange = func(amount int64) {}
 
 	changeDistributionPcts(
 		1, 1000,
@@ -205,10 +205,10 @@ func TestChangeDistributionPcts(t *testing.T) {
 		3, 3000,
 		4, 4000,
 	)
-	uassert.Equal(t, uint64(1000), GetDistributionBpsPct(1))
-	uassert.Equal(t, uint64(2000), GetDistributionBpsPct(2))
-	uassert.Equal(t, uint64(3000), GetDistributionBpsPct(3))
-	uassert.Equal(t, uint64(4000), GetDistributionBpsPct(4))
+	uassert.Equal(t, int64(1000), GetDistributionBpsPct(1))
+	uassert.Equal(t, int64(2000), GetDistributionBpsPct(2))
+	uassert.Equal(t, int64(3000), GetDistributionBpsPct(3))
+	uassert.Equal(t, int64(4000), GetDistributionBpsPct(4))
 
 	callbackStakerEmissionChange = originCallback
 }
@@ -216,8 +216,8 @@ func TestChangeDistributionPcts(t *testing.T) {
 func TestCalculateAmount(t *testing.T) {
 	tests := []struct {
 		name     string
-		pct      uint64
-		expected uint64
+		pct      int64
+		expected int64
 	}{
 		{name: "5% of 1_000", pct: 500, expected: 50},
 		{name: "10% of 1_000", pct: 1000, expected: 100},
@@ -227,7 +227,7 @@ func TestCalculateAmount(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			uassert.Equal(t, tt.expected, calculateAmount(uint64(1000), tt.pct))
+			uassert.Equal(t, tt.expected, calculateAmount(int64(1000), tt.pct))
 		})
 	}
 }
@@ -241,7 +241,7 @@ func TestTransferToTarget(t *testing.T) {
 		panicMsg    string
 		setup       func()
 		target      int
-		amount      uint64
+		amount      int64
 		verify      func()
 	}{
 		{
@@ -267,8 +267,8 @@ func TestTransferToTarget(t *testing.T) {
 			},
 			amount: 100,
 			verify: func() {
-				uassert.Equal(t, uint64(100), distributedToStaker)
-				uassert.Equal(t, uint64(100), accuDistributedToStaker)
+				uassert.Equal(t, int64(100), distributedToStaker)
+				uassert.Equal(t, int64(100), accuDistributedToStaker)
 			},
 		},
 		{
@@ -276,8 +276,8 @@ func TestTransferToTarget(t *testing.T) {
 			target: DEVOPS,
 			amount: 200,
 			verify: func() {
-				uassert.Equal(t, uint64(200), distributedToDevOps)
-				uassert.Equal(t, uint64(200), accuDistributedToDevOps)
+				uassert.Equal(t, int64(200), distributedToDevOps)
+				uassert.Equal(t, int64(200), accuDistributedToDevOps)
 			},
 		},
 		{
@@ -285,8 +285,8 @@ func TestTransferToTarget(t *testing.T) {
 			target: COMMUNITY_POOL,
 			amount: 300,
 			verify: func() {
-				uassert.Equal(t, uint64(300), distributedToCommunityPool)
-				uassert.Equal(t, uint64(300), accuDistributedToCommunityPool)
+				uassert.Equal(t, int64(300), distributedToCommunityPool)
+				uassert.Equal(t, int64(300), accuDistributedToCommunityPool)
 			},
 		},
 		{
@@ -294,8 +294,8 @@ func TestTransferToTarget(t *testing.T) {
 			target: GOV_STAKER,
 			amount: 400,
 			verify: func() {
-				uassert.Equal(t, uint64(400), distributedToGovStaker)
-				uassert.Equal(t, uint64(400), accuDistributedToGovStaker)
+				uassert.Equal(t, int64(400), distributedToGovStaker)
+				uassert.Equal(t, int64(400), accuDistributedToGovStaker)
 			},
 		},
 	}
@@ -328,15 +328,15 @@ func TestDistributeToTarget(t *testing.T) {
 		shouldPanic  bool
 		panicMsg     string
 		setup        func()
-		amount       uint64
-		expectedLeft uint64
+		amount       int64
+		expectedLeft int64
 	}{
 		{
 			name:        "invalid target",
 			shouldPanic: true,
 			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(a)",
 			setup: func() {
-				distributionBpsPct.Set("a", uint64(1000))
+				distributionBpsPct.Set("a", int64(1000))
 			},
 			amount: 100,
 		},
@@ -455,6 +455,12 @@ func TestClearClearDistributedToGovStaker(t *testing.T) {
 }
 
 func sliceToFourInt(t *testing.T, slice []int) (int, int, int, int) {
+	t.Helper()
+
+	return slice[0], slice[1], slice[2], slice[3]
+}
+
+func sliceToFourInt64(t *testing.T, slice []int64) (int64, int64, int64, int64) {
 	t.Helper()
 
 	return slice[0], slice[1], slice[2], slice[3]
