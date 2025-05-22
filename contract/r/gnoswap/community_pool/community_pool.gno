@@ -9,7 +9,8 @@ import (
 )
 
 // TransferTokenByAdmin transfers token to the given address.
-func TransferTokenByAdmin(tokenPath string, to std.Address, amount uint64) {
+func TransferTokenByAdmin(tokenPath string, to std.Address, amount int64) {
+	crossing()
 	assertOnlyNotHalted()
 	assertOnlyAdmin()
 
@@ -18,7 +19,8 @@ func TransferTokenByAdmin(tokenPath string, to std.Address, amount uint64) {
 
 // TransferToken transfers token to the given address.
 // Only governance contract can execute this function via proposal
-func TransferToken(tokenPath string, to std.Address, amount uint64) {
+func TransferToken(tokenPath string, to std.Address, amount int64) {
+	crossing()
 	assertOnlyNotHalted()
 	assertOnlyGovernance()
 
@@ -26,7 +28,7 @@ func TransferToken(tokenPath string, to std.Address, amount uint64) {
 }
 
 // transferToken transfers token to the given address.
-func transferToken(tokenPath string, to std.Address, amount uint64) {
+func transferToken(tokenPath string, to std.Address, amount int64) {
 	teller := common.GetTokenTeller(tokenPath)
 	checkErr(teller.Transfer(to, amount))
 
@@ -38,7 +40,7 @@ func transferToken(tokenPath string, to std.Address, amount uint64) {
 		"prevRealm", prevPkgPath,
 		"tokenPath", tokenPath,
 		"to", to.String(),
-		"amount", strconv.FormatUint(amount, 10),
+		"amount", strconv.FormatInt(amount, 10),
 	)
 }
 

@@ -22,10 +22,10 @@ func resetObject(t *testing.T) {
 	t.Helper()
 
 	distributionBpsPct = avl.NewTree()
-	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), uint64(7500))
-	distributionBpsPct.Set(strconv.Itoa(DEVOPS), uint64(2000))
-	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), uint64(500))
-	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), uint64(0))
+	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), int64(7500))
+	distributionBpsPct.Set(strconv.Itoa(DEVOPS), int64(2000))
+	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), int64(500))
+	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), int64(0))
 
 	distributedToStaker = 0
 	distributedToDevOps = 0
@@ -37,7 +37,7 @@ func resetObject(t *testing.T) {
 	accuDistributedToGovStaker = 0
 }
 
-func gnsBalance(t *testing.T, addr std.Address) uint64 {
+func gnsBalance(t *testing.T, addr std.Address) int64 {
 	t.Helper()
 
 	return gns.BalanceOf(addr)

@@ -27,7 +27,10 @@ func init() {
 	token, ledger = grc20.NewToken("XGNS", "xGNS", 6)
 }
 
-func TotalSupply() uint64 { return token.TotalSupply() }
+func TotalSupply() int64 {
+	crossing()
+	return token.TotalSupply()
+}
 
 // VotingSupply calculates the total supply of tokens eligible for voting.
 //
@@ -41,7 +44,8 @@ func TotalSupply() uint64 { return token.TotalSupply() }
 // Notes:
 // - `TotalSupply`: Represents the total amount of xGNS tokens minted.
 // - `BalanceOf(launchpadAddr)`: Retrieves the amount of xGNS tokens held by the launchpad contract.
-func VotingSupply() uint64 {
+func VotingSupply() int64 {
+	crossing()
 	total := token.TotalSupply() // this is entire amount of xGNS minted
 
 	// this is amount of xGNS held by launchpad
@@ -60,13 +64,15 @@ func VotingSupply() uint64 {
 //
 // Returns:
 // - uint64: The current token balance of the specified address.
-func BalanceOf(owner std.Address) uint64 {
+func BalanceOf(owner std.Address) int64 {
+	crossing()
 	return token.BalanceOf(owner)
 }
 
 // xGNS is non-transferable
 // Therefore it doesn't have transfer and transferFrom functions
 func Render(path string) string {
+	crossing()
 	parts := strings.Split(path, "/")
 	c := len(parts)
 
@@ -95,7 +101,8 @@ func Render(path string) string {
 // Errors:
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Mint function.
-func Mint(to std.Address, amount uint64) {
+func Mint(to std.Address, amount int64) {
+	crossing()
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
@@ -135,7 +142,8 @@ func Mint(to std.Address, amount uint64) {
 // Errors:
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Mint function.
-func MintByLaunchPad(to std.Address, amount uint64) {
+func MintByLaunchPad(to std.Address, amount int64) {
+	crossing()
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
@@ -160,7 +168,7 @@ func MintByLaunchPad(to std.Address, amount uint64) {
 }
 
 // mint increases the balance of a specified address by a given amount.
-func mint(to std.Address, amount uint64) {
+func mint(to std.Address, amount int64) {
 	checkErr(ledger.Mint(to, amount))
 }
 
@@ -179,7 +187,8 @@ func mint(to std.Address, amount uint64) {
 // Errors:
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Burn function.
-func Burn(from std.Address, amount uint64) {
+func Burn(from std.Address, amount int64) {
+	crossing()
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
@@ -205,7 +214,8 @@ func Burn(from std.Address, amount uint64) {
 	}
 }
 
-func BurnByLaunchPad(from std.Address, amount uint64) {
+func BurnByLaunchPad(from std.Address, amount int64) {
+	crossing()
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
@@ -228,7 +238,7 @@ func BurnByLaunchPad(from std.Address, amount uint64) {
 	burn(from, amount)
 }
 
-func burn(from std.Address, amount uint64) {
+func burn(from std.Address, amount int64) {
 	checkErr(ledger.Burn(from, amount))
 }
 

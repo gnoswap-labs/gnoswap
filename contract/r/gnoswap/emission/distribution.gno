@@ -22,16 +22,16 @@ var (
 	// 1 basis point = 0.01%
 	distributionBpsPct *avl.Tree
 
-	distributedToStaker        uint64 // can be cleared by staker contract
-	distributedToDevOps        uint64
-	distributedToCommunityPool uint64
-	distributedToGovStaker     uint64 // can be cleared by governance staker
+	distributedToStaker        int64 // can be cleared by staker contract
+	distributedToDevOps        int64
+	distributedToCommunityPool int64
+	distributedToGovStaker     int64 // can be cleared by governance staker
 
 	// Historical total distributions (never reset)
-	accuDistributedToStaker        uint64
-	accuDistributedToDevOps        uint64
-	accuDistributedToCommunityPool uint64
-	accuDistributedToGovStaker     uint64
+	accuDistributedToStaker        int64
+	accuDistributedToDevOps        int64
+	accuDistributedToCommunityPool int64
+	accuDistributedToGovStaker     int64
 )
 
 // Initialize default distribution percentages:
@@ -43,10 +43,10 @@ var (
 // ref: https://docs.gnoswap.io/gnoswap-token/emission
 func init() {
 	distributionBpsPct = avl.NewTree()
-	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), uint64(7500))
-	distributionBpsPct.Set(strconv.Itoa(DEVOPS), uint64(2000))
-	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), uint64(500))
-	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), uint64(0))
+	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), int64(7500))
+	distributionBpsPct.Set(strconv.Itoa(DEVOPS), int64(2000))
+	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), int64(500))
+	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), int64(0))
 }
 
 // ChangeDistributionPctByAdmin changes the distribution percentage for the given targets.
@@ -56,11 +56,12 @@ func init() {
 // - sum of percentages is not 10000
 // - swap is halted
 func ChangeDistributionPctByAdmin(
-	target01 int, pct01 uint64,
-	target02 int, pct02 uint64,
-	target03 int, pct03 uint64,
-	target04 int, pct04 uint64,
+	target01 int, pct01 int64,
+	target02 int, pct02 int64,
+	target03 int, pct03 int64,
+	target04 int, pct04 int64,
 ) {
+	crossing()
 	assertOnlyAdmin()
 	targets := []int{target01, target02, target03, target04}
 	for _, target := range targets {
@@ -84,11 +85,12 @@ func ChangeDistributionPctByAdmin(
 // - sum of percentages is not 10000
 // - swap is halted
 func ChangeDistributionPct(
-	target01 int, pct01 uint64,
-	target02 int, pct02 uint64,
-	target03 int, pct03 uint64,
-	target04 int, pct04 uint64,
+	target01 int, pct01 int64,
+	target02 int, pct02 int64,
+	target03 int, pct03 int64,
+	target04 int, pct04 int64,
 ) {
+	crossing()
 	assertOnlyGovernance()
 	targets := []int{target01, target02, target03, target04}
 	for _, target := range targets {
@@ -106,10 +108,10 @@ func ChangeDistributionPct(
 }
 
 func changeDistributionPcts(
-	target01 int, pct01 uint64,
-	target02 int, pct02 uint64,
-	target03 int, pct03 uint64,
-	target04 int, pct04 uint64,
+	target01 int, pct01 int64,
+	target02 int, pct02 int64,
+	target03 int, pct03 int64,
+	target04 int, pct04 int64,
 ) {
 	// First, cache the percentage of the staker just before it changes Callback if needed
 	// (check if the LIQUIDITY_STAKER was located between target01 and 04)
@@ -124,20 +126,20 @@ func changeDistributionPcts(
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"target01", targetToStr(target01),
-		"pct01", formatUint(pct01),
+		"pct01", formatInt(pct01),
 		"target02", targetToStr(target02),
-		"pct02", formatUint(pct02),
+		"pct02", formatInt(pct02),
 		"target03", targetToStr(target03),
-		"pct03", formatUint(pct03),
+		"pct03", formatInt(pct03),
 		"target04", targetToStr(target04),
-		"pct04", formatUint(pct04),
+		"pct04", formatInt(pct04),
 	)
 }
 
 // distributeToTarget splits an amount according to the configured percentages
 // and sends tokens to each target address. Returns the total amount distributed.
-func distributeToTarget(amount uint64) uint64 {
-	totalSent := uint64(0)
+func distributeToTarget(amount int64) int64 {
+	totalSent := int64(0)
 
 	distributionBpsPct.Iterate("", "", func(targetStr string, iPct any) bool {
 		targetInt, err := strconv.Atoi(targetStr)
@@ -148,8 +150,8 @@ func distributeToTarget(amount uint64) uint64 {
 			))
 		}
 
-		pct := iPct.(uint64)
-		distAmount := calculateAmount(amount, uint64(pct))
+		pct := iPct.(int64)
+		distAmount := calculateAmount(amount, pct)
 		totalSent += distAmount
 
 		transferToTarget(targetInt, distAmount)
@@ -168,31 +170,34 @@ func distributeToTarget(amount uint64) uint64 {
 // calculateAmount converts a basis point percentage to actual token amount
 // bptPct is in basis points (1/100th of 1%)
 // Example: 7500 basis points = 75%
-func calculateAmount(amount, bptPct uint64) uint64 {
+func calculateAmount(amount, bptPct int64) int64 {
+	if amount < 0 || bptPct < 0 {
+		panic("invalid amount or bptPct")
+	}
 	return amount * bptPct / 10000
 }
 
 // transferToTarget sends tokens to the appropriate address based on target type
 // and updates both current and accumulated distribution tracking
-func transferToTarget(target int, amount uint64) {
+func transferToTarget(target int, amount int64) {
 	switch target {
 	case LIQUIDITY_STAKER:
-		gns.Transfer(stakerAddr, amount)
+		cross(gns.Transfer)(stakerAddr, amount)
 		distributedToStaker += amount
 		accuDistributedToStaker += amount
 
 	case DEVOPS:
-		gns.Transfer(devOpsAddr, amount)
+		cross(gns.Transfer)(devOpsAddr, amount)
 		distributedToDevOps += amount
 		accuDistributedToDevOps += amount
 
 	case COMMUNITY_POOL:
-		gns.Transfer(communityPoolAddr, amount)
+		cross(gns.Transfer)(communityPoolAddr, amount)
 		distributedToCommunityPool += amount
 		accuDistributedToCommunityPool += amount
 
 	case GOV_STAKER:
-		gns.Transfer(govStakerAddr, amount)
+		cross(gns.Transfer)(govStakerAddr, amount)
 		distributedToGovStaker += amount
 		accuDistributedToGovStaker += amount
 
@@ -204,9 +209,9 @@ func transferToTarget(target int, amount uint64) {
 	}
 }
 
-func GetDistributionBpsPct(target int) uint64 {
+func GetDistributionBpsPct(target int) int64 {
 	assertDistributionTarget(target)
-	iUint64, exist := distributionBpsPct.Get(strconv.Itoa(target))
+	iInt64, exist := distributionBpsPct.Get(strconv.Itoa(target))
 	if !exist {
 		panic(addDetailToError(
 			errInvalidEmissionTarget,
@@ -214,38 +219,38 @@ func GetDistributionBpsPct(target int) uint64 {
 		))
 	}
 
-	return iUint64.(uint64)
+	return iInt64.(int64)
 }
 
-func GetDistributedToStaker() uint64 {
+func GetDistributedToStaker() int64 {
 	return distributedToStaker
 }
 
-func GetDistributedToDevOps() uint64 {
+func GetDistributedToDevOps() int64 {
 	return distributedToDevOps
 }
 
-func GetDistributedToCommunityPool() uint64 {
+func GetDistributedToCommunityPool() int64 {
 	return distributedToCommunityPool
 }
 
-func GetDistributedToGovStaker() uint64 {
+func GetDistributedToGovStaker() int64 {
 	return distributedToGovStaker
 }
 
-func GetAccuDistributedToStaker() uint64 {
+func GetAccuDistributedToStaker() int64 {
 	return accuDistributedToStaker
 }
 
-func GetAccuDistributedToDevOps() uint64 {
+func GetAccuDistributedToDevOps() int64 {
 	return accuDistributedToDevOps
 }
 
-func GetAccuDistributedToCommunityPool() uint64 {
+func GetAccuDistributedToCommunityPool() int64 {
 	return accuDistributedToCommunityPool
 }
 
-func GetAccuDistributedToGovStaker() uint64 {
+func GetAccuDistributedToGovStaker() int64 {
 	return accuDistributedToGovStaker
 }
 
@@ -260,14 +265,14 @@ func ClearDistributedToGovStaker() {
 }
 
 // setDistributionBpsPct changes percentage of each target for how much gns it will get by emission.
-func setDistributionBpsPct(target int, pct uint64) {
+func setDistributionBpsPct(target int, pct int64) {
 	if target == LIQUIDITY_STAKER {
 		oldPct, exist := distributionBpsPct.Get(strconv.Itoa(target))
 		if !exist {
 			panic("should not happen")
 		}
 
-		if oldPct.(uint64) != pct {
+		if oldPct.(int64) != pct {
 			callbackStakerEmissionChange(calculateAmount(gns.GetEmission(), pct))
 		}
 	}
@@ -275,13 +280,13 @@ func setDistributionBpsPct(target int, pct uint64) {
 	distributionBpsPct.Set(strconv.Itoa(target), pct)
 }
 
-func GetEmission() uint64 {
+func GetEmission() int64 {
 	return calculateAmount(gns.GetEmission(), GetDistributionBpsPct(LIQUIDITY_STAKER))
 }
 
 // When there is a staker % change, it will trigger the StakerCallback first, which should "flush" the halving blocks first(by poolTier calling the GetHalvingBlocksInRange before it updates the emission).
 // Therefore, if there are halving blocks exist from what we got from gns side, there must be no % change event between those blocks, which means we can use the current distribution pct to calculate the emissions for the past halving blocks.
-func GetHalvingBlocksInRange(start, end int64) ([]int64, []uint64) {
+func GetHalvingBlocksInRange(start, end int64) ([]int64, []int64) {
 	halvingBlocks, halvingEmissions := gns.GetHalvingBlocksInRange(start, end)
 	for i := range halvingBlocks {
 		// Applying staker ratio for past halving blocks

@@ -86,13 +86,12 @@ func assertOnlyNotHalted() {
 }
 
 // assertSumDistributionPct ensures the sum of all distribution percentages is 100%
-func assertSumDistributionPct(pct01, pct02, pct03, pct04 uint64) {
+func assertSumDistributionPct(pct01, pct02, pct03, pct04 int64) {
 	sum := pct01 + pct02 + pct03 + pct04
-
-	if sum != MAX_BPS_PCT {
+	if sum != 10000 {
 		panic(addDetailToError(
-			errInvalidEmissionPct,
-			ufmt.Sprintf("sum of all pct should be 100%% (10000 bps), got %d", sum),
+			errInvalidEmissionTarget,
+			ufmt.Sprintf("sum of percentages must be 10000, got %d", sum),
 		))
 	}
 }

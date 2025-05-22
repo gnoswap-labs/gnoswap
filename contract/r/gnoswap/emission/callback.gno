@@ -9,9 +9,9 @@ import (
 
 // upgradable pattern
 
-var callbackStakerEmissionChange func(amount uint64)
+var callbackStakerEmissionChange func(amount int64)
 
-func SetCallbackStakerEmissionChange(callback func(amount uint64)) {
+func SetCallbackStakerEmissionChange(callback func(amount int64)) {
 	if callbackStakerEmissionChange != nil {
 		panic("callbackStakerEmissionChange already set")
 	}
@@ -20,7 +20,7 @@ func SetCallbackStakerEmissionChange(callback func(amount uint64)) {
 
 // Called when per-block emission is changed from the gns side.
 // It does not process non-immediate emission changes, such as halving.
-func callbackEmissionChange(amount uint64) {
+func callbackEmissionChange(amount int64) {
 	calculatedAmount := calculateAmount(amount, GetDistributionBpsPct(LIQUIDITY_STAKER))
 	callbackStakerEmissionChange(calculatedAmount)
 }
