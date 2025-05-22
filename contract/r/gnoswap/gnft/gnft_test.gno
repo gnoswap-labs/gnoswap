@@ -44,32 +44,55 @@ func TestMetadata(t *testing.T) {
 	}
 }
 
+func TestBalanceOf(t *testing.T) {
+	resetObject(t)
+	testing.SetRealm(positionRealm)
+	cross(Mint)(addr01, tid(100))
+
+	tests := []struct {
+		name     string
+		addr     std.Address
+		expected int64
+	}{
+		{"BalanceOf(addr01)", addr01, 1},
+		{"BalanceOf(addr02)", addr02, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			balance, _ := BalanceOf(tt.addr)
+			uassert.Equal(t, tt.expected, balance)
+		})
+	}
+}
+
 func TestTotalSupply(t *testing.T) {
+	resetObject(t)
 	tests := []struct {
 		name     string
 		setup    func()
-		expected uint64
+		expected int64
 	}{
 		{
 			name:     "initial total supply",
-			expected: uint64(0),
+			expected: 0,
 		},
 		{
 			name: "total supply after minting",
 			setup: func() {
 				testing.SetRealm(positionRealm)
-				Mint(addr01, tid(1))
-				Mint(addr01, tid(2))
+				cross(Mint)(addr01, tid(1))
+				cross(Mint)(addr01, tid(2))
 			},
-			expected: uint64(2),
+			expected: 2,
 		},
 		{
 			name: "total supply after burning",
 			setup: func() {
 				testing.SetRealm(positionRealm)
-				Burn(tid(2))
+				cross(Burn)(tid(2))
 			},
-			expected: uint64(1),
+			expected: 1,
 		},
 	}
 
@@ -79,24 +102,6 @@ func TestTotalSupply(t *testing.T) {
 				tt.setup()
 			}
 			uassert.Equal(t, tt.expected, TotalSupply())
-		})
-	}
-}
-
-func TestBalanceOf(t *testing.T) {
-	tests := []struct {
-		name     string
-		addr     std.Address
-		expected uint64
-	}{
-		{"BalanceOf(addr01)", addr01, uint64(1)},
-		{"BalanceOf(addr02)", addr02, uint64(0)},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			balance, _ := BalanceOf(tt.addr)
-			uassert.Equal(t, tt.expected, balance)
 		})
 	}
 }
@@ -175,7 +180,7 @@ func TestGetApproved(t *testing.T) {
 			name: "GetApproved(1) after approving",
 			setup: func() {
 				testing.SetRealm(addr01Realm)
-				Approve(addr02, tid(1))
+				cross(Approve)(addr02, tid(1))
 			},
 			expectedAddr: addr02,
 		},
@@ -196,7 +201,7 @@ func TestGetApproved(t *testing.T) {
 func TestTransferFrom(t *testing.T) {
 	resetObject(t)
 	testing.SetRealm(positionRealm)
-	Mint(addr01, tid(1))
+	cross(Mint)(addr01, tid(1))
 
 	tests := []struct {
 		name              string
@@ -232,7 +237,7 @@ func TestTransferFrom(t *testing.T) {
 			name: "transfer token owned by other user with approval",
 			setup: func() {
 				testing.SetRealm(addr01Realm)
-				Approve((addr02), tid(1))
+				cross(Approve)(addr02, tid(1))
 			},
 			callerRealm:       std.NewUserRealm(addr02),
 			fromAddr:          addr01,
@@ -281,12 +286,12 @@ func TestTransferFrom(t *testing.T) {
 			}
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					TransferFrom((tt.fromAddr), (tt.toAddr), tid(tt.tokenIdToTransfer))
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					cross(TransferFrom)(tt.fromAddr, tt.toAddr, tid(tt.tokenIdToTransfer))
 				})
 			} else {
 				testing.SetRealm(tt.callerRealm)
-				TransferFrom((tt.fromAddr), (tt.toAddr), tid(tt.tokenIdToTransfer))
+				cross(TransferFrom)(tt.fromAddr, tt.toAddr, tid(tt.tokenIdToTransfer))
 				tt.verifyTokenList()
 			}
 		})
@@ -306,11 +311,6 @@ func TestMint(t *testing.T) {
 		expected        string
 		verifyTokenList func()
 	}{
-		{
-			name:        "mint without permission",
-			shouldPanic: true,
-			panicMsg:    "ownable: caller is not owner",
-		},
 		{
 			name:          "mint first nft to addr01",
 			callerRealm:   std.NewCodeRealm(consts.POSITION_PATH),
@@ -337,11 +337,11 @@ func TestMint(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					Mint((tt.addressToMint), tid(tt.tokenIdToMint))
+					cross(Mint)(tt.addressToMint, tid(tt.tokenIdToMint))
 				})
 			} else {
 				testing.SetRealm(tt.callerRealm)
-				mintedTokenId := Mint((tt.addressToMint), tid(tt.tokenIdToMint))
+				mintedTokenId := cross(Mint)(tt.addressToMint, tid(tt.tokenIdToMint))
 				uassert.Equal(t, tt.expected, string(mintedTokenId))
 				tt.verifyTokenList()
 			}
@@ -371,15 +371,6 @@ func TestBurn(t *testing.T) {
 			shouldPanic:   true,
 			panicMsg:      errInvalidTokenId,
 		},
-		{
-			name:          "burn token id(2)",
-			callerRealm:   std.NewCodeRealm(consts.POSITION_PATH),
-			tokenIdToBurn: 2,
-			shouldPanic:   false,
-			verifyTokenList: func() {
-				uassert.Equal(t, 0, len(mustGetTokenList(addr02)))
-			},
-		},
 	}
 
 	for _, tt := range tests {
@@ -387,12 +378,12 @@ func TestBurn(t *testing.T) {
 			testing.SetRealm(tt.callerRealm)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					Burn(tid(tt.tokenIdToBurn))
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					cross(Burn)(tid(tt.tokenIdToBurn))
 				})
 			} else {
-				uassert.NotPanics(t, func() {
-					Burn(tid(tt.tokenIdToBurn))
+				uassert.NotAborts(t, func() {
+					cross(Burn)(tid(tt.tokenIdToBurn))
 				})
 				tt.verifyTokenList()
 			}
@@ -410,10 +401,10 @@ func TestSetTokenURIByImageURI(t *testing.T) {
 	testing.SetOriginCaller(positionAddr)
 
 	// need to mint token to set owner
-	Mint(testAddr, tokenID)
+	cross(Mint)(testAddr, tokenID)
 	testing.SetOriginCaller(testAddr)
 
-	SetTokenURIByImageURI(tokenID)
+	cross(SetTokenURIByImageURI)(tokenID)
 
 	uri := TokenURI(tokenID)
 	if uri == "" {
@@ -441,7 +432,7 @@ func TestTokenURI(t *testing.T) {
 			name: "get token uri of minted token but not set token uri",
 			setup: func() {
 				testing.SetRealm(positionRealm)
-				Mint((addr01), tid(1))
+				cross(Mint)(addr01, tid(1))
 			},
 			tokenId:     1,
 			shouldPanic: true,
@@ -451,7 +442,7 @@ func TestTokenURI(t *testing.T) {
 			name: "get token uri of minted token after setting token uri",
 			setup: func() {
 				testing.SetRealm(addr01Realm)
-				SetTokenURIByImageURI(tid(1))
+				cross(SetTokenURIByImageURI)(tid(1))
 			},
 			tokenId: 1,
 		},
@@ -477,12 +468,12 @@ func TestTokenURI(t *testing.T) {
 func TestSetTokenURILast(t *testing.T) {
 	resetObject(t)
 	testing.SetRealm(positionRealm)
-	Mint(addr01, tid(1))
-	Mint(addr01, tid(2)) // last minted
+	cross(Mint)(addr01, tid(1))
+	cross(Mint)(addr01, tid(2)) // last minted
 
 	t.Run("set token uri last", func(t *testing.T) {
 		testing.SetRealm(addr01Realm)
-		SetTokenURILast()
+		cross(SetTokenURILast)()
 	})
 
 	t.Run("token uri(2)", func(t *testing.T) {

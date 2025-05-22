@@ -56,7 +56,7 @@ func TestUpdateAndRemovePermission(t *testing.T) {
 	roleName := "editor"
 	permissionName := "can_edit"
 
-	var errWrongCaller = errors.New("wrong caller")
+	errWrongCaller := errors.New("wrong caller")
 
 	// initial setup
 	RegisterRole(roleName)
@@ -92,7 +92,7 @@ func TestDeclareRole(t *testing.T) {
 	roleName := "supervisor"
 	permissionName := "can_supervise"
 
-	var errWrongCaller = errors.New("wrong caller")
+	errWrongCaller := errors.New("wrong caller")
 
 	checker := func(addr std.Address) error {
 		if addr == testCaller {
@@ -117,19 +117,19 @@ func TestUnauthorizedAccess(t *testing.T) {
 
 	t.Run("RegisterRole unauthorized", func(t *testing.T) {
 		testing.SetOriginCaller(wrongCaller)
-		err := RegisterRole(roleName)
+		err := cross(RegisterRole)(roleName)
 		uassert.ErrorContains(t, err, prbac.ErrUnauthorized.Error())
 	})
 
 	t.Run("RegisterPermission unauthorized", func(t *testing.T) {
 		testing.SetOriginCaller(wrongCaller)
-		err := RegisterPermission(roleName, permissionName, checker)
+		err := cross(RegisterPermission)(roleName, permissionName, checker)
 		uassert.ErrorContains(t, err, prbac.ErrUnauthorized.Error())
 	})
 
 	t.Run("RemovePermission unauthorized", func(t *testing.T) {
 		testing.SetOriginCaller(wrongCaller)
-		err := RemovePermission(roleName, permissionName)
+		err := cross(RemovePermission)(roleName, permissionName)
 		uassert.ErrorContains(t, err, prbac.ErrUnauthorized.Error())
 	})
 }

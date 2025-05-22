@@ -5,7 +5,6 @@ import (
 )
 
 const (
-	errHalted           = "ERR_HALTED"
 	errInvalidhaltLevel = "ERR_INVALID_HALT_LEVEL"
 )
 

@@ -11,6 +11,11 @@ import (
 	"gno.land/r/gnoswap/v1/halt"
 )
 
+var (
+	emissionRealm = std.NewCodeRealm(consts.EMISSION_PATH)
+	adminRealm    = std.NewUserRealm(adminAddr)
+)
+
 func TestCalculateAmountToMint(t *testing.T) {
 	t.Run("1 block for same year 01", func(t *testing.T) {
 		amount := calculateAmountToMint(GetLastMintedHeight()+1, GetLastMintedHeight()+1)
@@ -42,33 +47,46 @@ func TestCalculateAmountToMint(t *testing.T) {
 
 	t.Run("no emission amount for after 12 years", func(t *testing.T) {
 		amount := calculateAmountToMint(GetHalvingYearStartBlock(12), GetHalvingYearEndBlock(12)+1)
-		uassert.Equal(t, uint64(0), amount)
+		uassert.Equal(t, int64(0), amount)
+	})
+
+	t.Run("handles invalid block range - fromHeight > toHeight", func(t *testing.T) {
+		// Test when fromHeight is greater than toHeight
+		amount := calculateAmountToMint(GetLastMintedHeight()+10, GetLastMintedHeight()+5)
+		uassert.Equal(t, int64(0), amount)
+	})
+
+	t.Run("handles negative block heights correctly", func(t *testing.T) {
+		// Negative heights should be before emission start, so should return 0
+		negativeStart := GetHalvingYearStartBlock(1) - 100
+		amount := calculateAmountToMint(negativeStart, GetHalvingYearStartBlock(1)-1)
+		uassert.Equal(t, int64(0), amount)
 	})
 }
 
 func TestMintGns(t *testing.T) {
 	t.Run("panic for swap is halted", func(t *testing.T) {
 		testing.SetRealm(std.NewUserRealm(adminAddr))
-		testing.SkipHeights(123)  // pass some block to bypass last block check
-		halt.SetHaltByAdmin(true) // set halt
-		uassert.PanicsWithMessage(t, "halted", func() {
-			MintGns(adminAddr)
+		testing.SkipHeights(123)         // pass some block to bypass last block check
+		cross(halt.SetHaltByAdmin)(true) // set halt
+		uassert.AbortsWithMessage(t, "halted", func() {
+			cross(MintGns)(adminAddr)
 		})
 
-		halt.SetHaltByAdmin(false) // unset halt
+		cross(halt.SetHaltByAdmin)(false) // unset halt
 	})
 
 	t.Run("panic if caller is not emission contract", func(t *testing.T) {
 		testing.SetRealm(std.NewUserRealm(testutils.TestAddress("user")))
-		uassert.PanicsWithMessage(t, "caller(g1w4ek2ujlta047h6lta047h6lta047h6lkvk347) has no permission", func() {
-			MintGns(adminAddr)
+		uassert.AbortsWithMessage(t, "caller(g1w4ek2ujlta047h6lta047h6lta047h6lkvk347) has no permission", func() {
+			cross(MintGns)(adminAddr)
 		})
 	})
 
 	t.Run("do not mint for same block", func(t *testing.T) {
 		testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 		testing.SkipHeights(-123) // revert height to get caught by last block check
-		mintedAmount := MintGns(adminAddr)
-		uassert.Equal(t, uint64(0), mintedAmount)
+		mintedAmount := cross(MintGns)(adminAddr)
+		uassert.Equal(t, int64(0), mintedAmount)
 	})
 }

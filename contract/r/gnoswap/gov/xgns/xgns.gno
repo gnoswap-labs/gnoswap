@@ -10,7 +10,6 @@ import (
 
 	"gno.land/r/gnoswap/v1/access"
 
-	phalt "gno.land/p/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -100,11 +99,11 @@ func Mint(to std.Address, amount uint64) {
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
 			panic(err.Error())
 		}
 
-		if halt.IsContractHalted(phalt.OpTypeXGns) {
+		if halt.IsContractHalted(halt.OpTypeXGns) {
 			panic("xGNS contract operations are currently disabled")
 		}
 	}
@@ -140,11 +139,11 @@ func MintByLaunchPad(to std.Address, amount uint64) {
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
 			panic(err.Error())
 		}
 
-		if halt.IsContractHalted(phalt.OpTypeXGns) {
+		if halt.IsContractHalted(halt.OpTypeXGns) {
 			panic("xGNS contract operations are currently disabled")
 		}
 	}
@@ -184,11 +183,11 @@ func Burn(from std.Address, amount uint64) {
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
 			panic(err.Error())
 		}
 
-		if halt.IsContractHalted(phalt.OpTypeXGns) {
+		if halt.IsContractHalted(halt.OpTypeXGns) {
 			panic("xGNS contract operations are currently disabled")
 		}
 	}
@@ -210,11 +209,11 @@ func BurnByLaunchPad(from std.Address, amount uint64) {
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
+		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
 			panic(err.Error())
 		}
 
-		if halt.IsContractHalted(phalt.OpTypeXGns) {
+		if halt.IsContractHalted(halt.OpTypeXGns) {
 			panic("xGNS contract operations are currently disabled")
 		}
 	}
