@@ -219,7 +219,6 @@ func GetDistributionBpsPct(target int) int64 {
 		))
 	}
 
-	// XXX: type problem. need to update avl tree
 	return iInt64.(int64)
 }
 
