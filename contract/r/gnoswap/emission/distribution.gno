@@ -169,11 +169,8 @@ func distributeToTarget(amount int64) int64 {
 // bptPct is in basis points (1/100th of 1%)
 // Example: 7500 basis points = 75%
 func calculateAmount(amount, bptPct int64) int64 {
-	if bptPct <= 0 {
-		panic("invalid bptPct")
-	}
-	if amount < 0 {
-		panic("invalid amount")
+	if amount < 0 || bptPct < 0 {
+		panic("invalid amount or bptPct")
 	}
 	return amount * bptPct / 10000
 }
@@ -183,22 +180,22 @@ func calculateAmount(amount, bptPct int64) int64 {
 func transferToTarget(target int, amount int64) {
 	switch target {
 	case LIQUIDITY_STAKER:
-		gns.Transfer(stakerAddr, amount)
+		cross(gns.Transfer)(stakerAddr, amount)
 		distributedToStaker += amount
 		accuDistributedToStaker += amount
 
 	case DEVOPS:
-		gns.Transfer(devOpsAddr, amount)
+		cross(gns.Transfer)(devOpsAddr, amount)
 		distributedToDevOps += amount
 		accuDistributedToDevOps += amount
 
 	case COMMUNITY_POOL:
-		gns.Transfer(communityPoolAddr, amount)
+		cross(gns.Transfer)(communityPoolAddr, amount)
 		distributedToCommunityPool += amount
 		accuDistributedToCommunityPool += amount
 
 	case GOV_STAKER:
-		gns.Transfer(govStakerAddr, amount)
+		cross(gns.Transfer)(govStakerAddr, amount)
 		distributedToGovStaker += amount
 		accuDistributedToGovStaker += amount
 

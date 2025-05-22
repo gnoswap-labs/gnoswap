@@ -263,7 +263,7 @@ func TestTransferToTarget(t *testing.T) {
 			target: LIQUIDITY_STAKER,
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(emissionAddr, 100000) // give enough balance for emission
+				cross(gns.Transfer)(emissionAddr, 100000) // give enough balance for emission
 			},
 			amount: 100,
 			verify: func() {
