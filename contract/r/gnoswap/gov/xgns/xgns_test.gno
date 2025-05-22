@@ -60,19 +60,22 @@ func TestMintFail(t *testing.T) {
 	})
 }
 
-// func TestBurn(t *testing.T) {
-// 	burnAmount := int64(200)
+func TestBurn(t *testing.T) {
+	mintAmount := int64(1000)
+	burnAmount := int64(200)
 
-// 	func() {
-// 		testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
-// 		BurnByLaunchPad(launchpadAddress, burnAmount)
-// 		expectedBalance := int64(0)
-// 		actualBalance := BalanceOf(launchpadAddress)
-// 		if actualBalance != expectedBalance {
-// 			t.Errorf("Burn() failed. Expected %d, got %d", expectedBalance, actualBalance)
-// 		}
-// 	}()
-// }
+	testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
+	func() {
+		testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
+		Mint(launchpadAddress, mintAmount)
+		BurnByLaunchPad(launchpadAddress, burnAmount)
+		expectedBalance := mintAmount - burnAmount
+		actualBalance := BalanceOf(launchpadAddress)
+		if actualBalance != expectedBalance {
+			t.Errorf("Burn() failed. Expected %d, got %d", expectedBalance, actualBalance)
+		}
+	}()
+}
 
 // func TestBurnFail(t *testing.T) {
 // 	amount := int64(100)
