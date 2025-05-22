@@ -61,6 +61,7 @@ func ChangeDistributionPctByAdmin(
 	target03 int, pct03 int64,
 	target04 int, pct04 int64,
 ) {
+	crossing()
 	assertOnlyAdmin()
 	targets := []int{target01, target02, target03, target04}
 	for _, target := range targets {
@@ -89,6 +90,7 @@ func ChangeDistributionPct(
 	target03 int, pct03 int64,
 	target04 int, pct04 int64,
 ) {
+	crossing()
 	assertOnlyGovernance()
 	targets := []int{target01, target02, target03, target04}
 	for _, target := range targets {
@@ -217,6 +219,7 @@ func GetDistributionBpsPct(target int) int64 {
 		))
 	}
 
+	// XXX: type problem. need to update avl tree
 	return iInt64.(int64)
 }
 
