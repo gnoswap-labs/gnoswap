@@ -53,10 +53,10 @@ func (p *Pool) safeTransfer(
 	if err := validatePoolBalance(token0, token1, absAmount, isToken0); err != nil {
 		panic(err)
 	}
-	amountUint64 := safeConvertToUint64(absAmount)
+	amountInt64 := safeConvertToInt64(absAmount)
 
 	token := common.GetTokenTeller(tokenPath)
-	checkTransferError(token.Transfer(to, amountUint64))
+	checkTransferError(token.Transfer(to, amountInt64))
 
 	newBalance, err := updatePoolBalance(token0, token1, absAmount, isToken0)
 	if err != nil {
@@ -108,19 +108,19 @@ func (p *Pool) safeTransferFrom(
 	amount *u256.Uint,
 	isToken0 bool,
 ) {
-	amountUint64 := safeConvertToUint64(amount)
+	amountInt64 := safeConvertToInt64(amount)
 
 	token := common.GetToken(tokenPath)
 	beforeBalance := token.BalanceOf(to)
 
 	teller := common.GetTokenTeller(tokenPath)
-	checkTransferError(teller.TransferFrom(from, to, amountUint64))
+	checkTransferError(teller.TransferFrom(from, to, amountInt64))
 
 	afterBalance := token.BalanceOf(to)
-	if (beforeBalance + amountUint64) != afterBalance {
+	if (beforeBalance + amountInt64) != afterBalance {
 		panic(ufmt.Sprintf(
 			"%v. beforeBalance(%d) + amount(%d) != afterBalance(%d)",
-			errTransferFailed, beforeBalance, amountUint64, afterBalance,
+			errTransferFailed, beforeBalance, amountInt64, afterBalance,
 		))
 	}
 

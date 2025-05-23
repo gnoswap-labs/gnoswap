@@ -193,13 +193,13 @@ func Collect(
 		position.tokensOwed0 = new(u256.Uint).Sub(position.tokensOwed0, amount0)
 		pool.balances.token0 = new(u256.Uint).Sub(pool.balances.token0, amount0)
 		token0 := common.GetTokenTeller(pool.token0Path)
-		checkTransferError(token0.Transfer(recipient, amount0.Uint64()))
+		checkTransferError(token0.Transfer(recipient, amount0.Int64()))
 	}
 	if amount1.Gt(u256.Zero()) {
 		position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
 		pool.balances.token1 = new(u256.Uint).Sub(pool.balances.token1, amount1)
 		token1 := common.GetTokenTeller(pool.token1Path)
-		checkTransferError(token1.Transfer(recipient, amount1.Uint64()))
+		checkTransferError(token1.Transfer(recipient, amount1.Int64()))
 	}
 
 	pool.setPosition(positionKey, position)
@@ -344,8 +344,8 @@ func collectProtocol(
 	amount1 := u256Min(amount1Req, pool.ProtocolFeesToken1())
 
 	amount0, amount1 = pool.saveProtocolFees(amount0.Clone(), amount1.Clone())
-	uAmount0 := amount0.Uint64()
-	uAmount1 := amount1.Uint64()
+	uAmount0 := amount0.Int64()
+	uAmount1 := amount1.Int64()
 
 	token0Teller := common.GetTokenTeller(pool.token0Path)
 	checkTransferError(token0Teller.Transfer(recipient, uAmount0))

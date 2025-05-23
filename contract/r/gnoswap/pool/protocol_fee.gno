@@ -13,7 +13,7 @@ import (
 var (
 	// poolCreationFee is the fee that is charged when a user creates a pool.
 	// The fee is denominated in GNS tokens.
-	poolCreationFee = uint64(100_000_000) // 100_GNS
+	poolCreationFee = int64(100_000_000) // 100_GNS
 
 	// withdrawalFeeBPS is the fee that is charged when a user withdraws their collected fees
 	// The fee is denominated in BPS (Basis Points)
@@ -50,6 +50,7 @@ func CollectWithdrawalFee(
 	poolPath string,
 	positionCaller std.Address,
 ) (string, string) { // uint256 x2
+	crossing()
 	assertOnlyNotHalted()
 	common.MustRegistered(token0Path, token1Path)
 
@@ -71,11 +72,11 @@ func CollectWithdrawalFee(
 	feeAmount1, afterAmount1 := calculateAmountWithFee(u256.MustFromDecimal(amount1), u256.NewUint(fee))
 
 	token0Teller := common.GetTokenTeller(token0Path)
-	checkTransferError(token0Teller.TransferFrom(positionCaller, protocolFeeAddr, feeAmount0.Uint64()))
+	checkTransferError(token0Teller.TransferFrom(positionCaller, protocolFeeAddr, feeAmount0.Int64()))
 	pf.AddToProtocolFee(token0Path, feeAmount0.Uint64())
 
 	token1Teller := common.GetTokenTeller(token1Path)
-	checkTransferError(token1Teller.TransferFrom(positionCaller, protocolFeeAddr, feeAmount1.Uint64()))
+	checkTransferError(token1Teller.TransferFrom(positionCaller, protocolFeeAddr, feeAmount1.Int64()))
 	pf.AddToProtocolFee(token1Path, feeAmount1.Uint64())
 
 	prevAddr, prevPkgPath := getPrevAsString()
@@ -96,14 +97,16 @@ func CollectWithdrawalFee(
 
 // GetPoolCreationFee returns the poolCreationFee
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#getpoolcreationfee
-func GetPoolCreationFee() uint64 {
+func GetPoolCreationFee() int64 {
+	crossing()
 	return poolCreationFee
 }
 
 // SetPoolCreationFee sets the poolCreationFee.
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#setpoolcreationfee
-func SetPoolCreationFee(fee uint64) {
+func SetPoolCreationFee(fee int64) {
+	crossing()
 	assertOnlyNotHalted()
 	caller := getPrevAddr()
 	if err := common.GovernanceOnly(caller); err != nil {
@@ -124,7 +127,8 @@ func SetPoolCreationFee(fee uint64) {
 
 // SetPoolCreationFeeByAdmin sets the poolCreationFee by Admin.
 // Only admin can execute this function.
-func SetPoolCreationFeeByAdmin(fee uint64) {
+func SetPoolCreationFeeByAdmin(fee int64) {
+	crossing()
 	assertOnlyNotHalted()
 
 	caller := getPrevAddr()
@@ -147,6 +151,7 @@ func SetPoolCreationFeeByAdmin(fee uint64) {
 // GetWithdrawalFee returns the withdrawal fee
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_withdrawal.gno#getwithdrawalfee
 func GetWithdrawalFee() uint64 {
+	crossing()
 	return withdrawalFeeBPS
 }
 
@@ -154,6 +159,7 @@ func GetWithdrawalFee() uint64 {
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_withdrawal.gno#setwithdrawalfee
 func SetWithdrawalFee(fee uint64) {
+	crossing()
 	assertOnlyNotHalted()
 	caller := getPrevAddr()
 	if err := common.GovernanceOnly(caller); err != nil {
@@ -177,6 +183,7 @@ func SetWithdrawalFee(fee uint64) {
 // SetWithdrawalFeeByAdmin sets the withdrawal fee by Admin.
 // Only admin can execute this function.
 func SetWithdrawalFeeByAdmin(fee uint64) {
+	crossing()
 	assertOnlyNotHalted()
 	caller := getPrevAddr()
 	if err := common.AdminOnly(caller); err != nil {
@@ -215,7 +222,10 @@ func calculateAmountWithFee(amount *u256.Uint, fee *u256.Uint) (*u256.Uint, *u25
 
 // setPoolCreationFee this function is internal function called by SetPoolCreationFee
 // And SetPoolCreationFeeByAdmin
-func setPoolCreationFee(fee uint64) {
+func setPoolCreationFee(fee int64) {
+	if fee <= 0 {
+		panic("pool creation fee cannot be zero or negative")
+	}
 	poolCreationFee = fee
 }
 
@@ -226,7 +236,7 @@ func setWithdrawalFee(fee uint64) {
 	if fee > MaxBpsValue {
 		panic(newErrorWithDetail(
 			errInvalidWithdrawalFeePct,
-			ufmt.Sprintf("withdrawal_fee.gno__setWithdrawalFee() || fee(%d) must be in range 0 ~ 10000", fee),
+			ufmt.Sprintf("fee(%d) must be in range 0 ~ 10000", fee),
 		))
 	}
 	withdrawalFeeBPS = fee
