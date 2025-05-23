@@ -106,7 +106,7 @@ type TokenPair struct {
 	token1         string
 	token0IsNative bool
 	token1IsNative bool
-	wrappedAmount  uint64
+	wrappedAmount  int64
 }
 
 type ProcessedMintInput struct {

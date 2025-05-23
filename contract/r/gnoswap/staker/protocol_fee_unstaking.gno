@@ -30,16 +30,16 @@ var unstakingFee = uint64(100) // 1%
 // - uint64: The amount after deducting the unstaking fee.
 func handleUnStakingFee(
 	tokenPath string,
-	amount uint64,
+	amount int64,
 	internal bool,
 	positionId uint64,
 	poolPath string,
-) uint64 {
+) int64 {
 	if unstakingFee == 0 {
 		return amount
 	}
 
-	feeAmount := amount * unstakingFee / 10000
+	feeAmount := amount * int64(unstakingFee / 10000)
 	if feeAmount == 0 {
 		return amount
 	}
@@ -49,7 +49,7 @@ func handleUnStakingFee(
 	if internal {
 		// staker contract has fee
 		gns.Transfer(protocolFeeAddr, feeAmount)
-		pf.AddToProtocolFee(consts.GNS_PATH, feeAmount)
+		pf.AddToProtocolFee(consts.GNS_PATH, uint64(feeAmount))
 
 		std.Emit(
 			"ProtocolFeeInternalReward",
@@ -64,7 +64,7 @@ func handleUnStakingFee(
 		// external contract has fee
 		teller := common.GetTokenTeller(tokenPath)
 		teller.Transfer(protocolFeeAddr, feeAmount)
-		pf.AddToProtocolFee(tokenPath, feeAmount)
+		pf.AddToProtocolFee(tokenPath, uint64(feeAmount))
 
 		std.Emit(
 			"ProtocolFeeExternalReward",
@@ -73,7 +73,7 @@ func handleUnStakingFee(
 			"fromPositionId", formatUint(positionId),
 			"fromPoolPath", poolPath,
 			"feeTokenPath", tokenPath,
-			"feeAmount", formatUint(feeAmount),
+			"feeAmount", formatInt(feeAmount),
 		)
 	}
 
