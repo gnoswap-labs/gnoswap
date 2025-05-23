@@ -42,9 +42,9 @@ func TestSetPoolCreationFee(t *testing.T) {
 				SetPoolCreationFee(newFee)
 			},
 			verify: func() string {
-				return strconv.FormatUint(GetPoolCreationFee(), 10)
+				return strconv.FormatInt(GetPoolCreationFee(), 10)
 			},
-			expected:    strconv.FormatUint(2_000_000_000, 10),
+			expected:    strconv.FormatInt(2_000_000_000, 10),
 			shouldPanic: false,
 		},
 	}
@@ -123,9 +123,9 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 				}
 			},
 			verify: func() string {
-				return strconv.FormatUint(GetPoolCreationFee(), 10)
+				return strconv.FormatInt(GetPoolCreationFee(), 10)
 			},
-			expected:    strconv.FormatUint(2_000_000_000, 10),
+			expected:    strconv.FormatInt(2_000_000_000, 10),
 			shouldPanic: false,
 		},
 		{
@@ -138,9 +138,9 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 				}
 			},
 			verify: func() string {
-				return strconv.FormatUint(GetPoolCreationFee(), 10)
+				return strconv.FormatInt(GetPoolCreationFee(), 10)
 			},
-			expected:    strconv.FormatUint(1_000_000_000, 10),
+			expected:    strconv.FormatInt(1_000_000_000, 10),
 			shouldPanic: false,
 		},
 	}
@@ -211,8 +211,8 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				if !pools.Has(poolPath) {
 					panic("pool not found")
 				}
-				TokenApprove(t, wugnotPath, alice, protocolFeeAddr, uint64(0))
-				TokenApprove(t, gnsPath, alice, protocolFeeAddr, uint64(0))
+				TokenApprove(t, wugnotPath, alice, protocolFeeAddr, 0)
+				TokenApprove(t, gnsPath, alice, protocolFeeAddr, 0)
 				CollectWithdrawalFee(1, wugnotPath, "1000", gnsPath, "1000", poolPath, alice)
 			},
 			verify:      nil,
@@ -224,8 +224,8 @@ func TestHandleWithdrawalFee(t *testing.T) {
 			action: func(t *testing.T) {
 				InitialisePoolTest(t)
 				testing.SetRealm(std.NewUserRealm(alice))
-				TokenApprove(t, wugnotPath, alice, poolAddr, uint64(1000))
-				TokenApprove(t, gnsPath, alice, poolAddr, uint64(1000))
+				TokenApprove(t, wugnotPath, alice, poolAddr, 1000)
+				TokenApprove(t, gnsPath, alice, poolAddr, 1000)
 				pn.Mint(
 					wugnotPath,
 					gnsPath,
@@ -244,8 +244,8 @@ func TestHandleWithdrawalFee(t *testing.T) {
 			},
 			verify: func(t *testing.T) (string, string) {
 				testing.SetRealm(std.NewUserRealm(alice))
-				TokenApprove(t, wugnotPath, alice, poolAddr, uint64(10000000000))
-				TokenApprove(t, gnsPath, alice, poolAddr, uint64(1000000000))
+				TokenApprove(t, wugnotPath, alice, poolAddr, 10000000000)
+				TokenApprove(t, gnsPath, alice, poolAddr, 1000000000)
 				testing.SetRealm(std.NewUserRealm(positionAddr))
 				poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
 				return CollectWithdrawalFee(2, wugnotPath, "1000", gnsPath, "1000", poolPath, alice)

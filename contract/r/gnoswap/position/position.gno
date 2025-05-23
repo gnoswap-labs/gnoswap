@@ -126,14 +126,14 @@ func Mint(
 	id, liquidity, amount0, amount1 := mint(mintParams)
 
 	// refund leftover wrapped tokens
-	if processedInput.tokenPair.token0IsNative && processedInput.tokenPair.wrappedAmount > amount0.Uint64() {
-		err = unwrap(processedInput.tokenPair.wrappedAmount-amount0.Uint64(), caller)
+	if processedInput.tokenPair.token0IsNative && processedInput.tokenPair.wrappedAmount > amount0.Int64() {
+		err = unwrap(processedInput.tokenPair.wrappedAmount-amount0.Int64(), caller)
 		if err != nil {
 			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
 		}
 	}
-	if processedInput.tokenPair.token1IsNative && processedInput.tokenPair.wrappedAmount > amount1.Uint64() {
-		err = unwrap(processedInput.tokenPair.wrappedAmount-amount1.Uint64(), caller)
+	if processedInput.tokenPair.token1IsNative && processedInput.tokenPair.wrappedAmount > amount1.Int64() {
+		err = unwrap(processedInput.tokenPair.wrappedAmount-amount1.Int64(), caller)
 		if err != nil {
 			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
 		}
@@ -190,7 +190,7 @@ func IncreaseLiquidity(
 	}
 	caller := getPrevAddr()
 
-	wrappedAmount := uint64(0)
+	wrappedAmount := int64(0)
 	if isWrappedToken(token0) {
 		wrappedAmount = safeWrapNativeToken(amount0DesiredStr, caller)
 	} else if isWrappedToken(token1) {
@@ -209,16 +209,19 @@ func IncreaseLiquidity(
 
 	_, liquidity, amount0, amount1, poolPath := increaseLiquidity(increaseLiquidityParams)
 
-	if isWrappedToken(token0) && wrappedAmount > amount0.Uint64() {
+	amount0Int64 := amount0.Int64()
+	amount1Int64 := amount1.Int64()
+
+	if isWrappedToken(token0) && wrappedAmount > amount0Int64 {
 		// unwrap leftover wugnot
-		err = unwrap(wrappedAmount-amount0.Uint64(), caller)
+		err = unwrap(wrappedAmount-amount0Int64, caller)
 		if err != nil {
 			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
 		}
 	}
-	if isWrappedToken(token1) && wrappedAmount > amount1.Uint64() {
+	if isWrappedToken(token1) && wrappedAmount > amount1Int64 {
 		// unwrap leftover wugnot
-		err = unwrap(wrappedAmount-amount1.Uint64(), caller)
+		err = unwrap(wrappedAmount-amount1Int64, caller)
 		if err != nil {
 			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
 		}

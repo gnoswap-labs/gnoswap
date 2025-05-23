@@ -42,6 +42,7 @@ func CreatePool(
 	fee uint32,
 	sqrtPriceX96 string,
 ) {
+	crossing()
 	assertOnlyNotHalted()
 
 	poolInfo := createPool(token0Path, token1Path, fee, sqrtPriceX96, GetFeeAmountTickSpacing(fee))
@@ -60,7 +61,7 @@ func CreatePool(
 
 	if poolCreationFee > 0 {
 		gns.TransferFrom(std.PreviousRealm().Address(), protocolFeeAddr, poolCreationFee)
-		pf.AddToProtocolFee(consts.GNS_PATH, poolCreationFee)
+		pf.AddToProtocolFee(consts.GNS_PATH, uint64(poolCreationFee))
 
 		std.Emit(
 			"PoolCreationFee",
@@ -94,6 +95,7 @@ func CreatePool(
 // DoesPoolPathExist checks if a pool exists for the given poolPath.
 // The poolPath is a unique identifier for a pool, combining token paths and fee.
 func DoesPoolPathExist(poolPath string) bool {
+	crossing()
 	return pools.Has(poolPath)
 }
 
@@ -117,6 +119,7 @@ func DoesPoolPathExist(poolPath string) bool {
 // Example:
 // pool := GetPool("gno.land/r/demo/wugnot", "gno.land/r/gnoswap/v1/gns", 3000)
 func GetPool(token0Path, token1Path string, fee uint32) *Pool {
+	crossing()
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 	return GetPoolFromPoolPath(poolPath)
 }
@@ -142,6 +145,7 @@ func GetPool(token0Path, token1Path string, fee uint32) *Pool {
 // Example:
 // pool := GetPoolFromPoolPath("path/to/pool")
 func GetPoolFromPoolPath(poolPath string) *Pool {
+	crossing()
 	iPool, exist := pools.Get(poolPath)
 	if !exist {
 		panic(newErrorWithDetail(
@@ -176,6 +180,7 @@ func GetPoolFromPoolPath(poolPath string) *Pool {
 // poolPath := GetPoolPath("path/to/token0", "path/to/token1", 3000)
 // // Output: "path/to/token0:path/to/token1:3000"
 func GetPoolPath(token0Path, token1Path string, fee uint32) string {
+	crossing()
 	assertOnlyRegistered(token0Path)
 	assertOnlyRegistered(token1Path)
 
@@ -198,6 +203,7 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 // Panics:
 //   - If the fee amount is not registered in feeAmountTickSpacing
 func GetFeeAmountTickSpacing(fee uint32) int32 {
+	crossing()
 	feeStr := strconv.FormatUint(uint64(fee), 10)
 	iTickSpacing, exist := feeAmountTickSpacing.Get(feeStr)
 	if !exist {
@@ -216,6 +222,7 @@ func SetFeeProtocolByAdmin(
 	feeProtocol0 uint8,
 	feeProtocol1 uint8,
 ) {
+	crossing()
 	assertOnlyAdmin()
 	setFeeProtocolInternal(feeProtocol0, feeProtocol1, "SetFeeProtocolByAdmin")
 }
@@ -225,6 +232,7 @@ func SetFeeProtocolByAdmin(
 // Also it will be applied to new created pools
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#setfeeprotocol
 func SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
+	crossing()
 	assertOnlyGovernance()
 	setFeeProtocolInternal(feeProtocol0, feeProtocol1, "SetFeeProtocol")
 }

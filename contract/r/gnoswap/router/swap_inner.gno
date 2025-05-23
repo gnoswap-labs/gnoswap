@@ -42,7 +42,7 @@ func swapInner(
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
 	// approve only the required amount
-	approveAmount := amountSpecified.Abs().Uint64()
+	approveAmount := amountSpecified.Abs().Int64()
 
 	// approves pool as spender
 	common.GetTokenTeller(data.tokenIn).Approve(poolAddr, approveAmount)

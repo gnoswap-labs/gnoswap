@@ -33,13 +33,13 @@ const (
 
 // GnotSwapHandler encapsulates methods for handling GNOT token swaps
 type GnotSwapHandler struct {
-	BeforeBalance uint64
-	WrappedAmount uint64
-	NewBalance    uint64
+	BeforeBalance int64
+	WrappedAmount int64
+	NewBalance    int64
 }
 
 // newGnotSwapHandler creates a new handler for GNOT swaps
-func newGnotSwapHandler(beforeBalance, wrappedAmount uint64) *GnotSwapHandler {
+func newGnotSwapHandler(beforeBalance, wrappedAmount int64) *GnotSwapHandler {
 	return &GnotSwapHandler{
 		BeforeBalance: beforeBalance,
 		WrappedAmount: wrappedAmount,
@@ -217,7 +217,7 @@ func finalizeSwap(
 	resultAmountIn, resultAmountOut *u256.Uint,
 	swapType SwapType,
 	tokenAmountLimit *u256.Uint,
-	userBeforeWugnotBalance, userWrappedWugnot uint64,
+	userBeforeWugnotBalance, userWrappedWugnot int64,
 	amountSpecified *u256.Uint,
 ) (string, string) {
 	validator := &SwapValidator{}

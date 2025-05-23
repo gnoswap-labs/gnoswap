@@ -694,12 +694,12 @@ type ApiExternalDebugIncentive struct {
 type currentInfo struct {
 	height           int64
 	time             int64
-	gnsStaker        uint64
-	gnsDevOps        uint64
-	gnsCommunityPool uint64
-	gnsGovStaker     uint64
-	gnsProtocolFee   uint64
-	gnsADMIN         uint64
+	gnsStaker        int64
+	gnsDevOps        int64
+	gnsCommunityPool int64
+	gnsGovStaker     int64
+	gnsProtocolFee   int64
+	gnsADMIN         int64
 }
 
 func getCurrentInfo() currentInfo {

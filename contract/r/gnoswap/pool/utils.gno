@@ -47,6 +47,10 @@ func safeConvertToUint64(value *u256.Uint) uint64 {
 	return res
 }
 
+func safeConvertToInt64(value *u256.Uint) int64 {
+	return int64(safeConvertToUint64(value))
+}
+
 // safeConvertToInt128 safely converts a *u256.Uint value to an *i256.Int, ensuring it does not exceed the int128 range.
 //
 // This function converts an unsigned 256-bit integer (*u256.Uint) into a signed 256-bit integer (*i256.Int).

@@ -132,7 +132,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			TokenFaucet(t, tt.tokenPath, tt.from)
-			TokenApprove(t, tt.tokenPath, tt.from, poolAddr, u256.MustFromDecimal(tt.amount.ToString()).Uint64())
+			TokenApprove(t, tt.tokenPath, tt.from, poolAddr, u256.MustFromDecimal(tt.amount.ToString()).Int64())
 
 			tt.pool.safeTransferFrom(tt.from, tt.to, tt.tokenPath, u256.MustFromDecimal(tt.amount.ToString()), tt.isToken0)
 
@@ -161,7 +161,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 		negativeAmount := i256.NewInt(-500)
 
 		TokenFaucet(t, fooPath, testutils.TestAddress("from_addr"))
-		TokenApprove(t, fooPath, testutils.TestAddress("from_addr"), poolAddr, u256.MustFromDecimal(negativeAmount.Abs().ToString()).Uint64())
+		TokenApprove(t, fooPath, testutils.TestAddress("from_addr"), poolAddr, u256.MustFromDecimal(negativeAmount.Abs().ToString()).Int64())
 		pool.safeTransferFrom(
 			testutils.TestAddress("from_addr"),
 			testutils.TestAddress("to_addr"),

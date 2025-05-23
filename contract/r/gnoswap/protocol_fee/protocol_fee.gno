@@ -109,6 +109,7 @@ func GetDevOpsPct() uint64 {
 
 // SetDevOpsPctByAdmin sets the devOpsPct.
 func SetDevOpsPctByAdmin(pct uint64) {
+	crossing()
 	caller := std.PreviousRealm().Address()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err)

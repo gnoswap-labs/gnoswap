@@ -84,24 +84,6 @@ var (
 	addrUsedInTest = []std.Address{addr01, addr02}
 )
 
-func InitialisePoolTest(t *testing.T) {
-	t.Helper()
-
-	ugnotFaucet(t, admin, 100_000_000_000_000)
-	ugnotDeposit(t, admin, 100_000_000_000_000)
-
-	testing.SetOriginCaller(admin)
-	TokenApprove(t, gnsPath, admin, poolAddr, maxApprove)
-	CreatePool(t, wugnotPath, gnsPath, fee3000, "79228162514264337593543950336", admin)
-
-	// 2. create position
-	testing.SetOriginCaller(alice)
-	TokenFaucet(t, wugnotPath, alice)
-	TokenFaucet(t, gnsPath, alice)
-	TokenApprove(t, wugnotPath, alice, poolAddr, uint64(1000))
-	TokenApprove(t, gnsPath, alice, poolAddr, uint64(1000))
-}
-
 func TokenFaucet(t *testing.T, tokenPath string, to std.Address) {
 	t.Helper()
 	testing.SetOriginCaller(admin)
@@ -152,50 +134,6 @@ func TokenFaucet2(t *testing.T, tokenPath string, to std.Address) {
 	}
 }
 
-func TokenBalance(t *testing.T, tokenPath string, owner std.Address) uint64 {
-	t.Helper()
-	switch tokenPath {
-	case wugnotPath:
-		return wugnot.BalanceOf(owner)
-	case gnsPath:
-		return gns.BalanceOf(owner)
-	case barPath:
-		return bar.BalanceOf(owner)
-	case bazPath:
-		return baz.BalanceOf(owner)
-	case fooPath:
-		return foo.BalanceOf(owner)
-	case oblPath:
-		return obl.BalanceOf(owner)
-	case quxPath:
-		return qux.BalanceOf(owner)
-	default:
-		panic("token not found")
-	}
-}
-
-func TokenAllowance(t *testing.T, tokenPath string, owner, spender std.Address) uint64 {
-	t.Helper()
-	switch tokenPath {
-	case wugnotPath:
-		return wugnot.Allowance(owner, spender)
-	case gnsPath:
-		return gns.Allowance(owner, spender)
-	case barPath:
-		return bar.Allowance(owner, spender)
-	case bazPath:
-		return baz.Allowance(owner, spender)
-	case fooPath:
-		return foo.Allowance(owner, spender)
-	case oblPath:
-		return obl.Allowance(owner, spender)
-	case quxPath:
-		return qux.Allowance(owner, spender)
-	default:
-		panic("token not found")
-	}
-}
-
 func TokenApprove(t *testing.T, tokenPath string, owner, spender std.Address, amount uint64) {
 	t.Helper()
 	switch tokenPath {
@@ -233,18 +171,6 @@ func CreatePool(t *testing.T,
 		pl.CreatePool(token0, token1, fee, sqrtPriceX96)
 		sr.SetPoolTierByAdmin(poolPath, TIER_1)
 	}
-}
-
-func LPTokenStake(t *testing.T, owner std.Address, positionId uint64) {
-	t.Helper()
-	testing.SetRealm(std.NewUserRealm(owner))
-	sr.StakeToken(positionId, "")
-}
-
-func LPTokenUnStake(t *testing.T, owner std.Address, positionId uint64, unwrap bool) {
-	t.Helper()
-	testing.SetRealm(std.NewUserRealm(owner))
-	sr.UnStakeToken(positionId, unwrap)
 }
 
 func wugnotApprove(t *testing.T, owner, spender std.Address, amount uint64) {
