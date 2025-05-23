@@ -85,14 +85,14 @@ func proposeText(t *testing.T) {
 			proposal := pp.(ProposalInfo)
 
 			// 50% of voting xGNS supply
-			if proposal.QuorumAmount != 500000 {
-				t.Fatalf("proposal.QuorumAmount is not 500000")
+			if proposal.QuorumAmount != 1500000 {
+				t.Fatalf("proposal.QuorumAmount is not 1500000, got %d", proposal.QuorumAmount)
 			}
 
 			maxVotingWeight, _ := gs.GetPossibleVotingAddressWithWeight(proposal.State.CreatedAt - config.VotingWeightSmoothingDuration)
 			// config.VotingWeightSmoothingDuration = 10s = 5 block
 
-			uassert.Equal(t, maxVotingWeight, uint64(1000000))
+			uassert.Equal(t, maxVotingWeight, uint64(3000000))
 			// createdAt > 125 // 1234567894
 			// (createdAt - VotingWeightSmoothingDuration) > 120 // 1234567884
 			// no delegation happend until block 120
