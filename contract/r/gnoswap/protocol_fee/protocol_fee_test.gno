@@ -9,7 +9,6 @@ import (
 	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/onbloc/bar"
 	_ "gno.land/r/onbloc/baz"
