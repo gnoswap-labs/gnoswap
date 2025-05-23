@@ -14,12 +14,12 @@ var (
 	errFailedToWrapBelowMin = "amount(%d) < minimum(%d)"
 )
 
-func wrap(ugnotAmount uint64) {
+func wrap(ugnotAmount int64) {
 	if ugnotAmount <= 0 {
 		panic(addDetailToError(errWrapUnwrap, errFailedToWrapZeroUgnot))
 	}
 
-	if ugnotAmount < consts.UGNOT_MIN_DEPOSIT_TO_WRAP {
+	if ugnotAmount < int64(consts.UGNOT_MIN_DEPOSIT_TO_WRAP) {
 		panic(addDetailToError(
 			errWugnotMinimum,
 			ufmt.Sprintf(errFailedToWrapBelowMin, ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP),
@@ -36,7 +36,7 @@ func wrap(ugnotAmount uint64) {
 	wugnot.Transfer(std.PreviousRealm().Address(), ugnotAmount)
 }
 
-func unwrap(wugnotAmount uint64) {
+func unwrap(wugnotAmount int64) {
 	if wugnotAmount == 0 {
 		return
 	}

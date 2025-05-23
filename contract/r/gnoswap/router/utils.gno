@@ -191,3 +191,18 @@ func formatUint(v any) string {
 		panic(ufmt.Sprintf("invalid type: %T", v))
 	}
 }
+
+func formatInt64(v any) string {
+	switch v := v.(type) {
+	case int8:
+		return strconv.FormatInt(int64(v), 10)
+	case int16:
+		return strconv.FormatInt(int64(v), 10)
+	case int32:
+		return strconv.FormatInt(int64(v), 10)
+	case int64:
+		return strconv.FormatInt(v, 10)
+	default:
+		panic(ufmt.Sprintf("invalid type %T", v))
+	}
+}
