@@ -10,9 +10,7 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
 	// pn "gno.land/r/gnoswap/v1/position"
 )
 
@@ -938,10 +936,10 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 // 			setupFn: func(t *testing.T) {
 // 				testing.SetRealm(std.NewUserRealm(adminAddr))
 // 				wugnot.Approve(poolAddr, maxApprove)
-// 				gns.Approve(poolAddr, maxApprove)
+// 				cross(gns.Approve)(poolAddr, maxApprove)
 // 				CreatePool(wugnotTokenPath, gnsTokenPath, FeeTier100, "79228162514264337593543950336")
 // 				wugnot.Approve(routerAddr, maxApprove)
-// 				gns.Approve(routerAddr, maxApprove)
+// 				cross(gns.Approve)(routerAddr, maxApprove)
 
 // 				faucetAddress := adminAddr
 // 				testing.SetOriginCaller(faucetAddress)
@@ -950,7 +948,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 // 				testing.SetOriginSend(newCoins)
 // 				banker := std.NewBanker(std.BankerTypeRealmSend)
 // 				banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
-// 				wugnot.Deposit()
+// 				cross(wugnot.Deposit)()
 
 // 				pn.Mint(
 // 					wugnotTokenPath,

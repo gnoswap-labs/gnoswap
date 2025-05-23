@@ -25,7 +25,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 	// call gns faucet to get creation fee
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 	CreatePool(consts.WRAPPED_WUGNOT, fooPath, fee500, "130621891405341611593710811006") // x2.7
 }
 
@@ -45,7 +45,7 @@ func TestMint(t *testing.T) {
 
 	// Deposit(wrap)
 	testing.SetRealm(adminRealm)
-	wugnot.Deposit()
+	cross(wugnot.Deposit)()
 
 	testing.SetRealm(adminRealm)
 	foo.Approve(poolAddr, consts.UINT64_MAX)

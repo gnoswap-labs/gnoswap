@@ -21,7 +21,7 @@ var (
 
 func TestLimitOrderThru_Positive_1(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	foo.Approve(poolAddr, consts.UINT64_MAX)
@@ -89,7 +89,7 @@ func TestLimitOrderThru_Positive_1(t *testing.T) {
 
 func TestLimitOrderThru_Negative_1(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	foo.Approve(poolAddr, consts.UINT64_MAX)

@@ -23,7 +23,7 @@ var (
 
 func TestMintPostInit(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-1).ToString())
 
 	foo.Approve(poolAddr, consts.UINT64_MAX)

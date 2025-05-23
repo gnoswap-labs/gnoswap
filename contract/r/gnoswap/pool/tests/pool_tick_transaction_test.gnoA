@@ -21,7 +21,7 @@ import (
 
 func TestTickTransaction(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	testSqrt := common.TickMathGetSqrtRatioAtTick(-24081)
 	testSqrt = testSqrt.Add(testSqrt, u256.One())

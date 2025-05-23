@@ -13,7 +13,7 @@ import (
 
 func TestCreatePool(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(poolAddr, poolCreationFee*10)
+	cross(gns.Approve)(poolAddr, poolCreationFee*10)
 
 	t.Run("succeeds for low fee pool", func(t *testing.T) {
 		CreatePool(barPath, fooPath, uint32(500), common.TickMathGetSqrtRatioAtTick(0).ToString())

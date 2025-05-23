@@ -31,7 +31,7 @@ func TestCreateFooBarPool(t *testing.T) {
 
 	testing.SkipHeights(5)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 	testing.SkipHeights(1)
 
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
@@ -48,7 +48,7 @@ func TestCreateBarBazPool(t *testing.T) {
 
 	testing.SkipHeights(5)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 	testing.SkipHeights(1)
 
 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000

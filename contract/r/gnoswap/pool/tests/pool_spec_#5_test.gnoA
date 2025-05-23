@@ -42,7 +42,7 @@ func TestSuccess_transfers_token1_only(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	token0Path := "gno.land/r/onbloc/foo"
 
@@ -74,7 +74,7 @@ func TestSuccess_min_tick_with_max_leverage(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	token0Path := "gno.land/r/onbloc/foo"
 
@@ -106,7 +106,7 @@ func TestSuccess_work_for_min_tick(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	token0Path := "gno.land/r/onbloc/foo"
 
@@ -138,7 +138,7 @@ func TestSuccess_removing_works(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	token0Path := "gno.land/r/onbloc/foo"
 

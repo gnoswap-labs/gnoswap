@@ -34,7 +34,7 @@ func TestInitCreatePool(t *testing.T) {
 	// call gns faucet to get creation fee
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // x2.7
 }
 
