@@ -36,7 +36,7 @@ const (
 	fee100      uint32 = 100
 	fee500      uint32 = 500
 	fee3000     uint32 = 3000
-	maxApprove  int64 = 9223372036854775807
+	maxApprove  int64 = 9223372036854775806
 	max_timeout int64  = 9999999999
 
 	maxSqrtPriceLimitX96 string = "1461373636630004318706518188784493106690254656249"
