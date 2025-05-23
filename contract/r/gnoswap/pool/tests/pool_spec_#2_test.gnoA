@@ -44,7 +44,7 @@ func TestSuccess_case_init_balance(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	token0Path := "gno.land/r/onbloc/foo"
 
@@ -71,7 +71,7 @@ func TestSuccess_case_init_tick(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	token0Path := "gno.land/r/onbloc/foo"
 
@@ -96,7 +96,7 @@ func TestSuccess_case_transfer_token0_only(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	token0Path := "gno.land/r/onbloc/foo"
 
@@ -125,7 +125,7 @@ func TestSuccess_case_max_tick_with_max_leverage(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	token0Path := "gno.land/r/onbloc/foo"
 
@@ -157,7 +157,7 @@ func TestSuccess_case_work_for_max_tick(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	token0Path := "gno.land/r/onbloc/foo"
 
@@ -189,7 +189,7 @@ func TestSuccess_case_removing_works(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	token0Path := "gno.land/r/onbloc/foo"
 
@@ -224,7 +224,7 @@ func TestSuccess_case_adds_liquidity_to_liquidityGross(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	token0Path := "gno.land/r/onbloc/foo"
 
@@ -281,7 +281,7 @@ func TestSuccess_case_removes_liquidity_from_liquidityGross(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 	pl.CreatePool(barPath, fooPath, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 

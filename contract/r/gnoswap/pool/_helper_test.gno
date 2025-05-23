@@ -15,7 +15,6 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -394,7 +393,7 @@ func wugnotApprove(t *testing.T, owner, spender std.Address, amount int64) {
 func gnsApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	gns.Approve(spender, amount)
+	cross(gns.Approve)(spender, amount)
 }
 
 func barApprove(t *testing.T, owner, spender std.Address, amount int64) {
@@ -523,7 +522,7 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount int64) {
 	wugnotAddr := consts.WUGNOT_ADDR
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
-	wugnot.Deposit()
+	cross(wugnot.Deposit)()
 }
 
 // resetObject resets the object state(clear or make it default values)

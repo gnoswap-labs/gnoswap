@@ -7,12 +7,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
-	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
-	pn "gno.land/r/gnoswap/v1/position"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 )
@@ -322,10 +317,10 @@ func TestMint(t *testing.T) {
 // 				testing.SetOriginSend(newCoins)
 // 				banker := std.NewBanker(std.BankerTypeRealmSend)
 // 				banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
-// 				wugnot.Deposit()
+// 				cross(wugnot.Deposit)()
 
 // 				wugnot.Approve(poolAddr, maxApprove)
-// 				gns.Approve(poolAddr, maxApprove)
+// 				cross(gns.Approve)(poolAddr, maxApprove)
 
 // 				teller := common.GetTokenTeller(wugnotPath)
 // 				teller.Approve(poolAddr, maxApprove)
@@ -513,14 +508,14 @@ func TestMint(t *testing.T) {
 // 			testing.SetOriginSend(newCoins)
 // 			banker := std.NewBanker(std.BankerTypeRealmSend)
 // 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
-// 			wugnot.Deposit()
+// 			cross(wugnot.Deposit)()
 // 			if tt.recipient != positionOwner {
 // 				wugnot.Transfer(tt.recipient, 10000000000)
 // 			}
 
 // 			testing.SetRealm(std.NewUserRealm(tt.recipient))
 // 			wugnot.Approve(poolAddr, maxApprove)
-// 			gns.Approve(poolAddr, maxApprove)
+// 			cross(gns.Approve)(poolAddr, maxApprove)
 
 // 			teller := common.GetTokenTeller(wugnotPath)
 // 			teller.Approve(poolAddr, maxApprove)
