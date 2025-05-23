@@ -143,8 +143,8 @@ func SetPoolCreationFeeByAdmin(fee int64) {
 		"SetPoolCreationFeeByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"prevFee", formatUint(prevPoolCreationFee),
-		"newFee", formatUint(fee),
+		"prevFee", formatInt(prevPoolCreationFee),
+		"newFee", formatInt(fee),
 	)
 }
 
@@ -223,8 +223,8 @@ func calculateAmountWithFee(amount *u256.Uint, fee *u256.Uint) (*u256.Uint, *u25
 // setPoolCreationFee this function is internal function called by SetPoolCreationFee
 // And SetPoolCreationFeeByAdmin
 func setPoolCreationFee(fee int64) {
-	if fee <= 0 {
-		panic("pool creation fee cannot be zero or negative")
+	if fee < 0 {
+		panic("pool creation fee cannot be negative")
 	}
 	poolCreationFee = fee
 }
