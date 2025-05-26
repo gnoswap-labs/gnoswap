@@ -86,6 +86,7 @@ func Mint(
 	caller std.Address,
 	referrer string,
 ) (uint64, string, string, string) {
+	crossing()
 	assertOnlyNotHalted()
 	prevCaller := getPrevRealm()
 	assertOnlyUserOrStaker(prevCaller)

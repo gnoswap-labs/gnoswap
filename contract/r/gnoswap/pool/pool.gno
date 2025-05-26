@@ -172,6 +172,7 @@ func Collect(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
+	crossing()
 	assertOnlyNotHalted()
 	if common.GetLimitCaller() {
 		assertOnlyPositionContract()
