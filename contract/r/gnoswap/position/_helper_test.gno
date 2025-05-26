@@ -465,7 +465,7 @@ func LPTokenUnStake(t *testing.T, owner std.Address, positionId uint64, unwrap b
 func getPoolFromPositionId(t *testing.T, positionId uint64) *pl.Pool {
 	t.Helper()
 	position := MustGetPosition(positionId)
-	return pl.GetPoolFromPoolPath(position.poolKey)
+	return cross(pl.GetPoolFromPoolPath)(position.poolKey)
 }
 
 func wugnotApprove(t *testing.T, owner, spender std.Address, amount uint64) {

@@ -428,7 +428,7 @@ func computePositionKey(
 }
 
 func getCurrentFeeGrowth(position Position) (FeeGrowthInside, error) {
-	pool := pl.GetPoolFromPoolPath(position.poolKey)
+	pool := cross(pl.GetPoolFromPoolPath)(position.poolKey)
 	positionKey := computePositionKey(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 
 	feeGrowthInside0 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
