@@ -1,4 +1,4 @@
-package usdc
+package qux
 
 import (
 	"std"
@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	Token, privateLedger = grc20.NewToken("Usd Coin", "USDC", 6)
+	Token, privateLedger = grc20.NewToken("Qux", "QUX", 6)
 	UserTeller           = Token.CallerTeller()
 	owner                = ownable.NewWithAddress("g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d") // ADMIN
 )
