@@ -20,6 +20,8 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	pn "gno.land/r/gnoswap/v1/position"
+
+	"gno.land/p/demo/uassert"
 )
 
 const (
@@ -78,32 +80,38 @@ func InitialisePoolTest(t *testing.T) {
 	ugnotDeposit(t, adminAddr, 100_000_000_000_000)
 
 	testing.SetOriginCaller(adminAddr)
-	TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
-	poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
-	if !DoesPoolPathExist(poolPath) {
-		CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
-	}
+	func() {
+		testing.SetRealm(adminRealm)
+		TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
+		poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
+		if !DoesPoolPathExist(poolPath) {
+			CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
+		}
+	}()
 
 	// 2. create position
 	testing.SetOriginCaller(alice)
-	TokenFaucet(t, wugnotPath, alice)
-	TokenFaucet(t, gnsPath, alice)
-	TokenApprove(t, wugnotPath, alice, poolAddr, 1000)
-	TokenApprove(t, gnsPath, alice, poolAddr, 1000)
-	MintPosition(t,
-		wugnotPath,
-		gnsPath,
-		fee3000,
-		int32(1020),
-		int32(5040),
-		"1000",
-		"1000",
-		"0",
-		"0",
-		max_timeout,
-		alice,
-		alice,
-	)
+	func() {
+		testing.SetRealm(std.NewUserRealm(alice))
+		TokenFaucet(t, wugnotPath, alice)
+		TokenFaucet(t, gnsPath, alice)
+		TokenApprove(t, wugnotPath, alice, poolAddr, 1000)
+		TokenApprove(t, gnsPath, alice, poolAddr, 1000)
+		MintPosition(t,
+			wugnotPath,
+			gnsPath,
+			fee3000,
+			int32(1020),
+			int32(5040),
+			"1000",
+			"1000",
+			"0",
+			"0",
+			max_timeout,
+			alice,
+			alice,
+		)
+	}()
 }
 
 func TokenFaucet(t *testing.T, tokenPath string, to std.Address) {
@@ -111,24 +119,27 @@ func TokenFaucet(t *testing.T, tokenPath string, to std.Address) {
 	testing.SetOriginCaller(adminAddr)
 	defaultAmount := int64(5_000_000_000)
 
-	switch tokenPath {
-	case wugnotPath:
-		wugnotTransfer(t, to, defaultAmount)
-	case gnsPath:
-		gnsTransfer(t, to, defaultAmount)
-	case barPath:
-		barTransfer(t, to, defaultAmount)
-	case bazPath:
-		bazTransfer(t, to, defaultAmount)
-	case fooPath:
-		fooTransfer(t, to, defaultAmount)
-	case oblPath:
-		oblTransfer(t, to, defaultAmount)
-	case quxPath:
-		quxTransfer(t, to, defaultAmount)
-	default:
-		panic("token not found")
-	}
+	func() {
+		testing.SetRealm(adminRealm)
+		switch tokenPath {
+		case wugnotPath:
+			wugnotTransfer(t, to, defaultAmount)
+		case gnsPath:
+			gnsTransfer(t, to, defaultAmount)
+		case barPath:
+			barTransfer(t, to, defaultAmount)
+		case bazPath:
+			bazTransfer(t, to, defaultAmount)
+		case fooPath:
+			fooTransfer(t, to, defaultAmount)
+		case oblPath:
+			oblTransfer(t, to, defaultAmount)
+		case quxPath:
+			quxTransfer(t, to, defaultAmount)
+		default:
+			panic("token not found")
+		}
+	}()
 }
 
 func TokenBalance(t *testing.T, tokenPath string, owner std.Address) int64 {
@@ -549,66 +560,69 @@ func burnTokens(t *testing.T) {
 
 func burnFoo(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	foo.Burn(addr, foo.BalanceOf(addr))
+	cross(foo.Burn)(addr, cross(foo.BalanceOf)(addr))
 }
 
 func burnBar(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	bar.Burn(addr, bar.BalanceOf(addr))
+	cross(bar.Burn)(addr, cross(bar.BalanceOf)(addr))
 }
 
 func burnBaz(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	baz.Burn(addr, baz.BalanceOf(addr))
+	cross(baz.Burn)(addr, cross(baz.BalanceOf)(addr))
 }
 
 func burnQux(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	qux.Burn(addr, qux.BalanceOf(addr))
+	cross(qux.Burn)(addr, cross(qux.BalanceOf)(addr))
 }
 
 func burnObl(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	obl.Burn(addr, obl.BalanceOf(addr))
+	cross(obl.Burn)(addr, cross(obl.BalanceOf)(addr))
 }
 
 func burnUsdc(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	usdc.Burn(addr, usdc.BalanceOf(addr))
+	cross(usdc.Burn)(addr, cross(usdc.BalanceOf)(addr))
 }
 
-// func TestBeforeResetObject(t *testing.T) {
-// 	// make some data
-// 	pools = avl.NewTree()
-// 	pools.Set("gno.land/r/gnoswap/v1/gns:gno.land/r/onbloc/usdc", &Pool{
-// 		token0Path: "gno.land/r/gnoswap/v1/gns",
-// 		token1Path: "gno.land/r/onbloc/usdc",
-// 	})
+func TestBeforeResetObject(t *testing.T) {
+	// make some data
+	pools = avl.NewTree()
+	pools.Set("gno.land/r/gnoswap/v1/gns:gno.land/r/onbloc/usdc", &Pool{
+		token0Path: "gno.land/r/gnoswap/v1/gns",
+		token1Path: "gno.land/r/onbloc/usdc",
+	})
 
-// 	slot0FeeProtocol = 1
-// 	poolCreationFee = 100_000_000
-// 	withdrawalFeeBPS = 100
+	slot0FeeProtocol = 1
+	poolCreationFee = 100_000_000
+	withdrawalFeeBPS = 100
 
-// 	// transfer some tokens
-// 	testing.SetRealm(std.NewUserRealm(adminAddr))
-// 	foo.Transfer(addr01, 100_000_000)
-// 	bar.Transfer(addr01, 100_000_000)
+	// transfer some tokens
+	testing.SetRealm(std.NewUserRealm(adminAddr))
+	func() {
+		testing.SetRealm(std.NewUserRealm(adminAddr))
+		cross(foo.Transfer)(addr01, 100_000_000)
+		cross(bar.Transfer)(addr01, 100_000_000)
+	}()
 
-// 	uassert.Equal(t, foo.BalanceOf(addr01), uint64(100_000_000))
-// 	uassert.Equal(t, bar.BalanceOf(addr01), uint64(100_000_000))
-// }
+	uassert.Equal(t, cross(foo.BalanceOf)(addr01), int64(100_000_000))
+	uassert.Equal(t, cross(bar.BalanceOf)(addr01), int64(100_000_000))
+}
 
-// func TestResetObject(t *testing.T) {
-// 	resetObject(t)
-// 	uassert.Equal(t, pools.Size(), 0)
-// 	uassert.Equal(t, slot0FeeProtocol, uint8(0))
-// 	uassert.Equal(t, poolCreationFee, uint64(100_000_000))
-// 	uassert.Equal(t, withdrawalFeeBPS, uint64(100))
-// }
+func TestResetObject(t *testing.T) {
+	resetObject(t)
+	uassert.Equal(t, pools.Size(), 0)
+	uassert.Equal(t, slot0FeeProtocol, uint8(0))
+	uassert.Equal(t, poolCreationFee, int64(100_000_000))
+	uassert.Equal(t, withdrawalFeeBPS, uint64(100))
+}
 
-// func TestBurnTokens(t *testing.T) {
-// 	burnTokens(t)
+func TestBurnTokens(t *testing.T) {
+	burnTokens(t)
 
-// 	uassert.Equal(t, foo.BalanceOf(addr01), uint64(0)) // 100_000_000 -> 0
-// 	uassert.Equal(t, bar.BalanceOf(addr01), uint64(0)) // 100_000_000 -> 0
-// }
+	uassert.Equal(t, cross(foo.BalanceOf)(addr01), int64(0)) // 100_000_000 -> 0
+	uassert.Equal(t, cross(bar.BalanceOf)(addr01), int64(0)) // 100_000_000 -> 0
+}
