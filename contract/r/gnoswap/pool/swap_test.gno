@@ -6,11 +6,10 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
+	// "gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-
-	"gno.land/r/gnoswap/v1/common"
+	// "gno.land/r/gnoswap/v1/common"
 	// pn "gno.land/r/gnoswap/v1/position"
 )
 
@@ -278,119 +277,13 @@ func TestComputeSwap(t *testing.T) {
 	})
 }
 
-func TestSwap_Failures(t *testing.T) {
-	addr := routerAddr
-
-	tests := []struct {
-		name              string
-		setupFn           func(t *testing.T)
-		token0Path        string
-		token1Path        string
-		fee               uint32
-		recipient         std.Address
-		zeroForOne        bool
-		amountSpecified   string
-		sqrtPriceLimitX96 string
-		payer             std.Address
-		expectedAmount0   string
-		expectedAmount1   string
-		expectError       bool
-	}{
-		{
-			name: "locked pool",
-			setupFn: func(t *testing.T) {
-				InitialisePoolTest(t)
-				pool := GetPool(wugnotPath, gnsPath, fee3000)
-				pool.slot0.unlocked = false
-			},
-			token0Path:        wugnotPath,
-			token1Path:        gnsPath,
-			fee:               fee3000,
-			recipient:         addr,
-			zeroForOne:        true,
-			amountSpecified:   "100",
-			sqrtPriceLimitX96: "79228162514264337593543950336",
-			payer:             addr,
-			expectError:       true,
-		},
-		{
-			name: "zero amount",
-			setupFn: func(t *testing.T) {
-				InitialisePoolTest(t)
-			},
-			token0Path:        wugnotPath,
-			token1Path:        gnsPath,
-			fee:               fee3000,
-			recipient:         alice,
-			zeroForOne:        true,
-			amountSpecified:   "0",
-			sqrtPriceLimitX96: "79228162514264337593543950336",
-			payer:             alice,
-			expectError:       true,
-		},
-		{
-			name: "zero liquidity",
-			setupFn: func(t *testing.T) {
-				InitialisePoolTest(t)
-				pool := GetPool(wugnotPath, gnsPath, fee3000)
-				pool.liquidity = u256.Zero()
-			},
-			token0Path:        wugnotPath,
-			token1Path:        gnsPath,
-			fee:               fee3000,
-			recipient:         alice,
-			zeroForOne:        true,
-			amountSpecified:   "100",
-			sqrtPriceLimitX96: "79228162514264337593543950336",
-			payer:             alice,
-			expectedAmount0:   "0",
-			expectedAmount1:   "0",
-			expectError:       true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetObject(t)
-			burnTokens(t)
-
-			if tt.setupFn != nil {
-				tt.setupFn(t)
-			}
-
-			testing.SetOriginCaller(tt.payer)
-
-			if tt.expectError {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("error should be occurred but not occurred")
-					}
-				}()
-			}
-
-			amount0, amount1 := Swap(
-				tt.token0Path,
-				tt.token1Path,
-				tt.fee,
-				tt.recipient,
-				tt.zeroForOne,
-				tt.amountSpecified,
-				tt.sqrtPriceLimitX96,
-				tt.payer,
-			)
-
-			if !tt.expectError {
-				uassert.Equal(t, amount0, tt.expectedAmount0)
-				uassert.Equal(t, amount1, tt.expectedAmount1)
-			}
-		})
-	}
-}
-
 func TestDrySwap_Failures(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	SetPoolCreationFeeByAdmin(0)
-	CreatePool(barPath, bazPath, fee100, "79228162514264337593543950336")
+	func() {
+		testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
+		SetPoolCreationFeeByAdmin(0)
+		CreatePool(barPath, bazPath, fee100, "79228162514264337593543950336")
+	}()
 
 	tests := []struct {
 		name              string
@@ -460,465 +353,576 @@ func TestDrySwap_Failures(t *testing.T) {
 	}
 }
 
-func TestSwapAndDrySwapComparison(t *testing.T) {
-	addr := routerAddr
+/* Dependency cycle occurring for position */
 
-	tests := []struct {
-		name              string
-		setupFn           func(t *testing.T)
-		token0Path        string
-		token1Path        string
-		fee               uint32
-		zeroForOne        bool
-		amountSpecified   string
-		sqrtPriceLimitX96 string
-	}{
-		{
-			name: "normal swap",
-			setupFn: func(t *testing.T) {
-				InitialisePoolTest(t)
-				TokenFaucet(t, gnsPath, addr)
-				TokenApprove(t, gnsPath, addr, poolAddr, 1000)
-			},
-			token0Path:        wugnotPath,
-			token1Path:        gnsPath,
-			fee:               fee3000,
-			zeroForOne:        false,
-			amountSpecified:   "100",
-			sqrtPriceLimitX96: maxSqrtPriceLimitX96,
-		},
-		{
-			name: "swap - request to swap amount over total liquidty",
-			setupFn: func(t *testing.T) {
-				InitialisePoolTest(t)
-				MintPositionAll(t, adminAddr)
-				TokenFaucet(t, gnsPath, addr)
-				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
-			},
-			token0Path:        wugnotPath,
-			token1Path:        gnsPath,
-			fee:               fee3000,
-			zeroForOne:        false,
-			amountSpecified:   "2000000000",
-			sqrtPriceLimitX96: maxSqrtPriceLimitX96,
-		},
-	}
+// func TestSwap_Failures(t *testing.T) {
+// 	addr := routerAddr
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetObject(t)
-			burnTokens(t)
+// 	tests := []struct {
+// 		name              string
+// 		setupFn           func(t *testing.T)
+// 		token0Path        string
+// 		token1Path        string
+// 		fee               uint32
+// 		recipient         std.Address
+// 		zeroForOne        bool
+// 		amountSpecified   string
+// 		sqrtPriceLimitX96 string
+// 		payer             std.Address
+// 		expectedAmount0   string
+// 		expectedAmount1   string
+// 		expectError       bool
+// 	}{
+// 		{
+// 			name: "locked pool",
+// 			setupFn: func(t *testing.T) {
+// 				InitialisePoolTest(t)
+// 				pool := GetPool(wugnotPath, gnsPath, fee3000)
+// 				pool.slot0.unlocked = false
+// 			},
+// 			token0Path:        wugnotPath,
+// 			token1Path:        gnsPath,
+// 			fee:               fee3000,
+// 			recipient:         addr,
+// 			zeroForOne:        true,
+// 			amountSpecified:   "100",
+// 			sqrtPriceLimitX96: "79228162514264337593543950336",
+// 			payer:             addr,
+// 			expectError:       true,
+// 		},
+// 		{
+// 			name: "zero amount",
+// 			setupFn: func(t *testing.T) {
+// 				InitialisePoolTest(t)
+// 			},
+// 			token0Path:        wugnotPath,
+// 			token1Path:        gnsPath,
+// 			fee:               fee3000,
+// 			recipient:         alice,
+// 			zeroForOne:        true,
+// 			amountSpecified:   "0",
+// 			sqrtPriceLimitX96: "79228162514264337593543950336",
+// 			payer:             alice,
+// 			expectError:       true,
+// 		},
+// 		{
+// 			name: "zero liquidity",
+// 			setupFn: func(t *testing.T) {
+// 				InitialisePoolTest(t)
+// 				pool := GetPool(wugnotPath, gnsPath, fee3000)
+// 				pool.liquidity = u256.Zero()
+// 			},
+// 			token0Path:        wugnotPath,
+// 			token1Path:        gnsPath,
+// 			fee:               fee3000,
+// 			recipient:         alice,
+// 			zeroForOne:        true,
+// 			amountSpecified:   "100",
+// 			sqrtPriceLimitX96: "79228162514264337593543950336",
+// 			payer:             alice,
+// 			expectedAmount0:   "0",
+// 			expectedAmount1:   "0",
+// 			expectError:       true,
+// 		},
+// 	}
 
-			if tt.setupFn != nil {
-				tt.setupFn(t)
-			}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			resetObject(t)
+// 			burnTokens(t)
 
-			dryAmount0, dryAmount1, drySuccess := DrySwap(
-				tt.token0Path,
-				tt.token1Path,
-				tt.fee,
-				tt.zeroForOne,
-				tt.amountSpecified,
-				tt.sqrtPriceLimitX96,
-			)
+// 			if tt.setupFn != nil {
+// 				tt.setupFn(t)
+// 			}
 
-			testing.SetOriginCaller(routerAddr)
-			actualAmount0, actualAmount1 := Swap(
-				tt.token0Path,
-				tt.token1Path,
-				tt.fee,
-				addr,
-				tt.zeroForOne,
-				tt.amountSpecified,
-				tt.sqrtPriceLimitX96,
-				addr,
-			)
+// 			testing.SetOriginCaller(tt.payer)
 
-			if !drySuccess {
-				t.Error("DrySwap failed but actual Swap succeeded")
-			}
+// 			if tt.expectError {
+// 				defer func() {
+// 					if r := recover(); r == nil {
+// 						t.Errorf("error should be occurred but not occurred")
+// 					}
+// 				}()
+// 			}
 
-			uassert.NotEqual(t, dryAmount0, "0", "amount0 should not be zero")
-			uassert.NotEqual(t, dryAmount1, "0", "amount1 should not be zero")
-			uassert.NotEqual(t, actualAmount0, "0", "amount0 should not be zero")
-			uassert.NotEqual(t, actualAmount1, "0", "amount1 should not be zero")
+// 			amount0, amount1 := Swap(
+// 				tt.token0Path,
+// 				tt.token1Path,
+// 				tt.fee,
+// 				tt.recipient,
+// 				tt.zeroForOne,
+// 				tt.amountSpecified,
+// 				tt.sqrtPriceLimitX96,
+// 				tt.payer,
+// 			)
 
-			uassert.Equal(t, dryAmount0, actualAmount0,
-				"Amount0 mismatch between DrySwap and actual Swap")
-			uassert.Equal(t, dryAmount1, actualAmount1,
-				"Amount1 mismatch between DrySwap and actual Swap")
-		})
-	}
-}
+// 			if !tt.expectError {
+// 				uassert.Equal(t, amount0, tt.expectedAmount0)
+// 				uassert.Equal(t, amount1, tt.expectedAmount1)
+// 			}
+// 		})
+// 	}
+// }
 
-func TestSwapAndDrySwapComparison_amount_zero(t *testing.T) {
-	addr := routerAddr
+// func TestSwapAndDrySwapComparison(t *testing.T) {
+// 	addr := routerAddr
 
-	tests := []struct {
-		name        string
-		setupFn     func(t *testing.T)
-		action      func(t *testing.T)
-		shouldPanic bool
-		expected    string
-	}{
-		{
-			name: "zero amount swap - zeroForOne = false",
-			setupFn: func(t *testing.T) {
-				InitialisePoolTest(t)
-				TokenFaucet(t, gnsPath, addr)
-				TokenApprove(t, gnsPath, addr, poolAddr, 1000)
-			},
-			action: func(t *testing.T) {
-				dryAmount0, dryAmount1, drySuccess := DrySwap(
-					wugnotPath,
-					gnsPath,
-					fee3000,
-					false,
-					"0",
-					maxSqrtPriceLimitX96,
-				)
-				uassert.Equal(t, "0", dryAmount0)
-				uassert.Equal(t, "0", dryAmount1)
-				uassert.Equal(t, false, drySuccess)
-			},
-			shouldPanic: false,
-			expected:    "[GNOSWAP-POOL-014] invalid swap amount || amountSpecified == 0",
-		},
-		{
-			name: "zero amount swap - zeroForOne = true",
-			setupFn: func(t *testing.T) {
-				InitialisePoolTest(t)
-				TokenFaucet(t, gnsPath, addr)
-				TokenApprove(t, gnsPath, addr, poolAddr, 1000)
-			},
-			action: func(t *testing.T) {
-				testing.SetOriginCaller(routerAddr)
-				actualAmount0, actualAmount1 := Swap(
-					wugnotPath,
-					gnsPath,
-					fee3000,
-					addr,
-					true,
-					"0",
-					maxSqrtPriceLimitX96,
-					addr,
-				)
-			},
-			shouldPanic: true,
-			expected:    "[GNOSWAP-POOL-015] invalid swap amount || amountSpecified == 0",
-		},
-	}
+// 	tests := []struct {
+// 		name              string
+// 		setupFn           func(t *testing.T)
+// 		token0Path        string
+// 		token1Path        string
+// 		fee               uint32
+// 		zeroForOne        bool
+// 		amountSpecified   string
+// 		sqrtPriceLimitX96 string
+// 	}{
+// 		{
+// 			name: "normal swap",
+// 			setupFn: func(t *testing.T) {
+// 				InitialisePoolTest(t)
+// 				TokenFaucet(t, gnsPath, addr)
+// 				TokenApprove(t, gnsPath, addr, poolAddr, 1000)
+// 			},
+// 			token0Path:        wugnotPath,
+// 			token1Path:        gnsPath,
+// 			fee:               fee3000,
+// 			zeroForOne:        false,
+// 			amountSpecified:   "100",
+// 			sqrtPriceLimitX96: maxSqrtPriceLimitX96,
+// 		},
+// 		{
+// 			name: "swap - request to swap amount over total liquidty",
+// 			setupFn: func(t *testing.T) {
+// 				InitialisePoolTest(t)
+// 				MintPositionAll(t, adminAddr)
+// 				TokenFaucet(t, gnsPath, addr)
+// 				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
+// 			},
+// 			token0Path:        wugnotPath,
+// 			token1Path:        gnsPath,
+// 			fee:               fee3000,
+// 			zeroForOne:        false,
+// 			amountSpecified:   "2000000000",
+// 			sqrtPriceLimitX96: maxSqrtPriceLimitX96,
+// 		},
+// 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			defer func() {
-				r := recover()
-				if r == nil {
-					if tt.shouldPanic {
-						t.Errorf(">>> %s: expected panic but got none", tt.name)
-						return
-					}
-				} else {
-					switch r.(type) {
-					case string:
-						if r.(string) != tt.expected {
-							t.Errorf(">>> %s: got panic %v, want %v", tt.name, r, tt.expected)
-						}
-					case error:
-						if r.(error).Error() != tt.expected {
-							t.Errorf(">>> %s: got panic %v, want %v", tt.name, r.(error).Error(), tt.expected)
-						}
-					default:
-						t.Errorf(">>> %s: got panic %v, want %v", tt.name, r, tt.expected)
-					}
-				}
-			}()
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			resetObject(t)
+// 			burnTokens(t)
 
-			resetObject(t)
-			burnTokens(t)
+// 			if tt.setupFn != nil {
+// 				tt.setupFn(t)
+// 			}
 
-			if tt.setupFn != nil {
-				tt.setupFn(t)
-			}
+// 			dryAmount0, dryAmount1, drySuccess := DrySwap(
+// 				tt.token0Path,
+// 				tt.token1Path,
+// 				tt.fee,
+// 				tt.zeroForOne,
+// 				tt.amountSpecified,
+// 				tt.sqrtPriceLimitX96,
+// 			)
 
-			if tt.shouldPanic {
-				tt.action(t)
-			} else {
-				tt.action(t)
-			}
-		})
-	}
-}
+// 			testing.SetOriginCaller(routerAddr)
+// 			actualAmount0, actualAmount1 := Swap(
+// 				tt.token0Path,
+// 				tt.token1Path,
+// 				tt.fee,
+// 				addr,
+// 				tt.zeroForOne,
+// 				tt.amountSpecified,
+// 				tt.sqrtPriceLimitX96,
+// 				addr,
+// 			)
 
-func TestSwap_amount_over_liquidity(t *testing.T) {
-	addr := routerAddr
+// 			if !drySuccess {
+// 				t.Error("DrySwap failed but actual Swap succeeded")
+// 			}
 
-	tests := []struct {
-		name        string
-		setupFn     func(t *testing.T)
-		action      func(t *testing.T) (string, string)
-		shouldPanic bool
-		expected    []string
-	}{
-		{
-			name: "amount over liquidity - zeroForOne = false, token0:20000",
-			setupFn: func(t *testing.T) {
-				InitialisePoolTest(t)
-				MintPositionAll(t, adminAddr)
-				TokenFaucet(t, gnsPath, addr)
-				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
-			},
-			action: func(t *testing.T) (string, string) {
-				testing.SetOriginCaller(routerAddr)
-				actualAmount0, actualAmount1 := Swap(
-					wugnotPath,
-					gnsPath,
-					fee3000,
-					alice,
-					false,
-					"20000",
-					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
-					addr,
-				)
-				return actualAmount0, actualAmount1
-			},
-			shouldPanic: false,
-			expected:    []string{"-19939", "20000"},
-		},
-		{
-			name: "amount over liquidity - zeroForOne = false, token1:-20000",
-			setupFn: func(t *testing.T) {
-				InitialisePoolTest(t)
-				MintPositionAll(t, adminAddr)
-				TokenFaucet(t, gnsPath, addr)
-				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
-			},
-			action: func(t *testing.T) (string, string) {
-				testing.SetOriginCaller(routerAddr)
-				actualAmount0, actualAmount1 := Swap(
-					wugnotPath,
-					gnsPath,
-					fee3000,
-					alice,
-					false,
-					"-20000",
-					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
-					addr,
-				)
-				return actualAmount0, actualAmount1
-			},
-			shouldPanic: false,
-			expected:    []string{"-20000", "20062"},
-		},
-		{
-			name: "amount over liquidity - zeroForOne = true, token0:20000",
-			setupFn: func(t *testing.T) {
-				InitialisePoolTest(t)
-				MintPositionAll(t, adminAddr)
-				TokenFaucet(t, gnsPath, addr)
-				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
-				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
-			},
-			action: func(t *testing.T) (string, string) {
-				testing.SetOriginCaller(routerAddr)
-				actualAmount0, actualAmount1 := Swap(
-					wugnotPath,
-					gnsPath,
-					fee3000,
-					alice,
-					true,
-					"20000",
-					consts.MIN_PRICE,
-					addr,
-				)
-				return actualAmount0, actualAmount1
-			},
-			shouldPanic: false,
-			expected:    []string{"20000", "-19939"},
-		},
-		{
-			name: "amount over liquidity - zeroForOne = true, token1:-20000",
-			setupFn: func(t *testing.T) {
-				InitialisePoolTest(t)
-				MintPositionAll(t, adminAddr)
-				TokenFaucet(t, gnsPath, addr)
-				TokenFaucet(t, wugnotPath, addr)
-				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
-				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
-			},
-			action: func(t *testing.T) (string, string) {
-				testing.SetOriginCaller(routerAddr)
-				actualAmount0, actualAmount1 := Swap(
-					wugnotPath,
-					gnsPath,
-					fee3000,
-					alice,
-					true,
-					"-20000",
-					consts.MIN_PRICE,
-					addr,
-				)
-				return actualAmount0, actualAmount1
-			},
-			shouldPanic: false,
-			expected:    []string{"20062", "-20000"},
-		},
-	}
+// 			uassert.NotEqual(t, dryAmount0, "0", "amount0 should not be zero")
+// 			uassert.NotEqual(t, dryAmount1, "0", "amount1 should not be zero")
+// 			uassert.NotEqual(t, actualAmount0, "0", "amount0 should not be zero")
+// 			uassert.NotEqual(t, actualAmount1, "0", "amount1 should not be zero")
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetObject(t)
-			burnTokens(t)
+// 			uassert.Equal(t, dryAmount0, actualAmount0,
+// 				"Amount0 mismatch between DrySwap and actual Swap")
+// 			uassert.Equal(t, dryAmount1, actualAmount1,
+// 				"Amount1 mismatch between DrySwap and actual Swap")
+// 		})
+// 	}
+// }
 
-			if tt.setupFn != nil {
-				tt.setupFn(t)
-			}
+// func TestSwapAndDrySwapComparison_amount_zero(t *testing.T) {
+// 	addr := routerAddr
 
-			if tt.shouldPanic {
-				tt.action(t)
-			} else {
-				amount0, amount1 := tt.action(t)
-				uassert.Equal(t, tt.expected[0], amount0)
-				uassert.Equal(t, tt.expected[1], amount1)
-			}
-		})
-	}
-}
+// 	tests := []struct {
+// 		name        string
+// 		setupFn     func(t *testing.T)
+// 		action      func(t *testing.T)
+// 		shouldPanic bool
+// 		expected    string
+// 	}{
+// 		{
+// 			name: "zero amount swap - zeroForOne = false",
+// 			setupFn: func(t *testing.T) {
+// 				InitialisePoolTest(t)
+// 				TokenFaucet(t, gnsPath, addr)
+// 				TokenApprove(t, gnsPath, addr, poolAddr, 1000)
+// 			},
+// 			action: func(t *testing.T) {
+// 				dryAmount0, dryAmount1, drySuccess := DrySwap(
+// 					wugnotPath,
+// 					gnsPath,
+// 					fee3000,
+// 					false,
+// 					"0",
+// 					maxSqrtPriceLimitX96,
+// 				)
+// 				uassert.Equal(t, "0", dryAmount0)
+// 				uassert.Equal(t, "0", dryAmount1)
+// 				uassert.Equal(t, false, drySuccess)
+// 			},
+// 			shouldPanic: false,
+// 			expected:    "[GNOSWAP-POOL-014] invalid swap amount || amountSpecified == 0",
+// 		},
+// 		{
+// 			name: "zero amount swap - zeroForOne = true",
+// 			setupFn: func(t *testing.T) {
+// 				InitialisePoolTest(t)
+// 				TokenFaucet(t, gnsPath, addr)
+// 				TokenApprove(t, gnsPath, addr, poolAddr, 1000)
+// 			},
+// 			action: func(t *testing.T) {
+// 				testing.SetOriginCaller(routerAddr)
+// 				actualAmount0, actualAmount1 := Swap(
+// 					wugnotPath,
+// 					gnsPath,
+// 					fee3000,
+// 					addr,
+// 					true,
+// 					"0",
+// 					maxSqrtPriceLimitX96,
+// 					addr,
+// 				)
+// 			},
+// 			shouldPanic: true,
+// 			expected:    "[GNOSWAP-POOL-015] invalid swap amount || amountSpecified == 0",
+// 		},
+// 	}
 
-func TestSwap_EXACTIN_OUT(t *testing.T) {
-	addr := routerAddr
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			defer func() {
+// 				r := recover()
+// 				if r == nil {
+// 					if tt.shouldPanic {
+// 						t.Errorf(">>> %s: expected panic but got none", tt.name)
+// 						return
+// 					}
+// 				} else {
+// 					switch r.(type) {
+// 					case string:
+// 						if r.(string) != tt.expected {
+// 							t.Errorf(">>> %s: got panic %v, want %v", tt.name, r, tt.expected)
+// 						}
+// 					case error:
+// 						if r.(error).Error() != tt.expected {
+// 							t.Errorf(">>> %s: got panic %v, want %v", tt.name, r.(error).Error(), tt.expected)
+// 						}
+// 					default:
+// 						t.Errorf(">>> %s: got panic %v, want %v", tt.name, r, tt.expected)
+// 					}
+// 				}
+// 			}()
 
-	tests := []struct {
-		name        string
-		setupFn     func(t *testing.T)
-		action      func(t *testing.T) (string, string)
-		shouldPanic bool
-		expected    []string
-	}{
-		{
-			name: "EXACT IN - zeroForOne = false, token1:200",
-			setupFn: func(t *testing.T) {
-				InitialisePoolTest(t)
-				MintPositionAll(t, adminAddr)
-				TokenFaucet(t, gnsPath, addr)
-				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
-			},
-			action: func(t *testing.T) (string, string) {
-				testing.SetOriginCaller(routerAddr)
-				actualAmount0, actualAmount1 := Swap(
-					wugnotPath,
-					gnsPath,
-					fee3000,
-					alice,
-					false,
-					"200",
-					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
-					addr,
-				)
-				return actualAmount0, actualAmount1
-			},
-			shouldPanic: false,
-			expected:    []string{"-198", "200"},
-		},
-		{
-			name: "EXACT OUT - zeroForOne = false, token0:-200",
-			setupFn: func(t *testing.T) {
-				InitialisePoolTest(t)
-				MintPositionAll(t, adminAddr)
-				TokenFaucet(t, gnsPath, addr)
-				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
-			},
-			action: func(t *testing.T) (string, string) {
-				testing.SetOriginCaller(routerAddr)
-				actualAmount0, actualAmount1 := Swap(
-					wugnotPath,
-					gnsPath,
-					fee3000,
-					alice,
-					false,
-					"-200",
-					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
-					addr,
-				)
-				return actualAmount0, actualAmount1
-			},
-			shouldPanic: false,
-			expected:    []string{"-200", "202"},
-		},
-		{
-			name: "EXACT IN - zeroForOne = true, token0:200",
-			setupFn: func(t *testing.T) {
-				InitialisePoolTest(t)
-				MintPositionAll(t, adminAddr)
-				TokenFaucet(t, gnsPath, addr)
-				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
-				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
-			},
-			action: func(t *testing.T) (string, string) {
-				testing.SetOriginCaller(routerAddr)
-				actualAmount0, actualAmount1 := Swap(
-					wugnotPath,
-					gnsPath,
-					fee3000,
-					alice,
-					true,
-					"200",
-					consts.MIN_PRICE,
-					addr,
-				)
-				return actualAmount0, actualAmount1
-			},
-			shouldPanic: false,
-			expected:    []string{"200", "-198"},
-		},
-		{
-			name: "EXACT OUT - zeroForOne = true, token1:-200",
-			setupFn: func(t *testing.T) {
-				InitialisePoolTest(t)
-				MintPositionAll(t, adminAddr)
-				TokenFaucet(t, gnsPath, addr)
-				TokenFaucet(t, wugnotPath, addr)
-				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
-				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
-			},
-			action: func(t *testing.T) (string, string) {
-				testing.SetOriginCaller(routerAddr)
-				actualAmount0, actualAmount1 := Swap(
-					wugnotPath,
-					gnsPath,
-					fee3000,
-					alice,
-					true,
-					"-200",
-					consts.MIN_PRICE,
-					addr,
-				)
-				return actualAmount0, actualAmount1
-			},
-			shouldPanic: false,
-			expected:    []string{"202", "-200"},
-		},
-	}
+// 			resetObject(t)
+// 			burnTokens(t)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetObject(t)
-			burnTokens(t)
+// 			if tt.setupFn != nil {
+// 				tt.setupFn(t)
+// 			}
 
-			if tt.setupFn != nil {
-				tt.setupFn(t)
-			}
+// 			if tt.shouldPanic {
+// 				tt.action(t)
+// 			} else {
+// 				tt.action(t)
+// 			}
+// 		})
+// 	}
+// }
 
-			if tt.shouldPanic {
-				tt.action(t)
-			} else {
-				amount0, amount1 := tt.action(t)
-				uassert.Equal(t, tt.expected[0], amount0)
-				uassert.Equal(t, tt.expected[1], amount1)
-			}
-		})
-	}
-}
+// func TestSwap_amount_over_liquidity(t *testing.T) {
+// 	addr := routerAddr
+
+// 	tests := []struct {
+// 		name        string
+// 		setupFn     func(t *testing.T)
+// 		action      func(t *testing.T) (string, string)
+// 		shouldPanic bool
+// 		expected    []string
+// 	}{
+// 		{
+// 			name: "amount over liquidity - zeroForOne = false, token0:20000",
+// 			setupFn: func(t *testing.T) {
+// 				InitialisePoolTest(t)
+// 				MintPositionAll(t, adminAddr)
+// 				TokenFaucet(t, gnsPath, addr)
+// 				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
+// 			},
+// 			action: func(t *testing.T) (string, string) {
+// 				testing.SetOriginCaller(routerAddr)
+// 				actualAmount0, actualAmount1 := Swap(
+// 					wugnotPath,
+// 					gnsPath,
+// 					fee3000,
+// 					alice,
+// 					false,
+// 					"20000",
+// 					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+// 					addr,
+// 				)
+// 				return actualAmount0, actualAmount1
+// 			},
+// 			shouldPanic: false,
+// 			expected:    []string{"-19939", "20000"},
+// 		},
+// 		{
+// 			name: "amount over liquidity - zeroForOne = false, token1:-20000",
+// 			setupFn: func(t *testing.T) {
+// 				InitialisePoolTest(t)
+// 				MintPositionAll(t, adminAddr)
+// 				TokenFaucet(t, gnsPath, addr)
+// 				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
+// 			},
+// 			action: func(t *testing.T) (string, string) {
+// 				testing.SetOriginCaller(routerAddr)
+// 				actualAmount0, actualAmount1 := Swap(
+// 					wugnotPath,
+// 					gnsPath,
+// 					fee3000,
+// 					alice,
+// 					false,
+// 					"-20000",
+// 					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+// 					addr,
+// 				)
+// 				return actualAmount0, actualAmount1
+// 			},
+// 			shouldPanic: false,
+// 			expected:    []string{"-20000", "20062"},
+// 		},
+// 		{
+// 			name: "amount over liquidity - zeroForOne = true, token0:20000",
+// 			setupFn: func(t *testing.T) {
+// 				InitialisePoolTest(t)
+// 				MintPositionAll(t, adminAddr)
+// 				TokenFaucet(t, gnsPath, addr)
+// 				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
+// 				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
+// 			},
+// 			action: func(t *testing.T) (string, string) {
+// 				testing.SetOriginCaller(routerAddr)
+// 				actualAmount0, actualAmount1 := Swap(
+// 					wugnotPath,
+// 					gnsPath,
+// 					fee3000,
+// 					alice,
+// 					true,
+// 					"20000",
+// 					consts.MIN_PRICE,
+// 					addr,
+// 				)
+// 				return actualAmount0, actualAmount1
+// 			},
+// 			shouldPanic: false,
+// 			expected:    []string{"20000", "-19939"},
+// 		},
+// 		{
+// 			name: "amount over liquidity - zeroForOne = true, token1:-20000",
+// 			setupFn: func(t *testing.T) {
+// 				InitialisePoolTest(t)
+// 				MintPositionAll(t, adminAddr)
+// 				TokenFaucet(t, gnsPath, addr)
+// 				TokenFaucet(t, wugnotPath, addr)
+// 				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
+// 				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
+// 			},
+// 			action: func(t *testing.T) (string, string) {
+// 				testing.SetOriginCaller(routerAddr)
+// 				actualAmount0, actualAmount1 := Swap(
+// 					wugnotPath,
+// 					gnsPath,
+// 					fee3000,
+// 					alice,
+// 					true,
+// 					"-20000",
+// 					consts.MIN_PRICE,
+// 					addr,
+// 				)
+// 				return actualAmount0, actualAmount1
+// 			},
+// 			shouldPanic: false,
+// 			expected:    []string{"20062", "-20000"},
+// 		},
+// 	}
+
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			resetObject(t)
+// 			burnTokens(t)
+
+// 			if tt.setupFn != nil {
+// 				tt.setupFn(t)
+// 			}
+
+// 			if tt.shouldPanic {
+// 				tt.action(t)
+// 			} else {
+// 				amount0, amount1 := tt.action(t)
+// 				uassert.Equal(t, tt.expected[0], amount0)
+// 				uassert.Equal(t, tt.expected[1], amount1)
+// 			}
+// 		})
+// 	}
+// }
+
+// func TestSwap_EXACTIN_OUT(t *testing.T) {
+// 	addr := routerAddr
+
+// 	tests := []struct {
+// 		name        string
+// 		setupFn     func(t *testing.T)
+// 		action      func(t *testing.T) (string, string)
+// 		shouldPanic bool
+// 		expected    []string
+// 	}{
+// 		{
+// 			name: "EXACT IN - zeroForOne = false, token1:200",
+// 			setupFn: func(t *testing.T) {
+// 				InitialisePoolTest(t)
+// 				MintPositionAll(t, adminAddr)
+// 				TokenFaucet(t, gnsPath, addr)
+// 				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
+// 			},
+// 			action: func(t *testing.T) (string, string) {
+// 				testing.SetOriginCaller(routerAddr)
+// 				actualAmount0, actualAmount1 := Swap(
+// 					wugnotPath,
+// 					gnsPath,
+// 					fee3000,
+// 					alice,
+// 					false,
+// 					"200",
+// 					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+// 					addr,
+// 				)
+// 				return actualAmount0, actualAmount1
+// 			},
+// 			shouldPanic: false,
+// 			expected:    []string{"-198", "200"},
+// 		},
+// 		{
+// 			name: "EXACT OUT - zeroForOne = false, token0:-200",
+// 			setupFn: func(t *testing.T) {
+// 				InitialisePoolTest(t)
+// 				MintPositionAll(t, adminAddr)
+// 				TokenFaucet(t, gnsPath, addr)
+// 				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
+// 			},
+// 			action: func(t *testing.T) (string, string) {
+// 				testing.SetOriginCaller(routerAddr)
+// 				actualAmount0, actualAmount1 := Swap(
+// 					wugnotPath,
+// 					gnsPath,
+// 					fee3000,
+// 					alice,
+// 					false,
+// 					"-200",
+// 					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+// 					addr,
+// 				)
+// 				return actualAmount0, actualAmount1
+// 			},
+// 			shouldPanic: false,
+// 			expected:    []string{"-200", "202"},
+// 		},
+// 		{
+// 			name: "EXACT IN - zeroForOne = true, token0:200",
+// 			setupFn: func(t *testing.T) {
+// 				InitialisePoolTest(t)
+// 				MintPositionAll(t, adminAddr)
+// 				TokenFaucet(t, gnsPath, addr)
+// 				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
+// 				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
+// 			},
+// 			action: func(t *testing.T) (string, string) {
+// 				testing.SetOriginCaller(routerAddr)
+// 				actualAmount0, actualAmount1 := Swap(
+// 					wugnotPath,
+// 					gnsPath,
+// 					fee3000,
+// 					alice,
+// 					true,
+// 					"200",
+// 					consts.MIN_PRICE,
+// 					addr,
+// 				)
+// 				return actualAmount0, actualAmount1
+// 			},
+// 			shouldPanic: false,
+// 			expected:    []string{"200", "-198"},
+// 		},
+// 		{
+// 			name: "EXACT OUT - zeroForOne = true, token1:-200",
+// 			setupFn: func(t *testing.T) {
+// 				InitialisePoolTest(t)
+// 				MintPositionAll(t, adminAddr)
+// 				TokenFaucet(t, gnsPath, addr)
+// 				TokenFaucet(t, wugnotPath, addr)
+// 				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
+// 				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
+// 			},
+// 			action: func(t *testing.T) (string, string) {
+// 				testing.SetOriginCaller(routerAddr)
+// 				actualAmount0, actualAmount1 := Swap(
+// 					wugnotPath,
+// 					gnsPath,
+// 					fee3000,
+// 					alice,
+// 					true,
+// 					"-200",
+// 					consts.MIN_PRICE,
+// 					addr,
+// 				)
+// 				return actualAmount0, actualAmount1
+// 			},
+// 			shouldPanic: false,
+// 			expected:    []string{"202", "-200"},
+// 		},
+// 	}
+
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			resetObject(t)
+// 			burnTokens(t)
+
+// 			if tt.setupFn != nil {
+// 				tt.setupFn(t)
+// 			}
+
+// 			if tt.shouldPanic {
+// 				tt.action(t)
+// 			} else {
+// 				amount0, amount1 := tt.action(t)
+// 				uassert.Equal(t, tt.expected[0], amount0)
+// 				uassert.Equal(t, tt.expected[1], amount1)
+// 			}
+// 		})
+// 	}
+// }
 
 // func TestSwap_FeeTier100(t *testing.T) {
 // 	const wugnotTokenPath = "gno.land/r/demo/wugnot"
