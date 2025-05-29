@@ -55,63 +55,22 @@ func TestU256Min(t *testing.T) {
 	}
 }
 
-func TestIsUserCall(t *testing.T) {
-	tests := []struct {
-		name     string
-		action   func() bool
-		expected bool
-	}{
-		{
-			name: "called from user",
-			action: func() bool {
-				userRealm := std.NewUserRealm(std.Address("user"))
-				testing.SetRealm(userRealm)
-				return isUserCall()
-			},
-			expected: true,
-		},
-		{
-			name: "called from realm",
-			action: func() bool {
-				fromRealm := std.NewCodeRealm("gno.land/r/realm")
-				testing.SetRealm(fromRealm)
-				return isUserCall()
-			},
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			uassert.Equal(t, tt.expected, tt.action())
-		})
-	}
-}
-
 func TestGetPrevAsString(t *testing.T) {
 	tests := []struct {
 		name            string
-		action          func() (string, string)
+		realm           std.Realm
 		expectedAddr    string
 		expectedPkgPath string
 	}{
 		{
 			name: "user call",
-			action: func() (string, string) {
-				userRealm := std.NewUserRealm(std.Address("user"))
-				testing.SetRealm(userRealm)
-				return getPrevAsString()
-			},
+			realm: std.NewUserRealm(std.Address("user")),
 			expectedAddr:    "user",
 			expectedPkgPath: "",
 		},
 		{
 			name: "code call",
-			action: func() (string, string) {
-				codeRealm := std.NewCodeRealm("gno.land/r/demo/realm")
-				testing.SetRealm(codeRealm)
-				return getPrevAsString()
-			},
+			realm: std.NewCodeRealm("gno.land/r/demo/realm"),
 			expectedAddr:    std.DerivePkgAddr("gno.land/r/demo/realm").String(),
 			expectedPkgPath: "gno.land/r/demo/realm",
 		},
@@ -119,9 +78,13 @@ func TestGetPrevAsString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			addr, pkgPath := tt.action()
-			uassert.Equal(t, tt.expectedAddr, addr)
-			uassert.Equal(t, tt.expectedPkgPath, pkgPath)
+			testing.SetRealm(tt.realm)
+			func() {
+				testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
+				addr, pkgPath := getPrevAsString()
+				uassert.Equal(t, tt.expectedAddr, addr)
+				uassert.Equal(t, tt.expectedPkgPath, pkgPath)
+			}()
 		})
 	}
 }
@@ -211,49 +174,6 @@ func TestDerivePkgAddr(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			got := derivePkgAddr(tc.input)
 			uassert.Equal(t, got.String(), tc.expected)
-		})
-	}
-}
-
-func TestGetPrevRealm(t *testing.T) {
-	tests := []struct {
-		name         string
-		originCaller std.Address
-		expected     []string
-	}{
-		{
-			name:         "Success - prevRealm is User",
-			originCaller: adminAddr,
-			expected:     []string{"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", ""},
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			testing.SetOriginCaller(std.Address(tc.originCaller))
-			got := getPrevRealm()
-			uassert.Equal(t, got.Address().String(), tc.expected[0])
-			uassert.Equal(t, got.PkgPath(), tc.expected[1])
-		})
-	}
-}
-
-func TestGetPrevAddr(t *testing.T) {
-	tests := []struct {
-		name         string
-		originCaller std.Address
-		expected     std.Address
-	}{
-		{
-			name:         "Success - prev Address is User",
-			originCaller: adminAddr,
-			expected:     "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			testing.SetOriginCaller(std.Address(tc.originCaller))
-			got := getPrevAddr()
-			uassert.Equal(t, got.String(), tc.expected.String())
 		})
 	}
 }
