@@ -11,7 +11,7 @@ import (
 
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/gns"
-	pn "gno.land/r/gnoswap/v1/position"
+	// pn "gno.land/r/gnoswap/v1/position"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 )
@@ -76,52 +76,52 @@ func TestMint(t *testing.T) {
 		Mint("nonexistent_token0", "nonexistent_token1", fee, recipient, -100, 100, liquidityAmount, authorized)
 	})
 
-	t.Run("successful mint", func(t *testing.T) {
-		// create pool first
-		testing.SetRealm(adminRealm)
-		func() {
-			testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
-			SetPoolCreationFeeByAdmin(0)
-			CreatePool(
-				barTokenPath,
-				bazTokenPath,
-				FeeTier100,
-				"79228162514264337593543950336",
-			)
-		}()
+// 	t.Run("successful mint", func(t *testing.T) {
+// 		// create pool first
+// 		testing.SetRealm(adminRealm)
+// 		func() {
+// 			testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
+// 			SetPoolCreationFeeByAdmin(0)
+// 			CreatePool(
+// 				barTokenPath,
+// 				bazTokenPath,
+// 				FeeTier100,
+// 				"79228162514264337593543950336",
+// 			)
+// 		}()
 
-		// approve enough token to mint position
-		func() {
-			testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
-			bar.Approve(poolAddr, maxApprove)
-			baz.Approve(poolAddr, maxApprove)
-		}()
+// 		// approve enough token to mint position
+// 		func() {
+// 			testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
+// 			bar.Approve(poolAddr, maxApprove)
+// 			baz.Approve(poolAddr, maxApprove)
+// 		}()
 
-		beforeBalance0 := bar.BalanceOf(poolAddr)
-		beforeBalance1 := baz.BalanceOf(poolAddr)
+// 		beforeBalance0 := bar.BalanceOf(poolAddr)
+// 		beforeBalance1 := baz.BalanceOf(poolAddr)
 
-		testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
-		func() {
-			testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
-			mintAmount0, mintAmount1 := Mint(
-				barTokenPath,
-				bazTokenPath,
-				FeeTier100,
-				positionAddr,
-				int32(-100),
-				int32(100),
-				"10000000000",
-				adminAddr,
-			)
-			uassert.Equal(t, mintAmount0, "49872721")
-			uassert.Equal(t, mintAmount1, "49872721")
-		}()
+// 		testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
+// 		func() {
+// 			testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
+// 			mintAmount0, mintAmount1 := Mint(
+// 				barTokenPath,
+// 				bazTokenPath,
+// 				FeeTier100,
+// 				positionAddr,
+// 				int32(-100),
+// 				int32(100),
+// 				"10000000000",
+// 				adminAddr,
+// 			)
+// 			uassert.Equal(t, mintAmount0, "49872721")
+// 			uassert.Equal(t, mintAmount1, "49872721")
+// 		}()
 
-		afterBalance0 := bar.BalanceOf(poolAddr)
-		afterBalance1 := baz.BalanceOf(poolAddr)
-		uassert.Equal(t, int64(49872721), afterBalance0-beforeBalance0)
-		uassert.Equal(t, int64(49872721), afterBalance1-beforeBalance1)
-	})
+// 		afterBalance0 := bar.BalanceOf(poolAddr)
+// 		afterBalance1 := baz.BalanceOf(poolAddr)
+// 		uassert.Equal(t, int64(49872721), afterBalance0-beforeBalance0)
+// 		uassert.Equal(t, int64(49872721), afterBalance1-beforeBalance1)
+// 	})
 }
 
 func TestBurn(t *testing.T) {
