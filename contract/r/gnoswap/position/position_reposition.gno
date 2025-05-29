@@ -19,14 +19,14 @@ import (
 // Returns Position ID, liquidity, tickLower, tickUpper, amount0, amount1
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#reposition
 func Reposition(
-	positionId uint64,
+	positionId int64,
 	tickLower int32,
 	tickUpper int32,
 	amount0DesiredStr string,
 	amount1DesiredStr string,
 	amount0MinStr string,
 	amount1MinStr string,
-) (uint64, string, int32, int32, string, string) {
+) (int64, string, int32, int32, string, string) {
 	assertOnlyNotHalted()
 	verifyTokenIdAndOwnership(positionId)
 	mintAndDistributeGnsCallback()
@@ -96,7 +96,7 @@ func Reposition(
 		"Reposition",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpPositionId", formatUint(positionId),
+		"lpPositionId", formatInt(positionId),
 		"tickLower", formatInt(int64(tickLower)),
 		"tickUpper", formatInt(int64(tickUpper)),
 		"liquidity", liquidity.ToString(),

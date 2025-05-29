@@ -14,7 +14,7 @@ import (
 // If unwrapResult is true and the position involves WUGNOT, any leftover WUGNOT will be
 // unwrapped to GNOT at the end of the operation.
 // Returns position ID, liquidity, fee0, fee1, amount0, amount1, poolPath
-func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string) {
+func decreaseLiquidity(params DecreaseLiquidityParams) (int64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string) {
 	verifyTokenIdAndOwnership(params.positionId)
 
 	// BEFORE DECREASE LIQUIDITY, COLLECT FEE FIRST
