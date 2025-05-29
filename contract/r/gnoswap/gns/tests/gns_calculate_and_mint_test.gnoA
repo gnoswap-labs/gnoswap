@@ -29,6 +29,9 @@ func TestCalculateAmountToMint(t *testing.T) {
 
 	t.Run("entire block for year 01 + 1 block for year 02", func(t *testing.T) {
 		minted := calculateAmountToMint(GetLastMintedHeight()+4, GetHalvingYearStartBlock(2))
+		if minted != 224999971461188 {
+			println("minted", minted)
+		}
 
 		// minted all amount for year 01
 		uassert.Equal(t, GetHalvingYearMaxAmount(1), GetHalvingYearMintAmount(1))
