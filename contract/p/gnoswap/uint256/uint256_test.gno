@@ -22,7 +22,6 @@ func TestMulDiv_1(t *testing.T) {
 func TestMulDiv_2(t *testing.T) {
 	// reverts if denominator is 0 and numerator overflows
 	Q128 := MustFromDecimal("340282366920938463463374607431768211456") // 2**128
-	x := NewUint(5)
 	y := Zero()
 
 	shouldPanic(
@@ -114,7 +113,6 @@ func TestMulDiv_6_1(t *testing.T) {
 
 func TestMulDiv_7(t *testing.T) {
 	// accurate with phantom overflow #2
-	Q128 := MustFromDecimal("340282366920938463463374607431768211456")      // 2**128
 	Q128Const := MustFromDecimal("340282366920938463463374607431768211456") // 2**128
 	x := NewUint(4375)
 	expected := MulDiv(x, Q128Const, NewUint(1000))
@@ -135,7 +133,6 @@ func TestMulDiv_7(t *testing.T) {
 
 func TestMulDiv_8(t *testing.T) {
 	// accurate with phantom overflow and repeating decimal
-	Q128 := MustFromDecimal("340282366920938463463374607431768211456")      // 2**128
 	Q128Const := MustFromDecimal("340282366920938463463374607431768211456") // 2**128
 	expected := MulDiv(One(), Q128Const, NewUint(3))
 
@@ -253,9 +250,6 @@ func TestMulDivRoundingUp_7(t *testing.T) {
 }
 
 func TestMulDivRoundingUp_8(t *testing.T) {
-	// accurate without phantom overflow
-	denom := NewUint(100)
-
 	// accurate without phantom overflow #1
 	Q128 := MustFromDecimal("340282366920938463463374607431768211456")      // 2**128
 	Q128Const := MustFromDecimal("340282366920938463463374607431768211456") // 2**128
@@ -278,7 +272,6 @@ func TestMulDivRoundingUp_8(t *testing.T) {
 
 func TestMulDivRoundingUp_9(t *testing.T) {
 	// accurate with phantom overflow #2
-	Q128 := MustFromDecimal("340282366920938463463374607431768211456")      // 2**128
 	Q128Const := MustFromDecimal("340282366920938463463374607431768211456") // 2**128
 	x := NewUint(4375)
 	expected := MulDiv(x, Q128Const, NewUint(1000))
@@ -299,8 +292,6 @@ func TestMulDivRoundingUp_9(t *testing.T) {
 
 func TestMulDivRoundingUp_10(t *testing.T) {
 	// accurate with phantom overflow and repeating decimal
-
-	Q128 := MustFromDecimal("340282366920938463463374607431768211456")      // 2**128
 	Q128Const := MustFromDecimal("340282366920938463463374607431768211456") // 2**128
 
 	expected := MulDiv(One(), Q128Const, NewUint(3))

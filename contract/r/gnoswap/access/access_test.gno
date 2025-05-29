@@ -397,7 +397,7 @@ func TestGetAddress(t *testing.T) {
 
 	t.Run("get address from uninitialized config", func(t *testing.T) {
 		currentConfig = nil
-		addr, err := GetAddress("role_foo")
+		_, err := GetAddress("role_foo")
 		uassert.Error(t, err)
 	})
 }
