@@ -117,11 +117,11 @@ func SetPoolCreationFee(fee int64) {
 
 	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
-		"SetPoolCreationFee",
+		"SetPoolCreationFee",	
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"prevFee", formatUint(prevPoolCreationFee),
-		"newFee", formatUint(fee),
+		"prevFee", formatInt(prevPoolCreationFee),
+		"newFee", formatInt(fee),
 	)
 }
 
