@@ -175,7 +175,7 @@ func GetIncentiveRewardToken(poolPath string, incentiveId string) string {
 func GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
 	incentive := GetIncentive(poolPath, incentiveId)
 
-	return u256.NewUint(incentive.rewardAmount)
+	return u256.NewUint(uint64(incentive.rewardAmount))
 }
 
 // GetIncentiveRewardAmountAsString returns the reward amount for a given incentive as a string
@@ -239,7 +239,7 @@ func GetIncentiveEndHeight(poolPath string, incentiveId string) int64 {
 //
 // Returns:
 // - uint64: The reward amount distributed per block for the specified incentive.
-func GetIncentiveRewardPerBlock(poolPath string, incentiveId string) uint64 {
+func GetIncentiveRewardPerBlock(poolPath string, incentiveId string) int64 {
 	incentive := GetIncentive(poolPath, incentiveId)
 
 	return incentive.rewardPerBlock
@@ -455,7 +455,7 @@ func GetDepositWarmUp(lpTokenId uint64) []Warmup {
 //
 // Panics:
 //   - If the pool tier does not exist for the given poolPath
-func GetPoolTier(poolPath string) uint64 {
+func GetPoolTier(poolPath string) int64 {
 	return poolTier.CurrentTier(poolPath)
 }
 
@@ -469,7 +469,7 @@ func GetPoolTier(poolPath string) uint64 {
 //
 // Returns:
 // - uint64: The current reward ratio for the specified pool tier.
-func GetPoolTierRatio(poolPath string) uint64 {
+func GetPoolTierRatio(poolPath string) int64 {
 	tier := GetPoolTier(poolPath)
 	return poolTier.tierRatio.Get(tier)
 }
@@ -484,11 +484,11 @@ func GetPoolTierRatio(poolPath string) uint64 {
 //
 // Returns:
 // - uint64: The current count of pools in the specified tier.
-func GetPoolTierCount(tier uint64) uint64 {
+func GetPoolTierCount(tier int64) int64 {
 	if tier == 0 {
 		return 0
 	}
-	return uint64(poolTier.CurrentCount(tier))
+	return poolTier.CurrentCount(tier)
 }
 
 // GetPoolReward retrieves the current reward amount for the specified pool tier.
@@ -500,7 +500,7 @@ func GetPoolTierCount(tier uint64) uint64 {
 //
 // Returns:
 // - uint64: The current reward amount for the specified tier.
-func GetPoolReward(tier uint64) uint64 {
+func GetPoolReward(tier int64) int64 {
 	return poolTier.CurrentReward(tier)
 }
 
@@ -571,14 +571,14 @@ func GetPrintExternalInfo() string {
 					PoolPath:          incentive.targetPoolPath,
 					IncentiveId:       key,
 					RewardToken:       incentive.rewardToken,
-					RewardAmount:      strconv.FormatUint(incentive.rewardAmount, 10),
-					RewardLeft:        strconv.FormatUint(incentive.rewardLeft, 10),
+					RewardAmount:      strconv.FormatInt(incentive.rewardAmount, 10),
+					RewardLeft:        strconv.FormatInt(incentive.rewardLeft, 10),
 					StartTimestamp:    incentive.startTimestamp,
 					EndTimestamp:      incentive.endTimestamp,
-					RewardPerBlock:    strconv.FormatUint(incentive.rewardPerBlock, 10),
+					RewardPerBlock:    strconv.FormatInt(incentive.rewardPerBlock, 10),
 					Refundee:          incentive.refundee,
-					TokenAmountFull:   incentive.depositGnsAmount,
-					TokenAmountToGive: incentive.RewardSpent(uint64(std.ChainHeight())),
+					TokenAmountFull:   uint64(incentive.depositGnsAmount),
+					TokenAmountToGive: uint64(incentive.RewardSpent(std.ChainHeight())),
 					StartHeight:       incentive.startHeight,
 					EndHeight:         incentive.endHeight,
 				}

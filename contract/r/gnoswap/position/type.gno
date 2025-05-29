@@ -1,4 +1,4 @@
-package position
+package staker
 
 import (
 	"std"
@@ -6,122 +6,115 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// Position represents a liquidity position in a pool.
-// Each position tracks the amount of liquidity, fee growth, and tokens owed to the position owner.
-type Position struct {
-	nonce     *u256.Uint  // nonce for permits
-	operator  std.Address // address that is approved for spending this token
-	poolKey   string      // poolPath of the pool which this has lp token
-	tickLower int32       // the lower tick of the position, bounds are included
-	tickUpper int32       // the upper tick of the position
-	liquidity *u256.Uint  // liquidity of the position
+// ExternalIncentive is a struct for storing external incentive information.
+type ExternalIncentive struct {
+	incentiveId      string      // incentive id
+	startTimestamp   int64       // start time for external reward
+	endTimestamp     int64       // end time for external reward
+	createdHeight    int64       // block height when the incentive was created
+	depositGnsAmount int64       // deposited gns amount
+	targetPoolPath   string      // external reward target pool path
+	rewardToken      string      // external reward token path
+	rewardAmount     int64       // total reward amount
+	rewardLeft       int64       // remaining reward amount
+	startHeight      int64       // start height for external reward
+	endHeight        int64       // end height for external reward
+	rewardPerBlock   int64       // reward per block
+	refundee         std.Address // refundee address
 
-	// fee growth of the aggregate position as of the last action on the individual position
-	feeGrowthInside0LastX128 *u256.Uint
-	feeGrowthInside1LastX128 *u256.Uint
-
-	// how many uncollected tokens are owed to the position, as of the last computation
-	tokensOwed0 *u256.Uint
-	tokensOwed1 *u256.Uint
-
-	token0Balance *u256.Uint // token0 balance of the position
-	token1Balance *u256.Uint // token1 balance of the position
-
-	burned bool // whether the position has been burned(≈ actuall we don't burn lp token even its empty, just update flag)
+	unclaimableRefunded bool // whether unclaimable reward is refunded
 }
 
-// isClear reports whether the position is empty
-func (p Position) isClear() bool {
-	return p.liquidity.IsZero() && p.tokensOwed0.IsZero() && p.tokensOwed1.IsZero()
+func (e ExternalIncentive) StartTimestamp() int64 { return e.startTimestamp }
+func (e ExternalIncentive) EndTimestamp() int64   { return e.endTimestamp }
+func (e ExternalIncentive) RewardToken() string   { return e.rewardToken }
+func (e ExternalIncentive) RewardAmount() int64   { return e.rewardAmount }
+
+func (self *ExternalIncentive) RewardSpent(currentHeight int64) int64 {
+	if currentHeight < self.startHeight {
+		return 0
+	}
+
+	if currentHeight > self.endHeight {
+		return self.rewardAmount
+	}
+
+	blocks := currentHeight - self.startHeight
+	rewardSpent := blocks * self.rewardPerBlock
+	return rewardSpent
 }
 
-type MintParams struct {
-	token0         string      // token0 path for a specific pool
-	token1         string      // token1 path for a specific pool
-	fee            uint32      // fee for a specific pool
-	tickLower      int32       // lower end of the tick range for the position
-	tickUpper      int32       // upper end of the tick range for the position
-	amount0Desired *u256.Uint  // desired amount of token0 to be minted
-	amount1Desired *u256.Uint  // desired amount of token1 to be minted
-	amount0Min     *u256.Uint  // minimum amount of token0 to be minted
-	amount1Min     *u256.Uint  // minimum amount of token1 to be minted
-	deadline       int64       // time by which the transaction must be included to effect the change
-	mintTo         std.Address // address to mint lpToken
-	caller         std.Address // address to call the function
+func (self *ExternalIncentive) RewardLeft(currentHeight int64) int64 {
+	if currentHeight <= self.startHeight {
+		return self.rewardAmount
+	}
+
+	if currentHeight > self.endHeight {
+		return 0
+	}
+
+	if currentHeight == self.endHeight {
+		return self.rewardPerBlock
+	}
+
+	blocks := self.endHeight - currentHeight
+	rewardLeft := blocks * self.rewardPerBlock
+	return rewardLeft
 }
 
-// newMintParams creates `MintParams` from processed input data.
-func newMintParams(input ProcessedMintInput, mintInput MintInput) MintParams {
-	return MintParams{
-		token0:         input.tokenPair.token0,
-		token1:         input.tokenPair.token1,
-		fee:            mintInput.fee,
-		tickLower:      input.tickLower,
-		tickUpper:      input.tickUpper,
-		amount0Desired: input.amount0Desired,
-		amount1Desired: input.amount1Desired,
-		amount0Min:     input.amount0Min,
-		amount1Min:     input.amount1Min,
-		deadline:       mintInput.deadline,
-		mintTo:         mintInput.mintTo,
-		caller:         mintInput.caller,
+// NewExternalIncentive creates a new external incentive
+func NewExternalIncentive(
+	incentiveId string,
+	targetPoolPath string,
+	rewardToken string,
+	rewardAmount int64,
+	startTimestamp int64, // timestamp is in unix time(seconds)
+	endTimestamp int64,
+	refundee std.Address,
+	createdHeight int64,
+	depositGnsAmount int64,
+	currentTime int64, // current time in unix time(seconds)
+	msPerBlock int64, // msPerBlock is in milliseconds
+) *ExternalIncentive {
+	if msPerBlock <= 0 {
+		panic("msPerBlock must be greater than 0")
+	}
+
+	incentiveDuration := endTimestamp - startTimestamp
+	incentiveBlock := incentiveDuration * 1000 / msPerBlock
+	rewardPerBlock := rewardAmount / incentiveBlock
+
+	blocksLeftUntilStartHeight := (startTimestamp - currentTime) * 1000 / msPerBlock
+	blocksLeftUntilEndHeight := (endTimestamp - currentTime) * 1000 / msPerBlock
+
+	startHeight := std.ChainHeight() + blocksLeftUntilStartHeight
+	endHeight := std.ChainHeight() + blocksLeftUntilEndHeight
+
+	return &ExternalIncentive{
+		incentiveId:         incentiveId,
+		targetPoolPath:      targetPoolPath,
+		rewardToken:         rewardToken,
+		rewardAmount:        rewardAmount,
+		startTimestamp:      startTimestamp,
+		endTimestamp:        endTimestamp,
+		startHeight:         startHeight,
+		endHeight:           endHeight,
+		rewardPerBlock:      rewardPerBlock,
+		refundee:            refundee,
+		createdHeight:       createdHeight,
+		depositGnsAmount:    depositGnsAmount,
+		unclaimableRefunded: false,
 	}
 }
 
-type IncreaseLiquidityParams struct {
-	positionId     uint64     // positionId of the position to increase liquidity
-	amount0Desired *u256.Uint // desired amount of token0 to be minted
-	amount1Desired *u256.Uint // desired amount of token1 to be minted
-	amount0Min     *u256.Uint // minimum amount of token0 to be minted
-	amount1Min     *u256.Uint // minimum amount of token1 to be minted
-	deadline       int64      // time by which the transaction must be included to effect the change
-}
-
-type DecreaseLiquidityParams struct {
-	positionId   uint64     // positionId of the position to decrease liquidity
-	liquidity    string     // amount of liquidity to decrease
-	amount0Min   *u256.Uint // minimum amount of token0 to be minted
-	amount1Min   *u256.Uint // minimum amount of token1 to be minted
-	deadline     int64      // time by which the transaction must be included to effect the change
-	unwrapResult bool       // whether to unwrap the token if it's wrapped native token
-}
-
-type MintInput struct {
-	token0         string
-	token1         string
-	fee            uint32
-	tickLower      int32
-	tickUpper      int32
-	amount0Desired string
-	amount1Desired string
-	amount0Min     string
-	amount1Min     string
-	deadline       int64
-	mintTo         std.Address
-	caller         std.Address
-}
-
-type TokenPair struct {
-	token0         string
-	token1         string
-	token0IsNative bool
-	token1IsNative bool
-	wrappedAmount  int64
-}
-
-type ProcessedMintInput struct {
-	tokenPair      TokenPair
-	amount0Desired *u256.Uint
-	amount1Desired *u256.Uint
-	amount0Min     *u256.Uint
-	amount1Min     *u256.Uint
-	tickLower      int32
-	tickUpper      int32
-	poolPath       string
-}
-
-// FeeGrowthInside represents fee growth inside ticks
-type FeeGrowthInside struct {
-	feeGrowthInside0LastX128 *u256.Uint
-	feeGrowthInside1LastX128 *u256.Uint
+type Deposit struct {
+	owner             std.Address // owner address
+	stakeTimestamp    int64       // staked time
+	stakeHeight       int64       // staked block height
+	targetPoolPath    string      // staked position's pool path
+	tickLower         int32       // tick lower
+	tickUpper         int32       // tick upper
+	liquidity         *u256.Uint  // liquidity
+	lastCollectHeight int64       // last collect block height
+	warmups           []Warmup    // warmup information
 }

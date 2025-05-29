@@ -117,7 +117,7 @@ type Pool struct {
 	stakedLiquidity *UintTree // uint64 blockNumber -> *u256.Uint(Q128)
 
 	lastUnclaimableHeight int64
-	unclaimableAcc        uint64
+	unclaimableAcc        int64
 
 	rewardCache *UintTree // uint64 blockNumber -> uint64 gnsReward
 
@@ -194,10 +194,10 @@ func (self *Pool) IsExternallyIncentivizedPool() bool {
 
 // Get the latest reward in [0, currentHeight] range.
 // Returns the reward.
-func (self *Pool) CurrentReward(currentHeight int64) uint64 {
-	var reward uint64
+func (self *Pool) CurrentReward(currentHeight int64) int64 {
+	var reward int64
 	self.rewardCache.ReverseIterate(0, currentHeight, func(key int64, value any) bool {
-		reward = value.(uint64)
+		reward = value.(int64)
 		return true
 	})
 	return reward
@@ -205,7 +205,7 @@ func (self *Pool) CurrentReward(currentHeight int64) uint64 {
 
 // cacheReward sets the current reward for the pool
 // If the pool is in unclaimable period, it will end the unclaimable period,  updates the reward, and start the unclaimable period again.
-func (self *Pool) cacheReward(currentHeight int64, currentTierReward uint64) {
+func (self *Pool) cacheReward(currentHeight int64, currentTierReward int64) {
 	oldTierReward := self.CurrentReward(currentHeight)
 	if oldTierReward == currentTierReward {
 		return
@@ -224,7 +224,7 @@ func (self *Pool) cacheReward(currentHeight int64, currentTierReward uint64) {
 }
 
 // cacheInternalReward caches the current emission and updates the global reward ratio accumulation.
-func (self *Pool) cacheInternalReward(currentHeight int64, currentEmission uint64) {
+func (self *Pool) cacheInternalReward(currentHeight int64, currentEmission int64) {
 	self.cacheReward(currentHeight, currentEmission)
 
 	currentStakedLiquidity := self.CurrentStakedLiquidity(currentHeight)
@@ -264,8 +264,8 @@ type RewardState struct {
 	deposit *Deposit
 
 	// accumulated rewards for each warmup
-	rewards   []uint64
-	penalties []uint64
+	rewards   []int64
+	penalties []int64
 }
 
 // RewardStateOf initializes a new RewardState for the given deposit.
@@ -273,8 +273,8 @@ func (self *Pool) RewardStateOf(deposit *Deposit) *RewardState {
 	result := &RewardState{
 		pool:      self,
 		deposit:   deposit,
-		rewards:   make([]uint64, len(deposit.warmups)),
-		penalties: make([]uint64, len(deposit.warmups)),
+		rewards:   make([]int64, len(deposit.warmups)),
+		penalties: make([]int64, len(deposit.warmups)),
 	}
 
 	for i := range result.rewards {
@@ -287,13 +287,13 @@ func (self *Pool) RewardStateOf(deposit *Deposit) *RewardState {
 
 // calculateInternalReward calculates the internal reward for the deposit.
 // It calls rewardPerWarmup for each rewardCache interval, applies warmup, and returns the rewards and penalties.
-func (self *RewardState) calculateInternalReward(startHeight, endHeight int64) ([]uint64, []uint64) {
+func (self *RewardState) calculateInternalReward(startHeight, endHeight int64) (rewards []int64, penalties []int64) {
 	currentReward := self.pool.CurrentReward(startHeight)
 	self.pool.rewardCache.Iterate(startHeight, endHeight, func(key int64, value any) bool {
 		// we calculate per-position reward
-		self.rewardPerWarmup(startHeight, int64(key), currentReward)
-		currentReward = value.(uint64)
-		startHeight = int64(key)
+		self.rewardPerWarmup(startHeight, key, currentReward)
+		currentReward = value.(int64)
+		startHeight = key
 		return false
 	})
 
@@ -308,10 +308,10 @@ func (self *RewardState) calculateInternalReward(startHeight, endHeight int64) (
 
 // calculateExternalReward calculates the external reward for the deposit.
 // It calls rewardPerWarmup for startHeight to endHeight(clamped to the incentive period), applies warmup and returns the rewards and penalties.
-func (self *RewardState) calculateExternalReward(startHeight, endHeight int64, incentive *ExternalIncentive) ([]uint64, []uint64) {
-	if startHeight < int64(self.deposit.lastCollectHeight) {
+func (self *RewardState) calculateExternalReward(startHeight, endHeight int64, incentive *ExternalIncentive) ([]int64, []int64) {
+	if startHeight < self.deposit.lastCollectHeight {
 		// This must not happen, but adding some guards just in case.
-		startHeight = int64(self.deposit.lastCollectHeight)
+		startHeight = self.deposit.lastCollectHeight
 	}
 
 	if endHeight < incentive.startHeight {
@@ -349,7 +349,7 @@ func (self *RewardState) applyWarmup() {
 }
 
 // rewardPerWarmup calculates the reward for each warmup, adds to the RewardState's rewards array.
-func (self *RewardState) rewardPerWarmup(startHeight, endHeight int64, rewardPerBlock uint64) {
+func (self *RewardState) rewardPerWarmup(startHeight, endHeight int64, rewardPerBlock int64) {
 	for i, warmup := range self.deposit.warmups {
 		if startHeight >= warmup.NextWarmupHeight {
 			// passed the warmup
@@ -359,18 +359,18 @@ func (self *RewardState) rewardPerWarmup(startHeight, endHeight int64, rewardPer
 		if endHeight < warmup.NextWarmupHeight {
 			rewardAcc := self.pool.CalculateRewardForPosition(startHeight, self.pool.CurrentTick(startHeight), endHeight, self.pool.CurrentTick(endHeight), self.deposit)
 			rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.liquidity)
-			rewardAcc = u256.Zero().Mul(rewardAcc, u256.NewUint(rewardPerBlock))
+			rewardAcc = u256.Zero().Mul(rewardAcc, u256.NewUint(uint64(rewardPerBlock)))
 			rewardAcc = u256.Zero().Div(rewardAcc, q128)
-			self.rewards[i] += rewardAcc.Uint64()
+			self.rewards[i] += rewardAcc.Int64()
 			// done
 			break
 		}
 
 		rewardAcc := self.pool.CalculateRewardForPosition(startHeight, self.pool.CurrentTick(startHeight), warmup.NextWarmupHeight, self.pool.CurrentTick(warmup.NextWarmupHeight), self.deposit)
 		rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.liquidity)
-		rewardAcc = u256.Zero().Mul(rewardAcc, u256.NewUint(rewardPerBlock))
+		rewardAcc = u256.Zero().Mul(rewardAcc, u256.NewUint(uint64(rewardPerBlock)))
 		rewardAcc = u256.Zero().Div(rewardAcc, q128)
-		self.rewards[i] += rewardAcc.Uint64()
+		self.rewards[i] += rewardAcc.Int64()
 
 		startHeight = warmup.NextWarmupHeight
 	}
@@ -426,13 +426,13 @@ func (self *Pool) endUnclaimablePeriod(currentHeight int64) {
 		return
 	}
 	unclaimableHeights := currentHeight - self.lastUnclaimableHeight
-	self.unclaimableAcc += uint64(unclaimableHeights) * self.CurrentReward(self.lastUnclaimableHeight)
+	self.unclaimableAcc += unclaimableHeights * self.CurrentReward(self.lastUnclaimableHeight)
 	self.lastUnclaimableHeight = 0
 }
 
 // processUnclaimableReward processes the unclaimable reward and returns the accumulated reward.
 // It resets unclaimableAcc to 0 and updates lastUnclaimableHeight to endHeight.
-func (self *Pool) processUnclaimableReward(poolTier *PoolTier, endHeight int64) uint64 {
+func (self *Pool) processUnclaimableReward(poolTier *PoolTier, endHeight int64) int64 {
 	internalUnClaimable := self.unclaimableAcc
 	self.unclaimableAcc = 0
 	self.lastUnclaimableHeight = endHeight
