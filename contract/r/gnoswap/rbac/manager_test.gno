@@ -16,7 +16,14 @@ var (
 	wrongCaller = testutils.TestAddress("wrong")
 )
 
+func setupTest(t *testing.T) {
+	testing.SetOriginCaller(testCaller)
+	// Set the owner of globalManager to testCaller
+	globalManager = prbac.NewRBACWithAddress(testCaller)
+}
+
 func TestRegisterRole(t *testing.T) {
+	setupTest(t)
 	err := RegisterRole("admin")
 	uassert.NoError(t, err)
 
@@ -26,6 +33,7 @@ func TestRegisterRole(t *testing.T) {
 }
 
 func TestRegisterAndCheckPermission(t *testing.T) {
+	setupTest(t)
 	roleName := "moderator"
 	permissionName := "can_delete"
 
@@ -53,26 +61,30 @@ func TestRegisterAndCheckPermission(t *testing.T) {
 }
 
 func TestUpdateAndRemovePermission(t *testing.T) {
+	setupTest(t)
 	roleName := "editor"
 	permissionName := "can_edit"
 
 	errWrongCaller := errors.New("wrong caller")
 
 	// initial setup
-	RegisterRole(roleName)
+	err := RegisterRole(roleName)
+	uassert.NoError(t, err)
+
 	originalChecker := func(addr std.Address) error {
 		if addr == testCaller {
 			return nil
 		}
 		return errWrongCaller
 	}
-	RegisterPermission(roleName, permissionName, originalChecker)
+	err = RegisterPermission(roleName, permissionName, originalChecker)
+	uassert.NoError(t, err)
 
 	// update permission
 	newChecker := func(addr std.Address) error {
 		return errWrongCaller
 	}
-	err := UpdatePermission(roleName, permissionName, newChecker)
+	err = UpdatePermission(roleName, permissionName, newChecker)
 	uassert.NoError(t, err)
 
 	// check updated permission
