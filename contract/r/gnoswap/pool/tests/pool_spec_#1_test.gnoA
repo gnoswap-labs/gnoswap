@@ -48,7 +48,7 @@ func TestCreateFooBarPool_Should_be_failed_if_price_is_too_low(t *testing.T) {
 
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	uassert.PanicsWithMessage(
 		t,
@@ -62,7 +62,7 @@ func TestCreateFooBarPool_Should_be_failed_if_price_is_too_low(t *testing.T) {
 
 func TestCreateFooBarPool_Should_be_failed_if_price_is_too_high(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	uassert.PanicsWithMessage(
 		t,
@@ -75,7 +75,7 @@ func TestCreateFooBarPool_Should_be_failed_if_price_is_too_high(t *testing.T) {
 
 func TestCreateFooBarPool_can_be_init_at_MIN_SQRT_RATIO(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 	pl.CreatePool(barPath, fooPath, 3000, "4295128739") // MIN_SQRT_RATIO
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
@@ -86,7 +86,7 @@ func TestCreateFooBarPool_can_be_init_at_MIN_SQRT_RATIO(t *testing.T) {
 func TestCreateFooBarPool_can_be_init_at_MAX_SQRT_RATIO_Sub1(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 	pl.CreatePool(barPath, fooPath, 3000, "1461446703485210103287273052203988822378723970341") // MAX_SQRT_RATIO-1
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
@@ -96,7 +96,7 @@ func TestCreateFooBarPool_can_be_init_at_MAX_SQRT_RATIO_Sub1(t *testing.T) {
 
 func TestCreateFooBarPool_set_initial_variables(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	pl.CreatePool(barPath, fooPath, 3000, "56022770974786139918731938227") // encodePriceSqrt(1, 2)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
@@ -118,7 +118,7 @@ func TestMint_fail_if_tickLower_greater_than_tickUpper(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
@@ -143,7 +143,7 @@ func TestMint_fail_if_tickLower_less_than_min_tick(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
@@ -168,7 +168,7 @@ func TestMint_fail_if_tickUpper_greater_than_max_tick(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	pl.CreatePool(barPath, fooPath, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
@@ -192,7 +192,7 @@ func TestMint_fail_if_amount_exceeds_the_max(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
@@ -221,7 +221,7 @@ func TestMint_fail_if_total_amount_at_tick_exceeds_the_max(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 	bar.Approve(poolAddr, consts.UINT64_MAX)
@@ -271,7 +271,7 @@ func TestMint_fail_if_amount_is_0(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(poolAddr, poolCreationFee)
+	cross(gns.Approve)(poolAddr, poolCreationFee)
 
 	fooPath := "gno.land/r/onbloc/foo"
 

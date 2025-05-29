@@ -126,7 +126,7 @@ func ApiGetPositionUnclaimedFeeByLpPositionId(lpPositionId uint64) string {
 func rpcMakePosition(positionId uint64) RpcPosition {
 	position := MustGetPosition(positionId)
 
-	pool := pl.GetPoolFromPoolPath(position.poolKey)
+	pool := cross(pl.GetPoolFromPoolPath)(position.poolKey)
 	currentSqrtPriceX96 := pool.Slot0SqrtPriceX96()
 	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickLower)
 	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickUpper)
@@ -186,7 +186,7 @@ func unclaimedFee(positionId uint64) (*i256.Int, *i256.Int) {
 	tickUpper := position.tickUpper
 
 	poolKey := position.poolKey
-	pool := pl.GetPoolFromPoolPath(poolKey)
+	pool := cross(pl.GetPoolFromPoolPath)(poolKey)
 
 	currentTick := pool.Slot0Tick()
 

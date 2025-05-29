@@ -46,7 +46,7 @@ func CreatePool(
 	assertOnlyNotHalted()
 
 	poolInfo := createPool(token0Path, token1Path, fee, sqrtPriceX96, GetFeeAmountTickSpacing(fee))
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 
 	poolPath := poolInfo.generatePoolPath()
 	// check whether the pool already exist

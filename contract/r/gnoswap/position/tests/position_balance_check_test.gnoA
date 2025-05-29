@@ -80,7 +80,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		// 2. Create pool
 		pl.CreatePool(token0Path, token1Path, fee, common.TickMathGetSqrtRatioAtTick(defaultTick).ToString())
 		poolPath := pl.GetPoolPath(token0Path, token1Path, fee)
-		pool := pl.GetPoolFromPoolPath(poolPath)
+		pool := cross(pl.GetPoolFromPoolPath)(poolPath)
 		uassert.Equal(t, poolPath, pool.PoolPath())
 		uassert.Equal(t, token0Path, pool.Token0Path())
 		uassert.Equal(t, token1Path, pool.Token1Path())
@@ -286,7 +286,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		uassert.Equal(t, strconv.FormatUint(afterWugnotBalance-beforeWugnotBalance, 10), strconv.FormatInt(num, 10))
 
 		posIdOne := MustGetPosition(uint64(1))
-		poolForOne := pl.GetPoolFromPoolPath(posIdOne.poolKey)
+		poolForOne := cross(pl.GetPoolFromPoolPath)(posIdOne.poolKey)
 		calculatedToken0BalanceForOne, calculatedToken1BalanceForOne := common.GetAmountsForLiquidity(
 			poolForOne.Slot0SqrtPriceX96(),
 			common.TickMathGetSqrtRatioAtTick(posIdOne.tickLower),
@@ -301,7 +301,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		}
 
 		posIdTwo := MustGetPosition(uint64(2))
-		poolForTwo := pl.GetPoolFromPoolPath(posIdTwo.poolKey)
+		poolForTwo := cross(pl.GetPoolFromPoolPath)(posIdTwo.poolKey)
 		calculatedToken0BalanceForTwo, calculatedToken1BalanceForTwo := common.GetAmountsForLiquidity(
 			poolForTwo.Slot0SqrtPriceX96(),
 			common.TickMathGetSqrtRatioAtTick(posIdTwo.tickLower),
@@ -408,7 +408,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 			// 2. Create pool
 			pl.CreatePool(token0Path, token1Path, fee, common.TickMathGetSqrtRatioAtTick(defaultTick).ToString())
 			poolPath := pl.GetPoolPath(token0Path, token1Path, fee)
-			pool := pl.GetPoolFromPoolPath(poolPath)
+			pool := cross(pl.GetPoolFromPoolPath)(poolPath)
 			uassert.Equal(t, poolPath, pool.PoolPath())
 			uassert.Equal(t, token0Path, pool.Token0Path())
 			uassert.Equal(t, token1Path, pool.Token1Path())
@@ -630,7 +630,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		uassert.Equal(t, strconv.FormatUint(afterWugnotBalance-beforeWugnotBalance, 10), strconv.FormatInt(num, 10))
 
 		posIdOne := MustGetPosition(uint64(1))
-		poolForOne := pl.GetPoolFromPoolPath(posIdOne.poolKey)
+		poolForOne := cross(pl.GetPoolFromPoolPath)(posIdOne.poolKey)
 		calculatedToken0BalanceForOne, calculatedToken1BalanceForOne := common.GetAmountsForLiquidity(
 			poolForOne.Slot0SqrtPriceX96(),
 			common.TickMathGetSqrtRatioAtTick(posIdOne.tickLower),
@@ -645,7 +645,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		}
 
 		posIdTwo := MustGetPosition(uint64(2))
-		poolForTwo := pl.GetPoolFromPoolPath(posIdTwo.poolKey)
+		poolForTwo := cross(pl.GetPoolFromPoolPath)(posIdTwo.poolKey)
 		calculatedToken0BalanceForTwo, calculatedToken1BalanceForTwo := common.GetAmountsForLiquidity(
 			poolForTwo.Slot0SqrtPriceX96(),
 			common.TickMathGetSqrtRatioAtTick(posIdTwo.tickLower),
@@ -837,7 +837,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 			// 2. Create pool
 			pl.CreatePool(token0Path, token1Path, fee, common.TickMathGetSqrtRatioAtTick(defaultTick).ToString())
 			poolPath := pl.GetPoolPath(token0Path, token1Path, fee)
-			pool := pl.GetPoolFromPoolPath(poolPath)
+			pool := cross(pl.GetPoolFromPoolPath)(poolPath)
 			uassert.Equal(t, poolPath, pool.PoolPath())
 			uassert.Equal(t, token0Path, pool.Token0Path())
 			uassert.Equal(t, token1Path, pool.Token1Path())
@@ -1059,7 +1059,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		uassert.Equal(t, strconv.FormatUint(afterWugnotBalance-beforeWugnotBalance, 10), strconv.FormatInt(num, 10))
 
 		posIdOne := MustGetPosition(uint64(1))
-		poolForOne := pl.GetPoolFromPoolPath(posIdOne.poolKey)
+		poolForOne := cross(pl.GetPoolFromPoolPath)(posIdOne.poolKey)
 		calculatedToken0BalanceForOne, calculatedToken1BalanceForOne := common.GetAmountsForLiquidity(
 			poolForOne.Slot0SqrtPriceX96(),
 			common.TickMathGetSqrtRatioAtTick(posIdOne.tickLower),
@@ -1074,7 +1074,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		}
 
 		posIdTwo := MustGetPosition(uint64(2))
-		poolForTwo := pl.GetPoolFromPoolPath(posIdTwo.poolKey)
+		poolForTwo := cross(pl.GetPoolFromPoolPath)(posIdTwo.poolKey)
 		calculatedToken0BalanceForTwo, calculatedToken1BalanceForTwo := common.GetAmountsForLiquidity(
 			poolForTwo.Slot0SqrtPriceX96(),
 			common.TickMathGetSqrtRatioAtTick(posIdTwo.tickLower),
@@ -1157,7 +1157,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		testing.SetRealm(aliceRealm)
 
 		position, _ := GetPosition(positionId)
-		pool := pl.GetPoolFromPoolPath(position.poolKey)
+		pool := cross(pl.GetPoolFromPoolPath)(position.poolKey)
 		currentSqrtPriceX96 := pool.Slot0SqrtPriceX96()
 		lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickLower)
 		upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickUpper)

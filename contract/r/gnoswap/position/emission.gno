@@ -16,16 +16,17 @@ import (
 // If security and functionality issues are confirmed to be absent,
 // it will later be modified to directly call callbacks instead of using separate wrapper functions as it does now,
 // and other emission-dependent functions will also be handled with callbacks like this case.
-func mintAndDistributeGnsCallback() uint64 {
+func mintAndDistributeGnsCallback() int64 {
 	cb, exists := br.LookupCallback("emission", "MintAndDistributeGns")
 	if !exists {
 		panic("MintAndDistributeGns callback is not set!")
 	}
 
-	mintCallback, ok := cb.(func() uint64)
+	mintCallback, ok := cb.(func() int64)
 	if !ok {
 		panic("Invalid callback type for MintAndDistributeGns")
 	}
 
-	return mintCallback()
+	// stored function is crossing, it needs to be wrapped with `cross` to execute
+	return cross(mintCallback)()
 }

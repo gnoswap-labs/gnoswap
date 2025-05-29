@@ -90,7 +90,10 @@ func TestCreatePool(t *testing.T) {
 	}
 
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	SetPoolCreationFeeByAdmin(0)
+	func() {
+		testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+		SetPoolCreationFeeByAdmin(0)
+	}()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -107,7 +110,10 @@ func TestCreatePool(t *testing.T) {
 				}()
 			}
 
-			CreatePool(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
+			func() {
+				testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+				CreatePool(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
+			}()
 
 			if !tt.shouldPanic {
 				// verify pool was created correctly
@@ -188,7 +194,6 @@ func TestGetPool(t *testing.T) {
 
 			if tt.shouldPanic {
 				tt.action(t)
-			} else {
 			}
 		})
 	}

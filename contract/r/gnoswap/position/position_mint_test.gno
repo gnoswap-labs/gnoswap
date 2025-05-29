@@ -67,7 +67,7 @@ func TestMintInternal_PositionMint(t *testing.T) {
 			}
 			testing.SetRealm(adminRealm)
 			TokenApprove(t, gnsPath, alice, poolAddr, maxApprove)
-			poolPath := pl.GetPoolPath(tt.params.token0, tt.params.token1, tt.params.fee)
+			poolPath := cross(pl.GetPoolPath)(tt.params.token0, tt.params.token1, tt.params.fee)
 			if !pl.DoesPoolPathExist(poolPath) {
 				pl.CreatePool(tt.params.token0, tt.params.token1, tt.params.fee, "79228162514264337593543950336")
 			}

@@ -50,7 +50,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	verifySlippageAmounts(burnedAmount0, burnedAmount1, params.amount0Min, params.amount1Min)
 
 	positionKey := computePositionKey(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	pool := pl.GetPoolFromPoolPath(position.poolKey)
+	pool := cross(pl.GetPoolFromPoolPath)(position.poolKey)
 	feeGrowthInside0LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
 	feeGrowthInside1LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey))
 

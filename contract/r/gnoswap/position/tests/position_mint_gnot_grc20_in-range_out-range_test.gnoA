@@ -27,7 +27,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
-	singlePool := pl.GetPoolFromPoolPath("gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
+	singlePool := cross(pl.GetPoolFromPoolPath)("gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
 }
 
 func TestFreshUser(t *testing.T) {

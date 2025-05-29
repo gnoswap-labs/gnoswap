@@ -55,6 +55,7 @@ func Mint(
 	liquidityAmount string,
 	positionCaller std.Address,
 ) (string, string) {
+	crossing()
 	assertOnlyNotHalted()
 	if common.GetLimitCaller() {
 		assertOnlyPositionContract()
@@ -172,6 +173,7 @@ func Collect(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
+	crossing()
 	assertOnlyNotHalted()
 	if common.GetLimitCaller() {
 		assertOnlyPositionContract()
@@ -239,6 +241,7 @@ func CollectProtocolByAdmin(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
+	crossing()
 	assertOnlyAdmin()
 	amount0, amount1 := collectProtocol(
 		token0Path,
@@ -276,7 +279,8 @@ func CollectProtocol(
 	recipient std.Address,
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
-) (string, string) { // uint128 x2
+) (string, string) {
+	crossing()
 	assertOnlyGovernance()
 	amount0, amount1 := collectProtocol(
 		token0Path,
