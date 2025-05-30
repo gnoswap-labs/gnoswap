@@ -15,7 +15,7 @@ import (
 
 func ApiGetPositions() string {
 	rpcPositions := []RpcPosition{}
-	for positionId := uint64(1); positionId < nextId; positionId++ {
+	for positionId := int64(1); positionId < nextId; positionId++ {
 		rpcPosition := rpcMakePosition(positionId)
 		rpcPositions = append(rpcPositions, rpcPosition)
 	}
@@ -24,7 +24,7 @@ func ApiGetPositions() string {
 	return makeJsonResponse(&baseStat, &PositionsResponse{Positions: rpcPositions})
 }
 
-func ApiGetPosition(id uint64) string {
+func ApiGetPosition(id int64) string {
 	_, exist := GetPosition(id)
 	if !exist {
 		return ""
@@ -37,7 +37,7 @@ func ApiGetPosition(id uint64) string {
 
 func ApiGetPositionsByPoolPath(poolPath string) string {
 	rpcPositions := []RpcPosition{}
-	for id := uint64(1); id < nextId; id++ {
+	for id := int64(1); id < nextId; id++ {
 		position := MustGetPosition(id)
 		if position.poolKey != poolPath {
 			continue
@@ -52,7 +52,7 @@ func ApiGetPositionsByPoolPath(poolPath string) string {
 
 func ApiGetPositionsUnclaimedFee() string {
 	rpcUnclaimedFee := []RpcUnclaimedFee{}
-	for id := uint64(1); id < nextId; id++ {
+	for id := int64(1); id < nextId; id++ {
 		unclaimedFee0, unclaimedFee1 := unclaimedFee(id)
 		rpcUnclaimedFee = append(rpcUnclaimedFee, RpcUnclaimedFee{
 			LpPositionId: id,
@@ -67,7 +67,7 @@ func ApiGetPositionsUnclaimedFee() string {
 
 func ApiGetPositionsByAddress(address std.Address) string {
 	rpcPositions := []RpcPosition{}
-	for lpPositionId := uint64(1); lpPositionId < nextId; lpPositionId++ {
+	for lpPositionId := int64(1); lpPositionId < nextId; lpPositionId++ {
 		position := MustGetPosition(lpPositionId)
 		owner, err := gnft.OwnerOf(positionIdFrom(lpPositionId))
 		if err != nil {
@@ -109,7 +109,7 @@ func ApiGetPositionsByAddress(address std.Address) string {
 	return string(b)
 }
 
-func ApiGetPositionUnclaimedFeeByLpPositionId(lpPositionId uint64) string {
+func ApiGetPositionUnclaimedFeeByLpPositionId(lpPositionId int64) string {
 	unclaimedFee0, unclaimedFee1 := unclaimedFee(lpPositionId)
 	fee := RpcUnclaimedFee{
 		LpPositionId: lpPositionId,
@@ -123,7 +123,7 @@ func ApiGetPositionUnclaimedFeeByLpPositionId(lpPositionId uint64) string {
 	})
 }
 
-func rpcMakePosition(positionId uint64) RpcPosition {
+func rpcMakePosition(positionId int64) RpcPosition {
 	position := MustGetPosition(positionId)
 
 	pool := cross(pl.GetPoolFromPoolPath)(position.poolKey)
@@ -174,7 +174,7 @@ func rpcMakePosition(positionId uint64) RpcPosition {
 	}
 }
 
-func unclaimedFee(positionId uint64) (*i256.Int, *i256.Int) {
+func unclaimedFee(positionId int64) (*i256.Int, *i256.Int) {
 	// ref: https://blog.uniswap.org/uniswap-v3-math-primer-2#calculating-uncollected-fees
 
 	position := MustGetPosition(positionId)
@@ -249,7 +249,7 @@ func subIn256(x, y *i256.Int) *i256.Int {
 	return diff
 }
 
-func isBurned(positionId uint64) bool {
+func isBurned(positionId int64) bool {
 	position := MustGetPosition(positionId)
 	return position.burned
 }

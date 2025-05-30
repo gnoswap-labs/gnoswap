@@ -146,7 +146,7 @@ func setUnStakingFee(fee uint64) {
 	if fee > 10000 {
 		panic(addDetailToError(
 			errInvalidUnstakingFee,
-			ufmt.Sprintf("reward_fee.gno__SetUnstakingFee() || fee(%d) must be in range 0 ~ 10000", fee),
+			ufmt.Sprintf("fee(%d) must be in range 0 ~ 10000", fee),
 		))
 	}
 

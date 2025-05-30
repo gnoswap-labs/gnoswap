@@ -69,7 +69,7 @@ func newMintParams(input ProcessedMintInput, mintInput MintInput) MintParams {
 }
 
 type IncreaseLiquidityParams struct {
-	positionId     uint64     // positionId of the position to increase liquidity
+	positionId     int64     // positionId of the position to increase liquidity
 	amount0Desired *u256.Uint // desired amount of token0 to be minted
 	amount1Desired *u256.Uint // desired amount of token1 to be minted
 	amount0Min     *u256.Uint // minimum amount of token0 to be minted
@@ -78,7 +78,7 @@ type IncreaseLiquidityParams struct {
 }
 
 type DecreaseLiquidityParams struct {
-	positionId   uint64     // positionId of the position to decrease liquidity
+	positionId   int64     // positionId of the position to decrease liquidity
 	liquidity    string     // amount of liquidity to decrease
 	amount0Min   *u256.Uint // minimum amount of token0 to be minted
 	amount1Min   *u256.Uint // minimum amount of token1 to be minted

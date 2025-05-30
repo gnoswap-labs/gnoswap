@@ -60,8 +60,8 @@ func CreatePool(
 	prevAddr, prevRealm := getPrevAsString()
 
 	if poolCreationFee > 0 {
-		gns.TransferFrom(std.PreviousRealm().Address(), protocolFeeAddr, poolCreationFee)
-		pf.AddToProtocolFee(consts.GNS_PATH, uint64(poolCreationFee))
+		cross(gns.TransferFrom)(std.PreviousRealm().Address(), protocolFeeAddr, poolCreationFee)
+		cross(pf.AddToProtocolFee)(consts.GNS_PATH, uint64(poolCreationFee))
 
 		std.Emit(
 			"PoolCreationFee",

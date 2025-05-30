@@ -61,7 +61,7 @@ func (ur *UnclaimedFeesResponse) JSON() *json.Node {
 ///////////////// RPC TYPES /////////////////
 
 type RpcPosition struct {
-	LpPositionId             uint64 `json:"lpPositionId"`
+	LpPositionId             int64 `json:"lpPositionId"`
 	Burned                   bool   `json:"burned"`
 	Owner                    string `json:"owner"`
 	Operator                 string `json:"operator"`
@@ -106,7 +106,7 @@ func (p RpcPosition) JSON(owner std.Address) *json.Node {
 }
 
 type RpcUnclaimedFee struct {
-	LpPositionId uint64 `json:"lpPositionId"`
+	LpPositionId int64 `json:"lpPositionId"`
 	Fee0         string `json:"fee0"`
 	Fee1         string `json:"fee1"`
 }

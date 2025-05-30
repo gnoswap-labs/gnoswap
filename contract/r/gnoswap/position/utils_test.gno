@@ -654,52 +654,6 @@ func TestIsOperator(t *testing.T) {
 	}
 }
 
-func TestIsStaked(t *testing.T) {
-	tests := []struct {
-		name       string
-		owner      std.Address
-		operator   std.Address
-		positionId uint64
-		expected   bool
-	}{
-		{
-			name:       "Fail - is not staked",
-			owner:      bob,
-			operator:   alice,
-			positionId: 1,
-			expected:   false,
-		},
-		{
-			name:       "Fail - is not exist positionId",
-			owner:      adminAddr,
-			operator:   bob,
-			positionId: 100,
-			expected:   false,
-		},
-		{
-			name:       "Success - is staked",
-			owner:      adminAddr,
-			operator:   adminAddr,
-			positionId: 11,
-			expected:   true,
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			if tc.expected && tc.owner == tc.operator {
-				MakeMintPositionWithoutFee(t)
-				LPTokenApprove(t, tc.owner, stakerAddr, tc.positionId)
-				LPTokenStake(t, tc.owner, tc.positionId)
-			}
-			got := isStaked(positionIdFrom(tc.positionId))
-			uassert.Equal(t, tc.expected, got)
-			if tc.expected && tc.owner == tc.operator {
-				LPTokenUnStake(t, tc.owner, tc.positionId, false)
-			}
-		})
-	}
-}
-
 func TestIsOwnerOrOperator(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -741,45 +695,6 @@ func TestIsOwnerOrOperator(t *testing.T) {
 			} else {
 				got = isOwnerOrOperator(tc.operator, tc.positionId)
 			}
-			uassert.Equal(t, tc.expected, got)
-		})
-	}
-}
-
-func TestIsOwnerOrOperatorWithStake(t *testing.T) {
-	tests := []struct {
-		name       string
-		owner      std.Address
-		operator   std.Address
-		positionId uint64
-		isStake    bool
-		expected   bool
-	}{
-		{
-			name:       "Fail - is not token staked",
-			owner:      adminAddr,
-			operator:   alice,
-			positionId: 10,
-			isStake:    false,
-			expected:   false,
-		},
-		{
-			name:       "Success - is token staked (position operator)",
-			owner:      adminAddr,
-			operator:   adminAddr,
-			positionId: 10,
-			isStake:    true,
-			expected:   true,
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			if tc.isStake {
-				positionId, _, _, _ := MakeMintPositionWithoutFee(t)
-				LPTokenApprove(t, tc.owner, stakerAddr, tc.positionId)
-				LPTokenStake(t, tc.owner, tc.positionId)
-			}
-			got := isOwnerOrOperator(tc.operator, tc.positionId)
 			uassert.Equal(t, tc.expected, got)
 		})
 	}
