@@ -30,7 +30,7 @@ var (
 // Need to clear the distributed GNS to gov/staker in emission to get the latest accumulated GNS balance
 func collectAndGetGNSBalance() uint64 {
 	gotGnsForEmission := en.GetDistributedToGovStaker()
-	en.ClearDistributedToGovStaker()
+	cross(en.ClearDistributedToGovStaker)()
 
 	currentGNSBalance += uint64(gotGnsForEmission)
 
@@ -40,7 +40,7 @@ func collectAndGetGNSBalance() uint64 {
 // updateAndGetProtocolFeeBalance gets the accumulated protocol fee balance from protocol_fee to gov/staker
 // Need to clear the accumulated protocol fee to gov/staker in protocol fee to get the latest accumulated protocol fee balance
 func updateAndGetProtocolFeeBalance() map[string]uint64 {
-	pf.DistributeProtocolFee()
+	cross(pf.DistributeProtocolFee)()
 	gotAccuProtocolFee := pf.GetAccuTransferToGovStaker()
 
 	gotAccuProtocolFee.Iterate("", "", func(key string, value any) bool {
@@ -49,7 +49,7 @@ func updateAndGetProtocolFeeBalance() map[string]uint64 {
 		return false
 	})
 
-	pf.ClearAccuTransferToGovStaker()
+	cross(pf.ClearAccuTransferToGovStaker)()
 
 	return currentProtocolFeeBalance
 }
