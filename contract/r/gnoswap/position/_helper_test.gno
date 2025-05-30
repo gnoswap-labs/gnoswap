@@ -41,7 +41,7 @@ const (
 	fee500               uint32 = 500
 	fee3000              uint32 = 3000
 	fee10000             uint32 = 10000
-	maxApprove  		 int64 = 9223372036854775806
+	maxApprove           int64  = 9223372036854775806
 	max_timeout          int64  = 9999999999
 	maxSqrtPriceLimitX96 string = "1461446703485210103287273052203988822378723970341"
 
@@ -686,23 +686,24 @@ func burnAllNFT(t *testing.T) {
 // }
 
 func TestResetObject(t *testing.T) {
-	t.Skip("only works when testing this single file")
 	resetObject(t)
 
 	uassert.Equal(t, positions.Size(), 0, "positions should be empty")
-	uassert.Equal(t, nextId, uint64(1), "nextId should be 1")
+	uassert.Equal(t, nextId, int64(1), "nextId should be 1")
 }
 
 func TestBurnTokens(t *testing.T) {
-	t.Skip("only works when testing this single file")
 	burnTokens(t)
 
-	uassert.Equal(t, foo.BalanceOf(addr01), uint64(0)) // 100_000_000 -> 0
-	uassert.Equal(t, bar.BalanceOf(addr01), uint64(0)) // 100_000_000 -> 0
+	uassert.Equal(t, cross(foo.BalanceOf)(addr01), int64(0)) // 100_000_000 -> 0
+	uassert.Equal(t, cross(bar.BalanceOf)(addr01), int64(0)) // 100_000_000 -> 0
+
+	resetObject(t)
 }
 
 func TestBurnAllNFT(t *testing.T) {
-	t.Skip("only works when testing this single file")
 	burnAllNFT(t)
-	uassert.Equal(t, gnft.TotalSupply(), uint64(0), "gnft total supply should be 0")
+	uassert.Equal(t, gnft.TotalSupply(), int64(0), "gnft total supply should be 0")
+
+	resetObject(t)
 }
