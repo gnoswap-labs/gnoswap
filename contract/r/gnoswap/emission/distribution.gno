@@ -255,11 +255,13 @@ func GetAccuDistributedToGovStaker() int64 {
 }
 
 func ClearDistributedToStaker() {
+	crossing()
 	assertStakerOnly()
 	distributedToStaker = 0
 }
 
 func ClearDistributedToGovStaker() {
+	crossing()
 	assertOnlyGovStaker()
 	distributedToGovStaker = 0
 }

@@ -1,29 +1,33 @@
 package staker
 
 import (
+	"std"
 	"testing"
 
 	"gno.land/p/demo/avl"
 )
 
 func TestDelegateInternal(t *testing.T) {
-	t.Skip("Must running separately. because this test depends on TestUndelegate's state")
-	testing.SetOriginCaller(testAddr1)
-	resetState()
-
 	addr1 := testAddr1
 
 	t.Run("success - first delegation", func(t *testing.T) {
-		delegate(addr1, 100)
+		testing.SetOriginCaller(addr1)
+		func() {
+			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
+			delegate(addr1, 100)
 
-		if totalDelegated != 100 {
-			t.Errorf("expected totalDelegated 100, got %d", totalDelegated)
-		}
+			if totalDelegated != 100 {
+				t.Errorf("expected totalDelegated 100, got %d", totalDelegated)
+			}
 
-		value, exists := delegatorAmount.Get(addr1.String())
-		if !exists || value.(uint64) != 100 {
-			t.Error("delegator amount not updated correctly")
-		}
+			value, exists := delegatorAmount.Get(addr1.String())
+			if !exists {
+				t.Error("delegator amount not updated correctly")
+			}
+			if value.(uint64) != 100 {
+				t.Errorf("delegator amount should be 100, got %d", value.(uint64))
+			}
+		}()
 
 		innerTree, exists := delegatedFromTo.Get(addr1.String())
 		if !exists {
@@ -53,10 +57,7 @@ func TestDelegateInternal(t *testing.T) {
 }
 
 func TestUnDelegateInternal(t *testing.T) {
-	t.Skip("Must running separately. because this test depends on TestUndelegate's state")
 	addr1 := testAddr1
-	testing.SetOriginCaller(addr1)
-	resetState()
 
 	t.Run("fail - no delegation", func(t *testing.T) {
 		defer func() {
