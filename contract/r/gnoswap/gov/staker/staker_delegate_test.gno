@@ -53,10 +53,7 @@ func TestDelegateInternal(t *testing.T) {
 }
 
 func TestUnDelegateInternal(t *testing.T) {
-	t.Skip("Must running separately. because this test depends on TestUndelegate's state")
 	addr1 := testAddr1
-	testing.SetOriginCaller(addr1)
-	resetState()
 
 	t.Run("fail - no delegation", func(t *testing.T) {
 		defer func() {
