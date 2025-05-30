@@ -32,7 +32,7 @@ func collectAndGetGNSBalance() uint64 {
 	gotGnsForEmission := en.GetDistributedToGovStaker()
 	en.ClearDistributedToGovStaker()
 
-	currentGNSBalance += gotGnsForEmission
+	currentGNSBalance += uint64(gotGnsForEmission)
 
 	return currentGNSBalance
 }

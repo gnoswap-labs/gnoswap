@@ -121,7 +121,7 @@ func TestRemoveStake(t *testing.T) {
 		// unstake half of the initial stake
 		partialAmount := uint64(5000000) // 5 GNS
 
-		reward, protocolFeeRewards := state.removeStake(
+		_, protocolFeeRewards := state.removeStake(
 			staker,
 			partialAmount,
 			currentBalance,
@@ -147,13 +147,18 @@ func TestRemoveStake(t *testing.T) {
 			t.Errorf("wrong total stake amount: expected %d, got %d",
 				expectedRemainingStake, state.totalXGNSStake)
 		}
+
+		// check protocol fee rewards
+		if len(protocolFeeRewards) == 0 {
+			t.Error("expected non-empty protocol fee rewards")
+		}
 	})
 
 	t.Run("full unstake test", func(t *testing.T) {
 		// unstake the remaining amount
 		remainingAmount := uint64(5000000) // 5 GNS
 
-		reward, protocolFeeRewards := state.removeStake(
+		_, protocolFeeRewards := state.removeStake(
 			staker,
 			remainingAmount,
 			currentBalance,
@@ -170,6 +175,11 @@ func TestRemoveStake(t *testing.T) {
 		if state.totalXGNSStake != 0 {
 			t.Errorf("wrong total stake amount: expected 0, got %d",
 				state.totalXGNSStake)
+		}
+
+		// check protocol fee rewards
+		if len(protocolFeeRewards) == 0 {
+			t.Error("expected non-empty protocol fee rewards")
 		}
 	})
 }

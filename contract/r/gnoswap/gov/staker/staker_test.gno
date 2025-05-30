@@ -25,12 +25,12 @@ func TestDelegate(t *testing.T) {
 		to := makeFakeAddress("validator_1")
 		amount := uint64(1_000_000)
 
-		gns.Approve(govStaker, amount)
+		gns.Approve(govStaker, int64(amount))
 		Delegate(to, amount, "")
 
 		minted := xgns.BalanceOf(userRealm.Address())
-		if minted != amount {
-			t.Errorf("Delegate minted xGNS = %d, want %d", minted, amount)
+		if uint64(minted) != amount {
+			t.Fatalf("expected minted amount %d, got %d", amount, minted)
 		}
 		// verify "delegate" avl state, or any event logs, etc.
 	}
@@ -182,11 +182,11 @@ func TestRedelegate(t *testing.T) {
 	amount := uint64(1_000_000)
 
 	testing.SetOriginCaller(userRealm.Address())
-	gns.Approve(govStaker, amount)
+	gns.Approve(govStaker, int64(amount))
 	Delegate(from, amount, "")
 
 	testing.SetOriginCaller(userRealm.Address())
-	gns.Approve(govStaker, amount)
+	gns.Approve(govStaker, int64(amount))
 	Redelegate(from, to, amount)
 
 	// check data: user xGNS must remain the same, but from-> to shift in staker structure?
@@ -212,7 +212,7 @@ func TestUndelegate(t *testing.T) {
 	amount := uint64(1_000_000)
 
 	testing.SetOriginCaller(user3Realm.Address())
-	gns.Approve(govStaker, amount)
+	gns.Approve(govStaker, int64(amount))
 	Delegate(to, amount, "")
 	Undelegate(to, amount)
 
