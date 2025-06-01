@@ -378,21 +378,8 @@ func collectProtocol(
 //
 // Returns the adjusted amounts that will actually be collected for both tokens.
 func (p *Pool) saveProtocolFees(amount0, amount1 *u256.Uint) (*u256.Uint, *u256.Uint) {
-	cond01 := amount0.Gt(u256.Zero())
-	cond02 := amount0.Eq(p.ProtocolFeesToken0())
-	if cond01 && cond02 {
-		amount0 = new(u256.Uint).Sub(amount0, u256.One())
-	}
-
-	cond11 := amount1.Gt(u256.Zero())
-	cond12 := amount1.Eq(p.ProtocolFeesToken1())
-	if cond11 && cond12 {
-		amount1 = new(u256.Uint).Sub(amount1, u256.One())
-	}
-
 	p.protocolFees.token0 = new(u256.Uint).Sub(p.ProtocolFeesToken0(), amount0)
 	p.protocolFees.token1 = new(u256.Uint).Sub(p.ProtocolFeesToken1(), amount1)
 
-	// return rest fee
 	return amount0, amount1
 }
