@@ -6,18 +6,15 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
-	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -40,7 +37,7 @@ const (
 	fee100      uint32 = 100
 	fee500      uint32 = 500
 	fee3000     uint32 = 3000
-	maxApprove  uint64 = 18446744073709551615
+	maxApprove  int64 = 9223372036854775806
 	max_timeout int64  = 9999999999
 )
 
@@ -98,41 +95,6 @@ func LPTokenUnStake(t *testing.T, owner std.Address, positionId uint64, unwrap b
 	testing.SetRealm(std.NewUserRealm(owner))
 }
 
-func InitialisePoolTest(t *testing.T) {
-	t.Helper()
-
-	ugnotFaucet(t, admin, 100_000_000_000_000)
-	ugnotDeposit(t, admin, 100_000_000_000_000)
-	TokenFaucet(t, gnsPath, admin)
-
-	testing.SetOriginCaller(admin)
-	TokenApprove(t, gnsPath, admin, poolAddr, maxApprove)
-	poolPath := pl.GetPoolPath(wugnotPath, gnsPath, fee3000)
-	if !pl.DoesPoolPathExist(poolPath) {
-		pl.CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
-	}
-
-	testing.SetOriginCaller(alice)
-	TokenFaucet(t, wugnotPath, alice)
-	TokenFaucet(t, gnsPath, alice)
-	TokenApprove(t, wugnotPath, alice, poolAddr, uint64(1000))
-	TokenApprove(t, gnsPath, alice, poolAddr, uint64(1000))
-	MintPosition(t,
-		wugnotPath,
-		gnsPath,
-		fee3000,
-		int32(1020),
-		int32(5040),
-		"1000",
-		"1000",
-		"0",
-		"0",
-		max_timeout,
-		alice,
-		alice,
-	)
-}
-
 func CreateSecondPoolWithoutFee(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFeeByAdmin(0)
@@ -152,11 +114,11 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 	// make actual data to test resetting not only position's state but also pool's state
 	testing.SetRealm(adminRealm)
 
-	TokenApprove(t, barPath, admin, poolAddr, consts.UINT64_MAX)
-	TokenApprove(t, bazPath, admin, poolAddr, consts.UINT64_MAX)
+	TokenApprove(t, barPath, admin, poolAddr, maxApprove)
+	TokenApprove(t, bazPath, admin, poolAddr, maxApprove)
 
 	// mint position
-	return pn.Mint(
+	return cross(pn.Mint)(
 		barPath,
 		bazPath,
 		fee3000,
@@ -176,7 +138,7 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 func TokenFaucet(t *testing.T, tokenPath string, to std.Address) {
 	t.Helper()
 	testing.SetOriginCaller(admin)
-	defaultAmount := uint64(5_000_000_000)
+	defaultAmount := int64(5_000_000_000)
 
 	switch tokenPath {
 	case wugnotPath:
@@ -198,7 +160,7 @@ func TokenFaucet(t *testing.T, tokenPath string, to std.Address) {
 	}
 }
 
-func TokenBalance(t *testing.T, tokenPath string, owner std.Address) uint64 {
+func TokenBalance(t *testing.T, tokenPath string, owner std.Address) int64 {
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
@@ -220,7 +182,7 @@ func TokenBalance(t *testing.T, tokenPath string, owner std.Address) uint64 {
 	}
 }
 
-func TokenAllowance(t *testing.T, tokenPath string, owner, spender std.Address) uint64 {
+func TokenAllowance(t *testing.T, tokenPath string, owner, spender std.Address) int64 {
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
@@ -242,7 +204,7 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender std.Address) 
 	}
 }
 
-func TokenApprove(t *testing.T, tokenPath string, owner, spender std.Address, amount uint64) {
+func TokenApprove(t *testing.T, tokenPath string, owner, spender std.Address, amount int64) {
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
@@ -298,103 +260,103 @@ func MintPosition(t *testing.T,
 	)
 }
 
-func wugnotApprove(t *testing.T, owner, spender std.Address, amount uint64) {
+func wugnotApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	wugnot.Approve(spender, amount)
+	cross(wugnot.Approve)(spender, amount)
 }
 
-func gnsApprove(t *testing.T, owner, spender std.Address, amount uint64) {
+func gnsApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	gns.Approve(spender, amount)
+	cross(gns.Approve)(spender, amount)
 }
 
-func barApprove(t *testing.T, owner, spender std.Address, amount uint64) {
+func barApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	bar.Approve(spender, amount)
+	cross(bar.Approve)(spender, amount)
 }
 
-func bazApprove(t *testing.T, owner, spender std.Address, amount uint64) {
+func bazApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	baz.Approve(spender, amount)
+	cross(baz.Approve)(spender, amount)
 }
 
-func fooApprove(t *testing.T, owner, spender std.Address, amount uint64) {
+func fooApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	foo.Approve(spender, amount)
+	cross(foo.Approve)(spender, amount)
 }
 
-func oblApprove(t *testing.T, owner, spender std.Address, amount uint64) {
+func oblApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	obl.Approve(spender, amount)
+	cross(obl.Approve)(spender, amount)
 }
 
-func quxApprove(t *testing.T, owner, spender std.Address, amount uint64) {
+func quxApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	qux.Approve(spender, amount)
+	cross(qux.Approve)(spender, amount)
 }
 
-func wugnotTransfer(t *testing.T, to std.Address, amount uint64) {
+func wugnotTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(admin))
-	wugnot.Transfer(to, amount)
+	cross(wugnot.Transfer)(to, amount)
 }
 
-func gnsTransfer(t *testing.T, to std.Address, amount uint64) {
+func gnsTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(admin))
-	gns.Transfer(to, amount)
+	cross(gns.Transfer)(to, amount)
 }
 
-func barTransfer(t *testing.T, to std.Address, amount uint64) {
+func barTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(admin))
-	bar.Transfer(to, amount)
+	cross(bar.Transfer)(to, amount)
 }
 
-func bazTransfer(t *testing.T, to std.Address, amount uint64) {
+func bazTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(admin))
-	baz.Transfer(to, amount)
+	cross(baz.Transfer)(to, amount)
 }
 
-func fooTransfer(t *testing.T, to std.Address, amount uint64) {
+func fooTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(admin))
-	foo.Transfer(to, amount)
+	cross(foo.Transfer)(to, amount)
 }
 
-func oblTransfer(t *testing.T, to std.Address, amount uint64) {
+func oblTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(admin))
-	obl.Transfer(to, amount)
+	cross(obl.Transfer)(to, amount)
 }
 
-func quxTransfer(t *testing.T, to std.Address, amount uint64) {
+func quxTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(admin))
-	qux.Transfer(to, amount)
+	cross(qux.Transfer)(to, amount)
 }
 
 // ----------------------------------------------------------------------------
 // ugnot
 
-func ugnotTransfer(t *testing.T, from, to std.Address, amount uint64) {
+func ugnotTransfer(t *testing.T, from, to std.Address, amount int64) {
 	t.Helper()
 
 	testing.SetRealm(std.NewUserRealm(from))
-	testing.SetOriginSend(std.Coins{{ugnotDenom, int64(amount)}})
+	testing.SetOriginSend(std.Coins{{ugnotDenom, amount}})
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(from, to, std.Coins{{ugnotDenom, int64(amount)}})
+	banker.SendCoins(from, to, std.Coins{{ugnotDenom, amount}})
 }
 
-func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
+func ugnotBalanceOf(t *testing.T, addr std.Address) int64 {
 	t.Helper()
 
 	banker := std.NewBanker(std.BankerTypeRealmIssue)
@@ -403,12 +365,12 @@ func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
 		return 0
 	}
 
-	return uint64(coins.AmountOf(ugnotDenom))
+	return coins.AmountOf(ugnotDenom)
 }
 
 func ugnotMint(t *testing.T, addr std.Address, denom string, amount int64) {
 	t.Helper()
-	testing.IssueCoins(addr, std.Coins{{denom, int64(amount)}})
+	testing.IssueCoins(addr, std.Coins{{denom, amount}})
 }
 
 func ugnotBurn(t *testing.T, addr std.Address, denom string, amount int64) {
@@ -417,36 +379,26 @@ func ugnotBurn(t *testing.T, addr std.Address, denom string, amount int64) {
 	banker.RemoveCoin(addr, denom, amount)
 }
 
-func ugnotFaucet(t *testing.T, to std.Address, amount uint64) {
+func ugnotFaucet(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	faucetAddress := admin
 	testing.SetOriginCaller(faucetAddress)
 
 	if ugnotBalanceOf(t, faucetAddress) < amount {
-		newCoins := std.Coins{{ugnotDenom, int64(amount)}}
+		newCoins := std.Coins{{ugnotDenom, amount}}
 		ugnotMint(t, faucetAddress, newCoins[0].Denom, newCoins[0].Amount)
 		testing.SetOriginSend(newCoins)
 	}
 	ugnotTransfer(t, faucetAddress, to, amount)
 }
 
-func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
+func ugnotDeposit(t *testing.T, addr std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(addr))
 	wugnotAddr := consts.WUGNOT_ADDR
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
-	wugnot.Deposit()
-}
-
-// burnAllNFT burns all NFTs
-func burnAllNFT(t *testing.T) {
-	t.Helper()
-
-	testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
-	for i := uint64(1); i <= gnft.TotalSupply(); i++ {
-		gnft.Burn(positionIdFrom(i))
-	}
+	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, amount}})
+	cross(wugnot.Deposit)()
 }
 
 func deletePoolTier(t *testing.T, poolPath string) {
@@ -458,34 +410,8 @@ func deletePoolTier(t *testing.T, poolPath string) {
 	}
 }
 
-func addPoolTier(t *testing.T, poolPath string, tier uint64) {
-	t.Helper()
-	if poolTier != nil {
-		if pools != nil {
-			pools.GetOrCreate(poolPath)
-		} else {
-			panic(addDetailToError(
-				errPoolNotFound, ufmt.Sprintf("unknown error - pools is nil")))
-		}
-		poolTier.changeTier(std.ChainHeight(), pools, poolPath, tier)
-	} else {
-		poolTier = NewPoolTier(pools, std.ChainHeight(), poolPath, en.GetEmission, en.GetHalvingBlocksInRange)
-		pools.GetOrCreate(poolPath) // must update pools tree
-		poolTier.changeTier(std.ChainHeight(), pools, poolPath, tier)
-	}
-}
-
 func changeWarmup(t *testing.T, index int, blockDuration int64) {
 	modifyWarmup(index, blockDuration)
-}
-
-func getNumPoolTiers(t *testing.T) (uint64, uint64, uint64) {
-	counts := poolTier.CurrentAllTierCounts()
-	tier1Num := counts[1]
-	tier2Num := counts[2]
-	tier3Num := counts[3]
-
-	return uint64(tier1Num), uint64(tier2Num), uint64(tier3Num)
 }
 
 type gnsBalanceTracker struct {
@@ -496,29 +422,6 @@ type gnsBalanceTracker struct {
 	govStakerBalance     uint64
 	protocolFeeBalance   uint64
 	callerBalance        uint64
-}
-
-func gnsBalanceCheck(t *testing.T, beforeBalance gnsBalanceTracker, printChange bool) gnsBalanceTracker {
-	t.Helper()
-
-	caller := std.PreviousRealm().Address()
-	height := std.ChainHeight()
-	stakerBalance := gns.BalanceOf(stakerAddr)
-	devOpsBalance := gns.BalanceOf(devOpsAddr)
-	communityPoolBalance := gns.BalanceOf(communityPoolAddr)
-	govStakerBalance := gns.BalanceOf(consts.GOV_STAKER_ADDR)
-	protocolFeeBalance := gns.BalanceOf(protocolFeeAddr)
-	callerBalance := gns.BalanceOf(caller)
-
-	return gnsBalanceTracker{
-		height:               height,
-		stakerBalance:        stakerBalance,
-		devOpsBalance:        devOpsBalance,
-		communityPoolBalance: communityPoolBalance,
-		govStakerBalance:     govStakerBalance,
-		protocolFeeBalance:   protocolFeeBalance,
-		callerBalance:        callerBalance,
-	}
 }
 
 // returns true if actual is within 0.0001% of expected
@@ -533,18 +436,4 @@ func isInErrorRange(expected uint64, actual uint64) bool {
 		upperBound = expected * 1000001 / 1000000
 	}
 	return actual >= lowerBound && actual <= upperBound
-}
-
-func getRewardRatio(t *testing.T, height int64) uint64 {
-	t.Helper()
-	warmups := instantiateWarmup(height)
-
-	for _, warmup := range warmups {
-		if height < warmup.NextWarmupHeight {
-			return warmup.WarmupRatio
-		}
-	}
-
-	// passed all warmup-periods
-	return 100
 }
