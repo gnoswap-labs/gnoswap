@@ -62,7 +62,7 @@ func Delegate(to std.Address, amount uint64, referrer string) {
 	}
 
 	caller := std.PreviousRealm().Address()
-	gnsBalanceOfCaller := gns.BalanceOf(caller)
+	gnsBalanceOfCaller := cross(gns.BalanceOf)(caller)
 	if uint64(gnsBalanceOfCaller) < amount {
 		panic(addDetailToError(
 			errNotEnoughBalance,
@@ -135,7 +135,7 @@ func Redelegate(from, to std.Address, amount uint64) {
 	}
 
 	caller := std.PreviousRealm().Address()
-	delegatedBalanceOfCaller := xgns.BalanceOf(caller)
+	delegatedBalanceOfCaller := cross(xgns.BalanceOf)(caller)
 	if uint64(delegatedBalanceOfCaller) < amount {
 		panic(addDetailToError(
 			errNotEnoughBalance,
@@ -189,7 +189,7 @@ func Undelegate(from std.Address, amount uint64) {
 	}
 
 	caller := std.PreviousRealm().Address()
-	delegatedBalanceOfCaller := xgns.BalanceOf(caller)
+	delegatedBalanceOfCaller := cross(xgns.BalanceOf)(caller)
 	if uint64(delegatedBalanceOfCaller) < amount {
 		panic(addDetailToError(
 			errNotEnoughBalance,
