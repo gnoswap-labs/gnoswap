@@ -19,7 +19,7 @@ import (
 func CreateExternalIncentive(
 	targetPoolPath string,
 	rewardToken string, // token path should be registered
-	rewardAmount uint64,
+	rewardAmount int64,
 	startTimestamp int64,
 	endTimestamp int64,
 ) {
@@ -42,14 +42,14 @@ func CreateExternalIncentive(
 
 	// Check if reward amount meets the minimum requirement for the specific token
 	minReward := GetMinimumRewardAmountForToken(rewardToken)
-	if rewardAmount < minReward {
+	if rewardAmount < int64(minReward) {
 		panic(addDetailToError(
 			errInvalidInput,
 			ufmt.Sprintf("rewardAmount(%d) is less than minimum required amount(%d)", rewardAmount, minReward),
 		))
 	}
 
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 
 	// check token can be used as reward
 	if err := isAllowedForExternalReward(targetPoolPath, rewardToken); err != nil {
@@ -59,7 +59,7 @@ func CreateExternalIncentive(
 	// native ugnot check
 	if rewardToken == consts.GNOT {
 		sent := std.OriginSend()
-		ugnotSent := uint64(sent.AmountOf("ugnot"))
+		ugnotSent := int64(sent.AmountOf("ugnot"))
 
 		if ugnotSent != rewardAmount {
 			panic(addDetailToError(
@@ -104,12 +104,12 @@ func CreateExternalIncentive(
 		incentiveId,
 		targetPoolPath,
 		rewardToken,
-		rewardAmount,
+		uint64(rewardAmount),
 		startTimestamp,
 		endTimestamp,
 		caller,
 		std.ChainHeight(),
-		depositGnsAmount,
+		uint64(depositGnsAmount),
 		time.Now().Unix(),
 		gns.GetAvgBlockTimeInMs(),
 	)
@@ -191,10 +191,10 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	}
 
 	// when incentive ended, refund remaining reward
-	refund := ictv.rewardLeft
+	refund := int64(ictv.rewardLeft)
 
 	if !ictv.unclaimableRefunded {
-		refund += pool.incentives.calculateUnclaimableReward(ictv.incentiveId)
+		refund += int64(pool.incentives.calculateUnclaimableReward(ictv.incentiveId))
 		ictv.unclaimableRefunded = true
 	}
 
@@ -212,7 +212,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	}
 
 	// also refund deposit gns amount
-	gns.Transfer(ictv.refundee, ictv.depositGnsAmount)
+	cross(gns.Transfer)(ictv.refundee, int64(ictv.depositGnsAmount))
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -283,10 +283,6 @@ func isMidnight(startTime time.Time) bool {
 	second := startTime.Second()
 
 	return hour == 0 && minute == 0 && second == 0
-}
-
-func gnsBalance(addr std.Address) uint64 {
-	return gns.BalanceOf(addr)
 }
 
 func isAllowedForExternalReward(poolPath, tokenPath string) error {

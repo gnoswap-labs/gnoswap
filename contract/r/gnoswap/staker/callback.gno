@@ -15,7 +15,7 @@ import (
 //   - It first caches the reward until the current block height.
 //   - Then, it updates the `currentEmission` of the poolTier,
 //     which will be applied for future blocks thereafter.
-func callbackStakerEmissionChange(emission uint64) {
+func callbackStakerEmissionChange(emission int64) {
 	poolTier.cacheReward(std.ChainHeight(), pools)
-	poolTier.currentEmission = emission
+	poolTier.currentEmission = uint64(emission)
 }

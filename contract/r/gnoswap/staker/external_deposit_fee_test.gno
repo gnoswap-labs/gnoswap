@@ -8,7 +8,7 @@ import (
 )
 
 func TestGetDepositGnsAmount(t *testing.T) {
-	expected := uint64(1_000_000_000)
+	expected := int64(1_000_000_000)
 	actual := GetDepositGnsAmount()
 
 	if actual != expected {
@@ -20,7 +20,7 @@ func TestSetDepositGnsAmountByAdmin(t *testing.T) {
 	tests := []struct {
 		name        string
 		caller      std.Address
-		newAmount   uint64
+		newAmount   int64
 		shouldPanic bool
 	}{
 		{
@@ -68,7 +68,7 @@ func TestSetDepositGnsAmount(t *testing.T) {
 	tests := []struct {
 		name        string
 		caller      std.Address
-		newAmount   uint64
+		newAmount   int64
 		shouldPanic bool
 	}{
 		{

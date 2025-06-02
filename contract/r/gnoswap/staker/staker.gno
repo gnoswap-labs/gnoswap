@@ -448,7 +448,7 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[st
 		incentive.rewardAmount -= rewardAmount
 		rewardToken := incentive.rewardToken
 		toUserExternalReward[rewardToken] += rewardAmount
-		toUser := handleUnStakingFee(rewardToken, rewardAmount, false, positionId, incentive.targetPoolPath)
+		toUser := handleUnStakingFee(rewardToken, int64(rewardAmount), false, positionId, incentive.targetPoolPath)
 		if toUser > 0 {
 			teller := common.GetTokenTeller(rewardToken)
 			teller.Transfer(deposit.owner, toUser)
@@ -478,29 +478,29 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[st
 			"rewardToken", rewardToken,
 			"rewardAmount", formatUint(rewardAmount),
 			"rewardToUser", formatUint(toUser),
-			"rewardToFee", formatUint(rewardAmount-toUser),
+			"rewardToFee", formatInt(int64(rewardAmount)-toUser),
 			"rewardPenalty", formatUint(externalPenalty),
 			"isRequestUnwrap", formatBool(unwrapResult),
 		)
 	}
 
 	// internal reward to user
-	toUser := handleUnStakingFee(consts.GNS_PATH, reward.Internal, true, positionId, deposit.targetPoolPath)
+	toUser := handleUnStakingFee(consts.GNS_PATH, int64(reward.Internal), true, positionId, deposit.targetPoolPath)
 	if toUser > 0 {
 		// internal reward to user
-		totalEmissionSent += toUser
+		totalEmissionSent += uint64(toUser)
 		gns.Transfer(deposit.owner, toUser)
 
 		// internal penalty to community pool
-		totalEmissionSent += reward.InternalPenalty
-		gns.Transfer(communityPoolAddr, reward.InternalPenalty)
+		totalEmissionSent += uint64(reward.InternalPenalty)
+		gns.Transfer(communityPoolAddr, int64(reward.InternalPenalty))
 	}
 
 	unClaimableInternal := processUnClaimableReward(deposit.targetPoolPath, currentHeight)
 	if unClaimableInternal > 0 {
 		// internal unClaimable to community pool
-		totalEmissionSent += unClaimableInternal
-		gns.Transfer(communityPoolAddr, unClaimableInternal)
+		totalEmissionSent += uint64(unClaimableInternal)
+		gns.Transfer(communityPoolAddr, int64(unClaimableInternal))
 	}
 
 	std.Emit(
@@ -513,7 +513,7 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[st
 		"rewardToken", consts.GNS_PATH,
 		"rewardAmount", formatUint(reward.Internal),
 		"rewardToUser", formatUint(toUser),
-		"rewardToFee", formatUint(reward.Internal-toUser),
+		"rewardToFee", formatInt(int64(reward.Internal)-toUser),
 		"rewardPenalty", formatUint(reward.InternalPenalty),
 		"rewardUnClaimableAmount", formatUint(unClaimableInternal),
 	)

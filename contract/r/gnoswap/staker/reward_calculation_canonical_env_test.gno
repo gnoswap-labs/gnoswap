@@ -98,12 +98,13 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 	})
 
 	// Technically, the block number being provided to the NewPoolTier should be 124, but because of duplicate creation of the default pool, we put 123 here to just make rewardCache work for the testing.
-	result.global.poolTier = NewPoolTier(pools, 123, test_gnousdc, func() uint64 { return result.PerBlockEmission }, func(start, end int64) ([]int64, []uint64) {
+	// XXXX: type changed. need to check if this is correct.
+	result.global.poolTier = NewPoolTier(pools, 123, test_gnousdc, func() int64 { return int64(result.PerBlockEmission) }, func(start, end int64) ([]int64, []int64) {
 		heights := make([]int64, 0)
-		emissions := make([]uint64, 0)
+		emissions := make([]int64, 0)
 		result.emissionUpdates.Iterate(start, end, func(key int64, value any) bool {
 			heights = append(heights, key)
-			emissions = append(emissions, value.(uint64))
+			emissions = append(emissions, value.(int64)) // <- here
 			return false
 		})
 		return heights, emissions
