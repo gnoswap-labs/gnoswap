@@ -62,8 +62,8 @@ func Delegate(to std.Address, amount uint64, referrer string) {
 	}
 
 	caller := std.PreviousRealm().Address()
-	gnsBalanceOfCaller := gns.BalanceOf(caller)
-	if gnsBalanceOfCaller < amount {
+	gnsBalanceOfCaller := cross(gns.BalanceOf)(caller)
+	if uint64(gnsBalanceOfCaller) < amount {
 		panic(addDetailToError(
 			errNotEnoughBalance,
 			ufmt.Sprintf("invalid GNS balance(%d) to delegate(%d)", gnsBalanceOfCaller, amount),
@@ -71,14 +71,14 @@ func Delegate(to std.Address, amount uint64, referrer string) {
 	}
 
 	// Transfer the caller's GNS to GovStaker
-	gns.TransferFrom(caller, std.OriginCaller(), amount)
+	cross(gns.TransferFrom)(caller, std.OriginCaller(), int64(amount))
 
 	success := referral.TryRegister(caller, referrer)
 	actualReferrer := referrer
 	if !success {
 		actualReferrer = referral.GetReferral(caller.String())
 	}
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 
 	if running {
 		cleanDelegationStatHistory()
@@ -89,7 +89,7 @@ func Delegate(to std.Address, amount uint64, referrer string) {
 	delegate(to, amount)
 
 	// xGNS mint to caller
-	xgns.Mint(caller, amount)
+	xgns.Mint(caller, int64(amount))
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -135,15 +135,15 @@ func Redelegate(from, to std.Address, amount uint64) {
 	}
 
 	caller := std.PreviousRealm().Address()
-	delegatedBalanceOfCaller := xgns.BalanceOf(caller)
-	if delegatedBalanceOfCaller < amount {
+	delegatedBalanceOfCaller := cross(xgns.BalanceOf)(caller)
+	if uint64(delegatedBalanceOfCaller) < amount {
 		panic(addDetailToError(
 			errNotEnoughBalance,
 			ufmt.Sprintf("not enough xGNS delegated(%d) to redelegate(%d)", delegatedBalanceOfCaller, amount),
 		))
 	}
 
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 
 	if running {
 		cleanDelegationStatHistory()
@@ -189,22 +189,22 @@ func Undelegate(from std.Address, amount uint64) {
 	}
 
 	caller := std.PreviousRealm().Address()
-	delegatedBalanceOfCaller := xgns.BalanceOf(caller)
-	if delegatedBalanceOfCaller < amount {
+	delegatedBalanceOfCaller := cross(xgns.BalanceOf)(caller)
+	if uint64(delegatedBalanceOfCaller) < amount {
 		panic(addDetailToError(
 			errNotEnoughBalance,
 			ufmt.Sprintf("not enough xGNS delegated(%d) to undelegate(%d)", delegatedBalanceOfCaller, amount),
 		))
 	}
 
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 
 	if running {
 		cleanDelegationStatHistory()
 	}
 
 	reward, protocolFeeRewards := rewardState.removeStake(caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
-	gns.Transfer(caller, reward)
+	cross(gns.Transfer)(caller, int64(reward))
 
 	for tokenPath, rewardAmount := range protocolFeeRewards {
 		if rewardAmount > 0 {
@@ -215,7 +215,7 @@ func Undelegate(from std.Address, amount uint64) {
 	// actual unDelegate
 	unDelegate(from, amount)
 	// burn equivalent amount of xGNS
-	xgns.Burn(caller, amount)
+	xgns.Burn(caller, int64(amount))
 
 	// lock up
 	userLocked := lockedGNS{
@@ -257,7 +257,7 @@ func CollectUndelegatedGns() uint64 {
 		}
 	}
 
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 
 	caller := std.PreviousRealm().Address()
 	value, exists := addrLockedGns.Get(caller.String())
@@ -278,7 +278,7 @@ func CollectUndelegatedGns() uint64 {
 	for _, locked := range lockedList {
 		if currentTime >= locked.unlock { // passed 7 days
 			// transfer GNS to caller
-			gns.Transfer(caller, locked.amount)
+			cross(gns.Transfer)(caller, int64(locked.amount))
 			lockedAmount -= locked.amount
 			collected += locked.amount
 		} else {
@@ -327,7 +327,9 @@ func CollectReward() {
 	prevAddr, prevPkgPath := getPrev()
 	caller := std.PreviousRealm().Address()
 
-	en.MintAndDistributeGns()
+	println("caller", caller.String())
+
+	cross(en.MintAndDistributeGns)()
 
 	reward, protocolFeeRewards := rewardState.claim(caller, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
@@ -340,7 +342,7 @@ func CollectReward() {
 		}
 
 		currentGNSBalance -= reward
-		gns.Transfer(caller, reward)
+		cross(gns.Transfer)(caller, int64(reward))
 		std.Emit(
 			"CollectEmissionReward",
 			"prevAddr", prevAddr,
@@ -391,7 +393,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 		))
 	}
 
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 
 	prevAddr, prevPkgPath := getPrev()
 	emissionReward, protocolFeeRewards := rewardState.claim(to, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
@@ -404,7 +406,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 		}
 
 		currentGNSBalance -= emissionReward
-		gns.Transfer(to, emissionReward)
+		cross(gns.Transfer)(to, int64(emissionReward))
 		std.Emit(
 			"CollectEmissionFromLaunchPad",
 			"prevAddr", prevAddr,
@@ -454,11 +456,11 @@ func transferProtocolFee(tokenPath string, to std.Address, amount uint64) {
 
 	currentProtocolFeeBalance[tokenPath] -= amount
 	if tokenPath == consts.WUGNOT_PATH {
-		wugnot.Withdraw(amount)
+		cross(wugnot.Withdraw)(int64(amount))
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(govStaker, to, std.Coins{{"ugnot", int64(amount)}})
 	} else {
 		token := common.GetTokenTeller(tokenPath)
-		checkTransferError(token.Transfer(to, amount))
+		checkTransferError(token.Transfer(to, int64(amount)))
 	}
 }
