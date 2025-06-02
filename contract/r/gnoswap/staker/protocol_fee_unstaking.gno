@@ -39,7 +39,8 @@ func handleUnStakingFee(
 		return amount
 	}
 
-	feeAmount := amount * int64(unstakingFee / 10000)
+	// Do not change the order of the operation.
+	feeAmount := (amount * int64(unstakingFee)) / 10000
 	if feeAmount == 0 {
 		return amount
 	}
@@ -48,8 +49,8 @@ func handleUnStakingFee(
 
 	if internal {
 		// staker contract has fee
-		gns.Transfer(protocolFeeAddr, feeAmount)
-		pf.AddToProtocolFee(consts.GNS_PATH, uint64(feeAmount))
+		cross(gns.Transfer)(protocolFeeAddr, feeAmount)
+		cross(pf.AddToProtocolFee)(consts.GNS_PATH, uint64(feeAmount))
 
 		std.Emit(
 			"ProtocolFeeInternalReward",
@@ -64,7 +65,7 @@ func handleUnStakingFee(
 		// external contract has fee
 		teller := common.GetTokenTeller(tokenPath)
 		teller.Transfer(protocolFeeAddr, feeAmount)
-		pf.AddToProtocolFee(tokenPath, uint64(feeAmount))
+		cross(pf.AddToProtocolFee)(tokenPath, uint64(feeAmount))
 
 		std.Emit(
 			"ProtocolFeeExternalReward",
@@ -97,6 +98,7 @@ func GetUnstakingFee() uint64 {
 // Panics:
 // - If the caller is not an admin.
 func SetUnStakingFeeByAdmin(fee uint64) {
+	crossing()
 	caller := std.PreviousRealm().Address()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err.Error())
