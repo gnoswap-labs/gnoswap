@@ -8,7 +8,7 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
-	"gno.land/r/gnoswap/v1/gov/xgns"
+	// "gno.land/r/gnoswap/v1/gov/xgns"
 )
 
 func TestDelegate(t *testing.T) {
@@ -25,7 +25,7 @@ func TestDelegate(t *testing.T) {
 		cross(gns.MintGns)(userRealm.Address()) // 2M gns
 
 		testing.SetRealm(userRealm)
-		to := makeFakeAddress("validator_1")
+		// to := makeFakeAddress("validator_1")
 		amount := uint64(1_000_000)
 
 		cross(gns.Approve)(govStaker, int64(amount))
