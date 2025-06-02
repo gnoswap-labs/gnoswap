@@ -95,8 +95,8 @@ func SetDepositGnsAmountByAdmin(amount int64) {
 		"SetDepositGnsAmountByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"prevAmount", formatUint(prevDepositGnsAmount),
-		"newAmount", formatUint(amount),
+		"prevAmount", formatInt(prevDepositGnsAmount),
+		"newAmount", formatInt(amount),
 	)
 }
 
@@ -145,8 +145,8 @@ func SetDepositGnsAmount(amount int64) {
 		"SetDepositGnsAmount",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"prevAmount", formatUint(prevDepositGnsAmount),
-		"newAmount", formatUint(amount),
+		"prevAmount", formatInt(prevDepositGnsAmount),
+		"newAmount", formatInt(amount),
 	)
 }
 
