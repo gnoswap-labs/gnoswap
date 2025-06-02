@@ -36,6 +36,7 @@ var (
 // only `gov/staker` can execute this function.
 // It returns list of token with amount has been sent to gov/staker.
 func DistributeProtocolFee() map[string]uint64 {
+	crossing()
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
@@ -121,6 +122,7 @@ func SetDevOpsPctByAdmin(pct uint64) {
 // SetDevOpsPct sets the devOpsPct.
 // Only governance contract can execute this function via proposal
 func SetDevOpsPct(pct uint64) {
+	crossing()
 	caller := std.PreviousRealm().Address()
 	if err := common.GovernanceOnly(caller); err != nil {
 		panic(err)
@@ -154,6 +156,7 @@ func setDevOpsPct(pct uint64) {
 // AddToProtocolFee adds the amount to the tokenListWithAmount
 // Only `pool + router + staker` can execute this function.
 func AddToProtocolFee(tokenPath string, amount uint64) {
+	crossing()
 	assertOnlyPoolRouterStaker()
 	tokenListWithAmount[tokenPath] += amount
 }
@@ -161,6 +164,7 @@ func AddToProtocolFee(tokenPath string, amount uint64) {
 // ClearTokenListWithAmount clears the tokenListWithAmount.
 // only `gov/staker` can execute this function.
 func ClearTokenListWithAmount() {
+	crossing()
 	assertOnlyGovStaker()
 	clearTokenListWithAmount()
 }
@@ -171,6 +175,7 @@ func ClearTokenListWithAmount() {
 // which means gov/staker doesn't known how much protocol_fee has been distributed from last time
 // Therefore, gov/staker calls GetAccuTransferToGovStaker to get the accumulated amount and clear it
 func ClearAccuTransferToGovStaker() {
+	crossing()
 	assertOnlyNotHalted()
 
 	caller := std.PreviousRealm().Address()
