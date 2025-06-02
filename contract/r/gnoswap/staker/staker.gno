@@ -190,12 +190,11 @@ func init() {
 
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1)
 	poolTier = NewPoolTier(pools, std.ChainHeight(), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange)
-	RegisterCallbackStakerEmissionChange()
 }
 
 func RegisterCallbackStakerEmissionChange() {
-	en.SetCallbackStakerEmissionChange(callbackStakerEmissionChange)
-	en.RegisterGnsChangeCallback()
+	cross(en.SetEmissionHandler)(&StakerEmissionHandler{})
+	cross(en.RegisterGnsChangeCallback)()
 }
 
 // StakeToken stakes an LP token into the staker contract. It transfer the LP token

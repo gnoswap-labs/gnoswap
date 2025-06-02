@@ -275,7 +275,7 @@ func setDistributionBpsPct(target int, pct int64) {
 		}
 
 		if oldPct.(int64) != pct {
-			callbackStakerEmissionChange(calculateAmount(gns.GetEmission(), pct))
+			HandleEmissionChange(calculateAmount(gns.GetEmission(), pct))
 		}
 	}
 
