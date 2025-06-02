@@ -46,7 +46,7 @@ func testInit(t *testing.T) {
 		SetUnStakingFeeByAdmin(0)
 
 		// set pool creation fee to 0
-		pl.SetPoolCreationFeeByAdmin(0)
+		cross(pl.SetPoolCreationFeeByAdmin)(0)
 
 		// set community pool distribution to 0% (give it to devOps)
 		en.ChangeDistributionPctByAdmin(
