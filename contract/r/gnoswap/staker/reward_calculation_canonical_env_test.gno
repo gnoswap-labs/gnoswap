@@ -292,7 +292,7 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 
 	allIncentives := pool.incentives.GetAllInHeights(int64(lastCollectHeight), int64(currentHeight))
 
-	for incentiveId, incentive := range allIncentives {
+	for _, incentive := range allIncentives {
 		externalReward, externalPenalty := pool.RewardStateOf(deposit).calculateExternalReward(int64(lastCollectHeight), int64(currentHeight), incentive)
 
 		for i := range externalReward {
