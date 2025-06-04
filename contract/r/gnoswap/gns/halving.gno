@@ -198,6 +198,7 @@ func (h *HalvingData) initialize(startHeight, startTimestamp int64) {
 var callbackEmissionChange func(amount int64)
 
 func SetCallbackEmissionChange(callback func(amount int64)) {
+	crossing()
 	if callbackEmissionChange != nil {
 		panic("callbackEmissionChange already set")
 	}
