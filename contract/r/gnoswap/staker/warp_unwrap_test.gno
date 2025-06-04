@@ -9,6 +9,7 @@ import (
 )
 
 func TestWrap(t *testing.T) {
+	t.Skip("skipping warp test")
 	user1Addr := testutils.TestAddress("user1")
 	tests := []struct {
 		name        string

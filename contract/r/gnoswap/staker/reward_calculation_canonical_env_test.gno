@@ -104,7 +104,7 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 		emissions := make([]int64, 0)
 		result.emissionUpdates.Iterate(start, end, func(key int64, value any) bool {
 			heights = append(heights, key)
-			emissions = append(emissions, value.(int64)) // <- here
+			emissions = append(emissions, int64(value.(uint64))) // <- here
 			return false
 		})
 		return heights, emissions
