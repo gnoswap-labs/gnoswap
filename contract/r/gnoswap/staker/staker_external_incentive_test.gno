@@ -18,14 +18,6 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 	pool := NewPool(poolPath, 100)
 	pools.set(poolPath, pool)
 
-	// allowed tokens
-	allowedTokens := []string{
-		consts.GNS_PATH,    // GNS
-		consts.WUGNOT_PATH, // GNOT (wrapped)
-		"token0_path",      // pool's first token
-		"token1_path",      // pool's second token
-	}
-
 	currentTime := time.Now().Unix()
 	startTime := currentTime + 86400   // 1 day later
 	endTime := startTime + (86400 * 7) // 7 days after start

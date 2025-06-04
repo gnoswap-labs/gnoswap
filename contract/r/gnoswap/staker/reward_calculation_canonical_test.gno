@@ -1241,6 +1241,9 @@ func TestCanonicalEmissionChange_0(t *testing.T) {
 		300,
 		u256.NewUint(1000000000000000000),
 	)
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
 
 	canonical.NextBlock()
 

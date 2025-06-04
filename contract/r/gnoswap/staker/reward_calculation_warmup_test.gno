@@ -128,7 +128,6 @@ func TestWarmupApply2(t *testing.T) {
 func TestWarmupBoundaryValues(t *testing.T) {
 	warmup := Warmup{WarmupRatio: 50}
 	maxReward := uint64(math.MaxUint64)
-	minReward := uint64(0)
 
 	position := u256.NewUint(1)
 	staked := u256.NewUint(1)
@@ -224,8 +223,6 @@ func TestWarmupTransitions(t *testing.T) {
 }
 
 func TestModifyWarmup(t *testing.T) {
-	originalTemplate := DefaultWarmupTemplate()
-
 	t.Run("modify warmup with valid index", func(t *testing.T) {
 		modifyWarmup(0, 1000)
 		uassert.Equal(t, int64(1000), warmupTemplate[0].BlockDuration)

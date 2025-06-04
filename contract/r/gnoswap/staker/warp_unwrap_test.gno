@@ -13,7 +13,7 @@ func TestWrap(t *testing.T) {
 	tests := []struct {
 		name        string
 		action      func()
-		verify      func() uint64
+		verify      func() int64
 		expected    string
 		shouldPanic bool
 	}{
@@ -44,7 +44,7 @@ func TestWrap(t *testing.T) {
 				testing.SetRealm(std.NewUserRealm(user1Addr))
 				wrap(1_000)
 			},
-			verify: func() uint64 {
+			verify: func() int64 {
 				return TokenBalance(t, wugnotPath, user1Addr)
 			},
 			expected:    "1000",
@@ -77,7 +77,7 @@ func TestWrap(t *testing.T) {
 				tc.action()
 				if tc.verify != nil {
 					balance := tc.verify()
-					if strconv.FormatUint(balance, 10) != tc.expected {
+					if strconv.FormatInt(balance, 10) != tc.expected {
 						t.Errorf("Expected balance: %s, got: %d", tc.expected, balance)
 					}
 				}
@@ -91,7 +91,7 @@ func TestUnwrap(t *testing.T) {
 	tests := []struct {
 		name        string
 		action      func()
-		verify      func() uint64
+		verify      func() int64
 		expected    string
 		shouldPanic bool
 	}{
@@ -116,7 +116,7 @@ func TestUnwrap(t *testing.T) {
 				wugnotApprove(t, user2Addr, stakerAddr, 1_000)
 				unwrap(1_000)
 			},
-			verify: func() uint64 {
+			verify: func() int64 {
 				return TokenBalance(t, wugnotPath, user2Addr)
 			},
 			expected:    "0",
@@ -149,7 +149,7 @@ func TestUnwrap(t *testing.T) {
 				tc.action()
 				if tc.verify != nil {
 					balance := tc.verify()
-					if strconv.FormatUint(balance, 10) != tc.expected {
+					if strconv.FormatInt(balance, 10) != tc.expected {
 						t.Errorf("Expected balance: %s, got: %d", tc.expected, balance)
 					}
 				}
