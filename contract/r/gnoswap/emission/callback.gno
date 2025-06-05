@@ -2,46 +2,42 @@ package emission
 
 import (
 	"gno.land/r/gnoswap/v1/access"
-	br "gno.land/r/gnoswap/v1/bridge"
+	"gno.land/r/gnoswap/v1/bridge"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
-// EmissionHandler defines the interface for handling emission changes
-type EmissionHandler interface {
-	HandleEmissionChange(amount int64)
-}
+// upgradable pattern
 
-var currentHandler EmissionHandler
+var callbackStakerEmissionChange func(amount int64)
 
-// SetEmissionHandler sets the current emission handler
-func SetEmissionHandler(handler EmissionHandler) {
-	crossing()
-	if currentHandler != nil {
-		panic("emission handler already set")
+func SetCallbackStakerEmissionChange(callback func(amount int64)) {
+	if callbackStakerEmissionChange != nil {
+		panic("callbackStakerEmissionChange already set")
 	}
-	currentHandler = handler
+	callbackStakerEmissionChange = callback
 }
 
-// HandleEmissionChange is called when per-block emission is changed from the gns side.
+// Called when per-block emission is changed from the gns side.
 // It does not process non-immediate emission changes, such as halving.
-func HandleEmissionChange(amount int64) {
-	if currentHandler == nil {
-		return
-	}
+func callbackEmissionChange(amount int64) {
 	calculatedAmount := calculateAmount(amount, GetDistributionBpsPct(LIQUIDITY_STAKER))
-	currentHandler.HandleEmissionChange(calculatedAmount)
+	callbackStakerEmissionChange(calculatedAmount)
 }
 
 func RegisterGnsChangeCallback() {
 	crossing()
 	assertStakerOnly()
-	cross(gns.SetCallbackEmissionChange)(HandleEmissionChange)
+	cross(gns.SetCallbackEmissionChange)(callbackEmissionChange)
 }
 
 // registerMintAndDistributeGnsCallback upgrades the version of the function stored in the bridge contract.
 func registerMintAndDistributeGnsCallback() {
+	// When a contract is deployed, the init function runs immediately, and the caller is always fixed as the admin.
+	// Therefore, there is no need to separately check the caller in a function that applies upgrades,
+	// but in a test environment, since the admin address cannot be fixed as the default address,
+	// we use the admin address registered in the `access` contract instead.
 	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-	cross(br.RegisterCallback)(adminAddr, "emission", "MintAndDistributeGns", MintAndDistributeGns)
+	cross(bridge.RegisterCallback)(adminAddr, "emission", "MintAndDistributeGns", MintAndDistributeGns)
 }
 
 func init() {
