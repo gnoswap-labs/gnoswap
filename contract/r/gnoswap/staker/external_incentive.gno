@@ -59,7 +59,7 @@ func CreateExternalIncentive(
 	// native ugnot check
 	if rewardToken == consts.GNOT {
 		sent := std.OriginSend()
-		ugnotSent := int64(sent.AmountOf("ugnot"))
+		ugnotSent := sent.AmountOf("ugnot")
 
 		if ugnotSent != rewardAmount {
 			panic(addDetailToError(
@@ -95,7 +95,7 @@ func CreateExternalIncentive(
 
 	externalDuration := uint64(endTimestamp - startTimestamp)
 	if err := isValidIncentiveDuration(externalDuration); err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 
 	pool := pools.GetOrCreate(targetPoolPath)
@@ -124,7 +124,7 @@ func CreateExternalIncentive(
 	externalIncentives.set(incentiveId, incentive)
 
 	// deposit gns amount
-	gns.TransferFrom(caller, stakerAddr, depositGnsAmount)
+	cross(gns.TransferFrom)(caller, stakerAddr, depositGnsAmount)
 
 	// transfer reward token from user to staker
 	teller := common.GetTokenTeller(rewardToken)
