@@ -85,7 +85,7 @@ func NewUintTree() *UintTree {
 }
 
 func (self *UintTree) Get(key int64) (any, bool) {
-	v, ok := self.tree.Get(EncodeUint(uint64(key)))
+	v, ok := self.tree.Get(EncodeInt64(key))
 	if !ok {
 		return nil, false
 	}
@@ -93,7 +93,7 @@ func (self *UintTree) Get(key int64) (any, bool) {
 }
 
 func (self *UintTree) set(key int64, value any) {
-	self.tree.Set(EncodeUint(uint64(key)), value)
+	self.tree.Set(EncodeInt64(key), value)
 }
 
 func (self *UintTree) Has(key int64) bool {
