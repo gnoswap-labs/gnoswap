@@ -55,6 +55,14 @@ func DecodeUint(s string) uint64 {
 	return num
 }
 
+func DecodeInt64(s string) int64 {
+	num, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return num
+}
+
 // UintTree is a wrapper around an AVL tree for storing block heights as strings.
 // Since block heights are defined as int64, we take int64 and convert it to uint64 for the tree.
 //
@@ -89,21 +97,21 @@ func (self *UintTree) set(key int64, value any) {
 }
 
 func (self *UintTree) Has(key int64) bool {
-	return self.tree.Has(EncodeUint(uint64(key)))
+	return self.tree.Has(EncodeInt64(key))
 }
 
 func (self *UintTree) remove(key int64) {
-	self.tree.Remove(EncodeUint(uint64(key)))
+	self.tree.Remove(EncodeInt64(key))
 }
 
 func (self *UintTree) Iterate(start, end int64, fn func(key int64, value any) bool) {
-	self.tree.Iterate(EncodeUint(uint64(start)), EncodeUint(uint64(end)), func(key string, value any) bool {
-		return fn(int64(DecodeUint(key)), value)
+	self.tree.Iterate(EncodeInt64(start), EncodeInt64(end), func(key string, value any) bool {
+		return fn(DecodeInt64(key), value)
 	})
 }
 
 func (self *UintTree) ReverseIterate(start, end int64, fn func(key int64, value any) bool) {
-	self.tree.ReverseIterate(EncodeUint(uint64(start)), EncodeUint(uint64(end)), func(key string, value any) bool {
-		return fn(int64(DecodeUint(key)), value)
+	self.tree.ReverseIterate(EncodeInt64(start), EncodeInt64(end), func(key string, value any) bool {
+		return fn(DecodeInt64(key), value)
 	})
 }
