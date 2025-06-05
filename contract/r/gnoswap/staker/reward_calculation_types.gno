@@ -27,6 +27,12 @@ func EncodeUint(num uint64) string {
 	return strings.Repeat("0", zerosNeeded) + s
 }
 
+func EncodeInt64(num int64) string {
+	s := strconv.FormatInt(num, 10)
+	zerosNeeded := 20 - len(s)
+	return strings.Repeat("0", zerosNeeded) + s
+}
+
 // DecodeUint converts a zero-padded string back into a uint64 number.
 //
 // Parameters:
