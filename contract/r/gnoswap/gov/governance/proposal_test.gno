@@ -106,10 +106,18 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 	resetGlobalStateProposal(t)
 
 	testing.SetRealm(adminRealm)
+	func() {
+		testing.SetRealm(std.NewUserRealm(proposalAddr))
+		// Setup xGNS for proposal creation
+		cross(gns.Approve)(govStakerAddr, int64(2000000000))
+	}()
 
-	// Setup xGNS for proposal creation
-	cross(gns.Approve)(govStakerAddr, int64(2000000000))
-	gs.Delegate(proposalAddr, uint64(2000000000), "") // self delegate
+	testing.SetRealm(adminRealm)
+	func() {
+		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/governance"))
+		gs.Delegate(proposalAddr, uint64(2000000000), "") // self delegate
+	}()
+
 	testing.SkipHeights(1)
 
 	tests := []struct {
@@ -226,11 +234,13 @@ func TestIntegratedProposeParameterChange(t *testing.T) {
 			resetGlobalStateProposal(t)
 
 			testing.SetRealm(adminRealm)
-
-			// Setup xGNS for proposal creation
-			cross(gns.Approve)(govStakerAddr, int64(2000000000))
-			gs.Delegate(proposalAddr, uint64(2000000000), "") // self delegate
-			testing.SkipHeights(1)
+			func() {
+				testing.SetRealm(std.NewUserRealm(proposalAddr))
+				// Setup xGNS for proposal creation
+				cross(gns.Approve)(govStakerAddr, int64(2000000000))
+				gs.Delegate(proposalAddr, uint64(2000000000), "") // self delegate
+				testing.SkipHeights(1)
+			}()
 
 			var pid uint64
 			var err error
