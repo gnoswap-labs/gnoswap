@@ -9,7 +9,7 @@ import (
 )
 
 func TestWrap(t *testing.T) {
-	t.Skip("skipping warp test")
+	// t.Skip("skipping warp test")
 	user1Addr := testutils.TestAddress("user1")
 	tests := []struct {
 		name        string
@@ -40,10 +40,16 @@ func TestWrap(t *testing.T) {
 			name: "Success - Valid amount",
 			action: func() {
 				testing.SetRealm(std.NewUserRealm(user1Addr))
-				ugnotFaucet(t, user1Addr, 1_000)
-				ugnotFaucet(t, stakerAddr, 1_000)
+				func() {
+					testing.SetRealm(adminRealm)
+					ugnotFaucet(t, user1Addr, 1_000)
+					ugnotFaucet(t, stakerAddr, 1_000)
+				}()
 				testing.SetRealm(std.NewUserRealm(user1Addr))
-				wrap(1_000)
+				func() {
+					testing.SetRealm(stakerRealm)
+					wrap(1_000)
+				}()
 			},
 			verify: func() int64 {
 				return TokenBalance(t, wugnotPath, user1Addr)
@@ -109,13 +115,26 @@ func TestUnwrap(t *testing.T) {
 			name: "Success - Valid amount",
 			action: func() {
 				testing.SetRealm(std.NewUserRealm(user2Addr))
-				ugnotFaucet(t, user2Addr, 1_000)
-				ugnotFaucet(t, stakerAddr, 1_000)
+				func() {
+					testing.SetRealm(adminRealm)
+					ugnotFaucet(t, user2Addr, 1_000)
+					ugnotFaucet(t, stakerAddr, 1_000)
+				}()
 				testing.SetRealm(std.NewUserRealm(user2Addr))
-				wrap(1_000)
+				func() {
+					testing.SetRealm(stakerRealm)
+					wrap(1_000)
+				}()
 				testing.SetRealm(std.NewUserRealm(user2Addr))
-				wugnotApprove(t, user2Addr, stakerAddr, 1_000)
-				unwrap(1_000)
+				func() {
+					testing.SetRealm(std.NewUserRealm(stakerAddr))
+					wugnotApprove(t, user2Addr, stakerAddr, 1_000)
+				}()
+				testing.SetRealm(std.NewUserRealm(user2Addr))
+				func() {
+					testing.SetRealm(stakerRealm)
+					unwrap(1_000)
+				}()
 			},
 			verify: func() int64 {
 				return TokenBalance(t, wugnotPath, user2Addr)
