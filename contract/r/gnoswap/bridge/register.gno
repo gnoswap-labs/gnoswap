@@ -30,6 +30,7 @@ func init() {
 // RegisterCallback registers a callback function for a given namespace and function name.
 // Only admin and governance addresses are allowed to register callbacks.
 func RegisterCallback(caller std.Address, namespace, fname string, callback any) error {
+	crossing()
 	if !caller.IsValid() {
 		return ufmt.Errorf("invalid caller address: %s", caller)
 	}

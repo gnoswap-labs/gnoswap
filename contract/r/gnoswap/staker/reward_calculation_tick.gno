@@ -177,7 +177,7 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 
 func setTickCrossHook() {
 	// Sets tick cross hook for pool contract
-	pl.SetTickCrossHook(TickCrossHook(pools, std.ChainHeight))
+	cross(pl.SetTickCrossHook)(TickCrossHook(pools, std.ChainHeight))
 }
 
 func init() {

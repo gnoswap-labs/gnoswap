@@ -27,6 +27,12 @@ func EncodeUint(num uint64) string {
 	return strings.Repeat("0", zerosNeeded) + s
 }
 
+func EncodeInt64(num int64) string {
+	s := strconv.FormatInt(num, 10)
+	zerosNeeded := 20 - len(s)
+	return strings.Repeat("0", zerosNeeded) + s
+}
+
 // DecodeUint converts a zero-padded string back into a uint64 number.
 //
 // Parameters:
@@ -43,6 +49,14 @@ func EncodeUint(num uint64) string {
 // Output: 12345
 func DecodeUint(s string) uint64 {
 	num, err := strconv.ParseUint(s, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return num
+}
+
+func DecodeInt64(s string) int64 {
+	num, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		panic(err)
 	}
@@ -71,7 +85,7 @@ func NewUintTree() *UintTree {
 }
 
 func (self *UintTree) Get(key int64) (any, bool) {
-	v, ok := self.tree.Get(EncodeUint(uint64(key)))
+	v, ok := self.tree.Get(EncodeInt64(key))
 	if !ok {
 		return nil, false
 	}
@@ -79,25 +93,25 @@ func (self *UintTree) Get(key int64) (any, bool) {
 }
 
 func (self *UintTree) set(key int64, value any) {
-	self.tree.Set(EncodeUint(uint64(key)), value)
+	self.tree.Set(EncodeInt64(key), value)
 }
 
 func (self *UintTree) Has(key int64) bool {
-	return self.tree.Has(EncodeUint(uint64(key)))
+	return self.tree.Has(EncodeInt64(key))
 }
 
 func (self *UintTree) remove(key int64) {
-	self.tree.Remove(EncodeUint(uint64(key)))
+	self.tree.Remove(EncodeInt64(key))
 }
 
 func (self *UintTree) Iterate(start, end int64, fn func(key int64, value any) bool) {
-	self.tree.Iterate(EncodeUint(uint64(start)), EncodeUint(uint64(end)), func(key string, value any) bool {
-		return fn(int64(DecodeUint(key)), value)
+	self.tree.Iterate(EncodeInt64(start), EncodeInt64(end), func(key string, value any) bool {
+		return fn(DecodeInt64(key), value)
 	})
 }
 
 func (self *UintTree) ReverseIterate(start, end int64, fn func(key int64, value any) bool) {
-	self.tree.ReverseIterate(EncodeUint(uint64(start)), EncodeUint(uint64(end)), func(key string, value any) bool {
-		return fn(int64(DecodeUint(key)), value)
+	self.tree.ReverseIterate(EncodeInt64(start), EncodeInt64(end), func(key string, value any) bool {
+		return fn(DecodeInt64(key), value)
 	})
 }

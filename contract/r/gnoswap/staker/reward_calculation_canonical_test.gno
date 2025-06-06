@@ -1241,6 +1241,9 @@ func TestCanonicalEmissionChange_0(t *testing.T) {
 		300,
 		u256.NewUint(1000000000000000000),
 	)
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
 
 	canonical.NextBlock()
 
@@ -1417,7 +1420,7 @@ func events(
 }
 
 func TestCanonicalSimulation_0(t *testing.T) {
-	t.Skip("gets affect by previous")
+	// t.Skip("gets affect by previous")
 	wugnotgns := events(
 		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000",
 		1,

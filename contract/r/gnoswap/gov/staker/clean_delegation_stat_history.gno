@@ -15,6 +15,7 @@ var (
 
 // CleanDelegationStatHistoryByAdmin cleans delegation stat history
 func CleanDelegationStatHistoryByAdmin() {
+	crossing()
 	assertCallerIsAdmin()
 	cleanDelegationStatHistory()
 }
@@ -26,6 +27,7 @@ func GetThresholdVotingWeightBlockHeight() uint64 {
 
 // SetThresholdVotingWeightBlockHeightByAdmin sets the threshold voting weight block height
 func SetThresholdVotingWeightBlockHeightByAdmin(height uint64) {
+	crossing()
 	assertCallerIsAdmin()
 
 	thresholdVotingWeightBlockHeight = int64(height)
@@ -38,6 +40,7 @@ func GetRunning() bool {
 
 // SetRunning sets the running status
 func SetRunning(run bool) {
+	crossing()
 	assertCallerIsAdmin()
 
 	running = run

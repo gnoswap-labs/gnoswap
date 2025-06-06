@@ -62,7 +62,7 @@ func testCreatePool(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		// set pool creation fee to 0
-		pl.SetPoolCreationFeeByAdmin(uint64(0))
+		cross(pl.SetPoolCreationFeeByAdmin)(uint64(0))
 
 		barToken := common.GetTokenTeller(barPath)
 		bazToken := common.GetTokenTeller(bazPath)

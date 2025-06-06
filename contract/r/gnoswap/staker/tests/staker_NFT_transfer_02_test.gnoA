@@ -28,7 +28,7 @@ func testInit(t *testing.T) {
 	t.Run("initial", func(t *testing.T) {
 		// set pool create fee to 0 for testing
 		testing.SetRealm(adminRealm)
-		pl.SetPoolCreationFeeByAdmin(0)
+		cross(pl.SetPoolCreationFeeByAdmin)(0)
 	})
 }
 

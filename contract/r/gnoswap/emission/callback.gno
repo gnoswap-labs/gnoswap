@@ -1,10 +1,9 @@
 package emission
 
 import (
-	"gno.land/r/gnoswap/v1/gns"
-
 	"gno.land/r/gnoswap/v1/access"
-	br "gno.land/r/gnoswap/v1/bridge"
+	"gno.land/r/gnoswap/v1/bridge"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 // upgradable pattern
@@ -26,8 +25,9 @@ func callbackEmissionChange(amount int64) {
 }
 
 func RegisterGnsChangeCallback() {
+	crossing()
 	assertStakerOnly()
-	gns.SetCallbackEmissionChange(callbackEmissionChange)
+	cross(gns.SetCallbackEmissionChange)(callbackEmissionChange)
 }
 
 // registerMintAndDistributeGnsCallback upgrades the version of the function stored in the bridge contract.
@@ -37,7 +37,7 @@ func registerMintAndDistributeGnsCallback() {
 	// but in a test environment, since the admin address cannot be fixed as the default address,
 	// we use the admin address registered in the `access` contract instead.
 	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-	br.RegisterCallback(adminAddr, "emission", "MintAndDistributeGns", MintAndDistributeGns)
+	cross(bridge.RegisterCallback)(adminAddr, "emission", "MintAndDistributeGns", MintAndDistributeGns)
 }
 
 func init() {

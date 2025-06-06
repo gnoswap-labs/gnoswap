@@ -32,19 +32,19 @@ func MintAndStake(
 	if token0 == consts.GNOT || token1 == consts.GNOT {
 		// check sent ugnot
 		sent := std.OriginSend()
-		ugnotSent := uint64(sent.AmountOf("ugnot"))
+		ugnotSent := sent.AmountOf("ugnot")
 
 		// not enough ugnot sent
-		if ugnotSent < consts.UGNOT_MIN_DEPOSIT_TO_WRAP {
-			panic(addDetailToError(
-				errWugnotMinimum,
-				ufmt.Sprintf("mint_stake.gno__MintAndStake() || too less ugnot sent(%d), minimum:%d", ugnotSent, consts.UGNOT_MIN_DEPOSIT_TO_WRAP),
+		if ugnotSent < int64(consts.UGNOT_MIN_DEPOSIT_TO_WRAP) {
+			panic(ufmt.Errorf(
+				"%v: too less ugnot sent(%d), minimum:%d",
+				errWugnotMinimum, ugnotSent, consts.UGNOT_MIN_DEPOSIT_TO_WRAP,
 			))
 		}
 
 		// send it over to position to wrap
 		banker := std.NewBanker(std.BankerTypeRealmSend)
-		banker.SendCoins(stakerAddr, positionAddr, std.Coins{{Denom: "ugnot", Amount: int64(ugnotSent)}})
+		banker.SendCoins(stakerAddr, positionAddr, std.Coins{{Denom: "ugnot", Amount: ugnotSent}})
 	}
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(

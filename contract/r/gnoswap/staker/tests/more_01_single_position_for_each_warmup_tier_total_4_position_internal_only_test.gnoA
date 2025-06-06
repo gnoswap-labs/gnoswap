@@ -60,7 +60,7 @@ func testCreatePool(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		// set pool creation fee to 0
-		pl.SetPoolCreationFeeByAdmin(0)
+		cross(pl.SetPoolCreationFeeByAdmin)(0)
 
 		pl.CreatePool(barPath, bazPath, 100, "79228162514264337593543950337")
 		SetPoolTierByAdmin(poolPath, 1)

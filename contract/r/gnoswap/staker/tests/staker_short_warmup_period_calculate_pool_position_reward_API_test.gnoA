@@ -48,7 +48,7 @@ func testInit(t *testing.T) {
 		changeWarmup(t, 3, math.MaxInt64)
 
 		// no pool creation fee
-		pl.SetPoolCreationFeeByAdmin(0)
+		cross(pl.SetPoolCreationFeeByAdmin)(0)
 
 		// no unstaking fee
 		SetUnStakingFeeByAdmin(0)
