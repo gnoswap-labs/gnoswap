@@ -9,56 +9,56 @@ import (
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
-func PositionGetPosition(positionId uint64) Position {
+func PositionGetPosition(positionId int64) Position {
 	position, _ := GetPosition(positionId)
 	return position
 }
 
-func PositionGetPositionNonce(positionId uint64) *u256.Uint {
+func PositionGetPositionNonce(positionId int64) *u256.Uint {
 	return MustGetPosition(positionId).nonce
 }
 
-func PositionGetPositionOperator(positionId uint64) std.Address {
+func PositionGetPositionOperator(positionId int64) std.Address {
 	return MustGetPosition(positionId).operator
 }
 
-func PositionGetPositionPoolKey(positionId uint64) string {
+func PositionGetPositionPoolKey(positionId int64) string {
 	return MustGetPosition(positionId).poolKey
 }
 
-func PositionGetPositionTickLower(positionId uint64) int32 {
+func PositionGetPositionTickLower(positionId int64) int32 {
 	return MustGetPosition(positionId).tickLower
 }
 
-func PositionGetPositionTickUpper(positionId uint64) int32 {
+func PositionGetPositionTickUpper(positionId int64) int32 {
 	return MustGetPosition(positionId).tickUpper
 }
 
-func PositionGetPositionLiquidity(positionId uint64) *u256.Uint {
+func PositionGetPositionLiquidity(positionId int64) *u256.Uint {
 	return MustGetPosition(positionId).liquidity
 }
 
-func PositionGetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint {
+func PositionGetPositionFeeGrowthInside0LastX128(positionId int64) *u256.Uint {
 	return MustGetPosition(positionId).feeGrowthInside0LastX128
 }
 
-func PositionGetPositionFeeGrowthInside1LastX128(positionId uint64) *u256.Uint {
+func PositionGetPositionFeeGrowthInside1LastX128(positionId int64) *u256.Uint {
 	return MustGetPosition(positionId).feeGrowthInside1LastX128
 }
 
-func PositionGetPositionTokensOwed0(positionId uint64) *u256.Uint {
+func PositionGetPositionTokensOwed0(positionId int64) *u256.Uint {
 	return MustGetPosition(positionId).tokensOwed0
 }
 
-func PositionGetPositionTokensOwed1(positionId uint64) *u256.Uint {
+func PositionGetPositionTokensOwed1(positionId int64) *u256.Uint {
 	return MustGetPosition(positionId).tokensOwed1
 }
 
-func PositionGetPositionIsBurned(positionId uint64) bool {
+func PositionGetPositionIsBurned(positionId int64) bool {
 	return MustGetPosition(positionId).burned
 }
 
-func PositionIsInRange(positionId uint64) bool {
+func PositionIsInRange(positionId int64) bool {
 	position := MustGetPosition(positionId)
 	poolPath := position.poolKey
 	poolCurrentTick := pl.PoolGetSlot0Tick(poolPath)
@@ -66,7 +66,7 @@ func PositionIsInRange(positionId uint64) bool {
 	return position.tickLower <= poolCurrentTick && poolCurrentTick < position.tickUpper
 }
 
-func PositionGetPositionOwner(positionId uint64) std.Address {
+func PositionGetPositionOwner(positionId int64) std.Address {
 	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
 	if err != nil {
 		panic(newErrorWithDetail(
@@ -75,30 +75,30 @@ func PositionGetPositionOwner(positionId uint64) std.Address {
 	return owner
 }
 
-func PositionGetPositionNonceStr(positionId uint64) string {
+func PositionGetPositionNonceStr(positionId int64) string {
 	return PositionGetPositionNonce(positionId).ToString()
 }
 
-func PositionGetPositionOperatorStr(positionId uint64) string {
+func PositionGetPositionOperatorStr(positionId int64) string {
 	return PositionGetPositionOperator(positionId).String()
 }
 
-func PositionGetPositionLiquidityStr(positionId uint64) string {
+func PositionGetPositionLiquidityStr(positionId int64) string {
 	return PositionGetPositionLiquidity(positionId).ToString()
 }
 
-func PositionGetPositionFeeGrowthInside0LastX128Str(positionId uint64) string {
+func PositionGetPositionFeeGrowthInside0LastX128Str(positionId int64) string {
 	return PositionGetPositionFeeGrowthInside0LastX128(positionId).ToString()
 }
 
-func PositionGetPositionFeeGrowthInside1LastX128Str(positionId uint64) string {
+func PositionGetPositionFeeGrowthInside1LastX128Str(positionId int64) string {
 	return PositionGetPositionFeeGrowthInside1LastX128(positionId).ToString()
 }
 
-func PositionGetPositionTokensOwed0Str(positionId uint64) string {
+func PositionGetPositionTokensOwed0Str(positionId int64) string {
 	return PositionGetPositionTokensOwed0(positionId).ToString()
 }
 
-func PositionGetPositionTokensOwed1Str(positionId uint64) string {
+func PositionGetPositionTokensOwed1Str(positionId int64) string {
 	return PositionGetPositionTokensOwed1(positionId).ToString()
 }

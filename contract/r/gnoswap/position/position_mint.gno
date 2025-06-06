@@ -42,7 +42,7 @@ import (
 //   - This function relies on `addLiquidity` to perform the liquidity calculation and ensure proper slippage checks.
 //   - The NFT minted is critical for tracking the user's liquidity in the pool.
 //   - Position state management is handled by `setPosition`, ensuring the uniqueness of the position ID.
-func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
+func mint(params MintParams) (int64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	poolKey := cross(pl.GetPoolPath)(params.token0, params.token1, params.fee)
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
@@ -254,7 +254,7 @@ func processTokens(
 	return token0, token1, token0IsNative, token1IsNative, wrappedAmount
 }
 
-func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, string) {
+func increaseLiquidity(params IncreaseLiquidityParams) (int64, *u256.Uint, *u256.Uint, *u256.Uint, string) {
 	// verify position ID exists
 	assertTokenExists(params.positionId)
 	caller := getPrevAddr()

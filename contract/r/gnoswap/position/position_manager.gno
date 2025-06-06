@@ -9,13 +9,13 @@ import (
 
 var (
 	positions = avl.NewTree() // positionId[uint64] -> Position
-	nextId    = uint64(1)
+	nextId    = int64(1)
 )
 
 // GetPosition returns a position for a given position ID.
 // Returns false if position doesn't exist
-func GetPosition(id uint64) (Position, bool) {
-	idStr := strconv.FormatUint(id, 10)
+func GetPosition(id int64) (Position, bool) {
+	idStr := strconv.FormatInt(id, 10)
 	iPosition, exist := positions.Get(idStr)
 	if !exist {
 		return Position{}, false
@@ -26,7 +26,7 @@ func GetPosition(id uint64) (Position, bool) {
 
 // MustGetPosition returns a position for a given position ID.
 // panics if position doesn't exist
-func MustGetPosition(id uint64) Position {
+func MustGetPosition(id int64) Position {
 	position, exist := GetPosition(id)
 	if !exist {
 		panic(newErrorWithDetail(
@@ -38,18 +38,18 @@ func MustGetPosition(id uint64) Position {
 }
 
 // ExistPosition checks if a position exists for a given position ID
-func ExistPosition(id uint64) bool {
+func ExistPosition(id int64) bool {
 	_, exist := GetPosition(id)
 	return exist
 }
 
 // GetNextId is the next position ID to be minted
-func GetNextId() uint64 {
+func GetNextId() int64 {
 	return nextId
 }
 
 // createNewPosition creates a new position with the given position data.
-func createNewPosition(id uint64, pos Position) uint64 {
+func createNewPosition(id int64, pos Position) int64 {
 	if ExistPosition(id) {
 		panic(newErrorWithDetail(
 			errPositionExist,
@@ -63,13 +63,13 @@ func createNewPosition(id uint64, pos Position) uint64 {
 
 // setPosition sets a position for a given position ID.
 // Returns true if position is newly created, false if position already exists and just updated.
-func setPosition(id uint64, position Position) bool {
-	posIdStr := strconv.FormatUint(id, 10)
+func setPosition(id int64, position Position) bool {
+	posIdStr := strconv.FormatInt(id, 10)
 	return positions.Set(posIdStr, position)
 }
 
 // mustUpdatePosition updates a position for a given position ID.
-func mustUpdatePosition(id uint64, pos Position) {
+func mustUpdatePosition(id int64, pos Position) {
 	update := setPosition(id, pos)
 	if !update {
 		panic(newErrorWithDetail(
@@ -80,8 +80,8 @@ func mustUpdatePosition(id uint64, pos Position) {
 }
 
 // removePosition removes a position for a given position ID
-func removePosition(id uint64) {
-	posIdStr := strconv.FormatUint(id, 10)
+func removePosition(id int64) {
+	posIdStr := strconv.FormatInt(id, 10)
 	positions.Remove(posIdStr)
 }
 

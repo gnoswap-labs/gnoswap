@@ -55,7 +55,7 @@ func newDummyPosition(id uint64) Position {
 }
 
 func TestMustGetPosition(t *testing.T) {
-	var newId uint64
+	var newId int64
 	id := GetNextId()
 	nftId := gnft.TotalSupply()
 	if id > nftId {
@@ -380,7 +380,7 @@ func TestProcessTokens(t *testing.T) {
 		expected1      string
 		isNative0      bool
 		isNative1      bool
-		expectedWrap   uint64
+		expectedWrap   int64
 		expectPanic    bool
 		expectMsg      string
 	}{
@@ -469,13 +469,13 @@ func TestProcessTokens(t *testing.T) {
 			}()
 
 			if tt.token0 == consts.GNOT {
-				amount, _ := strconv.ParseUint(tt.amount0Desired, 10, 64)
+				amount, _ := strconv.ParseInt(tt.amount0Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
 				testing.SetRealm(std.NewUserRealm(positionAddr))
 				transferUGNOT(positionAddr, positionAddr, amount)
 			}
 			if tt.token1 == consts.GNOT {
-				amount, _ := strconv.ParseUint(tt.amount1Desired, 10, 64)
+				amount, _ := strconv.ParseInt(tt.amount1Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
 				testing.SetRealm(std.NewUserRealm(positionAddr))
 				transferUGNOT(positionAddr, positionAddr, amount)
