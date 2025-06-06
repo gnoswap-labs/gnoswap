@@ -257,7 +257,7 @@ func validateInitialState() {
 		}
 	}
 
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 	updateProposalsState()
 }
 
