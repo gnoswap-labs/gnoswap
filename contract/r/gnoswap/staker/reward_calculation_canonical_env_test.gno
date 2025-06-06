@@ -94,7 +94,7 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 		emulatedClaimedReward: make(map[uint64]uint64),
 	}
 	result.tickCrossHook = tickCrossHook(pools, func() int64 {
-		return int64(result.CurrentHeight())
+		return result.CurrentHeight()
 	})
 
 	// Technically, the block number being provided to the NewPoolTier should be 124, but because of duplicate creation of the default pool, we put 123 here to just make rewardCache work for the testing.
@@ -104,7 +104,7 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 		emissions := make([]int64, 0)
 		result.emissionUpdates.Iterate(start, end, func(key int64, value any) bool {
 			heights = append(heights, key)
-			emissions = append(emissions, value.(int64)) // <- here
+			emissions = append(emissions, int64(value.(uint64))) // <- here
 			return false
 		})
 		return heights, emissions
@@ -361,12 +361,12 @@ func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath s
 	currentHeight := self.CurrentHeight()
 	pool, ok := self.global.pools.Get(targetPoolPath)
 	if !ok {
-		panic("should not happen 1")
+		panic(ufmt.Sprintf("pool not found in global state: %s", targetPoolPath))
 	}
 
 	deposit := &Deposit{
 		owner:             owner,
-		stakeHeight:       int64(currentHeight),
+		stakeHeight:       currentHeight,
 		targetPoolPath:    targetPoolPath,
 		tickLower:         tickLower,
 		tickUpper:         tickUpper,
@@ -407,7 +407,7 @@ func (self *canonicalRewardState) UnstakeToken(positionId uint64) {
 
 	canonicalPool, ok := self.Pool[deposit.targetPoolPath]
 	if !ok {
-		panic("should not happen 2")
+		panic(ufmt.Sprintf("canonical pool not found for path: %s", deposit.targetPoolPath))
 	}
 
 	// Emulating CollectReward()
@@ -420,7 +420,7 @@ func (self *canonicalRewardState) UnstakeToken(positionId uint64) {
 
 	pool, ok := self.global.pools.Get(deposit.targetPoolPath)
 	if !ok {
-		panic("should not happen 3")
+		panic(ufmt.Sprintf("pool not found in global state during unstake: %s", deposit.targetPoolPath))
 	}
 	signedLiquidity := i256.FromUint256(deposit.liquidity)
 	signedLiquidity = signedLiquidity.Neg(signedLiquidity)
@@ -520,11 +520,11 @@ func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64
 func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
 	pool, ok := self.Pool[poolPath]
 	if !ok {
-		panic("should not happen 4")
+		panic(ufmt.Sprintf("canonical pool not found for tick movement: %s", poolPath))
 	}
 	globalPool, ok := self.global.pools.Get(poolPath)
 	if !ok {
-		panic("should not happen 5")
+		panic(ufmt.Sprintf("global pool not found for tick movement: %s", poolPath))
 	}
 
 	if pool.tick == tick {

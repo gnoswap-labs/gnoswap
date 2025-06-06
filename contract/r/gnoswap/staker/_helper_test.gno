@@ -61,6 +61,7 @@ var (
 
 	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
 	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
+	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
@@ -79,9 +80,9 @@ func CreatePool(t *testing.T,
 	t.Helper()
 
 	testing.SetRealm(std.NewUserRealm(caller))
-	poolPath := pl.GetPoolPath(token0, token1, fee)
-	if !pl.DoesPoolPathExist(poolPath) {
-		pl.CreatePool(token0, token1, fee, sqrtPriceX96)
+	poolPath := cross(pl.GetPoolPath)(token0, token1, fee)
+	if !cross(pl.DoesPoolPathExist)(poolPath) {
+		cross(pl.CreatePool)(token0, token1, fee, sqrtPriceX96)
 	}
 }
 
@@ -97,7 +98,7 @@ func LPTokenUnStake(t *testing.T, owner std.Address, positionId uint64, unwrap b
 
 func CreateSecondPoolWithoutFee(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFeeByAdmin(0)
+	cross(pl.SetPoolCreationFeeByAdmin)(0)
 
 	CreatePool(t,
 		barPath,
@@ -164,19 +165,19 @@ func TokenBalance(t *testing.T, tokenPath string, owner std.Address) int64 {
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
-		return wugnot.BalanceOf(owner)
+		return cross(wugnot.BalanceOf)(owner)
 	case gnsPath:
-		return gns.BalanceOf(owner)
+		return cross(gns.BalanceOf)(owner)
 	case barPath:
-		return bar.BalanceOf(owner)
+		return cross(bar.BalanceOf)(owner)
 	case bazPath:
-		return baz.BalanceOf(owner)
+		return cross(baz.BalanceOf)(owner)
 	case fooPath:
-		return foo.BalanceOf(owner)
+		return cross(foo.BalanceOf)(owner)
 	case oblPath:
-		return obl.BalanceOf(owner)
+		return cross(obl.BalanceOf)(owner)
 	case quxPath:
-		return qux.BalanceOf(owner)
+		return cross(qux.BalanceOf)(owner)
 	default:
 		panic("token not found")
 	}
@@ -186,19 +187,19 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender std.Address) 
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
-		return wugnot.Allowance(owner, spender)
+		return cross(wugnot.Allowance)(owner, spender)
 	case gnsPath:
-		return gns.Allowance(owner, spender)
+		return cross(gns.Allowance)(owner, spender)
 	case barPath:
-		return bar.Allowance(owner, spender)
+		return cross(bar.Allowance)(owner, spender)
 	case bazPath:
-		return baz.Allowance(owner, spender)
+		return cross(baz.Allowance)(owner, spender)
 	case fooPath:
-		return foo.Allowance(owner, spender)
+		return cross(foo.Allowance)(owner, spender)
 	case oblPath:
-		return obl.Allowance(owner, spender)
+		return cross(obl.Allowance)(owner, spender)
 	case quxPath:
-		return qux.Allowance(owner, spender)
+		return cross(qux.Allowance)(owner, spender)
 	default:
 		panic("token not found")
 	}

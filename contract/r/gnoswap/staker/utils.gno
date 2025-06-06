@@ -131,6 +131,8 @@ func min(x, y uint64) uint64 {
 
 // contains checks if a string is present in a slice of strings.
 func contains(slice []string, item string) bool {
+	// we can use strings.EqualFold here, but this function should be case-sensitive.
+	// so, it is better to compare strings directly.
 	for _, element := range slice {
 		if element == item {
 			return true

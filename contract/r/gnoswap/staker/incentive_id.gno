@@ -76,8 +76,8 @@ func buildIncentiveId(components []string) string {
 // Output: "000000000000012345:000000000000067890:g1xyz:gns:pool1"
 func incentiveIdByTime(startTime, endTime int64, creator std.Address, rewardToken string, targetPoolPath string) string {
 	components := []string{
-		EncodeUint(uint64(startTime)),
-		EncodeUint(uint64(endTime)),
+		EncodeInt64(startTime),
+		EncodeInt64(endTime),
 		creator.String(),
 		rewardToken,
 		targetPoolPath,
@@ -110,8 +110,8 @@ func incentiveIdByTime(startTime, endTime int64, creator std.Address, rewardToke
 // Input: startHeight=123, endHeight=456, creator="g1xyz", rewardToken="gns", targetPoolPath="pool1"
 // Output: "000000000000000123:000000000000000456:g1xyz:gns:pool1", "g1xyz:000000000000000123:000000000000000456:gns:pool1"
 func incentiveIdByHeight(startHeight, endHeight int64, creator std.Address, rewardToken string, targetPoolPath string) (string, string) {
-	startHeightEncode := EncodeUint(uint64(startHeight))
-	endHeightEncode := EncodeUint(uint64(endHeight))
+	startHeightEncode := EncodeInt64(startHeight)
+	endHeightEncode := EncodeInt64(endHeight)
 	creatorEncode := creator.String()
 
 	// byHeightId components

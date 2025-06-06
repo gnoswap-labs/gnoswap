@@ -103,7 +103,7 @@ func testInit() {
 func testCreatePool() {
 	testing.SetRealm(adminRealm)
 
-	pl.SetPoolCreationFeeByAdmin(0)
+	cross(pl.SetPoolCreationFeeByAdmin)(0)
 
 	testing.SkipHeights(1)
 	pl.CreatePool(

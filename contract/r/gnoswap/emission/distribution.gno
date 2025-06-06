@@ -255,13 +255,11 @@ func GetAccuDistributedToGovStaker() int64 {
 }
 
 func ClearDistributedToStaker() {
-	crossing()
 	assertStakerOnly()
 	distributedToStaker = 0
 }
 
 func ClearDistributedToGovStaker() {
-	crossing()
 	assertOnlyGovStaker()
 	distributedToGovStaker = 0
 }
@@ -275,7 +273,7 @@ func setDistributionBpsPct(target int, pct int64) {
 		}
 
 		if oldPct.(int64) != pct {
-			HandleEmissionChange(calculateAmount(gns.GetEmission(), pct))
+			callbackStakerEmissionChange(calculateAmount(gns.GetEmission(), pct))
 		}
 	}
 

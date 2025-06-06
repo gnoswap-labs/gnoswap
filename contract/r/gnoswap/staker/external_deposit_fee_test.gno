@@ -41,25 +41,28 @@ func TestSetDepositGnsAmountByAdmin(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testing.SetOriginCaller(tt.caller)
 
-			defer func() {
-				r := recover()
-				if r != nil {
-					if !tt.shouldPanic {
-						t.Errorf("Unexpected panic: %v", r)
+			func() {
+				testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+				defer func() {
+					r := recover()
+					if r != nil {
+						if !tt.shouldPanic {
+							t.Errorf("Unexpected panic: %v", r)
+						}
+					} else if tt.shouldPanic {
+						t.Errorf("Expected panic but did not occur")
 					}
-				} else if tt.shouldPanic {
-					t.Errorf("Expected panic but did not occur")
+				}()
+
+				SetDepositGnsAmountByAdmin(tt.newAmount)
+
+				if !tt.shouldPanic {
+					actual := GetDepositGnsAmount()
+					if actual != tt.newAmount {
+						t.Errorf("SetDepositGnsAmountByAdmin() = %d; want %d", actual, tt.newAmount)
+					}
 				}
 			}()
-
-			SetDepositGnsAmountByAdmin(tt.newAmount)
-
-			if !tt.shouldPanic {
-				actual := GetDepositGnsAmount()
-				if actual != tt.newAmount {
-					t.Errorf("SetDepositGnsAmountByAdmin() = %d; want %d", actual, tt.newAmount)
-				}
-			}
 		})
 	}
 }
@@ -89,25 +92,28 @@ func TestSetDepositGnsAmount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testing.SetOriginCaller(tt.caller)
 
-			defer func() {
-				r := recover()
-				if r != nil {
-					if !tt.shouldPanic {
-						t.Errorf("Unexpected panic: %v", r)
+			func() {
+				testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+				defer func() {
+					r := recover()
+					if r != nil {
+						if !tt.shouldPanic {
+							t.Errorf("Unexpected panic: %v", r)
+						}
+					} else if tt.shouldPanic {
+						t.Errorf("Expected panic but did not occur")
 					}
-				} else if tt.shouldPanic {
-					t.Errorf("Expected panic but did not occur")
+				}()
+
+				SetDepositGnsAmount(tt.newAmount)
+
+				if !tt.shouldPanic {
+					actual := GetDepositGnsAmount()
+					if actual != tt.newAmount {
+						t.Errorf("SetDepositGnsAmount() = %d; want %d", actual, tt.newAmount)
+					}
 				}
 			}()
-
-			SetDepositGnsAmount(tt.newAmount)
-
-			if !tt.shouldPanic {
-				actual := GetDepositGnsAmount()
-				if actual != tt.newAmount {
-					t.Errorf("SetDepositGnsAmount() = %d; want %d", actual, tt.newAmount)
-				}
-			}
 		})
 	}
 }
@@ -156,7 +162,11 @@ func TestMinimumRewardAmountLogic(t *testing.T) {
 
 		// Set specific minimum via governance
 		testing.SetOriginCaller(govGovernanceAddr)
-		SetTokenMinimumRewardAmount(paramStr)
+		func() {
+			testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+
+			SetTokenMinimumRewardAmount(paramStr)
+		}()
 
 		// Check specific token
 		actualSpecific := GetMinimumRewardAmountForToken(token1)
@@ -177,15 +187,19 @@ func TestMinimumRewardAmountLogic(t *testing.T) {
 		specificMin := currentDefault + 500
 		paramsSetStr := ufmt.Sprintf("%s:%d", token1, specificMin)
 		testing.SetOriginCaller(govGovernanceAddr)
-		SetTokenMinimumRewardAmount(paramsSetStr)
-		// Verify it's set
-		if GetMinimumRewardAmountForToken(token1) != specificMin {
-			t.Fatalf("Setup failed: could not set specific minimum for token1 before deletion test")
-		}
+		func() {
+			testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+			SetTokenMinimumRewardAmount(paramsSetStr)
 
-		// Delete the specific minimum via governance (amount 0)
-		paramsDelStr := ufmt.Sprintf("%s:0", token1)
-		SetTokenMinimumRewardAmount(paramsDelStr)
+			// Verify it's set
+			if GetMinimumRewardAmountForToken(token1) != specificMin {
+				t.Fatalf("Setup failed: could not set specific minimum for token1 before deletion test")
+			}
+
+			// Delete the specific minimum via governance (amount 0)
+			paramsDelStr := ufmt.Sprintf("%s:0", token1)
+			SetTokenMinimumRewardAmount(paramsDelStr)
+		}()
 
 		// Check the token reverts to default
 		actual := GetMinimumRewardAmountForToken(token1)
@@ -207,10 +221,13 @@ func TestMinimumRewardAmountLogic(t *testing.T) {
 		specificMinToken1 := originalDefault + 500
 		paramStr := ufmt.Sprintf("%s:%d", token1, specificMinToken1)
 		testing.SetOriginCaller(govGovernanceAddr)
-		SetTokenMinimumRewardAmount(paramStr)
+		func() {
+			testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+			SetTokenMinimumRewardAmount(paramStr)
 
-		// Change the default minimum via governance
-		SetMinimumRewardAmount(newDefault)
+			// Change the default minimum via governance
+			SetMinimumRewardAmount(newDefault)
+		}()
 
 		// Check token without specific minimum uses the NEW default
 		actualNewDefault := GetMinimumRewardAmountForToken(token2)

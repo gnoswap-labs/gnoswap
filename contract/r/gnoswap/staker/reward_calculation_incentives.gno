@@ -72,7 +72,7 @@ func (self *Incentives) GetAllInHeights(startHeight, endHeight int64) map[string
 	// Iterate all incentives that has start height less than endHeight
 	self.byHeight.ReverseIterate(
 		"",
-		EncodeUint(uint64(endHeight)),
+		EncodeInt64(endHeight),
 		func(key string, value any) bool {
 			incentive := value.(*ExternalIncentive)
 			if incentive.endHeight < startHeight {
@@ -86,7 +86,7 @@ func (self *Incentives) GetAllInHeights(startHeight, endHeight int64) map[string
 	)
 	// Iterate all incentives that has end height greater than startHeight
 	self.byEndHeight.Iterate(
-		EncodeUint(uint64(startHeight)),
+		EncodeInt64(startHeight),
 		"",
 		func(key string, value any) bool {
 			incentive := value.(*ExternalIncentive)

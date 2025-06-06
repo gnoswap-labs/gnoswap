@@ -9,22 +9,11 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 )
 
-// MockEmissionHandler implements EmissionHandler for testing
-type MockEmissionHandler struct {
-	lastAmount int64
-}
-
-func (h *MockEmissionHandler) HandleEmissionChange(amount int64) {
-	h.lastAmount = amount
-}
-
 func TestChangeDistributionPctByAdmin(t *testing.T) {
 	resetObject(t)
 
-	// Save original handler and set mock handler
-	originalHandler := currentHandler
-	mockHandler := &MockEmissionHandler{}
-	currentHandler = mockHandler
+	originCallback := callbackStakerEmissionChange
+	callbackStakerEmissionChange = func(amount int64) {}
 
 	tests := []struct {
 		name        string
@@ -115,16 +104,14 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 			}
 		})
 	}
-	currentHandler = originalHandler
+	callbackStakerEmissionChange = originCallback
 }
 
 func TestChangeDistributionPct(t *testing.T) {
 	resetObject(t)
 
-	// Save original handler and set mock handler
-	originalHandler := currentHandler
-	mockHandler := &MockEmissionHandler{}
-	currentHandler = mockHandler
+	originCallback := callbackStakerEmissionChange
+	callbackStakerEmissionChange = func(amount int64) {}
 
 	tests := []struct {
 		name        string
@@ -215,16 +202,14 @@ func TestChangeDistributionPct(t *testing.T) {
 			}
 		})
 	}
-	currentHandler = originalHandler
+	callbackStakerEmissionChange = originCallback
 }
 
 func TestChangeDistributionPcts(t *testing.T) {
 	resetObject(t)
 
-	// Save original handler and set mock handler
-	originalHandler := currentHandler
-	mockHandler := &MockEmissionHandler{}
-	currentHandler = mockHandler
+	originCallback := callbackStakerEmissionChange
+	callbackStakerEmissionChange = func(amount int64) {}
 
 	changeDistributionPcts(
 		1, 1000,
@@ -237,7 +222,7 @@ func TestChangeDistributionPcts(t *testing.T) {
 	uassert.Equal(t, int64(3000), GetDistributionBpsPct(3))
 	uassert.Equal(t, int64(4000), GetDistributionBpsPct(4))
 
-	currentHandler = originalHandler
+	callbackStakerEmissionChange = originCallback
 }
 
 func TestCalculateAmount(t *testing.T) {

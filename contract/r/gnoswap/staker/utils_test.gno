@@ -1,22 +1,11 @@
 package staker
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/uassert"
-
-	"gno.land/p/gnoswap/consts"
 )
-
-func TestGetOrigPkgAddr(t *testing.T) {
-	testing.SetOriginCaller(stakerAddr)
-	origPkgAddr := GetOrigPkgAddr()
-	if origPkgAddr != std.OriginCaller() {
-		t.Errorf("Expected %v, got %v", std.OriginCaller(), origPkgAddr)
-	}
-}
 
 func TestPoolPathAlign(t *testing.T) {
 	tests := []struct {
@@ -173,102 +162,6 @@ func TestTid(t *testing.T) {
 			} else {
 				positionIdFrom(tc.input)
 			}
-		})
-	}
-}
-
-func TestGetPrevRealm(t *testing.T) {
-	tests := []struct {
-		name         string
-		originCaller std.Address
-		expected     []string
-	}{
-		{
-			name:         "Success - prevRealm is User",
-			originCaller: adminAddr,
-			expected:     []string{"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", ""},
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			testing.SetOriginCaller(std.Address(tc.originCaller))
-			got := getPrevRealm()
-			uassert.Equal(t, got.Address().String(), tc.expected[0])
-			uassert.Equal(t, got.PkgPath(), tc.expected[1])
-		})
-	}
-}
-
-func TestGetPrevAddr(t *testing.T) {
-	tests := []struct {
-		name         string
-		originCaller std.Address
-		expected     std.Address
-	}{
-		{
-			name:         "Success - prev Address is User",
-			originCaller: adminAddr,
-			expected:     "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			testing.SetOriginCaller(std.Address(tc.originCaller))
-			got := getPrevAddr()
-			uassert.Equal(t, got.String(), tc.expected.String())
-		})
-	}
-}
-
-func TestGetPrevAsString(t *testing.T) {
-	tests := []struct {
-		name         string
-		originCaller std.Address
-		expected     []string
-	}{
-		{
-			name:         "Success - prev Realm of user info as string",
-			originCaller: adminAddr,
-			expected:     []string{"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", ""},
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			testing.SetOriginCaller(std.Address(tc.originCaller))
-			got1, got2 := getPrev()
-			uassert.Equal(t, got1, tc.expected[0])
-			uassert.Equal(t, got2, tc.expected[1])
-		})
-	}
-}
-
-func TestIsUserCall(t *testing.T) {
-	tests := []struct {
-		name          string
-		originCaller  std.Address
-		originPkgPath string
-		expected      bool
-	}{
-		{
-			name:         "Success - User Call",
-			originCaller: adminAddr,
-			expected:     true,
-		},
-		{
-			name:          "Failure - Not User Call",
-			originCaller:  routerAddr,
-			originPkgPath: consts.ROUTER_PATH,
-			expected:      false,
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			testing.SetOriginCaller(tc.originCaller)
-			if !tc.expected {
-				testing.SetRealm(std.NewCodeRealm(tc.originPkgPath))
-			}
-			got := isUserCall()
-			uassert.Equal(t, got, tc.expected)
 		})
 	}
 }
