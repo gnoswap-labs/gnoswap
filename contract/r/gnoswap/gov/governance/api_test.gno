@@ -56,12 +56,9 @@ func TestCreateProposalJsonNode(t *testing.T) {
 		}
 
 		value, err := node.GetString()
-		if err != nil {
-			t.Errorf("failed to get value: %s", err)
-			continue
-		}
-
+		uassert.NoError(t, err)
 		decodedValue := b64Decode(value)
+		println("decodedValue", decodedValue)
 	}
 }
 

@@ -145,7 +145,7 @@ func handleRoleChangeProposal(
 
 	minAmount := uint64(0)
 	if len(parts) > 6 {
-		minAmount = parseUint64(parts[6])
+		minAmount = parseNumber(parts[6], kindUint64).(uint64)
 	}
 
 	addresses := parseAddresses(addr)

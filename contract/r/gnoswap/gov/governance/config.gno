@@ -49,7 +49,7 @@ func getConfigByVersion(v uint64) (Config, bool) {
 func getLatestVersion() uint64 {
 	var maxVersion uint64
 	configVersions.ReverseIterate("", "", func(key string, value any) bool {
-		maxVersion = parseUint64(key)
+		maxVersion = parseNumber(key, kindUint64).(uint64)
 		return true
 	})
 	return maxVersion
@@ -98,7 +98,7 @@ func reconfigure(
 		panic(err)
 	}
 
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 	updateProposalsState()
 
 	prevVersion := getLatestVersion()

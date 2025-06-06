@@ -108,7 +108,7 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	// Setup xGNS for proposal creation
-	gns.Approve(govStakerAddr, uint64(2000000000))
+	cross(gns.Approve)(govStakerAddr, int64(2000000000))
 	gs.Delegate(proposalAddr, uint64(2000000000), "") // self delegate
 	testing.SkipHeights(1)
 
@@ -228,7 +228,7 @@ func TestIntegratedProposeParameterChange(t *testing.T) {
 			testing.SetRealm(adminRealm)
 
 			// Setup xGNS for proposal creation
-			gns.Approve(govStakerAddr, uint64(2000000000))
+			cross(gns.Approve)(govStakerAddr, int64(2000000000))
 			gs.Delegate(proposalAddr, uint64(2000000000), "") // self delegate
 			testing.SkipHeights(1)
 
