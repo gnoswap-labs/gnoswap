@@ -41,7 +41,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: gnolang/gno
-          ref: master
+          # ref: master
+          ref: 47d44988b47f9b7f05c34fe421f6166107487fe1 # before xform2
           path: ./gno
 
       - name: Set up Go
