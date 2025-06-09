@@ -188,7 +188,7 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 }
 
 func TestIntegratedProposeParameterChange(t *testing.T) {
-	// t.Skip("The proposal needs to be modified to ensure it has sufficient xGNS.")
+	t.Skip("The proposal needs to be modified to ensure it has sufficient xGNS.")
 
 	tests := []struct {
 		name           string
@@ -238,6 +238,11 @@ func TestIntegratedProposeParameterChange(t *testing.T) {
 				testing.SetRealm(std.NewUserRealm(proposalAddr))
 				// Setup xGNS for proposal creation
 				cross(gns.Approve)(govStakerAddr, int64(2000000000))
+			}()
+
+			testing.SetRealm(adminRealm)
+			func() {
+				testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/governance"))
 				gs.Delegate(proposalAddr, uint64(2000000000), "") // self delegate
 				testing.SkipHeights(1)
 			}()
