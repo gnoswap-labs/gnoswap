@@ -1,7 +1,6 @@
 package position
 
 import (
-	"fmt"
 	"std"
 	"strings"
 	"testing"
@@ -46,8 +45,8 @@ func TestGetOrigPkgAddr(t *testing.T) {
 
 func TestAssertTokenExists(t *testing.T) {
 	// Mock setup
-	mockTokenId := uint64(1)
-	mockInvalidTokenId := uint64(9999)
+	mockTokenId := int64(1)
+	mockInvalidTokenId := int64(9999)
 
 	t.Run("Token Exists - No Panic", func(t *testing.T) {
 		defer func() {
@@ -77,7 +76,7 @@ func TestAssertTokenExists(t *testing.T) {
 
 func TestAssertOnlyOwnerOfToken(t *testing.T) {
 	// Mock token ownership
-	mockTokenId := uint64(1)
+	mockTokenId := int64(1)
 	mockOwner := adminAddr
 	mockCaller := alice
 	// MakeMintPositionWithoutFee(t)
@@ -97,7 +96,7 @@ func TestAssertOnlyOwnerOfToken(t *testing.T) {
 				t.Errorf("expected panic for positionId(%d) called by unauthorized user(%s), but no panic occurred", mockTokenId, mockCaller)
 			} else {
 				expectedErr := ufmt.Sprintf("caller(%s) is not owner(%s) for positionId(%d)", mockCaller, mockOwner, mockTokenId)
-				if !strings.Contains(fmt.Sprintf("%v", r), expectedErr) {
+				if !strings.Contains(ufmt.Sprintf("%v", r), expectedErr) {
 					t.Errorf("unexpected error message: %v", r)
 				}
 			}
@@ -572,7 +571,7 @@ func TestPositionIdFrom(t *testing.T) {
 func TestExists(t *testing.T) {
 	tests := []struct {
 		name       string
-		positionId uint64
+		positionId int64
 		expected   bool
 	}{
 		{
@@ -597,7 +596,7 @@ func TestExists(t *testing.T) {
 func TestIsOwner(t *testing.T) {
 	tests := []struct {
 		name       string
-		positionId uint64
+		positionId int64
 		addr       std.Address
 		expected   bool
 	}{
@@ -626,7 +625,7 @@ func TestIsOwner(t *testing.T) {
 func TestIsOperator(t *testing.T) {
 	tests := []struct {
 		name       string
-		positionId uint64
+		positionId int64
 		addr       std.Address
 		expected   bool
 	}{
@@ -646,7 +645,7 @@ func TestIsOperator(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.expected {
-				LPTokenApprove(t, adminAddr, tc.addr, tc.positionId)
+				LPTokenApprove(t, adminAddr, tc.addr, uint64(tc.positionId))
 			}
 			got := isOperator(tc.positionId, tc.addr)
 			uassert.Equal(t, tc.expected, got)
@@ -659,7 +658,7 @@ func TestIsOwnerOrOperator(t *testing.T) {
 		name       string
 		owner      std.Address
 		operator   std.Address
-		positionId uint64
+		positionId int64
 		expected   bool
 	}{
 		{
@@ -687,7 +686,7 @@ func TestIsOwnerOrOperator(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.expected && tc.owner != tc.operator {
-				LPTokenApprove(t, tc.owner, tc.operator, tc.positionId)
+				LPTokenApprove(t, tc.owner, tc.operator, uint64(tc.positionId))
 			}
 			var got bool
 			if tc.owner == tc.operator {

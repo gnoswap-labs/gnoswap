@@ -13,7 +13,7 @@ func TestTransferUGNOT(t *testing.T) {
 	tests := []struct {
 		name        string
 		action      func(t *testing.T, from, to std.Address)
-		verify      func(t *testing.T, to std.Address) uint64
+		verify      func(t *testing.T, to std.Address) int64
 		from        std.Address
 		to          std.Address
 		expected    string
@@ -24,7 +24,7 @@ func TestTransferUGNOT(t *testing.T) {
 			action: func(t *testing.T, from, to std.Address) {
 				transferUGNOT(from, to, 0)
 			},
-			verify: func(t *testing.T, to std.Address) uint64 {
+			verify: func(t *testing.T, to std.Address) int64 {
 				return ugnotBalanceOf(t, to)
 			},
 			from:        alice,
@@ -39,7 +39,7 @@ func TestTransferUGNOT(t *testing.T) {
 				testing.SetRealm(std.NewUserRealm(from))
 				transferUGNOT(from, to, 100)
 			},
-			verify: func(t *testing.T, to std.Address) uint64 {
+			verify: func(t *testing.T, to std.Address) int64 {
 				return ugnotBalanceOf(t, to)
 			},
 			from:        positionAddr,
@@ -77,7 +77,7 @@ func TestTransferUGNOT(t *testing.T) {
 				tc.action(t, tc.from, tc.to)
 				if tc.verify != nil {
 					balance := tc.verify(t, tc.to)
-					uassert.Equal(t, tc.expected, strconv.FormatUint(balance, 10))
+					uassert.Equal(t, tc.expected, strconv.FormatInt(balance, 10))
 				}
 			} else {
 				tc.action(t, tc.from, tc.to)
@@ -90,7 +90,7 @@ func TestWrapInPosition(t *testing.T) {
 	tests := []struct {
 		name        string
 		action      func(t *testing.T, from, to std.Address) error
-		verify      func(t *testing.T, to std.Address) uint64
+		verify      func(t *testing.T, to std.Address) int64
 		from        std.Address
 		to          std.Address
 		expected    string
@@ -125,7 +125,7 @@ func TestWrapInPosition(t *testing.T) {
 				testing.SetRealm(std.NewUserRealm(from))
 				return wrap(1000, to)
 			},
-			verify: func(t *testing.T, to std.Address) uint64 {
+			verify: func(t *testing.T, to std.Address) int64 {
 				return TokenBalance(t, wugnotPath, to)
 			},
 			from:        positionAddr,
@@ -158,7 +158,7 @@ func TestWrapInPosition(t *testing.T) {
 				err := tc.action(t, tc.from, tc.to)
 				if err == nil && tc.verify != nil {
 					balance := tc.verify(t, tc.to)
-					uassert.Equal(t, tc.expected, strconv.FormatUint(balance, 10))
+					uassert.Equal(t, tc.expected, strconv.FormatInt(balance, 10))
 				}
 			} else {
 				err := tc.action(t, tc.from, tc.to)
@@ -176,7 +176,7 @@ func TestUnWrap(t *testing.T) {
 	tests := []struct {
 		name        string
 		action      func(t *testing.T, from, to std.Address) error
-		verify      func(t *testing.T, to std.Address) uint64
+		verify      func(t *testing.T, to std.Address) int64
 		from        std.Address
 		to          std.Address
 		expected    string
@@ -203,7 +203,7 @@ func TestUnWrap(t *testing.T) {
 				TokenApprove(t, wugnotPath, to, from, 1000)
 				return unwrap(1000, to)
 			},
-			verify: func(t *testing.T, to std.Address) uint64 {
+			verify: func(t *testing.T, to std.Address) int64 {
 				return TokenBalance(t, wugnotPath, to)
 			},
 			from:        positionAddr,
@@ -236,7 +236,7 @@ func TestUnWrap(t *testing.T) {
 				err := tc.action(t, tc.from, tc.to)
 				if err == nil && tc.verify != nil {
 					balance := tc.verify(t, tc.to)
-					uassert.Equal(t, tc.expected, strconv.FormatUint(balance, 10))
+					uassert.Equal(t, tc.expected, strconv.FormatInt(balance, 10))
 				}
 			} else {
 				err := tc.action(t, tc.from, tc.to)
@@ -412,7 +412,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 				}
 			}()
 
-			amount, err := strconv.ParseUint(tt.amountDesired, 10, 64)
+			amount, err := strconv.ParseInt(tt.amountDesired, 10, 64)
 			if err != nil {
 				panic("can not parse amount")
 			}

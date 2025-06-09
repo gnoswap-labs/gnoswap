@@ -38,9 +38,9 @@ func IsRegistered(t *testing.T, tokenPath string) error {
 	return errInvalidTokenPath
 }
 
-func newDummyPosition(id uint64) Position {
+func newDummyPosition(id int64) Position {
 	return Position{
-		nonce:                    u256.NewUint(id),
+		nonce:                    u256.NewUint(uint64(id)),
 		operator:                 "user1",
 		poolKey:                  "poolKey1",
 		tickLower:                -500,
@@ -227,34 +227,34 @@ func TestComputePositionKey(t *testing.T) {
 
 func TestNextIdFunctions(t *testing.T) {
 	prevNextId := GetNextId()
-	nextId = uint64(1)
+	nextId = 1
 
 	t.Run("Initial nextId should return 1", func(t *testing.T) {
-		uassert.Equal(t, uint64(1), GetNextId(), "expected nextId to start at 1")
+		uassert.Equal(t, int64(1), GetNextId(), "expected nextId to start at 1")
 	})
 
 	t.Run("After mint nextId should return 2", func(t *testing.T) {
 		incrementNextId()
-		uassert.Equal(t, GetNextId(), uint64(2), "expected nextId to be 2 after mint")
+		uassert.Equal(t, GetNextId(), int64(2), "expected nextId to be 2 after mint")
 	})
 
 	t.Run("Increment nextId once", func(t *testing.T) {
 		incrementNextId()
-		uassert.Equal(t, uint64(3), GetNextId(), "expected nextId to increment to 3")
+		uassert.Equal(t, int64(3), GetNextId(), "expected nextId to increment to 3")
 	})
 
 	t.Run("Increment nextId multiple times", func(t *testing.T) {
 		for i := 0; i < 2; i++ {
 			incrementNextId()
 		}
-		uassert.Equal(t, uint64(5), GetNextId(), "expected nextId to increment to 5 after 3 more increments")
+		uassert.Equal(t, int64(5), GetNextId(), "expected nextId to increment to 5 after 3 more increments")
 	})
 
 	t.Run("Ensure no overflow on normal increments", func(t *testing.T) {
-		for i := uint64(5); i < 100; i++ {
+		for i := int64(5); i < 100; i++ {
 			incrementNextId()
 		}
-		uassert.Equal(t, uint64(100), GetNextId(), "expected nextId to reach 100 after continuous increments")
+		uassert.Equal(t, int64(100), GetNextId(), "expected nextId to reach 100 after continuous increments")
 	})
 	nextId = prevNextId
 }
@@ -617,13 +617,13 @@ func TestMintInternal(t *testing.T) {
 	tests := []struct {
 		name              string
 		params            MintParams
-		expectedTokenId   uint64
+		expectedTokenId   int64
 		expectedLiquidity string
 		expectedAmount0   string
 		expectedAmount1   string
 		expectPanic       bool
 		expectedError     string
-		positionId        uint64
+		positionId        int64
 	}{
 		{
 			name: "Successful Mint",
@@ -870,22 +870,11 @@ func TestMint(t *testing.T) {
 
 func TestIncreaseLiquidityInternal(t *testing.T) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	position := Position{
-		poolKey:                  "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
-		tickLower:                -10000,
-		tickUpper:                10000,
-		liquidity:                u256.NewUint(1000000),
-		feeGrowthInside0LastX128: u256.Zero(),
-		feeGrowthInside1LastX128: u256.Zero(),
-		tokensOwed0:              u256.Zero(),
-		tokensOwed1:              u256.Zero(),
-		burned:                   false,
-	}
 	id := GetNextId()
 	nftId := gnft.TotalSupply()
 	if id > nftId {
 		diff := id - nftId
-		for i := uint64(1); i < diff; i++ {
+		for i := int64(1); i < diff; i++ {
 			removePosition(nftId + i)
 		}
 	}
@@ -955,7 +944,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	tests := []struct {
 		name             string
-		positionId       uint64
+		positionId       int64
 		amount0Desired   string
 		amount1Desired   string
 		amount0Min       string
@@ -1136,8 +1125,8 @@ func TestDecreaseLiquidity(t *testing.T) {
 
 	CreatePoolWithoutFee(t)
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	TokenApprove(t, barPath, adminAddr, poolAddr, consts.UINT64_MAX)
-	TokenApprove(t, fooPath, adminAddr, poolAddr, consts.UINT64_MAX)
+	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
+	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
 	positionId, _, _, _ := Mint(
 		barPath,
 		fooPath,
@@ -1258,8 +1247,8 @@ func TestCollectFees(t *testing.T) {
 
 	CreatePoolWithoutFee(t)
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	TokenApprove(t, barPath, adminAddr, poolAddr, consts.UINT64_MAX)
-	TokenApprove(t, fooPath, adminAddr, poolAddr, consts.UINT64_MAX)
+	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
+	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
 
 	// Mint liquidity
 	positionId, _, _, _ := Mint(
@@ -1378,8 +1367,8 @@ func TestReposition(t *testing.T) {
 
 	CreatePoolWithoutFee(t)
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	TokenApprove(t, barPath, adminAddr, poolAddr, consts.UINT64_MAX)
-	TokenApprove(t, fooPath, adminAddr, poolAddr, consts.UINT64_MAX)
+	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
+	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
 
 	// Step 1: Mint a position
 	positionId, _, _, _ := Mint(
