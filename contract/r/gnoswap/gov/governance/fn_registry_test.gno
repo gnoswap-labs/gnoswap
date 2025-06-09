@@ -27,22 +27,20 @@ func TestCreateParameterHandlers(t *testing.T) {
 		path     string
 		function string
 		params   []string
-		// wantErr  bool
 		validate func(t *testing.T)
 	}{
-		// {
-		// 	name:     "Emission_ChangeDistributionPct",
-		// 	path:     consts.EMISSION_PATH,
-		// 	function: "ChangeDistributionPct",
-		// 	params:   []string{"1", "7000", "2", "1500", "3", "1000", "4", "500"},
-		// 	wantErr:  false,
-		// 	validate: func(t *testing.T) {
-		// 		uassert.Equal(t, en.GetDistributionBpsPct(1), uint64(7000))
-		// 		uassert.Equal(t, en.GetDistributionBpsPct(2), uint64(1500))
-		// 		uassert.Equal(t, en.GetDistributionBpsPct(3), uint64(1000))
-		// 		uassert.Equal(t, en.GetDistributionBpsPct(4), uint64(500))
-		// 	},
-		// },
+		{
+			name:     "Emission_ChangeDistributionPct",
+			path:     consts.EMISSION_PATH,
+			function: "ChangeDistributionPct",
+			params:   []string{"1", "7000", "2", "1500", "3", "1000", "4", "500"},
+			validate: func(t *testing.T) {
+				uassert.Equal(t, en.GetDistributionBpsPct(1), uint64(7000))
+				uassert.Equal(t, en.GetDistributionBpsPct(2), uint64(1500))
+				uassert.Equal(t, en.GetDistributionBpsPct(3), uint64(1000))
+				uassert.Equal(t, en.GetDistributionBpsPct(4), uint64(500))
+			},
+		},
 		{
 			name:     "Router SetSwapFee: Pass",
 			path:     consts.ROUTER_PATH,
