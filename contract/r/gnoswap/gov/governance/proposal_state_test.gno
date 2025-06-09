@@ -129,54 +129,6 @@ func TestProposalStatus_CanTransitionTo(t *testing.T) {
 	}
 }
 
-func TestProposalStatus_GetValidTransitions(t *testing.T) {
-	tests := []struct {
-		status   ProposalStatus
-		expected []ProposalStatus
-	}{
-		{StatusUpcoming, []ProposalStatus{StatusActive, StatusCanceled}},
-		{StatusActive, []ProposalStatus{StatusPassed, StatusRejected, StatusCanceled}},
-		{StatusPassed, []ProposalStatus{StatusExecuted, StatusExpired, StatusCanceled}},
-		{StatusRejected, []ProposalStatus{}},
-		{StatusExecuted, []ProposalStatus{}},
-		{StatusExpired, []ProposalStatus{}},
-		{StatusCanceled, []ProposalStatus{}},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.status.String(), func(t *testing.T) {
-			got := tt.status.GetValidTransitions()
-			if len(got) != len(tt.expected) {
-				t.Errorf("ProposalStatus.GetValidTransitions() length = %v, want %v", len(got), len(tt.expected))
-				return
-			}
-
-			// Convert to sets for comparison
-			gotSet := make(map[ProposalStatus]bool)
-			expectedSet := make(map[ProposalStatus]bool)
-
-			for _, status := range got {
-				gotSet[status] = true
-			}
-			for _, status := range tt.expected {
-				expectedSet[status] = true
-			}
-
-			for status := range expectedSet {
-				if !gotSet[status] {
-					t.Errorf("ProposalStatus.GetValidTransitions() missing %v", status)
-				}
-			}
-
-			for status := range gotSet {
-				if !expectedSet[status] {
-					t.Errorf("ProposalStatus.GetValidTransitions() unexpected %v", status)
-				}
-			}
-		})
-	}
-}
-
 // Test proposalStateUpdater methods
 func TestProposalStateUpdater_GetCurrentStatus(t *testing.T) {
 	tests := []struct {

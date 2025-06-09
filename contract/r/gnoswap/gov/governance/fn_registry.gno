@@ -270,7 +270,7 @@ func createParameterHandlers() *ParameterRegistry {
 				}
 
 				roleName := params[0]
-				access.CreateRole(roleName, addr)
+				cross(access.CreateRole)(roleName, addr)
 			}),
 		},
 		{

@@ -272,7 +272,7 @@ func parseAddresses(addressStr string) []std.Address {
 
 func executeAddRole(roleInfo RoleChangeInfo) error {
 	if roleInfo.CheckerType == SingleAddressChecker && len(roleInfo.Addresses) == 1 {
-		return access.CreateRole(roleInfo.RoleName, roleInfo.Addresses[0])
+		return cross(access.CreateRole)(roleInfo.RoleName, roleInfo.Addresses[0])
 	}
 
 	return errors.New("invalid checker type or addresses for role creation")
