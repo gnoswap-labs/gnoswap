@@ -123,6 +123,7 @@ func SetUnStakingFeeByAdmin(fee uint64) {
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#setunstakingfee
 func SetUnStakingFee(fee uint64) {
+	crossing()
 	caller := getPrevAddr()
 	if err := common.GovernanceOnly(caller); err != nil {
 		panic(err.Error())
