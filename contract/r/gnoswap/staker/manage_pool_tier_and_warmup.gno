@@ -13,12 +13,11 @@ import (
 )
 
 const (
-	NOT_EMISSION_TARGET_TIER int64 = 0
+	NOT_EMISSION_TARGET_TIER uint64 = 0
 )
 
 // SetPoolTierByAdmin sets the tier of a pool by an admin
-func SetPoolTierByAdmin(poolPath string, tier int64) {
-	crossing()
+func SetPoolTierByAdmin(poolPath string, tier uint64) {
 	assertOnlyAdmin()
 	assertMustNotHalted()
 	assertPoolMustExist(poolPath)
@@ -27,8 +26,7 @@ func SetPoolTierByAdmin(poolPath string, tier int64) {
 }
 
 // SetPoolTier sets the tier of a pool by governance
-func SetPoolTier(poolPath string, tier int64) {
-	crossing()
+func SetPoolTier(poolPath string, tier uint64) {
 	assertOnlyGovernance()
 	assertMustNotHalted()
 	assertPoolMustExist(poolPath)
@@ -36,8 +34,8 @@ func SetPoolTier(poolPath string, tier int64) {
 	setPoolTier(poolPath, tier)
 }
 
-func setPoolTier(poolPath string, tier int64) {
-	cross(en.MintAndDistributeGns)()
+func setPoolTier(poolPath string, tier uint64) {
+	en.MintAndDistributeGns()
 
 	currentHeight := std.ChainHeight()
 	pools.GetOrCreate(poolPath)
@@ -55,8 +53,7 @@ func setPoolTier(poolPath string, tier int64) {
 }
 
 // ChangePoolTierByAdmin changes the tier of a pool by an admin
-func ChangePoolTierByAdmin(poolPath string, tier int64) {
-	crossing()
+func ChangePoolTierByAdmin(poolPath string, tier uint64) {
 	assertOnlyAdmin()
 	assertMustNotHalted()
 	assertPoolMustExist(poolPath)
@@ -65,8 +62,7 @@ func ChangePoolTierByAdmin(poolPath string, tier int64) {
 }
 
 // ChangePoolTier changes the tier of a pool by governance
-func ChangePoolTier(poolPath string, tier int64) {
-	crossing()
+func ChangePoolTier(poolPath string, tier uint64) {
 	assertOnlyGovernance()
 	assertMustNotHalted()
 	assertPoolMustExist(poolPath)
@@ -74,7 +70,7 @@ func ChangePoolTier(poolPath string, tier int64) {
 	changePoolTier(poolPath, tier)
 }
 
-func changePoolTier(poolPath string, tier int64) {
+func changePoolTier(poolPath string, tier uint64) {
 	en.MintAndDistributeGns()
 
 	prevTier := poolTier.CurrentTier(poolPath)
@@ -95,7 +91,6 @@ func changePoolTier(poolPath string, tier int64) {
 
 // RemovePoolTierByAdmin removes the tier of a pool by an admin
 func RemovePoolTierByAdmin(poolPath string) {
-	crossing()
 	assertOnlyAdmin()
 	assertMustNotHalted()
 	assertPoolMustExist(poolPath)
@@ -105,7 +100,6 @@ func RemovePoolTierByAdmin(poolPath string) {
 
 // RemovePoolTier removes the tier of a pool by governance
 func RemovePoolTier(poolPath string) {
-	crossing()
 	assertOnlyGovernance()
 	assertMustNotHalted()
 	assertPoolMustExist(poolPath)
@@ -131,7 +125,6 @@ func removePoolTier(poolPath string) {
 
 // SetWarmUpByAdmin sets the warmup percentage and block duration by an admin
 func SetWarmUpByAdmin(pct, blockDuration int64) {
-	crossing()
 	assertOnlyAdmin()
 	assertMustNotHalted()
 
@@ -140,7 +133,6 @@ func SetWarmUpByAdmin(pct, blockDuration int64) {
 
 // SetWarmUp sets the warmup percentage and block duration by governance
 func SetWarmUp(pct, blockDuration int64) {
-	crossing()
 	assertOnlyGovernance()
 	assertMustNotHalted()
 

@@ -93,8 +93,8 @@ func TestAddLiquidity(t *testing.T) {
 
 			InitialSetup(t)
 			testing.SetRealm(std.NewUserRealm(alice))
-			TokenApprove(t, gnsPath, alice, poolAddr, tt.params.amount0Desired.Uint64())
-			TokenApprove(t, barPath, alice, poolAddr, tt.params.amount1Desired.Uint64())
+			TokenApprove(t, gnsPath, alice, poolAddr, tt.params.amount0Desired.Int64())
+			TokenApprove(t, barPath, alice, poolAddr, tt.params.amount1Desired.Int64())
 
 			_, amount0, amount1 := addLiquidity(tt.params)
 

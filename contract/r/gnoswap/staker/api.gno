@@ -203,7 +203,7 @@ func ApiGetInternalIncentives() string {
 
 	poolTier.membership.Iterate("", "", func(key string, value any) bool {
 		poolPath := key
-		internalTier := value.(int64)
+		internalTier := value.(uint64)
 		internalIctv := newApiInternalIncentive(poolPath, internalTier)
 		apiInternalIncentives = append(apiInternalIncentives, internalIctv)
 		return false
@@ -236,12 +236,12 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 	return makeApiResponse(rsps)
 }
 
-func ApiGetInternalIncentivesByTiers(targetTier int64) string {
+func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
 	apiInternalIncentives := []ApiInternalIncentive{}
 
 	poolTier.membership.Iterate("", "", func(key string, value any) bool {
 		poolPath := key
-		internalTier := value.(int64)
+		internalTier := value.(uint64)
 		if internalTier != targetTier {
 			return false
 		}
