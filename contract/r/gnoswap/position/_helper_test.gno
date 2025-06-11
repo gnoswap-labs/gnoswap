@@ -450,18 +450,6 @@ func LPTokenApprove(t *testing.T, owner, operator std.Address, positionId uint64
 	gnft.Approve(operator, positionIdFrom(positionId))
 }
 
-func LPTokenStake(t *testing.T, owner std.Address, positionId uint64) {
-	t.Helper()
-	testing.SetRealm(std.NewUserRealm(owner))
-	sr.StakeToken(positionId, "")
-}
-
-func LPTokenUnStake(t *testing.T, owner std.Address, positionId uint64, unwrap bool) {
-	t.Helper()
-	testing.SetRealm(std.NewUserRealm(owner))
-	sr.UnStakeToken(positionId, unwrap)
-}
-
 func getPoolFromPositionId(t *testing.T, positionId int64) *pl.Pool {
 	t.Helper()
 	position := MustGetPosition(positionId)
