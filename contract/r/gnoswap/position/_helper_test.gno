@@ -447,7 +447,10 @@ func MintPositionAll(t *testing.T, caller std.Address) {
 func LPTokenApprove(t *testing.T, owner, operator std.Address, positionId uint64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	gnft.Approve(operator, positionIdFrom(positionId))
+	func() {
+		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gnft"))
+		cross(gnft.Approve)(operator, positionIdFrom(positionId))
+	}()
 }
 
 // func LPTokenStake(t *testing.T, owner std.Address, positionId uint64) {
