@@ -38,17 +38,17 @@ type ApiExternalIncentive struct {
 	IncentiveId         string `json:"incentiveId"`
 	PoolPath            string `json:"poolPath"`
 	RewardToken         string `json:"rewardToken"`
-	RewardAmount        uint64 `json:"rewardAmount"`
-	RewardLeft          uint64 `json:"rewardLeft"`
+	RewardAmount        int64  `json:"rewardAmount"`
+	RewardLeft          int64  `json:"rewardLeft"`
 	StartTimestamp      int64  `json:"startTimestamp"`
 	EndTimestamp        int64  `json:"endTimestamp"`
 	StartHeight         int64  `json:"startHeight"`
 	EndHeight           int64  `json:"endHeight"`
 	Active              bool   `json:"active"`
-	RewardPerBlock      uint64 `json:"rewardPerBlock"`
+	RewardPerBlock      int64  `json:"rewardPerBlock"`
 	Refundee            string `json:"refundee"`
 	CreatedHeight       int64  `json:"createdHeight"`
-	DepositGnsAmount    uint64 `json:"depositGnsAmount"`
+	DepositGnsAmount    int64  `json:"depositGnsAmount"`
 	UnClaimableRefunded bool   `json:"unclaimableRefunded"`
 }
 
@@ -63,7 +63,7 @@ func newApiExternalIncentive(ictv *ExternalIncentive) ApiExternalIncentive {
 		PoolPath:            ictv.targetPoolPath,
 		RewardToken:         ictv.rewardToken,
 		RewardAmount:        ictv.rewardAmount,
-		RewardLeft:          ictv.rewardLeft,
+		RewardLeft:          ictv.RewardLeft(uint64(std.ChainHeight())),
 		StartTimestamp:      ictv.startTimestamp,
 		EndTimestamp:        ictv.endTimestamp,
 		StartHeight:         ictv.startHeight,
@@ -87,14 +87,14 @@ func (r ApiExternalIncentive) JSON() *json.Node {
 		"incentiveId":         json.StringNode("incentiveId", r.IncentiveId),
 		"poolPath":            json.StringNode("poolPath", r.PoolPath),
 		"rewardToken":         json.StringNode("rewardToken", r.RewardToken),
-		"rewardAmount":        json.StringNode("rewardAmount", strconv.FormatUint(r.RewardAmount, 10)),
-		"rewardLeft":          json.StringNode("rewardLeft", strconv.FormatUint(r.RewardLeft, 10)),
+		"rewardAmount":        json.StringNode("rewardAmount", strconv.FormatInt(r.RewardAmount, 10)),
+		"rewardLeft":          json.StringNode("rewardLeft", strconv.FormatInt(r.RewardLeft, 10)),
 		"startTimestamp":      json.NumberNode("startTimestamp", float64(r.StartTimestamp)),
 		"endTimestamp":        json.NumberNode("endTimestamp", float64(r.EndTimestamp)),
 		"startHeight":         json.NumberNode("startHeight", float64(r.StartHeight)),
 		"endHeight":           json.NumberNode("endHeight", float64(r.EndHeight)),
 		"active":              json.BoolNode("active", active),
-		"rewardPerBlock":      json.StringNode("rewardPerBlock", strconv.FormatUint(r.RewardPerBlock, 10)),
+		"rewardPerBlock":      json.StringNode("rewardPerBlock", strconv.FormatInt(r.RewardPerBlock, 10)),
 		"refundee":            json.StringNode("refundee", r.Refundee),
 		"createdHeight":       json.NumberNode("createdHeight", float64(r.CreatedHeight)),
 		"depositGnsAmount":    json.NumberNode("depositGnsAmount", float64(r.DepositGnsAmount)),
@@ -213,7 +213,7 @@ type ApiReward struct {
 	IncentiveId       string `json:"incentiveId"`       // The unique identifier of the incentive
 	TargetPoolPath    string `json:"targetPoolPath"`    // The path of the target pool for the reward
 	RewardTokenPath   string `json:"rewardTokenPath"`   // The pathe of the reward token
-	RewardTokenAmount uint64 `json:"rewardTokenAmount"` // The amount of the reward token
+	RewardTokenAmount int64  `json:"rewardTokenAmount"` // The amount of the reward token
 	StakeTimestamp    int64  `json:"stakeTimestamp"`    // The timestamp when the LP token was staked
 	StakeHeight       int64  `json:"stakeHeight"`       // The block height when the LP token was staked
 	IncentiveStart    int64  `json:"incentiveStart"`    // The timestamp when the incentive started

@@ -11,16 +11,16 @@ import (
 )
 
 var depositGnsAmount = int64(1_000_000_000)    // 1_000 GNS
-var minimumRewardAmount = uint64(1_000_000_000) // Default 1000 (ugnot equivalent for GNS)
+var minimumRewardAmount = int64(1_000_000_000) // Default 1000 (ugnot equivalent for GNS)
 
 // tokenSpecificMinimumRewards stores minimum reward amounts for specific tokens.
-// Key: tokenPath (string), Value: minimumAmount (uint64)
+// Key: tokenPath (string), Value: minimumAmount (int64)
 var tokenSpecificMinimumRewards = avl.NewTree()
 
 // GetDepositGnsAmount returns the current deposit amount in GNS.
 //
 // Returns:
-// - uint64: The deposit amount in GNS.
+// - int64: The deposit amount in GNS.
 func GetDepositGnsAmount() int64 {
 	return depositGnsAmount
 }
@@ -29,8 +29,8 @@ func GetDepositGnsAmount() int64 {
 // This value is used if no specific minimum is set for a given token.
 //
 // Returns:
-// - uint64: The default minimum reward amount.
-func GetMinimumRewardAmount() uint64 {
+// - int64: The default minimum reward amount.
+func GetMinimumRewardAmount() int64 {
 	return minimumRewardAmount
 }
 
@@ -41,11 +41,11 @@ func GetMinimumRewardAmount() uint64 {
 // - tokenPath (string): The path of the token to check.
 //
 // Returns:
-// - uint64: The applicable minimum reward amount for the token.
-func GetMinimumRewardAmountForToken(tokenPath string) uint64 {
+// - int64: The applicable minimum reward amount for the token.
+func GetMinimumRewardAmountForToken(tokenPath string) int64 {
 	amountI, found := tokenSpecificMinimumRewards.Get(tokenPath)
 	if found {
-		return amountI.(uint64)
+		return amountI.(int64)
 	}
 	// Fallback to default if not found
 	return GetMinimumRewardAmount()
@@ -59,12 +59,12 @@ func GetMinimumRewardAmountForToken(tokenPath string) uint64 {
 // - tokenPath (string): The path of the token to query.
 //
 // Returns:
-// - uint64: The specific minimum reward amount set for the token.
+// - int64: The specific minimum reward amount set for the token.
 // - bool: True if a specific minimum was found, false otherwise.
-func GetSpecificTokenMinimumRewardAmount(tokenPath string) (uint64, bool) {
+func GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 	amountI, found := tokenSpecificMinimumRewards.Get(tokenPath)
 	if found {
-		return amountI.(uint64), true
+		return amountI.(int64), true
 	}
 	return 0, false
 }
@@ -76,7 +76,7 @@ func GetSpecificTokenMinimumRewardAmount(tokenPath string) (uint64, bool) {
 // of the change.
 //
 // Parameters:
-// - amount (uint64): The new deposit amount in GNS.
+// - amount (int64): The new deposit amount in GNS.
 //
 // Panics:
 // - If the caller is not an admin.
@@ -104,11 +104,11 @@ func SetDepositGnsAmountByAdmin(amount int64) {
 // SetMinimumRewardAmountByAdmin allows an admin to set the *default* minimum reward amount.
 //
 // Parameters:
-// - amount (uint64): The new minimum reward amount.
+// - amount (int64): The new minimum reward amount.
 //
 // Panics:
 // - If the caller is not an admin.
-func SetMinimumRewardAmountByAdmin(amount uint64) {
+func SetMinimumRewardAmountByAdmin(amount int64) {
 	crossing()
 	caller := getPrevAddr()
 	if err := common.AdminOnly(caller); err != nil {
@@ -124,8 +124,8 @@ func SetMinimumRewardAmountByAdmin(amount uint64) {
 		"SetMinimumRewardAmountByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"prevAmount", formatUint(prevMinimumRewardAmount),
-		"newAmount", formatUint(amount),
+		"prevAmount", formatInt(prevMinimumRewardAmount),
+		"newAmount", formatInt(amount),
 	)
 }
 
@@ -155,7 +155,7 @@ func SetDepositGnsAmount(amount int64) {
 
 // SetMinimumRewardAmount modifies the *default* minimum reward amount.
 // Only governance contract can execute this function via proposal.
-func SetMinimumRewardAmount(amount uint64) {
+func SetMinimumRewardAmount(amount int64) {
 	crossing()
 	caller := getPrevAddr()
 	if err := common.GovernanceOnly(caller); err != nil {
@@ -171,8 +171,8 @@ func SetMinimumRewardAmount(amount uint64) {
 		"SetMinimumRewardAmount",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"prevAmount", formatUint(prevMinimumRewardAmount),
-		"newAmount", formatUint(amount),
+		"prevAmount", formatInt(prevMinimumRewardAmount),
+		"newAmount", formatInt(amount),
 	)
 }
 
@@ -200,7 +200,7 @@ func SetTokenMinimumRewardAmount(paramsStr string) {
 	}
 	tokenPath := parts[0]
 	amountStr := parts[1]
-	amount, err := strconv.ParseUint(amountStr, 10, 64)
+	amount64, err := strconv.ParseInt(amountStr, 10, 64)
 	if err != nil {
 		panic(addDetailToError(
 			errInvalidInput,
@@ -211,13 +211,13 @@ func SetTokenMinimumRewardAmount(paramsStr string) {
 	prevAmount, found := GetSpecificTokenMinimumRewardAmount(tokenPath)
 
 	// If amount is 0, remove the entry; otherwise, set it.
-	if amount == 0 {
+	if amount64 == 0 {
 		// Only attempt removal if an entry actually existed
 		if found {
 			tokenSpecificMinimumRewards.Remove(tokenPath)
 		}
 	} else {
-		tokenSpecificMinimumRewards.Set(tokenPath, amount)
+		tokenSpecificMinimumRewards.Set(tokenPath, amount64)
 	}
 
 	prevAddr, prevPkgPath := getPrev()
@@ -228,8 +228,8 @@ func SetTokenMinimumRewardAmount(paramsStr string) {
 		"paramsStr", paramsStr, // Log the raw input string
 		"tokenPath", tokenPath,
 		"prevAmountFound", formatBool(found),
-		"prevAmount", formatUint(prevAmount), // Will be 0 if !found
-		"newAmount", formatUint(amount),
+		"prevAmount", formatInt(prevAmount), // Will be 0 if !found
+		"newAmount", formatInt(amount64),
 	)
 }
 
@@ -237,7 +237,7 @@ func setDepositGnsAmount(amount int64) {
 	depositGnsAmount = amount
 }
 
-func setMinimumRewardAmount(amount uint64) {
+func setMinimumRewardAmount(amount int64) {
 	minimumRewardAmount = amount
 }
 
@@ -245,6 +245,6 @@ func getDepositGnsAmount() int64 {
 	return depositGnsAmount
 }
 
-func getMinimumRewardAmount() uint64 {
+func getMinimumRewardAmount() int64 {
 	return minimumRewardAmount
 }

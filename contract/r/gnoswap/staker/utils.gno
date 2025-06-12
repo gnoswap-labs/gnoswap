@@ -200,7 +200,7 @@ func formatUint(v any) string {
 	}
 }
 
-func formatInt(v any) string {
+func formatAnyInt(v any) string {
 	switch v := v.(type) {
 	case int32:
 		return strconv.FormatInt(int64(v), 10)

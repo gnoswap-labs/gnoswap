@@ -21,7 +21,7 @@ func TestQueryPoolData(t *testing.T) {
 	startTime := time.Now().Unix()
 	endTime := startTime + 3600 // 1 hour
 	rewardToken := "TEST_TOKEN"
-	rewardAmount := uint64(1000)
+	rewardAmount := int64(1000)
 
 	incentive := &ExternalIncentive{
 		startTimestamp: startTime,

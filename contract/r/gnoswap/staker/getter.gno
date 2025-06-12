@@ -175,7 +175,7 @@ func GetIncentiveRewardToken(poolPath string, incentiveId string) string {
 func GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
 	incentive := GetIncentive(poolPath, incentiveId)
 
-	return u256.NewUint(incentive.rewardAmount)
+	return u256.NewUintFromInt64(incentive.rewardAmount)
 }
 
 // GetIncentiveRewardAmountAsString returns the reward amount for a given incentive as a string
@@ -238,8 +238,8 @@ func GetIncentiveEndHeight(poolPath string, incentiveId string) int64 {
 // - incentiveId (string): The ID of the incentive to retrieve the reward per block for.
 //
 // Returns:
-// - uint64: The reward amount distributed per block for the specified incentive.
-func GetIncentiveRewardPerBlock(poolPath string, incentiveId string) uint64 {
+// - int64: The reward amount distributed per block for the specified incentive.
+func GetIncentiveRewardPerBlock(poolPath string, incentiveId string) int64 {
 	incentive := GetIncentive(poolPath, incentiveId)
 
 	return incentive.rewardPerBlock
@@ -499,8 +499,8 @@ func GetPoolTierCount(tier uint64) uint64 {
 // - tier (uint64): The tier for which the reward is retrieved.
 //
 // Returns:
-// - uint64: The current reward amount for the specified tier.
-func GetPoolReward(tier uint64) uint64 {
+// - int64: The current reward amount for the specified tier.
+func GetPoolReward(tier uint64) int64 {
 	return poolTier.CurrentReward(tier)
 }
 
@@ -571,11 +571,11 @@ func GetPrintExternalInfo() string {
 					PoolPath:          incentive.targetPoolPath,
 					IncentiveId:       key,
 					RewardToken:       incentive.rewardToken,
-					RewardAmount:      strconv.FormatUint(incentive.rewardAmount, 10),
-					RewardLeft:        strconv.FormatUint(incentive.rewardLeft, 10),
+					RewardAmount:      strconv.FormatInt(incentive.rewardAmount, 10),
+					RewardLeft:        strconv.FormatInt(incentive.rewardLeft, 10),
 					StartTimestamp:    incentive.startTimestamp,
 					EndTimestamp:      incentive.endTimestamp,
-					RewardPerBlock:    strconv.FormatUint(incentive.rewardPerBlock, 10),
+					RewardPerBlock:    strconv.FormatInt(incentive.rewardPerBlock, 10),
 					Refundee:          incentive.refundee,
 					TokenAmountFull:   incentive.depositGnsAmount,
 					TokenAmountToGive: incentive.RewardSpent(uint64(std.ChainHeight())),
@@ -677,17 +677,17 @@ type ApiExternalDebugIncentive struct {
 	EndHeight         int64       `json:"endHeight"`
 	// FROM positionExternal -> externalRewards
 	TokenAmountX96    *u256.Uint `json:"tokenAmountX96"`
-	TokenAmount       uint64     `json:"tokenAmount"`
-	TokenAmountFull   uint64     `json:"tokenAmountFull"`
-	TokenAmountToGive uint64     `json:"tokenAmountToGive"`
+	TokenAmount       int64      `json:"tokenAmount"`
+	TokenAmountFull   int64      `json:"tokenAmountFull"`
+	TokenAmountToGive int64      `json:"tokenAmountToGive"`
 	// FROM externalWarmUpAmount
-	Full30  uint64 `json:"full30"`
-	Give30  uint64 `json:"give30"`
-	Full50  uint64 `json:"full50"`
-	Give50  uint64 `json:"give50"`
-	Full70  uint64 `json:"full70"`
-	Give70  uint64 `json:"give70"`
-	Full100 uint64 `json:"full100"`
+	Full30  int64 `json:"full30"`
+	Give30  int64 `json:"give30"`
+	Full50  int64 `json:"full50"`
+	Give50  int64 `json:"give50"`
+	Full70  int64 `json:"full70"`
+	Give70  int64 `json:"give70"`
+	Full100 int64 `json:"full100"`
 }
 
 // DEBUG INTERNAL (GNS EMISSION)

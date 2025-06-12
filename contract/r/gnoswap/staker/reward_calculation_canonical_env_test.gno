@@ -24,23 +24,23 @@ type canonicalPool struct {
 	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool)
 }
 
-func (self *canonicalPool) InternalReward(emission uint64, ratio TierRatio, count uint64) uint64 {
+func (self *canonicalPool) InternalReward(emission uint64, ratio TierRatio, count uint64) int64 {
 	switch self.tier {
 	case 0:
 		return 0
 	case 1:
-		return emission * ratio.Tier1 / count / 100
+		return int64(emission * ratio.Tier1 / count / 100)
 	case 2:
-		return emission * ratio.Tier2 / count / 100
+		return int64(emission * ratio.Tier2 / count / 100)
 	case 3:
-		return emission * ratio.Tier3 / count / 100
+		return int64(emission * ratio.Tier3 / count / 100)
 	default:
 		panic("invalid tier")
 	}
 }
 
-func (self *canonicalPool) ExternalReward(currentHeight int64) map[string]uint64 {
-	reward := make(map[string]uint64)
+func (self *canonicalPool) ExternalReward(currentHeight int64) map[string]int64 {
+	reward := make(map[string]int64)
 
 	for _, incentive := range self.incentive {
 		if incentive.startHeight > int64(currentHeight) || incentive.endHeight < int64(currentHeight) {
@@ -71,7 +71,7 @@ type canonicalRewardState struct {
 	CurrentTimestamp int64
 
 	// emulated reward claimed by unstake
-	emulatedClaimedReward map[uint64]uint64
+	emulatedClaimedReward map[uint64]int64
 }
 
 func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tickCrossHook func(pools *Pools, height func() int64) func(poolPath string, tickId int32, zeroForOne bool)) *canonicalRewardState {
@@ -91,7 +91,7 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 		PerBlockEmission: 1000000000,
 		CurrentTimestamp: 0,
 
-		emulatedClaimedReward: make(map[uint64]uint64),
+		emulatedClaimedReward: make(map[uint64]int64),
 	}
 	result.tickCrossHook = tickCrossHook(pools, func() int64 {
 		return result.CurrentHeight()
@@ -157,8 +157,8 @@ func (self *canonicalRewardState) LiquidityPerPool() map[string]*u256.Uint {
 	return liquidity
 }
 
-func (self *canonicalRewardState) InternalRewardPerPool(emission uint64) map[string]uint64 {
-	reward := make(map[string]uint64)
+func (self *canonicalRewardState) InternalRewardPerPool(emission uint64) map[string]int64 {
+	reward := make(map[string]int64)
 	tierCount := []uint64{0, 0, 0, 0}
 
 	for _, pool := range self.Pool {
@@ -173,8 +173,8 @@ func (self *canonicalRewardState) InternalRewardPerPool(emission uint64) map[str
 	return reward
 }
 
-func (self *canonicalRewardState) ExternalRewardPerPool(currentHeight int64) map[string]map[string]uint64 {
-	reward := make(map[string]map[string]uint64)
+func (self *canonicalRewardState) ExternalRewardPerPool(currentHeight int64) map[string]map[string]int64 {
+	reward := make(map[string]map[string]int64)
 
 	for _, pool := range self.Pool {
 		reward[pool.poolPath] = pool.ExternalReward(currentHeight)
@@ -204,8 +204,8 @@ func (self *canonicalRewardState) CalculateCanonicalReward() map[uint64]Reward {
 		warmup := deposit.warmups[deposit.FindWarmup(int64(currentHeight))]
 		internal, internalPenalty := warmup.apply(internalRewardPerPool[deposit.targetPoolPath], deposit.liquidity, liquidityPerPool[deposit.targetPoolPath])
 		poolExternals := externalRewardPerPool[deposit.targetPoolPath]
-		externals := make(map[string]uint64)
-		externalPenalties := make(map[string]uint64)
+		externals := make(map[string]int64)
+		externalPenalties := make(map[string]int64)
 		for key, value := range poolExternals {
 			external, externalPenalty := warmup.apply(value, deposit.liquidity, liquidityPerPool[deposit.targetPoolPath])
 			externals[key] = external
@@ -241,7 +241,7 @@ func (self *canonicalRewardState) NextBlockNoCanonical() {
 	}
 }
 
-func (self *canonicalRewardState) UnclaimableExternalRewardOf(depositId uint64, incentiveId string) uint64 {
+func (self *canonicalRewardState) UnclaimableExternalRewardOf(depositId uint64, incentiveId string) int64 {
 	pool, ok := self.global.pools.Get(self.global.deposits.Get(depositId).targetPoolPath)
 	if !ok {
 		panic("pool not found")
@@ -264,7 +264,7 @@ func (self *canonicalRewardState) CanonicalRewardOfHeight(depositId uint64, heig
 	return self.Reward[height][depositId]
 }
 
-func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) ([]uint64, []uint64, []map[string]uint64, []map[string]uint64) {
+func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) ([]int64, []int64, []map[string]int64, []map[string]int64) {
 	currentHeight := self.CurrentHeight()
 
 	// cache per-tier and per-pool rewards
@@ -284,11 +284,11 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 
 	internalRewards, internalPenalties := pool.RewardStateOf(deposit).calculateInternalReward(int64(lastCollectHeight), int64(currentHeight))
 
-	externalRewards := make([]map[string]uint64, 4)
-	externalPenalties := make([]map[string]uint64, 4)
+	externalRewards := make([]map[string]int64, 4)
+	externalPenalties := make([]map[string]int64, 4)
 	for i := range externalRewards {
-		externalRewards[i] = make(map[string]uint64)
-		externalPenalties[i] = make(map[string]uint64)
+		externalRewards[i] = make(map[string]int64)
+		externalPenalties[i] = make(map[string]int64)
 	}
 
 	allIncentives := pool.incentives.GetAllInHeights(int64(lastCollectHeight), int64(currentHeight))
@@ -312,8 +312,8 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
 		return Reward{
 			Internal:        claimed,
 			InternalPenalty: 0,
-			External:        make(map[string]uint64),
-			ExternalPenalty: make(map[string]uint64),
+			External:        make(map[string]int64),
+			ExternalPenalty: make(map[string]int64),
 		}
 	}
 
@@ -322,7 +322,7 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
 	deposit := self.global.deposits.Get(depositId)
 	deposit.lastCollectHeight = self.CurrentHeight()
 
-	internal := uint64(0)
+	internal := int64(0)
 	for _, reward := range rewards {
 		internal += reward
 	}
@@ -331,17 +331,17 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
 		internal += claimed
 		self.emulatedClaimedReward[depositId] = 0
 	}
-	internalPenalty := uint64(0)
+	internalPenalty := int64(0)
 	for _, penalty := range penalties {
 		internalPenalty += penalty
 	}
-	external := make(map[string]uint64)
+	external := make(map[string]int64)
 	for _, er := range externalRewards {
 		for incentiveId, reward := range er {
 			external[incentiveId] += reward
 		}
 	}
-	externalPenalty := make(map[string]uint64)
+	externalPenalty := make(map[string]int64)
 	for _, ep := range externalPenalties {
 		for incentiveId, penalty := range ep {
 			externalPenalty[incentiveId] += penalty
@@ -434,14 +434,14 @@ func (self *canonicalRewardState) UnstakeToken(positionId uint64) {
 func newExternalIncentiveByHeight(
 	targetPoolPath string,
 	rewardToken string,
-	rewardAmount uint64,
+	rewardAmount int64,
 	startTimestamp int64,
 	endTimestamp int64,
 	startHeight int64,
 	endHeight int64,
 	refundee std.Address,
 ) *ExternalIncentive {
-	rewardPerBlock := rewardAmount / uint64(endHeight-startHeight)
+	rewardPerBlock := rewardAmount / (endHeight-startHeight)
 
 	byTimeId := incentiveIdByTime(startTimestamp, endTimestamp, refundee, rewardToken, targetPoolPath)
 
@@ -461,7 +461,7 @@ func newExternalIncentiveByHeight(
 	}
 }
 
-func (self *canonicalRewardState) CreateExternalIncentive(targetPoolPath string, rewardToken string, rewardAmount uint64, startTimestamp, endTimestamp, startHeight, endHeight int64, refundee std.Address) string {
+func (self *canonicalRewardState) CreateExternalIncentive(targetPoolPath string, rewardToken string, rewardAmount int64, startTimestamp, endTimestamp, startHeight, endHeight int64, refundee std.Address) string {
 	incentive := newExternalIncentiveByHeight(targetPoolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp, startHeight, endHeight, refundee)
 
 	// update canonical state
@@ -564,7 +564,7 @@ func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
 
 // Testing helpers
 
-func (self *canonicalRewardState) AssertCanonicalInternalRewardPerPool(poolPath string, expected uint64) {
+func (self *canonicalRewardState) AssertCanonicalInternalRewardPerPool(poolPath string, expected int64) {
 	internalRewardPerPool := self.InternalRewardPerPool(self.PerBlockEmission)
 	actual := internalRewardPerPool[poolPath]
 	if actual != expected {
@@ -574,7 +574,10 @@ func (self *canonicalRewardState) AssertCanonicalInternalRewardPerPool(poolPath 
 
 func (self *canonicalRewardState) AssertEmulatedRewardOf(depositId uint64, expected uint64) {
 	reward := self.EmulatedRewardOf(depositId)
-	if !isInErrorRange(expected, reward.Internal) {
+	if reward.Internal < 0 {
+		panic("reward cannot be negative")
+	}
+	if !isInErrorRange(expected, uint64(reward.Internal)) {
 		self.t.Errorf("emulated reward of %d mismatch: expected %d, got %d", depositId, expected, reward.Internal)
 		panic("emulated reward mismatch")
 	}
@@ -582,14 +585,20 @@ func (self *canonicalRewardState) AssertEmulatedRewardOf(depositId uint64, expec
 
 func (self *canonicalRewardState) AssertEmulatedExternalRewardOf(depositId uint64, incentiveId string, expected uint64) {
 	reward := self.EmulatedRewardOf(depositId)
-	if !isInErrorRange(expected, reward.External[incentiveId]) {
+	if reward.External[incentiveId] < 0 {
+		panic("external reward cannot be negative")
+	}
+	if !isInErrorRange(expected, uint64(reward.External[incentiveId])) {
 		self.t.Errorf("!!!!emulated external reward of %d mismatch: expected %d, got %d", depositId, expected, reward.External[incentiveId])
 	}
 }
 
 func (self *canonicalRewardState) AssertCanonicalRewardOf(depositId uint64, expected uint64) {
 	reward := self.CanonicalRewardOf(depositId)
-	if !isInErrorRange(expected, reward.Internal) {
+	if reward.Internal < 0 {
+		panic("canonical reward cannot be negative")
+	}
+	if !isInErrorRange(expected, uint64(reward.Internal)) {
 		self.t.Errorf("canonical reward of %d mismatch: expected %d, got %d", depositId, expected, reward.Internal)
 	}
 }
@@ -597,13 +606,19 @@ func (self *canonicalRewardState) AssertCanonicalRewardOf(depositId uint64, expe
 func (self *canonicalRewardState) AssertEquivalence(depositId uint64) {
 	reward := self.CanonicalRewardOf(depositId)
 	emulatedReward := self.EmulatedRewardOf(depositId)
-	if !isInErrorRange(reward.Internal, emulatedReward.Internal) {
+	if reward.Internal < 0 || emulatedReward.Internal < 0 {
+		panic("rewards cannot be negative")
+	}
+	if !isInErrorRange(uint64(reward.Internal), uint64(emulatedReward.Internal)) {
 		self.t.Errorf("canonical reward of %d mismatch: expected %d, got %d", depositId, reward.Internal, emulatedReward.Internal)
 	}
 }
 
-func (self *canonicalRewardState) AssertEmulatedRewardMap(expected map[uint64]uint64) {
+func (self *canonicalRewardState) AssertEmulatedRewardMap(expected map[uint64]int64) {
 	for key, value := range expected {
-		self.AssertEmulatedRewardOf(key, value)
+		if value < 0 {
+			panic("expected reward cannot be negative")
+		}
+		self.AssertEmulatedRewardOf(key, uint64(value))
 	}
 }

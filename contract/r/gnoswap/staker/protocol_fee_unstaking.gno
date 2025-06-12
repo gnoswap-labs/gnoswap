@@ -50,6 +50,9 @@ func handleUnStakingFee(
 	if internal {
 		// staker contract has fee
 		cross(gns.Transfer)(protocolFeeAddr, feeAmount)
+		if feeAmount < 0 {
+			panic("fee amount cannot be negative")
+		}
 		cross(pf.AddToProtocolFee)(consts.GNS_PATH, uint64(feeAmount))
 
 		std.Emit(
@@ -59,12 +62,15 @@ func handleUnStakingFee(
 			"fromPositionId", formatUint(positionId),
 			"fromPoolPath", poolPath,
 			"feeTokenPath", consts.GNS_PATH,
-			"feeAmount", formatUint(feeAmount),
+			"feeAmount", formatInt(feeAmount),
 		)
 	} else {
 		// external contract has fee
 		teller := common.GetTokenTeller(tokenPath)
 		teller.Transfer(protocolFeeAddr, feeAmount)
+		if feeAmount < 0 {
+			panic("fee amount cannot be negative")
+		}
 		cross(pf.AddToProtocolFee)(tokenPath, uint64(feeAmount))
 
 		std.Emit(
