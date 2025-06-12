@@ -23,7 +23,7 @@ import (
 	"gno.land/r/onbloc/usdc"
 
 	"gno.land/r/gnoswap/v1/access"
-	// sr "gno.land/r/gnoswap/v1/staker"
+	sr "gno.land/r/gnoswap/v1/staker"
 )
 
 const (
