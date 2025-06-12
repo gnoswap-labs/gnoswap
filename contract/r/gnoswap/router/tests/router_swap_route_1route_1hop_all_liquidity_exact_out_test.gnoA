@@ -29,7 +29,7 @@ func TestAllLiquidityExactOut_1route_1hop(t *testing.T) {
 	baz.Approve(poolAddr, 100000)
 
 	// Mint
-	positionId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(-6000), int32(6000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := cross(pn.Mint)(barPath, bazPath, fee500, int32(-6000), int32(6000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	uassert.Equal(t, positionId, uint64(1))
 	uassert.Equal(t, amount0, "99962")

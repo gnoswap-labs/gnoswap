@@ -867,7 +867,7 @@ func TestCreateProject(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testing.SetRealm(adminRealm)
-			obl.Approve(launchpadAddr, tt.totalAmount)
+			cross(obl.Approve)(launchpadAddr, int64(tt.totalAmount))
 			if !tt.duplicateTest {
 				testing.SkipHeights(1)
 			}
@@ -944,7 +944,7 @@ func TestCreateProject_TierAndBalance(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testing.SetRealm(adminRealm)
-			obl.Approve(launchpadAddr, tt.totalAmount)
+			cross(obl.Approve)(launchpadAddr, int64(tt.totalAmount))
 			testing.SkipHeights(1)
 
 			defer func() {

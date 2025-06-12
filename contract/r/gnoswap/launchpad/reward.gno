@@ -23,6 +23,8 @@ type RewardCalculationResult struct {
 // each project's recipient wallet will be rewarded
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectprotocolfee
 func CollectProtocolFee() {
+	crossing()
+
 	caller := getPrevAddr()
 	gs.CollectRewardFromLaunchPad(caller)
 }
@@ -31,6 +33,7 @@ func CollectProtocolFee() {
 // Returns collected reward amount
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectrewardbyprojectid
 func CollectRewardByProjectId(projectId string) uint64 {
+	crossing()
 	assertOnlyNotHalted()
 
 	project, err := getProject(projectId)
@@ -107,7 +110,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 
 	if totalReward > 0 {
 		tokenTeller := common.GetTokenTeller(project.tokenPath)
-		tokenTeller.Transfer(caller, totalReward)
+		tokenTeller.Transfer(caller, int64(totalReward))
 	}
 
 	return totalReward
@@ -117,6 +120,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 // Returns collected reward amount
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectrewardbydepositid
 func CollectRewardByDepositId(depositId string) uint64 {
+	crossing()
 	assertOnlyNotHalted()
 
 	deposit, exists := deposits[depositId]
@@ -184,7 +188,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 	// Transfer reward
 	if rewardAmount > 0 {
 		tokenTeller := common.GetTokenTeller(project.tokenPath)
-		tokenTeller.Transfer(getPrevAddr(), rewardAmount)
+		tokenTeller.Transfer(getPrevAddr(), int64(rewardAmount))
 	}
 
 	return rewardAmount

@@ -47,7 +47,7 @@ func MintAndStake(
 		banker.SendCoins(stakerAddr, positionAddr, std.Coins{{Denom: "ugnot", Amount: ugnotSent}})
 	}
 
-	positionId, liquidity, amount0, amount1 := pn.Mint(
+	positionId, liquidity, amount0, amount1 := cross(pn.Mint)(
 		token0,
 		token1,
 		fee,

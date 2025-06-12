@@ -266,7 +266,7 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		beforeWugnotBalance := wugnot.BalanceOf(adminAddr)
 		beforeGnsBalance := gns.BalanceOf(adminAddr)
 
-		amountIn, amountOut := rr.ExactInSwapRoute(
+		amountIn, amountOut := cross(rr.ExactInSwapRoute)(
 			inputToken,
 			outputToken,
 			amountIn,
@@ -610,7 +610,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		beforeWugnotBalance := wugnot.BalanceOf(adminAddr)
 		beforeGnsBalance := gns.BalanceOf(adminAddr)
 
-		amountIn, amountOut := rr.ExactInSwapRoute(
+		amountIn, amountOut := cross(rr.ExactInSwapRoute)(
 			inputToken,
 			outputToken,
 			amountIn,
@@ -1039,7 +1039,7 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		beforeWugnotBalance := wugnot.BalanceOf(adminAddr)
 		beforeGnsBalance := gns.BalanceOf(adminAddr)
 
-		amountIn, amountOut := rr.ExactInSwapRoute(
+		amountIn, amountOut := cross(rr.ExactInSwapRoute)(
 			inputToken,
 			outputToken,
 			amountIn,

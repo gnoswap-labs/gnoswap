@@ -229,7 +229,7 @@ func launchPadCreateProject(t *testing.T) {
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-002] invalid address || caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) is not authorized for role admin", func() {
 			testing.SetRealm(aliceRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
-			lp.CreateProject(
+			cross(lp.CreateProject)(
 				projectName,
 				rewardTokenPath,
 				projectAddr,
@@ -258,7 +258,7 @@ func launchPadCreateProject(t *testing.T) {
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || project name cannot be empty", func() {
 			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
-			lp.CreateProject(
+			cross(lp.CreateProject)(
 				projectName,
 				rewardTokenPath,
 				projectAddr,
@@ -287,7 +287,7 @@ func launchPadCreateProject(t *testing.T) {
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || project name is too long", func() {
 			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
-			lp.CreateProject(
+			cross(lp.CreateProject)(
 				projectName,
 				rewardTokenPath,
 				projectAddr,
@@ -316,7 +316,7 @@ func launchPadCreateProject(t *testing.T) {
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || tokenPath cannot be empty", func() {
 			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
-			lp.CreateProject(
+			cross(lp.CreateProject)(
 				projectName,
 				rewardTokenPath,
 				projectAddr,
@@ -345,7 +345,7 @@ func launchPadCreateProject(t *testing.T) {
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || tokenPath(gno.land/r/gnoswap/v1/token_test/obl) not registered", func() {
 			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
-			lp.CreateProject(
+			cross(lp.CreateProject)(
 				projectName,
 				rewardTokenPath,
 				projectAddr,
@@ -375,7 +375,7 @@ func launchPadCreateProject(t *testing.T) {
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-002] invalid address || recipient address(invalidAddress)", func() {
 			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
-			lp.CreateProject(
+			cross(lp.CreateProject)(
 				projectName,
 				rewardTokenPath,
 				invalidAddr,
@@ -404,7 +404,7 @@ func launchPadCreateProject(t *testing.T) {
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || deposit amount cannot be 0", func() {
 			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
-			lp.CreateProject(
+			cross(lp.CreateProject)(
 				projectName,
 				rewardTokenPath,
 				projectAddr,
@@ -433,7 +433,7 @@ func launchPadCreateProject(t *testing.T) {
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || invalid ratio, sum of all tiers(30:15, 90:20, 180:70) should be 100", func() {
 			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
-			lp.CreateProject(
+			cross(lp.CreateProject)(
 				projectName,
 				rewardTokenPath,
 				projectAddr,
@@ -462,7 +462,7 @@ func launchPadCreateProject(t *testing.T) {
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234567915) must be greater than now(1234567925)", func() {
 			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
-			lp.CreateProject(
+			cross(lp.CreateProject)(
 				projectName,
 				rewardTokenPath,
 				projectAddr,
@@ -491,7 +491,7 @@ func launchPadCreateProject(t *testing.T) {
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || conditionsToken or conditionsAmount cannot be empty", func() {
 			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
-			lp.CreateProject(
+			cross(lp.CreateProject)(
 				projectName,
 				rewardTokenPath,
 				projectAddr,
@@ -520,7 +520,7 @@ func launchPadCreateProject(t *testing.T) {
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || conditionsToken or conditionsAmount cannot be empty", func() {
 			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
-			lp.CreateProject(
+			cross(lp.CreateProject)(
 				projectName,
 				rewardTokenPath,
 				projectAddr,
@@ -549,7 +549,7 @@ func launchPadCreateProject(t *testing.T) {
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-011] invalid length || invalid conditions(numTokens(1) != numAmounts(2))", func() {
 			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
-			lp.CreateProject(
+			cross(lp.CreateProject)(
 				projectName,
 				rewardTokenPath,
 				projectAddr,
@@ -578,7 +578,7 @@ func launchPadCreateProject(t *testing.T) {
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || invalid token()", func() {
 			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
-			lp.CreateProject(
+			cross(lp.CreateProject)(
 				projectName,
 				rewardTokenPath,
 				projectAddr,
@@ -607,7 +607,7 @@ func launchPadCreateProject(t *testing.T) {
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || token(gno.land/r/gnoswap/v1/token_test/obl) not registered", func() {
 			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
-			lp.CreateProject(
+			cross(lp.CreateProject)(
 				projectName,
 				rewardTokenPath,
 				projectAddr,
@@ -636,7 +636,7 @@ func launchPadCreateProject(t *testing.T) {
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-007] invalid input data || duplicated condition token(gno.land/r/gnoswap/v1/gov/xgns)", func() {
 			testing.SetRealm(adminRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
-			lp.CreateProject(
+			cross(lp.CreateProject)(
 				projectName,
 				rewardTokenPath,
 				projectAddr,
@@ -668,7 +668,7 @@ func launchPadCreateProject(t *testing.T) {
 
 			testing.SetRealm(aliceRealm)
 			obl.Approve(launchpadAddr, rewardAmount)
-			lp.CreateProject(
+			cross(lp.CreateProject)(
 				projectName,
 				rewardTokenPath,
 				projectAddr,
@@ -699,7 +699,7 @@ func launchPadCreateProject(t *testing.T) {
 
 		testing.SetRealm(adminRealm)
 		obl.Approve(launchpadAddr, rewardAmount)
-		projectId := lp.CreateProject(
+		projectId := cross(lp.CreateProject)(
 			projectName,
 			rewardTokenPath,
 			projectAddr,
@@ -760,7 +760,7 @@ func launchPadDepositTest(t *testing.T) {
 				testing.SetRealm(bobRealm)
 				gns.Approve(launchpadAddr, depositAmount)
 
-				lp.DepositGns(
+				cross(lp.DepositGns)(
 					projectTier30Id,
 					depositAmount,
 					"",
@@ -781,7 +781,7 @@ func launchPadDepositTest(t *testing.T) {
 				testing.SetRealm(bobRealm)
 				gns.Approve(launchpadAddr, depositAmount)
 
-				lp.DepositGns(
+				cross(lp.DepositGns)(
 					projectTier30Id,
 					depositAmount,
 					"",
@@ -802,7 +802,7 @@ func launchPadDepositTest(t *testing.T) {
 				testing.SetRealm(bobRealm)
 				gns.Approve(launchpadAddr, depositAmount)
 
-				lp.DepositGns(
+				cross(lp.DepositGns)(
 					projectTier30Id,
 					depositAmount,
 					"",
@@ -823,7 +823,7 @@ func launchPadDepositTest(t *testing.T) {
 				testing.SetRealm(bobRealm)
 				gns.Approve(launchpadAddr, depositAmount)
 
-				lp.DepositGns(
+				cross(lp.DepositGns)(
 					projectTier30Id,
 					depositAmount,
 					"",
@@ -844,7 +844,7 @@ func launchPadDepositTest(t *testing.T) {
 				testing.SetRealm(bobRealm)
 				gns.Approve(launchpadAddr, depositAmount)
 
-				lp.DepositGns(
+				cross(lp.DepositGns)(
 					projectTier30Id,
 					depositAmount,
 					"",
@@ -865,7 +865,7 @@ func launchPadDepositTest(t *testing.T) {
 				testing.SetRealm(bobRealm)
 				gns.Approve(launchpadAddr, depositAmount)
 
-				lp.DepositGns(
+				cross(lp.DepositGns)(
 					projectTier30Id,
 					depositAmount,
 					"",
@@ -886,7 +886,7 @@ func launchPadDepositTest(t *testing.T) {
 				testing.SetRealm(bobRealm)
 				gns.Approve(launchpadAddr, depositAmount)
 
-				lp.DepositGns(
+				cross(lp.DepositGns)(
 					projectTier30Id,
 					depositAmount,
 					"",
@@ -907,7 +907,7 @@ func launchPadDepositTest(t *testing.T) {
 				testing.SetRealm(aliceRealm)
 				gns.Approve(launchpadAddr, depositAmount)
 
-				lp.DepositGns(
+				cross(lp.DepositGns)(
 					projectTier30Id,
 					depositAmount,
 					"",
@@ -928,7 +928,7 @@ func launchPadDepositTest(t *testing.T) {
 				testing.SetRealm(bobRealm)
 				gns.Approve(launchpadAddr, depositAmount)
 
-				lp.DepositGns(
+				cross(lp.DepositGns)(
 					projectTier30Id,
 					depositAmount,
 					"",
@@ -947,7 +947,7 @@ func launchPadDepositTest(t *testing.T) {
 		testing.SetRealm(bobRealm)
 		gns.Approve(launchpadAddr, depositAmount)
 
-		depositId := lp.DepositGns(
+		depositId := cross(lp.DepositGns)(
 			projectTier30Id,
 			depositAmount,
 			"",
@@ -1082,7 +1082,7 @@ func rewardTest(t *testing.T) {
 		uassert.Equal(t, uint64(0), qux.BalanceOf(projectAddr))
 
 		testing.SetRealm(projectRealm)
-		lp.CollectProtocolFee()
+		cross(lp.CollectProtocolFee)()
 
 		uassert.Equal(t, uint64(142), bar.BalanceOf(projectAddr))
 		uassert.Equal(t, uint64(357), qux.BalanceOf(projectAddr))

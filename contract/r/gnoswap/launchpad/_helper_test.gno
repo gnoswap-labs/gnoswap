@@ -62,27 +62,27 @@ func NewMockXGNSToken() *MockXGNSToken {
 	}
 }
 
-func (m *MockXGNSToken) TotalSupply() uint64 {
+func (m *MockXGNSToken) TotalSupply() int64 {
 	return m.token.TotalSupply()
 }
 
-func (m *MockXGNSToken) VotingSupply() uint64 {
+func (m *MockXGNSToken) VotingSupply() int64 {
 	total := m.token.TotalSupply()
 	launchpad := m.token.BalanceOf(launchpadAddr)
 	return total - launchpad
 }
 
-func (m *MockXGNSToken) BalanceOf(owner std.Address) uint64 {
+func (m *MockXGNSToken) BalanceOf(owner std.Address) int64 {
 	ownerAddr := owner
 	return m.token.BalanceOf(ownerAddr)
 }
 
-func (m *MockXGNSToken) Mint(to std.Address, amount uint64) error {
+func (m *MockXGNSToken) Mint(to std.Address, amount int64) error {
 	toAddr := to
 	return m.ledger.Mint(toAddr, amount)
 }
 
-func (m *MockXGNSToken) Burn(from std.Address, amount uint64) error {
+func (m *MockXGNSToken) Burn(from std.Address, amount int64) error {
 	fromAddr := from
 	return m.ledger.Burn(fromAddr, amount)
 }
@@ -97,7 +97,7 @@ func setupXGNSTest(t *testing.T) (*MockXGNSToken, std.Address) {
 	return mockToken, testAddr
 }
 
-func xgnsMint(t *testing.T, token *MockXGNSToken, to std.Address, amount uint64) {
+func xgnsMint(t *testing.T, token *MockXGNSToken, to std.Address, amount int64) {
 	t.Helper()
 	// Set realm to gov/staker or launchpad to have permission
 	testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
@@ -107,7 +107,7 @@ func xgnsMint(t *testing.T, token *MockXGNSToken, to std.Address, amount uint64)
 	}
 }
 
-func xgnsBurn(t *testing.T, token *MockXGNSToken, from std.Address, amount uint64) {
+func xgnsBurn(t *testing.T, token *MockXGNSToken, from std.Address, amount int64) {
 	t.Helper()
 	// Set realm to gov/staker or launchpad to have permission
 	testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
@@ -117,7 +117,7 @@ func xgnsBurn(t *testing.T, token *MockXGNSToken, from std.Address, amount uint6
 	}
 }
 
-func xgnsCheckBalance(t *testing.T, token *MockXGNSToken, owner std.Address, expected uint64) {
+func xgnsCheckBalance(t *testing.T, token *MockXGNSToken, owner std.Address, expected int64) {
 	t.Helper()
 	balance := token.BalanceOf(owner)
 	if balance != expected {
@@ -125,7 +125,7 @@ func xgnsCheckBalance(t *testing.T, token *MockXGNSToken, owner std.Address, exp
 	}
 }
 
-func xgnsCheckTotalSupply(t *testing.T, token *MockXGNSToken, expected uint64) {
+func xgnsCheckTotalSupply(t *testing.T, token *MockXGNSToken, expected int64) {
 	t.Helper()
 	supply := token.TotalSupply()
 	if supply != expected {
@@ -133,7 +133,7 @@ func xgnsCheckTotalSupply(t *testing.T, token *MockXGNSToken, expected uint64) {
 	}
 }
 
-func xgnsCheckVotingSupply(t *testing.T, token *MockXGNSToken, expected uint64) {
+func xgnsCheckVotingSupply(t *testing.T, token *MockXGNSToken, expected int64) {
 	t.Helper()
 	supply := token.VotingSupply()
 	if supply != expected {

@@ -23,6 +23,8 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
 
 	"gno.land/r/demo/wugnot"
 
@@ -115,7 +117,7 @@ func testMintAndStakeWugnotGnsPos01() {
 	gns.Approve(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
-	pn.Mint(
+	cross(pn.Mint)(
 		wugnotPath,
 		gnsPath,
 		fee3000,
@@ -161,7 +163,7 @@ func testMintAndStakeBarBazPos02() {
 	baz.Approve(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
-	pn.Mint(
+	cross(pn.Mint)(
 		barPath,
 		bazPath,
 		fee100,
