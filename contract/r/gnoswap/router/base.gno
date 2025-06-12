@@ -71,7 +71,7 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 	}
 
 	// save current user's WGNOT amount
-	op.userBeforeWugnotBalance = wugnot.BalanceOf(std.PreviousRealm().Address())
+	op.userBeforeWugnotBalance = cross(wugnot.BalanceOf)(std.PreviousRealm().Address())
 
 	if inputToken != consts.GNOT {
 		return nil
