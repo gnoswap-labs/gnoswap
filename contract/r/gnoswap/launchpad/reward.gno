@@ -110,7 +110,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 
 	if totalReward > 0 {
 		tokenTeller := common.GetTokenTeller(project.tokenPath)
-		tokenTeller.Transfer(caller, totalReward)
+		tokenTeller.Transfer(caller, int64(totalReward))
 	}
 
 	return totalReward
@@ -188,7 +188,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 	// Transfer reward
 	if rewardAmount > 0 {
 		tokenTeller := common.GetTokenTeller(project.tokenPath)
-		tokenTeller.Transfer(getPrevAddr(), rewardAmount)
+		tokenTeller.Transfer(getPrevAddr(), int64(rewardAmount))
 	}
 
 	return rewardAmount

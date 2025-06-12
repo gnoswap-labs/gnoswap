@@ -205,12 +205,12 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 	gs.SetAmountByProjectWallet(project.recipient, amount, true)
 
 	// gns will be locked in `launchpad` contract
-	gns.TransferFrom(
+	cross(gns.TransferFrom)(
 		getPrevAddr(),
 		launchpadAddr,
-		amount,
+		int64(amount),
 	)
-	xgns.Mint(launchpadAddr, amount)
+	cross(xgns.Mint)(launchpadAddr, int64(amount))
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -346,8 +346,8 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 
 	// Process token transfers if amount > 0
 	if amount > 0 {
-		xgns.Burn(launchpadAddr, amount)
-		gns.Transfer(caller, amount)
+		cross(xgns.Burn)(launchpadAddr, int64(amount))
+		cross(gns.Transfer)(caller, int64(amount))
 		return amount
 	}
 
@@ -434,14 +434,14 @@ func checkDepositConditions(project Project) {
 		}
 
 		// check balance
-		var balance uint64
+		var balance int64
 		if condition.tokenPath == consts.GOV_XGNS_PATH {
-			balance = xgns.BalanceOf(caller)
+			balance = cross(xgns.BalanceOf)(caller)
 		} else {
 			balance = common.BalanceOf(condition.tokenPath, caller)
 		}
 
-		if balance < condition.minAmount {
+		if balance < int64(condition.minAmount) {
 			panic(addDetailToError(
 				errNotEnoughBalance,
 				ufmt.Sprintf("insufficient balance(%d) for token(%s)", balance, condition.tokenPath),
@@ -835,7 +835,7 @@ func processDepositCollection(
 
 func processCollectedDeposits(depositList []string, pid string) uint64 {
 	assertOnlyNotHalted()
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 
 	amount, err := processDepositCollection(depositList, pid)
 	if err != nil {
@@ -844,8 +844,8 @@ func processCollectedDeposits(depositList []string, pid string) uint64 {
 
 	if amount > 0 {
 		caller := getPrevAddr()
-		xgns.Burn(launchpadAddr, amount)
-		gns.Transfer(caller, amount)
+		cross(xgns.Burn)(launchpadAddr, int64(amount))
+		cross(gns.Transfer)(caller, int64(amount))
 	}
 
 	return amount
