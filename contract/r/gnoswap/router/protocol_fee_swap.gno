@@ -30,6 +30,7 @@ func GetSwapFee() uint64 {
 // SetSwapFeeByAdmin modifies the swap fee
 // Only admin can execute this function
 func SetSwapFeeByAdmin(fee uint64) {
+	crossing()
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {
 		panic(err)
@@ -55,6 +56,7 @@ func SetSwapFeeByAdmin(fee uint64) {
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/router/protocol_fee_swap.gno#setswapfee
 func SetSwapFee(fee uint64) {
+	crossing()
 	caller := getPrevAddr()
 	if err := access.GovernanceOnly(caller); err != nil {
 		panic(err)

@@ -178,7 +178,6 @@ func TestVote(t *testing.T) {
 
 			pid := tc.setup()
 
-			var voteKey string
 			var err error
 			func() {
 				defer func() {
@@ -193,7 +192,7 @@ func TestVote(t *testing.T) {
 						}
 					}
 				}()
-				voteKey = Vote(pid, tc.yes)
+				Vote(pid, tc.yes)
 			}()
 
 			if tc.expectError {

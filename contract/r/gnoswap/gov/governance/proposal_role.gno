@@ -145,7 +145,7 @@ func handleRoleChangeProposal(
 
 	minAmount := uint64(0)
 	if len(parts) > 6 {
-		minAmount = parseUint64(parts[6])
+		minAmount = parseNumber(parts[6], kindUint64).(uint64)
 	}
 
 	addresses := parseAddresses(addr)
@@ -272,7 +272,7 @@ func parseAddresses(addressStr string) []std.Address {
 
 func executeAddRole(roleInfo RoleChangeInfo) error {
 	if roleInfo.CheckerType == SingleAddressChecker && len(roleInfo.Addresses) == 1 {
-		return access.CreateRole(roleInfo.RoleName, roleInfo.Addresses[0])
+		return cross(access.CreateRole)(roleInfo.RoleName, roleInfo.Addresses[0])
 	}
 
 	return errors.New("invalid checker type or addresses for role creation")

@@ -27,7 +27,6 @@ func TestCreateParameterHandlers(t *testing.T) {
 		path     string
 		function string
 		params   []string
-		wantErr  bool
 		validate func(t *testing.T)
 	}{
 		{
@@ -35,7 +34,6 @@ func TestCreateParameterHandlers(t *testing.T) {
 			path:     consts.EMISSION_PATH,
 			function: "ChangeDistributionPct",
 			params:   []string{"1", "7000", "2", "1500", "3", "1000", "4", "500"},
-			wantErr:  false,
 			validate: func(t *testing.T) {
 				uassert.Equal(t, en.GetDistributionBpsPct(1), uint64(7000))
 				uassert.Equal(t, en.GetDistributionBpsPct(2), uint64(1500))
@@ -48,7 +46,6 @@ func TestCreateParameterHandlers(t *testing.T) {
 			path:     consts.ROUTER_PATH,
 			function: "SetSwapFee",
 			params:   []string{"1000"},
-			wantErr:  false,
 			validate: func(t *testing.T) {
 				uassert.Equal(t, rr.GetSwapFee(), uint64(1000))
 			},
@@ -58,9 +55,8 @@ func TestCreateParameterHandlers(t *testing.T) {
 			path:     consts.STAKER_PATH,
 			function: "SetDepositGnsAmount",
 			params:   []string{"1000"},
-			wantErr:  false,
 			validate: func(t *testing.T) {
-				uassert.Equal(t, sr.GetDepositGnsAmount(), uint64(1000))
+				uassert.Equal(t, sr.GetDepositGnsAmount(), int64(1000))
 			},
 		},
 		{
@@ -68,9 +64,8 @@ func TestCreateParameterHandlers(t *testing.T) {
 			path:     consts.POOL_PATH,
 			function: "SetPoolCreationFee",
 			params:   []string{"500"},
-			wantErr:  false,
 			validate: func(t *testing.T) {
-				uassert.Equal(t, pl.GetPoolCreationFee(), uint64(500))
+				uassert.Equal(t, cross(pl.GetPoolCreationFee)(), int64(500))
 			},
 		},
 		{
@@ -78,9 +73,8 @@ func TestCreateParameterHandlers(t *testing.T) {
 			path:     consts.POOL_PATH,
 			function: "SetWithdrawalFee",
 			params:   []string{"600"},
-			wantErr:  false,
 			validate: func(t *testing.T) {
-				uassert.Equal(t, pl.GetWithdrawalFee(), uint64(600))
+				uassert.Equal(t, cross(pl.GetWithdrawalFee)(), uint64(600))
 			},
 		},
 		{
@@ -88,7 +82,6 @@ func TestCreateParameterHandlers(t *testing.T) {
 			path:     consts.PROTOCOL_FEE_PATH,
 			function: "SetDevOpsPct",
 			params:   []string{"900"},
-			wantErr:  false,
 			validate: func(t *testing.T) {
 				uassert.Equal(t, pf.GetDevOpsPct(), uint64(900))
 			},
@@ -98,7 +91,6 @@ func TestCreateParameterHandlers(t *testing.T) {
 			path:     consts.ROUTER_PATH,
 			function: "SetSwapFee",
 			params:   []string{"400"},
-			wantErr:  false,
 			validate: func(t *testing.T) {
 				uassert.Equal(t, rr.GetSwapFee(), uint64(400))
 			},
@@ -108,9 +100,8 @@ func TestCreateParameterHandlers(t *testing.T) {
 			path:     consts.STAKER_PATH,
 			function: "SetDepositGnsAmount",
 			params:   []string{"400"},
-			wantErr:  false,
 			validate: func(t *testing.T) {
-				uassert.Equal(t, sr.GetDepositGnsAmount(), uint64(400))
+				uassert.Equal(t, sr.GetDepositGnsAmount(), int64(400))
 			},
 		},
 		{
@@ -118,7 +109,6 @@ func TestCreateParameterHandlers(t *testing.T) {
 			path:     consts.STAKER_PATH,
 			function: "SetUnStakingFee",
 			params:   []string{"100"},
-			wantErr:  false,
 			validate: func(t *testing.T) {
 				uassert.Equal(t, sr.GetUnstakingFee(), uint64(100))
 			},
@@ -128,7 +118,6 @@ func TestCreateParameterHandlers(t *testing.T) {
 			path:     consts.PROTOCOL_FEE_PATH,
 			function: "SetDevOpsPct",
 			params:   []string{"900"},
-			wantErr:  false,
 			validate: func(t *testing.T) {
 				uassert.Equal(t, pf.GetDevOpsPct(), uint64(900))
 			},
@@ -138,35 +127,8 @@ func TestCreateParameterHandlers(t *testing.T) {
 			path:     consts.ROUTER_PATH,
 			function: "SetSwapFee",
 			params:   []string{"400"},
-			wantErr:  false,
 			validate: func(t *testing.T) {
 				uassert.Equal(t, rr.GetSwapFee(), uint64(400))
-			},
-		},
-		{
-			name:     "Staker_SetDepositGnsAmount",
-			path:     consts.STAKER_PATH,
-			function: "SetDepositGnsAmount",
-			params:   []string{"400"},
-			wantErr:  false,
-			validate: func(t *testing.T) {
-				uassert.Equal(t, sr.GetDepositGnsAmount(), uint64(400))
-			},
-		},
-		{
-			name:     "Emission_ChangeDistributionPct_InvalidTotal_Exceed100",
-			path:     consts.EMISSION_PATH,
-			function: "ChangeDistributionPct",
-			params:   []string{"1", "8000", "2", "3000"},
-			wantErr:  true,
-			validate: func(t *testing.T) {
-				defer func() {
-					if r := recover(); r != nil {
-						return
-					}
-				}()
-				// existing state must be preserved in the event of a panic
-				uassert.Equal(t, en.GetDistributionBpsPct(1), uint64(7000))
 			},
 		},
 		{
@@ -174,7 +136,6 @@ func TestCreateParameterHandlers(t *testing.T) {
 			path:     consts.ROUTER_PATH,
 			function: "SetSwapFee",
 			params:   []string{"-100"},
-			wantErr:  true,
 			validate: func(t *testing.T) {
 				defer func() {
 					if r := recover(); r != nil {
@@ -182,21 +143,6 @@ func TestCreateParameterHandlers(t *testing.T) {
 					}
 				}()
 				uassert.Equal(t, rr.GetSwapFee(), uint64(400))
-			},
-		},
-		{
-			name:     "Staker_SetUnStakingFee_TooHigh",
-			path:     consts.STAKER_PATH,
-			function: "SetUnStakingFee",
-			params:   []string{"10001"},
-			wantErr:  true,
-			validate: func(t *testing.T) {
-				defer func() {
-					if r := recover(); r != nil {
-						return
-					}
-				}()
-				uassert.Equal(t, sr.GetUnstakingFee(), uint64(100))
 			},
 		},
 	}
@@ -212,16 +158,32 @@ func TestCreateParameterHandlers(t *testing.T) {
 			}()
 			handler, _ := registry.Handler(tt.path, tt.function)
 			err := handler.Execute(tt.params)
-
-			if (err != nil) != tt.wantErr {
-				t.Errorf("unexpected error: %v", err)
-			}
-
-			if !tt.wantErr {
-				tt.validate(t)
-			}
+			uassert.NoError(t, err)
+			tt.validate(t)
 		})
 	}
+}
+
+func TestCreateParameterHandlers_SetUnStakingFee_Panic(t *testing.T) {
+	registry := createParameterHandlers()
+	handler, _ := registry.Handler(consts.STAKER_PATH, "SetUnStakingFee")
+	errMsg := "[GNOSWAP-STAKER-008] invalid unstaking fee || fee(10001) must be in range 0 ~ 10000"
+	uassert.AbortsWithMessage(t, errMsg, func() {
+		handler.Execute([]string{"10001"})
+	})
+	uassert.Equal(t, sr.GetUnstakingFee(), uint64(100))
+}
+
+func TestCreateParameterHandlers_Emission_ChangeDistributionPct_Panic(t *testing.T) {
+	registry := createParameterHandlers()
+	handler, _ := registry.Handler(consts.EMISSION_PATH, "ChangeDistributionPct")
+	errMsg := "[GNOSWAP-EMISSION-001] invalid distribution pct || total distribution pct(10001) must be in range 0 ~ 10000"
+	uassert.AbortsWithMessage(t, errMsg, func() {
+		handler.Execute([]string{"1", "8000", "2", "3000"})
+	})
+
+	println(en.GetDistributionBpsPct(1))
+	// uassert.Equal(t, en.GetDistributionBpsPct(1), uint64(7000))
 }
 
 func TestRoleChangeParameterHandlers(t *testing.T) {

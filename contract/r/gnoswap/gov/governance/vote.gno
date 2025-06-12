@@ -34,7 +34,7 @@ func Vote(pid uint64, yes bool) string {
 		panic(err)
 	}
 
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 	updateProposalsState()
 
 	proposal := mustGetProposal(pid)
@@ -92,7 +92,7 @@ func Cancel(proposalId uint64) {
 		panic(err)
 	}
 
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 	updateProposalsState()
 
 	proposal := mustGetProposal(proposalId)

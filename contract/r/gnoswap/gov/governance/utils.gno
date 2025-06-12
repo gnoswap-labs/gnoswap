@@ -138,22 +138,39 @@ func formatBool(v bool) string {
 	return strconv.FormatBool(v)
 }
 
-// Parses a string to an integer, panics if parsing fails
-func parseInt(s string) int {
-	num, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		panic(ufmt.Sprintf("invalid int value: %s", s))
-	}
-	return int(num)
-}
+// numberKind represents the type of number to parse
+type numberKind int
 
-// Parses a string to an unsigned 64-bit integer, panics if parsing fails
-func parseUint64(s string) uint64 {
-	num, err := strconv.ParseUint(s, 10, 64)
-	if err != nil {
-		panic(ufmt.Sprintf("invalid uint64 value: %s", s))
+const (
+	kindInt numberKind = iota
+	kindInt64
+	kindUint64
+)
+
+// Parses a string to a number (int, int64, or uint64), panics if parsing fails
+func parseNumber(s string, kind numberKind) any {
+	switch kind {
+	case kindInt:
+		num, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			panic(ufmt.Sprintf("invalid int value: %s", s))
+		}
+		return int(num)
+	case kindInt64:
+		num, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			panic(ufmt.Sprintf("invalid int64 value: %s", s))
+		}
+		return num
+	case kindUint64:
+		num, err := strconv.ParseUint(s, 10, 64)
+		if err != nil {
+			panic(ufmt.Sprintf("invalid uint64 value: %s", s))
+		}
+		return num
+	default:
+		panic(ufmt.Sprintf("unsupported number kind: %v", kind))
 	}
-	return num
 }
 
 // Parses a string to a boolean, panics if parsing fails

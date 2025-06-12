@@ -211,6 +211,9 @@ func transferToTarget(target int, amount int64) {
 
 func GetDistributionBpsPct(target int) int64 {
 	assertDistributionTarget(target)
+	if distributionBpsPct == nil {
+		panic("distributionBpsPct is nil")
+	}
 	iInt64, exist := distributionBpsPct.Get(strconv.Itoa(target))
 	if !exist {
 		panic(addDetailToError(
@@ -266,13 +269,20 @@ func ClearDistributedToGovStaker() {
 
 // setDistributionBpsPct changes percentage of each target for how much gns it will get by emission.
 func setDistributionBpsPct(target int, pct int64) {
+	if distributionBpsPct == nil {
+		distributionBpsPct = avl.NewTree()
+	}
 	if target == LIQUIDITY_STAKER {
 		oldPct, exist := distributionBpsPct.Get(strconv.Itoa(target))
 		if !exist {
 			panic("should not happen")
 		}
 
-		if oldPct.(int64) != pct {
+		oldPctInt64, ok := oldPct.(int64)
+		if !ok {
+			panic("cannot convert oldPct to int64")
+		}
+		if oldPctInt64 != pct {
 			callbackStakerEmissionChange(calculateAmount(gns.GetEmission(), pct))
 		}
 	}
