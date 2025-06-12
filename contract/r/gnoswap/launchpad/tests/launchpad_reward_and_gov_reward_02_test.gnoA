@@ -81,7 +81,7 @@ func testRouterSwapRoute(t *testing.T) {
 		bar.Approve(routerAddr, uint64(100_000))
 		foo.Approve(routerAddr, uint64(100_000))
 
-		amountIn, amountOut := rr.ExactInSwapRoute(
+		amountIn, amountOut := cross(rr.ExactInSwapRoute)(
 			barPath,
 			fooPath,
 			"100000",

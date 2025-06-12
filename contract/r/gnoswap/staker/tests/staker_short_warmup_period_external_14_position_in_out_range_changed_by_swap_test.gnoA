@@ -223,7 +223,7 @@ func testMakePosition1OutRange(t *testing.T) {
 		bar.Approve(routerAddr, consts.UINT64_MAX)
 		qux.Approve(routerAddr, consts.UINT64_MAX)
 
-		tokenIn, tokenOut := rr.ExactInSwapRoute(
+		tokenIn, tokenOut := cross(rr.ExactInSwapRoute)(
 			barPath,  // inputToken
 			quxPath,  // outputToken
 			"100000", // amountSpecified
