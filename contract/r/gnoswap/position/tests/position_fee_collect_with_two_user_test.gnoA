@@ -136,7 +136,7 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 		// 	baz.Approve(poolAddr, consts.UINT64_MAX)
 		// 	userBarBalanceBeforeCollect_2 := bar.BalanceOf(user2Adderss)
 		// 	userBazBalanceBeforeCollect_2 := baz.BalanceOf(user2Adderss)
-		// 	tokenId_res4, withoutFee0_res4, withoutFee1_res4, positionPoolKey_res4, _, _ := pn.CollectFee(tokenId_res2, false)
+		// 	tokenId_res4, withoutFee0_res4, withoutFee1_res4, positionPoolKey_res4, _, _ := cross(pn.CollectFee)(tokenId_res2, false)
 		// 	userBarBalanceAfterCollect_2 := bar.BalanceOf(user2Adderss)
 		// 	userBazBalanceAfterCollect_2 := baz.BalanceOf(user2Adderss)
 		// 	uassert.Equal(t, (userBarBalanceAfterCollect_1-userBarBalanceBeforeCollect_1)-(userBarBalanceAfterCollect_2-userBarBalanceBeforeCollect_2), uint64(0))

@@ -448,7 +448,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			wugnot.Approve(poolContract, maxApprove)
 			gns.Approve(poolContract, maxApprove)
-			pn.IncreaseLiquidity(
+			cross(pn.IncreaseLiquidity)(
 				positionId,
 				tt.amount0Requested,
 				tt.amount1Requested,
@@ -601,7 +601,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			teller := common.GetTokenTeller(wugnotTokenPath)
 			teller.Approve(poolContract, maxApprove)
 			// Position Creation
-			positionId, liquidity, amount0, amount1 := cross(pn.Mint)(
+			positionId, liquidity, _, _ := cross(pn.Mint)(
 				tt.tokenPath0,
 				tt.tokenPath1,
 				tt.feeTier,
@@ -628,7 +628,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			partialLiquidity := liquidityUint64 / 5
 			reqLiquidity := strconv.FormatUint(partialLiquidity, 10)
 
-			posId, newLiquidity, feeAmount0, feeAmount1, amount0, amount1, poolPath := pn.DecreaseLiquidity(
+			_, _, _, _, amount0, amount1, _ := cross(pn.DecreaseLiquidity)(
 				positionId,
 				reqLiquidity,
 				"0",
