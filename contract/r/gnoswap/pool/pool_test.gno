@@ -12,7 +12,6 @@ import (
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/gns"
 	pn "gno.land/r/gnoswap/v1/position"
-	// pn "gno.land/r/gnoswap/v1/position"
 )
 
 func TestMint(t *testing.T) {
@@ -24,8 +23,6 @@ func TestMint(t *testing.T) {
 	tickUpper := int32(100)
 	liquidityAmount := "100000"
 	authorized := positionAddr
-	barTokenPath := "gno.land/r/onbloc/bar"
-	bazTokenPath := "gno.land/r/onbloc/baz"
 
 	t.Run("unauthorized caller mint should fail", func(t *testing.T) {
 		unauthorized := testutils.TestAddress("unauthorized")
@@ -555,13 +552,13 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			wugnot.Transfer(routerAddr, 20000000)
-			gns.Transfer(routerAddr, 20000000)
+			cross(wugnot.Transfer)(routerAddr, 20000000)
+			cross(gns.Transfer)(routerAddr, 20000000)
 
 			testing.SetRealm(rouRealm)
-			wugnot.Approve(poolAddr, maxApprove)
+			cross(wugnot.Approve)(poolAddr, maxApprove)
 
-			amount0, amount1 := Swap(
+			Swap(
 				tt.tokenPath0,
 				tt.tokenPath1,
 				tt.feeTier,
