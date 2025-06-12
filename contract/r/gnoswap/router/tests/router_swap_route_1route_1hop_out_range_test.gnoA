@@ -42,7 +42,7 @@ func TestSwapRouteOutRange_1route_1hop(t *testing.T) {
 	baz.Approve(poolAddr, consts.UINT64_MAX)
 
 	// Mint
-	positionId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(8000), int32(12000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := cross(pn.Mint)(barPath, bazPath, fee500, int32(8000), int32(12000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	uassert.Equal(t, positionId, uint64(1))
 	uassert.Equal(t, liquidity, "637408")

@@ -16,11 +16,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gnoswap-labs/gnoswap/contract/r/gnoswap/test_token/qux"
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/testutils"
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/onbloc/bar"
 
 	"gno.land/r/gnoswap/v1/access"
 
@@ -104,7 +106,7 @@ func testMintBarQuxPos01() {
 	qux.Approve(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
-	pn.Mint(
+	cross(pn.Mint)(
 		barPath,
 		quxPath,
 		fee100,
@@ -127,7 +129,7 @@ func testMintBarQuxPos02() {
 	qux.Approve(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
-	pn.Mint(
+	cross(pn.Mint)(
 		barPath,
 		quxPath,
 		fee100,

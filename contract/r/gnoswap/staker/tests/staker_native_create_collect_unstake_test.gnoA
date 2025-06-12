@@ -96,7 +96,7 @@ func testPositionMintNative01(t *testing.T) {
 		adminOldWugnotBalance := wugnot.BalanceOf(admin)
 		uassert.Equal(t, adminOldWugnotBalance, uint64(0))
 
-		lpTokenId, liquidity, amount0, amount1 := pn.Mint(
+		lpTokenId, liquidity, amount0, amount1 := cross(pn.Mint)(
 			consts.GNS_PATH, // token0
 			consts.GNOT,     // token1
 			uint32(500),     // fee
@@ -147,7 +147,7 @@ func testPositionMintNative02(t *testing.T) {
 		adminOldWugnotBalance := wugnot.BalanceOf(admin)
 		uassert.Equal(t, adminOldWugnotBalance, uint64(0))
 
-		lpTokenId, liquidity, amount0, amount1 := pn.Mint(
+		lpTokenId, liquidity, amount0, amount1 := cross(pn.Mint)(
 			consts.GNS_PATH, // token0
 			consts.GNOT,     // token1
 			uint32(500),     // fee

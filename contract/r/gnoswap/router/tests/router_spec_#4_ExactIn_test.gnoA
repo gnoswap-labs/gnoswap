@@ -30,8 +30,8 @@ func TestExactInSwapRoute_4(t *testing.T) {
 	foo.Approve(poolAddr, consts.UINT64_MAX)
 
 	// Mint
-	pn.Mint(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
-	pn.Mint(bazPath, fooPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	cross(pn.Mint)(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	cross(pn.Mint)(bazPath, fooPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	bar.Approve(routerAddr, 1000000)
 	foo.Approve(routerAddr, 1000000)

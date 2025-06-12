@@ -236,7 +236,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 // 				testing.SetRealm(std.NewUserRealm(alice))
 // 				TokenApprove(t, wugnotPath, alice, poolAddr, 1000)
 // 				TokenApprove(t, gnsPath, alice, poolAddr, 1000)
-// 				pn.Mint(
+// 				cross(pn.Mint)(
 // 					wugnotPath,
 // 					gnsPath,
 // 					fee3000,

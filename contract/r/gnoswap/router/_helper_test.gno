@@ -349,7 +349,7 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 	TokenApprove(t, bazPath, admin, poolAddr, consts.UINT64_MAX)
 
 	// mint position
-	return pn.Mint(
+	return cross(pn.Mint)(
 		barPath,
 		bazPath,
 		fee3000,
@@ -374,7 +374,7 @@ func MakeSecondMintPositionWithoutFee(t *testing.T) (uint64, string, string, str
 	TokenApprove(t, bazPath, admin, poolAddr, consts.UINT64_MAX)
 	TokenApprove(t, quxPath, admin, poolAddr, consts.UINT64_MAX)
 
-	return pn.Mint(
+	return cross(pn.Mint)(
 		bazPath,
 		quxPath,
 		fee3000,
@@ -399,7 +399,7 @@ func MakeThirdMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 	TokenApprove(t, barPath, admin, poolAddr, consts.UINT64_MAX)
 	TokenApprove(t, fooPath, admin, poolAddr, consts.UINT64_MAX)
 
-	return pn.Mint(
+	return cross(pn.Mint)(
 		barPath,
 		fooPath,
 		fee500,
@@ -426,7 +426,7 @@ func MakeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 	TokenApprove(t, bazPath, admin, poolAddr, consts.UINT64_MAX)
 
 	// mint position
-	return pn.Mint(
+	return cross(pn.Mint)(
 		barPath,
 		bazPath,
 		fee500,

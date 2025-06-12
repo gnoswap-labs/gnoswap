@@ -47,7 +47,7 @@ func testMintBarBaz100(t *testing.T) {
 		baz.Approve(poolAddr, consts.UINT64_MAX)
 		testing.SkipHeights(2)
 
-		positionId, liquidity, amount0, amount1 := pn.Mint(
+		positionId, liquidity, amount0, amount1 := cross(pn.Mint)(
 			barPath,      // token0
 			bazPath,      // token1
 			fee100,       // fee

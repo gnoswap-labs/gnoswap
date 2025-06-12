@@ -83,7 +83,7 @@ func testMintBarBaz100Pos01(t *testing.T) {
 		bar.Approve(poolAddr, consts.UINT64_MAX)
 		baz.Approve(poolAddr, consts.UINT64_MAX)
 
-		positionId, liquidity, amount0, amount1 := pn.Mint(
+		positionId, liquidity, amount0, amount1 := cross(pn.Mint)(
 			barPath,                  // token0
 			bazPath,                  // token1
 			fee100,                   // fee
@@ -109,7 +109,7 @@ func testMintBarBaz100Pos02(t *testing.T) {
 		bar.Approve(poolAddr, consts.UINT64_MAX)
 		baz.Approve(poolAddr, consts.UINT64_MAX)
 
-		positionId, liquidity, amount0, amount1 := pn.Mint(
+		positionId, liquidity, amount0, amount1 := cross(pn.Mint)(
 			barPath,      // token0
 			bazPath,      // token1
 			fee100,       // fee
@@ -135,7 +135,7 @@ func testMintBarBaz100Pos03(t *testing.T) {
 		bar.Approve(poolAddr, consts.UINT64_MAX)
 		baz.Approve(poolAddr, consts.UINT64_MAX)
 
-		positionId, liquidity, amount0, amount1 := pn.Mint(
+		positionId, liquidity, amount0, amount1 := cross(pn.Mint)(
 			barPath,     // token0
 			bazPath,     // token1
 			fee100,      // fee
@@ -161,7 +161,7 @@ func testMintBarBaz100Pos04(t *testing.T) {
 		bar.Approve(poolAddr, consts.UINT64_MAX)
 		baz.Approve(poolAddr, consts.UINT64_MAX)
 
-		positionId, liquidity, amount0, amount1 := pn.Mint(
+		positionId, liquidity, amount0, amount1 := cross(pn.Mint)(
 			barPath,     // token0
 			bazPath,     // token1
 			fee100,      // fee
@@ -187,7 +187,7 @@ func testMintBarBaz100Pos05(t *testing.T) {
 		bar.Approve(poolAddr, consts.UINT64_MAX)
 		baz.Approve(poolAddr, consts.UINT64_MAX)
 
-		positionId, liquidity, amount0, amount1 := pn.Mint(
+		positionId, liquidity, amount0, amount1 := cross(pn.Mint)(
 			barPath,                   // token0
 			bazPath,                   // token1
 			fee100,                    // fee

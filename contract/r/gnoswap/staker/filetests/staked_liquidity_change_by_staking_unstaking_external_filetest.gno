@@ -24,6 +24,8 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
+	pl "gno.land/r/gnoswap/v1/pool"
+	sr "gno.land/r/gnoswap/v1/staker"
 
 	"gno.land/r/gnoswap/v1/access"
 
@@ -96,7 +98,7 @@ func testMintBarQuxPos01() {
 	qux.Approve(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
-	pn.Mint(
+	cross(pn.Mint)(
 		barPath,
 		quxPath,
 		fee100,
@@ -119,7 +121,7 @@ func testMintBarQuxPos02() {
 	qux.Approve(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
-	pn.Mint(
+	cross(pn.Mint)(
 		barPath,
 		quxPath,
 		fee100,

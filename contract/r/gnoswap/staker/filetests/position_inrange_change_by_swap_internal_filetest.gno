@@ -104,7 +104,7 @@ func testMintWugnotGnsPos01() {
 	gns.Approve(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
-	pn.Mint(
+	cross(pn.Mint)(
 		wugnotPath,
 		gnsPath,
 		fee3000,
@@ -127,7 +127,7 @@ func testMintWugnotGnsPos02() {
 	gns.Approve(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
-	pn.Mint(
+	cross(pn.Mint)(
 		wugnotPath,
 		gnsPath,
 		fee3000,

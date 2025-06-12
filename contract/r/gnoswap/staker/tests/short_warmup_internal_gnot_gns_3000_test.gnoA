@@ -81,7 +81,7 @@ func testMintWugnotGnsPos01(t *testing.T) {
 		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 
-		positionId, liquidity, amount0, amount1 := pn.Mint(
+		positionId, liquidity, amount0, amount1 := cross(pn.Mint)(
 			wugnotPath,   // token0
 			gnsPath,      // token1
 			fee3000,      // fee

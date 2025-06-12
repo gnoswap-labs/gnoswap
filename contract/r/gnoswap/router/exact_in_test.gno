@@ -361,7 +361,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			teller.Approve(poolContract, maxApprove)
 
 			// Position Creation
-			pn.Mint(
+			cross(pn.Mint)(
 				tt.tokenPath0,
 				tt.tokenPath1,
 				tt.feeTier,

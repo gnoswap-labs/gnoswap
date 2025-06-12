@@ -249,7 +249,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			teller.Approve(poolContract, maxApprove)
 
 			// Position Creation
-			pn.Mint(
+			cross(pn.Mint)(
 				tt.tokenPath0,
 				tt.tokenPath1,
 				tt.feeTier,
@@ -418,7 +418,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			teller := common.GetTokenTeller(wugnotTokenPath)
 			teller.Approve(poolContract, maxApprove)
 			// Position Creation
-			positionId, liquidity, amount0, amount1 := pn.Mint(
+			positionId, liquidity, amount0, amount1 := cross(pn.Mint)(
 				tt.tokenPath0,
 				tt.tokenPath1,
 				tt.feeTier,
@@ -601,7 +601,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			teller := common.GetTokenTeller(wugnotTokenPath)
 			teller.Approve(poolContract, maxApprove)
 			// Position Creation
-			positionId, liquidity, amount0, amount1 := pn.Mint(
+			positionId, liquidity, amount0, amount1 := cross(pn.Mint)(
 				tt.tokenPath0,
 				tt.tokenPath1,
 				tt.feeTier,
@@ -785,7 +785,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			teller := common.GetTokenTeller(wugnotTokenPath)
 			teller.Approve(poolContract, maxApprove)
 			// Position Creation
-			positionId, liquidity, amount0, amount1 := pn.Mint(
+			positionId, liquidity, amount0, amount1 := cross(pn.Mint)(
 				tt.tokenPath0,
 				tt.tokenPath1,
 				tt.feeTier,

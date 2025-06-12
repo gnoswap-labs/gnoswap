@@ -11,9 +11,8 @@ import (
 
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/gns"
+	pn "gno.land/r/gnoswap/v1/position"
 	// pn "gno.land/r/gnoswap/v1/position"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
 )
 
 func TestMint(t *testing.T) {
@@ -532,7 +531,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 			cross(wugnot.Approve)(poolAddr, maxApprove)
 
 			// Position Creation
-			pn.Mint(
+			cross(pn.Mint)(
 				tt.tokenPath0,
 				tt.tokenPath1,
 				tt.feeTier,
