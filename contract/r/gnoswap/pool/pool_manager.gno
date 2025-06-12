@@ -2,7 +2,6 @@ package pool
 
 import (
 	"std"
-	"strconv"
 	"strings"
 
 	"gno.land/p/demo/avl"
@@ -60,7 +59,7 @@ func CreatePool(
 	prevAddr, prevRealm := getPrevAsString()
 
 	if poolCreationFee > 0 {
-		gns.TransferFrom(std.PreviousRealm().Address(), protocolFeeAddr, poolCreationFee)
+		cross(gns.TransferFrom)(std.PreviousRealm().Address(), protocolFeeAddr, poolCreationFee)
 		pf.AddToProtocolFee(consts.GNS_PATH, uint64(poolCreationFee))
 
 		std.Emit(
@@ -84,11 +83,11 @@ func CreatePool(
 		"prevRealm", prevRealm,
 		"token0Path", token0Path,
 		"token1Path", token1Path,
-		"fee", formatUint(uint64(fee)),
+		"fee", formatInt(fee),
 		"sqrtPriceX96", sqrtPriceX96,
 		"poolPath", poolPath,
-		"tick", formatInt(int64(currentTick)),
-		"tickSpacing", formatInt(int64(poolInfo.TickSpacing())),
+		"tick", formatInt(currentTick),
+		"tickSpacing", formatInt(poolInfo.TickSpacing()),
 	)
 }
 
@@ -204,7 +203,7 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 //   - If the fee amount is not registered in feeAmountTickSpacing
 func GetFeeAmountTickSpacing(fee uint32) int32 {
 	crossing()
-	feeStr := strconv.FormatUint(uint64(fee), 10)
+	feeStr := formatUint(fee)
 	iTickSpacing, exist := feeAmountTickSpacing.Get(feeStr)
 	if !exist {
 		panic(newErrorWithDetail(
@@ -247,7 +246,7 @@ func SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
 // Note: Smaller tick spacing allows for more granular price points but increases
 // computational overhead. Higher fee tiers typically use larger tick spacing.
 func setFeeAmountTickSpacing(fee uint32, tickSpacing int32) {
-	feeStr := strconv.FormatUint(uint64(fee), 10)
+	feeStr := formatUint(fee)
 	feeAmountTickSpacing.Set(feeStr, tickSpacing)
 }
 
@@ -305,11 +304,11 @@ func setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8, eventName string) 
 		eventName,
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"prevFeeProtocol0", formatUint(uint64(feeProtocol0Old)),
-		"prevFeeProtocol1", formatUint(uint64(feeProtocol1Old)),
-		"feeProtocol0", formatUint(uint64(feeProtocol0)),
-		"feeProtocol1", formatUint(uint64(feeProtocol1)),
-		"newFee", formatUint(uint64(newFee)),
+		"prevFeeProtocol0", formatUint(feeProtocol0Old),
+		"prevFeeProtocol1", formatUint(feeProtocol1Old),
+		"feeProtocol0", formatUint(feeProtocol0),
+		"feeProtocol1", formatUint(feeProtocol1),
+		"newFee", formatUint(newFee),
 	)
 }
 
