@@ -349,6 +349,7 @@ func CreateProject(
 	tier180Ratio uint64,
 	startTime uint64,
 ) string {
+	crossing()
 	assertOnlyNotHalted()
 	assertOnlyAdmin()
 
@@ -483,6 +484,8 @@ func CreateProject(
 // Returns:
 // - uint64: The amount of rewards transferred to the recipient.
 func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uint64 {
+	crossing()
+
 	if err := common.SatisfyCond(isUserCall()); err != nil {
 		panic(addDetailToError(errNotUserCaller, err.Error()))
 	}

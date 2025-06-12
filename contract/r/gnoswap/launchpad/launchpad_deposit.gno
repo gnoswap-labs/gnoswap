@@ -101,6 +101,7 @@ type ProjectTierInfo struct {
 //
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_deposit.gno#depositgns
 func DepositGns(targetProjectTierId string, amount uint64, referrer string) string {
+	crossing()
 	assertOnlyNotHalted()
 	assertValidAmount(amount)
 
@@ -239,6 +240,8 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 // - If the caller has no deposits.
 // - If an error occurs during the reward collection process.
 func CollectDepositGns() uint64 {
+	crossing()
+
 	caller := getPrevAddr()
 	depositList, ok := depositsByUser[caller]
 	if depositList == nil || !ok || len(depositList) == 0 {
@@ -267,6 +270,7 @@ func CollectDepositGns() uint64 {
 // - If the caller has no deposits in the specified project.
 // - If an error occurs during the reward collection process.
 func CollectDepositGnsByProjectId(projectId string) uint64 {
+	crossing()
 	assertValidProjectId(projectId)
 
 	_, err := getProject(projectId)
@@ -305,6 +309,7 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 // - If the deposit is not yet claimable or has already been collected.
 // - If an error occurs during the reward collection process.
 func CollectDepositGnsByDepositId(depositId string) uint64 {
+	crossing()
 	assertOnlyNotHalted()
 	assertValidProjectId(depositId)
 
