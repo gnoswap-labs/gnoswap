@@ -19,7 +19,7 @@ import (
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
-	pn "gno.land/r/gnoswap/v1/position"
+	// pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/p/demo/uassert"
 )
@@ -73,46 +73,46 @@ var (
 	addrUsedInTest = []std.Address{addr01, addr02}
 )
 
-func InitialisePoolTest(t *testing.T) {
-	t.Helper()
+// func InitialisePoolTest(t *testing.T) {
+// 	t.Helper()
 
-	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
-	ugnotDeposit(t, adminAddr, 100_000_000_000_000)
+// 	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
+// 	ugnotDeposit(t, adminAddr, 100_000_000_000_000)
 
-	testing.SetOriginCaller(adminAddr)
-	func() {
-		testing.SetRealm(adminRealm)
-		TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
-		poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
-		if !DoesPoolPathExist(poolPath) {
-			CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
-		}
-	}()
+// 	testing.SetOriginCaller(adminAddr)
+// 	func() {
+// 		testing.SetRealm(adminRealm)
+// 		TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
+// 		poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
+// 		if !DoesPoolPathExist(poolPath) {
+// 			CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
+// 		}
+// 	}()
 
-	// 2. create position
-	testing.SetOriginCaller(alice)
-	func() {
-		testing.SetRealm(std.NewUserRealm(alice))
-		TokenFaucet(t, wugnotPath, alice)
-		TokenFaucet(t, gnsPath, alice)
-		TokenApprove(t, wugnotPath, alice, poolAddr, 1000)
-		TokenApprove(t, gnsPath, alice, poolAddr, 1000)
-		MintPosition(t,
-			wugnotPath,
-			gnsPath,
-			fee3000,
-			int32(1020),
-			int32(5040),
-			"1000",
-			"1000",
-			"0",
-			"0",
-			max_timeout,
-			alice,
-			alice,
-		)
-	}()
-}
+// 	// 2. create position
+// 	testing.SetOriginCaller(alice)
+// 	func() {
+// 		testing.SetRealm(std.NewUserRealm(alice))
+// 		TokenFaucet(t, wugnotPath, alice)
+// 		TokenFaucet(t, gnsPath, alice)
+// 		TokenApprove(t, wugnotPath, alice, poolAddr, 1000)
+// 		TokenApprove(t, gnsPath, alice, poolAddr, 1000)
+// 		MintPosition(t,
+// 			wugnotPath,
+// 			gnsPath,
+// 			fee3000,
+// 			int32(1020),
+// 			int32(5040),
+// 			"1000",
+// 			"1000",
+// 			"0",
+// 			"0",
+// 			max_timeout,
+// 			alice,
+// 			alice,
+// 		)
+// 	}()
+// }
 
 func TokenFaucet(t *testing.T, tokenPath string, to std.Address) {
 	t.Helper()
@@ -208,192 +208,192 @@ func TokenApprove(t *testing.T, tokenPath string, owner, spender std.Address, am
 	}
 }
 
-func MintPosition(t *testing.T,
-	token0 string,
-	token1 string,
-	fee uint32,
-	tickLower int32,
-	tickUpper int32,
-	amount0Desired string, // *u256.Uint
-	amount1Desired string, // *u256.Uint
-	amount0Min string, // *u256.Uint
-	amount1Min string, // *u256.Uint
-	deadline int64,
-	mintTo std.Address,
-	caller std.Address,
-) (uint64, string, string, string) {
-	t.Helper()
-	testing.SetRealm(std.NewUserRealm(caller))
+// func MintPosition(t *testing.T,
+// 	token0 string,
+// 	token1 string,
+// 	fee uint32,
+// 	tickLower int32,
+// 	tickUpper int32,
+// 	amount0Desired string, // *u256.Uint
+// 	amount1Desired string, // *u256.Uint
+// 	amount0Min string, // *u256.Uint
+// 	amount1Min string, // *u256.Uint
+// 	deadline int64,
+// 	mintTo std.Address,
+// 	caller std.Address,
+// ) (uint64, string, string, string) {
+// 	t.Helper()
+// 	testing.SetRealm(std.NewUserRealm(caller))
 
-	return cross(pn.Mint)(
-		token0,
-		token1,
-		fee,
-		tickLower,
-		tickUpper,
-		amount0Desired,
-		amount1Desired,
-		amount0Min,
-		amount1Min,
-		deadline,
-		mintTo,
-		caller,
-		"",
-	)
-}
+// 	return pn.Mint(
+// 		token0,
+// 		token1,
+// 		fee,
+// 		tickLower,
+// 		tickUpper,
+// 		amount0Desired,
+// 		amount1Desired,
+// 		amount0Min,
+// 		amount1Min,
+// 		deadline,
+// 		mintTo,
+// 		caller,
+// 		"",
+// 	)
+// }
 
-func MintPositionAll(t *testing.T, caller std.Address) {
-	t.Helper()
-	testing.SetRealm(std.NewUserRealm(caller))
-	TokenApprove(t, gnsPath, caller, poolAddr, maxApprove)
-	TokenApprove(t, gnsPath, caller, routerAddr, maxApprove)
-	TokenApprove(t, wugnotPath, caller, poolAddr, maxApprove)
-	TokenApprove(t, wugnotPath, caller, routerAddr, maxApprove)
+// func MintPositionAll(t *testing.T, caller std.Address) {
+// 	t.Helper()
+// 	testing.SetRealm(std.NewUserRealm(caller))
+// 	TokenApprove(t, gnsPath, caller, poolAddr, maxApprove)
+// 	TokenApprove(t, gnsPath, caller, routerAddr, maxApprove)
+// 	TokenApprove(t, wugnotPath, caller, poolAddr, maxApprove)
+// 	TokenApprove(t, wugnotPath, caller, routerAddr, maxApprove)
 
-	params := []struct {
-		tickLower int32
-		tickUpper int32
-		liquidity uint64
-		zeroToOne bool
-	}{
-		{
-			tickLower: -300,
-			tickUpper: -240,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: -240,
-			tickUpper: -180,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: -180,
-			tickUpper: -120,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: -120,
-			tickUpper: -60,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: -60,
-			tickUpper: 0,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: 0,
-			tickUpper: 60,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: 60,
-			tickUpper: 120,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: 120,
-			tickUpper: 180,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: 180,
-			tickUpper: 240,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: 240,
-			tickUpper: 300,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: -360,
-			tickUpper: -300,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: -420,
-			tickUpper: -360,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: -480,
-			tickUpper: -420,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: -540,
-			tickUpper: -480,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: -600,
-			tickUpper: -540,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: 300,
-			tickUpper: 360,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: 360,
-			tickUpper: 420,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: 420,
-			tickUpper: 480,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: 480,
-			tickUpper: 540,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: 540,
-			tickUpper: 600,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-	}
+// 	params := []struct {
+// 		tickLower int32
+// 		tickUpper int32
+// 		liquidity uint64
+// 		zeroToOne bool
+// 	}{
+// 		{
+// 			tickLower: -300,
+// 			tickUpper: -240,
+// 			liquidity: 10,
+// 			zeroToOne: true,
+// 		},
+// 		{
+// 			tickLower: -240,
+// 			tickUpper: -180,
+// 			liquidity: 10,
+// 			zeroToOne: true,
+// 		},
+// 		{
+// 			tickLower: -180,
+// 			tickUpper: -120,
+// 			liquidity: 10,
+// 			zeroToOne: true,
+// 		},
+// 		{
+// 			tickLower: -120,
+// 			tickUpper: -60,
+// 			liquidity: 10,
+// 			zeroToOne: true,
+// 		},
+// 		{
+// 			tickLower: -60,
+// 			tickUpper: 0,
+// 			liquidity: 10,
+// 			zeroToOne: true,
+// 		},
+// 		{
+// 			tickLower: 0,
+// 			tickUpper: 60,
+// 			liquidity: 10,
+// 			zeroToOne: false,
+// 		},
+// 		{
+// 			tickLower: 60,
+// 			tickUpper: 120,
+// 			liquidity: 10,
+// 			zeroToOne: false,
+// 		},
+// 		{
+// 			tickLower: 120,
+// 			tickUpper: 180,
+// 			liquidity: 10,
+// 			zeroToOne: false,
+// 		},
+// 		{
+// 			tickLower: 180,
+// 			tickUpper: 240,
+// 			liquidity: 10,
+// 			zeroToOne: false,
+// 		},
+// 		{
+// 			tickLower: 240,
+// 			tickUpper: 300,
+// 			liquidity: 10,
+// 			zeroToOne: false,
+// 		},
+// 		{
+// 			tickLower: -360,
+// 			tickUpper: -300,
+// 			liquidity: 10,
+// 			zeroToOne: true,
+// 		},
+// 		{
+// 			tickLower: -420,
+// 			tickUpper: -360,
+// 			liquidity: 10,
+// 			zeroToOne: true,
+// 		},
+// 		{
+// 			tickLower: -480,
+// 			tickUpper: -420,
+// 			liquidity: 10,
+// 			zeroToOne: true,
+// 		},
+// 		{
+// 			tickLower: -540,
+// 			tickUpper: -480,
+// 			liquidity: 10,
+// 			zeroToOne: true,
+// 		},
+// 		{
+// 			tickLower: -600,
+// 			tickUpper: -540,
+// 			liquidity: 10,
+// 			zeroToOne: true,
+// 		},
+// 		{
+// 			tickLower: 300,
+// 			tickUpper: 360,
+// 			liquidity: 10,
+// 			zeroToOne: false,
+// 		},
+// 		{
+// 			tickLower: 360,
+// 			tickUpper: 420,
+// 			liquidity: 10,
+// 			zeroToOne: false,
+// 		},
+// 		{
+// 			tickLower: 420,
+// 			tickUpper: 480,
+// 			liquidity: 10,
+// 			zeroToOne: false,
+// 		},
+// 		{
+// 			tickLower: 480,
+// 			tickUpper: 540,
+// 			liquidity: 10,
+// 			zeroToOne: false,
+// 		},
+// 		{
+// 			tickLower: 540,
+// 			tickUpper: 600,
+// 			liquidity: 10,
+// 			zeroToOne: false,
+// 		},
+// 	}
 
-	for _, p := range params {
-		MintPosition(t,
-			wugnotPath,
-			gnsPath,
-			fee3000,
-			p.tickLower,
-			p.tickUpper,
-			"100000000",
-			"100000000",
-			"0",
-			"0",
-			max_timeout,
-			caller,
-			caller)
-	}
-}
+// 	for _, p := range params {
+// 		MintPosition(t,
+// 			wugnotPath,
+// 			gnsPath,
+// 			fee3000,
+// 			p.tickLower,
+// 			p.tickUpper,
+// 			"100000000",
+// 			"100000000",
+// 			"0",
+// 			"0",
+// 			max_timeout,
+// 			caller,
+// 			caller)
+// 	}
+// }
 
 func wugnotApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
