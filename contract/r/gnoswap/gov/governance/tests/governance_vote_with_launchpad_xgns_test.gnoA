@@ -71,7 +71,7 @@ func testLaunchpad(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		obl.Approve(launchpadAddr, 1_000_000_000)
-		projectId := lp.CreateProject(
+		projectId := cross(lp.CreateProject)(
 			"OBL PROTOCOL",
 			oblPath,
 			projectAddr,
@@ -98,7 +98,7 @@ func testLaunchpad(t *testing.T) {
 		uassert.Equal(t, xgns.TotalSupply(), uint64(0))
 		uassert.Equal(t, xgns.VotingSupply(), uint64(0))
 
-		lp.DepositGns(
+		cross(lp.DepositGns)(
 			`gno.land/r/onbloc/obl:123:30`,
 			uint64(1_000_000), // this xGNS can not be used for voting
 			"",                // referrer
