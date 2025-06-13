@@ -398,7 +398,7 @@ func TokenApprove(t *testing.T, tokenPath string, owner, spender std.Address, am
 func wugnotApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	wugnot.Approve(spender, amount)
+	cross(wugnot.Approve)(spender, amount)
 }
 
 func gnsApprove(t *testing.T, owner, spender std.Address, amount int64) {
@@ -410,73 +410,73 @@ func gnsApprove(t *testing.T, owner, spender std.Address, amount int64) {
 func barApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	bar.Approve(spender, amount)
+	cross(bar.Approve)(spender, amount)
 }
 
 func bazApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	baz.Approve(spender, amount)
+	cross(baz.Approve)(spender, amount)
 }
 
 func fooApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	foo.Approve(spender, amount)
+	cross(foo.Approve)(spender, amount)
 }
 
 func oblApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	obl.Approve(spender, amount)
+	cross(obl.Approve)(spender, amount)
 }
 
 func quxApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	qux.Approve(spender, amount)
+	cross(qux.Approve)(spender, amount)
 }
 
 func wugnotTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	wugnot.Transfer(to, amount)
+	cross(wugnot.Transfer)(to, amount)
 }
 
 func gnsTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	gns.Transfer(to, amount)
+	cross(gns.Transfer)(to, amount)
 }
 
 func barTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	bar.Transfer(to, amount)
+	cross(bar.Transfer)(to, amount)
 }
 
 func bazTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	baz.Transfer(to, amount)
+	cross(baz.Transfer)(to, amount)
 }
 
 func fooTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	foo.Transfer(to, amount)
+	cross(foo.Transfer)(to, amount)
 }
 
 func oblTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	obl.Transfer(to, amount)
+	cross(obl.Transfer)(to, amount)
 }
 
 func quxTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	qux.Transfer(to, amount)
+	cross(qux.Transfer)(to, amount)
 }
 
 // ----------------------------------------------------------------------------
