@@ -455,24 +455,20 @@ func sliceToFourUint64(t *testing.T, slice []uint64) (uint64, uint64, uint64, ui
 }
 
 func setupTestEnv(t *testing.T) {
-	// 테스트용 distributionBpsPct 초기화
 	distributionBpsPct = avl.NewTree()
-	
-	// 테스트용 분배 비율 설정
+
 	distributionBpsPct.Set("1", int64(7500)) // LIQUIDITY_STAKER
 	distributionBpsPct.Set("2", int64(2000)) // DEVOPS
 	distributionBpsPct.Set("3", int64(500))  // COMMUNITY_POOL
 	distributionBpsPct.Set("4", int64(0))    // GOV_STAKER
 
-	// 분배된 금액 초기화
 	distributedToStaker = 0
 	distributedToDevOps = 0
 	distributedToCommunityPool = 0
 	distributedToGovStaker = 0
 
-	// 테스트에 필요한 잔액 설정
 	testing.SetRealm(adminRealm)
-	cross(gns.Transfer)(emissionAddr, 1000000) // 충분한 잔액 설정
+	cross(gns.Transfer)(emissionAddr, 1000000)
 }
 
 func TestDistributeToTarget(t *testing.T) {
@@ -486,10 +482,10 @@ func TestDistributeToTarget(t *testing.T) {
 		totalSent := distributeToTarget(amount)
 
 		// Expected distribution amounts
-		expectedStaker := int64(7500)    // 75%
-		expectedDevOps := int64(2000)    // 20%
-		expectedCommunity := int64(500)  // 5%
-		expectedGov := int64(0)          // 0%
+		expectedStaker := int64(7500)   // 75%
+		expectedDevOps := int64(2000)   // 20%
+		expectedCommunity := int64(500) // 5%
+		expectedGov := int64(0)         // 0%
 
 		// Verify actual distribution amounts
 		if distributedToStaker != expectedStaker {
@@ -537,8 +533,8 @@ func TestDistributeToTarget(t *testing.T) {
 		}
 
 		// Verify all distribution amounts are 0
-		if distributedToStaker != 0 || distributedToDevOps != 0 || 
-		   distributedToCommunityPool != 0 || distributedToGovStaker != 0 {
+		if distributedToStaker != 0 || distributedToDevOps != 0 ||
+			distributedToCommunityPool != 0 || distributedToGovStaker != 0 {
 			t.Error("All distribution amounts should be 0 for zero amount")
 		}
 	})
@@ -551,10 +547,10 @@ func TestDistributeToTarget(t *testing.T) {
 		totalSent := distributeToTarget(amount)
 
 		// Expected distribution amounts
-		expectedStaker := int64(750000)    // 75%
-		expectedDevOps := int64(200000)    // 20%
-		expectedCommunity := int64(50000)  // 5%
-		expectedGov := int64(0)            // 0%
+		expectedStaker := int64(750000)   // 75%
+		expectedDevOps := int64(200000)   // 20%
+		expectedCommunity := int64(50000) // 5%
+		expectedGov := int64(0)           // 0%
 
 		// Verify actual distribution amounts
 		if distributedToStaker != expectedStaker {
@@ -596,15 +592,15 @@ func TestDistributeToTarget(t *testing.T) {
 		resetObject(t)
 		setupTestEnv(t)
 		amount := int64(-10000)
-		
+
 		// Negative amount should cause panic
 		uassert.PanicsWithMessage(t, "invalid amount or bptPct", func() {
 			distributeToTarget(amount)
 		})
 
 		// Verify all distribution amounts are 0
-		if distributedToStaker != 0 || distributedToDevOps != 0 || 
-		   distributedToCommunityPool != 0 || distributedToGovStaker != 0 {
+		if distributedToStaker != 0 || distributedToDevOps != 0 ||
+			distributedToCommunityPool != 0 || distributedToGovStaker != 0 {
 			t.Error("All distribution amounts should be 0 for negative amount")
 		}
 	})
@@ -614,15 +610,15 @@ func TestDistributeToTarget(t *testing.T) {
 		resetObject(t)
 		setupTestEnv(t)
 		amount := int64(9223372036854775807) // int64 maximum value
-		
+
 		// Maximum value should cause panic
 		uassert.PanicsWithMessage(t, "amount too large", func() {
 			distributeToTarget(amount)
 		})
 
 		// Verify all distribution amounts are 0
-		if distributedToStaker != 0 || distributedToDevOps != 0 || 
-		   distributedToCommunityPool != 0 || distributedToGovStaker != 0 {
+		if distributedToStaker != 0 || distributedToDevOps != 0 ||
+			distributedToCommunityPool != 0 || distributedToGovStaker != 0 {
 			t.Error("All distribution amounts should be 0 for maximum value")
 		}
 	})
@@ -635,10 +631,10 @@ func TestDistributeToTarget(t *testing.T) {
 		totalSent := distributeToTarget(amount)
 
 		// Expected distribution amounts (decimal part is truncated)
-		expectedStaker := int64(7500)    // 75%
-		expectedDevOps := int64(2000)    // 20%
-		expectedCommunity := int64(500)  // 5%
-		expectedGov := int64(0)          // 0%
+		expectedStaker := int64(7500)   // 75%
+		expectedDevOps := int64(2000)   // 20%
+		expectedCommunity := int64(500) // 5%
+		expectedGov := int64(0)         // 0%
 
 		// Verify actual distribution amounts
 		if distributedToStaker != expectedStaker {
