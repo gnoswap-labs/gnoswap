@@ -68,7 +68,7 @@ func CreatePool(
 			"prevRealm", prevRealm,
 			"poolPath", poolPath,
 			"feeTokenPath", consts.GNS_PATH,
-			"feeAmount", formatUint(poolCreationFee),
+			"feeAmount", formatInt(poolCreationFee),
 		)
 	}
 
