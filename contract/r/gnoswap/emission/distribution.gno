@@ -174,6 +174,12 @@ func calculateAmount(amount, bptPct int64) int64 {
 	if amount < 0 || bptPct < 0 {
 		panic("invalid amount or bptPct")
 	}
+
+	// 최댓값 검사
+	if amount > 9223372036854775807/10000 {
+		panic("amount too large")
+	}
+
 	return amount * bptPct / 10000
 }
 

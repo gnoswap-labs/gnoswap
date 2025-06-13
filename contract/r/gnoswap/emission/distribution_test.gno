@@ -4,6 +4,7 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v1/gns"
@@ -451,4 +452,212 @@ func sliceToFourUint64(t *testing.T, slice []uint64) (uint64, uint64, uint64, ui
 	t.Helper()
 
 	return slice[0], slice[1], slice[2], slice[3]
+}
+
+func setupTestEnv(t *testing.T) {
+	// 테스트용 distributionBpsPct 초기화
+	distributionBpsPct = avl.NewTree()
+	
+	// 테스트용 분배 비율 설정
+	distributionBpsPct.Set("1", int64(7500)) // LIQUIDITY_STAKER
+	distributionBpsPct.Set("2", int64(2000)) // DEVOPS
+	distributionBpsPct.Set("3", int64(500))  // COMMUNITY_POOL
+	distributionBpsPct.Set("4", int64(0))    // GOV_STAKER
+
+	// 분배된 금액 초기화
+	distributedToStaker = 0
+	distributedToDevOps = 0
+	distributedToCommunityPool = 0
+	distributedToGovStaker = 0
+
+	// 테스트에 필요한 잔액 설정
+	testing.SetRealm(adminRealm)
+	cross(gns.Transfer)(emissionAddr, 1000000) // 충분한 잔액 설정
+}
+
+func TestDistributeToTarget(t *testing.T) {
+	// Initialize test environment
+	resetObject(t)
+
+	// Test case 1: Basic distribution test
+	t.Run("Basic distribution test", func(t *testing.T) {
+		setupTestEnv(t)
+		amount := int64(10000)
+		totalSent := distributeToTarget(amount)
+
+		// Expected distribution amounts
+		expectedStaker := int64(7500)    // 75%
+		expectedDevOps := int64(2000)    // 20%
+		expectedCommunity := int64(500)  // 5%
+		expectedGov := int64(0)          // 0%
+
+		// Verify actual distribution amounts
+		if distributedToStaker != expectedStaker {
+			t.Errorf("Staker distribution amount mismatch: expected %d, got %d", expectedStaker, distributedToStaker)
+		}
+		if distributedToDevOps != expectedDevOps {
+			t.Errorf("DevOps distribution amount mismatch: expected %d, got %d", expectedDevOps, distributedToDevOps)
+		}
+		if distributedToCommunityPool != expectedCommunity {
+			t.Errorf("Community pool distribution amount mismatch: expected %d, got %d", expectedCommunity, distributedToCommunityPool)
+		}
+		if distributedToGovStaker != expectedGov {
+			t.Errorf("Governance staker distribution amount mismatch: expected %d, got %d", expectedGov, distributedToGovStaker)
+		}
+
+		// Verify total distribution amount
+		expectedTotal := expectedStaker + expectedDevOps + expectedCommunity + expectedGov
+		if totalSent != expectedTotal {
+			t.Errorf("Total distribution amount mismatch: expected %d, got %d", expectedTotal, totalSent)
+		}
+
+		// Verify accumulated distribution amounts
+		if accuDistributedToStaker != expectedStaker {
+			t.Errorf("Staker accumulated distribution amount mismatch: expected %d, got %d", expectedStaker, accuDistributedToStaker)
+		}
+		if accuDistributedToDevOps != expectedDevOps {
+			t.Errorf("DevOps accumulated distribution amount mismatch: expected %d, got %d", expectedDevOps, accuDistributedToDevOps)
+		}
+		if accuDistributedToCommunityPool != expectedCommunity {
+			t.Errorf("Community pool accumulated distribution amount mismatch: expected %d, got %d", expectedCommunity, accuDistributedToCommunityPool)
+		}
+		if accuDistributedToGovStaker != expectedGov {
+			t.Errorf("Governance staker accumulated distribution amount mismatch: expected %d, got %d", expectedGov, accuDistributedToGovStaker)
+		}
+	})
+
+	// Test case 2: Zero amount distribution test
+	t.Run("Zero amount distribution test", func(t *testing.T) {
+		resetObject(t)
+		amount := int64(0)
+		totalSent := distributeToTarget(amount)
+
+		if totalSent != 0 {
+			t.Errorf("Total distribution amount is not 0 for zero amount: %d", totalSent)
+		}
+
+		// Verify all distribution amounts are 0
+		if distributedToStaker != 0 || distributedToDevOps != 0 || 
+		   distributedToCommunityPool != 0 || distributedToGovStaker != 0 {
+			t.Error("All distribution amounts should be 0 for zero amount")
+		}
+	})
+
+	// Test case 3: Large amount distribution test
+	t.Run("Large amount distribution test", func(t *testing.T) {
+		resetObject(t)
+		setupTestEnv(t)
+		amount := int64(1000000)
+		totalSent := distributeToTarget(amount)
+
+		// Expected distribution amounts
+		expectedStaker := int64(750000)    // 75%
+		expectedDevOps := int64(200000)    // 20%
+		expectedCommunity := int64(50000)  // 5%
+		expectedGov := int64(0)            // 0%
+
+		// Verify actual distribution amounts
+		if distributedToStaker != expectedStaker {
+			t.Errorf("Staker distribution amount mismatch: expected %d, got %d", expectedStaker, distributedToStaker)
+		}
+		if distributedToDevOps != expectedDevOps {
+			t.Errorf("DevOps distribution amount mismatch: expected %d, got %d", expectedDevOps, distributedToDevOps)
+		}
+		if distributedToCommunityPool != expectedCommunity {
+			t.Errorf("Community pool distribution amount mismatch: expected %d, got %d", expectedCommunity, distributedToCommunityPool)
+		}
+		if distributedToGovStaker != expectedGov {
+			t.Errorf("Governance staker distribution amount mismatch: expected %d, got %d", expectedGov, distributedToGovStaker)
+		}
+
+		// Verify total distribution amount
+		expectedTotal := expectedStaker + expectedDevOps + expectedCommunity + expectedGov
+		if totalSent != expectedTotal {
+			t.Errorf("Total distribution amount mismatch: expected %d, got %d", expectedTotal, totalSent)
+		}
+
+		// Verify accumulated distribution amounts
+		if accuDistributedToStaker != expectedStaker {
+			t.Errorf("Staker accumulated distribution amount mismatch: expected %d, got %d", expectedStaker, accuDistributedToStaker)
+		}
+		if accuDistributedToDevOps != expectedDevOps {
+			t.Errorf("DevOps accumulated distribution amount mismatch: expected %d, got %d", expectedDevOps, accuDistributedToDevOps)
+		}
+		if accuDistributedToCommunityPool != expectedCommunity {
+			t.Errorf("Community pool accumulated distribution amount mismatch: expected %d, got %d", expectedCommunity, accuDistributedToCommunityPool)
+		}
+		if accuDistributedToGovStaker != expectedGov {
+			t.Errorf("Governance staker accumulated distribution amount mismatch: expected %d, got %d", expectedGov, accuDistributedToGovStaker)
+		}
+	})
+
+	// Test case 4: Negative amount distribution test
+	t.Run("Negative amount distribution test", func(t *testing.T) {
+		resetObject(t)
+		setupTestEnv(t)
+		amount := int64(-10000)
+		
+		// Negative amount should cause panic
+		uassert.PanicsWithMessage(t, "invalid amount or bptPct", func() {
+			distributeToTarget(amount)
+		})
+
+		// Verify all distribution amounts are 0
+		if distributedToStaker != 0 || distributedToDevOps != 0 || 
+		   distributedToCommunityPool != 0 || distributedToGovStaker != 0 {
+			t.Error("All distribution amounts should be 0 for negative amount")
+		}
+	})
+
+	// Test case 5: Maximum value distribution test
+	t.Run("Maximum value distribution test", func(t *testing.T) {
+		resetObject(t)
+		setupTestEnv(t)
+		amount := int64(9223372036854775807) // int64 maximum value
+		
+		// Maximum value should cause panic
+		uassert.PanicsWithMessage(t, "amount too large", func() {
+			distributeToTarget(amount)
+		})
+
+		// Verify all distribution amounts are 0
+		if distributedToStaker != 0 || distributedToDevOps != 0 || 
+		   distributedToCommunityPool != 0 || distributedToGovStaker != 0 {
+			t.Error("All distribution amounts should be 0 for maximum value")
+		}
+	})
+
+	// Test case 6: Decimal amount distribution test
+	t.Run("Decimal amount distribution test", func(t *testing.T) {
+		resetObject(t)
+		setupTestEnv(t)
+		amount := int64(10001) // Amount with decimal point (e.g., 10000.1)
+		totalSent := distributeToTarget(amount)
+
+		// Expected distribution amounts (decimal part is truncated)
+		expectedStaker := int64(7500)    // 75%
+		expectedDevOps := int64(2000)    // 20%
+		expectedCommunity := int64(500)  // 5%
+		expectedGov := int64(0)          // 0%
+
+		// Verify actual distribution amounts
+		if distributedToStaker != expectedStaker {
+			t.Errorf("Staker distribution amount mismatch: expected %d, got %d", expectedStaker, distributedToStaker)
+		}
+		if distributedToDevOps != expectedDevOps {
+			t.Errorf("DevOps distribution amount mismatch: expected %d, got %d", expectedDevOps, distributedToDevOps)
+		}
+		if distributedToCommunityPool != expectedCommunity {
+			t.Errorf("Community pool distribution amount mismatch: expected %d, got %d", expectedCommunity, distributedToCommunityPool)
+		}
+		if distributedToGovStaker != expectedGov {
+			t.Errorf("Governance staker distribution amount mismatch: expected %d, got %d", expectedGov, distributedToGovStaker)
+		}
+
+		// Verify total distribution amount
+		expectedTotal := expectedStaker + expectedDevOps + expectedCommunity + expectedGov
+		if totalSent != expectedTotal {
+			t.Errorf("Total distribution amount mismatch: expected %d, got %d", expectedTotal, totalSent)
+		}
+	})
 }
