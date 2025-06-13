@@ -127,12 +127,12 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 		panic(addDetailToError(errInactiveTier, tierType))
 	}
 
-	success := referral.TryRegister(caller, referrer)
+	success := cross(referral.TryRegister)(caller, referrer)
 	actualReferrer := referrer
 	if !success {
 		actualReferrer = referral.GetReferral(caller.String())
 	}
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 
 	now := uint64(time.Now().Unix())
 	info := ProjectTierInfo{
@@ -320,7 +320,7 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 		panic(addDetailToError(errInvalidInput, err.Error()))
 	}
 
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 
 	project = projects[deposit.projectId]
 

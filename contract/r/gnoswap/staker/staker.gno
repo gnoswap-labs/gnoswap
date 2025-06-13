@@ -221,15 +221,16 @@ func registerCallbackStakerEmissionChange() {
 //
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#staketoken
 func StakeToken(positionId uint64, referrer string) (string, string, string) {
+	crossing()
 	assertOnlyNotHalted()
 	assertOnlyNotStaked(positionId)
 
-	cross(en.MintAndDistributeGns())
+	cross(en.MintAndDistributeGns)()
 
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := getPrevAddr()
 
-	success := referral.TryRegister(caller, referrer)
+	success := cross(referral.TryRegister)(caller, referrer)
 	actualReferrer := referrer
 	if !success {
 		actualReferrer = referral.GetReferral(caller.String())
@@ -383,7 +384,7 @@ func transferDeposit(positionId uint64, owner, caller, to std.Address) error {
 		)
 	}
 	// transfer NFT ownership
-	return gnft.TransferFrom(owner, to, positionIdFrom(positionId))
+	return cross(gnft.TransferFrom)(owner, to, positionIdFrom(positionId))
 }
 
 ////////////////////////////////////////////////////////////
@@ -411,6 +412,7 @@ func transferDeposit(positionId uint64, owner, caller, to std.Address) error {
 //
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#collectreward
 func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[string]int64, map[string]int64) {
+	crossing()
 	assertOnlyNotHalted()
 
 	deposit := deposits.Get(positionId)
@@ -419,7 +421,7 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[st
 		panic(addDetailToError(errNoPermission, ufmt.Sprintf("caller is not owner of positionId(%d)", positionId)))
 	}
 
-	cross(en.MintAndDistributeGns())
+	cross(en.MintAndDistributeGns)()
 
 	currentHeight := std.ChainHeight()
 	// get all internal and external rewards
@@ -549,6 +551,7 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[st
 //
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#unstaketoken
 func UnStakeToken(positionId uint64, unwrapResult bool) (string, string, string) { // poolPath, token0Amount, token1Amount
+	crossing()
 	assertOnlyNotHalted()
 
 	// Verify that the caller is the actual owner of the deposit to prevent unauthorized unstaking

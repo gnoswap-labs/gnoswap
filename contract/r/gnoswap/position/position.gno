@@ -97,7 +97,7 @@ func Mint(
 	}
 	checkDeadline(deadline)
 
-	referral.TryRegister(caller, referrer)
+	cross(referral.TryRegister)(caller, referrer)
 
 	mintAndDistributeGnsCallback()
 

@@ -49,7 +49,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 		panic(addDetailToError(
 			errNotExistDeposit, ufmt.Sprintf("depositId (%s) not found", projectId)))
 	}
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 
 	currentHeight := uint64(std.ChainHeight())
 	totalReward := uint64(0) // toUser
@@ -138,7 +138,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 		panic(err.Error())
 	}
 
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 
 	tier, err := project.Tier(convertTierTypeStrToUint64(deposit.Tier()))
 	if err != nil {
