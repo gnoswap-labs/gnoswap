@@ -23,7 +23,6 @@ func resetGnsTokenObject(t *testing.T) {
 	t.Helper()
 
 	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
-	UserTeller = token.CallerTeller()
 
 	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 	owner = ownable.NewWithAddress(adminAddr)

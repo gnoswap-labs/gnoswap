@@ -60,6 +60,13 @@ func TestCreatePool(t *testing.T) {
 			sqrtPrice:  "4295128740",
 		},
 		{
+			name:       "success - wugnot <> gns pool",
+			token0Path: "gno.land/r/demo/wugnot",
+			token1Path: "gno.land/r/gnoswap/v1/gns",
+			fee:        3000,
+			sqrtPrice:  "79228162514264337593543950337",
+		},
+		{
 			name:        "fail - same tokens",
 			token0Path:  barPath,
 			token1Path:  barPath,
@@ -87,11 +94,29 @@ func TestCreatePool(t *testing.T) {
 			shouldPanic: true,
 			panicMsg:    "[GNOSWAP-POOL-003] pool already created || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000) not to exist",
 		},
+		{
+			name:        "fail - invalid fee amount",
+			token0Path:  barPath,
+			token1Path:  fooPath,
+			fee:         1234,
+			sqrtPrice:   "4295128740",
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-POOL-002] unsupported fee tier || expected fee(1234) to be one of 100, 500, 3000, 10000",
+		},
+		{
+			name:        "fail - invalid sqrtPrice (too small)",
+			token0Path:  bazPath,
+			token1Path:  barPath,
+			fee:         3000,
+			sqrtPrice:   "0",
+			shouldPanic: true,
+			panicMsg:    "sqrtPriceX96(0) is out of range",
+		},
 	}
 
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	func() {
-		testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/pool"))
 		SetPoolCreationFeeByAdmin(0)
 	}()
 
@@ -111,33 +136,31 @@ func TestCreatePool(t *testing.T) {
 			}
 
 			func() {
-				testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+				testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/pool"))
 				CreatePool(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
 			}()
 
-			if !tt.shouldPanic {
-				// verify pool was created correctly
-				poolPath := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
-				pool := mustGetPool(poolPath)
+			// verify pool was created correctly
+			poolPath := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
+			pool := mustGetPool(poolPath)
 
-				// check if GNOT was properly wrapped
-				expectedToken0 := tt.token0Path
-				expectedToken1 := tt.token1Path
-				if tt.inOrder {
-					expectedToken0, expectedToken1 = expectedToken1, expectedToken0
-				}
+			// check if GNOT was properly wrapped
+			expectedToken0 := tt.token0Path
+			expectedToken1 := tt.token1Path
+			if tt.inOrder {
+				expectedToken0, expectedToken1 = expectedToken1, expectedToken0
+			}
 
-				if expectedToken0 == consts.GNOT {
-					expectedToken0 = consts.WRAPPED_WUGNOT
-				}
-				if expectedToken1 == consts.GNOT {
-					expectedToken1 = consts.WRAPPED_WUGNOT
-				}
+			if expectedToken0 == consts.GNOT {
+				expectedToken0 = consts.WRAPPED_WUGNOT
+			}
+			if expectedToken1 == consts.GNOT {
+				expectedToken1 = consts.WRAPPED_WUGNOT
+			}
 
-				if pool.token0Path != expectedToken0 || pool.token1Path != expectedToken1 {
-					t.Errorf("incorrect token paths in pool. got %s,%s want %s,%s",
-						pool.token0Path, pool.token1Path, expectedToken0, expectedToken1)
-				}
+			if pool.token0Path != expectedToken0 || pool.token1Path != expectedToken1 {
+				t.Errorf("incorrect token paths in pool. got %s,%s want %s,%s",
+					pool.token0Path, pool.token1Path, expectedToken0, expectedToken1)
 			}
 		})
 	}
@@ -145,56 +168,100 @@ func TestCreatePool(t *testing.T) {
 	resetObject(t)
 }
 
-// func TestGetPool(t *testing.T) {
-// 	tests := []struct {
-// 		name        string
-// 		setupFn     func(t *testing.T)
-// 		action      func(t *testing.T)
-// 		shouldPanic bool
-// 		expected    string
-// 	}{
-// 		{
-// 			name: "Panic - unregisterd poolPath ",
-// 			setupFn: func(t *testing.T) {
-// 				InitialisePoolTest(t)
-// 			},
-// 			action: func(t *testing.T) {
-// 				GetPool(barPath, fooPath, fee500)
-// 			},
-// 			shouldPanic: true,
-// 			expected:    "[GNOSWAP-POOL-008] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500) to exist",
-// 		},
-// 	}
+func TestGetPool(t *testing.T) {
+	tests := []struct {
+		name        string
+		setupFn     func(t *testing.T)
+		action      func(t *testing.T) *Pool
+		shouldPanic bool
+		expected    string
+		verifyFn    func(t *testing.T, pool *Pool)
+	}{
+		{
+			name: "Panic - unregisterd poolPath ",
+			setupFn: func(t *testing.T) {
+				testing.SetRealm(adminRealm)
+				func() {
+					testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/pool"))
+					SetPoolCreationFeeByAdmin(0)
+				}()
+			},
+			action: func(t *testing.T) *Pool {
+				return GetPool(barPath, fooPath, fee500)
+			},
+			shouldPanic: true,
+			expected:    "[GNOSWAP-POOL-008] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500) to exist",
+		},
+		{
+			name: "success - get pool (bar:foo:500)",
+			setupFn: func(t *testing.T) {
+				testing.SetRealm(adminRealm)
+				func() {
+					testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/pool"))
+					SetPoolCreationFeeByAdmin(0)
+				}()
 
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			defer func() {
-// 				if r := recover(); r == nil {
-// 					if tt.shouldPanic {
-// 						t.Errorf(">>> %s: expected panic but got none", tt.name)
-// 					}
-// 				} else {
-// 					switch r.(type) {
-// 					case string:
-// 						if r.(string) != tt.expected {
-// 							t.Errorf(">>> %s: got panic %v, want %v", tt.name, r, tt.expected)
-// 						}
-// 					case error:
-// 						if r.(error).Error() != tt.expected {
-// 							t.Errorf(">>> %s: got panic %v, want %v", tt.name, r.(error).Error(), tt.expected)
-// 						}
-// 					default:
-// 						t.Errorf(">>> %s: got panic %v, want %v", tt.name, r, tt.expected)
-// 					}
-// 				}
-// 			}()
-// 			if tt.setupFn != nil {
-// 				tt.setupFn(t)
-// 			}
+				func() {
+					testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/pool"))
+					CreatePool(barPath, fooPath, fee500, "4295128740")
+				}()
+			},
+			action: func(t *testing.T) *Pool {
+				return GetPool(barPath, fooPath, fee500)
+			},
+			verifyFn: func(t *testing.T, pool *Pool) {
+				if pool.token0Path != barPath {
+					t.Errorf("expected token0Path %s, got %s", barPath, pool.token0Path)
+				}
+				if pool.token1Path != fooPath {
+					t.Errorf("expected token1Path %s, got %s", fooPath, pool.token1Path)
+				}
+				if pool.fee != fee500 {
+					t.Errorf("expected fee %d, got %d", fee500, pool.fee)
+				}
+				if pool.slot0.sqrtPriceX96.ToString() != "4295128740" {
+					t.Errorf("expected sqrtPriceX96 %s, got %s", "4295128740", pool.slot0.sqrtPriceX96.ToString())
+				}
+			},
+		},
+	}
 
-// 			if tt.shouldPanic {
-// 				tt.action(t)
-// 			}
-// 		})
-// 	}
-// }
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r == nil {
+					if tt.shouldPanic {
+						t.Errorf(">>> %s: expected panic but got none", tt.name)
+					}
+				} else {
+					switch r.(type) {
+					case string:
+						if r.(string) != tt.expected {
+							t.Errorf(">>> %s: got panic %v, want %v", tt.name, r, tt.expected)
+						}
+					case error:
+						if r.(error).Error() != tt.expected {
+							t.Errorf(">>> %s: got panic %v, want %v", tt.name, r.(error).Error(), tt.expected)
+						}
+					default:
+						t.Errorf(">>> %s: got panic %v, want %v", tt.name, r, tt.expected)
+					}
+				}
+			}()
+			if tt.setupFn != nil {
+				tt.setupFn(t)
+			}
+
+			if tt.shouldPanic {
+				tt.action(t)
+			}
+
+			if !tt.shouldPanic {
+				pool := tt.action(t)
+				if tt.verifyFn != nil {
+					tt.verifyFn(t, pool)
+				}
+			}
+		})
+	}
+}

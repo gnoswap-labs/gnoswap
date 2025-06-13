@@ -68,7 +68,7 @@ func CreatePool(
 			"prevRealm", prevRealm,
 			"poolPath", poolPath,
 			"feeTokenPath", consts.GNS_PATH,
-			"feeAmount", formatUint(poolCreationFee),
+			"feeAmount", formatInt(poolCreationFee),
 		)
 	}
 
@@ -207,8 +207,8 @@ func GetFeeAmountTickSpacing(fee uint32) int32 {
 	iTickSpacing, exist := feeAmountTickSpacing.Get(feeStr)
 	if !exist {
 		panic(newErrorWithDetail(
-			errDataNotFound,
-			ufmt.Sprintf("expected feeAmountTickSpacing(%s) to exist", feeStr),
+			errUnsupportedFeeTier,
+			ufmt.Sprintf("expected fee(%d) to be one of %d, %d, %d, %d", fee, FeeTier100, FeeTier500, FeeTier3000, FeeTier10000),
 		))
 	}
 

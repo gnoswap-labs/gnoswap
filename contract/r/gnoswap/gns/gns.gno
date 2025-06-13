@@ -143,17 +143,20 @@ func Burn(from std.Address, amount int64) {
 
 func Transfer(to std.Address, amount int64) {
 	crossing()
-	checkErr(UserTeller.Transfer(to, amount))
+	userTeller := token.CallerTeller()
+	checkErr(userTeller.Transfer(to, amount))
 }
 
 func Approve(spender std.Address, amount int64) {
 	crossing()
-	checkErr(UserTeller.Approve(spender, amount))
+	userTeller := token.CallerTeller()
+	checkErr(userTeller.Approve(spender, amount))
 }
 
 func TransferFrom(from, to std.Address, amount int64) {
 	crossing()
-	checkErr(UserTeller.TransferFrom(from, to, amount))
+	userTeller := token.CallerTeller()
+	checkErr(userTeller.TransferFrom(from, to, amount))
 }
 
 func Render(path string) string {
