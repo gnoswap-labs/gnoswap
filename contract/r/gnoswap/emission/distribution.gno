@@ -175,7 +175,7 @@ func calculateAmount(amount, bptPct int64) int64 {
 		panic("invalid amount or bptPct")
 	}
 
-	// 최댓값 검사
+	// prevent multiplication overflow
 	if amount > 9223372036854775807/10000 {
 		panic("amount too large")
 	}
