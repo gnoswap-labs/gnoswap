@@ -116,8 +116,8 @@ func testMint(t *testing.T) {
 	t.Run("mint", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		testing.SetOriginSend(std.Coins{{"ugnot", 100000000000000}})
-		wugnot.Deposit()
-		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		cross(wugnot.Deposit)()
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 
 		positionId, liquidity, amount0, amount1 := pn.Mint(consts.WUGNOT_PATH, consts.GNS_PATH, fee3000, int32(-8040), int32(8040), "10000000000", "10000000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
@@ -345,7 +345,7 @@ func testSwapRoute(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		gns.Approve(routerAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
-		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
 
 		amountIn, amountOut := cross(rr.ExactInSwapRoute)(
 			consts.GNS_PATH,

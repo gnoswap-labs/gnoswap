@@ -99,9 +99,9 @@ func testInit(t *testing.T) {
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
 		testing.SetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}})
-		wugnot.Deposit()
+		cross(wugnot.Deposit)()
 		testing.SetOriginSend(nil)
-		uassert.Equal(t, uint64(50_000_000_000_000), wugnot.BalanceOf(adminAddr))
+		uassert.Equal(t, uint64(50_000_000_000_000), cross(wugnot.BalanceOf)(adminAddr))
 		uassert.Equal(t, "50000000000000ugnot", (banker.GetCoins(adminAddr).String()))
 	})
 }
@@ -143,7 +143,7 @@ func testMintPos01InRange(t *testing.T) {
 	t.Run("mint position 01 in range", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 		cross(pn.Mint)(
 			wugnotPath,
@@ -209,7 +209,7 @@ func testMintPos03OutRange(t *testing.T) {
 	t.Run("mint position 03 out range", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 		cross(pn.Mint)(
 			wugnotPath,
@@ -235,7 +235,7 @@ func testMintPos04OutRange(t *testing.T) {
 	t.Run("mint position 04 out range", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 		cross(pn.Mint)(
 			barPath,
@@ -261,7 +261,7 @@ func testMintPos05OutRange(t *testing.T) {
 	t.Run("mint position 05 out range", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 		cross(pn.Mint)(
 			wugnotPath,
@@ -287,7 +287,7 @@ func testMintPos06OutRange(t *testing.T) {
 	t.Run("mint position 06 out range", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
-		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 		cross(pn.Mint)(
 			barPath,
@@ -510,10 +510,10 @@ func testCollectRewardAllForWarmUp100(t *testing.T) {
 func testSwapExactIn(t *testing.T) {
 	t.Run("swap token0 to token1 500 // swap #1", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
 		gns.Approve(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := cross(rr.ExactInSwapRoute)(
@@ -548,10 +548,10 @@ func testSwapExactIn(t *testing.T) {
 
 	t.Run("swap token0 to token1 500 // swap #2", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
 		gns.Approve(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := cross(rr.ExactInSwapRoute)(
@@ -586,10 +586,10 @@ func testSwapExactIn(t *testing.T) {
 
 	t.Run("swap token0 to token1 500 // swap #3", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
 		gns.Approve(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := cross(rr.ExactInSwapRoute)(
@@ -630,10 +630,10 @@ func testSwapExactIn(t *testing.T) {
 
 	t.Run("swap token0 to token1 500 // swap #4", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
 		gns.Approve(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := cross(rr.ExactInSwapRoute)(
@@ -665,10 +665,10 @@ func testSwapExactIn(t *testing.T) {
 func testSwapExactOut(t *testing.T) {
 	t.Run("swap token1 to token1 0 // swap #1", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
 		gns.Approve(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := cross(rr.ExactOutSwapRoute)(
@@ -702,10 +702,10 @@ func testSwapExactOut(t *testing.T) {
 
 	t.Run("swap token1 to token1 0 // swap #2", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
 		gns.Approve(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := cross(rr.ExactOutSwapRoute)(
@@ -739,10 +739,10 @@ func testSwapExactOut(t *testing.T) {
 
 	t.Run("swap token1 to token1 0 // swap #3", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
 		gns.Approve(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := cross(rr.ExactOutSwapRoute)(
@@ -776,10 +776,10 @@ func testSwapExactOut(t *testing.T) {
 
 	t.Run("swap token1 to token1 0 // swap #4", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(routerAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX)
 		gns.Approve(routerAddr, consts.UINT64_MAX)
 
 		tokenIn, tokenOut := cross(rr.ExactOutSwapRoute)(
