@@ -9,6 +9,10 @@ import (
 )
 
 // GetPossibleVotingAddressWithWeight returns the max voting weight + and possible voting address with weight
+//
+// This function calculates voting weights for all delegators by using their latest delegation amounts
+// regardless of the endTimestamp. This ensures that all delegators can participate in voting
+// with their current delegation amounts, even if their records were updated after the endTimestamp.
 func GetPossibleVotingAddressWithWeight(endTimestamp uint64) (uint64, map[std.Address]uint64) {
 	if endTimestamp > uint64(time.Now().Unix()) {
 		panic(addDetailToError(
@@ -24,18 +28,18 @@ func GetPossibleVotingAddressWithWeight(endTimestamp uint64) (uint64, map[std.Ad
 		history := value.([]DelegationSnapShotHistory)
 		toAddr := std.Address(key)
 
-		for i := len(history) - 1; i >= 0; i-- {
-			record := history[i]
-
-			if record.updatedAt > endTimestamp {
-				continue
-			}
-
-			addressWithWeight[toAddr] = record.amount
-			totalWeight += record.amount
-
-			break
+		// skip when there is no delegation history
+		if len(history) == 0 {
+			return false
 		}
+
+		// find the latest delegation record
+		latestRecord := history[len(history)-1]
+
+		// use the latest delegation amount even if the record is updated after endTimestamp
+		// this ensures all delegators can participate in voting with their current delegation amounts
+		addressWithWeight[toAddr] = latestRecord.amount
+		totalWeight += latestRecord.amount
 
 		return false
 	})
