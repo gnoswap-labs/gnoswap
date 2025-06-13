@@ -1,7 +1,6 @@
 package gns
 
 import (
-	"fmt"
 	"std"
 	"testing"
 
@@ -9,6 +8,8 @@ import (
 	"gno.land/p/demo/uassert"
 
 	"gno.land/p/gnoswap/consts"
+
+	"gno.land/p/demo/ufmt"
 )
 
 const (
@@ -91,7 +92,7 @@ func TestIsLastBlockOfHalvingYear(t *testing.T) {
 			height int64
 			want   bool
 		}{
-			name:   fmt.Sprintf("last block of halving year %d", i),
+			name:   ufmt.Sprintf("last block of halving year %d", i),
 			height: GetHalvingYearEndBlock(i),
 			want:   true,
 		})
@@ -101,7 +102,7 @@ func TestIsLastBlockOfHalvingYear(t *testing.T) {
 			height int64
 			want   bool
 		}{
-			name:   fmt.Sprintf("not last block of halving year %d", i),
+			name:   ufmt.Sprintf("not last block of halving year %d", i),
 			height: GetHalvingYearEndBlock(i) - 1,
 			want:   false,
 		})
@@ -129,7 +130,7 @@ func TestHandleLeftEmissionAmount(t *testing.T) {
 			amount int64
 			want   int64
 		}{
-			name:   fmt.Sprintf("handle left emission amount for year %d, non minted", i),
+			name:   ufmt.Sprintf("handle left emission amount for year %d, non minted", i),
 			year:   i,
 			amount: 0,
 			want:   GetHalvingYearMaxAmount(i),
@@ -141,7 +142,7 @@ func TestHandleLeftEmissionAmount(t *testing.T) {
 			amount int64
 			want   int64
 		}{
-			name:   fmt.Sprintf("handle left emission amount for year %d, minted", i),
+			name:   ufmt.Sprintf("handle left emission amount for year %d, minted", i),
 			year:   i,
 			amount: int64(123456),
 			want:   GetHalvingYearMaxAmount(i) - int64(123456),
