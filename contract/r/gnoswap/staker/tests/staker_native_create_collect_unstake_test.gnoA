@@ -76,9 +76,9 @@ func testPositionMintNative01(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		gns.Approve(poolAddr, consts.UINT64_MAX)    // MINT
-		wugnot.Approve(poolAddr, consts.UINT64_MAX) // MINT
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX) // MINT
 
-		wugnot.Approve(positionAddr, consts.UINT64_MAX) // WRAP
+		cross(wugnot.Approve)(positionAddr, consts.UINT64_MAX) // WRAP
 		testing.SkipHeights(3)
 
 		// prepare 50000005ugnot (5 for refund test)
@@ -93,7 +93,7 @@ func testPositionMintNative01(t *testing.T) {
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(0))
 		uassert.Equal(t, ugnotBalanceOf(t, positionAddr), uint64(50000005))
 
-		adminOldWugnotBalance := wugnot.BalanceOf(admin)
+		adminOldWugnotBalance := cross(wugnot.BalanceOf)(admin)
 		uassert.Equal(t, adminOldWugnotBalance, uint64(0))
 
 		lpTokenId, liquidity, amount0, amount1 := cross(pn.Mint)(
@@ -126,9 +126,9 @@ func testPositionMintNative02(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		gns.Approve(poolAddr, consts.UINT64_MAX)    // MINT
-		wugnot.Approve(poolAddr, consts.UINT64_MAX) // MINT
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX) // MINT
 
-		wugnot.Approve(positionAddr, consts.UINT64_MAX) // WRAP
+		cross(wugnot.Approve)(positionAddr, consts.UINT64_MAX) // WRAP
 		testing.SkipHeights(3)
 
 		// prepare 50000005ugnot (5 for refund test)
@@ -144,7 +144,7 @@ func testPositionMintNative02(t *testing.T) {
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(49999005))
 		uassert.Equal(t, ugnotBalanceOf(t, positionAddr), uint64(50000005))
 
-		adminOldWugnotBalance := wugnot.BalanceOf(admin)
+		adminOldWugnotBalance := cross(wugnot.BalanceOf)(admin)
 		uassert.Equal(t, adminOldWugnotBalance, uint64(0))
 
 		lpTokenId, liquidity, amount0, amount1 := cross(pn.Mint)(
@@ -188,10 +188,10 @@ func testCreateExternalIncentive(t *testing.T) {
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(99998010))
 		uassert.Equal(t, ugnotBalanceOf(t, stakerAddr), uint64(10_000_000_000))
 
-		adminOldWugnotBalance := wugnot.BalanceOf(admin)
+		adminOldWugnotBalance := cross(wugnot.BalanceOf)(admin)
 		// uassert.Equal(t, adminOldWugnotBalance, uint64(0))
 
-		wugnot.Approve(stakerAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(stakerAddr, consts.UINT64_MAX)
 		testing.SkipHeights(1)
 
 		AddToken(oblPath)
@@ -206,7 +206,7 @@ func testCreateExternalIncentive(t *testing.T) {
 		)
 		// height 134
 
-		adminNewWugnotBalance := wugnot.BalanceOf(admin)
+		adminNewWugnotBalance := cross(wugnot.BalanceOf)(admin)
 		uassert.Equal(t, adminNewWugnotBalance, uint64(0))
 
 		testing.SkipHeights(1)
@@ -250,14 +250,14 @@ func testCollectReward01(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		testing.SkipHeights(1000)
 
-		uassert.Equal(t, wugnot.BalanceOf(admin), uint64(0))
+		uassert.Equal(t, cross(wugnot.BalanceOf)(admin), uint64(0))
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(99998010))
 
 		CollectReward(1, false)
 
 		testing.SkipHeights(1)
 
-		uassert.Equal(t, wugnot.BalanceOf(admin), uint64(160235))
+		uassert.Equal(t, cross(wugnot.BalanceOf)(admin), uint64(160235))
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(99998010))
 	})
 }
@@ -266,7 +266,7 @@ func testUnstakeToken02(t *testing.T) {
 	t.Run("unstake token 02", func(t *testing.T) {
 		testing.SkipHeights(335) // skip times
 
-		uassert.Equal(t, wugnot.BalanceOf(admin), uint64(160235))
+		uassert.Equal(t, cross(wugnot.BalanceOf)(admin), uint64(160235))
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(99998010))
 
 		testing.SetRealm(adminRealm)
@@ -276,15 +276,15 @@ func testUnstakeToken02(t *testing.T) {
 
 		uassert.Equal(t, gnft.MustOwnerOf(positionIdFrom(2)), adminAddr)
 
-		uassert.Equal(t, wugnot.BalanceOf(admin), uint64(622937))
+		uassert.Equal(t, cross(wugnot.BalanceOf)(admin), uint64(622937))
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(99998010))
 	})
 }
 
 func testEndExternalIncentive(t *testing.T) {
 	t.Run("end external incentive", func(t *testing.T) {
-		wugnot.Approve(stakerAddr, consts.UINT64_MAX) // UNWRAP
-		uassert.Equal(t, wugnot.BalanceOf(admin), uint64(622937))
+		cross(wugnot.Approve)(stakerAddr, consts.UINT64_MAX) // UNWRAP
+		uassert.Equal(t, cross(wugnot.BalanceOf)(admin), uint64(622937))
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(99998010))
 
 		testing.SkipHeights(9999999)
@@ -299,7 +299,7 @@ func testEndExternalIncentive(t *testing.T) {
 		)
 		testing.SkipHeights(1)
 
-		uassert.Equal(t, wugnot.BalanceOf(admin), uint64(622937))         // stays same
+		uassert.Equal(t, cross(wugnot.BalanceOf)(admin), uint64(622937))         // stays same
 		uassert.Equal(t, ugnotBalanceOf(t, adminAddr), uint64(100264985)) // did get some refund
 	})
 }

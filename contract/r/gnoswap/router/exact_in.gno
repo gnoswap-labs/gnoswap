@@ -83,7 +83,7 @@ func ExactInSwapRoute(
 	)
 
 	prevAddr, prevPkgPath := getPrev()
-	success := referral.TryRegister(std.Address(prevAddr), referrer)
+	success := cross(referral.TryRegister)(std.Address(prevAddr), referrer)
 
 	// get the actual referral address that was used
 	actualReferrer := referrer

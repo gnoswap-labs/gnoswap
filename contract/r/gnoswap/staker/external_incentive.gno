@@ -23,6 +23,7 @@ func CreateExternalIncentive(
 	startTimestamp int64,
 	endTimestamp int64,
 ) {
+	crossing()
 	assertOnlyNotHalted()
 
 	if common.GetLimitCaller() {
@@ -153,6 +154,7 @@ func CreateExternalIncentive(
 // EndExternalIncentive ends the external incentive and refunds the remaining reward
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#endexternalincentive
 func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken string, startTimestamp, endTimestamp, height int64) {
+	crossing()
 	assertOnlyNotHalted()
 
 	pool, exists := pools.Get(targetPoolPath)

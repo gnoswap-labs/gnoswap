@@ -81,9 +81,9 @@ func testPositionMint(t *testing.T) {
 	t.Run("qux:gnot:500", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		qux.Approve(poolAddr, consts.UINT64_MAX)
-		wugnot.Approve(poolAddr, consts.UINT64_MAX)
+		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
 
-		wugnot.Approve(positionAddr, consts.UINT64_MAX) // wrap / unwrap
+		cross(wugnot.Approve)(positionAddr, consts.UINT64_MAX) // wrap / unwrap
 
 		// send coin
 		testing.IssueCoins(positionAddr, std.Coins{{"ugnot", 1000009}}) // without issuing, it will fail `source address g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5 does not exist`
@@ -106,8 +106,8 @@ func testPositionMint(t *testing.T) {
 // 		testing.SetRealm(adminRealm)
 
 // 		bar.Approve(poolAddr, consts.UINT64_MAX)      // input
-// 		wugnot.Approve(routerAddr, consts.UINT64_MAX) // output fee ≈ 0.15%
-// 		wugnot.Approve(routerAddr, consts.UINT64_MAX) // output unwrap
+// 		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX) // output fee ≈ 0.15%
+// 		cross(wugnot.Approve)(routerAddr, consts.UINT64_MAX) // output unwrap
 
 // 		// check protocol fee before swap
 // 		feeColUgnot := ugnotBalanceOf(t, protocolFeeAddr)
@@ -147,7 +147,7 @@ func testPositionMint(t *testing.T) {
 // 	t.Run("swap, sell native, gnot > bar", func(t *testing.T) {
 // 		testing.SetRealm(adminRealm)
 
-// 		wugnot.Approve(poolAddr, consts.UINT64_MAX) // input
+// 		cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX) // input
 // 		bar.Approve(routerAddr, consts.UINT64_MAX)  // output fee ≈ 0.15%
 
 // 		// check user balance

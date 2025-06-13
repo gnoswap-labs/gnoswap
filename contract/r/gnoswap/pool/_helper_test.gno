@@ -19,6 +19,7 @@ import (
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
+
 	// pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/p/demo/uassert"
@@ -146,7 +147,7 @@ func TokenBalance(t *testing.T, tokenPath string, owner std.Address) int64 {
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
-		return wugnot.BalanceOf(owner)
+		return cross(wugnot.BalanceOf)(owner)
 	case gnsPath:
 		return gns.BalanceOf(owner)
 	case barPath:
@@ -168,7 +169,7 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender std.Address) 
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
-		return wugnot.Allowance(owner, spender)
+		return cross(wugnot.Allowance)(owner, spender)
 	case gnsPath:
 		return gns.Allowance(owner, spender)
 	case barPath:

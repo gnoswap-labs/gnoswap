@@ -44,7 +44,7 @@ func TestCreatePool(t *testing.T) {
 func TestSwapRouteWugnotquxExactIn(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	wugnot.Approve(routerAddr, 1000000)
+	cross(wugnot.Approve)(routerAddr, 1000000)
 	qux.Approve(routerAddr, 1000000)
 	testing.SetOriginSend(std.Coins{{"ugnot", 12345}}) // sented ugnot amount
 

@@ -37,7 +37,7 @@ func SetPoolTier(poolPath string, tier uint64) {
 }
 
 func setPoolTier(poolPath string, tier uint64) {
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 
 	currentHeight := std.ChainHeight()
 	pools.GetOrCreate(poolPath)
@@ -75,7 +75,7 @@ func ChangePoolTier(poolPath string, tier uint64) {
 }
 
 func changePoolTier(poolPath string, tier uint64) {
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns)()
 
 	prevTier := poolTier.CurrentTier(poolPath)
 	currentHeight := std.ChainHeight()

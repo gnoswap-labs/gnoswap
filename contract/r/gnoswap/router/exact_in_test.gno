@@ -347,14 +347,14 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
-			wugnot.Deposit()
+			cross(wugnot.Deposit)()
 			if tt.recipient != positionOwner {
-				wugnot.Transfer(tt.recipient, 10000000000)
+				cross(wugnot.Transfer)(tt.recipient, 10000000000)
 			}
 			gns.Transfer(tt.recipient, 10000000000)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			wugnot.Approve(poolContract, maxApprove)
+			cross(wugnot.Approve)(poolContract, maxApprove)
 			gns.Approve(poolContract, maxApprove)
 
 			teller := common.GetTokenTeller(wugnotTokenPath)
@@ -380,14 +380,14 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			wugnot.Transfer(routerContract, 20000000)
+			cross(wugnot.Transfer)(routerContract, 20000000)
 			gns.Transfer(routerContract, 20000000)
-			wugnot.Approve(routerContract, maxApprove)
+			cross(wugnot.Approve)(routerContract, maxApprove)
 			gns.Approve(routerContract, maxApprove)
 			beforeGnotBalance := uint64(banker.GetCoins(tt.recipient).AmountOf("ugnot"))
 
 			testing.SetRealm(std.NewCodeRealm(routerPath))
-			wugnot.Approve(poolContract, maxApprove)
+			cross(wugnot.Approve)(poolContract, maxApprove)
 
 			amountIn, amountOut := ExactInSwapRoute(
 				tt.inputToken,

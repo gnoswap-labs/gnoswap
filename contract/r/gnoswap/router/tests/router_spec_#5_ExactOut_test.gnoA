@@ -73,7 +73,7 @@ This test demonstrates a issue(Gnoswap-16) in SwapRoute function. The key steps 
 func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	wugnot.Approve(routerAddr, 1000000)
+	cross(wugnot.Approve)(routerAddr, 1000000)
 	qux.Approve(routerAddr, 1000000)
 
 	testing.SetOriginCaller(adminAddr)
