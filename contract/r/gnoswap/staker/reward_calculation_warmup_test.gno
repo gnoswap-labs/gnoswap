@@ -137,8 +137,8 @@ func TestWarmupBoundaryValues(t *testing.T) {
 
 	// zero reward
 	reward, penalty = warmup.apply(0, position, staked)
-	uassert.Equal(t, uint64(0), reward)
-	uassert.Equal(t, uint64(0), penalty)
+	uassert.Equal(t, int64(0), reward)
+	uassert.Equal(t, int64(0), penalty)
 }
 
 func TestFindWarmup(t *testing.T) {
