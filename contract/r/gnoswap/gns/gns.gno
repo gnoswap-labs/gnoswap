@@ -20,23 +20,19 @@ const (
 )
 
 var (
-	owner         *ownable.Ownable
-	token         *grc20.Token
-	privateLedger *grc20.PrivateLedger
+	adminAddr, _         = access.GetAddress(access.ROLE_ADMIN)
+	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
+	UserTeller           = token.CallerTeller()
+	owner                = ownable.NewWithAddress(adminAddr)
 
 	leftEmissionAmount   int64 // amount of GNS can be minted for emission
 	mintedEmissionAmount int64 // amount of GNS that has been minted for emission
 	lastMintedHeight     int64 // last block height that gns was minted for emission
 
 	burnAmount int64 // amount of GNS that has been burned
-
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
 )
 
 func init() {
-	owner = ownable.NewWithAddress(adminAddr)
-	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
-
 	privateLedger.Mint(owner.Owner(), INITIAL_MINT_AMOUNT)
 	cross(grc20reg.Register)(token, "")
 

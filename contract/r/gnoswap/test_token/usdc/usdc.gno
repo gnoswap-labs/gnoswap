@@ -12,44 +12,49 @@ import (
 )
 
 var (
-	Token, privateLedger = grc20.NewToken("Usd Coin", "USDC", 6)
-	UserTeller           = Token.CallerTeller()
+	token, privateLedger = grc20.NewToken("Usd Coin", "USDC", 6)
 	owner                = ownable.NewWithAddress("g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d") // ADMIN
 )
 
 func init() {
 	privateLedger.Mint(owner.Owner(), 100_000_000_000_000)
-	cross(grc20reg.Register)(Token, "")
+	cross(grc20reg.Register)(token, "")
 }
 
 func TotalSupply() int64 {
 	crossing()
-	return UserTeller.TotalSupply()
+	userTeller := token.CallerTeller()
+	return userTeller.TotalSupply()
 }
 
 func BalanceOf(owner std.Address) int64 {
 	crossing()
-	return UserTeller.BalanceOf(owner)
+	userTeller := token.CallerTeller()
+	return userTeller.BalanceOf(owner)
 }
 
 func Allowance(owner, spender std.Address) int64 {
 	crossing()
-	return UserTeller.Allowance(owner, spender)
+	userTeller := token.CallerTeller()
+	return userTeller.Allowance(owner, spender)
 }
 
 func Transfer(to std.Address, amount int64) {
 	crossing()
-	checkErr(UserTeller.Transfer(to, amount))
+	userTeller := token.CallerTeller()
+	checkErr(userTeller.Transfer(to, amount))
 }
 
 func Approve(spender std.Address, amount int64) {
 	crossing()
-	checkErr(UserTeller.Approve(spender, amount))
+	userTeller := token.CallerTeller()
+	checkErr(userTeller.Approve(spender, amount))
 }
 
 func TransferFrom(from, to std.Address, amount int64) {
 	crossing()
-	checkErr(UserTeller.TransferFrom(from, to, amount))
+	userTeller := token.CallerTeller()
+	checkErr(userTeller.TransferFrom(from, to, amount))
 }
 
 func Burn(from std.Address, amount int64) {
@@ -65,10 +70,11 @@ func Render(path string) string {
 
 	switch {
 	case path == "":
-		return Token.RenderHome()
+		return token.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := std.Address(parts[1])
-		balance := UserTeller.BalanceOf(owner)
+		userTeller := token.CallerTeller()
+		balance := userTeller.BalanceOf(owner)
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"
