@@ -94,6 +94,24 @@ func TestCreatePool(t *testing.T) {
 			shouldPanic: true,
 			panicMsg:    "[GNOSWAP-POOL-003] pool already created || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000) not to exist",
 		},
+		{
+			name:        "fail - invalid fee amount",
+			token0Path:  barPath,
+			token1Path:  fooPath,
+			fee:         1234,
+			sqrtPrice:   "4295128740",
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-POOL-002] unsupported fee tier || expected fee(1234) to be one of 100, 500, 3000, 10000",
+		},
+		{
+			name:        "fail - invalid sqrtPrice (too small)",
+			token0Path:  bazPath,
+			token1Path:  barPath,
+			fee:         3000,
+			sqrtPrice:   "0",
+			shouldPanic: true,
+			panicMsg:    "sqrtPriceX96(0) is out of range",
+		},
 	}
 
 	testing.SetRealm(std.NewUserRealm(adminAddr))
@@ -122,29 +140,27 @@ func TestCreatePool(t *testing.T) {
 				CreatePool(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
 			}()
 
-			if !tt.shouldPanic {
-				// verify pool was created correctly
-				poolPath := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
-				pool := mustGetPool(poolPath)
+			// verify pool was created correctly
+			poolPath := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
+			pool := mustGetPool(poolPath)
 
-				// check if GNOT was properly wrapped
-				expectedToken0 := tt.token0Path
-				expectedToken1 := tt.token1Path
-				if tt.inOrder {
-					expectedToken0, expectedToken1 = expectedToken1, expectedToken0
-				}
+			// check if GNOT was properly wrapped
+			expectedToken0 := tt.token0Path
+			expectedToken1 := tt.token1Path
+			if tt.inOrder {
+				expectedToken0, expectedToken1 = expectedToken1, expectedToken0
+			}
 
-				if expectedToken0 == consts.GNOT {
-					expectedToken0 = consts.WRAPPED_WUGNOT
-				}
-				if expectedToken1 == consts.GNOT {
-					expectedToken1 = consts.WRAPPED_WUGNOT
-				}
+			if expectedToken0 == consts.GNOT {
+				expectedToken0 = consts.WRAPPED_WUGNOT
+			}
+			if expectedToken1 == consts.GNOT {
+				expectedToken1 = consts.WRAPPED_WUGNOT
+			}
 
-				if pool.token0Path != expectedToken0 || pool.token1Path != expectedToken1 {
-					t.Errorf("incorrect token paths in pool. got %s,%s want %s,%s",
-						pool.token0Path, pool.token1Path, expectedToken0, expectedToken1)
-				}
+			if pool.token0Path != expectedToken0 || pool.token1Path != expectedToken1 {
+				t.Errorf("incorrect token paths in pool. got %s,%s want %s,%s",
+					pool.token0Path, pool.token1Path, expectedToken0, expectedToken1)
 			}
 		})
 	}
