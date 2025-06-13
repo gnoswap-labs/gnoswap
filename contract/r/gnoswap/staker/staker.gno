@@ -224,7 +224,7 @@ func StakeToken(positionId uint64, referrer string) (string, string, string) {
 	assertOnlyNotHalted()
 	assertOnlyNotStaked(positionId)
 
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns())
 
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := getPrevAddr()
@@ -419,7 +419,7 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[st
 		panic(addDetailToError(errNoPermission, ufmt.Sprintf("caller is not owner of positionId(%d)", positionId)))
 	}
 
-	en.MintAndDistributeGns()
+	cross(en.MintAndDistributeGns())
 
 	currentHeight := std.ChainHeight()
 	// get all internal and external rewards
