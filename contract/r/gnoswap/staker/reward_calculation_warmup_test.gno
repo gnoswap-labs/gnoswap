@@ -36,26 +36,26 @@ func TestWarmupApply(t *testing.T) {
 		WarmupRatio: 30,
 	}
 
-	poolReward := uint64(1000)
+	poolReward := int64(1000)
 	positionLiquidity := u256.NewUint(100)
 	stakedLiquidity := u256.NewUint(200)
 
 	reward, penalty := warmup.apply(poolReward, positionLiquidity, stakedLiquidity)
 
 	uassert.Equal(t, poolReward/2, reward+penalty)
-	uassert.Equal(t, uint64(150), reward)
-	uassert.Equal(t, uint64(350), penalty)
+	uassert.Equal(t, int64(150), reward)
+	uassert.Equal(t, int64(350), penalty)
 }
 
 func TestWarmupApply2(t *testing.T) {
 	tests := []struct {
 		name        string
 		warmupRatio uint64
-		poolReward  uint64
+		poolReward  int64
 		position    uint64
 		staked      uint64
-		expReward   uint64
-		expPenalty  uint64
+		expReward   int64
+		expPenalty  int64
 	}{
 		{
 			name:        "30% ratio",
@@ -119,7 +119,7 @@ func TestWarmupApply2(t *testing.T) {
 			uassert.Equal(t, tt.expReward, reward)
 			uassert.Equal(t, tt.expPenalty, penalty)
 
-			expectedTotal := tt.poolReward * tt.position / tt.staked
+			expectedTotal := tt.poolReward * int64(tt.position) / int64(tt.staked)
 			uassert.Equal(t, expectedTotal, reward+penalty)
 		})
 	}
@@ -127,7 +127,7 @@ func TestWarmupApply2(t *testing.T) {
 
 func TestWarmupBoundaryValues(t *testing.T) {
 	warmup := Warmup{WarmupRatio: 50}
-	maxReward := uint64(math.MaxUint64)
+	maxReward := int64(math.MaxInt64)
 
 	position := u256.NewUint(1)
 	staked := u256.NewUint(1)
@@ -137,8 +137,8 @@ func TestWarmupBoundaryValues(t *testing.T) {
 
 	// zero reward
 	reward, penalty = warmup.apply(0, position, staked)
-	uassert.Equal(t, uint64(0), reward)
-	uassert.Equal(t, uint64(0), penalty)
+	uassert.Equal(t, int64(0), reward)
+	uassert.Equal(t, int64(0), penalty)
 }
 
 func TestFindWarmup(t *testing.T) {
@@ -161,8 +161,8 @@ func TestLiquidityRatios(t *testing.T) {
 		name     string
 		position uint64
 		staked   uint64
-		reward   uint64
-		expected uint64
+		reward   int64
+		expected int64
 	}{
 		// Case 1: position(100) / staked(200) = 0.5
 		// 50% of total reward 1000 is the base reward, which is 500
@@ -249,9 +249,9 @@ func TestRewardCalculationPrecision(t *testing.T) {
 
 	cases := []struct {
 		name            string
-		reward          uint64
-		expectedReward  uint64
-		expectedPenalty uint64
+		reward          int64
+		expectedReward  int64
+		expectedPenalty int64
 	}{
 		// reward: 100
 		// Reward calculation: 100 * (33/100) = 33
@@ -296,7 +296,7 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 	// Base reward calculation: poolRewardPerBlock * (position/staked)
 	// 100 * (1000/2000) = 50 per block
 	blocksInDay := msInDay / int64(gns.GetAvgBlockTimeInMs()) // 43200
-	baseReward := uint64(50)
+	baseReward := int64(50)
 
 	t.Run("7 days staking period", func(t *testing.T) {
 		// Step 1: Per Position Reward calculation
@@ -319,12 +319,12 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 		position := u256.NewUint(1000)
 		staked := u256.NewUint(2000)
 
-		var totalReward, totalPenalty uint64
+		var totalReward, totalPenalty int64
 
 		// WarmupRatio30 (30%) 5 days
 		blocks5Days := uint64(5 * blocksInDay)
 		reward5Days, penalty5Days := deposit.warmups[0].apply(
-			baseReward*blocks5Days,
+			baseReward*int64(blocks5Days),
 			position,
 			staked,
 		)
@@ -332,7 +332,7 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 		totalPenalty += penalty5Days
 
 		// baseReward * blocks * 0.3
-		expected5Days := baseReward * blocks5Days * 30 / 100 * 1000 / 2000
+		expected5Days := baseReward * int64(blocks5Days) * 30 / 100 * 1000 / 2000
 		uassert.Equal(t, expected5Days, reward5Days,
 			ufmt.Sprintf("5 days reward mismatch: expected %d, got %d", expected5Days, reward5Days))
 
@@ -340,7 +340,7 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 		testing.SkipHeights(5 * blocksInDay)
 		blocks2Days := uint64(2 * blocksInDay)
 		reward2Days, penalty2Days := deposit.warmups[1].apply(
-			baseReward*blocks2Days,
+			baseReward*int64(blocks2Days),
 			position,
 			staked,
 		)
@@ -348,7 +348,7 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 		totalPenalty += penalty2Days
 
 		// baseReward * blocks * 0.5
-		expected2Days := baseReward * blocks2Days * 50 / 100 * 1000 / 2000
+		expected2Days := baseReward * int64(blocks2Days) * 50 / 100 * 1000 / 2000
 		uassert.Equal(t, expected2Days, reward2Days,
 			ufmt.Sprintf("2 days reward mismatch: expected %d, got %d", expected2Days, reward2Days))
 
@@ -390,20 +390,20 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 			{10, 100}, // 31-40 days
 		}
 
-		var totalReward, totalPenalty uint64
+		var totalReward, totalPenalty int64
 		currentHeight := startHeight
 
 		for i, period := range periods {
 			blocks := uint64(period.days * blocksInDay)
 			reward, penalty := deposit.warmups[i].apply(
-				baseReward*blocks,
+				baseReward*int64(blocks),
 				position,
 				staked,
 			)
 			totalReward += reward
 			totalPenalty += penalty
 
-			expectedReward := baseReward * blocks * period.warmupRatio / 100 * 1000 / 2000
+			expectedReward := baseReward * int64(blocks) * int64(period.warmupRatio) / 100 * 1000 / 2000
 			uassert.Equal(t, expectedReward, reward,
 				ufmt.Sprintf("Period %d reward mismatch: expected %d, got %d",
 					i, expectedReward, reward))

@@ -442,3 +442,7 @@ func ApiGetStakesByAddress(targetAddress string) string {
 func IsStaked(positionId uint64) bool {
 	return deposits.Has(positionId)
 }
+
+func formatInt(value int64) string {
+	return ufmt.Sprintf("%d", value)
+}

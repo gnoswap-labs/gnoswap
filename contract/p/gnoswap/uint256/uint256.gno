@@ -30,6 +30,13 @@ func NewUint(val uint64) *Uint {
 	return &Uint{arr: [4]uint64{val, 0, 0, 0}}
 }
 
+func NewUintFromInt64(val int64) *Uint {
+	if val < 0 {
+		panic("val is negative")
+	}
+	return NewUint(uint64(val))
+}
+
 // Zero returns a new Uint initialized to zero.
 func Zero() *Uint {
 	return NewUint(0)

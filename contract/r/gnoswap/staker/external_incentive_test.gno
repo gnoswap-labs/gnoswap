@@ -26,7 +26,7 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 		name        string
 		creator     std.Address
 		rewardToken string
-		amount      uint64
+		amount      int64
 		shouldPass  bool
 	}{
 		{

@@ -69,7 +69,7 @@ func QueryIncentiveData(incentiveId string) (*IncentiveData, error) {
 					StartTimestamp: ictv.startTimestamp,
 					EndTimestamp:   ictv.endTimestamp,
 					RewardToken:    ictv.rewardToken,
-					RewardAmount:   u256.NewUint(ictv.rewardAmount),
+					RewardAmount:   u256.NewUintFromInt64(ictv.rewardAmount),
 					Refundee:       ictv.refundee,
 					PoolPath:       pool.poolPath,
 				}
