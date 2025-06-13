@@ -57,7 +57,7 @@ func testPositionMint01(t *testing.T) {
 		qux.Approve(poolAddr, consts.UINT64_MAX)
 		testing.SkipHeights(2)
 
-		lpTokenId, liquidity, amount0, amount1 := pn.Mint(
+		lpTokenId, liquidity, amount0, amount1 := cross(pn.Mint)(
 			barPath,      // token0
 			quxPath,      // token1
 			uint32(500),  // fee

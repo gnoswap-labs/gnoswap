@@ -349,6 +349,7 @@ func CreateProject(
 	tier180Ratio uint64,
 	startTime uint64,
 ) string {
+	crossing()
 	assertOnlyNotHalted()
 	assertOnlyAdmin()
 
@@ -362,7 +363,7 @@ func CreateProject(
 	// token Balance Check
 	tokenTeller := common.GetTokenTeller(tokenPath)
 	caller := getPrevAddr()
-	if tokenTeller.BalanceOf(caller) < depositAmount {
+	if tokenTeller.BalanceOf(caller) < int64(depositAmount) {
 		panic(addDetailToError(
 			errInsufficientBalance,
 			ufmt.Sprintf("caller(%s) balance(%d) < depositAmount(%d)", caller, tokenTeller.BalanceOf(caller), depositAmount)))
@@ -440,7 +441,7 @@ func CreateProject(
 	tokenTeller.TransferFrom(
 		getPrevAddr(),
 		std.Address(GetOrigPkgAddr()),
-		depositAmount,
+		int64(depositAmount),
 	)
 
 	prevAddr, prevPkgPath := getPrev()
@@ -483,6 +484,8 @@ func CreateProject(
 // Returns:
 // - uint64: The amount of rewards transferred to the recipient.
 func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uint64 {
+	crossing()
+
 	if err := common.SatisfyCond(isUserCall()); err != nil {
 		panic(addDetailToError(errNotUserCaller, err.Error()))
 	}
@@ -537,7 +540,7 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 
 	if projectLeftReward > 0 {
 		tokenTeller := common.GetTokenTeller(project.tokenPath)
-		tokenTeller.Transfer(recipient, projectLeftReward)
+		tokenTeller.Transfer(recipient, int64(projectLeftReward))
 	}
 
 	std.Emit(

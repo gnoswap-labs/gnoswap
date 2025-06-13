@@ -244,7 +244,7 @@ func MintPosition(t *testing.T,
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(caller))
 
-	return pn.Mint(
+	return cross(pn.Mint)(
 		token0,
 		token1,
 		fee,

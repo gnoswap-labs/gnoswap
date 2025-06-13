@@ -291,7 +291,7 @@ func testSwapRoute(t *testing.T) {
 		bar.Approve(routerAddr, uint64(1_000_000))
 		foo.Approve(routerAddr, uint64(1_000_000))
 
-		amountIn, amountOut := rr.ExactInSwapRoute(
+		amountIn, amountOut := cross(rr.ExactInSwapRoute)(
 			barPath,
 			fooPath,
 			"100000",
@@ -318,7 +318,7 @@ func testSwapRoute(t *testing.T) {
 		bar.Approve(routerAddr, uint64(1_000_000))
 		baz.Approve(routerAddr, uint64(1_000_000))
 
-		amountIn, amountOut := rr.ExactInSwapRoute(
+		amountIn, amountOut := cross(rr.ExactInSwapRoute)(
 			bazPath,
 			barPath,
 			"100000",
@@ -347,7 +347,7 @@ func testSwapRoute(t *testing.T) {
 		gns.Approve(poolAddr, consts.UINT64_MAX)
 		wugnot.Approve(routerAddr, consts.UINT64_MAX)
 
-		amountIn, amountOut := rr.ExactInSwapRoute(
+		amountIn, amountOut := cross(rr.ExactInSwapRoute)(
 			consts.GNS_PATH,
 			consts.WUGNOT_PATH,
 			"100000",

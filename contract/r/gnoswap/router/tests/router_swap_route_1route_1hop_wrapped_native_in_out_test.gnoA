@@ -38,7 +38,7 @@ func TestPositionMintQuxGnot(t *testing.T) {
 	qux.Approve(poolAddr, consts.UINT64_MAX)
 	wugnot.Approve(poolAddr, consts.UINT64_MAX)
 
-	positionId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.WRAPPED_WUGNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := cross(pn.Mint)(quxPath, consts.WRAPPED_WUGNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	uassert.Equal(t, positionId, uint64(1))
 	uassert.Equal(t, amount0, "100000")

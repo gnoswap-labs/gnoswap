@@ -5,7 +5,6 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -207,13 +206,13 @@ func createBasicPool(t *testing.T) {
 
 	gns.Approve(poolAddr, pl.GetPoolCreationFee()*2)
 
-	pl.CreatePool(barPath, bazPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
-	pl.CreatePool(bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
+	cross(pl.CreatePool)(barPath, bazPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
+	cross(pl.CreatePool)(bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
 
-	bar.Approve(poolAddr, consts.UINT64_MAX)
-	baz.Approve(poolAddr, consts.UINT64_MAX)
-	qux.Approve(poolAddr, consts.UINT64_MAX)
+	cross(bar.Approve)(poolAddr, maxApprove)
+	cross(baz.Approve)(poolAddr, maxApprove)
+	cross(qux.Approve)(poolAddr, maxApprove)
 
-	pn.Mint(barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
-	pn.Mint(bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
+	cross(pn.Mint)(barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
+	cross(pn.Mint)(bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
 }

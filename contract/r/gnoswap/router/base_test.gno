@@ -235,13 +235,13 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 		i256.NewInt(50), // 101 * 50 / 100 = 50
 	}
 
-	amountIn, amountOut, err := op.processRoutes(ExactIn)
+	_, amountOut, err := op.processRoutes(ExactIn)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	// check actual swapped amounts for each route
-	for i, route := range op.routes {
+	for i, _ := range op.routes {
 		toSwap, err := op.validateRouteQuote(op.quotes[i], i)
 		if err != nil {
 			t.Fatalf("unexpected error validating quote: %v", err)

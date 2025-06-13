@@ -77,7 +77,7 @@ func testMintBarQux100_1(t *testing.T) {
 		bar.Approve(poolAddr, consts.UINT64_MAX)
 		qux.Approve(poolAddr, consts.UINT64_MAX)
 
-		positionId, liquidity, amount0, amount1 := pn.Mint(
+		positionId, liquidity, amount0, amount1 := cross(pn.Mint)(
 			barPath,      // token0
 			quxPath,      // token1
 			fee100,       // fee

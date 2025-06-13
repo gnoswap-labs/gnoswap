@@ -40,7 +40,7 @@ func testPositionMint(t *testing.T) {
 	baz.Approve(poolAddr, 100000000)
 
 	// Mint
-	positionId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, FEE_MEDIUM, int32(-887220), int32(887220), "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := cross(pn.Mint)(barPath, bazPath, FEE_MEDIUM, int32(-887220), int32(887220), "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	uassert.Equal(t, positionId, uint64(1))
 	uassert.Equal(t, amount0, "100000000")

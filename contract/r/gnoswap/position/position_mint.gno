@@ -72,7 +72,7 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 		))
 	}
 
-	gnft.Mint(params.mintTo, positionIdFrom(id)) // owner, position ID
+	cross(gnft.Mint)(params.mintTo, positionIdFrom(id)) // owner, position ID
 
 	pool := cross(pl.GetPoolFromPoolPath)(poolKey)
 	positionKey := computePositionKey(GetOrigPkgAddr(), params.tickLower, params.tickUpper)

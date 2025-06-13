@@ -156,6 +156,7 @@ func DrySwapRoute(
 	strRouteArr, quoteArr string,
 	tokenAmountLimit string,
 ) (string, string, bool) {
+	crossing()
 	common.MustRegistered(inputToken, outputToken)
 
 	// initialize components

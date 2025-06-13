@@ -83,7 +83,7 @@ func CreatePool(
 		"prevRealm", prevRealm,
 		"token0Path", token0Path,
 		"token1Path", token1Path,
-		"fee", formatInt(fee),
+		"fee", formatUint(fee),
 		"sqrtPriceX96", sqrtPriceX96,
 		"poolPath", poolPath,
 		"tick", formatInt(currentTick),

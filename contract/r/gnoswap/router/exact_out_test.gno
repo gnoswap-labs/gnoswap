@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -103,12 +102,12 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	TokenFaucet2(t, barPath, routerAddr)
 
 	testing.SetRealm(std.NewUserRealm(routerAddr))
-	foo.Approve(poolAddr, consts.UINT64_MAX)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(poolAddr, maxApprove)
+	bar.Approve(poolAddr, maxApprove)
 
 	// create position
 	// a. Position 1: (-50%+50%)
-	pn.Mint(
+	cross(pn.Mint)(
 		barPath,
 		fooPath,
 		3000,
@@ -125,7 +124,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	)
 
 	// b. Position 2: (-10%+10%)
-	pn.Mint(
+	cross(pn.Mint)(
 		barPath,
 		fooPath,
 		3000,
@@ -142,7 +141,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	)
 
 	// c. Position 3: (full range)
-	pn.Mint(
+	cross(pn.Mint)(
 		barPath,
 		fooPath,
 		3000,
@@ -159,7 +158,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	)
 
 	// d. Position 4: (lower out-range)
-	pn.Mint(
+	cross(pn.Mint)(
 		barPath,
 		fooPath,
 		3000,
@@ -176,7 +175,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	)
 
 	// e. Position 5: (upper out-range)
-	pn.Mint(
+	cross(pn.Mint)(
 		barPath,
 		fooPath,
 		3000,
@@ -215,6 +214,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 		token0Balance := u256.MustFromDecimal(balance0)
 		token1Balance := u256.MustFromDecimal(balance1)
+		println("token1Balance", token1Balance.ToString())
 
 		overflowAmount := u256.Zero().Add(token0Balance, u256.One()).ToString()
 
@@ -245,12 +245,12 @@ func setupTestPool(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 
-	foo.Approve(poolAddr, consts.UINT64_MAX)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
+	cross(foo.Approve)(poolAddr, maxApprove)
+	cross(bar.Approve)(poolAddr, maxApprove)
 
 	pl.CreatePool(barPath, fooPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 
-	_, _, _, _ = pn.Mint(
+	_, _, _, _ = cross(pn.Mint)(
 		barPath,
 		fooPath,
 		3000,

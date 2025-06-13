@@ -27,7 +27,7 @@ func TestRewardState_BasicFlow(t *testing.T) {
 	uassert.NotEqual(t, reward, uint64(0), "Expected non-zero reward")
 
 	removeHeight := uint64(250)
-	finalReward := state.removeStake(depositId, stakeAmount, removeHeight)
+	state.removeStake(depositId, stakeAmount, removeHeight)
 	uassert.Equal(t, state.TotalStake, uint64(0), ufmt.Sprintf("TotalStake after removal = %d, want 0", state.TotalStake))
 }
 
@@ -80,7 +80,7 @@ func TestRewardState_EndHeightBehavior(t *testing.T) {
 	state.addStake(150, "deposit1", 100)
 
 	// claim after endHeight
-	reward := state.claim("deposit1", 250)
+	state.claim("deposit1", 250)
 
 	// must be no additional reward after endHeight
 	secondReward := state.claim("deposit1", 300)
@@ -95,8 +95,8 @@ func TestRewardState_PartialStakeRemoval(t *testing.T) {
 	state.addStake(150, "deposit1", 500)
 
 	// checking reward after partial removal
-	reward1 := state.removeStake("deposit1", 200, 200)
-	reward2 := state.claim("deposit1", 250)
+	// reward1 := state.removeStake("deposit1", 200, 200)
+	// reward2 := state.claim("deposit1", 250)
 
 	uassert.Equal(t, state.TotalStake, uint64(300), ufmt.Sprintf("TotalStake after partial removal = %d, want 300", state.TotalStake))
 }
@@ -115,6 +115,7 @@ func TestRewardState_BoundaryCases(t *testing.T) {
 	state.addStake(150, "deposit3", ^uint64(0)-1)
 
 	reward1 := state.claim("deposit2", 200)
+	println("reward1", reward1)
 	reward2 := state.claim("deposit2", 200)
 	uassert.Equal(t, reward2, uint64(0), ufmt.Sprintf("Second claim at same height should be 0, got %d", reward2))
 }

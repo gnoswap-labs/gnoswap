@@ -145,7 +145,7 @@ func testMintPos01InRange(t *testing.T) {
 
 		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
-		pn.Mint(
+		cross(pn.Mint)(
 			wugnotPath,
 			gnsPath,
 			fee3000,
@@ -185,7 +185,7 @@ func testMintPos02InRange(t *testing.T) {
 
 		bar.Approve(poolAddr, consts.UINT64_MAX)
 		baz.Approve(poolAddr, consts.UINT64_MAX)
-		pn.Mint(
+		cross(pn.Mint)(
 			barPath,
 			bazPath,
 			fee500,
@@ -211,7 +211,7 @@ func testMintPos03OutRange(t *testing.T) {
 
 		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
-		pn.Mint(
+		cross(pn.Mint)(
 			wugnotPath,
 			gnsPath,
 			fee3000,
@@ -237,7 +237,7 @@ func testMintPos04OutRange(t *testing.T) {
 
 		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
-		pn.Mint(
+		cross(pn.Mint)(
 			barPath,
 			bazPath,
 			fee500,
@@ -263,7 +263,7 @@ func testMintPos05OutRange(t *testing.T) {
 
 		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
-		pn.Mint(
+		cross(pn.Mint)(
 			wugnotPath,
 			gnsPath,
 			fee3000,
@@ -289,7 +289,7 @@ func testMintPos06OutRange(t *testing.T) {
 
 		wugnot.Approve(poolAddr, consts.UINT64_MAX)
 		gns.Approve(poolAddr, consts.UINT64_MAX)
-		pn.Mint(
+		cross(pn.Mint)(
 			barPath,
 			bazPath,
 			fee500,
@@ -516,7 +516,7 @@ func testSwapExactIn(t *testing.T) {
 		wugnot.Approve(routerAddr, consts.UINT64_MAX)
 		gns.Approve(routerAddr, consts.UINT64_MAX)
 
-		tokenIn, tokenOut := rr.ExactInSwapRoute(
+		tokenIn, tokenOut := cross(rr.ExactInSwapRoute)(
 			wugnotPath, // inputToken
 			gnsPath,    // outputToken
 			"500",      // finalAmountIn
@@ -554,7 +554,7 @@ func testSwapExactIn(t *testing.T) {
 		wugnot.Approve(routerAddr, consts.UINT64_MAX)
 		gns.Approve(routerAddr, consts.UINT64_MAX)
 
-		tokenIn, tokenOut := rr.ExactInSwapRoute(
+		tokenIn, tokenOut := cross(rr.ExactInSwapRoute)(
 			wugnotPath, // inputToken
 			gnsPath,    // outputToken
 			"500",      // finalAmountIn
@@ -592,7 +592,7 @@ func testSwapExactIn(t *testing.T) {
 		wugnot.Approve(routerAddr, consts.UINT64_MAX)
 		gns.Approve(routerAddr, consts.UINT64_MAX)
 
-		tokenIn, tokenOut := rr.ExactInSwapRoute(
+		tokenIn, tokenOut := cross(rr.ExactInSwapRoute)(
 			wugnotPath, // inputToken
 			gnsPath,    // outputToken
 			"500",      // finalAmountIn
@@ -636,7 +636,7 @@ func testSwapExactIn(t *testing.T) {
 		wugnot.Approve(routerAddr, consts.UINT64_MAX)
 		gns.Approve(routerAddr, consts.UINT64_MAX)
 
-		tokenIn, tokenOut := rr.ExactInSwapRoute(
+		tokenIn, tokenOut := cross(rr.ExactInSwapRoute)(
 			wugnotPath, // inputToken
 			gnsPath,    // outputToken
 			"500",      // finalAmountIn
@@ -671,7 +671,7 @@ func testSwapExactOut(t *testing.T) {
 		wugnot.Approve(routerAddr, consts.UINT64_MAX)
 		gns.Approve(routerAddr, consts.UINT64_MAX)
 
-		tokenIn, tokenOut := rr.ExactOutSwapRoute(
+		tokenIn, tokenOut := cross(rr.ExactOutSwapRoute)(
 			gnsPath,    // inputToken
 			wugnotPath, // outputToken
 			"500",      // amountOut
@@ -708,7 +708,7 @@ func testSwapExactOut(t *testing.T) {
 		wugnot.Approve(routerAddr, consts.UINT64_MAX)
 		gns.Approve(routerAddr, consts.UINT64_MAX)
 
-		tokenIn, tokenOut := rr.ExactOutSwapRoute(
+		tokenIn, tokenOut := cross(rr.ExactOutSwapRoute)(
 			gnsPath,    // inputToken
 			wugnotPath, // outputToken
 			"500",      // amountOut
@@ -745,7 +745,7 @@ func testSwapExactOut(t *testing.T) {
 		wugnot.Approve(routerAddr, consts.UINT64_MAX)
 		gns.Approve(routerAddr, consts.UINT64_MAX)
 
-		tokenIn, tokenOut := rr.ExactOutSwapRoute(
+		tokenIn, tokenOut := cross(rr.ExactOutSwapRoute)(
 			gnsPath,    // inputToken
 			wugnotPath, // outputToken
 			"500",      // amountOut
@@ -782,7 +782,7 @@ func testSwapExactOut(t *testing.T) {
 		wugnot.Approve(routerAddr, consts.UINT64_MAX)
 		gns.Approve(routerAddr, consts.UINT64_MAX)
 
-		tokenIn, tokenOut := rr.ExactOutSwapRoute(
+		tokenIn, tokenOut := cross(rr.ExactOutSwapRoute)(
 			gnsPath,    // inputToken
 			wugnotPath, // outputToken
 			"500",      // amountOut
@@ -956,7 +956,7 @@ func testMintPos08InRange(t *testing.T) {
 		qux.Approve(poolAddr, consts.UINT64_MAX)
 
 		testing.SkipHeights(1)
-		pn.Mint(
+		cross(pn.Mint)(
 			bazPath,
 			quxPath,
 			fee3000,

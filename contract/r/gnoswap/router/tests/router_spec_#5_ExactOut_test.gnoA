@@ -28,7 +28,7 @@ func TestExactOutSwapRoute_5(t *testing.T) {
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 	baz.Approve(poolAddr, consts.UINT64_MAX)
 
-	pn.Mint(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	cross(pn.Mint)(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	bar.Approve(routerAddr, 1000000)
 	baz.Approve(routerAddr, 1000000)

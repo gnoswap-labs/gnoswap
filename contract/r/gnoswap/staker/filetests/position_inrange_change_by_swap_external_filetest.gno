@@ -17,6 +17,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gnoswap-labs/gnoswap/contract/r/gnoswap/test_token/bar"
+	"github.com/gnoswap-labs/gnoswap/contract/r/gnoswap/test_token/qux"
 	"gno.land/p/demo/grc/grc721"
 
 	"gno.land/p/gnoswap/consts"
@@ -97,7 +99,7 @@ func testMintBarQuxPos01() {
 	qux.Approve(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
-	pn.Mint(
+	cross(pn.Mint)(
 		barPath,
 		quxPath,
 		fee100,
@@ -120,7 +122,7 @@ func testMintBarQuxPos02() {
 	qux.Approve(poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
-	pn.Mint(
+	cross(pn.Mint)(
 		barPath,
 		quxPath,
 		fee100,
@@ -199,7 +201,7 @@ func testMakePosition1OutRangeBySwap() {
 	bar.Approve(routerAddr, consts.UINT64_MAX)
 	qux.Approve(routerAddr, consts.UINT64_MAX)
 
-	tokenIn, tokenOut := rr.ExactInSwapRoute(
+	tokenIn, tokenOut := cross(rr.ExactInSwapRoute)(
 		barPath,     // inputToken
 		quxPath,     // outputToken
 		"100000",    // finalAmountIn
@@ -241,7 +243,7 @@ func testMakePosition1InRangeBySwap() {
 	bar.Approve(routerAddr, consts.UINT64_MAX)
 	qux.Approve(routerAddr, consts.UINT64_MAX)
 
-	tokenIn, tokenOut := rr.ExactInSwapRoute(
+	tokenIn, tokenOut := cross(rr.ExactInSwapRoute)(
 		quxPath,
 		barPath,
 		"100000",
