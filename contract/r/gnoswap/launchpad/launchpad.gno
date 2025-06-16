@@ -376,7 +376,7 @@ func CreateProject(
 			ufmt.Sprintf("project(%s) already exists", projectId)))
 	}
 
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 
 	calcResult, err := calculateProjectParams(input, now)
 	if err != nil {
@@ -501,7 +501,7 @@ func TransferLeftFromProjectByAdmin(cur realm, projectId string, recipient std.A
 			errInvalidCondition, err.Error()))
 	}
 
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 
 	accumTotalReward := uint64(0)
 	accumLeftReward := uint64(0)

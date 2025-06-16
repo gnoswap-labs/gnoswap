@@ -867,7 +867,7 @@ func TestCreateProject(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testing.SetRealm(adminRealm)
-			obl.Approve(nil, launchpadAddr, int64(tt.totalAmount))
+			obl.Approve(cross, launchpadAddr, int64(tt.totalAmount))
 			if !tt.duplicateTest {
 				testing.SkipHeights(1)
 			}
@@ -883,7 +883,7 @@ func TestCreateProject(t *testing.T) {
 			}()
 
 			projectId := CreateProject(
-				nil,
+				cross,
 				tt.projectName,
 				tt.tokenPath,
 				tt.projectOwner,
@@ -945,7 +945,7 @@ func TestCreateProject_TierAndBalance(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testing.SetRealm(adminRealm)
-			obl.Approve(nil, launchpadAddr, int64(tt.totalAmount))
+			obl.Approve(cross, launchpadAddr, int64(tt.totalAmount))
 			testing.SkipHeights(1)
 
 			defer func() {
@@ -959,7 +959,7 @@ func TestCreateProject_TierAndBalance(t *testing.T) {
 			}()
 
 			projectId := CreateProject(
-				nil,
+				cross,
 				tt.projectName,
 				tt.tokenPath,
 				tt.projectOwner,
@@ -1524,7 +1524,7 @@ func TestCovertTimeToHeight(t *testing.T) {
 		}()
 
 		testing.SetRealm(adminRealm)
-		gns.SetAvgBlockTimeInMsByAdmin(nil, 0)
+		gns.SetAvgBlockTimeInMsByAdmin(cross, 0)
 		_ = convertTimeToHeight(1000)
 	})
 }
@@ -1654,7 +1654,7 @@ func TestTransferLeftFromProjectByAdmin(t *testing.T) {
 			}()
 
 			// run
-			got := TransferLeftFromProjectByAdmin(nil, tt.projectId, tt.recipient)
+			got := TransferLeftFromProjectByAdmin(cross, tt.projectId, tt.recipient)
 
 			if tt.expectedPanic == "" {
 				project := projects[tt.projectId]

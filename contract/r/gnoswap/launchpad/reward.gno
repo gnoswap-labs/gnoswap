@@ -25,7 +25,7 @@ type RewardCalculationResult struct {
 func CollectProtocolFee(cur realm) {
 
 	caller := getPrevAddr()
-	gs.CollectRewardFromLaunchPad(cur, caller)
+	gs.CollectRewardFromLaunchPad(cross, caller)
 }
 
 // CollectRewardByProjectId collects reward from entire deposit of certain project by caller
@@ -47,7 +47,7 @@ func CollectRewardByProjectId(cur realm, projectId string) uint64 {
 		panic(addDetailToError(
 			errNotExistDeposit, ufmt.Sprintf("depositId (%s) not found", projectId)))
 	}
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 
 	currentHeight := uint64(std.ChainHeight())
 	totalReward := uint64(0) // toUser
@@ -135,7 +135,7 @@ func CollectRewardByDepositId(cur realm, depositId string) uint64 {
 		panic(err.Error())
 	}
 
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 
 	tier, err := project.Tier(convertTierTypeStrToUint64(deposit.Tier()))
 	if err != nil {
