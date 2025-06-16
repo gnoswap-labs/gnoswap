@@ -78,8 +78,7 @@ func removeTokenValidator(tokenPath string) error {
 //
 // Panics:
 //   - If the caller is not the admin
-func AddToken(tokenPath string) {
-	crossing()
+func AddToken(cur realm, tokenPath string) {
 	if err := modifyTokenList(tokenPath, nil, addTokenExecutor); err != nil {
 		panic(err.Error())
 	}
@@ -95,8 +94,7 @@ func AddToken(tokenPath string) {
 //
 // Panics:
 //   - If the caller is not the admin
-func RemoveToken(tokenPath string) {
-	crossing()
+func RemoveToken(cur realm, tokenPath string) {
 	if err := modifyTokenList(tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
 		panic(err.Error())
 	}

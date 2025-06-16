@@ -15,6 +15,7 @@ package staker_test
 import (
 	"std"
 	"strconv"
+	"testing"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/testutils"
@@ -103,10 +104,11 @@ func testInit() {
 func testCreatePool() {
 	testing.SetRealm(adminRealm)
 
-	cross(pl.SetPoolCreationFeeByAdmin)(0)
+	cross(pl.SetPoolCreationFeeByAdmin)(nil, 0)
 
 	testing.SkipHeights(1)
 	pl.CreatePool(
+		nil,
 		wugnotPath,
 		gnsPath,
 		fee3000,
@@ -118,10 +120,11 @@ func testMintWugnotGnsPos01() {
 	testing.SetRealm(adminRealm)
 
 	cross(wugnot.Approve)(poolAddr, consts.UINT64_MAX)
-	gns.Approve(poolAddr, consts.UINT64_MAX)
+	cross(gns.Approve)(nil, poolAddr, consts.UINT64_MAX)
 
 	testing.SkipHeights(1)
 	cross(pn.Mint)(
+		nil,
 		wugnotPath,
 		gnsPath,
 		fee3000,
@@ -144,12 +147,12 @@ func testStakeTokenPos01() {
 	gnft.Approve(stakerAddr, positionIdFrom(1))
 	sr.StakeToken(1, "")
 
-	before := gns.BalanceOf(adminUser)
+	before := gns.BalanceOf(nil, adminUser)
 
 	testing.SkipHeights(100)
 	sr.CollectReward(1, false)
 
-	after := gns.BalanceOf(adminUser)
+	after := gns.BalanceOf(nil, adminUser)
 
 	diff := after - before
 	if diff <= 0 {

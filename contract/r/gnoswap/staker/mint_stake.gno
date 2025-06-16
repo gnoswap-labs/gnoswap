@@ -15,7 +15,7 @@ import (
 // MintAndStake mints LP tokens and stakes them in a single transaction.
 // Returns positionId, liquidity, amount0, amount1, poolPath
 // ref: https://docs.gnoswap.io/contracts/staker/mint_stake.gno#mintandstake
-func MintAndStake(
+func MintAndStake(cur realm,
 	token0 string,
 	token1 string,
 	fee uint32,
@@ -28,8 +28,6 @@ func MintAndStake(
 	deadline int64,
 	referrer string,
 ) (uint64, string, string, string, string) {
-	crossing()
-
 	// if one click native
 	if token0 == consts.GNOT || token1 == consts.GNOT {
 		// check sent ugnot
@@ -49,7 +47,7 @@ func MintAndStake(
 		banker.SendCoins(stakerAddr, positionAddr, std.Coins{{Denom: "ugnot", Amount: ugnotSent}})
 	}
 
-	positionId, liquidity, amount0, amount1 := cross(pn.Mint)(
+	positionId, liquidity, amount0, amount1 := pn.Mint(nil,
 		token0,
 		token1,
 		fee,
@@ -67,9 +65,9 @@ func MintAndStake(
 
 	// at this point, staker has minted token
 	toTid := grc721.TokenID(ufmt.Sprintf("%d", positionId))
-	cross(gnft.SetTokenURIByImageURI)(toTid)
+	gnft.SetTokenURIByImageURI(nil, toTid)
 
-	poolPath, _, _ := StakeToken(positionId, "") // poolPath, stakedAmount0, stakedAmount1
+	poolPath, _, _ := StakeToken(cur, positionId, "") // poolPath, stakedAmount0, stakedAmount1
 
 	return positionId, liquidity, amount0, amount1, poolPath
 }
