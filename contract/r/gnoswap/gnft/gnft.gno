@@ -70,8 +70,7 @@ func TokenURI(tid grc721.TokenID) string {
 // Returns:
 //   - uint64: The number of NFTs owned by the address.
 //   - error: Returns an error if the balance retrieval fails.
-func BalanceOf(owner std.Address) (int64, error) {
-	crossing()
+func BalanceOf(cur realm, owner std.Address) (int64, error) {
 	balance, err := gnft.BalanceOf(owner)
 	if err != nil {
 		panic(err.Error())
@@ -124,12 +123,11 @@ func MustOwnerOf(tid grc721.TokenID) std.Address {
 // Panics:
 //   - If the caller is not the token owner, the function panics.
 //   - If the URI update fails, the function panics with the associated error.
-func SetTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
-	crossing()
+func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
 	assertOnlyNotHalted()
 	assertCallerIsOwnerOfToken(tid)
 
-	err := setTokenURI(tid, tURI)
+	err := setTokenURI(cur, tid, tURI)
 	if err != nil {
 		panic(addDetailToError(
 			errCannotSetURI,
@@ -170,7 +168,7 @@ func SafeTransferFrom(from, to std.Address, tid grc721.TokenID) error {
 
 	caller := getPrevAddr()
 	ownerAddr, _ := OwnerOf(tid)
-	approved, _ := GetApproved(tid)
+	approved, _ := GetApproved(cur, tid)
 	if (caller != ownerAddr) && (caller != approved) {
 		panic(addDetailToError(
 			errNoPermission,
@@ -195,8 +193,7 @@ func SafeTransferFrom(from, to std.Address, tid grc721.TokenID) error {
 //
 // Returns:
 //   - error: Returns `nil` if the transfer is successful; otherwise, returns an error.
-func TransferFrom(from, to std.Address, tid grc721.TokenID) error {
-	crossing()
+func TransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 	return SafeTransferFrom(from, to, tid)
 }
 
@@ -213,8 +210,7 @@ func TransferFrom(from, to std.Address, tid grc721.TokenID) error {
 //   - If the contract is halted.
 //   - If the caller is not the token owner.
 //   - If the `Approve` call fails.
-func Approve(approved std.Address, tid grc721.TokenID) error {
-	crossing()
+func Approve(cur realm, approved std.Address, tid grc721.TokenID) error {
 	assertOnlyNotHalted()
 	assertCallerIsOwnerOfToken(tid)
 
@@ -237,8 +233,7 @@ func Approve(approved std.Address, tid grc721.TokenID) error {
 // Panics:
 //   - If the contract is halted.
 //   - If the `SetApprovalForAll` operation fails.
-func SetApprovalForAll(operator std.Address, approved bool) error {
-	crossing()
+func SetApprovalForAll(cur realm, operator std.Address, approved bool) error {
 	assertOnlyNotHalted()
 	checkErr(gnft.SetApprovalForAll(operator, approved))
 	return nil
@@ -252,8 +247,7 @@ func SetApprovalForAll(operator std.Address, approved bool) error {
 // Returns:
 //   - std.Address: The address approved to manage the token. Returns an empty address if no approval exists.
 //   - error: Returns an error if the lookup fails or the token ID is invalid.
-func GetApproved(tid grc721.TokenID) (std.Address, error) {
-	crossing()
+func GetApproved(cur realm, tid grc721.TokenID) (std.Address, error) {
 	return gnft.GetApproved(tid)
 }
 
@@ -278,14 +272,13 @@ func IsApprovedForAll(owner, operator std.Address) bool {
 //   - If the contract is halted.
 //   - If the caller is not the owner of the token.
 //   - If the token URI cannot be set.
-func SetTokenURIByImageURI(tid grc721.TokenID) {
-	crossing()
+func SetTokenURIByImageURI(cur realm, tid grc721.TokenID) {
 	assertOnlyNotHalted()
 	assertCallerIsOwnerOfToken(tid)
 
 	tokenURI := genImageURI(generateRandInstance())
 
-	err := setTokenURI(tid, grc721.TokenURI(tokenURI))
+	err := setTokenURI(cur, tid, grc721.TokenURI(tokenURI))
 	if err != nil {
 		panic(addDetailToError(
 			errCannotSetURI,
@@ -303,10 +296,8 @@ func SetTokenURIByImageURI(tid grc721.TokenID) {
 //   - If the contract is halted.
 //   - If the caller does not own any tokens (empty token list).
 //   - If URI generation or assignment fails.
-func SetTokenURILast() {
-	crossing()
+func SetTokenURILast(cur realm) {
 	assertOnlyNotHalted()
-
 	caller := getPrevAddr()
 	tokenListByCaller, _ := getTokenList(caller)
 	lenTokenListByCaller := len(tokenListByCaller)
@@ -318,7 +309,7 @@ func SetTokenURILast() {
 	}
 
 	lastTokenId := tokenListByCaller[lenTokenListByCaller-1]
-	SetTokenURIByImageURI(lastTokenId)
+	SetTokenURIByImageURI(cur, lastTokenId)
 }
 
 // Mint creates a new NFT and assigns it to the specified address (only callable by owner)
@@ -328,8 +319,7 @@ func SetTokenURILast() {
 //
 // Returns:
 //   - grc721.TokenID: The ID of the newly minted token
-func Mint(to std.Address, tid grc721.TokenID) grc721.TokenID {
-	crossing()
+func Mint(cur realm, to std.Address, tid grc721.TokenID) grc721.TokenID {
 	owner.AssertOwnedByPrevious()
 	assertOnlyNotHalted()
 
@@ -342,8 +332,7 @@ func Mint(to std.Address, tid grc721.TokenID) grc721.TokenID {
 // Burn removes a specific token ID (only callable by owner)
 // Parameters:
 //   - tid: The token ID to burn
-func Burn(tid grc721.TokenID) {
-	crossing()
+func Burn(cur realm, tid grc721.TokenID) {
 	owner.AssertOwnedByPrevious()
 	assertOnlyNotHalted()
 
@@ -362,8 +351,7 @@ func Burn(tid grc721.TokenID) {
 //
 // Returns:
 //   - string: HTML representation of the NFT or 404 if path is invalid
-func Render(path string) string {
-	crossing()
+func Render(cur realm, path string) string {
 	switch {
 	case path == "":
 		return gnft.RenderHome()
@@ -373,8 +361,7 @@ func Render(path string) string {
 }
 
 // setTokenURI sets the metadata URI for a specific token ID
-func setTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) error {
-	crossing()
+func setTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) error {
 	assertOnlyEmptyTokenURI(tid)
 	_, err := gnft.SetTokenURI(tid, tURI)
 	if err != nil {
