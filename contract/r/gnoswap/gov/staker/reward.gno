@@ -28,9 +28,9 @@ var (
 
 // collectAndGetGNSBalance gets the acuumulated GNS balance from emission to gov/staker
 // Need to clear the distributed GNS to gov/staker in emission to get the latest accumulated GNS balance
-func collectAndGetGNSBalance() uint64 {
+func collectAndGetGNSBalance(cur realm) uint64 {
 	gotGnsForEmission := en.GetDistributedToGovStaker()
-	cross(en.ClearDistributedToGovStaker)()
+	en.ClearDistributedToGovStaker(cur)
 
 	currentGNSBalance += uint64(gotGnsForEmission)
 
@@ -39,8 +39,8 @@ func collectAndGetGNSBalance() uint64 {
 
 // updateAndGetProtocolFeeBalance gets the accumulated protocol fee balance from protocol_fee to gov/staker
 // Need to clear the accumulated protocol fee to gov/staker in protocol fee to get the latest accumulated protocol fee balance
-func updateAndGetProtocolFeeBalance() map[string]uint64 {
-	cross(pf.DistributeProtocolFee)()
+func updateAndGetProtocolFeeBalance(cur realm) map[string]uint64 {
+	pf.DistributeProtocolFee(cur)
 	gotAccuProtocolFee := pf.GetAccuTransferToGovStaker()
 
 	gotAccuProtocolFee.Iterate("", "", func(key string, value any) bool {
@@ -49,7 +49,7 @@ func updateAndGetProtocolFeeBalance() map[string]uint64 {
 		return false
 	})
 
-	cross(pf.ClearAccuTransferToGovStaker)()
+	pf.ClearAccuTransferToGovStaker(cur)
 
 	return currentProtocolFeeBalance
 }
@@ -373,13 +373,13 @@ func (self *RewardState) removeStake(
 
 // GetRewardByProjectWallet returns the amount of reward for the project wallet
 func GetRewardByProjectWallet(addr std.Address) (uint64, map[string]uint64) {
-	rewardState.finalize(collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
+	rewardState.finalize(collectAndGetGNSBalance(nil), updateAndGetProtocolFeeBalance(nil))
 	emissionReward, protocolFeeRewards := rewardState.CalculateReward(addr)
 	return emissionReward, protocolFeeRewards
 }
 
 // SetAmountByProjectWallet sets the amount of reward for the project wallet
-func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
+func SetAmountByProjectWallet(cur realm, addr std.Address, amount uint64, add bool) {
 	caller := std.PreviousRealm().Address()
 	if err := common.LaunchpadOnly(caller); err != nil {
 		panic(err)
@@ -391,10 +391,10 @@ func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
 	currentAmount := getAmountByProjectWallet(addr)
 	if add {
 		amountByProjectWallet.Set(addr.String(), currentAmount+amount)
-		rewardState.addStake(uint64(std.ChainHeight()), addr, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
+		rewardState.addStake(uint64(std.ChainHeight()), addr, amount, collectAndGetGNSBalance(cur), updateAndGetProtocolFeeBalance(cur))
 	} else {
 		amountByProjectWallet.Set(addr.String(), currentAmount-amount)
-		rewardState.removeStake(addr, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
+		rewardState.removeStake(addr, amount, collectAndGetGNSBalance(cur), updateAndGetProtocolFeeBalance(cur))
 	}
 }
 
