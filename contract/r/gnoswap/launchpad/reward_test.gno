@@ -256,7 +256,7 @@ func TestCollectRewardByDepositId_FailCases(t *testing.T) {
 			}
 		}()
 
-		CollectRewardByDepositId("non_existent_id")
+		CollectRewardByDepositId(cross, "non_existent_id")
 	})
 
 	t.Run("Claimable height before", func(t *testing.T) {
@@ -272,7 +272,7 @@ func TestCollectRewardByDepositId_FailCases(t *testing.T) {
 		}
 
 		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-024] not yet claim reward || need block >= 1123, current=123", func() {
-			CollectRewardByDepositId(depositId)
+			CollectRewardByDepositId(cross, depositId)
 		})
 	})
 }
@@ -318,7 +318,7 @@ func TestCollectRewardByDepositId_OwnerCheck(t *testing.T) {
 				uassert.Equal(t, "[GNOSWAP-LAUNCHPAD-026] invalid owner || caller(g1w4ek2ujpta047h6lta047h6lta047h6l55c22z) does not own depositId(depB)", r.(string))
 			}
 		}()
-		CollectRewardByDepositId("depB")
+		CollectRewardByDepositId(cross, "depB")
 	})
 
 	t.Run("UserA depositA => not claimable yet", func(t *testing.T) {
@@ -332,7 +332,7 @@ func TestCollectRewardByDepositId_OwnerCheck(t *testing.T) {
 				uassert.Equal(t, "[GNOSWAP-LAUNCHPAD-024] not yet claim reward || need block >= 133, current=123", r.(string))
 			}
 		}()
-		CollectRewardByDepositId("depA")
+		CollectRewardByDepositId(cross, "depA")
 	})
 
 	testing.SkipHeights(11) // now height=11 >= depositA.claimableHeight=10
@@ -363,7 +363,7 @@ func TestCollectRewardByDepositId_OwnerCheck(t *testing.T) {
 		mockTier.setReward(*mockReward)
 		project.setTier(TIER30, *mockTier)
 
-		amount := CollectRewardByDepositId("depA")
+		amount := CollectRewardByDepositId(cross, "depA")
 		uassert.Equal(t, uint64(100), amount)
 	})
 }

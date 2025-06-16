@@ -14,12 +14,12 @@ func TestInitTwoPools(t *testing.T) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	func() {
 		testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-		SetPoolCreationFeeByAdmin(0)
+		SetPoolCreationFeeByAdmin(cross, 0)
 		// foo:bar
-		CreatePool("gno.land/r/onbloc/bar", "gno.land/r/onbloc/foo", FeeTier500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+		CreatePool(cross, "gno.land/r/onbloc/bar", "gno.land/r/onbloc/foo", FeeTier500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
 		// bar:baz
-		CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000
+		CreatePool(cross, barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000
 
 		uassert.Equal(t, pools.Size(), 2)
 	}()

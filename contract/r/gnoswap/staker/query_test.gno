@@ -85,10 +85,10 @@ func TestFilterActiveIncentives(t *testing.T) {
 	poolPath := "test_pool"
 	rewardToken := "test_token"
 	refundee := testutils.TestAddress("refundee")
-	
+
 	// create pool
 	pool := NewPool(poolPath, 100)
-	
+
 	// create incentive
 	incentive1 := &ExternalIncentive{
 		startTimestamp: 150,
@@ -99,7 +99,7 @@ func TestFilterActiveIncentives(t *testing.T) {
 		rewardAmount:   1000,
 		refundee:       refundee,
 	}
-	
+
 	incentive2 := &ExternalIncentive{
 		startTimestamp: 200,
 		endTimestamp:   300,
@@ -109,16 +109,16 @@ func TestFilterActiveIncentives(t *testing.T) {
 		rewardAmount:   2000,
 		refundee:       refundee,
 	}
-	
+
 	// add incentive
 	pool.incentives.create(refundee, incentive1)
 	pool.incentives.create(refundee, incentive2)
-	
+
 	// test cases
 	tests := []struct {
-		name           string
-		currentHeight  int64
-		expectedCount  int
+		name          string
+		currentHeight int64
+		expectedCount int
 	}{
 		{
 			name:          "current height is lower than all incentives' start height",
@@ -141,11 +141,11 @@ func TestFilterActiveIncentives(t *testing.T) {
 			expectedCount: 0,
 		},
 	}
-	
+
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			activeIncentives := filterActiveIncentives(pool, tc.currentHeight)
-			
+
 			if len(activeIncentives) != tc.expectedCount {
 				t.Errorf("expected %d active incentives, got %d", tc.expectedCount, len(activeIncentives))
 			}

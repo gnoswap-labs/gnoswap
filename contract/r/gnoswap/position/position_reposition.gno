@@ -27,7 +27,6 @@ func Reposition(
 	amount0MinStr string,
 	amount1MinStr string,
 ) (uint64, string, int32, int32, string, string) {
-	crossing()
 	assertOnlyNotHalted()
 	verifyTokenIdAndOwnership(positionId)
 	mintAndDistributeGnsCallback()

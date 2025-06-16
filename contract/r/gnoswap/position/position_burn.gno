@@ -40,17 +40,17 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	}
 
 	caller := getPrevAddr()
-	beforeWugnotBalance := cross(wugnot.BalanceOf)(caller) // before unwrap
+	beforeWugnotBalance := wugnot.BalanceOf(caller) // before unwrap
 
 	pToken0, pToken1, pFee := splitOf(position.poolKey)
-	burn0, burn1 := pl.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, liquidityToRemove.ToString())
+	burn0, burn1 := pl.Burn(cross, pToken0, pToken1, pFee, position.tickLower, position.tickUpper, liquidityToRemove.ToString())
 
 	burnedAmount0 := u256.MustFromDecimal(burn0)
 	burnedAmount1 := u256.MustFromDecimal(burn1)
 	verifySlippageAmounts(burnedAmount0, burnedAmount1, params.amount0Min, params.amount1Min)
 
 	positionKey := computePositionKey(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	pool := cross(pl.GetPoolFromPoolPath)(position.poolKey)
+	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	feeGrowthInside0LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
 	feeGrowthInside1LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey))
 
@@ -90,6 +90,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	mustUpdatePosition(params.positionId, position)
 
 	collect0, collect1 := pl.Collect(
+		cross,
 		pToken0,
 		pToken1,
 		pFee,

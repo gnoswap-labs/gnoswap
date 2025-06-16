@@ -29,8 +29,7 @@ func GetSwapFee() uint64 {
 
 // SetSwapFeeByAdmin modifies the swap fee
 // Only admin can execute this function
-func SetSwapFeeByAdmin(fee uint64) {
-	crossing()
+func SetSwapFeeByAdmin(cur realm, fee uint64) {
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {
 		panic(err)
@@ -55,8 +54,7 @@ func SetSwapFeeByAdmin(fee uint64) {
 // SetSwapFee modifies the swap fee
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/router/protocol_fee_swap.gno#setswapfee
-func SetSwapFee(fee uint64) {
-	crossing()
+func SetSwapFee(cur realm, fee uint64) {
 	caller := getPrevAddr()
 	if err := access.GovernanceOnly(caller); err != nil {
 		panic(err)
@@ -115,7 +113,7 @@ func handleSwapFee(
 
 	outputTeller := common.GetTokenTeller(outputToken)
 	outputTeller.TransferFrom(std.PreviousRealm().Address(), protocolFeeAddr, feeAmountInt64)
-	cross(pf.AddToProtocolFee)(outputToken, uint64(feeAmountInt64))
+	pf.AddToProtocolFee(cross, outputToken, uint64(feeAmountInt64))
 
 	prevAddr, prevPkgPath := getPrev()
 

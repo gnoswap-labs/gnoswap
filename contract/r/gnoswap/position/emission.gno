@@ -28,5 +28,5 @@ func mintAndDistributeGnsCallback() int64 {
 	}
 
 	// stored function is crossing, it needs to be wrapped with `cross` to execute
-	return cross(mintCallback)()
+	return mintCallback()
 }

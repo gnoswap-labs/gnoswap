@@ -55,13 +55,12 @@ func init() {
 // - invalid target
 // - sum of percentages is not 10000
 // - swap is halted
-func ChangeDistributionPctByAdmin(
+func ChangeDistributionPctByAdmin(cur realm,
 	target01 int, pct01 int64,
 	target02 int, pct02 int64,
 	target03 int, pct03 int64,
 	target04 int, pct04 int64,
 ) {
-	crossing()
 	assertOnlyAdmin()
 	targets := []int{target01, target02, target03, target04}
 	for _, target := range targets {
@@ -84,13 +83,12 @@ func ChangeDistributionPctByAdmin(
 // - invalid target
 // - sum of percentages is not 10000
 // - swap is halted
-func ChangeDistributionPct(
+func ChangeDistributionPct(cur realm,
 	target01 int, pct01 int64,
 	target02 int, pct02 int64,
 	target03 int, pct03 int64,
 	target04 int, pct04 int64,
 ) {
-	crossing()
 	assertOnlyGovernance()
 	targets := []int{target01, target02, target03, target04}
 	for _, target := range targets {
@@ -138,7 +136,7 @@ func changeDistributionPcts(
 
 // distributeToTarget splits an amount according to the configured percentages
 // and sends tokens to each target address. Returns the total amount distributed.
-func distributeToTarget(amount int64) int64 {
+func distributeToTarget(cur realm, amount int64) int64 {
 	totalSent := int64(0)
 
 	distributionBpsPct.Iterate("", "", func(targetStr string, iPct any) bool {
@@ -154,7 +152,7 @@ func distributeToTarget(amount int64) int64 {
 		distAmount := calculateAmount(amount, pct)
 		totalSent += distAmount
 
-		transferToTarget(targetInt, distAmount)
+		transferToTarget(cross, targetInt, distAmount)
 
 		return false
 	})
@@ -185,25 +183,25 @@ func calculateAmount(amount, bptPct int64) int64 {
 
 // transferToTarget sends tokens to the appropriate address based on target type
 // and updates both current and accumulated distribution tracking
-func transferToTarget(target int, amount int64) {
+func transferToTarget(cur realm, target int, amount int64) {
 	switch target {
 	case LIQUIDITY_STAKER:
-		cross(gns.Transfer)(stakerAddr, amount)
+		gns.Transfer(cross, stakerAddr, amount)
 		distributedToStaker += amount
 		accuDistributedToStaker += amount
 
 	case DEVOPS:
-		cross(gns.Transfer)(devOpsAddr, amount)
+		gns.Transfer(cross, devOpsAddr, amount)
 		distributedToDevOps += amount
 		accuDistributedToDevOps += amount
 
 	case COMMUNITY_POOL:
-		cross(gns.Transfer)(communityPoolAddr, amount)
+		gns.Transfer(cross, communityPoolAddr, amount)
 		distributedToCommunityPool += amount
 		accuDistributedToCommunityPool += amount
 
 	case GOV_STAKER:
-		cross(gns.Transfer)(govStakerAddr, amount)
+		gns.Transfer(cross, govStakerAddr, amount)
 		distributedToGovStaker += amount
 		accuDistributedToGovStaker += amount
 
@@ -263,12 +261,12 @@ func GetAccuDistributedToGovStaker() int64 {
 	return accuDistributedToGovStaker
 }
 
-func ClearDistributedToStaker() {
+func ClearDistributedToStaker(cur realm) {
 	assertStakerOnly()
 	distributedToStaker = 0
 }
 
-func ClearDistributedToGovStaker() {
+func ClearDistributedToGovStaker(cur realm) {
 	assertOnlyGovStaker()
 	distributedToGovStaker = 0
 }

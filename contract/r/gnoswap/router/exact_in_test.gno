@@ -126,8 +126,8 @@ func TestExactInSwapRoute(t *testing.T) {
 		{
 			name: "BAR -> BAZ",
 			setup: func() {
-				bar.Approve(routerAddr, maxApprove)
-				baz.Approve(routerAddr, maxApprove)
+				bar.Approve(cross, routerAddr, maxApprove)
+				baz.Approve(cross, routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			inputToken:   barPath,
@@ -143,10 +143,10 @@ func TestExactInSwapRoute(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testing.SetRealm(user1Realm)
-			bar.Approve(routerAddr, maxApprove)
-			baz.Approve(routerAddr, maxApprove)
-			bar.Approve(poolAddr, maxApprove)
-			baz.Approve(poolAddr, maxApprove)
+			bar.Approve(cross, routerAddr, maxApprove)
+			baz.Approve(cross, routerAddr, maxApprove)
+			bar.Approve(cross, poolAddr, maxApprove)
+			baz.Approve(cross, poolAddr, maxApprove)
 			if tt.setup != nil {
 				tt.setup()
 			}
@@ -160,6 +160,7 @@ func TestExactInSwapRoute(t *testing.T) {
 			}()
 
 			amountIn, amountOut := ExactInSwapRoute(
+				cross,
 				tt.inputToken,
 				tt.outputToken,
 				tt.amountIn,
@@ -210,8 +211,8 @@ func TestExactInSwapRouteWithReferral(t *testing.T) {
 		{
 			name: "self referral",
 			setup: func() {
-				bar.Approve(routerAddr, maxApprove)
-				baz.Approve(routerAddr, maxApprove)
+				bar.Approve(cross, routerAddr, maxApprove)
+				baz.Approve(cross, routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			inputToken:   barPath,
@@ -226,8 +227,8 @@ func TestExactInSwapRouteWithReferral(t *testing.T) {
 		{
 			name: "change referral",
 			setup: func() {
-				bar.Approve(routerAddr, maxApprove)
-				baz.Approve(routerAddr, maxApprove)
+				bar.Approve(cross, routerAddr, maxApprove)
+				baz.Approve(cross, routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			inputToken:   barPath,
@@ -244,15 +245,16 @@ func TestExactInSwapRouteWithReferral(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testing.SetRealm(user1Realm)
-			bar.Approve(routerAddr, maxApprove)
-			baz.Approve(routerAddr, maxApprove)
-			bar.Approve(poolAddr, maxApprove)
-			baz.Approve(poolAddr, maxApprove)
+			bar.Approve(cross, routerAddr, maxApprove)
+			baz.Approve(cross, routerAddr, maxApprove)
+			bar.Approve(cross, poolAddr, maxApprove)
+			baz.Approve(cross, poolAddr, maxApprove)
 			if tt.setup != nil {
 				tt.setup()
 			}
 
 			ExactInSwapRoute(
+				cross,
 				tt.inputToken,
 				tt.outputToken,
 				tt.amountIn,
@@ -329,14 +331,14 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Pool Creation
 			testing.SetRealm(std.NewUserRealm(positionOwner))
-			pl.SetPoolCreationFeeByAdmin(0)
+			pl.SetPoolCreationFeeByAdmin(cross, 0)
 			if !pl.DoesPoolPathExist(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
-				pl.CreatePool(tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
+				pl.CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
 			}
 
 			if tt.feeProtocol0 != 0 || tt.feeProtocol1 != 0 {
 				pool := pl.GetPool(tt.tokenPath0, tt.tokenPath1, tt.feeTier)
-				pl.SetFeeProtocolByAdmin(tt.feeProtocol0, tt.feeProtocol1)
+				pl.SetFeeProtocolByAdmin(cross, tt.feeProtocol0, tt.feeProtocol1)
 				uassert.Equal(t, tt.feeProtocol0, pool.Slot0FeeProtocol()%16)
 				uassert.Equal(t, tt.feeProtocol1, pool.Slot0FeeProtocol()>>4)
 			}
@@ -347,21 +349,21 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
-			cross(wugnot.Deposit)()
+			wugnot.Deposit(cross)
 			if tt.recipient != positionOwner {
-				cross(wugnot.Transfer)(tt.recipient, 10000000000)
+				wugnot.Transfer(cross, tt.recipient, 10000000000)
 			}
-			gns.Transfer(tt.recipient, 10000000000)
+			gns.Transfer(cross, tt.recipient, 10000000000)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			cross(wugnot.Approve)(poolContract, maxApprove)
-			gns.Approve(poolContract, maxApprove)
+			wugnot.Approve(cross, poolContract, maxApprove)
+			gns.Approve(cross, poolContract, maxApprove)
 
 			teller := common.GetTokenTeller(wugnotTokenPath)
 			teller.Approve(poolContract, maxApprove)
 
 			// Position Creation
-			cross(pn.Mint)(
+			pn.Mint(
 				tt.tokenPath0,
 				tt.tokenPath1,
 				tt.feeTier,
@@ -380,16 +382,17 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			cross(wugnot.Transfer)(routerContract, 20000000)
-			gns.Transfer(routerContract, 20000000)
-			cross(wugnot.Approve)(routerContract, maxApprove)
-			gns.Approve(routerContract, maxApprove)
+			wugnot.Transfer(cross, routerContract, 20000000)
+			gns.Transfer(cross, routerContract, 20000000)
+			wugnot.Approve(cross, routerContract, maxApprove)
+			gns.Approve(cross, routerContract, maxApprove)
 			beforeGnotBalance := uint64(banker.GetCoins(tt.recipient).AmountOf("ugnot"))
 
 			testing.SetRealm(std.NewCodeRealm(routerPath))
-			cross(wugnot.Approve)(poolContract, maxApprove)
+			wugnot.Approve(cross, poolContract, maxApprove)
 
 			amountIn, amountOut := ExactInSwapRoute(
+				cross,
 				tt.inputToken,
 				tt.outputToken,
 				tt.amountIn,

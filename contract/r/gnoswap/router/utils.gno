@@ -103,7 +103,7 @@ func haltCheck() error {
 }
 
 // commonSwapSetup performs all necessary validations and setup for a swap operation
-func commonSwapSetup() error {
+func commonSwapSetup(cur realm) error {
 	if err := haltCheck(); err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func commonSwapSetup() error {
 		return ufmt.Errorf(errNoPermission.Error(), "only user can call this function")
 	}
 
-	cross(emission.MintAndDistributeGns)()
+	emission.MintAndDistributeGns(cross)
 	return nil
 }
 

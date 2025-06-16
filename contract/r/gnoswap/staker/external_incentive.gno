@@ -16,16 +16,14 @@ import (
 
 // CreateExternalIncentive creates an incentive program for a pool.
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#createexternalincentive
-func CreateExternalIncentive(
+func CreateExternalIncentive(cur realm,
 	targetPoolPath string,
 	rewardToken string, // token path should be registered
 	rewardAmount int64,
 	startTimestamp int64,
 	endTimestamp int64,
 ) {
-	crossing()
 	assertOnlyNotHalted()
-
 	if common.GetLimitCaller() {
 		prev := std.PreviousRealm()
 		if err := common.UserOnly(prev); err != nil {
@@ -50,7 +48,7 @@ func CreateExternalIncentive(
 		))
 	}
 
-	cross(en.MintAndDistributeGns)()
+	en.MintAndDistributeGns(cross)
 
 	// check token can be used as reward
 	if err := isAllowedForExternalReward(targetPoolPath, rewardToken); err != nil {
@@ -125,7 +123,7 @@ func CreateExternalIncentive(
 	externalIncentives.set(incentiveId, incentive)
 
 	// deposit gns amount
-	cross(gns.TransferFrom)(caller, stakerAddr, depositGnsAmount)
+	gns.TransferFrom(cross, caller, stakerAddr, depositGnsAmount)
 
 	// transfer reward token from user to staker
 	teller := common.GetTokenTeller(rewardToken)
@@ -153,10 +151,8 @@ func CreateExternalIncentive(
 
 // EndExternalIncentive ends the external incentive and refunds the remaining reward
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#endexternalincentive
-func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken string, startTimestamp, endTimestamp, height int64) {
-	crossing()
+func EndExternalIncentive(cur realm, refundee std.Address, targetPoolPath, rewardToken string, startTimestamp, endTimestamp, height int64) {
 	assertOnlyNotHalted()
-
 	pool, exists := pools.Get(targetPoolPath)
 	if !exists {
 		panic(addDetailToError(
@@ -214,7 +210,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	}
 
 	// also refund deposit gns amount
-	cross(gns.Transfer)(ictv.refundee, int64(ictv.depositGnsAmount))
+	gns.Transfer(cross, ictv.refundee, int64(ictv.depositGnsAmount))
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(

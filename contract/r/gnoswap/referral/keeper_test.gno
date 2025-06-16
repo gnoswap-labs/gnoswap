@@ -811,7 +811,7 @@ func TestTryRegisterRetryAfterFailure(t *testing.T) {
 	defer cleanup()
 
 	invalidRef := "000000000001"
-	success := TryRegister(validAddr3, invalidRef)
+	success := TryRegister(cross, validAddr3, invalidRef)
 	if success {
 		t.Error("should fail with invalid referral address")
 	}
@@ -820,7 +820,7 @@ func TestTryRegisterRetryAfterFailure(t *testing.T) {
 
 	// trying to register with valid address
 	// should not check rate limit
-	success = TryRegister(validAddr3, validAddrStr)
+	success = TryRegister(cross, validAddr3, validAddrStr)
 	if !success {
 		t.Error("re-register should succeed with valid address")
 	}
@@ -835,7 +835,7 @@ func TestTryRegisterRetryAfterFailure(t *testing.T) {
 	}
 
 	// check rate limit is applied
-	success = TryRegister(validAddr3, validAddrStr)
+	success = TryRegister(cross, validAddr3, validAddrStr)
 	if success {
 		t.Error("should fail due to rate limit")
 	}
@@ -846,14 +846,14 @@ func TestRegisterWithEmptyRefAddrAndThenValidRefAddr(t *testing.T) {
 	defer cleanup()
 
 	// try to register with empty refAddr
-	success := TryRegister(validAddr5, "")
+	success := TryRegister(cross, validAddr5, "")
 	if !success {
 		t.Error("empty refAddr registration should be bypassed")
 	}
 
 	// try to register with valid address
 	validAddr6Str := validAddr6.String()
-	success = TryRegister(validAddr5, validAddr6Str)
+	success = TryRegister(cross, validAddr5, validAddr6Str)
 	if !success {
 		t.Error("should succeed with valid address after empty refAddr")
 	}
@@ -871,7 +871,7 @@ func TestRegisterWithValidRefAddrAndThenRemoveWithEmptyRefAddr(t *testing.T) {
 
 	// register with valid address
 	validAddrStr := validAddr7.String()
-	success := TryRegister(validAddr8, validAddrStr)
+	success := TryRegister(cross, validAddr8, validAddrStr)
 	if !success {
 		t.Error("should succeed with valid address")
 	}
@@ -883,7 +883,7 @@ func TestRegisterWithValidRefAddrAndThenRemoveWithEmptyRefAddr(t *testing.T) {
 	}
 
 	// remove with empty refAddr
-	success = TryRegister(validAddr8, "")
+	success = TryRegister(cross, validAddr8, "")
 	if !success {
 		t.Error("should succeed with empty refAddr to remove")
 	}

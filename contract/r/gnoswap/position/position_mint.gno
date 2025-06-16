@@ -43,7 +43,7 @@ import (
 //   - The NFT minted is critical for tracking the user's liquidity in the pool.
 //   - Position state management is handled by `setPosition`, ensuring the uniqueness of the position ID.
 func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
-	poolKey := cross(pl.GetPoolPath)(params.token0, params.token1, params.fee)
+	poolKey := pl.GetPoolPath(params.token0, params.token1, params.fee)
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
 			poolKey:        poolKey,
@@ -72,9 +72,9 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 		))
 	}
 
-	cross(gnft.Mint)(params.mintTo, positionIdFrom(id)) // owner, position ID
+	gnft.Mint(cross, params.mintTo, positionIdFrom(id)) // owner, position ID
 
-	pool := cross(pl.GetPoolFromPoolPath)(poolKey)
+	pool := pl.GetPoolFromPoolPath(poolKey)
 	positionKey := computePositionKey(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
 
 	position := Position{
@@ -274,7 +274,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		},
 	)
 
-	pool := cross(pl.GetPoolFromPoolPath)(position.poolKey)
+	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := computePositionKey(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 	feeGrowthInside0LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
 	feeGrowthInside1LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey))
@@ -387,5 +387,5 @@ func parseAmounts(amount0Desired, amount1Desired, amount0Min, amount1Min string)
 // Returns:
 // - string: A unique path string representing the liquidity pool.
 func computePoolPath(token0, token1 string, fee uint32) string {
-	return cross(pl.GetPoolPath)(token0, token1, fee)
+	return pl.GetPoolPath(token0, token1, fee)
 }

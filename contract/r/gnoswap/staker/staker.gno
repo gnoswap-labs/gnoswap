@@ -194,7 +194,7 @@ func init() {
 }
 
 func registerCallbackStakerEmissionChange() {
-	cross(en.RegisterGnsChangeCallback)()
+	en.RegisterGnsChangeCallback(cross)
 }
 
 // StakeToken stakes an LP token into the staker contract. It transfer the LP token
@@ -220,17 +220,16 @@ func registerCallbackStakerEmissionChange() {
 //   - token1Amount (string): The amount of token1 in the LP token
 //
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#staketoken
-func StakeToken(positionId uint64, referrer string) (string, string, string) {
-	crossing()
+func StakeToken(cur realm, positionId uint64, referrer string) (string, string, string) {
 	assertOnlyNotHalted()
 	assertOnlyNotStaked(positionId)
 
-	cross(en.MintAndDistributeGns)()
+	en.MintAndDistributeGns(cross)
 
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := getPrevAddr()
 
-	success := cross(referral.TryRegister)(caller, referrer)
+	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer
 	if !success {
 		actualReferrer = referral.GetReferral(caller.String())
@@ -280,7 +279,7 @@ func StakeToken(positionId uint64, referrer string) (string, string, string) {
 	}
 
 	// after transfer, set caller(user) as position operator (to collect fee and reward)
-	cross(pn.SetPositionOperator)(positionId, caller)
+	pn.SetPositionOperator(positionId, caller)
 
 	signedLiquidity := i256.FromUint256(liquidity)
 	isInRange := false
@@ -384,7 +383,7 @@ func transferDeposit(positionId uint64, owner, caller, to std.Address) error {
 		)
 	}
 	// transfer NFT ownership
-	return cross(gnft.TransferFrom)(owner, to, positionIdFrom(positionId))
+	return gnft.TransferFrom(cross, owner, to, positionIdFrom(positionId))
 }
 
 ////////////////////////////////////////////////////////////
@@ -411,17 +410,15 @@ func transferDeposit(positionId uint64, owner, caller, to std.Address) error {
 //   - poolPath (string): The path of the pool to which the LP token is staked
 //
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#collectreward
-func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[string]int64, map[string]int64) {
-	crossing()
+func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, string, map[string]int64, map[string]int64) {
 	assertOnlyNotHalted()
-
 	deposit := deposits.Get(positionId)
 	caller := getPrevAddr()
 	if err := common.SatisfyCond(caller == deposit.owner); err != nil {
 		panic(addDetailToError(errNoPermission, ufmt.Sprintf("caller is not owner of positionId(%d)", positionId)))
 	}
 
-	cross(en.MintAndDistributeGns)()
+	en.MintAndDistributeGns(cross)
 
 	currentHeight := std.ChainHeight()
 	// get all internal and external rewards
@@ -490,18 +487,18 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[st
 	if toUser > 0 {
 		// internal reward to user
 		totalEmissionSent = safeAddInt64(totalEmissionSent, toUser)
-		gns.Transfer(deposit.owner, toUser)
+		gns.Transfer(cross, deposit.owner, toUser)
 
 		// internal penalty to community pool
 		totalEmissionSent = safeAddInt64(totalEmissionSent, reward.InternalPenalty)
-		gns.Transfer(communityPoolAddr, int64(reward.InternalPenalty))
+		gns.Transfer(cross, communityPoolAddr, int64(reward.InternalPenalty))
 	}
 
 	unClaimableInternal := processUnClaimableReward(deposit.targetPoolPath, currentHeight)
 	if unClaimableInternal > 0 {
 		// internal unClaimable to community pool
 		totalEmissionSent = safeAddInt64(totalEmissionSent, unClaimableInternal)
-		gns.Transfer(communityPoolAddr, int64(unClaimableInternal))
+		gns.Transfer(cross, communityPoolAddr, int64(unClaimableInternal))
 	}
 
 	std.Emit(
@@ -550,10 +547,8 @@ func CollectReward(positionId uint64, unwrapResult bool) (string, string, map[st
 // - token1Amount (string): Final amount of token1 in the position
 //
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#unstaketoken
-func UnStakeToken(positionId uint64, unwrapResult bool) (string, string, string) { // poolPath, token0Amount, token1Amount
-	crossing()
+func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) (string, string, string) { // poolPath, token0Amount, token1Amount
 	assertOnlyNotHalted()
-
 	// Verify that the caller is the actual owner of the deposit to prevent unauthorized unstaking
 	deposit := deposits.Get(positionId)
 	caller := getPrevAddr()
@@ -570,14 +565,14 @@ func UnStakeToken(positionId uint64, unwrapResult bool) (string, string, string)
 	poolPath := deposit.targetPoolPath
 
 	// claim All Rewards
-	CollectReward(positionId, unwrapResult)
+	CollectReward(cur, positionId, unwrapResult)
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(poolPath, positionId)
 
 	applyUnStake(positionId)
 
 	// transfer NFT ownership to origin owner
-	gnft.TransferFrom(stakerAddr, deposit.owner, positionIdFrom(positionId))
-	cross(pn.SetPositionOperator)(positionId, consts.ZERO_ADDRESS)
+	gnft.TransferFrom(cross, stakerAddr, deposit.owner, positionIdFrom(positionId))
+	pn.SetPositionOperator(positionId, consts.ZERO_ADDRESS)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(

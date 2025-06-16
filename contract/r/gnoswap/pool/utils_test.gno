@@ -58,19 +58,19 @@ func TestU256Min(t *testing.T) {
 func TestGetPrevAsString(t *testing.T) {
 	tests := []struct {
 		name            string
-		realm           std.Realm
+		_realm          std.Realm
 		expectedAddr    string
 		expectedPkgPath string
 	}{
 		{
-			name: "user call",
-			realm: std.NewUserRealm(std.Address("user")),
+			name:            "user call",
+			_realm:          std.NewUserRealm(std.Address("user")),
 			expectedAddr:    "user",
 			expectedPkgPath: "",
 		},
 		{
-			name: "code call",
-			realm: std.NewCodeRealm("gno.land/r/demo/realm"),
+			name:            "code call",
+			_realm:          std.NewCodeRealm("gno.land/r/demo/realm"),
 			expectedAddr:    std.DerivePkgAddr("gno.land/r/demo/realm").String(),
 			expectedPkgPath: "gno.land/r/demo/realm",
 		},
@@ -78,7 +78,7 @@ func TestGetPrevAsString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testing.SetRealm(tt.realm)
+			testing.SetRealm(tt._realm)
 			func() {
 				testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
 				addr, pkgPath := getPrevAsString()

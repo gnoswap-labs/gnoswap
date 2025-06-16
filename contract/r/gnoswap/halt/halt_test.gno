@@ -35,7 +35,7 @@ func TestHalts(t *testing.T) {
 func TestSetHaltLevelByAdminAndGovernance(t *testing.T) {
 	t.Run("with non-admin or non-governance privilege, should fail", func(t *testing.T) {
 		testing.SetRealm(userRealm)
-		err := SetHaltLevelByAdmin(LvNoHalt)
+		err := SetHaltLevelByAdmin(cross, LvNoHalt)
 		uassert.Error(t, err)
 	})
 
@@ -48,14 +48,14 @@ func TestSetHaltLevelByAdminAndGovernance(t *testing.T) {
 		}
 
 		// Change to NoHalt
-		err := cross(SetHaltLevelByAdmin)(LvNoHalt)
+		err := SetHaltLevelByAdmin(cross, LvNoHalt)
 		uassert.NoError(t, err)
 		if GetCurrentHaltLevel() != LvNoHalt {
 			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvNoHalt)
 		}
 
 		// Back to CompleteHalt
-		err = cross(SetHaltLevelByAdmin)(LvCompleteHalt)
+		err = SetHaltLevelByAdmin(cross, LvCompleteHalt)
 		uassert.NoError(t, err)
 		if GetCurrentHaltLevel() != LvCompleteHalt {
 			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvCompleteHalt)
@@ -67,7 +67,7 @@ func TestSetHalt(t *testing.T) {
 	t.Run("with admin privilege, success", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		// err := SetHalt(true)
-		err := cross(SetHalt)(true)
+		err := SetHalt(cross, true)
 		uassert.NoError(t, err)
 	})
 
@@ -77,7 +77,7 @@ func TestSetHalt(t *testing.T) {
 		// Currently in CompleteHalt from previous test
 		uassert.True(t, GetHalt())
 
-		err := cross(SetHalt)(false) // try to set to NoHalt
+		err := SetHalt(cross, false) // try to set to NoHalt
 		uassert.NoError(t, err)
 		if GetCurrentHaltLevel() != LvNoHalt {
 			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvNoHalt)
@@ -88,7 +88,7 @@ func TestSetHalt(t *testing.T) {
 func TestSetHaltWithLevel(t *testing.T) {
 	t.Run("with non-privileged user, should fail", func(t *testing.T) {
 		testing.SetRealm(userRealm)
-		err := cross(SetHalt)(true, LvEmergencyHalt)
+		err := SetHalt(cross, true, LvEmergencyHalt)
 		uassert.Error(t, err)
 	})
 
@@ -96,7 +96,7 @@ func TestSetHaltWithLevel(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		// Set EmergencyHalt
-		err := cross(SetHalt)(true, LvEmergencyHalt)
+		err := SetHalt(cross, true, LvEmergencyHalt)
 		uassert.NoError(t, err)
 		if GetCurrentHaltLevel() != LvEmergencyHalt {
 			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvEmergencyHalt)
@@ -109,7 +109,7 @@ func TestSetHaltWithLevel(t *testing.T) {
 		uassert.Error(t, err)
 
 		// Set CompleteHalt
-		err = cross(SetHalt)(true, LvCompleteHalt)
+		err = SetHalt(cross, true, LvCompleteHalt)
 		uassert.NoError(t, err)
 		if GetCurrentHaltLevel() != LvCompleteHalt {
 			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvCompleteHalt)
@@ -126,14 +126,14 @@ func TestSetHaltWithLevel(t *testing.T) {
 		testing.SetRealm(govRealm)
 
 		// Set EmergencyHalt
-		err := cross(SetHalt)(true, LvEmergencyHalt)
+		err := SetHalt(cross, true, LvEmergencyHalt)
 		uassert.NoError(t, err)
 		if GetCurrentHaltLevel() != LvEmergencyHalt {
 			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvEmergencyHalt)
 		}
 
 		// Set CompleteHalt
-		err = cross(SetHalt)(true, LvCompleteHalt)
+		err = SetHalt(cross, true, LvCompleteHalt)
 		uassert.NoError(t, err)
 		if GetCurrentHaltLevel() != LvCompleteHalt {
 			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvCompleteHalt)
@@ -144,11 +144,11 @@ func TestSetHaltWithLevel(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		// Try to set ContractHalt (not allowed)
-		err := cross(SetHalt)(true, LvContractHalt)
+		err := SetHalt(cross, true, LvContractHalt)
 		uassert.Error(t, err)
 
 		// Try to set MainnetSafeMode (not allowed)
-		err = cross(SetHalt)(true, LvMainnetSafeMode)
+		err = SetHalt(cross, true, LvMainnetSafeMode)
 		uassert.Error(t, err)
 	})
 
@@ -156,11 +156,11 @@ func TestSetHaltWithLevel(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		// First set to EmergencyHalt
-		err := cross(SetHalt)(true, LvEmergencyHalt)
+		err := SetHalt(cross, true, LvEmergencyHalt)
 		uassert.NoError(t, err)
 
 		// Unhalt should set to NoHalt regardless of current level
-		err = cross(SetHalt)(false)
+		err = SetHalt(cross, false)
 		uassert.NoError(t, err)
 		if GetCurrentHaltLevel() != LvNoHalt {
 			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvNoHalt)
@@ -171,7 +171,7 @@ func TestSetHaltWithLevel(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		// Set halt without specifying level
-		err := cross(SetHalt)(true)
+		err := SetHalt(cross, true)
 		uassert.NoError(t, err)
 		if GetCurrentHaltLevel() != LvCompleteHalt {
 			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvCompleteHalt)
@@ -182,11 +182,11 @@ func TestSetHaltWithLevel(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		// First set to EmergencyHalt
-		err := cross(SetHalt)(true, LvEmergencyHalt)
+		err := SetHalt(cross, true, LvEmergencyHalt)
 		uassert.NoError(t, err)
 
 		// Explicitly set to NoHalt
-		err = cross(SetHalt)(true, LvNoHalt)
+		err = SetHalt(cross, true, LvNoHalt)
 		uassert.NoError(t, err)
 		if GetCurrentHaltLevel() != LvNoHalt {
 			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvNoHalt)
@@ -205,7 +205,7 @@ func TestEnableOperationsForTestnet(t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		// First set to MainnetSafeMode
-		err := cross(SetHaltLevelByAdmin)(LvMainnetSafeMode)
+		err := SetHaltLevelByAdmin(cross, LvMainnetSafeMode)
 		uassert.NoError(t, err)
 		if GetCurrentHaltLevel() != LvMainnetSafeMode {
 			t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), LvMainnetSafeMode)
@@ -227,7 +227,7 @@ func TestEnableOperationsForTestnet(t *testing.T) {
 		}
 
 		t.Run("Enable withdrawals", func(t *testing.T) {
-			err := cross(EnableWithdrawalsForTestnet)()
+			err := EnableWithdrawalsForTestnet(cross)
 			uassert.NoError(t, err)
 			tests := []haltTestCases{
 				{OpTypeWithdraw, false}, // now enabled
@@ -253,7 +253,7 @@ func TestEnableOperationsForTestnet(t *testing.T) {
 
 		t.Run("Move to NoHalt after testing", func(t *testing.T) {
 			// Finally transition to NoHalt
-			err := cross(SetHaltLevelByAdmin)(LvNoHalt)
+			err := SetHaltLevelByAdmin(cross, LvNoHalt)
 			uassert.NoError(t, err)
 
 			// Now GetHalt() should return false
@@ -277,7 +277,7 @@ func TestCustomOperationHalts(t *testing.T) {
 
 	t.Run("Check undefined custom operations", func(t *testing.T) {
 		// Set to NoHalt first
-		err := cross(SetHaltLevelByAdmin)(LvNoHalt)
+		err := SetHaltLevelByAdmin(cross, LvNoHalt)
 		uassert.NoError(t, err)
 
 		// Even in NoHalt, undefined operations should be considered halted
@@ -317,11 +317,11 @@ func TestOperationStatusEdgeCases(t *testing.T) {
 
 	t.Run("EnableOperations in non-MainnetSafeMode", func(t *testing.T) {
 		// First set to NoHalt
-		err := cross(SetHaltLevelByAdmin)(LvNoHalt)
+		err := SetHaltLevelByAdmin(cross, LvNoHalt)
 		uassert.NoError(t, err)
 
 		// Try to enable operations in NoHalt mode - should return nil without changing state
-		err = cross(EnableWithdrawalsForTestnet)()
+		err = EnableWithdrawalsForTestnet(cross)
 		uassert.NoError(t, err)
 
 		// Verify operations maintain their NoHalt state
@@ -331,15 +331,15 @@ func TestOperationStatusEdgeCases(t *testing.T) {
 
 	t.Run("Operation state transitions during halt level changes", func(t *testing.T) {
 		// Set to MainnetSafeMode
-		err := cross(SetHaltLevelByAdmin)(LvMainnetSafeMode)
+		err := SetHaltLevelByAdmin(cross, LvMainnetSafeMode)
 		uassert.NoError(t, err)
 
 		// Enable all operations in MainnetSafeMode
-		err = cross(EnableWithdrawalsForTestnet)()
+		err = EnableWithdrawalsForTestnet(cross)
 		uassert.NoError(t, err)
 
 		// Change to EmergencyHalt - should override previous settings
-		err = cross(SetHaltLevelByAdmin)(LvEmergencyHalt)
+		err = SetHaltLevelByAdmin(cross, LvEmergencyHalt)
 		uassert.NoError(t, err)
 
 		// In EmergencyHalt, only withdrawals should be allowed
@@ -347,7 +347,7 @@ func TestOperationStatusEdgeCases(t *testing.T) {
 		uassert.NoError(t, err)
 
 		// Change back to MainnetSafeMode
-		err = cross(SetHaltLevelByAdmin)(LvMainnetSafeMode)
+		err = SetHaltLevelByAdmin(cross, LvMainnetSafeMode)
 		uassert.NoError(t, err)
 
 		// Check if operations return to their MainnetSafeMode defaults
@@ -361,11 +361,11 @@ func TestModeTransitions(t *testing.T) {
 
 	t.Run("MainnetSafeMode to NoHalt transition", func(t *testing.T) {
 		// Set initial state to MainnetSafeMode
-		err := cross(SetHaltLevelByAdmin)(LvMainnetSafeMode)
+		err := SetHaltLevelByAdmin(cross, LvMainnetSafeMode)
 		uassert.NoError(t, err)
 
 		// Enable all operations in MainnetSafeMode
-		err = cross(EnableWithdrawalsForTestnet)()
+		err = EnableWithdrawalsForTestnet(cross)
 		uassert.NoError(t, err)
 
 		// Verify current state in MainnetSafeMode
@@ -384,7 +384,7 @@ func TestModeTransitions(t *testing.T) {
 		}
 
 		// Transition to NoHalt
-		err = cross(SetHaltLevelByAdmin)(LvNoHalt)
+		err = SetHaltLevelByAdmin(cross, LvNoHalt)
 		uassert.NoError(t, err)
 		uassert.False(t, GetHalt())
 		currentHaltLevel := GetCurrentHaltLevel()
@@ -399,11 +399,11 @@ func TestModeTransitions(t *testing.T) {
 
 	t.Run("Emergency Mode transitions", func(t *testing.T) {
 		// default state: NoHalt
-		err := cross(SetHaltLevelByAdmin)(LvNoHalt)
+		err := SetHaltLevelByAdmin(cross, LvNoHalt)
 		uassert.NoError(t, err)
 
 		// NoHalt -> EmergencyHalt
-		err = cross(SetHaltLevelByAdmin)(LvEmergencyHalt)
+		err = SetHaltLevelByAdmin(cross, LvEmergencyHalt)
 		uassert.NoError(t, err)
 
 		// only withdrawals should be allowed
@@ -411,7 +411,7 @@ func TestModeTransitions(t *testing.T) {
 		uassert.NoError(t, err)
 
 		// EmergencyHalt -> CompleteHalt
-		err = cross(SetHaltLevelByAdmin)(LvCompleteHalt)
+		err = SetHaltLevelByAdmin(cross, LvCompleteHalt)
 		uassert.NoError(t, err)
 
 		// all contract operations should be halted
@@ -424,9 +424,9 @@ func TestModeTransitions(t *testing.T) {
 
 	t.Run("Mode transition edge cases", func(t *testing.T) {
 		// transition to same mode
-		err := cross(SetHaltLevelByAdmin)(LvMainnetSafeMode)
+		err := SetHaltLevelByAdmin(cross, LvMainnetSafeMode)
 		uassert.NoError(t, err)
-		err = cross(SetHaltLevelByAdmin)(LvMainnetSafeMode)
+		err = SetHaltLevelByAdmin(cross, LvMainnetSafeMode)
 		uassert.NoError(t, err)
 
 		// rapid mode transitions
@@ -439,7 +439,7 @@ func TestModeTransitions(t *testing.T) {
 		}
 
 		for _, mode := range modes {
-			err = cross(SetHaltLevelByAdmin)(mode)
+			err = SetHaltLevelByAdmin(cross, mode)
 			uassert.NoError(t, err)
 			if mode != GetCurrentHaltLevel() {
 				t.Fatalf("GetCurrentHaltLevel() = %d, want %d", GetCurrentHaltLevel(), mode)
@@ -447,17 +447,17 @@ func TestModeTransitions(t *testing.T) {
 		}
 
 		// operation status preservation after mode cycle
-		err = cross(SetHaltLevelByAdmin)(LvMainnetSafeMode)
+		err = SetHaltLevelByAdmin(cross, LvMainnetSafeMode)
 		uassert.NoError(t, err)
 
 		// enable all operations
-		err = cross(EnableWithdrawalsForTestnet)()
+		err = EnableWithdrawalsForTestnet(cross)
 		uassert.NoError(t, err)
 
 		// cycle through modes and back
-		err = cross(SetHaltLevelByAdmin)(LvEmergencyHalt)
+		err = SetHaltLevelByAdmin(cross, LvEmergencyHalt)
 		uassert.NoError(t, err)
-		err = cross(SetHaltLevelByAdmin)(LvMainnetSafeMode)
+		err = SetHaltLevelByAdmin(cross, LvMainnetSafeMode)
 		uassert.NoError(t, err)
 
 		// check operation states are reset to MainnetSafeMode defaults

@@ -9,8 +9,7 @@ import (
 )
 
 // TransferTokenByAdmin transfers token to the given address.
-func TransferTokenByAdmin(tokenPath string, to std.Address, amount int64) {
-	crossing()
+func TransferTokenByAdmin(cur realm, tokenPath string, to std.Address, amount int64) {
 	assertOnlyNotHalted()
 	assertOnlyAdmin()
 
@@ -19,8 +18,7 @@ func TransferTokenByAdmin(tokenPath string, to std.Address, amount int64) {
 
 // TransferToken transfers token to the given address.
 // Only governance contract can execute this function via proposal
-func TransferToken(tokenPath string, to std.Address, amount int64) {
-	crossing()
+func TransferToken(cur realm, tokenPath string, to std.Address, amount int64) {
 	assertOnlyNotHalted()
 	assertOnlyGovernance()
 

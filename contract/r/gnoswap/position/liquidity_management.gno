@@ -72,7 +72,7 @@ type AddLiquidityParams struct {
 //	  caller:        userAddress,
 //	})
 func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint) {
-	pool := cross(pl.GetPoolFromPoolPath)(params.poolKey)
+	pool := pl.GetPoolFromPoolPath(params.poolKey)
 
 	sqrtPriceX96 := new(u256.Uint).Set(pool.Slot0SqrtPriceX96())
 	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(params.tickLower)
@@ -87,7 +87,8 @@ func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint
 	)
 
 	token0, token1, fee := splitOf(params.poolKey)
-	amount0Str, amount1Str := cross(pl.Mint)(
+	amount0Str, amount1Str := pl.Mint(
+		cross,
 		token0,
 		token1,
 		fee,

@@ -34,7 +34,7 @@ func TestAddToken(t *testing.T) {
 			testing.SetRealm(adminRealm)
 			func() {
 				testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/staker"))
-				AddToken(tt.tokenPath)
+				AddToken(cross, tt.tokenPath)
 			}()
 
 			if !tt.wantErr {
@@ -86,7 +86,7 @@ func TestRemoveToken(t *testing.T) {
 						}
 					}
 				}()
-				RemoveToken(tt.tokenPath)
+				RemoveToken(cross, tt.tokenPath)
 			}()
 
 			if !tt.wantErr {

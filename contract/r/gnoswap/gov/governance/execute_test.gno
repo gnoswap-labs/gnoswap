@@ -164,7 +164,7 @@ func TestExecuteParameterChange(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := executeParameterChange(tt.msgs, registry)
+			err := executeParameterChange(cross, tt.msgs, registry)
 			if !tt.wantErr {
 				uassert.NoError(t, err)
 			} else {
@@ -453,7 +453,7 @@ func TestAtomicExecution(t *testing.T) {
 			}
 
 			// try to execute
-			err := executeProposal(ctx, registry)
+			err := executeProposal(cross, ctx, registry)
 
 			if tt.expectError {
 				uassert.Error(t, err)
@@ -669,7 +669,7 @@ func TestRollbackSystem(t *testing.T) {
 				Proposal:   proposal,
 			}
 
-			err := executeProposal(ctx, registry)
+			err := executeProposal(cross, ctx, registry)
 
 			// if error occurs, execute rollback
 			if err != nil {

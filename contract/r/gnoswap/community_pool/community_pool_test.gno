@@ -28,8 +28,8 @@ var (
 
 func resetCommunityPoolState(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	cross(halt.SetHaltByAdmin)(false)
-	cross(gns.Transfer)(communityPoolAddr, 10_000)
+	halt.SetHaltByAdmin(cross, false)
+	gns.Transfer(cross, communityPoolAddr, 10_000)
 }
 
 func TestTransferTokenByAdmin(t *testing.T) {
@@ -47,7 +47,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 			name: "panic if halted",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				cross(halt.SetHaltByAdmin)(true)
+				halt.SetHaltByAdmin(cross, true)
 			},
 			caller:      adminRealm,
 			tokenPath:   consts.GNS_PATH,
@@ -60,7 +60,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 			name: "panic if not admin",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				cross(halt.SetHaltByAdmin)(false)
+				halt.SetHaltByAdmin(cross, false)
 			},
 			caller:      dummyCaller,
 			tokenPath:   consts.GNS_PATH,
@@ -73,7 +73,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 		// 	name: "panic if not enough balance",
 		// 	setup: func() {
 		// 		testing.SetRealm(adminRealm)
-		// 		cross(gns.Transfer)(communityPoolAddr, 1)
+		// 		gns.Transfer(cross, communityPoolAddr, 1)
 		// 	},
 		// 	caller:      adminRealm,
 		// 	tokenPath:   consts.GNS_PATH,
@@ -86,7 +86,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 			name: "success if enough balance",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				cross(gns.Transfer)(communityPoolAddr, 10_000)
+				gns.Transfer(cross, communityPoolAddr, 10_000)
 			},
 			caller:    adminRealm,
 			tokenPath: consts.GNS_PATH,
@@ -109,18 +109,18 @@ func TestTransferTokenByAdmin(t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					func() {
+					func(cur realm) {
 						testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-						TransferTokenByAdmin(tt.tokenPath, tt.to, tt.amount)
-					}()
+						TransferTokenByAdmin(cur, tt.tokenPath, tt.to, tt.amount)
+					}(cross)
 				})
 			} else {
-				receiverOldBalance := cross(gns.BalanceOf)(tt.to)
-				func() {
+				receiverOldBalance := gns.BalanceOf(cross, tt.to)
+				func(cur realm) {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					TransferTokenByAdmin(tt.tokenPath, tt.to, tt.amount)
-				}()
-				receiverNewBalance := cross(gns.BalanceOf)(tt.to)
+					TransferTokenByAdmin(cross, tt.tokenPath, tt.to, tt.amount)
+				}(cross)
+				receiverNewBalance := gns.BalanceOf(cross, tt.to)
 				uassert.Equal(t, receiverNewBalance-receiverOldBalance, tt.amount)
 			}
 		})
@@ -142,7 +142,7 @@ func TestTransferToken(t *testing.T) {
 			name: "panic if halted",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				cross(halt.SetHaltByAdmin)(true)
+				halt.SetHaltByAdmin(cross, true)
 			},
 			tokenPath:   consts.GNS_PATH,
 			to:          dummyReceiver,
@@ -154,7 +154,7 @@ func TestTransferToken(t *testing.T) {
 			name: "panic if not governance",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				cross(halt.SetHaltByAdmin)(false)
+				halt.SetHaltByAdmin(cross, false)
 			},
 			tokenPath:   consts.GNS_PATH,
 			to:          dummyReceiver,
@@ -178,7 +178,7 @@ func TestTransferToken(t *testing.T) {
 		// 	name:      "governance can transfer community pool token",
 		// 	setup: func() {
 		// 		testing.SetRealm(adminRealm)
-		// 		cross(gns.Transfer)(communityPoolAddr, 10_000)
+		// 		gns.Transfer(cross, communityPoolAddr, 10_000)
 		// 	},
 		// 	caller:    govRealm,
 		// 	tokenPath: consts.GNS_PATH,
@@ -201,18 +201,18 @@ func TestTransferToken(t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					func() {
+					func(cur realm) {
 						testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-						TransferToken(tt.tokenPath, tt.to, tt.amount)
-					}()
+						TransferToken(cur, tt.tokenPath, tt.to, tt.amount)
+					}(cross)
 				})
 			} else {
-				receiverOldBalance := cross(gns.BalanceOf)(tt.to)
-				func() {
+				receiverOldBalance := gns.BalanceOf(cross, tt.to)
+				func(cur realm) {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					TransferToken(tt.tokenPath, tt.to, tt.amount)
-				}()
-				receiverNewBalance := cross(gns.BalanceOf)(tt.to)
+					TransferToken(cur, tt.tokenPath, tt.to, tt.amount)
+				}(cross)
+				receiverNewBalance := gns.BalanceOf(cross, tt.to)
 				uassert.Equal(t, receiverNewBalance-receiverOldBalance, tt.amount)
 			}
 		})
@@ -249,16 +249,16 @@ func TestPrivateTransferToken(t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					func() {
+					func(cur realm) {
 						testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
 						transferToken(tt.tokenPath, tt.to, tt.amount)
-					}()
+					}(cross)
 				})
 			} else {
-				func() {
+				func(cur realm) {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
 					transferToken(tt.tokenPath, tt.to, tt.amount)
-				}()
+				}(cross)
 			}
 		})
 	}

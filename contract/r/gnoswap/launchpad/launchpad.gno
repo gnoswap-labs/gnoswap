@@ -338,6 +338,7 @@ type ProjectCalculationResult struct {
 // Returns:
 // - string: The unique ID of the created project.
 func CreateProject(
+	cur realm,
 	name string,
 	tokenPath string,
 	recipient std.Address,
@@ -349,7 +350,6 @@ func CreateProject(
 	tier180Ratio uint64,
 	startTime uint64,
 ) string {
-	crossing()
 	assertOnlyNotHalted()
 	assertOnlyAdmin()
 
@@ -376,7 +376,7 @@ func CreateProject(
 			ufmt.Sprintf("project(%s) already exists", projectId)))
 	}
 
-	cross(en.MintAndDistributeGns)()
+	en.MintAndDistributeGns(cross)
 
 	calcResult, err := calculateProjectParams(input, now)
 	if err != nil {
@@ -483,9 +483,7 @@ func CreateProject(
 //
 // Returns:
 // - uint64: The amount of rewards transferred to the recipient.
-func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uint64 {
-	crossing()
-
+func TransferLeftFromProjectByAdmin(cur realm, projectId string, recipient std.Address) uint64 {
 	if err := common.SatisfyCond(isUserCall()); err != nil {
 		panic(addDetailToError(errNotUserCaller, err.Error()))
 	}
@@ -503,7 +501,7 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 			errInvalidCondition, err.Error()))
 	}
 
-	cross(en.MintAndDistributeGns)()
+	en.MintAndDistributeGns(cross)
 
 	accumTotalReward := uint64(0)
 	accumLeftReward := uint64(0)

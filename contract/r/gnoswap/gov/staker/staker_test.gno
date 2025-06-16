@@ -15,27 +15,27 @@ func TestDelegate(t *testing.T) {
 	testing.SetOriginCaller(admin)
 	func() {
 		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
-		SetRunning(true)
+		SetRunning(cross, true)
 	}()
 
 	testing.SetRealm(userRealm)
 	func() {
 		testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 		testing.SkipHeights(100)
-		cross(gns.MintGns)(userRealm.Address()) // 2M gns
+		gns.MintGns(cross, userRealm.Address()) // 2M gns
 
 		testing.SetRealm(userRealm)
 		// to := makeFakeAddress("validator_1")
 		amount := uint64(1_000_000)
 
-		cross(gns.Approve)(govStaker, int64(amount))
+		gns.Approve(cross, govStaker, int64(amount))
 
 		testing.SetRealm(userRealm)
 		func() {
 			testing.SetRealm(std.NewCodeRealm("gno.land/r/tests/tests"))
 			// Delegate(to, amount, "")
 
-			// minted := cross(xgns.BalanceOf)(userRealm.Address())
+			// minted := xgns.BalanceOf(userRealm.Address())
 			// if uint64(minted) != amount {
 			// 	t.Fatalf("expected minted amount %d, got %d", amount, minted)
 			// }
@@ -157,11 +157,11 @@ func TestDelegate_Boundary_Values(t *testing.T) {
 			testing.SetOriginCaller(admin)
 			func() {
 				testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
-				SetRunning(true)
+				SetRunning(cross, true)
 			}()
 			// SetRunning(true)
 			testing.SetRealm(userRealm)
-			func() {
+			func(cur realm) {
 				testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
 				if tt.expectPanic {
 					defer func() {
@@ -177,8 +177,8 @@ func TestDelegate_Boundary_Values(t *testing.T) {
 					}()
 				}
 
-				Delegate(tt.to, tt.amount, "")
-			}()
+				Delegate(cur, tt.to, tt.amount, "")
+			}(cross)
 		})
 	}
 }
@@ -188,7 +188,7 @@ func TestRedelegate(t *testing.T) {
 	func() {
 		testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 		testing.SkipHeights(100)
-		cross(gns.MintGns)(userRealm.Address()) // 2M gns
+		gns.MintGns(cross, userRealm.Address()) // 2M gns
 	}()
 
 	// user has xGNS from previous test (some minted)
@@ -204,11 +204,11 @@ func TestRedelegate(t *testing.T) {
 		testing.SetRealm(userRealm)
 		func() {
 			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
-			cross(gns.Approve)(govStaker, int64(amount))
-			Delegate(from, amount, "")
+			gns.Approve(cross, govStaker, int64(amount))
+			Delegate(cross, from, amount, "")
 
-			cross(gns.Approve)(govStaker, int64(amount))
-			Redelegate(from, to, amount)
+			gns.Approve(cross, govStaker, int64(amount))
+			Redelegate(cross, from, to, amount)
 		}()
 	}()
 
@@ -229,7 +229,7 @@ func TestUndelegate(t *testing.T) {
 	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	func() {
 		testing.SkipHeights(101)
-		cross(gns.MintGns)(user3Realm.Address()) // 2M gns
+		gns.MintGns(cross, user3Realm.Address()) // 2M gns
 
 		testing.SetRealm(user3Realm)
 		func() {
@@ -238,17 +238,15 @@ func TestUndelegate(t *testing.T) {
 			amount := uint64(1_000_000)
 
 			testing.SetRealm(user3Realm)
-			func() {
-				testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
-				cross(gns.Approve)(govStaker, int64(amount))
-				// Delegate(to, amount, "")
-				// Undelegate(to, amount)
-			}()
+			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
+			gns.Approve(cross, govStaker, int64(amount))
+			// Delegate(to, amount, "")
+			// Undelegate(to, amount)
 		}()
 
-		// if cross(xgns.BalanceOf)(user3Realm.Address()) == 1_000_000 {
+		// if xgns.BalanceOf(user3Realm.Address()) == 1_000_000 {
 		// 	t.Errorf("Expected user xGNS to be 0 after undelegating 1_000_000, got %d",
-		// 		cross(xgns.BalanceOf)(user3Realm.Address()))
+		// 		xgns.BalanceOf(user3Realm.Address()))
 		// }
 
 		// lockedList, exist := addrLockedGns.Get(user3Realm.Address().String())
@@ -285,7 +283,7 @@ func TestCollectUndelegatedGns(t *testing.T) {
 		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
 		// 1) no locked => expect 0
 		addrLockedGns.Remove(userRealm.Address().String()) // ensure no locked
-		collected := CollectUndelegatedGns()
+		collected := CollectUndelegatedGns(cross)
 		if collected != 0 {
 			t.Errorf("Expected 0 when no locked gns, got %d", collected)
 		}
@@ -299,7 +297,7 @@ func TestCollectUndelegatedGns(t *testing.T) {
 		addrLockedGns.Set(userRealm.Address().String(), []lockedGNS{locked})
 		lockedAmount = 100_000
 
-		collected = CollectUndelegatedGns()
+		collected = CollectUndelegatedGns(cross)
 		if collected != 0 {
 			t.Errorf("Expected 0 if 7days not passed, got %d", collected)
 		}
@@ -336,7 +334,7 @@ func TestCollectReward(t *testing.T) {
 	func() {
 		testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 		testing.SkipHeights(100)
-		cross(gns.MintGns)(govStaker)
+		gns.MintGns(cross, govStaker)
 
 		testing.SetRealm(std.NewUserRealm(admin))
 		ugnotFaucet(t, govStaker, 1_000_000)
@@ -358,7 +356,7 @@ func TestCollectReward(t *testing.T) {
 
 		testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 		testing.SkipHeights(100)
-		cross(gns.MintGns)(user2Realm.Address())
+		gns.MintGns(cross, user2Realm.Address())
 
 		testing.SetRealm(user2Realm)
 		testing.SkipHeights(100)
@@ -367,7 +365,7 @@ func TestCollectReward(t *testing.T) {
 		testing.SetOriginCaller(user2Realm.Address())
 		func() {
 			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
-			CollectReward()
+			CollectReward(cross)
 		}()
 
 		// // expect user emissionReward = 0
@@ -398,7 +396,7 @@ func TestCollectRewardFromLaunchPad(t *testing.T) {
 				t.Errorf("Expected panic, because caller is not launchpad")
 			}
 		}()
-		CollectRewardFromLaunchPad(userRealm.Address())
+		CollectRewardFromLaunchPad(cross, userRealm.Address())
 	}()
 
 	// Then set realm to a custom "launchpadRealm" whose .Address() == consts.LAUNCHPAD_ADDR

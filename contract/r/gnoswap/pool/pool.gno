@@ -45,7 +45,7 @@ var (
 //   - Any failure during token transfers or position modifications.
 //
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#mint
-func Mint(
+func Mint(cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -55,7 +55,6 @@ func Mint(
 	liquidityAmount string,
 	positionCaller std.Address,
 ) (string, string) {
-	crossing()
 	assertOnlyNotHalted()
 	if common.GetLimitCaller() {
 		assertOnlyPositionContract()
@@ -104,6 +103,7 @@ func Mint(
 //
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#burn
 func Burn(
+	cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -163,7 +163,7 @@ func Burn(
 //   - string: The actual amount of token 1 collected, as a string.
 //
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#collect
-func Collect(
+func Collect(cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -173,7 +173,6 @@ func Collect(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	crossing()
 	assertOnlyNotHalted()
 	if common.GetLimitCaller() {
 		assertOnlyPositionContract()
@@ -233,7 +232,7 @@ func collectToken(
 
 // CollectProtocolByAdmin collects protocol fees for the given pool that accumulated while it was being used for swap
 // Returns collected amount0, amount1 in string
-func CollectProtocolByAdmin(
+func CollectProtocolByAdmin(cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -241,7 +240,6 @@ func CollectProtocolByAdmin(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	crossing()
 	assertOnlyAdmin()
 	amount0, amount1 := collectProtocol(
 		token0Path,
@@ -272,7 +270,7 @@ func CollectProtocolByAdmin(
 // Only governance contract can execute this function via proposal
 // Returns collected amount0, amount1 in string
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#collectprotocol
-func CollectProtocol(
+func CollectProtocol(cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -280,7 +278,6 @@ func CollectProtocol(
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) {
-	crossing()
 	assertOnlyGovernance()
 	amount0, amount1 := collectProtocol(
 		token0Path,

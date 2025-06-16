@@ -27,7 +27,7 @@ func NewExactInSwapOperation(pp ExactInParams) *ExactInSwapOperation {
 
 // ExactInSwapRoute is a function that performs an exact-in swap operation.
 // exact-in swap means that the user wants to swap an exact amount of input tokens for output tokens.
-func ExactInSwapRoute(
+func ExactInSwapRoute(cur realm,
 	inputToken string,
 	outputToken string,
 	amountIn string,
@@ -37,13 +37,11 @@ func ExactInSwapRoute(
 	deadline int64,
 	referrer string,
 ) (string, string) {
-	crossing()
-
 	if err := checkDeadline(deadline); err != nil {
 		panic(addDetailToError(errExpired, err.Error()))
 	}
 
-	if err := commonSwapSetup(); err != nil {
+	if err := commonSwapSetup(cur); err != nil {
 		panic(addDetailToError(errInvalidInput, err.Error()))
 	}
 
@@ -83,7 +81,7 @@ func ExactInSwapRoute(
 	)
 
 	prevAddr, prevPkgPath := getPrev()
-	success := cross(referral.TryRegister)(std.Address(prevAddr), referrer)
+	success := referral.TryRegister(cross, std.Address(prevAddr), referrer)
 
 	// get the actual referral address that was used
 	actualReferrer := referrer

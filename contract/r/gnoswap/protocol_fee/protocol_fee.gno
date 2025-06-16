@@ -35,8 +35,7 @@ var (
 // DistributeProtocolFee distributes the protocol fee to devOps and gov/staker.
 // only `gov/staker` can execute this function.
 // It returns list of token with amount has been sent to gov/staker.
-func DistributeProtocolFee() map[string]uint64 {
-	crossing()
+func DistributeProtocolFee(cur realm) map[string]uint64 {
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
@@ -109,8 +108,7 @@ func GetDevOpsPct() uint64 {
 }
 
 // SetDevOpsPctByAdmin sets the devOpsPct.
-func SetDevOpsPctByAdmin(pct uint64) {
-	crossing()
+func SetDevOpsPctByAdmin(cur realm, pct uint64) {
 	caller := std.PreviousRealm().Address()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err)
@@ -121,8 +119,7 @@ func SetDevOpsPctByAdmin(pct uint64) {
 
 // SetDevOpsPct sets the devOpsPct.
 // Only governance contract can execute this function via proposal
-func SetDevOpsPct(pct uint64) {
-	crossing()
+func SetDevOpsPct(cur realm, pct uint64) {
 	caller := std.PreviousRealm().Address()
 	if err := common.GovernanceOnly(caller); err != nil {
 		panic(err)
@@ -155,16 +152,14 @@ func setDevOpsPct(pct uint64) {
 
 // AddToProtocolFee adds the amount to the tokenListWithAmount
 // Only `pool + router + staker` can execute this function.
-func AddToProtocolFee(tokenPath string, amount uint64) {
-	crossing()
+func AddToProtocolFee(cur realm, tokenPath string, amount uint64) {
 	assertOnlyPoolRouterStaker()
 	tokenListWithAmount[tokenPath] += amount
 }
 
 // ClearTokenListWithAmount clears the tokenListWithAmount.
 // only `gov/staker` can execute this function.
-func ClearTokenListWithAmount() {
-	crossing()
+func ClearTokenListWithAmount(cur realm) {
 	assertOnlyGovStaker()
 	clearTokenListWithAmount()
 }
@@ -174,10 +169,8 @@ func ClearTokenListWithAmount() {
 // protocol_fee just sends the accumulated amount to gov/staker
 // which means gov/staker doesn't known how much protocol_fee has been distributed from last time
 // Therefore, gov/staker calls GetAccuTransferToGovStaker to get the accumulated amount and clear it
-func ClearAccuTransferToGovStaker() {
-	crossing()
+func ClearAccuTransferToGovStaker(cur realm) {
 	assertOnlyNotHalted()
-
 	caller := std.PreviousRealm().Address()
 	if err := common.GovStakerOnly(caller); err != nil {
 		panic(err)

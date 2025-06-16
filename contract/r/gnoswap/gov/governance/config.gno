@@ -58,6 +58,7 @@ func getLatestVersion() uint64 {
 // ReconfigureByAdmin updates the proposal realted configuration.
 // Returns the new configuration version number.
 func ReconfigureByAdmin(
+	cur realm,
 	votingStartDelay uint64,
 	votingPeriod uint64,
 	votingWeightSmoothingDuration uint64,
@@ -72,6 +73,7 @@ func ReconfigureByAdmin(
 	}
 
 	return reconfigure(
+		cur,
 		votingStartDelay,
 		votingPeriod,
 		votingWeightSmoothingDuration,
@@ -86,6 +88,7 @@ func ReconfigureByAdmin(
 // Only governance contract can execute this function via proposal
 // Returns the new configuration version number.
 func reconfigure(
+	cur realm,
 	votingStartDelay uint64,
 	votingPeriod uint64,
 	votingWeightSmoothingDuration uint64,
@@ -98,7 +101,7 @@ func reconfigure(
 		panic(err)
 	}
 
-	cross(en.MintAndDistributeGns)()
+	en.MintAndDistributeGns(cross)
 	updateProposalsState()
 
 	prevVersion := getLatestVersion()

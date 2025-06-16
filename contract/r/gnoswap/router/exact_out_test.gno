@@ -61,6 +61,7 @@ func TestExactOutSwapOperation(t *testing.T) {
 		}()
 
 		ExactOutSwapRoute(
+			cross,
 			barPath,
 			fooPath,
 			"3",
@@ -80,6 +81,7 @@ func TestExactOutSwapOperation(t *testing.T) {
 		}()
 
 		ExactOutSwapRoute(
+			cross,
 			barPath,
 			fooPath,
 			"3",
@@ -102,12 +104,12 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	TokenFaucet2(t, barPath, routerAddr)
 
 	testing.SetRealm(std.NewUserRealm(routerAddr))
-	foo.Approve(poolAddr, maxApprove)
-	bar.Approve(poolAddr, maxApprove)
+	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross, poolAddr, maxApprove)
 
 	// create position
 	// a. Position 1: (-50%+50%)
-	cross(pn.Mint)(
+	pn.Mint(
 		barPath,
 		fooPath,
 		3000,
@@ -124,7 +126,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	)
 
 	// b. Position 2: (-10%+10%)
-	cross(pn.Mint)(
+	pn.Mint(
 		barPath,
 		fooPath,
 		3000,
@@ -141,7 +143,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	)
 
 	// c. Position 3: (full range)
-	cross(pn.Mint)(
+	pn.Mint(
 		barPath,
 		fooPath,
 		3000,
@@ -158,7 +160,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	)
 
 	// d. Position 4: (lower out-range)
-	cross(pn.Mint)(
+	pn.Mint(
 		barPath,
 		fooPath,
 		3000,
@@ -175,7 +177,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	)
 
 	// e. Position 5: (upper out-range)
-	cross(pn.Mint)(
+	pn.Mint(
 		barPath,
 		fooPath,
 		3000,
@@ -193,6 +195,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 	t.Run("successful exact out swap at boundary", func(t *testing.T) {
 		amountIn, amountOut := ExactOutSwapRoute(
+			cross,
 			barPath,
 			fooPath,
 			"1000000",
@@ -228,6 +231,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 		// request amount that slightly exceeds the pool balance
 		ExactOutSwapRoute(
+			cross,
 			barPath,
 			fooPath,
 			overflowAmount,
@@ -243,14 +247,14 @@ func TestExactOutSwapBoundary(t *testing.T) {
 func setupTestPool(t *testing.T) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
-	gns.Approve(poolAddr, pl.GetPoolCreationFee())
+	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
 
-	cross(foo.Approve)(poolAddr, maxApprove)
-	cross(bar.Approve)(poolAddr, maxApprove)
+	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross, poolAddr, maxApprove)
 
-	pl.CreatePool(barPath, fooPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
+	pl.CreatePool(cross, barPath, fooPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 
-	_, _, _, _ = cross(pn.Mint)(
+	_, _, _, _ = pn.Mint(
 		barPath,
 		fooPath,
 		3000,

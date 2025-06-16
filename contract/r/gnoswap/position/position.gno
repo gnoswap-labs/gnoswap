@@ -86,7 +86,6 @@ func Mint(
 	caller std.Address,
 	referrer string,
 ) (uint64, string, string, string) {
-	crossing()
 	assertOnlyNotHalted()
 	prevCaller := getPrevRealm()
 	assertOnlyUserOrStaker(prevCaller)
@@ -97,7 +96,7 @@ func Mint(
 	}
 	checkDeadline(deadline)
 
-	cross(referral.TryRegister)(caller, referrer)
+	referral.TryRegister(cross, caller, referrer)
 
 	mintAndDistributeGnsCallback()
 
@@ -174,7 +173,6 @@ func IncreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string) {
-	crossing()
 	assertOnlyNotHalted()
 	assertValidNumberString(amount0DesiredStr)
 	assertValidNumberString(amount1DesiredStr)
@@ -261,7 +259,6 @@ func DecreaseLiquidity(
 	deadline int64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
-	crossing()
 	assertOnlyNotHalted()
 	isAuthorizedForToken(positionId)
 	checkDeadline(deadline)
@@ -309,7 +306,6 @@ func DecreaseLiquidity(
 // Returns position ID, afterFee0, afterFee1, poolPath, origFee0, origFee1
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#collectfee
 func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, string, string, string) {
-	crossing()
 	assertOnlyNotHalted()
 	assertTokenExists(postionId)
 	isAuthorizedForToken(postionId)
@@ -320,6 +316,7 @@ func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, st
 	token0, token1, fee := splitOf(position.poolKey)
 
 	pl.Burn(
+		cross,
 		token0,
 		token1,
 		fee,
@@ -341,10 +338,11 @@ func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, st
 	// check user wugnot amount
 	// need this value to unwrap fee
 	caller := getPrevAddr()
-	userWugnot := cross(wugnot.BalanceOf)(caller)
+	userWugnot := wugnot.BalanceOf(caller)
 
 	// collect fee
 	amount0, amount1 := pl.Collect(
+		cross,
 		token0, token1, fee,
 		caller,
 		position.tickLower, position.tickUpper,
@@ -359,6 +357,7 @@ func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, st
 
 	// handle withdrawal fee
 	withoutFee0, withoutFee1 := pl.CollectWithdrawalFee(
+		cross,
 		postionId,
 		token0,
 		amount0,
@@ -389,7 +388,6 @@ func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, st
 }
 
 func SetPositionOperator(id uint64, operator std.Address) {
-	crossing()
 	caller := getPrevRealm().PkgPath()
 	if caller != consts.STAKER_PATH {
 		panic(newErrorWithDetail(
@@ -432,7 +430,7 @@ func computePositionKey(
 }
 
 func getCurrentFeeGrowth(position Position) (FeeGrowthInside, error) {
-	pool := cross(pl.GetPoolFromPoolPath)(position.poolKey)
+	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := computePositionKey(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 
 	feeGrowthInside0 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
