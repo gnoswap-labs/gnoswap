@@ -40,6 +40,7 @@ func init() {
 // Returns the proposal ID
 // ref: https://docs.gnoswap.io/contracts/governance/proposal.gno#proposetext
 func ProposeText(
+	cur realm,
 	title string,
 	description string,
 ) uint64 { // proposalId
@@ -55,7 +56,7 @@ func ProposeText(
 		))
 	}
 
-	cross(en.MintAndDistributeGns)()
+	en.MintAndDistributeGns(cur)
 	updateProposalsState()
 
 	now := uint64(time.Now().Unix())
@@ -109,6 +110,7 @@ func ProposeText(
 // Returns the proposal ID
 // ref: https://docs.gnoswap.io/contracts/governance/proposal.gno#proposecommunitypoolspend
 func ProposeCommunityPoolSpend(
+	cur realm,
 	title string,
 	description string,
 	to std.Address,
@@ -150,7 +152,7 @@ func ProposeCommunityPoolSpend(
 		))
 	}
 
-	cross(en.MintAndDistributeGns)()
+	en.MintAndDistributeGns(cur)
 	updateProposalsState()
 
 	now := uint64(time.Now().Unix())
@@ -215,6 +217,7 @@ func ProposeCommunityPoolSpend(
 // Returns the proposal ID
 // ref: https://docs.gnoswap.io/contracts/governance/proposal.gno#proposeparameterchange
 func ProposeParameterChange(
+	cur realm,
 	title string,
 	description string,
 	numToExecute uint64,
@@ -251,7 +254,7 @@ func ProposeParameterChange(
 		))
 	}
 
-	cross(en.MintAndDistributeGns)()
+	en.MintAndDistributeGns(cur)
 	updateProposalsState()
 
 	now := uint64(time.Now().Unix())

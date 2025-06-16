@@ -29,12 +29,12 @@ var (
 // Vote allows a user to vote on a given proposal.
 // The user's voting weight is determined by their accumulated delegated stake until proposal creation time.
 // ref: https://docs.gnoswap.io/contracts/governance/vote.gno#vote
-func Vote(pid uint64, yes bool) string {
+func Vote(cur realm, pid uint64, yes bool) string {
 	if err := halt.IsHalted(); err != nil {
 		panic(err)
 	}
 
-	cross(en.MintAndDistributeGns)()
+	en.MintAndDistributeGns(cur)
 	updateProposalsState()
 
 	proposal := mustGetProposal(pid)
@@ -87,12 +87,12 @@ func Vote(pid uint64, yes bool) string {
 // Cancel cancels the proposal with the given ID.
 // Only callable by the proposer or if the proposer's stake has fallen below the threshold others can call.
 // ref: https://docs.gnoswap.io/contracts/governance/vote.gno#cancel
-func Cancel(proposalId uint64) {
+func Cancel(cur realm, proposalId uint64) {
 	if err := halt.IsHalted(); err != nil {
 		panic(err)
 	}
 
-	cross(en.MintAndDistributeGns)()
+	en.MintAndDistributeGns(cur)
 	updateProposalsState()
 
 	proposal := mustGetProposal(proposalId)

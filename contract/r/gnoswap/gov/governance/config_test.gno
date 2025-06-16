@@ -126,6 +126,7 @@ func TestReconfigureByAdmin(t *testing.T) {
 				}()
 
 				ReconfigureByAdmin(
+					nil,
 					tt.newConfig.VotingStartDelay,
 					tt.newConfig.VotingPeriod,
 					tt.newConfig.VotingWeightSmoothingDuration,
@@ -201,6 +202,7 @@ func TestReconfigure(t *testing.T) {
 	initialVersion := GetLatestConfigVersion()
 
 	version := reconfigure(
+		nil,
 		newConfig.VotingStartDelay,
 		newConfig.VotingPeriod,
 		newConfig.VotingWeightSmoothingDuration,

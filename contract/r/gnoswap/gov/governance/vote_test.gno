@@ -192,7 +192,7 @@ func TestVote(t *testing.T) {
 						}
 					}
 				}()
-				Vote(pid, tc.yes)
+				Vote(nil, pid, tc.yes)
 			}()
 
 			if tc.expectError {

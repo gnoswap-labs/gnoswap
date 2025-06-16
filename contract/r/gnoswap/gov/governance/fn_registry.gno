@@ -51,7 +51,7 @@ func simpleHandler(fn func([]string)) func([]string) error {
 	}
 }
 
-func createParameterHandlers() *ParameterRegistry {
+func createParameterHandlers(cur realm) *ParameterRegistry {
 	registry := NewParameterRegistry()
 
 	// define all handler configurations in one array
@@ -62,7 +62,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "SetHalt",
 			ParamCount: 1,
 			HandlerFunc: simpleHandler(func(params []string) {
-				cross(halt.SetHalt)(parseBool(params[0])) // halt
+				halt.SetHalt(cur, parseBool(params[0])) // halt
 			}),
 		},
 
@@ -72,7 +72,8 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "TransferToken",
 			ParamCount: 3,
 			HandlerFunc: simpleHandler(func(params []string) {
-				cross(cp.TransferToken)(
+				cp.TransferToken(
+					cur,
 					params[0],              // pkgPath
 					std.Address(params[1]), // to
 					parseNumber(params[2], kindInt64).(int64), // amount
@@ -86,23 +87,24 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "ChangeDistributionPct",
 			ParamCount: 8,
 			HandlerFunc: simpleHandler(func(params []string) {
-				target01 := parseNumber(params[0], kindInt).(int)    // target01
+				target01 := parseNumber(params[0], kindInt).(int)  // target01
 				pct01 := parseNumber(params[1], kindInt64).(int64) // pct01
-				target02 := parseNumber(params[2], kindInt).(int)    // target02
+				target02 := parseNumber(params[2], kindInt).(int)  // target02
 				pct02 := parseNumber(params[3], kindInt64).(int64) // pct02
-				target03 := parseNumber(params[4], kindInt).(int)    // target03
+				target03 := parseNumber(params[4], kindInt).(int)  // target03
 				pct03 := parseNumber(params[5], kindInt64).(int64) // pct03
-				target04 := parseNumber(params[6], kindInt).(int)    // target04
+				target04 := parseNumber(params[6], kindInt).(int)  // target04
 				pct04 := parseNumber(params[7], kindInt64).(int64) // pct04
-				cross(en.ChangeDistributionPct)(
-					target01,    // target01
-					pct01,        // pct01
-					target02,    // target02
-					pct02,        // pct02
-					target03,    // target03
-					pct03,        // pct03
-					target04,    // target04
-					pct04,        // pct04
+				en.ChangeDistributionPct(
+					cur,
+					target01, // target01
+					pct01,    // pct01
+					target02, // target02
+					pct02,    // pct02
+					target03, // target03
+					pct03,    // pct03
+					target04, // target04
+					pct04,    // pct04
 				)
 			}),
 		},
@@ -114,7 +116,7 @@ func createParameterHandlers() *ParameterRegistry {
 			ParamCount: 1,
 			HandlerFunc: simpleHandler(func(params []string) {
 				blockTime := parseNumber(params[0], kindInt64).(int64)
-				cross(gns.SetAvgBlockTimeInMs)(blockTime)
+				gns.SetAvgBlockTimeInMs(cur, blockTime)
 			}),
 		},
 
@@ -124,21 +126,22 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "Reconfigure",
 			ParamCount: 7,
 			HandlerFunc: simpleHandler(func(params []string) {
-				votingStartDelay := parseNumber(params[0], kindUint64).(uint64) // votingStartDelay
-				votingPeriod := parseNumber(params[1], kindUint64).(uint64)     // votingPeriod
+				votingStartDelay := parseNumber(params[0], kindUint64).(uint64)              // votingStartDelay
+				votingPeriod := parseNumber(params[1], kindUint64).(uint64)                  // votingPeriod
 				votingWeightSmoothingDuration := parseNumber(params[2], kindUint64).(uint64) // votingWeightSmoothingDuration
-				quorum := parseNumber(params[3], kindUint64).(uint64)           // quorum
-				proposalCreationhold := parseNumber(params[4], kindUint64).(uint64) // proposalCreationhold
-				executionDelay := parseNumber(params[5], kindUint64).(uint64)   // executionDelay
-				executionWindow := parseNumber(params[6], kindUint64).(uint64)  // executionWindow
+				quorum := parseNumber(params[3], kindUint64).(uint64)                        // quorum
+				proposalCreationhold := parseNumber(params[4], kindUint64).(uint64)          // proposalCreationhold
+				executionDelay := parseNumber(params[5], kindUint64).(uint64)                // executionDelay
+				executionWindow := parseNumber(params[6], kindUint64).(uint64)               // executionWindow
 				reconfigure(
-					votingStartDelay, // votingStartDelay
-					votingPeriod,     // votingPeriod
+					cur,
+					votingStartDelay,              // votingStartDelay
+					votingPeriod,                  // votingPeriod
 					votingWeightSmoothingDuration, // votingWeightSmoothingDuration
-					quorum,           // quorum
-					proposalCreationhold, // proposalCreationhold
-					executionDelay,   // executionDelay
-					executionWindow,  // executionWindow
+					quorum,                        // quorum
+					proposalCreationhold,          // proposalCreationhold
+					executionDelay,                // executionDelay
+					executionWindow,               // executionWindow
 				)
 			}),
 		},
@@ -157,7 +160,8 @@ func createParameterHandlers() *ParameterRegistry {
 				if feeProtocol1 > 255 {
 					panic(ufmt.Sprintf("feeProtocol1 out of range: %d", feeProtocol1))
 				}
-				cross(pl.SetFeeProtocol)(
+				pl.SetFeeProtocol(
+					cur,
 					uint8(feeProtocol0), // feeProtocol0
 					uint8(feeProtocol1), // feeProtocol1
 				)
@@ -168,7 +172,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "SetPoolCreationFee",
 			ParamCount: 1,
 			HandlerFunc: simpleHandler(func(params []string) {
-				cross(pl.SetPoolCreationFee)(parseNumber(params[0], kindInt64).(int64)) // fee
+				pl.SetPoolCreationFee(cur, parseNumber(params[0], kindInt64).(int64)) // fee
 			}),
 		},
 		{
@@ -176,7 +180,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "SetWithdrawalFee",
 			ParamCount: 1,
 			HandlerFunc: simpleHandler(func(params []string) {
-				cross(pl.SetWithdrawalFee)(parseNumber(params[0], kindUint64).(uint64)) // fee
+				pl.SetWithdrawalFee(cur, parseNumber(params[0], kindUint64).(uint64)) // fee
 			}),
 		},
 
@@ -186,7 +190,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "SetDevOpsPct",
 			ParamCount: 1,
 			HandlerFunc: simpleHandler(func(params []string) {
-				cross(pf.SetDevOpsPct)(parseNumber(params[0], kindUint64).(uint64)) // pct
+				pf.SetDevOpsPct(cur, parseNumber(params[0], kindUint64).(uint64)) // pct
 			}),
 		},
 
@@ -196,7 +200,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "SetSwapFee",
 			ParamCount: 1,
 			HandlerFunc: simpleHandler(func(params []string) {
-				cross(rr.SetSwapFee)(parseNumber(params[0], kindUint64).(uint64)) // fee
+				rr.SetSwapFee(cur, parseNumber(params[0], kindUint64).(uint64)) // fee
 			}),
 		},
 
@@ -206,7 +210,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "SetDepositGnsAmount",
 			ParamCount: 1,
 			HandlerFunc: simpleHandler(func(params []string) {
-				cross(sr.SetDepositGnsAmount)(parseNumber(params[0], kindInt64).(int64)) // amount
+				sr.SetDepositGnsAmount(cur, parseNumber(params[0], kindInt64).(int64)) // amount
 			}),
 		},
 		{
@@ -214,8 +218,9 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "SetPoolTier",
 			ParamCount: 2,
 			HandlerFunc: simpleHandler(func(params []string) {
-				cross(sr.SetPoolTier)(
-					params[0],              // pool
+				sr.SetPoolTier(
+					cur,
+					params[0], // pool
 					parseNumber(params[1], kindUint64).(uint64), // tier
 				)
 			}),
@@ -225,8 +230,9 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "ChangePoolTier",
 			ParamCount: 2,
 			HandlerFunc: simpleHandler(func(params []string) {
-				cross(sr.ChangePoolTier)(
-					params[0],              // pool
+				sr.ChangePoolTier(
+					cur,
+					params[0], // pool
 					parseNumber(params[1], kindUint64).(uint64), // tier
 				)
 			}),
@@ -236,7 +242,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "RemovePoolTier",
 			ParamCount: 1,
 			HandlerFunc: simpleHandler(func(params []string) {
-				cross(sr.RemovePoolTier)(params[0]) // pool
+				sr.RemovePoolTier(cur, params[0]) // pool
 			}),
 		},
 		{
@@ -244,7 +250,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "SetUnStakingFee",
 			ParamCount: 1,
 			HandlerFunc: simpleHandler(func(params []string) {
-				cross(sr.SetUnStakingFee)(parseNumber(params[0], kindUint64).(uint64))
+				sr.SetUnStakingFee(cur, parseNumber(params[0], kindUint64).(uint64))
 			}),
 		},
 		{
@@ -254,7 +260,7 @@ func createParameterHandlers() *ParameterRegistry {
 			HandlerFunc: simpleHandler(func(params []string) {
 				percent := parseNumber(params[0], kindInt64).(int64)
 				block := parseNumber(params[1], kindInt64).(int64)
-				cross(sr.SetWarmUp)(percent, block)
+				sr.SetWarmUp(cur, percent, block)
 			}),
 		},
 
@@ -270,7 +276,7 @@ func createParameterHandlers() *ParameterRegistry {
 				}
 
 				roleName := params[0]
-				cross(access.CreateRole)(roleName, addr)
+				access.CreateRole(cur, roleName, addr)
 			}),
 		},
 		{
@@ -284,7 +290,7 @@ func createParameterHandlers() *ParameterRegistry {
 				}
 
 				roleName := params[0]
-				cross(access.SetRole)(roleName, addr)
+				access.SetRole(cur, roleName, addr)
 			}),
 		},
 		{
@@ -298,7 +304,7 @@ func createParameterHandlers() *ParameterRegistry {
 				}
 
 				roleName := params[0]
-				cross(access.UpdateRoleAddress)(roleName, addr)
+				access.UpdateRoleAddress(cur, roleName, addr)
 			}),
 		},
 
@@ -308,7 +314,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "SetHalt",
 			ParamCount: 1,
 			HandlerFunc: simpleHandler(func(params []string) {
-				cross(halt.SetHalt)(parseBool(params[0])) // true = halt, false = no halt
+				halt.SetHalt(cur, parseBool(params[0])) // true = halt, false = no halt
 			}),
 		},
 		{
@@ -325,7 +331,7 @@ func createParameterHandlers() *ParameterRegistry {
 					}
 					levels = append(levels, levelID)
 				}
-				return cross(halt.SetHalt)(haltStatus, levels...)
+				return halt.SetHalt(cur, haltStatus, levels...)
 			},
 		},
 		{
@@ -337,7 +343,7 @@ func createParameterHandlers() *ParameterRegistry {
 				if err != nil {
 					return err
 				}
-				return cross(halt.SetHaltLevel)(haltLevel)
+				return halt.SetHaltLevel(cur, haltLevel)
 			},
 		},
 		{
@@ -347,7 +353,7 @@ func createParameterHandlers() *ParameterRegistry {
 			HandlerFunc: func(params []string) error {
 				opType := halt.OpType(params[0])
 				allowed := parseBool(params[1])
-				return cross(halt.SetOperationStatus)(opType, allowed)
+				return halt.SetOperationStatus(cur, opType, allowed)
 			},
 		},
 		{
@@ -355,7 +361,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "EnableWithdrawals",
 			ParamCount: 0,
 			HandlerFunc: func(params []string) error {
-				return cross(halt.EnableWithdrawalsForTestnet)()
+				return halt.EnableWithdrawalsForTestnet(cur)
 			},
 		},
 		{
@@ -364,7 +370,7 @@ func createParameterHandlers() *ParameterRegistry {
 			ParamCount: 1,
 			HandlerFunc: func(params []string) error {
 				contract := halt.OpType(params[0])
-				return cross(halt.EnableContractOperations)(contract)
+				return halt.EnableContractOperations(cur, contract)
 			},
 		},
 		{
@@ -373,7 +379,7 @@ func createParameterHandlers() *ParameterRegistry {
 			ParamCount: 1,
 			HandlerFunc: func(params []string) error {
 				contract := halt.OpType(params[0])
-				return cross(halt.DisableContractOperations)(contract)
+				return halt.DisableContractOperations(cur, contract)
 			},
 		},
 	}

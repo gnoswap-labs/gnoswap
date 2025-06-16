@@ -16,7 +16,7 @@ import (
 )
 
 func TestCreateParameterHandlers(t *testing.T) {
-	registry := createParameterHandlers()
+	registry := createParameterHandlers(nil)
 
 	if registry == nil {
 		t.Fatal("registry is nil")
@@ -165,7 +165,7 @@ func TestCreateParameterHandlers(t *testing.T) {
 }
 
 func TestCreateParameterHandlers_SetUnStakingFee_Panic(t *testing.T) {
-	registry := createParameterHandlers()
+	registry := createParameterHandlers(nil)
 	handler, _ := registry.Handler(consts.STAKER_PATH, "SetUnStakingFee")
 	errMsg := "[GNOSWAP-STAKER-008] invalid unstaking fee || fee(10001) must be in range 0 ~ 10000"
 	uassert.AbortsWithMessage(t, errMsg, func() {
@@ -175,7 +175,7 @@ func TestCreateParameterHandlers_SetUnStakingFee_Panic(t *testing.T) {
 }
 
 func TestCreateParameterHandlers_Emission_ChangeDistributionPct_Panic(t *testing.T) {
-	registry := createParameterHandlers()
+	registry := createParameterHandlers(nil)
 	handler, _ := registry.Handler(consts.EMISSION_PATH, "ChangeDistributionPct")
 	errMsg := "[GNOSWAP-EMISSION-001] invalid distribution pct || total distribution pct(10001) must be in range 0 ~ 10000"
 	uassert.AbortsWithMessage(t, errMsg, func() {
@@ -187,7 +187,7 @@ func TestCreateParameterHandlers_Emission_ChangeDistributionPct_Panic(t *testing
 }
 
 func TestRoleChangeParameterHandlers(t *testing.T) {
-	registry := createParameterHandlers()
+	registry := createParameterHandlers(nil)
 
 	tests := []struct {
 		name        string
