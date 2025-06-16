@@ -35,16 +35,16 @@ func TestKnownAccounts(t *testing.T) {
 	testing.SetRealm(std.NewUserRealm(alice))
 	func() {
 		testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-		uassert.Equal(t, 1, KnownAccounts())
+		uassert.Equal(t, 1, KnownAccounts(cross))
 	}()
 }
 
 func TestTotalSupply(t *testing.T) {
-	uassert.Equal(t, INITIAL_MINT_AMOUNT, TotalSupply(cur))
+	uassert.Equal(t, INITIAL_MINT_AMOUNT, TotalSupply(cross))
 }
 
 func TestBalanceOf(t *testing.T) {
-	uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(cur, adminAddr))
+	uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(cross, adminAddr))
 }
 
 func TestAssertTooManyEmission(t *testing.T) {
@@ -184,32 +184,32 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "TotalSupply",
 			fn: func() {
-				uassert.Equal(t, INITIAL_MINT_AMOUNT, TotalSupply())
+				uassert.Equal(t, INITIAL_MINT_AMOUNT, TotalSupply(cross))
 			},
 		},
 		{
 			name: "BalanceOf(admin)",
 			fn: func() {
-				uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(adminAddr))
+				uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(cross, adminAddr))
 			},
 		},
 		{
 			name: "BalanceOf(alice)",
 			fn: func() {
-				uassert.Equal(t, int64(0), BalanceOf(alice))
+				uassert.Equal(t, int64(0), BalanceOf(cross, alice))
 			},
 		},
 		{
 			name: "Allowance(admin, alice)",
 			fn: func() {
-				uassert.Equal(t, int64(0), Allowance(adminAddr, alice))
+				uassert.Equal(t, int64(0), Allowance(cross, adminAddr, alice))
 			},
 		},
 		{
 			name: "MintGns success",
 			fn: func() {
 				testing.SetRealm(emissionRealm)
-				MintGns(adminAddr)
+				MintGns(cross, adminAddr)
 			},
 		},
 		{
@@ -217,7 +217,7 @@ func TestGrc20Methods(t *testing.T) {
 			fn: func() {
 				testing.SetRealm(emissionRealm)
 				testing.SkipHeights(1)
-				MintGns(adminAddr)
+				MintGns(cross, adminAddr)
 			},
 			shouldPanic: true,
 			panicMsg:    `caller(g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m) has no permission`,
@@ -225,7 +225,7 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "Burn without permission should panic",
 			fn: func() {
-				Burn(adminAddr, int64(1))
+				Burn(cross, adminAddr, int64(1))
 			},
 			shouldPanic: true,
 			panicMsg:    `ownable: caller is not owner`,
@@ -237,7 +237,7 @@ func TestGrc20Methods(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					Transfer(alice, int64(1))
+					Transfer(cross, alice, int64(1))
 				}()
 			},
 		},
@@ -248,7 +248,7 @@ func TestGrc20Methods(t *testing.T) {
 				testing.SetRealm(std.NewUserRealm(alice))
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					Transfer(bob, int64(1))
+					Transfer(cross, bob, int64(1))
 				}()
 			},
 			shouldPanic: true,
@@ -261,7 +261,7 @@ func TestGrc20Methods(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					Transfer(adminAddr, int64(1))
+					Transfer(cross, adminAddr, int64(1))
 				}()
 			},
 			shouldPanic: true,
@@ -274,7 +274,7 @@ func TestGrc20Methods(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					Approve(alice, int64(1))
+					Approve(cross, alice, int64(1))
 				}()
 
 				// alice transfer admin's balance to bob
@@ -282,7 +282,7 @@ func TestGrc20Methods(t *testing.T) {
 				testing.SetRealm(std.NewUserRealm(alice))
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					TransferFrom(adminAddr, bob, int64(1))
+					TransferFrom(cross, adminAddr, bob, int64(1))
 				}()
 			},
 		},
@@ -292,14 +292,14 @@ func TestGrc20Methods(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					Approve(alice, int64(1))
+					Approve(cross, alice, int64(1))
 				}()
 
 				testing.SetOriginCaller(alice)
 				testing.SetRealm(std.NewUserRealm(alice))
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					TransferFrom(adminAddr, bob, int64(2))
+					TransferFrom(cross, adminAddr, bob, int64(2))
 				}()
 			},
 			shouldPanic: true,

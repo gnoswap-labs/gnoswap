@@ -254,7 +254,7 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 				testing.SetRealm(std.NewUserRealm(alice))
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					SetAvgBlockTimeInMsByAdmin(1)
+					SetAvgBlockTimeInMsByAdmin(cross, 1)
 				}()
 			},
 		)
@@ -269,7 +269,7 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 		testing.SetRealm(std.NewUserRealm(adminAddr))
 		func() {
 			testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-			SetAvgBlockTimeInMsByAdmin(2)
+			SetAvgBlockTimeInMsByAdmin(cross, 2)
 		}()
 		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(2))
 
@@ -286,7 +286,7 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 			func() {
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					SetAvgBlockTimeInMsByAdmin(-1)
+					SetAvgBlockTimeInMsByAdmin(cross, -1)
 				}()
 			},
 		)
@@ -303,7 +303,7 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 			func() {
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					SetAvgBlockTimeInMsByAdmin(1e9)
+					SetAvgBlockTimeInMsByAdmin(cross, 1e9)
 				}()
 			},
 		)
@@ -318,7 +318,7 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 		uassert.PanicsWithMessage(t,
 			"caller() has no permission",
 			func() {
-				SetAvgBlockTimeInMs(3)
+				SetAvgBlockTimeInMs(cross, 3)
 			},
 		)
 		callbackEmissionChange = oldCallback
@@ -331,7 +331,7 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 		testing.SetRealm(govRealm)
 		func() {
 			testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-			SetAvgBlockTimeInMs(4)
+			SetAvgBlockTimeInMs(cross, 4)
 		}()
 		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(4))
 		callbackEmissionChange = oldCallback
@@ -347,7 +347,7 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 			func() {
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					SetAvgBlockTimeInMs(-1)
+					SetAvgBlockTimeInMs(cross, -1)
 				}()
 			},
 		)
@@ -364,7 +364,7 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 			func() {
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					SetAvgBlockTimeInMs(1e9)
+					SetAvgBlockTimeInMs(cross, 1e9)
 				}()
 			},
 		)
