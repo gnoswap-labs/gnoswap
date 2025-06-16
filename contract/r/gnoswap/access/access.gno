@@ -93,7 +93,7 @@ func initialize(cfg *config) error {
 // declareNewRole declares a new role with permissions
 func declareNewRole(roleName string, addr std.Address) error {
 	checker := createAddressChecker(addr, roleName)
-	if err := rbac.DeclareRole(nil, roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
+	if err := rbac.DeclareRole(cross, roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
 		return ufmt.Errorf(errDeclareRole, roleName, err)
 	}
 	return nil
@@ -126,11 +126,11 @@ func SetRole(cur realm, roleName string, address std.Address) error {
 	checker := createAddressChecker(address, roleName)
 
 	if RoleExists(roleName) {
-		if err := rbac.UpdatePermission(nil, roleName, PERM_ACCESS, checker); err != nil {
+		if err := rbac.UpdatePermission(cross, roleName, PERM_ACCESS, checker); err != nil {
 			return err
 		}
 	} else {
-		if err := rbac.DeclareRole(nil, roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
+		if err := rbac.DeclareRole(cross, roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
 			return err
 		}
 	}
@@ -173,7 +173,7 @@ func UpdateRoleAddress(cur realm, roleName string, newAddress std.Address) error
 		"prevAddress", prevAddress.String(),
 		"newAddress", newAddress.String(),
 	)
-	return rbac.UpdatePermission(nil, roleName, PERM_ACCESS, newChecker)
+	return rbac.UpdatePermission(cross, roleName, PERM_ACCESS, newChecker)
 }
 
 // CreateRole creates a new role with the given address
@@ -256,7 +256,7 @@ func DeleteRole(cur realm, roleName string) error {
 	deletedAddress := currentConfig.roles[roleName]
 
 	// Remove the role from RBAC
-	if err := rbac.RemoveRole(nil, roleName); err != nil {
+	if err := rbac.RemoveRole(cross, roleName); err != nil {
 		return ufmt.Errorf("failed to remove role from RBAC: %v", err)
 	}
 
