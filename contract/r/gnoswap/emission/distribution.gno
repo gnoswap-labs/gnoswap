@@ -261,12 +261,12 @@ func GetAccuDistributedToGovStaker() int64 {
 	return accuDistributedToGovStaker
 }
 
-func ClearDistributedToStaker() {
+func ClearDistributedToStaker(cur realm) {
 	assertStakerOnly()
 	distributedToStaker = 0
 }
 
-func ClearDistributedToGovStaker() {
+func ClearDistributedToGovStaker(cur realm) {
 	assertOnlyGovStaker()
 	distributedToGovStaker = 0
 }

@@ -1,1 +1,3 @@
 module gno.land/r/gnoswap/v1/launchpad
+
+gno 0.9
