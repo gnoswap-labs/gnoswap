@@ -15,12 +15,12 @@ func TestSetLimitCaller(t *testing.T) {
 	})
 
 	t.Run("with admin privilege, success", func(t *testing.T) {
-		func() {
+		func(cur realm) {
 			adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 			testing.SetRealm(std.NewUserRealm(adminAddr))
 
-			SetLimitCaller(nil, false)
+			SetLimitCaller(cross, false)
 			uassert.False(t, GetLimitCaller())
-		}()
+		}(cross)
 	})
 }
