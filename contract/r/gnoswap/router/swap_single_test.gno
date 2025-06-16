@@ -32,8 +32,8 @@ func TestSingleSwap(t *testing.T) {
 				MakeMintPositionWithoutFee(t)
 
 				testing.SetRealm(user1Realm)
-				bar.Approve(routerAddr, maxApprove)
-				baz.Approve(routerAddr, maxApprove)
+				bar.Approve(nil, routerAddr, maxApprove)
+				baz.Approve(nil, routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SingleSwapParams{
@@ -53,8 +53,8 @@ func TestSingleSwap(t *testing.T) {
 				MakeMintPositionWithoutFee(t)
 
 				testing.SetRealm(user1Realm)
-				bar.Approve(routerAddr, maxApprove)
-				baz.Approve(routerAddr, maxApprove)
+				bar.Approve(nil, routerAddr, maxApprove)
+				baz.Approve(nil, routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SingleSwapParams{
@@ -102,7 +102,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				CreatePoolWithoutFee(t)
 				MakeMintPositionWithoutFee(t)
 				testing.SetRealm(std.NewUserRealm(user1Addr))
-				bar.Approve(routerAddr, maxApprove)
+				bar.Approve(nil, routerAddr, maxApprove)
 			},
 			params: SingleSwapParams{
 				tokenIn:         barPath,
@@ -135,7 +135,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				CreatePoolWithoutFee(t)
 				MakeMintPositionWithoutFee(t)
 				testing.SetRealm(std.NewUserRealm(user1Addr))
-				bar.Approve(routerAddr, maxApprove)
+				bar.Approve(nil, routerAddr, maxApprove)
 			},
 			params: SingleSwapParams{
 				tokenIn:         barPath,
@@ -152,7 +152,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				CreatePoolWithoutFee(t)
 				MakeMintPositionWithoutFee(t)
 				testing.SetRealm(std.NewUserRealm(user1Addr))
-				bar.Approve(routerAddr, maxApprove)
+				bar.Approve(nil, routerAddr, maxApprove)
 			},
 			params: SingleSwapParams{
 				tokenIn:         barPath,
@@ -169,7 +169,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				CreatePoolWithoutFee(t)
 				MakeMintPositionWithoutFee(t)
 				testing.SetRealm(std.NewUserRealm(user1Addr))
-				bar.Approve(routerAddr, maxApprove)
+				bar.Approve(nil, routerAddr, maxApprove)
 			},
 			params: SingleSwapParams{
 				tokenIn:         barPath,
@@ -186,7 +186,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				CreatePoolWithoutFee(t)
 				MakeMintPositionWithoutFee(t)
 				testing.SetRealm(std.NewUserRealm(user1Addr))
-				bar.Approve(routerAddr, maxApprove)
+				bar.Approve(nil, routerAddr, maxApprove)
 			},
 			params: SingleSwapParams{
 				tokenIn:         barPath,
@@ -203,7 +203,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				CreatePoolWithoutFee(t)
 				MakeMintPositionWithoutFee(t)
 				testing.SetRealm(std.NewUserRealm(user1Addr))
-				bar.Approve(routerAddr, maxApprove)
+				bar.Approve(nil, routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SingleSwapParams{
