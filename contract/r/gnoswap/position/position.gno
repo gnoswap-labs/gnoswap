@@ -72,6 +72,7 @@ const (
 //
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#mint
 func Mint(
+	cur realm,
 	token0 string,
 	token1 string,
 	fee uint32,
@@ -86,7 +87,6 @@ func Mint(
 	caller std.Address,
 	referrer string,
 ) (uint64, string, string, string) {
-	crossing()
 	assertOnlyNotHalted()
 	prevCaller := getPrevRealm()
 	assertOnlyUserOrStaker(prevCaller)
@@ -97,7 +97,7 @@ func Mint(
 	}
 	checkDeadline(deadline)
 
-	cross(referral.TryRegister)(caller, referrer)
+	referral.TryRegister(cur, caller, referrer)
 
 	mintAndDistributeGnsCallback()
 
@@ -124,7 +124,7 @@ func Mint(
 	mintParams := newMintParams(processedInput, mintInput)
 
 	// mint liquidity
-	id, liquidity, amount0, amount1 := mint(mintParams)
+	id, liquidity, amount0, amount1 := mint(cur, mintParams)
 
 	// refund leftover wrapped tokens
 	if processedInput.tokenPair.token0IsNative && processedInput.tokenPair.wrappedAmount > amount0.Int64() {
@@ -166,7 +166,7 @@ func Mint(
 // IncreaseLiquidity increases liquidity of the existing position
 // Returns position ID, liquidity, amount0, amount1, poolPath
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#increaseliquidity
-func IncreaseLiquidity(
+func IncreaseLiquidity(cur realm,
 	positionId uint64,
 	amount0DesiredStr string,
 	amount1DesiredStr string,
@@ -174,7 +174,6 @@ func IncreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string) {
-	crossing()
 	assertOnlyNotHalted()
 	assertValidNumberString(amount0DesiredStr)
 	assertValidNumberString(amount1DesiredStr)
@@ -209,7 +208,7 @@ func IncreaseLiquidity(
 		deadline:       deadline,
 	}
 
-	_, liquidity, amount0, amount1, poolPath := increaseLiquidity(increaseLiquidityParams)
+	_, liquidity, amount0, amount1, poolPath := increaseLiquidity(cur, increaseLiquidityParams)
 
 	amount0Int64 := amount0.Int64()
 	amount1Int64 := amount1.Int64()
@@ -253,7 +252,7 @@ func IncreaseLiquidity(
 // It also handles the conversion between GNOT and WUGNOT transparently for the user.
 // Returns position ID, liquidity, fee0, fee1, amount0, amount1, poolPath
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#decreaseliquidity
-func DecreaseLiquidity(
+func DecreaseLiquidity(cur realm,
 	positionId uint64,
 	liquidityStr string,
 	amount0MinStr string,
@@ -261,7 +260,6 @@ func DecreaseLiquidity(
 	deadline int64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
-	crossing()
 	assertOnlyNotHalted()
 	isAuthorizedForToken(positionId)
 	checkDeadline(deadline)
@@ -280,7 +278,7 @@ func DecreaseLiquidity(
 		unwrapResult: unwrapResult,
 	}
 
-	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
+	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(cur, decreaseLiquidityParams)
 
 	prevAddr, prevPkgPath := getPrevAsString()
 
@@ -308,8 +306,7 @@ func DecreaseLiquidity(
 // CollectFee collects swap fee from the position
 // Returns position ID, afterFee0, afterFee1, poolPath, origFee0, origFee1
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#collectfee
-func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, string, string, string) {
-	crossing()
+func CollectFee(cur realm, postionId uint64, unwrapResult bool) (uint64, string, string, string, string, string) {
 	assertOnlyNotHalted()
 	assertTokenExists(postionId)
 	isAuthorizedForToken(postionId)
@@ -341,10 +338,11 @@ func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, st
 	// check user wugnot amount
 	// need this value to unwrap fee
 	caller := getPrevAddr()
-	userWugnot := cross(wugnot.BalanceOf)(caller)
+	userWugnot := wugnot.BalanceOf(caller)
 
 	// collect fee
 	amount0, amount1 := pl.Collect(
+		nil,
 		token0, token1, fee,
 		caller,
 		position.tickLower, position.tickUpper,
@@ -359,6 +357,7 @@ func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, st
 
 	// handle withdrawal fee
 	withoutFee0, withoutFee1 := pl.CollectWithdrawalFee(
+		cur,
 		postionId,
 		token0,
 		amount0,
@@ -388,8 +387,7 @@ func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, st
 	return postionId, withoutFee0, withoutFee1, position.poolKey, amount0, amount1
 }
 
-func SetPositionOperator(id uint64, operator std.Address) {
-	crossing()
+func SetPositionOperator(cur realm, id uint64, operator std.Address) {
 	caller := getPrevRealm().PkgPath()
 	if caller != consts.STAKER_PATH {
 		panic(newErrorWithDetail(
@@ -432,7 +430,7 @@ func computePositionKey(
 }
 
 func getCurrentFeeGrowth(position Position) (FeeGrowthInside, error) {
-	pool := cross(pl.GetPoolFromPoolPath)(position.poolKey)
+	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := computePositionKey(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 
 	feeGrowthInside0 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))

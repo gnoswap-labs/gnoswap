@@ -86,8 +86,8 @@ func InitialisePoolTest(t *testing.T) {
 	testing.SetOriginCaller(adminAddr)
 	TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
 	poolPath := pl.GetPoolPath(wugnotPath, gnsPath, fee3000)
-	if !cross(pl.DoesPoolPathExist)(poolPath) {
-		cross(pl.CreatePool)(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
+	if !pl.DoesPoolPathExist(poolPath) {
+		pl.CreatePool(nil, wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
 	}
 
 	// 2. create position
@@ -141,19 +141,19 @@ func TokenBalance(t *testing.T, tokenPath string, owner std.Address) int64 {
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
-		return cross(wugnot.BalanceOf)(owner)
+		return wugnot.BalanceOf(owner)
 	case gnsPath:
-		return cross(gns.BalanceOf)(owner)
+		return gns.BalanceOf(nil, owner)
 	case barPath:
-		return cross(bar.BalanceOf)(owner)
+		return bar.BalanceOf(nil, owner)
 	case bazPath:
-		return cross(baz.BalanceOf)(owner)
+		return baz.BalanceOf(nil, owner)
 	case fooPath:
-		return cross(foo.BalanceOf)(owner)
+		return foo.BalanceOf(nil, owner)
 	case oblPath:
-		return cross(obl.BalanceOf)(owner)
+		return obl.BalanceOf(nil, owner)
 	case quxPath:
-		return cross(qux.BalanceOf)(owner)
+		return qux.BalanceOf(nil, owner)
 	default:
 		panic("token not found")
 	}
@@ -163,19 +163,19 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender std.Address) 
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
-		return cross(wugnot.Allowance)(owner, spender)
+		return wugnot.Allowance(owner, spender)
 	case gnsPath:
-		return cross(gns.Allowance)(owner, spender)
+		return gns.Allowance(nil, owner, spender)
 	case barPath:
-		return cross(bar.Allowance)(owner, spender)
+		return bar.Allowance(nil, owner, spender)
 	case bazPath:
-		return cross(baz.Allowance)(owner, spender)
+		return baz.Allowance(nil, owner, spender)
 	case fooPath:
-		return cross(foo.Allowance)(owner, spender)
+		return foo.Allowance(nil, owner, spender)
 	case oblPath:
-		return cross(obl.Allowance)(owner, spender)
+		return obl.Allowance(nil, owner, spender)
 	case quxPath:
-		return cross(qux.Allowance)(owner, spender)
+		return qux.Allowance(nil, owner, spender)
 	default:
 		panic("token not found")
 	}
@@ -238,6 +238,7 @@ func MintPosition(t *testing.T,
 	testing.SetRealm(std.NewUserRealm(caller))
 
 	return Mint(
+		nil,
 		token0,
 		token1,
 		fee,
@@ -450,7 +451,7 @@ func LPTokenApprove(t *testing.T, owner, operator std.Address, positionId uint64
 	testing.SetRealm(std.NewUserRealm(owner))
 	func() {
 		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gnft"))
-		cross(gnft.Approve)(operator, positionIdFrom(positionId))
+		gnft.Approve(nil, operator, positionIdFrom(positionId))
 	}()
 }
 
@@ -469,91 +470,91 @@ func LPTokenApprove(t *testing.T, owner, operator std.Address, positionId uint64
 func getPoolFromPositionId(t *testing.T, positionId uint64) *pl.Pool {
 	t.Helper()
 	position := MustGetPosition(positionId)
-	return cross(pl.GetPoolFromPoolPath)(position.poolKey)
+	return pl.GetPoolFromPoolPath(position.poolKey)
 }
 
 func wugnotApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	cross(wugnot.Approve)(spender, amount)
+	wugnot.Approve(spender, amount)
 }
 
 func gnsApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	cross(gns.Approve)(spender, amount)
+	gns.Approve(nil, spender, amount)
 }
 
 func barApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	cross(bar.Approve)(spender, amount)
+	bar.Approve(nil, spender, amount)
 }
 
 func bazApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	cross(baz.Approve)(spender, amount)
+	baz.Approve(nil, spender, amount)
 }
 
 func fooApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	cross(foo.Approve)(spender, amount)
+	foo.Approve(nil, spender, amount)
 }
 
 func oblApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	cross(obl.Approve)(spender, amount)
+	obl.Approve(nil, spender, amount)
 }
 
 func quxApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	cross(qux.Approve)(spender, amount)
+	qux.Approve(nil, spender, amount)
 }
 
 func wugnotTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(wugnot.Transfer)(to, amount)
+	wugnot.Transfer(to, amount)
 }
 
 func gnsTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(gns.Transfer)(to, amount)
+	gns.Transfer(nil, to, amount)
 }
 
 func barTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(bar.Transfer)(to, amount)
+	bar.Transfer(nil, to, amount)
 }
 
 func bazTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(baz.Transfer)(to, amount)
+	baz.Transfer(nil, to, amount)
 }
 
 func fooTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(foo.Transfer)(to, amount)
+	foo.Transfer(nil, to, amount)
 }
 
 func oblTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(obl.Transfer)(to, amount)
+	obl.Transfer(nil, to, amount)
 }
 
 func quxTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(qux.Transfer)(to, amount)
+	qux.Transfer(nil, to, amount)
 }
 
 // ----------------------------------------------------------------------------
@@ -610,7 +611,7 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 	wugnotAddr := consts.WUGNOT_ADDR
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
-	cross(wugnot.Deposit)()
+	wugnot.Deposit()
 }
 
 // resetObject resets the object state(clear or make it default values)
@@ -635,32 +636,32 @@ func burnTokens(t *testing.T) {
 
 func burnFoo(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(foo.Burn)(addr, cross(foo.BalanceOf)(addr))
+	foo.Burn(nil, addr, foo.BalanceOf(nil, addr))
 }
 
 func burnBar(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(bar.Burn)(addr, cross(bar.BalanceOf)(addr))
+	bar.Burn(nil, addr, bar.BalanceOf(nil, addr))
 }
 
 func burnBaz(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(baz.Burn)(addr, cross(baz.BalanceOf)(addr))
+	baz.Burn(nil, addr, baz.BalanceOf(nil, addr))
 }
 
 func burnQux(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(qux.Burn)(addr, cross(qux.BalanceOf)(addr))
+	qux.Burn(nil, addr, qux.BalanceOf(nil, addr))
 }
 
 func burnObl(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(obl.Burn)(addr, cross(obl.BalanceOf)(addr))
+	obl.Burn(nil, addr, obl.BalanceOf(nil, addr))
 }
 
 func burnUsdc(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(usdc.Burn)(addr, cross(usdc.BalanceOf)(addr))
+	usdc.Burn(nil, addr, usdc.BalanceOf(nil, addr))
 }
 
 // burnAllNFT burns all NFTs
@@ -668,8 +669,8 @@ func burnAllNFT(t *testing.T) {
 	t.Helper()
 
 	testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
-	for i := int64(1); i <= cross(gnft.TotalSupply)(); i++ {
-		cross(gnft.Burn)(positionIdFrom(i))
+	for i := int64(1); i <= gnft.TotalSupply(); i++ {
+		gnft.Burn(nil, positionIdFrom(i))
 	}
 }
 
@@ -701,8 +702,8 @@ func TestBurnTokens(t *testing.T) {
 	t.Skip("only works when testing this single file")
 	burnTokens(t)
 
-	uassert.Equal(t, foo.BalanceOf(addr01), uint64(0)) // 100_000_000 -> 0
-	uassert.Equal(t, bar.BalanceOf(addr01), uint64(0)) // 100_000_000 -> 0
+	uassert.Equal(t, foo.BalanceOf(nil, addr01), uint64(0)) // 100_000_000 -> 0
+	uassert.Equal(t, bar.BalanceOf(nil, addr01), uint64(0)) // 100_000_000 -> 0
 }
 
 func TestBurnAllNFT(t *testing.T) {

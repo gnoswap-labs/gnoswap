@@ -34,8 +34,8 @@ func wrap(ugnotAmount int64, to std.Address) error {
 	wugnotAddr := std.DerivePkgAddr(consts.WRAPPED_WUGNOT)
 	transferUGNOT(positionAddr, wugnotAddr, ugnotAmount)
 
-	cross(wugnot.Deposit)()                 // POSITION HAS WUGNOT
-	cross(wugnot.Transfer)(to, ugnotAmount) // SEND WUGNOT: POSITION -> USER
+	wugnot.Deposit()                   // POSITION HAS WUGNOT
+	wugnot.Transfer(to, ugnotAmount) // SEND WUGNOT: POSITION -> USER
 
 	return nil
 }
@@ -55,9 +55,9 @@ func unwrap(wugnotAmount int64, to std.Address) error {
 		return ufmt.Errorf("amount(%d) is zero or negative", wugnotAmount)
 	}
 
-	cross(wugnot.TransferFrom)(to, positionAddr, wugnotAmount) // SEND WUGNOT: USER -> POSITION
-	cross(wugnot.Withdraw)(wugnotAmount)                       // POSITION HAS UGNOT
-	transferUGNOT(positionAddr, to, wugnotAmount)       // SEND UGNOT: POSITION -> USER
+	wugnot.TransferFrom(to, positionAddr, wugnotAmount) // SEND WUGNOT: USER -> POSITION
+	wugnot.Withdraw(wugnotAmount)                       // POSITION HAS UGNOT
+	transferUGNOT(positionAddr, to, wugnotAmount)            // SEND UGNOT: POSITION -> USER
 	return nil
 }
 
@@ -129,7 +129,7 @@ func isWrappedToken(tokenPath string) bool {
 //   - If the `wrap` function fails to wrap the tokens.
 //   - If there is a mismatch between the expected wrapped token amount and the user's balance after wrapping.
 func safeWrapNativeToken(amountDesired string, userAddress std.Address) int64 {
-	beforeWugnotBalance := cross(wugnot.BalanceOf)(userAddress)
+	beforeWugnotBalance := wugnot.BalanceOf(userAddress)
 	sentNative := std.OriginSend()
 	sentUgnotAmount := sentNative.AmountOf(consts.UGNOT)
 
@@ -160,7 +160,7 @@ func safeWrapNativeToken(amountDesired string, userAddress std.Address) int64 {
 		panic(newErrorWithDetail(errWugnotMinimum, err.Error()))
 	}
 
-	afterWugnotBalance := cross(wugnot.BalanceOf)(userAddress)
+	afterWugnotBalance := wugnot.BalanceOf(userAddress)
 	diff := afterWugnotBalance - beforeWugnotBalance
 
 	if diff != sentUgnotAmount {
@@ -174,7 +174,7 @@ func safeWrapNativeToken(amountDesired string, userAddress std.Address) int64 {
 
 func handleUnwrap(pToken0, pToken1 string, unwrapResult bool, userOldWugnotBalance int64, to std.Address) {
 	if (pToken0 == consts.WRAPPED_WUGNOT || pToken1 == consts.WRAPPED_WUGNOT) && unwrapResult {
-		userNewWugnotBalance := cross(wugnot.BalanceOf)(to)
+		userNewWugnotBalance := wugnot.BalanceOf(to)
 		leftOver := userNewWugnotBalance - userOldWugnotBalance
 		if leftOver > 0 {
 			if err := unwrap(leftOver, to); err != nil {

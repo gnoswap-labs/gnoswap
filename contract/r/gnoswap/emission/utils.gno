@@ -79,7 +79,7 @@ func assertOnlyNotHalted() {
 			panic(err.Error())
 		}
 
-		if halt.IsContractHalted(nil, halt.OpTypeEmission) {
+		if halt.IsContractHalted(halt.OpTypeEmission) {
 			panic("emission contract operations are currently disabled")
 		}
 	}

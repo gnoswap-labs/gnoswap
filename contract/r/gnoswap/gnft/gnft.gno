@@ -168,7 +168,7 @@ func SafeTransferFrom(from, to std.Address, tid grc721.TokenID) error {
 
 	caller := getPrevAddr()
 	ownerAddr, _ := OwnerOf(tid)
-	approved, _ := GetApproved(cur, tid)
+	approved, _ := GetApproved(tid)
 	if (caller != ownerAddr) && (caller != approved) {
 		panic(addDetailToError(
 			errNoPermission,
@@ -247,7 +247,7 @@ func SetApprovalForAll(cur realm, operator std.Address, approved bool) error {
 // Returns:
 //   - std.Address: The address approved to manage the token. Returns an empty address if no approval exists.
 //   - error: Returns an error if the lookup fails or the token ID is invalid.
-func GetApproved(cur realm, tid grc721.TokenID) (std.Address, error) {
+func GetApproved(tid grc721.TokenID) (std.Address, error) {
 	return gnft.GetApproved(tid)
 }
 

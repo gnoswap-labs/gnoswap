@@ -400,7 +400,7 @@ func DisableContractOperations(cur realm, contract OpType) error {
 }
 
 // IsContractHalted checks if specific contract operations are halted
-func IsContractHalted(cur realm, contract OpType) bool {
+func IsContractHalted(contract OpType) bool {
 	// if contract is halted, IsHalted will return an error
 	// so we need to check if the error is not nil
 	err := IsHalted(contract)

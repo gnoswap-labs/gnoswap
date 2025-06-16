@@ -43,7 +43,7 @@ func DistributeProtocolFee(cur realm) map[string]uint64 {
 			panic(err)
 		}
 
-		if halt.IsContractHalted(cur, halt.OpTypeProtocolFee) {
+		if halt.IsContractHalted(halt.OpTypeProtocolFee) {
 			panic("protocol fee contract operations are currently disabled")
 		}
 	}

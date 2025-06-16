@@ -67,9 +67,9 @@ func TestMintInternal_PositionMint(t *testing.T) {
 			}
 			testing.SetRealm(adminRealm)
 			TokenApprove(t, gnsPath, alice, poolAddr, maxApprove)
-			poolPath := cross(pl.GetPoolPath)(tt.params.token0, tt.params.token1, tt.params.fee)
-			if !cross(pl.DoesPoolPathExist)(poolPath) {
-				cross(pl.CreatePool)(tt.params.token0, tt.params.token1, tt.params.fee, "79228162514264337593543950336")
+			poolPath := pl.GetPoolPath(tt.params.token0, tt.params.token1, tt.params.fee)
+			if !pl.DoesPoolPathExist(poolPath) {
+				pl.CreatePool(nil, tt.params.token0, tt.params.token1, tt.params.fee, "79228162514264337593543950336")
 			}
 
 			testing.SetRealm(adminRealm)
@@ -77,10 +77,10 @@ func TestMintInternal_PositionMint(t *testing.T) {
 			TokenFaucet(t, tt.params.token1, alice)
 
 			testing.SetRealm(std.NewUserRealm(alice))
-			cross(bar.Approve)(poolAddr, maxApprove)
-			cross(baz.Approve)(poolAddr, maxApprove)
+			bar.Approve(nil, poolAddr, maxApprove)
+			baz.Approve(nil, poolAddr, maxApprove)
 			testing.SetOriginCaller(alice)
-			id, liquidity, amount0, amount1 := mint(tt.params)
+			id, liquidity, amount0, amount1 := mint(nil, tt.params)
 
 			if tt.expectedSuccess {
 				uassert.Equal(t, uint64(23), id)
