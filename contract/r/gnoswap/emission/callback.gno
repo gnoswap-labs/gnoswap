@@ -32,7 +32,7 @@ func callbackEmissionChange(amount int64) {
 
 func RegisterGnsChangeCallback(cur realm) {
 	assertStakerOnly()
-	gns.SetCallbackEmissionChange(cur, callbackEmissionChange)
+	gns.SetCallbackEmissionChange(cross, callbackEmissionChange)
 }
 
 // registerMintAndDistributeGnsCallback upgrades the version of the function stored in the bridge contract.
@@ -42,10 +42,10 @@ func registerMintAndDistributeGnsCallback(cur realm) {
 	// but in a test environment, since the admin address cannot be fixed as the default address,
 	// we use the admin address registered in the `access` contract instead.
 	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-	bridge.RegisterCallback(cur, adminAddr, "emission", "MintAndDistributeGns", MintAndDistributeGns)
+	bridge.RegisterCallback(cross, adminAddr, "emission", "MintAndDistributeGns", MintAndDistributeGns)
 }
 
 // XXX need to check if this is correct
 func init() {
-	registerMintAndDistributeGnsCallback(nil)
+	registerMintAndDistributeGnsCallback(cross)
 }

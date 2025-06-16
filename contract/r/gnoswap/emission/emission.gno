@@ -25,7 +25,7 @@ func MintAndDistributeGns(cur realm) int64 {
 		return 0
 	}
 	// Mint new tokens and add any leftover amounts from previous distribution
-	mintedEmissionRewardAmount := gns.MintGns(cur, emissionAddr)
+	mintedEmissionRewardAmount := gns.MintGns(cross, emissionAddr)
 
 	distributableAmount := mintedEmissionRewardAmount
 	prevLeftAmount := GetLeftGNSAmount()
@@ -52,7 +52,7 @@ func MintAndDistributeGns(cur realm) int64 {
 		"prevLeftAmount", formatInt(prevLeftAmount),
 		"distributedAmount", formatInt(distributedGNSAmount),
 		"currentLeftAmount", formatInt(GetLeftGNSAmount()),
-		"gnsTotalSupply", formatInt(gns.TotalSupply(nil)),
+		"gnsTotalSupply", formatInt(gns.TotalSupply(cross)),
 	)
 
 	setLastExecutedHeight(currentHeight)

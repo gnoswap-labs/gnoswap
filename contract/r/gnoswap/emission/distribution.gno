@@ -152,7 +152,7 @@ func distributeToTarget(cur realm, amount int64) int64 {
 		distAmount := calculateAmount(amount, pct)
 		totalSent += distAmount
 
-		transferToTarget(cur, targetInt, distAmount)
+		transferToTarget(cross, targetInt, distAmount)
 
 		return false
 	})
@@ -186,22 +186,22 @@ func calculateAmount(amount, bptPct int64) int64 {
 func transferToTarget(cur realm, target int, amount int64) {
 	switch target {
 	case LIQUIDITY_STAKER:
-		gns.Transfer(cur, stakerAddr, amount)
+		gns.Transfer(cross, stakerAddr, amount)
 		distributedToStaker += amount
 		accuDistributedToStaker += amount
 
 	case DEVOPS:
-		gns.Transfer(cur, devOpsAddr, amount)
+		gns.Transfer(cross, devOpsAddr, amount)
 		distributedToDevOps += amount
 		accuDistributedToDevOps += amount
 
 	case COMMUNITY_POOL:
-		gns.Transfer(cur, communityPoolAddr, amount)
+		gns.Transfer(cross, communityPoolAddr, amount)
 		distributedToCommunityPool += amount
 		accuDistributedToCommunityPool += amount
 
 	case GOV_STAKER:
-		gns.Transfer(cur, govStakerAddr, amount)
+		gns.Transfer(cross, govStakerAddr, amount)
 		distributedToGovStaker += amount
 		accuDistributedToGovStaker += amount
 

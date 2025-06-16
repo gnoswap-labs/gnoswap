@@ -8,7 +8,6 @@ import (
 	"gno.land/p/demo/avl"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/gns"
 )
 
 var (
