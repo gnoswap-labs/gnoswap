@@ -46,6 +46,6 @@ func registerMintAndDistributeGnsCallback(cur realm) {
 }
 
 // XXX need to check if this is correct
-func init(cur realm) {
-	registerMintAndDistributeGnsCallback(cur)
+func init() {
+	registerMintAndDistributeGnsCallback(nil)
 }

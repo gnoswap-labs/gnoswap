@@ -117,7 +117,7 @@ func TestCreatePool(t *testing.T) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	func() {
 		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/pool"))
-		SetPoolCreationFeeByAdmin(0)
+		SetPoolCreationFeeByAdmin(nil, 0)
 	}()
 
 	for _, tt := range tests {
@@ -137,7 +137,7 @@ func TestCreatePool(t *testing.T) {
 
 			func() {
 				testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/pool"))
-				CreatePool(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
+				CreatePool(nil, tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
 			}()
 
 			// verify pool was created correctly
@@ -183,7 +183,7 @@ func TestGetPool(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/pool"))
-					SetPoolCreationFeeByAdmin(0)
+					SetPoolCreationFeeByAdmin(nil, 0)
 				}()
 			},
 			action: func(t *testing.T) *Pool {
@@ -198,12 +198,12 @@ func TestGetPool(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/pool"))
-					SetPoolCreationFeeByAdmin(0)
+					SetPoolCreationFeeByAdmin(nil, 0)
 				}()
 
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/pool"))
-					CreatePool(barPath, fooPath, fee500, "4295128740")
+					CreatePool(nil, barPath, fooPath, fee500, "4295128740")
 				}()
 			},
 			action: func(t *testing.T) *Pool {

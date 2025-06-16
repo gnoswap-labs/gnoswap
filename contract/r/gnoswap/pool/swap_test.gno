@@ -282,8 +282,8 @@ func TestDrySwap_Failures(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	func() {
 		testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-		SetPoolCreationFeeByAdmin(0)
-		CreatePool(barPath, bazPath, fee100, "79228162514264337593543950336")
+		SetPoolCreationFeeByAdmin(nil, 0)
+		CreatePool(nil, barPath, bazPath, fee100, "79228162514264337593543950336")
 	}()
 
 	tests := []struct {

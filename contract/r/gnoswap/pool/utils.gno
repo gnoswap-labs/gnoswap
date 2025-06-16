@@ -211,7 +211,7 @@ func assertOnlyNotHalted() {
 			panic(err.Error())
 		}
 
-		if halt.IsContractHalted(halt.OpTypePool) {
+		if halt.IsContractHalted(nil, halt.OpTypePool) {
 			panic("pool contract operations are currently disabled")
 		}
 	}

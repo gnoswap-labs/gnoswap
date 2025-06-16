@@ -31,7 +31,7 @@ func TestMint(t *testing.T) {
 			}
 		}()
 
-		Mint(token0Path, token1Path, fee, recipient, tickLower, tickUpper, liquidityAmount, unauthorized)
+		Mint(nil, token0Path, token1Path, fee, recipient, tickLower, tickUpper, liquidityAmount, unauthorized)
 	})
 
 	t.Run("mint with 0 liquidity should fail", func(t *testing.T) {
@@ -41,7 +41,7 @@ func TestMint(t *testing.T) {
 			}
 		}()
 
-		Mint(token0Path, token1Path, fee, recipient, tickLower, tickUpper, "0", authorized)
+		Mint(nil, token0Path, token1Path, fee, recipient, tickLower, tickUpper, "0", authorized)
 	})
 
 	t.Run("invalid tick range should fail", func(t *testing.T) {
@@ -50,7 +50,7 @@ func TestMint(t *testing.T) {
 				t.Error("invalid tick range should fail")
 			}
 		}()
-		Mint(token0Path, token1Path, fee, recipient, 100, 100, liquidityAmount, authorized)
+		Mint(nil, token0Path, token1Path, fee, recipient, 100, 100, liquidityAmount, authorized)
 	})
 
 	t.Run("invalid fee amount should fail", func(t *testing.T) {
@@ -59,7 +59,7 @@ func TestMint(t *testing.T) {
 				t.Error("invalid fee amount should fail")
 			}
 		}()
-		Mint(token0Path, token1Path, 2000, recipient, -100, 100, liquidityAmount, authorized)
+		Mint(nil, token0Path, token1Path, 2000, recipient, -100, 100, liquidityAmount, authorized)
 	})
 
 	t.Run("non-existent pool should fail", func(t *testing.T) {
@@ -68,55 +68,55 @@ func TestMint(t *testing.T) {
 				t.Error("non-existent pool should fail")
 			}
 		}()
-		Mint("nonexistent_token0", "nonexistent_token1", fee, recipient, -100, 100, liquidityAmount, authorized)
+		Mint(nil, "nonexistent_token0", "nonexistent_token1", fee, recipient, -100, 100, liquidityAmount, authorized)
 	})
 
-// 	t.Run("successful mint", func(t *testing.T) {
-// 		// create pool first
-// 		testing.SetRealm(adminRealm)
-// 		func() {
-// 			testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
-// 			SetPoolCreationFeeByAdmin(0)
-// 			CreatePool(
-// 				barTokenPath,
-// 				bazTokenPath,
-// 				FeeTier100,
-// 				"79228162514264337593543950336",
-// 			)
-// 		}()
+	// 	t.Run("successful mint", func(t *testing.T) {
+	// 		// create pool first
+	// 		testing.SetRealm(adminRealm)
+	// 		func() {
+	// 			testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
+	// 			SetPoolCreationFeeByAdmin(0)
+	// 			CreatePool(
+	// 				barTokenPath,
+	// 				bazTokenPath,
+	// 				FeeTier100,
+	// 				"79228162514264337593543950336",
+	// 			)
+	// 		}()
 
-// 		// approve enough token to mint position
-// 		func() {
-// 			testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
-// 			bar.Approve(poolAddr, maxApprove)
-// 			baz.Approve(poolAddr, maxApprove)
-// 		}()
+	// 		// approve enough token to mint position
+	// 		func() {
+	// 			testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
+	// 			bar.Approve(poolAddr, maxApprove)
+	// 			baz.Approve(poolAddr, maxApprove)
+	// 		}()
 
-// 		beforeBalance0 := bar.BalanceOf(poolAddr)
-// 		beforeBalance1 := baz.BalanceOf(poolAddr)
+	// 		beforeBalance0 := bar.BalanceOf(poolAddr)
+	// 		beforeBalance1 := baz.BalanceOf(poolAddr)
 
-// 		testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
-// 		func() {
-// 			testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
-// 			mintAmount0, mintAmount1 := Mint(
-// 				barTokenPath,
-// 				bazTokenPath,
-// 				FeeTier100,
-// 				positionAddr,
-// 				int32(-100),
-// 				int32(100),
-// 				"10000000000",
-// 				adminAddr,
-// 			)
-// 			uassert.Equal(t, mintAmount0, "49872721")
-// 			uassert.Equal(t, mintAmount1, "49872721")
-// 		}()
+	// 		testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
+	// 		func() {
+	// 			testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
+	// 			mintAmount0, mintAmount1 := Mint(
+	// 				barTokenPath,
+	// 				bazTokenPath,
+	// 				FeeTier100,
+	// 				positionAddr,
+	// 				int32(-100),
+	// 				int32(100),
+	// 				"10000000000",
+	// 				adminAddr,
+	// 			)
+	// 			uassert.Equal(t, mintAmount0, "49872721")
+	// 			uassert.Equal(t, mintAmount1, "49872721")
+	// 		}()
 
-// 		afterBalance0 := bar.BalanceOf(poolAddr)
-// 		afterBalance1 := baz.BalanceOf(poolAddr)
-// 		uassert.Equal(t, int64(49872721), afterBalance0-beforeBalance0)
-// 		uassert.Equal(t, int64(49872721), afterBalance1-beforeBalance1)
-// 	})
+	//		afterBalance0 := bar.BalanceOf(poolAddr)
+	//		afterBalance1 := baz.BalanceOf(poolAddr)
+	//		uassert.Equal(t, int64(49872721), afterBalance0-beforeBalance0)
+	//		uassert.Equal(t, int64(49872721), afterBalance1-beforeBalance1)
+	//	})
 }
 
 func TestBurn(t *testing.T) {
@@ -206,7 +206,7 @@ func TestBurn(t *testing.T) {
 					if amount1 != tt.expectedAmount1 {
 						t.Errorf("expected amount1 %s, got %s", tt.expectedAmount1, amount1)
 					}
-	
+
 					pool := GetPool(barTokenPath, bazTokenPath, FeeTier100)
 					posKey := getPositionKey(positionAddr, tt.tickLower, tt.tickUpper)
 					newPosition := pool.mustGetPosition(posKey)

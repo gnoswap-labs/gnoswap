@@ -291,8 +291,7 @@ func newPool(poolInfo *poolCreateConfig) *Pool {
 
 var tickCrossHook func(poolPath string, tickId int32, zeroForOne bool)
 
-func SetTickCrossHook(hook func(poolPath string, tickId int32, zeroForOne bool)) {
-	crossing()
+func SetTickCrossHook(cur realm, hook func(poolPath string, tickId int32, zeroForOne bool)) {
 	if tickCrossHook != nil {
 		panic("tickCrossHook already set")
 	}
