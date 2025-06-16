@@ -72,11 +72,11 @@ func CollectWithdrawalFee(cur realm,
 
 	token0Teller := common.GetTokenTeller(token0Path)
 	checkTransferError(token0Teller.TransferFrom(positionCaller, protocolFeeAddr, feeAmount0.Int64()))
-	pf.AddToProtocolFee(cur, token0Path, feeAmount0.Uint64())
+	pf.AddToProtocolFee(cross, token0Path, feeAmount0.Uint64())
 
 	token1Teller := common.GetTokenTeller(token1Path)
 	checkTransferError(token1Teller.TransferFrom(positionCaller, protocolFeeAddr, feeAmount1.Int64()))
-	pf.AddToProtocolFee(cur, token1Path, feeAmount1.Uint64())
+	pf.AddToProtocolFee(cross, token1Path, feeAmount1.Uint64())
 
 	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(

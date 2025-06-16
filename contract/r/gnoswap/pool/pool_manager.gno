@@ -44,7 +44,7 @@ func CreatePool(
 ) {
 	assertOnlyNotHalted()
 	poolInfo := createPool(token0Path, token1Path, fee, sqrtPriceX96, GetFeeAmountTickSpacing(fee))
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 
 	poolPath := poolInfo.generatePoolPath()
 	// check whether the pool already exist
@@ -58,8 +58,8 @@ func CreatePool(
 	prevAddr, prevRealm := getPrevAsString()
 
 	if poolCreationFee > 0 {
-		gns.TransferFrom(cur, std.PreviousRealm().Address(), protocolFeeAddr, poolCreationFee)
-		pf.AddToProtocolFee(cur, consts.GNS_PATH, uint64(poolCreationFee))
+		gns.TransferFrom(cross, std.PreviousRealm().Address(), protocolFeeAddr, poolCreationFee)
+		pf.AddToProtocolFee(cross, consts.GNS_PATH, uint64(poolCreationFee))
 
 		std.Emit(
 			"PoolCreationFee",

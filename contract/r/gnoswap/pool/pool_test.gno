@@ -31,7 +31,7 @@ func TestMint(t *testing.T) {
 			}
 		}()
 
-		Mint(nil, token0Path, token1Path, fee, recipient, tickLower, tickUpper, liquidityAmount, unauthorized)
+		Mint(cross, token0Path, token1Path, fee, recipient, tickLower, tickUpper, liquidityAmount, unauthorized)
 	})
 
 	t.Run("mint with 0 liquidity should fail", func(t *testing.T) {
@@ -41,7 +41,7 @@ func TestMint(t *testing.T) {
 			}
 		}()
 
-		Mint(nil, token0Path, token1Path, fee, recipient, tickLower, tickUpper, "0", authorized)
+		Mint(cross, token0Path, token1Path, fee, recipient, tickLower, tickUpper, "0", authorized)
 	})
 
 	t.Run("invalid tick range should fail", func(t *testing.T) {
@@ -50,7 +50,7 @@ func TestMint(t *testing.T) {
 				t.Error("invalid tick range should fail")
 			}
 		}()
-		Mint(nil, token0Path, token1Path, fee, recipient, 100, 100, liquidityAmount, authorized)
+		Mint(cross, token0Path, token1Path, fee, recipient, 100, 100, liquidityAmount, authorized)
 	})
 
 	t.Run("invalid fee amount should fail", func(t *testing.T) {
@@ -59,7 +59,7 @@ func TestMint(t *testing.T) {
 				t.Error("invalid fee amount should fail")
 			}
 		}()
-		Mint(nil, token0Path, token1Path, 2000, recipient, -100, 100, liquidityAmount, authorized)
+		Mint(cross, token0Path, token1Path, 2000, recipient, -100, 100, liquidityAmount, authorized)
 	})
 
 	t.Run("non-existent pool should fail", func(t *testing.T) {
@@ -68,7 +68,7 @@ func TestMint(t *testing.T) {
 				t.Error("non-existent pool should fail")
 			}
 		}()
-		Mint(nil, "nonexistent_token0", "nonexistent_token1", fee, recipient, -100, 100, liquidityAmount, authorized)
+		Mint(cross, "nonexistent_token0", "nonexistent_token1", fee, recipient, -100, 100, liquidityAmount, authorized)
 	})
 
 	// 	t.Run("successful mint", func(t *testing.T) {

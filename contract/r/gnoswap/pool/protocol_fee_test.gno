@@ -27,7 +27,7 @@ func TestSetPoolCreationFee(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetPoolCreationFee(nil, newFee)
+					SetPoolCreationFee(cross, newFee)
 				}()
 			},
 			verify: nil,
@@ -44,7 +44,7 @@ func TestSetPoolCreationFee(t *testing.T) {
 				// testing.SetRealm(govRealm)
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetPoolCreationFee(nil, newFee)
+					SetPoolCreationFee(cross, newFee)
 				}()
 			},
 			verify: func() string {
@@ -100,7 +100,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 				testing.SetRealm(govRealm)
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetPoolCreationFeeByAdmin(nil, newFee)
+					SetPoolCreationFeeByAdmin(cross, newFee)
 				}()
 			},
 			verify:      nil,
@@ -114,7 +114,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 				testing.SetRealm(std.NewUserRealm(alice))
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetPoolCreationFeeByAdmin(nil, newFee)
+					SetPoolCreationFeeByAdmin(cross, newFee)
 				}()
 			},
 			verify:      nil,
@@ -128,7 +128,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetPoolCreationFeeByAdmin(nil, newFee)
+					SetPoolCreationFeeByAdmin(cross, newFee)
 				}()
 			},
 			verify: func() string {
@@ -144,7 +144,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetPoolCreationFeeByAdmin(nil, newFee)
+					SetPoolCreationFeeByAdmin(cross, newFee)
 				}()
 			},
 			verify: func() string {
@@ -321,7 +321,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 				testing.SetRealm(userRealm)
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetWithdrawalFee(nil, newFee)
+					SetWithdrawalFee(cross, newFee)
 				}()
 			},
 			verify:      nil,
@@ -336,7 +336,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetWithdrawalFee(nil, newFee)
+					SetWithdrawalFee(cross, newFee)
 				}()
 			},
 			verify:      nil,
@@ -351,7 +351,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 				testing.SetRealm(govRealm)
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetWithdrawalFee(nil, newFee)
+					SetWithdrawalFee(cross, newFee)
 				}()
 			},
 			verify: func(t *testing.T) string {
@@ -416,7 +416,7 @@ func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 				testing.SetRealm(userRealm)
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetWithdrawalFeeByAdmin(nil, newFee)
+					SetWithdrawalFeeByAdmin(cross, newFee)
 				}()
 			},
 			verify:      nil,
@@ -431,7 +431,7 @@ func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 				testing.SetRealm(govRealm)
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetWithdrawalFeeByAdmin(nil, newFee)
+					SetWithdrawalFeeByAdmin(cross, newFee)
 				}()
 			},
 			verify:      nil,
@@ -446,7 +446,7 @@ func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				func() {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetWithdrawalFeeByAdmin(nil, newFee)
+					SetWithdrawalFeeByAdmin(cross, newFee)
 				}()
 			},
 			verify: func(t *testing.T) string {
