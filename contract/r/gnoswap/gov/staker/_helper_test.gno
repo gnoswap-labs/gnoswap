@@ -110,7 +110,7 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 	wugnotAddr := consts.WUGNOT_ADDR
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
-	cross(wugnot.Deposit)()
+	wugnot.Deposit(cross)
 }
 
 func unmarshal(data string) *json.Node {

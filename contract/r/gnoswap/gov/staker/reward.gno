@@ -30,7 +30,7 @@ var (
 // Need to clear the distributed GNS to gov/staker in emission to get the latest accumulated GNS balance
 func collectAndGetGNSBalance(cur realm) uint64 {
 	gotGnsForEmission := en.GetDistributedToGovStaker()
-	en.ClearDistributedToGovStaker(cur)
+	en.ClearDistributedToGovStaker(cross)
 
 	currentGNSBalance += uint64(gotGnsForEmission)
 
@@ -40,7 +40,7 @@ func collectAndGetGNSBalance(cur realm) uint64 {
 // updateAndGetProtocolFeeBalance gets the accumulated protocol fee balance from protocol_fee to gov/staker
 // Need to clear the accumulated protocol fee to gov/staker in protocol fee to get the latest accumulated protocol fee balance
 func updateAndGetProtocolFeeBalance(cur realm) map[string]uint64 {
-	pf.DistributeProtocolFee(cur)
+	pf.DistributeProtocolFee(cross)
 	gotAccuProtocolFee := pf.GetAccuTransferToGovStaker()
 
 	gotAccuProtocolFee.Iterate("", "", func(key string, value any) bool {
@@ -49,7 +49,7 @@ func updateAndGetProtocolFeeBalance(cur realm) map[string]uint64 {
 		return false
 	})
 
-	pf.ClearAccuTransferToGovStaker(cur)
+	pf.ClearAccuTransferToGovStaker(cross)
 
 	return currentProtocolFeeBalance
 }
@@ -373,7 +373,7 @@ func (self *RewardState) removeStake(
 
 // GetRewardByProjectWallet returns the amount of reward for the project wallet
 func GetRewardByProjectWallet(addr std.Address) (uint64, map[string]uint64) {
-	rewardState.finalize(collectAndGetGNSBalance(nil), updateAndGetProtocolFeeBalance(nil))
+	rewardState.finalize(collectAndGetGNSBalance(cross), updateAndGetProtocolFeeBalance(cross))
 	emissionReward, protocolFeeRewards := rewardState.CalculateReward(addr)
 	return emissionReward, protocolFeeRewards
 }
