@@ -1,0 +1,3 @@
+module gno.land/r/onbloc/foo
+
+gno 0.9

@@ -1,0 +1,3 @@
+module gno.land/r/onbloc/baz
+
+gno 0.9

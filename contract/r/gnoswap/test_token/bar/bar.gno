@@ -18,7 +18,7 @@ var (
 
 func init() {
 	privateLedger.Mint(owner.Owner(), 100_000_000_000_000)
-	grc20reg.Register(cross, token, "")
+	grc20reg.Register(nil, token, "")
 }
 
 func TotalSupply(cur realm) int64 {

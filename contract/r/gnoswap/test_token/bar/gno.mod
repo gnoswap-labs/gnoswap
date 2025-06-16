@@ -1,0 +1,3 @@
+module gno.land/r/onbloc/bar
+
+gno 0.9

@@ -1,0 +1,3 @@
+module gno.land/r/onbloc/obl
+
+gno 0.9

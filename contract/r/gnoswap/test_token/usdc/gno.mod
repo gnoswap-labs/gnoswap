@@ -1,0 +1,3 @@
+module gno.land/r/onbloc/usdc
+
+gno 0.9
