@@ -17,11 +17,11 @@ import (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
 	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
-	adminRealm   = std.NewUserRealm(adminAddr)
-	adminUser    = adminAddr
-	dummyRealm   = std.NewCodeRealm("gno.land/r/dummy")
+	adminRealm    = std.NewUserRealm(adminAddr)
+	adminUser     = adminAddr
+	dummyRealm    = std.NewCodeRealm("gno.land/r/dummy")
 )
 
 // func TestDistributeProtocolFee(t *testing.T) {
