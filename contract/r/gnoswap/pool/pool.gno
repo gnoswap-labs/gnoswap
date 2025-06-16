@@ -103,6 +103,7 @@ func Mint(cur realm,
 //
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#burn
 func Burn(
+	cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,

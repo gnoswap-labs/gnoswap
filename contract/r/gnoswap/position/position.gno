@@ -72,7 +72,6 @@ const (
 //
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#mint
 func Mint(
-	cur realm,
 	token0 string,
 	token1 string,
 	fee uint32,
@@ -97,7 +96,7 @@ func Mint(
 	}
 	checkDeadline(deadline)
 
-	referral.TryRegister(cur, caller, referrer)
+	referral.TryRegister(cross, caller, referrer)
 
 	mintAndDistributeGnsCallback()
 
@@ -124,7 +123,7 @@ func Mint(
 	mintParams := newMintParams(processedInput, mintInput)
 
 	// mint liquidity
-	id, liquidity, amount0, amount1 := mint(cur, mintParams)
+	id, liquidity, amount0, amount1 := mint(mintParams)
 
 	// refund leftover wrapped tokens
 	if processedInput.tokenPair.token0IsNative && processedInput.tokenPair.wrappedAmount > amount0.Int64() {
@@ -166,7 +165,7 @@ func Mint(
 // IncreaseLiquidity increases liquidity of the existing position
 // Returns position ID, liquidity, amount0, amount1, poolPath
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#increaseliquidity
-func IncreaseLiquidity(cur realm,
+func IncreaseLiquidity(
 	positionId uint64,
 	amount0DesiredStr string,
 	amount1DesiredStr string,
@@ -208,7 +207,7 @@ func IncreaseLiquidity(cur realm,
 		deadline:       deadline,
 	}
 
-	_, liquidity, amount0, amount1, poolPath := increaseLiquidity(cur, increaseLiquidityParams)
+	_, liquidity, amount0, amount1, poolPath := increaseLiquidity(increaseLiquidityParams)
 
 	amount0Int64 := amount0.Int64()
 	amount1Int64 := amount1.Int64()
@@ -252,7 +251,7 @@ func IncreaseLiquidity(cur realm,
 // It also handles the conversion between GNOT and WUGNOT transparently for the user.
 // Returns position ID, liquidity, fee0, fee1, amount0, amount1, poolPath
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#decreaseliquidity
-func DecreaseLiquidity(cur realm,
+func DecreaseLiquidity(
 	positionId uint64,
 	liquidityStr string,
 	amount0MinStr string,
@@ -278,7 +277,7 @@ func DecreaseLiquidity(cur realm,
 		unwrapResult: unwrapResult,
 	}
 
-	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(cur, decreaseLiquidityParams)
+	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
 
 	prevAddr, prevPkgPath := getPrevAsString()
 
@@ -306,7 +305,7 @@ func DecreaseLiquidity(cur realm,
 // CollectFee collects swap fee from the position
 // Returns position ID, afterFee0, afterFee1, poolPath, origFee0, origFee1
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#collectfee
-func CollectFee(cur realm, postionId uint64, unwrapResult bool) (uint64, string, string, string, string, string) {
+func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, string, string, string) {
 	assertOnlyNotHalted()
 	assertTokenExists(postionId)
 	isAuthorizedForToken(postionId)
@@ -317,6 +316,7 @@ func CollectFee(cur realm, postionId uint64, unwrapResult bool) (uint64, string,
 	token0, token1, fee := splitOf(position.poolKey)
 
 	pl.Burn(
+		cross,
 		token0,
 		token1,
 		fee,
@@ -342,7 +342,7 @@ func CollectFee(cur realm, postionId uint64, unwrapResult bool) (uint64, string,
 
 	// collect fee
 	amount0, amount1 := pl.Collect(
-		nil,
+		cross,
 		token0, token1, fee,
 		caller,
 		position.tickLower, position.tickUpper,
@@ -357,7 +357,7 @@ func CollectFee(cur realm, postionId uint64, unwrapResult bool) (uint64, string,
 
 	// handle withdrawal fee
 	withoutFee0, withoutFee1 := pl.CollectWithdrawalFee(
-		cur,
+		cross,
 		postionId,
 		token0,
 		amount0,
@@ -387,7 +387,7 @@ func CollectFee(cur realm, postionId uint64, unwrapResult bool) (uint64, string,
 	return postionId, withoutFee0, withoutFee1, position.poolKey, amount0, amount1
 }
 
-func SetPositionOperator(cur realm, id uint64, operator std.Address) {
+func SetPositionOperator(id uint64, operator std.Address) {
 	caller := getPrevRealm().PkgPath()
 	if caller != consts.STAKER_PATH {
 		panic(newErrorWithDetail(

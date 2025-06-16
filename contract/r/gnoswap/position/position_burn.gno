@@ -14,11 +14,11 @@ import (
 // If unwrapResult is true and the position involves WUGNOT, any leftover WUGNOT will be
 // unwrapped to GNOT at the end of the operation.
 // Returns position ID, liquidity, fee0, fee1, amount0, amount1, poolPath
-func decreaseLiquidity(cur realm, params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string) {
+func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string) {
 	verifyTokenIdAndOwnership(params.positionId)
 
 	// BEFORE DECREASE LIQUIDITY, COLLECT FEE FIRST
-	_, fee0Str, fee1Str, _, _, _ := CollectFee(cur, params.positionId, params.unwrapResult)
+	_, fee0Str, fee1Str, _, _, _ := CollectFee(params.positionId, params.unwrapResult)
 	fee0 := u256.MustFromDecimal(fee0Str)
 	fee1 := u256.MustFromDecimal(fee1Str)
 
@@ -43,7 +43,7 @@ func decreaseLiquidity(cur realm, params DecreaseLiquidityParams) (uint64, *u256
 	beforeWugnotBalance := wugnot.BalanceOf(caller) // before unwrap
 
 	pToken0, pToken1, pFee := splitOf(position.poolKey)
-	burn0, burn1 := pl.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, liquidityToRemove.ToString())
+	burn0, burn1 := pl.Burn(cross, pToken0, pToken1, pFee, position.tickLower, position.tickUpper, liquidityToRemove.ToString())
 
 	burnedAmount0 := u256.MustFromDecimal(burn0)
 	burnedAmount1 := u256.MustFromDecimal(burn1)
@@ -90,7 +90,7 @@ func decreaseLiquidity(cur realm, params DecreaseLiquidityParams) (uint64, *u256
 	mustUpdatePosition(params.positionId, position)
 
 	collect0, collect1 := pl.Collect(
-		nil,
+		cross,
 		pToken0,
 		pToken1,
 		pFee,

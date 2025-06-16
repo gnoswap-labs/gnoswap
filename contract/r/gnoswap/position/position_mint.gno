@@ -42,10 +42,9 @@ import (
 //   - This function relies on `addLiquidity` to perform the liquidity calculation and ensure proper slippage checks.
 //   - The NFT minted is critical for tracking the user's liquidity in the pool.
 //   - Position state management is handled by `setPosition`, ensuring the uniqueness of the position ID.
-func mint(cur realm, params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
+func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	poolKey := pl.GetPoolPath(params.token0, params.token1, params.fee)
 	liquidity, amount0, amount1 := addLiquidity(
-		cur,
 		AddLiquidityParams{
 			poolKey:        poolKey,
 			tickLower:      params.tickLower,
@@ -73,7 +72,7 @@ func mint(cur realm, params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.U
 		))
 	}
 
-	gnft.Mint(cur, params.mintTo, positionIdFrom(id)) // owner, position ID
+	gnft.Mint(cross, params.mintTo, positionIdFrom(id)) // owner, position ID
 
 	pool := pl.GetPoolFromPoolPath(poolKey)
 	positionKey := computePositionKey(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
@@ -255,7 +254,7 @@ func processTokens(
 	return token0, token1, token0IsNative, token1IsNative, wrappedAmount
 }
 
-func increaseLiquidity(cur realm, params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, string) {
+func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, string) {
 	// verify position ID exists
 	assertTokenExists(params.positionId)
 	caller := getPrevAddr()
@@ -263,7 +262,6 @@ func increaseLiquidity(cur realm, params IncreaseLiquidityParams) (uint64, *u256
 
 	position := MustGetPosition(params.positionId)
 	liquidity, amount0, amount1 := addLiquidity(
-		cur,
 		AddLiquidityParams{
 			poolKey:        position.poolKey,
 			tickLower:      position.tickLower,

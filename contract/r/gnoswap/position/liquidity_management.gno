@@ -71,7 +71,7 @@ type AddLiquidityParams struct {
 //	  amount1Min:    u256.MustFromDecimal("1900000000"),
 //	  caller:        userAddress,
 //	})
-func addLiquidity(cur realm, params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint) {
+func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint) {
 	pool := pl.GetPoolFromPoolPath(params.poolKey)
 
 	sqrtPriceX96 := new(u256.Uint).Set(pool.Slot0SqrtPriceX96())
@@ -88,7 +88,7 @@ func addLiquidity(cur realm, params AddLiquidityParams) (*u256.Uint, *u256.Uint,
 
 	token0, token1, fee := splitOf(params.poolKey)
 	amount0Str, amount1Str := pl.Mint(
-		cur,
+		cross,
 		token0,
 		token1,
 		fee,

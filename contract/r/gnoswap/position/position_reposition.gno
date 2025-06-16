@@ -18,7 +18,7 @@ import (
 //
 // Returns Position ID, liquidity, tickLower, tickUpper, amount0, amount1
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#reposition
-func Reposition(cur realm,
+func Reposition(
 	positionId uint64,
 	tickLower int32,
 	tickUpper int32,
@@ -54,7 +54,6 @@ func Reposition(cur realm,
 	token0, token1, _, _, _ = processTokens(token0, token1, amount0DesiredStr, amount1DesiredStr, caller)
 
 	liquidity, amount0, amount1 := addLiquidity(
-		cur,
 		AddLiquidityParams{
 			poolKey:        position.poolKey,
 			tickLower:      tickLower,
