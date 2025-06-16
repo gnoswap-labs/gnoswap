@@ -34,8 +34,8 @@ func TestMultiSwap(t *testing.T) {
 				MakeMintPositionWithoutFee(t)
 
 				testing.SetRealm(user1Realm)
-				bar.Approve(nil, routerAddr, maxApprove)
-				baz.Approve(nil, routerAddr, maxApprove)
+				bar.Approve(cross, routerAddr, maxApprove)
+				baz.Approve(cross, routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{
@@ -65,9 +65,9 @@ func TestMultiSwap(t *testing.T) {
 				MakeSecondMintPositionWithoutFee(t)
 
 				testing.SetRealm(user1Realm)
-				bar.Approve(nil, routerAddr, maxApprove)
-				baz.Approve(nil, routerAddr, maxApprove)
-				qux.Approve(nil, routerAddr, maxApprove)
+				bar.Approve(cross, routerAddr, maxApprove)
+				baz.Approve(cross, routerAddr, maxApprove)
+				qux.Approve(cross, routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{
@@ -95,9 +95,9 @@ func TestMultiSwap(t *testing.T) {
 				MakeSecondMintPositionWithoutFee(t)
 
 				testing.SetRealm(user1Realm)
-				bar.Approve(nil, routerAddr, maxApprove)
-				baz.Approve(nil, routerAddr, maxApprove)
-				qux.Approve(nil, routerAddr, maxApprove)
+				bar.Approve(cross, routerAddr, maxApprove)
+				baz.Approve(cross, routerAddr, maxApprove)
+				qux.Approve(cross, routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{

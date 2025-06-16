@@ -168,93 +168,93 @@ func CreatePool(t *testing.T,
 	testing.SetRealm(std.NewUserRealm(caller))
 	poolPath := pl.GetPoolPath(token0, token1, fee)
 	if !pl.DoesPoolPathExist(poolPath) {
-		pl.CreatePool(nil, token0, token1, fee, sqrtPriceX96)
-		sr.SetPoolTierByAdmin(nil, poolPath, TIER_1)
+		pl.CreatePool(cross, token0, token1, fee, sqrtPriceX96)
+		sr.SetPoolTierByAdmin(cross, poolPath, TIER_1)
 	}
 }
 
 func wugnotApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	wugnot.Approve(spender, amount)
+	wugnot.Approve(cross, spender, amount)
 }
 
 func gnsApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	gns.Approve(nil, spender, amount)
+	gns.Approve(cross, spender, amount)
 }
 
 func barApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	bar.Approve(nil, spender, amount)
+	bar.Approve(cross, spender, amount)
 }
 
 func bazApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	baz.Approve(nil, spender, amount)
+	baz.Approve(cross, spender, amount)
 }
 
 func fooApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	foo.Approve(nil, spender, amount)
+	foo.Approve(cross, spender, amount)
 }
 
 func oblApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	obl.Approve(nil, spender, amount)
+	obl.Approve(cross, spender, amount)
 }
 
 func quxApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	qux.Approve(nil, spender, amount)
+	qux.Approve(cross, spender, amount)
 }
 
 func wugnotTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(admin))
-	wugnot.Transfer(to, amount)
+	wugnot.Transfer(cross, to, amount)
 }
 
 func gnsTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(admin))
-	gns.Transfer(nil, to, amount)
+	gns.Transfer(cross, to, amount)
 }
 
 func barTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(admin))
-	bar.Transfer(nil, to, amount)
+	bar.Transfer(cross, to, amount)
 }
 
 func bazTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(admin))
-	baz.Transfer(nil, to, amount)
+	baz.Transfer(cross, to, amount)
 }
 
 func fooTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(admin))
-	foo.Transfer(nil, to, amount)
+	foo.Transfer(cross, to, amount)
 }
 
 func oblTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(admin))
-	obl.Transfer(nil, to, amount)
+	obl.Transfer(cross, to, amount)
 }
 
 func quxTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(admin))
-	qux.Transfer(nil, to, amount)
+	qux.Transfer(cross, to, amount)
 }
 
 // ----------------------------------------------------------------------------
@@ -313,13 +313,13 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 	wugnotAddr := consts.WUGNOT_ADDR
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
-	wugnot.Deposit()
+	wugnot.Deposit(cross)
 }
 
 func CreatePoolWithoutFee(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	// set pool create fee to 0 for testing
-	pl.SetPoolCreationFeeByAdmin(nil, 0)
+	pl.SetPoolCreationFeeByAdmin(cross, 0)
 	CreatePool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
 	CreatePool(t, bazPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
 	CreatePool(t, barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
@@ -328,7 +328,7 @@ func CreatePoolWithoutFee(t *testing.T) {
 
 func CreateSecondPoolWithoutFee(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFeeByAdmin(nil, 0)
+	pl.SetPoolCreationFeeByAdmin(cross, 0)
 
 	CreatePool(t,
 		bazPath,
@@ -350,7 +350,6 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 
 	// mint position
 	return pn.Mint(
-		nil,
 		barPath,
 		bazPath,
 		fee3000,
@@ -375,7 +374,7 @@ func MakeSecondMintPositionWithoutFee(t *testing.T) (uint64, string, string, str
 	TokenApprove(t, bazPath, admin, poolAddr, maxApprove)
 	TokenApprove(t, quxPath, admin, poolAddr, maxApprove)
 
-	return pn.Mint(nil,
+	return pn.Mint(
 		bazPath,
 		quxPath,
 		fee3000,
@@ -400,7 +399,7 @@ func MakeThirdMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 	TokenApprove(t, barPath, admin, poolAddr, maxApprove)
 	TokenApprove(t, fooPath, admin, poolAddr, maxApprove)
 
-	return pn.Mint(nil,
+	return pn.Mint(
 		barPath,
 		fooPath,
 		fee500,
@@ -427,7 +426,7 @@ func MakeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 	TokenApprove(t, bazPath, admin, poolAddr, maxApprove)
 
 	// mint position
-	return pn.Mint(nil,
+	return pn.Mint(
 		barPath,
 		bazPath,
 		fee500,

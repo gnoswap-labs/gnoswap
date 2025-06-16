@@ -81,7 +81,7 @@ func ExactInSwapRoute(cur realm,
 	)
 
 	prevAddr, prevPkgPath := getPrev()
-	success := referral.TryRegister(nil, std.Address(prevAddr), referrer)
+	success := referral.TryRegister(cross, std.Address(prevAddr), referrer)
 
 	// get the actual referral address that was used
 	actualReferrer := referrer

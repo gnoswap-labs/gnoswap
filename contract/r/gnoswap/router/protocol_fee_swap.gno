@@ -113,7 +113,7 @@ func handleSwapFee(
 
 	outputTeller := common.GetTokenTeller(outputToken)
 	outputTeller.TransferFrom(std.PreviousRealm().Address(), protocolFeeAddr, feeAmountInt64)
-	pf.AddToProtocolFee(nil, outputToken, uint64(feeAmountInt64))
+	pf.AddToProtocolFee(cross, outputToken, uint64(feeAmountInt64))
 
 	prevAddr, prevPkgPath := getPrev()
 

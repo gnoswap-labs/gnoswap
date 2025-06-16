@@ -73,7 +73,7 @@ func ExactOutSwapRoute(cur realm,
 	)
 
 	prevAddr, prevPkgPath := getPrev()
-	success := referral.TryRegister(nil, std.Address(prevAddr), referrer)
+	success := referral.TryRegister(cross, std.Address(prevAddr), referrer)
 	actualReferrer := referrer
 	if !success {
 		actualReferrer = referral.GetReferral(prevAddr)
