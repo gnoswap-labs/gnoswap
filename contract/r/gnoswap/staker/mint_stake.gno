@@ -47,7 +47,7 @@ func MintAndStake(cur realm,
 		banker.SendCoins(stakerAddr, positionAddr, std.Coins{{Denom: "ugnot", Amount: ugnotSent}})
 	}
 
-	positionId, liquidity, amount0, amount1 := pn.Mint(nil,
+	positionId, liquidity, amount0, amount1 := pn.Mint(
 		token0,
 		token1,
 		fee,
@@ -65,7 +65,7 @@ func MintAndStake(cur realm,
 
 	// at this point, staker has minted token
 	toTid := grc721.TokenID(ufmt.Sprintf("%d", positionId))
-	gnft.SetTokenURIByImageURI(nil, toTid)
+	gnft.SetTokenURIByImageURI(cross, toTid)
 
 	poolPath, _, _ := StakeToken(cur, positionId, "") // poolPath, stakedAmount0, stakedAmount1
 

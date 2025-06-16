@@ -48,7 +48,7 @@ func CreateExternalIncentive(cur realm,
 		))
 	}
 
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 
 	// check token can be used as reward
 	if err := isAllowedForExternalReward(targetPoolPath, rewardToken); err != nil {
@@ -123,7 +123,7 @@ func CreateExternalIncentive(cur realm,
 	externalIncentives.set(incentiveId, incentive)
 
 	// deposit gns amount
-	gns.TransferFrom(nil, caller, stakerAddr, depositGnsAmount)
+	gns.TransferFrom(cross, caller, stakerAddr, depositGnsAmount)
 
 	// transfer reward token from user to staker
 	teller := common.GetTokenTeller(rewardToken)
@@ -210,7 +210,7 @@ func EndExternalIncentive(cur realm, refundee std.Address, targetPoolPath, rewar
 	}
 
 	// also refund deposit gns amount
-	gns.Transfer(nil, ictv.refundee, int64(ictv.depositGnsAmount))
+	gns.Transfer(cross, ictv.refundee, int64(ictv.depositGnsAmount))
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(

@@ -194,7 +194,7 @@ func init() {
 }
 
 func registerCallbackStakerEmissionChange() {
-	en.RegisterGnsChangeCallback(nil)
+	en.RegisterGnsChangeCallback(cross)
 }
 
 // StakeToken stakes an LP token into the staker contract. It transfer the LP token
@@ -224,12 +224,12 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 	assertOnlyNotHalted()
 	assertOnlyNotStaked(positionId)
 
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := getPrevAddr()
 
-	success := referral.TryRegister(nil, caller, referrer)
+	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer
 	if !success {
 		actualReferrer = referral.GetReferral(caller.String())
@@ -279,7 +279,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 	}
 
 	// after transfer, set caller(user) as position operator (to collect fee and reward)
-	pn.SetPositionOperator(nil, positionId, caller)
+	pn.SetPositionOperator(positionId, caller)
 
 	signedLiquidity := i256.FromUint256(liquidity)
 	isInRange := false
@@ -383,7 +383,7 @@ func transferDeposit(positionId uint64, owner, caller, to std.Address) error {
 		)
 	}
 	// transfer NFT ownership
-	return gnft.TransferFrom(nil, owner, to, positionIdFrom(positionId))
+	return gnft.TransferFrom(cross, owner, to, positionIdFrom(positionId))
 }
 
 ////////////////////////////////////////////////////////////
@@ -418,7 +418,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		panic(addDetailToError(errNoPermission, ufmt.Sprintf("caller is not owner of positionId(%d)", positionId)))
 	}
 
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 
 	currentHeight := std.ChainHeight()
 	// get all internal and external rewards
@@ -487,18 +487,18 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 	if toUser > 0 {
 		// internal reward to user
 		totalEmissionSent = safeAddInt64(totalEmissionSent, toUser)
-		gns.Transfer(nil, deposit.owner, toUser)
+		gns.Transfer(cross, deposit.owner, toUser)
 
 		// internal penalty to community pool
 		totalEmissionSent = safeAddInt64(totalEmissionSent, reward.InternalPenalty)
-		gns.Transfer(nil, communityPoolAddr, int64(reward.InternalPenalty))
+		gns.Transfer(cross, communityPoolAddr, int64(reward.InternalPenalty))
 	}
 
 	unClaimableInternal := processUnClaimableReward(deposit.targetPoolPath, currentHeight)
 	if unClaimableInternal > 0 {
 		// internal unClaimable to community pool
 		totalEmissionSent = safeAddInt64(totalEmissionSent, unClaimableInternal)
-		gns.Transfer(nil, communityPoolAddr, int64(unClaimableInternal))
+		gns.Transfer(cross, communityPoolAddr, int64(unClaimableInternal))
 	}
 
 	std.Emit(
@@ -571,8 +571,8 @@ func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) (string, stri
 	applyUnStake(positionId)
 
 	// transfer NFT ownership to origin owner
-	gnft.TransferFrom(nil, stakerAddr, deposit.owner, positionIdFrom(positionId))
-	pn.SetPositionOperator(nil, positionId, consts.ZERO_ADDRESS)
+	gnft.TransferFrom(cross, stakerAddr, deposit.owner, positionIdFrom(positionId))
+	pn.SetPositionOperator(positionId, consts.ZERO_ADDRESS)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(

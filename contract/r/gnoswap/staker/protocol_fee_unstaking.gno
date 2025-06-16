@@ -49,11 +49,11 @@ func handleUnStakingFee(
 
 	if internal {
 		// staker contract has fee
-		gns.Transfer(nil, protocolFeeAddr, feeAmount)
+		gns.Transfer(cross, protocolFeeAddr, feeAmount)
 		if feeAmount < 0 {
 			panic("fee amount cannot be negative")
 		}
-		pf.AddToProtocolFee(nil, consts.GNS_PATH, uint64(feeAmount))
+		pf.AddToProtocolFee(cross, consts.GNS_PATH, uint64(feeAmount))
 
 		std.Emit(
 			"ProtocolFeeInternalReward",
@@ -71,7 +71,7 @@ func handleUnStakingFee(
 		if feeAmount < 0 {
 			panic("fee amount cannot be negative")
 		}
-		pf.AddToProtocolFee(nil, tokenPath, uint64(feeAmount))
+		pf.AddToProtocolFee(cross, tokenPath, uint64(feeAmount))
 
 		std.Emit(
 			"ProtocolFeeExternalReward",

@@ -35,7 +35,7 @@ func SetPoolTier(cur realm, poolPath string, tier uint64) {
 }
 
 func setPoolTier(cur realm, poolPath string, tier uint64) {
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 
 	currentHeight := std.ChainHeight()
 	pools.GetOrCreate(poolPath)
@@ -71,7 +71,7 @@ func ChangePoolTier(cur realm, poolPath string, tier uint64) {
 }
 
 func changePoolTier(cur realm, poolPath string, tier uint64) {
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 
 	prevTier := poolTier.CurrentTier(poolPath)
 	currentHeight := std.ChainHeight()
@@ -108,7 +108,7 @@ func RemovePoolTier(cur realm, poolPath string) {
 }
 
 func removePoolTier(cur realm, poolPath string) {
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 
 	currentHeight := std.ChainHeight()
 	poolTier.changeTier(currentHeight, pools, poolPath, NOT_EMISSION_TARGET_TIER)
@@ -140,7 +140,7 @@ func SetWarmUp(cur realm, pct, blockDuration int64) {
 }
 
 func setWarmUp(cur realm, pct, blockDuration int64) {
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 
 	modifyWarmup(pctToIndex(pct), blockDuration)
 
