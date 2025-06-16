@@ -76,10 +76,10 @@ func TestSetDevOpsPctByAdminNoPermission(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t, `caller(g1v36k6mteta047h6lta047h6lta047h6lz7gmv8) has no permission`, func() {
-			func() {
+			func(cur realm) {
 				testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-				SetDevOpsPctByAdmin(123)
-			}()
+				SetDevOpsPctByAdmin(cur, 123)
+			}(cross)
 		},
 	)
 }
@@ -90,9 +90,9 @@ func TestSetDevOpsPctByAdminInvalidFee(t *testing.T) {
 	uassert.PanicsWithMessage(
 		t,
 		`[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(100001) should not be bigger than 10000`,
-		func() {
+		func(cur realm) {
 			testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-			SetDevOpsPctByAdmin(100001)
+			SetDevOpsPctByAdmin(cur, 100001)
 		},
 	)
 }
@@ -102,10 +102,10 @@ func TestSetDevOpsPctByAdmin(t *testing.T) {
 
 	uassert.Equal(t, GetDevOpsPct(), uint64(0))
 
-	func() {
+	func(cur realm) {
 		testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-		SetDevOpsPctByAdmin(123)
-	}()
+		SetDevOpsPctByAdmin(cur, 123)
+	}(cross)
 	uassert.Equal(t, GetDevOpsPct(), uint64(123))
 }
 
@@ -152,10 +152,10 @@ func TestAddToProtocolFee(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			testing.SetRealm(std.NewCodeRealm(consts.POOL_PATH))
-			func() {
+			func(cur realm) {
 				testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-				AddToProtocolFee(test.tokenPath, test.amount)
-			}()
+				AddToProtocolFee(cur, test.tokenPath, test.amount)
+			}(cross)
 
 			uassert.Equal(t, tokenListWithAmount[test.tokenPath], test.want)
 		})
@@ -194,16 +194,16 @@ func TestClearTokenListWithAmount(t *testing.T) {
 
 			if test.shouldPanic {
 				uassert.PanicsWithMessage(t, test.panicMsg, func() {
-					func() {
+					func(cur realm) {
 						testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-						ClearTokenListWithAmount()
-					}()
+						ClearTokenListWithAmount(cur)
+					}(cross)
 				})
 			} else {
-				func() {
+				func(cur realm) {
 					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					ClearTokenListWithAmount()
-				}()
+					ClearTokenListWithAmount(cur)
+				}(cross)
 				uassert.Equal(t, len(tokenListWithAmount), len(test.want))
 			}
 		})
@@ -243,17 +243,17 @@ func TestAssertOnlyPoolRouterStaker(t *testing.T) {
 
 			if test.shouldPanic {
 				uassert.PanicsWithMessage(t, test.panicMsg, func() {
-					func() {
+					func(cur realm) {
 						testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
 						assertOnlyPoolRouterStaker()
-					}()
+					}(cross)
 				})
 			} else {
 				uassert.NotPanics(t, func() {
-					func() {
+					func(cur realm) {
 						testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
 						assertOnlyPoolRouterStaker()
-					}()
+					}(cross)
 				})
 			}
 		})
