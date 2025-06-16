@@ -1,1 +1,3 @@
 module gno.land/r/gnoswap/v1/emission
+
+gno 0.9

@@ -36,9 +36,3 @@ func resetObject(t *testing.T) {
 	accuDistributedToCommunityPool = 0
 	accuDistributedToGovStaker = 0
 }
-
-func gnsBalance(t *testing.T, addr std.Address) int64 {
-	t.Helper()
-
-	return gns.BalanceOf(addr)
-}
