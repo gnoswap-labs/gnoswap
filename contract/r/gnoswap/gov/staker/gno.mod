@@ -1,1 +1,3 @@
 module gno.land/r/gnoswap/v1/gov/staker
+
+gno 0.9

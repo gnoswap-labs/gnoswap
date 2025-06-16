@@ -64,5 +64,6 @@ func GetDelegationAmountFromTo(from, to std.Address) uint64 {
 
 // GetRealmGnsBalance returns the amount of GNS in the current realm.
 func GetRealmGnsBalance() int64 {
-	return cross(gns.BalanceOf)(std.OriginCaller())
+	crossing()
+	return cross(gns.BalanceOf)(nil, std.OriginCaller())
 }
