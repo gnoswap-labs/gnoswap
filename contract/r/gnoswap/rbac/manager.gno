@@ -13,8 +13,7 @@ var globalManager = prbac.New()
 // RegisterRole globally registers a role with the given name.
 // Returns an error if the role already exists.
 // XXX seems not needed
-func RegisterRole(roleName string) error {
-	crossing()
+func RegisterRole(cur realm, roleName string) error {
 	if !callerIsOwner() {
 		return prbac.ErrUnauthorized
 	}
@@ -24,8 +23,7 @@ func RegisterRole(roleName string) error {
 // RegisterPermission globally registers a permission on a role.
 // If the role does not exist, an error is returned.
 // XXX seems not needed
-func RegisterPermission(roleName, permissionName string, checker prbac.PermissionChecker) error {
-	crossing()
+func RegisterPermission(cur realm, roleName, permissionName string, checker prbac.PermissionChecker) error {
 	if !callerIsOwner() {
 		return prbac.ErrUnauthorized
 	}
@@ -41,15 +39,13 @@ func CheckPermission(roleName, permissionName string, caller std.Address) error 
 
 // UpdatePermission globally updates the permission checker for a role's permission.
 // An error is returned if the role or permission does not exist.
-func UpdatePermission(roleName, permissionName string, newChecker prbac.PermissionChecker) error {
-	crossing()
+func UpdatePermission(cur realm, roleName, permissionName string, newChecker prbac.PermissionChecker) error {
 	return globalManager.UpdatePermission(roleName, permissionName, newChecker)
 }
 
 // RemovePermission globally removes a permission from a role.
 // An error is returned if the role or permission does not exist.
-func RemovePermission(roleName, permissionName string) error {
-	crossing()
+func RemovePermission(cur realm, roleName, permissionName string) error {
 	if !callerIsOwner() {
 		return prbac.ErrUnauthorized
 	}
@@ -58,16 +54,14 @@ func RemovePermission(roleName, permissionName string) error {
 
 // RemoveRole globally removes a role.
 // An error is returned if the role does not exist.
-func RemoveRole(roleName string) error {
-	crossing()
+func RemoveRole(cur realm, roleName string) error {
 	return globalManager.RemoveRole(roleName)
 }
 
 // DeclareRole globally declares a role using the Functional Option pattern.
 // This allows declarative registration of roles along with their permissions.
 // Returns an error if the role already exists.
-func DeclareRole(roleName string, opts ...prbac.RoleOption) error {
-	crossing()
+func DeclareRole(cur realm, roleName string, opts ...prbac.RoleOption) error {
 	return globalManager.DeclareRole(roleName, opts...)
 }
 
