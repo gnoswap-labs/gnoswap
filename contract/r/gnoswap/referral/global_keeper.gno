@@ -50,6 +50,7 @@ func IsEmpty() bool {
 
 // TryRegister attempts to register a new referral for an address.
 func TryRegister(addr std.Address, referral string) bool {
+	crossing()
 	refAddr := std.Address(referral)
 
 	r := NewReferral()

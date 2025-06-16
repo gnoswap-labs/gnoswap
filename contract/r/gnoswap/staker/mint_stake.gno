@@ -23,11 +23,13 @@ func MintAndStake(
 	tickUpper int32,
 	amount0Desired string, // *u256.Uint
 	amount1Desired string, // *u256.Uint
-	amount0Min string,     // *u256.Uint
-	amount1Min string,     // *u256.Uint
+	amount0Min string, // *u256.Uint
+	amount1Min string, // *u256.Uint
 	deadline int64,
 	referrer string,
 ) (uint64, string, string, string, string) {
+	crossing()
+
 	// if one click native
 	if token0 == consts.GNOT || token1 == consts.GNOT {
 		// check sent ugnot
@@ -65,7 +67,7 @@ func MintAndStake(
 
 	// at this point, staker has minted token
 	toTid := grc721.TokenID(ufmt.Sprintf("%d", positionId))
-	gnft.SetTokenURIByImageURI(toTid)
+	cross(gnft.SetTokenURIByImageURI)(toTid)
 
 	poolPath, _, _ := StakeToken(positionId, "") // poolPath, stakedAmount0, stakedAmount1
 

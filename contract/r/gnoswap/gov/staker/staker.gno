@@ -73,7 +73,7 @@ func Delegate(to std.Address, amount uint64, referrer string) {
 	// Transfer the caller's GNS to GovStaker
 	cross(gns.TransferFrom)(caller, std.OriginCaller(), int64(amount))
 
-	success := referral.TryRegister(caller, referrer)
+	success := cross(referral.TryRegister)(caller, referrer)
 	actualReferrer := referrer
 	if !success {
 		actualReferrer = referral.GetReferral(caller.String())
@@ -373,6 +373,7 @@ func CollectReward() {
 // Only launchpad contract can call this function
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#collectrewardfromlaunchpad
 func CollectRewardFromLaunchPad(to std.Address) {
+	crossing()
 	assertCallerIsLaunchpad()
 
 	currentLevel := halt.GetCurrentHaltLevel()

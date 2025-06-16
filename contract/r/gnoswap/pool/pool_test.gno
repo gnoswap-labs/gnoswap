@@ -8,7 +8,6 @@ import (
 	// "gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
 	// u256 "gno.land/p/gnoswap/uint256"
-
 	// "gno.land/r/demo/wugnot"
 	// "gno.land/r/gnoswap/v1/gns"
 	// pn "gno.land/r/gnoswap/v1/position"
@@ -516,11 +515,11 @@ func TestBurn(t *testing.T) {
 // 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
 // 			cross(wugnot.Deposit)()
 // 			if tt.recipient != positionOwner {
-// 				wugnot.Transfer(tt.recipient, 10000000000)
+// 				cross(wugnot.Transfer)(tt.recipient, 10000000000)
 // 			}
 
 // 			testing.SetRealm(std.NewUserRealm(tt.recipient))
-// 			wugnot.Approve(poolAddr, maxApprove)
+// 			cross(wugnot.Approve)(poolAddr, maxApprove)
 // 			cross(gns.Approve)(poolAddr, maxApprove)
 
 // 			// teller := common.GetTokenTeller(wugnotPath)
@@ -552,11 +551,11 @@ func TestBurn(t *testing.T) {
 
 // 			// Swap
 // 			testing.SetOriginCaller(tt.recipient)
-// 			wugnot.Transfer(routerAddr, 20000000)
+// 			cross(wugnot.Transfer)(routerAddr, 20000000)
 // 			gns.Transfer(routerAddr, 20000000)
 
 // 			testing.SetRealm(rouRealm)
-// 			wugnot.Approve(poolAddr, maxApprove)
+// 			cross(wugnot.Approve)(poolAddr, maxApprove)
 
 // 			Swap(
 // 				tt.tokenPath0,
