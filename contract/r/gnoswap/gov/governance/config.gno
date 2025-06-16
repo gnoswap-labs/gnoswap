@@ -101,7 +101,7 @@ func reconfigure(
 		panic(err)
 	}
 
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 	updateProposalsState()
 
 	prevVersion := getLatestVersion()

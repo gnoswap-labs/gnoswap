@@ -56,7 +56,7 @@ func ProposeText(
 		))
 	}
 
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 	updateProposalsState()
 
 	now := uint64(time.Now().Unix())
@@ -152,7 +152,7 @@ func ProposeCommunityPoolSpend(
 		))
 	}
 
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 	updateProposalsState()
 
 	now := uint64(time.Now().Unix())
@@ -242,7 +242,7 @@ func ProposeParameterChange(
 	}
 
 	if strings.HasPrefix(executions, ROLE_PREFIX) {
-		return handleRoleChangeProposal(title, description, proposer, executions)
+		return handleRoleChangeProposal(cur, title, description, proposer, executions)
 	}
 
 	// check if numToExecute is a valid number
@@ -254,7 +254,7 @@ func ProposeParameterChange(
 		))
 	}
 
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 	updateProposalsState()
 
 	now := uint64(time.Now().Unix())
@@ -312,7 +312,7 @@ func ProposeParameterChange(
 // ref: https://docs.gnoswap.io/core-concepts/governance#scope-of-proposals-5
 // It returns a boolean indicating if the proposer has enough xGNS, the balance of xGNS, and the threshold of xGNS.
 func checkEnoughXGnsToPropose(proposer std.Address) (bool, int64, uint64) {
-	xGNSBalance := cross(xgns.BalanceOf)(proposer)
+	xGNSBalance := xgns.BalanceOf(proposer)
 
 	if xGNSBalance < int64(config.ProposalCreationThreshold) {
 		return false, xGNSBalance, config.ProposalCreationThreshold

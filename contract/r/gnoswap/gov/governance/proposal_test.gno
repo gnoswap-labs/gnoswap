@@ -79,7 +79,7 @@ func TestProposeText(t *testing.T) {
 						err = r.(error)
 					}
 				}()
-				pid = ProposeText(nil, tt.title, tt.description)
+				pid = ProposeText(cross, tt.title, tt.description)
 			}()
 
 			uassert.NoError(t, err)
@@ -109,13 +109,13 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 	func() {
 		testing.SetRealm(std.NewUserRealm(proposalAddr))
 		// Setup xGNS for proposal creation
-		gns.Approve(nil, govStakerAddr, int64(2000000000))
+		gns.Approve(cross, govStakerAddr, int64(2000000000))
 	}()
 
 	testing.SetRealm(adminRealm)
 	func() {
 		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/governance"))
-		gs.Delegate(nil, proposalAddr, uint64(2000000000), "") // self delegate
+		gs.Delegate(cross, proposalAddr, uint64(2000000000), "") // self delegate
 	}()
 
 	testing.SkipHeights(1)
@@ -170,7 +170,7 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 					}
 				}()
 				pid = ProposeCommunityPoolSpend(
-					nil,
+					cross,
 					tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
 			}()
 
@@ -238,13 +238,13 @@ func TestIntegratedProposeParameterChange(t *testing.T) {
 			func() {
 				testing.SetRealm(std.NewUserRealm(proposalAddr))
 				// Setup xGNS for proposal creation
-				gns.Approve(nil, govStakerAddr, int64(2000000000))
+				gns.Approve(cross, govStakerAddr, int64(2000000000))
 			}()
 
 			testing.SetRealm(adminRealm)
 			func() {
 				testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/governance"))
-				gs.Delegate(nil, proposalAddr, uint64(2000000000), "") // self delegate
+				gs.Delegate(cross, proposalAddr, uint64(2000000000), "") // self delegate
 				testing.SkipHeights(1)
 			}()
 
@@ -257,7 +257,7 @@ func TestIntegratedProposeParameterChange(t *testing.T) {
 					}
 				}()
 				pid = ProposeParameterChange(
-					nil,
+					cross,
 					tt.title,
 					tt.description,
 					tt.numToExecute,

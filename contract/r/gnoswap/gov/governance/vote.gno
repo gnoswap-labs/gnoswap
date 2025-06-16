@@ -34,7 +34,7 @@ func Vote(cur realm, pid uint64, yes bool) string {
 		panic(err)
 	}
 
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 	updateProposalsState()
 
 	proposal := mustGetProposal(pid)
@@ -92,7 +92,7 @@ func Cancel(cur realm, proposalId uint64) {
 		panic(err)
 	}
 
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 	updateProposalsState()
 
 	proposal := mustGetProposal(proposalId)

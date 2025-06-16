@@ -114,6 +114,7 @@ func (r RoleChangeAction) String() string {
 }
 
 func handleRoleChangeProposal(
+	cur realm,
 	title string,
 	desc string,
 	proposer std.Address,
@@ -255,14 +256,14 @@ func parseAddresses(addressStr string) []std.Address {
 	addrStrings := strings.Split(addressStr, ":")
 	addresses := make([]std.Address, 0, len(addrStrings))
 
-	for _, addr := range addrStrings {
-		addr = strings.TrimSpace(addr)
-		if addr == "" {
+	for _, addrStr := range addrStrings {
+		addrStr = strings.TrimSpace(addrStr)
+		if addrStr == "" {
 			continue
 		}
 
-		address := std.Address(addr)
-		addresses = append(addresses, address)
+		addr := std.Address(addrStr)
+		addresses = append(addresses, addr)
 	}
 
 	return addresses
@@ -272,7 +273,7 @@ func parseAddresses(addressStr string) []std.Address {
 
 func executeAddRole(cur realm, roleInfo RoleChangeInfo) error {
 	if roleInfo.CheckerType == SingleAddressChecker && len(roleInfo.Addresses) == 1 {
-		return access.CreateRole(cur, roleInfo.RoleName, roleInfo.Addresses[0])
+		return access.CreateRole(cross, roleInfo.RoleName, roleInfo.Addresses[0])
 	}
 
 	return errors.New("invalid checker type or addresses for role creation")
@@ -289,7 +290,7 @@ func executeAddPermission(cur realm, roleInfo RoleChangeInfo) error {
 
 	// Create and add the permission checker
 	checker := getPermissionChecker(roleInfo)
-	return rbac.RegisterPermission(cur, roleInfo.RoleName, roleInfo.PermissionName, checker)
+	return rbac.RegisterPermission(cross, roleInfo.RoleName, roleInfo.PermissionName, checker)
 }
 
 func executeRemovePermission(cur realm, roleInfo RoleChangeInfo) error {
@@ -297,7 +298,7 @@ func executeRemovePermission(cur realm, roleInfo RoleChangeInfo) error {
 		return ufmt.Errorf("role %s does not exist", roleInfo.RoleName)
 	}
 
-	return rbac.RemovePermission(cur, roleInfo.RoleName, roleInfo.PermissionName)
+	return rbac.RemovePermission(cross, roleInfo.RoleName, roleInfo.PermissionName)
 }
 
 func executeUpdatePermission(cur realm, roleInfo RoleChangeInfo) error {
@@ -307,5 +308,5 @@ func executeUpdatePermission(cur realm, roleInfo RoleChangeInfo) error {
 
 	// Update the permission checker
 	checker := getPermissionChecker(roleInfo)
-	return rbac.UpdatePermission(cur, roleInfo.RoleName, roleInfo.PermissionName, checker)
+	return rbac.UpdatePermission(cross, roleInfo.RoleName, roleInfo.PermissionName, checker)
 }

@@ -257,7 +257,7 @@ func validateInitialState(cur realm) {
 		}
 	}
 
-	en.MintAndDistributeGns(cur)
+	en.MintAndDistributeGns(cross)
 	updateProposalsState()
 }
 
