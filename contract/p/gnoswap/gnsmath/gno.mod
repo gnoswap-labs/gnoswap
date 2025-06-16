@@ -1,1 +1,3 @@
 module gno.land/p/gnoswap/gnsmath
+
+gno 0.9

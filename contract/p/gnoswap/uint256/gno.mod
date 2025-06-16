@@ -1,2 +1,3 @@
 module gno.land/p/gnoswap/uint256
 
+gno 0.9
