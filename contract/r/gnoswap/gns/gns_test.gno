@@ -40,11 +40,11 @@ func TestKnownAccounts(t *testing.T) {
 }
 
 func TestTotalSupply(t *testing.T) {
-	uassert.Equal(t, INITIAL_MINT_AMOUNT, TotalSupply())
+	uassert.Equal(t, INITIAL_MINT_AMOUNT, TotalSupply(cur))
 }
 
 func TestBalanceOf(t *testing.T) {
-	uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(adminAddr))
+	uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(cur, adminAddr))
 }
 
 func TestAssertTooManyEmission(t *testing.T) {

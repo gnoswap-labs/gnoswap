@@ -34,7 +34,7 @@ var (
 
 func init() {
 	privateLedger.Mint(owner.Owner(), INITIAL_MINT_AMOUNT)
-	cross(grc20reg.Register)(token, "")
+	grc20reg.Register(nil, token, "")
 
 	// Initial amount set to 900_000_000_000_000 (MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT).
 	// leftEmissionAmount will decrease as tokens are minted.
@@ -44,43 +44,35 @@ func init() {
 	burnAmount = 0
 }
 
-func GetName() string {
-	crossing()
+func GetName(cur realm) string {
 	return token.GetName()
 }
 
-func GetSymbol() string {
-	crossing()
+func GetSymbol(cur realm) string {
 	return token.GetSymbol()
 }
 
-func GetDecimals() int {
-	crossing()
+func GetDecimals(cur realm) int {
 	return token.GetDecimals()
 }
 
-func TotalSupply() int64 {
-	crossing()
+func TotalSupply(cur realm) int64 {
 	return token.TotalSupply()
 }
 
-func KnownAccounts() int {
-	crossing()
+func KnownAccounts(cur realm) int {
 	return token.KnownAccounts()
 }
 
-func BalanceOf(owner std.Address) int64 {
-	crossing()
+func BalanceOf(cur realm, owner std.Address) int64 {
 	return token.BalanceOf(owner)
 }
 
-func Allowance(owner, spender std.Address) int64 {
-	crossing()
+func Allowance(cur realm, owner, spender std.Address) int64 {
 	return token.Allowance(owner, spender)
 }
 
-func MintGns(address std.Address) int64 {
-	crossing()
+func MintGns(cur realm, address std.Address) int64 {
 	lastGNSMintedHeight := GetLastMintedHeight()
 	currentHeight := std.ChainHeight()
 
@@ -122,8 +114,7 @@ func MintGns(address std.Address) int64 {
 	return amountToMint
 }
 
-func Burn(from std.Address, amount int64) {
-	crossing()
+func Burn(cur realm, from std.Address, amount int64) {
 	owner.AssertOwnedByCurrent()
 	checkErr(privateLedger.Burn(from, amount))
 
@@ -141,26 +132,22 @@ func Burn(from std.Address, amount int64) {
 	)
 }
 
-func Transfer(to std.Address, amount int64) {
-	crossing()
+func Transfer(cur realm, to std.Address, amount int64) {
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.Transfer(to, amount))
 }
 
-func Approve(spender std.Address, amount int64) {
-	crossing()
+func Approve(cur realm, spender std.Address, amount int64) {
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.Approve(spender, amount))
 }
 
-func TransferFrom(from, to std.Address, amount int64) {
-	crossing()
+func TransferFrom(cur realm, from, to std.Address, amount int64) {
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.TransferFrom(from, to, amount))
 }
 
-func Render(path string) string {
-	crossing()
+func Render(cur realm, path string) string {
 	parts := strings.Split(path, "/")
 	c := len(parts)
 
