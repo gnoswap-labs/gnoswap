@@ -1,3 +1,0 @@
-module gno.land/p/gnoswap/consts
-
-gno 0.9

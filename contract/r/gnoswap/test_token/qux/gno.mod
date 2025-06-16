@@ -1,3 +1,0 @@
-module gno.land/r/onbloc/qux
-
-gno 0.9

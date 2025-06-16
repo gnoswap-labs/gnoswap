@@ -1,3 +1,0 @@
-module gno.land/p/gnoswap/int256
-
-gno 0.9

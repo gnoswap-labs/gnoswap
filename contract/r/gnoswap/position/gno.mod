@@ -1,3 +1,0 @@
-module gno.land/r/gnoswap/v1/position
-
-gno 0.9

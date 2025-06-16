@@ -1,3 +1,0 @@
-module gno.land/r/gnoswap/v1/pool
-
-gno 0.9
