@@ -1,1 +1,3 @@
 module gno.land/r/gnoswap/v1/gns
+
+gno 0.9

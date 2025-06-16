@@ -270,6 +270,6 @@ func TestMulDiv_PowerOfTwo_DivisionByFour(t *testing.T) {
 }
 
 func TwoToThe255() *Uint {
-    u := &Uint{arr: [4]uint64{0, 0, 0, 1 << 63}}
-    return u
+	u := &Uint{arr: [4]uint64{0, 0, 0, 1 << 63}}
+	return u
 }

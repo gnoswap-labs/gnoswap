@@ -18,53 +18,45 @@ var (
 
 func init() {
 	privateLedger.Mint(owner.Owner(), 100_000_000_000_000)
-	cross(grc20reg.Register)(token, "")
+	grc20reg.Register(nil, token, "")
 }
 
-func TotalSupply() int64 {
-	crossing()
+func TotalSupply(cur realm) int64 {
 	userTeller := token.CallerTeller()
 	return userTeller.TotalSupply()
 }
 
-func BalanceOf(owner std.Address) int64 {
-	crossing()
+func BalanceOf(cur realm, owner std.Address) int64 {
 	userTeller := token.CallerTeller()
 	return userTeller.BalanceOf(owner)
 }
 
-func Allowance(owner, spender std.Address) int64 {
-	crossing()
+func Allowance(cur realm, owner, spender std.Address) int64 {
 	userTeller := token.CallerTeller()
 	return userTeller.Allowance(owner, spender)
 }
 
-func Transfer(to std.Address, amount int64) {
-	crossing()
+func Transfer(cur realm, to std.Address, amount int64) {
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.Transfer(to, amount))
 }
 
-func Approve(spender std.Address, amount int64) {
-	crossing()
+func Approve(cur realm, spender std.Address, amount int64) {
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.Approve(spender, amount))
 }
 
-func TransferFrom(from, to std.Address, amount int64) {
-	crossing()
+func TransferFrom(cur realm, from, to std.Address, amount int64) {
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.TransferFrom(from, to, amount))
 }
 
-func Burn(from std.Address, amount int64) {
-	crossing()
+func Burn(cur realm, from std.Address, amount int64) {
 	owner.AssertOwnedByPrevious()
 	checkErr(privateLedger.Burn(from, amount))
 }
 
-func Render(path string) string {
-	crossing()
+func Render(cur realm, path string) string {
 	parts := strings.Split(path, "/")
 	c := len(parts)
 

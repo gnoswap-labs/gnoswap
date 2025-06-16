@@ -14,7 +14,7 @@ func checkAndUpdateRole(roleName string, caller std.Address, newAddress ...std.A
 
 	// the number of new addresses that can be registered is limited to one
 	if len(newAddress) == 1 {
-		return UpdateRoleAddress(roleName, newAddress[0])
+		return UpdateRoleAddress(cur, roleName, newAddress[0])
 	}
 	return nil
 }

@@ -59,7 +59,7 @@ func TestUpdateRoleAddress(t *testing.T) {
 			err := initialize(cfg)
 			uassert.NoError(t, err)
 
-			err = cross(UpdateRoleAddress)("another_test_admin", testRealm1Addr)
+			err = UpdateRoleAddress(nil, "another_test_admin", testRealm1Addr)
 			uassert.NoError(t, err)
 
 			actual := GetCurrentConfig()
@@ -76,7 +76,7 @@ func TestUpdateRoleAddress(t *testing.T) {
 			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/access"))
 
 			currentConfig = nil
-			err := cross(UpdateRoleAddress)("another_test_admin", testRealm1Addr)
+			err := UpdateRoleAddress(nil, "another_test_admin", testRealm1Addr)
 			uassert.Error(t, err)
 		}()
 	})
@@ -89,7 +89,7 @@ func TestUpdateRoleAddress(t *testing.T) {
 			err := initialize(cfg)
 			uassert.NoError(t, err)
 
-			err = cross(UpdateRoleAddress)("non_existent_role", testRealm1Addr)
+			err = UpdateRoleAddress(nil, "non_existent_role", testRealm1Addr)
 			uassert.Error(t, err)
 		}()
 	})
@@ -260,7 +260,7 @@ func TestCreateRole(t *testing.T) {
 			err := initialize(cfg)
 			uassert.NoError(t, err)
 
-			err = cross(CreateRole)("custom_role", testNewRoleAddr)
+			err = CreateRole(nil, "custom_role", testNewRoleAddr)
 			uassert.NoError(t, err)
 
 			// verify role was created correctly
@@ -281,7 +281,7 @@ func TestCreateRole(t *testing.T) {
 	t.Run("create role fails while uninitialized", func(t *testing.T) {
 		func() {
 			currentConfig = nil
-			err := cross(CreateRole)("failed_role", testNewRoleAddr)
+			err := CreateRole(nil, "failed_role", testNewRoleAddr)
 			uassert.Error(t, err)
 		}()
 	})
@@ -295,11 +295,11 @@ func TestCreateRole(t *testing.T) {
 			uassert.NoError(t, err)
 
 			// create first role
-			err = cross(CreateRole)("duplicate_role", testNewRoleAddr)
+			err = CreateRole(nil, "duplicate_role", testNewRoleAddr)
 			uassert.NoError(t, err)
 
 			// attempt to create same role again
-			err = cross(CreateRole)("duplicate_role", testAnotherAddr)
+			err = CreateRole(nil, "duplicate_role", testAnotherAddr)
 			uassert.Error(t, err)
 		}()
 	})
@@ -439,7 +439,7 @@ func TestSetRole(t *testing.T) {
 			err := initialize(cfg)
 			uassert.NoError(t, err)
 
-			err = cross(SetRole)("test_auditor", testAuditorAddr)
+			err = SetRole(nil, "test_auditor", testAuditorAddr)
 			uassert.NoError(t, err)
 
 			actual := GetCurrentConfig()
@@ -457,7 +457,7 @@ func TestSetRole(t *testing.T) {
 			err := initialize(cfg)
 			uassert.NoError(t, err)
 
-			err = cross(SetRole)("custom_role_2", testNewRoleAddr)
+			err = SetRole(nil, "custom_role_2", testNewRoleAddr)
 			uassert.NoError(t, err)
 
 			// verify role was set correctly
@@ -483,7 +483,7 @@ func TestSetRole(t *testing.T) {
 			uassert.NoError(t, err)
 
 			newReviewerAddr := testutils.TestAddress("test_reviewer_new")
-			err = cross(SetRole)("test_reviewer", newReviewerAddr)
+			err = SetRole(nil, "test_reviewer", newReviewerAddr)
 			uassert.NoError(t, err)
 
 			// verify address was updated
@@ -505,7 +505,7 @@ func TestSetRole(t *testing.T) {
 			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/access"))
 
 			currentConfig = nil
-			err := cross(SetRole)("failed_role", testNewRoleAddr)
+			err := SetRole(nil, "failed_role", testNewRoleAddr)
 			uassert.Error(t, err)
 		}()
 	})
@@ -513,7 +513,7 @@ func TestSetRole(t *testing.T) {
 	t.Run("fail with non-admin address", func(t *testing.T) {
 		func() {
 			testing.SetRealm(std.NewUserRealm(testutils.TestAddress("non_admin")))
-			err := cross(SetRole)("test_auditor", testAuditorAddr)
+			err := SetRole(nil, "test_auditor", testAuditorAddr)
 			uassert.Error(t, err)
 		}()
 	})
@@ -535,7 +535,7 @@ func TestDeleteRole(t *testing.T) {
 			uassert.Equal(t, true, exists)
 
 			// Delete the role
-			err = cross(DeleteRole)("test_role_to_delete")
+			err = DeleteRole(nil, "test_role_to_delete")
 			uassert.NoError(t, err)
 
 			// Verify role no longer exists
@@ -554,14 +554,14 @@ func TestDeleteRole(t *testing.T) {
 			err := initialize(cfg)
 			uassert.NoError(t, err)
 
-			err = cross(DeleteRole)("non_existent_role")
+			err = DeleteRole(nil, "non_existent_role")
 			uassert.Error(t, err)
 		}()
 	})
 
 	t.Run("fail to delete admin role", func(t *testing.T) {
 		func() {
-			err := cross(DeleteRole)(ROLE_ADMIN)
+			err := DeleteRole(nil, ROLE_ADMIN)
 			uassert.Error(t, err)
 		}()
 	})
@@ -569,7 +569,7 @@ func TestDeleteRole(t *testing.T) {
 	t.Run("fail while uninitialized", func(t *testing.T) {
 		currentConfig = nil
 		func() {
-			err := cross(DeleteRole)("any_role")
+			err := DeleteRole(nil, "any_role")
 			uassert.Error(t, err)
 		}()
 	})
@@ -580,7 +580,7 @@ func TestDeleteRole(t *testing.T) {
 			err := initialize(cfg)
 			uassert.NoError(t, err)
 
-			err = cross(DeleteRole)("")
+			err = DeleteRole(nil, "")
 			uassert.Error(t, err)
 		}()
 	})

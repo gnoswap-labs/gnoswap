@@ -197,8 +197,7 @@ func (h *HalvingData) initialize(startHeight, startTimestamp int64) {
 // Emission change callback function
 var callbackEmissionChange func(amount int64)
 
-func SetCallbackEmissionChange(callback func(amount int64)) {
-	crossing()
+func SetCallbackEmissionChange(cur realm, callback func(amount int64)) {
 	if callbackEmissionChange != nil {
 		panic("callbackEmissionChange already set")
 	}
@@ -274,8 +273,7 @@ func GetAvgBlockTimeInMs() int64 {
 }
 
 // SetAvgBlockTimeInMsByAdmin admin sets average block time
-func SetAvgBlockTimeInMsByAdmin(ms int64) {
-	crossing()
+func SetAvgBlockTimeInMsByAdmin(cur realm, ms int64) {
 	if ms <= 0 {
 		panic(errInvalidAvgBlockTimeInMs)
 	}
@@ -292,10 +290,8 @@ func SetAvgBlockTimeInMsByAdmin(ms int64) {
 }
 
 // SetAvgBlockTimeInMs sets average block time through governance proposal
-func SetAvgBlockTimeInMs(ms int64) {
-	crossing()
+func SetAvgBlockTimeInMs(cur realm, ms int64) {
 	assertCallerIsGovernance()
-
 	prevAvgBlockTimeInMs := GetAvgBlockTimeInMs()
 	setAvgBlockTimeInMs(ms)
 

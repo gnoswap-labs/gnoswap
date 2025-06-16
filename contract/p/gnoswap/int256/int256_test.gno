@@ -136,34 +136,34 @@ func TestInitiateAbs(t *testing.T) {
 
 func TestInitiateAbsInOperation(t *testing.T) {
 	tests := []struct {
-		name   string
-		setup  func() *Int
-		op     func(*Int) *Int
-		want   string
+		name  string
+		setup func() *Int
+		op    func(*Int) *Int
+		want  string
 	}{
 		{
-			name:   "Add with nil receiver",
-			setup:  func() *Int { return nil },
-			op:     func(z *Int) *Int { return z.Add(NewInt(10), NewInt(20)) },
-			want:   "30",
+			name:  "Add with nil receiver",
+			setup: func() *Int { return nil },
+			op:    func(z *Int) *Int { return z.Add(NewInt(10), NewInt(20)) },
+			want:  "30",
 		},
 		{
-			name:   "Add with nil abs field",
-			setup:  func() *Int { return &Int{abs: nil} },
-			op:     func(z *Int) *Int { return z.Add(NewInt(10), NewInt(20)) },
-			want:   "30",
+			name:  "Add with nil abs field",
+			setup: func() *Int { return &Int{abs: nil} },
+			op:    func(z *Int) *Int { return z.Add(NewInt(10), NewInt(20)) },
+			want:  "30",
 		},
 		{
-			name:   "Sub with nil receiver",
-			setup:  func() *Int { return nil },
-			op:     func(z *Int) *Int { return z.Sub(NewInt(30), NewInt(20)) },
-			want:   "10",
+			name:  "Sub with nil receiver",
+			setup: func() *Int { return nil },
+			op:    func(z *Int) *Int { return z.Sub(NewInt(30), NewInt(20)) },
+			want:  "10",
 		},
 		{
-			name:   "Sub with nil abs field",
-			setup:  func() *Int { return &Int{abs: nil} },
-			op:     func(z *Int) *Int { return z.Sub(NewInt(30), NewInt(20)) },
-			want:   "10",
+			name:  "Sub with nil abs field",
+			setup: func() *Int { return &Int{abs: nil} },
+			op:    func(z *Int) *Int { return z.Sub(NewInt(30), NewInt(20)) },
+			want:  "10",
 		},
 	}
 

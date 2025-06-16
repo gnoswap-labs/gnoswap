@@ -1,1 +1,3 @@
 module gno.land/p/gnoswap/rbac
+
+gno 0.9
