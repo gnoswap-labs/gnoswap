@@ -11,7 +11,7 @@ import (
 func TestCallbackRegistration(t *testing.T) {
 	callbackTree = avl.NewTree()
 
-	err := RegisterCallback(adminAddr, "test", "add", func(a, b int) int {
+	err := RegisterCallback(cur, adminAddr, "test", "add", func(a, b int) int {
 		return a + b
 	})
 	uassert.NoError(t, err)
@@ -28,7 +28,7 @@ func TestCallbackRegistration(t *testing.T) {
 func TestCallbackUpdate(t *testing.T) {
 	callbackTree = avl.NewTree()
 
-	err := RegisterCallback(adminAddr, "test", "multiply", func(a, b int) int {
+	err := RegisterCallback(cur, adminAddr, "test", "multiply", func(a, b int) int {
 		return a * b
 	})
 	uassert.NoError(t, err)
@@ -62,14 +62,14 @@ func TestCallbackRegistrationErrors(t *testing.T) {
 	userAddr := testutils.TestAddress("user")
 
 	// duplicate registration test
-	err := RegisterCallback(adminAddr, "test", "duplicate", func() {})
+	err := RegisterCallback(cur, adminAddr, "test", "duplicate", func() {})
 	uassert.NoError(t, err)
 
-	err = RegisterCallback(adminAddr, "test", "duplicate", func() {})
+	err = RegisterCallback(cur, adminAddr, "test", "duplicate", func() {})
 	uassert.Error(t, err)
 
 	// unauthorized user registration test
-	err = RegisterCallback(userAddr, "test", "unauthorized", func() {})
+	err = RegisterCallback(cur, userAddr, "test", "unauthorized", func() {})
 	uassert.Error(t, err)
 }
 
@@ -80,7 +80,7 @@ func TestCallbackUpdateErrors(t *testing.T) {
 	err := UpdateCallback(adminAddr, "test", "nonexistent", func() {})
 	uassert.Error(t, err)
 
-	err = RegisterCallback(adminAddr, "test", "update", func() {})
+	err = RegisterCallback(cur, adminAddr, "test", "update", func() {})
 	uassert.NoError(t, err)
 
 	err = UpdateCallback(userAddr, "test", "update", func() {})
