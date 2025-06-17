@@ -21,17 +21,17 @@ func init() {
 	grc20reg.Register(cross, token, "")
 }
 
-func TotalSupply(cur realm) int64 {
+func TotalSupply() int64 {
 	userTeller := token.CallerTeller()
 	return userTeller.TotalSupply()
 }
 
-func BalanceOf(cur realm, owner std.Address) int64 {
+func BalanceOf(owner std.Address) int64 {
 	userTeller := token.CallerTeller()
 	return userTeller.BalanceOf(owner)
 }
 
-func Allowance(cur realm, owner, spender std.Address) int64 {
+func Allowance(owner, spender std.Address) int64 {
 	userTeller := token.CallerTeller()
 	return userTeller.Allowance(owner, spender)
 }
@@ -56,7 +56,7 @@ func Burn(cur realm, from std.Address, amount int64) {
 	checkErr(privateLedger.Burn(from, amount))
 }
 
-func Render(cur realm, path string) string {
+func Render(path string) string {
 	parts := strings.Split(path, "/")
 	c := len(parts)
 

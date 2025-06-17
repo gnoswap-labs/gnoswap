@@ -62,7 +62,7 @@ func Delegate(cur realm, to std.Address, amount uint64, referrer string) {
 	}
 
 	caller := std.PreviousRealm().Address()
-	gnsBalanceOfCaller := gns.BalanceOf(cross, caller)
+	gnsBalanceOfCaller := gns.BalanceOf(caller)
 	if uint64(gnsBalanceOfCaller) < amount {
 		panic(addDetailToError(
 			errNotEnoughBalance,
