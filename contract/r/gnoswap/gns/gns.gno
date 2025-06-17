@@ -44,31 +44,31 @@ func init() {
 	burnAmount = 0
 }
 
-func GetName(cur realm) string {
+func GetName() string {
 	return token.GetName()
 }
 
-func GetSymbol(cur realm) string {
+func GetSymbol() string {
 	return token.GetSymbol()
 }
 
-func GetDecimals(cur realm) int {
+func GetDecimals() int {
 	return token.GetDecimals()
 }
 
-func TotalSupply(cur realm) int64 {
+func TotalSupply() int64 {
 	return token.TotalSupply()
 }
 
-func KnownAccounts(cur realm) int {
+func KnownAccounts() int {
 	return token.KnownAccounts()
 }
 
-func BalanceOf(cur realm, owner std.Address) int64 {
+func BalanceOf(owner std.Address) int64 {
 	return token.BalanceOf(owner)
 }
 
-func Allowance(cur realm, owner, spender std.Address) int64 {
+func Allowance(owner, spender std.Address) int64 {
 	return token.Allowance(owner, spender)
 }
 
@@ -147,7 +147,7 @@ func TransferFrom(cur realm, from, to std.Address, amount int64) {
 	checkErr(userTeller.TransferFrom(from, to, amount))
 }
 
-func Render(cur realm, path string) string {
+func Render(path string) string {
 	parts := strings.Split(path, "/")
 	c := len(parts)
 
