@@ -438,7 +438,9 @@ func CreateProject(
 
 	// Transfer tokens
 
-	tokenTeller.TransferFrom(
+	common.TransferFrom(
+		cross,
+		tokenPath,
 		getPrevAddr(),
 		std.Address(GetOrigPkgAddr()),
 		int64(depositAmount),

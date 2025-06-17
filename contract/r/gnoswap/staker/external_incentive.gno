@@ -126,8 +126,7 @@ func CreateExternalIncentive(cur realm,
 	gns.TransferFrom(cross, caller, stakerAddr, depositGnsAmount)
 
 	// transfer reward token from user to staker
-	teller := common.GetTokenTeller(rewardToken)
-	teller.TransferFrom(caller, stakerAddr, rewardAmount)
+	common.TransferFrom(cross, rewardToken, caller, stakerAddr, rewardAmount)
 
 	pool.incentives.create(caller, incentive)
 

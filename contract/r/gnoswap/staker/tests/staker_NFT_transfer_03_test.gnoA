@@ -90,7 +90,7 @@ func testTransferNft(t *testing.T) {
 				t,
 				func() {
 					testing.SetRealm(adminRealm)
-					gnft.TransferFrom(admin, dummyAddr, positionIdFrom(uint64(1)))
+					gnft.TransferFrom(cross, admin, dummyAddr, positionIdFrom(uint64(1)))
 				},
 				`should not panic`,
 			)
