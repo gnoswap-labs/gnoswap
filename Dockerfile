@@ -1,5 +1,8 @@
 FROM python:3.11-slim
 
+# Create a non-root user
+RUN groupadd -r appuser && useradd -r -g appuser -m appuser
+
 RUN pip install uv
 
 WORKDIR /app
@@ -12,5 +15,11 @@ RUN uv venv && \
     uv pip install -r requirements.txt
 
 COPY . .
+
+# Change ownership of the application files
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
 
 CMD ["python3", "setup.py"] 
