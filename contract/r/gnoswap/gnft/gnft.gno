@@ -43,7 +43,7 @@ func Symbol() string {
 
 // TotalSupply returns the total number of NFTs minted
 // Returns:
-//   - uint64: The total number of tokens that have been minted
+//   - int64: The total number of tokens that have been minted
 func TotalSupply() int64 {
 	return gnft.TokenCount()
 }
@@ -54,13 +54,14 @@ func TotalSupply() int64 {
 //
 // Returns:
 //   - string: The metadata URI associated with the token
-func TokenURI(tid grc721.TokenID) string {
+//   - error: Returns an error if the token URI retrieval fails.
+func TokenURI(tid grc721.TokenID) (string, error) {
 	uri, err := gnft.TokenURI(tid)
 	if err != nil {
-		panic(err.Error())
+		return "", err
 	}
 
-	return string(uri)
+	return string(uri), nil
 }
 
 // BalanceOf returns the number of NFTs owned by the specified address.
@@ -68,12 +69,12 @@ func TokenURI(tid grc721.TokenID) string {
 //   - owner (std.Address): The address to check the NFT balance for.
 //
 // Returns:
-//   - uint64: The number of NFTs owned by the address.
+//   - int64: The number of NFTs owned by the address.
 //   - error: Returns an error if the balance retrieval fails.
-func BalanceOf(cur realm, owner std.Address) (int64, error) {
+func BalanceOf(owner std.Address) (int64, error) {
 	balance, err := gnft.BalanceOf(owner)
 	if err != nil {
-		panic(err.Error())
+		return 0, err
 	}
 	return balance, nil
 }
@@ -160,7 +161,7 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 //   - If either `from` or `to` addresses are invalid.
 //   - If the caller is not the owner or approved operator of the token.
 //   - If the internal transfer (`gnft.TransferFrom`) fails.
-func SafeTransferFrom(from, to std.Address, tid grc721.TokenID) error {
+func SafeTransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 	assertOnlyNotHalted()
 
 	assertValidAddr(from)
@@ -194,7 +195,7 @@ func SafeTransferFrom(from, to std.Address, tid grc721.TokenID) error {
 // Returns:
 //   - error: Returns `nil` if the transfer is successful; otherwise, returns an error.
 func TransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
-	return SafeTransferFrom(from, to, tid)
+	return SafeTransferFrom(cur, from, to, tid)
 }
 
 // Approve grants permission to transfer a specific token ID to another address.
