@@ -72,6 +72,7 @@ const (
 //
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#mint
 func Mint(
+	cur realm,
 	token0 string,
 	token1 string,
 	fee uint32,
@@ -166,6 +167,7 @@ func Mint(
 // Returns position ID, liquidity, amount0, amount1, poolPath
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#increaseliquidity
 func IncreaseLiquidity(
+	cur realm,
 	positionId uint64,
 	amount0DesiredStr string,
 	amount1DesiredStr string,
@@ -252,6 +254,7 @@ func IncreaseLiquidity(
 // Returns position ID, liquidity, fee0, fee1, amount0, amount1, poolPath
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#decreaseliquidity
 func DecreaseLiquidity(
+	cur realm,
 	positionId uint64,
 	liquidityStr string,
 	amount0MinStr string,
@@ -305,7 +308,11 @@ func DecreaseLiquidity(
 // CollectFee collects swap fee from the position
 // Returns position ID, afterFee0, afterFee1, poolPath, origFee0, origFee1
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#collectfee
-func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, string, string, string) {
+func CollectFee(
+	cur realm,
+	postionId uint64,
+	unwrapResult bool,
+) (uint64, string, string, string, string, string) {
 	assertOnlyNotHalted()
 	assertTokenExists(postionId)
 	isAuthorizedForToken(postionId)
@@ -387,7 +394,11 @@ func CollectFee(postionId uint64, unwrapResult bool) (uint64, string, string, st
 	return postionId, withoutFee0, withoutFee1, position.poolKey, amount0, amount1
 }
 
-func SetPositionOperator(id uint64, operator std.Address) {
+func SetPositionOperator(
+	cur realm,
+	id uint64,
+	operator std.Address,
+) {
 	caller := getPrevRealm().PkgPath()
 	if caller != consts.STAKER_PATH {
 		panic(newErrorWithDetail(

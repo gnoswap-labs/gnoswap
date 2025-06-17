@@ -364,6 +364,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 
 			// Position Creation
 			pn.Mint(
+				cross,
 				tt.tokenPath0,
 				tt.tokenPath1,
 				tt.feeTier,

@@ -52,7 +52,7 @@ func MintAndDistributeGns(cur realm) int64 {
 		"prevLeftAmount", formatInt(prevLeftAmount),
 		"distributedAmount", formatInt(distributedGNSAmount),
 		"currentLeftAmount", formatInt(GetLeftGNSAmount()),
-		"gnsTotalSupply", formatInt(gns.TotalSupply(cross)),
+		"gnsTotalSupply", formatInt(gns.TotalSupply()),
 	)
 
 	setLastExecutedHeight(currentHeight)

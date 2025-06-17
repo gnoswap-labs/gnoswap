@@ -35,16 +35,16 @@ func TestKnownAccounts(t *testing.T) {
 	testing.SetRealm(std.NewUserRealm(alice))
 	func() {
 		testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-		uassert.Equal(t, 1, KnownAccounts(cross))
+		uassert.Equal(t, 1, KnownAccounts())
 	}()
 }
 
 func TestTotalSupply(t *testing.T) {
-	uassert.Equal(t, INITIAL_MINT_AMOUNT, TotalSupply(cross))
+	uassert.Equal(t, INITIAL_MINT_AMOUNT, TotalSupply())
 }
 
 func TestBalanceOf(t *testing.T) {
-	uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(cross, adminAddr))
+	uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(adminAddr))
 }
 
 func TestAssertTooManyEmission(t *testing.T) {
@@ -184,25 +184,25 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "TotalSupply",
 			fn: func() {
-				uassert.Equal(t, INITIAL_MINT_AMOUNT, TotalSupply(cross))
+				uassert.Equal(t, INITIAL_MINT_AMOUNT, TotalSupply())
 			},
 		},
 		{
 			name: "BalanceOf(admin)",
 			fn: func() {
-				uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(cross, adminAddr))
+				uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(adminAddr))
 			},
 		},
 		{
 			name: "BalanceOf(alice)",
 			fn: func() {
-				uassert.Equal(t, int64(0), BalanceOf(cross, alice))
+				uassert.Equal(t, int64(0), BalanceOf(alice))
 			},
 		},
 		{
 			name: "Allowance(admin, alice)",
 			fn: func() {
-				uassert.Equal(t, int64(0), Allowance(cross, adminAddr, alice))
+				uassert.Equal(t, int64(0), Allowance(adminAddr, alice))
 			},
 		},
 		{
