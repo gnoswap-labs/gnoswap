@@ -537,8 +537,7 @@ func TransferLeftFromProjectByAdmin(cur realm, projectId string, recipient std.A
 	projects[projectId] = project
 
 	if projectLeftReward > 0 {
-		tokenTeller := common.GetTokenTeller(project.tokenPath)
-		tokenTeller.Transfer(recipient, int64(projectLeftReward))
+		common.Transfer(cross, project.tokenPath, recipient, int64(amount))
 	}
 
 	std.Emit(

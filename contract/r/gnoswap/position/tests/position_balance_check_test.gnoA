@@ -41,8 +41,8 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		// 0. Set realm to admin
 		testing.SetRealm(adminRealm)
 		// 1. transfer gns
-		gns.Transfer(aliceAddr, tokenAmountForDistribute)
-		gns.Transfer(bobAddr, tokenAmountForDistribute)
+		gns.Transfer(cross, aliceAddr, tokenAmountForDistribute)
+		gns.Transfer(cross, bobAddr, tokenAmountForDistribute)
 		uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(aliceAddr))
 		uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(bobAddr))
 	})
@@ -110,8 +110,8 @@ func TestPositionBalanceCompareWithPoolBalance(t *testing.T) {
 		// 0. Set realm to admin
 		testing.SetRealm(adminRealm)
 		// 1. transfer gns
-		gns.Transfer(aliceAddr, tokenAmountForDistribute)
-		gns.Transfer(bobAddr, tokenAmountForDistribute)
+		gns.Transfer(cross, aliceAddr, tokenAmountForDistribute)
+		gns.Transfer(cross, bobAddr, tokenAmountForDistribute)
 	})
 
 	t.Run("Mint New Position", func(t *testing.T) {
@@ -360,13 +360,13 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 		tokenAmountForDistribute := uint64(1000000000000)
 		if gns.BalanceOf(aliceAddr) < tokenAmountForDistribute {
 			testing.SetRealm(adminRealm)
-			gns.Transfer(aliceAddr, tokenAmountForDistribute)
+			gns.Transfer(cross, aliceAddr, tokenAmountForDistribute)
 			uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(aliceAddr))
 		}
 
 		if gns.BalanceOf(bobAddr) < tokenAmountForDistribute {
 			testing.SetRealm(adminRealm)
-			gns.Transfer(bobAddr, tokenAmountForDistribute)
+			gns.Transfer(cross, bobAddr, tokenAmountForDistribute)
 			uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(bobAddr))
 		}
 	})
@@ -440,13 +440,13 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionBurnAndIncrease(t *tes
 			// 0. Set realm to admin
 			testing.SetRealm(adminRealm)
 			// 1. transfer gns
-			gns.Transfer(aliceAddr, tokenAmountForDistribute)
+			gns.Transfer(cross, aliceAddr, tokenAmountForDistribute)
 		}
 		if gns.BalanceOf(bobAddr) > tokenAmountForDistribute {
 			// 0. Set realm to admin
 			testing.SetRealm(adminRealm)
 			// 1. transfer gns
-			gns.Transfer(bobAddr, tokenAmountForDistribute)
+			gns.Transfer(cross, bobAddr, tokenAmountForDistribute)
 		}
 	})
 
@@ -789,13 +789,13 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 		tokenAmountForDistribute := uint64(1000000000000)
 		if gns.BalanceOf(aliceAddr) < tokenAmountForDistribute {
 			testing.SetRealm(adminRealm)
-			gns.Transfer(aliceAddr, tokenAmountForDistribute)
+			gns.Transfer(cross, aliceAddr, tokenAmountForDistribute)
 			uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(aliceAddr))
 		}
 
 		if gns.BalanceOf(bobAddr) < tokenAmountForDistribute {
 			testing.SetRealm(adminRealm)
-			gns.Transfer(bobAddr, tokenAmountForDistribute)
+			gns.Transfer(cross, bobAddr, tokenAmountForDistribute)
 			uassert.Equal(t, tokenAmountForDistribute, gns.BalanceOf(bobAddr))
 		}
 	})
@@ -869,13 +869,13 @@ func TestPositionBalanceCompareWithPoolBalanceWhenPositionIncrease(t *testing.T)
 			// 0. Set realm to admin
 			testing.SetRealm(adminRealm)
 			// 1. transfer gns
-			gns.Transfer(aliceAddr, tokenAmountForDistribute)
+			gns.Transfer(cross, aliceAddr, tokenAmountForDistribute)
 		}
 		if gns.BalanceOf(bobAddr) > tokenAmountForDistribute {
 			// 0. Set realm to admin
 			testing.SetRealm(adminRealm)
 			// 1. transfer gns
-			gns.Transfer(bobAddr, tokenAmountForDistribute)
+			gns.Transfer(cross, bobAddr, tokenAmountForDistribute)
 		}
 	})
 

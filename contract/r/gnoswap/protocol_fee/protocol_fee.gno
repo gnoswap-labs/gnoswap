@@ -70,19 +70,18 @@ func DistributeProtocolFee(cur realm) map[string]uint64 {
 			toDevOpsAmount := balance * devOpsPct / 10000 // default 0%
 			toGovStakerAmount := balance - toDevOpsAmount // default 100%
 
-			tokenTeller := common.GetTokenTeller(token)
 			if toDevOpsAmount > 0 {
 				addAccuToDevOps(token, toDevOpsAmount)
 				updateDistributedToDevOpsHistory(token, toDevOpsAmount)
 				sentToDevOpsForEvent = append(sentToDevOpsForEvent, makeEventString(token, toDevOpsAmount))
-				tokenTeller.Transfer(devOpsAddr, int64(toDevOpsAmount))
+				common.Transfer(cross, token, devOpsAddr, int64(toDevOpsAmount))
 			}
 
 			if toGovStakerAmount > 0 {
 				addAccuToGovStaker(token, toGovStakerAmount)
 				updateDistributedToGovStakerHistory(token, toGovStakerAmount)
 				sentToGovStakerForEvent = append(sentToGovStakerForEvent, makeEventString(token, toGovStakerAmount))
-				tokenTeller.Transfer(govStakerAddr, int64(toGovStakerAmount))
+				common.Transfer(cross, token, govStakerAddr, int64(toGovStakerAmount))
 
 				toReturnDistributedToGovStaker[token] = toGovStakerAmount
 			}

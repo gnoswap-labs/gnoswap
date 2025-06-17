@@ -919,8 +919,8 @@ func testCreatePoolBazQux3000ExternalOnly(t *testing.T) {
 func testCreateExternalIncentiveBaz(t *testing.T) {
 	t.Run("create external incentive baz for baz:qux:0.3% pool", func(t *testing.T) {
 		testing.SetRealm(adminRealm)
-		baz.Transfer(externalCreator, 20000000)         // for external incentive
-		gns.Transfer(externalCreator, depositGnsAmount) // for deposit
+		baz.Transfer(cross, externalCreator, 20000000)         // for external incentive
+		gns.Transfer(cross, externalCreator, depositGnsAmount) // for deposit
 
 		testing.SetRealm(std.NewUserRealm(externalCreator))
 		baz.Approve(stakerAddr, 20000000)

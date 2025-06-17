@@ -147,8 +147,8 @@ func testMintBarQuxPos02() {
 
 func testCreateExternalIncentiveGns() {
 	testing.SetRealm(adminRealm)
-	gns.Transfer(externalCreatorUser, 9000000000)
-	gns.Transfer(externalCreatorUser, depositGnsAmount)
+	gns.Transfer(cross, externalCreatorUser, 9000000000)
+	gns.Transfer(cross, externalCreatorUser, depositGnsAmount)
 
 	testing.SetRealm(externalCreatorRealm) // creator
 	gns.Approve(stakerAddr, consts.UINT64_MAX)

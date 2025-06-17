@@ -27,8 +27,7 @@ func TransferToken(cur realm, tokenPath string, to std.Address, amount int64) {
 
 // transferToken transfers token to the given address.
 func transferToken(tokenPath string, to std.Address, amount int64) {
-	teller := common.GetTokenTeller(tokenPath)
-	checkErr(teller.Transfer(to, amount))
+	checkErr(common.Transfer(cross, tokenPath, to, amount))
 
 	prevAddr, prevPkgPath := getPrevAsString()
 

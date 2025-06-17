@@ -193,14 +193,12 @@ func Collect(cur realm,
 	if amount0.Gt(u256.Zero()) {
 		position.tokensOwed0 = new(u256.Uint).Sub(position.tokensOwed0, amount0)
 		pool.balances.token0 = new(u256.Uint).Sub(pool.balances.token0, amount0)
-		token0 := common.GetTokenTeller(pool.token0Path)
-		checkTransferError(token0.Transfer(recipient, amount0.Int64()))
+		checkTransferError(common.Transfer(cross, pool.token0Path, recipient, amount0.Int64()))
 	}
 	if amount1.Gt(u256.Zero()) {
 		position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
 		pool.balances.token1 = new(u256.Uint).Sub(pool.balances.token1, amount1)
-		token1 := common.GetTokenTeller(pool.token1Path)
-		checkTransferError(token1.Transfer(recipient, amount1.Int64()))
+		checkTransferError(common.Transfer(cross, pool.token1Path, recipient, amount1.Int64()))
 	}
 
 	pool.setPosition(positionKey, position)
@@ -348,16 +346,14 @@ func collectProtocol(
 	uAmount0 := amount0.Int64()
 	uAmount1 := amount1.Int64()
 
-	token0Teller := common.GetTokenTeller(pool.token0Path)
-	checkTransferError(token0Teller.Transfer(recipient, uAmount0))
+	checkTransferError(common.Transfer(cross, pool.token0Path, recipient, uAmount0))
 	newBalanceToken0, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount0, true)
 	if err != nil {
 		panic(err)
 	}
 	pool.balances.token0 = newBalanceToken0
 
-	token1Teller := common.GetTokenTeller(pool.token1Path)
-	checkTransferError(token1Teller.Transfer(recipient, uAmount1))
+	checkTransferError(common.Transfer(cross, pool.token1Path, recipient, uAmount1))
 	newBalanceToken1, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount1, false)
 	if err != nil {
 		panic(err)

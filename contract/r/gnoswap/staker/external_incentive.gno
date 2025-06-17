@@ -201,8 +201,7 @@ func EndExternalIncentive(cur realm, refundee std.Address, targetPoolPath, rewar
 		refund = poolLeftExternalRewardAmount
 	}
 
-	teller := common.GetTokenTeller(ictv.rewardToken)
-	teller.Transfer(ictv.refundee, refund)
+	common.Transfer(cross, ictv.rewardToken, ictv.refundee, refund)
 
 	// unwrap if wugnot
 	if ictv.rewardToken == consts.WUGNOT_PATH {

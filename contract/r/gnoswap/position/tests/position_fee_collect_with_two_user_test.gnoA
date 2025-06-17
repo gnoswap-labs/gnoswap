@@ -48,10 +48,10 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
 
 	// initial balance for user1 & user2
-	bar.Transfer(user1Adderss, 100_000_000)
-	baz.Transfer(user1Adderss, 100_000_000)
-	bar.Transfer(user2Adderss, 100_000_000)
-	baz.Transfer(user2Adderss, 100_000_000)
+	bar.Transfer(cross, user1Adderss, 100_000_000)
+	baz.Transfer(cross, user1Adderss, 100_000_000)
+	bar.Transfer(cross, user2Adderss, 100_000_000)
+	baz.Transfer(cross, user2Adderss, 100_000_000)
 
 	t.Run("mint and swap fee should be distributed to user's liquidity", func(t *testing.T) {
 		testing.SetRealm(user1Realm)

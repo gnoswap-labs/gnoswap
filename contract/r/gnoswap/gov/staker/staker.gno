@@ -460,7 +460,6 @@ func transferProtocolFee(tokenPath string, to std.Address, amount uint64) {
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(govStaker, to, std.Coins{{"ugnot", int64(amount)}})
 	} else {
-		token := common.GetTokenTeller(tokenPath)
-		checkTransferError(token.Transfer(to, int64(amount)))
+		checkTransferError(common.Transfer(cross, tokenPath, to, int64(amount)))
 	}
 }

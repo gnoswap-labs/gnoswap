@@ -55,8 +55,7 @@ func (p *Pool) safeTransfer(
 	}
 	amountInt64 := safeConvertToInt64(absAmount)
 
-	token := common.GetTokenTeller(tokenPath)
-	checkTransferError(token.Transfer(to, amountInt64))
+	checkTransferError(common.Transfer(cross, tokenPath, to, amountInt64))
 
 	newBalance, err := updatePoolBalance(token0, token1, absAmount, isToken0)
 	if err != nil {
