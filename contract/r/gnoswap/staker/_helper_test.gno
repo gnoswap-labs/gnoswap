@@ -120,6 +120,7 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 
 	// mint position
 	return pn.Mint(
+		cross,
 		barPath,
 		bazPath,
 		fee3000,
@@ -167,17 +168,17 @@ func TokenBalance(t *testing.T, tokenPath string, owner std.Address) int64 {
 	case wugnotPath:
 		return wugnot.BalanceOf(owner)
 	case gnsPath:
-		return gns.BalanceOf(cross, owner)
+		return gns.BalanceOf(owner)
 	case barPath:
-		return bar.BalanceOf(cross, owner)
+		return bar.BalanceOf(owner)
 	case bazPath:
-		return baz.BalanceOf(cross, owner)
+		return baz.BalanceOf(owner)
 	case fooPath:
-		return foo.BalanceOf(cross, owner)
+		return foo.BalanceOf(owner)
 	case oblPath:
-		return obl.BalanceOf(cross, owner)
+		return obl.BalanceOf(owner)
 	case quxPath:
-		return qux.BalanceOf(cross, owner)
+		return qux.BalanceOf(owner)
 	default:
 		panic("token not found")
 	}
@@ -189,17 +190,17 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender std.Address) 
 	case wugnotPath:
 		return wugnot.Allowance(owner, spender)
 	case gnsPath:
-		return gns.Allowance(cross, owner, spender)
+		return gns.Allowance(owner, spender)
 	case barPath:
-		return bar.Allowance(cross, owner, spender)
+		return bar.Allowance(owner, spender)
 	case bazPath:
-		return baz.Allowance(cross, owner, spender)
+		return baz.Allowance(owner, spender)
 	case fooPath:
-		return foo.Allowance(cross, owner, spender)
+		return foo.Allowance(owner, spender)
 	case oblPath:
-		return obl.Allowance(cross, owner, spender)
+		return obl.Allowance(owner, spender)
 	case quxPath:
-		return qux.Allowance(cross, owner, spender)
+		return qux.Allowance(owner, spender)
 	default:
 		panic("token not found")
 	}
@@ -245,6 +246,7 @@ func MintPosition(t *testing.T,
 	testing.SetRealm(std.NewUserRealm(caller))
 
 	return pn.Mint(
+		cross,
 		token0,
 		token1,
 		fee,

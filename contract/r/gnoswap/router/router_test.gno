@@ -251,6 +251,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 
 			// Position Creation
 			pn.Mint(
+				cross,
 				tt.tokenPath0,
 				tt.tokenPath1,
 				tt.feeTier,
@@ -422,6 +423,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			teller.Approve(poolContract, maxApprove)
 			// Position Creation
 			positionId, _, _, _ := pn.Mint(
+				cross,
 				tt.tokenPath0,
 				tt.tokenPath1,
 				tt.feeTier,
@@ -452,6 +454,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			wugnot.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
 			pn.IncreaseLiquidity(
+				cross,
 				positionId,
 				tt.amount0Requested,
 				tt.amount1Requested,
@@ -607,6 +610,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			teller.Approve(poolContract, maxApprove)
 			// Position Creation
 			positionId, liquidity, _, _ := pn.Mint(
+				cross,
 				tt.tokenPath0,
 				tt.tokenPath1,
 				tt.feeTier,
@@ -634,6 +638,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			reqLiquidity := strconv.FormatUint(partialLiquidity, 10)
 
 			pn.DecreaseLiquidity(
+				cross,
 				positionId,
 				reqLiquidity,
 				"0",
@@ -793,6 +798,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			teller.Approve(poolContract, maxApprove)
 			// Position Creation
 			pn.Mint(
+				cross,
 				tt.tokenPath0,
 				tt.tokenPath1,
 				tt.feeTier,

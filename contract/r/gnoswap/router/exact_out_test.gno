@@ -110,6 +110,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	// create position
 	// a. Position 1: (-50%+50%)
 	pn.Mint(
+		cross,
 		barPath,
 		fooPath,
 		3000,
@@ -127,6 +128,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 	// b. Position 2: (-10%+10%)
 	pn.Mint(
+		cross,
 		barPath,
 		fooPath,
 		3000,
@@ -144,6 +146,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 	// c. Position 3: (full range)
 	pn.Mint(
+		cross,
 		barPath,
 		fooPath,
 		3000,
@@ -161,6 +164,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 	// d. Position 4: (lower out-range)
 	pn.Mint(
+		cross,
 		barPath,
 		fooPath,
 		3000,
@@ -178,6 +182,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 	// e. Position 5: (upper out-range)
 	pn.Mint(
+		cross,
 		barPath,
 		fooPath,
 		3000,
@@ -255,6 +260,7 @@ func setupTestPool(t *testing.T) {
 	pl.CreatePool(cross, barPath, fooPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 
 	_, _, _, _ = pn.Mint(
+		cross,
 		barPath,
 		fooPath,
 		3000,

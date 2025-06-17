@@ -350,6 +350,7 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 
 	// mint position
 	return pn.Mint(
+		cross,
 		barPath,
 		bazPath,
 		fee3000,
@@ -375,6 +376,7 @@ func MakeSecondMintPositionWithoutFee(t *testing.T) (uint64, string, string, str
 	TokenApprove(t, quxPath, admin, poolAddr, maxApprove)
 
 	return pn.Mint(
+		cross,
 		bazPath,
 		quxPath,
 		fee3000,
@@ -400,6 +402,7 @@ func MakeThirdMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 	TokenApprove(t, fooPath, admin, poolAddr, maxApprove)
 
 	return pn.Mint(
+		cross,
 		barPath,
 		fooPath,
 		fee500,
@@ -427,6 +430,7 @@ func MakeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 
 	// mint position
 	return pn.Mint(
+		cross,
 		barPath,
 		bazPath,
 		fee500,

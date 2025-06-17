@@ -48,6 +48,7 @@ func MintAndStake(cur realm,
 	}
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(
+		cross,
 		token0,
 		token1,
 		fee,

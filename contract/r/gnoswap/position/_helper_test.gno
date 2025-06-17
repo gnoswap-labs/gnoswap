@@ -143,17 +143,17 @@ func TokenBalance(t *testing.T, tokenPath string, owner std.Address) int64 {
 	case wugnotPath:
 		return wugnot.BalanceOf(owner)
 	case gnsPath:
-		return gns.BalanceOf(cross, owner)
+		return gns.BalanceOf(owner)
 	case barPath:
-		return bar.BalanceOf(cross, owner)
+		return bar.BalanceOf(owner)
 	case bazPath:
-		return baz.BalanceOf(cross, owner)
+		return baz.BalanceOf(owner)
 	case fooPath:
-		return foo.BalanceOf(cross, owner)
+		return foo.BalanceOf(owner)
 	case oblPath:
-		return obl.BalanceOf(cross, owner)
+		return obl.BalanceOf(owner)
 	case quxPath:
-		return qux.BalanceOf(cross, owner)
+		return qux.BalanceOf(owner)
 	default:
 		panic("token not found")
 	}
@@ -165,17 +165,17 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender std.Address) 
 	case wugnotPath:
 		return wugnot.Allowance(owner, spender)
 	case gnsPath:
-		return gns.Allowance(cross, owner, spender)
+		return gns.Allowance(owner, spender)
 	case barPath:
-		return bar.Allowance(cross, owner, spender)
+		return bar.Allowance(owner, spender)
 	case bazPath:
-		return baz.Allowance(cross, owner, spender)
+		return baz.Allowance(owner, spender)
 	case fooPath:
-		return foo.Allowance(cross, owner, spender)
+		return foo.Allowance(owner, spender)
 	case oblPath:
-		return obl.Allowance(cross, owner, spender)
+		return obl.Allowance(owner, spender)
 	case quxPath:
-		return qux.Allowance(cross, owner, spender)
+		return qux.Allowance(owner, spender)
 	default:
 		panic("token not found")
 	}
@@ -238,6 +238,7 @@ func MintPosition(t *testing.T,
 	testing.SetRealm(std.NewUserRealm(caller))
 
 	return Mint(
+		cross,
 		token0,
 		token1,
 		fee,
@@ -635,32 +636,32 @@ func burnTokens(t *testing.T) {
 
 func burnFoo(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	foo.Burn(cross, addr, foo.BalanceOf(cross, addr))
+	foo.Burn(cross, addr, foo.BalanceOf(addr))
 }
 
 func burnBar(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	bar.Burn(cross, addr, bar.BalanceOf(cross, addr))
+	bar.Burn(cross, addr, bar.BalanceOf(addr))
 }
 
 func burnBaz(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	baz.Burn(cross, addr, baz.BalanceOf(cross, addr))
+	baz.Burn(cross, addr, baz.BalanceOf(addr))
 }
 
 func burnQux(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	qux.Burn(cross, addr, qux.BalanceOf(cross, addr))
+	qux.Burn(cross, addr, qux.BalanceOf(addr))
 }
 
 func burnObl(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	obl.Burn(cross, addr, obl.BalanceOf(cross, addr))
+	obl.Burn(cross, addr, obl.BalanceOf(addr))
 }
 
 func burnUsdc(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	usdc.Burn(cross, addr, usdc.BalanceOf(cross, addr))
+	usdc.Burn(cross, addr, usdc.BalanceOf(addr))
 }
 
 // burnAllNFT burns all NFTs
@@ -701,8 +702,8 @@ func TestBurnTokens(t *testing.T) {
 	t.Skip("only works when testing this single file")
 	burnTokens(t)
 
-	uassert.Equal(t, foo.BalanceOf(cross, addr01), uint64(0)) // 100_000_000 -> 0
-	uassert.Equal(t, bar.BalanceOf(cross, addr01), uint64(0)) // 100_000_000 -> 0
+	uassert.Equal(t, foo.BalanceOf(addr01), uint64(0)) // 100_000_000 -> 0
+	uassert.Equal(t, bar.BalanceOf(addr01), uint64(0)) // 100_000_000 -> 0
 }
 
 func TestBurnAllNFT(t *testing.T) {

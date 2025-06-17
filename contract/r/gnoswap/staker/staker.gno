@@ -279,7 +279,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 	}
 
 	// after transfer, set caller(user) as position operator (to collect fee and reward)
-	pn.SetPositionOperator(positionId, caller)
+	pn.SetPositionOperator(cross, positionId, caller)
 
 	signedLiquidity := i256.FromUint256(liquidity)
 	isInRange := false
@@ -572,7 +572,7 @@ func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) (string, stri
 
 	// transfer NFT ownership to origin owner
 	gnft.TransferFrom(cross, stakerAddr, deposit.owner, positionIdFrom(positionId))
-	pn.SetPositionOperator(positionId, consts.ZERO_ADDRESS)
+	pn.SetPositionOperator(cross, positionId, consts.ZERO_ADDRESS)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(

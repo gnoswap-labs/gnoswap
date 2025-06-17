@@ -191,6 +191,7 @@ func TestBurn(t *testing.T) {
 			func() {
 				testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
 				amount0, amount1 := Burn(
+					cross,
 					barTokenPath,
 					bazTokenPath,
 					tt.fee,
