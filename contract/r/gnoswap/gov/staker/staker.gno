@@ -71,7 +71,7 @@ func Delegate(cur realm, to std.Address, amount uint64, referrer string) {
 	}
 
 	// Transfer the caller's GNS to GovStaker
-	gns.TransferFrom(cross, caller, std.OriginCaller(), int64(amount))
+	gns.TransferFrom(cross, caller, std.CurrentRealm(), int64(amount))
 
 	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer
