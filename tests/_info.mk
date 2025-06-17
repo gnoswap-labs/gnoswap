@@ -14,7 +14,7 @@ ADDR_GNS := g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m
 ADDR_GNFT := g1wxv2rdfn53qc84nt3nn646f9yh3nly8lm7j89t
 
 # username address
-ADDR_GNOSWAP := 
+ADDR_GNOSWAP :=
 ADDR_ADMIN :=
 ADDR_TEST :=
 
