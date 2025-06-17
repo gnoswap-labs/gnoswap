@@ -539,7 +539,7 @@ func TransferLeftFromProjectByAdmin(cur realm, projectId string, recipient std.A
 	projects[projectId] = project
 
 	if projectLeftReward > 0 {
-		common.Transfer(cross, project.tokenPath, recipient, int64(amount))
+		common.Transfer(cross, project.tokenPath, recipient, int64(projectLeftReward))
 	}
 
 	std.Emit(

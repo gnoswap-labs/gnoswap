@@ -103,7 +103,7 @@ func haltCheck() error {
 }
 
 // commonSwapSetup performs all necessary validations and setup for a swap operation
-func commonSwapSetup(cur realm) error {
+func commonSwapSetup() error {
 	if err := haltCheck(); err != nil {
 		return err
 	}
