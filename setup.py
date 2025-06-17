@@ -6,6 +6,15 @@ from pathlib import Path
 from typing import Optional, Tuple
 from dataclasses import dataclass
 
+try:
+    import tomllib  # Python 3.11+
+except ImportError:
+    try:
+        import tomli as tomllib  # fallback for older Python versions
+    except ImportError:
+        import toml as tomllib  # alternative fallback
+
+
 @dataclass
 class ModuleInfo:
     """Information about a Gno module."""
@@ -22,8 +31,8 @@ class GnoModuleManager:
         self.workdir = workdir
         self.gno_dir = os.path.join(workdir, "gno", "examples", "gno.land")
 
-    def extract_module_path(self, file_path: str) -> Optional[str]:
-        """Extract module path from gno.mod file."""
+    def extract_module_path_from_gnomod(self, file_path: str) -> Optional[str]:
+        """Extract module path from gno.mod file (legacy format)."""
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
@@ -35,13 +44,37 @@ class GnoModuleManager:
             print(f"Error reading file: {file_path}")
             return None
 
+    def extract_module_path_from_toml(self, file_path: str) -> Optional[str]:
+        """Extract module path from gnomod.toml file."""
+        try:
+            with open(file_path, "rb") as f:
+                data = tomllib.load(f)
+                return data.get("module")
+        except (IOError, tomllib.TOMLDecodeError, KeyError) as e:
+            print(f"Error reading TOML file {file_path}: {e}")
+            return None
+
+    def extract_module_path(self, file_path: str) -> Optional[str]:
+        """Extract module path from either gno.mod or gnomod.toml file."""
+        if file_path.endswith("gnomod.toml"):
+            return self.extract_module_path_from_toml(file_path)
+        else:  # gno.mod
+            return self.extract_module_path_from_gnomod(file_path)
+
     def find_parent_module(self, directory: str) -> Tuple[Optional[str], Optional[str]]:
         """Find the nearest parent module path and directory."""
         current = directory
         while current != os.path.dirname(current):
+            # Check for new TOML format first
+            toml_file = os.path.join(current, "gnomod.toml")
+            if os.path.exists(toml_file):
+                return self.extract_module_path(toml_file), current
+            
+            # Fallback to legacy gno.mod format
             mod_file = os.path.join(current, "gno.mod")
             if os.path.exists(mod_file):
                 return self.extract_module_path(mod_file), current
+            
             current = os.path.dirname(current)
         return None, None
 
@@ -84,11 +117,15 @@ class ContractCopier:
 
     def process_directory(self, root: str, dirs: list, files: list) -> None:
         """Process a directory for modules and tests."""
-        # Handle modules with gno.mod
-        if "gno.mod" in files:
-            module_path = self.module_manager.extract_module_path(
-                os.path.join(root, "gno.mod")
-            )
+        # Handle modules - check for both new TOML format and legacy format
+        module_file = None
+        if "gnomod.toml" in files:
+            module_file = os.path.join(root, "gnomod.toml")
+        elif "gno.mod" in files:
+            module_file = os.path.join(root, "gno.mod")
+        
+        if module_file:
+            module_path = self.module_manager.extract_module_path(module_file)
             if module_info := self.module_manager.get_module_info(root, module_path):
                 self.copy_module(module_info)
 

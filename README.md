@@ -177,3 +177,51 @@ gno test -root-dir $WORKDIR/gno -v=false ./gno.land/r/gnoswap/v1/pool
 - position: [gno.land/r/gnoswap/v1/position](https://gnoscan.io/realms/details?path=gno.land/r/gnoswap/v1/position)
 - router: [gno.land/r/gnoswap/v1/router](https://gnoscan.io/realms/details?path=gno.land/r/gnoswap/v1/router)
 - staker: [gno.land/r/gnoswap/v1/staker](https://gnoscan.io/realms/details?path=gno.land/r/gnoswap/v1/staker)
+
+## Development Environment Setup
+
+### Using Docker (Recommended)
+
+1. Build the Docker image:
+```bash
+make docker-build
+```
+
+2. Start the container:
+```bash
+make docker-up
+```
+
+3. Access the container shell:
+```bash
+make docker-shell
+```
+
+4. View logs:
+```bash
+make docker-logs
+```
+
+5. Stop the container:
+```bash
+make docker-down
+```
+
+### Manual Setup
+
+If you prefer to set up the environment manually:
+
+1. Install Python 3.11 or later
+2. Install uv package manager:
+```bash
+pip install uv
+```
+
+3. Create a virtual environment and install dependencies:
+```bash
+uv venv
+source .venv/bin/activate  # On Unix/macOS
+# or
+.venv\Scripts\activate  # On Windows
+uv pip install -r requirements.txt
+```

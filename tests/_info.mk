@@ -14,9 +14,9 @@ ADDR_GNS := g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m
 ADDR_GNFT := g1wxv2rdfn53qc84nt3nn646f9yh3nly8lm7j89t
 
 # username address
-ADDR_GNOSWAP := 
-ADDR_ADMIN :=
-ADDR_TEST :=
+ADDR_GNOSWAP := g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c
+ADDR_ADMIN := g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+ADDR_TEST := g1mjqcxzek8yacgcvnqfkj0dck67wdyhqlfp9unr
 
 # INCENTIVE_START
 TOMORROW_MIDNIGHT := $(shell (gdate -ud 'tomorrow 00:00:00' +%s))
@@ -31,5 +31,5 @@ ROOT_DIR:=$(shell dirname $(MAKEFILE))/../
 
 
 # TODO: change below 2 values based on which chain to deploy
-GNOLAND_RPC_URL ?= localhost:26657
-CHAINID ?= dev
+GNOLAND_RPC_URL ?= https://dev.rpc.gnoswap.io
+CHAINID ?= dev.gnoswap
