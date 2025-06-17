@@ -14,7 +14,11 @@ RUN uv venv && \
     . .venv/bin/activate && \
     uv pip install -r requirements.txt
 
-COPY . .
+# Copy only necessary files
+COPY setup.py .
+COPY scripts/ scripts/
+COPY contract/ contract/
+COPY mapping.yml .
 
 # Change ownership of the application files
 RUN chown -R appuser:appuser /app
