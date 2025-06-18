@@ -203,22 +203,21 @@ func TokenApprove(t *testing.T, tokenPath string, owner, spender std.Address, am
 	}
 }
 
-// func CreatePool(t *testing.T,
-// 	token0 string,
-// 	token1 string,
-// 	fee uint32,
-// 	sqrtPriceX96 string,
-// 	caller std.Address,
-// ) {
-// 	t.Helper()
+func CreatePool(t *testing.T,
+	token0 string,
+	token1 string,
+	fee uint32,
+	sqrtPriceX96 string,
+	caller std.Address,
+) {
+	t.Helper()
 
-// 	testing.SetRealm(std.NewUserRealm(caller))
-// 	poolPath := pl.GetPoolPath(token0, token1, fee)
-// 	if !pl.DoesPoolPathExist(poolPath) {
-// 		pl.CreatePool(token0, token1, fee, sqrtPriceX96)
-// 		sr.SetPoolTierByAdmin(poolPath, TIER_1)
-// 	}
-// }
+	testing.SetRealm(std.NewUserRealm(caller))
+	poolPath := pl.GetPoolPath(token0, token1, fee)
+	if !pl.DoesPoolPathExist(poolPath) {
+		pl.CreatePool(cross, token0, token1, fee, sqrtPriceX96)
+	}
+}
 
 func MintPosition(t *testing.T,
 	token0 string,
