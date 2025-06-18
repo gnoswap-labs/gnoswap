@@ -60,7 +60,7 @@ func TestBalanceOf(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			balance, _ := BalanceOf(cross, tt.addr)
+			balance, _ := BalanceOf(tt.addr)
 			uassert.Equal(t, tt.expected, balance)
 		})
 	}
@@ -99,6 +99,7 @@ func TestTotalSupply(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setup != nil {
+				testing.SetRealm(positionRealm)
 				tt.setup(cross)
 			}
 			uassert.Equal(t, tt.expected, TotalSupply())
@@ -150,7 +151,7 @@ func TestIsApprovedForAll(t *testing.T) {
 			name: "IsApprovedForAll(addr01, addr02) after setting approval",
 			setup: func(cur realm) {
 				testing.SetRealm(addr01Realm)
-				SetApprovalForAll(cur, (addr02), true)
+				SetApprovalForAll(cur, addr02, true)
 			},
 			expected: true,
 		},
@@ -180,7 +181,7 @@ func TestGetApproved(t *testing.T) {
 			name: "GetApproved(1) after approving",
 			setup: func(cur realm) {
 				testing.SetRealm(addr01Realm)
-				Approve(cur, addr02, tid(1))
+				Approve(cross, addr02, tid(1))
 			},
 			expectedAddr: addr02,
 		},
@@ -406,9 +407,12 @@ func TestSetTokenURIByImageURI(t *testing.T) {
 
 	SetTokenURIByImageURI(cross, tokenID)
 
-	uri := TokenURI(tokenID)
+	uri, err := TokenURI(tokenID)
 	if uri == "" {
 		t.Error("token URI should not be empty")
+	}
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
 	}
 }
 
@@ -459,7 +463,14 @@ func TestTokenURI(t *testing.T) {
 					TokenURI(tid(tt.tokenId))
 				})
 			} else {
-				uassert.NotEmpty(t, TokenURI(tid(tt.tokenId)))
+				// uassert.NotEmpty(t, TokenURI(tid(tt.tokenId)))
+				res, err := TokenURI(tid(tt.tokenId))
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				if res == "" {
+					t.Error("token URI should not be empty")
+				}
 			}
 		})
 	}
@@ -477,7 +488,13 @@ func TestSetTokenURILast(t *testing.T) {
 	})
 
 	t.Run("token uri(2)", func(t *testing.T) {
-		uassert.NotEmpty(t, TokenURI(tid(2)))
+		res, err := TokenURI(tid(2))
+		if err != nil {
+			t.Errorf("Unexpected error: %v", err)
+		}
+		if res == "" {
+			t.Error("token URI should not be empty")
+		}
 	})
 }
 
