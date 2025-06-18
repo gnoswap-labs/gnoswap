@@ -33,11 +33,11 @@ class GnoModuleManager
     Dir.glob(File.join(@contract_dir, "**", "gnomod.toml")).each do |mod_file|
       if module_path = extract_module_path(mod_file)
         next unless module_path.start_with?("gno.land/")
-        
+
         # Extract relative path after gno.land/
         relative_path = module_path.sub("gno.land/", "")
         folder = "gno/examples/gno.land/#{relative_path}"
-        
+
         # Generate name by combining the first and last parts of the path
         path_parts = relative_path.split('/')
         name = if path_parts.include?('gov')
@@ -46,7 +46,7 @@ class GnoModuleManager
         else
           "#{path_parts[0]}/#{path_parts[-1]}"
         end
-        
+
         matrix[:include] << {
           name: name,
           folder: folder
