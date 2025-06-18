@@ -24,7 +24,23 @@ class TestRunner
 
   def run_unit_tests
     puts "Running unit tests for #{@folder}"
-    run_command("gno test ./#{@folder} -root-dir #{@root_dir} -v")
+    test_files = Dir.glob("./#{@folder}/*_test.gno")
+    test_files.each do |file|
+      content = File.read(file)
+      # collect test functions from the file
+      # we need to run each test function separately
+      # because the gno test environment does not separate its test environment
+      # which can cause the invalid test result
+      test_names = content.scan(/func (Test\w+)/).flatten
+      if test_names.empty?
+        puts "No test functions found in #{file}"
+        next
+      end
+      test_names.each do |test_name|
+        puts "Running #{test_name} in #{file}"
+        run_command("gno test #{file} -root-dir #{@root_dir} -run #{test_name} -v")
+      end
+    end
   end
 
   def remove_test_files

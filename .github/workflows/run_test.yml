@@ -19,6 +19,12 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.4
+      
+      - name: Install bundler
+        run: gem install bundler
+
+      - name: Install ruby gems
+        run: bundle install
 
       - name: Generate test matrix
         id: set-matrix
@@ -58,11 +64,41 @@ jobs:
           cd gno
           make install.gno
 
-      - name: Build and run Docker container
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      - name: Cache uv packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            uv-${{ runner.os }}-
+
+      - name: Install uv
         run: |
-          docker-compose build
-          docker-compose up -d
-          docker-compose exec -T app python3 setup.py -w /home/runner/work/gnoswap/gnoswap
+          pip install uv
+      
+      - name: Create uv virtual environment
+        run: |
+          uv venv .venv
+
+      - name: Activate venv and install dependencies
+        run: |
+          source .venv/bin/activate
+          uv pip install -r requirements.txt
+
+      - name: Checkout gnoswap(main)
+        uses: actions/checkout@v4
+        with:
+          path: ./tmp/gnoswap
+
+      - name: Run setup.py
+        run: |
+          cd tmp/gnoswap
+          python3 setup.py -w /home/runner/work/gnoswap/gnoswap
 
       - name: "Run tests for ${{ matrix.name }}"
         run: |
@@ -70,8 +106,3 @@ jobs:
           ruby .github/scripts/run_tests.rb \
             -f "${{ matrix.folder }}" \
             -r "/home/runner/work/gnoswap/gnoswap/gno"
-
-      - name: Cleanup Docker
-        if: always()
-        run: |
-          docker-compose down
