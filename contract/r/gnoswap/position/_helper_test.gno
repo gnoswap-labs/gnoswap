@@ -9,7 +9,7 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
 
-	// "gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
 
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -24,7 +24,6 @@ import (
 	"gno.land/r/onbloc/usdc"
 
 	"gno.land/r/gnoswap/v1/access"
-	// sr "gno.land/r/gnoswap/v1/staker"
 )
 
 const (
@@ -203,22 +202,21 @@ func TokenApprove(t *testing.T, tokenPath string, owner, spender std.Address, am
 	}
 }
 
-// func CreatePool(t *testing.T,
-// 	token0 string,
-// 	token1 string,
-// 	fee uint32,
-// 	sqrtPriceX96 string,
-// 	caller std.Address,
-// ) {
-// 	t.Helper()
+func CreatePool(t *testing.T,
+	token0 string,
+	token1 string,
+	fee uint32,
+	sqrtPriceX96 string,
+	caller std.Address,
+) {
+	t.Helper()
 
-// 	testing.SetRealm(std.NewUserRealm(caller))
-// 	poolPath := pl.GetPoolPath(token0, token1, fee)
-// 	if !pl.DoesPoolPathExist(poolPath) {
-// 		pl.CreatePool(token0, token1, fee, sqrtPriceX96)
-// 		sr.SetPoolTierByAdmin(poolPath, TIER_1)
-// 	}
-// }
+	testing.SetRealm(std.NewUserRealm(caller))
+	poolPath := pl.GetPoolPath(token0, token1, fee)
+	if !pl.DoesPoolPathExist(poolPath) {
+		pl.CreatePool(cross, token0, token1, fee, sqrtPriceX96)
+	}
+}
 
 func MintPosition(t *testing.T,
 	token0 string,
@@ -408,43 +406,44 @@ func MintPositionAll(t *testing.T, caller std.Address) {
 	}
 }
 
-// func CreatePoolWithoutFee(t *testing.T) {
-// 	testing.SetRealm(adminRealm)
-// 	// set pool create fee to 0 for testing
-// 	pl.SetPoolCreationFeeByAdmin(0)
-// 	CreatePool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
-// }
+// set pool create fee to 0 for testing
+func CreatePoolWithoutFee(t *testing.T) {
+	testing.SetRealm(adminRealm)
+	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	CreatePool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+}
 
-// func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
-// 	t.Helper()
+func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
+	t.Helper()
 
-// 	// make actual data to test resetting not only position's state but also pool's state
-// 	testing.SetRealm(adminRealm)
+	// make actual data to test resetting not only position's state but also pool's state
+	testing.SetRealm(adminRealm)
 
-// 	// set pool create fee to 0 for testing
-// 	pl.SetPoolCreationFeeByAdmin(0)
-// 	CreatePool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	// set pool create fee to 0 for testing
+	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	CreatePool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
 
-// 	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
-// 	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
+	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
+	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
 
-// 	// mint position
-// 	return Mint(
-// 		barPath,
-// 		fooPath,
-// 		fee500,
-// 		-887270,
-// 		887270,
-// 		"50000",
-// 		"50000",
-// 		"0",
-// 		"0",
-// 		max_timeout,
-// 		adminAddr,
-// 		adminAddr,
-// 		"",
-// 	)
-// }
+	// mint position
+	return Mint(
+		cross,
+		barPath,
+		fooPath,
+		fee500,
+		-887270,
+		887270,
+		"50000",
+		"50000",
+		"0",
+		"0",
+		max_timeout,
+		adminAddr,
+		adminAddr,
+		"",
+	)
+}
 
 func LPTokenApprove(t *testing.T, owner, operator std.Address, positionId uint64) {
 	t.Helper()
@@ -560,16 +559,16 @@ func quxTransfer(t *testing.T, to std.Address, amount int64) {
 // ----------------------------------------------------------------------------
 // ugnot
 
-func ugnotTransfer(t *testing.T, from, to std.Address, amount uint64) {
+func ugnotTransfer(t *testing.T, from, to std.Address, amount int64) {
 	t.Helper()
 
 	testing.SetRealm(std.NewUserRealm(from))
-	testing.SetOriginSend(std.Coins{{ugnotDenom, int64(amount)}})
+	testing.SetOriginSend(std.Coins{{ugnotDenom, amount}})
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(from, to, std.Coins{{ugnotDenom, int64(amount)}})
+	banker.SendCoins(from, to, std.Coins{{ugnotDenom, amount}})
 }
 
-func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
+func ugnotBalanceOf(t *testing.T, addr std.Address) int64 {
 	t.Helper()
 
 	banker := std.NewBanker(std.BankerTypeRealmIssue)
@@ -578,12 +577,12 @@ func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
 		return 0
 	}
 
-	return uint64(coins.AmountOf(ugnotDenom))
+	return coins.AmountOf(ugnotDenom)
 }
 
 func ugnotMint(t *testing.T, addr std.Address, denom string, amount int64) {
 	t.Helper()
-	testing.IssueCoins(addr, std.Coins{{denom, int64(amount)}})
+	testing.IssueCoins(addr, std.Coins{{denom, amount}})
 }
 
 func ugnotBurn(t *testing.T, addr std.Address, denom string, amount int64) {
@@ -592,25 +591,25 @@ func ugnotBurn(t *testing.T, addr std.Address, denom string, amount int64) {
 	banker.RemoveCoin(addr, denom, amount)
 }
 
-func ugnotFaucet(t *testing.T, to std.Address, amount uint64) {
+func ugnotFaucet(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	faucetAddress := adminAddr
 	testing.SetOriginCaller(faucetAddress)
 
 	if ugnotBalanceOf(t, faucetAddress) < amount {
-		newCoins := std.Coins{{ugnotDenom, int64(amount)}}
+		newCoins := std.Coins{{ugnotDenom, amount}}
 		ugnotMint(t, faucetAddress, newCoins[0].Denom, newCoins[0].Amount)
 		testing.SetOriginSend(newCoins)
 	}
 	ugnotTransfer(t, faucetAddress, to, amount)
 }
 
-func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
+func ugnotDeposit(t *testing.T, addr std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(addr))
 	wugnotAddr := consts.WUGNOT_ADDR
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
+	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, amount}})
 	wugnot.Deposit(cross)
 }
 
@@ -674,21 +673,21 @@ func burnAllNFT(t *testing.T) {
 	}
 }
 
-// func TestBeforeResetPositionObject(t *testing.T) {
-// 	t.Skip("only works when testing this single file")
-// 	// make actual data to test resetting not only position's state but also pool's state
-// 	testing.SetRealm(adminRealm)
+func TestBeforeResetPositionObject(t *testing.T) {
+	t.Skip("only works when testing this single file")
+	// make actual data to test resetting not only position's state but also pool's state
+	testing.SetRealm(adminRealm)
 
-// 	positionId, liquidity, amount0, amount1 := MakeMintPositionWithoutFee(t)
-// 	uassert.Equal(t, positionId, uint64(1), "positionId should be 1")
-// 	uassert.Equal(t, liquidity, "50000", "liquidity should be 50000")
-// 	uassert.Equal(t, amount0, "50000", "amount0 should be 50000")
-// 	uassert.Equal(t, amount1, "50000", "amount1 should be 50000")
-// 	uassert.Equal(t, positions.Size(), 1, "positions should have 1 position")
-// 	uassert.Equal(t, nextId, uint64(2), "nextId should be 2")
-// 	uassert.Equal(t, gnft.TotalSupply(), uint64(1), "gnft total supply should be 1")
-// 	uassert.Equal(t, pl.PoolGetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"), "50000", "pool liquidity should be 50000")
-// }
+	positionId, liquidity, amount0, amount1 := MakeMintPositionWithoutFee(t)
+	uassert.Equal(t, positionId, uint64(1), "positionId should be 1")
+	uassert.Equal(t, liquidity, "50000", "liquidity should be 50000")
+	uassert.Equal(t, amount0, "50000", "amount0 should be 50000")
+	uassert.Equal(t, amount1, "50000", "amount1 should be 50000")
+	uassert.Equal(t, positions.Size(), 1, "positions should have 1 position")
+	uassert.Equal(t, nextId, uint64(2), "nextId should be 2")
+	uassert.Equal(t, gnft.TotalSupply(), int64(1), "gnft total supply should be 1")
+	uassert.Equal(t, pl.PoolGetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"), "50000", "pool liquidity should be 50000")
+}
 
 func TestResetObject(t *testing.T) {
 	t.Skip("only works when testing this single file")
@@ -702,12 +701,12 @@ func TestBurnTokens(t *testing.T) {
 	t.Skip("only works when testing this single file")
 	burnTokens(t)
 
-	uassert.Equal(t, foo.BalanceOf(addr01), uint64(0)) // 100_000_000 -> 0
-	uassert.Equal(t, bar.BalanceOf(addr01), uint64(0)) // 100_000_000 -> 0
+	uassert.Equal(t, foo.BalanceOf(addr01), int64(0)) // 100_000_000 -> 0
+	uassert.Equal(t, bar.BalanceOf(addr01), int64(0)) // 100_000_000 -> 0
 }
 
 func TestBurnAllNFT(t *testing.T) {
 	t.Skip("only works when testing this single file")
 	burnAllNFT(t)
-	uassert.Equal(t, gnft.TotalSupply(), uint64(0), "gnft total supply should be 0")
+	uassert.Equal(t, gnft.TotalSupply(), int64(0), "gnft total supply should be 0")
 }

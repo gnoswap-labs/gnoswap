@@ -183,22 +183,22 @@ func TestTransferFromAndVerify(t *testing.T) {
 		expectedBal0 *u256.Uint
 		expectedBal1 *u256.Uint
 	}{
-		// {
-		// 	name: "normal token0 transfer",
-		// 	pool: &Pool{
-		// 		balances: Balances{
-		// 			token0: u256.NewUint(1000),
-		// 			token1: u256.NewUint(2000),
-		// 		},
-		// 	},
-		// 	from:         testutils.TestAddress("from_addr"),
-		// 	to:           testutils.TestAddress("to_addr"),
-		// 	tokenPath:    fooPath,
-		// 	amount:       i256.NewInt(500),
-		// 	isToken0:     true,
-		// 	expectedBal0: u256.NewUint(1500), // 1000 + 500
-		// 	expectedBal1: u256.NewUint(2000), // unchanged
-		// },
+		{
+			name: "normal token0 transfer",
+			pool: &Pool{
+				balances: Balances{
+					token0: u256.NewUint(1000),
+					token1: u256.NewUint(2000),
+				},
+			},
+			from:         testutils.TestAddress("from_addr"),
+			to:           testutils.TestAddress("to_addr"),
+			tokenPath:    fooPath,
+			amount:       i256.NewInt(500),
+			isToken0:     true,
+			expectedBal0: u256.NewUint(1500), // 1000 + 500
+			expectedBal1: u256.NewUint(2000), // unchanged
+		},
 		{
 			name: "normal token1 transfer",
 			pool: &Pool{
