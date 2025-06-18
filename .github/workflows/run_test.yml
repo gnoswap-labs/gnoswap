@@ -19,6 +19,12 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.4
+      
+      - name: Install bundler
+        run: gem install bundler
+
+      - name: Install ruby gems
+        run: bundle install
 
       - name: Generate test matrix
         id: set-matrix

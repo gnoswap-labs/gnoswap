@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require 'json'
 require 'pathname'
+require 'toml'
 
 class GnoModuleManager
   def initialize(contract_dir)
@@ -8,19 +9,19 @@ class GnoModuleManager
   end
 
   def extract_module_path(file_path)
-    content = File.read(file_path)
-    if content =~ /module\s+([\w.\/]+)/
-      $1
+    begin
+      toml = TOML.load_file(file_path)
+      toml["module"]
+    rescue => e
+      puts "Error reading/parsing toml file: #{file_path} - #{e}"
+      nil
     end
-  rescue
-    puts "Error reading file: #{file_path}"
-    nil
   end
 
   def generate_matrix
     matrix = { include: [] }
     
-    Dir.glob(File.join(@contract_dir, "**", "gno.mod")).each do |mod_file|
+    Dir.glob(File.join(@contract_dir, "**", "gnomod.toml")).each do |mod_file|
       if module_path = extract_module_path(mod_file)
         next unless module_path.start_with?("gno.land/")
         
