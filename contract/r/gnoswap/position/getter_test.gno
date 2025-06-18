@@ -30,7 +30,7 @@ func setupPositionGetter(t *testing.T) {
 	createNewPosition(positionId, position)
 }
 
-func TestPositionGetPosition(t *testing.T) {
+func TestPositionGetter_GetPosition(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	position := PositionGetPosition(positionId)
@@ -45,133 +45,133 @@ func TestPositionGetPosition(t *testing.T) {
 	uassert.Equal(t, false, position.burned)
 }
 
-func TestPositionGetPositionNonce(t *testing.T) {
+func TestPositionGetter_GetPositionNonce(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	nonce := PositionGetPositionNonce(positionId)
 	uassert.Equal(t, "0", nonce.ToString())
 }
 
-func TestPositionGetPositionOperator(t *testing.T) {
+func TestPositionGetter_GetPositionOperator(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	operator := PositionGetPositionOperator(positionId)
 	uassert.Equal(t, positionAddr, operator)
 }
 
-func TestPositionGetPositionPoolKey(t *testing.T) {
+func TestPositionGetter_GetPositionPoolKey(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	poolKey := PositionGetPositionPoolKey(positionId)
 	uassert.Equal(t, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", poolKey)
 }
 
-func TestPositionGetPositionTickLower(t *testing.T) {
+func TestPositionGetter_GetPositionTickLower(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	tickLower := PositionGetPositionTickLower(positionId)
 	uassert.Equal(t, int32(-10000), tickLower)
 }
 
-func TestPositionGetPositionTickUpper(t *testing.T) {
+func TestPositionGetter_GetPositionTickUpper(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	tickUpper := PositionGetPositionTickUpper(positionId)
 	uassert.Equal(t, int32(10000), tickUpper)
 }
 
-func TestPositionGetPositionLiquidity(t *testing.T) {
+func TestPositionGetter_GetPositionLiquidity(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	liquidity := PositionGetPositionLiquidity(positionId)
 	uassert.Equal(t, "1000000", liquidity.ToString())
 }
 
-func TestPositionGetPositionFeeGrowthInside0LastX128(t *testing.T) {
+func TestPositionGetter_GetPositionFeeGrowthInside0LastX128(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	feeGrowth0 := PositionGetPositionFeeGrowthInside0LastX128(positionId)
 	uassert.Equal(t, "0", feeGrowth0.ToString())
 }
 
-func TestPositionGetPositionFeeGrowthInside1LastX128(t *testing.T) {
+func TestPositionGetter_GetPositionFeeGrowthInside1LastX128(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	feeGrowth1 := PositionGetPositionFeeGrowthInside1LastX128(positionId)
 	uassert.Equal(t, "0", feeGrowth1.ToString())
 }
 
-func TestPositionGetPositionTokensOwed0(t *testing.T) {
+func TestPositionGetter_GetPositionTokensOwed0(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	tokenOwed0 := PositionGetPositionTokensOwed0(positionId)
 	uassert.Equal(t, "0", tokenOwed0.ToString())
 }
 
-func TestPositionGetPositionTokensOwed1(t *testing.T) {
+func TestPositionGetter_GetPositionTokensOwed1(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	tokenOwed1 := PositionGetPositionTokensOwed1(positionId)
 	uassert.Equal(t, "0", tokenOwed1.ToString())
 }
 
-func TestPositionGetPositionIsBurned(t *testing.T) {
+func TestPositionGetter_GetPositionIsBurned(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	isBurn := PositionGetPositionIsBurned(positionId)
 	uassert.Equal(t, false, isBurn)
 }
 
-func TestPositionIsInRange(t *testing.T) {
+func TestPositionGetter_IsInRange(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	inRange := PositionIsInRange(positionId)
 	uassert.Equal(t, true, inRange)
 }
 
-func TestPositionGetPositionNonceStr(t *testing.T) {
+func TestPositionGetter_GetPositionNonceStr(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	nonceStr := PositionGetPositionNonceStr(positionId)
 	uassert.Equal(t, "0", nonceStr)
 }
 
-func TestPositionGetPositionOperatorStr(t *testing.T) {
+func TestPositionGetter_GetPositionOperatorStr(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	operator := PositionGetPositionOperatorStr(positionId)
 	uassert.Equal(t, string(positionAddr), operator)
 }
 
-func TestPositionGetPositionLiquidityStr(t *testing.T) {
+func TestPositionGetter_GetPositionLiquidityStr(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	liquidity := PositionGetPositionLiquidityStr(positionId)
 	uassert.Equal(t, "1000000", liquidity)
 }
 
-func TestPositionGetPositionFeeGrowthInside0LastX128Str(t *testing.T) {
+func TestPositionGetter_GetPositionFeeGrowthInside0LastX128Str(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	feeGrowth0 := PositionGetPositionFeeGrowthInside0LastX128Str(positionId)
 	uassert.Equal(t, "0", feeGrowth0)
 }
 
-func TestPositionGetPositionFeeGrowthInside1LastX128Str(t *testing.T) {
+func TestPositionGetter_GetPositionFeeGrowthInside1LastX128Str(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	feeGrowth1 := PositionGetPositionFeeGrowthInside1LastX128Str(positionId)
 	uassert.Equal(t, "0", feeGrowth1)
 }
 
-func TestPositionGetPositionTokensOwed0Str(t *testing.T) {
+func TestPositionGetter_GetPositionTokensOwed0Str(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	tokenOwed0 := PositionGetPositionTokensOwed0Str(positionId)
 	uassert.Equal(t, "0", tokenOwed0)
 }
 
-func TestPositionGetPositionTokensOwed1Str(t *testing.T) {
+func TestPositionGetter_GetPositionTokensOwed1Str(t *testing.T) {
 	positionId := GetNextId()
 	setupPositionGetter(t)
 	tokenOwed1 := PositionGetPositionTokensOwed1Str(positionId)
