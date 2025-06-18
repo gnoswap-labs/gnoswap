@@ -41,7 +41,7 @@ func ExactOutSwapRoute(cur realm,
 		panic(addDetailToError(errExpired, err.Error()))
 	}
 
-	if err := commonSwapSetup(cur); err != nil {
+	if err := commonSwapSetup(); err != nil {
 		panic(addDetailToError(errInvalidInput, err.Error()))
 	}
 

@@ -71,7 +71,7 @@ func Delegate(cur realm, to std.Address, amount uint64, referrer string) {
 	}
 
 	// Transfer the caller's GNS to GovStaker
-	gns.TransferFrom(cross, caller, std.OriginCaller(), int64(amount))
+	gns.TransferFrom(cross, caller, std.CurrentRealm().Address(), int64(amount))
 
 	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer
@@ -83,7 +83,7 @@ func Delegate(cur realm, to std.Address, amount uint64, referrer string) {
 	if running {
 		cleanDelegationStatHistory()
 	}
-	rewardState.addStake(uint64(std.ChainHeight()), caller, amount, collectAndGetGNSBalance(cur), updateAndGetProtocolFeeBalance(cur))
+	rewardState.addStake(uint64(std.ChainHeight()), caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
 	// actual delegate
 	delegate(to, amount)
@@ -203,7 +203,7 @@ func Undelegate(cur realm, from std.Address, amount uint64) {
 		cleanDelegationStatHistory()
 	}
 
-	reward, protocolFeeRewards := rewardState.removeStake(caller, amount, collectAndGetGNSBalance(cur), updateAndGetProtocolFeeBalance(cur))
+	reward, protocolFeeRewards := rewardState.removeStake(caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	gns.Transfer(cross, caller, int64(reward))
 
 	for tokenPath, rewardAmount := range protocolFeeRewards {
@@ -331,7 +331,7 @@ func CollectReward(cur realm) {
 
 	en.MintAndDistributeGns(cross)
 
-	reward, protocolFeeRewards := rewardState.claim(caller, collectAndGetGNSBalance(cur), updateAndGetProtocolFeeBalance(cur))
+	reward, protocolFeeRewards := rewardState.claim(caller, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
 	if reward > 0 {
 		if currentGNSBalance < reward {
@@ -396,7 +396,7 @@ func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 	en.MintAndDistributeGns(cross)
 
 	prevAddr, prevPkgPath := getPrev()
-	emissionReward, protocolFeeRewards := rewardState.claim(to, collectAndGetGNSBalance(cur), updateAndGetProtocolFeeBalance(cur))
+	emissionReward, protocolFeeRewards := rewardState.claim(to, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	if emissionReward > 0 {
 		if currentGNSBalance < emissionReward {
 			panic(addDetailToError(
@@ -460,7 +460,6 @@ func transferProtocolFee(tokenPath string, to std.Address, amount uint64) {
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(govStaker, to, std.Coins{{"ugnot", int64(amount)}})
 	} else {
-		token := common.GetTokenTeller(tokenPath)
-		checkTransferError(token.Transfer(to, int64(amount)))
+		checkTransferError(common.Transfer(cross, tokenPath, to, int64(amount)))
 	}
 }

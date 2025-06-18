@@ -79,6 +79,7 @@ func TestApiGetPositionsUnclaimedFee(t *testing.T) {
 func TestSwap(t *testing.T) {
 	testing.SetRealm(rouRealm)
 	pl.Swap(
+		cross,
 		fooPath,
 		barPath,
 		fee500,

@@ -123,6 +123,7 @@ func testSwap(t *testing.T) {
 
 		testing.SetRealm(rouRealm)
 		amount0, amount1 := pl.Swap(
+			cross,
 			consts.WUGNOT_PATH,
 			consts.GNS_PATH,
 			fee500,

@@ -28,7 +28,7 @@ var (
 
 // collectAndGetGNSBalance gets the acuumulated GNS balance from emission to gov/staker
 // Need to clear the distributed GNS to gov/staker in emission to get the latest accumulated GNS balance
-func collectAndGetGNSBalance(cur realm) uint64 {
+func collectAndGetGNSBalance() uint64 {
 	gotGnsForEmission := en.GetDistributedToGovStaker()
 	en.ClearDistributedToGovStaker(cross)
 
@@ -39,13 +39,15 @@ func collectAndGetGNSBalance(cur realm) uint64 {
 
 // updateAndGetProtocolFeeBalance gets the accumulated protocol fee balance from protocol_fee to gov/staker
 // Need to clear the accumulated protocol fee to gov/staker in protocol fee to get the latest accumulated protocol fee balance
-func updateAndGetProtocolFeeBalance(cur realm) map[string]uint64 {
+func updateAndGetProtocolFeeBalance() map[string]uint64 {
 	pf.DistributeProtocolFee(cross)
 	gotAccuProtocolFee := pf.GetAccuTransferToGovStaker()
 
 	gotAccuProtocolFee.Iterate("", "", func(key string, value any) bool {
-		amount := value.(uint64)
-		currentProtocolFeeBalance[key] += amount
+		func(cur realm) {
+			amount := value.(uint64)
+			currentProtocolFeeBalance[key] += amount
+		}(cross)
 		return false
 	})
 
@@ -373,7 +375,7 @@ func (self *RewardState) removeStake(
 
 // GetRewardByProjectWallet returns the amount of reward for the project wallet
 func GetRewardByProjectWallet(addr std.Address) (uint64, map[string]uint64) {
-	rewardState.finalize(collectAndGetGNSBalance(cross), updateAndGetProtocolFeeBalance(cross))
+	rewardState.finalize(collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	emissionReward, protocolFeeRewards := rewardState.CalculateReward(addr)
 	return emissionReward, protocolFeeRewards
 }
@@ -391,10 +393,10 @@ func SetAmountByProjectWallet(cur realm, addr std.Address, amount uint64, add bo
 	currentAmount := getAmountByProjectWallet(addr)
 	if add {
 		amountByProjectWallet.Set(addr.String(), currentAmount+amount)
-		rewardState.addStake(uint64(std.ChainHeight()), addr, amount, collectAndGetGNSBalance(cur), updateAndGetProtocolFeeBalance(cur))
+		rewardState.addStake(uint64(std.ChainHeight()), addr, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	} else {
 		amountByProjectWallet.Set(addr.String(), currentAmount-amount)
-		rewardState.removeStake(addr, amount, collectAndGetGNSBalance(cur), updateAndGetProtocolFeeBalance(cur))
+		rewardState.removeStake(addr, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 	}
 }
 

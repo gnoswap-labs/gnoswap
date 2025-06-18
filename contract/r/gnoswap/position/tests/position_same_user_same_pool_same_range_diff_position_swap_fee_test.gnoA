@@ -107,6 +107,7 @@ func TestSwap1(t *testing.T) {
 
 	testing.SetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
+		cross,
 		barPath,
 		fooPath,
 		fee500,

@@ -66,8 +66,8 @@ func handleUnStakingFee(
 		)
 	} else {
 		// external contract has fee
-		teller := common.GetTokenTeller(tokenPath)
-		teller.Transfer(protocolFeeAddr, feeAmount)
+		common.Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
+
 		if feeAmount < 0 {
 			panic("fee amount cannot be negative")
 		}

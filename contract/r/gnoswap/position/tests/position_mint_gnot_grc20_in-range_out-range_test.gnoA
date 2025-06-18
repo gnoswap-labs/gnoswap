@@ -35,8 +35,8 @@ func TestFreshUser(t *testing.T) {
 	testing.IssueCoins(fresh02, std.Coins{{"ugnot", 100_000_000}})
 
 	testing.SetRealm(adminRealm)
-	gns.Transfer(fresh01, 100_000_000)
-	gns.Transfer(fresh02, 100_000_000)
+	gns.Transfer(cross, fresh01, 100_000_000)
+	gns.Transfer(cross, fresh02, 100_000_000)
 
 	// fresh users will have...
 	// 100_000_000 ugnot

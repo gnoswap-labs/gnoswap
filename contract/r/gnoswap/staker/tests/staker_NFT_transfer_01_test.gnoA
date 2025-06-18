@@ -110,7 +110,7 @@ func testTransferNft(t *testing.T) {
 				`[GNOSWAP-GNFT-001] caller has no permission || caller (g1v36k6mteta047h6lta047h6lta047h6lz7gmv8) is not the owner or operator of token (1)`,
 				func() {
 					testing.SetRealm(std.NewUserRealm(dummyAddr))
-					gnft.TransferFrom(admin, dummyAddr, positionIdFrom(uint64(1)))
+					gnft.TransferFrom(cross, admin, dummyAddr, positionIdFrom(uint64(1)))
 				},
 			)
 		})
@@ -121,12 +121,12 @@ func testTransferNft(t *testing.T) {
 				`[GNOSWAP-GNFT-001] caller has no permission || caller (g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) is not the owner or operator of token (1)`,
 				func() {
 					testing.SetRealm(adminRealm)
-					gnft.TransferFrom(stakerAddr, dummyAddr, positionIdFrom(uint64(1)))
+					gnft.TransferFrom(cross, stakerAddr, dummyAddr, positionIdFrom(uint64(1)))
 				},
 			)
 		})
 
-		gnft.TransferFrom(stakerAddr, dummyAddr, positionIdFrom(uint64(1)))
+		gnft.TransferFrom(cross, stakerAddr, dummyAddr, positionIdFrom(uint64(1)))
 	})
 }
 

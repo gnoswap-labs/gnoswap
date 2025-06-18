@@ -448,8 +448,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		toUserExternalReward[rewardToken] = safeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
 		toUser := handleUnStakingFee(rewardToken, int64(rewardAmount), false, positionId, incentive.targetPoolPath)
 		if toUser > 0 {
-			teller := common.GetTokenTeller(rewardToken)
-			teller.Transfer(deposit.owner, toUser)
+			common.Transfer(cross, rewardToken, deposit.owner, toUser)
 		}
 
 		// process external penalty

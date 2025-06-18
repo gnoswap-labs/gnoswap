@@ -38,7 +38,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	testing.SetRealm(posRealm)
 
 	// no mint == no liquidity => swap will fail
-	DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
+	DrySwap(cross, fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
 
 	// not enough mint == swap will fail
 	testing.SetRealm(adminRealm)
@@ -47,7 +47,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	bar.Approve(poolAddr, consts.UINT64_MAX)
 
 	testing.SetRealm(posRealm)
-	DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
+	DrySwap(cross, fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
 
 	testing.SetRealm(adminRealm)
 
@@ -57,6 +57,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	// zeroForOne true
 	// amountSpecified 16000
 	poolIn, poolOut, _ := DrySwap(
+		cross, 
 		fooPath,          // fooPath
 		barPath,          // barPath
 		fee500,           // fee500
@@ -73,6 +74,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
 	// amountSpecified -16000
 
 	poolIn, poolOut, _ := DrySwap(
+		cross, 
 		fooPath,          // fooPath
 		barPath,          // barPath
 		fee500,           // fee500

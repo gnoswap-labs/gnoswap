@@ -49,6 +49,7 @@ func swapInner(
 	common.GetTokenTeller(data.tokenOut).Approve(poolAddr, approveAmount)
 
 	amount0Str, amount1Str := pl.Swap(
+		cross,
 		data.tokenIn,
 		data.tokenOut,
 		data.fee,
@@ -106,6 +107,7 @@ func swapDryInner(
 
 	// check possible
 	amount0Str, amount1Str, ok := pl.DrySwap(
+		cross,
 		data.tokenIn,
 		data.tokenOut,
 		data.fee,

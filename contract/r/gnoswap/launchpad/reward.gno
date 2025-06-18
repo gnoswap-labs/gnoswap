@@ -107,8 +107,7 @@ func CollectRewardByProjectId(cur realm, projectId string) uint64 {
 	projects[projectId] = project
 
 	if totalReward > 0 {
-		tokenTeller := common.GetTokenTeller(project.tokenPath)
-		tokenTeller.Transfer(caller, int64(totalReward))
+		common.Transfer(cross, project.tokenPath, caller, int64(totalReward))
 	}
 
 	return totalReward
@@ -184,8 +183,7 @@ func CollectRewardByDepositId(cur realm, depositId string) uint64 {
 
 	// Transfer reward
 	if rewardAmount > 0 {
-		tokenTeller := common.GetTokenTeller(project.tokenPath)
-		tokenTeller.Transfer(getPrevAddr(), int64(rewardAmount))
+		common.Transfer(cross, project.tokenPath, getPrevAddr(), int64(rewardAmount))
 	}
 
 	return rewardAmount

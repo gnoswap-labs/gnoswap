@@ -338,7 +338,8 @@ func TestDrySwap_Failures(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			amount0, amount1, success := DrySwap(
+			amount0, amount1, success := 
+				cross,
 				tt.token0Path,
 				tt.token1Path,
 				tt.fee,
