@@ -18,9 +18,18 @@ class GnoModuleManager
     end
   end
 
+  # generate matrix for github actions
+  #
+  # traverse all directories and find gnomod.toml
+  # extract module path from gnomod.toml
+  # if generate matrix for github actions
+  # include:
+  # - name: name of the module
+  # - folder: folder path of the module
+  # - gno: gno version of the module
   def generate_matrix
     matrix = { include: [] }
-    
+
     Dir.glob(File.join(@contract_dir, "**", "gnomod.toml")).each do |mod_file|
       if module_path = extract_module_path(mod_file)
         next unless module_path.start_with?("gno.land/")
@@ -44,7 +53,7 @@ class GnoModuleManager
         }
       end
     end
-    
+
     # Sort by folder path for consistency
     matrix[:include].sort_by! { |entry| entry[:folder] }
     matrix
@@ -53,15 +62,15 @@ end
 
 if __FILE__ == $0
   contract_dir = ARGV[0] || File.join(Dir.pwd, "contract")
-  
+
   unless Dir.exist?(contract_dir)
     puts "Error: Contract directory '#{contract_dir}' does not exist"
     exit 1
   end
-  
+
   manager = GnoModuleManager.new(contract_dir)
   matrix = manager.generate_matrix
-  
+
   # Output in GitHub Actions matrix format
   puts JSON.generate(matrix)
 end
