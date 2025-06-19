@@ -54,7 +54,7 @@ func TestApiGetAccuTransferToDevOps(t *testing.T) {
 	uassert.Equal(t, `{"height":"124","now":"1234567895","gno.land/r/onbloc/bar":"1000","gno.land/r/onbloc/qux":"2000"}`, result)
 }
 
-// This test should be run in isolation. It may appear as failed when running the full test suite locally,
+// This test should be run individually. It may appear as failed when running the full test suite locally,
 // but there's no need to fix the test.
 // In CI, the `-run` flag is used to ensure isolated execution, so there's no need to add separate skip handling.
 func TestApiGetHistoryTransferToDevOps(t *testing.T) {
