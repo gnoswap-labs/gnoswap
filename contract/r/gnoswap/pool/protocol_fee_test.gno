@@ -25,14 +25,11 @@ func TestSetPoolCreationFee(t *testing.T) {
 			action: func() {
 				const newFee = 2_000_000_000
 				testing.SetRealm(adminRealm)
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetPoolCreationFee(cross, newFee)
-				}()
+				SetPoolCreationFee(cross, newFee)
 			},
 			verify: nil,
 			// expected:    "caller(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) has no permission",
-			expected:    ufmt.Sprintf("caller(%s) has no permission", adminRealm.Address().String()),
+			expected:    ufmt.Sprintf("caller(%s) has no permission", adminAddr.String()),
 			shouldPanic: true,
 		},
 		{
@@ -41,11 +38,7 @@ func TestSetPoolCreationFee(t *testing.T) {
 				const newFee = 2_000_000_000
 				govRealm := std.NewUserRealm(govAddr)
 				testing.SetRealm(govRealm)
-				// testing.SetRealm(govRealm)
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetPoolCreationFee(cross, newFee)
-				}()
+				SetPoolCreationFee(cross, newFee)
 			},
 			verify: func() string {
 				return strconv.FormatInt(GetPoolCreationFee(), 10)
@@ -57,20 +50,6 @@ func TestSetPoolCreationFee(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				r := recover()
-				if r == nil {
-					if tc.shouldPanic {
-						t.Errorf(">>> %s: expected panic but got none", tc.name)
-						return
-					}
-				} else {
-					if r.(string) != tc.expected {
-						t.Errorf(">>> %s: got panic %v, want %v", tc.name, r, tc.expected)
-					}
-				}
-			}()
-
 			if !tc.shouldPanic {
 				tc.action()
 				if tc.verify != nil {
@@ -78,7 +57,9 @@ func TestSetPoolCreationFee(t *testing.T) {
 					uassert.Equal(t, got, tc.expected)
 				}
 			} else {
-				tc.action()
+				uassert.AbortsWithMessage(t, tc.expected, func() {
+					tc.action()
+				})
 			}
 		})
 	}
@@ -98,13 +79,11 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 				const newFee = 2_000_000_000
 				govRealm := std.NewUserRealm(govAddr)
 				testing.SetRealm(govRealm)
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetPoolCreationFeeByAdmin(cross, newFee)
-				}()
+				SetPoolCreationFeeByAdmin(cross, newFee)
 			},
-			verify:      nil,
-			expected:    "caller(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) has no permission",
+			verify: nil,
+			// expected:    "caller(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) has no permission",
+			expected:    ufmt.Sprintf("caller(%s) has no permission", govAddr.String()),
 			shouldPanic: true,
 		},
 		{
@@ -112,10 +91,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			action: func() {
 				const newFee = 2_000_000_000
 				testing.SetRealm(std.NewUserRealm(alice))
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetPoolCreationFeeByAdmin(cross, newFee)
-				}()
+				SetPoolCreationFeeByAdmin(cross, newFee)
 			},
 			verify:      nil,
 			expected:    "caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) has no permission",
@@ -126,10 +102,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			action: func() {
 				const newFee = 2_000_000_000
 				testing.SetRealm(adminRealm)
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetPoolCreationFeeByAdmin(cross, newFee)
-				}()
+				SetPoolCreationFeeByAdmin(cross, newFee)
 			},
 			verify: func() string {
 				return strconv.FormatInt(GetPoolCreationFee(), 10)
@@ -142,10 +115,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			action: func() {
 				const newFee = 1_000_000_000
 				testing.SetRealm(adminRealm)
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetPoolCreationFeeByAdmin(cross, newFee)
-				}()
+				SetPoolCreationFeeByAdmin(cross, newFee)
 			},
 			verify: func() string {
 				return strconv.FormatInt(GetPoolCreationFee(), 10)
@@ -157,20 +127,6 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				r := recover()
-				if r == nil {
-					if tc.shouldPanic {
-						t.Errorf(">>> %s: expected panic but got none", tc.name)
-						return
-					}
-				} else {
-					if r.(string) != tc.expected {
-						t.Errorf(">>> %s: got panic %v, want %v", tc.name, r, tc.expected)
-					}
-				}
-			}()
-
 			if !tc.shouldPanic {
 				tc.action()
 				if tc.verify != nil {
@@ -178,7 +134,9 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 					uassert.Equal(t, got, tc.expected)
 				}
 			} else {
-				tc.action()
+				uassert.AbortsWithMessage(t, tc.expected, func() {
+					tc.action()
+				})
 			}
 		})
 	}
@@ -279,10 +237,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 				const newFee = uint64(200)
 				userRealm := std.NewUserRealm(alice)
 				testing.SetRealm(userRealm)
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetWithdrawalFee(cross, newFee)
-				}()
+				SetWithdrawalFee(cross, newFee)
 			},
 			verify:      nil,
 			expected:    "caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) has no permission",
@@ -294,10 +249,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 				const newFee = uint64(200)
 				adminRealm := std.NewUserRealm(adminAddr)
 				testing.SetRealm(adminRealm)
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetWithdrawalFee(cross, newFee)
-				}()
+				SetWithdrawalFee(cross, newFee)
 			},
 			verify:      nil,
 			expected:    "caller(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) has no permission",
@@ -309,10 +261,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 				const newFee = uint64(200)
 				govRealm := std.NewUserRealm(govAddr)
 				testing.SetRealm(govRealm)
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetWithdrawalFee(cross, newFee)
-				}()
+				SetWithdrawalFee(cross, newFee)
 			},
 			verify: func(t *testing.T) string {
 				return strconv.FormatUint(GetWithdrawalFee(), 10)
@@ -324,29 +273,6 @@ func TestSetWithdrawalFee(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				r := recover()
-				if r == nil {
-					if tc.shouldPanic {
-						t.Errorf(">>> %s: expected panic but got none", tc.name)
-						return
-					}
-				} else {
-					switch r.(type) {
-					case string:
-						if r.(string) != tc.expected {
-							t.Errorf(">>> %s: got panic %v, want %v", tc.name, r, tc.expected)
-						}
-					case error:
-						if r.(error).Error() != tc.expected {
-							t.Errorf(">>> %s: got panic %v, want %v", tc.name, r.(error).Error(), tc.expected)
-						}
-					default:
-						t.Errorf(">>> %s: got panic %v, want %v", tc.name, r, tc.expected)
-					}
-				}
-			}()
-
 			if !tc.shouldPanic {
 				tc.action(t)
 				if tc.verify != nil {
@@ -354,7 +280,9 @@ func TestSetWithdrawalFee(t *testing.T) {
 					uassert.Equal(t, gotWithdrawalFee, tc.expected)
 				}
 			} else {
-				tc.action(t)
+				uassert.AbortsWithMessage(t, tc.expected, func() {
+					tc.action(t)
+				})
 			}
 		})
 	}
@@ -374,10 +302,7 @@ func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 				const newFee = uint64(100)
 				userRealm := std.NewUserRealm(alice)
 				testing.SetRealm(userRealm)
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetWithdrawalFeeByAdmin(cross, newFee)
-				}()
+				SetWithdrawalFeeByAdmin(cross, newFee)
 			},
 			verify:      nil,
 			expected:    "caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) has no permission",
@@ -389,10 +314,7 @@ func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 				const newFee = uint64(100)
 				govRealm := std.NewUserRealm(govAddr)
 				testing.SetRealm(govRealm)
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetWithdrawalFeeByAdmin(cross, newFee)
-				}()
+				SetWithdrawalFeeByAdmin(cross, newFee)
 			},
 			verify:      nil,
 			expected:    "caller(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) has no permission",
@@ -404,10 +326,7 @@ func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 				const newFee = uint64(100)
 				adminRealm := std.NewUserRealm(adminAddr)
 				testing.SetRealm(adminRealm)
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-					SetWithdrawalFeeByAdmin(cross, newFee)
-				}()
+				SetWithdrawalFeeByAdmin(cross, newFee)
 			},
 			verify: func(t *testing.T) string {
 				return strconv.FormatUint(GetWithdrawalFee(), 10)
@@ -419,29 +338,6 @@ func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				r := recover()
-				if r == nil {
-					if tc.shouldPanic {
-						t.Errorf(">>> %s: expected panic but got none", tc.name)
-						return
-					}
-				} else {
-					switch r.(type) {
-					case string:
-						if r.(string) != tc.expected {
-							t.Errorf(">>> %s: got panic %v, want %v", tc.name, r, tc.expected)
-						}
-					case error:
-						if r.(error).Error() != tc.expected {
-							t.Errorf(">>> %s: got panic %v, want %v", tc.name, r.(error).Error(), tc.expected)
-						}
-					default:
-						t.Errorf(">>> %s: got panic %v, want %v", tc.name, r, tc.expected)
-					}
-				}
-			}()
-
 			if !tc.shouldPanic {
 				tc.action(t)
 				if tc.verify != nil {
@@ -449,7 +345,9 @@ func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 					uassert.Equal(t, gotWithdrawalFee, tc.expected)
 				}
 			} else {
-				tc.action(t)
+				uassert.AbortsWithMessage(t, tc.expected, func() {
+					tc.action(t)
+				})
 			}
 		})
 	}
