@@ -14,6 +14,7 @@ import (
 var (
 	testCaller  = testutils.TestAddress("caller")
 	wrongCaller = testutils.TestAddress("wrong")
+	testCallerRealm = std.NewUserRealm(testCaller)
 )
 
 func setupTest(t *testing.T) {
@@ -24,6 +25,7 @@ func setupTest(t *testing.T) {
 
 func TestRegisterRole(t *testing.T) {
 	setupTest(t)
+	testing.SetRealm(testCallerRealm)
 	err := RegisterRole(cross, "admin")
 	uassert.NoError(t, err)
 
@@ -38,6 +40,7 @@ func TestRegisterAndCheckPermission(t *testing.T) {
 	permissionName := "can_delete"
 
 	// register role
+	testing.SetRealm(testCallerRealm)
 	err := RegisterRole(cross, roleName)
 	uassert.NoError(t, err)
 
@@ -68,6 +71,7 @@ func TestUpdateAndRemovePermission(t *testing.T) {
 	errWrongCaller := errors.New("wrong caller")
 
 	// initial setup
+	testing.SetRealm(testCallerRealm)
 	err := RegisterRole(cross, roleName)
 	uassert.NoError(t, err)
 

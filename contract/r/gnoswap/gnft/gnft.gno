@@ -14,7 +14,7 @@ import (
 	"gno.land/r/gnoswap/v1/halt"
 )
 
-var gnft = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
+var nft = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
 
 var (
 	owner     *ownable.Ownable
@@ -31,21 +31,21 @@ func init() {
 // Returns:
 //   - string: The name of the NFT collection
 func Name() string {
-	return gnft.Name()
+	return nft.Name()
 }
 
 // Symbol returns the token symbol of the NFT
 // Returns:
 //   - string: The symbol of the NFT collection
 func Symbol() string {
-	return gnft.Symbol()
+	return nft.Symbol()
 }
 
 // TotalSupply returns the total number of NFTs minted
 // Returns:
 //   - int64: The total number of tokens that have been minted
 func TotalSupply() int64 {
-	return gnft.TokenCount()
+	return nft.TokenCount()
 }
 
 // TokenURI retrieves the metadata URI for a specific token ID
@@ -56,7 +56,7 @@ func TotalSupply() int64 {
 //   - string: The metadata URI associated with the token
 //   - error: Returns an error if the token URI retrieval fails.
 func TokenURI(tid grc721.TokenID) (string, error) {
-	uri, err := gnft.TokenURI(tid)
+	uri, err := nft.TokenURI(tid)
 	if err != nil {
 		return "", err
 	}
@@ -72,7 +72,7 @@ func TokenURI(tid grc721.TokenID) (string, error) {
 //   - int64: The number of NFTs owned by the address.
 //   - error: Returns an error if the balance retrieval fails.
 func BalanceOf(owner std.Address) (int64, error) {
-	balance, err := gnft.BalanceOf(owner)
+	balance, err := nft.BalanceOf(owner)
 	if err != nil {
 		return 0, err
 	}
@@ -86,7 +86,7 @@ func BalanceOf(owner std.Address) (int64, error) {
 // Returns:
 //   - std.Address: The address of the token owner
 func OwnerOf(tid grc721.TokenID) (std.Address, error) {
-	ownerAddr, err := gnft.OwnerOf(tid)
+	ownerAddr, err := nft.OwnerOf(tid)
 	if err != nil {
 		return "", err
 	}
@@ -146,7 +146,7 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 //   - Checks that the caller is the token owner or has been approved to transfer the token.
 //
 // After validation, the function updates the internal token lists by removing the token from the sender's list
-// and appending it to the recipient's list. It then calls the underlying transfer logic through `gnft.TransferFrom`.
+// and appending it to the recipient's list. It then calls the underlying transfer logic through `nft.TransferFrom`.
 //
 // Parameters:
 //   - from (std.Address): The current owner's address of the token being transferred.
@@ -160,7 +160,7 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 //   - If the contract is halted.
 //   - If either `from` or `to` addresses are invalid.
 //   - If the caller is not the owner or approved operator of the token.
-//   - If the internal transfer (`gnft.TransferFrom`) fails.
+//   - If the internal transfer (`nft.TransferFrom`) fails.
 func SafeTransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 	assertOnlyNotHalted()
 
@@ -180,7 +180,7 @@ func SafeTransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error
 	removeTokenList(from, tid)
 	appendTokenList(to, tid)
 
-	checkErr(gnft.TransferFrom(from, to, tid))
+	checkErr(nft.TransferFrom(from, to, tid))
 	return nil
 }
 
@@ -215,7 +215,7 @@ func Approve(cur realm, approved std.Address, tid grc721.TokenID) error {
 	assertOnlyNotHalted()
 	assertCallerIsOwnerOfToken(tid)
 
-	err := gnft.Approve(approved, tid)
+	err := nft.Approve(approved, tid)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -236,7 +236,7 @@ func Approve(cur realm, approved std.Address, tid grc721.TokenID) error {
 //   - If the `SetApprovalForAll` operation fails.
 func SetApprovalForAll(cur realm, operator std.Address, approved bool) error {
 	assertOnlyNotHalted()
-	checkErr(gnft.SetApprovalForAll(operator, approved))
+	checkErr(nft.SetApprovalForAll(operator, approved))
 	return nil
 }
 
@@ -249,7 +249,7 @@ func SetApprovalForAll(cur realm, operator std.Address, approved bool) error {
 //   - std.Address: The address approved to manage the token. Returns an empty address if no approval exists.
 //   - error: Returns an error if the lookup fails or the token ID is invalid.
 func GetApproved(tid grc721.TokenID) (std.Address, error) {
-	return gnft.GetApproved(tid)
+	return nft.GetApproved(tid)
 }
 
 // IsApprovedForAll checks if an operator is approved to manage all tokens of an owner.
@@ -261,7 +261,7 @@ func GetApproved(tid grc721.TokenID) (std.Address, error) {
 // Returns:
 //   - bool: true if the operator is approved to manage all tokens of the owner, false otherwise.
 func IsApprovedForAll(owner, operator std.Address) bool {
-	return gnft.IsApprovedForAll(owner, operator)
+	return nft.IsApprovedForAll(owner, operator)
 }
 
 // SetTokenURIByImageURI generates and sets a new token URI for a specified token ID using a random image URI.
@@ -324,7 +324,7 @@ func Mint(cur realm, to std.Address, tid grc721.TokenID) grc721.TokenID {
 	owner.AssertOwnedByPrevious()
 	assertOnlyNotHalted()
 
-	checkErr(gnft.Mint(to, tid))
+	checkErr(nft.Mint(to, tid))
 
 	appendTokenList(to, tid)
 	return tid
@@ -343,7 +343,7 @@ func Burn(cur realm, tid grc721.TokenID) {
 	}
 	removeTokenList(ownerAddr, tid)
 
-	checkErr(gnft.Burn(tid))
+	checkErr(nft.Burn(tid))
 }
 
 // Render returns the HTML representation of the NFT
@@ -355,7 +355,7 @@ func Burn(cur realm, tid grc721.TokenID) {
 func Render(cur realm, path string) string {
 	switch {
 	case path == "":
-		return gnft.RenderHome()
+		return nft.RenderHome()
 	default:
 		return "404\n"
 	}
@@ -364,7 +364,7 @@ func Render(cur realm, path string) string {
 // setTokenURI sets the metadata URI for a specific token ID
 func setTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) error {
 	assertOnlyEmptyTokenURI(tid)
-	_, err := gnft.SetTokenURI(tid, tURI)
+	_, err := nft.SetTokenURI(tid, tURI)
 	if err != nil {
 		return err
 	}
@@ -494,7 +494,7 @@ func assertValidAddr(addr std.Address) {
 
 // assertOnlyEmptyTokenURI panics if the token URI is not empty.
 func assertOnlyEmptyTokenURI(tid grc721.TokenID) {
-	uri, _ := gnft.TokenURI(tid)
+	uri, _ := nft.TokenURI(tid)
 	if string(uri) != "" {
 		panic(addDetailToError(
 			errCannotSetURI,

@@ -176,10 +176,11 @@ func TestGetterSetter(t *testing.T) {
 
 func TestGrc20Methods(t *testing.T) {
 	tests := []struct {
-		name        string
-		fn          func()
-		shouldPanic bool
-		panicMsg    string
+		name          string
+		fn            func()
+		shouldPanic   bool
+		exceptionKind string // abort / panic
+		panicMsg      string
 	}{
 		{
 			name: "TotalSupply",
@@ -215,30 +216,28 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "MintGns without permission should panic",
 			fn: func() {
-				testing.SetRealm(emissionRealm)
 				testing.SkipHeights(1)
 				MintGns(cross, adminAddr)
 			},
-			shouldPanic: true,
-			panicMsg:    `caller(g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m) has no permission`,
+			shouldPanic:   true,
+			exceptionKind: "abort",
+			panicMsg:      `caller(g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m) has no permission`,
 		},
 		{
 			name: "Burn without permission should panic",
 			fn: func() {
 				Burn(cross, adminAddr, int64(1))
 			},
-			shouldPanic: true,
-			panicMsg:    `ownable: caller is not owner`,
+			shouldPanic:   true,
+			exceptionKind: "abort",
+			panicMsg:      `ownable: caller is not owner`,
 		},
 		{
 			name: "Transfer success",
 			fn: func() {
 				testing.SetOriginCaller(adminAddr)
 				testing.SetRealm(adminRealm)
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					Transfer(cross, alice, int64(1))
-				}()
+				Transfer(cross, alice, int64(1))
 			},
 		},
 		{
@@ -246,64 +245,49 @@ func TestGrc20Methods(t *testing.T) {
 			fn: func() {
 				testing.SetOriginCaller(alice)
 				testing.SetRealm(std.NewUserRealm(alice))
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					Transfer(cross, bob, int64(1))
-				}()
+				Transfer(cross, bob, int64(1))
 			},
-			shouldPanic: true,
-			panicMsg:    `insufficient balance`,
+			shouldPanic:   true,
+			exceptionKind: "abort",
+			panicMsg:      `insufficient balance`,
 		},
 		{
 			name: "Transfer to self should panic",
 			fn: func() {
 				testing.SetOriginCaller(adminAddr)
 				testing.SetRealm(adminRealm)
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					Transfer(cross, adminAddr, int64(1))
-				}()
+				Transfer(cross, adminAddr, int64(1))
 			},
-			shouldPanic: true,
-			panicMsg:    `cannot send transfer to self`,
+			shouldPanic:   true,
+			exceptionKind: "abort",
+			panicMsg:      `cannot send transfer to self`,
 		},
 		{
 			name: "TransferFrom success",
 			fn: func() {
 				// approve first
 				testing.SetRealm(adminRealm)
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					Approve(cross, alice, int64(1))
-				}()
+				Approve(cross, alice, int64(1))
 
 				// alice transfer admin's balance to bob
 				testing.SetOriginCaller(alice)
 				testing.SetRealm(std.NewUserRealm(alice))
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					TransferFrom(cross, adminAddr, bob, int64(1))
-				}()
+				TransferFrom(cross, adminAddr, bob, int64(1))
 			},
 		},
 		{
 			name: "TransferFrom without enough allowance should panic",
 			fn: func() {
 				testing.SetRealm(adminRealm)
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					Approve(cross, alice, int64(1))
-				}()
+				Approve(cross, alice, int64(1))
 
 				testing.SetOriginCaller(alice)
 				testing.SetRealm(std.NewUserRealm(alice))
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					TransferFrom(cross, adminAddr, bob, int64(2))
-				}()
+				TransferFrom(cross, adminAddr, bob, int64(2))
 			},
-			shouldPanic: true,
-			panicMsg:    `insufficient allowance`,
+			shouldPanic:   true,
+			exceptionKind: "abort",
+			panicMsg:      `insufficient allowance`,
 		},
 	}
 
@@ -312,7 +296,14 @@ func TestGrc20Methods(t *testing.T) {
 			resetGnsTokenObject(t)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, tt.fn)
+				switch tt.exceptionKind {
+				case "abort":
+					uassert.AbortsWithMessage(t, tt.panicMsg, tt.fn)
+				case "panic":
+					uassert.PanicsWithMessage(t, tt.panicMsg, tt.fn)
+				default:
+					t.Fatalf("unknown exception kind: %s", tt.exceptionKind)
+				}
 			} else {
 				uassert.NotPanics(t, func() { tt.fn() })
 			}

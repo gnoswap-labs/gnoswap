@@ -247,15 +247,12 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 	t.Run("panic if caller is not admin", func(t *testing.T) {
 		oldCallback := callbackEmissionChange
 		callbackEmissionChange = func(amount int64) {}
-		uassert.PanicsWithMessage(t,
+		uassert.AbortsWithMessage(t,
 			"caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) has no permission",
 			func() {
 				testing.SetOriginCaller(alice)
 				testing.SetRealm(std.NewUserRealm(alice))
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					SetAvgBlockTimeInMsByAdmin(cross, 1)
-				}()
+				SetAvgBlockTimeInMsByAdmin(cross, 1)
 			},
 		)
 		callbackEmissionChange = oldCallback
@@ -267,10 +264,7 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 
 		testing.SkipHeights(1)
 		testing.SetRealm(std.NewUserRealm(adminAddr))
-		func() {
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-			SetAvgBlockTimeInMsByAdmin(cross, 2)
-		}()
+		SetAvgBlockTimeInMsByAdmin(cross, 2)
 		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(2))
 
 		callbackEmissionChange = oldCallback
@@ -281,13 +275,10 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 		callbackEmissionChange = func(amount int64) {}
 		testing.SkipHeights(1)
 		testing.SetRealm(std.NewUserRealm(adminAddr))
-		uassert.PanicsWithMessage(t,
+		uassert.AbortsWithMessage(t,
 			errInvalidAvgBlockTimeInMs.Error(),
 			func() {
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					SetAvgBlockTimeInMsByAdmin(cross, -1)
-				}()
+				SetAvgBlockTimeInMsByAdmin(cross, -1)
 			},
 		)
 		callbackEmissionChange = oldCallback
@@ -298,13 +289,10 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 		callbackEmissionChange = func(amount int64) {}
 		testing.SkipHeights(1)
 		testing.SetRealm(std.NewUserRealm(adminAddr))
-		uassert.PanicsWithMessage(t,
+		uassert.AbortsWithMessage(t,
 			"invalid block time interval",
 			func() {
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					SetAvgBlockTimeInMsByAdmin(cross, 1e9)
-				}()
+				SetAvgBlockTimeInMsByAdmin(cross, 1e9)
 			},
 		)
 		callbackEmissionChange = oldCallback
@@ -315,8 +303,9 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 	t.Run("panic if caller is not governance contract", func(t *testing.T) {
 		oldCallback := callbackEmissionChange
 		callbackEmissionChange = func(amount int64) {}
-		uassert.PanicsWithMessage(t,
-			"caller() has no permission",
+		expectedMsg := "caller(g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m) has no permission"
+		uassert.AbortsWithMessage(t,
+			expectedMsg,
 			func() {
 				SetAvgBlockTimeInMs(cross, 3)
 			},
@@ -329,10 +318,7 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 		callbackEmissionChange = func(amount int64) {}
 		testing.SkipHeights(3)
 		testing.SetRealm(govRealm)
-		func() {
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-			SetAvgBlockTimeInMs(cross, 4)
-		}()
+		SetAvgBlockTimeInMs(cross, 4)
 		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(4))
 		callbackEmissionChange = oldCallback
 	})
@@ -342,13 +328,10 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 		callbackEmissionChange = func(amount int64) {}
 		testing.SkipHeights(1)
 		testing.SetRealm(govRealm)
-		uassert.PanicsWithMessage(t,
+		uassert.AbortsWithMessage(t,
 			"invalid block time interval",
 			func() {
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					SetAvgBlockTimeInMs(cross, -1)
-				}()
+				SetAvgBlockTimeInMs(cross, -1)
 			},
 		)
 		callbackEmissionChange = oldCallback
@@ -359,13 +342,10 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 		callbackEmissionChange = func(amount int64) {}
 		testing.SkipHeights(1)
 		testing.SetRealm(govRealm)
-		uassert.PanicsWithMessage(t,
+		uassert.AbortsWithMessage(t,
 			"invalid block time interval",
 			func() {
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					SetAvgBlockTimeInMs(cross, 1e9)
-				}()
+				SetAvgBlockTimeInMs(cross, 1e9)
 			},
 		)
 		callbackEmissionChange = oldCallback
@@ -391,7 +371,7 @@ func TestGetEmission(t *testing.T) {
 		testing.SetHeight(currentHeight)
 
 		// Call GetEmission multiple times and verify the updated state
-		for i := 0; i < 3; i++ {
+		for range make([]struct{}, 3) {
 			// Record state before the call
 			mintedBefore := GetHalvingYearMintAmount(year)
 			leftBefore := GetHalvingYearLeftAmount(year)
