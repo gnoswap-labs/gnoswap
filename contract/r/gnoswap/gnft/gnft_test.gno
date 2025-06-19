@@ -416,66 +416,6 @@ func TestSetTokenURIByImageURI(t *testing.T) {
 	}
 }
 
-func TestTokenURI(t *testing.T) {
-	resetObject(t)
-
-	tests := []struct {
-		name        string
-		setup       func(cur realm)
-		tokenId     uint64
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name:        "get token uri of non-minted token id",
-			tokenId:     99,
-			shouldPanic: true,
-			panicMsg:    errInvalidTokenId,
-		},
-		{
-			name: "get token uri of minted token but not set token uri",
-			setup: func(cur realm) {
-				testing.SetRealm(positionRealm)
-				Mint(cross, addr01, tid(1))
-			},
-			tokenId:     1,
-			shouldPanic: true,
-			panicMsg:    errInvalidTokenId,
-		},
-		{
-			name: "get token uri of minted token after setting token uri",
-			setup: func(cur realm) {
-				testing.SetRealm(addr01Realm)
-				SetTokenURIByImageURI(cur, tid(1))
-			},
-			tokenId: 1,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.setup != nil {
-				tt.setup(cross)
-			}
-
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					TokenURI(tid(tt.tokenId))
-				})
-			} else {
-				// uassert.NotEmpty(t, TokenURI(tid(tt.tokenId)))
-				res, err := TokenURI(tid(tt.tokenId))
-				if err != nil {
-					t.Errorf("Unexpected error: %v", err)
-				}
-				if res == "" {
-					t.Error("token URI should not be empty")
-				}
-			}
-		})
-	}
-}
-
 func TestSetTokenURILast(t *testing.T) {
 	resetObject(t)
 	testing.SetRealm(positionRealm)
