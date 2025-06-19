@@ -168,22 +168,48 @@ func TestIsApprovedForAll(t *testing.T) {
 }
 
 func TestGetApproved(t *testing.T) {
+	resetObject(t)
+	testing.SetRealm(positionRealm)
+	Mint(cross, addr01, tid(1))
+
 	tests := []struct {
 		name         string
 		setup        func(cur realm)
+		tokenId      uint64
 		expectedAddr std.Address
+		shouldError  bool
+		errorMsg     string
 	}{
 		{
-			name:         "GetApproved(1)",
-			expectedAddr: std.Address(""),
+			name:         "GetApproved for token without approval",
+			tokenId:      1,
+			shouldError: true,
+			errorMsg: "token id not approved for anyone",
 		},
 		{
-			name: "GetApproved(1) after approving",
+			name: "GetApproved for token with approval",
 			setup: func(cur realm) {
 				testing.SetRealm(addr01Realm)
 				Approve(cross, addr02, tid(1))
 			},
+			tokenId:      1,
 			expectedAddr: addr02,
+		},
+		{
+			name:        "GetApproved for non-existent token",
+			tokenId:     999,
+			shouldError: true,
+			errorMsg:    "token id not approved for anyone",
+		},
+		{
+			name: "GetApproved for token with different approval",
+			setup: func(cur realm) {
+				testing.SetRealm(addr01Realm)
+				Approve(cross, addr02, tid(1))
+				Approve(cross, testutils.TestAddress("addr03"), tid(1)) // change approval
+			},
+			tokenId:      1,
+			expectedAddr: testutils.TestAddress("addr03"),
 		},
 	}
 
@@ -193,8 +219,20 @@ func TestGetApproved(t *testing.T) {
 				tt.setup(cross)
 			}
 
-			addr, _ := GetApproved(tid(1))
-			uassert.Equal(t, tt.expectedAddr, addr)
+			addr, err := GetApproved(tid(tt.tokenId))
+			
+			if tt.shouldError {
+				if err == nil {
+					t.Errorf("Expected error but got none")
+				} else if err.Error() != tt.errorMsg {
+					t.Errorf("Expected error message '%s', got '%s'", tt.errorMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				uassert.Equal(t, tt.expectedAddr, addr)
+			}
 		})
 	}
 }
