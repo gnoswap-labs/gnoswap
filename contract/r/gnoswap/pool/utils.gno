@@ -42,13 +42,25 @@ func safeConvertToUint64(value *u256.Uint) uint64 {
 	if overflow {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows uint64 range",
-			errOutOfRange, value.ToString()))
+			errOutOfRange, 
+			value.ToString()
+			consts.MAX_UINT64
+		))
 	}
 	return res
 }
 
 func safeConvertToInt64(value *u256.Uint) int64 {
-	return int64(safeConvertToUint64(value))
+	res, overflow := value.Uint64WithOverflow()
+	if overflow || res > uint64(math.MaxInt64) {
+		panic(ufmt.Sprintf(
+			"%v: amount(%s) overflows int64 range (max %d)",
+			errOutOfRange,
+			value.ToString(),
+			consts.MAX_INT64,
+		))
+	}
+	return int64(res)
 }
 
 // safeConvertToInt128 safely converts a *u256.Uint value to an *i256.Int, ensuring it does not exceed the int128 range.
