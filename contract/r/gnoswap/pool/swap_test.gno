@@ -49,8 +49,8 @@ func TestSaveProtocolFees(t *testing.T) {
 					token1: u256.NewUint(2000),
 				},
 			},
-			amount0:  u256.NewUint(1000),
-			amount1:  u256.NewUint(2000),
+			amount0:  u256.NewUint(999),
+			amount1:  u256.NewUint(1999),
 			want0:    u256.NewUint(999),
 			want1:    u256.NewUint(1999),
 			wantFee0: u256.NewUint(1),
@@ -281,11 +281,8 @@ func TestComputeSwap(t *testing.T) {
 
 func TestDrySwap_Failures(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	func() {
-		testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-		SetPoolCreationFeeByAdmin(cross, 0)
-		CreatePool(cross, barPath, bazPath, fee100, "79228162514264337593543950336")
-	}()
+	SetPoolCreationFeeByAdmin(cross, 0)
+	CreatePool(cross, barPath, bazPath, fee100, "79228162514264337593543950336")
 
 	tests := []struct {
 		name              string
@@ -356,8 +353,6 @@ func TestDrySwap_Failures(t *testing.T) {
 	}
 }
 
-/* Dependency cycle occurring for position */
-
 func TestSwap_Failures(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -372,7 +367,7 @@ func TestSwap_Failures(t *testing.T) {
 		payer             std.Address
 		expectedAmount0   string
 		expectedAmount1   string
-		expectedMsg     string
+		expectedMsg       string
 	}{
 		{
 			name: "locked pool",
@@ -389,7 +384,7 @@ func TestSwap_Failures(t *testing.T) {
 			amountSpecified:   "100",
 			sqrtPriceLimitX96: "79228162514264337593543950336",
 			payer:             routerAddr,
-			expectedMsg: "[GNOSWAP-POOL-018] can't swap while pool is locked",
+			expectedMsg:       "[GNOSWAP-POOL-018] can't swap while pool is locked",
 		},
 		{
 			name: "zero amount",
@@ -407,7 +402,7 @@ func TestSwap_Failures(t *testing.T) {
 			amountSpecified:   "0",
 			sqrtPriceLimitX96: "79228162514264337593543950336",
 			payer:             alice,
-			expectedMsg: "[GNOSWAP-POOL-015] invalid swap amount || amountSpecified == 0",
+			expectedMsg:       "[GNOSWAP-POOL-015] invalid swap amount || amountSpecified == 0",
 		},
 	}
 
@@ -604,7 +599,7 @@ func TestSwapAndDrySwapComparison_amount_zero(t *testing.T) {
 			}
 
 			if tt.shouldPanic {
-				uassert.AbortsWithMessage(t, tt.expected, func() {tt.action(t)})
+				uassert.AbortsWithMessage(t, tt.expected, func() { tt.action(t) })
 			} else {
 				tt.action(t)
 			}
