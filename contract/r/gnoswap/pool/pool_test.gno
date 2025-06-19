@@ -5,17 +5,34 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	// "gno.land/p/demo/uassert"
+	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
+
 	// u256 "gno.land/p/gnoswap/uint256"
-	// "gno.land/r/demo/wugnot"
-	// "gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/gns"
+
 	// pn "gno.land/r/gnoswap/v1/position"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
 )
 
+// cleanupPool removes the created pool to prevent interference with other tests
+func cleanupPool(t *testing.T, token0Path, token1Path string, fee uint32) {
+	poolPath := GetPoolPath(token0Path, token1Path, fee)
+	if pools.Has(poolPath) {
+		pools.Remove(poolPath)
+	}
+}
+
 func TestMint(t *testing.T) {
-	token0Path := "test_token0"
-	token1Path := "test_token1"
+	var (
+		fooTokenPath = "gno.land/r/onbloc/foo"
+		barTokenPath = "gno.land/r/onbloc/bar"
+		bazTokenPath = "gno.land/r/onbloc/baz"
+	)
+
 	fee := uint32(3000)
 	recipient := testutils.TestAddress("recipient")
 	tickLower := int32(-100)
@@ -25,98 +42,94 @@ func TestMint(t *testing.T) {
 
 	t.Run("unauthorized caller mint should fail", func(t *testing.T) {
 		unauthorized := testutils.TestAddress("unauthorized")
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("unauthorized caller mint should fail")
-			}
-		}()
+		expected := "[GNOSWAP-POOL-001] caller has no permission || only position(g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5) can call, called from g148tjamj80yyrm309z7rk690an22thd2l3z8ank"
 
-		Mint(cross, token0Path, token1Path, fee, recipient, tickLower, tickUpper, liquidityAmount, unauthorized)
+		uassert.AbortsWithMessage(t, expected, func() {
+			Mint(cross, fooTokenPath, barTokenPath, fee, recipient, tickLower, tickUpper, liquidityAmount, unauthorized)
+		})
 	})
 
 	t.Run("mint with 0 liquidity should fail", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("mint with 0 liquidity should fail")
-			}
-		}()
+		expected := "[GNOSWAP-POOL-010] zero liquidity"
 
-		Mint(cross, token0Path, token1Path, fee, recipient, tickLower, tickUpper, "0", authorized)
+		testing.SetRealm(posRealm)
+		uassert.AbortsWithMessage(t, expected, func() {
+			Mint(cross, fooTokenPath, barTokenPath, fee, recipient, tickLower, tickUpper, "0", authorized)
+		})
 	})
 
 	t.Run("invalid tick range should fail", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("invalid tick range should fail")
-			}
-		}()
-		Mint(cross, token0Path, token1Path, fee, recipient, 100, 100, liquidityAmount, authorized)
-	})
+		// Create pool before minting
+		testing.SetRealm(adminRealm)
+		SetPoolCreationFeeByAdmin(cross, 0)
+		CreatePool(
+			cross,
+			fooTokenPath,
+			barTokenPath,
+			fee,
+			"79228162514264337593543950337",
+		)
 
-	t.Run("invalid fee amount should fail", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("invalid fee amount should fail")
-			}
-		}()
-		Mint(cross, token0Path, token1Path, 2000, recipient, -100, 100, liquidityAmount, authorized)
+		// Cleanup pool after test
+		defer cleanupPool(t, fooTokenPath, barTokenPath, fee)
+
+		// Try minting with invalid tick range (tickLower == tickUpper)
+		expected := "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(100), tickUpper(100)"
+		testing.SetRealm(posRealm)
+
+		uassert.AbortsWithMessage(t, expected, func() {
+			Mint(cross, fooTokenPath, barTokenPath, fee, recipient, 100, 100, liquidityAmount, authorized)
+		})
 	})
 
 	t.Run("non-existent pool should fail", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("non-existent pool should fail")
-			}
-		}()
-		Mint(cross, "nonexistent_token0", "nonexistent_token1", fee, recipient, -100, 100, liquidityAmount, authorized)
+		expected := "[GNOSWAP-POOL-008] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000) to exist"
+
+		testing.SetRealm(posRealm)
+		uassert.AbortsWithMessage(t, expected, func() {
+			Mint(cross, fooTokenPath, barTokenPath, fee, recipient, -100, 100, liquidityAmount, authorized)
+		})
 	})
 
-	// 	t.Run("successful mint", func(t *testing.T) {
-	// 		// create pool first
-	// 		testing.SetRealm(adminRealm)
-	// 		func() {
-	// 			testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
-	// 			SetPoolCreationFeeByAdmin(0)
-	// 			CreatePool(
-	// 				barTokenPath,
-	// 				bazTokenPath,
-	// 				FeeTier100,
-	// 				"79228162514264337593543950336",
-	// 			)
-	// 		}()
+	t.Run("successful mint", func(t *testing.T) {
+		// create pool first
+		testing.SetRealm(adminRealm)
+		SetPoolCreationFeeByAdmin(cross, 0)
+		CreatePool(
+			cross,
+			barTokenPath,
+			bazTokenPath,
+			FeeTier100,
+			"79228162514264337593543950336",
+		)
 
-	// 		// approve enough token to mint position
-	// 		func() {
-	// 			testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
-	// 			bar.Approve(poolAddr, maxApprove)
-	// 			baz.Approve(poolAddr, maxApprove)
-	// 		}()
+		// approve enough token to mint position
+		bar.Approve(cross, poolAddr, maxApprove)
+		baz.Approve(cross, poolAddr, maxApprove)
 
-	// 		beforeBalance0 := bar.BalanceOf(poolAddr)
-	// 		beforeBalance1 := baz.BalanceOf(poolAddr)
+		beforeBalance0 := bar.BalanceOf(poolAddr)
+		beforeBalance1 := baz.BalanceOf(poolAddr)
 
-	// 		testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
-	// 		func() {
-	// 			testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
-	// 			mintAmount0, mintAmount1 := Mint(
-	// 				barTokenPath,
-	// 				bazTokenPath,
-	// 				FeeTier100,
-	// 				positionAddr,
-	// 				int32(-100),
-	// 				int32(100),
-	// 				"10000000000",
-	// 				adminAddr,
-	// 			)
-	// 			uassert.Equal(t, mintAmount0, "49872721")
-	// 			uassert.Equal(t, mintAmount1, "49872721")
-	// 		}()
+		testing.SetRealm(posRealm)
+		mintAmount0, mintAmount1 := Mint(
+			cross,
+			barTokenPath,
+			bazTokenPath,
+			FeeTier100,
+			positionAddr,
+			int32(-100),
+			int32(100),
+			"10000000000",
+			adminAddr,
+		)
+		uassert.Equal(t, mintAmount0, "49872721")
+		uassert.Equal(t, mintAmount1, "49872721")
 
-	//		afterBalance0 := bar.BalanceOf(poolAddr)
-	//		afterBalance1 := baz.BalanceOf(poolAddr)
-	//		uassert.Equal(t, int64(49872721), afterBalance0-beforeBalance0)
-	//		uassert.Equal(t, int64(49872721), afterBalance1-beforeBalance1)
-	//	})
+		afterBalance0 := bar.BalanceOf(poolAddr)
+		afterBalance1 := baz.BalanceOf(poolAddr)
+		uassert.Equal(t, int64(49872721), afterBalance0-beforeBalance0)
+		uassert.Equal(t, int64(49872721), afterBalance1-beforeBalance1)
+	})
 }
 
 func TestBurn(t *testing.T) {
@@ -223,186 +236,188 @@ func TestBurn(t *testing.T) {
 	}
 }
 
-// func TestCollect(t *testing.T) {
-// 	positionOwner := adminAddr
+func TestCollect(t *testing.T) {
+	positionOwner := adminAddr
 
-// 	tests := []struct {
-// 		name             string
-// 		tokenPath0       string
-// 		tokenPath1       string
-// 		feeTier          uint32
-// 		recipient        std.Address
-// 		tickLower        int32
-// 		tickUpper        int32
-// 		amount0Requested string
-// 		amount1Requested string
-// 		expectedAmount0  string
-// 		expectedAmount1  string
-// 		expectPanic      bool
-// 	}{
-// 		// {
-// 		// 	name:             "successful collect full amount",
-// 		// 	tokenPath0:       wugnotPath,
-// 		// 	tokenPath1:       gnsPath,
-// 		// 	feeTier:          FeeTier10000,
-// 		// 	recipient:        positionOwner,
-// 		// 	tickLower:        -200,
-// 		// 	tickUpper:        200,
-// 		// 	amount0Requested: "100",
-// 		// 	amount1Requested: "100",
-// 		// 	expectedAmount0:  "0",
-// 		// 	expectedAmount1:  "0",
-// 		// },
-// 		// {
-// 		// 	name:             "partial collect due to pool balance",
-// 		// 	tokenPath0:       wugnotPath,
-// 		// 	tokenPath1:       gnsPath,
-// 		// 	feeTier:          FeeTier10000,
-// 		// 	recipient:        positionOwner,
-// 		// 	tickLower:        -200,
-// 		// 	tickUpper:        200,
-// 		// 	amount0Requested: "1000",
-// 		// 	amount1Requested: "0",
-// 		// 	expectedAmount0:  "1000",
-// 		// 	expectedAmount1:  "0",
-// 		// },
-// 		// {
-// 		// 	name:             "partial collect due to tokensOwed limit",
-// 		// 	tokenPath0:       wugnotPath,
-// 		// 	tokenPath1:       gnsPath,
-// 		// 	feeTier:          FeeTier10000,
-// 		// 	recipient:        positionOwner,
-// 		// 	tickLower:        -200,
-// 		// 	tickUpper:        200,
-// 		// 	amount0Requested: "18998",
-// 		// 	amount1Requested: "600",
-// 		// 	expectedAmount0:  "18998",
-// 		// 	expectedAmount1:  "0",
-// 		// },
-// 		// {
-// 		// 	name:             "collect with zero requested amount",
-// 		// 	tokenPath0:       wugnotPath,
-// 		// 	tokenPath1:       gnsPath,
-// 		// 	feeTier:          FeeTier10000,
-// 		// 	recipient:        positionOwner,
-// 		// 	tickLower:        -200,
-// 		// 	tickUpper:        200,
-// 		// 	amount0Requested: "0",
-// 		// 	amount1Requested: "0",
-// 		// 	expectedAmount0:  "0",
-// 		// 	expectedAmount1:  "0",
-// 		// },
-// 		{
-// 			name:             "panic when position does not exist",
-// 			tokenPath0:       wugnotPath,
-// 			tokenPath1:       gnsPath,
-// 			feeTier:          FeeTier10000,
-// 			recipient:        positionOwner,
-// 			tickLower:        -400,
-// 			tickUpper:        400,
-// 			amount0Requested: "500",
-// 			amount1Requested: "300",
-// 			expectPanic:      true,
-// 		},
-// 	}
+	tests := []struct {
+		name             string
+		tokenPath0       string
+		tokenPath1       string
+		feeTier          uint32
+		recipient        std.Address
+		tickLower        int32
+		tickUpper        int32
+		amount0Requested string
+		amount1Requested string
+		expectedAmount0  string
+		expectedAmount1  string
+		expectPanic      bool
+		expectedPanicMsg string
+	}{
+		// {
+		// 	name:             "successful collect full amount",
+		// 	tokenPath0:       wugnotPath,
+		// 	tokenPath1:       gnsPath,
+		// 	feeTier:          FeeTier10000,
+		// 	recipient:        positionOwner,
+		// 	tickLower:        -200,
+		// 	tickUpper:        200,
+		// 	amount0Requested: "100",
+		// 	amount1Requested: "100",
+		// 	expectedAmount0:  "0",
+		// 	expectedAmount1:  "0",
+		// },
+		// {
+		// 	name:             "partial collect due to pool balance",
+		// 	tokenPath0:       wugnotPath,
+		// 	tokenPath1:       gnsPath,
+		// 	feeTier:          FeeTier10000,
+		// 	recipient:        positionOwner,
+		// 	tickLower:        -200,
+		// 	tickUpper:        200,
+		// 	amount0Requested: "1000",
+		// 	amount1Requested: "0",
+		// 	expectedAmount0:  "1000",
+		// 	expectedAmount1:  "0",
+		// },
+		// {
+		// 	name:             "partial collect due to tokensOwed limit",
+		// 	tokenPath0:       wugnotPath,
+		// 	tokenPath1:       gnsPath,
+		// 	feeTier:          FeeTier10000,
+		// 	recipient:        positionOwner,
+		// 	tickLower:        -200,
+		// 	tickUpper:        200,
+		// 	amount0Requested: "18998",
+		// 	amount1Requested: "600",
+		// 	expectedAmount0:  "18998",
+		// 	expectedAmount1:  "0",
+		// },
+		{
+			name:             "collect with zero requested amount",
+			tokenPath0:       wugnotPath,
+			tokenPath1:       gnsPath,
+			feeTier:          FeeTier10000,
+			recipient:        positionOwner,
+			tickLower:        -200,
+			tickUpper:        200,
+			amount0Requested: "0",
+			amount1Requested: "0",
+			expectedAmount0:  "0",
+			expectedAmount1:  "0",
+		},
+		{
+			name:             "panic when position does not exist",
+			tokenPath0:       wugnotPath,
+			tokenPath1:       gnsPath,
+			feeTier:          FeeTier10000,
+			recipient:        positionOwner,
+			tickLower:        -400,
+			tickUpper:        400,
+			amount0Requested: "500",
+			amount1Requested: "300",
+			expectPanic:      true,
+			expectedPanicMsg: "[GNOSWAP-POOL-008] requested data not found || positionKey(ZzFxNjQ2Y3R6aHZuNjB2NDkyeDh1Y3Z5cW5yajJ3MzBjd2g2ZWZrNV9fLTQwMF9fNDAw) does not exist",
+		},
+	}
 
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			// Pool Creation
-// 			testing.SetRealm(adminRealm)
-// 			func() {
-// 				testing.SetRealm(std.NewCodeRealm(consts.POOL_PATH))
-// 				SetPoolCreationFeeByAdmin(0)
-// 				if !DoesPoolPathExist(GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
-// 					CreatePool(tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
-// 				}
-// 			}()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Pool Creation
+			testing.SetRealm(adminRealm)
+			SetPoolCreationFeeByAdmin(cross, 0)
+			if !DoesPoolPathExist(GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
+				CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
+			}
 
-// 			if !tt.expectPanic {
-// 				// Setup tokens for position owner
-// 				testing.SetOriginCaller(positionOwner)
-// 				newCoins := std.Coins{{"ugnot", int64(10000000000)}}
-// 				testing.IssueCoins(positionOwner, newCoins)
-// 				testing.SetOriginSend(newCoins)
-// 				banker := std.NewBanker(std.BankerTypeRealmSend)
-// 				banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
-// 				cross(wugnot.Deposit)()
-// 				cross(wugnot.Approve)(poolAddr, maxApprove)
+			if tt.expectPanic {
+				testing.SetRealm(posRealm)
+				uassert.AbortsWithMessage(t, tt.expectedPanicMsg, func() {
+					Collect(
+						cross,
+						tt.tokenPath0,
+						tt.tokenPath1,
+						tt.feeTier,
+						tt.recipient,
+						tt.tickLower,
+						tt.tickUpper,
+						tt.amount0Requested,
+						tt.amount1Requested,
+					)
+				})
+			} else {
+				// Setup tokens for position owner
+				testing.SetOriginCaller(positionOwner)
+				newCoins := std.Coins{{"ugnot", int64(10000000000)}}
+				testing.IssueCoins(positionOwner, newCoins)
+				testing.SetOriginSend(newCoins)
+				banker := std.NewBanker(std.BankerTypeRealmSend)
+				banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
+				wugnot.Deposit(cross)
+				wugnot.Approve(cross, poolAddr, maxApprove)
 
-// 				// Create position
-// 				testing.SetRealm(std.NewUserRealm(positionOwner))
-// 				func() {
-// 					testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
-// 					cross(pn.Mint)(
-// 						tt.tokenPath0,
-// 						tt.tokenPath1,
-// 						tt.feeTier,
-// 						tt.tickLower,
-// 						tt.tickUpper,
-// 						"100000000",
-// 						"100000000",
-// 						"0",
-// 						"0",
-// 						max_timeout,
-// 						tt.recipient,
-// 						tt.recipient,
-// 						"",
-// 					)
-// 				}()
+				// Create position using pool.Mint instead of pn.Mint
+				testing.SetRealm(posRealm)
+				Mint(
+					cross,
+					tt.tokenPath0,
+					tt.tokenPath1,
+					tt.feeTier,
+					tt.recipient,
+					tt.tickLower,
+					tt.tickUpper,
+					"100000000",
+					positionOwner,
+				)
 
-// 				// Verify position exists
-// 				pool := GetPool(tt.tokenPath0, tt.tokenPath1, tt.feeTier)
-// 				posKey := getPositionKey(positionAddr, tt.tickLower, tt.tickUpper)
-// 				pool.mustGetPosition(posKey)
+				// Verify position exists
+				pool := GetPool(tt.tokenPath0, tt.tokenPath1, tt.feeTier)
+				posKey := getPositionKey(positionAddr, tt.tickLower, tt.tickUpper)
+				pool.mustGetPosition(posKey)
 
-// 				testing.SkipHeights(1)
+				testing.SkipHeights(1)
 
-// 				// Setup for swap
-// 				testing.SetOriginCaller(positionOwner)
-// 				cross(wugnot.Transfer)(routerAddr, 20000000)
-// 				cross(gns.Transfer)(routerAddr, 20000000)
+				// Setup for swap
+				testing.SetOriginCaller(positionOwner)
+				wugnot.Transfer(cross, routerAddr, 20000000)
+				gns.Transfer(cross, routerAddr, 20000000)
 
-// 				// Perform swap
-// 				testing.SetRealm(rouRealm)
-// 				func() {
-// 					testing.SetRealm(std.NewCodeRealm(consts.ROUTER_PATH))
-// 					cross(wugnot.Approve)(poolAddr, maxApprove)
-// 					cross(Swap)(
-// 						tt.tokenPath0,
-// 						tt.tokenPath1,
-// 						tt.feeTier,
-// 						tt.recipient,
-// 						true,
-// 						"1000000",
-// 						"3945129629379410362911094632",
-// 						tt.recipient,
-// 					)
-// 				}()
-// 				testing.SkipHeights(1)
-// 			}
+				// Perform swap
+				testing.SetRealm(rouRealm)
+				wugnot.Approve(cross, poolAddr, maxApprove)
+				Swap(
+					cross,
+					tt.tokenPath0,
+					tt.tokenPath1,
+					tt.feeTier,
+					tt.recipient,
+					true,
+					"1000000",
+					"3945129629379410362911094632",
+					tt.recipient,
+				)
+				testing.SkipHeights(1)
 
-// 			// Collect
-// 			testing.SetRealm(posRealm)
-// 			func() {
-// 				testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
-// 				collectedAmount0, collectedAmount1 := Collect(
-// 					tt.tokenPath0,
-// 					tt.tokenPath1,
-// 					tt.feeTier,
-// 					tt.recipient,
-// 					tt.tickLower,
-// 					tt.tickUpper,
-// 					tt.amount0Requested,
-// 					tt.amount1Requested,
-// 				)
-// 				if !tt.expectPanic {
-// 					uassert.Equal(t, tt.expectedAmount0, collectedAmount0)
-// 					uassert.Equal(t, tt.expectedAmount1, collectedAmount1)
-// 				}
-// 			}()
-// 		})
-// 	}
-// }
+				// Collect
+				testing.SetRealm(posRealm)
+				collectedAmount0, collectedAmount1 := Collect(
+					cross,
+					tt.tokenPath0,
+					tt.tokenPath1,
+					tt.feeTier,
+					tt.recipient,
+					tt.tickLower,
+					tt.tickUpper,
+					tt.amount0Requested,
+					tt.amount1Requested,
+				)
+
+				uassert.Equal(t, tt.expectedAmount0, collectedAmount0)
+				uassert.Equal(t, tt.expectedAmount1, collectedAmount1)
+			}
+		})
+	}
+}
 
 // func TestSetFeeProtocolInternal(t *testing.T) {
 // 	tests := []struct {
