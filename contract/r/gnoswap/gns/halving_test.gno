@@ -371,7 +371,7 @@ func TestGetEmission(t *testing.T) {
 		testing.SetHeight(currentHeight)
 
 		// Call GetEmission multiple times and verify the updated state
-		for i := 0; i < 3; i++ {
+		for range make([]struct{}, 3) {
 			// Record state before the call
 			mintedBefore := GetHalvingYearMintAmount(year)
 			leftBefore := GetHalvingYearLeftAmount(year)
