@@ -187,7 +187,6 @@ func TestBurn(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// 풀 생성 (non-existent pool 테스트 제외)
 			if tt.name != "non-existent pool" {
 				testing.SetRealm(adminRealm)
 				SetPoolCreationFeeByAdmin(cross, 0)
@@ -198,7 +197,6 @@ func TestBurn(t *testing.T) {
 					tt.fee,
 					"79228162514264337593543950336",
 				)
-				// 테스트 후 풀 정리
 				defer cleanupPool(t, barTokenPath, bazTokenPath, tt.fee)
 			}
 
