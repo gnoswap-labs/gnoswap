@@ -293,3 +293,9 @@ func TestRemoveRole(t *testing.T) {
 		}
 	})
 }
+
+// Note: Role 업데이트 테스트는 현재 RBAC 구현체에 Role 업데이트 기능이 없어서 존재하지 않습니다.
+// 현재 구현된 Role 관련 기능:
+// - RegisterRole: Role 등록
+// - RemoveRole: Role 삭제 (시스템 역할 제외)
+// - UpdatePermission: Role 내의 Permission 업데이트 (Role 자체 업데이트 아님)
