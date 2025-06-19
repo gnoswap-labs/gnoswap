@@ -255,53 +255,47 @@ func TestCreateRole(t *testing.T) {
 	testAnotherAddr := testutils.TestAddress("test_another_role")
 
 	t.Run("create new role success", func(t *testing.T) {
-		func(cur realm) {
-			cfg := newConfig()
-			err := initialize(cfg)
-			uassert.NoError(t, err)
+		cfg := newConfig()
+		err := initialize(cfg)
+		uassert.NoError(t, err)
 
-			err = CreateRole(cur, "custom_role", testNewRoleAddr)
-			uassert.NoError(t, err)
+		err = CreateRole(cross, "custom_role", testNewRoleAddr)
+		uassert.NoError(t, err)
 
-			// verify role was created correctly
-			actual := GetCurrentConfig()
-			roleAddr := actual.roles["custom_role"]
-			uassert.Equal(t, testNewRoleAddr, roleAddr)
+		// verify role was created correctly
+		actual := GetCurrentConfig()
+		roleAddr := actual.roles["custom_role"]
+		uassert.Equal(t, testNewRoleAddr, roleAddr)
 
-			// verify permission is set correctly
-			err = rbac.CheckPermission("custom_role", PERM_ACCESS, testNewRoleAddr)
-			uassert.NoError(t, err)
+		// verify permission is set correctly
+		err = rbac.CheckPermission("custom_role", PERM_ACCESS, testNewRoleAddr)
+		uassert.NoError(t, err)
 
-			// verify different address cannot access the role
-			err = rbac.CheckPermission("custom_role", PERM_ACCESS, testAnotherAddr)
-			uassert.Error(t, err)
-		}(cross)
+		// verify different address cannot access the role
+		err = rbac.CheckPermission("custom_role", PERM_ACCESS, testAnotherAddr)
+		uassert.Error(t, err)
 	})
 
 	t.Run("create role fails while uninitialized", func(t *testing.T) {
-		func(cur realm) {
-			currentConfig = nil
-			err := CreateRole(cur, "failed_role", testNewRoleAddr)
-			uassert.Error(t, err)
-		}(cross)
+		currentConfig = nil
+		err := CreateRole(cross, "failed_role", testNewRoleAddr)
+		uassert.Error(t, err)
 	})
 
 	t.Run("create duplicate role fails", func(t *testing.T) {
-		func(cur realm) {
-			testing.SetRealm(adminRealm)
+		testing.SetRealm(adminRealm)
 
-			cfg := newConfig()
-			err := initialize(cfg)
-			uassert.NoError(t, err)
+		cfg := newConfig()
+		err := initialize(cfg)
+		uassert.NoError(t, err)
 
-			// create first role
-			err = CreateRole(cur, "duplicate_role", testNewRoleAddr)
-			uassert.NoError(t, err)
+		// create first role
+		err = CreateRole(cross, "duplicate_role", testNewRoleAddr)
+		uassert.NoError(t, err)
 
-			// attempt to create same role again
-			err = CreateRole(cur, "duplicate_role", testAnotherAddr)
-			uassert.Error(t, err)
-		}(cross)
+		// attempt to create same role again
+		err = CreateRole(cross, "duplicate_role", testAnotherAddr)
+		uassert.Error(t, err)
 	})
 }
 
