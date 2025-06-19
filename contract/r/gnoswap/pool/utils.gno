@@ -57,7 +57,7 @@ func safeConvertToInt64(value *u256.Uint) int64 {
             "%v: amount(%s) overflows int64 range (max %d)",
             errOutOfRange,
             value.ToString(),
-            consts.INT64_MAX,
+            consts.MAX_INT64,
         ))
     }
     return int64(res)
