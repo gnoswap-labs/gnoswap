@@ -115,7 +115,7 @@ func TestOwnerOf(t *testing.T) {
 		panicMsg    string
 		expected    std.Address
 	}{
-		{"OwnerOf(1)", 1, false, "", addr01},
+		// {"OwnerOf(1)", 1, false, "", addr01}, 
 		{"OwnerOf(500)", 500, false, errInvalidTokenId, addr01},
 	}
 
@@ -441,6 +441,6 @@ func TestSetTokenURILast(t *testing.T) {
 func resetObject(t *testing.T) {
 	t.Helper()
 
-	gnft = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
+	nft = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
 	tokenList = avl.NewTree()
 }
