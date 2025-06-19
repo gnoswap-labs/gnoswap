@@ -9,11 +9,8 @@ import (
 	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	// u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/gns"
-
-	// pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
