@@ -254,19 +254,19 @@ func TestCollect(t *testing.T) {
 		expectPanic      bool
 		expectedPanicMsg string
 	}{
-		// {
-		// 	name:             "successful collect full amount",
-		// 	tokenPath0:       wugnotPath,
-		// 	tokenPath1:       gnsPath,
-		// 	feeTier:          FeeTier10000,
-		// 	recipient:        positionOwner,
-		// 	tickLower:        -200,
-		// 	tickUpper:        200,
-		// 	amount0Requested: "100",
-		// 	amount1Requested: "100",
-		// 	expectedAmount0:  "0",
-		// 	expectedAmount1:  "0",
-		// },
+		{
+			name:             "successful collect full amount",
+			tokenPath0:       wugnotPath,
+			tokenPath1:       gnsPath,
+			feeTier:          FeeTier10000,
+			recipient:        positionOwner,
+			tickLower:        -200,
+			tickUpper:        200,
+			amount0Requested: "100",
+			amount1Requested: "100",
+			expectedAmount0:  "0",
+			expectedAmount1:  "0",
+		},
 		// {
 		// 	name:             "partial collect due to pool balance",
 		// 	tokenPath0:       wugnotPath,
@@ -317,7 +317,7 @@ func TestCollect(t *testing.T) {
 			amount0Requested: "500",
 			amount1Requested: "300",
 			expectPanic:      true,
-			expectedPanicMsg: "[GNOSWAP-POOL-008] requested data not found || positionKey(ZzFxNjQ2Y3R6aHZuNjB2NDkyeDh1Y3Z5cW5yajJ3MzBjd2g2ZWZrNV9fLTQwMF9fNDAw) does not exist",
+			expectedPanicMsg: "[GNOSWAP-POOL-008] requested data not found || positionKey(ZzE3MjkwY3d2bXJhcHZwODY5eGZuaGhhd2E4c205ZWRwdWZ6YXQ3ZF9fLTQwMF9fNDAw) does not exist",
 		},
 	}
 
@@ -355,6 +355,7 @@ func TestCollect(t *testing.T) {
 				banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
 				wugnot.Deposit(cross)
 				wugnot.Approve(cross, poolAddr, maxApprove)
+				gns.Approve(cross, poolAddr, maxApprove)
 
 				testing.SetRealm(posRealm)
 				Mint(
@@ -371,10 +372,8 @@ func TestCollect(t *testing.T) {
 
 				// Verify position exists
 				pool := GetPool(tt.tokenPath0, tt.tokenPath1, tt.feeTier)
-				posKey := getPositionKey(positionAddr, tt.tickLower, tt.tickUpper)
+				posKey := getPositionKey(tt.recipient, tt.tickLower, tt.tickUpper)
 				pool.mustGetPosition(posKey)
-
-				testing.SkipHeights(1)
 
 				// Setup for swap
 				testing.SetOriginCaller(positionOwner)
@@ -392,7 +391,7 @@ func TestCollect(t *testing.T) {
 					tt.recipient,
 					true,
 					"1000000",
-					"3945129629379410362911094632",
+					"3945129629379410362911094631",
 					tt.recipient,
 				)
 				testing.SkipHeights(1)
