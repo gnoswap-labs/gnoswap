@@ -137,72 +137,115 @@ func TestBurn(t *testing.T) {
 	bazTokenPath := "gno.land/r/onbloc/baz"
 
 	tests := []struct {
-		name            string
-		liquidityAmount string
-		tickLower       int32
-		tickUpper       int32
-		fee             uint32
-		expectedAmount0 string
-		expectedAmount1 string
-		expectPanic     bool
+		name             string
+		liquidityAmount  string
+		tickLower        int32
+		tickUpper        int32
+		fee              uint32
+		expectedAmount0  string
+		expectedAmount1  string
+		expectPanic      bool
+		expectedPanicMsg string
 	}{
-		// {
-		// 	name:            "successful burn",
-		// 	liquidityAmount: "10000000000", // burn all liquidity
-		// 	tickLower:       -100,
-		// 	tickUpper:       100,
-		// 	fee:             FeeTier100,
-		// 	expectedAmount0: "49872720",
-		// 	expectedAmount1: "49872720",
-		// },
 		{
-			name:            "zero liquidity",
-			liquidityAmount: "0",
+			name:            "successful burn",
+			liquidityAmount: "10000000000", // burn all liquidity
 			tickLower:       -100,
 			tickUpper:       100,
 			fee:             FeeTier100,
-			expectPanic:     true,
+			expectedAmount0: "49872720",
+			expectedAmount1: "49872720",
 		},
 		{
-			name:            "invalid tick range",
-			liquidityAmount: "100000",
-			tickLower:       200,
-			tickUpper:       100,
-			expectPanic:     true,
+			name:             "zero liquidity",
+			liquidityAmount:  "0",
+			tickLower:        -100,
+			tickUpper:        100,
+			fee:              FeeTier100,
+			expectPanic:      true,
+			expectedPanicMsg: "[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero",
 		},
 		{
-			name:            "invalid fee amount",
-			liquidityAmount: "100000",
-			tickLower:       -100,
-			tickUpper:       100,
-			fee:             2000,
-			expectPanic:     true,
+			name:             "invalid tick range",
+			liquidityAmount:  "100000",
+			tickLower:        200,
+			tickUpper:        100,
+			expectPanic:      true,
+			fee:              FeeTier100,
+			expectedPanicMsg: "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)",
 		},
 		{
-			name:            "non-existent pool",
-			liquidityAmount: "100000",
-			tickLower:       -100,
-			tickUpper:       100,
-			fee:             FeeTier500,
-			expectPanic:     true,
+			name:             "non-existent pool",
+			liquidityAmount:  "100000",
+			tickLower:        -100,
+			tickUpper:        100,
+			fee:              FeeTier500,
+			expectPanic:      true,
+			expectedPanicMsg: "[GNOSWAP-POOL-008] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500) to exist",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.expectPanic {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("expected panic but got none")
-					}
-				}()
+			// 풀 생성 (non-existent pool 테스트 제외)
+			if tt.name != "non-existent pool" {
+				testing.SetRealm(adminRealm)
+				SetPoolCreationFeeByAdmin(cross, 0)
+				CreatePool(
+					cross,
+					barTokenPath,
+					bazTokenPath,
+					tt.fee,
+					"79228162514264337593543950336",
+				)
+				// 테스트 후 풀 정리
+				defer cleanupPool(t, barTokenPath, bazTokenPath, tt.fee)
 			}
 
-			// testing.SetRealm(adminRealm)
+			testing.SetRealm(posRealm)
 
-			testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
-			func() {
-				testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
+			if tt.expectPanic {
+				uassert.AbortsWithMessage(t, tt.expectedPanicMsg, func() {
+					Burn(
+						cross,
+						barTokenPath,
+						bazTokenPath,
+						tt.fee,
+						tt.tickLower,
+						tt.tickUpper,
+						tt.liquidityAmount,
+					)
+				})
+			} else {
+				// need to add liquidity first
+				if tt.name == "successful burn" {
+					// Setup tokens for position owner
+					testing.SetOriginCaller(adminAddr)
+					newCoins := std.Coins{{"ugnot", int64(10000000000)}}
+					testing.IssueCoins(adminAddr, newCoins)
+					testing.SetOriginSend(newCoins)
+					banker := std.NewBanker(std.BankerTypeRealmSend)
+					banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
+					wugnot.Deposit(cross)
+
+					// approve enough token to mint position
+					bar.Approve(cross, poolAddr, maxApprove)
+					baz.Approve(cross, poolAddr, maxApprove)
+
+					testing.SetRealm(posRealm)
+					Mint(
+						cross,
+						barTokenPath,
+						bazTokenPath,
+						tt.fee,
+						positionAddr,
+						tt.tickLower,
+						tt.tickUpper,
+						tt.liquidityAmount,
+						adminAddr,
+					)
+				}
+
 				amount0, amount1 := Burn(
 					cross,
 					barTokenPath,
@@ -213,25 +256,23 @@ func TestBurn(t *testing.T) {
 					tt.liquidityAmount,
 				)
 
-				if !tt.expectPanic {
-					if amount0 != tt.expectedAmount0 {
-						t.Errorf("expected amount0 %s, got %s", tt.expectedAmount0, amount0)
-					}
-					if amount1 != tt.expectedAmount1 {
-						t.Errorf("expected amount1 %s, got %s", tt.expectedAmount1, amount1)
-					}
-
-					pool := GetPool(barTokenPath, bazTokenPath, FeeTier100)
-					posKey := getPositionKey(positionAddr, tt.tickLower, tt.tickUpper)
-					newPosition := pool.mustGetPosition(posKey)
-					if newPosition.tokensOwed0.IsZero() {
-						t.Error("expected tokensOwed0 to be updated")
-					}
-					if newPosition.tokensOwed1.IsZero() {
-						t.Error("expected tokensOwed1 to be updated")
-					}
+				if amount0 != tt.expectedAmount0 {
+					t.Errorf("expected amount0 %s, got %s", tt.expectedAmount0, amount0)
 				}
-			}()
+				if amount1 != tt.expectedAmount1 {
+					t.Errorf("expected amount1 %s, got %s", tt.expectedAmount1, amount1)
+				}
+
+				pool := GetPool(barTokenPath, bazTokenPath, FeeTier100)
+				posKey := getPositionKey(positionAddr, tt.tickLower, tt.tickUpper)
+				newPosition := pool.mustGetPosition(posKey)
+				if newPosition.tokensOwed0.IsZero() {
+					t.Error("expected tokensOwed0 to be updated")
+				}
+				if newPosition.tokensOwed1.IsZero() {
+					t.Error("expected tokensOwed1 to be updated")
+				}
+			}
 		})
 	}
 }
@@ -417,32 +458,6 @@ func TestCollect(t *testing.T) {
 	}
 }
 
-// func TestSetFeeProtocolInternal(t *testing.T) {
-// 	tests := []struct {
-// 		name         string
-// 		feeProtocol0 uint8
-// 		feeProtocol1 uint8
-// 		eventName    string
-// 	}{
-// 		{
-// 			name:         "set fee protocol by admin",
-// 			feeProtocol0: 4,
-// 			feeProtocol1: 5,
-// 			eventName:    "SetFeeProtocolByAdmin",
-// 		},
-// 	}
-
-// 	for _, tt := range tests {
-// 		t.Run("set fee protocol by admin", func(t *testing.T) {
-// 			InitialisePoolTest(t)
-// 			pool := GetPool(wugnotPath, gnsPath, FeeTier3000)
-// 			SetFeeProtocolByAdmin(tt.feeProtocol0, tt.feeProtocol1)
-// 			uassert.Equal(t, tt.feeProtocol0, pool.Slot0FeeProtocol()%16)
-// 			uassert.Equal(t, tt.feeProtocol1, pool.Slot0FeeProtocol()>>4)
-// 		})
-// 	}
-// }
-
 // func TestCollectProtocolByAdmin(t *testing.T) {
 // 	positionOwner := adminAddr
 
@@ -510,14 +525,14 @@ func TestCollect(t *testing.T) {
 // 		t.Run(tt.name, func(t *testing.T) {
 // 			// Pool Creation
 // 			testing.SetRealm(std.NewUserRealm(positionOwner))
-// 			SetPoolCreationFeeByAdmin(0)
+// 			SetPoolCreationFeeByAdmin(cross, 0)
 // 			if !DoesPoolPathExist(GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
-// 				CreatePool(tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
+// 				CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
 // 			}
 
 // 			if tt.feeProtocol0 != 0 || tt.feeProtocol1 != 0 {
 // 				pool := GetPool(tt.tokenPath0, tt.tokenPath1, tt.feeTier)
-// 				SetFeeProtocolByAdmin(tt.feeProtocol0, tt.feeProtocol1)
+// 				SetFeeProtocolByAdmin(cross, tt.feeProtocol0, tt.feeProtocol1)
 // 				uassert.Equal(t, tt.feeProtocol0, pool.Slot0FeeProtocol()%16)
 // 				uassert.Equal(t, tt.feeProtocol1, pool.Slot0FeeProtocol()>>4)
 // 			}
@@ -527,18 +542,18 @@ func TestCollect(t *testing.T) {
 // 			testing.SetOriginSend(newCoins)
 // 			banker := std.NewBanker(std.BankerTypeRealmSend)
 // 			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
-// 			cross(wugnot.Deposit)()
+// 			wugnot.Deposit(cross)
 // 			if tt.recipient != positionOwner {
-// 				cross(wugnot.Transfer)(tt.recipient, 10000000000)
+// 				wugnot.Transfer(cross, tt.recipient, 10000000000)
 // 			}
 
 // 			testing.SetRealm(std.NewUserRealm(tt.recipient))
-// 			cross(wugnot.Approve)(poolAddr, maxApprove)
-// 			cross(gns.Approve)(poolAddr, maxApprove)
+// 			wugnot.Approve(cross, poolAddr, maxApprove)
+// 			gns.Approve(cross, poolAddr, maxApprove)
 
 // 			// teller := common.GetTokenTeller(wugnotPath)
 // 			// teller.Approve(poolAddr, maxApprove)
-// 			cross(wugnot.Approve)(poolAddr, maxApprove)
+// 			wugnot.Approve(cross, poolAddr, maxApprove)
 
 // 			// Position Creation
 // 			pn.Mint(
@@ -565,13 +580,14 @@ func TestCollect(t *testing.T) {
 
 // 			// Swap
 // 			testing.SetOriginCaller(tt.recipient)
-// 			cross(wugnot.Transfer)(routerAddr, 20000000)
-// 			gns.Transfer(routerAddr, 20000000)
+// 			wugnot.Transfer(cross, routerAddr, 20000000)
+// 			gns.Transfer(cross, routerAddr, 20000000)
 
 // 			testing.SetRealm(rouRealm)
-// 			cross(wugnot.Approve)(poolAddr, maxApprove)
+// 			wugnot.Approve(cross, poolAddr, maxApprove)
 
 // 			Swap(
+// 				cross,
 // 				tt.tokenPath0,
 // 				tt.tokenPath1,
 // 				tt.feeTier,
@@ -601,6 +617,7 @@ func TestCollect(t *testing.T) {
 // 			beforePoolBalance1 := pool.BalanceToken1()
 // 			testing.SetRealm(std.NewUserRealm(tt.recipient))
 // 			collectedAmount0, collectedAmount1 := CollectProtocolByAdmin(
+// 				cross,
 // 				tt.tokenPath0,
 // 				tt.tokenPath1,
 // 				tt.feeTier,

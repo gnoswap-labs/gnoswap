@@ -10,7 +10,7 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
-func TestInitTwoPools(t *testing.T) {
+func TestInitTwoPools_GetPools(t *testing.T) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	SetPoolCreationFeeByAdmin(cross, 0)
 	// foo:bar
@@ -20,11 +20,8 @@ func TestInitTwoPools(t *testing.T) {
 	CreatePool(cross, barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000
 
 	uassert.Equal(t, pools.Size(), 2)
-}
 
-func TestApiGetPools(t *testing.T) {
 	getPools := ApiGetPools()
-
 	root, err := json.Unmarshal([]byte(getPools))
 	if err != nil {
 		panic(err.Error())
