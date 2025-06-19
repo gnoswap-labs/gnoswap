@@ -356,7 +356,6 @@ func TestCollect(t *testing.T) {
 				wugnot.Deposit(cross)
 				wugnot.Approve(cross, poolAddr, maxApprove)
 
-				// Create position using pool.Mint instead of pn.Mint
 				testing.SetRealm(posRealm)
 				Mint(
 					cross,
