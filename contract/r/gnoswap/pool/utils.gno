@@ -41,10 +41,10 @@ func safeConvertToUint64(value *u256.Uint) uint64 {
 	res, overflow := value.Uint64WithOverflow()
 	if overflow {
 		panic(ufmt.Sprintf(
-			"%v: amount(%s) overflows uint64 range",
-			errOutOfRange, 
-			value.ToString()
-			consts.MAX_UINT64
+			"%v: amount(%s) overflows uint64 range (max %s)",
+			errOutOfRange,
+			value.ToString(),
+			consts.MAX_UINT64,
 		))
 	}
 	return res
