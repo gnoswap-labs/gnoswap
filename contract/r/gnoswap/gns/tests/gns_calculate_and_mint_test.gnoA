@@ -71,25 +71,25 @@ func TestMintGns(t *testing.T) {
 	t.Run("panic for swap is halted", func(t *testing.T) {
 		testing.SetRealm(std.NewUserRealm(adminAddr))
 		testing.SkipHeights(123)         // pass some block to bypass last block check
-		cross(halt.SetHaltByAdmin)(true) // set halt
+		halt.SetHaltByAdmin(cross, true) // set halt
 		uassert.AbortsWithMessage(t, "halted", func() {
-			cross(MintGns)(adminAddr)
+			MintGns(cross, adminAddr)
 		})
 
-		cross(halt.SetHaltByAdmin)(false) // unset halt
+		halt.SetHaltByAdmin(cross, false) // unset halt
 	})
 
 	t.Run("panic if caller is not emission contract", func(t *testing.T) {
 		testing.SetRealm(std.NewUserRealm(testutils.TestAddress("user")))
 		uassert.AbortsWithMessage(t, "caller(g1w4ek2ujlta047h6lta047h6lta047h6lkvk347) has no permission", func() {
-			cross(MintGns)(adminAddr)
+			MintGns(cross, adminAddr)
 		})
 	})
 
 	t.Run("do not mint for same block", func(t *testing.T) {
 		testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 		testing.SkipHeights(-123) // revert height to get caught by last block check
-		mintedAmount := cross(MintGns)(adminAddr)
+		mintedAmount := MintGns(cross, adminAddr)
 		uassert.Equal(t, int64(0), mintedAmount)
 	})
 }
