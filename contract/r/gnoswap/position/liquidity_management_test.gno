@@ -11,7 +11,7 @@ import (
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
-func InitialSetup(t *testing.T) {
+func initialSetup(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
@@ -150,7 +150,7 @@ func TestAddLiquidity(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			InitialSetup(t)
+			initialSetup(t)
 			testing.SetRealm(posRealm)
 			TokenApprove(t, gnsPath, alice, poolAddr, tt.params.amount0Desired.Int64())
 			TokenApprove(t, barPath, alice, poolAddr, tt.params.amount1Desired.Int64())
