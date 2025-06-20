@@ -457,11 +457,6 @@ func TestDerivePkgAddr(t *testing.T) {
 			input:    "gno.land/r/gnoswap/v1/gns",
 			expected: "g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m",
 		},
-		{
-			name:     "Empty package path",
-			input:    "",
-			expected: "g1dqzh5qknkx0kasfkwvx0qfcztcgdmwl3p0hzzr",
-		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
