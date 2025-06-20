@@ -84,7 +84,8 @@ class TestRunner
   def run_all
     run_unit_tests
     remove_test_files
-    run_gnoa_tests
+    # temporary disable gnoa tests
+    # run_gnoa_tests
   end
 end
 

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -806,91 +807,104 @@ func TestGlobalIsEmpty(t *testing.T) {
 	}
 }
 
-func TestTryRegisterRetryAfterFailure(t *testing.T) {
-	cleanup := mockValidCaller()
-	defer cleanup()
-
-	invalidRef := "000000000001"
-	success := TryRegister(cross, validAddr3, invalidRef)
-	if success {
-		t.Error("should fail with invalid referral address")
+func TestTryRegister(t *testing.T) {
+	tests := []struct {
+		name                         string
+		inputUserAddr                std.Address
+		inputFirstRefAddr            std.Address
+		inputSecondRefAddr           std.Address
+		inputSkipBlockHeight         int64
+		expectedFirstIsSuccess       bool
+		expectedFirstRegisteredAddr  std.Address
+		expectedSecondIsSuccess      bool
+		expectedSecondRegisteredAddr std.Address
+	}{
+		{
+			name:                         "try register with invalid referral address then valid referral address",
+			inputUserAddr:                validAddr3,
+			inputFirstRefAddr:            std.Address("000000000001"),
+			inputSecondRefAddr:           validAddr4,
+			inputSkipBlockHeight:         0,
+			expectedFirstIsSuccess:       false,
+			expectedFirstRegisteredAddr:  zeroAddress,
+			expectedSecondIsSuccess:      true,
+			expectedSecondRegisteredAddr: validAddr4,
+		},
+		{
+			name:                         "try register with valid referral address then failed by rate limit",
+			inputUserAddr:                validAddr3,
+			inputFirstRefAddr:            validAddr4,
+			inputSecondRefAddr:           validAddr5,
+			inputSkipBlockHeight:         0,
+			expectedFirstIsSuccess:       true,
+			expectedFirstRegisteredAddr:  validAddr4,
+			expectedSecondIsSuccess:      false,
+			expectedSecondRegisteredAddr: validAddr4,
+		},
+		{
+			name:                         "try register with valid referral address then success",
+			inputUserAddr:                validAddr3,
+			inputFirstRefAddr:            validAddr4,
+			inputSecondRefAddr:           validAddr5,
+			inputSkipBlockHeight:         (60 * 60 * 24 / 5), // 5 seconds per block (60 * 60 * 24 / 5 = 1day)
+			expectedFirstIsSuccess:       true,
+			expectedFirstRegisteredAddr:  validAddr4,
+			expectedSecondIsSuccess:      true,
+			expectedSecondRegisteredAddr: validAddr5,
+		},
+		{
+			name:                         "try register with empty referral address then valid referral address",
+			inputUserAddr:                validAddr3,
+			inputFirstRefAddr:            "",
+			inputSecondRefAddr:           validAddr5,
+			inputSkipBlockHeight:         (60 * 60 * 24 / 5), // 5 seconds per block (60 * 60 * 24 / 5 = 1day)
+			expectedFirstIsSuccess:       true,
+			expectedFirstRegisteredAddr:  zeroAddress,
+			expectedSecondIsSuccess:      true,
+			expectedSecondRegisteredAddr: validAddr5,
+		},
+		{
+			name:                         "try register with valid referral address then zero address",
+			inputUserAddr:                validAddr3,
+			inputFirstRefAddr:            validAddr4,
+			inputSecondRefAddr:           zeroAddress,
+			inputSkipBlockHeight:         (60 * 60 * 24 / 5), // 5 seconds per block (60 * 60 * 24 / 5 = 1day)
+			expectedFirstIsSuccess:       true,
+			expectedFirstRegisteredAddr:  validAddr4,
+			expectedSecondIsSuccess:      true,
+			expectedSecondRegisteredAddr: zeroAddress,
+		},
 	}
 
-	validAddrStr := validAddr4.String()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			cleanup := mockValidCaller()
+			defer cleanup()
 
-	// trying to register with valid address
-	// should not check rate limit
-	success = TryRegister(cross, validAddr3, validAddrStr)
-	if !success {
-		t.Error("re-register should succeed with valid address")
-	}
+			gReferralKeeper = NewKeeper()
 
-	// check if registration is successful
-	refAddr := GetReferral(validAddr3.String())
-	if refAddr == "" {
-		t.Error("should not be empty")
-	}
-	if refAddr != validAddrStr {
-		t.Errorf("registered address is not correct: got %v, want %v", refAddr, validAddrStr)
-	}
+			routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+			testing.SetOriginCaller(routerAddr)
 
-	// check rate limit is applied
-	success = TryRegister(cross, validAddr3, validAddrStr)
-	if success {
-		t.Error("should fail due to rate limit")
-	}
-}
+			// when: first register
+			success := TryRegister(cross, tt.inputUserAddr, tt.inputFirstRefAddr.String())
+			uassert.Equal(t, tt.expectedFirstIsSuccess, success)
 
-func TestRegisterWithEmptyRefAddrAndThenValidRefAddr(t *testing.T) {
-	cleanup := mockValidCaller()
-	defer cleanup()
+			// then: first registered address should be the first referral address
+			firstRegisteredAddr := GetReferral(tt.inputUserAddr.String())
+			uassert.Equal(t, tt.expectedFirstRegisteredAddr.String(), firstRegisteredAddr)
 
-	// try to register with empty refAddr
-	success := TryRegister(cross, validAddr5, "")
-	if !success {
-		t.Error("empty refAddr registration should be bypassed")
-	}
+			// skip block height
+			testing.SkipHeights(tt.inputSkipBlockHeight)
 
-	// try to register with valid address
-	validAddr6Str := validAddr6.String()
-	success = TryRegister(cross, validAddr5, validAddr6Str)
-	if !success {
-		t.Error("should succeed with valid address after empty refAddr")
-	}
+			// when: second register
+			success = TryRegister(cross, tt.inputUserAddr, tt.inputSecondRefAddr.String())
+			uassert.Equal(t, tt.expectedSecondIsSuccess, success)
 
-	// check registered address
-	refAddr := GetReferral(validAddr5.String())
-	if refAddr != validAddr6Str {
-		t.Errorf("registered address is not correct: got %v, want %v", refAddr, validAddr6Str)
-	}
-}
-
-func TestRegisterWithValidRefAddrAndThenRemoveWithEmptyRefAddr(t *testing.T) {
-	cleanup := mockValidCaller()
-	defer cleanup()
-
-	// register with valid address
-	validAddrStr := validAddr7.String()
-	success := TryRegister(cross, validAddr8, validAddrStr)
-	if !success {
-		t.Error("should succeed with valid address")
-	}
-
-	// check registered address
-	refAddr := GetReferral(validAddr8.String())
-	if refAddr != validAddrStr {
-		t.Errorf("registered address is not correct: got %v, want %v", refAddr, validAddrStr)
-	}
-
-	// remove with empty refAddr
-	success = TryRegister(cross, validAddr8, "")
-	if !success {
-		t.Error("should succeed with empty refAddr to remove")
-	}
-
-	// check removed
-	refAddr = GetReferral(validAddr8.String())
-	if refAddr != "" {
-		t.Error("referral should be removed")
+			// then: second registered address should be the second referral address
+			secondRegisteredAddr := GetReferral(tt.inputUserAddr.String())
+			uassert.Equal(t, tt.expectedSecondRegisteredAddr.String(), secondRegisteredAddr)
+		})
 	}
 }

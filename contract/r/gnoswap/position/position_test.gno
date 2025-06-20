@@ -4,7 +4,7 @@ import (
 	"std"
 	"strconv"
 	"testing"
-	"time"
+	_ "time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
@@ -211,11 +211,11 @@ func TestNextIdFunctions(t *testing.T) {
 	nextId = uint64(1)
 
 	tests := []struct {
-		name           string
-		initialValue   uint64
-		increments     int
-		expectedValue  uint64
-		errorMessage   string
+		name          string
+		initialValue  uint64
+		increments    int
+		expectedValue uint64
+		errorMessage  string
 	}{
 		{
 			name:          "Initial nextId should return 1",
@@ -257,7 +257,8 @@ func TestNextIdFunctions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			nextId = tt.initialValue
-			for i := 0; i < tt.increments; i++ {
+			for i := range make([]struct{}, tt.increments) {
+				t.Logf("iteration %d", i)
 				incrementNextId()
 			}
 			uassert.Equal(t, tt.expectedValue, GetNextId(), tt.errorMessage)

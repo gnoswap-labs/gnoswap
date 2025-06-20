@@ -9,7 +9,9 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func TestInitData(t *testing.T) {
+// create mock data for getters
+func testInitData(t *testing.T) {
+	t.Helper()
 	resetObject(t)
 
 	mockPool := &Pool{
@@ -64,6 +66,8 @@ func TestInitData(t *testing.T) {
 }
 
 func TestPoolGetters(t *testing.T) {
+	testInitData(t)
+
 	t.Run("get pool list", func(t *testing.T) {
 		poolList := PoolGetPoolList()
 		if len(poolList) != 1 || poolList[0] != "token0:token1:3000" {
@@ -295,6 +299,8 @@ func TestPoolGetters(t *testing.T) {
 }
 
 func TestPositionGetters(t *testing.T) {
+	testInitData(t)
+
 	t.Run("valid position", func(t *testing.T) {
 		validPoolPath := "token0:token1:3000"
 		validPositionKey := "test_position"
@@ -372,6 +378,7 @@ func TestPositionGetters(t *testing.T) {
 }
 
 func TestTickGetters(t *testing.T) {
+	testInitData(t)
 	t.Run("valid tick", func(t *testing.T) {
 		validPoolPath := "token0:token1:3000"
 		validTick := int32(0)
