@@ -12,7 +12,8 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gnft"
-	_ "gno.land/r/gnoswap/v1/referral"
+	pl "gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/v1/referral"
 )
 
 var mockRegistry = make(map[string]bool)
@@ -468,6 +469,7 @@ func TestProcessTokens(t *testing.T) {
 			MockRegister(t, tt.token0)
 			MockRegister(t, tt.token1)
 
+			// guard for unexpected panic
 			defer func() {
 				if r := recover(); r != nil {
 					if !tt.expectPanic {
@@ -514,15 +516,16 @@ func TestProcessTokens(t *testing.T) {
 
 func TestProcessMintInput(t *testing.T) {
 	tests := []struct {
-		name            string
-		input           MintInput
-		expectedToken0  string
-		expectedToken1  string
-		expectedAmount0 string
-		expectedAmount1 string
-		expectedTickL   int32
-		expectedTickU   int32
-		expectError     bool
+		name             string
+		input            MintInput
+		expectedToken0   string
+		expectedToken1   string
+		expectedAmount0  string
+		expectedAmount1  string
+		expectedTickL    int32
+		expectedTickU    int32
+		expectError      bool
+		expectedErrorMsg string
 	}{
 		{
 			name: "Standard Mint - Token0 < Token1",
@@ -579,31 +582,20 @@ func TestProcessMintInput(t *testing.T) {
 				tickUpper:      5000,
 				caller:         alice,
 			},
-			expectError: true,
+			expectError:      true,
+			expectedErrorMsg: "[GNOSWAP-POSITION-005] invalid input data || input string : invalid",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					if !tt.expectError {
-						t.Errorf("unexpected panic: %v", r)
-					} else {
-						uassert.Equal(t, "[GNOSWAP-POSITION-005] invalid input data || input string : invalid", r)
-					}
-				}
-			}()
-			processed, err := processMintInput(tt.input)
-
 			if tt.expectError {
-				if err == nil {
-					t.Errorf("expected error but got nil")
-				}
+				uassert.PanicsWithMessage(t, tt.expectedErrorMsg, func() {
+					processMintInput(tt.input)
+				})
 			} else {
-				if err != nil {
-					t.Errorf("unexpected error: %v", err)
-				}
+				processed, err := processMintInput(tt.input)
+				uassert.Nil(t, err, "processMintInput should not return error")
 				uassert.Equal(t, tt.expectedToken0, processed.tokenPair.token0)
 				uassert.Equal(t, tt.expectedToken1, processed.tokenPair.token1)
 				uassert.Equal(t, tt.expectedAmount0, processed.amount0Desired.ToString())
@@ -615,367 +607,434 @@ func TestProcessMintInput(t *testing.T) {
 	}
 }
 
-// func TestMintInternal(t *testing.T) {
-// 	MakeMintPositionWithoutFee(t)
-// 	TokenFaucet(t, fooPath, alice)
-// 	TokenFaucet(t, barPath, alice)
-// 	TokenApprove(t, fooPath, alice, poolAddr, maxApprove)
-// 	TokenApprove(t, barPath, alice, poolAddr, maxApprove)
+func TestMintInternal(t *testing.T) {
+	tests := []struct {
+		name              string
+		params            MintParams
+		expectedTokenId   uint64
+		expectedLiquidity string
+		expectedAmount0   string
+		expectedAmount1   string
+		expectPanic       bool
+		errKind           string // panic, abor
+		expectedError     string
+		positionId        uint64
+	}{
+		{
+			name: "Successful Mint",
+			params: MintParams{
+				token0:         barPath,
+				token1:         fooPath,
+				fee:            fee500,
+				tickLower:      -100,
+				tickUpper:      100,
+				amount0Desired: u256.MustFromDecimal("10000"),
+				amount1Desired: u256.MustFromDecimal("10000"),
+				amount0Min:     u256.MustFromDecimal("10"),
+				amount1Min:     u256.MustFromDecimal("10"),
+				caller:         alice,
+				mintTo:         alice,
+			},
+			expectedTokenId:   GetNextId(),
+			expectedLiquidity: "2005104",
+			expectedAmount0:   "10000",
+			expectedAmount1:   "10000",
+			expectPanic:       false,
+			positionId:        0,
+		},
+		{
+			name: "Position Exists",
+			params: MintParams{
+				token0:         barPath,
+				token1:         fooPath,
+				fee:            fee500,
+				tickLower:      -100,
+				tickUpper:      100,
+				amount0Desired: u256.MustFromDecimal("10000"),
+				amount1Desired: u256.MustFromDecimal("10000"),
+				amount0Min:     u256.MustFromDecimal("10"),
+				amount1Min:     u256.MustFromDecimal("10"),
+				caller:         alice,
+				mintTo:         alice,
+			},
+			expectPanic:   true,
+			errKind:       "panic",
+			expectedError: "[GNOSWAP-POSITION-011] position with same positionId already exists || positionId(1)",
+			positionId:    1,
+		},
+		{
+			name: "Zero Liquidity Mint",
+			params: MintParams{
+				token0:         barPath,
+				token1:         fooPath,
+				fee:            fee500,
+				tickLower:      -200,
+				tickUpper:      200,
+				amount0Desired: u256.Zero(),
+				amount1Desired: u256.Zero(),
+				amount0Min:     u256.NewUint(5),
+				amount1Min:     u256.NewUint(5),
+				caller:         alice,
+				mintTo:         alice,
+			},
+			expectPanic:   true,
+			errKind:       "abort",
+			expectedError: "[GNOSWAP-POOL-010] zero liquidity",
+			positionId:    0,
+		},
+	}
 
-// 	tests := []struct {
-// 		name              string
-// 		params            MintParams
-// 		expectedTokenId   uint64
-// 		expectedLiquidity string
-// 		expectedAmount0   string
-// 		expectedAmount1   string
-// 		expectPanic       bool
-// 		expectedError     string
-// 		positionId        uint64
-// 	}{
-// 		{
-// 			name: "Successful Mint",
-// 			params: MintParams{
-// 				token0:         barPath,
-// 				token1:         fooPath,
-// 				fee:            fee500,
-// 				tickLower:      -100,
-// 				tickUpper:      100,
-// 				amount0Desired: u256.MustFromDecimal("10000"),
-// 				amount1Desired: u256.MustFromDecimal("10000"),
-// 				amount0Min:     u256.MustFromDecimal("10"),
-// 				amount1Min:     u256.MustFromDecimal("10"),
-// 				caller:         alice,
-// 				mintTo:         alice,
-// 			},
-// 			expectedTokenId:   GetNextId(),
-// 			expectedLiquidity: "2005104",
-// 			expectedAmount0:   "10000",
-// 			expectedAmount1:   "10000",
-// 			expectPanic:       false,
-// 			positionId:        0,
-// 		},
-// 		{
-// 			name: "Position Exists",
-// 			params: MintParams{
-// 				token0:         barPath,
-// 				token1:         fooPath,
-// 				fee:            fee500,
-// 				tickLower:      -100,
-// 				tickUpper:      100,
-// 				amount0Desired: u256.MustFromDecimal("10000"),
-// 				amount1Desired: u256.MustFromDecimal("10000"),
-// 				amount0Min:     u256.MustFromDecimal("10"),
-// 				amount1Min:     u256.MustFromDecimal("10"),
-// 				caller:         alice,
-// 				mintTo:         alice,
-// 			},
-// 			expectPanic:   true,
-// 			expectedError: "[GNOSWAP-POSITION-011] position with same positionId already exists || positionId(1)",
-// 			positionId:    1,
-// 		},
-// 		{
-// 			name: "Zero Liquidity Mint",
-// 			params: MintParams{
-// 				token0:         barPath,
-// 				token1:         fooPath,
-// 				fee:            fee500,
-// 				tickLower:      -200,
-// 				tickUpper:      200,
-// 				amount0Desired: u256.Zero(),
-// 				amount1Desired: u256.Zero(),
-// 				amount0Min:     u256.NewUint(5),
-// 				amount1Min:     u256.NewUint(5),
-// 				caller:         alice,
-// 				mintTo:         alice,
-// 			},
-// 			expectPanic:   true,
-// 			expectedError: "[GNOSWAP-POOL-010] zero liquidity",
-// 			positionId:    0,
-// 		},
-// 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testing.SetRealm(adminRealm)
+			pl.SetPoolCreationFeeByAdmin(cross, 0)
+			CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
 
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			prevNextId := nextId
-// 			if tt.positionId != 0 {
-// 				nextId = tt.positionId
-// 			}
+			TokenFaucet(t, barPath, alice)
+			TokenFaucet(t, fooPath, alice)
 
-// 			if !tt.expectPanic {
-// 				testing.SetRealm(std.NewUserRealm(tt.params.mintTo))
-// 				positionId, liquidity, amount0, amount1 := mint(tt.params)
-// 				uassert.Equal(t, tt.expectedTokenId, positionId)
-// 				uassert.Equal(t, tt.expectedLiquidity, liquidity.ToString())
-// 				uassert.Equal(t, tt.expectedAmount0, amount0.ToString())
-// 				uassert.Equal(t, tt.expectedAmount1, amount1.ToString())
-// 			} else {
-// 				uassert.PanicsWithMessage(t, tt.expectedError, func() {
-// 					mint(tt.params)
-// 				})
-// 			}
+			testing.SetRealm(posRealm)
+			TokenApprove(t, barPath, alice, poolAddr, maxApprove)
+			TokenApprove(t, fooPath, alice, poolAddr, maxApprove)
 
-// 			if tt.positionId != 0 {
-// 				nextId = prevNextId
-// 			}
-// 		})
-// 	}
-// }
+			prevNextId := nextId
+			if tt.positionId != 0 {
+				nextId = tt.positionId
+			}
 
-// func TestMint(t *testing.T) {
-// 	tests := []struct {
-// 		name            string
-// 		token0          string
-// 		token1          string
-// 		fee             uint32
-// 		tickLower       int32
-// 		tickUpper       int32
-// 		amount0         string
-// 		amount1         string
-// 		minAmount0      string
-// 		minAmount1      string
-// 		deadline        int64
-// 		mintTo          std.Address
-// 		caller          std.Address
-// 		expectPanic     bool
-// 		expectedError   string
-// 		expectedAmount0 uint64
-// 		expectedAmount1 uint64
-// 		referrer        string
-// 	}{
-// 		{
-// 			name:            "Success - With valid referral",
-// 			token0:          barPath,
-// 			token1:          fooPath,
-// 			fee:             fee500,
-// 			tickLower:       -500,
-// 			tickUpper:       500,
-// 			amount0:         "1000000",
-// 			amount1:         "2000000",
-// 			minAmount0:      "950000",
-// 			minAmount1:      "900000",
-// 			deadline:        time.Now().Add(10 * time.Minute).Unix(),
-// 			mintTo:          alice,
-// 			caller:          alice,
-// 			expectPanic:     false,
-// 			expectedAmount0: 1000000,
-// 			expectedAmount1: 1000000,
-// 			referrer:        testutils.TestAddress("carol").String(),
-// 		},
-// 		{
-// 			name:            "Fail - Deadline exceeded",
-// 			token0:          barPath,
-// 			token1:          fooPath,
-// 			fee:             fee500,
-// 			tickLower:       -500,
-// 			tickUpper:       500,
-// 			amount0:         "1000000",
-// 			amount1:         "2000000",
-// 			minAmount0:      "950000",
-// 			minAmount1:      "1900000",
-// 			deadline:        time.Now().Add(-10 * time.Minute).Unix(),
-// 			mintTo:          alice,
-// 			caller:          alice,
-// 			expectPanic:     true,
-// 			expectedError:   "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234567290)",
-// 			expectedAmount0: 950000,
-// 			expectedAmount1: 1900000,
-// 		},
-// 		{
-// 			name:            "Fail - Invalid tick range",
-// 			token0:          barPath,
-// 			token1:          fooPath,
-// 			fee:             fee500,
-// 			tickLower:       600,
-// 			tickUpper:       500,
-// 			amount0:         "1000000",
-// 			amount1:         "2000000",
-// 			minAmount0:      "950000",
-// 			minAmount1:      "1900000",
-// 			deadline:        time.Now().Add(10 * time.Minute).Unix(),
-// 			mintTo:          alice,
-// 			caller:          alice,
-// 			expectPanic:     true,
-// 			expectedError:   "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(600), tickUpper(500)",
-// 			expectedAmount0: 950000,
-// 			expectedAmount1: 1900000,
-// 		},
-// 		{
-// 			name:            "Fail - Caller not authorized",
-// 			token0:          barPath,
-// 			token1:          fooPath,
-// 			fee:             fee500,
-// 			tickLower:       -500,
-// 			tickUpper:       500,
-// 			amount0:         "1000000",
-// 			amount1:         "2000000",
-// 			minAmount0:      "950000",
-// 			minAmount1:      "1900000",
-// 			deadline:        time.Now().Add(10 * time.Minute).Unix(),
-// 			mintTo:          adminAddr,
-// 			caller:          alice,
-// 			expectPanic:     true,
-// 			expectedError:   "[GNOSWAP-POSITION-012] invalid address || (g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh, g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d)",
-// 			expectedAmount0: 950000,
-// 			expectedAmount1: 1900000,
-// 		},
-// 	}
+			if !tt.expectPanic {
+				testing.SetRealm(posRealm)
+				positionId, liquidity, amount0, amount1 := mint(tt.params)
+				uassert.Equal(t, tt.expectedTokenId, positionId)
+				uassert.Equal(t, tt.expectedLiquidity, liquidity.ToString())
+				uassert.Equal(t, tt.expectedAmount0, amount0.ToString())
+				uassert.Equal(t, tt.expectedAmount1, amount1.ToString())
+			} else {
+				switch tt.errKind {
+				case "panic":
+					uassert.PanicsWithMessage(t, tt.expectedError, func() {
+						mint(tt.params)
+					})
+				case "abort":
+					uassert.AbortsWithMessage(t, tt.expectedError, func() {
+						mint(tt.params)
+					})
+				default:
+					t.Errorf("unexpected error kind: %s", tt.errKind)
+				}
+			}
 
-// 	for _, tc := range tests {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			testing.SetRealm(std.NewUserRealm(tc.caller))
-// 			if tc.expectPanic {
-// 				uassert.PanicsWithMessage(t,
-// 					tc.expectedError,
-// 					func() {
-// 						Mint(
-// 							cross,
-// 							tc.token0,
-// 							tc.token1,
-// 							tc.fee,
-// 							tc.tickLower,
-// 							tc.tickUpper,
-// 							tc.amount0,
-// 							tc.amount1,
-// 							tc.minAmount0,
-// 							tc.minAmount1,
-// 							tc.deadline,
-// 							tc.mintTo,
-// 							tc.caller,
-// 							tc.referrer,
-// 						)
-// 					})
-// 			} else {
-// 				positionId, liquidity, amount0, amount1 := Mint(
-// 					cross,
-// 					tc.token0,
-// 					tc.token1,
-// 					tc.fee,
-// 					tc.tickLower,
-// 					tc.tickUpper,
-// 					tc.amount0,
-// 					tc.amount1,
-// 					tc.minAmount0,
-// 					tc.minAmount1,
-// 					tc.deadline,
-// 					tc.mintTo,
-// 					tc.caller,
-// 					tc.referrer,
-// 				)
+			if tt.positionId != 0 {
+				nextId = prevNextId
+			}
+		})
+	}
+}
 
-// 				uassert.Equal(t, uint64(30), positionId)
-// 				uassert.NotEmpty(t, liquidity)
-// 				t0, _ := strconv.ParseUint(amount0, 10, 64)
-// 				t1, _ := strconv.ParseUint(amount1, 10, 64)
-// 				uassert.Equal(t, tc.expectedAmount0, t0)
-// 				uassert.Equal(t, tc.expectedAmount1, t1)
-// 			}
+func TestMint(t *testing.T) {
+	tests := []struct {
+		name               string
+		token0             string
+		token1             string
+		fee                uint32
+		tickLower          int32
+		tickUpper          int32
+		amount0            string
+		amount1            string
+		minAmount0         string
+		minAmount1         string
+		deadline           int64
+		mintTo             std.Address
+		caller             std.Address
+		shouldError        bool
+		expectedErrorMsg   string
+		expectedPositionId uint64
+		expectedAmount0    uint64
+		expectedAmount1    uint64
+		referrer           string
+	}{
+		{
+			name:               "Success - With valid referral",
+			token0:             barPath,
+			token1:             fooPath,
+			fee:                fee500,
+			tickLower:          -500,
+			tickUpper:          500,
+			amount0:            "1000000",
+			amount1:            "2000000",
+			minAmount0:         "950000",
+			minAmount1:         "900000",
+			deadline:           time.Now().Add(10 * time.Minute).Unix(),
+			mintTo:             alice,
+			caller:             alice,
+			expectedPositionId: 1,
+			expectedAmount0:    1000000,
+			expectedAmount1:    1000000,
+			referrer:           testutils.TestAddress("carol").String(),
+		},
+		{
+			name:             "Fail - Deadline exceeded",
+			token0:           barPath,
+			token1:           fooPath,
+			fee:              fee500,
+			tickLower:        -500,
+			tickUpper:        500,
+			amount0:          "1000000",
+			amount1:          "2000000",
+			minAmount0:       "950000",
+			minAmount1:       "1900000",
+			deadline:         time.Now().Add(-10 * time.Minute).Unix(),
+			mintTo:           alice,
+			caller:           alice,
+			shouldError:      true,
+			expectedErrorMsg: "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234567290)",
+			expectedAmount0:  950000,
+			expectedAmount1:  1900000,
+		},
+		{
+			name:             "Fail - Invalid tick range",
+			token0:           barPath,
+			token1:           fooPath,
+			fee:              fee500,
+			tickLower:        600,
+			tickUpper:        500,
+			amount0:          "1000000",
+			amount1:          "2000000",
+			minAmount0:       "950000",
+			minAmount1:       "1900000",
+			deadline:         time.Now().Add(10 * time.Minute).Unix(),
+			mintTo:           alice,
+			caller:           alice,
+			shouldError:      true,
+			expectedErrorMsg: "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(600), tickUpper(500)",
+			expectedAmount0:  950000,
+			expectedAmount1:  1900000,
+		},
+		{
+			name:             "Fail - Caller not authorized",
+			token0:           barPath,
+			token1:           fooPath,
+			fee:              fee500,
+			tickLower:        -500,
+			tickUpper:        500,
+			amount0:          "1000000",
+			amount1:          "2000000",
+			minAmount0:       "950000",
+			minAmount1:       "1900000",
+			deadline:         time.Now().Add(10 * time.Minute).Unix(),
+			mintTo:           adminAddr,
+			caller:           alice,
+			shouldError:      true,
+			expectedErrorMsg: "[GNOSWAP-POSITION-012] invalid address || (g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh, g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d)",
+			expectedAmount0:  950000,
+			expectedAmount1:  1900000,
+		},
+	}
 
-// 			if tc.referrer != "" {
-// 				uassert.Equal(t, tc.referrer, referral.GetReferral(tc.caller.String()))
-// 			}
-// 		})
-// 	}
-// }
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			testing.SetRealm(adminRealm)
+			pl.SetPoolCreationFeeByAdmin(cross, 0)
+			CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
 
-// func TestIncreaseLiquidity(t *testing.T) {
-// 	id := GetNextId() - 1
-// 	testing.SetRealm(std.NewUserRealm(adminAddr))
-// 	tests := []struct {
-// 		name             string
-// 		positionId       uint64
-// 		amount0Desired   string
-// 		amount1Desired   string
-// 		amount0Min       string
-// 		amount1Min       string
-// 		deadline         int64
-// 		expectedAmount0  string
-// 		expectedAmount1  string
-// 		expectPanic      bool
-// 		expectedErrorMsg string
-// 	}{
-// 		{
-// 			name:            "Success - Valid Increase",
-// 			positionId:      id,
-// 			amount0Desired:  "1000000",
-// 			amount1Desired:  "2000000",
-// 			amount0Min:      "950000",
-// 			amount1Min:      "900000",
-// 			deadline:        time.Now().Add(10 * time.Minute).Unix(),
-// 			expectedAmount0: "1000000",
-// 			expectedAmount1: "1000000",
-// 			expectPanic:     false,
-// 		},
-// 		{
-// 			name:             "Fail - Deadline Exceeded",
-// 			positionId:       id,
-// 			amount0Desired:   "1000000",
-// 			amount1Desired:   "2000000",
-// 			amount0Min:       "950000",
-// 			amount1Min:       "900000",
-// 			deadline:         time.Now().Add(-10 * time.Minute).Unix(),
-// 			expectPanic:      true,
-// 			expectedErrorMsg: "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234567290)",
-// 		},
-// 		{
-// 			name:             "Fail - Invalid Amount String",
-// 			positionId:       id,
-// 			amount0Desired:   "invalid_amount",
-// 			amount1Desired:   "2000000",
-// 			amount0Min:       "950000",
-// 			amount1Min:       "900000",
-// 			deadline:         time.Now().Add(10 * time.Minute).Unix(),
-// 			expectPanic:      true,
-// 			expectedErrorMsg: "[GNOSWAP-POSITION-005] invalid input data || input string : invalid_amount",
-// 		},
-// 		{
-// 			name:             "Fail - Position Does Not Exist",
-// 			positionId:       999,
-// 			amount0Desired:   "1000000",
-// 			amount1Desired:   "2000000",
-// 			amount0Min:       "950000",
-// 			amount1Min:       "900000",
-// 			deadline:         time.Now().Add(10 * time.Minute).Unix(),
-// 			expectPanic:      true,
-// 			expectedErrorMsg: "[GNOSWAP-POSITION-013] position does not exist || position with position ID(999) doesn't exist",
-// 		},
-// 	}
+			TokenFaucet(t, barPath, alice)
+			TokenFaucet(t, fooPath, alice)
 
-// 	for _, tc := range tests {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			if tc.expectPanic {
-// 				uassert.PanicsWithMessage(t,
-// 					tc.expectedErrorMsg,
-// 					func() {
-// 						IncreaseLiquidity(
-// 							cross,
-// 							tc.positionId,
-// 							tc.amount0Desired,
-// 							tc.amount1Desired,
-// 							tc.amount0Min,
-// 							tc.amount1Min,
-// 							tc.deadline,
-// 						)
-// 					})
-// 			} else {
-// 				positionId, _, amount0, amount1, _ := IncreaseLiquidity(
-// 					cross,
-// 					tc.positionId,
-// 					tc.amount0Desired,
-// 					tc.amount1Desired,
-// 					tc.amount0Min,
-// 					tc.amount1Min,
-// 					tc.deadline,
-// 				)
-// 				uassert.Equal(t, tc.positionId, positionId)
-// 				uassert.Equal(t, tc.expectedAmount0, amount0)
-// 				uassert.Equal(t, tc.expectedAmount1, amount1)
-// 			}
-// 		})
-// 	}
-// }
+			testing.SetRealm(posRealm)
+			TokenApprove(t, barPath, alice, poolAddr, maxApprove)
+			TokenApprove(t, fooPath, alice, poolAddr, maxApprove)
+
+			testing.SetRealm(std.NewUserRealm(tc.caller))
+			if tc.shouldError {
+				uassert.AbortsWithMessage(t, tc.expectedErrorMsg, func() {
+					Mint(
+						cross,
+						tc.token0,
+						tc.token1,
+						tc.fee,
+						tc.tickLower,
+						tc.tickUpper,
+						tc.amount0,
+						tc.amount1,
+						tc.minAmount0,
+						tc.minAmount1,
+						tc.deadline,
+						tc.mintTo,
+						tc.caller,
+						tc.referrer,
+					)
+				})
+			} else {
+				positionId, liquidity, amount0, amount1 := Mint(
+					cross,
+					tc.token0,
+					tc.token1,
+					tc.fee,
+					tc.tickLower,
+					tc.tickUpper,
+					tc.amount0,
+					tc.amount1,
+					tc.minAmount0,
+					tc.minAmount1,
+					tc.deadline,
+					tc.mintTo,
+					tc.caller,
+					tc.referrer,
+				)
+
+				uassert.Equal(t, tc.expectedPositionId, positionId)
+				uassert.NotEmpty(t, liquidity)
+				t0, _ := strconv.ParseUint(amount0, 10, 64)
+				t1, _ := strconv.ParseUint(amount1, 10, 64)
+				uassert.Equal(t, tc.expectedAmount0, t0)
+				uassert.Equal(t, tc.expectedAmount1, t1)
+			}
+
+			if tc.referrer != "" {
+				uassert.Equal(t, tc.referrer, referral.GetReferral(tc.caller.String()))
+			}
+		})
+	}
+}
+
+func TestIncreaseLiquidity(t *testing.T) {
+	testing.SetRealm(adminRealm)
+
+	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
+
+	TokenFaucet(t, barPath, alice)
+	TokenFaucet(t, fooPath, alice)
+
+	testing.SetRealm(posRealm)
+	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
+	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
+
+	testing.SetRealm(adminRealm)
+	positionId, _, _, _ := Mint(
+		cross,
+		barPath,
+		fooPath,
+		fee500,
+		-10000,
+		10000,
+		"1000000",
+		"1000000",
+		"0",
+		"0",
+		time.Now().Add(time.Hour).Unix(),
+		adminAddr,
+		adminAddr,
+		"",
+	)
+
+	tests := []struct {
+		name             string
+		positionId       uint64
+		amount0Desired   string
+		amount1Desired   string
+		amount0Min       string
+		amount1Min       string
+		deadline         int64
+		expectedAmount0  string
+		expectedAmount1  string
+		expectPanic      bool
+		expectedErrorMsg string
+	}{
+		{
+			name:            "Success - Valid Increase",
+			positionId:      positionId,
+			amount0Desired:  "1000000",
+			amount1Desired:  "2000000",
+			amount0Min:      "950000",
+			amount1Min:      "900000",
+			deadline:        time.Now().Add(10 * time.Minute).Unix(),
+			expectedAmount0: "1000000",
+			expectedAmount1: "1000000",
+			expectPanic:     false,
+		},
+		{
+			name:             "Fail - Deadline Exceeded",
+			positionId:       positionId,
+			amount0Desired:   "1000000",
+			amount1Desired:   "2000000",
+			amount0Min:       "950000",
+			amount1Min:       "900000",
+			deadline:         time.Now().Add(-10 * time.Minute).Unix(),
+			expectPanic:      true,
+			expectedErrorMsg: "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234567290)",
+		},
+		{
+			name:             "Fail - Invalid Amount String",
+			positionId:       positionId,
+			amount0Desired:   "invalid_amount",
+			amount1Desired:   "2000000",
+			amount0Min:       "950000",
+			amount1Min:       "900000",
+			deadline:         time.Now().Add(10 * time.Minute).Unix(),
+			expectPanic:      true,
+			expectedErrorMsg: "[GNOSWAP-POSITION-005] invalid input data || input string : invalid_amount",
+		},
+		{
+			name:             "Fail - Position Does Not Exist",
+			positionId:       999,
+			amount0Desired:   "1000000",
+			amount1Desired:   "2000000",
+			amount0Min:       "950000",
+			amount1Min:       "900000",
+			deadline:         time.Now().Add(10 * time.Minute).Unix(),
+			expectPanic:      true,
+			expectedErrorMsg: "[GNOSWAP-POSITION-013] position does not exist || position with position ID(999) doesn't exist",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.expectPanic {
+				uassert.AbortsWithMessage(t,
+					tc.expectedErrorMsg,
+					func() {
+						IncreaseLiquidity(
+							cross,
+							tc.positionId,
+							tc.amount0Desired,
+							tc.amount1Desired,
+							tc.amount0Min,
+							tc.amount1Min,
+							tc.deadline,
+						)
+					})
+			} else {
+				positionId, _, amount0, amount1, _ := IncreaseLiquidity(
+					cross,
+					tc.positionId,
+					tc.amount0Desired,
+					tc.amount1Desired,
+					tc.amount0Min,
+					tc.amount1Min,
+					tc.deadline,
+				)
+				uassert.Equal(t, tc.positionId, positionId)
+				uassert.Equal(t, tc.expectedAmount0, amount0)
+				uassert.Equal(t, tc.expectedAmount1, amount1)
+			}
+		})
+	}
+}
 
 // func TestDecreaseLiquidity(t *testing.T) {
+// 	testing.SetRealm(adminRealm)
+
+// 	pl.SetPoolCreationFeeByAdmin(cross, 0)
+// 	CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
+
+// 	TokenFaucet(t, barPath, alice)
+// 	TokenFaucet(t, fooPath, alice)
+
+// 	testing.SetRealm(posRealm)
+// 	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
+// 	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
+
 // 	tests := []struct {
 // 		name              string
 // 		beforeIncrease    bool
@@ -1064,10 +1123,7 @@ func TestProcessMintInput(t *testing.T) {
 // 		},
 // 	}
 
-// 	CreatePoolWithoutFee(t)
-// 	testing.SetRealm(std.NewUserRealm(adminAddr))
-// 	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
-// 	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
+// 	testing.SetRealm(adminRealm)
 // 	positionId, _, _, _ := Mint(
 // 		cross,
 // 		barPath,
@@ -1086,18 +1142,9 @@ func TestProcessMintInput(t *testing.T) {
 // 	)
 // 	for _, tc := range tests {
 // 		t.Run(tc.name, func(t *testing.T) {
-// 			defer func() {
-// 				if r := recover(); r != nil {
-// 					if !tc.expectPanic {
-// 						t.Errorf("unexpected panic: %v", r)
-// 					} else {
-// 						uassert.Equal(t, tc.expectedErrorMsg, r)
-// 					}
-// 				}
-// 			}()
-
 // 			deadline := time.Now().Add(tc.deadlineOffset).Unix()
 // 			if tc.beforeIncrease {
+// 				testing.SetRealm(adminRealm)
 // 				_, _, _, _, _ = IncreaseLiquidity(
 // 					cross,
 // 					positionId,
@@ -1110,7 +1157,9 @@ func TestProcessMintInput(t *testing.T) {
 // 			}
 
 // 			if tc.expectPanic {
-// 				DecreaseLiquidity(
+// 				testing.SetRealm(adminRealm)
+// 				uassert.PanicsWithMessage(t, tc.expectedErrorMsg, func() {
+// 					DecreaseLiquidity(
 // 					cross,
 // 					positionId,
 // 					tc.liquidityToRemove,
@@ -1118,8 +1167,10 @@ func TestProcessMintInput(t *testing.T) {
 // 					tc.amount1Min,
 // 					deadline,
 // 					tc.unwrapResult,
-// 				)
+// 					)
+// 				})
 // 			} else {
+// 				testing.SetRealm(adminRealm)
 // 				_, liquidity, fee0, fee1, _, _, _ := DecreaseLiquidity(
 // 					cross,
 // 					positionId,
