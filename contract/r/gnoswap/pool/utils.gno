@@ -296,7 +296,7 @@ func assertOnlyRegistered(tokenPath string) {
 }
 
 // formatUint converts various unsigned integer types to string representation.
-func formatUint(v interface{}) string {
+func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:
 		return strconv.FormatUint(uint64(v), 10)
@@ -310,7 +310,7 @@ func formatUint(v interface{}) string {
 }
 
 // formatInt converts various signed integer types to string representation.
-func formatInt(v interface{}) string {
+func formatInt(v any) string {
 	switch v := v.(type) {
 	case int32:
 		return strconv.FormatInt(int64(v), 10)

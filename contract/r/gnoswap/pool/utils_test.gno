@@ -657,7 +657,7 @@ func TestFormatFunctions(t *testing.T) {
 	t.Run("formatUint", func(t *testing.T) {
 		tests := []struct {
 			name     string
-			input    interface{}
+			input    any
 			expected string
 			panics   bool
 		}{
@@ -684,7 +684,7 @@ func TestFormatFunctions(t *testing.T) {
 	t.Run("formatInt", func(t *testing.T) {
 		tests := []struct {
 			name     string
-			input    interface{}
+			input    any
 			expected string
 			panics   bool
 		}{
