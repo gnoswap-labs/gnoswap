@@ -686,10 +686,15 @@ func TestConversionBoundaryValues(t *testing.T) {
 		result := safeConvertToInt128(q96)
 		uassert.Equal(t, consts.Q96, result.ToString())
 		
-		// Q128 should also work
+		// Q128 is actually 2^128 which is larger than MAX_INT128 (2^127 - 1)
+		// So it should panic
 		q128Val := u256.MustFromDecimal(consts.Q128)
-		result2 := safeConvertToInt128(q128Val)
-		uassert.Equal(t, consts.Q128, result2.ToString())
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("expected panic for Q128 value, but none occurred")
+			}
+		}()
+		safeConvertToInt128(q128Val)
 	})
 }
 
