@@ -8,6 +8,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+var poolKey = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+
 func setupPositionGetter(t *testing.T) {
 	t.Helper()
 
@@ -16,7 +18,7 @@ func setupPositionGetter(t *testing.T) {
 	position := Position{
 		nonce:                    u256.Zero(),
 		operator:                 positionAddr,
-		poolKey:                  "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
+		poolKey:                  poolKey,
 		tickLower:                -10000,
 		tickUpper:                10000,
 		liquidity:                u256.NewUint(1000000),
@@ -45,7 +47,7 @@ func TestPositionGetter(t *testing.T) {
 				position := PositionGetPosition(positionId)
 				return position.poolKey
 			},
-			expected: "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
+			expected: poolKey,
 		},
 		{
 			name: "GetPosition - tickLower",
@@ -130,7 +132,7 @@ func TestPositionGetter(t *testing.T) {
 			testFunc: func() any {
 				return PositionGetPositionPoolKey(positionId)
 			},
-			expected: "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
+			expected: poolKey,
 		},
 		{
 			name: "GetPositionTickLower",
