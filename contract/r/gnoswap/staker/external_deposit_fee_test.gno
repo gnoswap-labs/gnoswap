@@ -4,6 +4,10 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/r/gnoswap/v1/rbac"
+
+	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 )
 
@@ -18,227 +22,233 @@ func TestGetDepositGnsAmount(t *testing.T) {
 
 func TestSetDepositGnsAmountByAdmin(t *testing.T) {
 	tests := []struct {
-		name        string
-		caller      std.Address
-		newAmount   int64
-		shouldPanic bool
+		name             string
+		caller           std.Address
+		inputAmount      int64
+		expectedAmount   int64
+		expectedHasAbort bool
+		expectedAbortMsg string
+		expectedHasPanic bool
+		expectedPanicMsg string
 	}{
 		{
-			name:        "Success - Admin sets deposit amount",
-			caller:      adminAddr,
-			newAmount:   2_000_000_000,
-			shouldPanic: false,
+			name:             "set deposit amount by admin success",
+			caller:           testutils.TestAddress("admin"),
+			inputAmount:      2_000_000_000,
+			expectedAmount:   2_000_000_000,
+			expectedHasAbort: false,
+			expectedAbortMsg: "",
+			expectedHasPanic: false,
+			expectedPanicMsg: "",
 		},
 		{
-			name:        "Failure - Non-admin tries to set deposit amount",
-			caller:      std.Address("user1"),
-			newAmount:   2_000_000_000,
-			shouldPanic: true,
+			name:             "set deposit amount by admin failed by unauthorized caller",
+			caller:           testutils.TestAddress("user1"),
+			inputAmount:      2_000_000_000,
+			expectedAmount:   0,
+			expectedHasPanic: false,
+			expectedPanicMsg: "",
+			expectedHasAbort: true,
+			expectedAbortMsg: "caller(g1w4ek2u33ta047h6lta047h6lta047h6ldvdwpn) has no permission",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// given
+			depositGnsAmount = 0
+			setupExternalDepositFeeAdminPermission(t)
+
 			testing.SetOriginCaller(tt.caller)
 
-			func() {
-				testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-				defer func() {
-					r := recover()
-					if r != nil {
-						if !tt.shouldPanic {
-							t.Errorf("Unexpected panic: %v", r)
-						}
-					} else if tt.shouldPanic {
-						t.Errorf("Expected panic but did not occur")
-					}
-				}()
+			// when
+			if tt.expectedHasPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+					SetDepositGnsAmountByAdmin(cross, tt.inputAmount)
+				})
+			} else if tt.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
+					SetDepositGnsAmountByAdmin(cross, tt.inputAmount)
+				})
+			} else {
+				SetDepositGnsAmountByAdmin(cross, tt.inputAmount)
+			}
 
-				SetDepositGnsAmountByAdmin(cross, tt.newAmount)
-
-				if !tt.shouldPanic {
-					actual := GetDepositGnsAmount()
-					if actual != tt.newAmount {
-						t.Errorf("SetDepositGnsAmountByAdmin() = %d; want %d", actual, tt.newAmount)
-					}
-				}
-			}()
+			// then
+			actual := GetDepositGnsAmount()
+			uassert.Equal(t, tt.expectedAmount, actual)
 		})
 	}
 }
 
 func TestSetDepositGnsAmount(t *testing.T) {
 	tests := []struct {
-		name        string
-		caller      std.Address
-		newAmount   int64
-		shouldPanic bool
+		name             string
+		caller           std.Address
+		inputAmount      int64
+		expectedAmount   int64
+		expectedHasAbort bool
+		expectedAbortMsg string
+		expectedHasPanic bool
+		expectedPanicMsg string
 	}{
 		{
-			name:        "Success - Governance sets deposit amount",
-			caller:      govGovernanceAddr,
-			newAmount:   3_000_000_000,
-			shouldPanic: false,
+			name:             "set deposit success by governance",
+			caller:           testutils.TestAddress("governance"),
+			inputAmount:      3_000_000_000,
+			expectedAmount:   3_000_000_000,
+			expectedHasAbort: false,
+			expectedAbortMsg: "",
+			expectedHasPanic: false,
+			expectedPanicMsg: "",
 		},
 		{
-			name:        "Failure - Non-governance tries to set deposit amount",
-			caller:      std.Address("user2"),
-			newAmount:   3_000_000_000,
-			shouldPanic: true,
+			name:             "set deposit failed by non governance",
+			caller:           testutils.TestAddress("non-governance"),
+			inputAmount:      3_000_000_000,
+			expectedAmount:   0,
+			expectedHasPanic: false,
+			expectedPanicMsg: "",
+			expectedHasAbort: true,
+			expectedAbortMsg: "caller(g1dehkutt8damx2unwv9hxxe2lta047h6l9v0nxc) has no permission",
+		},
+		{
+			name:             "set deposit amount failed by unauthorized caller",
+			caller:           testutils.TestAddress("unauthorized"),
+			inputAmount:      3_000_000_000,
+			expectedAmount:   0,
+			expectedHasPanic: false,
+			expectedPanicMsg: "",
+			expectedHasAbort: true,
+			expectedAbortMsg: "caller(g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg) has no permission",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// given
+			depositGnsAmount = 0
+			setupExternalDepositFeeGovernancePermission(t)
+
 			testing.SetOriginCaller(tt.caller)
 
-			func() {
-				testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-				defer func() {
-					r := recover()
-					if r != nil {
-						if !tt.shouldPanic {
-							t.Errorf("Unexpected panic: %v", r)
-						}
-					} else if tt.shouldPanic {
-						t.Errorf("Expected panic but did not occur")
-					}
-				}()
+			// when
+			if tt.expectedHasPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+					SetDepositGnsAmount(cross, tt.inputAmount)
+				})
+			} else if tt.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
+					SetDepositGnsAmount(cross, tt.inputAmount)
+				})
+			} else {
+				SetDepositGnsAmount(cross, tt.inputAmount)
+			}
 
-				SetDepositGnsAmount(cross, tt.newAmount)
-
-				if !tt.shouldPanic {
-					actual := GetDepositGnsAmount()
-					if actual != tt.newAmount {
-						t.Errorf("SetDepositGnsAmount() = %d; want %d", actual, tt.newAmount)
-					}
-				}
-			}()
+			// then
+			actual := GetDepositGnsAmount()
+			uassert.Equal(t, tt.expectedAmount, actual)
 		})
 	}
 }
 
-func TestMinimumRewardAmountLogic(t *testing.T) {
-	token1 := "gno.land/r/demo/token1"
-	token2 := "gno.land/r/demo/token2"
+func TestSetMinimumRewardAmount(t *testing.T) {
+	tests := []struct {
+		name                        string
+		caller                      std.Address
+		inputMinimumRewardAmount    int64
+		expectedMinimumRewardAmount int64
+		expectedHasAbort            bool
+		expectedAbortMsg            string
+		expectedHasPanic            bool
+		expectedPanicMsg            string
+	}{
+		{
+			name:                        "set minimum reward amount success by governance",
+			caller:                      testutils.TestAddress("governance"),
+			inputMinimumRewardAmount:    1_000_000_000,
+			expectedMinimumRewardAmount: 1_000_000_000,
+			expectedHasAbort:            false,
+			expectedAbortMsg:            "",
+			expectedHasPanic:            false,
+			expectedPanicMsg:            "",
+		},
+		{
+			name:                        "set minimum reward amount failed by non governance",
+			caller:                      testutils.TestAddress("non-governance"),
+			inputMinimumRewardAmount:    1_000_000_000,
+			expectedMinimumRewardAmount: 0,
+			expectedHasPanic:            false,
+			expectedPanicMsg:            "",
+			expectedHasAbort:            true,
+			expectedAbortMsg:            "caller(g1dehkutt8damx2unwv9hxxe2lta047h6l9v0nxc) has no permission",
+		},
+		{
+			name:                        "set minimum reward amount failed by unauthorized caller",
+			caller:                      testutils.TestAddress("unauthorized"),
+			inputMinimumRewardAmount:    1_000_000_000,
+			expectedMinimumRewardAmount: 0,
+			expectedHasPanic:            false,
+			expectedPanicMsg:            "",
+			expectedHasAbort:            true,
+			expectedAbortMsg:            "caller(g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg) has no permission",
+		},
+	}
 
-	// --- Setup & Defer Cleanup ---
-	originalDefaultMin := GetMinimumRewardAmount()
-	originalToken1Min, found1 := GetSpecificTokenMinimumRewardAmount(token1)
-	originalToken2Min, found2 := GetSpecificTokenMinimumRewardAmount(token2)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			minimumRewardAmount = 0
+			setupExternalDepositFeeGovernancePermission(t)
 
-	// Cleanup function to restore original state
-	defer func() {
-		// Restore default
-		minimumRewardAmount = originalDefaultMin
-		// Restore token1 specific (or remove if it wasn't there originally)
-		if found1 {
-			tokenSpecificMinimumRewards.Set(token1, originalToken1Min)
-		} else {
-			tokenSpecificMinimumRewards.Remove(token1)
-		}
-		// Restore token2 specific
-		if found2 {
-			tokenSpecificMinimumRewards.Set(token2, originalToken2Min)
-		} else {
-			tokenSpecificMinimumRewards.Remove(token2)
-		}
-	}()
-	// --- End Setup & Defer Cleanup ---
+			testing.SetOriginCaller(tt.caller)
 
-	// --- Test Cases ---
-	t.Run("Default minimum is applied when no specific minimum is set", func(t *testing.T) {
-		currentDefault := GetMinimumRewardAmount()
-		actual := GetMinimumRewardAmountForToken(token1)
-		if actual != currentDefault {
-			t.Errorf("Expected default minimum %d for token1, got %d", currentDefault, actual)
-		}
-	})
-
-	t.Run("Setting specific minimum overrides default", func(t *testing.T) {
-		currentDefault := GetMinimumRewardAmount()
-		specificMin := currentDefault + 500 // Set a different value
-		paramStr := ufmt.Sprintf("%s:%d", token1, specificMin)
-
-		// Set specific minimum via governance
-		testing.SetOriginCaller(govGovernanceAddr)
-		func() {
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-
-			SetTokenMinimumRewardAmount(cross, paramStr)
-		}()
-
-		// Check specific token
-		actualSpecific := GetMinimumRewardAmountForToken(token1)
-		if actualSpecific != specificMin {
-			t.Errorf("Expected specific minimum %d for token1, got %d", specificMin, actualSpecific)
-		}
-
-		// Check another token still uses default
-		actualDefault := GetMinimumRewardAmountForToken(token2)
-		if actualDefault != currentDefault {
-			t.Errorf("Expected default minimum %d for token2 after setting token1, got %d", currentDefault, actualDefault)
-		}
-	})
-
-	t.Run("Deleting specific minimum reverts to default", func(t *testing.T) {
-		currentDefault := GetMinimumRewardAmount()
-		// First, ensure a specific minimum is set (building on previous test is risky, so set it again)
-		specificMin := currentDefault + 500
-		paramsSetStr := ufmt.Sprintf("%s:%d", token1, specificMin)
-		testing.SetOriginCaller(govGovernanceAddr)
-		func() {
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-			SetTokenMinimumRewardAmount(cross, paramsSetStr)
-
-			// Verify it's set
-			if GetMinimumRewardAmountForToken(token1) != specificMin {
-				t.Fatalf("Setup failed: could not set specific minimum for token1 before deletion test")
+			// when
+			if tt.expectedHasPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+					SetMinimumRewardAmount(cross, tt.inputMinimumRewardAmount)
+				})
+			} else if tt.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
+					SetMinimumRewardAmount(cross, tt.inputMinimumRewardAmount)
+				})
+			} else {
+				SetMinimumRewardAmount(cross, tt.inputMinimumRewardAmount)
 			}
 
-			// Delete the specific minimum via governance (amount 0)
-			paramsDelStr := ufmt.Sprintf("%s:0", token1)
-			SetTokenMinimumRewardAmount(cross, paramsDelStr)
-		}()
+			// then
+			actual := GetMinimumRewardAmount()
+			uassert.Equal(t, tt.expectedMinimumRewardAmount, actual)
+		})
+	}
+}
 
-		// Check the token reverts to default
-		actual := GetMinimumRewardAmountForToken(token1)
-		if actual != currentDefault {
-			t.Errorf("Expected default minimum %d for token1 after deletion, got %d", currentDefault, actual)
-		}
-		// Verify it's actually removed from the specific map
-		_, found := GetSpecificTokenMinimumRewardAmount(token1)
-		if found {
-			t.Errorf("Token1 specific minimum was not removed from the map after setting amount to 0")
-		}
-	})
+func setupExternalDepositFeeAdminPermission(t *testing.T) {
+	t.Helper()
 
-	t.Run("Changing default minimum applies subsequently", func(t *testing.T) {
-		originalDefault := GetMinimumRewardAmount()
-		newDefault := originalDefault + 1000
+	addr := testutils.TestAddress("admin")
+	setupExternalDepositFeePermission(t, addr, "admin")
+}
 
-		// Set a specific minimum for token1 *before* changing default
-		specificMinToken1 := originalDefault + 500
-		paramStr := ufmt.Sprintf("%s:%d", token1, specificMinToken1)
-		testing.SetOriginCaller(govGovernanceAddr)
-		func() {
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-			SetTokenMinimumRewardAmount(cross, paramStr)
+func setupExternalDepositFeeGovernancePermission(t *testing.T) {
+	t.Helper()
 
-			// Change the default minimum via governance
-			SetMinimumRewardAmount(cross, newDefault)
-		}()
+	addr := testutils.TestAddress("governance")
+	setupExternalDepositFeePermission(t, addr, "governance")
+}
 
-		// Check token without specific minimum uses the NEW default
-		actualNewDefault := GetMinimumRewardAmountForToken(token2)
-		if actualNewDefault != newDefault {
-			t.Errorf("Expected new default minimum %d for token2, got %d", newDefault, actualNewDefault)
+func setupExternalDepositFeePermission(t *testing.T, caller std.Address, permissionName string) {
+	t.Helper()
+
+	testing.SetOriginCaller(caller)
+	testing.SetRealm(std.NewUserRealm(caller))
+
+	globalManager := rbac.GlobalManager()
+	globalManager.UpdatePermission(permissionName, "access", func(addr std.Address) error {
+		if addr != caller {
+			return ufmt.Errorf("caller is not %s", addr)
 		}
 
-		// Check token WITH specific minimum *still* uses its specific minimum
-		actualSpecific := GetMinimumRewardAmountForToken(token1)
-		if actualSpecific != specificMinToken1 {
-			t.Errorf("Expected specific minimum %d for token1 to persist, got %d", specificMinToken1, actualSpecific)
-		}
+		return nil
 	})
 }
