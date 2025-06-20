@@ -179,7 +179,12 @@ func Collect(cur realm,
 	}
 
 	pool := GetPool(token0Path, token1Path, fee)
-	positionKey := getPositionKey(getPrevAddr(), tickLower, tickUpper)
+	// Use recipient address instead of getPrevAddr() for position key generation
+	// because positions are created with the recipient's address in Mint function,
+	// and we need to access the same position that was originally created.
+	// getPrevAddr() would return the position contract address, but the actual
+	// position is stored under the recipient's address key.
+	positionKey := getPositionKey(recipient, tickLower, tickUpper)
 	position := pool.mustGetPosition(positionKey)
 
 	var amount0, amount1 *u256.Uint
