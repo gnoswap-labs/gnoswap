@@ -1,6 +1,8 @@
 package referral
 
-import "std"
+import (
+	"std"
+)
 
 // gReferralKeeper is the global instance of the referral keeper
 var gReferralKeeper ReferralKeeper
@@ -61,6 +63,9 @@ func TryRegister(cur realm, addr std.Address, referral string) bool {
 		)
 		return false
 	}
+
+	// update global keeper
+	gReferralKeeper = r.keeper
 
 	std.Emit(
 		EventRegisterSuccess,
