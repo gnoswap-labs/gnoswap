@@ -110,7 +110,7 @@ func Execute(cur realm, proposalId uint64) error {
 		panic(err)
 	}
 
-	registry := createParameterHandlers(cur)
+	registry := createParameterHandlers()
 
 	// store the original state
 	originalState := *ctx.Proposal
