@@ -50,29 +50,6 @@ func TestTransferUGNOT(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				r := recover()
-				if r == nil {
-					if tc.shouldPanic {
-						t.Errorf(">>> %s: expected panic but got none", tc.name)
-						return
-					}
-				} else {
-					switch r.(type) {
-					case string:
-						if r.(string) != tc.expected {
-							t.Errorf(">>> %s: got panic %v, want %v", tc.name, r, tc.expected)
-						}
-					case error:
-						if r.(error).Error() != tc.expected {
-							t.Errorf(">>> %s: got panic %v, want %v", tc.name, r.(error).Error(), tc.expected)
-						}
-					default:
-						t.Errorf(">>> %s: got panic %v, want %v", tc.name, r, tc.expected)
-					}
-				}
-			}()
-
 			if !tc.shouldPanic {
 				tc.action(t, tc.from, tc.to)
 				if tc.verify != nil {
@@ -80,7 +57,9 @@ func TestTransferUGNOT(t *testing.T) {
 					uassert.Equal(t, tc.expected, strconv.FormatInt(balance, 10))
 				}
 			} else {
-				tc.action(t, tc.from, tc.to)
+				uassert.PanicsWithMessage(t, tc.expected, func() {
+					tc.action(t, tc.from, tc.to)
+				})
 			}
 		})
 	}
@@ -336,6 +315,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 		sentAmount    int64
 		expectPanic   bool
 		expectedWrap  int64
+		expectedError string
 	}{
 		{
 			name:          "Panic - Zero UGNOT",
@@ -400,21 +380,9 @@ func TestSafeWrapNativeToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					if !tt.expectPanic {
-						t.Errorf("unexpected panic: %v", r)
-					}
-				} else {
-					if tt.expectPanic {
-						t.Errorf("expected panic but did not occur")
-					}
-				}
-			}()
-
 			amount, err := strconv.ParseInt(tt.amountDesired, 10, 64)
 			if err != nil {
-				panic("can not parse amount")
+				t.Errorf("failed to parse amount")
 			}
 			if amount > 0 {
 				ugnotFaucet(t, positionAddr, amount)
@@ -429,6 +397,10 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			// Verify wrapped amount
 			if !tt.expectPanic {
 				uassert.Equal(t, tt.expectedWrap, wrappedAmount)
+			} else {
+				uassert.PanicsWithMessage(t, tt.expectedError, func() {
+					safeWrapNativeToken(tt.amountDesired, tt.userAddress)
+				})
 			}
 		})
 	}
