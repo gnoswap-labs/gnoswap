@@ -1,7 +1,6 @@
 package position
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/demo/json"
@@ -14,441 +13,319 @@ func setupPositions(t *testing.T) {
 	MakeMintPositionWithoutFee(t)
 }
 
-func TestApiGetPositions(t *testing.T) {
+func TestApiGetPositions_BasicResponse(t *testing.T) {
 	setupPositions(t)
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(adminRealm)
 
 	result := ApiGetPositions()
+	helper := NewApiTestHelper(t, result)
 
-	root, err := json.Unmarshal([]byte(result))
-	if err != nil {
-		panic(err.Error())
-	}
+	// Test basic API response structure
+	helper.TestApiResponse()
 
-	response, err := root.GetKey("response")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.NoError(t, err)
-	uassert.Equal(t, 1, response.Size())
+	// Verify response array size
+	response := helper.GetResponse()
+	helper.AssertArraySize(response, 1)
 
-	response, err = response.GetIndex(0)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	lpPositionId, err := response.GetKey("lpPositionId")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, "1", lpPositionId.String())
-
-	burned, err := response.GetKey("burned")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, "false", burned.String())
-
-	owner, err := response.GetKey("owner")
-	if err != nil {
-		panic(err.Error())
-	}
-	ownerAddr := `"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"`
-	uassert.Equal(t, ownerAddr, owner.String())
-
-	operator, err := response.GetKey("operator")
-	if err != nil {
-		panic(err.Error())
-	}
-	operatorAddr := `"g100000000000000000000000000000000dnmcnx"`
-	uassert.Equal(t, operatorAddr, operator.String())
-
-	poolKey, err := response.GetKey("poolKey")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"`, poolKey.String())
-
-	tickLower, err := response.GetKey("tickLower")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, "-887270", tickLower.String())
-
-	tickUpper, err := response.GetKey("tickUpper")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, "887270", tickUpper.String())
-
-	liquidity, err := response.GetKey("liquidity")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"50000"`, liquidity.String())
-
-	feeGrowthInside0LastX128, err := response.GetKey("feeGrowthInside0LastX128")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, feeGrowthInside0LastX128.String())
-
-	feeGrowthInside1LastX128, err := response.GetKey("feeGrowthInside1LastX128")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, feeGrowthInside1LastX128.String())
-
-	token0Owed, err := response.GetKey("token0Owed")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, token0Owed.String())
-
-	token1Owed, err := response.GetKey("token1Owed")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, token1Owed.String())
-
-	token0Balance, err := response.GetKey("token0Balance")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"50000"`, token0Balance.String())
-
-	token1Balance, err := response.GetKey("token1Balance")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"50000"`, token1Balance.String())
-
-	fee0Unclaimed, err := response.GetKey("fee0Unclaimed")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, fee0Unclaimed.String())
-
-	fee1Unclaimed, err := response.GetKey("fee1Unclaimed")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, fee1Unclaimed.String())
+	// Validate first position data
+	position := helper.GetResponseArray(0)
+	helper.AssertPositionFields(position)
 }
 
 func TestApiGetPositionsByPoolPath(t *testing.T) {
+	setupPositions(t)
 	result := ApiGetPositionsByPoolPath("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	helper := NewApiTestHelper(t, result)
 
-	root, err := json.Unmarshal([]byte(result))
-	if err != nil {
-		panic(err.Error())
-	}
+	// Test basic API response structure
+	helper.TestApiResponse()
 
-	response, err := root.GetKey("response")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.NoError(t, err)
-	uassert.Equal(t, 1, response.Size())
+	// Verify response array size
+	response := helper.GetResponse()
+	helper.AssertArraySize(response, 1)
 
-	response, err = response.GetIndex(0)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	lpPositionId, err := response.GetKey("lpPositionId")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, "1", lpPositionId.String())
-
-	burned, err := response.GetKey("burned")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, "false", burned.String())
-
-	owner, err := response.GetKey("owner")
-	if err != nil {
-		panic(err.Error())
-	}
-	ownerAddr := `"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"`
-	uassert.Equal(t, ownerAddr, owner.String())
-
-	operator, err := response.GetKey("operator")
-	if err != nil {
-		panic(err.Error())
-	}
-	operatorAddr := `"g100000000000000000000000000000000dnmcnx"`
-	uassert.Equal(t, operatorAddr, operator.String())
-
-	poolKey, err := response.GetKey("poolKey")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"`, poolKey.String())
-
-	tickLower, err := response.GetKey("tickLower")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, "-887270", tickLower.String())
-
-	tickUpper, err := response.GetKey("tickUpper")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, "887270", tickUpper.String())
-
-	liquidity, err := response.GetKey("liquidity")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"50000"`, liquidity.String())
-
-	feeGrowthInside0LastX128, err := response.GetKey("feeGrowthInside0LastX128")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, feeGrowthInside0LastX128.String())
-
-	feeGrowthInside1LastX128, err := response.GetKey("feeGrowthInside1LastX128")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, feeGrowthInside1LastX128.String())
-
-	token0Owed, err := response.GetKey("token0Owed")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, token0Owed.String())
-
-	token1Owed, err := response.GetKey("token1Owed")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, token1Owed.String())
-
-	token0Balance, err := response.GetKey("token0Balance")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"50000"`, token0Balance.String())
-
-	token1Balance, err := response.GetKey("token1Balance")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"50000"`, token1Balance.String())
-
-	fee0Unclaimed, err := response.GetKey("fee0Unclaimed")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, fee0Unclaimed.String())
-
-	fee1Unclaimed, err := response.GetKey("fee1Unclaimed")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, fee1Unclaimed.String())
+	// Validate first position data
+	position := helper.GetResponseArray(0)
+	helper.AssertPositionFields(position)
 }
 
 func TestApiGetPositionsByAddress(t *testing.T) {
+	setupPositions(t)
 	result := ApiGetPositionsByAddress(adminAddr)
+	helper := NewApiTestHelper(t, result)
 
-	root, err := json.Unmarshal([]byte(result))
-	if err != nil {
-		panic(err.Error())
-	}
+	// Test basic API response structure
+	helper.TestApiResponse()
 
-	response, err := root.GetKey("response")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.NoError(t, err)
-	uassert.Equal(t, 1, response.Size())
+	// Verify response array size
+	response := helper.GetResponse()
+	helper.AssertArraySize(response, 1)
 
-	response, err = response.GetIndex(0)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	lpPositionId, err := response.GetKey("lpPositionId")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, "1", lpPositionId.String())
-
-	burned, err := response.GetKey("burned")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, "false", burned.String())
-
-	owner, err := response.GetKey("owner")
-	if err != nil {
-		panic(err.Error())
-	}
-	ownerAddr := `"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"`
-	uassert.Equal(t, ownerAddr, owner.String())
-
-	operator, err := response.GetKey("operator")
-	if err != nil {
-		panic(err.Error())
-	}
-	operatorAddr := `"g100000000000000000000000000000000dnmcnx"`
-	uassert.Equal(t, operatorAddr, operator.String())
-
-	poolKey, err := response.GetKey("poolKey")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"`, poolKey.String())
-
-	tickLower, err := response.GetKey("tickLower")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, "-887270", tickLower.String())
-
-	tickUpper, err := response.GetKey("tickUpper")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, "887270", tickUpper.String())
-
-	liquidity, err := response.GetKey("liquidity")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"50000"`, liquidity.String())
-
-	feeGrowthInside0LastX128, err := response.GetKey("feeGrowthInside0LastX128")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, feeGrowthInside0LastX128.String())
-
-	feeGrowthInside1LastX128, err := response.GetKey("feeGrowthInside1LastX128")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, feeGrowthInside1LastX128.String())
-
-	token0Owed, err := response.GetKey("token0Owed")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, token0Owed.String())
-
-	token1Owed, err := response.GetKey("token1Owed")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, token1Owed.String())
-
-	token0Balance, err := response.GetKey("token0Balance")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"50000"`, token0Balance.String())
-
-	token1Balance, err := response.GetKey("token1Balance")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"50000"`, token1Balance.String())
-
-	fee0Unclaimed, err := response.GetKey("fee0Unclaimed")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, fee0Unclaimed.String())
-
-	fee1Unclaimed, err := response.GetKey("fee1Unclaimed")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, fee1Unclaimed.String())
+	// Validate first position data
+	position := helper.GetResponseArray(0)
+	helper.AssertPositionFields(position)
 }
 
 func TestApiGetPositionsUnclaimedFee(t *testing.T) {
+	setupPositions(t)
 	result := ApiGetPositionsUnclaimedFee()
+	helper := NewApiTestHelper(t, result)
 
-	root, err := json.Unmarshal([]byte(result))
-	if err != nil {
-		panic(err.Error())
-	}
+	// Test basic API response structure
+	helper.TestApiResponse()
 
-	response, err := root.GetKey("response")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.NoError(t, err)
-	uassert.Equal(t, 1, response.Size())
+	// Verify response array size
+	response := helper.GetResponse()
+	helper.AssertArraySize(response, 1)
 
-	response, err = response.GetIndex(0)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	lpPositionId, err := response.GetKey("lpPositionId")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, "1", lpPositionId.String())
-
-	fee0Unclaimed, err := response.GetKey("fee0")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, fee0Unclaimed.String())
-
-	fee1Unclaimed, err := response.GetKey("fee1")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, fee1Unclaimed.String())
+	// Validate first fee data
+	feeData := helper.GetResponseArray(0)
+	helper.AssertFeeFields(feeData)
 }
 
 func TestApiGetPositionUnclaimedFeeByLpPositionId(t *testing.T) {
 	setupPositions(t)
 	result := ApiGetPositionUnclaimedFeeByLpPositionId(1)
+	helper := NewApiTestHelper(t, result)
+
+	// Test basic API response structure
+	helper.TestApiResponse()
+
+	// Verify response array size
+	response := helper.GetResponse()
+	helper.AssertArraySize(response, 1)
+
+	// Validate first fee data
+	feeData := helper.GetResponseArray(0)
+	helper.AssertFeeFields(feeData)
+}
+
+//////// Helper Functions ////////
+
+// ApiTestHelper is a helper struct for API response testing.
+type ApiTestHelper struct {
+	t      *testing.T
+	result string
+	root   *json.Node
+}
+
+// NewApiTestHelper creates a new API test helper.
+func NewApiTestHelper(t *testing.T, result string) *ApiTestHelper {
+	t.Helper()
 
 	root, err := json.Unmarshal([]byte(result))
 	if err != nil {
-		panic(err.Error())
+		t.Fatalf("JSON parsing failed: %v", err)
 	}
 
-	response, err := root.GetKey("response")
-	if err != nil {
-		panic(err.Error())
+	return &ApiTestHelper{
+		t:      t,
+		result: result,
+		root:   root,
 	}
-	uassert.NoError(t, err)
-	uassert.Equal(t, 1, response.Size())
+}
 
-	response, err = response.GetIndex(0)
+// GetResponse returns the value of the response key.
+func (h *ApiTestHelper) GetResponse() *json.Node {
+	h.t.Helper()
+
+	response, err := h.root.GetKey("response")
 	if err != nil {
-		panic(err.Error())
+		h.t.Fatalf("response key not found: %v", err)
 	}
 
-	lpPositionId, err := response.GetKey("lpPositionId")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, "1", lpPositionId.String())
+	return response
+}
 
-	fee0Unclaimed, err := response.GetKey("fee0")
-	if err != nil {
-		panic(err.Error())
-	}
-	uassert.Equal(t, `"0"`, fee0Unclaimed.String())
+// GetResponseArray returns the element at the specified index of the response array.
+func (h *ApiTestHelper) GetResponseArray(index int) *json.Node {
+	h.t.Helper()
 
-	fee1Unclaimed, err := response.GetKey("fee1")
+	response := h.GetResponse()
+	uassert.Equal(h.t, index+1, response.Size())
+
+	element, err := response.GetIndex(index)
 	if err != nil {
-		panic(err.Error())
+		h.t.Fatalf("array index %d not found: %v", index, err)
 	}
-	uassert.Equal(t, `"0"`, fee1Unclaimed.String())
+
+	return element
+}
+
+// AssertField validates the value of a specific field.
+func (h *ApiTestHelper) AssertField(node *json.Node, fieldName, expectedValue string) {
+	h.t.Helper()
+
+	field, err := node.GetKey(fieldName)
+	if err != nil {
+		h.t.Fatalf("field %s not found: %v", fieldName, err)
+	}
+
+	uassert.Equal(h.t, expectedValue, field.String())
+}
+
+// AssertFieldExists checks if a specific field exists.
+func (h *ApiTestHelper) AssertFieldExists(node *json.Node, fieldName string) {
+	h.t.Helper()
+
+	_, err := node.GetKey(fieldName)
+	if err != nil {
+		h.t.Fatalf("field %s does not exist: %v", fieldName, err)
+	}
+}
+
+// AssertFieldNotExists checks if a specific field does not exist.
+func (h *ApiTestHelper) AssertFieldNotExists(node *json.Node, fieldName string) {
+	h.t.Helper()
+
+	_, err := node.GetKey(fieldName)
+	if err == nil {
+		h.t.Fatalf("field %s exists (should not exist)", fieldName)
+	}
+}
+
+// AssertArraySize validates the size of an array.
+func (h *ApiTestHelper) AssertArraySize(node *json.Node, expectedSize int) {
+	h.t.Helper()
+
+	uassert.Equal(h.t, expectedSize, node.Size())
+}
+
+// AssertStringField validates a string field.
+func (h *ApiTestHelper) AssertStringField(node *json.Node, fieldName, expectedValue string) {
+	h.t.Helper()
+
+	field, err := node.GetKey(fieldName)
+	if err != nil {
+		h.t.Fatalf("field %s not found: %v", fieldName, err)
+	}
+
+	value, err := field.GetString()
+	if err != nil {
+		h.t.Fatalf("field %s is not a string: %v", fieldName, err)
+	}
+
+	uassert.Equal(h.t, expectedValue, value)
+}
+
+// AssertNumberField validates a numeric field.
+func (h *ApiTestHelper) AssertNumberField(node *json.Node, fieldName string, expectedValue float64) {
+	h.t.Helper()
+
+	field, err := node.GetKey(fieldName)
+	if err != nil {
+		h.t.Fatalf("field %s not found: %v", fieldName, err)
+	}
+
+	value, err := field.GetNumeric()
+	if err != nil {
+		h.t.Fatalf("field %s is not a number: %v", fieldName, err)
+	}
+
+	uassert.Equal(h.t, expectedValue, value)
+}
+
+// AssertBoolField validates a boolean field.
+func (h *ApiTestHelper) AssertBoolField(node *json.Node, fieldName string, expectedValue bool) {
+	h.t.Helper()
+
+	field, err := node.GetKey(fieldName)
+	if err != nil {
+		h.t.Fatalf("field %s not found: %v", fieldName, err)
+	}
+
+	value, err := field.GetBool()
+	if err != nil {
+		h.t.Fatalf("field %s is not a boolean: %v", fieldName, err)
+	}
+
+	uassert.Equal(h.t, expectedValue, value)
+}
+
+// AssertPositionFields validates common position-related fields.
+func (h *ApiTestHelper) AssertPositionFields(position *json.Node) {
+	h.t.Helper()
+
+	expectedFields := map[string]string{
+		"lpPositionId":              "1",
+		"burned":                    "false",
+		"owner":                     `"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"`,
+		"operator":                  `"g100000000000000000000000000000000dnmcnx"`,
+		"poolKey":                   `"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"`,
+		"tickLower":                 "-887270",
+		"tickUpper":                 "887270",
+		"liquidity":                 `"50000"`,
+		"feeGrowthInside0LastX128": `"0"`,
+		"feeGrowthInside1LastX128": `"0"`,
+		"token0Owed":                `"0"`,
+		"token1Owed":                `"0"`,
+		"token0Balance":             `"50000"`,
+		"token1Balance":             `"50000"`,
+		"fee0Unclaimed":             `"0"`,
+		"fee1Unclaimed":             `"0"`,
+	}
+
+	for fieldName, expectedValue := range expectedFields {
+		h.AssertField(position, fieldName, expectedValue)
+	}
+}
+
+// AssertFeeFields validates fee-related fields.
+func (h *ApiTestHelper) AssertFeeFields(feeNode *json.Node) {
+	h.t.Helper()
+
+	expectedFields := map[string]string{
+		"lpPositionId": "1",
+		"fee0":         `"0"`,
+		"fee1":         `"0"`,
+	}
+
+	for fieldName, expectedValue := range expectedFields {
+		h.AssertField(feeNode, fieldName, expectedValue)
+	}
+}
+
+// TestApiResponse tests the basic structure of API response.
+func (h *ApiTestHelper) TestApiResponse() {
+	h.t.Helper()
+
+	// Check if response key exists
+	h.AssertFieldExists(h.root, "response")
+	
+	// Check if response is an array
+	response := h.GetResponse()
+	if !response.IsArray() {
+		h.t.Fatalf("response is not an array")
+	}
+}
+
+// CreateExpectedPositionMap creates a map of expected position data.
+func CreateExpectedPositionMap() map[string]string {
+	return map[string]string{
+		"lpPositionId":              "1",
+		"burned":                    "false",
+		"owner":                     `"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"`,
+		"operator":                  `"g100000000000000000000000000000000dnmcnx"`,
+		"poolKey":                   `"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"`,
+		"tickLower":                 "-887270",
+		"tickUpper":                 "887270",
+		"liquidity":                 `"50000"`,
+		"feeGrowthInside0LastX128": `"0"`,
+		"feeGrowthInside1LastX128": `"0"`,
+		"token0Owed":                `"0"`,
+		"token1Owed":                `"0"`,
+		"token0Balance":             `"50000"`,
+		"token1Balance":             `"50000"`,
+		"fee0Unclaimed":             `"0"`,
+		"fee1Unclaimed":             `"0"`,
+	}
+}
+
+// CreateExpectedFeeMap creates a map of expected fee data.
+func CreateExpectedFeeMap() map[string]string {
+	return map[string]string{
+		"lpPositionId": "1",
+		"fee0":         "0",
+		"fee1":         "0",
+	}
 }
