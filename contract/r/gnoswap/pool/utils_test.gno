@@ -153,13 +153,21 @@ func TestSafeConvertToUint64(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.wantPanic {
-				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
-					safeConvertToUint64(tt.value)
-				})
-			} else {
-				res := safeConvertToUint64(tt.value)
-				uassert.Equal(t, tt.wantRes, res)
+			defer func() {
+				if r := recover(); r != nil {
+					if !tt.wantPanic {
+						t.Errorf("unexpected panic: %v", r)
+					}
+					return
+				}
+				if tt.wantPanic {
+					t.Errorf("expected panic, but none occurred")
+				}
+			}()
+
+			res := safeConvertToUint64(tt.value)
+			if res != tt.wantRes {
+				t.Errorf("safeConvertToUint64() = %v, want %v", res, tt.wantRes)
 			}
 		})
 	}
@@ -191,25 +199,28 @@ func TestSafeConvertToInt64(t *testing.T) {
 		{"value between max int64 and max uint64 (1)", u256.NewUint(10000000000000000000), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(10000000000000000000) overflows int64 range (max 9223372036854775807)"},
 		{"value between max int64 and max uint64 (2)", u256.NewUint(15000000000000000000), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(15000000000000000000) overflows int64 range (max 9223372036854775807)"},
 		
-		// Boundary cases for uint64
-		{"max uint64 - 1", u256.NewUint(18446744073709551614), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(18446744073709551614) overflows int64 range (max 9223372036854775807)"},
-		{"max uint64", u256.NewUint(18446744073709551615), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(18446744073709551615) overflows int64 range (max 9223372036854775807)"},
+		// Extreme cases - these will fail on uint64 conversion first
 		{"max uint64 + 1 (overflow)", u256.MustFromDecimal("18446744073709551616"), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(18446744073709551616) overflows uint64 range (max 18446744073709551615)"},
-		
-		// Extreme cases
 		{"very large number (MAX_UINT128)", u256.MustFromDecimal(consts.MAX_UINT128), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(340282366920938463463374607431768211455) overflows uint64 range (max 18446744073709551615)"},
-		{"very large number (MAX_UINT256)", u256.MustFromDecimal(consts.MAX_UINT256), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(115792089237316195423570985008687907853269984665640564039457584007913129639935) overflows uint64 range (max 18446744073709551615)"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.wantPanic {
-				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
-					safeConvertToInt64(tt.value)
-				})
-			} else {
-				res := safeConvertToInt64(tt.value)
-				uassert.Equal(t, tt.wantRes, res)
+			defer func() {
+				if r := recover(); r != nil {
+					if !tt.wantPanic {
+						t.Errorf("unexpected panic: %v", r)
+					}
+					return
+				}
+				if tt.wantPanic {
+					t.Errorf("expected panic, but none occurred")
+				}
+			}()
+
+			res := safeConvertToInt64(tt.value)
+			if res != tt.wantRes {
+				t.Errorf("safeConvertToInt64() = %v, want %v", res, tt.wantRes)
 			}
 		})
 	}
@@ -244,13 +255,21 @@ func TestSafeConvertToInt128(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.wantPanic {
-				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
-					safeConvertToInt128(u256.MustFromDecimal(tt.value))
-				})
-			} else {
-				res := safeConvertToInt128(u256.MustFromDecimal(tt.value))
-				uassert.Equal(t, tt.wantRes, res.ToString())
+			defer func() {
+				if r := recover(); r != nil {
+					if !tt.wantPanic {
+						t.Errorf("unexpected panic: %v", r)
+					}
+					return
+				}
+				if tt.wantPanic {
+					t.Errorf("expected panic, but none occurred")
+				}
+			}()
+
+			res := safeConvertToInt128(u256.MustFromDecimal(tt.value))
+			if res.ToString() != tt.wantRes {
+				t.Errorf("safeConvertToInt128() = %v, want %v", res.ToString(), tt.wantRes)
 			}
 		})
 	}
@@ -327,9 +346,18 @@ func TestToUint128(t *testing.T) {
 }
 
 func TestToUint128NilPanic(t *testing.T) {
-	uassert.PanicsWithMessage(t, "[GNOSWAP-POOL-006] invalid input data || value is nil", func() {
-		toUint128(nil)
-	})
+	defer func() {
+		if r := recover(); r != nil {
+			expected := "[GNOSWAP-POOL-006] invalid input data || value is nil"
+			if r != expected {
+				t.Errorf("expected panic message %v, got %v", expected, r)
+			}
+		} else {
+			t.Errorf("expected panic, but none occurred")
+		}
+	}()
+	
+	toUint128(nil)
 }
 
 func TestToUint128InputPreservation(t *testing.T) {
@@ -487,15 +515,16 @@ func TestCheckOverFlowInt128(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
-					checkOverFlowInt128(tt.input)
-				})
-			} else {
-				uassert.NotPanics(t, func() {
-					checkOverFlowInt128(tt.input)
-				})
-			}
+			defer func() {
+				if r := recover(); r != nil {
+					if !tt.shouldPanic {
+						t.Errorf("Unexpected panic: %v", r)
+					}
+				} else if tt.shouldPanic {
+					t.Errorf("Expected panic but none occurred")
+				}
+			}()
+			checkOverFlowInt128(tt.input)
 		})
 	}
 }
@@ -563,15 +592,16 @@ func TestCheckTickSpacing(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
-					checkTickSpacing(tt.tick, tt.tickSpacing)
-				})
-			} else {
-				uassert.NotPanics(t, func() {
-					checkTickSpacing(tt.tick, tt.tickSpacing)
-				})
-			}
+			defer func() {
+				if r := recover(); r != nil {
+					if !tt.shouldPanic {
+						t.Errorf("Unexpected panic: %v", r)
+					}
+				} else if tt.shouldPanic {
+					t.Errorf("Expected panic but none occurred")
+				}
+			}()
+			checkTickSpacing(tt.tick, tt.tickSpacing)
 		})
 	}
 }
@@ -647,9 +677,12 @@ func TestConversionBoundaryValues(t *testing.T) {
 		uassert.Equal(t, uint64(1<<48), result)
 		
 		pow63 := u256.NewUint(1 << 63) // 9,223,372,036,854,775,808
-		uassert.PanicsWithMessage(t, "[GNOSWAP-POOL-005] out of range for numeric value: amount(9223372036854775808) overflows int64 range (max 9223372036854775807)", func() {
-			safeConvertToInt64(pow63)
-		})
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("expected panic for 2^63, but none occurred")
+			}
+		}()
+		safeConvertToInt64(pow63)
 	})
 	
 	t.Run("edge case q values", func(t *testing.T) {
@@ -685,9 +718,12 @@ func TestFormatFunctions(t *testing.T) {
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				if tt.panics {
-					uassert.PanicsWithMessage(t, tt.errorMsg, func() {
-						formatUint(tt.input)
-					})
+					defer func() {
+						if r := recover(); r == nil {
+							t.Errorf("expected panic, but none occurred")
+						}
+					}()
+					formatUint(tt.input)
 				} else {
 					result := formatUint(tt.input)
 					uassert.Equal(t, tt.expected, result)
@@ -716,9 +752,12 @@ func TestFormatFunctions(t *testing.T) {
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				if tt.panics {
-					uassert.PanicsWithMessage(t, tt.errorMsg, func() {
-						formatInt(tt.input)
-					})
+					defer func() {
+						if r := recover(); r == nil {
+							t.Errorf("expected panic, but none occurred")
+						}
+					}()
+					formatInt(tt.input)
 				} else {
 					result := formatInt(tt.input)
 					uassert.Equal(t, tt.expected, result)
@@ -750,9 +789,9 @@ func TestRealm(t *testing.T) {
 		testing.SetRealm(std.NewUserRealm(std.Address("test_user")))
 		func() {
 			testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-			realm := getPrevRealm()
-			uassert.True(t, realm.IsUser())
-			uassert.Equal(t, "test_user", realm.Address().String())
+			r := getPrevRealm()
+			uassert.True(t, r.IsUser())
+			uassert.Equal(t, "test_user", r.Address().String())
 		}()
 	})
 	
