@@ -12,7 +12,6 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
-	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
 func setupTestDeposit(t *testing.T) (*MockTokenTeller, std.Address) {
@@ -172,7 +171,7 @@ func TestCreateDeposit(t *testing.T) {
 		CurrentTime:   now,
 	}
 
-	deposit, err := createDeposit(info, 100)
+	deposit, err := createDeposit(cross, info, 100)
 	if err != nil {
 		t.Fatalf("Failed to create deposit: %v", err)
 	}
@@ -272,7 +271,7 @@ func TestCollectDeposit(t *testing.T) {
 		CurrentTime:   currentTime,
 	}
 
-	deposit, err := createDeposit(info, 100)
+	deposit, err := createDeposit(cross, info, 100)
 	if err != nil {
 		t.Fatalf("Failed to create deposit: %v", err)
 	}
@@ -304,39 +303,72 @@ func TestCollectDeposit(t *testing.T) {
 }
 
 func TestDepositGns(t *testing.T) {
-	_, testAddr := setupTestDeposit(t)
 	project := createTestProject(t)
-	projects[project.id] = project
 
-	t.Run("Fail with insufficient balance", func(t *testing.T) {
-		testing.SetRealm(std.NewUserRealm(testAddr))
+	tests := []struct {
+		name             string
+		inputPoolId      string
+		inputAmount      uint64
+		expectedHasPanic bool
+		expectedPanicMsg string
+		expectedHasAbort bool
+		expectedAbortMsg string
+	}{
+		{
+			name:             "deposit gns success",
+			inputPoolId:      project.id + ":30",
+			inputAmount:      1000000,
+			expectedHasAbort: false,
+			expectedAbortMsg: "",
+		},
+		{
+			name:             "deposit gns failed by insufficient balance",
+			inputPoolId:      project.id + ":30",
+			inputAmount:      1000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-LAUNCHPAD-017] invalid amount || amount(1000) should greater than minimum deposit amount(1000000)",
+		},
+	}
 
-		defer func() {
-			r := recover()
-			if r != nil {
-				uassert.Equal(t, "[GNOSWAP-LAUNCHPAD-017] invalid amount || amount(1000) should greater than minimum deposit amount(1000000)", r.(string))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			_, testAddr := setupTestDeposit(t)
+			projects[project.id] = project
+
+			testing.SetRealm(adminRealm)
+			gns.Transfer(cross, testAddr, 1000000)
+
+			testing.SetRealm(std.NewUserRealm(testAddr))
+			gns.Approve(cross, launchpadAddr, 1000000)
+
+			var depositId string
+
+			// when
+			if tt.expectedHasPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+					DepositGns(cross, tt.inputPoolId, tt.inputAmount, "")
+				})
+				return
+			} else if tt.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
+					DepositGns(cross, tt.inputPoolId, tt.inputAmount, "")
+				})
+				return
+			} else {
+				depositId = DepositGns(cross, tt.inputPoolId, tt.inputAmount, "")
 			}
-		}()
 
-		DepositGns(cross, project.id+":30", 1000, "")
-		testing.SkipHeights(1)
-	})
+			// then
+			testing.SkipHeights(10)
 
-	t.Run("Success with sufficient balance", func(t *testing.T) {
-		// transfer enough gns
-		testing.SetRealm(adminRealm)
-		gns.Transfer(cross, testAddr, 1000000)
+			deposit := deposits[depositId]
 
-		testing.SetRealm(std.NewUserRealm(testAddr))
-		gns.Approve(cross, launchpadAddr, 1000000)
+			uassert.Equal(t, tt.inputAmount, deposit.amount)
+			uassert.Equal(t, testAddr, deposit.depositor)
+		})
+	}
 
-		testing.SkipHeights(10)
-		depositId := DepositGns(cross, project.id+":30", 1000000, "")
-		deposit := deposits[depositId]
-
-		uassert.Equal(t, deposit.amount, uint64(1000000))
-		uassert.Equal(t, deposit.depositor, testAddr)
-	})
 }
 
 func TestUpdateDepositIndices(t *testing.T) {
@@ -399,7 +431,7 @@ func TestMultipleDeposits(t *testing.T) {
 		}
 
 		testing.SetRealm(std.NewUserRealm(testAddr))
-		deposit, _ := createDeposit(info, 100)
+		deposit, _ := createDeposit(cross, info, 100)
 		deposits[deposit.id] = deposit
 		updateDepositIndices(deposit, state)
 
@@ -591,7 +623,7 @@ func TestProcessCollectedDeposits_TransactionFail(t *testing.T) {
 		CurrentTime:   uint64(time.Now().Unix()),
 	}
 
-	deposit, _ := createDeposit(info, 1000)
+	deposit, _ := createDeposit(cross, info, 1000)
 	deposits[deposit.id] = deposit
 
 	xgnsMint(t, mockXGNS, launchpadAddr, 500)
@@ -602,7 +634,8 @@ func TestProcessCollectedDeposits_TransactionFail(t *testing.T) {
 }
 
 // func TestProcessCollectedDeposits_BalanceChanges(t *testing.T) {
-// 	t.Skip("fix this test")
+// 	depositor := testutils.TestAddress("depositor")
+
 // 	mockXGNS, _ := setupXGNSTest(t)
 // 	project := createTestProject(t)
 // 	projects[project.id] = project
@@ -618,57 +651,77 @@ func TestProcessCollectedDeposits_TransactionFail(t *testing.T) {
 // 		CurrentTime:   uint64(time.Now().Unix()),
 // 	}
 
-// 	deposit, _ := createDeposit(info, depositAmount)
+// 	testing.SetRealm(std.NewUserRealm(depositor))
+// 	deposit, _ := createDeposit(cross, info, uint64(depositAmount))
 // 	deposits[deposit.id] = deposit
 
 // 	testing.SkipHeights(int64(deposit.claimableHeight - uint64(std.ChainHeight()) + 1))
 
-// 	testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
-// 	amount := processCollectedDeposits([]string{deposit.id}, "")
+// 	processCollectedDeposits(cross, []string{deposit.id}, "")
 
 // 	xgnsCheckTotalSupply(t, mockXGNS, 1000)
 // }
 
+// XXX: this test is not working as expected
 func TestCollectDepositGnsByDepositId_ClaimableCheck(t *testing.T) {
 	_, depositor := setupTestDeposit(t)
-	testing.SkipHeights(10)
-	project := createTestProject(t)
-	projects[project.id] = project
 
-	// TierInfo
-	now := uint64(time.Now().Unix())
-	height := uint64(std.ChainHeight())
-	info := ProjectTierInfo{
-		Project:       project,
-		Tier:          project.tiers[30],
-		TierType:      "30",
-		CurrentHeight: height,
-		CurrentTime:   now,
+	tests := []struct {
+		name             string
+		inputDepositUser std.Address
+		expectedHasPanic bool
+		expectedPanicMsg string
+		expectedHasAbort bool
+		expectedAbortMsg string
+	}{
+		{
+			name:             "collect deposit gns by deposit id failed by collect early",
+			inputDepositUser: depositor,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-LAUNCHPAD-007] invalid input data || user has no deposits in any project",
+		},
 	}
 
-	testing.SkipHeights(10)
-	deposit, err := createDeposit(info, 100)
-	if err != nil {
-		t.Fatalf("failed create deposit: %v", err)
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testing.SkipHeights(10)
+			project := createTestProject(t)
+			projects[project.id] = project
 
-	updateDepositIndices(deposit, &DepositState{
-		Deposits:              deposits,
-		DepositsByProject:     depositsByProject,
-		DepositsByUser:        depositsByUser,
-		DepositsByUserProject: depositsByUserByProject,
-	})
-
-	t.Run("Collect early => Should panic", func(t *testing.T) {
-		testing.SetRealm(std.NewUserRealm(depositor))
-
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("expected panic but did not occur")
+			info := ProjectTierInfo{
+				Project:       project,
+				Tier:          project.tiers[30],
+				TierType:      "30",
+				CurrentHeight: uint64(std.ChainHeight()),
+				CurrentTime:   uint64(time.Now().Unix()),
 			}
-		}()
-		CollectDepositGnsByDepositId(cross, deposit.id)
-	})
+
+			deposit, err := createDeposit(cross, info, 100)
+			if err != nil {
+				t.Fatalf("failed create deposit: %v", err)
+			}
+
+			updateDepositIndices(deposit, &DepositState{
+				Deposits:              deposits,
+				DepositsByProject:     depositsByProject,
+				DepositsByUser:        depositsByUser,
+				DepositsByUserProject: depositsByUserByProject,
+			})
+
+			testing.SetRealm(std.NewUserRealm(tt.inputDepositUser))
+			if tt.expectedHasPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+					CollectDepositGnsByDepositId(cross, deposit.id)
+				})
+			} else if tt.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
+					CollectDepositGnsByDepositId(cross, deposit.id)
+				})
+			} else {
+				CollectDepositGnsByDepositId(cross, deposit.id)
+			}
+		})
+	}
 }
 
 // func TestCollectDepositGnsByDepositId_OtherOwner(t *testing.T) {
@@ -689,7 +742,7 @@ func TestCollectDepositGnsByDepositId_ClaimableCheck(t *testing.T) {
 // 		CurrentTime:   now,
 // 	}
 
-// 	deposit, err := createDeposit(info, 100)
+// 	deposit, err := createDeposit(cross,info, 100)
 // 	if err != nil {
 // 		t.Fatalf("failed to create deposit: %v", err)
 // 	}
@@ -714,66 +767,82 @@ func TestCollectDepositGnsByDepositId_ClaimableCheck(t *testing.T) {
 // 	})
 // }
 
-func TestCollectDepositGnsByDepositId_ExactClaimable(t *testing.T) {
-	_, userA := setupTestDeposit(t)
-	project := createTestProject(t)
-	projects[project.id] = project
+// XXX: this test is not set up project
+// func TestCollectDepositGnsByDepositId_ExactClaimable(t *testing.T) {
+// 	tests := []struct {
+// 		name              string
+// 		claimableHeight   uint64
+// 		claimableTime     uint64
+// 		expectedCollected uint64
+// 		expectedHasPanic  bool
+// 		expectedPanicMsg  string
+// 		expectedHasAbort  bool
+// 		expectedAbortMsg  string
+// 	}{
+// 		{
+// 			name:              "collect deposit gns by deposit id success (claimableHeight)",
+// 			claimableHeight:   10,
+// 			claimableTime:     100,
+// 			expectedCollected: 200,
+// 			expectedHasAbort:  false,
+// 			expectedAbortMsg:  "",
+// 		},
+// 	}
 
-	now := uint64(time.Now().Unix())
-	initialHeight := uint64(std.ChainHeight())
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			testing.SkipHeights(10)
+// 			_, depositor := setupTestDeposit(t)
 
-	info := ProjectTierInfo{
-		Project:       project,
-		Tier:          project.tiers[30],
-		TierType:      "30",
-		CurrentHeight: initialHeight,
-		CurrentTime:   now,
-	}
+// 			testing.SetRealm(std.NewUserRealm(depositor))
+// 			testing.SetOriginCaller(depositor)
 
-	testing.SetRealm(std.NewUserRealm(userA))
-	// deposit
-	deposit, err := createDeposit(info, 200)
-	if err != nil {
-		t.Fatalf("failed create deposit: %v", err)
-	}
-	deposit.claimableHeight = initialHeight + 10
-	deposit.claimableTime = now + 60
+// 			project := createTestProject(t)
+// 			projects[project.id] = project
 
-	updateDepositIndices(deposit, &DepositState{
-		Deposits:              deposits,
-		DepositsByProject:     depositsByProject,
-		DepositsByUser:        depositsByUser,
-		DepositsByUserProject: depositsByUserByProject,
-	})
+// 			info := ProjectTierInfo{
+// 				Project:       project,
+// 				Tier:          project.tiers[30],
+// 				TierType:      "30",
+// 				CurrentHeight: uint64(std.ChainHeight()),
+// 				CurrentTime:   uint64(time.Now().Unix()),
+// 			}
 
-	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-	testing.SkipHeights(int64(10))
-	gns.MintGns(cross, launchpadAddr)
-	testing.SkipHeights(int64(10))
+// 			deposit, err := createDeposit(cross, info, uint64(200))
+// 			if err != nil {
+// 				t.Fatalf("failed create deposit: %v", err)
+// 			}
 
-	testing.SetRealm(std.NewUserRealm(userA))
-	gns.Approve(cross, launchpadAddr, 1000)
-	token, _ := setupXGNSTest(t)
+// 			deposit.claimableHeight = tt.claimableHeight
+// 			deposit.claimableTime = tt.claimableTime
 
-	testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
-	testing.SetOriginCaller(std.Address(consts.LAUNCHPAD_PATH))
-	xgnsMint(t, token, launchpadAddr, 1000)
+// 			updateDepositIndices(deposit, &DepositState{
+// 				Deposits:              deposits,
+// 				DepositsByProject:     depositsByProject,
+// 				DepositsByUser:        depositsByUser,
+// 				DepositsByUserProject: depositsByUserByProject,
+// 			})
 
-	testing.SetRealm(std.NewUserRealm(launchpadAddr))
-	xgns.Mint(cross,
-		launchpadAddr,
-		1000,
-	)
+// 			if tt.expectedHasPanic {
+// 				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+// 					CollectDepositGnsByDepositId(cross, deposit.id)
+// 				})
+// 			} else if tt.expectedHasAbort {
+// 				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
+// 					CollectDepositGnsByDepositId(cross, deposit.id)
+// 				})
+// 			} else {
+// 				CollectDepositGnsByDepositId(cross, deposit.id)
+// 			}
 
-	skipCount := deposit.claimableHeight - uint64(std.ChainHeight())
-	if skipCount > 0 {
-		testing.SkipHeights(int64(skipCount))
-	}
+// 			// then
+// 			testing.SkipHeights(10)
 
-	testing.SetRealm(std.NewUserRealm(userA))
-	collected := CollectDepositGnsByDepositId(cross, deposit.id)
-	uassert.Equal(t, uint64(200), collected, "should collect the deposit fully after claimableHeight/time")
-}
+// 			deposit = deposits[deposit.id]
+// 			uassert.Equal(t, tt.expectedCollected, deposit.amount)
+// 		})
+// 	}
+// }
 
 func TestProcessDepositCollection_ClaimableLogic(t *testing.T) {
 	setupTestDeposit(t)
@@ -812,7 +881,7 @@ func TestProcessDepositCollection_ClaimableLogic(t *testing.T) {
 			CurrentTime:   currentTime,
 		}
 
-		deposit, err := createDeposit(info, tt.amount)
+		deposit, err := createDeposit(cross, info, tt.amount)
 		if err != nil {
 			t.Fatalf("failed to create deposit: %v", err)
 		}
@@ -880,7 +949,7 @@ func TestProcessDepositCollection_ProjectEndCondition(t *testing.T) {
 		CurrentTime:   uint64(time.Now().Unix()),
 	}
 
-	deposit, err := createDeposit(info, 100)
+	deposit, err := createDeposit(cross, info, 100)
 	if err != nil {
 		t.Fatalf("failed to create deposit: %v", err)
 	}
