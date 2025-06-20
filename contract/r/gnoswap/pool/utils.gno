@@ -11,7 +11,6 @@ import (
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
-
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -76,7 +75,7 @@ func safeConvertToInt64(value *u256.Uint) int64 {
 	res, overflow := value.Uint64WithOverflow()
 	if overflow || res > uint64(consts.INT64_MAX) {
 		panic(ufmt.Sprintf(
-			"%v: amount(%s) overflows int64 range (max %d)",
+			"%v: amount(%s) overflows int64 range (max %s)",
 			errOutOfRange,
 			value.ToString(),
 			consts.MAX_INT64,
