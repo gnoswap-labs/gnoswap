@@ -4,7 +4,7 @@ import (
 	"std"
 	"strconv"
 	"testing"
-	_ "time"
+	"time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
