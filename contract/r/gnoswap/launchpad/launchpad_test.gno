@@ -1515,17 +1515,11 @@ func TestCovertTimeToHeight(t *testing.T) {
 
 	// division by zero test
 	t.Run("blocktime is zero => panic", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("expected panic but got none")
-			} else {
-				uassert.Equal(t, r.(string), "division by zero")
-			}
-		}()
-
-		testing.SetRealm(adminRealm)
-		gns.SetAvgBlockTimeInMsByAdmin(cross, 0)
-		_ = convertTimeToHeight(1000)
+		uassert.AbortsWithMessage(t, "[GNOSWAP-GNS-004] invalid avg block time in ms", func() {
+			testing.SetRealm(adminRealm)
+			gns.SetAvgBlockTimeInMsByAdmin(cross, 0)
+			_ = convertTimeToHeight(1000)
+		})
 	})
 }
 
@@ -1552,22 +1546,22 @@ func TestTransferLeftFromProjectByAdmin(t *testing.T) {
 	}
 
 	tests := []struct {
-		name          string
-		setupFunc     func()
-		projectId     string
-		recipient     std.Address
-		mockHeight    uint64
-		expectedPanic string
+		name              string
+		setupFunc         func()
+		projectId         string
+		recipient         std.Address
+		mockHeight        uint64
+		expectedAboardMsg string
 	}{
 		{
 			name: "project not found",
 			setupFunc: func() {
 				projects = make(map[string]Project)
 			},
-			projectId:     "nonExistentProject",
-			recipient:     validRecipient,
-			mockHeight:    200,
-			expectedPanic: "[GNOSWAP-LAUNCHPAD-003] requested data not found || projectId(nonExistentProject) not found",
+			projectId:         "nonExistentProject",
+			recipient:         validRecipient,
+			mockHeight:        200,
+			expectedAboardMsg: "[GNOSWAP-LAUNCHPAD-003] requested data not found || projectId(nonExistentProject) not found",
 		},
 		{
 			name: "invalid recipient address",
@@ -1575,10 +1569,10 @@ func TestTransferLeftFromProjectByAdmin(t *testing.T) {
 				projects = make(map[string]Project)
 				projects[projectId] = dummyProject
 			},
-			projectId:     projectId,
-			recipient:     invalidRecipient,
-			mockHeight:    200,
-			expectedPanic: "[GNOSWAP-LAUNCHPAD-013] invalid transfer condition || invalid recipient address(invalidRecipient)",
+			projectId:         projectId,
+			recipient:         invalidRecipient,
+			mockHeight:        200,
+			expectedAboardMsg: "[GNOSWAP-LAUNCHPAD-013] invalid transfer condition || invalid recipient address(invalidRecipient)",
 		},
 		{
 			name: "project not ended yet",
@@ -1588,10 +1582,10 @@ func TestTransferLeftFromProjectByAdmin(t *testing.T) {
 				p.ended.height = 300
 				projects[projectId] = p
 			},
-			projectId:     projectId,
-			recipient:     validRecipient,
-			mockHeight:    250,
-			expectedPanic: "[GNOSWAP-LAUNCHPAD-013] invalid transfer condition || project not ended yet(current:250, endHeight: 300)",
+			projectId:         projectId,
+			recipient:         validRecipient,
+			mockHeight:        250,
+			expectedAboardMsg: "[GNOSWAP-LAUNCHPAD-013] invalid transfer condition || project not ended yet(current:250, endHeight: 300)",
 		},
 		{
 			name: "project already refunded",
@@ -1605,10 +1599,10 @@ func TestTransferLeftFromProjectByAdmin(t *testing.T) {
 				}
 				projects[projectId] = p
 			},
-			projectId:     projectId,
-			recipient:     validRecipient,
-			mockHeight:    200,
-			expectedPanic: "[GNOSWAP-LAUNCHPAD-013] invalid transfer condition || project already refunded(height:110)",
+			projectId:         projectId,
+			recipient:         validRecipient,
+			mockHeight:        200,
+			expectedAboardMsg: "[GNOSWAP-LAUNCHPAD-013] invalid transfer condition || project already refunded(height:110)",
 		},
 		{
 			name: "success leftover transfer",
@@ -1621,10 +1615,10 @@ func TestTransferLeftFromProjectByAdmin(t *testing.T) {
 				p.refund = RefundInfo{}
 				projects[projectId] = p
 			},
-			projectId:     projectId,
-			recipient:     validRecipient,
-			mockHeight:    250,
-			expectedPanic: "",
+			projectId:         projectId,
+			recipient:         validRecipient,
+			mockHeight:        250,
+			expectedAboardMsg: "",
 		},
 	}
 
@@ -1641,28 +1635,22 @@ func TestTransferLeftFromProjectByAdmin(t *testing.T) {
 				testing.SkipHeights(skip)
 			}
 
-			defer func() {
-				if r := recover(); r != nil {
-					if tt.expectedPanic == "" {
-						t.Errorf("unexpected panic: %v", r)
-					} else {
-						uassert.Equal(t, r.(string), tt.expectedPanic)
-					}
-				} else if tt.expectedPanic != "" {
-					t.Errorf("expected panic(%s) but got none", tt.expectedPanic)
-				}
-			}()
+			var leftAmount uint64
 
-			// run
-			got := TransferLeftFromProjectByAdmin(cross, tt.projectId, tt.recipient)
-
-			if tt.expectedPanic == "" {
-				project := projects[tt.projectId]
-				// leftover = (1000-400) + (2000-2000) + (3000-2500) = 1100
-				uassert.Equal(t, got, uint64(1100))
-				uassert.Equal(t, project.refund.amount, uint64(1100))
-				uassert.Equal(t, project.refund.height, tt.mockHeight)
+			if tt.expectedAboardMsg != "" {
+				uassert.AbortsWithMessage(t, tt.expectedAboardMsg, func() {
+					TransferLeftFromProjectByAdmin(cross, tt.projectId, tt.recipient)
+				})
+				return
+			} else {
+				leftAmount = TransferLeftFromProjectByAdmin(cross, tt.projectId, tt.recipient)
 			}
+
+			project := projects[tt.projectId]
+			// leftover = (1000-400) + (2000-2000) + (3000-2500) = 1100
+			uassert.Equal(t, leftAmount, uint64(1100))
+			uassert.Equal(t, project.refund.amount, uint64(1100))
+			uassert.Equal(t, project.refund.height, tt.mockHeight)
 		})
 	}
 }

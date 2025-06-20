@@ -141,7 +141,7 @@ func DepositGns(cur realm, targetProjectTierId string, amount uint64, referrer s
 		CurrentHeight: currentHeight,
 		CurrentTime:   now,
 	}
-	deposit, err := createDeposit(info, amount)
+	deposit, err := createDeposit(cur, info, amount)
 	if err != nil {
 		panic(addDetailToError(errInvalidInput, err.Error()))
 	}
@@ -321,7 +321,7 @@ func CollectDepositGnsByDepositId(cur realm, depositId string) uint64 {
 
 	// Process deposit collection
 	height := uint64(std.ChainHeight())
-	amount, err := processDeposit(&deposit, &project, height)
+	amount, err := processDeposit(cur, &deposit, &project, height)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -611,7 +611,7 @@ func isTierActive(tier Tier, height uint64) bool {
 // Returns:
 // - Deposit: The newly created `Deposit` object containing all relevant details.
 // - error: Returns an error if the deposit creation fails (currently always returns `nil`).
-func createDeposit(info ProjectTierInfo, amount uint64) (Deposit, error) {
+func createDeposit(cur realm, info ProjectTierInfo, amount uint64) (Deposit, error) {
 	// Validate input parameters
 	if amount == 0 {
 		return Deposit{}, errors.New(ufmt.Sprintf("deposit amount cannot be zero"))
@@ -886,7 +886,7 @@ func validateDepositCollection(depositId string, caller std.Address) (Deposit, P
 }
 
 // receive deposit and project as a pointer to avoid copying
-func processDeposit(deposit *Deposit, project *Project, height uint64) (uint64, error) {
+func processDeposit(cur realm, deposit *Deposit, project *Project, height uint64) (uint64, error) {
 	tier := getTier(*project, deposit.tier)
 	//if isTierActive(tier, height) {
 	//	return 0, errors.New(addDetailToError(errActiveProject, "tier is still active"))

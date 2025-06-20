@@ -55,7 +55,6 @@ func TestValidateRewardCollection(t *testing.T) {
 			name: "Valid case",
 			deposit: Deposit{
 				id:                "depositId",
-				depositor:         "g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm",
 				claimableHeight:   50, // Less than current height
 				rewardCollectTime: 0,
 			},
@@ -250,13 +249,9 @@ func TestCollectRewardByDepositId_FailCases(t *testing.T) {
 	t.Run("ID not found", func(t *testing.T) {
 		setup()
 
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("expected panic but not")
-			}
-		}()
-
-		CollectRewardByDepositId(cross, "non_existent_id")
+		uassert.AbortsWithMessage(t, "depositId(non_existent_id) not found", func() {
+			CollectRewardByDepositId(cross, "non_existent_id")
+		})
 	})
 
 	t.Run("Claimable height before", func(t *testing.T) {
@@ -271,7 +266,7 @@ func TestCollectRewardByDepositId_FailCases(t *testing.T) {
 			claimableHeight: uint64(std.ChainHeight()) + 1000,
 		}
 
-		uassert.PanicsWithMessage(t, "[GNOSWAP-LAUNCHPAD-024] not yet claim reward || need block >= 1123, current=123", func() {
+		uassert.AbortsWithMessage(t, "[GNOSWAP-LAUNCHPAD-024] not yet claim reward || need block >= 1123, current=123", func() {
 			CollectRewardByDepositId(cross, depositId)
 		})
 	})
@@ -310,29 +305,18 @@ func TestCollectRewardByDepositId_OwnerCheck(t *testing.T) {
 
 	t.Run("UserA tries depositB => panic", func(t *testing.T) {
 		testing.SetRealm(std.NewUserRealm(userA))
-		defer func() {
-			r := recover()
-			if r == nil {
-				t.Errorf("expected panic, got none")
-			} else {
-				uassert.Equal(t, "[GNOSWAP-LAUNCHPAD-026] invalid owner || caller(g1w4ek2ujpta047h6lta047h6lta047h6l55c22z) does not own depositId(depB)", r.(string))
-			}
-		}()
-		CollectRewardByDepositId(cross, "depB")
+
+		uassert.AbortsWithMessage(t, "[GNOSWAP-LAUNCHPAD-026] invalid owner || caller(g1w4ek2ujpta047h6lta047h6lta047h6l55c22z) does not own depositId(depB)", func() {
+			CollectRewardByDepositId(cross, "depB")
+		})
 	})
 
 	t.Run("UserA depositA => not claimable yet", func(t *testing.T) {
 		testing.SetRealm(std.NewUserRealm(userA))
 		// height=0, depositA.claimableHeight=10
-		defer func() {
-			r := recover()
-			if r == nil {
-				t.Errorf("expected panic for not claimable, got none")
-			} else {
-				uassert.Equal(t, "[GNOSWAP-LAUNCHPAD-024] not yet claim reward || need block >= 133, current=123", r.(string))
-			}
-		}()
-		CollectRewardByDepositId(cross, "depA")
+		uassert.AbortsWithMessage(t, "[GNOSWAP-LAUNCHPAD-024] not yet claim reward || need block >= 133, current=123", func() {
+			CollectRewardByDepositId(cross, "depA")
+		})
 	})
 
 	testing.SkipHeights(11) // now height=11 >= depositA.claimableHeight=10
