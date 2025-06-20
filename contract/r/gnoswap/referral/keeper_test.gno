@@ -814,10 +814,10 @@ func TestTryRegister(t *testing.T) {
 		inputFirstRefAddr            std.Address
 		inputSecondRefAddr           std.Address
 		inputSkipBlockHeight         int64
-		expectedIsSuccessFirst       bool
-		expectedRegisteredAddrFirst  std.Address
-		expectedIsSuccessSecond      bool
-		expectedRegisteredAddrSecond std.Address
+		expectedFirstIsSuccess       bool
+		expectedFirstRegisteredAddr  std.Address
+		expectedSecondIsSuccess      bool
+		expectedSecondRegisteredAddr std.Address
 	}{
 		{
 			name:                         "try register with invalid referral address then valid referral address",
@@ -825,10 +825,10 @@ func TestTryRegister(t *testing.T) {
 			inputFirstRefAddr:            std.Address("000000000001"),
 			inputSecondRefAddr:           validAddr4,
 			inputSkipBlockHeight:         0,
-			expectedIsSuccessFirst:       false,
-			expectedRegisteredAddrFirst:  zeroAddress,
-			expectedIsSuccessSecond:      true,
-			expectedRegisteredAddrSecond: validAddr4,
+			expectedFirstIsSuccess:       false,
+			expectedFirstRegisteredAddr:  zeroAddress,
+			expectedSecondIsSuccess:      true,
+			expectedSecondRegisteredAddr: validAddr4,
 		},
 		{
 			name:                         "try register with valid referral address then failed by rate limit",
@@ -836,10 +836,10 @@ func TestTryRegister(t *testing.T) {
 			inputFirstRefAddr:            validAddr4,
 			inputSecondRefAddr:           validAddr5,
 			inputSkipBlockHeight:         0,
-			expectedIsSuccessFirst:       true,
-			expectedRegisteredAddrFirst:  validAddr4,
-			expectedIsSuccessSecond:      false,
-			expectedRegisteredAddrSecond: validAddr4,
+			expectedFirstIsSuccess:       true,
+			expectedFirstRegisteredAddr:  validAddr4,
+			expectedSecondIsSuccess:      false,
+			expectedSecondRegisteredAddr: validAddr4,
 		},
 		{
 			name:                         "try register with valid referral address then success",
@@ -847,10 +847,10 @@ func TestTryRegister(t *testing.T) {
 			inputFirstRefAddr:            validAddr4,
 			inputSecondRefAddr:           validAddr5,
 			inputSkipBlockHeight:         (60 * 60 * 24 / 5), // 5 seconds per block (60 * 60 * 24 / 5 = 1day)
-			expectedIsSuccessFirst:       true,
-			expectedRegisteredAddrFirst:  validAddr4,
-			expectedIsSuccessSecond:      true,
-			expectedRegisteredAddrSecond: validAddr5,
+			expectedFirstIsSuccess:       true,
+			expectedFirstRegisteredAddr:  validAddr4,
+			expectedSecondIsSuccess:      true,
+			expectedSecondRegisteredAddr: validAddr5,
 		},
 		{
 			name:                         "try register with empty referral address then valid referral address",
@@ -858,10 +858,10 @@ func TestTryRegister(t *testing.T) {
 			inputFirstRefAddr:            "",
 			inputSecondRefAddr:           validAddr5,
 			inputSkipBlockHeight:         (60 * 60 * 24 / 5), // 5 seconds per block (60 * 60 * 24 / 5 = 1day)
-			expectedIsSuccessFirst:       true,
-			expectedRegisteredAddrFirst:  zeroAddress,
-			expectedIsSuccessSecond:      true,
-			expectedRegisteredAddrSecond: validAddr5,
+			expectedFirstIsSuccess:       true,
+			expectedFirstRegisteredAddr:  zeroAddress,
+			expectedSecondIsSuccess:      true,
+			expectedSecondRegisteredAddr: validAddr5,
 		},
 		{
 			name:                         "try register with valid referral address then zero address",
@@ -869,10 +869,10 @@ func TestTryRegister(t *testing.T) {
 			inputFirstRefAddr:            validAddr4,
 			inputSecondRefAddr:           zeroAddress,
 			inputSkipBlockHeight:         (60 * 60 * 24 / 5), // 5 seconds per block (60 * 60 * 24 / 5 = 1day)
-			expectedIsSuccessFirst:       true,
-			expectedRegisteredAddrFirst:  validAddr4,
-			expectedIsSuccessSecond:      true,
-			expectedRegisteredAddrSecond: zeroAddress,
+			expectedFirstIsSuccess:       true,
+			expectedFirstRegisteredAddr:  validAddr4,
+			expectedSecondIsSuccess:      true,
+			expectedSecondRegisteredAddr: zeroAddress,
 		},
 	}
 
@@ -889,22 +889,22 @@ func TestTryRegister(t *testing.T) {
 
 			// when: first register
 			success := TryRegister(cross, tt.inputUserAddr, tt.inputFirstRefAddr.String())
-			uassert.Equal(t, tt.expectedIsSuccessFirst, success)
+			uassert.Equal(t, tt.expectedFirstIsSuccess, success)
 
 			// then: first registered address should be the first referral address
 			firstRegisteredAddr := GetReferral(tt.inputUserAddr.String())
-			uassert.Equal(t, tt.expectedRegisteredAddrFirst.String(), firstRegisteredAddr)
+			uassert.Equal(t, tt.expectedFirstRegisteredAddr.String(), firstRegisteredAddr)
 
 			// skip block height
 			testing.SkipHeights(tt.inputSkipBlockHeight)
 
 			// when: second register
 			success = TryRegister(cross, tt.inputUserAddr, tt.inputSecondRefAddr.String())
-			uassert.Equal(t, tt.expectedIsSuccessSecond, success)
+			uassert.Equal(t, tt.expectedSecondIsSuccess, success)
 
 			// then: second registered address should be the second referral address
 			secondRegisteredAddr := GetReferral(tt.inputUserAddr.String())
-			uassert.Equal(t, tt.expectedRegisteredAddrSecond.String(), secondRegisteredAddr)
+			uassert.Equal(t, tt.expectedSecondRegisteredAddr.String(), secondRegisteredAddr)
 		})
 	}
 }
