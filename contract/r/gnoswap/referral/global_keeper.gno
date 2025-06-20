@@ -1,8 +1,6 @@
 package referral
 
-import (
-	"std"
-)
+import "std"
 
 // gReferralKeeper is the global instance of the referral keeper
 var gReferralKeeper ReferralKeeper
