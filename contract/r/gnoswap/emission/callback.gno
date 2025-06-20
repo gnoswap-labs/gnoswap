@@ -17,7 +17,11 @@ func SetCallbackStakerEmissionChange(cur realm, callback func(amount int64)) {
 	if callbackStakerEmissionChange != nil {
 		panic("callbackStakerEmissionChange already set")
 	}
-	callbackStakerEmissionChange = callback
+	callbackStakerEmissionChange = func(amount int64) {
+		func(cur realm) {
+			callback(amount)
+		}(cross)
+	}
 }
 
 // Called when per-block emission is changed from the gns side.
