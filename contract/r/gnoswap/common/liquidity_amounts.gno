@@ -31,14 +31,17 @@ func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 // Notes:
 //   - The function first checks if the value is not nil to avoid potential runtime errors.
 //   - The mask ensures that only the lower 128 bits of the value are retained.
-//   - If the input value is already within the uint128 range, it remains unchanged.
+//   - If the input value is already within the uint128 range, it is returned unchanged.
+//   - If masking is required, a new instance is returned without modifying the input.
 //   - MAX_UINT128 is a constant representing `2^128 - 1`.
 func toUint128(value *u256.Uint) *u256.Uint {
 	assertOnlyNotNil(value)
 	if value.Gt(u256.MustFromDecimal(consts.MAX_UINT128)) {
+		// Create a copy to preserve the original value
+		result := new(u256.Uint).Set(value)
 		mask := new(u256.Uint).Lsh(u256.One(), consts.Q128_RESOLUTION)
-		mask = new(u256.Uint).Sub(mask, u256.One())
-		return new(u256.Uint).And(value, mask)
+		mask = mask.Sub(mask, u256.One())
+		return result.And(result, mask)
 	}
 	return value
 }

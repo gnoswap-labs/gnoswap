@@ -49,7 +49,6 @@ func safeConvertToUint64(value *u256.Uint) uint64 {
 	return res
 }
 
-// safeConvertToInt64 safely converts a *u256.Uint value to an int64, panicking on overflow.
 // safeConvertToInt64 safely converts a *u256.Uint value to an int64, ensuring no overflow.
 //
 // This function attempts to convert the given *u256.Uint value to an int64. If the value exceeds
@@ -76,7 +75,7 @@ func safeConvertToInt64(value *u256.Uint) int64 {
 	res, overflow := value.Uint64WithOverflow()
 	if overflow || res > uint64(consts.INT64_MAX) {
 		panic(ufmt.Sprintf(
-			"%v: amount(%s) overflows int64 range (max %d)",
+			"%v: amount(%s) overflows int64 range (max %s)",
 			errOutOfRange,
 			value.ToString(),
 			consts.MAX_INT64,
@@ -137,11 +136,13 @@ func safeConvertToInt128(value *u256.Uint) *i256.Int {
 //   - If masking is required, a new instance is returned without modifying the input.
 //   - MAX_UINT128 is a constant representing `2^128 - 1`.
 func toUint128(value *u256.Uint) *u256.Uint {
-	assertOnlyNotNil(value)
+	common.assertOnlyNotNil(value)
 	if value.Gt(u256.MustFromDecimal(consts.MAX_UINT128)) {
+		// Create a copy to preserve the original value
+		result := new(u256.Uint).Set(value)
 		mask := new(u256.Uint).Lsh(u256.One(), consts.Q128_RESOLUTION)
 		mask = mask.Sub(mask, u256.One())
-		return new(u256.Uint).And(value, mask)
+		return result.And(result, mask)
 	}
 	return value
 }
@@ -260,16 +261,6 @@ func assertOnlyPositionContract() {
 		panic(newErrorWithDetail(
 			errNoPermission,
 			ufmt.Sprintf("only position(%s) can call, called from %s", positionAddr, caller.String()),
-		))
-	}
-}
-
-// assertOnlyNotNil panics if the value is nil.
-func assertOnlyNotNil(value *u256.Uint) {
-	if value == nil {
-		panic(newErrorWithDetail(
-			errInvalidInput,
-			"value is nil",
 		))
 	}
 }
