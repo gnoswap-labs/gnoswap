@@ -338,6 +338,7 @@ type ProjectCalculationResult struct {
 // Returns:
 // - string: The unique ID of the created project.
 func CreateProject(
+	cur realm,
 	name string,
 	tokenPath string,
 	recipient std.Address,
@@ -349,7 +350,6 @@ func CreateProject(
 	tier180Ratio uint64,
 	startTime uint64,
 ) string {
-	crossing()
 	assertOnlyNotHalted()
 	assertOnlyAdmin()
 
@@ -376,7 +376,7 @@ func CreateProject(
 			ufmt.Sprintf("project(%s) already exists", projectId)))
 	}
 
-	en.MintAndDistributeGns()
+	en.MintAndDistributeGns(cross)
 
 	calcResult, err := calculateProjectParams(input, now)
 	if err != nil {
@@ -438,7 +438,9 @@ func CreateProject(
 
 	// Transfer tokens
 
-	tokenTeller.TransferFrom(
+	common.TransferFrom(
+		cross,
+		tokenPath,
 		getPrevAddr(),
 		std.Address(GetOrigPkgAddr()),
 		int64(depositAmount),
@@ -483,9 +485,7 @@ func CreateProject(
 //
 // Returns:
 // - uint64: The amount of rewards transferred to the recipient.
-func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uint64 {
-	crossing()
-
+func TransferLeftFromProjectByAdmin(cur realm, projectId string, recipient std.Address) uint64 {
 	if err := common.SatisfyCond(isUserCall()); err != nil {
 		panic(addDetailToError(errNotUserCaller, err.Error()))
 	}
@@ -503,7 +503,7 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 			errInvalidCondition, err.Error()))
 	}
 
-	en.MintAndDistributeGns()
+	en.MintAndDistributeGns(cross)
 
 	accumTotalReward := uint64(0)
 	accumLeftReward := uint64(0)
@@ -539,8 +539,7 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 	projects[projectId] = project
 
 	if projectLeftReward > 0 {
-		tokenTeller := common.GetTokenTeller(project.tokenPath)
-		tokenTeller.Transfer(recipient, int64(projectLeftReward))
+		common.Transfer(cross, project.tokenPath, recipient, int64(projectLeftReward))
 	}
 
 	std.Emit(

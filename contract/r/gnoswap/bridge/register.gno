@@ -29,8 +29,7 @@ func init() {
 
 // RegisterCallback registers a callback function for a given namespace and function name.
 // Only admin and governance addresses are allowed to register callbacks.
-func RegisterCallback(caller std.Address, namespace, fname string, callback any) error {
-	crossing()
+func RegisterCallback(cur realm, caller std.Address, namespace, fname string, callback any) error {
 	if !caller.IsValid() {
 		return ufmt.Errorf("invalid caller address: %s", caller)
 	}
@@ -62,7 +61,7 @@ func LookupCallback(namespace, fname string) (any, bool) {
 
 // UpdateCallback updates an existing callback function for a given namespace and function name.
 // Only admin and governance addresses are allowed to update callbacks.
-func UpdateCallback(caller std.Address, namespace, fname string, newCallback any) error {
+func UpdateCallback(cur realm, caller std.Address, namespace, fname string, newCallback any) error {
 	if !caller.IsValid() {
 		return ufmt.Errorf("invalid caller address: %s", caller)
 	}

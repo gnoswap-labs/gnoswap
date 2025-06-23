@@ -40,6 +40,7 @@ func init() {
 // Returns the proposal ID
 // ref: https://docs.gnoswap.io/contracts/governance/proposal.gno#proposetext
 func ProposeText(
+	cur realm,
 	title string,
 	description string,
 ) uint64 { // proposalId
@@ -55,7 +56,7 @@ func ProposeText(
 		))
 	}
 
-	cross(en.MintAndDistributeGns)()
+	en.MintAndDistributeGns(cross)
 	updateProposalsState()
 
 	now := uint64(time.Now().Unix())
@@ -109,6 +110,7 @@ func ProposeText(
 // Returns the proposal ID
 // ref: https://docs.gnoswap.io/contracts/governance/proposal.gno#proposecommunitypoolspend
 func ProposeCommunityPoolSpend(
+	cur realm,
 	title string,
 	description string,
 	to std.Address,
@@ -150,7 +152,7 @@ func ProposeCommunityPoolSpend(
 		))
 	}
 
-	cross(en.MintAndDistributeGns)()
+	en.MintAndDistributeGns(cross)
 	updateProposalsState()
 
 	now := uint64(time.Now().Unix())
@@ -215,6 +217,7 @@ func ProposeCommunityPoolSpend(
 // Returns the proposal ID
 // ref: https://docs.gnoswap.io/contracts/governance/proposal.gno#proposeparameterchange
 func ProposeParameterChange(
+	cur realm,
 	title string,
 	description string,
 	numToExecute uint64,
@@ -239,7 +242,7 @@ func ProposeParameterChange(
 	}
 
 	if strings.HasPrefix(executions, ROLE_PREFIX) {
-		return handleRoleChangeProposal(title, description, proposer, executions)
+		return handleRoleChangeProposal(cur, title, description, proposer, executions)
 	}
 
 	// check if numToExecute is a valid number
@@ -251,7 +254,7 @@ func ProposeParameterChange(
 		))
 	}
 
-	cross(en.MintAndDistributeGns)()
+	en.MintAndDistributeGns(cross)
 	updateProposalsState()
 
 	now := uint64(time.Now().Unix())
@@ -309,7 +312,7 @@ func ProposeParameterChange(
 // ref: https://docs.gnoswap.io/core-concepts/governance#scope-of-proposals-5
 // It returns a boolean indicating if the proposer has enough xGNS, the balance of xGNS, and the threshold of xGNS.
 func checkEnoughXGnsToPropose(proposer std.Address) (bool, int64, uint64) {
-	xGNSBalance := cross(xgns.BalanceOf)(proposer)
+	xGNSBalance := xgns.BalanceOf(proposer)
 
 	if xGNSBalance < int64(config.ProposalCreationThreshold) {
 		return false, xGNSBalance, config.ProposalCreationThreshold

@@ -80,8 +80,7 @@ func GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 //
 // Panics:
 // - If the caller is not an admin.
-func SetDepositGnsAmountByAdmin(amount int64) {
-	crossing()
+func SetDepositGnsAmountByAdmin(cur realm, amount int64) {
 	caller := getPrevAddr()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err.Error())
@@ -108,8 +107,7 @@ func SetDepositGnsAmountByAdmin(amount int64) {
 //
 // Panics:
 // - If the caller is not an admin.
-func SetMinimumRewardAmountByAdmin(amount int64) {
-	crossing()
+func SetMinimumRewardAmountByAdmin(cur realm, amount int64) {
 	caller := getPrevAddr()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err.Error())
@@ -132,8 +130,7 @@ func SetMinimumRewardAmountByAdmin(amount int64) {
 // SetDepositGnsAmount modifies the deposit gns amount
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/staker/external_deposit_fee.gno
-func SetDepositGnsAmount(amount int64) {
-	crossing()
+func SetDepositGnsAmount(cur realm, amount int64) {
 	caller := getPrevAddr()
 	if err := common.GovernanceOnly(caller); err != nil {
 		panic(err.Error())
@@ -155,8 +152,7 @@ func SetDepositGnsAmount(amount int64) {
 
 // SetMinimumRewardAmount modifies the *default* minimum reward amount.
 // Only governance contract can execute this function via proposal.
-func SetMinimumRewardAmount(amount int64) {
-	crossing()
+func SetMinimumRewardAmount(cur realm, amount int64) {
 	caller := getPrevAddr()
 	if err := common.GovernanceOnly(caller); err != nil {
 		panic(err.Error())
@@ -183,8 +179,7 @@ func SetMinimumRewardAmount(amount int64) {
 // Parameters:
 //   - paramsStr (string): A string containing the token path and minimum amount, separated by a colon.
 //     Example: "gno.land/r/demo/wugnot:1500000000"
-func SetTokenMinimumRewardAmount(paramsStr string) {
-	crossing()
+func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 	caller := getPrevAddr()
 	if err := common.GovernanceOnly(caller); err != nil {
 		panic(err.Error())

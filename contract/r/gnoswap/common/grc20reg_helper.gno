@@ -96,3 +96,15 @@ func BalanceOf(path string, addr std.Address) int64 {
 func Allowance(path string, owner, spender std.Address) int64 {
 	return GetToken(path).Allowance(owner, spender)
 }
+
+// Transfer transfers tokens to the given address.
+// It is a wrapper of grc20.Teller.Transfer.
+func Transfer(cur realm, path string, to std.Address, amount int64) error {
+	return GetTokenTeller(path).Transfer(to, amount)
+}
+
+// TransferFrom transfers tokens from the given address to the given address.
+// It is a wrapper of grc20.Teller.TransferFrom.
+func TransferFrom(cur realm, path string, from, to std.Address, amount int64) error {
+	return GetTokenTeller(path).TransferFrom(from, to, amount)
+}

@@ -41,7 +41,7 @@ const (
 // - the amount of token1 after the fee
 //
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_withdrawal.gno#handlewithdrawalfee
-func CollectWithdrawalFee(
+func CollectWithdrawalFee(cur realm,
 	positionId uint64,
 	token0Path string,
 	amount0 string, // uint256
@@ -50,7 +50,6 @@ func CollectWithdrawalFee(
 	poolPath string,
 	positionCaller std.Address,
 ) (string, string) { // uint256 x2
-	crossing()
 	assertOnlyNotHalted()
 	common.MustRegistered(token0Path, token1Path)
 
@@ -71,13 +70,10 @@ func CollectWithdrawalFee(
 	feeAmount0, afterAmount0 := calculateAmountWithFee(u256.MustFromDecimal(amount0), u256.NewUint(fee))
 	feeAmount1, afterAmount1 := calculateAmountWithFee(u256.MustFromDecimal(amount1), u256.NewUint(fee))
 
-	token0Teller := common.GetTokenTeller(token0Path)
-	checkTransferError(token0Teller.TransferFrom(positionCaller, protocolFeeAddr, feeAmount0.Int64()))
-	pf.AddToProtocolFee(token0Path, feeAmount0.Uint64())
-
-	token1Teller := common.GetTokenTeller(token1Path)
-	checkTransferError(token1Teller.TransferFrom(positionCaller, protocolFeeAddr, feeAmount1.Int64()))
-	pf.AddToProtocolFee(token1Path, feeAmount1.Uint64())
+	checkTransferError(common.TransferFrom(cross, token0Path, positionCaller, protocolFeeAddr, feeAmount0.Int64()))
+	pf.AddToProtocolFee(cross, token0Path, feeAmount0.Uint64())
+	checkTransferError(common.TransferFrom(cross, token1Path, positionCaller, protocolFeeAddr, feeAmount1.Int64()))
+	pf.AddToProtocolFee(cross, token1Path, feeAmount1.Uint64())
 
 	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
@@ -98,15 +94,13 @@ func CollectWithdrawalFee(
 // GetPoolCreationFee returns the poolCreationFee
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#getpoolcreationfee
 func GetPoolCreationFee() int64 {
-	crossing()
 	return poolCreationFee
 }
 
 // SetPoolCreationFee sets the poolCreationFee.
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#setpoolcreationfee
-func SetPoolCreationFee(fee int64) {
-	crossing()
+func SetPoolCreationFee(cur realm, fee int64) {
 	assertOnlyNotHalted()
 	caller := getPrevAddr()
 	if err := common.GovernanceOnly(caller); err != nil {
@@ -117,7 +111,7 @@ func SetPoolCreationFee(fee int64) {
 
 	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
-		"SetPoolCreationFee",	
+		"SetPoolCreationFee",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"prevFee", formatInt(prevPoolCreationFee),
@@ -127,10 +121,8 @@ func SetPoolCreationFee(fee int64) {
 
 // SetPoolCreationFeeByAdmin sets the poolCreationFee by Admin.
 // Only admin can execute this function.
-func SetPoolCreationFeeByAdmin(fee int64) {
-	crossing()
+func SetPoolCreationFeeByAdmin(cur realm, fee int64) {
 	assertOnlyNotHalted()
-
 	caller := getPrevAddr()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err.Error())
@@ -151,15 +143,13 @@ func SetPoolCreationFeeByAdmin(fee int64) {
 // GetWithdrawalFee returns the withdrawal fee
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_withdrawal.gno#getwithdrawalfee
 func GetWithdrawalFee() uint64 {
-	crossing()
 	return withdrawalFeeBPS
 }
 
 // SetWithdrawalFee sets the withdrawal fee.
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_withdrawal.gno#setwithdrawalfee
-func SetWithdrawalFee(fee uint64) {
-	crossing()
+func SetWithdrawalFee(cur realm, fee uint64) {
 	assertOnlyNotHalted()
 	caller := getPrevAddr()
 	if err := common.GovernanceOnly(caller); err != nil {
@@ -182,8 +172,7 @@ func SetWithdrawalFee(fee uint64) {
 
 // SetWithdrawalFeeByAdmin sets the withdrawal fee by Admin.
 // Only admin can execute this function.
-func SetWithdrawalFeeByAdmin(fee uint64) {
-	crossing()
+func SetWithdrawalFeeByAdmin(cur realm, fee uint64) {
 	assertOnlyNotHalted()
 	caller := getPrevAddr()
 	if err := common.AdminOnly(caller); err != nil {

@@ -88,8 +88,8 @@ func TestSwapInner(t *testing.T) {
 				MakeMintPositionWithoutFee(t)
 
 				testing.SetRealm(user1Realm)
-				bar.Approve(routerAddr, maxApprove)
-				baz.Approve(routerAddr, maxApprove)
+				bar.Approve(cross, routerAddr, maxApprove)
+				baz.Approve(cross, routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 				TokenFaucet(t, bazPath, user1Addr)
 			},
@@ -113,8 +113,8 @@ func TestSwapInner(t *testing.T) {
 				MakeMintPositionWithoutFee(t)
 
 				testing.SetRealm(user1Realm)
-				bar.Approve(routerAddr, maxApprove)
-				baz.Approve(routerAddr, maxApprove)
+				bar.Approve(cross, routerAddr, maxApprove)
+				baz.Approve(cross, routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 				TokenFaucet(t, bazPath, user1Addr)
 			},
@@ -136,10 +136,10 @@ func TestSwapInner(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testing.SetRealm(user1Realm)
-			bar.Approve(routerAddr, maxApprove)
-			baz.Approve(routerAddr, maxApprove)
-			bar.Approve(poolAddr, maxApprove)
-			baz.Approve(poolAddr, maxApprove)
+			bar.Approve(cross, routerAddr, maxApprove)
+			baz.Approve(cross, routerAddr, maxApprove)
+			bar.Approve(cross, poolAddr, maxApprove)
+			baz.Approve(cross, poolAddr, maxApprove)
 			TokenFaucet(t, barPath, routerAddr)
 
 			if tt.setupFn != nil {

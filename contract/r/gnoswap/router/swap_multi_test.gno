@@ -18,14 +18,14 @@ func TestMultiSwap(t *testing.T) {
 	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
 
 	tests := []struct {
-		name             string
-		setupFn          func(t *testing.T)
-		params           SwapParams
-		numPools         int
-		swapPath         string
-		expectedFirstIn  string
-		expectedLastOut  string
-		expectError      bool
+		name            string
+		setupFn         func(t *testing.T)
+		params          SwapParams
+		numPools        int
+		swapPath        string
+		expectedFirstIn string
+		expectedLastOut string
+		expectError     bool
 	}{
 		{
 			name: "single hop swap BAR -> BAZ",
@@ -34,12 +34,12 @@ func TestMultiSwap(t *testing.T) {
 				MakeMintPositionWithoutFee(t)
 
 				testing.SetRealm(user1Realm)
-				bar.Approve(routerAddr, maxApprove)
-				baz.Approve(routerAddr, maxApprove)
+				bar.Approve(cross, routerAddr, maxApprove)
+				baz.Approve(cross, routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{
-				recipient:       alice,
+				recipient: alice,
 				SingleSwapParams: SingleSwapParams{
 					tokenIn:         barPath,
 					tokenOut:        bazPath,
@@ -47,11 +47,11 @@ func TestMultiSwap(t *testing.T) {
 					amountSpecified: i256.MustFromDecimal("100"),
 				},
 			},
-			numPools:         1,
-			swapPath:         "",
-			expectedFirstIn:  "100",
-			expectedLastOut:  "98",
-			expectError:      false,
+			numPools:        1,
+			swapPath:        "",
+			expectedFirstIn: "100",
+			expectedLastOut: "98",
+			expectError:     false,
 		},
 		{
 			name: "multi hop swap (BAR -> BAZ -> QUX)",
@@ -65,13 +65,13 @@ func TestMultiSwap(t *testing.T) {
 				MakeSecondMintPositionWithoutFee(t)
 
 				testing.SetRealm(user1Realm)
-				bar.Approve(routerAddr, maxApprove)
-				baz.Approve(routerAddr, maxApprove)
-				qux.Approve(routerAddr, maxApprove)
+				bar.Approve(cross, routerAddr, maxApprove)
+				baz.Approve(cross, routerAddr, maxApprove)
+				qux.Approve(cross, routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{
-				recipient:       alice,
+				recipient: alice,
 				SingleSwapParams: SingleSwapParams{
 					tokenIn:         barPath,
 					tokenOut:        bazPath,
@@ -79,11 +79,11 @@ func TestMultiSwap(t *testing.T) {
 					amountSpecified: i256.MustFromDecimal("100"),
 				},
 			},
-			numPools:         2,
-			swapPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
-			expectedFirstIn:  "100",
-			expectedLastOut:  "96",
-			expectError:      false,
+			numPools:        2,
+			swapPath:        "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
+			expectedFirstIn: "100",
+			expectedLastOut: "96",
+			expectError:     false,
 		},
 		{
 			name: "multi hop swap with exact output",
@@ -95,13 +95,13 @@ func TestMultiSwap(t *testing.T) {
 				MakeSecondMintPositionWithoutFee(t)
 
 				testing.SetRealm(user1Realm)
-				bar.Approve(routerAddr, maxApprove)
-				baz.Approve(routerAddr, maxApprove)
-				qux.Approve(routerAddr, maxApprove)
+				bar.Approve(cross, routerAddr, maxApprove)
+				baz.Approve(cross, routerAddr, maxApprove)
+				qux.Approve(cross, routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 			},
 			params: SwapParams{
-				recipient:       alice,
+				recipient: alice,
 				SingleSwapParams: SingleSwapParams{
 					tokenIn:         barPath,
 					tokenOut:        bazPath,
@@ -109,11 +109,11 @@ func TestMultiSwap(t *testing.T) {
 					amountSpecified: i256.MustFromDecimal("-96"),
 				},
 			},
-			numPools:         2,
-			swapPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
-			expectedFirstIn:  "98",
-			expectedLastOut:  "94",
-			expectError:      false,
+			numPools:        2,
+			swapPath:        "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
+			expectedFirstIn: "98",
+			expectedLastOut: "94",
+			expectError:     false,
 		},
 	}
 

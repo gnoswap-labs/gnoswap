@@ -30,7 +30,7 @@ func testcreatePool(t *testing.T) {
 	gns.Approve(poolAddr, pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, bazPath, FEE_MEDIUM, "79228162514264337593543950336")
 
-	bar.Transfer(user1Addr, 10000)
+	bar.Transfer(cross, user1Addr, 10000)
 }
 
 func testPositionMint(t *testing.T) {

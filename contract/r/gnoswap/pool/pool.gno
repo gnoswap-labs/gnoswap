@@ -45,7 +45,7 @@ var (
 //   - Any failure during token transfers or position modifications.
 //
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#mint
-func Mint(
+func Mint(cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -55,7 +55,6 @@ func Mint(
 	liquidityAmount string,
 	positionCaller std.Address,
 ) (string, string) {
-	crossing()
 	assertOnlyNotHalted()
 	if common.GetLimitCaller() {
 		assertOnlyPositionContract()
@@ -104,6 +103,7 @@ func Mint(
 //
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#burn
 func Burn(
+	cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -163,7 +163,7 @@ func Burn(
 //   - string: The actual amount of token 1 collected, as a string.
 //
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#collect
-func Collect(
+func Collect(cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -173,14 +173,18 @@ func Collect(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	crossing()
 	assertOnlyNotHalted()
 	if common.GetLimitCaller() {
 		assertOnlyPositionContract()
 	}
 
 	pool := GetPool(token0Path, token1Path, fee)
-	positionKey := getPositionKey(getPrevAddr(), tickLower, tickUpper)
+	// Use recipient address instead of getPrevAddr() for position key generation
+	// because positions are created with the recipient's address in Mint function,
+	// and we need to access the same position that was originally created.
+	// getPrevAddr() would return the position contract address, but the actual
+	// position is stored under the recipient's address key.
+	positionKey := getPositionKey(recipient, tickLower, tickUpper)
 	position := pool.mustGetPosition(positionKey)
 
 	var amount0, amount1 *u256.Uint
@@ -194,14 +198,12 @@ func Collect(
 	if amount0.Gt(u256.Zero()) {
 		position.tokensOwed0 = new(u256.Uint).Sub(position.tokensOwed0, amount0)
 		pool.balances.token0 = new(u256.Uint).Sub(pool.balances.token0, amount0)
-		token0 := common.GetTokenTeller(pool.token0Path)
-		checkTransferError(token0.Transfer(recipient, amount0.Int64()))
+		checkTransferError(common.Transfer(cross, pool.token0Path, recipient, amount0.Int64()))
 	}
 	if amount1.Gt(u256.Zero()) {
 		position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
 		pool.balances.token1 = new(u256.Uint).Sub(pool.balances.token1, amount1)
-		token1 := common.GetTokenTeller(pool.token1Path)
-		checkTransferError(token1.Transfer(recipient, amount1.Int64()))
+		checkTransferError(common.Transfer(cross, pool.token1Path, recipient, amount1.Int64()))
 	}
 
 	pool.setPosition(positionKey, position)
@@ -233,7 +235,7 @@ func collectToken(
 
 // CollectProtocolByAdmin collects protocol fees for the given pool that accumulated while it was being used for swap
 // Returns collected amount0, amount1 in string
-func CollectProtocolByAdmin(
+func CollectProtocolByAdmin(cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -241,7 +243,6 @@ func CollectProtocolByAdmin(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	crossing()
 	assertOnlyAdmin()
 	amount0, amount1 := collectProtocol(
 		token0Path,
@@ -272,7 +273,7 @@ func CollectProtocolByAdmin(
 // Only governance contract can execute this function via proposal
 // Returns collected amount0, amount1 in string
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#collectprotocol
-func CollectProtocol(
+func CollectProtocol(cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -280,7 +281,6 @@ func CollectProtocol(
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) {
-	crossing()
 	assertOnlyGovernance()
 	amount0, amount1 := collectProtocol(
 		token0Path,
@@ -351,16 +351,14 @@ func collectProtocol(
 	uAmount0 := amount0.Int64()
 	uAmount1 := amount1.Int64()
 
-	token0Teller := common.GetTokenTeller(pool.token0Path)
-	checkTransferError(token0Teller.Transfer(recipient, uAmount0))
+	checkTransferError(common.Transfer(cross, pool.token0Path, recipient, uAmount0))
 	newBalanceToken0, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount0, true)
 	if err != nil {
 		panic(err)
 	}
 	pool.balances.token0 = newBalanceToken0
 
-	token1Teller := common.GetTokenTeller(pool.token1Path)
-	checkTransferError(token1Teller.Transfer(recipient, uAmount1))
+	checkTransferError(common.Transfer(cross, pool.token1Path, recipient, uAmount1))
 	newBalanceToken1, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount1, false)
 	if err != nil {
 		panic(err)

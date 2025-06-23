@@ -22,11 +22,11 @@ func mintAndDistributeGnsCallback() int64 {
 		panic("MintAndDistributeGns callback is not set!")
 	}
 
-	mintCallback, ok := cb.(func() int64)
+	mintCallback, ok := cb.(func(cur realm) int64)
 	if !ok {
 		panic("Invalid callback type for MintAndDistributeGns")
 	}
 
 	// stored function is crossing, it needs to be wrapped with `cross` to execute
-	return cross(mintCallback)()
+	return mintCallback(cross)
 }

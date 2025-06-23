@@ -1,8 +1,8 @@
 package staker
 
 import (
-	"std"
 	"math"
+	"std"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )

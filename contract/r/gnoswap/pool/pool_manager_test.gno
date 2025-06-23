@@ -2,9 +2,9 @@ package pool
 
 import (
 	"std"
-	"strings"
 	"testing"
 
+	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
 )
 
@@ -73,7 +73,7 @@ func TestCreatePool(t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-011] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar",
+			panicMsg:    "[GNOSWAP-POOL-011] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar)",
 		},
 		{
 			name:        "success - when tokens not in order, reverse order and create pool",
@@ -110,57 +110,44 @@ func TestCreatePool(t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "0",
 			shouldPanic: true,
-			panicMsg:    "sqrtPriceX96(0) is out of range",
+			panicMsg:    "[GNOSWAP-POOL-005] out of range for numeric value || sqrtPriceX96(0) is out of range",
 		},
 	}
 
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	func() {
-		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/pool"))
-		SetPoolCreationFeeByAdmin(0)
-	}()
+	SetPoolCreationFeeByAdmin(cross, 0)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					if r == nil {
-						t.Errorf("expected panic but got none")
-					}
-					errMsg := r.(string)
-					if !strings.Contains(errMsg, tt.panicMsg) {
-						t.Errorf("expected panic message containing %q but got %q", tt.panicMsg, errMsg)
-					}
-				}()
-			}
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					CreatePool(cross, tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
+				})
+			} else {
+				CreatePool(cross, tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
 
-			func() {
-				testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/pool"))
-				CreatePool(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
-			}()
+				// verify pool was created correctly
+				poolPath := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
+				pool := mustGetPool(poolPath)
 
-			// verify pool was created correctly
-			poolPath := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
-			pool := mustGetPool(poolPath)
+				// check if GNOT was properly wrapped
+				expectedToken0 := tt.token0Path
+				expectedToken1 := tt.token1Path
+				if tt.inOrder {
+					expectedToken0, expectedToken1 = expectedToken1, expectedToken0
+				}
 
-			// check if GNOT was properly wrapped
-			expectedToken0 := tt.token0Path
-			expectedToken1 := tt.token1Path
-			if tt.inOrder {
-				expectedToken0, expectedToken1 = expectedToken1, expectedToken0
-			}
+				if expectedToken0 == consts.GNOT {
+					expectedToken0 = consts.WRAPPED_WUGNOT
+				}
+				if expectedToken1 == consts.GNOT {
+					expectedToken1 = consts.WRAPPED_WUGNOT
+				}
 
-			if expectedToken0 == consts.GNOT {
-				expectedToken0 = consts.WRAPPED_WUGNOT
-			}
-			if expectedToken1 == consts.GNOT {
-				expectedToken1 = consts.WRAPPED_WUGNOT
-			}
-
-			if pool.token0Path != expectedToken0 || pool.token1Path != expectedToken1 {
-				t.Errorf("incorrect token paths in pool. got %s,%s want %s,%s",
-					pool.token0Path, pool.token1Path, expectedToken0, expectedToken1)
+				if pool.token0Path != expectedToken0 || pool.token1Path != expectedToken1 {
+					t.Errorf("incorrect token paths in pool. got %s,%s want %s,%s",
+						pool.token0Path, pool.token1Path, expectedToken0, expectedToken1)
+				}
 			}
 		})
 	}
@@ -181,10 +168,7 @@ func TestGetPool(t *testing.T) {
 			name: "Panic - unregisterd poolPath ",
 			setupFn: func(t *testing.T) {
 				testing.SetRealm(adminRealm)
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/pool"))
-					SetPoolCreationFeeByAdmin(0)
-				}()
+				SetPoolCreationFeeByAdmin(cross, 0)
 			},
 			action: func(t *testing.T) *Pool {
 				return GetPool(barPath, fooPath, fee500)
@@ -196,15 +180,8 @@ func TestGetPool(t *testing.T) {
 			name: "success - get pool (bar:foo:500)",
 			setupFn: func(t *testing.T) {
 				testing.SetRealm(adminRealm)
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/pool"))
-					SetPoolCreationFeeByAdmin(0)
-				}()
-
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/pool"))
-					CreatePool(barPath, fooPath, fee500, "4295128740")
-				}()
+				SetPoolCreationFeeByAdmin(cross, 0)
+				CreatePool(cross, barPath, fooPath, fee500, "4295128740")
 			},
 			action: func(t *testing.T) *Pool {
 				return GetPool(barPath, fooPath, fee500)

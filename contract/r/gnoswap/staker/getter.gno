@@ -716,9 +716,9 @@ func getCurrentInfo() currentInfo {
 }
 
 func getAddress(roleName string) std.Address {
-	address, err := access.GetAddress(roleName)
+	addr, err := access.GetAddress(roleName)
 	if err != nil {
 		panic(err)
 	}
-	return address
+	return addr
 }

@@ -3,6 +3,8 @@ package governance
 import (
 	"testing"
 
+	"gno.land/p/demo/avl"
+
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -180,6 +182,7 @@ func TestProposalStateUpdater_GetCurrentStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			resetProposalStateEnv(t)
 			proposal := tt.setup()
 			updater := newProposalStateUpdater(proposal, 2000)
 
@@ -218,6 +221,7 @@ func TestProposalStateUpdater_GetCurrentPhase(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			resetProposalStateEnv(t)
 			proposal := createTestProposal(t, createdAt)
 			updater := newProposalStateUpdater(proposal, tt.now)
 
@@ -304,6 +308,7 @@ func TestProposalStateUpdater_StateTransitions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			resetProposalStateEnv(t)
 			proposal := tt.initialState()
 			updater := newProposalStateUpdater(proposal, tt.now)
 
@@ -410,6 +415,7 @@ func TestProposalStateUpdater_ShouldUpdate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			resetProposalStateEnv(t)
 			proposal := tt.setup()
 			updater := newProposalStateUpdater(proposal, 2000)
 
@@ -418,4 +424,28 @@ func TestProposalStateUpdater_ShouldUpdate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func resetProposalStateEnv(t *testing.T) {
+	t.Helper()
+	resetProposalStateConfig(t)
+	proposals = avl.NewTree()
+	votes = avl.NewTree()
+	userVotes = avl.NewTree()
+}
+
+func resetProposalStateConfig(t *testing.T) {
+	t.Helper()
+
+	config = Config{
+		VotingStartDelay:              uint64(86400),         // 1d
+		VotingPeriod:                  uint64(604800),        // 7d
+		VotingWeightSmoothingDuration: uint64(86400),         // 1d
+		Quorum:                        uint64(50),            // 50% of total xGNS supply
+		ProposalCreationThreshold:     uint64(1_000_000_000), // 1_000_000_000
+		ExecutionDelay:                uint64(86400),         // 1d
+		ExecutionWindow:               uint64(2592000),       // 30d
+	}
+	configVersions = avl.NewTree()
+	setConfigVersion(1, config)
 }

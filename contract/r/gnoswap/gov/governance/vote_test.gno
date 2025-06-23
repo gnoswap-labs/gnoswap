@@ -9,7 +9,6 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -17,22 +16,19 @@ func TestVote(t *testing.T) {
 	baseTime := uint64(time.Now().Unix())
 	voter := testutils.TestAddress("voter")
 
-	newConfig := Config{
-		VotingStartDelay: 50,
-		VotingPeriod:     100,
-	}
-	setConfigVersion(1, newConfig)
-
 	testCases := []struct {
-		name        string
-		setup       func() uint64
-		pid         uint64
-		yes         bool
-		expectError bool
-		validate    func(t *testing.T, voteKey string)
+		name             string
+		setup            func() uint64
+		pid              uint64
+		yes              bool
+		expectedHasPanic bool
+		expectedPanicMsg string
+		expectedHasAbort bool
+		expectedAbortMsg string
+		validate         func(t *testing.T, voteKey string)
 	}{
 		{
-			name: "Successful YES vote",
+			name: "vote yes success",
 			setup: func() uint64 {
 				pid := uint64(1)
 				proposals.Set(formatUint(pid), ProposalInfo{
@@ -49,10 +45,10 @@ func TestVote(t *testing.T) {
 				})
 				return pid
 			},
-			yes:         true,
-			expectError: false,
+			yes: true,
 			validate: func(t *testing.T, voteKey string) {
-				prop, exists := proposals.Get(formatUint(1))
+				pid := uint64(1)
+				prop, exists := proposals.Get(formatUint(pid))
 				if !exists {
 					t.Error("Proposal was not stored")
 					return
@@ -65,13 +61,8 @@ func TestVote(t *testing.T) {
 					t.Errorf("Expected Nay votes to be 0, got %v", proposal.Nay)
 				}
 
-				value, exists := votes.Get(voteKey)
-				if !exists || !value.(bool) {
-					t.Error("Vote record not properly stored")
-				}
-
 				// Verify user vote record
-				userVote, exists := userVotes.Get(voter.String())
+				userVote, exists := userVotes.Get(voteKey)
 				if !exists {
 					t.Error("User vote record not properly stored")
 				}
@@ -82,7 +73,7 @@ func TestVote(t *testing.T) {
 			},
 		},
 		{
-			name: "Successful NO vote",
+			name: "vote no success",
 			setup: func() uint64 {
 				pid := uint64(2)
 				proposals.Set(formatUint(pid), ProposalInfo{
@@ -99,10 +90,10 @@ func TestVote(t *testing.T) {
 				})
 				return pid
 			},
-			yes:         false,
-			expectError: false,
+			yes: false,
 			validate: func(t *testing.T, voteKey string) {
-				prop, exists := proposals.Get(formatUint(2))
+				pid := uint64(2)
+				prop, exists := proposals.Get(formatUint(pid))
 				if !exists {
 					t.Error("Proposal was not stored")
 					return
@@ -113,7 +104,7 @@ func TestVote(t *testing.T) {
 			},
 		},
 		{
-			name: "Vote before voting period starts",
+			name: "vote failed by out of voting period",
 			setup: func() uint64 {
 				pid := uint64(3)
 				proposals.Set(formatUint(pid), ProposalInfo{
@@ -128,10 +119,11 @@ func TestVote(t *testing.T) {
 				})
 				return pid
 			},
-			expectError: true,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period",
 		},
 		{
-			name: "Vote on canceled proposal",
+			name: "vote failed by canceled proposal",
 			setup: func() uint64 {
 				pid := uint64(5)
 				proposals.Set(formatUint(pid), ProposalInfo{
@@ -147,10 +139,11 @@ func TestVote(t *testing.T) {
 				})
 				return pid
 			},
-			expectError: true,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-003] requested data not found || proposalId(5) not found",
 		},
 		{
-			name: "Double voting attempt",
+			name: "vote failed by double voting",
 			setup: func() uint64 {
 				pid := uint64(6)
 				proposals.Set(formatUint(pid), ProposalInfo{
@@ -168,57 +161,43 @@ func TestVote(t *testing.T) {
 				votes.Set(voteKey, true)
 				return pid
 			},
-			expectError: true,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-006] can not vote twice",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// given
 			resetVoteEnv(t)
 
 			pid := tc.setup()
 
-			var err error
-			func() {
-				defer func() {
-					if r := recover(); r != nil {
-						switch v := r.(type) {
-						case error:
-							err = v
-						case string:
-							err = ufmt.Errorf(v)
-						default:
-							err = ufmt.Errorf("unknown error occurred")
-						}
-					}
-				}()
-				Vote(pid, tc.yes)
-			}()
-
-			if tc.expectError {
-				uassert.Error(t, err)
+			// when
+			if tc.expectedHasPanic {
+				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
+					testing.SetOriginCaller(voter)
+					Vote(cross, pid, tc.yes)
+				})
+				return
+			} else if tc.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tc.expectedAbortMsg, func() {
+					testing.SetOriginCaller(voter)
+					Vote(cross, pid, tc.yes)
+				})
 				return
 			}
+
+			testing.SetOriginCaller(voter)
+			Vote(cross, pid, tc.yes)
+
+			tc.validate(t, createUserVoteKey(voter, pid))
 		})
 	}
 }
 
 func TestNewVoteState(t *testing.T) {
 	voter := testutils.TestAddress("voter")
-	voteKey := createVoteKey(1, voter.String())
-
-	// test config
-	// configVersions = map[uint64]Config{
-	// 	1: {
-	// 		VotingStartDelay: 50,
-	// 		VotingPeriod:     100,
-	// 	},
-	// }
-	newConfig := Config{
-		VotingStartDelay: 50,
-		VotingPeriod:     100,
-	}
-	setConfigVersion(1, newConfig)
 
 	tests := []struct {
 		name          string
@@ -357,6 +336,10 @@ func TestNewVoteState(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			resetVoteEnv(t)
+
+			voteKey := createVoteKey(1, voter.String())
+
 			if tt.expectedState.hasUserVoted {
 				votes.Set(voteKey, true)
 			} else {
@@ -513,6 +496,19 @@ func TestVoteExecutor_Execute(t *testing.T) {
 
 func resetVoteEnv(t *testing.T) {
 	t.Helper()
+	resetVoteConfig(t)
+	proposals = avl.NewTree()
 	votes = avl.NewTree()
 	userVotes = avl.NewTree()
+}
+
+func resetVoteConfig(t *testing.T) {
+	t.Helper()
+
+	config = Config{
+		VotingStartDelay: 50,
+		VotingPeriod:     100,
+	}
+	configVersions = avl.NewTree()
+	setConfigVersion(1, config)
 }

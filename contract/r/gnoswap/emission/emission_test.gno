@@ -45,10 +45,10 @@ func TestMintAndDistributeGns(t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					MintAndDistributeGns()
+					MintAndDistributeGns(cross)
 				})
 			} else {
-				distributed := MintAndDistributeGns()
+				distributed := MintAndDistributeGns(cross)
 				if tt.verify != nil {
 					tt.verify(distributed)
 				}

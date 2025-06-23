@@ -78,28 +78,24 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 			pct01, pct02, pct03, pct04 := sliceToFourInt64(t, tt.pcts)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					func() {
-						testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-						ChangeDistributionPctByAdmin(
-							target01, pct01,
-							target02, pct02,
-							target03, pct03,
-							target04, pct04,
-						)
-					}()
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					ChangeDistributionPctByAdmin(
+						cross,
+						target01, pct01,
+						target02, pct02,
+						target03, pct03,
+						target04, pct04,
+					)
 				})
 			} else {
 				uassert.NotPanics(t, func() {
-					func() {
-						testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-						ChangeDistributionPctByAdmin(
-							target01, pct01,
-							target02, pct02,
-							target03, pct03,
-							target04, pct04,
-						)
-					}()
+					ChangeDistributionPctByAdmin(
+						cross,
+						target01, pct01,
+						target02, pct02,
+						target03, pct03,
+						target04, pct04,
+					)
 				})
 				tt.verify()
 			}
@@ -176,28 +172,24 @@ func TestChangeDistributionPct(t *testing.T) {
 			pct01, pct02, pct03, pct04 := sliceToFourInt64(t, tt.pcts)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					func() {
-						testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-						ChangeDistributionPct(
-							target01, pct01,
-							target02, pct02,
-							target03, pct03,
-							target04, pct04,
-						)
-					}()
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					ChangeDistributionPct(
+						cross,
+						target01, pct01,
+						target02, pct02,
+						target03, pct03,
+						target04, pct04,
+					)
 				})
 			} else {
 				uassert.NotPanics(t, func() {
-					func() {
-						testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-						ChangeDistributionPct(
-							target01, pct01,
-							target02, pct02,
-							target03, pct03,
-							target04, pct04,
-						)
-					}()
+					ChangeDistributionPct(
+						cross,
+						target01, pct01,
+						target02, pct02,
+						target03, pct03,
+						target04, pct04,
+					)
 				})
 				tt.verify()
 			}
@@ -213,6 +205,7 @@ func TestChangeDistributionPcts(t *testing.T) {
 	callbackStakerEmissionChange = func(amount int64) {}
 
 	changeDistributionPcts(
+		cross,
 		1, 1000,
 		2, 2000,
 		3, 3000,
@@ -260,8 +253,8 @@ func TestTransferToTarget(t *testing.T) {
 	}{
 		{
 			name:        "invalid target",
-			shouldPanic: true,
-			shouldAbort: false,
+			shouldPanic: false,
+			shouldAbort: true,
 			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(9)",
 			target:      9,
 			amount:      100,
@@ -279,7 +272,7 @@ func TestTransferToTarget(t *testing.T) {
 			target: LIQUIDITY_STAKER,
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				cross(gns.Transfer)(emissionAddr, 100000) // give enough balance for emission
+				gns.Transfer(cross, emissionAddr, 100000) // give enough balance for emission
 			},
 			amount: 100,
 			verify: func() {
@@ -324,15 +317,15 @@ func TestTransferToTarget(t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					transferToTarget(tt.target, tt.amount)
+					transferToTarget(cross, tt.target, tt.amount)
 				})
 			} else if tt.shouldAbort {
 				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					transferToTarget(tt.target, tt.amount)
+					transferToTarget(cross, tt.target, tt.amount)
 				})
 			} else {
 				uassert.NotPanics(t, func() {
-					transferToTarget(tt.target, tt.amount)
+					transferToTarget(cross, tt.target, tt.amount)
 				})
 				tt.verify()
 			}
@@ -369,17 +362,11 @@ func TestClearDistributedToStaker(t *testing.T) {
 			}
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					func() {
-						testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-						ClearDistributedToStaker()
-					}()
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					ClearDistributedToStaker(cross)
 				})
 			} else {
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					ClearDistributedToStaker()
-				}()
+				ClearDistributedToStaker(cross)
 				if distributedToStaker != 0 {
 					t.Errorf("distributedToStaker is not 0, got %d", distributedToStaker)
 				}
@@ -417,17 +404,11 @@ func TestClearClearDistributedToGovStaker(t *testing.T) {
 			}
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					func() {
-						testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-						ClearDistributedToGovStaker()
-					}()
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					ClearDistributedToGovStaker(cross)
 				})
 			} else {
-				func() {
-					testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-					ClearDistributedToGovStaker()
-				}()
+				ClearDistributedToGovStaker(cross)
 				if distributedToGovStaker != 0 {
 					t.Errorf("distributedToGovStaker is not 0, got %d", distributedToGovStaker)
 				}
@@ -468,7 +449,7 @@ func setupTestEnv(t *testing.T) {
 	distributedToGovStaker = 0
 
 	testing.SetRealm(adminRealm)
-	cross(gns.Transfer)(emissionAddr, 1000000)
+	gns.Transfer(cross, emissionAddr, 1000000)
 }
 
 func TestDistributeToTarget(t *testing.T) {
@@ -479,7 +460,7 @@ func TestDistributeToTarget(t *testing.T) {
 	t.Run("Basic distribution test", func(t *testing.T) {
 		setupTestEnv(t)
 		amount := int64(10000)
-		totalSent := distributeToTarget(amount)
+		totalSent := distributeToTarget(cross, amount)
 
 		// Expected distribution amounts
 		expectedStaker := int64(7500)   // 75%
@@ -526,7 +507,7 @@ func TestDistributeToTarget(t *testing.T) {
 	t.Run("Zero amount distribution test", func(t *testing.T) {
 		resetObject(t)
 		amount := int64(0)
-		totalSent := distributeToTarget(amount)
+		totalSent := distributeToTarget(cross, amount)
 
 		if totalSent != 0 {
 			t.Errorf("Total distribution amount is not 0 for zero amount: %d", totalSent)
@@ -544,7 +525,7 @@ func TestDistributeToTarget(t *testing.T) {
 		resetObject(t)
 		setupTestEnv(t)
 		amount := int64(1000000)
-		totalSent := distributeToTarget(amount)
+		totalSent := distributeToTarget(cross, amount)
 
 		// Expected distribution amounts
 		expectedStaker := int64(750000)   // 75%
@@ -594,8 +575,8 @@ func TestDistributeToTarget(t *testing.T) {
 		amount := int64(-10000)
 
 		// Negative amount should cause panic
-		uassert.PanicsWithMessage(t, "invalid amount or bptPct", func() {
-			distributeToTarget(amount)
+		uassert.AbortsWithMessage(t, "invalid amount or bptPct", func() {
+			distributeToTarget(cross, amount)
 		})
 
 		// Verify all distribution amounts are 0
@@ -612,8 +593,8 @@ func TestDistributeToTarget(t *testing.T) {
 		amount := int64(9223372036854775807) // int64 maximum value
 
 		// Maximum value should cause panic
-		uassert.PanicsWithMessage(t, "amount too large", func() {
-			distributeToTarget(amount)
+		uassert.AbortsWithMessage(t, "amount too large", func() {
+			distributeToTarget(cross, amount)
 		})
 
 		// Verify all distribution amounts are 0
@@ -628,7 +609,7 @@ func TestDistributeToTarget(t *testing.T) {
 		resetObject(t)
 		setupTestEnv(t)
 		amount := int64(10001) // Amount with decimal point (e.g., 10000.1)
-		totalSent := distributeToTarget(amount)
+		totalSent := distributeToTarget(cross, amount)
 
 		// Expected distribution amounts (decimal part is truncated)
 		expectedStaker := int64(7500)   // 75%

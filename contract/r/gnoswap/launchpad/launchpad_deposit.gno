@@ -100,8 +100,7 @@ type ProjectTierInfo struct {
 //   - Emit events for both the deposit and the first deposit for the tier (if applicable).
 //
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_deposit.gno#depositgns
-func DepositGns(targetProjectTierId string, amount uint64, referrer string) string {
-	crossing()
+func DepositGns(cur realm, targetProjectTierId string, amount uint64, referrer string) string {
 	assertOnlyNotHalted()
 	assertValidAmount(amount)
 
@@ -127,12 +126,12 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 		panic(addDetailToError(errInactiveTier, tierType))
 	}
 
-	success := referral.TryRegister(caller, referrer)
+	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer
 	if !success {
 		actualReferrer = referral.GetReferral(caller.String())
 	}
-	en.MintAndDistributeGns()
+	en.MintAndDistributeGns(cross)
 
 	now := uint64(time.Now().Unix())
 	info := ProjectTierInfo{
@@ -142,7 +141,7 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 		CurrentHeight: currentHeight,
 		CurrentTime:   now,
 	}
-	deposit, err := createDeposit(info, amount)
+	deposit, err := createDeposit(cur, info, amount)
 	if err != nil {
 		panic(addDetailToError(errInvalidInput, err.Error()))
 	}
@@ -202,15 +201,15 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 	projects[projectId] = project
 
 	// Update gov_staker to calculate project's recipient's reward
-	gs.SetAmountByProjectWallet(project.recipient, amount, true)
+	gs.SetAmountByProjectWallet(cross, project.recipient, amount, true)
 
 	// gns will be locked in `launchpad` contract
-	cross(gns.TransferFrom)(
+	gns.TransferFrom(cross,
 		getPrevAddr(),
 		launchpadAddr,
 		int64(amount),
 	)
-	cross(xgns.Mint)(launchpadAddr, int64(amount))
+	xgns.Mint(cross, launchpadAddr, int64(amount))
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -239,9 +238,7 @@ func DepositGns(targetProjectTierId string, amount uint64, referrer string) stri
 // Panics:
 // - If the caller has no deposits.
 // - If an error occurs during the reward collection process.
-func CollectDepositGns() uint64 {
-	crossing()
-
+func CollectDepositGns(cur realm) uint64 {
 	caller := getPrevAddr()
 	depositList, ok := depositsByUser[caller]
 	if depositList == nil || !ok || len(depositList) == 0 {
@@ -251,7 +248,7 @@ func CollectDepositGns() uint64 {
 		))
 	}
 
-	return processCollectedDeposits(depositList, "")
+	return processCollectedDeposits(cur, depositList, "")
 }
 
 // CollectDepositGnsByProjectId collects rewards from all deposits associated with a specific project.
@@ -269,8 +266,7 @@ func CollectDepositGns() uint64 {
 // - If the project ID is invalid.
 // - If the caller has no deposits in the specified project.
 // - If an error occurs during the reward collection process.
-func CollectDepositGnsByProjectId(projectId string) uint64 {
-	crossing()
+func CollectDepositGnsByProjectId(cur realm, projectId string) uint64 {
 	assertValidProjectId(projectId)
 
 	_, err := getProject(projectId)
@@ -288,7 +284,7 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 			errNotExistDeposit, ufmt.Sprintf("no deposit list for project(%s)", projectId)))
 	}
 
-	return processCollectedDeposits(depositList, projectId)
+	return processCollectedDeposits(cur, depositList, projectId)
 }
 
 // CollectDepositGnsByDepositId collects rewards from a specific deposit by ID.
@@ -308,8 +304,7 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 // - If the deposit does not belong to the caller.
 // - If the deposit is not yet claimable or has already been collected.
 // - If an error occurs during the reward collection process.
-func CollectDepositGnsByDepositId(depositId string) uint64 {
-	crossing()
+func CollectDepositGnsByDepositId(cur realm, depositId string) uint64 {
 	assertOnlyNotHalted()
 	assertValidProjectId(depositId)
 
@@ -320,19 +315,19 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 		panic(addDetailToError(errInvalidInput, err.Error()))
 	}
 
-	en.MintAndDistributeGns()
+	en.MintAndDistributeGns(cross)
 
 	project = projects[deposit.projectId]
 
 	// Process deposit collection
 	height := uint64(std.ChainHeight())
-	amount, err := processDeposit(&deposit, &project, height)
+	amount, err := processDeposit(cur, &deposit, &project, height)
 	if err != nil {
 		panic(err.Error())
 	}
 
 	// Update gov_staker contract
-	gs.SetAmountByProjectWallet(project.recipient, amount, false)
+	gs.SetAmountByProjectWallet(cross, project.recipient, amount, false)
 
 	// Emit collection event
 	prevAddr, prevPkgPath := getPrev()
@@ -346,8 +341,8 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 
 	// Process token transfers if amount > 0
 	if amount > 0 {
-		cross(xgns.Burn)(launchpadAddr, int64(amount))
-		cross(gns.Transfer)(caller, int64(amount))
+		xgns.Burn(cross, launchpadAddr, int64(amount))
+		gns.Transfer(cross, caller, int64(amount))
 		return amount
 	}
 
@@ -436,7 +431,7 @@ func checkDepositConditions(project Project) {
 		// check balance
 		var balance int64
 		if condition.tokenPath == consts.GOV_XGNS_PATH {
-			balance = cross(xgns.BalanceOf)(caller)
+			balance = xgns.BalanceOf(caller)
 		} else {
 			balance = common.BalanceOf(condition.tokenPath, caller)
 		}
@@ -616,7 +611,7 @@ func isTierActive(tier Tier, height uint64) bool {
 // Returns:
 // - Deposit: The newly created `Deposit` object containing all relevant details.
 // - error: Returns an error if the deposit creation fails (currently always returns `nil`).
-func createDeposit(info ProjectTierInfo, amount uint64) (Deposit, error) {
+func createDeposit(cur realm, info ProjectTierInfo, amount uint64) (Deposit, error) {
 	// Validate input parameters
 	if amount == 0 {
 		return Deposit{}, errors.New(ufmt.Sprintf("deposit amount cannot be zero"))
@@ -759,6 +754,7 @@ func updateDepositIndices(deposit Deposit, state *DepositState) {
 
 // processDepositCollection processes the collection of deposits
 func processDepositCollection(
+	cur realm,
 	depositList []string,
 	projectId string,
 ) (uint64, error) {
@@ -795,7 +791,7 @@ func processDepositCollection(
 
 		totalAmount += deposit.amount
 
-		gs.SetAmountByProjectWallet(project.recipient, deposit.amount, false)
+		gs.SetAmountByProjectWallet(cross, project.recipient, deposit.amount, false)
 
 		tier.setActualDepositAmount(tier.ActualDepositAmount() - deposit.amount)
 		tier.setActualParticipant(tier.ActualParticipant() - 1)
@@ -833,19 +829,19 @@ func processDepositCollection(
 	return totalAmount, nil
 }
 
-func processCollectedDeposits(depositList []string, pid string) uint64 {
+func processCollectedDeposits(cur realm, depositList []string, pid string) uint64 {
 	assertOnlyNotHalted()
-	cross(en.MintAndDistributeGns)()
+	en.MintAndDistributeGns(cross)
 
-	amount, err := processDepositCollection(depositList, pid)
+	amount, err := processDepositCollection(cur, depositList, pid)
 	if err != nil {
 		panic(err.Error())
 	}
 
 	if amount > 0 {
 		caller := getPrevAddr()
-		cross(xgns.Burn)(launchpadAddr, int64(amount))
-		cross(gns.Transfer)(caller, int64(amount))
+		xgns.Burn(cross, launchpadAddr, int64(amount))
+		gns.Transfer(cross, caller, int64(amount))
 	}
 
 	return amount
@@ -890,7 +886,7 @@ func validateDepositCollection(depositId string, caller std.Address) (Deposit, P
 }
 
 // receive deposit and project as a pointer to avoid copying
-func processDeposit(deposit *Deposit, project *Project, height uint64) (uint64, error) {
+func processDeposit(cur realm, deposit *Deposit, project *Project, height uint64) (uint64, error) {
 	tier := getTier(*project, deposit.tier)
 	//if isTierActive(tier, height) {
 	//	return 0, errors.New(addDetailToError(errActiveProject, "tier is still active"))

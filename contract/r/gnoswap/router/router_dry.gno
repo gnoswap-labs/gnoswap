@@ -149,16 +149,14 @@ func (p *SwapProcessor) AddSwapResults(
 //   - amountInStr: the calculated input amount as a string
 //   - amountOutStr: the calculated output amount as a string
 //   - success: true if the simulated swap meets all constraints
-func DrySwapRoute(
+func DrySwapRoute(cur realm,
 	inputToken, outputToken string,
 	specifiedAmount string,
 	swapTypeStr string,
 	strRouteArr, quoteArr string,
 	tokenAmountLimit string,
 ) (string, string, bool) {
-	crossing()
 	common.MustRegistered(inputToken, outputToken)
-
 	// initialize components
 	validator := &SwapValidator{}
 	processor := &SwapProcessor{}

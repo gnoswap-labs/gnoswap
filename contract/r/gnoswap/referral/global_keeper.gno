@@ -49,9 +49,8 @@ func IsEmpty() bool {
 }
 
 // TryRegister attempts to register a new referral for an address.
-func TryRegister(addr std.Address, referral string) bool {
+func TryRegister(cur realm, addr std.Address, referral string) bool {
 	refAddr := std.Address(referral)
-
 	r := NewReferral()
 	err := r.Register(addr, refAddr)
 	if err != nil {
@@ -62,6 +61,9 @@ func TryRegister(addr std.Address, referral string) bool {
 		)
 		return false
 	}
+
+	// update global keeper
+	gReferralKeeper = r.keeper
 
 	std.Emit(
 		EventRegisterSuccess,

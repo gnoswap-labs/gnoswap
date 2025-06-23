@@ -22,18 +22,16 @@ type RewardCalculationResult struct {
 // CollectProtocolFee collects protocol fee from gov/staker
 // each project's recipient wallet will be rewarded
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectprotocolfee
-func CollectProtocolFee() {
-	crossing()
+func CollectProtocolFee(cur realm) {
 
 	caller := getPrevAddr()
-	gs.CollectRewardFromLaunchPad(caller)
+	gs.CollectRewardFromLaunchPad(cross, caller)
 }
 
 // CollectRewardByProjectId collects reward from entire deposit of certain project by caller
 // Returns collected reward amount
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectrewardbyprojectid
-func CollectRewardByProjectId(projectId string) uint64 {
-	crossing()
+func CollectRewardByProjectId(cur realm, projectId string) uint64 {
 	assertOnlyNotHalted()
 
 	project, err := getProject(projectId)
@@ -49,7 +47,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 		panic(addDetailToError(
 			errNotExistDeposit, ufmt.Sprintf("depositId (%s) not found", projectId)))
 	}
-	en.MintAndDistributeGns()
+	en.MintAndDistributeGns(cross)
 
 	currentHeight := uint64(std.ChainHeight())
 	totalReward := uint64(0) // toUser
@@ -109,8 +107,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 	projects[projectId] = project
 
 	if totalReward > 0 {
-		tokenTeller := common.GetTokenTeller(project.tokenPath)
-		tokenTeller.Transfer(caller, int64(totalReward))
+		common.Transfer(cross, project.tokenPath, caller, int64(totalReward))
 	}
 
 	return totalReward
@@ -119,8 +116,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 // CollectRewardByDepositId collects reward from certain deposit by caller
 // Returns collected reward amount
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectrewardbydepositid
-func CollectRewardByDepositId(depositId string) uint64 {
-	crossing()
+func CollectRewardByDepositId(cur realm, depositId string) uint64 {
 	assertOnlyNotHalted()
 
 	deposit, exists := deposits[depositId]
@@ -138,7 +134,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 		panic(err.Error())
 	}
 
-	en.MintAndDistributeGns()
+	en.MintAndDistributeGns(cross)
 
 	tier, err := project.Tier(convertTierTypeStrToUint64(deposit.Tier()))
 	if err != nil {
@@ -187,8 +183,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 
 	// Transfer reward
 	if rewardAmount > 0 {
-		tokenTeller := common.GetTokenTeller(project.tokenPath)
-		tokenTeller.Transfer(getPrevAddr(), int64(rewardAmount))
+		common.Transfer(cross, project.tokenPath, getPrevAddr(), int64(rewardAmount))
 	}
 
 	return rewardAmount

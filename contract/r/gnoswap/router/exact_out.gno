@@ -27,7 +27,7 @@ func NewExactOutSwapOperation(pp ExactOutParams) *ExactOutSwapOperation {
 
 // ExactOutSwapRoute is a function that performs an exact-out swap operation.
 // exact-out swap means that the user wants to swap an exact amount of output tokens for input tokens.
-func ExactOutSwapRoute(
+func ExactOutSwapRoute(cur realm,
 	inputToken string,
 	outputToken string,
 	amountOut string,
@@ -37,8 +37,6 @@ func ExactOutSwapRoute(
 	deadline int64,
 	referrer string,
 ) (string, string) {
-	crossing()
-
 	if err := checkDeadline(deadline); err != nil {
 		panic(addDetailToError(errExpired, err.Error()))
 	}
@@ -75,7 +73,7 @@ func ExactOutSwapRoute(
 	)
 
 	prevAddr, prevPkgPath := getPrev()
-	success := referral.TryRegister(std.Address(prevAddr), referrer)
+	success := referral.TryRegister(cross, std.Address(prevAddr), referrer)
 	actualReferrer := referrer
 	if !success {
 		actualReferrer = referral.GetReferral(prevAddr)

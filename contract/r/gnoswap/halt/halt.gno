@@ -117,8 +117,7 @@ func IsHalted(opType ...OpType) error {
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
-func SetHaltLevelByAdmin(haltLevel LevelID) error {
-	crossing()
+func SetHaltLevelByAdmin(cur realm, haltLevel LevelID) error {
 	caller := std.PreviousRealm().Address()
 	if err := access.AdminOnly(caller); err != nil {
 		return ufmt.Errorf("only admin can set halt level, called from %s", caller)
@@ -140,8 +139,7 @@ func SetHaltLevelByAdmin(haltLevel LevelID) error {
 // - error: nil if successful, otherwise an error.
 //
 // TODO: Should we only allow EmergencyHalt or CompleteHalt?
-func SetHaltByAdmin(halt bool) error {
-	crossing()
+func SetHaltByAdmin(cur realm, halt bool) error {
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {
 		return ufmt.Errorf("only admin can set halt, called from %s", caller)
@@ -162,8 +160,7 @@ func SetHaltByAdmin(halt bool) error {
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
-func SetHalt(halt bool, level ...LevelID) error {
-	crossing()
+func SetHalt(cur realm, halt bool, level ...LevelID) error {
 	caller := getPrevAddr()
 	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
@@ -197,8 +194,7 @@ func SetHalt(halt bool, level ...LevelID) error {
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
-func SetHaltLevel(haltLevel LevelID) error {
-	crossing()
+func SetHaltLevel(cur realm, haltLevel LevelID) error {
 	caller := getPrevAddr()
 	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
@@ -241,8 +237,7 @@ func setHaltLevel(haltLevel LevelID) error {
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
-func SetOperationStatus(opType OpType, allowed bool) error {
-	crossing()
+func SetOperationStatus(cur realm, opType OpType, allowed bool) error {
 	caller := getPrevAddr()
 	if err := access.GovernanceOnly(caller); err != nil {
 		return ufmt.Errorf("only governance(%s) can set operation status, called from %s", govAddr, caller)
@@ -258,8 +253,7 @@ func SetOperationStatus(opType OpType, allowed bool) error {
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
-func SetOperationStatusByAdmin(opType OpType, allowed bool) error {
-	crossing()
+func SetOperationStatusByAdmin(cur realm, opType OpType, allowed bool) error {
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {
 		return ufmt.Errorf("only admin can set operation status, called from %s", caller)
@@ -298,10 +292,8 @@ func setOperationStatus(opType OpType, allowed bool) error {
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
-func EnableWithdrawalsForTestnet() error {
-	crossing()
-	caller := getPrevAddr()
-	// TODO: no need to check governance?
+func EnableWithdrawalsForTestnet(cur realm) error {
+	caller := getPrevAddr() // TODO: no need to check governance?
 	if err := access.AdminOnly(caller); err != nil {
 		return ufmt.Errorf("only admin can enable withdrawals, called from %s", caller)
 	}
@@ -351,8 +343,7 @@ func GetCurrentHaltLevel() LevelID {
 //
 // Returns:
 // - error: nil if successful, otherwise an error.
-func EnableContractOperations(contract OpType) error {
-	crossing()
+func EnableContractOperations(cur realm, contract OpType) error {
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {
 		return ufmt.Errorf("only admin can enable contract operations, called from %s", caller)
@@ -386,8 +377,7 @@ func EnableContractOperations(contract OpType) error {
 // - contract (halt.OpType): The contract operation type to disable.
 //
 // Returns:
-func DisableContractOperations(contract OpType) error {
-	crossing()
+func DisableContractOperations(cur realm, contract OpType) error {
 	caller := getPrevAddr()
 	if err := access.AdminOnly(caller); err != nil {
 		return ufmt.Errorf("only admin can disable contract operations, called from %s", caller)
@@ -411,7 +401,6 @@ func DisableContractOperations(contract OpType) error {
 
 // IsContractHalted checks if specific contract operations are halted
 func IsContractHalted(contract OpType) bool {
-	crossing()
 	// if contract is halted, IsHalted will return an error
 	// so we need to check if the error is not nil
 	err := IsHalted(contract)

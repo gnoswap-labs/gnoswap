@@ -1,0 +1,45 @@
+# Version control
+.git
+.gitignore
+
+# Environment variables
+.env
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Build and distribution
+dist/
+build/
+*.egg-info/
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# Docker
+Dockerfile
+.dockerignore 

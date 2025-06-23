@@ -112,7 +112,7 @@ func commonSwapSetup() error {
 		return ufmt.Errorf(errNoPermission.Error(), "only user can call this function")
 	}
 
-	cross(emission.MintAndDistributeGns)()
+	emission.MintAndDistributeGns(cross)
 	return nil
 }
 

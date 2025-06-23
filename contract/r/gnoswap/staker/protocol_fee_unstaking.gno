@@ -49,11 +49,11 @@ func handleUnStakingFee(
 
 	if internal {
 		// staker contract has fee
-		cross(gns.Transfer)(protocolFeeAddr, feeAmount)
+		gns.Transfer(cross, protocolFeeAddr, feeAmount)
 		if feeAmount < 0 {
 			panic("fee amount cannot be negative")
 		}
-		cross(pf.AddToProtocolFee)(consts.GNS_PATH, uint64(feeAmount))
+		pf.AddToProtocolFee(cross, consts.GNS_PATH, uint64(feeAmount))
 
 		std.Emit(
 			"ProtocolFeeInternalReward",
@@ -66,12 +66,12 @@ func handleUnStakingFee(
 		)
 	} else {
 		// external contract has fee
-		teller := common.GetTokenTeller(tokenPath)
-		teller.Transfer(protocolFeeAddr, feeAmount)
+		common.Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
+
 		if feeAmount < 0 {
 			panic("fee amount cannot be negative")
 		}
-		cross(pf.AddToProtocolFee)(tokenPath, uint64(feeAmount))
+		pf.AddToProtocolFee(cross, tokenPath, uint64(feeAmount))
 
 		std.Emit(
 			"ProtocolFeeExternalReward",
@@ -103,8 +103,7 @@ func GetUnstakingFee() uint64 {
 //
 // Panics:
 // - If the caller is not an admin.
-func SetUnStakingFeeByAdmin(fee uint64) {
-	crossing()
+func SetUnStakingFeeByAdmin(cur realm, fee uint64) {
 	caller := std.PreviousRealm().Address()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err.Error())
@@ -128,8 +127,7 @@ func SetUnStakingFeeByAdmin(fee uint64) {
 // SetUnStakingFee modifies the unstaking fee
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#setunstakingfee
-func SetUnStakingFee(fee uint64) {
-	crossing()
+func SetUnStakingFee(cur realm, fee uint64) {
 	caller := getPrevAddr()
 	if err := common.GovernanceOnly(caller); err != nil {
 		panic(err.Error())

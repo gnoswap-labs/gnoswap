@@ -34,8 +34,8 @@ func wrap(ugnotAmount int64, to std.Address) error {
 	wugnotAddr := std.DerivePkgAddr(consts.WRAPPED_WUGNOT)
 	transferUGNOT(positionAddr, wugnotAddr, ugnotAmount)
 
-	wugnot.Deposit()                 // POSITION HAS WUGNOT
-	wugnot.Transfer(to, ugnotAmount) // SEND WUGNOT: POSITION -> USER
+	wugnot.Deposit(cross)                   // POSITION HAS WUGNOT
+	wugnot.Transfer(cross, to, ugnotAmount) // SEND WUGNOT: POSITION -> USER
 
 	return nil
 }
@@ -55,9 +55,9 @@ func unwrap(wugnotAmount int64, to std.Address) error {
 		return ufmt.Errorf("amount(%d) is zero or negative", wugnotAmount)
 	}
 
-	wugnot.TransferFrom(to, positionAddr, wugnotAmount) // SEND WUGNOT: USER -> POSITION
-	wugnot.Withdraw(wugnotAmount)                       // POSITION HAS UGNOT
-	transferUGNOT(positionAddr, to, wugnotAmount)       // SEND UGNOT: POSITION -> USER
+	wugnot.TransferFrom(cross, to, positionAddr, wugnotAmount) // SEND WUGNOT: USER -> POSITION
+	wugnot.Withdraw(cross, wugnotAmount)                       // POSITION HAS UGNOT
+	transferUGNOT(positionAddr, to, wugnotAmount)              // SEND UGNOT: POSITION -> USER
 	return nil
 }
 

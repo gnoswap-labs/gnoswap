@@ -30,7 +30,7 @@ var (
 // Need to clear the distributed GNS to gov/staker in emission to get the latest accumulated GNS balance
 func collectAndGetGNSBalance() uint64 {
 	gotGnsForEmission := en.GetDistributedToGovStaker()
-	cross(en.ClearDistributedToGovStaker)()
+	en.ClearDistributedToGovStaker(cross)
 
 	currentGNSBalance += uint64(gotGnsForEmission)
 
@@ -40,16 +40,18 @@ func collectAndGetGNSBalance() uint64 {
 // updateAndGetProtocolFeeBalance gets the accumulated protocol fee balance from protocol_fee to gov/staker
 // Need to clear the accumulated protocol fee to gov/staker in protocol fee to get the latest accumulated protocol fee balance
 func updateAndGetProtocolFeeBalance() map[string]uint64 {
-	cross(pf.DistributeProtocolFee)()
+	pf.DistributeProtocolFee(cross)
 	gotAccuProtocolFee := pf.GetAccuTransferToGovStaker()
 
 	gotAccuProtocolFee.Iterate("", "", func(key string, value any) bool {
-		amount := value.(uint64)
-		currentProtocolFeeBalance[key] += amount
+		func(cur realm) {
+			amount := value.(uint64)
+			currentProtocolFeeBalance[key] += amount
+		}(cross)
 		return false
 	})
 
-	cross(pf.ClearAccuTransferToGovStaker)()
+	pf.ClearAccuTransferToGovStaker(cross)
 
 	return currentProtocolFeeBalance
 }
@@ -379,7 +381,7 @@ func GetRewardByProjectWallet(addr std.Address) (uint64, map[string]uint64) {
 }
 
 // SetAmountByProjectWallet sets the amount of reward for the project wallet
-func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
+func SetAmountByProjectWallet(cur realm, addr std.Address, amount uint64, add bool) {
 	caller := std.PreviousRealm().Address()
 	if err := common.LaunchpadOnly(caller); err != nil {
 		panic(err)

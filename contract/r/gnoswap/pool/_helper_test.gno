@@ -19,7 +19,6 @@ import (
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
-	// pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/p/demo/uassert"
 )
@@ -38,7 +37,7 @@ const (
 	fee100      uint32 = 100
 	fee500      uint32 = 500
 	fee3000     uint32 = 3000
-	maxApprove  int64 = 9223372036854775806
+	maxApprove  int64  = 9223372036854775806
 	max_timeout int64  = 9999999999
 
 	maxSqrtPriceLimitX96 string = "1461373636630004318706518188784493106690254656249"
@@ -73,46 +72,46 @@ var (
 	addrUsedInTest = []std.Address{addr01, addr02}
 )
 
-// func InitialisePoolTest(t *testing.T) {
-// 	t.Helper()
+func InitialisePoolTest(t *testing.T) {
+	t.Helper()
 
-// 	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
-// 	ugnotDeposit(t, adminAddr, 100_000_000_000_000)
+	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
+	ugnotDeposit(t, adminAddr, 100_000_000_000_000)
 
-// 	testing.SetOriginCaller(adminAddr)
-// 	func() {
-// 		testing.SetRealm(adminRealm)
-// 		TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
-// 		poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
-// 		if !DoesPoolPathExist(poolPath) {
-// 			CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
-// 		}
-// 	}()
+	testing.SetOriginCaller(adminAddr)
+	func() {
+		testing.SetRealm(adminRealm)
+		TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
+		poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
+		if !DoesPoolPathExist(poolPath) {
+			CreatePool(cross, wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
+		}
+	}()
 
-// 	// 2. create position
-// 	testing.SetOriginCaller(alice)
-// 	func() {
-// 		testing.SetRealm(std.NewUserRealm(alice))
-// 		TokenFaucet(t, wugnotPath, alice)
-// 		TokenFaucet(t, gnsPath, alice)
-// 		TokenApprove(t, wugnotPath, alice, poolAddr, 1000)
-// 		TokenApprove(t, gnsPath, alice, poolAddr, 1000)
-// 		MintPosition(t,
-// 			wugnotPath,
-// 			gnsPath,
-// 			fee3000,
-// 			int32(1020),
-// 			int32(5040),
-// 			"1000",
-// 			"1000",
-// 			"0",
-// 			"0",
-// 			max_timeout,
-// 			alice,
-// 			alice,
-// 		)
-// 	}()
-// }
+	// 2. create position
+	testing.SetOriginCaller(alice)
+	func() {
+		testing.SetRealm(std.NewUserRealm(alice))
+		TokenFaucet(t, wugnotPath, alice)
+		TokenFaucet(t, gnsPath, alice)
+		TokenApprove(t, wugnotPath, alice, poolAddr, 1000)
+		TokenApprove(t, gnsPath, alice, poolAddr, 1000)
+		MintPosition(t,
+			wugnotPath,
+			gnsPath,
+			fee3000,
+			int32(1020),
+			int32(5040),
+			"1000",
+			"1000",
+			"0",
+			"0",
+			max_timeout,
+			alice,
+			alice,
+		)
+	}()
+}
 
 func TokenFaucet(t *testing.T, tokenPath string, to std.Address) {
 	t.Helper()
@@ -208,275 +207,271 @@ func TokenApprove(t *testing.T, tokenPath string, owner, spender std.Address, am
 	}
 }
 
-// func MintPosition(t *testing.T,
-// 	token0 string,
-// 	token1 string,
-// 	fee uint32,
-// 	tickLower int32,
-// 	tickUpper int32,
-// 	amount0Desired string, // *u256.Uint
-// 	amount1Desired string, // *u256.Uint
-// 	amount0Min string, // *u256.Uint
-// 	amount1Min string, // *u256.Uint
-// 	deadline int64,
-// 	mintTo std.Address,
-// 	caller std.Address,
-// ) (uint64, string, string, string) {
-// 	t.Helper()
-// 	testing.SetRealm(std.NewUserRealm(caller))
+func MintPosition(t *testing.T,
+	token0 string,
+	token1 string,
+	fee uint32,
+	tickLower int32,
+	tickUpper int32,
+	amount0Desired string, // *u256.Uint
+	amount1Desired string, // *u256.Uint
+	amount0Min string, // *u256.Uint
+	amount1Min string, // *u256.Uint
+	deadline int64,
+	mintTo std.Address,
+	caller std.Address,
+) (string, string) {
+	t.Helper()
+	testing.SetRealm(posRealm)
 
-// 	return pn.Mint(
-// 		token0,
-// 		token1,
-// 		fee,
-// 		tickLower,
-// 		tickUpper,
-// 		amount0Desired,
-// 		amount1Desired,
-// 		amount0Min,
-// 		amount1Min,
-// 		deadline,
-// 		mintTo,
-// 		caller,
-// 		"",
-// 	)
-// }
+	return Mint(
+		cross,
+		token0,
+		token1,
+		fee,
+		mintTo,
+		tickLower,
+		tickUpper,
+		amount0Desired,
+		caller,
+	)
+}
 
-// func MintPositionAll(t *testing.T, caller std.Address) {
-// 	t.Helper()
-// 	testing.SetRealm(std.NewUserRealm(caller))
-// 	TokenApprove(t, gnsPath, caller, poolAddr, maxApprove)
-// 	TokenApprove(t, gnsPath, caller, routerAddr, maxApprove)
-// 	TokenApprove(t, wugnotPath, caller, poolAddr, maxApprove)
-// 	TokenApprove(t, wugnotPath, caller, routerAddr, maxApprove)
+func MintPositionAll(t *testing.T, caller std.Address) {
+	t.Helper()
+	testing.SetRealm(std.NewUserRealm(caller))
+	TokenApprove(t, gnsPath, caller, poolAddr, maxApprove)
+	TokenApprove(t, gnsPath, caller, routerAddr, maxApprove)
+	TokenApprove(t, wugnotPath, caller, poolAddr, maxApprove)
+	TokenApprove(t, wugnotPath, caller, routerAddr, maxApprove)
 
-// 	params := []struct {
-// 		tickLower int32
-// 		tickUpper int32
-// 		liquidity uint64
-// 		zeroToOne bool
-// 	}{
-// 		{
-// 			tickLower: -300,
-// 			tickUpper: -240,
-// 			liquidity: 10,
-// 			zeroToOne: true,
-// 		},
-// 		{
-// 			tickLower: -240,
-// 			tickUpper: -180,
-// 			liquidity: 10,
-// 			zeroToOne: true,
-// 		},
-// 		{
-// 			tickLower: -180,
-// 			tickUpper: -120,
-// 			liquidity: 10,
-// 			zeroToOne: true,
-// 		},
-// 		{
-// 			tickLower: -120,
-// 			tickUpper: -60,
-// 			liquidity: 10,
-// 			zeroToOne: true,
-// 		},
-// 		{
-// 			tickLower: -60,
-// 			tickUpper: 0,
-// 			liquidity: 10,
-// 			zeroToOne: true,
-// 		},
-// 		{
-// 			tickLower: 0,
-// 			tickUpper: 60,
-// 			liquidity: 10,
-// 			zeroToOne: false,
-// 		},
-// 		{
-// 			tickLower: 60,
-// 			tickUpper: 120,
-// 			liquidity: 10,
-// 			zeroToOne: false,
-// 		},
-// 		{
-// 			tickLower: 120,
-// 			tickUpper: 180,
-// 			liquidity: 10,
-// 			zeroToOne: false,
-// 		},
-// 		{
-// 			tickLower: 180,
-// 			tickUpper: 240,
-// 			liquidity: 10,
-// 			zeroToOne: false,
-// 		},
-// 		{
-// 			tickLower: 240,
-// 			tickUpper: 300,
-// 			liquidity: 10,
-// 			zeroToOne: false,
-// 		},
-// 		{
-// 			tickLower: -360,
-// 			tickUpper: -300,
-// 			liquidity: 10,
-// 			zeroToOne: true,
-// 		},
-// 		{
-// 			tickLower: -420,
-// 			tickUpper: -360,
-// 			liquidity: 10,
-// 			zeroToOne: true,
-// 		},
-// 		{
-// 			tickLower: -480,
-// 			tickUpper: -420,
-// 			liquidity: 10,
-// 			zeroToOne: true,
-// 		},
-// 		{
-// 			tickLower: -540,
-// 			tickUpper: -480,
-// 			liquidity: 10,
-// 			zeroToOne: true,
-// 		},
-// 		{
-// 			tickLower: -600,
-// 			tickUpper: -540,
-// 			liquidity: 10,
-// 			zeroToOne: true,
-// 		},
-// 		{
-// 			tickLower: 300,
-// 			tickUpper: 360,
-// 			liquidity: 10,
-// 			zeroToOne: false,
-// 		},
-// 		{
-// 			tickLower: 360,
-// 			tickUpper: 420,
-// 			liquidity: 10,
-// 			zeroToOne: false,
-// 		},
-// 		{
-// 			tickLower: 420,
-// 			tickUpper: 480,
-// 			liquidity: 10,
-// 			zeroToOne: false,
-// 		},
-// 		{
-// 			tickLower: 480,
-// 			tickUpper: 540,
-// 			liquidity: 10,
-// 			zeroToOne: false,
-// 		},
-// 		{
-// 			tickLower: 540,
-// 			tickUpper: 600,
-// 			liquidity: 10,
-// 			zeroToOne: false,
-// 		},
-// 	}
+	params := []struct {
+		tickLower int32
+		tickUpper int32
+		liquidity uint64
+		zeroToOne bool
+	}{
+		{
+			tickLower: -300,
+			tickUpper: -240,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -240,
+			tickUpper: -180,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -180,
+			tickUpper: -120,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -120,
+			tickUpper: -60,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -60,
+			tickUpper: 0,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: 0,
+			tickUpper: 60,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 60,
+			tickUpper: 120,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 120,
+			tickUpper: 180,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 180,
+			tickUpper: 240,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 240,
+			tickUpper: 300,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: -360,
+			tickUpper: -300,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -420,
+			tickUpper: -360,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -480,
+			tickUpper: -420,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -540,
+			tickUpper: -480,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -600,
+			tickUpper: -540,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: 300,
+			tickUpper: 360,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 360,
+			tickUpper: 420,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 420,
+			tickUpper: 480,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 480,
+			tickUpper: 540,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 540,
+			tickUpper: 600,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+	}
 
-// 	for _, p := range params {
-// 		MintPosition(t,
-// 			wugnotPath,
-// 			gnsPath,
-// 			fee3000,
-// 			p.tickLower,
-// 			p.tickUpper,
-// 			"100000000",
-// 			"100000000",
-// 			"0",
-// 			"0",
-// 			max_timeout,
-// 			caller,
-// 			caller)
-// 	}
-// }
+	for _, p := range params {
+		MintPosition(t,
+			wugnotPath,
+			gnsPath,
+			fee3000,
+			p.tickLower,
+			p.tickUpper,
+			"100000000",  // liquidityAmount
+			"100000000",  // unused
+			"0",          // unused
+			"0",          // unused
+			max_timeout,  // unused
+			caller,       // mintTo (recipient)
+			caller)       // positionCaller
+	}
+}
 
 func wugnotApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	cross(wugnot.Approve)(spender, amount)
+	wugnot.Approve(cross, spender, amount)
 }
 
 func gnsApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	cross(gns.Approve)(spender, amount)
+	gns.Approve(cross, spender, amount)
 }
 
 func barApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	cross(bar.Approve)(spender, amount)
+	bar.Approve(cross, spender, amount)
 }
 
 func bazApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	cross(baz.Approve)(spender, amount)
+	baz.Approve(cross, spender, amount)
 }
 
 func fooApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	cross(foo.Approve)(spender, amount)
+	foo.Approve(cross, spender, amount)
 }
 
 func oblApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	cross(obl.Approve)(spender, amount)
+	obl.Approve(cross, spender, amount)
 }
 
 func quxApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	cross(qux.Approve)(spender, amount)
+	qux.Approve(cross, spender, amount)
 }
 
 func wugnotTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(wugnot.Transfer)(to, amount)
+	wugnot.Transfer(cross, to, amount)
 }
 
 func gnsTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(gns.Transfer)(to, amount)
+	gns.Transfer(cross, to, amount)
 }
 
 func barTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(bar.Transfer)(to, amount)
+	bar.Transfer(cross, to, amount)
 }
 
 func bazTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(baz.Transfer)(to, amount)
+	baz.Transfer(cross, to, amount)
 }
 
 func fooTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(foo.Transfer)(to, amount)
+	foo.Transfer(cross, to, amount)
 }
 
 func oblTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(obl.Transfer)(to, amount)
+	obl.Transfer(cross, to, amount)
 }
 
 func quxTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(qux.Transfer)(to, amount)
+	qux.Transfer(cross, to, amount)
 }
 
 // ----------------------------------------------------------------------------
@@ -486,9 +481,9 @@ func ugnotTransfer(t *testing.T, from, to std.Address, amount int64) {
 	t.Helper()
 
 	testing.SetRealm(std.NewUserRealm(from))
-	testing.SetOriginSend(std.Coins{{ugnotDenom, int64(amount)}})
+	testing.SetOriginSend(std.Coins{{ugnotDenom, amount}})
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(from, to, std.Coins{{ugnotDenom, int64(amount)}})
+	banker.SendCoins(from, to, std.Coins{{ugnotDenom, amount}})
 }
 
 func ugnotBalanceOf(t *testing.T, addr std.Address) int64 {
@@ -533,7 +528,7 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount int64) {
 	wugnotAddr := consts.WUGNOT_ADDR
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
-	cross(wugnot.Deposit)()
+	wugnot.Deposit(cross)
 }
 
 // resetObject resets the object state(clear or make it default values)
@@ -560,32 +555,32 @@ func burnTokens(t *testing.T) {
 
 func burnFoo(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(foo.Burn)(addr, cross(foo.BalanceOf)(addr))
+	foo.Burn(cross, addr, foo.BalanceOf(addr))
 }
 
 func burnBar(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(bar.Burn)(addr, cross(bar.BalanceOf)(addr))
+	bar.Burn(cross, addr, bar.BalanceOf(addr))
 }
 
 func burnBaz(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(baz.Burn)(addr, cross(baz.BalanceOf)(addr))
+	baz.Burn(cross, addr, baz.BalanceOf(addr))
 }
 
 func burnQux(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(qux.Burn)(addr, cross(qux.BalanceOf)(addr))
+	qux.Burn(cross, addr, qux.BalanceOf(addr))
 }
 
 func burnObl(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(obl.Burn)(addr, cross(obl.BalanceOf)(addr))
+	obl.Burn(cross, addr, obl.BalanceOf(addr))
 }
 
 func burnUsdc(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	cross(usdc.Burn)(addr, cross(usdc.BalanceOf)(addr))
+	usdc.Burn(cross, addr, usdc.BalanceOf(addr))
 }
 
 func TestBeforeResetObject(t *testing.T) {
@@ -604,12 +599,12 @@ func TestBeforeResetObject(t *testing.T) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	func() {
 		testing.SetRealm(std.NewUserRealm(adminAddr))
-		cross(foo.Transfer)(addr01, 100_000_000)
-		cross(bar.Transfer)(addr01, 100_000_000)
+		foo.Transfer(cross, addr01, 100_000_000)
+		bar.Transfer(cross, addr01, 100_000_000)
 	}()
 
-	uassert.Equal(t, cross(foo.BalanceOf)(addr01), int64(100_000_000))
-	uassert.Equal(t, cross(bar.BalanceOf)(addr01), int64(100_000_000))
+	uassert.Equal(t, foo.BalanceOf(addr01), int64(100_000_000))
+	uassert.Equal(t, bar.BalanceOf(addr01), int64(100_000_000))
 }
 
 func TestResetObject(t *testing.T) {
@@ -623,6 +618,6 @@ func TestResetObject(t *testing.T) {
 func TestBurnTokens(t *testing.T) {
 	burnTokens(t)
 
-	uassert.Equal(t, cross(foo.BalanceOf)(addr01), int64(0)) // 100_000_000 -> 0
-	uassert.Equal(t, cross(bar.BalanceOf)(addr01), int64(0)) // 100_000_000 -> 0
+	uassert.Equal(t, foo.BalanceOf(addr01), int64(0)) // 100_000_000 -> 0
+	uassert.Equal(t, bar.BalanceOf(addr01), int64(0)) // 100_000_000 -> 0
 }

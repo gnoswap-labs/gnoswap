@@ -96,8 +96,8 @@ WindowEnd: %d
 	)
 }
 
-func Execute(proposalId uint64) error {
-	ctx, err := prepareExecution(proposalId)
+func Execute(cur realm, proposalId uint64) error {
+	ctx, err := prepareExecution(cur, proposalId)
 	if err != nil {
 		panic(err)
 	}
@@ -116,7 +116,7 @@ func Execute(proposalId uint64) error {
 	originalState := *ctx.Proposal
 
 	// try to execute
-	if err := executeProposal(ctx, registry); err != nil {
+	if err := executeProposal(cur, ctx, registry); err != nil {
 		// rollback the original state
 		*ctx.Proposal = originalState
 		return err
@@ -136,23 +136,23 @@ func Execute(proposalId uint64) error {
 	return nil
 }
 
-func executeProposal(ctx *ExecutionContext, registry *ParameterRegistry) error {
+func executeProposal(cur realm, ctx *ExecutionContext, registry *ParameterRegistry) error {
 	switch ctx.Proposal.ProposalType {
 	case ParameterChange, CommunityPoolSpend:
-		if err := executeParameterChange(ctx.Proposal.Execution.Msgs, registry); err != nil {
+		if err := executeParameterChange(cur, ctx.Proposal.Execution.Msgs, registry); err != nil {
 			return err
 		}
 		// Update proposal state on success
 		updateProposalState(ctx)
 		return nil
 	case RoleChange:
-		return dispatchRoleChange(ctx.Proposal)
+		return dispatchRoleChange(cur, ctx.Proposal)
 	default:
 		return errUnsupportedProposalType
 	}
 }
 
-func executeParameterChange(msgs []string, registry *ParameterRegistry) error {
+func executeParameterChange(cur realm, msgs []string, registry *ParameterRegistry) error {
 	stateManager := newStateManager()
 
 	for _, msg := range msgs {
@@ -185,20 +185,20 @@ func executeParameterChange(msgs []string, registry *ParameterRegistry) error {
 }
 
 // dispatchRoleChange function calls different functions depending on the type of role change
-func dispatchRoleChange(proposal *ProposalInfo) error {
+func dispatchRoleChange(cur realm, proposal *ProposalInfo) error {
 	roleInfo := proposal.RoleChange
 
 	switch roleInfo.Action {
 	case AddRole:
-		return executeAddRole(roleInfo)
+		return executeAddRole(cur, roleInfo)
 	case RemoveRole:
-		return executeRemoveRole(roleInfo)
+		return executeRemoveRole(cur, roleInfo)
 	case AddPermission:
-		return executeAddPermission(roleInfo)
+		return executeAddPermission(cur, roleInfo)
 	case RemovePermission:
-		return executeRemovePermission(roleInfo)
+		return executeRemovePermission(cur, roleInfo)
 	case UpdatePermission:
-		return executeUpdatePermission(roleInfo)
+		return executeUpdatePermission(cur, roleInfo)
 	default:
 		return ufmt.Errorf("unsupported role change action: %s", roleInfo.Action.String())
 	}
@@ -223,8 +223,8 @@ type ExecutionValidator struct {
 	hasPassed         bool
 }
 
-func prepareExecution(proposalId uint64) (*ExecutionContext, error) {
-	validateInitialState()
+func prepareExecution(cur realm, proposalId uint64) (*ExecutionContext, error) {
+	validateInitialState(cur)
 
 	proposal, err := getProposal(proposalId)
 	if err != nil {
@@ -244,7 +244,7 @@ func prepareExecution(proposalId uint64) (*ExecutionContext, error) {
 	return ctx, nil
 }
 
-func validateInitialState() {
+func validateInitialState(cur realm) {
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
 		// Check if withdrawals are specifically halted, not just if the system is halted
@@ -257,7 +257,7 @@ func validateInitialState() {
 		}
 	}
 
-	cross(en.MintAndDistributeGns)()
+	en.MintAndDistributeGns(cross)
 	updateProposalsState()
 }
 

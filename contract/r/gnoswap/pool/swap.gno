@@ -42,6 +42,7 @@ var fixedPointQ128 = u256.MustFromDecimal(consts.Q128)
 // Returns swapped amount0, amount1 in string
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#swap
 func Swap(
+	cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -138,6 +139,7 @@ func Swap(
 
 // DrySwap simulates a swap and returns the amount0, amount1 that would be received and a boolean indicating if the swap is possible
 func DrySwap(
+	cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,

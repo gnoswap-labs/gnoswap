@@ -26,7 +26,7 @@ type HandlerConfig struct {
 	PkgPath     string
 	Function    string
 	ParamCount  int
-	HandlerFunc func([]string) error
+	HandlerFunc func(realm, []string) error
 }
 
 // registerHandlers registers all configured handlers at once
@@ -37,16 +37,16 @@ func registerHandlers(registry *ParameterRegistry, configs []HandlerConfig) {
 				if err := hasDesiredParams(params, config.ParamCount); err != nil {
 					return err
 				}
-				return config.HandlerFunc(params)
+				return config.HandlerFunc(cross, params)
 			}))
 		}(config) // avoid closure problem
 	}
 }
 
 // helper functions to return h with error
-func simpleHandler(fn func([]string)) func([]string) error {
-	return func(params []string) error {
-		fn(params)
+func simpleHandler(fn func(realm, []string)) func(realm, []string) error {
+	return func(cur realm, params []string) error {
+		fn(cross, params)
 		return nil
 	}
 }
@@ -61,8 +61,8 @@ func createParameterHandlers() *ParameterRegistry {
 			PkgPath:    consts.COMMON_PATH,
 			Function:   "SetHalt",
 			ParamCount: 1,
-			HandlerFunc: simpleHandler(func(params []string) {
-				cross(halt.SetHalt)(parseBool(params[0])) // halt
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
+				halt.SetHalt(cross, parseBool(params[0])) // halt
 			}),
 		},
 
@@ -71,8 +71,9 @@ func createParameterHandlers() *ParameterRegistry {
 			PkgPath:    consts.COMMUNITY_POOL_PATH,
 			Function:   "TransferToken",
 			ParamCount: 3,
-			HandlerFunc: simpleHandler(func(params []string) {
-				cross(cp.TransferToken)(
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
+				cp.TransferToken(
+					cross,
 					params[0],              // pkgPath
 					std.Address(params[1]), // to
 					parseNumber(params[2], kindInt64).(int64), // amount
@@ -85,24 +86,25 @@ func createParameterHandlers() *ParameterRegistry {
 			PkgPath:    consts.EMISSION_PATH,
 			Function:   "ChangeDistributionPct",
 			ParamCount: 8,
-			HandlerFunc: simpleHandler(func(params []string) {
-				target01 := parseNumber(params[0], kindInt).(int)    // target01
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
+				target01 := parseNumber(params[0], kindInt).(int)  // target01
 				pct01 := parseNumber(params[1], kindInt64).(int64) // pct01
-				target02 := parseNumber(params[2], kindInt).(int)    // target02
+				target02 := parseNumber(params[2], kindInt).(int)  // target02
 				pct02 := parseNumber(params[3], kindInt64).(int64) // pct02
-				target03 := parseNumber(params[4], kindInt).(int)    // target03
+				target03 := parseNumber(params[4], kindInt).(int)  // target03
 				pct03 := parseNumber(params[5], kindInt64).(int64) // pct03
-				target04 := parseNumber(params[6], kindInt).(int)    // target04
+				target04 := parseNumber(params[6], kindInt).(int)  // target04
 				pct04 := parseNumber(params[7], kindInt64).(int64) // pct04
-				cross(en.ChangeDistributionPct)(
-					target01,    // target01
-					pct01,        // pct01
-					target02,    // target02
-					pct02,        // pct02
-					target03,    // target03
-					pct03,        // pct03
-					target04,    // target04
-					pct04,        // pct04
+				en.ChangeDistributionPct(
+					cross,
+					target01, // target01
+					pct01,    // pct01
+					target02, // target02
+					pct02,    // pct02
+					target03, // target03
+					pct03,    // pct03
+					target04, // target04
+					pct04,    // pct04
 				)
 			}),
 		},
@@ -112,9 +114,9 @@ func createParameterHandlers() *ParameterRegistry {
 			PkgPath:    consts.GNS_PATH,
 			Function:   "SetAvgBlockTimeInMs",
 			ParamCount: 1,
-			HandlerFunc: simpleHandler(func(params []string) {
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
 				blockTime := parseNumber(params[0], kindInt64).(int64)
-				cross(gns.SetAvgBlockTimeInMs)(blockTime)
+				gns.SetAvgBlockTimeInMs(cross, blockTime)
 			}),
 		},
 
@@ -123,22 +125,23 @@ func createParameterHandlers() *ParameterRegistry {
 			PkgPath:    consts.GOV_GOVERNANCE_PATH,
 			Function:   "Reconfigure",
 			ParamCount: 7,
-			HandlerFunc: simpleHandler(func(params []string) {
-				votingStartDelay := parseNumber(params[0], kindUint64).(uint64) // votingStartDelay
-				votingPeriod := parseNumber(params[1], kindUint64).(uint64)     // votingPeriod
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
+				votingStartDelay := parseNumber(params[0], kindUint64).(uint64)              // votingStartDelay
+				votingPeriod := parseNumber(params[1], kindUint64).(uint64)                  // votingPeriod
 				votingWeightSmoothingDuration := parseNumber(params[2], kindUint64).(uint64) // votingWeightSmoothingDuration
-				quorum := parseNumber(params[3], kindUint64).(uint64)           // quorum
-				proposalCreationhold := parseNumber(params[4], kindUint64).(uint64) // proposalCreationhold
-				executionDelay := parseNumber(params[5], kindUint64).(uint64)   // executionDelay
-				executionWindow := parseNumber(params[6], kindUint64).(uint64)  // executionWindow
+				quorum := parseNumber(params[3], kindUint64).(uint64)                        // quorum
+				proposalCreationhold := parseNumber(params[4], kindUint64).(uint64)          // proposalCreationhold
+				executionDelay := parseNumber(params[5], kindUint64).(uint64)                // executionDelay
+				executionWindow := parseNumber(params[6], kindUint64).(uint64)               // executionWindow
 				reconfigure(
-					votingStartDelay, // votingStartDelay
-					votingPeriod,     // votingPeriod
+					cur,
+					votingStartDelay,              // votingStartDelay
+					votingPeriod,                  // votingPeriod
 					votingWeightSmoothingDuration, // votingWeightSmoothingDuration
-					quorum,           // quorum
-					proposalCreationhold, // proposalCreationhold
-					executionDelay,   // executionDelay
-					executionWindow,  // executionWindow
+					quorum,                        // quorum
+					proposalCreationhold,          // proposalCreationhold
+					executionDelay,                // executionDelay
+					executionWindow,               // executionWindow
 				)
 			}),
 		},
@@ -148,7 +151,7 @@ func createParameterHandlers() *ParameterRegistry {
 			PkgPath:    consts.POOL_PATH,
 			Function:   "SetFeeProtocol",
 			ParamCount: 2,
-			HandlerFunc: simpleHandler(func(params []string) {
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
 				feeProtocol0 := parseNumber(params[0], kindUint64).(uint64)
 				feeProtocol1 := parseNumber(params[1], kindUint64).(uint64)
 				if feeProtocol0 > 255 {
@@ -157,7 +160,8 @@ func createParameterHandlers() *ParameterRegistry {
 				if feeProtocol1 > 255 {
 					panic(ufmt.Sprintf("feeProtocol1 out of range: %d", feeProtocol1))
 				}
-				cross(pl.SetFeeProtocol)(
+				pl.SetFeeProtocol(
+					cross,
 					uint8(feeProtocol0), // feeProtocol0
 					uint8(feeProtocol1), // feeProtocol1
 				)
@@ -167,16 +171,16 @@ func createParameterHandlers() *ParameterRegistry {
 			PkgPath:    consts.POOL_PATH,
 			Function:   "SetPoolCreationFee",
 			ParamCount: 1,
-			HandlerFunc: simpleHandler(func(params []string) {
-				cross(pl.SetPoolCreationFee)(parseNumber(params[0], kindInt64).(int64)) // fee
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
+				pl.SetPoolCreationFee(cross, parseNumber(params[0], kindInt64).(int64)) // fee
 			}),
 		},
 		{
 			PkgPath:    consts.POOL_PATH,
 			Function:   "SetWithdrawalFee",
 			ParamCount: 1,
-			HandlerFunc: simpleHandler(func(params []string) {
-				cross(pl.SetWithdrawalFee)(parseNumber(params[0], kindUint64).(uint64)) // fee
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
+				pl.SetWithdrawalFee(cross, parseNumber(params[0], kindUint64).(uint64)) // fee
 			}),
 		},
 
@@ -185,8 +189,8 @@ func createParameterHandlers() *ParameterRegistry {
 			PkgPath:    consts.PROTOCOL_FEE_PATH,
 			Function:   "SetDevOpsPct",
 			ParamCount: 1,
-			HandlerFunc: simpleHandler(func(params []string) {
-				cross(pf.SetDevOpsPct)(parseNumber(params[0], kindUint64).(uint64)) // pct
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
+				pf.SetDevOpsPct(cross, parseNumber(params[0], kindUint64).(uint64)) // pct
 			}),
 		},
 
@@ -195,8 +199,8 @@ func createParameterHandlers() *ParameterRegistry {
 			PkgPath:    consts.ROUTER_PATH,
 			Function:   "SetSwapFee",
 			ParamCount: 1,
-			HandlerFunc: simpleHandler(func(params []string) {
-				cross(rr.SetSwapFee)(parseNumber(params[0], kindUint64).(uint64)) // fee
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
+				rr.SetSwapFee(cross, parseNumber(params[0], kindUint64).(uint64)) // fee
 			}),
 		},
 
@@ -205,17 +209,18 @@ func createParameterHandlers() *ParameterRegistry {
 			PkgPath:    consts.STAKER_PATH,
 			Function:   "SetDepositGnsAmount",
 			ParamCount: 1,
-			HandlerFunc: simpleHandler(func(params []string) {
-				cross(sr.SetDepositGnsAmount)(parseNumber(params[0], kindInt64).(int64)) // amount
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
+				sr.SetDepositGnsAmount(cross, parseNumber(params[0], kindInt64).(int64)) // amount
 			}),
 		},
 		{
 			PkgPath:    consts.STAKER_PATH,
 			Function:   "SetPoolTier",
 			ParamCount: 2,
-			HandlerFunc: simpleHandler(func(params []string) {
-				cross(sr.SetPoolTier)(
-					params[0],              // pool
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
+				sr.SetPoolTier(
+					cross,
+					params[0], // pool
 					parseNumber(params[1], kindUint64).(uint64), // tier
 				)
 			}),
@@ -224,9 +229,10 @@ func createParameterHandlers() *ParameterRegistry {
 			PkgPath:    consts.STAKER_PATH,
 			Function:   "ChangePoolTier",
 			ParamCount: 2,
-			HandlerFunc: simpleHandler(func(params []string) {
-				cross(sr.ChangePoolTier)(
-					params[0],              // pool
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
+				sr.ChangePoolTier(
+					cross,
+					params[0], // pool
 					parseNumber(params[1], kindUint64).(uint64), // tier
 				)
 			}),
@@ -235,26 +241,26 @@ func createParameterHandlers() *ParameterRegistry {
 			PkgPath:    consts.STAKER_PATH,
 			Function:   "RemovePoolTier",
 			ParamCount: 1,
-			HandlerFunc: simpleHandler(func(params []string) {
-				cross(sr.RemovePoolTier)(params[0]) // pool
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
+				sr.RemovePoolTier(cross, params[0]) // pool
 			}),
 		},
 		{
 			PkgPath:    consts.STAKER_PATH,
 			Function:   "SetUnStakingFee",
 			ParamCount: 1,
-			HandlerFunc: simpleHandler(func(params []string) {
-				cross(sr.SetUnStakingFee)(parseNumber(params[0], kindUint64).(uint64))
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
+				sr.SetUnStakingFee(cross, parseNumber(params[0], kindUint64).(uint64))
 			}),
 		},
 		{
 			PkgPath:    consts.STAKER_PATH,
 			Function:   "SetWarmUp",
 			ParamCount: 2,
-			HandlerFunc: simpleHandler(func(params []string) {
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
 				percent := parseNumber(params[0], kindInt64).(int64)
 				block := parseNumber(params[1], kindInt64).(int64)
-				cross(sr.SetWarmUp)(percent, block)
+				sr.SetWarmUp(cross, percent, block)
 			}),
 		},
 
@@ -263,42 +269,42 @@ func createParameterHandlers() *ParameterRegistry {
 			PkgPath:    consts.ACCESS_PATH,
 			Function:   "CreateRole",
 			ParamCount: 2,
-			HandlerFunc: simpleHandler(func(params []string) {
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
 				addr := std.Address(params[1])
 				if !addr.IsValid() {
 					panic(ufmt.Sprintf("invalid address: %s", params[1]))
 				}
 
 				roleName := params[0]
-				cross(access.CreateRole)(roleName, addr)
+				access.CreateRole(cross, roleName, addr)
 			}),
 		},
 		{
 			PkgPath:    consts.ACCESS_PATH,
 			Function:   "SetRole",
 			ParamCount: 2,
-			HandlerFunc: simpleHandler(func(params []string) {
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
 				addr := std.Address(params[1])
 				if !addr.IsValid() {
 					panic(ufmt.Sprintf("invalid address: %s", params[1]))
 				}
 
 				roleName := params[0]
-				cross(access.SetRole)(roleName, addr)
+				access.SetRole(cross, roleName, addr)
 			}),
 		},
 		{
 			PkgPath:    consts.ACCESS_PATH,
 			Function:   "UpdateRoleAddress",
 			ParamCount: 2,
-			HandlerFunc: simpleHandler(func(params []string) {
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
 				addr := std.Address(params[1])
 				if !addr.IsValid() {
 					panic(ufmt.Sprintf("invalid address: %s", params[1]))
 				}
 
 				roleName := params[0]
-				cross(access.UpdateRoleAddress)(roleName, addr)
+				access.UpdateRoleAddress(cross, roleName, addr)
 			}),
 		},
 
@@ -307,15 +313,15 @@ func createParameterHandlers() *ParameterRegistry {
 			PkgPath:    consts.HALT_PATH,
 			Function:   "SetHalt",
 			ParamCount: 1,
-			HandlerFunc: simpleHandler(func(params []string) {
-				cross(halt.SetHalt)(parseBool(params[0])) // true = halt, false = no halt
+			HandlerFunc: simpleHandler(func(cur realm, params []string) {
+				halt.SetHalt(cross, parseBool(params[0])) // true = halt, false = no halt
 			}),
 		},
 		{
 			PkgPath:    consts.HALT_PATH,
 			Function:   "SetHaltWithLevel",
 			ParamCount: 2,
-			HandlerFunc: func(params []string) error {
+			HandlerFunc: func(cur realm, params []string) error {
 				haltStatus := parseBool(params[0])
 				levels := make([]halt.LevelID, 0)
 				for _, level := range strings.Split(params[1], ",") {
@@ -325,55 +331,55 @@ func createParameterHandlers() *ParameterRegistry {
 					}
 					levels = append(levels, levelID)
 				}
-				return cross(halt.SetHalt)(haltStatus, levels...)
+				return halt.SetHalt(cross, haltStatus, levels...)
 			},
 		},
 		{
 			PkgPath:    consts.HALT_PATH,
 			Function:   "SetHaltLevel",
 			ParamCount: 1,
-			HandlerFunc: func(params []string) error {
+			HandlerFunc: func(cur realm, params []string) error {
 				haltLevel, err := halt.LevelIDFromString(params[0])
 				if err != nil {
 					return err
 				}
-				return cross(halt.SetHaltLevel)(haltLevel)
+				return halt.SetHaltLevel(cross, haltLevel)
 			},
 		},
 		{
 			PkgPath:    consts.HALT_PATH,
 			Function:   "SetOperationStatus",
 			ParamCount: 2,
-			HandlerFunc: func(params []string) error {
+			HandlerFunc: func(cur realm, params []string) error {
 				opType := halt.OpType(params[0])
 				allowed := parseBool(params[1])
-				return cross(halt.SetOperationStatus)(opType, allowed)
+				return halt.SetOperationStatus(cross, opType, allowed)
 			},
 		},
 		{
 			PkgPath:    consts.HALT_PATH,
 			Function:   "EnableWithdrawals",
 			ParamCount: 0,
-			HandlerFunc: func(params []string) error {
-				return cross(halt.EnableWithdrawalsForTestnet)()
+			HandlerFunc: func(cur realm, params []string) error {
+				return halt.EnableWithdrawalsForTestnet(cross)
 			},
 		},
 		{
 			PkgPath:    consts.HALT_PATH,
 			Function:   "EnableContractOperations",
 			ParamCount: 1,
-			HandlerFunc: func(params []string) error {
+			HandlerFunc: func(cur realm, params []string) error {
 				contract := halt.OpType(params[0])
-				return cross(halt.EnableContractOperations)(contract)
+				return halt.EnableContractOperations(cross, contract)
 			},
 		},
 		{
 			PkgPath:    consts.HALT_PATH,
 			Function:   "DisableContractOperations",
 			ParamCount: 1,
-			HandlerFunc: func(params []string) error {
+			HandlerFunc: func(cur realm, params []string) error {
 				contract := halt.OpType(params[0])
-				return cross(halt.DisableContractOperations)(contract)
+				return halt.DisableContractOperations(cross, contract)
 			},
 		},
 	}
