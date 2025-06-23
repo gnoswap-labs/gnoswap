@@ -914,7 +914,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
 	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
 
-	testing.SetRealm(adminRealm)
+	testing.SetOriginCaller(adminAddr)
 	positionId, _, _, _ := Mint(
 		cross,
 		barPath,
@@ -994,6 +994,8 @@ func TestIncreaseLiquidity(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			testing.SetOriginCaller(adminAddr)
+
 			if tc.expectPanic {
 				uassert.AbortsWithMessage(t,
 					tc.expectedErrorMsg,
@@ -1049,7 +1051,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 		amount1Min        string
 		deadlineOffset    time.Duration
 		unwrapResult      bool
-		expectPanic       bool
+		expectedHasAbort  bool
 		expectedErrorMsg  string
 		expectedLiquidity string
 		expectedFee0      string
@@ -1062,7 +1064,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount1Min:        "15000",
 			deadlineOffset:    time.Hour,
 			unwrapResult:      false,
-			expectPanic:       false,
+			expectedHasAbort:  false,
 			expectedLiquidity: "400000",
 			expectedFee0:      "0",
 			expectedFee1:      "0",
@@ -1074,7 +1076,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount1Min:        "20000",
 			deadlineOffset:    time.Hour,
 			unwrapResult:      false,
-			expectPanic:       false,
+			expectedHasAbort:  false,
 			expectedLiquidity: "600000",
 			expectedFee0:      "0",
 			expectedFee1:      "0",
@@ -1087,18 +1089,20 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount1Min:        "20000",
 			deadlineOffset:    time.Hour,
 			unwrapResult:      false,
-			expectPanic:       true,
+			expectedHasAbort:  true,
 			expectedErrorMsg:  "[GNOSWAP-POSITION-010] zero liquidity || liquidity amount must be greater than 0, got 0",
 		},
 		{
 			name:              "Fail - Underflow",
-			liquidityToRemove: "1541592",
+			liquidityToRemove: "1541593",
 			amount0Min:        "200000",
 			amount1Min:        "400000",
 			deadlineOffset:    time.Hour,
 			unwrapResult:      false,
-			expectPanic:       true,
-			expectedErrorMsg:  "[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero",
+			expectedHasAbort:  true,
+			expectedFee0:      "0",
+			expectedFee1:      "0",
+			expectedErrorMsg:  "[GNOSWAP-POSITION-019] invalid liquidity || Liquidity requested(1541593) is greater than liquidity held(1541592)",
 		},
 		{
 			name:              "Fail - Deadline Exceeded",
@@ -1107,7 +1111,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount1Min:        "20000",
 			deadlineOffset:    -time.Hour,
 			unwrapResult:      false,
-			expectPanic:       true,
+			expectedHasAbort:  true,
 			expectedErrorMsg:  "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)",
 		},
 		{
@@ -1120,7 +1124,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount1Min:        "25000",
 			deadlineOffset:    time.Hour,
 			unwrapResult:      false,
-			expectPanic:       false,
+			expectedHasAbort:  false,
 			expectedLiquidity: "1270796",
 			expectedFee0:      "0",
 			expectedFee1:      "0",
@@ -1146,6 +1150,9 @@ func TestDecreaseLiquidity(t *testing.T) {
 	)
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			testing.SetOriginCaller(adminAddr)
+			gnft.Approve(cross, posRealm.Address(), positionIdFrom(positionId))
+
 			deadline := time.Now().Add(tc.deadlineOffset).Unix()
 			if tc.beforeIncrease {
 				testing.SetRealm(adminRealm)
@@ -1160,9 +1167,8 @@ func TestDecreaseLiquidity(t *testing.T) {
 				)
 			}
 
-			if tc.expectPanic {
-				testing.SetRealm(adminRealm)
-				uassert.PanicsWithMessage(t, tc.expectedErrorMsg, func() {
+			if tc.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tc.expectedErrorMsg, func() {
 					DecreaseLiquidity(
 						cross,
 						positionId,
@@ -1174,7 +1180,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 					)
 				})
 			} else {
-				testing.SetRealm(adminRealm)
 				_, liquidity, fee0, fee1, _, _, _ := DecreaseLiquidity(
 					cross,
 					positionId,
@@ -1275,10 +1280,10 @@ func TestCollectFees(t *testing.T) {
 
 			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tt.expectedAbortError, func() {
-					CollectFee(cross, positionId, tt.unwrapResult)
+					CollectFee(cross, positionId, tt.unwrapResult, adminAddr)
 				})
 			} else {
-				_, fee0, fee1, _, amount0, amount1 := CollectFee(cross, positionId, tt.unwrapResult)
+				_, fee0, fee1, _, amount0, amount1 := CollectFee(cross, positionId, tt.unwrapResult, adminAddr)
 				uassert.Equal(t, tt.expectedFee0, fee0)
 				uassert.Equal(t, tt.expectedFee1, fee1)
 				uassert.Equal(t, tt.expectedAmount0, amount0)
@@ -1290,78 +1295,84 @@ func TestCollectFees(t *testing.T) {
 
 func TestReposition(t *testing.T) {
 	tests := []struct {
-		name               string
-		mintAmount0        string
-		mintAmount1        string
-		increaseAmount0    string
-		increaseAmount1    string
-		liquidityToRemove  string
-		tickLower          int32
-		tickUpper          int32
-		expectPanic        bool
-		expectedPanicError string
+		name                 string
+		mintAmount0          string
+		mintAmount1          string
+		increaseAmount0      string
+		increaseAmount1      string
+		liquidityToRemove    string
+		tickLower            int32
+		tickUpper            int32
+		expectedHasAbort     bool
+		expectedAbortMessage string
 	}{
 		{
-			name:               "Fail - Reposition after full liquidity removal",
-			mintAmount0:        "1000000",
-			mintAmount1:        "2000000",
-			increaseAmount0:    "500000",
-			increaseAmount1:    "1000000",
-			liquidityToRemove:  "100",
-			tickLower:          -5000,
-			tickUpper:          5000,
-			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(10) isn't clear(liquidity:3812288, tokensOwed0:0, tokensOwed1:0)",
+			name:                 "Fail - Reposition after full liquidity removal",
+			mintAmount0:          "1000000",
+			mintAmount1:          "2000000",
+			increaseAmount0:      "500000",
+			increaseAmount1:      "1000000",
+			liquidityToRemove:    "100",
+			tickLower:            -5000,
+			tickUpper:            5000,
+			expectedHasAbort:     true,
+			expectedAbortMessage: "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:3812288, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
-			name:               "Fail - Reposition with partial liquidity removal",
-			mintAmount0:        "1000000",
-			mintAmount1:        "2000000",
-			increaseAmount0:    "500000",
-			increaseAmount1:    "1000000",
-			liquidityToRemove:  "50",
-			tickLower:          -3000,
-			tickUpper:          3000,
-			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(10) isn't clear(liquidity:5083034, tokensOwed0:0, tokensOwed1:0)",
+			name:                 "Fail - Reposition with partial liquidity removal",
+			mintAmount0:          "1000000",
+			mintAmount1:          "2000000",
+			increaseAmount0:      "500000",
+			increaseAmount1:      "1000000",
+			liquidityToRemove:    "50",
+			tickLower:            -3000,
+			tickUpper:            3000,
+			expectedHasAbort:     true,
+			expectedAbortMessage: "[GNOSWAP-POSITION-009] position is not clear || position(2) isn't clear(liquidity:3812338, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
-			name:               "Fail - Reposition on non-existent positionId",
-			mintAmount0:        "1000000",
-			mintAmount1:        "2000000",
-			liquidityToRemove:  "10",
-			tickLower:          -4000,
-			tickUpper:          4000,
-			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(10) isn't clear(liquidity:5083024, tokensOwed0:0, tokensOwed1:0)",
+			name:                 "Fail - Reposition on non-existent positionId",
+			mintAmount0:          "1000000",
+			mintAmount1:          "2000000",
+			liquidityToRemove:    "10",
+			tickLower:            -4000,
+			tickUpper:            4000,
+			expectedHasAbort:     true,
+			expectedAbortMessage: "[GNOSWAP-POSITION-009] position is not clear || position(3) isn't clear(liquidity:2541582, tokensOwed0:0, tokensOwed1:0)",
 		},
 	}
 
-	CreatePoolWithoutFee(t)
-	testing.SetRealm(std.NewUserRealm(adminAddr))
-	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
-	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
-
-	// Step 1: Mint a position
-	positionId, _, _, _ := Mint(
-		cross,
-		barPath,
-		fooPath,
-		fee500,
-		-10000,
-		10000,
-		"1000000",
-		"1000000",
-		"0",
-		"0",
-		time.Now().Add(time.Hour).Unix(),
-		adminAddr,
-		adminAddr,
-		"",
-	)
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			testing.SetOriginCaller(adminAddr)
+			CreatePoolWithoutFee(t)
+
+			testing.SetRealm(posRealm)
+			TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
+			TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
+
+			testing.SetOriginCaller(adminAddr)
+			// Step 1: Mint a position
+			positionId, _, _, _ := Mint(
+				cross,
+				barPath,
+				fooPath,
+				fee500,
+				-10000,
+				10000,
+				"1000000",
+				"1000000",
+				"0",
+				"0",
+				time.Now().Add(time.Hour).Unix(),
+				adminAddr,
+				adminAddr,
+				"",
+			)
+
+			testing.SetOriginCaller(adminAddr)
+			gnft.Approve(cross, posRealm.Address(), positionIdFrom(positionId))
+
 			// Step 2: Increase liquidity
 			if tt.increaseAmount0 != "" && tt.increaseAmount1 != "" {
 				_, _, _, _, _ = IncreaseLiquidity(
@@ -1387,9 +1398,10 @@ func TestReposition(t *testing.T) {
 			)
 
 			// Step 4: Attempt Reposition
-			if tt.expectPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicError, func() {
+			if tt.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, func() {
 					Reposition(
+						cross,
 						positionId,
 						tt.tickLower,
 						tt.tickUpper,
@@ -1402,6 +1414,7 @@ func TestReposition(t *testing.T) {
 			} else {
 				// positionId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
 				tid, _, tickL, tickH, _, _ := Reposition(
+					cross,
 					positionId,
 					tt.tickLower,
 					tt.tickUpper,

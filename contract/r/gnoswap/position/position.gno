@@ -190,6 +190,7 @@ func IncreaseLiquidity(
 	if err != nil {
 		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
 	}
+
 	caller := getPrevAddr()
 
 	wrappedAmount := int64(0)
@@ -207,6 +208,7 @@ func IncreaseLiquidity(
 		amount0Min:     amount0Min,
 		amount1Min:     amount1Min,
 		deadline:       deadline,
+		caller:         caller,
 	}
 
 	_, liquidity, amount0, amount1, poolPath := increaseLiquidity(increaseLiquidityParams)
@@ -313,6 +315,7 @@ func CollectFee(
 	cur realm,
 	positionId uint64,
 	unwrapResult bool,
+	caller std.Address,
 ) (uint64, string, string, string, string, string) {
 	assertOnlyNotHalted()
 	assertTokenExists(positionId)
@@ -322,7 +325,6 @@ func CollectFee(
 	// verify position
 	position := MustGetPosition(positionId)
 	token0, token1, fee := splitOf(position.poolKey)
-	caller := getPrevAddr()
 
 	pl.Burn(
 		cross,

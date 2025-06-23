@@ -521,9 +521,12 @@ func TestIsOperator(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			testing.SetOriginCaller(adminAddr)
+
 			if tc.expected {
 				LPTokenApprove(t, adminAddr, tc.addr, tc.positionId)
 			}
+
 			got := isOperator(tc.positionId, tc.addr)
 			uassert.Equal(t, tc.expected, got)
 		})

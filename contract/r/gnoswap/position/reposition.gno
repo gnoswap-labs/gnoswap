@@ -19,6 +19,7 @@ import (
 // Returns Position ID, liquidity, tickLower, tickUpper, amount0, amount1
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#reposition
 func Reposition(
+	cur realm,
 	positionId uint64,
 	tickLower int32,
 	tickUpper int32,

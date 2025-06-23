@@ -256,8 +256,8 @@ func processTokens(
 
 func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, string) {
 	// verify position ID exists
+	caller := params.caller
 	assertTokenExists(params.positionId)
-	caller := getPrevAddr()
 	assertOnlyOwnerOfToken(params.positionId, caller)
 
 	position := MustGetPosition(params.positionId)
@@ -275,7 +275,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	)
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
-	positionKey := computePositionKey(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
+	positionKey := computePositionKey(caller, position.tickLower, position.tickUpper)
 	feeGrowthInside0LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
 	feeGrowthInside1LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey))
 

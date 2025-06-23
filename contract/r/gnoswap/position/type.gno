@@ -69,12 +69,13 @@ func newMintParams(input ProcessedMintInput, mintInput MintInput) MintParams {
 }
 
 type IncreaseLiquidityParams struct {
-	positionId     uint64     // positionId of the position to increase liquidity
-	amount0Desired *u256.Uint // desired amount of token0 to be minted
-	amount1Desired *u256.Uint // desired amount of token1 to be minted
-	amount0Min     *u256.Uint // minimum amount of token0 to be minted
-	amount1Min     *u256.Uint // minimum amount of token1 to be minted
-	deadline       int64      // time by which the transaction must be included to effect the change
+	positionId     uint64      // positionId of the position to increase liquidity
+	amount0Desired *u256.Uint  // desired amount of token0 to be minted
+	amount1Desired *u256.Uint  // desired amount of token1 to be minted
+	amount0Min     *u256.Uint  // minimum amount of token0 to be minted
+	amount1Min     *u256.Uint  // minimum amount of token1 to be minted
+	deadline       int64       // time by which the transaction must be included to effect the change
+	caller         std.Address // address to call the function
 }
 
 type DecreaseLiquidityParams struct {
