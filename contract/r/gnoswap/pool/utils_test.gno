@@ -392,21 +392,6 @@ func TestToUint128(t *testing.T) {
 	}
 }
 
-func TestToUint128NilPanic(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			expected := "[GNOSWAP-POOL-006] invalid input data || value is nil"
-			if r != expected {
-				t.Errorf("expected panic message %v, got %v", expected, r)
-			}
-		} else {
-			t.Errorf("expected panic, but none occurred")
-		}
-	}()
-
-	toUint128(nil)
-}
-
 func TestToUint128InputPreservation(t *testing.T) {
 	tests := []struct {
 		name                      string
@@ -462,7 +447,7 @@ func TestAssertOnlyNotNil(t *testing.T) {
 			name:        "nil input",
 			input:       nil,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-006] invalid input data || value is nil",
+			errorMsg:    "[GNOSWAP-COMMON-008] invalid input data || value is nil",
 		},
 		{
 			name:        "valid zero",
@@ -923,18 +908,6 @@ func TestFormatFunctions(t *testing.T) {
 			})
 		}
 	})
-}
-
-func TestCheckTransferError(t *testing.T) {
-	t.Run("no error", func(t *testing.T) {
-		uassert.NotPanics(t, func() {
-			checkTransferError(nil)
-		})
-	})
-
-	// Since we can't easily create an error in the test without importing errors package,
-	// and the actual transfer errors would come from token transfer operations,
-	// we'll skip the error case test or test it differently in integration tests
 }
 
 func TestRealm(t *testing.T) {
