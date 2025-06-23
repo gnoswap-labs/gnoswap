@@ -109,7 +109,7 @@ func commonSwapSetup() error {
 	}
 
 	if common.GetLimitCaller() && std.PreviousRealm().PkgPath() != "" {
-		return ufmt.Errorf(errNoPermission.Error(), "only user can call this function")
+		return ufmt.Errorf("%v: only user can call this function", errNoPermission)
 	}
 
 	emission.MintAndDistributeGns(cross)
