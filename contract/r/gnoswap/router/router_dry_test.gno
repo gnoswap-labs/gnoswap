@@ -122,7 +122,6 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 			tokenAmountLimit:  "1",
 			expectedAmountIn:  "0",
 			expectedAmountOut: "0",
-			expectedSuccess:   false,
 			expectPanic:       true,
 			expectedPanicMsg:  "[GNOSWAP-ROUTER-005] invalid input data || overflow in calculateSwapAmount",
 		},
@@ -137,7 +136,6 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 			tokenAmountLimit:  "100000",
 			expectedAmountIn:  "0",
 			expectedAmountOut: "0",
-			expectedSuccess:   false,
 			expectPanic:       true,
 			expectedPanicMsg:  "[GNOSWAP-ROUTER-005] invalid input data || overflow in calculateSwapAmount",
 		},
@@ -145,8 +143,8 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if !tt.expectPanic {
-				amountIn, amountOut, success := DrySwapRoute(
+			uassert.AbortsWithMessage(t, tt.expectedPanicMsg, func() {
+				DrySwapRoute(
 					cross,
 					tt.inputToken,
 					tt.outputToken,
@@ -156,24 +154,7 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 					tt.quoteArr,
 					tt.tokenAmountLimit,
 				)
-
-				uassert.Equal(t, tt.expectedAmountIn, amountIn)
-				uassert.Equal(t, tt.expectedAmountOut, amountOut)
-				uassert.Equal(t, tt.expectedSuccess, success)
-			} else {
-				uassert.AbortsWithMessage(t, tt.expectedPanicMsg, func() {
-					DrySwapRoute(
-						cross,
-						tt.inputToken,
-						tt.outputToken,
-						tt.specifiedAmount,
-						tt.swapTypeStr,
-						tt.strRouteArr,
-						tt.quoteArr,
-						tt.tokenAmountLimit,
-					)
-				})
-			}
+			})
 		})
 	}
 }
