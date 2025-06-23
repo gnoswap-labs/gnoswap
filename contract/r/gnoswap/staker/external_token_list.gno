@@ -24,7 +24,7 @@ type TokenValidator func(tokenPath string) error
 type TokenExecutor func(tokenPath string, tokens []string) []string
 
 // modifyTokenList handles common token modification logics, such as admin check, validation, and execution.
-func modifyTokenList(tokenPath string, validator TokenValidator, executor TokenExecutor) error {
+func modifyTokenList(cur realm, tokenPath string, validator TokenValidator, executor TokenExecutor) error {
 	caller := getPrevAddr()
 	if err := common.AdminOnly(caller); err != nil {
 		return err
@@ -79,7 +79,7 @@ func removeTokenValidator(tokenPath string) error {
 // Panics:
 //   - If the caller is not the admin
 func AddToken(cur realm, tokenPath string) {
-	if err := modifyTokenList(tokenPath, nil, addTokenExecutor); err != nil {
+	if err := modifyTokenList(cur, tokenPath, nil, addTokenExecutor); err != nil {
 		panic(err.Error())
 	}
 }
@@ -95,7 +95,7 @@ func AddToken(cur realm, tokenPath string) {
 // Panics:
 //   - If the caller is not the admin
 func RemoveToken(cur realm, tokenPath string) {
-	if err := modifyTokenList(tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
+	if err := modifyTokenList(cur, tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
 		panic(err.Error())
 	}
 }
