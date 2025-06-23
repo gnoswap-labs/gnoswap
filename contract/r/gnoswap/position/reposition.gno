@@ -33,6 +33,7 @@ func Reposition(
 
 	// position should be burned to reposition
 	position := MustGetPosition(positionId)
+	caller := getPrevAddr()
 	oldTickLower := position.tickLower
 	oldTickUpper := position.tickUpper
 
@@ -49,7 +50,6 @@ func Reposition(
 		))
 	}
 
-	caller := getPrevAddr()
 	token0, token1, _ := splitOf(position.poolKey)
 	token0, token1, _, _, _ = processTokens(token0, token1, amount0DesiredStr, amount1DesiredStr, caller)
 
@@ -71,7 +71,7 @@ func Reposition(
 	position.tickLower = tickLower
 	position.tickUpper = tickUpper
 
-	currentFeeGrowth, err := getCurrentFeeGrowth(position)
+	currentFeeGrowth, err := getCurrentFeeGrowth(position, caller)
 	if err != nil {
 		panic(newErrorWithDetail(err, "failed to get current fee growth"))
 	}

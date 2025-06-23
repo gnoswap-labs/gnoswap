@@ -68,7 +68,7 @@ func Mint(cur realm,
 
 	pool := GetPool(token0Path, token1Path, fee)
 	liquidityDelta := safeConvertToInt128(liquidity)
-	positionParam := newModifyPositionParams(recipient, tickLower, tickUpper, liquidityDelta)
+	positionParam := newModifyPositionParams(positionCaller, tickLower, tickUpper, liquidityDelta)
 	_, amount0, amount1 := pool.modifyPosition(positionParam)
 
 	if amount0.Gt(u256.Zero()) {
@@ -110,6 +110,7 @@ func Burn(
 	tickLower int32,
 	tickUpper int32,
 	liquidityAmount string, // uint128
+	positionCaller std.Address,
 ) (string, string) { // uint256 x2
 	assertOnlyNotHalted()
 	if common.GetLimitCaller() {
@@ -117,11 +118,10 @@ func Burn(
 	}
 	pool := GetPool(token0Path, token1Path, fee)
 
-	caller := getPrevAddr()
 	liqAmount := u256.MustFromDecimal(liquidityAmount)
 	liqAmountInt256 := safeConvertToInt128(liqAmount)
 	liqDelta := i256.Zero().Neg(liqAmountInt256)
-	posParams := newModifyPositionParams(caller, tickLower, tickUpper, liqDelta)
+	posParams := newModifyPositionParams(positionCaller, tickLower, tickUpper, liqDelta)
 	position, amount0, amount1 := pool.modifyPosition(posParams)
 
 	if amount0.Gt(u256.Zero()) || amount1.Gt(u256.Zero()) {
@@ -131,7 +131,7 @@ func Burn(
 		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, amount1)
 	}
 
-	positionKey := getPositionKey(caller, tickLower, tickUpper)
+	positionKey := getPositionKey(positionCaller, tickLower, tickUpper)
 	pool.setPosition(positionKey, position)
 
 	// mustGetPosition() is called to ensure the position exists
