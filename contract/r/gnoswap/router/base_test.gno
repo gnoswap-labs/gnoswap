@@ -273,7 +273,7 @@ func TestProcessRoute(t *testing.T) {
 	})
 }
 
-// Test reproducing report L-08 "Loss of Tokens in Swap Due to Truncation"
+// Test reproducing Loss of Tokens in Swap Due to Truncation Scenario
 func TestProcessRoutesWithRemainder(t *testing.T) {
 	oddAmount := i256.NewInt(101)
 	op := &baseSwapOperation{
@@ -294,10 +294,17 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 		i256.NewInt(50), // 101 * 50 / 100 = 50
 	}
 
-	_, amountOut, err := op.processRoutes(ExactIn)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	func(cur realm) {
+		_, amountOut, err := op.processRoutes(ExactIn)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		// check output amount is not zero
+		if amountOut.Cmp(u256.Zero()) == 0 {
+			t.Error("expected non-zero amountOut")
+		}
+	}(cross)
 
 	// check actual swapped amounts for each route
 	for i, _ := range op.routes {
@@ -315,11 +322,6 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 	totalExpected := oddAmount
 	if op.amountSpecified.Cmp(totalExpected) != 0 {
 		t.Errorf("total expected amount %s, got %s", totalExpected.ToString(), op.amountSpecified.ToString())
-	}
-
-	// check output amount is not zero
-	if amountOut.Cmp(u256.Zero()) == 0 {
-		t.Error("expected non-zero amountOut")
 	}
 
 	// check remainder
