@@ -10,7 +10,7 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/qux"
+	_ "gno.land/r/onbloc/qux"
 )
 
 func TestMultiSwap(t *testing.T) {
