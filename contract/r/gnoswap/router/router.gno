@@ -76,7 +76,7 @@ func (h *GnotSwapHandler) HandleOutputSwap() {
 // SwapValidator provides validation methods for swap operations
 type SwapValidator struct{}
 
-// ValidateExactOutAmount checks if output amount meets specified requirements
+// exactOutAmount checks if output amount meets specified requirements
 func (v *SwapValidator) exactOutAmount(resultAmount, specifiedAmount *u256.Uint) error {
 	if resultAmount.Gte(specifiedAmount) {
 		return nil
@@ -89,7 +89,7 @@ func (v *SwapValidator) exactOutAmount(resultAmount, specifiedAmount *u256.Uint)
 	return nil
 }
 
-// ValidateSlippage ensures swap amounts meet slippage requirements
+// slippage ensures swap amounts meet slippage requirements
 func (v *SwapValidator) slippage(swapType SwapType, amountIn, amountOut, limit *u256.Uint) error {
 	switch swapType {
 	case ExactIn:
@@ -108,7 +108,7 @@ func (v *SwapValidator) slippage(swapType SwapType, amountIn, amountOut, limit *
 	return nil
 }
 
-// ValidateSwapType ensures the swap type string is valid
+// swapType ensures the swap type string is valid
 func (v *SwapValidator) swapType(swapTypeStr string) (SwapType, error) {
 	swapType, err := trySwapTypeFromStr(swapTypeStr)
 	if err != nil {
@@ -117,7 +117,7 @@ func (v *SwapValidator) swapType(swapTypeStr string) (SwapType, error) {
 	return swapType, nil
 }
 
-// ValidateAmount ensures the amount is properly formatted and positive
+// amount ensures the amount is properly formatted and positive
 func (v *SwapValidator) amount(amount string) (*i256.Int, error) {
 	parsedAmount := i256.MustFromDecimal(amount)
 	if parsedAmount.Lt(i256.Zero()) {
@@ -126,7 +126,7 @@ func (v *SwapValidator) amount(amount string) (*i256.Int, error) {
 	return parsedAmount, nil
 }
 
-// ValidateAmountLimit ensures the amount limit is properly formatted and non-zero
+// amountLimit ensures the amount limit is properly formatted and non-zero
 func (v *SwapValidator) amountLimit(amountLimit string) (*i256.Int, error) {
 	parsedLimit := i256.MustFromDecimal(amountLimit)
 	if parsedLimit.IsZero() {
