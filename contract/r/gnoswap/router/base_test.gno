@@ -265,15 +265,16 @@ func TestProcessRoute(t *testing.T) {
 		toSwap := i256.NewInt(1000)
 		swapType := ExactIn
 
-		amountIn, amountOut, err := op.processRoute(route, toSwap, swapType)
-
-		uassert.Equal(t, err, nil)
-		uassert.Equal(t, amountIn.ToString(), "1000")
-		uassert.Equal(t, amountOut.ToString(), "979")
+		func(cur realm) {
+			amountIn, amountOut, err := op.processRoute(route, toSwap, swapType)
+			uassert.Equal(t, err, nil)
+			uassert.Equal(t, amountIn.ToString(), "1000")
+			uassert.Equal(t, amountOut.ToString(), "979")
+		}(cross)
 	})
 }
 
-// Test reproducing Loss of Tokens in Swap Due to Truncation Scenario
+// Test reproducing report L-08 "Loss of Tokens in Swap Due to Truncation"
 func TestProcessRoutesWithRemainder(t *testing.T) {
 	oddAmount := i256.NewInt(101)
 	op := &baseSwapOperation{
