@@ -147,6 +147,13 @@ func (p *Pool) safeTransferFrom(
 // validatePoolBalance checks if the pool has sufficient balance of either token0 and token1
 // before proceeding with a transfer. This prevents the pool won't go into a negative balance.
 func validatePoolBalance(token0, token1, amount *u256.Uint, isToken0 bool) error {
+	if token0 == nil || token1 == nil || amount == nil {
+		return ufmt.Errorf(
+			"%v. token0(%s) or token1(%s) or amount(%s) is nil",
+			errTransferFailed, token0.ToString(), token1.ToString(), amount.ToString(),
+		)
+	}
+
 	if isToken0 {
 		if token0.Lt(amount) {
 			return ufmt.Errorf(
