@@ -45,11 +45,6 @@ func safeConvertToUint64(value *u256.Uint) uint64 {
 			value.ToString(),
 			consts.MAX_UINT64,
 		))
-			"%v: amount(%s) overflows uint64 range (max %s)",
-			errOutOfRange,
-			value.ToString(),
-			consts.MAX_UINT64,
-		))
 	}
 	return res
 }
@@ -82,16 +77,6 @@ func safeConvertToInt64(value *u256.Uint) int64 {
 	if overflow || res > uint64(consts.INT64_MAX) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows int64 range (max %d)",
-			errOutOfRange,
-			value.ToString(),
-			consts.MAX_INT64,
-		))
-	}
-	return int64(res)
-	res, overflow := value.Uint64WithOverflow()
-	if overflow || res > uint64(consts.INT64_MAX) {
-		panic(ufmt.Sprintf(
-			"%v: amount(%s) overflows int64 range (max %s)",
 			errOutOfRange,
 			value.ToString(),
 			consts.MAX_INT64,
@@ -156,7 +141,7 @@ func toUint128(value *u256.Uint) *u256.Uint {
 	if value.Gt(u256.MustFromDecimal(consts.MAX_UINT128)) {
 		mask := new(u256.Uint).Lsh(u256.One(), consts.Q128_RESOLUTION)
 		mask = mask.Sub(mask, u256.One())
-		value = value.And(value, mask)
+		return new(u256.Uint).And(value, mask)
 	}
 	return value
 }

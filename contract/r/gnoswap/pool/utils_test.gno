@@ -37,7 +37,7 @@ func TestU256Min(t *testing.T) {
 			num2:     "1",
 			expected: "1",
 		},
-		
+
 		// Edge cases with zero
 		{
 			name:     "compare max u256 with zero",
@@ -51,7 +51,7 @@ func TestU256Min(t *testing.T) {
 			num2:     "1",
 			expected: "0",
 		},
-		
+
 		// Close values
 		{
 			name:     "very close values (num1 smaller)",
@@ -65,7 +65,7 @@ func TestU256Min(t *testing.T) {
 			num2:     "999999999999999999",
 			expected: "999999999999999999",
 		},
-		
+
 		// Large values
 		{
 			name:     "large values (num1 smaller)",
@@ -139,12 +139,12 @@ func TestSafeConvertToUint64(t *testing.T) {
 		{"normal conversion - small", u256.NewUint(123), 123, false, ""},
 		{"normal conversion - medium", u256.NewUint(1000000), 1000000, false, ""},
 		{"zero", u256.NewUint(0), 0, false, ""},
-		
+
 		// Boundary cases
 		{"max uint64 - 2", u256.NewUint(18446744073709551613), 18446744073709551613, false, ""},
 		{"max uint64 - 1", u256.NewUint(18446744073709551614), 18446744073709551614, false, ""},
 		{"max uint64", u256.NewUint(1<<64 - 1), 1<<64 - 1, false, ""},
-		
+
 		// Overflow cases
 		{"overflow - max uint64 + 1", u256.MustFromDecimal("18446744073709551616"), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(18446744073709551616) overflows uint64 range (max 18446744073709551615)"},
 		{"overflow - large value", u256.MustFromDecimal(consts.MAX_UINT128), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(340282366920938463463374607431768211455) overflows uint64 range (max 18446744073709551615)"},
@@ -185,20 +185,20 @@ func TestSafeConvertToInt64(t *testing.T) {
 		{"small positive number", u256.NewUint(123), 123, false, ""},
 		{"medium positive number", u256.NewUint(1000000), 1000000, false, ""},
 		{"zero", u256.NewUint(0), 0, false, ""},
-		
+
 		// Boundary cases for int64
 		{"max int64 - 1", u256.NewUint(9223372036854775806), 9223372036854775806, false, ""},
 		{"max int64", u256.NewUint(9223372036854775807), 9223372036854775807, false, ""},
 		{"max int64 + 1 (overflow)", u256.NewUint(9223372036854775808), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(9223372036854775808) overflows int64 range (max 9223372036854775807)"},
-		
+
 		// Mid-range boundaries
 		{"2^32", u256.NewUint(4294967296), 4294967296, false, ""},
 		{"2^48", u256.NewUint(281474976710656), 281474976710656, false, ""},
-		
+
 		// Values between max int64 and max uint64
 		{"value between max int64 and max uint64 (1)", u256.NewUint(10000000000000000000), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(10000000000000000000) overflows int64 range (max 9223372036854775807)"},
 		{"value between max int64 and max uint64 (2)", u256.NewUint(15000000000000000000), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(15000000000000000000) overflows int64 range (max 9223372036854775807)"},
-		
+
 		// Extreme cases - these will fail on uint64 conversion first
 		{"max uint64 + 1 (overflow)", u256.MustFromDecimal("18446744073709551616"), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(18446744073709551616) overflows uint64 range (max 18446744073709551615)"},
 		{"very large number (MAX_UINT128)", u256.MustFromDecimal(consts.MAX_UINT128), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(340282366920938463463374607431768211455) overflows uint64 range (max 18446744073709551615)"},
@@ -238,15 +238,15 @@ func TestSafeConvertToInt128(t *testing.T) {
 		{"zero", "0", "0", false, ""},
 		{"small positive value", "123", "123", false, ""},
 		{"medium positive value", "1000000", "1000000", false, ""},
-		
+
 		// Power of 2 boundaries
 		{"2^64", consts.Q64, consts.Q64, false, ""},
 		{"2^96", consts.Q96, consts.Q96, false, ""},
-		
+
 		// Boundary cases
 		{"close to MAX_INT128", "170141183460469231731687303715884105726", "170141183460469231731687303715884105726", false, ""},
 		{"MAX_INT128", consts.MAX_INT128, consts.MAX_INT128, false, ""},
-		
+
 		// Overflow cases
 		{"just over MAX_INT128", "170141183460469231731687303715884105728", "", true, "[GNOSWAP-POOL-026] overflow: amount(170141183460469231731687303715884105728) overflows int128 range"},
 		{"large overflow", consts.MAX_UINT128, "", true, "[GNOSWAP-POOL-026] overflow: amount(340282366920938463463374607431768211455) overflows int128 range"},
@@ -304,7 +304,7 @@ func TestToUint128(t *testing.T) {
 		{
 			name:     "overflow - just over max uint128",
 			input:    "340282366920938463463374607431768211456", // MAX_UINT128 + 1
-			expected: "0", // Should wrap to 0 due to masking
+			expected: "0",                                       // Should wrap to 0 due to masking
 		},
 		// Additional masking tests
 		{
@@ -333,12 +333,12 @@ func TestToUint128(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			original := u256.MustFromDecimal(tt.input)
 			originalStr := original.ToString()
-			
+
 			result := toUint128(original)
-			
+
 			// Verify result
 			uassert.Equal(t, tt.expected, result.ToString())
-			
+
 			// Verify input wasn't mutated
 			uassert.Equal(t, originalStr, original.ToString())
 		})
@@ -356,7 +356,7 @@ func TestToUint128NilPanic(t *testing.T) {
 			t.Errorf("expected panic, but none occurred")
 		}
 	}()
-	
+
 	toUint128(nil)
 }
 
@@ -365,9 +365,9 @@ func TestToUint128InputPreservation(t *testing.T) {
 	t.Run("overflow case - input preservation", func(t *testing.T) {
 		original := u256.MustFromDecimal(consts.MAX_UINT256)
 		originalStr := original.ToString()
-		
+
 		result := toUint128(original)
-		
+
 		// Original should be unchanged
 		uassert.Equal(t, originalStr, original.ToString())
 		// Result should be masked
@@ -375,13 +375,13 @@ func TestToUint128InputPreservation(t *testing.T) {
 		// Result and original should be different instances when masking occurs
 		uassert.True(t, result != original)
 	})
-	
+
 	t.Run("within range case - input preservation", func(t *testing.T) {
 		original := u256.NewUint(1000)
 		originalStr := original.ToString()
-		
+
 		result := toUint128(original)
-		
+
 		// Original should be unchanged
 		uassert.Equal(t, originalStr, original.ToString())
 		// Result should be same as original
@@ -566,7 +566,7 @@ func TestCheckTickSpacing(t *testing.T) {
 			shouldPanic: false,
 		},
 		{
-			name:        "max tick boundary", 
+			name:        "max tick boundary",
 			tick:        consts.MAX_TICK, // 887272
 			tickSpacing: 1,
 			shouldPanic: false,
@@ -649,7 +649,7 @@ func TestPermissionFunctions(t *testing.T) {
 			uassert.True(t, isUserCall())
 		}()
 	})
-	
+
 	t.Run("code realm detection", func(t *testing.T) {
 		testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/realm"))
 		func() {
@@ -666,11 +666,11 @@ func TestConversionBoundaryValues(t *testing.T) {
 		pow32 := u256.NewUint(1 << 32) // 4,294,967,296
 		result := safeConvertToUint64(pow32)
 		uassert.Equal(t, uint64(1<<32), result)
-		
-		pow48 := u256.NewUint(1 << 48) 
+
+		pow48 := u256.NewUint(1 << 48)
 		result = safeConvertToUint64(pow48)
 		uassert.Equal(t, uint64(1<<48), result)
-		
+
 		pow63 := u256.NewUint(1 << 63) // 9,223,372,036,854,775,808
 		defer func() {
 			if r := recover(); r == nil {
@@ -679,13 +679,13 @@ func TestConversionBoundaryValues(t *testing.T) {
 		}()
 		safeConvertToInt64(pow63)
 	})
-	
+
 	t.Run("edge case q values", func(t *testing.T) {
 		// Q96 should work with int128
 		q96 := u256.MustFromDecimal(consts.Q96)
 		result := safeConvertToInt128(q96)
 		uassert.Equal(t, consts.Q96, result.ToString())
-		
+
 		// Q128 is actually 2^128 which is larger than MAX_INT128 (2^127 - 1)
 		// So it should panic
 		q128Val := u256.MustFromDecimal(consts.Q128)
@@ -714,7 +714,7 @@ func TestFormatFunctions(t *testing.T) {
 			{"invalid type", "string", "", true, "invalid type: string"},
 			{"invalid type int", int(42), "", true, "invalid type: int"},
 		}
-		
+
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				if tt.panics {
@@ -731,7 +731,7 @@ func TestFormatFunctions(t *testing.T) {
 			})
 		}
 	})
-	
+
 	t.Run("formatInt", func(t *testing.T) {
 		tests := []struct {
 			name     string
@@ -748,7 +748,7 @@ func TestFormatFunctions(t *testing.T) {
 			{"invalid type", "string", "", true, "invalid type: string"},
 			{"invalid type uint", uint(42), "", true, "invalid type: uint"},
 		}
-		
+
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				if tt.panics {
@@ -765,7 +765,7 @@ func TestFormatFunctions(t *testing.T) {
 			})
 		}
 	})
-	
+
 	t.Run("formatBool", func(t *testing.T) {
 		uassert.Equal(t, "true", formatBool(true))
 		uassert.Equal(t, "false", formatBool(false))
@@ -778,7 +778,7 @@ func TestCheckTransferError(t *testing.T) {
 			checkTransferError(nil)
 		})
 	})
-	
+
 	// Since we can't easily create an error in the test without importing errors package,
 	// and the actual transfer errors would come from token transfer operations,
 	// we'll skip the error case test or test it differently in integration tests
@@ -794,7 +794,7 @@ func TestRealm(t *testing.T) {
 			uassert.Equal(t, "test_user", r.Address().String())
 		}()
 	})
-	
+
 	t.Run("getPrevAddr", func(t *testing.T) {
 		testing.SetRealm(std.NewUserRealm(std.Address("test_user2")))
 		func() {
