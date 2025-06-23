@@ -9,6 +9,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 func TestU256Min(t *testing.T) {
@@ -136,38 +137,84 @@ func TestSafeConvertToUint64(t *testing.T) {
 		errorMsg  string
 	}{
 		// Normal cases
-		{"normal conversion - small", u256.NewUint(123), 123, false, ""},
-		{"normal conversion - medium", u256.NewUint(1000000), 1000000, false, ""},
-		{"zero", u256.NewUint(0), 0, false, ""},
+		{
+			name:      "normal conversion - small",
+			value:     u256.NewUint(123),
+			wantRes:   123,
+			wantPanic: false,
+			errorMsg:  "",
+		},
+		{
+			name:      "normal conversion - medium",
+			value:     u256.NewUint(1000000),
+			wantRes:   1000000,
+			wantPanic: false,
+			errorMsg:  "",
+		},
+		{
+			name:      "zero",
+			value:     u256.NewUint(0),
+			wantRes:   0,
+			wantPanic: false,
+			errorMsg:  "",
+		},
 		
 		// Boundary cases
-		{"max uint64 - 2", u256.NewUint(18446744073709551613), 18446744073709551613, false, ""},
-		{"max uint64 - 1", u256.NewUint(18446744073709551614), 18446744073709551614, false, ""},
-		{"max uint64", u256.NewUint(1<<64 - 1), 1<<64 - 1, false, ""},
+		{
+			name:      "max uint64 - 2",
+			value:     u256.NewUint(18446744073709551613),
+			wantRes:   18446744073709551613,
+			wantPanic: false,
+			errorMsg:  "",
+		},
+		{
+			name:      "max uint64 - 1",
+			value:     u256.NewUint(18446744073709551614),
+			wantRes:   18446744073709551614,
+			wantPanic: false,
+			errorMsg:  "",
+		},
+		{
+			name:      "max uint64",
+			value:     u256.NewUint(1<<64 - 1),
+			wantRes:   1<<64 - 1,
+			wantPanic: false,
+			errorMsg:  "",
+		},
 		
 		// Overflow cases
-		{"overflow - max uint64 + 1", u256.MustFromDecimal("18446744073709551616"), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(18446744073709551616) overflows uint64 range (max 18446744073709551615)"},
-		{"overflow - large value", u256.MustFromDecimal(consts.MAX_UINT128), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(340282366920938463463374607431768211455) overflows uint64 range (max 18446744073709551615)"},
-		{"overflow - very large value", u256.MustFromDecimal(consts.MAX_UINT256), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(115792089237316195423570985008687907853269984665640564039457584007913129639935) overflows uint64 range (max 18446744073709551615)"},
+		{
+			name:      "overflow - max uint64 + 1",
+			value:     u256.MustFromDecimal("18446744073709551616"),
+			wantRes:   0,
+			wantPanic: true,
+			errorMsg:  "[GNOSWAP-POOL-005] out of range for numeric value: amount(18446744073709551616) overflows uint64 range (max 18446744073709551615)",
+		},
+		{
+			name:      "overflow - large value",
+			value:     u256.MustFromDecimal(consts.MAX_UINT128),
+			wantRes:   0,
+			wantPanic: true,
+			errorMsg:  "[GNOSWAP-POOL-005] out of range for numeric value: amount(340282366920938463463374607431768211455) overflows uint64 range (max 18446744073709551615)",
+		},
+		{
+			name:      "overflow - very large value",
+			value:     u256.MustFromDecimal(consts.MAX_UINT256),
+			wantRes:   0,
+			wantPanic: true,
+			errorMsg:  "[GNOSWAP-POOL-005] out of range for numeric value: amount(115792089237316195423570985008687907853269984665640564039457584007913129639935) overflows uint64 range (max 18446744073709551615)",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					if !tt.wantPanic {
-						t.Errorf("unexpected panic: %v", r)
-					}
-					return
-				}
-				if tt.wantPanic {
-					t.Errorf("expected panic, but none occurred")
-				}
-			}()
-
-			res := safeConvertToUint64(tt.value)
-			if res != tt.wantRes {
-				t.Errorf("safeConvertToUint64() = %v, want %v", res, tt.wantRes)
+			if tt.wantPanic {
+				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+					safeConvertToUint64(tt.value)
+				})
+			} else {
+				res := safeConvertToUint64(tt.value)
+				uassert.Equal(t, tt.wantRes, res)
 			}
 		})
 	}
@@ -361,34 +408,49 @@ func TestToUint128NilPanic(t *testing.T) {
 }
 
 func TestToUint128InputPreservation(t *testing.T) {
-	// Test that input is never modified, especially in overflow cases
-	t.Run("overflow case - input preservation", func(t *testing.T) {
-		original := u256.MustFromDecimal(consts.MAX_UINT256)
-		originalStr := original.ToString()
-		
-		result := toUint128(original)
-		
-		// Original should be unchanged
-		uassert.Equal(t, originalStr, original.ToString())
-		// Result should be masked
-		uassert.Equal(t, consts.MAX_UINT128, result.ToString())
-		// Result and original should be different instances when masking occurs
-		uassert.True(t, result != original)
-	})
+	tests := []struct {
+		name                      string
+		input                     string
+		expectedResult            string
+		expectedOriginal          string
+		shouldBeDifferentInstance bool
+	}{
+		{
+			name:                      "overflow case - input preservation",
+			input:                     consts.MAX_UINT256,
+			expectedResult:            consts.MAX_UINT128,
+			expectedOriginal:          consts.MAX_UINT256,
+			shouldBeDifferentInstance: true,
+		},
+		{
+			name:                      "within range case - input preservation",
+			input:                     "1000",
+			expectedResult:            "1000",
+			expectedOriginal:          "1000",
+			shouldBeDifferentInstance: false,
+		},
+	}
 	
-	t.Run("within range case - input preservation", func(t *testing.T) {
-		original := u256.NewUint(1000)
-		originalStr := original.ToString()
-		
-		result := toUint128(original)
-		
-		// Original should be unchanged
-		uassert.Equal(t, originalStr, original.ToString())
-		// Result should be same as original
-		uassert.Equal(t, originalStr, result.ToString())
-		// But should be the same instance since no modification needed
-		uassert.True(t, result == original)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			original := u256.MustFromDecimal(tt.input)
+			originalStr := original.ToString()
+			
+			result := toUint128(original)
+			
+			// Original should be unchanged
+			uassert.Equal(t, tt.expectedOriginal, original.ToString())
+			// Result should have expected value
+			uassert.Equal(t, tt.expectedResult, result.ToString())
+			
+			// Check instance relationship
+			if tt.shouldBeDifferentInstance {
+				uassert.True(t, result != original, "result should be a different instance")
+			} else {
+				uassert.True(t, result == original, "result should be the same instance")
+			}
+		})
+	}
 }
 
 func TestAssertOnlyNotNil(t *testing.T) {
@@ -420,11 +482,11 @@ func TestAssertOnlyNotNil(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
-					common.assertOnlyNotNil(tt.input)
+					common.AssertOnlyNotNil(tt.input)
 				})
 			} else {
 				uassert.NotPanics(t, func() {
-					common.assertOnlyNotNil(tt.input)
+					common.AssertOnlyNotNil(tt.input)
 				})
 			}
 		})
@@ -707,23 +769,56 @@ func TestFormatFunctions(t *testing.T) {
 			panics   bool
 			errorMsg string
 		}{
-			{"uint8", uint8(255), "255", false, ""},
-			{"uint32", uint32(4294967295), "4294967295", false, ""},
-			{"uint64", uint64(18446744073709551615), "18446744073709551615", false, ""},
-			{"uint8 zero", uint8(0), "0", false, ""},
-			{"invalid type", "string", "", true, "invalid type: string"},
-			{"invalid type int", int(42), "", true, "invalid type: int"},
+			{
+				name:     "uint8",
+				input:    uint8(255),
+				expected: "255",
+				panics:   false,
+				errorMsg: "",
+			},
+			{
+				name:     "uint32",
+				input:    uint32(4294967295),
+				expected: "4294967295",
+				panics:   false,
+				errorMsg: "",
+			},
+			{
+				name:     "uint64",
+				input:    uint64(18446744073709551615),
+				expected: "18446744073709551615",
+				panics:   false,
+				errorMsg: "",
+			},
+			{
+				name:     "uint8 zero",
+				input:    uint8(0),
+				expected: "0",
+				panics:   false,
+				errorMsg: "",
+			},
+			{
+				name:     "invalid type string",
+				input:    "string",
+				expected: "",
+				panics:   true,
+				errorMsg: "invalid type: string",
+			},
+			{
+				name:     "invalid type int",
+				input:    int(42),
+				expected: "",
+				panics:   true,
+				errorMsg: "invalid type: int",
+			},
 		}
 		
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				if tt.panics {
-					defer func() {
-						if r := recover(); r == nil {
-							t.Errorf("expected panic, but none occurred")
-						}
-					}()
-					formatUint(tt.input)
+					uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+						formatUint(tt.input)
+					})
 				} else {
 					result := formatUint(tt.input)
 					uassert.Equal(t, tt.expected, result)
@@ -740,24 +835,63 @@ func TestFormatFunctions(t *testing.T) {
 			panics   bool
 			errorMsg string
 		}{
-			{"int32", int32(-2147483648), "-2147483648", false, ""},
-			{"int64", int64(9223372036854775807), "9223372036854775807", false, ""},
-			{"int", int(42), "42", false, ""},
-			{"int negative", int(-42), "-42", false, ""},
-			{"int32 zero", int32(0), "0", false, ""},
-			{"invalid type", "string", "", true, "invalid type: string"},
-			{"invalid type uint", uint(42), "", true, "invalid type: uint"},
+			{
+				name:     "int32",
+				input:    int32(-2147483648),
+				expected: "-2147483648",
+				panics:   false,
+				errorMsg: "",
+			},
+			{
+				name:     "int64",
+				input:    int64(9223372036854775807),
+				expected: "9223372036854775807",
+				panics:   false,
+				errorMsg: "",
+			},
+			{
+				name:     "int",
+				input:    int(42),
+				expected: "42",
+				panics:   false,
+				errorMsg: "",
+			},
+			{
+				name:     "int negative",
+				input:    int(-42),
+				expected: "-42",
+				panics:   false,
+				errorMsg: "",
+			},
+			{
+				name:     "int32 zero",
+				input:    int32(0),
+				expected: "0",
+				panics:   false,
+				errorMsg: "",
+			},
+			{
+				name:     "invalid type string",
+				input:    "string",
+				expected: "",
+				panics:   true,
+				errorMsg: "invalid type: string",
+			},
+			{
+				name:     "invalid type uint",
+				input:    uint(42),
+				expected: "",
+				panics:   true,
+				errorMsg: "invalid type: uint",
+			},
 		}
 		
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				if tt.panics {
-					defer func() {
-						if r := recover(); r == nil {
-							t.Errorf("expected panic, but none occurred")
-						}
-					}()
-					formatInt(tt.input)
+					uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+						formatInt(tt.input)
+					})
 				} else {
 					result := formatInt(tt.input)
 					uassert.Equal(t, tt.expected, result)
@@ -767,8 +901,29 @@ func TestFormatFunctions(t *testing.T) {
 	})
 	
 	t.Run("formatBool", func(t *testing.T) {
-		uassert.Equal(t, "true", formatBool(true))
-		uassert.Equal(t, "false", formatBool(false))
+		tests := []struct {
+			name     string
+			input    bool
+			expected string
+		}{
+			{
+				name:     "true",
+				input:    true,
+				expected: "true",
+			},
+			{
+				name:     "false",
+				input:    false,
+				expected: "false",
+			},
+		}
+		
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				result := formatBool(tt.input)
+				uassert.Equal(t, tt.expected, result)
+			})
+		}
 	})
 }
 
