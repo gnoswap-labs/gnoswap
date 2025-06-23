@@ -62,6 +62,9 @@ func TryRegister(cur realm, addr std.Address, referral string) bool {
 		return false
 	}
 
+	// update global keeper
+	gReferralKeeper = r.keeper
+
 	std.Emit(
 		EventRegisterSuccess,
 		"address", addr.String(),

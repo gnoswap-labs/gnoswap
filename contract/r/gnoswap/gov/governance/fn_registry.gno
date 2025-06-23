@@ -30,7 +30,7 @@ type HandlerConfig struct {
 }
 
 // registerHandlers registers all configured handlers at once
-func registerHandlers(cur realm, registry *ParameterRegistry, configs []HandlerConfig) {
+func registerHandlers(registry *ParameterRegistry, configs []HandlerConfig) {
 	for _, config := range configs {
 		func(config HandlerConfig) {
 			registry.Register(config.PkgPath, config.Function, NewFunctionHandler(func(params []string) error {
@@ -51,7 +51,7 @@ func simpleHandler(fn func(realm, []string)) func(realm, []string) error {
 	}
 }
 
-func createParameterHandlers(cur realm) *ParameterRegistry {
+func createParameterHandlers() *ParameterRegistry {
 	registry := NewParameterRegistry()
 
 	// define all handler configurations in one array
@@ -385,7 +385,7 @@ func createParameterHandlers(cur realm) *ParameterRegistry {
 	}
 
 	// apply all handlers at once
-	registerHandlers(cur, registry, handlers)
+	registerHandlers(registry, handlers)
 
 	return registry
 }

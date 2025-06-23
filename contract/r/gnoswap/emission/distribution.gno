@@ -70,6 +70,7 @@ func ChangeDistributionPctByAdmin(cur realm,
 	assertOnlyNotHalted()
 
 	changeDistributionPcts(
+		cur,
 		target01, pct01,
 		target02, pct02,
 		target03, pct03,
@@ -98,6 +99,7 @@ func ChangeDistributionPct(cur realm,
 	assertOnlyNotHalted()
 
 	changeDistributionPcts(
+		cur,
 		target01, pct01,
 		target02, pct02,
 		target03, pct03,
@@ -106,6 +108,7 @@ func ChangeDistributionPct(cur realm,
 }
 
 func changeDistributionPcts(
+	cur realm,
 	target01 int, pct01 int64,
 	target02 int, pct02 int64,
 	target03 int, pct03 int64,
@@ -113,10 +116,10 @@ func changeDistributionPcts(
 ) {
 	// First, cache the percentage of the staker just before it changes Callback if needed
 	// (check if the LIQUIDITY_STAKER was located between target01 and 04)
-	setDistributionBpsPct(target01, pct01)
-	setDistributionBpsPct(target02, pct02)
-	setDistributionBpsPct(target03, pct03)
-	setDistributionBpsPct(target04, pct04)
+	setDistributionBpsPct(cur, target01, pct01)
+	setDistributionBpsPct(cur, target02, pct02)
+	setDistributionBpsPct(cur, target03, pct03)
+	setDistributionBpsPct(cur, target04, pct04)
 
 	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
@@ -272,7 +275,7 @@ func ClearDistributedToGovStaker(cur realm) {
 }
 
 // setDistributionBpsPct changes percentage of each target for how much gns it will get by emission.
-func setDistributionBpsPct(target int, pct int64) {
+func setDistributionBpsPct(cur realm, target int, pct int64) {
 	if distributionBpsPct == nil {
 		distributionBpsPct = avl.NewTree()
 	}
@@ -287,7 +290,10 @@ func setDistributionBpsPct(target int, pct int64) {
 			panic("cannot convert oldPct to int64")
 		}
 		if oldPctInt64 != pct {
-			callbackStakerEmissionChange(calculateAmount(gns.GetEmission(), pct))
+			changedPct := calculateAmount(gns.GetEmission(), pct)
+			if callbackStakerEmissionChange != nil {
+				callbackStakerEmissionChange(changedPct)
+			}
 		}
 	}
 
