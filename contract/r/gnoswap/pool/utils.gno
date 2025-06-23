@@ -11,7 +11,6 @@ import (
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
-
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -41,14 +40,48 @@ func safeConvertToUint64(value *u256.Uint) uint64 {
 	res, overflow := value.Uint64WithOverflow()
 	if overflow {
 		panic(ufmt.Sprintf(
-			"%v: amount(%s) overflows uint64 range",
-			errOutOfRange, value.ToString()))
+			"%v: amount(%s) overflows uint64 range (max %s)",
+			errOutOfRange,
+			value.ToString(),
+			consts.MAX_UINT64,
+		))
 	}
 	return res
 }
 
+// safeConvertToInt64 safely converts a *u256.Uint value to an int64, ensuring no overflow.
+//
+// This function attempts to convert the given *u256.Uint value to an int64. If the value exceeds
+// the maximum allowable range for int64 (`2^63 - 1`), it triggers a panic with a descriptive error message.
+//
+// Parameters:
+// - value (*u256.Uint): The unsigned 256-bit integer to be converted.
+//
+// Returns:
+// - int64: The converted value if it falls within the int64 range.
+//
+// Panics:
+//   - If the `value` exceeds the range of int64, the function will panic with an error indicating
+//     the overflow and the original value.
+//
+// Notes:
+// - This function first checks for uint64 overflow, then validates the int64 range.
+// - The maximum value for int64 is 9,223,372,036,854,775,807 (2^63 - 1).
+//
+// Example:
+// safeValue := safeConvertToInt64(u256.MustFromDecimal("9223372036854775807")) // Valid conversion
+// safeConvertToInt64(u256.MustFromDecimal("9223372036854775808")) // Panics due to overflow
 func safeConvertToInt64(value *u256.Uint) int64 {
-	return int64(safeConvertToUint64(value))
+	res, overflow := value.Uint64WithOverflow()
+	if overflow || res > uint64(consts.INT64_MAX) {
+		panic(ufmt.Sprintf(
+			"%v: amount(%s) overflows int64 range (max %s)",
+			errOutOfRange,
+			value.ToString(),
+			consts.MAX_INT64,
+		))
+	}
+	return int64(res)
 }
 
 // safeConvertToInt128 safely converts a *u256.Uint value to an *i256.Int, ensuring it does not exceed the int128 range.
@@ -97,15 +130,17 @@ func safeConvertToInt128(value *u256.Uint) *i256.Int {
 //   - *u256.Uint: A value guaranteed to fit within the uint128 range.
 //
 // Notes:
+//   - The function first checks if the value is not nil to avoid potential runtime errors.
 //   - The mask ensures that only the lower 128 bits of the value are retained.
-//   - If the input value is already within the uint128 range, it remains unchanged.
+//   - If the input value is already within the uint128 range, it is returned unchanged.
+//   - If masking is required, a new instance is returned without modifying the input.
 //   - MAX_UINT128 is a constant representing `2^128 - 1`.
 func toUint128(value *u256.Uint) *u256.Uint {
-	assertOnlyInitializedUint256(value)
+	common.AssertOnlyNotNil(value)
 	if value.Gt(u256.MustFromDecimal(consts.MAX_UINT128)) {
 		mask := new(u256.Uint).Lsh(u256.One(), consts.Q128_RESOLUTION)
-		mask = mask.Sub(mask, u256.One())
-		value = value.And(value, mask)
+		mask = new(u256.Uint).Sub(mask, u256.One())
+		return new(u256.Uint).And(value, mask)
 	}
 	return value
 }
@@ -228,16 +263,6 @@ func assertOnlyPositionContract() {
 	}
 }
 
-// assertOnlyInitializedUint256 panics if the value is nil.
-func assertOnlyInitializedUint256(value *u256.Uint) {
-	if value == nil {
-		panic(newErrorWithDetail(
-			errInvalidInput,
-			"value is nil",
-		))
-	}
-}
-
 // assertOnlyAdmin panics if the caller is not the admin.
 func assertOnlyAdmin() {
 	caller := getPrevAddr()
@@ -259,6 +284,7 @@ func assertOnlyRegistered(tokenPath string) {
 	common.MustRegistered(tokenPath)
 }
 
+// formatUint converts various unsigned integer types to string representation.
 func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:
@@ -272,6 +298,7 @@ func formatUint(v any) string {
 	}
 }
 
+// formatInt converts various signed integer types to string representation.
 func formatInt(v any) string {
 	switch v := v.(type) {
 	case int32:
@@ -285,6 +312,7 @@ func formatInt(v any) string {
 	}
 }
 
+// formatBool converts a boolean value to string representation.
 func formatBool(v bool) string {
 	return strconv.FormatBool(v)
 }
