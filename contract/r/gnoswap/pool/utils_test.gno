@@ -372,8 +372,8 @@ func TestToUint128InputPreservation(t *testing.T) {
 		uassert.Equal(t, originalStr, original.ToString())
 		// Result should be masked
 		uassert.Equal(t, consts.MAX_UINT128, result.ToString())
-		// Result and original should be different instances
-		uassert.False(t, result == original)
+		// Result and original should be different instances when masking occurs
+		uassert.True(t, result != original)
 	})
 	
 	t.Run("within range case - input preservation", func(t *testing.T) {
