@@ -24,7 +24,7 @@ func TestMintInternal_PositionMint(t *testing.T) {
 		expectedAmount1   string
 	}{
 		{
-			name: "successful mint",
+			name: "mint is success by successful mint",
 			params: MintParams{
 				token0:         "gno.land/r/onbloc/bar",
 				token1:         "gno.land/r/onbloc/baz",
@@ -45,7 +45,7 @@ func TestMintInternal_PositionMint(t *testing.T) {
 			expectedAmount1:   "100000",
 		},
 		{
-			name: "zero liquidity should fail",
+			name: "mint is failed by zero liquidity",
 			params: MintParams{
 				token0:         "gno.land/r/onbloc/bar",
 				token1:         "gno.land/r/onbloc/baz",

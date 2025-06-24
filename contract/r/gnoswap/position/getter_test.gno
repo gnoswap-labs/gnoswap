@@ -44,7 +44,7 @@ func TestPositionGetter(t *testing.T) {
 		expected any
 	}{
 		{
-			name: "GetPosition - poolKey",
+			name: "get position is success by poolKey",
 			testFunc: func() any {
 				position := PositionGetPosition(positionId)
 				return position.poolKey
@@ -52,7 +52,7 @@ func TestPositionGetter(t *testing.T) {
 			expected: poolKey,
 		},
 		{
-			name: "GetPosition - tickLower",
+			name: "get position is success by tickLower",
 			testFunc: func() any {
 				position := PositionGetPosition(positionId)
 				return position.tickLower
@@ -60,7 +60,7 @@ func TestPositionGetter(t *testing.T) {
 			expected: int32(-10000),
 		},
 		{
-			name: "GetPosition - tickUpper",
+			name: "get position is success by tickUpper",
 			testFunc: func() any {
 				position := PositionGetPosition(positionId)
 				return position.tickUpper
@@ -68,7 +68,7 @@ func TestPositionGetter(t *testing.T) {
 			expected: int32(10000),
 		},
 		{
-			name: "GetPosition - liquidity",
+			name: "get position is success by liquidity",
 			testFunc: func() any {
 				position := PositionGetPosition(positionId)
 				return position.liquidity.ToString()
@@ -76,7 +76,7 @@ func TestPositionGetter(t *testing.T) {
 			expected: "1000000",
 		},
 		{
-			name: "GetPosition - feeGrowthInside0LastX128",
+			name: "get position is success by feeGrowthInside0LastX128",
 			testFunc: func() any {
 				position := PositionGetPosition(positionId)
 				return position.feeGrowthInside0LastX128.ToString()
@@ -84,7 +84,7 @@ func TestPositionGetter(t *testing.T) {
 			expected: "0",
 		},
 		{
-			name: "GetPosition - feeGrowthInside1LastX128",
+			name: "get position is success by feeGrowthInside1LastX128",
 			testFunc: func() any {
 				position := PositionGetPosition(positionId)
 				return position.feeGrowthInside1LastX128.ToString()
@@ -92,7 +92,7 @@ func TestPositionGetter(t *testing.T) {
 			expected: "0",
 		},
 		{
-			name: "GetPosition - tokensOwed0",
+			name: "get position is success by tokensOwed0",
 			testFunc: func() any {
 				position := PositionGetPosition(positionId)
 				return position.tokensOwed0.ToString()
@@ -100,7 +100,7 @@ func TestPositionGetter(t *testing.T) {
 			expected: "0",
 		},
 		{
-			name: "GetPosition - tokensOwed1",
+			name: "get position is success by tokensOwed1",
 			testFunc: func() any {
 				position := PositionGetPosition(positionId)
 				return position.tokensOwed1.ToString()
@@ -108,7 +108,7 @@ func TestPositionGetter(t *testing.T) {
 			expected: "0",
 		},
 		{
-			name: "GetPosition - burned",
+			name: "get position is success by burned",
 			testFunc: func() any {
 				position := PositionGetPosition(positionId)
 				return position.burned
@@ -116,133 +116,133 @@ func TestPositionGetter(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "GetPositionNonce",
+			name: "get position is success by nonce",
 			testFunc: func() any {
 				return PositionGetPositionNonce(positionId).ToString()
 			},
 			expected: "0",
 		},
 		{
-			name: "GetPositionOperator",
+			name: "get position is success by operator",
 			testFunc: func() any {
 				return PositionGetPositionOperator(positionId)
 			},
 			expected: positionAddr,
 		},
 		{
-			name: "GetPositionPoolKey",
+			name: "get position is success by poolKey",
 			testFunc: func() any {
 				return PositionGetPositionPoolKey(positionId)
 			},
 			expected: poolKey,
 		},
 		{
-			name: "GetPositionTickLower",
+			name: "get position is success by tickLower",
 			testFunc: func() any {
 				return PositionGetPositionTickLower(positionId)
 			},
 			expected: int32(-10000),
 		},
 		{
-			name: "GetPositionTickUpper",
+			name: "get position is success by tickUpper",
 			testFunc: func() any {
 				return PositionGetPositionTickUpper(positionId)
 			},
 			expected: int32(10000),
 		},
 		{
-			name: "GetPositionLiquidity",
+			name: "get position is success by liquidity",
 			testFunc: func() any {
 				return PositionGetPositionLiquidity(positionId).ToString()
 			},
 			expected: "1000000",
 		},
 		{
-			name: "GetPositionFeeGrowthInside0LastX128",
+			name: "get position is success by feeGrowthInside0LastX128",
 			testFunc: func() any {
 				return PositionGetPositionFeeGrowthInside0LastX128(positionId).ToString()
 			},
 			expected: "0",
 		},
 		{
-			name: "GetPositionFeeGrowthInside1LastX128",
+			name: "get position is success by feeGrowthInside1LastX128",
 			testFunc: func() any {
 				return PositionGetPositionFeeGrowthInside1LastX128(positionId).ToString()
 			},
 			expected: "0",
 		},
 		{
-			name: "GetPositionTokensOwed0",
+			name: "get position is success by tokensOwed0",
 			testFunc: func() any {
 				return PositionGetPositionTokensOwed0(positionId).ToString()
 			},
 			expected: "0",
 		},
 		{
-			name: "GetPositionTokensOwed1",
+			name: "get position is success by tokensOwed1",
 			testFunc: func() any {
 				return PositionGetPositionTokensOwed1(positionId).ToString()
 			},
 			expected: "0",
 		},
 		{
-			name: "GetPositionIsBurned",
+			name: "get position is success by isBurned",
 			testFunc: func() any {
 				return PositionGetPositionIsBurned(positionId)
 			},
 			expected: false,
 		},
 		{
-			name: "IsInRange",
+			name: "get position is success by isInRange",
 			testFunc: func() any {
 				return PositionIsInRange(positionId)
 			},
 			expected: true,
 		},
 		{
-			name: "GetPositionNonceStr",
+			name: "get position is success by nonceStr",
 			testFunc: func() any {
 				return PositionGetPositionNonceStr(positionId)
 			},
 			expected: "0",
 		},
 		{
-			name: "GetPositionOperatorStr",
+			name: "get position is success by operatorStr",
 			testFunc: func() any {
 				return PositionGetPositionOperatorStr(positionId)
 			},
 			expected: string(positionAddr),
 		},
 		{
-			name: "GetPositionLiquidityStr",
+			name: "get position is success by liquidityStr",
 			testFunc: func() any {
 				return PositionGetPositionLiquidityStr(positionId)
 			},
 			expected: "1000000",
 		},
 		{
-			name: "GetPositionFeeGrowthInside0LastX128Str",
+			name: "get position is success by feeGrowthInside0LastX128Str",
 			testFunc: func() any {
 				return PositionGetPositionFeeGrowthInside0LastX128Str(positionId)
 			},
 			expected: "0",
 		},
 		{
-			name: "GetPositionFeeGrowthInside1LastX128Str",
+			name: "get position is success by feeGrowthInside1LastX128Str",
 			testFunc: func() any {
 				return PositionGetPositionFeeGrowthInside1LastX128Str(positionId)
 			},
 			expected: "0",
 		},
 		{
-			name: "GetPositionTokensOwed0Str",
+			name: "get position is success by tokensOwed0Str",
 			testFunc: func() any {
 				return PositionGetPositionTokensOwed0Str(positionId)
 			},
 			expected: "0",
 		},
 		{
-			name: "GetPositionTokensOwed1Str",
+			name: "get position is success by tokensOwed1Str",
 			testFunc: func() any {
 				return PositionGetPositionTokensOwed1Str(positionId)
 			},

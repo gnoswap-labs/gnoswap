@@ -20,7 +20,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	caller := params.caller
 
 	// BEFORE DECREASE LIQUIDITY, COLLECT FEE FIRST
-	_, fee0Str, fee1Str, _, _, _ := CollectFee(cross, params.positionId, params.unwrapResult, params.caller)
+	_, fee0Str, fee1Str, _, _, _ := collectFee(cross, params.positionId, params.unwrapResult, params.caller)
 	fee0 := u256.MustFromDecimal(fee0Str)
 	fee1 := u256.MustFromDecimal(fee1Str)
 

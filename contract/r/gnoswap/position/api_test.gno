@@ -13,8 +13,6 @@ func setupPositions(t *testing.T) {
 }
 
 func TestApiGetPositions_ResponseStructure(t *testing.T) {
-	setupPositions(t)
-
 	tests := []struct {
 		name         string
 		apiCall      func() string
@@ -59,18 +57,19 @@ func TestApiGetPositions_ResponseStructure(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+			setupPositions(t)
+
 			if tt.setRealm {
 				testing.SetRealm(adminRealm)
 			}
+
 			runApiTest(t, tt.apiCall, tt.expectedSize, tt.validator)
 		})
 	}
 }
 
 func TestApiGetPositionsFee(t *testing.T) {
-	initPositionTest(t)
-	setupPositions(t)
-
 	tests := []struct {
 		name         string
 		apiCall      func() string
@@ -101,6 +100,9 @@ func TestApiGetPositionsFee(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+			setupPositions(t)
+
 			runApiTest(t, tt.apiCall, tt.expectedSize, tt.validator)
 		})
 	}

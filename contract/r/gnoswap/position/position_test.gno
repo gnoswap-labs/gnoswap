@@ -60,105 +60,178 @@ func newDummyPosition(id uint64) Position {
 }
 
 func TestMustGetPosition(t *testing.T) {
-	id := GetNextId()
-	nftId := gnft.TotalSupply()
-	var newId uint64
-	if id > uint64(nftId) {
-		newId = id
-	} else {
-		newId = uint64(nftId)
+	tests := []struct {
+		name                 string
+		positionId           uint64
+		inputPosition        Position
+		inputPositionId      uint64
+		expectedPosition     Position
+		expectedHasPanic     bool
+		expectedPanicMessage string
+	}{
+		{
+			name:                 "MustGetPosition is success by existing position",
+			positionId:           1,
+			inputPosition:        newDummyPosition(1),
+			inputPositionId:      1,
+			expectedPosition:     newDummyPosition(1),
+			expectedHasPanic:     false,
+			expectedPanicMessage: "",
+		},
+		{
+			name:                 "MustGetPosition is failed by non-existent position",
+			positionId:           1,
+			inputPosition:        newDummyPosition(1),
+			inputPositionId:      999,
+			expectedPosition:     Position{},
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-POSITION-013] position does not exist || position with position ID(999) doesn't exist",
+		},
 	}
-	position := newDummyPosition(newId)
-	createNewPosition(newId, position)
 
-	t.Run("Success - Get existing position", func(t *testing.T) {
-		result := MustGetPosition(newId)
-		uassert.Equal(t, position.nonce.ToString(), result.nonce.ToString())
-		uassert.Equal(t, position.operator, result.operator)
-		uassert.Equal(t, position.poolKey, result.poolKey)
-		uassert.Equal(t, position.tickLower, result.tickLower)
-		uassert.Equal(t, position.tickUpper, result.tickUpper)
-		uassert.Equal(t, position.liquidity.ToString(), result.liquidity.ToString())
-		uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), result.feeGrowthInside0LastX128.ToString())
-		uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), result.feeGrowthInside1LastX128.ToString())
-		uassert.Equal(t, position.tokensOwed0.ToString(), result.tokensOwed0.ToString())
-		uassert.Equal(t, position.tokensOwed1.ToString(), result.tokensOwed1.ToString())
-		uassert.Equal(t, position.burned, result.burned)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+			createNewPosition(tt.positionId, tt.inputPosition)
 
-	t.Run("Fail - Non-existent position", func(t *testing.T) {
-		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-POSITION-013] position does not exist || position with position ID(999) doesn't exist",
-			func() {
-				MustGetPosition(999)
-			})
-	})
+			if tt.expectedHasPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+					MustGetPosition(tt.inputPositionId)
+				})
+			} else {
+				result := MustGetPosition(tt.inputPositionId)
+				uassert.Equal(t, tt.expectedPosition.nonce.ToString(), result.nonce.ToString())
+				uassert.Equal(t, tt.expectedPosition.operator, result.operator)
+				uassert.Equal(t, tt.expectedPosition.poolKey, result.poolKey)
+				uassert.Equal(t, tt.expectedPosition.tickLower, result.tickLower)
+				uassert.Equal(t, tt.expectedPosition.tickUpper, result.tickUpper)
+				uassert.Equal(t, tt.expectedPosition.liquidity.ToString(), result.liquidity.ToString())
+				uassert.Equal(t, tt.expectedPosition.feeGrowthInside0LastX128.ToString(), result.feeGrowthInside0LastX128.ToString())
+				uassert.Equal(t, tt.expectedPosition.feeGrowthInside1LastX128.ToString(), result.feeGrowthInside1LastX128.ToString())
+				uassert.Equal(t, tt.expectedPosition.tokensOwed0.ToString(), result.tokensOwed0.ToString())
+				uassert.Equal(t, tt.expectedPosition.tokensOwed1.ToString(), result.tokensOwed1.ToString())
+				uassert.Equal(t, tt.expectedPosition.burned, result.burned)
+			}
+		})
+	}
 }
 
 func TestSetPosition(t *testing.T) {
-	id := GetNextId()
-	position := newDummyPosition(id)
+	position := newDummyPosition(1)
+	changedPosition := newDummyPosition(1)
+	changedPosition.nonce = u256.NewUint(2)
+	changedPosition.operator = "user2"
+	changedPosition.poolKey = "poolKey2"
+	changedPosition.tickLower = -2000
+	changedPosition.tickUpper = 2000
+	changedPosition.liquidity = u256.NewUint(2000)
+	changedPosition.feeGrowthInside0LastX128 = u256.NewUint(20)
+	changedPosition.feeGrowthInside1LastX128 = u256.NewUint(40)
+	changedPosition.tokensOwed0 = u256.NewUint(60)
+	changedPosition.tokensOwed1 = u256.NewUint(80)
+	changedPosition.burned = true
 
-	t.Run("Success - Create new position", func(t *testing.T) {
-		isNew := setPosition(id, position)
-		uassert.False(t, isNew)
-		incrementNextId()
+	tests := []struct {
+		name          string
+		positionId    uint64
+		position      Position
+		inputPosition Position
+		expected      bool
+	}{
+		{
+			name:          "set position is success by existing position",
+			positionId:    1,
+			position:      position,
+			inputPosition: changedPosition,
+			expected:      false,
+		},
+	}
 
-		storedPosition, _ := GetPosition(id)
-		uassert.Equal(t, position.nonce.ToString(), storedPosition.nonce.ToString())
-		uassert.Equal(t, position.operator, storedPosition.operator)
-		uassert.Equal(t, position.poolKey, storedPosition.poolKey)
-		uassert.Equal(t, position.tickLower, storedPosition.tickLower)
-		uassert.Equal(t, position.tickUpper, storedPosition.tickUpper)
-		uassert.Equal(t, position.liquidity.ToString(), storedPosition.liquidity.ToString())
-		uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), storedPosition.feeGrowthInside0LastX128.ToString())
-		uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), storedPosition.feeGrowthInside1LastX128.ToString())
-		uassert.Equal(t, position.tokensOwed0.ToString(), storedPosition.tokensOwed0.ToString())
-		uassert.Equal(t, position.tokensOwed1.ToString(), storedPosition.tokensOwed1.ToString())
-		uassert.Equal(t, position.burned, storedPosition.burned)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+			createNewPosition(tt.positionId, tt.position)
 
-	t.Run("Success - Update existing position", func(t *testing.T) {
-		position.tickUpper = 1000
-		isNew := setPosition(id, position)
-		uassert.True(t, isNew)
+			setPosition(tt.positionId, tt.inputPosition)
 
-		updatedPosition, _ := GetPosition(id)
-		uassert.Equal(t, int32(1000), updatedPosition.tickUpper)
-	})
+			storedPosition, _ := GetPosition(tt.positionId)
+			uassert.Equal(t, tt.inputPosition.nonce.ToString(), storedPosition.nonce.ToString())
+			uassert.Equal(t, tt.inputPosition.operator, storedPosition.operator)
+			uassert.Equal(t, tt.inputPosition.poolKey, storedPosition.poolKey)
+			uassert.Equal(t, tt.inputPosition.tickLower, storedPosition.tickLower)
+			uassert.Equal(t, tt.inputPosition.tickUpper, storedPosition.tickUpper)
+			uassert.Equal(t, tt.inputPosition.liquidity.ToString(), storedPosition.liquidity.ToString())
+			uassert.Equal(t, tt.inputPosition.feeGrowthInside0LastX128.ToString(), storedPosition.feeGrowthInside0LastX128.ToString())
+			uassert.Equal(t, tt.inputPosition.feeGrowthInside1LastX128.ToString(), storedPosition.feeGrowthInside1LastX128.ToString())
+			uassert.Equal(t, tt.inputPosition.tokensOwed0.ToString(), storedPosition.tokensOwed0.ToString())
+			uassert.Equal(t, tt.inputPosition.tokensOwed1.ToString(), storedPosition.tokensOwed1.ToString())
+			uassert.Equal(t, tt.inputPosition.burned, storedPosition.burned)
+		})
+	}
 }
 
 func TestRemovePosition(t *testing.T) {
-	id := GetNextId()
-	position := newDummyPosition(id)
+	tests := []struct {
+		name            string
+		positionId      uint64
+		inputPositionId uint64
+	}{
+		{
+			name:            "remove position is success by existing position",
+			positionId:      1,
+			inputPositionId: 1,
+		},
+		{
+			name:            "remove position is failed by non-existent position",
+			positionId:      1,
+			inputPositionId: 999,
+		},
+	}
 
-	t.Run("Success - Remove existing position", func(t *testing.T) {
-		createNewPosition(id, position)
-		removePosition(id)
-		_, found := GetPosition(id)
-		uassert.False(t, found)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
 
-	t.Run("Success - Remove non-existent position", func(t *testing.T) {
-		removePosition(id)
-		_, found := GetPosition(id)
-		uassert.False(t, found)
-	})
+			createNewPosition(tt.positionId, newDummyPosition(tt.positionId))
+
+			removePosition(tt.inputPositionId)
+
+			_, found := GetPosition(tt.inputPositionId)
+			uassert.False(t, found)
+		})
+	}
 }
 
 func TestExistPosition(t *testing.T) {
-	id := GetNextId()
-	position := newDummyPosition(id)
+	tests := []struct {
+		name            string
+		positionId      uint64
+		inputPositionId uint64
+		expectedExist   bool
+	}{
+		{
+			name:            "ExistPosition is failed by position does not exist",
+			positionId:      1,
+			inputPositionId: 999,
+			expectedExist:   false,
+		},
+		{
+			name:            "ExistPosition is success by position exists",
+			positionId:      1,
+			inputPositionId: 1,
+			expectedExist:   true,
+		},
+	}
 
-	t.Run("False - Position does not exist", func(t *testing.T) {
-		uassert.False(t, ExistPosition(id))
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
 
-	t.Run("True - Position exists", func(t *testing.T) {
-		createNewPosition(id, position)
-		uassert.True(t, ExistPosition(id))
-		removePosition(id)
-	})
+			createNewPosition(tt.positionId, newDummyPosition(tt.positionId))
+
+			uassert.Equal(t, tt.expectedExist, ExistPosition(tt.inputPositionId))
+		})
+	}
 }
 
 func TestComputePositionKey(t *testing.T) {
@@ -170,28 +243,28 @@ func TestComputePositionKey(t *testing.T) {
 		expected  string
 	}{
 		{
-			name:      "Basic Position Key",
+			name:      "computePositionKey is success by basic position key",
 			owner:     alice,
 			tickLower: -100,
 			tickUpper: 200,
 			expected:  "ZzF2OWt4amNtOXRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bHpkNDBnaF9fLTEwMF9fMjAw", // Base64 of "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh__-100__200"
 		},
 		{
-			name:      "Zero Ticks",
+			name:      "computePositionKey is failed by zero ticks",
 			owner:     alice,
 			tickLower: 0,
 			tickUpper: 0,
 			expected:  "ZzF2OWt4amNtOXRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bHpkNDBnaF9fMF9fMA==", // Base64 of "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh__0__0"
 		},
 		{
-			name:      "Negative Lower Tick",
+			name:      "computePositionKey is failed by negative lower tick",
 			owner:     alice,
 			tickLower: -50,
 			tickUpper: 150,
 			expected:  "ZzF2OWt4amNtOXRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bHpkNDBnaF9fLTUwX18xNTA=", // Base64 of "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh__-50__150"
 		},
 		{
-			name:      "Same Tick Bounds",
+			name:      "computePositionKey is failed by same tick bounds",
 			owner:     alice,
 			tickLower: 300,
 			tickUpper: 300,
@@ -280,13 +353,13 @@ func TestIsValidTokenPath(t *testing.T) {
 		expected  bool
 	}{
 		{
-			name:      "Valid Token Path",
+			name:      "isValidTokenPath is success by valid token path",
 			tokenPath: gnsPath,
 			register:  true,
 			expected:  true,
 		},
 		{
-			name:      "Invalid Token Path",
+			name:      "isValidTokenPath is failed by invalid token path",
 			tokenPath: "invalid/path",
 			register:  false,
 			expected:  false,
@@ -311,7 +384,7 @@ func TestValidateTokenPath(t *testing.T) {
 		expected  error
 	}{
 		{
-			name:      "Valid Token Path",
+			name:      "validateTokenPath is success by valid token path",
 			token0:    gnsPath,
 			token1:    barPath,
 			register0: true,
@@ -319,7 +392,7 @@ func TestValidateTokenPath(t *testing.T) {
 			expected:  nil,
 		},
 		{
-			name:      "Same Token Path",
+			name:      "validateTokenPath is failed by same token path",
 			token0:    "tokenA",
 			token1:    "tokenA",
 			register0: true,
@@ -327,7 +400,7 @@ func TestValidateTokenPath(t *testing.T) {
 			expected:  errInvalidTokenPath,
 		},
 		{
-			name:      "Conflicting Tokens (GNOT ↔ WUGNOT)",
+			name:      "validateTokenPath is failed by conflicting tokens (GNOT ↔ WUGNOT)",
 			token0:    consts.GNOT,
 			token1:    consts.WRAPPED_WUGNOT,
 			register0: true,
@@ -335,7 +408,7 @@ func TestValidateTokenPath(t *testing.T) {
 			expected:  errInvalidTokenPath,
 		},
 		{
-			name:      "Invalid Token Path",
+			name:      "validateTokenPath is failed by invalid token path",
 			token0:    "tokenX",
 			token1:    "tokenY",
 			register0: false,
@@ -343,7 +416,7 @@ func TestValidateTokenPath(t *testing.T) {
 			expected:  errInvalidTokenPath,
 		},
 		{
-			name:      "Both Invalid Tokens",
+			name:      "validateTokenPath is failed by both invalid tokens",
 			token0:    "invalidA",
 			token1:    "invalidB",
 			register0: false,
@@ -398,7 +471,7 @@ func TestProcessTokens(t *testing.T) {
 		expectMsg      string
 	}{
 		{
-			name:           "Both tokens valid and not native",
+			name:           "processTokens is failed by both tokens are valid and not native",
 			token0:         gnsPath,
 			token1:         "tokenB",
 			amount0Desired: "100",
@@ -413,7 +486,7 @@ func TestProcessTokens(t *testing.T) {
 			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(gno.land/r/gnoswap/v1/gns), token1(tokenB)",
 		},
 		{
-			name:           "token0 is native",
+			name:           "processTokens is failed by token0 is native",
 			token0:         consts.GNOT,
 			token1:         gnsPath,
 			amount0Desired: "1300",
@@ -428,7 +501,7 @@ func TestProcessTokens(t *testing.T) {
 			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(gnot), token1(gno.land/r/gnoswap/v1/gns)",
 		},
 		{
-			name:           "token1 is native",
+			name:           "processTokens is failed by token1 is native",
 			token0:         gnsPath,
 			token1:         consts.GNOT,
 			amount0Desired: "150",
@@ -442,7 +515,7 @@ func TestProcessTokens(t *testing.T) {
 			expectPanic:    false,
 		},
 		{
-			name:           "Both tokens are native",
+			name:           "processTokens is failed by both tokens are native",
 			token0:         consts.GNOT,
 			token1:         consts.GNOT,
 			amount0Desired: "1100",
@@ -457,7 +530,7 @@ func TestProcessTokens(t *testing.T) {
 			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(gnot), token1(gnot)",
 		},
 		{
-			name:           "Invalid token path",
+			name:           "processTokens is failed by invalid token path",
 			token0:         "invalidToken",
 			token1:         "tokenB",
 			amount0Desired: "150",
@@ -532,7 +605,7 @@ func TestProcessMintInput(t *testing.T) {
 		expectedErrorMsg string
 	}{
 		{
-			name: "Standard Mint - Token0 < Token1",
+			name: "processMintInput is success by standard mint",
 			input: MintInput{
 				token0:         gnsPath,
 				token1:         barPath,
@@ -553,7 +626,7 @@ func TestProcessMintInput(t *testing.T) {
 			expectError:     false,
 		},
 		{
-			name: "Token Swap - Token1 < Token0",
+			name: "processMintInput is success by token swap",
 			input: MintInput{
 				token0:         barPath,
 				token1:         gnsPath,
@@ -574,7 +647,7 @@ func TestProcessMintInput(t *testing.T) {
 			expectError:     false,
 		},
 		{
-			name: "Error Case - Invalid Amounts",
+			name: "processMintInput is failed by invalid amounts",
 			input: MintInput{
 				token0:         gnsPath,
 				token1:         barPath,
@@ -625,7 +698,7 @@ func TestMintInternal(t *testing.T) {
 		positionId        uint64
 	}{
 		{
-			name: "Successful Mint",
+			name: "internal mint is success by successful mint",
 			params: MintParams{
 				token0:         barPath,
 				token1:         fooPath,
@@ -647,7 +720,7 @@ func TestMintInternal(t *testing.T) {
 			positionId:        0,
 		},
 		{
-			name: "Position Exists",
+			name: "internal mint is failed by position already exists",
 			params: MintParams{
 				token0:         barPath,
 				token1:         fooPath,
@@ -667,7 +740,7 @@ func TestMintInternal(t *testing.T) {
 			positionId:    1,
 		},
 		{
-			name: "Zero Liquidity Mint",
+			name: "internal mint is failed by zero liquidity",
 			params: MintParams{
 				token0:         barPath,
 				token1:         fooPath,
@@ -758,7 +831,7 @@ func TestMint(t *testing.T) {
 		referrer           string
 	}{
 		{
-			name:               "Success - With valid referral",
+			name:               "mint is success by valid referral",
 			token0:             barPath,
 			token1:             fooPath,
 			fee:                fee500,
@@ -777,7 +850,7 @@ func TestMint(t *testing.T) {
 			referrer:           testutils.TestAddress("carol").String(),
 		},
 		{
-			name:             "Fail - Deadline exceeded",
+			name:             "mint is failed by deadline exceeded",
 			token0:           barPath,
 			token1:           fooPath,
 			fee:              fee500,
@@ -796,7 +869,7 @@ func TestMint(t *testing.T) {
 			expectedAmount1:  1900000,
 		},
 		{
-			name:             "Fail - Invalid tick range",
+			name:             "mint is failed by invalid tick range",
 			token0:           barPath,
 			token1:           fooPath,
 			fee:              fee500,
@@ -815,7 +888,7 @@ func TestMint(t *testing.T) {
 			expectedAmount1:  1900000,
 		},
 		{
-			name:             "Fail - Caller not authorized",
+			name:             "mint is failed by caller not authorized",
 			token0:           barPath,
 			token1:           fooPath,
 			fee:              fee500,
@@ -918,7 +991,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 		expectedErrorMsg string
 	}{
 		{
-			name:            "Success - Valid Increase",
+			name:            "increase liquidity is success by valid increase",
 			positionId:      1,
 			amount0Desired:  "1000000",
 			amount1Desired:  "2000000",
@@ -930,7 +1003,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 			expectPanic:     false,
 		},
 		{
-			name:             "Fail - Deadline Exceeded",
+			name:             "increase liquidity is failed by deadline exceeded",
 			positionId:       1,
 			amount0Desired:   "1000000",
 			amount1Desired:   "2000000",
@@ -941,7 +1014,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 			expectedErrorMsg: "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234567290)",
 		},
 		{
-			name:             "Fail - Invalid Amount String",
+			name:             "increase liquidity is failed by invalid amount string",
 			positionId:       1,
 			amount0Desired:   "invalid_amount",
 			amount1Desired:   "2000000",
@@ -952,7 +1025,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 			expectedErrorMsg: "[GNOSWAP-POSITION-005] invalid input data || input string : invalid_amount",
 		},
 		{
-			name:             "Fail - Position Does Not Exist",
+			name:             "increase liquidity is failed by position does not exist",
 			positionId:       999,
 			amount0Desired:   "1000000",
 			amount1Desired:   "2000000",
@@ -1282,10 +1355,10 @@ func TestCollectFees(t *testing.T) {
 
 			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tt.expectedAbortError, func() {
-					CollectFee(cross, positionId, tt.unwrapResult, adminAddr)
+					CollectFee(cross, positionId, tt.unwrapResult)
 				})
 			} else {
-				_, fee0, fee1, _, amount0, amount1 := CollectFee(cross, positionId, tt.unwrapResult, adminAddr)
+				_, fee0, fee1, _, amount0, amount1 := CollectFee(cross, positionId, tt.unwrapResult)
 				uassert.Equal(t, tt.expectedFee0, fee0)
 				uassert.Equal(t, tt.expectedFee1, fee1)
 				uassert.Equal(t, tt.expectedAmount0, amount0)

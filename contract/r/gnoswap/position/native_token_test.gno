@@ -21,7 +21,7 @@ func TestTransferUGNOT(t *testing.T) {
 		shouldPanic bool
 	}{
 		{
-			name: "Success - Zero amount",
+			name: "transferUGNOT is success by zero amount",
 			action: func(t *testing.T, from, to std.Address) {
 				transferUGNOT(from, to, 0)
 			},
@@ -34,7 +34,7 @@ func TestTransferUGNOT(t *testing.T) {
 			shouldPanic: false,
 		},
 		{
-			name: "Success - Valid transfer",
+			name: "transferUGNOT is success by valid transfer",
 			action: func(t *testing.T, from, to std.Address) {
 				ugnotFaucet(t, from, 100)
 				testing.SetRealm(std.NewUserRealm(from))
@@ -78,7 +78,7 @@ func TestWrapInPosition(t *testing.T) {
 		expectedErrMsg string
 	}{
 		{
-			name: "Failure - Amount less than minimum",
+			name: "wrap is failed by amount less than minimum",
 			action: func(t *testing.T, from, to std.Address) error {
 				return wrap(999, to)
 			},
@@ -89,7 +89,7 @@ func TestWrapInPosition(t *testing.T) {
 			shouldPanic:    true,
 		},
 		{
-			name: "Failure - Zero amount",
+			name: "wrap is failed by zero amount",
 			action: func(t *testing.T, from, to std.Address) error {
 				return wrap(0, to)
 			},
@@ -100,7 +100,7 @@ func TestWrapInPosition(t *testing.T) {
 			shouldPanic:    true,
 		},
 		{
-			name: "Success - Valid amount",
+			name: "wrap is success by valid amount",
 			action: func(t *testing.T, from, to std.Address) error {
 				ugnotFaucet(t, from, 1000)
 				testing.SetRealm(std.NewUserRealm(from))
@@ -141,7 +141,7 @@ func TestUnWrap(t *testing.T) {
 		shouldPanic bool
 	}{
 		{
-			name: "Failure - Zero amount",
+			name: "unwrap is failed by zero amount",
 			action: func(t *testing.T, from, to std.Address) error {
 				return unwrap(0, to)
 			},
@@ -152,7 +152,7 @@ func TestUnWrap(t *testing.T) {
 			shouldPanic: true,
 		},
 		{
-			name: "Success - Valid amount",
+			name: "unwrap is success by valid amount",
 			action: func(t *testing.T, from, to std.Address) error {
 				ugnotFaucet(t, from, 1000)
 
@@ -199,22 +199,22 @@ func TestIsNative(t *testing.T) {
 		expected bool
 	}{
 		{
-			name:     "Native Token - GNOT",
+			name:     "isNative is success by native token",
 			token:    "gnot",
 			expected: true,
 		},
 		{
-			name:     "Non-Native Token",
+			name:     "isNative is failed by non-native token",
 			token:    "usdt",
 			expected: false,
 		},
 		{
-			name:     "Empty Token",
+			name:     "isNative is failed by empty token",
 			token:    "",
 			expected: false,
 		},
 		{
-			name:     "Similar but Different Token",
+			name:     "isNative is failed by similar but different token",
 			token:    "GNOT",
 			expected: false,
 		},
@@ -235,22 +235,22 @@ func TestIsWrappedToken(t *testing.T) {
 		expected  bool
 	}{
 		{
-			name:      "Success - Token is Wrapped WUGNOT",
+			name:      "isWrappedToken is success by wrapped WUGNOT",
 			tokenPath: consts.WRAPPED_WUGNOT,
 			expected:  true,
 		},
 		{
-			name:      "Fail - Token is not Wrapped WUGNOT",
+			name:      "isWrappedToken is failed by non-wrapped WUGNOT",
 			tokenPath: "gno.land/r/demo/ugnot",
 			expected:  false,
 		},
 		{
-			name:      "Fail - Empty tokenPath",
+			name:      "isWrappedToken is failed by empty tokenPath",
 			tokenPath: "",
 			expected:  false,
 		},
 		{
-			name:      "Fail - Similar but Different Token Path",
+			name:      "isWrappedToken is failed by similar but different tokenPath",
 			tokenPath: "gno.land/r/demo/Wugnot",
 			expected:  false,
 		},
@@ -281,7 +281,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Panic - Zero UGNOT",
+			name:          "safeWrapNativeToken is failed by zero UGNOT",
 			amountDesired: "50",
 			userAddress:   alice,
 			sentAmount:    0,
@@ -289,7 +289,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			expectedError: "[GNOSWAP-POSITION-008] can not wrap less than minimum amount || amount(50) < minimum(1000)",
 		},
 		{
-			name:          "Panic - Insufficient UGNOT",
+			name:          "safeWrapNativeToken is failed by insufficient UGNOT",
 			amountDesired: "150",
 			userAddress:   alice,
 			sentAmount:    100,
@@ -297,7 +297,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			expectedError: "[GNOSWAP-POSITION-008] can not wrap less than minimum amount || amount(150) < minimum(1000)",
 		},
 		{
-			name:          "Panic - Invalid Desired Amount",
+			name:          "safeWrapNativeToken is failed by invalid desired amount",
 			amountDesired: "invalid",
 			userAddress:   alice,
 			sentAmount:    200,
@@ -305,7 +305,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			expectedError: "[GNOSWAP-POSITION-003] wrap, unwrap failed || strconv.ParseInt: parsing \"invalid\": invalid syntax",
 		},
 		{
-			name:          "Successful wrap - Exact Amount",
+			name:          "safeWrapNativeToken is success by exact amount",
 			amountDesired: "1050",
 			userAddress:   alice,
 			sentAmount:    1050,
@@ -313,7 +313,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			expectedWrap:  1050,
 		},
 		{
-			name:          "Excess Refund",
+			name:          "safeWrapNativeToken is success by excess refund",
 			amountDesired: "1000",
 			userAddress:   alice,
 			sentAmount:    1500,
@@ -321,7 +321,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			expectedWrap:  1000,
 		},
 		{
-			name:          "Boundary Test - Exact Match",
+			name:          "safeWrapNativeToken is success by boundary test",
 			amountDesired: "1000",
 			userAddress:   alice,
 			sentAmount:    1000,
@@ -329,7 +329,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			expectedWrap:  1000,
 		},
 		{
-			name:          "Zero Desired Amount", // unable to catch this panic
+			name:          "safeWrapNativeToken is failed by zero desired amount", // unable to catch this panic
 			amountDesired: "0",
 			userAddress:   alice,
 			sentAmount:    100,
@@ -337,7 +337,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			expectedError: "[GNOSWAP-POSITION-004] zero wrapped amount || amount requested to wrap is zero",
 		},
 		{
-			name:          "Wrap Error Test",
+			name:          "safeWrapNativeToken is failed by wrap error",
 			amountDesired: "100",
 			userAddress:   alice,
 			sentAmount:    100,

@@ -315,6 +315,16 @@ func CollectFee(
 	cur realm,
 	positionId uint64,
 	unwrapResult bool,
+) (uint64, string, string, string, string, string) {
+	caller := getPrevAddr()
+
+	return collectFee(cur, positionId, unwrapResult, caller)
+}
+
+func collectFee(
+	cur realm,
+	positionId uint64,
+	unwrapResult bool,
 	caller std.Address,
 ) (uint64, string, string, string, string, string) {
 	assertOnlyNotHalted()
