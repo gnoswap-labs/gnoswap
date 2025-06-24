@@ -164,7 +164,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				amountSpecified: newInt256("100"),
 			},
 			expectError:  true,
-			errType:      "panic",
+			errType:      "abort",
 			errorMessage: "[GNOSWAP-ROUTER-006] invalid pool fee tier || unknown fee(0)",
 		},
 		{
@@ -182,7 +182,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				amountSpecified: newInt256("100"),
 			},
 			expectError:  true,
-			errType:      "panic",
+			errType:      "abort",
 			errorMessage: "[GNOSWAP-ROUTER-006] invalid pool fee tier || unknown fee(1000000)",
 		},
 		{
