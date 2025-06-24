@@ -2,7 +2,6 @@ package router
 
 import (
 	"std"
-	"strings"
 	"testing"
 
 	"gno.land/p/demo/uassert"
@@ -94,6 +93,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 		setupFn      func(t *testing.T)
 		params       SingleSwapParams
 		expectError  bool
+		errType      string
 		errorMessage string
 	}{
 		{
@@ -111,7 +111,8 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				amountSpecified: newInt256("100"),
 			},
 			expectError:  true,
-			errorMessage: "cannot swap same token",
+			errType:      "panic",
+			errorMessage: "[GNOSWAP-ROUTER-014] cannot swap same token",
 		},
 		{
 			name: "Fail: Unregistered input token",
@@ -127,7 +128,8 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				amountSpecified: newInt256("100"),
 			},
 			expectError:  true,
-			errorMessage: "token is not registered",
+			errType:      "panic",
+			errorMessage: "[GNOSWAP-COMMON-004] token is not registered || token(gno.land/r/invalid/token)",
 		},
 		{
 			name: "Fail: Unregistered output token",
@@ -144,7 +146,8 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				amountSpecified: newInt256("100"),
 			},
 			expectError:  true,
-			errorMessage: "token is not registered || token(gno.land/r/invalid/token)",
+			errType:      "panic",
+			errorMessage: "[GNOSWAP-COMMON-004] token is not registered || token(gno.land/r/invalid/token)",
 		},
 		{
 			name: "Fail: Invalid fee tier 1",
@@ -161,7 +164,8 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				amountSpecified: newInt256("100"),
 			},
 			expectError:  true,
-			errorMessage: "unknown fee(0)",
+			errType:      "abort",
+			errorMessage: "[GNOSWAP-ROUTER-006] invalid pool fee tier || unknown fee(0)",
 		},
 		{
 			name: "Fail: Invalid fee tier 2",
@@ -178,7 +182,8 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				amountSpecified: newInt256("100"),
 			},
 			expectError:  true,
-			errorMessage: "unknown fee(1000000)",
+			errType:      "abort",
+			errorMessage: "[GNOSWAP-ROUTER-006] invalid pool fee tier || unknown fee(1000000)",
 		},
 		{
 			name: "Fail: Zero amount specified",
@@ -195,7 +200,8 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				amountSpecified: newInt256("0"),
 			},
 			expectError:  true,
-			errorMessage: "amountSpecified == 0",
+			errType:      "abort",
+			errorMessage: "[GNOSWAP-POOL-015] invalid swap amount || amountSpecified == 0",
 		},
 		{
 			name: "Success: Valid parameters",
@@ -223,31 +229,21 @@ func TestSingleSwapInputValidation(t *testing.T) {
 			}
 
 			if tt.expectError {
-				defer func() {
-					r := recover()
-					if r == nil {
-						t.Errorf("Expected error but got none")
-						return
-					}
-					var errorStr string
-					switch v := r.(type) {
-					case string:
-						errorStr = v
-					case error:
-						errorStr = v.Error()
-					default:
-						t.Errorf("Expected error string but got %T: %v", r, r)
-						return
-					}
-					if !strings.Contains(errorStr, tt.errorMessage) {
-						t.Errorf("Expected error containing %q but got %q", tt.errorMessage, errorStr)
-					}
-				}()
-			}
+				switch tt.errType {
+				case "panic":
+					uassert.PanicsWithMessage(t, tt.errorMessage, func() {
+						singleSwap(&tt.params)
+					})
+				case "abort":
+					uassert.AbortsWithMessage(t, tt.errorMessage, func() {
+						singleSwap(&tt.params)
+					})
+				default:
+					t.Errorf("unexpected error type: %s", tt.errType)
+				}
+			} else {
+				amountIn, amountOut := singleSwap(&tt.params)
 
-			amountIn, amountOut := singleSwap(&tt.params)
-
-			if !tt.expectError {
 				if amountIn == nil || amountOut == nil {
 					t.Error("Expected non-nil amounts for successful swap")
 				}

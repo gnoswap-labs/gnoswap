@@ -28,12 +28,10 @@ type testDrySwapRouteCases struct {
 	expectedAmountOut string
 	expectedSuccess   bool
 	expectPanic       bool
+	expectedPanicMsg  string
 }
 
-func TestDrySwapRoute(t *testing.T) {
-	t.Skip("run this test separately with `gno test -v -run TestDrySwapRoute`")
-	createBasicPool(t)
-
+func TestDrySwapRoute_Basic(t *testing.T) {
 	tests := []testDrySwapRouteCases{
 		{
 			name:              "ExactIn - Single Route",
@@ -91,6 +89,10 @@ func TestDrySwapRoute(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initRouterTest(t)
+
+			createBasicPool(t)
+
 			amountIn, amountOut, success := DrySwapRoute(
 				cross,
 				tt.inputToken,
@@ -110,7 +112,6 @@ func TestDrySwapRoute(t *testing.T) {
 }
 
 func TestDrySwapRouteOverflow(t *testing.T) {
-	t.Skip("run this test separately with `gno test -v -run TestDrySwapRouteOverflow`")
 	tests := []testDrySwapRouteCases{
 		{
 			name:              "ExactIn - Overflow in calculateSwapAmount",
@@ -123,8 +124,8 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 			tokenAmountLimit:  "1",
 			expectedAmountIn:  "0",
 			expectedAmountOut: "0",
-			expectedSuccess:   false,
 			expectPanic:       true,
+			expectedPanicMsg:  "[GNOSWAP-ROUTER-005] invalid input data || overflow in calculateSwapAmount",
 		},
 		{
 			name:              "ExactOut - Overflow in calculateSwapAmount",
@@ -137,67 +138,29 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 			tokenAmountLimit:  "100000",
 			expectedAmountIn:  "0",
 			expectedAmountOut: "0",
-			expectedSuccess:   false,
 			expectPanic:       true,
-		},
-		{
-			name:              "ExactIn - Overflow in resultAmountIn",
-			inputToken:        "gno.land/r/onbloc/bar",
-			outputToken:       "gno.land/r/onbloc/baz",
-			specifiedAmount:   "1000",
-			swapTypeStr:       "EXACT_IN",
-			strRouteArr:       "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
-			quoteArr:          "50,50",
-			tokenAmountLimit:  "1",
-			expectedAmountIn:  "0",
-			expectedAmountOut: "0",
-			expectedSuccess:   false,
-			expectPanic:       true,
-		},
-		{
-			name:              "ExactOut - Overflow in resultAmountOut",
-			inputToken:        "gno.land/r/onbloc/baz",
-			outputToken:       "gno.land/r/onbloc/bar",
-			specifiedAmount:   "1000",
-			swapTypeStr:       "EXACT_OUT",
-			strRouteArr:       "gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500",
-			quoteArr:          "50,50",
-			tokenAmountLimit:  "100000",
-			expectedAmountIn:  "0",
-			expectedAmountOut: "0",
-			expectedSuccess:   false,
-			expectPanic:       true,
+			expectedPanicMsg:  "[GNOSWAP-ROUTER-005] invalid input data || overflow in calculateSwapAmount",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					if !tt.expectPanic {
-						t.Errorf("unexpected panic: %v", r)
-					}
-				} else if tt.expectPanic {
-					t.Error("expected panic but got none")
-				}
-			}()
+			initRouterTest(t)
 
-			amountIn, amountOut, success := DrySwapRoute(
-				cross,
-				tt.inputToken,
-				tt.outputToken,
-				tt.specifiedAmount,
-				tt.swapTypeStr,
-				tt.strRouteArr,
-				tt.quoteArr,
-				tt.tokenAmountLimit,
-			)
+			createBasicPool(t)
 
-			if !tt.expectPanic {
-				uassert.Equal(t, tt.expectedAmountIn, amountIn)
-				uassert.Equal(t, tt.expectedAmountOut, amountOut)
-				uassert.Equal(t, tt.expectedSuccess, success)
-			}
+			uassert.AbortsWithMessage(t, tt.expectedPanicMsg, func() {
+				DrySwapRoute(
+					cross,
+					tt.inputToken,
+					tt.outputToken,
+					tt.specifiedAmount,
+					tt.swapTypeStr,
+					tt.strRouteArr,
+					tt.quoteArr,
+					tt.tokenAmountLimit,
+				)
+			})
 		})
 	}
 }

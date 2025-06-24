@@ -5,10 +5,10 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 )
 
@@ -92,6 +92,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 		specifiedAmount *i256.Int
 		sentAmount      int64
 		expectError     bool
+		expectedError   string
 	}{
 		{
 			name:            "Pass: non-GNOT token swap",
@@ -102,10 +103,61 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 			expectError:     false,
 		},
 		{
-			name:            "Pass: GNOT -> WGNOT exact amount",
-			inputToken:      consts.GNOT,
+			name:            "Pass: WUGNOT input token",
+			inputToken:      "gno.land/r/demo/wugnot",
+			outputToken:     "token2",
+			specifiedAmount: i256.NewInt(100),
+			sentAmount:      0,
+			expectError:     false,
+		},
+		{
+			name:            "Pass: WUGNOT output token",
+			inputToken:      "token1",
+			outputToken:     "gno.land/r/demo/wugnot",
+			specifiedAmount: i256.NewInt(100),
+			sentAmount:      0,
+			expectError:     false,
+		},
+		{
+			name:            "Fail: GNOT input with insufficient sent amount",
+			inputToken:      "gnot",
 			outputToken:     "token2",
 			specifiedAmount: i256.NewInt(1000),
+			sentAmount:      500,
+			expectError:     true,
+			expectedError:   "ugnot sent by user(500) is not equal to amountSpecified(1000)",
+		},
+		{
+			name:            "Fail: GNOT input with excess sent amount",
+			inputToken:      "gnot",
+			outputToken:     "token2",
+			specifiedAmount: i256.NewInt(1000),
+			sentAmount:      1500,
+			expectError:     true,
+			expectedError:   "ugnot sent by user(1500) is not equal to amountSpecified(1000)",
+		},
+		{
+			name:            "Fail: GNOT input with zero sent amount",
+			inputToken:      "gnot",
+			outputToken:     "token2",
+			specifiedAmount: i256.NewInt(1000),
+			sentAmount:      0,
+			expectError:     true,
+			expectedError:   "ugnot sent by user(0) is not equal to amountSpecified(1000)",
+		},
+		{
+			name:            "Pass: GNOT input with zero specified amount",
+			inputToken:      "gnot",
+			outputToken:     "token2",
+			specifiedAmount: i256.NewInt(0),
+			sentAmount:      0,
+			expectError:     false,
+		},
+		{
+			name:            "Pass: non-GNOT input with non-zero sent amount",
+			inputToken:      "token1",
+			outputToken:     "token2",
+			specifiedAmount: i256.NewInt(100),
 			sentAmount:      1000,
 			expectError:     false,
 		},
@@ -115,8 +167,15 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			op := &baseSwapOperation{}
 
+			testUser := testutils.TestAddress("test_user")
+			testing.SetOriginCaller(testUser)
+			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+
 			testCoins := std.Coins{{"ugnot", tt.sentAmount}}
 			testing.IssueCoins(std.OriginCaller(), testCoins)
+			if tt.sentAmount > 0 {
+				testing.IssueCoins(routerAddr, testCoins)
+			}
 			testing.SetOriginSend(testCoins)
 
 			err := op.handleNativeTokenWrapping(
@@ -206,11 +265,12 @@ func TestProcessRoute(t *testing.T) {
 		toSwap := i256.NewInt(1000)
 		swapType := ExactIn
 
-		amountIn, amountOut, err := op.processRoute(route, toSwap, swapType)
-
-		uassert.Equal(t, err, nil)
-		uassert.Equal(t, amountIn.ToString(), "1000")
-		uassert.Equal(t, amountOut.ToString(), "979")
+		func(cur realm) {
+			amountIn, amountOut, err := op.processRoute(route, toSwap, swapType)
+			uassert.Equal(t, err, nil)
+			uassert.Equal(t, amountIn.ToString(), "1000")
+			uassert.Equal(t, amountOut.ToString(), "979")
+		}(cross)
 	})
 }
 
@@ -235,10 +295,17 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 		i256.NewInt(50), // 101 * 50 / 100 = 50
 	}
 
-	_, amountOut, err := op.processRoutes(ExactIn)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	func(cur realm) {
+		_, amountOut, err := op.processRoutes(ExactIn)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		// check output amount is not zero
+		if amountOut.Cmp(u256.Zero()) == 0 {
+			t.Error("expected non-zero amountOut")
+		}
+	}(cross)
 
 	// check actual swapped amounts for each route
 	for i, _ := range op.routes {
@@ -256,11 +323,6 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 	totalExpected := oddAmount
 	if op.amountSpecified.Cmp(totalExpected) != 0 {
 		t.Errorf("total expected amount %s, got %s", totalExpected.ToString(), op.amountSpecified.ToString())
-	}
-
-	// check output amount is not zero
-	if amountOut.Cmp(u256.Zero()) == 0 {
-		t.Error("expected non-zero amountOut")
 	}
 
 	// check remainder

@@ -2,7 +2,7 @@ package router
 
 import (
 	"std"
-	"strings"
+	// "strings"
 	"testing"
 
 	"gno.land/p/demo/uassert"
@@ -65,7 +65,6 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 }
 
 func TestSwapInner(t *testing.T) {
-	t.Skip("run this test separately")
 	user1Realm := std.NewUserRealm(user1Addr)
 	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
 	poolAddr, _ := access.GetAddress(access.ROLE_POOL)
@@ -80,6 +79,7 @@ func TestSwapInner(t *testing.T) {
 		expectedRecv      string
 		expectedOut       string
 		expectError       bool
+		expectedErrorMsg  string
 	}{
 		{
 			name: "normal swap - exact input",
@@ -127,9 +127,10 @@ func TestSwapInner(t *testing.T) {
 				fee:      3000,
 				payer:    routerAddr,
 			},
-			expectedRecv: "0",
-			expectedOut:  "0",
-			expectError:  true,
+			expectedRecv:     "0",
+			expectedOut:      "0",
+			expectError:      true,
+			expectedErrorMsg: "[GNOSWAP-POOL-005] out of range for numeric value: amount(92267581029952440000000) overflows int64 range (max 9223372036854775807)",
 		},
 	}
 
@@ -147,25 +148,29 @@ func TestSwapInner(t *testing.T) {
 			}
 
 			if tt.expectError {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Error("Expected panic for overflow")
-					} else if !strings.Contains(r.(string), "overflow") {
-						t.Error("Expected panic for overflow")
-					}
-				}()
-			}
+				uassert.AbortsWithMessage(t, tt.expectedErrorMsg, func() {
+					swapInner(
+						cross,
+						tt.amountSpecified,
+						tt.recipient,
+						tt.sqrtPriceLimitX96,
+						tt.data,
+					)
+				})
+			} else {
+				testing.SetRealm(routerRealm)
+				poolRecv, poolOut := swapInner(
+					cross,
+					tt.amountSpecified,
+					tt.recipient,
+					tt.sqrtPriceLimitX96,
+					tt.data,
+				)
 
-			poolRecv, poolOut := swapInner(
-				tt.amountSpecified,
-				tt.recipient,
-				tt.sqrtPriceLimitX96,
-				tt.data,
-			)
-
-			if !tt.expectError {
-				uassert.Equal(t, poolRecv.ToString(), tt.expectedRecv)
-				uassert.Equal(t, poolOut.ToString(), tt.expectedOut)
+				if !tt.expectError {
+					uassert.Equal(t, poolRecv.ToString(), tt.expectedRecv)
+					uassert.Equal(t, poolOut.ToString(), tt.expectedOut)
+				}
 			}
 		})
 	}
