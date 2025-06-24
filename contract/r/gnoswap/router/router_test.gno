@@ -112,6 +112,9 @@ func TestFinalizeSwap(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initRouterTest(t)
+			createBasicPool(t)
+
 			if tt.expectError {
 				defer func() {
 					r := recover()
@@ -216,6 +219,8 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initRouterTest(t)
+
 			// Pool Creation
 			testing.SetRealm(std.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFeeByAdmin(cross, 0)
@@ -381,6 +386,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initRouterTest(t)
+
 			// Pool Creation
 			testing.SetRealm(std.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFeeByAdmin(cross, 0)
@@ -573,6 +580,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initRouterTest(t)
+
 			// Pool Creation
 			testing.SetRealm(std.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFeeByAdmin(cross, 0)
@@ -765,6 +774,8 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initRouterTest(t)
+
 			// Pool Creation
 			testing.SetRealm(std.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFeeByAdmin(cross, 0)

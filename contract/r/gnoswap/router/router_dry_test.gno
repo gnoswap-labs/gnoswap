@@ -32,8 +32,6 @@ type testDrySwapRouteCases struct {
 }
 
 func TestDrySwapRoute_Basic(t *testing.T) {
-	createBasicPool(t)
-
 	tests := []testDrySwapRouteCases{
 		{
 			name:              "ExactIn - Single Route",
@@ -91,6 +89,10 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initRouterTest(t)
+
+			createBasicPool(t)
+
 			amountIn, amountOut, success := DrySwapRoute(
 				cross,
 				tt.inputToken,
@@ -143,6 +145,10 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initRouterTest(t)
+
+			createBasicPool(t)
+
 			uassert.AbortsWithMessage(t, tt.expectedPanicMsg, func() {
 				DrySwapRoute(
 					cross,
