@@ -837,6 +837,8 @@ func TestMint(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			initPositionTest(t)
+
 			testing.SetRealm(adminRealm)
 			pl.SetPoolCreationFeeByAdmin(cross, 0)
 			CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
@@ -902,36 +904,6 @@ func TestMint(t *testing.T) {
 }
 
 func TestIncreaseLiquidity(t *testing.T) {
-	testing.SetRealm(adminRealm)
-
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
-	CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
-
-	TokenFaucet(t, barPath, alice)
-	TokenFaucet(t, fooPath, alice)
-
-	testing.SetRealm(posRealm)
-	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
-	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
-
-	testing.SetOriginCaller(adminAddr)
-	positionId, _, _, _ := Mint(
-		cross,
-		barPath,
-		fooPath,
-		fee500,
-		-10000,
-		10000,
-		"1000000",
-		"1000000",
-		"0",
-		"0",
-		time.Now().Add(time.Hour).Unix(),
-		adminAddr,
-		adminAddr,
-		"",
-	)
-
 	tests := []struct {
 		name             string
 		positionId       uint64
@@ -947,7 +919,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 	}{
 		{
 			name:            "Success - Valid Increase",
-			positionId:      positionId,
+			positionId:      1,
 			amount0Desired:  "1000000",
 			amount1Desired:  "2000000",
 			amount0Min:      "950000",
@@ -959,7 +931,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 		},
 		{
 			name:             "Fail - Deadline Exceeded",
-			positionId:       positionId,
+			positionId:       1,
 			amount0Desired:   "1000000",
 			amount1Desired:   "2000000",
 			amount0Min:       "950000",
@@ -970,7 +942,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 		},
 		{
 			name:             "Fail - Invalid Amount String",
-			positionId:       positionId,
+			positionId:       1,
 			amount0Desired:   "invalid_amount",
 			amount1Desired:   "2000000",
 			amount0Min:       "950000",
@@ -994,7 +966,36 @@ func TestIncreaseLiquidity(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			initPositionTest(t)
+			testing.SetRealm(adminRealm)
+
+			pl.SetPoolCreationFeeByAdmin(cross, 0)
+			CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
+
+			TokenFaucet(t, barPath, alice)
+			TokenFaucet(t, fooPath, alice)
+
+			testing.SetRealm(posRealm)
+			TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
+			TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
+
 			testing.SetOriginCaller(adminAddr)
+			_, _, _, _ = Mint(
+				cross,
+				barPath,
+				fooPath,
+				fee500,
+				-10000,
+				10000,
+				"1000000",
+				"1000000",
+				"0",
+				"0",
+				time.Now().Add(time.Hour).Unix(),
+				adminAddr,
+				adminAddr,
+				"",
+			)
 
 			if tc.expectPanic {
 				uassert.AbortsWithMessage(t,
@@ -1029,18 +1030,6 @@ func TestIncreaseLiquidity(t *testing.T) {
 }
 
 func TestDecreaseLiquidity(t *testing.T) {
-	testing.SetRealm(adminRealm)
-
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
-	CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
-
-	TokenFaucet(t, barPath, alice)
-	TokenFaucet(t, fooPath, alice)
-
-	testing.SetRealm(posRealm)
-	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
-	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
-
 	tests := []struct {
 		name              string
 		beforeIncrease    bool
@@ -1058,7 +1047,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 		expectedFee1      string
 	}{
 		{
-			name:              "Success - Decrease 50% Liquidity",
+			name:              "decrease liquidity is success by 50%",
 			liquidityToRemove: "400000",
 			amount0Min:        "8000",
 			amount1Min:        "15000",
@@ -1070,7 +1059,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			expectedFee1:      "0",
 		},
 		{
-			name:              "Success - Decrease 100% Liquidity",
+			name:              "decrease liquidity is success by 100%",
 			liquidityToRemove: "600000",
 			amount0Min:        "10000",
 			amount1Min:        "20000",
@@ -1083,7 +1072,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			expectedErrorMsg:  "",
 		},
 		{
-			name:              "Fail - Zero Liquidity",
+			name:              "decrease liquidity is fail by zero liquidity",
 			liquidityToRemove: "0",
 			amount0Min:        "10000",
 			amount1Min:        "20000",
@@ -1093,8 +1082,8 @@ func TestDecreaseLiquidity(t *testing.T) {
 			expectedErrorMsg:  "[GNOSWAP-POSITION-010] zero liquidity || liquidity amount must be greater than 0, got 0",
 		},
 		{
-			name:              "Fail - Underflow",
-			liquidityToRemove: "1541593",
+			name:              "decrease liquidity is fail by underflow",
+			liquidityToRemove: "2541593",
 			amount0Min:        "200000",
 			amount1Min:        "400000",
 			deadlineOffset:    time.Hour,
@@ -1102,10 +1091,10 @@ func TestDecreaseLiquidity(t *testing.T) {
 			expectedHasAbort:  true,
 			expectedFee0:      "0",
 			expectedFee1:      "0",
-			expectedErrorMsg:  "[GNOSWAP-POSITION-019] invalid liquidity || Liquidity requested(1541593) is greater than liquidity held(1541592)",
+			expectedErrorMsg:  "[GNOSWAP-POSITION-019] invalid liquidity || Liquidity requested(2541593) is greater than liquidity held(2541592)",
 		},
 		{
-			name:              "Fail - Deadline Exceeded",
+			name:              "decrease liquidity is fail by deadline exceeded",
 			liquidityToRemove: "50",
 			amount0Min:        "10000",
 			amount1Min:        "20000",
@@ -1115,7 +1104,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			expectedErrorMsg:  "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)",
 		},
 		{
-			name:              "Success - Increase and Decrease",
+			name:              "decrease liquidity is success by increase and decrease",
 			beforeIncrease:    true,
 			increaseAmount0:   "500000",
 			increaseAmount1:   "1000000",
@@ -1131,26 +1120,39 @@ func TestDecreaseLiquidity(t *testing.T) {
 		},
 	}
 
-	testing.SetRealm(adminRealm)
-	positionId, _, _, _ := Mint(
-		cross,
-		barPath,
-		fooPath,
-		fee500,
-		-10000,
-		10000,
-		"1000000",
-		"1000000",
-		"0",
-		"0",
-		time.Now().Add(time.Hour).Unix(),
-		adminAddr,
-		adminAddr,
-		"",
-	)
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			initPositionTest(t)
+			testing.SetRealm(adminRealm)
+
+			pl.SetPoolCreationFeeByAdmin(cross, 0)
+			CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
+
+			TokenFaucet(t, barPath, alice)
+			TokenFaucet(t, fooPath, alice)
+
+			testing.SetRealm(posRealm)
+			TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
+			TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
+
 			testing.SetOriginCaller(adminAddr)
+			positionId, _, _, _ := Mint(
+				cross,
+				barPath,
+				fooPath,
+				fee500,
+				-10000,
+				10000,
+				"1000000",
+				"1000000",
+				"0",
+				"0",
+				time.Now().Add(time.Hour).Unix(),
+				adminAddr,
+				adminAddr,
+				"",
+			)
+
 			gnft.Approve(cross, posRealm.Address(), positionIdFrom(positionId))
 
 			deadline := time.Now().Add(tc.deadlineOffset).Unix()
@@ -1307,7 +1309,7 @@ func TestReposition(t *testing.T) {
 		expectedAbortMessage string
 	}{
 		{
-			name:                 "Fail - Reposition after full liquidity removal",
+			name:                 "reposition is failed by full liquidity removal",
 			mintAmount0:          "1000000",
 			mintAmount1:          "2000000",
 			increaseAmount0:      "500000",
@@ -1319,7 +1321,7 @@ func TestReposition(t *testing.T) {
 			expectedAbortMessage: "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:3812288, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
-			name:                 "Fail - Reposition with partial liquidity removal",
+			name:                 "reposition is failed by partial liquidity removal",
 			mintAmount0:          "1000000",
 			mintAmount1:          "2000000",
 			increaseAmount0:      "500000",
@@ -1328,22 +1330,24 @@ func TestReposition(t *testing.T) {
 			tickLower:            -3000,
 			tickUpper:            3000,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "[GNOSWAP-POSITION-009] position is not clear || position(2) isn't clear(liquidity:3812338, tokensOwed0:0, tokensOwed1:0)",
+			expectedAbortMessage: "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:3812338, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
-			name:                 "Fail - Reposition on non-existent positionId",
+			name:                 "reposition is failed by non-existent positionId",
 			mintAmount0:          "1000000",
 			mintAmount1:          "2000000",
 			liquidityToRemove:    "10",
 			tickLower:            -4000,
 			tickUpper:            4000,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "[GNOSWAP-POSITION-009] position is not clear || position(3) isn't clear(liquidity:2541582, tokensOwed0:0, tokensOwed1:0)",
+			expectedAbortMessage: "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:2541582, tokensOwed0:0, tokensOwed1:0)",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+
 			testing.SetOriginCaller(adminAddr)
 			CreatePoolWithoutFee(t)
 

@@ -299,47 +299,87 @@ func TestPoolGetters(t *testing.T) {
 }
 
 func TestPositionGetters(t *testing.T) {
-	testInitData(t)
+	tests := []struct {
+		name                             string
+		poolPath                         string
+		positionKey                      string
+		expectedLiquidity                string
+		expectedFeeGrowthInside0LastX128 string
+		expectedFeeGrowthInside1LastX128 string
+		expectedTokensOwed0              string
+		expectedTokensOwed1              string
+		expectedHasAbort                 bool
+		expectedAbortMessage             string
+	}{
+		{
+			name:                             "position getters is success by valid position",
+			poolPath:                         "token0:token1:3000",
+			positionKey:                      "test_position",
+			expectedLiquidity:                "1000000",
+			expectedFeeGrowthInside0LastX128: "2000000",
+			expectedFeeGrowthInside1LastX128: "3000000",
+			expectedTokensOwed0:              "4000000",
+			expectedTokensOwed1:              "5000000",
+			expectedHasAbort:                 false,
+		},
+		{
+			name:                             "position getters is failed by invalid position",
+			poolPath:                         "token0:token1:3000",
+			positionKey:                      "invalid_position",
+			expectedLiquidity:                "0",
+			expectedFeeGrowthInside0LastX128: "0",
+			expectedFeeGrowthInside1LastX128: "0",
+			expectedTokensOwed0:              "0",
+			expectedTokensOwed1:              "0",
+			expectedHasAbort:                 true,
+			expectedAbortMessage:             "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:3812338, tokensOwed0:0, tokensOwed1:0)",
+		},
+	}
 
-	t.Run("valid position", func(t *testing.T) {
-		validPoolPath := "token0:token1:3000"
-		validPositionKey := "test_position"
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+			testInitData(t)
 
-		t.Run("get position liquidity", func(t *testing.T) {
-			liquidity := PoolGetPositionLiquidity(validPoolPath, validPositionKey)
-			if liquidity != "1000000" {
-				t.Errorf("Expected liquidity [%s], got %s", "1000000", liquidity)
+			var liquidity u256.Uint
+			var feeGrowthInside0LastX128 u256.Uint
+			var feeGrowthInside1LastX128 u256.Uint
+			var tokensOwed0 u256.Uint
+			var tokensOwed1 u256.Uint
+
+			if tt.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, func() {
+					PoolGetPositionLiquidity(tt.poolPath, tt.positionKey)
+				})
+				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, func() {
+					PoolGetPositionFeeGrowthInside0LastX128(tt.poolPath, tt.positionKey)
+				})
+				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, func() {
+					PoolGetPositionFeeGrowthInside1LastX128(tt.poolPath, tt.positionKey)
+				})
+				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, func() {
+					PoolGetPositionTokensOwed0(tt.poolPath, tt.positionKey)
+				})
+				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, func() {
+					PoolGetPositionTokensOwed1(tt.poolPath, tt.positionKey)
+				})
+
+				return
+			} else {
+				liquidity = PoolGetPositionLiquidity(tt.poolPath, tt.positionKey)
+				feeGrowthInside0LastX128 = PoolGetPositionFeeGrowthInside0LastX128(tt.poolPath, tt.positionKey)
+				feeGrowthInside1LastX128 = PoolGetPositionFeeGrowthInside1LastX128(tt.poolPath, tt.positionKey)
+				tokensOwed0 = PoolGetPositionTokensOwed0(tt.poolPath, tt.positionKey)
+				tokensOwed1 = PoolGetPositionTokensOwed1(tt.poolPath, tt.positionKey)
 			}
-		})
 
-		t.Run("get position fee growth inside0 last x128", func(t *testing.T) {
-			feeGrowthInside0LastX128 := PoolGetPositionFeeGrowthInside0LastX128(validPoolPath, validPositionKey)
-			if feeGrowthInside0LastX128 != "2000000" {
-				t.Errorf("Expected fee growth inside0 last x128 [%s], got %s", "2000000", feeGrowthInside0LastX128)
-			}
+			uassert.Equal(t, tt.expectedLiquidity, liquidity.ToString())
+			uassert.Equal(t, tt.expectedFeeGrowthInside0LastX128, feeGrowthInside0LastX128.ToString())
+			uassert.Equal(t, tt.expectedFeeGrowthInside1LastX128, feeGrowthInside1LastX128.ToString())
+			uassert.Equal(t, tt.expectedTokensOwed0, tokensOwed0.ToString())
+			uassert.Equal(t, tt.expectedTokensOwed1, tokensOwed1.ToString())
 		})
-
-		t.Run("get position fee growth inside1 last x128", func(t *testing.T) {
-			feeGrowthInside1LastX128 := PoolGetPositionFeeGrowthInside1LastX128(validPoolPath, validPositionKey)
-			if feeGrowthInside1LastX128 != "3000000" {
-				t.Errorf("Expected fee growth inside1 last x128 [%s], got %s", "3000000", feeGrowthInside1LastX128)
-			}
-		})
-
-		t.Run("get position tokens owed0", func(t *testing.T) {
-			tokensOwed0 := PoolGetPositionTokensOwed0(validPoolPath, validPositionKey)
-			if tokensOwed0 != "4000000" {
-				t.Errorf("Expected tokens owed0 [%s], got %s", "4000000", tokensOwed0)
-			}
-		})
-
-		t.Run("get position tokens owed1", func(t *testing.T) {
-			tokensOwed1 := PoolGetPositionTokensOwed1(validPoolPath, validPositionKey)
-			if tokensOwed1 != "5000000" {
-				t.Errorf("Expected tokens owed1 [%s], got %s", "5000000", tokensOwed1)
-			}
-		})
-	})
+	}
 
 	t.Run("invalid position", func(t *testing.T) {
 		validPoolPath := "token0:token1:3000"        // pool must valid

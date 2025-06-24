@@ -68,6 +68,7 @@ func TestApiGetPositions_ResponseStructure(t *testing.T) {
 }
 
 func TestApiGetPositionsFee(t *testing.T) {
+	initPositionTest(t)
 	setupPositions(t)
 
 	tests := []struct {

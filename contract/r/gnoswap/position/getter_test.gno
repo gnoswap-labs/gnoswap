@@ -33,6 +33,8 @@ func setupPositionGetter(t *testing.T) {
 }
 
 func TestPositionGetter(t *testing.T) {
+	initPositionTest(t)
+
 	positionId := uint64(1)
 	setupPositionGetter(t)
 
