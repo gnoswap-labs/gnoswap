@@ -65,7 +65,6 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 }
 
 func TestSwapInner(t *testing.T) {
-	// t.Skip("run this test separately")
 	user1Realm := std.NewUserRealm(user1Addr)
 	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
 	poolAddr, _ := access.GetAddress(access.ROLE_POOL)
