@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/uassert"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -308,8 +309,8 @@ func TestPositionGetters(t *testing.T) {
 		expectedFeeGrowthInside1LastX128 string
 		expectedTokensOwed0              string
 		expectedTokensOwed1              string
-		expectedHasAbort                 bool
-		expectedAbortMessage             string
+		expectedHasPanic                 bool
+		expectedPanicMessage             string
 	}{
 		{
 			name:                             "position getters is success by valid position",
@@ -320,7 +321,7 @@ func TestPositionGetters(t *testing.T) {
 			expectedFeeGrowthInside1LastX128: "3000000",
 			expectedTokensOwed0:              "4000000",
 			expectedTokensOwed1:              "5000000",
-			expectedHasAbort:                 false,
+			expectedHasPanic:                 false,
 		},
 		{
 			name:                             "position getters is failed by invalid position",
@@ -331,36 +332,35 @@ func TestPositionGetters(t *testing.T) {
 			expectedFeeGrowthInside1LastX128: "0",
 			expectedTokensOwed0:              "0",
 			expectedTokensOwed1:              "0",
-			expectedHasAbort:                 true,
-			expectedAbortMessage:             "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:3812338, tokensOwed0:0, tokensOwed1:0)",
+			expectedHasPanic:                 true,
+			expectedPanicMessage:             "[GNOSWAP-POOL-008] requested data not found || positionKey(invalid_position) does not exist",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
 			testInitData(t)
 
-			var liquidity u256.Uint
-			var feeGrowthInside0LastX128 u256.Uint
-			var feeGrowthInside1LastX128 u256.Uint
-			var tokensOwed0 u256.Uint
-			var tokensOwed1 u256.Uint
+			var liquidity string
+			var feeGrowthInside0LastX128 string
+			var feeGrowthInside1LastX128 string
+			var tokensOwed0 string
+			var tokensOwed1 string
 
-			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, func() {
+			if tt.expectedHasPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
 					PoolGetPositionLiquidity(tt.poolPath, tt.positionKey)
 				})
-				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, func() {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
 					PoolGetPositionFeeGrowthInside0LastX128(tt.poolPath, tt.positionKey)
 				})
-				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, func() {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
 					PoolGetPositionFeeGrowthInside1LastX128(tt.poolPath, tt.positionKey)
 				})
-				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, func() {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
 					PoolGetPositionTokensOwed0(tt.poolPath, tt.positionKey)
 				})
-				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, func() {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
 					PoolGetPositionTokensOwed1(tt.poolPath, tt.positionKey)
 				})
 
@@ -373,11 +373,11 @@ func TestPositionGetters(t *testing.T) {
 				tokensOwed1 = PoolGetPositionTokensOwed1(tt.poolPath, tt.positionKey)
 			}
 
-			uassert.Equal(t, tt.expectedLiquidity, liquidity.ToString())
-			uassert.Equal(t, tt.expectedFeeGrowthInside0LastX128, feeGrowthInside0LastX128.ToString())
-			uassert.Equal(t, tt.expectedFeeGrowthInside1LastX128, feeGrowthInside1LastX128.ToString())
-			uassert.Equal(t, tt.expectedTokensOwed0, tokensOwed0.ToString())
-			uassert.Equal(t, tt.expectedTokensOwed1, tokensOwed1.ToString())
+			uassert.Equal(t, tt.expectedLiquidity, liquidity)
+			uassert.Equal(t, tt.expectedFeeGrowthInside0LastX128, feeGrowthInside0LastX128)
+			uassert.Equal(t, tt.expectedFeeGrowthInside1LastX128, feeGrowthInside1LastX128)
+			uassert.Equal(t, tt.expectedTokensOwed0, tokensOwed0)
+			uassert.Equal(t, tt.expectedTokensOwed1, tokensOwed1)
 		})
 	}
 
