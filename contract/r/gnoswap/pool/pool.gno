@@ -117,11 +117,6 @@ func Burn(
 		assertOnlyPositionContract()
 	}
 
-	liquidity := u256.MustFromDecimal(liquidityAmount)
-	if liquidity.IsZero() {
-		panic(errZeroLiquidity)
-	}
-
 	pool := GetPool(token0Path, token1Path, fee)
 
 	liqAmount := u256.MustFromDecimal(liquidityAmount)

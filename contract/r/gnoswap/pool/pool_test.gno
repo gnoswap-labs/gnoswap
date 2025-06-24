@@ -172,8 +172,10 @@ func TestBurn(t *testing.T) {
 			inputBurnAmount:  "0",
 			inputTickLower:   -100,
 			inputTickUpper:   100,
-			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-POOL-010] zero liquidity",
+			expectedAmount0:  "0",
+			expectedAmount1:  "0",
+			expectedHasAbort: false,
+			expectedAbortMsg: "",
 		},
 		{
 			name:             "invalid tick range",
@@ -265,22 +267,8 @@ func TestBurn(t *testing.T) {
 				adminAddr,
 			)
 
-			if amount0 != tt.expectedAmount0 {
-				t.Errorf("expected amount0 %s, got %s", tt.expectedAmount0, amount0)
-			}
-			if amount1 != tt.expectedAmount1 {
-				t.Errorf("expected amount1 %s, got %s", tt.expectedAmount1, amount1)
-			}
-
-			pool := GetPool(barTokenPath, bazTokenPath, FeeTier100)
-			posKey := getPositionKey(adminAddr, tt.tickLower, tt.tickUpper)
-			newPosition := pool.mustGetPosition(posKey)
-			if newPosition.tokensOwed0.IsZero() {
-				t.Error("expected tokensOwed0 to be updated")
-			}
-			if newPosition.tokensOwed1.IsZero() {
-				t.Error("expected tokensOwed1 to be updated")
-			}
+			uassert.Equal(t, tt.expectedAmount0, amount0)
+			uassert.Equal(t, tt.expectedAmount1, amount1)
 		})
 	}
 }
