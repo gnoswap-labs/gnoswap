@@ -38,7 +38,7 @@ class TestRunner
       end
       test_names.each do |test_name|
         puts "Running #{test_name} in #{file}"
-        run_command("gno test #{file} -root-dir #{@root_dir} -run #{test_name} -v")
+        run_command("gno test #{file} -root-dir #{@root_dir} -run ^#{test_name}$ -v")
       end
     end
   end

@@ -8,6 +8,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+var poolKey = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+
 func setupPositionGetter(t *testing.T) {
 	t.Helper()
 
@@ -16,7 +18,7 @@ func setupPositionGetter(t *testing.T) {
 	position := Position{
 		nonce:                    u256.Zero(),
 		operator:                 positionAddr,
-		poolKey:                  "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
+		poolKey:                  poolKey,
 		tickLower:                -10000,
 		tickUpper:                10000,
 		liquidity:                u256.NewUint(1000000),
@@ -30,150 +32,228 @@ func setupPositionGetter(t *testing.T) {
 	createNewPosition(positionId, position)
 }
 
-func TestPositionGetter_GetPosition(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	position := PositionGetPosition(positionId)
-	uassert.Equal(t, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", position.poolKey)
-	uassert.Equal(t, int32(-10000), position.tickLower)
-	uassert.Equal(t, int32(10000), position.tickUpper)
-	uassert.Equal(t, "1000000", position.liquidity.ToString())
-	uassert.Equal(t, "0", position.feeGrowthInside0LastX128.ToString())
-	uassert.Equal(t, "0", position.feeGrowthInside1LastX128.ToString())
-	uassert.Equal(t, "0", position.tokensOwed0.ToString())
-	uassert.Equal(t, "0", position.tokensOwed1.ToString())
-	uassert.Equal(t, false, position.burned)
-}
+func TestPositionGetter(t *testing.T) {
+	initPositionTest(t)
 
-func TestPositionGetter_GetPositionNonce(t *testing.T) {
-	positionId := GetNextId()
+	positionId := uint64(1)
 	setupPositionGetter(t)
-	nonce := PositionGetPositionNonce(positionId)
-	uassert.Equal(t, "0", nonce.ToString())
-}
 
-func TestPositionGetter_GetPositionOperator(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	operator := PositionGetPositionOperator(positionId)
-	uassert.Equal(t, positionAddr, operator)
-}
+	testCases := []struct {
+		name     string
+		testFunc func() any
+		expected any
+	}{
+		{
+			name: "get position is success by poolKey",
+			testFunc: func() any {
+				position := PositionGetPosition(positionId)
+				return position.poolKey
+			},
+			expected: poolKey,
+		},
+		{
+			name: "get position is success by tickLower",
+			testFunc: func() any {
+				position := PositionGetPosition(positionId)
+				return position.tickLower
+			},
+			expected: int32(-10000),
+		},
+		{
+			name: "get position is success by tickUpper",
+			testFunc: func() any {
+				position := PositionGetPosition(positionId)
+				return position.tickUpper
+			},
+			expected: int32(10000),
+		},
+		{
+			name: "get position is success by liquidity",
+			testFunc: func() any {
+				position := PositionGetPosition(positionId)
+				return position.liquidity.ToString()
+			},
+			expected: "1000000",
+		},
+		{
+			name: "get position is success by feeGrowthInside0LastX128",
+			testFunc: func() any {
+				position := PositionGetPosition(positionId)
+				return position.feeGrowthInside0LastX128.ToString()
+			},
+			expected: "0",
+		},
+		{
+			name: "get position is success by feeGrowthInside1LastX128",
+			testFunc: func() any {
+				position := PositionGetPosition(positionId)
+				return position.feeGrowthInside1LastX128.ToString()
+			},
+			expected: "0",
+		},
+		{
+			name: "get position is success by tokensOwed0",
+			testFunc: func() any {
+				position := PositionGetPosition(positionId)
+				return position.tokensOwed0.ToString()
+			},
+			expected: "0",
+		},
+		{
+			name: "get position is success by tokensOwed1",
+			testFunc: func() any {
+				position := PositionGetPosition(positionId)
+				return position.tokensOwed1.ToString()
+			},
+			expected: "0",
+		},
+		{
+			name: "get position is success by burned",
+			testFunc: func() any {
+				position := PositionGetPosition(positionId)
+				return position.burned
+			},
+			expected: false,
+		},
+		{
+			name: "get position is success by nonce",
+			testFunc: func() any {
+				return PositionGetPositionNonce(positionId).ToString()
+			},
+			expected: "0",
+		},
+		{
+			name: "get position is success by operator",
+			testFunc: func() any {
+				return PositionGetPositionOperator(positionId)
+			},
+			expected: positionAddr,
+		},
+		{
+			name: "get position is success by poolKey",
+			testFunc: func() any {
+				return PositionGetPositionPoolKey(positionId)
+			},
+			expected: poolKey,
+		},
+		{
+			name: "get position is success by tickLower",
+			testFunc: func() any {
+				return PositionGetPositionTickLower(positionId)
+			},
+			expected: int32(-10000),
+		},
+		{
+			name: "get position is success by tickUpper",
+			testFunc: func() any {
+				return PositionGetPositionTickUpper(positionId)
+			},
+			expected: int32(10000),
+		},
+		{
+			name: "get position is success by liquidity",
+			testFunc: func() any {
+				return PositionGetPositionLiquidity(positionId).ToString()
+			},
+			expected: "1000000",
+		},
+		{
+			name: "get position is success by feeGrowthInside0LastX128",
+			testFunc: func() any {
+				return PositionGetPositionFeeGrowthInside0LastX128(positionId).ToString()
+			},
+			expected: "0",
+		},
+		{
+			name: "get position is success by feeGrowthInside1LastX128",
+			testFunc: func() any {
+				return PositionGetPositionFeeGrowthInside1LastX128(positionId).ToString()
+			},
+			expected: "0",
+		},
+		{
+			name: "get position is success by tokensOwed0",
+			testFunc: func() any {
+				return PositionGetPositionTokensOwed0(positionId).ToString()
+			},
+			expected: "0",
+		},
+		{
+			name: "get position is success by tokensOwed1",
+			testFunc: func() any {
+				return PositionGetPositionTokensOwed1(positionId).ToString()
+			},
+			expected: "0",
+		},
+		{
+			name: "get position is success by isBurned",
+			testFunc: func() any {
+				return PositionGetPositionIsBurned(positionId)
+			},
+			expected: false,
+		},
+		{
+			name: "get position is success by isInRange",
+			testFunc: func() any {
+				return PositionIsInRange(positionId)
+			},
+			expected: true,
+		},
+		{
+			name: "get position is success by nonceStr",
+			testFunc: func() any {
+				return PositionGetPositionNonceStr(positionId)
+			},
+			expected: "0",
+		},
+		{
+			name: "get position is success by operatorStr",
+			testFunc: func() any {
+				return PositionGetPositionOperatorStr(positionId)
+			},
+			expected: string(positionAddr),
+		},
+		{
+			name: "get position is success by liquidityStr",
+			testFunc: func() any {
+				return PositionGetPositionLiquidityStr(positionId)
+			},
+			expected: "1000000",
+		},
+		{
+			name: "get position is success by feeGrowthInside0LastX128Str",
+			testFunc: func() any {
+				return PositionGetPositionFeeGrowthInside0LastX128Str(positionId)
+			},
+			expected: "0",
+		},
+		{
+			name: "get position is success by feeGrowthInside1LastX128Str",
+			testFunc: func() any {
+				return PositionGetPositionFeeGrowthInside1LastX128Str(positionId)
+			},
+			expected: "0",
+		},
+		{
+			name: "get position is success by tokensOwed0Str",
+			testFunc: func() any {
+				return PositionGetPositionTokensOwed0Str(positionId)
+			},
+			expected: "0",
+		},
+		{
+			name: "get position is success by tokensOwed1Str",
+			testFunc: func() any {
+				return PositionGetPositionTokensOwed1Str(positionId)
+			},
+			expected: "0",
+		},
+	}
 
-func TestPositionGetter_GetPositionPoolKey(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	poolKey := PositionGetPositionPoolKey(positionId)
-	uassert.Equal(t, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", poolKey)
-}
-
-func TestPositionGetter_GetPositionTickLower(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	tickLower := PositionGetPositionTickLower(positionId)
-	uassert.Equal(t, int32(-10000), tickLower)
-}
-
-func TestPositionGetter_GetPositionTickUpper(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	tickUpper := PositionGetPositionTickUpper(positionId)
-	uassert.Equal(t, int32(10000), tickUpper)
-}
-
-func TestPositionGetter_GetPositionLiquidity(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	liquidity := PositionGetPositionLiquidity(positionId)
-	uassert.Equal(t, "1000000", liquidity.ToString())
-}
-
-func TestPositionGetter_GetPositionFeeGrowthInside0LastX128(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	feeGrowth0 := PositionGetPositionFeeGrowthInside0LastX128(positionId)
-	uassert.Equal(t, "0", feeGrowth0.ToString())
-}
-
-func TestPositionGetter_GetPositionFeeGrowthInside1LastX128(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	feeGrowth1 := PositionGetPositionFeeGrowthInside1LastX128(positionId)
-	uassert.Equal(t, "0", feeGrowth1.ToString())
-}
-
-func TestPositionGetter_GetPositionTokensOwed0(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	tokenOwed0 := PositionGetPositionTokensOwed0(positionId)
-	uassert.Equal(t, "0", tokenOwed0.ToString())
-}
-
-func TestPositionGetter_GetPositionTokensOwed1(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	tokenOwed1 := PositionGetPositionTokensOwed1(positionId)
-	uassert.Equal(t, "0", tokenOwed1.ToString())
-}
-
-func TestPositionGetter_GetPositionIsBurned(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	isBurn := PositionGetPositionIsBurned(positionId)
-	uassert.Equal(t, false, isBurn)
-}
-
-func TestPositionGetter_IsInRange(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	inRange := PositionIsInRange(positionId)
-	uassert.Equal(t, true, inRange)
-}
-
-func TestPositionGetter_GetPositionNonceStr(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	nonceStr := PositionGetPositionNonceStr(positionId)
-	uassert.Equal(t, "0", nonceStr)
-}
-
-func TestPositionGetter_GetPositionOperatorStr(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	operator := PositionGetPositionOperatorStr(positionId)
-	uassert.Equal(t, string(positionAddr), operator)
-}
-
-func TestPositionGetter_GetPositionLiquidityStr(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	liquidity := PositionGetPositionLiquidityStr(positionId)
-	uassert.Equal(t, "1000000", liquidity)
-}
-
-func TestPositionGetter_GetPositionFeeGrowthInside0LastX128Str(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	feeGrowth0 := PositionGetPositionFeeGrowthInside0LastX128Str(positionId)
-	uassert.Equal(t, "0", feeGrowth0)
-}
-
-func TestPositionGetter_GetPositionFeeGrowthInside1LastX128Str(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	feeGrowth1 := PositionGetPositionFeeGrowthInside1LastX128Str(positionId)
-	uassert.Equal(t, "0", feeGrowth1)
-}
-
-func TestPositionGetter_GetPositionTokensOwed0Str(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	tokenOwed0 := PositionGetPositionTokensOwed0Str(positionId)
-	uassert.Equal(t, "0", tokenOwed0)
-}
-
-func TestPositionGetter_GetPositionTokensOwed1Str(t *testing.T) {
-	positionId := GetNextId()
-	setupPositionGetter(t)
-	tokenOwed1 := PositionGetPositionTokensOwed1Str(positionId)
-	uassert.Equal(t, "0", tokenOwed1)
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.testFunc()
+			uassert.Equal(t, tt.expected, result)
+		})
+	}
 }

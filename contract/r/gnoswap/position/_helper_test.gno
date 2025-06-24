@@ -447,11 +447,8 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 
 func LPTokenApprove(t *testing.T, owner, operator std.Address, positionId uint64) {
 	t.Helper()
-	testing.SetRealm(std.NewUserRealm(owner))
-	func() {
-		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gnft"))
-		gnft.Approve(cross, operator, positionIdFrom(positionId))
-	}()
+	testing.SetOriginCaller(owner)
+	gnft.Approve(cross, operator, positionIdFrom(positionId))
 }
 
 // func LPTokenStake(t *testing.T, owner std.Address, positionId uint64) {
