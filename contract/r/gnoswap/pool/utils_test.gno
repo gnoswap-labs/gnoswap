@@ -9,7 +9,6 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
 )
 
 func TestU256Min(t *testing.T) {
@@ -90,6 +89,64 @@ func TestU256Min(t *testing.T) {
 
 			result := u256Min(num1, num2)
 			uassert.Equal(t, expected.ToString(), result.ToString())
+		})
+	}
+}
+
+func TestU256Min_AdditionalCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		num1     string
+		num2     string
+		expected string
+	}{
+		// Q values comparison
+		{
+			name:     "Q64 vs Q96",
+			num1:     consts.Q64,
+			num2:     consts.Q96,
+			expected: consts.Q64,
+		},
+		{
+			name:     "Q96 vs Q128",
+			num1:     consts.Q96,
+			num2:     consts.Q128,
+			expected: consts.Q96,
+		},
+		// Price boundaries
+		{
+			name:     "MIN_SQRT_RATIO vs MAX_SQRT_RATIO",
+			num1:     consts.MIN_SQRT_RATIO,
+			num2:     consts.MAX_SQRT_RATIO,
+			expected: consts.MIN_SQRT_RATIO,
+		},
+		// Different magnitudes
+		{
+			name:     "very small vs very large",
+			num1:     "1",
+			num2:     consts.MAX_UINT256,
+			expected: "1",
+		},
+		{
+			name:     "consecutive values",
+			num1:     "999999999999999999999999999999999999999",
+			num2:     "1000000000000000000000000000000000000000",
+			expected: "999999999999999999999999999999999999999",
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			num1 := u256.MustFromDecimal(tt.num1)
+			num2 := u256.MustFromDecimal(tt.num2)
+			expected := u256.MustFromDecimal(tt.expected)
+			
+			result := u256Min(num1, num2)
+			uassert.Equal(t, expected.ToString(), result.ToString())
+			
+			// Test commutativity
+			resultReversed := u256Min(num2, num1)
+			uassert.Equal(t, expected.ToString(), resultReversed.ToString())
 		})
 	}
 }
@@ -436,7 +493,164 @@ func TestToUint128InputPreservation(t *testing.T) {
 	}
 }
 
-func TestAssertOnlyNotNil(t *testing.T) {
+func TestToUint128_PowerOfTwoBoundaries(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "Q64 (2^64)",
+			input:    consts.Q64,
+			expected: consts.Q64,
+		},
+		{
+			name:     "Q96 (2^96)",
+			input:    consts.Q96,
+			expected: consts.Q96,
+		},
+		{
+			name:     "2^127",
+			input:    "170141183460469231731687303715884105728",
+			expected: "170141183460469231731687303715884105728",
+		},
+		{
+			name:     "Q128 (2^128) wraps to 0",
+			input:    consts.Q128,
+			expected: "0",
+		},
+		{
+			name:     "2^128 + 1 wraps to 1",
+			input:    "340282366920938463463374607431768211457",
+			expected: "1",
+		},
+		{
+			name:     "2^129 wraps to 0",
+			input:    "680564733841876926926749214863536422912",
+			expected: "0",
+		},
+		{
+			name:     "MAX_UINT128 * 2 + 10",
+			input:    "680564733841876926926749214863536422920",
+			expected: "8",
+		},
+		// Price boundaries
+		{
+			name:     "MIN_SQRT_RATIO",
+			input:    consts.MIN_SQRT_RATIO,
+			expected: consts.MIN_SQRT_RATIO,
+		},
+		{
+			name:     "MAX_SQRT_RATIO overflows uint128",
+			input:    consts.MAX_SQRT_RATIO,
+			expected: "318775800626314356294205765087544249638",
+			// MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342
+			// This value is used as the maximum price square root in Uniswap V3
+			// When masked to uint128 (keeping only lower 128 bits):
+			// Binary: ...10101010101010101010101010100110 (lower 128 bits)
+			// Decimal: 318775800626314356294205765087544249638
+		},
+		{
+			name:     "MIN_PRICE",
+			input:    consts.MIN_PRICE,
+			expected: consts.MIN_PRICE,
+		},
+		{
+			name:     "MAX_PRICE overflows uint128",
+			input:    consts.MAX_PRICE,
+			expected: "318775800626314356294205765087544249637",
+			// MAX_PRICE = MAX_SQRT_RATIO - 1 = 1461446703485210103287273052203988822378723970341
+			// When masked to uint128:
+			// Result: 318775800626314356294205765087544249637 (masked MAX_SQRT_RATIO - 1)
+			// This masking ensures price calculations remain within bounds
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			original := u256.MustFromDecimal(tt.input)
+			originalStr := original.ToString()
+			
+			result := toUint128(original)
+			
+			uassert.Equal(t, tt.expected, result.ToString())
+			uassert.Equal(t, originalStr, original.ToString())
+		})
+	}
+}
+
+func TestVerifyToUint128MaskingLogic(t *testing.T) {
+	// 1. Verify toUint128 function logic
+	// toUint128 keeps only lower 128 bits when value > MAX_UINT128
+	
+	// Verify MAX_UINT128
+	maxUint128 := u256.MustFromDecimal(consts.MAX_UINT128)
+	uassert.Equal(t, "340282366920938463463374607431768211455", maxUint128.ToString())
+	uassert.Equal(t, consts.MAX_UINT128, maxUint128.ToString())
+	
+	// 2. Verify MAX_SQRT_RATIO
+	maxSqrtRatio := u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
+	uassert.Equal(t, consts.MAX_SQRT_RATIO, "1461446703485210103287273052203988822378723970342")
+	uassert.True(t, maxSqrtRatio.Gt(maxUint128), "MAX_SQRT_RATIO should be > MAX_UINT128")
+	
+	// 3. Verify masking logic
+	// mask = (1 << 128) - 1 = MAX_UINT128
+	mask := new(u256.Uint).Lsh(u256.One(), 128)
+	mask = new(u256.Uint).Sub(mask, u256.One())
+	uassert.Equal(t, mask.ToString(), maxUint128.ToString())
+	
+	// 4. Verify actual masking
+	maskedMaxSqrt := new(u256.Uint).And(maxSqrtRatio, mask)
+	uassert.Equal(t, "318775800626314356294205765087544249638", maskedMaxSqrt.ToString())
+	
+	// 5. Verify toUint128 function result matches manual masking
+	toUint128Result := toUint128(maxSqrtRatio)
+	uassert.Equal(t, maskedMaxSqrt.ToString(), toUint128Result.ToString())
+	
+	// 6. Verify MAX_PRICE (MAX_SQRT_RATIO - 1)
+	maxPrice := u256.MustFromDecimal(consts.MAX_PRICE)
+	uassert.Equal(t, consts.MAX_PRICE, "1461446703485210103287273052203988822378723970341")
+	
+	// Verify MAX_PRICE = MAX_SQRT_RATIO - 1
+	maxSqrtMinusOne := new(u256.Uint).Sub(maxSqrtRatio, u256.One())
+	uassert.True(t, maxPrice.Eq(maxSqrtMinusOne), "MAX_PRICE should equal MAX_SQRT_RATIO - 1")
+	
+	// 7. Verify MAX_PRICE masking
+	maskedMaxPrice := new(u256.Uint).And(maxPrice, mask)
+	uassert.Equal(t, "318775800626314356294205765087544249637", maskedMaxPrice.ToString())
+	
+	toUint128PriceResult := toUint128(maxPrice)
+	uassert.Equal(t, maskedMaxPrice.ToString(), toUint128PriceResult.ToString())
+	
+	// 8. Verify difference between masked values is 1
+	diff := new(u256.Uint).Sub(maskedMaxSqrt, maskedMaxPrice)
+	uassert.Equal(t, "1", diff.ToString())
+	
+	// Final verification
+	uassert.Equal(t, "318775800626314356294205765087544249638", toUint128Result.ToString())
+	uassert.Equal(t, "318775800626314356294205765087544249637", toUint128PriceResult.ToString())
+}
+
+// Additional verification: Ensure masked values are within uint128 range
+func TestToUint128MaskedValuesRange(t *testing.T) {
+	maxSqrtRatio := u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
+	maxUint128 := u256.MustFromDecimal(consts.MAX_UINT128)
+	
+	// toUint128 results
+	resultMaxSqrt := toUint128(maxSqrtRatio)
+	resultMaxPrice := toUint128(u256.MustFromDecimal(consts.MAX_PRICE))
+	
+	// Verify results are <= MAX_UINT128
+	uassert.True(t, resultMaxSqrt.Lte(maxUint128), "Masked MAX_SQRT_RATIO should be <= MAX_UINT128")
+	uassert.True(t, resultMaxPrice.Lte(maxUint128), "Masked MAX_PRICE should be <= MAX_UINT128")
+	
+	// Verify specific values
+	uassert.Equal(t, "318775800626314356294205765087544249638", resultMaxSqrt.ToString())
+	uassert.Equal(t, "318775800626314356294205765087544249637", resultMaxPrice.ToString())
+}
+
+//assertOnlyNotNil
+func TestAssertOnlyInitializedUint256(t *testing.T) {
 	tests := []struct {
 		name        string
 		input       *u256.Uint
@@ -447,7 +661,7 @@ func TestAssertOnlyNotNil(t *testing.T) {
 			name:        "nil input",
 			input:       nil,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-COMMON-008] invalid input data || value is nil",
+			errorMsg:    "[GNOSWAP-POOL-006] invalid input data || value is nil",
 		},
 		{
 			name:        "valid zero",
@@ -465,11 +679,11 @@ func TestAssertOnlyNotNil(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
-					common.AssertOnlyNotNil(tt.input)
+					assertOnlyInitializedUint256(tt.input)
 				})
 			} else {
 				uassert.NotPanics(t, func() {
-					common.AssertOnlyNotNil(tt.input)
+					assertOnlyInitializedUint256(tt.input)
 				})
 			}
 		})
@@ -569,6 +783,82 @@ func TestCheckOverFlowInt128(t *testing.T) {
 	}
 }
 
+func TestCheckOverFlowInt128_BoundaryValues(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		shouldPanic bool
+		errorMsg    string
+	}{
+		// Exact boundaries
+		{
+			name:        "MAX_INT128 exact",
+			input:       consts.MAX_INT128,
+			shouldPanic: false,
+		},
+		{
+			name:        "MAX_INT128 + 1",
+			input:       "170141183460469231731687303715884105728",
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POOL-026] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
+		},
+		// Negative values
+		{
+			name:        "negative MAX_INT128",
+			input:       "-170141183460469231731687303715884105727",
+			shouldPanic: false,
+		},
+		{
+			name:        "negative MAX_INT128 - 1",
+			input:       "-170141183460469231731687303715884105728",
+			shouldPanic: false,
+		},
+		// Q values
+		{
+			name:        "Q96 within range",
+			input:       consts.Q96,
+			shouldPanic: false,
+		},
+		{
+			name:        "Q128 exceeds range",
+			input:       consts.Q128,
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POOL-026] overflow: amount(340282366920938463463374607431768211456) overflows int128 range",
+		},
+		// Special values
+		{
+			name:        "zero",
+			input:       "0",
+			shouldPanic: false,
+		},
+		{
+			name:        "one",
+			input:       "1",
+			shouldPanic: false,
+		},
+		{
+			name:        "negative one",
+			input:       "-1",
+			shouldPanic: false,
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			value := i256.MustFromDecimal(tt.input)
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+					checkOverFlowInt128(value)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					checkOverFlowInt128(value)
+				})
+			}
+		})
+	}
+}
+
 func TestCheckTickSpacing(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -646,6 +936,117 @@ func TestCheckTickSpacing(t *testing.T) {
 	}
 }
 
+func TestCheckTickSpacing_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		tick        int32
+		tickSpacing int32
+		shouldPanic bool
+		errorMsg    string
+	}{
+		// Boundary values with tick spacing 1
+		{
+			name:        "MIN_TICK with spacing 1",
+			tick:        consts.MIN_TICK,
+			tickSpacing: 1,
+			shouldPanic: false,
+		},
+		{
+			name:        "MAX_TICK with spacing 1",
+			tick:        consts.MAX_TICK,
+			tickSpacing: 1,
+			shouldPanic: false,
+		},
+		// Fee tier tick spacings
+		{
+			name:        "fee tier 100 - valid tick",
+			tick:        12345,
+			tickSpacing: 1,
+			shouldPanic: false,
+		},
+		{
+			name:        "fee tier 500 - valid tick",
+			tick:        12340,
+			tickSpacing: 10,
+			shouldPanic: false,
+		},
+		{
+			name:        "fee tier 500 - invalid tick",
+			tick:        12345,
+			tickSpacing: 10,
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(12345) MOD tickSpacing(10) != 0(5)",
+		},
+		{
+			name:        "fee tier 3000 - valid tick",
+			tick:        -12360,
+			tickSpacing: 60,
+			shouldPanic: false,
+		},
+		{
+			name:        "fee tier 3000 - invalid tick",
+			tick:        -12359,
+			tickSpacing: 60,
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(-12359) MOD tickSpacing(60) != 0(-59)",
+		},
+		{
+			name:        "fee tier 10000 - valid tick",
+			tick:        -12400,
+			tickSpacing: 200,
+			shouldPanic: false,
+		},
+		{
+			name:        "fee tier 10000 - invalid tick",
+			tick:        -12399,
+			tickSpacing: 200,
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(-12399) MOD tickSpacing(200) != 0(-199)",
+		},
+		// Extreme boundary cases
+		{
+			name:        "near MIN_TICK aligned",
+			tick:        -887200,
+			tickSpacing: 100,
+			shouldPanic: false,
+		},
+		{
+			name:        "near MIN_TICK not aligned",
+			tick:        -887271,
+			tickSpacing: 100,
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(-887271) MOD tickSpacing(100) != 0(-71)",
+		},
+		{
+			name:        "maximum tick spacing",
+			tick:        0,
+			tickSpacing: 887272,
+			shouldPanic: false,
+		},
+		{
+			name:        "maximum tick spacing not aligned",
+			tick:        1,
+			tickSpacing: 887272,
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(1) MOD tickSpacing(887272) != 0(1)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+					checkTickSpacing(tt.tick, tt.tickSpacing)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					checkTickSpacing(tt.tick, tt.tickSpacing)
+				})
+			}
+		})
+	}
+}
+
 func TestAssertOnlyValidAddress(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -680,6 +1081,75 @@ func TestAssertOnlyValidAddress(t *testing.T) {
 			} else {
 				uassert.PanicsWithMessage(t, tc.errorMsg, func() {
 					assertOnlyValidAddress(tc.addr)
+				})
+			}
+		})
+	}
+}
+
+func TestAssertOnlyValidAddress_SpecialCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		addr        std.Address
+		shouldPanic bool
+		errorMsg    string
+	}{
+		{
+			name:        "zero address is valid",
+			addr:        consts.ZERO_ADDRESS,
+			shouldPanic: false,
+		},
+		{
+			name:        "admin address",
+			addr:        consts.ADMIN,
+			shouldPanic: false,
+		},
+		{
+			name:        "pool address",
+			addr:        consts.POOL_ADDR,
+			shouldPanic: false,
+		},
+		{
+			name:        "empty string",
+			addr:        "",
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POOL-023] invalid address || ()",
+		},
+		{
+			name:        "invalid format - wrong length",
+			addr:        "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha", // 39 chars instead of 40
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POOL-023] invalid address || (g1lmvrrrr4er2us84h2732sru76c9zl2nvknha)",
+		},
+		{
+			name:        "too short",
+			addr:        "g1lmvrrrr4er2us84h2732",
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POOL-023] invalid address || (g1lmvrrrr4er2us84h2732)",
+		},
+		{
+			name:        "wrong prefix",
+			addr:        "x17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POOL-023] invalid address || (x17290cwvmrapvp869xfnhhawa8sm9edpufzat7d)",
+		},
+		{
+			name:        "invalid characters",
+			addr:        "g1!@#$%^&*()_+{}[]|\\:;\"'<>,.?/~`12345678",
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POOL-023] invalid address || (g1!@#$%^&*()_+{}[]|\\:;\"'<>,.?/~`12345678)",
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+					assertOnlyValidAddress(tt.addr)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					assertOnlyValidAddress(tt.addr)
 				})
 			}
 		})
@@ -740,6 +1210,47 @@ func TestConversionBoundaryValues(t *testing.T) {
 			}
 		}()
 		safeConvertToInt128(q128Val)
+	})
+}
+
+func TestSafeConversions_ExactBoundaries(t *testing.T) {
+	t.Run("uint64 exact boundary", func(t *testing.T) {
+		// MAX_UINT64
+		maxValue := u256.MustFromDecimal(consts.MAX_UINT64)
+		result := safeConvertToUint64(maxValue)
+		uassert.Equal(t, consts.UINT64_MAX, result)
+		
+		// MAX_UINT64 + 1
+		overValue := new(u256.Uint).Add(maxValue, u256.One())
+		uassert.PanicsWithMessage(t, 
+			"[GNOSWAP-POOL-005] out of range for numeric value: amount(18446744073709551616) overflows uint64 range (max 18446744073709551615)",
+			func() { safeConvertToUint64(overValue) })
+	})
+	
+	t.Run("int64 exact boundary", func(t *testing.T) {
+		// MAX_INT64
+		maxValue := u256.MustFromDecimal(consts.MAX_INT64)
+		result := safeConvertToInt64(maxValue)
+		uassert.Equal(t, consts.INT64_MAX, result)
+		
+		// MAX_INT64 + 1
+		overValue := new(u256.Uint).Add(maxValue, u256.One())
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-POOL-005] out of range for numeric value: amount(9223372036854775808) overflows int64 range (max 9223372036854775807)",
+			func() { safeConvertToInt64(overValue) })
+	})
+	
+	t.Run("int128 exact boundary", func(t *testing.T) {
+		// MAX_INT128
+		maxValue := u256.MustFromDecimal(consts.MAX_INT128)
+		result := safeConvertToInt128(maxValue)
+		uassert.Equal(t, consts.MAX_INT128, result.ToString())
+		
+		// MAX_INT128 + 1
+		overValue := new(u256.Uint).Add(maxValue, u256.One())
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-POOL-026] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
+			func() { safeConvertToInt128(overValue) })
 	})
 }
 

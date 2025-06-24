@@ -7,7 +7,7 @@ import (
 )
 
 // assertOnlyNotNil panics if the value is nil.
-func AssertOnlyNotNil(value *u256.Uint) {
+func assertOnlyNotNil(value *u256.Uint) {
 	if value == nil {
 		panic(newErrorWithDetail(
 			errInvalidInput,

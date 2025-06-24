@@ -136,7 +136,7 @@ func safeConvertToInt128(value *u256.Uint) *i256.Int {
 //   - If masking is required, a new instance is returned without modifying the input.
 //   - MAX_UINT128 is a constant representing `2^128 - 1`.
 func toUint128(value *u256.Uint) *u256.Uint {
-	common.AssertOnlyNotNil(value)
+	assertOnlyInitializedUint256(value)
 	if value.Gt(u256.MustFromDecimal(consts.MAX_UINT128)) {
 		mask := new(u256.Uint).Lsh(u256.One(), consts.Q128_RESOLUTION)
 		mask = new(u256.Uint).Sub(mask, u256.One())
@@ -223,6 +223,16 @@ func checkTickSpacing(tick, tickSpacing int32) {
 		panic(newErrorWithDetail(
 			errInvalidTickAndTickSpacing,
 			ufmt.Sprintf("tick(%d) MOD tickSpacing(%d) != 0(%d)", tick, tickSpacing, tick%tickSpacing),
+		))
+	}
+}
+
+// assertOnlyInitializedUint256 (assertOnlyNotNil) panics if the value is nil.
+func assertOnlyInitializedUint256(value *u256.Uint) {
+	if value == nil {
+		panic(newErrorWithDetail(
+			errInvalidInput,
+			"value is nil",
 		))
 	}
 }
