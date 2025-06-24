@@ -32,6 +32,7 @@ import (
 //   - *u256.Uint: Total amount of input tokens used
 //   - *u256.Uint: Total amount of output tokens received
 func swapInner(
+	cur realm,
 	amountSpecified *i256.Int,
 	recipient std.Address,
 	sqrtPriceLimitX96 *u256.Uint,
@@ -76,6 +77,7 @@ type RealSwapExecutor struct{}
 
 func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
 	return swapInner(
+		cross,
 		p.amountSpecified,
 		getPrevAddr(), // if single swap => user will receive
 		zero,          // sqrtPriceLimitX96
@@ -98,6 +100,7 @@ func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u2
 // - poolRecv: The absolute value of the maximum amount received by the pool during the swap.
 // - poolOut: The absolute value of the minimum amount output from the pool during the swap.
 func swapDryInner(
+	cur realm,
 	amountSpecified *i256.Int,
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
@@ -135,6 +138,7 @@ type DrySwapExecutor struct{}
 
 func (e *DrySwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
 	return swapDryInner(
+		cross,
 		p.amountSpecified,
 		zero,
 		newSwapCallbackData(p, getPrevAddr()),
