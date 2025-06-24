@@ -24,7 +24,7 @@ func TestMintInternal_PositionMint(t *testing.T) {
 		expectedAmount1   string
 	}{
 		{
-			name: "successful mint",
+			name: "mint is success by successful mint",
 			params: MintParams{
 				token0:         "gno.land/r/onbloc/bar",
 				token1:         "gno.land/r/onbloc/baz",
@@ -45,7 +45,7 @@ func TestMintInternal_PositionMint(t *testing.T) {
 			expectedAmount1:   "100000",
 		},
 		{
-			name: "zero liquidity should fail",
+			name: "mint is failed by zero liquidity",
 			params: MintParams{
 				token0:         "gno.land/r/onbloc/bar",
 				token1:         "gno.land/r/onbloc/baz",
@@ -66,6 +66,8 @@ func TestMintInternal_PositionMint(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+
 			testing.SetRealm(adminRealm)
 			pl.SetPoolCreationFeeByAdmin(cross, 0)
 			CreatePool(t, tt.params.token0, tt.params.token1, tt.params.fee, "79228162514264337593543950336", adminAddr)

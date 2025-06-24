@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
 )
 
 func assertPanic(t *testing.T, expectedMsg string, fn func()) {
@@ -28,7 +27,7 @@ func TestGetOrigPkgAddr(t *testing.T) {
 		expected std.Address
 	}{
 		{
-			name:     "Success - getOrigPkgAddr",
+			name:     "getOrigPkgAddr is success",
 			expected: positionAddr,
 		},
 	}
@@ -41,34 +40,47 @@ func TestGetOrigPkgAddr(t *testing.T) {
 }
 
 func TestAssertTokenExists(t *testing.T) {
-	// Mock setup
-	// mockTokenId := uint64(1)
-	mockInvalidTokenId := uint64(9999)
+	tests := []struct {
+		name                 string
+		positionId           uint64
+		expected             bool
+		expectedHasPanic     bool
+		expectedPanicMessage string
+	}{
+		{
+			name:             "assertTokenExists is success by token exists",
+			positionId:       1,
+			expected:         true,
+			expectedHasPanic: false,
+		},
+		{
+			name:                 "assertTokenExists is failed by positionId is zero",
+			positionId:           0,
+			expected:             false,
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-POSITION-006] requested data not found || positionId(0) doesn't exist",
+		},
+		{
+			name:                 "assertTokenExists is failed by token does not exist",
+			positionId:           9999,
+			expected:             false,
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-POSITION-006] requested data not found || positionId(9999) doesn't exist",
+		},
+	}
 
-	// t.Run("Token Exists - No Panic", func(t *testing.T) {
-	// 	defer func() {
-	// 		if r := recover(); r != nil {
-	// 			t.Errorf("unexpected panic for existing positionId(%d): %v", mockTokenId, r)
-	// 		}
-	// 	}()
-	// 	assertTokenExists(mockTokenId) // Should not panic
-	// })
-
-	t.Run("Token Does Not Exist - Panic Expected", func(t *testing.T) {
-		expectedErr := ufmt.Sprintf("[GNOSWAP-POSITION-006] requested data not found || positionId(%d) doesn't exist", mockInvalidTokenId)
-		uassert.PanicsWithMessage(t, expectedErr, func() {
-			assertTokenExists(mockInvalidTokenId) // Should panic
-		})
-	})
-
-	t.Run("Boundary Case - PositionId Zero", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("expected panic for positionId(0) but did not occur")
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.expectedHasPanic {
+				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+					assertTokenExists(tc.positionId)
+				})
+			} else {
+				assertTokenExists(tc.positionId)
+				uassert.Equal(t, true, true)
 			}
-		}()
-		assertTokenExists(0) // Assume positionId 0 does not exist
-	})
+		})
+	}
 }
 
 func TestAssertOnlyUserOrStaker(t *testing.T) {
@@ -78,17 +90,17 @@ func TestAssertOnlyUserOrStaker(t *testing.T) {
 		expected     bool
 	}{
 		{
-			name:         "Failure - Not User or Staker",
+			name:         "assertOnlyUserOrStaker is failed by Not User or Staker",
 			originCaller: routerAddr,
 			expected:     false,
 		},
 		{
-			name:         "Success - User Call",
+			name:         "assertOnlyUserOrStaker is success by User Call",
 			originCaller: adminAddr,
 			expected:     true,
 		},
 		{
-			name:         "Success - Staker Call",
+			name:         "assertOnlyUserOrStaker is success by Staker Call",
 			originCaller: stakerAddr,
 			expected:     true,
 		},
@@ -112,12 +124,12 @@ func TestAssertOnlyValidAddress(t *testing.T) {
 		errorMsg string
 	}{
 		{
-			name:     "Success - valid address",
+			name:     "assertOnlyValidAddress is success by valid address",
 			addr:     adminAddr,
 			expected: true,
 		},
 		{
-			name:     "Failure - invalid address",
+			name:     "assertOnlyValidAddress is failed by invalid address",
 			addr:     "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8", // invalid length
 			expected: false,
 			errorMsg: "[GNOSWAP-POSITION-012] invalid address || (g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8)",
@@ -147,13 +159,13 @@ func TestAssertOnlyValidAddressWith(t *testing.T) {
 		errorMsg string
 	}{
 		{
-			name:     "Success - validation address check to compare with other address",
+			name:     "assertOnlyValidAddressWith is success by validation address check to compare with other address",
 			addr:     adminAddr,
 			other:    std.Address("g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"),
 			expected: true,
 		},
 		{
-			name:     "Failure - two address is different",
+			name:     "assertOnlyValidAddressWith is failed by two address is different",
 			addr:     "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8",
 			other:    "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
 			expected: false,
@@ -183,54 +195,54 @@ func TestAssertValidNumberString(t *testing.T) {
 	}{
 		// Valid Cases
 		{
-			name:        "Valid Positive Number",
+			name:        "assertValidNumberString is success by valid positive number",
 			input:       "12345",
 			expectPanic: false,
 		},
 		{
-			name:        "Valid Negative Number",
+			name:        "assertValidNumberString is success by valid negative number",
 			input:       "-98765",
 			expectPanic: false,
 		},
 		{
-			name:        "Zero",
+			name:        "assertValidNumberString is success by zero",
 			input:       "0",
 			expectPanic: false,
 		},
 		{
-			name:        "Negative Zero",
+			name:        "assertValidNumberString is success by negative zero",
 			input:       "-0",
 			expectPanic: false,
 		},
 
 		// Invalid Cases
 		{
-			name:        "Empty String",
+			name:        "assertValidNumberString is failed by empty string",
 			input:       "",
 			expectPanic: true,
 		},
 		{
-			name:        "Alphabet in String",
+			name:        "assertValidNumberString is failed by alphabet in string",
 			input:       "12a45",
 			expectPanic: true,
 		},
 		{
-			name:        "Special Characters",
+			name:        "assertValidNumberString is failed by special characters",
 			input:       "123@45",
 			expectPanic: true,
 		},
 		{
-			name:        "Leading Plus Sign",
+			name:        "assertValidNumberString is failed by leading plus sign",
 			input:       "+12345",
 			expectPanic: true,
 		},
 		{
-			name:        "Multiple Negative Signs",
+			name:        "assertValidNumberString is failed by multiple negative signs",
 			input:       "--12345",
 			expectPanic: true,
 		},
 		{
-			name:        "Space in String",
+			name:        "assertValidNumberString is failed by space in string",
 			input:       "123 45",
 			expectPanic: true,
 		},
@@ -263,7 +275,7 @@ func TestDerivePkgAddr(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "Success - derivePkgAddr",
+			name:     "derivePkgAddr is success by derivePkgAddr",
 			input:    pkgPath,
 			expected: "g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5",
 		},
@@ -283,7 +295,7 @@ func TestGetPrevRealm(t *testing.T) {
 		expected     []string
 	}{
 		{
-			name:         "Success - prevRealm is User",
+			name:         "getPrevRealm is success by prevRealm is User",
 			originCaller: adminAddr,
 			expected:     []string{"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", ""},
 		},
@@ -308,7 +320,7 @@ func TestGetPrevAddr(t *testing.T) {
 		expected     std.Address
 	}{
 		{
-			name:         "Success - prev Address is User",
+			name:         "getPrevAddr is success by prev Address is User",
 			originCaller: adminAddr,
 			expected:     "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
 		},
@@ -332,7 +344,7 @@ func TestGetPrevAsString(t *testing.T) {
 		expected     []string
 	}{
 		{
-			name:         "Success - prev Realm of user info as string",
+			name:         "getPrevAsString is success by prev Realm of user info as string",
 			originCaller: adminAddr,
 			expected:     []string{"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", ""},
 		},
@@ -358,19 +370,19 @@ func TestCheckDeadline(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "Success - checkDeadline",
+			name:     "checkDeadline is success by deadline is greater than now",
 			deadline: 1234567890 + 100,
 			now:      1234567890,
 			expected: "",
 		},
 		{
-			name:     "Failure - checkDeadline",
+			name:     "checkDeadline is failed by deadline is less than now",
 			deadline: 1234567890 - 100,
 			now:      1234567890,
 			expected: "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234567790)",
 		},
 		{
-			name:     "Success - deadline equals now",
+			name:     "checkDeadline is success by deadline equals now",
 			deadline: 1234567890,
 			now:      1234567890,
 			expected: "",
@@ -399,37 +411,37 @@ func TestPositionIdFrom(t *testing.T) {
 		shouldPanic bool
 	}{
 		{
-			name:        "Panic - nil",
+			name:        "positionIdFrom is failed by nil",
 			input:       nil,
 			expected:    "[GNOSWAP-POSITION-005] invalid input data || positionId is nil",
 			shouldPanic: true,
 		},
 		{
-			name:        "Panic - unsupported type",
+			name:        "positionIdFrom is failed by unsupported type",
 			input:       float64(1),
 			expected:    "[GNOSWAP-POSITION-005] invalid input data || unsupported positionId type",
 			shouldPanic: true,
 		},
 		{
-			name:        "Success - string",
+			name:        "positionIdFrom is success by string",
 			input:       "1",
 			expected:    "1",
 			shouldPanic: false,
 		},
 		{
-			name:        "Success - int",
+			name:        "positionIdFrom is success by int",
 			input:       int(1),
 			expected:    "1",
 			shouldPanic: false,
 		},
 		{
-			name:        "Success - uint64",
+			name:        "positionIdFrom is success by uint64",
 			input:       uint64(1),
 			expected:    "1",
 			shouldPanic: false,
 		},
 		{
-			name:        "Success - grc721.TokenID",
+			name:        "positionIdFrom is success by grc721.TokenID",
 			input:       grc721.TokenID("1"),
 			expected:    "1",
 			shouldPanic: false,
@@ -478,16 +490,16 @@ func TestIsOwner(t *testing.T) {
 		expected   bool
 	}{
 		{
-			name:       "Fail - is not owner",
-			positionId: 1,
-			addr:       alice,
-			expected:   false,
-		},
-		{
-			name:       "Success - is owner",
+			name:       "is owner is success by is owner",
 			positionId: 1,
 			addr:       adminAddr,
 			expected:   true,
+		},
+		{
+			name:       "is owner is failed by is not owner",
+			positionId: 1,
+			addr:       alice,
+			expected:   false,
 		},
 	}
 	for _, tc := range tests {
@@ -521,9 +533,12 @@ func TestIsOperator(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			testing.SetOriginCaller(adminAddr)
+
 			if tc.expected {
 				LPTokenApprove(t, adminAddr, tc.addr, tc.positionId)
 			}
+
 			got := isOperator(tc.positionId, tc.addr)
 			uassert.Equal(t, tc.expected, got)
 		})
@@ -541,13 +556,7 @@ func TestPoolKeyDivide(t *testing.T) {
 		shouldPanic   bool
 	}{
 		{
-			name:          "Fail - invalid poolKey",
-			poolKey:       "gno.land/r/onbloc",
-			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid poolKey(gno.land/r/onbloc)",
-			shouldPanic:   true,
-		},
-		{
-			name:          "Success - split poolKey",
+			name:          "pool key divide is success by valid poolKey",
 			poolKey:       "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:500",
 			expectedPath0: gnsPath,
 			expectedPath1: wugnotPath,
@@ -555,7 +564,13 @@ func TestPoolKeyDivide(t *testing.T) {
 			shouldPanic:   false,
 		},
 		{
-			name:          "Fail -empty poolKey",
+			name:          "pool key divide is failed by invalid poolKey",
+			poolKey:       "gno.land/r/onbloc",
+			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid poolKey(gno.land/r/onbloc)",
+			shouldPanic:   true,
+		},
+		{
+			name:          "pool key divide is failed by empty poolKey",
 			poolKey:       "",
 			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid poolKey()",
 			shouldPanic:   true,
@@ -609,37 +624,37 @@ func TestSplitOf(t *testing.T) {
 		shouldPanic   bool
 	}{
 		{
-			name:          "Fail - empty poolKey",
+			name:          "split of is failed by empty poolKey",
 			poolKey:       "",
 			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid poolKey()",
 			shouldPanic:   true,
 		},
 		{
-			name:          "Fail - invalid delimiter",
+			name:          "split of is failed by invalid delimiter",
 			poolKey:       "gno.land/r/gnoswap:v1/gns:gno.land/r/demo/wugnot-500",
 			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid fee(gno.land/r/demo/wugnot-500)",
 			shouldPanic:   true,
 		},
 		{
-			name:          "Fail - non-numeric fee",
+			name:          "split of is failed by non-numeric fee",
 			poolKey:       "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:fee",
 			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid fee(fee)",
 			shouldPanic:   true,
 		},
 		{
-			name:          "Fail - missing fee part",
+			name:          "split of is failed by missing fee part",
 			poolKey:       "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:",
 			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid fee()",
 			shouldPanic:   true,
 		},
 		{
-			name:          "Fail - insufficient parts",
+			name:          "split of is failed by insufficient parts",
 			poolKey:       "gno.land/r/gnoswap/v1/gns:gno.land/r/demo",
 			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid poolKey(gno.land/r/gnoswap/v1/gns:gno.land/r/demo)",
 			shouldPanic:   true,
 		},
 		{
-			name:          "Success - valid poolKey",
+			name:          "split of is success by valid poolKey",
 			poolKey:       "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:500",
 			expectedPath0: "gno.land/r/gnoswap/v1/gns",
 			expectedPath1: "gno.land/r/demo/wugnot",
@@ -647,7 +662,7 @@ func TestSplitOf(t *testing.T) {
 			shouldPanic:   false,
 		},
 		{
-			name:          "Success - poolKey with large fee",
+			name:          "split of is success by poolKey with large fee",
 			poolKey:       "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:10000",
 			expectedPath0: "gno.land/r/gnoswap/v1/gns",
 			expectedPath1: "gno.land/r/demo/wugnot",
@@ -655,7 +670,7 @@ func TestSplitOf(t *testing.T) {
 			shouldPanic:   false,
 		},
 		{
-			name:          "Success - poolKey with minimal fee",
+			name:          "split of is success by poolKey with minimal fee",
 			poolKey:       "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:1",
 			expectedPath0: "gno.land/r/gnoswap/v1/gns",
 			expectedPath1: "gno.land/r/demo/wugnot",
