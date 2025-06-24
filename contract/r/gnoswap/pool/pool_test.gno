@@ -136,56 +136,80 @@ func TestBurn(t *testing.T) {
 
 	tests := []struct {
 		name             string
+		existsPool       bool
 		liquidityAmount  string
 		tickLower        int32
 		tickUpper        int32
 		fee              uint32
+		inputBurnAmount  string
+		inputTickLower   int32
+		inputTickUpper   int32
 		expectedAmount0  string
 		expectedAmount1  string
-		expectPanic      bool
-		expectedPanicMsg string
+		expectedHasAbort bool
+		expectedAbortMsg string
 	}{
 		{
 			name:            "successful burn",
+			existsPool:      true,
 			liquidityAmount: "10000000000", // burn all liquidity
 			tickLower:       -100,
 			tickUpper:       100,
 			fee:             FeeTier100,
+			inputBurnAmount: "10000000000",
+			inputTickLower:  -100,
+			inputTickUpper:  100,
 			expectedAmount0: "49872720",
 			expectedAmount1: "49872720",
 		},
 		{
 			name:             "zero liquidity",
-			liquidityAmount:  "0",
+			existsPool:       true,
+			liquidityAmount:  "10000000000",
 			tickLower:        -100,
 			tickUpper:        100,
 			fee:              FeeTier100,
-			expectPanic:      true,
-			expectedPanicMsg: "[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero",
+			inputBurnAmount:  "0",
+			inputTickLower:   -100,
+			inputTickUpper:   100,
+			expectedAmount0:  "0",
+			expectedAmount1:  "0",
+			expectedHasAbort: false,
+			expectedAbortMsg: "",
 		},
 		{
 			name:             "invalid tick range",
-			liquidityAmount:  "100000",
-			tickLower:        200,
+			existsPool:       true,
+			liquidityAmount:  "1000000",
+			tickLower:        -100,
 			tickUpper:        100,
-			expectPanic:      true,
+			inputBurnAmount:  "1000000",
+			inputTickLower:   200,
+			inputTickUpper:   100,
+			expectedHasAbort: true,
 			fee:              FeeTier100,
-			expectedPanicMsg: "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)",
+			expectedAbortMsg: "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)",
 		},
 		{
 			name:             "non-existent pool",
-			liquidityAmount:  "100000",
+			existsPool:       false,
+			liquidityAmount:  "1000000",
 			tickLower:        -100,
 			tickUpper:        100,
 			fee:              FeeTier500,
-			expectPanic:      true,
-			expectedPanicMsg: "[GNOSWAP-POOL-008] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500) to exist",
+			inputBurnAmount:  "1000000",
+			inputTickLower:   -100,
+			inputTickUpper:   100,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-POOL-008] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500) to exist",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.name != "non-existent pool" {
+			InitPoolTest(t)
+
+			if tt.existsPool {
 				testing.SetRealm(adminRealm)
 				SetPoolCreationFeeByAdmin(cross, 0)
 				CreatePool(
@@ -195,80 +219,56 @@ func TestBurn(t *testing.T) {
 					tt.fee,
 					"79228162514264337593543950336",
 				)
-				defer cleanupPool(t, barTokenPath, bazTokenPath, tt.fee)
+
+				// approve enough token to mint position
+				bar.Approve(cross, poolAddr, maxApprove)
+				baz.Approve(cross, poolAddr, maxApprove)
+
+				testing.SetRealm(posRealm)
+				Mint(
+					cross,
+					barTokenPath,
+					bazTokenPath,
+					tt.fee,
+					positionAddr,
+					tt.tickLower,
+					tt.tickUpper,
+					tt.liquidityAmount,
+					adminAddr,
+				)
 			}
 
 			testing.SetRealm(posRealm)
 
-			if tt.expectPanic {
-				uassert.AbortsWithMessage(t, tt.expectedPanicMsg, func() {
+			if tt.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
 					Burn(
 						cross,
 						barTokenPath,
 						bazTokenPath,
 						tt.fee,
-						tt.tickLower,
-						tt.tickUpper,
-						tt.liquidityAmount,
-					)
-				})
-			} else {
-				// need to add liquidity first
-				if tt.name == "successful burn" {
-					// Setup tokens for position owner
-					testing.SetOriginCaller(adminAddr)
-					newCoins := std.Coins{{"ugnot", int64(10000000000)}}
-					testing.IssueCoins(adminAddr, newCoins)
-					testing.SetOriginSend(newCoins)
-					banker := std.NewBanker(std.BankerTypeRealmSend)
-					banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
-					wugnot.Deposit(cross)
-
-					// approve enough token to mint position
-					bar.Approve(cross, poolAddr, maxApprove)
-					baz.Approve(cross, poolAddr, maxApprove)
-
-					testing.SetRealm(posRealm)
-					Mint(
-						cross,
-						barTokenPath,
-						bazTokenPath,
-						tt.fee,
-						positionAddr,
-						tt.tickLower,
-						tt.tickUpper,
-						tt.liquidityAmount,
+						tt.inputTickLower,
+						tt.inputTickUpper,
+						tt.inputBurnAmount,
 						adminAddr,
 					)
-				}
-
-				amount0, amount1 := Burn(
-					cross,
-					barTokenPath,
-					bazTokenPath,
-					tt.fee,
-					tt.tickLower,
-					tt.tickUpper,
-					tt.liquidityAmount,
-				)
-
-				if amount0 != tt.expectedAmount0 {
-					t.Errorf("expected amount0 %s, got %s", tt.expectedAmount0, amount0)
-				}
-				if amount1 != tt.expectedAmount1 {
-					t.Errorf("expected amount1 %s, got %s", tt.expectedAmount1, amount1)
-				}
-
-				pool := GetPool(barTokenPath, bazTokenPath, FeeTier100)
-				posKey := getPositionKey(positionAddr, tt.tickLower, tt.tickUpper)
-				newPosition := pool.mustGetPosition(posKey)
-				if newPosition.tokensOwed0.IsZero() {
-					t.Error("expected tokensOwed0 to be updated")
-				}
-				if newPosition.tokensOwed1.IsZero() {
-					t.Error("expected tokensOwed1 to be updated")
-				}
+				})
+				return
 			}
+
+			amount0, amount1 := Burn(
+				cross,
+				barTokenPath,
+				bazTokenPath,
+				tt.fee,
+				tt.inputTickLower,
+				tt.inputTickUpper,
+				tt.inputBurnAmount,
+				adminAddr,
+			)
+
+			uassert.Equal(t, tt.expectedAmount0, amount0)
+			uassert.Equal(t, tt.expectedAmount1, amount1)
 		})
 	}
 }

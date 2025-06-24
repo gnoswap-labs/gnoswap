@@ -11,7 +11,7 @@ import (
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
-func InitialSetup(t *testing.T) {
+func initialSetup(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
@@ -33,7 +33,7 @@ func TestAddLiquidity(t *testing.T) {
 		expectedMessage string
 	}{
 		{
-			name: "Successful Liquidity Addition",
+			name: "add liquidity is success by successful liquidity addition",
 			params: AddLiquidityParams{
 				poolKey:        poolKey,
 				tickLower:      -600,
@@ -49,7 +49,7 @@ func TestAddLiquidity(t *testing.T) {
 			expectedAmount1: "1000000",
 		},
 		{
-			name: "Invalid slippage amount, should panic",
+			name: "add liquidity is failed by invalid slippage amount",
 			params: AddLiquidityParams{
 				poolKey:        poolKey,
 				tickLower:      -600,
@@ -65,7 +65,7 @@ func TestAddLiquidity(t *testing.T) {
 			expectedMessage: "[GNOSWAP-POSITION-002] slippage failed || Price Slippage Check(amount0(1000000) >= amount0Min(1100000), amount1(1000000) >= amount1Min(2200000))",
 		},
 		{
-			name: "Zero Liquidity, should abort",
+			name: "add liquidity is failed by zero liquidity",
 			params: AddLiquidityParams{
 				poolKey:        poolKey,
 				tickLower:      -100,
@@ -83,7 +83,7 @@ func TestAddLiquidity(t *testing.T) {
 			expectedMessage: "[GNOSWAP-POOL-010] zero liquidity",
 		},
 		{
-			name: "Invalid Tick Range Test (tickLower > tickUpper)",
+			name: "add liquidity is failed by invalid tick range",
 			params: AddLiquidityParams{
 				poolKey:        poolKey,
 				tickLower:      600,
@@ -99,7 +99,7 @@ func TestAddLiquidity(t *testing.T) {
 			expectedMessage: "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(600), tickUpper(-600)",
 		},
 		{
-			name: "Non-existent Pool Test",
+			name: "add liquidity is failed by non-existent pool",
 			params: AddLiquidityParams{
 				poolKey:        "invalid/pool/path",
 				tickLower:      -600,
@@ -115,7 +115,7 @@ func TestAddLiquidity(t *testing.T) {
 			expectedMessage: "[GNOSWAP-POOL-008] requested data not found || expected poolPath(invalid/pool/path) to exist",
 		},
 		{
-			name: "Insufficient Balance Test",
+			name: "add liquidity is failed by insufficient balance",
 			params: AddLiquidityParams{
 				poolKey:        poolKey,
 				tickLower:      -600,
@@ -131,7 +131,7 @@ func TestAddLiquidity(t *testing.T) {
 			expectedMessage: "[GNOSWAP-POOL-021] token transfer failed || insufficient balance",
 		},
 		{
-			name: "Same Tick Range Test",
+			name: "add liquidity is failed by same tick range",
 			params: AddLiquidityParams{
 				poolKey:        poolKey,
 				tickLower:      0,
@@ -150,7 +150,9 @@ func TestAddLiquidity(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			InitialSetup(t)
+			initPositionTest(t)
+
+			initialSetup(t)
 			testing.SetRealm(posRealm)
 			TokenApprove(t, gnsPath, alice, poolAddr, tt.params.amount0Desired.Int64())
 			TokenApprove(t, barPath, alice, poolAddr, tt.params.amount1Desired.Int64())

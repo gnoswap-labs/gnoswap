@@ -380,13 +380,13 @@ func MintPositionAll(t *testing.T, caller std.Address) {
 			fee3000,
 			p.tickLower,
 			p.tickUpper,
-			"100000000",  // liquidityAmount
-			"100000000",  // unused
-			"0",          // unused
-			"0",          // unused
-			max_timeout,  // unused
-			caller,       // mintTo (recipient)
-			caller)       // positionCaller
+			"100000000", // liquidityAmount
+			"100000000", // unused
+			"0",         // unused
+			"0",         // unused
+			max_timeout, // unused
+			caller,      // mintTo (recipient)
+			caller)      // positionCaller
 	}
 }
 
