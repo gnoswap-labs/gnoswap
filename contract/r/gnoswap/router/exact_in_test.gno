@@ -359,8 +359,10 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			wugnot.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
 
-			teller := common.GetTokenTeller(wugnotTokenPath)
-			teller.Approve(poolContract, maxApprove)
+			func(cur realm) {
+				teller := common.GetTokenTeller(wugnotTokenPath)
+				teller.Approve(poolContract, maxApprove)
+			}(cross)
 
 			// Position Creation
 			pn.Mint(
@@ -392,6 +394,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			testing.SetRealm(std.NewCodeRealm(routerPath))
 			wugnot.Approve(cross, poolContract, maxApprove)
 
+			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			amountIn, amountOut := ExactInSwapRoute(
 				cross,
 				tt.inputToken,

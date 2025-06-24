@@ -8,6 +8,7 @@ import (
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -445,4 +446,12 @@ func MakeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 		admin,
 		"",
 	)
+}
+
+func initRouterTest(t *testing.T) {
+	t.Helper()
+
+	pl.InitPoolTest(t)
+	pn.InitPositionTest(t)
+	gnft.InitGNFTTest(t)
 }

@@ -146,8 +146,8 @@ func Mint(
 		"Mint",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"tickLower", formatInt(int64(processedInput.tickLower)),
-		"tickUpper", formatInt(int64(processedInput.tickUpper)),
+		"tickLower", formatInt(processedInput.tickLower),
+		"tickUpper", formatInt(processedInput.tickUpper),
 		"poolPath", processedInput.poolPath,
 		"mintTo", mintTo.String(),
 		"caller", caller.String(),
@@ -190,6 +190,7 @@ func IncreaseLiquidity(
 	if err != nil {
 		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
 	}
+
 	caller := getPrevAddr()
 
 	wrappedAmount := int64(0)
@@ -207,6 +208,7 @@ func IncreaseLiquidity(
 		amount0Min:     amount0Min,
 		amount1Min:     amount1Min,
 		deadline:       deadline,
+		caller:         caller,
 	}
 
 	_, liquidity, amount0, amount1, poolPath := increaseLiquidity(increaseLiquidityParams)
@@ -263,12 +265,12 @@ func DecreaseLiquidity(
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
 	assertOnlyNotHalted()
-	isAuthorizedForToken(positionId)
+	assertAuthorizedForToken(positionId)
 	checkDeadline(deadline)
 	assertValidLiquidityAmount(liquidityStr)
-
 	mintAndDistributeGnsCallback()
 
+	caller := getPrevAddr()
 	amount0Min := u256.MustFromDecimal(amount0MinStr)
 	amount1Min := u256.MustFromDecimal(amount1MinStr)
 	decreaseLiquidityParams := DecreaseLiquidityParams{
@@ -278,6 +280,7 @@ func DecreaseLiquidity(
 		amount1Min:   amount1Min,
 		deadline:     deadline,
 		unwrapResult: unwrapResult,
+		caller:       caller,
 	}
 
 	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
@@ -310,16 +313,27 @@ func DecreaseLiquidity(
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#collectfee
 func CollectFee(
 	cur realm,
-	postionId uint64,
+	positionId uint64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string) {
+	caller := getPrevAddr()
+
+	return collectFee(cur, positionId, unwrapResult, caller)
+}
+
+func collectFee(
+	cur realm,
+	positionId uint64,
+	unwrapResult bool,
+	caller std.Address,
+) (uint64, string, string, string, string, string) {
 	assertOnlyNotHalted()
-	assertTokenExists(postionId)
-	isAuthorizedForToken(postionId)
+	assertTokenExists(positionId)
+	assertAuthorizedForToken(positionId)
 	mintAndDistributeGnsCallback()
 
 	// verify position
-	position := MustGetPosition(postionId)
+	position := MustGetPosition(positionId)
 	token0, token1, fee := splitOf(position.poolKey)
 
 	pl.Burn(
@@ -330,9 +344,10 @@ func CollectFee(
 		position.tickLower,
 		position.tickUpper,
 		ZERO_LIQUIDITY_FOR_FEE_COLLECTION, // burn '0' liquidity to collect fee
+		caller,
 	)
 
-	currentFeeGrowth, err := getCurrentFeeGrowth(position)
+	currentFeeGrowth, err := getCurrentFeeGrowth(position, caller)
 	if err != nil {
 		panic(newErrorWithDetail(err, "failed to get current fee growth"))
 	}
@@ -344,7 +359,6 @@ func CollectFee(
 
 	// check user wugnot amount
 	// need this value to unwrap fee
-	caller := getPrevAddr()
 	userWugnot := wugnot.BalanceOf(caller)
 
 	// collect fee
@@ -360,12 +374,12 @@ func CollectFee(
 	// instead of the actual amount so we can burn the token
 	position.tokensOwed0 = new(u256.Uint).Sub(tokensOwed0, u256.MustFromDecimal(amount0))
 	position.tokensOwed1 = new(u256.Uint).Sub(tokensOwed1, u256.MustFromDecimal(amount1))
-	mustUpdatePosition(postionId, position)
+	mustUpdatePosition(positionId, position)
 
 	// handle withdrawal fee
 	withoutFee0, withoutFee1 := pl.CollectWithdrawalFee(
 		cross,
-		postionId,
+		positionId,
 		token0,
 		amount0,
 		token1,
@@ -384,14 +398,14 @@ func CollectFee(
 		"CollectSwapFee",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpPositionId", formatUint(postionId),
+		"lpPositionId", formatUint(positionId),
 		"feeAmount0", withoutFee0,
 		"feeAmount1", withoutFee1,
 		"poolPath", position.poolKey,
 		"unwrapResult", formatBool(unwrapResult),
 	)
 
-	return postionId, withoutFee0, withoutFee1, position.poolKey, amount0, amount1
+	return positionId, withoutFee0, withoutFee1, position.poolKey, amount0, amount1
 }
 
 func SetPositionOperator(
@@ -440,9 +454,9 @@ func computePositionKey(
 	return encoded
 }
 
-func getCurrentFeeGrowth(position Position) (FeeGrowthInside, error) {
+func getCurrentFeeGrowth(position Position, owner std.Address) (FeeGrowthInside, error) {
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
-	positionKey := computePositionKey(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
+	positionKey := computePositionKey(owner, position.tickLower, position.tickUpper)
 
 	feeGrowthInside0 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
 	feeGrowthInside1 := new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey))

@@ -54,43 +54,35 @@ func TestExactOutSwapOperation(t *testing.T) {
 	})
 
 	t.Run("exact out swap with invalid route", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("Expected panic for invalid route")
-			}
-		}()
-
-		ExactOutSwapRoute(
-			cross,
-			barPath,
-			fooPath,
-			"3",
-			"invalid:route:format", // invalid route format
-			"100",
-			"5",
-			time.Now().Add(time.Hour).Unix(),
-			"",
-		)
+		uassert.AbortsWithMessage(t, "invalid fee: format", func() {
+			ExactOutSwapRoute(
+				cross,
+				barPath,
+				fooPath,
+				"3",
+				"invalid:route:format", // invalid route format
+				"100",
+				"5",
+				time.Now().Add(time.Hour).Unix(),
+				"",
+			)
+		})
 	})
 
 	t.Run("exact out swap with expired deadline", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("Expected panic for expired deadline")
-			}
-		}()
-
-		ExactOutSwapRoute(
-			cross,
-			barPath,
-			fooPath,
-			"3",
-			"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000",
-			"100",
-			"5",
-			time.Now().Add(-time.Hour).Unix(), // expired deadline
-			"",
-		)
+		uassert.AbortsWithMessage(t, "[GNOSWAP-ROUTER-004] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)", func() {
+			ExactOutSwapRoute(
+				cross,
+				barPath,
+				fooPath,
+				"3",
+				"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000",
+				"100",
+				"5",
+				time.Now().Add(-time.Hour).Unix(), // expired deadline
+				"",
+			)
+		})
 	})
 }
 

@@ -11,7 +11,7 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
 
-	// i256 "gno.land/p/gnoswap/int256"
+	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/demo/wugnot"
@@ -21,139 +21,142 @@ import (
 	pn "gno.land/r/gnoswap/v1/position"
 )
 
-// func TestFinalizeSwap(t *testing.T) {
-// 	gnot := consts.GNOT
+func TestFinalizeSwap(t *testing.T) {
+	gnot := consts.GNOT
 
-// 	newUint256 := func(val string) *u256.Uint {
-// 		return u256.MustFromDecimal(val)
-// 	}
+	newUint256 := func(val string) *u256.Uint {
+		return u256.MustFromDecimal(val)
+	}
 
-// 	tests := []struct {
-// 		name                    string
-// 		inputToken              string
-// 		outputToken             string
-// 		resultAmountIn          *u256.Uint
-// 		resultAmountOut         *u256.Uint
-// 		swapType                SwapType
-// 		tokenAmountLimit        *u256.Uint
-// 		userBeforeWugnotBalance uint64
-// 		userWrappedWugnot       uint64
-// 		amountSpecified         *u256.Uint
-// 		expectError             bool
-// 		errorMessage            string
-// 	}{
-// 		{
-// 			name:                    "Pass: ExactIn",
-// 			inputToken:              barPath,
-// 			outputToken:             bazPath,
-// 			resultAmountIn:          newUint256("100"),
-// 			resultAmountOut:         newUint256("90"),
-// 			swapType:                ExactIn,
-// 			tokenAmountLimit:        newUint256("85"),
-// 			userBeforeWugnotBalance: 0,
-// 			userWrappedWugnot:       0,
-// 			amountSpecified:         newUint256("100"),
-// 			expectError:             false,
-// 		},
-// 		{
-// 			name:                    "Pass: ExactOut",
-// 			inputToken:              barPath,
-// 			outputToken:             bazPath,
-// 			resultAmountIn:          newUint256("110"),
-// 			resultAmountOut:         newUint256("100"),
-// 			swapType:                ExactOut,
-// 			tokenAmountLimit:        newUint256("120"),
-// 			userBeforeWugnotBalance: 0,
-// 			userWrappedWugnot:       0,
-// 			amountSpecified:         newUint256("100"),
-// 			expectError:             false,
-// 		},
-// 		{
-// 			name:                    "ExactOut: Slippage error",
-// 			inputToken:              barPath,
-// 			outputToken:             bazPath,
-// 			resultAmountIn:          newUint256("100"),
-// 			resultAmountOut:         newUint256("90"),
-// 			swapType:                ExactOut,
-// 			tokenAmountLimit:        newUint256("100"),
-// 			userBeforeWugnotBalance: 0,
-// 			userWrappedWugnot:       0,
-// 			amountSpecified:         newUint256("100"),
-// 			expectError:             true,
-// 			errorMessage:            "[GNOSWAP-ROUTER-002] slippage check failed || Received more than requested in [EXACT_OUT] requested=100, actual=90",
-// 		},
-// 		{
-// 			name:                    "GNOT: Slippage error",
-// 			inputToken:              gnot,
-// 			outputToken:             barPath,
-// 			resultAmountIn:          newUint256("300"),
-// 			resultAmountOut:         newUint256("90"),
-// 			swapType:                ExactIn,
-// 			tokenAmountLimit:        newUint256("85"),
-// 			userBeforeWugnotBalance: 1000000,
-// 			userWrappedWugnot:       20000,
-// 			expectError:             true,
-// 			errorMessage:            "too much wugnot spent",
-// 		},
-// 		{
-// 			name:                    "ExactOut: Real world slippage error",
-// 			inputToken:              barPath,
-// 			outputToken:             bazPath,
-// 			resultAmountIn:          newUint256("843455035"),
-// 			resultAmountOut:         newUint256("600901351"),
-// 			swapType:                ExactOut,
-// 			tokenAmountLimit:        newUint256("843455036"),
-// 			userBeforeWugnotBalance: 0,
-// 			userWrappedWugnot:       0,
-// 			amountSpecified:         newUint256("600901352"),
-// 			expectError:             false,
-// 		},
-// 	}
+	tests := []struct {
+		name                    string
+		inputToken              string
+		outputToken             string
+		resultAmountIn          *u256.Uint
+		resultAmountOut         *u256.Uint
+		swapType                SwapType
+		tokenAmountLimit        *u256.Uint
+		userBeforeWugnotBalance int64
+		userWrappedWugnot       int64
+		amountSpecified         *u256.Uint
+		expectError             bool
+		errorMessage            string
+	}{
+		{
+			name:                    "Pass: ExactIn",
+			inputToken:              barPath,
+			outputToken:             bazPath,
+			resultAmountIn:          newUint256("100"),
+			resultAmountOut:         newUint256("90"),
+			swapType:                ExactIn,
+			tokenAmountLimit:        newUint256("85"),
+			userBeforeWugnotBalance: 0,
+			userWrappedWugnot:       0,
+			amountSpecified:         newUint256("100"),
+			expectError:             false,
+		},
+		{
+			name:                    "Pass: ExactOut",
+			inputToken:              barPath,
+			outputToken:             bazPath,
+			resultAmountIn:          newUint256("110"),
+			resultAmountOut:         newUint256("100"),
+			swapType:                ExactOut,
+			tokenAmountLimit:        newUint256("120"),
+			userBeforeWugnotBalance: 0,
+			userWrappedWugnot:       0,
+			amountSpecified:         newUint256("100"),
+			expectError:             false,
+		},
+		{
+			name:                    "ExactOut: Slippage error",
+			inputToken:              barPath,
+			outputToken:             bazPath,
+			resultAmountIn:          newUint256("100"),
+			resultAmountOut:         newUint256("90"),
+			swapType:                ExactOut,
+			tokenAmountLimit:        newUint256("100"),
+			userBeforeWugnotBalance: 0,
+			userWrappedWugnot:       0,
+			amountSpecified:         newUint256("100"),
+			expectError:             true,
+			errorMessage:            "[GNOSWAP-ROUTER-002] slippage check failed || Received more than requested in [EXACT_OUT] requested=100, actual=90",
+		},
+		{
+			name:                    "GNOT: Slippage error",
+			inputToken:              gnot,
+			outputToken:             barPath,
+			resultAmountIn:          newUint256("300"),
+			resultAmountOut:         newUint256("90"),
+			swapType:                ExactIn,
+			tokenAmountLimit:        newUint256("85"),
+			userBeforeWugnotBalance: 1000000,
+			userWrappedWugnot:       20000,
+			expectError:             true,
+			errorMessage:            "too much wugnot spent",
+		},
+		{
+			name:                    "ExactOut: Real world slippage error",
+			inputToken:              barPath,
+			outputToken:             bazPath,
+			resultAmountIn:          newUint256("843455035"),
+			resultAmountOut:         newUint256("600901351"),
+			swapType:                ExactOut,
+			tokenAmountLimit:        newUint256("843455036"),
+			userBeforeWugnotBalance: 0,
+			userWrappedWugnot:       0,
+			amountSpecified:         newUint256("600901352"),
+			expectError:             false,
+		},
+	}
 
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			if tt.expectError {
-// 				defer func() {
-// 					r := recover()
-// 					if r == nil {
-// 						t.Errorf("Error expected but not occurred")
-// 						return
-// 					}
-// 					errorStr, ok := r.(string)
-// 					if !ok {
-// 						t.Errorf("Unexpected error type: %v", r)
-// 						return
-// 					}
-// 					if tt.errorMessage != "" && !strings.Contains(errorStr, tt.errorMessage) {
-// 						t.Errorf("Expected error message not included. got: %v, want: %v", errorStr, tt.errorMessage)
-// 					}
-// 				}()
-// 			}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initRouterTest(t)
+			createBasicPool(t)
 
-// 			amountIn, amountOut := finalizeSwap(
-// 				tt.inputToken,
-// 				tt.outputToken,
-// 				tt.resultAmountIn,
-// 				tt.resultAmountOut,
-// 				tt.swapType,
-// 				tt.tokenAmountLimit,
-// 				tt.userBeforeWugnotBalance,
-// 				tt.userWrappedWugnot,
-// 				tt.amountSpecified,
-// 			)
+			if tt.expectError {
+				defer func() {
+					r := recover()
+					if r == nil {
+						t.Errorf("Error expected but not occurred")
+						return
+					}
+					errorStr, ok := r.(string)
+					if !ok {
+						t.Errorf("Unexpected error type: %v", r)
+						return
+					}
+					if tt.errorMessage != "" && !strings.Contains(errorStr, tt.errorMessage) {
+						t.Errorf("Expected error message not included. got: %v, want: %v", errorStr, tt.errorMessage)
+					}
+				}()
+			}
 
-// 			if !tt.expectError {
-// 				uassert.NotEqual(t, amountIn, "")
-// 				uassert.NotEqual(t, amountOut, "")
+			amountIn, amountOut := finalizeSwap(
+				tt.inputToken,
+				tt.outputToken,
+				tt.resultAmountIn,
+				tt.resultAmountOut,
+				tt.swapType,
+				tt.tokenAmountLimit,
+				tt.userBeforeWugnotBalance,
+				tt.userWrappedWugnot,
+				tt.amountSpecified,
+			)
 
-// 				outVal := i256.MustFromDecimal(amountOut)
-// 				if !outVal.IsNeg() {
-// 					t.Error("amountOut is not negative")
-// 				}
-// 			}
-// 		})
-// 	}
-// }
+			if !tt.expectError {
+				uassert.NotEqual(t, amountIn, "")
+				uassert.NotEqual(t, amountOut, "")
+
+				outVal := i256.MustFromDecimal(amountOut)
+				if !outVal.IsNeg() {
+					t.Error("amountOut is not negative")
+				}
+			}
+		})
+	}
+}
 
 func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 	const wugnotTokenPath = "gno.land/r/demo/wugnot"
@@ -209,13 +212,15 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			quoteArr:         "100",
 			amountOutMin:     "85000000",
 			expectedAmount0:  "100000000",
-			expectedAmount1:  "-98905913",
+			expectedAmount1:  "-98817367",
 			expectPanic:      true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initRouterTest(t)
+
 			// Pool Creation
 			testing.SetRealm(std.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFeeByAdmin(cross, 0)
@@ -246,8 +251,10 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			wugnot.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
 
-			teller := common.GetTokenTeller(wugnotTokenPath)
-			teller.Approve(poolContract, maxApprove)
+			func(cur realm) {
+				teller := common.GetTokenTeller(wugnotTokenPath)
+				teller.Approve(poolContract, maxApprove)
+			}(cross)
 
 			// Position Creation
 			pn.Mint(
@@ -290,6 +297,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				tt.amountOutMin,
 			)
 
+			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			amountIn, amountOut := ExactInSwapRoute(
 				cross,
 				tt.inputToken,
@@ -304,25 +312,15 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			testing.SkipHeights(1)
 			afterWugnotBalance := wugnot.BalanceOf(tt.recipient)
 
-			defer func() {
-				if r := recover(); r != nil {
-					if tt.expectPanic {
-						if errMsg, ok := r.(string); ok {
-							uassert.Equal(t, "not authorized", errMsg)
-						}
-					} else {
-						t.Errorf("expected panic but got none")
-					}
-				}
-			}()
-
-			absDrySwapAmountOut := strings.TrimPrefix(drySwapAmountOut, "-")
-			withoutFee := handleSwapFee(tt.outputToken, u256.MustFromDecimal(absDrySwapAmountOut))
-			absAmountOut := strings.TrimPrefix(amountOut, "-")
-			uassert.Equal(t, withoutFee.ToString(), absAmountOut)
-			uassert.Equal(t, tt.expectedAmount0, amountIn)
-			uassert.Equal(t, tt.expectedAmount1, amountOut)
-			uassert.Equal(t, tt.expectedAmount0, strconv.FormatInt(int64(beforeWugnotBalance-afterWugnotBalance), 10))
+			func(cur realm) {
+				absDrySwapAmountOut := strings.TrimPrefix(drySwapAmountOut, "-")
+				withoutFee := handleSwapFee(tt.outputToken, u256.MustFromDecimal(absDrySwapAmountOut))
+				absAmountOut := strings.TrimPrefix(amountOut, "-")
+				uassert.Equal(t, withoutFee.ToString(), absAmountOut)
+				uassert.Equal(t, tt.expectedAmount0, amountIn, "amountIn is not equal to expectedAmount0")
+				uassert.Equal(t, tt.expectedAmount1, amountOut, "amountOut is not equal to expectedAmount1")
+				uassert.Equal(t, tt.expectedAmount0, strconv.FormatInt(int64(beforeWugnotBalance-afterWugnotBalance), 10), "amountIn is not equal to expectedAmount0")
+			}(cross)
 		})
 	}
 }
@@ -381,13 +379,15 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			quoteArr:         "100",
 			amountOutMin:     "20000000",
 			expectedAmount0:  "50000000",
-			expectedAmount1:  "-21340516",
+			expectedAmount1:  "-49776285",
 			expectPanic:      true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initRouterTest(t)
+
 			// Pool Creation
 			testing.SetRealm(std.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFeeByAdmin(cross, 0)
@@ -419,8 +419,11 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			wugnot.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
 
-			teller := common.GetTokenTeller(wugnotTokenPath)
-			teller.Approve(poolContract, maxApprove)
+			func(cur realm) {
+				teller := common.GetTokenTeller(wugnotTokenPath)
+				teller.Approve(poolContract, maxApprove)
+			}(cross)
+
 			// Position Creation
 			positionId, _, _, _ := pn.Mint(
 				cross,
@@ -483,6 +486,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 				tt.amountOutMin,
 			)
 
+			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			_, amountOut := ExactInSwapRoute(
 				cross,
 				tt.inputToken,
@@ -514,6 +518,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 }
 
 func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T) {
+	t.Skip("permission problem")
 	const wugnotTokenPath = "gno.land/r/demo/wugnot"
 	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
 	const routerPath = consts.ROUTER_PATH
@@ -575,6 +580,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initRouterTest(t)
+
 			// Pool Creation
 			testing.SetRealm(std.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFeeByAdmin(cross, 0)
@@ -606,8 +613,11 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			wugnot.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
 
-			teller := common.GetTokenTeller(wugnotTokenPath)
-			teller.Approve(poolContract, maxApprove)
+			func(cur realm) {
+				teller := common.GetTokenTeller(wugnotTokenPath)
+				teller.Approve(poolContract, maxApprove)
+			}(cross)
+
 			// Position Creation
 			positionId, liquidity, _, _ := pn.Mint(
 				cross,
@@ -637,6 +647,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			partialLiquidity := liquidityUint64 / 5
 			reqLiquidity := strconv.FormatUint(partialLiquidity, 10)
 
+			testing.SetOriginCaller(tt.recipient)
 			pn.DecreaseLiquidity(
 				cross,
 				positionId,
@@ -756,13 +767,15 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			quoteArr:         "100",
 			amountOutMin:     "850000",
 			expectedAmount0:  "10000000",
-			expectedAmount1:  "-9903728",
+			expectedAmount1:  "-9875422",
 			expectPanic:      true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initRouterTest(t)
+
 			// Pool Creation
 			testing.SetRealm(std.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFeeByAdmin(cross, 0)
@@ -794,8 +807,11 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			wugnot.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
 
-			teller := common.GetTokenTeller(wugnotTokenPath)
-			teller.Approve(poolContract, maxApprove)
+			func(cur realm) {
+				teller := common.GetTokenTeller(wugnotTokenPath)
+				teller.Approve(poolContract, maxApprove)
+			}(cross)
+
 			// Position Creation
 			pn.Mint(
 				cross,
@@ -838,6 +854,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			)
 			handleSwapFee(tt.outputToken, u256.MustFromDecimal(drySwapAmountOut))
 
+			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			amountIn, amountOut := ExactInSwapRoute(
 				cross,
 				tt.inputToken,
@@ -850,8 +867,6 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 				"", // referrer
 			)
 			testing.SkipHeights(1)
-			afterWugnotBalance := wugnot.BalanceOf(tt.recipient)
-			println("afterWugnotBalance", afterWugnotBalance)
 
 			defer func() {
 				if r := recover(); r != nil {

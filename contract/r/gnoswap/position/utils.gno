@@ -310,12 +310,13 @@ func isOwnerOrOperator(addr std.Address, positionId uint64) bool {
 	return false
 }
 
-func isAuthorizedForToken(positionId uint64) {
+func assertAuthorizedForToken(positionId uint64) {
 	caller := getPrevAddr()
-	if !(isOwnerOrOperator(caller, positionId)) {
+
+	if !isOwnerOrOperator(caller, positionId) {
 		panic(newErrorWithDetail(
 			errNoPermission,
-			ufmt.Sprintf("caller(%s) is not approved or owner of positionId(%d)", caller, positionId),
+			ufmt.Sprintf("caller(%s) is not owner or approved operator of positionId(%d)", caller, positionId),
 		))
 	}
 }
