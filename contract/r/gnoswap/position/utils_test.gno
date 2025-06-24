@@ -6,6 +6,8 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/uassert"
+
+	"gno.land/r/gnoswap/v1/gnft"
 )
 
 func assertPanic(t *testing.T, expectedMsg string, fn func()) {
@@ -71,14 +73,26 @@ func TestAssertTokenExists(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			// given
+			initPositionTest(t)
+
+			// given - nft 1 is minted to adminAddr
+			testing.SetRealm(posRealm)
+			gnft.Mint(cross, adminAddr, positionIdFrom(1))
+
+			// when
+			testing.SetOriginCaller(adminAddr)
+
 			if tc.expectedHasPanic {
 				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
 					assertTokenExists(tc.positionId)
 				})
 			} else {
 				assertTokenExists(tc.positionId)
-				uassert.Equal(t, true, true)
 			}
+
+			// then
+			uassert.Equal(t, true, true)
 		})
 	}
 }
@@ -189,80 +203,87 @@ func TestAssertOnlyValidAddressWith(t *testing.T) {
 
 func TestAssertValidNumberString(t *testing.T) {
 	tests := []struct {
-		name        string
-		input       string
-		expectPanic bool
+		name                 string
+		input                string
+		expectedHasPanic     bool
+		expectedPanicMessage string
 	}{
 		// Valid Cases
 		{
-			name:        "assertValidNumberString is success by valid positive number",
-			input:       "12345",
-			expectPanic: false,
+			name:                 "assertValidNumberString is success by valid positive number",
+			input:                "12345",
+			expectedHasPanic:     false,
+			expectedPanicMessage: "",
 		},
 		{
-			name:        "assertValidNumberString is success by valid negative number",
-			input:       "-98765",
-			expectPanic: false,
+			name:                 "assertValidNumberString is success by valid negative number",
+			input:                "-98765",
+			expectedHasPanic:     false,
+			expectedPanicMessage: "",
 		},
 		{
-			name:        "assertValidNumberString is success by zero",
-			input:       "0",
-			expectPanic: false,
+			name:                 "assertValidNumberString is success by zero",
+			input:                "0",
+			expectedHasPanic:     false,
+			expectedPanicMessage: "",
 		},
 		{
-			name:        "assertValidNumberString is success by negative zero",
-			input:       "-0",
-			expectPanic: false,
+			name:                 "assertValidNumberString is success by negative zero",
+			input:                "-0",
+			expectedHasPanic:     false,
+			expectedPanicMessage: "",
 		},
 
 		// Invalid Cases
 		{
-			name:        "assertValidNumberString is failed by empty string",
-			input:       "",
-			expectPanic: true,
+			name:                 "assertValidNumberString is failed by empty string",
+			input:                "",
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-POSITION-005] invalid input data || input is empty",
 		},
 		{
-			name:        "assertValidNumberString is failed by alphabet in string",
-			input:       "12a45",
-			expectPanic: true,
+			name:                 "assertValidNumberString is failed by alphabet in string",
+			input:                "12a45",
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-POSITION-005] invalid input data || input string : 12a45",
 		},
 		{
-			name:        "assertValidNumberString is failed by special characters",
-			input:       "123@45",
-			expectPanic: true,
+			name:                 "assertValidNumberString is failed by special characters",
+			input:                "123@45",
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-POSITION-005] invalid input data || input string : 123@45",
 		},
 		{
-			name:        "assertValidNumberString is failed by leading plus sign",
-			input:       "+12345",
-			expectPanic: true,
+			name:                 "assertValidNumberString is failed by leading plus sign",
+			input:                "+12345",
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-POSITION-005] invalid input data || input string : +12345",
 		},
 		{
-			name:        "assertValidNumberString is failed by multiple negative signs",
-			input:       "--12345",
-			expectPanic: true,
+			name:                 "assertValidNumberString is failed by multiple negative signs",
+			input:                "--12345",
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-POSITION-005] invalid input data || input string : --12345",
 		},
 		{
-			name:        "assertValidNumberString is failed by space in string",
-			input:       "123 45",
-			expectPanic: true,
+			name:                 "assertValidNumberString is failed by space in string",
+			input:                "123 45",
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-POSITION-005] invalid input data || input string : 123 45",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					if !tt.expectPanic {
-						t.Errorf("unexpected panic for input: %s, got: %v", tt.input, r)
-					}
-				} else {
-					if tt.expectPanic {
-						t.Errorf("expected panic but did not occur for input: %s", tt.input)
-					}
-				}
-			}()
 
-			assertValidNumberString(tt.input)
+			if tt.expectedHasPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+					assertValidNumberString(tt.input)
+				})
+			} else {
+				assertValidNumberString(tt.input)
+				uassert.Equal(t, true, true)
+			}
 		})
 	}
 }
@@ -490,7 +511,7 @@ func TestIsOwner(t *testing.T) {
 		expected   bool
 	}{
 		{
-			name:       "is owner is success by is owner",
+			name:       "is owner is success by owner is admin",
 			positionId: 1,
 			addr:       adminAddr,
 			expected:   true,
@@ -504,8 +525,13 @@ func TestIsOwner(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// MakeMintPositionWithoutFee(t)
+			initPositionTest(t)
+
+			testing.SetRealm(posRealm)
+			gnft.Mint(cross, adminAddr, positionIdFrom(tc.positionId))
+
 			got := isOwner(tc.positionId, tc.addr)
+
 			uassert.Equal(t, tc.expected, got)
 		})
 	}
@@ -519,27 +545,38 @@ func TestIsOperator(t *testing.T) {
 		expected   bool
 	}{
 		{
-			name:       "Fail - is not operator",
+			name:       "is operator is success by is operator",
 			positionId: 1,
 			addr:       alice,
-			expected:   false,
+			expected:   true,
 		},
 		{
-			name:       "Success - is operator",
+			name:       "is operator is failed by is not operator",
 			positionId: 1,
 			addr:       bob,
-			expected:   true,
+			expected:   false,
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			testing.SetOriginCaller(adminAddr)
+			// given
+			initPositionTest(t)
 
-			if tc.expected {
-				LPTokenApprove(t, adminAddr, tc.addr, tc.positionId)
-			}
+			position := newDummyPosition(tc.positionId)
+			position.operator = alice
+			createNewPosition(tc.positionId, position)
 
+			// given - nft owner is position realm then set as approved alice
+			testing.SetRealm(posRealm)
+			gnft.Mint(cross, posRealm.Address(), positionIdFrom(tc.positionId))
+
+			testing.SetOriginCaller(posRealm.Address())
+			gnft.Approve(cross, alice, positionIdFrom(tc.positionId))
+
+			// when
 			got := isOperator(tc.positionId, tc.addr)
+
+			// then
 			uassert.Equal(t, tc.expected, got)
 		})
 	}

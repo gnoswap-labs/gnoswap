@@ -288,11 +288,11 @@ func TestNextIdFunctions(t *testing.T) {
 	nextId = uint64(1)
 
 	tests := []struct {
-		name           string
-		initialValue   uint64
-		increments     int
-		expectedValue  uint64
-		errorMessage   string
+		name          string
+		initialValue  uint64
+		increments    int
+		expectedValue uint64
+		errorMessage  string
 	}{
 		{
 			name:          "Initial nextId should return 1",
