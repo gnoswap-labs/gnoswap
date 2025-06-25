@@ -30,7 +30,7 @@ jobs:
         id: set-matrix
         run: |
           chmod +x .github/scripts/generate_matrix.rb
-          echo "matrix=$(ruby .github/scripts/generate_matrix.rb contract)" >> $GITHUB_OUTPUT
+          echo "matrix=$(ruby .github/scripts/generate_matrix.rb contract tests/scenario)" >> $GITHUB_OUTPUT
 
   test-gnoswap:
     needs: generate-matrix
