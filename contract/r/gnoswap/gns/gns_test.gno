@@ -310,3 +310,43 @@ func TestGrc20Methods(t *testing.T) {
 		})
 	}
 }
+
+func TestCalculateAmountToMint(t *testing.T) {
+	startHeight := std.ChainHeight()
+
+	tests := []struct {
+		name            string
+		inputFromHeight int64
+		inputToHeight   int64
+		expectedAmount  int64
+	}{
+		{
+			name:            "calculate amount to mint by 1 block for same year(1st year)",
+			inputFromHeight: startHeight + 1,
+			inputToHeight:   startHeight + 1,
+			expectedAmount:  14269406,
+		},
+		{
+			name:            "calculate amount to mint by 2 block for same year(1st year)",
+			inputFromHeight: startHeight + 1,
+			inputToHeight:   startHeight + 2,
+			expectedAmount:  28538812, // 14269406 * 2
+		},
+		{
+			name:            "calculate amount to mint by 1st year's entire block and 2nd year's 1 block",
+			inputFromHeight: GetHalvingYearStartBlock(1) - 1,
+			inputToHeight:   GetHalvingYearStartBlock(2),
+			expectedAmount:  225000008077406, // 224999993808000(actually distributed amount) + 14269406 (apply with 1st year's left amount)
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			InitGnsTest(t)
+
+			amount := calculateAmountToMint(tt.inputFromHeight, tt.inputToHeight)
+
+			uassert.Equal(t, tt.expectedAmount, amount)
+		})
+	}
+}
