@@ -344,37 +344,34 @@ func setAvgBlockTimeInMs(ms int64) {
 	prevBlockTimeMs := GetAvgBlockTimeInMs()
 
 	hd := &es.halvingData
-	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
-		if year < currentYear {
-			continue
-		}
-
-		maxAmt := hd.getMaxAmount(year)
-		// divide the annual issuance amount by the number of days
-		// and then by the number of blocks
-		dailyAmt := maxAmt / DAY_PER_YEAR
-		newAmtPerBlock := dailyAmt / blockPerDay
-		hd.setAmountPerBlock(year, newAmtPerBlock)
-
-		// calculate changed end block height
-		// calculate new remaining blocks by taking original remaining blocks,
-		// multiplying by previous block time (ms) and dividing by new block time (ms)
+	for year := currentYear; year <= HALVING_END_YEAR; year++ {
+		// set start block height and block number for current year
 		halvingStartHeight := hd.getStartBlockHeight(year)
-		halvingEndHeight := hd.getEndBlockHeight(year)
+		blockNumOfYear := SECONDS_IN_YEAR * 1_000 / ms
 
-		changedStartHeight := halvingStartHeight
-		if std.ChainHeight() > halvingStartHeight {
-			changedStartHeight = std.ChainHeight()
+		// if current year, calculate block number by remaining block number and previous block time
+		if year == currentYear {
+			currentHeight := std.ChainHeight()
+			prevHalvingEndHeight := hd.getEndBlockHeight(year)
+			remainBlockNum := prevHalvingEndHeight - currentHeight
+
+			halvingStartHeight = currentHeight
+			blockNumOfYear = remainBlockNum * prevBlockTimeMs / ms
 		}
 
-		remainBlockNum := halvingEndHeight - changedStartHeight
-		changedRemainBlockNum := remainBlockNum * prevBlockTimeMs / ms
+		// amount per block is calculated by left amount / block number
+		// minted amount exists only for current year and is zero for next years
+		leftAmount := hd.getMaxAmount(year) - hd.getMintedAmount(year)
+		amountPerBlock := leftAmount / blockNumOfYear
+		hd.setAmountPerBlock(year, amountPerBlock)
 
-		changedEndHeight := changedStartHeight + changedRemainBlockNum
+		// end block height is updated by calculated start block height and block number
+		halvingEndHeight := halvingStartHeight + blockNumOfYear
+		hd.setEndBlockHeight(year, halvingEndHeight)
 
-		hd.setEndBlockHeight(year, changedEndHeight)
+		// next year's start block height is updated by calculated end block height
 		if year < HALVING_END_YEAR {
-			hd.setStartBlockHeight(year+1, changedEndHeight+1)
+			hd.setStartBlockHeight(year+1, halvingEndHeight+1)
 		}
 	}
 

@@ -12,8 +12,6 @@ import (
 	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 
-	_ "gno.land/r/gnoswap/v1/staker"
-
 	"gno.land/r/gnoswap/v1/access"
 )
 
@@ -67,7 +65,8 @@ func main() {
 	changeBlockTime(4000)
 	println()
 
-	println("[SCENARIO] 7. Mint GNS when skipped 1 block (expect amount per block is 28538812)")
+	// expect amount per block is 28538814, (225000000000000 - 14269406) / 7883999 = 28538814
+	println("[SCENARIO] 7. Mint GNS when skipped 1 block (expect amount per block is 28538814)")
 	testing.SkipHeights(1)
 	println("[INFO] current block height", std.ChainHeight())
 	mintGNS()
@@ -78,6 +77,13 @@ func main() {
 	testing.SkipHeights(7883998)
 	println("[INFO] current block height", std.ChainHeight())
 	mintGNS()
+	println()
+
+	println("[SCENARIO] 9. Mint GNS when skipped 1 block (expect amount per block is 14269406)")
+	testing.SkipHeights(1)
+	println("[INFO] current block height", std.ChainHeight())
+	mintGNS()
+	println()
 }
 
 func initEmission() {
@@ -146,14 +152,19 @@ func changeBlockTime(blockTime int64) {
 // [INFO] emission amount changed 10702054
 // [INFO] current year is 2
 // [EXPECTED] end block height should be changed 31536123 to 23652123
-// [EXPECTED] amount per block should be changed 14269406 to 28538812
+// [EXPECTED] amount per block should be changed 14269406 to 28538814
 //
-// [SCENARIO] 7. Mint GNS when skipped 1 block (expect amount per block is 28538812)
+// [SCENARIO] 7. Mint GNS when skipped 1 block (expect amount per block is 28538814)
 // [INFO] current block height 15768125
-// [EXPECTED] minted amount should be 28538812
-// [EXPECTED] total minted amount should be 225000042808218
+// [EXPECTED] minted amount should be 28538814
+// [EXPECTED] total minted amount should be 225000042808220
 //
 // [SCENARIO] 8. Mint GNS when skipped 7883998 block then 2nd year end (expect total minted amount is 450000000000000)
 // [INFO] current block height 23652123
-// [EXPECTED] minted amount should be 224999957191782
+// [EXPECTED] minted amount should be 224999957191780
 // [EXPECTED] total minted amount should be 450000000000000
+//
+// [SCENARIO] 9. Mint GNS when skipped 1 block (expect amount per block is 14269406)
+// [INFO] current block height 23652124
+// [EXPECTED] minted amount should be 14269406
+// [EXPECTED] total minted amount should be 450000014269406
