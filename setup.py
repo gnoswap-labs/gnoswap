@@ -122,7 +122,7 @@ class ContractCopier:
         if "gnomod.toml" in files:
             module_file = os.path.join(root, "gnomod.toml")
         elif "gno.mod" in files:
-            module_file = os.path.join(root, "gno.mod")
+            raise ValueError("gno.mod format is outdated. Please use gnomod.toml instead.")
         
         if module_file:
             module_path = self.module_manager.extract_module_path(module_file)
@@ -156,6 +156,9 @@ def setup_contracts(workdir: str) -> None:
     copier = ContractCopier(module_manager)
 
     for root, dirs, files in os.walk("contract"):
+        copier.process_directory(root, dirs, files)
+
+    for root, dirs, files in os.walk("tests/scenario"):
         copier.process_directory(root, dirs, files)
 
 
