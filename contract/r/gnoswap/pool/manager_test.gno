@@ -165,7 +165,7 @@ func TestGetPool(t *testing.T) {
 		verifyFn    func(t *testing.T, pool *Pool)
 	}{
 		{
-			name: "Panic - unregisterd poolPath ",
+			name: "Panic - unregistered poolPath",
 			setupFn: func(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				SetPoolCreationFeeByAdmin(cross, 0)
