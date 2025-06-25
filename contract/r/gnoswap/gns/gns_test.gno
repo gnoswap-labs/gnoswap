@@ -6,10 +6,11 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 const (
@@ -401,6 +402,84 @@ func TestCalculateAmountToMint(t *testing.T) {
 			amount := calculateAmountToMint(tt.inputFromHeight, tt.inputToHeight)
 
 			uassert.Equal(t, tt.expectedAmount, amount)
+		})
+	}
+}
+
+func TestMintGns(t *testing.T) {
+	tests := []struct {
+		name                 string
+		halted               bool
+		inputRealm           std.Realm
+		inputSkipHeight      int64
+		expectedMintedAmount int64
+		expectedHasAbort     bool
+		expectedAbortMessage string
+	}{
+		{
+			name:                 "mint gns is success by emission realm",
+			halted:               false,
+			inputRealm:           std.NewCodeRealm(consts.EMISSION_PATH),
+			inputSkipHeight:      1,
+			expectedMintedAmount: 14269406,
+			expectedHasAbort:     false,
+			expectedAbortMessage: "",
+		},
+		{
+			name:                 "mint gns is failed by halted",
+			halted:               true,
+			inputRealm:           std.NewCodeRealm(consts.EMISSION_PATH),
+			inputSkipHeight:      1,
+			expectedMintedAmount: 0,
+			expectedHasAbort:     true,
+			expectedAbortMessage: "halted",
+		},
+		{
+			name:                 "mint gns is failed by caller is not emission realm",
+			halted:               false,
+			inputRealm:           std.NewUserRealm(testutils.TestAddress("user")),
+			inputSkipHeight:      1,
+			expectedMintedAmount: 0,
+			expectedHasAbort:     true,
+			expectedAbortMessage: "caller(g1w4ek2ujlta047h6lta047h6lta047h6lkvk347) has no permission",
+		},
+		{
+			name:                 "mint gns is failed by not allowed to mint same block",
+			halted:               false,
+			inputRealm:           std.NewCodeRealm(consts.EMISSION_PATH),
+			inputSkipHeight:      0,
+			expectedMintedAmount: 0,
+			expectedHasAbort:     false,
+			expectedAbortMessage: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			InitGnsTest(t)
+
+			testing.SetOriginCaller(adminAddr)
+			halt.SetHaltByAdmin(cross, tt.halted) // set halt
+
+			var mintedAmount int64
+
+			mintGnsFn := func() {
+				testing.SetRealm(tt.inputRealm)
+
+				firstMintedAmount := MintGns(cross, adminAddr)
+				testing.SkipHeights(tt.inputSkipHeight)
+				secondMintedAmount := MintGns(cross, adminAddr)
+
+				mintedAmount = firstMintedAmount + secondMintedAmount
+			}
+
+			if tt.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, mintGnsFn)
+			} else {
+				uassert.NotPanics(t, mintGnsFn)
+			}
+
+			uassert.Equal(t, tt.expectedMintedAmount, mintedAmount)
 		})
 	}
 }
