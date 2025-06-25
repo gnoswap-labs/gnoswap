@@ -327,16 +327,70 @@ func TestCalculateAmountToMint(t *testing.T) {
 			expectedAmount:  14269406,
 		},
 		{
+			name:            "calculate amount to mint by 1 block for same year(2nd year)",
+			inputFromHeight: GetHalvingYearStartBlock(2),
+			inputToHeight:   GetHalvingYearStartBlock(2),
+			expectedAmount:  14269406,
+		},
+		{
+			name:            "calculate amount to mint by 1 block for same year(3rd year)",
+			inputFromHeight: GetHalvingYearStartBlock(3),
+			inputToHeight:   GetHalvingYearStartBlock(3),
+			expectedAmount:  7134703, // halving year's amount / 2
+		},
+		{
 			name:            "calculate amount to mint by 2 block for same year(1st year)",
 			inputFromHeight: startHeight + 1,
 			inputToHeight:   startHeight + 2,
 			expectedAmount:  28538812, // 14269406 * 2
 		},
 		{
+			name:            "calculate amount to mint by 1st year's entire block - 1 block",
+			inputFromHeight: GetHalvingYearStartBlock(1),
+			inputToHeight:   GetHalvingYearEndBlock(1) - 1,
+			expectedAmount:  224_999_979_538_594, // 225000000000000 - 14269406 - 6192000
+		},
+		{
+			name:            "calculate amount to mint by 1st year's entire block",
+			inputFromHeight: GetHalvingYearStartBlock(1),
+			inputToHeight:   GetHalvingYearEndBlock(1),
+			expectedAmount:  225_000_000_000_000, // 225000000000000
+		},
+		{
+			name:            "calculate amount to mint by 2nd year's entire block",
+			inputFromHeight: GetHalvingYearStartBlock(2),
+			inputToHeight:   GetHalvingYearEndBlock(2),
+			expectedAmount:  225_000_000_000_000, // 225000000000000
+		},
+		{
+			name:            "calculate amount to mint by 3rd year's entire block",
+			inputFromHeight: GetHalvingYearStartBlock(3),
+			inputToHeight:   GetHalvingYearEndBlock(3),
+			expectedAmount:  112_500_000_000_000, // 112500000000000
+		},
+		{
 			name:            "calculate amount to mint by 1st year's entire block and 2nd year's 1 block",
-			inputFromHeight: GetHalvingYearStartBlock(1) - 1,
+			inputFromHeight: GetHalvingYearStartBlock(1),
 			inputToHeight:   GetHalvingYearStartBlock(2),
-			expectedAmount:  225000008077406, // 224999993808000(actually distributed amount) + 14269406 (apply with 1st year's left amount)
+			expectedAmount:  225_000_014_269_406, // 225000000000000 + 14269406
+		},
+		{
+			name:            "calculate amount to mint by entire block for 12 years",
+			inputFromHeight: GetHalvingYearStartBlock(1),
+			inputToHeight:   GetHalvingYearEndBlock(12),
+			expectedAmount:  900_000_000_000_000, // 225000000000000
+		},
+		{
+			name:            "calculate amount to mint is zero amount by after emission end height",
+			inputFromHeight: GetHalvingYearEndBlock(12) + 1,
+			inputToHeight:   GetHalvingYearEndBlock(12) + 10000,
+			expectedAmount:  0,
+		},
+		{
+			name:            "calculate amount to mint is zero amount by before emission start height",
+			inputFromHeight: GetHalvingYearStartBlock(1) - 100,
+			inputToHeight:   GetHalvingYearStartBlock(1) - 1,
+			expectedAmount:  0,
 		},
 	}
 
