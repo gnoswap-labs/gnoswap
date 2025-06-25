@@ -21,7 +21,6 @@ var t *testing.T
 
 // Constants for fee tiers
 const (
-	FeeTier100  uint32 = 100
 	FeeTier500  uint32 = 500
 	FeeTier3000 uint32 = 3000
 )
