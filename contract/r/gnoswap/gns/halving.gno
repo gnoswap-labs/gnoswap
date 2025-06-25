@@ -339,18 +339,47 @@ func setAvgBlockTimeInMs(ms int64) {
 
 	// recalculate all remaining years (amountPerBlock)
 	es := GetEmissionState()
+
+	currentYear := GetHalvingYearByHeight(std.ChainHeight())
+	prevBlockTimeMs := GetAvgBlockTimeInMs()
+
 	hd := &es.halvingData
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
+		if year < currentYear {
+			continue
+		}
+
 		maxAmt := hd.getMaxAmount(year)
 		// divide the annual issuance amount by the number of days
 		// and then by the number of blocks
 		dailyAmt := maxAmt / DAY_PER_YEAR
 		newAmtPerBlock := dailyAmt / blockPerDay
 		hd.setAmountPerBlock(year, newAmtPerBlock)
+
+		// calculate changed end block height
+		// calculate new remaining blocks by taking original remaining blocks,
+		// multiplying by previous block time (ms) and dividing by new block time (ms)
+		halvingStartHeight := hd.getStartBlockHeight(year)
+		halvingEndHeight := hd.getEndBlockHeight(year)
+
+		changedStartHeight := halvingStartHeight
+		if std.ChainHeight() > halvingStartHeight {
+			changedStartHeight = std.ChainHeight()
+		}
+
+		remainBlockNum := halvingEndHeight - halvingStartHeight
+		changedRemainBlockNum := remainBlockNum * prevBlockTimeMs / ms
+
+		changedEndHeight := changedStartHeight + changedRemainBlockNum
+
+		hd.setEndBlockHeight(year, changedEndHeight)
+		if year < HALVING_END_YEAR {
+			hd.setStartBlockHeight(year+1, changedEndHeight+1)
+		}
 	}
 
 	// adjust the current year's amount per block
-	currentYear, _ := getHalvingYearAndEndTimestamp(now)
+	currentYear, _ = getHalvingYearAndEndTimestamp(now)
 	adjusted := hd.getAmountPerBlock(currentYear)
 	if callbackEmissionChange == nil {
 		panic(errCallbackEmissionChangeIsNil.Error())
