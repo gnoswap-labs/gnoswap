@@ -367,7 +367,7 @@ func setAvgBlockTimeInMs(ms int64) {
 			changedStartHeight = std.ChainHeight()
 		}
 
-		remainBlockNum := halvingEndHeight - halvingStartHeight
+		remainBlockNum := halvingEndHeight - changedStartHeight
 		changedRemainBlockNum := remainBlockNum * prevBlockTimeMs / ms
 
 		changedEndHeight := changedStartHeight + changedRemainBlockNum
