@@ -29,12 +29,15 @@ var (
 func main() {
 	ufmt.Println("[SCENARIO] 1. Initialize emission callback")
 	initEmissionCallback()
+	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint GNS when initialized")
 	mintGNS()
+	println()
 
 	ufmt.Println("[SCENARIO] 3. Skip 50 blocks")
 	testing.SkipHeights(50)
+	println()
 
 	ufmt.Println("[SCENARIO] 4. Mint GNS when skipped 50 blocks")
 	mintGNS()
@@ -56,8 +59,11 @@ func mintGNS() {
 
 // Output:
 // [SCENARIO] 1. Initialize emission callback
+//
 // [SCENARIO] 2. Mint GNS when initialized
 // [EXPECTED] minted amount should be 0
+//
 // [SCENARIO] 3. Skip 50 blocks
+//
 // [SCENARIO] 4. Mint GNS when skipped 50 blocks
 // [EXPECTED] minted amount should be 713470300
