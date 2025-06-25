@@ -158,6 +158,9 @@ def setup_contracts(workdir: str) -> None:
     for root, dirs, files in os.walk("contract"):
         copier.process_directory(root, dirs, files)
 
+    for root, dirs, files in os.walk("tests/scenario"):
+        copier.process_directory(root, dirs, files)
+
 
 def main() -> None:
     """Main entry point for the script."""
