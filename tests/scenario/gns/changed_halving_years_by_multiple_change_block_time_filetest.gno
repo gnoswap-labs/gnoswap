@@ -33,7 +33,7 @@ func main() {
 	getHalvingYears()
 	println()
 
-	ufmt.Println("[SCENARIO] 3. Skip 3942000 blocks and change block time to 1000ms (skip 25% of 1 year)")
+	ufmt.Println("[SCENARIO] 3. Skip 3942000 blocks and change block time to 1000ms (skip to 25% of 1 year)")
 	testing.SkipHeights(3942000)
 	changeBlockTime(1000)
 	println()
@@ -41,7 +41,7 @@ func main() {
 	ufmt.Println("[SCENARIO] 4. Get halving years (block time is 1000ms)")
 	getHalvingYears()
 
-	ufmt.Println("[SCENARIO] 5. Skip 3942000 blocks and change block time to 5000ms (skip 25% of 1 year)")
+	ufmt.Println("[SCENARIO] 5. Skip 3942000 blocks and change block time to 5000ms (skip to 50% of 1 year)")
 	testing.SkipHeights(3942000)
 	changeBlockTime(5000)
 	println()
@@ -109,7 +109,7 @@ func changeBlockTime(blockTime int64) {
 // [EXPECTED] halving year 11 block range 157680124~173448123 (block count: 15768000)
 // [EXPECTED] halving year 12 block range 173448124~189216123 (block count: 15768000)
 //
-// [SCENARIO] 3. Skip 3942000 blocks and change block time to 1000ms (skip 25% of 1 year)
+// [SCENARIO] 3. Skip 3942000 blocks and change block time to 1000ms (skip to 25% of 1 year)
 // [INFO] emission amount changed 5351027
 // [INFO] current year is 1
 // [EXPECTED] end block height should be changed 15768123 to 27594123
@@ -130,7 +130,7 @@ func changeBlockTime(blockTime int64) {
 // [EXPECTED] halving year 10 block range 279882124~311418123 (block count: 31536000)
 // [EXPECTED] halving year 11 block range 311418124~342954123 (block count: 31536000)
 // [EXPECTED] halving year 12 block range 342954124~374490123 (block count: 31536000)
-// [SCENARIO] 5. Skip 3942000 blocks and change block time to 5000ms (skip 25% of 1 year)
+// [SCENARIO] 5. Skip 3942000 blocks and change block time to 5000ms (skip to 50% of 1 year)
 // [INFO] emission amount changed 26755136
 // [INFO] current year is 1
 // [EXPECTED] end block height should be changed 27594123 to 11826123
