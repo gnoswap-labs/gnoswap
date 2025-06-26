@@ -340,38 +340,47 @@ func setAvgBlockTimeInMs(ms int64) {
 	// recalculate all remaining years (amountPerBlock)
 	es := GetEmissionState()
 
-	currentYear := GetHalvingYearByHeight(std.ChainHeight())
+	currentHeight := std.ChainHeight()
+	currentYear := GetHalvingYearByHeight(currentHeight)
 	prevBlockTimeMs := GetAvgBlockTimeInMs()
 
 	hd := &es.halvingData
 	for year := currentYear; year <= HALVING_END_YEAR; year++ {
-		// set start block height and block number for current year
-		halvingStartHeight := hd.getStartBlockHeight(year)
-		blockNumOfYear := SECONDS_IN_YEAR * 1_000 / ms
+		maxMintedAmount := hd.getMaxAmount(year)
+		halvingEndHeight := hd.getEndBlockHeight(year)
 
-		// if current year, calculate block number by remaining block number and previous block time
+		// Calculate remaining blocks with new block time
+		remainBlockNum := halvingEndHeight - currentHeight
+		changedRemainBlockNum := remainBlockNum * prevBlockTimeMs / ms
+
+		// For current year, use remaining amount to avoid over/under emission
 		if year == currentYear {
-			currentHeight := std.ChainHeight()
-			prevHalvingEndHeight := hd.getEndBlockHeight(year)
-			remainBlockNum := prevHalvingEndHeight - currentHeight
+			startHeight := hd.getStartBlockHeight(year)
+			lastGNSMintedHeight := GetLastMintedHeight() + 1
+			if lastGNSMintedHeight < startHeight {
+				lastGNSMintedHeight = startHeight
+			}
 
-			halvingStartHeight = currentHeight
-			blockNumOfYear = remainBlockNum * prevBlockTimeMs / ms
+			mintedAmount := hd.getMintedAmount(year) + calculateAmountToMint(lastGNSMintedHeight, currentHeight)
+			leftAmount := maxMintedAmount - mintedAmount
+
+			if changedRemainBlockNum > 0 {
+				changedAmountPerBlock := leftAmount / changedRemainBlockNum
+				hd.setAmountPerBlock(year, changedAmountPerBlock)
+			}
+		} else {
+			// For future years, use total year amount
+			dailyAmount := maxMintedAmount / DAY_PER_YEAR
+			changedAmountPerBlock := dailyAmount / blockPerDay
+			hd.setAmountPerBlock(year, changedAmountPerBlock)
 		}
 
-		// amount per block is calculated by left amount / block number
-		// minted amount exists only for current year and is zero for next years
-		leftAmount := hd.getMaxAmount(year) - hd.getMintedAmount(year)
-		amountPerBlock := leftAmount / blockNumOfYear
-		hd.setAmountPerBlock(year, amountPerBlock)
+		changedEndHeight := currentHeight + changedRemainBlockNum
+		hd.setEndBlockHeight(year, changedEndHeight)
 
-		// end block height is updated by calculated start block height and block number
-		halvingEndHeight := halvingStartHeight + blockNumOfYear
-		hd.setEndBlockHeight(year, halvingEndHeight)
-
-		// next year's start block height is updated by calculated end block height
+		// next year's start block height is updated by calculated end block heightAdd commentMore actions
 		if year < HALVING_END_YEAR {
-			hd.setStartBlockHeight(year+1, halvingEndHeight+1)
+			hd.setStartBlockHeight(year+1, changedEndHeight+1)
 		}
 	}
 
