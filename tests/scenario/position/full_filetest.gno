@@ -10,11 +10,11 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 // Constants for addresses and approvals
@@ -29,6 +29,12 @@ var (
 	poolAddr     = consts.POOL_ADDR
 )
 
+var (
+	fee500 uint32 = 500
+
+	max_timeout int64 = 9999
+)
+
 // Token paths
 var (
 	fooPath = "gno.land/r/onbloc/foo"
@@ -37,7 +43,7 @@ var (
 
 func main() {
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFeeByAdmin(0)
+	pl.SetPoolCreationFeeByAdmin(cross, 0)
 
 	poolInitCreatePool()
 	mintPositionFullInRange()
