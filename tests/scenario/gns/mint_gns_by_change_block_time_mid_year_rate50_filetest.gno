@@ -1,4 +1,4 @@
-// mint gns by change block time at mid year (at 25% of 2nd year)
+// mint gns by change block time at mid year (at 50% of 2nd year)
 package main
 
 import (
