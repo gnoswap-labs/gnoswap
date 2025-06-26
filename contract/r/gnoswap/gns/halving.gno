@@ -339,18 +339,53 @@ func setAvgBlockTimeInMs(ms int64) {
 
 	// recalculate all remaining years (amountPerBlock)
 	es := GetEmissionState()
+
+	currentHeight := std.ChainHeight()
+	currentYear := GetHalvingYearByHeight(currentHeight)
+	prevBlockTimeMs := GetAvgBlockTimeInMs()
+
 	hd := &es.halvingData
-	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
-		maxAmt := hd.getMaxAmount(year)
-		// divide the annual issuance amount by the number of days
-		// and then by the number of blocks
-		dailyAmt := maxAmt / DAY_PER_YEAR
-		newAmtPerBlock := dailyAmt / blockPerDay
-		hd.setAmountPerBlock(year, newAmtPerBlock)
+	for year := currentYear; year <= HALVING_END_YEAR; year++ {
+		maxMintedAmount := hd.getMaxAmount(year)
+		halvingEndHeight := hd.getEndBlockHeight(year)
+
+		// Calculate remaining blocks with new block time
+		remainBlockNum := halvingEndHeight - currentHeight
+		changedRemainBlockNum := remainBlockNum * prevBlockTimeMs / ms
+
+		// For current year, use remaining amount to avoid over/under emission
+		if year == currentYear {
+			startHeight := hd.getStartBlockHeight(year)
+			lastGNSMintedHeight := GetLastMintedHeight() + 1
+			if lastGNSMintedHeight < startHeight {
+				lastGNSMintedHeight = startHeight
+			}
+
+			mintedAmount := hd.getMintedAmount(year) + calculateAmountToMint(lastGNSMintedHeight, currentHeight)
+			leftAmount := maxMintedAmount - mintedAmount
+
+			if changedRemainBlockNum > 0 {
+				changedAmountPerBlock := leftAmount / changedRemainBlockNum
+				hd.setAmountPerBlock(year, changedAmountPerBlock)
+			}
+		} else {
+			// For future years, use total year amount
+			dailyAmount := maxMintedAmount / DAY_PER_YEAR
+			changedAmountPerBlock := dailyAmount / blockPerDay
+			hd.setAmountPerBlock(year, changedAmountPerBlock)
+		}
+
+		changedEndHeight := currentHeight + changedRemainBlockNum
+		hd.setEndBlockHeight(year, changedEndHeight)
+
+		// next year's start block height is updated by calculated end block heightAdd commentMore actions
+		if year < HALVING_END_YEAR {
+			hd.setStartBlockHeight(year+1, changedEndHeight+1)
+		}
 	}
 
 	// adjust the current year's amount per block
-	currentYear, _ := getHalvingYearAndEndTimestamp(now)
+	currentYear, _ = getHalvingYearAndEndTimestamp(now)
 	adjusted := hd.getAmountPerBlock(currentYear)
 	if callbackEmissionChange == nil {
 		panic(errCallbackEmissionChangeIsNil.Error())
