@@ -327,8 +327,6 @@ func CollectReward(cur realm) {
 	prevAddr, prevPkgPath := getPrev()
 	caller := std.PreviousRealm().Address()
 
-	println("caller", caller.String())
-
 	en.MintAndDistributeGns(cross)
 
 	reward, protocolFeeRewards := rewardState.claim(caller, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
