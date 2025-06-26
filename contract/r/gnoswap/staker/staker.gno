@@ -195,6 +195,11 @@ func init() {
 
 func registerCallbackStakerEmissionChange() {
 	en.RegisterGnsChangeCallback(cross)
+	en.SetCallbackStakerEmissionChange(cross, func(emission int64) {
+		func(cur realm) {
+			callbackStakerEmissionChange(emission)
+		}(cross)
+	})
 }
 
 // StakeToken stakes an LP token into the staker contract. It transfer the LP token
