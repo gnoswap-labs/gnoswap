@@ -4,7 +4,6 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -14,13 +13,8 @@ import (
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/r/gnoswap/v1/pool"
-)
-
-// Constants for fee tiers
-const (
-	FeeTier500  uint32 = 500
-	FeeTier3000 uint32 = 3000
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
 )
 
 // Constants for addresses and approvals
@@ -39,7 +33,6 @@ var (
 var (
 	fooPath = "gno.land/r/onbloc/foo"
 	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
 )
 
 func main() {
@@ -81,6 +74,11 @@ func mintPositionFullInRange() {
 		adminAddr,
 		"",
 	)
+
+	println("positionId", positionId)
+	println("liquidity", liquidity)
+	println("amount0", amount0)
+	println("amount1", amount1)
 }
 
 func increaseLiquidity() {
@@ -97,6 +95,12 @@ func increaseLiquidity() {
 		"0",
 		max_timeout,
 	)
+
+	println("positionId", positionId)
+	println("liquidity", liquidity)
+	println("amount0", amount0)
+	println("amount1", amount1)
+	println("poolPath", poolPath)
 }
 
 func decreaseLiquidity() {
@@ -114,6 +118,13 @@ func decreaseLiquidity() {
 		false,
 	)
 
+	println("positionId", positionId)
+	println("liquidity", liquidity)
+	println("fee0", fee0)
+	println("fee1", fee1)
+	println("amount0", amount0)
+	println("amount1", amount1)
+	println("poolPath", poolPath)
 }
 
 func collectFee() {
@@ -122,4 +133,9 @@ func collectFee() {
 	foo.Approve(cross, poolAddr, maxApprove)
 
 	positionId, fee0, fee1, poolPath, _, _ := pn.CollectFee(cross, uint64(1), false)
+
+	println("positionId", positionId)
+	println("fee0", fee0)
+	println("fee1", fee1)
+	println("poolPath", poolPath)
 }
