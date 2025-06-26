@@ -56,7 +56,6 @@ func (z *Uint) SetAllOne() *Uint {
 // Set sets z to x and returns z.
 func (z *Uint) Set(x *Uint) *Uint {
 	*z = *x
-
 	return z
 }
 
@@ -168,7 +167,17 @@ func (z *Uint) fromDecimal(bs string) error {
 			z.SetUint64(num)
 		} else {
 			base := NewUint(num)
-			z.Add(z, base.Mul(base, mult))
+			// Check for overflow in multiplication
+			mulResult, overflow := new(Uint).MulOverflow(base, mult)
+			if overflow {
+				return ErrBig256Range
+			}
+			// Check for overflow in addition
+			addResult, overflow := new(Uint).AddOverflow(z, mulResult)
+			if overflow {
+				return ErrBig256Range
+			}
+			z.Set(addResult)
 		}
 		// Chop off another 19 characters
 		if remaining > 19 {

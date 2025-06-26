@@ -50,10 +50,9 @@ func (z *Uint) SubOverflow(x, y *Uint) (*Uint, bool) {
 
 // Neg returns -x mod 2^256.
 func (z *Uint) Neg(x *Uint) *Uint {
-	return z.Sub(new(Uint), x)
+	return z.Sub(Zero(), x)
 }
 
-// commented out for possible overflow
 // Mul sets z to the product x*y
 func (z *Uint) Mul(x, y *Uint) *Uint {
 	var (
@@ -86,42 +85,55 @@ func (z *Uint) MulOverflow(x, y *Uint) (*Uint, bool) {
 	return z, (p[4] | p[5] | p[6] | p[7]) != 0
 }
 
-// commented out for possible overflow
-// Div sets z to the quotient x/y for returns z.
-// If y == 0, z is set to 0
-func (z *Uint) Div(x, y *Uint) *Uint {
-	if y.IsZero() || y.Gt(x) {
-		return z.Clear()
+// Div sets z to the quotient x/y and returns z and error.
+// Returns error if y == 0.
+// Returns 0 when x < y.
+// Returns 1 when x == y.
+// Division rounds down (truncates).
+func (z *Uint) Div(x, y *Uint) (*Uint, error) {
+	if y.IsZero() {
+		return nil, errDivisionByZero("Div")
 	}
+
+	// x < y: quotient is 0
+	if x.Lt(y) {
+		return z.Clear(), nil
+	}
+
+	// x == y: quotient is 1
 	if x.Eq(y) {
-		return z.SetOne()
-	}
-	// Shortcut some cases
-	if x.IsUint64() {
-		return z.SetUint64(x.Uint64() / y.Uint64())
+		return z.SetOne(), nil
 	}
 
-	// At this point, we know
-	// x/y ; x > y > 0
+	// Fast path for small numbers
+	if x.IsUint64() && y.IsUint64() {
+		return z.SetUint64(x.Uint64() / y.Uint64()), nil
+	}
 
+	// General case: Knuth division
 	var quot Uint
 	udivrem(quot.arr[:], x.arr[:], y)
-	return z.Set(&quot)
+	return z.Set(&quot), nil
 }
 
 // MulMod calculates the modulo-m multiplication of x and y and
-// returns z.
-// If m == 0, z is set to 0 (OBS: differs from the big.Int)
-func (z *Uint) MulMod(x, y, m *Uint) *Uint {
-	if x.IsZero() || y.IsZero() || m.IsZero() {
-		return z.Clear()
+// returns z and error.
+// Returns error if m == 0.
+func (z *Uint) MulMod(x, y, m *Uint) (*Uint, error) {
+	if m.IsZero() {
+		return nil, errModuloByZero("MulMod")
 	}
+
+	if x.IsZero() || y.IsZero() {
+		return z.Clear(), nil
+	}
+
 	p := umul(x, y)
 
 	if m.arr[3] != 0 {
 		mu := Reciprocal(m)
 		r := reduce4(p, m, mu)
-		return z.Set(&r)
+		return z.Set(&r), nil
 	}
 
 	var (
@@ -139,53 +151,81 @@ func (z *Uint) MulMod(x, y, m *Uint) *Uint {
 
 	var quot [8]uint64
 	rem := udivrem(quot[:], p[:], m)
-	return z.Set(&rem)
+	return z.Set(&rem), nil
 }
 
-// Mod sets z to the modulus x%y for y != 0 and returns z.
-// If y == 0, z is set to 0 (OBS: differs from the big.Uint)
-func (z *Uint) Mod(x, y *Uint) *Uint {
-	if x.IsZero() || y.IsZero() {
-		return z.Clear()
-	}
-	switch x.Cmp(y) {
-	case -1:
-		// x < y
-		copy(z.arr[:], x.arr[:])
-		return z
-	case 0:
-		// x == y
-		return z.Clear() // They are equal
+// Mod sets z to the modulus x%y and returns z and error.
+// Returns error if y == 0.
+// Returns x when x < y.
+// Returns 0 when x == y.
+func (z *Uint) Mod(x, y *Uint) (*Uint, error) {
+	if y.IsZero() {
+		return nil, errModuloByZero("Mod")
 	}
 
-	// At this point:
-	// x != 0
-	// y != 0
-	// x > y
-
-	// Shortcut trivial case
-	if x.IsUint64() {
-		return z.SetUint64(x.Uint64() % y.Uint64())
+	// x < y: remainder is x
+	if x.Lt(y) {
+		return z.Set(x), nil
 	}
 
+	// x == y: remainder is 0
+	if x.Eq(y) {
+		return z.Clear(), nil
+	}
+
+	// Fast path for small numbers
+	if x.IsUint64() && y.IsUint64() {
+		return z.SetUint64(x.Uint64() % y.Uint64()), nil
+	}
+
+	// General case
 	var quot Uint
 	*z = udivrem(quot.arr[:], x.arr[:], y)
-	return z
+	return z, nil
 }
 
-// DivMod sets z to the quotient x div y and m to the modulus x mod y and returns the pair (z, m) for y != 0.
-// If y == 0, both z and m are set to 0 (OBS: differs from the big.Int)
-func (z *Uint) DivMod(x, y, m *Uint) (*Uint, *Uint) {
+// DivMod sets z to the quotient x/y and m to the modulus x%y.
+// Returns the pair (quotient, remainder) and error.
+// Returns error if y == 0.
+// When x < y: quotient = 0, remainder = x.
+// When x == y: quotient = 1, remainder = 0.
+func (z *Uint) DivMod(x, y, m *Uint) (*Uint, *Uint, error) {
 	if y.IsZero() {
-		return z.Clear(), m.Clear()
+		return nil, nil, errDivisionByZero("DivMod")
 	}
+
+	// x < y: quotient 0, remainder x
+	if x.Lt(y) {
+		z.Clear()
+		m.Set(x)
+		return z, m, nil
+	}
+
+	// x == y: quotient 1, remainder 0
+	if x.Eq(y) {
+		z.SetOne()
+		m.Clear()
+		return z, m, nil
+	}
+
+	// Fast path for 64-bit values
+	if x.IsUint64() && y.IsUint64() {
+		q := x.Uint64() / y.Uint64()
+		r := x.Uint64() % y.Uint64()
+		z.SetUint64(q)
+		m.SetUint64(r)
+		return z, m, nil
+	}
+
+	// General case: Knuth division
 	var quot Uint
 	*m = udivrem(quot.arr[:], x.arr[:], y)
 	*z = quot
-	return z, m
+	return z, m, nil
 }
 
 // Exp sets z = base**exponent mod 2**256, and returns z.
+// All results are modulo 2^256 (wrapped).
 func (z *Uint) Exp(base, exponent *Uint) *Uint {
 	res := Uint{arr: [4]uint64{1, 0, 0, 0}}
 	multiplier := *base
@@ -473,4 +513,54 @@ func udivrem2by1(uh, ul, d, reciprocal uint64) (quot, rem uint64) {
 	}
 
 	return qh, r
+}
+
+// MustDiv is like Div but panics if y == 0.
+// Used in critical paths where division by zero must be caught.
+func (z *Uint) MustDiv(x, y *Uint) *Uint {
+	result, err := z.Div(x, y)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// MustMod is like Mod but panics if y == 0.
+// Used in critical paths where modulo by zero must be caught.
+func (z *Uint) MustMod(x, y *Uint) *Uint {
+	result, err := z.Mod(x, y)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// MustMulMod is like MulMod but panics if m == 0.
+// Used in critical paths where modulo by zero must be caught.
+func (z *Uint) MustMulMod(x, y, m *Uint) *Uint {
+	result, err := z.MulMod(x, y, m)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// MustDivMod is like DivMod but panics if y == 0.
+// Used in critical paths where division by zero must be caught.
+func (z *Uint) MustDivMod(x, y, m *Uint) (*Uint, *Uint) {
+	q, r, err := z.DivMod(x, y, m)
+	if err != nil {
+		panic(err)
+	}
+	return q, r
+}
+
+// MustMul multiplies two numbers and panics on overflow.
+// Used in critical paths of AMM where overflow must be caught.
+func (z *Uint) MustMul(x, y *Uint) *Uint {
+	result, overflow := z.MulOverflow(x, y)
+	if overflow {
+		panic("uint256: multiplication overflow")
+	}
+	return result
 }

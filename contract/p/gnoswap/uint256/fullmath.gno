@@ -59,7 +59,7 @@ func MulDiv(
 	lo = new(Uint).Div(lo, twos)
 
 	// denominator is now odd, so find its inverse mod 2^256 using Newton-Raphson
-	inv := zero
+	inv := Zero()
 	inv = new(Uint).Mul(three, denominator)
 	inv = new(Uint).Xor(inv, two)
 
@@ -75,7 +75,7 @@ func MulDiv(
 	// flip twos to 2^256/twos and multiply + shift hi and or with lo
 	twos = new(Uint).Add(
 		new(Uint).Div(
-			new(Uint).Sub(zero, twos),
+			new(Uint).Sub(Zero(), twos),
 			twos,
 		),
 		one,
@@ -106,7 +106,7 @@ func MulDivRoundingUp(
 ) *Uint {
 	result := MulDiv(a, b, denominator)
 
-	if new(Uint).MulMod(a, b, denominator).Lte(zero) {
+	if new(Uint).MulMod(a, b, denominator).Lte(Zero()) {
 		return result
 	}
 
@@ -138,7 +138,7 @@ func DivRoundingUp(
 	div := new(Uint).Div(x, y)
 	mod := new(Uint).Mod(x, y)
 
-	z := new(Uint).Add(div, gt(mod, zero))
+	z := new(Uint).Add(div, gt(mod, Zero()))
 	return z
 }
 
@@ -155,5 +155,5 @@ func gt(x, y *Uint) *Uint {
 	if x.Gt(y) {
 		return one
 	}
-	return zero
+	return Zero()
 }
