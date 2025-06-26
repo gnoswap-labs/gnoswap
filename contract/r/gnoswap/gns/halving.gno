@@ -387,6 +387,92 @@ func setAvgBlockTimeInMs(ms int64) {
 	avgBlockTimeMs = ms
 }
 
+// SetAvgBlockTimeInMsByAdmin admin sets average block time
+func SetAvgBlockTimeInMsByAdminCheck(cur realm, ms int64) {
+	if ms <= 0 {
+		panic(errInvalidAvgBlockTimeInMs)
+	}
+	assertCallerIsAdmin()
+
+	prevAvgBlockTimeInMs := GetAvgBlockTimeInMs()
+	setAvgBlockTimeInMsCheck(ms)
+
+	// Log event generation
+	halvingData := GetEmissionState().getHalvingData()
+	prevAddr, prevPkgPath := getPrev()
+	emitBlockTimeChangeEvent("SetAvgBlockTimeInMsByAdmin", prevAddr, prevPkgPath,
+		prevAvgBlockTimeInMs, ms, halvingData)
+}
+
+// setAvgBlockTimeInMs sets the new average block time (ms) and updates all halving schedules.
+func setAvgBlockTimeInMsCheck(ms int64) {
+	assertShouldNotBeHalted()
+
+	// prevent division errors due to very large values or zero.
+	// block time values outside of practical range are blocked
+	if ms <= 0 || ms >= 1e9 {
+		panic("invalid block time interval")
+	}
+
+	now := time.Now().Unix()
+
+	// sync blockPerYear, blockPerDay
+	// SECONDS_IN_YEAR, consts.SECONDS_PER_DAY must be in seconds
+	blockPerYear = secToMs(SECONDS_IN_YEAR) / ms
+	blockPerDay = secToMs(consts.SECONDS_PER_DAY) / ms
+
+	// recalculate all remaining years (amountPerBlock)
+	es := GetEmissionState()
+
+	currentYear := GetHalvingYearByHeight(std.ChainHeight())
+	prevBlockTimeMs := GetAvgBlockTimeInMs()
+
+	hd := &es.halvingData
+	for year := currentYear; year <= HALVING_END_YEAR; year++ {
+		maxAmt := hd.getMaxAmount(year)
+		halvingEndHeight := hd.getEndBlockHeight(year)
+
+		// Calculate remaining blocks with new block time
+		remainBlockNum := halvingEndHeight - std.ChainHeight()
+		changedRemainBlockNum := remainBlockNum * prevBlockTimeMs / ms
+
+		// For current year, use remaining amount to avoid over/under emission
+		if year == currentYear {
+			mintedAmt := hd.getMintedAmount(year)
+			leftAmt := maxAmt - mintedAmt
+
+			if changedRemainBlockNum > 0 {
+				newAmtPerBlock := leftAmt / changedRemainBlockNum
+				hd.setAmountPerBlock(year, newAmtPerBlock)
+			}
+		} else {
+			// For future years, use total year amount
+			dailyAmt := maxAmt / DAY_PER_YEAR
+			newAmtPerBlock := dailyAmt / blockPerDay
+			hd.setAmountPerBlock(year, newAmtPerBlock)
+		}
+
+		changedEndHeight := std.ChainHeight() + changedRemainBlockNum
+		hd.setEndBlockHeight(year, changedEndHeight)
+
+		// next year's start block height is updated by calculated end block height
+		if year < HALVING_END_YEAR {
+			hd.setStartBlockHeight(year+1, changedEndHeight+1)
+		}
+	}
+
+	// adjust the current year's amount per block
+	currentYear, _ = getHalvingYearAndEndTimestamp(now)
+	adjusted := hd.getAmountPerBlock(currentYear)
+	if callbackEmissionChange == nil {
+		panic(errCallbackEmissionChangeIsNil.Error())
+	}
+	callbackEmissionChange(adjusted)
+
+	// final update of global variables
+	avgBlockTimeMs = ms
+}
+
 // GetAmountByHeight returns emission amount based on block height
 func GetAmountByHeight(height int64) int64 {
 	if isEmissionEnded(height) {
