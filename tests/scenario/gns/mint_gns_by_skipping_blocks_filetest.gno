@@ -1,4 +1,4 @@
-// minted amount of gns by skipping blocks
+// mint gns by skipping blocks
 package main
 
 import (
