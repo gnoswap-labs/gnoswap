@@ -69,15 +69,15 @@ func TestFullMathMulDiv(t *testing.T) {
 	})
 
 	t.Run("accurate without phantom overflow", func(t *testing.T) {
-		result := new(Uint).Div(Q128, NewUint(3))
+		result, _ := new(Uint).Div(Q128, NewUint(3))
 
 		x := NewUint(50)
 		x = x.Mul(x, Q128)
-		x = x.Div(x, NewUint(100)) /*0.5=*/
+		x, _ = x.Div(x, NewUint(100)) /*0.5=*/
 
 		y := NewUint(150)
 		y = y.Mul(y, Q128)
-		y = y.Div(y, NewUint(100)) /*1.5=*/
+		y, _ = y.Div(y, NewUint(100)) /*1.5=*/
 
 		got := MulDiv(Q128, x, y)
 		if !got.Eq(result) {
@@ -201,16 +201,16 @@ func TestMulDivRoundingUp(t *testing.T) {
 	})
 
 	t.Run("accurate without phantom overflow", func(t *testing.T) {
-		result := new(Uint).Div(Q128, NewUint(3))
+		result, _ := new(Uint).Div(Q128, NewUint(3))
 		result = result.Add(result, One())
 
 		x := NewUint(50)
 		x = x.Mul(x, Q128)
-		x = x.Div(x, NewUint(100)) /*0.5=*/
+		x, _ = x.Div(x, NewUint(100)) /*0.5=*/
 
 		y := NewUint(150)
 		y = y.Mul(y, Q128)
-		y = y.Div(y, NewUint(100)) /*1.5=*/
+		y, _ = y.Div(y, NewUint(100)) /*1.5=*/
 
 		got := MulDivRoundingUp(Q128, x, y)
 		if !got.Eq(result) {
