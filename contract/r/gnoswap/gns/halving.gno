@@ -360,7 +360,7 @@ func setAvgBlockTimeInMs(ms int64) {
 				lastGNSMintedHeight = startHeight
 			}
 
-			mintedAmount := hd.getMintedAmount(year) + calculateAmountToMint(lastGNSMintedHeight, currentHeight)
+			mintedAmount := hd.getMintedAmount(year)
 			leftAmount := maxMintedAmount - mintedAmount
 
 			if changedRemainBlockNum > 0 {
@@ -386,9 +386,11 @@ func setAvgBlockTimeInMs(ms int64) {
 	// adjust the current year's amount per block
 	currentYear, _ = getHalvingYearAndEndTimestamp(now)
 	adjusted := hd.getAmountPerBlock(currentYear)
+
 	if callbackEmissionChange == nil {
 		panic(errCallbackEmissionChangeIsNil.Error())
 	}
+
 	callbackEmissionChange(adjusted)
 
 	// final update of global variables
