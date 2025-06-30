@@ -198,9 +198,8 @@ func (h *HalvingData) initialize(startHeight, startTimestamp int64) {
 var callbackEmissionChange func(amount int64)
 
 func SetCallbackEmissionChange(cur realm, callback func(amount int64)) {
-	if callbackEmissionChange != nil {
-		panic("callbackEmissionChange already set")
-	}
+	assertCallerIsEmission()
+
 	callbackEmissionChange = callback
 }
 

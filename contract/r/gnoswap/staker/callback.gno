@@ -16,6 +16,6 @@ import (
 //   - Then, it updates the `currentEmission` of the poolTier,
 //     which will be applied for future blocks thereafter.
 func callbackStakerEmissionChange(emission int64) {
-	poolTier.cacheReward(std.ChainHeight(), pools)
 	poolTier.currentEmission = int64(emission)
+	poolTier.cacheReward(std.ChainHeight(), pools)
 }
