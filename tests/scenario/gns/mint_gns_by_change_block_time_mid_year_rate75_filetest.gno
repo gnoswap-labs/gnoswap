@@ -10,7 +10,6 @@ import (
 	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -56,11 +55,7 @@ func main() {
 	println()
 }
 
-func initEmission() {
-	emission.SetCallbackStakerEmissionChange(cross, func(amount int64) {
-		ufmt.Println("[INFO] emission amount changed", amount)
-	})
-}
+func initEmission() {}
 
 func mintGNS() {
 	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
@@ -136,7 +131,6 @@ func getHalvingYears() {
 // [EXPECTED] halving year 12 block range 173448124~189216123 (block count: 15768000)
 //
 // [SCENARIO] 5. Change block time to 4000ms (2000ms -> 4000ms)
-// [INFO] emission amount changed 5351027
 // [INFO] current year is 2
 // [EXPECTED] end block height should be changed 31536123 to 29565123
 // [EXPECTED] amount per block should be changed 14269406 to 28538815

@@ -9,7 +9,6 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 
 	_ "gno.land/r/gnoswap/v1/staker"
@@ -56,11 +55,7 @@ func main() {
 	}
 }
 
-func initEmission() {
-	emission.SetCallbackStakerEmissionChange(cross, func(amount int64) {
-		ufmt.Println("[INFO] emission amount changed", amount)
-	})
-}
+func initEmission() {}
 
 func mintGNS() {
 	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))

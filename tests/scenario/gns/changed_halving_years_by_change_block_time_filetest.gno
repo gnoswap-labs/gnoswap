@@ -7,7 +7,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 
 	_ "gno.land/r/gnoswap/v1/staker"
@@ -46,11 +45,7 @@ func main() {
 	println()
 }
 
-func initEmission() {
-	emission.SetCallbackStakerEmissionChange(cross, func(amount int64) {
-		ufmt.Println("[INFO] emission amount changed", amount)
-	})
-}
+func initEmission() {}
 
 func getHalvingYears() {
 	println("[INFO] current halving years", gns.GetHalvingYearByHeight(std.ChainHeight()))
@@ -107,7 +102,6 @@ func changeBlockTime(blockTime int64) {
 // [SCENARIO] 3. Skip 788400 blocks (distribute of half of 1 year)
 //
 // [SCENARIO] 4. Change block time to 3500ms (2000ms -> 3500ms)
-// [INFO] emission amount changed 18728596
 // [INFO] current year is 1
 // [EXPECTED] end block height should be changed 15768123 to 9348294
 // [EXPECTED] amount per block should be changed 14269406 to 24971462

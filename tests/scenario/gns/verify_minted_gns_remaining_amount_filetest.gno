@@ -10,7 +10,6 @@ import (
 	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -52,11 +51,7 @@ func main() {
 	println()
 }
 
-func initEmission() {
-	emission.SetCallbackStakerEmissionChange(cross, func(amount int64) {
-		ufmt.Println("[INFO] emission amount changed", amount)
-	})
-}
+func initEmission() {}
 
 func mintGNS() {
 	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
@@ -124,7 +119,6 @@ func verifyMintedGNSRemainingAmount() {
 // [EXPECTED] total minted amount should be 539999997523200
 //
 // [SCENARIO] 4. Change block time to 3000ms (2000ms -> 3000ms)
-// [INFO] emission amount changed 2006634
 // [INFO] current year is 3
 // [EXPECTED] end block height should be changed 47304123 to 46252923
 // [EXPECTED] amount per block should be changed 7134703 to 10702055
