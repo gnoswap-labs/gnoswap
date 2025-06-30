@@ -210,7 +210,7 @@ func computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 	val2 := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
 	res := u256.MulDiv(val1, val2, sqrtRatioBX96)
-	res = new(u256.Uint).Div(res, sqrtRatioAX96)
+	res, _ = new(u256.Uint).Div(res, sqrtRatioAX96) // Safe: sqrtRatioAX96 != 0 checked above
 
 	return res
 }
