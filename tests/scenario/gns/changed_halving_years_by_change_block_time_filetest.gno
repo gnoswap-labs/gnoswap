@@ -9,9 +9,8 @@ import (
 
 	"gno.land/r/gnoswap/v1/gns"
 
-	_ "gno.land/r/gnoswap/v1/staker"
-
 	"gno.land/r/gnoswap/v1/access"
+	_ "gno.land/r/gnoswap/v1/staker"
 )
 
 var t *testing.T
@@ -104,7 +103,7 @@ func changeBlockTime(blockTime int64) {
 // [SCENARIO] 4. Change block time to 3500ms (2000ms -> 3500ms)
 // [INFO] current year is 1
 // [EXPECTED] end block height should be changed 15768123 to 9348294
-// [EXPECTED] amount per block should be changed 14269406 to 24971462
+// [EXPECTED] amount per block should be changed 14269406 to 26285749
 //
 // [SCENARIO] 5. Get halving years (block time is 3500ms)
 // [INFO] current halving years 1

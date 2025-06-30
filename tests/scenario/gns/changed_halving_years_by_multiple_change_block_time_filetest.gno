@@ -107,7 +107,7 @@ func changeBlockTime(blockTime int64) {
 // [SCENARIO] 3. Skip 3942000 blocks and change block time to 1000ms (skip to 25% of 1 year)
 // [INFO] current year is 1
 // [EXPECTED] end block height should be changed 15768123 to 27594123
-// [EXPECTED] amount per block should be changed 14269406 to 7134703
+// [EXPECTED] amount per block should be changed 14269406 to 9512937
 //
 // [SCENARIO] 4. Get halving years (block time is 1000ms)
 // [INFO] current halving years 1
@@ -127,7 +127,7 @@ func changeBlockTime(blockTime int64) {
 // [SCENARIO] 5. Skip 3942000 blocks and change block time to 5000ms (skip to 50% of 1 year)
 // [INFO] current year is 1
 // [EXPECTED] end block height should be changed 27594123 to 11826123
-// [EXPECTED] amount per block should be changed 7134703 to 28538813
+// [EXPECTED] amount per block should be changed 9512937 to 57077625
 //
 // [SCENARIO] 6. Get halving years (block time is 5000ms)
 // [INFO] current halving years 1
