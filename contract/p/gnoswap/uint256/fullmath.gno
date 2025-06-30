@@ -109,8 +109,10 @@ func MulDiv(
 	inv = new(Uint).Mul(inv, new(Uint).Sub(two, new(Uint).Mul(denominator, inv))) // inverse mod 2^256
 
 	// Compute the quotient
-	// Since we factored out twos, we need to adjust our calculation:
-	// result = (lo + hi * (2^256 / twos)) * inv
+	// 2^256 / twos = (2^256 - 1) / twos + 1
+	// negTwos = -twos = 2^256 - twos (mod 2^256)
+	// divResult = negTwos / twos = (2^256 - twos) / twos = 2^256/twos - 1
+	// twos = divResult + 1 = 2^256/twos
 	negTwos := new(Uint).Sub(Zero(), twos)
 	divResult, err := new(Uint).Div(negTwos, twos)
 	if err != nil {
