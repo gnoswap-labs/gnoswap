@@ -16,8 +16,6 @@ var (
 	ErrBadEncodedLength = errors.New("bad ssz encoded length")
 	ErrInvalidBase      = errors.New("invalid base")
 	ErrInvalidBitSize   = errors.New("invalid bit size")
-	ErrDivisionByZero   = errors.New("division by zero")
-	ErrModuloByZero     = errors.New("modulo by zero")
 )
 
 type u256Error struct {
@@ -72,12 +70,4 @@ func errInvalidBase(fn string, base int) error {
 
 func errInvalidBitSize(fn string, bitSize int) error {
 	return &u256Error{fn: fn, input: string(bitSize), err: ErrInvalidBitSize}
-}
-
-func errDivisionByZero(fn string) error {
-	return &u256Error{fn: fn, input: "0", err: ErrDivisionByZero}
-}
-
-func errModuloByZero(fn string) error {
-	return &u256Error{fn: fn, input: "0", err: ErrModuloByZero}
 }
