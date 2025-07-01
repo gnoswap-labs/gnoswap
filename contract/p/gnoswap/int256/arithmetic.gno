@@ -238,8 +238,8 @@ func (z *Int) Div(x, y *Int) *Int {
 		panic("division by zero")
 	}
 
-	z.abs, _ = z.abs.Div(x.abs, y.abs)
-	z.neg = (x.neg != y.neg) && !z.abs.IsZero()
+	z.abs.Div(x.abs, y.abs)
+	z.neg = (x.neg != y.neg) && !z.abs.IsZero() // 0 has no sign
 
 	return z
 }
@@ -249,13 +249,7 @@ func (z *Int) Div(x, y *Int) *Int {
 func (z *Int) DivUint256(x *Int, y *uint256.Uint) *Int {
 	z = z.initiateAbs()
 
-	if y.IsZero() {
-		z.abs.Clear()
-		z.neg = false
-		return z
-	}
-
-	z.abs, _ = z.abs.Div(x.abs, y)
+	z.abs.Div(x.abs, y)
 	if z.abs.IsZero() {
 		z.neg = false
 	} else {
@@ -275,7 +269,7 @@ func (z *Int) Quo(x, y *Int) *Int {
 
 	z = z.initiateAbs()
 
-	z.abs, _ = z.abs.Div(x.abs, y.abs)
+	z.abs = z.abs.Div(x.abs, y.abs)
 	z.neg = !(z.abs.IsZero()) && x.neg != y.neg // 0 has no sign
 	return z
 }
@@ -291,7 +285,7 @@ func (z *Int) Rem(x, y *Int) *Int {
 
 	z = z.initiateAbs()
 
-	z.abs, _ = z.abs.Mod(x.abs, y.abs)
+	z.abs.Mod(x.abs, y.abs)
 	z.neg = z.abs.Sign() > 0 && x.neg // 0 has no sign
 	return z
 }
@@ -301,20 +295,14 @@ func (z *Int) Rem(x, y *Int) *Int {
 func (z *Int) Mod(x, y *Int) *Int {
 	z = z.initiateAbs()
 
-	if y.IsZero() {
-		z.abs.Clear()
-		z.neg = false
-		return z
-	}
-
 	if x.neg {
-		z.abs, _ = z.abs.Div(x.abs, y.abs)
-		z.abs = z.abs.Add(z.abs, one)
-		z.abs = z.abs.Mul(z.abs, y.abs)
-		z.abs = z.abs.Sub(z.abs, x.abs)
-		z.abs, _ = z.abs.Mod(z.abs, y.abs)
+		z.abs.Div(x.abs, y.abs)
+		z.abs.Add(z.abs, one)
+		z.abs.Mul(z.abs, y.abs)
+		z.abs.Sub(z.abs, x.abs)
+		z.abs.Mod(z.abs, y.abs)
 	} else {
-		z.abs, _ = z.abs.Mod(x.abs, y.abs)
+		z.abs.Mod(x.abs, y.abs)
 	}
 	z.neg = false
 	return z
