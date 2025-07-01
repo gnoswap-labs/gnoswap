@@ -113,7 +113,43 @@ func protocolFeeRewardBob() {
 func protocolFeeRewardAdmin() {
 	gcr := staker.GetClaimableRewardByAddress(admin)
 	ufmt.Printf("[INFO] claimable reward (admin): %s\n", gcr)
+
+	prevBarBalance := bar.BalanceOf(admin)
+	prevQuxBalance := qux.BalanceOf(admin)
+
 	testing.SetRealm(adminRealm)
 	staker.CollectReward(cross)
+
+	afterBarBalance := bar.BalanceOf(admin)
+	afterQuxBalance := qux.BalanceOf(admin)
+
 	ufmt.Printf("[INFO] collected protocol fee reward for admin\n")
+	ufmt.Printf("[EXPECTED] collected bar amount: %d\n", afterBarBalance-prevBarBalance)
+	ufmt.Printf("[EXPECTED] collected qux amount: %d\n", afterQuxBalance-prevQuxBalance)
 }
+
+// Output:
+// [SCENARIO] 1. Admin delegates GNS to Alice
+// [INFO] delegated 1000000 GNS from admin to alice
+//
+// [SCENARIO] 2. Mock protocol fee deposit (bar, qux)
+// [INFO] protocol fee deposited: bar(1000), qux(2500)
+//
+// [SCENARIO] 3. Bob delegates GNS to Bob
+// [INFO] delegated 5000000 GNS from bob to bob
+//
+// [SCENARIO] 4. Mock protocol fee deposit again (bar, qux)
+// [INFO] protocol fee deposited again: bar(1000), qux(2500)
+//
+// [SCENARIO] 5. Skip blocks and distribute protocol fee
+// [INFO] skipped 10 blocks
+//
+// [SCENARIO] 6. Check and collect protocol fee reward for Bob
+// [INFO] claimable reward (bob): {"height":"133","now":"1234567940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"833"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2083"}]}
+// [INFO] collected protocol fee reward for bob
+//
+// [SCENARIO] 7. Check and collect protocol fee reward for Admin
+// [INFO] claimable reward (admin): {"height":"133","now":"1234567940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"1166"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2916"}]}
+// [INFO] collected protocol fee reward for admin
+// [EXPECTED] collected bar amount: 1166
+// [EXPECTED] collected qux amount: 2916

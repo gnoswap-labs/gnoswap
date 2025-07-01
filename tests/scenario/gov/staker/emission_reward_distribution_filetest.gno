@@ -93,9 +93,27 @@ func emissionRewardScenario() {
 	ufmt.Printf("[INFO] claimable reward (dummy): %s\n", gcr)
 
 	// Collect reward
-	testing.SetRealm(dummyRealm)
+	testing.SetOriginCaller(dummyAddr)
 	staker.CollectReward(cross)
 	ufmt.Printf("[INFO] collected emission reward for dummy\n")
 	after := gns.BalanceOf(dummyAddr)
 	ufmt.Printf("[EXPECTED] dummy GNS balance after collect: %d\n", after)
 }
+
+// Output:
+// [SCENARIO] 1. Change GNS emission distribution ratio
+// [INFO] emission distribution ratio changed: staker 70%, devops 20%, community 5%, govstaker 5%
+//
+// [SCENARIO] 2. Admin delegates GNS to dummyTo
+// [INFO] delegated 1000000 GNS from admin to dummyTo
+//
+// [SCENARIO] 3. Admin delegates GNS to dummy
+// [INFO] delegated 5000000 GNS from admin to dummy
+//
+// [SCENARIO] 4. Skip blocks and distribute emission
+// [INFO] skipped 10 blocks and distributed emission
+//
+// [SCENARIO] 5. Check and collect emission reward
+// [INFO] claimable reward (dummy): {"height":"133","now":"1234567940","emissionReward":"5945585"}
+// [INFO] collected emission reward for dummy
+// [EXPECTED] dummy GNS balance after collect: 5945585
