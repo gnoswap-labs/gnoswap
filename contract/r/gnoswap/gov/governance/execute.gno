@@ -204,6 +204,16 @@ func dispatchRoleChange(cur realm, proposal *ProposalInfo) error {
 	}
 }
 
+func makeExecuteMessage(pkgPath, function string, params []string) string {
+	messageParams := make([]string, 0)
+
+	messageParams = append(messageParams, pkgPath)
+	messageParams = append(messageParams, function)
+	messageParams = append(messageParams, strings.Join(params, ","))
+
+	return strings.Join(messageParams, EXECUTE_SEPARATOR)
+}
+
 func parseMessage(msg string) (pkgPath string, function string, params []string, err error) {
 	parts := strings.Split(msg, EXECUTE_SEPARATOR)
 	if len(parts) != 3 {
