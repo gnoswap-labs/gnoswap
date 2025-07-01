@@ -612,17 +612,14 @@ func TestDiv(t *testing.T) {
 			x := parseUint(tc.x)
 			y := parseUint(tc.y)
 
-			got, err := new(Uint).Div(x, y)
+			got := new(Uint).Div(x, y)
 
 			if tc.wantErr {
-				if err == nil {
-					t.Errorf("Div(%s, %s) expected error but got none", tc.x, tc.y)
+				// Division by zero returns 0
+				if !got.IsZero() {
+					t.Errorf("Div(%s, %s) expected zero for division by zero", tc.x, tc.y)
 				}
 				return
-			}
-
-			if err != nil {
-				t.Fatalf("Unexpected error: %v", err)
 			}
 
 			want := parseUint(tc.want)
@@ -733,17 +730,14 @@ func TestMod(t *testing.T) {
 			x := parseUint(tc.x)
 			y := parseUint(tc.y)
 
-			got, err := new(Uint).Mod(x, y)
+			got := new(Uint).Mod(x, y)
 
 			if tc.wantErr {
-				if err == nil {
-					t.Errorf("Mod(%s, %s) expected error but got none", tc.x, tc.y)
+				// Modulo by zero returns 0
+				if !got.IsZero() {
+					t.Errorf("Mod(%s, %s) expected zero for modulo by zero", tc.x, tc.y)
 				}
 				return
-			}
-
-			if err != nil {
-				t.Fatalf("Unexpected error: %v", err)
 			}
 
 			want := parseUint(tc.want)
@@ -894,17 +888,14 @@ func TestDivMod(t *testing.T) {
 
 			gotDiv := new(Uint)
 			gotMod := new(Uint)
-			gotDiv, gotMod, err := gotDiv.DivMod(x, y, gotMod)
+			gotDiv, gotMod = gotDiv.DivMod(x, y, gotMod)
 
 			if tc.wantErr {
-				if err == nil {
-					t.Errorf("DivMod(%s, %s) expected error but got none", tc.x, tc.y)
+				// Division by zero returns (0, 0)
+				if !gotDiv.IsZero() || !gotMod.IsZero() {
+					t.Errorf("DivMod(%s, %s) expected (0, 0) for division by zero", tc.x, tc.y)
 				}
 				return
-			}
-
-			if err != nil {
-				t.Fatalf("Unexpected error: %v", err)
 			}
 
 			wantDiv := parseUint(tc.wantDiv)
@@ -1037,17 +1028,14 @@ func TestMulMod(t *testing.T) {
 			y := parseUint(tc.y)
 			m := parseUint(tc.m)
 
-			got, err := new(Uint).MulMod(x, y, m)
+			got := new(Uint).MulMod(x, y, m)
 
 			if tc.wantErr {
-				if err == nil {
-					t.Errorf("MulMod(%s, %s, %s) expected error but got none", tc.x, tc.y, tc.m)
+				// MulMod by zero returns 0
+				if !got.IsZero() {
+					t.Errorf("MulMod(%s, %s, %s) expected zero for modulo by zero", tc.x, tc.y, tc.m)
 				}
 				return
-			}
-
-			if err != nil {
-				t.Fatalf("Unexpected error: %v", err)
 			}
 
 			want := parseUint(tc.want)
@@ -1338,52 +1326,40 @@ func TestIsOverflow(t *testing.T) {
 func TestDivisionByZero(t *testing.T) {
 	testCases := []struct {
 		name string
-		fn   func() error
+		fn   func() *Uint
 	}{
 		{
 			name: "div_by_zero",
-			fn: func() error {
+			fn: func() *Uint {
 				x := MustFromDecimal("12345")
 				y := MustFromDecimal("0")
-				_, err := new(Uint).Div(x, y)
-				return err
+				return new(Uint).Div(x, y)
 			},
 		},
 		{
 			name: "mod_by_zero",
-			fn: func() error {
+			fn: func() *Uint {
 				x := MustFromDecimal("12345")
 				y := MustFromDecimal("0")
-				_, err := new(Uint).Mod(x, y)
-				return err
-			},
-		},
-		{
-			name: "divmod_by_zero",
-			fn: func() error {
-				x := MustFromDecimal("12345")
-				y := MustFromDecimal("0")
-				_, _, err := new(Uint).DivMod(x, y, new(Uint))
-				return err
+				return new(Uint).Mod(x, y)
 			},
 		},
 		{
 			name: "mulmod_by_zero",
-			fn: func() error {
+			fn: func() *Uint {
 				x := MustFromDecimal("12345")
 				y := MustFromDecimal("67890")
 				m := MustFromDecimal("0")
-				_, err := new(Uint).MulMod(x, y, m)
-				return err
+				return new(Uint).MulMod(x, y, m)
 			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.fn()
-			if err == nil {
-				t.Errorf("%s should return error but didn't", tc.name)
+			result := tc.fn()
+			if !result.IsZero() {
+				t.Errorf("%s should return zero but returned %s", tc.name, result.ToString())
 			}
 		})
 	}
@@ -1537,10 +1513,8 @@ func TestMulModPaths(t *testing.T) {
 			m := parseUint(tc.m)
 			want := parseUint(tc.want)
 
-			got, err := new(Uint).MulMod(x, y, m)
-			if err != nil {
-				t.Fatalf("Unexpected error: %v", err)
-			}
+			got := new(Uint).MulMod(x, y, m)
+
 			if !got.Eq(want) {
 				t.Errorf("MulMod(%s, %s, %s) = %s, want %s",
 					tc.x, tc.y, tc.m, got.ToString(), tc.want)
@@ -1639,10 +1613,7 @@ func TestDivModPowerOfTwo(t *testing.T) {
 
 			gotDiv := new(Uint)
 			gotMod := new(Uint)
-			gotDiv, gotMod, err := gotDiv.DivMod(x, y, gotMod)
-			if err != nil {
-				t.Fatalf("Unexpected error: %v", err)
-			}
+			gotDiv, gotMod = gotDiv.DivMod(x, y, gotMod)
 
 			if !gotDiv.Eq(wantDiv) {
 				t.Errorf("DivMod div = %s, want %s", gotDiv.ToString(), tc.wantDiv)
@@ -1719,7 +1690,7 @@ func TestChainedOperations(t *testing.T) {
 				case "mul":
 					result = new(Uint).Mul(result, arg)
 				case "div":
-					result, _ = new(Uint).Div(result, arg)
+					result = new(Uint).Div(result, arg)
 				}
 			}
 
@@ -1782,14 +1753,8 @@ func TestDivisionRoundingConsistency(t *testing.T) {
 			x := parseUint(tt.x)
 			y := parseUint(tt.y)
 
-			gotDiv, err := new(Uint).Div(x, y)
-			if err != nil {
-				t.Fatalf("Unexpected error in Div: %v", err)
-			}
-			gotMod, err := new(Uint).Mod(x, y)
-			if err != nil {
-				t.Fatalf("Unexpected error in Mod: %v", err)
-			}
+			gotDiv := new(Uint).Div(x, y)
+			gotMod := new(Uint).Mod(x, y)
 
 			wantDiv := parseUint(tt.wantDiv)
 			wantMod := parseUint(tt.wantMod)
@@ -1840,17 +1805,17 @@ func TestExtremeValues(t *testing.T) {
 				_ = new(Uint).Mul(xu, yu)
 
 				if !yu.IsZero() {
-					_, _ = new(Uint).Div(xu, yu)
-					_, _ = new(Uint).Mod(xu, yu)
+					_ = new(Uint).Div(xu, yu)
+					_ = new(Uint).Mod(xu, yu)
 
 					// DivMod
 					quotient := new(Uint)
 					remainder := new(Uint)
-					quotient, remainder, _ = quotient.DivMod(xu, yu, remainder)
+					quotient, remainder = quotient.DivMod(xu, yu, remainder)
 
 					// Verify DivMod consistency
-					divResult, _ := new(Uint).Div(xu, yu)
-					modResult, _ := new(Uint).Mod(xu, yu)
+					divResult := new(Uint).Div(xu, yu)
+					modResult := new(Uint).Mod(xu, yu)
 					if !quotient.Eq(divResult) || !remainder.Eq(modResult) {
 						t.Errorf("DivMod inconsistent with Div/Mod")
 					}

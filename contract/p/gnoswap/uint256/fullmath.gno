@@ -39,9 +39,7 @@ import (
 // Panics:
 //   - If denominator is 0
 //   - If the result would overflow 256 bits (i.e., if a * b / denominator > 2^256 - 1)
-func MulDiv(
-	a, b, denominator *Uint,
-) *Uint {
+func MulDiv(a, b, denominator *Uint) *Uint {
 	// Compute the 512-bit product of a * b
 	p := umul(a, b)
 
@@ -54,10 +52,7 @@ func MulDiv(
 		if denominator.IsZero() {
 			panic(ufmt.Sprintf("denominator must be greater than 0. got %s", denominator.ToString()))
 		}
-		result, err := new(Uint).Div(lo, denominator)
-		if err != nil {
-			panic(err)
-		}
+		result := new(Uint).Div(lo, denominator)
 		return result
 	}
 
@@ -68,10 +63,7 @@ func MulDiv(
 	}
 
 	// Compute the remainder of (a * b) mod denominator
-	remainder, err := new(Uint).MulMod(a, b, denominator)
-	if err != nil {
-		panic(err)
-	}
+	remainder := new(Uint).MulMod(a, b, denominator)
 
 	// Subtract remainder from [hi, lo] to make it divisible by denominator
 	// If remainder > lo, we need to borrow from hi
@@ -83,14 +75,8 @@ func MulDiv(
 	// Factor out powers of 2 from denominator
 	// This optimization leverages the fact that division by powers of 2 is just bit shifting
 	twos := new(Uint).And(new(Uint).Neg(denominator), denominator)
-	denominator, err = new(Uint).Div(denominator, twos)
-	if err != nil {
-		panic(err)
-	}
-	lo, err = new(Uint).Div(lo, twos)
-	if err != nil {
-		panic(err)
-	}
+	denominator = new(Uint).Div(denominator, twos)
+	lo = new(Uint).Div(lo, twos)
 
 	// Find the multiplicative inverse of the odd denominator modulo 2^256
 	// Using Newton-Raphson iteration to find the inverse
@@ -114,10 +100,7 @@ func MulDiv(
 	// divResult = negTwos / twos = (2^256 - twos) / twos = 2^256/twos - 1
 	// twos = divResult + 1 = 2^256/twos
 	negTwos := new(Uint).Sub(Zero(), twos)
-	divResult, err := new(Uint).Div(negTwos, twos)
-	if err != nil {
-		panic(err)
-	}
+	divResult := new(Uint).Div(negTwos, twos)
 	twos = new(Uint).Add(divResult, one)
 
 	lo = new(Uint).Or(lo, new(Uint).Mul(hi, twos))
@@ -141,16 +124,11 @@ func MulDiv(
 // Panics:
 //   - If denominator is 0
 //   - If the result would overflow 256 bits
-func MulDivRoundingUp(
-	a, b, denominator *Uint,
-) *Uint {
+func MulDivRoundingUp(a, b, denominator *Uint) *Uint {
 	result := MulDiv(a, b, denominator)
 
 	// Check if there's a remainder
-	mulModResult, err := new(Uint).MulMod(a, b, denominator)
-	if err != nil {
-		panic(err)
-	}
+	mulModResult := new(Uint).MulMod(a, b, denominator)
 
 	// If there's no remainder, return the result as-is
 	if mulModResult.IsZero() {
@@ -177,20 +155,12 @@ func MulDivRoundingUp(
 //
 // Panics:
 //   - If y is 0
-func DivRoundingUp(
-	x, y *Uint,
-) *Uint {
-	div, err := new(Uint).Div(x, y)
-	if err != nil {
-		panic(err)
+func DivRoundingUp(x, y *Uint) *Uint {
+	if y.IsZero() {
+		panic("division by zero")
 	}
-
-	mod, err := new(Uint).Mod(x, y)
-	if err != nil {
-		panic(err)
-	}
-
-	// If there's a remainder, add 1 to round up
+	div := new(Uint).Div(x, y)
+	mod := new(Uint).Mod(x, y)
 	z := new(Uint).Add(div, gt(mod, Zero()))
 	return z
 }

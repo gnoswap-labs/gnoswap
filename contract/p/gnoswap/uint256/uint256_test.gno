@@ -824,7 +824,7 @@ func TestOperationConsistency(t *testing.T) {
 		// x * y / y = x (when no remainder)
 		y = NewUint(12345)
 		result = new(Uint).Mul(x, y)
-		result, _ = new(Uint).Div(result, y)
+		result = new(Uint).Div(result, y)
 		if !result.Eq(x) {
 			t.Error("Mul/Div inverse failed")
 		}
@@ -883,10 +883,7 @@ func TestBoundaryStress(t *testing.T) {
 
 			// Division by zero check
 			if !b.IsZero() {
-				_, err := new(Uint).Div(a, b)
-				if err != nil {
-					t.Errorf("%s: Unexpected division error: %v", testName, err)
-				}
+				_ = new(Uint).Div(a, b)
 			}
 		}
 	}
