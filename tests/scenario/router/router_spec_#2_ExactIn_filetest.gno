@@ -27,8 +27,8 @@ var (
 	barPath = "gno.land/r/onbloc/bar"
 	fooPath = "gno.land/r/onbloc/foo"
 
-	min_tick int32 = -887220
-	max_tick int32 = 887220
+	min_tick    int32 = -887220
+	max_tick    int32 = 887220
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
 )
@@ -40,7 +40,7 @@ const (
 func main() {
 	println("[SCENARIO] #2 ExactIn Router Test")
 	println("[INFO] Starting scenario: Single pool ExactIn swap test")
-	
+
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving pool creation fee")
@@ -51,13 +51,13 @@ func main() {
 	println("[INFO] Approving tokens for pool operations")
 	foo.Approve(cross, poolAddr, max_approve)
 	bar.Approve(cross, poolAddr, max_approve)
-	
+
 	println("[INFO] Creating bar-foo pool (fee: 3000)")
 	pl.CreatePool(cross, barPath, token0Path, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 
 	println("[INFO] Minting position in bar-foo pool")
 	pn.Mint(cross, barPath, token0Path, 3000, min_tick, max_tick, "1000000", "1000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
-	
+
 	pool := pl.GetPool(barPath, token0Path, FEE_MEDIUM)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 1000000")
@@ -71,7 +71,7 @@ func main() {
 	poolToken1Before := foo.BalanceOf(poolAddr)
 	user1Token0Before := bar.BalanceOf(adminAddr)
 	user1Token1Before := foo.BalanceOf(adminAddr)
-	
+
 	println("[INFO] Pool bar balance:", poolToken0Before)
 	println("[INFO] Pool foo balance:", poolToken1Before)
 	println("[INFO] admin bar balance:", user1Token0Before)
@@ -103,7 +103,7 @@ func main() {
 	println("[EXPECTED] admin foo balance change:", user1Token1After, "expected:", user1Token1Before-3)
 	println("[EXPECTED] pool bar balance change:", poolToken0After, "expected:", poolToken0Before-1)
 	println("[EXPECTED] pool foo balance change:", poolToken1After, "expected:", poolToken1Before+3)
-	
+
 	println("[INFO] Scenario completed")
 }
 
