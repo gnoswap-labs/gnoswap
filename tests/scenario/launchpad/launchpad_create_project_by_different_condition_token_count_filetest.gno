@@ -47,7 +47,7 @@ func createProjectByDifferentConditionTokenCount() {
 	rewardTokenPath := "gno.land/r/onbloc/obl"
 	recipientAddr := testutils.TestAddress("project-owner")
 	rewardAmount := uint64(1_000_000_000)
-	conditionTokenPath := "gno.land/r/gnoswap/v1/gov/xgns"
+	conditionPath := "gno.land/r/gnoswap/v1/gov/xgns"
 	conditionsAmount := "1000000*PAD*0"
 	tier30Ratio := uint64(10)
 	tier90Ratio := uint64(20)
@@ -59,7 +59,7 @@ func createProjectByDifferentConditionTokenCount() {
 	println("[INFO] create project with reward token path:", rewardTokenPath)
 	println("[INFO] create project with recipient:", recipientAddr)
 	println("[INFO] create project with reward amount:", rewardAmount)
-	println("[INFO] create project with conditions token:", conditionTokenPath)
+	println("[INFO] create project with conditions token:", conditionPath)
 	println("[INFO] create project with conditions amount:", conditionsAmount)
 	println("[INFO] create project with tier30 ratio:", tier30Ratio)
 	println("[INFO] create project with tier90 ratio:", tier90Ratio)
@@ -78,7 +78,7 @@ func createProjectByDifferentConditionTokenCount() {
 			rewardTokenPath,
 			recipientAddr,
 			rewardAmount,
-			conditionTokenPath,
+			conditionPath,
 			conditionsAmount,
 			tier30Ratio,
 			tier90Ratio,
