@@ -6,10 +6,11 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 const (
@@ -307,6 +308,178 @@ func TestGrc20Methods(t *testing.T) {
 			} else {
 				uassert.NotPanics(t, func() { tt.fn() })
 			}
+		})
+	}
+}
+
+func TestCalculateAmountToMint(t *testing.T) {
+	startHeight := std.ChainHeight()
+
+	tests := []struct {
+		name            string
+		inputFromHeight int64
+		inputToHeight   int64
+		expectedAmount  int64
+	}{
+		{
+			name:            "calculate amount to mint by 1 block for same year(1st year)",
+			inputFromHeight: startHeight + 1,
+			inputToHeight:   startHeight + 1,
+			expectedAmount:  14269406,
+		},
+		{
+			name:            "calculate amount to mint by 1 block for same year(2nd year)",
+			inputFromHeight: GetHalvingYearStartBlock(2),
+			inputToHeight:   GetHalvingYearStartBlock(2),
+			expectedAmount:  14269406,
+		},
+		{
+			name:            "calculate amount to mint by 1 block for same year(3rd year)",
+			inputFromHeight: GetHalvingYearStartBlock(3),
+			inputToHeight:   GetHalvingYearStartBlock(3),
+			expectedAmount:  7134703, // halving year's amount / 2
+		},
+		{
+			name:            "calculate amount to mint by 2 block for same year(1st year)",
+			inputFromHeight: startHeight + 1,
+			inputToHeight:   startHeight + 2,
+			expectedAmount:  28538812, // 14269406 * 2
+		},
+		{
+			name:            "calculate amount to mint by 1st year's entire block - 1 block",
+			inputFromHeight: GetHalvingYearStartBlock(1),
+			inputToHeight:   GetHalvingYearEndBlock(1) - 1,
+			expectedAmount:  224_999_979_538_594, // 225000000000000 - 14269406 - 6192000
+		},
+		{
+			name:            "calculate amount to mint by 1st year's entire block",
+			inputFromHeight: GetHalvingYearStartBlock(1),
+			inputToHeight:   GetHalvingYearEndBlock(1),
+			expectedAmount:  225_000_000_000_000, // 225000000000000
+		},
+		{
+			name:            "calculate amount to mint by 2nd year's entire block",
+			inputFromHeight: GetHalvingYearStartBlock(2),
+			inputToHeight:   GetHalvingYearEndBlock(2),
+			expectedAmount:  225_000_000_000_000, // 225000000000000
+		},
+		{
+			name:            "calculate amount to mint by 3rd year's entire block",
+			inputFromHeight: GetHalvingYearStartBlock(3),
+			inputToHeight:   GetHalvingYearEndBlock(3),
+			expectedAmount:  112_500_000_000_000, // 112500000000000
+		},
+		{
+			name:            "calculate amount to mint by 1st year's entire block and 2nd year's 1 block",
+			inputFromHeight: GetHalvingYearStartBlock(1),
+			inputToHeight:   GetHalvingYearStartBlock(2),
+			expectedAmount:  225_000_014_269_406, // 225000000000000 + 14269406
+		},
+		{
+			name:            "calculate amount to mint by entire block for 12 years",
+			inputFromHeight: GetHalvingYearStartBlock(1),
+			inputToHeight:   GetHalvingYearEndBlock(12),
+			expectedAmount:  900_000_000_000_000, // 225000000000000
+		},
+		{
+			name:            "calculate amount to mint is zero amount by after emission end height",
+			inputFromHeight: GetHalvingYearEndBlock(12) + 1,
+			inputToHeight:   GetHalvingYearEndBlock(12) + 10000,
+			expectedAmount:  0,
+		},
+		{
+			name:            "calculate amount to mint is zero amount by before emission start height",
+			inputFromHeight: GetHalvingYearStartBlock(1) - 100,
+			inputToHeight:   GetHalvingYearStartBlock(1) - 1,
+			expectedAmount:  0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			InitGnsTest(t)
+
+			amount := calculateAmountToMint(tt.inputFromHeight, tt.inputToHeight)
+
+			uassert.Equal(t, tt.expectedAmount, amount)
+		})
+	}
+}
+
+func TestMintGns(t *testing.T) {
+	tests := []struct {
+		name                 string
+		halted               bool
+		inputRealm           std.Realm
+		inputSkipHeight      int64
+		expectedMintedAmount int64
+		expectedHasAbort     bool
+		expectedAbortMessage string
+	}{
+		{
+			name:                 "mint gns is success by emission realm",
+			halted:               false,
+			inputRealm:           std.NewCodeRealm(consts.EMISSION_PATH),
+			inputSkipHeight:      1,
+			expectedMintedAmount: 14269406,
+			expectedHasAbort:     false,
+			expectedAbortMessage: "",
+		},
+		{
+			name:                 "mint gns is failed by halted",
+			halted:               true,
+			inputRealm:           std.NewCodeRealm(consts.EMISSION_PATH),
+			inputSkipHeight:      1,
+			expectedMintedAmount: 0,
+			expectedHasAbort:     true,
+			expectedAbortMessage: "halted",
+		},
+		{
+			name:                 "mint gns is failed by caller is not emission realm",
+			halted:               false,
+			inputRealm:           std.NewUserRealm(testutils.TestAddress("user")),
+			inputSkipHeight:      1,
+			expectedMintedAmount: 0,
+			expectedHasAbort:     true,
+			expectedAbortMessage: "caller(g1w4ek2ujlta047h6lta047h6lta047h6lkvk347) has no permission",
+		},
+		{
+			name:                 "mint gns is failed by not allowed to mint same block",
+			halted:               false,
+			inputRealm:           std.NewCodeRealm(consts.EMISSION_PATH),
+			inputSkipHeight:      0,
+			expectedMintedAmount: 0,
+			expectedHasAbort:     false,
+			expectedAbortMessage: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			InitGnsTest(t)
+
+			testing.SetOriginCaller(adminAddr)
+			halt.SetHaltByAdmin(cross, tt.halted) // set halt
+
+			var mintedAmount int64
+
+			mintGnsFn := func() {
+				testing.SetRealm(tt.inputRealm)
+
+				firstMintedAmount := MintGns(cross, adminAddr)
+				testing.SkipHeights(tt.inputSkipHeight)
+				secondMintedAmount := MintGns(cross, adminAddr)
+
+				mintedAmount = firstMintedAmount + secondMintedAmount
+			}
+
+			if tt.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, mintGnsFn)
+			} else {
+				uassert.NotPanics(t, mintGnsFn)
+			}
+
+			uassert.Equal(t, tt.expectedMintedAmount, mintedAmount)
 		})
 	}
 }
