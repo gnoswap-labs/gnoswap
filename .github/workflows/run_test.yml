@@ -19,7 +19,7 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.4
-      
+
       - name: Install bundler
         run: gem install bundler
 
@@ -46,14 +46,14 @@ jobs:
       - name: Check out gno(master - before change std prefix)
         uses: actions/checkout@v4
         with:
-          repository: gnolang/gno
+          repository: gnoswap-labs/gno
           ref: master
           path: ./gno
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: '1.22'
 
       - name: Config gnovm
         run: |
@@ -80,7 +80,7 @@ jobs:
       - name: Install uv
         run: |
           pip install uv
-      
+
       - name: Create uv virtual environment
         run: |
           uv venv .venv
@@ -100,7 +100,7 @@ jobs:
           cd tmp/gnoswap
           python3 setup.py -w /home/runner/work/gnoswap/gnoswap
 
-      - name: "Run tests for ${{ matrix.name }}"
+      - name: 'Run tests for ${{ matrix.name }}'
         run: |
           chmod +x .github/scripts/run_tests.rb
           ruby .github/scripts/run_tests.rb \
