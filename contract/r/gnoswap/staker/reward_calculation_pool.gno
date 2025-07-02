@@ -179,7 +179,7 @@ func (self *Pool) CurrentTick(currentHeight int64) int32 {
 }
 
 func (self *Pool) CurrentStakedLiquidity(currentHeight int64) *u256.Uint {
-	var liquidity *u256.Uint
+	liquidity := u256.Zero()
 	self.stakedLiquidity.ReverseIterate(0, currentHeight, func(key int64, value any) bool {
 		liquidity = value.(*u256.Uint)
 		return true

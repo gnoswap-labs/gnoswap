@@ -127,6 +127,28 @@ func (self *Incentives) create(
 }
 
 // starts incentive unclaimable period for this pool
+func (self *Incentives) update(
+	creator std.Address,
+	incentive *ExternalIncentive,
+) {
+	byTimeId := incentiveIdByTime(incentive.startTimestamp, incentive.endTimestamp, creator, incentive.rewardToken, self.targetPoolPath)
+	if !self.byTime.Has(byTimeId) {
+		panic(addDetailToError(
+			errIncentiveNotFound,
+			ufmt.Sprintf("incentiveId(%s) not found", byTimeId),
+		))
+	}
+
+	byHeightId, byCreatorId := incentiveIdByHeight(incentive.startHeight, incentive.endHeight, creator, incentive.rewardToken, self.targetPoolPath)
+	byEndHeightId, _ := incentiveIdByHeight(incentive.endHeight, incentive.startHeight, creator, incentive.rewardToken, self.targetPoolPath)
+
+	self.byTime.Set(byTimeId, incentive)
+	self.byHeight.Set(byHeightId, incentive)
+	self.byEndHeight.Set(byEndHeightId, incentive)
+	self.byCreator.Set(byCreatorId, incentive)
+}
+
+// starts incentive unclaimable period for this pool
 func (self *Incentives) startUnclaimablePeriod(startHeight int64) {
 	self.unclaimablePeriods.set(startHeight, int64(0))
 }
