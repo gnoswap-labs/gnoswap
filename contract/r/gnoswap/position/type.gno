@@ -30,6 +30,15 @@ type Position struct {
 	burned bool // whether the position has been burned(≈ actuall we don't burn lp token even its empty, just update flag)
 }
 
+func (p Position) PoolKey() string { return p.poolKey }
+func (p Position) Liquidity() *u256.Uint { return p.liquidity }
+func (p Position) TickLower() int32 { return p.tickLower }
+func (p Position) TickUpper() int32 { return p.tickUpper }
+func (p Position) TokensOwed0() *u256.Uint { return p.tokensOwed0 }
+func (p Position) TokensOwed1() *u256.Uint { return p.tokensOwed1 }
+func (p Position) Token0Balance() *u256.Uint { return p.token0Balance }
+func (p Position) Token1Balance() *u256.Uint { return p.token1Balance }
+
 // isClear reports whether the position is empty
 func (p Position) isClear() bool {
 	return p.liquidity.IsZero() && p.tokensOwed0.IsZero() && p.tokensOwed1.IsZero()
