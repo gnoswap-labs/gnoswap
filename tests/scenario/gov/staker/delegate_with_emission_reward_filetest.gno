@@ -1,4 +1,4 @@
-// emission reward distribution scenario
+// delegate with emission reward distribution
 
 package main
 

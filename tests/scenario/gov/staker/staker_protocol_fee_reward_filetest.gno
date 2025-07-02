@@ -1,4 +1,4 @@
-// staker protocol fee reward scenario
+// staker protocol fee reward
 
 package main
 

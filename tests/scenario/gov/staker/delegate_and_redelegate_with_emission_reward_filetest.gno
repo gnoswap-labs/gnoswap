@@ -1,4 +1,4 @@
-// emission delegate and redelegate scenario
+// delegate and redelegate with emission reward distribution
 
 package main
 

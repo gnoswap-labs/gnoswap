@@ -1,4 +1,4 @@
-// launchpad protocol fee reward scenario
+// launchpad protocol fee reward
 
 package main
 
