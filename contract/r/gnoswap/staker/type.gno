@@ -121,6 +121,25 @@ func (self *ExternalIncentive) RewardLeft(currentHeight uint64) int64 {
 	return rewardLeft
 }
 
+func (self *ExternalIncentive) Clone() *ExternalIncentive {
+	return &ExternalIncentive{
+		incentiveId:         self.incentiveId,
+		startTimestamp:      self.startTimestamp,
+		endTimestamp:        self.endTimestamp,
+		createdHeight:       self.createdHeight,
+		depositGnsAmount:    self.depositGnsAmount,
+		targetPoolPath:      self.targetPoolPath,
+		rewardToken:         self.rewardToken,
+		rewardAmount:        self.rewardAmount,
+		rewardLeft:          self.rewardLeft,
+		startHeight:         self.startHeight,
+		endHeight:           self.endHeight,
+		rewardPerBlock:      self.rewardPerBlock,
+		refundee:            self.refundee,
+		unclaimableRefunded: self.unclaimableRefunded,
+	}
+}
+
 // NewExternalIncentive creates a new external incentive
 func NewExternalIncentive(
 	incentiveId string,

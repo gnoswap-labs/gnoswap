@@ -288,7 +288,6 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 
 	signedLiquidity := i256.FromUint256(liquidity)
 	isInRange := false
-
 	poolTier.cacheReward(currentHeight, pools)
 
 	if pn.PositionIsInRange(positionId) {
@@ -439,7 +438,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 	toUserExternalReward := make(map[string]int64)
 	toUserExternalPenalty := make(map[string]int64)
 	for incentiveId, rewardAmount := range externalReward {
-		incentive := externalIncentives.Get(incentiveId)
+		incentive := externalIncentives.Get(incentiveId).Clone()
 		if incentive.rewardAmount < rewardAmount {
 			panic(addDetailToError(
 				errInsufficientReward,

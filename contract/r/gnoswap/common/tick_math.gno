@@ -200,7 +200,9 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 		ratio = new(u256.Uint).Div(maxUint256, ratio)
 	}
 
-	upper128Bits := new(u256.Uint).Rsh(ratio, 32)   // ratio >> 32
+	// direct modification of ratio objects is restricted
+	ratioClone := ratio.Clone()
+	upper128Bits := ratioClone.Rsh(ratioClone, 32)  // ratio >> 32
 	lower32Bits := ratio.Mod(ratio, shift1By32Left) // ratio % (1 << 32)
 
 	var roundUp *u256.Uint
