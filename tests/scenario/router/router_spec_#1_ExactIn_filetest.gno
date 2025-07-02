@@ -40,16 +40,15 @@ const (
 	FEE_MEDIUM uint32 = 3000
 )
 
-var t *testing.T
-
 func main() {
 	println("[SCENARIO] #1 ExactIn Router Test")
 	println("[INFO] Starting scenario: Pool creation → Position minting → ExactIn swap test")
+	println()
 
 	testcreatePool()
 	testPositionMint()
 	testExactInputSinglePool()
-
+	
 	println("[INFO] Scenario completed")
 }
 
@@ -60,21 +59,22 @@ func testcreatePool() {
 
 	println("[INFO] Approving pool creation fee")
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
-
+	
 	println("[INFO] Creating bar-baz pool (fee: 3000)")
 	pl.CreatePool(cross, barPath, bazPath, FEE_MEDIUM, "79228162514264337593543950336")
 
 	println("[INFO] Transferring 10000 bar tokens to user1")
 	bar.Transfer(cross, user1Addr, 10000)
-
+	
 	println("[EXPECTED] Pool creation completed")
+	println()
 }
 
 func testPositionMint() {
 	println("[SCENARIO] Given: Position minting preparation")
 	println("[INFO] Setting position minting permission with admin account")
 	testing.SetRealm(adminRealm)
-
+	
 	println("[INFO] Approving bar and baz tokens for pool")
 	bar.Approve(cross, poolAddr, 100000000)
 	baz.Approve(cross, poolAddr, 100000000)
@@ -99,6 +99,7 @@ func testPositionMint() {
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
 
 	println("[INFO] pool tick:", poolTick)
+	println()
 }
 
 func testExactInputSinglePool() {
@@ -118,7 +119,7 @@ func testExactInputSinglePool() {
 	poolToken1Before := baz.BalanceOf(poolAddr)
 	user1Token0Before := bar.BalanceOf(user1Addr)
 	user1Token1Before := baz.BalanceOf(user1Addr)
-
+	
 	println("[INFO] Pool bar balance:", poolToken0Before)
 	println("[INFO] Pool baz balance:", poolToken1Before)
 	println("[INFO] user1 bar balance:", user1Token0Before)
@@ -150,17 +151,20 @@ func testExactInputSinglePool() {
 	println("[EXPECTED] user1 baz balance change:", user1Token1After, "expected:", user1Token1Before+1)
 	println("[EXPECTED] pool bar balance change:", poolToken0After, "expected:", poolToken0Before+3)
 	println("[EXPECTED] pool baz balance change:", poolToken1After, "expected:", poolToken1Before-1)
+	println()
 }
 
 // Output:
 // [SCENARIO] #1 ExactIn Router Test
 // [INFO] Starting scenario: Pool creation → Position minting → ExactIn swap test
+//
 // [SCENARIO] Given: Pool creation preparation
 // [INFO] Setting pool creation permission with admin account
 // [INFO] Approving pool creation fee
 // [INFO] Creating bar-baz pool (fee: 3000)
 // [INFO] Transferring 10000 bar tokens to user1
 // [EXPECTED] Pool creation completed
+//
 // [SCENARIO] Given: Position minting preparation
 // [INFO] Setting position minting permission with admin account
 // [INFO] Approving bar and baz tokens for pool
@@ -171,6 +175,7 @@ func testExactInputSinglePool() {
 // [EXPECTED] amount1: 100000000 expected: 100000000
 // [EXPECTED] pool liquidity: 100000000 expected: 100000000
 // [INFO] pool tick: 0
+//
 // [SCENARIO] Given: ExactIn swap preparation
 // [INFO] Setting swap permission with user1 account
 // [INFO] Approving bar and baz tokens
@@ -187,4 +192,5 @@ func testExactInputSinglePool() {
 // [EXPECTED] user1 baz balance change: 1 expected: 1
 // [EXPECTED] pool bar balance change: 100000003 expected: 100000003
 // [EXPECTED] pool baz balance change: 99999999 expected: 99999999
+//
 // [INFO] Scenario completed

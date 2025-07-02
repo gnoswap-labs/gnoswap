@@ -21,6 +21,7 @@ var (
 	adminRealm   = std.NewUserRealm(adminAddr)
 
 	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+
 	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
 
 	barPath = "gno.land/r/onbloc/bar"
@@ -61,6 +62,7 @@ func main() {
 	pn.Mint(cross, bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	println("[INFO] Executing test scenarios")
+	println()
 	testDrySwapRouteBarQuxExactIn()
 	testSwapRouteBarQuxExactIn()
 	testDrySwapRouteBarQuxExactOut()
@@ -90,6 +92,7 @@ func testDrySwapRouteBarQuxExactIn() {
 	)
 
 	println("[EXPECTED] dryResult:", dryResult, "expected: 7337")
+	println()
 }
 
 func testSwapRouteBarQuxExactIn() {
@@ -115,6 +118,7 @@ func testSwapRouteBarQuxExactIn() {
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 1000")
 	println("[EXPECTED] amountOut:", amountOut, "expected: -7318")
+	println()
 }
 
 func testDrySwapRouteBarQuxExactOut() {
@@ -134,6 +138,7 @@ func testDrySwapRouteBarQuxExactOut() {
 	)
 
 	println("[EXPECTED] dryResult:", dryResult, "expected: 140")
+	println()
 }
 
 func testSwapRouteBarQuxExactOut() {
@@ -155,6 +160,7 @@ func testSwapRouteBarQuxExactOut() {
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 141")
 	println("[EXPECTED] amountOut:", amountOut, "expected: -1001")
+	println()
 }
 
 func TestDrySwapRouteQuxBarExactIn() {
@@ -174,6 +180,7 @@ func TestDrySwapRouteQuxBarExactIn() {
 	)
 
 	println("[EXPECTED] dryResult:", dryResult, "expected: 135")
+	println()
 }
 
 func TestSwapRouteQuxBarExactIn() {
@@ -195,6 +202,7 @@ func TestSwapRouteQuxBarExactIn() {
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 1000")
 	println("[EXPECTED] amountOut:", amountOut, "expected: -135")
+	println()
 }
 
 func TestDrySwapRouteQuxBarExactOut() {
@@ -214,6 +222,7 @@ func TestDrySwapRouteQuxBarExactOut() {
 	)
 
 	println("[EXPECTED] dryResult:", dryResult, "expected: 7351")
+	println()
 }
 
 func TestSwapRouteQuxBarExactOut() {
@@ -239,6 +248,7 @@ func TestSwapRouteQuxBarExactOut() {
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 7365")
 	println("[EXPECTED] amountOut:", amountOut, "expected: -999")
+	println()
 }
 
 // Output:
@@ -251,34 +261,43 @@ func TestSwapRouteQuxBarExactOut() {
 // [INFO] Minting positions in bar-baz pool
 // [INFO] Minting positions in baz-qux pool
 // [INFO] Executing test scenarios
+//
 // [SCENARIO] Given: Dry swap route bar to qux exact in preparation
 // [INFO] Executing dry swap route (bar → baz → qux)
 // [EXPECTED] dryResult: 7337 expected: 7337
+//
 // [SCENARIO] Given: Swap route bar to qux exact in preparation
 // [INFO] Approving tokens for swap
 // [INFO] Executing swap route (bar → baz → qux)
 // [EXPECTED] amountIn: 1000 expected: 1000
 // [EXPECTED] amountOut: -7318 expected: -7318
+//
 // [SCENARIO] Given: Dry swap route bar to qux exact out preparation
 // [INFO] Executing dry swap route exact out (bar → baz → qux)
 // [EXPECTED] dryResult: 140 expected: 140
+//
 // [SCENARIO] Given: Swap route bar to qux exact out preparation
 // [INFO] Executing swap route exact out (bar → baz → qux)
 // [EXPECTED] amountIn: 141 expected: 141
 // [EXPECTED] amountOut: -1001 expected: -1001
+//
 // [SCENARIO] Given: Dry swap route qux to bar exact in preparation
 // [INFO] Executing dry swap route (qux → baz → bar)
 // [EXPECTED] dryResult: 135 expected: 135
+//
 // [SCENARIO] Given: Swap route qux to bar exact in preparation
 // [INFO] Executing swap route (qux → baz → bar)
 // [EXPECTED] amountIn: 1000 expected: 1000
 // [EXPECTED] amountOut: -135 expected: -135
+//
 // [SCENARIO] Given: Dry swap route qux to bar exact out preparation
 // [INFO] Executing dry swap route exact out (qux → baz → bar)
 // [EXPECTED] dryResult: 7351 expected: 7351
+//
 // [SCENARIO] Given: Swap route qux to bar exact out preparation
 // [INFO] Approving tokens for swap
 // [INFO] Executing swap route exact out (qux → baz → bar)
 // [EXPECTED] amountIn: 7365 expected: 7365
 // [EXPECTED] amountOut: -999 expected: -999
+//
 // [INFO] Scenario completed

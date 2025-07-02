@@ -58,6 +58,7 @@ func main() {
 	pl.CreatePool(cross, wrappedWugnot, quxPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
 	println("[INFO] Executing test scenarios")
+	println()
 	testPositionMintQuxGnot(t)
 	testDrySwapRouteQuxGnotExactIn(t)
 	testDrySwapRouteQuxGnotExactOut(t)
@@ -94,6 +95,7 @@ func testPositionMintQuxGnot(t *testing.T) {
 	println("[EXPECTED] positionId:", positionId, "expected: 1")
 	println("[EXPECTED] amount0:", amount0, "expected: 100000")
 	println("[EXPECTED] amount1:", amount1, "expected: 36790")
+	println()
 }
 
 func testDrySwapRouteQuxGnotExactIn(t *testing.T) {
@@ -112,6 +114,7 @@ func testDrySwapRouteQuxGnotExactIn(t *testing.T) {
 		"1",
 	)
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 2711")
+	println()
 }
 
 func testDrySwapRouteQuxGnotExactOut(t *testing.T) {
@@ -130,6 +133,7 @@ func testDrySwapRouteQuxGnotExactOut(t *testing.T) {
 		"100000",
 	)
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 370")
+	println()
 }
 
 // Output:
@@ -139,6 +143,7 @@ func testDrySwapRouteQuxGnotExactOut(t *testing.T) {
 // [INFO] Approving pool creation fees
 // [INFO] Creating qux-wugnot pool (fee: 500, tick: -10000)
 // [INFO] Executing test scenarios
+//
 // [SCENARIO] Given: Position minting preparation for qux-wugnot pool
 // [INFO] Issuing native tokens to admin
 // [INFO] Depositing native tokens to get wrapped tokens
@@ -151,10 +156,13 @@ func testDrySwapRouteQuxGnotExactOut(t *testing.T) {
 // [EXPECTED] positionId: 1 expected: 1
 // [EXPECTED] amount0: 100000 expected: 100000
 // [EXPECTED] amount1: 36790 expected: 36790
+//
 // [SCENARIO] Given: Dry swap route qux to wugnot exact in preparation
 // [INFO] Executing dry swap route (qux → wugnot)
 // [EXPECTED] dry swap result: 2711 expected: 2711
+//
 // [SCENARIO] Given: Dry swap route qux to wugnot exact out preparation
 // [INFO] Executing dry swap route exact out (qux → wugnot)
 // [EXPECTED] dry swap result: 370 expected: 370
+//
 // [INFO] Scenario completed

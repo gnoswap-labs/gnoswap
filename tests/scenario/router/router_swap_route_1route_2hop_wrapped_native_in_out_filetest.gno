@@ -62,6 +62,7 @@ func main() {
 	pl.CreatePool(cross, wrappedWugnot, quxPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
 	println("[INFO] Executing test scenarios")
+	println()
 	testPositionMintBarBaz(t)
 	testPositionMintBazQux(t)
 	testPositionMintQuxGnot(t)
@@ -92,6 +93,7 @@ func testPositionMintBarBaz(t *testing.T) {
 	println("[EXPECTED] positionId:", positionId, "expected: 1")
 	println("[EXPECTED] amount0:", amount0, "expected: 36790")  // bar
 	println("[EXPECTED] amount1:", amount1, "expected: 100000") // baz
+	println()
 }
 
 func testPositionMintBazQux(t *testing.T) {
@@ -113,6 +115,7 @@ func testPositionMintBazQux(t *testing.T) {
 	println("[EXPECTED] positionId:", positionId, "expected: 2")
 	println("[EXPECTED] amount0:", amount0, "expected: 36790")
 	println("[EXPECTED] amount1:", amount1, "expected: 100000")
+	println()
 }
 
 func testPositionMintQuxGnot(t *testing.T) {
@@ -144,6 +147,7 @@ func testPositionMintQuxGnot(t *testing.T) {
 	println("[EXPECTED] positionId:", positionId, "expected: 3")
 	println("[EXPECTED] amount0:", amount0, "expected: 100000")
 	println("[EXPECTED] amount1:", amount1, "expected: 36790")
+	println()
 }
 
 func testDrySwapRouteBarGnotExactIn(t *testing.T) {
@@ -162,6 +166,7 @@ func testDrySwapRouteBarGnotExactIn(t *testing.T) {
 		"1",
 	)
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 19740")
+	println()
 }
 
 func testDrySwapRouteBarGnotExactOut(t *testing.T) {
@@ -180,6 +185,7 @@ func testDrySwapRouteBarGnotExactOut(t *testing.T) {
 		"2000000",
 	)
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 1014")
+	println()
 }
 
 func testDrySwapRouteGnotBarExactIn(t *testing.T) {
@@ -198,6 +204,7 @@ func testDrySwapRouteGnotBarExactIn(t *testing.T) {
 		"1",
 	)
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 247")
+	println()
 }
 
 func testDrySwapRouteGnotBarExactOut(t *testing.T) {
@@ -216,6 +223,7 @@ func testDrySwapRouteGnotBarExactOut(t *testing.T) {
 		"100000",
 	)
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 2027")
+	println()
 }
 
 // Output:
@@ -227,6 +235,7 @@ func testDrySwapRouteGnotBarExactOut(t *testing.T) {
 // [INFO] Creating baz-qux pool (fee: 500)
 // [INFO] Creating qux-wugnot pool (fee: 500, tick: -10000)
 // [INFO] Executing test scenarios
+//
 // [SCENARIO] Given: Position minting preparation for bar-baz pool
 // [INFO] Approving tokens for pool operations
 // [INFO] Minting position in bar-baz pool
@@ -237,6 +246,7 @@ func testDrySwapRouteGnotBarExactOut(t *testing.T) {
 // [EXPECTED] positionId: 1 expected: 1
 // [EXPECTED] amount0: 36790 expected: 36790
 // [EXPECTED] amount1: 100000 expected: 100000
+//
 // [SCENARIO] Given: Position minting preparation for baz-qux pool
 // [INFO] Approving tokens for pool operations
 // [INFO] Minting position in baz-qux pool
@@ -247,6 +257,7 @@ func testDrySwapRouteGnotBarExactOut(t *testing.T) {
 // [EXPECTED] positionId: 2 expected: 2
 // [EXPECTED] amount0: 36790 expected: 36790
 // [EXPECTED] amount1: 100000 expected: 100000
+//
 // [SCENARIO] Given: Position minting preparation for qux-wugnot pool
 // [INFO] Issuing native tokens to admin
 // [INFO] Depositing native tokens to get wrapped tokens
@@ -259,13 +270,17 @@ func testDrySwapRouteGnotBarExactOut(t *testing.T) {
 // [EXPECTED] positionId: 3 expected: 3
 // [EXPECTED] amount0: 100000 expected: 100000
 // [EXPECTED] amount1: 36790 expected: 36790
+//
 // [SCENARIO] Given: Dry swap route bar to wugnot exact in preparation
 // [INFO] Executing dry swap route (bar → baz → qux → wugnot)
 // [EXPECTED] dry swap result: 19740 expected: 19740
+//
 // [SCENARIO] Given: Dry swap route bar to wugnot exact out preparation
 // [INFO] Executing dry swap route exact out (bar → baz → qux → wugnot)
 // [EXPECTED] dry swap result: 1014 expected: 1014
+//
 // [SCENARIO] Given: Dry swap route wugnot to bar exact in preparation
 // [INFO] Executing dry swap route (wugnot → qux → baz → bar)
 // [EXPECTED] dry swap result: 247 expected: 247
+//
 // [INFO] Scenario completed
