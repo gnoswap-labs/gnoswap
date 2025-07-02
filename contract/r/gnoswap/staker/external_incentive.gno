@@ -161,7 +161,8 @@ func EndExternalIncentive(cur realm, refundee std.Address, targetPoolPath, rewar
 	}
 
 	incentiveId := incentiveIdByTime(startTimestamp, endTimestamp, refundee, rewardToken, targetPoolPath)
-	ictv, exists := pool.incentives.Get(startTimestamp, endTimestamp, refundee, rewardToken)
+	readOnlyIncentive, exists := pool.incentives.Get(startTimestamp, endTimestamp, refundee, rewardToken)
+	incentive := readOnlyIncentive.Clone()
 	if !exists {
 		panic(addDetailToError(
 			errCannotEndIncentive,
@@ -170,10 +171,10 @@ func EndExternalIncentive(cur realm, refundee std.Address, targetPoolPath, rewar
 	}
 
 	currentHeight := std.ChainHeight()
-	if currentHeight < ictv.endHeight {
+	if currentHeight < incentive.endHeight {
 		panic(addDetailToError(
 			errCannotEndIncentive,
-			ufmt.Sprintf("cannot end incentive before endHeight(%d), current(%d)", ictv.endHeight, currentHeight),
+			ufmt.Sprintf("cannot end incentive before endHeight(%d), current(%d)", incentive.endHeight, currentHeight),
 		))
 	}
 
@@ -188,27 +189,29 @@ func EndExternalIncentive(cur realm, refundee std.Address, targetPoolPath, rewar
 	}
 
 	// when incentive ended, refund remaining reward
-	refund := int64(ictv.rewardLeft)
+	refund := int64(incentive.rewardLeft)
 
-	if !ictv.unclaimableRefunded {
-		refund += int64(pool.incentives.calculateUnclaimableReward(ictv.incentiveId))
-		ictv.unclaimableRefunded = true
+	if !incentive.unclaimableRefunded {
+		refund += int64(pool.incentives.calculateUnclaimableReward(incentive.incentiveId))
+		incentive.unclaimableRefunded = true
 	}
 
-	poolLeftExternalRewardAmount := common.BalanceOf(ictv.rewardToken, stakerAddr)
+	poolLeftExternalRewardAmount := common.BalanceOf(incentive.rewardToken, stakerAddr)
 	if poolLeftExternalRewardAmount < refund {
 		refund = poolLeftExternalRewardAmount
 	}
 
-	common.Transfer(cross, ictv.rewardToken, ictv.refundee, refund)
+	common.Transfer(cross, incentive.rewardToken, incentive.refundee, refund)
 
 	// unwrap if wugnot
-	if ictv.rewardToken == consts.WUGNOT_PATH {
+	if incentive.rewardToken == consts.WUGNOT_PATH {
 		unwrap(refund)
 	}
 
 	// also refund deposit gns amount
-	gns.Transfer(cross, ictv.refundee, int64(ictv.depositGnsAmount))
+	gns.Transfer(cross, incentive.refundee, int64(incentive.depositGnsAmount))
+
+	pool.incentives.update(incentive.refundee, incentive)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -220,8 +223,8 @@ func EndExternalIncentive(cur realm, refundee std.Address, targetPoolPath, rewar
 		"refundee", refundee.String(),
 		"refundToken", rewardToken,
 		"refundAmount", formatInt(refund),
-		"refundGnsAmount", formatInt(ictv.depositGnsAmount),
-		"isRequestUnwrap", formatBool(ictv.rewardToken == consts.WUGNOT_PATH),
+		"refundGnsAmount", formatInt(incentive.depositGnsAmount),
+		"isRequestUnwrap", formatBool(incentive.rewardToken == consts.WUGNOT_PATH),
 		"externalIncentiveEndBy", prevAddr,
 	)
 }
