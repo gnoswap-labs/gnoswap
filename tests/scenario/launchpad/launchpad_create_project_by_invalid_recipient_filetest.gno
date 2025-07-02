@@ -46,7 +46,7 @@ func createProjectByInvalidRecipient() {
 	rewardTokenPath := "gno.land/r/onbloc/obl"
 	recipientAddr := std.Address("invalidAddress")
 	rewardAmount := uint64(1_000_000_000)
-	conditionsToken := "gno.land/r/gnoswap/v1/gov/xgns"
+	conditionTokenPath := "gno.land/r/gnoswap/v1/gov/xgns"
 	conditionsAmount := "1000000"
 	tier30Ratio := uint64(10)
 	tier90Ratio := uint64(20)
@@ -58,7 +58,7 @@ func createProjectByInvalidRecipient() {
 	println("[INFO] create project with reward token path:", rewardTokenPath)
 	println("[INFO] create project with recipient:", recipientAddr)
 	println("[INFO] create project with reward amount:", rewardAmount)
-	println("[INFO] create project with conditions token:", conditionsToken)
+	println("[INFO] create project with conditions token:", conditionTokenPath)
 	println("[INFO] create project with conditions amount:", conditionsAmount)
 	println("[INFO] create project with tier30 ratio:", tier30Ratio)
 	println("[INFO] create project with tier90 ratio:", tier90Ratio)
@@ -76,7 +76,7 @@ func createProjectByInvalidRecipient() {
 			rewardTokenPath,
 			recipientAddr,
 			rewardAmount,
-			conditionsToken,
+			conditionTokenPath,
 			conditionsAmount,
 			tier30Ratio,
 			tier90Ratio,
