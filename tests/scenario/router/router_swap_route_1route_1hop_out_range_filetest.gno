@@ -37,7 +37,7 @@ var (
 )
 
 var (
-	fee500 uint32 = 500
+	fee500  uint32 = 500
 	fee3000 uint32 = 3000
 
 	tier1 uint64 = 1
@@ -48,7 +48,7 @@ var t *testing.T
 func main() {
 	println("[SCENARIO] #3 Out of Range Swap Test")
 	println("[INFO] Starting scenario: Out of range swap with slippage check failure")
-	
+
 	println("[INFO] Setting up pool and position")
 	testing.SetRealm(adminRealm)
 
@@ -105,7 +105,7 @@ func main() {
 	println("[INFO] Attempting ExactIn swap with high slippage tolerance")
 	println("[INFO] Expected to fail due to slippage check")
 	println("[EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-002] slippage check failed || ExactIn: too few received (min:2710, got:367)")
-	
+
 	uassert.AbortsWithMessage(
 		t,
 		`[GNOSWAP-ROUTER-002] slippage check failed || ExactIn: too few received (min:2710, got:367)`,
@@ -126,7 +126,6 @@ func main() {
 
 	println("[INFO] Scenario completed")
 }
-
 
 // Output:
 // [SCENARIO] #3 Out of Range Swap Test
