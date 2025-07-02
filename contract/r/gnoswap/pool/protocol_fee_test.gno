@@ -10,6 +10,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 func TestSetPoolCreationFee(t *testing.T) {
@@ -403,6 +404,158 @@ func TestCalculateAmountWithFee(t *testing.T) {
 			feeAmount, restAmount := calculateAmountWithFee(tt.amount, tt.fee)
 			uassert.Equal(t, feeAmount.ToString(), tt.expectedFee.ToString())
 			uassert.Equal(t, restAmount.ToString(), tt.expectedRest.ToString())
+		})
+	}
+}
+
+func TestProtocolFee(t *testing.T) {
+	tests := []struct {
+		name        string
+		action      func(t *testing.T)
+		verify      func(t *testing.T) interface{}
+		expected    interface{}
+		shouldPanic bool
+	}{
+		{
+			name: "initial fee is 0",
+			action: func(t *testing.T) {
+				// No action needed, just verify initial state
+			},
+			verify: func(t *testing.T) interface{} {
+				return slot0FeeProtocol
+			},
+			expected:    uint8(0),
+			shouldPanic: false,
+		},
+		{
+			name: "create first pool with zero creation fee",
+			action: func(t *testing.T) {
+				testing.SetRealm(adminRealm)
+				SetPoolCreationFeeByAdmin(cross, 0)
+				CreatePool(cross, barPath, fooPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+			},
+			verify: func(t *testing.T) interface{} {
+				return slot0FeeProtocol
+			},
+			expected:    uint8(0),
+			shouldPanic: false,
+		},
+		{
+			name: "get protocol fee from created pool",
+			action: func(t *testing.T) {
+				// Pool already created in previous test
+			},
+			verify: func(t *testing.T) interface{} {
+				pool := GetPool(barPath, fooPath, 3000)
+				return pool.slot0.feeProtocol
+			},
+			expected:    uint8(0),
+			shouldPanic: false,
+		},
+		{
+			name: "panic when setting fee protocol with invalid values (3, 3)",
+			action: func(t *testing.T) {
+				setFeeProtocol(3, 3)
+			},
+			verify:      nil,
+			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage || expected (feeProtocol0(3) == 0 || (feeProtocol0(3) >= 4 && feeProtocol0(3) <= 10)) && (feeProtocol1(3) == 0 || (feeProtocol1(3) >= 4 && feeProtocol1(3) <= 10))",
+			shouldPanic: true,
+		},
+		{
+			name: "panic when setting fee protocol with invalid values (6, 3)",
+			action: func(t *testing.T) {
+				setFeeProtocol(6, 3)
+			},
+			verify:      nil,
+			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage || expected (feeProtocol0(6) == 0 || (feeProtocol0(6) >= 4 && feeProtocol0(6) <= 10)) && (feeProtocol1(3) == 0 || (feeProtocol1(3) >= 4 && feeProtocol1(3) <= 10))",
+			shouldPanic: true,
+		},
+		{
+			name: "panic when setting fee protocol with invalid values (3, 6)",
+			action: func(t *testing.T) {
+				setFeeProtocol(3, 6)
+			},
+			verify:      nil,
+			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage || expected (feeProtocol0(3) == 0 || (feeProtocol0(3) >= 4 && feeProtocol0(3) <= 10)) && (feeProtocol1(6) == 0 || (feeProtocol1(6) >= 4 && feeProtocol1(6) <= 10))",
+			shouldPanic: true,
+		},
+		{
+			name: "panic when setting fee protocol with invalid values (11, 11)",
+			action: func(t *testing.T) {
+				setFeeProtocol(11, 11)
+			},
+			verify:      nil,
+			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage || expected (feeProtocol0(11) == 0 || (feeProtocol0(11) >= 4 && feeProtocol0(11) <= 10)) && (feeProtocol1(11) == 0 || (feeProtocol1(11) >= 4 && feeProtocol1(11) <= 10))",
+			shouldPanic: true,
+		},
+		{
+			name: "panic when setting fee protocol with invalid values (6, 11)",
+			action: func(t *testing.T) {
+				setFeeProtocol(6, 11)
+			},
+			verify:      nil,
+			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage || expected (feeProtocol0(6) == 0 || (feeProtocol0(6) >= 4 && feeProtocol0(6) <= 10)) && (feeProtocol1(11) == 0 || (feeProtocol1(11) >= 4 && feeProtocol1(11) <= 10))",
+			shouldPanic: true,
+		},
+		{
+			name: "panic when setting fee protocol with invalid values (11, 6)",
+			action: func(t *testing.T) {
+				setFeeProtocol(11, 6)
+			},
+			verify:      nil,
+			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage || expected (feeProtocol0(11) == 0 || (feeProtocol0(11) >= 4 && feeProtocol0(11) <= 10)) && (feeProtocol1(6) == 0 || (feeProtocol1(6) >= 4 && feeProtocol1(6) <= 10))",
+			shouldPanic: true,
+		},
+		{
+			name: "set fee protocol to valid values (10, 10)",
+			action: func(t *testing.T) {
+				setFeeProtocol(10, 10)
+			},
+			verify: func(t *testing.T) interface{} {
+				return slot0FeeProtocol
+			},
+			expected:    uint8(170), // 10 + (10 << 4) = 170
+			shouldPanic: false,
+		},
+		{
+			name: "check if previous pool's protocol fee is updated",
+			action: func(t *testing.T) {
+				// Fee already set in previous test
+			},
+			verify: func(t *testing.T) interface{} {
+				pool := GetPool(barPath, fooPath, 3000)
+				return pool.slot0.feeProtocol
+			},
+			expected:    uint8(170),
+			shouldPanic: false,
+		},
+		{
+			name: "create second pool with updated protocol fee",
+			action: func(t *testing.T) {
+				CreatePool(cross, barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+			},
+			verify: func(t *testing.T) interface{} {
+				pool := GetPool(barPath, fooPath, 500)
+				return pool.slot0.feeProtocol
+			},
+			expected:    uint8(170),
+			shouldPanic: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if !tc.shouldPanic {
+				tc.action(t)
+				if tc.verify != nil {
+					got := tc.verify(t)
+					uassert.Equal(t, got, tc.expected)
+				}
+			} else {
+				uassert.PanicsWithMessage(t, tc.expected.(string), func() {
+					tc.action(t)
+				})
+			}
 		})
 	}
 }
