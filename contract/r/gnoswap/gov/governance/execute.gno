@@ -204,6 +204,8 @@ func dispatchRoleChange(cur realm, proposal *ProposalInfo) error {
 	}
 }
 
+// makeExecuteMessage creates a message to execute a function
+// message format: <pkgPath>*EXE*<function>*EXE*<params>
 func makeExecuteMessage(pkgPath, function string, params []string) string {
 	messageParams := make([]string, 0)
 
