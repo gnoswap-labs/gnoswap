@@ -15,8 +15,8 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gns"
 
-	"gno.land/r/onbloc/foo"
 	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/foo"
 )
 
 func TestSetPoolCreationFee(t *testing.T) {
@@ -573,6 +573,8 @@ func TestProtocolFee(t *testing.T) {
 //  3. No protocol fees are accumulated when protocol fees are not configured
 //  4. Position liquidity remains protected from unexpected fee deductions
 func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
+	InitPoolTest(t)
+
 	// Create pool with initial price at tick -10000
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, poolAddr, poolCreationFee)
