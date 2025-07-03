@@ -264,13 +264,14 @@ func DecreaseLiquidity(
 	deadline int64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
+	caller := getPrevAddr()
+
 	assertOnlyNotHalted()
-	assertAuthorizedForToken(positionId)
+	assertAuthorizedForToken(caller, positionId)
 	checkDeadline(deadline)
 	assertValidLiquidityAmount(liquidityStr)
 	mintAndDistributeGnsCallback()
 
-	caller := getPrevAddr()
 	amount0Min := u256.MustFromDecimal(amount0MinStr)
 	amount1Min := u256.MustFromDecimal(amount1MinStr)
 	decreaseLiquidityParams := DecreaseLiquidityParams{
@@ -329,7 +330,7 @@ func collectFee(
 ) (uint64, string, string, string, string, string) {
 	assertOnlyNotHalted()
 	assertTokenExists(positionId)
-	assertAuthorizedForToken(positionId)
+	assertAuthorizedForToken(caller, positionId)
 	mintAndDistributeGnsCallback()
 
 	// verify position
@@ -385,7 +386,7 @@ func collectFee(
 		token1,
 		amount1,
 		position.poolKey,
-		std.PreviousRealm().Address(),
+		caller,
 	)
 
 	// UNWRAP
