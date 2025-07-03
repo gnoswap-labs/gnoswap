@@ -191,7 +191,8 @@ func (self *RewardState) deductReward(staker std.Address) (uint64, map[string]ui
 		if !(collectableProtocolFeeReward > 0) {
 			continue
 		}
-		protocolFeeRewards[tokenPath] = collectableProtocolFeeReward
+
+		protocolFeeRewards[tokenPath] = uint64(collectableProtocolFeeReward)
 		info.ProtocolFeeClaimed[tokenPath] += protocolFeeRewards[tokenPath]
 		self.currentProtocolFeeBalance[tokenPath] -= protocolFeeRewards[tokenPath]
 	}
@@ -273,7 +274,11 @@ func (rs *RewardState) updateReward(staker std.Address) {
 		collectableProtocolFeeReward := protocolFeeReward.Uint64()
 		alreadyClaimed, exist := info.ProtocolFeeClaimed[tokenPath]
 		if exist {
-			collectableProtocolFeeReward -= alreadyClaimed
+			if collectableProtocolFeeReward < alreadyClaimed {
+				collectableProtocolFeeReward = 0
+			} else {
+				collectableProtocolFeeReward -= alreadyClaimed
+			}
 		}
 		info.PendingProtocolFeeReward[tokenPath] = collectableProtocolFeeReward
 	}
