@@ -32,7 +32,7 @@ var (
 )
 
 var (
-	fee500 uint32 = 500
+	fee500  uint32 = 500
 	fee3000 uint32 = 3000
 
 	tier1 uint64 = 1
@@ -48,7 +48,7 @@ const (
 func main() {
 	println("[SCENARIO] #4 Basic Router Swap Test")
 	println("[INFO] Starting scenario: Basic 1route 1hop swap tests")
-	
+
 	println("[INFO] Setting up pool and position")
 	testing.SetRealm(adminRealm)
 
@@ -76,7 +76,6 @@ func main() {
 
 	println("[INFO] Executing dry swap to check expected output")
 	_, dryResult, _ := router.DrySwapRoute(
-		cross,
 		barPath,
 		bazPath,
 		"1000",
@@ -166,7 +165,7 @@ func main() {
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 8171")
 	println("[EXPECTED] amountOut:", amountOut, "expected: -2996")
-	
+
 	println("[INFO] Scenario completed")
 }
 
