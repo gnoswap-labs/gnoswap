@@ -90,7 +90,6 @@ func main() {
 
 	println("[INFO] Executing dry swap to check expected output")
 	_, dryResult, _ := router.DrySwapRoute(
-		cross,
 		bazPath,    // inputToken
 		barPath,    // outputToken
 		"1000",     // amountSpecified

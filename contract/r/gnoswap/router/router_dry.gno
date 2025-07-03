@@ -149,7 +149,22 @@ func (p *SwapProcessor) AddSwapResults(
 //   - amountInStr: the calculated input amount as a string
 //   - amountOutStr: the calculated output amount as a string
 //   - success: true if the simulated swap meets all constraints
-func DrySwapRoute(cur realm,
+func DrySwapRoute(
+	inputToken, outputToken string,
+	specifiedAmount string,
+	swapTypeStr string,
+	strRouteArr, quoteArr string,
+	tokenAmountLimit string,
+) (string, string, bool) {
+	drySwapRouteWithCrossFn := func(cur realm) (string, string, bool) {
+		return drySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit)
+	}
+
+	return drySwapRouteWithCrossFn(cross)
+}
+
+// drySwapRoute is a function for applying cross realm
+func drySwapRoute(
 	inputToken, outputToken string,
 	specifiedAmount string,
 	swapTypeStr string,

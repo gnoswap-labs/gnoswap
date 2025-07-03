@@ -134,7 +134,6 @@ func testDrySwapRouteGnsBarExactIn() {
 
 	println("[INFO] Executing dry swap route (gns → wugnot → bar)")
 	_, dryResult, _ := router.DrySwapRoute(
-		cross,
 		gnsPath,    // inputToken
 		barPath,    // outputToken
 		"1000",     // amountSpecified
