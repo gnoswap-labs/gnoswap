@@ -1,4 +1,4 @@
-// position reposition test
+// position reposition
 package main
 
 import (

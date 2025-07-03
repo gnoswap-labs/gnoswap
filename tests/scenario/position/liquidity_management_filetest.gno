@@ -1,3 +1,7 @@
+// liquidity management
+
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 package main
 
 import (

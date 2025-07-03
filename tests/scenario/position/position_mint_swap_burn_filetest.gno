@@ -1,4 +1,4 @@
-// position mint swap burn test
+// position mint swap burn
 
 // PKGPATH: gno.land/r/gnoswap/v1/main
 

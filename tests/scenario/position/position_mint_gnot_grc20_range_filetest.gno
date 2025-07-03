@@ -1,4 +1,4 @@
-// position mint GNOT/GRC20 range test
+// position mint GNOT/GRC20 range
 
 // PKGPATH: gno.land/r/gnoswap/v1/main
 

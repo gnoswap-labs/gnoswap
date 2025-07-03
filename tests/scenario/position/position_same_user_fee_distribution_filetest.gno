@@ -1,4 +1,4 @@
-// position same user fee distribution test
+// position same user fee distribution
 
 // PKGPATH: gno.land/r/gnoswap/v1/main
 

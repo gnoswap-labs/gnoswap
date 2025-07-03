@@ -1,4 +1,4 @@
-// position unclaimed fee test
+// position unclaimed fee
 package main
 
 import (

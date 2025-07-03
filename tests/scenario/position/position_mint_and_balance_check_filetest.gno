@@ -1,4 +1,4 @@
-// position balance check test
+// position mint and balance check
 
 // PKGPATH: gno.land/r/gnoswap/v1/main
 

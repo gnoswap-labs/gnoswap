@@ -1,4 +1,4 @@
-// position native token
+// position handle native token
 
 // PKGPATH: gno.land/r/gnoswap/v1/main
 

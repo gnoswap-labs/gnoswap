@@ -1,4 +1,4 @@
-// position swap fee distribution test
+// position swap fee distribution
 package main
 
 import (
