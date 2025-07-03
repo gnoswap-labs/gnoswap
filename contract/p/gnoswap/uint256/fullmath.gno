@@ -136,7 +136,7 @@ func MulDivRoundingUp(a, b, denominator *Uint) *Uint {
 	}
 
 	// Add 1 to round up, but check for overflow
-	if result.Eq(MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935")) {
+	if result.Eq(MustFromDecimal(MAX_UINT256)) {
 		panic(ufmt.Sprintf("overflow: result(%s) + 1 would exceed MAX_UINT256", result.ToString()))
 	}
 
