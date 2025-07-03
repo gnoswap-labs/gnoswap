@@ -9,7 +9,9 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/gnoswap/v1/common"
 )
 
@@ -558,4 +560,69 @@ func TestProtocolFee(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestProtocolFeesDisabledWhenNotConfigured verifies that protocol fees are not collected
+// when protocol fee configuration is not enabled. This test ensures that:
+//  1. A pool can be created and liquidity can be minted without protocol fees
+//  2. Swaps can be performed in both directions (token0->token1 and token1->token0)
+//  3. No protocol fees are accumulated when protocol fees are not configured
+//  4. Position liquidity remains protected from unexpected fee deductions
+func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
+	// Create pool with initial price at tick -10000
+	testing.SetRealm(adminRealm)
+	gns.Approve(cross, poolAddr, poolCreationFee)
+	CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+
+	// Approve tokens for minting liquidity
+	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross, poolAddr, maxApprove)
+
+	// Mint liquidity position across full tick range
+	testing.SetRealm(posRealm)
+	Mint(
+		cross,
+		barPath,
+		fooPath,
+		fee500,
+		positionAddr,
+		-887160,
+		887160,
+		"100000000",
+		adminAddr,
+	)
+
+	// Perform swap from token0 to token1 (bar -> foo)
+	testing.SetRealm(rouRealm)
+	Swap(
+		cross,
+		barPath,
+		fooPath,
+		fee500,
+		adminAddr,
+		true,
+		"10000",
+		consts.MIN_PRICE,
+		adminAddr,
+	)
+
+	// Perform swap from token1 to token0 (foo -> bar)
+	Swap(
+		cross,
+		barPath,
+		fooPath,
+		fee500,
+		adminAddr,
+		false,
+		"10000",
+		consts.MAX_PRICE,
+		adminAddr,
+	)
+
+	// Verify that no protocol fees were collected since protocol fees are not enabled
+	thisPool := GetPool(barPath, fooPath, fee500)
+	uassert.Equal(t, thisPool.protocolFees.token0.ToString(), "0")
+	uassert.Equal(t, thisPool.protocolFees.token1.ToString(), "0")
+
+	resetObject(t)
 }
