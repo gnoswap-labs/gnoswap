@@ -149,7 +149,7 @@ func (p *SwapProcessor) AddSwapResults(
 //   - amountInStr: the calculated input amount as a string
 //   - amountOutStr: the calculated output amount as a string
 //   - success: true if the simulated swap meets all constraints
-func DrySwapRoute(cur realm,
+func DrySwapRoute(
 	inputToken, outputToken string,
 	specifiedAmount string,
 	swapTypeStr string,

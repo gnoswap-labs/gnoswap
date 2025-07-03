@@ -156,7 +156,6 @@ func testDrySwapRouteBarGnotExactIn(t *testing.T) {
 
 	println("[INFO] Executing dry swap route (bar → baz → qux → wugnot)")
 	_, dryResult, _ := router.DrySwapRoute(
-		cross,
 		barPath,       // inputToken
 		wrappedWugnot, // outputToken
 		"1000",        // amountSpecified
@@ -175,7 +174,6 @@ func testDrySwapRouteBarGnotExactOut(t *testing.T) {
 
 	println("[INFO] Executing dry swap route exact out (bar → baz → qux → wugnot)")
 	dryResult, _, _ := router.DrySwapRoute(
-		cross,
 		barPath,       // inputToken
 		wrappedWugnot, // outputToken
 		"20000",       // amountSpecified
@@ -194,7 +192,6 @@ func testDrySwapRouteGnotBarExactIn(t *testing.T) {
 
 	println("[INFO] Executing dry swap route (wugnot → qux → baz → bar)")
 	_, dryResult, _ := router.DrySwapRoute(
-		cross,
 		wrappedWugnot, // intputToken
 		barPath,       // outputToken
 		"5000",        // amountSpecified
@@ -213,7 +210,6 @@ func testDrySwapRouteGnotBarExactOut(t *testing.T) {
 
 	println("[INFO] Executing dry swap route exact out (wugnot → qux → baz → bar)")
 	dryResult, _, _ := router.DrySwapRoute(
-		cross,
 		wrappedWugnot, // intputToken
 		barPath,       // outputToken
 		"100",         // amountSpecified

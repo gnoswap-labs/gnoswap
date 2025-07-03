@@ -86,7 +86,6 @@ func testDrySwapRouteBarQuxExactIn() {
 
 	println("[INFO] Executing dry swap route with 2 routes (bar → baz → qux)")
 	_, dryResult, _ := router.DrySwapRoute(
-		cross,
 		barPath,    // inputToken
 		quxPath,    // outputToken
 		"1000",     // amountSpecified
