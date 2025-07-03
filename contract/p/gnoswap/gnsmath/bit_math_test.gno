@@ -625,6 +625,16 @@ func TestBitMath_ShiftTableCompleteness(t *testing.T) {
 		}
 	})
 }
+func TestBitMathNoSideEffects(t *testing.T) {
+	original := u256.NewUint(0xFF00)
+	backup := original.Clone()
+
+	_ = BitMathLeastSignificantBit(original)
+
+	if !original.Eq(backup) {
+		t.Error("BitMathLeastSignificantBit modified input")
+	}
+}
 
 func TestBitMath_SpecialPatterns(t *testing.T) {
 	tests := []struct {
