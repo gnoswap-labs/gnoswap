@@ -13,6 +13,10 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/gns"
+
+	"gno.land/r/onbloc/foo"
+	"gno.land/r/onbloc/bar"
 )
 
 func TestSetPoolCreationFee(t *testing.T) {
