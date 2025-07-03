@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -161,6 +162,12 @@ func ProposeCommunityPoolSpend(
 	maxVotingWeight := u256.NewUint(votingMax)
 	quorumAmount := maxVotingWeight.Uint64() * config.Quorum / 100
 
+	executeMessage := makeExecuteMessage(
+		consts.COMMUNITY_POOL_PATH,
+		"TransferToken",
+		[]string{tokenPath, to.String(), formatUint(amount)},
+	)
+
 	proposal := ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: CommunityPoolSpend,
@@ -181,6 +188,10 @@ func ProposeCommunityPoolSpend(
 			To:        to,
 			TokenPath: tokenPath,
 			Amount:    amount,
+		},
+		Execution: ExecutionInfo{
+			Num:  1,
+			Msgs: []string{executeMessage},
 		},
 	}
 

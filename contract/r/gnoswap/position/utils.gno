@@ -310,9 +310,7 @@ func isOwnerOrOperator(addr std.Address, positionId uint64) bool {
 	return false
 }
 
-func assertAuthorizedForToken(positionId uint64) {
-	caller := getPrevAddr()
-
+func assertAuthorizedForToken(caller std.Address, positionId uint64) {
 	if !isOwnerOrOperator(caller, positionId) {
 		panic(newErrorWithDetail(
 			errNoPermission,
