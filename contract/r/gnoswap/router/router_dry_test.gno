@@ -148,7 +148,7 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 
 			createBasicPool(t)
 
-			uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+			uassert.AbortsWithMessage(t, tt.expectedPanicMsg, func() {
 				DrySwapRoute(
 					tt.inputToken,
 					tt.outputToken,
