@@ -14,6 +14,7 @@ import (
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
+	"gno.land/r/onbloc/foo"
 )
 
 // cleanupPool removes the created pool to prevent interference with other tests
@@ -785,4 +786,316 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 			uassert.Equal(t, beforeBalance1+collected1.Int64(), afterBalance1)
 		}
 	})
+}
+
+func TestCreatePoolTable(t *testing.T) {
+	tests := []struct {
+		name          string
+		token0Path    string
+		token1Path    string
+		fee           uint32
+		sqrtPriceX96  string
+		expectPanic   bool
+		expectedPanic string
+		expectedTick  int32
+		expectedPrice string
+	}{
+		{
+			name:          "should fail if price is too low",
+			token0Path:    "gno.land/r/onbloc/foo",
+			token1Path:    "gno.land/r/onbloc/bar",
+			fee:           3000,
+			sqrtPriceX96:  "1",
+			expectPanic:   true,
+			expectedPanic: "[GNOSWAP-POOL-005] out of range for numeric value || sqrtPriceX96(1) is out of range",
+		},
+		{
+			name:          "should fail if price is too high",
+			token0Path:    "gno.land/r/onbloc/foo",
+			token1Path:    "gno.land/r/onbloc/bar",
+			fee:           3000,
+			sqrtPriceX96:  "1461446703485210103287273052203988822378723970342",
+			expectPanic:   true,
+			expectedPanic: "[GNOSWAP-POOL-005] out of range for numeric value || sqrtPriceX96(4295128738) is out of range",
+		},
+		{
+			name:         "can be initialized at MIN_SQRT_RATIO",
+			token0Path:   "gno.land/r/onbloc/bar",
+			token1Path:   "gno.land/r/onbloc/foo",
+			fee:          3000,
+			sqrtPriceX96: "4295128739", // MIN_SQRT_RATIO
+			expectPanic:  false,
+			expectedTick: -887272,
+		},
+		{
+			name:         "can be initialized at MAX_SQRT_RATIO-1",
+			token0Path:   "gno.land/r/onbloc/bar",
+			token1Path:   "gno.land/r/onbloc/foo",
+			fee:          3000,
+			sqrtPriceX96: "1461446703485210103287273052203988822378723970341", // MAX_SQRT_RATIO-1
+			expectPanic:  false,
+			expectedTick: 887271,
+		},
+		{
+			name:          "set initial variables correctly",
+			token0Path:    "gno.land/r/onbloc/bar",
+			token1Path:    "gno.land/r/onbloc/foo",
+			fee:           3000,
+			sqrtPriceX96:  "56022770974786139918731938227", // encodePriceSqrt(1, 2)
+			expectPanic:   false,
+			expectedTick:  -6932,
+			expectedPrice: "56022770974786139918731938227",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			testing.SetRealm(adminRealm)
+			SetPoolCreationFeeByAdmin(cross, 0)
+			gns.Approve(cross, poolAddr, 0)
+
+			poolPath := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
+			defer cleanupPool(t, tt.token0Path, tt.token1Path, tt.fee)
+
+			if tt.expectPanic {
+				uassert.AbortsWithMessage(t, tt.expectedPanic, func() {
+					CreatePool(cross, tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96)
+				})
+			} else {
+				CreatePool(cross, tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96)
+
+				poolTick := PoolGetSlot0Tick(poolPath)
+				uassert.Equal(t, tt.expectedTick, int32(poolTick))
+
+				if tt.expectedPrice != "" {
+					poolPrice := poolGetSlot0Price(t, tt.token0Path, tt.token1Path, tt.fee)
+					uassert.Equal(t, tt.expectedPrice, poolPrice)
+				}
+			}
+
+			resetObject(t)
+		})
+	}
+}
+
+func TestMintValidationTable(t *testing.T) {
+	tests := []struct {
+		name          string
+		token0Path    string
+		token1Path    string
+		fee           uint32
+		recipient     std.Address
+		tickLower     int32
+		tickUpper     int32
+		liquidity     string
+		expectPanic   bool
+		expectedPanic string
+	}{
+		{
+			name:          "fail if tickLower greater than tickUpper",
+			token0Path:    "gno.land/r/onbloc/bar",
+			token1Path:    "gno.land/r/onbloc/foo",
+			fee:           3000,
+			recipient:     addr01,
+			tickLower:     1,
+			tickUpper:     0,
+			liquidity:     "1",
+			expectPanic:   true,
+			expectedPanic: "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(1), tickUpper(0)",
+		},
+		{
+			name:          "fail if tickLower less than min tick",
+			token0Path:    "gno.land/r/onbloc/bar",
+			token1Path:    "gno.land/r/onbloc/foo",
+			fee:           3000,
+			recipient:     addr01,
+			tickLower:     -887273,
+			tickUpper:     0,
+			liquidity:     "1",
+			expectPanic:   true,
+			expectedPanic: "[GNOSWAP-POOL-013] tickLower is invalid || tickLower(-887273) < MIN_TICK(-887272)",
+		},
+		{
+			name:          "fail if tickUpper greater than max tick",
+			token0Path:    "gno.land/r/onbloc/bar",
+			token1Path:    "gno.land/r/onbloc/foo",
+			fee:           3000,
+			recipient:     addr01,
+			tickLower:     0,
+			tickUpper:     887273,
+			liquidity:     "1",
+			expectPanic:   true,
+			expectedPanic: "[GNOSWAP-POOL-014] tickUpper is invalid || tickUpper(887273) > MAX_TICK(887272)",
+		},
+		{
+			name:          "fail if amount is 0",
+			token0Path:    "gno.land/r/onbloc/foo",
+			token1Path:    "gno.land/r/onbloc/bar",
+			fee:           3000,
+			recipient:     addr01,
+			tickLower:     -887220 + 60, // minTick + tickSpacing
+			tickUpper:     887220 - 60,  // maxTick - tickSpacing
+			liquidity:     "0",
+			expectPanic:   true,
+			expectedPanic: "[GNOSWAP-POOL-010] zero liquidity",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup pool
+			testing.SetRealm(adminRealm)
+			SetPoolCreationFeeByAdmin(cross, 0)
+			CreatePool(cross, tt.token0Path, tt.token1Path, tt.fee, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
+			defer cleanupPool(t, tt.token0Path, tt.token1Path, tt.fee)
+
+			// Approve tokens
+			foo.Approve(cross, poolAddr, maxApprove)
+			bar.Approve(cross, poolAddr, maxApprove)
+
+			// Create initial position to ensure pool exists
+			testing.SetRealm(posRealm)
+			Mint(cross, tt.token0Path, tt.token1Path, tt.fee, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", -887220, 887220, "3161", adminAddr)
+
+			if tt.expectPanic {
+				uassert.AbortsWithMessage(t, tt.expectedPanic, func() {
+					Mint(cross, tt.token0Path, tt.token1Path, tt.fee, tt.recipient, tt.tickLower, tt.tickUpper, tt.liquidity, adminAddr)
+				})
+			}
+
+			resetObject(t)
+		})
+	}
+}
+
+func TestMintLiquidityOverflowTable(t *testing.T) {
+	tests := []struct {
+		name          string
+		token0Path    string
+		token1Path    string
+		fee           uint32
+		recipient     std.Address
+		tickLower     int32
+		tickUpper     int32
+		liquidity     string
+		expectPanic   bool
+		expectedPanic string
+	}{
+		{
+			name:          "fail if amount exceeds the max",
+			token0Path:    "gno.land/r/onbloc/bar",
+			token1Path:    "gno.land/r/onbloc/foo",
+			fee:           3000,
+			recipient:     addr01,
+			tickLower:     -887220 + 60,              // minTick + tickSpacing
+			tickUpper:     887220 - 60,               // maxTick - tickSpacing
+			liquidity:     "maxLiquidityPerTick + 1", // Will be calculated in test
+			expectPanic:   true,
+			expectedPanic: "[GNOSWAP-POOL-009] invalid liquidity calculated || liquidityGrossAfter(11505743598341114571880798222544995) overflows maxLiquidity(11505743598341114571880798222544994)",
+		},
+		{
+			name:          "fail if total amount at tick exceeds the max - overflow case 1",
+			token0Path:    "gno.land/r/onbloc/foo",
+			token1Path:    "gno.land/r/onbloc/bar",
+			fee:           3000,
+			recipient:     addr01,
+			tickLower:     -887220 + 60,                     // minTick + tickSpacing
+			tickUpper:     887220 - 60,                      // maxTick - tickSpacing
+			liquidity:     "maxLiquidityPerTick - 1000 + 1", // Will be calculated in test
+			expectPanic:   true,
+			expectedPanic: "[GNOSWAP-POOL-005] out of range for numeric value: amount(3638435594465944908512579814290918) overflows int64 range (max 9223372036854775807)",
+		},
+		{
+			name:          "fail if total amount at tick exceeds the max - overflow case 2",
+			token0Path:    "gno.land/r/onbloc/foo",
+			token1Path:    "gno.land/r/onbloc/bar",
+			fee:           3000,
+			recipient:     addr01,
+			tickLower:     -887220 + 120,                    // minTick + tickSpacing * 2
+			tickUpper:     887220 - 60,                      // maxTick - tickSpacing
+			liquidity:     "maxLiquidityPerTick - 1000 + 1", // Will be calculated in test
+			expectPanic:   true,
+			expectedPanic: "[GNOSWAP-POOL-005] out of range for numeric value: amount(3638435594465944908512579814290918) overflows int64 range (max 9223372036854775807)",
+		},
+		{
+			name:          "fail if total amount at tick exceeds the max - overflow case 3",
+			token0Path:    "gno.land/r/onbloc/foo",
+			token1Path:    "gno.land/r/onbloc/bar",
+			fee:           3000,
+			recipient:     addr01,
+			tickLower:     -887220 + 60,                     // minTick + tickSpacing
+			tickUpper:     887220 - 120,                     // maxTick - tickSpacing * 2
+			liquidity:     "maxLiquidityPerTick - 1000 + 1", // Will be calculated in test
+			expectPanic:   true,
+			expectedPanic: "[GNOSWAP-POOL-005] out of range for numeric value: amount(3638435594465944908510695322135961) overflows int64 range (max 9223372036854775807)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup pool
+			testing.SetRealm(adminRealm)
+			SetPoolCreationFeeByAdmin(cross, 0)
+			CreatePool(cross, tt.token0Path, tt.token1Path, tt.fee, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
+			defer cleanupPool(t, tt.token0Path, tt.token1Path, tt.fee)
+
+			// Approve tokens
+			foo.Approve(cross, poolAddr, maxApprove)
+			bar.Approve(cross, poolAddr, maxApprove)
+
+			// Create initial position
+			testing.SetRealm(posRealm)
+			Mint(cross, tt.token0Path, tt.token1Path, tt.fee, addr01, -887220, 887220, "3161", adminAddr)
+
+			// Calculate actual liquidity amount based on pool state
+			pool := GetPool(tt.token0Path, tt.token1Path, tt.fee)
+			tickSpacing := pool.tickSpacing
+
+			var actualLiquidity string
+			if tt.liquidity == "maxLiquidityPerTick + 1" {
+				maxLiquidityPerTick := u256.Zero().Add(u256.Zero(), pool.maxLiquidityPerTick)
+				maxLiquidityPerTick.Add(maxLiquidityPerTick, u256.One())
+				actualLiquidity = maxLiquidityPerTick.ToString()
+			} else if tt.liquidity == "maxLiquidityPerTick - 1000 + 1" {
+				maxLiquidityPerTick := u256.Zero().Add(u256.Zero(), pool.maxLiquidityPerTick)
+				maxLiquidityPerTick.Sub(maxLiquidityPerTick, u256.NewUint(1000))
+				maxLiquidityPerTick.Add(maxLiquidityPerTick, u256.One())
+				actualLiquidity = maxLiquidityPerTick.ToString()
+			} else {
+				actualLiquidity = tt.liquidity
+			}
+
+			// Calculate actual tick range
+			actualTickLower := tt.tickLower
+			actualTickUpper := tt.tickUpper
+
+			if actualTickLower == -887220+60 {
+				actualTickLower = -887220 + tickSpacing
+			} else if actualTickLower == -887220+120 {
+				actualTickLower = -887220 + tickSpacing*2
+			}
+
+			if actualTickUpper == 887220-60 {
+				actualTickUpper = 887220 - tickSpacing
+			} else if actualTickUpper == 887220-120 {
+				actualTickUpper = 887220 - tickSpacing*2
+			}
+
+			if tt.expectPanic {
+				uassert.AbortsWithMessage(t, tt.expectedPanic, func() {
+					Mint(cross, tt.token0Path, tt.token1Path, tt.fee, tt.recipient, actualTickLower, actualTickUpper, actualLiquidity, adminAddr)
+				})
+			}
+
+			resetObject(t)
+		})
+	}
+}
+
+// Helper function to get pool slot0 price
+func poolGetSlot0Price(t *testing.T, token0Path, token1Path string, fee uint32) string {
+	t.Helper()
+	pool := GetPool(token0Path, token1Path, fee)
+	return pool.slot0.sqrtPriceX96.ToString()
 }
