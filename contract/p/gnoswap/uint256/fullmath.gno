@@ -23,8 +23,10 @@ import (
 )
 
 // MulDiv calculates (a * b) / denominator with full 512-bit intermediate precision.
-// This implementation uses stack-allocated variables with clear naming conventions
-// to ensure safety while reducing heap allocations.
+// This function is crucial for maintaining precision in Uniswap V3's tick math.
+//
+// The implementation uses Remco Bloemen's multiplication and division algorithm
+// which computes the 512-bit product and divides it by the denominator.
 //
 // Parameters:
 //   - a: First multiplicand
@@ -36,107 +38,75 @@ import (
 //
 // Panics:
 //   - If denominator is 0
-//   - If the result would overflow 256 bits
+//   - If the result would overflow 256 bits (i.e., if a * b / denominator > 2^256 - 1)
 func MulDiv(a, b, denominator *Uint) *Uint {
-	// Pre-allocate variables with explicit names indicating their purpose
-	var loProduct, hiProduct Uint // Low and high parts of the 512-bit product
-	var remainder Uint            // For the remainder calculation
-	var twos Uint                 // For factoring out powers of 2
-	var denomCopy Uint            // For working copy of denominator
-	var tempCalc Uint             // For intermediate calculations
-	var inverse Uint              // For multiplicative inverse
-	var result Uint               // For final result
-
 	// Compute the 512-bit product of a * b
 	p := umul(a, b)
 
 	// Split the 512-bit product into high and low 256-bit parts
-	loProduct.arr = [4]uint64{p[0], p[1], p[2], p[3]}
-	hiProduct.arr = [4]uint64{p[4], p[5], p[6], p[7]}
+	lo := &Uint{arr: [4]uint64{p[0], p[1], p[2], p[3]}}
+	hi := &Uint{arr: [4]uint64{p[4], p[5], p[6], p[7]}}
 
 	// If the high part is zero, we can use simple 256-bit division
-	if hiProduct.IsZero() {
+	if hi.IsZero() {
 		if denominator.IsZero() {
 			panic(ufmt.Sprintf("denominator must be greater than 0. got %s", denominator.ToString()))
 		}
-		// Use direct division when high part is zero
-		result.Div(&loProduct, denominator)
-		return &result
+		result := new(Uint).Div(lo, denominator)
+		return result
 	}
 
 	// Ensure the result will fit in 256 bits
-	if denominator.Lte(&hiProduct) {
-		panic(ufmt.Sprintf("overflow: denominator(%s) must be greater than hi(%s)",
-			denominator.ToString(), hiProduct.ToString()))
+	// If hi >= denominator, then (hi * 2^256 + lo) / denominator >= 2^256
+	if denominator.Lte(hi) {
+		panic(ufmt.Sprintf("overflow: denominator(%s) must be greater than hi(%s)", denominator.ToString(), hi.ToString()))
 	}
 
 	// Compute the remainder of (a * b) mod denominator
-	remainder.MulMod(a, b, denominator)
+	remainder := new(Uint).MulMod(a, b, denominator)
 
 	// Subtract remainder from [hi, lo] to make it divisible by denominator
 	// If remainder > lo, we need to borrow from hi
-	if remainder.Gt(&loProduct) {
-		// Need to borrow from hi, so decrement hi by 1
-		tempCalc.Sub(&hiProduct, one)
-		hiProduct = tempCalc // Safe assignment since original hiProduct is no longer needed
+	if remainder.Gt(lo) {
+		hi = new(Uint).Sub(hi, one)
 	}
-
-	tempCalc.Sub(&loProduct, &remainder)
-	loProduct = tempCalc // Safe assignment since original loProduct is no longer needed
+	lo = new(Uint).Sub(lo, remainder)
 
 	// Factor out powers of 2 from denominator
 	// This optimization leverages the fact that division by powers of 2 is just bit shifting
-	tempCalc.Neg(denominator)
-	twos.And(&tempCalc, denominator)
-
-	// Create a safe copy of denominator for division
-	denomCopy.Div(denominator, &twos)
-
-	// Divide lo by twos
-	tempCalc.Div(&loProduct, &twos)
-	loProduct = tempCalc // Safe reassignment
+	twos := new(Uint).And(new(Uint).Neg(denominator), denominator)
+	denominator = new(Uint).Div(denominator, twos)
+	lo = new(Uint).Div(lo, twos)
 
 	// Find the multiplicative inverse of the odd denominator modulo 2^256
+	// Using Newton-Raphson iteration to find the inverse
 	// Start with a good initial guess: inverse = 3 * denominator XOR 2
-	tempCalc.Mul(three, &denomCopy)
-	inverse.Xor(&tempCalc, two)
+	inv := Zero()
+	inv = new(Uint).Mul(three, denominator)
+	inv = new(Uint).Xor(inv, two)
 
 	// Newton-Raphson iteration: inv = inv * (2 - denominator * inv)
-	// Using safe temporary calculations for each step
-	for i := 0; i < 6; i++ { // 6 iterations for full 256-bit precision
-		// Calculate denominator * inv
-		tempCalc.Mul(&denomCopy, &inverse)
-
-		// Calculate 2 - denominator * inv
-		var subResult Uint
-		subResult.Sub(two, &tempCalc)
-
-		// Calculate inv * (2 - denominator * inv)
-		tempCalc.Mul(&inverse, &subResult)
-		inverse = tempCalc // Safe reassignment
-	}
+	// Each iteration doubles the precision
+	inv = new(Uint).Mul(inv, new(Uint).Sub(two, new(Uint).Mul(denominator, inv))) // inverse mod 2^8
+	inv = new(Uint).Mul(inv, new(Uint).Sub(two, new(Uint).Mul(denominator, inv))) // inverse mod 2^16
+	inv = new(Uint).Mul(inv, new(Uint).Sub(two, new(Uint).Mul(denominator, inv))) // inverse mod 2^32
+	inv = new(Uint).Mul(inv, new(Uint).Sub(two, new(Uint).Mul(denominator, inv))) // inverse mod 2^64
+	inv = new(Uint).Mul(inv, new(Uint).Sub(two, new(Uint).Mul(denominator, inv))) // inverse mod 2^128
+	inv = new(Uint).Mul(inv, new(Uint).Sub(two, new(Uint).Mul(denominator, inv))) // inverse mod 2^256
 
 	// Compute the quotient
-	// Calculate 2^256 / twos
-	var negTwos Uint
-	negTwos.Sub(Zero(), &twos)
+	// 2^256 / twos = (2^256 - 1) / twos + 1
+	// negTwos = -twos = 2^256 - twos (mod 2^256)
+	// divResult = negTwos / twos = (2^256 - twos) / twos = 2^256/twos - 1
+	// twos = divResult + 1 = 2^256/twos
+	negTwos := new(Uint).Sub(Zero(), twos)
+	divResult := new(Uint).Div(negTwos, twos)
+	twos = new(Uint).Add(divResult, one)
 
-	var divResult Uint
-	divResult.Div(&negTwos, &twos)
+	lo = new(Uint).Or(lo, new(Uint).Mul(hi, twos))
 
-	tempCalc.Add(&divResult, one)
-	twos = tempCalc // twos now holds 2^256/twos
-
-	// Calculate hi * twos
-	tempCalc.Mul(&hiProduct, &twos)
-
-	// Calculate lo | (hi * twos)
-	var combined Uint
-	combined.Or(&loProduct, &tempCalc)
-
-	// Final multiplication for the result
-	result.Mul(&combined, &inverse)
-	return &result
+	result := new(Uint).Mul(lo, inv)
+	return result
 }
 
 // MulDivRoundingUp calculates ceil((a * b) / denominator).
