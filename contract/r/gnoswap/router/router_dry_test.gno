@@ -94,7 +94,6 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 			createBasicPool(t)
 
 			amountIn, amountOut, success := DrySwapRoute(
-				cross,
 				tt.inputToken,
 				tt.outputToken,
 				tt.specifiedAmount,
@@ -151,7 +150,6 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 
 			uassert.AbortsWithMessage(t, tt.expectedPanicMsg, func() {
 				DrySwapRoute(
-					cross,
 					tt.inputToken,
 					tt.outputToken,
 					tt.specifiedAmount,

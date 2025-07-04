@@ -104,7 +104,6 @@ func testDrySwapRouteQuxGnotExactIn(t *testing.T) {
 
 	println("[INFO] Executing dry swap route (qux → wugnot)")
 	_, dryResult, _ := router.DrySwapRoute(
-		cross,
 		quxPath,       // inputToken
 		wrappedWugnot, // outputToken
 		"1000",        // amountSpecified
@@ -123,7 +122,6 @@ func testDrySwapRouteQuxGnotExactOut(t *testing.T) {
 
 	println("[INFO] Executing dry swap route exact out (qux → wugnot)")
 	dryResult, _, _ := router.DrySwapRoute(
-		cross,
 		quxPath,       // inputToken
 		wrappedWugnot, // outputToken
 		"1000",        // amountSpecified

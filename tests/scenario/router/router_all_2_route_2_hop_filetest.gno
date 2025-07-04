@@ -81,7 +81,6 @@ func testDrySwapRouteBarQuxExactIn() {
 
 	println("[INFO] Executing dry swap route (bar → baz → qux)")
 	_, dryResult, _ := router.DrySwapRoute(
-		cross,
 		barPath,    // inputToken
 		quxPath,    // outputToken
 		"1000",     // amountSpecified
@@ -127,7 +126,6 @@ func testDrySwapRouteBarQuxExactOut() {
 
 	println("[INFO] Executing dry swap route exact out (bar → baz → qux)")
 	dryResult, _, _ := router.DrySwapRoute(
-		cross,
 		barPath,     // inputToken
 		quxPath,     // outputToken
 		"1000",      // amountSpecified
@@ -169,7 +167,6 @@ func TestDrySwapRouteQuxBarExactIn() {
 
 	println("[INFO] Executing dry swap route (qux → baz → bar)")
 	_, dryResult, _ := router.DrySwapRoute(
-		cross,
 		quxPath,    // inputToken
 		barPath,    // outputToken
 		"1000",     // amountSpecified
@@ -211,7 +208,6 @@ func TestDrySwapRouteQuxBarExactOut() {
 
 	println("[INFO] Executing dry swap route exact out (qux → baz → bar)")
 	dryResult, _, _ := router.DrySwapRoute(
-		cross,
 		quxPath,     // inputToken
 		barPath,     // outputToken
 		"1000",      // amountSpecified

@@ -513,7 +513,7 @@ func (z *Uint) SetBytes28(in []byte) *Uint {
 
 // SetBytes29 is identical to SetBytes(in[:29]), but panics is input is too short
 func (z *Uint) SetBytes29(in []byte) *Uint {
-	_ = in[23] // bounds check hint to compiler; see golang.org/issue/14808
+	_ = in[28] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3] = bigEndianUint40(in[0:5])
 	z.arr[2] = binary.BigEndian.Uint64(in[5:13])
 	z.arr[1] = binary.BigEndian.Uint64(in[13:21])
