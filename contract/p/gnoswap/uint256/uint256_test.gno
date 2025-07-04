@@ -1,7 +1,6 @@
 package uint256
 
 import (
-	"fmt"
 	"testing"
 
 	"gno.land/p/demo/uassert"

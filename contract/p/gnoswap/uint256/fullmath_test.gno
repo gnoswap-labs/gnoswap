@@ -773,36 +773,3 @@ func TestMulDivMathematicalProperty(t *testing.T) {
 		})
 	}
 }
-
-// Benchmarks
-func BenchmarkMulDiv(b *testing.B) {
-	x := MustFromDecimal("123456789012345678901234567890")
-	y := MustFromDecimal("987654321098765432109876543210")
-	z := MustFromDecimal("111111111111111111111111111111")
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		MulDiv(x, y, z)
-	}
-}
-
-func BenchmarkMulDivRoundingUp(b *testing.B) {
-	x := MustFromDecimal("123456789012345678901234567890")
-	y := MustFromDecimal("987654321098765432109876543210")
-	z := MustFromDecimal("111111111111111111111111111111")
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		MulDivRoundingUp(x, y, z)
-	}
-}
-
-func BenchmarkDivRoundingUp(b *testing.B) {
-	x := MustFromDecimal("123456789012345678901234567890123456789012345678901234567890")
-	y := MustFromDecimal("123456789012345678901234567890")
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		DivRoundingUp(x, y)
-	}
-}
