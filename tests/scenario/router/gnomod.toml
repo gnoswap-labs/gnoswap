@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/scenario/router"
+gno = "0.9"

@@ -55,7 +55,9 @@ func GetLockedInfoByAddress(addr std.Address) string {
 
 // GetClaimableRewardByAddress gets the claimable reward of an address.
 func GetClaimableRewardByAddress(addr std.Address) string {
-	rewardState.finalize(collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
+	func(cur realm) {
+		rewardState.finalize(collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
+	}(cross)
 
 	emissionReward, protocolFeeRewards := rewardState.CalculateReward(addr)
 	if emissionReward == 0 && len(protocolFeeRewards) == 0 {

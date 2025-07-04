@@ -287,7 +287,6 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			wugnot.Approve(cross, poolContract, maxApprove)
 
 			_, drySwapAmountOut, _ := DrySwapRoute(
-				cross,
 				tt.inputToken,
 				tt.outputToken,
 				tt.amountIn,
@@ -476,7 +475,6 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			wugnot.Approve(cross, poolContract, maxApprove)
 
 			DrySwapRoute(
-				cross,
 				tt.inputToken,
 				tt.outputToken,
 				tt.amountIn,
@@ -670,7 +668,6 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityPartiallyRemoved(t *testing.T)
 			wugnot.Approve(cross, poolContract, maxApprove)
 
 			DrySwapRoute(
-				cross,
 				tt.inputToken,
 				tt.outputToken,
 				tt.amountIn,
@@ -843,7 +840,6 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			wugnot.Approve(cross, poolContract, maxApprove)
 
 			_, drySwapAmountOut, _ := DrySwapRoute(
-				cross,
 				tt.inputToken,
 				tt.outputToken,
 				tt.amountIn,

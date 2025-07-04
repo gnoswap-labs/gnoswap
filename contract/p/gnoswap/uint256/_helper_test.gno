@@ -41,31 +41,12 @@ func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
 // for original tests
 func parseUint(s string) *Uint {
 	if len(s) >= 2 && s[:2] == "0x" {
-		u, err := FromHex(s)
-		if err != nil {
-			panic(err)
-		}
-		return u
+		return MustFromHex(s)
 	}
-	u, err := FromDecimal(s)
-	if err != nil {
-		panic(err)
-	}
-	return u
+	return MustFromDecimal(s)
 }
 
 // for testing.T
 func parseUintT(t *testing.T, s string) *Uint {
-	if len(s) >= 2 && s[:2] == "0x" {
-		u, err := FromHex(s)
-		if err != nil {
-			t.Fatalf("Failed to parse hex %s: %v", s, err)
-		}
-		return u
-	}
-	u, err := FromDecimal(s)
-	if err != nil {
-		t.Fatalf("Failed to parse decimal %s: %v", s, err)
-	}
-	return u
+	return parseUint(s)
 }
