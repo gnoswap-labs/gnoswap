@@ -1,4 +1,4 @@
-// exact out swap route with multi route
+// exact out swap route with single route
 
 // PKGPATH: gno.land/r/gnoswap/v1/main
 
@@ -47,21 +47,21 @@ func main() {
 
 	println("[SCENARIO] 3. Create Pool And Mint Position (gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000)")
 	createPool(wugnotPath, gnsPath, 3000, 100)
-	mintPosition(wugnotPath, gnsPath, 3000, -6960, 6960, "100000000", "100000000")
+	mintPosition(wugnotPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
 	println()
 
 	println("[SCENARIO] 4. Create Pool And Mint Position (gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:10000)")
 	createPool(wugnotPath, gnsPath, 10000, -100)
-	mintPosition(wugnotPath, gnsPath, 10000, -7000, 7000, "100000000", "100000000")
+	mintPosition(wugnotPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
 	println()
 
-	println("[SCENARIO] 5. ExactOutSwapRoute multi route (gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500,gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000,gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:10000)")
+	println("[SCENARIO] 5. ExactOutSwapRoute")
 	exactOutSwapRouteBy(
 		consts.GNOT,
 		gnsPath,
 		"1001502",
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500,gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000,gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:10000",
-		"40,40,20",
+		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500",
+		"100",
 		"10000000",
 	)
 	println()
@@ -181,25 +181,25 @@ func exactOutSwapRouteBy(
 // [EXPECTED] created gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000 pool at tick 100
 // [INFO] Minting position
 // [EXPECTED] positionId: 2
-// [EXPECTED] liquidity: 334558813
-// [EXPECTED] amount0: 96654566
+// [EXPECTED] liquidity: 340264708
+// [EXPECTED] amount0: 100000000
 // [EXPECTED] amount1: 100000000
 //
 // [SCENARIO] 4. Create Pool And Mint Position (gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:10000)
 // [EXPECTED] created gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:10000 pool at tick -100
 // [INFO] Minting position
 // [EXPECTED] positionId: 3
-// [EXPECTED] liquidity: 332987194
+// [EXPECTED] liquidity: 340264708
 // [EXPECTED] amount0: 100000000
-// [EXPECTED] amount1: 96670281
+// [EXPECTED] amount1: 100000000
 //
-// [SCENARIO] 5. ExactOutSwapRoute multi route (gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500,gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000,gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:10000)
+// [SCENARIO] 5. ExactOutSwapRoute
 // [INFO] ExactOutSwapRoute
 // [INFO] inputToken: gnot
 // [INFO] outputToken: gno.land/r/gnoswap/v1/gns
 // [INFO] specifiedAmount: 1001502
-// [INFO] routeQueryString: gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500,gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000,gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:10000
-// [INFO] queryRatios: 40,40,20
+// [INFO] routeQueryString: gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500
+// [INFO] queryRatios: 100
 // [INFO] amountInMax: 10000000
-// [EXPECTED] inputTokenAmount: 1004040
+// [EXPECTED] inputTokenAmount: 1002988
 // [EXPECTED] outputTokenAmount: -1000000
