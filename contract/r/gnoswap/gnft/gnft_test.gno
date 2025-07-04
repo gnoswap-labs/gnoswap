@@ -115,7 +115,7 @@ func TestOwnerOf(t *testing.T) {
 		panicMsg    string
 		expected    std.Address
 	}{
-		// {"OwnerOf(1)", 1, false, "", addr01}, 
+		// {"OwnerOf(1)", 1, false, "", addr01},
 		{"OwnerOf(500)", 500, false, errInvalidTokenId, addr01},
 	}
 
@@ -139,30 +139,29 @@ func TestOwnerOf(t *testing.T) {
 
 func TestIsApprovedForAll(t *testing.T) {
 	tests := []struct {
-		name     string
-		setup    func(cur realm)
-		expected bool
+		name             string
+		isApprovedForAll bool
+		expected         bool
 	}{
 		{
-			name:     "IsApprovedForAll(addr01, addr02)",
-			expected: false,
+			name:             "IsApprovedForAll(addr01, addr02)",
+			isApprovedForAll: false,
+			expected:         false,
 		},
 		{
-			name: "IsApprovedForAll(addr01, addr02) after setting approval",
-			setup: func(cur realm) {
-				testing.SetRealm(addr01Realm)
-				SetApprovalForAll(cur, addr02, true)
-			},
-			expected: true,
+			name:             "IsApprovedForAll(addr01, addr02) after setting approval",
+			isApprovedForAll: true,
+			expected:         true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.setup != nil {
-				tt.setup(cross)
+			testing.SetRealm(addr01Realm)
+			if tt.isApprovedForAll {
+				SetApprovalForAll(cross, addr02, tt.isApprovedForAll)
 			}
-			uassert.Equal(t, tt.expected, IsApprovedForAll((addr01), (addr02)))
+			uassert.Equal(t, tt.expected, IsApprovedForAll(addr01, addr02))
 		})
 	}
 }
@@ -181,10 +180,10 @@ func TestGetApproved(t *testing.T) {
 		errorMsg     string
 	}{
 		{
-			name:         "GetApproved for token without approval",
-			tokenId:      1,
+			name:        "GetApproved for token without approval",
+			tokenId:     1,
 			shouldError: true,
-			errorMsg: "token id not approved for anyone",
+			errorMsg:    "token id not approved for anyone",
 		},
 		{
 			name: "GetApproved for token with approval",
@@ -220,7 +219,7 @@ func TestGetApproved(t *testing.T) {
 			}
 
 			addr, err := GetApproved(tid(tt.tokenId))
-			
+
 			if tt.shouldError {
 				if err == nil {
 					t.Errorf("Expected error but got none")
