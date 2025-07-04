@@ -337,3 +337,52 @@ func TestValidateStatusPhaseTransition(t *testing.T) {
 		})
 	}
 }
+
+// Test ProposalType String method
+func TestProposalType_String(t *testing.T) {
+	tests := []struct {
+		proposalType ProposalType
+		expected     string
+	}{
+		{ProposalText, "text"},
+		{ProposalParamChange, "parameter_change"},
+		{ProposalCommunitySpend, "community_pool_spend"},
+		{ProposalRoleChange, "role_change"},
+		{ProposalType(99), "unknown"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expected, func(t *testing.T) {
+			result := tt.proposalType.String()
+			uassert.Equal(t, tt.expected, result, "ProposalType.String() mismatch")
+		})
+	}
+}
+
+// Test ValidateProposalType function
+func TestValidateProposalType(t *testing.T) {
+	// Valid proposal types
+	validTypes := []ProposalType{
+		ProposalText,
+		ProposalParamChange,
+		ProposalCommunitySpend,
+		ProposalRoleChange,
+	}
+
+	for _, proposalType := range validTypes {
+		err := ValidateProposalType(proposalType)
+		uassert.NoError(t, err, "Valid proposal type should not return error: "+proposalType.String())
+	}
+
+	// Invalid proposal types
+	invalidTypes := []ProposalType{
+		ProposalType(4),
+		ProposalType(99),
+		ProposalType(255),
+	}
+
+	for _, proposalType := range invalidTypes {
+		err := ValidateProposalType(proposalType)
+		uassert.Error(t, err, "Invalid proposal type should return error")
+	}
+}

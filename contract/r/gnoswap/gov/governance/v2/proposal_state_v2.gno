@@ -56,6 +56,17 @@ const (
 	PhaseExecutionEnded
 )
 
+// ProposalType represents the type of proposal being submitted.
+// Each type has different validation, execution, and expiry rules.
+type ProposalType uint8
+
+const (
+	ProposalText ProposalType = iota
+	ProposalParamChange
+	ProposalCommunitySpend
+	ProposalRoleChange
+)
+
 // TODO: remove `V2` suffix after integration with the main `gov/governance` module
 
 // ProposalStateV2 is an optimized structure for tracking proposal state
@@ -226,6 +237,22 @@ func (p ProposalPhase) String() string {
 	}
 }
 
+// String returns the string representation of ProposalType
+func (t ProposalType) String() string {
+	switch t {
+	case ProposalText:
+		return "text"
+	case ProposalParamChange:
+		return "parameter_change"
+	case ProposalCommunitySpend:
+		return "community_pool_spend"
+	case ProposalRoleChange:
+		return "role_change"
+	default:
+		return "unknown"
+	}
+}
+
 // CanTransitionTo checks if the current status can transition to the target status
 func (s ProposalStatus) CanTransitionTo(target ProposalStatus) bool {
 	validTransitions := map[ProposalStatus][]ProposalStatus{
@@ -316,4 +343,14 @@ func ValidateStatusPhaseTransition(status ProposalStatus, phase ProposalPhase) e
 	}
 
 	return ufmt.Errorf("invalid status-phase combination: %s-%s", status.String(), phase.String())
+}
+
+// ValidateProposalType checks if a ProposalType value is valid
+func ValidateProposalType(proposalType ProposalType) error {
+	switch proposalType {
+	case ProposalText, ProposalParamChange, ProposalCommunitySpend, ProposalRoleChange:
+		return nil
+	default:
+		return ufmt.Errorf("invalid ProposalType: %d", proposalType)
+	}
 }
