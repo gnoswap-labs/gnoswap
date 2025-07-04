@@ -69,26 +69,18 @@ func (z *Int) And(x, y *Int) *Int {
 // Rsh sets z = x >> n and returns z.
 // OBS: Different from original implementation it was using math.Big
 func (z *Int) Rsh(x *Int, n uint) *Int {
-	z = z.initiateAbs()
-
 	if !x.neg {
 		z.abs.Rsh(x.abs, n)
-		z.neg = false
+		z.neg = x.neg
 		return z
 	}
 
 	// REF: https://cs.opensource.google/go/go/+/refs/tags/go1.22.1:src/math/big/int.go;l=1118-1126;drc=d57303e65f00b84b528ee682747dbe1fd3316d30
-	// Arithmetic right shift for negative numbers:
-	// (-x) >> s == ^(x-1) >> s == ^((x-1) >> s) == -(((x-1) >> s) + 1)
+	t := NewInt(0).Sub(FromUint256(x.abs), NewInt(1))
+	t = t.Rsh(t, n)
 
-	// Step 1: x-1
-	temp := new(uint256.Uint).Sub(x.abs, one)
-
-	// Step 2: (x-1) >> n
-	temp.Rsh(temp, n)
-
-	// Step 3: ((x-1) >> n) + 1
-	z.abs.Add(temp, one)
+	_tmp := t.Add(t, NewInt(1))
+	z.abs = _tmp.Abs()
 	z.neg = true
 
 	return z

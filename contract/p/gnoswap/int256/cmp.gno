@@ -75,16 +75,6 @@ func (z *Int) Lt(x *Int) bool {
 	}
 }
 
-// Lte returns true if z <= x
-func (z *Int) Lte(x *Int) bool {
-	return z.Cmp(x) <= 0
-}
-
-// Gte returns true if z >= x
-func (z *Int) Gte(x *Int) bool {
-	return z.Cmp(x) >= 0
-}
-
 // Gt returns true if z > x
 func (z *Int) Gt(x *Int) bool {
 	if z == nil || x == nil {
