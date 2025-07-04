@@ -45,7 +45,7 @@ func SwapMathComputeSwapStepStr(
 	// zeroForOne determines swap direction based on the relationship of current vs. target
 	zeroForOne := sqrtRatioCurrentX96.Gte(sqrtRatioTargetX96)
 
-	// POSTIVIE == EXACT_IN => Estimated AmountOut
+	// POSITIVE == EXACT_IN => Estimated AmountOut
 	// NEGATIVE == EXACT_OUT => Estimated AmountIn
 	exactIn := !amountRemaining.IsNeg()
 
@@ -152,6 +152,11 @@ func handleExactIn(
 		u256.NewUint(1000000),
 	)
 
+	// Special case: if amount after fee is 0, no swap happens
+	if amountRemainingLessFee.IsZero() {
+		return sqrtRatioCurrentX96, u256.Zero()
+	}
+
 	// If we fully move to the target, how much would 'amountIn' be?
 	var amountIn *u256.Uint
 	if zeroForOne {
@@ -181,6 +186,14 @@ func handleExactIn(
 		amountRemainingLessFee,
 		zeroForOne,
 	)
+
+	// If price didn't change, amountIn is 0
+	if nextSqrt.Eq(sqrtRatioCurrentX96) {
+		return sqrtRatioCurrentX96, u256.Zero()
+	}
+
+	// Return the partially moved price and calculate amountIn later
+	// This avoids double calculation and ensures consistency
 	return nextSqrt, amountIn
 }
 
