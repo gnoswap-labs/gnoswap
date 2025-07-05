@@ -196,6 +196,14 @@ func TestMulDivBoundary(t *testing.T) {
 			want:      "108420217248550443",
 			wantPanic: false,
 		},
+		{
+			name:      "power_of_2_division_large",
+			x:         "57896044618658097711785492504343953926634992332820282019728792003956564819968", // 2^255
+			y:         "2",
+			denom:     "4",
+			want:      "28948022309329048855892746252171976963317496166410141009864396001978282409984", // 2^254
+			wantPanic: false,
+		},
 
 		// Newton-Raphson precision (odd denominators)
 		{
@@ -275,6 +283,68 @@ func TestMulDivBoundary(t *testing.T) {
 
 			if !got.Eq(want) {
 				t.Errorf("MulDiv(%s, %s, %s) = %s, want %s", tc.x, tc.y, tc.denom, got.ToString(), tc.want)
+			}
+		})
+	}
+}
+
+// This test verifies that the MulDiv function does not modify its input parameters
+func TestMulDivInputPreservation(t *testing.T) {
+
+	tests := []struct {
+		name  string
+		x     string
+		y     string
+		denom string
+	}{
+		{
+			name:  "normal_inputs",
+			x:     "12345678901234567890",
+			y:     "98765432109876543210",
+			denom: "123456789",
+		},
+		{
+			name:  "power_of_2_boundary",
+			x:     "57896044618658097711785492504343953926634992332820282019728792003956564819968", // 2^255
+			y:     "2",
+			denom: "4",
+		},
+		{
+			name:  "phantom_overflow_case",
+			x:     "340282366920938463463374607431768211456",  // Q128
+			y:     "11930464781601263584560605149792510336",   // 35 * Q128 / 1000
+			denom: "2722258935367507707706996859454145691648", // 8 * Q128
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			x := MustFromDecimal(tc.x)
+			y := MustFromDecimal(tc.y)
+			denom := MustFromDecimal(tc.denom)
+
+			// Create copies of input values
+			xCopy := new(Uint).Set(x)
+			yCopy := new(Uint).Set(y)
+			denomCopy := new(Uint).Set(denom)
+
+			// Call MulDiv
+			_ = MulDiv(x, y, denom)
+
+			// Verify that input values were not modified
+			if !x.Eq(xCopy) {
+				t.Errorf("Input 'x' was modified: original=%s, modified=%s",
+					xCopy.ToString(), x.ToString())
+			}
+
+			if !y.Eq(yCopy) {
+				t.Errorf("Input 'y' was modified: original=%s, modified=%s",
+					yCopy.ToString(), y.ToString())
+			}
+
+			if !denom.Eq(denomCopy) {
+				t.Errorf("Input 'denom' was modified: original=%s, modified=%s",
+					denomCopy.ToString(), denom.ToString())
 			}
 		})
 	}
