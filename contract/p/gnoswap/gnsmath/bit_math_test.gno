@@ -829,13 +829,11 @@ func TestBitMath_ExhaustiveSmallRange(t *testing.T) {
 
 		// Manual calculation for verification
 		expectedMSB := uint8(0)
-		for bit := uint8(63); bit >=0 0; bit-- {
-			if i&(1<<bit) != 0 {
-				expectedMSB = bit
+		// Start from bit 63 and work down to find the highest set bit
+		for bit := 63; bit >= 0; bit-- {
+			if i&(1<<uint(bit)) != 0 {
+				expectedMSB = uint8(bit)
 				break
-			}
-			if bit == 0 {
-			    break
 			}
 		}
 
@@ -854,6 +852,4 @@ func TestBitMath_ExhaustiveSmallRange(t *testing.T) {
 			t.Errorf("LSB mismatch for %d: got %d, expected %d", i, lsb, expectedLSB)
 		}
 	}
-}
-
 }
