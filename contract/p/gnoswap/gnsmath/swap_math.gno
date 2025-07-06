@@ -152,12 +152,14 @@ func handleExactIn(
 		u256.NewUint(1000000),
 	)
 
-	// Special case: if amount after fee is 0, no swap happens
+	// Special case:
+	// When the remaining amount to be swapped becomes 1 during a tick swap,
+	// the swap fee becomes less than 0.
+	// At this point, check whether the swap is no longer being executed.
 	if amountRemainingLessFee.IsZero() {
 		return sqrtRatioCurrentX96, u256.Zero()
 	}
 
-	// If we fully move to the target, how much would 'amountIn' be?
 	var amountIn *u256.Uint
 	if zeroForOne {
 		amountIn = getAmount0DeltaHelper(
@@ -187,7 +189,7 @@ func handleExactIn(
 		zeroForOne,
 	)
 
-	// If price didn't change, amountIn is 0
+	// If sqrt_price didn't change, amountIn is 0
 	if nextSqrt.Eq(sqrtRatioCurrentX96) {
 		return sqrtRatioCurrentX96, u256.Zero()
 	}
