@@ -830,10 +830,13 @@ func TestBitMath_ExhaustiveSmallRange(t *testing.T) {
 
 		// Manual calculation for verification
 		expectedMSB := uint8(0)
-		for bit := uint8(63); bit > 0; bit-- {
+		for bit := uint8(63); bit >=0 0; bit-- {
 			if i&(1<<bit) != 0 {
 				expectedMSB = bit
 				break
+			}
+			if bit == 0 {
+			    break
 			}
 		}
 
