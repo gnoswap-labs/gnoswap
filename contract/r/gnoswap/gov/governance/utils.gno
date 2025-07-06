@@ -184,3 +184,8 @@ func parseBool(s string) bool {
 		panic(ufmt.Sprintf("invalid bool value: %s", s))
 	}
 }
+
+// parseUint64 helper function to parse string to uint64
+func parseUint64(s string) uint64 {
+	return parseNumber(s, kindUint64).(uint64)
+}
