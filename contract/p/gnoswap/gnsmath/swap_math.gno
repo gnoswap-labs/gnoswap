@@ -234,5 +234,11 @@ func handleExactOut(
 		amountRemainingAbs,
 		zeroForOne,
 	)
+
+	// If sqrt_price didn't change, amountIn is 0
+	if nextSqrt.Eq(sqrtRatioCurrentX96) {
+		return sqrtRatioCurrentX96, u256.Zero()
+	}
+
 	return nextSqrt, amountOut
 }
