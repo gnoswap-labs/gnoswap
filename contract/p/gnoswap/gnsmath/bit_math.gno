@@ -61,12 +61,11 @@ func BitMathLeastSignificantBit(x *u256.Uint) uint8 {
 	}
 
 	temp := x.Clone()
-	andResult := new(u256.Uint)
+	hasSetBits := new(u256.Uint)
 	r := uint8(255)
 
 	for _, s := range lsbShifts {
-		andResult.And(temp, s.bitPattern)
-		if !andResult.IsZero() {
+		if !hasSetBits.And(temp, s.bitPattern).IsZero() {
 			r -= uint8(s.shift)
 		} else {
 			temp.Rsh(temp, s.shift)
