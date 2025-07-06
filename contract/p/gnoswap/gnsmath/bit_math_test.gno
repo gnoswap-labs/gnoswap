@@ -627,7 +627,6 @@ func TestBitMath_ShiftTableCompleteness(t *testing.T) {
 }
 
 // TestBitMathInputPreservation verifies that bit math functions do not mutate their input.
-// This test replaces the existing TestBitMathNoSideEffects which only tested LSB.
 func TestBitMathInputPreservation(t *testing.T) {
 	cases := []struct {
 		name string
@@ -672,7 +671,6 @@ func TestBitMathInputPreservation(t *testing.T) {
 }
 
 // TestBitMathIdempotency ensures that multiple calls with the same input produce consistent results
-// and do not cause any side effects through repeated execution.
 func TestBitMathIdempotency(t *testing.T) {
 	values := []string{
 		"42",
@@ -709,9 +707,7 @@ func TestBitMathIdempotency(t *testing.T) {
 	}
 }
 
-// TestBitMathMemoryReuse specifically tests the PR's improvement where temp.Clone() is used
-// instead of mutating the input parameter. This ensures the function doesn't modify
-// the memory location or value of the input.
+// TestBitMathMemoryReuse specifically tests temp.Clone() is used instead of mutating the input parameter.
 func TestBitMathMemoryReuse(t *testing.T) {
 	// Test with 2^128 - a value that triggers multiple shift operations
 	v := "340282366920938463463374607431768211456"
