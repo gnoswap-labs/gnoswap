@@ -14,7 +14,6 @@ func TestBitMathMostSignificantBit(t *testing.T) {
 		expected    uint8
 		shouldPanic bool
 	}{
-		// Zero input - should panic
 		{
 			name:        "zero_panics",
 			input:       "0",
