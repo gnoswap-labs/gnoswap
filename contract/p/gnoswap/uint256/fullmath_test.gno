@@ -329,7 +329,7 @@ func TestMulDivInputPreservation(t *testing.T) {
 			denomCopy := new(Uint).Set(denom)
 
 			// Call MulDiv
-			_ = MulDiv(x, y, denom)
+			MulDiv(x, y, denom)
 
 			// Verify that input values were not modified
 			if !x.Eq(xCopy) {
