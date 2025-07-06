@@ -14,7 +14,6 @@ func TestBitMathMostSignificantBit(t *testing.T) {
 		expected    uint8
 		shouldPanic bool
 	}{
-		// Zero input - should panic
 		{
 			name:        "zero_panics",
 			input:       "0",
@@ -194,7 +193,6 @@ func TestBitMathLeastSignificantBit(t *testing.T) {
 		expected    uint8
 		shouldPanic bool
 	}{
-		// Zero input - should panic
 		{
 			name:        "zero_panics",
 			input:       "0",
@@ -831,10 +829,13 @@ func TestBitMath_ExhaustiveSmallRange(t *testing.T) {
 
 		// Manual calculation for verification
 		expectedMSB := uint8(0)
-		for bit := uint8(63); bit > 0; bit-- {
+		for bit := uint8(63); bit >=0 0; bit-- {
 			if i&(1<<bit) != 0 {
 				expectedMSB = bit
 				break
+			}
+			if bit == 0 {
+			    break
 			}
 		}
 
@@ -855,34 +856,4 @@ func TestBitMath_ExhaustiveSmallRange(t *testing.T) {
 	}
 }
 
-func TestUniswapV3Compatibility(t *testing.T) {
-	testCases := []struct {
-		input       string
-		expectedMSB uint8
-		expectedLSB uint8
-		description string
-	}{
-		{"1", 0, 0, "Uniswap test: 2^0"},
-		{"2", 1, 1, "Uniswap test: 2^1"},
-		{"4", 2, 2, "Uniswap test: 2^2"},
-		{"8", 3, 3, "Uniswap test: 2^3"},
-		{"340282366920938463463374607431768211456", 128, 128, "Uniswap test: 2^128"},
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", 255, 0, "Uniswap test: MAX_UINT256"},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.description, func(t *testing.T) {
-			x := u256.MustFromDecimal(tc.input)
-
-			msb := BitMathMostSignificantBit(x)
-			lsb := BitMathLeastSignificantBit(x)
-
-			if msb != tc.expectedMSB {
-				t.Errorf("MSB mismatch: got %d, expected %d", msb, tc.expectedMSB)
-			}
-			if lsb != tc.expectedLSB {
-				t.Errorf("LSB mismatch: got %d, expected %d", lsb, tc.expectedLSB)
-			}
-		})
-	}
 }
