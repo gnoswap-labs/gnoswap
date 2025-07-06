@@ -625,15 +625,146 @@ func TestBitMath_ShiftTableCompleteness(t *testing.T) {
 		}
 	})
 }
-func TestBitMathNoSideEffects(t *testing.T) {
-	original := u256.NewUint(0xFF00)
-	backup := original.Clone()
 
-	_ = BitMathLeastSignificantBit(original)
-
-	if !original.Eq(backup) {
-		t.Error("BitMathLeastSignificantBit modified input")
+// TestBitMathInputPreservation verifies that bit math functions do not mutate their input.
+// This test replaces the existing TestBitMathNoSideEffects which only tested LSB.
+func TestBitMathInputPreservation(t *testing.T) {
+	cases := []struct {
+		name string
+		val  string
+	}{
+		{"zero_plus_one", "1"},
+		{"small", "12345"},
+		{"power_of_two_small", "256"},         // 2^8
+		{"power_of_two_medium", "4294967296"}, // 2^32
+		{"power_of_two_large", "340282366920938463463374607431768211456"},                                 // 2^128
+		{"max_uint256", "115792089237316195423570985008687907853269984665640564039457584007913129639935"}, // 2^256 - 1
+		{"random_large", "98765432109876543210987654321098765432109876543210987654321098765432"},
+		{"all_bits_set_lower", "4294967295"},         // 0xFFFFFFFF
+		{"alternating_bits", "12297829382473034410"}, // 0xAAAAAAAAAAAAAAAA
 	}
+
+	for _, tc := range cases {
+		t.Run(tc.name+"/MSB", func(t *testing.T) {
+			x := u256.MustFromDecimal(tc.val)
+			before := x.Clone()
+			_ = BitMathMostSignificantBit(x)
+
+			// Verify input was not mutated
+			if !x.Eq(before) {
+				t.Errorf("MSB mutated input: before=%s, after=%s",
+					before.ToString(), x.ToString())
+			}
+		})
+
+		t.Run(tc.name+"/LSB", func(t *testing.T) {
+			x := u256.MustFromDecimal(tc.val)
+			before := x.Clone()
+			_ = BitMathLeastSignificantBit(x)
+
+			// Verify input was not mutated
+			if !x.Eq(before) {
+				t.Errorf("LSB mutated input: before=%s, after=%s",
+					before.ToString(), x.ToString())
+			}
+		})
+	}
+}
+
+// TestBitMathIdempotency ensures that multiple calls with the same input produce consistent results
+// and do not cause any side effects through repeated execution.
+func TestBitMathIdempotency(t *testing.T) {
+	values := []string{
+		"42",
+		"65535",
+		"340282366920938463463374607431768211456",
+		"98765432109876543210987654321098765432109876543210987654321098765432",
+	}
+
+	for _, v := range values {
+		x := u256.MustFromDecimal(v)
+
+		// Call MSB multiple times and verify consistency
+		msb1 := BitMathMostSignificantBit(x)
+		msb2 := BitMathMostSignificantBit(x)
+		msb3 := BitMathMostSignificantBit(x)
+
+		if msb1 != msb2 || msb2 != msb3 {
+			t.Errorf("MSB inconsistent for %s: %d, %d, %d", v, msb1, msb2, msb3)
+		}
+
+		// Call LSB multiple times and verify consistency
+		lsb1 := BitMathLeastSignificantBit(x)
+		lsb2 := BitMathLeastSignificantBit(x)
+		lsb3 := BitMathLeastSignificantBit(x)
+
+		if lsb1 != lsb2 || lsb2 != lsb3 {
+			t.Errorf("LSB inconsistent for %s: %d, %d, %d", v, lsb1, lsb2, lsb3)
+		}
+
+		// Final verification that input remains unchanged after multiple calls
+		if !x.Eq(u256.MustFromDecimal(v)) {
+			t.Errorf("Value mutated after multiple calls: %s", v)
+		}
+	}
+}
+
+// TestBitMathMemoryReuse specifically tests the PR's improvement where temp.Clone() is used
+// instead of mutating the input parameter. This ensures the function doesn't modify
+// the memory location or value of the input.
+func TestBitMathMemoryReuse(t *testing.T) {
+	// Test with 2^128 - a value that triggers multiple shift operations
+	v := "340282366920938463463374607431768211456"
+
+	t.Run("MSB_no_reallocation", func(t *testing.T) {
+		x := u256.MustFromDecimal(v)
+
+		// Store the original pointer value (*Uint itself, not address of x)
+		originalPtr := x
+
+		// Execute the function that previously had mutation issues
+		msb := BitMathMostSignificantBit(x)
+
+		// Verify the pointer hasn't changed (no reallocation)
+		if x != originalPtr {
+			t.Error("Pointer value changed - unexpected reallocation occurred")
+		}
+
+		// Verify the value hasn't been mutated
+		if !x.Eq(u256.MustFromDecimal(v)) {
+			t.Error("Value was mutated")
+		}
+
+		// Verify the result is correct
+		if msb != 128 {
+			t.Errorf("Incorrect MSB: got %d, expected 128", msb)
+		}
+	})
+
+	t.Run("LSB_no_reallocation", func(t *testing.T) {
+		x := u256.MustFromDecimal(v)
+
+		// Store the original pointer value (*Uint itself, not address of x)
+		originalPtr := x
+
+		// Execute the function
+		lsb := BitMathLeastSignificantBit(x)
+
+		// Verify the pointer hasn't changed (no reallocation)
+		if x != originalPtr {
+			t.Error("Pointer value changed - unexpected reallocation occurred")
+		}
+
+		// Verify the value hasn't been mutated
+		if !x.Eq(u256.MustFromDecimal(v)) {
+			t.Error("Value was mutated")
+		}
+
+		// Verify the result is correct (2^128 has LSB at position 128)
+		if lsb != 128 {
+			t.Errorf("Incorrect LSB: got %d, expected 128", lsb)
+		}
+	})
 }
 
 func TestBitMath_SpecialPatterns(t *testing.T) {
