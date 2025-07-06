@@ -17,6 +17,7 @@ import (
 	"gno.land/r/gnoswap/v1/halt"
 )
 
+// TODO: remove this variables
 var (
 	proposalId               uint64
 	proposals                = avl.NewTree() // Only stores active proposals
@@ -49,44 +50,23 @@ func ProposeText(
 		panic(err)
 	}
 	proposer := std.PreviousRealm().Address()
-	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
-	if !enough {
-		panic(addDetailToError(
-			errNotEnoughBalance,
-			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
-		))
-	}
 
 	en.MintAndDistributeGns(cross)
 	updateProposalsState()
 
-	now := uint64(time.Now().Unix())
-	// votingMax does not include quantities delegated through Launchpad.
-	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
-
-	maxVotingWeight := u256.NewUint(votingMax)
-	quorumAmount := maxVotingWeight.Uint64() * config.Quorum / 100
-
-	proposal := ProposalInfo{
-		Proposer:     proposer,
-		ProposalType: Text,
-		State: ProposalState{
-			Created:   true,
-			CreatedAt: now,
-			Upcoming:  true,
-		},
-		Yea:                       u256.Zero(),
-		Nay:                       u256.Zero(),
-		MaxVotingWeight:           maxVotingWeight,
-		PossibleAddressWithWeight: possibleAddressWithWeight,
-		ConfigVersion:             uint64(configVersions.Size()), // use latest config version
-		QuorumAmount:              quorumAmount,
-		Title:                     title,
-		Description:               description,
+	// Use state transition to create proposal
+	transition := CreateProposalTransition(proposer, Text, title, description)
+	if err := applyTransition(transition); err != nil {
+		panic(err)
 	}
 
-	increaseProposalId()
-	newProposalId := getProposalId()
+	// Get the new proposal ID from the updated state
+	newProposalId := governanceState.GetProposalCounter()
+
+	// Update backward compatibility variables
+	// TODO: remove this
+	proposalId = newProposalId
+	proposal, _ := governanceState.GetProposal(newProposalId)
 	proposals.Set(formatUint(newProposalId), proposal)
 	proposalIdListByProposer.Set(proposer.String(), newProposalId)
 
@@ -103,7 +83,7 @@ func ProposeText(
 		"configVersion", formatUint(proposal.ConfigVersion),
 		"createdAt", formatUint(proposal.State.CreatedAt),
 	)
-	return proposalId
+	return newProposalId
 }
 
 // ProposeCommunityPoolSpend creates a new community pool spend proposal with the given data
