@@ -89,20 +89,13 @@ func TestGetProposalStatus(t *testing.T) {
 	now := uint64(time.Now().Unix())
 	defaultProposal := ProposalInfo{
 		ConfigVersion: 1,
-		State: ProposalState{
-			CreatedAt:  now,
-			Upcoming:   false,
-			Active:     true,
-			Passed:     false,
-			PassedAt:   0,
-			Rejected:   false,
-			RejectedAt: 0,
-			Canceled:   false,
-			CanceledAt: 0,
-			Executed:   false,
-			ExecutedAt: 0,
-			Expired:    false,
-			ExpiredAt:  0,
+		Status: ProposalStatus{
+			Schedule: ProposalSchedule{
+				CreateTime: now,
+				ActiveTime: now + 86400,
+				VotingEndTime: now + 691200,
+			},
+			ActionState: ActionState{},
 		},
 	}
 

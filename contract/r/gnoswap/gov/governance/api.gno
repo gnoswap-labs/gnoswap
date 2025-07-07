@@ -227,12 +227,25 @@ func getProposalStatus(id uint64) string {
 		return ""
 	}
 
-	config := GetConfigVersion(proposal.ConfigVersion)
+	// Get current status dynamically
+	updater := newProposalStateUpdater(&proposal, uint64(time.Now().Unix()))
+	status := updater.getCurrentStatus()
+	
+	// Create a synthetic ProposalState for backward compatibility
+	syntheticState := ProposalState{
+		CreatedAt: proposal.Status.Schedule.CreateTime,
+		Upcoming:  status == StatusUpcoming,
+		Active:    status == StatusActive,
+		Passed:    status == StatusPassed,
+		Rejected:  status == StatusRejected,
+		Executed:  proposal.Status.ActionState.Executed,
+		ExecutedAt: proposal.Status.ActionState.ExecutedAt,
+		Canceled:  proposal.Status.ActionState.Canceled,
+		CanceledAt: proposal.Status.ActionState.CanceledAt,
+		Expired:   status == StatusExpired,
+	}
 
-	votingStart := proposal.State.CreatedAt + config.VotingStartDelay
-	votingEnd := votingStart + config.VotingPeriod
-
-	node := createProposalStateNode(proposal.State, votingStart, votingEnd)
+	node := createProposalStateNode(syntheticState, proposal.Status.Schedule.ActiveTime, proposal.Status.Schedule.VotingEndTime)
 	return marshal(node)
 }
 

@@ -52,10 +52,11 @@ func TestWithNewProposal(t *testing.T) {
 	proposal := ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: Text,
-		State: ProposalState{
-			Created:   true,
-			CreatedAt: uint64(time.Now().Unix()),
-			Upcoming:  true,
+		Status: ProposalStatus{
+			Schedule: ProposalSchedule{
+				CreateTime: uint64(time.Now().Unix()),
+			},
+			ActionState: ActionState{},
 		},
 		Yea:             u256.Zero(),
 		Nay:             u256.Zero(),
@@ -92,23 +93,20 @@ func TestWithUpdatedProposal(t *testing.T) {
 
 	state := createTestStateWithProposal()
 
-	// Update proposal to active state
+	// Update proposal votes
 	newState := state.WithUpdatedProposal(1, func(p ProposalInfo) ProposalInfo {
-		p.State.Active = true
-		p.State.Upcoming = false
+		p.Yea = u256.NewUint(100)
 		return p
 	})
 
 	// Verify old state unchanged
 	oldProposal, _ := state.GetProposal(1)
-	uassert.True(t, oldProposal.State.Upcoming, "old state should have upcoming true")
-	uassert.False(t, oldProposal.State.Active, "old state should have active false")
+	uassert.Equal(t, oldProposal.Yea.Uint64(), uint64(0), "old state should have 0 yea votes")
 
 	// Verify new state
 	newProposal, exists := newState.GetProposal(1)
 	uassert.True(t, exists, "proposal should exist in new state")
-	uassert.False(t, newProposal.State.Upcoming, "new state should have upcoming false")
-	uassert.True(t, newProposal.State.Active, "new state should have active true")
+	uassert.Equal(t, newProposal.Yea.Uint64(), uint64(100), "new state should have 100 yea votes")
 }
 
 func TestWithArchivedProposal(t *testing.T) {
@@ -345,7 +343,7 @@ func TestStateImmutability(t *testing.T) {
 	state2 := state1.WithNewProposal(std.Address("g1p2"), createTestProposal2(std.Address("g1p2")))
 	state3 := state2.WithVote(1, std.Address("g1v1"), true, 100)
 	state4 := state3.WithUpdatedProposal(1, func(p ProposalInfo) ProposalInfo {
-		p.State.Active = true
+		p.Yea = u256.NewUint(200)
 		return p
 	})
 	state5 := state4.WithArchivedProposal(1)
@@ -365,7 +363,7 @@ func TestStateImmutability(t *testing.T) {
 
 	proposal, exists := state4.GetProposal(1)
 	uassert.True(t, exists, "state4 has proposal")
-	uassert.True(t, proposal.State.Active, "state4 has active proposal")
+	uassert.Equal(t, proposal.Yea.Uint64(), uint64(200), "state4 has updated yea votes")
 
 	_, exists = state5.GetProposal(1)
 	uassert.False(t, exists, "state5 has archived proposal")
@@ -400,10 +398,11 @@ func createTestProposal2(proposer std.Address) ProposalInfo {
 	return ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: Text,
-		State: ProposalState{
-			Created:   true,
-			CreatedAt: uint64(time.Now().Unix()),
-			Upcoming:  true,
+		Status: ProposalStatus{
+			Schedule: ProposalSchedule{
+				CreateTime: uint64(time.Now().Unix()),
+			},
+			ActionState: ActionState{},
 		},
 		Yea:             u256.Zero(),
 		Nay:             u256.Zero(),

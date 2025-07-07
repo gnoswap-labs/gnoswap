@@ -82,6 +82,8 @@ func (a ActionState) IsActionTaken() bool {
 }
 
 // ProposalState represents the state of a proposal's execution
+// DEPRECATED: This type is maintained only for backward compatibility in APIs.
+// The actual state is computed dynamically from Schedule and ActionState.
 type ProposalState struct {
 	Created   bool
 	CreatedAt uint64
@@ -98,13 +100,13 @@ type ProposalState struct {
 	Canceled   bool
 	CanceledAt uint64
 
-	// LABEL
 	Executed   bool
 	ExecutedAt uint64
 
 	Expired   bool
 	ExpiredAt uint64
 }
+
 
 type CommunityPoolSpendInfo struct {
 	To        std.Address
@@ -151,6 +153,20 @@ func (p ProposalType) String() string {
 	return string(p)
 }
 
+// Proposal represents the core proposal structure as per RFC
+type Proposal struct {
+	ID           uint64
+	ConfigID     uint64
+	ProposalType ProposalType
+	Status       ProposalStatus
+}
+
+// ProposalStatus combines schedule and action state as per RFC
+type ProposalStatus struct {
+	Schedule    ProposalSchedule
+	ActionState ActionState
+}
+
 // ProposalInfo represents all the information about a proposal
 type ProposalInfo struct {
 	// The address of the proposer
@@ -159,14 +175,8 @@ type ProposalInfo struct {
 	// Text, CommunityPoolSpend, ParameterChange
 	ProposalType ProposalType
 
-	// The execution state of the proposal
-	State ProposalState
-
-	// Pre-calculated time schedule for the proposal
-	Schedule ProposalSchedule
-
-	// Action-based state changes (Cancel, Execute)
-	ActionState ActionState
+	// Combined status as per RFC (Schedule + ActionState)
+	Status ProposalStatus
 
 	// How many yes votes have been collected
 	Yea *u256.Uint
