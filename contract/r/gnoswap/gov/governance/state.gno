@@ -21,10 +21,6 @@ type GovernanceState struct {
 	votes     *avl.Tree // voteKey(proposalId:voter) -> bool
 	userVotes *avl.Tree // userVoteKey(voter:proposalId) -> voteWeight
 
-	// Aggregated vote counts
-	yesVotes map[uint64]uint64 // proposal -> accumulated
-	noVotes  map[uint64]uint64 // proposal -> accumulated
-
 	// tracker
 	proposalIdByProposer *avl.Tree // proposer -> proposalId
 
@@ -45,8 +41,6 @@ func NewGovernanceState(initialConfig Config) *GovernanceState {
 		archievedProposals:   avl.NewTree(),
 		votes:                avl.NewTree(),
 		userVotes:            avl.NewTree(),
-		yesVotes:             make(map[uint64]uint64),
-		noVotes:              make(map[uint64]uint64),
 		proposalIdByProposer: avl.NewTree(),
 		currentConfig:        initialConfig,
 		configVersions:       versions,
@@ -124,13 +118,6 @@ func (s *GovernanceState) WithVote(proposalId uint64, voter std.Address, vote bo
 		VotedAt:     uint64(time.Now().Unix()),
 	}
 	state.userVotes.Set(userVoteKey, voteData)
-
-	// update accumulated votes
-	if vote {
-		state.yesVotes[proposalId] += weight
-	} else {
-		state.noVotes[proposalId] += weight
-	}
 
 	// update proposal vote counts
 	return state.WithUpdatedProposal(proposalId, func(p ProposalInfo) ProposalInfo {
@@ -231,7 +218,11 @@ func (s *GovernanceState) GetProposalCounter() uint64 {
 }
 
 func (s *GovernanceState) GetAccumulatedVotes(proposalId uint64) (uint64, uint64) {
-	return s.yesVotes[proposalId], s.noVotes[proposalId]
+	proposal, exists := s.GetProposal(proposalId)
+	if !exists {
+		return 0, 0
+	}
+	return proposal.Yea.Uint64(), proposal.Nay.Uint64()
 }
 
 /* Iterators */
@@ -264,16 +255,6 @@ func (s *GovernanceState) IterateUserVotes(voter std.Address, fn func(uint64, vo
 
 // Helper method to clone state
 func (s *GovernanceState) clone() *GovernanceState {
-	// Create new maps for accumulated votes
-	newAccumYes := make(map[uint64]uint64)
-	newAccumNo := make(map[uint64]uint64)
-	for k, v := range s.yesVotes {
-		newAccumYes[k] = v
-	}
-	for k, v := range s.noVotes {
-		newAccumNo[k] = v
-	}
-
 	// Create new AVL trees by copying all data
 	newProposals := avl.NewTree()
 	s.proposals.Iterate("", "", func(key string, value any) bool {
@@ -317,8 +298,6 @@ func (s *GovernanceState) clone() *GovernanceState {
 		archievedProposals:   newArchivedProposals,
 		votes:                newVotes,
 		userVotes:            newUserVotes,
-		yesVotes:             newAccumYes,
-		noVotes:              newAccumNo,
 		proposalIdByProposer: newProposalIdByProposer,
 		currentConfig:        s.currentConfig,
 		configVersions:       newConfigVersions,

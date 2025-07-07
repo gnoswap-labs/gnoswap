@@ -185,46 +185,6 @@ func CastVoteTransition(proposalId uint64, voter std.Address, vote bool) StateTr
 	}
 }
 
-// CancelProposalTransition cancels a proposal
-func CancelProposalTransition(proposalId uint64, caller std.Address) StateTransition2 {
-	return func(s *GovernanceState) (*GovernanceState, error) {
-		proposal, exists := s.GetProposal(proposalId)
-		if !exists {
-			return s, errProposalNotFound
-		}
-
-		if proposal.State.Canceled {
-			return s, errAlreadyCanceledProposal
-		}
-
-		config, _ := s.GetConfig(proposal.ConfigVersion)
-		now := uint64(time.Now().Unix())
-		votingStart := proposal.State.CreatedAt + config.VotingStartDelay
-
-		if now >= votingStart {
-			return s, errUnableToCancleVotingProposal
-		}
-
-		// Check if caller can cancel
-		if caller != proposal.Proposer {
-			xGnsBalance := xgns.BalanceOf(proposal.Proposer)
-			threshold := config.ProposalCreationThreshold
-			if xGnsBalance >= int64(threshold) {
-				return s, errUnableToCancelProposalWithVoterEnoughDelegated
-			}
-		}
-
-		// Update proposal state
-		return s.WithUpdatedProposal(proposalId, func(p ProposalInfo) ProposalInfo {
-			p.State.Canceled = true
-			p.State.CanceledAt = now
-			p.State.Upcoming = false
-			p.State.Active = false
-			return p
-		}), nil
-	}
-}
-
 // UpdateProposalStateTransition2 updates proposal states based on current time
 func UpdateProposalStateTransition2() StateTransition2 {
 	return func(s *GovernanceState) (*GovernanceState, error) {
@@ -345,6 +305,97 @@ func CreateAndValidateProposal(proposer std.Address, proposalType ProposalType, 
 			return nil
 		},
 	)
+}
+
+// VoteTransition creates a state transition for casting a vote
+func VoteTransition(proposalId uint64, voter std.Address, vote bool) StateTransition2 {
+	return func(s *GovernanceState) (*GovernanceState, error) {
+		proposal, exists := s.GetProposal(proposalId)
+		if !exists {
+			return s, errProposalNotFound
+		}
+
+		// Check if already voted
+		if s.HasVoted(proposalId, voter) {
+			return s, errAlreadyVoted
+		}
+
+		// Validate voting period
+		now := uint64(time.Now().Unix())
+		config, _ := s.GetConfig(proposal.ConfigVersion)
+		votingStart := proposal.State.CreatedAt + config.VotingStartDelay
+		votingEnd := votingStart + config.VotingPeriod
+
+		if now < votingStart || now >= votingEnd {
+			return s, errUnableToVoteOutOfPeriod
+		}
+
+		// Check if proposal is canceled
+		if proposal.State.Canceled {
+			return s, errUnableToVoteCanceledProposal
+		}
+
+		// Get voting weight
+		weight, exists := proposal.PossibleAddressWithWeight[voter]
+		if !exists || weight == 0 {
+			return s, errNotEnoughVotingWeight
+		}
+
+		// Cast vote
+		return s.WithVote(proposalId, voter, vote, weight), nil
+	}
+}
+
+// VoteWithUpdate composes state update and vote in a single transition
+func VoteWithUpdate(proposalId uint64, voter std.Address, vote bool) StateTransition2 {
+	return Compose(
+		UpdateProposalStateTransition2(),
+		VoteTransition(proposalId, voter, vote),
+	)
+}
+
+// CancelProposalTransition cancels a proposal
+func CancelProposalTransition(proposalId uint64, caller std.Address) StateTransition2 {
+	return func(s *GovernanceState) (*GovernanceState, error) {
+		proposal, exists := s.GetProposal(proposalId)
+		if !exists {
+			return s, errProposalNotFound
+		}
+
+		// Check if already canceled
+		if proposal.State.Canceled {
+			return s, errAlreadyCanceledProposal
+		}
+
+		// Check if voting has started
+		now := uint64(time.Now().Unix())
+		config, _ := s.GetConfig(proposal.ConfigVersion)
+		votingStart := proposal.State.CreatedAt + config.VotingStartDelay
+		
+		if now >= votingStart {
+			return s, errUnableToCancleVotingProposal
+		}
+
+		// Check if caller is authorized to cancel
+		if caller != proposal.Proposer {
+			// Check if proposer's stake has fallen below threshold
+			balance := xgns.BalanceOf(proposal.Proposer)
+			threshold := config.ProposalCreationThreshold
+			
+			if balance >= int64(threshold) {
+				return s, errUnableToCancelProposalWithVoterEnoughDelegated
+			}
+		}
+
+		// Cancel the proposal
+		return s.WithUpdatedProposal(proposalId, func(p ProposalInfo) ProposalInfo {
+			p.State.Canceled = true
+			p.State.CanceledAt = now
+			p.State.Upcoming = false
+			p.State.Active = false
+			return p
+		}).WithArchivedProposal(proposalId), nil
+	}
 }
 
 // VoteWithRetry attempts to cast a vote with retry logic

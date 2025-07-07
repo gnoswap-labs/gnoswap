@@ -2,7 +2,6 @@ package governance
 
 import (
 	"std"
-	"time"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
@@ -35,38 +34,32 @@ func Vote(cur realm, pid uint64, yes bool) string {
 	}
 
 	en.MintAndDistributeGns(cross)
-	updateProposalsState()
-
-	proposal := mustGetProposal(pid)
 
 	voter := std.PreviousRealm().Address()
-	now := uint64(time.Now().Unix())
 
+	// Use VoteWithUpdate to ensure proposal states are current before voting
+	transition := VoteWithUpdate(pid, voter, yes)
+	if err := applyTransition(transition); err != nil {
+		panic(err)
+	}
+
+	// Get updated proposal and vote info for backward compatibility
+	proposal, _ := governanceState.GetProposal(pid)
+	voteInfo, _ := governanceState.GetUserVote(voter, pid)
+
+	// Update backward compatibility variables
 	voteKey := createVoteKey(pid, voter.String())
-
-	state, err := newVoteState(proposal, voteKey, voter, now)
-	if err != nil {
-		panic(err)
-	}
-
-	if err := state.validate(); err != nil {
-		panic(err)
-	}
-
-	executor := newVoteExecutor(&proposal, voter, state.userWeight)
-	if err := executor.execute(yes); err != nil {
-		panic(err)
-	}
-
-	proposals.Set(formatUint(pid), proposal)
-
 	setVote(pid, voter.String(), yes)
 	setUserVote(voter, pid, voteWithWeight{
 		Yes:         yes,
-		Weight:      state.userWeight,
-		VotedHeight: uint64(std.ChainHeight()),
-		VotedAt:     now,
+		Weight:      voteInfo.Weight,
+		VotedHeight: voteInfo.VotedHeight,
+		VotedAt:     voteInfo.VotedAt,
 	})
+	proposals.Set(formatUint(pid), proposal)
+
+	// Get accumulated votes from state
+	yesVotes, noVotes := governanceState.GetAccumulatedVotes(pid)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -76,9 +69,9 @@ func Vote(cur realm, pid uint64, yes bool) string {
 		"proposalId", formatUint(pid),
 		"voter", voter.String(),
 		"yes", voteToString(yes),
-		"voteWeight", formatUint(state.userWeight),
-		"voteYes", formatUint(accumYesVotes[pid]),
-		"voteNo", formatUint(accumNoVotes[pid]),
+		"voteWeight", formatUint(voteInfo.Weight),
+		"voteYes", formatUint(yesVotes),
+		"voteNo", formatUint(noVotes),
 	)
 
 	return voteKey
@@ -93,47 +86,26 @@ func Cancel(cur realm, proposalId uint64) {
 	}
 
 	en.MintAndDistributeGns(cross)
-	updateProposalsState()
-
-	proposal := mustGetProposal(proposalId)
-	if proposal.State.Canceled {
-		panic(addDetailToError(
-			errAlreadyCanceledProposal,
-			ufmt.Sprintf("proposalId(%d) has already canceled", proposalId),
-		))
-	}
-
-	config := GetConfigVersion(proposal.ConfigVersion)
-	now := uint64(time.Now().Unix())
-	if now >= (proposal.State.CreatedAt + config.VotingStartDelay) {
-		panic(addDetailToError(
-			errUnableToCancleVotingProposal,
-			ufmt.Sprintf("voting has already started for proposalId(%d)", proposalId),
-		))
-	}
 
 	caller := std.PreviousRealm().Address()
-	if caller != proposal.Proposer {
-		// If the caller is not the proposer, check if the proposer's stake has fallen below the threshold
-		enough, balance, wanted := checkEnoughXGnsToPropose(proposal.Proposer)
-		if enough {
-			panic(addDetailToError(
-				errUnableToCancelProposalWithVoterEnoughDelegated,
-				ufmt.Sprintf(
-					"caller(%s) is not the proposer(%s) and proposer's xgns balance(%d) is above the threshold(%d)",
-					caller, proposal.Proposer,
-					balance, wanted,
-				),
-			))
-		}
+
+	// Use CancelProposalTransition with state update
+	transition := Compose(
+		UpdateProposalStateTransition2(),
+		CancelProposalTransition(proposalId, caller),
+	)
+
+	if err := applyTransition(transition); err != nil {
+		panic(err)
 	}
 
-	proposal.State.Canceled = true
-	proposal.State.CanceledAt = now
-	proposal.State.Upcoming = false
-	proposal.State.Active = false
-
-	proposals.Set(formatUint(proposalId), proposal)
+	// Update backward compatibility variables
+	proposal, exists := governanceState.GetArchivedProposal(proposalId)
+	if exists {
+		proposals.Remove(formatUint(proposalId))
+		archivedProposals.Set(formatUint(proposalId), proposal)
+		proposalIdListByProposer.Remove(proposal.Proposer.String())
+	}
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -186,77 +158,4 @@ func setUserVote(voter std.Address, pid uint64, vote voteWithWeight) {
 		accumNoVotes[pid] += vote.Weight
 	}
 	userVotes.Set(createUserVoteKey(voter, pid), vote)
-}
-
-type VoteState struct {
-	isVotingPeriod  bool
-	isProposalValid bool
-	hasUserVoted    bool
-	userWeight      uint64
-}
-
-func newVoteState(proposal ProposalInfo, voteKey string, voter std.Address, now uint64) (*VoteState, error) {
-	cfg := GetConfigVersion(proposal.ConfigVersion)
-	votingStartTime := proposal.State.CreatedAt + cfg.VotingStartDelay
-	votingEndTime := votingStartTime + cfg.VotingPeriod
-
-	hasUserVoted := false
-	voted, exists := votes.Get(voteKey)
-	if exists {
-		hasUserVoted = voted.(bool)
-	}
-
-	return &VoteState{
-		isVotingPeriod:  now >= votingStartTime && now < votingEndTime,
-		isProposalValid: !proposal.State.Canceled,
-		hasUserVoted:    hasUserVoted,
-		userWeight:      proposal.PossibleAddressWithWeight[voter],
-	}, nil
-}
-
-func (s *VoteState) validate() error {
-	if !s.isVotingPeriod {
-		return errUnableToVoteOutOfPeriod
-	}
-	if !s.isProposalValid {
-		return errUnableToVoteCanceledProposal
-	}
-	if s.hasUserVoted {
-		return errAlreadyVoted
-	}
-	if s.userWeight == 0 {
-		return errNotEnoughVotingWeight
-	}
-	return nil
-}
-
-type VoteExecutor struct {
-	proposal *ProposalInfo
-	voter    std.Address
-	weight   uint64
-}
-
-func newVoteExecutor(proposal *ProposalInfo, voter std.Address, weight uint64) *VoteExecutor {
-	return &VoteExecutor{
-		proposal: proposal,
-		voter:    voter,
-		weight:   weight,
-	}
-}
-
-func (e *VoteExecutor) execute(yes bool) error {
-	if yes {
-		e.proposal.Yea = safeVoteSum(e.proposal.Yea, e.weight)
-	} else {
-		e.proposal.Nay = safeVoteSum(e.proposal.Nay, e.weight)
-	}
-	return nil
-}
-
-func safeVoteSum(collected *u256.Uint, weight uint64) *u256.Uint {
-	newSum, overflow := new(u256.Uint).AddOverflow(collected, u256.NewUint(weight))
-	if overflow {
-		panic(errOutOfRange)
-	}
-	return newSum
 }
