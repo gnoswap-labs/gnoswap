@@ -151,6 +151,13 @@ func (p ProposalType) String() string {
 	return string(p)
 }
 
+// ProposalStatusEnum combines schedule and action state
+// This represents the complete status information for a proposal
+type ProposalStatus struct {
+	Schedule    ProposalSchedule
+	ActionState ActionState
+}
+
 // ProposalInfo represents all the information about a proposal
 type ProposalInfo struct {
 	// The address of the proposer
@@ -159,14 +166,17 @@ type ProposalInfo struct {
 	// Text, CommunityPoolSpend, ParameterChange
 	ProposalType ProposalType
 
-	// The execution state of the proposal
+	// The execution state of the proposal (legacy, will be removed)
 	State ProposalState
 
-	// Pre-calculated time schedule for the proposal
+	// Pre-calculated time schedule for the proposal (will be moved to Status)
 	Schedule ProposalSchedule
 
-	// Action-based state changes (Cancel, Execute)
+	// Action-based state changes (Cancel, Execute) (will be moved to Status)
 	ActionState ActionState
+
+	// Combined status as per RFC (Schedule + ActionState)
+	Status ProposalStatus
 
 	// How many yes votes have been collected
 	Yea *u256.Uint

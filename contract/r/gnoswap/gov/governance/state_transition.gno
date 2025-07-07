@@ -124,6 +124,7 @@ func CreateProposalTransition(proposer std.Address, proposalType ProposalType, t
 		quorumAmount := maxVotingWeight.Uint64() * s.currentConfig.Quorum / 100
 
 		// Create proposal with pre-calculated schedule
+		schedule := createProposalSchedule(s.currentConfig, now)
 		proposal := ProposalInfo{
 			Proposer:     proposer,
 			ProposalType: proposalType,
@@ -132,7 +133,12 @@ func CreateProposalTransition(proposer std.Address, proposalType ProposalType, t
 				CreatedAt: now,
 				Upcoming:  true,
 			},
-			Schedule:                  createProposalSchedule(s.currentConfig, now),
+			Schedule:    schedule,
+			ActionState: ActionState{}, // Empty action state for new proposal
+			Status: ProposalStatus{
+				Schedule:    schedule,
+				ActionState: ActionState{}, // Empty action state for new proposal
+			},
 			Yea:                       u256.Zero(),
 			Nay:                       u256.Zero(),
 			MaxVotingWeight:           maxVotingWeight,
@@ -281,6 +287,11 @@ func ExecuteProposalTransition(proposalId uint64) Transition {
 			p.ActionState.Executed = true
 			p.ActionState.ExecutedAt = now
 			p.ActionState.ExecutedBy = executor
+
+			// Update Status.ActionState
+			p.Status.ActionState.Executed = true
+			p.Status.ActionState.ExecutedAt = now
+			p.Status.ActionState.ExecutedBy = executor
 
 			// Update legacy State for backward compatibility
 			p.State.Executed = true
@@ -448,6 +459,11 @@ func CancelProposalTransition(proposalId uint64, caller std.Address) Transition 
 			p.ActionState.Canceled = true
 			p.ActionState.CanceledAt = now
 			p.ActionState.CanceledBy = caller
+
+			// Update Status.ActionState
+			p.Status.ActionState.Canceled = true
+			p.Status.ActionState.CanceledAt = now
+			p.Status.ActionState.CanceledBy = caller
 
 			// Update legacy State for backward compatibility
 			p.State.Canceled = true

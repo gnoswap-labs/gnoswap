@@ -4,11 +4,11 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-// ProposalStatus represents the current status of a proposal
-type ProposalStatus int
+// ProposalStatusEnum represents the current status of a proposal
+type ProposalStatusEnum int
 
 const (
-	_ ProposalStatus = iota
+	_ ProposalStatusEnum = iota
 	StatusUpcoming
 	StatusActive
 	StatusPassed
@@ -18,8 +18,8 @@ const (
 	StatusCanceled
 )
 
-// String returns the string representation of ProposalStatus
-func (s ProposalStatus) String() string {
+// String returns the string representation of ProposalStatusEnum
+func (s ProposalStatusEnum) String() string {
 	switch s {
 	case StatusUpcoming:
 		return "upcoming"
@@ -41,7 +41,7 @@ func (s ProposalStatus) String() string {
 }
 
 // IsTerminated returns true if the proposal is in a terminated state
-func (s ProposalStatus) IsTerminated() bool {
+func (s ProposalStatusEnum) IsTerminated() bool {
 	switch s {
 	case StatusExecuted, StatusRejected, StatusCanceled, StatusExpired:
 		return true
@@ -51,8 +51,8 @@ func (s ProposalStatus) IsTerminated() bool {
 }
 
 // CanTransitionTo checks if transition to target status is allowed
-func (s ProposalStatus) CanTransitionTo(target ProposalStatus) bool {
-	validTransitions := map[ProposalStatus][]ProposalStatus{
+func (s ProposalStatusEnum) CanTransitionTo(target ProposalStatusEnum) bool {
+	validTransitions := map[ProposalStatusEnum][]ProposalStatusEnum{
 		StatusUpcoming: {StatusActive, StatusCanceled},
 		StatusActive:   {StatusPassed, StatusRejected, StatusCanceled},
 		StatusPassed:   {StatusExecuted, StatusExpired, StatusCanceled},
@@ -92,8 +92,8 @@ type proposalStateUpdater struct {
 // StateTransition represents a single state transition with its conditions and actions
 type StateTransition struct {
 	name      string
-	from      ProposalStatus
-	to        ProposalStatus
+	from      ProposalStatusEnum
+	to        ProposalStatusEnum
 	condition func() bool
 	action    func()
 }
@@ -108,7 +108,7 @@ func newProposalStateUpdater(proposal *ProposalInfo, now uint64) *proposalStateU
 }
 
 // getCurrentStatus returns the current status based on the proposal state
-func (u *proposalStateUpdater) getCurrentStatus() ProposalStatus {
+func (u *proposalStateUpdater) getCurrentStatus() ProposalStatusEnum {
 	state := u.proposal.State
 	actionState := u.proposal.ActionState
 
@@ -316,7 +316,7 @@ func isProposalTerminated(proposal ProposalInfo) bool {
 	if proposal.ActionState.IsActionTaken() {
 		return true
 	}
-	// Then check ProposalStatus
+	// Then check ProposalStatusEnum
 	updater := &proposalStateUpdater{proposal: &proposal}
 	return updater.getCurrentStatus().IsTerminated()
 }

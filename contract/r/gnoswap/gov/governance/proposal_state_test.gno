@@ -42,7 +42,7 @@ func createTestConfig() Config {
 
 func TestProposalStatus_String(t *testing.T) {
 	tests := []struct {
-		status   ProposalStatus
+		status   ProposalStatusEnum
 		expected string
 	}{
 		{StatusUpcoming, "upcoming"},
@@ -52,13 +52,13 @@ func TestProposalStatus_String(t *testing.T) {
 		{StatusExecuted, "executed"},
 		{StatusExpired, "expired"},
 		{StatusCanceled, "canceled"},
-		{ProposalStatus(99), "unknown"},
+		{ProposalStatusEnum(99), "unknown"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.expected, func(t *testing.T) {
 			if got := tt.status.String(); got != tt.expected {
-				t.Errorf("ProposalStatus.String() = %v, want %v", got, tt.expected)
+				t.Errorf("ProposalStatusEnum.String() = %v, want %v", got, tt.expected)
 			}
 		})
 	}
@@ -66,7 +66,7 @@ func TestProposalStatus_String(t *testing.T) {
 
 func TestProposalStatus_IsTerminated(t *testing.T) {
 	tests := []struct {
-		status     ProposalStatus
+		status     ProposalStatusEnum
 		terminated bool
 	}{
 		{StatusUpcoming, false},
@@ -81,7 +81,7 @@ func TestProposalStatus_IsTerminated(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.status.String(), func(t *testing.T) {
 			if got := tt.status.IsTerminated(); got != tt.terminated {
-				t.Errorf("ProposalStatus.IsTerminated() = %v, want %v", got, tt.terminated)
+				t.Errorf("ProposalStatusEnum.IsTerminated() = %v, want %v", got, tt.terminated)
 			}
 		})
 	}
@@ -89,8 +89,8 @@ func TestProposalStatus_IsTerminated(t *testing.T) {
 
 func TestProposalStatus_CanTransitionTo(t *testing.T) {
 	tests := []struct {
-		from     ProposalStatus
-		to       ProposalStatus
+		from     ProposalStatusEnum
+		to       ProposalStatusEnum
 		expected bool
 	}{
 		// Valid transitions
@@ -118,14 +118,14 @@ func TestProposalStatus_CanTransitionTo(t *testing.T) {
 		{StatusCanceled, StatusActive, false},
 
 		// Invalid status values
-		{ProposalStatus(99), StatusActive, false},
-		{StatusActive, ProposalStatus(99), false},
+		{ProposalStatusEnum(99), StatusActive, false},
+		{StatusActive, ProposalStatusEnum(99), false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.from.String()+"_to_"+tt.to.String(), func(t *testing.T) {
 			if got := tt.from.CanTransitionTo(tt.to); got != tt.expected {
-				t.Errorf("ProposalStatus.CanTransitionTo() = %v, want %v", got, tt.expected)
+				t.Errorf("ProposalStatusEnum.CanTransitionTo() = %v, want %v", got, tt.expected)
 			}
 		})
 	}
@@ -136,7 +136,7 @@ func TestProposalStateUpdater_GetCurrentStatus(t *testing.T) {
 	tests := []struct {
 		name     string
 		setup    func() *ProposalInfo
-		expected ProposalStatus
+		expected ProposalStatusEnum
 	}{
 		{
 			name: "upcoming_proposal",
@@ -277,7 +277,7 @@ func TestProposalStateUpdater_StateTransitions(t *testing.T) {
 		name           string
 		now            uint64
 		initialState   func() *ProposalInfo
-		expectedStatus ProposalStatus
+		expectedStatus ProposalStatusEnum
 		expectChange   bool
 	}{
 		{
