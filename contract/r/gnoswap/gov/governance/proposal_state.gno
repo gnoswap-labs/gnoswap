@@ -302,5 +302,3 @@ func isProposalTerminated(proposal ProposalInfo) bool {
 	updater := &proposalStateUpdater{proposal: &proposal}
 	return updater.getCurrentStatus().IsTerminated()
 }
-
-// updateProposalsState removed - replaced by UpdateProposalStateTransition2 in state_transition.gno
