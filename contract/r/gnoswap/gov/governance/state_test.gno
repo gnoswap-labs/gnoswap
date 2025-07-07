@@ -163,7 +163,8 @@ func TestWithVote(t *testing.T) {
 	uassert.Equal(t, noVotes, uint64(0), "no votes should be 0")
 
 	// Verify proposal updated
-	proposal, _ := newState.GetProposal(proposalId)
+	proposal, exists := newState.GetProposal(proposalId)
+	uassert.True(t, exists, "proposal should exist")
 	uassert.Equal(t, proposal.Yea.Uint64(), voteWeight, "proposal yes votes should be updated")
 	uassert.Equal(t, proposal.Nay.Uint64(), uint64(0), "proposal no votes should be 0")
 
@@ -362,7 +363,8 @@ func TestStateImmutability(t *testing.T) {
 	vote, exists := state3.GetVote(1, std.Address("g1v1"))
 	uassert.True(t, exists && vote == true, "state3 has vote")
 
-	proposal, _ := state4.GetProposal(1)
+	proposal, exists := state4.GetProposal(1)
+	uassert.True(t, exists, "state4 has proposal")
 	uassert.True(t, proposal.State.Active, "state4 has active proposal")
 
 	_, exists = state5.GetProposal(1)

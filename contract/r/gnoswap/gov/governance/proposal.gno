@@ -28,25 +28,28 @@ func ProposeText(
 	cur realm,
 	title string,
 	description string,
-) uint64 { // proposalId
+) (newProposalId uint64) {
 	if err := halt.IsHalted(); err != nil {
 		panic(err)
 	}
-	proposer := std.PreviousRealm().Address()
 
 	en.MintAndDistributeGns(cross)
 
 	// Use state transition to create proposal
+	proposer := std.PreviousRealm().Address()
 	transition := CreateProposalTransition(proposer, Text, title, description)
 	if err := applyTransition(transition); err != nil {
 		panic(err)
 	}
 
 	// Get the new proposal ID from the updated state
-	newProposalId := governanceState.GetProposalCounter()
+	newProposalId = governanceState.GetProposalCounter()
 
 	// Get the created proposal for event data
-	proposal, _ := governanceState.GetProposal(newProposalId)
+	proposal, exists := governanceState.GetProposal(newProposalId)
+	if !exists {
+		panic(ufmt.Sprintf("proposal(%d) not found", newProposalId))
+	}
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -75,7 +78,7 @@ func ProposeCommunityPoolSpend(
 	to std.Address,
 	tokenPath string,
 	amount uint64,
-) uint64 { // proposalId
+) (newProposalId uint64) {
 	// Skip halt check if current level is MainnetSafeMode
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
@@ -88,8 +91,6 @@ func ProposeCommunityPoolSpend(
 			panic("gov/governance contract operations are currently disabled")
 		}
 	}
-
-	proposer := std.PreviousRealm().Address()
 
 	// validate input
 	if !to.IsValid() {
@@ -109,16 +110,20 @@ func ProposeCommunityPoolSpend(
 	en.MintAndDistributeGns(cross)
 
 	// Create base proposal
+	proposer := std.PreviousRealm().Address()
 	transition := CreateProposalTransition(proposer, CommunityPoolSpend, title, description)
 	if err := applyTransition(transition); err != nil {
 		panic(err)
 	}
 
 	// Get the new proposal ID from the updated state
-	newProposalId := governanceState.GetProposalCounter()
+	newProposalId = governanceState.GetProposalCounter()
 
 	// Get the created proposal and update it with CommunityPoolSpend specific fields
-	proposal, _ := governanceState.GetProposal(newProposalId)
+	proposal, exists := governanceState.GetProposal(newProposalId)
+	if !exists {
+		panic(ufmt.Sprintf("proposal(%d) not found", newProposalId))
+	}
 
 	executeMessage := makeExecuteMessage(
 		consts.COMMUNITY_POOL_PATH,
@@ -140,8 +145,6 @@ func ProposeCommunityPoolSpend(
 	governanceState = governanceState.WithUpdatedProposal(newProposalId, func(p ProposalInfo) ProposalInfo {
 		return proposal
 	})
-
-	// Proposal already stored in state
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -177,7 +180,7 @@ func ProposeParameterChange(
 	description string,
 	numToExecute uint64,
 	executions string,
-) uint64 { // proposalId
+) (newProposalId uint64) {
 	if err := halt.IsHalted(); err != nil {
 		panic(err)
 	}
@@ -211,8 +214,11 @@ func ProposeParameterChange(
 		panic(err)
 	}
 
-	newProposalId := governanceState.GetProposalCounter()
-	proposal, _ := governanceState.GetProposal(newProposalId)
+	newProposalId = governanceState.GetProposalCounter()
+	proposal, exists := governanceState.GetProposal(newProposalId)
+	if !exists {
+		panic(ufmt.Sprintf("proposal(%d) not found", newProposalId))
+	}
 
 	// Set execution info for parameter change
 	proposal.Execution = ExecutionInfo{
@@ -224,8 +230,6 @@ func ProposeParameterChange(
 	governanceState = governanceState.WithUpdatedProposal(newProposalId, func(p ProposalInfo) ProposalInfo {
 		return proposal
 	})
-
-	// Proposal already stored in state
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(

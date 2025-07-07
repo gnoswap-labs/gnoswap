@@ -155,7 +155,10 @@ func handleRoleChangeProposal(
 
 	// Get the new proposal ID from the updated state
 	newProposalId := governanceState.GetProposalCounter()
-	proposal, _ := governanceState.GetProposal(newProposalId)
+	proposal, exists := governanceState.GetProposal(newProposalId)
+	if !exists {
+		panic(ufmt.Sprintf("proposal(%d) not found", newProposalId))
+	}
 
 	// Set role change info
 	proposal.RoleChange = RoleChangeInfo{

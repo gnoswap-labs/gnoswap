@@ -297,7 +297,11 @@ func CreateAndValidateProposal(proposer std.Address, proposalType ProposalType, 
 				return errors.New("proposal creation failed")
 			}
 
-			proposal, _ := s.GetProposal(proposalId)
+			proposal, exists := s.GetProposal(proposalId)
+			if !exists {
+				return errors.New("proposal not found")
+			}
+
 			if proposal.Title != title {
 				return errors.New("proposal title mismatch")
 			}
