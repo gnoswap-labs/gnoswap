@@ -9,6 +9,7 @@ import (
 func createTestProposal(t *testing.T, createdAt uint64) *ProposalInfo {
 	t.Helper()
 	testConfig := createTestConfig()
+	schedule := createProposalSchedule(testConfig, createdAt)
 	return &ProposalInfo{
 		// Do not use ProposalType::Text when testing expiration
 		// because it will not be expired
@@ -26,7 +27,11 @@ func createTestProposal(t *testing.T, createdAt uint64) *ProposalInfo {
 			Expired:   false,
 			Canceled:  false,
 		},
-		Schedule:      createProposalSchedule(testConfig, createdAt),
+		Schedule:      schedule,
+		Status: ProposalStatus{
+			Schedule:    schedule,
+			ActionState: ActionState{},
+		},
 		ConfigVersion: 1,
 	}
 }
@@ -177,6 +182,9 @@ func TestProposalStateUpdater_GetCurrentStatus(t *testing.T) {
 				// Set ActionState for proper execution status
 				p.ActionState.Executed = true
 				p.ActionState.ExecutedAt = 1500
+				// Also set Status.ActionState
+				p.Status.ActionState.Executed = true
+				p.Status.ActionState.ExecutedAt = 1500
 				return p
 			},
 			expected: StatusExecuted,

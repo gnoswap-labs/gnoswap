@@ -242,11 +242,11 @@ func buildProposalStateFromStatus(proposal ProposalInfo) ProposalState {
 	// Get current status dynamically
 	updater := newProposalStateUpdater(&proposal, uint64(time.Now().Unix()))
 	status := updater.getCurrentStatus()
-	
+
 	state := ProposalState{
 		CreatedAt: proposal.Status.Schedule.CreateTime,
 	}
-	
+
 	// Update state fields based on current status
 	switch status {
 	case StatusUpcoming:
@@ -283,7 +283,7 @@ func buildProposalStateFromStatus(proposal ProposalInfo) ProposalState {
 		state.CanceledAt = proposal.Status.ActionState.CanceledAt
 		state.Created = true
 	}
-	
+
 	return state
 }
 
