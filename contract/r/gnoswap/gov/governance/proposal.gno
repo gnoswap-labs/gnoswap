@@ -4,7 +4,6 @@ import (
 	"std"
 	"strings"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
 
@@ -13,13 +12,7 @@ import (
 	"gno.land/r/gnoswap/v1/halt"
 )
 
-// TODO: remove this variables
-var (
-	proposalId               uint64
-	proposals                = avl.NewTree() // Only stores active proposals
-	archivedProposals        = avl.NewTree() // Stores terminated proposals
-	proposalIdListByProposer = avl.NewTree() // proposer -> proposalId
-)
+// Backward compatibility variables removed - all proposal data now managed in GovernanceState
 
 // Governance can execute multiple messages in a single proposal
 // To separate the messages, we use this separator
@@ -29,9 +22,7 @@ const (
 	ROLE_PREFIX = "ROLE_CHANGE:"
 )
 
-func init() {
-	proposalId = 0 // initialize proposalId
-}
+// init function removed - initialization now handled in globals.gno
 
 // ProposeText creates a new text proposal with the given data
 // It checks if the proposer is eligible to create a proposal and if they don't have an active proposal.
@@ -48,7 +39,6 @@ func ProposeText(
 	proposer := std.PreviousRealm().Address()
 
 	en.MintAndDistributeGns(cross)
-	updateProposalsState()
 
 	// Use state transition to create proposal
 	transition := CreateProposalTransition(proposer, Text, title, description)
@@ -59,12 +49,8 @@ func ProposeText(
 	// Get the new proposal ID from the updated state
 	newProposalId := governanceState.GetProposalCounter()
 
-	// Update backward compatibility variables
-	// TODO: remove this
-	proposalId = newProposalId
+	// Get the created proposal for event data
 	proposal, _ := governanceState.GetProposal(newProposalId)
-	proposals.Set(formatUint(newProposalId), proposal)
-	proposalIdListByProposer.Set(proposer.String(), newProposalId)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -125,7 +111,6 @@ func ProposeCommunityPoolSpend(
 	}
 
 	en.MintAndDistributeGns(cross)
-	updateProposalsState()
 
 	// Create base proposal
 	transition := CreateProposalTransition(proposer, CommunityPoolSpend, title, description)
@@ -160,10 +145,7 @@ func ProposeCommunityPoolSpend(
 		return proposal
 	})
 
-	// Update backward compatibility variables
-	proposalId = newProposalId
-	proposals.Set(formatUint(newProposalId), proposal)
-	proposalIdListByProposer.Set(proposer.String(), newProposalId)
+	// Proposal already stored in state
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -227,7 +209,6 @@ func ProposeParameterChange(
 	}
 
 	en.MintAndDistributeGns(cross)
-	updateProposalsState()
 
 	transition := CreateProposalTransition(proposer, ParameterChange, title, description)
 	if err := applyTransition(transition); err != nil {
@@ -248,10 +229,7 @@ func ProposeParameterChange(
 		return proposal
 	})
 
-	// Update backward compatibility variables
-	proposalId = newProposalId
-	proposals.Set(formatUint(newProposalId), proposal)
-	proposalIdListByProposer.Set(proposer.String(), newProposalId)
+	// Proposal already stored in state
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(

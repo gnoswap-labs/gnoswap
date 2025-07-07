@@ -3,7 +3,7 @@ package governance
 import (
 	"errors"
 	"std"
-	"strconv"
+
 	"strings"
 	"time"
 
@@ -142,8 +142,6 @@ func executeProposal(cur realm, ctx *ExecutionContext, registry *ParameterRegist
 		if err := executeParameterChange(cur, ctx.Proposal.Execution.Msgs, registry); err != nil {
 			return err
 		}
-		// Update proposal state on success
-		updateProposalState(ctx)
 		return nil
 	case RoleChange:
 		return dispatchRoleChange(cur, ctx.Proposal)
@@ -270,18 +268,16 @@ func validateInitialState(cur realm) {
 	}
 
 	en.MintAndDistributeGns(cross)
-	updateProposalsState()
+
+	// Update proposal states before execution
+	transition := UpdateProposalStateTransition2()
+	if err := applyTransition(transition); err != nil {
+		panic(err)
+	}
 }
 
 func getProposal(proposalId uint64) (*ProposalInfo, error) {
-	result, exists := proposals.Get(strconv.Itoa(int(proposalId)))
-	if !exists {
-		return nil, ufmt.Errorf("proposal %d not found", proposalId)
-	}
-	proposal, ok := result.(ProposalInfo)
-	if !ok {
-		return nil, ufmt.Errorf("failed to cast proposal %d to ProposalInfo", proposalId)
-	}
+	proposal, exists := governanceState.GetProposal(proposalId)
 	if !exists {
 		return nil, ufmt.Errorf("proposal %d not found", proposalId)
 	}
@@ -379,11 +375,11 @@ func validateVotes(pp *ProposalInfo) error {
 }
 
 func updateProposalState(ctx *ExecutionContext) {
-	ctx.Proposal.State.Executed = true
-	ctx.Proposal.State.ExecutedAt = ctx.Now
-	ctx.Proposal.State.Upcoming = false
-	ctx.Proposal.State.Active = false
-	proposals.Set(strconv.FormatUint(ctx.ProposalId, 10), *ctx.Proposal)
+	// Use state transition to mark proposal as executed
+	transition := ExecuteProposalTransition(ctx.ProposalId)
+	if err := applyTransition(transition); err != nil {
+		panic(err)
+	}
 }
 
 func validateCommunityPoolToken(pp *ProposalInfo) error {

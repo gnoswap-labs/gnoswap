@@ -3,7 +3,6 @@ package governance
 import (
 	"std"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
 	en "gno.land/r/gnoswap/v1/emission"
@@ -17,12 +16,7 @@ type voteWithWeight struct {
 	VotedAt     uint64
 }
 
-var (
-	votes         = avl.NewTree()           // voteKey(proposalId:user) -> yes/no
-	userVotes     = avl.NewTree()           // user -> proposalId -> voteWithWeight
-	accumYesVotes = make(map[uint64]uint64) // proposalId -> yes
-	accumNoVotes  = make(map[uint64]uint64) // proposalId -> no
-)
+// Backward compatibility variables removed - all vote data now managed in GovernanceState
 
 // Vote allows a user to vote on a given proposal.
 // The user's voting weight is determined by their accumulated delegated stake until proposal creation time.
@@ -42,20 +36,9 @@ func Vote(cur realm, pid uint64, yes bool) string {
 		panic(err)
 	}
 
-	// Get updated proposal and vote info for backward compatibility
-	proposal, _ := governanceState.GetProposal(pid)
+	// Get updated vote info from state
 	voteInfo, _ := governanceState.GetUserVote(voter, pid)
-
-	// Update backward compatibility variables
 	voteKey := createVoteKey(pid, voter.String())
-	setVote(pid, voter.String(), yes)
-	setUserVote(voter, pid, voteWithWeight{
-		Yes:         yes,
-		Weight:      voteInfo.Weight,
-		VotedHeight: voteInfo.VotedHeight,
-		VotedAt:     voteInfo.VotedAt,
-	})
-	proposals.Set(formatUint(pid), proposal)
 
 	// Get accumulated votes from state
 	yesVotes, noVotes := governanceState.GetAccumulatedVotes(pid)
@@ -98,13 +81,7 @@ func Cancel(cur realm, proposalId uint64) {
 		panic(err)
 	}
 
-	// Update backward compatibility variables
-	proposal, exists := governanceState.GetArchivedProposal(proposalId)
-	if exists {
-		proposals.Remove(formatUint(proposalId))
-		archivedProposals.Set(formatUint(proposalId), proposal)
-		proposalIdListByProposer.Remove(proposal.Proposer.String())
-	}
+	// Proposal is now archived in state
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -125,16 +102,7 @@ func createVoteKey(pid uint64, voter string) string {
 // - vote: the vote for the given proposal ID and voter address
 // - exists: a boolean indicating if user has voted on the proposal
 func getVote(pid uint64, voter string) (bool, bool) {
-	value, exists := votes.Get(createVoteKey(pid, voter))
-	if !exists {
-		return false, false
-	}
-	return value.(bool), true
-}
-
-func setVote(pid uint64, voter string, vote bool) {
-	voteKey := createVoteKey(pid, voter)
-	votes.Set(voteKey, vote)
+	return governanceState.GetVote(pid, std.Address(voter))
 }
 
 // createUserVoteKey creates a user vote key for a given voter address and proposal ID
@@ -143,18 +111,5 @@ func createUserVoteKey(voter std.Address, pid uint64) string {
 }
 
 func getUserVote(voter std.Address, pid uint64) (voteWithWeight, bool) {
-	value, exists := userVotes.Get(createUserVoteKey(voter, pid))
-	if !exists {
-		return voteWithWeight{}, false
-	}
-	return value.(voteWithWeight), true
-}
-
-func setUserVote(voter std.Address, pid uint64, vote voteWithWeight) {
-	if vote.Yes {
-		accumYesVotes[pid] += vote.Weight
-	} else {
-		accumNoVotes[pid] += vote.Weight
-	}
-	userVotes.Set(createUserVoteKey(voter, pid), vote)
+	return governanceState.GetUserVote(voter, pid)
 }

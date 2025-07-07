@@ -3,8 +3,6 @@ package governance
 // TODO: remove
 
 import (
-	"time"
-
 	"gno.land/p/demo/ufmt"
 )
 
@@ -307,35 +305,4 @@ func isProposalTerminated(proposal ProposalInfo) bool {
 	return updater.getCurrentStatus().IsTerminated()
 }
 
-// updateProposalsState updates the state of all proposals based on current time.
-func updateProposalsState() {
-	now := uint64(time.Now().Unix())
-	var keysToArchive []string
-
-	proposals.Iterate("", "", func(key string, value any) bool {
-		proposal := value.(ProposalInfo)
-
-		// Update proposal state using the new structure
-		updater := newProposalStateUpdater(&proposal, now)
-		if updater.shouldUpdate() {
-			updater.update()
-		}
-
-		// Collect keys to archive
-		if isProposalTerminated(*updater.proposal) {
-			keysToArchive = append(keysToArchive, key)
-			archivedProposals.Set(key, *updater.proposal)
-		} else {
-			proposals.Set(key, *updater.proposal)
-		}
-		return false
-	})
-
-	// Process archived proposals outside the iterator
-	for _, key := range keysToArchive {
-		proposals.Remove(key)
-		archivedVal, _ := archivedProposals.Get(key)
-		proposer := archivedVal.(ProposalInfo).Proposer.String()
-		proposalIdListByProposer.Remove(proposer)
-	}
-}
+// updateProposalsState removed - replaced by UpdateProposalStateTransition2 in state_transition.gno

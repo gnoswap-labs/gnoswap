@@ -173,10 +173,7 @@ func handleRoleChangeProposal(
 		return proposal
 	})
 
-	// Update backward compatibility variables
-	proposalId = newProposalId
-	proposals.Set(formatUint(newProposalId), proposal)
-	proposalIdListByProposer.Set(proposer.String(), newProposalId)
+	// Proposal already stored in state
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
