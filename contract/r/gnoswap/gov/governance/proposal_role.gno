@@ -193,7 +193,7 @@ func handleRoleChangeProposal(
 		"quorumAmount", formatUint(proposal.QuorumAmount),
 		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
 		"configVersion", formatUint(proposal.ConfigVersion),
-		"createdAt", formatUint(proposal.Status.Schedule.CreateTime),
+		"createdAt", formatUint(proposal.State.CreatedAt),
 	)
 
 	return newProposalId

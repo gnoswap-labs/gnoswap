@@ -62,7 +62,7 @@ func ProposeText(
 		"quorumAmount", formatUint(proposal.QuorumAmount),
 		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
 		"configVersion", formatUint(proposal.ConfigVersion),
-		"createdAt", formatUint(proposal.Status.Schedule.CreateTime),
+		"createdAt", formatUint(proposal.State.CreatedAt),
 	)
 	return newProposalId
 }
@@ -160,7 +160,7 @@ func ProposeCommunityPoolSpend(
 		"quorumAmount", formatUint(proposal.QuorumAmount),
 		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
 		"configVersion", formatUint(proposal.ConfigVersion),
-		"createdAt", formatUint(proposal.Status.Schedule.CreateTime),
+		"createdAt", formatUint(proposal.State.CreatedAt),
 	)
 
 	return newProposalId
@@ -244,7 +244,7 @@ func ProposeParameterChange(
 		"quorumAmount", formatUint(proposal.QuorumAmount),
 		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
 		"configVersion", formatUint(proposal.ConfigVersion),
-		"createdAt", formatUint(proposal.Status.Schedule.CreateTime),
+		"createdAt", formatUint(proposal.State.CreatedAt),
 	)
 
 	return newProposalId

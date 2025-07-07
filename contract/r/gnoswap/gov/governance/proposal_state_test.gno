@@ -16,10 +16,17 @@ func createTestProposal(t *testing.T, createdAt uint64) *ProposalInfo {
 		QuorumAmount: 100,
 		Yea:          u256.NewUint(0),
 		Nay:          u256.NewUint(0),
-		Status: ProposalStatus{
-			Schedule:    createProposalSchedule(testConfig, createdAt),
-			ActionState: ActionState{},
+		State: ProposalState{
+			CreatedAt: createdAt,
+			Upcoming:  true,
+			Active:    false,
+			Passed:    false,
+			Rejected:  false,
+			Executed:  false,
+			Expired:   false,
+			Canceled:  false,
 		},
+		Schedule:      createProposalSchedule(testConfig, createdAt),
 		ConfigVersion: 1,
 	}
 }
@@ -33,9 +40,9 @@ func createTestConfig() Config {
 	}
 }
 
-func TestProposalStatusEnum_String(t *testing.T) {
+func TestProposalStatus_String(t *testing.T) {
 	tests := []struct {
-		status   ProposalStatusEnum
+		status   ProposalStatus
 		expected string
 	}{
 		{StatusUpcoming, "upcoming"},
@@ -45,21 +52,21 @@ func TestProposalStatusEnum_String(t *testing.T) {
 		{StatusExecuted, "executed"},
 		{StatusExpired, "expired"},
 		{StatusCanceled, "canceled"},
-		{ProposalStatusEnum(99), "unknown"},
+		{ProposalStatus(99), "unknown"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.expected, func(t *testing.T) {
 			if got := tt.status.String(); got != tt.expected {
-				t.Errorf("ProposalStatusEnum.String() = %v, want %v", got, tt.expected)
+				t.Errorf("ProposalStatus.String() = %v, want %v", got, tt.expected)
 			}
 		})
 	}
 }
 
-func TestProposalStatusEnum_IsTerminated(t *testing.T) {
+func TestProposalStatus_IsTerminated(t *testing.T) {
 	tests := []struct {
-		status     ProposalStatusEnum
+		status     ProposalStatus
 		terminated bool
 	}{
 		{StatusUpcoming, false},
@@ -74,16 +81,16 @@ func TestProposalStatusEnum_IsTerminated(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.status.String(), func(t *testing.T) {
 			if got := tt.status.IsTerminated(); got != tt.terminated {
-				t.Errorf("ProposalStatusEnum.IsTerminated() = %v, want %v", got, tt.terminated)
+				t.Errorf("ProposalStatus.IsTerminated() = %v, want %v", got, tt.terminated)
 			}
 		})
 	}
 }
 
-func TestProposalStatusEnum_CanTransitionTo(t *testing.T) {
+func TestProposalStatus_CanTransitionTo(t *testing.T) {
 	tests := []struct {
-		from     ProposalStatusEnum
-		to       ProposalStatusEnum
+		from     ProposalStatus
+		to       ProposalStatus
 		expected bool
 	}{
 		// Valid transitions
@@ -111,14 +118,14 @@ func TestProposalStatusEnum_CanTransitionTo(t *testing.T) {
 		{StatusCanceled, StatusActive, false},
 
 		// Invalid status values
-		{ProposalStatusEnum(99), StatusActive, false},
-		{StatusActive, ProposalStatusEnum(99), false},
+		{ProposalStatus(99), StatusActive, false},
+		{StatusActive, ProposalStatus(99), false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.from.String()+"_to_"+tt.to.String(), func(t *testing.T) {
 			if got := tt.from.CanTransitionTo(tt.to); got != tt.expected {
-				t.Errorf("ProposalStatusEnum.CanTransitionTo() = %v, want %v", got, tt.expected)
+				t.Errorf("ProposalStatus.CanTransitionTo() = %v, want %v", got, tt.expected)
 			}
 		})
 	}
@@ -129,7 +136,7 @@ func TestProposalStateUpdater_GetCurrentStatus(t *testing.T) {
 	tests := []struct {
 		name     string
 		setup    func() *ProposalInfo
-		expected ProposalStatusEnum
+		expected ProposalStatus
 	}{
 		{
 			name: "upcoming_proposal",
@@ -141,9 +148,9 @@ func TestProposalStateUpdater_GetCurrentStatus(t *testing.T) {
 		{
 			name: "active_proposal",
 			setup: func() *ProposalInfo {
-				// Create proposal that should be in active voting period
-				// Created at 1000, voting starts at 1100, voting ends at 2100
 				p := createTestProposal(t, 1000)
+				p.State.Upcoming = false
+				p.State.Active = true
 				return p
 			},
 			expected: StatusActive,
@@ -151,10 +158,10 @@ func TestProposalStateUpdater_GetCurrentStatus(t *testing.T) {
 		{
 			name: "passed_proposal",
 			setup: func() *ProposalInfo {
-				// Create proposal with enough votes to pass
 				p := createTestProposal(t, 1000)
-				p.Yea = u256.NewUint(150) // Above quorum (100)
-				p.Nay = u256.NewUint(50)
+				p.State.Upcoming = false
+				p.State.Active = false
+				p.State.Passed = true
 				return p
 			},
 			expected: StatusPassed,
@@ -163,9 +170,13 @@ func TestProposalStateUpdater_GetCurrentStatus(t *testing.T) {
 			name: "executed_proposal",
 			setup: func() *ProposalInfo {
 				p := createTestProposal(t, 1000)
+				p.State.Upcoming = false
+				p.State.Active = false
+				p.State.Passed = true
+				p.State.Executed = true
 				// Set ActionState for proper execution status
-				p.Status.ActionState.Executed = true
-				p.Status.ActionState.ExecutedAt = 1500
+				p.ActionState.Executed = true
+				p.ActionState.ExecutedAt = 1500
 				return p
 			},
 			expected: StatusExecuted,
@@ -266,7 +277,7 @@ func TestProposalStateUpdater_StateTransitions(t *testing.T) {
 		name           string
 		now            uint64
 		initialState   func() *ProposalInfo
-		expectedStatus ProposalStatusEnum
+		expectedStatus ProposalStatus
 		expectChange   bool
 	}{
 		{
@@ -283,6 +294,8 @@ func TestProposalStateUpdater_StateTransitions(t *testing.T) {
 			now:  2200, // after voting (2100 < 2200 < 2300)
 			initialState: func() *ProposalInfo {
 				p := createTestProposal(t, createdAt)
+				p.State.Upcoming = false
+				p.State.Active = true
 				p.Yea = u256.NewUint(150) // Above quorum (100) and more than nay
 				p.Nay = u256.NewUint(50)
 				return p
@@ -295,6 +308,8 @@ func TestProposalStateUpdater_StateTransitions(t *testing.T) {
 			now:  2200, // after voting
 			initialState: func() *ProposalInfo {
 				p := createTestProposal(t, createdAt)
+				p.State.Upcoming = false
+				p.State.Active = true
 				p.Yea = u256.NewUint(50) // Below quorum
 				p.Nay = u256.NewUint(30)
 				return p
@@ -307,8 +322,10 @@ func TestProposalStateUpdater_StateTransitions(t *testing.T) {
 			now:  3000, // after execution (2800 < 3000)
 			initialState: func() *ProposalInfo {
 				p := createTestProposal(t, createdAt)
-				p.Yea = u256.NewUint(150) // Above quorum to ensure passed status
-				p.Nay = u256.NewUint(50)
+				p.State.Upcoming = false
+				p.State.Active = false
+				p.State.Passed = true
+				p.State.PassedAt = 2200
 				return p
 			},
 			expectedStatus: StatusExpired,
@@ -392,8 +409,9 @@ func TestProposalStateUpdater_ShouldUpdate(t *testing.T) {
 		{
 			name: "active_should_update",
 			setup: func() *ProposalInfo {
-				// Proposal in active voting period should update
 				p := createTestProposal(t, 1000)
+				p.State.Upcoming = false
+				p.State.Active = true
 				return p
 			},
 			expected: true,
@@ -401,10 +419,10 @@ func TestProposalStateUpdater_ShouldUpdate(t *testing.T) {
 		{
 			name: "passed_should_update",
 			setup: func() *ProposalInfo {
-				// Passed proposal should still update (can expire or be executed)
 				p := createTestProposal(t, 1000)
-				p.Yea = u256.NewUint(150) // Above quorum
-				p.Nay = u256.NewUint(50)
+				p.State.Upcoming = false
+				p.State.Active = false
+				p.State.Passed = true
 				return p
 			},
 			expected: true,
@@ -413,8 +431,12 @@ func TestProposalStateUpdater_ShouldUpdate(t *testing.T) {
 			name: "executed_should_not_update",
 			setup: func() *ProposalInfo {
 				p := createTestProposal(t, 1000)
+				p.State.Upcoming = false
+				p.State.Active = false
+				p.State.Passed = true
+				p.State.Executed = true
 				// Set ActionState for proper execution status
-				p.Status.ActionState.Executed = true
+				p.ActionState.Executed = true
 				return p
 			},
 			expected: false,
@@ -422,10 +444,10 @@ func TestProposalStateUpdater_ShouldUpdate(t *testing.T) {
 		{
 			name: "rejected_should_not_update",
 			setup: func() *ProposalInfo {
-				// Rejected proposal (low votes) should not update
 				p := createTestProposal(t, 1000)
-				p.Yea = u256.NewUint(30) // Below quorum
-				p.Nay = u256.NewUint(50)
+				p.State.Upcoming = false
+				p.State.Active = false
+				p.State.Rejected = true
 				return p
 			},
 			expected: false,

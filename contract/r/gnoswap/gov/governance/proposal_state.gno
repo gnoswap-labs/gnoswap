@@ -4,11 +4,11 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-// ProposalStatusEnum represents the current status of a proposal
-type ProposalStatusEnum int
+// ProposalStatus represents the current status of a proposal
+type ProposalStatus int
 
 const (
-	_ ProposalStatusEnum = iota
+	_ ProposalStatus = iota
 	StatusUpcoming
 	StatusActive
 	StatusPassed
@@ -18,8 +18,8 @@ const (
 	StatusCanceled
 )
 
-// String returns the string representation of ProposalStatusEnum
-func (s ProposalStatusEnum) String() string {
+// String returns the string representation of ProposalStatus
+func (s ProposalStatus) String() string {
 	switch s {
 	case StatusUpcoming:
 		return "upcoming"
@@ -41,7 +41,7 @@ func (s ProposalStatusEnum) String() string {
 }
 
 // IsTerminated returns true if the proposal is in a terminated state
-func (s ProposalStatusEnum) IsTerminated() bool {
+func (s ProposalStatus) IsTerminated() bool {
 	switch s {
 	case StatusExecuted, StatusRejected, StatusCanceled, StatusExpired:
 		return true
@@ -51,8 +51,8 @@ func (s ProposalStatusEnum) IsTerminated() bool {
 }
 
 // CanTransitionTo checks if transition to target status is allowed
-func (s ProposalStatusEnum) CanTransitionTo(target ProposalStatusEnum) bool {
-	validTransitions := map[ProposalStatusEnum][]ProposalStatusEnum{
+func (s ProposalStatus) CanTransitionTo(target ProposalStatus) bool {
+	validTransitions := map[ProposalStatus][]ProposalStatus{
 		StatusUpcoming: {StatusActive, StatusCanceled},
 		StatusActive:   {StatusPassed, StatusRejected, StatusCanceled},
 		StatusPassed:   {StatusExecuted, StatusExpired, StatusCanceled},
@@ -92,8 +92,8 @@ type proposalStateUpdater struct {
 // StateTransition represents a single state transition with its conditions and actions
 type StateTransition struct {
 	name      string
-	from      ProposalStatusEnum
-	to        ProposalStatusEnum
+	from      ProposalStatus
+	to        ProposalStatus
 	condition func() bool
 	action    func()
 }
@@ -108,8 +108,9 @@ func newProposalStateUpdater(proposal *ProposalInfo, now uint64) *proposalStateU
 }
 
 // getCurrentStatus returns the current status based on the proposal state
-func (u *proposalStateUpdater) getCurrentStatus() ProposalStatusEnum {
-	actionState := u.proposal.Status.ActionState
+func (u *proposalStateUpdater) getCurrentStatus() ProposalStatus {
+	state := u.proposal.State
+	actionState := u.proposal.ActionState
 
 	// Check action-based terminal states first (highest priority)
 	if actionState.IsExecuted() {
@@ -119,32 +120,22 @@ func (u *proposalStateUpdater) getCurrentStatus() ProposalStatusEnum {
 		return StatusCanceled
 	}
 
-	// Check time and vote based states
-	phase := u.getCurrentPhase()
-	
-	// Check if expired (only for non-text proposals after execution window)
-	if u.proposal.ProposalType != Text && phase == PhaseExecutionEnded {
+	// Then check time-based terminal states
+	if state.Expired {
 		return StatusExpired
 	}
-
-	// Check voting results
-	if phase >= PhaseVotingEnded {
-		yeaVotes := u.proposal.Yea.Uint64()
-		nayVotes := u.proposal.Nay.Uint64()
-		if u.isVotingPassed(yeaVotes, nayVotes) {
-			return StatusPassed
-		} else {
-			return StatusRejected
-		}
+	if state.Rejected {
+		return StatusRejected
 	}
 
-	// Check active voting
-	if phase == PhaseVoting {
+	// Check active states
+	if state.Passed {
+		return StatusPassed
+	}
+	if state.Active {
 		return StatusActive
 	}
-
-	// Before voting starts
-	if phase == PhaseCreated {
+	if state.Upcoming {
 		return StatusUpcoming
 	}
 
@@ -231,11 +222,26 @@ func (u *proposalStateUpdater) getStateTransitions() []StateTransition {
 
 // Time period calculations
 func (u *proposalStateUpdater) getVotingPeriod() (start, end uint64) {
-	return u.proposal.Status.Schedule.ActiveTime, u.proposal.Status.Schedule.VotingEndTime
+	// Use pre-calculated schedule if available
+	if u.proposal.Schedule.CreateTime != 0 {
+		return u.proposal.Schedule.ActiveTime, u.proposal.Schedule.VotingEndTime
+	}
+	// Fallback to calculation for backward compatibility
+	start = u.proposal.State.CreatedAt + u.config.VotingStartDelay
+	end = start + u.config.VotingPeriod
+	return
 }
 
 func (u *proposalStateUpdater) getExecutionPeriod() (start, end uint64) {
-	return u.proposal.Status.Schedule.ExecutableTime, u.proposal.Status.Schedule.ExpiredTime
+	// Use pre-calculated schedule if available
+	if u.proposal.Schedule.CreateTime != 0 {
+		return u.proposal.Schedule.ExecutableTime, u.proposal.Schedule.ExpiredTime
+	}
+	// Fallback to calculation for backward compatibility
+	_, votingEnd := u.getVotingPeriod()
+	start = votingEnd + u.config.ExecutionDelay
+	end = start + u.config.ExecutionWindow
+	return
 }
 
 // Phase-based condition checks (safer than boolean logic)
@@ -276,19 +282,27 @@ func (u *proposalStateUpdater) isExecutionExpired() bool {
 
 // State transition actions
 func (u *proposalStateUpdater) startVoting() {
-	// No action needed - status is computed dynamically
+	u.proposal.State.Upcoming = false
+	u.proposal.State.Active = true
 }
 
 func (u *proposalStateUpdater) markAsPassed() {
-	// No action needed - status is computed dynamically
+	u.proposal.State.Passed = true
+	u.proposal.State.PassedAt = u.now
+	u.proposal.State.Upcoming = false
+	u.proposal.State.Active = false
 }
 
 func (u *proposalStateUpdater) markAsRejected() {
-	// No action needed - status is computed dynamically
+	u.proposal.State.Rejected = true
+	u.proposal.State.RejectedAt = u.now
+	u.proposal.State.Upcoming = false
+	u.proposal.State.Active = false
 }
 
 func (u *proposalStateUpdater) markAsExpired() {
-	// No action needed - status is computed dynamically
+	u.proposal.State.Expired = true
+	u.proposal.State.ExpiredAt = u.now
 }
 
 // Helper methods
@@ -299,10 +313,10 @@ func (u *proposalStateUpdater) isVotingPassed(yeaVotes, nayVotes uint64) bool {
 // isProposalTerminated checks if a proposal is in a terminated state (legacy compatibility)
 func isProposalTerminated(proposal ProposalInfo) bool {
 	// Check ActionState first (takes priority)
-	if proposal.Status.ActionState.IsActionTaken() {
+	if proposal.ActionState.IsActionTaken() {
 		return true
 	}
-	// Then check ProposalStatusEnum
+	// Then check ProposalStatus
 	updater := &proposalStateUpdater{proposal: &proposal}
 	return updater.getCurrentStatus().IsTerminated()
 }

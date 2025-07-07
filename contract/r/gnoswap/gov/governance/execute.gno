@@ -285,16 +285,12 @@ func getProposal(proposalId uint64) (*ProposalInfo, error) {
 }
 
 func validateProposalState(proposal *ProposalInfo) ExecutionValidator {
-	// Get current status
-	updater := newProposalStateUpdater(proposal, uint64(time.Now().Unix()))
-	status := updater.getCurrentStatus()
-	
 	return ExecutionValidator{
 		isTextProposal:    proposal.ProposalType == Text,
-		isAlreadyExecuted: proposal.Status.ActionState.IsExecuted(),
-		isAlreadyCanceled: proposal.Status.ActionState.IsCanceled(),
-		isAlreadyRejected: status == StatusRejected,
-		hasPassed:         status == StatusPassed,
+		isAlreadyExecuted: proposal.State.Executed,
+		isAlreadyCanceled: proposal.State.Canceled,
+		isAlreadyRejected: proposal.State.Rejected,
+		hasPassed:         proposal.State.Passed,
 	}
 }
 
@@ -337,7 +333,9 @@ func createExecutionContext(proposalId uint64, proposal *ProposalInfo) (*Executi
 }
 
 func calculateVotingEnd(proposal *ProposalInfo, config *Config) uint64 {
-	return proposal.Status.Schedule.VotingEndTime
+	return proposal.State.CreatedAt +
+		config.VotingStartDelay +
+		config.VotingPeriod
 }
 
 func calculateWindowStart(votingEnd uint64, config *Config) uint64 {

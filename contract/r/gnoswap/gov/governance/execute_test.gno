@@ -7,7 +7,6 @@ import (
 
 	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 func TestParameterRegistry_Register(t *testing.T) {
@@ -167,15 +166,12 @@ func TestValidateProposalState(t *testing.T) {
 			name: "validate proposal state is success by text proposal",
 			proposal: &ProposalInfo{
 				ProposalType: Text,
-				Status: ProposalStatus{
-					ActionState: ActionState{
-						Executed: false,
-						Canceled: false,
-					},
+				State: ProposalState{
+					Executed: false,
+					Canceled: false,
+					Rejected: false,
+					Passed:   true,
 				},
-				Yea: u256.NewUint(100),
-				Nay: u256.NewUint(50),
-				QuorumAmount: 50,
 			},
 			expected: ExecutionValidator{
 				isTextProposal:    true,
@@ -189,15 +185,12 @@ func TestValidateProposalState(t *testing.T) {
 			name: "validate proposal state is success by already executed",
 			proposal: &ProposalInfo{
 				ProposalType: ParameterChange,
-				Status: ProposalStatus{
-					ActionState: ActionState{
-						Executed: true,
-						Canceled: false,
-					},
+				State: ProposalState{
+					Executed: true,
+					Canceled: false,
+					Rejected: false,
+					Passed:   true,
 				},
-				Yea: u256.NewUint(100),
-				Nay: u256.NewUint(50),
-				QuorumAmount: 50,
 			},
 			expected: ExecutionValidator{
 				isTextProposal:    false,
@@ -211,15 +204,12 @@ func TestValidateProposalState(t *testing.T) {
 			name: "validate proposal state is success by canceled",
 			proposal: &ProposalInfo{
 				ProposalType: ParameterChange,
-				Status: ProposalStatus{
-					ActionState: ActionState{
-						Executed: false,
-						Canceled: true,
-					},
+				State: ProposalState{
+					Executed: false,
+					Canceled: true,
+					Rejected: false,
+					Passed:   false,
 				},
-				Yea: u256.NewUint(30),
-				Nay: u256.NewUint(50),
-				QuorumAmount: 50,
 			},
 			expected: ExecutionValidator{
 				isTextProposal:    false,
@@ -551,12 +541,9 @@ func TestRollbackSystem(t *testing.T) {
 			// create a test proposal
 			proposal := &ProposalInfo{
 				ProposalType: ParameterChange,
-				Status: ProposalStatus{
-					ActionState: ActionState{},
+				State: ProposalState{
+					Passed: true,
 				},
-				Yea: u256.NewUint(150), // Above quorum to ensure passed status
-				Nay: u256.NewUint(50),
-				QuorumAmount: 100,
 				Execution: ExecutionInfo{
 					Msgs: tt.msgs,
 				},
