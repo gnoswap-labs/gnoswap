@@ -16,8 +16,6 @@ type voteWithWeight struct {
 	VotedAt     uint64
 }
 
-// Backward compatibility variables removed - all vote data now managed in GovernanceState
-
 // Vote allows a user to vote on a given proposal.
 // The user's voting weight is determined by their accumulated delegated stake until proposal creation time.
 // ref: https://docs.gnoswap.io/contracts/governance/vote.gno#vote
