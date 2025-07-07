@@ -265,11 +265,11 @@ func (u *proposalStateUpdater) getStateTransitions() []StateTransition {
 
 // Time period calculations
 func (u *proposalStateUpdater) getVotingPeriod() (start, end uint64) {
-	// Priority 1: Use Status.Schedule if available
+	// Use Status.Schedule
 	if u.proposal.Status.Schedule.CreateTime != 0 {
 		return u.proposal.Status.Schedule.ActiveTime, u.proposal.Status.Schedule.VotingEndTime
 	}
-	// Priority 2: Use Schedule field if available
+	// Fallback to Schedule field for backward compatibility
 	if u.proposal.Schedule.CreateTime != 0 {
 		return u.proposal.Schedule.ActiveTime, u.proposal.Schedule.VotingEndTime
 	}
@@ -280,11 +280,11 @@ func (u *proposalStateUpdater) getVotingPeriod() (start, end uint64) {
 }
 
 func (u *proposalStateUpdater) getExecutionPeriod() (start, end uint64) {
-	// Priority 1: Use Status.Schedule if available
+	// Use Status.Schedule
 	if u.proposal.Status.Schedule.CreateTime != 0 {
 		return u.proposal.Status.Schedule.ExecutableTime, u.proposal.Status.Schedule.ExpiredTime
 	}
-	// Priority 2: Use Schedule field if available
+	// Fallback to Schedule field for backward compatibility
 	if u.proposal.Schedule.CreateTime != 0 {
 		return u.proposal.Schedule.ExecutableTime, u.proposal.Schedule.ExpiredTime
 	}

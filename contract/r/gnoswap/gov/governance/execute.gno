@@ -347,9 +347,7 @@ func createExecutionContext(proposalId uint64, proposal *ProposalInfo) (*Executi
 }
 
 func calculateVotingEnd(proposal *ProposalInfo, config *Config) uint64 {
-	return proposal.State.CreatedAt +
-		config.VotingStartDelay +
-		config.VotingPeriod
+	return proposal.Status.Schedule.VotingEndTime
 }
 
 func calculateWindowStart(votingEnd uint64, config *Config) uint64 {

@@ -227,13 +227,64 @@ func getProposalStatus(id uint64) string {
 		return ""
 	}
 
-	config := GetConfigVersion(proposal.ConfigVersion)
+	// config := GetConfigVersion(proposal.ConfigVersion)
 
-	votingStart := proposal.State.CreatedAt + config.VotingStartDelay
-	votingEnd := votingStart + config.VotingPeriod
+	votingStart := proposal.Status.Schedule.ActiveTime
+	votingEnd := proposal.Status.Schedule.VotingEndTime
 
-	node := createProposalStateNode(proposal.State, votingStart, votingEnd)
+	// Build ProposalState from Status for backward compatibility
+	state := buildProposalStateFromStatus(proposal)
+	node := createProposalStateNode(state, votingStart, votingEnd)
 	return marshal(node)
+}
+
+func buildProposalStateFromStatus(proposal ProposalInfo) ProposalState {
+	// Get current status dynamically
+	updater := newProposalStateUpdater(&proposal, uint64(time.Now().Unix()))
+	status := updater.getCurrentStatus()
+	
+	state := ProposalState{
+		CreatedAt: proposal.Status.Schedule.CreateTime,
+	}
+	
+	// Update state fields based on current status
+	switch status {
+	case StatusUpcoming:
+		state.Upcoming = true
+		state.Created = true
+	case StatusActive:
+		state.Active = true
+		state.Created = true
+	case StatusPassed:
+		state.Passed = true
+		state.PassedAt = proposal.Status.Schedule.VotingEndTime // Approximate
+		state.Created = true
+	case StatusRejected:
+		state.Rejected = true
+		state.RejectedAt = proposal.Status.Schedule.VotingEndTime // Approximate
+		state.Created = true
+	case StatusExpired:
+		state.Expired = true
+		state.ExpiredAt = proposal.Status.Schedule.ExpiredTime
+		state.Created = true
+		// Check if it was passed before expiring
+		yeaVotes := proposal.Yea.Uint64()
+		nayVotes := proposal.Nay.Uint64()
+		if yeaVotes >= proposal.QuorumAmount && yeaVotes > nayVotes {
+			state.Passed = true
+		}
+	case StatusExecuted:
+		state.Executed = true
+		state.ExecutedAt = proposal.Status.ActionState.ExecutedAt
+		state.Created = true
+		state.Passed = true // Must have passed to be executed
+	case StatusCanceled:
+		state.Canceled = true
+		state.CanceledAt = proposal.Status.ActionState.CanceledAt
+		state.Created = true
+	}
+	
+	return state
 }
 
 func createProposalStateNode(state ProposalState, votingStart, votingEnd uint64) *json.Node {
