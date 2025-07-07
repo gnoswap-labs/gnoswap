@@ -269,10 +269,6 @@ func executeAddRole(cur realm, roleInfo RoleChangeInfo) error {
 	return errors.New("invalid checker type or addresses for role creation")
 }
 
-func executeRemoveRole(cur realm, info RoleChangeInfo) error {
-	panic("TODO")
-}
-
 func executeAddPermission(cur realm, roleInfo RoleChangeInfo) error {
 	if !access.RoleExists(roleInfo.RoleName) {
 		return ufmt.Errorf("role %s does not exist", roleInfo.RoleName)

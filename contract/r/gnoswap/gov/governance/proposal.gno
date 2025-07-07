@@ -14,7 +14,7 @@ import (
 
 // Governance can execute multiple messages in a single proposal
 // To separate the messages, we use this separator
-// Look for ProposeParameterChange() for more details
+// Look for ProposeParameterChange for more details
 const (
 	GOV_SPLIT   = "*GOV*"
 	ROLE_PREFIX = "ROLE_CHANGE:"
