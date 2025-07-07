@@ -12,8 +12,6 @@ import (
 	"gno.land/r/gnoswap/v1/halt"
 )
 
-// Backward compatibility variables removed - all proposal data now managed in GovernanceState
-
 // Governance can execute multiple messages in a single proposal
 // To separate the messages, we use this separator
 // Look for ProposeParameterChange() for more details
@@ -21,8 +19,6 @@ const (
 	GOV_SPLIT   = "*GOV*"
 	ROLE_PREFIX = "ROLE_CHANGE:"
 )
-
-// init function removed - initialization now handled in globals.gno
 
 // ProposeText creates a new text proposal with the given data
 // It checks if the proposer is eligible to create a proposal and if they don't have an active proposal.

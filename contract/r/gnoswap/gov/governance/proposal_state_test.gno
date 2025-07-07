@@ -1,7 +1,5 @@
 package governance
 
-// TODO: remove
-
 import (
 	"testing"
 

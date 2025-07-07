@@ -11,12 +11,6 @@ import (
 	"gno.land/r/gnoswap/v1/halt"
 )
 
-// Backward compatibility variables removed - all config data now managed in GovernanceState
-
-// init function removed - initialization now handled in globals.gno
-
-// setConfigVersion removed - now handled by GovernanceState
-
 func getConfigByVersion(v uint64) (Config, bool) {
 	return governanceState.GetConfig(v)
 }
