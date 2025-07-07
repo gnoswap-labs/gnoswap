@@ -248,19 +248,30 @@ func ExecuteProposalTransition(proposalId uint64) Transition {
 			return s, errProposalNotPassed
 		}
 
-		// Check execution window
-		config, _ := s.GetConfig(proposal.ConfigVersion)
+		// Check execution window using Schedule
 		now := uint64(time.Now().Unix())
-		votingEnd := proposal.State.CreatedAt + config.VotingStartDelay + config.VotingPeriod
-		windowStart := votingEnd + config.ExecutionDelay
-		windowEnd := windowStart + config.ExecutionWindow
 
-		if now < windowStart {
-			return s, errors.New("execution window not started")
-		}
+		// Use pre-calculated schedule if available
+		if proposal.Schedule.CreateTime != 0 {
+			if now < proposal.Schedule.ExecutableTime {
+				return s, errExecutionWindowNotStarted
+			}
+			if now >= proposal.Schedule.ExpiredTime {
+				return s, errors.New("execution window expired")
+			}
+		} else {
+			// Fallback for proposals without Schedule
+			config, _ := s.GetConfig(proposal.ConfigVersion)
+			votingEnd := proposal.State.CreatedAt + config.VotingStartDelay + config.VotingPeriod
+			windowStart := votingEnd + config.ExecutionDelay
+			windowEnd := windowStart + config.ExecutionWindow
 
-		if now >= windowEnd {
-			return s, errors.New("execution window expired")
+			if now < windowStart {
+				return s, errExecutionWindowNotStarted
+			}
+			if now >= windowEnd {
+				return s, errors.New("execution window expired")
+			}
 		}
 
 		// Update proposal state with ActionState
@@ -343,14 +354,23 @@ func VoteTransition(proposalId uint64, voter std.Address, vote bool) Transition 
 			return s, errAlreadyVoted
 		}
 
-		// Validate voting period
+		// Validate voting period using Schedule
 		now := uint64(time.Now().Unix())
-		config, _ := s.GetConfig(proposal.ConfigVersion)
-		votingStart := proposal.State.CreatedAt + config.VotingStartDelay
-		votingEnd := votingStart + config.VotingPeriod
 
-		if now < votingStart || now >= votingEnd {
-			return s, errUnableToVoteOutOfPeriod
+		// Use pre-calculated schedule if available
+		if proposal.Schedule.CreateTime != 0 {
+			if !proposal.Schedule.IsVotingPeriod(now) {
+				return s, errUnableToVoteOutOfPeriod
+			}
+		} else {
+			// Fallback for proposals without Schedule
+			config, _ := s.GetConfig(proposal.ConfigVersion)
+			votingStart := proposal.State.CreatedAt + config.VotingStartDelay
+			votingEnd := votingStart + config.VotingPeriod
+
+			if now < votingStart || now >= votingEnd {
+				return s, errUnableToVoteOutOfPeriod
+			}
 		}
 
 		// Check if proposal is canceled
@@ -390,14 +410,26 @@ func CancelProposalTransition(proposalId uint64, caller std.Address) Transition 
 			return s, errAlreadyCanceledProposal
 		}
 
-		// Check if voting has started
+		// Check if voting has started using Schedule
 		now := uint64(time.Now().Unix())
-		config, _ := s.GetConfig(proposal.ConfigVersion)
-		votingStart := proposal.State.CreatedAt + config.VotingStartDelay
 
-		if now >= votingStart {
-			return s, errUnableToCancleVotingProposal
+		// Use pre-calculated schedule if available
+		if proposal.Schedule.CreateTime != 0 {
+			if now >= proposal.Schedule.ActiveTime {
+				return s, errUnableToCancleVotingProposal
+			}
+		} else {
+			// Fallback for proposals without Schedule
+			config, _ := s.GetConfig(proposal.ConfigVersion)
+			votingStart := proposal.State.CreatedAt + config.VotingStartDelay
+
+			if now >= votingStart {
+				return s, errUnableToCancleVotingProposal
+			}
 		}
+
+		// Get config for threshold check
+		config, _ := s.GetConfig(proposal.ConfigVersion)
 
 		// Check if caller is authorized to cancel
 		if caller != proposal.Proposer {
