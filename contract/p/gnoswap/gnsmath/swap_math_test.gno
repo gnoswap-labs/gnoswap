@@ -112,12 +112,12 @@ func TestSwapMathComputeSwapStepStr(t *testing.T) {
 		},
 		{
 			name:            "entire input amount taken as fee",
-			currentX96:      u256.MustFromDecimal("2413"),
+			currentX96:      u256.MustFromDecimal("4295128739"),
 			targetX96:       u256.MustFromDecimal("79887613182836312"),
 			liquidity:       u256.MustFromDecimal("1985041575832132834610021537970"),
 			amountRemaining: i256.MustFromDecimal("10"),
 			feePips:         1872,
-			sqrtNextX96:     u256.MustFromDecimal("2413"),
+			sqrtNextX96:     u256.MustFromDecimal("4295128739"),
 			chkSqrtNextX96: func(sqrtRatioNextX96, priceTarget *u256.Uint) {
 				uassert.True(t, sqrtRatioNextX96.Eq(priceTarget))
 			},
