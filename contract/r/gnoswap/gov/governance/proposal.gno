@@ -10,7 +10,6 @@ import (
 
 	"gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/gov/xgns"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -271,21 +270,4 @@ func ProposeParameterChange(
 	)
 
 	return newProposalId
-}
-
-// checkEnoughXGnsToPropose checks if the proposer has enough xGNS to propose a proposal.
-// ref: https://docs.gnoswap.io/core-concepts/governance#scope-of-proposals-5
-// It returns a boolean indicating if the proposer has enough xGNS, the balance of xGNS, and the threshold of xGNS.
-func checkEnoughXGnsToPropose(proposer std.Address) (bool, int64, uint64) {
-	xGNSBalance := xgns.BalanceOf(proposer)
-
-	if xGNSBalance < int64(config.ProposalCreationThreshold) {
-		return false, xGNSBalance, config.ProposalCreationThreshold
-	}
-
-	return true, xGNSBalance, config.ProposalCreationThreshold
-}
-
-func increaseProposalId() {
-	proposalId++
 }

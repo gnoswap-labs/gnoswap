@@ -108,7 +108,7 @@ func CreateProposalTransition(proposer std.Address, proposalType ProposalType, t
 			return s, errAlreadyActiveProposal
 		}
 
-		// Check XGns balance
+		// ref: https://docs.gnoswap.io/core-concepts/governance#scope-of-proposals-5
 		xGnsBalance := xgns.BalanceOf(proposer)
 		threshold := s.currentConfig.ProposalCreationThreshold
 		if xGnsBalance < int64(threshold) {
