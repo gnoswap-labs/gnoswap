@@ -12,9 +12,9 @@ import (
 	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
-// StateTransition2 represents a function that transforms governance state
+// Transition represents a function that transforms governance state
 // It returns the new state and any error that occurred
-type StateTransition2 func(*GovernanceState) (*GovernanceState, error)
+type Transition func(*GovernanceState) (*GovernanceState, error)
 
 // TransitionResult contains the result of a state transition
 type TransitionResult struct {
@@ -24,7 +24,7 @@ type TransitionResult struct {
 
 // Compose combines multiple state transitions into a single transition
 // Transitions are applied in order, and if any fails, the entire composition fails
-func Compose(transitions ...StateTransition2) StateTransition2 {
+func Compose(transitions ...Transition) Transition {
 	return func(s *GovernanceState) (*GovernanceState, error) {
 		current := s
 		for i, transition := range transitions {
@@ -39,7 +39,7 @@ func Compose(transitions ...StateTransition2) StateTransition2 {
 }
 
 // Conditional applies a transition only if the condition is true
-func Conditional(condition func(*GovernanceState) bool, transition StateTransition2) StateTransition2 {
+func Conditional(condition func(*GovernanceState) bool, transition Transition) Transition {
 	return func(s *GovernanceState) (*GovernanceState, error) {
 		if condition(s) {
 			return transition(s)
@@ -49,7 +49,7 @@ func Conditional(condition func(*GovernanceState) bool, transition StateTransiti
 }
 
 // Try attempts a transition and returns the original state if it fails
-func Try(transition StateTransition2) StateTransition2 {
+func Try(transition Transition) Transition {
 	return func(s *GovernanceState) (*GovernanceState, error) {
 		newState, err := transition(s)
 		if err != nil {
@@ -60,7 +60,7 @@ func Try(transition StateTransition2) StateTransition2 {
 }
 
 // Map applies a transition to each element that matches a condition
-func Map(selector func(*GovernanceState, uint64) bool, transition StateTransition2) StateTransition2 {
+func Map(selector func(*GovernanceState, uint64) bool, transition Transition) Transition {
 	return func(s *GovernanceState) (*GovernanceState, error) {
 		current := s
 		var err error
@@ -83,7 +83,7 @@ func Map(selector func(*GovernanceState, uint64) bool, transition StateTransitio
 }
 
 // Validate ensures the state meets certain conditions after transition
-func Validate(transition StateTransition2, validator func(*GovernanceState) error) StateTransition2 {
+func Validate(transition Transition, validator func(*GovernanceState) error) Transition {
 	return func(s *GovernanceState) (*GovernanceState, error) {
 		newState, err := transition(s)
 		if err != nil {
@@ -101,7 +101,7 @@ func Validate(transition StateTransition2, validator func(*GovernanceState) erro
 // Specific state transitions for governance operations
 
 // CreateProposalTransition creates a new proposal
-func CreateProposalTransition(proposer std.Address, proposalType ProposalType, title, description string) StateTransition2 {
+func CreateProposalTransition(proposer std.Address, proposalType ProposalType, title, description string) Transition {
 	return func(s *GovernanceState) (*GovernanceState, error) {
 		// Check if proposer can create proposal
 		if !s.CanPropose(proposer) {
@@ -147,7 +147,7 @@ func CreateProposalTransition(proposer std.Address, proposalType ProposalType, t
 }
 
 // CastVoteTransition records a vote on a proposal
-func CastVoteTransition(proposalId uint64, voter std.Address, vote bool) StateTransition2 {
+func CastVoteTransition(proposalId uint64, voter std.Address, vote bool) Transition {
 	return func(s *GovernanceState) (*GovernanceState, error) {
 		// Check if proposal exists
 		proposal, exists := s.GetProposal(proposalId)
@@ -186,7 +186,7 @@ func CastVoteTransition(proposalId uint64, voter std.Address, vote bool) StateTr
 }
 
 // UpdateProposalStateTransition2 updates proposal states based on current time
-func UpdateProposalStateTransition() StateTransition2 {
+func UpdateProposalStateTransition() Transition {
 	return func(s *GovernanceState) (*GovernanceState, error) {
 		now := uint64(time.Now().Unix())
 		current := s
@@ -221,7 +221,7 @@ func UpdateProposalStateTransition() StateTransition2 {
 }
 
 // ExecuteProposalTransition executes a proposal
-func ExecuteProposalTransition(proposalId uint64) StateTransition2 {
+func ExecuteProposalTransition(proposalId uint64) Transition {
 	return func(s *GovernanceState) (*GovernanceState, error) {
 		proposal, exists := s.GetProposal(proposalId)
 		if !exists {
@@ -268,7 +268,7 @@ func ExecuteProposalTransition(proposalId uint64) StateTransition2 {
 }
 
 // ReconfigureTransition updates the governance configuration
-func ReconfigureTransition(newConfig Config) StateTransition2 {
+func ReconfigureTransition(newConfig Config) Transition {
 	return func(s *GovernanceState) (*GovernanceState, error) {
 		return s.WithNewConfig(newConfig), nil
 	}
@@ -282,12 +282,12 @@ func isTerminated(state ProposalState) bool {
 // Batch operations using state transitions
 
 // ProcessAllProposals updates all proposal states
-func ProcessAllProposals() StateTransition2 {
+func ProcessAllProposals() Transition {
 	return UpdateProposalStateTransition()
 }
 
 // CreateAndValidateProposal creates a proposal with validation
-func CreateAndValidateProposal(proposer std.Address, proposalType ProposalType, title, description string) StateTransition2 {
+func CreateAndValidateProposal(proposer std.Address, proposalType ProposalType, title, description string) Transition {
 	return Validate(
 		CreateProposalTransition(proposer, proposalType, title, description),
 		func(s *GovernanceState) error {
@@ -308,7 +308,7 @@ func CreateAndValidateProposal(proposer std.Address, proposalType ProposalType, 
 }
 
 // VoteTransition creates a state transition for casting a vote
-func VoteTransition(proposalId uint64, voter std.Address, vote bool) StateTransition2 {
+func VoteTransition(proposalId uint64, voter std.Address, vote bool) Transition {
 	return func(s *GovernanceState) (*GovernanceState, error) {
 		proposal, exists := s.GetProposal(proposalId)
 		if !exists {
@@ -347,7 +347,7 @@ func VoteTransition(proposalId uint64, voter std.Address, vote bool) StateTransi
 }
 
 // VoteWithUpdate composes state update and vote in a single transition
-func VoteWithUpdate(proposalId uint64, voter std.Address, vote bool) StateTransition2 {
+func VoteWithUpdate(proposalId uint64, voter std.Address, vote bool) Transition {
 	return Compose(
 		UpdateProposalStateTransition(),
 		VoteTransition(proposalId, voter, vote),
@@ -355,7 +355,7 @@ func VoteWithUpdate(proposalId uint64, voter std.Address, vote bool) StateTransi
 }
 
 // CancelProposalTransition cancels a proposal
-func CancelProposalTransition(proposalId uint64, caller std.Address) StateTransition2 {
+func CancelProposalTransition(proposalId uint64, caller std.Address) Transition {
 	return func(s *GovernanceState) (*GovernanceState, error) {
 		proposal, exists := s.GetProposal(proposalId)
 		if !exists {
@@ -371,7 +371,7 @@ func CancelProposalTransition(proposalId uint64, caller std.Address) StateTransi
 		now := uint64(time.Now().Unix())
 		config, _ := s.GetConfig(proposal.ConfigVersion)
 		votingStart := proposal.State.CreatedAt + config.VotingStartDelay
-		
+
 		if now >= votingStart {
 			return s, errUnableToCancleVotingProposal
 		}
@@ -381,7 +381,7 @@ func CancelProposalTransition(proposalId uint64, caller std.Address) StateTransi
 			// Check if proposer's stake has fallen below threshold
 			balance := xgns.BalanceOf(proposal.Proposer)
 			threshold := config.ProposalCreationThreshold
-			
+
 			if balance >= int64(threshold) {
 				return s, errUnableToCancelProposalWithVoterEnoughDelegated
 			}
@@ -399,7 +399,7 @@ func CancelProposalTransition(proposalId uint64, caller std.Address) StateTransi
 }
 
 // VoteWithRetry attempts to cast a vote with retry logic
-func VoteWithRetry(proposalId uint64, voter std.Address, vote bool) StateTransition2 {
+func VoteWithRetry(proposalId uint64, voter std.Address, vote bool) Transition {
 	return Compose(
 		Try(UpdateProposalStateTransition()), // Update states first
 		CastVoteTransition(proposalId, voter, vote),

@@ -19,7 +19,7 @@ func init() {
 }
 
 // applyTransition applies a state transition and updates the global state
-func applyTransition(transition StateTransition2) error {
+func applyTransition(transition Transition) error {
 	newState, err := transition(governanceState)
 	if err != nil {
 		return err
