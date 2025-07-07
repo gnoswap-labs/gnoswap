@@ -11,14 +11,6 @@ import (
 	"gno.land/r/gnoswap/v1/halt"
 )
 
-func getConfigByVersion(v uint64) (Config, bool) {
-	return governanceState.GetConfig(v)
-}
-
-func getLatestVersion() uint64 {
-	return governanceState.configCounter
-}
-
 // ReconfigureByAdmin updates the proposal realted configuration.
 // Returns the new configuration version number.
 func ReconfigureByAdmin(
@@ -73,7 +65,7 @@ func reconfigure(
 		panic(err)
 	}
 
-	prevVersion := getLatestVersion()
+	prevVersion := governanceState.configCounter
 
 	newConfig := Config{
 		VotingStartDelay:              votingStartDelay,
@@ -126,17 +118,17 @@ func GetConfigVersion(version uint64) Config {
 	return cfg
 }
 
-// GetLatestConfig() returns the latest configuration.
+// GetLatestConfig returns the latest configuration.
 func GetLatestConfig() Config {
 	return governanceState.currentConfig
 }
 
-// GetLatestConfigVersion() returns the latest configuration version.
+// GetLatestConfigVersion returns the latest configuration version.
 func GetLatestConfigVersion() uint64 {
-	return getLatestVersion()
+	return governanceState.configCounter
 }
 
-// GetProposalCreationThreshold() returns the current proposal creation threshold.
+// GetProposalCreationThreshold returns the current proposal creation threshold.
 func GetProposalCreationThreshold() uint64 {
 	return governanceState.currentConfig.ProposalCreationThreshold
 }
