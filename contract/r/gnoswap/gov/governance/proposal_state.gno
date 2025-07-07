@@ -147,38 +147,8 @@ func (u *proposalStateUpdater) getCurrentStatus() ProposalStatusEnum {
 		return StatusUpcoming
 	}
 
-	// Fallback: Use legacy State and ActionState fields
-	state := u.proposal.State
-	actionState := u.proposal.ActionState
-
-	// Check action-based terminal states first (highest priority)
-	if actionState.IsExecuted() {
-		return StatusExecuted
-	}
-	if actionState.IsCanceled() {
-		return StatusCanceled
-	}
-
-	// Then check time-based terminal states
-	if state.Expired {
-		return StatusExpired
-	}
-	if state.Rejected {
-		return StatusRejected
-	}
-
-	// Check active states
-	if state.Passed {
-		return StatusPassed
-	}
-	if state.Active {
-		return StatusActive
-	}
-	if state.Upcoming {
-		return StatusUpcoming
-	}
-
-	// Fallback (shouldn't happen with proper state management)
+	// If Status.Schedule is not initialized, return upcoming as default
+	// This should not happen in production
 	return StatusUpcoming
 }
 
@@ -213,12 +183,10 @@ func (u *proposalStateUpdater) getVotingPeriod() (start, end uint64) {
 	if u.proposal.Status.Schedule.CreateTime != 0 {
 		return u.proposal.Status.Schedule.ActiveTime, u.proposal.Status.Schedule.VotingEndTime
 	}
-	// Fallback to Schedule field for backward compatibility
-	if u.proposal.Schedule.CreateTime != 0 {
-		return u.proposal.Schedule.ActiveTime, u.proposal.Schedule.VotingEndTime
-	}
-	// Fallback to calculation for backward compatibility
-	start = u.proposal.State.CreatedAt + u.config.VotingStartDelay
+	// If Status.Schedule is not initialized, calculate from current time
+	// This should not happen in production
+	now := u.now
+	start = now + u.config.VotingStartDelay
 	end = start + u.config.VotingPeriod
 	return
 }
@@ -228,11 +196,8 @@ func (u *proposalStateUpdater) getExecutionPeriod() (start, end uint64) {
 	if u.proposal.Status.Schedule.CreateTime != 0 {
 		return u.proposal.Status.Schedule.ExecutableTime, u.proposal.Status.Schedule.ExpiredTime
 	}
-	// Fallback to Schedule field for backward compatibility
-	if u.proposal.Schedule.CreateTime != 0 {
-		return u.proposal.Schedule.ExecutableTime, u.proposal.Schedule.ExpiredTime
-	}
-	// Fallback to calculation for backward compatibility
+	// If Status.Schedule is not initialized, calculate from voting period
+	// This should not happen in production
 	_, votingEnd := u.getVotingPeriod()
 	start = votingEnd + u.config.ExecutionDelay
 	end = start + u.config.ExecutionWindow
@@ -309,10 +274,8 @@ func isProposalTerminated(proposal ProposalInfo) bool {
 	if proposal.Status.Schedule.CreateTime != 0 && proposal.Status.ActionState.IsActionTaken() {
 		return true
 	}
-	// Priority 2: Check ActionState field
-	if proposal.ActionState.IsActionTaken() {
-		return true
-	}
+	// If Status.Schedule is not initialized, proposal is not terminated
+	// This should not happen in production
 	// Then check ProposalStatusEnum
 	updater := &proposalStateUpdater{proposal: &proposal}
 	return updater.getCurrentStatus().IsTerminated()

@@ -288,16 +288,9 @@ func validateProposalState(proposal *ProposalInfo) ExecutionValidator {
 	updater := newProposalStateUpdater(proposal, uint64(time.Now().Unix()))
 	status := updater.getCurrentStatus()
 	
-	// Check action states prioritizing Status field
-	isExecuted := false
-	isCanceled := false
-	if proposal.Status.Schedule.CreateTime != 0 {
-		isExecuted = proposal.Status.ActionState.IsExecuted()
-		isCanceled = proposal.Status.ActionState.IsCanceled()
-	} else {
-		isExecuted = proposal.ActionState.IsExecuted()
-		isCanceled = proposal.ActionState.IsCanceled()
-	}
+	// Check action states from Status field
+	isExecuted := proposal.Status.ActionState.IsExecuted()
+	isCanceled := proposal.Status.ActionState.IsCanceled()
 	
 	return ExecutionValidator{
 		isTextProposal:    proposal.ProposalType == Text,

@@ -81,30 +81,8 @@ func (a ActionState) IsActionTaken() bool {
 	return a.Canceled || a.Executed
 }
 
-// ProposalState represents the state of a proposal's execution
-type ProposalState struct {
-	Created   bool
-	CreatedAt uint64
-
-	Upcoming bool
-	Active   bool
-
-	Passed   bool
-	PassedAt uint64
-
-	Rejected   bool
-	RejectedAt uint64
-
-	Canceled   bool
-	CanceledAt uint64
-
-	// LABEL
-	Executed   bool
-	ExecutedAt uint64
-
-	Expired   bool
-	ExpiredAt uint64
-}
+// ProposalState is deprecated and will be removed.
+// Use ProposalStatus (Schedule + ActionState) instead.
 
 type CommunityPoolSpendInfo struct {
 	To        std.Address
@@ -165,15 +143,6 @@ type ProposalInfo struct {
 
 	// Text, CommunityPoolSpend, ParameterChange
 	ProposalType ProposalType
-
-	// The execution state of the proposal (legacy, will be removed)
-	State ProposalState
-
-	// Pre-calculated time schedule for the proposal (will be moved to Status)
-	Schedule ProposalSchedule
-
-	// Action-based state changes (Cancel, Execute) (will be moved to Status)
-	ActionState ActionState
 
 	// Combined status as per RFC (Schedule + ActionState)
 	Status ProposalStatus

@@ -116,7 +116,7 @@ func execute(proposalID uint64) {
 	proposalState := governance.GetExecutionStateByProposalId(proposalID)
 
 	ufmt.Printf("[EXPECTED] receiver's balance increased by %d\n", afterReceiverBalance-prevReceiverBalance)
-	ufmt.Printf("[EXPECTED] proposal's executed state is %v\n", proposalState.Executed)
+	ufmt.Printf("[EXPECTED] proposal's status is %v\n", proposalState)
 }
 
 // Output:
@@ -143,4 +143,4 @@ func execute(proposalID uint64) {
 // [INFO] receiver's balance before executing: 0
 // [INFO] receiver's balance after executing: 100
 // [EXPECTED] receiver's balance increased by 100
-// [EXPECTED] proposal's executed state is true
+// [EXPECTED] proposal's status is executed
