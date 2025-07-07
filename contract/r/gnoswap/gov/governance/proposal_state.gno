@@ -71,7 +71,8 @@ func (s ProposalStatusEnum) CanTransitionTo(target ProposalStatusEnum) bool {
 type ProposalPhase int
 
 const (
-	PhaseCreated ProposalPhase = iota
+	_ ProposalPhase = iota
+	PhaseCreated
 	PhaseVoting
 	PhaseVotingEnded
 	PhaseExecution
@@ -199,31 +200,35 @@ func (u *proposalStateUpdater) getExecutionPeriod() (start, end uint64) {
 	return
 }
 
-// Phase-based condition checks (safer than boolean logic)
-func (u *proposalStateUpdater) isVotingPhase() bool {
-	return u.getCurrentPhase() == PhaseVoting
-}
-
 func (u *proposalStateUpdater) isVotingEndedAndPassed() bool {
-	phase := u.getCurrentPhase()
-	if phase != PhaseVotingEnded && phase != PhaseExecution && phase != PhaseExecutionEnded {
+	if u.isTerminalPhase() {
 		return false
 	}
-
 	yeaVotes := u.proposal.Voting.Yea.Uint64()
 	nayVotes := u.proposal.Voting.Nay.Uint64()
 	return u.isVotingPassed(yeaVotes, nayVotes)
 }
 
 func (u *proposalStateUpdater) isVotingEndedAndRejected() bool {
-	phase := u.getCurrentPhase()
-	if phase != PhaseVotingEnded && phase != PhaseExecution && phase != PhaseExecutionEnded {
+	if u.isTerminalPhase() {
 		return false
 	}
-
 	yeaVotes := u.proposal.Voting.Yea.Uint64()
 	nayVotes := u.proposal.Voting.Nay.Uint64()
 	return !u.isVotingPassed(yeaVotes, nayVotes)
+}
+
+func (u *proposalStateUpdater) isVotingPhase() bool {
+	return u.getCurrentPhase() == PhaseVoting
+}
+
+func (u *proposalStateUpdater) isTerminalPhase() bool {
+	switch u.getCurrentPhase() {
+	case PhaseVotingEnded, PhaseExecution, PhaseExecutionEnded:
+		return true
+	default:
+		return false
+	}
 }
 
 func (u *proposalStateUpdater) isExecutionExpired() bool {
@@ -246,8 +251,7 @@ func isProposalTerminated(proposal ProposalInfo) bool {
 		return true
 	}
 	// If Status.Schedule is not initialized, proposal is not terminated
-	// This should not happen in production
-	// Then check ProposalStatusEnum
+	// This should not happen
 	updater := &proposalStateUpdater{proposal: &proposal}
 	return updater.getCurrentStatus().IsTerminated()
 }

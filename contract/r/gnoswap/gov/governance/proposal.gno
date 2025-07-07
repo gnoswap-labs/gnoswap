@@ -132,7 +132,6 @@ func ProposeCommunityPoolSpend(
 	)
 
 	proposalData := proposal.Data
-
 	proposalData.CommunityPoolSpend = CommunityPoolSpendInfo{
 		To:        to,
 		TokenPath: tokenPath,

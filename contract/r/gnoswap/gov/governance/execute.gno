@@ -288,13 +288,11 @@ func validateProposalState(proposal *ProposalInfo) ExecutionValidator {
 	status := updater.getCurrentStatus()
 	
 	// Check action states from Status field
-	isExecuted := proposal.Status.ActionState.IsExecuted()
-	isCanceled := proposal.Status.ActionState.IsCanceled()
-	
+	action := proposal.Status.ActionState
 	return ExecutionValidator{
 		isTextProposal:    proposal.Data.ProposalType == Text,
-		isAlreadyExecuted: isExecuted,
-		isAlreadyCanceled: isCanceled,
+		isAlreadyExecuted: action.IsExecuted(),
+		isAlreadyCanceled: action.IsCanceled(),
 		isAlreadyRejected: status == StatusRejected,
 		hasPassed:         status == StatusPassed,
 	}
