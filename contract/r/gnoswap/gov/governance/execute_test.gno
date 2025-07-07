@@ -191,13 +191,17 @@ func TestValidateProposalState(t *testing.T) {
 					Rejected: false,
 					Passed:   true,
 				},
+				ActionState: ActionState{
+					Executed:   true,
+					ExecutedAt: uint64(time.Now().Unix()),
+				},
 			},
 			expected: ExecutionValidator{
 				isTextProposal:    false,
 				isAlreadyExecuted: true,
 				isAlreadyCanceled: false,
 				isAlreadyRejected: false,
-				hasPassed:         true,
+				hasPassed:         false, // When executed, status is StatusExecuted, not passed
 			},
 		},
 		{
@@ -209,6 +213,10 @@ func TestValidateProposalState(t *testing.T) {
 					Canceled: true,
 					Rejected: false,
 					Passed:   false,
+				},
+				ActionState: ActionState{
+					Canceled:   true,
+					CanceledAt: uint64(time.Now().Unix()),
 				},
 			},
 			expected: ExecutionValidator{
@@ -558,7 +566,6 @@ func TestRollbackSystem(t *testing.T) {
 			}
 
 			err := executeProposal(cross, ctx, registry)
-
 			// if error occurs, execute rollback
 			if err != nil {
 				rollback()
