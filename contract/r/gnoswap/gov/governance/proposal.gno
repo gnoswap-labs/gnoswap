@@ -3,16 +3,13 @@ package governance
 import (
 	"std"
 	"strings"
-	"time"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
-	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
-	gs "gno.land/r/gnoswap/v1/gov/staker"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 	"gno.land/r/gnoswap/v1/halt"
 )
@@ -233,45 +230,29 @@ func ProposeParameterChange(
 	en.MintAndDistributeGns(cross)
 	updateProposalsState()
 
-	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
-	if !enough {
-		panic(addDetailToError(
-			errNotEnoughBalance,
-			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
-		))
+	transition := CreateProposalTransition(proposer, ParameterChange, title, description)
+	if err := applyTransition(transition); err != nil {
+		panic(err)
 	}
 
-	now := uint64(time.Now().Unix())
-	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
+	newProposalId := governanceState.GetProposalCounter()
+	proposal, _ := governanceState.GetProposal(newProposalId)
 
-	maxVotingWeight := u256.NewUint(votingMax)
-	quorumAmount := maxVotingWeight.Uint64() * config.Quorum / 100
-
-	proposal := ProposalInfo{
-		Proposer:     proposer,
-		ProposalType: ParameterChange,
-		State: ProposalState{
-			Created:   true,
-			CreatedAt: now,
-			Upcoming:  true,
-		},
-		Yea:                       u256.Zero(),
-		Nay:                       u256.Zero(),
-		MaxVotingWeight:           maxVotingWeight,
-		PossibleAddressWithWeight: possibleAddressWithWeight,
-		ConfigVersion:             uint64(configVersions.Size()),
-		QuorumAmount:              quorumAmount,
-		Title:                     title,
-		Description:               description,
-		Execution: ExecutionInfo{
-			Num:  numToExecute,
-			Msgs: splitGov,
-		},
+	// Set execution info for parameter change
+	proposal.Execution = ExecutionInfo{
+		Num:  numToExecute,
+		Msgs: splitGov,
 	}
 
-	increaseProposalId()
-	proposals.Set(formatUint(proposalId), proposal)
-	proposalIdListByProposer.Set(proposer.String(), proposalId)
+	// Update the proposal in state with execution info
+	governanceState = governanceState.WithUpdatedProposal(newProposalId, func(p ProposalInfo) ProposalInfo {
+		return proposal
+	})
+
+	// Update backward compatibility variables
+	proposalId = newProposalId
+	proposals.Set(formatUint(newProposalId), proposal)
+	proposalIdListByProposer.Set(proposer.String(), newProposalId)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -282,14 +263,14 @@ func ProposeParameterChange(
 		"description", description,
 		"numToExecute", formatUint(numToExecute),
 		"executions", executions,
-		"proposalId", formatUint(proposalId),
+		"proposalId", formatUint(newProposalId),
 		"quorumAmount", formatUint(proposal.QuorumAmount),
 		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
 		"configVersion", formatUint(proposal.ConfigVersion),
 		"createdAt", formatUint(proposal.State.CreatedAt),
 	)
 
-	return proposalId
+	return newProposalId
 }
 
 // checkEnoughXGnsToPropose checks if the proposer has enough xGNS to propose a proposal.
