@@ -122,9 +122,9 @@ func (s *GovernanceState) WithVote(proposalId uint64, voter std.Address, vote bo
 	// update proposal vote counts
 	return state.WithUpdatedProposal(proposalId, func(p ProposalInfo) ProposalInfo {
 		if vote {
-			p.Yea = new(u256.Uint).Add(p.Yea, u256.NewUint(weight))
+			p.Voting.Yea = new(u256.Uint).Add(p.Voting.Yea, u256.NewUint(weight))
 		} else {
-			p.Nay = new(u256.Uint).Add(p.Nay, u256.NewUint(weight))
+			p.Voting.Nay = new(u256.Uint).Add(p.Voting.Nay, u256.NewUint(weight))
 		}
 		return p
 	})
@@ -222,7 +222,7 @@ func (s *GovernanceState) GetAccumulatedVotes(proposalId uint64) (uint64, uint64
 	if !exists {
 		return 0, 0
 	}
-	return proposal.Yea.Uint64(), proposal.Nay.Uint64()
+	return proposal.Voting.Yea.Uint64(), proposal.Voting.Nay.Uint64()
 }
 
 /* Iterators */

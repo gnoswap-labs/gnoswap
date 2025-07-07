@@ -119,14 +119,14 @@ func (u *proposalStateUpdater) getCurrentStatus() ProposalStatusEnum {
 		phase := u.getCurrentPhase()
 		
 		// Check if expired (only for non-text proposals after execution window)
-		if u.proposal.ProposalType != Text && phase == PhaseExecutionEnded {
+		if u.proposal.Data.ProposalType != Text && phase == PhaseExecutionEnded {
 			return StatusExpired
 		}
 
 		// Check voting results
 		if phase >= PhaseVotingEnded {
-			yeaVotes := u.proposal.Yea.Uint64()
-			nayVotes := u.proposal.Nay.Uint64()
+			yeaVotes := u.proposal.Voting.Yea.Uint64()
+			nayVotes := u.proposal.Voting.Nay.Uint64()
 			if u.isVotingPassed(yeaVotes, nayVotes) {
 				return StatusPassed
 			} else {
@@ -215,8 +215,8 @@ func (u *proposalStateUpdater) isVotingEndedAndPassed() bool {
 		return false
 	}
 
-	yeaVotes := u.proposal.Yea.Uint64()
-	nayVotes := u.proposal.Nay.Uint64()
+	yeaVotes := u.proposal.Voting.Yea.Uint64()
+	nayVotes := u.proposal.Voting.Nay.Uint64()
 	return u.isVotingPassed(yeaVotes, nayVotes)
 }
 
@@ -226,14 +226,14 @@ func (u *proposalStateUpdater) isVotingEndedAndRejected() bool {
 		return false
 	}
 
-	yeaVotes := u.proposal.Yea.Uint64()
-	nayVotes := u.proposal.Nay.Uint64()
+	yeaVotes := u.proposal.Voting.Yea.Uint64()
+	nayVotes := u.proposal.Voting.Nay.Uint64()
 	return !u.isVotingPassed(yeaVotes, nayVotes)
 }
 
 func (u *proposalStateUpdater) isExecutionExpired() bool {
 	// Only non-text proposals can expire
-	if u.proposal.ProposalType == Text {
+	if u.proposal.Data.ProposalType == Text {
 		return false
 	}
 
@@ -265,7 +265,7 @@ func (u *proposalStateUpdater) markAsExpired() {
 
 // Helper methods
 func (u *proposalStateUpdater) isVotingPassed(yeaVotes, nayVotes uint64) bool {
-	return yeaVotes >= u.proposal.QuorumAmount && yeaVotes > nayVotes
+	return yeaVotes >= u.proposal.Voting.QuorumAmount && yeaVotes > nayVotes
 }
 
 // isProposalTerminated checks if a proposal is in a terminated state (legacy compatibility)

@@ -15,9 +15,9 @@ func createProposalJsonNode(id uint64, proposal ProposalInfo) *json.Node {
 		WriteString("configVersion", formatUint(proposal.ConfigVersion)).
 		WriteString("proposer", proposal.Proposer.String()).
 		WriteString("status", b64Encode(getProposalStatus(id))).
-		WriteString("type", proposal.ProposalType.String()).
-		WriteString("title", proposal.Title).
-		WriteString("description", proposal.Description).
+		WriteString("type", proposal.Data.ProposalType.String()).
+		WriteString("title", proposal.Metadata.Title).
+		WriteString("description", proposal.Metadata.Description).
 		WriteString("vote", b64Encode(getProposalVotes(id))).
 		WriteString("extra", b64Encode(getProposalExtraData(id))).
 		Node()
@@ -182,7 +182,7 @@ func getProposalExtraData(proposalId uint64) string {
 		return ""
 	}
 
-	switch proposal.ProposalType {
+	switch proposal.Data.ProposalType {
 	case Text:
 		return ""
 	case CommunityPoolSpend:
@@ -200,11 +200,12 @@ func getProposalExtraData(proposalId uint64) string {
 // 3. amount
 func getCommunityPoolSpendProposalData(proposalId uint64) string {
 	proposal := mustGetProposal(proposalId)
+	spend := proposal.Data.CommunityPoolSpend
 
 	proposalObj := json.Builder().
-		WriteString("to", proposal.CommunityPoolSpend.To.String()).
-		WriteString("tokenPath", proposal.CommunityPoolSpend.TokenPath).
-		WriteString("amount", formatUint(proposal.CommunityPoolSpend.Amount)).
+		WriteString("to", spend.To.String()).
+		WriteString("tokenPath", spend.TokenPath).
+		WriteString("amount", formatUint(spend.Amount)).
 		Node()
 
 	return marshal(proposalObj)
@@ -214,7 +215,7 @@ func getCommunityPoolSpendProposalData(proposalId uint64) string {
 func getParameterChangeProposalData(proposalId uint64) string {
 	proposal := mustGetProposal(proposalId)
 
-	msgs := proposal.Execution.Msgs
+	msgs := proposal.Data.Execution.Msgs
 	msgsStr := strings.Join(msgs, "*GOV*")
 
 	return msgsStr
@@ -231,14 +232,15 @@ func getProposalStatus(id uint64) string {
 	updater := newProposalStateUpdater(&proposal, uint64(time.Now().Unix()))
 	status := updater.getCurrentStatus()
 
+	schedule := proposal.Status.Schedule
 	// Create status node with schedule and current status
 	node := json.Builder().
 		WriteString("status", status.String()).
-		WriteString("createTime", formatUint(proposal.Status.Schedule.CreateTime)).
-		WriteString("activeTime", formatUint(proposal.Status.Schedule.ActiveTime)).
-		WriteString("votingEndTime", formatUint(proposal.Status.Schedule.VotingEndTime)).
-		WriteString("executableTime", formatUint(proposal.Status.Schedule.ExecutableTime)).
-		WriteString("expiredTime", formatUint(proposal.Status.Schedule.ExpiredTime))
+		WriteString("createTime", formatUint(schedule.CreateTime)).
+		WriteString("activeTime", formatUint(schedule.ActiveTime)).
+		WriteString("votingEndTime", formatUint(schedule.VotingEndTime)).
+		WriteString("executableTime", formatUint(schedule.ExecutableTime)).
+		WriteString("expiredTime", formatUint(schedule.ExpiredTime))
 
 	// Add action state if applicable
 	if proposal.Status.ActionState.IsCanceled() {
@@ -257,186 +259,24 @@ func getProposalStatus(id uint64) string {
 	return marshal(node.Node())
 }
 
-// func buildProposalStateFromStatus(proposal ProposalInfo) ProposalState {
-// 	// Get current status dynamically
-// 	updater := newProposalStateUpdater(&proposal, uint64(time.Now().Unix()))
-// 	status := updater.getCurrentStatus()
-
-// 	state := ProposalState{
-// 		CreatedAt: proposal.Status.Schedule.CreateTime,
-// 		Created: true, // All proposals are created
-// 	}
-
-// 	// Update state fields based on current status
-// 	switch status {
-// 	case StatusUpcoming:
-// 		state.Upcoming = true
-// 	case StatusActive:
-// 		state.Active = true
-// 	case StatusPassed:
-// 		state.Passed = true
-// 		// More accurate: passed at voting end time
-// 		state.PassedAt = proposal.Status.Schedule.VotingEndTime
-// 	case StatusRejected:
-// 		state.Rejected = true
-// 		// More accurate: rejected at voting end time 
-// 		state.RejectedAt = proposal.Status.Schedule.VotingEndTime
-// 	case StatusExpired:
-// 		state.Expired = true
-// 		state.ExpiredAt = proposal.Status.Schedule.ExpiredTime
-// 		// Check if it was passed before expiring
-// 		yeaVotes := proposal.Yea.Uint64()
-// 		nayVotes := proposal.Nay.Uint64()
-// 		if yeaVotes >= proposal.QuorumAmount && yeaVotes > nayVotes {
-// 			state.Passed = true
-// 			state.PassedAt = proposal.Status.Schedule.VotingEndTime
-// 		}
-// 	case StatusExecuted:
-// 		state.Executed = true
-// 		state.ExecutedAt = proposal.Status.ActionState.ExecutedAt
-// 		state.Passed = true // Must have passed to be executed
-// 		state.PassedAt = proposal.Status.Schedule.VotingEndTime
-// 	case StatusCanceled:
-// 		state.Canceled = true
-// 		state.CanceledAt = proposal.Status.ActionState.CanceledAt
-// 	}
-
-// 	return state
-// }
-
-// func createProposalStateNode(state ProposalState, votingStart, votingEnd uint64) *json.Node {
-// 	return json.Builder().
-// 		WriteString("createdAt", formatUint(state.CreatedAt)).
-// 		WriteString("upcoming", formatBool(state.Upcoming)).
-// 		WriteString("active", formatBool(state.Active)).
-// 		WriteString("votingStart", formatUint(votingStart)).
-// 		WriteString("votingEnd", formatUint(votingEnd)).
-// 		WriteString("passed", formatBool(state.Passed)).
-// 		WriteString("passedAt", formatUint(state.PassedAt)).
-// 		WriteString("rejected", formatBool(state.Rejected)).
-// 		WriteString("rejectedAt", formatUint(state.RejectedAt)).
-// 		WriteString("canceled", formatBool(state.Canceled)).
-// 		WriteString("canceledAt", formatUint(state.CanceledAt)).
-// 		WriteString("executed", formatBool(state.Executed)).
-// 		WriteString("executedAt", formatUint(state.ExecutedAt)).
-// 		WriteString("expired", formatBool(state.Expired)).
-// 		WriteString("expiredAt", formatUint(state.ExpiredAt)).
-// 		Node()
-// }
-
 // getProposalVotes returns the votes of a proposal.
 func getProposalVotes(id uint64) string {
 	proposal, exist := governanceState.GetProposal(id)
 	if !exist {
 		return ""
 	}
-	maxVoting := proposal.MaxVotingWeight.ToString()
+	voting := proposal.Voting
+	maxVoting := voting.MaxVotingWeight.ToString()
 
 	proposalObj := json.Builder().
-		WriteString("quorum", formatUint(proposal.QuorumAmount)).
+		WriteString("quorum", formatUint(voting.QuorumAmount)).
 		WriteString("max", maxVoting).
-		WriteString("yes", proposal.Yea.ToString()).
-		WriteString("no", proposal.Nay.ToString()).
+		WriteString("yes", voting.Yea.ToString()).
+		WriteString("no", voting.Nay.ToString()).
 		Node()
 
 	return marshal(proposalObj)
 }
-
-// // GetProposalStatusById returns the ProposalStatus directly
-// func GetProposalStatusById(id uint64) string {
-// 	// Update proposal states before returning data
-// 	transition := UpdateProposalStateTransition()
-// 	if err := applyTransition(transition); err != nil {
-// 		panic(err)
-// 	}
-
-// 	proposal, exists := governanceState.GetProposal(id)
-// 	if !exists {
-// 		return ""
-// 	}
-
-// 	statusObj := metaNode()
-// 	statusObj.AppendObject("status", createProposalStatusNode(proposal.Status))
-// 	return marshal(statusObj)
-// }
-
-// // GetProposalScheduleById returns only the Schedule information
-// func GetProposalScheduleById(id uint64) string {
-// 	// Update proposal states before returning data
-// 	transition := UpdateProposalStateTransition()
-// 	if err := applyTransition(transition); err != nil {
-// 		panic(err)
-// 	}
-
-// 	proposal, exists := governanceState.GetProposal(id)
-// 	if !exists {
-// 		return ""
-// 	}
-
-// 	scheduleObj := metaNode()
-// 	scheduleObj.AppendObject("schedule", createProposalScheduleNode(proposal.Status.Schedule))
-// 	return marshal(scheduleObj)
-// }
-
-// // GetProposalActionStateById returns only the ActionState information
-// func GetProposalActionStateById(id uint64) string {
-// 	// Update proposal states before returning data
-// 	transition := UpdateProposalStateTransition()
-// 	if err := applyTransition(transition); err != nil {
-// 		panic(err)
-// 	}
-
-// 	proposal, exists := governanceState.GetProposal(id)
-// 	if !exists {
-// 		return ""
-// 	}
-
-// 	actionStateObj := metaNode()
-// 	actionStateObj.AppendObject("actionState", createActionStateNode(proposal.Status.ActionState))
-// 	return marshal(actionStateObj)
-// }
-
-// // Helper functions for new API endpoints
-// func createProposalStatusNode(status ProposalStatus) *json.Node {
-// 	return json.Builder().
-// 		WriteObject("schedule", createProposalScheduleNode(status.Schedule)).
-// 		WriteObject("actionState", createActionStateNode(status.ActionState)).
-// 		Node()
-// }
-
-// func createProposalScheduleNode(schedule ProposalSchedule) *json.Node {
-// 	return json.Builder().
-// 		WriteString("createTime", formatUint(schedule.CreateTime)).
-// 		WriteString("activeTime", formatUint(schedule.ActiveTime)).
-// 		WriteString("votingEndTime", formatUint(schedule.VotingEndTime)).
-// 		WriteString("executableTime", formatUint(schedule.ExecutableTime)).
-// 		WriteString("expiredTime", formatUint(schedule.ExpiredTime)).
-// 		Node()
-// }
-
-// func createActionStateNode(actionState ActionState) *json.Node {
-// 	builder := json.Builder()
-	
-// 	if actionState.IsCanceled() {
-// 		builder.
-// 			WriteString("canceled", formatBool(true)).
-// 			WriteString("canceledAt", formatUint(actionState.CanceledAt)).
-// 			WriteString("canceledBy", actionState.CanceledBy.String())
-// 	} else {
-// 		builder.WriteString("canceled", formatBool(false))
-// 	}
-	
-// 	if actionState.IsExecuted() {
-// 		builder.
-// 			WriteString("executed", formatBool(true)).
-// 			WriteString("executedAt", formatUint(actionState.ExecutedAt)).
-// 			WriteString("executedBy", actionState.ExecutedBy.String())
-// 	} else {
-// 		builder.WriteString("executed", formatBool(false))
-// 	}
-	
-// 	return builder.Node()
-// }
 
 func metaNode() *json.Node {
 	height := std.ChainHeight()

@@ -59,8 +59,8 @@ func ProposeText(
 		"title", title,
 		"description", description,
 		"proposalId", formatUint(newProposalId),
-		"quorumAmount", formatUint(proposal.QuorumAmount),
-		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
+		"quorumAmount", formatUint(proposal.Voting.QuorumAmount),
+		"maxVotingWeight", proposal.Voting.MaxVotingWeight.ToString(),
 		"configVersion", formatUint(proposal.ConfigVersion),
 		"createdAt", formatUint(proposal.Status.Schedule.CreateTime),
 	)
@@ -131,12 +131,14 @@ func ProposeCommunityPoolSpend(
 		[]string{tokenPath, to.String(), formatUint(amount)},
 	)
 
-	proposal.CommunityPoolSpend = CommunityPoolSpendInfo{
+	proposalData := proposal.Data
+
+	proposalData.CommunityPoolSpend = CommunityPoolSpendInfo{
 		To:        to,
 		TokenPath: tokenPath,
 		Amount:    amount,
 	}
-	proposal.Execution = ExecutionInfo{
+	proposalData.Execution = ExecutionInfo{
 		Num:  1,
 		Msgs: []string{executeMessage},
 	}
@@ -157,8 +159,8 @@ func ProposeCommunityPoolSpend(
 		"tokenPath", tokenPath,
 		"amount", formatUint(amount),
 		"proposalId", formatUint(newProposalId),
-		"quorumAmount", formatUint(proposal.QuorumAmount),
-		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
+		"quorumAmount", formatUint(proposal.Voting.QuorumAmount),
+		"maxVotingWeight", proposal.Voting.MaxVotingWeight.ToString(),
 		"configVersion", formatUint(proposal.ConfigVersion),
 		"createdAt", formatUint(proposal.Status.Schedule.CreateTime),
 	)
@@ -221,7 +223,7 @@ func ProposeParameterChange(
 	}
 
 	// Set execution info for parameter change
-	proposal.Execution = ExecutionInfo{
+	proposal.Data.Execution = ExecutionInfo{
 		Num:  numToExecute,
 		Msgs: splitGov,
 	}
@@ -241,8 +243,8 @@ func ProposeParameterChange(
 		"numToExecute", formatUint(numToExecute),
 		"executions", executions,
 		"proposalId", formatUint(newProposalId),
-		"quorumAmount", formatUint(proposal.QuorumAmount),
-		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
+		"quorumAmount", formatUint(proposal.Voting.QuorumAmount),
+		"maxVotingWeight", proposal.Voting.MaxVotingWeight.ToString(),
 		"configVersion", formatUint(proposal.ConfigVersion),
 		"createdAt", formatUint(proposal.Status.Schedule.CreateTime),
 	)

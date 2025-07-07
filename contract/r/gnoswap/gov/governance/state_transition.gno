@@ -126,20 +126,26 @@ func CreateProposalTransition(proposer std.Address, proposalType ProposalType, t
 		// Create proposal with pre-calculated schedule
 		schedule := createProposalSchedule(s.currentConfig, now)
 		proposal := ProposalInfo{
-			Proposer:     proposer,
-			ProposalType: proposalType,
+			Proposer:      proposer,
+			ConfigVersion: s.configCounter,
 			Status: ProposalStatus{
 				Schedule:    schedule,
 				ActionState: ActionState{}, // Empty action state for new proposal
 			},
-			Yea:                       u256.Zero(),
-			Nay:                       u256.Zero(),
-			MaxVotingWeight:           maxVotingWeight,
-			PossibleAddressWithWeight: possibleAddresses,
-			ConfigVersion:             s.configCounter,
-			QuorumAmount:              quorumAmount,
-			Title:                     title,
-			Description:               description,
+			Voting: VotingInfo{
+				Yea:                       u256.Zero(),
+				Nay:                       u256.Zero(),
+				MaxVotingWeight:           maxVotingWeight,
+				PossibleAddressWithWeight: possibleAddresses,
+				QuorumAmount:              quorumAmount,
+			},
+			Metadata: ProposalMetadata{
+				Title:       title,
+				Description: description,
+			},
+			Data: ProposalData{
+				ProposalType: proposalType,
+			},
 		}
 
 		return s.WithNewProposal(proposer, proposal), nil
@@ -173,7 +179,7 @@ func CastVoteTransition(proposalId uint64, voter std.Address, vote bool) Transit
 		}
 
 		// Get voter weight
-		weight := proposal.PossibleAddressWithWeight[voter]
+		weight := proposal.Voting.PossibleAddressWithWeight[voter]
 		if weight == 0 {
 			return s, errNotEnoughVotingWeight
 		}
@@ -225,7 +231,7 @@ func ExecuteProposalTransition(proposalId uint64) Transition {
 		}
 
 		// Validate proposal can be executed
-		if proposal.ProposalType == Text {
+		if proposal.Data.ProposalType == Text {
 			return s, errTextProposalNotExecutable
 		}
 
@@ -311,7 +317,7 @@ func CreateAndValidateProposal(proposer std.Address, proposalType ProposalType, 
 				return errors.New("proposal not found")
 			}
 
-			if proposal.Title != title {
+			if proposal.Metadata.Title != title {
 				return errors.New("proposal title mismatch")
 			}
 
@@ -346,7 +352,7 @@ func VoteTransition(proposalId uint64, voter std.Address, vote bool) Transition 
 		}
 
 		// Get voting weight
-		weight, exists := proposal.PossibleAddressWithWeight[voter]
+		weight, exists := proposal.Voting.PossibleAddressWithWeight[voter]
 		if !exists || weight == 0 {
 			return s, errNotEnoughVotingWeight
 		}

@@ -7,15 +7,15 @@ func GetProposerByProposalId(proposalId uint64) string {
 }
 
 func GetProposalTypeByProposalId(proposalId uint64) string {
-	return mustGetProposal(proposalId).ProposalType.String()
+	return mustGetProposal(proposalId).Data.ProposalType.String()
 }
 
 func GetYeaByProposalId(proposalId uint64) string {
-	return mustGetProposal(proposalId).Yea.ToString()
+	return mustGetProposal(proposalId).Voting.Yea.ToString()
 }
 
 func GetNayByProposalId(proposalId uint64) string {
-	return mustGetProposal(proposalId).Nay.ToString()
+	return mustGetProposal(proposalId).Voting.Nay.ToString()
 }
 
 func GetConfigVersionByProposalId(proposalId uint64) uint64 {
@@ -23,15 +23,15 @@ func GetConfigVersionByProposalId(proposalId uint64) uint64 {
 }
 
 func GetQuorumAmountByProposalId(proposalId uint64) uint64 {
-	return mustGetProposal(proposalId).QuorumAmount
+	return mustGetProposal(proposalId).Voting.QuorumAmount
 }
 
 func GetTitleByProposalId(proposalId uint64) string {
-	return mustGetProposal(proposalId).Title
+	return mustGetProposal(proposalId).Metadata.Title
 }
 
 func GetDescriptionByProposalId(proposalId uint64) string {
-	return mustGetProposal(proposalId).Description
+	return mustGetProposal(proposalId).Metadata.Description
 }
 
 // GetExecutionStateByProposalId is deprecated. Use GetProposalStatusById instead.

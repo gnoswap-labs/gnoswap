@@ -136,9 +136,10 @@ func Execute(cur realm, proposalId uint64) error {
 }
 
 func executeProposal(cur realm, ctx *ExecutionContext, registry *ParameterRegistry) error {
-	switch ctx.Proposal.ProposalType {
+	data := ctx.Proposal.Data
+	switch data.ProposalType {
 	case ParameterChange, CommunityPoolSpend:
-		if err := executeParameterChange(cur, ctx.Proposal.Execution.Msgs, registry); err != nil {
+		if err := executeParameterChange(cur, data.Execution.Msgs, registry); err != nil {
 			return err
 		}
 		return nil
@@ -183,7 +184,7 @@ func executeParameterChange(cur realm, msgs []string, registry *ParameterRegistr
 
 // dispatchRoleChange function calls different functions depending on the type of role change
 func dispatchRoleChange(cur realm, proposal *ProposalInfo) error {
-	roleInfo := proposal.RoleChange
+	roleInfo := proposal.Data.RoleChange
 
 	switch roleInfo.Action {
 	case AddRole:
@@ -293,7 +294,7 @@ func validateProposalState(proposal *ProposalInfo) ExecutionValidator {
 	isCanceled := proposal.Status.ActionState.IsCanceled()
 	
 	return ExecutionValidator{
-		isTextProposal:    proposal.ProposalType == Text,
+		isTextProposal:    proposal.Data.ProposalType == Text,
 		isAlreadyExecuted: isExecuted,
 		isAlreadyCanceled: isCanceled,
 		isAlreadyRejected: status == StatusRejected,
@@ -364,9 +365,9 @@ func validateExecutionWindow(now, windowStart, windowEnd uint64) error {
 }
 
 func validateVotes(pp *ProposalInfo) error {
-	yea := pp.Yea.Uint64()
-	nea := pp.Nay.Uint64()
-	quorum := pp.QuorumAmount
+	yea := pp.Voting.Yea.Uint64()
+	nea := pp.Voting.Nay.Uint64()
+	quorum := pp.Voting.QuorumAmount
 
 	if yea < quorum {
 		return ufmt.Errorf("quorum not met (yes(%d) < quorum(%d))", yea, quorum)
@@ -388,11 +389,11 @@ func updateProposalState(ctx *ExecutionContext) {
 }
 
 func validateCommunityPoolToken(pp *ProposalInfo) error {
-	if pp.ProposalType != CommunityPoolSpend {
+	if pp.Data.ProposalType != CommunityPoolSpend {
 		return nil
 	}
 
-	common.MustRegistered(pp.CommunityPoolSpend.TokenPath)
+	common.MustRegistered(pp.Data.CommunityPoolSpend.TokenPath)
 
 	return nil
 }

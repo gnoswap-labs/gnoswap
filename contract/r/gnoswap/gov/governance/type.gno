@@ -66,15 +66,8 @@ type ActionState struct {
 	ExecutedBy std.Address // Who executed the proposal
 }
 
-// IsCanceled returns true if the proposal has been canceled
-func (a ActionState) IsCanceled() bool {
-	return a.Canceled
-}
-
-// IsExecuted returns true if the proposal has been executed
-func (a ActionState) IsExecuted() bool {
-	return a.Executed
-}
+func (a ActionState) IsCanceled() bool { return a.Canceled }
+func (a ActionState) IsExecuted() bool { return a.Executed }
 
 // IsActionTaken returns true if any action has been taken on the proposal
 func (a ActionState) IsActionTaken() bool {
@@ -136,46 +129,38 @@ type ProposalStatus struct {
 	ActionState ActionState
 }
 
-// ProposalInfo represents all the information about a proposal
-type ProposalInfo struct {
-	// The address of the proposer
-	Proposer std.Address
+// VotingInfo contains all voting-related information for a proposal
+type VotingInfo struct {
+	Yea             *u256.Uint // collected yes votes
+	Nay             *u256.Uint // collected no votes
+	MaxVotingWeight *u256.Uint // The max voting weight at the time of proposal creation
 
-	// Text, CommunityPoolSpend, ParameterChange
-	ProposalType ProposalType
-
-	// Combined status as per RFC (Schedule + ActionState)
-	Status ProposalStatus
-
-	// How many yes votes have been collected
-	Yea *u256.Uint
-
-	// How many no votes have been collected
-	Nay *u256.Uint
-
-	// The max voting weight at the time of proposal creation
-	MaxVotingWeight *u256.Uint
-
+	// Addresses that can vote with their respective weights
 	PossibleAddressWithWeight map[std.Address]uint64
 
-	// The version of the config that this proposal was created with
-	ConfigVersion uint64
+	QuorumAmount uint64 // How many total votes must be collected for the proposal
+}
 
-	// How many total votes must be collected for the proposal
-	QuorumAmount uint64
-
-	// The title of the proposal
-	Title string
-
-	// The description of the proposal
+// ProposalMetadata contains descriptive information about a proposal
+type ProposalMetadata struct {
+	Title       string
 	Description string
+}
 
-	// CommunityPoolSpend
+// ProposalData contains the type-specific data for a proposal
+type ProposalData struct {
+	ProposalType       ProposalType
 	CommunityPoolSpend CommunityPoolSpendInfo
+	Execution          ExecutionInfo
+	RoleChange         RoleChangeInfo
+}
 
-	// Execution (ParamterChange)
-	Execution ExecutionInfo
-
-	// RoleChange
-	RoleChange RoleChangeInfo
+// ProposalInfo represents all the information about a proposal
+type ProposalInfo struct {
+	Proposer      std.Address // The address of the proposer
+	ConfigVersion uint64      // The version of the config that this proposal was created with
+	Status        ProposalStatus
+	Voting        VotingInfo
+	Metadata      ProposalMetadata
+	Data          ProposalData
 }
