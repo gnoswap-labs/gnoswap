@@ -4,7 +4,6 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
@@ -40,17 +39,30 @@ func TestInitialConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// given
+			// Save original state and create test state
+			originalState := governanceState
+			testState := NewGovernanceState(tt.config)
+
+			// Temporarily replace global state
+			governanceState = testState
+
+			// Restore original state after test
+			defer func() {
+				governanceState = originalState
+			}()
+
 			// when
-			setupMockConfig(t, tt.config)
+			currentConfig := governanceState.currentConfig
 
 			// then
-			uassert.Equal(t, config.VotingStartDelay, tt.expectedConfig.VotingStartDelay)
-			uassert.Equal(t, config.VotingPeriod, tt.expectedConfig.VotingPeriod)
-			uassert.Equal(t, config.VotingWeightSmoothingDuration, tt.expectedConfig.VotingWeightSmoothingDuration)
-			uassert.Equal(t, config.Quorum, tt.expectedConfig.Quorum)
-			uassert.Equal(t, config.ProposalCreationThreshold, tt.expectedConfig.ProposalCreationThreshold)
-			uassert.Equal(t, config.ExecutionDelay, tt.expectedConfig.ExecutionDelay)
-			uassert.Equal(t, config.ExecutionWindow, tt.expectedConfig.ExecutionWindow)
+			uassert.Equal(t, currentConfig.VotingStartDelay, tt.expectedConfig.VotingStartDelay)
+			uassert.Equal(t, currentConfig.VotingPeriod, tt.expectedConfig.VotingPeriod)
+			uassert.Equal(t, currentConfig.VotingWeightSmoothingDuration, tt.expectedConfig.VotingWeightSmoothingDuration)
+			uassert.Equal(t, currentConfig.Quorum, tt.expectedConfig.Quorum)
+			uassert.Equal(t, currentConfig.ProposalCreationThreshold, tt.expectedConfig.ProposalCreationThreshold)
+			uassert.Equal(t, currentConfig.ExecutionDelay, tt.expectedConfig.ExecutionDelay)
+			uassert.Equal(t, currentConfig.ExecutionWindow, tt.expectedConfig.ExecutionWindow)
 		})
 	}
 }
@@ -104,7 +116,18 @@ func TestReconfigureByAdmin(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
-			setupMockConfig(t, tt.config)
+			// Save original state and create test state
+			originalState := governanceState
+			testState := NewGovernanceState(tt.config)
+
+			// Temporarily replace global state
+			governanceState = testState
+
+			// Restore original state after test
+			defer func() {
+				governanceState = originalState
+			}()
+
 			setupConfigAdminPermission(t)
 
 			// when
@@ -200,7 +223,10 @@ func TestGetConfigVersion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
-			initConfig(t)
+			// Save original state and create test state
+			originalState := governanceState
+
+			// Create initial config
 			config1 := Config{
 				VotingStartDelay:              0,
 				VotingPeriod:                  0,
@@ -210,6 +236,11 @@ func TestGetConfigVersion(t *testing.T) {
 				ExecutionDelay:                0,
 				ExecutionWindow:               0,
 			}
+
+			// Create test state with initial config
+			testState := NewGovernanceState(config1)
+
+			// Add second config version
 			config2 := Config{
 				VotingStartDelay:              1,
 				VotingPeriod:                  1,
@@ -219,11 +250,15 @@ func TestGetConfigVersion(t *testing.T) {
 				ExecutionDelay:                1,
 				ExecutionWindow:               1,
 			}
+			testState = testState.WithNewConfig(config2)
 
-			config = config1
-			setConfigVersion(1, config1)
-			config = config2
-			setConfigVersion(2, config2)
+			// Temporarily replace global state
+			governanceState = testState
+
+			// Restore original state after test
+			defer func() {
+				governanceState = originalState
+			}()
 
 			// when
 			var result Config
@@ -250,12 +285,6 @@ func TestGetConfigVersion(t *testing.T) {
 	}
 }
 
-func initConfig(t *testing.T) {
-	t.Helper()
-	config = Config{}
-	configVersions = avl.NewTree()
-}
-
 func setupConfigAdminPermission(t *testing.T) {
 	t.Helper()
 
@@ -272,16 +301,6 @@ func setupConfigAdminPermission(t *testing.T) {
 
 		return nil
 	})
-}
-
-func setupMockConfig(t *testing.T, newConfig Config) {
-	t.Helper()
-
-	config = newConfig
-	configVersions = avl.NewTree()
-	setConfigVersion(1, newConfig)
-
-	setupConfigAdminPermission(t)
 }
 
 func createMockConfig() Config {

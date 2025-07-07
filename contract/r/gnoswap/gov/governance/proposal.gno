@@ -3,25 +3,13 @@ package governance
 import (
 	"std"
 	"strings"
-	"time"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
-	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
-	gs "gno.land/r/gnoswap/v1/gov/staker"
-	"gno.land/r/gnoswap/v1/gov/xgns"
 	"gno.land/r/gnoswap/v1/halt"
-)
-
-var (
-	proposalId               uint64
-	proposals                = avl.NewTree() // Only stores active proposals
-	archivedProposals        = avl.NewTree() // Stores terminated proposals
-	proposalIdListByProposer = avl.NewTree() // proposer -> proposalId
 )
 
 // Governance can execute multiple messages in a single proposal
@@ -32,10 +20,6 @@ const (
 	ROLE_PREFIX = "ROLE_CHANGE:"
 )
 
-func init() {
-	proposalId = 0 // initialize proposalId
-}
-
 // ProposeText creates a new text proposal with the given data
 // It checks if the proposer is eligible to create a proposal and if they don't have an active proposal.
 // Returns the proposal ID
@@ -44,51 +28,28 @@ func ProposeText(
 	cur realm,
 	title string,
 	description string,
-) uint64 { // proposalId
+) (newProposalId uint64) {
 	if err := halt.IsHalted(); err != nil {
 		panic(err)
 	}
-	proposer := std.PreviousRealm().Address()
-	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
-	if !enough {
-		panic(addDetailToError(
-			errNotEnoughBalance,
-			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
-		))
-	}
 
 	en.MintAndDistributeGns(cross)
-	updateProposalsState()
 
-	now := uint64(time.Now().Unix())
-	// votingMax does not include quantities delegated through Launchpad.
-	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
-
-	maxVotingWeight := u256.NewUint(votingMax)
-	quorumAmount := maxVotingWeight.Uint64() * config.Quorum / 100
-
-	proposal := ProposalInfo{
-		Proposer:     proposer,
-		ProposalType: Text,
-		State: ProposalState{
-			Created:   true,
-			CreatedAt: now,
-			Upcoming:  true,
-		},
-		Yea:                       u256.Zero(),
-		Nay:                       u256.Zero(),
-		MaxVotingWeight:           maxVotingWeight,
-		PossibleAddressWithWeight: possibleAddressWithWeight,
-		ConfigVersion:             uint64(configVersions.Size()), // use latest config version
-		QuorumAmount:              quorumAmount,
-		Title:                     title,
-		Description:               description,
+	// Use state transition to create proposal
+	proposer := std.PreviousRealm().Address()
+	transition := CreateProposalTransition(proposer, Text, title, description)
+	if err := applyTransition(transition); err != nil {
+		panic(err)
 	}
 
-	increaseProposalId()
-	newProposalId := getProposalId()
-	proposals.Set(formatUint(newProposalId), proposal)
-	proposalIdListByProposer.Set(proposer.String(), newProposalId)
+	// Get the new proposal ID from the updated state
+	newProposalId = governanceState.GetProposalCounter()
+
+	// Get the created proposal for event data
+	proposal, exists := governanceState.GetProposal(newProposalId)
+	if !exists {
+		panic(ufmt.Sprintf("proposal(%d) not found", newProposalId))
+	}
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -103,7 +64,7 @@ func ProposeText(
 		"configVersion", formatUint(proposal.ConfigVersion),
 		"createdAt", formatUint(proposal.State.CreatedAt),
 	)
-	return proposalId
+	return newProposalId
 }
 
 // ProposeCommunityPoolSpend creates a new community pool spend proposal with the given data
@@ -117,7 +78,7 @@ func ProposeCommunityPoolSpend(
 	to std.Address,
 	tokenPath string,
 	amount uint64,
-) uint64 { // proposalId
+) (newProposalId uint64) {
 	// Skip halt check if current level is MainnetSafeMode
 	currentLevel := halt.GetCurrentHaltLevel()
 	if currentLevel != halt.LvMainnetSafeMode {
@@ -131,14 +92,7 @@ func ProposeCommunityPoolSpend(
 		}
 	}
 
-	proposer := std.PreviousRealm().Address()
-	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
-	if !enough {
-		panic(addDetailToError(
-			errNotEnoughBalance,
-			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
-		))
-	}
+	// validate input
 	if !to.IsValid() {
 		panic(addDetailToError(
 			errInvalidAddress,
@@ -154,13 +108,22 @@ func ProposeCommunityPoolSpend(
 	}
 
 	en.MintAndDistributeGns(cross)
-	updateProposalsState()
 
-	now := uint64(time.Now().Unix())
-	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
+	// Create base proposal
+	proposer := std.PreviousRealm().Address()
+	transition := CreateProposalTransition(proposer, CommunityPoolSpend, title, description)
+	if err := applyTransition(transition); err != nil {
+		panic(err)
+	}
 
-	maxVotingWeight := u256.NewUint(votingMax)
-	quorumAmount := maxVotingWeight.Uint64() * config.Quorum / 100
+	// Get the new proposal ID from the updated state
+	newProposalId = governanceState.GetProposalCounter()
+
+	// Get the created proposal and update it with CommunityPoolSpend specific fields
+	proposal, exists := governanceState.GetProposal(newProposalId)
+	if !exists {
+		panic(ufmt.Sprintf("proposal(%d) not found", newProposalId))
+	}
 
 	executeMessage := makeExecuteMessage(
 		consts.COMMUNITY_POOL_PATH,
@@ -168,36 +131,20 @@ func ProposeCommunityPoolSpend(
 		[]string{tokenPath, to.String(), formatUint(amount)},
 	)
 
-	proposal := ProposalInfo{
-		Proposer:     proposer,
-		ProposalType: CommunityPoolSpend,
-		State: ProposalState{
-			Created:   true,
-			CreatedAt: now,
-			Upcoming:  true,
-		},
-		Yea:                       u256.Zero(),
-		Nay:                       u256.Zero(),
-		MaxVotingWeight:           maxVotingWeight,
-		PossibleAddressWithWeight: possibleAddressWithWeight,
-		ConfigVersion:             uint64(configVersions.Size()),
-		QuorumAmount:              quorumAmount,
-		Title:                     title,
-		Description:               description,
-		CommunityPoolSpend: CommunityPoolSpendInfo{
-			To:        to,
-			TokenPath: tokenPath,
-			Amount:    amount,
-		},
-		Execution: ExecutionInfo{
-			Num:  1,
-			Msgs: []string{executeMessage},
-		},
+	proposal.CommunityPoolSpend = CommunityPoolSpendInfo{
+		To:        to,
+		TokenPath: tokenPath,
+		Amount:    amount,
+	}
+	proposal.Execution = ExecutionInfo{
+		Num:  1,
+		Msgs: []string{executeMessage},
 	}
 
-	increaseProposalId()
-	proposals.Set(formatUint(proposalId), proposal)
-	proposalIdListByProposer.Set(proposer.String(), proposalId)
+	// Update the proposal in state
+	governanceState = governanceState.WithUpdatedProposal(newProposalId, func(p ProposalInfo) ProposalInfo {
+		return proposal
+	})
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -209,14 +156,14 @@ func ProposeCommunityPoolSpend(
 		"to", to.String(),
 		"tokenPath", tokenPath,
 		"amount", formatUint(amount),
-		"proposalId", formatUint(proposalId),
+		"proposalId", formatUint(newProposalId),
 		"quorumAmount", formatUint(proposal.QuorumAmount),
 		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
 		"configVersion", formatUint(proposal.ConfigVersion),
 		"createdAt", formatUint(proposal.State.CreatedAt),
 	)
 
-	return proposalId
+	return newProposalId
 }
 
 // ProposeParameterChange creates a new parameter change with the given data
@@ -233,18 +180,12 @@ func ProposeParameterChange(
 	description string,
 	numToExecute uint64,
 	executions string,
-) uint64 { // proposalId
+) (newProposalId uint64) {
 	if err := halt.IsHalted(); err != nil {
 		panic(err)
 	}
-	proposer := std.PreviousRealm().Address()
-	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
-	if !enough {
-		panic(addDetailToError(
-			errNotEnoughBalance,
-			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
-		))
-	}
+
+	// validate input
 	if numToExecute == 0 {
 		panic(addDetailToError(
 			errInvalidInput,
@@ -252,6 +193,7 @@ func ProposeParameterChange(
 		))
 	}
 
+	proposer := std.PreviousRealm().Address()
 	if strings.HasPrefix(executions, ROLE_PREFIX) {
 		return handleRoleChangeProposal(cur, title, description, proposer, executions)
 	}
@@ -266,39 +208,28 @@ func ProposeParameterChange(
 	}
 
 	en.MintAndDistributeGns(cross)
-	updateProposalsState()
 
-	now := uint64(time.Now().Unix())
-	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
-
-	maxVotingWeight := u256.NewUint(votingMax)
-	quorumAmount := maxVotingWeight.Uint64() * config.Quorum / 100
-
-	proposal := ProposalInfo{
-		Proposer:     proposer,
-		ProposalType: ParameterChange,
-		State: ProposalState{
-			Created:   true,
-			CreatedAt: now,
-			Upcoming:  true,
-		},
-		Yea:                       u256.Zero(),
-		Nay:                       u256.Zero(),
-		MaxVotingWeight:           maxVotingWeight,
-		PossibleAddressWithWeight: possibleAddressWithWeight,
-		ConfigVersion:             uint64(configVersions.Size()),
-		QuorumAmount:              quorumAmount,
-		Title:                     title,
-		Description:               description,
-		Execution: ExecutionInfo{
-			Num:  numToExecute,
-			Msgs: splitGov,
-		},
+	transition := CreateProposalTransition(proposer, ParameterChange, title, description)
+	if err := applyTransition(transition); err != nil {
+		panic(err)
 	}
 
-	increaseProposalId()
-	proposals.Set(formatUint(proposalId), proposal)
-	proposalIdListByProposer.Set(proposer.String(), proposalId)
+	newProposalId = governanceState.GetProposalCounter()
+	proposal, exists := governanceState.GetProposal(newProposalId)
+	if !exists {
+		panic(ufmt.Sprintf("proposal(%d) not found", newProposalId))
+	}
+
+	// Set execution info for parameter change
+	proposal.Execution = ExecutionInfo{
+		Num:  numToExecute,
+		Msgs: splitGov,
+	}
+
+	// Update the proposal in state with execution info
+	governanceState = governanceState.WithUpdatedProposal(newProposalId, func(p ProposalInfo) ProposalInfo {
+		return proposal
+	})
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -309,33 +240,12 @@ func ProposeParameterChange(
 		"description", description,
 		"numToExecute", formatUint(numToExecute),
 		"executions", executions,
-		"proposalId", formatUint(proposalId),
+		"proposalId", formatUint(newProposalId),
 		"quorumAmount", formatUint(proposal.QuorumAmount),
 		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
 		"configVersion", formatUint(proposal.ConfigVersion),
 		"createdAt", formatUint(proposal.State.CreatedAt),
 	)
 
-	return proposalId
-}
-
-// checkEnoughXGnsToPropose checks if the proposer has enough xGNS to propose a proposal.
-// ref: https://docs.gnoswap.io/core-concepts/governance#scope-of-proposals-5
-// It returns a boolean indicating if the proposer has enough xGNS, the balance of xGNS, and the threshold of xGNS.
-func checkEnoughXGnsToPropose(proposer std.Address) (bool, int64, uint64) {
-	xGNSBalance := xgns.BalanceOf(proposer)
-
-	if xGNSBalance < int64(config.ProposalCreationThreshold) {
-		return false, xGNSBalance, config.ProposalCreationThreshold
-	}
-
-	return true, xGNSBalance, config.ProposalCreationThreshold
-}
-
-func increaseProposalId() {
-	proposalId++
-}
-
-func getProposalId() uint64 {
-	return proposalId
+	return newProposalId
 }
