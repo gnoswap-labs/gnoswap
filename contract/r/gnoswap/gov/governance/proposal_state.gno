@@ -1,9 +1,5 @@
 package governance
 
-import (
-	"gno.land/p/demo/ufmt"
-)
-
 // ProposalStatusEnum represents the current status of a proposal
 type ProposalStatusEnum int
 
@@ -211,58 +207,6 @@ func (u *proposalStateUpdater) shouldUpdate() bool {
 	return !currentStatus.IsTerminated()
 }
 
-// update processes all possible state transitions in order
-func (u *proposalStateUpdater) update() {
-	transitions := u.getStateTransitions()
-	currentStatus := u.getCurrentStatus()
-
-	for _, transition := range transitions {
-		if transition.from == currentStatus && transition.condition() {
-			// Validate transition is allowed
-			if !currentStatus.CanTransitionTo(transition.to) {
-				panic(ufmt.Sprintf("Invalid state transition from %s to %s",
-					currentStatus.String(), transition.to.String()))
-			}
-			transition.action()
-			break // Only one transition per update cycle
-		}
-	}
-}
-
-// getStateTransitions returns all possible state transitions
-func (u *proposalStateUpdater) getStateTransitions() []StateTransition {
-	return []StateTransition{
-		{
-			name:      "upcoming_to_active",
-			from:      StatusUpcoming,
-			to:        StatusActive,
-			condition: u.isVotingPhase,
-			action:    u.startVoting,
-		},
-		{
-			name:      "active_to_passed",
-			from:      StatusActive,
-			to:        StatusPassed,
-			condition: u.isVotingEndedAndPassed,
-			action:    u.markAsPassed,
-		},
-		{
-			name:      "active_to_rejected",
-			from:      StatusActive,
-			to:        StatusRejected,
-			condition: u.isVotingEndedAndRejected,
-			action:    u.markAsRejected,
-		},
-		{
-			name:      "passed_to_expired",
-			from:      StatusPassed,
-			to:        StatusExpired,
-			condition: u.isExecutionExpired,
-			action:    u.markAsExpired,
-		},
-	}
-}
-
 // Time period calculations
 func (u *proposalStateUpdater) getVotingPeriod() (start, end uint64) {
 	// Use Status.Schedule
@@ -332,28 +276,26 @@ func (u *proposalStateUpdater) isExecutionExpired() bool {
 }
 
 // State transition actions
+// NOTE: These methods are now empty as state is calculated dynamically from Status.
+// They are kept for backward compatibility but will be removed in future versions.
 func (u *proposalStateUpdater) startVoting() {
-	u.proposal.State.Upcoming = false
-	u.proposal.State.Active = true
+	// State is now calculated dynamically from Status.Schedule
+	// No need to update legacy State fields
 }
 
 func (u *proposalStateUpdater) markAsPassed() {
-	u.proposal.State.Passed = true
-	u.proposal.State.PassedAt = u.now
-	u.proposal.State.Upcoming = false
-	u.proposal.State.Active = false
+	// State is now calculated dynamically from Status.Schedule and votes
+	// No need to update legacy State fields
 }
 
 func (u *proposalStateUpdater) markAsRejected() {
-	u.proposal.State.Rejected = true
-	u.proposal.State.RejectedAt = u.now
-	u.proposal.State.Upcoming = false
-	u.proposal.State.Active = false
+	// State is now calculated dynamically from Status.Schedule and votes
+	// No need to update legacy State fields
 }
 
 func (u *proposalStateUpdater) markAsExpired() {
-	u.proposal.State.Expired = true
-	u.proposal.State.ExpiredAt = u.now
+	// State is now calculated dynamically from Status.Schedule
+	// No need to update legacy State fields
 }
 
 // Helper methods

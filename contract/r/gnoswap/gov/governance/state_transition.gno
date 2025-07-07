@@ -199,7 +199,6 @@ func UpdateProposalStateTransition() Transition {
 			updater.config = config
 
 			if updater.shouldUpdate() {
-				updater.update()
 				current = current.WithUpdatedProposal(id, func(_ ProposalInfo) ProposalInfo {
 					return *updater.proposal
 				})
