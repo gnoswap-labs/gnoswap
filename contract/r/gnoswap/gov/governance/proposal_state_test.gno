@@ -5,8 +5,6 @@ package governance
 import (
 	"testing"
 
-	"gno.land/p/demo/avl"
-
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -184,7 +182,19 @@ func TestProposalStateUpdater_GetCurrentStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resetProposalStateEnv(t)
+			// Save original state and create test state
+			originalState := governanceState
+			testConfig := createTestConfig()
+			testState := NewGovernanceState(testConfig)
+
+			// Temporarily replace global state
+			governanceState = testState
+
+			// Restore original state after test
+			defer func() {
+				governanceState = originalState
+			}()
+
 			proposal := tt.setup()
 			updater := newProposalStateUpdater(proposal, 2000)
 
@@ -200,30 +210,42 @@ func TestProposalStateUpdater_GetCurrentPhase(t *testing.T) {
 
 	// Test timeline:
 	// Created: 1000
-	// Voting starts: 1000 + 86400 = 87400
-	// Voting ends: 87400 + 604800 = 692200
-	// Execution starts: 692200 + 86400 = 778600
-	// Execution ends: 778600 + 2592000 = 3370600
+	// Voting starts: 1000 + 100 = 1100
+	// Voting ends: 1100 + 1000 = 2100
+	// Execution starts: 2100 + 200 = 2300
+	// Execution ends: 2300 + 500 = 2800
 
 	tests := []struct {
 		name     string
 		now      uint64
 		expected ProposalPhase
 	}{
-		{"before_voting", 50000, PhaseCreated},
-		{"voting_start", 87400, PhaseVoting},
-		{"during_voting", 300000, PhaseVoting},
-		{"voting_end", 692200, PhaseVoting},
-		{"after_voting", 700000, PhaseVotingEnded},
-		{"execution_start", 778600, PhaseExecution},
-		{"during_execution", 2000000, PhaseExecution},
-		{"execution_end", 3370600, PhaseExecution},
-		{"after_execution", 4000000, PhaseExecutionEnded},
+		{"before_voting", 1050, PhaseCreated},
+		{"voting_start", 1100, PhaseVoting},
+		{"during_voting", 1500, PhaseVoting},
+		{"voting_end", 2100, PhaseVoting},
+		{"after_voting", 2200, PhaseVotingEnded},
+		{"execution_start", 2300, PhaseExecution},
+		{"during_execution", 2500, PhaseExecution},
+		{"execution_end", 2800, PhaseExecution},
+		{"after_execution", 3000, PhaseExecutionEnded},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resetProposalStateEnv(t)
+			// Save original state and create test state
+			originalState := governanceState
+			testConfig := createTestConfig()
+			testState := NewGovernanceState(testConfig)
+
+			// Temporarily replace global state
+			governanceState = testState
+
+			// Restore original state after test
+			defer func() {
+				governanceState = originalState
+			}()
+
 			proposal := createTestProposal(t, createdAt)
 			updater := newProposalStateUpdater(proposal, tt.now)
 
@@ -245,8 +267,8 @@ func TestProposalStateUpdater_GetCurrentPhase(t *testing.T) {
 func TestProposalStateUpdater_StateTransitions(t *testing.T) {
 	createdAt := uint64(1000)
 
-	// Voting starts: 87400, Voting ends: 692200
-	// Execution starts: 778600, Execution ends: 3370600
+	// Voting starts: 1100, Voting ends: 2100
+	// Execution starts: 2300, Execution ends: 2800
 
 	tests := []struct {
 		name           string
@@ -257,7 +279,7 @@ func TestProposalStateUpdater_StateTransitions(t *testing.T) {
 	}{
 		{
 			name: "upcoming_to_active",
-			now:  300000, // during voting (87400 < 300000 < 692200)
+			now:  1500, // during voting (1100 < 1500 < 2100)
 			initialState: func() *ProposalInfo {
 				return createTestProposal(t, createdAt)
 			},
@@ -266,7 +288,7 @@ func TestProposalStateUpdater_StateTransitions(t *testing.T) {
 		},
 		{
 			name: "active_to_passed",
-			now:  700000, // after voting (692200 < 700000 < 778600)
+			now:  2200, // after voting (2100 < 2200 < 2300)
 			initialState: func() *ProposalInfo {
 				p := createTestProposal(t, createdAt)
 				p.State.Upcoming = false
@@ -280,7 +302,7 @@ func TestProposalStateUpdater_StateTransitions(t *testing.T) {
 		},
 		{
 			name: "active_to_rejected",
-			now:  700000, // after voting
+			now:  2200, // after voting
 			initialState: func() *ProposalInfo {
 				p := createTestProposal(t, createdAt)
 				p.State.Upcoming = false
@@ -294,13 +316,13 @@ func TestProposalStateUpdater_StateTransitions(t *testing.T) {
 		},
 		{
 			name: "passed_to_expired",
-			now:  4000000, // after execution (3370600 < 4000000)
+			now:  3000, // after execution (2800 < 3000)
 			initialState: func() *ProposalInfo {
 				p := createTestProposal(t, createdAt)
 				p.State.Upcoming = false
 				p.State.Active = false
 				p.State.Passed = true
-				p.State.PassedAt = 700000
+				p.State.PassedAt = 2200
 				return p
 			},
 			expectedStatus: StatusExpired,
@@ -310,7 +332,19 @@ func TestProposalStateUpdater_StateTransitions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resetProposalStateEnv(t)
+			// Save original state and create test state
+			originalState := governanceState
+			testConfig := createTestConfig()
+			testState := NewGovernanceState(testConfig)
+
+			// Temporarily replace global state
+			governanceState = testState
+
+			// Restore original state after test
+			defer func() {
+				governanceState = originalState
+			}()
+
 			proposal := tt.initialState()
 			updater := newProposalStateUpdater(proposal, tt.now)
 
@@ -417,7 +451,19 @@ func TestProposalStateUpdater_ShouldUpdate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resetProposalStateEnv(t)
+			// Save original state and create test state
+			originalState := governanceState
+			testConfig := createTestConfig()
+			testState := NewGovernanceState(testConfig)
+
+			// Temporarily replace global state
+			governanceState = testState
+
+			// Restore original state after test
+			defer func() {
+				governanceState = originalState
+			}()
+
 			proposal := tt.setup()
 			updater := newProposalStateUpdater(proposal, 2000)
 
@@ -426,28 +472,4 @@ func TestProposalStateUpdater_ShouldUpdate(t *testing.T) {
 			}
 		})
 	}
-}
-
-func resetProposalStateEnv(t *testing.T) {
-	t.Helper()
-	resetProposalStateConfig(t)
-	proposals = avl.NewTree()
-	votes = avl.NewTree()
-	userVotes = avl.NewTree()
-}
-
-func resetProposalStateConfig(t *testing.T) {
-	t.Helper()
-
-	config = Config{
-		VotingStartDelay:              uint64(86400),         // 1d
-		VotingPeriod:                  uint64(604800),        // 7d
-		VotingWeightSmoothingDuration: uint64(86400),         // 1d
-		Quorum:                        uint64(50),            // 50% of total xGNS supply
-		ProposalCreationThreshold:     uint64(1_000_000_000), // 1_000_000_000
-		ExecutionDelay:                uint64(86400),         // 1d
-		ExecutionWindow:               uint64(2592000),       // 30d
-	}
-	configVersions = avl.NewTree()
-	setConfigVersion(1, config)
 }

@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
@@ -158,13 +157,26 @@ func TestGetProposalStatus(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			proposals = avl.NewTree()
-			proposals.Set(formatUint(tc.proposalId), tc.proposal)
-
-			config = Config{
+			// Create a new governance state with test config
+			testConfig := Config{
 				VotingStartDelay: uint64(86400),
 				VotingPeriod:     uint64(604800),
 			}
+
+			// Save original state and create test state
+			originalState := governanceState
+			testState := NewGovernanceState(testConfig)
+
+			// Add proposal to test state
+			testState = testState.WithNewProposal(tc.proposal.Proposer, tc.proposal)
+
+			// Temporarily replace global state
+			governanceState = testState
+
+			// Restore original state after test
+			defer func() {
+				governanceState = originalState
+			}()
 
 			// when
 			status := getProposalStatus(tc.inputProposalId)
@@ -239,8 +251,20 @@ func TestGetProposalVotes(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			proposals = avl.NewTree()
-			proposals.Set(formatUint(tc.proposalId), tc.proposal)
+			// Save original state and create test state
+			originalState := governanceState
+			testState := NewGovernanceState(Config{})
+
+			// Add proposal to test state
+			testState = testState.WithNewProposal(tc.proposal.Proposer, tc.proposal)
+
+			// Temporarily replace global state
+			governanceState = testState
+
+			// Restore original state after test
+			defer func() {
+				governanceState = originalState
+			}()
 
 			// when
 			votes := getProposalVotes(tc.inputProposalId)

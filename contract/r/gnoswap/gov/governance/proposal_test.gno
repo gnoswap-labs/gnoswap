@@ -5,7 +5,6 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
@@ -24,13 +23,6 @@ var (
 	insufficientProposer = testutils.TestAddress("insufficient")
 )
 
-func resetGlobalStateProposal(t *testing.T) {
-	t.Helper()
-	proposalId = 0
-	proposals = avl.NewTree()
-	proposalIdListByProposer = avl.NewTree()
-}
-
 func mockCheckEnoughXGnsToPropose(proposer std.Address) (bool, uint64, uint64) {
 	if proposer == insufficientProposer {
 		return false, 500, 1000
@@ -47,11 +39,20 @@ func mockGetPossibleVotingAddressWithWeight(t *testing.T, timestamp uint64) (uin
 }
 
 func TestProposeText(t *testing.T) {
-	// override for test
-	origProposalCreationThreshold := config.ProposalCreationThreshold
-	config.ProposalCreationThreshold = 0
+	// Save original state and create test state
+	originalState := governanceState
+	testConfig := Config{
+		ProposalCreationThreshold: 0, // Override for test
+	}
+	testState := NewGovernanceState(testConfig)
 
-	resetGlobalStateProposal(t)
+	// Temporarily replace global state
+	governanceState = testState
+
+	// Restore original state after test
+	defer func() {
+		governanceState = originalState
+	}()
 
 	tests := []struct {
 		name        string
@@ -84,10 +85,8 @@ func TestProposeText(t *testing.T) {
 
 			uassert.NoError(t, err)
 
-			prop, exists := proposals.Get(formatUint(pid))
+			proposal, exists := governanceState.GetProposal(pid)
 			uassert.True(t, exists)
-
-			proposal := prop.(ProposalInfo)
 
 			uassert.Equal(t, proposal.Title, tt.title)
 			uassert.Equal(t, proposal.Description, tt.description)
@@ -96,14 +95,25 @@ func TestProposeText(t *testing.T) {
 			uassert.True(t, proposal.State.Upcoming)
 		})
 	}
-
-	config.ProposalCreationThreshold = origProposalCreationThreshold
 }
 
 func TestProposeCommunityPoolSpend(t *testing.T) {
 	t.Skip("")
 
-	resetGlobalStateProposal(t)
+	// Save original state and create test state
+	originalState := governanceState
+	testConfig := Config{
+		ProposalCreationThreshold: 0, // Override for test
+	}
+	testState := NewGovernanceState(testConfig)
+
+	// Temporarily replace global state
+	governanceState = testState
+
+	// Restore original state after test
+	defer func() {
+		governanceState = originalState
+	}()
 
 	testing.SetRealm(adminRealm)
 	func() {
@@ -176,10 +186,8 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 
 			uassert.NoError(t, err)
 
-			prop, exists := proposals.Get(formatUint(pid))
+			proposal, exists := governanceState.GetProposal(pid)
 			uassert.True(t, exists)
-
-			proposal := prop.(ProposalInfo)
 
 			uassert.Equal(t, proposal.ProposalType.String(), CommunityPoolSpend.String())
 			uassert.Equal(t, proposal.CommunityPoolSpend.To, tt.to)
@@ -232,7 +240,20 @@ func TestIntegratedProposeParameterChange(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resetGlobalStateProposal(t)
+			// Save original state and create test state
+			originalState := governanceState
+			testConfig := Config{
+				ProposalCreationThreshold: 0, // Override for test
+			}
+			testState := NewGovernanceState(testConfig)
+
+			// Temporarily replace global state
+			governanceState = testState
+
+			// Restore original state after test
+			defer func() {
+				governanceState = originalState
+			}()
 
 			testing.SetRealm(adminRealm)
 			func() {
@@ -271,10 +292,8 @@ func TestIntegratedProposeParameterChange(t *testing.T) {
 			}
 			uassert.NoError(t, err)
 
-			prop, exists := proposals.Get(formatUint(pid))
+			proposal, exists := governanceState.GetProposal(pid)
 			uassert.True(t, exists)
-
-			proposal := prop.(ProposalInfo)
 
 			uassert.Equal(t, proposal.Title, tt.title)
 			uassert.Equal(t, proposal.Description, tt.description)
