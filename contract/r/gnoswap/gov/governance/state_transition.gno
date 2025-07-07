@@ -123,7 +123,7 @@ func CreateProposalTransition(proposer std.Address, proposalType ProposalType, t
 		maxVotingWeight := u256.NewUint(votingMax)
 		quorumAmount := maxVotingWeight.Uint64() * s.currentConfig.Quorum / 100
 
-		// Create proposal
+		// Create proposal with pre-calculated schedule
 		proposal := ProposalInfo{
 			Proposer:     proposer,
 			ProposalType: proposalType,
@@ -132,6 +132,7 @@ func CreateProposalTransition(proposer std.Address, proposalType ProposalType, t
 				CreatedAt: now,
 				Upcoming:  true,
 			},
+			Schedule:                  createProposalSchedule(s.currentConfig, now),
 			Yea:                       u256.Zero(),
 			Nay:                       u256.Zero(),
 			MaxVotingWeight:           maxVotingWeight,

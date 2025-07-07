@@ -31,6 +31,30 @@ type Config struct {
 	ExecutionWindow uint64
 }
 
+// ProposalSchedule represents the pre-calculated time schedule for a proposal
+type ProposalSchedule struct {
+	CreateTime     uint64 // When the proposal was created
+	ActiveTime     uint64 // When voting starts (CreateTime + VotingStartDelay)
+	VotingEndTime  uint64 // When voting ends (ActiveTime + VotingPeriod)
+	ExecutableTime uint64 // When execution window starts (VotingEndTime + ExecutionDelay)
+	ExpiredTime    uint64 // When execution window ends (ExecutableTime + ExecutionWindow)
+}
+
+// IsVotingPeriod checks if the given time is within the voting period
+func (s ProposalSchedule) IsVotingPeriod(now uint64) bool {
+	return now >= s.ActiveTime && now <= s.VotingEndTime
+}
+
+// IsExecutionPeriod checks if the given time is within the execution period
+func (s ProposalSchedule) IsExecutionPeriod(now uint64) bool {
+	return now >= s.ExecutableTime && now <= s.ExpiredTime
+}
+
+// IsExpired checks if the proposal has expired at the given time
+func (s ProposalSchedule) IsExpired(now uint64) bool {
+	return now > s.ExpiredTime
+}
+
 // ProposalState represents the state of a proposal's execution
 type ProposalState struct {
 	Created   bool
@@ -111,6 +135,9 @@ type ProposalInfo struct {
 
 	// The execution state of the proposal
 	State ProposalState
+
+	// Pre-calculated time schedule for the proposal
+	Schedule ProposalSchedule
 
 	// How many yes votes have been collected
 	Yea *u256.Uint

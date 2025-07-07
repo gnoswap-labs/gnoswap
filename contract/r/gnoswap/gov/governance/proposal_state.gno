@@ -219,12 +219,22 @@ func (u *proposalStateUpdater) getStateTransitions() []StateTransition {
 
 // Time period calculations
 func (u *proposalStateUpdater) getVotingPeriod() (start, end uint64) {
+	// Use pre-calculated schedule if available
+	if u.proposal.Schedule.CreateTime != 0 {
+		return u.proposal.Schedule.ActiveTime, u.proposal.Schedule.VotingEndTime
+	}
+	// Fallback to calculation for backward compatibility
 	start = u.proposal.State.CreatedAt + u.config.VotingStartDelay
 	end = start + u.config.VotingPeriod
 	return
 }
 
 func (u *proposalStateUpdater) getExecutionPeriod() (start, end uint64) {
+	// Use pre-calculated schedule if available
+	if u.proposal.Schedule.CreateTime != 0 {
+		return u.proposal.Schedule.ExecutableTime, u.proposal.Schedule.ExpiredTime
+	}
+	// Fallback to calculation for backward compatibility
 	_, votingEnd := u.getVotingPeriod()
 	start = votingEnd + u.config.ExecutionDelay
 	end = start + u.config.ExecutionWindow
@@ -301,4 +311,20 @@ func (u *proposalStateUpdater) isVotingPassed(yeaVotes, nayVotes uint64) bool {
 func isProposalTerminated(proposal ProposalInfo) bool {
 	updater := &proposalStateUpdater{proposal: &proposal}
 	return updater.getCurrentStatus().IsTerminated()
+}
+
+// createProposalSchedule creates a pre-calculated schedule for a proposal
+func createProposalSchedule(config Config, now uint64) ProposalSchedule {
+	activeTime := now + config.VotingStartDelay
+	votingEndTime := activeTime + config.VotingPeriod
+	executableTime := votingEndTime + config.ExecutionDelay
+	expiredTime := executableTime + config.ExecutionWindow
+
+	return ProposalSchedule{
+		CreateTime:     now,
+		ActiveTime:     activeTime,
+		VotingEndTime:  votingEndTime,
+		ExecutableTime: executableTime,
+		ExpiredTime:    expiredTime,
+	}
 }

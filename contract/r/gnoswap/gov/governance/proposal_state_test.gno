@@ -8,6 +8,7 @@ import (
 
 func createTestProposal(t *testing.T, createdAt uint64) *ProposalInfo {
 	t.Helper()
+	testConfig := createTestConfig()
 	return &ProposalInfo{
 		// Do not use ProposalType::Text when testing expiration
 		// because it will not be expired
@@ -25,6 +26,7 @@ func createTestProposal(t *testing.T, createdAt uint64) *ProposalInfo {
 			Expired:   false,
 			Canceled:  false,
 		},
+		Schedule:      createProposalSchedule(testConfig, createdAt),
 		ConfigVersion: 1,
 	}
 }
