@@ -6,29 +6,47 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// Config represents the configuration of the governor contract
-// ref: https://docs.gnoswap.io/core-concepts/governance#scope-of-proposals-5
-type Config struct {
-	// How long after a proposal is created does voting starrt
-	VotingStartDelay uint64
+// ProposalInfo represents all the information about a proposal
+type ProposalInfo struct {
+	Proposer      std.Address // The address of the proposer
+	ConfigVersion uint64      // The version of the config
+	Status        ProposalStatus
+	Voting        VotingInfo
+	Metadata      ProposalMetadata
+	Data          ProposalData
+}
 
-	// The period during which votes are collected
-	VotingPeriod uint64
+// ProposalStatusEnum combines schedule and action state
+// This represents the complete status information for a proposal
+type ProposalStatus struct {
+	Schedule    ProposalSchedule
+	ActionState ActionState
+}
 
-	// Over how many seconds the voting weight is averaged for proposal voting as creation/cancellation threshold
-	VotingWeightSmoothingDuration uint64
+// VotingInfo contains all voting-related information for a proposal
+type VotingInfo struct {
+	Yea             *u256.Uint // collected yes votes
+	Nay             *u256.Uint // collected no votes
+	MaxVotingWeight *u256.Uint // The max voting weight at the time of proposal creation
 
-	// Percentages of x gns total supply at the time of proposal creation
-	Quorum uint64
+	// Addresses that can vote with their respective weights
+	PossibleAddressWithWeight map[std.Address]uint64
 
-	// The minimum amount of average votes required to create a proposal
-	ProposalCreationThreshold uint64
+	QuorumAmount uint64 // How many total votes must be collected for the proposal
+}
 
-	// How much time must pass after the end of a voting period before a proposal can be executed
-	ExecutionDelay uint64
+// ProposalMetadata contains descriptive information about a proposal
+type ProposalMetadata struct {
+	Title       string
+	Description string
+}
 
-	// The amount of time after the execution delay that the proposal can be executed
-	ExecutionWindow uint64
+// ProposalData contains the type-specific data for a proposal
+type ProposalData struct {
+	ProposalType       ProposalType
+	CommunityPoolSpend CommunityPoolSpendInfo
+	Execution          ExecutionInfo
+	RoleChange         RoleChangeInfo
 }
 
 // ProposalSchedule represents the pre-calculated time schedule for a proposal
@@ -74,9 +92,6 @@ func (a ActionState) IsActionTaken() bool {
 	return a.Canceled || a.Executed
 }
 
-// ProposalState is deprecated and will be removed.
-// Use ProposalStatus (Schedule + ActionState) instead.
-
 type CommunityPoolSpendInfo struct {
 	To        std.Address
 	TokenPath string
@@ -120,47 +135,4 @@ func tryParseProposalType(v string) (ProposalType, error) {
 
 func (p ProposalType) String() string {
 	return string(p)
-}
-
-// ProposalStatusEnum combines schedule and action state
-// This represents the complete status information for a proposal
-type ProposalStatus struct {
-	Schedule    ProposalSchedule
-	ActionState ActionState
-}
-
-// VotingInfo contains all voting-related information for a proposal
-type VotingInfo struct {
-	Yea             *u256.Uint // collected yes votes
-	Nay             *u256.Uint // collected no votes
-	MaxVotingWeight *u256.Uint // The max voting weight at the time of proposal creation
-
-	// Addresses that can vote with their respective weights
-	PossibleAddressWithWeight map[std.Address]uint64
-
-	QuorumAmount uint64 // How many total votes must be collected for the proposal
-}
-
-// ProposalMetadata contains descriptive information about a proposal
-type ProposalMetadata struct {
-	Title       string
-	Description string
-}
-
-// ProposalData contains the type-specific data for a proposal
-type ProposalData struct {
-	ProposalType       ProposalType
-	CommunityPoolSpend CommunityPoolSpendInfo
-	Execution          ExecutionInfo
-	RoleChange         RoleChangeInfo
-}
-
-// ProposalInfo represents all the information about a proposal
-type ProposalInfo struct {
-	Proposer      std.Address // The address of the proposer
-	ConfigVersion uint64      // The version of the config that this proposal was created with
-	Status        ProposalStatus
-	Voting        VotingInfo
-	Metadata      ProposalMetadata
-	Data          ProposalData
 }

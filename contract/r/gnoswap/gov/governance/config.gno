@@ -11,6 +11,26 @@ import (
 	"gno.land/r/gnoswap/v1/halt"
 )
 
+// Config represents the configuration of the governor contract
+// ref: https://docs.gnoswap.io/core-concepts/governance#scope-of-proposals-5
+type Config struct {
+	// VotingStartDelay is the delay before voting starts after proposal creation (in seconds)
+	VotingStartDelay uint64
+	// VotingPeriod is the duration during which votes are collected (in seconds)
+	VotingPeriod uint64
+	// VotingWeightSmoothingDuration is the period over which voting weight is averaged
+	// for proposal creation and cancellation threshold calculations (in seconds)
+	VotingWeightSmoothingDuration uint64
+	// Quorum is the percentage of total GNS supply required for proposal approval
+	Quorum uint64
+	// ProposalCreationThreshold is the minimum average voting weight required to create a proposal
+	ProposalCreationThreshold uint64
+	// ExecutionDelay is the waiting period after voting ends before a proposal can be executed (in seconds)
+	ExecutionDelay uint64
+	// ExecutionWindow is the time window during which an approved proposal can be executed (in seconds)
+	ExecutionWindow uint64
+}
+
 // ReconfigureByAdmin updates the proposal realted configuration.
 // Returns the new configuration version number.
 func ReconfigureByAdmin(
