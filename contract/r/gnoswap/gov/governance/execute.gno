@@ -270,7 +270,7 @@ func validateInitialState(cur realm) {
 	en.MintAndDistributeGns(cross)
 
 	// Update proposal states before execution
-	transition := UpdateProposalStateTransition2()
+	transition := UpdateProposalStateTransition()
 	if err := applyTransition(transition); err != nil {
 		panic(err)
 	}

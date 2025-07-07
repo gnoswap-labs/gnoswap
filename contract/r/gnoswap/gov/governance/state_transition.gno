@@ -186,7 +186,7 @@ func CastVoteTransition(proposalId uint64, voter std.Address, vote bool) StateTr
 }
 
 // UpdateProposalStateTransition2 updates proposal states based on current time
-func UpdateProposalStateTransition2() StateTransition2 {
+func UpdateProposalStateTransition() StateTransition2 {
 	return func(s *GovernanceState) (*GovernanceState, error) {
 		now := uint64(time.Now().Unix())
 		current := s
@@ -283,7 +283,7 @@ func isTerminated(state ProposalState) bool {
 
 // ProcessAllProposals updates all proposal states
 func ProcessAllProposals() StateTransition2 {
-	return UpdateProposalStateTransition2()
+	return UpdateProposalStateTransition()
 }
 
 // CreateAndValidateProposal creates a proposal with validation
@@ -349,7 +349,7 @@ func VoteTransition(proposalId uint64, voter std.Address, vote bool) StateTransi
 // VoteWithUpdate composes state update and vote in a single transition
 func VoteWithUpdate(proposalId uint64, voter std.Address, vote bool) StateTransition2 {
 	return Compose(
-		UpdateProposalStateTransition2(),
+		UpdateProposalStateTransition(),
 		VoteTransition(proposalId, voter, vote),
 	)
 }
@@ -401,7 +401,7 @@ func CancelProposalTransition(proposalId uint64, caller std.Address) StateTransi
 // VoteWithRetry attempts to cast a vote with retry logic
 func VoteWithRetry(proposalId uint64, voter std.Address, vote bool) StateTransition2 {
 	return Compose(
-		Try(UpdateProposalStateTransition2()), // Update states first
+		Try(UpdateProposalStateTransition()), // Update states first
 		CastVoteTransition(proposalId, voter, vote),
 	)
 }

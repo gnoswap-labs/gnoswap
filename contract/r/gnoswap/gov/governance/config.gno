@@ -74,7 +74,7 @@ func reconfigure(
 	en.MintAndDistributeGns(cross)
 
 	// Update proposal states before reconfiguring
-	transition := UpdateProposalStateTransition2()
+	transition := UpdateProposalStateTransition()
 	if err := applyTransition(transition); err != nil {
 		panic(err)
 	}

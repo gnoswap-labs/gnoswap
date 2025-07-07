@@ -26,7 +26,7 @@ func createProposalJsonNode(id uint64, proposal ProposalInfo) *json.Node {
 // GetProposals returns all proposals with necessary information.
 func GetProposals() string {
 	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition2()
+	transition := UpdateProposalStateTransition()
 	if err := applyTransition(transition); err != nil {
 		panic(err)
 	}
@@ -49,7 +49,7 @@ func GetProposals() string {
 // GetProposalById returns a single proposal with necessary information.
 func GetProposalById(id uint64) string {
 	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition2()
+	transition := UpdateProposalStateTransition()
 	if err := applyTransition(transition); err != nil {
 		panic(err)
 	}
@@ -70,7 +70,7 @@ func GetProposalById(id uint64) string {
 
 func GetArchivedProposalById(id uint64) string {
 	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition2()
+	transition := UpdateProposalStateTransition()
 	if err := applyTransition(transition); err != nil {
 		panic(err)
 	}
@@ -92,7 +92,7 @@ func GetArchivedProposalById(id uint64) string {
 // GetVoteStatusFromProposalById returns the vote status(max, yes, no) of a proposal.
 func GetVoteStatusFromProposalById(id uint64) string {
 	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition2()
+	transition := UpdateProposalStateTransition()
 	if err := applyTransition(transition); err != nil {
 		panic(err)
 	}
@@ -118,7 +118,7 @@ func GetVoteStatusFromProposalById(id uint64) string {
 // - timestamp
 func GetVotesByAddress(addr std.Address) string {
 	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition2()
+	transition := UpdateProposalStateTransition()
 	if err := applyTransition(transition); err != nil {
 		panic(err)
 	}
@@ -140,7 +140,7 @@ func GetVotesByAddress(addr std.Address) string {
 // GetVoteByAddressFromProposalById returns the vote of an address from a certain proposal.
 func GetVoteByAddressFromProposalById(addr std.Address, id uint64) string {
 	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition2()
+	transition := UpdateProposalStateTransition()
 	if err := applyTransition(transition); err != nil {
 		panic(err)
 	}

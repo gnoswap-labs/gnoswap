@@ -73,7 +73,7 @@ func Cancel(cur realm, proposalId uint64) {
 
 	// Use CancelProposalTransition with state update
 	transition := Compose(
-		UpdateProposalStateTransition2(),
+		UpdateProposalStateTransition(),
 		CancelProposalTransition(proposalId, caller),
 	)
 
