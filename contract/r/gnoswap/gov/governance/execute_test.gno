@@ -227,11 +227,11 @@ func TestValidateProposalState(t *testing.T) {
 			proposalState := validateProposalState(tt.proposal)
 
 			// then
-			uassert.Equal(t, proposalState.isTextProposal, tt.expected.isTextProposal)
-			uassert.Equal(t, proposalState.isAlreadyExecuted, tt.expected.isAlreadyExecuted)
-			uassert.Equal(t, proposalState.isAlreadyCanceled, tt.expected.isAlreadyCanceled)
-			uassert.Equal(t, proposalState.isAlreadyRejected, tt.expected.isAlreadyRejected)
-			uassert.Equal(t, proposalState.hasPassed, tt.expected.hasPassed)
+			uassert.Equal(t, proposalState.isTextProposal, tt.expected.isTextProposal, "#1 TextProposal")
+			uassert.Equal(t, proposalState.isAlreadyExecuted, tt.expected.isAlreadyExecuted, "#2 AlreadyExecuted")
+			uassert.Equal(t, proposalState.isAlreadyCanceled, tt.expected.isAlreadyCanceled, "#3 AlreadyCanceled")
+			uassert.Equal(t, proposalState.isAlreadyRejected, tt.expected.isAlreadyRejected, "#4 AlreadyRejected")
+			uassert.Equal(t, proposalState.hasPassed, tt.expected.hasPassed, "#5 HasPassed")
 		})
 	}
 }
