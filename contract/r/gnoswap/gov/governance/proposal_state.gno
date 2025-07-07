@@ -109,6 +109,49 @@ func newProposalStateUpdater(proposal *ProposalInfo, now uint64) *proposalStateU
 
 // getCurrentStatus returns the current status based on the proposal state
 func (u *proposalStateUpdater) getCurrentStatus() ProposalStatusEnum {
+	// Priority 1: Check Status field if available
+	if u.proposal.Status.Schedule.CreateTime != 0 {
+		// Check action-based terminal states first (highest priority)
+		if u.proposal.Status.ActionState.IsExecuted() {
+			return StatusExecuted
+		}
+		if u.proposal.Status.ActionState.IsCanceled() {
+			return StatusCanceled
+		}
+
+		// Then check time-based states using Schedule and votes
+		phase := u.getCurrentPhase()
+		
+		// Check if expired (only for non-text proposals after execution window)
+		if u.proposal.ProposalType != Text && phase == PhaseExecutionEnded {
+			return StatusExpired
+		}
+
+		// Check voting results
+		if phase >= PhaseVotingEnded {
+			yeaVotes := u.proposal.Yea.Uint64()
+			nayVotes := u.proposal.Nay.Uint64()
+			if u.isVotingPassed(yeaVotes, nayVotes) {
+				return StatusPassed
+			} else {
+				return StatusRejected
+			}
+		}
+
+		// Check active voting
+		if phase == PhaseVoting {
+			return StatusActive
+		}
+
+		// Before voting starts
+		if phase == PhaseCreated {
+			return StatusUpcoming
+		}
+
+		return StatusUpcoming
+	}
+
+	// Fallback: Use legacy State and ActionState fields
 	state := u.proposal.State
 	actionState := u.proposal.ActionState
 
@@ -222,7 +265,11 @@ func (u *proposalStateUpdater) getStateTransitions() []StateTransition {
 
 // Time period calculations
 func (u *proposalStateUpdater) getVotingPeriod() (start, end uint64) {
-	// Use pre-calculated schedule if available
+	// Priority 1: Use Status.Schedule if available
+	if u.proposal.Status.Schedule.CreateTime != 0 {
+		return u.proposal.Status.Schedule.ActiveTime, u.proposal.Status.Schedule.VotingEndTime
+	}
+	// Priority 2: Use Schedule field if available
 	if u.proposal.Schedule.CreateTime != 0 {
 		return u.proposal.Schedule.ActiveTime, u.proposal.Schedule.VotingEndTime
 	}
@@ -233,7 +280,11 @@ func (u *proposalStateUpdater) getVotingPeriod() (start, end uint64) {
 }
 
 func (u *proposalStateUpdater) getExecutionPeriod() (start, end uint64) {
-	// Use pre-calculated schedule if available
+	// Priority 1: Use Status.Schedule if available
+	if u.proposal.Status.Schedule.CreateTime != 0 {
+		return u.proposal.Status.Schedule.ExecutableTime, u.proposal.Status.Schedule.ExpiredTime
+	}
+	// Priority 2: Use Schedule field if available
 	if u.proposal.Schedule.CreateTime != 0 {
 		return u.proposal.Schedule.ExecutableTime, u.proposal.Schedule.ExpiredTime
 	}
@@ -312,7 +363,11 @@ func (u *proposalStateUpdater) isVotingPassed(yeaVotes, nayVotes uint64) bool {
 
 // isProposalTerminated checks if a proposal is in a terminated state (legacy compatibility)
 func isProposalTerminated(proposal ProposalInfo) bool {
-	// Check ActionState first (takes priority)
+	// Priority 1: Check Status.ActionState if available
+	if proposal.Status.Schedule.CreateTime != 0 && proposal.Status.ActionState.IsActionTaken() {
+		return true
+	}
+	// Priority 2: Check ActionState field
 	if proposal.ActionState.IsActionTaken() {
 		return true
 	}

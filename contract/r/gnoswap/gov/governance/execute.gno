@@ -3,7 +3,6 @@ package governance
 import (
 	"errors"
 	"std"
-
 	"strings"
 	"time"
 
@@ -285,12 +284,27 @@ func getProposal(proposalId uint64) (*ProposalInfo, error) {
 }
 
 func validateProposalState(proposal *ProposalInfo) ExecutionValidator {
+	// Check status dynamically
+	updater := newProposalStateUpdater(proposal, uint64(time.Now().Unix()))
+	status := updater.getCurrentStatus()
+	
+	// Check action states prioritizing Status field
+	isExecuted := false
+	isCanceled := false
+	if proposal.Status.Schedule.CreateTime != 0 {
+		isExecuted = proposal.Status.ActionState.IsExecuted()
+		isCanceled = proposal.Status.ActionState.IsCanceled()
+	} else {
+		isExecuted = proposal.ActionState.IsExecuted()
+		isCanceled = proposal.ActionState.IsCanceled()
+	}
+	
 	return ExecutionValidator{
 		isTextProposal:    proposal.ProposalType == Text,
-		isAlreadyExecuted: proposal.State.Executed,
-		isAlreadyCanceled: proposal.State.Canceled,
-		isAlreadyRejected: proposal.State.Rejected,
-		hasPassed:         proposal.State.Passed,
+		isAlreadyExecuted: isExecuted,
+		isAlreadyCanceled: isCanceled,
+		isAlreadyRejected: status == StatusRejected,
+		hasPassed:         status == StatusPassed,
 	}
 }
 
