@@ -172,7 +172,7 @@ func CastVoteTransition(proposalId uint64, voter std.Address, vote bool) Transit
 		}
 
 		// Check if proposal is canceled
-		if proposal.State.Canceled {
+		if proposal.ActionState.IsCanceled() {
 			return s, errUnableToVoteCanceledProposal
 		}
 
@@ -194,7 +194,7 @@ func UpdateProposalStateTransition() Transition {
 
 		s.IterateProposals(func(id uint64, proposal ProposalInfo) bool {
 			// Skip if already terminated
-			if isTerminated(proposal.State) {
+			if isTerminated(&proposal) {
 				return false
 			}
 
@@ -210,7 +210,7 @@ func UpdateProposalStateTransition() Transition {
 			}
 
 			// Archive if terminated
-			if isTerminated(updater.proposal.State) {
+			if isTerminated(updater.proposal) {
 				current = current.WithArchivedProposal(id)
 			}
 
@@ -234,7 +234,13 @@ func ExecuteProposalTransition(proposalId uint64) Transition {
 			return s, errTextProposalNotExecutable
 		}
 
-		if proposal.State.Executed || proposal.State.Canceled || proposal.State.Rejected {
+		// Check ActionState first
+		if proposal.ActionState.IsActionTaken() {
+			return s, errProposalNotExecutable
+		}
+
+		// Then check time-based states
+		if proposal.State.Rejected {
 			return s, errProposalNotExecutable
 		}
 
@@ -257,8 +263,15 @@ func ExecuteProposalTransition(proposalId uint64) Transition {
 			return s, errors.New("execution window expired")
 		}
 
-		// Update proposal state
+		// Update proposal state with ActionState
+		executor := std.PreviousRealm().Address()
 		return s.WithUpdatedProposal(proposalId, func(p ProposalInfo) ProposalInfo {
+			// Update ActionState
+			p.ActionState.Executed = true
+			p.ActionState.ExecutedAt = now
+			p.ActionState.ExecutedBy = executor
+
+			// Update legacy State for backward compatibility
 			p.State.Executed = true
 			p.State.ExecutedAt = now
 			p.State.Upcoming = false
@@ -275,9 +288,14 @@ func ReconfigureTransition(newConfig Config) Transition {
 	}
 }
 
-// Helper function to check if proposal state is terminated
-func isTerminated(state ProposalState) bool {
-	return state.Executed || state.Expired || state.Canceled || state.Rejected
+// Helper function to check if proposal is terminated
+func isTerminated(proposal *ProposalInfo) bool {
+	// Check ActionState first (takes priority)
+	if proposal.ActionState.IsActionTaken() {
+		return true
+	}
+	// Then check time-based terminal states
+	return proposal.State.Expired || proposal.State.Rejected
 }
 
 // Batch operations using state transitions
@@ -336,7 +354,7 @@ func VoteTransition(proposalId uint64, voter std.Address, vote bool) Transition 
 		}
 
 		// Check if proposal is canceled
-		if proposal.State.Canceled {
+		if proposal.ActionState.IsCanceled() {
 			return s, errUnableToVoteCanceledProposal
 		}
 
@@ -368,7 +386,7 @@ func CancelProposalTransition(proposalId uint64, caller std.Address) Transition 
 		}
 
 		// Check if already canceled
-		if proposal.State.Canceled {
+		if proposal.ActionState.IsCanceled() {
 			return s, errAlreadyCanceledProposal
 		}
 
@@ -392,8 +410,14 @@ func CancelProposalTransition(proposalId uint64, caller std.Address) Transition 
 			}
 		}
 
-		// Cancel the proposal
+		// Cancel the proposal with ActionState
 		return s.WithUpdatedProposal(proposalId, func(p ProposalInfo) ProposalInfo {
+			// Update ActionState
+			p.ActionState.Canceled = true
+			p.ActionState.CanceledAt = now
+			p.ActionState.CanceledBy = caller
+
+			// Update legacy State for backward compatibility
 			p.State.Canceled = true
 			p.State.CanceledAt = now
 			p.State.Upcoming = false

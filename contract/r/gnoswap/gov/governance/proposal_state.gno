@@ -110,16 +110,19 @@ func newProposalStateUpdater(proposal *ProposalInfo, now uint64) *proposalStateU
 // getCurrentStatus returns the current status based on the proposal state
 func (u *proposalStateUpdater) getCurrentStatus() ProposalStatus {
 	state := u.proposal.State
+	actionState := u.proposal.ActionState
 
-	// Check terminal states first
-	if state.Executed {
+	// Check action-based terminal states first (highest priority)
+	if actionState.IsExecuted() {
 		return StatusExecuted
 	}
+	if actionState.IsCanceled() {
+		return StatusCanceled
+	}
+
+	// Then check time-based terminal states
 	if state.Expired {
 		return StatusExpired
-	}
-	if state.Canceled {
-		return StatusCanceled
 	}
 	if state.Rejected {
 		return StatusRejected
@@ -309,6 +312,11 @@ func (u *proposalStateUpdater) isVotingPassed(yeaVotes, nayVotes uint64) bool {
 
 // isProposalTerminated checks if a proposal is in a terminated state (legacy compatibility)
 func isProposalTerminated(proposal ProposalInfo) bool {
+	// Check ActionState first (takes priority)
+	if proposal.ActionState.IsActionTaken() {
+		return true
+	}
+	// Then check ProposalStatus
 	updater := &proposalStateUpdater{proposal: &proposal}
 	return updater.getCurrentStatus().IsTerminated()
 }

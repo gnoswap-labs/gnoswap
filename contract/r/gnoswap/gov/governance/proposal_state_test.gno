@@ -174,6 +174,9 @@ func TestProposalStateUpdater_GetCurrentStatus(t *testing.T) {
 				p.State.Active = false
 				p.State.Passed = true
 				p.State.Executed = true
+				// Set ActionState for proper execution status
+				p.ActionState.Executed = true
+				p.ActionState.ExecutedAt = 1500
 				return p
 			},
 			expected: StatusExecuted,
@@ -432,6 +435,8 @@ func TestProposalStateUpdater_ShouldUpdate(t *testing.T) {
 				p.State.Active = false
 				p.State.Passed = true
 				p.State.Executed = true
+				// Set ActionState for proper execution status
+				p.ActionState.Executed = true
 				return p
 			},
 			expected: false,

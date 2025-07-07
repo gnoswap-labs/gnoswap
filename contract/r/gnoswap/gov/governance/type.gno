@@ -55,6 +55,32 @@ func (s ProposalSchedule) IsExpired(now uint64) bool {
 	return now > s.ExpiredTime
 }
 
+// ActionState represents the action-based state changes of a proposal
+type ActionState struct {
+	Canceled   bool
+	CanceledAt uint64
+	CanceledBy std.Address // Who canceled the proposal
+
+	Executed   bool
+	ExecutedAt uint64
+	ExecutedBy std.Address // Who executed the proposal
+}
+
+// IsCanceled returns true if the proposal has been canceled
+func (a ActionState) IsCanceled() bool {
+	return a.Canceled
+}
+
+// IsExecuted returns true if the proposal has been executed
+func (a ActionState) IsExecuted() bool {
+	return a.Executed
+}
+
+// IsActionTaken returns true if any action has been taken on the proposal
+func (a ActionState) IsActionTaken() bool {
+	return a.Canceled || a.Executed
+}
+
 // ProposalState represents the state of a proposal's execution
 type ProposalState struct {
 	Created   bool
@@ -138,6 +164,9 @@ type ProposalInfo struct {
 
 	// Pre-calculated time schedule for the proposal
 	Schedule ProposalSchedule
+
+	// Action-based state changes (Cancel, Execute)
+	ActionState ActionState
 
 	// How many yes votes have been collected
 	Yea *u256.Uint
