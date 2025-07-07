@@ -189,8 +189,6 @@ func dispatchRoleChange(cur realm, proposal *ProposalInfo) error {
 	switch roleInfo.Action {
 	case AddRole:
 		return executeAddRole(cur, roleInfo)
-	case RemoveRole:
-		return executeRemoveRole(cur, roleInfo)
 	case AddPermission:
 		return executeAddPermission(cur, roleInfo)
 	case RemovePermission:

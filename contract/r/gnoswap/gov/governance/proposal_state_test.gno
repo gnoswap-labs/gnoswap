@@ -11,23 +11,16 @@ func createTestProposal(t *testing.T, createdAt uint64) *ProposalInfo {
 	testConfig := createTestConfig()
 	schedule := createProposalSchedule(testConfig, createdAt)
 	return &ProposalInfo{
-		// Do not use ProposalType::Text when testing expiration
+		// Do not use Text type when testing expiration
 		// because it will not be expired
-		ProposalType: CommunityPoolSpend,
-		QuorumAmount: 100,
-		Yea:          u256.NewUint(0),
-		Nay:          u256.NewUint(0),
-		State: ProposalState{
-			CreatedAt: createdAt,
-			Upcoming:  true,
-			Active:    false,
-			Passed:    false,
-			Rejected:  false,
-			Executed:  false,
-			Expired:   false,
-			Canceled:  false,
+		Data: ProposalData{
+			ProposalType: CommunityPoolSpend,
 		},
-		Schedule:      schedule,
+		Voting: VotingInfo{
+			QuorumAmount: 100,
+			Yea:          u256.NewUint(0),
+			Nay:          u256.NewUint(0),
+		},
 		Status: ProposalStatus{
 			Schedule:    schedule,
 			ActionState: ActionState{},
@@ -136,86 +129,6 @@ func TestProposalStatus_CanTransitionTo(t *testing.T) {
 	}
 }
 
-// Test proposalStateUpdater methods
-func TestProposalStateUpdater_GetCurrentStatus(t *testing.T) {
-	tests := []struct {
-		name     string
-		setup    func() *ProposalInfo
-		expected ProposalStatusEnum
-	}{
-		{
-			name: "upcoming_proposal",
-			setup: func() *ProposalInfo {
-				return createTestProposal(t, 1000)
-			},
-			expected: StatusUpcoming,
-		},
-		{
-			name: "active_proposal",
-			setup: func() *ProposalInfo {
-				p := createTestProposal(t, 1000)
-				p.State.Upcoming = false
-				p.State.Active = true
-				return p
-			},
-			expected: StatusActive,
-		},
-		{
-			name: "passed_proposal",
-			setup: func() *ProposalInfo {
-				p := createTestProposal(t, 1000)
-				p.State.Upcoming = false
-				p.State.Active = false
-				p.State.Passed = true
-				return p
-			},
-			expected: StatusPassed,
-		},
-		{
-			name: "executed_proposal",
-			setup: func() *ProposalInfo {
-				p := createTestProposal(t, 1000)
-				p.State.Upcoming = false
-				p.State.Active = false
-				p.State.Passed = true
-				p.State.Executed = true
-				// Set ActionState for proper execution status
-				p.ActionState.Executed = true
-				p.ActionState.ExecutedAt = 1500
-				// Also set Status.ActionState
-				p.Status.ActionState.Executed = true
-				p.Status.ActionState.ExecutedAt = 1500
-				return p
-			},
-			expected: StatusExecuted,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Save original state and create test state
-			originalState := governanceState
-			testConfig := createTestConfig()
-			testState := NewGovernanceState(testConfig)
-
-			// Temporarily replace global state
-			governanceState = testState
-
-			// Restore original state after test
-			defer func() {
-				governanceState = originalState
-			}()
-
-			proposal := tt.setup()
-			updater := newProposalStateUpdater(proposal, 2000)
-
-			if got := updater.getCurrentStatus(); got != tt.expected {
-				t.Errorf("getCurrentStatus() = %v, want %v", got, tt.expected)
-			}
-		})
-	}
-}
-
 func TestProposalStateUpdater_GetCurrentPhase(t *testing.T) {
 	createdAt := uint64(1000)
 
@@ -270,92 +183,6 @@ func TestProposalStateUpdater_GetCurrentPhase(t *testing.T) {
 
 				t.Errorf("getCurrentPhase() = %v (%d), want %v (%d)",
 					got, int(got), tt.expected, int(tt.expected))
-			}
-		})
-	}
-}
-
-func TestProposalStateUpdater_ShouldUpdate(t *testing.T) {
-	tests := []struct {
-		name     string
-		setup    func() *ProposalInfo
-		expected bool
-	}{
-		{
-			name: "upcoming_should_update",
-			setup: func() *ProposalInfo {
-				return createTestProposal(t, 1000)
-			},
-			expected: true,
-		},
-		{
-			name: "active_should_update",
-			setup: func() *ProposalInfo {
-				p := createTestProposal(t, 1000)
-				p.State.Upcoming = false
-				p.State.Active = true
-				return p
-			},
-			expected: true,
-		},
-		{
-			name: "passed_should_update",
-			setup: func() *ProposalInfo {
-				p := createTestProposal(t, 1000)
-				p.State.Upcoming = false
-				p.State.Active = false
-				p.State.Passed = true
-				return p
-			},
-			expected: true,
-		},
-		{
-			name: "executed_should_not_update",
-			setup: func() *ProposalInfo {
-				p := createTestProposal(t, 1000)
-				p.State.Upcoming = false
-				p.State.Active = false
-				p.State.Passed = true
-				p.State.Executed = true
-				// Set ActionState for proper execution status
-				p.ActionState.Executed = true
-				return p
-			},
-			expected: false,
-		},
-		{
-			name: "rejected_should_not_update",
-			setup: func() *ProposalInfo {
-				p := createTestProposal(t, 1000)
-				p.State.Upcoming = false
-				p.State.Active = false
-				p.State.Rejected = true
-				return p
-			},
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Save original state and create test state
-			originalState := governanceState
-			testConfig := createTestConfig()
-			testState := NewGovernanceState(testConfig)
-
-			// Temporarily replace global state
-			governanceState = testState
-
-			// Restore original state after test
-			defer func() {
-				governanceState = originalState
-			}()
-
-			proposal := tt.setup()
-			updater := newProposalStateUpdater(proposal, 2000)
-
-			if got := updater.shouldUpdate(); got != tt.expected {
-				t.Errorf("shouldUpdate() = %v, want %v", got, tt.expected)
 			}
 		})
 	}
