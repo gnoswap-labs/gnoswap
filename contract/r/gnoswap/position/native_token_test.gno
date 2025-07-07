@@ -329,12 +329,12 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			expectedWrap:  1000,
 		},
 		{
-			name:          "safeWrapNativeToken is failed by zero desired amount", // unable to catch this panic
+			name:          "safeWrapNativeToken is success by zero desired amount", // unable to catch this panic
 			amountDesired: "0",
 			userAddress:   alice,
 			sentAmount:    100,
-			expectPanic:   true,
-			expectedError: "[GNOSWAP-POSITION-004] zero wrapped amount || amount requested to wrap is zero",
+			expectPanic:   false,
+			expectedWrap:  0,
 		},
 		{
 			name:          "safeWrapNativeToken is failed by wrap error",

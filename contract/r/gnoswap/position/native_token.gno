@@ -129,20 +129,22 @@ func isWrappedToken(tokenPath string) bool {
 //   - If the `wrap` function fails to wrap the tokens.
 //   - If there is a mismatch between the expected wrapped token amount and the user's balance after wrapping.
 func safeWrapNativeToken(amountDesired string, userAddress std.Address) int64 {
+	amount, err := strconv.ParseInt(amountDesired, 10, 64)
+	if err != nil {
+		panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
+	}
+
+	// if amountDesired is zero, return 0
+	if amount == 0 {
+		return 0
+	}
+
 	beforeWugnotBalance := wugnot.BalanceOf(userAddress)
 	sentNative := std.OriginSend()
 	sentUgnotAmount := sentNative.AmountOf(consts.UGNOT)
 
 	if sentUgnotAmount <= 0 {
 		panic(newErrorWithDetail(errZeroUGNOT, "amount of ugnot is zero"))
-	}
-
-	amount, err := strconv.ParseInt(amountDesired, 10, 64)
-	if err != nil {
-		panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
-	}
-	if amount == 0 {
-		panic(newErrorWithDetail(errZeroWrappedAmount, "amount requested to wrap is zero"))
 	}
 
 	if sentUgnotAmount < amount {

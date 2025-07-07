@@ -111,14 +111,28 @@ func (op *baseSwapOperation) validateRouteQuote(quote string, i int) (*i256.Int,
 func (op *baseSwapOperation) processRoutes(swapType SwapType) (*u256.Uint, *u256.Uint, error) {
 	zero := u256.Zero()
 	resultAmountIn, resultAmountOut := zero, zero
+	remainRequestAmount := op.amountSpecified
 
 	for i, route := range op.routes {
-		toSwap, err := op.validateRouteQuote(op.quotes[i], i)
-		if err != nil {
-			return nil, nil, err
+		toSwapAmount := i256.Zero()
+
+		// if it's the last route, use the remaining amount
+		isLastRoute := i == len(op.routes)-1
+		if !isLastRoute {
+			// calculate the amount to swap for this route
+			swapAmount, err := op.validateRouteQuote(op.quotes[i], i)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			// update the remaining amount
+			remainRequestAmount = new(i256.Int).Sub(remainRequestAmount, swapAmount)
+			toSwapAmount = swapAmount
+		} else {
+			toSwapAmount = remainRequestAmount
 		}
 
-		amountIn, amountOut, err := op.processRoute(route, toSwap, swapType)
+		amountIn, amountOut, err := op.processRoute(route, toSwapAmount, swapType)
 		if err != nil {
 			return nil, nil, err
 		}

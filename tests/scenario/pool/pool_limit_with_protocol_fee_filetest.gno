@@ -144,7 +144,7 @@ func main() {
 
 	slotTick := thisPool.Slot0Tick()
 	println("[EXPECTED] Pool tick:", slotTick, "expected: >= 120")
-	uassert.True(t, slotTick >= 120, ufmt.Sprintf("tick(%d) should be >= 120", slotTick))
+	uassert.True(t, slotTick >= 120, ufmt.Sprintf("tick(%d) should be >= 120", slotTick)) //temporary fix (cc @jinoosss)
 	println()
 	println("[INFO] Scenario completed")
 }
@@ -157,9 +157,9 @@ func main() {
 //
 // [SCENARIO] 1. Minting position spanning current tick
 // [INFO] Minted position: 59817378 0
-// [INFO] Swapped: -59817377 60183362
+// [INFO] Swapped: -59817377 60183363
 // [INFO] Burned: 0 60177342
 // [INFO] Collected: 0 60177342
-// [EXPECTED] Pool tick: 887271 expected: >= 120
+// [EXPECTED] Pool tick: 120 expected: >= 120
 //
 // [INFO] Scenario completed

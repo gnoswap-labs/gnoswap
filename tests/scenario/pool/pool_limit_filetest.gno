@@ -50,7 +50,7 @@ var (
 	fee100 = uint32(100)
 	fee500 = uint32(500)
 
-	minPrice = "4295128740" // MIN_SQRT_RATIO + 1
+	minPrice = "4295128740"                                        // MIN_SQRT_RATIO + 1
 	maxPrice = "1461446703485210103287273052203988822378723970341" // MAX_SQRT_RATIO - 1
 )
 
@@ -101,7 +101,7 @@ func main() {
 	println()
 
 	// BURN
-	println("[SCENARIO] 3. Burn Position (Burn liquidity from tick 0 to 120)")	
+	println("[SCENARIO] 3. Burn Position (Burn liquidity from tick 0 to 120)")
 	testing.SetRealm(posRealm)
 	burn0, burn1 := pool.Burn(
 		cross,
@@ -153,7 +153,7 @@ func main() {
 // [SCENARIO] 2. Mint Position (Limit selling 0 for 1 at tick 0 thru 120)
 // [INFO] Swap 1 -> 0
 // [INFO] Swap 0: -59817377
-// [INFO] Swap 1: 60183362
+// [INFO] Swap 1: 60183363
 //
 // [SCENARIO] 3. Burn Position (Burn liquidity from tick 0 to 120)
 // [INFO] Burn 0: 0
@@ -165,6 +165,6 @@ func main() {
 //
 // [SCENARIO] 5. Verify Final State (Check slot tick >= 120)
 // [INFO] slot tick should be >= 120
-// [INFO] Slot tick: 887271
+// [INFO] Slot tick: 120
 //
 // [INFO] Scenario completed

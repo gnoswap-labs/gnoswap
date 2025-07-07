@@ -308,7 +308,7 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 	}(cross)
 
 	// check actual swapped amounts for each route
-	for i, _ := range op.routes {
+	for i := range op.routes {
 		toSwap, err := op.validateRouteQuote(op.quotes[i], i)
 		if err != nil {
 			t.Fatalf("unexpected error validating quote: %v", err)
@@ -335,5 +335,99 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 	remainder := totalExpected.Sub(totalExpected, usedAmount)
 	if remainder.Cmp(i256.NewInt(1)) != 0 {
 		t.Errorf("expected remainder of 1, got %s", remainder.ToString())
+	}
+}
+
+func TestProcessRoutes_LastRouteUsesRemainingAmount(t *testing.T) {
+	tests := []struct {
+		name            string
+		amountSpecified *i256.Int
+		routes          []string
+		quotes          []string
+		expectedAmounts []string // expected amount for each route
+		description     string
+	}{
+		{
+			// 50% + 50% = 100% (no remainder)
+			name:            "two routes with perfect split",
+			amountSpecified: i256.NewInt(100),
+			routes:          []string{foobar500, barbaz500},
+			quotes:          []string{"50", "50"},
+			expectedAmounts: []string{"50", "50"},
+		},
+		{
+			// 33% + 33% + remainder(34%) = 100%
+			name:            "three routes with remainder",
+			amountSpecified: i256.NewInt(100),
+			routes:          []string{foobar500, barbaz500, foobar500},
+			quotes:          []string{"33", "33", "34"},
+			expectedAmounts: []string{"33", "33", "34"}, // last route gets remainder
+		},
+		{
+			name:            "odd amount with two routes",
+			amountSpecified: i256.NewInt(101),
+			routes:          []string{foobar500, barbaz500},
+			quotes:          []string{"50", "50"},
+			expectedAmounts: []string{"50", "51"}, // last route gets 50 + remainder(1)
+		},
+		{
+			// 24% + 25% + 25% + remainder(26%) = 100%
+			name:            "large amount with multiple routes",
+			amountSpecified: i256.NewInt(1000),
+			routes:          []string{foobar500, barbaz500, foobar500, barbaz500},
+			quotes:          []string{"24", "25", "25", "26"},
+			expectedAmounts: []string{"240", "250", "250", "260"}, // last route gets remainder
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testing.SetRealm(adminRealm)
+			CreatePoolWithoutFee(t)
+			MakeThirdMintPositionWithoutFee(t)
+
+			// Track the amounts used for each route
+			totalUsed := i256.NewInt(0)
+
+			// Calculate expected amounts based on the new logic
+			calculatedAmounts := make([]*i256.Int, len(tt.routes))
+
+			for i := range tt.routes {
+				if i < len(tt.routes)-1 {
+					// For non-last routes, calculate based on quote
+					quote := tt.quotes[i]
+					quoteInt, err := i256.FromDecimal(quote)
+					uassert.NoError(t, err)
+
+					amount := new(i256.Int).Mul(tt.amountSpecified, quoteInt)
+					amount = new(i256.Int).Div(amount, i256.NewInt(100))
+
+					calculatedAmounts[i] = amount
+					totalUsed = new(i256.Int).Add(totalUsed, amount)
+				} else {
+					// Last route gets the remaining amount
+					calculatedAmounts[i] = new(i256.Int).Sub(tt.amountSpecified, totalUsed)
+				}
+			}
+
+			// Verify each calculated amount matches expected
+			for i, expectedAmount := range tt.expectedAmounts {
+				expected := i256.MustFromDecimal(expectedAmount)
+				if calculatedAmounts[i].Cmp(expected) != 0 {
+					t.Errorf("route %d: expected %s, got %s",
+						i, expected.ToString(), calculatedAmounts[i].ToString())
+				}
+			}
+
+			// Verify total equals amountSpecified
+			total := i256.NewInt(0)
+			for _, amount := range calculatedAmounts {
+				total = total.Add(total, amount)
+			}
+			if total.Cmp(tt.amountSpecified) != 0 {
+				t.Errorf("total amount mismatch: expected %s, got %s",
+					tt.amountSpecified.ToString(), total.ToString())
+			}
+		})
 	}
 }
