@@ -71,21 +71,20 @@ func reconfigure(cur realm, cfg Config) uint64 {
 
 	en.MintAndDistributeGns(cross)
 
-	// Update proposal states before reconfiguring
-	transition := UpdateProposalStateTransition()
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
+	var prevVersion, newVersion uint64
 
-	prevVersion := governanceState.configCounter
+	// Update proposal states before reconfiguring using middleware pattern
+	executeWithStateUpdate(func() {
+		prevVersion = governanceState.configCounter
 
-	// Apply reconfiguration using state transition
-	transition = ReconfigureTransition(cfg)
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
+		// Apply reconfiguration using state transition
+		transition := ReconfigureTransition(cfg)
+		if err := applyTransition(transition); err != nil {
+			panic(err)
+		}
 
-	newVersion := governanceState.configCounter
+		newVersion = governanceState.configCounter
+	})
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(

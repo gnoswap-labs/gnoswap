@@ -25,88 +25,72 @@ func createProposalJsonNode(id uint64, proposal ProposalInfo) *json.Node {
 
 // GetProposals returns all proposals with necessary information.
 func GetProposals() string {
-	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition()
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
+	return withStateUpdate(func() string {
+		proposalsObj := metaNode()
+		proposalArr := json.ArrayNode("", nil)
 
-	proposalsObj := metaNode()
-	proposalArr := json.ArrayNode("", nil)
+		// Iterate through all proposals in state
+		governanceState.IterateProposals(func(id uint64, proposal ProposalInfo) bool {
+			proposalObj := getProposalById(id)
+			proposalArr.AppendArray(proposalObj)
+			return false
+		})
 
-	// Iterate through all proposals in state
-	governanceState.IterateProposals(func(id uint64, proposal ProposalInfo) bool {
-		proposalObj := getProposalById(id)
-		proposalArr.AppendArray(proposalObj)
-		return false
+		proposalsObj.AppendObject("proposals", proposalArr)
+
+		return marshal(proposalsObj)
 	})
-
-	proposalsObj.AppendObject("proposals", proposalArr)
-
-	return marshal(proposalsObj)
 }
 
 // GetProposalById returns a single proposal with necessary information.
 func GetProposalById(id uint64) string {
-	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition()
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
+	return withStateUpdate(func() string {
+		_, exists := governanceState.GetProposal(id)
+		if !exists {
+			return ""
+		}
 
-	_, exists := governanceState.GetProposal(id)
-	if !exists {
-		return ""
-	}
+		proposalsObj := metaNode()
+		proposalArr := json.ArrayNode("", nil)
+		proposalObj := getProposalById(id)
+		proposalArr.AppendArray(proposalObj)
+		proposalsObj.AppendObject("proposals", proposalArr)
 
-	proposalsObj := metaNode()
-	proposalArr := json.ArrayNode("", nil)
-	proposalObj := getProposalById(id)
-	proposalArr.AppendArray(proposalObj)
-	proposalsObj.AppendObject("proposals", proposalArr)
-
-	return marshal(proposalsObj)
+		return marshal(proposalsObj)
+	})
 }
 
 func GetArchivedProposalById(id uint64) string {
-	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition()
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
+	return withStateUpdate(func() string {
+		_, exists := governanceState.GetArchivedProposal(id)
+		if !exists {
+			return ""
+		}
 
-	_, exists := governanceState.GetArchivedProposal(id)
-	if !exists {
-		return ""
-	}
+		proposalsObj := metaNode()
+		proposalArr := json.ArrayNode("", nil)
+		proposalObj := getProposalById(id)
+		proposalArr.AppendArray(proposalObj)
+		proposalsObj.AppendObject("proposals", proposalArr)
 
-	proposalsObj := metaNode()
-	proposalArr := json.ArrayNode("", nil)
-	proposalObj := getProposalById(id)
-	proposalArr.AppendArray(proposalObj)
-	proposalsObj.AppendObject("proposals", proposalArr)
-
-	return marshal(proposalsObj)
+		return marshal(proposalsObj)
+	})
 }
 
 // GetVoteStatusFromProposalById returns the vote status(max, yes, no) of a proposal.
 func GetVoteStatusFromProposalById(id uint64) string {
-	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition()
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
+	return withStateUpdate(func() string {
+		_, exists := governanceState.GetProposal(id)
+		if !exists {
+			return ""
+		}
 
-	_, exists := governanceState.GetProposal(id)
-	if !exists {
-		return ""
-	}
+		votesObj := metaNode()
+		votesObj.AppendObject("proposalId", json.StringNode("proposalId", formatUint(id)))
+		votesObj.AppendObject("votes", json.StringNode("votes", b64Encode(getProposalVotes(id)))) // max, yes, no
 
-	votesObj := metaNode()
-	votesObj.AppendObject("proposalId", json.StringNode("proposalId", formatUint(id)))
-	votesObj.AppendObject("votes", json.StringNode("votes", b64Encode(getProposalVotes(id)))) // max, yes, no
-
-	return marshal(votesObj)
+		return marshal(votesObj)
+	})
 }
 
 // GetVotesByAddress returns all votes of an address.
@@ -117,46 +101,38 @@ func GetVoteStatusFromProposalById(id uint64) string {
 // - height
 // - timestamp
 func GetVotesByAddress(addr std.Address) string {
-	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition()
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
+	return withStateUpdate(func() string {
+		votesObj := metaNode()
+		votesArr := json.ArrayNode("", nil)
 
-	votesObj := metaNode()
-	votesArr := json.ArrayNode("", nil)
+		// Iterate through all user votes for the given address
+		governanceState.IterateUserVotes(addr, func(proposalId uint64, vote voteWithWeight) bool {
+			voteObj := createVoteJsonNode(addr, proposalId, vote)
+			votesArr.AppendArray(voteObj)
+			return false
+		})
+		votesObj.AppendObject("votes", votesArr)
 
-	// Iterate through all user votes for the given address
-	governanceState.IterateUserVotes(addr, func(proposalId uint64, vote voteWithWeight) bool {
-		voteObj := createVoteJsonNode(addr, proposalId, vote)
-		votesArr.AppendArray(voteObj)
-		return false
+		return marshal(votesObj)
 	})
-	votesObj.AppendObject("votes", votesArr)
-
-	return marshal(votesObj)
 }
 
 // GetVoteByAddressFromProposalById returns the vote of an address from a certain proposal.
 func GetVoteByAddressFromProposalById(addr std.Address, id uint64) string {
-	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition()
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
+	return withStateUpdate(func() string {
+		vote, exists := getUserVote(addr, id)
+		if !exists {
+			return ""
+		}
 
-	vote, exists := getUserVote(addr, id)
-	if !exists {
-		return ""
-	}
+		votesObj := metaNode()
+		voteArr := json.ArrayNode("", nil)
+		voteObj := createVoteJsonNode(addr, id, vote)
+		voteArr.AppendArray(voteObj)
+		votesObj.AppendObject("votes", voteArr)
 
-	votesObj := metaNode()
-	voteArr := json.ArrayNode("", nil)
-	voteObj := createVoteJsonNode(addr, id, vote)
-	voteArr.AppendArray(voteObj)
-	votesObj.AppendObject("votes", voteArr)
-
-	return marshal(votesObj)
+		return marshal(votesObj)
+	})
 }
 
 // helper function for GetProposals and GetProposalById

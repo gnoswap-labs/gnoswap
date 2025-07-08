@@ -242,3 +242,28 @@ func getVoterWeight(s *GovernanceState, proposalId uint64, voter std.Address) ui
 
 	return weight
 }
+
+// withStateUpdate executes a function after updating proposal states
+// This middleware pattern ensures proposal states are always current before operations
+func withStateUpdate(fn func() string) string {
+	// Update proposal states
+	transition := UpdateProposalStateTransition()
+	if err := applyTransition(transition); err != nil {
+		panic(err)
+	}
+
+	// Execute the actual function
+	return fn()
+}
+
+// executeWithStateUpdate executes a void function after updating proposal states
+func executeWithStateUpdate(fn func()) {
+	// Update proposal states
+	transition := UpdateProposalStateTransition()
+	if err := applyTransition(transition); err != nil {
+		panic(err)
+	}
+
+	// Execute the actual function
+	fn()
+}

@@ -257,11 +257,10 @@ func validateInitialState(cur realm) {
 
 	en.MintAndDistributeGns(cross)
 
-	// Update proposal states before execution
-	transition := UpdateProposalStateTransition()
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
+	// Update proposal states before execution using middleware pattern
+	executeWithStateUpdate(func() {
+		// State update is handled by the middleware
+	})
 }
 
 func getProposal(proposalId uint64) (*ProposalInfo, error) {
