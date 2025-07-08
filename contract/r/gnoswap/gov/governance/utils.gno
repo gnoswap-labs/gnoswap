@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"std"
 	"strconv"
+	"time"
 
 	"gno.land/p/demo/avl"
 
@@ -190,4 +191,54 @@ func parseBool(s string) bool {
 // parseUint64 helper function to parse string to uint64
 func parseUint64(s string) uint64 {
 	return parseNumber(s, kindUint64).(uint64)
+}
+
+// validateVoteEligibility validates if a voter is eligible to vote on a proposal
+// This consolidates the common voting validation logic used across multiple functions
+func validateVoteEligibility(s *GovernanceState, proposalId uint64, voter std.Address) error {
+	// Check if proposal exists
+	proposal, exists := s.GetProposal(proposalId)
+	if !exists {
+		return errProposalNotFound
+	}
+
+	// Check if already voted
+	if s.HasVoted(proposalId, voter) {
+		return errAlreadyVoted
+	}
+
+	// Check voting period
+	now := uint64(time.Now().Unix())
+	if !proposal.Status.Schedule.IsVotingPeriod(now) {
+		return errUnableToVoteOutOfPeriod
+	}
+
+	// Check if proposal is canceled
+	if proposal.Status.ActionState.IsCanceled() {
+		return errUnableToVoteCanceledProposal
+	}
+
+	// Check voting weight
+	weight, exists := proposal.Voting.PossibleAddressWithWeight[voter]
+	if !exists || weight == 0 {
+		return errNotEnoughVotingWeight
+	}
+
+	return nil
+}
+
+// getVoterWeight retrieves the voting weight for a voter on a specific proposal
+// Returns 0 if the voter doesn't have voting weight
+func getVoterWeight(s *GovernanceState, proposalId uint64, voter std.Address) uint64 {
+	proposal, exists := s.GetProposal(proposalId)
+	if !exists {
+		return 0
+	}
+
+	weight, exists := proposal.Voting.PossibleAddressWithWeight[voter]
+	if !exists {
+		return 0
+	}
+
+	return weight
 }

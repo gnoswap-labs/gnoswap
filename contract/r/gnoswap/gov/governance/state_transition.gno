@@ -155,34 +155,13 @@ func CreateProposalTransition(proposer std.Address, proposalType ProposalType, t
 // CastVoteTransition records a vote on a proposal
 func CastVoteTransition(proposalId uint64, voter std.Address, vote bool) Transition {
 	return func(s *GovernanceState) (*GovernanceState, error) {
-		// Check if proposal exists
-		proposal, exists := s.GetProposal(proposalId)
-		if !exists {
-			return s, errProposalNotFound
-		}
-
-		// Check if already voted
-		if s.HasVoted(proposalId, voter) {
-			return s, errAlreadyVoted
-		}
-
-		// Check voting period
-		now := uint64(time.Now().Unix())
-
-		// Use Status.Schedule
-		if !proposal.Status.Schedule.IsVotingPeriod(now) {
-			return s, errUnableToVoteOutOfPeriod
-		}
-		// Check if proposal is canceled
-		if proposal.Status.ActionState.IsCanceled() {
-			return s, errUnableToVoteCanceledProposal
+		// Validate vote eligibility using common validation logic
+		if err := validateVoteEligibility(s, proposalId, voter); err != nil {
+			return s, err
 		}
 
 		// Get voter weight
-		weight := proposal.Voting.PossibleAddressWithWeight[voter]
-		if weight == 0 {
-			return s, errNotEnoughVotingWeight
-		}
+		weight := getVoterWeight(s, proposalId, voter)
 
 		return s.WithVote(proposalId, voter, vote, weight), nil
 	}
@@ -329,33 +308,13 @@ func CreateAndValidateProposal(proposer std.Address, proposalType ProposalType, 
 // VoteTransition creates a state transition for casting a vote
 func VoteTransition(proposalId uint64, voter std.Address, vote bool) Transition {
 	return func(s *GovernanceState) (*GovernanceState, error) {
-		proposal, exists := s.GetProposal(proposalId)
-		if !exists {
-			return s, errProposalNotFound
-		}
-
-		// Check if already voted
-		if s.HasVoted(proposalId, voter) {
-			return s, errAlreadyVoted
-		}
-
-		// Validate voting period using Schedule
-		now := uint64(time.Now().Unix())
-
-		// Use Status.Schedule
-		if !proposal.Status.Schedule.IsVotingPeriod(now) {
-			return s, errUnableToVoteOutOfPeriod
-		}
-		// Check if proposal is canceled
-		if proposal.Status.ActionState.IsCanceled() {
-			return s, errUnableToVoteCanceledProposal
+		// Validate vote eligibility using common validation logic
+		if err := validateVoteEligibility(s, proposalId, voter); err != nil {
+			return s, err
 		}
 
 		// Get voting weight
-		weight, exists := proposal.Voting.PossibleAddressWithWeight[voter]
-		if !exists || weight == 0 {
-			return s, errNotEnoughVotingWeight
-		}
+		weight := getVoterWeight(s, proposalId, voter)
 
 		// Cast vote
 		return s.WithVote(proposalId, voter, vote, weight), nil
