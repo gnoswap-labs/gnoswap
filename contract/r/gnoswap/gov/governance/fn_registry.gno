@@ -43,7 +43,7 @@ func registerHandlers(registry *ParameterRegistry, configs []HandlerConfig) {
 	}
 }
 
-// helper functions to return h with error
+// helper functions to return handler with error
 func simpleHandler(fn func(realm, []string)) func(realm, []string) error {
 	return func(cur realm, params []string) error {
 		fn(cross, params)
