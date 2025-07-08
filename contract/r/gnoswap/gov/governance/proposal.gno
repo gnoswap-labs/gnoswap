@@ -144,7 +144,8 @@ func ProposeCommunityPoolSpend(
 
 	// Update the proposal in state
 	governanceState = governanceState.WithUpdatedProposal(newProposalId, func(p ProposalInfo) ProposalInfo {
-		return proposal
+		p.Data = proposalData
+		return p
 	})
 
 	prevAddr, prevPkgPath := getPrev()
