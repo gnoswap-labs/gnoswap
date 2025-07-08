@@ -28,10 +28,6 @@ const (
 type ParameterHandler interface {
 	// Execute processes the parameters
 	Execute(params []string) error
-	// GetState returns the current state (optional)
-	GetState() interface{}
-	// RestoreState restores the given state (optional)
-	RestoreState(state interface{}) error
 }
 
 // Registry for parameter handlers
@@ -40,17 +36,11 @@ type ParameterRegistry struct {
 }
 
 func NewParameterRegistry() *ParameterRegistry {
-	return &ParameterRegistry{
-		handlers: avl.NewTree(),
-	}
+	return &ParameterRegistry{handlers: avl.NewTree()}
 }
 
-func (r *ParameterRegistry) Register(
-	pkgPath, function string,
-	hdlr ParameterHandler,
-) {
-	key := makeHandlerKey(pkgPath, function)
-	r.handlers.Set(key, hdlr)
+func (r *ParameterRegistry) Register(pkgPath, function string, hdlr ParameterHandler) {
+	r.handlers.Set(makeHandlerKey(pkgPath, function), hdlr)
 }
 
 func (r *ParameterRegistry) Handler(pkgPath, function string) (ParameterHandler, error) {
@@ -286,7 +276,7 @@ func validateProposalState(proposal *ProposalInfo) ExecutionValidator {
 	// Check status dynamically
 	updater := newProposalStateUpdater(proposal, uint64(time.Now().Unix()))
 	status := updater.getCurrentStatus()
-	
+
 	// Check action states from Status field
 	action := proposal.Status.ActionState
 	return ExecutionValidator{
@@ -464,7 +454,7 @@ type FunctionHandler struct {
 }
 
 func NewFunctionHandler(fn func(params []string) error) *FunctionHandler {
-	return &FunctionHandler{fn: fn}
+	return &FunctionHandler{fn}
 }
 
 var _ ParameterHandler = (*FunctionHandler)(nil)
