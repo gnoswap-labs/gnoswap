@@ -126,23 +126,16 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "Reconfigure",
 			ParamCount: 7,
 			HandlerFunc: simpleHandler(func(cur realm, params []string) {
-				votingStartDelay := parseNumber(params[0], kindUint64).(uint64)              // votingStartDelay
-				votingPeriod := parseNumber(params[1], kindUint64).(uint64)                  // votingPeriod
-				votingWeightSmoothingDuration := parseNumber(params[2], kindUint64).(uint64) // votingWeightSmoothingDuration
-				quorum := parseNumber(params[3], kindUint64).(uint64)                        // quorum
-				proposalCreationhold := parseNumber(params[4], kindUint64).(uint64)          // proposalCreationhold
-				executionDelay := parseNumber(params[5], kindUint64).(uint64)                // executionDelay
-				executionWindow := parseNumber(params[6], kindUint64).(uint64)               // executionWindow
-				reconfigure(
-					cur,
-					votingStartDelay,              // votingStartDelay
-					votingPeriod,                  // votingPeriod
-					votingWeightSmoothingDuration, // votingWeightSmoothingDuration
-					quorum,                        // quorum
-					proposalCreationhold,          // proposalCreationhold
-					executionDelay,                // executionDelay
-					executionWindow,               // executionWindow
-				)
+				cfg := Config{
+					VotingStartDelay:              parseUint64(params[0]),
+					VotingPeriod:                  parseUint64(params[1]),
+					VotingWeightSmoothingDuration: parseUint64(params[2]),
+					Quorum:                        parseUint64(params[3]),
+					ProposalCreationThreshold:     parseUint64(params[4]),
+					ExecutionDelay:                parseUint64(params[5]),
+					ExecutionWindow:               parseUint64(params[6]),
+				}
+				reconfigure(cur, cfg)
 			}),
 		},
 
@@ -152,8 +145,8 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "SetFeeProtocol",
 			ParamCount: 2,
 			HandlerFunc: simpleHandler(func(cur realm, params []string) {
-				feeProtocol0 := parseNumber(params[0], kindUint64).(uint64)
-				feeProtocol1 := parseNumber(params[1], kindUint64).(uint64)
+				feeProtocol0 := parseUint64(params[0])
+				feeProtocol1 := parseUint64(params[1])
 				if feeProtocol0 > 255 {
 					panic(ufmt.Sprintf("feeProtocol0 out of range: %d", feeProtocol0))
 				}
@@ -180,7 +173,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "SetWithdrawalFee",
 			ParamCount: 1,
 			HandlerFunc: simpleHandler(func(cur realm, params []string) {
-				pl.SetWithdrawalFee(cross, parseNumber(params[0], kindUint64).(uint64)) // fee
+				pl.SetWithdrawalFee(cross, parseUint64(params[0])) // fee
 			}),
 		},
 
@@ -190,7 +183,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "SetDevOpsPct",
 			ParamCount: 1,
 			HandlerFunc: simpleHandler(func(cur realm, params []string) {
-				pf.SetDevOpsPct(cross, parseNumber(params[0], kindUint64).(uint64)) // pct
+				pf.SetDevOpsPct(cross, parseUint64(params[0])) // pct
 			}),
 		},
 
@@ -200,7 +193,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "SetSwapFee",
 			ParamCount: 1,
 			HandlerFunc: simpleHandler(func(cur realm, params []string) {
-				rr.SetSwapFee(cross, parseNumber(params[0], kindUint64).(uint64)) // fee
+				rr.SetSwapFee(cross, parseUint64(params[0])) // fee
 			}),
 		},
 
@@ -220,8 +213,8 @@ func createParameterHandlers() *ParameterRegistry {
 			HandlerFunc: simpleHandler(func(cur realm, params []string) {
 				sr.SetPoolTier(
 					cross,
-					params[0], // pool
-					parseNumber(params[1], kindUint64).(uint64), // tier
+					params[0],              // pool
+					parseUint64(params[1]), // tier
 				)
 			}),
 		},
@@ -232,8 +225,8 @@ func createParameterHandlers() *ParameterRegistry {
 			HandlerFunc: simpleHandler(func(cur realm, params []string) {
 				sr.ChangePoolTier(
 					cross,
-					params[0], // pool
-					parseNumber(params[1], kindUint64).(uint64), // tier
+					params[0],              // pool
+					parseUint64(params[1]), // tier
 				)
 			}),
 		},
@@ -250,7 +243,7 @@ func createParameterHandlers() *ParameterRegistry {
 			Function:   "SetUnStakingFee",
 			ParamCount: 1,
 			HandlerFunc: simpleHandler(func(cur realm, params []string) {
-				sr.SetUnStakingFee(cross, parseNumber(params[0], kindUint64).(uint64))
+				sr.SetUnStakingFee(cross, parseUint64(params[0]))
 			}),
 		},
 		{

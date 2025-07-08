@@ -48,31 +48,23 @@ func ReconfigureByAdmin(
 		panic(err)
 	}
 
-	return reconfigure(
-		cur,
-		votingStartDelay,
-		votingPeriod,
-		votingWeightSmoothingDuration,
-		quorum,
-		proposalCreationThreshold,
-		executionDelay,
-		executionWindow,
-	)
+	cfg := Config{
+		VotingStartDelay:              votingStartDelay,
+		VotingPeriod:                  votingPeriod,
+		VotingWeightSmoothingDuration: votingWeightSmoothingDuration,
+		Quorum:                        quorum,
+		ProposalCreationThreshold:     proposalCreationThreshold,
+		ExecutionDelay:                executionDelay,
+		ExecutionWindow:               executionWindow,
+	}
+
+	return reconfigure(cur, cfg)
 }
 
 // reconfigure updates the Governor's configuration.
 // Only governance contract can execute this function via proposal
 // Returns the new configuration version number.
-func reconfigure(
-	cur realm,
-	votingStartDelay uint64,
-	votingPeriod uint64,
-	votingWeightSmoothingDuration uint64,
-	quorum uint64,
-	proposalCreationThreshold uint64,
-	executionDelay uint64,
-	executionWindow uint64,
-) uint64 {
+func reconfigure(cur realm, cfg Config) uint64 {
 	if err := halt.IsHalted(); err != nil {
 		panic(err)
 	}
@@ -87,18 +79,8 @@ func reconfigure(
 
 	prevVersion := governanceState.configCounter
 
-	newConfig := Config{
-		VotingStartDelay:              votingStartDelay,
-		VotingPeriod:                  votingPeriod,
-		VotingWeightSmoothingDuration: votingWeightSmoothingDuration,
-		Quorum:                        quorum,
-		ProposalCreationThreshold:     proposalCreationThreshold,
-		ExecutionDelay:                executionDelay,
-		ExecutionWindow:               executionWindow,
-	}
-
 	// Apply reconfiguration using state transition
-	transition = ReconfigureTransition(newConfig)
+	transition = ReconfigureTransition(cfg)
 	if err := applyTransition(transition); err != nil {
 		panic(err)
 	}
@@ -110,13 +92,13 @@ func reconfigure(
 		"Reconfigure",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"votingStartDelay", formatUint(newConfig.VotingStartDelay),
-		"votingPeriod", formatUint(newConfig.VotingPeriod),
-		"votingWeightSmoothingDuration", formatUint(newConfig.VotingWeightSmoothingDuration),
-		"quorum", formatUint(newConfig.Quorum),
-		"proposalCreationThreshold", formatUint(newConfig.ProposalCreationThreshold),
-		"executionDelay", formatUint(newConfig.ExecutionDelay),
-		"executionPeriod", formatUint(newConfig.ExecutionWindow),
+		"votingStartDelay", formatUint(cfg.VotingStartDelay),
+		"votingPeriod", formatUint(cfg.VotingPeriod),
+		"votingWeightSmoothingDuration", formatUint(cfg.VotingWeightSmoothingDuration),
+		"quorum", formatUint(cfg.Quorum),
+		"proposalCreationThreshold", formatUint(cfg.ProposalCreationThreshold),
+		"executionDelay", formatUint(cfg.ExecutionDelay),
+		"executionPeriod", formatUint(cfg.ExecutionWindow),
 		"newConfigVersion", formatUint(newVersion),
 		"prevConfigVersion", formatUint(prevVersion),
 	)
