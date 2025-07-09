@@ -95,20 +95,20 @@ func TestSwapMathComputeSwapStepStr(t *testing.T) {
 			amountOut: "1",
 			feeAmount: "1",
 		},
-		{
-			name:            "target price of 1 uses partial input amount",
-			currentX96:      u256.MustFromDecimal("2"),
-			targetX96:       u256.MustFromDecimal("1"),
+		{ // caught an edge case: amountRemainingLessFee = 0
+			name:            "extreme_low_price_with_fee",
+			currentX96:      MIN_SQRT_RATIO,
+			targetX96:       new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(1000)),
 			liquidity:       u256.MustFromDecimal("1"),
-			amountRemaining: i256.MustFromDecimal("3915081100057732413702495386755767"),
+			amountRemaining: i256.MustFromDecimal("1000000"),
 			feePips:         1,
-			sqrtNextX96:     u256.MustFromDecimal("1"),
+			sqrtNextX96:     MIN_SQRT_RATIO,
 			chkSqrtNextX96: func(sqrtRatioNextX96, priceTarget *u256.Uint) {
-				uassert.True(t, sqrtRatioNextX96.Eq(priceTarget))
+				uassert.True(t, sqrtRatioNextX96.Gte(MIN_SQRT_RATIO))
 			},
-			amountIn:  "39614081257132168796771975168",
-			amountOut: "0",
-			feeAmount: "39614120871253040049813",
+			amountIn:  "1",
+			amountOut: "4294643428317",
+			feeAmount: "1",
 		},
 		{
 			name:            "entire input amount taken as fee",
@@ -213,7 +213,27 @@ func TestSwapMathComputeSwapStepStrFail(t *testing.T) {
 			amountOut:       "9925619580021728",
 			feeAmount:       "5988667735148",
 			shouldPanic:     true,
-			expectedMessage: "SwapMathComputeSwapStepStr: feePips must be less than or equal to 1000000",
+			expectedMessage: "SwapMathComputeSwapStepStr: feePips must be <= 1000000",
+		},
+		{
+			name:            "sqrt price below minimum",
+			currentX96:      u256.MustFromDecimal("2"), // Lower than MIN_SQRT_RATIO
+			targetX96:       u256.MustFromDecimal("1"),
+			liquidity:       u256.MustFromDecimal("1"),
+			amountRemaining: i256.MustFromDecimal("100"),
+			feePips:         1,
+			shouldPanic:     true,
+			expectedMessage: "SwapMathComputeSwapStepStr: sqrt price out of bounds",
+		},
+		{
+			name:            "sqrt price above maximum",
+			currentX96:      new(u256.Uint).Add(MAX_SQRT_RATIO, u256.One()), // MAX_SQRT_RATIO + 1
+			targetX96:       MAX_SQRT_RATIO,
+			liquidity:       u256.MustFromDecimal("1"),
+			amountRemaining: i256.MustFromDecimal("100"),
+			feePips:         1,
+			shouldPanic:     true,
+			expectedMessage: "SwapMathComputeSwapStepStr: sqrt price out of bounds",
 		},
 	}
 
