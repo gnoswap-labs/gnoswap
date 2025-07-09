@@ -19,6 +19,9 @@ var (
 )
 
 func TestHalts(t *testing.T) {
+	// Reset state to ensure consistent starting point
+	resetToMainnetSafeMode()
+
 	t.Run("Operation specific checks in MainnetSafeMode", func(t *testing.T) {
 		// Withdrawals should be disabled in MainnetSafeMode
 		err := IsHalted(OpTypeWithdraw)
@@ -33,6 +36,9 @@ func TestHalts(t *testing.T) {
 }
 
 func TestSetHaltLevelByAdminAndGovernance(t *testing.T) {
+	// Reset state to ensure consistent starting point
+	resetToMainnetSafeMode()
+
 	t.Run("with non-admin or non-governance privilege, should fail", func(t *testing.T) {
 		testing.SetRealm(userRealm)
 		err := SetHaltLevelByAdmin(cross, LvNoHalt)
@@ -200,6 +206,9 @@ type haltTestCases struct {
 }
 
 func TestEnableOperationsForTestnet(t *testing.T) {
+	// Reset state to ensure consistent starting point
+	resetToMainnetSafeMode()
+
 	// Setup test with admin privileges
 	func() {
 		testing.SetRealm(adminRealm)
