@@ -12,8 +12,6 @@ import (
 
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/staker"
-	_ "gno.land/r/gnoswap/v1/gov/xgns"
-	"gno.land/r/gnoswap/v1/rbac"
 )
 
 var (
@@ -54,14 +52,6 @@ func setupStakerAdminPermission(t *testing.T) {
 
 	testing.SetOriginCaller(adminAddr)
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-
-	globalManager := rbac.GlobalManager()
-	globalManager.UpdatePermission("admin", "access", func(addr std.Address) error {
-		if addr != adminAddr {
-			return ufmt.Errorf("caller is not admin")
-		}
-		return nil
-	})
 }
 
 // Helper function to mint GNS to a user
