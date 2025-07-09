@@ -161,7 +161,7 @@ func handleRoleChangeProposal(
 	}
 
 	// Set role change info
-	proposal.RoleChange = RoleChangeInfo{
+	proposal.Data.RoleChange = RoleChangeInfo{
 		RoleName:       roleName,
 		PermissionName: permissionName,
 		Action:         action,
@@ -190,10 +190,10 @@ func handleRoleChangeProposal(
 		"action", action.String(),
 		"checkerType", checkerType.String(),
 		"proposalId", formatUint(newProposalId),
-		"quorumAmount", formatUint(proposal.QuorumAmount),
-		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
+		"quorumAmount", formatUint(proposal.Voting.QuorumAmount),
+		"maxVotingWeight", proposal.Voting.MaxVotingWeight.ToString(),
 		"configVersion", formatUint(proposal.ConfigVersion),
-		"createdAt", formatUint(proposal.State.CreatedAt),
+		"createdAt", formatUint(proposal.Status.Schedule.CreateTime),
 	)
 
 	return newProposalId
@@ -267,10 +267,6 @@ func executeAddRole(cur realm, roleInfo RoleChangeInfo) error {
 	}
 
 	return errors.New("invalid checker type or addresses for role creation")
-}
-
-func executeRemoveRole(cur realm, info RoleChangeInfo) error {
-	panic("TODO")
 }
 
 func executeAddPermission(cur realm, roleInfo RoleChangeInfo) error {

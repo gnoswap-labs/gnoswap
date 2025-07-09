@@ -49,21 +49,33 @@ func TestWithNewProposal(t *testing.T) {
 	state := createTestState()
 	proposer := std.Address("g1proposer")
 
+	now := uint64(time.Now().Unix())
 	proposal := ProposalInfo{
-		Proposer:     proposer,
-		ProposalType: Text,
-		State: ProposalState{
-			Created:   true,
-			CreatedAt: uint64(time.Now().Unix()),
-			Upcoming:  true,
+		Proposer:      proposer,
+		ConfigVersion: 1,
+		Status: ProposalStatus{
+			Schedule: ProposalSchedule{
+				CreateTime:     now,
+				ActiveTime:     now + 86400,
+				VotingEndTime:  now + 86400 + 604800,
+				ExecutableTime: now + 86400 + 604800 + 86400,
+				ExpiredTime:    now + 86400 + 604800 + 86400 + 2592000,
+			},
+			ActionState: ActionState{},
 		},
-		Yea:             u256.Zero(),
-		Nay:             u256.Zero(),
-		MaxVotingWeight: u256.NewUint(1000000),
-		ConfigVersion:   1,
-		QuorumAmount:    500000,
-		Title:           "Test Proposal",
-		Description:     "Test Description",
+		Voting: VotingInfo{
+			Yea:             u256.Zero(),
+			Nay:             u256.Zero(),
+			MaxVotingWeight: u256.NewUint(1000000),
+			QuorumAmount:    500000,
+		},
+		Metadata: ProposalMetadata{
+			Title:       "Test Proposal",
+			Description: "Test Description",
+		},
+		Data: ProposalData{
+			ProposalType: Text,
+		},
 	}
 
 	// Add proposal
@@ -78,7 +90,7 @@ func TestWithNewProposal(t *testing.T) {
 	uassert.Equal(t, newState.GetProposalCounter(), uint64(1), "new state counter should be 1")
 	retrievedProposal, exists := newState.GetProposal(1)
 	uassert.True(t, exists, "new state should have proposal")
-	uassert.Equal(t, retrievedProposal.Title, "Test Proposal", "proposal title should match")
+	uassert.Equal(t, retrievedProposal.Metadata.Title, "Test Proposal", "proposal title should match")
 
 	// Verify proposer mapping
 	proposalId, exists := newState.GetProposalByProposer(proposer)
@@ -92,23 +104,28 @@ func TestWithUpdatedProposal(t *testing.T) {
 
 	state := createTestStateWithProposal()
 
-	// Update proposal to active state
+	// Update proposal to simulate it being in active voting period
+	// by adjusting the schedule times
+	now := uint64(time.Now().Unix())
 	newState := state.WithUpdatedProposal(1, func(p ProposalInfo) ProposalInfo {
-		p.State.Active = true
-		p.State.Upcoming = false
+		// Adjust schedule to make proposal active
+		p.Status.Schedule.ActiveTime = now - 3600 // Started 1 hour ago
+		p.Status.Schedule.VotingEndTime = now + 3600 // Ends in 1 hour
 		return p
 	})
 
 	// Verify old state unchanged
 	oldProposal, _ := state.GetProposal(1)
-	uassert.True(t, oldProposal.State.Upcoming, "old state should have upcoming true")
-	uassert.False(t, oldProposal.State.Active, "old state should have active false")
+	// Check if proposal is in upcoming state (ActiveTime is in future)
+	isOldUpcoming := oldProposal.Status.Schedule.ActiveTime > now
+	uassert.True(t, isOldUpcoming, "old state should be in upcoming period")
 
 	// Verify new state
 	newProposal, exists := newState.GetProposal(1)
 	uassert.True(t, exists, "proposal should exist in new state")
-	uassert.False(t, newProposal.State.Upcoming, "new state should have upcoming false")
-	uassert.True(t, newProposal.State.Active, "new state should have active true")
+	// Check if proposal is in active voting period
+	isNewActive := newProposal.Status.Schedule.IsVotingPeriod(now)
+	uassert.True(t, isNewActive, "new state should be in active voting period")
 }
 
 func TestWithArchivedProposal(t *testing.T) {
@@ -127,7 +144,7 @@ func TestWithArchivedProposal(t *testing.T) {
 
 	archivedProposal, exists := newState.GetArchivedProposal(1)
 	uassert.True(t, exists, "proposal should be in archived proposals")
-	uassert.Equal(t, archivedProposal.Title, "Test Proposal", "archived proposal should have correct data")
+	uassert.Equal(t, archivedProposal.Metadata.Title, "Test Proposal", "archived proposal should have correct data")
 
 	// Verify proposer mapping cleared
 	_, exists = newState.GetProposalByProposer(proposer)
@@ -165,8 +182,8 @@ func TestWithVote(t *testing.T) {
 	// Verify proposal updated
 	proposal, exists := newState.GetProposal(proposalId)
 	uassert.True(t, exists, "proposal should exist")
-	uassert.Equal(t, proposal.Yea.Uint64(), voteWeight, "proposal yes votes should be updated")
-	uassert.Equal(t, proposal.Nay.Uint64(), uint64(0), "proposal no votes should be 0")
+	uassert.Equal(t, proposal.Voting.Yea.Uint64(), voteWeight, "proposal yes votes should be updated")
+	uassert.Equal(t, proposal.Voting.Nay.Uint64(), uint64(0), "proposal no votes should be 0")
 
 	// Cast NO vote from another voter
 	voter2 := std.Address("g1voter2")
@@ -270,7 +287,7 @@ func TestIterateProposals(t *testing.T) {
 	for i := 1; i <= 3; i++ {
 		proposer := std.Address("g1proposer" + formatUint(uint64(i)))
 		proposal := createTestProposal2(proposer)
-		proposal.Title = "Proposal " + formatUint(uint64(i))
+		proposal.Metadata.Title = "Proposal " + formatUint(uint64(i))
 		state = state.WithNewProposal(proposer, proposal)
 	}
 
@@ -283,7 +300,7 @@ func TestIterateProposals(t *testing.T) {
 
 	state.IterateProposals(func(id uint64, p ProposalInfo) bool {
 		collectedIds = append(collectedIds, id)
-		collectedTitles = append(collectedTitles, p.Title)
+		collectedTitles = append(collectedTitles, p.Metadata.Title)
 		return false // continue iteration
 	})
 
@@ -345,7 +362,11 @@ func TestStateImmutability(t *testing.T) {
 	state2 := state1.WithNewProposal(std.Address("g1p2"), createTestProposal2(std.Address("g1p2")))
 	state3 := state2.WithVote(1, std.Address("g1v1"), true, 100)
 	state4 := state3.WithUpdatedProposal(1, func(p ProposalInfo) ProposalInfo {
-		p.State.Active = true
+		// Simulate proposal being executed
+		now := uint64(time.Now().Unix())
+		p.Status.ActionState.Executed = true
+		p.Status.ActionState.ExecutedAt = now
+		p.Status.ActionState.ExecutedBy = std.Address("g1executor")
 		return p
 	})
 	state5 := state4.WithArchivedProposal(1)
@@ -365,7 +386,7 @@ func TestStateImmutability(t *testing.T) {
 
 	proposal, exists := state4.GetProposal(1)
 	uassert.True(t, exists, "state4 has proposal")
-	uassert.True(t, proposal.State.Active, "state4 has active proposal")
+	uassert.True(t, proposal.Status.ActionState.IsExecuted(), "state4 has executed proposal")
 
 	_, exists = state5.GetProposal(1)
 	uassert.False(t, exists, "state5 has archived proposal")
@@ -397,24 +418,36 @@ func createTestStateWithProposal() *GovernanceState {
 }
 
 func createTestProposal2(proposer std.Address) ProposalInfo {
+	now := uint64(time.Now().Unix())
 	return ProposalInfo{
-		Proposer:     proposer,
-		ProposalType: Text,
-		State: ProposalState{
-			Created:   true,
-			CreatedAt: uint64(time.Now().Unix()),
-			Upcoming:  true,
+		Proposer:      proposer,
+		ConfigVersion: 1,
+		Status: ProposalStatus{
+			Schedule: ProposalSchedule{
+				CreateTime:     now,
+				ActiveTime:     now + 86400,
+				VotingEndTime:  now + 86400 + 604800,
+				ExecutableTime: now + 86400 + 604800 + 86400,
+				ExpiredTime:    now + 86400 + 604800 + 86400 + 2592000,
+			},
+			ActionState: ActionState{},
 		},
-		Yea:             u256.Zero(),
-		Nay:             u256.Zero(),
-		MaxVotingWeight: u256.NewUint(1000000),
-		ConfigVersion:   1,
-		QuorumAmount:    500000,
-		Title:           "Test Proposal",
-		Description:     "Test Description",
-		PossibleAddressWithWeight: map[std.Address]uint64{
-			std.Address("g1voter"):  100,
-			std.Address("g1voter2"): 200,
+		Voting: VotingInfo{
+			Yea:             u256.Zero(),
+			Nay:             u256.Zero(),
+			MaxVotingWeight: u256.NewUint(1000000),
+			PossibleAddressWithWeight: map[std.Address]uint64{
+				std.Address("g1voter"):  100,
+				std.Address("g1voter2"): 200,
+			},
+			QuorumAmount: 500000,
+		},
+		Metadata: ProposalMetadata{
+			Title:       "Test Proposal",
+			Description: "Test Description",
+		},
+		Data: ProposalData{
+			ProposalType: Text,
 		},
 	}
 }

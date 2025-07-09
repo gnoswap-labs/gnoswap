@@ -1,14 +1,10 @@
 package governance
 
-import (
-	"gno.land/p/demo/ufmt"
-)
-
-// ProposalStatus represents the current status of a proposal
-type ProposalStatus int
+// ProposalStatusEnum represents the current status of a proposal
+type ProposalStatusEnum int
 
 const (
-	_ ProposalStatus = iota
+	_ ProposalStatusEnum = iota
 	StatusUpcoming
 	StatusActive
 	StatusPassed
@@ -18,8 +14,8 @@ const (
 	StatusCanceled
 )
 
-// String returns the string representation of ProposalStatus
-func (s ProposalStatus) String() string {
+// String returns the string representation of ProposalStatusEnum
+func (s ProposalStatusEnum) String() string {
 	switch s {
 	case StatusUpcoming:
 		return "upcoming"
@@ -41,7 +37,7 @@ func (s ProposalStatus) String() string {
 }
 
 // IsTerminated returns true if the proposal is in a terminated state
-func (s ProposalStatus) IsTerminated() bool {
+func (s ProposalStatusEnum) IsTerminated() bool {
 	switch s {
 	case StatusExecuted, StatusRejected, StatusCanceled, StatusExpired:
 		return true
@@ -51,8 +47,8 @@ func (s ProposalStatus) IsTerminated() bool {
 }
 
 // CanTransitionTo checks if transition to target status is allowed
-func (s ProposalStatus) CanTransitionTo(target ProposalStatus) bool {
-	validTransitions := map[ProposalStatus][]ProposalStatus{
+func (s ProposalStatusEnum) CanTransitionTo(target ProposalStatusEnum) bool {
+	validTransitions := map[ProposalStatusEnum][]ProposalStatusEnum{
 		StatusUpcoming: {StatusActive, StatusCanceled},
 		StatusActive:   {StatusPassed, StatusRejected, StatusCanceled},
 		StatusPassed:   {StatusExecuted, StatusExpired, StatusCanceled},
@@ -75,7 +71,8 @@ func (s ProposalStatus) CanTransitionTo(target ProposalStatus) bool {
 type ProposalPhase int
 
 const (
-	PhaseCreated ProposalPhase = iota
+	_ ProposalPhase = iota
+	PhaseCreated
 	PhaseVoting
 	PhaseVotingEnded
 	PhaseExecution
@@ -92,8 +89,8 @@ type proposalStateUpdater struct {
 // StateTransition represents a single state transition with its conditions and actions
 type StateTransition struct {
 	name      string
-	from      ProposalStatus
-	to        ProposalStatus
+	from      ProposalStatusEnum
+	to        ProposalStatusEnum
 	condition func() bool
 	action    func()
 }
@@ -108,35 +105,49 @@ func newProposalStateUpdater(proposal *ProposalInfo, now uint64) *proposalStateU
 }
 
 // getCurrentStatus returns the current status based on the proposal state
-func (u *proposalStateUpdater) getCurrentStatus() ProposalStatus {
-	state := u.proposal.State
+func (u *proposalStateUpdater) getCurrentStatus() ProposalStatusEnum {
+	if u.proposal.Status.Schedule.CreateTime != 0 {
+		// Check action-based terminal states first (highest priority)
+		actionState := u.proposal.Status.ActionState
+		if actionState.IsExecuted() {
+			return StatusExecuted
+		}
+		if actionState.IsCanceled() {
+			return StatusCanceled
+		}
 
-	// Check terminal states first
-	if state.Executed {
-		return StatusExecuted
-	}
-	if state.Expired {
-		return StatusExpired
-	}
-	if state.Canceled {
-		return StatusCanceled
-	}
-	if state.Rejected {
-		return StatusRejected
+		// Then check time-based states using Schedule and votes
+		phase := u.getCurrentPhase()
+
+		// Check if expired (only for non-text proposals after execution window)
+		if u.proposal.Data.ProposalType != Text && phase == PhaseExecutionEnded {
+			return StatusExpired
+		}
+
+		// Check voting results
+		if phase >= PhaseVotingEnded {
+			yeaVotes := u.proposal.Voting.Yea.Uint64()
+			nayVotes := u.proposal.Voting.Nay.Uint64()
+			if u.isVotingPassed(yeaVotes, nayVotes) {
+				return StatusPassed
+			}
+			return StatusRejected
+		}
+
+		switch phase {
+		case PhaseCreated:
+			// before voting starts
+			return StatusUpcoming
+		case PhaseVoting:
+			// active voting
+			return StatusActive
+		default:
+			return StatusUpcoming
+		}
 	}
 
-	// Check active states
-	if state.Passed {
-		return StatusPassed
-	}
-	if state.Active {
-		return StatusActive
-	}
-	if state.Upcoming {
-		return StatusUpcoming
-	}
-
-	// Fallback (shouldn't happen with proper state management)
+	// If Status.Schedule is not initialized, return upcoming as default
+	// This should not happen in production
 	return StatusUpcoming
 }
 
@@ -165,140 +176,98 @@ func (u *proposalStateUpdater) shouldUpdate() bool {
 	return !currentStatus.IsTerminated()
 }
 
-// update processes all possible state transitions in order
-func (u *proposalStateUpdater) update() {
-	transitions := u.getStateTransitions()
-	currentStatus := u.getCurrentStatus()
-
-	for _, transition := range transitions {
-		if transition.from == currentStatus && transition.condition() {
-			// Validate transition is allowed
-			if !currentStatus.CanTransitionTo(transition.to) {
-				panic(ufmt.Sprintf("Invalid state transition from %s to %s",
-					currentStatus.String(), transition.to.String()))
-			}
-			transition.action()
-			break // Only one transition per update cycle
-		}
-	}
-}
-
-// getStateTransitions returns all possible state transitions
-func (u *proposalStateUpdater) getStateTransitions() []StateTransition {
-	return []StateTransition{
-		{
-			name:      "upcoming_to_active",
-			from:      StatusUpcoming,
-			to:        StatusActive,
-			condition: u.isVotingPhase,
-			action:    u.startVoting,
-		},
-		{
-			name:      "active_to_passed",
-			from:      StatusActive,
-			to:        StatusPassed,
-			condition: u.isVotingEndedAndPassed,
-			action:    u.markAsPassed,
-		},
-		{
-			name:      "active_to_rejected",
-			from:      StatusActive,
-			to:        StatusRejected,
-			condition: u.isVotingEndedAndRejected,
-			action:    u.markAsRejected,
-		},
-		{
-			name:      "passed_to_expired",
-			from:      StatusPassed,
-			to:        StatusExpired,
-			condition: u.isExecutionExpired,
-			action:    u.markAsExpired,
-		},
-	}
-}
-
 // Time period calculations
 func (u *proposalStateUpdater) getVotingPeriod() (start, end uint64) {
-	start = u.proposal.State.CreatedAt + u.config.VotingStartDelay
+	if u.proposal.Status.Schedule.CreateTime != 0 {
+		return u.proposal.Status.Schedule.ActiveTime, u.proposal.Status.Schedule.VotingEndTime
+	}
+	// Fallback: If `Status.Schedule` is not initialized,
+	// calculate from current time
+	start = u.now + u.config.VotingStartDelay
 	end = start + u.config.VotingPeriod
 	return
 }
 
 func (u *proposalStateUpdater) getExecutionPeriod() (start, end uint64) {
+	if u.proposal.Status.Schedule.CreateTime != 0 {
+		return u.proposal.Status.Schedule.ExecutableTime, u.proposal.Status.Schedule.ExpiredTime
+	}
+	// Fallback: If `Status.Schedule` is not initialized,
+	// calculate from voting period
 	_, votingEnd := u.getVotingPeriod()
 	start = votingEnd + u.config.ExecutionDelay
 	end = start + u.config.ExecutionWindow
 	return
 }
 
-// Phase-based condition checks (safer than boolean logic)
-func (u *proposalStateUpdater) isVotingPhase() bool {
-	return u.getCurrentPhase() == PhaseVoting
-}
-
 func (u *proposalStateUpdater) isVotingEndedAndPassed() bool {
-	phase := u.getCurrentPhase()
-	if phase != PhaseVotingEnded && phase != PhaseExecution && phase != PhaseExecutionEnded {
+	if u.isTerminalPhase() {
 		return false
 	}
-
-	yeaVotes := u.proposal.Yea.Uint64()
-	nayVotes := u.proposal.Nay.Uint64()
+	yeaVotes := u.proposal.Voting.Yea.Uint64()
+	nayVotes := u.proposal.Voting.Nay.Uint64()
 	return u.isVotingPassed(yeaVotes, nayVotes)
 }
 
 func (u *proposalStateUpdater) isVotingEndedAndRejected() bool {
-	phase := u.getCurrentPhase()
-	if phase != PhaseVotingEnded && phase != PhaseExecution && phase != PhaseExecutionEnded {
+	if u.isTerminalPhase() {
 		return false
 	}
-
-	yeaVotes := u.proposal.Yea.Uint64()
-	nayVotes := u.proposal.Nay.Uint64()
+	yeaVotes := u.proposal.Voting.Yea.Uint64()
+	nayVotes := u.proposal.Voting.Nay.Uint64()
 	return !u.isVotingPassed(yeaVotes, nayVotes)
+}
+
+func (u *proposalStateUpdater) isVotingPhase() bool {
+	return u.getCurrentPhase() == PhaseVoting
+}
+
+func (u *proposalStateUpdater) isTerminalPhase() bool {
+	switch u.getCurrentPhase() {
+	case PhaseVotingEnded, PhaseExecution, PhaseExecutionEnded:
+		return true
+	default:
+		return false
+	}
 }
 
 func (u *proposalStateUpdater) isExecutionExpired() bool {
 	// Only non-text proposals can expire
-	if u.proposal.ProposalType == Text {
+	if u.proposal.Data.ProposalType == Text {
 		return false
 	}
 
 	return u.getCurrentPhase() == PhaseExecutionEnded
 }
 
-// State transition actions
-func (u *proposalStateUpdater) startVoting() {
-	u.proposal.State.Upcoming = false
-	u.proposal.State.Active = true
-}
-
-func (u *proposalStateUpdater) markAsPassed() {
-	u.proposal.State.Passed = true
-	u.proposal.State.PassedAt = u.now
-	u.proposal.State.Upcoming = false
-	u.proposal.State.Active = false
-}
-
-func (u *proposalStateUpdater) markAsRejected() {
-	u.proposal.State.Rejected = true
-	u.proposal.State.RejectedAt = u.now
-	u.proposal.State.Upcoming = false
-	u.proposal.State.Active = false
-}
-
-func (u *proposalStateUpdater) markAsExpired() {
-	u.proposal.State.Expired = true
-	u.proposal.State.ExpiredAt = u.now
-}
-
 // Helper methods
 func (u *proposalStateUpdater) isVotingPassed(yeaVotes, nayVotes uint64) bool {
-	return yeaVotes >= u.proposal.QuorumAmount && yeaVotes > nayVotes
+	return yeaVotes >= u.proposal.Voting.QuorumAmount && yeaVotes > nayVotes
 }
 
 // isProposalTerminated checks if a proposal is in a terminated state (legacy compatibility)
 func isProposalTerminated(proposal ProposalInfo) bool {
+	if proposal.Status.Schedule.CreateTime != 0 && proposal.Status.ActionState.IsActionTaken() {
+		return true
+	}
+	// If Status.Schedule is not initialized, proposal is not terminated
+	// This should not happen
 	updater := &proposalStateUpdater{proposal: &proposal}
 	return updater.getCurrentStatus().IsTerminated()
+}
+
+// createProposalSchedule creates a pre-calculated schedule for a proposal
+func createProposalSchedule(config Config, now uint64) ProposalSchedule {
+	activeTime := now + config.VotingStartDelay
+	votingEndTime := activeTime + config.VotingPeriod
+	executableTime := votingEndTime + config.ExecutionDelay
+	expiredTime := executableTime + config.ExecutionWindow
+
+	return ProposalSchedule{
+		CreateTime:     now,
+		ActiveTime:     activeTime,
+		VotingEndTime:  votingEndTime,
+		ExecutableTime: executableTime,
+		ExpiredTime:    expiredTime,
+	}
 }

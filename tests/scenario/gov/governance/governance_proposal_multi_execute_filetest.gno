@@ -110,7 +110,7 @@ func executeMultiProposal(proposalID uint64) {
 	ufmt.Printf("[EXPECTED] before executing - block time: %d, community pool: %d\n", prevBlockTime, prevCommunityPool)
 	ufmt.Printf("[EXPECTED] after executing - block time: %d, community pool: %d\n", afterBlockTime, afterCommunityPool)
 	state := governance.GetExecutionStateByProposalId(proposalID)
-	ufmt.Printf("[EXPECTED] proposal executed: %v\n", state.Executed)
+	ufmt.Printf("[EXPECTED] proposal executed: %v\n", state)
 }
 
 // Output:
@@ -136,4 +136,4 @@ func executeMultiProposal(proposalID uint64) {
 // [SCENARIO] 7. Execute Multi Proposal
 // [EXPECTED] before executing - block time: 2000, community pool: 61643833920
 // [EXPECTED] after executing - block time: 123, community pool: 308219168695
-// [EXPECTED] proposal executed: true
+// [EXPECTED] proposal executed: executed

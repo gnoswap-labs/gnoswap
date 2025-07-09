@@ -84,7 +84,7 @@ func voteProposalWithDummy(proposalId uint64) {
 	testing.SetRealm(std.NewUserRealm(dummyAddr))
 	governance.Vote(cross, proposalId, true)
 	state := governance.GetExecutionStateByProposalId(proposalId)
-	ufmt.Printf("[EXPECTED] after voting - active: %v, passed: %v\n", state.Active, state.Passed)
+	println("[EXPECTED] after voting state: ", state)
 }
 
 // Output:
@@ -105,4 +105,4 @@ func voteProposalWithDummy(proposalId uint64) {
 // [INFO] current height: 86523
 //
 // [SCENARIO] 6. Vote for the proposal with dummy
-// [EXPECTED] after voting - active: true, passed: false
+// [EXPECTED] after voting state:  active

@@ -3,7 +3,6 @@ package governance
 import (
 	"errors"
 	"std"
-
 	"strings"
 	"time"
 
@@ -29,10 +28,6 @@ const (
 type ParameterHandler interface {
 	// Execute processes the parameters
 	Execute(params []string) error
-	// GetState returns the current state (optional)
-	GetState() interface{}
-	// RestoreState restores the given state (optional)
-	RestoreState(state interface{}) error
 }
 
 // Registry for parameter handlers
@@ -41,17 +36,11 @@ type ParameterRegistry struct {
 }
 
 func NewParameterRegistry() *ParameterRegistry {
-	return &ParameterRegistry{
-		handlers: avl.NewTree(),
-	}
+	return &ParameterRegistry{handlers: avl.NewTree()}
 }
 
-func (r *ParameterRegistry) Register(
-	pkgPath, function string,
-	hdlr ParameterHandler,
-) {
-	key := makeHandlerKey(pkgPath, function)
-	r.handlers.Set(key, hdlr)
+func (r *ParameterRegistry) Register(pkgPath, function string, hdlr ParameterHandler) {
+	r.handlers.Set(makeHandlerKey(pkgPath, function), hdlr)
 }
 
 func (r *ParameterRegistry) Handler(pkgPath, function string) (ParameterHandler, error) {
@@ -137,9 +126,10 @@ func Execute(cur realm, proposalId uint64) error {
 }
 
 func executeProposal(cur realm, ctx *ExecutionContext, registry *ParameterRegistry) error {
-	switch ctx.Proposal.ProposalType {
+	data := ctx.Proposal.Data
+	switch data.ProposalType {
 	case ParameterChange, CommunityPoolSpend:
-		if err := executeParameterChange(cur, ctx.Proposal.Execution.Msgs, registry); err != nil {
+		if err := executeParameterChange(cur, data.Execution.Msgs, registry); err != nil {
 			return err
 		}
 		return nil
@@ -184,13 +174,11 @@ func executeParameterChange(cur realm, msgs []string, registry *ParameterRegistr
 
 // dispatchRoleChange function calls different functions depending on the type of role change
 func dispatchRoleChange(cur realm, proposal *ProposalInfo) error {
-	roleInfo := proposal.RoleChange
+	roleInfo := proposal.Data.RoleChange
 
 	switch roleInfo.Action {
 	case AddRole:
 		return executeAddRole(cur, roleInfo)
-	case RemoveRole:
-		return executeRemoveRole(cur, roleInfo)
 	case AddPermission:
 		return executeAddPermission(cur, roleInfo)
 	case RemovePermission:
@@ -269,11 +257,10 @@ func validateInitialState(cur realm) {
 
 	en.MintAndDistributeGns(cross)
 
-	// Update proposal states before execution
-	transition := UpdateProposalStateTransition()
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
+	// Update proposal states before execution using middleware pattern
+	executeWithStateUpdate(func() {
+		// State update is handled by the middleware
+	})
 }
 
 func getProposal(proposalId uint64) (*ProposalInfo, error) {
@@ -285,12 +272,18 @@ func getProposal(proposalId uint64) (*ProposalInfo, error) {
 }
 
 func validateProposalState(proposal *ProposalInfo) ExecutionValidator {
+	// Check status dynamically
+	updater := newProposalStateUpdater(proposal, uint64(time.Now().Unix()))
+	status := updater.getCurrentStatus()
+
+	// Check action states from Status field
+	action := proposal.Status.ActionState
 	return ExecutionValidator{
-		isTextProposal:    proposal.ProposalType == Text,
-		isAlreadyExecuted: proposal.State.Executed,
-		isAlreadyCanceled: proposal.State.Canceled,
-		isAlreadyRejected: proposal.State.Rejected,
-		hasPassed:         proposal.State.Passed,
+		isTextProposal:    proposal.Data.ProposalType == Text,
+		isAlreadyExecuted: action.IsExecuted(),
+		isAlreadyCanceled: action.IsCanceled(),
+		isAlreadyRejected: status == StatusRejected,
+		hasPassed:         status == StatusPassed,
 	}
 }
 
@@ -333,9 +326,7 @@ func createExecutionContext(proposalId uint64, proposal *ProposalInfo) (*Executi
 }
 
 func calculateVotingEnd(proposal *ProposalInfo, config *Config) uint64 {
-	return proposal.State.CreatedAt +
-		config.VotingStartDelay +
-		config.VotingPeriod
+	return proposal.Status.Schedule.VotingEndTime
 }
 
 func calculateWindowStart(votingEnd uint64, config *Config) uint64 {
@@ -359,9 +350,9 @@ func validateExecutionWindow(now, windowStart, windowEnd uint64) error {
 }
 
 func validateVotes(pp *ProposalInfo) error {
-	yea := pp.Yea.Uint64()
-	nea := pp.Nay.Uint64()
-	quorum := pp.QuorumAmount
+	yea := pp.Voting.Yea.Uint64()
+	nea := pp.Voting.Nay.Uint64()
+	quorum := pp.Voting.QuorumAmount
 
 	if yea < quorum {
 		return ufmt.Errorf("quorum not met (yes(%d) < quorum(%d))", yea, quorum)
@@ -383,11 +374,11 @@ func updateProposalState(ctx *ExecutionContext) {
 }
 
 func validateCommunityPoolToken(pp *ProposalInfo) error {
-	if pp.ProposalType != CommunityPoolSpend {
+	if pp.Data.ProposalType != CommunityPoolSpend {
 		return nil
 	}
 
-	common.MustRegistered(pp.CommunityPoolSpend.TokenPath)
+	common.MustRegistered(pp.Data.CommunityPoolSpend.TokenPath)
 
 	return nil
 }
@@ -462,7 +453,7 @@ type FunctionHandler struct {
 }
 
 func NewFunctionHandler(fn func(params []string) error) *FunctionHandler {
-	return &FunctionHandler{fn: fn}
+	return &FunctionHandler{fn}
 }
 
 var _ ParameterHandler = (*FunctionHandler)(nil)
