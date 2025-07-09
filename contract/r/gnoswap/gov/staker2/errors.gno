@@ -26,4 +26,8 @@ var (
 	
 	// Reward errors
 	ErrNoRewards               = errors.New("no rewards to claim")
+	
+	// Staker errors
+	ErrStakerNotFound          = errors.New("staker not found")
+	ErrDelegationNotFound      = errors.New("delegation not found")
 )
