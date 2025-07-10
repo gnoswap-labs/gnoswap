@@ -50,13 +50,13 @@ func createOBLProject() {
 	recipientAddr := projectAddr
 	projectName := "OBL Launchpad Project"
 	rewardTokenPath := "gno.land/r/onbloc/obl"
-	rewardAmount := uint64(1_000_000_000)
+	rewardAmount := int64(1_000_000_000)
 	conditionPath := "gno.land/r/gnoswap/v1/gov/xgns"
 	conditionsAmount := "1000000"
-	tier30Ratio := uint64(10)
-	tier90Ratio := uint64(20)
-	tier180Ratio := uint64(70)
-	startTime := uint64(time.Now().Unix() + 10)
+	tier30Ratio := int64(10)
+	tier90Ratio := int64(20)
+	tier180Ratio := int64(70)
+	startTime := int64(time.Now().Unix() + 10)
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
