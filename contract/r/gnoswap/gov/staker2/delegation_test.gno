@@ -1,9 +1,11 @@
 package staker2
 
 import (
+	"fmt"
 	"std"
 	"strings"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
@@ -1051,6 +1053,1038 @@ func TestUndelegate(t *testing.T) {
 					uassert.Equal(t, expected, actual, "delegatedTo mismatch for %s", delegatee)
 				}
 			}()
+		})
+	}
+}
+
+func TestGetDelegatedCumulative(t *testing.T) {
+	delegator := testutils.TestAddress("delegator")
+	invalidAddress := std.Address("")
+
+	now := uint64(time.Now().Unix())
+	pastTime := now - 1000
+	futureTime := now + 1000
+
+	tests := []struct {
+		name           string
+		state          *State
+		delegator      std.Address
+		endTimestamp   uint64
+		expectedAmount uint64
+		expectPanic    bool
+		panicMessage   string
+		description    string
+	}{
+		{
+			name: "empty snapshot history",
+			state: &State{
+				snapShotHistory: make(SnapShotMap),
+			},
+			delegator:      delegator,
+			endTimestamp:   pastTime,
+			expectedAmount: 0,
+			expectPanic:    false,
+			description:    "should return 0 when no snapshot history exists",
+		},
+		{
+			name: "single snapshot entry - exact timestamp match",
+			state: &State{
+				snapShotHistory: SnapShotMap{
+					delegator.String(): []DelegationSnapShotHistory{
+						{
+							to:           delegator,
+							amount:       1000,
+							updatedBlock: 100,
+							updatedAt:    pastTime,
+						},
+					},
+				},
+			},
+			delegator:      delegator,
+			endTimestamp:   pastTime,
+			expectedAmount: 1000,
+			expectPanic:    false,
+			description:    "should return amount when timestamp exactly matches",
+		},
+		{
+			name: "single snapshot entry - timestamp after snapshot",
+			state: &State{
+				snapShotHistory: SnapShotMap{
+					delegator.String(): []DelegationSnapShotHistory{
+						{
+							to:           delegator,
+							amount:       1000,
+							updatedBlock: 100,
+							updatedAt:    pastTime,
+						},
+					},
+				},
+			},
+			delegator:      delegator,
+			endTimestamp:   pastTime + 100,
+			expectedAmount: 1000,
+			expectPanic:    false,
+			description:    "should return amount when timestamp is after snapshot",
+		},
+		{
+			name: "single snapshot entry - timestamp before snapshot",
+			state: &State{
+				snapShotHistory: SnapShotMap{
+					delegator.String(): []DelegationSnapShotHistory{
+						{
+							to:           delegator,
+							amount:       1000,
+							updatedBlock: 100,
+							updatedAt:    pastTime + 100,
+						},
+					},
+				},
+			},
+			delegator:      delegator,
+			endTimestamp:   pastTime,
+			expectedAmount: 0,
+			expectPanic:    false,
+			description:    "should return 0 when timestamp is before first snapshot",
+		},
+		{
+			name: "multiple snapshot entries - find correct one",
+			state: &State{
+				snapShotHistory: SnapShotMap{
+					delegator.String(): []DelegationSnapShotHistory{
+						{
+							to:           delegator,
+							amount:       500,
+							updatedBlock: 100,
+							updatedAt:    pastTime,
+						},
+						{
+							to:           delegator,
+							amount:       1000,
+							updatedBlock: 200,
+							updatedAt:    pastTime + 100,
+						},
+						{
+							to:           delegator,
+							amount:       1500,
+							updatedBlock: 300,
+							updatedAt:    pastTime + 200,
+						},
+					},
+				},
+			},
+			delegator:      delegator,
+			endTimestamp:   pastTime + 150,
+			expectedAmount: 1000,
+			expectPanic:    false,
+			description:    "should return correct amount for timestamp between snapshots",
+		},
+		{
+			name: "multiple snapshot entries - exact timestamp match",
+			state: &State{
+				snapShotHistory: SnapShotMap{
+					delegator.String(): []DelegationSnapShotHistory{
+						{
+							to:           delegator,
+							amount:       500,
+							updatedBlock: 100,
+							updatedAt:    pastTime,
+						},
+						{
+							to:           delegator,
+							amount:       1000,
+							updatedBlock: 200,
+							updatedAt:    pastTime + 100,
+						},
+						{
+							to:           delegator,
+							amount:       1500,
+							updatedBlock: 300,
+							updatedAt:    pastTime + 200,
+						},
+					},
+				},
+			},
+			delegator:      delegator,
+			endTimestamp:   pastTime + 100,
+			expectedAmount: 1000,
+			expectPanic:    false,
+			description:    "should return exact amount when timestamp matches snapshot",
+		},
+		{
+			name: "multiple snapshot entries - latest snapshot",
+			state: &State{
+				snapShotHistory: SnapShotMap{
+					delegator.String(): []DelegationSnapShotHistory{
+						{
+							to:           delegator,
+							amount:       500,
+							updatedBlock: 100,
+							updatedAt:    pastTime,
+						},
+						{
+							to:           delegator,
+							amount:       1000,
+							updatedBlock: 200,
+							updatedAt:    pastTime + 100,
+						},
+						{
+							to:           delegator,
+							amount:       1500,
+							updatedBlock: 300,
+							updatedAt:    pastTime + 200,
+						},
+					},
+				},
+			},
+			delegator:      delegator,
+			endTimestamp:   pastTime + 300,
+			expectedAmount: 1500,
+			expectPanic:    false,
+			description:    "should return latest amount when timestamp is after all snapshots",
+		},
+		{
+			name: "invalid delegator address",
+			state: &State{
+				snapShotHistory: make(SnapShotMap),
+			},
+			delegator:    invalidAddress,
+			endTimestamp: pastTime,
+			expectPanic:  true,
+			panicMessage: "invalid delegator address",
+			description:  "should panic with invalid delegator address",
+		},
+		{
+			name: "future timestamp",
+			state: &State{
+				snapShotHistory: make(SnapShotMap),
+			},
+			delegator:    delegator,
+			endTimestamp: futureTime,
+			expectPanic:  true,
+			panicMessage: "endTimestamp",
+			description:  "should panic when endTimestamp is in the future",
+		},
+		{
+			name: "zero amount snapshot",
+			state: &State{
+				snapShotHistory: SnapShotMap{
+					delegator.String(): []DelegationSnapShotHistory{
+						{
+							to:           delegator,
+							amount:       0,
+							updatedBlock: 100,
+							updatedAt:    pastTime,
+						},
+					},
+				},
+			},
+			delegator:      delegator,
+			endTimestamp:   pastTime,
+			expectedAmount: 0,
+			expectPanic:    false,
+			description:    "should return 0 when snapshot amount is 0",
+		},
+		{
+			name: "large amount snapshot",
+			state: &State{
+				snapShotHistory: SnapShotMap{
+					delegator.String(): []DelegationSnapShotHistory{
+						{
+							to:           delegator,
+							amount:       999999999,
+							updatedBlock: 100,
+							updatedAt:    pastTime,
+						},
+					},
+				},
+			},
+			delegator:      delegator,
+			endTimestamp:   pastTime,
+			expectedAmount: 999999999,
+			expectPanic:    false,
+			description:    "should handle large amounts correctly",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectPanic {
+				defer func() {
+					r := recover()
+					if r == nil {
+						t.Errorf("expected panic but none occurred")
+						return
+					}
+					panicStr := fmt.Sprintf("%v", r)
+					if !strings.Contains(panicStr, tt.panicMessage) {
+						t.Errorf("expected panic to contain '%s', got '%s'", tt.panicMessage, panicStr)
+					}
+				}()
+			}
+
+			result := tt.state.GetDelegatedCumulative(tt.delegator, tt.endTimestamp)
+
+			if !tt.expectPanic {
+				uassert.Equal(t, tt.expectedAmount, result, "amount mismatch")
+			}
+		})
+	}
+}
+
+func TestGetDelegateHistoryOf(t *testing.T) {
+	// 테스트용 주소 생성
+	delegator1 := testutils.TestAddress("delegator1")
+	delegator2 := testutils.TestAddress("delegator2")
+	invalidAddress := std.Address("")
+	delegatee1 := testutils.TestAddress("delegatee1")
+	delegatee2 := testutils.TestAddress("delegatee2")
+
+	// 테스트용 타임스탬프와 블록 높이
+	ts1 := uint64(time.Now().Unix()) - 1000
+	ts2 := uint64(time.Now().Unix()) - 500
+	ts3 := uint64(time.Now().Unix()) - 100
+	height1 := uint64(100)
+	height2 := uint64(200)
+	height3 := uint64(300)
+
+	tests := []struct {
+		name           string
+		state          *State
+		delegator      std.Address
+		expectedResult []DelegationHistory
+		expectPanic    bool
+		panicMessage   string
+		description    string
+	}{
+		{
+			name: "empty delegation history",
+			state: &State{
+				delegationHistory: make(HistoryMap),
+			},
+			delegator:      delegator1,
+			expectedResult: []DelegationHistory{},
+			expectPanic:    false,
+			description:    "should return empty slice when no delegation history exists",
+		},
+		{
+			name: "single delegation history entry",
+			state: &State{
+				delegationHistory: HistoryMap{
+					delegator1.String(): []DelegationHistory{
+						{
+							to:        delegatee1,
+							amount:    1000,
+							timestamp: ts1,
+							height:    height1,
+							add:       true,
+						},
+					},
+				},
+			},
+			delegator: delegator1,
+			expectedResult: []DelegationHistory{
+				{
+					to:        delegatee1,
+					amount:    1000,
+					timestamp: ts1,
+					height:    height1,
+					add:       true,
+				},
+			},
+			expectPanic: false,
+			description: "should return single delegation history entry",
+		},
+		{
+			name: "multiple delegation history entries",
+			state: &State{
+				delegationHistory: HistoryMap{
+					delegator1.String(): []DelegationHistory{
+						{
+							to:        delegatee1,
+							amount:    1000,
+							timestamp: ts1,
+							height:    height1,
+							add:       true,
+						},
+						{
+							to:        delegatee2,
+							amount:    2000,
+							timestamp: ts2,
+							height:    height2,
+							add:       true,
+						},
+						{
+							to:        delegatee1,
+							amount:    500,
+							timestamp: ts3,
+							height:    height3,
+							add:       false,
+						},
+					},
+				},
+			},
+			delegator: delegator1,
+			expectedResult: []DelegationHistory{
+				{
+					to:        delegatee1,
+					amount:    1000,
+					timestamp: ts1,
+					height:    height1,
+					add:       true,
+				},
+				{
+					to:        delegatee2,
+					amount:    2000,
+					timestamp: ts2,
+					height:    height2,
+					add:       true,
+				},
+				{
+					to:        delegatee1,
+					amount:    500,
+					timestamp: ts3,
+					height:    height3,
+					add:       false,
+				},
+			},
+			expectPanic: false,
+			description: "should return multiple delegation history entries in order",
+		},
+		{
+			name: "delegation history with zero amount",
+			state: &State{
+				delegationHistory: HistoryMap{
+					delegator1.String(): []DelegationHistory{
+						{
+							to:        delegatee1,
+							amount:    0,
+							timestamp: ts1,
+							height:    height1,
+							add:       true,
+						},
+					},
+				},
+			},
+			delegator: delegator1,
+			expectedResult: []DelegationHistory{
+				{
+					to:        delegatee1,
+					amount:    0,
+					timestamp: ts1,
+					height:    height1,
+					add:       true,
+				},
+			},
+			expectPanic: false,
+			description: "should return delegation history with zero amount",
+		},
+		{
+			name: "delegation history with large amount",
+			state: &State{
+				delegationHistory: HistoryMap{
+					delegator1.String(): []DelegationHistory{
+						{
+							to:        delegatee1,
+							amount:    999999999,
+							timestamp: ts1,
+							height:    height1,
+							add:       true,
+						},
+					},
+				},
+			},
+			delegator: delegator1,
+			expectedResult: []DelegationHistory{
+				{
+					to:        delegatee1,
+					amount:    999999999,
+					timestamp: ts1,
+					height:    height1,
+					add:       true,
+				},
+			},
+			expectPanic: false,
+			description: "should return delegation history with large amount",
+		},
+		{
+			name: "delegation history with both add and remove operations",
+			state: &State{
+				delegationHistory: HistoryMap{
+					delegator1.String(): []DelegationHistory{
+						{
+							to:        delegatee1,
+							amount:    1000,
+							timestamp: ts1,
+							height:    height1,
+							add:       true,
+						},
+						{
+							to:        delegatee1,
+							amount:    500,
+							timestamp: ts2,
+							height:    height2,
+							add:       false,
+						},
+						{
+							to:        delegatee1,
+							amount:    300,
+							timestamp: ts3,
+							height:    height3,
+							add:       true,
+						},
+					},
+				},
+			},
+			delegator: delegator1,
+			expectedResult: []DelegationHistory{
+				{
+					to:        delegatee1,
+					amount:    1000,
+					timestamp: ts1,
+					height:    height1,
+					add:       true,
+				},
+				{
+					to:        delegatee1,
+					amount:    500,
+					timestamp: ts2,
+					height:    height2,
+					add:       false,
+				},
+				{
+					to:        delegatee1,
+					amount:    300,
+					timestamp: ts3,
+					height:    height3,
+					add:       true,
+				},
+			},
+			expectPanic: false,
+			description: "should return delegation history with both add and remove operations",
+		},
+		{
+			name: "delegation history for different delegator",
+			state: &State{
+				delegationHistory: HistoryMap{
+					delegator1.String(): []DelegationHistory{
+						{
+							to:        delegatee1,
+							amount:    1000,
+							timestamp: ts1,
+							height:    height1,
+							add:       true,
+						},
+					},
+					delegator2.String(): []DelegationHistory{
+						{
+							to:        delegatee2,
+							amount:    2000,
+							timestamp: ts2,
+							height:    height2,
+							add:       true,
+						},
+					},
+				},
+			},
+			delegator: delegator2,
+			expectedResult: []DelegationHistory{
+				{
+					to:        delegatee2,
+					amount:    2000,
+					timestamp: ts2,
+					height:    height2,
+					add:       true,
+				},
+			},
+			expectPanic: false,
+			description: "should return delegation history for specific delegator only",
+		},
+		{
+			name: "invalid delegator address",
+			state: &State{
+				delegationHistory: make(HistoryMap),
+			},
+			delegator:    invalidAddress,
+			expectPanic:  true,
+			panicMessage: "invalid delegator address",
+			description:  "should panic with invalid delegator address",
+		},
+		{
+			name: "delegation history with same delegatee multiple times",
+			state: &State{
+				delegationHistory: HistoryMap{
+					delegator1.String(): []DelegationHistory{
+						{
+							to:        delegatee1,
+							amount:    1000,
+							timestamp: ts1,
+							height:    height1,
+							add:       true,
+						},
+						{
+							to:        delegatee1,
+							amount:    500,
+							timestamp: ts2,
+							height:    height2,
+							add:       true,
+						},
+						{
+							to:        delegatee1,
+							amount:    200,
+							timestamp: ts3,
+							height:    height3,
+							add:       false,
+						},
+					},
+				},
+			},
+			delegator: delegator1,
+			expectedResult: []DelegationHistory{
+				{
+					to:        delegatee1,
+					amount:    1000,
+					timestamp: ts1,
+					height:    height1,
+					add:       true,
+				},
+				{
+					to:        delegatee1,
+					amount:    500,
+					timestamp: ts2,
+					height:    height2,
+					add:       true,
+				},
+				{
+					to:        delegatee1,
+					amount:    200,
+					timestamp: ts3,
+					height:    height3,
+					add:       false,
+				},
+			},
+			expectPanic: false,
+			description: "should return delegation history with same delegatee multiple times",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectPanic {
+				defer func() {
+					r := recover()
+					if r == nil {
+						t.Errorf("expected panic but none occurred")
+						return
+					}
+					panicStr := fmt.Sprintf("%v", r)
+					if !strings.Contains(panicStr, tt.panicMessage) {
+						t.Errorf("expected panic to contain '%s', got '%s'", tt.panicMessage, panicStr)
+					}
+				}()
+			}
+
+			result := tt.state.GetDelegateHistoryOf(tt.delegator)
+
+			if !tt.expectPanic {
+				uassert.Equal(t, len(tt.expectedResult), len(result), "history length mismatch")
+
+				for i, expected := range tt.expectedResult {
+					if i >= len(result) {
+						t.Errorf("expected history entry at index %d but none found", i)
+						continue
+					}
+
+					actual := result[i]
+					uassert.Equal(t, expected.to, actual.to)
+					uassert.Equal(t, expected.amount, actual.amount)
+					uassert.Equal(t, expected.timestamp, actual.timestamp)
+					uassert.Equal(t, expected.height, actual.height)
+					uassert.Equal(t, expected.add, actual.add)
+				}
+			}
+		})
+	}
+}
+
+func TestGetDelegationSnapShotHistoryOf(t *testing.T) {
+	// 테스트용 주소 생성
+	delegator1 := testutils.TestAddress("delegator1")
+	delegator2 := testutils.TestAddress("delegator2")
+	invalidAddress := std.Address("")
+
+	// 테스트용 타임스탬프와 블록 높이
+	ts1 := uint64(time.Now().Unix()) - 1000
+	ts2 := uint64(time.Now().Unix()) - 500
+	ts3 := uint64(time.Now().Unix()) - 100
+	height1 := uint64(100)
+	height2 := uint64(200)
+	height3 := uint64(300)
+
+	tests := []struct {
+		name           string
+		state          *State
+		delegator      std.Address
+		expectedResult []DelegationSnapShotHistory
+		expectPanic    bool
+		panicMessage   string
+		description    string
+	}{
+		{
+			name: "empty snapshot history",
+			state: &State{
+				snapShotHistory: make(SnapShotMap),
+			},
+			delegator:      delegator1,
+			expectedResult: []DelegationSnapShotHistory{},
+			expectPanic:    false,
+			description:    "should return empty slice when no snapshot history exists",
+		},
+		{
+			name: "single snapshot history entry",
+			state: &State{
+				snapShotHistory: SnapShotMap{
+					delegator1.String(): []DelegationSnapShotHistory{
+						{
+							to:           delegator1,
+							amount:       1000,
+							updatedBlock: height1,
+							updatedAt:    ts1,
+						},
+					},
+				},
+			},
+			delegator: delegator1,
+			expectedResult: []DelegationSnapShotHistory{
+				{
+					to:           delegator1,
+					amount:       1000,
+					updatedBlock: height1,
+					updatedAt:    ts1,
+				},
+			},
+			expectPanic: false,
+			description: "should return single snapshot history entry",
+		},
+		{
+			name: "multiple snapshot history entries",
+			state: &State{
+				snapShotHistory: SnapShotMap{
+					delegator1.String(): []DelegationSnapShotHistory{
+						{
+							to:           delegator1,
+							amount:       500,
+							updatedBlock: height1,
+							updatedAt:    ts1,
+						},
+						{
+							to:           delegator1,
+							amount:       1000,
+							updatedBlock: height2,
+							updatedAt:    ts2,
+						},
+						{
+							to:           delegator1,
+							amount:       1500,
+							updatedBlock: height3,
+							updatedAt:    ts3,
+						},
+					},
+				},
+			},
+			delegator: delegator1,
+			expectedResult: []DelegationSnapShotHistory{
+				{
+					to:           delegator1,
+					amount:       500,
+					updatedBlock: height1,
+					updatedAt:    ts1,
+				},
+				{
+					to:           delegator1,
+					amount:       1000,
+					updatedBlock: height2,
+					updatedAt:    ts2,
+				},
+				{
+					to:           delegator1,
+					amount:       1500,
+					updatedBlock: height3,
+					updatedAt:    ts3,
+				},
+			},
+			expectPanic: false,
+			description: "should return multiple snapshot history entries in order",
+		},
+		{
+			name: "snapshot history with zero amount",
+			state: &State{
+				snapShotHistory: SnapShotMap{
+					delegator1.String(): []DelegationSnapShotHistory{
+						{
+							to:           delegator1,
+							amount:       0,
+							updatedBlock: height1,
+							updatedAt:    ts1,
+						},
+					},
+				},
+			},
+			delegator: delegator1,
+			expectedResult: []DelegationSnapShotHistory{
+				{
+					to:           delegator1,
+					amount:       0,
+					updatedBlock: height1,
+					updatedAt:    ts1,
+				},
+			},
+			expectPanic: false,
+			description: "should return snapshot history with zero amount",
+		},
+		{
+			name: "snapshot history with large amount",
+			state: &State{
+				snapShotHistory: SnapShotMap{
+					delegator1.String(): []DelegationSnapShotHistory{
+						{
+							to:           delegator1,
+							amount:       999999999,
+							updatedBlock: height1,
+							updatedAt:    ts1,
+						},
+					},
+				},
+			},
+			delegator: delegator1,
+			expectedResult: []DelegationSnapShotHistory{
+				{
+					to:           delegator1,
+					amount:       999999999,
+					updatedBlock: height1,
+					updatedAt:    ts1,
+				},
+			},
+			expectPanic: false,
+			description: "should return snapshot history with large amount",
+		},
+		{
+			name: "snapshot history with decreasing amounts",
+			state: &State{
+				snapShotHistory: SnapShotMap{
+					delegator1.String(): []DelegationSnapShotHistory{
+						{
+							to:           delegator1,
+							amount:       1000,
+							updatedBlock: height1,
+							updatedAt:    ts1,
+						},
+						{
+							to:           delegator1,
+							amount:       500,
+							updatedBlock: height2,
+							updatedAt:    ts2,
+						},
+						{
+							to:           delegator1,
+							amount:       0,
+							updatedBlock: height3,
+							updatedAt:    ts3,
+						},
+					},
+				},
+			},
+			delegator: delegator1,
+			expectedResult: []DelegationSnapShotHistory{
+				{
+					to:           delegator1,
+					amount:       1000,
+					updatedBlock: height1,
+					updatedAt:    ts1,
+				},
+				{
+					to:           delegator1,
+					amount:       500,
+					updatedBlock: height2,
+					updatedAt:    ts2,
+				},
+				{
+					to:           delegator1,
+					amount:       0,
+					updatedBlock: height3,
+					updatedAt:    ts3,
+				},
+			},
+			expectPanic: false,
+			description: "should return snapshot history with decreasing amounts",
+		},
+		{
+			name: "snapshot history for different delegator",
+			state: &State{
+				snapShotHistory: SnapShotMap{
+					delegator1.String(): []DelegationSnapShotHistory{
+						{
+							to:           delegator1,
+							amount:       1000,
+							updatedBlock: height1,
+							updatedAt:    ts1,
+						},
+					},
+					delegator2.String(): []DelegationSnapShotHistory{
+						{
+							to:           delegator2,
+							amount:       2000,
+							updatedBlock: height2,
+							updatedAt:    ts2,
+						},
+					},
+				},
+			},
+			delegator: delegator2,
+			expectedResult: []DelegationSnapShotHistory{
+				{
+					to:           delegator2,
+					amount:       2000,
+					updatedBlock: height2,
+					updatedAt:    ts2,
+				},
+			},
+			expectPanic: false,
+			description: "should return snapshot history for specific delegator only",
+		},
+		{
+			name: "invalid delegator address",
+			state: &State{
+				snapShotHistory: make(SnapShotMap),
+			},
+			delegator:    invalidAddress,
+			expectPanic:  true,
+			panicMessage: "invalid delegator address",
+			description:  "should panic with invalid delegator address",
+		},
+		{
+			name: "snapshot history with fluctuating amounts",
+			state: &State{
+				snapShotHistory: SnapShotMap{
+					delegator1.String(): []DelegationSnapShotHistory{
+						{
+							to:           delegator1,
+							amount:       1000,
+							updatedBlock: height1,
+							updatedAt:    ts1,
+						},
+						{
+							to:           delegator1,
+							amount:       500,
+							updatedBlock: height2,
+							updatedAt:    ts2,
+						},
+						{
+							to:           delegator1,
+							amount:       1200,
+							updatedBlock: height3,
+							updatedAt:    ts3,
+						},
+					},
+				},
+			},
+			delegator: delegator1,
+			expectedResult: []DelegationSnapShotHistory{
+				{
+					to:           delegator1,
+					amount:       1000,
+					updatedBlock: height1,
+					updatedAt:    ts1,
+				},
+				{
+					to:           delegator1,
+					amount:       500,
+					updatedBlock: height2,
+					updatedAt:    ts2,
+				},
+				{
+					to:           delegator1,
+					amount:       1200,
+					updatedBlock: height3,
+					updatedAt:    ts3,
+				},
+			},
+			expectPanic: false,
+			description: "should return snapshot history with fluctuating amounts",
+		},
+		{
+			name: "snapshot history with same timestamp",
+			state: &State{
+				snapShotHistory: SnapShotMap{
+					delegator1.String(): []DelegationSnapShotHistory{
+						{
+							to:           delegator1,
+							amount:       1000,
+							updatedBlock: height1,
+							updatedAt:    ts1,
+						},
+						{
+							to:           delegator1,
+							amount:       2000,
+							updatedBlock: height2,
+							updatedAt:    ts1, // Same timestamp
+						},
+					},
+				},
+			},
+			delegator: delegator1,
+			expectedResult: []DelegationSnapShotHistory{
+				{
+					to:           delegator1,
+					amount:       1000,
+					updatedBlock: height1,
+					updatedAt:    ts1,
+				},
+				{
+					to:           delegator1,
+					amount:       2000,
+					updatedBlock: height2,
+					updatedAt:    ts1,
+				},
+			},
+			expectPanic: false,
+			description: "should return snapshot history with same timestamp",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectPanic {
+				defer func() {
+					r := recover()
+					if r == nil {
+						t.Errorf("expected panic but none occurred")
+						return
+					}
+					panicStr := fmt.Sprintf("%v", r)
+					if !strings.Contains(panicStr, tt.panicMessage) {
+						t.Errorf("expected panic to contain '%s', got '%s'", tt.panicMessage, panicStr)
+					}
+				}()
+			}
+
+			result := tt.state.GetDelegationSnapShotHistoryOf(tt.delegator)
+
+			if !tt.expectPanic {
+				uassert.Equal(t, len(tt.expectedResult), len(result), "snapshot history length mismatch")
+
+				for i, expected := range tt.expectedResult {
+					if i >= len(result) {
+						t.Errorf("expected snapshot entry at index %d but none found", i)
+						continue
+					}
+
+					actual := result[i]
+					uassert.Equal(t, expected.to, actual.to)
+					uassert.Equal(t, expected.amount, actual.amount)
+					uassert.Equal(t, expected.updatedBlock, actual.updatedBlock)
+					uassert.Equal(t, expected.updatedAt, actual.updatedAt)
+				}
+			}
 		})
 	}
 }

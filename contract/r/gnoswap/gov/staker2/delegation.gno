@@ -232,3 +232,35 @@ func updateDelegationSnapShotHistory(st *State, to std.Address, amount uint64, a
 	st.snapShotHistory[toStr] = snapshots
 	return nil
 }
+
+func (st *State) GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
+	if !delegator.IsValid() {
+		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
+	}
+	if endTimestamp > uint64(time.Now().Unix()) {
+		panic(ufmt.Sprintf("endTimestamp(%d) > now(%d)", endTimestamp, time.Now().Unix()))
+	}
+	toStr := delegator.String()
+	history := st.snapShotHistory[toStr]
+	for i := len(history) - 1; i >= 0; i-- {
+		record := history[i]
+		if record.updatedAt <= endTimestamp {
+			return record.amount
+		}
+	}
+	return 0
+}
+
+func (st *State) GetDelegateHistoryOf(delegator std.Address) []DelegationHistory {
+	if !delegator.IsValid() {
+		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
+	}
+	return st.delegationHistory[delegator.String()]
+}
+
+func (st *State) GetDelegationSnapShotHistoryOf(delegator std.Address) []DelegationSnapShotHistory {
+	if !delegator.IsValid() {
+		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
+	}
+	return st.snapShotHistory[delegator.String()]
+}

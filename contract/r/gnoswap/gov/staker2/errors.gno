@@ -1,6 +1,10 @@
 package staker2
 
-import "errors"
+import (
+	"errors"
+
+	"gno.land/p/demo/ufmt"
+)
 
 var (
 	// Delegation errors
@@ -31,3 +35,8 @@ var (
 	ErrStakerNotFound          = errors.New("staker not found")
 	ErrDelegationNotFound      = errors.New("delegation not found")
 )
+
+func addDetailToError(err error, detail string) string {
+	finalErr := ufmt.Errorf("%s || %s", err.Error(), detail)
+	return finalErr.Error()
+}
