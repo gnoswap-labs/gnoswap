@@ -6,7 +6,11 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
+
+	"gno.land/p/gnoswap/consts"
 )
+
+var thresholdVotingWeightBlockHeight = consts.SECONDS_PER_DAY / milliToSec(consts.BLOCK_GENERATION_INTERVAL)
 
 type (
 	AmountMap   = map[string]uint64
@@ -263,4 +267,33 @@ func (st *State) GetDelegationSnapShotHistoryOf(delegator std.Address) []Delegat
 		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
 	}
 	return st.snapShotHistory[delegator.String()]
+}
+
+// cleanDelegationStatHistory removes old delegation snapshots older than threshold
+func (st *State) CleanDelegationStatHistory(lastCleanedHeight *uint64, thresholdVotingWeightBlockHeight int64) {
+	height := uint64(std.ChainHeight())
+	sinceLast := height - *lastCleanedHeight
+
+	if sinceLast < uint64(thresholdVotingWeightBlockHeight) {
+		return
+	}
+
+	*lastCleanedHeight = height
+	keepFrom := height - uint64(thresholdVotingWeightBlockHeight)
+
+	for key, history := range st.snapShotHistory {
+		// keep only entries newer than keepFrom, keeping at least one entry
+		for i := len(history) - 1; i >= 0; i-- {
+			if history[i].updatedBlock > keepFrom {
+				continue
+			}
+			st.snapShotHistory[key] = history[i:]
+			break
+		}
+	}
+}
+
+// milliToSec converts milliseconds to seconds
+func milliToSec(ms int64) int64 {
+	return ms / consts.MILLISECONDS_PER_SECOND
 }
