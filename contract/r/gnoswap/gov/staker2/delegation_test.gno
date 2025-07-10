@@ -439,7 +439,7 @@ func TestApplyDelegationChange(t *testing.T) {
 			}
 
 			// Apply the delegation change
-			result := applyDelegationChange(initialState, tt.record, tt.add)
+			result := initialState.applyDelegationChange(tt.record, tt.add)
 
 			// Verify delegatorAmount
 			for delegator, expectedAmount := range tt.expectedState.delegatorAmount {
@@ -482,7 +482,7 @@ func TestAppendDelegationHistory(t *testing.T) {
 		to := testutils.TestAddress("to")
 		amount := uint64(1000)
 
-		err := appendDelegationHistory(st, from, to, amount, true)
+		err := st.appendDelegationHistory(from, to, amount, true)
 
 		uassert.NoError(t, err)
 		uassert.True(t, len(st.delegationHistory) > 0)
@@ -507,11 +507,11 @@ func TestAppendDelegationHistory(t *testing.T) {
 		to2 := testutils.TestAddress("to2")
 
 		// Add first delegation
-		err1 := appendDelegationHistory(st, from, to1, 1000, true)
+		err1 := st.appendDelegationHistory(from, to1, 1000, true)
 		uassert.NoError(t, err1)
 
 		// Add second delegation
-		err2 := appendDelegationHistory(st, from, to2, 2000, false)
+		err2 := st.appendDelegationHistory(from, to2, 2000, false)
 		uassert.NoError(t, err2)
 
 		fromStr := from.String()
@@ -537,7 +537,7 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 		to := testutils.TestAddress("to")
 		amount := uint64(1000)
 
-		err := updateDelegationSnapShotHistory(st, to, amount, true)
+		err := st.updateDelegationSnapShotHistory(to, amount, true)
 
 		uassert.NoError(t, err)
 		toStr := to.String()
@@ -557,11 +557,11 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 		to := testutils.TestAddress("to")
 
 		// Add first delegation
-		err1 := updateDelegationSnapShotHistory(st, to, 1000, true)
+		err1 := st.updateDelegationSnapShotHistory(to, 1000, true)
 		uassert.NoError(t, err1)
 
 		// Add second delegation
-		err2 := updateDelegationSnapShotHistory(st, to, 2000, true)
+		err2 := st.updateDelegationSnapShotHistory(to, 2000, true)
 		uassert.NoError(t, err2)
 
 		toStr := to.String()
@@ -580,11 +580,11 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 		to := testutils.TestAddress("to")
 
 		// Add initial delegation
-		err1 := updateDelegationSnapShotHistory(st, to, 5000, true)
+		err1 := st.updateDelegationSnapShotHistory(to, 5000, true)
 		uassert.NoError(t, err1)
 
 		// Remove some delegation
-		err2 := updateDelegationSnapShotHistory(st, to, 2000, false)
+		err2 := st.updateDelegationSnapShotHistory(to, 2000, false)
 		uassert.NoError(t, err2)
 
 		toStr := to.String()
@@ -603,11 +603,11 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 		to := testutils.TestAddress("to")
 
 		// Add initial delegation
-		err1 := updateDelegationSnapShotHistory(st, to, 1000, true)
+		err1 := st.updateDelegationSnapShotHistory(to, 1000, true)
 		uassert.NoError(t, err1)
 
 		// Remove more than available
-		err2 := updateDelegationSnapShotHistory(st, to, 2000, false)
+		err2 := st.updateDelegationSnapShotHistory(to, 2000, false)
 		uassert.NoError(t, err2)
 
 		toStr := to.String()
@@ -626,7 +626,7 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 		to := std.Address("") // Invalid address
 		amount := uint64(1000)
 
-		err := updateDelegationSnapShotHistory(st, to, amount, true)
+		err := st.updateDelegationSnapShotHistory(to, amount, true)
 
 		uassert.Error(t, err)
 		if !strings.Contains(err.Error(), "invalid address") {
@@ -639,7 +639,7 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 		to := testutils.TestAddress("to")
 		amount := uint64(0)
 
-		err := updateDelegationSnapShotHistory(st, to, amount, true)
+		err := st.updateDelegationSnapShotHistory(to, amount, true)
 
 		uassert.NoError(t, err)
 		toStr := to.String()
@@ -653,9 +653,9 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 		to := testutils.TestAddress("to")
 
 		// Add multiple delegations
-		updateDelegationSnapShotHistory(st, to, 1000, true)
-		updateDelegationSnapShotHistory(st, to, 2000, true)
-		updateDelegationSnapShotHistory(st, to, 500, false)
+		st.updateDelegationSnapShotHistory(to, 1000, true)
+		st.updateDelegationSnapShotHistory(to, 2000, true)
+		st.updateDelegationSnapShotHistory(to, 500, false)
 
 		toStr := to.String()
 		snapshots := st.snapShotHistory[toStr]

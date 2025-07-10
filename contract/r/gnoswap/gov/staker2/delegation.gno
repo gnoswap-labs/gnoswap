@@ -10,6 +10,8 @@ import (
 	"gno.land/p/gnoswap/consts"
 )
 
+var delegationState = NewState()
+
 var thresholdVotingWeightBlockHeight = consts.SECONDS_PER_DAY / milliToSec(consts.BLOCK_GENERATION_INTERVAL)
 
 type (
@@ -86,11 +88,11 @@ func delegate(st *State, to std.Address, amount uint64) error {
 	toStr := to.String()
 
 	record := NewDelegationRecord(caller, toStr, amount)
-	st = applyDelegationChange(st, *record, true)
+	st = st.applyDelegationChange(*record, true)
 	st.totalDelegated += amount
 
-	appendDelegationHistory(st, std.Address(caller), to, amount, true)
-	updateDelegationSnapShotHistory(st, to, amount, true)
+	st.appendDelegationHistory(std.Address(caller), to, amount, true)
+	st.updateDelegationSnapShotHistory(to, amount, true)
 
 	return nil
 }
@@ -114,24 +116,24 @@ func undelegate(st *State, to std.Address, amount uint64) error {
 	}
 
 	record := NewDelegationRecord(callerStr, toStr, amount)
-	st = applyDelegationChange(st, *record, false)
+	st = st.applyDelegationChange(*record, false)
 	st.totalDelegated -= amount
 
-	appendDelegationHistory(st, caller, to, amount, false)
-	updateDelegationSnapShotHistory(st, to, amount, false)
+	st.appendDelegationHistory(caller, to, amount, false)
+	st.updateDelegationSnapShotHistory(to, amount, false)
 
 	return nil
 }
 
-func applyDelegationChange(st *State, record DelegationRecord, add bool) *State {
+func (st *State) applyDelegationChange(record DelegationRecord, add bool) *State {
 	if add {
-		return addDelegation(st, record)
+		return st.addDelegation(record)
 	}
-	return removeDelegation(st, record)
+	return st.removeDelegation(record)
 }
 
 // addDelegation handles adding delegation amount to the state
-func addDelegation(st *State, record DelegationRecord) *State {
+func (st *State) addDelegation(record DelegationRecord) *State {
 	delta := record.Amount
 
 	// Update delegator's total delegated amount
@@ -152,7 +154,7 @@ func addDelegation(st *State, record DelegationRecord) *State {
 }
 
 // removeDelegation handles removing delegation amount from the state
-func removeDelegation(st *State, record DelegationRecord) *State {
+func (st *State) removeDelegation(record DelegationRecord) *State {
 	delta := record.Amount
 
 	// Update delegator's total delegated amount
@@ -182,7 +184,7 @@ func removeDelegation(st *State, record DelegationRecord) *State {
 	return st
 }
 
-func appendDelegationHistory(st *State, from, to std.Address, amount uint64, add bool) error {
+func (st *State) appendDelegationHistory(from, to std.Address, amount uint64, add bool) error {
 	ts := uint64(time.Now().Unix())
 	if !(from.IsValid() || to.IsValid()) {
 		return fmt.Errorf("invalid address")
@@ -201,7 +203,7 @@ func appendDelegationHistory(st *State, from, to std.Address, amount uint64, add
 	return nil
 }
 
-func updateDelegationSnapShotHistory(st *State, to std.Address, amount uint64, add bool) error {
+func (st *State) updateDelegationSnapShotHistory(to std.Address, amount uint64, add bool) error {
 	if !to.IsValid() {
 		return fmt.Errorf("invalid address")
 	}
