@@ -6,6 +6,20 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+// Deposit represents a deposit made by a user in a launchpad project.
+//
+// This struct contains the necessary data and methods to manage and distribute
+// rewards for a specific deposit.
+//
+// Fields:
+// - createdBlockTimeInfo (BlockTimeInfo): The block time and height information for the creation of the deposit.
+// - endBlockTimeInfo (BlockTimeInfo): The block time and height information for the end of the deposit.
+// - depositor (std.Address): The address of the depositor.
+// - id (string): The unique identifier for the deposit.
+// - projectID (string): The ID of the project associated with the deposit.
+// - tier (int64): The tier of the deposit.
+// - depositAmount (int64): The amount of the deposit.
+// - withdrawnHeight (int64): The height at which the deposit was withdrawn.
 type Deposit struct {
 	createdBlockTimeInfo *BlockTimeInfo
 	endBlockTimeInfo     *BlockTimeInfo
