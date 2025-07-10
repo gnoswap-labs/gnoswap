@@ -1,87 +1,210 @@
 package staker2
 
 import (
+	"fmt"
 	"std"
+	"time"
+
+	"gno.land/p/demo/ufmt"
 )
 
-// validateDelegation checks if a delegation is valid according to DoS protection rules
-func validateDelegation(staker *StakerState, to std.Address, amount uint64) error {
-	// Check self-delegation
-	if staker.Address == to {
-		return ErrSelfDelegation
-	}
+type (
+	AmountMap   = map[string]uint64
+	FromToMap   = map[string]AmountMap
+	HistoryMap  = map[string][]DelegationHistory
+	SnapShotMap = map[string][]DelegationSnapShotHistory
+)
 
-	// Check if it's a new delegation or adding to existing
-	if _, exists := staker.Delegations[to]; exists {
-		// Adding to existing delegation - check minimum increment
-		if amount < MIN_DELEGATION_INCREMENT {
-			return ErrInsufficientIncrement
-		}
-	} else {
-		// New delegation - check minimum per address and max delegations
-		if amount < MIN_DELEGATION_PER_ADDRESS {
-			return ErrInsufficientDelegation
-		}
-		if len(staker.Delegations) >= MAX_DELEGATIONS_PER_USER {
-			return ErrTooManyDelegations
-		}
+// DelegationHistory represents a single delegation event
+type DelegationHistory struct {
+	to        std.Address
+	amount    uint64
+	timestamp uint64
+	height    uint64
+	add       bool
+}
+
+// DelegationSnapShotHistory represents delegation stat for to address
+type DelegationSnapShotHistory struct {
+	to           std.Address
+	amount       uint64
+	updatedBlock uint64
+	updatedAt    uint64
+}
+
+// TODO: rename it to DelegationState
+type State struct {
+	totalDelegated    uint64
+	delegatorAmount   AmountMap
+	delegatedFromTo   FromToMap
+	delegatedTo       AmountMap
+	delegationHistory HistoryMap
+	snapShotHistory   SnapShotMap
+}
+
+func (st *State) TotalDelegated() uint64        { return st.totalDelegated }
+func (st *State) DelegatorAmount() AmountMap    { return st.delegatorAmount }
+func (st *State) DelegatedFromTo() FromToMap    { return st.delegatedFromTo }
+func (st *State) DelegatedTo() AmountMap        { return st.delegatedTo }
+func (st *State) DelegationHistory() HistoryMap { return st.delegationHistory }
+func (st *State) SnapShotHistory() SnapShotMap  { return st.snapShotHistory }
+
+type DelegationRecord struct {
+	Delegator string `json:"delegator"`
+	Delegatee string `json:"delegatee"`
+	Amount    uint64 `json:"amount"`
+}
+
+func NewState() *State {
+	return &State{
+		totalDelegated:    0,
+		delegatorAmount:   make(AmountMap),
+		delegatedFromTo:   make(FromToMap),
+		delegatedTo:       make(AmountMap),
+		delegationHistory: make(HistoryMap),
+		snapShotHistory:   make(SnapShotMap),
 	}
+}
+
+func NewDelegationRecord(delegator string, delegatee string, amount uint64) *DelegationRecord {
+	return &DelegationRecord{
+		Delegator: delegator,
+		Delegatee: delegatee,
+		Amount:    amount,
+	}
+}
+
+func delegate(st *State, to std.Address, amount uint64) error {
+	if amount == 0 {
+		return fmt.Errorf("amount must be positive")
+	}
+	caller := std.PreviousRealm().Address().String()
+	toStr := to.String()
+
+	record := NewDelegationRecord(caller, toStr, amount)
+	st = applyDelegationChange(st, *record, true)
+	st.totalDelegated += amount
+
+	appendDelegationHistory(st, std.Address(caller), to, amount, true)
+	updateDelegationSnapShotHistory(st, to, amount, true)
 
 	return nil
 }
 
-// addDelegation adds a delegation to the staker state
-func addDelegation(staker *StakerState, to std.Address, amount uint64, currentEpoch uint64) error {
-	// Validate first
-	if err := validateDelegation(staker, to, amount); err != nil {
-		return err
+func undelegate(st *State, to std.Address, amount uint64) error {
+	if amount == 0 {
+		return fmt.Errorf("amount must be positive")
+	}
+	caller := std.PreviousRealm().Address()
+	callerStr := caller.String()
+	toStr := to.String()
+
+	innerMap, ok := st.delegatedFromTo[callerStr]
+	if !ok {
+		return ufmt.Errorf("caller(%s) has no delegated amount", callerStr)
 	}
 
-	// Add or update delegation
-	if existing, exists := staker.Delegations[to]; exists {
-		// Update existing delegation
-		existing.Amount += amount
-		staker.Delegations[to] = existing
-	} else {
-		// Create new delegation
-		staker.Delegations[to] = DelegationInfo{
-			Amount:     amount,
-			StartEpoch: currentEpoch,
-		}
+	delegatedAmount, ok := innerMap[toStr]
+	if !ok || delegatedAmount < amount {
+		return ufmt.Errorf("caller(%s) has insufficient delegated amount to(%s)", callerStr, toStr)
 	}
 
-	// Update total staked
-	staker.TotalStaked += amount
-	staker.LastUpdateEpoch = currentEpoch
+	record := NewDelegationRecord(callerStr, toStr, amount)
+	st = applyDelegationChange(st, *record, false)
+	st.totalDelegated -= amount
+
+	appendDelegationHistory(st, caller, to, amount, false)
+	updateDelegationSnapShotHistory(st, to, amount, false)
 
 	return nil
 }
 
-// removeDelegation removes a delegation from the staker state
-func removeDelegation(staker *StakerState, from std.Address, amount uint64) (uint64, error) {
-	delegation, exists := staker.Delegations[from]
-	if !exists {
-		return 0, ErrNoDelegation
+func applyDelegationChange(st *State, record DelegationRecord, add bool) *State {
+	delta := record.Amount
+	if add {
+		st.delegatorAmount[record.Delegator] += delta
+		if _, ok := st.delegatedFromTo[record.Delegator]; !ok {
+			st.delegatedFromTo[record.Delegator] = make(AmountMap)
+		}
+		st.delegatedFromTo[record.Delegator][record.Delegatee] += delta
+		st.delegatedTo[record.Delegatee] += delta
+		return st
 	}
 
-	// Calculate actual amount to remove (cap at delegation amount)
-	removeAmount := amount
-	if removeAmount > delegation.Amount {
-		removeAmount = delegation.Amount
-	}
-
-	// Update delegation
-	delegation.Amount -= removeAmount
-	if delegation.Amount == 0 {
-		// Remove delegation entirely if amount is 0
-		delete(staker.Delegations, from)
+	if amt, ok := st.delegatorAmount[record.Delegator]; ok && amt >= delta {
+		st.delegatorAmount[record.Delegator] = amt - delta
 	} else {
-		// Update with reduced amount
-		staker.Delegations[from] = delegation
+		st.delegatorAmount[record.Delegator] = 0
 	}
 
-	// Update total staked
-	staker.TotalStaked -= removeAmount
+	if toMap, ok := st.delegatedFromTo[record.Delegator]; ok {
+		if amt, ok := toMap[record.Delegatee]; ok && amt >= delta {
+			toMap[record.Delegatee] = amt - delta
+		} else {
+			delete(toMap, record.Delegatee)
+		}
+	}
 
-	return removeAmount, nil
+	if amt, ok := st.delegatedTo[record.Delegatee]; ok && amt >= delta {
+		st.delegatedTo[record.Delegatee] = amt - delta
+	} else {
+		st.delegatedTo[record.Delegatee] = 0
+	}
+
+	return st
+}
+
+func appendDelegationHistory(st *State, from, to std.Address, amount uint64, add bool) error {
+	ts := uint64(time.Now().Unix())
+	if !(from.IsValid() || to.IsValid()) {
+		return fmt.Errorf("invalid address")
+	}
+
+	history := DelegationHistory{
+		to:        to,
+		amount:    amount,
+		timestamp: ts,
+		height:    uint64(std.ChainHeight()),
+		add:       add,
+	}
+
+	fromStr := from.String()
+	st.delegationHistory[fromStr] = append(st.delegationHistory[fromStr], history)
+	return nil
+}
+
+func updateDelegationSnapShotHistory(st *State, to std.Address, amount uint64, add bool) error {
+	if !to.IsValid() {
+		return fmt.Errorf("invalid address")
+	}
+	toStr := to.String()
+
+	ts := uint64(time.Now().Unix())
+	height := uint64(std.ChainHeight())
+
+	snapshots := st.snapShotHistory[toStr]
+	prev := uint64(0)
+	if len(snapshots) > 0 {
+		prev = snapshots[len(snapshots)-1].amount
+	}
+
+	if add {
+		prev += amount
+	} else {
+		if prev >= amount {
+			prev -= amount
+		} else {
+			prev = 0
+		}
+	}
+
+	snapshots = append(snapshots, DelegationSnapShotHistory{
+		to:           to,
+		amount:       prev,
+		updatedBlock: height,
+		updatedAt:    ts,
+	})
+
+	st.snapShotHistory[toStr] = snapshots
+	return nil
 }
