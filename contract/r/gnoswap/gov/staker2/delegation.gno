@@ -120,33 +120,57 @@ func undelegate(st *State, to std.Address, amount uint64) error {
 }
 
 func applyDelegationChange(st *State, record DelegationRecord, add bool) *State {
-	delta := record.Amount
 	if add {
-		st.delegatorAmount[record.Delegator] += delta
-		if _, ok := st.delegatedFromTo[record.Delegator]; !ok {
-			st.delegatedFromTo[record.Delegator] = make(AmountMap)
-		}
-		st.delegatedFromTo[record.Delegator][record.Delegatee] += delta
-		st.delegatedTo[record.Delegatee] += delta
-		return st
+		return addDelegation(st, record)
+	}
+	return removeDelegation(st, record)
+}
+
+// addDelegation handles adding delegation amount to the state
+func addDelegation(st *State, record DelegationRecord) *State {
+	delta := record.Amount
+
+	// Update delegator's total delegated amount
+	st.delegatorAmount[record.Delegator] += delta
+
+	// Initialize delegator's from-to map if it doesn't exist
+	if _, exists := st.delegatedFromTo[record.Delegator]; !exists {
+		st.delegatedFromTo[record.Delegator] = make(AmountMap)
 	}
 
-	if amt, ok := st.delegatorAmount[record.Delegator]; ok && amt >= delta {
-		st.delegatorAmount[record.Delegator] = amt - delta
+	// Update specific delegation amount from delegator to delegatee
+	st.delegatedFromTo[record.Delegator][record.Delegatee] += delta
+
+	// Update delegatee's total received delegation amount
+	st.delegatedTo[record.Delegatee] += delta
+
+	return st
+}
+
+// removeDelegation handles removing delegation amount from the state
+func removeDelegation(st *State, record DelegationRecord) *State {
+	delta := record.Amount
+
+	// Update delegator's total delegated amount
+	if currentAmount, exists := st.delegatorAmount[record.Delegator]; exists && currentAmount >= delta {
+		st.delegatorAmount[record.Delegator] = currentAmount - delta
 	} else {
 		st.delegatorAmount[record.Delegator] = 0
 	}
 
-	if toMap, ok := st.delegatedFromTo[record.Delegator]; ok {
-		if amt, ok := toMap[record.Delegatee]; ok && amt >= delta {
-			toMap[record.Delegatee] = amt - delta
+	// Update specific delegation amount from delegator to delegatee
+	if delegatorMap, exists := st.delegatedFromTo[record.Delegator]; exists {
+		if currentAmount, exists := delegatorMap[record.Delegatee]; exists && currentAmount >= delta {
+			delegatorMap[record.Delegatee] = currentAmount - delta
 		} else {
-			delete(toMap, record.Delegatee)
+			// Remove the delegation entry if amount is insufficient or zero
+			delete(delegatorMap, record.Delegatee)
 		}
 	}
 
-	if amt, ok := st.delegatedTo[record.Delegatee]; ok && amt >= delta {
-		st.delegatedTo[record.Delegatee] = amt - delta
+	// Update delegatee's total received delegation amount
+	if currentAmount, exists := st.delegatedTo[record.Delegatee]; exists && currentAmount >= delta {
+		st.delegatedTo[record.Delegatee] = currentAmount - delta
 	} else {
 		st.delegatedTo[record.Delegatee] = 0
 	}
