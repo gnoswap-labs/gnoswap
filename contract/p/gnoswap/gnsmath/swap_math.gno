@@ -179,9 +179,14 @@ func handleExactIn(
 			true,
 		)
 	}
+	// If zero input (i.e. no liquidity), then no swap: price unchanged
+	if amountIn.IsZero() {
+		return sqrtRatioCurrentX96, u256.Zero()
+	}
 
 	// If we can afford the full move, jump to target
 	if amountRemainingLessFee.Gte(amountIn) {
+
 		return sqrtRatioTargetX96, amountIn
 	}
 
