@@ -1332,14 +1332,12 @@ func TestGetDelegatedCumulative(t *testing.T) {
 }
 
 func TestGetDelegateHistoryOf(t *testing.T) {
-	// 테스트용 주소 생성
 	delegator1 := testutils.TestAddress("delegator1")
 	delegator2 := testutils.TestAddress("delegator2")
 	invalidAddress := std.Address("")
 	delegatee1 := testutils.TestAddress("delegatee1")
 	delegatee2 := testutils.TestAddress("delegatee2")
 
-	// 테스트용 타임스탬프와 블록 높이
 	ts1 := uint64(time.Now().Unix()) - 1000
 	ts2 := uint64(time.Now().Unix()) - 500
 	ts3 := uint64(time.Now().Unix()) - 100
@@ -1707,12 +1705,10 @@ func TestGetDelegateHistoryOf(t *testing.T) {
 }
 
 func TestGetDelegationSnapShotHistoryOf(t *testing.T) {
-	// 테스트용 주소 생성
 	delegator1 := testutils.TestAddress("delegator1")
 	delegator2 := testutils.TestAddress("delegator2")
 	invalidAddress := std.Address("")
 
-	// 테스트용 타임스탬프와 블록 높이
 	ts1 := uint64(time.Now().Unix()) - 1000
 	ts2 := uint64(time.Now().Unix()) - 500
 	ts3 := uint64(time.Now().Unix()) - 100
