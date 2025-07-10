@@ -124,6 +124,26 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 	return deposit.ID()
 }
 
+// depositGns deposits GNS to a project tier
+//
+// Parameters:
+// - projectID (string): The ID of the project.
+// - tierDuration (int64): The duration of the tier.
+// - depositAmount (int64): The amount of the deposit.
+// - callerAddress (std.Address): The address of the caller.
+//
+// Returns:
+// - *Deposit: The deposit created.
+// - *RewardState: The reward state for the deposit.
+// - bool: Whether this is the first deposit for the tier.
+// - string: The distribute amount per block in Q128 format.
+// - error: If the deposit creation fails, returns an error.
+//
+// Panics:
+// - If the project is not found.
+// - If the project tier is not found.
+// - If the reward manager is not found.
+// - If the deposit creation fails.
 func depositGns(
 	projectID string,
 	tierDuration int64,
@@ -192,6 +212,18 @@ func depositGns(
 		nil
 }
 
+// registerReferral registers a referral for a caller
+//
+// Parameters:
+// - referrer (string): The referrer address.
+// - callerAddress (std.Address): The address of the caller.
+//
+// Returns:
+// - string: The actual referrer address.
+// - bool: Whether the referral registration was successful.
+//
+// Panics:
+// - If the referral registration fails.
 func registerReferral(referrer string, callerAddress std.Address) (string, bool) {
 	success := referral.TryRegister(cross, callerAddress, referrer)
 	actualReferrer := referrer
@@ -202,6 +234,19 @@ func registerReferral(referrer string, callerAddress std.Address) (string, bool)
 	return actualReferrer, success
 }
 
+// stakeGovernance stakes governance token to the project
+//
+// Parameters:
+// - projectID (string): The ID of the project.
+// - depositAmount (int64): The amount of the deposit.
+// - launchpadAddress (std.Address): The address of the launchpad.
+// - callerAddress (std.Address): The address of the caller.
+//
+// Returns:
+// - error: If the governance token staking fails, returns an error.
+//
+// Panics:
+// - If the project is not found.
 func stakeGovernance(projectID string, depositAmount int64, launchpadAddress std.Address, callerAddress std.Address) error {
 	project, err := getProject(projectID)
 	if err != nil {
