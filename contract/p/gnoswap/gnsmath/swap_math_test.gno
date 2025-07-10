@@ -225,16 +225,6 @@ func TestSwapMathComputeSwapStepStrFail(t *testing.T) {
 			shouldPanic:     true,
 			expectedMessage: "SwapMathComputeSwapStepStr: sqrt price out of bounds",
 		},
-		{
-			name:            "sqrt price above maximum",
-			currentX96:      new(u256.Uint).Add(MAX_SQRT_RATIO, u256.One()), // MAX_SQRT_RATIO + 1
-			targetX96:       MAX_SQRT_RATIO,
-			liquidity:       u256.MustFromDecimal("1"),
-			amountRemaining: i256.MustFromDecimal("100"),
-			feePips:         1,
-			shouldPanic:     true,
-			expectedMessage: "SwapMathComputeSwapStepStr: sqrt price out of bounds",
-		},
 	}
 
 	for _, test := range tests {

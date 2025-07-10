@@ -33,11 +33,7 @@ func SwapMathComputeSwapStepStr(
 		liquidity == nil || amountRemaining == nil {
 		panic("SwapMathComputeSwapStepStr: invalid input")
 	}
-	// TODO: remove? this seems unnessasery, and should be done in above layers?
-	if sqrtRatioCurrentX96.Lt(MIN_SQRT_RATIO) || sqrtRatioCurrentX96.Gt(MAX_SQRT_RATIO) ||
-		sqrtRatioTargetX96.Lt(MIN_SQRT_RATIO) || sqrtRatioTargetX96.Gt(MAX_SQRT_RATIO) {
-		panic("SwapMathComputeSwapStepStr: sqrt price out of bounds")
-	}
+
 	// This function is publicly accessible and can be called by external users or contracts.
 	// While the pool realm only uses predefined fee values (100, 500, 3000, 10000) which are safely within range,
 	// external callers could potentially pass any feePips value. The fee calculation involves subtracting feePips
