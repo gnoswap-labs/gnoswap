@@ -56,7 +56,7 @@ func main() {
 
 func createLaunchpadProject() {
 	rewardAmount := int64(1_000_000_000)
-	startTime := uint64(time.Now().Unix() + 10)
+	startTime := int64(time.Now().Unix() + 10)
 
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross, consts.LAUNCHPAD_ADDR, rewardAmount)
@@ -65,7 +65,7 @@ func createLaunchpadProject() {
 		"Bar Launchpad Project",
 		barPath,
 		projectAddr,
-		uint64(rewardAmount),
+		int64(rewardAmount),
 		barPath,
 		"1000000",
 		10,
@@ -79,7 +79,7 @@ func createLaunchpadProject() {
 
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, consts.LAUNCHPAD_ADDR, rewardAmount)
-	lp.DepositGns(cross, "gno.land/r/onbloc/bar:123:30", uint64(rewardAmount), "")
+	lp.DepositGns(cross, "gno.land/r/onbloc/bar:123:30", int64(rewardAmount), "")
 }
 
 func setupProtocolFeeDeposit() {
