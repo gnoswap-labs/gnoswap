@@ -186,7 +186,6 @@ func handleExactIn(
 
 	// If we can afford the full move, jump to target
 	if amountRemainingLessFee.Gte(amountIn) {
-
 		return sqrtRatioTargetX96, amountIn
 	}
 
