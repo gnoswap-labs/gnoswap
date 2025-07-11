@@ -57,7 +57,7 @@ func TestCleanDelegationStatHistory(t *testing.T) {
 
 			historyState.SnapshotHistory()[addrKey] = tt.inputHistory
 
-			CleanDelegationStatHistory(tt.threshold)
+			cleanDelegationStatHistory(tt.threshold)
 
 			snapshots := historyState.SnapshotHistory()[addrKey]
 			uassert.Equal(t, tt.expectedLen, len(snapshots), "unexpected snapshot history length")

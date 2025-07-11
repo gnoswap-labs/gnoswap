@@ -20,10 +20,11 @@ func GetPossibleVotingAddressWithWeight(endTimestamp uint64) (uint64, map[std.Ad
 	totalWeight := uint64(0)
 	addressWithWeight := make(map[std.Address]uint64)
 
-	delegationSnapShotHistory.Iterate("", "", func(key string, value any) bool {
-		history := value.([]DelegationSnapShotHistory)
+	// Iterate through all snapshot history entries
+	for key, history := range historyState.SnapshotHistory() {
 		toAddr := std.Address(key)
 
+		// Find the most recent snapshot that is not after endTimestamp
 		for i := len(history) - 1; i >= 0; i-- {
 			record := history[i]
 
@@ -36,9 +37,7 @@ func GetPossibleVotingAddressWithWeight(endTimestamp uint64) (uint64, map[std.Ad
 
 			break
 		}
-
-		return false
-	})
+	}
 
 	return totalWeight, addressWithWeight
 }

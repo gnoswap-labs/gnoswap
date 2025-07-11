@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
@@ -450,11 +449,6 @@ func TestCollectRewardFromLaunchPad(t *testing.T) {
 
 func resetStaker(t *testing.T) {
 	t.Helper()
-
-	totalDelegated = 0
-	delegatorAmount = avl.NewTree()
-	delegatedFromTo = avl.NewTree()
-	delegatedTo = avl.NewTree()
 }
 
 func setupStakerRunning(t *testing.T, run bool) {

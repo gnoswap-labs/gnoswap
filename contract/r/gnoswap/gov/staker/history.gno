@@ -25,12 +25,6 @@ func GetDelegationSnapShotHistoryOf(delegator std.Address) []DelegationSnapShotH
 	return historyState.GetDelegationSnapShotHistoryOf(delegator)
 }
 
-// CleanDelegationStatHistory is a wrapper for HistoryState method
-// TODO: should be private
-func CleanDelegationStatHistory(thresholdVotingWeightBlockHeight int64) {
-	historyState.CleanDelegationStatHistory(thresholdVotingWeightBlockHeight)
-}
-
 type (
 	HistoryMap  = map[string][]DelegationHistory
 	SnapShotMap = map[string][]DelegationSnapShotHistory
@@ -166,7 +160,7 @@ func (hs *HistoryState) GetDelegationSnapShotHistoryOf(delegator std.Address) []
 }
 
 // CleanDelegationStatHistory removes old delegation snapshots older than threshold
-func (hs *HistoryState) CleanDelegationStatHistory(thresholdVotingWeightBlockHeight int64) {
+func (hs *HistoryState) pruneSnapshots(thresholdVotingWeightBlockHeight int64) {
 	height := uint64(std.ChainHeight())
 	sinceLast := height - hs.lastCleanedHeight
 

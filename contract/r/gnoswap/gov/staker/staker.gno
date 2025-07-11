@@ -81,7 +81,7 @@ func Delegate(cur realm, to std.Address, amount uint64, referrer string) {
 	en.MintAndDistributeGns(cross)
 
 	if running {
-		CleanDelegationStatHistory(thresholdVotingWeightBlockHeight)
+		cleanDelegationStatHistory(thresholdVotingWeightBlockHeight)
 	}
 	rewardState.addStake(uint64(std.ChainHeight()), caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
@@ -146,7 +146,7 @@ func Redelegate(cur realm, from, to std.Address, amount uint64) {
 	en.MintAndDistributeGns(cross)
 
 	if running {
-		CleanDelegationStatHistory(thresholdVotingWeightBlockHeight)
+		cleanDelegationStatHistory(thresholdVotingWeightBlockHeight)
 	}
 
 	CollectReward(cur)
@@ -200,7 +200,7 @@ func Undelegate(cur realm, from std.Address, amount uint64) {
 	en.MintAndDistributeGns(cross)
 
 	if running {
-		CleanDelegationStatHistory(thresholdVotingWeightBlockHeight)
+		cleanDelegationStatHistory(thresholdVotingWeightBlockHeight)
 	}
 
 	reward, protocolFeeRewards := rewardState.removeStake(caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
