@@ -647,7 +647,7 @@ func TestCalculateAmount_Panic(t *testing.T) {
 
 	testing.SetRealm(govRealm)
 
-	// attempts to set 40000 basis points = 400% (should be impossible but let's test)
+	// attempts to set 40000 basis points = 400%
 	t.Run("Attack via ChangeDistributionPct - Should fail with current validation", func(t *testing.T) {
 		uassert.AbortsWithMessage(t, "[GNOSWAP-EMISSION-002] invalid emission target || sum of percentages must be 10000, got 40000", func() {
 			ChangeDistributionPct(
@@ -661,7 +661,7 @@ func TestCalculateAmount_Panic(t *testing.T) {
 	})
 
 	t.Run("Direct calculateAmount", func(t *testing.T) {
-		testCases := []struct {
+		tests := []struct {
 			name        string
 			amount      int64
 			bptPct      int64
@@ -685,11 +685,11 @@ func TestCalculateAmount_Panic(t *testing.T) {
 				name:        "Set 1000% - should not be allowed",
 				amount:      1000,
 				bptPct:      100000, // 1000%
-				expected:    10000,  // Returns 10x the amount!
+				expected:    10000,  // Returns 10x the amount
 				shouldPanic: true,
 			},
 			{
-				name:        "Set 1000% - should not be allowed",
+				name:        "Maximum exploit before overflow",
 				amount:      900000000000000000,  // Large but below overflow threshold
 				bptPct:      100000,              // 1000%
 				expected:    9000000000000000000, // 10x multiplication
@@ -697,18 +697,18 @@ func TestCalculateAmount_Panic(t *testing.T) {
 			},
 		}
 
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				if tc.shouldPanic {
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				if tt.shouldPanic {
 					defer func() {
 						if r := recover(); r != nil {
 							t.Logf("Recovered from panic: %v", r)
 						}
 					}()
-					calculateAmount(tc.amount, tc.bptPct)
+					calculateAmount(tt.amount, tt.bptPct)
 				} else {
-					result := calculateAmount(tc.amount, tc.bptPct)
-					uassert.Equal(t, tc.expected, result)
+					result := calculateAmount(tt.amount, tt.bptPct)
+					uassert.Equal(t, tt.expected, result)
 				}
 			})
 		}
