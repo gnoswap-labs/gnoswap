@@ -98,15 +98,48 @@ func (r *RewardState) ClaimableTime() int64 {
 	return r.claimableBlockTimeInfo.BlockTime()
 }
 
+// calculateReward calculates the total reward amount based on
+// the accumulated reward per deposit.
+//
+// Parameters:
+// - accumRewardPerDepositX128 (*u256.Uint): Current accumulated reward per deposit
+//
+// Returns:
+// - int64: The total reward amount
 func (r *RewardState) calculateReward(accumRewardPerDepositX128 *u256.Uint) int64 {
+	if accumRewardPerDepositX128 == nil || r.PriceDebtX128() == nil {
+		return 0
+	}
+
 	actualRewardPerDepositX128 := u256.Zero().Sub(accumRewardPerDepositX128, r.PriceDebtX128())
+	if actualRewardPerDepositX128.IsZero() {
+		return 0
+	}
+
 	reward := u256.Zero().Mul(actualRewardPerDepositX128, u256.NewUintFromInt64(r.DepositAmount()))
 	reward = u256.Zero().Rsh(reward, 128)
 
 	return reward.Int64()
 }
 
+// calculateClaimableReward calculates the amount of reward that can be claimed
+// based on the current accumulated reward per deposit.
+//
+// Parameters:
+// - accumRewardPerDepositX128 (*u256.Uint): Current accumulated reward per deposit
+//
+// Returns:
+// - int64: The amount of reward that can be claimed
 func (r *RewardState) calculateClaimableReward(accumRewardPerDepositX128 *u256.Uint) int64 {
+	if accumRewardPerDepositX128 == nil {
+		return 0
+	}
+
+	// Return 0 if accumulated reward is less than price debt
+	if accumRewardPerDepositX128.Lt(r.priceDebtX128) {
+		return 0
+	}
+
 	reward := r.calculateReward(accumRewardPerDepositX128)
 	claimedAmount := r.ClaimedAmount()
 

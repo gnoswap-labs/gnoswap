@@ -162,7 +162,23 @@ func (r *RewardManager) addRewardPerDepositX128(rewardPerDepositX128 *u256.Uint,
 	r.accumulatedHeight = currentHeight
 }
 
+// updateRewardPerDepositX128 updates the reward per deposit state.
+// This function calculates and updates the accumulated reward per deposit
+// based on the current total deposit amount and height.
+//
+// Parameters:
+// - totalDepositAmount (int64): Current total deposit amount
+// - height (int64): Current blockchain height
+//
+// Returns:
+// - error: If the update fails
 func (r *RewardManager) updateRewardPerDepositX128(totalDepositAmount int64, height int64) error {
+	// Input validation
+	if height <= 0 {
+		return makeErrorWithDetails(errInvalidHeight, "height must be positive")
+	}
+
+	// Calculate and update rewards
 	rewardPerDepositX128, err := r.calculateRewardPerDepositX128(
 		r.distributeAmountPerBlockX128,
 		totalDepositAmount,
@@ -195,6 +211,17 @@ func (r *RewardManager) updateDistributeAmountPerBlockX128(totalDistributeAmount
 	r.distributeAmountPerBlockX128 = amountPerBlockX128
 }
 
+// collectReward processes the reward collection for a specific deposit.
+// This function ensures that the reward collection is valid and updates
+// the claimed amount accordingly.
+//
+// Parameters:
+// - depositId (string): The ID of the deposit
+// - currentHeight (int64): Current blockchain height
+//
+// Returns:
+// - int64: The amount of reward collected
+// - error: If the collection fails
 func (r *RewardManager) collectReward(depositId string, currentHeight int64) (int64, error) {
 	if currentHeight < r.accumulatedHeight {
 		return 0, makeErrorWithDetails(

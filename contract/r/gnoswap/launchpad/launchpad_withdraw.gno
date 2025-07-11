@@ -11,9 +11,6 @@ import (
 
 // CollectDepositGns collects rewards from all deposits associated with the caller.
 //
-// This function retrieves all deposits for the caller, validates their claimable status,
-// and processes the collection of rewards.
-//
 // Parameters:
 // - depositID (string): The ID of the deposit to collect reward from.
 //
@@ -59,7 +56,9 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 	return withdrawalAmount, nil
 }
 
-// withdrawDeposit withdraws a deposit and updates the reward manager
+// withdrawDeposit withdraws a deposit and updates the reward manager.
+// This function ensures accurate reward calculation by updating rewards
+// both before and after the withdrawal.
 //
 // Parameters:
 // - deposit (Deposit): The deposit to withdraw.
@@ -68,15 +67,25 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 // Returns:
 // - std.Address: The recipient address.
 // - int64: The withdrawal amount.
-// - error: If the withdrawal fails, returns an error.
+// - error: If the withdrawal fails.
 //
-// Panics:
-// - If the deposit is already withdrawn.
-// - If the deposit is not ended.
-// - If the project is not found.
-// - If the project tier is not found.
-// - If the reward manager is not found.
+// The function follows these steps:
+// 1. Validates input parameters and deposit state
+// 2. Updates rewards before withdrawal
+// 3. Processes the withdrawal
+// 4. Updates rewards after withdrawal
+// 5. Finalizes the withdrawal
 func withdrawDeposit(deposit *Deposit, currentHeight int64) (std.Address, int64, error) {
+	// Input validation
+	if deposit == nil {
+		return "", 0, makeErrorWithDetails(errNotExistDeposit, "deposit is nil")
+	}
+
+	if currentHeight <= 0 {
+		return "", 0, makeErrorWithDetails(errInvalidHeight, "currentHeight must be positive")
+	}
+
+	// State validation
 	if deposit.IsWithdrawn() {
 		return "", 0, makeErrorWithDetails(errAlreadyCollected, ufmt.Sprintf("(%s)", deposit.ID()))
 	}
@@ -85,6 +94,7 @@ func withdrawDeposit(deposit *Deposit, currentHeight int64) (std.Address, int64,
 		return "", 0, makeErrorWithDetails(errNotYetEndedProject, ufmt.Sprintf("(%s)", deposit.ID()))
 	}
 
+	// Get project and tier information
 	project, err := getProject(deposit.ProjectID())
 	if err != nil {
 		return "", 0, err
@@ -95,24 +105,35 @@ func withdrawDeposit(deposit *Deposit, currentHeight int64) (std.Address, int64,
 		return "", 0, err
 	}
 
-	projectTier.withdraw(deposit)
-
+	// Get reward manager and update rewards before withdrawal
 	rewardManager, err := getProjectTierRewardManager(projectTier.ID())
 	if err != nil {
 		return "", 0, err
 	}
 
-	// update reward per deposit
-	rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight)
+	// Update rewards with current deposit amount
+	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight)
+	if err != nil {
+		return "", 0, err
+	}
 
-	// withdraw deposit amount and set to project wallet
+	// Process withdrawal from project tier
+	projectTier.withdraw(deposit)
+
+	// Update rewards with new deposit amount after withdrawal
+	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight)
+	if err != nil {
+		return "", 0, err
+	}
+
+	// Finalize withdrawal
 	withdrawalAmount := deposit.withdraw(currentHeight)
-
 	deposits.Set(deposit.ID(), deposit)
 
 	return project.Recipient(), withdrawalAmount, nil
 }
 
+// unStakeGovernance removes the staked amount from governance system
 func unStakeGovernance(recipient std.Address, withdrawalAmount int64) {
 	gov_staker.SetAmountByProjectWallet(cross, recipient, uint64(withdrawalAmount), false)
 }
