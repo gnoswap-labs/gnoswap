@@ -5,146 +5,182 @@ import (
 )
 
 func TestSetOperationStatus(t *testing.T) {
-	t.Run("Basic operation toggling", func(t *testing.T) {
-		mgr := DefaultManager()
-		// Initially pool should be allowed at NoHalt level
-		poolOp := NewOperation(OpTypePool, "Pool", "Pool management operations")
-		if !mgr.Level().IsOperationAllowed(poolOp) {
-			t.Errorf("Expected pool operation to be allowed initially")
-		}
+	tt := []struct {
+		name    string
+		setupFn func() *Manager
+		testFn  func(t *testing.T, mgr *Manager)
+	}{
+		{
+			name: "Basic operation toggling",
+			setupFn: func() *Manager {
+				return DefaultManager()
+			},
+			testFn: func(t *testing.T, mgr *Manager) {
+				// Initially pool should be allowed at NoHalt level
+				poolOp := NewOperation(OpTypePool, "Pool", "Pool management operations")
+				if !mgr.Level().IsOperationAllowed(poolOp) {
+					t.Errorf("Expected pool operation to be allowed initially")
+				}
 
-		// Disable swap operation
-		err := mgr.SetOperationStatus(OpTypePool, false)
-		if err != nil {
-			t.Errorf("Failed to set operation status: %v", err)
-		}
+				// Disable pool operation
+				err := mgr.SetOperationStatus(OpTypePool, false)
+				if err != nil {
+					t.Errorf("Failed to set operation status: %v", err)
+				}
 
-		// Verify pool is now disabled
-		if mgr.Level().IsOperationAllowed(poolOp) {
-			t.Errorf("Expected pool operation to be disabled after SetOperationStatus(false)")
-		}
+				// Verify pool is now disabled
+				if mgr.Level().IsOperationAllowed(poolOp) {
+					t.Errorf("Expected pool operation to be disabled after SetOperationStatus(false)")
+				}
 
-		// Re-enable swap operation
-		err = mgr.SetOperationStatus(OpTypePool, true)
-		if err != nil {
-			t.Errorf("Failed to re-enable operation: %v", err)
-		}
+				// Re-enable pool operation
+				err = mgr.SetOperationStatus(OpTypePool, true)
+				if err != nil {
+					t.Errorf("Failed to re-enable operation: %v", err)
+				}
 
-		// Verify pool is enabled again
-		if !mgr.Level().IsOperationAllowed(poolOp) {
-			t.Errorf("Expected pool operation to be re-enabled after SetOperationStatus(true)")
-		}
-	})
+				// Verify pool is enabled again
+				if !mgr.Level().IsOperationAllowed(poolOp) {
+					t.Errorf("Expected pool operation to be re-enabled after SetOperationStatus(true)")
+				}
+			},
+		},
+		{
+			name: "Custom operation handling",
+			setupFn: func() *Manager {
+				mgr := DefaultManager()
+				const OpTypeStake OpType = "stake"
+				customOp := NewOperation(OpTypeStake, "Stake Tokens", "Stake tokens for rewards")
+				mgr.RegisterOperation(customOp)
+				return mgr
+			},
+			testFn: func(t *testing.T, mgr *Manager) {
+				const OpTypeStake OpType = "stake"
+				customOp := NewOperation(OpTypeStake, "Stake Tokens", "Stake tokens for rewards")
 
-	t.Run("Custom operation handling", func(t *testing.T) {
-		const OpTypeStake OpType = "stake"
+				// Initially the custom operation should not be allowed
+				if mgr.Level().IsOperationAllowed(customOp) {
+					t.Errorf("Expected custom operation to be disabled initially")
+				}
 
-		customOp := NewOperation(OpTypeStake, "Stake Tokens", "Stake tokens for rewards")
+				// Enable the custom operation at current level (NoHalt)
+				err := mgr.SetOperationStatus(OpTypeStake, true)
+				if err != nil {
+					t.Errorf("Failed to enable custom operation: %v", err)
+				}
 
-		// Create a manager with default levels
-		mgr := DefaultManager()
-		mgr.RegisterOperation(customOp)
+				// Verify custom operation is now enabled
+				if !mgr.Level().IsOperationAllowed(customOp) {
+					t.Errorf("Expected custom operation to be enabled after SetOperationStatus")
+				}
 
-		// Initially the custom operation should not be allowed
-		if mgr.Level().IsOperationAllowed(customOp) {
-			t.Errorf("Expected custom operation to be disabled initially")
-		}
+				// Disable the custom operation
+				err = mgr.SetOperationStatus(OpTypeStake, false)
+				if err != nil {
+					t.Errorf("Failed to disable custom operation: %v", err)
+				}
 
-		// Enable the custom operation at current level (NoHalt)
-		err := mgr.SetOperationStatus(OpTypeStake, true)
-		if err != nil {
-			t.Errorf("Failed to enable custom operation: %v", err)
-		}
+				// Verify custom operation is now disabled
+				if mgr.Level().IsOperationAllowed(customOp) {
+					t.Errorf("Expected custom operation to be disabled after SetOperationStatus(false)")
+				}
+			},
+		},
+		{
+			name: "Operation not previously in allowedOps map",
+			setupFn: func() *Manager {
+				return DefaultManager()
+			},
+			testFn: func(t *testing.T, mgr *Manager) {
+				// Operation that wasn't previously in the allowedOps map
+				newOpType := OpType("newOperation")
+				newOp := NewOperation(newOpType, "New Op", "New operation type")
 
-		// Verify custom operation is now enabled
-		if !mgr.Level().IsOperationAllowed(customOp) {
-			t.Errorf("Expected custom operation to be enabled after SetOperationStatus")
-		}
+				// Attempt to enable the new operation type
+				err := mgr.SetOperationStatus(newOpType, true)
+				if err != nil {
+					t.Errorf("Failed to set status for new operation type: %v", err)
+				}
 
-		// Disable the custom operation
-		err = mgr.SetOperationStatus(OpTypeStake, false)
-		if err != nil {
-			t.Errorf("Failed to disable custom operation: %v", err)
-		}
+				// Verify operation is now allowed
+				if !mgr.Level().IsOperationAllowed(newOp) {
+					t.Errorf("Expected new operation to be allowed after adding it")
+				}
+			},
+		},
+		{
+			name: "Preservation across level changes",
+			setupFn: func() *Manager {
+				return DefaultManager()
+			},
+			testFn: func(t *testing.T, mgr *Manager) {
+				// Modify NoHalt level to disallow pools
+				err := mgr.SetOperationStatus(OpTypePool, false)
+				if err != nil {
+					t.Errorf("Failed to disable pool: %v", err)
+				}
 
-		// Verify custom operation is now disabled
-		if mgr.Level().IsOperationAllowed(customOp) {
-			t.Errorf("Expected custom operation to be disabled after SetOperationStatus(false)")
-		}
-	})
+				// Change level and then switch back
+				if err := mgr.SetCurrentLevel(LvContractHalt); err != nil {
+					t.Errorf("Failed to change level: %v", err)
+				}
+				if err := mgr.SetCurrentLevel(LvNoHalt); err != nil {
+					t.Errorf("Failed to change back to original level: %v", err)
+				}
 
-	t.Run("Operation not previously in allowedOps map", func(t *testing.T) {
-		mgr := DefaultManager()
+				// Verify the modification persisted
+				poolOp := NewOperation(OpTypePool, "Pool", "Pool management operations")
+				if mgr.Level().IsOperationAllowed(poolOp) {
+					t.Errorf("Expected pool to remain disabled after level change and back")
+				}
+			},
+		},
+		{
+			name: "Composite halt level should return error",
+			setupFn: func() *Manager {
+				// Create basic levels for the composite
+				level1 := NewHaltLevel(LevelID(100), "Level1", "Test level 1", map[OpType]bool{
+					OpTypePool: true,
+				})
+				level2 := NewHaltLevel(LevelID(101), "Level2", "Test level 2", map[OpType]bool{
+					OpTypePool: false,
+				})
 
-		// Operation that wasn't previously in the allowedOps map
-		newOpType := OpType("newOperation")
-		newOp := NewOperation(newOpType, "New Op", "New operation type")
+				// Create a composite level
+				compositeLevel := &CompositeHaltLevel{
+					baseInfo: baseInfo{name: "Composite", desc: "Composite level"},
+					levels:   HaltLevels{level1, level2},
+					operator: CompositeOpAnd,
+				}
 
-		// Attempt to enable the new operation type
-		err := mgr.SetOperationStatus(newOpType, true)
-		if err != nil {
-			t.Errorf("Failed to set status for new operation type: %v", err)
-		}
+				// Create a manager
+				mgr := &Manager{
+					currentLevel: compositeLevel,
+					levels:       make(map[LevelID]HaltLevel),
+					operations:   make(map[OpType]Operation),
+				}
 
-		// Verify operation is now allowed
-		if !mgr.Level().IsOperationAllowed(newOp) {
-			t.Errorf("Expected new operation to be allowed after adding it")
-		}
-	})
+				return mgr
+			},
+			testFn: func(t *testing.T, mgr *Manager) {
+				// Attempt to modify composite level should fail
+				err := mgr.SetOperationStatus(OpTypePool, true)
+				if err == nil {
+					t.Error("Expected error when trying to modify composite halt level, got nil")
+				}
+			},
+		},
+	}
 
-	t.Run("Preservation across level changes", func(t *testing.T) {
-		mgr := DefaultManager()
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup
+			mgr := tc.setupFn()
 
-		// Modify NoHalt level to disallow pools
-		err := mgr.SetOperationStatus(OpTypePool, false)
-		if err != nil {
-			t.Errorf("Failed to disable pool: %v", err)
-		}
-
-		// Change level and then switch back
-		if err := mgr.SetCurrentLevel(LvContractHalt); err != nil {
-			t.Errorf("Failed to change level: %v", err)
-		}
-		if err := mgr.SetCurrentLevel(LvNoHalt); err != nil {
-			t.Errorf("Failed to change back to original level: %v", err)
-		}
-
-		// Verify the modification persisted
-		poolOp := NewOperation(OpTypePool, "Pool", "Pool management operations")
-		if mgr.Level().IsOperationAllowed(poolOp) {
-			t.Errorf("Expected pool to remain disabled after level change and back")
-		}
-	})
-
-	t.Run("Composite halt level should return error", func(t *testing.T) {
-		// Create basic levels for the composite
-		level1 := NewHaltLevel(LevelID(100), "Level1", "Test level 1", map[OpType]bool{
-			OpTypePool: true,
+			// Test
+			tc.testFn(t, mgr)
 		})
-		level2 := NewHaltLevel(LevelID(101), "Level2", "Test level 2", map[OpType]bool{
-			OpTypePool: false,
-		})
-
-		// Create a composite level
-		compositeLevel := &CompositeHaltLevel{
-			baseInfo: baseInfo{name: "Composite", desc: "Composite level"},
-			levels:   HaltLevels{level1, level2},
-			operator: CompositeOpAnd,
-		}
-
-		// Create a manager
-		mgr := &Manager{
-			currentLevel: compositeLevel,
-			levels:       make(map[LevelID]HaltLevel),
-			operations:   make(map[OpType]Operation),
-		}
-
-		// Attempt to modify composite level should fail
-		err := mgr.SetOperationStatus(OpTypePool, true)
-		if err == nil {
-			t.Error("Expected error when trying to modify composite halt level, got nil")
-		}
-	})
+	}
 }
 
 func TestSetOperationStatus_ToggleOperations(t *testing.T) {
@@ -290,61 +326,88 @@ func TestSetOperationStatus_ToggleOperations(t *testing.T) {
 }
 
 func TestSetOperationStatusScenarios(t *testing.T) {
-	t.Run("emergency_scenario", func(t *testing.T) {
-		mgr := DefaultManager()
-		if err := mgr.SetCurrentLevel(LvCompleteHalt); err != nil {
-			t.Fatalf("Failed to set halt level: %v", err)
-		}
+	tt := []struct {
+		name    string
+		setupFn func() *Manager
+		testFn  func(t *testing.T, mgr *Manager)
+	}{
+		{
+			name: "emergency_scenario",
+			setupFn: func() *Manager {
+				mgr := DefaultManager()
+				if err := mgr.SetCurrentLevel(LvCompleteHalt); err != nil {
+					t.Fatalf("Failed to set halt level: %v", err)
+				}
+				return mgr
+			},
+			testFn: func(t *testing.T, mgr *Manager) {
+				withdrawOp := createOperation(OpTypeWithdraw)
+				assertOperationStatus(t, mgr, withdrawOp, true)
 
-		withdrawOp := createOperation(OpTypeWithdraw)
-		assertOperationStatus(t, mgr, withdrawOp, true)
+				// Other operations should remain disabled
+				poolOp := createOperation(OpTypePool)
+				positionOp := createOperation(OpTypePosition)
+				assertOperationStatus(t, mgr, poolOp, false)
+				assertOperationStatus(t, mgr, positionOp, false)
+			},
+		},
+		{
+			name: "maintenance_scenario",
+			setupFn: func() *Manager {
+				mgr := DefaultManager()
+				// enable all operations
+				setOperationStatusOrFail(t, mgr, OpTypePool, true)
+				setOperationStatusOrFail(t, mgr, OpTypeWithdraw, true)
+				return mgr
+			},
+			testFn: func(t *testing.T, mgr *Manager) {
+				poolOp := createOperation(OpTypePool)
+				assertOperationStatus(t, mgr, poolOp, true)
 
-		// Other operations should remain disabled
-		poolOp := createOperation(OpTypePool)
-		positionOp := createOperation(OpTypePosition)
-		assertOperationStatus(t, mgr, poolOp, false)
-		assertOperationStatus(t, mgr, positionOp, false)
-	})
+				setOperationStatusOrFail(t, mgr, OpTypePool, false)
+				assertOperationStatus(t, mgr, poolOp, false)
 
-	t.Run("maintenance_scenario", func(t *testing.T) {
-		mgr := DefaultManager()
+				// Other operations should remain enabled
+				withdrawOp := createOperation(OpTypeWithdraw)
+				assertOperationStatus(t, mgr, withdrawOp, true)
 
-		// enable all operations
-		setOperationStatusOrFail(t, mgr, OpTypePool, true)
-		setOperationStatusOrFail(t, mgr, OpTypeWithdraw, true)
+				setOperationStatusOrFail(t, mgr, OpTypePool, true)
+				assertOperationStatus(t, mgr, poolOp, true)
+			},
+		},
+		{
+			name: "custom_operation_scenario",
+			setupFn: func() *Manager {
+				mgr := DefaultManager()
+				// enable all operations
+				setOperationStatusOrFail(t, mgr, OpTypePool, true)
+				setOperationStatusOrFail(t, mgr, OpTypeWithdraw, true)
+				return mgr
+			},
+			testFn: func(t *testing.T, mgr *Manager) {
+				const OpTypeStake = OpType("stake")
+				stakeOp := createOperation(OpTypeStake)
 
-		poolOp := createOperation(OpTypePool)
-		assertOperationStatus(t, mgr, poolOp, true)
+				assertOperationStatus(t, mgr, stakeOp, false)
 
-		setOperationStatusOrFail(t, mgr, OpTypePool, false)
-		assertOperationStatus(t, mgr, poolOp, false)
+				setOperationStatusOrFail(t, mgr, OpTypeStake, true)
+				assertOperationStatus(t, mgr, stakeOp, true)
 
-		// Other operations should remain enabled
-		withdrawOp := createOperation(OpTypeWithdraw)
-		assertOperationStatus(t, mgr, withdrawOp, true)
+				poolOp := createOperation(OpTypePool)
+				assertOperationStatus(t, mgr, poolOp, true)
+			},
+		},
+	}
 
-		setOperationStatusOrFail(t, mgr, OpTypePool, true)
-		assertOperationStatus(t, mgr, poolOp, true)
-	})
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup
+			mgr := tc.setupFn()
 
-	t.Run("custom_operation_scenario", func(t *testing.T) {
-		mgr := DefaultManager()
-
-		// enable all operations
-		setOperationStatusOrFail(t, mgr, OpTypePool, true)
-		setOperationStatusOrFail(t, mgr, OpTypeWithdraw, true)
-
-		const OpTypeStake = OpType("stake")
-		stakeOp := createOperation(OpTypeStake)
-
-		assertOperationStatus(t, mgr, stakeOp, false)
-
-		setOperationStatusOrFail(t, mgr, OpTypeStake, true)
-		assertOperationStatus(t, mgr, stakeOp, true)
-
-		poolOp := createOperation(OpTypePool)
-		assertOperationStatus(t, mgr, poolOp, true)
-	})
+			// Test
+			tc.testFn(t, mgr)
+		})
+	}
 }
 
 func assertOperationStatus(t *testing.T, mgr *Manager, op Operation, expectedAllowed bool) {
