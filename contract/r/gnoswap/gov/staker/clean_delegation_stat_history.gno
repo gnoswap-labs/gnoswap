@@ -1,7 +1,9 @@
+// TODO: Change file name
+
 package staker
 
 import (
-	"std"
+	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
 )
@@ -16,19 +18,21 @@ var (
 // CleanDelegationStatHistoryByAdmin cleans delegation stat history
 func CleanDelegationStatHistoryByAdmin() {
 	assertCallerIsAdmin()
-	cleanDelegationStatHistory()
+	cleanDelegationStatHistory(thresholdVotingWeightBlockHeight)
 }
 
 // GetThresholdVotingWeightBlockHeight returns the threshold voting weight block height
-func GetThresholdVotingWeightBlockHeight() uint64 {
-	return uint64(thresholdVotingWeightBlockHeight)
+func GetThresholdVotingWeightBlockHeight() int64 {
+	return thresholdVotingWeightBlockHeight
 }
 
 // SetThresholdVotingWeightBlockHeightByAdmin sets the threshold voting weight block height
-func SetThresholdVotingWeightBlockHeightByAdmin(cur realm, height uint64) {
+func SetThresholdVotingWeightBlockHeightByAdmin(cur realm, height int64) {
 	assertCallerIsAdmin()
-
-	thresholdVotingWeightBlockHeight = int64(height)
+	if height < 0 {
+		panic(ufmt.Sprintf("invalid height: %d", height))
+	}
+	thresholdVotingWeightBlockHeight = height
 }
 
 // GetRunning returns the running status
@@ -43,35 +47,9 @@ func SetRunning(cur realm, run bool) {
 	running = run
 }
 
-// cleanDelegationStatHistory cleans delegation stat history
-func cleanDelegationStatHistory() {
-	height := uint64(std.ChainHeight())
-	sinceLast := height - lastCleanedHeight
-
-	if sinceLast < uint64(thresholdVotingWeightBlockHeight) {
-		return
+// cleanDelegationStatHistory is a wrapper for HistoryState method
+func cleanDelegationStatHistory(thresholdVotingWeightBlockHeight int64) {
+	if err := historyState.pruneSnapshots(thresholdVotingWeightBlockHeight); err != nil {
+		panic(err)
 	}
-
-	lastCleanedHeight = height
-
-	// delete history older than 1 day, but keep the latest one
-	keepFrom := height - uint64(thresholdVotingWeightBlockHeight)
-
-	delegationSnapShotHistory.Iterate("", "", func(key string, value any) bool {
-		history := value.([]DelegationSnapShotHistory)
-
-		// reverse history
-		for i := len(history) - 1; i >= 0; i-- {
-			if history[i].updatedBlock > keepFrom {
-				continue
-			}
-
-			// save truncated history
-			newHistory := history[i:]
-			delegationSnapShotHistory.Set(key, newHistory)
-			break
-		}
-
-		return false
-	})
 }

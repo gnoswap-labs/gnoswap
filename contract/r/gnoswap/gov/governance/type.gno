@@ -6,54 +6,90 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// Config represents the configuration of the governor contract
-// ref: https://docs.gnoswap.io/core-concepts/governance#scope-of-proposals-5
-type Config struct {
-	// How long after a proposal is created does voting starrt
-	VotingStartDelay uint64
-
-	// The period during which votes are collected
-	VotingPeriod uint64
-
-	// Over how many seconds the voting weight is averaged for proposal voting as creation/cancellation threshold
-	VotingWeightSmoothingDuration uint64
-
-	// Percentages of x gns total supply at the time of proposal creation
-	Quorum uint64
-
-	// The minimum amount of average votes required to create a proposal
-	ProposalCreationThreshold uint64
-
-	// How much time must pass after the end of a voting period before a proposal can be executed
-	ExecutionDelay uint64
-
-	// The amount of time after the execution delay that the proposal can be executed
-	ExecutionWindow uint64
+// ProposalInfo represents all the information about a proposal
+type ProposalInfo struct {
+	Proposer      std.Address // The address of the proposer
+	ConfigVersion uint64      // The version of the config
+	Status        ProposalStatus
+	Voting        VotingInfo
+	Metadata      ProposalMetadata
+	Data          ProposalData
 }
 
-// ProposalState represents the state of a proposal's execution
-type ProposalState struct {
-	Created   bool
-	CreatedAt uint64
+// ProposalStatusEnum combines schedule and action state
+// This represents the complete status information for a proposal
+type ProposalStatus struct {
+	Schedule    ProposalSchedule
+	ActionState ActionState
+}
 
-	Upcoming bool
-	Active   bool
+// VotingInfo contains all voting-related information for a proposal
+type VotingInfo struct {
+	Yea             *u256.Uint // collected yes votes
+	Nay             *u256.Uint // collected no votes
+	MaxVotingWeight *u256.Uint // The max voting weight at the time of proposal creation
 
-	Passed   bool
-	PassedAt uint64
+	// Addresses that can vote with their respective weights
+	PossibleAddressWithWeight map[std.Address]uint64
 
-	Rejected   bool
-	RejectedAt uint64
+	QuorumAmount uint64 // How many total votes must be collected for the proposal
+}
 
+// ProposalMetadata contains descriptive information about a proposal
+type ProposalMetadata struct {
+	Title       string
+	Description string
+}
+
+// ProposalData contains the type-specific data for a proposal
+type ProposalData struct {
+	ProposalType       ProposalType
+	CommunityPoolSpend CommunityPoolSpendInfo
+	Execution          ExecutionInfo
+	RoleChange         RoleChangeInfo
+}
+
+// ProposalSchedule represents the pre-calculated time schedule for a proposal
+type ProposalSchedule struct {
+	CreateTime     uint64 // When the proposal was created
+	ActiveTime     uint64 // When voting starts (CreateTime + VotingStartDelay)
+	VotingEndTime  uint64 // When voting ends (ActiveTime + VotingPeriod)
+	ExecutableTime uint64 // When execution window starts (VotingEndTime + ExecutionDelay)
+	ExpiredTime    uint64 // When execution window ends (ExecutableTime + ExecutionWindow)
+}
+
+// IsVotingPeriod checks if the given time is within the voting period
+func (s ProposalSchedule) IsVotingPeriod(now uint64) bool {
+	return now >= s.ActiveTime && now <= s.VotingEndTime
+}
+
+// IsExecutionPeriod checks if the given time is within the execution period
+func (s ProposalSchedule) IsExecutionPeriod(now uint64) bool {
+	return now >= s.ExecutableTime && now <= s.ExpiredTime
+}
+
+// IsExpired checks if the proposal has expired at the given time
+func (s ProposalSchedule) IsExpired(now uint64) bool {
+	return now > s.ExpiredTime
+}
+
+// ActionState represents the action-based state changes of a proposal
+type ActionState struct {
 	Canceled   bool
 	CanceledAt uint64
+	CanceledBy std.Address // Who canceled the proposal
 
-	// LABEL
 	Executed   bool
 	ExecutedAt uint64
+	ExecutedBy std.Address // Who executed the proposal
+}
 
-	Expired   bool
-	ExpiredAt uint64
+func (a ActionState) IsCanceled() bool { return a.Canceled }
+func (a ActionState) IsExecuted() bool { return a.Executed }
+
+// IsActionTaken returns true if any action has been taken on the proposal
+func (a ActionState) IsActionTaken() bool {
+	return a.Canceled || a.Executed
 }
 
 type CommunityPoolSpendInfo struct {
@@ -99,48 +135,4 @@ func tryParseProposalType(v string) (ProposalType, error) {
 
 func (p ProposalType) String() string {
 	return string(p)
-}
-
-// ProposalInfo represents all the information about a proposal
-type ProposalInfo struct {
-	// The address of the proposer
-	Proposer std.Address
-
-	// Text, CommunityPoolSpend, ParameterChange
-	ProposalType ProposalType
-
-	// The execution state of the proposal
-	State ProposalState
-
-	// How many yes votes have been collected
-	Yea *u256.Uint
-
-	// How many no votes have been collected
-	Nay *u256.Uint
-
-	// The max voting weight at the time of proposal creation
-	MaxVotingWeight *u256.Uint
-
-	PossibleAddressWithWeight map[std.Address]uint64
-
-	// The version of the config that this proposal was created with
-	ConfigVersion uint64
-
-	// How many total votes must be collected for the proposal
-	QuorumAmount uint64
-
-	// The title of the proposal
-	Title string
-
-	// The description of the proposal
-	Description string
-
-	// CommunityPoolSpend
-	CommunityPoolSpend CommunityPoolSpendInfo
-
-	// Execution (ParamterChange)
-	Execution ExecutionInfo
-
-	// RoleChange
-	RoleChange RoleChangeInfo
 }

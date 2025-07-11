@@ -123,23 +123,29 @@ func CreateProposalTransition(proposer std.Address, proposalType ProposalType, t
 		maxVotingWeight := u256.NewUint(votingMax)
 		quorumAmount := maxVotingWeight.Uint64() * s.currentConfig.Quorum / 100
 
-		// Create proposal
+		// Create proposal with pre-calculated schedule
+		schedule := createProposalSchedule(s.currentConfig, now)
 		proposal := ProposalInfo{
-			Proposer:     proposer,
-			ProposalType: proposalType,
-			State: ProposalState{
-				Created:   true,
-				CreatedAt: now,
-				Upcoming:  true,
+			Proposer:      proposer,
+			ConfigVersion: s.configCounter,
+			Status: ProposalStatus{
+				Schedule:    schedule,
+				ActionState: ActionState{}, // Empty action state for new proposal
 			},
-			Yea:                       u256.Zero(),
-			Nay:                       u256.Zero(),
-			MaxVotingWeight:           maxVotingWeight,
-			PossibleAddressWithWeight: possibleAddresses,
-			ConfigVersion:             s.configCounter,
-			QuorumAmount:              quorumAmount,
-			Title:                     title,
-			Description:               description,
+			Voting: VotingInfo{
+				Yea:                       u256.Zero(),
+				Nay:                       u256.Zero(),
+				MaxVotingWeight:           maxVotingWeight,
+				PossibleAddressWithWeight: possibleAddresses,
+				QuorumAmount:              quorumAmount,
+			},
+			Metadata: ProposalMetadata{
+				Title:       title,
+				Description: description,
+			},
+			Data: ProposalData{
+				ProposalType: proposalType,
+			},
 		}
 
 		return s.WithNewProposal(proposer, proposal), nil
@@ -149,37 +155,13 @@ func CreateProposalTransition(proposer std.Address, proposalType ProposalType, t
 // CastVoteTransition records a vote on a proposal
 func CastVoteTransition(proposalId uint64, voter std.Address, vote bool) Transition {
 	return func(s *GovernanceState) (*GovernanceState, error) {
-		// Check if proposal exists
-		proposal, exists := s.GetProposal(proposalId)
-		if !exists {
-			return s, errProposalNotFound
-		}
-
-		// Check if already voted
-		if s.HasVoted(proposalId, voter) {
-			return s, errAlreadyVoted
-		}
-
-		// Check voting period
-		config, _ := s.GetConfig(proposal.ConfigVersion)
-		now := uint64(time.Now().Unix())
-		votingStart := proposal.State.CreatedAt + config.VotingStartDelay
-		votingEnd := votingStart + config.VotingPeriod
-
-		if now < votingStart || now >= votingEnd {
-			return s, errUnableToVoteOutOfPeriod
-		}
-
-		// Check if proposal is canceled
-		if proposal.State.Canceled {
-			return s, errUnableToVoteCanceledProposal
+		// Validate vote eligibility using common validation logic
+		if err := validateVoteEligibility(s, proposalId, voter); err != nil {
+			return s, err
 		}
 
 		// Get voter weight
-		weight := proposal.PossibleAddressWithWeight[voter]
-		if weight == 0 {
-			return s, errNotEnoughVotingWeight
-		}
+		weight := getVoterWeight(s, proposalId, voter)
 
 		return s.WithVote(proposalId, voter, vote, weight), nil
 	}
@@ -193,7 +175,7 @@ func UpdateProposalStateTransition() Transition {
 
 		s.IterateProposals(func(id uint64, proposal ProposalInfo) bool {
 			// Skip if already terminated
-			if isTerminated(proposal.State) {
+			if isTerminated(&proposal) {
 				return false
 			}
 
@@ -202,14 +184,13 @@ func UpdateProposalStateTransition() Transition {
 			updater.config = config
 
 			if updater.shouldUpdate() {
-				updater.update()
 				current = current.WithUpdatedProposal(id, func(_ ProposalInfo) ProposalInfo {
 					return *updater.proposal
 				})
 			}
 
 			// Archive if terminated
-			if isTerminated(updater.proposal.State) {
+			if isTerminated(updater.proposal) {
 				current = current.WithArchivedProposal(id)
 			}
 
@@ -229,39 +210,45 @@ func ExecuteProposalTransition(proposalId uint64) Transition {
 		}
 
 		// Validate proposal can be executed
-		if proposal.ProposalType == Text {
+		if proposal.Data.ProposalType == Text {
 			return s, errTextProposalNotExecutable
 		}
 
-		if proposal.State.Executed || proposal.State.Canceled || proposal.State.Rejected {
+		// Check ActionState first
+		if proposal.Status.ActionState.IsActionTaken() {
 			return s, errProposalNotExecutable
 		}
 
-		if !proposal.State.Passed {
+		// Check proposal status
+		updater := newProposalStateUpdater(&proposal, uint64(time.Now().Unix()))
+		status := updater.getCurrentStatus()
+
+		if status == StatusRejected {
+			return s, errProposalNotExecutable
+		}
+
+		if status != StatusPassed {
 			return s, errProposalNotPassed
 		}
 
-		// Check execution window
-		config, _ := s.GetConfig(proposal.ConfigVersion)
+		// Check execution window using Schedule
 		now := uint64(time.Now().Unix())
-		votingEnd := proposal.State.CreatedAt + config.VotingStartDelay + config.VotingPeriod
-		windowStart := votingEnd + config.ExecutionDelay
-		windowEnd := windowStart + config.ExecutionWindow
 
-		if now < windowStart {
-			return s, errors.New("execution window not started")
+		// Use Status.Schedule
+		if now < proposal.Status.Schedule.ExecutableTime {
+			return s, errExecutionWindowNotStarted
 		}
-
-		if now >= windowEnd {
+		if now >= proposal.Status.Schedule.ExpiredTime {
 			return s, errors.New("execution window expired")
 		}
 
-		// Update proposal state
+		// Update proposal state with ActionState
+		executor := std.PreviousRealm().Address()
 		return s.WithUpdatedProposal(proposalId, func(p ProposalInfo) ProposalInfo {
-			p.State.Executed = true
-			p.State.ExecutedAt = now
-			p.State.Upcoming = false
-			p.State.Active = false
+			// Update Status.ActionState
+			p.Status.ActionState.Executed = true
+			p.Status.ActionState.ExecutedAt = now
+			p.Status.ActionState.ExecutedBy = executor
 			return p
 		}), nil
 	}
@@ -274,9 +261,16 @@ func ReconfigureTransition(newConfig Config) Transition {
 	}
 }
 
-// Helper function to check if proposal state is terminated
-func isTerminated(state ProposalState) bool {
-	return state.Executed || state.Expired || state.Canceled || state.Rejected
+// Helper function to check if proposal is terminated
+func isTerminated(proposal *ProposalInfo) bool {
+	// Check Status.ActionState if available
+	if proposal.Status.ActionState.IsActionTaken() {
+		return true
+	}
+	// Check if proposal status is terminal by getting current status
+	updater := newProposalStateUpdater(proposal, uint64(time.Now().Unix()))
+	status := updater.getCurrentStatus()
+	return status.IsTerminated()
 }
 
 // Batch operations using state transitions
@@ -302,7 +296,7 @@ func CreateAndValidateProposal(proposer std.Address, proposalType ProposalType, 
 				return errors.New("proposal not found")
 			}
 
-			if proposal.Title != title {
+			if proposal.Metadata.Title != title {
 				return errors.New("proposal title mismatch")
 			}
 
@@ -314,36 +308,13 @@ func CreateAndValidateProposal(proposer std.Address, proposalType ProposalType, 
 // VoteTransition creates a state transition for casting a vote
 func VoteTransition(proposalId uint64, voter std.Address, vote bool) Transition {
 	return func(s *GovernanceState) (*GovernanceState, error) {
-		proposal, exists := s.GetProposal(proposalId)
-		if !exists {
-			return s, errProposalNotFound
-		}
-
-		// Check if already voted
-		if s.HasVoted(proposalId, voter) {
-			return s, errAlreadyVoted
-		}
-
-		// Validate voting period
-		now := uint64(time.Now().Unix())
-		config, _ := s.GetConfig(proposal.ConfigVersion)
-		votingStart := proposal.State.CreatedAt + config.VotingStartDelay
-		votingEnd := votingStart + config.VotingPeriod
-
-		if now < votingStart || now >= votingEnd {
-			return s, errUnableToVoteOutOfPeriod
-		}
-
-		// Check if proposal is canceled
-		if proposal.State.Canceled {
-			return s, errUnableToVoteCanceledProposal
+		// Validate vote eligibility using common validation logic
+		if err := validateVoteEligibility(s, proposalId, voter); err != nil {
+			return s, err
 		}
 
 		// Get voting weight
-		weight, exists := proposal.PossibleAddressWithWeight[voter]
-		if !exists || weight == 0 {
-			return s, errNotEnoughVotingWeight
-		}
+		weight := getVoterWeight(s, proposalId, voter)
 
 		// Cast vote
 		return s.WithVote(proposalId, voter, vote, weight), nil
@@ -367,18 +338,20 @@ func CancelProposalTransition(proposalId uint64, caller std.Address) Transition 
 		}
 
 		// Check if already canceled
-		if proposal.State.Canceled {
+		if proposal.Status.ActionState.IsCanceled() {
 			return s, errAlreadyCanceledProposal
 		}
 
-		// Check if voting has started
+		// Check if voting has started using Schedule
 		now := uint64(time.Now().Unix())
-		config, _ := s.GetConfig(proposal.ConfigVersion)
-		votingStart := proposal.State.CreatedAt + config.VotingStartDelay
 
-		if now >= votingStart {
+		// Use Status.Schedule
+		if now >= proposal.Status.Schedule.ActiveTime {
 			return s, errUnableToCancleVotingProposal
 		}
+
+		// Get config for threshold check
+		config, _ := s.GetConfig(proposal.ConfigVersion)
 
 		// Check if caller is authorized to cancel
 		if caller != proposal.Proposer {
@@ -391,12 +364,12 @@ func CancelProposalTransition(proposalId uint64, caller std.Address) Transition 
 			}
 		}
 
-		// Cancel the proposal
+		// Cancel the proposal with ActionState
 		return s.WithUpdatedProposal(proposalId, func(p ProposalInfo) ProposalInfo {
-			p.State.Canceled = true
-			p.State.CanceledAt = now
-			p.State.Upcoming = false
-			p.State.Active = false
+			// Update Status.ActionState
+			p.Status.ActionState.Canceled = true
+			p.Status.ActionState.CanceledAt = now
+			p.Status.ActionState.CanceledBy = caller
 			return p
 		}).WithArchivedProposal(proposalId), nil
 	}

@@ -156,158 +156,6 @@ func TestExecuteParameterChange(t *testing.T) {
 	}
 }
 
-func TestValidateProposalState(t *testing.T) {
-	tests := []struct {
-		name     string
-		proposal *ProposalInfo
-		expected ExecutionValidator
-	}{
-		{
-			name: "validate proposal state is success by text proposal",
-			proposal: &ProposalInfo{
-				ProposalType: Text,
-				State: ProposalState{
-					Executed: false,
-					Canceled: false,
-					Rejected: false,
-					Passed:   true,
-				},
-			},
-			expected: ExecutionValidator{
-				isTextProposal:    true,
-				isAlreadyExecuted: false,
-				isAlreadyCanceled: false,
-				isAlreadyRejected: false,
-				hasPassed:         true,
-			},
-		},
-		{
-			name: "validate proposal state is success by already executed",
-			proposal: &ProposalInfo{
-				ProposalType: ParameterChange,
-				State: ProposalState{
-					Executed: true,
-					Canceled: false,
-					Rejected: false,
-					Passed:   true,
-				},
-			},
-			expected: ExecutionValidator{
-				isTextProposal:    false,
-				isAlreadyExecuted: true,
-				isAlreadyCanceled: false,
-				isAlreadyRejected: false,
-				hasPassed:         true,
-			},
-		},
-		{
-			name: "validate proposal state is success by canceled",
-			proposal: &ProposalInfo{
-				ProposalType: ParameterChange,
-				State: ProposalState{
-					Executed: false,
-					Canceled: true,
-					Rejected: false,
-					Passed:   false,
-				},
-			},
-			expected: ExecutionValidator{
-				isTextProposal:    false,
-				isAlreadyExecuted: false,
-				isAlreadyCanceled: true,
-				isAlreadyRejected: false,
-				hasPassed:         false,
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// given
-			proposalState := validateProposalState(tt.proposal)
-
-			// then
-			uassert.Equal(t, proposalState.isTextProposal, tt.expected.isTextProposal)
-			uassert.Equal(t, proposalState.isAlreadyExecuted, tt.expected.isAlreadyExecuted)
-			uassert.Equal(t, proposalState.isAlreadyCanceled, tt.expected.isAlreadyCanceled)
-			uassert.Equal(t, proposalState.isAlreadyRejected, tt.expected.isAlreadyRejected)
-			uassert.Equal(t, proposalState.hasPassed, tt.expected.hasPassed)
-		})
-	}
-}
-
-func TestCheckProposalValidation(t *testing.T) {
-	// TODO: change error message after error code is defined
-	tests := []struct {
-		name      string
-		validator ExecutionValidator
-		wantErr   bool
-		errMsg    string
-	}{
-		{
-			name: "check proposal validation is success by valid proposal",
-			validator: ExecutionValidator{
-				isTextProposal:    false,
-				isAlreadyExecuted: false,
-				isAlreadyCanceled: false,
-				isAlreadyRejected: false,
-				hasPassed:         true,
-			},
-			wantErr: false,
-		},
-		{
-			name: "check proposal validation is failed by text proposal is not executable",
-			validator: ExecutionValidator{
-				isTextProposal:    true,
-				isAlreadyExecuted: false,
-				isAlreadyCanceled: false,
-				isAlreadyRejected: false,
-				hasPassed:         true,
-			},
-			wantErr: true,
-			errMsg:  "[GNOSWAP-GOVERNANCE-011] can not execute text proposal",
-		},
-		{
-			name: "check proposal validation is failed by already executed, canceled, or rejected",
-			validator: ExecutionValidator{
-				isTextProposal:    false,
-				isAlreadyExecuted: true,
-				isAlreadyCanceled: false,
-				isAlreadyRejected: false,
-				hasPassed:         true,
-			},
-			wantErr: true,
-			errMsg:  "proposal already executed, canceled, or rejected",
-		},
-		{
-			name: "check proposal validation is failed by proposal has not passed",
-			validator: ExecutionValidator{
-				isTextProposal:    false,
-				isAlreadyExecuted: false,
-				isAlreadyCanceled: false,
-				isAlreadyRejected: false,
-				hasPassed:         false,
-			},
-			wantErr: true,
-			errMsg:  "[GNOSWAP-GOVERNANCE-016] proposal not passed",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// given
-			err := checkProposalValidation(tt.validator)
-
-			// then
-			if tt.wantErr {
-				uassert.Error(t, err, tt.errMsg)
-			} else {
-				uassert.NoError(t, err)
-			}
-		})
-	}
-}
-
 func TestParameterRegistry_Execute(t *testing.T) {
 	tests := []struct {
 		name                    string
@@ -540,12 +388,11 @@ func TestRollbackSystem(t *testing.T) {
 
 			// create a test proposal
 			proposal := &ProposalInfo{
-				ProposalType: ParameterChange,
-				State: ProposalState{
-					Passed: true,
-				},
-				Execution: ExecutionInfo{
-					Msgs: tt.msgs,
+				Data: ProposalData{
+					ProposalType: ParameterChange,
+					Execution: ExecutionInfo{
+						Msgs: tt.msgs,
+					},
 				},
 			}
 
@@ -558,7 +405,6 @@ func TestRollbackSystem(t *testing.T) {
 			}
 
 			err := executeProposal(cross, ctx, registry)
-
 			// if error occurs, execute rollback
 			if err != nil {
 				rollback()

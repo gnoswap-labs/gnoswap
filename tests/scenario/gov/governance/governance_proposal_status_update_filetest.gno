@@ -55,7 +55,7 @@ func proposeTextAndCheckInitialState() uint64 {
 	proposalId := governance.ProposeText(cross, "test_title_1", "test_description_1")
 	ufmt.Printf("[INFO] created proposal ID: %d\n", proposalId)
 	state := governance.GetExecutionStateByProposalId(proposalId)
-	ufmt.Printf("[EXPECTED] proposal created: %v\n", state.Created)
+	ufmt.Printf("[EXPECTED] proposal created: %v\n", state)
 	return proposalId
 }
 
@@ -74,7 +74,7 @@ func cancelProposalAndCheckState(proposalId uint64) {
 //
 // [SCENARIO] 3. Propose Text and Check Initial State
 // [INFO] created proposal ID: 1
-// [EXPECTED] proposal created: true
+// [EXPECTED] proposal created: upcoming
 //
 // [SCENARIO] 4. Cancel Proposal and Check State
 // [EXPECTED] proposal canceled and archived

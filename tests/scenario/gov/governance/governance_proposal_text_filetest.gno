@@ -57,13 +57,6 @@ func proposeText() uint64 {
 	return proposalId
 }
 
-func voteProposal(proposalId uint64) {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
-	governance.Vote(cross, proposalId, true)
-	state := governance.GetExecutionStateByProposalId(proposalId)
-	ufmt.Printf("[EXPECTED] after voting - active: %v, passed: %v\n", state.Active, state.Passed)
-}
-
 func cancelProposal(proposalId uint64) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	governance.Cancel(cross, proposalId)
