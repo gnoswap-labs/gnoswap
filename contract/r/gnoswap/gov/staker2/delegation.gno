@@ -9,33 +9,18 @@ import (
 	"gno.land/p/gnoswap/consts"
 )
 
-var delegationState = NewState()
+// global state initialization
+func init() {
+	delegationState = NewState()
+	historyState = NewHistoryState()
+}
 
-var thresholdVotingWeightBlockHeight = consts.SECONDS_PER_DAY / milliToSec(consts.BLOCK_GENERATION_INTERVAL)
+var delegationState *DelegationState
 
 type (
-	AmountMap   = map[string]uint64
-	FromToMap   = map[string]AmountMap
-	HistoryMap  = map[string][]DelegationHistory
-	SnapShotMap = map[string][]DelegationSnapShotHistory
+	AmountMap = map[string]uint64
+	FromToMap = map[string]AmountMap
 )
-
-// DelegationHistory represents a single delegation event
-type DelegationHistory struct {
-	to        std.Address `json:"to"`
-	amount    uint64      `json:"amount"`
-	timestamp uint64      `json:"timestamp"`
-	height    uint64      `json:"height"`
-	add       bool        `json:"add"`
-}
-
-// DelegationSnapShotHistory represents delegation stat for to address
-type DelegationSnapShotHistory struct {
-	to           std.Address `json:"to"`
-	amount       uint64      `json:"amount"`
-	updatedBlock uint64      `json:"updatedBlock"`
-	updatedAt    uint64      `json:"updatedAt"`
-}
 
 type DelegationState struct {
 	totalDelegated  uint64
@@ -174,26 +159,6 @@ func (st *DelegationState) removeDelegation(record DelegationRecord) *Delegation
 	}
 
 	return st
-}
-
-// GetDelegatedCumulative is a wrapper for HistoryState method
-func GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
-	return historyState.GetDelegatedCumulative(delegator, endTimestamp)
-}
-
-// GetDelegateHistoryOf is a wrapper for HistoryState method
-func GetDelegateHistoryOf(delegator std.Address) []DelegationHistory {
-	return historyState.GetDelegateHistoryOf(delegator)
-}
-
-// GetDelegationSnapShotHistoryOf is a wrapper for HistoryState method
-func GetDelegationSnapShotHistoryOf(delegator std.Address) []DelegationSnapShotHistory {
-	return historyState.GetDelegationSnapShotHistoryOf(delegator)
-}
-
-// CleanDelegationStatHistory is a wrapper for HistoryState method
-func CleanDelegationStatHistory(thresholdVotingWeightBlockHeight int64) {
-	historyState.CleanDelegationStatHistory(thresholdVotingWeightBlockHeight)
 }
 
 // milliToSec converts milliseconds to seconds

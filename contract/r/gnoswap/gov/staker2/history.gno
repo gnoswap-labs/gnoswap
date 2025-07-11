@@ -6,9 +6,56 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
+
+	"gno.land/p/gnoswap/consts"
 )
 
-var historyState = NewHistoryState()
+var (
+	historyState *HistoryState
+	thresholdVotingWeightBlockHeight = consts.SECONDS_PER_DAY / milliToSec(consts.BLOCK_GENERATION_INTERVAL)
+)
+
+// GetDelegatedCumulative is a wrapper for HistoryState method
+func GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
+	return historyState.GetDelegatedCumulative(delegator, endTimestamp)
+}
+
+// GetDelegateHistoryOf is a wrapper for HistoryState method
+func GetDelegateHistoryOf(delegator std.Address) []DelegationHistory {
+	return historyState.GetDelegateHistoryOf(delegator)
+}
+
+// GetDelegationSnapShotHistoryOf is a wrapper for HistoryState method
+func GetDelegationSnapShotHistoryOf(delegator std.Address) []DelegationSnapShotHistory {
+	return historyState.GetDelegationSnapShotHistoryOf(delegator)
+}
+
+// CleanDelegationStatHistory is a wrapper for HistoryState method
+func CleanDelegationStatHistory(thresholdVotingWeightBlockHeight int64) {
+	historyState.CleanDelegationStatHistory(thresholdVotingWeightBlockHeight)
+}
+
+type (
+	HistoryMap  = map[string][]DelegationHistory
+	SnapShotMap = map[string][]DelegationSnapShotHistory
+)
+
+// DelegationHistory represents a single delegation event
+type DelegationHistory struct {
+	to        std.Address `json:"to"`
+	amount    uint64      `json:"amount"`
+	timestamp uint64      `json:"timestamp"`
+	height    uint64      `json:"height"`
+	add       bool        `json:"add"`
+}
+
+// DelegationSnapShotHistory represents delegation stat for to address
+type DelegationSnapShotHistory struct {
+	to           std.Address `json:"to"`
+	amount       uint64      `json:"amount"`
+	updatedBlock uint64      `json:"updatedBlock"`
+	updatedAt    uint64      `json:"updatedAt"`
+}
 
 // HistoryState manages all delegation history data
 type HistoryState struct {
