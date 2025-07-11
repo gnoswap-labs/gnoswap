@@ -15,6 +15,8 @@ const (
 	minimumDepositAmount = int64(1_000_000)
 
 	stringSplitterPad = "*PAD*"
+
+	projectMinimumStartDelayTime = int64(60 * 60) // 1 hour
 )
 
 var projectTierDurations = []int64{

@@ -44,7 +44,7 @@ func init() {
 // - tier30Ratio (uint64): The percentage of the deposit allocated to the 30-day tier.
 // - tier90Ratio (uint64): The percentage of the deposit allocated to the 90-day tier.
 // - tier180Ratio (uint64): The percentage of the deposit allocated to the 180-day tier.
-// - startTime (uint64): The project's start time in Unix timestamp (seconds).
+// - startTime (uint64): The project's start time in Unix timestamp (seconds), must be greater than now + 1 hour.
 //
 // Returns:
 // - string: The unique ID of the created project.
@@ -73,19 +73,20 @@ func CreateProject(
 	currentTime := time.Now().Unix()
 
 	params := &createProjectParams{
-		name:               name,
-		tokenPath:          tokenPath,
-		recipient:          recipient,
-		depositAmount:      depositAmount,
-		conditionTokens:    conditionTokens,
-		conditionAmounts:   conditionAmounts,
-		tier30Ratio:        tier30Ratio,
-		tier90Ratio:        tier90Ratio,
-		tier180Ratio:       tier180Ratio,
-		startTime:          startTime,
-		currentTime:        currentTime,
-		currentHeight:      currentHeight,
-		averageBlockTimeMs: averageBlockTimeMs,
+		name:                  name,
+		tokenPath:             tokenPath,
+		recipient:             recipient,
+		depositAmount:         depositAmount,
+		conditionTokens:       conditionTokens,
+		conditionAmounts:      conditionAmounts,
+		tier30Ratio:           tier30Ratio,
+		tier90Ratio:           tier90Ratio,
+		tier180Ratio:          tier180Ratio,
+		startTime:             startTime,
+		currentTime:           currentTime,
+		currentHeight:         currentHeight,
+		averageBlockTimeMs:    averageBlockTimeMs,
+		minimumStartDelayTime: projectMinimumStartDelayTime,
 	}
 
 	project, err := createProject(params)
@@ -97,7 +98,7 @@ func CreateProject(
 	if tokenBalance < depositAmount {
 		panic(makeErrorWithDetails(errInsufficientBalance, ufmt.Sprintf("caller(%s) balance(%d) < depositAmount(%d)", previousAddress.String(), tokenBalance, depositAmount)))
 	}
-	
+
 	err = common.TransferFrom(
 		cross,
 		tokenPath,
@@ -374,19 +375,20 @@ func getProjectTierRewardManager(projectTierID string) (*RewardManager, error) {
 }
 
 type createProjectParams struct {
-	name               string
-	tokenPath          string
-	recipient          std.Address
-	depositAmount      int64
-	conditionTokens    string
-	conditionAmounts   string
-	tier30Ratio        int64
-	tier90Ratio        int64
-	tier180Ratio       int64
-	startTime          int64
-	currentTime        int64
-	currentHeight      int64
-	averageBlockTimeMs int64
+	name                  string
+	tokenPath             string
+	recipient             std.Address
+	depositAmount         int64
+	conditionTokens       string
+	conditionAmounts      string
+	tier30Ratio           int64
+	tier90Ratio           int64
+	tier180Ratio          int64
+	startTime             int64
+	currentTime           int64
+	currentHeight         int64
+	averageBlockTimeMs    int64
+	minimumStartDelayTime int64
 }
 
 func (p *createProjectParams) validate() error {
@@ -410,7 +412,7 @@ func (p *createProjectParams) validate() error {
 		return err
 	}
 
-	if err := p.validateStartTime(p.currentTime); err != nil {
+	if err := p.validateStartTime(p.currentTime, p.minimumStartDelayTime); err != nil {
 		return err
 	}
 
@@ -499,16 +501,19 @@ func (p *createProjectParams) validateRatio() error {
 	return nil
 }
 
-// ValidateStartTime checks if the start time is in the future.
+// ValidateStartTime checks if the start time is available.
 //
 // Parameters:
 // - now (uint64): The current time in Unix timestamp.
+// - minimumStartDelayTime (uint64): The minimum start delay time in Unix timestamp. (default: 1 hour)
 //
 // Returns:
 // - error: If the start time is in the past or equal to `now`, returns an error.
-func (p *createProjectParams) validateStartTime(now int64) error {
-	if p.startTime <= now {
-		return makeErrorWithDetails(errInvalidInput, ufmt.Sprintf("start time(%d) must be greater than now(%d)", p.startTime, now))
+func (p *createProjectParams) validateStartTime(now int64, minimumStartDelayTime int64) error {
+	availableStartTime := now + minimumStartDelayTime
+
+	if p.startTime < availableStartTime {
+		return makeErrorWithDetails(errInvalidInput, ufmt.Sprintf("start time(%d) must be greater than now(%d)", p.startTime, availableStartTime))
 	}
 
 	return nil

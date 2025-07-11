@@ -203,7 +203,6 @@ func depositGns(
 	if err != nil {
 		return nil, nil, false, "", err
 	}
-	
 
 	return deposit,
 		rewardState,

@@ -52,11 +52,11 @@ func TestCreateProject(t *testing.T) {
 			tier30Ratio:          10,
 			tier90Ratio:          20,
 			tier180Ratio:         70,
-			startTime:            time.Now().Unix() + 10,
+			startTime:            time.Now().Unix() + 3600, // 1 hour
 			callerAddress:        adminAddr,
 			averageBlockTimeMs:   2000,
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
-			expectedStartHeight:  std.ChainHeight() + 5,
+			expectedStartHeight:  std.ChainHeight() + 3600/2, // 1 hour / 2
 			expectedHasAbort:     false,
 			expectedAbortMessage: "",
 		},
@@ -71,11 +71,11 @@ func TestCreateProject(t *testing.T) {
 			tier30Ratio:          10,
 			tier90Ratio:          20,
 			tier180Ratio:         70,
-			startTime:            time.Now().Unix() + 10,
+			startTime:            time.Now().Unix() + 3600, // 1 hour
 			callerAddress:        adminAddr,
 			averageBlockTimeMs:   1000,
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
-			expectedStartHeight:  std.ChainHeight() + 10,
+			expectedStartHeight:  std.ChainHeight() + 3600,
 			expectedHasAbort:     false,
 			expectedAbortMessage: "",
 		},
@@ -90,7 +90,7 @@ func TestCreateProject(t *testing.T) {
 			tier30Ratio:          10,
 			tier90Ratio:          20,
 			tier180Ratio:         70,
-			startTime:            time.Now().Unix() + 10,
+			startTime:            time.Now().Unix() + 3600, // 1 hour
 			callerAddress:        testutils.TestAddress("non-admin"),
 			averageBlockTimeMs:   2000,
 			expectedHasAbort:     true,
@@ -107,11 +107,28 @@ func TestCreateProject(t *testing.T) {
 			tier30Ratio:          10,
 			tier90Ratio:          20,
 			tier180Ratio:         70,
-			startTime:            time.Now().Unix() - 10,
+			startTime:            time.Now().Unix() - 3600, // 1 hour
 			callerAddress:        adminAddr,
 			averageBlockTimeMs:   2000,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234567880) must be greater than now(1234567890)",
+			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234564290) must be greater than now(1234571490)",
+		},
+		{
+			name:                 "create project failed by start time is less than minimum start delay time",
+			projectName:          "Obl Protocol",
+			tokenPath:            oblPath,
+			recipient:            testutils.TestAddress("projectAddr"),
+			depositAmount:        1_000_000_000,
+			conditionTokens:      "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+			conditionAmounts:     "1000*PAD*2000",
+			tier30Ratio:          10,
+			tier90Ratio:          20,
+			tier180Ratio:         70,
+			startTime:            time.Now().Unix() + 3600 - 1, // 1 hour
+			callerAddress:        adminAddr,
+			averageBlockTimeMs:   2000,
+			expectedHasAbort:     true,
+			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234571489) must be greater than now(1234571490)",
 		},
 	}
 
@@ -180,7 +197,7 @@ func TestCreateProjectPrivate(t *testing.T) {
 				tier180Ratio:       int64(70),
 				currentTime:        int64(time.Now().Unix()),
 				currentHeight:      std.ChainHeight(),
-				startTime:          int64(time.Now().Unix() + 10),
+				startTime:          int64(time.Now().Unix() + 3600), // 1 hour
 				averageBlockTimeMs: 2000,
 			},
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
@@ -201,7 +218,7 @@ func TestCreateProjectPrivate(t *testing.T) {
 				tier180Ratio:       int64(30),
 				currentTime:        int64(time.Now().Unix()),
 				currentHeight:      std.ChainHeight(),
-				startTime:          int64(time.Now().Unix() + 50),
+				startTime:          int64(time.Now().Unix() + 3600),
 				averageBlockTimeMs: 2000,
 			},
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
@@ -222,7 +239,7 @@ func TestCreateProjectPrivate(t *testing.T) {
 				tier180Ratio:       int64(60),
 				currentTime:        int64(time.Now().Unix()),
 				currentHeight:      std.ChainHeight(),
-				startTime:          int64(time.Now().Unix() + 10),
+				startTime:          int64(time.Now().Unix() + 3600),
 				averageBlockTimeMs: 2000,
 			},
 			expectedHasError:     true,
@@ -242,7 +259,7 @@ func TestCreateProjectPrivate(t *testing.T) {
 				tier180Ratio:       int64(70),
 				currentTime:        int64(time.Now().Unix()),
 				currentHeight:      std.ChainHeight(),
-				startTime:          int64(time.Now().Unix() + 10),
+				startTime:          int64(time.Now().Unix() + 3600),
 				averageBlockTimeMs: 2000,
 			},
 			expectedHasError:     true,
@@ -262,7 +279,7 @@ func TestCreateProjectPrivate(t *testing.T) {
 				tier180Ratio:       int64(70),
 				currentTime:        int64(time.Now().Unix()),
 				currentHeight:      std.ChainHeight(),
-				startTime:          int64(time.Now().Unix() + 10),
+				startTime:          int64(time.Now().Unix() + 3600),
 				averageBlockTimeMs: 2000,
 			},
 			expectedHasError:     true,
@@ -271,39 +288,41 @@ func TestCreateProjectPrivate(t *testing.T) {
 		{
 			name: "create project failed by invalid start time",
 			params: &createProjectParams{
-				name:               "Obl Protocol",
-				tokenPath:          oblPath,
-				recipient:          projectAddr,
-				depositAmount:      1_000_000_000,
-				conditionTokens:    "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
-				conditionAmounts:   "1000*PAD*2000",
-				tier30Ratio:        int64(10),
-				tier90Ratio:        int64(20),
-				tier180Ratio:       int64(70),
-				currentTime:        int64(time.Now().Unix()),
-				currentHeight:      std.ChainHeight(),
-				startTime:          int64(time.Now().Unix()),
-				averageBlockTimeMs: 2000,
+				name:                  "Obl Protocol",
+				tokenPath:             oblPath,
+				recipient:             projectAddr,
+				depositAmount:         1_000_000_000,
+				conditionTokens:       "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionAmounts:      "1000*PAD*2000",
+				tier30Ratio:           int64(10),
+				tier90Ratio:           int64(20),
+				tier180Ratio:          int64(70),
+				currentTime:           int64(time.Now().Unix()),
+				currentHeight:         std.ChainHeight(),
+				startTime:             int64(time.Now().Unix() + 3600 - 1), // 1 hour - 1 second
+				averageBlockTimeMs:    2000,
+				minimumStartDelayTime: 3600,
 			},
 			expectedHasError:     true,
-			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234567890) must be greater than now(1234567890)",
+			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234571489) must be greater than now(1234571490)",
 		},
 		{
 			name: "create project failed by invalid token path",
 			params: &createProjectParams{
-				name:               "Obl Protocol",
-				tokenPath:          "gno.land/r/test/token",
-				recipient:          projectAddr,
-				depositAmount:      1_000_000_000,
-				conditionTokens:    "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
-				conditionAmounts:   "1000*PAD*2000",
-				tier30Ratio:        int64(10),
-				tier90Ratio:        int64(20),
-				tier180Ratio:       int64(70),
-				currentTime:        int64(time.Now().Unix()),
-				currentHeight:      std.ChainHeight(),
-				startTime:          int64(time.Now().Unix() + 50),
-				averageBlockTimeMs: 2000,
+				name:                  "Obl Protocol",
+				tokenPath:             "gno.land/r/test/token",
+				recipient:             projectAddr,
+				depositAmount:         1_000_000_000,
+				conditionTokens:       "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionAmounts:      "1000*PAD*2000",
+				tier30Ratio:           int64(10),
+				tier90Ratio:           int64(20),
+				tier180Ratio:          int64(70),
+				currentTime:           int64(time.Now().Unix()),
+				currentHeight:         std.ChainHeight(),
+				startTime:             int64(time.Now().Unix() + 3600 - 1), // 1 hour - 1 second
+				averageBlockTimeMs:    2000,
+				minimumStartDelayTime: 3600,
 			},
 			expectedHasError:     true,
 			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || tokenPath(gno.land/r/test/token) not registered",
@@ -358,7 +377,7 @@ func TestCreateProjectPrivate_Multiple(t *testing.T) {
 				tier180Ratio:       int64(70),
 				currentTime:        int64(time.Now().Unix()),
 				currentHeight:      std.ChainHeight(),
-				startTime:          int64(time.Now().Unix() + 10),
+				startTime:          int64(time.Now().Unix() + 3600), // 1 hour
 				averageBlockTimeMs: 2000,
 			},
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
@@ -382,7 +401,7 @@ func TestCreateProjectPrivate_Multiple(t *testing.T) {
 				tier180Ratio:       int64(70),
 				currentTime:        int64(time.Now().Unix()),
 				currentHeight:      std.ChainHeight(),
-				startTime:          int64(time.Now().Unix()) + 10,
+				startTime:          int64(time.Now().Unix() + 3600), // 1 hour
 				averageBlockTimeMs: 2000,
 			},
 			expectedHasError:     true,
@@ -610,6 +629,8 @@ func TestCreateProjectParams_ValidateRatio(t *testing.T) {
 }
 
 func TestCreateProjectParams_ValidateStartTime(t *testing.T) {
+	projectMinimumStartDelayTime := int64(60 * 60) // 1 hour
+
 	tests := []struct {
 		name          string
 		startTime     int64
@@ -617,7 +638,7 @@ func TestCreateProjectParams_ValidateStartTime(t *testing.T) {
 	}{
 		{
 			name:          "start time is valid",
-			startTime:     int64(time.Now().Unix() + 10),
+			startTime:     int64(time.Now().Unix() + projectMinimumStartDelayTime),
 			expectedError: nil,
 		},
 		{
@@ -630,6 +651,11 @@ func TestCreateProjectParams_ValidateStartTime(t *testing.T) {
 			startTime:     int64(time.Now().Unix()),
 			expectedError: errInvalidInput,
 		},
+		{
+			name:          "start time is invalid by less than minimum start delay time",
+			startTime:     int64(time.Now().Unix() + projectMinimumStartDelayTime - 1),
+			expectedError: errInvalidInput,
+		},
 	}
 
 	for _, test := range tests {
@@ -638,7 +664,7 @@ func TestCreateProjectParams_ValidateStartTime(t *testing.T) {
 				startTime: test.startTime,
 			}
 
-			err := params.validateStartTime(int64(time.Now().Unix()))
+			err := params.validateStartTime(int64(time.Now().Unix()), projectMinimumStartDelayTime)
 
 			if test.expectedError == nil {
 				uassert.NoError(t, err)
@@ -708,6 +734,7 @@ func TestCreateProjectParams_ValidateConditions(t *testing.T) {
 
 // define test methods for launchpad project
 func initLaunchpadProjectTest(t *testing.T) {
+	testing.SetHeight(123)
 	projects = new(avl.Tree)
 	projectTierRewardManagers = new(avl.Tree)
 }
