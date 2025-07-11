@@ -638,3 +638,100 @@ func TestDistributeToTarget(t *testing.T) {
 		}
 	})
 }
+
+func TestCalculateAmount_Panic(t *testing.T) {
+	resetObject(t)
+
+	testing.SetRealm(adminRealm)
+	gns.Transfer(cross, emissionAddr, 10000000) // 10M GNS tokens
+
+	testing.SetRealm(govRealm)
+
+	// attempts to set 40000 basis points = 400% (should be impossible but let's test)
+	t.Run("Attack via ChangeDistributionPct - Should fail with current validation", func(t *testing.T) {
+		uassert.AbortsWithMessage(t, "[GNOSWAP-EMISSION-002] invalid emission target || sum of percentages must be 10000, got 40000", func() {
+			ChangeDistributionPct(
+				cross,
+				LIQUIDITY_STAKER, 10000, // 100%
+				DEVOPS, 10000, // 100%
+				COMMUNITY_POOL, 10000, // 100%
+				GOV_STAKER, 10000, // 100%
+			)
+		})
+	})
+
+	t.Run("Direct calculateAmount", func(t *testing.T) {
+		testCases := []struct {
+			name        string
+			amount      int64
+			bptPct      int64
+			expected    int64
+			shouldPanic bool
+		}{
+			{
+				name:     "Normal case - 100%",
+				amount:   1000,
+				bptPct:   10000,
+				expected: 1000,
+			},
+			{
+				name:        "Set 200% - should not be allowed",
+				amount:      1000,
+				bptPct:      20000, // 200% - should not be allowed
+				expected:    2000,  // Returns 2x the amount!
+				shouldPanic: true,
+			},
+			{
+				name:        "Set 1000% - should not be allowed",
+				amount:      1000,
+				bptPct:      100000, // 1000%
+				expected:    10000,  // Returns 10x the amount!
+				shouldPanic: true,
+			},
+			{
+				name:        "Set 1000% - should not be allowed",
+				amount:      900000000000000000,  // Large but below overflow threshold
+				bptPct:      100000,              // 1000%
+				expected:    9000000000000000000, // 10x multiplication
+				shouldPanic: true,                // overflow
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				if tc.shouldPanic {
+					defer func() {
+						if r := recover(); r != nil {
+							t.Logf("Recovered from panic: %v", r)
+						}
+					}()
+					calculateAmount(tc.amount, tc.bptPct)
+				} else {
+					result := calculateAmount(tc.amount, tc.bptPct)
+					uassert.Equal(t, tc.expected, result)
+				}
+			})
+		}
+	})
+
+	t.Run("Overflow protection boundary test", func(t *testing.T) {
+		maxSafeAmount := int64(9223372036854775807 / 10000)
+
+		// under the limit
+		result := calculateAmount(maxSafeAmount, 10000)
+		uassert.Equal(t, maxSafeAmount, result)
+
+		// over the limit
+		uassert.PanicsWithMessage(t, "amount too large", func() {
+			calculateAmount(maxSafeAmount+1, 10000)
+		})
+
+		// over the limit
+		unsafeAmount := maxSafeAmount / 10 // 10x smaller than max
+		hugebptPct := int64(100001)        // Just over 1000%
+
+		uassert.PanicsWithMessage(t, "invalid amount or bptPct", func() {
+			calculateAmount(unsafeAmount, hugebptPct)
+		})
+	})
+}
