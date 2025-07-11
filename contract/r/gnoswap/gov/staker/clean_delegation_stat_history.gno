@@ -3,6 +3,8 @@
 package staker
 
 import (
+	"gno.land/p/demo/ufmt"
+
 	"gno.land/p/gnoswap/consts"
 )
 
@@ -20,15 +22,17 @@ func CleanDelegationStatHistoryByAdmin() {
 }
 
 // GetThresholdVotingWeightBlockHeight returns the threshold voting weight block height
-func GetThresholdVotingWeightBlockHeight() uint64 {
-	return uint64(thresholdVotingWeightBlockHeight)
+func GetThresholdVotingWeightBlockHeight() int64 {
+	return thresholdVotingWeightBlockHeight
 }
 
 // SetThresholdVotingWeightBlockHeightByAdmin sets the threshold voting weight block height
-func SetThresholdVotingWeightBlockHeightByAdmin(cur realm, height uint64) {
+func SetThresholdVotingWeightBlockHeightByAdmin(cur realm, height int64) {
 	assertCallerIsAdmin()
-
-	thresholdVotingWeightBlockHeight = int64(height)
+	if height < 0 {
+		panic(ufmt.Sprintf("invalid height: %d", height))
+	}
+	thresholdVotingWeightBlockHeight = height
 }
 
 // GetRunning returns the running status
@@ -44,7 +48,8 @@ func SetRunning(cur realm, run bool) {
 }
 
 // cleanDelegationStatHistory is a wrapper for HistoryState method
-// TODO: should be private
 func cleanDelegationStatHistory(thresholdVotingWeightBlockHeight int64) {
-	historyState.pruneSnapshots(thresholdVotingWeightBlockHeight)
+	if err := historyState.pruneSnapshots(thresholdVotingWeightBlockHeight); err != nil {
+		panic(err)
+	}
 }

@@ -8,8 +8,8 @@ import (
 )
 
 type (
-	AmountMap   = map[string]uint64
-	FromToMap   = map[string]AmountMap
+	AmountMap = map[string]uint64
+	FromToMap = map[string]AmountMap
 )
 
 type DelegationState struct {
@@ -30,7 +30,7 @@ type DelegationRecord struct {
 	Amount    uint64 `json:"amount"`
 }
 
-func NewDelegationState() *DelegationState {
+func newDelegationState() *DelegationState {
 	return &DelegationState{
 		totalDelegated:  0,
 		delegatorAmount: make(AmountMap),
@@ -39,7 +39,7 @@ func NewDelegationState() *DelegationState {
 	}
 }
 
-func NewDelegationRecord(delegator string, delegatee string, amount uint64) *DelegationRecord {
+func newDelegationRecord(delegator string, delegatee string, amount uint64) *DelegationRecord {
 	return &DelegationRecord{
 		Delegator: delegator,
 		Delegatee: delegatee,
@@ -54,8 +54,8 @@ func delegate(st *DelegationState, hs *HistoryState, to std.Address, amount uint
 	caller := std.PreviousRealm().Address().String()
 	toStr := to.String()
 
-	record := NewDelegationRecord(caller, toStr, amount)
-	st = st.applyDelegationChange(*record, true)
+	record := newDelegationRecord(caller, toStr, amount)
+	st = st.update(*record, true)
 	st.totalDelegated += amount
 
 	hs.AppendDelegationHistory(std.Address(caller), to, amount, true)
@@ -82,8 +82,8 @@ func undelegate(st *DelegationState, hs *HistoryState, to std.Address, amount ui
 		return ufmt.Errorf("caller(%s) has insufficient delegated amount to(%s)", callerStr, toStr)
 	}
 
-	record := NewDelegationRecord(callerStr, toStr, amount)
-	st = st.applyDelegationChange(*record, false)
+	record := newDelegationRecord(callerStr, toStr, amount)
+	st = st.update(*record, false)
 	st.totalDelegated -= amount
 
 	hs.AppendDelegationHistory(caller, to, amount, false)
@@ -92,15 +92,15 @@ func undelegate(st *DelegationState, hs *HistoryState, to std.Address, amount ui
 	return nil
 }
 
-func (st *DelegationState) applyDelegationChange(record DelegationRecord, add bool) *DelegationState {
+func (st *DelegationState) update(record DelegationRecord, add bool) *DelegationState {
 	if add {
-		return st.addDelegation(record)
+		return st.add(record)
 	}
-	return st.removeDelegation(record)
+	return st.remove(record)
 }
 
-// addDelegation handles adding delegation amount to the state
-func (st *DelegationState) addDelegation(record DelegationRecord) *DelegationState {
+// add handles adding delegation amount to the state
+func (st *DelegationState) add(record DelegationRecord) *DelegationState {
 	delta := record.Amount
 
 	// Update delegator's total delegated amount
@@ -120,8 +120,8 @@ func (st *DelegationState) addDelegation(record DelegationRecord) *DelegationSta
 	return st
 }
 
-// removeDelegation handles removing delegation amount from the state
-func (st *DelegationState) removeDelegation(record DelegationRecord) *DelegationState {
+// remove handles removing delegation amount from the state
+func (st *DelegationState) remove(record DelegationRecord) *DelegationState {
 	delta := record.Amount
 
 	// Update delegator's total delegated amount

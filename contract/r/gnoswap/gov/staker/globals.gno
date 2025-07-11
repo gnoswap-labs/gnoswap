@@ -2,8 +2,8 @@ package staker
 
 // global state initialization
 func init() {
-	delegationState = NewDelegationState()
-	historyState = NewHistoryState()
+	delegationState = newDelegationState()
+	historyState = newHistoryState()
 	rewardState = NewRewardState()
 }
 

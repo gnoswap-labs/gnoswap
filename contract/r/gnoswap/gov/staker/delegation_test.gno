@@ -439,7 +439,7 @@ func TestApplyDelegationChange(t *testing.T) {
 			}
 
 			// Apply the delegation change
-			result := initialState.applyDelegationChange(tt.record, tt.add)
+			result := initialState.update(tt.record, tt.add)
 
 			// Verify delegatorAmount
 			for delegator, expectedAmount := range tt.expectedState.delegatorAmount {
@@ -477,7 +477,7 @@ func TestApplyDelegationChange(t *testing.T) {
 // TestAppendDelegationHistory tests the AppendDelegationHistory function
 func TestAppendDelegationHistory(t *testing.T) {
 	t.Run("should append delegation history for valid addresses", func(t *testing.T) {
-		st := NewHistoryState()
+		st := newHistoryState()
 		from := testutils.TestAddress("from")
 		to := testutils.TestAddress("to")
 		amount := uint64(1000)
@@ -501,7 +501,7 @@ func TestAppendDelegationHistory(t *testing.T) {
 	})
 
 	t.Run("should append multiple delegation histories", func(t *testing.T) {
-		st := NewHistoryState()
+		st := newHistoryState()
 		from := testutils.TestAddress("from")
 		to1 := testutils.TestAddress("to1")
 		to2 := testutils.TestAddress("to2")
@@ -533,7 +533,7 @@ func TestAppendDelegationHistory(t *testing.T) {
 // TestUpdateDelegationSnapShotHistory tests the UpdateDelegationSnapShotHistory function
 func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 	t.Run("should create new snapshot for first delegation", func(t *testing.T) {
-		st := NewHistoryState()
+		st := newHistoryState()
 		to := testutils.TestAddress("to")
 		amount := uint64(1000)
 
@@ -553,7 +553,7 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 	})
 
 	t.Run("should update existing snapshot when adding delegation", func(t *testing.T) {
-		st := NewHistoryState()
+		st := newHistoryState()
 		to := testutils.TestAddress("to")
 
 		// Add first delegation
@@ -576,7 +576,7 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 	})
 
 	t.Run("should update existing snapshot when removing delegation", func(t *testing.T) {
-		st := NewHistoryState()
+		st := newHistoryState()
 		to := testutils.TestAddress("to")
 
 		// Add initial delegation
@@ -599,7 +599,7 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 	})
 
 	t.Run("should handle removal that exceeds current amount", func(t *testing.T) {
-		st := NewHistoryState()
+		st := newHistoryState()
 		to := testutils.TestAddress("to")
 
 		// Add initial delegation
@@ -622,7 +622,7 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 	})
 
 	t.Run("should return error for invalid to address", func(t *testing.T) {
-		st := NewHistoryState()
+		st := newHistoryState()
 		to := std.Address("") // Invalid address
 		amount := uint64(1000)
 
@@ -635,7 +635,7 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 	})
 
 	t.Run("should handle zero amount delegation", func(t *testing.T) {
-		st := NewHistoryState()
+		st := newHistoryState()
 		to := testutils.TestAddress("to")
 		amount := uint64(0)
 
@@ -649,7 +649,7 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 	})
 
 	t.Run("should maintain chronological order of snapshots", func(t *testing.T) {
-		st := NewHistoryState()
+		st := newHistoryState()
 		to := testutils.TestAddress("to")
 
 		// Add multiple delegations
@@ -797,7 +797,7 @@ func TestDelegate_Internal(t *testing.T) {
 				delegatedTo:     make(AmountMap),
 			}
 
-			hs := NewHistoryState()
+			hs := newHistoryState()
 
 			// Copy maps to avoid reference issues
 			for k, v := range tt.initialState.delegatorAmount {
@@ -860,7 +860,7 @@ func TestDelegate_Internal(t *testing.T) {
 
 				// Verify that delegation history was added through historyState
 				callerStr := caller.String()
-				history := hs.GetDelegateHistoryOf(std.Address(callerStr))
+				history := hs.DelegateHistoryOf(std.Address(callerStr))
 				uassert.Equal(t, 1, len(history), "should have one delegation history entry")
 
 				// Verify history entry
@@ -872,7 +872,7 @@ func TestDelegate_Internal(t *testing.T) {
 				uassert.True(t, entry.add, "add flag should be true")
 
 				// Verify that snapshot history was updated through historyState
-				snapshots := hs.GetDelegationSnapShotHistoryOf(tt.to)
+				snapshots := hs.DelegationSnapShotHistoryOf(tt.to)
 				uassert.Equal(t, 1, len(snapshots), "should have one snapshot entry")
 
 				// Verify snapshot entry
@@ -916,7 +916,7 @@ func TestUndelegate_Internal(t *testing.T) {
 					delegatee.String(): 1000,
 				},
 			},
-			historyState: NewHistoryState(),
+			historyState: newHistoryState(),
 			undelegateTo: delegatee,
 			amount:       1000,
 			expectedState: &DelegationState{
@@ -937,23 +937,23 @@ func TestUndelegate_Internal(t *testing.T) {
 		},
 		{
 			name:          "error - undelegate zero amount",
-			initialState:  NewDelegationState(),
-			historyState:  NewHistoryState(),
+			initialState:  newDelegationState(),
+			historyState:  newHistoryState(),
 			undelegateTo:  delegatee,
 			amount:        0,
 			expectedError: "amount must be positive",
-			expectedState: NewDelegationState(),
+			expectedState: newDelegationState(),
 			description:   "should return error when undelegating zero amount",
 		},
 		{
 			name:          "error - undelegate without delegation",
-			initialState:  NewDelegationState(),
-			historyState:  NewHistoryState(),
+			initialState:  newDelegationState(),
+			historyState:  newHistoryState(),
 			undelegateTo:  delegatee,
 			amount:        100,
 			expectedError: "no delegated amount",
 			description:   "should return error if caller never delegated",
-			expectedState: NewDelegationState(),
+			expectedState: newDelegationState(),
 		},
 		{
 			name: "error - insufficient undelegate amount",
@@ -971,7 +971,7 @@ func TestUndelegate_Internal(t *testing.T) {
 					delegatee.String(): 100,
 				},
 			},
-			historyState:  NewHistoryState(),
+			historyState:  newHistoryState(),
 			undelegateTo:  delegatee,
 			amount:        200,
 			expectedError: "insufficient delegated amount",
@@ -1055,7 +1055,7 @@ func TestGetDelegatedCumulative(t *testing.T) {
 	}{
 		{
 			name:           "empty snapshot history",
-			historyState:   NewHistoryState(),
+			historyState:   newHistoryState(),
 			delegator:      delegator,
 			endTimestamp:   pastTime,
 			expectedAmount: 0,
@@ -1220,7 +1220,7 @@ func TestGetDelegatedCumulative(t *testing.T) {
 		},
 		{
 			name:         "invalid delegator address",
-			historyState: NewHistoryState(),
+			historyState: newHistoryState(),
 			delegator:    invalidAddress,
 			endTimestamp: pastTime,
 			expectPanic:  true,
@@ -1229,7 +1229,7 @@ func TestGetDelegatedCumulative(t *testing.T) {
 		},
 		{
 			name:         "future timestamp",
-			historyState: NewHistoryState(),
+			historyState: newHistoryState(),
 			delegator:    delegator,
 			endTimestamp: futureTime,
 			expectPanic:  true,

@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/ufmt"
-	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/ufmt"
 )
 
 func TestGetDelegateHistoryOf(t *testing.T) {
@@ -36,7 +36,7 @@ func TestGetDelegateHistoryOf(t *testing.T) {
 	}{
 		{
 			name:           "empty delegation history",
-			historyState:   NewHistoryState(),
+			historyState:   newHistoryState(),
 			delegator:      delegator1,
 			expectedResult: []DelegationHistory{},
 			expectPanic:    false,
@@ -411,7 +411,7 @@ func TestGetDelegationSnapShotHistoryOf(t *testing.T) {
 	}{
 		{
 			name:           "empty snapshot history",
-			historyState:   NewHistoryState(),
+			historyState:   newHistoryState(),
 			delegator:      delegator1,
 			expectedResult: []DelegationSnapShotHistory{},
 			expectPanic:    false,
@@ -631,7 +631,7 @@ func TestGetDelegationSnapShotHistoryOf(t *testing.T) {
 		},
 		{
 			name:         "invalid delegator address",
-			historyState: NewHistoryState(),
+			historyState: newHistoryState(),
 			delegator:    invalidAddress,
 			expectPanic:  true,
 			panicMessage: "invalid delegator address",

@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"fmt"
 	"std"
 	"time"
 
@@ -10,17 +9,17 @@ import (
 
 // GetDelegatedCumulative is a wrapper for HistoryState method
 func GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
-	return historyState.GetDelegatedCumulative(delegator, endTimestamp)
+	return historyState.DelegatedCumulative(delegator, endTimestamp)
 }
 
 // GetDelegateHistoryOf is a wrapper for HistoryState method
 func GetDelegateHistoryOf(delegator std.Address) []DelegationHistory {
-	return historyState.GetDelegateHistoryOf(delegator)
+	return historyState.DelegateHistoryOf(delegator)
 }
 
 // GetDelegationSnapShotHistoryOf is a wrapper for HistoryState method
 func GetDelegationSnapShotHistoryOf(delegator std.Address) []DelegationSnapShotHistory {
-	return historyState.GetDelegationSnapShotHistoryOf(delegator)
+	return historyState.DelegationSnapShotHistoryOf(delegator)
 }
 
 type (
@@ -52,7 +51,7 @@ type HistoryState struct {
 	lastCleanedHeight uint64
 }
 
-func NewHistoryState() *HistoryState {
+func newHistoryState() *HistoryState {
 	return &HistoryState{
 		delegationHistory: make(HistoryMap),
 		snapshotHistory:   make(SnapShotMap),
@@ -69,7 +68,7 @@ func (hs *HistoryState) LastCleanedHeight() uint64     { return hs.lastCleanedHe
 func (hs *HistoryState) AppendDelegationHistory(from, to std.Address, amount uint64, add bool) error {
 	ts := uint64(time.Now().Unix())
 	if !(from.IsValid() || to.IsValid()) {
-		return fmt.Errorf("invalid address")
+		return ufmt.Errorf("invalid address")
 	}
 
 	history := DelegationHistory{
@@ -88,7 +87,7 @@ func (hs *HistoryState) AppendDelegationHistory(from, to std.Address, amount uin
 // UpdateDelegationSnapShotHistory updates delegation snapshot for a delegatee
 func (hs *HistoryState) UpdateDelegationSnapShotHistory(to std.Address, amount uint64, add bool) error {
 	if !to.IsValid() {
-		return fmt.Errorf("invalid address")
+		return ufmt.Errorf("invalid address")
 	}
 	toStr := to.String()
 
@@ -123,7 +122,7 @@ func (hs *HistoryState) UpdateDelegationSnapShotHistory(to std.Address, amount u
 }
 
 // GetDelegatedCumulative returns cumulative delegated amount at specific timestamp
-func (hs *HistoryState) GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
+func (hs *HistoryState) DelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
 	if !delegator.IsValid() {
 		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
 	}
@@ -142,7 +141,7 @@ func (hs *HistoryState) GetDelegatedCumulative(delegator std.Address, endTimesta
 }
 
 // GetDelegateHistoryOf returns delegation history for a delegator
-func (hs *HistoryState) GetDelegateHistoryOf(delegator std.Address) []DelegationHistory {
+func (hs *HistoryState) DelegateHistoryOf(delegator std.Address) []DelegationHistory {
 	if !delegator.IsValid() {
 		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
 	}
@@ -150,7 +149,7 @@ func (hs *HistoryState) GetDelegateHistoryOf(delegator std.Address) []Delegation
 }
 
 // GetDelegationSnapShotHistoryOf returns snapshot history for a delegator
-func (hs *HistoryState) GetDelegationSnapShotHistoryOf(delegator std.Address) []DelegationSnapShotHistory {
+func (hs *HistoryState) DelegationSnapShotHistoryOf(delegator std.Address) []DelegationSnapShotHistory {
 	if !delegator.IsValid() {
 		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
 	}
@@ -158,16 +157,17 @@ func (hs *HistoryState) GetDelegationSnapShotHistoryOf(delegator std.Address) []
 }
 
 // CleanDelegationStatHistory removes old delegation snapshots older than threshold
-func (hs *HistoryState) pruneSnapshots(thresholdVotingWeightBlockHeight int64) {
+func (hs *HistoryState) pruneSnapshots(thresholdVotingWeightBlockHeight int64) error {
 	height := uint64(std.ChainHeight())
 	sinceLast := height - hs.lastCleanedHeight
 
-	if sinceLast < uint64(thresholdVotingWeightBlockHeight) {
-		return
+	threshold := uint64(thresholdVotingWeightBlockHeight)
+	if sinceLast < threshold {
+		return nil
 	}
 
 	hs.lastCleanedHeight = height
-	keepFrom := height - uint64(thresholdVotingWeightBlockHeight)
+	keepFrom := height - threshold
 
 	for key, history := range hs.snapshotHistory {
 		// keep only entries newer than keepFrom, keeping at least one entry
@@ -179,4 +179,6 @@ func (hs *HistoryState) pruneSnapshots(thresholdVotingWeightBlockHeight int64) {
 			break
 		}
 	}
+
+	return nil
 }
