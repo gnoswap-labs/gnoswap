@@ -14,12 +14,12 @@ func ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
 		return ""
 	}
 
-	builder := MetaBuilder().WriteString("projectId", projectId)
-	ProjectBuilder(builder, project)
+	builder := metaBuilder().WriteString("projectId", projectId)
+	projectBuilder(builder, project)
 
-	for _, duration := range []uint64{30, 90, 180} {
-		if tier, exists := project.tiers[duration]; exists {
-			TierBuilder(builder, ufmt.Sprintf("tier%d", duration), tier)
+	for _, duration := range []int64{30, 90, 180} {
+		if tier, err := project.getTier(duration); err == nil {
+			tierBuilder(builder, ufmt.Sprintf("tier%d", duration), tier)
 		}
 	}
 
@@ -33,8 +33,8 @@ func ApiGetProjectStatisticsByProjectId(projectId string) string {
 		return ""
 	}
 
-	builder := MetaBuilder().WriteString("projectId", projectId)
-	ProjectBuilder(builder, project)
+	builder := metaBuilder().WriteString("projectId", projectId)
+	projectBuilder(builder, project)
 
 	return marshal(builder.Node())
 }
@@ -46,11 +46,11 @@ func ApiGetTierStatisticsByProjectId(projectId string) string {
 		return ""
 	}
 
-	builder := MetaBuilder().WriteString("projectId", projectId)
+	builder := metaBuilder().WriteString("projectId", projectId)
 
-	for _, duration := range []uint64{30, 90, 180} {
-		if tier, exists := project.tiers[duration]; exists {
-			TierBuilder(builder, ufmt.Sprintf("tier%d", duration), tier)
+	for _, duration := range []int64{30, 90, 180} {
+		if tier, err := project.getTier(duration); err == nil {
+			tierBuilder(builder, ufmt.Sprintf("tier%d", duration), tier)
 		}
 	}
 
@@ -59,40 +59,19 @@ func ApiGetTierStatisticsByProjectId(projectId string) string {
 
 // ApiGetProjectStatisticsByProjectTierId retrieves project statistics by project tier ID.
 func ApiGetProjectStatisticsByProjectTierId(tierId string) string {
-	projectId, tierStr := splitProjectIdAndTier(tierId)
+	projectId, duration := parseProjectTierID(tierId)
 	project, err := getProject(projectId)
 	if err != nil {
 		return ""
 	}
 
-	var tier Tier
-	switch tierStr {
-	case "30":
-		tier = project.tiers[30]
-	case "90":
-		tier = project.tiers[90]
-	case "180":
-		tier = project.tiers[180]
-	default:
+	tier, err := project.getTier(duration)
+	if err != nil {
 		return ""
 	}
 
-	builder := MetaBuilder().
-		WriteString("projectId", projectId).
-		WriteString("tierId", tierId).
-		WriteString("collectWaitDuration", strconv.FormatUint(tier.collectWaitDuration, 10)).
-		WriteString("tierAmount", strconv.FormatUint(tier.tierAmount, 10)).
-		WriteString("tierAmountPerBlockX128", tier.tierAmountPerBlockX128.ToString()).
-		WriteString("started.height", strconv.FormatUint(tier.started.height, 10)).
-		WriteString("started.time", strconv.FormatUint(tier.started.time, 10)).
-		WriteString("ended.height", strconv.FormatUint(tier.ended.height, 10)).
-		WriteString("ended.time", strconv.FormatUint(tier.ended.time, 10)).
-		WriteString("tierTotalDepositAmount", strconv.FormatUint(tier.totalDepositAmount, 10)).
-		WriteString("tierActualDepositAmount", strconv.FormatUint(tier.actualDepositAmount, 10)).
-		WriteString("tierTotalParticipant", strconv.FormatUint(tier.totalParticipant, 10)).
-		WriteString("tierActualParticipant", strconv.FormatUint(tier.actualParticipant, 10)).
-		WriteString("userCollectedAmount", strconv.FormatUint(tier.userCollectedAmount, 10)).
-		WriteString("calculatedAmount", strconv.FormatUint(tier.calculatedAmount, 10))
+	builder := metaBuilder().WriteString("projectId", projectId)
+	tierBuilder(builder, "tier", tier)
 
 	return marshal(builder.Node())
 }
@@ -103,11 +82,11 @@ func ApiGetProjectActiveOf(projectId string) string {
 	if err != nil {
 		return ""
 	}
-	projectActiveResult := isProjectActive(project, uint64(std.ChainHeight()))
-	builder := (MetaBuilder().
+	projectActiveResult := project.IsActive(std.ChainHeight())
+	builder := (metaBuilder().
 		WriteString("projectId", project.id).
 		WriteString("isActive", strconv.FormatBool(projectActiveResult)).
 		WriteString("currentHeight", strconv.FormatInt(std.ChainHeight(), 10))).
-		WriteString("started.height", strconv.FormatUint(project.started.height, 10))
+		WriteString("started.height", strconv.FormatInt(project.standardTier().startBlockTimeInfo.BlockHeight(), 10))
 	return marshal(builder.Node())
 }
