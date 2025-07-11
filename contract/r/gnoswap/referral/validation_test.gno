@@ -33,64 +33,109 @@ func mockValidCallerValidation() func() {
 
 // TestSelfReferralValidation tests self-referral prevention
 func TestSelfReferralValidation(t *testing.T) {
-	t.Run("prevents self referral on register", func(t *testing.T) {
-		cleanup := mockValidCallerValidation()
-		defer cleanup()
+	tt := []struct {
+		name              string
+		setupInitial      bool
+		addr              std.Address
+		initialRefAddr    std.Address
+		targetRefAddr     std.Address
+		operation         string // "register" or "update"
+		expectedError     bool
+		expectedErrorType error
+		expectedRef       string
+		expectedHas       bool
+	}{
+		{
+			name:              "prevents self referral on register",
+			setupInitial:      false,
+			addr:              validationAddr1,
+			initialRefAddr:    zeroAddress,
+			targetRefAddr:     validationAddr1,
+			operation:         "register",
+			expectedError:     true,
+			expectedErrorType: ErrSelfReferral,
+			expectedRef:       "",
+			expectedHas:       false,
+		},
+		{
+			name:              "prevents self referral on update",
+			setupInitial:      true,
+			addr:              validationAddr1,
+			initialRefAddr:    validationAddr2,
+			targetRefAddr:     validationAddr1,
+			operation:         "update",
+			expectedError:     true,
+			expectedErrorType: ErrSelfReferral,
+			expectedRef:       validationAddr2.String(),
+			expectedHas:       true,
+		},
+		{
+			name:              "allows same address as referrer for different users - first",
+			setupInitial:      false,
+			addr:              validationAddr1,
+			initialRefAddr:    zeroAddress,
+			targetRefAddr:     validationAddr3,
+			operation:         "register",
+			expectedError:     false,
+			expectedErrorType: nil,
+			expectedRef:       validationAddr3.String(),
+			expectedHas:       true,
+		},
+		{
+			name:              "allows same address as referrer for different users - second",
+			setupInitial:      false,
+			addr:              validationAddr2,
+			initialRefAddr:    zeroAddress,
+			targetRefAddr:     validationAddr3,
+			operation:         "register",
+			expectedError:     false,
+			expectedErrorType: nil,
+			expectedRef:       validationAddr3.String(),
+			expectedHas:       true,
+		},
+	}
 
-		k := setupValidationKeeper()
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			cleanup := mockValidCallerValidation()
+			defer cleanup()
 
-		err := k.register(validationAddr1, validationAddr1)
-		uassert.Error(t, err)
-		uassert.True(t, err.Error() == ErrSelfReferral.Error())
+			k := setupValidationKeeper()
 
-		// Verify no referral was created
-		has := k.has(validationAddr1)
-		uassert.False(t, has)
-	})
+			if tc.setupInitial {
+				err := k.register(tc.addr, tc.initialRefAddr)
+				uassert.NoError(t, err)
+			}
 
-	t.Run("prevents self referral on update", func(t *testing.T) {
-		cleanup := mockValidCallerValidation()
-		defer cleanup()
+			// when
+			var err error
+			if tc.operation == "register" {
+				err = k.register(tc.addr, tc.targetRefAddr)
+			} else {
+				err = k.update(tc.addr, tc.targetRefAddr)
+			}
 
-		k := setupValidationKeeper()
+			// then
+			if tc.expectedError {
+				uassert.Error(t, err)
+				if tc.expectedErrorType != nil {
+					uassert.True(t, err.Error() == tc.expectedErrorType.Error())
+				}
+			} else {
+				uassert.NoError(t, err)
+			}
 
-		// Initial registration
-		err := k.register(validationAddr1, validationAddr2)
-		uassert.NoError(t, err)
+			has := k.has(tc.addr)
+			uassert.Equal(t, tc.expectedHas, has)
 
-		// Attempt self referral update
-		err = k.update(validationAddr1, validationAddr1)
-		uassert.Error(t, err)
-		uassert.True(t, err.Error() == ErrSelfReferral.Error())
-
-		// Original referral should remain
-		ref, err := k.get(validationAddr1)
-		uassert.NoError(t, err)
-		uassert.Equal(t, validationAddr2.String(), ref.String())
-	})
-
-	t.Run("allows same address as referrer for different users", func(t *testing.T) {
-		cleanup := mockValidCallerValidation()
-		defer cleanup()
-
-		k := setupValidationKeeper()
-
-		// Two different users can have same referrer
-		err := k.register(validationAddr1, validationAddr3)
-		uassert.NoError(t, err)
-
-		err = k.register(validationAddr2, validationAddr3)
-		uassert.NoError(t, err)
-
-		// Verify both referrals
-		ref1, err := k.get(validationAddr1)
-		uassert.NoError(t, err)
-		uassert.Equal(t, validationAddr3.String(), ref1.String())
-
-		ref2, err := k.get(validationAddr2)
-		uassert.NoError(t, err)
-		uassert.Equal(t, validationAddr3.String(), ref2.String())
-	})
+			if tc.expectedRef != "" {
+				ref, err := k.get(tc.addr)
+				uassert.NoError(t, err)
+				uassert.Equal(t, tc.expectedRef, ref.String())
+			}
+		})
+	}
 }
 
 // TestZeroAddressValidation tests zero address handling
@@ -346,7 +391,7 @@ func TestErrorValidation(t *testing.T) {
 		cleanup := mockValidCallerValidation()
 		err := k.register(validationAddr1, validationAddr1)
 		cleanup()
-		
+
 		uassert.Error(t, err)
 		uassert.True(t, err.Error() == ErrSelfReferral.Error())
 

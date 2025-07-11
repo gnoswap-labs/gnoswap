@@ -25,225 +25,374 @@ func setupUtilityKeeper() *keeper {
 func mockValidCallerUtility() func() {
 	origCaller := std.OriginCaller()
 	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+	routerRealm := std.NewUserRealm(routerAddr)
 	testing.SetOriginCaller(routerAddr)
+	testing.SetRealm(routerRealm)
 	return func() {
 		testing.SetOriginCaller(origCaller)
+		testing.SetRealm(std.NewUserRealm(origCaller))
 	}
 }
 
 // TestGlobalTryRegister tests the global TryRegister function
 func TestGlobalTryRegister(t *testing.T) {
-	// Create a fresh global keeper for this test
-	gReferralKeeper = NewKeeper()
-	
-	t.Run("successful registration", func(t *testing.T) {
-		cleanup := mockValidCallerUtility()
-		defer cleanup()
+	tt := []struct {
+		name           string
+		userAddr       std.Address
+		referrerAddr   string
+		expectedResult bool
+		shouldSetup    bool
+	}{
+		{
+			name:           "successful registration",
+			userAddr:       testutils.TestAddress("globalTryUnique1"),
+			referrerAddr:   testutils.TestAddress("globalTryUnique2").String(),
+			expectedResult: true,
+			shouldSetup:    true,
+		},
+		{
+			name:           "handles self referral",
+			userAddr:       testutils.TestAddress("globalTryUnique3"),
+			referrerAddr:   testutils.TestAddress("globalTryUnique3").String(),
+			expectedResult: false,
+			shouldSetup:    true,
+		},
+		{
+			name:           "handles invalid address",
+			userAddr:       testutils.TestAddress("globalTryUnique4"),
+			referrerAddr:   "g1invalid",
+			expectedResult: false,
+			shouldSetup:    true,
+		},
+		{
+			name:           "handles zero address referrer",
+			userAddr:       testutils.TestAddress("globalTryUnique5"),
+			referrerAddr:   zeroAddress.String(),
+			expectedResult: true,
+			shouldSetup:    true,
+		},
+		{
+			name:           "handles unauthorized caller",
+			userAddr:       testutils.TestAddress("globalTryUnique6"),
+			referrerAddr:   testutils.TestAddress("globalTryUnique7").String(),
+			expectedResult: false,
+			shouldSetup:    false,
+		},
+	}
 
-		// Also set origin caller to router address like the working test
-		routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
-		testing.SetOriginCaller(routerAddr)
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			gReferralKeeper = NewKeeper()
 
-		// Use unique addresses to avoid conflicts with other tests and rate limiting
-		tryAddr1 := testutils.TestAddress("tryRegUnique1")
-		tryAddr2 := testutils.TestAddress("tryRegUnique2")
-		
-		result := TryRegister(cross, tryAddr1, tryAddr2.String())
-		uassert.True(t, result)
-	})
+			var cleanup func()
+			if tc.shouldSetup {
+				cleanup = mockValidCallerUtility()
+				defer cleanup()
+				// Set the origin caller again like in the working test
+				routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+				testing.SetOriginCaller(routerAddr)
+			}
 
-	t.Run("handles self referral", func(t *testing.T) {
-		cleanup := mockValidCallerUtility()
-		defer cleanup()
+			// when
+			result := TryRegister(cross, tc.userAddr, tc.referrerAddr)
 
-		// Also set origin caller to router address
-		routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
-		testing.SetOriginCaller(routerAddr)
-
-		tryAddr3 := testutils.TestAddress("tryReg3")
-		result := TryRegister(cross, tryAddr3, tryAddr3.String())
-		uassert.False(t, result)
-	})
-
-	t.Run("handles invalid address", func(t *testing.T) {
-		cleanup := mockValidCallerUtility()
-		defer cleanup()
-
-		// Also set origin caller to router address
-		routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
-		testing.SetOriginCaller(routerAddr)
-
-		tryAddr4 := testutils.TestAddress("tryReg4")
-		// Invalid address format should fail
-		result := TryRegister(cross, tryAddr4, "g1invalid")
-		uassert.False(t, result)
-	})
-
-	t.Run("handles zero address referrer", func(t *testing.T) {
-		cleanup := mockValidCallerUtility()
-		defer cleanup()
-
-		// Also set origin caller to router address
-		routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
-		testing.SetOriginCaller(routerAddr)
-
-		tryAddr5 := testutils.TestAddress("tryRegZero5")
-		// Zero address referrer should succeed (means no referrer)
-		result := TryRegister(cross, tryAddr5, zeroAddress.String())
-		uassert.True(t, result)
-	})
+			// then
+			uassert.Equal(t, tc.expectedResult, result)
+		})
+	}
 }
 
 // TestGlobalKeeperFunctions tests the global keeper accessor functions
 func TestGlobalKeeperFunctions(t *testing.T) {
+	tt := []struct {
+		name      string
+		userAddr  std.Address
+		refAddr   std.Address
+		operation string
+	}{
+		{
+			name:      "GetKeeper returns valid keeper",
+			userAddr:  testutils.TestAddress("keeper1"),
+			refAddr:   testutils.TestAddress("keeper2"),
+			operation: "get_keeper",
+		},
+		{
+			name:      "GetReferral returns correct referral",
+			userAddr:  testutils.TestAddress("keeper3"),
+			refAddr:   testutils.TestAddress("keeper4"),
+			operation: "get_referral",
+		},
+		{
+			name:      "HasReferral returns correct status",
+			userAddr:  testutils.TestAddress("keeper5"),
+			refAddr:   testutils.TestAddress("keeper6"),
+			operation: "has_referral",
+		},
+		{
+			name:      "IsEmpty returns correct state",
+			userAddr:  testutils.TestAddress("keeper7"),
+			refAddr:   testutils.TestAddress("keeper8"),
+			operation: "is_empty",
+		},
+	}
+
 	cleanup := mockValidCallerUtility()
 	defer cleanup()
 
-	t.Run("GetKeeper returns valid keeper", func(t *testing.T) {
-		keeper := GetKeeper()
-		uassert.NotNil(t, keeper)
-	})
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			gReferralKeeper = NewKeeper()
 
-	t.Run("GetReferral returns correct referral", func(t *testing.T) {
-		// Register a referral
-		keeper := GetKeeper()
-		err := keeper.register(utilityAddr1, utilityAddr2)
-		uassert.NoError(t, err)
+			// when & then
+			switch tc.operation {
+			case "get_keeper":
+				keeper := GetKeeper()
+				uassert.True(t, keeper != nil)
+			case "get_referral":
+				// Setup: Register a referral
+				keeper := GetKeeper()
+				err := keeper.register(tc.userAddr, tc.refAddr)
+				uassert.NoError(t, err)
 
-		// Get referral should return the correct address
-		refStr := GetReferral(utilityAddr1.String())
-		uassert.Equal(t, utilityAddr2.String(), refStr)
+				// Test: Get referral should return the correct address
+				refStr := GetReferral(tc.userAddr.String())
+				uassert.Equal(t, tc.refAddr.String(), refStr)
 
-		// Non-existent referral should return empty string
-		refStr = GetReferral(utilityAddr3.String())
-		uassert.Equal(t, "", refStr)
-	})
+				// Test: Non-existent referral should return empty string
+				refStr = GetReferral(testutils.TestAddress("nonexistent").String())
+				uassert.Equal(t, "", refStr)
+			case "has_referral":
+				// Setup: Register a referral
+				keeper := GetKeeper()
+				err := keeper.register(tc.userAddr, tc.refAddr)
+				uassert.NoError(t, err)
 
-	t.Run("HasReferral returns correct status", func(t *testing.T) {
-		// Initially no referral
-		has := HasReferral(utilityAddr1.String())
-		uassert.True(t, has) // Should be true from previous test
+				// Test: Should be true for existing referral
+				has := HasReferral(tc.userAddr.String())
+				uassert.True(t, has)
 
-		// Non-existent referral
-		has = HasReferral(utilityAddr3.String())
-		uassert.False(t, has)
-	})
+				// Test: Should be false for non-existent referral
+				has = HasReferral(testutils.TestAddress("nonexistent").String())
+				uassert.False(t, has)
+			case "is_empty":
+				// Test: Should be true for empty keeper
+				isEmpty := IsEmpty()
+				uassert.True(t, isEmpty)
 
-	t.Run("IsEmpty returns correct state", func(t *testing.T) {
-		// Should not be empty after registering referrals
-		isEmpty := IsEmpty()
-		uassert.False(t, isEmpty)
-	})
+				// Setup: Register a referral
+				keeper := GetKeeper()
+				err := keeper.register(tc.userAddr, tc.refAddr)
+				uassert.NoError(t, err)
+
+				// Test: Should be false after registering referrals
+				isEmpty = IsEmpty()
+				uassert.False(t, isEmpty)
+			}
+		})
+	}
 }
 
 // TestUtilityFunctions tests utility and helper functions
 func TestUtilityFunctions(t *testing.T) {
-	t.Run("address string conversion consistency", func(t *testing.T) {
-		addr := utilityAddr1
-		addrStr := addr.String()
+	tt := []struct {
+		name      string
+		testAddr1 std.Address
+		testAddr2 std.Address
+		operation string
+	}{
+		{
+			name:      "address string conversion consistency",
+			testAddr1: testutils.TestAddress("util1"),
+			testAddr2: testutils.TestAddress("util2"),
+			operation: "address_conversion",
+		},
+		{
+			name:      "zero address handling",
+			testAddr1: zeroAddress,
+			testAddr2: testutils.TestAddress("util3"),
+			operation: "zero_address",
+		},
+		{
+			name:      "address comparison",
+			testAddr1: testutils.TestAddress("util4"),
+			testAddr2: testutils.TestAddress("util5"),
+			operation: "address_comparison",
+		},
+	}
 
-		// Converting back and forth should be consistent
-		uassert.True(t, len(addrStr) > 0)
-		uassert.True(t, addrStr != "")
-	})
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// when & then
+			switch tc.operation {
+			case "address_conversion":
+				addrStr := tc.testAddr1.String()
+				uassert.True(t, len(addrStr) > 0)
+				uassert.True(t, addrStr != "")
+			case "zero_address":
+				zeroStr := tc.testAddr1.String()
+				uassert.True(t, len(zeroStr) >= 0)
+				// Zero address should be different from regular addresses (unless empty)
+				if zeroStr != "" {
+					uassert.True(t, zeroStr != tc.testAddr2.String())
+				}
+			case "address_comparison":
+				// Same address should have same string representation
+				addr1Str1 := tc.testAddr1.String()
+				addr1Str2 := tc.testAddr1.String()
+				uassert.Equal(t, addr1Str1, addr1Str2)
 
-	t.Run("zero address handling", func(t *testing.T) {
-		zeroStr := zeroAddress.String()
-
-		// Zero address should have a specific string representation
-		uassert.True(t, len(zeroStr) >= 0) // Could be empty string
-
-		// Should be different from regular addresses (unless empty)
-		if zeroStr != "" {
-			uassert.NotEqual(t, zeroStr, utilityAddr1.String())
-		}
-	})
-
-	t.Run("address comparison", func(t *testing.T) {
-		// Same address should have same string representation
-		addr1Str1 := utilityAddr1.String()
-		addr1Str2 := utilityAddr1.String()
-		uassert.Equal(t, addr1Str1, addr1Str2)
-
-		// Different addresses should have different string representations
-		addr1Str := utilityAddr1.String()
-		addr2Str := utilityAddr2.String()
-		uassert.NotEqual(t, addr1Str, addr2Str)
-	})
+				// Different addresses should have different string representations
+				addr1Str := tc.testAddr1.String()
+				addr2Str := tc.testAddr2.String()
+				uassert.True(t, addr1Str != addr2Str)
+			}
+		})
+	}
 }
 
 // TestErrorHandlingInGlobalFunctions tests error handling in global functions
 func TestErrorHandlingInGlobalFunctions(t *testing.T) {
-	t.Run("TryRegister handles errors gracefully", func(t *testing.T) {
-		// Without proper authorization should return false
-		result := TryRegister(cross, std.Address("invalid"), utilityAddr1.String())
-		uassert.False(t, result)
-	})
+	tt := []struct {
+		name           string
+		userAddr       std.Address
+		referrerAddr   std.Address
+		operation      string
+		expectedResult bool
+	}{
+		{
+			name:           "TryRegister handles unauthorized caller",
+			userAddr:       testutils.TestAddress("errorUnique1"),
+			referrerAddr:   testutils.TestAddress("errorUnique2"),
+			operation:      "unauthorized_try_register",
+			expectedResult: false,
+		},
+		{
+			name:           "TryRegister handles authorized caller",
+			userAddr:       testutils.TestAddress("errorUnique3"),
+			referrerAddr:   testutils.TestAddress("errorUnique4"),
+			operation:      "authorized_try_register",
+			expectedResult: true,
+		},
+		{
+			name:           "global functions handle missing data",
+			userAddr:       testutils.TestAddress("errorUnique5"),
+			referrerAddr:   testutils.TestAddress("errorUnique6"),
+			operation:      "missing_data",
+			expectedResult: false,
+		},
+	}
 
-	t.Run("global functions handle missing data", func(t *testing.T) {
-		// Functions should work even when no referrals exist for specific addresses
-		refStr := GetReferral("nonexistent")
-		uassert.Equal(t, "", refStr)
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			gReferralKeeper = NewKeeper()
 
-		has := HasReferral("nonexistent")
-		uassert.False(t, has)
-	})
+			// when & then
+			switch tc.operation {
+			case "unauthorized_try_register":
+				// Without proper authorization should return false
+				result := TryRegister(cross, tc.userAddr, tc.referrerAddr.String())
+				uassert.Equal(t, tc.expectedResult, result)
+			case "authorized_try_register":
+				cleanup := mockValidCallerUtility()
+				defer cleanup()
+				// Set the origin caller again like in the working test
+				routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+				testing.SetOriginCaller(routerAddr)
+				result := TryRegister(cross, tc.userAddr, tc.referrerAddr.String())
+				uassert.Equal(t, tc.expectedResult, result)
+			case "missing_data":
+				// Functions should work even when no referrals exist for specific addresses
+				refStr := GetReferral("nonexistent")
+				uassert.Equal(t, "", refStr)
+
+				has := HasReferral("nonexistent")
+				uassert.Equal(t, tc.expectedResult, has)
+			}
+		})
+	}
 }
 
 // TestIntegrationWithKeeper tests integration between global functions and keeper
 func TestIntegrationWithKeeper(t *testing.T) {
-	cleanup := mockValidCallerUtility()
-	defer cleanup()
+	tt := []struct {
+		name       string
+		userAddr   std.Address
+		refAddr    std.Address
+		operation  string
+		shouldAuth bool
+	}{
+		{
+			name:       "global functions reflect keeper state",
+			userAddr:   testutils.TestAddress("integUnique1"),
+			refAddr:    testutils.TestAddress("integUnique2"),
+			operation:  "reflect_keeper_state",
+			shouldAuth: true,
+		},
+		{
+			name:       "TryRegister reflects authorization state",
+			userAddr:   testutils.TestAddress("integUnique3"),
+			refAddr:    testutils.TestAddress("integUnique4"),
+			operation:  "authorization_state",
+			shouldAuth: true,
+		},
+		{
+			name:       "functions maintain consistency",
+			userAddr:   testutils.TestAddress("integUnique5"),
+			refAddr:    testutils.TestAddress("integUnique6"),
+			operation:  "maintain_consistency",
+			shouldAuth: true,
+		},
+	}
 
-	t.Run("global functions reflect keeper state", func(t *testing.T) {
-		// Use unique addresses to avoid conflicts
-		integrationAddr1 := testutils.TestAddress("integration1")
-		integrationAddr2 := testutils.TestAddress("integration2")
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			gReferralKeeper = NewKeeper()
 
-		// Initial state - no relationship for new address
-		has := HasReferral(integrationAddr1.String())
-		uassert.False(t, has)
+			var cleanup func()
+			if tc.shouldAuth {
+				cleanup = mockValidCallerUtility()
+				defer cleanup()
+			}
 
-		// Create relationship through global keeper
-		k := GetKeeper()
-		err := k.register(integrationAddr1, integrationAddr2)
-		uassert.NoError(t, err)
+			// when & then
+			switch tc.operation {
+			case "reflect_keeper_state":
+				// Create relationship through global keeper
+				k := GetKeeper()
+				err := k.register(tc.userAddr, tc.refAddr)
+				uassert.NoError(t, err)
 
-		// Global function should reflect new state
-		has = HasReferral(integrationAddr1.String())
-		uassert.True(t, has)
+				// Global function should reflect new state
+				has := HasReferral(tc.userAddr.String())
+				uassert.True(t, has)
 
-		refStr := GetReferral(integrationAddr1.String())
-		uassert.Equal(t, integrationAddr2.String(), refStr)
-	})
+				refStr := GetReferral(tc.userAddr.String())
+				uassert.Equal(t, tc.refAddr.String(), refStr)
+			case "authorization_state":
+				// With authorization, registration should work
+				routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+				testing.SetOriginCaller(routerAddr)
+				result := TryRegister(cross, tc.userAddr, tc.refAddr.String())
+				uassert.True(t, result)
+			case "maintain_consistency":
+				// Create referral using global keeper
+				k := GetKeeper()
+				err := k.register(tc.userAddr, tc.refAddr)
+				uassert.NoError(t, err)
 
-	t.Run("TryRegister reflects authorization state", func(t *testing.T) {
-		// Set up proper authorization context
-		routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
-		testing.SetOriginCaller(routerAddr)
-		
-		// With authorization, registration should work
-		result := TryRegister(cross, utilityAddr1, utilityAddr2.String())
-		// Could be true or false depending on whether already registered and rate limits
-		uassert.True(t, result == true || result == false)
-	})
+				// Global functions should be consistent with keeper state
+				uassert.True(t, k.has(tc.userAddr))
 
-	t.Run("functions maintain consistency", func(t *testing.T) {
-		// Use unique addresses to avoid conflicts
-		consistencyAddr1 := testutils.TestAddress("consistency1")
-		consistencyAddr2 := testutils.TestAddress("consistency2")
+				has := HasReferral(tc.userAddr.String())
+				uassert.True(t, has)
 
-		// Create referral using global keeper
-		k := GetKeeper()
-		err := k.register(consistencyAddr1, consistencyAddr2)
-		uassert.NoError(t, err)
-
-		// Global functions should be consistent with keeper state
-		uassert.True(t, k.has(consistencyAddr1))
-		has := HasReferral(consistencyAddr1.String())
-		uassert.True(t, has)
-
-		refStr := GetReferral(consistencyAddr1.String())
-		uassert.Equal(t, consistencyAddr2.String(), refStr)
-	})
+				refStr := GetReferral(tc.userAddr.String())
+				uassert.Equal(t, tc.refAddr.String(), refStr)
+			}
+		})
+	}
 }

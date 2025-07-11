@@ -63,203 +63,333 @@ func TestNewReferral(t *testing.T) {
 
 // TestReferralRegister tests the Register method
 func TestReferralRegister(t *testing.T) {
-	t.Run("successful registration with valid caller", func(t *testing.T) {
-		cleanup := mockValidCallerUnit()
-		defer cleanup()
+	tt := []struct {
+		name          string
+		setupCaller   func() func()
+		addr          std.Address
+		refAddr       std.Address
+		expectedError bool
+		expectedHas   bool
+		expectedRef   string
+	}{
+		{
+			name:          "successful registration with valid caller",
+			setupCaller:   mockValidCallerUnit,
+			addr:          unitAddr1,
+			refAddr:       unitAddr2,
+			expectedError: false,
+			expectedHas:   true,
+			expectedRef:   unitAddr2.String(),
+		},
+		{
+			name:          "fails with unauthorized caller",
+			setupCaller:   mockInvalidCallerUnit,
+			addr:          unitAddr1,
+			refAddr:       unitAddr2,
+			expectedError: true,
+			expectedHas:   false,
+			expectedRef:   "",
+		},
+		{
+			name:          "prevents self referral",
+			setupCaller:   mockValidCallerUnit,
+			addr:          unitAddr1,
+			refAddr:       unitAddr1,
+			expectedError: true,
+			expectedHas:   false,
+			expectedRef:   "",
+		},
+		{
+			name:          "allows zero address referral",
+			setupCaller:   mockValidCallerUnit,
+			addr:          unitAddr1,
+			refAddr:       zeroAddress,
+			expectedError: false,
+			expectedHas:   false,
+			expectedRef:   "",
+		},
+	}
 
-		k := setupUnitKeeper()
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			cleanup := tc.setupCaller()
+			defer cleanup()
 
-		err := k.register(unitAddr1, unitAddr2)
-		uassert.NoError(t, err)
+			k := setupUnitKeeper()
 
-		// Verify registration
-		has := k.has(unitAddr1)
-		uassert.True(t, has)
+			// when
+			err := k.register(tc.addr, tc.refAddr)
 
-		ref, err := k.get(unitAddr1)
-		uassert.NoError(t, err)
-		uassert.Equal(t, unitAddr2.String(), ref.String())
-	})
+			// then
+			if tc.expectedError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
 
-	t.Run("fails with unauthorized caller", func(t *testing.T) {
-		cleanup := mockInvalidCallerUnit()
-		defer cleanup()
+			has := k.has(tc.addr)
+			uassert.Equal(t, tc.expectedHas, has)
 
-		k := setupUnitKeeper()
-
-		err := k.register(unitAddr1, unitAddr2)
-		uassert.Error(t, err)
-	})
-
-	t.Run("prevents self referral", func(t *testing.T) {
-		cleanup := mockValidCallerUnit()
-		defer cleanup()
-
-		k := setupUnitKeeper()
-
-		err := k.register(unitAddr1, unitAddr1)
-		uassert.Error(t, err)
-	})
-
-	t.Run("allows zero address referral", func(t *testing.T) {
-		cleanup := mockValidCallerUnit()
-		defer cleanup()
-
-		k := setupUnitKeeper()
-
-		err := k.register(unitAddr1, zeroAddress)
-		uassert.NoError(t, err)
-
-		// Zero address means no referrer
-		has := k.has(unitAddr1)
-		uassert.False(t, has)
-	})
+			if tc.expectedRef != "" {
+				ref, err := k.get(tc.addr)
+				uassert.NoError(t, err)
+				uassert.Equal(t, tc.expectedRef, ref.String())
+			}
+		})
+	}
 }
 
 // TestReferralUpdate tests the Update method
 func TestReferralUpdate(t *testing.T) {
-	t.Run("successful update with valid caller", func(t *testing.T) {
-		cleanup := mockValidCallerUnit()
-		defer cleanup()
+	tt := []struct {
+		name            string
+		setupCaller     func() func()
+		initialRegister bool
+		addr            std.Address
+		initialRefAddr  std.Address
+		updateRefAddr   std.Address
+		expectedError   bool
+		expectedRef     string
+	}{
+		{
+			name:            "successful update with valid caller rate limited",
+			setupCaller:     mockValidCallerUnit,
+			initialRegister: true,
+			addr:            unitAddr1,
+			initialRefAddr:  unitAddr2,
+			updateRefAddr:   unitAddr3,
+			expectedError:   true, // Should fail due to rate limiting
+			expectedRef:     unitAddr2.String(),
+		},
+		{
+			name:            "fails with unauthorized caller",
+			setupCaller:     mockInvalidCallerUnit,
+			initialRegister: false,
+			addr:            unitAddr1,
+			initialRefAddr:  zeroAddress,
+			updateRefAddr:   unitAddr2,
+			expectedError:   true,
+			expectedRef:     "",
+		},
+		{
+			name:            "prevents self referral update",
+			setupCaller:     mockValidCallerUnit,
+			initialRegister: false,
+			addr:            unitAddr1,
+			initialRefAddr:  zeroAddress,
+			updateRefAddr:   unitAddr1,
+			expectedError:   true,
+			expectedRef:     "",
+		},
+		{
+			name:            "updates non-existent referral",
+			setupCaller:     mockValidCallerUnit,
+			initialRegister: false,
+			addr:            unitAddr1,
+			initialRefAddr:  zeroAddress,
+			updateRefAddr:   unitAddr2,
+			expectedError:   false,
+			expectedRef:     unitAddr2.String(),
+		},
+	}
 
-		k := setupUnitKeeper()
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			cleanup := tc.setupCaller()
+			defer cleanup()
 
-		// Initial registration
-		err := k.register(unitAddr1, unitAddr2)
-		uassert.NoError(t, err)
+			k := setupUnitKeeper()
 
-		// Update to new referrer (should fail due to rate limiting)
-		err = k.update(unitAddr1, unitAddr3)
-		uassert.Error(t, err)
-	})
+			// setup initial registration if needed
+			if tc.initialRegister {
+				err := k.register(tc.addr, tc.initialRefAddr)
+				uassert.NoError(t, err)
+			}
 
-	t.Run("fails with unauthorized caller", func(t *testing.T) {
-		cleanup := mockInvalidCallerUnit()
-		defer cleanup()
+			// when
+			err := k.update(tc.addr, tc.updateRefAddr)
 
-		k := setupUnitKeeper()
+			// then
+			if tc.expectedError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
 
-		err := k.update(unitAddr1, unitAddr2)
-		uassert.Error(t, err)
-	})
-
-	t.Run("prevents self referral update", func(t *testing.T) {
-		cleanup := mockValidCallerUnit()
-		defer cleanup()
-
-		k := setupUnitKeeper()
-
-		err := k.update(unitAddr1, unitAddr1)
-		uassert.Error(t, err)
-	})
-
-	t.Run("updates non-existent referral", func(t *testing.T) {
-		cleanup := mockValidCallerUnit()
-		defer cleanup()
-
-		k := setupUnitKeeper()
-
-		// Update should create new referral
-		err := k.update(unitAddr1, unitAddr2)
-		uassert.NoError(t, err)
-
-		ref, err := k.get(unitAddr1)
-		uassert.NoError(t, err)
-		uassert.Equal(t, unitAddr2.String(), ref.String())
-	})
+			if tc.expectedRef != "" {
+				ref, err := k.get(tc.addr)
+				uassert.NoError(t, err)
+				uassert.Equal(t, tc.expectedRef, ref.String())
+			}
+		})
+	}
 }
 
 // TestReferralGet tests the Get method
 func TestReferralGet(t *testing.T) {
-	t.Run("gets existing referral", func(t *testing.T) {
-		cleanup := mockValidCallerUnit()
-		defer cleanup()
+	tt := []struct {
+		name             string
+		setupCaller      func() func()
+		setupReferral    bool
+		addr             std.Address
+		refAddr          std.Address
+		expectedError    bool
+		expectedRef      string
+		multipleCallTest bool
+	}{
+		{
+			name:             "gets existing referral",
+			setupCaller:      mockValidCallerUnit,
+			setupReferral:    true,
+			addr:             unitAddr1,
+			refAddr:          unitAddr2,
+			expectedError:    false,
+			expectedRef:      unitAddr2.String(),
+			multipleCallTest: false,
+		},
+		{
+			name:             "fails for non-existent referral",
+			setupCaller:      nil,
+			setupReferral:    false,
+			addr:             unitAddr1,
+			refAddr:          zeroAddress,
+			expectedError:    true,
+			expectedRef:      "",
+			multipleCallTest: false,
+		},
+		{
+			name:             "consistent results across multiple calls",
+			setupCaller:      mockValidCallerUnit,
+			setupReferral:    true,
+			addr:             unitAddr1,
+			refAddr:          unitAddr2,
+			expectedError:    false,
+			expectedRef:      unitAddr2.String(),
+			multipleCallTest: true,
+		},
+	}
 
-		k := setupUnitKeeper()
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			var cleanup func()
+			if tc.setupCaller != nil {
+				cleanup = tc.setupCaller()
+				defer cleanup()
+			}
 
-		err := k.register(unitAddr1, unitAddr2)
-		uassert.NoError(t, err)
+			k := setupUnitKeeper()
 
-		ref, err := k.get(unitAddr1)
-		uassert.NoError(t, err)
-		uassert.Equal(t, unitAddr2.String(), ref.String())
-	})
+			if tc.setupReferral {
+				err := k.register(tc.addr, tc.refAddr)
+				uassert.NoError(t, err)
+			}
 
-	t.Run("fails for non-existent referral", func(t *testing.T) {
-		k := setupUnitKeeper()
-
-		_, err := k.get(unitAddr1)
-		uassert.Error(t, err)
-	})
-
-	t.Run("consistent results across multiple calls", func(t *testing.T) {
-		cleanup := mockValidCallerUnit()
-		defer cleanup()
-
-		k := setupUnitKeeper()
-
-		err := k.register(unitAddr1, unitAddr2)
-		uassert.NoError(t, err)
-
-		// Multiple gets should return same result
-		for i := 0; i < 3; i++ {
-			ref, err := k.get(unitAddr1)
-			uassert.NoError(t, err)
-			uassert.Equal(t, unitAddr2.String(), ref.String())
-		}
-	})
+			// when & then
+			if tc.multipleCallTest {
+				// Multiple gets should return same result
+				for i := 0; i < 3; i++ {
+					ref, err := k.get(tc.addr)
+					if tc.expectedError {
+						uassert.Error(t, err)
+					} else {
+						uassert.NoError(t, err)
+						uassert.Equal(t, tc.expectedRef, ref.String())
+					}
+				}
+			} else {
+				ref, err := k.get(tc.addr)
+				if tc.expectedError {
+					uassert.Error(t, err)
+				} else {
+					uassert.NoError(t, err)
+					uassert.Equal(t, tc.expectedRef, ref.String())
+				}
+			}
+		})
+	}
 }
 
 // TestReferralHas tests the Has method
 func TestReferralHas(t *testing.T) {
-	t.Run("returns true for existing referral", func(t *testing.T) {
-		cleanup := mockValidCallerUnit()
-		defer cleanup()
+	tt := []struct {
+		name             string
+		setupCaller      func() func()
+		setupReferral    bool
+		addr             std.Address
+		refAddr          std.Address
+		expectedHas      bool
+		multipleCallTest bool
+	}{
+		{
+			name:             "returns true for existing referral",
+			setupCaller:      mockValidCallerUnit,
+			setupReferral:    true,
+			addr:             unitAddr1,
+			refAddr:          unitAddr2,
+			expectedHas:      true,
+			multipleCallTest: false,
+		},
+		{
+			name:             "returns false for non-existent referral",
+			setupCaller:      nil,
+			setupReferral:    false,
+			addr:             unitAddr1,
+			refAddr:          zeroAddress,
+			expectedHas:      false,
+			multipleCallTest: false,
+		},
+		{
+			name:             "returns false for zero address referral",
+			setupCaller:      mockValidCallerUnit,
+			setupReferral:    true,
+			addr:             unitAddr1,
+			refAddr:          zeroAddress,
+			expectedHas:      false,
+			multipleCallTest: false,
+		},
+		{
+			name:             "consistent results across multiple calls",
+			setupCaller:      mockValidCallerUnit,
+			setupReferral:    true,
+			addr:             unitAddr1,
+			refAddr:          unitAddr2,
+			expectedHas:      true,
+			multipleCallTest: true,
+		},
+	}
 
-		k := setupUnitKeeper()
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			var cleanup func()
+			if tc.setupCaller != nil {
+				cleanup = tc.setupCaller()
+				defer cleanup()
+			}
 
-		err := k.register(unitAddr1, unitAddr2)
-		uassert.NoError(t, err)
+			k := setupUnitKeeper()
 
-		has := k.has(unitAddr1)
-		uassert.True(t, has)
-	})
+			if tc.setupReferral {
+				err := k.register(tc.addr, tc.refAddr)
+				uassert.NoError(t, err)
+			}
 
-	t.Run("returns false for non-existent referral", func(t *testing.T) {
-		k := setupUnitKeeper()
-
-		has := k.has(unitAddr1)
-		uassert.False(t, has)
-	})
-
-	t.Run("returns false for zero address referral", func(t *testing.T) {
-		cleanup := mockValidCallerUnit()
-		defer cleanup()
-
-		k := setupUnitKeeper()
-
-		err := k.register(unitAddr1, zeroAddress)
-		uassert.NoError(t, err)
-
-		has := k.has(unitAddr1)
-		uassert.False(t, has)
-	})
-
-	t.Run("consistent results across multiple calls", func(t *testing.T) {
-		cleanup := mockValidCallerUnit()
-		defer cleanup()
-
-		k := setupUnitKeeper()
-
-		err := k.register(unitAddr1, unitAddr2)
-		uassert.NoError(t, err)
-
-		// Multiple has calls should return same result
-		for i := 0; i < 3; i++ {
-			has := k.has(unitAddr1)
-			uassert.True(t, has)
-		}
-	})
+			// when & then
+			if tc.multipleCallTest {
+				// Multiple has calls should return same result
+				for i := 0; i < 3; i++ {
+					has := k.has(tc.addr)
+					uassert.Equal(t, tc.expectedHas, has)
+				}
+			} else {
+				has := k.has(tc.addr)
+				uassert.Equal(t, tc.expectedHas, has)
+			}
+		})
+	}
 }
 
 // TestMultipleReferrals tests managing multiple referral relationships
@@ -361,37 +491,66 @@ func TestReferralStateTransitions(t *testing.T) {
 
 // TestTryRegisterGlobal tests the global TryRegister function
 func TestTryRegisterGlobal(t *testing.T) {
-	// Create a fresh global keeper for this test
-	gReferralKeeper = NewKeeper()
-	
-	cleanup := mockValidCallerUnit()
-	defer cleanup()
+	tt := []struct {
+		name           string
+		addr           std.Address
+		referralStr    string
+		expectedResult bool
+		isValidInput   bool // for cases where we just check it returns a boolean
+	}{
+		{
+			name:           "returns boolean for valid inputs",
+			addr:           unitAddr1,
+			referralStr:    unitAddr2.String(),
+			expectedResult: false, // can be true or false
+			isValidInput:   true,
+		},
+		{
+			name:           "handles self referral",
+			addr:           unitAddr3,
+			referralStr:    unitAddr3.String(),
+			expectedResult: false,
+			isValidInput:   false,
+		},
+		{
+			name:           "handles invalid addresses",
+			addr:           std.Address("invalid"),
+			referralStr:    unitAddr1.String(),
+			expectedResult: false,
+			isValidInput:   false,
+		},
+		{
+			name:           "handles zero address referrer",
+			addr:           testutils.TestAddress("uniqueForZeroTest"),
+			referralStr:    zeroAddress.String(),
+			expectedResult: true,
+			isValidInput:   false,
+		},
+	}
 
-	// Also set origin caller to router address like the working test
-	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
-	testing.SetOriginCaller(routerAddr)
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			// Create a fresh global keeper for this test
+			gReferralKeeper = NewKeeper()
 
-	t.Run("returns boolean for valid inputs", func(t *testing.T) {
-		result := TryRegister(cross, unitAddr1, unitAddr2.String())
+			cleanup := mockValidCallerUnit()
+			defer cleanup()
 
-		// Should return either true or false
-		uassert.True(t, result == true || result == false)
-	})
+			// Also set origin caller to router address like the working test
+			routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+			testing.SetOriginCaller(routerAddr)
 
-	t.Run("handles self referral", func(t *testing.T) {
-		result := TryRegister(cross, unitAddr3, unitAddr3.String())
+			// when
+			result := TryRegister(cross, tc.addr, tc.referralStr)
 
-		// Self referral should return false
-		uassert.False(t, result)
-	})
-
-	t.Run("handles invalid addresses", func(t *testing.T) {
-		result := TryRegister(cross, std.Address("invalid"), unitAddr1.String())
-		uassert.False(t, result)
-
-		// Use unique address to avoid conflicts
-		uniqueAddr := testutils.TestAddress("uniqueForZeroTest")
-		result = TryRegister(cross, uniqueAddr, zeroAddress.String())
-		uassert.True(t, result) // Zero address is valid for removal
-	})
+			// then
+			if tc.isValidInput {
+				// Should return either true or false
+				uassert.True(t, result == true || result == false)
+			} else {
+				uassert.Equal(t, tc.expectedResult, result)
+			}
+		})
+	}
 }

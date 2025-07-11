@@ -40,34 +40,55 @@ func mockUnauthorizedCaller() func() {
 
 // TestUnauthorizedAccess tests that unauthorized callers cannot perform operations
 func TestUnauthorizedAccess(t *testing.T) {
-	k := setupSecurityKeeper()
+	tt := []struct {
+		name      string
+		operation string
+		addr      std.Address
+		refAddr   std.Address
+	}{
+		{
+			name:      "unauthorized register",
+			operation: "register",
+			addr:      secAddr1,
+			refAddr:   secAddr2,
+		},
+		{
+			name:      "unauthorized update",
+			operation: "update",
+			addr:      secAddr1,
+			refAddr:   secAddr2,
+		},
+		{
+			name:      "unauthorized remove",
+			operation: "remove",
+			addr:      secAddr1,
+			refAddr:   zeroAddress,
+		},
+	}
 
-	t.Run("unauthorized register", func(t *testing.T) {
-		cleanup := mockUnauthorizedCaller()
-		defer cleanup()
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			k := setupSecurityKeeper()
+			cleanup := mockUnauthorizedCaller()
+			defer cleanup()
 
-		err := k.register(secAddr1, secAddr2)
-		uassert.Error(t, err)
-		uassert.True(t, err.Error() != "")
-	})
+			// when
+			var err error
+			switch tc.operation {
+			case "register":
+				err = k.register(tc.addr, tc.refAddr)
+			case "update":
+				err = k.update(tc.addr, tc.refAddr)
+			case "remove":
+				err = k.remove(tc.addr)
+			}
 
-	t.Run("unauthorized update", func(t *testing.T) {
-		cleanup := mockUnauthorizedCaller()
-		defer cleanup()
-
-		err := k.update(secAddr1, secAddr2)
-		uassert.Error(t, err)
-		uassert.True(t, err.Error() != "")
-	})
-
-	t.Run("unauthorized remove", func(t *testing.T) {
-		cleanup := mockUnauthorizedCaller()
-		defer cleanup()
-
-		err := k.remove(secAddr1)
-		uassert.Error(t, err)
-		uassert.True(t, err.Error() != "")
-	})
+			// then
+			uassert.Error(t, err)
+			uassert.True(t, err.Error() != "")
+		})
+	}
 }
 
 // TestValidCallerAccess tests that authorized callers can perform operations
