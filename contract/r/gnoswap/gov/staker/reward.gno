@@ -18,9 +18,8 @@ var (
 	currentGNSBalance         uint64            = 0                       // GNS balance of gov/staker minted by emission
 	currentProtocolFeeBalance map[string]uint64 = make(map[string]uint64) // protocol fee balance of gov/staker (tokenPath -> balance)
 
-	q96         = u256.MustFromDecimal(consts.Q96)
-	q128        = uint(128)
-	rewardState = NewRewardState() // reward state of gov/staker
+	q96  = u256.MustFromDecimal(consts.Q96)
+	q128 = uint(128)
 
 	// For Launchpad deposit
 	amountByProjectWallet = avl.NewTree() // recipient wallet => amount

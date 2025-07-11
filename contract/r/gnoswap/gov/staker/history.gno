@@ -8,8 +8,6 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-var historyState *HistoryState
-
 // GetDelegatedCumulative is a wrapper for HistoryState method
 func GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
 	return historyState.GetDelegatedCumulative(delegator, endTimestamp)

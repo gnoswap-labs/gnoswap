@@ -7,14 +7,6 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-// global state initialization
-func init() {
-	delegationState = NewDelegationState()
-	historyState = NewHistoryState()
-}
-
-var delegationState *DelegationState
-
 type (
 	AmountMap   = map[string]uint64
 	FromToMap   = map[string]AmountMap
