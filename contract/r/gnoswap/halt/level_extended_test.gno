@@ -7,91 +7,133 @@ import (
 )
 
 func TestLevelID(t *testing.T) {
-	t.Run("LevelID constants are correctly defined", func(t *testing.T) {
-		uassert.Equal(t, uint8(1), LvNoHalt.Nth())
-		uassert.Equal(t, uint8(2), LvContractHalt.Nth())
-		uassert.Equal(t, uint8(3), LvEmergencyHalt.Nth())
-		uassert.Equal(t, uint8(4), LvCompleteHalt.Nth())
-	})
+	tests := []struct {
+		name   string
+		testFn func(t *testing.T)
+	}{
+		{
+			name: "LevelID constants are correctly defined",
+			testFn: func(t *testing.T) {
+				uassert.Equal(t, uint8(1), LvNoHalt.Nth())
+				uassert.Equal(t, uint8(2), LvContractHalt.Nth())
+				uassert.Equal(t, uint8(3), LvEmergencyHalt.Nth())
+				uassert.Equal(t, uint8(4), LvCompleteHalt.Nth())
+			},
+		},
+		{
+			name: "LevelID string representation",
+			testFn: func(t *testing.T) {
+				uassert.Equal(t, "NoHalt", LvNoHalt.String())
+				uassert.Equal(t, "ContractHalt", LvContractHalt.String())
+				uassert.Equal(t, "EmergencyHalt", LvEmergencyHalt.String())
+				uassert.Equal(t, "CompleteHalt", LvCompleteHalt.String())
+			},
+		},
+		{
+			name: "LevelID unknown value",
+			testFn: func(t *testing.T) {
+				unknownLevel := LevelID(99)
+				uassert.Equal(t, "Unknown", unknownLevel.String())
+				uassert.Equal(t, uint8(99), unknownLevel.Nth())
+			},
+		},
+		{
+			name: "LevelID Name method",
+			testFn: func(t *testing.T) {
+				uassert.Equal(t, "NoHalt", LvNoHalt.Name())
+				uassert.Equal(t, "EmergencyHalt", LvEmergencyHalt.Name())
+				uassert.Equal(t, "Unknown", LevelID(255).Name())
+			},
+		},
+		{
+			name: "LevelID Desc method",
+			testFn: func(t *testing.T) {
+				uassert.Equal(t, "Level NoHalt", LvNoHalt.Desc())
+				uassert.Equal(t, "Level EmergencyHalt", LvEmergencyHalt.Desc())
+				uassert.Equal(t, "Level Unknown", LevelID(100).Desc())
+			},
+		},
+		{
+			name: "LevelID Level method",
+			testFn: func(t *testing.T) {
+				uassert.True(t, LvNoHalt.Level() == LvNoHalt)
+				uassert.True(t, LvCompleteHalt.Level() == LvCompleteHalt)
+			},
+		},
+		{
+			name: "LevelID IsOperationAllowed always returns true",
+			testFn: func(t *testing.T) {
+				testOp := NewOperation(OpTypePool, "Test", "Test operation")
 
-	t.Run("LevelID string representation", func(t *testing.T) {
-		uassert.Equal(t, "NoHalt", LvNoHalt.String())
-		uassert.Equal(t, "ContractHalt", LvContractHalt.String())
-		uassert.Equal(t, "EmergencyHalt", LvEmergencyHalt.String())
-		uassert.Equal(t, "CompleteHalt", LvCompleteHalt.String())
-	})
+				// Default implementation always returns true
+				uassert.True(t, LvNoHalt.IsOperationAllowed(testOp))
+				uassert.True(t, LvCompleteHalt.IsOperationAllowed(testOp))
+				uassert.True(t, LevelID(255).IsOperationAllowed(testOp))
+			},
+		},
+	}
 
-	t.Run("LevelID unknown value", func(t *testing.T) {
-		unknownLevel := LevelID(99)
-		uassert.Equal(t, "Unknown", unknownLevel.String())
-		uassert.Equal(t, uint8(99), unknownLevel.Nth())
-	})
-
-	t.Run("LevelID Name method", func(t *testing.T) {
-		uassert.Equal(t, "NoHalt", LvNoHalt.Name())
-		uassert.Equal(t, "EmergencyHalt", LvEmergencyHalt.Name())
-		uassert.Equal(t, "Unknown", LevelID(255).Name())
-	})
-
-	t.Run("LevelID Desc method", func(t *testing.T) {
-		uassert.Equal(t, "Level NoHalt", LvNoHalt.Desc())
-		uassert.Equal(t, "Level EmergencyHalt", LvEmergencyHalt.Desc())
-		uassert.Equal(t, "Level Unknown", LevelID(100).Desc())
-	})
-
-	t.Run("LevelID Level method", func(t *testing.T) {
-		uassert.True(t, LvNoHalt.Level() == LvNoHalt)
-		uassert.True(t, LvCompleteHalt.Level() == LvCompleteHalt)
-	})
-
-	t.Run("LevelID IsOperationAllowed always returns true", func(t *testing.T) {
-		testOp := NewOperation(OpTypePool, "Test", "Test operation")
-
-		// Default implementation always returns true
-		uassert.True(t, LvNoHalt.IsOperationAllowed(testOp))
-		uassert.True(t, LvCompleteHalt.IsOperationAllowed(testOp))
-		uassert.True(t, LevelID(255).IsOperationAllowed(testOp))
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.testFn(t)
+		})
+	}
 }
 
 func TestLevelIDFromString(t *testing.T) {
-	t.Run("valid level strings", func(t *testing.T) {
-		tests := []struct {
-			input    string
-			expected LevelID
-		}{
-			{"NoHalt", LvNoHalt},
-			{"ContractHalt", LvContractHalt},
-			{"EmergencyHalt", LvEmergencyHalt},
-			{"CompleteHalt", LvCompleteHalt},
-		}
+	tests := []struct {
+		name   string
+		testFn func(t *testing.T)
+	}{
+		{
+			name: "valid level strings",
+			testFn: func(t *testing.T) {
+				tests := []struct {
+					input    string
+					expected LevelID
+				}{
+					{"NoHalt", LvNoHalt},
+					{"ContractHalt", LvContractHalt},
+					{"EmergencyHalt", LvEmergencyHalt},
+					{"CompleteHalt", LvCompleteHalt},
+				}
 
-		for _, tt := range tests {
-			result, err := LevelIDFromString(tt.input)
-			uassert.NoError(t, err)
-			uassert.True(t, result == tt.expected)
-		}
-	})
+				for _, tt := range tests {
+					result, err := LevelIDFromString(tt.input)
+					uassert.NoError(t, err)
+					uassert.True(t, result == tt.expected)
+				}
+			},
+		},
+		{
+			name: "invalid level strings",
+			testFn: func(t *testing.T) {
+				tests := []string{
+					"invalid",
+					"nohalt",    // case sensitive
+					"NOHALT",    // case sensitive
+					"NoHalt ",   // trailing space
+					" NoHalt",   // leading space
+					"",          // empty string
+					"Unknown",   // unknown level
+					"123",       // numeric
+					"NoHalt123", // with numbers
+				}
 
-	t.Run("invalid level strings", func(t *testing.T) {
-		tests := []string{
-			"invalid",
-			"nohalt",    // case sensitive
-			"NOHALT",    // case sensitive
-			"NoHalt ",   // trailing space
-			" NoHalt",   // leading space
-			"",          // empty string
-			"Unknown",   // unknown level
-			"123",       // numeric
-			"NoHalt123", // with numbers
-		}
+				for _, input := range tests {
+					result, err := LevelIDFromString(input)
+					uassert.Error(t, err)
+					uassert.True(t, result == LevelID(0))
+				}
+			},
+		},
+	}
 
-		for _, input := range tests {
-			result, err := LevelIDFromString(input)
-			uassert.Error(t, err)
-			uassert.True(t, result == LevelID(0))
-		}
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.testFn(t)
+		})
+	}
 }
 
 func TestBasicHaltLevel(t *testing.T) {
