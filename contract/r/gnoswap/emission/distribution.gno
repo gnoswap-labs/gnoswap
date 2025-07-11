@@ -161,7 +161,7 @@ func distributeToTarget(cur realm, amount int64) int64 {
 	})
 
 	leftAmount := amount - totalSent
-	if leftGNSAmount > 0 {
+	if leftAmount > 0 {
 		setLeftGNSAmount(leftAmount)
 	}
 
