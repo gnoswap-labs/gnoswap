@@ -3,7 +3,6 @@ package staker2
 import (
 	"fmt"
 	"std"
-	"time"
 
 	"gno.land/p/demo/ufmt"
 
@@ -23,37 +22,32 @@ type (
 
 // DelegationHistory represents a single delegation event
 type DelegationHistory struct {
-	to        std.Address
-	amount    uint64
-	timestamp uint64
-	height    uint64
-	add       bool
+	to        std.Address `json:"to"`
+	amount    uint64      `json:"amount"`
+	timestamp uint64      `json:"timestamp"`
+	height    uint64      `json:"height"`
+	add       bool        `json:"add"`
 }
 
 // DelegationSnapShotHistory represents delegation stat for to address
 type DelegationSnapShotHistory struct {
-	to           std.Address
-	amount       uint64
-	updatedBlock uint64
-	updatedAt    uint64
+	to           std.Address `json:"to"`
+	amount       uint64      `json:"amount"`
+	updatedBlock uint64      `json:"updatedBlock"`
+	updatedAt    uint64      `json:"updatedAt"`
 }
 
-// TODO: rename it to DelegationState
-type State struct {
-	totalDelegated    uint64
-	delegatorAmount   AmountMap
-	delegatedFromTo   FromToMap
-	delegatedTo       AmountMap
-	delegationHistory HistoryMap
-	snapShotHistory   SnapShotMap
+type DelegationState struct {
+	totalDelegated  uint64
+	delegatorAmount AmountMap
+	delegatedFromTo FromToMap
+	delegatedTo     AmountMap
 }
 
-func (st *State) TotalDelegated() uint64        { return st.totalDelegated }
-func (st *State) DelegatorAmount() AmountMap    { return st.delegatorAmount }
-func (st *State) DelegatedFromTo() FromToMap    { return st.delegatedFromTo }
-func (st *State) DelegatedTo() AmountMap        { return st.delegatedTo }
-func (st *State) DelegationHistory() HistoryMap { return st.delegationHistory }
-func (st *State) SnapShotHistory() SnapShotMap  { return st.snapShotHistory }
+func (st *DelegationState) TotalDelegated() uint64     { return st.totalDelegated }
+func (st *DelegationState) DelegatorAmount() AmountMap { return st.delegatorAmount }
+func (st *DelegationState) DelegatedFromTo() FromToMap { return st.delegatedFromTo }
+func (st *DelegationState) DelegatedTo() AmountMap     { return st.delegatedTo }
 
 type DelegationRecord struct {
 	Delegator string `json:"delegator"`
@@ -61,14 +55,12 @@ type DelegationRecord struct {
 	Amount    uint64 `json:"amount"`
 }
 
-func NewState() *State {
-	return &State{
-		totalDelegated:    0,
-		delegatorAmount:   make(AmountMap),
-		delegatedFromTo:   make(FromToMap),
-		delegatedTo:       make(AmountMap),
-		delegationHistory: make(HistoryMap),
-		snapShotHistory:   make(SnapShotMap),
+func NewState() *DelegationState {
+	return &DelegationState{
+		totalDelegated:  0,
+		delegatorAmount: make(AmountMap),
+		delegatedFromTo: make(FromToMap),
+		delegatedTo:     make(AmountMap),
 	}
 }
 
@@ -80,7 +72,7 @@ func NewDelegationRecord(delegator string, delegatee string, amount uint64) *Del
 	}
 }
 
-func delegate(st *State, to std.Address, amount uint64) error {
+func delegate(st *DelegationState, hs *HistoryState, to std.Address, amount uint64) error {
 	if amount == 0 {
 		return fmt.Errorf("amount must be positive")
 	}
@@ -91,13 +83,13 @@ func delegate(st *State, to std.Address, amount uint64) error {
 	st = st.applyDelegationChange(*record, true)
 	st.totalDelegated += amount
 
-	st.appendDelegationHistory(std.Address(caller), to, amount, true)
-	st.updateDelegationSnapShotHistory(to, amount, true)
+	hs.AppendDelegationHistory(std.Address(caller), to, amount, true)
+	hs.UpdateDelegationSnapShotHistory(to, amount, true)
 
 	return nil
 }
 
-func undelegate(st *State, to std.Address, amount uint64) error {
+func undelegate(st *DelegationState, hs *HistoryState, to std.Address, amount uint64) error {
 	if amount == 0 {
 		return fmt.Errorf("amount must be positive")
 	}
@@ -119,13 +111,13 @@ func undelegate(st *State, to std.Address, amount uint64) error {
 	st = st.applyDelegationChange(*record, false)
 	st.totalDelegated -= amount
 
-	st.appendDelegationHistory(caller, to, amount, false)
-	st.updateDelegationSnapShotHistory(to, amount, false)
+	hs.AppendDelegationHistory(caller, to, amount, false)
+	hs.UpdateDelegationSnapShotHistory(to, amount, false)
 
 	return nil
 }
 
-func (st *State) applyDelegationChange(record DelegationRecord, add bool) *State {
+func (st *DelegationState) applyDelegationChange(record DelegationRecord, add bool) *DelegationState {
 	if add {
 		return st.addDelegation(record)
 	}
@@ -133,7 +125,7 @@ func (st *State) applyDelegationChange(record DelegationRecord, add bool) *State
 }
 
 // addDelegation handles adding delegation amount to the state
-func (st *State) addDelegation(record DelegationRecord) *State {
+func (st *DelegationState) addDelegation(record DelegationRecord) *DelegationState {
 	delta := record.Amount
 
 	// Update delegator's total delegated amount
@@ -154,7 +146,7 @@ func (st *State) addDelegation(record DelegationRecord) *State {
 }
 
 // removeDelegation handles removing delegation amount from the state
-func (st *State) removeDelegation(record DelegationRecord) *State {
+func (st *DelegationState) removeDelegation(record DelegationRecord) *DelegationState {
 	delta := record.Amount
 
 	// Update delegator's total delegated amount
@@ -184,115 +176,24 @@ func (st *State) removeDelegation(record DelegationRecord) *State {
 	return st
 }
 
-func (st *State) appendDelegationHistory(from, to std.Address, amount uint64, add bool) error {
-	ts := uint64(time.Now().Unix())
-	if !(from.IsValid() || to.IsValid()) {
-		return fmt.Errorf("invalid address")
-	}
-
-	history := DelegationHistory{
-		to:        to,
-		amount:    amount,
-		timestamp: ts,
-		height:    uint64(std.ChainHeight()),
-		add:       add,
-	}
-
-	fromStr := from.String()
-	st.delegationHistory[fromStr] = append(st.delegationHistory[fromStr], history)
-	return nil
+// GetDelegatedCumulative is a wrapper for HistoryState method
+func GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
+	return historyState.GetDelegatedCumulative(delegator, endTimestamp)
 }
 
-func (st *State) updateDelegationSnapShotHistory(to std.Address, amount uint64, add bool) error {
-	if !to.IsValid() {
-		return fmt.Errorf("invalid address")
-	}
-	toStr := to.String()
-
-	ts := uint64(time.Now().Unix())
-	height := uint64(std.ChainHeight())
-
-	snapshots := st.snapShotHistory[toStr]
-	prev := uint64(0)
-	if len(snapshots) > 0 {
-		prev = snapshots[len(snapshots)-1].amount
-	}
-
-	if add {
-		prev += amount
-	} else {
-		if prev >= amount {
-			prev -= amount
-		} else {
-			prev = 0
-		}
-	}
-
-	snapshots = append(snapshots, DelegationSnapShotHistory{
-		to:           to,
-		amount:       prev,
-		updatedBlock: height,
-		updatedAt:    ts,
-	})
-
-	st.snapShotHistory[toStr] = snapshots
-	return nil
+// GetDelegateHistoryOf is a wrapper for HistoryState method
+func GetDelegateHistoryOf(delegator std.Address) []DelegationHistory {
+	return historyState.GetDelegateHistoryOf(delegator)
 }
 
-func (st *State) GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
-	if !delegator.IsValid() {
-		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
-	}
-	if endTimestamp > uint64(time.Now().Unix()) {
-		panic(ufmt.Sprintf("endTimestamp(%d) > now(%d)", endTimestamp, time.Now().Unix()))
-	}
-	toStr := delegator.String()
-	history := st.snapShotHistory[toStr]
-	for i := len(history) - 1; i >= 0; i-- {
-		record := history[i]
-		if record.updatedAt <= endTimestamp {
-			return record.amount
-		}
-	}
-	return 0
+// GetDelegationSnapShotHistoryOf is a wrapper for HistoryState method
+func GetDelegationSnapShotHistoryOf(delegator std.Address) []DelegationSnapShotHistory {
+	return historyState.GetDelegationSnapShotHistoryOf(delegator)
 }
 
-func (st *State) GetDelegateHistoryOf(delegator std.Address) []DelegationHistory {
-	if !delegator.IsValid() {
-		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
-	}
-	return st.delegationHistory[delegator.String()]
-}
-
-func (st *State) GetDelegationSnapShotHistoryOf(delegator std.Address) []DelegationSnapShotHistory {
-	if !delegator.IsValid() {
-		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
-	}
-	return st.snapShotHistory[delegator.String()]
-}
-
-// cleanDelegationStatHistory removes old delegation snapshots older than threshold
-func (st *State) CleanDelegationStatHistory(lastCleanedHeight *uint64, thresholdVotingWeightBlockHeight int64) {
-	height := uint64(std.ChainHeight())
-	sinceLast := height - *lastCleanedHeight
-
-	if sinceLast < uint64(thresholdVotingWeightBlockHeight) {
-		return
-	}
-
-	*lastCleanedHeight = height
-	keepFrom := height - uint64(thresholdVotingWeightBlockHeight)
-
-	for key, history := range st.snapShotHistory {
-		// keep only entries newer than keepFrom, keeping at least one entry
-		for i := len(history) - 1; i >= 0; i-- {
-			if history[i].updatedBlock > keepFrom {
-				continue
-			}
-			st.snapShotHistory[key] = history[i:]
-			break
-		}
-	}
+// CleanDelegationStatHistory is a wrapper for HistoryState method
+func CleanDelegationStatHistory(thresholdVotingWeightBlockHeight int64) {
+	historyState.CleanDelegationStatHistory(thresholdVotingWeightBlockHeight)
 }
 
 // milliToSec converts milliseconds to seconds

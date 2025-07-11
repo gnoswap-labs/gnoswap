@@ -1,7 +1,6 @@
 package staker2
 
 import (
-	"fmt"
 	"std"
 	"strings"
 	"testing"
@@ -9,20 +8,21 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/ufmt"
 )
 
 func TestApplyDelegationChange(t *testing.T) {
 	tests := []struct {
 		name          string
-		initialState  *State
+		initialState  *DelegationState
 		record        DelegationRecord
 		add           bool
-		expectedState *State
+		expectedState *DelegationState
 		description   string
 	}{
 		{
 			name: "add delegation - new delegator and delegatee",
-			initialState: &State{
+			initialState: &DelegationState{
 				totalDelegated:  0,
 				delegatorAmount: make(AmountMap),
 				delegatedFromTo: make(FromToMap),
@@ -34,7 +34,7 @@ func TestApplyDelegationChange(t *testing.T) {
 				Amount:    1000,
 			},
 			add: true,
-			expectedState: &State{
+			expectedState: &DelegationState{
 				totalDelegated: 0, // Note: totalDelegated is not updated in the function
 				delegatorAmount: AmountMap{
 					"alice": 1000,
@@ -52,7 +52,7 @@ func TestApplyDelegationChange(t *testing.T) {
 		},
 		{
 			name: "add delegation - existing delegator, new delegatee",
-			initialState: &State{
+			initialState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 500,
@@ -72,7 +72,7 @@ func TestApplyDelegationChange(t *testing.T) {
 				Amount:    1000,
 			},
 			add: true,
-			expectedState: &State{
+			expectedState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 1500,
@@ -92,7 +92,7 @@ func TestApplyDelegationChange(t *testing.T) {
 		},
 		{
 			name: "add delegation - existing delegator and delegatee",
-			initialState: &State{
+			initialState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 500,
@@ -112,7 +112,7 @@ func TestApplyDelegationChange(t *testing.T) {
 				Amount:    1000,
 			},
 			add: true,
-			expectedState: &State{
+			expectedState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 1500,
@@ -130,7 +130,7 @@ func TestApplyDelegationChange(t *testing.T) {
 		},
 		{
 			name: "remove delegation - sufficient amount",
-			initialState: &State{
+			initialState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 1000,
@@ -150,7 +150,7 @@ func TestApplyDelegationChange(t *testing.T) {
 				Amount:    600,
 			},
 			add: false,
-			expectedState: &State{
+			expectedState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 400,
@@ -168,7 +168,7 @@ func TestApplyDelegationChange(t *testing.T) {
 		},
 		{
 			name: "remove delegation - exact amount",
-			initialState: &State{
+			initialState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 1000,
@@ -188,7 +188,7 @@ func TestApplyDelegationChange(t *testing.T) {
 				Amount:    1000,
 			},
 			add: false,
-			expectedState: &State{
+			expectedState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 0,
@@ -204,7 +204,7 @@ func TestApplyDelegationChange(t *testing.T) {
 		},
 		{
 			name: "remove delegation - insufficient amount, delegator amount becomes 0",
-			initialState: &State{
+			initialState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 500,
@@ -224,7 +224,7 @@ func TestApplyDelegationChange(t *testing.T) {
 				Amount:    1000,
 			},
 			add: false,
-			expectedState: &State{
+			expectedState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 0,
@@ -240,7 +240,7 @@ func TestApplyDelegationChange(t *testing.T) {
 		},
 		{
 			name: "remove delegation - insufficient amount, delegatee amount becomes 0",
-			initialState: &State{
+			initialState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 500,
@@ -260,7 +260,7 @@ func TestApplyDelegationChange(t *testing.T) {
 				Amount:    1000,
 			},
 			add: false,
-			expectedState: &State{
+			expectedState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 0,
@@ -276,7 +276,7 @@ func TestApplyDelegationChange(t *testing.T) {
 		},
 		{
 			name: "remove delegation - non-existent delegator",
-			initialState: &State{
+			initialState: &DelegationState{
 				totalDelegated:  0,
 				delegatorAmount: make(AmountMap),
 				delegatedFromTo: make(FromToMap),
@@ -288,7 +288,7 @@ func TestApplyDelegationChange(t *testing.T) {
 				Amount:    1000,
 			},
 			add: false,
-			expectedState: &State{
+			expectedState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 0,
@@ -300,7 +300,7 @@ func TestApplyDelegationChange(t *testing.T) {
 		},
 		{
 			name: "remove delegation - multiple delegations to same delegatee",
-			initialState: &State{
+			initialState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 1500,
@@ -324,7 +324,7 @@ func TestApplyDelegationChange(t *testing.T) {
 				Amount:    1000,
 			},
 			add: false,
-			expectedState: &State{
+			expectedState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 500,
@@ -346,7 +346,7 @@ func TestApplyDelegationChange(t *testing.T) {
 		},
 		{
 			name: "remove delegation - zero amount",
-			initialState: &State{
+			initialState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 1000,
@@ -366,7 +366,7 @@ func TestApplyDelegationChange(t *testing.T) {
 				Amount:    0,
 			},
 			add: false,
-			expectedState: &State{
+			expectedState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 1000,
@@ -384,7 +384,7 @@ func TestApplyDelegationChange(t *testing.T) {
 		},
 		{
 			name: "add delegation - zero amount",
-			initialState: &State{
+			initialState: &DelegationState{
 				totalDelegated:  0,
 				delegatorAmount: make(AmountMap),
 				delegatedFromTo: make(FromToMap),
@@ -396,7 +396,7 @@ func TestApplyDelegationChange(t *testing.T) {
 				Amount:    0,
 			},
 			add: true,
-			expectedState: &State{
+			expectedState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					"alice": 0,
@@ -417,7 +417,7 @@ func TestApplyDelegationChange(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a copy of the initial state to avoid modifying the test data
-			initialState := &State{
+			initialState := &DelegationState{
 				totalDelegated:  tt.initialState.totalDelegated,
 				delegatorAmount: make(AmountMap),
 				delegatedFromTo: make(FromToMap),
@@ -474,15 +474,15 @@ func TestApplyDelegationChange(t *testing.T) {
 	}
 }
 
-// TestAppendDelegationHistory tests the appendDelegationHistory function
+// TestAppendDelegationHistory tests the AppendDelegationHistory function
 func TestAppendDelegationHistory(t *testing.T) {
 	t.Run("should append delegation history for valid addresses", func(t *testing.T) {
-		st := NewState()
+		st := NewHistoryState()
 		from := testutils.TestAddress("from")
 		to := testutils.TestAddress("to")
 		amount := uint64(1000)
 
-		err := st.appendDelegationHistory(from, to, amount, true)
+		err := st.AppendDelegationHistory(from, to, amount, true)
 
 		uassert.NoError(t, err)
 		uassert.True(t, len(st.delegationHistory) > 0)
@@ -501,17 +501,17 @@ func TestAppendDelegationHistory(t *testing.T) {
 	})
 
 	t.Run("should append multiple delegation histories", func(t *testing.T) {
-		st := NewState()
+		st := NewHistoryState()
 		from := testutils.TestAddress("from")
 		to1 := testutils.TestAddress("to1")
 		to2 := testutils.TestAddress("to2")
 
 		// Add first delegation
-		err1 := st.appendDelegationHistory(from, to1, 1000, true)
+		err1 := st.AppendDelegationHistory(from, to1, 1000, true)
 		uassert.NoError(t, err1)
 
 		// Add second delegation
-		err2 := st.appendDelegationHistory(from, to2, 2000, false)
+		err2 := st.AppendDelegationHistory(from, to2, 2000, false)
 		uassert.NoError(t, err2)
 
 		fromStr := from.String()
@@ -530,18 +530,18 @@ func TestAppendDelegationHistory(t *testing.T) {
 	})
 }
 
-// TestUpdateDelegationSnapShotHistory tests the updateDelegationSnapShotHistory function
+// TestUpdateDelegationSnapShotHistory tests the UpdateDelegationSnapShotHistory function
 func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 	t.Run("should create new snapshot for first delegation", func(t *testing.T) {
-		st := NewState()
+		st := NewHistoryState()
 		to := testutils.TestAddress("to")
 		amount := uint64(1000)
 
-		err := st.updateDelegationSnapShotHistory(to, amount, true)
+		err := st.UpdateDelegationSnapShotHistory(to, amount, true)
 
 		uassert.NoError(t, err)
 		toStr := to.String()
-		snapshots := st.snapShotHistory[toStr]
+		snapshots := st.SnapshotHistory()[toStr]
 		uassert.Equal(t, 1, len(snapshots))
 
 		// Verify snapshot entry
@@ -553,19 +553,19 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 	})
 
 	t.Run("should update existing snapshot when adding delegation", func(t *testing.T) {
-		st := NewState()
+		st := NewHistoryState()
 		to := testutils.TestAddress("to")
 
 		// Add first delegation
-		err1 := st.updateDelegationSnapShotHistory(to, 1000, true)
+		err1 := st.UpdateDelegationSnapShotHistory(to, 1000, true)
 		uassert.NoError(t, err1)
 
 		// Add second delegation
-		err2 := st.updateDelegationSnapShotHistory(to, 2000, true)
+		err2 := st.UpdateDelegationSnapShotHistory(to, 2000, true)
 		uassert.NoError(t, err2)
 
 		toStr := to.String()
-		snapshots := st.snapShotHistory[toStr]
+		snapshots := st.SnapshotHistory()[toStr]
 		uassert.Equal(t, 2, len(snapshots))
 
 		// Verify first snapshot
@@ -576,19 +576,19 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 	})
 
 	t.Run("should update existing snapshot when removing delegation", func(t *testing.T) {
-		st := NewState()
+		st := NewHistoryState()
 		to := testutils.TestAddress("to")
 
 		// Add initial delegation
-		err1 := st.updateDelegationSnapShotHistory(to, 5000, true)
+		err1 := st.UpdateDelegationSnapShotHistory(to, 5000, true)
 		uassert.NoError(t, err1)
 
 		// Remove some delegation
-		err2 := st.updateDelegationSnapShotHistory(to, 2000, false)
+		err2 := st.UpdateDelegationSnapShotHistory(to, 2000, false)
 		uassert.NoError(t, err2)
 
 		toStr := to.String()
-		snapshots := st.snapShotHistory[toStr]
+		snapshots := st.SnapshotHistory()[toStr]
 		uassert.Equal(t, 2, len(snapshots))
 
 		// Verify first snapshot
@@ -599,19 +599,19 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 	})
 
 	t.Run("should handle removal that exceeds current amount", func(t *testing.T) {
-		st := NewState()
+		st := NewHistoryState()
 		to := testutils.TestAddress("to")
 
 		// Add initial delegation
-		err1 := st.updateDelegationSnapShotHistory(to, 1000, true)
+		err1 := st.UpdateDelegationSnapShotHistory(to, 1000, true)
 		uassert.NoError(t, err1)
 
 		// Remove more than available
-		err2 := st.updateDelegationSnapShotHistory(to, 2000, false)
+		err2 := st.UpdateDelegationSnapShotHistory(to, 2000, false)
 		uassert.NoError(t, err2)
 
 		toStr := to.String()
-		snapshots := st.snapShotHistory[toStr]
+		snapshots := st.SnapshotHistory()[toStr]
 		uassert.Equal(t, 2, len(snapshots))
 
 		// Verify first snapshot
@@ -622,11 +622,11 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 	})
 
 	t.Run("should return error for invalid to address", func(t *testing.T) {
-		st := NewState()
+		st := NewHistoryState()
 		to := std.Address("") // Invalid address
 		amount := uint64(1000)
 
-		err := st.updateDelegationSnapShotHistory(to, amount, true)
+		err := st.UpdateDelegationSnapShotHistory(to, amount, true)
 
 		uassert.Error(t, err)
 		if !strings.Contains(err.Error(), "invalid address") {
@@ -635,30 +635,30 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 	})
 
 	t.Run("should handle zero amount delegation", func(t *testing.T) {
-		st := NewState()
+		st := NewHistoryState()
 		to := testutils.TestAddress("to")
 		amount := uint64(0)
 
-		err := st.updateDelegationSnapShotHistory(to, amount, true)
+		err := st.UpdateDelegationSnapShotHistory(to, amount, true)
 
 		uassert.NoError(t, err)
 		toStr := to.String()
-		snapshots := st.snapShotHistory[toStr]
+		snapshots := st.SnapshotHistory()[toStr]
 		uassert.Equal(t, 1, len(snapshots))
 		uassert.Equal(t, uint64(0), snapshots[0].amount)
 	})
 
 	t.Run("should maintain chronological order of snapshots", func(t *testing.T) {
-		st := NewState()
+		st := NewHistoryState()
 		to := testutils.TestAddress("to")
 
 		// Add multiple delegations
-		st.updateDelegationSnapShotHistory(to, 1000, true)
-		st.updateDelegationSnapShotHistory(to, 2000, true)
-		st.updateDelegationSnapShotHistory(to, 500, false)
+		st.UpdateDelegationSnapShotHistory(to, 1000, true)
+		st.UpdateDelegationSnapShotHistory(to, 2000, true)
+		st.UpdateDelegationSnapShotHistory(to, 500, false)
 
 		toStr := to.String()
-		snapshots := st.snapShotHistory[toStr]
+		snapshots := st.SnapshotHistory()[toStr]
 		uassert.Equal(t, 3, len(snapshots))
 
 		// Verify chronological order and amounts
@@ -679,26 +679,24 @@ func TestDelegate(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		initialState  *State
+		initialState  *DelegationState
 		to            std.Address
 		amount        uint64
 		expectedError string
-		expectedState *State
+		expectedState *DelegationState
 		description   string
 	}{
 		{
 			name: "successful delegation - new delegator and delegatee",
-			initialState: &State{
-				totalDelegated:    0,
-				delegatorAmount:   make(AmountMap),
-				delegatedFromTo:   make(FromToMap),
-				delegatedTo:       make(AmountMap),
-				delegationHistory: make(HistoryMap),
-				snapShotHistory:   make(SnapShotMap),
+			initialState: &DelegationState{
+				totalDelegated:  0,
+				delegatorAmount: make(AmountMap),
+				delegatedFromTo: make(FromToMap),
+				delegatedTo:     make(AmountMap),
 			},
 			to:     delegatee,
 			amount: 1000,
-			expectedState: &State{
+			expectedState: &DelegationState{
 				totalDelegated: 1000,
 				delegatorAmount: AmountMap{
 					caller.String(): 1000,
@@ -716,40 +714,34 @@ func TestDelegate(t *testing.T) {
 		},
 		{
 			name: "error - zero amount",
-			initialState: &State{
-				totalDelegated:    0,
-				delegatorAmount:   make(AmountMap),
-				delegatedFromTo:   make(FromToMap),
-				delegatedTo:       make(AmountMap),
-				delegationHistory: make(HistoryMap),
-				snapShotHistory:   make(SnapShotMap),
+			initialState: &DelegationState{
+				totalDelegated:  0,
+				delegatorAmount: make(AmountMap),
+				delegatedFromTo: make(FromToMap),
+				delegatedTo:     make(AmountMap),
 			},
 			to:            delegatee,
 			amount:        0,
 			expectedError: "amount must be positive",
-			expectedState: &State{
-				totalDelegated:    0,
-				delegatorAmount:   make(AmountMap),
-				delegatedFromTo:   make(FromToMap),
-				delegatedTo:       make(AmountMap),
-				delegationHistory: make(HistoryMap),
-				snapShotHistory:   make(SnapShotMap),
+			expectedState: &DelegationState{
+				totalDelegated:  0,
+				delegatorAmount: make(AmountMap),
+				delegatedFromTo: make(FromToMap),
+				delegatedTo:     make(AmountMap),
 			},
 			description: "should return error when amount is zero",
 		},
 		{
 			name: "large amount delegation",
-			initialState: &State{
-				totalDelegated:    0,
-				delegatorAmount:   make(AmountMap),
-				delegatedFromTo:   make(FromToMap),
-				delegatedTo:       make(AmountMap),
-				delegationHistory: make(HistoryMap),
-				snapShotHistory:   make(SnapShotMap),
+			initialState: &DelegationState{
+				totalDelegated:  0,
+				delegatorAmount: make(AmountMap),
+				delegatedFromTo: make(FromToMap),
+				delegatedTo:     make(AmountMap),
 			},
 			to:     delegatee,
 			amount: 999999999,
-			expectedState: &State{
+			expectedState: &DelegationState{
 				totalDelegated: 999999999,
 				delegatorAmount: AmountMap{
 					caller.String(): 999999999,
@@ -767,17 +759,15 @@ func TestDelegate(t *testing.T) {
 		},
 		{
 			name: "delegation with minimum amount",
-			initialState: &State{
-				totalDelegated:    0,
-				delegatorAmount:   make(AmountMap),
-				delegatedFromTo:   make(FromToMap),
-				delegatedTo:       make(AmountMap),
-				delegationHistory: make(HistoryMap),
-				snapShotHistory:   make(SnapShotMap),
+			initialState: &DelegationState{
+				totalDelegated:  0,
+				delegatorAmount: make(AmountMap),
+				delegatedFromTo: make(FromToMap),
+				delegatedTo:     make(AmountMap),
 			},
 			to:     delegatee,
 			amount: 1,
-			expectedState: &State{
+			expectedState: &DelegationState{
 				totalDelegated: 1,
 				delegatorAmount: AmountMap{
 					caller.String(): 1,
@@ -800,14 +790,14 @@ func TestDelegate(t *testing.T) {
 			testing.SetOriginCaller(caller)
 
 			// Create a copy of the initial state to avoid modifying the test data
-			initialState := &State{
-				totalDelegated:    tt.initialState.totalDelegated,
-				delegatorAmount:   make(AmountMap),
-				delegatedFromTo:   make(FromToMap),
-				delegatedTo:       make(AmountMap),
-				delegationHistory: make(HistoryMap),
-				snapShotHistory:   make(SnapShotMap),
+			initialState := &DelegationState{
+				totalDelegated:  tt.initialState.totalDelegated,
+				delegatorAmount: make(AmountMap),
+				delegatedFromTo: make(FromToMap),
+				delegatedTo:     make(AmountMap),
 			}
+
+			hs := NewHistoryState()
 
 			// Copy maps to avoid reference issues
 			for k, v := range tt.initialState.delegatorAmount {
@@ -822,20 +812,12 @@ func TestDelegate(t *testing.T) {
 			for k, v := range tt.initialState.delegatedTo {
 				initialState.delegatedTo[k] = v
 			}
-			for k, v := range tt.initialState.delegationHistory {
-				initialState.delegationHistory[k] = make([]DelegationHistory, len(v))
-				copy(initialState.delegationHistory[k], v)
-			}
-			for k, v := range tt.initialState.snapShotHistory {
-				initialState.snapShotHistory[k] = make([]DelegationSnapShotHistory, len(v))
-				copy(initialState.snapShotHistory[k], v)
-			}
 
 			func() {
 				testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
 
 				// Call the delegate function
-				err := delegate(initialState, tt.to, tt.amount)
+				err := delegate(initialState, hs, tt.to, tt.amount)
 
 				// Check error expectations
 				if tt.expectedError != "" {
@@ -876,10 +858,9 @@ func TestDelegate(t *testing.T) {
 					uassert.Equal(t, expectedAmount, actualAmount, "delegatee total amount mismatch for %s", delegatee)
 				}
 
-				// Verify that delegation history was added
+				// Verify that delegation history was added through historyState
 				callerStr := caller.String()
-				history, exists := initialState.delegationHistory[callerStr]
-				uassert.True(t, exists, "delegation history should exist for caller")
+				history := hs.GetDelegateHistoryOf(std.Address(callerStr))
 				uassert.Equal(t, 1, len(history), "should have one delegation history entry")
 
 				// Verify history entry
@@ -890,10 +871,8 @@ func TestDelegate(t *testing.T) {
 				uassert.True(t, entry.height > 0, "height should be set")
 				uassert.True(t, entry.add, "add flag should be true")
 
-				// Verify that snapshot history was updated
-				toStr := tt.to.String()
-				snapshots, exists := initialState.snapShotHistory[toStr]
-				uassert.True(t, exists, "snapshot history should exist for delegatee")
+				// Verify that snapshot history was updated through historyState
+				snapshots := hs.GetDelegationSnapShotHistoryOf(tt.to)
 				uassert.Equal(t, 1, len(snapshots), "should have one snapshot entry")
 
 				// Verify snapshot entry
@@ -913,16 +892,17 @@ func TestUndelegate(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		initialState  *State
+		initialState  *DelegationState
+		historyState  *HistoryState
 		undelegateTo  std.Address
 		amount        uint64
 		expectedError string
-		expectedState *State
+		expectedState *DelegationState
 		description   string
 	}{
 		{
 			name: "successful undelegation",
-			initialState: &State{
+			initialState: &DelegationState{
 				totalDelegated: 1000,
 				delegatorAmount: AmountMap{
 					caller.String(): 1000,
@@ -935,12 +915,11 @@ func TestUndelegate(t *testing.T) {
 				delegatedTo: AmountMap{
 					delegatee.String(): 1000,
 				},
-				delegationHistory: make(HistoryMap),
-				snapShotHistory:   make(SnapShotMap),
 			},
+			historyState: NewHistoryState(),
 			undelegateTo: delegatee,
 			amount:       1000,
-			expectedState: &State{
+			expectedState: &DelegationState{
 				totalDelegated: 0,
 				delegatorAmount: AmountMap{
 					caller.String(): 0,
@@ -959,6 +938,7 @@ func TestUndelegate(t *testing.T) {
 		{
 			name:          "error - undelegate zero amount",
 			initialState:  NewState(),
+			historyState:  NewHistoryState(),
 			undelegateTo:  delegatee,
 			amount:        0,
 			expectedError: "amount must be positive",
@@ -968,6 +948,7 @@ func TestUndelegate(t *testing.T) {
 		{
 			name:          "error - undelegate without delegation",
 			initialState:  NewState(),
+			historyState:  NewHistoryState(),
 			undelegateTo:  delegatee,
 			amount:        100,
 			expectedError: "no delegated amount",
@@ -976,7 +957,7 @@ func TestUndelegate(t *testing.T) {
 		},
 		{
 			name: "error - insufficient undelegate amount",
-			initialState: &State{
+			initialState: &DelegationState{
 				totalDelegated: 100,
 				delegatorAmount: AmountMap{
 					caller.String(): 100,
@@ -989,14 +970,13 @@ func TestUndelegate(t *testing.T) {
 				delegatedTo: AmountMap{
 					delegatee.String(): 100,
 				},
-				delegationHistory: make(HistoryMap),
-				snapShotHistory:   make(SnapShotMap),
 			},
+			historyState:  NewHistoryState(),
 			undelegateTo:  delegatee,
 			amount:        200,
 			expectedError: "insufficient delegated amount",
 			description:   "should return error if undelegate amount exceeds delegation",
-			expectedState: &State{
+			expectedState: &DelegationState{
 				totalDelegated: 100,
 				delegatorAmount: AmountMap{
 					caller.String(): 100,
@@ -1009,8 +989,6 @@ func TestUndelegate(t *testing.T) {
 				delegatedTo: AmountMap{
 					delegatee.String(): 100,
 				},
-				delegationHistory: make(HistoryMap),
-				snapShotHistory:   make(SnapShotMap),
 			},
 		},
 	}
@@ -1022,7 +1000,7 @@ func TestUndelegate(t *testing.T) {
 			func() {
 				testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
 
-				err := undelegate(tt.initialState, tt.undelegateTo, tt.amount)
+				err := undelegate(tt.initialState, tt.historyState, tt.undelegateTo, tt.amount)
 
 				if tt.expectedError != "" {
 					uassert.Error(t, err)
@@ -1067,7 +1045,7 @@ func TestGetDelegatedCumulative(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		state          *State
+		historyState   *HistoryState
 		delegator      std.Address
 		endTimestamp   uint64
 		expectedAmount uint64
@@ -1076,10 +1054,8 @@ func TestGetDelegatedCumulative(t *testing.T) {
 		description    string
 	}{
 		{
-			name: "empty snapshot history",
-			state: &State{
-				snapShotHistory: make(SnapShotMap),
-			},
+			name:           "empty snapshot history",
+			historyState:   NewHistoryState(),
 			delegator:      delegator,
 			endTimestamp:   pastTime,
 			expectedAmount: 0,
@@ -1088,8 +1064,8 @@ func TestGetDelegatedCumulative(t *testing.T) {
 		},
 		{
 			name: "single snapshot entry - exact timestamp match",
-			state: &State{
-				snapShotHistory: SnapShotMap{
+			historyState: &HistoryState{
+				snapshotHistory: SnapShotMap{
 					delegator.String(): []DelegationSnapShotHistory{
 						{
 							to:           delegator,
@@ -1108,8 +1084,8 @@ func TestGetDelegatedCumulative(t *testing.T) {
 		},
 		{
 			name: "single snapshot entry - timestamp after snapshot",
-			state: &State{
-				snapShotHistory: SnapShotMap{
+			historyState: &HistoryState{
+				snapshotHistory: SnapShotMap{
 					delegator.String(): []DelegationSnapShotHistory{
 						{
 							to:           delegator,
@@ -1128,8 +1104,8 @@ func TestGetDelegatedCumulative(t *testing.T) {
 		},
 		{
 			name: "single snapshot entry - timestamp before snapshot",
-			state: &State{
-				snapShotHistory: SnapShotMap{
+			historyState: &HistoryState{
+				snapshotHistory: SnapShotMap{
 					delegator.String(): []DelegationSnapShotHistory{
 						{
 							to:           delegator,
@@ -1148,8 +1124,8 @@ func TestGetDelegatedCumulative(t *testing.T) {
 		},
 		{
 			name: "multiple snapshot entries - find correct one",
-			state: &State{
-				snapShotHistory: SnapShotMap{
+			historyState: &HistoryState{
+				snapshotHistory: SnapShotMap{
 					delegator.String(): []DelegationSnapShotHistory{
 						{
 							to:           delegator,
@@ -1180,8 +1156,8 @@ func TestGetDelegatedCumulative(t *testing.T) {
 		},
 		{
 			name: "multiple snapshot entries - exact timestamp match",
-			state: &State{
-				snapShotHistory: SnapShotMap{
+			historyState: &HistoryState{
+				snapshotHistory: SnapShotMap{
 					delegator.String(): []DelegationSnapShotHistory{
 						{
 							to:           delegator,
@@ -1212,8 +1188,8 @@ func TestGetDelegatedCumulative(t *testing.T) {
 		},
 		{
 			name: "multiple snapshot entries - latest snapshot",
-			state: &State{
-				snapShotHistory: SnapShotMap{
+			historyState: &HistoryState{
+				snapshotHistory: SnapShotMap{
 					delegator.String(): []DelegationSnapShotHistory{
 						{
 							to:           delegator,
@@ -1243,10 +1219,8 @@ func TestGetDelegatedCumulative(t *testing.T) {
 			description:    "should return latest amount when timestamp is after all snapshots",
 		},
 		{
-			name: "invalid delegator address",
-			state: &State{
-				snapShotHistory: make(SnapShotMap),
-			},
+			name:         "invalid delegator address",
+			historyState: NewHistoryState(),
 			delegator:    invalidAddress,
 			endTimestamp: pastTime,
 			expectPanic:  true,
@@ -1254,10 +1228,8 @@ func TestGetDelegatedCumulative(t *testing.T) {
 			description:  "should panic with invalid delegator address",
 		},
 		{
-			name: "future timestamp",
-			state: &State{
-				snapShotHistory: make(SnapShotMap),
-			},
+			name:         "future timestamp",
+			historyState: NewHistoryState(),
 			delegator:    delegator,
 			endTimestamp: futureTime,
 			expectPanic:  true,
@@ -1266,8 +1238,8 @@ func TestGetDelegatedCumulative(t *testing.T) {
 		},
 		{
 			name: "zero amount snapshot",
-			state: &State{
-				snapShotHistory: SnapShotMap{
+			historyState: &HistoryState{
+				snapshotHistory: SnapShotMap{
 					delegator.String(): []DelegationSnapShotHistory{
 						{
 							to:           delegator,
@@ -1286,8 +1258,8 @@ func TestGetDelegatedCumulative(t *testing.T) {
 		},
 		{
 			name: "large amount snapshot",
-			state: &State{
-				snapShotHistory: SnapShotMap{
+			historyState: &HistoryState{
+				snapshotHistory: SnapShotMap{
 					delegator.String(): []DelegationSnapShotHistory{
 						{
 							to:           delegator,
@@ -1315,14 +1287,20 @@ func TestGetDelegatedCumulative(t *testing.T) {
 						t.Errorf("expected panic but none occurred")
 						return
 					}
-					panicStr := fmt.Sprintf("%v", r)
+					panicStr := ufmt.Sprintf("%v", r)
 					if !strings.Contains(panicStr, tt.panicMessage) {
 						t.Errorf("expected panic to contain '%s', got '%s'", tt.panicMessage, panicStr)
 					}
 				}()
 			}
 
-			result := tt.state.GetDelegatedCumulative(tt.delegator, tt.endTimestamp)
+			// mock the history state
+			historyState.SnapshotHistory()[tt.delegator.String()] = tt.historyState.SnapshotHistory()[tt.delegator.String()]
+			defer func() {
+				historyState.SnapshotHistory()[tt.delegator.String()] = nil
+			}()
+
+			result := GetDelegatedCumulative(tt.delegator, tt.endTimestamp)
 
 			if !tt.expectPanic {
 				uassert.Equal(t, tt.expectedAmount, result, "amount mismatch")
@@ -1347,7 +1325,7 @@ func TestGetDelegateHistoryOf(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		state          *State
+		historyState   *HistoryState
 		delegator      std.Address
 		expectedResult []DelegationHistory
 		expectPanic    bool
@@ -1355,10 +1333,8 @@ func TestGetDelegateHistoryOf(t *testing.T) {
 		description    string
 	}{
 		{
-			name: "empty delegation history",
-			state: &State{
-				delegationHistory: make(HistoryMap),
-			},
+			name:           "empty delegation history",
+			historyState:   NewHistoryState(),
 			delegator:      delegator1,
 			expectedResult: []DelegationHistory{},
 			expectPanic:    false,
@@ -1366,7 +1342,7 @@ func TestGetDelegateHistoryOf(t *testing.T) {
 		},
 		{
 			name: "single delegation history entry",
-			state: &State{
+			historyState: &HistoryState{
 				delegationHistory: HistoryMap{
 					delegator1.String(): []DelegationHistory{
 						{
@@ -1394,7 +1370,7 @@ func TestGetDelegateHistoryOf(t *testing.T) {
 		},
 		{
 			name: "multiple delegation history entries",
-			state: &State{
+			historyState: &HistoryState{
 				delegationHistory: HistoryMap{
 					delegator1.String(): []DelegationHistory{
 						{
@@ -1450,7 +1426,7 @@ func TestGetDelegateHistoryOf(t *testing.T) {
 		},
 		{
 			name: "delegation history with zero amount",
-			state: &State{
+			historyState: &HistoryState{
 				delegationHistory: HistoryMap{
 					delegator1.String(): []DelegationHistory{
 						{
@@ -1478,7 +1454,7 @@ func TestGetDelegateHistoryOf(t *testing.T) {
 		},
 		{
 			name: "delegation history with large amount",
-			state: &State{
+			historyState: &HistoryState{
 				delegationHistory: HistoryMap{
 					delegator1.String(): []DelegationHistory{
 						{
@@ -1506,7 +1482,7 @@ func TestGetDelegateHistoryOf(t *testing.T) {
 		},
 		{
 			name: "delegation history with both add and remove operations",
-			state: &State{
+			historyState: &HistoryState{
 				delegationHistory: HistoryMap{
 					delegator1.String(): []DelegationHistory{
 						{
@@ -1562,7 +1538,7 @@ func TestGetDelegateHistoryOf(t *testing.T) {
 		},
 		{
 			name: "delegation history for different delegator",
-			state: &State{
+			historyState: &HistoryState{
 				delegationHistory: HistoryMap{
 					delegator1.String(): []DelegationHistory{
 						{
@@ -1599,7 +1575,7 @@ func TestGetDelegateHistoryOf(t *testing.T) {
 		},
 		{
 			name: "invalid delegator address",
-			state: &State{
+			historyState: &HistoryState{
 				delegationHistory: make(HistoryMap),
 			},
 			delegator:    invalidAddress,
@@ -1609,7 +1585,7 @@ func TestGetDelegateHistoryOf(t *testing.T) {
 		},
 		{
 			name: "delegation history with same delegatee multiple times",
-			state: &State{
+			historyState: &HistoryState{
 				delegationHistory: HistoryMap{
 					delegator1.String(): []DelegationHistory{
 						{
@@ -1674,14 +1650,20 @@ func TestGetDelegateHistoryOf(t *testing.T) {
 						t.Errorf("expected panic but none occurred")
 						return
 					}
-					panicStr := fmt.Sprintf("%v", r)
+					panicStr := ufmt.Sprintf("%v", r)
 					if !strings.Contains(panicStr, tt.panicMessage) {
 						t.Errorf("expected panic to contain '%s', got '%s'", tt.panicMessage, panicStr)
 					}
 				}()
 			}
 
-			result := tt.state.GetDelegateHistoryOf(tt.delegator)
+			// mock the history state
+			historyState.DelegationHistory()[tt.delegator.String()] = tt.historyState.DelegationHistory()[tt.delegator.String()]
+			defer func() {
+				historyState.DelegationHistory()[tt.delegator.String()] = nil
+			}()
+
+			result := GetDelegateHistoryOf(tt.delegator)
 
 			if !tt.expectPanic {
 				uassert.Equal(t, len(tt.expectedResult), len(result), "history length mismatch")
@@ -1718,7 +1700,7 @@ func TestGetDelegationSnapShotHistoryOf(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		state          *State
+		historyState   *HistoryState
 		delegator      std.Address
 		expectedResult []DelegationSnapShotHistory
 		expectPanic    bool
@@ -1726,10 +1708,8 @@ func TestGetDelegationSnapShotHistoryOf(t *testing.T) {
 		description    string
 	}{
 		{
-			name: "empty snapshot history",
-			state: &State{
-				snapShotHistory: make(SnapShotMap),
-			},
+			name:           "empty snapshot history",
+			historyState:   NewHistoryState(),
 			delegator:      delegator1,
 			expectedResult: []DelegationSnapShotHistory{},
 			expectPanic:    false,
@@ -1737,8 +1717,8 @@ func TestGetDelegationSnapShotHistoryOf(t *testing.T) {
 		},
 		{
 			name: "single snapshot history entry",
-			state: &State{
-				snapShotHistory: SnapShotMap{
+			historyState: &HistoryState{
+				snapshotHistory: SnapShotMap{
 					delegator1.String(): []DelegationSnapShotHistory{
 						{
 							to:           delegator1,
@@ -1763,8 +1743,8 @@ func TestGetDelegationSnapShotHistoryOf(t *testing.T) {
 		},
 		{
 			name: "multiple snapshot history entries",
-			state: &State{
-				snapShotHistory: SnapShotMap{
+			historyState: &HistoryState{
+				snapshotHistory: SnapShotMap{
 					delegator1.String(): []DelegationSnapShotHistory{
 						{
 							to:           delegator1,
@@ -1813,8 +1793,8 @@ func TestGetDelegationSnapShotHistoryOf(t *testing.T) {
 		},
 		{
 			name: "snapshot history with zero amount",
-			state: &State{
-				snapShotHistory: SnapShotMap{
+			historyState: &HistoryState{
+				snapshotHistory: SnapShotMap{
 					delegator1.String(): []DelegationSnapShotHistory{
 						{
 							to:           delegator1,
@@ -1839,8 +1819,8 @@ func TestGetDelegationSnapShotHistoryOf(t *testing.T) {
 		},
 		{
 			name: "snapshot history with large amount",
-			state: &State{
-				snapShotHistory: SnapShotMap{
+			historyState: &HistoryState{
+				snapshotHistory: SnapShotMap{
 					delegator1.String(): []DelegationSnapShotHistory{
 						{
 							to:           delegator1,
@@ -1865,8 +1845,8 @@ func TestGetDelegationSnapShotHistoryOf(t *testing.T) {
 		},
 		{
 			name: "snapshot history with decreasing amounts",
-			state: &State{
-				snapShotHistory: SnapShotMap{
+			historyState: &HistoryState{
+				snapshotHistory: SnapShotMap{
 					delegator1.String(): []DelegationSnapShotHistory{
 						{
 							to:           delegator1,
@@ -1915,8 +1895,8 @@ func TestGetDelegationSnapShotHistoryOf(t *testing.T) {
 		},
 		{
 			name: "snapshot history for different delegator",
-			state: &State{
-				snapShotHistory: SnapShotMap{
+			historyState: &HistoryState{
+				snapshotHistory: SnapShotMap{
 					delegator1.String(): []DelegationSnapShotHistory{
 						{
 							to:           delegator1,
@@ -1948,10 +1928,8 @@ func TestGetDelegationSnapShotHistoryOf(t *testing.T) {
 			description: "should return snapshot history for specific delegator only",
 		},
 		{
-			name: "invalid delegator address",
-			state: &State{
-				snapShotHistory: make(SnapShotMap),
-			},
+			name:         "invalid delegator address",
+			historyState: NewHistoryState(),
 			delegator:    invalidAddress,
 			expectPanic:  true,
 			panicMessage: "invalid delegator address",
@@ -1959,8 +1937,8 @@ func TestGetDelegationSnapShotHistoryOf(t *testing.T) {
 		},
 		{
 			name: "snapshot history with fluctuating amounts",
-			state: &State{
-				snapShotHistory: SnapShotMap{
+			historyState: &HistoryState{
+				snapshotHistory: SnapShotMap{
 					delegator1.String(): []DelegationSnapShotHistory{
 						{
 							to:           delegator1,
@@ -2009,8 +1987,8 @@ func TestGetDelegationSnapShotHistoryOf(t *testing.T) {
 		},
 		{
 			name: "snapshot history with same timestamp",
-			state: &State{
-				snapShotHistory: SnapShotMap{
+			historyState: &HistoryState{
+				snapshotHistory: SnapShotMap{
 					delegator1.String(): []DelegationSnapShotHistory{
 						{
 							to:           delegator1,
@@ -2056,14 +2034,20 @@ func TestGetDelegationSnapShotHistoryOf(t *testing.T) {
 						t.Errorf("expected panic but none occurred")
 						return
 					}
-					panicStr := fmt.Sprintf("%v", r)
+					panicStr := ufmt.Sprintf("%v", r)
 					if !strings.Contains(panicStr, tt.panicMessage) {
 						t.Errorf("expected panic to contain '%s', got '%s'", tt.panicMessage, panicStr)
 					}
 				}()
 			}
 
-			result := tt.state.GetDelegationSnapShotHistoryOf(tt.delegator)
+			// mock the history state
+			historyState.SnapshotHistory()[tt.delegator.String()] = tt.historyState.SnapshotHistory()[tt.delegator.String()]
+			defer func() {
+				historyState.SnapshotHistory()[tt.delegator.String()] = nil
+			}()
+
+			result := GetDelegationSnapShotHistoryOf(tt.delegator)
 
 			if !tt.expectPanic {
 				uassert.Equal(t, len(tt.expectedResult), len(result), "snapshot history length mismatch")
@@ -2131,13 +2115,11 @@ func TestCleanDelegationStatHistory(t *testing.T) {
 			testing.SetOriginCaller(caller)
 			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker"))
 
-			state := NewState()
-			state.SnapShotHistory()[addrKey] = tt.inputHistory
+			historyState.SnapshotHistory()[addrKey] = tt.inputHistory
 
-			last := tt.lastCleaned
-			state.CleanDelegationStatHistory(&last, tt.threshold)
+			CleanDelegationStatHistory(tt.threshold)
 
-			snapshots := state.SnapShotHistory()[addrKey]
+			snapshots := historyState.SnapshotHistory()[addrKey]
 			uassert.Equal(t, tt.expectedLen, len(snapshots), "unexpected snapshot history length")
 		})
 	}
