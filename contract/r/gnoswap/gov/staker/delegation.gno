@@ -1,12 +1,10 @@
-package staker2
+package staker
 
 import (
 	"fmt"
 	"std"
 
 	"gno.land/p/demo/ufmt"
-
-	"gno.land/p/gnoswap/consts"
 )
 
 // global state initialization
@@ -159,9 +157,4 @@ func (st *DelegationState) removeDelegation(record DelegationRecord) *Delegation
 	}
 
 	return st
-}
-
-// milliToSec converts milliseconds to seconds
-func milliToSec(ms int64) int64 {
-	return ms / consts.MILLISECONDS_PER_SECOND
 }

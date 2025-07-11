@@ -3,8 +3,6 @@ package staker
 import (
 	"std"
 
-	"gno.land/p/demo/avl"
-
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 )
@@ -21,7 +19,7 @@ func GetTotalVoteWeight() int64 {
 
 // GetTotalDelegated returns the total amount of xGNS delegated.
 func GetTotalDelegated() uint64 {
-	return totalDelegated
+	return delegationState.TotalDelegated()
 }
 
 // GetTotalLockedAmount returns the total amount of locked GNS.
@@ -31,35 +29,35 @@ func GetTotalLockedAmount() uint64 {
 
 // GetTotalDelegatedFrom returns the total amount of xGNS delegated by given address.
 func GetTotalDelegatedFrom(from std.Address) uint64 {
-	amount, exist := delegatorAmount.Get(from.String())
+	amount, exist := delegationState.DelegatorAmount()[from.String()]
 	if !exist {
 		return 0
 	}
-	return amount.(uint64)
+	return amount
 }
 
 // GetTotalDelegatedTo returns the total amount of xGNS delegated to given address.
 func GetTotalDelegatedTo(to std.Address) uint64 {
-	amount, exist := delegatedTo.Get(to.String())
+	amount, exist := delegationState.DelegatedTo()[to.String()]
 	if !exist {
 		return 0
 	}
-	return amount.(uint64)
+	return amount
 }
 
 // GetDelegationAmountFromTo returns the amount of xGNS delegated by given address to given address.
 func GetDelegationAmountFromTo(from, to std.Address) uint64 {
-	toAmount, exist := delegatedFromTo.Get(from.String())
+	toAmount, exist := delegationState.DelegatedFromTo()[from.String()]
 	if !exist {
 		return 0
 	}
 
-	amount, exist := toAmount.(*avl.Tree).Get(to.String())
+	amount, exist := toAmount[to.String()]
 	if !exist {
 		return 0
 	}
 
-	return amount.(uint64)
+	return amount
 }
 
 // GetRealmGnsBalance returns the amount of GNS in the current realm.

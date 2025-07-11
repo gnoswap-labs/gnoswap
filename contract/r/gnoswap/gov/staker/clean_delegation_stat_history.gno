@@ -1,8 +1,8 @@
+// TODO: Change file name
+
 package staker
 
 import (
-	"std"
-
 	"gno.land/p/gnoswap/consts"
 )
 
@@ -43,35 +43,41 @@ func SetRunning(cur realm, run bool) {
 	running = run
 }
 
-// cleanDelegationStatHistory cleans delegation stat history
-func cleanDelegationStatHistory() {
-	height := uint64(std.ChainHeight())
-	sinceLast := height - lastCleanedHeight
-
-	if sinceLast < uint64(thresholdVotingWeightBlockHeight) {
-		return
-	}
-
-	lastCleanedHeight = height
-
-	// delete history older than 1 day, but keep the latest one
-	keepFrom := height - uint64(thresholdVotingWeightBlockHeight)
-
-	delegationSnapShotHistory.Iterate("", "", func(key string, value any) bool {
-		history := value.([]DelegationSnapShotHistory)
-
-		// reverse history
-		for i := len(history) - 1; i >= 0; i-- {
-			if history[i].updatedBlock > keepFrom {
-				continue
-			}
-
-			// save truncated history
-			newHistory := history[i:]
-			delegationSnapShotHistory.Set(key, newHistory)
-			break
-		}
-
-		return false
-	})
+// CleanDelegationStatHistory is a wrapper for HistoryState method
+// TODO: should be private
+func CleanDelegationStatHistory(thresholdVotingWeightBlockHeight int64) {
+	historyState.CleanDelegationStatHistory(thresholdVotingWeightBlockHeight)
 }
+
+// cleanDelegationStatHistory cleans delegation stat history
+// func cleanDelegationStatHistory() {
+// 	height := uint64(std.ChainHeight())
+// 	sinceLast := height - lastCleanedHeight
+
+// 	if sinceLast < uint64(thresholdVotingWeightBlockHeight) {
+// 		return
+// 	}
+
+// 	lastCleanedHeight = height
+
+// 	// delete history older than 1 day, but keep the latest one
+// 	keepFrom := height - uint64(thresholdVotingWeightBlockHeight)
+
+// 	delegationSnapShotHistory.Iterate("", "", func(key string, value any) bool {
+// 		history := value.([]DelegationSnapShotHistory)
+
+// 		// reverse history
+// 		for i := len(history) - 1; i >= 0; i-- {
+// 			if history[i].updatedBlock > keepFrom {
+// 				continue
+// 			}
+
+// 			// save truncated history
+// 			newHistory := history[i:]
+// 			delegationSnapShotHistory.Set(key, newHistory)
+// 			break
+// 		}
+
+// 		return false
+// 	})
+// }

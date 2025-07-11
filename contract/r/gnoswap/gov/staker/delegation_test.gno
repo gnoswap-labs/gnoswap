@@ -1,14 +1,12 @@
-package staker2
+package staker
 
 import (
 	"std"
 	"strings"
 	"testing"
-	"time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
 )
 
 func TestApplyDelegationChange(t *testing.T) {
@@ -673,7 +671,7 @@ func TestUpdateDelegationSnapShotHistory(t *testing.T) {
 	})
 }
 
-func TestDelegate(t *testing.T) {
+func TestDelegate_Internal(t *testing.T) {
 	caller := testutils.TestAddress("caller")
 	delegatee := testutils.TestAddress("delegatee")
 
@@ -886,7 +884,7 @@ func TestDelegate(t *testing.T) {
 	}
 }
 
-func TestUndelegate(t *testing.T) {
+func TestUndelegate_Internal(t *testing.T) {
 	caller := testutils.TestAddress("caller")
 	delegatee := testutils.TestAddress("delegatee")
 

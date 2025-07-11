@@ -1,102 +1,190 @@
 package staker
 
 import (
+	"fmt"
 	"std"
 	"time"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
+)
+
+var historyState *HistoryState
+
+// GetDelegatedCumulative is a wrapper for HistoryState method
+func GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
+	return historyState.GetDelegatedCumulative(delegator, endTimestamp)
+}
+
+// GetDelegateHistoryOf is a wrapper for HistoryState method
+func GetDelegateHistoryOf(delegator std.Address) []DelegationHistory {
+	return historyState.GetDelegateHistoryOf(delegator)
+}
+
+// GetDelegationSnapShotHistoryOf is a wrapper for HistoryState method
+func GetDelegationSnapShotHistoryOf(delegator std.Address) []DelegationSnapShotHistory {
+	return historyState.GetDelegationSnapShotHistoryOf(delegator)
+}
+
+// CleanDelegationStatHistory is a wrapper for HistoryState method
+// TODO: should be private
+func CleanDelegationStatHistory(thresholdVotingWeightBlockHeight int64) {
+	historyState.CleanDelegationStatHistory(thresholdVotingWeightBlockHeight)
+}
+
+type (
+	HistoryMap  = map[string][]DelegationHistory
+	SnapShotMap = map[string][]DelegationSnapShotHistory
 )
 
 // DelegationHistory represents a single delegation event
 type DelegationHistory struct {
-	to        std.Address
-	amount    uint64
-	timestamp uint64
-	height    uint64
-	add       bool
+	to        std.Address `json:"to"`
+	amount    uint64      `json:"amount"`
+	timestamp uint64      `json:"timestamp"`
+	height    uint64      `json:"height"`
+	add       bool        `json:"add"`
 }
 
 // DelegationSnapShotHistory represents delegation stat for to address
 type DelegationSnapShotHistory struct {
-	to           std.Address
-	amount       uint64
-	updatedBlock uint64
-	updatedAt    uint64
+	to           std.Address `json:"to"`
+	amount       uint64      `json:"amount"`
+	updatedBlock uint64      `json:"updatedBlock"`
+	updatedAt    uint64      `json:"updatedAt"`
 }
 
-var (
-	delegationHistory         = avl.NewTree() // addr => []delegationHistory
-	delegationSnapShotHistory = avl.NewTree() // addr => []delegationSnapShotHistory
-)
+// HistoryState manages all delegation history data
+type HistoryState struct {
+	delegationHistory HistoryMap
+	snapshotHistory   SnapShotMap
+	lastCleanedHeight uint64
+}
 
-// GetDelegatedCumulative gets the cumulative delegated amount for an address at a certain timestamp.
-func GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
-	if !delegator.IsValid() {
-		panic(addDetailToError(
-			errInvalidAddress,
-			ufmt.Sprintf("invalid delegator address: %s", delegator.String()),
-		))
+func NewHistoryState() *HistoryState {
+	return &HistoryState{
+		delegationHistory: make(HistoryMap),
+		snapshotHistory:   make(SnapShotMap),
+		lastCleanedHeight: 0,
+	}
+}
+
+// Getter methods
+func (hs *HistoryState) DelegationHistory() HistoryMap { return hs.delegationHistory }
+func (hs *HistoryState) SnapshotHistory() SnapShotMap  { return hs.snapshotHistory }
+func (hs *HistoryState) LastCleanedHeight() uint64     { return hs.lastCleanedHeight }
+
+// AppendDelegationHistory adds a new delegation history record
+func (hs *HistoryState) AppendDelegationHistory(from, to std.Address, amount uint64, add bool) error {
+	ts := uint64(time.Now().Unix())
+	if !(from.IsValid() || to.IsValid()) {
+		return fmt.Errorf("invalid address")
 	}
 
-	if endTimestamp > uint64(time.Now().Unix()) {
-		panic(addDetailToError(
-			errFutureTime,
-			ufmt.Sprintf("endTimestamp(%d) > now(%d)", endTimestamp, time.Now().Unix()),
-		))
+	history := DelegationHistory{
+		to:        to,
+		amount:    amount,
+		timestamp: ts,
+		height:    uint64(std.ChainHeight()),
+		add:       add,
 	}
 
-	history := make([]DelegationSnapShotHistory, 0)
-	if value, exists := delegationSnapShotHistory.Get(delegator.String()); exists {
-		history = value.([]DelegationSnapShotHistory)
+	fromStr := from.String()
+	hs.delegationHistory[fromStr] = append(hs.delegationHistory[fromStr], history)
+	return nil
+}
+
+// UpdateDelegationSnapShotHistory updates delegation snapshot for a delegatee
+func (hs *HistoryState) UpdateDelegationSnapShotHistory(to std.Address, amount uint64, add bool) error {
+	if !to.IsValid() {
+		return fmt.Errorf("invalid address")
+	}
+	toStr := to.String()
+
+	ts := uint64(time.Now().Unix())
+	height := uint64(std.ChainHeight())
+
+	snapshots := hs.snapshotHistory[toStr]
+	prev := uint64(0)
+	if len(snapshots) > 0 {
+		prev = snapshots[len(snapshots)-1].amount
+	}
+
+	if add {
+		prev += amount
 	} else {
-		return 0
+		if prev >= amount {
+			prev -= amount
+		} else {
+			prev = 0
+		}
 	}
 
-	// reverse history
+	snapshots = append(snapshots, DelegationSnapShotHistory{
+		to:           to,
+		amount:       prev,
+		updatedBlock: height,
+		updatedAt:    ts,
+	})
+
+	hs.snapshotHistory[toStr] = snapshots
+	return nil
+}
+
+// GetDelegatedCumulative returns cumulative delegated amount at specific timestamp
+func (hs *HistoryState) GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
+	if !delegator.IsValid() {
+		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
+	}
+	if endTimestamp > uint64(time.Now().Unix()) {
+		panic(ufmt.Sprintf("endTimestamp(%d) > now(%d)", endTimestamp, time.Now().Unix()))
+	}
+	toStr := delegator.String()
+	history := hs.snapshotHistory[toStr]
 	for i := len(history) - 1; i >= 0; i-- {
 		record := history[i]
-
-		if record.updatedAt > endTimestamp {
-			continue
+		if record.updatedAt <= endTimestamp {
+			return record.amount
 		}
-
-		return record.amount // return last accumulated amount
 	}
-
 	return 0
 }
 
-// GetDelegateHistoryOf returns the delegation history for a delegator.
-func GetDelegateHistoryOf(delegator std.Address) []DelegationHistory {
+// GetDelegateHistoryOf returns delegation history for a delegator
+func (hs *HistoryState) GetDelegateHistoryOf(delegator std.Address) []DelegationHistory {
 	if !delegator.IsValid() {
-		panic(addDetailToError(
-			errInvalidAddress,
-			ufmt.Sprintf("invalid delegator address: %s", delegator.String()),
-		))
+		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
 	}
-
-	history := make([]DelegationHistory, 0)
-	if value, exists := delegationHistory.Get(delegator.String()); exists {
-		history = value.([]DelegationHistory)
-	}
-
-	return history
+	return hs.delegationHistory[delegator.String()]
 }
 
-// GetDelegationSnapShotHistoryOf returns the delegation snapshot history for a delegator.
-func GetDelegationSnapShotHistoryOf(delegator std.Address) []DelegationSnapShotHistory {
+// GetDelegationSnapShotHistoryOf returns snapshot history for a delegator
+func (hs *HistoryState) GetDelegationSnapShotHistoryOf(delegator std.Address) []DelegationSnapShotHistory {
 	if !delegator.IsValid() {
-		panic(addDetailToError(
-			errInvalidAddress,
-			ufmt.Sprintf("invalid delegator address: %s", delegator.String()),
-		))
+		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
+	}
+	return hs.snapshotHistory[delegator.String()]
+}
+
+// CleanDelegationStatHistory removes old delegation snapshots older than threshold
+func (hs *HistoryState) CleanDelegationStatHistory(thresholdVotingWeightBlockHeight int64) {
+	height := uint64(std.ChainHeight())
+	sinceLast := height - hs.lastCleanedHeight
+
+	if sinceLast < uint64(thresholdVotingWeightBlockHeight) {
+		return
 	}
 
-	history := make([]DelegationSnapShotHistory, 0)
-	if value, exists := delegationSnapShotHistory.Get(delegator.String()); exists {
-		history = value.([]DelegationSnapShotHistory)
-	}
+	hs.lastCleanedHeight = height
+	keepFrom := height - uint64(thresholdVotingWeightBlockHeight)
 
-	return history
+	for key, history := range hs.snapshotHistory {
+		// keep only entries newer than keepFrom, keeping at least one entry
+		for i := len(history) - 1; i >= 0; i-- {
+			if history[i].updatedBlock > keepFrom {
+				continue
+			}
+			hs.snapshotHistory[key] = history[i:]
+			break
+		}
+	}
 }

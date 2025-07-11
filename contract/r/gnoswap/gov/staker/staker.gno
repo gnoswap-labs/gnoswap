@@ -81,12 +81,12 @@ func Delegate(cur realm, to std.Address, amount uint64, referrer string) {
 	en.MintAndDistributeGns(cross)
 
 	if running {
-		cleanDelegationStatHistory()
+		CleanDelegationStatHistory(thresholdVotingWeightBlockHeight)
 	}
 	rewardState.addStake(uint64(std.ChainHeight()), caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
 
 	// actual delegate
-	delegate(to, amount)
+	delegate(delegationState, historyState, to, amount)
 
 	// xGNS mint to caller
 	xgns.Mint(cross, caller, int64(amount))
@@ -146,12 +146,12 @@ func Redelegate(cur realm, from, to std.Address, amount uint64) {
 	en.MintAndDistributeGns(cross)
 
 	if running {
-		cleanDelegationStatHistory()
+		CleanDelegationStatHistory(thresholdVotingWeightBlockHeight)
 	}
 
 	CollectReward(cur)
-	unDelegate(from, amount)
-	delegate(to, amount)
+	undelegate(delegationState, historyState, from, amount)
+	delegate(delegationState, historyState, to, amount)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -200,7 +200,7 @@ func Undelegate(cur realm, from std.Address, amount uint64) {
 	en.MintAndDistributeGns(cross)
 
 	if running {
-		cleanDelegationStatHistory()
+		CleanDelegationStatHistory(thresholdVotingWeightBlockHeight)
 	}
 
 	reward, protocolFeeRewards := rewardState.removeStake(caller, amount, collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
@@ -213,7 +213,7 @@ func Undelegate(cur realm, from std.Address, amount uint64) {
 	}
 
 	// actual unDelegate
-	unDelegate(from, amount)
+	undelegate(delegationState, historyState, from, amount)
 	// burn equivalent amount of xGNS
 	xgns.Burn(cross, caller, int64(amount))
 
