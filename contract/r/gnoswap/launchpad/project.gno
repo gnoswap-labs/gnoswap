@@ -94,6 +94,10 @@ func (p *Project) IsEnded(currentHeight int64) bool {
 	return p.standardTier().isEnded(currentHeight)
 }
 
+func (p *Project) IsOwner(caller std.Address) bool {
+	return p.recipient == caller
+}
+
 func (p *Project) RemainingAmount() int64 {
 	remainingAmount := int64(0)
 
