@@ -10,63 +10,63 @@ import (
 	"gno.land/p/demo/uassert"
 )
 
-// func TestCollectDepositGns(t *testing.T) {
-// 	userAddr := testutils.TestAddress("user")
-// 	otherAddr := testutils.TestAddress("other")
+func TestCollectDepositGns(t *testing.T) {
+	userAddr := testutils.TestAddress("user")
+	otherAddr := testutils.TestAddress("other")
 
-// 	tests := []struct {
-// 		name                 string
-// 		depositID            string
-// 		callerAddress        std.Address
-// 		expectedHasAbort     bool
-// 		expectedAbortMessage string
-// 		expectedAmount       int64
-// 	}{
-// 		{
-// 			name:             "collect deposit gns successfully",
-// 			depositID:        "gno.land/r/onbloc/obl:123:30:g1w4ek2ujlta047h6lta047h6lta047h6lkvk347:133",
-// 			callerAddress:    userAddr,
-// 			expectedHasAbort: false,
-// 			expectedAmount:   1000,
-// 		},
-// 		{
-// 			name:                 "collect deposit gns failed by invalid deposit id",
-// 			depositID:            "invalid_deposit",
-// 			callerAddress:        userAddr,
-// 			expectedHasAbort:     true,
-// 			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-005] deposit not exist || (invalid_deposit)",
-// 		},
-// 		{
-// 			name:                 "collect deposit gns failed by invalid owner",
-// 			depositID:            "gno.land/r/onbloc/obl:123:30:g1w4ek2ujlta047h6lta047h6lta047h6lkvk347:133",
-// 			callerAddress:        otherAddr,
-// 			expectedHasAbort:     true,
-// 			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-002] invalid address || (g1jg757dh8gdrpm9s4x7m6mzrr4r4qcqvx4x4qcq)",
-// 		},
-// 	}
+	tests := []struct {
+		name                 string
+		depositID            string
+		callerAddress        std.Address
+		expectedHasAbort     bool
+		expectedAbortMessage string
+		expectedAmount       int64
+	}{
+		{
+			name:             "collect deposit gns successfully",
+			depositID:        "gno.land/r/onbloc/obl:123:30:g1w4ek2ujlta047h6lta047h6lta047h6lkvk347:133",
+			callerAddress:    userAddr,
+			expectedHasAbort: false,
+			expectedAmount:   1000000000,
+		},
+		{
+			name:                 "collect deposit gns failed by invalid deposit id",
+			depositID:            "invalid_deposit",
+			callerAddress:        userAddr,
+			expectedHasAbort:     true,
+			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-020] not exist deposit || (invalid_deposit)",
+		},
+		{
+			name:                 "collect deposit gns failed by invalid owner",
+			depositID:            "gno.land/r/onbloc/obl:123:30:g1w4ek2ujlta047h6lta047h6lta047h6lkvk347:133",
+			callerAddress:        otherAddr,
+			expectedHasAbort:     true,
+			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-026] invalid owner || (g1da6xsetjta047h6lta047h6lta047h6ltrh8mk)",
+		},
+	}
 
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			initLaunchpadWithdrawTest(t)
-// 			testing.SetOriginCaller(tt.callerAddress)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initLaunchpadWithdrawTest(t)
+			testing.SetOriginCaller(tt.callerAddress)
 
-// 			println(tt.callerAddress.String())
+			println(tt.callerAddress.String())
 
-// 			collectDepositFn := func() {
-// 			CollectDepositGns(cross, tt.depositID)
-// 			}
+			collectDepositFn := func() {
+				CollectDepositGns(cross, tt.depositID)
+			}
 
-// 			if tt.expectedHasAbort {
-// 				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, collectDepositFn)
-// 				return
-// 			}
+			if tt.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, collectDepositFn)
+				return
+			}
 
-// 			amount, err := CollectDepositGns(cross, tt.depositID)
-// 			uassert.NoError(t, err)
-// 			uassert.Equal(t, tt.expectedAmount, amount)
-// 		})
-// 	}
-// }
+			amount, err := CollectDepositGns(cross, tt.depositID)
+			uassert.NoError(t, err)
+			uassert.Equal(t, tt.expectedAmount, amount)
+		})
+	}
+}
 
 func TestWithdrawDeposit(t *testing.T) {
 	const currentDepositID = "gno.land/r/onbloc/obl:123:30:g1w4ek2ujlta047h6lta047h6lta047h6lkvk347:133"
@@ -79,8 +79,8 @@ func TestWithdrawDeposit(t *testing.T) {
 		expectedAmount       int64
 	}{
 		{
-			name: "withdraw deposit successfully",
-			depositID: currentDepositID,
+			name:             "withdraw deposit successfully",
+			depositID:        currentDepositID,
 			expectedHasError: false,
 			expectedAmount:   1000000000,
 		},
@@ -120,17 +120,17 @@ func initLaunchpadWithdrawTest(t *testing.T) {
 	// Setup test project
 	project, _ := createProject(
 		&createProjectParams{
-			name: "Test Project",
-			tokenPath:   "gno.land/r/onbloc/obl",
-			depositAmount: 1000000,
-			tier30Ratio: 30,
-			tier90Ratio: 30,
-			tier180Ratio: 40,
+			name:               "Test Project",
+			tokenPath:          "gno.land/r/onbloc/obl",
+			depositAmount:      1000000,
+			tier30Ratio:        30,
+			tier90Ratio:        30,
+			tier180Ratio:       40,
 			averageBlockTimeMs: 2000,
-			recipient: testutils.TestAddress("project"), // TODO: change to real address
-			startTime: currentTime + 10,
-			currentTime: currentTime,
-			currentHeight: currentHeight,
+			recipient:          testutils.TestAddress("project"), // TODO: change to real address
+			startTime:          currentTime + 10,
+			currentTime:        currentTime,
+			currentHeight:      currentHeight,
 		},
 	)
 	projects.Set(project.ID(), project)
