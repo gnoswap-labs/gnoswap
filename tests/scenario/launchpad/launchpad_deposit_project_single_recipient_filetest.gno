@@ -89,13 +89,13 @@ func createOBLProject() {
 	recipientAddr := testutils.TestAddress("project-owner")
 	projectName := "OBL Launchpad Project"
 	rewardTokenPath := "gno.land/r/onbloc/obl"
-	rewardAmount := uint64(1_000_000_000)
+	rewardAmount := int64(1_000_000_000)
 	conditionPath := "gno.land/r/gnoswap/v1/gov/xgns"
 	conditionsAmount := "1000000"
-	tier30Ratio := uint64(10)
-	tier90Ratio := uint64(20)
-	tier180Ratio := uint64(70)
-	startTime := uint64(time.Now().Unix() + 10)
+	tier30Ratio := int64(10)
+	tier90Ratio := int64(20)
+	tier180Ratio := int64(70)
+	startTime := int64(time.Now().Unix() + 3600) // 1 hour
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
@@ -113,6 +113,9 @@ func createOBLProject() {
 		tier180Ratio, // 700000000
 		startTime,    // 5 block later
 	)
+
+	println("[INFO] Skipping 3600 blocks")
+	testing.SkipHeights(3600)
 
 	println("[EXPECTED] Project created with ID:", projectId)
 
@@ -192,7 +195,7 @@ func depositGnsTo(projectId, projectTierId string, depositAmount int64) {
 	depositId := launchpad.DepositGns(
 		cross,
 		projectTierId,
-		uint64(depositAmount),
+		int64(depositAmount),
 		"",
 	)
 	println("[EXPECTED] Deposit created with ID:", depositId)
@@ -300,6 +303,7 @@ func unmarshal(data string) map[string]interface{} {
 // [SCENARIO] 1. Create OBL launchpad project
 // [INFO] Creating OBL launchpad project
 // [INFO] Admin creating OBL project
+// [INFO] Skipping 3600 blocks
 // [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
 // [EXPECTED] Project name: OBL Launchpad Project
 // [EXPECTED] Project token path: gno.land/r/onbloc/obl
@@ -333,7 +337,7 @@ func unmarshal(data string) map[string]interface{} {
 // [INFO] Admin transferring GNS to Bob for deposit
 // [INFO] Bob delegating GNS to gov staker
 // [INFO] Skipping blocks to make project active
-// [EXPECTED] Deposit created with ID: gno.land/r/onbloc/obl:123:30:g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu:128
+// [EXPECTED] Deposit created with ID: gno.land/r/onbloc/obl:123:30:g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu:3728
 // [EXPECTED] Deposit amount: 1000000
 // [EXPECTED] Deposit tier: 30
 // [EXPECTED] Deposit depositor: g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu
@@ -371,7 +375,7 @@ func unmarshal(data string) map[string]interface{} {
 // [INFO] Admin transferring GNS to Bob for deposit
 // [INFO] Bob delegating GNS to gov staker
 // [INFO] Skipping blocks to make project active
-// [EXPECTED] Deposit created with ID: gno.land/r/onbloc/obl:123:30:g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu:134
+// [EXPECTED] Deposit created with ID: gno.land/r/onbloc/obl:123:30:g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu:3734
 // [EXPECTED] Deposit amount: 1000000
 // [EXPECTED] Deposit tier: 30
 // [EXPECTED] Deposit depositor: g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu
