@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestSetOperationStatus(t *testing.T) {
+func TestOperationStatus_SetOperationStatus(t *testing.T) {
 	tt := []struct {
 		name    string
 		setupFn func() *Manager
@@ -183,7 +183,7 @@ func TestSetOperationStatus(t *testing.T) {
 	}
 }
 
-func TestSetOperationStatus_ToggleOperations(t *testing.T) {
+func TestOperationStatus_SetOperationStatusToggleOperations(t *testing.T) {
 	tests := []struct {
 		name      string
 		setupFn   func() *Manager
@@ -325,7 +325,7 @@ func TestSetOperationStatus_ToggleOperations(t *testing.T) {
 	}
 }
 
-func TestSetOperationStatusScenarios(t *testing.T) {
+func TestOperationStatus_SetOperationStatusScenarios(t *testing.T) {
 	tt := []struct {
 		name    string
 		setupFn func() *Manager

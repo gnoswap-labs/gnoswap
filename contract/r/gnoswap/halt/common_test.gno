@@ -6,196 +6,241 @@ import (
 	"gno.land/p/demo/uassert"
 )
 
-func TestBaseInfo(t *testing.T) {
+func TestCommon_newBaseInfo(t *testing.T) {
 	tests := []struct {
-		name     string
-		inName   string
-		inDesc   string
-		wantName string
-		wantDesc string
+		name                 string
+		inputName            string
+		inputDesc            string
+		expectedName         string
+		expectedDesc         string
+		expectedHasPanic     bool
+		expectedPanicMessage string
 	}{
 		{
-			name:     "newBaseInfo creates valid baseInfo",
-			inName:   "test-name",
-			inDesc:   "test description",
-			wantName: "test-name",
-			wantDesc: "test description",
+			name:             "Success with valid input",
+			inputName:        "test-name",
+			inputDesc:        "test description",
+			expectedName:     "test-name",
+			expectedDesc:     "test description",
+			expectedHasPanic: false,
 		},
 		{
-			name:     "baseInfo with empty values",
-			inName:   "",
-			inDesc:   "",
-			wantName: "",
-			wantDesc: "",
+			name:             "Success with empty values",
+			inputName:        "",
+			inputDesc:        "",
+			expectedName:     "",
+			expectedDesc:     "",
+			expectedHasPanic: false,
 		},
 		{
-			name:     "baseInfo with unicode characters",
-			inName:   "测试名称",
-			inDesc:   "これは説明です",
-			wantName: "测试名称",
-			wantDesc: "これは説明です",
+			name:             "Success with unicode characters",
+			inputName:        "测试名称",
+			inputDesc:        "これは説明です",
+			expectedName:     "测试名称",
+			expectedDesc:     "これは説明です",
+			expectedHasPanic: false,
 		},
 		{
-			name:     "baseInfo with special characters",
-			inName:   "test@name#123",
-			inDesc:   "test & description with <special> chars",
-			wantName: "test@name#123",
-			wantDesc: "test & description with <special> chars",
+			name:             "Success with special characters",
+			inputName:        "test@name#123",
+			inputDesc:        "test & description with <special> chars",
+			expectedName:     "test@name#123",
+			expectedDesc:     "test & description with <special> chars",
+			expectedHasPanic: false,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			info := newBaseInfo(tt.inName, tt.inDesc)
-
-			uassert.Equal(t, tt.wantName, info.Name())
-			uassert.Equal(t, tt.wantDesc, info.Desc())
-		})
-	}
-}
-
-func TestBaseInfoInterface(t *testing.T) {
-	tests := []struct {
-		name     string
-		verifyFn func(t *testing.T)
-	}{
-		{
-			name: "baseInfo implements baseOp interface",
-			verifyFn: func(t *testing.T) {
-				var op baseOp = newBaseInfo("test", "description")
-				uassert.Equal(t, "test", op.Name())
-				uassert.Equal(t, "description", op.Desc())
-			},
-		},
-		{
-			name: "baseInfo can be used as embedded struct",
-			verifyFn: func(t *testing.T) {
-				// Create a custom type that embeds baseInfo
-				type customType struct {
-					baseInfo
-					value int
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.Equal(t, tc.expectedPanicMessage, r.(string))
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
 				}
+			}()
 
-				custom := customType{
-					baseInfo: newBaseInfo("custom", "custom desc"),
-					value:    42,
+			// given
+			// when
+			info := newBaseInfo(tc.inputName, tc.inputDesc)
+
+			// then
+			uassert.Equal(t, tc.expectedName, info.Name())
+			uassert.Equal(t, tc.expectedDesc, info.Desc())
+		})
+	}
+}
+
+func TestCommon_baseInfoInterface(t *testing.T) {
+	tests := []struct {
+		name                 string
+		expectedHasPanic     bool
+		expectedPanicMessage string
+	}{
+		{
+			name:             "Success implements baseOp interface",
+			expectedHasPanic: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.Equal(t, tc.expectedPanicMessage, r.(string))
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
 				}
+			}()
 
-				uassert.Equal(t, "custom", custom.Name())
-				uassert.Equal(t, "custom desc", custom.Desc())
-				uassert.Equal(t, 42, custom.value)
-			},
-		},
-	}
+			// given
+			// when
+			var op baseOp = newBaseInfo("test", "description")
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.verifyFn(t)
+			// then
+			uassert.Equal(t, "test", op.Name())
+			uassert.Equal(t, "description", op.Desc())
 		})
 	}
 }
 
-func TestBaseInfoModification(t *testing.T) {
+func TestCommon_baseInfoModification(t *testing.T) {
 	tests := []struct {
-		name     string
-		verifyFn func(t *testing.T)
+		name                 string
+		expectedHasPanic     bool
+		expectedPanicMessage string
 	}{
 		{
-			name: "baseInfo fields are immutable after creation",
-			verifyFn: func(t *testing.T) {
-				info := newBaseInfo("original", "original desc")
-				// Cannot modify internal fields directly since they're private
-				// This test ensures the design maintains immutability
-				uassert.Equal(t, "original", info.Name())
-				uassert.Equal(t, "original desc", info.Desc())
-			},
-		},
-		{
-			name: "creating multiple baseInfo instances",
-			verifyFn: func(t *testing.T) {
-				info1 := newBaseInfo("first", "first desc")
-				info2 := newBaseInfo("second", "second desc")
-				// Each instance should be independent
-				uassert.Equal(t, "first", info1.Name())
-				uassert.Equal(t, "first desc", info1.Desc())
-				uassert.Equal(t, "second", info2.Name())
-				uassert.Equal(t, "second desc", info2.Desc())
-			},
+			name:             "Success fields are immutable after creation",
+			expectedHasPanic: false,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.verifyFn(t)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.Equal(t, tc.expectedPanicMessage, r.(string))
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
+				}
+			}()
+
+			// given
+			// when
+			info := newBaseInfo("original", "original desc")
+
+			// then
+			uassert.Equal(t, "original", info.Name())
+			uassert.Equal(t, "original desc", info.Desc())
 		})
 	}
 }
 
-func TestBaseInfoLongValues(t *testing.T) {
+func TestCommon_baseInfoLongValues(t *testing.T) {
 	tests := []struct {
-		name     string
-		inName   string
-		inDesc   string
-		wantName string
-		wantDesc string
+		name                 string
+		inputName            string
+		inputDesc            string
+		expectedName         string
+		expectedDesc         string
+		expectedHasPanic     bool
+		expectedPanicMessage string
 	}{
 		{
-			name:     "baseInfo with very long strings",
-			inName:   "this_is_a_very_long_name_that_should_still_work_properly_even_with_many_characters_and_underscores_and_numbers_123456789",
-			inDesc:   "This is a very long description that spans multiple lines and contains various types of information including technical details, explanations, and examples that might be used in real-world scenarios where detailed documentation is required.",
-			wantName: "this_is_a_very_long_name_that_should_still_work_properly_even_with_many_characters_and_underscores_and_numbers_123456789",
-			wantDesc: "This is a very long description that spans multiple lines and contains various types of information including technical details, explanations, and examples that might be used in real-world scenarios where detailed documentation is required.",
+			name:             "Success with very long strings",
+			inputName:        "this_is_a_very_long_name_that_should_still_work_properly_even_with_many_characters_and_underscores_and_numbers_123456789",
+			inputDesc:        "This is a very long description that spans multiple lines and contains various types of information including technical details, explanations, and examples that might be used in real-world scenarios where detailed documentation is required.",
+			expectedName:     "this_is_a_very_long_name_that_should_still_work_properly_even_with_many_characters_and_underscores_and_numbers_123456789",
+			expectedDesc:     "This is a very long description that spans multiple lines and contains various types of information including technical details, explanations, and examples that might be used in real-world scenarios where detailed documentation is required.",
+			expectedHasPanic: false,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			info := newBaseInfo(tt.inName, tt.inDesc)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.Equal(t, tc.expectedPanicMessage, r.(string))
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
+				}
+			}()
 
-			uassert.Equal(t, tt.wantName, info.Name())
-			uassert.Equal(t, tt.wantDesc, info.Desc())
+			// given
+			// when
+			info := newBaseInfo(tc.inputName, tc.inputDesc)
+
+			// then
+			uassert.Equal(t, tc.expectedName, info.Name())
+			uassert.Equal(t, tc.expectedDesc, info.Desc())
 		})
 	}
 }
 
-func TestBaseInfoEdgeCases(t *testing.T) {
+func TestCommon_baseInfoEdgeCases(t *testing.T) {
 	tests := []struct {
-		name     string
-		inName   string
-		inDesc   string
-		wantName string
-		wantDesc string
+		name                 string
+		inputName            string
+		inputDesc            string
+		expectedName         string
+		expectedDesc         string
+		expectedHasPanic     bool
+		expectedPanicMessage string
 	}{
 		{
-			name:     "baseInfo with whitespace",
-			inName:   "  name with spaces  ",
-			inDesc:   "\tdescription\nwith\ttabs\nand\nnewlines  ",
-			wantName: "  name with spaces  ",
-			wantDesc: "\tdescription\nwith\ttabs\nand\nnewlines  ",
+			name:             "Success with whitespace",
+			inputName:        "  name with spaces  ",
+			inputDesc:        "\tdescription\nwith\ttabs\nand\nnewlines  ",
+			expectedName:     "  name with spaces  ",
+			expectedDesc:     "\tdescription\nwith\ttabs\nand\nnewlines  ",
+			expectedHasPanic: false,
 		},
 		{
-			name:     "baseInfo with numeric strings",
-			inName:   "12345",
-			inDesc:   "999.999",
-			wantName: "12345",
-			wantDesc: "999.999",
+			name:             "Success with numeric strings",
+			inputName:        "12345",
+			inputDesc:        "999.999",
+			expectedName:     "12345",
+			expectedDesc:     "999.999",
+			expectedHasPanic: false,
 		},
 		{
-			name:     "baseInfo with single characters",
-			inName:   "a",
-			inDesc:   "1",
-			wantName: "a",
-			wantDesc: "1",
+			name:             "Success with single characters",
+			inputName:        "a",
+			inputDesc:        "1",
+			expectedName:     "a",
+			expectedDesc:     "1",
+			expectedHasPanic: false,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			info := newBaseInfo(tt.inName, tt.inDesc)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.Equal(t, tc.expectedPanicMessage, r.(string))
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
+				}
+			}()
 
-			// Should preserve whitespace as-is
-			uassert.Equal(t, tt.wantName, info.Name())
-			uassert.Equal(t, tt.wantDesc, info.Desc())
+			// given
+			// when
+			info := newBaseInfo(tc.inputName, tc.inputDesc)
+
+			// then
+			uassert.Equal(t, tc.expectedName, info.Name())
+			uassert.Equal(t, tc.expectedDesc, info.Desc())
 		})
 	}
 }

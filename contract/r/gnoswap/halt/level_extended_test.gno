@@ -6,7 +6,7 @@ import (
 	"gno.land/p/demo/uassert"
 )
 
-func TestLevelID(t *testing.T) {
+func TestLevelExtended_LevelID(t *testing.T) {
 	tests := []struct {
 		name   string
 		testFn func(t *testing.T)
@@ -80,7 +80,7 @@ func TestLevelID(t *testing.T) {
 	}
 }
 
-func TestLevelIDFromString(t *testing.T) {
+func TestLevelExtended_LevelIDFromString(t *testing.T) {
 	tests := []struct {
 		name   string
 		testFn func(t *testing.T)
@@ -136,7 +136,7 @@ func TestLevelIDFromString(t *testing.T) {
 	}
 }
 
-func TestBasicHaltLevel(t *testing.T) {
+func TestLevelExtended_BasicHaltLevel(t *testing.T) {
 	t.Run("NewHaltLevel creates valid BasicHaltLevel", func(t *testing.T) {
 		allowedOps := map[OpType]bool{
 			OpTypePool:     true,
@@ -200,7 +200,7 @@ func TestBasicHaltLevel(t *testing.T) {
 	})
 }
 
-func TestHaltLevels(t *testing.T) {
+func TestLevelExtended_HaltLevels(t *testing.T) {
 	t.Run("HaltLevels Iter with no matches", func(t *testing.T) {
 		// Create levels directly to avoid the NewHaltLevel issue
 		base1 := newBaseInfo("Level1", "Description1")
@@ -300,7 +300,7 @@ func TestHaltLevels(t *testing.T) {
 	})
 }
 
-func TestCompositeOp(t *testing.T) {
+func TestLevelExtended_CompositeOp(t *testing.T) {
 	t.Run("CompositeOp string representation", func(t *testing.T) {
 		uassert.Equal(t, "and", CompositeOpAnd.String())
 		uassert.Equal(t, "or", CompositeOpOr.String())
@@ -328,7 +328,7 @@ func TestCompositeOp(t *testing.T) {
 	})
 }
 
-func TestCompositeHaltLevel(t *testing.T) {
+func TestLevelExtended_CompositeHaltLevel(t *testing.T) {
 	t.Run("CompositeHaltLevel with AND operator", func(t *testing.T) {
 		// Create two levels with different allowed operations
 		level1 := NewHaltLevel(LvNoHalt, "Level1", "Description1", map[OpType]bool{

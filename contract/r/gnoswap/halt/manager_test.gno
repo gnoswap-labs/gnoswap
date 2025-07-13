@@ -2,127 +2,275 @@ package halt
 
 import (
 	"testing"
+
+	"gno.land/p/demo/uassert"
 )
 
-func TestDefaultManager(t *testing.T) {
-	mgr := DefaultManager()
-
-	if mgr.Level().Name() != "NoHalt" {
-		t.Errorf("Expected initial level to be 'NoHalt', got '%s'", mgr.Level().Name())
+func TestManager_DefaultManager(t *testing.T) {
+	tests := []struct {
+		name                 string
+		expectedHasPanic     bool
+		expectedPanicMessage string
+	}{
+		{
+			name:             "Success creates default manager with NoHalt level",
+			expectedHasPanic: false,
+		},
 	}
 
-	// Check that basic operations are registered
-	if _, exists := mgr.operations[OpTypeWithdraw]; !exists {
-		t.Error("Expected OpTypeWithdraw to be registered")
-	}
-}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.Equal(t, tc.expectedPanicMessage, r.(string))
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
+				}
+			}()
 
-func TestNewManagerWithOptions(t *testing.T) {
-	customOp := NewOperation(OpType("customOp"), "Custom Op", "Custom operation")
+			// given
+			// when
+			mgr := DefaultManager()
 
-	customLevel := NewHaltLevel(LevelID(10), "CustomLevel", "Custom level", map[OpType]bool{
-		OpType("customOp"): true,
-	})
-
-	mgr := NewManager(
-		WithOperations([]Operation{customOp}),
-		WithLevels([]HaltLevel{customLevel}),
-		WithInitialLevel(LevelID(10)),
-	)
-
-	if _, exists := mgr.operations[OpType("customOp")]; !exists {
-		t.Error("Expected custom operation to be registered")
-	}
-
-	if _, exists := mgr.levels[LevelID(10)]; !exists {
-		t.Error("Expected custom level to be registered")
-	}
-
-	if mgr.currentLevel.Name() != "CustomLevel" {
-		t.Errorf("Expected current level to be 'CustomLevel', got '%s'", mgr.currentLevel.Name())
+			// then
+			uassert.Equal(t, "NoHalt", mgr.Level().Name())
+			_, exists := mgr.operations[OpTypeWithdraw]
+			uassert.True(t, exists)
+		})
 	}
 }
 
-func TestWithOperationsPanic(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("Expected panic with invalid initial level, but got none")
-		}
-	}()
-
-	NewManager(WithInitialLevel(LevelID(9)))
-}
-
-func TestSetCurrentLevel(t *testing.T) {
-	mgr := DefaultManager()
-
-	if err := mgr.SetCurrentLevel(LvContractHalt); err != nil {
-		t.Errorf("Failed to set current level to 1: %v", err)
+func TestManager_NewManager(t *testing.T) {
+	tests := []struct {
+		name                 string
+		setupFn              func() *Manager
+		expectedLevelName    string
+		expectedHasPanic     bool
+		expectedPanicMessage string
+	}{
+		{
+			name: "Success with custom operations and levels",
+			setupFn: func() *Manager {
+				customOp := NewOperation(OpType("customOp"), "Custom Op", "Custom operation")
+				customLevel := NewHaltLevel(LevelID(10), "CustomLevel", "Custom level", map[OpType]bool{
+					OpType("customOp"): true,
+				})
+				return NewManager(
+					WithOperations([]Operation{customOp}),
+					WithLevels([]HaltLevel{customLevel}),
+					WithInitialLevel(LevelID(10)),
+				)
+			},
+			expectedLevelName: "CustomLevel",
+			expectedHasPanic:  false,
+		},
+		{
+			name: "Error with invalid initial level",
+			setupFn: func() *Manager {
+				return NewManager(WithInitialLevel(LevelID(255)))
+			},
+			expectedHasPanic:     true,
+			expectedPanicMessage: "invalid halt level: 255",
+		},
 	}
-	if mgr.Level().Name() != "ContractHalt" {
-		t.Errorf("Expected current level to be 'ContractHalt', got '%s'", mgr.Level().Name())
-	}
 
-	// Try setting an invalid level and expect an error
-	if err := mgr.SetCurrentLevel(99); err == nil {
-		t.Error("Expected error when setting an invalid halt level, but got nil")
-	}
-}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.True(t, tc.expectedHasPanic)
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
+				}
+			}()
 
-func TestStatus(t *testing.T) {
-	mgr := DefaultManager()
+			// given
+			// when
+			mgr := tc.setupFn()
 
-	if err := mgr.SetCurrentLevel(LvEmergencyHalt); err != nil {
-		t.Errorf("Failed to set current level to 2: %v", err)
-	}
-
-	// The Status method should return the name of the current level
-	status := mgr.Status(OpTypePool) // The passed operation is ignored in Status
-	if status != "EmergencyHalt" {
-		t.Errorf("Expected status 'EmergencyHalt', got '%s'", status)
-	}
-}
-
-func TestRegisterCustomHaltLevel(t *testing.T) {
-	mgr := DefaultManager()
-
-	// Create and register a custom halt level (level 5)
-	const CustomHaltLevel = LevelID(5)
-
-	customLevel := NewHaltLevel(CustomHaltLevel, "CustomHalt", "Custom halt level", map[OpType]bool{
-		OpTypePool:        false,
-		OpTypePosition:    false,
-		OpTypeProtocolFee: false,
-		OpTypeRouter:      false,
-		OpTypeStaker:      false,
-		OpTypeLaunchpad:   false,
-		OpTypeGovernance:  false,
-		OpTypeWithdraw:    false,
-	})
-	mgr.RegisterHaltLevel(customLevel)
-
-	// Set current level to the custom level
-	if err := mgr.SetCurrentLevel(CustomHaltLevel); err != nil {
-		t.Errorf("Failed to set current level to custom level 3: %v", err)
-	}
-	if mgr.Level().Name() != "CustomHalt" {
-		t.Errorf("Expected current level to be 'CustomHalt', got '%s'", mgr.Level().Name())
+			// then
+			if !tc.expectedHasPanic {
+				uassert.Equal(t, tc.expectedLevelName, mgr.currentLevel.Name())
+			}
+		})
 	}
 }
 
-func TestRegisterOperation(t *testing.T) {
-	mgr := DefaultManager()
-
-	// Create and register a new operation
-	newOp := NewOperation(OpType("newOp"), "New Operation", "Test new operation")
-	mgr.RegisterOperation(newOp)
-
-	// Check that the new operation is registered correctly
-	registeredOp, exists := mgr.operations[newOp.Type()]
-	if !exists {
-		t.Error("Expected new operation to be registered")
+func TestManager_SetCurrentLevel(t *testing.T) {
+	tests := []struct {
+		name                 string
+		inputLevel           LevelID
+		expectedLevelName    string
+		expectedHasPanic     bool
+		expectedPanicMessage string
+	}{
+		{
+			name:              "Success set to ContractHalt",
+			inputLevel:        LvContractHalt,
+			expectedLevelName: "ContractHalt",
+			expectedHasPanic:  false,
+		},
+		{
+			name:                 "Error with invalid level",
+			inputLevel:           LevelID(255),
+			expectedHasPanic:     true,
+			expectedPanicMessage: "invalid halt level: 255",
+		},
 	}
-	if registeredOp.Name() != "New Operation" {
-		t.Errorf("Expected new operation name to be 'New Operation', got '%s'", registeredOp.Name())
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.True(t, tc.expectedHasPanic)
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
+				}
+			}()
+
+			// given
+			mgr := DefaultManager()
+
+			// when
+			err := mgr.SetCurrentLevel(tc.inputLevel)
+
+			// then
+			if tc.expectedHasPanic {
+				uassert.True(t, err != nil)
+			} else {
+				uassert.True(t, err == nil)
+				uassert.Equal(t, tc.expectedLevelName, mgr.Level().Name())
+			}
+		})
+	}
+}
+
+func TestManager_Status(t *testing.T) {
+	tests := []struct {
+		name                 string
+		inputLevel           LevelID
+		inputOpType          OpType
+		expectedStatus       string
+		expectedHasPanic     bool
+		expectedPanicMessage string
+	}{
+		{
+			name:             "Success returns EmergencyHalt status",
+			inputLevel:       LvEmergencyHalt,
+			inputOpType:      OpTypePool,
+			expectedStatus:   "EmergencyHalt",
+			expectedHasPanic: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.Equal(t, tc.expectedPanicMessage, r.(string))
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
+				}
+			}()
+
+			// given
+			mgr := DefaultManager()
+			err := mgr.SetCurrentLevel(tc.inputLevel)
+			uassert.True(t, err == nil)
+
+			// when
+			status := mgr.Status(tc.inputOpType)
+
+			// then
+			uassert.Equal(t, tc.expectedStatus, status)
+		})
+	}
+}
+
+func TestManager_RegisterHaltLevel(t *testing.T) {
+	tests := []struct {
+		name                 string
+		expectedHasPanic     bool
+		expectedPanicMessage string
+	}{
+		{
+			name:             "Success register custom halt level",
+			expectedHasPanic: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.Equal(t, tc.expectedPanicMessage, r.(string))
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
+				}
+			}()
+
+			// given
+			mgr := DefaultManager()
+			const CustomHaltLevel = LevelID(5)
+			customLevel := NewHaltLevel(CustomHaltLevel, "CustomHalt", "Custom halt level", map[OpType]bool{
+				OpTypePool: false,
+			})
+
+			// when
+			mgr.RegisterHaltLevel(customLevel)
+			err := mgr.SetCurrentLevel(CustomHaltLevel)
+
+			// then
+			uassert.True(t, err == nil)
+			uassert.Equal(t, "CustomHalt", mgr.Level().Name())
+		})
+	}
+}
+
+func TestManager_RegisterOperation(t *testing.T) {
+	tests := []struct {
+		name                 string
+		expectedHasPanic     bool
+		expectedPanicMessage string
+	}{
+		{
+			name:             "Success register custom operation",
+			expectedHasPanic: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.Equal(t, tc.expectedPanicMessage, r.(string))
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
+				}
+			}()
+
+			// given
+			mgr := DefaultManager()
+			customOp := NewOperation(OpType("customTest"), "Custom Test", "Custom test operation")
+
+			// when
+			mgr.RegisterOperation(customOp)
+
+			// then
+			_, exists := mgr.operations[OpType("customTest")]
+			uassert.True(t, exists)
+		})
 	}
 }

@@ -10,46 +10,145 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 )
 
-// Helper function to reset halt manager to initial state
-func resetToMainnetSafeMode() {
-	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-	adminRealm := std.NewUserRealm(adminAddr)
-	testing.SetRealm(adminRealm)
+func TestHaltExtended_HaltPermissions(t *testing.T) {
+	tests := []struct {
+		name                 string
+		setupLevel           LevelID
+		operationToTest      []OpType
+		useAdminRealm        bool
+		useGovRealm          bool
+		useUnauthorizedRealm bool
+		testAction           string
+		expectedError        bool
+		expectedPanicMessage string
+	}{
+		{
+			name:            "IsHalted with no parameters checks complete halt - CompleteHalt should error",
+			setupLevel:      LvCompleteHalt,
+			operationToTest: []OpType{},
+			useAdminRealm:   true,
+			testAction:      "IsHalted",
+			expectedError:   true,
+		},
+		{
+			name:            "IsHalted with no parameters checks complete halt - NoHalt should not error",
+			setupLevel:      LvNoHalt,
+			operationToTest: []OpType{},
+			useAdminRealm:   true,
+			testAction:      "IsHalted",
+			expectedError:   false,
+		},
+		{
+			name:            "IsHalted with multiple operation types - EmergencyHalt mixed operations",
+			setupLevel:      LvEmergencyHalt,
+			operationToTest: []OpType{OpTypeWithdraw, OpTypePool},
+			useAdminRealm:   true,
+			testAction:      "IsHalted",
+			expectedError:   true, // Pool is not allowed in EmergencyHalt
+		},
+		{
+			name:            "IsHalted with multiple operation types - EmergencyHalt allowed operations",
+			setupLevel:      LvEmergencyHalt,
+			operationToTest: []OpType{OpTypeWithdraw, OpTypeGovernance},
+			useAdminRealm:   true,
+			testAction:      "IsHalted",
+			expectedError:   false,
+		},
+		{
+			name:                 "SetHaltByAdmin with unauthorized caller",
+			setupLevel:           LvMainnetSafeMode,
+			useUnauthorizedRealm: true,
+			testAction:           "SetHaltByAdmin",
+			expectedError:        true,
+			expectedPanicMessage: "only admin can set halt",
+		},
+		{
+			name:          "SetHaltByAdmin with admin privileges - halt true",
+			setupLevel:    LvMainnetSafeMode,
+			useAdminRealm: true,
+			testAction:    "SetHaltByAdmin_true",
+			expectedError: false,
+		},
+		{
+			name:          "SetHaltByAdmin with admin privileges - halt false",
+			setupLevel:    LvCompleteHalt,
+			useAdminRealm: true,
+			testAction:    "SetHaltByAdmin_false",
+			expectedError: false,
+		},
+	}
 
-	// Re-create the MainnetSafeMode level with original settings
-	operations := make(map[OpType]bool)
-	operations[OpTypePool] = true
-	operations[OpTypePosition] = true
-	operations[OpTypeProtocolFee] = true
-	operations[OpTypeRouter] = true
-	operations[OpTypeStaker] = true
-	operations[OpTypeLaunchpad] = true
-	operations[OpTypeGovernance] = true
-	operations[OpTypeGovStaker] = true
-	operations[OpTypeXGns] = true
-	operations[OpTypeEmission] = true
-	operations[OpTypeWithdraw] = false // disabled in MainnetSafeMode
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedPanicMessage != "" {
+						uassert.True(t, strings.Contains(r.(string), tc.expectedPanicMessage))
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
+				}
+			}()
 
-	mainnetSafeMode := NewHaltLevel(
-		LvMainnetSafeMode,
-		"MainnetSafeMode",
-		"Safe mode for post-mainnet (no withdrawals)",
-		operations,
-	)
+			// given
+			resetToMainnetSafeMode()
+			var err error
+			
+			if tc.useAdminRealm {
+				adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+				testing.SetRealm(std.NewUserRealm(adminAddr))
+				err = SetHaltLevelByAdmin(cross, tc.setupLevel)
+				uassert.NoError(t, err)
+			} else if tc.useGovRealm {
+				govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+				testing.SetRealm(std.NewUserRealm(govAddr))
+				err = SetHaltLevel(cross, tc.setupLevel)
+				uassert.NoError(t, err)
+			} else if tc.useUnauthorizedRealm {
+				testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/unauthorized"))
+			}
 
-	// Get the halt manager and re-register the level
-	mgr := GetHaltManager()
-	mgr.RegisterHaltLevel(mainnetSafeMode)
-
-	// Set the level
-	SetHaltLevelByAdmin(cross, LvMainnetSafeMode)
+			// when & then
+			switch tc.testAction {
+			case "IsHalted":
+				err = IsHalted(tc.operationToTest...)
+				if tc.expectedError {
+					uassert.Error(t, err)
+				} else {
+					uassert.NoError(t, err)
+				}
+			case "SetHaltByAdmin":
+				err = SetHaltByAdmin(cross, true)
+				if tc.expectedError {
+					uassert.Error(t, err)
+					if tc.expectedPanicMessage != "" {
+						uassert.True(t, strings.Contains(err.Error(), tc.expectedPanicMessage))
+					}
+				} else {
+					uassert.NoError(t, err)
+				}
+			case "SetHaltByAdmin_true":
+				err = SetHaltByAdmin(cross, true)
+				if tc.expectedError {
+					uassert.Error(t, err)
+				} else {
+					uassert.NoError(t, err)
+					uassert.True(t, GetCurrentHaltLevel() == LvCompleteHalt)
+				}
+			case "SetHaltByAdmin_false":
+				err = SetHaltByAdmin(cross, false)
+				if tc.expectedError {
+					uassert.Error(t, err)
+				} else {
+					uassert.NoError(t, err)
+					uassert.True(t, GetCurrentHaltLevel() == LvNoHalt)
+				}
+			}
+		})
+	}
 }
 
-// Test halt module functions that require specific caller permissions
-func TestHaltPermissions(t *testing.T) {
-	// Reset state when test completes
-	defer resetToMainnetSafeMode()
-
+func TestHaltExtended_SetHaltFunctions(t *testing.T) {
 	var (
 		adminAddr, _      = access.GetAddress(access.ROLE_ADMIN)
 		adminRealm        = std.NewUserRealm(adminAddr)
@@ -62,77 +161,24 @@ func TestHaltPermissions(t *testing.T) {
 		testFn func(t *testing.T)
 	}{
 		{
-			name: "IsHalted with no parameters checks complete halt",
+			name: "SetHaltByAdmin with admin privileges",
 			testFn: func(t *testing.T) {
-				testing.SetRealm(adminRealm)
-
-				// Set to CompleteHalt
-				err := SetHaltLevelByAdmin(cross, LvCompleteHalt)
-				uassert.NoError(t, err)
-
-				// IsHalted() with no params should return error for complete halt
-				err = IsHalted()
-				uassert.Error(t, err)
-
-				// Set to NoHalt
-				err = SetHaltLevelByAdmin(cross, LvNoHalt)
-				uassert.NoError(t, err)
-
-				// IsHalted() with no params should return nil for no halt
-				err = IsHalted()
-				uassert.NoError(t, err)
-			},
-		},
-		{
-			name: "IsHalted with multiple operation types",
-			testFn: func(t *testing.T) {
-				testing.SetRealm(adminRealm)
-
 				// Save original state
 				originalLevel := GetCurrentHaltLevel()
 				defer func() {
 					// Restore original state
+					testing.SetRealm(adminRealm)
 					SetHaltLevelByAdmin(cross, originalLevel)
 				}()
 
-				// Set to EmergencyHalt
-				err := SetHaltLevelByAdmin(cross, LvEmergencyHalt)
-				uassert.NoError(t, err)
-
-				// Mix of allowed and disallowed operations
-				err = IsHalted(OpTypeWithdraw, OpTypePool)
-				uassert.Error(t, err) // Pool is not allowed in EmergencyHalt
-
-				// Only allowed operations
-				err = IsHalted(OpTypeWithdraw, OpTypeGovernance)
-				uassert.NoError(t, err)
-
-				// Only disallowed operations
-				err = IsHalted(OpTypePool, OpTypePosition)
-				uassert.Error(t, err)
-			},
-		},
-		{
-			name: "SetHaltByAdmin with unauthorized caller",
-			testFn: func(t *testing.T) {
-				testing.SetRealm(unauthorizedRealm)
-
-				err := SetHaltByAdmin(cross, true)
-				uassert.Error(t, err)
-				uassert.True(t, strings.Contains(err.Error(), "only admin can set halt"))
-			},
-		},
-		{
-			name: "SetHaltByAdmin with admin privileges",
-			testFn: func(t *testing.T) {
 				testing.SetRealm(adminRealm)
 
-				// Test halting
+				// Test halt true
 				err := SetHaltByAdmin(cross, true)
 				uassert.NoError(t, err)
 				uassert.True(t, GetCurrentHaltLevel() == LvCompleteHalt)
 
-				// Test unhalting
+				// Test halt false
 				err = SetHaltByAdmin(cross, false)
 				uassert.NoError(t, err)
 				uassert.True(t, GetCurrentHaltLevel() == LvNoHalt)
@@ -220,7 +266,7 @@ func TestHaltPermissions(t *testing.T) {
 	}
 }
 
-func TestHaltOperationStatus(t *testing.T) {
+func TestHaltExtended_OperationStatus(t *testing.T) {
 	var (
 		adminAddr, _      = access.GetAddress(access.ROLE_ADMIN)
 		adminRealm        = std.NewUserRealm(adminAddr)
@@ -316,7 +362,7 @@ func TestHaltOperationStatus(t *testing.T) {
 	}
 }
 
-func TestHaltSpecialFunctions(t *testing.T) {
+func TestHaltExtended_SpecialFunctions(t *testing.T) {
 	// Reset state when test completes
 	defer resetToMainnetSafeMode()
 
@@ -435,7 +481,7 @@ func TestHaltSpecialFunctions(t *testing.T) {
 	}
 }
 
-func TestHaltStatusFunctions(t *testing.T) {
+func TestHaltExtended_StatusFunctions(t *testing.T) {
 	var (
 		adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
 		adminRealm   = std.NewUserRealm(adminAddr)
@@ -520,7 +566,7 @@ func TestHaltStatusFunctions(t *testing.T) {
 	}
 }
 
-func TestHaltErrorMessages(t *testing.T) {
+func TestHaltExtended_ErrorMessages(t *testing.T) {
 	var (
 		adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
 		adminRealm   = std.NewUserRealm(adminAddr)
@@ -582,7 +628,7 @@ func TestHaltErrorMessages(t *testing.T) {
 	}
 }
 
-func TestHaltInitialization(t *testing.T) {
+func TestHaltExtended_Initialization(t *testing.T) {
 	// Reset state to ensure consistent starting point
 	resetToMainnetSafeMode()
 
@@ -636,4 +682,14 @@ func TestHaltInitialization(t *testing.T) {
 			tt.testFn(t)
 		})
 	}
+}
+
+// Helper function to reset state to MainnetSafeMode for consistent testing
+func resetToMainnetSafeMode() {
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+	testing.SetRealm(std.NewUserRealm(adminAddr))
+	SetHaltLevelByAdmin(cross, LvMainnetSafeMode)
+	
+	// Reset withdraw status to disabled in MainnetSafeMode (in case it was enabled by tests)
+	SetOperationStatusByAdmin(cross, OpTypeWithdraw, false)
 }

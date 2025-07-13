@@ -2,50 +2,68 @@ package halt
 
 import (
 	"testing"
+
+	"gno.land/p/demo/uassert"
 )
 
-func TestCompositeOpFromString(t *testing.T) {
+func TestLevel_CompositeOpFromString(t *testing.T) {
 	tests := []struct {
-		name    string
-		input   string
-		want    CompositeOp
-		wantErr bool
+		name                 string
+		input                string
+		expectedResult       CompositeOp
+		expectedHasPanic     bool
+		expectedPanicMessage string
 	}{
 		{
-			name:    "should parse 'and' operator correctly",
-			input:   "and",
-			want:    CompositeOpAnd,
-			wantErr: false,
+			name:             "Success parse 'and' operator correctly",
+			input:            "and",
+			expectedResult:   CompositeOpAnd,
+			expectedHasPanic: false,
 		},
 		{
-			name:    "should parse 'or' operator correctly",
-			input:   "or",
-			want:    CompositeOpOr,
-			wantErr: false,
+			name:             "Success parse 'or' operator correctly",
+			input:            "or",
+			expectedResult:   CompositeOpOr,
+			expectedHasPanic: false,
 		},
 		{
-			name:    "should return error for invalid operator",
-			input:   "invalid",
-			want:    0,
-			wantErr: true,
+			name:                 "Error for invalid operator",
+			input:                "invalid",
+			expectedResult:       0,
+			expectedHasPanic:     true,
+			expectedPanicMessage: "unknown composite operation: invalid",
 		},
 		{
-			name:    "should return error for empty string",
-			input:   "",
-			want:    0,
-			wantErr: true,
+			name:                 "Error for empty string",
+			input:                "",
+			expectedResult:       0,
+			expectedHasPanic:     true,
+			expectedPanicMessage: "unknown composite operation: ",
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := CompositeOpFromString(tt.input)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("CompositeOpFromString() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("CompositeOpFromString() = %v, want %v", got, tt.want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.True(t, tc.expectedHasPanic)
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
+				}
+			}()
+
+			// given
+			// when
+			got, err := CompositeOpFromString(tc.input)
+
+			// then
+			if tc.expectedHasPanic {
+				uassert.True(t, err != nil)
+			} else {
+				uassert.Equal(t, uint8(tc.expectedResult), uint8(got))
+				uassert.True(t, err == nil)
 			}
 		})
 	}

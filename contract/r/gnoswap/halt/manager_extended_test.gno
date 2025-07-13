@@ -6,7 +6,7 @@ import (
 	"gno.land/p/demo/uassert"
 )
 
-func TestManagerSetOperationStatusEdgeCases(t *testing.T) {
+func TestManagerExtended_ManagerSetOperationStatusEdgeCases(t *testing.T) {
 	t.Run("SetOperationStatus with composite level should fail", func(t *testing.T) {
 		mgr := NewManager()
 
@@ -102,7 +102,7 @@ func TestManagerSetOperationStatusEdgeCases(t *testing.T) {
 	})
 }
 
-func TestManagerStatusMethod(t *testing.T) {
+func TestManagerExtended_ManagerStatusMethod(t *testing.T) {
 	t.Run("Status returns current level name regardless of operation", func(t *testing.T) {
 		mgr := DefaultManager()
 
@@ -147,7 +147,7 @@ func TestManagerStatusMethod(t *testing.T) {
 	})
 }
 
-func TestManagerRegisterOperationEdgeCases(t *testing.T) {
+func TestManagerExtended_ManagerRegisterOperationEdgeCases(t *testing.T) {
 	t.Run("RegisterOperation overwrites existing operation", func(t *testing.T) {
 		mgr := DefaultManager()
 
@@ -187,7 +187,7 @@ func TestManagerRegisterOperationEdgeCases(t *testing.T) {
 	})
 }
 
-func TestManagerRegisterHaltLevelEdgeCases(t *testing.T) {
+func TestManagerExtended_ManagerRegisterHaltLevelEdgeCases(t *testing.T) {
 	t.Run("RegisterHaltLevel overwrites existing level", func(t *testing.T) {
 		mgr := DefaultManager()
 
@@ -233,7 +233,7 @@ func TestManagerRegisterHaltLevelEdgeCases(t *testing.T) {
 	})
 }
 
-func TestManagerLevelMethod(t *testing.T) {
+func TestManagerExtended_ManagerLevelMethod(t *testing.T) {
 	t.Run("Level returns current level", func(t *testing.T) {
 		mgr := DefaultManager()
 
@@ -286,7 +286,7 @@ func TestManagerLevelMethod(t *testing.T) {
 	})
 }
 
-func TestManagerWithOptionsComplexScenarios(t *testing.T) {
+func TestManagerExtended_ManagerWithOptionsComplexScenarios(t *testing.T) {
 	t.Run("NewManager with multiple options", func(t *testing.T) {
 		// Create custom operations
 		customOps := []Operation{

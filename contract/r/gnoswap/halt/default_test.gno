@@ -6,7 +6,7 @@ import (
 	"gno.land/p/demo/uassert"
 )
 
-func TestDefaultOperations(t *testing.T) {
+func TestDefault_DefaultOperations(t *testing.T) {
 	tests := []struct {
 		name     string
 		verifyFn func(t *testing.T)
@@ -50,7 +50,7 @@ func TestDefaultOperations(t *testing.T) {
 	}
 }
 
-func TestDefaultLevels(t *testing.T) {
+func TestDefault_DefaultLevels(t *testing.T) {
 	tests := []struct {
 		name     string
 		verifyFn func(t *testing.T)
@@ -280,7 +280,7 @@ func TestDefaultLevels(t *testing.T) {
 	}
 }
 
-func TestDefaultLevelProgression(t *testing.T) {
+func TestDefault_DefaultLevelProgression(t *testing.T) {
 	tests := []struct {
 		name     string
 		verifyFn func(t *testing.T)
@@ -364,7 +364,7 @@ func TestDefaultLevelProgression(t *testing.T) {
 	}
 }
 
-func TestDefaultLevelStructure(t *testing.T) {
+func TestDefault_DefaultLevelStructure(t *testing.T) {
 	tests := []struct {
 		name     string
 		verifyFn func(t *testing.T)
@@ -417,7 +417,7 @@ func TestDefaultLevelStructure(t *testing.T) {
 	}
 }
 
-func TestDefaultLevelConsistency(t *testing.T) {
+func TestDefault_DefaultLevelConsistency(t *testing.T) {
 	tests := []struct {
 		name     string
 		verifyFn func(t *testing.T)

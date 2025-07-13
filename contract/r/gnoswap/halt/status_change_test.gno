@@ -10,7 +10,7 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 )
 
-func TestChangeHaltStatus(t *testing.T) {
+func TestStatusChange_ChangeHaltStatus(t *testing.T) {
 	var (
 		adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
 		adminRealm   = std.NewUserRealm(adminAddr)
@@ -102,7 +102,7 @@ func TestChangeHaltStatus(t *testing.T) {
 }
 
 // Integration tests for complex permission scenarios
-func TestChangePermissions(t *testing.T) {
+func TestStatusChange_ChangePermissions(t *testing.T) {
 	var (
 		adminAddr, _      = access.GetAddress(access.ROLE_ADMIN)
 		adminRealm        = std.NewUserRealm(adminAddr)
