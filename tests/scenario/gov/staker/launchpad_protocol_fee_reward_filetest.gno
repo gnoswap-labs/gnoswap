@@ -128,7 +128,7 @@ func protocolFeeRewardProjectRecipient() {
 
 // Output:
 // [SCENARIO] 1. Create launchpad project and deposit
-// [INFO] skipped 10 blocks
+// [INFO] skipped 3600 blocks
 //
 // [SCENARIO] 1. Setup protocol fee deposit (bar, qux)
 // [INFO] protocol fee deposited: bar(1000), qux(2500)
@@ -141,7 +141,7 @@ func protocolFeeRewardProjectRecipient() {
 // [INFO] collected protocol fee reward for bob
 //
 // [SCENARIO] 4. Check and collect protocol fee reward for project recipient
-// [INFO] claimable reward (project recipient): {"height":"143","now":"1234567990","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"999"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2499"}]}
+// [INFO] claimable reward (project recipient): {"height":"3733","now":"1234585940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"999"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2499"}]}
 // [INFO] collected protocol fee reward for project recipient
 // [EXPECTED] collected bar amount: 999
 // [EXPECTED] collected qux amount: 2499
