@@ -246,6 +246,10 @@ func (self *Pool) calculateGlobalRewardRatioAccumulation(currentHeight int64, cu
 		panic("block height cannot go backwards")
 	}
 
+	if currentStakedLiquidity.IsZero() {
+		return oldAcc.Clone()
+	}
+
 	acc := u256.NewUint(uint64(blockDiff))
 	acc = acc.Mul(acc, q128)
 	acc = acc.Div(acc, currentStakedLiquidity)
