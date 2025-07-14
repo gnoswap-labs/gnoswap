@@ -3,7 +3,6 @@ package protocol_fee
 import (
 	"testing"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/uassert"
 )
 
@@ -46,7 +45,7 @@ func TestApiGetAccuTransferToGovStaker(t *testing.T) {
 			resetApi(t)
 
 			for _, item := range tt.historyItem {
-				addAccuToGovStaker(item.token, item.amount)
+				protocolFeeState.addAccuToGovStaker(item.token, item.amount)
 			}
 
 			// when
@@ -89,8 +88,8 @@ func TestApiGetHistoryTransferToGovStaker(t *testing.T) {
 			testing.SkipHeights(1)
 
 			for _, item := range tt.historyItem {
-				addAccuToGovStaker(item.token, item.amount)
-				updateDistributedToGovStakerHistory(item.token, item.amount)
+				protocolFeeState.addAccuToGovStaker(item.token, item.amount)
+				protocolFeeState.updateDistributedToGovStakerHistory(item.token, item.amount)
 			}
 
 			// when
@@ -133,7 +132,7 @@ func TestApiGetAccuTransferToDevOps(t *testing.T) {
 			testing.SkipHeights(1)
 
 			for _, item := range tt.historyItem {
-				addAccuToDevOps(item.token, item.amount)
+				protocolFeeState.addAccuToDevOps(item.token, item.amount)
 			}
 
 			// when
@@ -179,8 +178,8 @@ func TestApiGetHistoryTransferToDevOps(t *testing.T) {
 			testing.SkipHeights(1)
 
 			for _, item := range tt.historyItem {
-				addAccuToDevOps(item.token, item.amount)
-				updateDistributedToDevOpsHistory(item.token, item.amount)
+				protocolFeeState.addAccuToDevOps(item.token, item.amount)
+				protocolFeeState.updateDistributedToDevOpsHistory(item.token, item.amount)
 			}
 
 			// when
@@ -195,8 +194,5 @@ func TestApiGetHistoryTransferToDevOps(t *testing.T) {
 }
 
 func resetApi(t *testing.T) {
-	accuToDevOps = avl.NewTree()
-	accuToGovStaker = avl.NewTree()
-	distributedToDevOpsHistory = avl.NewTree()
-	distributedToGovStakerHistory = avl.NewTree()
+	protocolFeeState = NewProtocolFeeState()
 }
