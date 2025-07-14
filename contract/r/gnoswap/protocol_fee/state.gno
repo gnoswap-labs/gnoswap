@@ -26,6 +26,16 @@ type ProtocolFeeState struct {
 	TokenListWithAmount map[string]uint64 // tokenPath -> amount
 }
 
+// distributedToGovStakerHistory returns the history of distributed to gov/staker.
+func distributedToGovStakerHistory() *avl.Tree {
+	return protocolFeeState.DistributedToGovStakerHistory
+}
+
+// distributedToDevOpsHistory returns the history of distributed to devOps.
+func distributedToDevOpsHistory() *avl.Tree {
+	return protocolFeeState.DistributedToDevOpsHistory
+}
+
 // NewProtocolFeeState creates a new instance of ProtocolFeeState with initialized values
 func NewProtocolFeeState() *ProtocolFeeState {
 	return &ProtocolFeeState{

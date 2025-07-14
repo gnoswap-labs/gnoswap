@@ -1,7 +1,11 @@
 package protocol_fee
 
 import (
+	"std"
+
 	"gno.land/p/demo/avl"
+
+	"gno.land/r/gnoswap/v1/common"
 )
 
 // TokenList returns only the list of token path.
@@ -50,16 +54,6 @@ func GetAccuTransferToGovStakerByTokenPath(path string) uint64 {
 // GetAccuTransferToDevOpsByTokenPath returns the accumulated transfer to devOps by token path.
 func GetAccuTransferToDevOpsByTokenPath(path string) uint64 {
 	return protocolFeeState.GetAccuTransferToDevOpsByTokenPath(path)
-}
-
-// GetHistoryOfDistributedToGovStaker returns the history of distributed to gov/staker.
-func GetHistoryOfDistributedToGovStaker() *avl.Tree {
-	return protocolFeeState.DistributedToGovStakerHistory
-}
-
-// GetHistoryOfDistributedToDevOps returns the history of distributed to devOps.
-func GetHistoryOfDistributedToDevOps() *avl.Tree {
-	return protocolFeeState.DistributedToDevOpsHistory
 }
 
 // GetHistoryOfDistributedToGovStakerByTokenPath returns the history of distributed to gov/staker by token path.

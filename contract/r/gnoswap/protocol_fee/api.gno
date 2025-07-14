@@ -48,7 +48,7 @@ func ApiGetAccuTransferToDevOps() string {
 }
 
 func ApiGetHistoryTransferToGovStaker() string {
-	historyTransferList := GetHistoryOfDistributedToGovStaker()
+	historyTransferList := distributedToGovStakerHistory()
 	if historyTransferList == nil {
 		return ""
 	}
@@ -57,7 +57,7 @@ func ApiGetHistoryTransferToGovStaker() string {
 }
 
 func ApiGetHistoryTransferToDevOps() string {
-	historyTransferList := GetHistoryOfDistributedToDevOps()
+	historyTransferList := distributedToDevOpsHistory()
 	if historyTransferList == nil {
 		return ""
 	}
