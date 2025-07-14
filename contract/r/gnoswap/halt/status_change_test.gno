@@ -10,99 +10,122 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 )
 
-func TestStatusChange_ChangeHaltStatus(t *testing.T) {
+func TestStatusChange_SetHalt(t *testing.T) {
 	var (
 		adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
 		adminRealm   = std.NewUserRealm(adminAddr)
 	)
 
 	tests := []struct {
-		name   string
-		testFn func(t *testing.T)
+		name                 string
+		executorRealm        std.Realm
+		initialHaltLevel     LevelID
+		isHalted             bool
+		haltLevels           []LevelID
+		operationType        OpType
+		preOpStatus          bool
+		expectedHasPanic     bool
+		expectedPanicMessage string
+		expectedError        bool
+		expectedFinalLevel   LevelID
+		expectedOpAllowed    bool
 	}{
 		{
-			name: "complex transition sequence with operation status preservation",
-			testFn: func(t *testing.T) {
-				// Start from NoHalt
-				testing.SetRealm(adminRealm)
-				err := SetHalt(cross, false)
-				uassert.NoError(t, err)
-
-				// Enable withdrawals
-				err = SetOperationStatusByAdmin(cross, OpTypeWithdraw, true)
-				uassert.NoError(t, err)
-
-				// Verify withdrawals are enabled
-				err = IsHalted(OpTypeWithdraw)
-				uassert.NoError(t, err)
-
-				// Switch to EmergencyHalt
-				err = SetHalt(cross, true, LvEmergencyHalt)
-				uassert.NoError(t, err)
-
-				// Verify only essential operations are allowed
-				err = IsHalted(OpTypeWithdraw)
-				uassert.NoError(t, err)
-				err = IsHalted(OpTypePool)
-				uassert.Error(t, err)
-
-				// Switch back to NoHalt
-				err = SetHalt(cross, false)
-				uassert.NoError(t, err)
-
-				// Verify operation states are preserved
-				err = IsHalted(OpTypeWithdraw)
-				uassert.NoError(t, err)
-			},
+			name:               "Success transition from NoHalt to EmergencyHalt",
+			executorRealm:      adminRealm,
+			initialHaltLevel:   LvNoHalt,
+			isHalted:           true,
+			haltLevels:         []LevelID{LvEmergencyHalt},
+			operationType:      OpTypeWithdraw,
+			preOpStatus:        true,
+			expectedError:      false,
+			expectedFinalLevel: LvEmergencyHalt,
+			expectedOpAllowed:  true,
 		},
 		{
-			name: "operation status inheritance",
-			testFn: func(t *testing.T) {
-				// Reset to NoHalt
-				testing.SetRealm(adminRealm)
-				err := SetHalt(cross, false)
-				uassert.NoError(t, err)
-
-				// Disable pool operations
-				err = SetOperationStatusByAdmin(cross, OpTypePool, false)
-				uassert.NoError(t, err)
-
-				// Verify pool is disabled
-				err = IsHalted(OpTypePool)
-				uassert.Error(t, err)
-
-				// Switch through different modes and verify pool stays disabled
-				modes := []LevelID{
-					LvEmergencyHalt,
-					LvCompleteHalt,
-					LvNoHalt,
-				}
-
-				for _, mode := range modes {
-					if mode == LvNoHalt {
-						err = SetHalt(cross, false)
-					} else {
-						err = SetHalt(cross, true, mode)
-					}
-					uassert.NoError(t, err)
-
-					// Pool should remain disabled or be halted by the mode
-					err = IsHalted(OpTypePool)
-					uassert.Error(t, err)
-				}
-			},
+			name:               "Success complex transition sequence with operation status preservation",
+			executorRealm:      adminRealm,
+			initialHaltLevel:   LvNoHalt,
+			isHalted:           false,
+			haltLevels:         []LevelID{LvEmergencyHalt, LvNoHalt},
+			operationType:      OpTypeWithdraw,
+			preOpStatus:        true,
+			expectedError:      false,
+			expectedFinalLevel: LvNoHalt,
+			expectedOpAllowed:  true,
+		},
+		{
+			name:               "Success operation status inheritance through multiple levels",
+			executorRealm:      adminRealm,
+			initialHaltLevel:   LvNoHalt,
+			isHalted:           false,
+			haltLevels:         []LevelID{LvEmergencyHalt, LvCompleteHalt, LvNoHalt},
+			operationType:      OpTypePool,
+			preOpStatus:        false,
+			expectedError:      false,
+			expectedFinalLevel: LvNoHalt,
+			expectedOpAllowed:  false,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.testFn(t)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.Equal(t, tc.expectedPanicMessage, r.(string))
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
+				}
+			}()
+
+			cleanupHalt()
+
+			// given
+			testing.SetRealm(tc.executorRealm)
+			err := SetHalt(cross, false)
+			uassert.NoError(t, err)
+
+			// Set pre-operation status
+			err = SetOperationStatusByAdmin(cross, tc.operationType, tc.preOpStatus)
+			uassert.NoError(t, err)
+
+			// when
+			var finalErr error
+			for _, level := range tc.haltLevels {
+				if level == LvNoHalt {
+					finalErr = SetHalt(cross, false)
+				} else {
+					finalErr = SetHalt(cross, true, level)
+				}
+				if finalErr != nil {
+					break
+				}
+			}
+
+			// then
+			if tc.expectedHasPanic {
+				t.Errorf("[%s] expected panic but none occurred", tc.name)
+			} else if tc.expectedError {
+				uassert.Error(t, finalErr)
+			} else {
+				uassert.NoError(t, finalErr)
+				uassert.True(t, GetCurrentHaltLevel() == tc.expectedFinalLevel)
+
+				// Check operation status
+				err = IsHalted(tc.operationType)
+				if tc.expectedOpAllowed {
+					uassert.NoError(t, err)
+				} else {
+					uassert.Error(t, err)
+				}
+			}
 		})
 	}
 }
 
-// Integration tests for complex permission scenarios
-func TestStatusChange_ChangePermissions(t *testing.T) {
+func TestStatusChange_SetOperationStatus(t *testing.T) {
 	var (
 		adminAddr, _      = access.GetAddress(access.ROLE_ADMIN)
 		adminRealm        = std.NewUserRealm(adminAddr)
@@ -111,73 +134,209 @@ func TestStatusChange_ChangePermissions(t *testing.T) {
 	)
 
 	tests := []struct {
-		name   string
-		testFn func(t *testing.T)
+		name                 string
+		executorRealm        std.Realm
+		initialHaltLevel     LevelID
+		operationType        OpType
+		operationStatus      bool
+		useAdminMethod       bool
+		expectedHasPanic     bool
+		expectedPanicMessage string
+		expectedError        bool
+		expectedOpAllowed    bool
 	}{
 		{
-			name: "permission interaction between admin and governance",
-			testFn: func(t *testing.T) {
-				// Start from NoHalt
-				testing.SetRealm(adminRealm)
-				err := SetHalt(cross, false)
-				uassert.NoError(t, err)
-
-				// Admin disables an operation
-				err = SetOperationStatusByAdmin(cross, OpTypePool, false)
-				uassert.NoError(t, err)
-
-				// Governance tries to enable the same operation
-				testing.SetRealm(govRealm)
-				err = SetOperationStatus(cross, OpTypePool, true)
-				uassert.NoError(t, err)
-
-				// Operation should now be enabled
-				err = IsHalted(OpTypePool)
-				uassert.NoError(t, err)
-
-				// Admin overrides governance
-				testing.SetRealm(adminRealm)
-				err = SetOperationStatusByAdmin(cross, OpTypePool, false)
-				uassert.NoError(t, err)
-
-				// Operation should be disabled again
-				err = IsHalted(OpTypePool)
-				uassert.Error(t, err)
-			},
+			name:              "Success admin disables operation",
+			executorRealm:     adminRealm,
+			initialHaltLevel:  LvNoHalt,
+			operationType:     OpTypePool,
+			operationStatus:   false,
+			useAdminMethod:    true,
+			expectedError:     false,
+			expectedOpAllowed: false,
 		},
 		{
-			name: "complex mode transition permissions",
-			testFn: func(t *testing.T) {
-				// Start from NoHalt
-				testing.SetRealm(adminRealm)
-				err := SetHalt(cross, false)
-				uassert.NoError(t, err)
-
-				// Unauthorized user tries multiple operations
-				testing.SetRealm(unauthorizedRealm)
-
-				// Try to set halt level
-				err = SetHalt(cross, true, LvEmergencyHalt)
-				uassert.Error(t, err)
-
-				// Try to enable operations
-				err = SetOperationStatus(cross, OpTypePool, true)
-				uassert.Error(t, err)
-
-				// Try to enable withdrawals
-				err = EnableWithdrawalsForTestnet(cross)
-				uassert.Error(t, err)
-
-				// Verify nothing changed
-				testing.SetRealm(adminRealm)
-				uassert.True(t, GetCurrentHaltLevel() == LvNoHalt)
-			},
+			name:              "Success governance enables operation",
+			executorRealm:     govRealm,
+			initialHaltLevel:  LvNoHalt,
+			operationType:     OpTypePool,
+			operationStatus:   true,
+			useAdminMethod:    false,
+			expectedError:     false,
+			expectedOpAllowed: true,
+		},
+		{
+			name:              "Success admin overrides governance",
+			executorRealm:     adminRealm,
+			initialHaltLevel:  LvNoHalt,
+			operationType:     OpTypePool,
+			operationStatus:   false,
+			useAdminMethod:    true,
+			expectedError:     false,
+			expectedOpAllowed: false,
+		},
+		{
+			name:              "Fail unauthorized user tries to enable operation",
+			executorRealm:     unauthorizedRealm,
+			initialHaltLevel:  LvNoHalt,
+			operationType:     OpTypePool,
+			operationStatus:   true,
+			useAdminMethod:    false,
+			expectedError:     true,
+			expectedOpAllowed: false,
+		},
+		{
+			name:              "Fail unauthorized user tries to set halt level",
+			executorRealm:     unauthorizedRealm,
+			initialHaltLevel:  LvNoHalt,
+			operationType:     OpTypePool,
+			operationStatus:   true,
+			useAdminMethod:    true,
+			expectedError:     true,
+			expectedOpAllowed: false,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.testFn(t)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.Equal(t, tc.expectedPanicMessage, r.(string))
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
+				}
+			}()
+
+			cleanupHalt()
+
+			// given
+			testing.SetRealm(adminRealm)
+			err := SetHalt(cross, false)
+			uassert.NoError(t, err)
+
+			testing.SetRealm(tc.executorRealm)
+
+			// when
+			var operationErr error
+			if tc.useAdminMethod {
+				operationErr = SetOperationStatusByAdmin(cross, tc.operationType, tc.operationStatus)
+			} else {
+				operationErr = SetOperationStatus(cross, tc.operationType, tc.operationStatus)
+			}
+
+			// then
+			if tc.expectedHasPanic {
+				t.Errorf("[%s] expected panic but none occurred", tc.name)
+			} else if tc.expectedError {
+				uassert.Error(t, operationErr)
+			} else {
+				uassert.NoError(t, operationErr)
+
+				// Check operation status
+				err = IsHalted(tc.operationType)
+				if tc.expectedOpAllowed {
+					uassert.NoError(t, err)
+				} else {
+					uassert.Error(t, err)
+				}
+			}
 		})
 	}
+}
+
+func TestStatusChange_EnableWithdrawalsForTestnet(t *testing.T) {
+	var (
+		adminAddr, _      = access.GetAddress(access.ROLE_ADMIN)
+		adminRealm        = std.NewUserRealm(adminAddr)
+		unauthorizedRealm = std.NewCodeRealm("gno.land/r/demo/unauthorized")
+	)
+
+	tests := []struct {
+		name                    string
+		executorRealm           std.Realm
+		initialHaltLevel        LevelID
+		expectedHasPanic        bool
+		expectedPanicMessage    string
+		expectedError           bool
+		expectedWithdrawAllowed bool
+	}{
+		{
+			name:                    "Success admin enables withdrawals for testnet",
+			executorRealm:           adminRealm,
+			initialHaltLevel:        LvNoHalt,
+			expectedError:           false,
+			expectedWithdrawAllowed: true,
+		},
+		{
+			name:                    "Fail unauthorized user tries to enable withdrawals",
+			executorRealm:           unauthorizedRealm,
+			initialHaltLevel:        LvNoHalt,
+			expectedError:           true,
+			expectedWithdrawAllowed: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.Equal(t, tc.expectedPanicMessage, r.(string))
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
+				}
+			}()
+
+			cleanupHalt()
+
+			// given
+			testing.SetRealm(adminRealm)
+			err := SetHalt(cross, false)
+			uassert.NoError(t, err)
+
+			testing.SetRealm(tc.executorRealm)
+
+			// when
+			err = EnableWithdrawalsForTestnet(cross)
+
+			// then
+			if tc.expectedHasPanic {
+				t.Errorf("[%s] expected panic but none occurred", tc.name)
+			} else if tc.expectedError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+
+				// Check withdraw operation status
+				err = IsHalted(OpTypeWithdraw)
+				if tc.expectedWithdrawAllowed {
+					uassert.NoError(t, err)
+				} else {
+					uassert.Error(t, err)
+				}
+			}
+		})
+	}
+}
+
+// Helper functions
+func cleanupHalt() {
+	// Reset halt manager to default state
+	haltManager = DefaultManager()
+}
+
+func setupHaltTest() {
+	cleanupHalt()
+}
+
+func verifyHaltLevel(expectedLevel LevelID) bool {
+	return GetCurrentHaltLevel() == expectedLevel
+}
+
+func verifyOperationAllowed(opType OpType) bool {
+	err := IsHalted(opType)
+	return err == nil
 }

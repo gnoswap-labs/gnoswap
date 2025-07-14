@@ -84,7 +84,7 @@ func DefaultManager() *Manager {
 func (m *Manager) SetCurrentLevel(lv LevelID) error {
 	newLevel, ok := m.levels[lv]
 	if !ok {
-		return ufmt.Errorf("invalid halt level: %d", lv)
+		return ufmt.Errorf("invalid halt level: %d", uint8(lv))
 	}
 	m.currentLevel = newLevel
 	return nil

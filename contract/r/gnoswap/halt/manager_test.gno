@@ -20,24 +20,18 @@ func TestManager_DefaultManager(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					if tc.expectedHasPanic {
-						uassert.Equal(t, tc.expectedPanicMessage, r.(string))
-					} else {
-						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
-					}
-				}
-			}()
-
 			// given
-			// when
-			mgr := DefaultManager()
-
-			// then
-			uassert.Equal(t, "NoHalt", mgr.Level().Name())
-			_, exists := mgr.operations[OpTypeWithdraw]
-			uassert.True(t, exists)
+			// when & then
+			if tc.expectedHasPanic {
+				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+					DefaultManager()
+				})
+			} else {
+				mgr := DefaultManager()
+				uassert.Equal(t, "NoHalt", mgr.Level().Name())
+				_, exists := mgr.operations[OpTypeWithdraw]
+				uassert.True(t, exists)
+			}
 		})
 	}
 }
@@ -78,22 +72,14 @@ func TestManager_NewManager(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					if tc.expectedHasPanic {
-						uassert.True(t, tc.expectedHasPanic)
-					} else {
-						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
-					}
-				}
-			}()
-
 			// given
-			// when
-			mgr := tc.setupFn()
-
-			// then
-			if !tc.expectedHasPanic {
+			// when & then
+			if tc.expectedHasPanic {
+				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+					tc.setupFn()
+				})
+			} else {
+				mgr := tc.setupFn()
 				uassert.Equal(t, tc.expectedLevelName, mgr.currentLevel.Name())
 			}
 		})
@@ -107,33 +93,24 @@ func TestManager_SetCurrentLevel(t *testing.T) {
 		expectedLevelName    string
 		expectedHasPanic     bool
 		expectedPanicMessage string
+		expectedError        bool
 	}{
 		{
 			name:              "Success set to ContractHalt",
 			inputLevel:        LvContractHalt,
 			expectedLevelName: "ContractHalt",
 			expectedHasPanic:  false,
+			expectedError:     false,
 		},
 		{
-			name:                 "Error with invalid level",
-			inputLevel:           LevelID(255),
-			expectedHasPanic:     true,
-			expectedPanicMessage: "invalid halt level: 255",
+			name:          "Error with invalid level",
+			inputLevel:    LevelID(255),
+			expectedError: true,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					if tc.expectedHasPanic {
-						uassert.True(t, tc.expectedHasPanic)
-					} else {
-						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
-					}
-				}
-			}()
-
 			// given
 			mgr := DefaultManager()
 
@@ -141,10 +118,10 @@ func TestManager_SetCurrentLevel(t *testing.T) {
 			err := mgr.SetCurrentLevel(tc.inputLevel)
 
 			// then
-			if tc.expectedHasPanic {
-				uassert.True(t, err != nil)
+			if tc.expectedError {
+				uassert.Error(t, err)
 			} else {
-				uassert.True(t, err == nil)
+				uassert.NoError(t, err)
 				uassert.Equal(t, tc.expectedLevelName, mgr.Level().Name())
 			}
 		})
@@ -171,26 +148,20 @@ func TestManager_Status(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					if tc.expectedHasPanic {
-						uassert.Equal(t, tc.expectedPanicMessage, r.(string))
-					} else {
-						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
-					}
-				}
-			}()
-
 			// given
 			mgr := DefaultManager()
 			err := mgr.SetCurrentLevel(tc.inputLevel)
-			uassert.True(t, err == nil)
+			uassert.NoError(t, err)
 
-			// when
-			status := mgr.Status(tc.inputOpType)
-
-			// then
-			uassert.Equal(t, tc.expectedStatus, status)
+			// when & then
+			if tc.expectedHasPanic {
+				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+					mgr.Status(tc.inputOpType)
+				})
+			} else {
+				status := mgr.Status(tc.inputOpType)
+				uassert.Equal(t, tc.expectedStatus, status)
+			}
 		})
 	}
 }
@@ -209,16 +180,6 @@ func TestManager_RegisterHaltLevel(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					if tc.expectedHasPanic {
-						uassert.Equal(t, tc.expectedPanicMessage, r.(string))
-					} else {
-						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
-					}
-				}
-			}()
-
 			// given
 			mgr := DefaultManager()
 			const CustomHaltLevel = LevelID(5)
@@ -226,13 +187,17 @@ func TestManager_RegisterHaltLevel(t *testing.T) {
 				OpTypePool: false,
 			})
 
-			// when
-			mgr.RegisterHaltLevel(customLevel)
-			err := mgr.SetCurrentLevel(CustomHaltLevel)
-
-			// then
-			uassert.True(t, err == nil)
-			uassert.Equal(t, "CustomHalt", mgr.Level().Name())
+			// when & then
+			if tc.expectedHasPanic {
+				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+					mgr.RegisterHaltLevel(customLevel)
+				})
+			} else {
+				mgr.RegisterHaltLevel(customLevel)
+				err := mgr.SetCurrentLevel(CustomHaltLevel)
+				uassert.NoError(t, err)
+				uassert.Equal(t, "CustomHalt", mgr.Level().Name())
+			}
 		})
 	}
 }
@@ -251,26 +216,20 @@ func TestManager_RegisterOperation(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					if tc.expectedHasPanic {
-						uassert.Equal(t, tc.expectedPanicMessage, r.(string))
-					} else {
-						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
-					}
-				}
-			}()
-
 			// given
 			mgr := DefaultManager()
 			customOp := NewOperation(OpType("customTest"), "Custom Test", "Custom test operation")
 
-			// when
-			mgr.RegisterOperation(customOp)
-
-			// then
-			_, exists := mgr.operations[OpType("customTest")]
-			uassert.True(t, exists)
+			// when & then
+			if tc.expectedHasPanic {
+				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+					mgr.RegisterOperation(customOp)
+				})
+			} else {
+				mgr.RegisterOperation(customOp)
+				_, exists := mgr.operations[OpType("customTest")]
+				uassert.True(t, exists)
+			}
 		})
 	}
 }
