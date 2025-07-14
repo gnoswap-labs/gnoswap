@@ -3,7 +3,6 @@ package governance
 import (
 	"std"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -11,49 +10,6 @@ import (
 
 	"gno.land/r/gnoswap/v1/halt"
 )
-
-var (
-	config         Config
-	configVersions = avl.NewTree() // version -> Config
-)
-
-func init() {
-	// https://docs.gnoswap.io/core-concepts/governance
-	config = Config{
-		VotingStartDelay:              uint64(86400),         // 1d
-		VotingPeriod:                  uint64(604800),        // 7d
-		VotingWeightSmoothingDuration: uint64(86400),         // 1d
-		Quorum:                        uint64(50),            // 50% of total xGNS supply
-		ProposalCreationThreshold:     uint64(1_000_000_000), // 1_000_000_000
-		ExecutionDelay:                uint64(86400),         // 1d
-		ExecutionWindow:               uint64(2592000),       // 30d
-	}
-
-	// config version 0 should return the current config
-	// therefore we set initial config version to 1
-	setConfigVersion(1, config)
-}
-
-func setConfigVersion(v uint64, cfg Config) {
-	configVersions.Set(formatUint(v), cfg)
-}
-
-func getConfigByVersion(v uint64) (Config, bool) {
-	value, exists := configVersions.Get(formatUint(v))
-	if !exists {
-		return Config{}, false
-	}
-	return value.(Config), true
-}
-
-func getLatestVersion() uint64 {
-	var maxVersion uint64
-	configVersions.ReverseIterate("", "", func(key string, value any) bool {
-		maxVersion = parseNumber(key, kindUint64).(uint64)
-		return true
-	})
-	return maxVersion
-}
 
 // ReconfigureByAdmin updates the proposal realted configuration.
 // Returns the new configuration version number.
@@ -102,12 +58,16 @@ func reconfigure(
 	}
 
 	en.MintAndDistributeGns(cross)
-	updateProposalsState()
 
-	prevVersion := getLatestVersion()
-	newVersion := prevVersion + 1
+	// Update proposal states before reconfiguring
+	transition := UpdateProposalStateTransition()
+	if err := applyTransition(transition); err != nil {
+		panic(err)
+	}
 
-	config = Config{
+	prevVersion := governanceState.configCounter
+
+	newConfig := Config{
 		VotingStartDelay:              votingStartDelay,
 		VotingPeriod:                  votingPeriod,
 		VotingWeightSmoothingDuration: votingWeightSmoothingDuration,
@@ -116,20 +76,27 @@ func reconfigure(
 		ExecutionDelay:                executionDelay,
 		ExecutionWindow:               executionWindow,
 	}
-	setConfigVersion(newVersion, config)
+
+	// Apply reconfiguration using state transition
+	transition = ReconfigureTransition(newConfig)
+	if err := applyTransition(transition); err != nil {
+		panic(err)
+	}
+
+	newVersion := governanceState.configCounter
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"Reconfigure",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"votingStartDelay", formatUint(config.VotingStartDelay),
-		"votingPeriod", formatUint(config.VotingPeriod),
-		"votingWeightSmoothingDuration", formatUint(config.VotingWeightSmoothingDuration),
-		"quorum", formatUint(config.Quorum),
-		"proposalCreationThreshold", formatUint(config.ProposalCreationThreshold),
-		"executionDelay", formatUint(config.ExecutionDelay),
-		"executionPeriod", formatUint(config.ExecutionWindow),
+		"votingStartDelay", formatUint(newConfig.VotingStartDelay),
+		"votingPeriod", formatUint(newConfig.VotingPeriod),
+		"votingWeightSmoothingDuration", formatUint(newConfig.VotingWeightSmoothingDuration),
+		"quorum", formatUint(newConfig.Quorum),
+		"proposalCreationThreshold", formatUint(newConfig.ProposalCreationThreshold),
+		"executionDelay", formatUint(newConfig.ExecutionDelay),
+		"executionPeriod", formatUint(newConfig.ExecutionWindow),
 		"newConfigVersion", formatUint(newVersion),
 		"prevConfigVersion", formatUint(prevVersion),
 	)
@@ -140,11 +107,7 @@ func reconfigure(
 // GetConfigVersion returns the configuration for a specific version.
 // If version is 0, it returns the current configuration.
 func GetConfigVersion(version uint64) Config {
-	if version == 0 {
-		return config
-	}
-
-	cfg, exists := getConfigByVersion(version)
+	cfg, exists := governanceState.GetConfig(version)
 	if !exists {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -155,17 +118,17 @@ func GetConfigVersion(version uint64) Config {
 	return cfg
 }
 
-// GetLatestConfig() returns the latest configuration.
+// GetLatestConfig returns the latest configuration.
 func GetLatestConfig() Config {
-	return config
+	return governanceState.currentConfig
 }
 
-// GetLatestConfigVersion() returns the latest configuration version.
+// GetLatestConfigVersion returns the latest configuration version.
 func GetLatestConfigVersion() uint64 {
-	return getLatestVersion()
+	return governanceState.configCounter
 }
 
-// GetProposalCreationThreshold() returns the current proposal creation threshold.
+// GetProposalCreationThreshold returns the current proposal creation threshold.
 func GetProposalCreationThreshold() uint64 {
-	return config.ProposalCreationThreshold
+	return governanceState.currentConfig.ProposalCreationThreshold
 }

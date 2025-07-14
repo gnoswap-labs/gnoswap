@@ -172,7 +172,7 @@ func distributeToTarget(cur realm, amount int64) int64 {
 // bptPct is in basis points (1/100th of 1%)
 // Example: 7500 basis points = 75%
 func calculateAmount(amount, bptPct int64) int64 {
-	if amount < 0 || bptPct < 0 {
+	if amount < 0 || bptPct < 0 || bptPct > 10000 {
 		panic("invalid amount or bptPct")
 	}
 

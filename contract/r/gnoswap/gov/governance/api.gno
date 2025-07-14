@@ -25,17 +25,18 @@ func createProposalJsonNode(id uint64, proposal ProposalInfo) *json.Node {
 
 // GetProposals returns all proposals with necessary information.
 func GetProposals() string {
-	updateProposalsState()
-
-	if proposals.Size() == 0 {
-		return ""
+	// Update proposal states before returning data
+	transition := UpdateProposalStateTransition()
+	if err := applyTransition(transition); err != nil {
+		panic(err)
 	}
 
 	proposalsObj := metaNode()
 	proposalArr := json.ArrayNode("", nil)
 
-	proposals.Iterate("", "", func(key string, value any) bool {
-		proposalObj := getProposalById(proposalId)
+	// Iterate through all proposals in state
+	governanceState.IterateProposals(func(id uint64, proposal ProposalInfo) bool {
+		proposalObj := getProposalById(id)
 		proposalArr.AppendArray(proposalObj)
 		return false
 	})
@@ -47,9 +48,13 @@ func GetProposals() string {
 
 // GetProposalById returns a single proposal with necessary information.
 func GetProposalById(id uint64) string {
-	updateProposalsState()
+	// Update proposal states before returning data
+	transition := UpdateProposalStateTransition()
+	if err := applyTransition(transition); err != nil {
+		panic(err)
+	}
 
-	_, exists := proposals.Get(formatUint(id))
+	_, exists := governanceState.GetProposal(id)
 	if !exists {
 		return ""
 	}
@@ -64,9 +69,13 @@ func GetProposalById(id uint64) string {
 }
 
 func GetArchivedProposalById(id uint64) string {
-	updateProposalsState()
+	// Update proposal states before returning data
+	transition := UpdateProposalStateTransition()
+	if err := applyTransition(transition); err != nil {
+		panic(err)
+	}
 
-	_, exists := archivedProposals.Get(formatUint(id))
+	_, exists := governanceState.GetArchivedProposal(id)
 	if !exists {
 		return ""
 	}
@@ -82,9 +91,13 @@ func GetArchivedProposalById(id uint64) string {
 
 // GetVoteStatusFromProposalById returns the vote status(max, yes, no) of a proposal.
 func GetVoteStatusFromProposalById(id uint64) string {
-	updateProposalsState()
+	// Update proposal states before returning data
+	transition := UpdateProposalStateTransition()
+	if err := applyTransition(transition); err != nil {
+		panic(err)
+	}
 
-	_, exists := proposals.Get(formatUint(id))
+	_, exists := governanceState.GetProposal(id)
 	if !exists {
 		return ""
 	}
@@ -104,19 +117,20 @@ func GetVoteStatusFromProposalById(id uint64) string {
 // - height
 // - timestamp
 func GetVotesByAddress(addr std.Address) string {
-	updateProposalsState()
+	// Update proposal states before returning data
+	transition := UpdateProposalStateTransition()
+	if err := applyTransition(transition); err != nil {
+		panic(err)
+	}
 
 	votesObj := metaNode()
 	votesArr := json.ArrayNode("", nil)
 
-	// sertUesrVote does add data to `userVotes` with key (voter_pid) as key
-	// therefore this function can not search for 'specific_address'
-	userVotes.Iterate("", "", func(key string, value any) bool {
-		if strings.HasPrefix(key, addr.String()) {
-			voteObj := createVoteJsonNode(addr, proposalId, value.(voteWithWeight))
-			votesArr.AppendArray(voteObj)
-		}
-		return true
+	// Iterate through all user votes for the given address
+	governanceState.IterateUserVotes(addr, func(proposalId uint64, vote voteWithWeight) bool {
+		voteObj := createVoteJsonNode(addr, proposalId, vote)
+		votesArr.AppendArray(voteObj)
+		return false
 	})
 	votesObj.AppendObject("votes", votesArr)
 
@@ -125,7 +139,11 @@ func GetVotesByAddress(addr std.Address) string {
 
 // GetVoteByAddressFromProposalById returns the vote of an address from a certain proposal.
 func GetVoteByAddressFromProposalById(addr std.Address, id uint64) string {
-	updateProposalsState()
+	// Update proposal states before returning data
+	transition := UpdateProposalStateTransition()
+	if err := applyTransition(transition); err != nil {
+		panic(err)
+	}
 
 	vote, exists := getUserVote(addr, id)
 	if !exists {
@@ -159,12 +177,12 @@ func createVoteJsonNode(addr std.Address, id uint64, vote voteWithWeight) *json.
 
 // getProposalExtraData returns the extra data of a proposal based on its type.
 func getProposalExtraData(proposalId uint64) string {
-	proposal, exist := proposals.Get(formatUint(proposalId))
+	proposal, exist := governanceState.GetProposal(proposalId)
 	if !exist {
 		return ""
 	}
 
-	switch proposal.(ProposalInfo).ProposalType {
+	switch proposal.ProposalType {
 	case Text:
 		return ""
 	case CommunityPoolSpend:
@@ -204,11 +222,10 @@ func getParameterChangeProposalData(proposalId uint64) string {
 
 // getProposalStatus returns the status of a proposal.
 func getProposalStatus(id uint64) string {
-	prop, exist := proposals.Get(formatUint(id))
+	proposal, exist := governanceState.GetProposal(id)
 	if !exist {
 		return ""
 	}
-	proposal := prop.(ProposalInfo)
 
 	config := GetConfigVersion(proposal.ConfigVersion)
 
@@ -241,12 +258,10 @@ func createProposalStateNode(state ProposalState, votingStart, votingEnd uint64)
 
 // getProposalVotes returns the votes of a proposal.
 func getProposalVotes(id uint64) string {
-	prop, exist := proposals.Get(formatUint(id))
+	proposal, exist := governanceState.GetProposal(id)
 	if !exist {
 		return ""
 	}
-
-	proposal := prop.(ProposalInfo)
 	maxVoting := proposal.MaxVotingWeight.ToString()
 
 	proposalObj := json.Builder().

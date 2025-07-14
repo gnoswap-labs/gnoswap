@@ -13,7 +13,7 @@ import (
 
 // Retrieves a proposal by its ID
 func mustGetProposal(proposalId uint64) ProposalInfo {
-	result, exists := proposals.Get(formatUint(proposalId))
+	proposal, exists := governanceState.GetProposal(proposalId)
 	if !exists {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -21,19 +21,21 @@ func mustGetProposal(proposalId uint64) ProposalInfo {
 		))
 	}
 
-	return result.(ProposalInfo)
+	return proposal
 }
 
 // Retrieves a vote by its key
 func mustGetVote(key string) bool {
-	vote, exists := votes.Get(key)
+	// Parse the vote key to get proposal ID and voter
+	pid, voter := divideVoteKeyToProposalIdAndUser(key)
+	vote, exists := governanceState.GetVote(pid, std.Address(voter))
 	if !exists {
 		panic(addDetailToError(
 			errDataNotFound,
 			ufmt.Sprintf("voteKey(%s) not found", key),
 		))
 	}
-	return vote.(bool)
+	return vote
 }
 
 // Helper function to validate and get vote information
@@ -183,4 +185,9 @@ func parseBool(s string) bool {
 	default:
 		panic(ufmt.Sprintf("invalid bool value: %s", s))
 	}
+}
+
+// parseUint64 helper function to parse string to uint64
+func parseUint64(s string) uint64 {
+	return parseNumber(s, kindUint64).(uint64)
 }

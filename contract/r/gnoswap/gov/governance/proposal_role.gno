@@ -4,16 +4,12 @@ import (
 	"errors"
 	"std"
 	"strings"
-	"time"
 
 	"gno.land/p/demo/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/rbac"
-
-	gs "gno.land/r/gnoswap/v1/gov/staker"
 )
 
 // CheckerType defines available predefined permission checker types
@@ -151,42 +147,36 @@ func handleRoleChangeProposal(
 
 	addresses := parseAddresses(addr)
 
-	now := uint64(time.Now().Unix())
-	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
-
-	maxVotingWeight := u256.NewUint(votingMax)
-	quorumAmount := maxVotingWeight.Uint64() * config.Quorum / 100
-
-	proposal := ProposalInfo{
-		Proposer:     proposer,
-		ProposalType: RoleChange,
-		State: ProposalState{
-			Created:   true,
-			CreatedAt: now,
-			Upcoming:  true,
-		},
-		Yea:                       u256.Zero(),
-		Nay:                       u256.Zero(),
-		MaxVotingWeight:           maxVotingWeight,
-		PossibleAddressWithWeight: possibleAddressWithWeight,
-		ConfigVersion:             uint64(configVersions.Size()),
-		QuorumAmount:              quorumAmount,
-		Title:                     title,
-		Description:               desc,
-		RoleChange: RoleChangeInfo{
-			RoleName:       roleName,
-			PermissionName: permissionName,
-			Action:         action,
-			CheckerType:    checkerType,
-			Addresses:      addresses,
-			TokenPath:      tokenPath,
-			MinAmount:      minAmount,
-		},
+	// Use state transition to create proposal
+	transition := CreateProposalTransition(proposer, RoleChange, title, desc)
+	if err := applyTransition(transition); err != nil {
+		panic(err)
 	}
 
-	proposalId++
-	proposals.Set(formatUint(proposalId), proposal)
-	proposalIdListByProposer.Set(proposer.String(), proposalId)
+	// Get the new proposal ID from the updated state
+	newProposalId := governanceState.GetProposalCounter()
+	proposal, exists := governanceState.GetProposal(newProposalId)
+	if !exists {
+		panic(ufmt.Sprintf("proposal(%d) not found", newProposalId))
+	}
+
+	// Set role change info
+	proposal.RoleChange = RoleChangeInfo{
+		RoleName:       roleName,
+		PermissionName: permissionName,
+		Action:         action,
+		CheckerType:    checkerType,
+		Addresses:      addresses,
+		TokenPath:      tokenPath,
+		MinAmount:      minAmount,
+	}
+
+	// Update the proposal in state with role change info
+	governanceState = governanceState.WithUpdatedProposal(newProposalId, func(p ProposalInfo) ProposalInfo {
+		return proposal
+	})
+
+	// Proposal already stored in state
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -199,14 +189,14 @@ func handleRoleChangeProposal(
 		"permissionName", permissionName,
 		"action", action.String(),
 		"checkerType", checkerType.String(),
-		"proposalId", formatUint(proposalId),
+		"proposalId", formatUint(newProposalId),
 		"quorumAmount", formatUint(proposal.QuorumAmount),
 		"maxVotingWeight", proposal.MaxVotingWeight.ToString(),
 		"configVersion", formatUint(proposal.ConfigVersion),
 		"createdAt", formatUint(proposal.State.CreatedAt),
 	)
 
-	return proposalId
+	return newProposalId
 }
 
 func getPermissionChecker(info RoleChangeInfo) prbac.PermissionChecker {
