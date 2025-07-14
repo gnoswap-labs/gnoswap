@@ -34,6 +34,17 @@ var (
 	accuDistributedToGovStaker     int64
 )
 
+func getDistributionBpsPct(key string) int64 {
+	val, exists := distributionBpsPct.Get(key)
+	if !exists {
+		panic(addDetailToError(
+			errInvalidEmissionTarget,
+			ufmt.Sprintf("invalid target(%s)", key),
+		))
+	}
+	return val.(int64)
+}
+
 // Initialize default distribution percentages:
 // - Liquidity Stakers: 75%
 // - DevOps: 20%
@@ -53,6 +64,7 @@ func init() {
 // Panics if following conditions are not met:
 // - caller is not admin
 // - invalid target
+// - duplicate targets
 // - sum of percentages is not 10000
 // - swap is halted
 func ChangeDistributionPctByAdmin(cur realm,
@@ -66,6 +78,7 @@ func ChangeDistributionPctByAdmin(cur realm,
 	for _, target := range targets {
 		assertDistributionTarget(target)
 	}
+	assertNoDuplicateTargets(target01, target02, target03, target04)
 	assertSumDistributionPct(pct01, pct02, pct03, pct04)
 	assertOnlyNotHalted()
 
@@ -82,6 +95,7 @@ func ChangeDistributionPctByAdmin(cur realm,
 // Panics if following conditions are not met:
 // - caller is not governance
 // - invalid target
+// - duplicate targets
 // - sum of percentages is not 10000
 // - swap is halted
 func ChangeDistributionPct(cur realm,
@@ -95,6 +109,7 @@ func ChangeDistributionPct(cur realm,
 	for _, target := range targets {
 		assertDistributionTarget(target)
 	}
+	assertNoDuplicateTargets(target01, target02, target03, target04)
 	assertSumDistributionPct(pct01, pct02, pct03, pct04)
 	assertOnlyNotHalted()
 
