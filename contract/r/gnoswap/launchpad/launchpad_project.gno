@@ -327,7 +327,9 @@ func transferLeftFromProject(projectID string, recipient std.Address, currentHei
 	projectLeftReward := project.RemainingAmount()
 
 	if projectLeftReward > 0 {
-		common.Transfer(cross, project.tokenPath, recipient, int64(projectLeftReward))
+		if err := common.Transfer(cross, project.tokenPath, recipient, int64(projectLeftReward)); err != nil {
+			return 0, makeErrorWithDetails(errTransferFailed, ufmt.Sprintf("token(%s), amount(%d)", project.tokenPath, projectLeftReward))
+		}
 	}
 
 	return projectLeftReward, nil

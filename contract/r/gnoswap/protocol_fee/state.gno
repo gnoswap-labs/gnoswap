@@ -46,7 +46,9 @@ var protocolFeeState = NewProtocolFeeState()
 func (pfs *ProtocolFeeState) distributeToDevOps(token string, amount uint64) error {
 	pfs.addAccuToDevOps(token, amount)
 	pfs.updateDistributedToDevOpsHistory(token, amount)
-	common.Transfer(cross, token, devOpsAddr, int64(amount))
+	if err := common.Transfer(cross, token, devOpsAddr, int64(amount)); err != nil {
+		return ufmt.Errorf("transfer failed: token(%s), amount(%d)", token, amount)
+	}
 
 	return nil
 }
@@ -56,7 +58,9 @@ func (pfs *ProtocolFeeState) distributeToDevOps(token string, amount uint64) err
 func (pfs *ProtocolFeeState) distributeToGovStaker(token string, amount uint64) error {
 	pfs.addAccuToGovStaker(token, amount)
 	pfs.updateDistributedToGovStakerHistory(token, amount)
-	common.Transfer(cross, token, govStakerAddr, int64(amount))
+	if err := common.Transfer(cross, token, govStakerAddr, int64(amount)); err != nil {
+		return ufmt.Errorf("transfer failed: token(%s), amount(%d)", token, amount)
+	}
 
 	return nil
 }
