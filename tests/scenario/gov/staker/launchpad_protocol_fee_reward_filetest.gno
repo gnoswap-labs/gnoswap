@@ -56,7 +56,7 @@ func main() {
 
 func createLaunchpadProject() {
 	rewardAmount := int64(1_000_000_000)
-	startTime := uint64(time.Now().Unix() + 10)
+	startTime := int64(time.Now().Unix() + 3600) // 1 hour
 
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross, consts.LAUNCHPAD_ADDR, rewardAmount)
@@ -65,7 +65,7 @@ func createLaunchpadProject() {
 		"Bar Launchpad Project",
 		barPath,
 		projectAddr,
-		uint64(rewardAmount),
+		int64(rewardAmount),
 		barPath,
 		"1000000",
 		10,
@@ -74,12 +74,12 @@ func createLaunchpadProject() {
 		startTime,
 	)
 
-	testing.SkipHeights(10)
-	ufmt.Printf("[INFO] skipped 10 blocks\n")
+	testing.SkipHeights(3600)
+	ufmt.Printf("[INFO] skipped 3600 blocks\n")
 
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, consts.LAUNCHPAD_ADDR, rewardAmount)
-	lp.DepositGns(cross, "gno.land/r/onbloc/bar:123:30", uint64(rewardAmount), "")
+	lp.DepositGns(cross, "gno.land/r/onbloc/bar:123:30", int64(rewardAmount), "")
 }
 
 func setupProtocolFeeDeposit() {
@@ -128,7 +128,7 @@ func protocolFeeRewardProjectRecipient() {
 
 // Output:
 // [SCENARIO] 1. Create launchpad project and deposit
-// [INFO] skipped 10 blocks
+// [INFO] skipped 3600 blocks
 //
 // [SCENARIO] 1. Setup protocol fee deposit (bar, qux)
 // [INFO] protocol fee deposited: bar(1000), qux(2500)
@@ -141,7 +141,7 @@ func protocolFeeRewardProjectRecipient() {
 // [INFO] collected protocol fee reward for bob
 //
 // [SCENARIO] 4. Check and collect protocol fee reward for project recipient
-// [INFO] claimable reward (project recipient): {"height":"143","now":"1234567990","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"999"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2499"}]}
+// [INFO] claimable reward (project recipient): {"height":"3733","now":"1234585940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"999"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2499"}]}
 // [INFO] collected protocol fee reward for project recipient
 // [EXPECTED] collected bar amount: 999
 // [EXPECTED] collected qux amount: 2499
