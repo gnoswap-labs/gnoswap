@@ -49,22 +49,17 @@ func getNextPriceAmount0Add(
 func getNextPriceAmount0Remove(
 	currentSqrtPriceX96, liquidity, amountToRemove *u256.Uint,
 ) *u256.Uint {
+
 	// liquidityShifted = liquidity << 96
 	liquidityShifted := new(u256.Uint).Lsh(liquidity, Q96_RESOLUTION)
-	// amountTimesSqrtPrice = amount * sqrtPrice
+	// amountTimesSqrtPrice = amountToRemove * currentSqrtPriceX96
 	amountTimesSqrtPrice := new(u256.Uint).Mul(amountToRemove, currentSqrtPriceX96)
 
-	// Check overflow: (amountTimesSqrtPrice / amount) == sqrtPrice
-	if !new(u256.Uint).Div(amountTimesSqrtPrice, amountToRemove).Eq(currentSqrtPriceX96) {
-		panic(errMultiplicationOverflow)
+	if !new(u256.Uint).Div(amountTimesSqrtPrice, amountToRemove).Eq(currentSqrtPriceX96) ||
+		!liquidityShifted.Gt(amountTimesSqrtPrice) {
+		panic(errInvalidPoolSqrtPrice)
 	}
 
-	// Check sufficient liquidity: liquidityShifted > amountTimesSqrtPrice
-	if !liquidityShifted.Gt(amountTimesSqrtPrice) {
-		panic(errInsufficientLiquidity)
-	}
-
-	// Calculate: liquidityShifted * sqrtPrice / (liquidityShifted - amountTimesSqrtPrice)
 	denominator := new(u256.Uint).Sub(liquidityShifted, amountTimesSqrtPrice)
 	return u256.MulDivRoundingUp(liquidityShifted, currentSqrtPriceX96, denominator)
 }

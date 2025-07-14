@@ -138,7 +138,7 @@ func TestGetNextPriceAmount0Remove(t *testing.T) {
 			liquidity:      u256.MustFromDecimal("1"),
 			amountToRemove: MAX_UINT256,
 			shouldPanic:    true,
-			panicMsg:       errMultiplicationOverflow.Error(),
+			panicMsg:       errInvalidPoolSqrtPrice.Error(),
 		},
 		{
 			name:           "insufficient_liquidity",
@@ -146,7 +146,7 @@ func TestGetNextPriceAmount0Remove(t *testing.T) {
 			liquidity:      u256.MustFromDecimal("1000"),
 			amountToRemove: u256.MustFromDecimal("100000000000000000000"),
 			shouldPanic:    true,
-			panicMsg:       errInsufficientLiquidity.Error(),
+			panicMsg:       errInvalidPoolSqrtPrice.Error(),
 		},
 		{
 			name:           "overflow_path_large_remove_panics",
@@ -154,7 +154,7 @@ func TestGetNextPriceAmount0Remove(t *testing.T) {
 			liquidity:      u256.MustFromDecimal("1000000000000000000"),
 			amountToRemove: huge,
 			shouldPanic:    true,
-			panicMsg:       errInsufficientLiquidity.Error(),
+			panicMsg:       errInvalidPoolSqrtPrice.Error(),
 		},
 		{
 			name:           "remove_at_max_boundary_insufficient_liquidity",
@@ -162,7 +162,7 @@ func TestGetNextPriceAmount0Remove(t *testing.T) {
 			liquidity:      u256.MustFromDecimal("1000000000000000000000"),
 			amountToRemove: u256.MustFromDecimal("1000"),
 			shouldPanic:    true,
-			panicMsg:       errInsufficientLiquidity.Error(),
+			panicMsg:       errInvalidPoolSqrtPrice.Error(),
 		},
 	}
 
@@ -259,7 +259,7 @@ func TestGetNextSqrtPriceFromAmount0RoundingUp(t *testing.T) {
 			amount:      MAX_UINT256,
 			add:         false,
 			shouldPanic: true,
-			panicMsg:    errMultiplicationOverflow.Error(),
+			panicMsg:    errInvalidPoolSqrtPrice.Error(),
 		},
 		{
 			name:        "remove_insufficient_liquidity",
@@ -268,7 +268,7 @@ func TestGetNextSqrtPriceFromAmount0RoundingUp(t *testing.T) {
 			amount:      u256.MustFromDecimal("100000000000000000000"),
 			add:         false,
 			shouldPanic: true,
-			panicMsg:    errInsufficientLiquidity.Error(),
+			panicMsg:    errInvalidPoolSqrtPrice.Error(),
 		},
 	}
 
