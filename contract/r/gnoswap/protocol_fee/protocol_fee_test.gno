@@ -427,9 +427,9 @@ func TestProtocolFeeStateSetDevOpsPct(t *testing.T) {
 
 func TestProtocolFeeStateClearTokenListWithAmount(t *testing.T) {
 	tests := []struct {
-		name         string
-		initialData  map[string]uint64
-		expectedLen  int
+		name        string
+		initialData map[string]uint64
+		expectedLen int
 	}{
 		{
 			name:        "clear empty list",
@@ -571,6 +571,299 @@ func TestProtocolFeeStateUpdateDistributedToDevOpsHistory(t *testing.T) {
 			historyValue, exists := pfs.DistributedToDevOpsHistory.Get(test.tokenPath)
 			uassert.True(t, exists)
 			uassert.Equal(t, historyValue.(uint64), test.expectedSum)
+		})
+	}
+}
+
+func TestBalanceAmountMismatch_Fix(t *testing.T) {
+	tests := []struct {
+		name                      string
+		setupFunc                 func()
+		tokenPath                 string
+		recordedAmount            uint64 // Amount recorded in TokenListWithAmount
+		actualBalance             uint64 // Actual token balance in protocol_fee
+		externalTransferAmount    uint64 // Amount transferred externally
+		devOpsPct                 uint64 // DevOps percentage (basis points)
+		expectedDevOpsReceived    uint64 // Expected amount DevOps should receive
+		expectedGovStakerReceived uint64 // Expected amount GovStaker should receive
+		expectPanic               bool
+		panicMsg                  string
+	}{
+		{
+			name: "exact match - balance equals recorded amount",
+			setupFunc: func() {
+				protocolFeeState = NewProtocolFeeState()
+
+				// reset balances
+				if balance := bar.BalanceOf(protocolFeeAddr); balance > 0 {
+					bar.Transfer(cross, adminAddr, balance)
+				}
+				if balance := bar.BalanceOf(devOpsAddr); balance > 0 {
+					testing.SetRealm(std.NewUserRealm(devOpsAddr))
+					bar.Transfer(cross, adminAddr, balance)
+					testing.SetRealm(adminRealm)
+				}
+				if balance := bar.BalanceOf(govStakerAddr); balance > 0 {
+					testing.SetRealm(std.NewUserRealm(govStakerAddr))
+					bar.Transfer(cross, adminAddr, balance)
+					testing.SetRealm(adminRealm)
+				}
+
+				// Admin transfers tokens to protocol_fee
+				testing.SetRealm(adminRealm)
+				testing.SetOriginCaller(adminAddr)
+				bar.Transfer(cross, protocolFeeAddr, 1000)
+			},
+			tokenPath:                 "gno.land/r/onbloc/bar",
+			recordedAmount:            1000,
+			actualBalance:             1000,
+			externalTransferAmount:    0,
+			devOpsPct:                 2000, // 20%
+			expectedDevOpsReceived:    200,
+			expectedGovStakerReceived: 800,
+			expectPanic:               false,
+		},
+		{
+			name: "external transfer - balance exceeds recorded amount",
+			setupFunc: func() {
+				protocolFeeState = NewProtocolFeeState()
+
+				// Reset balances
+				if balance := bar.BalanceOf(protocolFeeAddr); balance > 0 {
+					bar.Transfer(cross, adminAddr, balance)
+				}
+				if balance := bar.BalanceOf(devOpsAddr); balance > 0 {
+					testing.SetRealm(std.NewUserRealm(devOpsAddr))
+					bar.Transfer(cross, adminAddr, balance)
+					testing.SetRealm(adminRealm)
+				}
+				if balance := bar.BalanceOf(govStakerAddr); balance > 0 {
+					testing.SetRealm(std.NewUserRealm(govStakerAddr))
+					bar.Transfer(cross, adminAddr, balance)
+					testing.SetRealm(adminRealm)
+				}
+
+				// Admin transfers initial amount
+				testing.SetRealm(adminRealm)
+				testing.SetOriginCaller(adminAddr)
+				bar.Transfer(cross, protocolFeeAddr, 1000)
+
+				// External user sends additional tokens
+				bar.Transfer(cross, protocolFeeAddr, 500)
+			},
+			tokenPath:                 "gno.land/r/onbloc/bar",
+			recordedAmount:            1000,
+			actualBalance:             1500,
+			externalTransferAmount:    500,
+			devOpsPct:                 2000, // 20%
+			expectedDevOpsReceived:    200,  // 20% of 1000 (recorded amount only)
+			expectedGovStakerReceived: 800,  // 80% of 1000 (recorded amount only)
+			expectPanic:               false,
+		},
+		{
+			name: "recorded exceeds balance - should panic",
+			setupFunc: func() {
+				protocolFeeState = NewProtocolFeeState()
+
+				// Reset balances
+				if balance := bar.BalanceOf(protocolFeeAddr); balance > 0 {
+					bar.Transfer(cross, adminAddr, balance)
+				}
+				if balance := bar.BalanceOf(devOpsAddr); balance > 0 {
+					testing.SetRealm(std.NewUserRealm(devOpsAddr))
+					bar.Transfer(cross, adminAddr, balance)
+					testing.SetRealm(adminRealm)
+				}
+				if balance := bar.BalanceOf(govStakerAddr); balance > 0 {
+					testing.SetRealm(std.NewUserRealm(govStakerAddr))
+					bar.Transfer(cross, adminAddr, balance)
+					testing.SetRealm(adminRealm)
+				}
+
+				// Admin transfers tokens
+				testing.SetRealm(adminRealm)
+				testing.SetOriginCaller(adminAddr)
+				bar.Transfer(cross, protocolFeeAddr, 500)
+			},
+			tokenPath:                 "gno.land/r/onbloc/bar",
+			recordedAmount:            1000, // More than actual balance
+			actualBalance:             500,
+			externalTransferAmount:    0,
+			devOpsPct:                 2000,
+			expectedDevOpsReceived:    0,
+			expectedGovStakerReceived: 0,
+			expectPanic:               true,
+			panicMsg:                  "[GNOSWAP-PROTOCOL_FEE-003] invalid amount || amount: 1000 should be less than or equal to balance: 500",
+		},
+		{
+			name: "multiple external transfers - all distributed",
+			setupFunc: func() {
+				protocolFeeState = NewProtocolFeeState()
+
+				// Reset balances
+				if balance := bar.BalanceOf(protocolFeeAddr); balance > 0 {
+					bar.Transfer(cross, adminAddr, balance)
+				}
+				if balance := bar.BalanceOf(devOpsAddr); balance > 0 {
+					testing.SetRealm(std.NewUserRealm(devOpsAddr))
+					bar.Transfer(cross, adminAddr, balance)
+					testing.SetRealm(adminRealm)
+				}
+				if balance := bar.BalanceOf(govStakerAddr); balance > 0 {
+					testing.SetRealm(std.NewUserRealm(govStakerAddr))
+					bar.Transfer(cross, adminAddr, balance)
+					testing.SetRealm(adminRealm)
+				}
+
+				// Admin transfers initial amount
+				testing.SetRealm(adminRealm)
+				testing.SetOriginCaller(adminAddr)
+				bar.Transfer(cross, protocolFeeAddr, 100)
+
+				// Multiple external transfers
+				bar.Transfer(cross, protocolFeeAddr, 200)
+				bar.Transfer(cross, protocolFeeAddr, 300)
+				bar.Transfer(cross, protocolFeeAddr, 400)
+			},
+			tokenPath:                 "gno.land/r/onbloc/bar",
+			recordedAmount:            100,  // Only the recorded amount
+			actualBalance:             1000, // Total including external transfers
+			externalTransferAmount:    900,
+			devOpsPct:                 1000, // 10%
+			expectedDevOpsReceived:    10,   // 10% of 100 (recorded amount only)
+			expectedGovStakerReceived: 90,   // 90% of 100 (recorded amount only)
+			expectPanic:               false,
+		},
+		{
+			name: "zero recorded amount with external balance",
+			setupFunc: func() {
+				protocolFeeState = NewProtocolFeeState()
+
+				// Reset balances
+				if balance := bar.BalanceOf(protocolFeeAddr); balance > 0 {
+					bar.Transfer(cross, adminAddr, balance)
+				}
+				if balance := bar.BalanceOf(devOpsAddr); balance > 0 {
+					testing.SetRealm(std.NewUserRealm(devOpsAddr))
+					bar.Transfer(cross, adminAddr, balance)
+					testing.SetRealm(adminRealm)
+				}
+				if balance := bar.BalanceOf(govStakerAddr); balance > 0 {
+					testing.SetRealm(std.NewUserRealm(govStakerAddr))
+					bar.Transfer(cross, adminAddr, balance)
+					testing.SetRealm(adminRealm)
+				}
+
+				// Only external transfer, no recorded amount
+				testing.SetRealm(adminRealm)
+				testing.SetOriginCaller(adminAddr)
+				bar.Transfer(cross, protocolFeeAddr, 1000)
+			},
+			tokenPath:                 "gno.land/r/onbloc/bar",
+			recordedAmount:            0,    // Nothing recorded
+			actualBalance:             1000, // But balance exists
+			externalTransferAmount:    1000,
+			devOpsPct:                 5000, // 50%
+			expectedDevOpsReceived:    0,    // Nothing distributed as recorded is 0
+			expectedGovStakerReceived: 0,    // Nothing distributed as recorded is 0
+			expectPanic:               false,
+		},
+		{
+			name: "100% to DevOps with external transfer",
+			setupFunc: func() {
+				protocolFeeState = NewProtocolFeeState()
+
+				// Reset balances
+				if balance := bar.BalanceOf(protocolFeeAddr); balance > 0 {
+					bar.Transfer(cross, adminAddr, balance)
+				}
+				if balance := bar.BalanceOf(devOpsAddr); balance > 0 {
+					testing.SetRealm(std.NewUserRealm(devOpsAddr))
+					bar.Transfer(cross, adminAddr, balance)
+					testing.SetRealm(adminRealm)
+				}
+				if balance := bar.BalanceOf(govStakerAddr); balance > 0 {
+					testing.SetRealm(std.NewUserRealm(govStakerAddr))
+					bar.Transfer(cross, adminAddr, balance)
+					testing.SetRealm(adminRealm)
+				}
+
+				// Admin transfers
+				testing.SetRealm(adminRealm)
+				testing.SetOriginCaller(adminAddr)
+				bar.Transfer(cross, protocolFeeAddr, 800)
+
+				// External transfer
+				bar.Transfer(cross, protocolFeeAddr, 200)
+			},
+			tokenPath:                 "gno.land/r/onbloc/bar",
+			recordedAmount:            800,
+			actualBalance:             1000,
+			externalTransferAmount:    200,
+			devOpsPct:                 10000, // 100%
+			expectedDevOpsReceived:    800,   // All recorded amount goes to DevOps
+			expectedGovStakerReceived: 0,
+			expectPanic:               false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupFunc()
+
+			testing.SetRealm(adminRealm)
+			SetDevOpsPctByAdmin(cross, tt.devOpsPct)
+
+			// record the amount in protocol fee
+			if tt.recordedAmount > 0 {
+				testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+				AddToProtocolFee(cross, tt.tokenPath, tt.recordedAmount)
+			}
+
+			// check initial state
+			uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), int64(tt.actualBalance))
+			uassert.Equal(t, protocolFeeState.TokenListWithAmount[tt.tokenPath], tt.recordedAmount)
+
+			// distribute protocol fee
+			testing.SetRealm(std.NewCodeRealm(consts.GOV_STAKER_PATH))
+			testing.SetOriginCaller(govStakerAddr)
+
+			if tt.expectPanic {
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					DistributeProtocolFee(cross)
+				})
+			} else {
+				// record initial balances before distribution
+				prevDevOpsBalance := bar.BalanceOf(devOpsAddr)
+				prevGovStakerBalance := bar.BalanceOf(govStakerAddr)
+
+				result := DistributeProtocolFee(cross)
+
+				// check the actual amounts received (delta from previous balance)
+				actualDevOpsReceived := bar.BalanceOf(devOpsAddr) - prevDevOpsBalance
+				actualGovStakerReceived := bar.BalanceOf(govStakerAddr) - prevGovStakerBalance
+
+				// verify balances after distribution
+				if tt.recordedAmount == 0 {
+					// If recorded amount is 0, nothing should be distributed even if balance exists
+					uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), int64(tt.actualBalance))
+				} else {
+					// Only recorded amount should be distributed, external transfers remain
+					expectedRemaining := int64(tt.actualBalance) - int64(tt.recordedAmount)
+					uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), expectedRemaining)
+				}
+
+				uassert.Equal(t, actualDevOpsReceived, int64(tt.expectedDevOpsReceived))
+				uassert.Equal(t, actualGovStakerReceived, int64(tt.expectedGovStakerReceived))
+
+				// verify returned result
+				if tt.expectedGovStakerReceived > 0 {
+					uassert.Equal(t, result[tt.tokenPath], tt.expectedGovStakerReceived)
+				}
+
+				// verify TokenListWithAmount is cleared
+				uassert.Equal(t, len(protocolFeeState.TokenListWithAmount), 0)
+			}
 		})
 	}
 }

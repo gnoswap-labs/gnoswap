@@ -78,8 +78,15 @@ func DistributeProtocolFee(cur realm) map[string]uint64 {
 		}
 
 		if amount > 0 {
-			toDevOpsAmount := balance * protocolFeeState.DevOpsPct / 10000 // default 0%
-			toGovStakerAmount := balance - toDevOpsAmount                  // default 100%
+			// Distribute only the recorded amount, not the entire balance
+			distributeAmount := amount
+			if distributeAmount > balance {
+				// This should not happen due to the check above, but safeguard anyway
+				distributeAmount = balance
+			}
+
+			toDevOpsAmount := distributeAmount * protocolFeeState.DevOpsPct / 10000 // default 0%
+			toGovStakerAmount := distributeAmount - toDevOpsAmount                  // default 100%
 
 			if toDevOpsAmount > 0 {
 				protocolFeeState.addAccuToDevOps(token, toDevOpsAmount)
