@@ -264,6 +264,104 @@ func TestAssertOnlyPoolRouterStaker(t *testing.T) {
 	}
 }
 
+func TestDistributeWithDifferentDevOpsPct(t *testing.T) {
+	tests := []struct {
+		name                    string
+		devOpsPct               uint64
+		tokenAmount             uint64
+		expectedDevOpsAmount    uint64
+		expectedGovStakerAmount uint64
+	}{
+		{
+			name:                    "0% to DevOps",
+			devOpsPct:               0,
+			tokenAmount:             1000,
+			expectedDevOpsAmount:    0,
+			expectedGovStakerAmount: 1000,
+		},
+		{
+			name:                    "25% to DevOps",
+			devOpsPct:               2500,
+			tokenAmount:             1000,
+			expectedDevOpsAmount:    250,
+			expectedGovStakerAmount: 750,
+		},
+		{
+			name:                    "50% to DevOps",
+			devOpsPct:               5000,
+			tokenAmount:             1000,
+			expectedDevOpsAmount:    500,
+			expectedGovStakerAmount: 500,
+		},
+		{
+			name:                    "100% to DevOps",
+			devOpsPct:               10000,
+			tokenAmount:             1000,
+			expectedDevOpsAmount:    1000,
+			expectedGovStakerAmount: 0,
+		},
+		{
+			name:                    "33.33% to DevOps",
+			devOpsPct:               3333,
+			tokenAmount:             1000,
+			expectedDevOpsAmount:    333,
+			expectedGovStakerAmount: 667,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			protocolFeeState = NewProtocolFeeState()
+
+			if balance := bar.BalanceOf(protocolFeeAddr); balance > 0 {
+				bar.Transfer(cross, adminAddr, balance)
+			}
+			if balance := bar.BalanceOf(devOpsAddr); balance > 0 {
+				testing.SetRealm(std.NewUserRealm(devOpsAddr))
+				bar.Transfer(cross, adminAddr, balance)
+				testing.SetRealm(adminRealm)
+			}
+			if balance := bar.BalanceOf(govStakerAddr); balance > 0 {
+				testing.SetRealm(std.NewUserRealm(govStakerAddr))
+				bar.Transfer(cross, adminAddr, balance)
+				testing.SetRealm(adminRealm)
+			}
+
+			testing.SetRealm(adminRealm)
+			SetDevOpsPctByAdmin(cross, tt.devOpsPct)
+			uassert.Equal(t, GetDevOpsPct(), tt.devOpsPct)
+
+			testing.SetOriginCaller(adminAddr)
+			bar.Transfer(cross, protocolFeeAddr, int64(tt.tokenAmount))
+
+			// record the amount in protocol fee
+			testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+			AddToProtocolFee(cross, "gno.land/r/onbloc/bar", tt.tokenAmount)
+
+			// initial state
+			uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), int64(tt.tokenAmount))
+			uassert.Equal(t, bar.BalanceOf(devOpsAddr), int64(0))
+			uassert.Equal(t, bar.BalanceOf(govStakerAddr), int64(0))
+
+			// distribute protocol fee
+			testing.SetRealm(std.NewCodeRealm(consts.GOV_STAKER_PATH))
+			testing.SetOriginCaller(govStakerAddr)
+			result := DistributeProtocolFee(cross)
+
+			// final state
+			uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), int64(0))
+			uassert.Equal(t, bar.BalanceOf(devOpsAddr), int64(tt.expectedDevOpsAmount))
+			uassert.Equal(t, bar.BalanceOf(govStakerAddr), int64(tt.expectedGovStakerAmount))
+
+			if tt.expectedGovStakerAmount > 0 {
+				uassert.Equal(t, result["gno.land/r/onbloc/bar"], tt.expectedGovStakerAmount)
+			}
+
+			uassert.Equal(t, len(protocolFeeState.TokenListWithAmount), 0)
+		})
+	}
+}
+
 func TestBalanceAmountMismatch_Fix(t *testing.T) {
 	tests := []struct {
 		name                      string

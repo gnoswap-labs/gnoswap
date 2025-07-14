@@ -1,12 +1,6 @@
 package protocol_fee
 
-import (
-	"std"
-
-	"gno.land/p/demo/avl"
-
-	"gno.land/r/gnoswap/v1/common"
-)
+import "gno.land/p/demo/avl"
 
 // TokenList returns only the list of token path.
 // If positive is true, it returns only the token path with amount > 0.
