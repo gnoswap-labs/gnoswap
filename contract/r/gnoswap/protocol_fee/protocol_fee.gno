@@ -12,6 +12,9 @@ import (
 	"gno.land/r/gnoswap/v1/halt"
 )
 
+// Global instance of the protocol fee state
+var protocolFeeState = NewProtocolFeeState()
+
 // ProtocolFeeState holds all the state variables for protocol fee management
 type ProtocolFeeState struct {
 	// by default, devOps will get 0% of the protocol fee (which means gov/staker will get 100% of the protocol fee)
@@ -40,8 +43,14 @@ func NewProtocolFeeState() *ProtocolFeeState {
 	}
 }
 
-// Global instance of the protocol fee state
-var protocolFeeState = NewProtocolFeeState()
+// distributeTo distributes tokens to the desired address (should be registered in access contract)
+// with the amount of the token
+func (pfs *ProtocolFeeState) distributeTo(token string, addr std.Address, amount uint64) error {
+	pfs.addAccuToDevOps(token, amount)
+	pfs.updateDistributedToDevOpsHistory(token, amount)
+	common.Transfer(cross, token, addr, int64(amount))
+	return nil
+}
 
 // DistributeProtocolFee distributes the protocol fee to devOps and gov/staker.
 // only `gov/staker` can execute this function.
@@ -77,32 +86,34 @@ func DistributeProtocolFee(cur realm) map[string]uint64 {
 			))
 		}
 
-		if amount > 0 {
-			// Distribute only the recorded amount, not the entire balance
-			distributeAmount := amount
-			if distributeAmount > balance {
-				// This should not happen due to the check above, but safeguard anyway
-				distributeAmount = balance
-			}
+		if amount <= 0 {
+			continue
+		}
 
-			toDevOpsAmount := distributeAmount * protocolFeeState.DevOpsPct / 10000 // default 0%
-			toGovStakerAmount := distributeAmount - toDevOpsAmount                  // default 100%
+		// Distribute only the recorded amount, not the entire balance
+		distributeAmount := amount
+		if distributeAmount > balance {
+			// This should not happen due to the check above, but safeguard anyway
+			distributeAmount = balance
+		}
 
-			if toDevOpsAmount > 0 {
-				protocolFeeState.addAccuToDevOps(token, toDevOpsAmount)
-				protocolFeeState.updateDistributedToDevOpsHistory(token, toDevOpsAmount)
-				sentToDevOpsForEvent = append(sentToDevOpsForEvent, makeEventString(token, toDevOpsAmount))
-				common.Transfer(cross, token, devOpsAddr, int64(toDevOpsAmount))
-			}
+		toDevOpsAmount := distributeAmount * protocolFeeState.DevOpsPct / 10000 // default 0%
+		toGovStakerAmount := distributeAmount - toDevOpsAmount                  // default 100%
 
-			if toGovStakerAmount > 0 {
-				protocolFeeState.addAccuToGovStaker(token, toGovStakerAmount)
-				protocolFeeState.updateDistributedToGovStakerHistory(token, toGovStakerAmount)
-				sentToGovStakerForEvent = append(sentToGovStakerForEvent, makeEventString(token, toGovStakerAmount))
-				common.Transfer(cross, token, govStakerAddr, int64(toGovStakerAmount))
+		if err := protocolFeeState.distributeTo(token, devOpsAddr, toDevOpsAmount); err != nil {
+			panic(err)
+		}
+		if toDevOpsAmount > 0 {
+			sentToDevOpsForEvent = append(sentToDevOpsForEvent, makeEventString(token, toDevOpsAmount))
+		}
 
-				toReturnDistributedToGovStaker[token] = toGovStakerAmount
-			}
+		if err := protocolFeeState.distributeTo(token, govStakerAddr, toGovStakerAmount); err != nil {
+			panic(err)
+		}
+
+		if toGovStakerAmount > 0 {
+			sentToGovStakerForEvent = append(sentToGovStakerForEvent, makeEventString(token, toGovStakerAmount))
+			toReturnDistributedToGovStaker[token] = toGovStakerAmount
 		}
 	}
 
@@ -262,5 +273,5 @@ func (pfs *ProtocolFeeState) clearTokenListWithAmount() {
 }
 
 func makeEventString(tokenPath string, amount uint64) string {
-	return tokenPath + "*FEE*" + strconv.FormatUint(amount, 10)
+	return ufmt.Sprintf("%s*FEE*%d", tokenPath, amount)
 }
