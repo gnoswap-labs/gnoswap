@@ -84,6 +84,10 @@ func instantiateWarmup(currentHeight int64) []Warmup {
 }
 
 func (warmup *Warmup) apply(poolReward int64, positionLiquidity, stakedLiquidity *u256.Uint) (int64, int64) {
+	if stakedLiquidity.IsZero() {
+		return 0, 0
+	}
+	
 	poolRewardUint := u256.NewUintFromInt64(poolReward)
 	perPositionReward := u256.Zero().Mul(poolRewardUint, positionLiquidity)
 	perPositionReward = u256.Zero().Div(perPositionReward, stakedLiquidity)
