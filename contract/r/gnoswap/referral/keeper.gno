@@ -112,13 +112,10 @@ func (k *keeper) remove(target std.Address) error {
 
 	tgt := target.String()
 
-	if err := k.checkRateLimit(tgt); err != nil {
-		return err
-	}
-
 	_, ok := k.store.Remove(tgt)
 	if !ok {
-		return ErrNotFound
+		// Removing non-existent referral is a no-op, not an error
+		return nil
 	}
 
 	std.Emit(

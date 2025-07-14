@@ -3,7 +3,6 @@ package referral
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/v1/access"
 )
 
@@ -25,7 +24,7 @@ func isValidCaller(caller std.Address) error {
 	if validCallers[caller] {
 		return nil
 	}
-	return ufmt.Errorf("unauthorized caller: %s", caller)
+	return ErrUnauthorized
 }
 
 func getAddress(role string) std.Address {

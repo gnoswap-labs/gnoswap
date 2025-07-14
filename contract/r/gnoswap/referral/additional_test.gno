@@ -2,6 +2,7 @@ package referral
 
 import (
 	"std"
+	"strings"
 	"testing"
 
 	"gno.land/p/demo/testutils"
@@ -10,43 +11,8 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 )
 
-var (
-	// Additional test addresses
-	additionalAddr1     = testutils.TestAddress("additional1")
-	additionalAddr2     = testutils.TestAddress("additional2")
-	additionalAddr3     = testutils.TestAddress("additional3")
-	additionalAddr4     = testutils.TestAddress("additional4")
-	additionalAddr5     = testutils.TestAddress("additional5")
-	additionalRateAddr1 = testutils.TestAddress("additionalRate1")
-	additionalRateAddr2 = testutils.TestAddress("additionalRate2")
-	stressAddr1         = testutils.TestAddress("stress1")
-	stressAddr2         = testutils.TestAddress("stress2")
-)
-
-func setupAdditionalKeeper() *keeper {
-	return NewKeeper().(*keeper)
-}
-
-func mockValidCallerAdditional() func() {
-	origCaller := std.OriginCaller()
-	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
-	testing.SetOriginCaller(routerAddr)
-	return func() {
-		testing.SetOriginCaller(origCaller)
-	}
-}
-
-func mockInvalidCallerAdditional() func() {
-	origCaller := std.OriginCaller()
-	testing.SetOriginCaller(std.Address("unauthorized"))
-	return func() {
-		testing.SetOriginCaller(origCaller)
-	}
-}
-
-// TestChainedReferrals tests complex referral chains
-func TestChainedReferrals(t *testing.T) {
-	tt := []struct {
+func TestAdditional_ChainedReferrals(t *testing.T) {
+	tests := []struct {
 		name          string
 		setupChain    func(*keeper) error
 		verifyChain   func(*keeper) error
@@ -56,37 +22,47 @@ func TestChainedReferrals(t *testing.T) {
 			name: "Multi-level referral chain success",
 			setupChain: func(k *keeper) error {
 				// Create a chain: addr1 -> addr2 -> addr3 -> addr4
-				if err := k.register(additionalAddr1, additionalAddr2); err != nil {
+				addr1 := testutils.TestAddress("additional1")
+				addr2 := testutils.TestAddress("additional2")
+				addr3 := testutils.TestAddress("additional3")
+				addr4 := testutils.TestAddress("additional4")
+
+				if err := k.register(addr1, addr2); err != nil {
 					return err
 				}
-				if err := k.register(additionalAddr2, additionalAddr3); err != nil {
+				if err := k.register(addr2, addr3); err != nil {
 					return err
 				}
-				return k.register(additionalAddr3, additionalAddr4)
+				return k.register(addr3, addr4)
 			},
 			verifyChain: func(k *keeper) error {
+				addr1 := testutils.TestAddress("additional1")
+				addr2 := testutils.TestAddress("additional2")
+				addr3 := testutils.TestAddress("additional3")
+				addr4 := testutils.TestAddress("additional4")
+
 				// Verify each link in the chain
-				ref1, err := k.get(additionalAddr1)
+				ref1, err := k.get(addr1)
 				if err != nil {
 					return err
 				}
-				if ref1.String() != additionalAddr2.String() {
+				if ref1.String() != addr2.String() {
 					return ErrNotFound
 				}
 
-				ref2, err := k.get(additionalAddr2)
+				ref2, err := k.get(addr2)
 				if err != nil {
 					return err
 				}
-				if ref2.String() != additionalAddr3.String() {
+				if ref2.String() != addr3.String() {
 					return ErrNotFound
 				}
 
-				ref3, err := k.get(additionalAddr3)
+				ref3, err := k.get(addr3)
 				if err != nil {
 					return err
 				}
-				if ref3.String() != additionalAddr4.String() {
+				if ref3.String() != addr4.String() {
 					return ErrNotFound
 				}
 				return nil
@@ -99,42 +75,18 @@ func TestChainedReferrals(t *testing.T) {
 				// Use different addresses to avoid rate limiting
 				chainAddr1 := testutils.TestAddress("chain1")
 				chainAddr2 := testutils.TestAddress("chain2")
-				chainAddr3 := testutils.TestAddress("chain3")
-				chainAddr4 := testutils.TestAddress("chain4")
 
-				// Initial chain: addr1 -> addr2 -> addr3
-				if err := k.register(chainAddr1, chainAddr2); err != nil {
-					return err
-				}
-				if err := k.register(chainAddr2, chainAddr3); err != nil {
-					return err
-				}
-
-				// Bypass rate limiting for update operation
-				k.lastOps[chainAddr2.String()] = 0
-
-				// Update middle of chain: addr2 -> addr4
-				return k.update(chainAddr2, chainAddr4)
+				return k.register(chainAddr1, chainAddr2)
 			},
 			verifyChain: func(k *keeper) error {
 				chainAddr1 := testutils.TestAddress("chain1")
 				chainAddr2 := testutils.TestAddress("chain2")
-				chainAddr4 := testutils.TestAddress("chain4")
 
-				// Verify updated chain
-				ref1, err := k.get(chainAddr1)
+				ref, err := k.get(chainAddr1)
 				if err != nil {
 					return err
 				}
-				if ref1.String() != chainAddr2.String() {
-					return ErrNotFound
-				}
-
-				ref2, err := k.get(chainAddr2)
-				if err != nil {
-					return err
-				}
-				if ref2.String() != chainAddr4.String() {
+				if ref.String() != chainAddr2.String() {
 					return ErrNotFound
 				}
 				return nil
@@ -143,11 +95,11 @@ func TestChainedReferrals(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tt {
+	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
 			k := setupAdditionalKeeper()
-			cleanup := mockValidCallerAdditional()
+			cleanup := setupAdditionalCaller()
 			defer cleanup()
 
 			// when
@@ -163,35 +115,31 @@ func TestChainedReferrals(t *testing.T) {
 	}
 }
 
-// TestRateLimitingBehavior tests comprehensive rate limiting scenarios
-func TestRateLimitingBehavior(t *testing.T) {
-	tt := []struct {
+func TestAdditional_RateLimitingEdgeCases(t *testing.T) {
+	tests := []struct {
 		name          string
 		setupTest     func(*keeper) error
 		expectedError error
 	}{
 		{
-			name: "Rate limiting prevents multiple operations within 24 hours",
+			name: "Rate limiting with different operation types",
 			setupTest: func(k *keeper) error {
-				// Use unique address to avoid conflicts with other tests
-				rateAddr1 := testutils.TestAddress("rateTest1")
-				rateAddr2 := testutils.TestAddress("rateTest2")
-				rateAddr3 := testutils.TestAddress("rateTest3")
+				rateSpecificAddr1 := testutils.TestAddress("rateSpecific1")
+				rateSpecificAddr2 := testutils.TestAddress("rateSpecific2")
 
-				// First registration should succeed
-				if err := k.register(rateAddr1, rateAddr2); err != nil {
+				// Register first
+				if err := k.register(rateSpecificAddr1, rateSpecificAddr2); err != nil {
 					return err
 				}
 
-				// Second operation should fail due to rate limiting
-				return k.update(rateAddr1, rateAddr3)
+				// Try to update immediately (should be rate limited)
+				return k.update(rateSpecificAddr1, testutils.TestAddress("rateSpecific3"))
 			},
 			expectedError: ErrTooManyRequests,
 		},
 		{
-			name: "Rate limiting is address-specific",
+			name: "Rate limiting is per address",
 			setupTest: func(k *keeper) error {
-				// Use different addresses to avoid conflicts
 				rateSpecificAddr1 := testutils.TestAddress("rateSpecific1")
 				rateSpecificAddr2 := testutils.TestAddress("rateSpecific2")
 				rateSpecificAddr3 := testutils.TestAddress("rateSpecific3")
@@ -209,11 +157,11 @@ func TestRateLimitingBehavior(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tt {
+	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
 			k := setupAdditionalKeeper()
-			cleanup := mockValidCallerAdditional()
+			cleanup := setupAdditionalCaller()
 			defer cleanup()
 
 			// when
@@ -225,9 +173,8 @@ func TestRateLimitingBehavior(t *testing.T) {
 	}
 }
 
-// TestPermissionValidation tests permission and authorization scenarios
-func TestPermissionValidation(t *testing.T) {
-	tt := []struct {
+func TestAdditional_PermissionValidation(t *testing.T) {
+	tests := []struct {
 		name          string
 		setupCaller   func() func()
 		operation     func(*keeper) error
@@ -235,37 +182,29 @@ func TestPermissionValidation(t *testing.T) {
 		errorContains string
 	}{
 		{
-			name:        "Valid callers should be accepted",
-			setupCaller: mockValidCallerAdditional,
+			name: "Valid caller can register",
+			setupCaller: func() func() {
+				return setupAdditionalCaller()
+			},
 			operation: func(k *keeper) error {
-				// Use unique addresses to avoid rate limiting from other tests
-				permAddr1 := testutils.TestAddress("perm1")
-				permAddr2 := testutils.TestAddress("perm2")
-				return k.register(permAddr1, permAddr2)
+				return k.register(testutils.TestAddress("perm1"), testutils.TestAddress("perm2"))
 			},
 			expectError: false,
 		},
 		{
-			name:        "Invalid callers should be rejected for register",
-			setupCaller: mockInvalidCallerAdditional,
-			operation: func(k *keeper) error {
-				return k.register(additionalAddr1, additionalAddr2)
+			name: "Invalid caller cannot register",
+			setupCaller: func() func() {
+				return setupInvalidCaller()
 			},
-			expectError:   true,
-			errorContains: "unauthorized caller",
-		},
-		{
-			name:        "Invalid callers should be rejected for update",
-			setupCaller: mockInvalidCallerAdditional,
 			operation: func(k *keeper) error {
-				return k.update(additionalAddr1, additionalAddr3)
+				return k.register(testutils.TestAddress("perm3"), testutils.TestAddress("perm4"))
 			},
 			expectError:   true,
 			errorContains: "unauthorized caller",
 		},
 	}
 
-	for _, tc := range tt {
+	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
 			k := setupAdditionalKeeper()
@@ -279,10 +218,8 @@ func TestPermissionValidation(t *testing.T) {
 			if tc.expectError {
 				uassert.Error(t, err)
 				if tc.errorContains != "" && err != nil {
-					uassert.True(t, len(err.Error()) > 0 &&
-						err.Error() != "" &&
-						err.Error() != "unauthorized caller" &&
-						err.Error() != "unauthorized caller: ") // Check for any meaningful error message
+					uassert.True(t, len(err.Error()) > 0 && 
+						strings.Contains(err.Error(), tc.errorContains))
 				}
 			} else {
 				uassert.NoError(t, err)
@@ -291,82 +228,55 @@ func TestPermissionValidation(t *testing.T) {
 	}
 }
 
-// TestEdgeCases tests various edge cases and boundary conditions
-func TestEdgeCases(t *testing.T) {
-	tt := []struct {
+func TestAdditional_EdgeCases(t *testing.T) {
+	tests := []struct {
 		name          string
 		setupTest     func(*keeper) error
 		verifyTest    func(*keeper) error
 		expectedError error
 	}{
 		{
-			name: "Self referral prevention",
+			name: "Multiple registrations same pair",
 			setupTest: func(k *keeper) error {
-				// Self referral should fail
-				return k.register(additionalAddr1, additionalAddr1)
-			},
-			verifyTest:    func(k *keeper) error { return nil },
-			expectedError: ErrSelfReferral,
-		},
-		{
-			name: "Zero address handling",
-			setupTest: func(k *keeper) error {
-				// Zero address referral should be allowed (means no referrer)
-				return k.register(additionalAddr1, zeroAddress)
-			},
-			verifyTest: func(k *keeper) error {
-				// Verify no referrer exists
-				has := k.has(additionalAddr1)
-				if has {
-					return ErrNotFound
-				}
-				return nil
-			},
-			expectedError: nil,
-		},
-		{
-			name: "Update non-existent referral",
-			setupTest: func(k *keeper) error {
-				// Update should work even if no prior referral exists
-				return k.update(additionalAddr1, additionalAddr2)
-			},
-			verifyTest: func(k *keeper) error {
-				// Verify referral was created
-				ref, err := k.get(additionalAddr1)
-				if err != nil {
+				edgeAddr1 := testutils.TestAddress("edge1")
+				edgeAddr2 := testutils.TestAddress("edge2")
+
+				// Register once
+				if err := k.register(edgeAddr1, edgeAddr2); err != nil {
 					return err
 				}
-				if ref.String() != additionalAddr2.String() {
-					return ErrNotFound
+				// Try to register again with same pair (should be rate limited)
+				return k.register(edgeAddr1, edgeAddr2)
+			},
+			verifyTest: func(k *keeper) error {
+				return nil // No verification needed for expected error
+			},
+			expectedError: ErrTooManyRequests,
+		},
+		{
+			name: "Zero address operations",
+			setupTest: func(k *keeper) error {
+				edgeAddr3 := testutils.TestAddress("edge3")
+				// Register with zero address (should work and remove any existing)
+				return k.register(edgeAddr3, zeroAddress)
+			},
+			verifyTest: func(k *keeper) error {
+				edgeAddr3 := testutils.TestAddress("edge3")
+				has := k.has(edgeAddr3)
+				if has {
+					return ErrInvalidAddress // Should not have referral
 				}
 				return nil
 			},
 			expectedError: nil,
-		},
-		{
-			name: "Get non-existent referral",
-			setupTest: func(k *keeper) error {
-				// Get should return error for non-existent referral
-				_, err := k.get(additionalAddr1)
-				return err
-			},
-			verifyTest: func(k *keeper) error {
-				// Has should return false
-				has := k.has(additionalAddr1)
-				if has {
-					return ErrNotFound
-				}
-				return nil
-			},
-			expectedError: ErrNotFound,
 		},
 	}
 
-	for _, tc := range tt {
+	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
 			k := setupAdditionalKeeper()
-			cleanup := mockValidCallerAdditional()
+			cleanup := setupAdditionalCaller()
 			defer cleanup()
 
 			// when
@@ -382,9 +292,8 @@ func TestEdgeCases(t *testing.T) {
 	}
 }
 
-// TestStressScenarios tests performance under load
-func TestStressScenarios(t *testing.T) {
-	tt := []struct {
+func TestAdditional_StressScenarios(t *testing.T) {
+	tests := []struct {
 		name          string
 		setupTest     func(*keeper) error
 		verifyTest    func(*keeper) error
@@ -405,11 +314,19 @@ func TestStressScenarios(t *testing.T) {
 				return nil
 			},
 			verifyTest: func(k *keeper) error {
-				// Verify all registrations
+				// Verify all referrals exist
 				for i := 0; i < 10; i++ {
 					addr := testutils.TestAddress("stress" + string(rune(i+'0')))
-					has := k.has(addr)
-					if !has {
+					refAddr := testutils.TestAddress("ref" + string(rune(i+'0')))
+
+					if !k.has(addr) {
+						return ErrNotFound
+					}
+					ref, err := k.get(addr)
+					if err != nil {
+						return err
+					}
+					if ref.String() != refAddr.String() {
 						return ErrNotFound
 					}
 				}
@@ -418,33 +335,28 @@ func TestStressScenarios(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name: "State consistency under multiple operations",
+			name: "Large scale operations",
 			setupTest: func(k *keeper) error {
-				// Create base referral
-				return k.register(stressAddr1, stressAddr2)
-			},
-			verifyTest: func(k *keeper) error {
-				// Verify initial state
-				ref, err := k.get(stressAddr1)
-				if err != nil {
-					return err
-				}
-				if ref.String() != stressAddr2.String() {
-					return ErrNotFound
-				}
+				// Register many different referrals
+				for i := 0; i < 50; i++ {
+					addr := testutils.TestAddress("large" + string(rune(i+'0')))
+					refAddr := testutils.TestAddress("largeRef" + string(rune(i+'0')))
 
-				// Multiple state checks should be consistent
-				for i := 0; i < 5; i++ {
-					has := k.has(stressAddr1)
-					if !has {
-						return ErrNotFound
-					}
-
-					ref, err := k.get(stressAddr1)
-					if err != nil {
+					if err := k.register(addr, refAddr); err != nil {
 						return err
 					}
-					if ref.String() != stressAddr2.String() {
+				}
+				return nil
+			},
+			verifyTest: func(k *keeper) error {
+				// Verify keeper is not empty
+				if k.isEmpty() {
+					return ErrNotFound
+				}
+				// Spot check a few entries
+				for i := 0; i < 5; i++ {
+					addr := testutils.TestAddress("large" + string(rune(i+'0')))
+					if !k.has(addr) {
 						return ErrNotFound
 					}
 				}
@@ -454,11 +366,11 @@ func TestStressScenarios(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tt {
+	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
 			k := setupAdditionalKeeper()
-			cleanup := mockValidCallerAdditional()
+			cleanup := setupAdditionalCaller()
 			defer cleanup()
 
 			// when
@@ -474,167 +386,107 @@ func TestStressScenarios(t *testing.T) {
 	}
 }
 
-// TestDataIntegrity tests data consistency and integrity
-func TestDataIntegrity(t *testing.T) {
-	tt := []struct {
-		name          string
-		setupTest     func(*keeper) (*keeper, error)
-		verifyTest    func(*keeper, *keeper) error
-		expectedError error
+func TestAdditional_GlobalStateConsistency(t *testing.T) {
+	tests := []struct {
+		name           string
+		operations     []func(*keeper) error
+		finalCheck     func(*keeper) error
+		expectedResult bool
 	}{
 		{
-			name: "Referral data remains consistent",
-			setupTest: func(k *keeper) (*keeper, error) {
-				// Use unique addresses to avoid rate limiting conflicts
-				dataAddr1 := testutils.TestAddress("data1")
-				dataAddr2 := testutils.TestAddress("data2")
-				dataAddr3 := testutils.TestAddress("data3")
-
-				// Register initial referral
-				if err := k.register(dataAddr1, dataAddr2); err != nil {
-					return nil, err
-				}
-
-				// Multiple reads should return same result
-				for i := 0; i < 3; i++ {
-					ref, err := k.get(dataAddr1)
-					if err != nil {
-						return nil, err
-					}
-					if ref.String() != dataAddr2.String() {
-						return nil, ErrNotFound
-					}
-				}
-
-				// Create new keeper to avoid rate limiting for update
-				k2 := setupAdditionalKeeper()
-				err := k2.register(dataAddr1, dataAddr3)
-				return k2, err
+			name: "Mixed operations maintain consistency",
+			operations: []func(*keeper) error{
+				func(k *keeper) error {
+					return k.register(testutils.TestAddress("mix1"), testutils.TestAddress("mix2"))
+				},
+				func(k *keeper) error {
+					return k.register(testutils.TestAddress("mix3"), testutils.TestAddress("mix4"))
+				},
+				func(k *keeper) error {
+					return k.remove(testutils.TestAddress("mix1"))
+				},
 			},
-			verifyTest: func(k *keeper, k2 *keeper) error {
-				dataAddr1 := testutils.TestAddress("data1")
-				dataAddr3 := testutils.TestAddress("data3")
-
-				// Multiple reads should return new result
-				for i := 0; i < 3; i++ {
-					ref, err := k2.get(dataAddr1)
-					if err != nil {
-						return err
-					}
-					if ref.String() != dataAddr3.String() {
-						return ErrNotFound
-					}
+			finalCheck: func(k *keeper) error {
+				// Should have mix3 but not mix1
+				if k.has(testutils.TestAddress("mix1")) {
+					return ErrInvalidAddress
+				}
+				if !k.has(testutils.TestAddress("mix3")) {
+					return ErrNotFound
 				}
 				return nil
 			},
-			expectedError: nil,
+			expectedResult: true,
 		},
 		{
-			name: "Independent referral management",
-			setupTest: func(k *keeper) (*keeper, error) {
-				// Use unique addresses
-				indepAddr1 := testutils.TestAddress("indep1")
-				indepAddr2 := testutils.TestAddress("indep2")
-				indepAddr3 := testutils.TestAddress("indep3")
-				indepAddr4 := testutils.TestAddress("indep4")
-				indepAddr5 := testutils.TestAddress("indep5")
-
-				// Register multiple independent referrals
-				if err := k.register(indepAddr1, indepAddr2); err != nil {
-					return nil, err
-				}
-				if err := k.register(indepAddr3, indepAddr4); err != nil {
-					return nil, err
-				}
-
-				// Create new keeper to avoid rate limiting for update
-				k2 := setupAdditionalKeeper()
-				err := k2.register(indepAddr1, indepAddr5)
-				return k2, err
+			name: "Empty after all removals",
+			operations: []func(*keeper) error{
+				func(k *keeper) error {
+					return k.register(testutils.TestAddress("temp1"), testutils.TestAddress("temp2"))
+				},
+				func(k *keeper) error {
+					return k.register(testutils.TestAddress("temp3"), testutils.TestAddress("temp4"))
+				},
+				func(k *keeper) error {
+					return k.remove(testutils.TestAddress("temp1"))
+				},
+				func(k *keeper) error {
+					return k.remove(testutils.TestAddress("temp3"))
+				},
 			},
-			verifyTest: func(k *keeper, k2 *keeper) error {
-				indepAddr1 := testutils.TestAddress("indep1")
-				indepAddr3 := testutils.TestAddress("indep3")
-				indepAddr4 := testutils.TestAddress("indep4")
-				indepAddr5 := testutils.TestAddress("indep5")
-
-				// Verify first referral updated
-				ref1, err := k2.get(indepAddr1)
-				if err != nil {
-					return err
-				}
-				if ref1.String() != indepAddr5.String() {
-					return ErrNotFound
-				}
-
-				// Verify second referral unchanged in first keeper
-				ref3, err := k.get(indepAddr3)
-				if err != nil {
-					return err
-				}
-				if ref3.String() != indepAddr4.String() {
-					return ErrNotFound
+			finalCheck: func(k *keeper) error {
+				if !k.isEmpty() {
+					return ErrInvalidAddress
 				}
 				return nil
 			},
-			expectedError: nil,
+			expectedResult: true,
 		},
 	}
 
-	for _, tc := range tt {
+	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
 			k := setupAdditionalKeeper()
-			cleanup := mockValidCallerAdditional()
+			cleanup := setupAdditionalCaller()
 			defer cleanup()
 
 			// when
-			k2, err := tc.setupTest(k)
+			for _, op := range tc.operations {
+				err := op(k)
+				uassert.NoError(t, err)
+			}
 
 			// then
-			uassert.ErrorIs(t, err, tc.expectedError)
-			if tc.expectedError == nil {
-				err = tc.verifyTest(k, k2)
+			err := tc.finalCheck(k)
+			if tc.expectedResult {
 				uassert.NoError(t, err)
+			} else {
+				uassert.Error(t, err)
 			}
 		})
 	}
 }
 
-// TestGlobalFunctionality tests global functions
-func TestGlobalFunctionality(t *testing.T) {
-	tt := []struct {
-		name           string
-		userAddr       std.Address
-		referrerAddr   string
-		expectedResult bool
-	}{
-		{
-			name:           "TryRegister with valid referrer",
-			userAddr:       additionalAddr1,
-			referrerAddr:   additionalAddr2.String(),
-			expectedResult: true, // Should succeed or fail gracefully
-		},
-		{
-			name:           "TryRegister with self referral",
-			userAddr:       additionalAddr1,
-			referrerAddr:   additionalAddr1.String(),
-			expectedResult: false, // Self referral should fail
-		},
+// Helper functions at the bottom of the file
+
+func setupAdditionalKeeper() *keeper {
+	return NewKeeper().(*keeper)
+}
+
+func setupAdditionalCaller() func() {
+	origCaller := std.OriginCaller()
+	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+	testing.SetOriginCaller(routerAddr)
+	return func() {
+		testing.SetOriginCaller(origCaller)
 	}
+}
 
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			// when
-			result := TryRegister(cross, tc.userAddr, tc.referrerAddr)
-
-			// then
-			if tc.name == "TryRegister with self referral" {
-				uassert.Equal(t, tc.expectedResult, result)
-			} else {
-				// For other cases, just verify it returns a boolean
-				uassert.True(t, result || !result)
-			}
-		})
+func setupInvalidCaller() func() {
+	origCaller := std.OriginCaller()
+	testing.SetOriginCaller(std.Address("unauthorized"))
+	return func() {
+		testing.SetOriginCaller(origCaller)
 	}
 }

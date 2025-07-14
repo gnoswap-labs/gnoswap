@@ -10,30 +10,8 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 )
 
-var (
-	// Test addresses for validation tests
-	validationAddr1 = testutils.TestAddress("validation1")
-	validationAddr2 = testutils.TestAddress("validation2")
-	validationAddr3 = testutils.TestAddress("validation3")
-	validationAddr4 = testutils.TestAddress("validation4")
-)
-
-func setupValidationKeeper() *keeper {
-	return NewKeeper().(*keeper)
-}
-
-func mockValidCallerValidation() func() {
-	origCaller := std.OriginCaller()
-	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
-	testing.SetOriginCaller(routerAddr)
-	return func() {
-		testing.SetOriginCaller(origCaller)
-	}
-}
-
-// TestSelfReferralValidation tests self-referral prevention
-func TestSelfReferralValidation(t *testing.T) {
-	tt := []struct {
+func TestValidation_SelfReferralPrevention(t *testing.T) {
+	tests := []struct {
 		name              string
 		setupInitial      bool
 		addr              std.Address
@@ -48,9 +26,9 @@ func TestSelfReferralValidation(t *testing.T) {
 		{
 			name:              "prevents self referral on register",
 			setupInitial:      false,
-			addr:              validationAddr1,
+			addr:              testutils.TestAddress("validation1"),
 			initialRefAddr:    zeroAddress,
-			targetRefAddr:     validationAddr1,
+			targetRefAddr:     testutils.TestAddress("validation1"),
 			operation:         "register",
 			expectedError:     true,
 			expectedErrorType: ErrSelfReferral,
@@ -60,47 +38,46 @@ func TestSelfReferralValidation(t *testing.T) {
 		{
 			name:              "prevents self referral on update",
 			setupInitial:      true,
-			addr:              validationAddr1,
-			initialRefAddr:    validationAddr2,
-			targetRefAddr:     validationAddr1,
+			addr:              testutils.TestAddress("validation1"),
+			initialRefAddr:    testutils.TestAddress("validation2"),
+			targetRefAddr:     testutils.TestAddress("validation1"),
 			operation:         "update",
 			expectedError:     true,
 			expectedErrorType: ErrSelfReferral,
-			expectedRef:       validationAddr2.String(),
+			expectedRef:       testutils.TestAddress("validation2").String(),
 			expectedHas:       true,
 		},
 		{
 			name:              "allows same address as referrer for different users - first",
 			setupInitial:      false,
-			addr:              validationAddr1,
+			addr:              testutils.TestAddress("validation1"),
 			initialRefAddr:    zeroAddress,
-			targetRefAddr:     validationAddr3,
+			targetRefAddr:     testutils.TestAddress("validation3"),
 			operation:         "register",
 			expectedError:     false,
 			expectedErrorType: nil,
-			expectedRef:       validationAddr3.String(),
+			expectedRef:       testutils.TestAddress("validation3").String(),
 			expectedHas:       true,
 		},
 		{
 			name:              "allows same address as referrer for different users - second",
 			setupInitial:      false,
-			addr:              validationAddr2,
+			addr:              testutils.TestAddress("validation2"),
 			initialRefAddr:    zeroAddress,
-			targetRefAddr:     validationAddr3,
+			targetRefAddr:     testutils.TestAddress("validation3"),
 			operation:         "register",
 			expectedError:     false,
 			expectedErrorType: nil,
-			expectedRef:       validationAddr3.String(),
+			expectedRef:       testutils.TestAddress("validation3").String(),
 			expectedHas:       true,
 		},
 	}
 
-	for _, tc := range tt {
+	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			cleanup := mockValidCallerValidation()
+			cleanup := setupValidationCaller()
 			defer cleanup()
-
 			k := setupValidationKeeper()
 
 			if tc.setupInitial {
@@ -110,9 +87,10 @@ func TestSelfReferralValidation(t *testing.T) {
 
 			// when
 			var err error
-			if tc.operation == "register" {
+			switch tc.operation {
+			case "register":
 				err = k.register(tc.addr, tc.targetRefAddr)
-			} else {
+			case "update":
 				err = k.update(tc.addr, tc.targetRefAddr)
 			}
 
@@ -120,7 +98,7 @@ func TestSelfReferralValidation(t *testing.T) {
 			if tc.expectedError {
 				uassert.Error(t, err)
 				if tc.expectedErrorType != nil {
-					uassert.True(t, err.Error() == tc.expectedErrorType.Error())
+					uassert.ErrorIs(t, err, tc.expectedErrorType)
 				}
 			} else {
 				uassert.NoError(t, err)
@@ -138,302 +116,381 @@ func TestSelfReferralValidation(t *testing.T) {
 	}
 }
 
-// TestZeroAddressValidation tests zero address handling
-func TestZeroAddressValidation(t *testing.T) {
-	t.Run("allows zero address as referrer", func(t *testing.T) {
-		cleanup := mockValidCallerValidation()
-		defer cleanup()
+func TestValidation_AddressValidation(t *testing.T) {
+	tests := []struct {
+		name          string
+		addr          std.Address
+		refAddr       std.Address
+		operation     string
+		expectedError bool
+		expectedType  error
+	}{
+		{
+			name:          "rejects invalid user address on register",
+			addr:          std.Address(""),
+			refAddr:       testutils.TestAddress("valid"),
+			operation:     "register",
+			expectedError: true,
+			expectedType:  ErrInvalidAddress,
+		},
+		{
+			name:          "rejects invalid referral address on register",
+			addr:          testutils.TestAddress("valid"),
+			refAddr:       std.Address("invalid"),
+			operation:     "register",
+			expectedError: true,
+			expectedType:  ErrInvalidAddress,
+		},
+		{
+			name:          "allows zero address as referral",
+			addr:          testutils.TestAddress("valid"),
+			refAddr:       zeroAddress,
+			operation:     "register",
+			expectedError: false,
+			expectedType:  nil,
+		},
+		{
+			name:          "rejects invalid user address on update",
+			addr:          std.Address(""),
+			refAddr:       testutils.TestAddress("valid"),
+			operation:     "update",
+			expectedError: true,
+			expectedType:  ErrInvalidAddress,
+		},
+		{
+			name:          "rejects invalid referral address on update",
+			addr:          testutils.TestAddress("valid"),
+			refAddr:       std.Address("invalid"),
+			operation:     "update",
+			expectedError: true,
+			expectedType:  ErrInvalidAddress,
+		},
+	}
 
-		k := setupValidationKeeper()
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			cleanup := setupValidationCaller()
+			defer cleanup()
+			k := setupValidationKeeper()
 
-		err := k.register(validationAddr1, zeroAddress)
-		uassert.NoError(t, err)
-
-		// Zero address means no referrer stored
-		has := k.has(validationAddr1)
-		uassert.False(t, has)
-	})
-
-	t.Run("zero address referrer does not create storage entry", func(t *testing.T) {
-		cleanup := mockValidCallerValidation()
-		defer cleanup()
-
-		k := setupValidationKeeper()
-
-		err := k.register(validationAddr1, zeroAddress)
-		uassert.NoError(t, err)
-
-		// Should not exist in storage
-		_, exists := k.store.Get(validationAddr1.String())
-		uassert.False(t, exists)
-	})
-
-	t.Run("can update from real referrer to zero address", func(t *testing.T) {
-		cleanup := mockValidCallerValidation()
-		defer cleanup()
-
-		k := setupValidationKeeper()
-
-		// Initial registration with real referrer
-		err := k.register(validationAddr1, validationAddr2)
-		uassert.NoError(t, err)
-
-		has := k.has(validationAddr1)
-		uassert.True(t, has)
-
-		// Update to zero address should succeed (zero address bypasses rate limiting)
-		err = k.update(validationAddr1, zeroAddress)
-		uassert.NoError(t, err)
-
-		// Verify the referral was removed
-		has = k.has(validationAddr1)
-		uassert.False(t, has)
-	})
-}
-
-// TestInputValidation tests various input validation scenarios
-func TestInputValidation(t *testing.T) {
-	t.Run("validates address consistency", func(t *testing.T) {
-		cleanup := mockValidCallerValidation()
-		defer cleanup()
-
-		k := setupValidationKeeper()
-
-		// Valid addresses should work
-		err := k.register(validationAddr1, validationAddr2)
-		uassert.NoError(t, err)
-
-		// Verify registration
-		ref, err := k.get(validationAddr1)
-		uassert.NoError(t, err)
-		uassert.Equal(t, validationAddr2.String(), ref.String())
-	})
-
-	t.Run("handles address edge cases", func(t *testing.T) {
-		cleanup := mockValidCallerValidation()
-		defer cleanup()
-
-		k := setupValidationKeeper()
-
-		// Test with different valid addresses
-		testCases := []struct {
-			user          std.Address
-			referrer      std.Address
-			shouldSucceed bool
-		}{
-			{validationAddr1, validationAddr2, true},
-			{validationAddr2, validationAddr3, true},
-			{validationAddr3, zeroAddress, true},
-			{validationAddr4, validationAddr4, false}, // self referral
-		}
-
-		for _, tc := range testCases {
-			err := k.register(tc.user, tc.referrer)
-			if tc.shouldSucceed {
-				uassert.NoError(t, err)
-			} else {
-				uassert.Error(t, err)
+			// when
+			var err error
+			switch tc.operation {
+			case "register":
+				err = k.register(tc.addr, tc.refAddr)
+			case "update":
+				err = k.update(tc.addr, tc.refAddr)
 			}
+
+			// then
+			if tc.expectedError {
+				uassert.Error(t, err)
+				if tc.expectedType != nil {
+					uassert.ErrorIs(t, err, tc.expectedType)
+				}
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidation_CallerAuthorization(t *testing.T) {
+	tests := []struct {
+		name          string
+		caller        string
+		addr          std.Address
+		refAddr       std.Address
+		operation     string
+		expectedError bool
+		expectedType  error
+	}{
+		{
+			name:          "allows router to register",
+			caller:        "router",
+			addr:          testutils.TestAddress("user1"),
+			refAddr:       testutils.TestAddress("ref1"),
+			operation:     "register",
+			expectedError: false,
+			expectedType:  nil,
+		},
+		{
+			name:          "allows router to update",
+			caller:        "router",
+			addr:          testutils.TestAddress("user2_update"),
+			refAddr:       testutils.TestAddress("ref2_update"),
+			operation:     "update",
+			expectedError: false,
+			expectedType:  nil,
+		},
+		{
+			name:          "allows router to remove",
+			caller:        "router",
+			addr:          testutils.TestAddress("user3"),
+			refAddr:       zeroAddress,
+			operation:     "remove",
+			expectedError: false,
+			expectedType:  nil,
+		},
+		{
+			name:          "rejects unauthorized register",
+			caller:        "unauthorized",
+			addr:          testutils.TestAddress("user4"),
+			refAddr:       testutils.TestAddress("ref4"),
+			operation:     "register",
+			expectedError: true,
+			expectedType:  ErrUnauthorized,
+		},
+		{
+			name:          "rejects unauthorized update",
+			caller:        "unauthorized",
+			addr:          testutils.TestAddress("user5"),
+			refAddr:       testutils.TestAddress("ref5"),
+			operation:     "update",
+			expectedError: true,
+			expectedType:  ErrUnauthorized,
+		},
+		{
+			name:          "rejects unauthorized remove",
+			caller:        "unauthorized",
+			addr:          testutils.TestAddress("user6"),
+			refAddr:       zeroAddress,
+			operation:     "remove",
+			expectedError: true,
+			expectedType:  ErrUnauthorized,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			cleanup := setupSpecificCaller(tc.caller)
+			defer cleanup()
+			k := setupValidationKeeper()
+
+			// Setup initial referral for update/remove operations
+			if tc.operation == "update" || tc.operation == "remove" {
+				routerCleanup := setupSpecificCaller("router")
+				// For update test, create a new keeper with existing data to avoid rate limit
+				if tc.operation == "update" {
+					// Manually set up the initial referral without rate limiting
+					k.store.Set(tc.addr.String(), testutils.TestAddress("initial").String())
+				} else {
+					k.register(tc.addr, testutils.TestAddress("initial"))
+				}
+				routerCleanup()
+				// Reset caller to test caller
+				cleanup()
+				cleanup = setupSpecificCaller(tc.caller)
+			}
+
+			// when
+			var err error
+			switch tc.operation {
+			case "register":
+				err = k.register(tc.addr, tc.refAddr)
+			case "update":
+				err = k.update(tc.addr, tc.refAddr)
+			case "remove":
+				err = k.remove(tc.addr)
+			}
+
+			// then
+			if tc.expectedError {
+				uassert.Error(t, err)
+				if tc.expectedType != nil {
+					uassert.ErrorIs(t, err, tc.expectedType)
+				}
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidation_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name          string
+		addr          std.Address
+		refAddr       std.Address
+		operation     string
+		setupRef      bool
+		expectedError bool
+		expectedHas   bool
+	}{
+		{
+			name:          "register with zero address removes existing referral",
+			addr:          testutils.TestAddress("edge1"),
+			refAddr:       zeroAddress,
+			operation:     "register_zero",
+			setupRef:      true,
+			expectedError: false,
+			expectedHas:   false,
+		},
+		{
+			name:          "update with zero address removes existing referral",
+			addr:          testutils.TestAddress("edge2"),
+			refAddr:       zeroAddress,
+			operation:     "update_zero",
+			setupRef:      true,
+			expectedError: false,
+			expectedHas:   false,
+		},
+		{
+			name:          "register zero address on empty state",
+			addr:          testutils.TestAddress("edge3"),
+			refAddr:       zeroAddress,
+			operation:     "register_zero_empty",
+			setupRef:      false,
+			expectedError: false,
+			expectedHas:   false,
+		},
+		{
+			name:          "update zero address on empty state",
+			addr:          testutils.TestAddress("edge4"),
+			refAddr:       zeroAddress,
+			operation:     "update_zero_empty",
+			setupRef:      false,
+			expectedError: false,
+			expectedHas:   false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			cleanup := setupValidationCaller()
+			defer cleanup()
+			k := setupValidationKeeper()
+
+			if tc.setupRef {
+				err := k.register(tc.addr, testutils.TestAddress("initial"))
+				uassert.NoError(t, err)
+			}
+
+			// when
+			var err error
+			switch tc.operation {
+			case "register_zero", "register_zero_empty":
+				err = k.register(tc.addr, tc.refAddr)
+			case "update_zero", "update_zero_empty":
+				err = k.update(tc.addr, tc.refAddr)
+			}
+
+			// then
+			if tc.expectedError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+
+			has := k.has(tc.addr)
+			uassert.Equal(t, tc.expectedHas, has)
+		})
+	}
+}
+
+func TestValidation_ConsistencyChecks(t *testing.T) {
+	tests := []struct {
+		name          string
+		operations    []struct {
+			addr    std.Address
+			refAddr std.Address
+			op      string
 		}
-	})
+		expectedFinalStates map[string]bool
+	}{
+		{
+			name: "multiple users same referrer",
+			operations: []struct {
+				addr    std.Address
+				refAddr std.Address
+				op      string
+			}{
+				{testutils.TestAddress("user1"), testutils.TestAddress("ref1"), "register"},
+				{testutils.TestAddress("user2"), testutils.TestAddress("ref1"), "register"},
+				{testutils.TestAddress("user3"), testutils.TestAddress("ref1"), "register"},
+			},
+			expectedFinalStates: map[string]bool{
+				testutils.TestAddress("user1").String(): true,
+				testutils.TestAddress("user2").String(): true,
+				testutils.TestAddress("user3").String(): true,
+			},
+		},
+		{
+			name: "chained referrals",
+			operations: []struct {
+				addr    std.Address
+				refAddr std.Address
+				op      string
+			}{
+				{testutils.TestAddress("user1"), testutils.TestAddress("user2"), "register"},
+				{testutils.TestAddress("user2"), testutils.TestAddress("user3"), "register"},
+				{testutils.TestAddress("user3"), testutils.TestAddress("user4"), "register"},
+			},
+			expectedFinalStates: map[string]bool{
+				testutils.TestAddress("user1").String(): true,
+				testutils.TestAddress("user2").String(): true,
+				testutils.TestAddress("user3").String(): true,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			cleanup := setupValidationCaller()
+			defer cleanup()
+			k := setupValidationKeeper()
+
+			// when
+			for _, op := range tc.operations {
+				switch op.op {
+				case "register":
+					err := k.register(op.addr, op.refAddr)
+					uassert.NoError(t, err)
+				case "update":
+					err := k.update(op.addr, op.refAddr)
+					uassert.NoError(t, err)
+				}
+			}
+
+			// then
+			for addrStr, expectedHas := range tc.expectedFinalStates {
+				addr := std.Address(addrStr)
+				has := k.has(addr)
+				uassert.Equal(t, expectedHas, has)
+			}
+		})
+	}
 }
 
-// TestBusinessRuleValidation tests business logic validation
-func TestBusinessRuleValidation(t *testing.T) {
-	t.Run("enforces single referrer per user", func(t *testing.T) {
-		cleanup := mockValidCallerValidation()
-		defer cleanup()
+// Helper functions at the bottom of the file
 
-		k := setupValidationKeeper()
-
-		// Register user with referrer
-		err := k.register(validationAddr1, validationAddr2)
-		uassert.NoError(t, err)
-
-		// User should have exactly one referrer
-		ref, err := k.get(validationAddr1)
-		uassert.NoError(t, err)
-		uassert.Equal(t, validationAddr2.String(), ref.String())
-
-		// Attempting to register again should fail (implicit in update failing due to rate limiting)
-		err = k.register(validationAddr1, validationAddr3)
-		uassert.Error(t, err)
-	})
-
-	t.Run("allows referral chains", func(t *testing.T) {
-		cleanup := mockValidCallerValidation()
-		defer cleanup()
-
-		k := setupValidationKeeper()
-
-		// Create referral chain: addr1 -> addr2 -> addr3 -> addr4
-		err := k.register(validationAddr1, validationAddr2)
-		uassert.NoError(t, err)
-
-		err = k.register(validationAddr2, validationAddr3)
-		uassert.NoError(t, err)
-
-		err = k.register(validationAddr3, validationAddr4)
-		uassert.NoError(t, err)
-
-		// Verify chain
-		ref1, err := k.get(validationAddr1)
-		uassert.NoError(t, err)
-		uassert.Equal(t, validationAddr2.String(), ref1.String())
-
-		ref2, err := k.get(validationAddr2)
-		uassert.NoError(t, err)
-		uassert.Equal(t, validationAddr3.String(), ref2.String())
-
-		ref3, err := k.get(validationAddr3)
-		uassert.NoError(t, err)
-		uassert.Equal(t, validationAddr4.String(), ref3.String())
-	})
-
-	t.Run("validates operation types", func(t *testing.T) {
-		cleanup := mockValidCallerValidation()
-		defer cleanup()
-
-		k := setupValidationKeeper()
-
-		// Register operation
-		err := k.setReferral(validationAddr1, validationAddr2, EventTypeRegister)
-		uassert.NoError(t, err)
-
-		// Update operation (should fail due to rate limiting)
-		err = k.setReferral(validationAddr1, validationAddr3, EventTypeUpdate)
-		uassert.Error(t, err)
-	})
+func setupValidationKeeper() *keeper {
+	return NewKeeper().(*keeper)
 }
 
-// TestDataConsistencyValidation tests data consistency rules
-func TestDataConsistencyValidation(t *testing.T) {
-	t.Run("maintains referral data consistency", func(t *testing.T) {
-		cleanup := mockValidCallerValidation()
-		defer cleanup()
-
-		k := setupValidationKeeper()
-
-		// Register referral
-		err := k.register(validationAddr1, validationAddr2)
-		uassert.NoError(t, err)
-
-		// Multiple reads should return consistent data
-		for i := 0; i < 5; i++ {
-			has := k.has(validationAddr1)
-			uassert.True(t, has)
-
-			ref, err := k.get(validationAddr1)
-			uassert.NoError(t, err)
-			uassert.Equal(t, validationAddr2.String(), ref.String())
-		}
-	})
-
-	t.Run("isolates user data", func(t *testing.T) {
-		cleanup := mockValidCallerValidation()
-		defer cleanup()
-
-		k := setupValidationKeeper()
-
-		// Register multiple users
-		err := k.register(validationAddr1, validationAddr2)
-		uassert.NoError(t, err)
-
-		err = k.register(validationAddr3, validationAddr4)
-		uassert.NoError(t, err)
-
-		// Each user should have isolated data
-		ref1, err := k.get(validationAddr1)
-		uassert.NoError(t, err)
-		uassert.Equal(t, validationAddr2.String(), ref1.String())
-
-		ref3, err := k.get(validationAddr3)
-		uassert.NoError(t, err)
-		uassert.Equal(t, validationAddr4.String(), ref3.String())
-
-		// Non-existent user should not have data
-		has := k.has(testutils.TestAddress("nonexistent"))
-		uassert.False(t, has)
-	})
-
-	t.Run("handles storage state correctly", func(t *testing.T) {
-		cleanup := mockValidCallerValidation()
-		defer cleanup()
-
-		k := setupValidationKeeper()
-
-		// Before registration
-		has := k.has(validationAddr1)
-		uassert.False(t, has)
-
-		_, exists := k.store.Get(validationAddr1.String())
-		uassert.False(t, exists)
-
-		// After registration
-		err := k.register(validationAddr1, validationAddr2)
-		uassert.NoError(t, err)
-
-		has = k.has(validationAddr1)
-		uassert.True(t, has)
-
-		value, exists := k.store.Get(validationAddr1.String())
-		uassert.True(t, exists)
-		uassert.Equal(t, validationAddr2.String(), value)
-	})
+func setupValidationCaller() func() {
+	origCaller := std.OriginCaller()
+	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+	testing.SetOriginCaller(routerAddr)
+	return func() {
+		testing.SetOriginCaller(origCaller)
+	}
 }
 
-// TestErrorValidation tests error handling validation
-func TestErrorValidation(t *testing.T) {
-	t.Run("returns appropriate error messages", func(t *testing.T) {
-		k := setupValidationKeeper()
-
-		// Test self referral error with valid caller
-		cleanup := mockValidCallerValidation()
-		err := k.register(validationAddr1, validationAddr1)
-		cleanup()
-
-		uassert.Error(t, err)
-		uassert.True(t, err.Error() == ErrSelfReferral.Error())
-
-		// Test with invalid address - skip authorization test due to context issues
-		invalidAddr := std.Address("invalid")
-		err = k.validateAddresses(invalidAddr, validationAddr2)
-		uassert.Error(t, err)
-	})
-
-	t.Run("preserves state on errors", func(t *testing.T) {
-		cleanup := mockValidCallerValidation()
-		defer cleanup()
-
-		k := setupValidationKeeper()
-
-		// Successful operation
-		err := k.register(validationAddr1, validationAddr2)
-		uassert.NoError(t, err)
-
-		// Failed operation (self referral)
-		err = k.register(validationAddr3, validationAddr3)
-		uassert.Error(t, err)
-
-		// Original state should be preserved
-		ref, err := k.get(validationAddr1)
-		uassert.NoError(t, err)
-		uassert.Equal(t, validationAddr2.String(), ref.String())
-
-		// Non-failed user should not exist
-		has := k.has(validationAddr3)
-		uassert.False(t, has)
-	})
-
-	t.Run("validates operation context", func(t *testing.T) {
-		k := setupValidationKeeper()
-
-		// Missing authorization context
-		err := k.register(validationAddr1, validationAddr2)
-		uassert.Error(t, err)
-
-		// State should remain clean
-		has := k.has(validationAddr1)
-		uassert.False(t, has)
-	})
+func setupSpecificCaller(caller string) func() {
+	origCaller := std.OriginCaller()
+	switch caller {
+	case "router":
+		routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+		testing.SetOriginCaller(routerAddr)
+	case "unauthorized":
+		testing.SetOriginCaller(std.Address("unauthorized"))
+	}
+	return func() {
+		testing.SetOriginCaller(origCaller)
+	}
 }
