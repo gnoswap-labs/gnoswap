@@ -96,6 +96,22 @@ func assertSumDistributionPct(pct01, pct02, pct03, pct04 int64) {
 	}
 }
 
+// assertNoDuplicateTargets ensures no duplicate targets are provided
+func assertNoDuplicateTargets(target01, target02, target03, target04 int) {
+	targets := []int{target01, target02, target03, target04}
+	seen := make(map[int]bool)
+
+	for _, target := range targets {
+		if seen[target] {
+			panic(addDetailToError(
+				errDuplicateTarget,
+				ufmt.Sprintf("target %d appears multiple times", target),
+			))
+		}
+		seen[target] = true
+	}
+}
+
 func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:
