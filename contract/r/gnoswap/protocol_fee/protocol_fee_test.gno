@@ -4,6 +4,7 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/json"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
@@ -20,6 +21,7 @@ var (
 	adminRealm    = std.NewUserRealm(adminAddr)
 	adminUser     = adminAddr
 	dummyRealm    = std.NewCodeRealm("gno.land/r/dummy")
+	aliceAddr     = testutils.TestAddress("alice")
 )
 
 func TestDistributeProtocolFee(t *testing.T) {
@@ -653,4 +655,152 @@ func TestBalanceAmountMismatch_Fix(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestApiGetActualBalance(t *testing.T) {
+	protocolFeeState = NewProtocolFeeState()
+
+	testing.SetRealm(adminRealm)
+	if balance := bar.BalanceOf(protocolFeeAddr); balance > 0 {
+		bar.Burn(cross, protocolFeeAddr, balance)
+	}
+	if balance := qux.BalanceOf(protocolFeeAddr); balance > 0 {
+		qux.Burn(cross, protocolFeeAddr, balance)
+	}
+
+	// Transfer tokens to protocol fee
+	bar.Transfer(cross, protocolFeeAddr, 1500)
+	qux.Transfer(cross, protocolFeeAddr, 2500)
+
+	// Record only part of the amounts
+	testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+	AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
+	AddToProtocolFee(cross, "gno.land/r/onbloc/qux", 2000)
+
+	result := ApiGetActualBalance()
+
+	node := json.Must(json.Unmarshal([]byte(result)))
+
+	uassert.True(t, node.HasKey("height"))
+	uassert.True(t, node.HasKey("now"))
+
+	// Verify actual balances (not recorded amounts)
+	barBalance, err := node.MustKey("gno.land/r/onbloc/bar").GetString()
+	uassert.NoError(t, err)
+	uassert.Equal(t, barBalance, "1500")
+
+	quxBalance, err := node.MustKey("gno.land/r/onbloc/qux").GetString()
+	uassert.NoError(t, err)
+	uassert.Equal(t, quxBalance, "2500")
+
+	protocolFeeState = NewProtocolFeeState()
+}
+
+func TestApiGetRecordedBalance(t *testing.T) {
+	protocolFeeState = NewProtocolFeeState()
+
+	testing.SetRealm(adminRealm)
+	if balance := bar.BalanceOf(protocolFeeAddr); balance > 0 {
+		bar.Burn(cross, protocolFeeAddr, balance)
+	}
+	if balance := qux.BalanceOf(protocolFeeAddr); balance > 0 {
+		qux.Burn(cross, protocolFeeAddr, balance)
+	}
+
+	// Transfer tokens to protocol fee
+	bar.Transfer(cross, protocolFeeAddr, 1500)
+	qux.Transfer(cross, protocolFeeAddr, 2500)
+
+	// Record only part of the amounts
+	testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+	AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
+	AddToProtocolFee(cross, "gno.land/r/onbloc/qux", 2000)
+
+	// Call API function
+	result := ApiGetRecordedBalance()
+
+	// Parse JSON response
+	node := json.Must(json.Unmarshal([]byte(result)))
+
+	// Verify metadata fields
+	uassert.True(t, node.HasKey("height"))
+	uassert.True(t, node.HasKey("now"))
+
+	// Verify recorded balances (not actual balances)
+	barBalance, err := node.MustKey("gno.land/r/onbloc/bar").GetString()
+	uassert.NoError(t, err)
+	uassert.Equal(t, barBalance, "1000")
+
+	quxBalance, err := node.MustKey("gno.land/r/onbloc/qux").GetString()
+	uassert.NoError(t, err)
+	uassert.Equal(t, quxBalance, "2000")
+}
+
+func TestApiGetUnrecordedBalance(t *testing.T) {
+	// Reset protocol fee state
+	protocolFeeState = NewProtocolFeeState()
+
+	testing.SetRealm(adminRealm)
+	if balance := bar.BalanceOf(protocolFeeAddr); balance > 0 {
+		bar.Burn(cross, protocolFeeAddr, balance)
+	}
+	if balance := qux.BalanceOf(protocolFeeAddr); balance > 0 {
+		qux.Burn(cross, protocolFeeAddr, balance)
+	}
+
+	// Test case 1: Unrecorded amounts exist
+	bar.Transfer(cross, protocolFeeAddr, 1500)
+	qux.Transfer(cross, protocolFeeAddr, 2500)
+
+	// Record only part of the amounts
+	testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+	AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
+	AddToProtocolFee(cross, "gno.land/r/onbloc/qux", 2000)
+
+	result := ApiGetUnrecordedBalance()
+
+	node := json.Must(json.Unmarshal([]byte(result)))
+
+	// Verify metadata fields
+	uassert.True(t, node.HasKey("height"))
+	uassert.True(t, node.HasKey("now"))
+
+	// Verify unrecorded balances (actual - recorded)
+	barBalance, err := node.MustKey("gno.land/r/onbloc/bar").GetString()
+	uassert.NoError(t, err)
+	uassert.Equal(t, barBalance, "500") // 1500 - 1000
+
+	quxBalance, err := node.MustKey("gno.land/r/onbloc/qux").GetString()
+	uassert.NoError(t, err)
+	uassert.Equal(t, quxBalance, "500") // 2500 - 2000
+}
+
+func TestApiGetUnrecordedBalance_NoUnrecorded(t *testing.T) {
+	protocolFeeState = NewProtocolFeeState()
+
+	testing.SetRealm(adminRealm)
+	testing.SetOriginCaller(adminAddr)
+	if balance := bar.BalanceOf(protocolFeeAddr); balance > 0 {
+		bar.Burn(cross, protocolFeeAddr, balance)
+	}
+
+	// Transfer exact amount that will be recorded
+	bar.Transfer(cross, protocolFeeAddr, 1000)
+
+	// Record the exact amount
+	testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+	AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
+
+	// Call API function
+	result := ApiGetUnrecordedBalance()
+
+	// Parse JSON response
+	node := json.Must(json.Unmarshal([]byte(result)))
+
+	// Verify metadata fields
+	uassert.True(t, node.HasKey("height"))
+	uassert.True(t, node.HasKey("now"))
+
+	// Should not have bar token as there's no unrecorded amount
+	uassert.False(t, node.HasKey("gno.land/r/onbloc/bar"))
 }

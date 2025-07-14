@@ -7,6 +7,8 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/json"
+
+	"gno.land/r/gnoswap/v1/common"
 )
 
 func ApiGetTokenListWithAmountOverZero() string {
@@ -92,4 +94,70 @@ func marshal(node *json.Node) string {
 	}
 
 	return string(b)
+}
+
+// ApiGetActualBalance returns all tokens with their current balances (recorded + unrecorded)
+func ApiGetActualBalance() string {
+	tokenMap := make(map[string]uint64)
+
+	// get all recorded tokens
+	for token := range protocolFeeState.TokenListWithAmount {
+		actualBalance := uint64(common.BalanceOf(token, protocolFeeAddr))
+		tokenMap[token] = actualBalance
+	}
+
+	// only include tokens that are already recorded.
+	// check for any tokens that have balance will requires
+	// iterating through known tokens or having a registry.
+	data := json.Builder().
+		WriteString("height", formatInt(std.ChainHeight())).
+		WriteString("now", formatInt(time.Now().Unix()))
+
+	for token, balance := range tokenMap {
+		data.WriteString(token, formatUint(balance))
+	}
+
+	return marshal(data.Node())
+}
+
+// ApiGetRecordedBalance returns the recorded tokens and their amounts
+func ApiGetRecordedBalance() string {
+	tokenList := GetTokenListWithAmount()
+	if tokenList == nil {
+		return ""
+	}
+
+	data := json.Builder().
+		WriteString("height", formatInt(std.ChainHeight())).
+		WriteString("now", formatInt(time.Now().Unix()))
+
+	for token, amount := range tokenList {
+		data.WriteString(token, formatUint(amount))
+	}
+
+	return marshal(data.Node())
+}
+
+// ApiGetUnrecordedBalance returns tokens with unrecorded balances
+func ApiGetUnrecordedBalance() string {
+	unrecordedMap := make(map[string]uint64)
+
+	// Check all recorded tokens for discrepancies
+	for token, recordedAmount := range protocolFeeState.TokenListWithAmount {
+		actualBalance := uint64(common.BalanceOf(token, protocolFeeAddr))
+		if actualBalance > recordedAmount {
+			unrecordedAmount := actualBalance - recordedAmount
+			unrecordedMap[token] = unrecordedAmount
+		}
+	}
+
+	data := json.Builder().
+		WriteString("height", formatInt(std.ChainHeight())).
+		WriteString("now", formatInt(time.Now().Unix()))
+
+	for token, unrecordedBalance := range unrecordedMap {
+		data.WriteString(token, formatUint(unrecordedBalance))
+	}
+
+	return marshal(data.Node())
 }
