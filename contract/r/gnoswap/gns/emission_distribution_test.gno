@@ -20,32 +20,32 @@ func TestEmissionDistributionAcrossYears(t *testing.T) {
 
 	// Test different scenarios of block time changes
 	scenarios := []struct {
-		name           string
-		changeAtYear   int64
+		name            string
+		changeAtYear    int64
 		changeAtPercent int // percentage through the year
-		oldBlockTime   int64
-		newBlockTime   int64
+		oldBlockTime    int64
+		newBlockTime    int64
 	}{
 		{
-			name:           "Early change in year 2",
-			changeAtYear:   2,
+			name:            "Early change in year 2",
+			changeAtYear:    2,
 			changeAtPercent: 10,
-			oldBlockTime:   2000,
-			newBlockTime:   1000,
+			oldBlockTime:    2000,
+			newBlockTime:    1000,
 		},
 		{
-			name:           "Mid-year change in year 5",
-			changeAtYear:   5,
+			name:            "Mid-year change in year 5",
+			changeAtYear:    5,
 			changeAtPercent: 50,
-			oldBlockTime:   2000,
-			newBlockTime:   3000,
+			oldBlockTime:    2000,
+			newBlockTime:    3000,
 		},
 		{
-			name:           "Late change in year 3",
-			changeAtYear:   3,
+			name:            "Late change in year 3",
+			changeAtYear:    3,
 			changeAtPercent: 90,
-			oldBlockTime:   2000,
-			newBlockTime:   1500,
+			oldBlockTime:    2000,
+			newBlockTime:    1500,
 		},
 	}
 
@@ -60,7 +60,7 @@ func TestEmissionDistributionAcrossYears(t *testing.T) {
 			yearEnd := GetHalvingYearEndBlock(sc.changeAtYear)
 			blocksInYear := yearEnd - yearStart + 1
 			targetHeight := yearStart + (blocksInYear * int64(sc.changeAtPercent) / 100)
-			
+
 			testing.SkipHeights(targetHeight - std.ChainHeight() - 1)
 
 			// Record expected total emissions for each year
@@ -79,7 +79,7 @@ func TestEmissionDistributionAcrossYears(t *testing.T) {
 				endBlock := GetHalvingYearEndBlock(year)
 				blocksInYear := endBlock - startBlock + 1
 				amountPerBlock := GetAmountPerBlockPerHalvingYear(year)
-				
+
 				actualTotal := amountPerBlock * blocksInYear
 				expectedTotal := expectedTotals[year]
 
@@ -87,22 +87,22 @@ func TestEmissionDistributionAcrossYears(t *testing.T) {
 				if year == sc.changeAtYear {
 					mintedAmount := GetHalvingYearMintAmount(year)
 					leftAmount := GetHalvingYearLeftAmount(year)
-					
+
 					// The sum of minted and left should equal max
 					uassert.Equal(t, expectedTotal, mintedAmount+leftAmount,
 						ufmt.Sprintf("%s: Year %d minted+left should equal max", sc.name, year))
-					
+
 					// Calculate expected emission for remaining blocks
 					remainingBlocks := endBlock - std.ChainHeight()
 					expectedRemainingEmission := amountPerBlock * remainingBlocks
-					
+
 					// Should be close to left amount (within 1%)
 					diff := expectedRemainingEmission - leftAmount
 					if diff < 0 {
 						diff = -diff
 					}
 					tolerance := leftAmount / 100
-					
+
 					uassert.True(t, diff <= tolerance,
 						ufmt.Sprintf("%s: Year %d remaining emission incorrect. Left: %d, Expected: %d",
 							sc.name, year, leftAmount, expectedRemainingEmission))
@@ -112,10 +112,10 @@ func TestEmissionDistributionAcrossYears(t *testing.T) {
 					if diff < 0 {
 						diff = -diff
 					}
-					
+
 					// Allow 1% tolerance for rounding
 					tolerance := expectedTotal / 100
-					
+
 					uassert.True(t, diff <= tolerance,
 						ufmt.Sprintf("%s: Year %d total emission incorrect. Expected: %d, Got: %d, Diff: %d",
 							sc.name, year, expectedTotal, actualTotal, diff))
@@ -166,7 +166,7 @@ func TestEmissionRateConsistencyAcrossYears(t *testing.T) {
 		if diff < 0 {
 			diff = -diff
 		}
-		
+
 		// Allow small tolerance for integer division
 		tolerance := maxAmount / 100
 		uassert.True(t, diff <= tolerance,
@@ -191,27 +191,27 @@ func TestEmissionEvennessScore(t *testing.T) {
 
 	// Test multiple block time changes
 	blockTimes := []int64{1500, 2500, 1800, 2200}
-	
+
 	for _, newBlockTime := range blockTimes {
 		testing.SetRealm(adminRealm)
 		setAvgBlockTimeInMs(newBlockTime)
 
 		// Calculate "evenness score" - the maximum deviation from expected
 		maxDeviation := int64(0)
-		
+
 		for year := int64(5); year <= HALVING_END_YEAR; year++ {
 			maxAmount := GetHalvingYearMaxAmount(year)
 			amountPerBlock := GetAmountPerBlockPerHalvingYear(year)
 			startBlock := GetHalvingYearStartBlock(year)
 			endBlock := GetHalvingYearEndBlock(year)
 			blocksInYear := endBlock - startBlock + 1
-			
+
 			totalEmission := amountPerBlock * blocksInYear
 			deviation := totalEmission - maxAmount
 			if deviation < 0 {
 				deviation = -deviation
 			}
-			
+
 			if deviation > maxDeviation {
 				maxDeviation = deviation
 			}
@@ -220,7 +220,7 @@ func TestEmissionEvennessScore(t *testing.T) {
 		// Maximum deviation should be less than 1% of any year's emission
 		// This ensures emissions remain evenly distributed
 		maxAllowedDeviation := GetHalvingYearMaxAmount(5) / 100 // 1% of a typical year
-		
+
 		uassert.True(t, maxDeviation <= maxAllowedDeviation,
 			ufmt.Sprintf("Block time %d: max deviation %d exceeds allowed %d",
 				newBlockTime, maxDeviation, maxAllowedDeviation))
