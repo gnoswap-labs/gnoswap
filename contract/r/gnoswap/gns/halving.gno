@@ -385,6 +385,15 @@ func setAvgBlockTimeInMs(ms int64) {
 
 	// adjust the current year's amount per block
 	currentYear, _ = getHalvingYearAndEndTimestamp(now)
+
+	// Validate that we're still within the emission period
+	if currentYear == 0 {
+		panic(addDetailToError(
+			errInvalidYear,
+			ufmt.Sprintf("cannot set average block time after emission period has ended"),
+		))
+	}
+
 	adjusted := hd.getAmountPerBlock(currentYear)
 
 	if callbackEmissionChange == nil {

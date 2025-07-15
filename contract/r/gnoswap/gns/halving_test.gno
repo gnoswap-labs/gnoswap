@@ -65,6 +65,8 @@ var END_TIMESTAMP_OF_YEAR = []int64{
 }
 
 func TestGetAmountByHeight(t *testing.T) {
+	resetEmissionState(t)
+
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		firstBlockOfYear := FIRST_BLOCK_OF_YEAR[year-1]
 		uassert.Equal(t, GetAmountPerBlockPerHalvingYear(year), GetAmountByHeight(firstBlockOfYear))
@@ -87,6 +89,8 @@ func TestGetAmountByHeight(t *testing.T) {
 }
 
 func TestGetHalvingYearByHeight(t *testing.T) {
+	resetEmissionState(t)
+
 	t.Run("during halving years", func(t *testing.T) {
 		for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 			firstBlockOfYear := FIRST_BLOCK_OF_YEAR[year-1]
@@ -100,6 +104,8 @@ func TestGetHalvingYearByHeight(t *testing.T) {
 }
 
 func TestGetHalvingYearAndEndTimestamp(t *testing.T) {
+	resetEmissionState(t)
+
 	t.Run("bit of extra timestamp for each year", func(t *testing.T) {
 		for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 			firstTimestampOfYear := FIRST_TIMESTAMP_OF_YEAR[year-1]
@@ -202,6 +208,8 @@ func TestSetAvgBlockTime_RecalculatesAllYears(t *testing.T) {
 		Test that the "issuance per block" is actually reallocated
 		by comparing the value of the amountPerBlock array before and after the call.
 	*/
+	resetEmissionState(t)
+
 	es := GetEmissionState()
 	before := make([]int64, HALVING_END_YEAR)
 	for y := int64(1); y <= HALVING_END_YEAR; y++ {
@@ -461,4 +469,187 @@ func TestGetEmission(t *testing.T) {
 			}
 		}
 	})
+}
+
+// TestGetHalvingYearAndEndTimestampValidation tests various scenarios for getHalvingYearAndEndTimestamp
+// to ensure proper validation and handling of edge cases
+func TestGetHalvingYearAndEndTimestampValidation(t *testing.T) {
+	resetEmissionState(t)
+
+	es := GetEmissionState()
+
+	testCases := []struct {
+		name            string
+		timestampOffset int64 // offset from start timestamp
+		expectedYear    int64
+		expectedEndTime int64
+		description     string
+	}{
+		{
+			name:            "Before emission start",
+			timestampOffset: -1000,
+			expectedYear:    1,
+			expectedEndTime: es.getStartTimestamp() + SECONDS_IN_YEAR,
+			description:     "Should return year 1 even before emission starts",
+		},
+		{
+			name:            "Start of emission",
+			timestampOffset: 0,
+			expectedYear:    1,
+			expectedEndTime: es.getStartTimestamp() + SECONDS_IN_YEAR,
+			description:     "Should return year 1 at emission start",
+		},
+		{
+			name:            "Middle of year 1",
+			timestampOffset: SECONDS_IN_YEAR / 2,
+			expectedYear:    1,
+			expectedEndTime: es.getStartTimestamp() + SECONDS_IN_YEAR,
+			description:     "Should return year 1 in the middle of first year",
+		},
+		{
+			name:            "End of year 1",
+			timestampOffset: SECONDS_IN_YEAR - 1,
+			expectedYear:    1,
+			expectedEndTime: es.getStartTimestamp() + SECONDS_IN_YEAR,
+			description:     "Should return year 1 at the end of first year",
+		},
+		{
+			name:            "Start of year 2",
+			timestampOffset: SECONDS_IN_YEAR,
+			expectedYear:    2,
+			expectedEndTime: es.getStartTimestamp() + (SECONDS_IN_YEAR * 2),
+			description:     "Should return year 2 at the start of second year",
+		},
+		{
+			name:            "Middle of year 6",
+			timestampOffset: (SECONDS_IN_YEAR * 5) + (SECONDS_IN_YEAR / 2),
+			expectedYear:    6,
+			expectedEndTime: es.getStartTimestamp() + (SECONDS_IN_YEAR * 6),
+			description:     "Should return year 6 in the middle of sixth year",
+		},
+		{
+			name:            "Start of year 12",
+			timestampOffset: SECONDS_IN_YEAR * 11,
+			expectedYear:    12,
+			expectedEndTime: es.getStartTimestamp() + (SECONDS_IN_YEAR * 12),
+			description:     "Should return year 12 at the start of final year",
+		},
+		{
+			name:            "End of year 12",
+			timestampOffset: (SECONDS_IN_YEAR * 12) - 1,
+			expectedYear:    12,
+			expectedEndTime: es.getStartTimestamp() + (SECONDS_IN_YEAR * 12),
+			description:     "Should return year 12 at the end of emission period",
+		},
+		{
+			name:            "Exactly at emission end",
+			timestampOffset: SECONDS_IN_YEAR * 12,
+			expectedYear:    13,
+			expectedEndTime: es.getStartTimestamp() + (SECONDS_IN_YEAR * 13),
+			description:     "Should return year 13 exactly at emission end timestamp (edge case)",
+		},
+		{
+			name:            "Just after emission end",
+			timestampOffset: (SECONDS_IN_YEAR * 12) + 1,
+			expectedYear:    0,
+			expectedEndTime: 0,
+			description:     "Should return (0, 0) immediately after emission ends",
+		},
+		{
+			name:            "Far after emission end",
+			timestampOffset: SECONDS_IN_YEAR * 20,
+			expectedYear:    0,
+			expectedEndTime: 0,
+			description:     "Should return (0, 0) far after emission ends",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			timestamp := es.getStartTimestamp() + tc.timestampOffset
+			year, endTime := getHalvingYearAndEndTimestamp(timestamp)
+
+			uassert.Equal(t, tc.expectedYear, year,
+				"Year mismatch for %s: %s", tc.name, tc.description)
+			uassert.Equal(t, tc.expectedEndTime, endTime,
+				"End time mismatch for %s: %s", tc.name, tc.description)
+		})
+	}
+}
+
+// TestHalvingDataGettersWithInvalidYear tests that HalvingData getters handle invalid years properly
+func TestHalvingDataGettersWithInvalidYear(t *testing.T) {
+	// Reset emission state to ensure clean test environment
+	resetEmissionState(t)
+
+	hd := &HalvingData{
+		startBlockHeight: make([]int64, HALVING_END_YEAR),
+		endBlockHeight:   make([]int64, HALVING_END_YEAR),
+		startTimestamp:   make([]int64, HALVING_END_YEAR),
+		maxAmount:        make([]int64, HALVING_END_YEAR),
+		mintedAmount:     make([]int64, HALVING_END_YEAR),
+		leftAmount:       make([]int64, HALVING_END_YEAR),
+		accumAmount:      make([]int64, HALVING_END_YEAR),
+		amountPerBlock:   make([]int64, HALVING_END_YEAR),
+	}
+
+	// Set test values for valid years
+	for i := int64(0); i < HALVING_END_YEAR; i++ {
+		hd.startBlockHeight[i] = 1000 + i*100
+		hd.endBlockHeight[i] = 2000 + i*100
+		hd.startTimestamp[i] = 3000 + i*100
+		hd.maxAmount[i] = 4000 + i*100
+		hd.mintedAmount[i] = 5000 + i*100
+		hd.leftAmount[i] = 6000 + i*100
+		hd.accumAmount[i] = 7000 + i*100
+		hd.amountPerBlock[i] = 8000 + i*100
+	}
+
+	testCases := []struct {
+		name     string
+		year     int64
+		getter   func(int64) int64
+		expected int64
+	}{
+		// Year 0 tests (should return 0)
+		{"StartBlockHeight with year 0", 0, hd.getStartBlockHeight, 0},
+		{"EndBlockHeight with year 0", 0, hd.getEndBlockHeight, 0},
+		{"StartTimestamp with year 0", 0, hd.getStartTimestamp, 0},
+		{"MaxAmount with year 0", 0, hd.getMaxAmount, 0},
+		{"MintedAmount with year 0", 0, hd.getMintedAmount, 0},
+		{"LeftAmount with year 0", 0, hd.getLeftAmount, 0},
+		{"AccumAmount with year 0", 0, hd.getAccumAmount, 0},
+		{"AmountPerBlock with year 0", 0, hd.getAmountPerBlock, 0},
+
+		// Year -1 tests (negative year, should return 0)
+		{"StartBlockHeight with year -1", -1, hd.getStartBlockHeight, 0},
+
+		// Valid year tests
+		{"StartBlockHeight with year 1", 1, hd.getStartBlockHeight, 1000},
+		{"EndBlockHeight with year 1", 1, hd.getEndBlockHeight, 2000},
+		{"StartTimestamp with year 1", 1, hd.getStartTimestamp, 3000},
+		{"MaxAmount with year 1", 1, hd.getMaxAmount, 4000},
+		{"MintedAmount with year 1", 1, hd.getMintedAmount, 5000},
+		{"LeftAmount with year 1", 1, hd.getLeftAmount, 6000},
+		{"AccumAmount with year 1", 1, hd.getAccumAmount, 7000},
+		{"AmountPerBlock with year 1", 1, hd.getAmountPerBlock, 8000},
+
+		// Last valid year tests
+		{"StartBlockHeight with year 12", 12, hd.getStartBlockHeight, 2100},
+		{"EndBlockHeight with year 12", 12, hd.getEndBlockHeight, 3100},
+		{"StartTimestamp with year 12", 12, hd.getStartTimestamp, 4100},
+		{"MaxAmount with year 12", 12, hd.getMaxAmount, 5100},
+		{"MintedAmount with year 12", 12, hd.getMintedAmount, 6100},
+		{"LeftAmount with year 12", 12, hd.getLeftAmount, 7100},
+		{"AccumAmount with year 12", 12, hd.getAccumAmount, 8100},
+		{"AmountPerBlock with year 12", 12, hd.getAmountPerBlock, 9100},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.getter(tc.year)
+			uassert.Equal(t, tc.expected, result,
+				"Unexpected result for %s", tc.name)
+		})
+	}
 }
