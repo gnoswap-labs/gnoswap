@@ -64,12 +64,12 @@ var END_TIMESTAMP_OF_YEAR = []int64{
 	startTimestamp + SECONDS_IN_YEAR*12,
 }
 
-func TestGetAmountByHeight(t *testing.T) {
+func TestAmountByHeight(t *testing.T) {
 	resetEmissionState(t)
 
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		firstBlockOfYear := FIRST_BLOCK_OF_YEAR[year-1]
-		uassert.Equal(t, GetAmountPerBlockPerHalvingYear(year), GetAmountByHeight(firstBlockOfYear))
+		uassert.Equal(t, GetAmountPerBlockPerHalvingYear(year), AmountByHeight(firstBlockOfYear))
 		if year == HALVING_START_YEAR {
 			uassert.Equal(t, GetHalvingYearAccuAmount(year), GetHalvingYearMaxAmount(year))
 		} else {
@@ -88,18 +88,18 @@ func TestGetAmountByHeight(t *testing.T) {
 	}
 }
 
-func TestGetHalvingYearByHeight(t *testing.T) {
+func TestHalvingYearByHeight(t *testing.T) {
 	resetEmissionState(t)
 
 	t.Run("during halving years", func(t *testing.T) {
 		for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 			firstBlockOfYear := FIRST_BLOCK_OF_YEAR[year-1]
-			uassert.Equal(t, year, GetHalvingYearByHeight(firstBlockOfYear))
+			uassert.Equal(t, year, HalvingYearByHeight(firstBlockOfYear))
 		}
 	})
 
 	t.Run("no year after 12 years", func(t *testing.T) {
-		uassert.Equal(t, int64(0), GetHalvingYearByHeight(GetEndHeight()+1))
+		uassert.Equal(t, int64(0), HalvingYearByHeight(GetEndHeight()+1))
 	})
 }
 
@@ -116,7 +116,7 @@ func TestGetHalvingYearAndEndTimestamp(t *testing.T) {
 	})
 
 	t.Run("after 12 years", func(t *testing.T) {
-		year, endTimestamp := getHalvingYearAndEndTimestamp(GetEndTimestamp() + 1)
+		year, endTimestamp := getHalvingYearAndEndTimestamp(endTimestamp() + 1)
 		uassert.Equal(t, int64(0), year)
 		uassert.Equal(t, int64(0), endTimestamp)
 	})
@@ -273,7 +273,7 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 		testing.SkipHeights(1)
 		testing.SetRealm(std.NewUserRealm(adminAddr))
 		SetAvgBlockTimeInMsByAdmin(cross, 2)
-		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(2))
+		uassert.Equal(t, AvgBlockTimeInMs(), int64(2))
 
 		callbackEmissionChange = oldCallback
 	})
@@ -300,7 +300,7 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 		uassert.AbortsWithMessage(t,
 			"invalid block time interval",
 			func() {
-				SetAvgBlockTimeInMsByAdmin(cross, 1e9)
+				SetAvgBlockTimeInMsByAdmin(cross, MAX_BLOCK_TIME_MS)
 			},
 		)
 		callbackEmissionChange = oldCallback
@@ -327,7 +327,7 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 		testing.SkipHeights(3)
 		testing.SetRealm(govRealm)
 		SetAvgBlockTimeInMs(cross, 4)
-		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(4))
+		uassert.Equal(t, AvgBlockTimeInMs(), int64(4))
 		callbackEmissionChange = oldCallback
 	})
 
@@ -353,7 +353,7 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 		uassert.AbortsWithMessage(t,
 			"invalid block time interval",
 			func() {
-				SetAvgBlockTimeInMs(cross, 1e9)
+				SetAvgBlockTimeInMs(cross, MAX_BLOCK_TIME_MS)
 			},
 		)
 		callbackEmissionChange = oldCallback
@@ -362,7 +362,6 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 
 func TestGetEmission(t *testing.T) {
 	t.Run("emission during halving year", func(t *testing.T) {
-		// Set initial values for the test
 		year := HALVING_START_YEAR
 		initialMinted := int64(1000)
 		initialLeft := int64(5000)
@@ -478,7 +477,7 @@ func TestGetHalvingYearAndEndTimestampValidation(t *testing.T) {
 
 	es := GetEmissionState()
 
-	testCases := []struct {
+	tests := []struct {
 		name            string
 		timestampOffset int64 // offset from start timestamp
 		expectedYear    int64
@@ -564,22 +563,21 @@ func TestGetHalvingYearAndEndTimestampValidation(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			timestamp := es.getStartTimestamp() + tc.timestampOffset
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			timestamp := es.getStartTimestamp() + tt.timestampOffset
 			year, endTime := getHalvingYearAndEndTimestamp(timestamp)
 
-			uassert.Equal(t, tc.expectedYear, year,
-				"Year mismatch for %s: %s", tc.name, tc.description)
-			uassert.Equal(t, tc.expectedEndTime, endTime,
-				"End time mismatch for %s: %s", tc.name, tc.description)
+			uassert.Equal(t, tt.expectedYear, year,
+				"Year mismatch for %s: %s", tt.name, tt.description)
+			uassert.Equal(t, tt.expectedEndTime, endTime,
+				"End time mismatch for %s: %s", tt.name, tt.description)
 		})
 	}
 }
 
 // TestHalvingDataGettersWithInvalidYear tests that HalvingData getters handle invalid years properly
 func TestHalvingDataGettersWithInvalidYear(t *testing.T) {
-	// Reset emission state to ensure clean test environment
 	resetEmissionState(t)
 
 	hd := &HalvingData{
@@ -605,7 +603,7 @@ func TestHalvingDataGettersWithInvalidYear(t *testing.T) {
 		hd.amountPerBlock[i] = 8000 + i*100
 	}
 
-	testCases := []struct {
+	tests := []struct {
 		name     string
 		year     int64
 		getter   func(int64) int64
@@ -645,11 +643,11 @@ func TestHalvingDataGettersWithInvalidYear(t *testing.T) {
 		{"AmountPerBlock with year 12", 12, hd.getAmountPerBlock, 9100},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			result := tc.getter(tc.year)
-			uassert.Equal(t, tc.expected, result,
-				"Unexpected result for %s", tc.name)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.getter(tt.year)
+			uassert.Equal(t, tt.expected, result,
+				"Unexpected result for %s", tt.name)
 		})
 	}
 }

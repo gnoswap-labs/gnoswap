@@ -110,7 +110,7 @@ func CreateExternalIncentive(cur realm,
 		std.ChainHeight(),
 		depositGnsAmount,
 		time.Now().Unix(),
-		gns.GetAvgBlockTimeInMs(),
+		gns.AvgBlockTimeInMs(),
 	)
 
 	if externalIncentives.Has(incentiveId) {
@@ -144,7 +144,7 @@ func CreateExternalIncentive(cur realm,
 		"depositGnsAmount", formatInt(depositGnsAmount),
 		"currentHeight", formatInt(std.ChainHeight()),
 		"currentTime", formatInt(time.Now().Unix()),
-		"avgBlockTimeInMs", formatInt(gns.GetAvgBlockTimeInMs()),
+		"avgBlockTimeInMs", formatInt(gns.AvgBlockTimeInMs()),
 	)
 }
 

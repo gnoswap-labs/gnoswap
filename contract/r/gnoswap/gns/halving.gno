@@ -15,6 +15,9 @@ const (
 
 	HALVING_START_YEAR = int64(1)
 	HALVING_END_YEAR   = int64(12)
+
+	// Maximum allowed block time in milliseconds (1 second)
+	MAX_BLOCK_TIME_MS = 1e9
 )
 
 // Annual halving amount - maximum issuance per year
@@ -245,11 +248,11 @@ func NewEmissionState() *EmissionState {
 	}
 }
 
-func (e *EmissionState) getStartHeight() int64             { return e.startHeight }
+func (e *EmissionState) getStartHeight() int64                { return e.startHeight }
 func (e *EmissionState) setStartHeight(height int64)       { e.startHeight = height }
-func (e *EmissionState) getStartTimestamp() int64          { return e.startTimestamp }
+func (e *EmissionState) getStartTimestamp() int64             { return e.startTimestamp }
 func (e *EmissionState) setStartTimestamp(timestamp int64) { e.startTimestamp = timestamp }
-func (e *EmissionState) getEndTimestamp() int64            { return e.endTimestamp }
+func (e *EmissionState) getEndTimestamp() int64               { return e.endTimestamp }
 func (e *EmissionState) setEndTimestamp(timestamp int64)   { e.endTimestamp = timestamp }
 func (e *EmissionState) getHalvingData() HalvingData       { return e.halvingData }
 func (e *EmissionState) setHalvingData(data HalvingData)   { e.halvingData = data }
@@ -266,8 +269,8 @@ func init() {
 	emissionState = GetEmissionState()
 }
 
-// GetAvgBlockTimeInMs returns average block time in milliseconds
-func GetAvgBlockTimeInMs() int64 {
+// AvgBlockTimeInMs returns average block time in milliseconds
+func AvgBlockTimeInMs() int64 {
 	return avgBlockTimeMs
 }
 
@@ -278,7 +281,7 @@ func SetAvgBlockTimeInMsByAdmin(cur realm, ms int64) {
 	}
 	assertCallerIsAdmin()
 
-	prevAvgBlockTimeInMs := GetAvgBlockTimeInMs()
+	prevAvgBlockTimeInMs := AvgBlockTimeInMs()
 	setAvgBlockTimeInMs(ms)
 
 	// Log event generation
@@ -291,7 +294,7 @@ func SetAvgBlockTimeInMsByAdmin(cur realm, ms int64) {
 // SetAvgBlockTimeInMs sets average block time through governance proposal
 func SetAvgBlockTimeInMs(cur realm, ms int64) {
 	assertCallerIsGovernance()
-	prevAvgBlockTimeInMs := GetAvgBlockTimeInMs()
+	prevAvgBlockTimeInMs := AvgBlockTimeInMs()
 	setAvgBlockTimeInMs(ms)
 
 	// Log event generation
@@ -325,7 +328,7 @@ func setAvgBlockTimeInMs(ms int64) {
 
 	// prevent division errors due to very large values or zero.
 	// block time values outside of practical range are blocked
-	if ms <= 0 || ms >= 1e9 {
+	if ms <= 0 || ms >= MAX_BLOCK_TIME_MS {
 		panic("invalid block time interval")
 	}
 
@@ -340,8 +343,8 @@ func setAvgBlockTimeInMs(ms int64) {
 	es := GetEmissionState()
 
 	currentHeight := std.ChainHeight()
-	currentYear := GetHalvingYearByHeight(currentHeight)
-	prevBlockTimeMs := GetAvgBlockTimeInMs()
+	currentYear := HalvingYearByHeight(currentHeight)
+	prevBlockTimeMs := AvgBlockTimeInMs()
 
 	hd := &es.halvingData
 	for year := currentYear; year <= HALVING_END_YEAR; year++ {
@@ -355,7 +358,7 @@ func setAvgBlockTimeInMs(ms int64) {
 		// For current year, use remaining amount to avoid over/under emission
 		if year == currentYear {
 			startHeight := hd.getStartBlockHeight(year)
-			lastGNSMintedHeight := GetLastMintedHeight() + 1
+			lastGNSMintedHeight := LastMintedHeight() + 1
 			if lastGNSMintedHeight < startHeight {
 				lastGNSMintedHeight = startHeight
 			}
@@ -406,18 +409,18 @@ func setAvgBlockTimeInMs(ms int64) {
 	avgBlockTimeMs = ms
 }
 
-// GetAmountByHeight returns emission amount based on block height
-func GetAmountByHeight(height int64) int64 {
+// AmountByHeight returns emission amount based on block height
+func AmountByHeight(height int64) int64 {
 	if isEmissionEnded(height) {
 		return 0
 	}
 
-	halvingYear := GetHalvingYearByHeight(height)
+	halvingYear := HalvingYearByHeight(height)
 	return GetAmountPerBlockPerHalvingYear(halvingYear)
 }
 
-// GetHalvingYearByHeight returns halving year based on block height
-func GetHalvingYearByHeight(height int64) int64 {
+// HalvingYearByHeight returns halving year based on block height
+func HalvingYearByHeight(height int64) int64 {
 	if isEmissionEnded(height) {
 		return 0
 	}

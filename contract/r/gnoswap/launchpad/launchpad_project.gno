@@ -68,7 +68,7 @@ func CreateProject(
 	assertOnlyNotHalted()
 	assertOnlyAdmin(previousAddress)
 
-	averageBlockTimeMs := gns.GetAvgBlockTimeInMs()
+	averageBlockTimeMs := gns.AvgBlockTimeInMs()
 	currentHeight := std.ChainHeight()
 	currentTime := time.Now().Unix()
 

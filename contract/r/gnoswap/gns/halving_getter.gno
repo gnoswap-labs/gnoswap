@@ -171,8 +171,8 @@ func GetEndHeight() int64 {
 	return GetHalvingYearEndBlock(HALVING_END_YEAR)
 }
 
-// GetEndTimestamp returns the end timestamp of the emission period
-func GetEndTimestamp() int64 {
+// endTimestamp returns the end timestamp of the emission period
+func endTimestamp() int64 {
 	return GetEmissionState().getEndTimestamp()
 }
 
