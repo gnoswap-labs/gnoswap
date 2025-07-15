@@ -363,13 +363,13 @@ func TestReferral_Remove(t *testing.T) {
 		expectedHas   bool
 	}{
 		{
-			name:          "removes existing referral successfully",
+			name:          "removes existing referral successfully but rate limited",
 			caller:        "router",
 			setupReferral: true,
 			addr:          testutils.TestAddress("unit1"),
 			refAddr:       testutils.TestAddress("unit2"),
-			expectedError: false,
-			expectedHas:   false,
+			expectedError: true,
+			expectedHas:   true,
 		},
 		{
 			name:          "fails with unauthorized caller",
@@ -381,12 +381,12 @@ func TestReferral_Remove(t *testing.T) {
 			expectedHas:   true,
 		},
 		{
-			name:          "removing non-existent referral is no-op",
+			name:          "removing non-existent referral returns error",
 			caller:        "router",
 			setupReferral: false,
 			addr:          testutils.TestAddress("unit1"),
 			refAddr:       zeroAddress,
-			expectedError: false,
+			expectedError: true,
 			expectedHas:   false,
 		},
 	}

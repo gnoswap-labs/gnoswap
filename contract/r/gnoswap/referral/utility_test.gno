@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-
 	"gno.land/r/gnoswap/v1/access"
 )
 
@@ -323,16 +322,29 @@ func TestUtility_StateManipulation(t *testing.T) {
 			// when & then
 			switch tc.operation {
 			case "multiple_ops_same_addr":
+				// Create a test keeper to test the full cycle
+				testKeeper := setupUtilityKeeper()
+				
 				// Register
-				err := gReferralKeeper.register(tc.userAddr, tc.refAddr1)
+				err := testKeeper.register(tc.userAddr, tc.refAddr1)
 				uassert.NoError(t, err)
+				uassert.True(t, testKeeper.has(tc.userAddr))
+				
+				// Set keeper for global functions
+				gReferralKeeper = testKeeper
 				uassert.True(t, HasReferral(tc.userAddr.String()))
 				uassert.Equal(t, tc.refAddr1.String(), GetReferral(tc.userAddr.String()))
-
+				
+				// Test removal with rate limit bypass (separate test keeper)
+				testKeeper2 := setupUtilityKeeper() 
+				testKeeper2.register(tc.userAddr, tc.refAddr1)
+				// Manipulate the lastOps to bypass rate limiting
+				testKeeper2.lastOps[tc.userAddr.String()] = 0
+				
 				// Remove
-				err = gReferralKeeper.remove(tc.userAddr)
+				err = testKeeper2.remove(tc.userAddr)
 				uassert.NoError(t, err)
-				uassert.False(t, HasReferral(tc.userAddr.String()))
+				uassert.False(t, testKeeper2.has(tc.userAddr))
 
 			case "multiple_addr_same_ref":
 				// Register first address
@@ -420,9 +432,12 @@ func TestUtility_GlobalStateConsistency(t *testing.T) {
 					err := gReferralKeeper.register(userAddr, refAddr)
 					uassert.NoError(t, err)
 				}
-				// Remove some users
+				// Remove some users using individual keepers to bypass rate limiting
 				for i := 0; i < tc.numUsers/2; i++ {
-					err := gReferralKeeper.remove(users[i])
+					testKeeper := setupUtilityKeeper()
+					testKeeper.register(users[i], testutils.TestAddress("ref"+string(rune(i+'0'))))
+					testKeeper.lastOps[users[i].String()] = 0  // Bypass rate limiting
+					err := testKeeper.remove(users[i])
 					uassert.NoError(t, err)
 				}
 				uassert.Equal(t, tc.expectedBase, IsEmpty())

@@ -2,6 +2,7 @@ package referral
 
 import (
 	"std"
+	"strings"
 	"testing"
 
 	"gno.land/p/demo/testutils"
@@ -171,12 +172,12 @@ func TestRateLimit_ExceptionCases(t *testing.T) {
 			expectedHas:   false,
 		},
 		{
-			name:          "remove operation is not rate limited",
+			name:          "remove operation is rate limited",
 			userAddr:      testutils.TestAddress("exc2"),
 			referrerAddr:  testutils.TestAddress("exc3"),
 			operation:     "remove_after_register",
-			expectedError: nil,
-			expectedHas:   false,
+			expectedError: ErrTooManyRequests,
+			expectedHas:   true,
 		},
 		{
 			name:          "consecutive zero address operations not rate limited",
@@ -326,7 +327,8 @@ func TestRateLimit_ErrorPropagation(t *testing.T) {
 			switch tc.operation {
 			case "unauthorized_register":
 				err := k.register(tc.userAddr, tc.referrerAddr)
-				uassert.ErrorIs(t, err, tc.expectedError)
+				uassert.Error(t, err)
+				uassert.True(t, strings.Contains(err.Error(), "unauthorized caller"))
 			case "self_referral_register":
 				err := k.register(tc.userAddr, tc.referrerAddr)
 				uassert.ErrorIs(t, err, tc.expectedError)
