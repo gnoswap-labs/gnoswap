@@ -4,6 +4,7 @@ import (
 	"std"
 
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/p/demo/ufmt"
 )
 
 // validCallers is a lookup table of addresses that are authorized to modify referral data.
@@ -24,7 +25,7 @@ func isValidCaller(caller std.Address) error {
 	if validCallers[caller] {
 		return nil
 	}
-	return ErrUnauthorized
+	return ufmt.Errorf("unauthorized caller: %s", caller)
 }
 
 func getAddress(role string) std.Address {
