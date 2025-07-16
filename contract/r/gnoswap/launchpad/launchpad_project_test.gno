@@ -205,7 +205,7 @@ func TestCreateProjectPrivate(t *testing.T) {
 			expectedErrorMessage: "",
 		},
 		{
-			name: "create project successfully by 30:40:30 ratio",
+			name: "create project successfully by 20:30:50 ratio",
 			params: &createProjectParams{
 				name:               "Obl Protocol",
 				tokenPath:          oblPath,
@@ -213,9 +213,9 @@ func TestCreateProjectPrivate(t *testing.T) {
 				depositAmount:      1_000_000_000,
 				conditionTokens:    "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
 				conditionAmounts:   "1000*PAD*2000",
-				tier30Ratio:        int64(30),
-				tier90Ratio:        int64(40),
-				tier180Ratio:       int64(30),
+				tier30Ratio:        int64(20),
+				tier90Ratio:        int64(30),
+				tier180Ratio:       int64(50),
 				currentTime:        int64(time.Now().Unix()),
 				currentHeight:      std.ChainHeight(),
 				startTime:          int64(time.Now().Unix() + 3600),
@@ -727,6 +727,107 @@ func TestCreateProjectParams_ValidateConditions(t *testing.T) {
 				uassert.NoError(t, err)
 			} else {
 				uassert.ErrorContains(t, err, test.expectedError.Error())
+			}
+		})
+	}
+}
+
+func TestTierRatioValidation(t *testing.T) {
+	const (
+		errInvalidRatioOrder = "invalid ratio order, tier ratios must be in ascending order"
+		errInvalidSum        = "sum of all tiers"
+	)
+	tests := []struct {
+		name          string
+		tier30Ratio   int64
+		tier90Ratio   int64
+		tier180Ratio  int64
+		shouldSucceed bool
+		expectedError string
+	}{
+		{
+			name:          "normal_ascending_ratios",
+			tier30Ratio:   20,
+			tier90Ratio:   30,
+			tier180Ratio:  50,
+			shouldSucceed: true,
+		},
+		{
+			name:          "reversed_ratios",
+			tier30Ratio:   50,
+			tier90Ratio:   30,
+			tier180Ratio:  20,
+			shouldSucceed: false,
+			expectedError: errInvalidRatioOrder,
+		},
+		{
+			name:          "all_to_shortest_tier",
+			tier30Ratio:   100,
+			tier90Ratio:   0,
+			tier180Ratio:  0,
+			shouldSucceed: false,
+			expectedError: errInvalidRatioOrder,
+		},
+		{
+			name:          "mixed_order",
+			tier30Ratio:   40,
+			tier90Ratio:   10,
+			tier180Ratio:  50,
+			shouldSucceed: false,
+			expectedError: errInvalidRatioOrder,
+		},
+		{
+			name:          "equal_ratios",
+			tier30Ratio:   33,
+			tier90Ratio:   33,
+			tier180Ratio:  34,
+			shouldSucceed: true,
+		},
+		{
+			name:          "invalid_sum",
+			tier30Ratio:   30,
+			tier90Ratio:   30,
+			tier180Ratio:  30,
+			shouldSucceed: false,
+			expectedError: errInvalidSum,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			deposits = avl.NewTree()
+			projects = avl.NewTree()
+			projectTierRewardManagers = avl.NewTree()
+
+			currentTime := time.Now().Unix()
+			currentHeight := int64(100)
+			testing.SetHeight(currentHeight)
+
+			createProjectFn := func() (*Project, error) {
+				return createProject(
+					&createProjectParams{
+						name:               "Test Project",
+						tokenPath:          "gno.land/r/onbloc/obl",
+						depositAmount:      10000000,
+						tier30Ratio:        tt.tier30Ratio,
+						tier90Ratio:        tt.tier90Ratio,
+						tier180Ratio:       tt.tier180Ratio,
+						averageBlockTimeMs: 2000,
+						recipient:          testutils.TestAddress("project"),
+						startTime:          currentTime + 3600,
+						currentTime:        currentTime,
+						currentHeight:      currentHeight,
+					},
+				)
+			}
+
+			if tt.shouldSucceed {
+				_, err := createProjectFn()
+				uassert.Nil(t, err)
+			} else {
+				_, err := createProjectFn()
+				uassert.NotNil(t, err)
+				uassert.ErrorContains(t, err, tt.expectedError)
 			}
 		})
 	}
