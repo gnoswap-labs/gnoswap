@@ -3,7 +3,9 @@ package launchpad
 import (
 	"std"
 	"testing"
+	"time"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 )
@@ -272,4 +274,81 @@ func TestNewDeposit(t *testing.T) {
 			uassert.Equal(t, int64(0), deposit.withdrawnHeight)
 		})
 	}
+}
+
+// TestDepositIndividualUnlockTime verifies that each deposit has its own unlock time
+// based on when it was created, not when the project tier ends
+func TestDepositIndividualUnlockTime(t *testing.T) {
+	deposits = avl.NewTree()
+	projects = avl.NewTree()
+	projectTierRewardManagers = avl.NewTree()
+
+	currentTime := time.Now().Unix()
+	currentHeight := int64(100)
+	testing.SetHeight(currentHeight)
+
+	project, _ := createProject(
+		&createProjectParams{
+			name:               "Test Individual Unlock",
+			tokenPath:          "gno.land/r/onbloc/obl",
+			depositAmount:      10000000,
+			tier30Ratio:        100,
+			tier90Ratio:        0,
+			tier180Ratio:       0,
+			averageBlockTimeMs: 2000, // 2 seconds per block
+			recipient:          testutils.TestAddress("project"),
+			startTime:          currentTime,
+			currentTime:        currentTime,
+			currentHeight:      currentHeight,
+		},
+	)
+	projects.Set(project.ID(), project)
+
+	// User 1 deposits at the beginning
+	user1 := testutils.TestAddress("user1")
+	testing.SetOriginCaller(user1)
+	deposit1, _, _, _, _ := depositGns(project.ID(), 30, 1000000, user1)
+
+	// User 2 deposits 10 days later
+	tenDaysInBlocks := int64(10 * 24 * 60 * 60 / 2) // 432,000 blocks
+	testing.SetHeight(currentHeight + tenDaysInBlocks)
+
+	user2 := testutils.TestAddress("user2")
+	testing.SetOriginCaller(user2)
+	deposit2, _, _, _, _ := depositGns(project.ID(), 30, 1000000, user2)
+
+	// IMPORTANT: Deposits should have different unlock times
+	// User2's deposit should unlock 10 days after User1's
+	expectedDifference := tenDaysInBlocks
+	actualDifference := deposit2.EndHeight() - deposit1.EndHeight()
+
+	t.Logf("User1 deposit unlock height: %d", deposit1.EndHeight())
+	t.Logf("User2 deposit unlock height: %d", deposit2.EndHeight())
+	t.Logf("Difference: %d blocks (expected: %d blocks)", actualDifference, expectedDifference)
+
+	// Verify deposits have individual unlock times
+	uassert.Equal(t, expectedDifference, actualDifference,
+		"Deposits should have individual unlock times based on creation time")
+
+	// Verify User1 can withdraw after 30 days from THEIR deposit
+	thirtyDaysInBlocks := int64(30 * 24 * 60 * 60 / 2)
+	user1UnlockHeight := deposit1.DepositHeight() + thirtyDaysInBlocks + 1
+	testing.SetHeight(user1UnlockHeight)
+
+	// User1 should be able to withdraw
+	_, amount1, err1 := withdrawDeposit(deposit1, user1UnlockHeight)
+	uassert.NoError(t, err1, "User1 should be able to withdraw 30 days after their deposit")
+	uassert.Equal(t, int64(1000000), amount1)
+
+	// User2 should NOT be able to withdraw yet (only 20 days passed for them)
+	_, _, err2 := withdrawDeposit(deposit2, user1UnlockHeight)
+	uassert.Error(t, err2, "User2 should not be able to withdraw after only 20 days")
+
+	// Move to User2's unlock time and verify they can now withdraw
+	user2UnlockHeight := deposit2.DepositHeight() + thirtyDaysInBlocks + 1
+	testing.SetHeight(user2UnlockHeight)
+
+	_, amount2, err3 := withdrawDeposit(deposit2, user2UnlockHeight)
+	uassert.NoError(t, err3, "User2 should be able to withdraw 30 days after their deposit")
+	uassert.Equal(t, int64(1000000), amount2)
 }
