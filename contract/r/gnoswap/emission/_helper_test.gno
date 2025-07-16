@@ -34,4 +34,8 @@ func resetObject(t *testing.T) {
 	accuDistributedToDevOps = 0
 	accuDistributedToCommunityPool = 0
 	accuDistributedToGovStaker = 0
+
+	// Reset emission-specific variables
+	leftGNSAmount = 0
+	lastExecutedHeight = 0
 }
