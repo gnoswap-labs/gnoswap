@@ -16,10 +16,8 @@ import (
 	"gno.land/r/gnoswap/v1/referral"
 )
 
-var (
-	// depositId -> Deposit
-	deposits = avl.NewTree()
-)
+// depositId -> Deposit
+var deposits = avl.NewTree()
 
 // DepositGns handles the deposit process for a specific project tier.
 //
@@ -178,13 +176,26 @@ func depositGns(
 
 	currentTime := time.Now().Unix()
 	createdBlockTimeInfo := newBlockTimeInfo(currentTime, currentHeight)
+
+	// Calculate individual unlock time based on deposit creation and tier duration
+	unlockTime := currentTime + projectTierDurationTimes[tierDuration]
+	averageBlockTimeMs := (projectTier.endBlockTimeInfo.BlockTime() - projectTier.startBlockTimeInfo.BlockTime()) * 1000 /
+		(projectTier.endBlockTimeInfo.BlockHeight() - projectTier.startBlockTimeInfo.BlockHeight())
+
+	individualUnlockBlockTimeInfo := newBlockTimeInfoByTimeAndAverageBlockTimeMs(
+		currentTime,
+		currentHeight,
+		unlockTime,
+		averageBlockTimeMs,
+	)
+
 	deposit := NewDeposit(
 		projectID,
 		tierDuration,
 		callerAddress,
 		depositAmount,
 		createdBlockTimeInfo,
-		projectTier.endBlockTimeInfo,
+		individualUnlockBlockTimeInfo, // Use individual unlock time instead of project tier end time
 	)
 	deposits.Set(deposit.ID(), deposit)
 
