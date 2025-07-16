@@ -735,3 +735,270 @@ func TestCalculateAmount_Panic(t *testing.T) {
 		})
 	})
 }
+
+// TestDuplicateTargetsFix verifies that the duplicate target vulnerability has been fixed
+func TestDuplicateTargetsFix(t *testing.T) {
+	t.Run("ChangeDistributionPctByAdmin", func(t *testing.T) {
+		tests := []struct {
+			name        string
+			callerRealm std.Realm
+			targets     [4]int
+			percentages [4]int64
+			expectedErr string
+			shouldPanic bool
+		}{
+			{
+				name:        "duplicate LIQUIDITY_STAKER",
+				callerRealm: adminRealm,
+				targets:     [4]int{LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL, LIQUIDITY_STAKER},
+				percentages: [4]int64{4000, 3000, 2000, 1000},
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 1 appears multiple times",
+				shouldPanic: true,
+			},
+			{
+				name:        "all same target DEVOPS",
+				callerRealm: adminRealm,
+				targets:     [4]int{DEVOPS, DEVOPS, DEVOPS, DEVOPS},
+				percentages: [4]int64{2500, 2500, 2500, 2500},
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 2 appears multiple times",
+				shouldPanic: true,
+			},
+			{
+				name:        "two pairs of duplicates",
+				callerRealm: adminRealm,
+				targets:     [4]int{LIQUIDITY_STAKER, GOV_STAKER, LIQUIDITY_STAKER, GOV_STAKER},
+				percentages: [4]int64{3000, 2000, 3000, 2000},
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 1 appears multiple times",
+				shouldPanic: true,
+			},
+			{
+				name:        "duplicate COMMUNITY_POOL",
+				callerRealm: adminRealm,
+				targets:     [4]int{COMMUNITY_POOL, DEVOPS, COMMUNITY_POOL, GOV_STAKER},
+				percentages: [4]int64{5000, 2500, 2500, 0},
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 3 appears multiple times",
+				shouldPanic: true,
+			},
+			{
+				name:        "valid distribution without duplicates",
+				callerRealm: adminRealm,
+				targets:     [4]int{LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL, GOV_STAKER},
+				percentages: [4]int64{4000, 3000, 2000, 1000},
+				shouldPanic: false,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				resetObject(t)
+				testing.SetRealm(tt.callerRealm)
+
+				if tt.shouldPanic {
+					uassert.AbortsWithMessage(t, tt.expectedErr, func() {
+						ChangeDistributionPctByAdmin(
+							cross,
+							tt.targets[0], tt.percentages[0],
+							tt.targets[1], tt.percentages[1],
+							tt.targets[2], tt.percentages[2],
+							tt.targets[3], tt.percentages[3],
+						)
+					})
+				} else {
+					// Should not panic for valid distribution
+					ChangeDistributionPctByAdmin(
+						cross,
+						tt.targets[0], tt.percentages[0],
+						tt.targets[1], tt.percentages[1],
+						tt.targets[2], tt.percentages[2],
+						tt.targets[3], tt.percentages[3],
+					)
+
+					// Verify the distribution was set correctly
+					uassert.Equal(t, tt.percentages[0], GetDistributionBpsPct(tt.targets[0]))
+					uassert.Equal(t, tt.percentages[1], GetDistributionBpsPct(tt.targets[1]))
+					uassert.Equal(t, tt.percentages[2], GetDistributionBpsPct(tt.targets[2]))
+					uassert.Equal(t, tt.percentages[3], GetDistributionBpsPct(tt.targets[3]))
+				}
+			})
+		}
+	})
+
+	t.Run("ChangeDistributionPct", func(t *testing.T) {
+		tests := []struct {
+			name        string
+			callerRealm std.Realm
+			targets     [4]int
+			percentages [4]int64
+			expectedErr string
+			shouldPanic bool
+		}{
+			{
+				name:        "duplicate GOV_STAKER",
+				callerRealm: govRealm,
+				targets:     [4]int{GOV_STAKER, DEVOPS, COMMUNITY_POOL, GOV_STAKER},
+				percentages: [4]int64{5000, 2000, 2000, 1000},
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 4 appears multiple times",
+				shouldPanic: true,
+			},
+			{
+				name:        "duplicate LIQUIDITY_STAKER in governance",
+				callerRealm: govRealm,
+				targets:     [4]int{LIQUIDITY_STAKER, LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL},
+				percentages: [4]int64{3000, 3000, 2000, 2000},
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 1 appears multiple times",
+				shouldPanic: true,
+			},
+			{
+				name:        "all same target COMMUNITY_POOL",
+				callerRealm: govRealm,
+				targets:     [4]int{COMMUNITY_POOL, COMMUNITY_POOL, COMMUNITY_POOL, COMMUNITY_POOL},
+				percentages: [4]int64{2500, 2500, 2500, 2500},
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 3 appears multiple times",
+				shouldPanic: true,
+			},
+			{
+				name:        "valid governance distribution",
+				callerRealm: govRealm,
+				targets:     [4]int{LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL, GOV_STAKER},
+				percentages: [4]int64{5000, 2000, 2000, 1000},
+				shouldPanic: false,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				resetObject(t)
+				testing.SetRealm(tt.callerRealm)
+
+				if tt.shouldPanic {
+					uassert.AbortsWithMessage(t, tt.expectedErr, func() {
+						ChangeDistributionPct(
+							cross,
+							tt.targets[0], tt.percentages[0],
+							tt.targets[1], tt.percentages[1],
+							tt.targets[2], tt.percentages[2],
+							tt.targets[3], tt.percentages[3],
+						)
+					})
+				} else {
+					// Should not panic for valid distribution
+					ChangeDistributionPct(
+						cross,
+						tt.targets[0], tt.percentages[0],
+						tt.targets[1], tt.percentages[1],
+						tt.targets[2], tt.percentages[2],
+						tt.targets[3], tt.percentages[3],
+					)
+
+					// Verify the distribution was set correctly
+					uassert.Equal(t, tt.percentages[0], GetDistributionBpsPct(tt.targets[0]))
+					uassert.Equal(t, tt.percentages[1], GetDistributionBpsPct(tt.targets[1]))
+					uassert.Equal(t, tt.percentages[2], GetDistributionBpsPct(tt.targets[2]))
+					uassert.Equal(t, tt.percentages[3], GetDistributionBpsPct(tt.targets[3]))
+				}
+			})
+		}
+	})
+
+	t.Run("edge cases", func(t *testing.T) {
+		tests := []struct {
+			name        string
+			setupFunc   func()
+			callerRealm std.Realm
+			isAdmin     bool
+			targets     [4]int
+			percentages [4]int64
+			expectedErr string
+			description string
+		}{
+			{
+				name: "duplicate prevents distribution changes",
+				setupFunc: func() {
+					// Set initial distribution
+					testing.SetRealm(adminRealm)
+					ChangeDistributionPctByAdmin(
+						cross,
+						LIQUIDITY_STAKER, 2500,
+						DEVOPS, 2500,
+						COMMUNITY_POOL, 2500,
+						GOV_STAKER, 2500,
+					)
+				},
+				callerRealm: adminRealm,
+				isAdmin:     true,
+				targets:     [4]int{LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL, LIQUIDITY_STAKER},
+				percentages: [4]int64{4000, 3000, 2000, 1000},
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 1 appears multiple times",
+				description: "distribution should remain unchanged after failed duplicate attempt",
+			},
+			{
+				name: "governance manipulation prevented",
+				setupFunc: func() {
+					// Set initial state with GOV_STAKER at 0%
+					testing.SetRealm(govRealm)
+					ChangeDistributionPct(
+						cross,
+						LIQUIDITY_STAKER, 7000,
+						DEVOPS, 2000,
+						COMMUNITY_POOL, 1000,
+						GOV_STAKER, 0,
+					)
+				},
+				callerRealm: govRealm,
+				isAdmin:     false,
+				targets:     [4]int{GOV_STAKER, LIQUIDITY_STAKER, DEVOPS, GOV_STAKER},
+				percentages: [4]int64{3000, 5000, 1500, 500},
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 4 appears multiple times",
+				description: "GOV_STAKER should remain at 0% after failed manipulation attempt",
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				resetObject(t)
+
+				// Execute setup function if provided
+				if tt.setupFunc != nil {
+					tt.setupFunc()
+				}
+
+				// Store initial distribution for verification
+				initialDist := map[int]int64{
+					LIQUIDITY_STAKER: GetDistributionBpsPct(LIQUIDITY_STAKER),
+					DEVOPS:           GetDistributionBpsPct(DEVOPS),
+					COMMUNITY_POOL:   GetDistributionBpsPct(COMMUNITY_POOL),
+					GOV_STAKER:       GetDistributionBpsPct(GOV_STAKER),
+				}
+
+				testing.SetRealm(tt.callerRealm)
+
+				// Attempt the change with duplicates
+				uassert.AbortsWithMessage(t, tt.expectedErr, func() {
+					if tt.isAdmin {
+						ChangeDistributionPctByAdmin(
+							cross,
+							tt.targets[0], tt.percentages[0],
+							tt.targets[1], tt.percentages[1],
+							tt.targets[2], tt.percentages[2],
+							tt.targets[3], tt.percentages[3],
+						)
+					} else {
+						ChangeDistributionPct(
+							cross,
+							tt.targets[0], tt.percentages[0],
+							tt.targets[1], tt.percentages[1],
+							tt.targets[2], tt.percentages[2],
+							tt.targets[3], tt.percentages[3],
+						)
+					}
+				})
+
+				// Verify distribution unchanged after failed attempt
+				uassert.Equal(t, initialDist[LIQUIDITY_STAKER], GetDistributionBpsPct(LIQUIDITY_STAKER), tt.description+" - LIQUIDITY_STAKER")
+				uassert.Equal(t, initialDist[DEVOPS], GetDistributionBpsPct(DEVOPS), tt.description+" - DEVOPS")
+				uassert.Equal(t, initialDist[COMMUNITY_POOL], GetDistributionBpsPct(COMMUNITY_POOL), tt.description+" - COMMUNITY_POOL")
+				uassert.Equal(t, initialDist[GOV_STAKER], GetDistributionBpsPct(GOV_STAKER), tt.description+" - GOV_STAKER")
+			})
+		}
+	})
+}
