@@ -59,6 +59,16 @@ func registerRoles() {
 	// given
 	adminAddr := testutils.TestAddress("admin")
 
+	// when - register roles
+	registerBasicRoles()
+
+	// when - add permissions to roles
+	registerRolePermissions(adminAddr)
+
+	println("[INFO] Three roles with permissions registered")
+}
+
+func registerBasicRoles() {
 	// when - register admin role
 	err := rbac.RegisterRole(cross, "admin")
 	if err != nil {
@@ -82,7 +92,9 @@ func registerRoles() {
 	} else {
 		println("[EXPECTED] Pool role registered successfully")
 	}
+}
 
+func registerRolePermissions(adminAddr std.Address) {
 	// when - add admin permission
 	adminChecker := func(caller std.Address) error {
 		if caller == adminAddr {
@@ -90,7 +102,7 @@ func registerRoles() {
 		}
 		return prbac.ErrUnauthorized
 	}
-	err = rbac.RegisterPermission(cross, "admin", "manage", adminChecker)
+	err := rbac.RegisterPermission(cross, "admin", "manage", adminChecker)
 	if err != nil {
 		println("[INFO] Admin permission registration result:", err.Error())
 	} else {
@@ -126,8 +138,6 @@ func registerRoles() {
 	} else {
 		println("[EXPECTED] Pool permission 'manage_pool' registered successfully")
 	}
-
-	println("[INFO] Three roles with permissions registered")
 }
 
 func checkPermissions() {
