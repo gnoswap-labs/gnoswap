@@ -76,6 +76,12 @@ func Swap(
 	if !slot0Start.unlocked {
 		panic(errLockedPool)
 	}
+
+	// no liquidity -> no swap, return zero amounts
+	if pool.liquidity.IsZero() {
+		return "0", "0"
+	}
+
 	pool.slot0.unlocked = false
 	defer func() { pool.slot0.unlocked = true }()
 
@@ -98,6 +104,7 @@ func Swap(
 	}
 
 	result, err := computeSwap(pool, comp)
+
 	if err != nil {
 		panic(err)
 	}
@@ -152,6 +159,11 @@ func DrySwap(
 	}
 
 	pool := GetPool(token0Path, token1Path, fee)
+
+	// no liquidity -> simulation fails
+	if pool.liquidity.IsZero() {
+		return "0", "0", false
+	}
 
 	slot0Start := pool.slot0
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
@@ -332,6 +344,10 @@ func getFeeGrowthGlobal(pool *Pool, zeroForOne bool) *u256.Uint {
 }
 
 func shouldContinueSwap(state SwapState, sqrtPriceLimitX96 *u256.Uint) bool {
+	// liquidity is zero -> no swap, return zero amounts
+	if state.liquidity.IsZero() {
+		return false
+	}
 	return !(state.amountSpecifiedRemaining.IsZero()) && !(state.sqrtPriceX96.Eq(sqrtPriceLimitX96))
 }
 

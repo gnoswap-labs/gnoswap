@@ -97,6 +97,7 @@ func TestShouldContinueSwap(t *testing.T) {
 			state: SwapState{
 				amountSpecifiedRemaining: i256.MustFromDecimal("1000"),
 				sqrtPriceX96:             u256.MustFromDecimal("1000000"),
+				liquidity:                u256.MustFromDecimal("1000000"),
 			},
 			sqrtPriceLimitX96: u256.MustFromDecimal("900000"),
 			expected:          true,
@@ -106,6 +107,7 @@ func TestShouldContinueSwap(t *testing.T) {
 			state: SwapState{
 				amountSpecifiedRemaining: i256.Zero(),
 				sqrtPriceX96:             u256.MustFromDecimal("1000000"),
+				liquidity:                u256.MustFromDecimal("1000000"),
 			},
 			sqrtPriceLimitX96: u256.MustFromDecimal("900000"),
 			expected:          false,
@@ -115,6 +117,17 @@ func TestShouldContinueSwap(t *testing.T) {
 			state: SwapState{
 				amountSpecifiedRemaining: i256.MustFromDecimal("1000"),
 				sqrtPriceX96:             u256.MustFromDecimal("900000"),
+				liquidity:                u256.MustFromDecimal("1000000"),
+			},
+			sqrtPriceLimitX96: u256.MustFromDecimal("900000"),
+			expected:          false,
+		},
+		{
+			name: "Should stop - zero liquidity",
+			state: SwapState{
+				amountSpecifiedRemaining: i256.MustFromDecimal("1000"),
+				sqrtPriceX96:             u256.MustFromDecimal("1000000"),
+				liquidity:                u256.Zero(), // ← liquidity 0
 			},
 			sqrtPriceLimitX96: u256.MustFromDecimal("900000"),
 			expected:          false,
@@ -273,9 +286,28 @@ func TestComputeSwap(t *testing.T) {
 			t.Fatalf("expected no error, got %v", err)
 		}
 
-		if !result.Amount0.IsZero() || !result.Amount1.IsZero() {
-			t.Error("expected zero amounts for zero liquidity")
-		}
+		// computeSwap() applies pure mathematical logic only,
+		// when liquidity=0, swap loop exits immediately and no swap occurs
+		uassert.True(t,
+			result.Amount0.IsZero(),
+			"expected Amount0 = 0 (no swap with zero liquidity), got %s",
+			result.Amount0.ToString(),
+		)
+		uassert.True(t,
+			result.Amount1.IsZero(),
+			"expected Amount1 = 0, got %s", result.Amount1.ToString(),
+		)
+
+		// Price and tick should not change
+		uassert.True(t,
+			result.NewSqrtPrice.Eq(mockPoolZeroLiq.slot0.sqrtPriceX96),
+			"price should remain constant with zero liquidity",
+		)
+		uassert.Equal(t,
+			result.NewTick,
+			mockPoolZeroLiq.slot0.tick,
+			"tick should remain constant with zero liquidity",
+		)
 	})
 }
 
@@ -450,6 +482,7 @@ func TestSwapAndDrySwapComparison(t *testing.T) {
 			name: "normal swap",
 			setupFn: func(t *testing.T) {
 				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, gnsPath, addr)
 				TokenApprove(t, gnsPath, addr, poolAddr, 1000)
 			},
