@@ -34,11 +34,6 @@ func SwapMathComputeSwapStepStr(
 		panic("SwapMathComputeSwapStepStr: invalid input")
 	}
 
-	// Zero liquidity means no swap can occur
-	if liquidity.IsZero() {
-		return sqrtRatioCurrentX96.ToString(), "0", "0", "0"
-	}
-
 	// This function is publicly accessible and can be called by external users or contracts.
 	// While the pool realm only uses predefined fee values (100, 500, 3000, 10000) which are safely within range,
 	// external callers could potentially pass any feePips value. The fee calculation involves subtracting feePips
@@ -184,7 +179,6 @@ func handleExactIn(
 			true,
 		)
 	}
-
 	// If zero input (i.e. no liquidity), then no swap: price unchanged
 	if amountIn.IsZero() {
 		return sqrtRatioCurrentX96, u256.Zero()

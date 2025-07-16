@@ -111,7 +111,7 @@ func TestSwapMathComputeSwapStepStr(t *testing.T) {
 			},
 			amountIn:  "0",
 			amountOut: "0",
-			feeAmount: "0",
+			feeAmount: "1000000",
 		},
 		{
 			name:            "zero_amount_remaining",
@@ -308,12 +308,6 @@ func TestSwapMathFeeConsistency(t *testing.T) {
 			sqrtNext, amountIn, _, feeAmount := SwapMathComputeSwapStepStr(
 				test.current, test.target, test.liquidity, test.amount, test.fee_pips,
 			)
-
-			// zero liquidity should return zero fee
-			if test.liquidity.IsZero() {
-				uassert.Equal(t, "0", feeAmount)
-				return
-			}
 
 			amount_in_num := u256.MustFromDecimal(amountIn)
 			fee_amount_num := u256.MustFromDecimal(feeAmount)
