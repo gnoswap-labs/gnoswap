@@ -139,9 +139,8 @@ func initLaunchpadWithdrawTest(t *testing.T) {
 
 	depositor := testutils.TestAddress("user")
 	testing.SetOriginCaller(depositor)
-	deposit, _, _, _, _ := depositGns(project.ID(), 30, 1000000000, depositor)
+	depositGns(project.ID(), 30, 1000000000, depositor)
 
-	// Move to after individual deposit unlock time (30 days from deposit)
-	// Instead of project tier end time
-	testing.SetHeight(deposit.EndHeight() + 1)
+	projectTier, _ := project.getTier(30)
+	testing.SetHeight(projectTier.EndHeight() + 1)
 }
