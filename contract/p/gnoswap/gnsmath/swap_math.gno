@@ -179,7 +179,7 @@ func handleExactIn(
 			true,
 		)
 	}
-	// If zero input (i.e. no liquidity), then no swap: price unchanged
+	// If zero input, then no swap
 	if amountIn.IsZero() {
 		return sqrtRatioCurrentX96, u256.Zero()
 	}
