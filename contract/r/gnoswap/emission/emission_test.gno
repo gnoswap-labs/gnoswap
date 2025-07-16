@@ -54,5 +54,7 @@ func TestMintAndDistributeGns(t *testing.T) {
 				}
 			}
 		})
+
+		resetObject(t)
 	}
 }
