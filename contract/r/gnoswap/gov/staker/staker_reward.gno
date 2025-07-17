@@ -7,6 +7,7 @@ import (
 	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
@@ -126,13 +127,18 @@ func SetAmountByProjectWallet(cur realm, addr std.Address, amount int64, add boo
 
 	assertCallerIsLaunchpad(caller)
 	assertIsNotHaltedWithdraw()
+		
+	launchpadAddr, err := access.GetAddress(access.ROLE_LAUNCHPAD)
+	if err != nil {
+		panic(err)
+	}
 
 	if add {
 		addStakeFromLaunchpad(addr.String(), amount, currentHeight)
-		xgns.Mint(cross, addr, amount)
+		xgns.Mint(cross, launchpadAddr, amount)
 	} else {
 		removeStakeFromLaunchpad(addr.String(), amount, currentHeight)
-		xgns.Burn(cross, addr, amount)
+		xgns.Burn(cross, launchpadAddr, amount)
 	}
 }
 
