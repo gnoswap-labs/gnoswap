@@ -8,7 +8,6 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 )
 
-// Global cached addresses (like in old module)
 var govAddr, _ = access.GetAddress(access.ROLE_GOVERNANCE)
 var adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
 
@@ -54,7 +53,7 @@ func getPrevAddr() std.Address {
 	return std.PreviousRealm().Address()
 }
 
-// Core public API (consolidated from 8+ functions to 2)
+/** Core public API **/
 
 // SetHaltLevel sets the global halt level
 // Only admin or governance can call this function
@@ -95,7 +94,7 @@ func IsHalted(operations ...OpType) error {
 	return nil
 }
 
-// Override system functions
+/** Override system functions **/
 
 // SetOperationStatus enables or disables a specific operation, overriding the level default
 // Only governance can call this function
@@ -225,7 +224,6 @@ func setHaltLevel(level HaltLevel) error {
 	return nil
 }
 
-// Getter functions for external use
 
 // GetCurrentHaltLevel returns the current halt level
 func GetCurrentHaltLevel() HaltLevel {
@@ -246,7 +244,9 @@ func GetHaltLevelDescription() string {
 	return getLevelDescription(currentLevel)
 }
 
-// Backward compatibility functions (will be deprecated)
+/** 
+IMPORTANT: Backward compatibility functions will be deprecated.
+**/
 
 // GetHalt returns true if system is completely halted (backward compatibility)
 func GetHalt() bool {
