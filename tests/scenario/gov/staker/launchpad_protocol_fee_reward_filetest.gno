@@ -45,11 +45,7 @@ func main() {
 	skipBlocksAndDistribute()
 	println()
 
-	println("[SCENARIO] 3. Check and collect protocol fee reward for bob")
-	protocolFeeRewardBob()
-	println()
-
-	println("[SCENARIO] 4. Check and collect protocol fee reward for project recipient")
+	println("[SCENARIO] 3. Check and collect protocol fee reward for project recipient")
 	protocolFeeRewardProjectRecipient()
 	println()
 }
@@ -100,16 +96,8 @@ func skipBlocksAndDistribute() {
 	ufmt.Printf("[INFO] skipped 10 blocks\n")
 }
 
-func protocolFeeRewardBob() {
-	gcr := staker.GetClaimableRewardByAddress(bobAddr)
-	ufmt.Printf("[INFO] claimable reward (bob): %s\n", gcr)
-	testing.SetRealm(bobRealm)
-	staker.CollectReward(cross)
-	ufmt.Printf("[INFO] collected protocol fee reward for bob\n")
-}
-
 func protocolFeeRewardProjectRecipient() {
-	gcr := staker.GetClaimableRewardByAddress(projectAddr)
+	gcr := staker.GetClaimableRewardByLaunchpad(projectAddr)
 	ufmt.Printf("[INFO] claimable reward (project recipient): %s\n", gcr)
 	testing.SetRealm(projectRealm)
 
@@ -136,11 +124,7 @@ func protocolFeeRewardProjectRecipient() {
 // [SCENARIO] 2. Skip blocks and distribute protocol fee
 // [INFO] skipped 10 blocks
 //
-// [SCENARIO] 3. Check and collect protocol fee reward for bob
-// [INFO] claimable reward (bob):
-// [INFO] collected protocol fee reward for bob
-//
-// [SCENARIO] 4. Check and collect protocol fee reward for project recipient
+// [SCENARIO] 3. Check and collect protocol fee reward for project recipient
 // [INFO] claimable reward (project recipient): {"height":"3733","now":"1234585940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"999"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2499"}]}
 // [INFO] collected protocol fee reward for project recipient
 // [EXPECTED] collected bar amount: 999

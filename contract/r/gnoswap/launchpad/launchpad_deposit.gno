@@ -252,7 +252,7 @@ func stakeGovernance(projectID string, depositAmount int64, launchpadAddress std
 		return err
 	}
 
-	gov_staker.SetAmountByProjectWallet(cross, project.Recipient(), uint64(depositAmount), true)
+	gov_staker.SetAmountByProjectWallet(cross, project.Recipient(), depositAmount, true)
 
 	gns.TransferFrom(
 		cross,

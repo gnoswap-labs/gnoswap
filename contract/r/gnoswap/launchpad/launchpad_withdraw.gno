@@ -135,5 +135,5 @@ func withdrawDeposit(deposit *Deposit, currentHeight int64) (std.Address, int64,
 
 // unStakeGovernance removes the staked amount from governance system
 func unStakeGovernance(recipient std.Address, withdrawalAmount int64) {
-	gov_staker.SetAmountByProjectWallet(cross, recipient, uint64(withdrawalAmount), false)
+	gov_staker.SetAmountByProjectWallet(cross, recipient, withdrawalAmount, false)
 }

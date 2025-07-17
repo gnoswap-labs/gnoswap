@@ -173,8 +173,6 @@ func setupProtocolFee(barAmount, quxAmount int64) {
 	println("[EXPECTED] Qux balance:", qux.BalanceOf(protocolFeeAddr))
 	println("[EXPECTED] Bar amount in protocol fee:", protocol_fee.GetAmountOfToken("gno.land/r/onbloc/bar"))
 	println("[EXPECTED] Qux amount in protocol fee:", protocol_fee.GetAmountOfToken("gno.land/r/onbloc/qux"))
-	println("[EXPECTED] Accumulated transfer to gov staker - Bar:", protocol_fee.GetAccuTransferToGovStakerByTokenPath("gno.land/r/onbloc/bar"))
-	println("[EXPECTED] Accumulated transfer to gov staker - Qux:", protocol_fee.GetAccuTransferToGovStakerByTokenPath("gno.land/r/onbloc/qux"))
 }
 
 // Deposit GNS to OBL project tier 30
@@ -195,7 +193,7 @@ func depositGnsTo(toAddress std.Address, projectId, projectTierId string, deposi
 	println("[INFO] Depositor delegating GNS to gov staker")
 	testing.SetRealm(std.NewUserRealm(toAddress))
 	gns.Approve(cross, govStakerAddr, depositAmount)
-	staker.Delegate(cross, toAddress, uint64(depositAmount), "") // bob has xgns 1_000_000
+	staker.Delegate(cross, toAddress, int64(depositAmount), "") // bob has xgns 1_000_000
 
 	println("[INFO] Skipping blocks to make project active")
 	testing.SkipHeights(4) // project is active
@@ -232,6 +230,7 @@ func collectProtocolFeeForOBLProjectRecipient() {
 	println("[INFO] Qux balance in protocol fee:", qux.BalanceOf(protocolFeeAddr))
 
 	testing.SetRealm(projectRealm)
+	staker.CollectReward(cross)
 	launchpad.CollectProtocolFee(cross)
 
 	// 1000 + 1000 - 499 = 1501
@@ -328,8 +327,6 @@ func unmarshal(data string) map[string]interface{} {
 // [EXPECTED] Qux balance: 2500
 // [EXPECTED] Bar amount in protocol fee: 1000
 // [EXPECTED] Qux amount in protocol fee: 2500
-// [EXPECTED] Accumulated transfer to gov staker - Bar: 0
-// [EXPECTED] Accumulated transfer to gov staker - Qux: 0
 //
 // [SCENARIO] 3. Deposit GNS to OBL project tier 30 by user1
 // [INFO] Depositing GNS to OBL project tier 30
@@ -364,8 +361,6 @@ func unmarshal(data string) map[string]interface{} {
 // [EXPECTED] Qux balance: 2500
 // [EXPECTED] Bar amount in protocol fee: 1000
 // [EXPECTED] Qux amount in protocol fee: 2500
-// [EXPECTED] Accumulated transfer to gov staker - Bar: 0
-// [EXPECTED] Accumulated transfer to gov staker - Qux: 0
 //
 // [SCENARIO] 6. Collect protocol fee for OBL project recipient
 // [INFO] Protocol fee height: 123
@@ -410,8 +405,6 @@ func unmarshal(data string) map[string]interface{} {
 // [EXPECTED] Qux balance: 2500
 // [EXPECTED] Bar amount in protocol fee: 1000
 // [EXPECTED] Qux amount in protocol fee: 2500
-// [EXPECTED] Accumulated transfer to gov staker - Bar: 0
-// [EXPECTED] Accumulated transfer to gov staker - Qux: 0
 //
 // [SCENARIO] 9. Collect protocol fee for OBL project recipient 2
 // [INFO] Protocol fee height: 123
@@ -420,7 +413,7 @@ func unmarshal(data string) map[string]interface{} {
 // [INFO] Qux amount: 2500
 // [INFO] Bar balance in protocol fee: 1000
 // [INFO] Qux balance in protocol fee: 2500
-// [EXPECTED] Gov staker bar balance after collection: 2501
-// [EXPECTED] Gov staker qux balance after collection: 6251
-// [EXPECTED] Project bar balance after collection: 499
-// [EXPECTED] Project qux balance after collection: 1249
+// [EXPECTED] Gov staker bar balance after collection: 2002
+// [EXPECTED] Gov staker qux balance after collection: 5002
+// [EXPECTED] Project bar balance after collection: 998
+// [EXPECTED] Project qux balance after collection: 2498

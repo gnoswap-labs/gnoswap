@@ -63,7 +63,7 @@ func adminDelegateToAlice() {
 	amount := int64(1_000_000)
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, consts.GOV_STAKER_ADDR, amount)
-	staker.Delegate(cross, aliceAddr, uint64(amount), "")
+	staker.Delegate(cross, aliceAddr, int64(amount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from admin to alice\n", amount)
 }
 
@@ -83,7 +83,7 @@ func bobDelegateToBob() {
 	gns.Transfer(cross, bobAddr, amount)
 	testing.SetRealm(bobRealm)
 	gns.Approve(cross, consts.GOV_STAKER_ADDR, amount)
-	staker.Delegate(cross, bobAddr, uint64(amount), "")
+	staker.Delegate(cross, bobAddr, int64(amount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from bob to bob\n", amount)
 }
 

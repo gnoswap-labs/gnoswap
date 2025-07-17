@@ -7,34 +7,41 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
-func GetVoteByVoteKey(voteKey string) bool {
-	return mustGetVote(voteKey)
+func GetVoteWeight(proposalID int64, address std.Address) int64 {
+	proposalUserVotingInfo, ok := getProposalUserVotingInfo(proposalID, address)
+	if !ok {
+		panic(errDataNotFound)
+	}
+
+	return proposalUserVotingInfo.VotedWeight()
 }
 
-func GetVoteYesByVoteKey(voteKey string) bool {
-	return mustGetVoteInfo(voteKey).Yes
+func GetVotedHeight(proposalID int64, address std.Address) int64 {
+	proposalUserVotingInfo, ok := getProposalUserVotingInfo(proposalID, address)
+	if !ok {
+		panic(errDataNotFound)
+	}
+
+	return proposalUserVotingInfo.votedHeight
 }
 
-func GetVoteWeightByVoteKey(voteKey string) uint64 {
-	return mustGetVoteInfo(voteKey).Weight
+func GetVotedAt(proposalID int64, address std.Address) int64 {
+	proposalUserVotingInfo, ok := getProposalUserVotingInfo(proposalID, address)
+	if !ok {
+		panic(errDataNotFound)
+	}
+
+	return proposalUserVotingInfo.votedAt
 }
 
-func GetVotedHeightByVoteKey(voteKey string) uint64 {
-	return mustGetVoteInfo(voteKey).VotedHeight
-}
-
-func GetVotedAtByVoteKey(voteKey string) uint64 {
-	return mustGetVoteInfo(voteKey).VotedAt
-}
-
-func divideVoteKeyToProposalIdAndUser(voteKey string) (proposalId uint64, user std.Address) {
+func divideVoteKeyToProposalIdAndUser(voteKey string) (proposalId int64, user std.Address) {
 	parts, err := common.Split(voteKey, ":", 2)
 	if err != nil {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("voteKey(%s) is invalid", voteKey),
 		))
 	}
-
-	return parseNumber(parts[0], kindUint64).(uint64), std.Address(parts[1])
+	
+	return parseNumber(parts[0], kindInt64).(int64), std.Address(parts[1])
 }
