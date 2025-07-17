@@ -85,7 +85,7 @@ func IsHalted(operations ...OpType) error {
 
 // SetOperationStatus enables or disables a specific operation, overriding the level default
 // Only governance can call this function
-func SetOperationStatus(op OpType, enabled bool) error {
+func SetOperationStatus(cur realm, op OpType, enabled bool) error {
 	caller := getPrevAddr()
 	if !isGovernance(caller) {
 		return errUnauthorized
