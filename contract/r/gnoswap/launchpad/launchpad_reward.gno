@@ -4,6 +4,10 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
+	"gno.land/p/gnoswap/consts"
+
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
 // CollectRewardByDepositId collects reward from a specific deposit.
@@ -34,6 +38,23 @@ func CollectRewardByDepositId(cur realm, depositID string) int64 {
 
 	if !deposit.IsOwner(previousAddress) {
 		panic(makeErrorWithDetails(errInvalidOwner, ufmt.Sprintf("(%s)", previousAddress.String())).Error())
+	}
+
+	// Check project conditions before allowing reward collection
+	project, err := getProject(deposit.ProjectID())
+	if err != nil {
+		panic(err.Error())
+	}
+
+	balanceOfFn := func(tokenPath string, caller std.Address) int64 {
+		if tokenPath == consts.GOV_XGNS_PATH {
+			return xgns.BalanceOf(caller)
+		}
+		return common.BalanceOf(tokenPath, caller)
+	}
+
+	if err := project.CheckConditions(previousAddress, balanceOfFn); err != nil {
+		panic(err.Error())
 	}
 
 	currentHeight := std.ChainHeight()

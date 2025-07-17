@@ -4,9 +4,12 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
+	"gno.land/p/gnoswap/consts"
 
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/emission"
 	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
+	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
 // CollectDepositGns collects rewards from all deposits associated with the caller.
@@ -36,6 +39,23 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 
 	if !deposit.IsOwner(previousAddress) {
 		panic(makeErrorWithDetails(errInvalidOwner, ufmt.Sprintf("(%s)", previousAddress.String())).Error())
+	}
+
+	// Check project conditions before allowing withdrawal
+	project, err := getProject(deposit.ProjectID())
+	if err != nil {
+		panic(err.Error())
+	}
+
+	balanceOfFn := func(tokenPath string, caller std.Address) int64 {
+		if tokenPath == consts.GOV_XGNS_PATH {
+			return xgns.BalanceOf(caller)
+		}
+		return common.BalanceOf(tokenPath, caller)
+	}
+
+	if err := project.CheckConditions(previousAddress, balanceOfFn); err != nil {
+		panic(err.Error())
 	}
 
 	recipient, withdrawalAmount, err := withdrawDeposit(deposit, std.ChainHeight())
