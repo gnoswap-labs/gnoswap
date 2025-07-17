@@ -64,7 +64,7 @@ func changeEmissionDistribution() {
 func adminDelegateToDummyTo() {
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, consts.GOV_STAKER_ADDR, minAmount)
-	staker.Delegate(cross, dummyToAddr, uint64(minAmount), "")
+	staker.Delegate(cross, dummyToAddr, int64(minAmount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from admin to dummyTo\n", minAmount)
 }
 
@@ -75,7 +75,7 @@ func adminDelegateToDummy() {
 	gns.Transfer(cross, dummyAddr, amount)
 	testing.SetRealm(dummyRealm)
 	gns.Approve(cross, consts.GOV_STAKER_ADDR, amount)
-	staker.Delegate(cross, dummyAddr, uint64(amount), "")
+	staker.Delegate(cross, dummyAddr, int64(amount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from admin to dummy\n", amount)
 }
 
