@@ -25,6 +25,10 @@ func addDetailToError(err error, detail string) string {
 	return finalErr.Error()
 }
 
+func makeErrorWithDetail(err error, detail string) error {
+	return ufmt.Errorf("%s || %s", err.Error(), detail)
+}
+
 // checkTransferError checks transfer error.
 func checkTransferError(err error) {
 	if err != nil {

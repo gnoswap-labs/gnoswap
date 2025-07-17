@@ -44,11 +44,11 @@ func main() {
 	println()
 
 	println("[SCENARIO] 2. Admin delegates GNS to dummy2")
-	delegateToDummy2()
+	delegateAdminToDummy2()
 	println()
 
-	println("[SCENARIO] 3. Admin delegates GNS to dummy")
-	delegateToDummy()
+	println("[SCENARIO] 3. Dummy delegates GNS to dummy")
+	delegateDummyToDummy()
 	println()
 
 	println("[SCENARIO] 4. Protocol fee deposit")
@@ -71,8 +71,8 @@ func main() {
 	collectRewardsByDummy()
 	println()
 
-	println("[SCENARIO] 9. Admin undelegates dummy2")
-	undelegateByDummy2()
+	println("[SCENARIO] 9. Admin undelegates dummy2 and collects reward")
+	unDelegateAndCollectRewardByAdmin()
 	println()
 }
 
@@ -80,21 +80,22 @@ func setupTokens() {
 	ufmt.Printf("[INFO] WUGNOT token issued for protocol fee\n")
 }
 
-func delegateToDummy2() {
+func delegateAdminToDummy2() {
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, consts.GOV_STAKER_ADDR, minAmount)
-	staker.Delegate(cross, dummy2Addr, uint64(minAmount), "")
+	staker.Delegate(cross, dummy2Addr, int64(minAmount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from admin to dummy2\n", minAmount)
 }
 
-func delegateToDummy() {
+func delegateDummyToDummy() {
 	testing.SetRealm(adminRealm)
 	amount := 5 * minAmount
 	gns.Transfer(cross, dummyAddr, amount)
+
 	testing.SetRealm(dummyRealm)
 	gns.Approve(cross, consts.GOV_STAKER_ADDR, amount)
-	staker.Delegate(cross, dummyAddr, uint64(amount), "")
-	ufmt.Printf("[INFO] delegated %d GNS from admin to dummy\n", amount)
+	staker.Delegate(cross, dummyAddr, int64(amount), "")
+	ufmt.Printf("[INFO] delegated %d GNS from dummy to dummy\n", amount)
 }
 
 func depositProtocolFee() {
@@ -150,7 +151,7 @@ func depositProtocolFeeAdditional() {
 }
 
 func collectRewardsByDummy() {
-	testing.SetRealm(dummyRealm)
+	testing.SetOriginCaller(dummyAddr)
 	testing.SkipHeights(1)
 
 	prevBarBalance := bar.BalanceOf(dummyAddr)
@@ -166,31 +167,32 @@ func collectRewardsByDummy() {
 	ufmt.Printf("[INFO] collected more protocol fee reward for dummy: bar(%d), qux(%d), gnot(%d)\n", afterBarBalance-prevBarBalance, afterQuxBalance-prevQuxBalance, afterGnotBalance-prevGnotBalance)
 }
 
-func undelegateByDummy2() {
+func unDelegateAndCollectRewardByAdmin() {
 	testing.SetRealm(adminRealm)
 	testing.SkipHeights(1)
 
-	prevBarBalance := bar.BalanceOf(dummy2Addr)
-	prevQuxBalance := qux.BalanceOf(dummy2Addr)
-	prevGnotBalance := getUgnotBalance(dummy2Addr)
+	prevBarBalance := bar.BalanceOf(adminAddr)
+	prevQuxBalance := qux.BalanceOf(adminAddr)
+	prevGnotBalance := getUgnotBalance(adminAddr)
 
-	staker.Undelegate(cross, dummy2Addr, uint64(minAmount))
+	staker.Undelegate(cross, adminAddr, int64(minAmount))
+	staker.CollectReward(cross)
 
-	afterBarBalance := bar.BalanceOf(dummy2Addr)
-	afterQuxBalance := qux.BalanceOf(dummy2Addr)
-	afterGnotBalance := getUgnotBalance(dummy2Addr)
+	afterBarBalance := bar.BalanceOf(adminAddr)
+	afterQuxBalance := qux.BalanceOf(adminAddr)
+	afterGnotBalance := getUgnotBalance(adminAddr)
 
 	ufmt.Printf("[INFO] admin undelegated %d GNS from dummy2: bar(%d), qux(%d), gnot(%d)\n", minAmount, afterBarBalance-prevBarBalance, afterQuxBalance-prevQuxBalance, afterGnotBalance-prevGnotBalance)
 }
 
-func getUgnotBalance(addr std.Address) uint64 {
+func getUgnotBalance(addr std.Address) int64 {
 	banker := std.NewBanker(std.BankerTypeRealmIssue)
 	coins := banker.GetCoins(addr)
 	if len(coins) == 0 {
 		return 0
 	}
 
-	return uint64(coins.AmountOf("ugnot"))
+	return int64(coins.AmountOf("ugnot"))
 }
 
 // Output:
@@ -200,8 +202,8 @@ func getUgnotBalance(addr std.Address) uint64 {
 // [SCENARIO] 2. Admin delegates GNS to dummy2
 // [INFO] delegated 1000000 GNS from admin to dummy2
 //
-// [SCENARIO] 3. Admin delegates GNS to dummy
-// [INFO] delegated 5000000 GNS from admin to dummy
+// [SCENARIO] 3. Dummy delegates GNS to dummy
+// [INFO] delegated 5000000 GNS from dummy to dummy
 //
 // [SCENARIO] 4. Protocol fee deposit
 // [INFO] protocol fee deposited: bar(1000), qux(2500), wugnot(10000)
@@ -218,5 +220,5 @@ func getUgnotBalance(addr std.Address) uint64 {
 // [SCENARIO] 8. Collect rewards after additional protocol fee
 // [INFO] collected more protocol fee reward for dummy: bar(2083), qux(3333), gnot(0)
 //
-// [SCENARIO] 9. Admin undelegates dummy2
+// [SCENARIO] 9. Admin undelegates dummy2 and collects reward
 // [INFO] admin undelegated 1000000 GNS from dummy2: bar(583), qux(1083), gnot(1666)

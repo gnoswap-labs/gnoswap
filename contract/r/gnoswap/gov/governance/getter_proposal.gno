@@ -1,37 +1,71 @@
 package governance
 
-func GetProposerByProposalId(proposalId uint64) string {
-	return mustGetProposal(proposalId).Proposer.String()
+import "time"
+
+func mustGetProposal(proposalId int64) *Proposal {
+	proposal, ok := getProposal(proposalId)
+	if !ok {
+		panic(errDataNotFound)
+	}
+
+	return proposal
 }
 
-func GetProposalTypeByProposalId(proposalId uint64) string {
-	return mustGetProposal(proposalId).ProposalType.String()
+func GetProposerByProposalId(proposalId int64) string {
+	return mustGetProposal(proposalId).proposer.String()
 }
 
-func GetYeaByProposalId(proposalId uint64) string {
-	return mustGetProposal(proposalId).Yea.ToString()
+func GetProposalTypeByProposalId(proposalId int64) string {
+	return mustGetProposal(proposalId).data.proposalType.String()
 }
 
-func GetNayByProposalId(proposalId uint64) string {
-	return mustGetProposal(proposalId).Nay.ToString()
+func GetYeaByProposalId(proposalId int64) int64 {
+	return mustGetProposal(proposalId).status.YesWeight()
 }
 
-func GetConfigVersionByProposalId(proposalId uint64) uint64 {
-	return mustGetProposal(proposalId).ConfigVersion
+func GetNayByProposalId(proposalId int64) int64 {
+	return mustGetProposal(proposalId).status.NoWeight()
 }
 
-func GetQuorumAmountByProposalId(proposalId uint64) uint64 {
-	return mustGetProposal(proposalId).QuorumAmount
+func GetConfigVersionByProposalId(proposalId int64) int64 {
+	return mustGetProposal(proposalId).configVersion
 }
 
-func GetTitleByProposalId(proposalId uint64) string {
-	return mustGetProposal(proposalId).Title
+func GetQuorumAmountByProposalId(proposalId int64) int64 {
+	return mustGetProposal(proposalId).status.voteStatus.quorumAmount
 }
 
-func GetDescriptionByProposalId(proposalId uint64) string {
-	return mustGetProposal(proposalId).Description
+func GetTitleByProposalId(proposalId int64) string {
+	return mustGetProposal(proposalId).metadata.title
 }
 
-func GetExecutionStateByProposalId(proposalId uint64) ProposalState {
-	return mustGetProposal(proposalId).State
+func GetDescriptionByProposalId(proposalId int64) string {
+	return mustGetProposal(proposalId).metadata.description
+}
+
+// GetExecutionStateByProposalId is deprecated. Use GetProposalStatusById instead.
+// This function is kept for backward compatibility.
+func GetExecutionStateByProposalId(proposalId int64) string {
+	currentAt := time.Now().Unix()
+	proposal := mustGetProposal(proposalId)
+
+	return proposal.Status(currentAt)
+}
+
+func GetLatestConfig() Config {
+	config, ok := getCurrentConfig()
+	if !ok {
+		panic(errDataNotFound)
+	}
+
+	return config
+}
+
+func GetConfig(configVersion int64) Config {
+	config, ok := getConfig(configVersion)
+	if !ok {
+		panic(errDataNotFound)
+	}
+
+	return config
 }

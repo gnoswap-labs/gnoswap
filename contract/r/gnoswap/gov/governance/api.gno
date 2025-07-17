@@ -9,15 +9,15 @@ import (
 	"gno.land/p/demo/json"
 )
 
-func createProposalJsonNode(id uint64, proposal ProposalInfo) *json.Node {
+func createProposalJsonNode(id int64, proposal *Proposal) *json.Node {
 	return json.Builder().
-		WriteString("id", formatUint(id)).
-		WriteString("configVersion", formatUint(proposal.ConfigVersion)).
-		WriteString("proposer", proposal.Proposer.String()).
+		WriteString("id", formatInt(id)).
+		WriteString("configVersion", formatInt(proposal.ConfigVersion)).
+		WriteString("proposer", proposal.Proposer().String()).
 		WriteString("status", b64Encode(getProposalStatus(id))).
-		WriteString("type", proposal.ProposalType.String()).
-		WriteString("title", proposal.Title).
-		WriteString("description", proposal.Description).
+		WriteString("type", proposal.Type().String()).
+		WriteString("title", proposal.Title()).
+		WriteString("description", proposal.Description()).
 		WriteString("vote", b64Encode(getProposalVotes(id))).
 		WriteString("extra", b64Encode(getProposalExtraData(id))).
 		Node()
@@ -25,19 +25,18 @@ func createProposalJsonNode(id uint64, proposal ProposalInfo) *json.Node {
 
 // GetProposals returns all proposals with necessary information.
 func GetProposals() string {
-	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition()
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
-
 	proposalsObj := metaNode()
 	proposalArr := json.ArrayNode("", nil)
 
-	// Iterate through all proposals in state
-	governanceState.IterateProposals(func(id uint64, proposal ProposalInfo) bool {
-		proposalObj := getProposalById(id)
+	proposals.Iterate("", "", func(key string, value interface{}) bool {
+		if value == nil {
+			return false
+		}
+
+		proposal := value.(*Proposal)
+		proposalObj := createProposalJsonNode(proposal.ID(), proposal)
 		proposalArr.AppendArray(proposalObj)
+
 		return false
 	})
 
@@ -47,35 +46,8 @@ func GetProposals() string {
 }
 
 // GetProposalById returns a single proposal with necessary information.
-func GetProposalById(id uint64) string {
-	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition()
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
-
-	_, exists := governanceState.GetProposal(id)
-	if !exists {
-		return ""
-	}
-
-	proposalsObj := metaNode()
-	proposalArr := json.ArrayNode("", nil)
-	proposalObj := getProposalById(id)
-	proposalArr.AppendArray(proposalObj)
-	proposalsObj.AppendObject("proposals", proposalArr)
-
-	return marshal(proposalsObj)
-}
-
-func GetArchivedProposalById(id uint64) string {
-	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition()
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
-
-	_, exists := governanceState.GetArchivedProposal(id)
+func GetProposalById(id int64) string {
+	_, exists := getProposal(id)
 	if !exists {
 		return ""
 	}
@@ -90,62 +62,22 @@ func GetArchivedProposalById(id uint64) string {
 }
 
 // GetVoteStatusFromProposalById returns the vote status(max, yes, no) of a proposal.
-func GetVoteStatusFromProposalById(id uint64) string {
-	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition()
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
-
-	_, exists := governanceState.GetProposal(id)
+func GetVoteStatusFromProposalById(id int64) string {
+	_, exists := getProposal(id)
 	if !exists {
 		return ""
 	}
 
 	votesObj := metaNode()
-	votesObj.AppendObject("proposalId", json.StringNode("proposalId", formatUint(id)))
+	votesObj.AppendObject("proposalId", json.StringNode("proposalId", formatInt(id)))
 	votesObj.AppendObject("votes", json.StringNode("votes", b64Encode(getProposalVotes(id)))) // max, yes, no
 
 	return marshal(votesObj)
 }
 
-// GetVotesByAddress returns all votes of an address.
-// included information:
-// - proposalId
-// - vote (yes/no)
-// - weight
-// - height
-// - timestamp
-func GetVotesByAddress(addr std.Address) string {
-	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition()
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
-
-	votesObj := metaNode()
-	votesArr := json.ArrayNode("", nil)
-
-	// Iterate through all user votes for the given address
-	governanceState.IterateUserVotes(addr, func(proposalId uint64, vote voteWithWeight) bool {
-		voteObj := createVoteJsonNode(addr, proposalId, vote)
-		votesArr.AppendArray(voteObj)
-		return false
-	})
-	votesObj.AppendObject("votes", votesArr)
-
-	return marshal(votesObj)
-}
-
 // GetVoteByAddressFromProposalById returns the vote of an address from a certain proposal.
-func GetVoteByAddressFromProposalById(addr std.Address, id uint64) string {
-	// Update proposal states before returning data
-	transition := UpdateProposalStateTransition()
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
-
-	vote, exists := getUserVote(addr, id)
+func GetVoteByAddressFromProposalById(addr std.Address, id int64) string {
+	vote, exists := getProposalUserVotingInfo(id, addr)
 	if !exists {
 		return ""
 	}
@@ -160,29 +92,29 @@ func GetVoteByAddressFromProposalById(addr std.Address, id uint64) string {
 }
 
 // helper function for GetProposals and GetProposalById
-func getProposalById(id uint64) *json.Node {
+func getProposalById(id int64) *json.Node {
 	proposal := mustGetProposal(id)
 	return createProposalJsonNode(id, proposal)
 }
 
-func createVoteJsonNode(addr std.Address, id uint64, vote voteWithWeight) *json.Node {
+func createVoteJsonNode(addr std.Address, id int64, vote *VotingInfo) *json.Node {
 	return json.Builder().
-		WriteString("proposalId", formatUint(id)).
-		WriteString("voteYes", formatBool(vote.Yes)).
-		WriteString("voteWeight", formatUint(vote.Weight)).
-		WriteString("voteHeight", formatUint(vote.VotedHeight)).
-		WriteString("voteTimestamp", formatUint(vote.VotedAt)).
+		WriteString("proposalId", formatInt(id)).
+		WriteString("voteYes", formatBool(vote.votedYes)).
+		WriteString("voteWeight", formatInt(vote.votedWeight)).
+		WriteString("voteHeight", formatInt(vote.votedHeight)).
+		WriteString("voteTimestamp", formatInt(vote.votedAt)).
 		Node()
 }
 
 // getProposalExtraData returns the extra data of a proposal based on its type.
-func getProposalExtraData(proposalId uint64) string {
-	proposal, exist := governanceState.GetProposal(proposalId)
+func getProposalExtraData(proposalId int64) string {
+	proposal, exist := getProposal(proposalId)
 	if !exist {
 		return ""
 	}
 
-	switch proposal.ProposalType {
+	switch proposal.Type() {
 	case Text:
 		return ""
 	case CommunityPoolSpend:
@@ -198,77 +130,80 @@ func getProposalExtraData(proposalId uint64) string {
 // 1. to
 // 2. tokenPath
 // 3. amount
-func getCommunityPoolSpendProposalData(proposalId uint64) string {
+func getCommunityPoolSpendProposalData(proposalId int64) string {
 	proposal := mustGetProposal(proposalId)
+	spend := proposal.data.CommunityPoolSpend()
 
 	proposalObj := json.Builder().
-		WriteString("to", proposal.CommunityPoolSpend.To.String()).
-		WriteString("tokenPath", proposal.CommunityPoolSpend.TokenPath).
-		WriteString("amount", formatUint(proposal.CommunityPoolSpend.Amount)).
+		WriteString("to", spend.to.String()).
+		WriteString("tokenPath", spend.tokenPath).
+		WriteString("amount", formatInt(spend.amount)).
 		Node()
 
 	return marshal(proposalObj)
 }
 
 // parameter change proposal has three extra data
-func getParameterChangeProposalData(proposalId uint64) string {
+func getParameterChangeProposalData(proposalId int64) string {
 	proposal := mustGetProposal(proposalId)
 
-	msgs := proposal.Execution.Msgs
+	msgs := proposal.data.Execution().msgs
 	msgsStr := strings.Join(msgs, "*GOV*")
 
 	return msgsStr
 }
 
 // getProposalStatus returns the status of a proposal.
-func getProposalStatus(id uint64) string {
-	proposal, exist := governanceState.GetProposal(id)
+func getProposalStatus(id int64) string {
+	proposal, exist := getProposal(id)
 	if !exist {
 		return ""
 	}
 
-	config := GetConfigVersion(proposal.ConfigVersion)
+	// Get current status dynamically
+	status := proposal.Status(time.Now().Unix())
 
-	votingStart := proposal.State.CreatedAt + config.VotingStartDelay
-	votingEnd := votingStart + config.VotingPeriod
+	schedule := proposal.status.schedule
+	// Create status node with schedule and current status
+	node := json.Builder().
+		WriteString("status", status).
+		WriteString("createTime", formatInt(schedule.createTime)).
+		WriteString("activeTime", formatInt(schedule.activeTime)).
+		WriteString("votingEndTime", formatInt(schedule.votingEndTime)).
+		WriteString("executableTime", formatInt(schedule.executableTime)).
+		WriteString("expiredTime", formatInt(schedule.expiredTime))
 
-	node := createProposalStateNode(proposal.State, votingStart, votingEnd)
-	return marshal(node)
-}
+	// Add action state if applicable
+	if proposal.status.IsCanceled(time.Now().Unix()) {
+		node.
+			WriteString("canceled", formatBool(true)).
+			WriteString("canceledAt", formatInt(proposal.status.actionStatus.canceledAt)).
+			WriteString("canceledBy", proposal.status.actionStatus.canceledBy.String())
+	}
+	if proposal.status.IsExecuted(time.Now().Unix()) {
+		node.
+			WriteString("executed", formatBool(true)).
+			WriteString("executedAt", formatInt(proposal.status.actionStatus.executedAt)).
+			WriteString("executedBy", proposal.status.actionStatus.executedBy.String())
+	}
 
-func createProposalStateNode(state ProposalState, votingStart, votingEnd uint64) *json.Node {
-	return json.Builder().
-		WriteString("createdAt", formatUint(state.CreatedAt)).
-		WriteString("upcoming", formatBool(state.Upcoming)).
-		WriteString("active", formatBool(state.Active)).
-		WriteString("votingStart", formatUint(votingStart)).
-		WriteString("votingEnd", formatUint(votingEnd)).
-		WriteString("passed", formatBool(state.Passed)).
-		WriteString("passedAt", formatUint(state.PassedAt)).
-		WriteString("rejected", formatBool(state.Rejected)).
-		WriteString("rejectedAt", formatUint(state.RejectedAt)).
-		WriteString("canceled", formatBool(state.Canceled)).
-		WriteString("canceledAt", formatUint(state.CanceledAt)).
-		WriteString("executed", formatBool(state.Executed)).
-		WriteString("executedAt", formatUint(state.ExecutedAt)).
-		WriteString("expired", formatBool(state.Expired)).
-		WriteString("expiredAt", formatUint(state.ExpiredAt)).
-		Node()
+	return marshal(node.Node())
 }
 
 // getProposalVotes returns the votes of a proposal.
-func getProposalVotes(id uint64) string {
-	proposal, exist := governanceState.GetProposal(id)
+func getProposalVotes(id int64) string {
+	proposal, exist := getProposal(id)
 	if !exist {
 		return ""
 	}
-	maxVoting := proposal.MaxVotingWeight.ToString()
+	voting := proposal.status.voteStatus
+	maxVoting := formatInt(voting.maxVotingWeight)
 
 	proposalObj := json.Builder().
-		WriteString("quorum", formatUint(proposal.QuorumAmount)).
+		WriteString("quorum", formatInt(voting.quorumAmount)).
 		WriteString("max", maxVoting).
-		WriteString("yes", proposal.Yea.ToString()).
-		WriteString("no", proposal.Nay.ToString()).
+		WriteString("yes", formatInt(voting.yea)).
+		WriteString("no", formatInt(voting.nay)).
 		Node()
 
 	return marshal(proposalObj)
