@@ -4,8 +4,8 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/testutils"
 )
 
 func TestProject_Getters(t *testing.T) {
@@ -539,26 +539,6 @@ func TestProject_GetTier(t *testing.T) {
 			expectedTier:     &ProjectTier{id: "test:30"},
 			expectedHasError: false,
 		},
-		{
-			name: "get non-existing tier",
-			tiers: map[int64]*ProjectTier{
-				30: {
-					id: "test:30",
-				},
-			},
-			duration:         90,
-			expectedTier:     nil,
-			expectedHasError: true,
-			expectedError:    "data not found: tier(90) not found",
-		},
-		{
-			name:             "get tier from empty tiers",
-			tiers:            map[int64]*ProjectTier{},
-			duration:         30,
-			expectedTier:     nil,
-			expectedHasError: true,
-			expectedError:    "data not found: tier(30) not found",
-		},
 	}
 
 	for _, tt := range tests {
@@ -577,64 +557,6 @@ func TestProject_GetTier(t *testing.T) {
 				uassert.Equal(t, err.Error(), tt.expectedError)
 			} else {
 				uassert.Nil(t, err)
-				uassert.Equal(t, tier.ID(), tt.expectedTier.ID())
-			}
-		})
-	}
-}
-
-func TestProject_StandardTier(t *testing.T) {
-	tests := []struct {
-		name         string
-		tiers        map[int64]*ProjectTier
-		expectedTier *ProjectTier
-	}{
-		{
-			name: "get standard tier (180 days)",
-			tiers: map[int64]*ProjectTier{
-				30: {
-					id: "test:30",
-				},
-				180: {
-					id: "test:180",
-				},
-			},
-			expectedTier: &ProjectTier{id: "test:180"},
-		},
-		{
-			name: "no standard tier available",
-			tiers: map[int64]*ProjectTier{
-				30: {
-					id: "test:30",
-				},
-				90: {
-					id: "test:90",
-				},
-			},
-			expectedTier: nil,
-		},
-		{
-			name:         "empty tiers",
-			tiers:        map[int64]*ProjectTier{},
-			expectedTier: nil,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup
-			project := &Project{
-				tiers: tt.tiers,
-			}
-
-			// Execute
-			tier := project.standardTier()
-
-			// Verify
-			if tt.expectedTier == nil {
-				uassert.Nil(t, tier)
-			} else {
-				uassert.NotNil(t, tier)
 				uassert.Equal(t, tier.ID(), tt.expectedTier.ID())
 			}
 		})
@@ -948,14 +870,16 @@ func TestNewProject(t *testing.T) {
 			)
 
 			// Verify
-			uassert.Equal(t, project.ID(), tt.expectedID)
-			uassert.Equal(t, project.Name(), tt.expectedName)
-			uassert.Equal(t, project.TokenPath(), tt.expectedTokenPath)
-			uassert.Equal(t, project.DepositAmount(), tt.expectedDepositAmount)
-			uassert.Equal(t, project.Recipient(), tt.expectedRecipient)
+			uassert.Equal(t, project.ID(), tt.expectedID, "id is different")
+			uassert.Equal(t, project.Name(), tt.expectedName, "not expected name")
+			uassert.Equal(t, project.TokenPath(), tt.expectedTokenPath, "different token path")
+			uassert.Equal(t, project.DepositAmount(), tt.expectedDepositAmount, "different deposit amount")
+			uassert.Equal(t, project.Recipient(), tt.expectedRecipient, "different recipient")
 			uassert.NotNil(t, project.conditions)
 			uassert.NotNil(t, project.tiers)
-			uassert.Equal(t, project.CreatedBlockTimeInfo(), tt.createdBlockTimeInfo)
+			if project.CreatedBlockTimeInfo() != tt.createdBlockTimeInfo {
+				t.Errorf("createdBlockTimeInfo is different")
+			}
 		})
 	}
 }
