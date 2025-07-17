@@ -116,6 +116,9 @@ func executeSwap() {
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross, poolAddr, consts.INT64_MAX)
 
+	p := pool.GetPool(barPath, fooPath, fee500)
+	println("[DEBUG] Tick before swap:", p.Slot0Tick())
+
 	testing.SetRealm(routerRealm)
 	ufmt.Println("[INFO] Executing swap to change price")
 	amount0, amount1 := pool.Swap(
@@ -129,6 +132,8 @@ func executeSwap() {
 		consts.MIN_PRICE,
 		adminAddr,
 	)
+
+	println("[DEBUG] Tick after swap:", p.Slot0Tick())
 
 	ufmt.Printf("[EXPECTED] Swap amount0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Swap amount1 should be %s\n", amount1)
@@ -183,6 +188,11 @@ func checkRepositionedState() {
 }
 
 func executeSwapInNewRange() {
+
+	p := pool.GetPool(barPath, fooPath, fee500)
+	println("[DEBUG] Tick before second swap:", p.Slot0Tick())
+	println("[DEBUG] Pool liquidity:", p.Liquidity().ToString())
+
 	testing.SetRealm(adminRealm)
 	foo.Approve(cross, poolAddr, consts.INT64_MAX)
 

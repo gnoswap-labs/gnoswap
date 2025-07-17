@@ -344,10 +344,6 @@ func getFeeGrowthGlobal(pool *Pool, zeroForOne bool) *u256.Uint {
 }
 
 func shouldContinueSwap(state SwapState, sqrtPriceLimitX96 *u256.Uint) bool {
-	// liquidity is zero -> no swap, return zero amounts
-	if state.liquidity.IsZero() {
-		return false
-	}
 	return !(state.amountSpecifiedRemaining.IsZero()) && !(state.sqrtPriceX96.Eq(sqrtPriceLimitX96))
 }
 
