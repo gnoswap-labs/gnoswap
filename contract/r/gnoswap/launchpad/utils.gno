@@ -92,12 +92,20 @@ func parseProjectTierID(projectTierID string) (string, int64) {
 	}
 
 	projectID := ufmt.Sprintf("%s:%s", parts[0], parts[1])
-	
+
 	tierDuration, err := strconv.ParseInt(parts[2], 10, 64)
 	if err != nil {
 		panic(makeErrorWithDetails(
 			errInvalidData,
 			ufmt.Sprintf("(%s)", projectTierID),
+		))
+	}
+
+	// Validate tier duration
+	if tierDuration != projectTier30 && tierDuration != projectTier90 && tierDuration != projectTier180 {
+		panic(makeErrorWithDetails(
+			errInvalidTier,
+			ufmt.Sprintf("pool type(%d) is not available", tierDuration),
 		))
 	}
 
