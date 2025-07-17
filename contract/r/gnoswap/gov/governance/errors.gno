@@ -30,7 +30,6 @@ var (
 	errProposalNotExecutable                          = errors.New("[GNOSWAP-GOVERNANCE-021] proposal not executable")
 )
 
-func addDetailToError(err error, detail string) string {
-	finalErr := ufmt.Errorf("%s || %s", err.Error(), detail)
-	return finalErr.Error()
+func makeErrorWithDetails(err error, detail string) error {
+	return ufmt.Errorf("%s || %s", err.Error(), detail)
 }

@@ -8,6 +8,8 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
 func TestCollectDepositGns(t *testing.T) {
@@ -49,8 +51,6 @@ func TestCollectDepositGns(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			initLaunchpadWithdrawTest(t)
 			testing.SetOriginCaller(tt.callerAddress)
-
-			println(tt.callerAddress.String())
 
 			collectDepositFn := func() {
 				CollectDepositGns(cross, tt.depositID)
@@ -137,9 +137,18 @@ func initLaunchpadWithdrawTest(t *testing.T) {
 
 	testing.SkipHeights(10)
 
+	depositAmount := int64(1000000000)
+
 	depositor := testutils.TestAddress("user")
 	testing.SetOriginCaller(depositor)
-	depositGns(project.ID(), 30, 1000000000, depositor)
+	depositGns(project.ID(), 30, depositAmount, depositor)
+
+	govStakerAddr, _ := access.GetAddress(access.ROLE_GOV_STAKER)
+	govStakerRealm := std.NewUserRealm(govStakerAddr)
+	testing.SetRealm(govStakerRealm)
+
+	launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+	xgns.Mint(cross, launchpadAddr, depositAmount)
 
 	projectTier, _ := project.getTier(30)
 	testing.SetHeight(projectTier.EndHeight() + 1)

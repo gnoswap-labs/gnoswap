@@ -2,7 +2,6 @@ package staker
 
 import (
 	b64 "encoding/base64"
-	"std"
 	"strconv"
 
 	"gno.land/p/demo/avl"
@@ -10,7 +9,6 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
 )
 
 // marshal data to json string
@@ -28,32 +26,6 @@ func b64Encode(data string) string {
 	return string(b64.StdEncoding.EncodeToString([]byte(data)))
 }
 
-// getPrevRealm returns the previous realm's package path
-func getPrevRealm() std.Realm {
-	return std.PreviousRealm()
-}
-
-// getPrevAddr returns the address of the previous realm.
-func getPrevAddr() std.Address {
-	return std.PreviousRealm().Address()
-}
-
-// isUserCall returns true if the previous realm is a user
-func isUserCall() bool {
-	return std.PreviousRealm().IsUser()
-}
-
-// getPrev returns the previous realm's address and package path
-func getPrev() (string, string) {
-	prev := getPrevRealm()
-	return prev.Address().String(), prev.PkgPath()
-}
-
-// derivePkgAddr derives the Realm address from it's pkgPath parameter
-func derivePkgAddr(pkgPath string) std.Address {
-	return std.DerivePkgAddr(pkgPath)
-}
-
 // formatUint formats a uint64 to a string
 func formatUint(v uint64) string {
 	return strconv.FormatUint(v, 10)
@@ -62,22 +34,6 @@ func formatUint(v uint64) string {
 // formatInt formats an int64 to a string
 func formatInt(v int64) string {
 	return strconv.FormatInt(v, 10)
-}
-
-// assertCallerIsAdmin panics if the caller is not an admin
-func assertCallerIsAdmin() {
-	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
-}
-
-// assertCallerIsLaunchpad panics if the caller is not the launchpad
-func assertCallerIsLaunchpad() {
-	caller := std.PreviousRealm().Address()
-	if err := common.LaunchpadOnly(caller); err != nil {
-		panic(err)
-	}
 }
 
 // getUint64FromTree returns the uint64 value from the tree

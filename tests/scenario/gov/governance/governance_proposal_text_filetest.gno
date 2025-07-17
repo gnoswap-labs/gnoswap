@@ -33,11 +33,12 @@ func main() {
 	println("[INFO] current height:", std.ChainHeight())
 	println()
 
-	println("[SCENARIO] 3. Propose Text")
-	proposalId := proposeText()
+	println("[SCENARIO] 3. Propose community pool spend")
+	proposalId := proposeCommunityPoolSpend()
 	println()
 
 	println("[SCENARIO] 4. Cancel Proposal")
+	testing.SkipHeights((config.VotingStartDelay + config.VotingPeriod + config.ExecutionDelay) / currentBlockTime)
 	cancelProposal(proposalId)
 	println()
 }
@@ -46,25 +47,25 @@ func delegateGnsToAdmin() {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	gns.Approve(cross, consts.GOV_STAKER_ADDR, delegatedAmount)
-	gs.Delegate(cross, adminAddr, uint64(delegatedAmount), "")
+	gs.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 	ufmt.Printf("[INFO] gns delegated to %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 }
 
-func proposeText() uint64 {
+func proposeCommunityPoolSpend() int64 {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	proposalId := governance.ProposeText(cross, "test_title", "test_description")
+	proposalId := governance.ProposeCommunityPoolSpend(cross, "test_title", "test_description", adminAddr, "gno.land/r/gnoswap/v1/gns", 100)
 	ufmt.Printf("[INFO] created proposal ID: %d\n", proposalId)
 	return proposalId
 }
 
-func voteProposal(proposalId uint64) {
+func voteProposal(proposalId int64) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	governance.Vote(cross, proposalId, true)
 	state := governance.GetExecutionStateByProposalId(proposalId)
-	ufmt.Printf("[EXPECTED] after voting - active: %v, passed: %v\n", state.Active, state.Passed)
+	ufmt.Printf("[EXPECTED] after voting - %s\n", state)
 }
 
-func cancelProposal(proposalId uint64) {
+func cancelProposal(proposalId int64) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	governance.Cancel(cross, proposalId)
 	ufmt.Printf("[EXPECTED] proposal canceled and archived\n")
@@ -77,7 +78,7 @@ func cancelProposal(proposalId uint64) {
 // [SCENARIO] 2. Skip vote weight smoothing duration for create proposal
 // [INFO] current height: 43323
 //
-// [SCENARIO] 3. Propose Text
+// [SCENARIO] 3. Propose community pool spend
 // [INFO] created proposal ID: 1
 //
 // [SCENARIO] 4. Cancel Proposal

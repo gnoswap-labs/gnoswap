@@ -73,22 +73,22 @@ func delegateGnsToDummy() {
 	delegatedAmount := int64(2_000_000_000)
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	gns.Approve(cross, consts.GOV_STAKER_ADDR, delegatedAmount)
-	gs.Delegate(cross, dummyAddr, uint64(delegatedAmount), "")
+	gs.Delegate(cross, dummyAddr, int64(delegatedAmount), "")
 	ufmt.Printf("[INFO] gns delegated to dummy %s (amount: %d)\n", dummyAddr.String(), delegatedAmount)
 }
 
-func proposeText() uint64 {
+func proposeText() int64 {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	proposalId := governance.ProposeText(cross, "test_title", "test_description")
 	ufmt.Printf("[INFO] created proposal ID: %d\n", proposalId)
 	return proposalId
 }
 
-func voteProposalWithDummy(proposalId uint64) {
+func voteProposalWithDummy(proposalId int64) {
 	testing.SetRealm(std.NewUserRealm(dummyAddr))
 	governance.Vote(cross, proposalId, true)
 	state := governance.GetExecutionStateByProposalId(proposalId)
-	ufmt.Printf("[EXPECTED] after voting - active: %v, passed: %v\n", state.Active, state.Passed)
+	ufmt.Printf("[EXPECTED] after voting - %s\n", state)
 }
 
 // Output:
@@ -111,4 +111,4 @@ func voteProposalWithDummy(proposalId uint64) {
 // [INFO] current height: 86523
 //
 // [SCENARIO] 7. Vote for the proposal with dummy
-// [EXPECTED] after voting - active: true, passed: false
+// [EXPECTED] after voting - active
