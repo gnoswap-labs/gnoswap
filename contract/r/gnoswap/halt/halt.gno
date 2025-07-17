@@ -8,6 +8,10 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 )
 
+// Global cached addresses (like in old module)
+var govAddr, _ = access.GetAddress(access.ROLE_GOVERNANCE)
+var adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+
 func init() {
 	// Simple initialization - start in safe mode for beta mainnet
 	currentLevel = HaltLevelSafeMode
@@ -21,19 +25,29 @@ var (
 
 // Helper functions for authorization
 func isAdminOrGovernance(caller std.Address) bool {
-	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
-	return caller == adminAddr || caller == govAddr
+	if err := access.AdminOnly(caller); err == nil {
+		return true
+	}
+	if err := access.GovernanceOnly(caller); err == nil {
+		return true
+	}
+	return false
 }
 
 func isGovernance(caller std.Address) bool {
-	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
-	return caller == govAddr
+	// Use only access module check like old module
+	if err := access.GovernanceOnly(caller); err == nil {
+		return true
+	}
+	return false
 }
 
 func isAdmin(caller std.Address) bool {
-	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-	return caller == adminAddr
+	// Use only access module check like old module
+	if err := access.AdminOnly(caller); err == nil {
+		return true
+	}
+	return false
 }
 
 func getPrevAddr() std.Address {
@@ -44,7 +58,7 @@ func getPrevAddr() std.Address {
 
 // SetHaltLevel sets the global halt level
 // Only admin or governance can call this function
-func SetHaltLevel(level HaltLevel) error {
+func SetHaltLevel(cur realm, level HaltLevel) error {
 	caller := getPrevAddr()
 	if !isAdminOrGovernance(caller) {
 		return errUnauthorized
@@ -87,8 +101,8 @@ func IsHalted(operations ...OpType) error {
 // Only governance can call this function
 func SetOperationStatus(cur realm, op OpType, enabled bool) error {
 	caller := getPrevAddr()
-	if !isGovernance(caller) {
-		return errUnauthorized
+	if err := access.GovernanceOnly(caller); err != nil {
+		return ufmt.Errorf("only governance(%s) can set operation status, called from %s", govAddr, caller)
 	}
 
 	if !op.IsValid() {
@@ -109,10 +123,10 @@ func SetOperationStatus(cur realm, op OpType, enabled bool) error {
 }
 
 // SetOperationStatusByAdmin allows admin to override operation status (for emergency use)
-func SetOperationStatusByAdmin(op OpType, enabled bool) error {
+func SetOperationStatusByAdmin(cur realm, op OpType, enabled bool) error {
 	caller := getPrevAddr()
-	if !isAdmin(caller) {
-		return errUnauthorized
+	if err := access.AdminOnly(caller); err != nil {
+		return ufmt.Errorf("only admin(%s) can set operation status, called from %s", adminAddr, caller)
 	}
 
 	if !op.IsValid() {
@@ -134,10 +148,10 @@ func SetOperationStatusByAdmin(op OpType, enabled bool) error {
 
 // ClearOperationOverride removes the override for a specific operation
 // Only governance can call this function
-func ClearOperationOverride(op OpType) error {
+func ClearOperationOverride(cur realm, op OpType) error {
 	caller := getPrevAddr()
-	if !isGovernance(caller) {
-		return errUnauthorized
+	if err := access.GovernanceOnly(caller); err != nil {
+		return ufmt.Errorf("only governance(%s) can clear operation override, called from %s", govAddr, caller)
 	}
 
 	if !op.IsValid() {
@@ -174,10 +188,10 @@ func GetOperationStatus(op OpType) (bool, bool) {
 
 // ClearAllOverrides removes all operation overrides
 // Only governance can call this function
-func ClearAllOverrides() error {
+func ClearAllOverrides(cur realm) error {
 	caller := getPrevAddr()
-	if !isGovernance(caller) {
-		return errUnauthorized
+	if err := access.GovernanceOnly(caller); err != nil {
+		return ufmt.Errorf("only governance(%s) can clear all overrides, called from %s", govAddr, caller)
 	}
 
 	customOverrides = make(map[OpType]bool)
@@ -234,20 +248,6 @@ func GetHaltLevelDescription() string {
 
 // Backward compatibility functions (will be deprecated)
 
-// SetHalt maintains backward compatibility with the old API
-// Maps true to CompleteHalt and false to NoHalt
-func SetHalt(halt bool) error {
-	caller := getPrevAddr()
-	if !isAdminOrGovernance(caller) {
-		return errUnauthorized
-	}
-
-	if halt {
-		return setHaltLevel(HaltLevelComplete)
-	}
-	return setHaltLevel(HaltLevelNone)
-}
-
 // GetHalt returns true if system is completely halted (backward compatibility)
 func GetHalt() bool {
 	return currentLevel == HaltLevelComplete
@@ -263,4 +263,147 @@ func IsContractHalted(contract OpType) bool {
 func GetContractStatus(contract OpType) bool {
 	enabled, _ := GetOperationStatus(contract)
 	return enabled
+}
+
+// Additional backward compatibility functions for old API
+
+// SetHaltLevelByAdmin allows an admin to set the halt level using LevelID (backward compatibility)
+func SetHaltLevelByAdmin(cur realm, haltLevel LevelID) error {
+	caller := getPrevAddr()
+	if !isAdmin(caller) {
+		return ufmt.Errorf("only admin can set halt level, called from %s", caller)
+	}
+	return setHaltLevel(levelIDToHaltLevel(haltLevel))
+}
+
+// SetHaltByAdmin maintains backward compatibility with the old API
+func SetHaltByAdmin(cur realm, halt bool) error {
+	caller := getPrevAddr()
+	if !isAdmin(caller) {
+		return ufmt.Errorf("only admin can set halt, called from %s", caller)
+	}
+
+	if halt {
+		return setHaltLevel(HaltLevelComplete)
+	}
+	return setHaltLevel(HaltLevelNone)
+}
+
+// SetHalt allows both admin and governance to set the halt status (backward compatibility)
+func SetHalt(cur realm, halt bool, level ...LevelID) error {
+	caller := getPrevAddr()
+	if !isAdminOrGovernance(caller) {
+		return ufmt.Errorf("only admin or governance can set halt, called from %s", caller)
+	}
+
+	// If no level specified, use defaults
+	if len(level) == 0 {
+		if !halt {
+			return setHaltLevel(HaltLevelNone)
+		}
+		return setHaltLevel(HaltLevelComplete)
+	}
+
+	// Validate the specified level
+	haltLevel := level[0]
+	switch haltLevel {
+	case LvNoHalt, LvEmergencyHalt, LvCompleteHalt:
+		return setHaltLevel(levelIDToHaltLevel(haltLevel))
+	default:
+		return ufmt.Errorf("only NoHalt, EmergencyHalt and CompleteHalt levels are allowed")
+	}
+}
+
+// SetHaltLevel with LevelID for backward compatibility
+func SetHaltLevelWithID(cur realm, haltLevel LevelID) error {
+	caller := getPrevAddr()
+	if !isAdminOrGovernance(caller) {
+		return ufmt.Errorf("only admin or governance can set halt level, called from %s", caller)
+	}
+	return setHaltLevel(levelIDToHaltLevel(haltLevel))
+}
+
+// EnableWithdrawalsForTestnet enables withdrawals in MainnetSafeMode (backward compatibility)
+func EnableWithdrawalsForTestnet(cur realm) error {
+	caller := getPrevAddr()
+	if !isAdmin(caller) {
+		return ufmt.Errorf("only admin can enable withdrawals, called from %s", caller)
+	}
+
+	// Only proceed if we're in SafeMode (equivalent to MainnetSafeMode)
+	if currentLevel != HaltLevelSafeMode {
+		return nil
+	}
+
+	customOverrides[OpTypeWithdraw] = true
+
+	// Emit event
+	std.Emit(
+		"enableWithdrawals",
+		"caller", caller.String(),
+	)
+
+	return nil
+}
+
+// EnableContractOperations allows enabling contract-specific operations (backward compatibility)
+func EnableContractOperations(cur realm, contract OpType) error {
+	caller := getPrevAddr()
+	if !isAdmin(caller) {
+		return ufmt.Errorf("only admin can enable contract operations, called from %s", caller)
+	}
+
+	if !contract.IsValid() {
+		return ufmt.Errorf("invalid operation type: %s", contract)
+	}
+
+	customOverrides[contract] = true
+
+	// Emit event
+	std.Emit(
+		"enableContract",
+		"contract", string(contract),
+		"caller", caller.String(),
+	)
+
+	return nil
+}
+
+// DisableContractOperations allows disabling contract-specific operations (backward compatibility)
+func DisableContractOperations(cur realm, contract OpType) error {
+	caller := getPrevAddr()
+	if !isAdmin(caller) {
+		return ufmt.Errorf("only admin can disable contract operations, called from %s", caller)
+	}
+
+	if !contract.IsValid() {
+		return ufmt.Errorf("invalid operation type: %s", contract)
+	}
+
+	customOverrides[contract] = false
+
+	// Emit event
+	std.Emit(
+		"disableContract",
+		"contract", string(contract),
+		"caller", caller.String(),
+	)
+
+	return nil
+}
+
+// GetHaltManager returns a minimal manager instance for backward compatibility
+func GetHaltManager() *Manager {
+	return &Manager{} // Empty manager struct for compatibility
+}
+
+// GetCurrentHaltLevelID returns LevelID for exact backward compatibility with old API
+func GetCurrentHaltLevelID() LevelID {
+	return haltLevelToLevelID(currentLevel)
+}
+
+// Helper function to get previous address and package path as strings (backward compatibility)
+func getPrevAsString() (string, string) {
+	prev := std.PreviousRealm()
+	return prev.Address().String(), prev.PkgPath()
 }
