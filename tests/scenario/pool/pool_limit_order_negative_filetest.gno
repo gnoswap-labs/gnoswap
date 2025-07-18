@@ -93,7 +93,7 @@ func main() {
 		fee500,
 		adminAddr,
 		true,
-		"60283363",
+		"59707210",
 		minPrice,
 		adminAddr,
 	)
