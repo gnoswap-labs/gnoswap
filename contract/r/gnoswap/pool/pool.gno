@@ -40,7 +40,7 @@ var (
 //
 // Panic Conditions:
 //   - The system is halted (`halt.IsHalted()`).
-//   - Caller lacks permission to mint a position.
+//   - Caller is not the position contract.
 //   - The provided `liquidityAmount` is zero.
 //   - Any failure during token transfers or position modifications.
 //
