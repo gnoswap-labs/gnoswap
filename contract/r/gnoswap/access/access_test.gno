@@ -49,49 +49,40 @@ func TestInitialize(t *testing.T) {
 }
 
 func TestUpdateRoleAddress(t *testing.T) {
-	testing.SetRealm(adminRealm)
-
 	t.Run("update success", func(t *testing.T) {
-		cfg := newConfig()
-		cfg.roles["another_test_admin"] = testAdminAddr
+		adminAddr, _ := GetAddress(ROLE_ADMIN)
+		testing.SetRealm(std.NewUserRealm(adminAddr))
 
-		func(cur realm) {
-			err := initialize(cfg)
-			uassert.NoError(t, err)
+		err := CreateRole(cross, "another_test_admin", testAdminAddr)
+		uassert.NoError(t, err)
 
-			err = UpdateRoleAddress(cur, "another_test_admin", testRealm1Addr)
-			uassert.NoError(t, err)
+		err = UpdateRoleAddress(cross, "another_test_admin", testRealm1Addr)
+		uassert.NoError(t, err)
 
-			actual := GetCurrentConfig()
-			adminAddr := actual.roles["another_test_admin"]
-			uassert.Equal(t, testRealm1Addr, adminAddr)
+		actual := GetCurrentConfig()
+		updatedAddr := actual.roles["another_test_admin"]
+		uassert.Equal(t, testRealm1Addr, updatedAddr)
 
-			err = rbac.CheckPermission("another_test_admin", PERM_ACCESS, adminAddr)
-			uassert.NoError(t, err)
-		}(cross)
+		err = rbac.CheckPermission("another_test_admin", PERM_ACCESS, updatedAddr)
+		uassert.NoError(t, err)
 	})
 
 	t.Run("update fails while uninitialized", func(t *testing.T) {
-		func(cur realm) {
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/access"))
+		backup := currentConfig
+		currentConfig = nil
 
-			currentConfig = nil
-			err := UpdateRoleAddress(cur, "another_test_admin", testRealm1Addr)
-			uassert.Error(t, err)
-		}(cross)
+		err := UpdateRoleAddress(cross, "another_test_admin", testRealm1Addr)
+		uassert.Error(t, err)
+
+		currentConfig = backup
 	})
 
 	t.Run("update fails while update non-existent role", func(t *testing.T) {
-		func(cur realm) {
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/access"))
+		adminAddr, _ := GetAddress(ROLE_ADMIN)
+		testing.SetRealm(std.NewUserRealm(adminAddr))
 
-			cfg := newConfig()
-			err := initialize(cfg)
-			uassert.NoError(t, err)
-
-			err = UpdateRoleAddress(cur, "non_existent_role", testRealm1Addr)
-			uassert.Error(t, err)
-		}(cross)
+		err := UpdateRoleAddress(cross, "non_existent_role", testRealm1Addr)
+		uassert.Error(t, err)
 	})
 }
 

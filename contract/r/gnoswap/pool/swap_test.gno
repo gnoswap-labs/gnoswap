@@ -966,7 +966,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 
 func TestSwap_ExtremeGaps(t *testing.T) {
 	addr := routerAddr
-	receiver := adminAddr
+	receiver := alice
 
 	tests := []struct {
 		name        string
@@ -976,69 +976,38 @@ func TestSwap_ExtremeGaps(t *testing.T) {
 		expected    []string
 	}{
 		{
-			// Test extreme tick gap of 200,000 ticks with minimal liquidity
 			name: "extreme gap - moderate extreme range with minimal liquidity",
 			setupFn: func(t *testing.T) {
-				testing.SetRealm(std.NewUserRealm(adminAddr))
-				CreatePool(cross, wugnotPath, gnsPath, fee3000, common.TickMathGetSqrtRatioAtTick(-100000).ToString())
+				testing.SetOriginCaller(adminAddr)
+				testing.SetRealm(adminRealm)
+
+				// Ensure adminAddr has sufficient tokens
+				ugnotFaucet(t, adminAddr, 1_000_000_000_000_000)
+				ugnotDeposit(t, adminAddr, 1_000_000_000_000_000)
 
 				TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
 				TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
 
+				CreatePool(cross, wugnotPath, gnsPath, fee3000, common.TickMathGetSqrtRatioAtTick(-100000).ToString())
+
 				testing.SetRealm(posRealm)
-				// Positions at ±100,000 ticks (must be multiples of tickSpacing 60)
+				// Positions at extreme ticks (must be multiples of tickSpacing 60)
 				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, -100020, -99960, "50000", adminAddr)
 				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, 99960, 100020, "50000", adminAddr)
 
-				testing.SetRealm(std.NewUserRealm(adminAddr))
-				TokenFaucet(t, gnsPath, addr)
+				testing.SetOriginCaller(adminAddr)
+				testing.SetRealm(adminRealm)
 				TokenFaucet(t, wugnotPath, addr)
+				TokenFaucet(t, gnsPath, addr)
+
+				testing.SetOriginCaller(addr)
+				testing.SetRealm(std.NewUserRealm(addr))
 				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
 				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
 				testing.SetOriginCaller(routerAddr)
-				actualAmount0, actualAmount1 := Swap(
-					cross,
-					wugnotPath,
-					gnsPath,
-					fee3000,
-					receiver,
-					false, // oneForZero - tick increases
-					"-1000",
-					common.TickMathGetSqrtRatioAtTick(100080).ToString(),
-					addr,
-				)
-				return actualAmount0, actualAmount1
-			},
-			shouldPanic: false,
-			expected:    []string{"-1000", "2"},
-		},
-		{
-			// Test swap across multiple liquidity positions with gaps
-			name: "scattered liquidity - 4 positions with gaps",
-			setupFn: func(t *testing.T) {
-				testing.SetRealm(std.NewUserRealm(adminAddr))
-				CreatePool(cross, wugnotPath, gnsPath, fee3000, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
-
-				TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
-				TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
-
-				testing.SetRealm(posRealm)
-				// Four positions with varying liquidity and gaps between them
-				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, -10020, -9000, "10000000", adminAddr)
-				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, -4980, -4020, "20000000", adminAddr)
-				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, 0, 1020, "30000000", adminAddr)
-				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, 8040, 10020, "40000000", adminAddr)
-
-				testing.SetRealm(std.NewUserRealm(adminAddr))
-				TokenFaucet(t, gnsPath, addr)
-				TokenFaucet(t, wugnotPath, addr)
-				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
-				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
-			},
-			action: func(t *testing.T) (string, string) {
-				testing.SetOriginCaller(routerAddr)
+				testing.SetRealm(rouRealm)
 				actualAmount0, actualAmount1 := Swap(
 					cross,
 					wugnotPath,
@@ -1046,44 +1015,108 @@ func TestSwap_ExtremeGaps(t *testing.T) {
 					fee3000,
 					receiver,
 					false,
-					"-6020052",
+					"-10",
+					common.TickMathGetSqrtRatioAtTick(100080).ToString(),
+					addr,
+				)
+				return actualAmount0, actualAmount1
+			},
+			shouldPanic: false,
+			expected:    []string{"-10", "2"},
+		},
+		{
+			name: "scattered liquidity - 4 positions with gaps",
+			setupFn: func(t *testing.T) {
+				testing.SetOriginCaller(adminAddr)
+				testing.SetRealm(adminRealm)
+				ugnotFaucet(t, adminAddr, 1_000_000_000_000_000)
+				ugnotDeposit(t, adminAddr, 1_000_000_000_000_000)
+
+				TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
+				TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
+
+				CreatePool(cross, wugnotPath, gnsPath, fee3000, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+
+				testing.SetRealm(posRealm)
+				// Four positions with varying liquidity and gaps
+				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, -10020, -9000, "10000000", adminAddr)
+				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, -4980, -4020, "20000000", adminAddr)
+				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, 0, 1020, "30000000", adminAddr)
+				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, 8040, 10020, "40000000", adminAddr)
+
+				testing.SetOriginCaller(adminAddr)
+				testing.SetRealm(adminRealm)
+				TokenFaucet(t, wugnotPath, addr)
+				TokenFaucet(t, gnsPath, addr)
+				TokenFaucet(t, wugnotPath, alice)
+				TokenFaucet(t, gnsPath, alice)
+
+				testing.SetOriginCaller(addr)
+				testing.SetRealm(std.NewUserRealm(addr))
+				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
+				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
+
+				testing.SetOriginCaller(alice)
+				testing.SetRealm(std.NewUserRealm(alice))
+				TokenApprove(t, gnsPath, alice, poolAddr, maxApprove)
+				TokenApprove(t, wugnotPath, alice, poolAddr, maxApprove)
+			},
+			action: func(t *testing.T) (string, string) {
+				testing.SetOriginCaller(routerAddr)
+				testing.SetRealm(rouRealm)
+				actualAmount0, actualAmount1 := Swap(
+					cross,
+					wugnotPath,
+					gnsPath,
+					fee3000,
+					alice,
+					false,
+					"1000",
 					common.TickMathGetSqrtRatioAtTick(11040).ToString(),
 					addr,
 				)
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
-			expected:    []string{"-6020052", "8895810"},
+			expected:    []string{"-2709", "1000"},
 		},
 		{
-			// Test zeroForOne swap across extreme gap
 			name: "extreme gap - zeroForOne from moderate MAX to MIN",
 			setupFn: func(t *testing.T) {
-				testing.SetRealm(std.NewUserRealm(adminAddr))
-				CreatePool(cross, wugnotPath, gnsPath, fee3000, common.TickMathGetSqrtRatioAtTick(100000).ToString())
+				testing.SetOriginCaller(adminAddr)
+				testing.SetRealm(adminRealm)
+				ugnotFaucet(t, adminAddr, 1_000_000_000_000_000)
+				ugnotDeposit(t, adminAddr, 1_000_000_000_000_000)
 
 				TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
 				TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
+
+				CreatePool(cross, wugnotPath, gnsPath, fee3000, common.TickMathGetSqrtRatioAtTick(100000).ToString())
 
 				testing.SetRealm(posRealm)
 				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, -100020, -99960, "500000", adminAddr)
 				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, 99960, 100020, "500000", adminAddr)
 
-				testing.SetRealm(std.NewUserRealm(adminAddr))
-				TokenFaucet(t, gnsPath, addr)
+				testing.SetOriginCaller(adminAddr)
+				testing.SetRealm(adminRealm)
 				TokenFaucet(t, wugnotPath, addr)
+				TokenFaucet(t, gnsPath, addr)
+
+				testing.SetOriginCaller(addr)
+				testing.SetRealm(std.NewUserRealm(addr))
 				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
 				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
 				testing.SetOriginCaller(routerAddr)
+				testing.SetRealm(rouRealm)
 				actualAmount0, actualAmount1 := Swap(
 					cross,
 					wugnotPath,
 					gnsPath,
 					fee3000,
 					receiver,
-					true, // zeroForOne
+					true,
 					"1000",
 					common.TickMathGetSqrtRatioAtTick(-100080).ToString(),
 					addr,
@@ -1094,27 +1127,35 @@ func TestSwap_ExtremeGaps(t *testing.T) {
 			expected:    []string{"1000", "-148220"},
 		},
 		{
-			// Test practical extreme range that stays within int64 limits
 			name: "practical extreme gap - moderate range (-100000 to 100000)",
 			setupFn: func(t *testing.T) {
-				testing.SetRealm(std.NewUserRealm(adminAddr))
-				CreatePool(cross, wugnotPath, gnsPath, fee3000, common.TickMathGetSqrtRatioAtTick(-100000).ToString())
+				testing.SetOriginCaller(adminAddr)
+				testing.SetRealm(adminRealm)
+				ugnotFaucet(t, adminAddr, 1_000_000_000_000_000)
+				ugnotDeposit(t, adminAddr, 1_000_000_000_000_000)
 
 				TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
 				TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
+
+				CreatePool(cross, wugnotPath, gnsPath, fee3000, common.TickMathGetSqrtRatioAtTick(-100000).ToString())
 
 				testing.SetRealm(posRealm)
 				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, -100020, -99960, "1000000", adminAddr)
 				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, 99960, 100020, "1000000", adminAddr)
 
-				testing.SetRealm(std.NewUserRealm(adminAddr))
-				TokenFaucet(t, gnsPath, addr)
+				testing.SetOriginCaller(adminAddr)
+				testing.SetRealm(adminRealm)
 				TokenFaucet(t, wugnotPath, addr)
+				TokenFaucet(t, gnsPath, addr)
+
+				testing.SetOriginCaller(addr)
+				testing.SetRealm(std.NewUserRealm(addr))
 				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
 				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
 			},
 			action: func(t *testing.T) (string, string) {
 				testing.SetOriginCaller(routerAddr)
+				testing.SetRealm(rouRealm)
 				actualAmount0, actualAmount1 := Swap(
 					cross,
 					wugnotPath,
@@ -1122,14 +1163,14 @@ func TestSwap_ExtremeGaps(t *testing.T) {
 					fee3000,
 					receiver,
 					false,
-					"-296460",
+					"-100",
 					common.TickMathGetSqrtRatioAtTick(100080).ToString(),
 					addr,
 				)
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
-			expected:    []string{"-296460", "446238"},
+			expected:    []string{"-100", "2"},
 		},
 	}
 

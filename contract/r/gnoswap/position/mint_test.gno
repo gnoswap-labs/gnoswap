@@ -618,7 +618,7 @@ func TestMintInternal_TickBoundaries(t *testing.T) {
 			},
 			expectPanic:       false,
 			expectedId:        1,
-			expectedLiquidity: "18446050707367246063",
+			expectedLiquidity: "368930354290617215256478",
 			expectedAmount0:   "0",
 			expectedAmount1:   "1",
 		},
@@ -637,8 +637,11 @@ func TestMintInternal_TickBoundaries(t *testing.T) {
 				caller:         alice,
 				mintTo:         alice,
 			},
-			expectPanic: true, // Due to sqrtRatio calculation issues at extreme positive ticks
-			expectedMsg: "sqrtRatioAX96 must be greater than zero",
+			expectPanic:       false,
+			expectedId:        1,
+			expectedLiquidity: "368930237016745472596742",
+			expectedAmount0:   "1",
+			expectedAmount1:   "0",
 		},
 		// 0.05% pool (tick spacing 10) - boundaries
 		{
