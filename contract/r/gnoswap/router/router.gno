@@ -222,15 +222,17 @@ func finalizeSwap(
 ) (string, string) {
 	validator := &SwapValidator{}
 
+	// Handle swap fee
+	resultAmountOutWithoutFee := handleSwapFee(outputToken, resultAmountOut)
+
 	// Validate exact out amount if applicable
+	// For ExactOut swaps, we validate that the user receives at least the amount they specified
+	// after protocol fee deduction
 	if swapType == ExactOut {
-		if err := validator.exactOutAmount(resultAmountOut, amountSpecified); err != nil {
+		if err := validator.exactOutAmount(resultAmountOutWithoutFee, amountSpecified); err != nil {
 			panic(addDetailToError(errSlippage, err.Error()))
 		}
 	}
-
-	// Handle swap fee
-	resultAmountOutWithoutFee := handleSwapFee(outputToken, resultAmountOut)
 
 	// Handle GNOT token swaps
 	handler := newGnotSwapHandler(userBeforeWugnotBalance, userWrappedWugnot)
