@@ -63,12 +63,12 @@ func delegateGnsToAdmin() {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 
 	gns.Approve(cross, consts.GOV_STAKER_ADDR, delegatedAmount)
-	govStaker.Delegate(cross, adminAddr, uint64(delegatedAmount), "")
+	govStaker.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 
 	ufmt.Printf("[INFO] gns delegated to %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 }
 
-func proposeChangePoolCreationFee() uint64 {
+func proposeChangePoolCreationFee() int64 {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	proposalID := governance.ProposeParameterChange(cross, "createfee", "change", 1, "gno.land/r/gnoswap/v1/pool*EXE*SetPoolCreationFee*EXE*500")
 
@@ -76,7 +76,7 @@ func proposeChangePoolCreationFee() uint64 {
 	return proposalID
 }
 
-func vote(proposalID uint64, yea bool) {
+func vote(proposalID int64, yea bool) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 
 	prevYeaNum := governance.GetYeaByProposalId(proposalID)
@@ -86,11 +86,11 @@ func vote(proposalID uint64, yea bool) {
 
 	afterYeaNum := governance.GetYeaByProposalId(proposalID)
 	afterNayNum := governance.GetNayByProposalId(proposalID)
-	ufmt.Printf("[EXPECTED] before proposal %d voting - yea: %s, nay: %s\n", proposalID, prevYeaNum, prevNayNum)
-	ufmt.Printf("[EXPECTED] after proposal %d voting - yea: %s, nay: %s\n", proposalID, afterYeaNum, afterNayNum)
+	ufmt.Printf("[EXPECTED] before proposal %d voting - yea: %d, nay: %d\n", proposalID, prevYeaNum, prevNayNum)
+	ufmt.Printf("[EXPECTED] after proposal %d voting - yea: %d, nay: %d\n", proposalID, afterYeaNum, afterNayNum)
 }
 
-func executeChangePoolCreationFee(proposalID uint64) {
+func executeChangePoolCreationFee(proposalID int64) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 
 	prevPoolCreationFee := pool.GetPoolCreationFee()

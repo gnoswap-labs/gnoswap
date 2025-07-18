@@ -63,19 +63,19 @@ func delegateGnsToAdmin() {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 
 	gns.Approve(cross, consts.GOV_STAKER_ADDR, delegatedAmount)
-	gs.Delegate(cross, adminAddr, uint64(delegatedAmount), "")
+	gs.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 
 	ufmt.Printf("[INFO] gns delegated to %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 }
 
 // [SCENARIO] 2. Propose Multi Execute
-func proposeMultiExecute() uint64 {
+func proposeMultiExecute() int64 {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	proposalID := governance.ProposeParameterChange(
 		cross,
 		"test_title",
 		"test_description",
-		uint64(2),
+		int64(2),
 		"gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*123*GOV*gno.land/r/gnoswap/v1/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/v1/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905",
 	)
 	ufmt.Printf("[INFO] Multi Execute Proposal ID: %d\n", proposalID)
@@ -83,7 +83,7 @@ func proposeMultiExecute() uint64 {
 }
 
 // [SCENARIO] 3. Vote for the proposal
-func voteProposal(proposalID uint64) {
+func voteProposal(proposalID int64) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	prevYea := governance.GetYeaByProposalId(proposalID)
 	prevNay := governance.GetNayByProposalId(proposalID)
@@ -93,24 +93,23 @@ func voteProposal(proposalID uint64) {
 	afterYea := governance.GetYeaByProposalId(proposalID)
 	afterNay := governance.GetNayByProposalId(proposalID)
 
-	ufmt.Printf("[EXPECTED] before voting - yea: %s, nay: %s\n", prevYea, prevNay)
-	ufmt.Printf("[EXPECTED] after voting - yea: %s, nay: %s\n", afterYea, afterNay)
+	ufmt.Printf("[EXPECTED] before voting - yea: %d, nay: %d\n", prevYea, prevNay)
+	ufmt.Printf("[EXPECTED] after voting - yea: %d, nay: %d\n", afterYea, afterNay)
 }
 
 // [SCENARIO] 4. Execute Multi Proposal
-func executeMultiProposal(proposalID uint64) {
-	prevBlockTime := gns.AvgBlockTimeInMs()
+func executeMultiProposal(proposalID int64) {
+	prevBlockTime := gns.GetAvgBlockTimeInMs()
 	prevCommunityPool := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
-	err := governance.Execute(cross, proposalID)
-	if err != nil {
-		ufmt.Printf("[INFO] execute error: %v\n", err)
-	}
-	afterBlockTime := gns.AvgBlockTimeInMs()
+	governance.Execute(cross, proposalID)
+	
+	afterBlockTime := gns.GetAvgBlockTimeInMs()
 	afterCommunityPool := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
 	ufmt.Printf("[EXPECTED] before executing - block time: %d, community pool: %d\n", prevBlockTime, prevCommunityPool)
 	ufmt.Printf("[EXPECTED] after executing - block time: %d, community pool: %d\n", afterBlockTime, afterCommunityPool)
+	
 	state := governance.GetExecutionStateByProposalId(proposalID)
-	ufmt.Printf("[EXPECTED] proposal executed: %v\n", state.Executed)
+	ufmt.Printf("[EXPECTED] proposal executed: %v\n", state)
 }
 
 // Output:
@@ -136,4 +135,4 @@ func executeMultiProposal(proposalID uint64) {
 // [SCENARIO] 7. Execute Multi Proposal
 // [EXPECTED] before executing - block time: 2000, community pool: 61643833920
 // [EXPECTED] after executing - block time: 123, community pool: 308219168695
-// [EXPECTED] proposal executed: true
+// [EXPECTED] proposal executed: executed
