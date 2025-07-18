@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/scenario/rbac"
+gno = "0.9"
