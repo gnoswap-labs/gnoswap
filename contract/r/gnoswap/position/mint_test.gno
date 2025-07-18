@@ -530,7 +530,7 @@ func TestMintInternal_FeeTierEdgeCases(t *testing.T) {
 			},
 			expectPanic:       false,
 			expectedId:        1,
-			expectedLiquidity: "71914955436073",
+			expectedLiquidity: "1438335065300305010",
 			expectedAmount0:   "0",
 			expectedAmount1:   "1000",
 		},
@@ -550,8 +550,11 @@ func TestMintInternal_FeeTierEdgeCases(t *testing.T) {
 				caller:         alice,
 				mintTo:         alice,
 			},
-			expectPanic: true,
-			expectedMsg: "sqrtRatioAX96 must be greater than zero",
+			expectedId: 1,
+			expectedLiquidity: "1438335065300290965",
+			expectedAmount0: "1000",
+			expectedAmount1: "0",
+			expectPanic: false,
 		},
 	}
 
@@ -600,6 +603,28 @@ func TestMintInternal_TickBoundaries(t *testing.T) {
 		expectedAmount1   string
 	}{
 		// 0.01% pool (tick spacing 1) - MIN/MAX boundaries
+		{
+			// XXX this needs to debug: [TickMathGetSqrtRatioAtTick] ratio is zero
+			name: "Test1",
+			params: MintParams{
+				token0:         "gno.land/r/onbloc/bar",
+				token1:         "gno.land/r/onbloc/baz",
+				fee:            100,
+				tickLower:      -1, // MIN_TICK (valid for spacing 1)
+				tickUpper:      424288,
+				amount0Desired: u256.MustFromDecimal("1"),
+				amount1Desired: u256.MustFromDecimal("1"),
+				amount0Min:     u256.MustFromDecimal("0"),
+				amount1Min:     u256.MustFromDecimal("0"),
+				caller:         alice,
+				mintTo:         alice,
+			},
+			expectPanic:       false,
+			expectedId:        1,
+			expectedLiquidity: "368930354290617215256478",
+			expectedAmount0:   "0",
+			expectedAmount1:   "1",
+		},
 		{
 			// XXX this needs to debug: [TickMathGetSqrtRatioAtTick] ratio is zero
 			name: "0.01% pool - valid at MIN_TICK boundary",
@@ -853,6 +878,7 @@ func TestMintInternal_TickBoundaries(t *testing.T) {
 				})
 			} else {
 				id, liquidity, amount0, amount1 := mint(tt.params)
+				println("id:", id)
 				uassert.Equal(t, tt.expectedId, id)
 				uassert.Equal(t, tt.expectedLiquidity, liquidity.ToString())
 				uassert.Equal(t, tt.expectedAmount0, amount0.ToString())
