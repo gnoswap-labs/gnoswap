@@ -40,7 +40,7 @@ var (
 //
 // Panic Conditions:
 //   - The system is halted (`halt.IsHalted()`).
-//   - Caller lacks permission to mint a position when `common.GetLimitCaller()` is enforced.
+//   - Caller lacks permission to mint a position.
 //   - The provided `liquidityAmount` is zero.
 //   - Any failure during token transfers or position modifications.
 //
@@ -56,9 +56,7 @@ func Mint(cur realm,
 	positionCaller std.Address,
 ) (string, string) {
 	assertOnlyNotHalted()
-	if common.GetLimitCaller() {
-		assertOnlyPositionContract()
-	}
+	assertOnlyPositionContract()
 	assertOnlyValidAddress(positionCaller)
 
 	liquidity := u256.MustFromDecimal(liquidityAmount)
@@ -113,9 +111,7 @@ func Burn(
 	positionCaller std.Address,
 ) (string, string) { // uint256 x2
 	assertOnlyNotHalted()
-	if common.GetLimitCaller() {
-		assertOnlyPositionContract()
-	}
+	assertOnlyPositionContract()
 
 	pool := GetPool(token0Path, token1Path, fee)
 
@@ -175,9 +171,7 @@ func Collect(cur realm,
 	amount1Requested string,
 ) (string, string) {
 	assertOnlyNotHalted()
-	if common.GetLimitCaller() {
-		assertOnlyPositionContract()
-	}
+	assertOnlyPositionContract()
 
 	pool := GetPool(token0Path, token1Path, fee)
 	// Use recipient address instead of getPrevAddr() for position key generation
