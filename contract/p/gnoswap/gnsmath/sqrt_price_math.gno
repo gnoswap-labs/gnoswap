@@ -381,7 +381,7 @@ func GetAmount0Delta(
 			// if u > (2**255 - 1), cannot cast to int256
 			panic(errAmount0DeltaOverflow)
 		}
-		
+
 		// Convert to i256 and negate properly
 		result := i256.FromUint256(u)
 		return result.Neg(result)
@@ -430,7 +430,7 @@ func GetAmount1Delta(
 			// if u > (2**255 - 1), cannot cast to int256
 			panic(errAmount1DeltaOverflow)
 		}
-		
+
 		// Convert to i256 and negate properly
 		result := i256.FromUint256(u)
 		return result.Neg(result)

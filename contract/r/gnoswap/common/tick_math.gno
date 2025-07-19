@@ -15,7 +15,7 @@ var (
 	// Initial ratio constants - exactly matching Uniswap V3
 	ratio0 = u256.MustFromDecimal("340265354078544963557816517032075149313") // 0xfffcb933bd6fad37aa2d162d1a594001
 	ratio1 = u256.MustFromDecimal("340282366920938463463374607431768211456") // 0x100000000000000000000000000000000 (2^128)
-	
+
 	// Bit mask ratio constants in order (bit 1 to bit 19)
 	ratioConstants = []*u256.Uint{
 		u256.MustFromDecimal("340248342086729790484326174814286782778"), // 0xfff97272373d413259a46990580e213a (bit 1)
@@ -35,23 +35,23 @@ var (
 		u256.MustFromDecimal("66119101136024775622716233608466517926"),  // 0x31be135f97d08fd981231505542fcfa6 (bit 15)
 		u256.MustFromDecimal("12847376061809297530290974190478138313"),  // 0x9aa508b5b7a84e1c677de54f3e99bc9 (bit 16)
 		u256.MustFromDecimal("485053260817066172746253684029974020"),    // 0x5d6af8dedb81196699c329225ee604 (bit 17)
-		u256.MustFromDecimal("691415978906521570653435304214168"),        // 0x2216e584f5fa1ea926041bedfe98 (bit 18)
-		u256.MustFromDecimal("1404880482679654955896180642"),             // 0x48a170391f7dc42444e8fa2 (bit 19)
+		u256.MustFromDecimal("691415978906521570653435304214168"),       // 0x2216e584f5fa1ea926041bedfe98 (bit 18)
+		u256.MustFromDecimal("1404880482679654955896180642"),            // 0x48a170391f7dc42444e8fa2 (bit 19)
 	}
-	
+
 	// Pre-computed constants for optimization
 	maxUint256 = u256.MustFromDecimal(consts.MAX_UINT256)
 	oneLsh32   = new(u256.Uint).Lsh(u256.One(), 32) // 1 << 32
-	
+
 	// MSB calculation thresholds - pre-computed for performance
 	msb128Threshold = u256.MustFromDecimal("340282366920938463463374607431768211455") // 2^128 - 1
 	msb64Threshold  = u256.MustFromDecimal("18446744073709551615")                    // 2^64 - 1
-	msb32Threshold  = u256.MustFromDecimal("4294967295")                             // 2^32 - 1
-	msb16Threshold  = u256.NewUint(65535)                                            // 2^16 - 1
-	msb8Threshold   = u256.NewUint(255)                                              // 2^8 - 1
-	msb4Threshold   = u256.NewUint(15)                                               // 2^4 - 1
-	msb2Threshold   = u256.NewUint(3)                                                // 2^2 - 1
-	msb1Threshold   = u256.One()                                                     // 1
+	msb32Threshold  = u256.MustFromDecimal("4294967295")                              // 2^32 - 1
+	msb16Threshold  = u256.NewUint(65535)                                             // 2^16 - 1
+	msb8Threshold   = u256.NewUint(255)                                               // 2^8 - 1
+	msb4Threshold   = u256.NewUint(15)                                                // 2^4 - 1
+	msb2Threshold   = u256.NewUint(3)                                                 // 2^2 - 1
+	msb1Threshold   = u256.One()                                                      // 1
 )
 
 // TickMathGetSqrtRatioAtTick calculates the square root price ratio for a given tick.
@@ -72,7 +72,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 
 	// Initialize ratio based on LSB - exactly like Uniswap V3
 	var ratio *u256.Uint
-	
+
 	if absTick&0x1 != 0 {
 		ratio = ratio0.Clone()
 	} else {
@@ -95,7 +95,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 
 	// Convert from Q128.128 to Q128.96 with rounding up
 	// This divides by 1<<32 rounding up to go from a Q128.128 to a Q128.96
-	upper := new(u256.Uint).Rsh(ratio, 32) // ratio >> 32
+	upper := new(u256.Uint).Rsh(ratio, 32)           // ratio >> 32
 	remainder := new(u256.Uint).Mod(ratio, oneLsh32) // ratio % (1 << 32)
 
 	// Round up: add 1 if remainder != 0
@@ -167,7 +167,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	// Validate input range
 	minSqrtRatio := u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
 	maxSqrtRatio := u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
-	
+
 	if sqrtPriceX96.Lt(minSqrtRatio) || sqrtPriceX96.Gte(maxSqrtRatio) {
 		panic(newErrorWithDetail(
 			errOutOfRange,
@@ -180,10 +180,10 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 
 	// Find MSB using optimized calculation
 	msb := optimizedMostSignificantBit(ratio)
-	
+
 	// Adjust ratio based on MSB
 	var r *u256.Uint
-	
+
 	if msb.Gte(u256.NewUint(128)) {
 		msbDiff := msb.Uint64() - 127
 		r = new(u256.Uint).Rsh(ratio, uint(msbDiff))
@@ -224,7 +224,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	} else if TickMathGetSqrtRatioAtTick(tickHiInt32).Lte(sqrtPriceX96) {
 		return tickHiInt32
 	}
-	
+
 	return tickLowInt32
 }
 
