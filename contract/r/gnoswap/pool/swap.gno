@@ -53,14 +53,12 @@ func Swap(
 	payer std.Address, // router
 ) (string, string) {
 	assertOnlyNotHalted()
-	if common.GetLimitCaller() {
-		caller := getPrevAddr()
-		if err := common.RouterOnly(caller); err != nil {
-			panic(newErrorWithDetail(
-				errNoPermission,
-				ufmt.Sprintf("only router(%s) can call pool swap(), called from %s", routerAddr, caller.String()),
-			))
-		}
+	caller := getPrevAddr()
+	if err := common.RouterOnly(caller); err != nil {
+		panic(newErrorWithDetail(
+			errNoPermission,
+			ufmt.Sprintf("only router(%s) can call pool swap(), called from %s", routerAddr, caller.String()),
+		))
 	}
 
 	if amountSpecified == "0" {
