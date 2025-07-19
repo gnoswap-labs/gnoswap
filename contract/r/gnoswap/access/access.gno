@@ -82,8 +82,18 @@ func initialize(cfg *config) error {
 	}
 
 	for roleName, addr := range cfg.roles {
-		if err := declareNewRole(roleName, addr); err != nil {
-			return err
+		err := declareNewRole(roleName, addr)
+		if err != nil {
+			errStr := err.Error()
+			if ufmt.Sprintf("%s", errStr) == ufmt.Sprintf(errDeclareRole, roleName, "role "+roleName+" already exists") {
+				// If already exists, only update permission
+				checker := createAddressChecker(addr, roleName)
+				if updateErr := rbac.UpdatePermission(cross, roleName, PERM_ACCESS, checker); updateErr != nil {
+					return updateErr
+				}
+			} else {
+				return err
+			}
 		}
 	}
 

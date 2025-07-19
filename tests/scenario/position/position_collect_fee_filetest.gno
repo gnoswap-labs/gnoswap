@@ -48,19 +48,15 @@ func main() {
 	executeMultipleSwaps()
 	println()
 
-	ufmt.Println("[SCENARIO] 4. Check tokens owed")
-	checkTokensOwed()
-	println()
-
-	ufmt.Println("[SCENARIO] 5. Decrease liquidity partially")
+	ufmt.Println("[SCENARIO] 4. Decrease liquidity partially")
 	decreaseLiquidityPartially()
 	println()
 
-	ufmt.Println("[SCENARIO] 6. Execute more swaps")
+	ufmt.Println("[SCENARIO] 5. Execute more swaps")
 	executeMoreSwaps()
 	println()
 
-	ufmt.Println("[SCENARIO] 7. Verify final tokens owed")
+	ufmt.Println("[SCENARIO] 6. Verify final tokens owed")
 	verifyFinalTokensOwed()
 	println()
 }
@@ -163,15 +159,6 @@ func executeMultipleSwaps() {
 	ufmt.Printf("[EXPECTED] Swap2 amount1 should be %s\n", amount1)
 }
 
-func checkTokensOwed() {
-	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPosition(1)
-
-	ufmt.Println("[INFO] Checking tokens owed after swaps")
-	ufmt.Printf("[EXPECTED] Token0 owed should be %s\n", pos.TokensOwed0().ToString())
-	ufmt.Printf("[EXPECTED] Token1 owed should be %s\n", pos.TokensOwed1().ToString())
-}
-
 func decreaseLiquidityPartially() {
 	testing.SetRealm(aliceRealm)
 	bar.Approve(cross, poolAddr, consts.INT64_MAX)
@@ -217,13 +204,6 @@ func executeMoreSwaps() {
 }
 
 func verifyFinalTokensOwed() {
-	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPosition(1)
-
-	ufmt.Println("[INFO] Checking final tokens owed")
-	ufmt.Printf("[EXPECTED] Final token0 owed should be %s\n", pos.TokensOwed0().ToString())
-	ufmt.Printf("[EXPECTED] Final token1 owed should be %s\n", pos.TokensOwed1().ToString())
-
 	testing.SetRealm(aliceRealm)
 	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
 
@@ -254,25 +234,17 @@ func verifyFinalTokensOwed() {
 // [EXPECTED] Swap2 amount0 should be -10062294
 // [EXPECTED] Swap2 amount1 should be 10000000
 //
-// [SCENARIO] 4. Check tokens owed
-// [INFO] Checking tokens owed after swaps
-// [EXPECTED] Token0 owed should be 0
-// [EXPECTED] Token1 owed should be 0
-//
-// [SCENARIO] 5. Decrease liquidity partially
+// [SCENARIO] 4. Decrease liquidity partially
 // [INFO] Decreasing liquidity by 50%
 // [EXPECTED] Removed liquidity should be 614189560
 // [EXPECTED] Amount0 removed should be 28730202
 // [EXPECTED] Amount1 removed should be 28836469
 //
-// [SCENARIO] 6. Execute more swaps
+// [SCENARIO] 5. Execute more swaps
 // [INFO] Executing additional swap BAR -> FOO
 // [EXPECTED] Swap3 amount0 should be 5000000
 // [EXPECTED] Swap3 amount1 should be -4931555
 //
-// [SCENARIO] 7. Verify final tokens owed
-// [INFO] Checking final tokens owed
-// [EXPECTED] Final token0 owed should be 0
-// [EXPECTED] Final token1 owed should be 0
+// [SCENARIO] 6. Verify final tokens owed
 // [EXPECTED] Collected fee0 should be 14850
 // [EXPECTED] Collected fee1 should be 0

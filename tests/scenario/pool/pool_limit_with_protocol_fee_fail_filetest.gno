@@ -72,7 +72,7 @@ func main() {
 	println()
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-1).ToString())
 
 	foo.Approve(cross, poolAddr, maxApprove)
 	bar.Approve(cross, poolAddr, maxApprove)
@@ -92,8 +92,8 @@ func main() {
 		test_liquidityExpectStr,
 		adminAddr,
 	)
-	println("[EXPECTED] mint0:", mint0, "expected: 0")
-	println("[EXPECTED] mint1:", mint1, "expected: 59817378")
+	println("[EXPECTED] mint0:", mint0, "expected: 499988")
+	println("[EXPECTED] mint1:", mint1, "expected: 59317416")
 	println()
 
 	println("[SCENARIO] 2. Swapping 0 -> 1")
@@ -109,8 +109,8 @@ func main() {
 		consts.MIN_PRICE,
 		adminAddr,
 	)
-	println("[EXPECTED] swap0:", swap0, "expected: 60207447")
-	println("[EXPECTED] swap1:", swap1, "expected: -59817377")
+	println("[EXPECTED] swap0:", swap0, "expected: 59707210")
+	println("[EXPECTED] swap1:", swap1, "expected: -59317415")
 	println()
 
 	println("[SCENARIO] 3. Burning position")
@@ -160,12 +160,12 @@ func main() {
 // [INFO] Approving pool creation fee
 //
 // [SCENARIO] 1. Minting position spanning current tick
-// [EXPECTED] mint0: 0 expected: 0
-// [EXPECTED] mint1: 59817378 expected: 59817378
+// [EXPECTED] mint0: 499988 expected: 499988
+// [EXPECTED] mint1: 59317416 expected: 59317416
 //
 // [SCENARIO] 2. Swapping 0 -> 1
-// [EXPECTED] swap0: 60207447 expected: 60207447
-// [EXPECTED] swap1: -59817377 expected: -59817377
+// [EXPECTED] swap0: 59707210 expected: 59707210
+// [EXPECTED] swap1: -59317415 expected: -59317415
 //
 // [SCENARIO] 3. Burning position
 // [EXPECTED] burn0: 60177342 expected: 60177342

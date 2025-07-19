@@ -45,7 +45,7 @@ func BitMathMostSignificantBit(x *u256.Uint) uint8 {
 
 	for _, s := range msbShifts {
 		if temp.Gte(s.bitPattern) {
-			temp.Rsh(temp, s.shift)
+			temp = temp.Rsh(temp, s.shift)
 			r += uint8(s.shift)
 		}
 	}
@@ -65,10 +65,11 @@ func BitMathLeastSignificantBit(x *u256.Uint) uint8 {
 	r := uint8(255)
 
 	for _, s := range lsbShifts {
-		if !hasSetBits.And(temp, s.bitPattern).IsZero() {
+		hasSetBits = hasSetBits.And(temp, s.bitPattern)
+		if !hasSetBits.IsZero() {
 			r -= uint8(s.shift)
 		} else {
-			temp.Rsh(temp, s.shift)
+			temp = temp.Rsh(temp, s.shift)
 		}
 	}
 
