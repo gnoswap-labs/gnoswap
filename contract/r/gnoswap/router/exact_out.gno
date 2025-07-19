@@ -60,6 +60,9 @@ func ExactOutSwapRoute(cur realm,
 		panic(addDetailToError(errInvalidInput, err.Error()))
 	}
 
+	// Pass the original user-requested amount for validation
+	userRequestedAmount := u256.MustFromDecimal(pp.AmountOut)
+
 	inputAmount, outputAmount := finalizeSwap(
 		pp.InputToken,
 		pp.OutputToken,
@@ -69,7 +72,7 @@ func ExactOutSwapRoute(cur realm,
 		u256.MustFromDecimal(pp.AmountInMax),
 		op.userBeforeWugnotBalance,
 		op.userWrappedWugnot,
-		result.AmountSpecified.Abs(),
+		userRequestedAmount,
 	)
 
 	prevAddr, prevPkgPath := getPrev()
@@ -101,9 +104,15 @@ func (op *ExactOutSwapOperation) Validate() error {
 		return ufmt.Errorf("invalid amountOut(%s), must be positive", amountOut.ToString())
 	}
 
-	// assign a signed reversed `amountOut` to `amountSpecified`
+	// Calculate the amount needed from the pool considering protocol fee
+	// This ensures user receives exactly the amount they specified
+	userAmountUint := amountOut.Abs()
+	poolAmountNeeded := calculateAmountWithFee(userAmountUint)
+	poolAmountInt := i256.FromUint256(poolAmountNeeded)
+
+	// assign a signed reversed pool amount to `amountSpecified`
 	// when it's an ExactOut
-	op.amountSpecified = i256.Zero().Neg(amountOut)
+	op.amountSpecified = i256.Zero().Neg(poolAmountInt)
 
 	routes, quotes, err := validateRoutesAndQuotes(op.params.RouteArr, op.params.QuoteArr)
 	if err != nil {

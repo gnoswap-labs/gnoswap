@@ -93,6 +93,28 @@ func setSwapFee(fee uint64) error {
 	return nil
 }
 
+// calculateAmountWithFee calculates the amount needed from the pool to ensure
+// the user receives the exact amount after protocol fee deduction
+// Used for ExactOut swaps
+func calculateAmountWithFee(userAmount *u256.Uint) *u256.Uint {
+	if swapFee <= 0 {
+		return userAmount
+	}
+
+	// Calculate: poolAmount = userAmount * 10000 / (10000 - swapFee)
+	// This ensures that after deducting the fee, user gets exactly userAmount
+	denominator := u256.NewUint(10000 - swapFee)
+	poolAmount := new(u256.Uint).Mul(userAmount, u256.NewUint(10000))
+	poolAmount.Div(poolAmount, denominator)
+
+	// Add 1 to handle rounding issues
+	if new(u256.Uint).Mod(new(u256.Uint).Mul(userAmount, u256.NewUint(10000)), denominator).Gt(u256.Zero()) {
+		poolAmount.Add(poolAmount, u256.One())
+	}
+
+	return poolAmount
+}
+
 // handleSwapFee deducts the protocol fee from the amount and sends it to the protocol_fee contract
 // and returns the amount after deducting the protocol fee
 func handleSwapFee(

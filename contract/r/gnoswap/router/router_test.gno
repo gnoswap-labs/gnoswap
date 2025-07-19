@@ -33,12 +33,12 @@ func TestFinalizeSwap(t *testing.T) {
 		inputToken              string
 		outputToken             string
 		resultAmountIn          *u256.Uint
-		resultAmountOut         *u256.Uint
+		resultAmountOut         *u256.Uint // The amount of users actually want to receive
 		swapType                SwapType
 		tokenAmountLimit        *u256.Uint
 		userBeforeWugnotBalance int64
 		userWrappedWugnot       int64
-		amountSpecified         *u256.Uint
+		amountSpecified         *u256.Uint // The amount of users actually want to receive
 		expectError             bool
 		errorMessage            string
 	}{
@@ -100,12 +100,12 @@ func TestFinalizeSwap(t *testing.T) {
 			inputToken:              barPath,
 			outputToken:             bazPath,
 			resultAmountIn:          newUint256("843455035"),
-			resultAmountOut:         newUint256("600901351"),
+			resultAmountOut:         newUint256("600901353"),
 			swapType:                ExactOut,
 			tokenAmountLimit:        newUint256("843455036"),
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
-			amountSpecified:         newUint256("600901352"),
+			amountSpecified:         newUint256("600000000"),
 			expectError:             false,
 		},
 	}
