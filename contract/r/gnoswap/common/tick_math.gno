@@ -3,10 +3,14 @@ package common
 import (
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+)
+
+// Tick bounds
+const (
+    minTick int32 = -887272
+    maxTick int32 = 887272
 )
 
 // Pre-calculated ratio constants for performance optimization
@@ -39,19 +43,26 @@ var (
 		u256.MustFromDecimal("1404880482679654955896180642"),            // 0x48a170391f7dc42444e8fa2 (bit 19)
 	}
 
-	// Pre-computed constants for optimization
-	maxUint256 = u256.MustFromDecimal(consts.MAX_UINT256)
-	oneLsh32   = new(u256.Uint).Lsh(u256.One(), 32) // 1 << 32
+    // Pre-computed constants for optimization
+    maxUint256   = u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935") // 2^256 - 1
+    minSqrtRatio = u256.MustFromDecimal("4295128739")                                                                     // same as TickMathGetSqrtRatioAtTick(minTick)
+    maxSqrtRatio = u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")                              // same as TickMathGetSqrtRatioAtTick(maxTick)
+    oneLsh32     = new(u256.Uint).Lsh(u256.One(), 32)                                                                     // 1 << 32
 
-	// MSB calculation thresholds - pre-computed for performance
-	msb128Threshold = u256.MustFromDecimal("340282366920938463463374607431768211455") // 2^128 - 1
-	msb64Threshold  = u256.MustFromDecimal("18446744073709551615")                    // 2^64 - 1
-	msb32Threshold  = u256.MustFromDecimal("4294967295")                              // 2^32 - 1
-	msb16Threshold  = u256.NewUint(65535)                                             // 2^16 - 1
-	msb8Threshold   = u256.NewUint(255)                                               // 2^8 - 1
-	msb4Threshold   = u256.NewUint(15)                                                // 2^4 - 1
-	msb2Threshold   = u256.NewUint(3)                                                 // 2^2 - 1
-	msb1Threshold   = u256.One()                                                      // 1
+    // MSB calculation thresholds - pre-computed for performance
+    msb128Threshold = u256.MustFromDecimal("340282366920938463463374607431768211455") // 2^128 - 1
+    msb64Threshold  = u256.MustFromDecimal("18446744073709551615")                    // 2^64 - 1
+    msb32Threshold  = u256.MustFromDecimal("4294967295")                              // 2^32 - 1
+    msb16Threshold  = u256.NewUint(65535)                                             // 2^16 - 1
+    msb8Threshold   = u256.NewUint(255)                                               // 2^8 - 1
+    msb4Threshold   = u256.NewUint(15)                                                // 2^4 - 1
+    msb2Threshold   = u256.NewUint(3)                                                 // 2^2 - 1
+    msb1Threshold   = u256.One()                                                      // 1
+
+    // Pre-computed constants for tick calculation
+    log2Multiplier = i256.MustFromDecimal("255738958999603826347141")
+    tickLowOffset  = i256.MustFromDecimal("3402992956809132418596140100660247210")
+    tickHiOffset   = i256.MustFromDecimal("291339464771989622907027621153398088495")
 )
 
 // TickMathGetSqrtRatioAtTick calculates the square root price ratio for a given tick.
@@ -79,18 +90,20 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 		ratio = ratio1.Clone()
 	}
 
+    temp := new(u256.Uint)
+
 	// Apply bit masks using optimized loop - maintains exact same logic
 	for i := 1; i < 20; i++ {
 		if absTick&(1<<uint(i)) != 0 {
 			// Use temporary variables to avoid memory allocation in hot path
-			temp := new(u256.Uint).Mul(ratio, ratioConstants[i-1])
-			ratio = new(u256.Uint).Rsh(temp, 128)
+            temp = temp.Mul(ratio, ratioConstants[i-1])
+            temp = ratio.Rsh(temp, 128) // in-place: ratio = temp >> 128
 		}
 	}
 
 	// Invert ratio for positive ticks
 	if tick > 0 {
-		ratio = new(u256.Uint).Div(maxUint256, ratio)
+        ratio = temp.Div(maxUint256, ratio)
 	}
 
 	// Convert from Q128.128 to Q128.96 with rounding up
@@ -106,52 +119,52 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 	return upper
 }
 
-// optimizedMostSignificantBit calculates the most significant bit position more efficiently
-func optimizedMostSignificantBit(r *u256.Uint) *u256.Uint {
-	msb := u256.Zero()
-	rCopy := r.Clone()
+// getMostSignificantBit calculates the most significant bit position more efficiently
+func getMostSignificantBit(r *u256.Uint) uint64 {
+	msb := uint64(0)
+    temp := new(u256.Uint).Set(r)
 
-	// Optimized MSB calculation using pre-computed thresholds
-	if rCopy.Gt(msb128Threshold) {
-		msb = new(u256.Uint).Or(msb, u256.NewUint(128))
-		rCopy = new(u256.Uint).Rsh(rCopy, 128)
-	}
+    // Optimized MSB calculation using pre-computed thresholds
+    if temp.Gt(msb128Threshold) {
+        msb |= 128
+        temp.Rsh(temp, 128) // in-place: temp = temp >> 128
+    }
 
-	if rCopy.Gt(msb64Threshold) {
-		msb = new(u256.Uint).Or(msb, u256.NewUint(64))
-		rCopy = new(u256.Uint).Rsh(rCopy, 64)
-	}
+    if temp.Gt(msb64Threshold) {
+        msb |= 64
+        temp.Rsh(temp, 64)
+    }
 
-	if rCopy.Gt(msb32Threshold) {
-		msb = new(u256.Uint).Or(msb, u256.NewUint(32))
-		rCopy = new(u256.Uint).Rsh(rCopy, 32)
-	}
+    if temp.Gt(msb32Threshold) {
+        msb |= 32
+        temp.Rsh(temp, 32)
+    }
 
-	if rCopy.Gt(msb16Threshold) {
-		msb = new(u256.Uint).Or(msb, u256.NewUint(16))
-		rCopy = new(u256.Uint).Rsh(rCopy, 16)
-	}
+    if temp.Gt(msb16Threshold) {
+        msb |= 16
+        temp.Rsh(temp, 16)
+    }
 
-	if rCopy.Gt(msb8Threshold) {
-		msb = new(u256.Uint).Or(msb, u256.NewUint(8))
-		rCopy = new(u256.Uint).Rsh(rCopy, 8)
-	}
+    if temp.Gt(msb8Threshold) {
+        msb |= 8
+        temp.Rsh(temp, 8)
+    }
 
-	if rCopy.Gt(msb4Threshold) {
-		msb = new(u256.Uint).Or(msb, u256.NewUint(4))
-		rCopy = new(u256.Uint).Rsh(rCopy, 4)
-	}
+    if temp.Gt(msb4Threshold) {
+        msb |= 4
+        temp.Rsh(temp, 4)
+    }
 
-	if rCopy.Gt(msb2Threshold) {
-		msb = new(u256.Uint).Or(msb, u256.NewUint(2))
-		rCopy = new(u256.Uint).Rsh(rCopy, 2)
-	}
+    if temp.Gt(msb2Threshold) {
+        msb |= 2
+        temp.Rsh(temp, 2)
+    }
 
-	if rCopy.Gt(msb1Threshold) {
-		msb = new(u256.Uint).Or(msb, u256.One())
-	}
+    if temp.Gt(msb1Threshold) {
+        msb |= 1
+    }
 
-	return msb
+    return msb
 }
 
 // TickMathGetTickAtSqrtRatio calculates the greatest tick value such that getSqrtRatioAtTick(tick) <= ratio
@@ -164,10 +177,6 @@ func optimizedMostSignificantBit(r *u256.Uint) *u256.Uint {
 // Returns:
 //   - int32: The greatest tick for which the ratio is less than or equal to the input ratio
 func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
-	// Validate input range
-	minSqrtRatio := u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
-	maxSqrtRatio := u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
-
 	if sqrtPriceX96.Lt(minSqrtRatio) || sqrtPriceX96.Gte(maxSqrtRatio) {
 		panic(newErrorWithDetail(
 			errOutOfRange,
@@ -179,31 +188,38 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	ratio := new(u256.Uint).Lsh(sqrtPriceX96, 32)
 
 	// Find MSB using optimized calculation
-	msb := optimizedMostSignificantBit(ratio)
+	msb := getMostSignificantBit(ratio)
 
 	// Adjust ratio based on MSB
 	var r *u256.Uint
 
-	if msb.Gte(u256.NewUint(128)) {
-		msbDiff := msb.Uint64() - 127
-		r = new(u256.Uint).Rsh(ratio, uint(msbDiff))
-	} else {
-		msbDiff := 127 - msb.Uint64()
-		r = new(u256.Uint).Lsh(ratio, uint(msbDiff))
-	}
+	if msb >= 128 {
+        r = new(u256.Uint).Rsh(ratio, uint(msb-127))
+    } else {
+        r = new(u256.Uint).Lsh(ratio, uint(127-msb))
+    }
 
 	// Calculate log_2 using fixed-point arithmetic
-	msbInt := i256.FromUint256(msb)
-	constant128 := i256.NewInt(128)
-	log2 := new(i256.Int).Sub(msbInt, constant128)
-	log2 = log2.Lsh(log2, 64)
+    log2 := i256.NewInt(int64(msb) - 128)
+    log2 = log2.Lsh(log2, 64)
+
+	// Define temporary variables for optimization
+    tempR := new(u256.Uint)
+    tempF := new(u256.Uint)
+    tempI256 := new(i256.Int)
 
 	// Optimized iterative calculation using loop - maintains exact same logic
 	for i := 0; i < 14; i++ {
-		r = new(u256.Uint).Rsh(new(u256.Uint).Mul(r, r), 127)
-		f := new(u256.Uint).Rsh(r, 128)
-		log2 = i256.Zero().Or(log2, i256.Zero().Lsh(i256.FromUint256(f), uint(63-i)))
-		r = new(u256.Uint).Rsh(r, uint(f.Uint64()))
+		tempR = tempR.Mul(r, r)
+        r = new(u256.Uint).Rsh(tempR, 127)
+
+        tempF = tempF.Rsh(r, 128)
+        tempI256 = i256.FromUint256(tempF)
+        f := tempF
+
+        tempI256 = tempI256.Lsh(tempI256, uint(63-i)) // in-place: tempI256 = tempI256 << (63-i)
+        log2 = log2.Or(log2, tempI256)            // in-place: log2 = log2 | tempI256
+        r = new(u256.Uint).Rsh(r, uint(f.Uint64()))
 	}
 
 	// Calculate tick from log_sqrt10001
@@ -239,13 +255,13 @@ func abs(x int32) int32 {
 
 // assertValidTickRange validates that the absolute tick value is within the acceptable range.
 func assertValidTickRange(tick int32) {
-	if tick > consts.MAX_TICK {
+	if tick > maxTick {
 		panic(newErrorWithDetail(
 			errOutOfRange,
 			ufmt.Sprintf("tick is out of range (larger than 887272), tick: %d", tick),
 		))
 	}
-	if tick < consts.MIN_TICK {
+	if tick < minTick {
 		panic(newErrorWithDetail(
 			errOutOfRange,
 			ufmt.Sprintf("tick is out of range (smaller than -887272), tick: %d", tick),
