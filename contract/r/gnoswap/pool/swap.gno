@@ -102,7 +102,6 @@ func Swap(
 	}
 
 	result, err := computeSwap(pool, comp)
-
 	if err != nil {
 		panic(err)
 	}
@@ -196,7 +195,7 @@ func DrySwap(
 			return "0", "0", false
 		}
 	}
-
+	
 	// Validate non-zero amounts
 	if result.Amount0.IsZero() || result.Amount1.IsZero() {
 		return "0", "0", false
@@ -400,6 +399,7 @@ func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState
 	if overflow {
 		return state, step, errUnderflow
 	}
+	
 	step.feeAmount = newFeeAmount
 	state.protocolFee.Add(state.protocolFee, delta)
 
@@ -455,6 +455,12 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 		uint64(pool.fee),
 	)
 
+	println("[DEBUG] computeAmounts")
+	println("[DEBUG] sqrtPriceX96:", sqrtPriceX96.ToString())
+	println("[DEBUG] amountIn:", amountIn.ToString())
+	println("[DEBUG] amountOut:", amountOut.ToString())
+	println("[DEBUG] feeAmount:", feeAmount.ToString())
+
 	step.amountIn = amountIn
 	step.amountOut = amountOut
 	step.feeAmount = feeAmount
@@ -477,6 +483,7 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) Swap
 	if amountInWithFeeU256.Gt(u256.MustFromDecimal(consts.MAX_INT256)) {
 		panic("amountIn + feeAmount overflows int256")
 	}
+
 	amountInWithFee := i256.FromUint256(amountInWithFeeU256)
 	if step.amountOut.Gt(u256.MustFromDecimal(consts.MAX_INT256)) {
 		panic("amountOut overflows int256")
@@ -485,11 +492,12 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) Swap
 	if exactInput {
 		state.amountSpecifiedRemaining = i256.Zero().Sub(state.amountSpecifiedRemaining, amountInWithFee)
 		state.amountCalculated = i256.Zero().Sub(state.amountCalculated, i256.FromUint256(step.amountOut))
+
 		return state
-	} else {
-		state.amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
-		state.amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
-	}
+	} 
+	
+	state.amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
+	state.amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
 
 	return state
 }

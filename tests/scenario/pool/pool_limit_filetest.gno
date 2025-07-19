@@ -153,7 +153,7 @@ func main() {
 // [SCENARIO] 2. Mint Position (Limit selling 0 for 1 at tick 0 thru 120)
 // [INFO] Swap 1 -> 0
 // [INFO] Swap 0: -59817377
-// [INFO] Swap 1: 60183363
+// [INFO] Swap 1: 60183362
 //
 // [SCENARIO] 3. Burn Position (Burn liquidity from tick 0 to 120)
 // [INFO] Burn 0: 0

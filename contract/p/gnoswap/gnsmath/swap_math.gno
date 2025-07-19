@@ -5,6 +5,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+const denominator = uint64(1_000_000)
+
 // SwapMathComputeSwapStep computes the next sqrt price, amount in, amount out, and fee amount
 // Computes the result of swapping some amount in, or amount out, given the parameters of the swap
 // The fee, plus the amount in, will never exceed the amount remaining if the swap's `amountSpecified` is positive
@@ -38,7 +40,7 @@ func SwapMathComputeSwapStep(
 	// external callers could potentially pass any feePips value. The fee calculation involves subtracting feePips
 	// from 1000000 (representing 100%), and if feePips exceeds 1000000, it would cause an underflow,
 	// leading to incorrect fee calculations.
-	if feePips > 1_000_000 {
+	if feePips > denominator {
 		panic("SwapMathComputeSwapStep: feePips must be <= 1000000")
 	}
 
@@ -49,7 +51,7 @@ func SwapMathComputeSwapStep(
 
 	// Optimize fee calculations - use constants where possible
 	feePipsUint := u256.NewUint(feePips)
-	feeDenom := new(u256.Uint).Sub(u256.NewUint(1_000_000), feePipsUint)
+	feeDenom := new(u256.Uint).Sub(u256.NewUint(denominator), feePipsUint)
 
 	// Initialize result variables
 	var sqrtRatioNextX96, amountIn, amountOut, feeAmount *u256.Uint
@@ -115,7 +117,7 @@ func SwapMathComputeSwapStep(
 	}
 
 	// Optimized amountOut bounding and fee calculation using pre-computed values
-	if !exactIn && amountOut != nil && amountOut.Gt(amountRemainingAbs) {
+	if !exactIn && amountOut.Gt(amountRemainingAbs) {
 		amountOut = amountRemainingAbs
 	}
 
@@ -124,7 +126,7 @@ func SwapMathComputeSwapStep(
 		// Fast path: fee is leftover when target not reached
 		feeAmount = new(u256.Uint).Sub(amountRemainingAbs, amountIn)
 	} else {
-		// Standard path: compute proportional fee
+		// Otherwise compute fee = amountIn * feePips / (1e6 - feePips), rounding up
 		feeAmount = u256.MulDivRoundingUp(amountIn, feePipsUint, feeDenom)
 	}
 
@@ -143,7 +145,7 @@ func SwapMathComputeSwapStep(
 	if sqrtRatioNextX96.Lt(MIN_SQRT_RATIO) || sqrtRatioNextX96.Gt(MAX_SQRT_RATIO) {
 		panic("SwapMathComputeSwapStep: sqrt price out of bounds")
 	}
-
+	
 	return sqrtRatioNextX96, amountIn, amountOut, feeAmount
 }
 
@@ -154,12 +156,8 @@ func handleExactIn(
 	sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity, amountRemainingAbs *u256.Uint,
 	feeDenom *u256.Uint,
 ) (*u256.Uint, *u256.Uint) {
-
-	// Pre-computed constant to avoid repeated allocation
-	oneMillion := u256.NewUint(1_000_000)
-
 	// Fast path: calculate fee-adjusted amount with single operation
-	amountRemainingLessFee := u256.MulDiv(amountRemainingAbs, feeDenom, oneMillion)
+	amountRemainingLessFee := u256.MulDiv(amountRemainingAbs, feeDenom, u256.NewUint(denominator))
 
 	// Early return: when fee consumes all input, no swap occurs
 	if amountRemainingLessFee.IsZero() {
@@ -168,6 +166,7 @@ func handleExactIn(
 
 	// Estimate the full move amountIn
 	var amountIn *u256.Uint
+
 	if zeroForOne {
 		amountIn = getAmount0DeltaHelper(
 			sqrtRatioTargetX96,
@@ -183,7 +182,7 @@ func handleExactIn(
 			true,
 		)
 	}
-
+	
 	// If zero input, then no swap
 	if amountIn.IsZero() {
 		return sqrtRatioCurrentX96, u256.Zero()
@@ -202,10 +201,6 @@ func handleExactIn(
 		zeroForOne,
 	)
 
-	// No price change -> no amountIn
-	if nextSqrt.Eq(sqrtRatioCurrentX96) {
-		return sqrtRatioCurrentX96, u256.Zero()
-	}
 	return nextSqrt, amountIn
 }
 
@@ -235,11 +230,6 @@ func handleExactOut(
 		amountRemainingAbs,
 		zeroForOne,
 	)
-
-	// No price change -> no amountOut
-	if nextSqrt.Eq(sqrtRatioCurrentX96) {
-		return sqrtRatioCurrentX96, u256.Zero()
-	}
 
 	return nextSqrt, amountOut
 }

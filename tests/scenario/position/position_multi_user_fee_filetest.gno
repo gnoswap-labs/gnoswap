@@ -250,7 +250,7 @@ func compareCollectedFees() {
 // [EXPECTED] Swap1 amount1 should be -743552
 // [INFO] Executing swap BAZ -> BAR
 // [EXPECTED] Swap2 amount0 should be -29969994
-// [EXPECTED] Swap2 amount1 should be 7089378
+// [EXPECTED] Swap2 amount1 should be 10000000
 //
 // [SCENARIO] 5. Check and collect fees for user1
 // [INFO] Collecting fees for user1

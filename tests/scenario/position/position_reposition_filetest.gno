@@ -35,27 +35,31 @@ func main() {
 	mintInitialPosition()
 	println()
 
-	ufmt.Println("[SCENARIO] 3. Check initial position state")
+	ufmt.Println("[SCENARIO] 3. Mint additional position (8000~12000)")
+	mintInitialPosition()
+	println()
+
+	ufmt.Println("[SCENARIO] 4. Check initial position state")
 	checkInitialPositionState()
 	println()
 
-	ufmt.Println("[SCENARIO] 4. Execute swap to change price")
+	ufmt.Println("[SCENARIO] 5. Execute swap to change price")
 	executeSwap()
 	println()
 
-	ufmt.Println("[SCENARIO] 5. Reposition to new range (9000~13000)")
+	ufmt.Println("[SCENARIO] 6. Reposition to new range (9000~13000)")
 	repositionToNewRange()
 	println()
 
-	ufmt.Println("[SCENARIO] 6. Check repositioned state")
+	ufmt.Println("[SCENARIO] 7. Check repositioned state")
 	checkRepositionedState()
 	println()
 
-	ufmt.Println("[SCENARIO] 7. Execute swap in new range")
+	ufmt.Println("[SCENARIO] 8. Execute swap in new range")
 	executeSwapInNewRange()
 	println()
 
-	ufmt.Println("[SCENARIO] 8. Check final position state")
+	ufmt.Println("[SCENARIO] 9. Check final position state")
 	checkFinalPositionState()
 	println()
 }
@@ -174,8 +178,8 @@ func repositionToNewRange() {
 	)
 
 	ufmt.Printf("[EXPECTED] New liquidity should be %s\n", liquidity)
-	ufmt.Printf("[EXPECTED] Amount0 should be %s\n", amount0)
-	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
+	ufmt.Printf("[EXPECTED] Amount0 should be %d\n", amount0)
+	ufmt.Printf("[EXPECTED] Amount1 should be %d\n", amount1)
 }
 
 func checkRepositionedState() {
@@ -238,39 +242,50 @@ func checkFinalPositionState() {
 // [EXPECTED] Amount0 should be 18394892
 // [EXPECTED] Amount1 should be 50000000
 //
-// [SCENARIO] 3. Check initial position state
+// [SCENARIO] 3. Mint additional position (8000~12000)
+// [INFO] Minting initial position
+// [EXPECTED] Position ID should be 2
+// [EXPECTED] Liquidity should be 318704392
+// [EXPECTED] Amount0 should be 18394892
+// [EXPECTED] Amount1 should be 50000000
+//
+// [SCENARIO] 4. Check initial position state
 // [EXPECTED] Position liquidity should be 318704392
 // [EXPECTED] Position tickLower should be 8000
 // [EXPECTED] Position tickUpper should be 12000
 //
-// [SCENARIO] 4. Execute swap to change price
+// [SCENARIO] 5. Execute swap to change price
+// [DEBUG] Tick before swap: 10000
 // [INFO] Executing swap to change price
+// [DEBUG] Tick after swap: 8991
 // [EXPECTED] Swap amount0 should be 20000000
-// [EXPECTED] Swap amount1 should be -49243484
+// [EXPECTED] Swap amount1 should be -51664436
 //
-// [SCENARIO] 5. Reposition to new range (9000~13000)
+// [SCENARIO] 6. Reposition to new range (9000~13000)
 // [INFO] Collecting fees before reposition
-// [EXPECTED] Collected fee0 should be 9900
+// [EXPECTED] Collected fee0 should be 4950
 // [EXPECTED] Collected fee1 should be 0
 // [INFO] Decreasing liquidity for reposition (liquidity: 318704392)
 // [INFO] Repositioning to new range
 // [EXPECTED] New liquidity should be 432601712
-// [EXPECTED] Amount0 should be %!s(int32=9000)
-// [EXPECTED] Amount1 should be %!s(int32=13000)
+// [EXPECTED] Amount0 should be 9000
+// [EXPECTED] Amount1 should be 13000
 //
-// [SCENARIO] 6. Check repositioned state
+// [SCENARIO] 7. Check repositioned state
 // [EXPECTED] Position liquidity should be 432601712
 // [EXPECTED] Position tickLower should be 9000
 // [EXPECTED] Position tickUpper should be 13000
 //
-// [SCENARIO] 7. Execute swap in new range
+// [SCENARIO] 8. Execute swap in new range
+// [DEBUG] Tick before second swap: 8991
+// [DEBUG] Pool liquidity: 318704392
 // [INFO] Executing swap in new range
-// [EXPECTED] Swap amount0 should be -7895067
+// [EXPECTED] Swap amount0 should be -7994911
 // [EXPECTED] Swap amount1 should be 20000000
 //
-// [SCENARIO] 8. Check final position state
+// [SCENARIO] 9. Check final position state
 // [EXPECTED] Final position liquidity should be 432601712
 // [EXPECTED] Final position tickLower should be 9000
 // [EXPECTED] Final position tickUpper should be 13000
 // [EXPECTED] Final fee0 should be 0
-// [EXPECTED] Final fee1 should be 9900
+// [EXPECTED] Final fee1 should be 5642
