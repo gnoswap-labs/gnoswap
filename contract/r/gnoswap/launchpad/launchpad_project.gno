@@ -500,7 +500,19 @@ func (p *createProjectParams) validateRatio() error {
 		)
 	}
 
+	if !p.isRatiosInOrder() {
+		return makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("invalid ratio order, tier ratios must be in ascending order: tier30(%d) <= tier90(%d) <= tier180(%d)", p.tier30Ratio, p.tier90Ratio, p.tier180Ratio),
+		)
+	}
+
 	return nil
+}
+
+// isRatiosInOrder checks if tier ratios are in ascending order
+func (p *createProjectParams) isRatiosInOrder() bool {
+	return p.tier30Ratio <= p.tier90Ratio && p.tier90Ratio <= p.tier180Ratio
 }
 
 // ValidateStartTime checks if the start time is available.
