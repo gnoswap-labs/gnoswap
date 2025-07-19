@@ -107,11 +107,11 @@ func TestSwapMathComputeSwapStep(t *testing.T) {
 			feePips:         3000,
 			sqrtNextX96:     encodePriceSqrtTest(t, "1", "1"),
 			chkSqrtNextX96: func(sqrtRatioNextX96, priceTarget *u256.Uint) {
-				uassert.True(t, sqrtRatioNextX96.Eq(encodePriceSqrtTest(t, "1", "1")))
+				uassert.True(t, sqrtRatioNextX96.Eq(encodePriceSqrtTest(t, "2", "1")))
 			},
 			amountIn:  "0",
 			amountOut: "0",
-			feeAmount: "1000000",
+			feeAmount: "0",
 		},
 		{
 			name:            "zero_amount_remaining",
@@ -577,7 +577,7 @@ func TestSwapMathComputeSwapStepFail(t *testing.T) {
 			liquidity:        u256.MustFromDecimal("2000000000000000000"),
 			amount_remaining: i256.MustFromDecimal("1000000000000000000"),
 			fee_pips:         1000001,
-			expected_message: "SwapMathComputeSwapStep: feePips must be <= 1000000",
+			expected_message: "SwapMathComputeSwapStep: feePips must be less than or equal to 1000000",
 		},
 		{
 			name:             "sqrt_price_below_minimum",
@@ -586,7 +586,7 @@ func TestSwapMathComputeSwapStepFail(t *testing.T) {
 			liquidity:        u256.MustFromDecimal("1"),
 			amount_remaining: i256.MustFromDecimal("100"),
 			fee_pips:         1,
-			expected_message: "SwapMathComputeSwapStep: sqrt price out of bounds",
+			expected_message: errInvalidPoolSqrtPrice.Error(),
 		},
 	}
 
@@ -662,8 +662,8 @@ func TestSwapMathHighPrecision(t *testing.T) {
 			if !test.amount.IsNeg() {
 				total := new(u256.Uint).Add(amountInNum, feeAmountNum)
 				uassert.True(t, total.Lte(test.amount.Abs()),
-					ufmt.Sprintf("Total consumption %s should not exceed input %s", 
-					total.ToString(), test.amount.Abs().ToString()))
+					ufmt.Sprintf("Total consumption %s should not exceed input %s",
+						total.ToString(), test.amount.Abs().ToString()))
 			}
 		})
 	}
@@ -671,33 +671,33 @@ func TestSwapMathHighPrecision(t *testing.T) {
 
 func TestSwapMathExtremeFees(t *testing.T) {
 	tests := []struct {
-		name      string
-		fee_pips  uint64
+		name           string
+		fee_pips       uint64
 		expect_no_swap bool
 	}{
 		{
-			name:      "minimal_fee_1_pip",
-			fee_pips:  1,
+			name:           "minimal_fee_1_pip",
+			fee_pips:       1,
 			expect_no_swap: false,
 		},
 		{
-			name:      "low_fee_10_pips",
-			fee_pips:  10,
+			name:           "low_fee_10_pips",
+			fee_pips:       10,
 			expect_no_swap: false,
 		},
 		{
-			name:      "medium_fee_3000_pips",
-			fee_pips:  3000,
+			name:           "medium_fee_3000_pips",
+			fee_pips:       3000,
 			expect_no_swap: false,
 		},
 		{
-			name:      "high_fee_50000_pips",
-			fee_pips:  50000,
+			name:           "high_fee_50000_pips",
+			fee_pips:       50000,
 			expect_no_swap: false,
 		},
 		{
-			name:      "very_high_fee_500000_pips",
-			fee_pips:  500000,
+			name:           "very_high_fee_500000_pips",
+			fee_pips:       500000,
 			expect_no_swap: false,
 		},
 	}

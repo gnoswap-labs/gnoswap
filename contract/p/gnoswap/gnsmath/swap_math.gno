@@ -32,7 +32,7 @@ func SwapMathComputeSwapStep(
 ) (*u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint) {
 	if sqrtRatioCurrentX96 == nil || sqrtRatioTargetX96 == nil ||
 		liquidity == nil || amountRemaining == nil {
-		panic("SwapMathComputeSwapStepStr: invalid input")
+		panic("SwapMathComputeSwapStep: invalid input")
 	}
 
 	// This function is publicly accessible and can be called by external users or contracts.
@@ -41,12 +41,12 @@ func SwapMathComputeSwapStep(
 	// from 1000000 (representing 100%), and if feePips exceeds 1000000, it would cause an underflow,
 	// leading to incorrect fee calculations.
 	if feePips > denominator {
-		panic("SwapMathComputeSwapStepStr: feePips must be less than or equal to 1000000")
+		panic("SwapMathComputeSwapStep: feePips must be less than or equal to 1000000")
 	}
 
 	// zeroForOne determines swap direction based on the relationship of current vs. target
 	zeroForOne := sqrtRatioCurrentX96.Gte(sqrtRatioTargetX96)
-	
+
 	// POSITIVE == EXACT_IN => Estimated AmountOut
 	// NEGATIVE == EXACT_OUT => Estimated AmountIn
 	exactIn := !amountRemaining.IsNeg()
@@ -141,11 +141,15 @@ func SwapMathComputeSwapStep(
 		)
 	}
 
+	// Final sanity check for resulting price
+	if sqrtRatioNextX96.Lt(MIN_SQRT_RATIO) || sqrtRatioNextX96.Gt(MAX_SQRT_RATIO) {
+		panic(errInvalidPoolSqrtPrice)
+	}
+
 	return sqrtRatioNextX96, amountIn, amountOut, feeAmount
 }
 
 // handleExactIn handles the EXACT_IN scenario and returns (nextSqrtPrice, provisionalAmountIn).
-// Optimized version with reduced memory allocations and faster early returns
 func handleExactIn(
 	zeroForOne bool,
 	sqrtRatioCurrentX96,
@@ -154,7 +158,6 @@ func handleExactIn(
 	amountRemainingAbs,
 	withoutFeeRateInPips *u256.Uint,
 ) (*u256.Uint, *u256.Uint) {
-	// Compute amountRemainingLessFee
 	amountRemainingLessFee := u256.MulDiv(
 		amountRemainingAbs,
 		withoutFeeRateInPips,
@@ -172,7 +175,7 @@ func handleExactIn(
 	var amountIn *u256.Uint
 	if zeroForOne {
 		amountIn = getAmount0DeltaHelper(
-			sqrtRatioTargetX96, // from lower to current
+			sqrtRatioTargetX96,
 			sqrtRatioCurrentX96,
 			liquidity,
 			true,
@@ -198,23 +201,16 @@ func handleExactIn(
 		zeroForOne,
 	)
 
-	// If sqrt_price didn't change, amountIn is 0
-	if nextSqrt.Eq(sqrtRatioCurrentX96) {
-		return sqrtRatioCurrentX96, u256.Zero()
-	}
-
 	// Return the partially moved price and calculate amountIn later
 	// This avoids double calculation and ensures consistency
-	return nextSqrt, amountIn
+	return nextSqrt, amountRemainingLessFee
 }
 
 // handleExactOut handles the EXACT_OUT scenario and returns (nextSqrtPrice, provisionalAmountOut).
-// Optimized version with reduced function calls and improved branch prediction
 func handleExactOut(
 	zeroForOne bool,
 	sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity, amountRemainingAbs *u256.Uint,
 ) (*u256.Uint, *u256.Uint) {
-	// Optimized: calculate amountOut based on direction with single conditional
 	var amountOut *u256.Uint
 	if zeroForOne {
 		amountOut = getAmount1DeltaHelper(sqrtRatioTargetX96, sqrtRatioCurrentX96, liquidity, false)
@@ -235,10 +231,5 @@ func handleExactOut(
 		zeroForOne,
 	)
 
-	// If sqrt_price didn't change, amountOut is 0
-	if nextSqrt.Eq(sqrtRatioCurrentX96) {
-		return sqrtRatioCurrentX96, u256.Zero()
-	}
-
-	return nextSqrt, amountOut
+	return nextSqrt, amountRemainingAbs
 }
