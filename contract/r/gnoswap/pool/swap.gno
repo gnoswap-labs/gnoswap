@@ -459,7 +459,7 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 	step.amountOut = amountOut
 	step.feeAmount = feeAmount
 
-	state.setSqrtPriceX96(sqrtPriceX96.ToString())
+	state.setSqrtPriceX96(sqrtPriceX96)
 
 	return state, step
 }
