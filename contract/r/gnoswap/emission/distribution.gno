@@ -175,19 +175,6 @@ func distributeToTarget(cur realm, amount int64) int64 {
 		return false
 	})
 
-	leftAmount := amount - totalSent
-
-	// guard for totalSent > amount case
-	// this should never happen.
-	if leftAmount < 0 {
-		panic(addDetailToError(
-			errInvalidEmissionTarget,
-			ufmt.Sprintf("total distributed amount (%d) exceeds original amount (%d)", totalSent, amount),
-		))
-	}
-
-	setLeftGNSAmount(leftAmount)
-
 	return totalSent
 }
 
