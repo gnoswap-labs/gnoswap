@@ -57,7 +57,7 @@ var (
 	tickLowOffset  = i256.MustFromDecimal("3402992956809132418596140100660247210")
 	tickHiOffset   = i256.MustFromDecimal("291339464771989622907027621153398088495")
 
-	oneLsh32 = u256.One().Lsh(u256.One(), 32)                                                                     // 1 << 32
+	oneLsh32 = u256.One().Lsh(u256.One(), 32) // 1 << 32
 )
 
 // TickMathGetSqrtRatioAtTick calculates the square root price ratio for a given tick.
@@ -92,7 +92,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 		if absTick&(1<<uint(i)) != 0 {
 			// Use temporary variables to avoid memory allocation in hot path
 			temp = temp.Mul(ratio, ratioConstants[i-1])
-			ratio = temp.Rsh(temp, 128) // in-place: ratio = temp >> 128
+			ratio = ratio.Rsh(temp, 128)
 		}
 	}
 
@@ -122,37 +122,37 @@ func getMostSignificantBit(r *u256.Uint) uint64 {
 	// Optimized MSB calculation using pre-computed thresholds
 	if temp.Gt(msb128Threshold) {
 		msb |= 128
-		temp.Rsh(temp, 128) // in-place: temp = temp >> 128
+		temp = temp.Rsh(temp, 128)
 	}
 
 	if temp.Gt(msb64Threshold) {
 		msb |= 64
-		temp.Rsh(temp, 64)
+		temp = temp.Rsh(temp, 64)
 	}
 
 	if temp.Gt(msb32Threshold) {
 		msb |= 32
-		temp.Rsh(temp, 32)
+		temp = temp.Rsh(temp, 32)
 	}
 
 	if temp.Gt(msb16Threshold) {
 		msb |= 16
-		temp.Rsh(temp, 16)
+		temp = temp.Rsh(temp, 16)
 	}
 
 	if temp.Gt(msb8Threshold) {
 		msb |= 8
-		temp.Rsh(temp, 8)
+		temp = temp.Rsh(temp, 8)
 	}
 
 	if temp.Gt(msb4Threshold) {
 		msb |= 4
-		temp.Rsh(temp, 4)
+		temp = temp.Rsh(temp, 4)
 	}
 
 	if temp.Gt(msb2Threshold) {
 		msb |= 2
-		temp.Rsh(temp, 2)
+		temp = temp.Rsh(temp, 2)
 	}
 
 	if temp.Gt(msb1Threshold) {
@@ -212,22 +212,22 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 		tempI256 = i256.FromUint256(tempF)
 		f := tempF
 
-		tempI256 = tempI256.Lsh(tempI256, uint(63-i)) // in-place: tempI256 = tempI256 << (63-i)
-		log2 = log2.Or(log2, tempI256)                // in-place: log2 = log2 | tempI256
+		tempI256 = tempI256.Lsh(tempI256, uint(63-i))
+		log2 = log2.Or(log2, tempI256)
 		r = new(u256.Uint).Rsh(r, uint(f.Uint64()))
 	}
 
-    // Calculate tick from log_sqrt10001
-    logSqrt10001 := new(i256.Int).Mul(log2, log2Multiplier)
+	// Calculate tick from log_sqrt10001
+	logSqrt10001 := new(i256.Int).Mul(log2, log2Multiplier)
 
-    // Calculate tick bounds
-    tickLow := new(i256.Int).Sub(logSqrt10001, tickLowOffset)
-    tickLow.Rsh(tickLow, 128) // in-place: tickLow = tickLow >> 128
-    tickLowInt32 := int32(tickLow.Int64())
+	// Calculate tick bounds
+	tickLow := new(i256.Int).Sub(logSqrt10001, tickLowOffset)
+	tickLow = tickLow.Rsh(tickLow, 128)
+	tickLowInt32 := int32(tickLow.Int64())
 
-    tickHi := new(i256.Int).Add(logSqrt10001, tickHiOffset)
-    tickHi.Rsh(tickHi, 128) // in-place: tickHi = tickHi >> 128
-    tickHiInt32 := int32(tickHi.Int64())
+	tickHi := new(i256.Int).Add(logSqrt10001, tickHiOffset)
+	tickHi = tickHi.Rsh(tickHi, 128)
+	tickHiInt32 := int32(tickHi.Int64())
 
 	// Select the appropriate tick
 	if tickLowInt32 == tickHiInt32 {
