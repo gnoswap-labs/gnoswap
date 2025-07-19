@@ -223,7 +223,7 @@ func getHalvingYearAndEndTimestamp(timestamp int64) (int64, int64) {
 	endTimestamp := state.getEndTimestamp()
 	startTimestamp := state.getStartTimestamp()
 
-	if timestamp > endTimestamp { // After 12 years
+	if timestamp >= endTimestamp { // After 12 years
 		return 0, 0
 	}
 
