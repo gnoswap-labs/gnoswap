@@ -157,7 +157,7 @@ func main() {
 //
 // [SCENARIO] 1. Minting position spanning current tick
 // [INFO] Minted position: 59817378 0
-// [INFO] Swapped: -59817377 60183362
+// [INFO] Swapped: -59817377 60183363
 // [INFO] Burned: 0 60177342
 // [INFO] Collected: 0 60177342
 // [EXPECTED] Pool tick: 120 expected: >= 120

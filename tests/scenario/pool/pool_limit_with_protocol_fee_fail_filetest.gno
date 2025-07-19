@@ -175,6 +175,6 @@ func main() {
 // [EXPECTED] collect0: 60177342 expected: 60177342
 // [EXPECTED] collect1: 0 expected: 0
 //
-// [EXPECTED] Pool tick: -121 expected: < -120
+// [EXPECTED] Pool tick: -887272 expected: < -120
 //
 // [INFO] Scenario completed

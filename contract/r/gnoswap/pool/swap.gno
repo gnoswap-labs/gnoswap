@@ -455,12 +455,6 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 		uint64(pool.fee),
 	)
 
-	println("[DEBUG] computeAmounts")
-	println("[DEBUG] sqrtPriceX96:", sqrtPriceX96.ToString())
-	println("[DEBUG] amountIn:", amountIn.ToString())
-	println("[DEBUG] amountOut:", amountOut.ToString())
-	println("[DEBUG] feeAmount:", feeAmount.ToString())
-
 	step.amountIn = amountIn
 	step.amountOut = amountOut
 	step.feeAmount = feeAmount
