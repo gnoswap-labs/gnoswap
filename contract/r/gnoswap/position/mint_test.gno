@@ -550,11 +550,11 @@ func TestMintInternal_FeeTierEdgeCases(t *testing.T) {
 				caller:         alice,
 				mintTo:         alice,
 			},
-			expectedId: 1,
+			expectedId:        1,
 			expectedLiquidity: "1438335065300290965",
-			expectedAmount0: "1000",
-			expectedAmount1: "0",
-			expectPanic: false,
+			expectedAmount0:   "1000",
+			expectedAmount1:   "0",
+			expectPanic:       false,
 		},
 	}
 

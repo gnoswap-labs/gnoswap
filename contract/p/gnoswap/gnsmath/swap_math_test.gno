@@ -10,7 +10,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func TestSwapMathComputeSwapStepStr(t *testing.T) {
+func TestSwapMathComputeSwapStep(t *testing.T) {
 	tests := []struct {
 		name                           string
 		currentX96, targetX96          *u256.Uint
@@ -226,13 +226,13 @@ func TestSwapMathComputeSwapStepStr(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			sqrtRatioNextX96, amountIn, amountOut, feeAmount := SwapMathComputeSwapStepStr(
+			sqrtRatioNextX96, amountIn, amountOut, feeAmount := SwapMathComputeSwapStep(
 				test.currentX96, test.targetX96, test.liquidity, test.amountRemaining, test.feePips,
 			)
-			test.chkSqrtNextX96(u256.MustFromDecimal(sqrtRatioNextX96), test.sqrtNextX96)
-			uassert.Equal(t, amountIn, test.amountIn)
-			uassert.Equal(t, amountOut, test.amountOut)
-			uassert.Equal(t, feeAmount, test.feeAmount)
+			test.chkSqrtNextX96(sqrtRatioNextX96, test.sqrtNextX96)
+			uassert.Equal(t, amountIn.ToString(), test.amountIn)
+			uassert.Equal(t, amountOut.ToString(), test.amountOut)
+			uassert.Equal(t, feeAmount.ToString(), test.feeAmount)
 		})
 	}
 }
@@ -306,13 +306,13 @@ func TestSwapMathFeeConsistency(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			sqrtNext, amountIn, _, feeAmount := SwapMathComputeSwapStepStr(
+			sqrtNext, amountIn, _, feeAmount := SwapMathComputeSwapStep(
 				test.current, test.target, test.liquidity, test.amount, test.fee_pips,
 			)
 
-			amount_in_num := u256.MustFromDecimal(amountIn)
-			fee_amount_num := u256.MustFromDecimal(feeAmount)
-			sqrt_next_num := u256.MustFromDecimal(sqrtNext)
+			amount_in_num := amountIn
+			fee_amount_num := feeAmount
+			sqrt_next_num := sqrtNext
 
 			// Check if it's a partial fill (didn't reach target)
 			is_partial_fill := !sqrt_next_num.Eq(test.target)
@@ -366,11 +366,11 @@ func TestSwapMathPriceBounds(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			sqrtNext, _, _, _ := SwapMathComputeSwapStepStr(
+			sqrtNext, _, _, _ := SwapMathComputeSwapStep(
 				test.current, test.target, test.liquidity, test.amount, test.fee_pips,
 			)
 
-			sqrt_next_num := u256.MustFromDecimal(sqrtNext)
+			sqrt_next_num := sqrtNext
 
 			if test.zero_for_one {
 				uassert.True(t, sqrt_next_num.Gte(test.target),
@@ -417,21 +417,16 @@ func TestSwapMathSymmetry(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			// Forward swap
-			sqrt1_str, _, out1_str, fee1_str := SwapMathComputeSwapStepStr(
+			sqrt1, _, out1, fee1 := SwapMathComputeSwapStep(
 				test.current, test.target, test.liquidity, test.amount, test.fee_pips,
 			)
-			sqrt1 := u256.MustFromDecimal(sqrt1_str)
-			fee1 := u256.MustFromDecimal(fee1_str)
 
 			// Reverse swap
-			out1_neg := i256.MustFromDecimal(out1_str)
-			out1_neg.Neg(out1_neg)
+			out1_neg := i256.FromUint256(out1.Clone()).Neg(i256.FromUint256(out1.Clone()))
 
-			sqrt2_str, _, _, fee2_str := SwapMathComputeSwapStepStr(
+			sqrt2, _, _, fee2 := SwapMathComputeSwapStep(
 				sqrt1, test.current, test.liquidity, out1_neg, test.fee_pips,
 			)
-			sqrt2 := u256.MustFromDecimal(sqrt2_str)
-			fee2 := u256.MustFromDecimal(fee2_str)
 
 			// Price should return to original
 			uassert.True(t, sqrt2.Eq(test.current),
@@ -484,12 +479,12 @@ func TestSwapMathBoundaries(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			sqrt_next, amount_in, _, _ := SwapMathComputeSwapStepStr(
+			sqrt_next, amount_in, _, _ := SwapMathComputeSwapStep(
 				test.current_x96, test.target_x96, test.liquidity, test.amount_remaining, test.fee_pips,
 			)
 
-			sqrt_next_num := u256.MustFromDecimal(sqrt_next)
-			amount_in_num := u256.MustFromDecimal(amount_in)
+			sqrt_next_num := sqrt_next
+			amount_in_num := amount_in
 
 			if test.expect_price_move {
 				uassert.True(t, !sqrt_next_num.Eq(test.current_x96),
@@ -532,16 +527,16 @@ func TestSwapMathPartialFill(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			sqrt_next_str, in_str, _, fee_str := SwapMathComputeSwapStepStr(
+			sqrt_next_str, in_str, _, fee_str := SwapMathComputeSwapStep(
 				test.current,
 				test.target,
 				test.liquidity,
 				test.amount,
 				test.fee_pips,
 			)
-			sqrt_next := u256.MustFromDecimal(sqrt_next_str)
-			in_amt := u256.MustFromDecimal(in_str)
-			fee_amt := u256.MustFromDecimal(fee_str)
+			sqrt_next := sqrt_next_str
+			in_amt := in_str
+			fee_amt := fee_str
 
 			// Should not reach target with small amount
 			uassert.True(t, !sqrt_next.Eq(test.target), "Price should move but not reach target")
@@ -556,7 +551,7 @@ func TestSwapMathPartialFill(t *testing.T) {
 	}
 }
 
-func TestSwapMathComputeSwapStepStrFail(t *testing.T) {
+func TestSwapMathComputeSwapStepFail(t *testing.T) {
 	tests := []struct {
 		name             string
 		current_x96      *u256.Uint
@@ -573,7 +568,7 @@ func TestSwapMathComputeSwapStepStrFail(t *testing.T) {
 			liquidity:        nil,
 			amount_remaining: nil,
 			fee_pips:         600,
-			expected_message: "SwapMathComputeSwapStepStr: invalid input",
+			expected_message: "SwapMathComputeSwapStep: invalid input",
 		},
 		{
 			name:             "fee_pips_exceeds_maximum",
@@ -582,7 +577,7 @@ func TestSwapMathComputeSwapStepStrFail(t *testing.T) {
 			liquidity:        u256.MustFromDecimal("2000000000000000000"),
 			amount_remaining: i256.MustFromDecimal("1000000000000000000"),
 			fee_pips:         1000001,
-			expected_message: "SwapMathComputeSwapStepStr: feePips must be <= 1000000",
+			expected_message: "SwapMathComputeSwapStep: feePips must be <= 1000000",
 		},
 		{
 			name:             "sqrt_price_below_minimum",
@@ -591,14 +586,14 @@ func TestSwapMathComputeSwapStepStrFail(t *testing.T) {
 			liquidity:        u256.MustFromDecimal("1"),
 			amount_remaining: i256.MustFromDecimal("100"),
 			fee_pips:         1,
-			expected_message: "SwapMathComputeSwapStepStr: sqrt price out of bounds",
+			expected_message: "SwapMathComputeSwapStep: sqrt price out of bounds",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			uassert.PanicsWithMessage(t, test.expected_message, func() {
-				SwapMathComputeSwapStepStr(
+				SwapMathComputeSwapStep(
 					test.current_x96,
 					test.target_x96,
 					test.liquidity,
@@ -647,15 +642,15 @@ func TestSwapMathHighPrecision(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			sqrtNext, amountIn, amountOut, feeAmount := SwapMathComputeSwapStepStr(
+			sqrtNext, amountIn, amountOut, feeAmount := SwapMathComputeSwapStep(
 				test.current, test.target, test.liquidity, test.amount, test.fee_pips,
 			)
 
 			// Basic sanity checks
-			sqrtNextNum := u256.MustFromDecimal(sqrtNext)
-			amountInNum := u256.MustFromDecimal(amountIn)
-			amountOutNum := u256.MustFromDecimal(amountOut)
-			feeAmountNum := u256.MustFromDecimal(feeAmount)
+			sqrtNextNum := sqrtNext
+			amountInNum := amountIn
+			amountOutNum := amountOut
+			feeAmountNum := feeAmount
 
 			uassert.True(t, sqrtNextNum.Gte(MIN_SQRT_RATIO), "sqrt price should be >= MIN_SQRT_RATIO")
 			uassert.True(t, sqrtNextNum.Lte(MAX_SQRT_RATIO), "sqrt price should be <= MAX_SQRT_RATIO")
@@ -714,13 +709,13 @@ func TestSwapMathExtremeFees(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			sqrtNext, amountIn, _, feeAmount := SwapMathComputeSwapStepStr(
+			sqrtNext, amountIn, _, feeAmount := SwapMathComputeSwapStep(
 				current, target, liquidity, amount, test.fee_pips,
 			)
 
-			amountInNum := u256.MustFromDecimal(amountIn)
-			feeAmountNum := u256.MustFromDecimal(feeAmount)
-			sqrtNextNum := u256.MustFromDecimal(sqrtNext)
+			amountInNum := amountIn
+			feeAmountNum := feeAmount
+			sqrtNextNum := sqrtNext
 
 			if test.expect_no_swap {
 				// With extreme fees, most/all input goes to fees, no actual swap
@@ -774,14 +769,14 @@ func TestSwapMathConsistencyChecks(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			sqrtNext, amountIn, amountOut, feeAmount := SwapMathComputeSwapStepStr(
+			sqrtNext, amountIn, amountOut, feeAmount := SwapMathComputeSwapStep(
 				test.current, test.target, test.liquidity, test.amount, test.fee_pips,
 			)
 
-			sqrtNextNum := u256.MustFromDecimal(sqrtNext)
-			amountInNum := u256.MustFromDecimal(amountIn)
-			amountOutNum := u256.MustFromDecimal(amountOut)
-			feeAmountNum := u256.MustFromDecimal(feeAmount)
+			sqrtNextNum := sqrtNext
+			amountInNum := amountIn
+			amountOutNum := amountOut
+			feeAmountNum := feeAmount
 
 			// Check that price movement is in the right direction
 			zeroForOne := test.current.Gte(test.target)

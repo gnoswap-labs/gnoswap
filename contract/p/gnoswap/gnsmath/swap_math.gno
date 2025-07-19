@@ -5,7 +5,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// SwapMathComputeSwapStepStr computes the next sqrt price, amount in, amount out, and fee amount
+// SwapMathComputeSwapStep computes the next sqrt price, amount in, amount out, and fee amount
 // Computes the result of swapping some amount in, or amount out, given the parameters of the swap
 // The fee, plus the amount in, will never exceed the amount remaining if the swap's `amountSpecified` is positive
 //
@@ -21,32 +21,32 @@ import (
 // - amountIn: The amount to be swapped in, of either token0 or token1, based on the direction of the swap
 // - amountOut: The amount to be received, of either token0 or token1, based on the direction of the swap
 // - feeAmount: The amount of input that will be taken as a fee
-func SwapMathComputeSwapStepStr(
+func SwapMathComputeSwapStep(
 	sqrtRatioCurrentX96 *u256.Uint,
 	sqrtRatioTargetX96 *u256.Uint,
 	liquidity *u256.Uint,
 	amountRemaining *i256.Int,
 	feePips uint64,
-) (string, string, string, string) {
+) (*u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint) {
 	// Combined validation for better performance - single conditional check
 	if sqrtRatioCurrentX96 == nil || sqrtRatioTargetX96 == nil || liquidity == nil || amountRemaining == nil {
-		panic("SwapMathComputeSwapStepStr: invalid input")
+		panic("SwapMathComputeSwapStep: invalid input")
 	}
-	
+
 	// This function is publicly accessible and can be called by external users or contracts.
 	// While the pool realm only uses predefined fee values (100, 500, 3000, 10000) which are safely within range,
 	// external callers could potentially pass any feePips value. The fee calculation involves subtracting feePips
 	// from 1000000 (representing 100%), and if feePips exceeds 1000000, it would cause an underflow,
 	// leading to incorrect fee calculations.
 	if feePips > 1_000_000 {
-		panic("SwapMathComputeSwapStepStr: feePips must be <= 1000000")
+		panic("SwapMathComputeSwapStep: feePips must be <= 1000000")
 	}
 
 	// Pre-compute frequently used values to avoid repeated calculations
 	zeroForOne := sqrtRatioCurrentX96.Gte(sqrtRatioTargetX96)
 	exactIn := !amountRemaining.IsNeg()
 	amountRemainingAbs := amountRemaining.Abs()
-	
+
 	// Optimize fee calculations - use constants where possible
 	feePipsUint := u256.NewUint(feePips)
 	feeDenom := new(u256.Uint).Sub(u256.NewUint(1_000_000), feePipsUint)
@@ -141,10 +141,10 @@ func SwapMathComputeSwapStepStr(
 
 	// Final bounds check - optimized with single condition
 	if sqrtRatioNextX96.Lt(MIN_SQRT_RATIO) || sqrtRatioNextX96.Gt(MAX_SQRT_RATIO) {
-		panic("SwapMathComputeSwapStepStr: sqrt price out of bounds")
+		panic("SwapMathComputeSwapStep: sqrt price out of bounds")
 	}
 
-	return sqrtRatioNextX96.ToString(), amountIn.ToString(), amountOut.ToString(), feeAmount.ToString()
+	return sqrtRatioNextX96, amountIn, amountOut, feeAmount
 }
 
 // handleExactIn handles the EXACT_IN scenario and returns (nextSqrtPrice, provisionalAmountIn).
@@ -157,7 +157,7 @@ func handleExactIn(
 
 	// Pre-computed constant to avoid repeated allocation
 	oneMillion := u256.NewUint(1_000_000)
-	
+
 	// Fast path: calculate fee-adjusted amount with single operation
 	amountRemainingLessFee := u256.MulDiv(amountRemainingAbs, feeDenom, oneMillion)
 
@@ -183,7 +183,7 @@ func handleExactIn(
 			true,
 		)
 	}
-	
+
 	// If zero input, then no swap
 	if amountIn.IsZero() {
 		return sqrtRatioCurrentX96, u256.Zero()

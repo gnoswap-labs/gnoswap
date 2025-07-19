@@ -447,7 +447,7 @@ func shouldUsePriceLimit(sqrtPriceNext, sqrtPriceLimit *u256.Uint, zeroForOne bo
 
 // computeAmounts calculates the input and output amounts for the current swap step.
 func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, step StepComputations) (SwapState, StepComputations) {
-	sqrtPriceX96Str, amountInStr, amountOutStr, feeAmountStr := plp.SwapMathComputeSwapStepStr(
+	sqrtPriceX96, amountIn, amountOut, feeAmount := plp.SwapMathComputeSwapStep(
 		state.sqrtPriceX96,
 		sqrtRatioTargetX96,
 		state.liquidity,
@@ -455,11 +455,11 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 		uint64(pool.fee),
 	)
 
-	step.amountIn = u256.MustFromDecimal(amountInStr)
-	step.amountOut = u256.MustFromDecimal(amountOutStr)
-	step.feeAmount = u256.MustFromDecimal(feeAmountStr)
+	step.amountIn = amountIn
+	step.amountOut = amountOut
+	step.feeAmount = feeAmount
 
-	state.setSqrtPriceX96(sqrtPriceX96Str)
+	state.setSqrtPriceX96(sqrtPriceX96.ToString())
 
 	return state, step
 }
