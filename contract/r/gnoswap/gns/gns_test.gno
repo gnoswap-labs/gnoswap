@@ -165,13 +165,13 @@ func TestGetterSetter(t *testing.T) {
 	t.Run("last minted height", func(t *testing.T) {
 		value := int64(123)
 		setLastMintedHeight(value)
-		uassert.Equal(t, value, GetLastMintedHeight())
+		uassert.Equal(t, value, LastMintedHeight())
 	})
 
 	t.Run("left emission amount", func(t *testing.T) {
 		value := int64(0)
 		setLeftEmissionAmount(value)
-		uassert.Equal(t, value, GetLeftEmissionAmount())
+		uassert.Equal(t, value, LeftEmissionAmount())
 	})
 }
 
@@ -313,6 +313,7 @@ func TestGrc20Methods(t *testing.T) {
 }
 
 func TestCalculateAmountToMint(t *testing.T) {
+	resetEmissionState(t)
 	startHeight := std.ChainHeight()
 
 	tests := []struct {

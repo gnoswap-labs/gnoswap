@@ -20,7 +20,7 @@ var warmupTemplate []Warmup = DefaultWarmupTemplate()
 
 func DefaultWarmupTemplate() []Warmup {
 	msInDay := int64(86400000)
-	blocksInDay := msInDay / int64(gns.GetAvgBlockTimeInMs())
+	blocksInDay := msInDay / int64(gns.AvgBlockTimeInMs())
 	blocksIn5Days := int64(5 * blocksInDay)
 	blocksIn10Days := int64(10 * blocksInDay)
 	blocksIn30Days := int64(30 * blocksInDay)
@@ -87,7 +87,7 @@ func (warmup *Warmup) apply(poolReward int64, positionLiquidity, stakedLiquidity
 	if stakedLiquidity.IsZero() {
 		return 0, 0
 	}
-	
+
 	poolRewardUint := u256.NewUintFromInt64(poolReward)
 	perPositionReward := u256.Zero().Mul(poolRewardUint, positionLiquidity)
 	perPositionReward = u256.Zero().Div(perPositionReward, stakedLiquidity)

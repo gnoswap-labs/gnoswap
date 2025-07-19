@@ -295,7 +295,7 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 	msInDay := int64(86400000)
 	// Base reward calculation: poolRewardPerBlock * (position/staked)
 	// 100 * (1000/2000) = 50 per block
-	blocksInDay := msInDay / int64(gns.GetAvgBlockTimeInMs()) // 43200
+	blocksInDay := msInDay / int64(gns.AvgBlockTimeInMs()) // 43200
 	baseReward := int64(50)
 
 	t.Run("7 days staking period", func(t *testing.T) {
