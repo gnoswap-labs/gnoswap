@@ -16,7 +16,7 @@ func init() {
 	currentLevel = HaltLevelSafeMode
 }
 
-// Global state (previously in Manager)
+// Global state manager
 var (
 	currentLevel    HaltLevel       = HaltLevelSafeMode
 	customOverrides map[OpType]bool = make(map[OpType]bool)
