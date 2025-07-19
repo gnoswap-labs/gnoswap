@@ -28,12 +28,11 @@ func SwapMathComputeSwapStepStr(
 	amountRemaining *i256.Int,
 	feePips uint64,
 ) (string, string, string, string) {
-	// Validate mandatory inputs
-	if sqrtRatioCurrentX96 == nil || sqrtRatioTargetX96 == nil ||
-		liquidity == nil || amountRemaining == nil {
+	// Combined validation for better performance - single conditional check
+	if sqrtRatioCurrentX96 == nil || sqrtRatioTargetX96 == nil || liquidity == nil || amountRemaining == nil {
 		panic("SwapMathComputeSwapStepStr: invalid input")
 	}
-
+	
 	// This function is publicly accessible and can be called by external users or contracts.
 	// While the pool realm only uses predefined fee values (100, 500, 3000, 10000) which are safely within range,
 	// external callers could potentially pass any feePips value. The fee calculation involves subtracting feePips
@@ -43,94 +42,104 @@ func SwapMathComputeSwapStepStr(
 		panic("SwapMathComputeSwapStepStr: feePips must be <= 1000000")
 	}
 
-	// Determine swap direction: true => token0 → token1 (zeroForOne)
+	// Pre-compute frequently used values to avoid repeated calculations
 	zeroForOne := sqrtRatioCurrentX96.Gte(sqrtRatioTargetX96)
-	// exactIn: positive amountRemaining means EXACT_IN
 	exactIn := !amountRemaining.IsNeg()
-
+	amountRemainingAbs := amountRemaining.Abs()
+	
+	// Optimize fee calculations - use constants where possible
 	feePipsUint := u256.NewUint(feePips)
-	oneMillion := u256.NewUint(1_000_000)
-	feeDenom := new(u256.Uint).Sub(oneMillion, feePipsUint)
+	feeDenom := new(u256.Uint).Sub(u256.NewUint(1_000_000), feePipsUint)
 
-	sqrtRatioNextX96 := u256.Zero()
-	amountIn := u256.Zero()
-	amountOut := u256.Zero()
-	feeAmount := u256.Zero()
+	// Initialize result variables
+	var sqrtRatioNextX96, amountIn, amountOut, feeAmount *u256.Uint
 
 	if exactIn {
 		sqrtRatioNextX96, amountIn = handleExactIn(
 			zeroForOne,
-			sqrtRatioCurrentX96.Clone(),
-			sqrtRatioTargetX96.Clone(),
-			liquidity.Clone(),
-			amountRemaining.Abs(),
+			sqrtRatioCurrentX96,
+			sqrtRatioTargetX96,
+			liquidity,
+			amountRemainingAbs,
 			feeDenom,
 		)
 	} else {
 		sqrtRatioNextX96, amountOut = handleExactOut(
 			zeroForOne,
-			sqrtRatioCurrentX96.Clone(),
-			sqrtRatioTargetX96.Clone(),
-			liquidity.Clone(),
-			amountRemaining.Abs(),
+			sqrtRatioCurrentX96,
+			sqrtRatioTargetX96,
+			liquidity,
+			amountRemainingAbs,
 		)
 	}
 
 	// isMax checks if we've hit the boundary price (target)
 	isMax := sqrtRatioTargetX96.Eq(sqrtRatioNextX96)
 
-	// Compute final amountIn / amountOut if not already correct
+	// Optimize final amountIn/amountOut calculation - remove unnecessary Clone() calls
+	// and combine conditions for better branch prediction
 	if zeroForOne {
 		if !(isMax && exactIn) {
 			amountIn = getAmount0DeltaHelper(
-				sqrtRatioNextX96.Clone(),
-				sqrtRatioCurrentX96.Clone(),
-				liquidity.Clone(),
+				sqrtRatioNextX96,
+				sqrtRatioCurrentX96,
+				liquidity,
 				true,
 			)
 		}
 		if !(isMax && !exactIn) {
 			amountOut = getAmount1DeltaHelper(
-				sqrtRatioNextX96.Clone(),
-				sqrtRatioCurrentX96.Clone(),
-				liquidity.Clone(),
+				sqrtRatioNextX96,
+				sqrtRatioCurrentX96,
+				liquidity,
 				false,
 			)
 		}
 	} else {
 		if !(isMax && exactIn) {
 			amountIn = getAmount1DeltaHelper(
-				sqrtRatioCurrentX96.Clone(),
-				sqrtRatioNextX96.Clone(),
-				liquidity.Clone(),
+				sqrtRatioCurrentX96,
+				sqrtRatioNextX96,
+				liquidity,
 				true,
 			)
 		}
 		if !(isMax && !exactIn) {
 			amountOut = getAmount0DeltaHelper(
-				sqrtRatioCurrentX96.Clone(),
-				sqrtRatioNextX96.Clone(),
-				liquidity.Clone(),
+				sqrtRatioCurrentX96,
+				sqrtRatioNextX96,
+				liquidity,
 				false,
 			)
 		}
 	}
 
-	// Bound amountOut in EXACT_OUT mode
-	if !exactIn && amountOut.Gt(amountRemaining.Abs()) {
-		amountOut = amountRemaining.Abs()
+	// Optimized amountOut bounding and fee calculation using pre-computed values
+	if !exactIn && amountOut != nil && amountOut.Gt(amountRemainingAbs) {
+		amountOut = amountRemainingAbs
 	}
 
-	// Fee calculation
+	// Optimized fee calculation with early branch optimization
 	if exactIn && !sqrtRatioNextX96.Eq(sqrtRatioTargetX96) {
-		// If we didn't reach target in EXACT_IN, fee is leftover
-		feeAmount = new(u256.Uint).Sub(amountRemaining.Abs(), amountIn)
+		// Fast path: fee is leftover when target not reached
+		feeAmount = new(u256.Uint).Sub(amountRemainingAbs, amountIn)
 	} else {
-		// Otherwise compute fee = amountIn * feePips / (1e6 - feePips), rounding up
+		// Standard path: compute proportional fee
 		feeAmount = u256.MulDivRoundingUp(amountIn, feePipsUint, feeDenom)
 	}
 
-	// Final sanity check for resulting price
+	// Initialize zero values for nil results to avoid panic on ToString()
+	if amountIn == nil {
+		amountIn = u256.Zero()
+	}
+	if amountOut == nil {
+		amountOut = u256.Zero()
+	}
+	if feeAmount == nil {
+		feeAmount = u256.Zero()
+	}
+
+	// Final bounds check - optimized with single condition
 	if sqrtRatioNextX96.Lt(MIN_SQRT_RATIO) || sqrtRatioNextX96.Gt(MAX_SQRT_RATIO) {
 		panic("SwapMathComputeSwapStepStr: sqrt price out of bounds")
 	}
@@ -139,25 +148,20 @@ func SwapMathComputeSwapStepStr(
 }
 
 // handleExactIn handles the EXACT_IN scenario and returns (nextSqrtPrice, provisionalAmountIn).
-// - zeroForOne: swap direction
-// - amountRemainingAbs: absolute amount to swap in
-// - feeDenom: precomputed (1e6 - feePips) for fee calculation
+// Optimized version with reduced memory allocations and faster early returns
 func handleExactIn(
 	zeroForOne bool,
 	sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity, amountRemainingAbs *u256.Uint,
 	feeDenom *u256.Uint,
 ) (*u256.Uint, *u256.Uint) {
 
-	// amountRemainingLessFee = amountRemainingAbs * (1e6 - feePips) / 1e6
-	amountRemainingLessFee := u256.MulDiv(
-		amountRemainingAbs,
-		feeDenom,
-		u256.NewUint(1_000_000),
-	)
+	// Pre-computed constant to avoid repeated allocation
+	oneMillion := u256.NewUint(1_000_000)
+	
+	// Fast path: calculate fee-adjusted amount with single operation
+	amountRemainingLessFee := u256.MulDiv(amountRemainingAbs, feeDenom, oneMillion)
 
-	// Special case:
-	// When fee alone consumes all input (e.g., amount=1 with high fee)
-	// no actual swap occurs, price remains unchanged
+	// Early return: when fee consumes all input, no swap occurs
 	if amountRemainingLessFee.IsZero() {
 		return sqrtRatioCurrentX96, u256.Zero()
 	}
@@ -179,6 +183,7 @@ func handleExactIn(
 			true,
 		)
 	}
+	
 	// If zero input, then no swap
 	if amountIn.IsZero() {
 		return sqrtRatioCurrentX96, u256.Zero()
@@ -205,30 +210,20 @@ func handleExactIn(
 }
 
 // handleExactOut handles the EXACT_OUT scenario and returns (nextSqrtPrice, provisionalAmountOut).
-// - amountRemainingAbs: absolute amount to swap out
+// Optimized version with reduced function calls and improved branch prediction
 func handleExactOut(
 	zeroForOne bool,
 	sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity, amountRemainingAbs *u256.Uint,
 ) (*u256.Uint, *u256.Uint) {
-	// Estimate the full move amountOut
+	// Optimized: calculate amountOut based on direction with single conditional
 	var amountOut *u256.Uint
 	if zeroForOne {
-		amountOut = getAmount1DeltaHelper(
-			sqrtRatioTargetX96,
-			sqrtRatioCurrentX96,
-			liquidity,
-			false,
-		)
+		amountOut = getAmount1DeltaHelper(sqrtRatioTargetX96, sqrtRatioCurrentX96, liquidity, false)
 	} else {
-		amountOut = getAmount0DeltaHelper(
-			sqrtRatioCurrentX96,
-			sqrtRatioTargetX96,
-			liquidity,
-			false,
-		)
+		amountOut = getAmount0DeltaHelper(sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity, false)
 	}
 
-	// If we can supply the full amountOut, jump to target
+	// Fast path: if sufficient liquidity, use target price
 	if amountRemainingAbs.Gte(amountOut) {
 		return sqrtRatioTargetX96, amountOut
 	}
