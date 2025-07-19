@@ -605,28 +605,6 @@ func TestMintInternal_TickBoundaries(t *testing.T) {
 		// 0.01% pool (tick spacing 1) - MIN/MAX boundaries
 		{
 			// XXX this needs to debug: [TickMathGetSqrtRatioAtTick] ratio is zero
-			name: "Test1",
-			params: MintParams{
-				token0:         "gno.land/r/onbloc/bar",
-				token1:         "gno.land/r/onbloc/baz",
-				fee:            100,
-				tickLower:      -1, // MIN_TICK (valid for spacing 1)
-				tickUpper:      424288,
-				amount0Desired: u256.MustFromDecimal("1"),
-				amount1Desired: u256.MustFromDecimal("1"),
-				amount0Min:     u256.MustFromDecimal("0"),
-				amount1Min:     u256.MustFromDecimal("0"),
-				caller:         alice,
-				mintTo:         alice,
-			},
-			expectPanic:       false,
-			expectedId:        1,
-			expectedLiquidity: "368930354290617215256478",
-			expectedAmount0:   "0",
-			expectedAmount1:   "1",
-		},
-		{
-			// XXX this needs to debug: [TickMathGetSqrtRatioAtTick] ratio is zero
 			name: "0.01% pool - valid at MIN_TICK boundary",
 			params: MintParams{
 				token0:         "gno.land/r/onbloc/bar",

@@ -933,8 +933,8 @@ func TestGetAmount1DeltaHelper(t *testing.T) {
 	}
 }
 
-// TestGetAmount0DeltaStr tests string representation with signed liquidity
-func TestGetAmount0DeltaStr(t *testing.T) {
+// TestGetAmount0Delta tests string representation with signed liquidity
+func TestGetAmount0Delta(t *testing.T) {
 	tests := []struct {
 		name          string
 		sqrtRatioAX96 *u256.Uint
@@ -951,7 +951,7 @@ func TestGetAmount0DeltaStr(t *testing.T) {
 			sqrtRatioBX96: u256.MustFromDecimal("1000000"),
 			liquidity:     i256.FromUint256(u256.MustFromDecimal("5000000")),
 			shouldPanic:   true,
-			panicMsg:      errGetAmount0DeltaStrNilInput.Error(),
+			panicMsg:      errGetAmount0DeltaNilInput.Error(),
 		},
 		{
 			name:          "nil_sqrtRatioB",
@@ -959,7 +959,7 @@ func TestGetAmount0DeltaStr(t *testing.T) {
 			sqrtRatioBX96: nil,
 			liquidity:     i256.FromUint256(u256.MustFromDecimal("5000000")),
 			shouldPanic:   true,
-			panicMsg:      errGetAmount0DeltaStrNilInput.Error(),
+			panicMsg:      errGetAmount0DeltaNilInput.Error(),
 		},
 		{
 			name:          "nil_liquidity",
@@ -967,7 +967,7 @@ func TestGetAmount0DeltaStr(t *testing.T) {
 			sqrtRatioBX96: u256.MustFromDecimal("2000000"),
 			liquidity:     nil,
 			shouldPanic:   true,
-			panicMsg:      errGetAmount0DeltaStrNilInput.Error(),
+			panicMsg:      errGetAmount0DeltaNilInput.Error(),
 		},
 		// Positive liquidity (roundUp = true)
 		{
@@ -1006,19 +1006,19 @@ func TestGetAmount0DeltaStr(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					GetAmount0DeltaStr(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.liquidity)
+					GetAmount0Delta(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.liquidity)
 				})
 				return
 			}
 
-			result := GetAmount0DeltaStr(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.liquidity)
-			uassert.Equal(t, tt.expected, result)
+			result := GetAmount0Delta(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.liquidity)
+			uassert.Equal(t, tt.expected, result.ToString())
 		})
 	}
 }
 
-// TestGetAmount1DeltaStr tests string representation with signed liquidity
-func TestGetAmount1DeltaStr(t *testing.T) {
+// TestGetAmount1Delta tests string representation with signed liquidity
+func TestGetAmount1Delta(t *testing.T) {
 	tests := []struct {
 		name          string
 		sqrtRatioAX96 *u256.Uint
@@ -1035,7 +1035,7 @@ func TestGetAmount1DeltaStr(t *testing.T) {
 			sqrtRatioBX96: nil,
 			liquidity:     nil,
 			shouldPanic:   true,
-			panicMsg:      errGetAmount1DeltaStrNilInput.Error(),
+			panicMsg:      errGetAmount1DeltaNilInput.Error(),
 		},
 		// Positive liquidity (roundUp = true)
 		{
@@ -1104,20 +1104,20 @@ func TestGetAmount1DeltaStr(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					GetAmount1DeltaStr(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.liquidity)
+					GetAmount1Delta(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.liquidity)
 				})
 				return
 			}
 
-			result := GetAmount1DeltaStr(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.liquidity)
+			result := GetAmount1Delta(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.liquidity)
 
 			if tt.name == "positive_liquidity_large_values" {
-				if tt.expected != result {
+				if tt.expected != result.ToString() {
 					t.Logf("Result for %s: %s", tt.name, result)
 				}
 			}
 
-			uassert.Equal(t, tt.expected, result)
+			uassert.Equal(t, tt.expected, result.ToString())
 		})
 	}
 }
