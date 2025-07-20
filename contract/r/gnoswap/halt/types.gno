@@ -92,11 +92,17 @@ const (
 
 // Legacy LevelID constants for backward compatibility
 const (
-	LvNoHalt          LevelID = 0
-	LvEmergencyHalt   LevelID = 1
-	LvCompleteHalt    LevelID = 2
-	LvContractHalt    LevelID = 3
-	LvMainnetSafeMode LevelID = 10
+	LvNoHalt LevelID = iota // 0
+	LvEmergencyHalt         // 1
+	LvCompleteHalt          // 2
+	LvContractHalt          // 3
+	_                       // 4 (skip)
+	_                       // 5
+	_                       // 6
+	_                       // 7
+	_                       // 8
+	_                       // 9
+	LvMainnetSafeMode       = 10
 )
 
 // Errors
