@@ -80,6 +80,7 @@ func TestTierDurationConsistency(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			deposits = avl.NewTree()
+			depositCounter = NewCounter()
 			projects = avl.NewTree()
 			projectTierRewardManagers = avl.NewTree()
 

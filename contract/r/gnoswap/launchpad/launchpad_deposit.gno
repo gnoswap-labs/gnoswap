@@ -17,9 +17,16 @@ import (
 )
 
 var (
+	depositCounter *Counter // Counter for generating unique deposit IDs
+
 	// depositId -> Deposit
-	deposits = avl.NewTree()
+	deposits *avl.Tree // Tree storing all deposits by ID
 )
+
+func init() {
+	depositCounter = NewCounter()
+	deposits = avl.NewTree()
+}
 
 // DepositGns handles the deposit process for a specific project tier.
 //
@@ -181,7 +188,9 @@ func depositGns(
 
 	currentTime := time.Now().Unix()
 	createdBlockTimeInfo := newBlockTimeInfo(currentTime, currentHeight)
+	depositID := nextDepositID()
 	deposit := NewDeposit(
+		depositID,
 		projectID,
 		tierDuration,
 		callerAddress,
@@ -189,7 +198,7 @@ func depositGns(
 		createdBlockTimeInfo,
 		projectTier.endBlockTimeInfo,
 	)
-	deposits.Set(deposit.ID(), deposit)
+	deposits.Set(depositID, deposit)
 
 	projectTier.deposit(deposit)
 
@@ -276,4 +285,21 @@ func getDeposit(depositID string) (*Deposit, error) {
 	}
 
 	return depositI.(*Deposit), nil
+}
+
+// getCurrentDepositID returns the current deposit ID (last assigned).
+//
+// Returns:
+//   - string: current deposit ID
+func getCurrentDepositID() string {
+	return formatInt(depositCounter.Get())
+}
+
+// nextDepositID increments and returns the next unique deposit ID.
+// This is used when creating new deposits.
+//
+// Returns:
+//   - string: next unique deposit ID
+func nextDepositID() string {
+	return formatInt(depositCounter.next())
 }
