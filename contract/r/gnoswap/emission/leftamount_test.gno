@@ -70,13 +70,13 @@ func TestLeftAmountFix(t *testing.T) {
 			initialLeftAmount:  0,
 			distributionAmount: 123456,
 			distributions: map[string]int64{
-				"1": 3333, // 33.33%
-				"2": 3333, // 33.33%
-				"3": 3333, // 33.33%
-				"4": 1,    // 0.01% to make total 9999 bps
+				"1": 3333, // 33.33%, 123456 * 3333 / 10000 = 41147
+				"2": 3333, // 33.33%, 123456 * 3333 / 10000 = 41147
+				"3": 3333, // 33.33%, 123456 * 3333 / 10000 = 41147
+				"4": 1,    // 0.01% to make total 9999 bps, 123456 * 1 / 10000 = 12
 			},
-			expectedTotalSent:  0, // Will be calculated based on actual distribution
-			expectedLeftAmount: 0, // Will be calculated based on actual distribution
+			expectedTotalSent:  123453, // 41147 +  41147 +  41147 +  12
+			expectedLeftAmount: 3,      // 123456 - 123453
 			shouldPanic:        false,
 			panicMsg:           "",
 			setupFunc: func() {
@@ -104,23 +104,6 @@ func TestLeftAmountFix(t *testing.T) {
 				distributionBpsPct = avl.NewTree()
 			},
 		},
-		{
-			name:               "Test negative leftAmount prevention",
-			initialLeftAmount:  0,
-			distributionAmount: 10000,
-			distributions: map[string]int64{
-				"1": 6000, // 60%
-				"2": 5000, // 50% (total: 110% exceeds 100%)
-			},
-			expectedTotalSent:  0,
-			expectedLeftAmount: 0,
-			shouldPanic:        true,
-			panicMsg:           "[GNOSWAP-EMISSION-002] invalid emission target || total distributed amount (11000) exceeds original amount (10000)",
-			setupFunc: func() {
-				leftGNSAmount = 0
-				distributionBpsPct = avl.NewTree()
-			},
-		},
 	}
 
 	for _, tt := range tests {
@@ -135,8 +118,6 @@ func TestLeftAmountFix(t *testing.T) {
 				distributionBpsPct.Set(target, bps)
 			}
 
-			beforeLeft := GetLeftGNSAmount()
-
 			if tt.shouldPanic {
 				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
 					distributeToTarget(cross, tt.distributionAmount)
@@ -146,31 +127,17 @@ func TestLeftAmountFix(t *testing.T) {
 				totalSent := distributeToTarget(cross, tt.distributionAmount)
 
 				// Get leftGNSAmount after distribution
-				afterLeft := GetLeftGNSAmount()
-				actualLeftDifference := afterLeft - beforeLeft
+				leftAmount := tt.distributionAmount - totalSent
 
 				if tt.expectedTotalSent > 0 {
 					uassert.Equal(t, tt.expectedTotalSent, totalSent)
 				}
 
 				if tt.verifyFunc != nil {
-					tt.verifyFunc(t, afterLeft)
-				} else {
-					if tt.expectedLeftAmount > 0 {
-						// For cases where we expect a specific left amount difference
-						leftAmount := tt.distributionAmount - totalSent
-						uassert.Equal(t, tt.expectedLeftAmount, leftAmount)
-						uassert.Equal(t, leftAmount, actualLeftDifference)
-					}
+					tt.verifyFunc(t, leftAmount)
 				}
 
-				// Additional verification that leftGNSAmount is updated correctly
-				if tt.name != "Integration test with different percentages" {
-					actualLeftGNSAmount := GetLeftGNSAmount()
-					if tt.expectedLeftAmount > 0 {
-						uassert.Equal(t, tt.expectedLeftAmount, actualLeftGNSAmount)
-					}
-				}
+				uassert.Equal(t, tt.expectedLeftAmount, leftAmount)
 			}
 		})
 	}

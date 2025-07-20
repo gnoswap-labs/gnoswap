@@ -148,6 +148,7 @@ func initLaunchpadDepositTest(t *testing.T) {
 
 	// Initialize test environment
 	deposits = avl.NewTree()
+	depositCounter = NewCounter()
 	projects = avl.NewTree()
 	projectTierRewardManagers = avl.NewTree()
 
