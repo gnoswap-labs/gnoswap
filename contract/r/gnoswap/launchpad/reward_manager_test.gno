@@ -126,6 +126,7 @@ func TestRewardManager_AddRewardStateByDeposit(t *testing.T) {
 		{
 			name: "add reward state succeed for first deposit",
 			deposit: NewDeposit(
+				"1",
 				"test",
 				30,
 				"",
@@ -146,6 +147,7 @@ func TestRewardManager_AddRewardStateByDeposit(t *testing.T) {
 		{
 			name: "add reward state succeed for subsequent deposit",
 			deposit: NewDeposit(
+				"1",
 				"test",
 				30,
 				"",
@@ -159,6 +161,7 @@ func TestRewardManager_AddRewardStateByDeposit(t *testing.T) {
 			averageBlockTimeMs:    2000,
 			existingDeposits: []*Deposit{
 				NewDeposit(
+					"1",
 					"existing",
 					500,
 					"",
@@ -234,6 +237,7 @@ func TestRewardManager_CollectReward(t *testing.T) {
 			distributeEndHeight:   200,
 			currentHeight:         150,
 			deposit: NewDeposit(
+				"1",
 				"test",
 				30,
 				"",
@@ -241,7 +245,7 @@ func TestRewardManager_CollectReward(t *testing.T) {
 				&BlockTimeInfo{blockTime: 1000, blockHeight: 150},
 				&BlockTimeInfo{blockTime: 1000, blockHeight: 200},
 			),
-			depositId:          "test:30::150",
+			depositId:          "1",
 			averageBlockTimeMs: 2000,
 			existingDeposits:   []*Deposit{},
 			collectHeight:      200,
@@ -251,6 +255,7 @@ func TestRewardManager_CollectReward(t *testing.T) {
 		{
 			name: "collect reward fail with nonexistent deposit",
 			deposit: NewDeposit(
+				"1",
 				"test",
 				30,
 				"",
