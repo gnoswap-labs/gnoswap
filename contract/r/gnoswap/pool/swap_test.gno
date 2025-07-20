@@ -97,6 +97,7 @@ func TestShouldContinueSwap(t *testing.T) {
 			state: SwapState{
 				amountSpecifiedRemaining: i256.MustFromDecimal("1000"),
 				sqrtPriceX96:             u256.MustFromDecimal("1000000"),
+				liquidity:                u256.MustFromDecimal("1000000"),
 			},
 			sqrtPriceLimitX96: u256.MustFromDecimal("900000"),
 			expected:          true,
@@ -106,6 +107,7 @@ func TestShouldContinueSwap(t *testing.T) {
 			state: SwapState{
 				amountSpecifiedRemaining: i256.Zero(),
 				sqrtPriceX96:             u256.MustFromDecimal("1000000"),
+				liquidity:                u256.MustFromDecimal("1000000"),
 			},
 			sqrtPriceLimitX96: u256.MustFromDecimal("900000"),
 			expected:          false,
@@ -115,6 +117,7 @@ func TestShouldContinueSwap(t *testing.T) {
 			state: SwapState{
 				amountSpecifiedRemaining: i256.MustFromDecimal("1000"),
 				sqrtPriceX96:             u256.MustFromDecimal("900000"),
+				liquidity:                u256.MustFromDecimal("1000000"),
 			},
 			sqrtPriceLimitX96: u256.MustFromDecimal("900000"),
 			expected:          false,
@@ -273,9 +276,25 @@ func TestComputeSwap(t *testing.T) {
 			t.Fatalf("expected no error, got %v", err)
 		}
 
-		if !result.Amount0.IsZero() || !result.Amount1.IsZero() {
-			t.Error("expected zero amounts for zero liquidity")
-		}
+		// computeSwap() applies pure mathematical logic only,
+		// In liquidity=0 regions, no swap actually occurs (amountIn = 0, amountOut = 0).
+		// If all input is consumed as fee, it's due to the math's edge-case, not real pool behavior.
+		// This matches the raw SwapMath result, but not always actual swap logic.
+		expectedAmount0 := i256.MustFromDecimal("0")
+		uassert.True(t,
+			result.Amount0.Eq(expectedAmount0),
+			"expected Amount0 = %s (entire input as fee), got %s",
+			expectedAmount0.ToString(), result.Amount0.ToString(),
+		)
+		uassert.True(t,
+			result.Amount1.IsZero(),
+			"expected Amount1 = 0, got %s", result.Amount1.ToString(),
+		)
+		uassert.Equal(t,
+			result.NewSqrtPrice.ToString(),
+			"1100000000000000000",
+			"tick should remain constant with zero liquidity",
+		)
 	})
 }
 
@@ -450,6 +469,7 @@ func TestSwapAndDrySwapComparison(t *testing.T) {
 			name: "normal swap",
 			setupFn: func(t *testing.T) {
 				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, gnsPath, addr)
 				TokenApprove(t, gnsPath, addr, poolAddr, 1000)
 			},
@@ -869,6 +889,283 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 			shouldPanic: false,
 			expected:    []string{"202", "-200"},
 		},
+		{
+			name: "EXACT IN - zero liquidity",
+			setupFn: func(t *testing.T) {
+				InitialisePoolTest(t)
+				TokenFaucet(t, wugnotPath, addr)
+				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
+			},
+			action: func(t *testing.T) (string, string) {
+				testing.SetOriginCaller(routerAddr)
+				// exactIn positive amount
+				return Swap(
+					cross,
+					wugnotPath, gnsPath, fee3000,
+					alice,
+					false,
+					"1000", // exact‑in amount
+					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+					addr,
+				)
+			},
+			shouldPanic: false,
+			expected:    []string{"0", "0"},
+		},
+		{
+			name: "EXACT OUT - zero liquidity",
+			setupFn: func(t *testing.T) {
+				InitialisePoolTest(t)
+				// No MintPositionAll, liquidity == 0
+				TokenFaucet(t, wugnotPath, addr)
+				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
+			},
+			action: func(t *testing.T) (string, string) {
+				testing.SetOriginCaller(routerAddr)
+				// exactOut negative amount
+				return Swap(
+					cross,
+					wugnotPath, gnsPath, fee3000,
+					alice,
+					false,
+					"-1000", // exact‑out amount
+					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+					addr,
+				)
+			},
+			shouldPanic: false,
+			expected:    []string{"0", "0"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+			burnTokens(t)
+
+			if tt.setupFn != nil {
+				tt.setupFn(t)
+			}
+
+			if tt.shouldPanic {
+				tt.action(t)
+			} else {
+				amount0, amount1 := tt.action(t)
+				uassert.Equal(t, tt.expected[0], amount0)
+				uassert.Equal(t, tt.expected[1], amount1)
+			}
+		})
+	}
+}
+
+func TestSwap_ExtremeGaps(t *testing.T) {
+	addr := routerAddr
+	receiver := alice
+
+	tests := []struct {
+		name        string
+		setupFn     func(t *testing.T)
+		action      func(t *testing.T) (string, string)
+		shouldPanic bool
+		expected    []string
+	}{
+		{
+			name: "extreme gap - moderate extreme range with minimal liquidity",
+			setupFn: func(t *testing.T) {
+				testing.SetOriginCaller(adminAddr)
+				testing.SetRealm(adminRealm)
+
+				// Ensure adminAddr has sufficient tokens
+				ugnotFaucet(t, adminAddr, 1_000_000_000_000_000)
+				ugnotDeposit(t, adminAddr, 1_000_000_000_000_000)
+
+				TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
+				TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
+
+				CreatePool(cross, wugnotPath, gnsPath, fee3000, common.TickMathGetSqrtRatioAtTick(-100000).ToString())
+
+				testing.SetRealm(posRealm)
+				// Positions at extreme ticks (must be multiples of tickSpacing 60)
+				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, -100020, -99960, "50000", adminAddr)
+				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, 99960, 100020, "50000", adminAddr)
+
+				testing.SetOriginCaller(adminAddr)
+				testing.SetRealm(adminRealm)
+				TokenFaucet(t, wugnotPath, addr)
+				TokenFaucet(t, gnsPath, addr)
+
+				testing.SetOriginCaller(addr)
+				testing.SetRealm(std.NewUserRealm(addr))
+				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
+				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
+			},
+			action: func(t *testing.T) (string, string) {
+				testing.SetOriginCaller(routerAddr)
+				testing.SetRealm(rouRealm)
+				actualAmount0, actualAmount1 := Swap(
+					cross,
+					wugnotPath,
+					gnsPath,
+					fee3000,
+					receiver,
+					false,
+					"-10",
+					common.TickMathGetSqrtRatioAtTick(100080).ToString(),
+					addr,
+				)
+				return actualAmount0, actualAmount1
+			},
+			shouldPanic: false,
+			expected:    []string{"-10", "2"},
+		},
+		{
+			name: "scattered liquidity - 4 positions with gaps",
+			setupFn: func(t *testing.T) {
+				testing.SetOriginCaller(adminAddr)
+				testing.SetRealm(adminRealm)
+				ugnotFaucet(t, adminAddr, 1_000_000_000_000_000)
+				ugnotDeposit(t, adminAddr, 1_000_000_000_000_000)
+
+				TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
+				TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
+
+				CreatePool(cross, wugnotPath, gnsPath, fee3000, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+
+				testing.SetRealm(posRealm)
+				// Four positions with varying liquidity and gaps
+				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, -10020, -9000, "10000000", adminAddr)
+				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, -4980, -4020, "20000000", adminAddr)
+				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, 0, 1020, "30000000", adminAddr)
+				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, 8040, 10020, "40000000", adminAddr)
+
+				testing.SetOriginCaller(adminAddr)
+				testing.SetRealm(adminRealm)
+				TokenFaucet(t, wugnotPath, addr)
+				TokenFaucet(t, gnsPath, addr)
+				TokenFaucet(t, wugnotPath, alice)
+				TokenFaucet(t, gnsPath, alice)
+
+				testing.SetOriginCaller(addr)
+				testing.SetRealm(std.NewUserRealm(addr))
+				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
+				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
+
+				testing.SetOriginCaller(alice)
+				testing.SetRealm(std.NewUserRealm(alice))
+				TokenApprove(t, gnsPath, alice, poolAddr, maxApprove)
+				TokenApprove(t, wugnotPath, alice, poolAddr, maxApprove)
+			},
+			action: func(t *testing.T) (string, string) {
+				testing.SetOriginCaller(routerAddr)
+				testing.SetRealm(rouRealm)
+				actualAmount0, actualAmount1 := Swap(
+					cross,
+					wugnotPath,
+					gnsPath,
+					fee3000,
+					alice,
+					false,
+					"1000",
+					common.TickMathGetSqrtRatioAtTick(11040).ToString(),
+					addr,
+				)
+				return actualAmount0, actualAmount1
+			},
+			shouldPanic: false,
+			expected:    []string{"-2709", "1000"},
+		},
+		{
+			name: "extreme gap - zeroForOne from moderate MAX to MIN",
+			setupFn: func(t *testing.T) {
+				testing.SetOriginCaller(adminAddr)
+				testing.SetRealm(adminRealm)
+				ugnotFaucet(t, adminAddr, 1_000_000_000_000_000)
+				ugnotDeposit(t, adminAddr, 1_000_000_000_000_000)
+
+				TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
+				TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
+
+				CreatePool(cross, wugnotPath, gnsPath, fee3000, common.TickMathGetSqrtRatioAtTick(100000).ToString())
+
+				testing.SetRealm(posRealm)
+				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, -100020, -99960, "500000", adminAddr)
+				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, 99960, 100020, "500000", adminAddr)
+
+				testing.SetOriginCaller(adminAddr)
+				testing.SetRealm(adminRealm)
+				TokenFaucet(t, wugnotPath, addr)
+				TokenFaucet(t, gnsPath, addr)
+
+				testing.SetOriginCaller(addr)
+				testing.SetRealm(std.NewUserRealm(addr))
+				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
+				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
+			},
+			action: func(t *testing.T) (string, string) {
+				testing.SetOriginCaller(routerAddr)
+				testing.SetRealm(rouRealm)
+				actualAmount0, actualAmount1 := Swap(
+					cross,
+					wugnotPath,
+					gnsPath,
+					fee3000,
+					receiver,
+					true,
+					"1000",
+					common.TickMathGetSqrtRatioAtTick(-100080).ToString(),
+					addr,
+				)
+				return actualAmount0, actualAmount1
+			},
+			shouldPanic: false,
+			expected:    []string{"1000", "-148220"},
+		},
+		{
+			name: "practical extreme gap - moderate range (-100000 to 100000)",
+			setupFn: func(t *testing.T) {
+				testing.SetOriginCaller(adminAddr)
+				testing.SetRealm(adminRealm)
+				ugnotFaucet(t, adminAddr, 1_000_000_000_000_000)
+				ugnotDeposit(t, adminAddr, 1_000_000_000_000_000)
+
+				TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
+				TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
+
+				CreatePool(cross, wugnotPath, gnsPath, fee3000, common.TickMathGetSqrtRatioAtTick(-100000).ToString())
+
+				testing.SetRealm(posRealm)
+				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, -100020, -99960, "1000000", adminAddr)
+				Mint(cross, wugnotPath, gnsPath, fee3000, adminAddr, 99960, 100020, "1000000", adminAddr)
+
+				testing.SetOriginCaller(adminAddr)
+				testing.SetRealm(adminRealm)
+				TokenFaucet(t, wugnotPath, addr)
+				TokenFaucet(t, gnsPath, addr)
+
+				testing.SetOriginCaller(addr)
+				testing.SetRealm(std.NewUserRealm(addr))
+				TokenApprove(t, gnsPath, addr, poolAddr, maxApprove)
+				TokenApprove(t, wugnotPath, addr, poolAddr, maxApprove)
+			},
+			action: func(t *testing.T) (string, string) {
+				testing.SetOriginCaller(routerAddr)
+				testing.SetRealm(rouRealm)
+				actualAmount0, actualAmount1 := Swap(
+					cross,
+					wugnotPath,
+					gnsPath,
+					fee3000,
+					receiver,
+					false,
+					"-100",
+					common.TickMathGetSqrtRatioAtTick(100080).ToString(),
+					addr,
+				)
+				return actualAmount0, actualAmount1
+			},
+			shouldPanic: false,
+			expected:    []string{"-100", "2"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -967,6 +1264,7 @@ func TestSwap_FeeTier100(t *testing.T) {
 					common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
 					adminAddr,
 				)
+
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,

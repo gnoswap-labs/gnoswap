@@ -34,6 +34,8 @@ var (
 	posRealm     = std.NewCodeRealm(consts.POSITION_PATH)
 	positionAddr = consts.POSITION_ADDR
 	poolAddr     = consts.POOL_ADDR
+	routerAddr   = consts.ROUTER_ADDR
+	routerRealm  = std.NewUserRealm(routerAddr)
 )
 
 // Token paths

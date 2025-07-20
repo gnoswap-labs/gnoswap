@@ -118,7 +118,7 @@ func main() {
 	testSqrtSubOne := new(u256.Uint).Sub(testSqrt, u256.One())
 	{
 		println("[INFO] Computing swap step with sqrt price change")
-		sqrtQ, amountIn, amountOut, feeAmount := plp.SwapMathComputeSwapStepStr(
+		sqrtQ, amountIn, amountOut, feeAmount := plp.SwapMathComputeSwapStep(
 			testSqrt,
 			testSqrtSubOne,
 			u256.MustFromDecimal(liqToMint),
@@ -126,10 +126,10 @@ func main() {
 			uint64(3000),
 		)
 
-		println("[EXPECTED] sqrtQ:", sqrtQ, "expected:", testSqrtSubOne.ToString())
-		println("[EXPECTED] amountIn:", amountIn, "expected: 1")
-		println("[EXPECTED] amountOut:", amountOut, "expected: 0")
-		println("[EXPECTED] feeAmount:", feeAmount, "expected: 1")
+		println("[EXPECTED] sqrtQ:", sqrtQ.ToString(), "expected:", testSqrtSubOne.ToString())
+		println("[EXPECTED] amountIn:", amountIn.ToString(), "expected: 1")
+		println("[EXPECTED] amountOut:", amountOut.ToString(), "expected: 0")
+		println("[EXPECTED] feeAmount:", feeAmount.ToString(), "expected: 1")
 	}
 	println()
 
