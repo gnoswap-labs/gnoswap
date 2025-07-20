@@ -341,7 +341,7 @@ func unmarshal(data string) map[string]interface{} {
 // [INFO] Admin transferring GNS to Bob for deposit
 // [INFO] Bob delegating GNS to gov staker
 // [INFO] Skipping blocks to make project active
-// [EXPECTED] Deposit created with ID: gno.land/r/onbloc/obl:123:30:g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu:3728
+// [EXPECTED] Deposit created with ID: 1
 // [EXPECTED] Deposit amount: 1000000
 // [EXPECTED] Deposit tier: 30
 // [EXPECTED] Deposit depositor: g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu
@@ -379,7 +379,7 @@ func unmarshal(data string) map[string]interface{} {
 // [INFO] Admin transferring GNS to Bob for deposit
 // [INFO] Bob delegating GNS to gov staker
 // [INFO] Skipping blocks to make project active
-// [EXPECTED] Deposit created with ID: gno.land/r/onbloc/obl:123:30:g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu:3734
+// [EXPECTED] Deposit created with ID: 2
 // [EXPECTED] Deposit amount: 1000000
 // [EXPECTED] Deposit tier: 30
 // [EXPECTED] Deposit depositor: g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu
