@@ -159,6 +159,6 @@ func getTickIfNotInitialized(compress, tickSpacing int32, bitPos uint8, lte bool
 	if lte {
 		return (compress - int32(bitPos)) * tickSpacing
 	}
-	// Use bit mask instead of 255
+
 	return (compress + 1 + int32(bitMask8-bitPos)) * tickSpacing
 }
