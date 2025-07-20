@@ -163,7 +163,10 @@ func depositGns(
 		return common.BalanceOf(tokenPath, caller)
 	}
 
-	project.CheckConditions(callerAddress, balanceOfFn)
+	err = project.CheckConditions(callerAddress, balanceOfFn)
+	if err != nil {
+		return nil, nil, false, "", err
+	}
 
 	projectTier, err := project.getTier(tierDuration)
 	if err != nil {
