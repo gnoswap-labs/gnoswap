@@ -26,7 +26,7 @@ func TestCollectDepositGns(t *testing.T) {
 	}{
 		{
 			name:             "collect deposit gns successfully",
-			depositID:        "gno.land/r/onbloc/obl:123:30:g1w4ek2ujlta047h6lta047h6lta047h6lkvk347:133",
+			depositID:        "1",
 			callerAddress:    userAddr,
 			expectedHasAbort: false,
 			expectedAmount:   1000000000,
@@ -40,7 +40,7 @@ func TestCollectDepositGns(t *testing.T) {
 		},
 		{
 			name:                 "collect deposit gns failed by invalid owner",
-			depositID:            "gno.land/r/onbloc/obl:123:30:g1w4ek2ujlta047h6lta047h6lta047h6lkvk347:133",
+			depositID:            "1",
 			callerAddress:        otherAddr,
 			expectedHasAbort:     true,
 			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-026] invalid owner || (g1da6xsetjta047h6lta047h6lta047h6ltrh8mk)",
@@ -69,7 +69,7 @@ func TestCollectDepositGns(t *testing.T) {
 }
 
 func TestWithdrawDeposit(t *testing.T) {
-	const currentDepositID = "gno.land/r/onbloc/obl:123:30:g1w4ek2ujlta047h6lta047h6lta047h6lkvk347:133"
+	const currentDepositID = "1"
 
 	tests := []struct {
 		name                 string
@@ -110,6 +110,7 @@ func initLaunchpadWithdrawTest(t *testing.T) {
 
 	// Initialize test environment
 	deposits = avl.NewTree()
+	depositCounter = NewCounter()
 	projects = avl.NewTree()
 	projectTierRewardManagers = avl.NewTree()
 

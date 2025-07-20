@@ -245,7 +245,7 @@ func TestRewardManager_CollectReward(t *testing.T) {
 				&BlockTimeInfo{blockTime: 1000, blockHeight: 150},
 				&BlockTimeInfo{blockTime: 1000, blockHeight: 200},
 			),
-			depositId:          "test:30::150",
+			depositId:          "1",
 			averageBlockTimeMs: 2000,
 			existingDeposits:   []*Deposit{},
 			collectHeight:      200,
