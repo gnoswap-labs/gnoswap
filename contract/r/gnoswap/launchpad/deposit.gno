@@ -2,8 +2,6 @@ package launchpad
 
 import (
 	"std"
-
-	"gno.land/p/demo/ufmt"
 )
 
 // Deposit represents a deposit made by a user in a launchpad project.
@@ -96,6 +94,7 @@ func (d *Deposit) withdraw(currentHeight int64) int64 {
 
 // NewDeposit returns a pointer to a new Deposit with the given values.
 func NewDeposit(
+	depositID string,
 	projectID string,
 	tier int64,
 	depositor std.Address,
@@ -104,7 +103,7 @@ func NewDeposit(
 	endBlockTimeInfo *BlockTimeInfo,
 ) *Deposit {
 	return &Deposit{
-		id:                   makeDepositID(projectID, tier, depositor, createdBlockTimeInfo.BlockHeight()),
+		id:                   depositID,
 		projectID:            projectID,
 		tier:                 tier,
 		depositor:            depositor,
@@ -113,8 +112,4 @@ func NewDeposit(
 		createdBlockTimeInfo: createdBlockTimeInfo,
 		endBlockTimeInfo:     endBlockTimeInfo,
 	}
-}
-
-func makeDepositID(projectID string, tier int64, depositor std.Address, height int64) string {
-	return ufmt.Sprintf("%s:%d:%s:%d", projectID, tier, depositor.String(), height)
 }

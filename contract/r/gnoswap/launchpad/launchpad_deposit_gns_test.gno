@@ -40,6 +40,7 @@ func TestDepositGns(t *testing.T) {
 				projects = avl.NewTree()
 				projectTierRewardManagers = avl.NewTree()
 				deposits = avl.NewTree()
+				depositCounter = NewCounter()
 
 				// Set initial block height
 				testing.SetHeight(123)
@@ -106,6 +107,7 @@ func TestDepositGns(t *testing.T) {
 				projects = avl.NewTree()
 				projectTierRewardManagers = avl.NewTree()
 				deposits = avl.NewTree()
+				depositCounter = NewCounter()
 
 				adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 				launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
@@ -173,6 +175,7 @@ func TestDepositGns(t *testing.T) {
 				projects = avl.NewTree()
 				projectTierRewardManagers = avl.NewTree()
 				deposits = avl.NewTree()
+				depositCounter = NewCounter()
 
 				// Set initial block height
 				testing.SetHeight(123)
@@ -297,6 +300,7 @@ func TestDepositGns(t *testing.T) {
 				projects = avl.NewTree()
 				projectTierRewardManagers = avl.NewTree()
 				deposits = avl.NewTree()
+				depositCounter = NewCounter()
 
 				// Set initial block height
 				testing.SetHeight(123)
@@ -354,6 +358,7 @@ func TestDepositGns(t *testing.T) {
 				projects = avl.NewTree()
 				projectTierRewardManagers = avl.NewTree()
 				deposits = avl.NewTree()
+				depositCounter = NewCounter()
 
 				// Set initial block height
 				testing.SetHeight(123)
@@ -410,6 +415,7 @@ func TestDepositGns(t *testing.T) {
 				projects = avl.NewTree()
 				projectTierRewardManagers = avl.NewTree()
 				deposits = avl.NewTree()
+				depositCounter = NewCounter()
 
 				// Set initial block height
 				testing.SetHeight(123)

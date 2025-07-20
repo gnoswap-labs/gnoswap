@@ -54,12 +54,12 @@ func ProposeText(
 	}
 
 	// Get snapshot of voting weights for proposal creation
-	userVotes, maxVotingWeight, ok := getUserVotingInfoSnapshot(
+	userVotes, maxVotingWeight, err := getUserVotingInfoSnapshot(
 		createdAt,
 		config.VotingWeightSmoothingDuration,
 	)
-	if !ok || maxVotingWeight <= 0 {
-		panic(errNotEnoughVotingWeight)
+	if err != nil {
+		panic(err)
 	}
 
 	// Create the text proposal with metadata
@@ -153,12 +153,12 @@ func ProposeCommunityPoolSpend(
 	}
 
 	// Get snapshot of voting weights for proposal creation
-	userVotes, maxVotingWeight, ok := getUserVotingInfoSnapshot(
+	userVotes, maxVotingWeight, err := getUserVotingInfoSnapshot(
 		createdAt,
 		config.VotingWeightSmoothingDuration,
 	)
-	if !ok {
-		panic(errNotEnoughVotingWeight)
+	if err != nil {
+		panic(err)
 	}
 
 	// Get community pool package path for execution
@@ -257,12 +257,12 @@ func ProposeParameterChange(
 	}
 
 	// Get snapshot of voting weights for proposal creation
-	userVotes, maxVotingWeight, ok := getUserVotingInfoSnapshot(
+	userVotes, maxVotingWeight, err := getUserVotingInfoSnapshot(
 		createdAt,
 		config.VotingWeightSmoothingDuration,
 	)
-	if !ok {
-		panic(errNotEnoughVotingWeight)
+	if err != nil {
+		panic(err)
 	}
 
 	// Create the parameter change proposal with execution data
@@ -400,17 +400,26 @@ func createProposal(
 func getUserVotingInfoSnapshot(
 	current,
 	smoothingPeriod int64,
-) (map[string]*VotingInfo, int64, bool) {
+) (map[string]*VotingInfo, int64, error) {
 	// Calculate snapshot time by going back by smoothing period
 	snapshotTime := current - smoothingPeriod
 
-	// Use custom snapshot function if available (for testing)
+	var votingInfos map[string]*VotingInfo
+	var maxVotingWeight int64
+	var ok bool
+
+	// Use custom snapshot function if available
 	if getUserVotingInfoSnapshotFn != nil {
-		return getUserVotingInfoSnapshotFn(snapshotTime)
+		votingInfos, maxVotingWeight, ok = getUserVotingInfoSnapshotFn(snapshotTime)
+	} else {
+		votingInfos, maxVotingWeight, ok = getUserVotingInfotWithDelegationSnapshots(snapshotTime)
 	}
 
-	// Use delegation snapshots from staker contract
-	return getUserVotingInfotWithDelegationSnapshots(snapshotTime)
+	if !ok || maxVotingWeight <= 0 {
+		return votingInfos, maxVotingWeight, errNotEnoughVotingWeight
+	}
+
+	return votingInfos, maxVotingWeight, nil
 }
 
 // getUserVotingInfotWithDelegationSnapshots retrieves voting info from staker delegation snapshots.
