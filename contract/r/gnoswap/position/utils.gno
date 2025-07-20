@@ -266,11 +266,8 @@ func isOwner(positionId uint64, addr std.Address) bool {
 // input: positionId uint64, addr std.Address
 // output: bool
 func isOperator(positionId uint64, addr std.Address) bool {
-	operator, err := gnft.GetApproved(positionIdFrom(positionId))
-	if err == nil && operator == addr {
-		return true
-	}
-	return false
+	operator := PositionGetPositionOperator(positionId)
+	return operator == addr
 }
 
 // isStaked checks whether positionId is staked
@@ -298,16 +295,13 @@ func isOwnerOrOperator(addr std.Address, positionId uint64) bool {
 	if !exists(positionId) {
 		return false
 	}
-	if isOwner(positionId, addr) || isOperator(positionId, addr) {
-		return true
+
+	staked := isStaked(positionIdFrom(positionId))
+	if staked {
+		return isOperator(positionId, addr)
 	}
-	if isStaked(positionIdFrom(positionId)) {
-		position, exist := GetPosition(positionId)
-		if exist && addr == position.operator {
-			return true
-		}
-	}
-	return false
+
+	return isOwner(positionId, addr)
 }
 
 func assertAuthorizedForToken(caller std.Address, positionId uint64) {

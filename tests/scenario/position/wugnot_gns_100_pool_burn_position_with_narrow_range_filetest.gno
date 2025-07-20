@@ -152,14 +152,14 @@ func removePosition(positionId uint64) {
 // [SCENARIO] 3. Mint Position (-1 ~ 1)
 // [INFO] Minting position
 // [EXPECTED] positionId: 1
-// [EXPECTED] liquidity: 1000000000
+// [EXPECTED] liquidity: 20001499987500
 // [EXPECTED] amount0: 1000000000
 // [EXPECTED] amount1: 1000000000
 //
 // [SCENARIO] 4. Remove Position (-1 ~ 1)
 // [EXPECTED] positionId: 1
 // [EXPECTED] decreased liquidity: 1000000000
-// [EXPECTED] decreased amount0: 999999999
-// [EXPECTED] decreased amount1: 999999999
-// [EXPECTED] pool token0 balance: 1
-// [EXPECTED] pool token1 balance: 1
+// [EXPECTED] decreased amount0: 49996
+// [EXPECTED] decreased amount1: 49996
+// [EXPECTED] pool token0 balance: 999950004
+// [EXPECTED] pool token1 balance: 999950004

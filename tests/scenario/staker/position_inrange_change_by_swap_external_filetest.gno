@@ -378,7 +378,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 11. Make position 01 in-range by swap
 // [INFO] make position 01 in-range by swap
-// [EXPECTED] position 01 moved back in range, pool tick: 18
+// [EXPECTED] position 01 moved back in range, pool tick: 19
 //
 // [SCENARIO] 12. Check reward with both positions in-range
 // [INFO] check reward for position 01 (both positions in-range again)

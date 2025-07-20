@@ -125,8 +125,8 @@ func newSwapState(
 	}
 }
 
-func (s *SwapState) setSqrtPriceX96(sqrtPriceX96 string) {
-	s.sqrtPriceX96 = u256.MustFromDecimal(sqrtPriceX96)
+func (s *SwapState) setSqrtPriceX96(sqrtPriceX96 *u256.Uint) {
+	s.sqrtPriceX96 = sqrtPriceX96.Clone()
 }
 
 func (s *SwapState) setTick(tick int32) {
