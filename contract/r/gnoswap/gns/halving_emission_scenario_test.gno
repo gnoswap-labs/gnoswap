@@ -156,7 +156,7 @@ func testHistoricalBlockEmissionAccuracy(t *testing.T) {
 
 	// Verify that the emission per block hasn't been retroactively changed
 	// by checking total mintable amount for the historical period
-	year := GetHalvingYearByHeight(h1)
+	year := HalvingYearByHeight(h1)
 	t.Logf("Year: %d", year)
 	// Since we can't directly access yearData struct, we'll verify by checking
 	// that current emission is different from what it was
