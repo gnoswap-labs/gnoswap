@@ -123,7 +123,7 @@ func (p *Project) CheckConditions(caller std.Address, balanceOfFunc func(tokenPa
 		tokenPath := condition.TokenPath()
 		balance := balanceOfFunc(tokenPath, caller)
 
-		if err := condition.CheckCondition(tokenPath, balance); err != nil {
+		if err := condition.CheckBalanceCondition(tokenPath, balance); err != nil {
 			return err
 		}
 	}

@@ -108,7 +108,7 @@ func TestProjectCondition_CheckCondition(t *testing.T) {
 			}
 
 			// Execute
-			err := condition.CheckCondition(tt.inputToken, tt.inputAmount)
+			err := condition.CheckBalanceCondition(tt.inputToken, tt.inputAmount)
 
 			// Verify
 			if tt.expectedHasError {
