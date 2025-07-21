@@ -8,109 +8,266 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 )
 
-func TestHalt_SetHaltLevel(t *testing.T) {
+// Test internal setHaltLevel function
+func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 	tests := []struct {
 		name             string
 		inputLevel       HaltLevel
-		expectedLevel    HaltLevel
-		expectedHasPanic bool
+		expectedConfig   HaltConfig
+		expectedHasError bool
 	}{
 		{
 			name:             "Success set none level",
 			inputLevel:       HaltLevelNone,
-			expectedLevel:    HaltLevelNone,
-			expectedHasPanic: false,
-		},
-		{
-			name:             "Success set emergency level",
-			inputLevel:       HaltLevelEmergency,
-			expectedLevel:    HaltLevelEmergency,
-			expectedHasPanic: false,
+			expectedConfig:   newNoneConfig(),
+			expectedHasError: false,
 		},
 		{
 			name:             "Success set safe mode level",
 			inputLevel:       HaltLevelSafeMode,
-			expectedLevel:    HaltLevelSafeMode,
-			expectedHasPanic: false,
+			expectedConfig:   newSafeModeConfig(),
+			expectedHasError: false,
+		},
+		{
+			name:             "Success set emergency level",
+			inputLevel:       HaltLevelEmergency,
+			expectedConfig:   newEmergencyConfig(),
+			expectedHasError: false,
+		},
+		{
+			name:             "Success set complete level",
+			inputLevel:       HaltLevelComplete,
+			expectedConfig:   newCompleteConfig(),
+			expectedHasError: false,
 		},
 		{
 			name:             "Fail invalid level",
 			inputLevel:       HaltLevel("INVALID"),
-			expectedLevel:    HaltLevelSafeMode, // Should remain unchanged
-			expectedHasPanic: true,
+			expectedConfig:   nil,
+			expectedHasError: true,
+		},
+		{
+			name:             "Fail empty level",
+			inputLevel:       HaltLevel(""),
+			expectedConfig:   nil,
+			expectedHasError: true,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					if !tc.expectedHasPanic {
-						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
-					}
-				}
-			}()
-
 			cleanup()
 
-			// when - use internal function to test logic without authorization
+			// when
 			err := setHaltLevel(tc.inputLevel)
 
 			// then
-			if tc.expectedHasPanic {
+			if tc.expectedHasError {
 				uassert.Error(t, err)
 			} else {
 				uassert.NoError(t, err)
-				uassert.Equal(t, string(GetCurrentHaltLevel()), string(tc.expectedLevel))
+
+				for op, status := range tc.expectedConfig {
+					uassert.Equal(t, GetHaltConfig().get(op).access, status.access)
+					uassert.Equal(t, GetHaltConfig().get(op).withdraw, status.withdraw)
+				}
 			}
 		})
 	}
 }
 
-func TestHalt_IsHalted(t *testing.T) {
+// Test internal setAccessOperationStatus function
+func TestHalt_UpdateHaltAccessOption_Internal(t *testing.T) {
 	tests := []struct {
-		name            string
-		initialLevel    HaltLevel
-		operations      []OpType
-		expectedHalted  bool
-		expectedMessage string
+		name             string
+		inputOption      *HaltOption
+		inputAccess      bool
+		expectedAccess   bool
+		expectedWithdraw bool
+		expectedHasError bool
 	}{
 		{
-			name:           "Success no operations complete level",
-			initialLevel:   HaltLevelComplete,
-			operations:     []OpType{},
-			expectedHalted: true,
+			name:             "Success enable access",
+			inputOption:      &HaltOption{access: false, withdraw: true},
+			inputAccess:      true,
+			expectedAccess:   true,
+			expectedWithdraw: true,
+			expectedHasError: false,
 		},
 		{
-			name:           "Success no operations safe mode",
-			initialLevel:   HaltLevelSafeMode,
-			operations:     []OpType{},
-			expectedHalted: false,
+			name:             "Success isable access",
+			inputOption:      &HaltOption{access: true, withdraw: false},
+			inputAccess:      false,
+			expectedAccess:   false,
+			expectedWithdraw: false,
+			expectedHasError: false,
 		},
 		{
-			name:           "Success enabled operation none level",
-			initialLevel:   HaltLevelNone,
-			operations:     []OpType{OpTypePool},
-			expectedHalted: false,
+			name:             "Fail nil option",
+			inputOption:      nil,
+			inputAccess:      true,
+			expectedAccess:   false,
+			expectedWithdraw: false,
+			expectedHasError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			result, err := updateHaltAccessOption(tc.inputOption, tc.inputAccess)
+
+			// then
+			if tc.expectedHasError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, result.access, tc.expectedAccess)
+				uassert.Equal(t, result.withdraw, tc.expectedWithdraw)
+			}
+		})
+	}
+}
+
+// Test internal updateHaltWithdrawOption function
+func TestHalt_UpdateHaltWithdrawOption_Internal(t *testing.T) {
+	tests := []struct {
+		name             string
+		inputOption      *HaltOption
+		inputWithdraw    bool
+		expectedAccess   bool
+		expectedWithdraw bool
+		expectedHasError bool
+	}{
+		{
+			name:             "Success enable withdraw",
+			inputOption:      &HaltOption{access: true, withdraw: false},
+			inputWithdraw:    true,
+			expectedAccess:   true,
+			expectedWithdraw: true,
+			expectedHasError: false,
 		},
 		{
-			name:           "Fail disabled operation safe mode",
-			initialLevel:   HaltLevelSafeMode,
-			operations:     []OpType{OpTypeWithdraw},
-			expectedHalted: true,
+			name:             "Success isable withdraw",
+			inputOption:      &HaltOption{access: false, withdraw: true},
+			inputWithdraw:    false,
+			expectedAccess:   false,
+			expectedWithdraw: false,
+			expectedHasError: false,
 		},
 		{
-			name:           "Success multiple operations all enabled",
+			name:             "Fail nil option",
+			inputOption:      nil,
+			inputWithdraw:    true,
+			expectedAccess:   false,
+			expectedWithdraw: false,
+			expectedHasError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			result, err := updateHaltWithdrawOption(tc.inputOption, tc.inputWithdraw)
+
+			// then
+			if tc.expectedHasError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, result.access, tc.expectedAccess)
+				uassert.Equal(t, result.withdraw, tc.expectedWithdraw)
+			}
+		})
+	}
+}
+
+// Test GetHaltConfig function
+func TestHalt_GetHaltConfig(t *testing.T) {
+	cleanup()
+
+	// given - set a specific configuration
+	err := setHaltLevel(HaltLevelSafeMode)
+	uassert.NoError(t, err)
+
+	// when
+	config := GetHaltConfig()
+
+	// then
+	expectedConfig := newSafeModeConfig()
+	for op, expectedOption := range expectedConfig {
+		actualOption := config.get(op)
+		uassert.Equal(t, actualOption.access, expectedOption.access)
+		uassert.Equal(t, actualOption.withdraw, expectedOption.withdraw)
+	}
+
+	haltConfig.get(OpTypePool).disableAll()
+	clonedConfig := GetHaltConfig()
+	uassert.Equal(t, clonedConfig.get(OpTypePool).access, false)
+}
+
+// Test IsHalted function
+func TestHalt_IsHalted_Internal(t *testing.T) {
+	tests := []struct {
+		name           string
+		initialLevel   HaltLevel
+		operations     []OpType
+		expectedHalted bool
+	}{
+		{
+			name:           "None level - no operations halted",
 			initialLevel:   HaltLevelNone,
 			operations:     []OpType{OpTypePool, OpTypeRouter},
 			expectedHalted: false,
 		},
 		{
-			name:           "Fail multiple operations one disabled",
+			name:           "Safe mode - operations not halted for access",
 			initialLevel:   HaltLevelSafeMode,
-			operations:     []OpType{OpTypePool, OpTypeWithdraw},
+			operations:     []OpType{OpTypePool, OpTypeGovernance},
+			expectedHalted: false,
+		},
+		{
+			name:           "Emergency - pool operations halted",
+			initialLevel:   HaltLevelEmergency,
+			operations:     []OpType{OpTypePool},
 			expectedHalted: true,
 		},
+		{
+			name:           "Emergency - governance not halted",
+			initialLevel:   HaltLevelEmergency,
+			operations:     []OpType{OpTypeGovernance},
+			expectedHalted: false,
+		},
+		{
+			name:           "Emergency - mixed operations",
+			initialLevel:   HaltLevelEmergency,
+			operations:     []OpType{OpTypePool, OpTypeGovernance},
+			expectedHalted: true, // Should return true if ANY operation is halted
+		},
+		{
+			name:           "Complete - all operations halted",
+			initialLevel:   HaltLevelComplete,
+			operations:     []OpType{OpTypePool, OpTypeGovernance},
+			expectedHalted: true,
+		},
+		{
+			name:           "Empty operations list",
+			initialLevel:   HaltLevelComplete,
+			operations:     []OpType{},
+			expectedHalted: false, // No operations to check
+		},
+		{
+			name:           "Single operation - pool halted in emergency",
+			initialLevel:   HaltLevelEmergency,
+			operations:     []OpType{OpTypePool},
+			expectedHalted: true,
+		},
+		{
+			name:           "Multiple operations - all allowed in none",
+			initialLevel:   HaltLevelNone,
+			operations:     []OpType{OpTypePool, OpTypePosition, OpTypeRouter, OpTypeStaker},
+			expectedHalted: false,
+		},
 	}
 
 	for _, tc := range tests {
@@ -118,49 +275,253 @@ func TestHalt_IsHalted(t *testing.T) {
 			cleanup()
 
 			// given
-			currentLevel = tc.initialLevel
+			err := setHaltLevel(tc.initialLevel)
+			uassert.NoError(t, err)
 
 			// when
-			err := IsHalted(tc.operations...)
+			halted := isHalted(tc.operations...)
 
 			// then
-			if tc.expectedHalted {
-				uassert.Error(t, err)
+			uassert.Equal(t, halted, tc.expectedHalted)
+		})
+	}
+}
+
+// Test isableedAccess function
+func TestHalt_IsAllowedAccess(t *testing.T) {
+	tests := []struct {
+		name            string
+		initialLevel    HaltLevel
+		operation       OpType
+		expectedAllowed bool
+	}{
+		{
+			name:            "None level allows all access",
+			initialLevel:    HaltLevelNone,
+			operation:       OpTypePool,
+			expectedAllowed: true,
+		},
+		{
+			name:            "Safe mode allows access",
+			initialLevel:    HaltLevelSafeMode,
+			operation:       OpTypePool,
+			expectedAllowed: true,
+		},
+		{
+			name:            "Emergency disables pool access",
+			initialLevel:    HaltLevelEmergency,
+			operation:       OpTypePool,
+			expectedAllowed: false,
+		},
+		{
+			name:            "Emergency allows governance access",
+			initialLevel:    HaltLevelEmergency,
+			operation:       OpTypeGovernance,
+			expectedAllowed: true,
+		},
+		{
+			name:            "Complete disables all access",
+			initialLevel:    HaltLevelComplete,
+			operation:       OpTypeGovernance,
+			expectedAllowed: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup()
+
+			// given
+			err := setHaltLevel(tc.initialLevel)
+			uassert.NoError(t, err)
+
+			// when
+			allowed := IsAllowedAccess(tc.operation)
+
+			// then
+			uassert.Equal(t, allowed, tc.expectedAllowed)
+		})
+	}
+}
+
+// Test isableedWithdraw function
+func TestHalt_IsAllowedWithdraw(t *testing.T) {
+	tests := []struct {
+		name            string
+		initialLevel    HaltLevel
+		operation       OpType
+		expectedAllowed bool
+	}{
+		{
+			name:            "None level allows all withdraw",
+			initialLevel:    HaltLevelNone,
+			operation:       OpTypePool,
+			expectedAllowed: true,
+		},
+		{
+			name:            "Safe mode disables withdraw",
+			initialLevel:    HaltLevelSafeMode,
+			operation:       OpTypePool,
+			expectedAllowed: false,
+		},
+		{
+			name:            "Emergency allows withdraw",
+			initialLevel:    HaltLevelEmergency,
+			operation:       OpTypePool,
+			expectedAllowed: true,
+		},
+		{
+			name:            "Emergency allows governance withdraw",
+			initialLevel:    HaltLevelEmergency,
+			operation:       OpTypeGovernance,
+			expectedAllowed: true,
+		},
+		{
+			name:            "Complete disables all withdraw",
+			initialLevel:    HaltLevelComplete,
+			operation:       OpTypeGovernance,
+			expectedAllowed: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup()
+
+			// given
+			err := setHaltLevel(tc.initialLevel)
+			uassert.NoError(t, err)
+
+			// when
+			allowed := IsAllowedWithdraw(tc.operation)
+
+			// then
+			uassert.Equal(t, allowed, tc.expectedAllowed)
+		})
+	}
+}
+
+// Test SetHaltLevel with authorization
+func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+
+	tests := []struct {
+		name                 string
+		callerAddress        std.Address
+		inputLevel           HaltLevel
+		expectedLevel        HaltLevel
+		expectedHasAbort     bool
+		expectedAbortMessage string
+	}{
+		{
+			name:                 "Success with admin realm",
+			callerAddress:        adminAddr,
+			inputLevel:           HaltLevelEmergency,
+			expectedLevel:        HaltLevelEmergency,
+			expectedHasAbort:     false,
+			expectedAbortMessage: "",
+		},
+		{
+			name:                 "Success with governance realm",
+			callerAddress:        govAddr,
+			inputLevel:           HaltLevelNone,
+			expectedLevel:        HaltLevelNone,
+			expectedHasAbort:     false,
+			expectedAbortMessage: "",
+		},
+		{
+			name:                 "Fail with unauthorized realm",
+			callerAddress:        std.Address("g1unauthorized"),
+			inputLevel:           HaltLevelComplete,
+			expectedLevel:        HaltLevelNone, // Should remain unchanged
+			expectedHasAbort:     true,
+			expectedAbortMessage: "caller g1unauthorized is not admin or governance",
+		},
+		{
+			name:                 "Fail with invalid level",
+			callerAddress:        adminAddr,
+			inputLevel:           HaltLevel("INVALID"),
+			expectedLevel:        HaltLevelNone,
+			expectedHasAbort:     true,
+			expectedAbortMessage: "invalid halt level: INVALID",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup()
+
+			testing.SetRealm(std.NewUserRealm(tc.callerAddress))
+
+			// when/then
+			if tc.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tc.expectedAbortMessage, func() {
+					SetHaltLevel(cross, tc.inputLevel)
+				})
 			} else {
-				uassert.NoError(t, err)
+				SetHaltLevel(cross, tc.inputLevel)
+
+				// Verify the level was set correctly by checking specific operations
+				config := GetHaltConfig()
+				expectedConfig := newNoneConfig()
+				switch tc.expectedLevel {
+				case HaltLevelNone:
+					expectedConfig = newNoneConfig()
+				case HaltLevelSafeMode:
+					expectedConfig = newSafeModeConfig()
+				case HaltLevelEmergency:
+					expectedConfig = newEmergencyConfig()
+				case HaltLevelComplete:
+					expectedConfig = newCompleteConfig()
+				}
+
+				for op, expectedOption := range expectedConfig {
+					actualOption := config.get(op)
+					uassert.Equal(t, actualOption.access, expectedOption.access)
+					uassert.Equal(t, actualOption.withdraw, expectedOption.withdraw)
+				}
 			}
 		})
 	}
 }
 
-func TestHalt_SetOperationStatus(t *testing.T) {
+// Test SetOperationStatus with authorization
+func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+
 	tests := []struct {
 		name                 string
+		callerAddress        std.Address
 		operationType        OpType
-		operationStatus      bool
-		expectedError        bool
-		expectedOpAllowed    bool
+		enabled              bool
+		expectedHasAbort     bool
+		expectedAbortMessage string
 	}{
 		{
-			name:              "Success enables operation",
-			operationType:     OpTypePool,
-			operationStatus:   true,
-			expectedError:     false,
-			expectedOpAllowed: true,
+			name:                 "Success with admin realm",
+			callerAddress:        adminAddr,
+			operationType:        OpTypePool,
+			enabled:              false,
+			expectedHasAbort:     false,
+			expectedAbortMessage: "",
 		},
 		{
-			name:              "Success disables operation",
-			operationType:     OpTypePool,
-			operationStatus:   false,
-			expectedError:     false,
-			expectedOpAllowed: false,
+			name:                 "Success with governance realm",
+			callerAddress:        govAddr,
+			operationType:        OpTypeRouter,
+			enabled:              true,
+			expectedHasAbort:     false,
+			expectedAbortMessage: "",
 		},
 		{
-			name:              "Fail invalid operation type",
-			operationType:     OpType("invalid"),
-			operationStatus:   true,
-			expectedError:     true,
-			expectedOpAllowed: false,
+			name:                 "Fail with unauthorized realm",
+			callerAddress:        std.Address("g1unauthorized"),
+			operationType:        OpTypePool,
+			enabled:              true,
+			expectedHasAbort:     true,
+			expectedAbortMessage: "caller g1unauthorized is not admin or governance",
 		},
 	}
 
@@ -168,208 +529,204 @@ func TestHalt_SetOperationStatus(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cleanup()
 
-			// when - directly set the operation status to test the core logic
-			if tc.operationType.IsValid() {
-				customOverrides[tc.operationType] = tc.operationStatus
-			}
+			testing.SetRealm(std.NewUserRealm(tc.callerAddress))
 
-			// then
-			if tc.operationType.IsValid() && !tc.expectedError {
-				// Check operation status using the override
-				opErr := IsHalted(tc.operationType)
-				if tc.expectedOpAllowed {
-					uassert.NoError(t, opErr)
-				} else {
-					uassert.Error(t, opErr)
-				}
-			} else if tc.expectedError {
-				// For invalid operation types, verify that they are indeed invalid
-				uassert.Equal(t, tc.operationType.IsValid(), false)
-			}
-		})
-	}
-}
-
-func TestHalt_GetOperationStatus(t *testing.T) {
-	tests := []struct {
-		name               string
-		initialLevel       HaltLevel
-		operationType      OpType
-		overrideValue      *bool // nil means no override
-		expectedEnabled    bool
-		expectedIsOverride bool
-	}{
-		{
-			name:               "No override none level pool enabled",
-			initialLevel:       HaltLevelNone,
-			operationType:      OpTypePool,
-			overrideValue:      nil,
-			expectedEnabled:    true,
-			expectedIsOverride: false,
-		},
-		{
-			name:               "No override safe mode withdraw disabled",
-			initialLevel:       HaltLevelSafeMode,
-			operationType:      OpTypeWithdraw,
-			overrideValue:      nil,
-			expectedEnabled:    false,
-			expectedIsOverride: false,
-		},
-		{
-			name:               "Override enabled",
-			initialLevel:       HaltLevelSafeMode,
-			operationType:      OpTypeWithdraw,
-			overrideValue:      &[]bool{true}[0],
-			expectedEnabled:    true,
-			expectedIsOverride: true,
-		},
-		{
-			name:               "Override disabled",
-			initialLevel:       HaltLevelNone,
-			operationType:      OpTypePool,
-			overrideValue:      &[]bool{false}[0],
-			expectedEnabled:    false,
-			expectedIsOverride: true,
-		},
-		{
-			name:               "Invalid operation type",
-			initialLevel:       HaltLevelNone,
-			operationType:      OpType("invalid"),
-			overrideValue:      nil,
-			expectedEnabled:    false,
-			expectedIsOverride: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
-
-			// given
-			currentLevel = tc.initialLevel
-			if tc.overrideValue != nil {
-				customOverrides[tc.operationType] = *tc.overrideValue
-			}
-
-			// when
-			enabled, isOverride := GetOperationStatus(tc.operationType)
-
-			// then
-			uassert.Equal(t, enabled, tc.expectedEnabled)
-			uassert.Equal(t, isOverride, tc.expectedIsOverride)
-		})
-	}
-}
-
-func TestHalt_ClearOperationOverride(t *testing.T) {
-	tests := []struct {
-		name          string
-		operationType OpType
-		expectedError bool
-	}{
-		{
-			name:          "Success clears override for valid operation",
-			operationType: OpTypePool,
-			expectedError: false,
-		},
-		{
-			name:          "Fail invalid operation type",
-			operationType: OpType("invalid"),
-			expectedError: true,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
-
-			// given - set an override to clear
-			if tc.operationType.IsValid() {
-				customOverrides[tc.operationType] = true
-			}
-
-			// when - directly test the override clearing logic
-			if tc.operationType.IsValid() {
-				delete(customOverrides, tc.operationType)
-				// Verify override was cleared
-				_, isOverride := GetOperationStatus(tc.operationType)
-				
-				// then
-				if tc.expectedError {
-					uassert.Equal(t, isOverride, true) // Should still have override if error expected
-				} else {
-					uassert.Equal(t, isOverride, false) // Should not have override if successful
-				}
+			// when/then
+			if tc.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tc.expectedAbortMessage, func() {
+					SetOperationStatus(cross, tc.operationType, tc.enabled)
+				})
 			} else {
-				// For invalid operation types, we expect the operation would fail
-				uassert.Equal(t, tc.expectedError, true)
+				SetOperationStatus(cross, tc.operationType, tc.enabled)
+
+				// Verify the operation status was set correctly
+				config := GetHaltConfig()
+				option := config.get(tc.operationType)
+				uassert.Equal(t, option.access, tc.enabled)
+				uassert.Equal(t, option.withdraw, tc.enabled)
 			}
 		})
 	}
 }
 
-func TestHalt_ClearAllOverrides(t *testing.T) {
-	tests := []struct {
-		name                string
-		initialOverrides    map[OpType]bool
-		expectedOverrideLen int
-	}{
-		{
-			name: "Success clears all overrides",
-			initialOverrides: map[OpType]bool{
-				OpTypePool:   false,
-				OpTypeRouter: true,
-			},
-			expectedOverrideLen: 0,
-		},
-		{
-			name:                "Success with no overrides",
-			initialOverrides:    map[OpType]bool{},
-			expectedOverrideLen: 0,
-		},
-	}
+// Test SetOperationAccessStatus with authorization
+func TestHalt_SetOperationAccessStatus_WithAuthorization(t *testing.T) {
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
-
-			// given
-			for op, status := range tc.initialOverrides {
-				customOverrides[op] = status
-			}
-
-			// when - directly test clearing all overrides
-			customOverrides = make(map[OpType]bool)
-
-			// then
-			overrides := GetAllOverrides()
-			uassert.Equal(t, len(overrides), tc.expectedOverrideLen)
-		})
-	}
-}
-
-func TestHalt_OverrideOperations(t *testing.T) {
 	tests := []struct {
 		name                 string
-		initialOverrides     map[OpType]bool
-		expectedOverrideLen  int
-		expectedPoolStatus   *bool
-		expectedRouterStatus *bool
+		callerAddress        std.Address
+		operationType        OpType
+		enabled              bool
+		expectedHasAbort     bool
+		expectedAbortMessage string
 	}{
 		{
-			name: "Multiple overrides set and retrieved",
-			initialOverrides: map[OpType]bool{
-				OpTypePool:   false,
-				OpTypeRouter: true,
+			name:                 "Success with admin realm",
+			callerAddress:        adminAddr,
+			operationType:        OpTypePool,
+			enabled:              false,
+			expectedHasAbort:     false,
+			expectedAbortMessage: "",
+		},
+		{
+			name:                 "Success with governance realm",
+			callerAddress:        govAddr,
+			operationType:        OpTypeRouter,
+			enabled:              true,
+			expectedHasAbort:     false,
+			expectedAbortMessage: "",
+		},
+		{
+			name:                 "Fail with unauthorized realm",
+			callerAddress:        std.Address("g1unauthorized"),
+			operationType:        OpTypePool,
+			enabled:              true,
+			expectedHasAbort:     true,
+			expectedAbortMessage: "caller g1unauthorized is not admin or governance",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup()
+
+			testing.SetRealm(std.NewUserRealm(tc.callerAddress))
+
+			// when/then
+			if tc.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tc.expectedAbortMessage, func() {
+					SetOperationAccessStatus(cross, tc.operationType, tc.enabled)
+				})
+			} else {
+				// Set initial state
+				initialOption := &HaltOption{access: !tc.enabled, withdraw: true}
+				haltConfig.set(tc.operationType, initialOption)
+
+				SetOperationAccessStatus(cross, tc.operationType, tc.enabled)
+
+				// Verify only access status was changed
+				config := GetHaltConfig()
+				option := config.get(tc.operationType)
+				uassert.Equal(t, option.access, tc.enabled)
+				uassert.Equal(t, option.withdraw, true) // Should remain unchanged
+			}
+		})
+	}
+}
+
+// Test SetOperationWithdrawStatus with authorization
+func TestHalt_SetOperationWithdrawStatus_WithAuthorization(t *testing.T) {
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+
+	tests := []struct {
+		name                 string
+		callerAddress        std.Address
+		operationType        OpType
+		enabled              bool
+		expectedHasAbort     bool
+		expectedAbortMessage string
+	}{
+		{
+			name:                 "Success with admin realm",
+			callerAddress:        adminAddr,
+			operationType:        OpTypePool,
+			enabled:              false,
+			expectedHasAbort:     false,
+			expectedAbortMessage: "",
+		},
+		{
+			name:                 "Success with governance realm",
+			callerAddress:        govAddr,
+			operationType:        OpTypeRouter,
+			enabled:              true,
+			expectedHasAbort:     false,
+			expectedAbortMessage: "",
+		},
+		{
+			name:                 "Fail with unauthorized realm",
+			callerAddress:        std.Address("g1unauthorized"),
+			operationType:        OpTypePool,
+			enabled:              true,
+			expectedHasAbort:     true,
+			expectedAbortMessage: "caller g1unauthorized is not admin or governance",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup()
+
+			testing.SetRealm(std.NewUserRealm(tc.callerAddress))
+
+			// when/then
+			if tc.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tc.expectedAbortMessage, func() {
+					SetOperationWithdrawStatus(cross, tc.operationType, tc.enabled)
+				})
+			} else {
+				// Set initial state
+				initialOption := &HaltOption{access: true, withdraw: !tc.enabled}
+				haltConfig.set(tc.operationType, initialOption)
+
+				SetOperationWithdrawStatus(cross, tc.operationType, tc.enabled)
+
+				// Verify only withdraw status was changed
+				config := GetHaltConfig()
+				option := config.get(tc.operationType)
+				uassert.Equal(t, option.access, true) // Should remain unchanged
+				uassert.Equal(t, option.withdraw, tc.enabled)
+			}
+		})
+	}
+}
+
+// Test comprehensive integration scenarios
+func TestHalt_IntegrationScenarios(t *testing.T) {
+	tests := []struct {
+		name                    string
+		initialLevel            HaltLevel
+		customOperations        map[OpType]*HaltOption
+		testOperations          []OpType
+		expectedHalted          bool
+		expectedAccessAllowed   map[OpType]bool
+		expectedWithdrawAllowed map[OpType]bool
+	}{
+		{
+			name:         "Emergency with custom overrides",
+			initialLevel: HaltLevelEmergency,
+			customOperations: map[OpType]*HaltOption{
+				OpTypePool: &HaltOption{access: true, withdraw: false}, // Override to allow access
 			},
-			expectedOverrideLen:  2,
-			expectedPoolStatus:   &[]bool{false}[0],
-			expectedRouterStatus: &[]bool{true}[0],
+			testOperations: []OpType{OpTypePool, OpTypeRouter},
+			expectedHalted: true, // Router is still halted
+			expectedAccessAllowed: map[OpType]bool{
+				OpTypePool:   true,  // Custom override
+				OpTypeRouter: false, // Emergency default
+			},
+			expectedWithdrawAllowed: map[OpType]bool{
+				OpTypePool:   false, // Custom override
+				OpTypeRouter: true,  // Emergency default
+			},
 		},
 		{
-			name:                "Empty overrides",
-			initialOverrides:    map[OpType]bool{},
-			expectedOverrideLen: 0,
+			name:         "Safe mode with selective disabling",
+			initialLevel: HaltLevelSafeMode,
+			customOperations: map[OpType]*HaltOption{
+				OpTypeGovernance: &HaltOption{access: false, withdraw: false}, // isable governance
+			},
+			testOperations: []OpType{OpTypeGovernance},
+			expectedHalted: true, // Governance isabled
+			expectedAccessAllowed: map[OpType]bool{
+				OpTypeGovernance: false, // Custom override
+				OpTypePool:       true,  // Safe mode default
+			},
+			expectedWithdrawAllowed: map[OpType]bool{
+				OpTypeGovernance: false, // Custom override
+				OpTypePool:       false, // Safe mode default
+			},
 		},
 	}
 
@@ -377,629 +734,84 @@ func TestHalt_OverrideOperations(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cleanup()
 
-			// given
-			for op, status := range tc.initialOverrides {
-				customOverrides[op] = status
+			// Set initial level
+			err := setHaltLevel(tc.initialLevel)
+			uassert.NoError(t, err)
+
+			// Apply custom overrides
+			for op, option := range tc.customOperations {
+				haltConfig.set(op, option)
 			}
 
-			// when
-			overrides := GetAllOverrides()
+			// Test IsHalted
+			halted := isHalted(tc.testOperations...)
+			uassert.Equal(t, halted, tc.expectedHalted)
 
-			// then
-			uassert.Equal(t, len(overrides), tc.expectedOverrideLen)
-			if tc.expectedPoolStatus != nil {
-				uassert.Equal(t, overrides[OpTypePool], *tc.expectedPoolStatus)
+			// Test individual access permissions
+			for op, expected := range tc.expectedAccessAllowed {
+				allowed := IsAllowedAccess(op)
+				uassert.Equal(t, allowed, expected)
 			}
-			if tc.expectedRouterStatus != nil {
-				uassert.Equal(t, overrides[OpTypeRouter], *tc.expectedRouterStatus)
+
+			// Test individual withdraw permissions
+			for op, expected := range tc.expectedWithdrawAllowed {
+				allowed := IsAllowedWithdraw(op)
+				uassert.Equal(t, allowed, expected)
 			}
 		})
 	}
 }
 
-func TestHalt_BackwardCompatibility(t *testing.T) {
-	tests := []struct {
-		name                        string
-		initialLevel                HaltLevel
-		expectedGetHalt             bool
-		testOperation               OpType
-		expectedIsContractHalted    bool
-		expectedGetContractStatus   bool
-	}{
-		{
-			name:                        "None level backward compatibility",
-			initialLevel:                HaltLevelNone,
-			expectedGetHalt:             false,
-			testOperation:               OpTypePool,
-			expectedIsContractHalted:    false,
-			expectedGetContractStatus:   true,
-		},
-		{
-			name:                        "Complete level backward compatibility",
-			initialLevel:                HaltLevelComplete,
-			expectedGetHalt:             true,
-			testOperation:               OpTypePool,
-			expectedIsContractHalted:    true,
-			expectedGetContractStatus:   false,
-		},
-		{
-			name:                        "Safe mode withdraw disabled backward compatibility",
-			initialLevel:                HaltLevelSafeMode,
-			expectedGetHalt:             false,
-			testOperation:               OpTypeWithdraw,
-			expectedIsContractHalted:    true,
-			expectedGetContractStatus:   false,
-		},
-		{
-			name:                        "Safe mode pool enabled backward compatibility",
-			initialLevel:                HaltLevelSafeMode,
-			expectedGetHalt:             false,
-			testOperation:               OpTypePool,
-			expectedIsContractHalted:    false,
-			expectedGetContractStatus:   true,
-		},
-	}
+// Test edge cases
+func TestHalt_EdgeCases(t *testing.T) {
+	t.Run("GetHaltConfig independence", func(t *testing.T) {
+		cleanup()
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+		// Get initial config
+		haltConfig = newNoneConfig()
 
-			// given
-			currentLevel = tc.initialLevel
+		configByGetter := GetHaltConfig()
 
-			// when & then
-			uassert.Equal(t, GetHalt(), tc.expectedGetHalt)
-			uassert.Equal(t, IsContractHalted(tc.testOperation), tc.expectedIsContractHalted)
-			uassert.Equal(t, GetContractStatus(tc.testOperation), tc.expectedGetContractStatus)
-		})
-	}
-}
+		// Modify internal state
+		haltConfig.get(OpTypePool).disableAll()
 
-func TestHalt_SetHalt(t *testing.T) {
-	tests := []struct {
-		name          string
-		isHalted      bool
-		expectedLevel HaltLevel
-	}{
-		{
-			name:          "Success sets halt to true",
-			isHalted:      true,
-			expectedLevel: HaltLevelComplete,
-		},
-		{
-			name:          "Success sets halt to false",
-			isHalted:      false,
-			expectedLevel: HaltLevelNone,
-		},
-	}
+		// Both should be independent of internal state and each other
+		uassert.Equal(t, haltConfig.get(OpTypePool).access, false)
+		uassert.Equal(t, configByGetter.get(OpTypePool).access, true)
+	})
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+	t.Run("IsHalted with no operations", func(t *testing.T) {
+		cleanup()
+		err := setHaltLevel(HaltLevelComplete)
+		uassert.NoError(t, err)
 
-			// when - test the internal logic
-			if tc.isHalted {
-				err := setHaltLevel(HaltLevelComplete)
-				uassert.NoError(t, err)
-			} else {
-				err := setHaltLevel(HaltLevelNone)
-				uassert.NoError(t, err)
-			}
+		// Empty operation list should return false
+		halted := isHalted()
+		uassert.Equal(t, halted, false)
+	})
 
-			// then
-			uassert.Equal(t, string(GetCurrentHaltLevel()), string(tc.expectedLevel))
-		})
-	}
-}
+	t.Run("Multiple halt level changes", func(t *testing.T) {
+		cleanup()
 
-func TestHalt_ComplexStatusTransitions(t *testing.T) {
-	tests := []struct {
-		name               string
-		transitions        []HaltLevel
-		operationType      OpType
-		preOpStatus        *bool
-		expectedFinalLevel HaltLevel
-		expectedOpAllowed  bool
-	}{
-		{
-			name:               "Transition from none to emergency to none",
-			transitions:        []HaltLevel{HaltLevelNone, HaltLevelEmergency, HaltLevelNone},
-			operationType:      OpTypeWithdraw,
-			preOpStatus:        &[]bool{true}[0],
-			expectedFinalLevel: HaltLevelNone,
-			expectedOpAllowed:  true,
-		},
-		{
-			name:               "Complex transition with operation override preservation",
-			transitions:        []HaltLevel{HaltLevelNone, HaltLevelEmergency, HaltLevelComplete, HaltLevelNone},
-			operationType:      OpTypePool,
-			preOpStatus:        &[]bool{false}[0],
-			expectedFinalLevel: HaltLevelNone,
-			expectedOpAllowed:  false,
-		},
-	}
+		// Start with emergency
+		err := setHaltLevel(HaltLevelEmergency)
+		uassert.NoError(t, err)
+		uassert.Equal(t, IsAllowedAccess(OpTypePool), false)
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+		// Change to none
+		err = setHaltLevel(HaltLevelNone)
+		uassert.NoError(t, err)
+		uassert.Equal(t, IsAllowedAccess(OpTypePool), true)
 
-			// given - set pre-operation status if specified
-			if tc.preOpStatus != nil {
-				customOverrides[tc.operationType] = *tc.preOpStatus
-			}
-
-			// when - apply transitions
-			var finalErr error
-			for _, level := range tc.transitions {
-				finalErr = setHaltLevel(level)
-				if finalErr != nil {
-					break
-				}
-			}
-
-			// then
-			uassert.NoError(t, finalErr)
-			uassert.Equal(t, string(GetCurrentHaltLevel()), string(tc.expectedFinalLevel))
-
-			// Check operation status
-			err := IsHalted(tc.operationType)
-			if tc.expectedOpAllowed {
-				uassert.NoError(t, err)
-			} else {
-				uassert.Error(t, err)
-			}
-		})
-	}
-}
-
-func TestHalt_GetHaltLevelDescription(t *testing.T) {
-	tests := []struct {
-		name                string
-		initialLevel        HaltLevel
-		expectedDescription string
-	}{
-		{
-			name:                "None level description",
-			initialLevel:        HaltLevelNone,
-			expectedDescription: "All operations enabled",
-		},
-		{
-			name:                "Safe mode description",
-			initialLevel:        HaltLevelSafeMode,
-			expectedDescription: "All operations enabled except withdrawals",
-		},
-		{
-			name:                "Emergency level description",
-			initialLevel:        HaltLevelEmergency,
-			expectedDescription: "Only governance and withdrawal operations enabled",
-		},
-		{
-			name:                "Complete level description",
-			initialLevel:        HaltLevelComplete,
-			expectedDescription: "All operations disabled",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
-
-			// given
-			currentLevel = tc.initialLevel
-
-			// when
-			result := GetHaltLevelDescription()
-
-			// then
-			uassert.Equal(t, result, tc.expectedDescription)
-		})
-	}
-}
-
-func TestHalt_OperationPermissions(t *testing.T) {
-	tests := []struct {
-		name                string
-		level               HaltLevel
-		operationType       OpType
-		expectedAllowed     bool
-	}{
-		// None level - all operations allowed
-		{
-			name:            "None level allows pool operations",
-			level:           HaltLevelNone,
-			operationType:   OpTypePool,
-			expectedAllowed: true,
-		},
-		{
-			name:            "None level allows withdraw operations",
-			level:           HaltLevelNone,
-			operationType:   OpTypeWithdraw,
-			expectedAllowed: true,
-		},
-		
-		// Safe mode - all except withdraw
-		{
-			name:            "Safe mode allows pool operations",
-			level:           HaltLevelSafeMode,
-			operationType:   OpTypePool,
-			expectedAllowed: true,
-		},
-		{
-			name:            "Safe mode disallows withdraw operations",
-			level:           HaltLevelSafeMode,
-			operationType:   OpTypeWithdraw,
-			expectedAllowed: false,
-		},
-		
-		// Emergency - only governance and withdraw
-		{
-			name:            "Emergency allows governance operations",
-			level:           HaltLevelEmergency,
-			operationType:   OpTypeGovernance,
-			expectedAllowed: true,
-		},
-		{
-			name:            "Emergency allows withdraw operations",
-			level:           HaltLevelEmergency,
-			operationType:   OpTypeWithdraw,
-			expectedAllowed: true,
-		},
-		{
-			name:            "Emergency disallows pool operations",
-			level:           HaltLevelEmergency,
-			operationType:   OpTypePool,
-			expectedAllowed: false,
-		},
-		
-		// Complete - nothing allowed
-		{
-			name:            "Complete disallows all operations",
-			level:           HaltLevelComplete,
-			operationType:   OpTypeGovernance,
-			expectedAllowed: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
-
-			// given
-			currentLevel = tc.level
-
-			// when
-			err := IsHalted(tc.operationType)
-
-			// then
-			if tc.expectedAllowed {
-				uassert.NoError(t, err)
-			} else {
-				uassert.Error(t, err)
-			}
-		})
-	}
+		// Change to complete
+		err = setHaltLevel(HaltLevelComplete)
+		uassert.NoError(t, err)
+		uassert.Equal(t, IsAllowedAccess(OpTypePool), false)
+		uassert.Equal(t, IsAllowedWithdraw(OpTypePool), false)
+	})
 }
 
 // Test helpers
 func cleanup() {
-	currentLevel = HaltLevelSafeMode
-	customOverrides = make(map[OpType]bool)
-}
-
-// Reset function like in old module to properly set realm and state
-func resetToSafeMode() {
-	// Reset internal state directly without authorization checks
-	currentLevel = HaltLevelSafeMode
-	customOverrides = make(map[OpType]bool)
-}
-
-// Debug function to check access module setup
-func TestHalt_AccessModuleSetup(t *testing.T) {
-	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
-	
-	// These should not be zero addresses
-	uassert.NotEqual(t, adminAddr, std.Address(""))
-	uassert.NotEqual(t, govAddr, std.Address(""))
-}
-
-// Integration tests that call actual API functions with realm setup
-func TestHalt_SetHaltLevel_WithRealm(t *testing.T) {
-	tests := []struct {
-		name             string
-		realmType        string // "admin", "governance", "unauthorized"
-		inputLevel       HaltLevel
-		expectedLevel    HaltLevel
-		expectedError    bool
-	}{
-		{
-			name:          "Success with admin realm",
-			realmType:     "admin",
-			inputLevel:    HaltLevelEmergency,
-			expectedLevel: HaltLevelEmergency,
-			expectedError: false,
-		},
-		{
-			name:          "Success with governance realm",
-			realmType:     "governance",
-			inputLevel:    HaltLevelNone,
-			expectedLevel: HaltLevelNone,
-			expectedError: false,
-		},
-		{
-			name:          "Fail with unauthorized realm",
-			realmType:     "unauthorized",
-			inputLevel:    HaltLevelComplete,
-			expectedLevel: HaltLevelSafeMode, // Should remain unchanged
-			expectedError: true,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
-			
-			// Set realm directly based on type
-			switch tc.realmType {
-			case "admin":
-				adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-				testing.SetRealm(std.NewUserRealm(adminAddr))
-			case "governance":
-				govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
-				testing.SetRealm(std.NewUserRealm(govAddr))
-			case "unauthorized":
-				testing.SetRealm(std.NewUserRealm(std.Address("g1useraddress")))
-			}
-
-			// when
-			err := SetHaltLevel(cross, tc.inputLevel)
-
-			// then
-			if tc.expectedError {
-				uassert.Error(t, err)
-			} else {
-				uassert.NoError(t, err)
-			}
-			uassert.Equal(t, string(GetCurrentHaltLevel()), string(tc.expectedLevel))
-		})
-	}
-}
-
-func TestHalt_SetOperationStatus_WithRealm(t *testing.T) {
-	tests := []struct {
-		name           string
-		realmType      string // "governance", "unauthorized", "invalid"
-		operationType  OpType
-		enabled        bool
-		expectedError  bool
-	}{
-		{
-			name:          "Success with governance realm",
-			realmType:     "governance",
-			operationType: OpTypePool,
-			enabled:       false,
-			expectedError: false,
-		},
-		{
-			name:          "Fail with unauthorized realm",
-			realmType:     "unauthorized",
-			operationType: OpTypePool,
-			enabled:       true,
-			expectedError: true,
-		},
-		{
-			name:          "Fail with invalid operation type",
-			realmType:     "governance",
-			operationType: OpType("invalid"),
-			enabled:       true,
-			expectedError: true,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// Set realm directly based on type (not through function)
-			switch tc.realmType {
-			case "governance":
-				govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
-				testing.SetRealm(std.NewUserRealm(govAddr))
-			case "unauthorized":
-				testing.SetRealm(std.NewUserRealm(std.Address("g1useraddress")))
-			}
-
-			// when
-			err := SetOperationStatus(cross, tc.operationType, tc.enabled)
-
-			// then
-			if tc.expectedError {
-				uassert.Error(t, err)
-			} else {
-				uassert.NoError(t, err)
-				enabled, isOverride := GetOperationStatus(tc.operationType)
-				uassert.Equal(t, enabled, tc.enabled)
-				uassert.Equal(t, isOverride, true) // Should be override
-			}
-		})
-	}
-}
-
-func TestHalt_ClearOperationOverride_WithRealm(t *testing.T) {
-	tests := []struct {
-		name           string
-		realmType      string // "governance", "unauthorized", "invalid"
-		operationType  OpType
-		expectedError  bool
-	}{
-		{
-			name:          "Success with governance realm",
-			realmType:     "governance",
-			operationType: OpTypePool,
-			expectedError: false,
-		},
-		{
-			name:          "Fail with unauthorized realm",
-			realmType:     "unauthorized",
-			operationType: OpTypePool,
-			expectedError: true,
-		},
-		{
-			name:          "Fail with invalid operation type",
-			realmType:     "governance",
-			operationType: OpType("invalid"),
-			expectedError: true,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
-			
-			// given - set an override first
-			customOverrides[tc.operationType] = true
-			
-			// Set realm directly based on type
-			switch tc.realmType {
-			case "governance":
-				govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
-				testing.SetRealm(std.NewUserRealm(govAddr))
-			case "unauthorized":
-				testing.SetRealm(std.NewUserRealm(std.Address("g1useraddress")))
-			}
-
-			// when
-			err := ClearOperationOverride(cross, tc.operationType)
-
-			// then
-			if tc.expectedError {
-				uassert.Error(t, err)
-				if tc.operationType.IsValid() {
-					// Override should still exist
-					_, isOverride := GetOperationStatus(tc.operationType)
-					uassert.Equal(t, isOverride, true)
-				}
-			} else {
-				uassert.NoError(t, err)
-				// Override should be cleared
-				_, isOverride := GetOperationStatus(tc.operationType)
-				uassert.Equal(t, isOverride, false)
-			}
-		})
-	}
-}
-
-func TestHalt_ClearAllOverrides_WithRealm(t *testing.T) {
-	tests := []struct {
-		name           string
-		realmType      string // "governance", "unauthorized"
-		expectedError  bool
-	}{
-		{
-			name:          "Success with governance realm",
-			realmType:     "governance",
-			expectedError: false,
-		},
-		{
-			name:          "Fail with unauthorized realm",
-			realmType:     "unauthorized",
-			expectedError: true,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
-			
-			// given - set some overrides first
-			customOverrides[OpTypePool] = false
-			customOverrides[OpTypeRouter] = true
-			
-			// Set realm directly based on type
-			switch tc.realmType {
-			case "governance":
-				govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
-				testing.SetRealm(std.NewUserRealm(govAddr))
-			case "unauthorized":
-				testing.SetRealm(std.NewUserRealm(std.Address("g1useraddress")))
-			}
-
-			// when
-			err := ClearAllOverrides(cross)
-
-			// then
-			if tc.expectedError {
-				uassert.Error(t, err)
-				// Overrides should still exist
-				overrides := GetAllOverrides()
-				uassert.Equal(t, len(overrides), 2)
-			} else {
-				uassert.NoError(t, err)
-				// All overrides should be cleared
-				overrides := GetAllOverrides()
-				uassert.Equal(t, len(overrides), 0)
-			}
-		})
-	}
-}
-
-func TestHalt_SetOperationStatusByAdmin_WithRealm(t *testing.T) {
-	tests := []struct {
-		name           string
-		realmType      string // "admin", "unauthorized", "governance"
-		operationType  OpType
-		enabled        bool
-		expectedError  bool
-	}{
-		{
-			name:          "Success with admin realm",
-			realmType:     "admin",
-			operationType: OpTypePool,
-			enabled:       false,
-			expectedError: false,
-		},
-		{
-			name:          "Fail with unauthorized realm",
-			realmType:     "unauthorized",
-			operationType: OpTypePool,
-			enabled:       true,
-			expectedError: true,
-		},
-		{
-			name:          "Fail with governance realm (admin only)",
-			realmType:     "governance",
-			operationType: OpTypePool,
-			enabled:       true,
-			expectedError: true,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
-			
-			// Set realm directly based on type
-			switch tc.realmType {
-			case "admin":
-				adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-				testing.SetRealm(std.NewUserRealm(adminAddr))
-			case "governance":
-				govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
-				testing.SetRealm(std.NewUserRealm(govAddr))
-			case "unauthorized":
-				testing.SetRealm(std.NewUserRealm(std.Address("g1useraddress")))
-			}
-
-			// when
-			err := SetOperationStatusByAdmin(cross, tc.operationType, tc.enabled)
-
-			// then
-			if tc.expectedError {
-				uassert.Error(t, err)
-			} else {
-				uassert.NoError(t, err)
-				enabled, isOverride := GetOperationStatus(tc.operationType)
-				uassert.Equal(t, enabled, tc.enabled)
-				uassert.Equal(t, isOverride, true) // Should be override
-			}
-		})
-	}
+	haltConfig = newNoneConfig()
 }

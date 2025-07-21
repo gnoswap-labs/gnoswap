@@ -2,126 +2,61 @@ package halt
 
 import "errors"
 
-// Core types
-type HaltLevel string
-type OpType string
-
-// Backward compatibility types
-type LevelID uint8
-type Manager struct {
-	// Simplified manager for backward compatibility
-}
-
-// Manager methods for backward compatibility with old API
-func (m *Manager) Level() HaltLevelInterface {
-	return &BackwardCompatHaltLevel{level: currentLevel}
-}
-
-func (m *Manager) Status(o OpType) string {
-	return string(currentLevel)
-}
-
-// Interface for backward compatibility
-type HaltLevelInterface interface {
-	Level() LevelID
-	Name() string
-	IsOperationAllowed(op OperationInterface) bool
-}
-
-type BackwardCompatHaltLevel struct {
-	level HaltLevel
-}
-
-func (h *BackwardCompatHaltLevel) Level() LevelID {
-	return haltLevelToLevelID(h.level)
-}
-
-func (h *BackwardCompatHaltLevel) Name() string {
-	return string(h.level)
-}
-
-func (h *BackwardCompatHaltLevel) IsOperationAllowed(op OperationInterface) bool {
-	if op == nil {
-		return false
-	}
-	enabled, _ := GetOperationStatus(op.Type())
-	return enabled
-}
-
-// Operation interface for backward compatibility
-type OperationInterface interface {
-	Type() OpType
-}
-
-type BackwardCompatOperation struct {
-	opType OpType
-}
-
-func (o *BackwardCompatOperation) Type() OpType {
-	return o.opType
-}
-
-// NewOperation creates a backward compatible operation
-func NewOperation(opType OpType, name, desc string) OperationInterface {
-	return &BackwardCompatOperation{opType: opType}
-}
-
-// Halt levels
+// Halt levels define different states of system operation restriction
 const (
-	HaltLevelNone      HaltLevel = "NONE"
-	HaltLevelSafeMode  HaltLevel = "SAFE_MODE"
-	HaltLevelEmergency HaltLevel = "EMERGENCY"
-	HaltLevelComplete  HaltLevel = "COMPLETE"
+	HaltLevelNone      HaltLevel = "NONE"      // All operations enabled
+	HaltLevelSafeMode  HaltLevel = "SAFE_MODE" // All operations enabled except withdrawals
+	HaltLevelEmergency HaltLevel = "EMERGENCY" // Only governance and withdrawal operations enabled
+	HaltLevelComplete  HaltLevel = "COMPLETE"  // All operations isabled
 )
 
-// Operation types representing individual contracts
+// Operation types representing individual contracts and their capabilities
 const (
-	OpTypePool          OpType = "pool"
-	OpTypePosition      OpType = "position"
-	OpTypeProtocolFee   OpType = "protocol_fee"
-	OpTypeRouter        OpType = "router"
-	OpTypeStaker        OpType = "staker"
-	OpTypeLaunchpad     OpType = "launchpad"
-	OpTypeGovernance    OpType = "governance"
-	OpTypeGovStaker     OpType = "gov_staker"
-	OpTypeXGns          OpType = "xgns"
-	OpTypeCommunityPool OpType = "community_pool"
-	OpTypeEmission      OpType = "emission"
-	OpTypeWithdraw      OpType = "withdraw"
+	OpTypePool          OpType = "pool"           // Pool contract operations
+	OpTypePosition      OpType = "position"       // Position management operations
+	OpTypeProtocolFee   OpType = "protocol_fee"   // Protocol fee operations
+	OpTypeRouter        OpType = "router"         // Router contract operations
+	OpTypeStaker        OpType = "staker"         // Staker contract operations
+	OpTypeLaunchpad     OpType = "launchpad"      // Launchpad contract operations
+	OpTypeGovernance    OpType = "governance"     // Governance contract operations
+	OpTypeGovStaker     OpType = "gov_staker"     // Governance staker operations
+	OpTypeXGns          OpType = "xgns"           // xGNS token operations
+	OpTypeCommunityPool OpType = "community_pool" // Community pool operations
+	OpTypeEmission      OpType = "emission"       // Token emission operations
 )
 
-// Legacy LevelID constants for backward compatibility
-const (
-	LvNoHalt LevelID = iota // 0
-	LvEmergencyHalt         // 1
-	LvCompleteHalt          // 2
-	LvContractHalt          // 3
-	_                       // 4 (skip)
-	_                       // 5
-	_                       // 6
-	_                       // 7
-	_                       // 8
-	_                       // 9
-	LvMainnetSafeMode       = 10
-)
-
-// Errors
+// Default errors used throughout the halt system
 var (
-	errHalted       = errors.New("operations halted")
-	errUnauthorized = errors.New("unauthorized")
-	errInvalidLevel = errors.New("invalid halt level")
+	errHalted = errors.New("halted") // Error returned when operations are halted
 )
 
-// String methods for better debugging
+// Core types and descriptions mapping for halt levels
+var haltLevelDescriptions = map[HaltLevel]string{
+	HaltLevelNone:      "All operations enabled",
+	HaltLevelSafeMode:  "All operations enabled except withdrawals",
+	HaltLevelEmergency: "Only governance and withdrawal operations enabled",
+	HaltLevelComplete:  "All operations isabled",
+}
+
+// HaltLevel represents the current system halt state
+type HaltLevel string
+
+// String returns the string representation of the halt level
 func (h HaltLevel) String() string {
 	return string(h)
 }
 
-func (o OpType) String() string {
-	return string(o)
+// Description returns a human-readable description of what the halt level allows
+func (h HaltLevel) Description() string {
+	desc, ok := haltLevelDescriptions[h]
+	if !ok {
+		return "Unknown halt level"
+	}
+
+	return desc
 }
 
-// IsValid checks if the halt level is valid
+// IsValid checks if the halt level is one of the predefined valid levels
 func (h HaltLevel) IsValid() bool {
 	switch h {
 	case HaltLevelNone, HaltLevelSafeMode, HaltLevelEmergency, HaltLevelComplete:
@@ -131,45 +66,30 @@ func (h HaltLevel) IsValid() bool {
 	}
 }
 
-// IsValid checks if the operation type is valid
+// OpType represents different operation types that can be controlled independently
+type OpType string
+
+// String returns the string representation of the operation type
+func (o OpType) String() string {
+	return string(o)
+}
+
+// IsValid checks if the operation type is one of the predefined valid operation types
 func (o OpType) IsValid() bool {
 	switch o {
-	case OpTypePool, OpTypePosition, OpTypeProtocolFee, OpTypeRouter,
-		OpTypeStaker, OpTypeLaunchpad, OpTypeGovernance, OpTypeGovStaker,
-		OpTypeXGns, OpTypeCommunityPool, OpTypeEmission, OpTypeWithdraw:
+	case OpTypePool,
+		OpTypePosition,
+		OpTypeProtocolFee,
+		OpTypeRouter,
+		OpTypeStaker,
+		OpTypeLaunchpad,
+		OpTypeGovernance,
+		OpTypeGovStaker,
+		OpTypeXGns,
+		OpTypeCommunityPool,
+		OpTypeEmission:
 		return true
 	default:
 		return false
-	}
-}
-
-// Backward compatibility conversion functions
-func levelIDToHaltLevel(id LevelID) HaltLevel {
-	switch id {
-	case LvNoHalt:
-		return HaltLevelNone
-	case LvEmergencyHalt:
-		return HaltLevelEmergency
-	case LvCompleteHalt:
-		return HaltLevelComplete
-	case LvContractHalt, LvMainnetSafeMode:
-		return HaltLevelSafeMode
-	default:
-		return HaltLevelSafeMode // Default fallback
-	}
-}
-
-func haltLevelToLevelID(level HaltLevel) LevelID {
-	switch level {
-	case HaltLevelNone:
-		return LvNoHalt
-	case HaltLevelEmergency:
-		return LvEmergencyHalt
-	case HaltLevelComplete:
-		return LvCompleteHalt
-	case HaltLevelSafeMode:
-		return LvMainnetSafeMode // Map to special mainnet mode
-	default:
-		return LvMainnetSafeMode // Default fallback
 	}
 }

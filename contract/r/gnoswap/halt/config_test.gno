@@ -6,174 +6,50 @@ import (
 	"gno.land/p/demo/uassert"
 )
 
-func TestConfig_GetOperationDefaultStatus(t *testing.T) {
+// Test HaltConfig methods
+func TestHaltConfig_IsEnabled(t *testing.T) {
 	tests := []struct {
 		name     string
-		level    HaltLevel
+		config   HaltConfig
 		op       OpType
 		expected bool
 	}{
-		// HaltLevelNone - all operations enabled
 		{
-			name:     "None level pool enabled",
-			level:    HaltLevelNone,
+			name:     "Enable operation",
+			config:   HaltConfig{OpTypePool: newEnabledOption()},
 			op:       OpTypePool,
 			expected: true,
 		},
 		{
-			name:     "None level withdraw enabled",
-			level:    HaltLevelNone,
-			op:       OpTypeWithdraw,
-			expected: true,
-		},
-		{
-			name:     "None level governance enabled",
-			level:    HaltLevelNone,
-			op:       OpTypeGovernance,
-			expected: true,
-		},
-
-		// HaltLevelSafeMode - all enabled except withdrawal
-		{
-			name:     "Safe mode pool enabled",
-			level:    HaltLevelSafeMode,
-			op:       OpTypePool,
-			expected: true,
-		},
-		{
-			name:     "Safe mode withdraw disabled",
-			level:    HaltLevelSafeMode,
-			op:       OpTypeWithdraw,
-			expected: false,
-		},
-		{
-			name:     "Safe mode governance enabled",
-			level:    HaltLevelSafeMode,
-			op:       OpTypeGovernance,
-			expected: true,
-		},
-		{
-			name:     "Safe mode router enabled",
-			level:    HaltLevelSafeMode,
-			op:       OpTypeRouter,
-			expected: true,
-		},
-
-		// HaltLevelEmergency - only governance and withdrawal enabled
-		{
-			name:     "Emergency governance enabled",
-			level:    HaltLevelEmergency,
-			op:       OpTypeGovernance,
-			expected: true,
-		},
-		{
-			name:     "Emergency withdraw enabled",
-			level:    HaltLevelEmergency,
-			op:       OpTypeWithdraw,
-			expected: true,
-		},
-		{
-			name:     "Emergency pool disabled",
-			level:    HaltLevelEmergency,
+			name:     "Access only operation",
+			config:   HaltConfig{OpTypePool: newAccessOnlyOption()},
 			op:       OpTypePool,
 			expected: false,
 		},
 		{
-			name:     "Emergency router disabled",
-			level:    HaltLevelEmergency,
-			op:       OpTypeRouter,
-			expected: false,
-		},
-		{
-			name:     "Emergency staker disabled",
-			level:    HaltLevelEmergency,
-			op:       OpTypeStaker,
-			expected: false,
-		},
-
-		// HaltLevelComplete - all operations disabled
-		{
-			name:     "Complete governance disabled",
-			level:    HaltLevelComplete,
-			op:       OpTypeGovernance,
-			expected: false,
-		},
-		{
-			name:     "Complete withdraw disabled",
-			level:    HaltLevelComplete,
-			op:       OpTypeWithdraw,
-			expected: false,
-		},
-		{
-			name:     "Complete pool disabled",
-			level:    HaltLevelComplete,
+			name:     "Withdraw only operation",
+			config:   HaltConfig{OpTypePool: newWithdrawOnlyOption()},
 			op:       OpTypePool,
 			expected: false,
 		},
-
-		// Invalid level
 		{
-			name:     "Invalid level defaults disabled",
-			level:    HaltLevel("INVALID"),
+			name:     "Disabled operation",
+			config:   HaltConfig{OpTypePool: newDisabledOption()},
 			op:       OpTypePool,
 			expected: false,
 		},
-
-		// Test all operation types with None level
 		{
-			name:     "None level position enabled",
-			level:    HaltLevelNone,
-			op:       OpTypePosition,
-			expected: true,
-		},
-		{
-			name:     "None level protocol fee enabled",
-			level:    HaltLevelNone,
-			op:       OpTypeProtocolFee,
-			expected: true,
-		},
-		{
-			name:     "None level staker enabled",
-			level:    HaltLevelNone,
-			op:       OpTypeStaker,
-			expected: true,
-		},
-		{
-			name:     "None level launchpad enabled",
-			level:    HaltLevelNone,
-			op:       OpTypeLaunchpad,
-			expected: true,
-		},
-		{
-			name:     "None level gov staker enabled",
-			level:    HaltLevelNone,
-			op:       OpTypeGovStaker,
-			expected: true,
-		},
-		{
-			name:     "None level xgns enabled",
-			level:    HaltLevelNone,
-			op:       OpTypeXGns,
-			expected: true,
-		},
-		{
-			name:     "None level community pool enabled",
-			level:    HaltLevelNone,
-			op:       OpTypeCommunityPool,
-			expected: true,
-		},
-		{
-			name:     "None level emission enabled",
-			level:    HaltLevelNone,
-			op:       OpTypeEmission,
-			expected: true,
+			name:     "Nil operation",
+			config:   HaltConfig{},
+			op:       OpTypePool,
+			expected: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			result := getOperationDefaultStatus(tc.level, tc.op)
+			result := tc.config.IsEnabled(tc.op)
 
 			// then
 			uassert.Equal(t, result, tc.expected)
@@ -181,24 +57,523 @@ func TestConfig_GetOperationDefaultStatus(t *testing.T) {
 	}
 }
 
-func TestConfig_AllOperationsEnabled(t *testing.T) {
+func TestHaltConfig_IsEnabledAccess(t *testing.T) {
+	tests := []struct {
+		name     string
+		config   HaltConfig
+		op       OpType
+		expected bool
+	}{
+		{
+			name:     "Enable access",
+			config:   HaltConfig{OpTypePool: newEnabledOption()},
+			op:       OpTypePool,
+			expected: true,
+		},
+		{
+			name:     "Access only operation",
+			config:   HaltConfig{OpTypePool: newAccessOnlyOption()},
+			op:       OpTypePool,
+			expected: true,
+		},
+		{
+			name:     "Withdraw only operation",
+			config:   HaltConfig{OpTypePool: newWithdrawOnlyOption()},
+			op:       OpTypePool,
+			expected: false,
+		},
+		{
+			name:     "Disabled operation",
+			config:   HaltConfig{OpTypePool: newDisabledOption()},
+			op:       OpTypePool,
+			expected: false,
+		},
+		{
+			name:     "Nil operation",
+			config:   HaltConfig{},
+			op:       OpTypePool,
+			expected: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			result := tc.config.IsEnabledAccess(tc.op)
+
+			// then
+			uassert.Equal(t, result, tc.expected)
+		})
+	}
+}
+
+func TestHaltConfig_IsEnabledWithdraw(t *testing.T) {
+	tests := []struct {
+		name     string
+		config   HaltConfig
+		op       OpType
+		expected bool
+	}{
+		{
+			name:     "Enable withdraw",
+			config:   HaltConfig{OpTypePool: newEnabledOption()},
+			op:       OpTypePool,
+			expected: true,
+		},
+		{
+			name:     "Access only operation",
+			config:   HaltConfig{OpTypePool: newAccessOnlyOption()},
+			op:       OpTypePool,
+			expected: false,
+		},
+		{
+			name:     "Withdraw only operation",
+			config:   HaltConfig{OpTypePool: newWithdrawOnlyOption()},
+			op:       OpTypePool,
+			expected: true,
+		},
+		{
+			name:     "Disabled operation",
+			config:   HaltConfig{OpTypePool: newDisabledOption()},
+			op:       OpTypePool,
+			expected: false,
+		},
+		{
+			name:     "Nil operation",
+			config:   HaltConfig{},
+			op:       OpTypePool,
+			expected: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			result := tc.config.IsEnabledWithdraw(tc.op)
+
+			// then
+			uassert.Equal(t, result, tc.expected)
+		})
+	}
+}
+
+func TestHaltConfig_Clone(t *testing.T) {
+	// given
+	original := HaltConfig{
+		OpTypePool:   newEnabledOption(),
+		OpTypeRouter: newAccessOnlyOption(),
+		OpTypeStaker: newEnabledOption(),
+	}
+
 	// when
-	result := allOperationsEnabled()
+	cloned := original.Clone()
 
 	// then
-	uassert.Equal(t, len(result), 12) // Should have all 12 operations
+	uassert.Equal(t, len(cloned), len(original))
 
-	// Verify all operations are enabled
-	uassert.Equal(t, result[OpTypePool], true)
-	uassert.Equal(t, result[OpTypePosition], true)
-	uassert.Equal(t, result[OpTypeProtocolFee], true)
-	uassert.Equal(t, result[OpTypeRouter], true)
-	uassert.Equal(t, result[OpTypeStaker], true)
-	uassert.Equal(t, result[OpTypeLaunchpad], true)
-	uassert.Equal(t, result[OpTypeGovernance], true)
-	uassert.Equal(t, result[OpTypeGovStaker], true)
-	uassert.Equal(t, result[OpTypeXGns], true)
-	uassert.Equal(t, result[OpTypeCommunityPool], true)
-	uassert.Equal(t, result[OpTypeEmission], true)
-	uassert.Equal(t, result[OpTypeWithdraw], true)
+	for op, option := range original {
+		clonedOption := cloned[op]
+		uassert.Equal(t, clonedOption.access, option.access)
+		uassert.Equal(t, clonedOption.withdraw, option.withdraw)
+	}
+
+	// Verify independence by modifying original
+	original[OpTypePool].disableAll()
+	uassert.Equal(t, cloned[OpTypePool].access, true)
+	uassert.Equal(t, cloned[OpTypePool].withdraw, true)
+}
+
+// Test HaltOption methods
+func TestHaltOption_isableed(t *testing.T) {
+	tests := []struct {
+		name     string
+		option   *HaltOption
+		expected bool
+	}{
+		{
+			name:     "Both access and withdraw allowed",
+			option:   &HaltOption{access: true, withdraw: true},
+			expected: true,
+		},
+		{
+			name:     "Only access allowed",
+			option:   &HaltOption{access: true, withdraw: false},
+			expected: false,
+		},
+		{
+			name:     "Only withdraw allowed",
+			option:   &HaltOption{access: false, withdraw: true},
+			expected: false,
+		},
+		{
+			name:     "Neither allowed",
+			option:   &HaltOption{access: false, withdraw: false},
+			expected: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			result := tc.option.IsEnabled()
+
+			// then
+			uassert.Equal(t, result, tc.expected)
+		})
+	}
+}
+
+func TestHaltOption_IsEnabledAccess(t *testing.T) {
+	tests := []struct {
+		name     string
+		option   *HaltOption
+		expected bool
+	}{
+		{
+			name:     "Access allowed",
+			option:   &HaltOption{access: true, withdraw: false},
+			expected: true,
+		},
+		{
+			name:     "Access not allowed",
+			option:   &HaltOption{access: false, withdraw: true},
+			expected: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			result := tc.option.IsEnabledAccess()
+
+			// then
+			uassert.Equal(t, result, tc.expected)
+		})
+	}
+}
+
+func TestHaltOption_IsEnabledWithdraw(t *testing.T) {
+	tests := []struct {
+		name     string
+		option   *HaltOption
+		expected bool
+	}{
+		{
+			name:     "Withdraw allowed",
+			option:   &HaltOption{access: false, withdraw: true},
+			expected: true,
+		},
+		{
+			name:     "Withdraw not allowed",
+			option:   &HaltOption{access: true, withdraw: false},
+			expected: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			result := tc.option.IsEnabledWithdraw()
+
+			// then
+			uassert.Equal(t, result, tc.expected)
+		})
+	}
+}
+
+func TestHaltOption_Clone(t *testing.T) {
+	// given
+	original := &HaltOption{access: true, withdraw: false}
+
+	// when
+	cloned := original.Clone()
+
+	// then
+	uassert.Equal(t, cloned.access, original.access)
+	uassert.Equal(t, cloned.withdraw, original.withdraw)
+
+	// Verify independence
+	original.access = false
+	uassert.Equal(t, cloned.access, true)
+}
+
+func TestHaltOption_AllowDisableMethods(t *testing.T) {
+	option := &HaltOption{access: false, withdraw: false}
+
+	// Test allowAll
+	option.enableAll()
+	uassert.Equal(t, option.access, true)
+	uassert.Equal(t, option.withdraw, true)
+
+	// Test disableAll
+	option.disableAll()
+	uassert.Equal(t, option.access, false)
+	uassert.Equal(t, option.withdraw, false)
+
+	// Test allowAccess
+	option.enableAccess()
+	uassert.Equal(t, option.access, true)
+	uassert.Equal(t, option.withdraw, false)
+
+	// Test disableAccess
+	option.disableAccess()
+	uassert.Equal(t, option.access, false)
+	uassert.Equal(t, option.withdraw, false)
+
+	// Test allowWithdraw
+	option.enableWithdraw()
+	uassert.Equal(t, option.access, false)
+	uassert.Equal(t, option.withdraw, true)
+
+	// Test disableWithdraw
+	option.disableWithdraw()
+	uassert.Equal(t, option.access, false)
+	uassert.Equal(t, option.withdraw, false)
+}
+
+// Test factory functions
+func TestNewHaltOption(t *testing.T) {
+	tests := []struct {
+		name             string
+		access           bool
+		withdraw         bool
+		expectedAccess   bool
+		expectedWithdraw bool
+	}{
+		{
+			name:             "Both true",
+			access:           true,
+			withdraw:         true,
+			expectedAccess:   true,
+			expectedWithdraw: true,
+		},
+		{
+			name:             "Both false",
+			access:           false,
+			withdraw:         false,
+			expectedAccess:   false,
+			expectedWithdraw: false,
+		},
+		{
+			name:             "Access only",
+			access:           true,
+			withdraw:         false,
+			expectedAccess:   true,
+			expectedWithdraw: false,
+		},
+		{
+			name:             "Withdraw only",
+			access:           false,
+			withdraw:         true,
+			expectedAccess:   false,
+			expectedWithdraw: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			option := newHaltOption(tc.access, tc.withdraw)
+
+			// then
+			uassert.Equal(t, option.access, tc.expectedAccess)
+			uassert.Equal(t, option.withdraw, tc.expectedWithdraw)
+		})
+	}
+}
+
+func TestNewIsEnabledOption(t *testing.T) {
+	// when
+	option := newEnabledOption()
+
+	// then
+	uassert.Equal(t, option.access, true)
+	uassert.Equal(t, option.withdraw, true)
+}
+
+func TestNewAccessOnlyOption(t *testing.T) {
+	// when
+	option := newAccessOnlyOption()
+
+	// then
+	uassert.Equal(t, option.access, true)
+	uassert.Equal(t, option.withdraw, false)
+}
+
+func TestNewWithdrawOnlyOption(t *testing.T) {
+	// when
+	option := newWithdrawOnlyOption()
+
+	// then
+	uassert.Equal(t, option.access, false)
+	uassert.Equal(t, option.withdraw, true)
+}
+
+func TestNewDisabledOption(t *testing.T) {
+	// when
+	option := newDisabledOption()
+
+	// then
+	uassert.Equal(t, option.access, false)
+	uassert.Equal(t, option.withdraw, false)
+}
+
+// Test config factory functions
+func TestNewNoneConfig(t *testing.T) {
+	// when
+	config := newNoneConfig()
+
+	// then
+	allOperations := []OpType{
+		OpTypePool, OpTypePosition, OpTypeProtocolFee, OpTypeRouter,
+		OpTypeStaker, OpTypeLaunchpad, OpTypeGovernance, OpTypeGovStaker,
+		OpTypeXGns, OpTypeCommunityPool, OpTypeEmission,
+	}
+
+	for _, op := range allOperations {
+		option := config.get(op)
+		uassert.Equal(t, option.access, true)
+		uassert.Equal(t, option.withdraw, true)
+	}
+}
+
+func TestNewSafeModeConfig(t *testing.T) {
+	// when
+	config := newSafeModeConfig()
+
+	// then
+	allOperations := []OpType{
+		OpTypePool, OpTypePosition, OpTypeProtocolFee, OpTypeRouter,
+		OpTypeStaker, OpTypeLaunchpad, OpTypeGovernance, OpTypeGovStaker,
+		OpTypeXGns, OpTypeCommunityPool, OpTypeEmission,
+	}
+
+	for _, op := range allOperations {
+		option := config.get(op)
+		uassert.Equal(t, option.access, true)
+		uassert.Equal(t, option.withdraw, false)
+	}
+}
+
+func TestNewEmergencyConfig(t *testing.T) {
+	// when
+	config := newEmergencyConfig()
+
+	// then
+	// Governance should allow all operations
+	govOption := config.get(OpTypeGovernance)
+	uassert.Equal(t, govOption.access, true)
+	uassert.Equal(t, govOption.withdraw, true)
+
+	// All other operations should allow only withdraw
+	otherOperations := []OpType{
+		OpTypePool, OpTypePosition, OpTypeProtocolFee, OpTypeRouter,
+		OpTypeStaker, OpTypeLaunchpad, OpTypeGovStaker,
+		OpTypeXGns, OpTypeCommunityPool, OpTypeEmission,
+	}
+
+	for _, op := range otherOperations {
+		option := config.get(op)
+		uassert.Equal(t, option.access, false)
+		uassert.Equal(t, option.withdraw, true)
+	}
+}
+
+func TestNewCompleteConfig(t *testing.T) {
+	// when
+	config := newCompleteConfig()
+
+	// then
+	allOperations := []OpType{
+		OpTypePool, OpTypePosition, OpTypeProtocolFee, OpTypeRouter,
+		OpTypeStaker, OpTypeLaunchpad, OpTypeGovernance, OpTypeGovStaker,
+		OpTypeXGns, OpTypeCommunityPool, OpTypeEmission,
+	}
+
+	for _, op := range allOperations {
+		option := config.get(op)
+		uassert.Equal(t, option.access, false)
+		uassert.Equal(t, option.withdraw, false)
+	}
+}
+
+func TestConfig_AllConfigLevelsIntegration(t *testing.T) {
+	tests := []struct {
+		name             string
+		configFunc       func() HaltConfig
+		expectedAccess   map[OpType]bool
+		expectedWithdraw map[OpType]bool
+	}{
+		{
+			name:       "None config allows all",
+			configFunc: newNoneConfig,
+			expectedAccess: map[OpType]bool{
+				OpTypePool:       true,
+				OpTypeGovernance: true,
+				OpTypeRouter:     true,
+			},
+			expectedWithdraw: map[OpType]bool{
+				OpTypePool:       true,
+				OpTypeGovernance: true,
+				OpTypeRouter:     true,
+			},
+		},
+		{
+			name:       "Safe mode allows access only",
+			configFunc: newSafeModeConfig,
+			expectedAccess: map[OpType]bool{
+				OpTypePool:       true,
+				OpTypeGovernance: true,
+				OpTypeRouter:     true,
+			},
+			expectedWithdraw: map[OpType]bool{
+				OpTypePool:       false,
+				OpTypeGovernance: false,
+				OpTypeRouter:     false,
+			},
+		},
+		{
+			name:       "Emergency allows governance all, others withdraw only",
+			configFunc: newEmergencyConfig,
+			expectedAccess: map[OpType]bool{
+				OpTypePool:       false,
+				OpTypeGovernance: true,
+				OpTypeRouter:     false,
+			},
+			expectedWithdraw: map[OpType]bool{
+				OpTypePool:       true,
+				OpTypeGovernance: true,
+				OpTypeRouter:     true,
+			},
+		},
+		{
+			name:       "Complete disables all",
+			configFunc: newCompleteConfig,
+			expectedAccess: map[OpType]bool{
+				OpTypePool:       false,
+				OpTypeGovernance: false,
+				OpTypeRouter:     false,
+			},
+			expectedWithdraw: map[OpType]bool{
+				OpTypePool:       false,
+				OpTypeGovernance: false,
+				OpTypeRouter:     false,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			config := tc.configFunc()
+
+			// then
+			for op, expected := range tc.expectedAccess {
+				uassert.Equal(t, config.IsEnabledAccess(op), expected)
+			}
+			for op, expected := range tc.expectedWithdraw {
+				uassert.Equal(t, config.IsEnabledWithdraw(op), expected)
+			}
+		})
+	}
 }
