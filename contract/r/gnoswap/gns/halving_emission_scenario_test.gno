@@ -69,7 +69,7 @@ func testBasicEmissionUpdateFlow(t *testing.T) {
 	SetAvgBlockTimeInMsByAdmin(cross, 1000)
 
 	// Step 2: Record current emission value (E1)
-	e1 := GetAmountByHeight(std.ChainHeight())
+	e1 := AmountByHeight(std.ChainHeight())
 	t.Logf("Initial emission E1: %d", e1)
 
 	// Step 3: Advance 100 blocks
@@ -87,7 +87,7 @@ func testBasicEmissionUpdateFlow(t *testing.T) {
 	SetAvgBlockTimeInMsByAdmin(cross, 2000)
 
 	// Step 5: Record new emission value (E2)
-	e2 := GetAmountByHeight(std.ChainHeight())
+	e2 := AmountByHeight(std.ChainHeight())
 	t.Logf("New emission E2: %d", e2)
 
 	// Step 6: Verify that E1 ≠ E2 (emission should change)
@@ -126,7 +126,7 @@ func testHistoricalBlockEmissionAccuracy(t *testing.T) {
 	// Step 1: Set initial block time and record emission at height H1
 	SetAvgBlockTimeInMsByAdmin(cross, 1000)
 	h1 := std.ChainHeight()
-	e1 := GetAmountByHeight(h1)
+	e1 := AmountByHeight(h1)
 	t.Logf("Height H1: %d, Emission: %d", h1, e1)
 
 	// Step 2: Advance N blocks
@@ -135,7 +135,7 @@ func testHistoricalBlockEmissionAccuracy(t *testing.T) {
 	// Step 3: Change block time at height H2
 	h2 := std.ChainHeight()
 	SetAvgBlockTimeInMsByAdmin(cross, 2000)
-	e2 := GetAmountByHeight(h2)
+	e2 := AmountByHeight(h2)
 	t.Logf("Height H2: %d, New Emission: %d", h2, e2)
 
 	// Step 4: Call getHalvingBlocksInRange(H1, H2)
@@ -205,7 +205,7 @@ func testCacheRewardIntegration(t *testing.T) {
 
 	// Set initial block time
 	SetAvgBlockTimeInMsByAdmin(cross, 1000)
-	e1 := GetAmountByHeight(std.ChainHeight())
+	e1 := AmountByHeight(std.ChainHeight())
 	t.Logf("Block 1000 - Initial emission: %d GNS/block", e1)
 
 	// Step 2: Create staking positions (simulated by tracking block range)
@@ -232,7 +232,7 @@ func testCacheRewardIntegration(t *testing.T) {
 	defer func() { callbackEmissionChange = oldCallback }()
 
 	SetAvgBlockTimeInMsByAdmin(cross, 2000)
-	e2 := GetAmountByHeight(std.ChainHeight())
+	e2 := AmountByHeight(std.ChainHeight())
 	t.Logf("Block 1100 - New emission: %d GNS/block", e2)
 
 	// Step 5: Verify rewards for blocks 1000-1099 use E1
@@ -243,7 +243,7 @@ func testCacheRewardIntegration(t *testing.T) {
 	}
 
 	// Step 6: Verify rewards for blocks 1100+ use E2
-	currentEmission := GetAmountByHeight(std.ChainHeight())
+	currentEmission := AmountByHeight(std.ChainHeight())
 	uassert.Equal(t, currentEmission, e2, "Current emission should be E2 for blocks 1100+")
 }
 
@@ -280,7 +280,7 @@ func testMultipleBlockTimeChanges(t *testing.T) {
 
 	// Step 1: Initial state: BlockTime = 1000ms, Emission = E1
 	SetAvgBlockTimeInMsByAdmin(cross, 1000)
-	e1 := GetAmountByHeight(std.ChainHeight())
+	e1 := AmountByHeight(std.ChainHeight())
 	t.Logf("Initial state - Emission E1: %d", e1)
 
 	// Advance to block 1000
@@ -294,7 +294,7 @@ func testMultipleBlockTimeChanges(t *testing.T) {
 	// Step 2: Block 1000: Change to 2000ms -> Emission = E2
 	h1 := std.ChainHeight()
 	SetAvgBlockTimeInMsByAdmin(cross, 2000)
-	e2 := GetAmountByHeight(std.ChainHeight())
+	e2 := AmountByHeight(std.ChainHeight())
 	t.Logf("Block %d - Changed to 2000ms, Emission E2: %d", h1, e2)
 
 	// Advance to block 1100
@@ -303,7 +303,7 @@ func testMultipleBlockTimeChanges(t *testing.T) {
 	// Step 3: Block 1100: Change to 1500ms -> Emission = E3
 	h2 := std.ChainHeight()
 	SetAvgBlockTimeInMsByAdmin(cross, 1500)
-	e3 := GetAmountByHeight(std.ChainHeight())
+	e3 := AmountByHeight(std.ChainHeight())
 	t.Logf("Block %d - Changed to 1500ms, Emission E3: %d", h2, e3)
 
 	// Advance to block 1200
