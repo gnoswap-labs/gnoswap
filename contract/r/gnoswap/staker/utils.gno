@@ -174,16 +174,12 @@ func isUserCall() bool {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err.Error())
-		}
+	if !halt.IsAllowedAccess(halt.OpTypeStaker) {
+		panic("staker contract operations are currently disabled")
+	}
 
-		if halt.IsContractHalted(halt.OpTypeStaker) {
-			panic("staker contract operations are currently disabled")
-		}
+	if !halt.IsAllowedWithdraw(halt.OpTypeStaker) {
+		panic("staker contract withdrawals are currently disabled")
 	}
 }
 

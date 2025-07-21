@@ -148,7 +148,7 @@ func TestCreateParameterHandlers(t *testing.T) {
 		pkgPath  string
 		function string
 	}{
-		{"gno.land/r/gnoswap/v1/halt", "SetHalt"},
+		{"gno.land/r/gnoswap/v1/halt", "SetHaltLevel"},
 		{"gno.land/r/gnoswap/v1/community_pool", "TransferToken"},
 		{"gno.land/r/gnoswap/v1/emission", "ChangeDistributionPct"},
 		{"gno.land/r/gnoswap/v1/gns", "SetAvgBlockTimeInMs"},

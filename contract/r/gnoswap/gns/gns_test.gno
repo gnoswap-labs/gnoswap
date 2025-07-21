@@ -459,7 +459,7 @@ func TestMintGns(t *testing.T) {
 			InitGnsTest(t)
 
 			testing.SetOriginCaller(adminAddr)
-			halt.SetHaltByAdmin(cross, tt.halted) // set halt
+			halt.SetHaltLevel(cross, halt.HaltLevelNone) // set halt
 
 			var mintedAmount int64
 

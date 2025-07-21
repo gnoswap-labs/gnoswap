@@ -28,7 +28,7 @@ var (
 
 func resetCommunityPoolState(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	halt.SetHaltByAdmin(cross, false)
+	halt.SetHaltLevel(cross, halt.HaltLevelNone)
 	gns.Transfer(cross, communityPoolAddr, 10_000)
 }
 
@@ -47,7 +47,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 			name: "panic if halted",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				halt.SetHaltByAdmin(cross, true)
+				halt.SetHaltLevel(cross, halt.HaltLevelComplete)
 			},
 			caller:      adminRealm,
 			tokenPath:   consts.GNS_PATH,
@@ -60,7 +60,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 			name: "panic if not admin",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				halt.SetHaltByAdmin(cross, false)
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			},
 			caller:      dummyCaller,
 			tokenPath:   consts.GNS_PATH,
@@ -123,7 +123,7 @@ func TestTransferToken(t *testing.T) {
 			name: "panic if halted",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				halt.SetHaltByAdmin(cross, true)
+				halt.SetHaltLevel(cross, halt.HaltLevelComplete)
 			},
 			tokenPath:   consts.GNS_PATH,
 			to:          dummyReceiver,
@@ -135,7 +135,7 @@ func TestTransferToken(t *testing.T) {
 			name: "panic if not governance",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				halt.SetHaltByAdmin(cross, false)
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			},
 			tokenPath:   consts.GNS_PATH,
 			to:          dummyReceiver,

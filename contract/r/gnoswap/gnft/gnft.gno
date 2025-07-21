@@ -477,8 +477,12 @@ func assertCallerIsOwnerOfToken(tid grc721.TokenID) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
+	if !halt.IsAllowedAccess(halt.OpTypePosition) {
+		panic("gnft contract operations are currently disabled")
+	}
+
+	if !halt.IsAllowedWithdraw(halt.OpTypePosition) {
+		panic("gnft contract withdrawals are currently disabled")
 	}
 }
 

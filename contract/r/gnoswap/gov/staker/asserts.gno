@@ -9,17 +9,12 @@ import (
 )
 
 func assertIsNotHaltedWithdraw() {
-	currentLevel := halt.GetCurrentHaltLevel()
+	if !halt.IsAllowedAccess(halt.OpTypeGovStaker) {
+		panic("gov/staker contract access is currently disabled")
+	}
 
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err)
-		}
-
-		if halt.IsContractHalted(halt.OpTypeGovStaker) {
-			panic("gov/staker contract operations are currently disabled")
-		}
+	if !halt.IsAllowedWithdraw(halt.OpTypeGovStaker) {
+		panic("gov/staker contract withdrawals are currently disabled")
 	}
 }
 
