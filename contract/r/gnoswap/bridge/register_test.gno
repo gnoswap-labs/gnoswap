@@ -6,10 +6,13 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	"gno.land/r/gnoswap/v1/access"
 )
 
 func TestCallbackRegistration(t *testing.T) {
 	callbackTree = avl.NewTree()
+
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 
 	err := RegisterCallback(cross, adminAddr, "test", "add", func(a, b int) int {
 		return a + b
@@ -27,6 +30,8 @@ func TestCallbackRegistration(t *testing.T) {
 
 func TestCallbackUpdate(t *testing.T) {
 	callbackTree = avl.NewTree()
+
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 
 	err := RegisterCallback(cross, adminAddr, "test", "multiply", func(a, b int) int {
 		return a * b
@@ -60,6 +65,7 @@ func TestCallbackUpdate(t *testing.T) {
 func TestCallbackRegistrationErrors(t *testing.T) {
 	callbackTree = avl.NewTree()
 	userAddr := testutils.TestAddress("user")
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 
 	// duplicate registration test
 	err := RegisterCallback(cross, adminAddr, "test", "duplicate", func() {})
@@ -76,6 +82,7 @@ func TestCallbackRegistrationErrors(t *testing.T) {
 func TestCallbackUpdateErrors(t *testing.T) {
 	callbackTree = avl.NewTree()
 	userAddr := testutils.TestAddress("user2")
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 
 	err := UpdateCallback(cross, adminAddr, "test", "nonexistent", func() {})
 	uassert.Error(t, err)
@@ -90,6 +97,7 @@ func TestCallbackUpdateErrors(t *testing.T) {
 func TestUpgradablePattern(t *testing.T) {
 	t.Run("version Management", func(t *testing.T) {
 		callbackTree = avl.NewTree()
+		adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 
 		// v1
 		err := RegisterCallback(cross, adminAddr, "emission", "MintAndDistributeGns", func() uint64 {
@@ -114,6 +122,7 @@ func TestUpgradablePattern(t *testing.T) {
 
 	t.Run("Multiple Contract Callbacks", func(t *testing.T) {
 		callbackTree = avl.NewTree()
+		adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 
 		// Emission contract callback
 		err := RegisterCallback(cross, adminAddr, "emission", "MintAndDistributeGns", func() uint64 {
@@ -144,6 +153,7 @@ func TestUpgradablePattern(t *testing.T) {
 
 	t.Run("Rollback Scenario", func(t *testing.T) {
 		callbackTree = avl.NewTree()
+		adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 
 		// v1
 		originalCallback := func() uint64 {
@@ -173,6 +183,7 @@ func TestUpgradablePattern(t *testing.T) {
 
 	t.Run("Namespace Collision", func(t *testing.T) {
 		callbackTree = avl.NewTree()
+		adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 
 		// same namespace, different function
 		err := RegisterCallback(cross, adminAddr, "emission", "func1", func() int { return 1 })
