@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/emission"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -33,8 +32,8 @@ func assertHopsInRange(hops int) {
 
 // getDataForSinglePath extracts token0, token1, and fee from a single path.
 func getDataForSinglePath(poolPath string) (token0, token1 string, fee uint32) {
-	poolPathSplit, err := common.Split(poolPath, ":", 3)
-	if err != nil {
+	poolPathSplit := strings.Split(poolPath, ":")
+	if len(poolPathSplit) != 3 {
 		panic(addDetailToError(
 			errInvalidPoolPath,
 			ufmt.Sprintf("len(poolPathSplit) != 3, poolPath: %s", poolPath),
@@ -108,7 +107,7 @@ func commonSwapSetup() error {
 		return err
 	}
 
-	if common.GetLimitCaller() && std.PreviousRealm().PkgPath() != "" {
+	if std.PreviousRealm().PkgPath() != "" {
 		return ufmt.Errorf("%v: only user can call this function", errNoPermission)
 	}
 

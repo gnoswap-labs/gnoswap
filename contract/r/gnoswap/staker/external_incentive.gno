@@ -24,11 +24,9 @@ func CreateExternalIncentive(cur realm,
 	endTimestamp int64,
 ) {
 	assertOnlyNotHalted()
-	if common.GetLimitCaller() {
-		prev := std.PreviousRealm()
-		if err := common.UserOnly(prev); err != nil {
-			panic(ufmt.Sprintf("%v: %v", errNoPermission, err))
-		}
+	prev := std.PreviousRealm()
+	if err := common.UserOnly(prev); err != nil {
+		panic(ufmt.Sprintf("%v: %v", errNoPermission, err))
 	}
 
 	// panic if pool does not exist

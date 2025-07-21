@@ -137,13 +137,11 @@ func positionUpdate(
 }
 
 func calculateToken0Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityDelta *i256.Int) *i256.Int {
-	res := plp.GetAmount0DeltaStr(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
-	return i256.MustFromDecimal(res)
+	return plp.GetAmount0Delta(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
 }
 
 func calculateToken1Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityDelta *i256.Int) *i256.Int {
-	res := plp.GetAmount1DeltaStr(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
-	return i256.MustFromDecimal(res)
+	return plp.GetAmount1Delta(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
 }
 
 // PositionLiquidity returns the liquidity of a position.

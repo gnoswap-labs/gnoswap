@@ -53,14 +53,12 @@ func Swap(
 	payer std.Address, // router
 ) (string, string) {
 	assertOnlyNotHalted()
-	if common.GetLimitCaller() {
-		caller := getPrevAddr()
-		if err := common.RouterOnly(caller); err != nil {
-			panic(newErrorWithDetail(
-				errNoPermission,
-				ufmt.Sprintf("only router(%s) can call pool swap(), called from %s", routerAddr, caller.String()),
-			))
-		}
+	caller := getPrevAddr()
+	if err := common.RouterOnly(caller); err != nil {
+		panic(newErrorWithDetail(
+			errNoPermission,
+			ufmt.Sprintf("only router(%s) can call pool swap(), called from %s", routerAddr, caller.String()),
+		))
 	}
 
 	if amountSpecified == "0" {
@@ -76,6 +74,12 @@ func Swap(
 	if !slot0Start.unlocked {
 		panic(errLockedPool)
 	}
+
+	// no liquidity -> no swap, return zero amounts
+	if pool.liquidity.IsZero() {
+		return "0", "0"
+	}
+
 	pool.slot0.unlocked = false
 	defer func() { pool.slot0.unlocked = true }()
 
@@ -153,6 +157,11 @@ func DrySwap(
 
 	pool := GetPool(token0Path, token1Path, fee)
 
+	// no liquidity -> simulation fails
+	if pool.liquidity.IsZero() {
+		return "0", "0", false
+	}
+
 	slot0Start := pool.slot0
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
 	validatePriceLimits(slot0Start, zeroForOne, sqrtPriceLimit)
@@ -186,7 +195,7 @@ func DrySwap(
 			return "0", "0", false
 		}
 	}
-
+	
 	// Validate non-zero amounts
 	if result.Amount0.IsZero() || result.Amount1.IsZero() {
 		return "0", "0", false
@@ -390,6 +399,7 @@ func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState
 	if overflow {
 		return state, step, errUnderflow
 	}
+	
 	step.feeAmount = newFeeAmount
 	state.protocolFee.Add(state.protocolFee, delta)
 
@@ -437,7 +447,7 @@ func shouldUsePriceLimit(sqrtPriceNext, sqrtPriceLimit *u256.Uint, zeroForOne bo
 
 // computeAmounts calculates the input and output amounts for the current swap step.
 func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, step StepComputations) (SwapState, StepComputations) {
-	sqrtPriceX96Str, amountInStr, amountOutStr, feeAmountStr := plp.SwapMathComputeSwapStepStr(
+	sqrtPriceX96, amountIn, amountOut, feeAmount := plp.SwapMathComputeSwapStep(
 		state.sqrtPriceX96,
 		sqrtRatioTargetX96,
 		state.liquidity,
@@ -445,11 +455,11 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 		uint64(pool.fee),
 	)
 
-	step.amountIn = u256.MustFromDecimal(amountInStr)
-	step.amountOut = u256.MustFromDecimal(amountOutStr)
-	step.feeAmount = u256.MustFromDecimal(feeAmountStr)
+	step.amountIn = amountIn
+	step.amountOut = amountOut
+	step.feeAmount = feeAmount
 
-	state.setSqrtPriceX96(sqrtPriceX96Str)
+	state.setSqrtPriceX96(sqrtPriceX96)
 
 	return state, step
 }
@@ -467,6 +477,7 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) Swap
 	if amountInWithFeeU256.Gt(u256.MustFromDecimal(consts.MAX_INT256)) {
 		panic("amountIn + feeAmount overflows int256")
 	}
+
 	amountInWithFee := i256.FromUint256(amountInWithFeeU256)
 	if step.amountOut.Gt(u256.MustFromDecimal(consts.MAX_INT256)) {
 		panic("amountOut overflows int256")
@@ -475,11 +486,12 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) Swap
 	if exactInput {
 		state.amountSpecifiedRemaining = i256.Zero().Sub(state.amountSpecifiedRemaining, amountInWithFee)
 		state.amountCalculated = i256.Zero().Sub(state.amountCalculated, i256.FromUint256(step.amountOut))
+
 		return state
-	} else {
-		state.amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
-		state.amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
-	}
+	} 
+	
+	state.amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
+	state.amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
 
 	return state
 }

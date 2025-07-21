@@ -177,7 +177,11 @@ func createProject(params *createProjectParams) (*Project, error) {
 		)
 	}
 
-	projectConditions := NewProjectConditions(params.conditionTokens, params.conditionAmounts)
+	projectConditions, err := NewProjectConditionsWithError(params.conditionTokens, params.conditionAmounts)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, condition := range projectConditions {
 		project.addProjectCondition(condition.tokenPath, condition)
 	}
