@@ -2,8 +2,6 @@ package access
 
 import (
 	"std"
-
-	"gno.land/p/gnoswap/consts"
 )
 
 // initial addresses
