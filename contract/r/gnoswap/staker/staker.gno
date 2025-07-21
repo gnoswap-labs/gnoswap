@@ -440,10 +440,19 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 	for incentiveId, rewardAmount := range externalReward {
 		incentive := externalIncentives.Get(incentiveId).Clone()
 		if incentive.rewardAmount < rewardAmount {
-			panic(addDetailToError(
-				errInsufficientReward,
-				ufmt.Sprintf("incentiveId(%s) has insufficient reward(%d)", incentiveId, rewardAmount),
-			))
+			// Emit event for insufficient reward and skip this incentive
+			std.Emit(
+				"InsufficientExternalReward",
+				"prevAddr", prevAddr,
+				"prevRealm", prevPkgPath,
+				"positionId", formatUint(positionId),
+				"incentiveId", incentiveId,
+				"requiredAmount", formatInt(rewardAmount),
+				"availableAmount", formatInt(incentive.rewardAmount),
+				"timestamp", formatInt(time.Now().Unix()),
+				"blockHeight", formatUint(std.ChainHeight()),
+			)
+			continue
 		}
 
 		// process external reward to user
