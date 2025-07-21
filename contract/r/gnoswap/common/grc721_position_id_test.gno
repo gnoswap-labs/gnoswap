@@ -4,60 +4,94 @@ import (
 	"testing"
 
 	"gno.land/p/demo/grc/grc721"
+	"gno.land/p/demo/uassert"
 )
 
-func TestPositionIdFrom(t *testing.T) {
+func TestGrc721PositionId_PositionIdFrom(t *testing.T) {
 	tests := []struct {
-		name      string
-		input     any
-		want      grc721.TokenID
-		wantPanic bool
+		name                 string
+		inputPositionId      any
+		expectedResult       grc721.TokenID
+		expectedHasPanic     bool
+		expectedPanicMessage string
 	}{
 		{
-			name:  "string input",
-			input: "123",
-			want:  grc721.TokenID("123"),
+			name:             "Valid string input",
+			inputPositionId:  "123",
+			expectedResult:   grc721.TokenID("123"),
+			expectedHasPanic: false,
 		},
 		{
-			name:  "int input",
-			input: 123,
-			want:  grc721.TokenID("123"),
+			name:             "Valid int input",
+			inputPositionId:  123,
+			expectedResult:   grc721.TokenID("123"),
+			expectedHasPanic: false,
 		},
 		{
-			name:  "uint64 input",
-			input: uint64(123),
-			want:  grc721.TokenID("123"),
+			name:             "Valid uint64 input",
+			inputPositionId:  uint64(123),
+			expectedResult:   grc721.TokenID("123"),
+			expectedHasPanic: false,
 		},
 		{
-			name:  "grc721.TokenID input",
-			input: grc721.TokenID("123"),
-			want:  grc721.TokenID("123"),
+			name:             "Valid grc721.TokenID input",
+			inputPositionId:  grc721.TokenID("123"),
+			expectedResult:   grc721.TokenID("123"),
+			expectedHasPanic: false,
 		},
 		{
-			name:      "nil input",
-			input:     nil,
-			wantPanic: true,
+			name:                 "Nil input should panic",
+			inputPositionId:      nil,
+			expectedResult:       grc721.TokenID(""),
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-COMMON-007] invalid positionId || can not be nil",
 		},
 		{
-			name:      "unsupported type (byte)",
-			input:     []byte("123"),
-			wantPanic: true,
+			name:                 "Unsupported type should panic",
+			inputPositionId:      []byte("123"),
+			expectedResult:       grc721.TokenID(""),
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-COMMON-007] invalid positionId || unsupported positionId type: []byte",
+		},
+		{
+			name:             "Zero int input",
+			inputPositionId:  0,
+			expectedResult:   grc721.TokenID("0"),
+			expectedHasPanic: false,
+		},
+		{
+			name:             "Large uint64 input with overflow",
+			inputPositionId:  uint64(18446744073709551615),
+			expectedResult:   grc721.TokenID("-1"),
+			expectedHasPanic: false,
+		},
+		{
+			name:             "Empty string input",
+			inputPositionId:  "",
+			expectedResult:   grc721.TokenID(""),
+			expectedHasPanic: false,
+		},
+		{
+			name:             "Negative int input",
+			inputPositionId:  -123,
+			expectedResult:   grc721.TokenID("-123"),
+			expectedHasPanic: false,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.wantPanic {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("PositionIdFrom() should have panicked")
-					}
-				}()
-			}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			inputPositionId := tc.inputPositionId
 
-			got := PositionIdFrom(tt.input)
-			if got != tt.want {
-				t.Errorf("PositionIdFrom() = %v, want %v", got, tt.want)
+			// when & then
+			if tc.expectedHasPanic {
+				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+					PositionIdFrom(inputPositionId)
+				})
+			} else {
+				result := PositionIdFrom(inputPositionId)
+				uassert.Equal(t, string(tc.expectedResult), string(result))
 			}
 		})
 	}
