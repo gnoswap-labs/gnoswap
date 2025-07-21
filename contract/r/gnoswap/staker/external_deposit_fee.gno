@@ -180,10 +180,7 @@ func SetMinimumRewardAmount(cur realm, amount int64) {
 //   - paramsStr (string): A string containing the token path and minimum amount, separated by a colon.
 //     Example: "gno.land/r/demo/wugnot:1500000000"
 func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
-	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	assertOnlyGovernance()
 
 	// Parse the paramsStr
 	parts := strings.SplitN(paramsStr, ":", 2)

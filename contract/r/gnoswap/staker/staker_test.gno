@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/demo/uassert"
 
+	"gno.land/r/gnoswap/v1/access"
 	pl "gno.land/r/gnoswap/v1/pool"
 
 	"gno.land/r/gnoswap/v1/gnft"
@@ -16,7 +17,6 @@ import (
 
 const (
 	// External incentive timestamps
-	incentiveStartTimestamp int64 = 1234569600
 	incentiveDuration       int64 = 90 * 24 * 60 * 60 // 90 days
 
 	rewardMinimumAmount int64 = 1000000000
@@ -24,9 +24,13 @@ const (
 
 func TestCollectRewardGracefulDegradation(t *testing.T) {
 	// setup
-	testing.SetRealm(adminRealm)
-	SetUnStakingFeeByAdmin(cross, 0)
+	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+	testing.SetOriginCaller(govAddr)
+	SetMinimumRewardAmount(cross, 1000000000)
 
+	testing.SetOriginCaller(admin)
+	SetUnStakingFeeByAdmin(cross, 0)
+	
 	// Create pool
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
 	CreatePool(t, barPath, bazPath, fee3000, "79228162514264337593543950336", admin)
@@ -70,6 +74,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 	// Create external incentive
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, stakerAddr, rewardMinimumAmount)
+	incentiveStartTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
 	CreateExternalIncentive(
 		cross,
 		poolPath,

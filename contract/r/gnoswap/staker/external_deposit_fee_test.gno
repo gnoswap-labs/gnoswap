@@ -4,6 +4,7 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/rbac"
 
 	"gno.land/p/demo/testutils"
@@ -82,6 +83,8 @@ func TestSetDepositGnsAmountByAdmin(t *testing.T) {
 }
 
 func TestSetDepositGnsAmount(t *testing.T) {
+	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+	
 	tests := []struct {
 		name             string
 		caller           std.Address
@@ -94,7 +97,7 @@ func TestSetDepositGnsAmount(t *testing.T) {
 	}{
 		{
 			name:             "set deposit success by governance",
-			caller:           testutils.TestAddress("governance"),
+			caller:           govAddr,
 			inputAmount:      3_000_000_000,
 			expectedAmount:   3_000_000_000,
 			expectedHasAbort: false,
@@ -153,6 +156,8 @@ func TestSetDepositGnsAmount(t *testing.T) {
 }
 
 func TestSetMinimumRewardAmount(t *testing.T) {
+	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+
 	tests := []struct {
 		name                        string
 		caller                      std.Address
@@ -165,7 +170,7 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 	}{
 		{
 			name:                        "set minimum reward amount success by governance",
-			caller:                      testutils.TestAddress("governance"),
+			caller:                      govAddr,
 			inputMinimumRewardAmount:    1_000_000_000,
 			expectedMinimumRewardAmount: 1_000_000_000,
 			expectedHasAbort:            false,
