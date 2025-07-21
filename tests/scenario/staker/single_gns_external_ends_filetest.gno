@@ -264,12 +264,8 @@ func endExternalGnsIncentive() {
 	gnsBalanceBeforeEnds := gns.BalanceOf(externalCreatorUser)
 	sr.EndExternalIncentive(
 		cross,
-		externalCreatorAddr,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
-		gnsPath,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
-		126,
+		"1",
 	)
 	gnsBalanceAfterEnds := gns.BalanceOf(externalCreatorUser)
 

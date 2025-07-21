@@ -189,7 +189,7 @@ func (self *Pool) CurrentStakedLiquidity(currentHeight int64) *u256.Uint {
 
 // IsExternallyIncentivizedPool returns true if the pool has any external incentives.
 func (self *Pool) IsExternallyIncentivizedPool() bool {
-	return self.incentives.byTime.Size() != 0
+	return self.incentives.incentives.Size() > 0
 }
 
 // Get the latest reward in [0, currentHeight] range.
