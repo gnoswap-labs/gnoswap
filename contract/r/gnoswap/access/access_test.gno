@@ -33,7 +33,7 @@ func TestInitialize(t *testing.T) {
 		err := initialize(cfg)
 		uassert.NoError(t, err)
 
-		actual := GetCurrentConfig()
+		actual := getCurrentConfig()
 
 		adminAddr := actual.roles["test_admin"]
 		routerAddr := actual.roles["test_router"]
@@ -60,7 +60,7 @@ func TestUpdateRoleAddress(t *testing.T) {
 		err = UpdateRoleAddress(cross, "another_test_admin", testRealm1Addr)
 		uassert.NoError(t, err)
 
-		actual := GetCurrentConfig()
+		actual := getCurrentConfig()
 		updatedAddr := actual.roles["another_test_admin"]
 		uassert.Equal(t, testRealm1Addr, updatedAddr)
 
@@ -98,7 +98,7 @@ func TestCreateRole(t *testing.T) {
 		err := CreateRole(cross, "custom_role", testNewRoleAddr)
 		uassert.NoError(t, err)
 
-		actual := GetCurrentConfig()
+		actual := getCurrentConfig()
 		roleAddr := actual.roles["custom_role"]
 		uassert.Equal(t, testNewRoleAddr, roleAddr)
 
@@ -142,7 +142,7 @@ func TestSetRole(t *testing.T) {
 		err := SetRole(cross, "test_auditor", testAuditorAddr)
 		uassert.NoError(t, err)
 
-		actual := GetCurrentConfig()
+		actual := getCurrentConfig()
 		uassert.Equal(t, testAuditorAddr, actual.roles["test_auditor"])
 
 		err = rbac.CheckPermission("test_auditor", PERM_ACCESS, testAuditorAddr)
@@ -156,7 +156,7 @@ func TestSetRole(t *testing.T) {
 		err := SetRole(cross, "custom_role_2", testNewRoleAddr)
 		uassert.NoError(t, err)
 
-		actual := GetCurrentConfig()
+		actual := getCurrentConfig()
 		roleAddr := actual.roles["custom_role_2"]
 		uassert.Equal(t, testNewRoleAddr, roleAddr)
 
@@ -178,7 +178,7 @@ func TestSetRole(t *testing.T) {
 		err = SetRole(cross, "test_reviewer", newReviewerAddr)
 		uassert.NoError(t, err)
 
-		actual := GetCurrentConfig()
+		actual := getCurrentConfig()
 		uassert.Equal(t, newReviewerAddr, actual.roles["test_reviewer"])
 
 		err = rbac.CheckPermission("test_reviewer", PERM_ACCESS, testReviewerAddr)
