@@ -109,11 +109,12 @@ func declareNewRole(roleName string, addr std.Address) error {
 	return nil
 }
 
-// GetCurrentConfig returns the current configuration
-func GetCurrentConfig() *config {
+// getCurrentConfig returns the current configuration
+func getCurrentConfig() *config {
 	if currentConfig == nil {
 		return nil
 	}
+
 	return currentConfig
 }
 

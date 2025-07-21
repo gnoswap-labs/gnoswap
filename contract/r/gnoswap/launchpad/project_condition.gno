@@ -32,7 +32,7 @@ func (p *ProjectCondition) IsAvailable() bool {
 	return p.tokenPath != "" && p.minimumAmount > 0
 }
 
-func (p *ProjectCondition) CheckCondition(inputTokenPath string, inputAmount int64) error {
+func (p *ProjectCondition) CheckBalanceCondition(inputTokenPath string, inputAmount int64) error {
 	if p.tokenPath != inputTokenPath {
 		return makeErrorWithDetails(
 			errInvalidData,
@@ -57,9 +57,9 @@ func NewProjectCondition(tokenPath string, minimumAmount int64) *ProjectConditio
 	}
 }
 
-func NewProjectConditions(conditionTokens string, conditionAmounts string) []*ProjectCondition {
+func NewProjectConditionsWithError(conditionTokens string, conditionAmounts string) ([]*ProjectCondition, error) {
 	if conditionTokens == "" && conditionAmounts == "" {
-		return []*ProjectCondition{}
+		return []*ProjectCondition{}, nil
 	}
 
 	conditions := []*ProjectCondition{}
@@ -69,16 +69,30 @@ func NewProjectConditions(conditionTokens string, conditionAmounts string) []*Pr
 
 	for index, tokenPath := range tokenPaths {
 		if index >= len(minimumAmounts) {
-			panic(ufmt.Sprintf("condition amount(%s) is not matched with condition token(%s)", conditionAmounts, conditionTokens))
+			return nil, makeErrorWithDetails(
+				errInvalidData,
+				ufmt.Sprintf("condition amount(%s) is not matched with condition token(%s)", conditionAmounts, conditionTokens),
+			)
 		}
 
 		minimumAmount, err := strconv.ParseInt(minimumAmounts[index], 10, 64)
 		if err != nil {
-			panic(err)
+			return nil, makeErrorWithDetails(
+				errInvalidData,
+				ufmt.Sprintf("condition amount(%s) is not a valid integer", minimumAmounts[index]),
+			)
 		}
 
-		conditions = append(conditions, NewProjectCondition(tokenPath, minimumAmount))
+		condition := NewProjectCondition(tokenPath, minimumAmount)
+		if !condition.IsAvailable() {
+			return nil, makeErrorWithDetails(
+				errInvalidData,
+				ufmt.Sprintf("condition(%s) is not available", condition.TokenPath()),
+			)
+		}
+
+		conditions = append(conditions, condition)
 	}
 
-	return conditions
+	return conditions, nil
 }
