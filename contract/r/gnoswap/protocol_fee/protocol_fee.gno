@@ -9,26 +9,15 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/halt"
 )
 
 // DistributeProtocolFee distributes the protocol fee to devOps and gov/staker.
 // only `gov/staker` can execute this function.
 // It returns list of token with amount has been sent to gov/staker.
 func DistributeProtocolFee(cur realm) map[string]uint64 {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err)
-		}
-
-		if halt.IsContractHalted(halt.OpTypeProtocolFee) {
-			panic("protocol fee contract operations are currently disabled")
-		}
-	}
-
+	assertOnlyNotHalted()
 	assertOnlyGovStaker()
+	
 	sentToDevOpsForEvent := make([]string, 0)
 	sentToGovStakerForEvent := make([]string, 0)
 	toReturnDistributedToGovStaker := make(map[string]uint64)

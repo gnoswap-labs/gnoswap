@@ -231,11 +231,13 @@ func TestDepositGns(t *testing.T) {
 		{
 			name: "fail with zero amount",
 			setupFunc: func() (string, std.Address) {
-				userAddr := testutils.TestAddress("user5")
-
 				// Unhalt the system
-				halt.SetHalt(cross, false)
-
+				adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+				testing.SetRealm(std.NewUserRealm(adminAddr))
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+				
+				userAddr := testutils.TestAddress("user5")
+				
 				// Return a valid project tier ID format
 				return "gno.land/r/onbloc/obl:123:30", userAddr
 			},
@@ -478,7 +480,9 @@ func TestDepositGns(t *testing.T) {
 				deposits = origDeposits
 				// Restore halt state if needed
 				if origHalted {
-					halt.SetHalt(cross, true)
+					adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+					testing.SetRealm(std.NewUserRealm(adminAddr))
+					halt.SetHaltLevel(cross, halt.HaltLevelComplete)
 				}
 			}()
 

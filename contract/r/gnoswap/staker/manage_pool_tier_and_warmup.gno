@@ -187,7 +187,7 @@ func assertOnlyGovernance() {
 }
 
 func assertMustNotHalted() {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
+	if halt.IsHaltedStaker() {
+		panic("staker contract operations are currently disabled")
 	}
 }

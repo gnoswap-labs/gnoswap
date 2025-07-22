@@ -29,8 +29,8 @@ import (
 // ref: https://docs.gnoswap.io/contracts/governance/vote.gno#vote
 func Vote(cur realm, proposalID int64, yes bool) string {
 	// Check if system is halted before allowing voting
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
+	if halt.IsHaltedGovernance() {
+		panic("governance contract operations are currently disabled")
 	}
 
 	// Get current blockchain state and caller information
