@@ -9,7 +9,9 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/staker"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
@@ -18,12 +20,13 @@ import (
 )
 
 var (
-	admin       = consts.ADMIN
-	adminRealm  = std.NewUserRealm(admin)
+	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm   = std.NewUserRealm(adminAddr)
 	aliceAddr   = testutils.TestAddress("alice")
 	bobAddr     = testutils.TestAddress("bob")
 	bobRealm    = std.NewUserRealm(bobAddr)
-	stakerRealm = std.NewUserRealm(consts.STAKER_ADDR)
+	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
+	stakerRealm   = std.NewUserRealm(stakerAddr)
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
@@ -64,7 +67,7 @@ func adminDelegateToAlice() {
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, consts.GOV_STAKER_ADDR, amount)
 	staker.Delegate(cross, aliceAddr, int64(amount), "")
-	ufmt.Printf("[INFO] delegated %d GNS from admin to alice\n", amount)
+	ufmt.Printf("[INFO] delegated %d GNS from adminAddr to alice\n", amount)
 }
 
 func mockProtocolFeeDeposit() {
@@ -111,26 +114,26 @@ func protocolFeeRewardBob() {
 }
 
 func protocolFeeRewardAdmin() {
-	gcr := staker.GetClaimableRewardByAddress(admin)
-	ufmt.Printf("[INFO] claimable reward (admin): %s\n", gcr)
+	gcr := staker.GetClaimableRewardByAddress(adminAddr)
+	ufmt.Printf("[INFO] claimable reward (adminAddr): %s\n", gcr)
 
-	prevBarBalance := bar.BalanceOf(admin)
-	prevQuxBalance := qux.BalanceOf(admin)
+	prevBarBalance := bar.BalanceOf(adminAddr)
+	prevQuxBalance := qux.BalanceOf(adminAddr)
 
 	testing.SetRealm(adminRealm)
 	staker.CollectReward(cross)
 
-	afterBarBalance := bar.BalanceOf(admin)
-	afterQuxBalance := qux.BalanceOf(admin)
+	afterBarBalance := bar.BalanceOf(adminAddr)
+	afterQuxBalance := qux.BalanceOf(adminAddr)
 
-	ufmt.Printf("[INFO] collected protocol fee reward for admin\n")
+	ufmt.Printf("[INFO] collected protocol fee reward for adminAddr\n")
 	ufmt.Printf("[EXPECTED] collected bar amount: %d\n", afterBarBalance-prevBarBalance)
 	ufmt.Printf("[EXPECTED] collected qux amount: %d\n", afterQuxBalance-prevQuxBalance)
 }
 
 // Output:
 // [SCENARIO] 1. Admin delegates GNS to Alice
-// [INFO] delegated 1000000 GNS from admin to alice
+// [INFO] delegated 1000000 GNS from adminAddr to alice
 //
 // [SCENARIO] 2. Mock protocol fee deposit (bar, qux)
 // [INFO] protocol fee deposited: bar(1000), qux(2500)
@@ -149,7 +152,7 @@ func protocolFeeRewardAdmin() {
 // [INFO] collected protocol fee reward for bob
 //
 // [SCENARIO] 7. Check and collect protocol fee reward for Admin
-// [INFO] claimable reward (admin): {"height":"133","now":"1234567940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"1166"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2916"}]}
-// [INFO] collected protocol fee reward for admin
+// [INFO] claimable reward (adminAddr): {"height":"133","now":"1234567940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"1166"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2916"}]}
+// [INFO] collected protocol fee reward for adminAddr
 // [EXPECTED] collected bar amount: 1166
 // [EXPECTED] collected qux amount: 2916

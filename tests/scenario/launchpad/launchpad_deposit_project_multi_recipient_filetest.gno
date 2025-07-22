@@ -11,6 +11,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
@@ -23,14 +24,14 @@ import (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	launchpadAddr, _   = access.GetAddress(access.ROLE_LAUNCHPAD)
-	stakerAddr, _      = access.GetAddress(access.ROLE_STAKER)
+	launchpadAddr, _   = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	stakerAddr, _      = access.GetAddress(prbac.ROLE_STAKER.String())
 	stakerRealm        = std.NewUserRealm(stakerAddr)
-	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
-	govStakerAddr, _   = access.GetAddress(access.ROLE_GOV_STAKER)
+	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	govStakerAddr, _   = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = std.NewUserRealm(aliceAddr)

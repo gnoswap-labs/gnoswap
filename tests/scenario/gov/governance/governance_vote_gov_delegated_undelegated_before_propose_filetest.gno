@@ -11,6 +11,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	gns "gno.land/r/gnoswap/v1/gns"
@@ -19,7 +20,7 @@ import (
 )
 
 var (
-	adminAddr, _     = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
 	dummyAddr        = testutils.TestAddress("dummyAddr")
 	currentBlockTime = int64(2)
 )
