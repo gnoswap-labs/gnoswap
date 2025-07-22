@@ -4,11 +4,9 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/gnoswap/v1/rbac"
-
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/v1/access"
 )
 
 func TestGetDepositGnsAmount(t *testing.T) {
@@ -33,7 +31,7 @@ func TestSetDepositGnsAmountByAdmin(t *testing.T) {
 	}{
 		{
 			name:             "set deposit amount by admin success",
-			caller:           testutils.TestAddress("admin"),
+			caller:           getAdminAddress(t),
 			inputAmount:      2_000_000_000,
 			expectedAmount:   2_000_000_000,
 			expectedHasAbort: false,
@@ -94,7 +92,7 @@ func TestSetDepositGnsAmount(t *testing.T) {
 	}{
 		{
 			name:             "set deposit success by governance",
-			caller:           testutils.TestAddress("governance"),
+			caller:           getGovernanceAddress(t),
 			inputAmount:      3_000_000_000,
 			expectedAmount:   3_000_000_000,
 			expectedHasAbort: false,
@@ -165,7 +163,7 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 	}{
 		{
 			name:                        "set minimum reward amount success by governance",
-			caller:                      testutils.TestAddress("governance"),
+			caller:                      getGovernanceAddress(t),
 			inputMinimumRewardAmount:    1_000_000_000,
 			expectedMinimumRewardAmount: 1_000_000_000,
 			expectedHasAbort:            false,
@@ -226,14 +224,22 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 func setupExternalDepositFeeAdminPermission(t *testing.T) {
 	t.Helper()
 
-	addr := testutils.TestAddress("admin")
+	// Use the actual admin address from access package
+	addr, err := access.GetAddress(access.ROLE_ADMIN)
+	if err != nil {
+		t.Fatal(err)
+	}
 	setupExternalDepositFeePermission(t, addr, "admin")
 }
 
 func setupExternalDepositFeeGovernancePermission(t *testing.T) {
 	t.Helper()
 
-	addr := testutils.TestAddress("governance")
+	// Use the actual governance address from access package
+	addr, err := access.GetAddress(access.ROLE_GOVERNANCE)
+	if err != nil {
+		t.Fatal(err)
+	}
 	setupExternalDepositFeePermission(t, addr, "governance")
 }
 
@@ -242,13 +248,22 @@ func setupExternalDepositFeePermission(t *testing.T, caller std.Address, permiss
 
 	testing.SetOriginCaller(caller)
 	testing.SetRealm(std.NewUserRealm(caller))
+}
 
-	globalManager := rbac.GlobalManager()
-	globalManager.UpdatePermission(permissionName, "access", func(addr std.Address) error {
-		if addr != caller {
-			return ufmt.Errorf("caller is not %s", addr)
-		}
+func getAdminAddress(t *testing.T) std.Address {
+	t.Helper()
+	addr, err := access.GetAddress(access.ROLE_ADMIN)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return addr
+}
 
-		return nil
-	})
+func getGovernanceAddress(t *testing.T) std.Address {
+	t.Helper()
+	addr, err := access.GetAddress(access.ROLE_GOVERNANCE)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return addr
 }
