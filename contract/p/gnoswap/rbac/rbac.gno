@@ -1,14 +1,18 @@
 package rbac
 
 import (
+	"errors"
 	"std"
 
 	"gno.land/p/demo/ufmt"
+	oo "gno.land/p/oxtekgrinder/ownable2step"
 )
+
+var ErrUnauthorized = errors.New("caller is not owner")
 
 // RBAC encapsulates and manages toles and their permissions.
 type RBAC struct {
-	ownable *Ownable2Step
+	ownable *oo.Ownable2Step
 	// roles maps role names to their respective `Role` objects
 	roles map[string]*Role
 }
@@ -16,20 +20,20 @@ type RBAC struct {
 // New creates a new RBAC instance.
 func New() *RBAC {
 	return &RBAC{
-		ownable: NewOwnable2Step(),
+		ownable: oo.New(),
 		roles:   make(map[string]*Role),
 	}
 }
 
 func NewRBACWithAddress(addr std.Address) *RBAC {
 	return &RBAC{
-		ownable: NewWithAddress(addr),
+		ownable: oo.NewWithAddress(addr),
 		roles:   make(map[string]*Role),
 	}
 }
 
-func (rb *RBAC) Ownable() *Ownable2Step { return rb.ownable }
-func (rb *RBAC) Owner() std.Address     { return rb.ownable.Owner() }
+func (rb *RBAC) Ownable() *oo.Ownable2Step { return rb.ownable }
+func (rb *RBAC) Owner() std.Address        { return rb.ownable.Owner() }
 
 // PendingOwner returns the pending owner address
 func (rb *RBAC) PendingOwner() std.Address { return rb.ownable.PendingOwner() }
