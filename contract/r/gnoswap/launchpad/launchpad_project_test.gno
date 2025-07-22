@@ -94,7 +94,7 @@ func TestCreateProject(t *testing.T) {
 			callerAddress:        testutils.TestAddress("non-admin"),
 			averageBlockTimeMs:   2000,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-002] invalid address || caller(g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj) is not authorized for role admin",
+			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-002] invalid address || unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin",
 		},
 		{
 			name:                 "create project failed by start time is in the past",

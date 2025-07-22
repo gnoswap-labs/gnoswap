@@ -69,7 +69,7 @@ func createProjectByNonAdmin() {
 	testing.SetRealm(nonAdminRealm)
 	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
 
-	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-002] invalid address || caller(g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj) is not authorized for role admin"
+	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-002] invalid address || unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin"
 	uassert.AbortsWithMessage(t, expectedPanicMessage, func() {
 		launchpad.CreateProject(
 			cross,
@@ -104,4 +104,4 @@ func createProjectByNonAdmin() {
 // [INFO] create project with tier90 ratio: 20
 // [INFO] create project with tier180 ratio: 70
 // [INFO] create project with start time: 1234571490
-// [EXPECTED] Should abort with authorization error: [GNOSWAP-LAUNCHPAD-002] invalid address || caller(g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj) is not authorized for role admin
+// [EXPECTED] Should abort with authorization error: [GNOSWAP-LAUNCHPAD-002] invalid address || unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin
