@@ -8,11 +8,12 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
-
-	"gno.land/r/gnoswap/v1/rbac"
+	"gno.land/r/gnoswap/v1/access"
 )
 
 func TestAddToken(t *testing.T) {
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+
 	tests := []struct {
 		name                  string
 		caller                std.Address
@@ -25,7 +26,7 @@ func TestAddToken(t *testing.T) {
 	}{
 		{
 			name:           "add token success by admin",
-			caller:         testutils.TestAddress("admin"),
+			caller:         adminAddr,
 			inputTokenPath: "gno.land/r/gnoswap/v1/token1",
 			expectedAllowedTokens: []string{
 				consts.GNS_PATH,
@@ -57,7 +58,6 @@ func TestAddToken(t *testing.T) {
 			// given
 			allowedTokens = defaultAllowed
 
-			setupExternalTokenListAdminPermission(t)
 			testing.SetOriginCaller(tt.caller)
 
 			// when
@@ -89,6 +89,8 @@ func TestAddToken(t *testing.T) {
 }
 
 func TestRemoveToken(t *testing.T) {
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+
 	customTokenPath := "gno.land/r/gnoswap/v1/custom"
 
 	currentDefaultTokens := make([]string, 0)
@@ -107,7 +109,7 @@ func TestRemoveToken(t *testing.T) {
 	}{
 		{
 			name:                  "remove token success with custom token by admin",
-			caller:                testutils.TestAddress("admin"),
+			caller:                adminAddr,
 			inputTokenPath:        customTokenPath,
 			expectedAllowedTokens: []string{consts.GNS_PATH, consts.GNOT},
 			expectedHasAbort:      false,
@@ -125,7 +127,7 @@ func TestRemoveToken(t *testing.T) {
 		},
 		{
 			name:                  "remove token failed by default token",
-			caller:                testutils.TestAddress("admin"),
+			caller:                adminAddr,
 			inputTokenPath:        consts.GNS_PATH,
 			expectedAllowedTokens: []string{consts.GNS_PATH, consts.GNOT, customTokenPath},
 			expectedHasAbort:      true,
@@ -136,7 +138,7 @@ func TestRemoveToken(t *testing.T) {
 		{
 			// XXX: When removing a non-existent token, it is necessary to confirm that the operation was successful.
 			name:                  "remove token failed by not existing token",
-			caller:                testutils.TestAddress("admin"),
+			caller:                adminAddr,
 			inputTokenPath:        "not-existing-token",
 			expectedAllowedTokens: []string{consts.GNS_PATH, consts.GNOT, customTokenPath},
 			expectedHasAbort:      false,
@@ -150,7 +152,6 @@ func TestRemoveToken(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			allowedTokens = currentDefaultTokens
 
-			setupExternalTokenListAdminPermission(t)
 			testing.SetOriginCaller(tt.caller)
 
 			// when
@@ -182,6 +183,8 @@ func TestRemoveToken(t *testing.T) {
 }
 
 func TestModifyTokenList(t *testing.T) {
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+
 	tests := []struct {
 		name                  string
 		caller                std.Address
@@ -194,7 +197,7 @@ func TestModifyTokenList(t *testing.T) {
 	}{
 		{
 			name:                  "modify token list success with valid token addition",
-			caller:                testutils.TestAddress("admin"),
+			caller:                adminAddr,
 			inputTokenPath:        "gno.land/r/gnoswap/v1/token1",
 			inputValidator:        nil,
 			inputExecutor:         addTokenExecutor,
@@ -204,7 +207,7 @@ func TestModifyTokenList(t *testing.T) {
 		},
 		{
 			name:           "modify token list success with validation failure",
-			caller:         testutils.TestAddress("admin"),
+			caller:         adminAddr,
 			inputTokenPath: consts.GNS_PATH,
 			inputValidator: func(tokenPath string) error {
 				return ufmt.Errorf("validation failure")
@@ -230,7 +233,6 @@ func TestModifyTokenList(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			allowedTokens = defaultAllowed
 
-			setupExternalTokenListAdminPermission(t)
 			testing.SetOriginCaller(tt.caller)
 
 			// when
@@ -255,34 +257,4 @@ func TestModifyTokenList(t *testing.T) {
 			}
 		})
 	}
-}
-
-func setupExternalTokenListAdminPermission(t *testing.T) {
-	t.Helper()
-
-	addr := testutils.TestAddress("admin")
-	setupExternalDepositFeePermission(t, addr, "admin")
-}
-
-func setupExternalTokenListGovernancePermission(t *testing.T) {
-	t.Helper()
-
-	addr := testutils.TestAddress("governance")
-	setupExternalDepositFeePermission(t, addr, "governance")
-}
-
-func setupExternalTokenListPermission(t *testing.T, caller std.Address, permissionName string) {
-	t.Helper()
-
-	testing.SetOriginCaller(caller)
-	testing.SetRealm(std.NewUserRealm(caller))
-
-	globalManager := rbac.GlobalManager()
-	globalManager.UpdatePermission(permissionName, "access", func(addr std.Address) error {
-		if addr != caller {
-			return ufmt.Errorf("caller is not %s", addr)
-		}
-
-		return nil
-	})
 }

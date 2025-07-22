@@ -5,11 +5,9 @@ import (
 	"testing"
 
 	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/rbac"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
 )
 
 func TestGetDepositGnsAmount(t *testing.T) {
@@ -22,6 +20,8 @@ func TestGetDepositGnsAmount(t *testing.T) {
 }
 
 func TestSetDepositGnsAmountByAdmin(t *testing.T) {
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+
 	tests := []struct {
 		name             string
 		caller           std.Address
@@ -34,7 +34,7 @@ func TestSetDepositGnsAmountByAdmin(t *testing.T) {
 	}{
 		{
 			name:             "set deposit amount by admin success",
-			caller:           testutils.TestAddress("admin"),
+			caller:           adminAddr,
 			inputAmount:      2_000_000_000,
 			expectedAmount:   2_000_000_000,
 			expectedHasAbort: false,
@@ -58,7 +58,6 @@ func TestSetDepositGnsAmountByAdmin(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			depositGnsAmount = 0
-			setupExternalDepositFeeAdminPermission(t)
 
 			testing.SetOriginCaller(tt.caller)
 
@@ -131,7 +130,6 @@ func TestSetDepositGnsAmount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			depositGnsAmount = 0
-			setupExternalDepositFeeGovernancePermission(t)
 
 			testing.SetOriginCaller(tt.caller)
 
@@ -204,7 +202,6 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			minimumRewardAmount = 0
-			setupExternalDepositFeeGovernancePermission(t)
 
 			testing.SetOriginCaller(tt.caller)
 
@@ -226,34 +223,4 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 			uassert.Equal(t, tt.expectedMinimumRewardAmount, actual)
 		})
 	}
-}
-
-func setupExternalDepositFeeAdminPermission(t *testing.T) {
-	t.Helper()
-
-	addr := testutils.TestAddress("admin")
-	setupExternalDepositFeePermission(t, addr, "admin")
-}
-
-func setupExternalDepositFeeGovernancePermission(t *testing.T) {
-	t.Helper()
-
-	addr := testutils.TestAddress("governance")
-	setupExternalDepositFeePermission(t, addr, "governance")
-}
-
-func setupExternalDepositFeePermission(t *testing.T, caller std.Address, permissionName string) {
-	t.Helper()
-
-	testing.SetOriginCaller(caller)
-	testing.SetRealm(std.NewUserRealm(caller))
-
-	globalManager := rbac.GlobalManager()
-	globalManager.UpdatePermission(permissionName, "access", func(addr std.Address) error {
-		if addr != caller {
-			return ufmt.Errorf("caller is not %s", addr)
-		}
-
-		return nil
-	})
 }
