@@ -8,10 +8,9 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
-
-	"gno.land/r/gnoswap/v1/halt"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -74,25 +73,11 @@ func assertCallerIsOwner(positionId uint64, owner, caller std.Address) {
 
 // assertOnlyUserOrStaker panics if the caller is not a user or staker.
 func assertOnlyUserOrStaker(caller std.Realm) {
-	if !caller.IsUser() {
-		if err := common.StakerOnly(caller.Address()); err != nil {
-			panic(newErrorWithDetail(
-				errNoPermission,
-				ufmt.Sprintf("from (%s)", caller.Address()),
-			))
-		}
-	}
-}
-
-// assertOnlyNotHalted panics if the contract is halted.
-func assertOnlyNotHalted() {
-	if halt.IsHaltedPosition() {
-		panic("position contract operations are currently disabled")
+	if caller.IsUser() {
+		return
 	}
 
-	if halt.IsHaltedWithdraw() {
-		panic("position contract withdrawals are currently disabled")
-	}
+	access.AssertIsStaker(caller.Address())
 }
 
 // assertOnlyValidAddress panics if the address is invalid.

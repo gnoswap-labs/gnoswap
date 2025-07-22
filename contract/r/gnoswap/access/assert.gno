@@ -80,6 +80,22 @@ func AssertIsAuthorized(roleName string, caller std.Address) {
 	}
 }
 
+// AssertHasAnyRole checks if the caller has any of the given roles by comparing address
+func AssertHasAnyRole(caller std.Address, roleNames ...string) {
+	for _, roleName := range roleNames {
+		roleAddr, ok := GetAddress(roleName)
+		if !ok {
+			panic(ufmt.Errorf("role %s does not exist", roleName))
+		}
+
+		if caller == roleAddr {
+			return
+		}
+	}
+
+	panic(ufmt.Errorf("unauthorized: caller %s is not any of the roles %v", caller, roleNames))
+}
+
 func assertIsRBAC(caller std.Address) {
 	rbacAddr := std.NewCodeRealm(rbacPackagePath).Address()
 

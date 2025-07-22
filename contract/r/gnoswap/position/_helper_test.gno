@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
-
+	prabc "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
 
@@ -23,7 +23,7 @@ import (
 	"gno.land/r/onbloc/qux"
 	"gno.land/r/onbloc/usdc"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/rbac"
 )
 
 const (
@@ -57,16 +57,16 @@ var (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr = rbac.DefaultRoleAddresses[prabc.ROLE_ADMIN]
 
 	alice = testutils.TestAddress("alice")
 	bob   = testutils.TestAddress("bob")
 
-	emissionAddr, _    = access.GetAddress(access.ROLE_EMISSION)
-	poolAddr, _        = access.GetAddress(access.ROLE_POOL)
-	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
-	routerAddr, _      = access.GetAddress(access.ROLE_ROUTER)
-	devOpsAddr, _      = access.GetAddress(access.ROLE_DEVOPS)
+	emissionAddr = rbac.DefaultRoleAddresses[prabc.ROLE_EMISSION]
+	poolAddr     = rbac.DefaultRoleAddresses[prabc.ROLE_POOL]
+	protocolFeeAddr = rbac.DefaultRoleAddresses[prabc.ROLE_PROTOCOL_FEE]
+	routerAddr = rbac.DefaultRoleAddresses[prabc.ROLE_ROUTER]
+	devOpsAddr = rbac.DefaultRoleAddresses[prabc.ROLE_DEVOPS]
 
 	adminRealm = std.NewUserRealm(adminAddr)
 	posRealm   = std.NewCodeRealm(consts.POSITION_PATH)
@@ -426,6 +426,7 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
 	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
 
+	testing.SetRealm(adminRealm)
 	// mint position
 	return Mint(
 		cross,

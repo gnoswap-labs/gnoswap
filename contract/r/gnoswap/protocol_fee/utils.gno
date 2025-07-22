@@ -3,6 +3,8 @@ package protocol_fee
 import (
 	"std"
 
+	prbac "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 )
 
@@ -15,9 +17,12 @@ func getPrev() (string, string) {
 func assertOnlyPoolRouterStaker() {
 	caller := std.PreviousRealm().Address()
 
-	access.AssertIsPool(caller)
-	access.AssertIsRouter(caller)
-	access.AssertIsStaker(caller)
+	access.AssertHasAnyRole(
+		caller,
+		prbac.ROLE_POOL.String(),
+		prbac.ROLE_ROUTER.String(),
+		prbac.ROLE_STAKER.String(),
+	)
 }
 
 // assertOnlyGovStaker panics if the caller is not the gov/staker contract.
