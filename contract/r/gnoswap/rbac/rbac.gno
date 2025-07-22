@@ -25,12 +25,14 @@ func initRbac() {
 		manager.RegisterRole(role.String())
 		manager.UpdateRoleAddress(role.String(), defaultRoleAddresses[role])
 	}
+
+	updateAccessRoleAddresses(manager.GetRoleAddresses())
 }
 
 // Registers a new role in the RBAC system
 // Only admin can register new roles
 // System roles cannot be registered through this function
-func RegisterRole(roleName string) {
+func RegisterRole(cur realm, roleName string) {
 	caller := std.PreviousRealm().Address()
 	assertIsAdmin(caller)
 
@@ -43,13 +45,13 @@ func RegisterRole(roleName string) {
 		panic(err)
 	}
 
-	updateAccessRoleAddresses()
+	updateAccessRoleAddresses(manager.GetRoleAddresses())
 }
 
 // Removes an existing role from the RBAC system
 // Only admin can remove roles
 // System roles cannot be removed through this function
-func RemoveRole(roleName string) {
+func RemoveRole(cur realm, roleName string) {
 	caller := std.PreviousRealm().Address()
 	assertIsAdmin(caller)
 
@@ -62,20 +64,20 @@ func RemoveRole(roleName string) {
 		panic(err)
 	}
 
-	updateAccessRoleAddresses()
+	updateAccessRoleAddresses(manager.GetRoleAddresses())
 }
 
 // Retrieves the address associated with a given role
 // Returns error if role does not exist
 // Used to verify role assignments and permissions
-func GetRoleAddress(roleName string) (std.Address, error) {
+func GetRoleAddress(cur realm, roleName string) (std.Address, error) {
 	return manager.GetRoleAddress(roleName)
 }
 
 // Updates the address associated with a role
 // Only admin can update role addresses
 // Panics if role update fails
-func UpdateRoleAddress(roleName string, addr std.Address) {
+func UpdateRoleAddress(cur realm, roleName string, addr std.Address) {
 	caller := std.PreviousRealm().Address()
 	assertIsAdmin(caller)
 
@@ -84,18 +86,12 @@ func UpdateRoleAddress(roleName string, addr std.Address) {
 		panic(err)
 	}
 
-	updateAccessRoleAddresses()
+	updateAccessRoleAddresses(manager.GetRoleAddresses())
 }
 
 // updateAccessRoleAddresses updates the role addresses in the access package
 // by copying the default role addresses from RBAC system.
 // This ensures that access package has the latest role-address mappings.
-func updateAccessRoleAddresses() {
-	newRoleAddresses := make(map[string]std.Address)
-
-	for role := range defaultRoleAddresses {
-		newRoleAddresses[role.String()] = defaultRoleAddresses[role]
-	}
-
-	access.SetRoleAddresses(newRoleAddresses)
+func updateAccessRoleAddresses(newRoleAddresses map[string]std.Address) {
+	access.SetRoleAddresses(cross, newRoleAddresses)
 }

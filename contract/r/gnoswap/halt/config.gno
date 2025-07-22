@@ -1,7 +1,5 @@
 package halt
 
-import "gno.land/p/demo/ufmt"
-
 // HaltConfig is a map that stores halt options for each operation type
 // It provides centralized control over access and withdrawal permissions
 type HaltConfig map[OpType]bool
@@ -35,7 +33,7 @@ func (c HaltConfig) Clone() HaltConfig {
 func (c HaltConfig) get(op OpType) (bool, error) {
 	enabled, exists := c[op]
 	if !exists {
-		return false, ufmt.Errorf("operation type %s not found", op)
+		return false, makeErrorWithDetails(errInvalidOpType, op.String())
 	}
 
 	return enabled, nil
@@ -43,7 +41,7 @@ func (c HaltConfig) get(op OpType) (bool, error) {
 
 func (c HaltConfig) set(op OpType, enabled bool) error {
 	if !op.IsValid() {
-		return ufmt.Errorf("invalid operation type: %s", op)
+		return makeErrorWithDetails(errInvalidOpType, op.String())
 	}
 
 	c[op] = enabled

@@ -2,8 +2,6 @@ package halt
 
 import (
 	"gno.land/p/demo/json"
-
-	"gno.land/p/demo/ufmt"
 )
 
 // Checks if any of the given operation types are halted
@@ -13,7 +11,7 @@ func IsHalted(opTypes ...OpType) (bool, error) {
 	// Validate and check halt status for each operation
 	for _, op := range opTypes {
 		if !op.IsValid() {
-			return true, ufmt.Errorf("invalid operation type: %s", op)
+			return true, makeErrorWithDetails(errInvalidOpType, op.String())
 		}
 
 		halted, err := haltConfig.get(op)

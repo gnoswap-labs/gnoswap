@@ -66,6 +66,17 @@ func (rb *RBAC) RemoveRole(roleName string) error {
 	return nil
 }
 
+// GetRoleAddresses returns all role addresses
+func (rb *RBAC) GetRoleAddresses() map[string]std.Address {
+	addresses := make(map[string]std.Address)
+
+	for role := range rb.roles {
+		addresses[role] = rb.roles[role].Address()
+	}
+
+	return addresses
+}
+
 // GetRoleAddress returns the address with a specific role
 func (rb *RBAC) GetRoleAddress(roleName string) (std.Address, error) {
 	role, exists := rb.roles[roleName]

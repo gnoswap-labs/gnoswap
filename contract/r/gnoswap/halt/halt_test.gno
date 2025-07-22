@@ -6,6 +6,9 @@ import (
 
 	"gno.land/p/demo/uassert"
 	"gno.land/r/gnoswap/v1/access"
+
+	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
 )
 
 // Test internal setHaltLevel function
@@ -325,8 +328,8 @@ func TestHalt_GetHaltConfigJson(t *testing.T) {
 
 // Test SetHaltLevel with authorization
 func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
-	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+	govAddr, _ := access.GetAddress(prbac.ROLE_GOVERNANCE.String())
 
 	tests := []struct {
 		name                 string
@@ -410,8 +413,8 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 
 // Test SetOperationStatus with authorization
 func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
-	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+	govAddr, _ := access.GetAddress(prbac.ROLE_GOVERNANCE.String())
 
 	tests := []struct {
 		name                 string

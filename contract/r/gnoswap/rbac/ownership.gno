@@ -33,7 +33,7 @@ func GetPendingOwner() std.Address {
 // AcceptOwnership completes the ownership transfer process.
 // This function can only be called by the pending owner to accept their new role.
 // Panics if called by any address other than the pending owner or if the transfer fails.
-func AcceptOwnership() {
+func AcceptOwnership(cur realm) {
 	assertIsPendingOwner(std.PreviousRealm().Address())
 
 	err := manager.AcceptOwnership()
@@ -45,7 +45,7 @@ func AcceptOwnership() {
 // TransferOwnership initiates the transfer of ownership to a new address.
 // Only the current owner can initiate this transfer, setting up the two-step ownership transfer process.
 // Panics if called by non-owner or if the transfer initiation fails.
-func TransferOwnership(addr std.Address) {
+func TransferOwnership(cur realm, addr std.Address) {
 	assertIsOwner(std.PreviousRealm().Address())
 
 	err := manager.TransferOwnership(addr)

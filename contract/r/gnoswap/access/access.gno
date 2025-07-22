@@ -35,7 +35,10 @@ func GetRoleAddresses() map[string]std.Address {
 // SetRoleAddresses updates the role addresses
 // Takes a map of role names to their corresponding addresses
 // Used to set the role addresses in the access package
-func SetRoleAddresses(newRoleAddresses map[string]std.Address) {
+func SetRoleAddresses(cur realm, newRoleAddresses map[string]std.Address) {
+	caller := std.PreviousRealm().Address()
+	assertIsRBAC(caller)
+
 	roleAddresses = newRoleAddresses
 }
 
