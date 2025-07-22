@@ -72,15 +72,16 @@ func initialize(cfg *config) error {
 
 	for roleName, addr := range cfg.roles {
 		err := declareNewRole(roleName, addr)
-		if err != nil {
-			errStr := err.Error()
-			if ufmt.Sprintf("%s", errStr) == ufmt.Sprintf(errDeclareRole, roleName, "role "+roleName+" already exists") {
-				// If role already exists, skip
-				continue
-			} else {
-				return err
-			}
+		if err == nil {
+			continue
 		}
+
+		errStr := err.Error()
+		if ufmt.Sprintf("%s", errStr) == ufmt.Sprintf(errDeclareRole, roleName, "role "+roleName+" already exists") {
+			// role already exists, skip
+			continue
+		}
+		return err
 	}
 
 	return setConfig(cfg)
