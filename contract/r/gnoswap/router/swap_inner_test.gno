@@ -2,12 +2,13 @@ package router
 
 import (
 	"std"
-	// "strings"
 	"testing"
 
 	"gno.land/p/demo/uassert"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -66,8 +67,8 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 
 func TestSwapInner(t *testing.T) {
 	user1Realm := std.NewUserRealm(user1Addr)
-	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
-	poolAddr, _ := access.GetAddress(access.ROLE_POOL)
+	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	tests := []struct {
 		name              string
