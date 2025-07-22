@@ -85,10 +85,10 @@ func main() {
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
 
-	sr.SetWarmUp(cross, 30, 150)
-	sr.SetWarmUp(cross, 50, 300)
-	sr.SetWarmUp(cross, 70, 900)
-	sr.SetWarmUp(cross, 100, consts.INT64_MAX)
+	sr.SetWarmUpByAdmin(cross, 30, 150)
+	sr.SetWarmUpByAdmin(cross, 50, 300)
+	sr.SetWarmUpByAdmin(cross, 70, 900)
+	sr.SetWarmUpByAdmin(cross, 100, consts.INT64_MAX)
 
 	testing.SetRealm(stakerRealm)
 	en.RegisterGnsChangeCallback(cross)

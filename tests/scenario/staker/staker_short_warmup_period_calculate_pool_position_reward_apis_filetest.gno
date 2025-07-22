@@ -102,10 +102,10 @@ func initAndSetup() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] override warm-up period for testing")
-	sr.SetWarmUp(cross, 30, 150)
-	sr.SetWarmUp(cross, 50, 300)
-	sr.SetWarmUp(cross, 70, 900)
-	sr.SetWarmUp(cross, 100, math.MaxInt64)
+	sr.SetWarmUpByAdmin(cross, 30, 150)
+	sr.SetWarmUpByAdmin(cross, 50, 300)
+	sr.SetWarmUpByAdmin(cross, 70, 900)
+	sr.SetWarmUpByAdmin(cross, 100, math.MaxInt64)
 
 	println("[INFO] set pool creation fee to 0")
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
