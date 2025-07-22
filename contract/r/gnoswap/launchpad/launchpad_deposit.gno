@@ -13,6 +13,7 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
 	"gno.land/r/gnoswap/v1/gov/xgns"
+	"gno.land/r/gnoswap/v1/halt"
 	"gno.land/r/gnoswap/v1/referral"
 )
 
@@ -74,7 +75,8 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 	previousAddress := std.PreviousRealm().Address()
 	previousPkgPath := std.PreviousRealm().PkgPath()
 
-	assertOnlyNotHalted()
+	halt.AssertIsHaltedLaunchpad()
+	halt.AssertIsHaltedWithdraw()
 	assertOnlyUser()
 	assertValidAmount(depositAmount)
 
