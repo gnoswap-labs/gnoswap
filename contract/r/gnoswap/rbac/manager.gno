@@ -17,23 +17,14 @@ func RegisterRole(cur realm, roleName string) error {
 	return globalManager.RegisterRole(roleName)
 }
 
-// RemoveRole globally removes a role.
-// An error is returned if the role does not exist.
-func RemoveRole(cur realm, roleName string) error {
-	if !callerIsOwner() {
-		return prbac.ErrUnauthorized
-	}
-	return globalManager.RemoveRole(roleName)
-}
-
 // DeclareRole globally declares a role using the Functional Option pattern.
 // This allows declarative registration of roles along with their permissions.
 // Returns an error if the role already exists.
-func DeclareRole(cur realm, roleName string, opts ...prbac.RoleOption) error {
+func DeclareRole(cur realm, roleName string) error {
 	if !callerIsOwner() {
 		return prbac.ErrUnauthorized
 	}
-	return globalManager.DeclareRole(roleName, opts...)
+	return globalManager.DeclareRole(roleName)
 }
 
 // GlobalManager returns the underlying global RBAC manager instance.
