@@ -10,6 +10,8 @@ import (
 	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
 
+	prabc "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/halt"
 )
@@ -22,7 +24,7 @@ var (
 )
 
 func init() {
-	positionAddr, _ := access.GetAddress(access.ROLE_POSITION)
+	positionAddr, _ := access.GetAddress(prabc.ROLE_POSITION.String())
 	owner = ownable.NewWithAddress(positionAddr) // deployed position contract
 	tokenList = avl.NewTree()
 }
