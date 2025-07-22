@@ -9,6 +9,8 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
 
+	prbac "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 
 	"gno.land/r/onbloc/bar"
@@ -16,8 +18,8 @@ import (
 )
 
 var (
-	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
+	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
 	adminRealm    = std.NewUserRealm(adminAddr)
 	adminUser     = adminAddr
 	dummyRealm    = std.NewCodeRealm("gno.land/r/dummy")

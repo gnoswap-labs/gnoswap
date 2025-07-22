@@ -3,7 +3,7 @@ package protocol_fee
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -25,19 +25,13 @@ func assertOnlyNotHalted() {
 func assertOnlyPoolRouterStaker() {
 	caller := std.PreviousRealm().Address()
 
-	poolOnlyErr := common.PoolOnly(caller)
-	routerOnlyErr := common.RouterOnly(caller)
-	stakerOnlyErr := common.StakerOnly(caller)
-
-	if poolOnlyErr != nil && routerOnlyErr != nil && stakerOnlyErr != nil {
-		panic(errNoPermission)
-	}
+	access.AssertIsPool(caller)
+	access.AssertIsRouter(caller)
+	access.AssertIsStaker(caller)
 }
 
 // assertOnlyGovStaker panics if the caller is not the gov/staker contract.
 func assertOnlyGovStaker() {
 	caller := std.PreviousRealm().Address()
-	if err := common.GovStakerOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	access.AssertIsGovStaker(caller)
 }

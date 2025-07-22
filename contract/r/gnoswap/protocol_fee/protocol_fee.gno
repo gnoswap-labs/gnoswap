@@ -18,7 +18,7 @@ import (
 func DistributeProtocolFee(cur realm) map[string]uint64 {
 	assertOnlyNotHalted()
 	assertOnlyGovStaker()
-	
+
 	sentToDevOpsForEvent := make([]string, 0)
 	sentToGovStakerForEvent := make([]string, 0)
 	toReturnDistributedToGovStaker := make(map[string]uint64)
