@@ -25,21 +25,24 @@ import (
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
 	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
 
-	poolAddr, _          = access.GetAddress(access.ROLE_POOL)
-	communityPoolAddr, _ = access.GetAddress(access.ROLE_COMMUNITY_POOL)
+	poolAddr, _          = access.GetAddress(prabc.ROLE_POOL.String())
+	communityPoolAddr, _ = access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"

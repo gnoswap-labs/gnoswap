@@ -17,16 +17,19 @@ import (
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/staker"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 )
 
 var (
-	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _  = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminRealm    = std.NewUserRealm(adminAddr)
-	poolAddr, _   = access.GetAddress(access.ROLE_POOL)
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
-	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
+	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
+	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 	routerRealm   = std.NewUserRealm(routerAddr)
 
 	aliceAddr  = testutils.TestAddress("alice")

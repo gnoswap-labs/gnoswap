@@ -33,12 +33,15 @@ import (
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
@@ -47,8 +50,8 @@ var (
 	externalCreatorUser  = externalCreatorAddr
 	externalCreatorRealm = std.NewUserRealm(externalCreatorAddr)
 
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
-	poolAddr, _   = access.GetAddress(access.ROLE_POOL)
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
+	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
