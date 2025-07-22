@@ -534,7 +534,6 @@ func TestMintInternal_FeeTierEdgeCases(t *testing.T) {
 			expectedAmount0:   "0",
 			expectedAmount1:   "1000",
 		},
-		// XXX this needs to debug: [TickMathGetSqrtRatioAtTick] ratio is zero
 		{
 			name: "positive tick extreme with 0.01% pool",
 			params: MintParams{
@@ -604,7 +603,6 @@ func TestMintInternal_TickBoundaries(t *testing.T) {
 	}{
 		// 0.01% pool (tick spacing 1) - MIN/MAX boundaries
 		{
-			// XXX this needs to debug: [TickMathGetSqrtRatioAtTick] ratio is zero
 			name: "0.01% pool - valid at MIN_TICK boundary",
 			params: MintParams{
 				token0:         "gno.land/r/onbloc/bar",
