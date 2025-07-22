@@ -29,7 +29,7 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 		{
 			name:        "panic if caller is not admin",
 			shouldPanic: true,
-			panicMsg:    `caller(g10xg6559w9e93zfttlhvdmaaa0er3zewcr7nh20) is not authorized for role admin`,
+			panicMsg:    `unauthorized: caller g10xg6559w9e93zfttlhvdmaaa0er3zewcr7nh20 is not admin`,
 			targets:     []int{1, 2, 3, 4},
 			pcts:        []int64{1000, 2000, 3000, 4000},
 		},
@@ -123,7 +123,7 @@ func TestChangeDistributionPct(t *testing.T) {
 		{
 			name:        "panic if caller is not governance",
 			shouldPanic: true,
-			panicMsg:    `caller(g10xg6559w9e93zfttlhvdmaaa0er3zewcr7nh20) is not authorized for role governance`,
+			panicMsg:    `unauthorized: caller g10xg6559w9e93zfttlhvdmaaa0er3zewcr7nh20 is not governance`,
 			targets:     []int{1, 2, 3, 4},
 			pcts:        []int64{1000, 2000, 3000, 4000},
 		},
@@ -346,7 +346,7 @@ func TestClearDistributedToStaker(t *testing.T) {
 		{
 			name:        "can not clear is caller is not staker",
 			shouldPanic: true,
-			panicMsg:    `caller(g10xg6559w9e93zfttlhvdmaaa0er3zewcr7nh20) is not authorized for role staker`,
+			panicMsg:    `unauthorized: caller g10xg6559w9e93zfttlhvdmaaa0er3zewcr7nh20 is not staker`,
 		},
 		{
 			name:        "can clear if caller is staker",
@@ -388,7 +388,7 @@ func TestClearClearDistributedToGovStaker(t *testing.T) {
 		{
 			name:        "can not clear is caller is not gov/staker",
 			shouldPanic: true,
-			panicMsg:    `caller(g10xg6559w9e93zfttlhvdmaaa0er3zewcr7nh20) is not authorized for role gov_staker`,
+			panicMsg:    `unauthorized: caller g10xg6559w9e93zfttlhvdmaaa0er3zewcr7nh20 is not gov_staker`,
 		},
 		{
 			name:        "can clear if caller is gov/taker",
