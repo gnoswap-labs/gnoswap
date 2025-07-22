@@ -24,7 +24,7 @@ func GetAddress(role string) (std.Address, bool) {
 // Used to get a complete view of all role-address mappings
 func GetRoleAddresses() map[string]std.Address {
 	addresses := make(map[string]std.Address)
-	
+
 	for role, addr := range roleAddresses {
 		addresses[role] = addr
 	}
