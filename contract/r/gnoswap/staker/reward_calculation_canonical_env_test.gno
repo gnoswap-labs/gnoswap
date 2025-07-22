@@ -441,9 +441,10 @@ func newExternalIncentiveByHeight(
 	endHeight int64,
 	refundee std.Address,
 ) *ExternalIncentive {
+	caller := std.OriginCaller()
 	rewardPerBlock := rewardAmount / (endHeight - startHeight)
 
-	incentiveId := nextIncentiveID()
+	incentiveId := nextIncentiveID(caller, startHeight)
 
 	return &ExternalIncentive{
 		incentiveId:      incentiveId,

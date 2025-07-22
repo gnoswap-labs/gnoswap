@@ -88,7 +88,7 @@ func CreateExternalIncentive(cur realm,
 	caller := getPrevAddr()
 
 	// incentiveId := incentiveIdCompute(std.PrevRealm().Address(), targetPoolPath, rewardToken, startTimestamp, endTimestamp, std.GetHeight())
-	incentiveId := nextIncentiveID()
+	incentiveId := nextIncentiveID(caller, std.ChainHeight())
 
 	externalDuration := uint64(endTimestamp - startTimestamp)
 	if err := isValidIncentiveDuration(externalDuration); err != nil {

@@ -5,6 +5,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 	"std"
 	"strconv"
@@ -278,6 +279,9 @@ func createExternalIncentiveNative() {
 	testing.SetOriginSend(std.Coins{{"ugnot", 10_000_000_000}})
 	wugnot.Approve(cross, stakerAddr, consts.INT64_MAX)
 
+	incentiveID := fmt.Sprintf("%s:%d:%d", adminAddr, std.ChainHeight(), 1)
+	println("[INFO] create external incentive with incentiveID: ", incentiveID)
+
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500", // targetPoolPath
@@ -403,10 +407,11 @@ func endExternalIncentive() {
 	testing.SkipHeights(9999999)
 
 	println("[INFO] end external incentive")
+	incentiveID := "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:150:1"
 	sr.EndExternalIncentive(
 		cross,
 		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500",
-		"1",
+		incentiveID,
 	)
 	testing.SkipHeights(1)
 
@@ -492,6 +497,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] prepare 10_000_000_000 ugnot for external incentive
 // [INFO] add token and approve gns
 // [INFO] create external incentive with native coin
+// [INFO] create external incentive with incentiveID:  g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:150:1
 // [INFO] external incentive created - start: 1234569600, end: 1242345600
 // [EXPECTED] admin wugnot balance after external incentive: 0
 //
