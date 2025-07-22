@@ -8,6 +8,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/gnoswap/v1/gnft"
@@ -278,6 +279,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 	stakers.addDeposit(caller, positionId, deposit)
 
 	if caller == owner { // if caller is owner, transfer NFT ownership to staker contract
+		stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 		if err := transferDeposit(positionId, owner, caller, stakerAddr); err != nil {
 			panic(err.Error())
 		}
@@ -498,6 +500,8 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		)
 	}
 
+	communityPoolAddr := getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
+
 	// internal reward to user
 	toUser := handleUnStakingFee(consts.GNS_PATH, int64(reward.Internal), true, positionId, deposit.targetPoolPath)
 	if toUser > 0 {
@@ -587,6 +591,7 @@ func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) (string, stri
 	applyUnStake(positionId)
 
 	// transfer NFT ownership to origin owner
+	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	gnft.TransferFrom(cross, stakerAddr, deposit.owner, positionIdFrom(positionId))
 	pn.SetPositionOperator(cross, positionId, consts.ZERO_ADDRESS)
 
@@ -645,6 +650,8 @@ func applyUnStake(positionId uint64) {
 // requireTokenOwnership validates that the caller has permission to operate the token.
 func requireTokenOwnership(owner, caller std.Address) error {
 	callerIsOwner := owner == caller
+
+	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	stakerIsOwner := owner == stakerAddr
 
 	if err := common.SatisfyCond(callerIsOwner || stakerIsOwner); err != nil {

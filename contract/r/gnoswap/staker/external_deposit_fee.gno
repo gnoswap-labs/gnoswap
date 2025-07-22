@@ -173,7 +173,8 @@ func SetMinimumRewardAmount(cur realm, amount int64) {
 //   - paramsStr (string): A string containing the token path and minimum amount, separated by a colon.
 //     Example: "gno.land/r/demo/wugnot:1500000000"
 func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
-	assertOnlyGovernance()
+	caller := std.PreviousRealm().Address()
+	access.AssertIsGovernance(caller)
 
 	// Parse the paramsStr
 	parts := strings.SplitN(paramsStr, ":", 2)

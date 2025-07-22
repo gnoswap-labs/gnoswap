@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
@@ -121,6 +122,7 @@ func CreateExternalIncentive(cur realm,
 	externalIncentives.set(incentiveId, incentive)
 
 	// deposit gns amount
+	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	gns.TransferFrom(cross, caller, stakerAddr, depositGnsAmount)
 
 	// transfer reward token from user to staker
@@ -192,6 +194,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		incentive.setUnClaimableRefunded(true)
 	}
 
+	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	poolLeftExternalRewardAmount := common.BalanceOf(incentive.rewardToken, stakerAddr)
 	if poolLeftExternalRewardAmount < refund {
 		refund = poolLeftExternalRewardAmount

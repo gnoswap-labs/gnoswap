@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 )
 
 // wrap converts `ugnot` tokens into `wugnot` tokens.
@@ -33,6 +34,7 @@ func wrap(ugnotAmount int64) {
 	}
 
 	// WRAP IT
+	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(stakerAddr, consts.WUGNOT_ADDR, std.Coins{{Denom: "ugnot", Amount: ugnotAmount}})
 	wugnot.Deposit(cross) // STAKER HAS WUGNOT
@@ -53,6 +55,8 @@ func unwrap(wugnotAmount int64) {
 		return
 	}
 
+	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
+	
 	// SEND WUGNOT: USER -> STAKER
 	wugnot.TransferFrom(cross, std.PreviousRealm().Address(), stakerAddr, wugnotAmount)
 

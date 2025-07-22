@@ -6,6 +6,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
 )
 
@@ -19,8 +20,6 @@ func TestGetDepositGnsAmount(t *testing.T) {
 }
 
 func TestSetDepositGnsAmountByAdmin(t *testing.T) {
-	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-
 	tests := []struct {
 		name             string
 		caller           std.Address
@@ -49,7 +48,7 @@ func TestSetDepositGnsAmountByAdmin(t *testing.T) {
 			expectedHasPanic: false,
 			expectedPanicMsg: "",
 			expectedHasAbort: true,
-			expectedAbortMsg: "caller(g1w4ek2u33ta047h6lta047h6lta047h6ldvdwpn) has no permission",
+			expectedAbortMsg: "unauthorized: caller g1w4ek2u33ta047h6lta047h6lta047h6ldvdwpn is not admin",
 		},
 	}
 
@@ -81,8 +80,6 @@ func TestSetDepositGnsAmountByAdmin(t *testing.T) {
 }
 
 func TestSetDepositGnsAmount(t *testing.T) {
-	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
-	
 	tests := []struct {
 		name             string
 		caller           std.Address
@@ -111,7 +108,7 @@ func TestSetDepositGnsAmount(t *testing.T) {
 			expectedHasPanic: false,
 			expectedPanicMsg: "",
 			expectedHasAbort: true,
-			expectedAbortMsg: "caller(g1dehkutt8damx2unwv9hxxe2lta047h6l9v0nxc) has no permission",
+			expectedAbortMsg: "unauthorized: caller g1dehkutt8damx2unwv9hxxe2lta047h6l9v0nxc is not governance",
 		},
 		{
 			name:             "set deposit amount failed by unauthorized caller",
@@ -121,7 +118,7 @@ func TestSetDepositGnsAmount(t *testing.T) {
 			expectedHasPanic: false,
 			expectedPanicMsg: "",
 			expectedHasAbort: true,
-			expectedAbortMsg: "caller(g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg) has no permission",
+			expectedAbortMsg: "unauthorized: caller g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg is not governance",
 		},
 	}
 
@@ -153,8 +150,6 @@ func TestSetDepositGnsAmount(t *testing.T) {
 }
 
 func TestSetMinimumRewardAmount(t *testing.T) {
-	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
-
 	tests := []struct {
 		name                        string
 		caller                      std.Address
@@ -183,7 +178,7 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 			expectedHasPanic:            false,
 			expectedPanicMsg:            "",
 			expectedHasAbort:            true,
-			expectedAbortMsg:            "caller(g1dehkutt8damx2unwv9hxxe2lta047h6l9v0nxc) has no permission",
+			expectedAbortMsg:            "unauthorized: caller g1dehkutt8damx2unwv9hxxe2lta047h6l9v0nxc is not governance",
 		},
 		{
 			name:                        "set minimum reward amount failed by unauthorized caller",
@@ -193,7 +188,7 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 			expectedHasPanic:            false,
 			expectedPanicMsg:            "",
 			expectedHasAbort:            true,
-			expectedAbortMsg:            "caller(g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg) has no permission",
+			expectedAbortMsg:            "unauthorized: caller g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg is not governance",
 		},
 	}
 
@@ -228,10 +223,7 @@ func setupExternalDepositFeeAdminPermission(t *testing.T) {
 	t.Helper()
 
 	// Use the actual admin address from access package
-	addr, err := access.GetAddress(access.ROLE_ADMIN)
-	if err != nil {
-		t.Fatal(err)
-	}
+	addr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 	setupExternalDepositFeePermission(t, addr, "admin")
 }
 
@@ -239,10 +231,7 @@ func setupExternalDepositFeeGovernancePermission(t *testing.T) {
 	t.Helper()
 
 	// Use the actual governance address from access package
-	addr, err := access.GetAddress(access.ROLE_GOVERNANCE)
-	if err != nil {
-		t.Fatal(err)
-	}
+	addr, _ := access.GetAddress(prbac.ROLE_GOVERNANCE.String())
 	setupExternalDepositFeePermission(t, addr, "governance")
 }
 
@@ -255,18 +244,12 @@ func setupExternalDepositFeePermission(t *testing.T, caller std.Address, permiss
 
 func getAdminAddress(t *testing.T) std.Address {
 	t.Helper()
-	addr, err := access.GetAddress(access.ROLE_ADMIN)
-	if err != nil {
-		t.Fatal(err)
-	}
+	addr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 	return addr
 }
 
 func getGovernanceAddress(t *testing.T) std.Address {
 	t.Helper()
-	addr, err := access.GetAddress(access.ROLE_GOVERNANCE)
-	if err != nil {
-		t.Fatal(err)
-	}
+	addr, _ := access.GetAddress(prbac.ROLE_GOVERNANCE.String())
 	return addr
 }
