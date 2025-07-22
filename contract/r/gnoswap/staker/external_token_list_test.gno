@@ -7,12 +7,13 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
-
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/access"
 )
 
 func TestAddToken(t *testing.T) {
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+
 	tests := []struct {
 		name                  string
 		caller                std.Address
@@ -57,7 +58,6 @@ func TestAddToken(t *testing.T) {
 			// given
 			allowedTokens = defaultAllowed
 
-			setupExternalTokenListAdminPermission(t)
 			testing.SetOriginCaller(tt.caller)
 
 			// when
@@ -89,6 +89,8 @@ func TestAddToken(t *testing.T) {
 }
 
 func TestRemoveToken(t *testing.T) {
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+
 	customTokenPath := "gno.land/r/gnoswap/v1/custom"
 
 	currentDefaultTokens := make([]string, 0)
@@ -150,7 +152,6 @@ func TestRemoveToken(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			allowedTokens = currentDefaultTokens
 
-			setupExternalTokenListAdminPermission(t)
 			testing.SetOriginCaller(tt.caller)
 
 			// when
@@ -182,6 +183,8 @@ func TestRemoveToken(t *testing.T) {
 }
 
 func TestModifyTokenList(t *testing.T) {
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+
 	tests := []struct {
 		name                  string
 		caller                std.Address
@@ -230,7 +233,6 @@ func TestModifyTokenList(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			allowedTokens = defaultAllowed
 
-			setupExternalTokenListAdminPermission(t)
 			testing.SetOriginCaller(tt.caller)
 
 			// when

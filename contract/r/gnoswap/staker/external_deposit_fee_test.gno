@@ -19,6 +19,8 @@ func TestGetDepositGnsAmount(t *testing.T) {
 }
 
 func TestSetDepositGnsAmountByAdmin(t *testing.T) {
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+
 	tests := []struct {
 		name             string
 		caller           std.Address
@@ -55,7 +57,6 @@ func TestSetDepositGnsAmountByAdmin(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			depositGnsAmount = 0
-			setupExternalDepositFeeAdminPermission(t)
 
 			testing.SetOriginCaller(tt.caller)
 
@@ -80,6 +81,8 @@ func TestSetDepositGnsAmountByAdmin(t *testing.T) {
 }
 
 func TestSetDepositGnsAmount(t *testing.T) {
+	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+	
 	tests := []struct {
 		name             string
 		caller           std.Address
@@ -126,7 +129,6 @@ func TestSetDepositGnsAmount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			depositGnsAmount = 0
-			setupExternalDepositFeeGovernancePermission(t)
 
 			testing.SetOriginCaller(tt.caller)
 
@@ -151,6 +153,8 @@ func TestSetDepositGnsAmount(t *testing.T) {
 }
 
 func TestSetMinimumRewardAmount(t *testing.T) {
+	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+
 	tests := []struct {
 		name                        string
 		caller                      std.Address
@@ -197,7 +201,6 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			minimumRewardAmount = 0
-			setupExternalDepositFeeGovernancePermission(t)
 
 			testing.SetOriginCaller(tt.caller)
 

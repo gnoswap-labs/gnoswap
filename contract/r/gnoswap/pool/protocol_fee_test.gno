@@ -90,7 +90,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			},
 			verify: nil,
 			// expected:    "caller(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) has no permission",
-			expected:    ufmt.Sprintf("caller(%s) has no permission", govAddr.String()),
+			expected:    "[GNOSWAP-POOL-001] caller has no permission || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can call, called from g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd",
 			shouldPanic: true,
 		},
 		{
@@ -101,7 +101,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 				SetPoolCreationFeeByAdmin(cross, newFee)
 			},
 			verify:      nil,
-			expected:    "caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) has no permission",
+			expected:    "[GNOSWAP-POOL-001] caller has no permission || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can call, called from g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh",
 			shouldPanic: true,
 		},
 		{

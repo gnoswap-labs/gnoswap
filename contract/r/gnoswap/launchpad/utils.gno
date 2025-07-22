@@ -24,16 +24,12 @@ func formatInt(value int64) string {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err)
-		}
+	if halt.IsHaltedLaunchpad() {
+		panic("launchpad contract operations are currently disabled")
+	}
 
-		if halt.IsContractHalted(halt.OpTypeLaunchpad) {
-			panic("launchpad contract operations are currently disabled")
-		}
+	if halt.IsHaltedWithdraw() {
+		panic("launchpad contract withdrawals are currently disabled")
 	}
 }
 

@@ -761,7 +761,7 @@ func TestGovernanceVote_QuorumCalculation(t *testing.T) {
 func cleanupGovernanceVoteTest() {
 	// Reset global state
 	testing.SetRealm(adminRealm)
-	halt.SetHaltByAdmin(cross, false)
+	halt.SetHaltLevel(cross, halt.HaltLevelNone)
 	configCounter = NewCounter()
 	proposalCounter = NewCounter()
 	configs = avl.NewTree()

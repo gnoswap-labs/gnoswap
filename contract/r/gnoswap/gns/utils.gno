@@ -21,8 +21,8 @@ func getPrevAddr() std.Address {
 }
 
 func assertShouldNotBeHalted() {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
+	if halt.IsHaltedEmission() {
+		panic("gns contract operations are currently disabled")
 	}
 }
 

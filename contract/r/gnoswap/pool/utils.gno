@@ -249,16 +249,12 @@ func assertOnlyValidAddress(addr std.Address) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err.Error())
-		}
+	if halt.IsHaltedPool() {
+		panic("pool contract operations are currently disabled")
+	}
 
-		if halt.IsContractHalted(halt.OpTypePool) {
-			panic("pool contract operations are currently disabled")
-		}
+	if halt.IsHaltedWithdraw() {
+		panic("pool contract withdrawals are currently disabled")
 	}
 }
 
@@ -275,9 +271,17 @@ func assertOnlyPositionContract() {
 
 // assertOnlyAdmin panics if the caller is not the admin.
 func assertOnlyAdmin() {
-	caller := getPrevAddr()
-	if err := access.AdminOnly(caller); err != nil {
+	adminAddr, err := access.GetAddress(access.ROLE_ADMIN)
+	if err != nil {
 		panic(err)
+	}
+
+	caller := getPrevAddr()
+	if caller != adminAddr {
+		panic(newErrorWithDetail(
+			errNoPermission,
+			ufmt.Sprintf("only admin(%s) can call, called from %s", adminAddr, caller.String()),
+		))
 	}
 }
 

@@ -50,8 +50,12 @@ func checkErr(err error) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	if err := halt.IsHalted(); err != nil {
-		panic(addDetailToError(errHalted, "community pool is currently halted"))
+	if halt.IsHaltedCommunityPool() {
+		panic("community pool contract operations are currently disabled")
+	}
+
+	if halt.IsHaltedWithdraw() {
+		panic("community pool contract withdrawals are currently disabled")
 	}
 }
 
