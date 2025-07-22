@@ -84,18 +84,12 @@ func getPrev() (string, string) {
 
 // haltCheck performs security validations before any swap operation
 func haltCheck() error {
-	currentLevel := halt.GetCurrentHaltLevel()
+	if halt.IsHaltedRouter() {
+		panic("router contract operations are currently disabled")
+	}
 
-	if currentLevel != halt.LvMainnetSafeMode {
-		// check for withdraw operation halt
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			return err
-		}
-
-		// check for router contract halt
-		if halt.IsContractHalted(halt.OpTypeRouter) {
-			return ufmt.Errorf(errRouterHalted)
-		}
+	if halt.IsHaltedWithdraw() {
+		panic("router contract withdrawals are currently disabled")
 	}
 
 	return nil

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"gno.land/p/demo/avl"
-	"gno.land/r/gnoswap/v1/halt"
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
@@ -132,20 +131,6 @@ func parseBool(s string) bool {
 		return false
 	default:
 		panic(ufmt.Sprintf("invalid bool value: %s", s))
-	}
-}
-
-func assertHaltedExecute() {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err.Error())
-		}
-
-		if halt.IsContractHalted(halt.OpTypeGovernance) {
-			panic("gov/governance contract operations are currently disabled")
-		}
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/access"
@@ -109,7 +110,7 @@ func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 	caller := previousRealm.Address()
 	currentHeight := std.ChainHeight()
 
-	assertCallerIsLaunchpad(caller)
+	access.AssertIsLaunchpad(caller)
 	assertIsNotHaltedWithdraw()
 
 	launchpadRewardID := makeLaunchpadRewardID(to.String())
@@ -183,12 +184,12 @@ func SetAmountByProjectWallet(cur realm, addr std.Address, amount int64, add boo
 	caller := std.PreviousRealm().Address()
 	currentHeight := std.ChainHeight()
 
-	assertCallerIsLaunchpad(caller)
+	access.AssertIsLaunchpad(caller)
 	assertIsNotHaltedWithdraw()
 		
-	launchpadAddr, err := access.GetAddress(access.ROLE_LAUNCHPAD)
-	if err != nil {
-		panic(err)
+	launchpadAddr, exists := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	if !exists {
+		panic(ufmt.Sprintf("launchpad address not found"))
 	}
 
 	if add {

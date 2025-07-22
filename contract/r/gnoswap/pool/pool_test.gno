@@ -42,7 +42,7 @@ func TestMint(t *testing.T) {
 
 	t.Run("unauthorized caller mint should fail", func(t *testing.T) {
 		unauthorized := testutils.TestAddress("unauthorized")
-		expected := "[GNOSWAP-POOL-001] caller has no permission || only position(g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5) can call, called from g148tjamj80yyrm309z7rk690an22thd2l3z8ank"
+		expected := "unauthorized: caller g148tjamj80yyrm309z7rk690an22thd2l3z8ank is not position"
 
 		uassert.AbortsWithMessage(t, expected, func() {
 			Mint(cross, fooTokenPath, barTokenPath, fee, recipient, tickLower, tickUpper, liquidityAmount, unauthorized)
@@ -465,7 +465,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 
 	t.Run("unauthorized caller should fail", func(t *testing.T) {
 		unauthorized := testutils.TestAddress("unauthorized")
-		expected := "caller(" + unauthorized.String() + ") is not authorized for role admin"
+		expected := "[GNOSWAP-POOL-001] caller has no permission || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can call, called from g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg"
 
 		testing.SetRealm(std.NewUserRealm(unauthorized))
 		uassert.AbortsWithMessage(t, expected, func() {

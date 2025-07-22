@@ -8,6 +8,8 @@ import (
 	"gno.land/p/demo/avl"
 
 	"gno.land/p/gnoswap/consts"
+
+	_ "gno.land/r/gnoswap/v1/rbac" // initialize rbac package
 )
 
 var (

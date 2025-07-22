@@ -8,6 +8,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/gnoswap/v1/gnft"
@@ -34,7 +35,21 @@ func NewDeposits() *Deposits {
 	}
 }
 
-func (self *Deposits) Get(positionId uint64) *Deposit {
+func (self *Deposits) Has(positionId uint64) bool {
+	return self.tree.Has(EncodeUint(positionId))
+}
+
+func (self *Deposits) Iterate(start uint64, end uint64, fn func(positionId uint64, deposit *Deposit) bool) {
+	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI any) bool {
+		return fn(DecodeUint(positionId), depositI.(*Deposit))
+	})
+}
+
+func (self *Deposits) Size() int {
+	return self.tree.Size()
+}
+
+func (self *Deposits) get(positionId uint64) *Deposit {
 	depositI, ok := self.tree.Get(EncodeUint(positionId))
 	if !ok {
 		panic(addDetailToError(
@@ -50,22 +65,8 @@ func (self *Deposits) set(positionId uint64, deposit *Deposit) {
 	self.tree.Set(EncodeUint(positionId), deposit)
 }
 
-func (self *Deposits) Has(positionId uint64) bool {
-	return self.tree.Has(EncodeUint(positionId))
-}
-
 func (self *Deposits) remove(positionId uint64) {
 	self.tree.Remove(EncodeUint(positionId))
-}
-
-func (self *Deposits) Iterate(start uint64, end uint64, fn func(positionId uint64, deposit *Deposit) bool) {
-	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI any) bool {
-		return fn(DecodeUint(positionId), depositI.(*Deposit))
-	})
-}
-
-func (self *Deposits) Size() int {
-	return self.tree.Size()
 }
 
 type ExternalIncentives struct {
@@ -78,7 +79,15 @@ func NewExternalIncentives() *ExternalIncentives {
 	}
 }
 
-func (self *ExternalIncentives) Get(incentiveId string) *ExternalIncentive {
+func (self *ExternalIncentives) Has(incentiveId string) bool {
+	return self.tree.Has(incentiveId)
+}
+
+func (self *ExternalIncentives) Size() int {
+	return self.tree.Size()
+}
+
+func (self *ExternalIncentives) get(incentiveId string) *ExternalIncentive {
 	incentiveI, ok := self.tree.Get(incentiveId)
 	if !ok {
 		panic(addDetailToError(
@@ -95,16 +104,8 @@ func (self *ExternalIncentives) set(incentiveId string, incentive *ExternalIncen
 	self.tree.Set(incentiveId, incentive)
 }
 
-func (self *ExternalIncentives) Has(incentiveId string) bool {
-	return self.tree.Has(incentiveId)
-}
-
 func (self *ExternalIncentives) remove(incentiveId string) {
 	self.tree.Remove(incentiveId)
-}
-
-func (self *ExternalIncentives) Size() int {
-	return self.tree.Size()
 }
 
 type Stakers struct {
@@ -233,6 +234,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := getPrevAddr()
+	currentHeight := std.ChainHeight()
 
 	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer
@@ -254,7 +256,6 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 			ufmt.Sprintf("can not stake position to non existing pool(%s)", poolPath),
 		))
 	}
-	currentHeight := std.ChainHeight()
 	liquidity := getLiquidity(positionId)
 
 	tickLower, tickUpper := getTickOf(positionId)
@@ -278,6 +279,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 	stakers.addDeposit(caller, positionId, deposit)
 
 	if caller == owner { // if caller is owner, transfer NFT ownership to staker contract
+		stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 		if err := transferDeposit(positionId, owner, caller, stakerAddr); err != nil {
 			panic(err.Error())
 		}
@@ -416,7 +418,7 @@ func transferDeposit(positionId uint64, owner, caller, to std.Address) error {
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#collectreward
 func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, string, map[string]int64, map[string]int64) {
 	assertOnlyNotHalted()
-	deposit := deposits.Get(positionId)
+	deposit := deposits.get(positionId)
 	caller := getPrevAddr()
 	if err := common.SatisfyCond(caller == deposit.owner); err != nil {
 		panic(addDetailToError(errNoPermission, ufmt.Sprintf("caller is not owner of positionId(%d)", positionId)))
@@ -438,7 +440,11 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 	toUserExternalReward := make(map[string]int64)
 	toUserExternalPenalty := make(map[string]int64)
 	for incentiveId, rewardAmount := range externalReward {
-		incentive := externalIncentives.Get(incentiveId).Clone()
+		incentive := externalIncentives.get(incentiveId).Clone()
+		if !incentive.IsStarted(currentHeight) {
+			continue
+		}
+
 		if incentive.rewardAmount < rewardAmount {
 			// Emit event for insufficient reward and skip this incentive
 			std.Emit(
@@ -493,6 +499,8 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 			"isRequestUnwrap", formatBool(unwrapResult),
 		)
 	}
+
+	communityPoolAddr := getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
 
 	// internal reward to user
 	toUser := handleUnStakingFee(consts.GNS_PATH, int64(reward.Internal), true, positionId, deposit.targetPoolPath)
@@ -562,7 +570,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) (string, string, string) { // poolPath, token0Amount, token1Amount
 	assertOnlyNotHalted()
 	// Verify that the caller is the actual owner of the deposit to prevent unauthorized unstaking
-	deposit := deposits.Get(positionId)
+	deposit := deposits.get(positionId)
 	caller := getPrevAddr()
 	if deposit.owner != caller {
 		panic(addDetailToError(
@@ -583,6 +591,7 @@ func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) (string, stri
 	applyUnStake(positionId)
 
 	// transfer NFT ownership to origin owner
+	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	gnft.TransferFrom(cross, stakerAddr, deposit.owner, positionIdFrom(positionId))
 	pn.SetPositionOperator(cross, positionId, consts.ZERO_ADDRESS)
 
@@ -604,7 +613,7 @@ func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) (string, stri
 }
 
 func applyUnStake(positionId uint64) {
-	deposit := deposits.Get(positionId)
+	deposit := deposits.get(positionId)
 	pool, ok := pools.Get(deposit.targetPoolPath)
 	if !ok {
 		panic(addDetailToError(
@@ -632,32 +641,17 @@ func applyUnStake(positionId uint64) {
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := getPrevAddr()
 
-	token0Amount, token1Amount, err := calculateStakeTokenAmount(positionId, owner, caller)
+	_, _, err := calculateStakeTokenAmount(positionId, owner, caller)
 	if err != nil {
 		panic(err.Error())
 	}
-
-	prevAddr, prevPkgPath := getPrev()
-	std.Emit(
-		"UnStakeToken",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
-		"positionId", formatUint(positionId),
-		"poolPath", deposit.targetPoolPath,
-		"from", GetOrigPkgAddr().String(),
-		"to", deposit.owner.String(),
-		"amount0", token0Amount,
-		"amount1", token1Amount,
-		"liquidity", deposit.liquidity.ToString(),
-		"positionUpperTick", formatInt(int64(deposit.tickUpper)),
-		"positionLowerTick", formatInt(int64(deposit.tickLower)),
-		"currentTick", formatInt(int64(currentTick)),
-	)
 }
 
 // requireTokenOwnership validates that the caller has permission to operate the token.
 func requireTokenOwnership(owner, caller std.Address) error {
 	callerIsOwner := owner == caller
+
+	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	stakerIsOwner := owner == stakerAddr
 
 	if err := common.SatisfyCond(callerIsOwner || stakerIsOwner); err != nil {

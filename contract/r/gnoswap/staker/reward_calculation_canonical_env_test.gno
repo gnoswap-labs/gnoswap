@@ -242,7 +242,7 @@ func (self *canonicalRewardState) NextBlockNoCanonical() {
 }
 
 func (self *canonicalRewardState) UnclaimableExternalRewardOf(depositId uint64, incentiveId string) int64 {
-	pool, ok := self.global.pools.Get(self.global.deposits.Get(depositId).targetPoolPath)
+	pool, ok := self.global.pools.Get(self.global.deposits.get(depositId).targetPoolPath)
 	if !ok {
 		panic("pool not found")
 	}
@@ -270,7 +270,7 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 	// cache per-tier and per-pool rewards
 	self.global.poolTier.cacheReward(currentHeight, self.global.pools)
 
-	deposit := self.global.deposits.Get(positionId)
+	deposit := self.global.deposits.get(positionId)
 
 	poolPath := deposit.targetPoolPath
 
@@ -319,7 +319,7 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
 
 	rewards, penalties, externalRewards, externalPenalties := self.EmulateCalcPositionReward(depositId)
 
-	deposit := self.global.deposits.Get(depositId)
+	deposit := self.global.deposits.get(depositId)
 	deposit.lastCollectHeight = self.CurrentHeight()
 
 	internal := int64(0)
@@ -401,7 +401,7 @@ func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath s
 }
 
 func (self *canonicalRewardState) UnstakeToken(positionId uint64) {
-	deposit := self.global.deposits.Get(positionId)
+	deposit := self.global.deposits.get(positionId)
 
 	currentHeight := self.CurrentHeight()
 
@@ -441,12 +441,13 @@ func newExternalIncentiveByHeight(
 	endHeight int64,
 	refundee std.Address,
 ) *ExternalIncentive {
+	caller := std.OriginCaller()
 	rewardPerBlock := rewardAmount / (endHeight - startHeight)
 
-	byTimeId := incentiveIdByTime(startTimestamp, endTimestamp, refundee, rewardToken, targetPoolPath)
+	incentiveId := nextIncentiveID(caller, startHeight)
 
 	return &ExternalIncentive{
-		incentiveId:      byTimeId,
+		incentiveId:      incentiveId,
 		targetPoolPath:   targetPoolPath,
 		rewardToken:      rewardToken,
 		rewardAmount:     rewardAmount,

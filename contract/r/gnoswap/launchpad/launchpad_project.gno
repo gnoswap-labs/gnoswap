@@ -11,9 +11,11 @@ import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (
@@ -65,8 +67,9 @@ func CreateProject(
 	previousPkgPath := std.PreviousRealm().PkgPath()
 	launchpadAddr := std.CurrentRealm().Address()
 
-	assertOnlyNotHalted()
-	assertOnlyAdmin(previousAddress)
+	halt.AssertIsHaltedLaunchpad()
+	halt.AssertIsHaltedWithdraw()
+	access.AssertIsAdmin(previousAddress)
 
 	averageBlockTimeMs := gns.GetAvgBlockTimeInMs()
 	currentHeight := std.ChainHeight()
@@ -248,8 +251,9 @@ func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.A
 	currentHeight := int64(std.ChainHeight())
 
 	assertOnlyUser()
-	assertOnlyNotHalted()
-	assertOnlyAdmin(previousAddress)
+	halt.AssertIsHaltedLaunchpad()
+	halt.AssertIsHaltedWithdraw()
+	access.AssertIsAdmin(previousAddress)
 
 	projectLeftReward, err := transferLeftFromProject(projectID, recipient, currentHeight)
 	if err != nil {

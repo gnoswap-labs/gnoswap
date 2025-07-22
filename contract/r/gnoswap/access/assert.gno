@@ -3,65 +3,103 @@ package access
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v1/rbac"
+	"gno.land/p/demo/ufmt"
+	prbac "gno.land/p/gnoswap/rbac"
 )
 
-// checkRole checks if the caller has the given role and optionally updates the role address
-func checkRole(roleName string, caller std.Address) error {
-	return rbac.CheckPermission(roleName, PERM_ACCESS, caller)
+func AssertIsAdminOrGovernance(caller std.Address) {
+	if !IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && !IsAuthorized(prbac.ROLE_GOVERNANCE.String(), caller) {
+		panic(ufmt.Errorf("unauthorized: caller %s is not admin or governance", caller))
+	}
 }
 
-// AdminOnly checks if the caller is the admin and optionally updates the admin address
-func AdminOnly(caller std.Address) error {
-	return checkRole(ROLE_ADMIN, caller)
+// AssertIsAdmin checks if the caller is the admin and optionally updates the admin address
+func AssertIsAdmin(caller std.Address) {
+	AssertIsAuthorized(prbac.ROLE_ADMIN.String(), caller)
 }
 
-// GovernanceOnly checks if the caller is the governance and optionally updates the governance address
-func GovernanceOnly(caller std.Address) error {
-	return checkRole(ROLE_GOVERNANCE, caller)
+// AssertIsGovernance checks if the caller is the governance and optionally updates the governance address
+func AssertIsGovernance(caller std.Address) {
+	AssertIsAuthorized(prbac.ROLE_GOVERNANCE.String(), caller)
 }
 
-// GovStakerOnly checks if the caller is the gov staker and optionally updates the gov staker address
-func GovStakerOnly(caller std.Address) error {
-	return checkRole(ROLE_GOV_STAKER, caller)
+// AssertIsGovStaker checks if the caller is the gov staker and optionally updates the gov staker address
+func AssertIsGovStaker(caller std.Address) {
+	AssertIsAuthorized(prbac.ROLE_GOV_STAKER.String(), caller)
 }
 
-// RouterOnly checks if the caller is the router and optionally updates the router address
-func RouterOnly(caller std.Address) error {
-	return checkRole(ROLE_ROUTER, caller)
+// AssertIsRouter checks if the caller is the router and optionally updates the router address
+func AssertIsRouter(caller std.Address) {
+	AssertIsAuthorized(prbac.ROLE_ROUTER.String(), caller)
 }
 
-// PoolOnly checks if the caller is the pool and optionally updates the pool address
-func PoolOnly(caller std.Address) error {
-	return checkRole(ROLE_POOL, caller)
+// AssertIsPool checks if the caller is the pool and optionally updates the pool address
+func AssertIsPool(caller std.Address) {
+	AssertIsAuthorized(prbac.ROLE_POOL.String(), caller)
 }
 
-// PositionOnly checks if the caller is the position and optionally updates the position address
-func PositionOnly(caller std.Address) error {
-	return checkRole(ROLE_POSITION, caller)
+// AssertIsPosition checks if the caller is the position and optionally updates the position address
+func AssertIsPosition(caller std.Address) {
+	AssertIsAuthorized(prbac.ROLE_POSITION.String(), caller)
 }
 
-// StakerOnly checks if the caller is the staker and optionally updates the staker address
-func StakerOnly(caller std.Address) error {
-	return checkRole(ROLE_STAKER, caller)
+// AssertIsStaker checks if the caller is the staker and optionally updates the staker address
+func AssertIsStaker(caller std.Address) {
+	AssertIsAuthorized(prbac.ROLE_STAKER.String(), caller)
 }
 
-// LaunchpadOnly checks if the caller is the launchpad and optionally updates the launchpad address
-func LaunchpadOnly(caller std.Address) error {
-	return checkRole(ROLE_LAUNCHPAD, caller)
+// AssertIsLaunchpad checks if the caller is the launchpad and optionally updates the launchpad address
+func AssertIsLaunchpad(caller std.Address) {
+	AssertIsAuthorized(prbac.ROLE_LAUNCHPAD.String(), caller)
 }
 
-// EmissionOnly checks if the caller is the emission and optionally updates the emission address
-func EmissionOnly(caller std.Address) error {
-	return checkRole(ROLE_EMISSION, caller)
+// AssertIsEmission checks if the caller is the emission and optionally updates the emission address
+func AssertIsEmission(caller std.Address) {
+	AssertIsAuthorized(prbac.ROLE_EMISSION.String(), caller)
 }
 
-// ProtocolFeeOnly checks if the caller is the protocol fee and optionally updates the protocol fee address
-func ProtocolFeeOnly(caller std.Address) error {
-	return checkRole(ROLE_PROTOCOL_FEE, caller)
+// AssertIsProtocolFee checks if the caller is the protocol fee and optionally updates the protocol fee address
+func AssertIsProtocolFee(caller std.Address) {
+	AssertIsAuthorized(prbac.ROLE_PROTOCOL_FEE.String(), caller)
 }
 
-// GovXGNSOnly checks if the caller is the gov xgns and optionally updates the gov xgns address
-func GovXGNSOnly(caller std.Address) error {
-	return checkRole(ROLE_GOV_XGNS, caller)
+// AssertIsGovXGNS checks if the caller is the gov xgns and optionally updates the gov xgns address
+func AssertIsGovXGNS(caller std.Address) {
+	AssertIsAuthorized(prbac.ROLE_XGNS.String(), caller)
+}
+
+// AssertIsAuthorized checks if the caller has the given role by comparing addresses
+func AssertIsAuthorized(roleName string, caller std.Address) {
+	roleAddr, ok := GetAddress(roleName)
+	if !ok {
+		panic(ufmt.Errorf("role %s does not exist", roleName))
+	}
+
+	if caller != roleAddr {
+		panic(ufmt.Errorf("unauthorized: caller %s is not %s", caller, roleName))
+	}
+}
+
+// AssertHasAnyRole checks if the caller has any of the given roles by comparing address
+func AssertHasAnyRole(caller std.Address, roleNames ...string) {
+	for _, roleName := range roleNames {
+		roleAddr, ok := GetAddress(roleName)
+		if !ok {
+			panic(ufmt.Errorf("role %s does not exist", roleName))
+		}
+
+		if caller == roleAddr {
+			return
+		}
+	}
+
+	panic(ufmt.Errorf("unauthorized: caller %s is not any of the roles %v", caller, roleNames))
+}
+
+func assertIsRBAC(caller std.Address) {
+	rbacAddr := std.NewCodeRealm(rbacPackagePath).Address()
+
+	if caller != rbacAddr {
+		panic(ufmt.Errorf("unauthorized: caller %s is not rbac", caller))
+	}
 }

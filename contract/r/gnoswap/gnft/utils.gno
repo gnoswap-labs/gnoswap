@@ -5,6 +5,10 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
+	prabc "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/rbac"
 )
 
 // getPrevAsString returns the address and package path of the previous realm.
@@ -16,6 +20,15 @@ func getPrevAsString() (string, string) {
 // getPrevAddr returns the address of the previous realm.
 func getPrevAddr() std.Address {
 	return std.PreviousRealm().Address()
+}
+
+func getPositionAddress() std.Address {
+	addr, exists := access.GetAddress(prabc.ROLE_POSITION.String())
+	if !exists {
+		return rbac.DefaultRoleAddresses[prabc.ROLE_POSITION]
+	}
+
+	return addr
 }
 
 // tid converts uint64 to grc721.TokenID.

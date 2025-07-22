@@ -6,8 +6,11 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
+	prbac "gno.land/p/gnoswap/rbac"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/rbac"
 
 	"gno.land/r/gnoswap/v1/halt"
 )
@@ -15,7 +18,7 @@ import (
 // GetOrigPkgAddr returns the original package address.
 // In staker contract, original package address is the staker address.
 func GetOrigPkgAddr() std.Address {
-	return stakerAddr
+	return getRoleAddress(prbac.ROLE_STAKER)
 }
 
 // poolPathAlign ensures that a pool path is formatted with tokens in lexicographical order.
@@ -174,16 +177,12 @@ func isUserCall() bool {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err.Error())
-		}
+	if halt.IsHaltedStaker() {
+		panic("staker contract operations are currently disabled")
+	}
 
-		if halt.IsContractHalted(halt.OpTypeStaker) {
-			panic("staker contract operations are currently disabled")
-		}
+	if halt.IsHaltedWithdraw() {
+		panic("staker contract withdrawals are currently disabled")
 	}
 }
 
@@ -215,4 +214,13 @@ func formatAnyInt(v any) string {
 
 func formatBool(v bool) string {
 	return strconv.FormatBool(v)
+}
+
+func getRoleAddress(role prbac.SystemRole) std.Address {
+	addr, exists := access.GetAddress(role.String())
+	if !exists {
+		return rbac.DefaultRoleAddresses[role]
+	}
+
+	return addr
 }

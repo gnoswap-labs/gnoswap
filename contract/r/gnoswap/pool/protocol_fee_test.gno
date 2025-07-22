@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -35,8 +34,7 @@ func TestSetPoolCreationFee(t *testing.T) {
 				SetPoolCreationFee(cross, newFee)
 			},
 			verify: nil,
-			// expected:    "caller(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) has no permission",
-			expected:    ufmt.Sprintf("caller(%s) has no permission", adminAddr.String()),
+			expected: "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not governance",
 			shouldPanic: true,
 		},
 		{
@@ -90,7 +88,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			},
 			verify: nil,
 			// expected:    "caller(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) has no permission",
-			expected:    ufmt.Sprintf("caller(%s) has no permission", govAddr.String()),
+			expected:    "[GNOSWAP-POOL-001] caller has no permission || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can call, called from g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd",
 			shouldPanic: true,
 		},
 		{
@@ -101,7 +99,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 				SetPoolCreationFeeByAdmin(cross, newFee)
 			},
 			verify:      nil,
-			expected:    "caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) has no permission",
+			expected:    "[GNOSWAP-POOL-001] caller has no permission || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can call, called from g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh",
 			shouldPanic: true,
 		},
 		{
@@ -164,7 +162,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				CollectWithdrawalFee(cross, 0, "gno.land/r/onbloc/foo", "0", "gno.land/r/onbloc/foo", "0", "", adminAddr)
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-POOL-001] caller has no permission || only position(g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5) can call this function, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
+			expected:    "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not position",
 			shouldPanic: true,
 		},
 		{
@@ -247,7 +245,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 				SetWithdrawalFee(cross, newFee)
 			},
 			verify:      nil,
-			expected:    "caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) has no permission",
+			expected:    "unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not governance",
 			shouldPanic: true,
 		},
 		{
@@ -259,7 +257,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 				SetWithdrawalFee(cross, newFee)
 			},
 			verify:      nil,
-			expected:    "caller(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) has no permission",
+			expected:    "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not governance",
 			shouldPanic: true,
 		},
 		{
@@ -312,7 +310,7 @@ func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 				SetWithdrawalFeeByAdmin(cross, newFee)
 			},
 			verify:      nil,
-			expected:    "caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) has no permission",
+			expected:    "unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not admin",
 			shouldPanic: true,
 		},
 		{
@@ -324,7 +322,7 @@ func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 				SetWithdrawalFeeByAdmin(cross, newFee)
 			},
 			verify:      nil,
-			expected:    "caller(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) has no permission",
+			expected:    "unauthorized: caller g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd is not admin",
 			shouldPanic: true,
 		},
 		{

@@ -6,6 +6,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 
 	plp "gno.land/p/gnoswap/gnsmath"
@@ -54,12 +55,7 @@ func Swap(
 ) (string, string) {
 	assertOnlyNotHalted()
 	caller := getPrevAddr()
-	if err := common.RouterOnly(caller); err != nil {
-		panic(newErrorWithDetail(
-			errNoPermission,
-			ufmt.Sprintf("only router(%s) can call pool swap(), called from %s", routerAddr, caller.String()),
-		))
-	}
+	access.AssertIsRouter(caller)
 
 	if amountSpecified == "0" {
 		panic(newErrorWithDetail(

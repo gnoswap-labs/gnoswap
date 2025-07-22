@@ -19,6 +19,8 @@ import (
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
 
+	prabc "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 )
 
@@ -71,7 +73,7 @@ var (
 )
 
 var (
-	admin, _  = access.GetAddress(access.ROLE_ADMIN)
+	admin, _  = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminAddr = admin
 
 	alice = testutils.TestAddress("alice")

@@ -9,6 +9,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/gnoswap/consts"
+	prabc "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/halt"
@@ -249,44 +251,41 @@ func assertOnlyValidAddress(addr std.Address) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err.Error())
-		}
+	if halt.IsHaltedPool() {
+		panic("pool contract operations are currently disabled")
+	}
 
-		if halt.IsContractHalted(halt.OpTypePool) {
-			panic("pool contract operations are currently disabled")
-		}
+	if halt.IsHaltedWithdraw() {
+		panic("pool contract withdrawals are currently disabled")
 	}
 }
 
 // assertOnlyPositionContract panics if the caller is not the position contract.
 func assertOnlyPositionContract() {
 	caller := getPrevAddr()
-	if err := access.PositionOnly(caller); err != nil {
-		panic(newErrorWithDetail(
-			errNoPermission,
-			ufmt.Sprintf("only position(%s) can call, called from %s", positionAddr, caller.String()),
-		))
-	}
+	access.AssertIsPosition(caller)
 }
 
 // assertOnlyAdmin panics if the caller is not the admin.
 func assertOnlyAdmin() {
+	adminAddr, ok := access.GetAddress(prabc.ROLE_ADMIN.String())
+	if !ok {
+		panic(ufmt.Sprintf("address not found for role: %s", prabc.ROLE_ADMIN.String()))
+	}
+
 	caller := getPrevAddr()
-	if err := access.AdminOnly(caller); err != nil {
-		panic(err)
+	if caller != adminAddr {
+		panic(newErrorWithDetail(
+			errNoPermission,
+			ufmt.Sprintf("only admin(%s) can call, called from %s", adminAddr, caller.String()),
+		))
 	}
 }
 
 // assertOnlyGovernance panics if the caller is not the governance.
 func assertOnlyGovernance() {
 	caller := getPrevAddr()
-	if err := access.GovernanceOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsGovernance(caller)
 }
 
 // assertOnlyRegistered panics if the token is not registered.

@@ -32,33 +32,25 @@ func getPrevAsString() (string, string) {
 // assertOnlyAdmin panics if the caller is not the admin.
 func assertOnlyAdmin() {
 	caller := getPrevAddr()
-	if err := access.AdminOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	access.AssertIsAdmin(caller)
 }
 
 // assertStakerOnly panics if the caller is not the staker.
 func assertStakerOnly() {
 	caller := getPrevAddr()
-	if err := access.StakerOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	access.AssertIsStaker(caller)
 }
 
 // assertOnlyGovernance panics if the caller is not the governance.
 func assertOnlyGovernance() {
 	caller := getPrevAddr()
-	if err := access.GovernanceOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	access.AssertIsGovernance(caller)
 }
 
 // assertOnlyGovStaker panics if the caller is not the gov staker.
 func assertOnlyGovStaker() {
 	caller := getPrevAddr()
-	if err := access.GovStakerOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	access.AssertIsGovStaker(caller)
 }
 
 // assertDistributionTarget panics if the target is invalid.
@@ -73,15 +65,12 @@ func assertDistributionTarget(target int) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err.Error())
-		}
+	if halt.IsHaltedEmission() {
+		panic("emission contract operations are currently disabled")
+	}
 
-		if halt.IsContractHalted(halt.OpTypeEmission) {
-			panic("emission contract operations are currently disabled")
-		}
+	if halt.IsHaltedWithdraw() {
+		panic("emission contract withdrawals are currently disabled")
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/halt"
 )
@@ -16,19 +17,10 @@ import (
 // only `gov/staker` can execute this function.
 // It returns list of token with amount has been sent to gov/staker.
 func DistributeProtocolFee(cur realm) map[string]uint64 {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err)
-		}
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsHaltedWithdraw()
+	access.AssertIsGovStaker(caller)
 
-		if halt.IsContractHalted(halt.OpTypeProtocolFee) {
-			panic("protocol fee contract operations are currently disabled")
-		}
-	}
-
-	assertOnlyGovStaker()
 	sentToDevOpsForEvent := make([]string, 0)
 	sentToGovStakerForEvent := make([]string, 0)
 	toReturnDistributedToGovStaker := make(map[string]uint64)
@@ -99,9 +91,7 @@ func GetDevOpsPct() uint64 {
 // SetDevOpsPctByAdmin sets the devOpsPct.
 func SetDevOpsPctByAdmin(cur realm, pct uint64) {
 	caller := std.PreviousRealm().Address()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsAdmin(caller)
 
 	protocolFeeState.setDevOpsPct(pct)
 }
@@ -110,9 +100,7 @@ func SetDevOpsPctByAdmin(cur realm, pct uint64) {
 // Only governance contract can execute this function via proposal
 func SetDevOpsPct(cur realm, pct uint64) {
 	caller := std.PreviousRealm().Address()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsGovernance(caller)
 
 	protocolFeeState.setDevOpsPct(pct)
 }
@@ -127,7 +115,8 @@ func AddToProtocolFee(cur realm, tokenPath string, amount uint64) {
 // ClearTokenListWithAmount clears the tokenListWithAmount.
 // only `gov/staker` can execute this function.
 func ClearTokenListWithAmount(cur realm) {
-	assertOnlyGovStaker()
+	caller := std.PreviousRealm().Address()
+	access.AssertIsGovStaker(caller)
 	protocolFeeState.clearTokenListWithAmount()
 }
 
@@ -137,11 +126,9 @@ func ClearTokenListWithAmount(cur realm) {
 // which means gov/staker doesn't known how much protocol_fee has been distributed from last time
 // Therefore, gov/staker calls GetAccuTransferToGovStaker to get the accumulated amount and clear it
 func ClearAccuTransferToGovStaker(cur realm) {
-	assertOnlyNotHalted()
+	halt.AssertIsHaltedWithdraw()
 	caller := std.PreviousRealm().Address()
-	if err := common.GovStakerOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsGovStaker(caller)
 
 	protocolFeeState.AccuToGovStaker = avl.NewTree()
 }

@@ -24,6 +24,7 @@ func TestQueryPoolData(t *testing.T) {
 	rewardAmount := int64(1000)
 
 	incentive := &ExternalIncentive{
+		incentiveId:    "incentive1",
 		startTimestamp: startTime,
 		endTimestamp:   endTime,
 		startHeight:    std.ChainHeight(),
@@ -91,6 +92,7 @@ func TestFilterActiveIncentives(t *testing.T) {
 
 	// create incentive
 	incentive1 := &ExternalIncentive{
+		incentiveId:    "incentive1",
 		startTimestamp: 150,
 		endTimestamp:   250,
 		startHeight:    100,
@@ -101,6 +103,7 @@ func TestFilterActiveIncentives(t *testing.T) {
 	}
 
 	incentive2 := &ExternalIncentive{
+		incentiveId:    "incentive2",
 		startTimestamp: 200,
 		endTimestamp:   300,
 		startHeight:    150,

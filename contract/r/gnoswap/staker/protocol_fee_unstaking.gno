@@ -6,6 +6,8 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gns"
 
@@ -45,8 +47,11 @@ func handleUnStakingFee(
 		return amount
 	}
 
+	
 	prevAddr, prevPkgPath := getPrev()
-
+	
+	protocolFeeAddr := getRoleAddress(prbac.ROLE_PROTOCOL_FEE)
+	
 	if internal {
 		// staker contract has fee
 		gns.Transfer(cross, protocolFeeAddr, feeAmount)
@@ -105,9 +110,7 @@ func GetUnstakingFee() uint64 {
 // - If the caller is not an admin.
 func SetUnStakingFeeByAdmin(cur realm, fee uint64) {
 	caller := std.PreviousRealm().Address()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	access.AssertIsAdmin(caller)
 
 	prevUnStakingFee := GetUnstakingFee()
 
@@ -128,10 +131,8 @@ func SetUnStakingFeeByAdmin(cur realm, fee uint64) {
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#setunstakingfee
 func SetUnStakingFee(cur realm, fee uint64) {
-	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	caller := std.PreviousRealm().Address()
+	access.AssertIsGovernance(caller)
 
 	prevUnStakingFee := GetUnstakingFee()
 

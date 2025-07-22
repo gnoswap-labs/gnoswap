@@ -4,7 +4,6 @@ import (
 	"std"
 
 	"gno.land/p/demo/avl"
-	"gno.land/p/demo/ufmt"
 )
 
 // Incentives is a collection of external incentives for a given pool.
@@ -21,10 +20,7 @@ import (
 //     it stores (key: start) => (value: end)
 //     if end is 0, it means the unclaimable period is ongoing.
 type Incentives struct {
-	byTime      *avl.Tree // (startTime, endTime, creator, rewardToken) => ExternalIncentive
-	byHeight    *avl.Tree // (startHeight, endHeight, creator, rewardToken) => ExternalIncentive
-	byEndHeight *avl.Tree // (endHeight, startHeight, creator, rewardToken) => ExternalIncentive
-	byCreator   *avl.Tree // (creator, startHeight, endHeight, rewardToken) => ExternalIncentive
+	incentives *avl.Tree // (incentiveId) => ExternalIncentive
 
 	targetPoolPath string // The target pool path for this incentive collection
 
@@ -34,12 +30,9 @@ type Incentives struct {
 // NewIncentives creates a new Incentives instance.
 func NewIncentives(targetPoolPath string) Incentives {
 	result := Incentives{
-		byTime:             avl.NewTree(),
-		byHeight:           avl.NewTree(),
-		byEndHeight:        avl.NewTree(),
-		byCreator:          avl.NewTree(),
 		targetPoolPath:     targetPoolPath,
 		unclaimablePeriods: NewUintTree(),
+		incentives:         avl.NewTree(),
 	}
 
 	// initial unclaimable period starts, as there cannot be any staked positions yet.
@@ -47,19 +40,19 @@ func NewIncentives(targetPoolPath string) Incentives {
 	return result
 }
 
-// Get incentive by time
-func (self *Incentives) Get(startTime, endTime int64, creator std.Address, rewardToken string) (*ExternalIncentive, bool) {
-	byTimeId := incentiveIdByTime(startTime, endTime, creator, rewardToken, self.targetPoolPath)
-	value, ok := self.byTime.Get(byTimeId)
+// Get incentive by incentiveId
+func (self *Incentives) Get(incentiveId string) (*ExternalIncentive, bool) {
+	value, ok := self.incentives.Get(incentiveId)
 	if !ok {
 		return nil, false
 	}
+
 	return value.(*ExternalIncentive), true
 }
 
 // Get incentive by full incentiveId(by time)
 func (self *Incentives) GetByIncentiveId(incentiveId string) (*ExternalIncentive, bool) {
-	value, ok := self.byTime.Get(incentiveId)
+	value, ok := self.incentives.Get(incentiveId)
 	if !ok {
 		return nil, false
 	}
@@ -70,35 +63,23 @@ func (self *Incentives) GetByIncentiveId(incentiveId string) (*ExternalIncentive
 func (self *Incentives) GetAllInHeights(startHeight, endHeight int64) map[string]*ExternalIncentive {
 	incentives := make(map[string]*ExternalIncentive)
 	// Iterate all incentives that has start height less than endHeight
-	self.byHeight.ReverseIterate(
-		"",
-		EncodeInt64(endHeight),
-		func(key string, value any) bool {
-			incentive := value.(*ExternalIncentive)
-			if incentive.endHeight < startHeight {
-				// incentive is already ended
-				return false
-			}
 
-			incentives[incentive.incentiveId] = incentive
+	self.incentives.Iterate("", "", func(key string, value any) bool {
+		incentive, ok := value.(*ExternalIncentive)
+		if !ok {
 			return false
-		},
-	)
-	// Iterate all incentives that has end height greater than startHeight
-	self.byEndHeight.Iterate(
-		EncodeInt64(startHeight),
-		"",
-		func(key string, value any) bool {
-			incentive := value.(*ExternalIncentive)
-			if incentive.startHeight > endHeight {
-				// incentive is not started yet
-				return false
-			}
+		}
 
-			incentives[incentive.incentiveId] = incentive
+		// incentive is not active
+		if incentive.startHeight > endHeight || incentive.endHeight < startHeight {
 			return false
-		},
-	)
+		}
+
+		incentives[incentive.incentiveId] = incentive
+
+		return false
+	})
+
 	return incentives
 }
 
@@ -109,21 +90,7 @@ func (self *Incentives) create(
 	creator std.Address,
 	incentive *ExternalIncentive,
 ) {
-	byTimeId := incentiveIdByTime(incentive.startTimestamp, incentive.endTimestamp, creator, incentive.rewardToken, self.targetPoolPath)
-	if self.byTime.Has(byTimeId) {
-		panic(addDetailToError(
-			errIncentiveAlreadyExists,
-			ufmt.Sprintf("incentiveId(%s) already exists", byTimeId),
-		))
-	}
-
-	byHeightId, byCreatorId := incentiveIdByHeight(incentive.startHeight, incentive.endHeight, creator, incentive.rewardToken, self.targetPoolPath)
-	byEndHeightId, _ := incentiveIdByHeight(incentive.endHeight, incentive.startHeight, creator, incentive.rewardToken, self.targetPoolPath)
-
-	self.byTime.Set(byTimeId, incentive)
-	self.byHeight.Set(byHeightId, incentive)
-	self.byEndHeight.Set(byEndHeightId, incentive)
-	self.byCreator.Set(byCreatorId, incentive)
+	self.incentives.Set(incentive.incentiveId, incentive)
 }
 
 // starts incentive unclaimable period for this pool
@@ -131,21 +98,7 @@ func (self *Incentives) update(
 	creator std.Address,
 	incentive *ExternalIncentive,
 ) {
-	byTimeId := incentiveIdByTime(incentive.startTimestamp, incentive.endTimestamp, creator, incentive.rewardToken, self.targetPoolPath)
-	if !self.byTime.Has(byTimeId) {
-		panic(addDetailToError(
-			errIncentiveNotFound,
-			ufmt.Sprintf("incentiveId(%s) not found", byTimeId),
-		))
-	}
-
-	byHeightId, byCreatorId := incentiveIdByHeight(incentive.startHeight, incentive.endHeight, creator, incentive.rewardToken, self.targetPoolPath)
-	byEndHeightId, _ := incentiveIdByHeight(incentive.endHeight, incentive.startHeight, creator, incentive.rewardToken, self.targetPoolPath)
-
-	self.byTime.Set(byTimeId, incentive)
-	self.byHeight.Set(byHeightId, incentive)
-	self.byEndHeight.Set(byEndHeightId, incentive)
-	self.byCreator.Set(byCreatorId, incentive)
+	self.incentives.Set(incentive.incentiveId, incentive)
 }
 
 // starts incentive unclaimable period for this pool

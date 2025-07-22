@@ -18,8 +18,9 @@ const (
 
 // SetPoolTierByAdmin sets the tier of a pool by an admin
 func SetPoolTierByAdmin(cur realm, poolPath string, tier uint64) {
-	assertOnlyAdmin()
-	assertMustNotHalted()
+	caller := std.PreviousRealm().Address()
+	access.AssertIsAdmin(caller)
+	halt.AssertIsHaltedGovStaker()
 	assertPoolMustExist(poolPath)
 
 	setPoolTier(cur, poolPath, tier)
@@ -27,8 +28,9 @@ func SetPoolTierByAdmin(cur realm, poolPath string, tier uint64) {
 
 // SetPoolTier sets the tier of a pool by governance
 func SetPoolTier(cur realm, poolPath string, tier uint64) {
-	assertOnlyGovernance()
-	assertMustNotHalted()
+	caller := std.PreviousRealm().Address()
+	access.AssertIsGovernance(caller)
+	halt.AssertIsHaltedGovStaker()
 	assertPoolMustExist(poolPath)
 
 	setPoolTier(cur, poolPath, tier)
@@ -54,8 +56,9 @@ func setPoolTier(cur realm, poolPath string, tier uint64) {
 
 // ChangePoolTierByAdmin changes the tier of a pool by an admin
 func ChangePoolTierByAdmin(cur realm, poolPath string, tier uint64) {
-	assertOnlyAdmin()
-	assertMustNotHalted()
+	caller := std.PreviousRealm().Address()
+	access.AssertIsAdmin(caller)
+	halt.AssertIsHaltedGovStaker()
 	assertPoolMustExist(poolPath)
 
 	changePoolTier(cur, poolPath, tier)
@@ -63,8 +66,9 @@ func ChangePoolTierByAdmin(cur realm, poolPath string, tier uint64) {
 
 // ChangePoolTier changes the tier of a pool by governance
 func ChangePoolTier(cur realm, poolPath string, tier uint64) {
-	assertOnlyGovernance()
-	assertMustNotHalted()
+	caller := std.PreviousRealm().Address()
+	access.AssertIsGovernance(caller)
+	halt.AssertIsHaltedGovStaker()
 	assertPoolMustExist(poolPath)
 
 	changePoolTier(cur, poolPath, tier)
@@ -91,8 +95,9 @@ func changePoolTier(cur realm, poolPath string, tier uint64) {
 
 // RemovePoolTierByAdmin removes the tier of a pool by an admin
 func RemovePoolTierByAdmin(cur realm, poolPath string) {
-	assertOnlyAdmin()
-	assertMustNotHalted()
+	caller := std.PreviousRealm().Address()
+	access.AssertIsAdmin(caller)
+	halt.AssertIsHaltedGovStaker()
 	assertPoolMustExist(poolPath)
 
 	removePoolTier(cur, poolPath)
@@ -100,8 +105,9 @@ func RemovePoolTierByAdmin(cur realm, poolPath string) {
 
 // RemovePoolTier removes the tier of a pool by governance
 func RemovePoolTier(cur realm, poolPath string) {
-	assertOnlyGovernance()
-	assertMustNotHalted()
+	caller := std.PreviousRealm().Address()
+	access.AssertIsGovernance(caller)
+	halt.AssertIsHaltedGovStaker()
 	assertPoolMustExist(poolPath)
 
 	removePoolTier(cur, poolPath)
@@ -125,16 +131,18 @@ func removePoolTier(cur realm, poolPath string) {
 
 // SetWarmUpByAdmin sets the warmup percentage and block duration by an admin
 func SetWarmUpByAdmin(cur realm, pct, blockDuration int64) {
-	assertOnlyAdmin()
-	assertMustNotHalted()
+	caller := std.PreviousRealm().Address()
+	access.AssertIsAdmin(caller)
+	halt.AssertIsHaltedGovStaker()
 
 	setWarmUp(cur, pct, blockDuration)
 }
 
 // SetWarmUp sets the warmup percentage and block duration by governance
 func SetWarmUp(cur realm, pct, blockDuration int64) {
-	assertOnlyGovernance()
-	assertMustNotHalted()
+	caller := std.PreviousRealm().Address()
+	access.AssertIsGovernance(caller)
+	halt.AssertIsHaltedGovStaker()
 
 	setWarmUp(cur, pct, blockDuration)
 }
@@ -175,19 +183,5 @@ func assertPoolMustExist(poolPath string) {
 			errInvalidPoolPath,
 			ufmt.Sprintf("pool(%s) does not exist", poolPath),
 		))
-	}
-}
-
-func assertOnlyAdmin() {
-	access.AdminOnly(getPrevAddr())
-}
-
-func assertOnlyGovernance() {
-	access.GovernanceOnly(getPrevAddr())
-}
-
-func assertMustNotHalted() {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
 	}
 }

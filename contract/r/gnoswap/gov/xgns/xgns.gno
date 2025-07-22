@@ -9,19 +9,18 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/rbac"
 
-	"gno.land/r/gnoswap/v1/halt"
+	prbac "gno.land/p/gnoswap/rbac"
 )
 
 var (
+	govStakerAddr = getContractAddress(prbac.ROLE_GOV_STAKER.String())
+	launchpadAddr = getContractAddress(prbac.ROLE_LAUNCHPAD.String())
+
 	admin         = ownable.NewWithAddress(std.DerivePkgAddr(govStakerAddr.String()))
 	token, ledger = grc20.NewToken("XGNS", "xGNS", 6)
-
-	govStakerAddr = getContractAddress(access.ROLE_GOV_STAKER)
-	launchpadAddr = getContractAddress(access.ROLE_LAUNCHPAD)
 )
-
-func init() {}
 
 func TotalSupply() int64 {
 	return token.TotalSupply()
@@ -94,17 +93,8 @@ func Render(path string) string {
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Mint function.
 func Mint(cur realm, to std.Address, amount int64) {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err.Error())
-		}
-
-		if halt.IsContractHalted(halt.OpTypeXGns) {
-			panic("xGNS contract operations are currently disabled")
-		}
-	}
+	assertIsNotHaltedAccess()
+	assertIsNotHaltedWithdraw()
 
 	// only (gov staker) or (launchpad) contract can call Mint
 	caller := std.PreviousRealm().Address()
@@ -134,25 +124,11 @@ func Mint(cur realm, to std.Address, amount int64) {
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Mint function.
 func MintByLaunchPad(cur realm, to std.Address, amount int64) {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err.Error())
-		}
-
-		if halt.IsContractHalted(halt.OpTypeXGns) {
-			panic("xGNS contract operations are currently disabled")
-		}
-	}
+	assertIsNotHaltedAccess()
+	assertIsNotHaltedWithdraw()
 
 	caller := std.PreviousRealm().Address()
-	if err := access.LaunchpadOnly(caller); err != nil {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("only launchpad(%s) contract can call MintByLaunchPad, called from %s", launchpadAddr.String(), caller.String()),
-		))
-	}
+	access.AssertIsLaunchpad(caller)
 
 	mint(to, amount)
 }
@@ -178,17 +154,8 @@ func mint(to std.Address, amount int64) {
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Burn function.
 func Burn(cur realm, from std.Address, amount int64) {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err.Error())
-		}
-
-		if halt.IsContractHalted(halt.OpTypeXGns) {
-			panic("xGNS contract operations are currently disabled")
-		}
-	}
+	assertIsNotHaltedAccess()
+	assertIsNotHaltedWithdraw()
 
 	// only (gov staker) or (launchpad) contract can call Mint
 	caller := std.PreviousRealm().Address()
@@ -204,25 +171,12 @@ func Burn(cur realm, from std.Address, amount int64) {
 }
 
 func BurnByLaunchPad(cur realm, from std.Address, amount int64) {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err.Error())
-		}
-
-		if halt.IsContractHalted(halt.OpTypeXGns) {
-			panic("xGNS contract operations are currently disabled")
-		}
-	}
+	assertIsNotHaltedAccess()
+	assertIsNotHaltedWithdraw()
 
 	caller := std.PreviousRealm().Address()
-	if err := access.LaunchpadOnly(caller); err != nil {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("only launchpad(%s) contract can call BurnByLaunchPad, called from %s", launchpadAddr.String(), caller.String()),
-		))
-	}
+	access.AssertIsLaunchpad(caller)
+	
 	burn(from, amount)
 }
 
@@ -232,6 +186,10 @@ func burn(from std.Address, amount int64) {
 
 // getContractAddress retrieves the address which registered the role
 func getContractAddress(roleName string) std.Address {
-	addr, _ := access.GetAddress(roleName)
+	addr, exists := access.GetAddress(roleName)
+	if !exists {
+		return rbac.DefaultRoleAddresses[prbac.SystemRole(roleName)]
+	}
+
 	return addr
 }

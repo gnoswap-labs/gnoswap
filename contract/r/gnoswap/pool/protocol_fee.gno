@@ -6,6 +6,7 @@ import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
@@ -55,12 +56,7 @@ func CollectWithdrawalFee(cur realm,
 
 	// only position contract can call this function
 	caller := getPrevAddr()
-	if err := common.PositionOnly(caller); err != nil {
-		panic(newErrorWithDetail(
-			errNoPermission,
-			ufmt.Sprintf("only position(%s) can call this function, called from %s", positionAddr, caller.String()),
-		))
-	}
+	access.AssertIsPosition(caller)
 
 	fee := GetWithdrawalFee()
 	if fee == ZeroBps {
@@ -103,9 +99,8 @@ func GetPoolCreationFee() int64 {
 func SetPoolCreationFee(cur realm, fee int64) {
 	assertOnlyNotHalted()
 	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	access.AssertIsGovernance(caller)
+
 	prevPoolCreationFee := GetPoolCreationFee()
 	setPoolCreationFee(fee)
 
@@ -123,10 +118,8 @@ func SetPoolCreationFee(cur realm, fee int64) {
 // Only admin can execute this function.
 func SetPoolCreationFeeByAdmin(cur realm, fee int64) {
 	assertOnlyNotHalted()
-	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	assertOnlyAdmin()
+
 	prevPoolCreationFee := GetPoolCreationFee()
 	setPoolCreationFee(fee)
 
@@ -152,9 +145,7 @@ func GetWithdrawalFee() uint64 {
 func SetWithdrawalFee(cur realm, fee uint64) {
 	assertOnlyNotHalted()
 	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	access.AssertIsGovernance(caller)
 
 	prevWithdrawalFee := GetWithdrawalFee()
 
@@ -175,9 +166,7 @@ func SetWithdrawalFee(cur realm, fee uint64) {
 func SetWithdrawalFeeByAdmin(cur realm, fee uint64) {
 	assertOnlyNotHalted()
 	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	access.AssertIsAdmin(caller)
 
 	prevWithdrawalFee := GetWithdrawalFee()
 

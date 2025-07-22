@@ -7,6 +7,7 @@ import (
 
 	"gno.land/r/gnoswap/v1/emission"
 	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 // CollectDepositGns collects rewards from all deposits associated with the caller.
@@ -24,8 +25,9 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 	previousAddress := std.PreviousRealm().Address()
 	previousPkgPath := std.PreviousRealm().PkgPath()
 
+	halt.AssertIsHaltedLaunchpad()
+	halt.AssertIsHaltedWithdraw()
 	assertOnlyUser()
-	assertOnlyNotHalted()
 
 	emission.MintAndDistributeGns(cross)
 

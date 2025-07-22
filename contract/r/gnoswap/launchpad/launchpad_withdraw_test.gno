@@ -10,6 +10,8 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gov/xgns"
+
+	prbac "gno.land/p/gnoswap/rbac"
 )
 
 func TestCollectDepositGns(t *testing.T) {
@@ -144,11 +146,11 @@ func initLaunchpadWithdrawTest(t *testing.T) {
 	testing.SetOriginCaller(depositor)
 	depositGns(project.ID(), 30, depositAmount, depositor)
 
-	govStakerAddr, _ := access.GetAddress(access.ROLE_GOV_STAKER)
+	govStakerAddr, _ := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 	govStakerRealm := std.NewUserRealm(govStakerAddr)
 	testing.SetRealm(govStakerRealm)
 
-	launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	xgns.Mint(cross, launchpadAddr, depositAmount)
 
 	projectTier, _ := project.getTier(30)

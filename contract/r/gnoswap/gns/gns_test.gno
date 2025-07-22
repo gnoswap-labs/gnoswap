@@ -222,7 +222,7 @@ func TestGrc20Methods(t *testing.T) {
 			},
 			shouldPanic:   true,
 			exceptionKind: "abort",
-			panicMsg:      `caller(g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m) has no permission`,
+			panicMsg:      `unauthorized: caller g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m is not emission`,
 		},
 		{
 			name: "Burn without permission should panic",
@@ -432,7 +432,7 @@ func TestMintGns(t *testing.T) {
 			inputSkipHeight:      1,
 			expectedMintedAmount: 0,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "halted",
+			expectedAbortMessage: "gns contract operations are currently disabled",
 		},
 		{
 			name:                 "mint gns is failed by caller is not emission realm",
@@ -441,7 +441,7 @@ func TestMintGns(t *testing.T) {
 			inputSkipHeight:      1,
 			expectedMintedAmount: 0,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "caller(g1w4ek2ujlta047h6lta047h6lta047h6lkvk347) has no permission",
+			expectedAbortMessage: "unauthorized: caller g1w4ek2ujlta047h6lta047h6lta047h6lkvk347 is not emission",
 		},
 		{
 			name:                 "mint gns is failed by not allowed to mint same block",
@@ -459,7 +459,12 @@ func TestMintGns(t *testing.T) {
 			InitGnsTest(t)
 
 			testing.SetOriginCaller(adminAddr)
-			halt.SetHaltByAdmin(cross, tt.halted) // set halt
+
+			if tt.halted {
+				halt.SetHaltLevel(cross, halt.HaltLevelEmergency) // set halt
+			} else {
+				halt.SetHaltLevel(cross, halt.HaltLevelNone) // set halt
+			}
 
 			var mintedAmount int64
 
@@ -480,6 +485,7 @@ func TestMintGns(t *testing.T) {
 			}
 
 			uassert.Equal(t, tt.expectedMintedAmount, mintedAmount)
+			halt.SetHaltLevel(cross, halt.HaltLevelNone)
 		})
 	}
 }
