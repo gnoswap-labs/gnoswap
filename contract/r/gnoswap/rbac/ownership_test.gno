@@ -107,6 +107,7 @@ func TestGetPendingOwner(t *testing.T) {
 	}
 
 	// Set pending owner
+	testing.SetRealm(std.NewUserRealm(ADMIN))
 	err := manager.TransferOwnership(DEV_OPS)
 	if err != nil {
 		t.Fatalf("Failed to transfer ownership: %v", err)
@@ -124,6 +125,7 @@ func TestTransferOwnership(t *testing.T) {
 
 	// Test successful transfer (we can't fully test the assertion since it depends on std.PreviousRealm())
 	// We test the manager's functionality directly
+	testing.SetRealm(std.NewUserRealm(ADMIN))
 	err := manager.TransferOwnership(DEV_OPS)
 	if err != nil {
 		t.Errorf("TransferOwnership failed: %v", err)
@@ -147,12 +149,14 @@ func TestAcceptOwnership(t *testing.T) {
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
 	// Set up pending owner
+	testing.SetRealm(std.NewUserRealm(ADMIN))
 	err := manager.TransferOwnership(DEV_OPS)
 	if err != nil {
 		t.Fatalf("Failed to transfer ownership: %v", err)
 	}
 
 	// Test successful acceptance (we test the manager's functionality directly)
+	testing.SetRealm(std.NewUserRealm(DEV_OPS))
 	err = manager.AcceptOwnership()
 	if err != nil {
 		t.Errorf("AcceptOwnership failed: %v", err)
@@ -182,6 +186,7 @@ func TestOwnershipWorkflow(t *testing.T) {
 	}
 
 	// Step 1: Transfer ownership
+	testing.SetRealm(std.NewUserRealm(ADMIN))
 	err := manager.TransferOwnership(DEV_OPS)
 	if err != nil {
 		t.Fatalf("Step 1 failed: %v", err)
@@ -191,11 +196,13 @@ func TestOwnershipWorkflow(t *testing.T) {
 	if GetOwner() != ADMIN {
 		t.Error("Owner should not change until acceptance")
 	}
+
 	if GetPendingOwner() != DEV_OPS {
 		t.Error("Pending owner should be set")
 	}
 
 	// Step 2: Accept ownership
+	testing.SetRealm(std.NewUserRealm(DEV_OPS))
 	err = manager.AcceptOwnership()
 	if err != nil {
 		t.Fatalf("Step 2 failed: %v", err)

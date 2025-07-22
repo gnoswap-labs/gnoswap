@@ -81,9 +81,9 @@ func AssertIsAuthorized(roleName string, caller std.Address) {
 }
 
 func assertIsRBAC(caller std.Address) {
-	rbacAddr := std.NewCodeRealm("gno.land/r/gnoswap/v1/rbac").Address()
+	rbacAddr := std.NewCodeRealm(rbacPackagePath).Address()
 
-	if caller.String() != rbacAddr.String() {
+	if caller != rbacAddr {
 		panic(ufmt.Errorf("unauthorized: caller %s is not rbac", caller))
 	}
 }

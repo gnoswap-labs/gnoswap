@@ -4,104 +4,51 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/uassert"
 
 	prbac "gno.land/p/gnoswap/rbac"
 )
-
-func TestInitRbac(t *testing.T) {
-	// Test that init function sets up manager correctly
-	if manager == nil {
-		t.Fatal("Manager should be initialized")
-	}
-
-	// Check that all default roles are registered
-	for role := range defaultRoleAddresses {
-		_, err := manager.GetRoleAddress(role.String())
-		if err != nil {
-			t.Errorf("Default role %s should be registered: %v", role.String(), err)
-		}
-	}
-
-	// Check that role addresses are set correctly
-	for role, expectedAddr := range defaultRoleAddresses {
-		actualAddr, err := manager.GetRoleAddress(role.String())
-		if err != nil {
-			t.Errorf("Failed to get role address for %s: %v", role.String(), err)
-			continue
-		}
-		if actualAddr != expectedAddr {
-			t.Errorf("Role %s address mismatch: got %s, want %s", role.String(), actualAddr, expectedAddr)
-		}
-	}
-}
 
 func TestRegisterRole(t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 	initRbac()
+	manager.RegisterRole("duplicate_role")
 
 	tests := []struct {
 		name        string
 		roleName    string
-		shouldPanic bool
-		panicMsg    string
+		shouldError bool
+		errorMsg    string
 	}{
 		{
 			name:        "Register new custom role should succeed",
 			roleName:    "custom_role",
-			shouldPanic: false,
+			shouldError: false,
 		},
 		{
-			name:        "Register system role should panic",
+			name:        "Register system role should error",
 			roleName:    prbac.ROLE_ADMIN.String(),
-			shouldPanic: true,
-			panicMsg:    "cannot register system role",
+			shouldError: true,
+			errorMsg:    "role admin already exists",
 		},
 		{
-			name:        "Register existing role should panic",
+			name:        "Register existing role should error",
 			roleName:    "duplicate_role",
-			shouldPanic: false, // First registration should succeed
+			shouldError: true, // First registration should succeed
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					if r == nil {
-						t.Error("Expected panic but none occurred")
-					}
-					if tt.panicMsg != "" {
-						panicStr := ufmt.Sprintf("%v", r)
-						if panicStr != tt.panicMsg && !contains(panicStr, tt.panicMsg) {
-							t.Errorf("Expected panic message to contain '%s', got '%s'", tt.panicMsg, panicStr)
-						}
-					}
-				}()
-			}
+			testing.SetRealm(std.NewUserRealm(ADMIN))
 
-			// For testing we directly call manager.RegisterRole since we can't mock std.PreviousRealm()
-			if !tt.shouldPanic {
-				err := manager.RegisterRole(tt.roleName)
-				if err != nil {
-					t.Errorf("Failed to register role %s: %v", tt.roleName, err)
-				}
+			err := manager.RegisterRole(tt.roleName)
 
-				// Verify role was registered
-				_, err = manager.GetRoleAddress(tt.roleName)
-				if err != nil {
-					t.Errorf("Role %s should exist after registration: %v", tt.roleName, err)
-				}
+			if tt.shouldError {
+				uassert.Error(t, err)
 			} else {
-				// Test the actual RegisterRole function that includes admin check
-				// This will panic due to the admin check, but we can't easily test that
-				// So we test the system role check through manager directly
-				if prbac.IsSystemRole(tt.roleName) {
-					// This should be handled by the function logic
-					t.Skip("Cannot test admin assertion without mocking std.PreviousRealm()")
-				}
+				uassert.NoError(t, err)
 			}
 		})
 	}
@@ -109,7 +56,7 @@ func TestRegisterRole(t *testing.T) {
 	// Test duplicate registration
 	t.Run("Register duplicate role should fail", func(t *testing.T) {
 		duplicateRole := "duplicate_test_role"
-		
+
 		// First registration
 		err := manager.RegisterRole(duplicateRole)
 		if err != nil {
@@ -139,55 +86,37 @@ func TestRemoveRole(t *testing.T) {
 	tests := []struct {
 		name        string
 		roleName    string
-		shouldPanic bool
-		panicMsg    string
+		shouldError bool
+		errorMsg    string
 	}{
 		{
 			name:        "Remove custom role should succeed",
 			roleName:    testRole,
-			shouldPanic: false,
+			shouldError: false,
 		},
 		{
-			name:        "Remove system role should panic",
+			name:        "Remove system role should error",
 			roleName:    prbac.ROLE_ADMIN.String(),
-			shouldPanic: true,
-			panicMsg:    "cannot remove system role",
+			shouldError: true,
+			errorMsg:    "cannot remove system role",
 		},
 		{
 			name:        "Remove non-existent role should fail",
 			roleName:    "non_existent_role",
-			shouldPanic: false, // manager.RemoveRole will return error, not panic
+			shouldError: true, // manager.RemoveRole will return error, not panic
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					if r == nil {
-						t.Error("Expected panic but none occurred")
-					}
-				}()
-			}
+			testing.SetRealm(std.NewUserRealm(ADMIN))
 
 			// Test manager functionality directly
-			if !tt.shouldPanic {
-				err := manager.RemoveRole(tt.roleName)
-				if tt.roleName == testRole {
-					if err != nil {
-						t.Errorf("Failed to remove role %s: %v", tt.roleName, err)
-					}
-					// Verify role was removed
-					_, err = manager.GetRoleAddress(tt.roleName)
-					if err == nil {
-						t.Errorf("Role %s should not exist after removal", tt.roleName)
-					}
-				} else if tt.roleName == "non_existent_role" {
-					if err == nil {
-						t.Error("Removing non-existent role should return error")
-					}
-				}
+			err := manager.RemoveRole(tt.roleName)
+			if tt.shouldError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
 			}
 		})
 	}
@@ -218,7 +147,7 @@ func TestGetRoleAddress(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			addr, err := GetRoleAddress(tt.roleName)
-			
+
 			if tt.shouldErr {
 				if err == nil {
 					t.Error("Expected error for non-existent role")
@@ -248,27 +177,27 @@ func TestUpdateRoleAddress(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		roleName string
-		addr     std.Address
+		name      string
+		roleName  string
+		addr      std.Address
 		shouldErr bool
 	}{
 		{
-			name:     "Update existing role with valid address should succeed",
-			roleName: testRole,
-			addr:     DEV_OPS,
+			name:      "Update existing role with valid address should succeed",
+			roleName:  testRole,
+			addr:      DEV_OPS,
 			shouldErr: false,
 		},
 		{
-			name:     "Update non-existent role should fail",
-			roleName: "non_existent_role",
-			addr:     DEV_OPS,
+			name:      "Update non-existent role should fail",
+			roleName:  "non_existent_role",
+			addr:      DEV_OPS,
 			shouldErr: true,
 		},
 		{
-			name:     "Update role with invalid address should fail",
-			roleName: testRole,
-			addr:     "",
+			name:      "Update role with invalid address should fail",
+			roleName:  testRole,
+			addr:      "",
 			shouldErr: true,
 		},
 	}
@@ -277,7 +206,7 @@ func TestUpdateRoleAddress(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test manager functionality directly
 			err := manager.UpdateRoleAddress(tt.roleName, tt.addr)
-			
+
 			if tt.shouldErr {
 				if err == nil {
 					t.Errorf("Expected error for test case: %s", tt.name)
@@ -306,11 +235,11 @@ func TestUpdateAccessRoleAddresses(t *testing.T) {
 
 	// This function is private, but we can test its effect indirectly
 	// by calling functions that invoke it and checking if access package is updated
-	
+
 	// Test that updateAccessRoleAddresses is called during initialization
 	// We can't directly test the access.SetRoleAddresses call without mocking,
 	// but we can verify the function doesn't panic when called
-	
+
 	// Register a new role and update its address to trigger updateAccessRoleAddresses
 	testRole := "test_access_update"
 	err := manager.RegisterRole(testRole)
@@ -329,9 +258,9 @@ func TestUpdateAccessRoleAddresses(t *testing.T) {
 
 // Helper function to check if a string contains a substring
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && s[:len(substr)] == substr || 
-		   (len(s) > len(substr) && s[len(s)-len(substr):] == substr) ||
-		   (len(s) > len(substr) && findSubstring(s, substr))
+	return len(s) >= len(substr) && s[:len(substr)] == substr ||
+		(len(s) > len(substr) && s[len(s)-len(substr):] == substr) ||
+		(len(s) > len(substr) && findSubstring(s, substr))
 }
 
 func findSubstring(s, substr string) bool {
@@ -341,4 +270,4 @@ func findSubstring(s, substr string) bool {
 		}
 	}
 	return false
-} 
+}

@@ -4,6 +4,7 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -65,15 +66,6 @@ func TestAssertIsOwner(t *testing.T) {
 }
 
 func TestAssertIsPendingOwner(t *testing.T) {
-	// Reset manager for test
-	manager = prbac.NewRBACWithAddress(ADMIN)
-
-	// Set up pending owner
-	err := manager.TransferOwnership(DEV_OPS)
-	if err != nil {
-		t.Fatalf("Failed to set up pending owner: %v", err)
-	}
-
 	tests := []struct {
 		name        string
 		addr        std.Address
@@ -107,33 +99,36 @@ func TestAssertIsPendingOwner(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					if r == nil {
-						t.Error("Expected panic but none occurred")
-					}
-					if tt.expectedMsg != "" {
-						panicStr := ufmt.Sprintf("%v", r)
-						if !contains(panicStr, tt.expectedMsg) {
-							t.Errorf("Expected panic message to contain '%s', got '%s'", tt.expectedMsg, panicStr)
-						}
-					}
-				}()
+			testing.SetRealm(std.NewUserRealm(ADMIN))
+		
+			// Reset manager for test
+			manager = prbac.NewRBACWithAddress(ADMIN)
+		
+			// Set up pending owner
+			err := manager.TransferOwnership(DEV_OPS)
+			if err != nil {
+				t.Fatalf("Failed to set up pending owner: %v", err)
 			}
-
-			assertIsPendingOwner(tt.addr)
+			
+			testing.SetRealm(std.NewUserRealm(tt.addr))
 
 			if tt.shouldPanic {
-				t.Error("Expected panic but function completed normally")
+				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+					assertIsPendingOwner(tt.addr)
+				})
+			} else {
+				assertIsPendingOwner(tt.addr)
 			}
 		})
 	}
 }
 
 func TestAssertIsAdmin(t *testing.T) {
+	testing.SetRealm(std.NewUserRealm(ADMIN))
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
+	
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/rbac"))
 	initRbac()
 
 	tests := []struct {
@@ -163,25 +158,14 @@ func TestAssertIsAdmin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					if r == nil {
-						t.Error("Expected panic but none occurred")
-					}
-					if tt.expectedMsg != "" {
-						panicStr := ufmt.Sprintf("%v", r)
-						if !contains(panicStr, tt.expectedMsg) {
-							t.Errorf("Expected panic message to contain '%s', got '%s'", tt.expectedMsg, panicStr)
-						}
-					}
-				}()
-			}
-
-			assertIsAdmin(tt.addr)
+			testing.SetRealm(std.NewUserRealm(tt.addr))
 
 			if tt.shouldPanic {
-				t.Error("Expected panic but function completed normally")
+				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+					assertIsAdmin(tt.addr)
+				})
+			} else {
+				assertIsAdmin(tt.addr)
 			}
 		})
 	}
@@ -219,25 +203,14 @@ func TestAssertIsAdminWithRoleUpdate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			testing.SetRealm(std.NewUserRealm(tt.addr))
+			
 			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					if r == nil {
-						t.Error("Expected panic but none occurred")
-					}
-					if tt.expectedMsg != "" {
-						panicStr := ufmt.Sprintf("%v", r)
-						if !contains(panicStr, tt.expectedMsg) {
-							t.Errorf("Expected panic message to contain '%s', got '%s'", tt.expectedMsg, panicStr)
-						}
-					}
-				}()
-			}
-
-			assertIsAdmin(tt.addr)
-
-			if tt.shouldPanic {
-				t.Error("Expected panic but function completed normally")
+				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+					assertIsAdmin(tt.addr)
+				})
+			} else {
+				assertIsAdmin(tt.addr)
 			}
 		})
 	}
@@ -246,6 +219,7 @@ func TestAssertIsAdminWithRoleUpdate(t *testing.T) {
 func TestAssertFunctionsIntegration(t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/rbac"))
 	initRbac()
 
 	// Test complete ownership transfer workflow with assertions
@@ -254,19 +228,20 @@ func TestAssertFunctionsIntegration(t *testing.T) {
 		assertIsOwner(ADMIN)
 
 		// DEV_OPS should not be owner or pending owner
-		defer func() {
-			r := recover()
-			if r == nil {
-				t.Error("assertIsOwner should panic for non-owner")
-			}
-		}()
-		assertIsOwner(DEV_OPS) // This should panic
+		uassert.PanicsWithMessage(t, "caller is not owner", func() {
+			assertIsOwner(DEV_OPS)
+		})
 
 		// Clear the panic and continue with next test
 	})
 
 	t.Run("Pending owner assertions after transfer", func(t *testing.T) {
 		// Transfer ownership
+		manager = prbac.NewRBACWithAddress(ADMIN)
+		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/rbac"))
+		initRbac()
+
+		testing.SetRealm(std.NewUserRealm(ADMIN))
 		err := manager.TransferOwnership(DEV_OPS)
 		if err != nil {
 			t.Fatalf("Failed to transfer ownership: %v", err)
@@ -276,32 +251,25 @@ func TestAssertFunctionsIntegration(t *testing.T) {
 		assertIsPendingOwner(DEV_OPS)
 
 		// ADMIN should not be pending owner
-		defer func() {
-			r := recover()
-			if r == nil {
-				t.Error("assertIsPendingOwner should panic for non-pending-owner")
-			}
-		}()
-		assertIsPendingOwner(ADMIN) // This should panic
+		uassert.PanicsWithMessage(t, "caller is not pending owner", func() {
+			assertIsPendingOwner(ADMIN)
+		})
 	})
 
 	t.Run("Admin assertions", func(t *testing.T) {
 		// Reset for clean admin test
 		manager = prbac.NewRBACWithAddress(ADMIN)
+		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/rbac"))
 		initRbac()
 
 		// ADMIN should pass admin assertion
 		assertIsAdmin(ADMIN)
 
 		// Non-admin should fail
-		defer func() {
-			r := recover()
-			if r == nil {
-				t.Error("assertIsAdmin should panic for non-admin")
-			}
-		}()
-		assertIsAdmin(DEV_OPS) // This should panic
+		uassert.PanicsWithMessage(t, "caller is not admin", func() {
+			assertIsAdmin(DEV_OPS)
+		})
 	})
 }
 
-// Note: contains function is defined in rbac_test.gno to avoid duplication 
+// Note: contains function is defined in rbac_test.gno to avoid duplication

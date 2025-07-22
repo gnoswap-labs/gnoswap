@@ -70,7 +70,7 @@ func RemoveRole(cur realm, roleName string) {
 // Retrieves the address associated with a given role
 // Returns error if role does not exist
 // Used to verify role assignments and permissions
-func GetRoleAddress(cur realm, roleName string) (std.Address, error) {
+func GetRoleAddress(roleName string) (std.Address, error) {
 	return manager.GetRoleAddress(roleName)
 }
 
