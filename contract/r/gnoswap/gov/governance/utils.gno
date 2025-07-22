@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"gno.land/p/demo/avl"
-	"gno.land/r/gnoswap/v1/halt"
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
@@ -132,16 +131,6 @@ func parseBool(s string) bool {
 		return false
 	default:
 		panic(ufmt.Sprintf("invalid bool value: %s", s))
-	}
-}
-
-func assertHaltedExecute() {
-	if halt.IsHaltedGovernance() {
-		panic("gov/governance contract access is currently disabled")
-	}
-
-	if halt.IsHaltedWithdraw() {
-		panic("gov/governance contract withdraw is currently disabled")
 	}
 }
 
