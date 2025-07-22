@@ -722,11 +722,3 @@ func getCurrentInfo() currentInfo {
 		gnsADMIN:         gns.BalanceOf(adminAddr),
 	}
 }
-
-func getAddress(roleName string) std.Address {
-	addr, exists := access.GetAddress(roleName)
-	if !exists {
-		panic(ufmt.Sprintf("role %s does not exist", roleName))
-	}
-	return addr
-}

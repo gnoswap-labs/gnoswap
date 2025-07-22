@@ -7,6 +7,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/gnft"
 
 	pn "gno.land/r/gnoswap/v1/position"
@@ -28,6 +29,8 @@ func MintAndStake(cur realm,
 	deadline int64,
 	referrer string,
 ) (uint64, string, string, string, string) {
+	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
+	
 	// if one click native
 	if token0 == consts.GNOT || token1 == consts.GNOT {
 		// check sent ugnot
@@ -43,6 +46,7 @@ func MintAndStake(cur realm,
 		}
 
 		// send it over to position to wrap
+		positionAddr := getRoleAddress(prbac.ROLE_POSITION)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(stakerAddr, positionAddr, std.Coins{{Denom: "ugnot", Amount: ugnotSent}})
 	}

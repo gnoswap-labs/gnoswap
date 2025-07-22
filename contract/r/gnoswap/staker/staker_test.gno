@@ -7,12 +7,14 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/access"
 	pl "gno.land/r/gnoswap/v1/pool"
 
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/bar"
+
+	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/v1/rbac"
 )
 
 const (
@@ -24,7 +26,7 @@ const (
 
 func TestCollectRewardGracefulDegradation(t *testing.T) {
 	// setup
-	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+	govAddr := rbac.DefaultRoleAddresses[prabc.ROLE_GOVERNANCE]
 	testing.SetOriginCaller(govAddr)
 	SetMinimumRewardAmount(cross, 1000000000)
 
@@ -68,6 +70,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 
 	// Stake position
 	testing.SetRealm(std.NewUserRealm(addr01))
+	stakerAddr := getRoleAddress(prabc.ROLE_STAKER)
 	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
 	StakeToken(cross, positionId, "")
 
