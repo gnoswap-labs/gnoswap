@@ -247,7 +247,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 				SetWithdrawalFee(cross, newFee)
 			},
 			verify:      nil,
-			expected:    "caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) has no permission",
+			expected:    "unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not admin",
 			shouldPanic: true,
 		},
 		{
@@ -259,7 +259,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 				SetWithdrawalFee(cross, newFee)
 			},
 			verify:      nil,
-			expected:    "caller(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) has no permission",
+			expected:    "unauthorized: caller g1d9h8vctvd9j97h6lta047h6lta047h6l8k5rvt is not admin",
 			shouldPanic: true,
 		},
 		{

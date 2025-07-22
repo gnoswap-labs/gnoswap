@@ -21,9 +21,9 @@ func init() {
 func initRbac() {
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
-	for role := range defaultRoleAddresses {
+	for role := range DefaultRoleAddresses {
 		manager.RegisterRole(role.String())
-		manager.UpdateRoleAddress(role.String(), defaultRoleAddresses[role])
+		manager.UpdateRoleAddress(role.String(), DefaultRoleAddresses[role])
 	}
 
 	updateAccessRoleAddresses(manager.GetRoleAddresses())

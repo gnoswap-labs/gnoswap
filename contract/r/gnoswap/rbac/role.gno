@@ -6,7 +6,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-var defaultRoleAddresses = map[prbac.SystemRole]std.Address{
+var DefaultRoleAddresses = map[prbac.SystemRole]std.Address{
 	prbac.ROLE_ADMIN:         ADMIN,
 	prbac.ROLE_DEVOPS:        DEV_OPS,
 	prbac.ROLE_COMMUNITY_POOL: COMMUNITY_POOL_ADDR,

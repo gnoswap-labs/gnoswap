@@ -4,7 +4,7 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -18,18 +18,9 @@ func assertIsNotHaltedWithdraw() {
 	}
 }
 
-// assertCallerIsAdmin panics if the caller is not an admin
-func assertCallerIsAdmin(caller std.Address) {
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
-}
-
 // assertCallerIsLaunchpad panics if the caller is not the launchpad
 func assertCallerIsLaunchpad(caller std.Address) {
-	if err := common.LaunchpadOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsLaunchpad(caller)
 }
 
 func assertValidAddress(address std.Address) {

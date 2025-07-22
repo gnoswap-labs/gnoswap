@@ -6,11 +6,12 @@ import (
 	"gno.land/p/demo/json"
 
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
 )
 
 var (
-	admin, _ = access.GetAddress(access.ROLE_ADMIN)
+	admin, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 
 	fooPath string = "gno.land/r/onbloc/foo"
 	barPath string = "gno.land/r/onbloc/bar"
@@ -35,9 +36,9 @@ var (
 	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
 	govRealm = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
 
-	govStakerAddr, _     = access.GetAddress(access.ROLE_GOV_STAKER)
-	communityPoolAddr, _ = access.GetAddress(access.ROLE_COMMUNITY_POOL)
-	launchpadAddr, _     = access.GetAddress(access.ROLE_LAUNCHPAD)
+	govStakerAddr, _     = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	communityPoolAddr, _ = access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+	launchpadAddr, _     = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 )
 
 /* HELPER */

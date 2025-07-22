@@ -4,21 +4,11 @@ import (
 	"std"
 
 	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/halt"
 )
 
 func getPrev() (string, string) {
 	prev := std.PreviousRealm()
 	return prev.Address().String(), prev.PkgPath()
-}
-
-// assertOnlyNotHalted panics if the contract is halted.
-func assertOnlyNotHalted() {
-	// Protocol fee halting is handled in the router.
-	// So, we only need to check if withdrawals are allowed here.
-	if halt.IsHaltedWithdraw() {
-		panic("protocol fee contract withdrawals are currently disabled")
-	}
 }
 
 // assertOnlyPoolRouterStaker panics if the caller is not the pool, router, or staker contract.

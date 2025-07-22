@@ -41,11 +41,11 @@ func TestDefaultRoleAddresses(t *testing.T) {
 		prbac.ROLE_PROTOCOL_FEE:   PROTOCOL_FEE_ADDR,
 	}
 
-	// Test that all expected roles exist in defaultRoleAddresses
+	// Test that all expected roles exist in DefaultRoleAddresses
 	for _, role := range expectedRoles {
-		addr, exists := defaultRoleAddresses[role]
+		addr, exists := DefaultRoleAddresses[role]
 		if !exists {
-			t.Errorf("Role %s not found in defaultRoleAddresses", role.String())
+			t.Errorf("Role %s not found in DefaultRoleAddresses", role.String())
 			continue
 		}
 
@@ -56,16 +56,16 @@ func TestDefaultRoleAddresses(t *testing.T) {
 		}
 	}
 
-	// Test that defaultRoleAddresses doesn't contain unexpected roles
-	if len(defaultRoleAddresses) != len(expectedRoles) {
-		t.Errorf("defaultRoleAddresses contains unexpected number of roles: got %d, want %d", 
-			len(defaultRoleAddresses), len(expectedRoles))
+	// Test that DefaultRoleAddresses doesn't contain unexpected roles
+	if len(DefaultRoleAddresses) != len(expectedRoles) {
+		t.Errorf("DefaultRoleAddresses contains unexpected number of roles: got %d, want %d", 
+			len(DefaultRoleAddresses), len(expectedRoles))
 	}
 }
 
 func TestDefaultRoleAddressesCompleteness(t *testing.T) {
 	// Test that all addresses are valid (non-empty)
-	for role, addr := range defaultRoleAddresses {
+	for role, addr := range DefaultRoleAddresses {
 		if addr == "" {
 			t.Errorf("Role %s has empty address", role.String())
 		}
@@ -152,9 +152,9 @@ func TestDefaultRoleAddressesMapping(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
-			actualAddr, exists := defaultRoleAddresses[tt.role]
+			actualAddr, exists := DefaultRoleAddresses[tt.role]
 			if !exists {
-				t.Errorf("Role %s not found in defaultRoleAddresses", tt.role.String())
+				t.Errorf("Role %s not found in DefaultRoleAddresses", tt.role.String())
 				return
 			}
 
@@ -184,7 +184,7 @@ func TestRoleStringRepresentation(t *testing.T) {
 		prbac.ROLE_PROTOCOL_FEE:   "protocol_fee",
 	}
 
-	for role := range defaultRoleAddresses {
+	for role := range DefaultRoleAddresses {
 		expectedStr := expectedStrings[role]
 		actualStr := role.String()
 		
@@ -196,15 +196,15 @@ func TestRoleStringRepresentation(t *testing.T) {
 }
 
 func TestSystemRoleValidation(t *testing.T) {
-	// Test that all roles in defaultRoleAddresses are system roles
-	for role := range defaultRoleAddresses {
+	// Test that all roles in DefaultRoleAddresses are system roles
+	for role := range DefaultRoleAddresses {
 		if !prbac.IsSystemRole(role.String()) {
 			t.Errorf("Role %s should be a system role but IsSystemRole returned false", 
 				role.String())
 		}
 	}
 
-	// Test that non-system roles are not in defaultRoleAddresses
+	// Test that non-system roles are not in DefaultRoleAddresses
 	nonSystemRoles := []string{
 		"custom_role",
 		"user_defined_role",
@@ -224,7 +224,7 @@ func TestRoleAddressUniqueness(t *testing.T) {
 	// Test that all role addresses are unique (no two roles share the same address)
 	addressToRole := make(map[std.Address]prbac.SystemRole)
 	
-	for role, addr := range defaultRoleAddresses {
+	for role, addr := range DefaultRoleAddresses {
 		if existingRole, exists := addressToRole[addr]; exists {
 			t.Errorf("Address %s is assigned to multiple roles: %s and %s", 
 				addr, existingRole.String(), role.String())
@@ -235,12 +235,12 @@ func TestRoleAddressUniqueness(t *testing.T) {
 }
 
 func TestDefaultRoleAddressesIntegrationWithManager(t *testing.T) {
-	// Test that defaultRoleAddresses works correctly with RBAC manager
+	// Test that DefaultRoleAddresses works correctly with RBAC manager
 	manager = prbac.NewRBACWithAddress(ADMIN)
 	initRbac()
 
-	// Test that all roles from defaultRoleAddresses are properly registered in manager
-	for role, expectedAddr := range defaultRoleAddresses {
+	// Test that all roles from DefaultRoleAddresses are properly registered in manager
+	for role, expectedAddr := range DefaultRoleAddresses {
 		actualAddr, err := manager.GetRoleAddress(role.String())
 		if err != nil {
 			t.Errorf("Failed to get address for role %s: %v", role.String(), err)
