@@ -361,7 +361,7 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 			inputLevel:           HaltLevelComplete,
 			expectedLevel:        HaltLevelNone, // Should remain unchanged
 			expectedHasAbort:     true,
-			expectedAbortMessage: "caller g1unauthorized is not admin or governance",
+			expectedAbortMessage: "unauthorized: caller g1unauthorized is not admin or governance",
 		},
 		{
 			name:                 "Fail with invalid level",
@@ -446,7 +446,7 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 			operationType:        OpTypePool,
 			halted:               true,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "caller g1unauthorized is not admin or governance",
+			expectedAbortMessage: "unauthorized: caller g1unauthorized is not admin or governance",
 		},
 		{
 			name:                 "Fail with invalid operation type",
