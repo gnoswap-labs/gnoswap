@@ -113,9 +113,14 @@ func SetRole(cur realm, roleName string, address std.Address) error {
 		return err
 	}
 
-	// only admin can set roles
-	if !isAdmin() {
-		return ufmt.Errorf("only admin can set roles")
+	// only admin or governance can set roles
+	if !isAdminOrGovernance() {
+		return ufmt.Errorf("only admin or governance can set roles")
+	}
+
+	// Only admin can set critical roles
+	if isCriticalRole(roleName) && !isAdmin() {
+		return ufmt.Errorf("only admin can set critical roles (admin, devops)")
 	}
 
 	prevAddress := currentConfig.roles[roleName]
@@ -146,8 +151,13 @@ func GetAddress(roleName string) (std.Address, error) {
 
 // UpdateRoleAddress updates the address for a specific role's permission checker
 func UpdateRoleAddress(cur realm, roleName string, newAddress std.Address) error {
-	if !isAdmin() {
-		return ufmt.Errorf("only admin can update roles")
+	if !isAdminOrGovernance() {
+		return ufmt.Errorf("only admin or governance can update roles")
+	}
+
+	// Only admin can update critical roles
+	if isCriticalRole(roleName) && !isAdmin() {
+		return ufmt.Errorf("only admin can update critical roles (admin, devops)")
 	}
 
 	if err := validateConfig(); err != nil {
@@ -272,4 +282,22 @@ func isAdmin() bool {
 		return false
 	}
 	return caller == adminAddr
+}
+
+func isGovernance() bool {
+	caller := std.PreviousRealm().Address()
+	govAddr, err := GetAddress(ROLE_GOVERNANCE)
+	if err != nil {
+		return false
+	}
+	return caller == govAddr
+}
+
+func isAdminOrGovernance() bool {
+	return isAdmin() || isGovernance()
+}
+
+// isCriticalRole checks if a role is critical and should only be modified by admin
+func isCriticalRole(roleName string) bool {
+	return roleName == ROLE_ADMIN || roleName == ROLE_DEVOPS
 }

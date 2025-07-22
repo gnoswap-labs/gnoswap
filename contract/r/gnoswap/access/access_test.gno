@@ -88,6 +88,44 @@ func TestUpdateRoleAddress(t *testing.T) {
 		err = UpdateRoleAddress(cross, "non_existent_role", testRealm1Addr)
 		uassert.Error(t, err)
 	})
+
+	t.Run("update success with governance", func(t *testing.T) {
+		// First create a role as admin
+		adminAddr, err := GetAddress(ROLE_ADMIN)
+		uassert.NoError(t, err)
+		testing.SetOriginCaller(adminAddr)
+
+		err = CreateRole(cross, "test_gov_update", testAdminAddr)
+		uassert.NoError(t, err)
+
+		// Then update it as governance
+		govAddr, err := GetAddress(ROLE_GOVERNANCE)
+		uassert.NoError(t, err)
+		testing.SetOriginCaller(govAddr)
+
+		err = UpdateRoleAddress(cross, "test_gov_update", testRealm2Addr)
+		uassert.NoError(t, err)
+
+		actual := getCurrentConfig()
+		updatedAddr := actual.roles["test_gov_update"]
+		uassert.Equal(t, testRealm2Addr, updatedAddr)
+	})
+
+	t.Run("governance cannot update critical roles", func(t *testing.T) {
+		govAddr, err := GetAddress(ROLE_GOVERNANCE)
+		uassert.NoError(t, err)
+		testing.SetOriginCaller(govAddr)
+
+		// Try to update admin role
+		err = UpdateRoleAddress(cross, ROLE_ADMIN, testRealm1Addr)
+		uassert.Error(t, err)
+		uassert.ErrorContains(t, err, "only admin can update critical roles")
+
+		// Try to update devops role
+		err = UpdateRoleAddress(cross, ROLE_DEVOPS, testRealm1Addr)
+		uassert.Error(t, err)
+		uassert.ErrorContains(t, err, "only admin can update critical roles")
+	})
 }
 
 func TestCreateRole(t *testing.T) {
@@ -200,6 +238,34 @@ func TestSetRole(t *testing.T) {
 		testing.SetRealm(std.NewUserRealm(testutils.TestAddress("non_admin")))
 		err := SetRole(cross, "test_auditor", testAuditorAddr)
 		uassert.Error(t, err)
+	})
+
+	t.Run("success with governance address", func(t *testing.T) {
+		govAddr, err := GetAddress(ROLE_GOVERNANCE)
+		uassert.NoError(t, err)
+		testing.SetOriginCaller(govAddr)
+
+		err = SetRole(cross, "test_gov_role", testutils.TestAddress("test_gov_role"))
+		uassert.NoError(t, err)
+
+		actual := getCurrentConfig()
+		uassert.Equal(t, testutils.TestAddress("test_gov_role"), actual.roles["test_gov_role"])
+	})
+
+	t.Run("governance cannot set critical roles", func(t *testing.T) {
+		govAddr, err := GetAddress(ROLE_GOVERNANCE)
+		uassert.NoError(t, err)
+		testing.SetOriginCaller(govAddr)
+
+		// Try to set admin role
+		err = SetRole(cross, ROLE_ADMIN, testutils.TestAddress("new_admin"))
+		uassert.Error(t, err)
+		uassert.ErrorContains(t, err, "only admin can set critical roles")
+
+		// Try to set devops role
+		err = SetRole(cross, ROLE_DEVOPS, testutils.TestAddress("new_devops"))
+		uassert.Error(t, err)
+		uassert.ErrorContains(t, err, "only admin can set critical roles")
 	})
 }
 
