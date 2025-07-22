@@ -4,6 +4,7 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 // CollectRewardByDepositId collects reward from a specific deposit.
@@ -25,7 +26,8 @@ func CollectRewardByDepositId(cur realm, depositID string) int64 {
 	previousAddress := std.PreviousRealm().Address()
 	previousPkgPath := std.PreviousRealm().PkgPath()
 
-	assertOnlyNotHalted()
+	halt.AssertIsHaltedLaunchpad()
+	halt.AssertIsHaltedWithdraw()
 
 	deposit, err := getDeposit(depositID)
 	if err != nil {

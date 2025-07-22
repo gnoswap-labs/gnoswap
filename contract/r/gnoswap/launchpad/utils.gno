@@ -6,10 +6,6 @@ import (
 	"strings"
 
 	"gno.land/p/demo/ufmt"
-
-	"gno.land/r/gnoswap/v1/access"
-
-	"gno.land/r/gnoswap/v1/halt"
 )
 
 // isUserCall returns true if the caller is a user.
@@ -22,28 +18,10 @@ func formatInt(value int64) string {
 	return strconv.FormatInt(value, 10)
 }
 
-// assertOnlyNotHalted panics if the contract is halted.
-func assertOnlyNotHalted() {
-	if halt.IsHaltedLaunchpad() {
-		panic("launchpad contract operations are currently disabled")
-	}
-
-	if halt.IsHaltedWithdraw() {
-		panic("launchpad contract withdrawals are currently disabled")
-	}
-}
-
 // assertOnlyAdmin panics if the caller is not an admin.
 func assertOnlyUser() {
 	if !isUserCall() {
 		panic(makeErrorWithDetails(errInvalidAddress, "only user can call this function"))
-	}
-}
-
-// assertOnlyAdmin panics if the caller is not an admin.
-func assertOnlyAdmin(caller std.Address) {
-	if err := access.AdminOnly(caller); err != nil {
-		panic(makeErrorWithDetails(errInvalidAddress, err.Error()))
 	}
 }
 

@@ -7,8 +7,11 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
+	prabc "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/v1/rbac"
 )
 
 func getPrev() (string, string) {
@@ -20,6 +23,15 @@ func getPrevAddr() std.Address {
 	return std.PreviousRealm().Address()
 }
 
+func getAdminAddress() std.Address {
+	addr, exists := access.GetAddress(prabc.ROLE_ADMIN.String())
+	if !exists {
+		return rbac.DefaultRoleAddresses[prabc.ROLE_ADMIN]
+	}
+
+	return addr
+}
+
 func assertShouldNotBeHalted() {
 	if halt.IsHaltedEmission() {
 		panic("gns contract operations are currently disabled")
@@ -28,23 +40,17 @@ func assertShouldNotBeHalted() {
 
 func assertCallerIsEmission() {
 	caller := getPrevAddr()
-	if err := common.EmissionOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsEmission(caller)
 }
 
 func assertCallerIsAdmin() {
 	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsAdmin(caller)
 }
 
 func assertCallerIsGovernance() {
 	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsGovernance(caller)
 }
 
 func assertValidYear(year int64) {

@@ -151,7 +151,7 @@ func TestStakerReward_CollectRewardFromLaunchPad(t *testing.T) {
 			caller:        testutils.TestAddress("alice"),
 			to:            testutils.TestAddress("project1"),
 			expectPanic:   true,
-			expectedError: "caller(" + testutils.TestAddress("alice").String() + ") has no permission",
+			expectedError: "unauthorized: caller " + testutils.TestAddress("alice").String() + " is not launchpad",
 			setupLaunchpad: func() {
 				cleanupStakerRewardTest(t)
 			},
@@ -245,7 +245,7 @@ func TestStakerReward_SetAmountByProjectWallet(t *testing.T) {
 			amount:        1000,
 			add:           true,
 			expectPanic:   true,
-			expectedError: "caller(" + testutils.TestAddress("alice").String() + ") has no permission",
+			expectedError: "unauthorized: caller " + testutils.TestAddress("alice").String() + " is not launchpad",
 			setupMocks: func() {
 				cleanupStakerRewardTest(t)
 			},

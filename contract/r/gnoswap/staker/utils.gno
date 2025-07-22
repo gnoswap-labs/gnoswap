@@ -6,8 +6,11 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
+	prbac "gno.land/p/gnoswap/rbac"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/rbac"
 
 	"gno.land/r/gnoswap/v1/halt"
 )
@@ -15,7 +18,7 @@ import (
 // GetOrigPkgAddr returns the original package address.
 // In staker contract, original package address is the staker address.
 func GetOrigPkgAddr() std.Address {
-	return stakerAddr
+	return getRoleAddress(prbac.ROLE_STAKER)
 }
 
 // poolPathAlign ensures that a pool path is formatted with tokens in lexicographical order.
@@ -211,4 +214,13 @@ func formatAnyInt(v any) string {
 
 func formatBool(v bool) string {
 	return strconv.FormatBool(v)
+}
+
+func getRoleAddress(role prbac.SystemRole) std.Address {
+	addr, exists := access.GetAddress(role.String())
+	if !exists {
+		return rbac.DefaultRoleAddresses[role]
+	}
+
+	return addr
 }

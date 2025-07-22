@@ -6,6 +6,9 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+
+	prabc "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 )
 
@@ -60,7 +63,7 @@ func TestUtility_GlobalTryRegister(t *testing.T) {
 			gReferralKeeper = NewKeeper()
 
 			if tc.shouldSetup {
-				routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+				routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 				testing.SetRealm(std.NewUserRealm(routerAddr))
 			}
 
@@ -454,7 +457,7 @@ func setupUtilityKeeper() *keeper {
 
 func setupUtilityCaller() func() {
 	origCaller := std.OriginCaller()
-	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 	routerRealm := std.NewUserRealm(routerAddr)
 	testing.SetOriginCaller(routerAddr)
 	testing.SetRealm(routerRealm)

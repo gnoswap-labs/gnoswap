@@ -10,7 +10,10 @@ import (
 	"gno.land/p/demo/uassert"
 
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
+	_ "gno.land/r/gnoswap/v1/rbac" // initialize rbac package
 )
 
 const (
@@ -433,7 +436,7 @@ func TestSetTokenURIByImageURI(t *testing.T) {
 	testAddr := testutils.TestAddress("testAddr")
 	tokenID := grc721.TokenID("10")
 
-	positionAddr, _ := access.GetAddress(access.ROLE_POSITION)
+	positionAddr, _ := access.GetAddress(prbac.ROLE_POSITION.String())
 
 	// set position contract as caller
 	testing.SetOriginCaller(positionAddr)

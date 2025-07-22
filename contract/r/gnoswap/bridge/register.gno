@@ -5,6 +5,9 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
+
+	prabc "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 )
 
@@ -81,17 +84,17 @@ func createKey(namespace, fname string) string {
 }
 
 func getAdminAddress() std.Address {
-	return getAccessAddress(access.ROLE_ADMIN)
+	return getAccessAddress(prabc.ROLE_ADMIN.String())
 }
 
 func getGovernanceAddress() std.Address {
-	return getAccessAddress(access.ROLE_GOVERNANCE)
+	return getAccessAddress(prabc.ROLE_GOVERNANCE.String())
 }
 
 func getAccessAddress(role string) std.Address {
-	addr, err := access.GetAddress(role)
-	if err != nil {
-		panic(err)
+	addr, ok := access.GetAddress(role)
+	if !ok {
+		panic(ufmt.Errorf("address not found for role: %s", role))
 	}
 
 	return addr

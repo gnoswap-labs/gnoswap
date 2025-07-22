@@ -29,25 +29,28 @@ import (
 	rr "gno.land/r/gnoswap/v1/router"
 	sr "gno.land/r/gnoswap/v1/staker"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
 	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
 
-	poolAddr, _          = access.GetAddress(access.ROLE_POOL)
-	routerAddr, _        = access.GetAddress(access.ROLE_ROUTER)
-	emissionAddr, _      = access.GetAddress(access.ROLE_EMISSION)
-	devOpsAddr, _        = access.GetAddress(access.ROLE_DEVOPS)
-	communityPoolAddr, _ = access.GetAddress(access.ROLE_COMMUNITY_POOL)
+	poolAddr, _          = access.GetAddress(prabc.ROLE_POOL.String())
+	routerAddr, _        = access.GetAddress(prabc.ROLE_ROUTER.String())
+	emissionAddr, _      = access.GetAddress(prabc.ROLE_EMISSION.String())
+	devOpsAddr, _        = access.GetAddress(prabc.ROLE_DEVOPS.String())
+	communityPoolAddr, _ = access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
 	wugnotAddr = consts.WUGNOT_ADDR
 

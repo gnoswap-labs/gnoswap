@@ -7,6 +7,8 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
+	prabc "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 )
 
@@ -528,10 +530,10 @@ func TestSecurityTest_CallerValidation(t *testing.T) {
 			var err error
 			switch tc.callerRole {
 			case "governance":
-				addr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+				addr, _ := access.GetAddress(prabc.ROLE_GOVERNANCE.String())
 				err = isValidCaller(addr)
 			case "router":
-				addr, _ := access.GetAddress(access.ROLE_ROUTER)
+				addr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 				err = isValidCaller(addr)
 			case "malicious":
 				err = isValidCaller(testutils.TestAddress("malicious"))

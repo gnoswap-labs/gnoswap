@@ -6,17 +6,19 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
+	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/halt"
 	pl "gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/v1/rbac"
 	"gno.land/r/gnoswap/v1/referral"
 )
 
 var (
-	positionAddr, _ = access.GetAddress(access.ROLE_POSITION)
-	stakerAddr, _   = access.GetAddress(access.ROLE_STAKER)
+	positionAddr = rbac.DefaultRoleAddresses[prabc.ROLE_POSITION]
+	stakerAddr   = rbac.DefaultRoleAddresses[prabc.ROLE_STAKER]
 )
 
 const (
@@ -87,7 +89,8 @@ func Mint(
 	caller std.Address,
 	referrer string,
 ) (uint64, string, string, string) {
-	assertOnlyNotHalted()
+	halt.AssertIsHaltedPosition()
+	halt.AssertIsHaltedWithdraw()
 	prevCaller := getPrevRealm()
 	assertOnlyUserOrStaker(prevCaller)
 	if isUserCall() {
@@ -175,7 +178,8 @@ func IncreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string) {
-	assertOnlyNotHalted()
+	halt.AssertIsHaltedPosition()
+	halt.AssertIsHaltedWithdraw()
 	assertValidNumberString(amount0DesiredStr)
 	assertValidNumberString(amount1DesiredStr)
 	assertValidNumberString(amount0MinStr)
@@ -265,8 +269,8 @@ func DecreaseLiquidity(
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
 	caller := getPrevAddr()
-
-	assertOnlyNotHalted()
+	halt.AssertIsHaltedPosition()
+	halt.AssertIsHaltedWithdraw()
 	assertAuthorizedForToken(caller, positionId)
 	checkDeadline(deadline)
 	assertValidLiquidityAmount(liquidityStr)
@@ -328,7 +332,8 @@ func collectFee(
 	unwrapResult bool,
 	caller std.Address,
 ) (uint64, string, string, string, string, string) {
-	assertOnlyNotHalted()
+	halt.AssertIsHaltedPosition()
+	halt.AssertIsHaltedWithdraw()
 	assertTokenExists(positionId)
 	assertAuthorizedForToken(caller, positionId)
 	mintAndDistributeGnsCallback()

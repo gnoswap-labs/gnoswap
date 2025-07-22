@@ -9,8 +9,6 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/demo/grc20reg"
-
-	"gno.land/r/gnoswap/v1/access"
 )
 
 const (
@@ -20,7 +18,7 @@ const (
 )
 
 var (
-	adminAddr, _         = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr            = getAdminAddress()
 	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
 	UserTeller           = token.CallerTeller()
 	owner                = ownable.NewWithAddress(adminAddr)

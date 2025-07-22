@@ -6,6 +6,7 @@ import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/r/gnoswap/v1/halt"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
@@ -28,7 +29,8 @@ func Reposition(
 	amount0MinStr string,
 	amount1MinStr string,
 ) (uint64, string, int32, int32, string, string) {
-	assertOnlyNotHalted()
+	halt.AssertIsHaltedPosition()
+	halt.AssertIsHaltedWithdraw()
 	verifyTokenIdAndOwnership(positionId)
 	mintAndDistributeGnsCallback()
 

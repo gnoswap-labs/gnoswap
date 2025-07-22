@@ -17,10 +17,14 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/gnoswap/consts"
 
+	prabc "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/p/demo/uassert"
+
+	_ "gno.land/r/gnoswap/v1/rbac" // initialize rbac package
 )
 
 const (
@@ -56,12 +60,12 @@ var (
 )
 
 var (
-	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
-	devOpsAddr, _ = access.GetAddress(access.ROLE_DEVOPS)
+	adminAddr, _  = access.GetAddress(prabc.ROLE_ADMIN.String())
+	devOpsAddr, _ = access.GetAddress(prabc.ROLE_DEVOPS.String())
 
-	govAddr, _      = access.GetAddress(access.ROLE_GOVERNANCE)
-	stakerAddr, _   = access.GetAddress(access.ROLE_STAKER)
-	emissionAddr, _ = access.GetAddress(access.ROLE_EMISSION)
+	govAddr, _      = access.GetAddress(prabc.ROLE_GOVERNANCE.String())
+	stakerAddr, _   = access.GetAddress(prabc.ROLE_STAKER.String())
+	emissionAddr, _ = access.GetAddress(prabc.ROLE_EMISSION.String())
 
 	alice      = testutils.TestAddress("alice")
 	adminRealm = std.NewUserRealm(adminAddr)

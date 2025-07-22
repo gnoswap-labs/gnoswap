@@ -6,21 +6,23 @@ import (
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/testutils"
-	"gno.land/r/demo/wugnot"
 
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/demo/wugnot"
 
 	"gno.land/r/gnoswap/v1/access"
 )
 
 var (
-	admin, _             = access.GetAddress(access.ROLE_ADMIN)
-	stakerAddr, _        = access.GetAddress(access.ROLE_STAKER)
-	communityPoolAddr, _ = access.GetAddress(access.ROLE_COMMUNITY_POOL)
-	govStakerAddr, _     = access.GetAddress(access.ROLE_GOV_STAKER)
-	protocolFeeAddr, _   = access.GetAddress(access.ROLE_PROTOCOL_FEE)
-	launchpadAddr, _     = access.GetAddress(access.ROLE_LAUNCHPAD)
-	devOpsAddr, _        = access.GetAddress(access.ROLE_DEVOPS)
+	admin, _             = access.GetAddress(prbac.ROLE_ADMIN.String())
+	stakerAddr, _        = access.GetAddress(prbac.ROLE_STAKER.String())
+	communityPoolAddr, _ = access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+	govStakerAddr, _     = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	protocolFeeAddr, _   = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	launchpadAddr, _     = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	devOpsAddr, _        = access.GetAddress(prbac.ROLE_DEVOPS.String())
 
 	fooPath  string = "gno.land/r/onbloc/foo"
 	barPath  string = "gno.land/r/onbloc/bar"

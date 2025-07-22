@@ -248,7 +248,7 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 		oldCallback := callbackEmissionChange
 		callbackEmissionChange = func(amount int64) {}
 		uassert.AbortsWithMessage(t,
-			"caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) has no permission",
+			"unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not admin",
 			func() {
 				testing.SetOriginCaller(alice)
 				testing.SetRealm(std.NewUserRealm(alice))
@@ -303,7 +303,7 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 	t.Run("panic if caller is not governance contract", func(t *testing.T) {
 		oldCallback := callbackEmissionChange
 		callbackEmissionChange = func(amount int64) {}
-		expectedMsg := "caller(g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m) has no permission"
+		expectedMsg := "unauthorized: caller g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m is not governance"
 		uassert.AbortsWithMessage(t,
 			expectedMsg,
 			func() {

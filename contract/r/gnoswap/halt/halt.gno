@@ -4,7 +4,7 @@ import (
 	"std"
 	"strconv"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/v1/access"
 )
 
 // Global halt configuration that controls all operation permissions
@@ -22,7 +22,7 @@ func init() {
 // This function overrides all individual operation settings
 func SetHaltLevel(cur realm, level HaltLevel) {
 	caller := std.PreviousRealm().Address()
-	assertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	// Apply the new halt level configuration
 	err := setHaltLevel(level)
@@ -43,10 +43,10 @@ func SetHaltLevel(cur realm, level HaltLevel) {
 // Only admin or governance can call this function
 func SetOperationStatus(cur realm, op OpType, halted bool) {
 	caller := std.PreviousRealm().Address()
-	assertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	if !op.IsValid() {
-		panic(ufmt.Errorf("invalid operation type: %s", op))
+		panic(makeErrorWithDetails(errInvalidOpType, op.String()))
 	}
 
 	// Save the updated configuration
@@ -77,7 +77,7 @@ func setHaltLevel(level HaltLevel) error {
 	case HaltLevelComplete:
 		config = newCompleteConfig()
 	default:
-		return ufmt.Errorf("invalid halt level: %s", level)
+		return makeErrorWithDetails(errInvalidHaltLevel, level.String())
 	}
 
 	// Apply the new configuration

@@ -9,6 +9,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/gns"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -20,7 +21,7 @@ var (
 	user01Addr  = testutils.TestAddress("user01Addr")
 	user01Realm = std.NewUserRealm(user01Addr)
 
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 )
 
 const (

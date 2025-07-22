@@ -49,7 +49,7 @@ func TestConfig_ReconfigureByAdmin(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "caller(notadmin) has no permission",
+			expectedPanicMsg:              "unauthorized: caller notadmin is not admin",
 		},
 		{
 			name:                          "Fail: halted",
@@ -63,7 +63,7 @@ func TestConfig_ReconfigureByAdmin(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "gov/governance contract access is currently disabled",
+			expectedPanicMsg:              "halted: governance",
 		},
 		{
 			name:                          "Edge: zero values",
@@ -82,6 +82,11 @@ func TestConfig_ReconfigureByAdmin(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				testing.SetRealm(adminRealm)
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+			}()
+
 			// given: set realm and halt state
 			testing.SetRealm(adminRealm)
 			if tc.halted {
@@ -175,7 +180,7 @@ func TestConfig_ReconfigureByGovernance(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "caller(notgov) has no permission",
+			expectedPanicMsg:              "unauthorized: caller notgov is not governance",
 		},
 		{
 			name:                          "Fail: halted",
@@ -189,7 +194,7 @@ func TestConfig_ReconfigureByGovernance(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "gov/governance contract access is currently disabled",
+			expectedPanicMsg:              "halted: governance",
 		},
 	}
 

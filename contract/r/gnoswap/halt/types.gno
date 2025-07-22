@@ -1,7 +1,5 @@
 package halt
 
-import "errors"
-
 // Halt levels define different states of system operation restriction
 const (
 	HaltLevelNone      HaltLevel = "NONE"      // All operations enabled
@@ -24,11 +22,6 @@ const (
 	OpTypeCommunityPool OpType = "community_pool" // Community pool operations
 	OpTypeEmission      OpType = "emission"       // Token emission operations
 	OpTypeWithdraw      OpType = "withdraw"       // Withdraw operations
-)
-
-// Default errors used throughout the halt system
-var (
-	errHalted = errors.New("halted") // Error returned when operations are halted
 )
 
 // Core types and descriptions mapping for halt levels

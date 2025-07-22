@@ -6,14 +6,13 @@ import (
 
 	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
-
-	"gno.land/r/gnoswap/v1/access"
+	prbac "gno.land/p/gnoswap/rbac"
 )
 
 var (
-	adminAddr        = getContractAddress(access.ROLE_ADMIN)
-	govStakerAddress = getContractAddress(access.ROLE_GOV_STAKER)
-	launchpadAddress = getContractAddress(access.ROLE_LAUNCHPAD)
+	adminAddr        = getContractAddress(prbac.ROLE_ADMIN.String())
+	govStakerAddress = getContractAddress(prbac.ROLE_GOV_STAKER.String())
+	launchpadAddress = getContractAddress(prbac.ROLE_LAUNCHPAD.String())
 )
 
 func TestTotalSupply(t *testing.T) {
@@ -30,7 +29,7 @@ func TestMintFail(t *testing.T) {
 	uassert.AbortsWithMessage(t, "[GNOSWAP-XGNS-001] caller has no permission || only gov/staker(g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa) or launchpad(g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3) contract can call Mint, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", func() {
 		Mint(cross, govStakerAddress, amount)
 	})
-	uassert.AbortsWithMessage(t, "[GNOSWAP-XGNS-001] caller has no permission || only launchpad(g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3) contract can call MintByLaunchPad, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", func() {
+	uassert.AbortsWithMessage(t, "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not launchpad", func() {
 		MintByLaunchPad(cross, govStakerAddress, amount)
 	})
 }
@@ -89,7 +88,7 @@ func TestBurnFail(t *testing.T) {
 	uassert.AbortsWithMessage(t, "[GNOSWAP-XGNS-001] caller has no permission || only gov/staker(g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa) or launchpad(g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3) contract can call Burn, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", func() {
 		Burn(cross, govStakerAddress, amount)
 	})
-	uassert.AbortsWithMessage(t, "[GNOSWAP-XGNS-001] caller has no permission || only launchpad(g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3) contract can call BurnByLaunchPad, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", func() {
+	uassert.AbortsWithMessage(t, "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not launchpad", func() {
 		BurnByLaunchPad(cross, govStakerAddress, amount)
 	})
 }

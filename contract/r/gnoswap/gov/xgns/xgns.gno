@@ -9,17 +9,18 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/rbac"
+
+	prbac "gno.land/p/gnoswap/rbac"
 )
 
 var (
+	govStakerAddr = getContractAddress(prbac.ROLE_GOV_STAKER.String())
+	launchpadAddr = getContractAddress(prbac.ROLE_LAUNCHPAD.String())
+
 	admin         = ownable.NewWithAddress(std.DerivePkgAddr(govStakerAddr.String()))
 	token, ledger = grc20.NewToken("XGNS", "xGNS", 6)
-
-	govStakerAddr = getContractAddress(access.ROLE_GOV_STAKER)
-	launchpadAddr = getContractAddress(access.ROLE_LAUNCHPAD)
 )
-
-func init() {}
 
 func TotalSupply() int64 {
 	return token.TotalSupply()
@@ -127,12 +128,7 @@ func MintByLaunchPad(cur realm, to std.Address, amount int64) {
 	assertIsNotHaltedWithdraw()
 
 	caller := std.PreviousRealm().Address()
-	if err := access.LaunchpadOnly(caller); err != nil {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("only launchpad(%s) contract can call MintByLaunchPad, called from %s", launchpadAddr.String(), caller.String()),
-		))
-	}
+	access.AssertIsLaunchpad(caller)
 
 	mint(to, amount)
 }
@@ -179,12 +175,8 @@ func BurnByLaunchPad(cur realm, from std.Address, amount int64) {
 	assertIsNotHaltedWithdraw()
 
 	caller := std.PreviousRealm().Address()
-	if err := access.LaunchpadOnly(caller); err != nil {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("only launchpad(%s) contract can call BurnByLaunchPad, called from %s", launchpadAddr.String(), caller.String()),
-		))
-	}
+	access.AssertIsLaunchpad(caller)
+	
 	burn(from, amount)
 }
 
@@ -194,6 +186,10 @@ func burn(from std.Address, amount int64) {
 
 // getContractAddress retrieves the address which registered the role
 func getContractAddress(roleName string) std.Address {
-	addr, _ := access.GetAddress(roleName)
+	addr, exists := access.GetAddress(roleName)
+	if !exists {
+		return rbac.DefaultRoleAddresses[prbac.SystemRole(roleName)]
+	}
+
 	return addr
 }

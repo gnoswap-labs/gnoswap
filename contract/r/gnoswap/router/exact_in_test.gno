@@ -14,6 +14,9 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gns"
+
+	prabc "gno.land/p/gnoswap/rbac"
+
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	"gno.land/r/onbloc/bar"
@@ -103,8 +106,8 @@ func TestExactInSwapRouteOperation_Validate(t *testing.T) {
 }
 
 func TestExactInSwapRoute(t *testing.T) {
-	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
-	poolAddr, _ := access.GetAddress(access.ROLE_POOL)
+	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	CreatePoolWithoutFee(t)
 	MakeMintPositionWithoutFee(t)
@@ -183,8 +186,8 @@ func TestExactInSwapRoute(t *testing.T) {
 
 func TestExactInSwapRouteWithReferral(t *testing.T) {
 	t.Skip("Currently we don't have a way to test emitted events")
-	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
-	poolAddr, _ := access.GetAddress(access.ROLE_POOL)
+	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	CreatePoolWithoutFee(t)
 	MakeMintPositionWithoutFee(t)

@@ -6,7 +6,6 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/access"
 	cp "gno.land/r/gnoswap/v1/community_pool"
 	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
@@ -414,59 +413,6 @@ func createParameterHandlers() *ParameterRegistry {
 				percent := parseNumber(params[0], kindInt64).(int64)
 				block := parseNumber(params[1], kindInt64).(int64)
 				sr.SetWarmUp(cross, percent, block)
-
-				return nil
-			},
-		},
-
-		// Access control handlers
-		{
-			pkgPath:    consts.ACCESS_PATH,
-			function:   "CreateRole",
-			paramCount: 2,
-			handlerFunc: func(params []string) error {
-				// Create new access control role with assigned address
-				addr := std.Address(params[1])
-				if !addr.IsValid() {
-					panic(ufmt.Sprintf("invalid address: %s", params[1]))
-				}
-
-				roleName := params[0]
-				access.CreateRole(cross, roleName, addr)
-
-				return nil
-			},
-		},
-		{
-			pkgPath:    consts.ACCESS_PATH,
-			function:   "SetRole",
-			paramCount: 2,
-			handlerFunc: func(params []string) error {
-				// Assign role to an address
-				addr := std.Address(params[1])
-				if !addr.IsValid() {
-					panic(ufmt.Sprintf("invalid address: %s", params[1]))
-				}
-
-				roleName := params[0]
-				access.SetRole(cross, roleName, addr)
-
-				return nil
-			},
-		},
-		{
-			pkgPath:    consts.ACCESS_PATH,
-			function:   "UpdateRoleAddress",
-			paramCount: 2,
-			handlerFunc: func(params []string) error {
-				// Update the address assigned to a role
-				addr := std.Address(params[1])
-				if !addr.IsValid() {
-					panic(ufmt.Sprintf("invalid address: %s", params[1]))
-				}
-
-				roleName := params[0]
-				access.UpdateRoleAddress(cross, roleName, addr)
 
 				return nil
 			},
