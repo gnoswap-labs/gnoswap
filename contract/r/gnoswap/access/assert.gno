@@ -3,12 +3,19 @@ package access
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v1/rbac"
+	"gno.land/p/demo/ufmt"
 )
 
-// checkRole checks if the caller has the given role and optionally updates the role address
+// checkRole checks if the caller has the given role by comparing addresses
 func checkRole(roleName string, caller std.Address) error {
-	return rbac.CheckPermission(roleName, PERM_ACCESS, caller)
+	roleAddr, err := GetAddress(roleName)
+	if err != nil {
+		return err
+	}
+	if caller != roleAddr {
+		return ufmt.Errorf("unauthorized: caller %s is not %s", caller, roleName)
+	}
+	return nil
 }
 
 // AdminOnly checks if the caller is the admin and optionally updates the admin address

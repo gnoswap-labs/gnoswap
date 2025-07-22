@@ -7,8 +7,6 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
-
-	"gno.land/r/gnoswap/v1/rbac"
 )
 
 var (
@@ -122,7 +120,6 @@ func TestCreateRole(t *testing.T) {
 
 func TestSetRole(t *testing.T) {
 	testNewRoleAddr := testutils.TestAddress("test_new_role")
-	testAnotherAddr := testutils.TestAddress("test_another_role")
 	testAuditorAddr := testutils.TestAddress("test_auditor")
 	testReviewerAddr := testutils.TestAddress("test_reviewer")
 

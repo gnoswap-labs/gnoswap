@@ -1,8 +1,6 @@
 package rbac
 
 import (
-	"std"
-
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
@@ -18,38 +16,6 @@ func RegisterRole(cur realm, roleName string) error {
 	}
 	return globalManager.RegisterRole(roleName)
 }
-
-// RegisterPermission globally registers a permission on a role.
-// If the role does not exist, an error is returned.
-// XXX seems not needed
-// func RegisterPermission(cur realm, roleName, permissionName string, checker prbac.PermissionChecker) error {
-// 	if !callerIsOwner() {
-// 		return prbac.ErrUnauthorized
-// 	}
-// 	return globalManager.RegisterPermission(roleName, permissionName, checker)
-// }
-
-// CheckPermission globally checks if the provided caller has the specified
-// permission under the given role. If the role or permission is not found, or
-// the check fails, an error is returned.
-// func CheckPermission(roleName, permissionName string, caller std.Address) error {
-// 	return globalManager.CheckPermission(roleName, permissionName, caller)
-// }
-
-// UpdatePermission globally updates the permission checker for a role's permission.
-// An error is returned if the role or permission does not exist.
-// func UpdatePermission(cur realm, roleName, permissionName string, newChecker prbac.PermissionChecker) error {
-// 	return globalManager.UpdatePermission(roleName, permissionName, newChecker)
-// }
-
-// RemovePermission globally removes a permission from a role.
-// An error is returned if the role or permission does not exist.
-// func RemovePermission(cur realm, roleName, permissionName string) error {
-// 	if !callerIsOwner() {
-// 		return prbac.ErrUnauthorized
-// 	}
-// 	return globalManager.RemovePermission(roleName, permissionName)
-// }
 
 // RemoveRole globally removes a role.
 // An error is returned if the role does not exist.
