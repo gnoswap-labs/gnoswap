@@ -79,7 +79,7 @@ func TestTypes_HaltLevelDescription(t *testing.T) {
 		{
 			name:     "Complete level description",
 			level:    HaltLevelComplete,
-			expected: "All operations isabled",
+			expected: "All operations disabled",
 		},
 		{
 			name:     "Invalid level description",
@@ -230,6 +230,11 @@ func TestTypes_OpTypeString(t *testing.T) {
 			expected: "emission",
 		},
 		{
+			name:     "Withdraw operation string",
+			op:       OpTypeWithdraw,
+			expected: "withdraw",
+		},
+		{
 			name:     "Custom operation string",
 			op:       OpType("custom"),
 			expected: "custom",
@@ -311,6 +316,11 @@ func TestTypes_OpTypeIsValid(t *testing.T) {
 		{
 			name:     "Valid emission operation",
 			op:       OpTypeEmission,
+			expected: true,
+		},
+		{
+			name:     "Valid withdraw operation",
+			op:       OpTypeWithdraw,
 			expected: true,
 		},
 		{

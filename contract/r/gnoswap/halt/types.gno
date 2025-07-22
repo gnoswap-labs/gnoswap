@@ -23,6 +23,7 @@ const (
 	OpTypeXGns          OpType = "xgns"           // xGNS token operations
 	OpTypeCommunityPool OpType = "community_pool" // Community pool operations
 	OpTypeEmission      OpType = "emission"       // Token emission operations
+	OpTypeWithdraw      OpType = "withdraw"       // Withdraw operations
 )
 
 // Default errors used throughout the halt system
@@ -35,7 +36,7 @@ var haltLevelDescriptions = map[HaltLevel]string{
 	HaltLevelNone:      "All operations enabled",
 	HaltLevelSafeMode:  "All operations enabled except withdrawals",
 	HaltLevelEmergency: "Only governance and withdrawal operations enabled",
-	HaltLevelComplete:  "All operations isabled",
+	HaltLevelComplete:  "All operations disabled",
 }
 
 // HaltLevel represents the current system halt state
@@ -87,7 +88,8 @@ func (o OpType) IsValid() bool {
 		OpTypeGovStaker,
 		OpTypeXGns,
 		OpTypeCommunityPool,
-		OpTypeEmission:
+		OpTypeEmission,
+		OpTypeWithdraw:
 		return true
 	default:
 		return false
