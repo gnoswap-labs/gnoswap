@@ -1,7 +1,6 @@
 package rbac
 
 import (
-	"errors"
 	"std"
 	"testing"
 
@@ -134,31 +133,31 @@ func TestDeclareRole(t *testing.T) {
 		expectedError    error
 	}{
 		{
-			name:          "declare role success",
-			caller:        testCaller,
-			owner:         testCaller,
-			roleName:      "test_role",
-			inputRoleName: "newAdmin",
+			name:             "declare role success",
+			caller:           testCaller,
+			owner:            testCaller,
+			roleName:         "test_role",
+			inputRoleName:    "newAdmin",
 			inputRoleOptions: []prbac.RoleOption{},
-			expectedError: nil,
+			expectedError:    nil,
 		},
 		{
-			name:          "declare role failed by wrong caller",
-			caller:        wrongCaller,
-			owner:         testCaller,
-			roleName:      "test_role",
-			inputRoleName: "newAdmin",
+			name:             "declare role failed by wrong caller",
+			caller:           wrongCaller,
+			owner:            testCaller,
+			roleName:         "test_role",
+			inputRoleName:    "newAdmin",
 			inputRoleOptions: []prbac.RoleOption{},
-			expectedError: prbac.ErrUnauthorized,
+			expectedError:    prbac.ErrUnauthorized,
 		},
 		{
-			name:          "declare role failed by already declared role",
-			caller:        wrongCaller,
-			owner:         testCaller,
-			roleName:      "test_role",
-			inputRoleName: "test_role",
+			name:             "declare role failed by already declared role",
+			caller:           wrongCaller,
+			owner:            testCaller,
+			roleName:         "test_role",
+			inputRoleName:    "test_role",
 			inputRoleOptions: []prbac.RoleOption{},
-			expectedError: ufmt.Errorf("role test_role already exists"),
+			expectedError:    ufmt.Errorf("role test_role already exists"),
 		},
 	}
 
@@ -176,4 +175,210 @@ func TestDeclareRole(t *testing.T) {
 			uassert.ErrorIs(t, err, tc.expectedError)
 		})
 	}
+}
+
+func TestManager_GlobalManager(t *testing.T) {
+	tests := []struct {
+		name             string
+		setupOwner       std.Address
+		expectedNotNil   bool
+		expectedOwner    std.Address
+		expectedHasPanic bool
+		expectedPanicMsg string
+	}{
+		{
+			name:             "success - get global manager",
+			setupOwner:       testutils.TestAddress("owner1"),
+			expectedNotNil:   true,
+			expectedOwner:    testutils.TestAddress("owner1"),
+			expectedHasPanic: false,
+		},
+		{
+			name:             "success - get global manager with different owner",
+			setupOwner:       testutils.TestAddress("owner2"),
+			expectedNotNil:   true,
+			expectedOwner:    testutils.TestAddress("owner2"),
+			expectedHasPanic: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.Equal(t, tc.expectedPanicMsg, r.(string))
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
+				}
+			}()
+
+			cleanup()
+
+			// given
+			testing.SetOriginCaller(tc.setupOwner)
+			globalManager = prbac.NewRBACWithAddress(tc.setupOwner)
+
+			// when
+			manager := GlobalManager()
+
+			// then
+			if tc.expectedNotNil {
+				uassert.NotNil(t, manager)
+				uassert.Equal(t, tc.expectedOwner, manager.Owner())
+			} else {
+				uassert.Nil(t, manager)
+			}
+		})
+	}
+}
+
+func TestManager_OwnershipValidation(t *testing.T) {
+	tests := []struct {
+		name             string
+		setupOwner       std.Address
+		caller           std.Address
+		roleName         string
+		expectedHasPanic bool
+		expectedPanicMsg string
+		expectedError    error
+	}{
+		{
+			name:             "success - owner can register role",
+			setupOwner:       testutils.TestAddress("owner1"),
+			caller:           testutils.TestAddress("owner1"),
+			roleName:         "test_role",
+			expectedHasPanic: false,
+			expectedError:    nil,
+		},
+		{
+			name:             "fail - non-owner cannot register role",
+			setupOwner:       testutils.TestAddress("owner1"),
+			caller:           testutils.TestAddress("notowner"),
+			roleName:         "test_role",
+			expectedHasPanic: false,
+			expectedError:    prbac.ErrUnauthorized,
+		},
+		{
+			name:             "success - different owner can register role",
+			setupOwner:       testutils.TestAddress("owner2"),
+			caller:           testutils.TestAddress("owner2"),
+			roleName:         "admin_role",
+			expectedHasPanic: false,
+			expectedError:    nil,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.Equal(t, tc.expectedPanicMsg, r.(string))
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
+				}
+			}()
+
+			cleanup()
+
+			// given
+			testing.SetOriginCaller(tc.setupOwner)
+			globalManager = prbac.NewRBACWithAddress(tc.setupOwner)
+
+			// when
+			testing.SetOriginCaller(tc.caller)
+			err := RegisterRole(cross, tc.roleName)
+
+			// then
+			if tc.expectedError != nil {
+				uassert.ErrorIs(t, err, tc.expectedError)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestManager_RegisterRoleExtended(t *testing.T) {
+	tests := []struct {
+		name             string
+		setupOwner       std.Address
+		caller           std.Address
+		roleName         string
+		expectedHasPanic bool
+		expectedPanicMsg string
+		expectedError    error
+	}{
+		{
+			name:             "success - register admin role",
+			setupOwner:       testutils.TestAddress("admin"),
+			caller:           testutils.TestAddress("admin"),
+			roleName:         "admin",
+			expectedHasPanic: false,
+			expectedError:    nil,
+		},
+		{
+			name:             "success - register custom role",
+			setupOwner:       testutils.TestAddress("admin"),
+			caller:           testutils.TestAddress("admin"),
+			roleName:         "custom_role",
+			expectedHasPanic: false,
+			expectedError:    nil,
+		},
+		{
+			name:             "fail - unauthorized caller",
+			setupOwner:       testutils.TestAddress("admin"),
+			caller:           testutils.TestAddress("hacker"),
+			roleName:         "hack_role",
+			expectedHasPanic: false,
+			expectedError:    prbac.ErrUnauthorized,
+		},
+		{
+			name:             "fail - empty role name",
+			setupOwner:       testutils.TestAddress("admin"),
+			caller:           testutils.TestAddress("admin"),
+			roleName:         "",
+			expectedHasPanic: false,
+			expectedError:    nil, // Should succeed with empty string
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if tc.expectedHasPanic {
+						uassert.Equal(t, tc.expectedPanicMsg, r.(string))
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
+					}
+				}
+			}()
+
+			cleanup()
+
+			// given
+			testing.SetOriginCaller(tc.setupOwner)
+			globalManager = prbac.NewRBACWithAddress(tc.setupOwner)
+
+			// when
+			testing.SetOriginCaller(tc.caller)
+			err := RegisterRole(cross, tc.roleName)
+
+			// then
+			if tc.expectedError != nil {
+				uassert.ErrorIs(t, err, tc.expectedError)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// Helper function to cleanup global state
+func cleanup() {
+	globalManager = prbac.New()
 }
