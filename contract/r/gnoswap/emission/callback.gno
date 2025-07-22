@@ -1,7 +1,6 @@
 package emission
 
 import (
-	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/bridge"
 	"gno.land/r/gnoswap/v1/gns"
 )
@@ -45,7 +44,6 @@ func registerMintAndDistributeGnsCallback(cur realm) {
 	// Therefore, there is no need to separately check the caller in a function that applies upgrades,
 	// but in a test environment, since the admin address cannot be fixed as the default address,
 	// we use the admin address registered in the `access` contract instead.
-	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
 	bridge.RegisterCallback(cross, adminAddr, "emission", "MintAndDistributeGns", MintAndDistributeGns)
 }
 
