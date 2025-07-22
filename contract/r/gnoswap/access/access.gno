@@ -233,48 +233,6 @@ func GetRoles() []string {
 	return roles
 }
 
-// DeleteRole deletes a role and its associated permissions
-func DeleteRole(cur realm, roleName string) error {
-	if !isAdmin() {
-		return ufmt.Errorf("only admin can delete roles")
-	}
-
-	if err := validateConfig(); err != nil {
-		return err
-	}
-
-	if err := validateRoleName(roleName); err != nil {
-		return err
-	}
-
-	if !RoleExists(roleName) {
-		return ufmt.Errorf("role %s does not exist", roleName)
-	}
-
-	// Prevent deletion of critical roles
-	if roleName == ROLE_ADMIN {
-		return ufmt.Errorf("cannot delete admin role")
-	}
-
-	// Store the address before deletion for event emission
-	deletedAddress := currentConfig.roles[roleName]
-
-	// Remove the role from RBAC
-	if err := rbac.RemoveRole(cross, roleName); err != nil {
-		return ufmt.Errorf("failed to remove role from RBAC: %v", err)
-	}
-
-	// Remove the role from current config
-	delete(currentConfig.roles, roleName)
-
-	std.Emit(
-		roleDeleted,
-		"roleName", roleName,
-		"address", deletedAddress.String(),
-	)
-	return nil
-}
-
 func isAdmin() bool {
 	caller := std.PreviousRealm().Address()
 	adminAddr, err := GetAddress(ROLE_ADMIN)
