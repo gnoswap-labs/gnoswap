@@ -636,27 +636,10 @@ func applyUnStake(positionId uint64) {
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := getPrevAddr()
 
-	token0Amount, token1Amount, err := calculateStakeTokenAmount(positionId, owner, caller)
+	_, _, err := calculateStakeTokenAmount(positionId, owner, caller)
 	if err != nil {
 		panic(err.Error())
 	}
-
-	prevAddr, prevPkgPath := getPrev()
-	std.Emit(
-		"UnStakeToken",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
-		"positionId", formatUint(positionId),
-		"poolPath", deposit.targetPoolPath,
-		"from", GetOrigPkgAddr().String(),
-		"to", deposit.owner.String(),
-		"amount0", token0Amount,
-		"amount1", token1Amount,
-		"liquidity", deposit.liquidity.ToString(),
-		"positionUpperTick", formatInt(int64(deposit.tickUpper)),
-		"positionLowerTick", formatInt(int64(deposit.tickLower)),
-		"currentTick", formatInt(int64(currentTick)),
-	)
 }
 
 // requireTokenOwnership validates that the caller has permission to operate the token.
