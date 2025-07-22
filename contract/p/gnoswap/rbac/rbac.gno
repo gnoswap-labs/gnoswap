@@ -60,6 +60,11 @@ func (rb *RBAC) RemoveRole(roleName string) error {
 		return ufmt.Errorf("role %s does not exist", roleName)
 	}
 
+	// Check if it's a system role
+	if IsSystemRole(roleName) {
+		return ufmt.Errorf("cannot remove system role %s", roleName)
+	}
+
 	// Simply delete the role since permissions are no longer managed here
 	delete(rb.roles, roleName)
 
