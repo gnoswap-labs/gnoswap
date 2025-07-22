@@ -54,7 +54,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 			to:          dummyReceiver,
 			amount:      1000,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-COMMUNITY_POOL-005] halted || community pool is currently halted",
+			panicMsg:    "community pool contract operations are currently disabled",
 		},
 		{
 			name: "panic if not admin",
@@ -129,7 +129,7 @@ func TestTransferToken(t *testing.T) {
 			to:          dummyReceiver,
 			amount:      1000,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-COMMUNITY_POOL-005] halted || community pool is currently halted",
+			panicMsg:    "community pool contract operations are currently disabled",
 		},
 		{
 			name: "panic if not governance",
