@@ -5,6 +5,7 @@ import (
 
 	"gno.land/r/gnoswap/v1/access"
 	en "gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 // Config represents the configuration of the governor contract
@@ -57,7 +58,7 @@ func ReconfigureByAdmin(
 	executionWindow int64,
 ) int64 {
 	// Check if system is halted before proceeding
-	assertHaltedExecute()
+	halt.AssertIsHaltedGovernance()
 
 	// Get caller information and verify admin privileges
 	previousRealm := std.PreviousRealm()
@@ -130,7 +131,7 @@ func ReconfigureByGovernance(
 	executionWindow int64,
 ) int64 {
 	// Check if system is halted before proceeding
-	assertHaltedExecute()
+	halt.AssertIsHaltedGovernance()
 
 	// Get caller information and verify governance privileges
 	previousRealm := std.PreviousRealm()
