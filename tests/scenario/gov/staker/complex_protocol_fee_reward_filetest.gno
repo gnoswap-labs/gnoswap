@@ -11,6 +11,8 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/access"
 	en "gno.land/r/gnoswap/v1/emission"
@@ -24,14 +26,15 @@ import (
 var t *testing.T
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
-	adminRealm   = std.NewUserRealm(adminAddr)
-	dummyAddr    = testutils.TestAddress("dummy")
-	dummyRealm   = std.NewUserRealm(dummyAddr)
-	dummy2Addr   = testutils.TestAddress("dummy2")
-	dummy2Realm  = std.NewUserRealm(dummy2Addr)
-	stakerRealm  = std.NewUserRealm(consts.STAKER_ADDR)
-	minAmount    = int64(1_000_000)
+	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm    = std.NewUserRealm(adminAddr)
+	dummyAddr     = testutils.TestAddress("dummy")
+	dummyRealm    = std.NewUserRealm(dummyAddr)
+	dummy2Addr    = testutils.TestAddress("dummy2")
+	dummy2Realm   = std.NewUserRealm(dummy2Addr)
+	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
+	stakerRealm   = std.NewUserRealm(stakerAddr)
+	minAmount     = int64(1_000_000)
 
 	barPath    = "gno.land/r/onbloc/bar"
 	quxPath    = "gno.land/r/onbloc/qux"
