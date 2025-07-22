@@ -10,6 +10,9 @@ import (
 	pn "gno.land/r/gnoswap/v1/position"
 	"gno.land/r/gnoswap/v1/router"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
@@ -17,12 +20,12 @@ import (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
+	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
 	barPath = "gno.land/r/onbloc/bar"
 	fooPath = "gno.land/r/onbloc/foo"
