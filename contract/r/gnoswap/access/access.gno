@@ -55,7 +55,6 @@ func validateRoleName(roleName string) error {
 	return nil
 }
 
-
 // setConfig sets the current configuration
 func setConfig(cfg *config) error {
 	if cfg == nil {
@@ -153,6 +152,10 @@ func UpdateRoleAddress(cur realm, roleName string, newAddress std.Address) error
 
 	if err := validateConfig(); err != nil {
 		return err
+	}
+
+	if !RoleExists(roleName) {
+		return ufmt.Errorf("role %s does not exist", roleName)
 	}
 
 	prevAddress := currentConfig.roles[roleName]
