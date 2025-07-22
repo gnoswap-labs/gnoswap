@@ -8,14 +8,16 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	prabc "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 )
 
 var (
-	positionAddr, _    = access.GetAddress(access.ROLE_POSITION)
-	poolAddr, _        = access.GetAddress(access.ROLE_POOL)
-	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
-	routerAddr, _      = access.GetAddress(access.ROLE_ROUTER)
+	positionAddr, _    = access.GetAddress(prabc.ROLE_POSITION.String())
+	poolAddr, _        = access.GetAddress(prabc.ROLE_POOL.String())
+	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 )
 
 // Mint adds liquidity to a pool by minting a new position.

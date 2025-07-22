@@ -9,6 +9,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/gnoswap/consts"
+	prabc "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/halt"
@@ -261,19 +263,14 @@ func assertOnlyNotHalted() {
 // assertOnlyPositionContract panics if the caller is not the position contract.
 func assertOnlyPositionContract() {
 	caller := getPrevAddr()
-	if err := access.PositionOnly(caller); err != nil {
-		panic(newErrorWithDetail(
-			errNoPermission,
-			ufmt.Sprintf("only position(%s) can call, called from %s", positionAddr, caller.String()),
-		))
-	}
+	access.AssertIsPosition(caller)
 }
 
 // assertOnlyAdmin panics if the caller is not the admin.
 func assertOnlyAdmin() {
-	adminAddr, err := access.GetAddress(access.ROLE_ADMIN)
-	if err != nil {
-		panic(err)
+	adminAddr, ok := access.GetAddress(prabc.ROLE_ADMIN.String())
+	if !ok {
+		panic(ufmt.Sprintf("address not found for role: %s", prabc.ROLE_ADMIN.String()))
 	}
 
 	caller := getPrevAddr()
@@ -288,9 +285,7 @@ func assertOnlyAdmin() {
 // assertOnlyGovernance panics if the caller is not the governance.
 func assertOnlyGovernance() {
 	caller := getPrevAddr()
-	if err := access.GovernanceOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsGovernance(caller)
 }
 
 // assertOnlyRegistered panics if the token is not registered.
