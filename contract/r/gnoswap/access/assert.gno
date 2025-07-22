@@ -97,7 +97,7 @@ func AssertHasAnyRole(caller std.Address, roleNames ...string) {
 }
 
 func assertIsRBAC(caller std.Address) {
-	rbacAddr := std.NewCodeRealm(rbacPackagePath).Address()
+	rbacAddr := std.DerivePkgAddr(rbacPackagePath)
 
 	if caller != rbacAddr {
 		panic(ufmt.Errorf("unauthorized: caller %s is not rbac", caller))
