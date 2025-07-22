@@ -152,7 +152,7 @@ func TestDeclareRole(t *testing.T) {
 		},
 		{
 			name:             "declare role failed by already declared role",
-			caller:           wrongCaller,
+			caller:           testCaller,
 			owner:            testCaller,
 			roleName:         "test_role",
 			inputRoleName:    "test_role",
@@ -166,6 +166,11 @@ func TestDeclareRole(t *testing.T) {
 			// given
 			testing.SetOriginCaller(tc.owner)
 			globalManager = prbac.NewRBACWithAddress(tc.owner)
+
+			if tc.roleName != "" && tc.roleName == tc.inputRoleName {
+				err := RegisterRole(cross, tc.roleName)
+				uassert.NoError(t, err)
+			}
 
 			// when
 			testing.SetOriginCaller(tc.caller)

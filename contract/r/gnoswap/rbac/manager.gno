@@ -20,6 +20,9 @@ func RegisterRole(cur realm, roleName string) error {
 // RemoveRole globally removes a role.
 // An error is returned if the role does not exist.
 func RemoveRole(cur realm, roleName string) error {
+	if !callerIsOwner() {
+		return prbac.ErrUnauthorized
+	}
 	return globalManager.RemoveRole(roleName)
 }
 
@@ -27,6 +30,9 @@ func RemoveRole(cur realm, roleName string) error {
 // This allows declarative registration of roles along with their permissions.
 // Returns an error if the role already exists.
 func DeclareRole(cur realm, roleName string, opts ...prbac.RoleOption) error {
+	if !callerIsOwner() {
+		return prbac.ErrUnauthorized
+	}
 	return globalManager.DeclareRole(roleName, opts...)
 }
 
