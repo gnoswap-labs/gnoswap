@@ -465,7 +465,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 
 	t.Run("unauthorized caller should fail", func(t *testing.T) {
 		unauthorized := testutils.TestAddress("unauthorized")
-		expected := "caller(" + unauthorized.String() + ") is not authorized for role admin"
+		expected := "unauthorized: caller " + unauthorized.String() + " is not admin"
 
 		testing.SetRealm(std.NewUserRealm(unauthorized))
 		uassert.AbortsWithMessage(t, expected, func() {
