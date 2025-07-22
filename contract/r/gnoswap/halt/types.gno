@@ -7,7 +7,7 @@ const (
 	HaltLevelNone      HaltLevel = "NONE"      // All operations enabled
 	HaltLevelSafeMode  HaltLevel = "SAFE_MODE" // All operations enabled except withdrawals
 	HaltLevelEmergency HaltLevel = "EMERGENCY" // Only governance and withdrawal operations enabled
-	HaltLevelComplete  HaltLevel = "COMPLETE"  // All operations isabled
+	HaltLevelComplete  HaltLevel = "COMPLETE"  // All operations disabled
 )
 
 // Operation types representing individual contracts and their capabilities
