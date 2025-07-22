@@ -103,113 +103,11 @@ func getCurrentConfig() *config {
 	return currentConfig
 }
 
-// SetRole sets or updates a role with the given address
-func SetRole(cur realm, roleName string, address std.Address) error {
-	if err := validateConfig(); err != nil {
-		return err
-	}
-
-	if err := validateRoleName(roleName); err != nil {
-		return err
-	}
-
-	// only admin or governance can set roles
-	if !isAdminOrGovernance() {
-		return ufmt.Errorf("only admin or governance can set roles")
-	}
-
-	// Only admin can set critical roles
-	if isCriticalRole(roleName) && !isAdmin() {
-		return ufmt.Errorf("only admin can set critical roles (admin, devops)")
-	}
-
-	prevAddress := currentConfig.roles[roleName]
-
-	if !RoleExists(roleName) {
-		if err := rbac.DeclareRole(cross, roleName); err != nil {
-			return err
-		}
-	}
-
-	currentConfig.roles[roleName] = address
-
-	std.Emit(
-		roleSet,
-		"roleName", roleName,
-		"prevAddress", prevAddress.String(),
-		"newAddress", address.String(),
-	)
-	return nil
-}
-
 func GetAddress(roleName string) (std.Address, error) {
 	if currentConfig == nil {
 		return std.Address(""), ufmt.Errorf(errNotInitialized)
 	}
 	return currentConfig.roles[roleName], nil
-}
-
-// UpdateRoleAddress updates the address for a specific role's permission checker
-func UpdateRoleAddress(cur realm, roleName string, newAddress std.Address) error {
-	if !isAdminOrGovernance() {
-		return ufmt.Errorf("only admin or governance can update roles")
-	}
-
-	// Only admin can update critical roles
-	if isCriticalRole(roleName) && !isAdmin() {
-		return ufmt.Errorf("only admin can update critical roles (admin, devops)")
-	}
-
-	if err := validateConfig(); err != nil {
-		return err
-	}
-
-	if !RoleExists(roleName) {
-		return ufmt.Errorf("role %s does not exist", roleName)
-	}
-
-	prevAddress := currentConfig.roles[roleName]
-	currentConfig.roles[roleName] = newAddress
-
-	std.Emit(
-		roleUpdated,
-		"roleName", roleName,
-		"prevAddress", prevAddress.String(),
-		"newAddress", newAddress.String(),
-	)
-	return nil
-}
-
-// CreateRole creates a new role with the given address
-func CreateRole(cur realm, roleName string, address std.Address) error {
-	if !isAdmin() {
-		return ufmt.Errorf("only admin can create roles")
-	}
-
-	if err := validateConfig(); err != nil {
-		return err
-	}
-
-	if err := validateRoleName(roleName); err != nil {
-		return err
-	}
-
-	if RoleExists(roleName) {
-		return ufmt.Errorf(errRoleExists, roleName)
-	}
-
-	if err := declareNewRole(roleName, address); err != nil {
-		return err
-	}
-
-	currentConfig.roles[roleName] = address
-
-	std.Emit(
-		roleCreated,
-		"roleName", roleName,
-		"address", address.String(),
-	)
-	return nil
 }
 
 // RoleExists checks if a role exists in the current configuration

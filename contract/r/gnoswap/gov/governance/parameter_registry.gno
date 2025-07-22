@@ -420,59 +420,6 @@ func createParameterHandlers() *ParameterRegistry {
 			},
 		},
 
-		// Access control handlers
-		{
-			pkgPath:    consts.ACCESS_PATH,
-			function:   "CreateRole",
-			paramCount: 2,
-			handlerFunc: func(params []string) error {
-				// Create new access control role with assigned address
-				addr := std.Address(params[1])
-				if !addr.IsValid() {
-					panic(ufmt.Sprintf("invalid address: %s", params[1]))
-				}
-
-				roleName := params[0]
-				access.CreateRole(cross, roleName, addr)
-
-				return nil
-			},
-		},
-		{
-			pkgPath:    consts.ACCESS_PATH,
-			function:   "SetRole",
-			paramCount: 2,
-			handlerFunc: func(params []string) error {
-				// Assign role to an address
-				addr := std.Address(params[1])
-				if !addr.IsValid() {
-					panic(ufmt.Sprintf("invalid address: %s", params[1]))
-				}
-
-				roleName := params[0]
-				access.SetRole(cross, roleName, addr)
-
-				return nil
-			},
-		},
-		{
-			pkgPath:    consts.ACCESS_PATH,
-			function:   "UpdateRoleAddress",
-			paramCount: 2,
-			handlerFunc: func(params []string) error {
-				// Update the address assigned to a role
-				addr := std.Address(params[1])
-				if !addr.IsValid() {
-					panic(ufmt.Sprintf("invalid address: %s", params[1]))
-				}
-
-				roleName := params[0]
-				access.UpdateRoleAddress(cross, roleName, addr)
-
-				return nil
-			},
-		},
-
 		// System halt controls
 		{
 			pkgPath:    consts.HALT_PATH,
