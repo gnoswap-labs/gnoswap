@@ -73,11 +73,11 @@ func assertDistributionTarget(target int) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	if !halt.IsAllowedAccess(halt.OpTypeEmission) {
+	if halt.IsHaltedEmission() {
 		panic("emission contract operations are currently disabled")
 	}
 
-	if !halt.IsAllowedWithdraw(halt.OpTypeEmission) {
+	if halt.IsHaltedWithdraw() {
 		panic("emission contract withdrawals are currently disabled")
 	}
 }

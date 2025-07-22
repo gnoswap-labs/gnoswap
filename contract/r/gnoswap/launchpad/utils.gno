@@ -24,11 +24,11 @@ func formatInt(value int64) string {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	if !halt.IsAllowedAccess(halt.OpTypeLaunchpad) {
+	if halt.IsHaltedLaunchpad() {
 		panic("launchpad contract operations are currently disabled")
 	}
 
-	if !halt.IsAllowedWithdraw(halt.OpTypeLaunchpad) {
+	if halt.IsHaltedWithdraw() {
 		panic("launchpad contract withdrawals are currently disabled")
 	}
 }

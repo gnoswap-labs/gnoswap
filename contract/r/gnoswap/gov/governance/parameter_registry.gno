@@ -498,17 +498,6 @@ func createParameterHandlers() *ParameterRegistry {
 				return nil
 			},
 		},
-		{
-			pkgPath:    consts.HALT_PATH,
-			function:   "EnableWithdrawals",
-			paramCount: 0,
-			handlerFunc: func(params []string) error {
-				// Enable withdrawals for testnet (special function)
-				halt.EnableWithdrawals(cross)
-
-				return nil
-			},
-		},
 	}
 
 	// Register all configured handlers in the registry

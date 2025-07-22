@@ -249,11 +249,11 @@ func assertOnlyValidAddress(addr std.Address) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	if !halt.IsAllowedAccess(halt.OpTypePool) {
+	if halt.IsHaltedPool() {
 		panic("pool contract operations are currently disabled")
 	}
 
-	if !halt.IsAllowedWithdraw(halt.OpTypePool) {
+	if halt.IsHaltedWithdraw() {
 		panic("pool contract withdrawals are currently disabled")
 	}
 }

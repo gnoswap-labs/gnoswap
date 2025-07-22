@@ -208,54 +208,54 @@ func TestHalt_IsHalted(t *testing.T) {
 // Test individual operation halt status functions
 func TestHalt_IndividualOperationStatus(t *testing.T) {
 	tests := []struct {
-		name              string
-		initialLevel      HaltLevel
-		operation         OpType
-		expectedHalted    bool
-		expectedPanic     bool
-		expectedPanicMsg  string
+		name             string
+		initialLevel     HaltLevel
+		operation        OpType
+		expectedHalted   bool
+		expectedPanic    bool
+		expectedPanicMsg string
 	}{
 		{
-			name:              "None level - pool not halted",
-			initialLevel:      HaltLevelNone,
-			operation:         OpTypePool,
-			expectedHalted:    false,
-			expectedPanic:     false,
+			name:           "None level - pool not halted",
+			initialLevel:   HaltLevelNone,
+			operation:      OpTypePool,
+			expectedHalted: false,
+			expectedPanic:  false,
 		},
 		{
-			name:              "Safe mode - pool not halted",
-			initialLevel:      HaltLevelSafeMode,
-			operation:         OpTypePool,
-			expectedHalted:    false,
-			expectedPanic:     false,
+			name:           "Safe mode - pool not halted",
+			initialLevel:   HaltLevelSafeMode,
+			operation:      OpTypePool,
+			expectedHalted: false,
+			expectedPanic:  false,
 		},
 		{
-			name:              "Safe mode - withdraw halted",
-			initialLevel:      HaltLevelSafeMode,
-			operation:         OpTypeWithdraw,
-			expectedHalted:    true,
-			expectedPanic:     false,
+			name:           "Safe mode - withdraw halted",
+			initialLevel:   HaltLevelSafeMode,
+			operation:      OpTypeWithdraw,
+			expectedHalted: true,
+			expectedPanic:  false,
 		},
 		{
-			name:              "Emergency - pool halted",
-			initialLevel:      HaltLevelEmergency,
-			operation:         OpTypePool,
-			expectedHalted:    true,
-			expectedPanic:     false,
+			name:           "Emergency - pool halted",
+			initialLevel:   HaltLevelEmergency,
+			operation:      OpTypePool,
+			expectedHalted: true,
+			expectedPanic:  false,
 		},
 		{
-			name:              "Emergency - governance not halted",
-			initialLevel:      HaltLevelEmergency,
-			operation:         OpTypeGovernance,
-			expectedHalted:    false,
-			expectedPanic:     false,
+			name:           "Emergency - governance not halted",
+			initialLevel:   HaltLevelEmergency,
+			operation:      OpTypeGovernance,
+			expectedHalted: false,
+			expectedPanic:  false,
 		},
 		{
-			name:              "Complete - governance halted",
-			initialLevel:      HaltLevelComplete,
-			operation:         OpTypeGovernance,
-			expectedHalted:    true,
-			expectedPanic:     false,
+			name:           "Complete - governance halted",
+			initialLevel:   HaltLevelComplete,
+			operation:      OpTypeGovernance,
+			expectedHalted: true,
+			expectedPanic:  false,
 		},
 	}
 
@@ -624,7 +624,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 		cleanup()
 
 		config := newNoneConfig()
-		
+
 		// Test with existing operation
 		uassert.Equal(t, config.IsHalted(OpTypePool), false)
 

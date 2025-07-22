@@ -174,11 +174,11 @@ func isUserCall() bool {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	if !halt.IsAllowedAccess(halt.OpTypeStaker) {
+	if halt.IsHaltedStaker() {
 		panic("staker contract operations are currently disabled")
 	}
 
-	if !halt.IsAllowedWithdraw(halt.OpTypeStaker) {
+	if halt.IsHaltedWithdraw() {
 		panic("staker contract withdrawals are currently disabled")
 	}
 }

@@ -9,11 +9,11 @@ import (
 )
 
 func assertIsNotHaltedWithdraw() {
-	if !halt.IsAllowedAccess(halt.OpTypeGovStaker) {
+	if halt.IsHaltedGovStaker() {
 		panic("gov/staker contract access is currently disabled")
 	}
 
-	if !halt.IsAllowedWithdraw(halt.OpTypeGovStaker) {
+	if halt.IsHaltedWithdraw() {
 		panic("gov/staker contract withdrawals are currently disabled")
 	}
 }

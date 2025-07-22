@@ -77,8 +77,8 @@ func SetSwapFee(cur realm, fee uint64) {
 }
 
 func setSwapFee(fee uint64) error {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
+	if halt.IsHaltedProtocolFee() {
+		panic("protocol fee contract operations are currently disabled")
 	}
 
 	// 10000 (bps) = 100%

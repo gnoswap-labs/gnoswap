@@ -165,7 +165,7 @@ func TestHaltConfig_Clone(t *testing.T) {
 	// Verify independence by modifying original
 	err := original.set(OpTypePool, false)
 	uassert.NoError(t, err)
-	
+
 	clonedValue, err := cloned.get(OpTypePool)
 	uassert.NoError(t, err)
 	uassert.Equal(t, clonedValue, true) // Should still be true (halted) in the clone
@@ -328,7 +328,7 @@ func TestConfig_AllConfigLevelsIntegration(t *testing.T) {
 func TestHaltConfig_EdgeCases(t *testing.T) {
 	t.Run("Empty config", func(t *testing.T) {
 		config := make(HaltConfig)
-		
+
 		// Non-existing operation should return false and error
 		halted, err := config.get(OpTypePool)
 		uassert.Error(t, err)
@@ -337,7 +337,7 @@ func TestHaltConfig_EdgeCases(t *testing.T) {
 
 	t.Run("IsHalted with non-existing operation", func(t *testing.T) {
 		config := make(HaltConfig)
-		
+
 		// IsHalted should return false for non-existing operations
 		halted := config.IsHalted(OpTypePool)
 		uassert.Equal(t, halted, false)
@@ -345,27 +345,27 @@ func TestHaltConfig_EdgeCases(t *testing.T) {
 
 	t.Run("Set and get consistency", func(t *testing.T) {
 		config := make(HaltConfig)
-		
+
 		// Set a value to halted
 		err := config.set(OpTypePool, true)
 		uassert.NoError(t, err)
-		
+
 		// Get the value back
 		halted, err := config.get(OpTypePool)
 		uassert.NoError(t, err)
 		uassert.Equal(t, halted, true)
-		
+
 		// Check with IsHalted
 		uassert.Equal(t, config.IsHalted(OpTypePool), true)
 	})
 
 	t.Run("Override existing value", func(t *testing.T) {
 		config := HaltConfig{OpTypePool: true}
-		
+
 		// Override with false (not halted)
 		err := config.set(OpTypePool, false)
 		uassert.NoError(t, err)
-		
+
 		// Verify the change
 		halted, err := config.get(OpTypePool)
 		uassert.NoError(t, err)
@@ -377,21 +377,21 @@ func TestHaltConfig_EdgeCases(t *testing.T) {
 			OpTypePool:   true,
 			OpTypeRouter: false,
 		}
-		
+
 		cloned := original.Clone()
-		
+
 		// Modify original
 		err := original.set(OpTypePool, false)
 		uassert.NoError(t, err)
-		
+
 		err = original.set(OpTypeRouter, true)
 		uassert.NoError(t, err)
-		
+
 		// Cloned should remain unchanged
 		poolHalted, err := cloned.get(OpTypePool)
 		uassert.NoError(t, err)
 		uassert.Equal(t, poolHalted, true)
-		
+
 		routerHalted, err := cloned.get(OpTypeRouter)
 		uassert.NoError(t, err)
 		uassert.Equal(t, routerHalted, false)

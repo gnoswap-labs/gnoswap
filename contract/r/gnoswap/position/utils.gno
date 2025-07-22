@@ -86,11 +86,11 @@ func assertOnlyUserOrStaker(caller std.Realm) {
 
 // assertOnlyNotHalted panics if the contract is halted.
 func assertOnlyNotHalted() {
-	if !halt.IsAllowedAccess(halt.OpTypePosition) {
+	if halt.IsHaltedPosition() {
 		panic("position contract operations are currently disabled")
 	}
 
-	if !halt.IsAllowedWithdraw(halt.OpTypePosition) {
+	if halt.IsHaltedWithdraw() {
 		panic("position contract withdrawals are currently disabled")
 	}
 }

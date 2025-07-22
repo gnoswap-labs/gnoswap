@@ -16,7 +16,7 @@ func getPrev() (string, string) {
 func assertOnlyNotHalted() {
 	// Protocol fee halting is handled in the router.
 	// So, we only need to check if withdrawals are allowed here.
-	if !halt.IsAllowedWithdraw(halt.OpTypeProtocolFee) {
+	if halt.IsHaltedWithdraw() {
 		panic("protocol fee contract withdrawals are currently disabled")
 	}
 }

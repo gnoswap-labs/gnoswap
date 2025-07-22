@@ -136,11 +136,11 @@ func parseBool(s string) bool {
 }
 
 func assertHaltedExecute() {
-	if !halt.IsAllowedAccess(halt.OpTypeGovernance) {
+	if halt.IsHaltedGovernance() {
 		panic("gov/governance contract access is currently disabled")
 	}
 
-	if !halt.IsAllowedWithdraw(halt.OpTypeGovernance) {
+	if halt.IsHaltedWithdraw() {
 		panic("gov/governance contract withdraw is currently disabled")
 	}
 }

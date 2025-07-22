@@ -52,6 +52,7 @@ func GetHaltConfigJson() string {
 
 	return objectNode.String()
 }
+
 // Checks if pool operations are currently halted
 // Returns true if halted, panics if operation type is invalid
 func IsHaltedPool() bool {
