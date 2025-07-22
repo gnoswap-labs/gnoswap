@@ -11,20 +11,10 @@ import (
 var (
 	callbackTree       *avl.Tree
 	err                error
-	adminAddr, govAddr std.Address
 )
 
 func init() {
 	callbackTree = avl.NewTree()
-
-	adminAddr, err = access.GetAddress(access.ROLE_ADMIN)
-	if err != nil {
-		panic(err)
-	}
-	govAddr, err = access.GetAddress(access.ROLE_GOVERNANCE)
-	if err != nil {
-		panic(err)
-	}
 }
 
 // RegisterCallback registers a callback function for a given namespace and function name.
@@ -33,6 +23,9 @@ func RegisterCallback(cur realm, caller std.Address, namespace, fname string, ca
 	if !caller.IsValid() {
 		return ufmt.Errorf("invalid caller address: %s", caller)
 	}
+
+	adminAddr := getAdminAddress()
+	govAddr := getGovernanceAddress()
 
 	// TODO: Currently, Register is only allowed for admin or governance,
 	// but for some contracts, the previous caller might not be that contract.
@@ -66,6 +59,9 @@ func UpdateCallback(cur realm, caller std.Address, namespace, fname string, newC
 		return ufmt.Errorf("invalid caller address: %s", caller)
 	}
 
+	adminAddr := getAdminAddress()
+	govAddr := getGovernanceAddress()
+
 	// allow only admin and governance
 	if caller != adminAddr && caller != govAddr {
 		return ufmt.Errorf("unauthorized caller: %s", caller)
@@ -82,4 +78,21 @@ func UpdateCallback(cur realm, caller std.Address, namespace, fname string, newC
 // createKey creates a unique key by combining namespace and function name.
 func createKey(namespace, fname string) string {
 	return ufmt.Sprintf("%s/%s", namespace, fname)
+}
+
+func getAdminAddress() std.Address {
+	return getAccessAddress(access.ROLE_ADMIN)
+}
+
+func getGovernanceAddress() std.Address {
+	return getAccessAddress(access.ROLE_GOVERNANCE)
+}
+
+func getAccessAddress(role string) std.Address {
+	addr, err := access.GetAddress(role)
+	if err != nil {
+		panic(err)
+	}
+
+	return addr
 }
