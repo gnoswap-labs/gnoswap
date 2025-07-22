@@ -7,7 +7,8 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
+
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -28,23 +29,17 @@ func assertShouldNotBeHalted() {
 
 func assertCallerIsEmission() {
 	caller := getPrevAddr()
-	if err := common.EmissionOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsEmission(caller)
 }
 
 func assertCallerIsAdmin() {
 	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsAdmin(caller)
 }
 
 func assertCallerIsGovernance() {
 	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsGovernance(caller)
 }
 
 func assertValidYear(year int64) {

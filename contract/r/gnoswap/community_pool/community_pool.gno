@@ -4,6 +4,7 @@ import (
 	"std"
 	"strconv"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/halt"
 )
@@ -62,17 +63,13 @@ func assertOnlyNotHalted() {
 // assertOnlyAdmin panics if the caller is not the admin.
 func assertOnlyAdmin() {
 	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsAdmin(caller)
 }
 
 // assertOnlyGovernance panics if the caller is not the governance.
 func assertOnlyGovernance() {
 	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsGovernance(caller)
 }
 
 // getPrevAddr returns the address of the caller.

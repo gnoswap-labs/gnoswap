@@ -4,7 +4,7 @@ import (
 	"std"
 	"strconv"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/v1/access"
 )
 
 // limitCaller is a global boolean flag that controls whether function calls are restricted.
@@ -31,15 +31,7 @@ func GetLimitCaller() bool {
 // - If the caller is not an admin, the function panics with an errNoPermission error.
 func SetLimitCaller(cur realm, v bool) {
 	caller := getPrevAddr()
-	if err := AdminOnly(caller); err != nil {
-		panic(newErrorWithDetail(
-			errNoPermission,
-			ufmt.Sprintf(
-				"only Admin can set halt, called from %s",
-				caller,
-			)),
-		)
-	}
+	access.AssertIsAdmin(caller)
 
 	limitCaller = v
 

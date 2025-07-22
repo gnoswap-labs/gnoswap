@@ -8,6 +8,7 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 )
 
@@ -88,9 +89,7 @@ func GetDevOpsPct() uint64 {
 // SetDevOpsPctByAdmin sets the devOpsPct.
 func SetDevOpsPctByAdmin(cur realm, pct uint64) {
 	caller := std.PreviousRealm().Address()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsAdmin(caller)
 
 	protocolFeeState.setDevOpsPct(pct)
 }
@@ -99,9 +98,7 @@ func SetDevOpsPctByAdmin(cur realm, pct uint64) {
 // Only governance contract can execute this function via proposal
 func SetDevOpsPct(cur realm, pct uint64) {
 	caller := std.PreviousRealm().Address()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsGovernance(caller)
 
 	protocolFeeState.setDevOpsPct(pct)
 }
@@ -128,9 +125,7 @@ func ClearTokenListWithAmount(cur realm) {
 func ClearAccuTransferToGovStaker(cur realm) {
 	assertOnlyNotHalted()
 	caller := std.PreviousRealm().Address()
-	if err := common.GovStakerOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsGovStaker(caller)
 
 	protocolFeeState.AccuToGovStaker = avl.NewTree()
 }

@@ -7,7 +7,8 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/v1/common"
+
+	"gno.land/r/gnoswap/v1/access"
 )
 
 var depositGnsAmount = int64(1_000_000_000)    // 1_000 GNS
@@ -82,9 +83,7 @@ func GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 // - If the caller is not an admin.
 func SetDepositGnsAmountByAdmin(cur realm, amount int64) {
 	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	access.AssertIsAdmin(caller)
 
 	prevDepositGnsAmount := getDepositGnsAmount()
 	setDepositGnsAmount(amount)
@@ -109,9 +108,7 @@ func SetDepositGnsAmountByAdmin(cur realm, amount int64) {
 // - If the caller is not an admin.
 func SetMinimumRewardAmountByAdmin(cur realm, amount int64) {
 	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	access.AssertIsAdmin(caller)
 
 	prevMinimumRewardAmount := getMinimumRewardAmount()
 	setMinimumRewardAmount(amount)
@@ -132,9 +129,7 @@ func SetMinimumRewardAmountByAdmin(cur realm, amount int64) {
 // ref: https://docs.gnoswap.io/contracts/staker/external_deposit_fee.gno
 func SetDepositGnsAmount(cur realm, amount int64) {
 	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	access.AssertIsGovernance(caller)
 
 	prevDepositGnsAmount := getDepositGnsAmount()
 	setDepositGnsAmount(amount)
@@ -154,9 +149,7 @@ func SetDepositGnsAmount(cur realm, amount int64) {
 // Only governance contract can execute this function via proposal.
 func SetMinimumRewardAmount(cur realm, amount int64) {
 	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	access.AssertIsGovernance(caller)
 
 	prevMinimumRewardAmount := getMinimumRewardAmount()
 	setMinimumRewardAmount(amount)
