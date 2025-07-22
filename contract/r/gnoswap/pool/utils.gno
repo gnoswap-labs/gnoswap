@@ -271,9 +271,17 @@ func assertOnlyPositionContract() {
 
 // assertOnlyAdmin panics if the caller is not the admin.
 func assertOnlyAdmin() {
-	caller := getPrevAddr()
-	if err := access.AdminOnly(caller); err != nil {
+	adminAddr, err := access.GetAddress(access.ROLE_ADMIN)
+	if err != nil {
 		panic(err)
+	}
+
+	caller := getPrevAddr()
+	if caller != adminAddr {
+		panic(newErrorWithDetail(
+			errNoPermission,
+			ufmt.Sprintf("only admin(%s) can call, called from %s", adminAddr, caller.String()),
+		))
 	}
 }
 

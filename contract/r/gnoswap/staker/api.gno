@@ -23,7 +23,7 @@ func ApiGetRewardTokens() string {
 
 		// HANDLE EXTERNAL
 		if pool.IsExternallyIncentivizedPool() {
-			pool.incentives.byTime.Iterate("", "", func(key string, value any) bool {
+			pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
 				ictv := value.(*ExternalIncentive)
 				if ictv.RewardToken() == "" {
 					return false
@@ -67,7 +67,7 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 
 	// HANDLE EXTERNAL
 	if pool.IsExternallyIncentivizedPool() {
-		pool.incentives.byTime.Iterate("", "", func(key string, value any) bool {
+		pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
 			ictv := value.(*ExternalIncentive)
 			if ictv.RewardToken() == "" {
 				return false
@@ -93,7 +93,7 @@ func ApiGetExternalIncentives() string {
 
 	pools.tree.Iterate("", "", func(key string, value any) bool {
 		pool := value.(*Pool)
-		pool.incentives.byTime.Iterate("", "", func(key string, value any) bool {
+		pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
 			ictv := value.(*ExternalIncentive)
 			externalIctv := newApiExternalIncentive(ictv)
 			apiExternalIncentives = append(apiExternalIncentives, externalIctv)
@@ -151,7 +151,7 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 		))
 	}
 
-	pool.incentives.byTime.Iterate("", "", func(key string, value any) bool {
+	pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
 		incentive := value.(*ExternalIncentive)
 		if incentive.targetPoolPath != targetPoolPath {
 			return false
@@ -176,7 +176,7 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 
 	pools.tree.Iterate("", "", func(key string, value any) bool {
 		pool := value.(*Pool)
-		pool.incentives.byTime.Iterate("", "", func(key string, value any) bool {
+		pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
 			incentive := value.(*ExternalIncentive)
 			if incentive.rewardToken != rewardTokenPath {
 				return false
@@ -292,7 +292,7 @@ type ResponseApiGetRewardByLpTokenId struct {
 }
 
 func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
-	deposit := deposits.Get(targetLpTokenId)
+	deposit := deposits.get(targetLpTokenId)
 
 	reward := calcPositionReward(std.ChainHeight(), targetLpTokenId)
 
@@ -315,7 +315,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 		if externalReward == 0 {
 			continue
 		}
-		incentive := externalIncentives.Get(incentiveId)
+		incentive := externalIncentives.get(incentiveId)
 		rewards = append(rewards, ApiReward{
 			IncentiveType:     "EXTERNAL",
 			IncentiveId:       incentiveId,
@@ -363,7 +363,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 			if externalReward == 0 {
 				continue
 			}
-			incentive := externalIncentives.Get(incentiveId)
+			incentive := externalIncentives.get(incentiveId)
 			rewards = append(rewards, ApiReward{
 				IncentiveType:     "EXTERNAL",
 				IncentiveId:       incentiveId,
@@ -409,7 +409,7 @@ func ApiGetStakes() string {
 func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 	stakes := []ApiStake{}
 
-	deposit := deposits.Get(targetLpTokenId)
+	deposit := deposits.get(targetLpTokenId)
 	stk := newApiStake(targetLpTokenId, deposit)
 	stakes = append(stakes, stk)
 

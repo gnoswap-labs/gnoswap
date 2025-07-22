@@ -1,18 +1,6 @@
-// pool add to tier2 and removed internal incentive
+// pool add to tier 2 and removed internal rewards scenario test
 
 // PKGPATH: gno.land/r/gnoswap/v1/main
-
-// POOLs:
-// 1. gnot:gns:3000
-// 2. bar:baz:100
-
-// POSITIONs:
-// 1. in-range ( gnot:gns:3000 )
-// 2. in-range ( bar:baz:100 )
-
-// REWARDs:
-// - internal tier 1 ( gnot:gns:3000 )
-// - internal tier 2 ( bar:baz:100 ) -> will be removed from internal tiers
 
 package main
 
@@ -26,8 +14,6 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
-
-	"gno.land/r/demo/wugnot"
 
 	"gno.land/r/gnoswap/v1/access"
 
@@ -54,207 +40,224 @@ var (
 
 	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
 
-	wugnotAddr = consts.WUGNOT_ADDR
-
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
 
-	gnsPath    = "gno.land/r/gnoswap/v1/gns"
-	wugnotPath = "gno.land/r/demo/wugnot"
-
-	fee100  uint32 = 100
-	fee500  uint32 = 500
-	fee3000 uint32 = 3000
+	fee100 uint32 = 100
 
 	max_timeout int64 = 9999999999
 
-	// external incentive deposit fee
-	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
-
-	TIMESTAMP_90DAYS  int64 = 90 * 24 * 60 * 60
-	TIMESTAMP_180DAYS int64 = 180 * 24 * 60 * 60
-	TIMESTAMP_365DAYS int64 = 365 * 24 * 60 * 60
-
-	poolPath1 = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
-	poolPath2 = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
 )
 
 func main() {
-	println("[SCENARIO] 1. Initialize account and emission")
-	initAccountAndEmission()
+	println("[SCENARIO] 1. Initialize and setup")
+	initAndSetup()
 	println()
 
-	println("[SCENARIO] 2. Create wugnot:gns:3000 and bar:baz:100 pools")
-	createPools()
+	println("[SCENARIO] 2. Create bar:baz:100 pool")
+	createPool()
 	println()
 
-	println("[SCENARIO] 3. Mint and stake wugnot:gns:3000 position 01")
-	mintAndStakePosition01()
+	println("[SCENARIO] 3. Set pool to tier 2")
+	setPoolToTier2()
 	println()
 
-	println("[SCENARIO] 4. Set bar:baz:100 pool to tier 2")
-	setPoolTier2()
+	println("[SCENARIO] 4. Mint and stake position")
+	mintAndStakePosition()
 	println()
 
-	println("[SCENARIO] 5. Mint and stake bar baz position 02")
-	mintAndStakePosition02()
+	println("[SCENARIO] 5. Collect reward with tier 2")
+	collectRewardWithTier2()
 	println()
 
-	println("[SCENARIO] 6. Remove bar:baz:100 pool from internal tiers")
-	removePoolTier()
+	println("[SCENARIO] 6. Remove pool from tier system")
+	removePoolFromTier()
+	println()
+
+	println("[SCENARIO] 7. Collect reward after tier removal")
+	collectRewardAfterTierRemoval()
+	println()
+
+	println("[SCENARIO] 8. Verify pool removal effects")
+	verifyPoolRemovalEffects()
 }
 
-func initAccountAndEmission() {
-	println("[INFO] send coins to admin")
+func initAndSetup() {
 	testing.SetRealm(adminRealm)
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
-
-	testing.SetRealm(adminRealm)
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}})
-
-	println("[INFO] wrap gnot to wugnot")
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(nil)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFeeByAdmin(cross, 0)
+
+	println("[INFO] set pool creation fee to 0")
+	pl.SetPoolCreationFeeByAdmin(cross, 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 	emission.RegisterGnsChangeCallback(cross)
 }
 
-func createPools() {
-	println("[INFO] set pool creation fee to 0")
-	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
-
-	println("[INFO] create pool gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000 at tick 0")
-	pl.CreatePool(
-		cross,
-		wugnotPath,
-		gnsPath,
-		fee3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(), // 79228162514264337593543950337
-	)
-
-	println("[INFO] create pool gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100 at tick 0")
-	pl.CreatePool(
-		cross,
-		barPath,
-		bazPath,
-		fee100,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(), // 79228162514264337593543950337
-	)
-}
-
-func mintAndStakePosition01() {
+func createPool() {
 	testing.SetRealm(adminRealm)
 
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
-
-	println("[INFO] mint in-range position 01 (tick range: -60 ~ 60, requested amount: 100, 100)")
-	pn.Mint(
-		cross,
-		wugnotPath,
-		gnsPath,
-		fee3000,
-		int32(-60),
-		int32(60),
-		"100",
-		"100",
-		"0",
-		"0",
-		max_timeout,
-		adminAddr,
-		adminAddr,
-		"",
-	)
+	println("[INFO] create bar:baz:100 pool")
+	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
-
-	ufmt.Printf("[INFO] stake position 01 (height: %d)\n", std.ChainHeight())
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
-
-	// check reward for position 01 (gnot:gns:3000 tier 01)
-	testing.SetRealm(adminRealm)
-	testing.SkipHeights(1)
-
-	collectRewardOf1BlockByPositionId(1)
 }
 
-func setPoolTier2() {
+func mintAndStakePosition() {
 	testing.SetRealm(adminRealm)
 
-	ufmt.Printf("[INFO] set pool bar:baz:100 to tier 2 (height: %d)\n", std.ChainHeight())
-	sr.SetPoolTierByAdmin(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", 2)
-}
-
-func mintAndStakePosition02() {
-	testing.SetRealm(adminRealm)
-
+	println("[INFO] approve tokens for minting")
 	bar.Approve(cross, poolAddr, consts.INT64_MAX)
 	baz.Approve(cross, poolAddr, consts.INT64_MAX)
+	testing.SkipHeights(2)
 
-	println("[INFO] mint in-range position 02 (tick range: -50 ~ 50, requested amount: 100, 100)")
-	pn.Mint(
+	println("[INFO] mint position 01 (tick range: -100 ~ 100)")
+	positionId, liquidity, _, _ := pn.Mint(
 		cross,
 		barPath,
 		bazPath,
 		fee100,
-		int32(-50),
-		int32(50),
-		"100",
-		"100",
-		"0",
-		"0",
+		int32(-100),
+		int32(100),
+		"1000",
+		"1000",
+		"1",
+		"1",
 		max_timeout,
 		adminAddr,
 		adminAddr,
 		"",
 	)
 
-	testing.SkipHeights(1)
+	ufmt.Printf("[EXPECTED] position ID: %d\n", positionId)
+	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 
-	ufmt.Printf("[INFO] stake position 02 (height: %d)\n", std.ChainHeight())
-	gnft.Approve(cross, stakerAddr, positionIdFrom(2))
-	sr.StakeToken(cross, 2, "")
-	testing.SkipHeights(1)
+	println("[INFO] approve NFT to staker and stake position")
+	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
+	sr.StakeToken(cross, positionId, "")
 
-	collectRewardOf1BlockByPositionId(1)
-	collectRewardOf1BlockByPositionId(2)
+	ufmt.Printf("[EXPECTED] position staked successfully\n")
+	testing.SkipHeights(1)
 }
 
-func removePoolTier() {
+func setPoolToTier2() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] remove pool bar:baz:100 from internal tiers")
-	testing.SkipHeights(1)
-	sr.RemovePoolTierByAdmin(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100")
+	println("[INFO] set pool to tier 2")
+	sr.SetPoolTierByAdmin(cross, poolPath, 2)
 
-	testing.SkipHeights(1)
-	// check reward for position 01 (gnot:gns:3000 tier 01) - should be back to 100%
-	collectRewardOf1BlockByPositionId(1)
+	currentTier := sr.GetPoolTier(poolPath)
+	ufmt.Printf("[EXPECTED] pool tier set to: %d\n", currentTier)
 
-	// check reward for position 02 (bar:baz:100) - should be 0 as removed from internal tiers
-	collectRewardOf1BlockByPositionId(2)
+	if currentTier != 2 {
+		panic("pool tier should be 2")
+	}
+
+	println("[INFO] pool successfully set to tier 2")
 }
 
-func collectRewardOf1BlockByPositionId(positionId uint64) {
+func collectRewardWithTier2() {
 	testing.SetRealm(adminRealm)
-	sr.CollectReward(cross, positionId, false)
+
+	println("[INFO] skip blocks to accumulate rewards with tier 2")
+	testing.SkipHeights(10)
+
+	println("[INFO] collect reward with tier 2")
 	beforeGns := gns.BalanceOf(adminUser)
-
-	testing.SkipHeights(1)
-	sr.CollectReward(cross, positionId, false)
+	sr.CollectReward(cross, 1, false)
 	afterGns := gns.BalanceOf(adminUser)
-	diff := afterGns - beforeGns
+	tier2Reward := afterGns - beforeGns
 
-	ufmt.Printf("[EXPECTED] position %d of 1 block reward (height: %d): %d\n", positionId, std.ChainHeight(), diff)
+	ufmt.Printf("[EXPECTED] reward with tier 2: %d\n", tier2Reward)
+
+	if tier2Reward <= 0 {
+		panic("should have received reward with tier 2")
+	}
+
+	println("[INFO] confirmed: rewards are distributed with tier 2")
+}
+
+func removePoolFromTier() {
+	testing.SetRealm(adminRealm)
+
+	println("[INFO] remove pool from tier system")
+	sr.RemovePoolTierByAdmin(cross, poolPath)
+
+	currentTier := sr.GetPoolTier(poolPath)
+	ufmt.Printf("[EXPECTED] pool tier after removal: %d (should be 0)\n", currentTier)
+
+	if currentTier != 0 {
+		panic("pool tier should be 0 after removal")
+	}
+
+	println("[INFO] pool successfully removed from tier system")
+}
+
+func collectRewardAfterTierRemoval() {
+	testing.SetRealm(adminRealm)
+
+	println("[INFO] skip blocks to test rewards after tier removal")
+	testing.SkipHeights(10)
+
+	println("[INFO] collect reward after tier removal")
+	beforeGns := gns.BalanceOf(adminUser)
+	sr.CollectReward(cross, 1, false)
+	afterGns := gns.BalanceOf(adminUser)
+	rewardAfterRemoval := afterGns - beforeGns
+
+	ufmt.Printf("[EXPECTED] reward after tier removal: %d (should be 0)\n", rewardAfterRemoval)
+
+	if rewardAfterRemoval != 0 {
+		panic("should not receive reward after tier removal")
+	}
+
+	println("[INFO] confirmed: no rewards after tier removal")
+}
+
+func verifyPoolRemovalEffects() {
+	testing.SetRealm(adminRealm)
+
+	println("[INFO] verify pool removal effects")
+
+	// Verify tier is still 0
+	finalTier := sr.GetPoolTier(poolPath)
+	ufmt.Printf("[EXPECTED] final pool tier: %d (should be 0)\n", finalTier)
+
+	if finalTier != 0 {
+		panic("final pool tier should be 0")
+	}
+
+	// Test adding back to tier system
+	println("[INFO] test adding pool back to tier system")
+	sr.SetPoolTierByAdmin(cross, poolPath, 1)
+
+	restoredTier := sr.GetPoolTier(poolPath)
+	ufmt.Printf("[EXPECTED] restored pool tier: %d\n", restoredTier)
+
+	if restoredTier != 1 {
+		panic("restored pool tier should be 1")
+	}
+
+	println("[INFO] skip blocks to test rewards after restoration")
+	testing.SkipHeights(5)
+
+	println("[INFO] collect reward after tier restoration")
+	beforeGns := gns.BalanceOf(adminUser)
+	sr.CollectReward(cross, 1, false)
+	afterGns := gns.BalanceOf(adminUser)
+	rewardAfterRestoration := afterGns - beforeGns
+
+	ufmt.Printf("[EXPECTED] reward after tier restoration: %d\n", rewardAfterRestoration)
+
+	if rewardAfterRestoration <= 0 {
+		panic("should receive reward after tier restoration")
+	}
+
+	println("[INFO] pool tier removal and restoration scenario completed successfully")
+	println("[INFO] confirmed: tier removal stops rewards, tier restoration resumes rewards")
 }
 
 func positionIdFrom(positionId any) grc721.TokenID {
@@ -277,32 +280,51 @@ func positionIdFrom(positionId any) grc721.TokenID {
 }
 
 // Output:
-// [SCENARIO] 1. Initialize account and emission
-// [INFO] send coins to admin
-// [INFO] wrap gnot to wugnot
+// [SCENARIO] 1. Initialize and setup
 // [INFO] set unstaking fee to 0
+// [INFO] set pool creation fee to 0
 // [INFO] register gns change callback
 //
-// [SCENARIO] 2. Create wugnot:gns:3000 and bar:baz:100 pools
-// [INFO] set pool creation fee to 0
-// [INFO] create pool gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000 at tick 0
-// [INFO] create pool gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100 at tick 0
+// [SCENARIO] 2. Create bar:baz:100 pool
+// [INFO] create bar:baz:100 pool
 //
-// [SCENARIO] 3. Mint and stake wugnot:gns:3000 position 01
-// [INFO] mint in-range position 01 (tick range: -60 ~ 60, requested amount: 100, 100)
-// [INFO] stake position 01 (height: 124)
-// [EXPECTED] position 1 of 1 block reward (height: 126): 3210615
+// [SCENARIO] 3. Set pool to tier 2
+// [INFO] set pool to tier 2
+// [EXPECTED] pool tier set to: 2
+// [INFO] pool successfully set to tier 2
 //
-// [SCENARIO] 4. Set bar:baz:100 pool to tier 2
-// [INFO] set pool bar:baz:100 to tier 2 (height: 126)
+// [SCENARIO] 4. Mint and stake position
+// [INFO] approve tokens for minting
+// [INFO] mint position 01 (tick range: -100 ~ 100)
+// [EXPECTED] position ID: 1
+// [EXPECTED] liquidity: 200510
+// [INFO] approve NFT to staker and stake position
+// [EXPECTED] position staked successfully
 //
-// [SCENARIO] 5. Mint and stake bar baz position 02
-// [INFO] mint in-range position 02 (tick range: -50 ~ 50, requested amount: 100, 100)
-// [INFO] stake position 02 (height: 127)
-// [EXPECTED] position 1 of 1 block reward (height: 129): 2247430
-// [EXPECTED] position 2 of 1 block reward (height: 130): 963184
+// [SCENARIO] 5. Collect reward with tier 2
+// [INFO] skip blocks to accumulate rewards with tier 2
+// [INFO] collect reward with tier 2
+// [EXPECTED] reward with tier 2: 10595032
+// [INFO] confirmed: rewards are distributed with tier 2
 //
-// [SCENARIO] 6. Remove bar:baz:100 pool from internal tiers
-// [INFO] remove pool bar:baz:100 from internal tiers
-// [EXPECTED] position 1 of 1 block reward (height: 133): 3210615
-// [EXPECTED] position 2 of 1 block reward (height: 134): 0
+// [SCENARIO] 6. Remove pool from tier system
+// [INFO] remove pool from tier system
+// [EXPECTED] pool tier after removal: 0 (should be 0)
+// [INFO] pool successfully removed from tier system
+//
+// [SCENARIO] 7. Collect reward after tier removal
+// [INFO] skip blocks to test rewards after tier removal
+// [INFO] collect reward after tier removal
+// [EXPECTED] reward after tier removal: 0 (should be 0)
+// [INFO] confirmed: no rewards after tier removal
+//
+// [SCENARIO] 8. Verify pool removal effects
+// [INFO] verify pool removal effects
+// [EXPECTED] final pool tier: 0 (should be 0)
+// [INFO] test adding pool back to tier system
+// [EXPECTED] restored pool tier: 1
+// [INFO] skip blocks to test rewards after restoration
+// [INFO] collect reward after tier restoration
+// [EXPECTED] reward after tier restoration: 8026540
+// [INFO] pool tier removal and restoration scenario completed successfully
+// [INFO] confirmed: tier removal stops rewards, tier restoration resumes rewards

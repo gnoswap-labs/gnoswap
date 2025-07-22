@@ -46,6 +46,7 @@ func addTokenExecutor(tokenPath string, tokens []string) []string {
 	if contains(tokens, tokenPath) {
 		return tokens
 	}
+
 	return append(tokens, tokenPath)
 }
 
@@ -67,6 +68,7 @@ func removeTokenValidator(tokenPath string) error {
 	if contains(defaultAllowed, tokenPath) {
 		return ufmt.Errorf("%v: can not remove default token(%s)", errDefaultExternalToken, tokenPath)
 	}
+
 	return nil
 }
 
@@ -79,6 +81,8 @@ func removeTokenValidator(tokenPath string) error {
 // Panics:
 //   - If the caller is not the admin
 func AddToken(cur realm, tokenPath string) {
+	assertOnlyAdmin()
+
 	if err := modifyTokenList(cur, tokenPath, nil, addTokenExecutor); err != nil {
 		panic(err.Error())
 	}
@@ -95,6 +99,8 @@ func AddToken(cur realm, tokenPath string) {
 // Panics:
 //   - If the caller is not the admin
 func RemoveToken(cur realm, tokenPath string) {
+	assertOnlyAdmin()
+
 	if err := modifyTokenList(cur, tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
 		panic(err.Error())
 	}

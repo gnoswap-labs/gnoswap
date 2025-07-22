@@ -104,10 +104,7 @@ func GetUnstakingFee() uint64 {
 // Panics:
 // - If the caller is not an admin.
 func SetUnStakingFeeByAdmin(cur realm, fee uint64) {
-	caller := std.PreviousRealm().Address()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	assertOnlyAdmin()
 
 	prevUnStakingFee := GetUnstakingFee()
 
@@ -128,10 +125,7 @@ func SetUnStakingFeeByAdmin(cur realm, fee uint64) {
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#setunstakingfee
 func SetUnStakingFee(cur realm, fee uint64) {
-	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	assertOnlyGovernance()
 
 	prevUnStakingFee := GetUnstakingFee()
 
