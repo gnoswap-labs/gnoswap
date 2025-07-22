@@ -6,10 +6,13 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
 )
 
 var (
+	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 	routerRealm = std.NewCodeRealm("gno.land/r/gnoswap/v1/router")
 	userRealm   = std.NewCodeRealm("gno.land/r/demo/users")
 )
@@ -133,7 +136,6 @@ func TestGlobalKeeper_GetReferral(t *testing.T) {
 			cleanup()
 
 			// given
-			routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
 			testing.SetRealm(std.NewUserRealm(routerAddr))
 			
 			if tc.setupReferral != "" {
@@ -181,7 +183,6 @@ func TestGlobalKeeper_HasReferral(t *testing.T) {
 			cleanup()
 
 			// given
-			routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
 			testing.SetRealm(std.NewUserRealm(routerAddr))
 			
 			if tc.setupReferral != "" {
@@ -230,7 +231,6 @@ func TestGlobalKeeper_IsEmpty(t *testing.T) {
 			cleanup()
 
 			// given
-			routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
 			testing.SetRealm(std.NewUserRealm(routerAddr))
 			
 			for addr, referral := range tc.setupReferrals {

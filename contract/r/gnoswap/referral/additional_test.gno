@@ -8,7 +8,11 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
+	prabc "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
+
+	_ "gno.land/r/gnoswap/v1/rbac" // initialize rbac package
 )
 
 func TestAdditional_ChainedReferrals(t *testing.T) {
@@ -482,7 +486,7 @@ func setupAdditionalKeeper() *keeper {
 
 func setupAdditionalCaller() func() {
 	origCaller := std.OriginCaller()
-	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 	testing.SetOriginCaller(routerAddr)
 	return func() {
 		testing.SetOriginCaller(origCaller)
