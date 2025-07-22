@@ -8,6 +8,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
+	_ "gno.land/r/gnoswap/v1/rbac"
 )
 
 // validCallers is a lookup table of addresses that are authorized to modify referral data.

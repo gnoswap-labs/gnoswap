@@ -31,9 +31,7 @@ func GetSwapFee() uint64 {
 // Only admin can execute this function
 func SetSwapFeeByAdmin(cur realm, fee uint64) {
 	caller := getPrevAddr()
-	if err := access.AdminOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsAdmin(caller)
 
 	prevSwapFee := swapFee
 	if err := setSwapFee(fee); err != nil {
@@ -56,9 +54,7 @@ func SetSwapFeeByAdmin(cur realm, fee uint64) {
 // ref: https://docs.gnoswap.io/contracts/router/protocol_fee_swap.gno#setswapfee
 func SetSwapFee(cur realm, fee uint64) {
 	caller := getPrevAddr()
-	if err := access.GovernanceOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsGovernance(caller)
 
 	prevSwapFee := swapFee
 	if err := setSwapFee(fee); err != nil {
