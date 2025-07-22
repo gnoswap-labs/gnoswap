@@ -6,6 +6,7 @@ import (
 
 	"gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -189,6 +190,21 @@ func cancel(proposalID, canceledAt, canceledHeight int64, canceledBy std.Address
 	proposal, ok := getProposal(proposalID)
 	if !ok {
 		return nil, errDataNotFound
+	}
+
+	// Check if the caller is the proposer or if proposer's stake has fallen below threshold
+	if canceledBy != proposal.proposer {
+		// If not the proposer, check if proposer's stake is below threshold
+		config, ok := getCurrentConfig()
+		if !ok {
+			return nil, errDataNotFound
+		}
+
+		proposerGnsBalance := gns.BalanceOf(proposal.proposer)
+		if proposerGnsBalance >= config.ProposalCreationThreshold {
+			// Proposer still has enough stake, only proposer can cancel
+			return nil, errNotAuthorized
+		}
 	}
 
 	// Attempt to cancel the proposal (this validates cancellation conditions)

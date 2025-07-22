@@ -28,6 +28,7 @@ var (
 	errAlreadyActiveProposal                          = errors.New("[GNOSWAP-GOVERNANCE-019] already active proposal")
 	errProposalNotFound                               = errors.New("[GNOSWAP-GOVERNANCE-020] proposal not found")
 	errProposalNotExecutable                          = errors.New("[GNOSWAP-GOVERNANCE-021] proposal not executable")
+	errNotAuthorized                                  = errors.New("[GNOSWAP-GOVERNANCE-022] not authorized")
 )
 
 func makeErrorWithDetails(err error, detail string) error {
