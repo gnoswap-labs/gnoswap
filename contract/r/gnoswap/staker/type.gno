@@ -26,6 +26,10 @@ type ExternalIncentive struct {
 	unclaimableRefunded bool // whether unclaimable reward is refunded
 }
 
+func (e ExternalIncentive) IsStarted(currentHeight int64) bool {
+	return currentHeight >= e.startHeight
+}
+
 // safeMulInt64 performs safe multiplication of int64 values, panicking on overflow
 func safeMulInt64(a, b int64) int64 {
 	if a == 0 || b == 0 {
@@ -138,6 +142,10 @@ func (self *ExternalIncentive) Clone() *ExternalIncentive {
 		refundee:            self.refundee,
 		unclaimableRefunded: self.unclaimableRefunded,
 	}
+}
+
+func (self *ExternalIncentive) setUnClaimableRefunded(unClaimableRefunded bool) {
+	self.unclaimableRefunded = unClaimableRefunded
 }
 
 // NewExternalIncentive creates a new external incentive

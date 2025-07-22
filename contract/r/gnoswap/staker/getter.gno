@@ -13,7 +13,7 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 )
 
-// GetPoolByPoolPath retrieves the pool's path using the provided pool path.
+// getPoolByPoolPath retrieves the pool's path using the provided pool path.
 //
 // Parameters:
 // - poolPath (string): The path of the pool to retrieve.
@@ -23,7 +23,7 @@ import (
 //
 // Panics:
 // - If the pool corresponding to the given `poolPath` does not exist in the `pools` collection.
-func GetPoolByPoolPath(poolPath string) *Pool {
+func getPoolByPoolPath(poolPath string) *Pool {
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		panic(addDetailToError(
@@ -46,10 +46,10 @@ func GetPoolByPoolPath(poolPath string) *Pool {
 // Panics:
 //   - If the pool incentives do not exist for the given pool path
 func GetPoolIncentiveIdList(poolPath string) []string {
-	pool := GetPoolByPoolPath(poolPath)
+	pool := getPoolByPoolPath(poolPath)
 
 	ids := []string{}
-	pool.incentives.byTime.Iterate("", "", func(key string, value any) bool {
+	pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
 		ids = append(ids, key)
 		return true
 	})
@@ -57,7 +57,7 @@ func GetPoolIncentiveIdList(poolPath string) []string {
 	return ids
 }
 
-// GetIncentive retrieves an external incentive by its ID from a specified pool.
+// getIncentive retrieves an external incentive by its ID from a specified pool.
 //
 // This function searches for an incentive within the specified pool's incentives,
 // identified by the given `incentiveId`. If the pool or the incentive does not exist,
@@ -73,10 +73,10 @@ func GetPoolIncentiveIdList(poolPath string) []string {
 // Panics:
 // - If the pool corresponding to the given `poolPath` does not exist.
 // - If the incentive with the specified `incentiveId` does not exist.
-func GetIncentive(poolPath string, incentiveId string) *ExternalIncentive {
-	pool := GetPoolByPoolPath(poolPath)
+func getIncentive(poolPath string, incentiveId string) *ExternalIncentive {
+	pool := getPoolByPoolPath(poolPath)
 
-	incentive, exist := pool.incentives.byTime.Get(incentiveId)
+	incentive, exist := pool.incentives.incentives.Get(incentiveId)
 	if !exist {
 		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
 	}
@@ -95,7 +95,7 @@ func GetIncentive(poolPath string, incentiveId string) *ExternalIncentive {
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
 func GetIncentiveStartTimestamp(poolPath string, incentiveId string) int64 {
-	incentive := GetIncentive(poolPath, incentiveId)
+	incentive := getIncentive(poolPath, incentiveId)
 
 	return incentive.startTimestamp
 }
@@ -111,7 +111,7 @@ func GetIncentiveStartTimestamp(poolPath string, incentiveId string) int64 {
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
 func GetIncentiveEndTimestamp(poolPath string, incentiveId string) int64 {
-	incentive := GetIncentive(poolPath, incentiveId)
+	incentive := getIncentive(poolPath, incentiveId)
 
 	return incentive.endTimestamp
 }
@@ -127,7 +127,7 @@ func GetIncentiveEndTimestamp(poolPath string, incentiveId string) int64 {
 // Panics:
 //   - If the incentive does nor exist for the given incentive ID
 func GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) string {
-	incentive := GetIncentive(poolPath, incentiveId)
+	incentive := getIncentive(poolPath, incentiveId)
 
 	return incentive.targetPoolPath
 }
@@ -141,7 +141,7 @@ func GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) string 
 // Returns:
 // - int64: The creation height of the specified incentive.
 func GetCreatedHeightOfIncentive(poolPath string, incentiveId string) int64 {
-	incentive := GetIncentive(poolPath, incentiveId)
+	incentive := getIncentive(poolPath, incentiveId)
 
 	return incentive.createdHeight
 }
@@ -157,7 +157,7 @@ func GetCreatedHeightOfIncentive(poolPath string, incentiveId string) int64 {
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
 func GetIncentiveRewardToken(poolPath string, incentiveId string) string {
-	incentive := GetIncentive(poolPath, incentiveId)
+	incentive := getIncentive(poolPath, incentiveId)
 
 	return incentive.rewardToken
 }
@@ -173,7 +173,7 @@ func GetIncentiveRewardToken(poolPath string, incentiveId string) string {
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
 func GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
-	incentive := GetIncentive(poolPath, incentiveId)
+	incentive := getIncentive(poolPath, incentiveId)
 
 	return u256.NewUintFromInt64(incentive.rewardAmount)
 }
@@ -206,7 +206,7 @@ func GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) strin
 // Returns:
 // - int64: The starting height of the specified incentive.
 func GetIncentiveStartHeight(poolPath string, incentiveId string) int64 {
-	incentive := GetIncentive(poolPath, incentiveId)
+	incentive := getIncentive(poolPath, incentiveId)
 
 	return incentive.startHeight
 }
@@ -223,7 +223,7 @@ func GetIncentiveStartHeight(poolPath string, incentiveId string) int64 {
 // Returns:
 // - int64: The ending height of the specified incentive.
 func GetIncentiveEndHeight(poolPath string, incentiveId string) int64 {
-	incentive := GetIncentive(poolPath, incentiveId)
+	incentive := getIncentive(poolPath, incentiveId)
 
 	return incentive.endHeight
 }
@@ -240,7 +240,7 @@ func GetIncentiveEndHeight(poolPath string, incentiveId string) int64 {
 // Returns:
 // - int64: The reward amount distributed per block for the specified incentive.
 func GetIncentiveRewardPerBlock(poolPath string, incentiveId string) int64 {
-	incentive := GetIncentive(poolPath, incentiveId)
+	incentive := getIncentive(poolPath, incentiveId)
 
 	return incentive.rewardPerBlock
 }
@@ -256,12 +256,12 @@ func GetIncentiveRewardPerBlock(poolPath string, incentiveId string) int64 {
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
 func GetIncentiveRefundee(poolPath string, incentiveId string) std.Address {
-	incentive := GetIncentive(poolPath, incentiveId)
+	incentive := getIncentive(poolPath, incentiveId)
 
 	return incentive.refundee
 }
 
-// GetDeposit retrieves a deposit associated with a given LP token ID.
+// getDeposit retrieves a deposit associated with a given LP token ID.
 //
 // This function looks up the deposit record for the specified LP token ID in the global `deposits` collection.
 // If the deposit does not exist, it panics with an appropriate error message.
@@ -271,8 +271,8 @@ func GetIncentiveRefundee(poolPath string, incentiveId string) std.Address {
 //
 // Returns:
 // - *Deposit: A pointer to the `Deposit` object associated with the given LP token ID.
-func GetDeposit(lpTokenId uint64) *Deposit {
-	deposit := deposits.Get(lpTokenId)
+func getDeposit(lpTokenId uint64) *Deposit {
+	deposit := deposits.get(lpTokenId)
 	if deposit == nil {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -294,7 +294,7 @@ func GetDeposit(lpTokenId uint64) *Deposit {
 // Panics:
 //   - If the deposit does not exist for the given lpTokenId
 func GetDepositOwner(lpTokenId uint64) std.Address {
-	deposit := GetDeposit(lpTokenId)
+	deposit := getDeposit(lpTokenId)
 
 	return deposit.owner
 }
@@ -310,7 +310,7 @@ func GetDepositOwner(lpTokenId uint64) std.Address {
 // Panics:
 //   - If the deposit does not exist for the given lpTokenId
 func GetDepositStakeTimestamp(lpTokenId uint64) int64 {
-	deposit := GetDeposit(lpTokenId)
+	deposit := getDeposit(lpTokenId)
 
 	return deposit.stakeTimestamp
 }
@@ -327,7 +327,7 @@ func GetDepositStakeTimestamp(lpTokenId uint64) int64 {
 // Returns:
 // - int64: The stake height of the deposit associated with the given LP token ID.
 func GetDepositStakeHeight(lpTokenId uint64) int64 {
-	deposit := GetDeposit(lpTokenId)
+	deposit := getDeposit(lpTokenId)
 
 	return deposit.stakeHeight
 }
@@ -343,7 +343,7 @@ func GetDepositStakeHeight(lpTokenId uint64) int64 {
 // Panics:
 //   - If the deposit does not exist for the given lpTokenId
 func GetDepositTargetPoolPath(lpTokenId uint64) string {
-	deposit := GetDeposit(lpTokenId)
+	deposit := getDeposit(lpTokenId)
 
 	return deposit.targetPoolPath
 }
@@ -359,7 +359,7 @@ func GetDepositTargetPoolPath(lpTokenId uint64) string {
 // Returns:
 // - int32: The lower tick value of the deposit.
 func GetDepositTickLower(lpTokenId uint64) int32 {
-	deposit := GetDeposit(lpTokenId)
+	deposit := getDeposit(lpTokenId)
 
 	return deposit.tickLower
 }
@@ -375,7 +375,7 @@ func GetDepositTickLower(lpTokenId uint64) int32 {
 // Returns:
 // - int32: The upper tick value of the deposit.
 func GetDepositTickUpper(lpTokenId uint64) int32 {
-	deposit := GetDeposit(lpTokenId)
+	deposit := getDeposit(lpTokenId)
 
 	return deposit.tickUpper
 }
@@ -391,9 +391,9 @@ func GetDepositTickUpper(lpTokenId uint64) int32 {
 // Returns:
 // - *u256.Uint: The liquidity value of the deposit.
 func GetDepositLiquidity(lpTokenId uint64) *u256.Uint {
-	deposit := GetDeposit(lpTokenId)
+	deposit := getDeposit(lpTokenId)
 
-	return deposit.liquidity
+	return deposit.liquidity.Clone()
 }
 
 // GetDepositLiquidityAsString retrieves the liquidity of a deposit associated with a given LP token ID
@@ -424,7 +424,7 @@ func GetDepositLiquidityAsString(lpTokenId uint64) string {
 // Returns:
 // - uint64: The last collection height of the deposit.
 func GetDepositLastCollectHeight(lpTokenId uint64) int64 {
-	deposit := GetDeposit(lpTokenId)
+	deposit := getDeposit(lpTokenId)
 
 	return deposit.lastCollectHeight
 }
@@ -440,7 +440,7 @@ func GetDepositLastCollectHeight(lpTokenId uint64) int64 {
 // Returns:
 // - []Warmup: A slice of warm-up records associated with the deposit.
 func GetDepositWarmUp(lpTokenId uint64) []Warmup {
-	deposit := GetDeposit(lpTokenId)
+	deposit := getDeposit(lpTokenId)
 
 	return deposit.warmups
 }
@@ -504,7 +504,7 @@ func GetPoolReward(tier uint64) int64 {
 	return poolTier.CurrentReward(tier)
 }
 
-// GetExternalIncentive retrieves an external incentive by its ID.
+// getExternalIncentive retrieves an external incentive by its ID.
 //
 // This function looks up an external incentive in the global `externalIncentives` tree using the specified `incentiveId`.
 // If the incentive does not exist, the function panics with an appropriate error message.
@@ -514,7 +514,7 @@ func GetPoolReward(tier uint64) int64 {
 //
 // Returns:
 // - *ExternalIncentive: A pointer to the retrieved `ExternalIncentive` object.
-func GetExternalIncentive(incentiveId string) *ExternalIncentive {
+func getExternalIncentive(incentiveId string) *ExternalIncentive {
 	incentive, exist := externalIncentives.tree.Get(incentiveId)
 	if !exist {
 		panic(addDetailToError(

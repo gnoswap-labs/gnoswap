@@ -123,10 +123,8 @@ func SetPoolCreationFee(cur realm, fee int64) {
 // Only admin can execute this function.
 func SetPoolCreationFeeByAdmin(cur realm, fee int64) {
 	assertOnlyNotHalted()
-	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	assertOnlyAdmin()
+
 	prevPoolCreationFee := GetPoolCreationFee()
 	setPoolCreationFee(fee)
 
