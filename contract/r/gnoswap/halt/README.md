@@ -6,4 +6,4 @@ The halt contract uses the core framwork in the [halt package](../../../p/gnoswa
 
 ## For Beta Mainnet
 
-The protocol will be initially deployed in `MainnetSafeMode`, which isables the withdrawal function during the beta mainnet period for safety reasons. The withdrawal function will be enabled by governance once the stability of the network is confirmed.
+The protocol will be initially deployed in `MainnetSafeMode`, which disables the withdrawal function during the beta mainnet period for safety reasons. The withdrawal function will be enabled by governance once the stability of the network is confirmed.
