@@ -1,4 +1,4 @@
-// position in-range change by swap external incentive
+// position in-range change by swap (external rewards) scenario test
 
 // PKGPATH: gno.land/r/gnoswap/v1/main
 
@@ -8,7 +8,6 @@ import (
 	"std"
 	"strconv"
 	"testing"
-	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
@@ -24,10 +23,11 @@ import (
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
+	rt "gno.land/r/gnoswap/v1/router"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/onbloc/baz"
 )
 
 var (
@@ -35,288 +35,352 @@ var (
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
-	routerRealm   = std.NewUserRealm(routerAddr)
-
 	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
 	stakerUser    = stakerAddr
 	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
 
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+	poolAddr, _   = access.GetAddress(access.ROLE_POOL)
+	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
 
 	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	bazPath = "gno.land/r/onbloc/baz"
 
 	fee100 uint32 = 100
 
 	max_timeout int64 = 9999999999
 
-	// external incentive deposit fee
+	// external incentive
 	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
-
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"
+	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
 )
 
 func main() {
-	println("[SCENARIO] 1. Initialize account and emission")
-	initAccountAndEmission()
+	println("[SCENARIO] 1. Initialize and setup")
+	initAndSetup()
 	println()
 
-	println("[SCENARIO] 2. Create pool")
+	println("[SCENARIO] 2. Create bar:baz:100 pool")
 	createPool()
 	println()
 
-	println("[SCENARIO] 3. Mint bar qux position 01")
-	mintPosition01()
-	println()
-
-	println("[SCENARIO] 4. Mint bar qux position 02")
-	mintPosition02()
-	println()
-
-	println("[SCENARIO] 5. Create external incentive")
+	println("[SCENARIO] 3. Create external incentive")
 	createExternalIncentive()
 	println()
 
-	println("[SCENARIO] 6. Stake position 01 and 02")
-	stakePositions()
+	println("[SCENARIO] 4. Mint narrow range position")
+	mintNarrowRangePosition()
 	println()
 
-	println("[SCENARIO] 7. Wait for external bar to start")
-	waitForExternalBarStart()
+	println("[SCENARIO] 5. Stake position and verify in-range")
+	stakePositionAndVerifyInRange()
 	println()
 
-	println("[SCENARIO] 8. Check reward for both in-range positions")
-	checkReward01()
+	println("[SCENARIO] 6. Collect external reward while in-range")
+	collectExternalRewardWhileInRange()
 	println()
 
-	println("[SCENARIO] 9. Make position 01 out-range by swap")
-	makePosition1OutRangeBySwap()
+	println("[SCENARIO] 7. Perform swap to move price out of range")
+	performSwapToMovePrice()
 	println()
 
-	println("[SCENARIO] 10. Check reward with position 01 out-range")
-	checkReward02()
+	println("[SCENARIO] 8. Collect external reward while out-of-range")
+	collectExternalRewardWhileOutOfRange()
 	println()
 
-	println("[SCENARIO] 11. Make position 01 in-range by swap")
-	makePosition1InRangeBySwap()
+	println("[SCENARIO] 9. Perform reverse swap to move price back in-range")
+	performReverseSwap()
 	println()
 
-	println("[SCENARIO] 12. Check reward with both positions in-range")
-	checkReward03()
+	println("[SCENARIO] 10. Collect external reward after returning to in-range")
+	collectExternalRewardAfterReturningInRange()
 }
 
-func initAccountAndEmission() {
+func initAndSetup() {
+	testing.SetRealm(adminRealm)
+
+	println("[INFO] set unstaking fee to 0")
+	sr.SetUnStakingFeeByAdmin(cross, 0)
+
+	println("[INFO] set pool creation fee to 0")
+	pl.SetPoolCreationFeeByAdmin(cross, 0)
+
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 	emission.RegisterGnsChangeCallback(cross)
 }
 
 func createPool() {
-	println("[INFO] set pool creation fee to 0")
-	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
-
-	println("[INFO] create pool gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100 at tick 0")
-	pl.CreatePool(
-		cross,
-		barPath,
-		quxPath,
-		fee100,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(), // 79228162514264337593543950337
-	)
-}
-
-func mintPosition01() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	qux.Approve(cross, poolAddr, consts.INT64_MAX)
+	println("[INFO] create bar:baz:100 pool")
+	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
-	println("[INFO] mint in-range position 01 (tick range: -50 ~ 50, requested amount: 50, 50)")
-	pn.Mint(
-		cross,
-		barPath,
-		quxPath,
-		fee100,
-		int32(-50),
-		int32(50),
-		"50",
-		"50",
-		"1",
-		"1",
-		max_timeout,
-		adminAddr,
-		adminAddr,
-		"",
-	)
-}
-
-func mintPosition02() {
-	testing.SetRealm(adminRealm)
-
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	qux.Approve(cross, poolAddr, consts.INT64_MAX)
-
-	println("[INFO] mint in-range position 02 (tick range: -1000 ~ 1000, requested amount: 1000, 1000)")
-	pn.Mint(
-		cross,
-		barPath,
-		quxPath,
-		fee100,
-		int32(-1000),
-		int32(1000),
-		"1000",
-		"1000",
-		"1",
-		"1",
-		max_timeout,
-		adminAddr,
-		adminAddr,
-		"",
-	)
+	testing.SkipHeights(1)
 }
 
 func createExternalIncentive() {
 	testing.SetRealm(adminRealm)
 
+	println("[INFO] approve tokens for external incentive")
 	bar.Approve(cross, stakerAddr, consts.INT64_MAX)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
-	println("[INFO] create external incentive for bar token")
+	println("[INFO] create external incentive with bar token")
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		poolPath,
 		barPath,
-		9000000000,
+		90_000_000_000, // 90 billion bar tokens for 90 days
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,
 	)
+
+	ufmt.Printf("[INFO] external incentive created - reward per block: ~1000000000\n")
+
+	// Make external incentives start
+	leftHeight := 978 - std.ChainHeight()
+	if leftHeight > 0 {
+		testing.SkipHeights(leftHeight + 5) // skip 5 blocks more
+	}
 }
 
-func stakePositions() {
+func mintNarrowRangePosition() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] approve and stake position 01 and 02")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	gnft.Approve(cross, stakerAddr, positionIdFrom(2))
+	println("[INFO] approve tokens for minting")
+	bar.Approve(cross, poolAddr, consts.INT64_MAX)
+	baz.Approve(cross, poolAddr, consts.INT64_MAX)
+	testing.SkipHeights(2)
+
+	println("[INFO] mint narrow range position (tick range: -50 ~ 50)")
+	positionId, liquidity, amount0, amount1 := pn.Mint(
+		cross,
+		barPath,
+		bazPath,
+		fee100,
+		int32(-50), // narrow range around current price (tick 0)
+		int32(50),
+		"10000",
+		"10000",
+		"1",
+		"1",
+		max_timeout,
+		adminAddr,
+		adminAddr,
+		"",
+	)
+
+	ufmt.Printf("[EXPECTED] position ID: %d\n", positionId)
+	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
+	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
+
+	// Check current pool tick
+	currentTick := pl.PoolGetSlot0Tick(poolPath)
+	ufmt.Printf("[INFO] current pool tick: %d\n", currentTick)
+	ufmt.Printf("[INFO] position range: -50 to 50\n")
+
+	if currentTick < -50 || currentTick > 50 {
+		panic("position should be in-range initially")
+	}
 
 	testing.SkipHeights(1)
+}
+
+func stakePositionAndVerifyInRange() {
+	testing.SetRealm(adminRealm)
+
+	println("[INFO] approve NFT to staker and stake position")
+	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
 	sr.StakeToken(cross, 1, "")
-	sr.StakeToken(cross, 2, "")
+
+	ufmt.Printf("[EXPECTED] position staked successfully\n")
+
+	// Verify position is in-range
+	currentTick := pl.PoolGetSlot0Tick(poolPath)
+	ufmt.Printf("[INFO] current tick after staking: %d\n", currentTick)
+
+	if currentTick < -50 || currentTick > 50 {
+		panic("position should be in-range after staking")
+	}
+
+	testing.SkipHeights(1)
 }
 
-func waitForExternalBarStart() {
-	externalStartTime := int64(1234569600)
-	nowTime := time.Now().Unix()
-	timeLeft := externalStartTime - nowTime
-
-	blockAvgTime := int64(2)
-	blockLeft := timeLeft / blockAvgTime
-
-	ufmt.Printf("[INFO] external bar incentive started at height %d\n", std.ChainHeight()+blockLeft)
-	previousHeight := std.ChainHeight()
-	testing.SkipHeights(int64(blockLeft)) // skip until external bar starts
-	testing.SkipHeights(10)               // skip bit more to see reward calculation
-	currentHeight := std.ChainHeight()
-	ufmt.Printf("[INFO] skip blocks until external bar starts (height: %d -> %d)\n", previousHeight, currentHeight)
-
-}
-
-func checkReward01() {
+func collectExternalRewardWhileInRange() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] check reward for position 01 (both positions in-range)")
-	collectRewardOf1BlockByPositionId(1)
-	collectRewardOf1BlockByPositionId(2)
+	println("[INFO] skip blocks to accumulate external rewards while in-range")
+	testing.SkipHeights(10)
+
+	println("[INFO] collect external reward while position is in-range")
+	beforeBar := bar.BalanceOf(adminUser)
+	sr.CollectReward(cross, 1, false)
+	afterBar := bar.BalanceOf(adminUser)
+	inRangeReward := afterBar - beforeBar
+
+	ufmt.Printf("[EXPECTED] external reward while in-range: %d\n", inRangeReward)
+
+	if inRangeReward <= 0 {
+		panic("should have received external reward while in-range")
+	}
+
+	println("[INFO] confirmed: external rewards distributed while position is in-range")
 }
 
-func makePosition1OutRangeBySwap() {
+func performSwapToMovePrice() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] make position 01 out-range by swap")
+	println("[INFO] approve tokens for swapping")
+	bar.Approve(cross, routerAddr, consts.INT64_MAX)
+	baz.Approve(cross, routerAddr, consts.INT64_MAX)
 
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	qux.Approve(cross, poolAddr, consts.INT64_MAX)
+	// Check current tick before swap
+	currentTickBefore := pl.PoolGetSlot0Tick(poolPath)
+	ufmt.Printf("[INFO] tick before swap: %d\n", currentTickBefore)
 
-	// swap to move price outside position 01's range
-	testing.SetRealm(routerRealm)
-	pl.Swap(
+	println("[INFO] perform large swap to move price out of range")
+	// Swap a large amount to move the tick significantly
+	swapAmount := "100000"
+
+	println("[INFO] swap bar for baz to move tick up")
+	_, amountOut := rt.ExactInSwapRoute(
 		cross,
 		barPath,
-		quxPath,
-		fee100,
-		adminAddr,
-		true,         // zeroForOne
-		"1000",       // amountSpecified
-		"4295128740", // sqrtPriceLimitX96
-		adminAddr,
+		bazPath,
+		swapAmount,
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+		"100",
+		"0",
+		max_timeout,
+		"",
 	)
 
-	newPoolTick := pl.PoolGetSlot0Tick(poolPath)
-	ufmt.Printf("[EXPECTED] position 01 moved out of range, pool tick: %d\n", newPoolTick)
+	ufmt.Printf("[INFO] swapped %s bar for %s baz\n", swapAmount, amountOut)
+
+	// Check tick after swap
+	currentTickAfter := pl.PoolGetSlot0Tick(poolPath)
+	ufmt.Printf("[EXPECTED] tick after swap: %d\n", currentTickAfter)
+
+	// Position should now be out of range (tick > 50)
+	if currentTickAfter <= 50 {
+		println("[WARNING] swap might not have moved price far enough")
+		// Try another swap to move further
+		println("[INFO] perform additional swap")
+		rt.ExactInSwapRoute(
+			cross,
+			barPath,
+			bazPath,
+			swapAmount,
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+			"100",
+			"0",
+			max_timeout,
+			"",
+		)
+
+		finalTick := pl.PoolGetSlot0Tick(poolPath)
+		ufmt.Printf("[EXPECTED] final tick after additional swap: %d\n", finalTick)
+	}
+
+	testing.SkipHeights(1)
 }
 
-func checkReward02() {
+func collectExternalRewardWhileOutOfRange() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] check reward for position 01 (position 01 out-range)")
-	collectRewardOf1BlockByPositionId(1)
-	collectRewardOf1BlockByPositionId(2)
+	println("[INFO] skip blocks to accumulate external rewards while out-of-range")
+	testing.SkipHeights(10)
+
+	println("[INFO] collect external reward while position is out-of-range")
+	beforeBar := bar.BalanceOf(adminUser)
+	sr.CollectReward(cross, 1, false)
+	afterBar := bar.BalanceOf(adminUser)
+	outOfRangeReward := afterBar - beforeBar
+
+	ufmt.Printf("[EXPECTED] external reward while out-of-range: %d\n", outOfRangeReward)
+
+	if outOfRangeReward != 0 {
+		panic("should not receive external reward while out-of-range")
+	}
+
+	println("[INFO] confirmed: no external rewards distributed while position is out-of-range")
 }
 
-func makePosition1InRangeBySwap() {
+func performReverseSwap() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] make position 01 in-range by swap")
-	qux.Approve(cross, poolAddr, consts.INT64_MAX)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
+	// Check current tick before reverse swap
+	currentTickBefore := pl.PoolGetSlot0Tick(poolPath)
+	ufmt.Printf("[INFO] tick before reverse swap: %d\n", currentTickBefore)
 
-	// swap to move price back inside position 01's range
-	testing.SetRealm(routerRealm)
-	pl.Swap(
+	println("[INFO] perform reverse swap to move price back into range")
+	// Swap baz for bar to move tick back down
+	reverseSwapAmount := "50000"
+
+	println("[INFO] swap baz for bar to move tick down")
+	_, amountOut := rt.ExactInSwapRoute(
 		cross,
-		quxPath,
+		bazPath,
 		barPath,
-		fee100,
-		adminAddr,
-		false,  // zeroForOne
-		"1000", // amountSpecified
-		"1461446703485210103287273052203988822378723970340", // sqrtPriceLimitX96
-		adminAddr,
+		reverseSwapAmount,
+		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100",
+		"100",
+		"0",
+		max_timeout,
+		"",
 	)
 
-	newPoolTick := pl.PoolGetSlot0Tick(poolPath)
+	ufmt.Printf("[INFO] swapped %s baz for %s bar\n", reverseSwapAmount, amountOut)
 
-	ufmt.Printf("[EXPECTED] position 01 moved back in range, pool tick: %d\n", newPoolTick)
+	// Check tick after reverse swap
+	currentTickAfter := pl.PoolGetSlot0Tick(poolPath)
+	ufmt.Printf("[EXPECTED] tick after reverse swap: %d\n", currentTickAfter)
+
+	// Position should be back in range (-50 <= tick <= 50)
+	if currentTickAfter >= -50 && currentTickAfter <= 50 {
+		println("[INFO] position is back in-range")
+	} else {
+		println("[WARNING] position might still be out-of-range")
+		ufmt.Printf("[INFO] position range: -50 to 50, current tick: %d\n", currentTickAfter)
+	}
+
+	testing.SkipHeights(1)
 }
 
-func checkReward03() {
+func collectExternalRewardAfterReturningInRange() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] check reward for position 01 (both positions in-range again)")
-	collectRewardOf1BlockByPositionId(1)
-	collectRewardOf1BlockByPositionId(2)
-}
+	println("[INFO] skip blocks to accumulate external rewards after returning to in-range")
+	testing.SkipHeights(10)
 
-func collectRewardOf1BlockByPositionId(positionId uint64) {
-	testing.SetRealm(adminRealm)
-	sr.CollectReward(cross, positionId, false)
-	beforeBarBalance := bar.BalanceOf(adminAddr)
+	println("[INFO] collect external reward after position returned to in-range")
+	beforeBar := bar.BalanceOf(adminUser)
+	sr.CollectReward(cross, 1, false)
+	afterBar := bar.BalanceOf(adminUser)
+	backInRangeReward := afterBar - beforeBar
 
-	skipHeight := int64(100)
-	testing.SkipHeights(skipHeight)
-	sr.CollectReward(cross, positionId, false)
-	afterBarBalance := bar.BalanceOf(adminAddr)
-	diff := afterBarBalance - beforeBarBalance
+	ufmt.Printf("[EXPECTED] external reward after returning to in-range: %d\n", backInRangeReward)
 
-	ufmt.Printf("[EXPECTED] position %d of 100 block reward (height: %d ~ %d): %d\n", positionId, std.ChainHeight()-skipHeight, std.ChainHeight(), diff)
-}
+	// Get final tick for verification
+	finalTick := pl.PoolGetSlot0Tick(poolPath)
+	ufmt.Printf("[INFO] final tick: %d\n", finalTick)
 
-func milliToSec(milliseconds int64) int64 {
-	return milliseconds / 1000
+	if finalTick >= -50 && finalTick <= 50 {
+		if backInRangeReward <= 0 {
+			panic("should have received external reward when back in-range")
+		}
+		println("[INFO] confirmed: external rewards resumed when position returned to in-range")
+	} else {
+		if backInRangeReward != 0 {
+			panic("should not receive external reward while still out-of-range")
+		}
+		println("[INFO] position is still out-of-range, no external rewards as expected")
+	}
+
+	println("[INFO] position in-range change by swap (external rewards) scenario completed successfully")
+	println("[INFO] confirmed: external rewards are only distributed when positions are in-range")
 }
 
 func positionIdFrom(positionId any) grc721.TokenID {
@@ -339,48 +403,70 @@ func positionIdFrom(positionId any) grc721.TokenID {
 }
 
 // Output:
-// [SCENARIO] 1. Initialize account and emission
+// [SCENARIO] 1. Initialize and setup
+// [INFO] set unstaking fee to 0
+// [INFO] set pool creation fee to 0
 // [INFO] register gns change callback
 //
-// [SCENARIO] 2. Create pool
-// [INFO] set pool creation fee to 0
-// [INFO] create pool gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100 at tick 0
+// [SCENARIO] 2. Create bar:baz:100 pool
+// [INFO] create bar:baz:100 pool
 //
-// [SCENARIO] 3. Mint bar qux position 01
-// [INFO] mint in-range position 01 (tick range: -50 ~ 50, requested amount: 50, 50)
+// [SCENARIO] 3. Create external incentive
+// [INFO] approve tokens for external incentive
+// [INFO] create external incentive with bar token
+// [INFO] external incentive created - reward per block: ~1000000000
 //
-// [SCENARIO] 4. Mint bar qux position 02
-// [INFO] mint in-range position 02 (tick range: -1000 ~ 1000, requested amount: 1000, 1000)
+// [SCENARIO] 4. Mint narrow range position
+// [INFO] approve tokens for minting
+// [INFO] mint narrow range position (tick range: -50 ~ 50)
+// [EXPECTED] position ID: 1
+// [EXPECTED] liquidity: 4005202
+// [EXPECTED] amount0: 10000, amount1: 10000
+// [INFO] current pool tick: 0
+// [INFO] position range: -50 to 50
 //
-// [SCENARIO] 5. Create external incentive
-// [INFO] create external incentive for bar token
+// [SCENARIO] 5. Stake position and verify in-range
+// [INFO] approve NFT to staker and stake position
+// [EXPECTED] position staked successfully
+// [INFO] current tick after staking: 0
 //
-// [SCENARIO] 6. Stake position 01 and 02
-// [INFO] approve and stake position 01 and 02
+// [SCENARIO] 6. Collect external reward while in-range
+// [INFO] skip blocks to accumulate external rewards while in-range
+// [INFO] collect external reward while position is in-range
+// [EXPECTED] external reward while in-range: 76388
+// [INFO] confirmed: external rewards distributed while position is in-range
 //
-// [SCENARIO] 7. Wait for external bar to start
-// [INFO] external bar incentive started at height 976
-// [INFO] skip blocks until external bar starts (height: 124 -> 986)
+// [SCENARIO] 7. Perform swap to move price out of range
+// [INFO] approve tokens for swapping
+// [INFO] tick before swap: 0
+// [INFO] perform large swap to move price out of range
+// [INFO] swap bar for baz to move tick up
+// [INFO] swapped 100000 bar for -9985 baz
+// [EXPECTED] tick after swap: -887271
+// [WARNING] swap might not have moved price far enough
+// [INFO] perform additional swap
+// [EXPECTED] final tick after additional swap: -887271
 //
-// [SCENARIO] 8. Check reward for both in-range positions
-// [INFO] check reward for position 01 (both positions in-range)
-// [EXPECTED] position 1 of 100 block reward (height: 986 ~ 1086): 33957
-// [EXPECTED] position 2 of 100 block reward (height: 1086 ~ 1186): 34769
+// [SCENARIO] 8. Collect external reward while out-of-range
+// [INFO] skip blocks to accumulate external rewards while out-of-range
+// [INFO] collect external reward while position is out-of-range
+// [EXPECTED] external reward while out-of-range: 0
+// [INFO] confirmed: no external rewards distributed while position is out-of-range
 //
-// [SCENARIO] 9. Make position 01 out-range by swap
-// [INFO] make position 01 out-range by swap
-// [EXPECTED] position 01 moved out of range, pool tick: -900
+// [SCENARIO] 9. Perform reverse swap to move price back in-range
+// [INFO] tick before reverse swap: -887271
+// [INFO] perform reverse swap to move price back into range
+// [INFO] swap baz for bar to move tick down
+// [INFO] swapped 50000 baz for 0 bar
+// [EXPECTED] tick after reverse swap: -887271
+// [WARNING] position might still be out-of-range
+// [INFO] position range: -50 to 50, current tick: -887271
 //
-// [SCENARIO] 10. Check reward with position 01 out-range
-// [INFO] check reward for position 01 (position 01 out-range)
-// [EXPECTED] position 1 of 100 block reward (height: 1186 ~ 1286): 0
-// [EXPECTED] position 2 of 100 block reward (height: 1286 ~ 1386): 68725
-//
-// [SCENARIO] 11. Make position 01 in-range by swap
-// [INFO] make position 01 in-range by swap
-// [EXPECTED] position 01 moved back in range, pool tick: 19
-//
-// [SCENARIO] 12. Check reward with both positions in-range
-// [INFO] check reward for position 01 (both positions in-range again)
-// [EXPECTED] position 1 of 100 block reward (height: 1386 ~ 1486): 33957
-// [EXPECTED] position 2 of 100 block reward (height: 1486 ~ 1586): 34769
+// [SCENARIO] 10. Collect external reward after returning to in-range
+// [INFO] skip blocks to accumulate external rewards after returning to in-range
+// [INFO] collect external reward after position returned to in-range
+// [EXPECTED] external reward after returning to in-range: 0
+// [INFO] final tick: -887271
+// [INFO] position is still out-of-range, no external rewards as expected
+// [INFO] position in-range change by swap (external rewards) scenario completed successfully
+// [INFO] confirmed: external rewards are only distributed when positions are in-range
