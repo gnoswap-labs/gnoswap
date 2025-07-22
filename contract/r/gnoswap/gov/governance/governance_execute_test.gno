@@ -998,7 +998,6 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 		expectedError      string
 		expectedHasAbort   bool
 		description        string
-		setupGnsBalance    bool
 	}{
 		{
 			name:               "fail - proposer cancels upcoming proposal",
@@ -1031,19 +1030,6 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 			proposerThreshold:  1_000_000_000,
 			proposerCurrentGns: 500_000_000, // Below threshold
 			expectedHasAbort:   false,
-			setupGnsBalance:    true,
-		},
-		{
-			name:               "fail - others cannot cancel when proposer has enough stake",
-			proposalTime:       now,
-			cancellationTime:   now.Add(-time.Second * time.Duration(testConfig.VotingStartDelay+testConfig.VotingPeriod+testConfig.ExecutionDelay)),
-			canceler:           testutils.TestAddress("other"),
-			proposer:           testutils.TestAddress("proposer"),
-			proposerThreshold:  1_000_000_000,
-			proposerCurrentGns: 2_000_000_000, // Above threshold
-			expectedError:      "[GNOSWAP-GOVERNANCE-022] not authorized",
-			expectedHasAbort:   true,
-			setupGnsBalance:    true,
 		},
 		{
 			name:               "fail - cancel nonexistent proposal",
@@ -1080,13 +1066,6 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 					100,
 				)
 				setupExecuteTestProposal(t, proposal)
-
-				// Setup proposer's GNS balance if needed
-				if tt.setupGnsBalance {
-					// First, ensure proposer has initial GNS balance
-					testing.SetRealm(adminRealm)
-					gns.Transfer(cross, tt.proposer, tt.proposerCurrentGns)
-				}
 			}
 
 			testing.SetRealm(std.NewUserRealm(tt.canceler))

@@ -127,7 +127,6 @@ func executeProposal(
 }
 
 // Cancel cancels an active proposal with the given ID.
-// This function can be called by the proposer or others if the proposer's stake has fallen below threshold.
 //
 // Parameters:
 //   - cur: realm context for cross-realm calls
@@ -190,21 +189,6 @@ func cancel(proposalID, canceledAt, canceledHeight int64, canceledBy std.Address
 	proposal, ok := getProposal(proposalID)
 	if !ok {
 		return nil, errDataNotFound
-	}
-
-	// Check if the caller is the proposer or if proposer's stake has fallen below threshold
-	if canceledBy != proposal.proposer {
-		// If not the proposer, check if proposer's stake is below threshold
-		config, ok := getCurrentConfig()
-		if !ok {
-			return nil, errDataNotFound
-		}
-
-		proposerGnsBalance := gns.BalanceOf(proposal.proposer)
-		if proposerGnsBalance >= config.ProposalCreationThreshold {
-			// Proposer still has enough stake, only proposer can cancel
-			return nil, errNotAuthorized
-		}
 	}
 
 	// Attempt to cancel the proposal (this validates cancellation conditions)
