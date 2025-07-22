@@ -126,7 +126,6 @@ func executeProposal(
 }
 
 // Cancel cancels an active proposal with the given ID.
-// This function can be called by the proposer or others if the proposer's stake has fallen below threshold.
 //
 // Parameters:
 //   - cur: realm context for cross-realm calls
