@@ -7,58 +7,64 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-// AdminOnly checks if the caller is the admin and optionally updates the admin address
-func AdminOnly(caller std.Address) {
+func AssertIsAdminOrGovernance(caller std.Address) {
+	if !IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && !IsAuthorized(prbac.ROLE_GOVERNANCE.String(), caller) {
+		panic(ufmt.Errorf("unauthorized: caller %s is not admin or governance", caller))
+	}
+}
+
+// AssertIsAdmin checks if the caller is the admin and optionally updates the admin address
+func AssertIsAdmin(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_ADMIN.String(), caller)
 }
 
-// GovernanceOnly checks if the caller is the governance and optionally updates the governance address
-func GovernanceOnly(caller std.Address) {
+// AssertIsGovernance checks if the caller is the governance and optionally updates the governance address
+func AssertIsGovernance(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_GOVERNANCE.String(), caller)
 }
 
-// GovStakerOnly checks if the caller is the gov staker and optionally updates the gov staker address
-func GovStakerOnly(caller std.Address) {
+// AssertIsGovStaker checks if the caller is the gov staker and optionally updates the gov staker address
+func AssertIsGovStaker(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_GOV_STAKER.String(), caller)
 }
 
-// RouterOnly checks if the caller is the router and optionally updates the router address
-func RouterOnly(caller std.Address) {
+// AssertIsRouter checks if the caller is the router and optionally updates the router address
+func AssertIsRouter(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_ROUTER.String(), caller)
 }
 
-// PoolOnly checks if the caller is the pool and optionally updates the pool address
-func PoolOnly(caller std.Address) {
+// AssertIsPool checks if the caller is the pool and optionally updates the pool address
+func AssertIsPool(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_POOL.String(), caller)
 }
 
-// PositionOnly checks if the caller is the position and optionally updates the position address
-func PositionOnly(caller std.Address) {
+// AssertIsPosition checks if the caller is the position and optionally updates the position address
+func AssertIsPosition(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_POSITION.String(), caller)
 }
 
-// StakerOnly checks if the caller is the staker and optionally updates the staker address
-func StakerOnly(caller std.Address) {
+// AssertIsStaker checks if the caller is the staker and optionally updates the staker address
+func AssertIsStaker(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_STAKER.String(), caller)
 }
 
-// LaunchpadOnly checks if the caller is the launchpad and optionally updates the launchpad address
-func LaunchpadOnly(caller std.Address) {
+// AssertIsLaunchpad checks if the caller is the launchpad and optionally updates the launchpad address
+func AssertIsLaunchpad(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_LAUNCHPAD.String(), caller)
 }
 
-// EmissionOnly checks if the caller is the emission and optionally updates the emission address
-func EmissionOnly(caller std.Address) {
+// AssertIsEmission checks if the caller is the emission and optionally updates the emission address
+func AssertIsEmission(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_EMISSION.String(), caller)
 }
 
-// ProtocolFeeOnly checks if the caller is the protocol fee and optionally updates the protocol fee address
-func ProtocolFeeOnly(caller std.Address) {
+// AssertIsProtocolFee checks if the caller is the protocol fee and optionally updates the protocol fee address
+func AssertIsProtocolFee(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_PROTOCOL_FEE.String(), caller)
 }
 
-// GovXGNSOnly checks if the caller is the gov xgns and optionally updates the gov xgns address
-func GovXGNSOnly(caller std.Address) {
+// AssertIsGovXGNS checks if the caller is the gov xgns and optionally updates the gov xgns address
+func AssertIsGovXGNS(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_XGNS.String(), caller)
 }
 
