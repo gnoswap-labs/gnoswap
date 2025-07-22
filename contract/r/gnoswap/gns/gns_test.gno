@@ -222,7 +222,7 @@ func TestGrc20Methods(t *testing.T) {
 			},
 			shouldPanic:   true,
 			exceptionKind: "abort",
-			panicMsg:      `caller(g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m) has no permission`,
+			panicMsg:      `unauthorized: caller g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m is not emission`,
 		},
 		{
 			name: "Burn without permission should panic",
@@ -441,7 +441,7 @@ func TestMintGns(t *testing.T) {
 			inputSkipHeight:      1,
 			expectedMintedAmount: 0,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "caller(g1w4ek2ujlta047h6lta047h6lta047h6lkvk347) has no permission",
+			expectedAbortMessage: "unauthorized: caller g1w4ek2ujlta047h6lta047h6lta047h6lkvk347 is not emission",
 		},
 		{
 			name:                 "mint gns is failed by not allowed to mint same block",
