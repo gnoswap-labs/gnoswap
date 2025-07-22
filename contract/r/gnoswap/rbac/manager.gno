@@ -21,9 +21,6 @@ func RegisterRole(cur realm, roleName string) error {
 // This allows declarative registration of roles along with their permissions.
 // Returns an error if the role already exists.
 func DeclareRole(cur realm, roleName string) error {
-	if !callerIsOwner() {
-		return prbac.ErrUnauthorized
-	}
 	return globalManager.DeclareRole(roleName)
 }
 
