@@ -7,9 +7,11 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
+	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/v1/rbac"
 )
 
 func getPrev() (string, string) {
@@ -19,6 +21,15 @@ func getPrev() (string, string) {
 
 func getPrevAddr() std.Address {
 	return std.PreviousRealm().Address()
+}
+
+func getAdminAddress() std.Address {
+	addr, exists := access.GetAddress(prabc.ROLE_ADMIN.String())
+	if !exists {
+		return rbac.DefaultRoleAddresses[prabc.ROLE_ADMIN]
+	}
+
+	return addr
 }
 
 func assertShouldNotBeHalted() {
