@@ -10,13 +10,13 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
+	// "gno.land/p/demo/ufmt"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/rbac"
+	// "gno.land/r/gnoswap/v1/rbac"
 	"gno.land/r/gnoswap/v1/referral"
 )
 
@@ -1321,7 +1321,7 @@ func TestCollectFees(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupPositionStakerPermission(t)
+			// setupPositionStakerPermission(t)
 
 			testing.SetOriginCaller(adminAddr)
 			CreatePoolWithoutFee(t)
@@ -1508,20 +1508,20 @@ func TestReposition(t *testing.T) {
 	}
 }
 
-func setupPositionStakerPermission(t *testing.T) {
-	t.Helper()
+// func setupPositionStakerPermission(t *testing.T) {
+// 	t.Helper()
 
-	adminAddr := testutils.TestAddress("admin")
+// 	adminAddr := testutils.TestAddress("admin")
 
-	testing.SetOriginCaller(adminAddr)
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+// 	testing.SetOriginCaller(adminAddr)
+// 	testing.SetRealm(std.NewUserRealm(adminAddr))
 
-	globalManager := rbac.GlobalManager()
-	globalManager.UpdatePermission("staker", "access", func(addr std.Address) error {
-		if addr != adminAddr {
-			return ufmt.Errorf("caller is not staker")
-		}
+// 	globalManager := rbac.GlobalManager()
+// 	globalManager.UpdatePermission("staker", "access", func(addr std.Address) error {
+// 		if addr != adminAddr {
+// 			return ufmt.Errorf("caller is not staker")
+// 		}
 
-		return nil
-	})
-}
+// 		return nil
+// 	})
+// }
