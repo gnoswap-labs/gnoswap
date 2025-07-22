@@ -465,7 +465,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 
 	t.Run("unauthorized caller should fail", func(t *testing.T) {
 		unauthorized := testutils.TestAddress("unauthorized")
-		expected := "caller(" + unauthorized.String() + ") is not authorized for role admin"
+		expected := "[GNOSWAP-POOL-001] caller has no permission || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can call, called from g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg"
 
 		testing.SetRealm(std.NewUserRealm(unauthorized))
 		uassert.AbortsWithMessage(t, expected, func() {

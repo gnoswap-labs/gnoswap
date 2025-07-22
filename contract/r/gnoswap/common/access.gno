@@ -37,15 +37,9 @@ func AdminOnly(caller std.Address) error {
 
 // GovernanceOnly checks if the caller is the gov governance contract.
 func GovernanceOnly(caller std.Address) error {
-	govAddr, err := access.GetAddress(access.ROLE_GOVERNANCE)
-	if err != nil  {
+	if err := access.GovernanceOnly(caller); err != nil {
 		return ufmt.Errorf(ErrNoPermission, caller.String())
 	}
-
-	if caller != govAddr {
-		return ufmt.Errorf(ErrNoPermission, caller.String())
-	}
-
 	return nil
 }
 
