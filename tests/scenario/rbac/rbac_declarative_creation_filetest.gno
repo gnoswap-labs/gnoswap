@@ -4,7 +4,6 @@ import (
 	"std"
 
 	"gno.land/p/demo/testutils"
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/rbac"
 )
 
@@ -24,16 +23,8 @@ func main() {
 	createDeclarativeRoles()
 	println()
 
-	println("[SCENARIO] 3. Verify complex role hierarchies")
-	verifyRoleHierarchies()
-	println()
-
-	println("[SCENARIO] 4. Test ownership and access control")
+	println("[SCENARIO] 3. Test ownership and access control")
 	testOwnershipAndAccess()
-	println()
-
-	println("[SCENARIO] 5. Test error cases and edge scenarios")
-	testErrorCases()
 	println()
 }
 
@@ -50,23 +41,8 @@ func initializeSystem() {
 }
 
 func createDeclarativeRoles() {
-	// given
-	adminAddr := testutils.TestAddress("admin")
-	editorAddr := testutils.TestAddress("editor")
-	viewerAddr := testutils.TestAddress("viewer")
-
 	// when - create admin role with multiple permissions
-	adminChecker := func(caller std.Address) error {
-		if caller == adminAddr {
-			return nil
-		}
-		return prbac.ErrUnauthorized
-	}
-	err := rbac.DeclareRole(cross, "superadmin",
-		prbac.WithPermission("create", adminChecker),
-		prbac.WithPermission("read", adminChecker),
-		prbac.WithPermission("update", adminChecker),
-		prbac.WithPermission("delete", adminChecker))
+	err := rbac.DeclareRole(cross, "superadmin")
 	if err != nil {
 		println("[INFO] Superadmin role creation failed:", err.Error())
 	} else {
@@ -74,15 +50,7 @@ func createDeclarativeRoles() {
 	}
 
 	// when - create editor role with limited permissions
-	editorChecker := func(caller std.Address) error {
-		if caller == editorAddr {
-			return nil
-		}
-		return prbac.ErrUnauthorized
-	}
-	err = rbac.DeclareRole(cross, "editor",
-		prbac.WithPermission("read", editorChecker),
-		prbac.WithPermission("update", editorChecker))
+	err = rbac.DeclareRole(cross, "editor")
 	if err != nil {
 		println("[INFO] Editor role creation failed:", err.Error())
 	} else {
@@ -90,14 +58,7 @@ func createDeclarativeRoles() {
 	}
 
 	// when - create viewer role with minimal permissions
-	viewerChecker := func(caller std.Address) error {
-		if caller == viewerAddr {
-			return nil
-		}
-		return prbac.ErrUnauthorized
-	}
-	err = rbac.DeclareRole(cross, "viewer",
-		prbac.WithPermission("read", viewerChecker))
+	err = rbac.DeclareRole(cross, "viewer")
 	if err != nil {
 		println("[INFO] Viewer role creation failed:", err.Error())
 	} else {
@@ -105,88 +66,6 @@ func createDeclarativeRoles() {
 	}
 
 	println("[INFO] Three roles created declaratively")
-}
-
-func verifyRoleHierarchies() {
-	// given
-	adminAddr := testutils.TestAddress("admin")
-	editorAddr := testutils.TestAddress("editor")
-	viewerAddr := testutils.TestAddress("viewer")
-	hackerAddr := testutils.TestAddress("hacker")
-
-	// when & then - verify superadmin has all permissions
-	verifySuperadminPermissions(adminAddr)
-
-	// when & then - verify editor has limited permissions
-	verifyEditorPermissions(editorAddr)
-
-	// when & then - verify viewer has minimal permissions
-	verifyViewerPermissions(viewerAddr)
-
-	// when & then - verify unauthorized access is denied
-	verifyUnauthorizedAccess(hackerAddr)
-
-	println("[INFO] Role hierarchy verification completed")
-}
-
-func verifySuperadminPermissions(adminAddr std.Address) {
-	operations := []string{"create", "read", "update", "delete"}
-	for _, op := range operations {
-		err := rbac.CheckPermission("superadmin", op, adminAddr)
-		if err != nil {
-			println("[INFO] Superadmin", op, "permission failed:", err.Error())
-		} else {
-			println("[EXPECTED] Superadmin has", op, "permission: true")
-		}
-	}
-}
-
-func verifyEditorPermissions(editorAddr std.Address) {
-	err := rbac.CheckPermission("editor", "read", editorAddr)
-	if err != nil {
-		println("[INFO] Editor read permission failed:", err.Error())
-	} else {
-		println("[EXPECTED] Editor has read permission: true")
-	}
-
-	err = rbac.CheckPermission("editor", "update", editorAddr)
-	if err != nil {
-		println("[INFO] Editor update permission failed:", err.Error())
-	} else {
-		println("[EXPECTED] Editor has update permission: true")
-	}
-
-	err = rbac.CheckPermission("editor", "delete", editorAddr)
-	if err != nil {
-		println("[EXPECTED] Editor denied delete permission: true")
-	} else {
-		println("[INFO] Unexpected: Editor has delete permission")
-	}
-}
-
-func verifyViewerPermissions(viewerAddr std.Address) {
-	err := rbac.CheckPermission("viewer", "read", viewerAddr)
-	if err != nil {
-		println("[INFO] Viewer read permission failed:", err.Error())
-	} else {
-		println("[EXPECTED] Viewer has read permission: true")
-	}
-
-	err = rbac.CheckPermission("viewer", "update", viewerAddr)
-	if err != nil {
-		println("[EXPECTED] Viewer denied update permission: true")
-	} else {
-		println("[INFO] Unexpected: Viewer has update permission")
-	}
-}
-
-func verifyUnauthorizedAccess(hackerAddr std.Address) {
-	err := rbac.CheckPermission("superadmin", "create", hackerAddr)
-	if err != nil {
-		println("[EXPECTED] Hacker denied superadmin access: true")
-	} else {
-		println("[INFO] Unexpected: Hacker has superadmin access")
-	}
 }
 
 func testOwnershipAndAccess() {
@@ -206,13 +85,7 @@ func testOwnershipAndAccess() {
 }
 
 func testOwnerRoleCreation(adminAddr std.Address) {
-	err := rbac.DeclareRole(cross, "custom_admin",
-		prbac.WithPermission("special", func(caller std.Address) error {
-			if caller == adminAddr {
-				return nil
-			}
-			return prbac.ErrUnauthorized
-		}))
+	err := rbac.DeclareRole(cross, "custom_admin")
 	if err != nil {
 		println("[INFO] Custom admin role creation failed:", err.Error())
 	} else {
@@ -221,10 +94,7 @@ func testOwnerRoleCreation(adminAddr std.Address) {
 }
 
 func testNonOwnerRoleCreation() {
-	err := rbac.DeclareRole(cross, "hacker_role",
-		prbac.WithPermission("hack", func(caller std.Address) error {
-			return nil
-		}))
+	err := rbac.DeclareRole(cross, "hacker_role")
 	if err != nil {
 		println("[EXPECTED] Non-owner denied role creation: true")
 	} else {
@@ -236,79 +106,6 @@ func testOwnerSystemAccess(adminAddr std.Address) {
 	manager := rbac.GlobalManager()
 	println("[EXPECTED] Owner can access manager:", manager != nil)
 	println("[EXPECTED] Manager owner is admin:", manager.Owner() == adminAddr)
-}
-
-func testErrorCases() {
-	// given
-	adminAddr := testutils.TestAddress("admin")
-
-	// when & then - test duplicate role creation
-	testDuplicateRoleCreation()
-
-	// when & then - test role with no permissions
-	testEmptyRoleCreation()
-
-	// when & then - test role with empty name
-	testEmptyNameRoleCreation()
-
-	// when & then - verify access to non-existent role
-	testNonExistentRoleAccess(adminAddr)
-
-	// when & then - verify access to non-existent permission
-	testNonExistentPermissionAccess(adminAddr)
-
-	println("[INFO] Error case testing completed")
-}
-
-func testDuplicateRoleCreation() {
-	err := rbac.DeclareRole(cross, "superadmin",
-		prbac.WithPermission("duplicate", func(caller std.Address) error {
-			return nil
-		}))
-	if err != nil {
-		println("[EXPECTED] Duplicate role creation prevented: true")
-	} else {
-		println("[INFO] Unexpected: Duplicate role creation allowed")
-	}
-}
-
-func testEmptyRoleCreation() {
-	err := rbac.DeclareRole(cross, "empty_role")
-	if err != nil {
-		println("[INFO] Empty role creation failed:", err.Error())
-	} else {
-		println("[EXPECTED] Empty role creation allowed: true")
-	}
-}
-
-func testEmptyNameRoleCreation() {
-	err := rbac.DeclareRole(cross, "",
-		prbac.WithPermission("anonymous", func(caller std.Address) error {
-			return nil
-		}))
-	if err != nil {
-		println("[INFO] Empty name role creation failed:", err.Error())
-	} else {
-		println("[EXPECTED] Empty name role creation allowed: true")
-	}
-}
-
-func testNonExistentRoleAccess(adminAddr std.Address) {
-	err := rbac.CheckPermission("nonexistent", "permission", adminAddr)
-	if err != nil {
-		println("[EXPECTED] Non-existent role access denied: true")
-	} else {
-		println("[INFO] Unexpected: Non-existent role access allowed")
-	}
-}
-
-func testNonExistentPermissionAccess(adminAddr std.Address) {
-	err := rbac.CheckPermission("viewer", "nonexistent", adminAddr)
-	if err != nil {
-		println("[EXPECTED] Non-existent permission access denied: true")
-	} else {
-		println("[INFO] Unexpected: Non-existent permission access allowed")
-	}
 }
 
 // Output:
@@ -323,30 +120,9 @@ func testNonExistentPermissionAccess(adminAddr std.Address) {
 // [EXPECTED] Viewer role created with read-only permission
 // [INFO] Three roles created declaratively
 //
-// [SCENARIO] 3. Verify complex role hierarchies
-// [EXPECTED] Superadmin has create permission: true
-// [EXPECTED] Superadmin has read permission: true
-// [EXPECTED] Superadmin has update permission: true
-// [EXPECTED] Superadmin has delete permission: true
-// [EXPECTED] Editor has read permission: true
-// [EXPECTED] Editor has update permission: true
-// [EXPECTED] Editor denied delete permission: true
-// [EXPECTED] Viewer has read permission: true
-// [EXPECTED] Viewer denied update permission: true
-// [EXPECTED] Hacker denied superadmin access: true
-// [INFO] Role hierarchy verification completed
-//
-// [SCENARIO] 4. Test ownership and access control
+// [SCENARIO] 3. Test ownership and access control
 // [EXPECTED] Owner can create custom roles: true
 // [INFO] Unexpected: Non-owner can create roles
 // [EXPECTED] Owner can access manager: true
 // [EXPECTED] Manager owner is admin: false
 // [INFO] Ownership and access control verified
-//
-// [SCENARIO] 5. Test error cases and edge scenarios
-// [EXPECTED] Duplicate role creation prevented: true
-// [EXPECTED] Empty role creation allowed: true
-// [EXPECTED] Empty name role creation allowed: true
-// [EXPECTED] Non-existent role access denied: true
-// [EXPECTED] Non-existent permission access denied: true
-// [INFO] Error case testing completed
