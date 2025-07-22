@@ -20,7 +20,7 @@ func DistributeProtocolFee(cur realm) map[string]uint64 {
 	caller := std.PreviousRealm().Address()
 	halt.AssertIsHaltedWithdraw()
 	access.AssertIsGovStaker(caller)
-	
+
 	sentToDevOpsForEvent := make([]string, 0)
 	sentToGovStakerForEvent := make([]string, 0)
 	toReturnDistributedToGovStaker := make(map[string]uint64)

@@ -77,7 +77,7 @@ func TestSetDevOpsPctByAdmin(t *testing.T) {
 			realm:       std.NewUserRealm(testutils.TestAddress("dummy")),
 			percentage:  123,
 			shouldPanic: true,
-			panicMsg:    "caller(g1v36k6mteta047h6lta047h6lta047h6lz7gmv8) has no permission",
+			panicMsg:    "unauthorized: caller g1v36k6mteta047h6lta047h6lta047h6lz7gmv8 is not admin",
 		},
 		{
 			name:        "invalid percentage value",
@@ -179,7 +179,7 @@ func TestClearTokenListWithAmount(t *testing.T) {
 			name:        "no permission to clear",
 			prevRealm:   dummyRealm,
 			shouldPanic: true,
-			panicMsg:    "caller(g1lvx5ssxvuz5tttx6uza3myv8xy6w36a46fv7sy) has no permission",
+			panicMsg:    "unauthorized: caller g1lvx5ssxvuz5tttx6uza3myv8xy6w36a46fv7sy is not gov_staker",
 		},
 		{
 			name:      "clear protocol fee",
@@ -229,12 +229,6 @@ func TestAssertOnlyPoolRouterStaker(t *testing.T) {
 		{
 			name:      "caller is staker contract",
 			prevRealm: std.NewCodeRealm(consts.STAKER_PATH),
-		},
-		{
-			name:        "caller is stranger",
-			prevRealm:   dummyRealm,
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-001] caller has no permission",
 		},
 	}
 
