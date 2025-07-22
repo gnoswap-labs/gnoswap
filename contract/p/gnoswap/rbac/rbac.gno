@@ -74,12 +74,7 @@ func (rb *RBAC) RemoveRole(roleName string) error {
 		return ufmt.Errorf("cannot remove system role %s", roleName)
 	}
 
-	role := rb.roles[roleName]
-	for permName := range role.permissions {
-		if err := rb.RemovePermission(roleName, permName); err != nil {
-			return ufmt.Errorf("failed to remove permission %s from role %s: %v", permName, roleName, err)
-		}
-	}
+	// Simply delete the role since permissions are no longer managed here
 
 	delete(rb.roles, roleName)
 	return nil
@@ -109,68 +104,6 @@ func GetSystemRoles() map[string]bool {
 // role defined in contract/r/gnoswap/access/consts.gno
 func isSystemRole(roleName string) bool {
 	return systemRoles[roleName]
-}
-
-// RegisterPermission registers a permission name and checker
-// for the specific role.
-func (rb *RBAC) RegisterPermission(
-	roleName, permissionName string,
-	checker PermissionChecker,
-) error {
-	role, exists := rb.roles[roleName]
-	if !exists {
-		return ufmt.Errorf("role %s does not exist", roleName)
-	}
-	role.AddPermission(permissionName, checker)
-	return nil
-}
-
-// CheckPermission verifies if the caller has the specific permission.
-func (rb *RBAC) CheckPermission(
-	roleName, permissionName string,
-	caller std.Address,
-) error {
-	role, exists := rb.roles[roleName]
-	if !exists {
-		return ufmt.Errorf("role %s does not exist", roleName)
-	}
-	checker, exists := role.permissions[permissionName]
-	if !exists {
-		return ufmt.Errorf("permission %s does not exist for role %s", permissionName, roleName)
-	}
-	return checker(caller)
-}
-
-// UpdatePermission updates the checker for a specific permission
-// in a role.
-func (rb *RBAC) UpdatePermission(
-	roleName, permissionName string,
-	newChecker PermissionChecker,
-) error {
-	role, exists := rb.roles[roleName]
-	if !exists {
-		return ufmt.Errorf("role %s does not exist", roleName)
-	}
-	if !role.HasPermission(permissionName) {
-		return ufmt.Errorf("permission %s does not exist for role %s", permissionName, roleName)
-	}
-	role.AddPermission(permissionName, newChecker)
-	return nil
-}
-
-// RemovePermission removes a permission from a role.
-func (rb *RBAC) RemovePermission(
-	roleName, permissionName string,
-) error {
-	role, exists := rb.roles[roleName]
-	if !exists {
-		return ufmt.Errorf("cannot remove permission from non-existent role %s", roleName)
-	}
-	if !role.HasPermission(permissionName) {
-		return ufmt.Errorf("permission %s does not exist for role %s", permissionName, roleName)
-	}
-	delete(role.permissions, permissionName)
-	return nil
 }
 
 // GrantRoleAndSetAddressByOwner assigns a role to an address

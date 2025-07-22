@@ -63,9 +63,6 @@ func TestUpdateRoleAddress(t *testing.T) {
 		actual := getCurrentConfig()
 		updatedAddr := actual.roles["another_test_admin"]
 		uassert.Equal(t, testRealm1Addr, updatedAddr)
-
-		err = rbac.CheckPermission("another_test_admin", PERM_ACCESS, updatedAddr)
-		uassert.NoError(t, err)
 	})
 
 	t.Run("update fails while uninitialized", func(t *testing.T) {
@@ -101,12 +98,6 @@ func TestCreateRole(t *testing.T) {
 		actual := getCurrentConfig()
 		roleAddr := actual.roles["custom_role"]
 		uassert.Equal(t, testNewRoleAddr, roleAddr)
-
-		err = rbac.CheckPermission("custom_role", PERM_ACCESS, testNewRoleAddr)
-		uassert.NoError(t, err)
-
-		err = rbac.CheckPermission("custom_role", PERM_ACCESS, testAnotherAddr)
-		uassert.Error(t, err)
 	})
 
 	t.Run("create role fails while uninitialized", func(t *testing.T) {
@@ -144,9 +135,6 @@ func TestSetRole(t *testing.T) {
 
 		actual := getCurrentConfig()
 		uassert.Equal(t, testAuditorAddr, actual.roles["test_auditor"])
-
-		err = rbac.CheckPermission("test_auditor", PERM_ACCESS, testAuditorAddr)
-		uassert.NoError(t, err)
 	})
 
 	t.Run("set new role success", func(t *testing.T) {
@@ -159,12 +147,6 @@ func TestSetRole(t *testing.T) {
 		actual := getCurrentConfig()
 		roleAddr := actual.roles["custom_role_2"]
 		uassert.Equal(t, testNewRoleAddr, roleAddr)
-
-		err = rbac.CheckPermission("custom_role_2", PERM_ACCESS, testNewRoleAddr)
-		uassert.NoError(t, err)
-
-		err = rbac.CheckPermission("custom_role_2", PERM_ACCESS, testAnotherAddr)
-		uassert.Error(t, err)
 	})
 
 	t.Run("success updating existing role", func(t *testing.T) {
@@ -180,12 +162,6 @@ func TestSetRole(t *testing.T) {
 
 		actual := getCurrentConfig()
 		uassert.Equal(t, newReviewerAddr, actual.roles["test_reviewer"])
-
-		err = rbac.CheckPermission("test_reviewer", PERM_ACCESS, testReviewerAddr)
-		uassert.Error(t, err)
-
-		err = rbac.CheckPermission("test_reviewer", PERM_ACCESS, newReviewerAddr)
-		uassert.NoError(t, err)
 	})
 
 	t.Run("set role fails while uninitialized", func(t *testing.T) {
@@ -221,9 +197,6 @@ func TestDeleteRole(t *testing.T) {
 
 		exists = RoleExists("test_role_to_delete")
 		uassert.Equal(t, false, exists)
-
-		err = rbac.CheckPermission("test_role_to_delete", PERM_ACCESS, testRoleAddr)
-		uassert.Error(t, err)
 	})
 
 	t.Run("fail to delete non-existent role", func(t *testing.T) {

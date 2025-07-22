@@ -5,7 +5,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/rbac"
 )
 
@@ -56,15 +55,6 @@ func validateRoleName(roleName string) error {
 	return nil
 }
 
-// createAddressChecker creates a permission checker for a specific address
-func createAddressChecker(addr std.Address, roleName string) prbac.PermissionChecker {
-	return func(caller std.Address) error {
-		if caller != addr {
-			return ufmt.Errorf(errUnauthorized, caller.String(), roleName)
-		}
-		return nil
-	}
-}
 
 // setConfig sets the current configuration
 func setConfig(cfg *config) error {
@@ -86,11 +76,8 @@ func initialize(cfg *config) error {
 		if err != nil {
 			errStr := err.Error()
 			if ufmt.Sprintf("%s", errStr) == ufmt.Sprintf(errDeclareRole, roleName, "role "+roleName+" already exists") {
-				// If already exists, only update permission
-				checker := createAddressChecker(addr, roleName)
-				if updateErr := rbac.UpdatePermission(cross, roleName, PERM_ACCESS, checker); updateErr != nil {
-					return updateErr
-				}
+				// If role already exists, skip
+				continue
 			} else {
 				return err
 			}
@@ -100,10 +87,9 @@ func initialize(cfg *config) error {
 	return setConfig(cfg)
 }
 
-// declareNewRole declares a new role with permissions
+// declareNewRole declares a new role
 func declareNewRole(roleName string, addr std.Address) error {
-	checker := createAddressChecker(addr, roleName)
-	if err := rbac.DeclareRole(cross, roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
+	if err := rbac.DeclareRole(cross, roleName); err != nil {
 		return ufmt.Errorf(errDeclareRole, roleName, err)
 	}
 	return nil
@@ -134,14 +120,9 @@ func SetRole(cur realm, roleName string, address std.Address) error {
 	}
 
 	prevAddress := currentConfig.roles[roleName]
-	checker := createAddressChecker(address, roleName)
 
-	if RoleExists(roleName) {
-		if err := rbac.UpdatePermission(cross, roleName, PERM_ACCESS, checker); err != nil {
-			return err
-		}
-	} else {
-		if err := rbac.DeclareRole(cross, roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
+	if !RoleExists(roleName) {
+		if err := rbac.DeclareRole(cross, roleName); err != nil {
 			return err
 		}
 	}
@@ -176,7 +157,6 @@ func UpdateRoleAddress(cur realm, roleName string, newAddress std.Address) error
 
 	prevAddress := currentConfig.roles[roleName]
 	currentConfig.roles[roleName] = newAddress
-	newChecker := createAddressChecker(newAddress, roleName)
 
 	std.Emit(
 		roleUpdated,
@@ -184,7 +164,7 @@ func UpdateRoleAddress(cur realm, roleName string, newAddress std.Address) error
 		"prevAddress", prevAddress.String(),
 		"newAddress", newAddress.String(),
 	)
-	return rbac.UpdatePermission(cross, roleName, PERM_ACCESS, newChecker)
+	return nil
 }
 
 // CreateRole creates a new role with the given address
@@ -284,5 +264,9 @@ func DeleteRole(cur realm, roleName string) error {
 
 func isAdmin() bool {
 	caller := std.PreviousRealm().Address()
-	return rbac.CheckPermission("admin", PERM_ACCESS, caller) == nil
+	adminAddr, err := GetAddress(ROLE_ADMIN)
+	if err != nil {
+		return false
+	}
+	return caller == adminAddr
 }
