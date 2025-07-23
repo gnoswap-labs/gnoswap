@@ -1,12 +1,14 @@
 package rbac
 
 import (
+	"errors"
 	"std"
 
 	"gno.land/p/demo/ufmt"
 	oo "gno.land/p/oxtekgrinder/ownable2step"
 )
 
+var ErrUnauthorized = errors.New("caller is not owner")
 
 // RBAC encapsulates and manages toles and their permissions.
 type RBAC struct {
