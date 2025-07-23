@@ -1,8 +1,11 @@
 package rbac
 
 import (
+	"errors"
 	"std"
 )
+
+var ErrUnauthorized = errors.New("caller is not owner")
 
 // RBAC encapsulates and manages toles and their permissions.
 type RBAC struct {
