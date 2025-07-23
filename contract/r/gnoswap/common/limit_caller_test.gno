@@ -11,19 +11,6 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 )
 
-// setupTestRolesForLimitCaller initializes role addresses for testing
-func setupTestRolesForLimitCaller() {
-	testAdminAddr := testutils.TestAddress("admin")
-
-	roleMap := map[string]std.Address{
-		prbac.ROLE_ADMIN.String(): testAdminAddr,
-	}
-
-	// Set up the test realm context to mimic RBAC package calling SetRoleAddresses
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/rbac"))
-	access.SetRoleAddresses(cross, roleMap)
-}
-
 func TestGetLimitCaller(t *testing.T) {
 	t.Run("returns boolean value", func(t *testing.T) {
 		result := GetLimitCaller()
@@ -93,6 +80,8 @@ func TestSetLimitCaller(t *testing.T) {
 
 // TestLimitCallerIntegration tests the integration between GetLimitCaller and SetLimitCaller
 func TestLimitCallerIntegration(t *testing.T) {
+	setupTestRolesForLimitCaller()
+	
 	// Store original state
 	originalState := GetLimitCaller()
 	defer func() {
@@ -125,4 +114,17 @@ func TestLimitCallerIntegration(t *testing.T) {
 			}(cross)
 		})
 	}
+}
+
+// setupTestRolesForLimitCaller initializes role addresses for testing
+func setupTestRolesForLimitCaller() {
+	testAdminAddr := testutils.TestAddress("admin")
+
+	roleMap := map[string]std.Address{
+		prbac.ROLE_ADMIN.String(): testAdminAddr,
+	}
+
+	// Set up the test realm context to mimic RBAC package calling SetRoleAddresses
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/rbac"))
+	access.SetRoleAddresses(cross, roleMap)
 }
