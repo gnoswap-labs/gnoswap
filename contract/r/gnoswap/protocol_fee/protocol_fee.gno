@@ -18,7 +18,7 @@ import (
 // It returns list of token with amount has been sent to gov/staker.
 func DistributeProtocolFee(cur realm) map[string]uint64 {
 	caller := std.PreviousRealm().Address()
-	halt.AssertIsHaltedWithdraw()
+	halt.AssertIsNotHaltedWithdraw()
 	access.AssertIsGovStaker(caller)
 
 	sentToDevOpsForEvent := make([]string, 0)
@@ -126,7 +126,7 @@ func ClearTokenListWithAmount(cur realm) {
 // which means gov/staker doesn't known how much protocol_fee has been distributed from last time
 // Therefore, gov/staker calls GetAccuTransferToGovStaker to get the accumulated amount and clear it
 func ClearAccuTransferToGovStaker(cur realm) {
-	halt.AssertIsHaltedWithdraw()
+	halt.AssertIsNotHaltedWithdraw()
 	caller := std.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)
 

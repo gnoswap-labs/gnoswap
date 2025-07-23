@@ -89,8 +89,8 @@ func Mint(
 	caller std.Address,
 	referrer string,
 ) (uint64, string, string, string) {
-	halt.AssertIsHaltedPosition()
-	halt.AssertIsHaltedWithdraw()
+	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedWithdraw()
 	prevCaller := getPrevRealm()
 	assertOnlyUserOrStaker(prevCaller)
 	if isUserCall() {
@@ -178,8 +178,8 @@ func IncreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string) {
-	halt.AssertIsHaltedPosition()
-	halt.AssertIsHaltedWithdraw()
+	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedWithdraw()
 	assertValidNumberString(amount0DesiredStr)
 	assertValidNumberString(amount1DesiredStr)
 	assertValidNumberString(amount0MinStr)
@@ -269,8 +269,8 @@ func DecreaseLiquidity(
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
 	caller := getPrevAddr()
-	halt.AssertIsHaltedPosition()
-	halt.AssertIsHaltedWithdraw()
+	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedWithdraw()
 	assertAuthorizedForToken(caller, positionId)
 	checkDeadline(deadline)
 	assertValidLiquidityAmount(liquidityStr)
@@ -332,8 +332,8 @@ func collectFee(
 	unwrapResult bool,
 	caller std.Address,
 ) (uint64, string, string, string, string, string) {
-	halt.AssertIsHaltedPosition()
-	halt.AssertIsHaltedWithdraw()
+	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedWithdraw()
 	assertTokenExists(positionId)
 	assertAuthorizedForToken(caller, positionId)
 	mintAndDistributeGnsCallback()

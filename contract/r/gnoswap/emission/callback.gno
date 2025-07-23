@@ -44,7 +44,7 @@ func registerMintAndDistributeGnsCallback(cur realm) {
 	// Therefore, there is no need to separately check the caller in a function that applies upgrades,
 	// but in a test environment, since the admin address cannot be fixed as the default address,
 	// we use the admin address registered in the `access` contract instead.
-	bridge.RegisterCallback(cross, adminAddr, "emission", "MintAndDistributeGns", MintAndDistributeGns)
+	bridge.RegisterCallback(cross, "emission", "MintAndDistributeGns", MintAndDistributeGns)
 }
 
 // XXX need to check if this is correct

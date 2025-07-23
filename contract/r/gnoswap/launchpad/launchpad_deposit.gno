@@ -75,8 +75,8 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 	previousAddress := std.PreviousRealm().Address()
 	previousPkgPath := std.PreviousRealm().PkgPath()
 
-	halt.AssertIsHaltedLaunchpad()
-	halt.AssertIsHaltedWithdraw()
+	halt.AssertIsNotHaltedLaunchpad()
+	halt.AssertIsNotHaltedWithdraw()
 	assertOnlyUser()
 	assertValidAmount(depositAmount)
 

@@ -29,8 +29,8 @@ func Reposition(
 	amount0MinStr string,
 	amount1MinStr string,
 ) (uint64, string, int32, int32, string, string) {
-	halt.AssertIsHaltedPosition()
-	halt.AssertIsHaltedWithdraw()
+	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedWithdraw()
 	verifyTokenIdAndOwnership(positionId)
 	mintAndDistributeGnsCallback()
 

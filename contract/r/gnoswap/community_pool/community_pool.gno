@@ -12,8 +12,8 @@ import (
 // TransferTokenByAdmin transfers token to the given address.
 func TransferTokenByAdmin(cur realm, tokenPath string, to std.Address, amount int64) {
 	caller := std.PreviousRealm().Address()
-	halt.AssertIsHaltedCommunityPool()
-	halt.AssertIsHaltedWithdraw()
+	halt.AssertIsNotHaltedCommunityPool()
+	halt.AssertIsNotHaltedWithdraw()
 	access.AssertIsAdmin(caller)
 
 	transferToken(tokenPath, to, amount)
@@ -23,8 +23,8 @@ func TransferTokenByAdmin(cur realm, tokenPath string, to std.Address, amount in
 // Only governance contract can execute this function via proposal
 func TransferToken(cur realm, tokenPath string, to std.Address, amount int64) {
 	caller := std.PreviousRealm().Address()
-	halt.AssertIsHaltedCommunityPool()
-	halt.AssertIsHaltedWithdraw()
+	halt.AssertIsNotHaltedCommunityPool()
+	halt.AssertIsNotHaltedWithdraw()
 	access.AssertIsGovernance(caller)
 
 	transferToken(tokenPath, to, amount)

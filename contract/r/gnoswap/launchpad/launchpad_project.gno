@@ -67,8 +67,8 @@ func CreateProject(
 	previousPkgPath := std.PreviousRealm().PkgPath()
 	launchpadAddr := std.CurrentRealm().Address()
 
-	halt.AssertIsHaltedLaunchpad()
-	halt.AssertIsHaltedWithdraw()
+	halt.AssertIsNotHaltedLaunchpad()
+	halt.AssertIsNotHaltedWithdraw()
 	access.AssertIsAdmin(previousAddress)
 
 	averageBlockTimeMs := gns.GetAvgBlockTimeInMs()
@@ -251,8 +251,8 @@ func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.A
 	currentHeight := int64(std.ChainHeight())
 
 	assertOnlyUser()
-	halt.AssertIsHaltedLaunchpad()
-	halt.AssertIsHaltedWithdraw()
+	halt.AssertIsNotHaltedLaunchpad()
+	halt.AssertIsNotHaltedWithdraw()
 	access.AssertIsAdmin(previousAddress)
 
 	projectLeftReward, err := transferLeftFromProject(projectID, recipient, currentHeight)

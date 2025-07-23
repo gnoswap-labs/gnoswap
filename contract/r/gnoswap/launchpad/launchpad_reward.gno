@@ -26,8 +26,8 @@ func CollectRewardByDepositId(cur realm, depositID string) int64 {
 	previousAddress := std.PreviousRealm().Address()
 	previousPkgPath := std.PreviousRealm().PkgPath()
 
-	halt.AssertIsHaltedLaunchpad()
-	halt.AssertIsHaltedWithdraw()
+	halt.AssertIsNotHaltedLaunchpad()
+	halt.AssertIsNotHaltedWithdraw()
 
 	deposit, err := getDeposit(depositID)
 	if err != nil {

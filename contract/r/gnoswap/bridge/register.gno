@@ -22,30 +22,17 @@ func init() {
 
 // RegisterCallback registers a callback function for a given namespace and function name.
 // Only admin and governance addresses are allowed to register callbacks.
-func RegisterCallback(cur realm, caller std.Address, namespace, fname string, callback any) error {
-	if !caller.IsValid() {
-		return ufmt.Errorf("invalid caller address: %s", caller)
-	}
-
-	adminAddr := getAdminAddress()
-	govAddr := getGovernanceAddress()
-
-	// TODO: Currently, Register is only allowed for admin or governance,
-	// but for some contracts, the previous caller might not be that contract.
-	// Therefore, there is a need to expand permissions.
-	//
-	// Currently, admin addresses are directly inserted into the caller,
-	// but this part is planned to be modified after discussion.
-	if caller != adminAddr && caller != govAddr {
-		return ufmt.Errorf("unauthorized caller: %s", caller)
-	}
+func RegisterCallback(cur realm, namespace, fname string, callback any) {
+	originCaller := std.OriginCaller()
+	access.AssertIsValidAddress(originCaller)
+	access.AssertIsAdminOrGovernance(originCaller)
 
 	key := createKey(namespace, fname)
 	if callbackTree.Has(key) {
-		return ufmt.Errorf("callback already registered for key: %s", key)
+		panic(ufmt.Errorf("callback already registered for key: %s", key))
 	}
+
 	callbackTree.Set(key, callback)
-	return nil
 }
 
 // LookupCallback retrieves a callback function by namespace and function name.
@@ -57,25 +44,17 @@ func LookupCallback(namespace, fname string) (any, bool) {
 
 // UpdateCallback updates an existing callback function for a given namespace and function name.
 // Only admin and governance addresses are allowed to update callbacks.
-func UpdateCallback(cur realm, caller std.Address, namespace, fname string, newCallback any) error {
-	if !caller.IsValid() {
-		return ufmt.Errorf("invalid caller address: %s", caller)
-	}
-
-	adminAddr := getAdminAddress()
-	govAddr := getGovernanceAddress()
-
-	// allow only admin and governance
-	if caller != adminAddr && caller != govAddr {
-		return ufmt.Errorf("unauthorized caller: %s", caller)
-	}
+func UpdateCallback(cur realm, namespace, fname string, newCallback any) {
+	originCaller := std.OriginCaller()
+	access.AssertIsValidAddress(originCaller)
+	access.AssertIsAdminOrGovernance(originCaller)
 
 	key := createKey(namespace, fname)
 	if !callbackTree.Has(key) {
-		return ufmt.Errorf("callback not found for key: %s", key)
+		panic(ufmt.Errorf("callback not found for key: %s", key))
 	}
+
 	callbackTree.Set(key, newCallback)
-	return nil
 }
 
 // createKey creates a unique key by combining namespace and function name.

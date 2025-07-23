@@ -27,8 +27,8 @@ import (
 // ref: https://docs.gnoswap.io/contracts/governance/vote.gno#execute
 func Execute(cur realm, proposalID int64) int64 {
 	// Check if execution is allowed (system not halted for execution)
-	halt.AssertIsHaltedGovernance()
-	halt.AssertIsHaltedWithdraw()
+	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedWithdraw()
 
 	// Get caller information and current blockchain state
 	previousRealm := std.PreviousRealm()

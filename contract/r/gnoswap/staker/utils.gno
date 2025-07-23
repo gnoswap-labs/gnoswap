@@ -11,8 +11,6 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/rbac"
-
-	"gno.land/r/gnoswap/v1/halt"
 )
 
 // GetOrigPkgAddr returns the original package address.
@@ -142,48 +140,6 @@ func contains(slice []string, item string) bool {
 		}
 	}
 	return false
-}
-
-// derivePkgAddr derives the Realm address from it's pkgpath parameter
-func derivePkgAddr(pkgPath string) std.Address {
-	return std.DerivePkgAddr(pkgPath)
-}
-
-// getPrevRealm returns object of the previous realm.
-func getPrevRealm() std.Realm {
-	return std.PreviousRealm()
-}
-
-// getPrevAddr returns the address of the previous realm.
-func getPrevAddr() std.Address {
-	return std.PreviousRealm().Address()
-}
-
-// getPrevPkgPath returns the package path of the previous realm.
-func getPrevPkgPath() string {
-	return std.PreviousRealm().PkgPath()
-}
-
-// getPrev returns the address and package path of the previous realm.
-func getPrev() (string, string) {
-	prev := getPrevRealm()
-	return prev.Address().String(), prev.PkgPath()
-}
-
-// isUserCall returns true if the caller is a user.
-func isUserCall() bool {
-	return std.PreviousRealm().IsUser()
-}
-
-// assertOnlyNotHalted panics if the contract is halted.
-func assertOnlyNotHalted() {
-	if halt.IsHaltedStaker() {
-		panic("staker contract operations are currently disabled")
-	}
-
-	if halt.IsHaltedWithdraw() {
-		panic("staker contract withdrawals are currently disabled")
-	}
 }
 
 func formatUint(v any) string {

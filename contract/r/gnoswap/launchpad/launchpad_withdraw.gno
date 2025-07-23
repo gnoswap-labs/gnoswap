@@ -25,8 +25,8 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 	previousAddress := std.PreviousRealm().Address()
 	previousPkgPath := std.PreviousRealm().PkgPath()
 
-	halt.AssertIsHaltedLaunchpad()
-	halt.AssertIsHaltedWithdraw()
+	halt.AssertIsNotHaltedLaunchpad()
+	halt.AssertIsNotHaltedWithdraw()
 	assertOnlyUser()
 
 	emission.MintAndDistributeGns(cross)

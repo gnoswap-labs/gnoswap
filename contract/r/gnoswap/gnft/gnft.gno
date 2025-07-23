@@ -121,7 +121,7 @@ func MustOwnerOf(tid grc721.TokenID) std.Address {
 //   - If the caller is not the token owner, the function panics.
 //   - If the URI update fails, the function panics with the associated error.
 func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
-	halt.AssertIsHaltedPosition()
+	halt.AssertIsNotHaltedPosition()
 	assertCallerIsOwnerOfToken(tid)
 
 	err := setTokenURI(cur, tid, tURI)
@@ -158,7 +158,7 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 //   - If the caller is not the owner or approved operator of the token.
 //   - If the internal transfer (`nft.TransferFrom`) fails.
 func SafeTransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
-	halt.AssertIsHaltedPosition()
+	halt.AssertIsNotHaltedPosition()
 
 	assertValidAddr(from)
 	assertValidAddr(to)
@@ -208,7 +208,7 @@ func TransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 //   - If the caller is not the token owner.
 //   - If the `Approve` call fails.
 func Approve(cur realm, approved std.Address, tid grc721.TokenID) error {
-	halt.AssertIsHaltedPosition()
+	halt.AssertIsNotHaltedPosition()
 	assertCallerIsOwnerOfToken(tid)
 
 	err := nft.Approve(approved, tid)
@@ -231,7 +231,7 @@ func Approve(cur realm, approved std.Address, tid grc721.TokenID) error {
 //   - If the contract is halted.
 //   - If the `SetApprovalForAll` operation fails.
 func SetApprovalForAll(cur realm, operator std.Address, approved bool) error {
-	halt.AssertIsHaltedPosition()
+	halt.AssertIsNotHaltedPosition()
 	checkErr(nft.SetApprovalForAll(operator, approved))
 	return nil
 }
@@ -270,7 +270,7 @@ func IsApprovedForAll(owner, operator std.Address) bool {
 //   - If the caller is not the owner of the token.
 //   - If the token URI cannot be set.
 func SetTokenURIByImageURI(cur realm, tid grc721.TokenID) {
-	halt.AssertIsHaltedPosition()
+	halt.AssertIsNotHaltedPosition()
 	assertCallerIsOwnerOfToken(tid)
 
 	tokenURI := genImageURI(generateRandInstance())
@@ -294,7 +294,7 @@ func SetTokenURIByImageURI(cur realm, tid grc721.TokenID) {
 //   - If the caller does not own any tokens (empty token list).
 //   - If URI generation or assignment fails.
 func SetTokenURILast(cur realm) {
-	halt.AssertIsHaltedPosition()
+	halt.AssertIsNotHaltedPosition()
 	caller := getPrevAddr()
 	tokenListByCaller, _ := getTokenList(caller)
 	lenTokenListByCaller := len(tokenListByCaller)
@@ -318,7 +318,7 @@ func SetTokenURILast(cur realm) {
 //   - grc721.TokenID: The ID of the newly minted token
 func Mint(cur realm, to std.Address, tid grc721.TokenID) grc721.TokenID {
 	owner.AssertOwnedByPrevious()
-	halt.AssertIsHaltedPosition()
+	halt.AssertIsNotHaltedPosition()
 
 	checkErr(nft.Mint(to, tid))
 
@@ -331,7 +331,7 @@ func Mint(cur realm, to std.Address, tid grc721.TokenID) grc721.TokenID {
 //   - tid: The token ID to burn
 func Burn(cur realm, tid grc721.TokenID) {
 	owner.AssertOwnedByPrevious()
-	halt.AssertIsHaltedPosition()
+	halt.AssertIsNotHaltedPosition()
 
 	ownerAddr, err := OwnerOf(tid)
 	if err != nil {
