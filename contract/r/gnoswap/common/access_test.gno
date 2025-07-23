@@ -66,111 +66,173 @@ func TestSatisfyCond(t *testing.T) {
 	})
 }
 
-func TestAdminOnly(t *testing.T) {
+func TestIsAuthorized(t *testing.T) {
 	setupTestRoles()
 
-	t.Run("caller is admin", func(t *testing.T) {
-		uassert.NoError(t, AdminOnly(testAdminAddr))
+	t.Run("authorized admin", func(t *testing.T) {
+		uassert.True(t, IsAuthorized(prbac.ROLE_ADMIN, testAdminAddr))
 	})
 
-	t.Run("caller is not admin", func(t *testing.T) {
-		uassert.Error(t, AdminOnly(addr01))
+	t.Run("unauthorized user for admin role", func(t *testing.T) {
+		uassert.False(t, IsAuthorized(prbac.ROLE_ADMIN, addr01))
+	})
+
+	t.Run("authorized governance", func(t *testing.T) {
+		uassert.True(t, IsAuthorized(prbac.ROLE_GOVERNANCE, testGovAddr))
+	})
+
+	t.Run("unauthorized user for governance role", func(t *testing.T) {
+		uassert.False(t, IsAuthorized(prbac.ROLE_GOVERNANCE, addr01))
+	})
+
+	t.Run("authorized router", func(t *testing.T) {
+		uassert.True(t, IsAuthorized(prbac.ROLE_ROUTER, testRouterAddr))
+	})
+
+	t.Run("cross-role authorization check", func(t *testing.T) {
+		// Admin address should not be authorized for governance role
+		uassert.False(t, IsAuthorized(prbac.ROLE_GOVERNANCE, testAdminAddr))
+		// Governance address should not be authorized for admin role
+		uassert.False(t, IsAuthorized(prbac.ROLE_ADMIN, testGovAddr))
 	})
 }
 
-func TestGovernanceOnly(t *testing.T) {
+func TestRequireAuthorized(t *testing.T) {
 	setupTestRoles()
 
-	t.Run("caller is governance", func(t *testing.T) {
-		uassert.NoError(t, GovernanceOnly(testGovAddr))
+	t.Run("authorized admin - should not panic", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Errorf("RequireAuthorized should not panic for authorized admin, but got: %v", r)
+			}
+		}()
+		RequireAuthorized(prbac.ROLE_ADMIN, testAdminAddr)
 	})
 
-	t.Run("caller is not governance", func(t *testing.T) {
-		uassert.Error(t, GovernanceOnly(addr01))
+	t.Run("unauthorized user - should panic", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("RequireAuthorized should panic for unauthorized user")
+			}
+		}()
+		RequireAuthorized(prbac.ROLE_ADMIN, addr01)
+	})
+
+	t.Run("authorized governance - should not panic", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Errorf("RequireAuthorized should not panic for authorized governance, but got: %v", r)
+			}
+		}()
+		RequireAuthorized(prbac.ROLE_GOVERNANCE, testGovAddr)
 	})
 }
 
-func TestGovStakerOnly(t *testing.T) {
+func TestAdminAuthorization(t *testing.T) {
 	setupTestRoles()
 
-	t.Run("caller is gov staker", func(t *testing.T) {
-		uassert.NoError(t, GovStakerOnly(testGovStakerAddr))
+	t.Run("admin is authorized", func(t *testing.T) {
+		uassert.True(t, IsAuthorized(prbac.ROLE_ADMIN, testAdminAddr))
 	})
 
-	t.Run("caller is not gov staker", func(t *testing.T) {
-		uassert.Error(t, GovStakerOnly(addr01))
+	t.Run("non-admin is not authorized", func(t *testing.T) {
+		uassert.False(t, IsAuthorized(prbac.ROLE_ADMIN, addr01))
 	})
 }
 
-func TestRouterOnly(t *testing.T) {
+func TestGovernanceAuthorization(t *testing.T) {
 	setupTestRoles()
 
-	t.Run("caller is router", func(t *testing.T) {
-		uassert.NoError(t, RouterOnly(testRouterAddr))
+	t.Run("governance is authorized", func(t *testing.T) {
+		uassert.True(t, IsAuthorized(prbac.ROLE_GOVERNANCE, testGovAddr))
 	})
 
-	t.Run("caller is not router", func(t *testing.T) {
-		uassert.Error(t, RouterOnly(addr01))
+	t.Run("non-governance is not authorized", func(t *testing.T) {
+		uassert.False(t, IsAuthorized(prbac.ROLE_GOVERNANCE, addr01))
 	})
 }
 
-func TestPositionOnly(t *testing.T) {
+func TestGovStakerAuthorization(t *testing.T) {
 	setupTestRoles()
 
-	t.Run("caller is position", func(t *testing.T) {
-		uassert.NoError(t, PositionOnly(testPositionAddr))
+	t.Run("gov staker is authorized", func(t *testing.T) {
+		uassert.True(t, IsAuthorized(prbac.ROLE_GOV_STAKER, testGovStakerAddr))
 	})
 
-	t.Run("caller is not position", func(t *testing.T) {
-		uassert.Error(t, PositionOnly(addr01))
+	t.Run("non-gov staker is not authorized", func(t *testing.T) {
+		uassert.False(t, IsAuthorized(prbac.ROLE_GOV_STAKER, addr01))
 	})
 }
 
-func TestPoolOnly(t *testing.T) {
+func TestRouterAuthorization(t *testing.T) {
 	setupTestRoles()
 
-	t.Run("caller is pool", func(t *testing.T) {
-		uassert.NoError(t, PoolOnly(testPoolAddr))
+	t.Run("router is authorized", func(t *testing.T) {
+		uassert.True(t, IsAuthorized(prbac.ROLE_ROUTER, testRouterAddr))
 	})
 
-	t.Run("caller is not pool", func(t *testing.T) {
-		uassert.Error(t, PoolOnly(addr01))
+	t.Run("non-router is not authorized", func(t *testing.T) {
+		uassert.False(t, IsAuthorized(prbac.ROLE_ROUTER, addr01))
 	})
 }
 
-func TestStakerOnly(t *testing.T) {
+func TestPositionAuthorization(t *testing.T) {
 	setupTestRoles()
 
-	t.Run("caller is staker", func(t *testing.T) {
-		uassert.NoError(t, StakerOnly(testStakerAddr))
+	t.Run("position is authorized", func(t *testing.T) {
+		uassert.True(t, IsAuthorized(prbac.ROLE_POSITION, testPositionAddr))
 	})
 
-	t.Run("caller is not staker", func(t *testing.T) {
-		uassert.Error(t, StakerOnly(addr01))
+	t.Run("non-position is not authorized", func(t *testing.T) {
+		uassert.False(t, IsAuthorized(prbac.ROLE_POSITION, addr01))
 	})
 }
 
-func TestLaunchpadOnly(t *testing.T) {
+func TestPoolAuthorization(t *testing.T) {
 	setupTestRoles()
 
-	t.Run("caller is launchpad", func(t *testing.T) {
-		uassert.NoError(t, LaunchpadOnly(testLaunchpadAddr))
+	t.Run("pool is authorized", func(t *testing.T) {
+		uassert.True(t, IsAuthorized(prbac.ROLE_POOL, testPoolAddr))
 	})
 
-	t.Run("caller is not launchpad", func(t *testing.T) {
-		uassert.Error(t, LaunchpadOnly(addr01))
+	t.Run("non-pool is not authorized", func(t *testing.T) {
+		uassert.False(t, IsAuthorized(prbac.ROLE_POOL, addr01))
 	})
 }
 
-func TestEmissionOnly(t *testing.T) {
+func TestStakerAuthorization(t *testing.T) {
 	setupTestRoles()
 
-	t.Run("caller is emission", func(t *testing.T) {
-		uassert.NoError(t, EmissionOnly(testEmissionAddr))
+	t.Run("staker is authorized", func(t *testing.T) {
+		uassert.True(t, IsAuthorized(prbac.ROLE_STAKER, testStakerAddr))
 	})
 
-	t.Run("caller is not emission", func(t *testing.T) {
-		uassert.Error(t, EmissionOnly(addr01))
+	t.Run("non-staker is not authorized", func(t *testing.T) {
+		uassert.False(t, IsAuthorized(prbac.ROLE_STAKER, addr01))
+	})
+}
+
+func TestLaunchpadAuthorization(t *testing.T) {
+	setupTestRoles()
+
+	t.Run("launchpad is authorized", func(t *testing.T) {
+		uassert.True(t, IsAuthorized(prbac.ROLE_LAUNCHPAD, testLaunchpadAddr))
+	})
+
+	t.Run("non-launchpad is not authorized", func(t *testing.T) {
+		uassert.False(t, IsAuthorized(prbac.ROLE_LAUNCHPAD, addr01))
+	})
+}
+
+func TestEmissionAuthorization(t *testing.T) {
+	setupTestRoles()
+
+	t.Run("emission is authorized", func(t *testing.T) {
+		uassert.True(t, IsAuthorized(prbac.ROLE_EMISSION, testEmissionAddr))
+	})
+
+	t.Run("non-emission is not authorized", func(t *testing.T) {
+		uassert.False(t, IsAuthorized(prbac.ROLE_EMISSION, addr01))
 	})
 }
 
@@ -195,25 +257,32 @@ func TestAccessFunctions_EdgeCases(t *testing.T) {
 		uassert.Error(t, AssertCaller(zeroAddr, addr01))
 	})
 
-	t.Run("AdminOnly with zero address", func(t *testing.T) {
-		uassert.Error(t, AdminOnly(zeroAddr))
+	t.Run("IsAuthorized with zero address", func(t *testing.T) {
+		uassert.False(t, IsAuthorized(prbac.ROLE_ADMIN, zeroAddr))
+		uassert.False(t, IsAuthorized(prbac.ROLE_GOVERNANCE, zeroAddr))
 	})
 
-	t.Run("GovernanceOnly with zero address", func(t *testing.T) {
-		uassert.Error(t, GovernanceOnly(zeroAddr))
+	t.Run("All role-based authorization with correct addresses", func(t *testing.T) {
+		// Test that all roles authorize their respective addresses
+		uassert.True(t, IsAuthorized(prbac.ROLE_ADMIN, testAdminAddr))
+		uassert.True(t, IsAuthorized(prbac.ROLE_GOVERNANCE, testGovAddr))
+		uassert.True(t, IsAuthorized(prbac.ROLE_GOV_STAKER, testGovStakerAddr))
+		uassert.True(t, IsAuthorized(prbac.ROLE_ROUTER, testRouterAddr))
+		uassert.True(t, IsAuthorized(prbac.ROLE_POOL, testPoolAddr))
+		uassert.True(t, IsAuthorized(prbac.ROLE_POSITION, testPositionAddr))
+		uassert.True(t, IsAuthorized(prbac.ROLE_STAKER, testStakerAddr))
+		uassert.True(t, IsAuthorized(prbac.ROLE_LAUNCHPAD, testLaunchpadAddr))
+		uassert.True(t, IsAuthorized(prbac.ROLE_EMISSION, testEmissionAddr))
 	})
 
-	t.Run("All role-based functions with correct constants", func(t *testing.T) {
-		// Test that all functions accept their respective addresses
-		uassert.NoError(t, AdminOnly(testAdminAddr))
-		uassert.NoError(t, GovernanceOnly(testGovAddr))
-		uassert.NoError(t, GovStakerOnly(testGovStakerAddr))
-		uassert.NoError(t, RouterOnly(testRouterAddr))
-		uassert.NoError(t, PoolOnly(testPoolAddr))
-		uassert.NoError(t, PositionOnly(testPositionAddr))
-		uassert.NoError(t, StakerOnly(testStakerAddr))
-		uassert.NoError(t, LaunchpadOnly(testLaunchpadAddr))
-		uassert.NoError(t, EmissionOnly(testEmissionAddr))
+	t.Run("RequireAuthorized panic behavior", func(t *testing.T) {
+		// Test that RequireAuthorized panics for unauthorized users
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("RequireAuthorized should panic for unauthorized user")
+			}
+		}()
+		RequireAuthorized(prbac.ROLE_ADMIN, addr01)
 	})
 
 	t.Run("Error message format validation", func(t *testing.T) {
