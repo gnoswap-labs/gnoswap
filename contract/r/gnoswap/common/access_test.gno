@@ -7,7 +7,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 )
 
 var (
@@ -36,8 +36,10 @@ func TestSatisfyCond(t *testing.T) {
 }
 
 func TestAdminOnly(t *testing.T) {
+	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+
 	t.Run("caller is admin", func(t *testing.T) {
-		uassert.NoError(t, AdminOnly(consts.ADMIN))
+		uassert.NoError(t, AdminOnly(adminAddr))
 	})
 
 	t.Run("caller is not admin", func(t *testing.T) {
@@ -46,8 +48,10 @@ func TestAdminOnly(t *testing.T) {
 }
 
 func TestGovernanceOnly(t *testing.T) {
+	govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+
 	t.Run("caller is governance", func(t *testing.T) {
-		uassert.NoError(t, GovernanceOnly(consts.GOV_GOVERNANCE_ADDR))
+		uassert.NoError(t, GovernanceOnly(govAddr))
 	})
 
 	t.Run("caller is not governance", func(t *testing.T) {
@@ -56,8 +60,10 @@ func TestGovernanceOnly(t *testing.T) {
 }
 
 func TestGovStakerOnly(t *testing.T) {
+	govStakerAddr, _ := access.GetAddress(access.ROLE_GOV_STAKER)
+
 	t.Run("caller is gov staker", func(t *testing.T) {
-		uassert.NoError(t, GovStakerOnly(consts.GOV_STAKER_ADDR))
+		uassert.NoError(t, GovStakerOnly(govStakerAddr))
 	})
 
 	t.Run("caller is not gov staker", func(t *testing.T) {
@@ -66,8 +72,10 @@ func TestGovStakerOnly(t *testing.T) {
 }
 
 func TestRouterOnly(t *testing.T) {
+	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+
 	t.Run("caller is router", func(t *testing.T) {
-		uassert.NoError(t, RouterOnly(consts.ROUTER_ADDR))
+		uassert.NoError(t, RouterOnly(routerAddr))
 	})
 
 	t.Run("caller is not router", func(t *testing.T) {
@@ -76,8 +84,10 @@ func TestRouterOnly(t *testing.T) {
 }
 
 func TestPositionOnly(t *testing.T) {
+	positionAddr, _ := access.GetAddress(access.ROLE_POSITION)
+
 	t.Run("caller is position", func(t *testing.T) {
-		uassert.NoError(t, PositionOnly(consts.POSITION_ADDR))
+		uassert.NoError(t, PositionOnly(positionAddr))
 	})
 
 	t.Run("caller is not position", func(t *testing.T) {
@@ -86,8 +96,10 @@ func TestPositionOnly(t *testing.T) {
 }
 
 func TestPoolOnly(t *testing.T) {
+	poolAddr, _ := access.GetAddress(access.ROLE_POOL)
+
 	t.Run("caller is pool", func(t *testing.T) {
-		uassert.NoError(t, PoolOnly(consts.POOL_ADDR))
+		uassert.NoError(t, PoolOnly(poolAddr))
 	})
 
 	t.Run("caller is not pool", func(t *testing.T) {
@@ -96,8 +108,10 @@ func TestPoolOnly(t *testing.T) {
 }
 
 func TestStakerOnly(t *testing.T) {
+	stakerAddr, _ := access.GetAddress(access.ROLE_STAKER)
+
 	t.Run("caller is staker", func(t *testing.T) {
-		uassert.NoError(t, StakerOnly(consts.STAKER_ADDR))
+		uassert.NoError(t, StakerOnly(stakerAddr))
 	})
 
 	t.Run("caller is not staker", func(t *testing.T) {
@@ -106,8 +120,10 @@ func TestStakerOnly(t *testing.T) {
 }
 
 func TestLaunchpadOnly(t *testing.T) {
+	launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+
 	t.Run("caller is launchpad", func(t *testing.T) {
-		uassert.NoError(t, LaunchpadOnly(consts.LAUNCHPAD_ADDR))
+		uassert.NoError(t, LaunchpadOnly(launchpadAddr))
 	})
 
 	t.Run("caller is not launchpad", func(t *testing.T) {
@@ -116,8 +132,10 @@ func TestLaunchpadOnly(t *testing.T) {
 }
 
 func TestEmissionOnly(t *testing.T) {
+	emissionAddr, _ := access.GetAddress(access.ROLE_EMISSION)
+
 	t.Run("caller is emission", func(t *testing.T) {
-		uassert.NoError(t, EmissionOnly(consts.EMISSION_ADDR))
+		uassert.NoError(t, EmissionOnly(emissionAddr))
 	})
 
 	t.Run("caller is not emission", func(t *testing.T) {
@@ -138,39 +156,50 @@ func TestUserOnly(t *testing.T) {
 // TestAccessFunctions_EdgeCases tests edge cases for all access functions
 func TestAccessFunctions_EdgeCases(t *testing.T) {
 	zeroAddr := std.Address("")
-	
+
 	t.Run("AssertCaller with empty addresses", func(t *testing.T) {
 		uassert.NoError(t, AssertCaller(zeroAddr, zeroAddr))
 		uassert.Error(t, AssertCaller(addr01, zeroAddr))
 		uassert.Error(t, AssertCaller(zeroAddr, addr01))
 	})
-	
+
 	t.Run("AdminOnly with zero address", func(t *testing.T) {
 		uassert.Error(t, AdminOnly(zeroAddr))
 	})
-	
+
 	t.Run("GovernanceOnly with zero address", func(t *testing.T) {
 		uassert.Error(t, GovernanceOnly(zeroAddr))
 	})
-	
+
 	t.Run("All role-based functions with correct constants", func(t *testing.T) {
-		// Test that all functions accept their respective constant addresses
-		uassert.NoError(t, AdminOnly(consts.ADMIN))
-		uassert.NoError(t, GovernanceOnly(consts.GOV_GOVERNANCE_ADDR))
-		uassert.NoError(t, GovStakerOnly(consts.GOV_STAKER_ADDR))
-		uassert.NoError(t, RouterOnly(consts.ROUTER_ADDR))
-		uassert.NoError(t, PoolOnly(consts.POOL_ADDR))
-		uassert.NoError(t, PositionOnly(consts.POSITION_ADDR))
-		uassert.NoError(t, StakerOnly(consts.STAKER_ADDR))
-		uassert.NoError(t, LaunchpadOnly(consts.LAUNCHPAD_ADDR))
-		uassert.NoError(t, EmissionOnly(consts.EMISSION_ADDR))
+		// Get addresses from access package
+		adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+		govAddr, _ := access.GetAddress(access.ROLE_GOVERNANCE)
+		govStakerAddr, _ := access.GetAddress(access.ROLE_GOV_STAKER)
+		routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+		poolAddr, _ := access.GetAddress(access.ROLE_POOL)
+		positionAddr, _ := access.GetAddress(access.ROLE_POSITION)
+		stakerAddr, _ := access.GetAddress(access.ROLE_STAKER)
+		launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+		emissionAddr, _ := access.GetAddress(access.ROLE_EMISSION)
+
+		// Test that all functions accept their respective addresses
+		uassert.NoError(t, AdminOnly(adminAddr))
+		uassert.NoError(t, GovernanceOnly(govAddr))
+		uassert.NoError(t, GovStakerOnly(govStakerAddr))
+		uassert.NoError(t, RouterOnly(routerAddr))
+		uassert.NoError(t, PoolOnly(poolAddr))
+		uassert.NoError(t, PositionOnly(positionAddr))
+		uassert.NoError(t, StakerOnly(stakerAddr))
+		uassert.NoError(t, LaunchpadOnly(launchpadAddr))
+		uassert.NoError(t, EmissionOnly(emissionAddr))
 	})
-	
+
 	t.Run("Error message format validation", func(t *testing.T) {
 		err := AssertCaller(addr01, addr02)
 		uassert.Error(t, err)
 		uassert.True(t, len(err.Error()) > 0)
-		
+
 		// Check that error contains the caller address
 		errorMsg := err.Error()
 		uassert.True(t, len(errorMsg) > len(addr01.String()))
