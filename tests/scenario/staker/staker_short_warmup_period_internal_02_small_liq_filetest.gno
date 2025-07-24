@@ -102,7 +102,6 @@ func initAndSetup() {
 	)
 
 	testing.SetRealm(stakerRealm)
-	en.RegisterGnsChangeCallback(cross)
 	testing.SkipHeights(1)
 }
 
