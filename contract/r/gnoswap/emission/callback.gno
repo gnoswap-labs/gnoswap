@@ -16,12 +16,12 @@ func init() {
 
 // registerEmissionChangeCallback registers the callback function for the emission change.
 func registerEmissionChangeCallback() {
-	gns.SetEmissionChangeCallback(cross, callbackEmissionChange)
+	gns.SetEmissionChangeCallback(cross, emissionChangeCallback)
 }
 
 // Called when per-block emission is changed from the gns side.
 // It does not process non-immediate emission changes, such as halving.
-func callbackEmissionChange(amount int64) {
+func emissionChangeCallback(amount int64) {
 	if stakerEmissionChangeCallback == nil {
 		panic("stakerEmissionChangeCallback is nil")
 	}

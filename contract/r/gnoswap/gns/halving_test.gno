@@ -166,18 +166,18 @@ func TestSetAvgBlockTime_InvalidIntervalErrors(t *testing.T) {
 
 func TestSetAvgBlockTime_CallbackInvocation(t *testing.T) {
 	/*
-		Test that the function registered with callbackEmissionChange
+		Test that the function registered with emissionChangeCallback
 		accepts the amountPerBlock value of the "current year" as an argument,
 		and only once.
 	*/
 	called := 0
 	var received int64
-	oldCb := callbackEmissionChange
-	callbackEmissionChange = func(a int64) {
+	oldCb := emissionChangeCallback
+	emissionChangeCallback = func(a int64) {
 		called++
 		received = a
 	}
-	defer func() { callbackEmissionChange = oldCb }()
+	defer func() { emissionChangeCallback = oldCb }()
 
 	// assume current block height is at the first year boundary
 	testing.SkipHeights(1)
@@ -202,9 +202,9 @@ func TestSetAvgBlockTime_RecalculatesAllYears(t *testing.T) {
 	}
 
 	// ignore callback in test
-	oldCallback := callbackEmissionChange
-	callbackEmissionChange = func(amount int64) {}
-	defer func() { callbackEmissionChange = oldCallback }()
+	oldCallback := emissionChangeCallback
+	emissionChangeCallback = func(amount int64) {}
+	defer func() { emissionChangeCallback = oldCallback }()
 
 	testing.SkipHeights(1)
 	testing.SetRealm(adminRealm)
@@ -238,8 +238,8 @@ func TestSetAvgBlockTime_RecalculatesAllYears(t *testing.T) {
 
 func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 	t.Run("panic if caller is not admin", func(t *testing.T) {
-		oldCallback := callbackEmissionChange
-		callbackEmissionChange = func(amount int64) {}
+		oldCallback := emissionChangeCallback
+		emissionChangeCallback = func(amount int64) {}
 		uassert.AbortsWithMessage(t,
 			"unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not admin",
 			func() {
@@ -248,24 +248,24 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 				SetAvgBlockTimeInMsByAdmin(cross, 1)
 			},
 		)
-		callbackEmissionChange = oldCallback
+		emissionChangeCallback = oldCallback
 	})
 
 	t.Run("success if caller is admin", func(t *testing.T) {
-		oldCallback := callbackEmissionChange
-		callbackEmissionChange = func(amount int64) {}
+		oldCallback := emissionChangeCallback
+		emissionChangeCallback = func(amount int64) {}
 
 		testing.SkipHeights(1)
 		testing.SetRealm(std.NewUserRealm(adminAddr))
 		SetAvgBlockTimeInMsByAdmin(cross, 2)
 		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(2))
 
-		callbackEmissionChange = oldCallback
+		emissionChangeCallback = oldCallback
 	})
 
 	t.Run("panic with negative block time", func(t *testing.T) {
-		oldCallback := callbackEmissionChange
-		callbackEmissionChange = func(amount int64) {}
+		oldCallback := emissionChangeCallback
+		emissionChangeCallback = func(amount int64) {}
 		testing.SkipHeights(1)
 		testing.SetRealm(std.NewUserRealm(adminAddr))
 		uassert.AbortsWithMessage(t,
@@ -274,12 +274,12 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 				SetAvgBlockTimeInMsByAdmin(cross, -1)
 			},
 		)
-		callbackEmissionChange = oldCallback
+		emissionChangeCallback = oldCallback
 	})
 
 	t.Run("panic with extremely large block time", func(t *testing.T) {
-		oldCallback := callbackEmissionChange
-		callbackEmissionChange = func(amount int64) {}
+		oldCallback := emissionChangeCallback
+		emissionChangeCallback = func(amount int64) {}
 		testing.SkipHeights(1)
 		testing.SetRealm(std.NewUserRealm(adminAddr))
 		uassert.AbortsWithMessage(t,
@@ -288,14 +288,14 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 				SetAvgBlockTimeInMsByAdmin(cross, 1e9)
 			},
 		)
-		callbackEmissionChange = oldCallback
+		emissionChangeCallback = oldCallback
 	})
 }
 
 func TestSetAvgBlockTimeInMs(t *testing.T) {
 	t.Run("panic if caller is not governance contract", func(t *testing.T) {
-		oldCallback := callbackEmissionChange
-		callbackEmissionChange = func(amount int64) {}
+		oldCallback := emissionChangeCallback
+		emissionChangeCallback = func(amount int64) {}
 		expectedMsg := "unauthorized: caller g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m is not governance"
 		uassert.AbortsWithMessage(t,
 			expectedMsg,
@@ -303,22 +303,22 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 				SetAvgBlockTimeInMs(cross, 3)
 			},
 		)
-		callbackEmissionChange = oldCallback
+		emissionChangeCallback = oldCallback
 	})
 
 	t.Run("success if caller is governance contract", func(t *testing.T) {
-		oldCallback := callbackEmissionChange
-		callbackEmissionChange = func(amount int64) {}
+		oldCallback := emissionChangeCallback
+		emissionChangeCallback = func(amount int64) {}
 		testing.SkipHeights(3)
 		testing.SetRealm(govRealm)
 		SetAvgBlockTimeInMs(cross, 4)
 		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(4))
-		callbackEmissionChange = oldCallback
+		emissionChangeCallback = oldCallback
 	})
 
 	t.Run("panic with negative block time", func(t *testing.T) {
-		oldCallback := callbackEmissionChange
-		callbackEmissionChange = func(amount int64) {}
+		oldCallback := emissionChangeCallback
+		emissionChangeCallback = func(amount int64) {}
 		testing.SkipHeights(1)
 		testing.SetRealm(govRealm)
 		uassert.AbortsWithMessage(t,
@@ -327,12 +327,12 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 				SetAvgBlockTimeInMs(cross, -1)
 			},
 		)
-		callbackEmissionChange = oldCallback
+		emissionChangeCallback = oldCallback
 	})
 
 	t.Run("panic with extremely large block time", func(t *testing.T) {
-		oldCallback := callbackEmissionChange
-		callbackEmissionChange = func(amount int64) {}
+		oldCallback := emissionChangeCallback
+		emissionChangeCallback = func(amount int64) {}
 		testing.SkipHeights(1)
 		testing.SetRealm(govRealm)
 		uassert.AbortsWithMessage(t,
@@ -341,7 +341,7 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 				SetAvgBlockTimeInMs(cross, 1e9)
 			},
 		)
-		callbackEmissionChange = oldCallback
+		emissionChangeCallback = oldCallback
 	})
 }
 

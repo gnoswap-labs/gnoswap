@@ -192,13 +192,13 @@ func init() {
 
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1)
 	poolTier = NewPoolTier(pools, std.ChainHeight(), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange)
-	registerCallbackStakerEmissionChange()
+	registerstakerEmissionChangeCallback()
 }
 
-func registerCallbackStakerEmissionChange() {
+func registerstakerEmissionChangeCallback() {
 	en.SetGnsStakerEmissionChangeCallback(cross, func(emission int64) {
 		func(cur realm) {
-			callbackStakerEmissionChange(emission)
+			stakerEmissionChangeCallback(emission)
 		}(cross)
 	})
 }
