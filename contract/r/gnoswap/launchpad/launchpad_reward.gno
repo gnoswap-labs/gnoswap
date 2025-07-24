@@ -4,6 +4,7 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -23,19 +24,22 @@ import (
 // - If the caller is not the owner
 // - If reward collection fails
 func CollectRewardByDepositId(cur realm, depositID string) int64 {
-	previousAddress := std.PreviousRealm().Address()
-	previousPkgPath := std.PreviousRealm().PkgPath()
-
 	halt.AssertIsNotHaltedLaunchpad()
 	halt.AssertIsNotHaltedWithdraw()
+
+	previousRealm := std.PreviousRealm()
+	access.AssertIsUser(previousRealm)
+
+	caller := previousRealm.Address()
+
 
 	deposit, err := getDeposit(depositID)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	if !deposit.IsOwner(previousAddress) {
-		panic(makeErrorWithDetails(errInvalidOwner, ufmt.Sprintf("(%s)", previousAddress.String())).Error())
+	if !deposit.IsOwner(caller) {
+		panic(makeErrorWithDetails(errInvalidOwner, ufmt.Sprintf("(%s)", caller.String())).Error())
 	}
 
 	currentHeight := std.ChainHeight()
@@ -46,8 +50,8 @@ func CollectRewardByDepositId(cur realm, depositID string) int64 {
 
 	std.Emit(
 		"CollectRewardByDepositId",
-		"prevAddr", previousAddress.String(),
-		"prevRealm", previousPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"depositId", depositID,
 		"amount", formatInt(rewardAmount),
 	)

@@ -9,6 +9,7 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gns"
 	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
@@ -72,12 +73,13 @@ func init() {
 //
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_deposit.gno#depositgns
 func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, referrer string) string {
-	previousAddress := std.PreviousRealm().Address()
-	previousPkgPath := std.PreviousRealm().PkgPath()
-
 	halt.AssertIsNotHaltedLaunchpad()
 	halt.AssertIsNotHaltedWithdraw()
-	assertOnlyUser()
+
+	previousRealm := std.PreviousRealm()
+	access.AssertIsUser(previousRealm)
+
+	caller := previousRealm.Address()
 	assertValidAmount(depositAmount)
 
 	projectID, tierDuration := parseProjectTierID(targetProjectTierID)
@@ -85,13 +87,13 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 		projectID,
 		tierDuration,
 		depositAmount,
-		previousAddress,
+		caller,
 	)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	actualReferrer, success := registerReferral(referrer, previousAddress)
+	actualReferrer, success := registerReferral(referrer, caller)
 	if !success {
 		actualReferrer = referral.GetReferral(std.PreviousRealm().Address().String())
 	}
@@ -99,8 +101,8 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 	if isFirstDeposit {
 		std.Emit(
 			"FirstDepositForProjectTier",
-			"prevAddr", previousAddress.String(),
-			"prevRealm", previousPkgPath,
+			"prevAddr", previousRealm.Address().String(),
+			"prevRealm", previousRealm.PkgPath(),
 			"targetProjectTierId", targetProjectTierID,
 			"amount", formatInt(depositAmount),
 			"depositId", deposit.ID(),
@@ -112,8 +114,8 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 
 	std.Emit(
 		"DepositGns",
-		"prevAddr", previousAddress.String(),
-		"prevRealm", previousPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"targetProjectTierId", targetProjectTierID,
 		"amount", formatInt(depositAmount),
 		"depositId", deposit.ID(),
@@ -125,7 +127,7 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 	launchpadAddress := std.CurrentRealm().Address()
 
 	// stake governance token to the project
-	err = stakeGovernance(projectID, depositAmount, launchpadAddress, previousAddress)
+	err = stakeGovernance(projectID, depositAmount, launchpadAddress, caller)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -275,7 +277,7 @@ func stakeGovernance(projectID string, depositAmount int64, launchpadAddress std
 		depositAmount,
 	)
 
-	xgns.Mint(cross, launchpadAddress, depositAmount)
+	xgns.MintByLaunchPad(cross, launchpadAddress, depositAmount)
 
 	return nil
 }

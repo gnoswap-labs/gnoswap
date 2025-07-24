@@ -13,7 +13,6 @@ var (
 	errInvalidAvgBlockTimeInMs     = errors.New("[GNOSWAP-GNS-004] invalid avg block time in ms")
 )
 
-func addDetailToError(err error, detail string) string {
-	finalErr := ufmt.Errorf("%s || %s", err.Error(), detail)
-	return finalErr.Error()
+func makeErrorWithDetails(err error, details string) error {
+	return ufmt.Errorf("%s || %s", err.Error(), details)
 }

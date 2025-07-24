@@ -9,6 +9,7 @@ import (
 	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/v1/halt"
 
 	pn "gno.land/r/gnoswap/v1/position"
 )
@@ -16,7 +17,8 @@ import (
 // MintAndStake mints LP tokens and stakes them in a single transaction.
 // Returns positionId, liquidity, amount0, amount1, poolPath
 // ref: https://docs.gnoswap.io/contracts/staker/mint_stake.gno#mintandstake
-func MintAndStake(cur realm,
+func MintAndStake(
+	cur realm,
 	token0 string,
 	token1 string,
 	fee uint32,
@@ -29,6 +31,8 @@ func MintAndStake(cur realm,
 	deadline int64,
 	referrer string,
 ) (uint64, string, string, string, string) {
+	halt.AssertIsNotHaltedStaker()
+	
 	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	
 	// if one click native

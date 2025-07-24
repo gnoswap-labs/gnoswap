@@ -9,9 +9,11 @@ import (
 	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/v1/halt"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
@@ -24,15 +26,13 @@ func CreateExternalIncentive(cur realm,
 	startTimestamp int64,
 	endTimestamp int64,
 ) {
-	assertOnlyNotHalted()
-	prev := std.PreviousRealm()
-	if err := common.UserOnly(prev); err != nil {
-		panic(ufmt.Sprintf("%v: %v", errNoPermission, err))
-	}
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedStaker()
+	access.AssertIsUser(std.PreviousRealm())
 
 	// panic if pool does not exist
 	if !pl.DoesPoolPathExist(targetPoolPath) {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("targetPoolPath(%s) does not exist", targetPoolPath),
 		))
@@ -41,7 +41,7 @@ func CreateExternalIncentive(cur realm,
 	// Check if reward amount meets the minimum requirement for the specific token
 	minReward := GetMinimumRewardAmountForToken(rewardToken)
 	if rewardAmount < int64(minReward) {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("rewardAmount(%d) is less than minimum required amount(%d)", rewardAmount, minReward),
 		))
@@ -60,9 +60,9 @@ func CreateExternalIncentive(cur realm,
 		ugnotSent := sent.AmountOf("ugnot")
 
 		if ugnotSent != rewardAmount {
-			panic(addDetailToError(
+			panic(makeErrorWithDetails(
 				errInvalidInput,
-				ufmt.Sprintf("user(%s) sent ugnot(%d) amount not equal to rewardAmount(%d)", getPrevAddr(), ugnotSent, rewardAmount),
+				ufmt.Sprintf("user(%s) sent ugnot(%d) amount not equal to rewardAmount(%d)", caller.String(), ugnotSent, rewardAmount),
 			))
 		}
 
@@ -80,13 +80,11 @@ func CreateExternalIncentive(cur realm,
 
 	// endTimestamp cannot be later than 253402300799 (9999-12-31 23:59:59)
 	if endTimestamp >= MAX_UNIX_EPOCH_TIME {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errInvalidIncentiveEndTime,
 			ufmt.Sprintf("endTimestamp(%d) cannot be later than 253402300799 (9999-12-31 23:59:59)", endTimestamp),
 		))
 	}
-
-	caller := getPrevAddr()
 
 	// incentiveId := incentiveIdCompute(std.PrevRealm().Address(), targetPoolPath, rewardToken, startTimestamp, endTimestamp, std.GetHeight())
 	incentiveId := nextIncentiveID(caller, std.ChainHeight())
@@ -113,7 +111,7 @@ func CreateExternalIncentive(cur realm,
 	)
 
 	if externalIncentives.Has(incentiveId) {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errIncentiveAlreadyExists,
 			ufmt.Sprintf("incentiveId(%s)", incentiveId),
 		))
@@ -130,11 +128,11 @@ func CreateExternalIncentive(cur realm,
 
 	pool.incentives.create(caller, incentive)
 
-	prevAddr, prevPkgPath := getPrev()
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"CreateExternalIncentive",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"incentiveId", incentiveId,
 		"targetPoolPath", targetPoolPath,
 		"rewardToken", rewardToken,
@@ -151,47 +149,20 @@ func CreateExternalIncentive(cur realm,
 // EndExternalIncentive ends the external incentive and refunds the remaining reward
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#endexternalincentive
 func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
-	assertOnlyNotHalted()
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedStaker()
+	
 	pool, exists := pools.Get(targetPoolPath)
 	if !exists {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("targetPoolPath(%s) does not exist", targetPoolPath),
 		))
 	}
 
-	incentive, exists := pool.incentives.Get(incentiveId)
-	if !exists {
-		panic(addDetailToError(
-			errCannotEndIncentive,
-			ufmt.Sprintf("cannot end non existent incentive(%s)", incentiveId),
-		))
-	}
-
-	currentHeight := std.ChainHeight()
-	if currentHeight < incentive.endHeight {
-		panic(addDetailToError(
-			errCannotEndIncentive,
-			ufmt.Sprintf("cannot end incentive before endHeight(%d), current(%d)", incentive.endHeight, currentHeight),
-		))
-	}
-
-	// when incentive end time is over
-	// admin or refundee can end incentive ( left amount will be refunded )
-	caller := getPrevAddr()
-	if caller != consts.ADMIN && caller != incentive.refundee {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("only refundee(%s) or admin(%s) can end incentive, but called from %s", incentive.refundee, consts.ADMIN, caller),
-		))
-	}
-
-	// when incentive ended, refund remaining reward
-	refund := int64(incentive.rewardLeft)
-
-	if !incentive.unclaimableRefunded {
-		refund += int64(pool.incentives.calculateUnclaimableReward(incentive.incentiveId))
-		incentive.setUnClaimableRefunded(true)
+	incentive, refund, err := endExternalIncentive(pool, incentiveId, caller, std.ChainHeight())
+	if err != nil {
+		panic(err)
 	}
 
 	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
@@ -212,11 +183,12 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 
 	pool.incentives.update(incentive.refundee, incentive)
 
-	prevAddr, prevPkgPath := getPrev()
+	previousRealm := std.PreviousRealm()
+
 	std.Emit(
 		"EndExternalIncentive",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"incentiveId", incentiveId,
 		"targetPoolPath", targetPoolPath,
 		"refundee", incentive.refundee.String(),
@@ -224,8 +196,42 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		"refundAmount", formatInt(refund),
 		"refundGnsAmount", formatInt(incentive.depositGnsAmount),
 		"isRequestUnwrap", formatBool(incentive.rewardToken == consts.WUGNOT_PATH),
-		"externalIncentiveEndBy", prevAddr,
+		"externalIncentiveEndBy", previousRealm.Address().String(),
 	)
+}
+
+func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, currentHeight int64) (*ExternalIncentive, int64, error) {
+	incentive, exists := pool.incentives.Get(incentiveId)
+	if !exists {
+		return nil, 0, makeErrorWithDetails(
+			errCannotEndIncentive,
+			ufmt.Sprintf("cannot end non existent incentive(%s)", incentiveId),
+		)
+	}
+
+	if int64(currentHeight) < incentive.endHeight {
+		return nil, 0, makeErrorWithDetails(
+			errCannotEndIncentive,
+			ufmt.Sprintf("cannot end incentive before endHeight(%d), current(%d)", incentive.endHeight, currentHeight),
+		)
+	}
+
+	// only refundee or admin can end incentive
+	if !access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && caller != incentive.refundee {
+		return nil, 0, makeErrorWithDetails(
+			errNoPermission,
+			ufmt.Sprintf("only refundee(%s) or admin(%s) can end incentive, but called from %s", incentive.refundee, consts.ADMIN, caller),
+		)
+	}
+
+	refund := int64(incentive.rewardLeft)
+
+	if !incentive.unclaimableRefunded {
+		refund += int64(pool.incentives.calculateUnclaimableReward(incentive.incentiveId))
+		incentive.setUnClaimableRefunded(true)
+	}
+
+	return incentive, refund, nil
 }
 
 func isValidIncentiveDuration(dur uint64) error {

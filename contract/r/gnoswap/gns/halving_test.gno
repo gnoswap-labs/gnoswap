@@ -154,21 +154,14 @@ func TestGetHalvingInfo(t *testing.T) {
 	uassert.Equal(t, len(halving), 12)
 }
 
-func TestSetAvgBlockTime_InvalidIntervalPanics(t *testing.T) {
-	uassert.PanicsWithMessage(t,
-		"invalid block time interval",
-		func() {
-			testing.SetRealm(std.NewUserRealm(adminAddr))
-			setAvgBlockTimeInMs(0)
-		},
-	)
-	uassert.PanicsWithMessage(t,
-		"invalid block time interval",
-		func() {
-			testing.SetRealm(govRealm)
-			setAvgBlockTimeInMs(-5)
-		},
-	)
+func TestSetAvgBlockTime_InvalidIntervalErrors(t *testing.T) {
+	testing.SetRealm(std.NewUserRealm(adminAddr))
+
+	err := setAvgBlockTimeInMs(0)
+	uassert.ErrorIs(t, errInvalidAvgBlockTimeInMs, err)
+
+	err = setAvgBlockTimeInMs(-5)
+	uassert.ErrorIs(t, errInvalidAvgBlockTimeInMs, err)
 }
 
 func TestSetAvgBlockTime_CallbackInvocation(t *testing.T) {
@@ -290,7 +283,7 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 		testing.SkipHeights(1)
 		testing.SetRealm(std.NewUserRealm(adminAddr))
 		uassert.AbortsWithMessage(t,
-			"invalid block time interval",
+			"[GNOSWAP-GNS-004] invalid avg block time in ms",
 			func() {
 				SetAvgBlockTimeInMsByAdmin(cross, 1e9)
 			},
@@ -329,7 +322,7 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 		testing.SkipHeights(1)
 		testing.SetRealm(govRealm)
 		uassert.AbortsWithMessage(t,
-			"invalid block time interval",
+			"[GNOSWAP-GNS-004] invalid avg block time in ms",
 			func() {
 				SetAvgBlockTimeInMs(cross, -1)
 			},
@@ -343,7 +336,7 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 		testing.SkipHeights(1)
 		testing.SetRealm(govRealm)
 		uassert.AbortsWithMessage(t,
-			"invalid block time interval",
+			"[GNOSWAP-GNS-004] invalid avg block time in ms",
 			func() {
 				SetAvgBlockTimeInMs(cross, 1e9)
 			},

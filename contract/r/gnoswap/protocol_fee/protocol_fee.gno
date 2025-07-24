@@ -18,6 +18,7 @@ import (
 // It returns list of token with amount has been sent to gov/staker.
 func DistributeProtocolFee(cur realm) map[string]uint64 {
 	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedProtocolFee()
 	halt.AssertIsNotHaltedWithdraw()
 	access.AssertIsGovStaker(caller)
 
@@ -32,7 +33,7 @@ func DistributeProtocolFee(cur realm) map[string]uint64 {
 		// therefore, we don't need any guard logic to check whether protocol_fee's xxx token balance is equal to `amount`
 		// however, amount always should be less than or equal to balance
 		if amount > balance {
-			panic(addDetailToError(
+			panic(makeErrorWithDetail(
 				errInvalidAmount,
 				ufmt.Sprintf("amount: %d should be less than or equal to balance: %d", amount, balance),
 			))
@@ -72,11 +73,11 @@ func DistributeProtocolFee(cur realm) map[string]uint64 {
 
 	protocolFeeState.clearTokenListWithAmount()
 
-	prevAddr, prevRealm := getPrev()
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"TransferProtocolFee",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"toDevOps", strings.Join(sentToDevOpsForEvent, ","),
 		"toGovStaker", strings.Join(sentToGovStakerForEvent, ","),
 	)
@@ -91,24 +92,52 @@ func GetDevOpsPct() uint64 {
 // SetDevOpsPctByAdmin sets the devOpsPct.
 func SetDevOpsPctByAdmin(cur realm, pct uint64) {
 	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedProtocolFee()
 	access.AssertIsAdmin(caller)
 
-	protocolFeeState.setDevOpsPct(pct)
+	prevPct, newPct, err := protocolFeeState.setDevOpsPct(pct)
+	if err != nil {
+		panic(err)
+	}
+
+	previousRealm := std.PreviousRealm()
+	std.Emit(
+		"SetDevOpsPct",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"newPct", strconv.FormatUint(newPct, 10),
+		"prevPct", strconv.FormatUint(prevPct, 10),
+	)
 }
 
 // SetDevOpsPct sets the devOpsPct.
 // Only governance contract can execute this function via proposal
 func SetDevOpsPct(cur realm, pct uint64) {
 	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedProtocolFee()
 	access.AssertIsGovernance(caller)
 
-	protocolFeeState.setDevOpsPct(pct)
+	prevPct, newPct, err := protocolFeeState.setDevOpsPct(pct)
+	if err != nil {
+		panic(err)
+	}
+
+	previousRealm := std.PreviousRealm()
+	std.Emit(
+		"SetDevOpsPct",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"newPct", strconv.FormatUint(newPct, 10),
+		"prevPct", strconv.FormatUint(prevPct, 10),
+	)
 }
 
 // AddToProtocolFee adds the amount to the tokenListWithAmount
 // Only `pool + router + staker` can execute this function.
 func AddToProtocolFee(cur realm, tokenPath string, amount uint64) {
-	assertOnlyPoolRouterStaker()
+	halt.AssertIsNotHaltedProtocolFee()
+	assertCallerHasAddProtocolFeePermission()
+
 	protocolFeeState.TokenListWithAmount[tokenPath] += amount
 }
 
@@ -116,7 +145,9 @@ func AddToProtocolFee(cur realm, tokenPath string, amount uint64) {
 // only `gov/staker` can execute this function.
 func ClearTokenListWithAmount(cur realm) {
 	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedProtocolFee()
 	access.AssertIsGovStaker(caller)
+
 	protocolFeeState.clearTokenListWithAmount()
 }
 
@@ -126,8 +157,8 @@ func ClearTokenListWithAmount(cur realm) {
 // which means gov/staker doesn't known how much protocol_fee has been distributed from last time
 // Therefore, gov/staker calls GetAccuTransferToGovStaker to get the accumulated amount and clear it
 func ClearAccuTransferToGovStaker(cur realm) {
-	halt.AssertIsNotHaltedWithdraw()
 	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedProtocolFee()
 	access.AssertIsGovStaker(caller)
 
 	protocolFeeState.AccuToGovStaker = avl.NewTree()

@@ -1,28 +1,15 @@
 package launchpad
 
 import (
-	"std"
 	"strconv"
 	"strings"
 
 	"gno.land/p/demo/ufmt"
 )
 
-// isUserCall returns true if the caller is a user.
-func isUserCall() bool {
-	return std.PreviousRealm().IsUser()
-}
-
 // formatInt returns the string representation of the int64 value.
 func formatInt(value int64) string {
 	return strconv.FormatInt(value, 10)
-}
-
-// assertOnlyAdmin panics if the caller is not an admin.
-func assertOnlyUser() {
-	if !isUserCall() {
-		panic(makeErrorWithDetails(errInvalidAddress, "only user can call this function"))
-	}
 }
 
 // assertValidAmount panics if the amount is zero.

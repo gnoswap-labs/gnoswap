@@ -39,7 +39,7 @@ func GetOrigPkgAddr() std.Address {
 func poolPathAlign(poolPath string) string {
 	res, err := common.Split(poolPath, ":", 3)
 	if err != nil {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errInvalidPoolPath,
 			ufmt.Sprintf("invalid poolPath(%s)", poolPath),
 		))
@@ -91,7 +91,7 @@ func poolPathDivide(poolPath string) (string, string, string) {
 //   - grc721.TokenID: the converted token ID
 func positionIdFrom(positionId any) grc721.TokenID {
 	if positionId == nil {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			"positionId is nil",
 		))
@@ -107,7 +107,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 	case grc721.TokenID:
 		return positionId.(grc721.TokenID)
 	default:
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("unsupported positionId type(%T)", positionId),
 		))

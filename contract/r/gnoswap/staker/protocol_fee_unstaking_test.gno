@@ -41,7 +41,10 @@ func TestHandleUnstakingFee(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			unstakingFee = uint64(tc.expectedFee) // Set the fee globally for the test
 
-			netAmount := handleUnStakingFee(tc.tokenPath, tc.amount, tc.internal, tc.positionId, tc.poolPath)
+			netAmount, _, err := handleUnStakingFee(tc.tokenPath, tc.amount, tc.internal, tc.positionId, tc.poolPath)
+			if err != nil {
+				t.Errorf("Expected no error, got %v", err)
+			}
 
 			if netAmount != tc.expectedNet {
 				t.Errorf("Expected netAmount %d, got %d", tc.expectedNet, netAmount)

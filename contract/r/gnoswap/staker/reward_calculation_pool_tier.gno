@@ -71,7 +71,7 @@ func (self *TierRatio) Get(tier uint64) uint64 {
 	case Tier3:
 		return self.Tier3
 	default:
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errInvalidPoolTier, ufmt.Sprintf("unsupported tier(%d)", tier)))
 	}
 }

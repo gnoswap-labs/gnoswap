@@ -51,7 +51,13 @@ func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 //   - If masking is required, a new instance is returned without modifying the input.
 //   - MAX_UINT128 is a constant representing `2^128 - 1`.
 func toUint128(value *u256.Uint) *u256.Uint {
-	assertOnlyNotNil(value)
+	if value == nil {
+		panic(newErrorWithDetail(
+			errInvalidInput,
+			"value is nil",
+		))
+	}
+
 	if value.Gt(maxUint128) {
 		return new(u256.Uint).And(value, q128Mask)
 	}

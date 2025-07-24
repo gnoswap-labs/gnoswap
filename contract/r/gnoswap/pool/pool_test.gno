@@ -411,7 +411,7 @@ func TestCollect(t *testing.T) {
 
 				// Verify position exists
 				pool := GetPool(tt.tokenPath0, tt.tokenPath1, tt.feeTier)
-				posKey := getPositionKey(tt.recipient, tt.tickLower, tt.tickUpper)
+				posKey, _ := getPositionKey(tt.recipient, tt.tickLower, tt.tickUpper)
 				pool.mustGetPosition(posKey)
 
 				// Setup for swap
@@ -465,7 +465,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 
 	t.Run("unauthorized caller should fail", func(t *testing.T) {
 		unauthorized := testutils.TestAddress("unauthorized")
-		expected := "[GNOSWAP-POOL-001] caller has no permission || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can call, called from g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg"
+		expected := "unauthorized: caller g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg is not admin"
 
 		testing.SetRealm(std.NewUserRealm(unauthorized))
 		uassert.AbortsWithMessage(t, expected, func() {

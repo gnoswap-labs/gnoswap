@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (
@@ -17,7 +18,8 @@ var (
 // MintAndDistributeGns mints new GNS tokens and distributes them to targets
 // Returns the total amount of GNS distributed
 func MintAndDistributeGns(cur realm) int64 {
-	assertOnlyNotHalted()
+	halt.AssertIsNotHaltedEmission()
+
 	currentHeight := std.ChainHeight()
 	lastMintedHeight := gns.GetLastMintedHeight()
 	if lastMintedHeight >= currentHeight {
@@ -34,17 +36,21 @@ func MintAndDistributeGns(cur realm) int64 {
 		setLeftGNSAmount(0)
 	}
 	// Distribute tokens and track any undistributed amount
-	distributedGNSAmount := distributeToTarget(cur, distributableAmount)
+	distributedGNSAmount, err := distributeToTarget(cur, distributableAmount)
+	if err != nil {
+		panic(err)
+	}
+	
 	if distributableAmount != distributedGNSAmount {
 		setLeftGNSAmount(distributableAmount - distributedGNSAmount)
 	}
 
 	// Emit event with distribution details
-	prevAddr, prevPkgPath := getPrevAsString()
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"MintAndDistributeGns",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"lastHeight", formatInt(lastExecutedHeight),
 		"currentHeight", formatInt(currentHeight),
 		"currentTimestamp", formatInt(time.Now().Unix()),
