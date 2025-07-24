@@ -8,6 +8,7 @@ import (
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 
 	plp "gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
@@ -53,8 +54,8 @@ func Swap(
 	sqrtPriceLimitX96 string,
 	payer std.Address, // router
 ) (string, string) {
-	assertOnlyNotHalted()
-	caller := getPrevAddr()
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPool()
 	access.AssertIsRouter(caller)
 
 	if amountSpecified == "0" {
@@ -107,12 +108,11 @@ func Swap(
 	// actual swap
 	pool.swapTransfers(zeroForOne, payer, recipient, result.Amount0, result.Amount1)
 
-	prevAddr, prevPkgPath := getPrevAsString()
-
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"Swap",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", GetPoolPath(token0Path, token1Path, fee),
 		"zeroForOne", formatBool(zeroForOne),
 		"requestAmount", amountSpecified,

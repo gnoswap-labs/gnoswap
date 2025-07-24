@@ -76,12 +76,14 @@ func swapInner(
 type RealSwapExecutor struct{}
 
 func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
+	previousRealmAddr := std.PreviousRealm().Address()
+
 	return swapInner(
 		cross,
 		p.amountSpecified,
-		getPrevAddr(), // if single swap => user will receive
+		previousRealmAddr, // if single swap => user will receive
 		zero,          // sqrtPriceLimitX96
-		newSwapCallbackData(p, getPrevAddr()),
+		newSwapCallbackData(p, previousRealmAddr),
 	)
 }
 
@@ -137,11 +139,13 @@ func swapDryInner(
 type DrySwapExecutor struct{}
 
 func (e *DrySwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
+	previousRealmAddr := std.PreviousRealm().Address()
+
 	return swapDryInner(
 		cross,
 		p.amountSpecified,
 		zero,
-		newSwapCallbackData(p, getPrevAddr()),
+		newSwapCallbackData(p, previousRealmAddr),
 	)
 }
 

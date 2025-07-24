@@ -119,7 +119,7 @@ func TestUtility_GlobalKeeperFunctions(t *testing.T) {
 			// when & then
 			switch tc.operation {
 			case "get_keeper":
-				keeper := GetKeeper()
+				keeper := getKeeper()
 				uassert.NotNil(t, keeper)
 			case "get_referral":
 				// Setup referral first

@@ -20,21 +20,13 @@ var (
 	errLessThanMinimum    = errors.New("[GNOSWAP-GOV_STAKER-011] can not delegate less than minimum amount")
 )
 
-func addDetailToError(err error, detail string) string {
-	finalErr := ufmt.Errorf("%s || %s", err.Error(), detail)
-	return finalErr.Error()
-}
-
-func makeErrorWithDetail(err error, detail string) error {
+func makeErrorWithDetails(err error, detail string) error {
 	return ufmt.Errorf("%s || %s", err.Error(), detail)
 }
 
 // checkTransferError checks transfer error.
 func checkTransferError(err error) {
 	if err != nil {
-		panic(addDetailToError(
-			errTransferFailed,
-			err.Error(),
-		))
+		panic(makeErrorWithDetails(errTransferFailed, err.Error()))
 	}
 }

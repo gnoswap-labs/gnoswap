@@ -91,7 +91,6 @@ func initAndSetup() {
 	sr.SetWarmUpByAdmin(cross, 100, consts.INT64_MAX)
 
 	testing.SetRealm(stakerRealm)
-	en.RegisterGnsChangeCallback(cross)
 	testing.SkipHeights(1)
 }
 

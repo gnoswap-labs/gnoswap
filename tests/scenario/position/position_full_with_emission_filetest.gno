@@ -16,7 +16,6 @@ import (
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
@@ -71,7 +70,6 @@ func main() {
 
 func initPoolAndEmission() {
 	testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
-	emission.RegisterGnsChangeCallback(cross)
 
 	testing.SetRealm(adminRealm)
 

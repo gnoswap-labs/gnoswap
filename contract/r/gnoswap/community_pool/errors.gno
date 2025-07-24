@@ -2,8 +2,6 @@ package community_pool
 
 import (
 	"errors"
-
-	"gno.land/p/demo/ufmt"
 )
 
 var (
@@ -13,8 +11,3 @@ var (
 	errLocked            = errors.New("[GNOSWAP-COMMUNITY_POOL-004] can't transfer token while locked")
 	errHalted            = errors.New("[GNOSWAP-COMMUNITY_POOL-005] halted")
 )
-
-func addDetailToError(err error, detail string) string {
-	finalErr := ufmt.Errorf("%s || %s", err.Error(), detail)
-	return finalErr.Error()
-}

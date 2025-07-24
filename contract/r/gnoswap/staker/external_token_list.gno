@@ -5,6 +5,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/halt"
 
 	"gno.land/p/gnoswap/consts"
 )
@@ -79,6 +80,7 @@ func removeTokenValidator(tokenPath string) error {
 //   - If the caller is not the admin
 func AddToken(cur realm, tokenPath string) {
 	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedStaker()
 	access.AssertIsAdmin(caller)
 
 	if err := modifyTokenList(tokenPath, nil, addTokenExecutor); err != nil {
@@ -98,6 +100,7 @@ func AddToken(cur realm, tokenPath string) {
 //   - If the caller is not the admin
 func RemoveToken(cur realm, tokenPath string) {
 	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedStaker()
 	access.AssertIsAdmin(caller)
 
 	if err := modifyTokenList(tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {

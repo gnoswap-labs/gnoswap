@@ -9,6 +9,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 var depositGnsAmount = int64(1_000_000_000)    // 1_000 GNS
@@ -82,18 +83,17 @@ func GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 // Panics:
 // - If the caller is not an admin.
 func SetDepositGnsAmountByAdmin(cur realm, amount int64) {
-	caller := getPrevAddr()
+	caller := std.PreviousRealm().Address()
 	access.AssertIsAdmin(caller)
 
 	prevDepositGnsAmount := getDepositGnsAmount()
 	setDepositGnsAmount(amount)
 
-	prevAddr, prevPkgPath := getPrev()
-
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"SetDepositGnsAmountByAdmin",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"prevAmount", formatInt(prevDepositGnsAmount),
 		"newAmount", formatInt(amount),
 	)
@@ -107,18 +107,17 @@ func SetDepositGnsAmountByAdmin(cur realm, amount int64) {
 // Panics:
 // - If the caller is not an admin.
 func SetMinimumRewardAmountByAdmin(cur realm, amount int64) {
-	caller := getPrevAddr()
+	caller := std.PreviousRealm().Address()
 	access.AssertIsAdmin(caller)
 
 	prevMinimumRewardAmount := getMinimumRewardAmount()
 	setMinimumRewardAmount(amount)
 
-	prevAddr, prevPkgPath := getPrev()
-
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"SetMinimumRewardAmountByAdmin",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"prevAmount", formatInt(prevMinimumRewardAmount),
 		"newAmount", formatInt(amount),
 	)
@@ -128,18 +127,17 @@ func SetMinimumRewardAmountByAdmin(cur realm, amount int64) {
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/staker/external_deposit_fee.gno
 func SetDepositGnsAmount(cur realm, amount int64) {
-	caller := getPrevAddr()
+	caller := std.PreviousRealm().Address()
 	access.AssertIsGovernance(caller)
 
 	prevDepositGnsAmount := getDepositGnsAmount()
 	setDepositGnsAmount(amount)
 
-	prevAddr, prevPkgPath := getPrev()
-
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"SetDepositGnsAmount",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"prevAmount", formatInt(prevDepositGnsAmount),
 		"newAmount", formatInt(amount),
 	)
@@ -148,18 +146,18 @@ func SetDepositGnsAmount(cur realm, amount int64) {
 // SetMinimumRewardAmount modifies the *default* minimum reward amount.
 // Only governance contract can execute this function via proposal.
 func SetMinimumRewardAmount(cur realm, amount int64) {
-	caller := getPrevAddr()
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedStaker()
 	access.AssertIsGovernance(caller)
 
 	prevMinimumRewardAmount := getMinimumRewardAmount()
 	setMinimumRewardAmount(amount)
 
-	prevAddr, prevPkgPath := getPrev()
-
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"SetMinimumRewardAmount",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"prevAmount", formatInt(prevMinimumRewardAmount),
 		"newAmount", formatInt(amount),
 	)
@@ -174,12 +172,13 @@ func SetMinimumRewardAmount(cur realm, amount int64) {
 //     Example: "gno.land/r/demo/wugnot:1500000000"
 func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedStaker()
 	access.AssertIsGovernance(caller)
 
 	// Parse the paramsStr
 	parts := strings.SplitN(paramsStr, ":", 2)
 	if len(parts) != 2 {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("invalid format for SetTokenMinimumRewardAmount params: expected 'tokenPath:amount', got '%s'", paramsStr),
 		))
@@ -188,7 +187,7 @@ func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 	amountStr := parts[1]
 	amount64, err := strconv.ParseInt(amountStr, 10, 64)
 	if err != nil {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("invalid amount format in params '%s': %v", paramsStr, err),
 		))
@@ -206,11 +205,11 @@ func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 		tokenSpecificMinimumRewards.Set(tokenPath, amount64)
 	}
 
-	prevAddr, prevPkgPath := getPrev()
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"SetTokenMinimumRewardAmount",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"paramsStr", paramsStr, // Log the raw input string
 		"tokenPath", tokenPath,
 		"prevAmountFound", formatBool(found),

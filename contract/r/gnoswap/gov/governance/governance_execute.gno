@@ -27,8 +27,8 @@ import (
 // ref: https://docs.gnoswap.io/contracts/governance/vote.gno#execute
 func Execute(cur realm, proposalID int64) int64 {
 	// Check if execution is allowed (system not halted for execution)
-	halt.AssertIsHaltedGovernance()
-	halt.AssertIsHaltedWithdraw()
+	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedWithdraw()
 
 	// Get caller information and current blockchain state
 	previousRealm := std.PreviousRealm()
@@ -142,10 +142,7 @@ func executeProposal(
 //
 // ref: https://docs.gnoswap.io/contracts/governance/vote.gno#cancel
 func Cancel(cur realm, proposalID int64) int64 {
-	// Check if system is halted before allowing cancellation
-	if halt.IsHaltedGovernance() {
-		panic("governance contract operations are currently disabled")
-	}
+	halt.AssertIsNotHaltedGovernance()
 
 	// Get current blockchain state and caller information
 	currentHeight := std.ChainHeight()
