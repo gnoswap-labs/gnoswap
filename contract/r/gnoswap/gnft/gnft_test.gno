@@ -307,7 +307,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "[GNOSWAP-GNFT-004] invalid addresss || ",
+			panicMsg:          "invalid address: ",
 		},
 		{
 			name:              "transfer to is invalid address",
@@ -316,7 +316,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            std.Address("this_is_invalid_address"),
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "[GNOSWAP-GNFT-004] invalid addresss || this_is_invalid_address",
+			panicMsg:          "invalid address: this_is_invalid_address",
 		},
 	}
 

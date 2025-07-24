@@ -463,7 +463,7 @@ func TestDepositGns(t *testing.T) {
 			depositAmount:        1000000,
 			referrer:             "",
 			expectedPanic:        true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-002] invalid address || only user can call this function",
+			expectedPanicMessage: "caller is not user",
 		},
 	}
 

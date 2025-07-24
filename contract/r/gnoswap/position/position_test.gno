@@ -1,6 +1,7 @@
 package position
 
 import (
+	"errors"
 	"std"
 	"strconv"
 	"testing"
@@ -566,24 +567,23 @@ func TestProcessTokens(t *testing.T) {
 				transferUGNOT(positionAddr, positionAddr, amount)
 			}
 
-			if !tt.expectPanic {
-				token0, token1, native0, native1, wrapped := processTokens(
-					tt.token0,
-					tt.token1,
-					tt.amount0Desired,
-					tt.amount1Desired,
-					tt.caller,
-				)
+			token0, token1, native0, native1, wrapped, err := processTokens(
+				tt.token0,
+				tt.token1,
+				tt.amount0Desired,
+				tt.amount1Desired,
+				tt.caller,
+			)
 
+			if tt.expectPanic {
+				uassert.ErrorIs(t, err, errors.New(tt.expectMsg))
+			} else {
+				uassert.Nil(t, err)
 				uassert.Equal(t, tt.expected0, token0)
 				uassert.Equal(t, tt.expected1, token1)
 				uassert.Equal(t, tt.isNative0, native0)
 				uassert.Equal(t, tt.isNative1, native1)
 				uassert.Equal(t, tt.expectedWrap, wrapped)
-			} else {
-				uassert.PanicsWithMessage(t, tt.expectMsg, func() {
-					processTokens(tt.token0, tt.token1, tt.amount0Desired, tt.amount1Desired, tt.caller)
-				})
 			}
 		})
 	}

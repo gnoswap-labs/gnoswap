@@ -744,7 +744,7 @@ func initLaunchpadProjectTest(t *testing.T) {
 func initLaunchpadProjectTestAvgBlockTime(t *testing.T, avgBlockTimeMs int64) {
 	emissionAddr, _ := access.GetAddress(prbac.ROLE_EMISSION.String())
 	testing.SetOriginCaller(emissionAddr)
-	gns.SetCallbackEmissionChange(cross, func(amount int64) {})
+	gns.SetEmissionChangeCallback(cross, func(amount int64) {})
 
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 	testing.SetOriginCaller(adminAddr)

@@ -24,7 +24,7 @@ func init() {
 //	// In other packages:
 //	keeper := referral.GetKeeper()
 //	keeper.register(addr, refAddr)
-func GetKeeper() ReferralKeeper {
+func getKeeper() ReferralKeeper {
 	return gReferralKeeper
 }
 

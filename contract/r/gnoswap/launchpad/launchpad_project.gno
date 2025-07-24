@@ -63,13 +63,14 @@ func CreateProject(
 	tier180Ratio int64,
 	startTime int64,
 ) string {
-	previousAddress := std.PreviousRealm().Address()
-	previousPkgPath := std.PreviousRealm().PkgPath()
-	launchpadAddr := std.CurrentRealm().Address()
+	halt.AssertIsNotHaltedLaunchpad()
+	halt.AssertIsNotHaltedWithdraw()
 
-	halt.AssertIsHaltedLaunchpad()
-	halt.AssertIsHaltedWithdraw()
-	access.AssertIsAdmin(previousAddress)
+	previousRealm := std.PreviousRealm()
+	access.AssertIsAdmin(previousRealm.Address())
+
+	caller := previousRealm.Address()
+	launchpadAddr := std.CurrentRealm().Address()
 
 	averageBlockTimeMs := gns.GetAvgBlockTimeInMs()
 	currentHeight := std.ChainHeight()
@@ -97,15 +98,15 @@ func CreateProject(
 		panic(err)
 	}
 
-	tokenBalance := common.BalanceOf(tokenPath, previousAddress)
+	tokenBalance := common.BalanceOf(tokenPath, caller)
 	if tokenBalance < depositAmount {
-		panic(makeErrorWithDetails(errInsufficientBalance, ufmt.Sprintf("caller(%s) balance(%d) < depositAmount(%d)", previousAddress.String(), tokenBalance, depositAmount)))
+		panic(makeErrorWithDetails(errInsufficientBalance, ufmt.Sprintf("caller(%s) balance(%d) < depositAmount(%d)", launchpadAddr.String(), tokenBalance, depositAmount)))
 	}
 
 	err = common.TransferFrom(
 		cross,
 		tokenPath,
-		previousAddress,
+		caller,
 		launchpadAddr,
 		depositAmount,
 	)
@@ -115,8 +116,8 @@ func CreateProject(
 
 	std.Emit(
 		"CreateProject",
-		"prevAddr", previousAddress.String(),
-		"prevRealm", previousPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"name", name,
 		"tokenPath", tokenPath,
 		"recipient", recipient.String(),
@@ -246,15 +247,14 @@ func createProject(params *createProjectParams) (*Project, error) {
 // Returns:
 // - uint64: The amount of rewards transferred to the recipient.
 func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.Address) int64 {
-	previousAddress := std.PreviousRealm().Address()
-	previousPkgPath := std.PreviousRealm().PkgPath()
-	currentHeight := int64(std.ChainHeight())
+	halt.AssertIsNotHaltedLaunchpad()
+	halt.AssertIsNotHaltedWithdraw()
 
-	assertOnlyUser()
-	halt.AssertIsHaltedLaunchpad()
-	halt.AssertIsHaltedWithdraw()
-	access.AssertIsAdmin(previousAddress)
+	previousRealm := std.PreviousRealm()
+	access.AssertIsAdmin(previousRealm.Address())
 
+	currentHeight := std.ChainHeight()
+	
 	projectLeftReward, err := transferLeftFromProject(projectID, recipient, currentHeight)
 	if err != nil {
 		panic(err)
@@ -267,8 +267,8 @@ func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.A
 
 	std.Emit(
 		"TransferLeftFromProjectByAdmin",
-		"prevAddr", previousAddress.String(),
-		"prevRealm", previousPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"projectId", projectID,
 		"recipient", recipient.String(),
 		"tokenPath", project.tokenPath,

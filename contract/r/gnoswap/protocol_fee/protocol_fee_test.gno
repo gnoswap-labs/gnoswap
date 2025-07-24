@@ -211,7 +211,7 @@ func TestClearTokenListWithAmount(t *testing.T) {
 	}
 }
 
-func TestAssertOnlyPoolRouterStaker(t *testing.T) {
+func TestAssertCallerHasAddProtocolFeePermission(t *testing.T) {
 	tests := []struct {
 		name        string
 		prevRealm   std.Realm
@@ -238,21 +238,21 @@ func TestAssertOnlyPoolRouterStaker(t *testing.T) {
 
 			// When a function is defined to accept realm as a parameter,
 			// there's no need to wrap it with an anonymous function,
-			// but since the assertOnlyPoolRouterStaker function doesn't accept a realm parameter,
+			// but since the assertCallerHasAddProtocolFeePermission function doesn't accept a realm parameter,
 			// it appears that a separate execution scope needs to be set up to distinguish realms,
 			// and this anonymous function wrapping pattern must be maintained for the tests to pass.
 			if test.shouldPanic {
 				uassert.AbortsWithMessage(t, test.panicMsg, func() {
 					func(cur realm) {
 						testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-						assertOnlyPoolRouterStaker()
+						assertCallerHasAddProtocolFeePermission()
 					}(cross)
 				})
 			} else {
 				uassert.NotPanics(t, func() {
 					func(cur realm) {
 						testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-						assertOnlyPoolRouterStaker()
+						assertCallerHasAddProtocolFeePermission()
 					}(cross)
 				})
 			}

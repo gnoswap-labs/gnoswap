@@ -11,7 +11,6 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 	_ "gno.land/r/gnoswap/v1/staker"
 )
@@ -165,7 +164,6 @@ func main() {
 
 func initEmission() {
 	testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
-	emission.RegisterGnsChangeCallback(cross)
 }
 
 func mintGNS() {

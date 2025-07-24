@@ -20,14 +20,14 @@ import (
 // - If `ugnotAmount` is less than the minimum deposit required (`consts.UGNOT_MIN_DEPOSIT_TO_WRAP`).
 func wrap(ugnotAmount int64) {
 	if ugnotAmount <= 0 {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errWrapUnwrap,
 			"cannot wrap 0 ugnot",
 		))
 	}
 
 	if ugnotAmount < int64(consts.UGNOT_MIN_DEPOSIT_TO_WRAP) {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errWugnotMinimum,
 			ufmt.Sprintf("amount(%d) < minimum(%d)", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP),
 		))

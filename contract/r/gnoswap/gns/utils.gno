@@ -10,17 +10,36 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/halt"
 	"gno.land/r/gnoswap/v1/rbac"
 )
 
-func getPrev() (string, string) {
-	prev := std.PreviousRealm()
-	return prev.Address().String(), prev.PkgPath()
+func validBlockTime(blockTime int64) error {
+	if blockTime <= 0 || blockTime >= 1e9 {
+		return errInvalidAvgBlockTimeInMs
+	}
+
+	return nil
 }
 
-func getPrevAddr() std.Address {
-	return std.PreviousRealm().Address()
+func validYear(year int64) error {
+	if year < HALVING_START_YEAR || year > HALVING_END_YEAR {
+		return makeErrorWithDetails(errInvalidYear, ufmt.Sprintf("year: %d", year))
+	}
+
+	return nil
+}
+
+// validEmissionAmount validates the emission amount if the amount of gns to mint is too many.
+// Parameters:
+//   - amount: The emission amount to validate
+// Returns:
+//   - error: An error if the emission amount is invalid
+func validEmissionAmount(amount int64) error {
+	if (amount + GetMintedEmissionAmount()) > MAX_EMISSION_AMOUNT {
+		return makeErrorWithDetails(errTooManyEmission, ufmt.Sprintf("amount: %d", amount))
+	}
+
+	return nil
 }
 
 func getAdminAddress() std.Address {
@@ -30,33 +49,6 @@ func getAdminAddress() std.Address {
 	}
 
 	return addr
-}
-
-func assertShouldNotBeHalted() {
-	if halt.IsHaltedEmission() {
-		panic("gns contract operations are currently disabled")
-	}
-}
-
-func assertCallerIsEmission() {
-	caller := getPrevAddr()
-	access.AssertIsEmission(caller)
-}
-
-func assertCallerIsAdmin() {
-	caller := getPrevAddr()
-	access.AssertIsAdmin(caller)
-}
-
-func assertCallerIsGovernance() {
-	caller := getPrevAddr()
-	access.AssertIsGovernance(caller)
-}
-
-func assertValidYear(year int64) {
-	if year < HALVING_START_YEAR || year > HALVING_END_YEAR {
-		panic(addDetailToError(errInvalidYear, ufmt.Sprintf("year: %d", year)))
-	}
 }
 
 func i64Min(x, y int64) int64 {

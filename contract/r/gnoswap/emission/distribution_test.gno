@@ -13,8 +13,8 @@ import (
 func TestChangeDistributionPctByAdmin(t *testing.T) {
 	resetObject(t)
 
-	originCallback := callbackStakerEmissionChange
-	callbackStakerEmissionChange = func(amount int64) {}
+	originCallback := stakerEmissionChangeCallback
+	stakerEmissionChangeCallback = func(amount int64) {}
 
 	tests := []struct {
 		name        string
@@ -101,14 +101,14 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 			}
 		})
 	}
-	callbackStakerEmissionChange = originCallback
+	stakerEmissionChangeCallback = originCallback
 }
 
 func TestChangeDistributionPct(t *testing.T) {
 	resetObject(t)
 
-	originCallback := callbackStakerEmissionChange
-	callbackStakerEmissionChange = func(amount int64) {}
+	originCallback := stakerEmissionChangeCallback
+	stakerEmissionChangeCallback = func(amount int64) {}
 
 	tests := []struct {
 		name        string
@@ -195,14 +195,14 @@ func TestChangeDistributionPct(t *testing.T) {
 			}
 		})
 	}
-	callbackStakerEmissionChange = originCallback
+	stakerEmissionChangeCallback = originCallback
 }
 
 func TestChangeDistributionPcts(t *testing.T) {
 	resetObject(t)
 
-	originCallback := callbackStakerEmissionChange
-	callbackStakerEmissionChange = func(amount int64) {}
+	originCallback := stakerEmissionChangeCallback
+	stakerEmissionChangeCallback = func(amount int64) {}
 
 	changeDistributionPcts(
 		cross,
@@ -216,7 +216,7 @@ func TestChangeDistributionPcts(t *testing.T) {
 	uassert.Equal(t, int64(3000), GetDistributionBpsPct(3))
 	uassert.Equal(t, int64(4000), GetDistributionBpsPct(4))
 
-	callbackStakerEmissionChange = originCallback
+	stakerEmissionChangeCallback = originCallback
 }
 
 func TestCalculateAmount(t *testing.T) {
@@ -242,30 +242,31 @@ func TestTransferToTarget(t *testing.T) {
 	resetObject(t)
 
 	tests := []struct {
-		name        string
-		shouldPanic bool
-		shouldAbort bool
-		panicMsg    string
-		setup       func()
-		target      int
-		amount      int64
-		verify      func()
+		name         string
+		shouldAbort  bool
+		shouldError  bool
+		abortMessage string
+		errorMsg     string
+		setup        func()
+		target       int
+		amount       int64
+		verify       func()
 	}{
 		{
 			name:        "invalid target",
-			shouldPanic: false,
-			shouldAbort: true,
-			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(9)",
+			shouldAbort: false,
+			shouldError: true,
+			errorMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(9)",
 			target:      9,
 			amount:      100,
 		},
 		{
-			name:        "not enough balance for emission",
-			shouldPanic: false,
-			shouldAbort: true,
-			panicMsg:    "insufficient balance",
-			target:      LIQUIDITY_STAKER,
-			amount:      1,
+			name:         "not enough balance for emission",
+			shouldAbort:  true,
+			shouldError:  false,
+			abortMessage: "insufficient balance",
+			target:       LIQUIDITY_STAKER,
+			amount:       1,
 		},
 		{
 			name:   "transfer to LIQUIDITY_STAKER",
@@ -315,18 +316,19 @@ func TestTransferToTarget(t *testing.T) {
 				tt.setup()
 			}
 
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+			if tt.shouldAbort {
+				uassert.AbortsWithMessage(t, tt.abortMessage, func() {
 					transferToTarget(cross, tt.target, tt.amount)
 				})
-			} else if tt.shouldAbort {
-				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					transferToTarget(cross, tt.target, tt.amount)
-				})
+
+				return
+			}
+
+			err := transferToTarget(cross, tt.target, tt.amount)
+			if tt.shouldError {
+				uassert.Equal(t, tt.errorMsg, err.Error())
 			} else {
-				uassert.NotPanics(t, func() {
-					transferToTarget(cross, tt.target, tt.amount)
-				})
+				uassert.NoError(t, err)
 				tt.verify()
 			}
 		})
@@ -460,7 +462,7 @@ func TestDistributeToTarget(t *testing.T) {
 	t.Run("Basic distribution test", func(t *testing.T) {
 		setupTestEnv(t)
 		amount := int64(10000)
-		totalSent := distributeToTarget(cross, amount)
+		totalSent, _ := distributeToTarget(cross, amount)
 
 		// Expected distribution amounts
 		expectedStaker := int64(7500)   // 75%
@@ -507,7 +509,7 @@ func TestDistributeToTarget(t *testing.T) {
 	t.Run("Zero amount distribution test", func(t *testing.T) {
 		resetObject(t)
 		amount := int64(0)
-		totalSent := distributeToTarget(cross, amount)
+		totalSent, _ := distributeToTarget(cross, amount)
 
 		if totalSent != 0 {
 			t.Errorf("Total distribution amount is not 0 for zero amount: %d", totalSent)
@@ -525,7 +527,7 @@ func TestDistributeToTarget(t *testing.T) {
 		resetObject(t)
 		setupTestEnv(t)
 		amount := int64(1000000)
-		totalSent := distributeToTarget(cross, amount)
+		totalSent, _ := distributeToTarget(cross, amount)
 
 		// Expected distribution amounts
 		expectedStaker := int64(750000)   // 75%
@@ -609,7 +611,7 @@ func TestDistributeToTarget(t *testing.T) {
 		resetObject(t)
 		setupTestEnv(t)
 		amount := int64(10001) // Amount with decimal point (e.g., 10000.1)
-		totalSent := distributeToTarget(cross, amount)
+		totalSent, _ := distributeToTarget(cross, amount)
 
 		// Expected distribution amounts (decimal part is truncated)
 		expectedStaker := int64(7500)   // 75%
@@ -752,7 +754,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				callerRealm: adminRealm,
 				targets:     [4]int{LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL, LIQUIDITY_STAKER},
 				percentages: [4]int64{4000, 3000, 2000, 1000},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 1 appears multiple times",
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
 				shouldPanic: true,
 			},
 			{
@@ -760,7 +762,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				callerRealm: adminRealm,
 				targets:     [4]int{DEVOPS, DEVOPS, DEVOPS, DEVOPS},
 				percentages: [4]int64{2500, 2500, 2500, 2500},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 2 appears multiple times",
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
 				shouldPanic: true,
 			},
 			{
@@ -768,7 +770,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				callerRealm: adminRealm,
 				targets:     [4]int{LIQUIDITY_STAKER, GOV_STAKER, LIQUIDITY_STAKER, GOV_STAKER},
 				percentages: [4]int64{3000, 2000, 3000, 2000},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 1 appears multiple times",
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
 				shouldPanic: true,
 			},
 			{
@@ -776,7 +778,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				callerRealm: adminRealm,
 				targets:     [4]int{COMMUNITY_POOL, DEVOPS, COMMUNITY_POOL, GOV_STAKER},
 				percentages: [4]int64{5000, 2500, 2500, 0},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 3 appears multiple times",
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
 				shouldPanic: true,
 			},
 			{
@@ -837,7 +839,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				callerRealm: govRealm,
 				targets:     [4]int{GOV_STAKER, DEVOPS, COMMUNITY_POOL, GOV_STAKER},
 				percentages: [4]int64{5000, 2000, 2000, 1000},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 4 appears multiple times",
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
 				shouldPanic: true,
 			},
 			{
@@ -845,7 +847,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				callerRealm: govRealm,
 				targets:     [4]int{LIQUIDITY_STAKER, LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL},
 				percentages: [4]int64{3000, 3000, 2000, 2000},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 1 appears multiple times",
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
 				shouldPanic: true,
 			},
 			{
@@ -853,7 +855,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				callerRealm: govRealm,
 				targets:     [4]int{COMMUNITY_POOL, COMMUNITY_POOL, COMMUNITY_POOL, COMMUNITY_POOL},
 				percentages: [4]int64{2500, 2500, 2500, 2500},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 3 appears multiple times",
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
 				shouldPanic: true,
 			},
 			{
@@ -928,7 +930,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				isAdmin:     true,
 				targets:     [4]int{LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL, LIQUIDITY_STAKER},
 				percentages: [4]int64{4000, 3000, 2000, 1000},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 1 appears multiple times",
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
 				description: "distribution should remain unchanged after failed duplicate attempt",
 			},
 			{
@@ -948,7 +950,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				isAdmin:     false,
 				targets:     [4]int{GOV_STAKER, LIQUIDITY_STAKER, DEVOPS, GOV_STAKER},
 				percentages: [4]int64{3000, 5000, 1500, 500},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target || target 4 appears multiple times",
+				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
 				description: "GOV_STAKER should remain at 0% after failed manipulation attempt",
 			},
 		}

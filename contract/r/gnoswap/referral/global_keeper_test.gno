@@ -262,7 +262,7 @@ func TestGlobalKeeper_GetKeeper(t *testing.T) {
 			cleanup()
 
 			// when
-			keeper := GetKeeper()
+			keeper := getKeeper()
 
 			// then
 			if tc.expectedNotNil {

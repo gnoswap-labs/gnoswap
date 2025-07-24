@@ -426,39 +426,31 @@ func getFeeGrowthAboveX128(
 	return feeGrowthAbove0X128, feeGrowthAbove1X128
 }
 
-// checkTicks validates the tick range for a liquidity position.
+// validateTicks validates the tick range for a liquidity position.
 //
 // This function performs three essential checks to ensure the provided
 // tick values are valid before creating or modifying a liquidity position.
-func checkTicks(tickLower, tickUpper int32) {
-	assertTickLowerLessThanUpper(tickLower, tickUpper)
-	assertValidTickLower(tickLower)
-	assertValidTickUpper(tickUpper)
-}
-
-func assertTickLowerLessThanUpper(tickLower, tickUpper int32) {
+func validateTicks(tickLower, tickUpper int32) error {
 	if tickLower >= tickUpper {
-		panic(newErrorWithDetail(
+		return makeErrorWithDetails(
 			errInvalidTickRange,
 			ufmt.Sprintf("tickLower(%d), tickUpper(%d)", tickLower, tickUpper),
-		))
+		)
 	}
-}
 
-func assertValidTickLower(tickLower int32) {
 	if tickLower < consts.MIN_TICK {
-		panic(newErrorWithDetail(
+		return makeErrorWithDetails(
 			errTickLowerInvalid,
 			ufmt.Sprintf("tickLower(%d) < MIN_TICK(%d)", tickLower, consts.MIN_TICK),
-		))
+		)
 	}
-}
 
-func assertValidTickUpper(tickUpper int32) {
 	if tickUpper > consts.MAX_TICK {
-		panic(newErrorWithDetail(
+		return makeErrorWithDetails(
 			errTickUpperInvalid,
 			ufmt.Sprintf("tickUpper(%d) > MAX_TICK(%d)", tickUpper, consts.MAX_TICK),
-		))
+		)
 	}
+
+	return nil
 }

@@ -115,7 +115,6 @@ func initAndSetup() {
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
-	emission.RegisterGnsChangeCallback(cross)
 
 	ufmt.Printf("[EXPECTED] initialization completed\n")
 }

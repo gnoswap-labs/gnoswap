@@ -15,7 +15,6 @@ import (
 
 	"gno.land/r/gnoswap/v1/access"
 
-	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 
 	prabc "gno.land/p/gnoswap/rbac"
@@ -79,7 +78,6 @@ func initAccountAndEmission() {
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
-	emission.RegisterGnsChangeCallback(cross)
 }
 
 func createPools() {

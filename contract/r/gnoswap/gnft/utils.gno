@@ -1,7 +1,9 @@
 package gnft
 
 import (
+	"math/rand"
 	"std"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
@@ -10,17 +12,6 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/rbac"
 )
-
-// getPrevAsString returns the address and package path of the previous realm.
-func getPrevAsString() (string, string) {
-	prev := std.PreviousRealm()
-	return prev.Address().String(), prev.PkgPath()
-}
-
-// getPrevAddr returns the address of the previous realm.
-func getPrevAddr() std.Address {
-	return std.PreviousRealm().Address()
-}
 
 func getPositionAddress() std.Address {
 	addr, exists := access.GetAddress(prabc.ROLE_POSITION.String())
@@ -42,18 +33,21 @@ func tid(id uint64) grc721.TokenID {
 	return grc721.TokenID(ufmt.Sprintf("%d", id))
 }
 
-// Exists checks if a token ID exists.
-//
-// Input:
-//   - tid: the token ID to check
-//
-// Output:
-//   - bool: true if the token ID exists, false otherwise
-func Exists(tid grc721.TokenID) bool {
-	_, err := nft.OwnerOf(tid)
-	if err != nil {
-		return false
-	}
+// generateRandInstnace generates a new random instance
+// Returns:
+//   - *rand.Rand: A new random instance
+func generateRandInstance() *rand.Rand {
+	seed1 := time.Now().Unix() + TotalSupply()
+	seed2 := time.Now().UnixNano() + TotalSupply()
+	pcg := rand.NewPCG(uint64(seed1), uint64(seed2))
+	return rand.New(pcg)
+}
 
-	return true
+// checkErr helper function to panic if an error occurs
+// Parameters:
+//   - err: The error to check
+func checkErr(err error) {
+	if err != nil {
+		panic(err.Error())
+	}
 }

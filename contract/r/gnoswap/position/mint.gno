@@ -159,7 +159,11 @@ func processMintInput(input MintInput) (ProcessedMintInput, error) {
 	var result ProcessedMintInput
 
 	// process tokens
-	token0, token1, token0IsNative, token1IsNative, wrappedAmount := processTokens(input.token0, input.token1, input.amount0Desired, input.amount1Desired, input.caller)
+	token0, token1, token0IsNative, token1IsNative, wrappedAmount, err := processTokens(input.token0, input.token1, input.amount0Desired, input.amount1Desired, input.caller)
+	if err != nil {
+		return ProcessedMintInput{}, err
+	}
+	
 	pair := TokenPair{
 		token0:         token0,
 		token1:         token1,
@@ -229,7 +233,7 @@ func processTokens(
 	amount0Desired string,
 	amount1Desired string,
 	caller std.Address,
-) (string, string, bool, bool, int64) {
+) (string, string, bool, bool, int64, error) {
 	err := validateTokenPath(token0, token1)
 	if err != nil {
 		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
@@ -243,24 +247,33 @@ func processTokens(
 		token0 = consts.WRAPPED_WUGNOT
 		token0IsNative = true
 
-		wrappedAmount = safeWrapNativeToken(amount0Desired, caller)
+		wrappedAmount, err = safeWrapNativeToken(amount0Desired, caller)
+		if err != nil {
+			return "", "", false, false, 0, err
+		}
 	} else if isNative(token1) {
 		token1 = consts.WRAPPED_WUGNOT
 		token1IsNative = true
 
-		wrappedAmount = safeWrapNativeToken(amount1Desired, caller)
+		wrappedAmount, err = safeWrapNativeToken(amount1Desired, caller)
+		if err != nil {
+			return "", "", false, false, 0, err
+		}
 	}
 
-	return token0, token1, token0IsNative, token1IsNative, wrappedAmount
+	return token0, token1, token0IsNative, token1IsNative, wrappedAmount, nil
 }
 
-func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, string) {
-	// verify position ID exists
+func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, string, error) {
 	caller := params.caller
-	assertTokenExists(params.positionId)
-	assertOnlyOwnerOfToken(params.positionId, caller)
+	position, exist := GetPosition(params.positionId)
+	if !exist {
+		return 0, nil, nil, nil, "", makeErrorWithDetails(
+			errDataNotFound,
+			ufmt.Sprintf("positionId(%d) doesn't exist", params.positionId),
+		)
+	}
 
-	position := MustGetPosition(params.positionId)
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
 			poolKey:        position.poolKey,
@@ -314,13 +327,13 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	updated := setPosition(params.positionId, position)
 	if !updated {
-		panic(newErrorWithDetail(
+		return 0, nil, nil, nil, "", makeErrorWithDetails(
 			errPositionDoesNotExist,
 			ufmt.Sprintf("can not increase liquidity for non-existent position(%d)", params.positionId),
-		))
+		)
 	}
 
-	return params.positionId, liquidity, amount0, amount1, position.poolKey
+	return params.positionId, liquidity, amount0, amount1, position.poolKey, nil
 }
 
 // validateTokenPath validates the relationship and format of token paths.

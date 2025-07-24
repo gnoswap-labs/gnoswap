@@ -54,7 +54,7 @@ func updateUint64InTree(tree *avl.Tree, key string, delta uint64, add bool) uint
 		newValue = current + delta
 	} else {
 		if current < delta {
-			panic(addDetailToError(
+			panic(makeErrorWithDetails(
 				errNotEnoughBalance,
 				ufmt.Sprintf("not enough balance: current(%d) < requested(%d)", current, delta),
 			))

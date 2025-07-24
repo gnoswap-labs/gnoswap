@@ -7,6 +7,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
+// AssertIsAdminOrGovernance checks if the caller is the admin or governance and optionally updates the admin or governance address
 func AssertIsAdminOrGovernance(caller std.Address) {
 	if !IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && !IsAuthorized(prbac.ROLE_GOVERNANCE.String(), caller) {
 		panic(ufmt.Errorf("unauthorized: caller %s is not admin or governance", caller))
@@ -96,10 +97,25 @@ func AssertHasAnyRole(caller std.Address, roleNames ...string) {
 	panic(ufmt.Errorf("unauthorized: caller %s is not any of the roles %v", caller, roleNames))
 }
 
-func assertIsRBAC(caller std.Address) {
-	rbacAddr := std.DerivePkgAddr(rbacPackagePath)
+// AssertIsValidAddress checks if the address is valid
+func AssertIsValidAddress(addr std.Address) {
+	if !addr.IsValid() {
+		panic(ufmt.Errorf("invalid address: %s", addr))
+	}
+}
 
-	if caller != rbacAddr {
+// AssertIsUser checks if the caller is the user and optionally updates the user address
+func AssertIsUser(r std.Realm) {
+	if !r.IsUser() {
+		panic(ufmt.Errorf("caller is not user"))
+	}
+}
+
+// assertIsRBAC checks if the caller is the rbac and optionally updates the rbac address
+func assertIsRBAC(caller std.Address) {
+	rbacAddress := std.DerivePkgAddr(rbacPackagePath)
+
+	if caller != rbacAddress {
 		panic(ufmt.Errorf("unauthorized: caller %s is not rbac", caller))
 	}
 }

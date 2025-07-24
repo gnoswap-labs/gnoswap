@@ -15,13 +15,12 @@ import (
 
 func TestCallbackRegistration(t *testing.T) {
 	callbackTree = avl.NewTree()
-
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	testing.SetOriginCaller(adminAddr)
 
-	err := RegisterCallback(cross, adminAddr, "test", "add", func(a, b int) int {
+	RegisterCallback(cross, "test", "add", func(a, b int) int {
 		return a + b
 	})
-	uassert.NoError(t, err)
 
 	cb, exists := LookupCallback("test", "add")
 	uassert.True(t, exists)
@@ -34,13 +33,12 @@ func TestCallbackRegistration(t *testing.T) {
 
 func TestCallbackUpdate(t *testing.T) {
 	callbackTree = avl.NewTree()
-
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	testing.SetOriginCaller(adminAddr)
 
-	err := RegisterCallback(cross, adminAddr, "test", "multiply", func(a, b int) int {
+	RegisterCallback(cross, "test", "multiply", func(a, b int) int {
 		return a * b
 	})
-	uassert.NoError(t, err)
 
 	cb, exists := LookupCallback("test", "multiply")
 	uassert.True(t, exists)
@@ -51,10 +49,9 @@ func TestCallbackUpdate(t *testing.T) {
 	uassert.Equal(t, result, 12) // 3 * 4 = 12
 
 	// update callback
-	err = UpdateCallback(cross, adminAddr, "test", "multiply", func(a, b int) int {
+	UpdateCallback(cross, "test", "multiply", func(a, b int) int {
 		return a * b * 2
 	})
-	uassert.NoError(t, err)
 
 	// get callback and check the result
 	cb, exists = LookupCallback("test", "multiply")
@@ -68,52 +65,58 @@ func TestCallbackUpdate(t *testing.T) {
 
 func TestCallbackRegistrationErrors(t *testing.T) {
 	callbackTree = avl.NewTree()
-	userAddr := testutils.TestAddress("user")
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	testing.SetOriginCaller(adminAddr)
 
 	// duplicate registration test
-	err := RegisterCallback(cross, adminAddr, "test", "duplicate", func() {})
-	uassert.NoError(t, err)
+	RegisterCallback(cross, "test", "duplicate", func() {})
 
-	err = RegisterCallback(cross, adminAddr, "test", "duplicate", func() {})
-	uassert.Error(t, err)
+	uassert.AbortsWithMessage(t, "callback already registered for key: test/duplicate", func() {
+		RegisterCallback(cross, "test", "duplicate", func() {})
+	})
 
-	// unauthorized user registration test
-	err = RegisterCallback(cross, userAddr, "test", "unauthorized", func() {})
-	uassert.Error(t, err)
+	// unauthorized user registration
+	userAddr := testutils.TestAddress("user")
+	testing.SetOriginCaller(userAddr)
+
+	uassert.AbortsWithMessage(t, "unauthorized: caller g1w4ek2ujlta047h6lta047h6lta047h6lkvk347 is not admin or governance", func() {
+		RegisterCallback(cross, "test", "unauthorized", func() {})
+	})
 }
 
 func TestCallbackUpdateErrors(t *testing.T) {
 	callbackTree = avl.NewTree()
-	userAddr := testutils.TestAddress("user2")
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	testing.SetOriginCaller(adminAddr)
 
-	err := UpdateCallback(cross, adminAddr, "test", "nonexistent", func() {})
-	uassert.Error(t, err)
+	uassert.AbortsWithMessage(t, "callback not found for key: test/nonexistent", func() {
+		UpdateCallback(cross, "test", "nonexistent", func() {})
+	})
 
-	err = RegisterCallback(cross, adminAddr, "test", "update", func() {})
-	uassert.NoError(t, err)
+	RegisterCallback(cross, "test", "update", func() {})
 
-	err = UpdateCallback(cross, userAddr, "test", "update", func() {})
-	uassert.Error(t, err)
+	userAddr := testutils.TestAddress("user")
+	testing.SetOriginCaller(userAddr)
+	uassert.AbortsWithMessage(t, "unauthorized: caller g1w4ek2ujlta047h6lta047h6lta047h6lkvk347 is not admin or governance", func() {
+		UpdateCallback(cross, "test", "update", func() {})
+	})
 }
 
 func TestUpgradablePattern(t *testing.T) {
 	t.Run("version Management", func(t *testing.T) {
 		callbackTree = avl.NewTree()
 		adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+		testing.SetOriginCaller(adminAddr)
 
 		// v1
-		err := RegisterCallback(cross, adminAddr, "emission", "MintAndDistributeGns", func() uint64 {
+		RegisterCallback(cross, "emission", "MintAndDistributeGns", func() uint64 {
 			return 100
 		})
-		uassert.NoError(t, err)
 
 		// v2
-		err = UpdateCallback(cross, adminAddr, "emission", "MintAndDistributeGns", func() uint64 {
+		UpdateCallback(cross, "emission", "MintAndDistributeGns", func() uint64 {
 			return 200
 		})
-		uassert.NoError(t, err)
 
 		// check version
 		cb, exists := LookupCallback("emission", "MintAndDistributeGns")
@@ -127,18 +130,17 @@ func TestUpgradablePattern(t *testing.T) {
 	t.Run("Multiple Contract Callbacks", func(t *testing.T) {
 		callbackTree = avl.NewTree()
 		adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+		testing.SetOriginCaller(adminAddr)
 
 		// Emission contract callback
-		err := RegisterCallback(cross, adminAddr, "emission", "MintAndDistributeGns", func() uint64 {
-			return 100
-		})
-		uassert.NoError(t, err)
+			RegisterCallback(cross, "emission", "MintAndDistributeGns", func() uint64 {
+				return 100
+			})
 
 		// Position contract callback
-		err = RegisterCallback(cross, adminAddr, "position", "GetPosition", func(id uint64) string {
-			return "position"
-		})
-		uassert.NoError(t, err)
+			RegisterCallback(cross, "position", "GetPosition", func(id uint64) string {
+				return "position"
+			})
 
 		// check each callback is independent
 		cb1, exists := LookupCallback("emission", "MintAndDistributeGns")
@@ -158,23 +160,22 @@ func TestUpgradablePattern(t *testing.T) {
 	t.Run("Rollback Scenario", func(t *testing.T) {
 		callbackTree = avl.NewTree()
 		adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+		testing.SetOriginCaller(adminAddr)
 
 		// v1
 		originalCallback := func() uint64 {
 			return 100
 		}
-		err := RegisterCallback(cross, adminAddr, "emission", "MintAndDistributeGns", originalCallback)
-		uassert.NoError(t, err)
+		
+		RegisterCallback(cross, "emission", "MintAndDistributeGns", originalCallback)
 
 		// buggy version
-		err = UpdateCallback(cross, adminAddr, "emission", "MintAndDistributeGns", func() uint64 {
+		UpdateCallback(cross, "emission", "MintAndDistributeGns", func() uint64 {
 			panic("buggy version")
 		})
-		uassert.NoError(t, err)
 
 		// rollback
-		err = UpdateCallback(cross, adminAddr, "emission", "MintAndDistributeGns", originalCallback)
-		uassert.NoError(t, err)
+		UpdateCallback(cross, "emission", "MintAndDistributeGns", originalCallback)
 
 		// check rollback
 		cb, exists := LookupCallback("emission", "MintAndDistributeGns")
@@ -188,12 +189,11 @@ func TestUpgradablePattern(t *testing.T) {
 	t.Run("Namespace Collision", func(t *testing.T) {
 		callbackTree = avl.NewTree()
 		adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+		testing.SetOriginCaller(adminAddr)
 
 		// same namespace, different function
-		err := RegisterCallback(cross, adminAddr, "emission", "func1", func() int { return 1 })
-		uassert.NoError(t, err)
-		err = RegisterCallback(cross, adminAddr, "emission", "func2", func() int { return 2 })
-		uassert.NoError(t, err)
+		RegisterCallback(cross, "emission", "func1", func() int { return 1 })
+		RegisterCallback(cross, "emission", "func2", func() int { return 2 })
 
 		// check each function is independent
 		cb1, exists := LookupCallback("emission", "func1")

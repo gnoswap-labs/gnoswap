@@ -12,7 +12,6 @@ import (
 	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/emission"
 
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
@@ -110,7 +109,6 @@ func initAndSetup() {
 	sr.SetUnStakingFeeByAdmin(cross, 0)
 
 	testing.SetRealm(stakerRealm)
-	emission.RegisterGnsChangeCallback(cross)
 	testing.SkipHeights(1)
 }
 

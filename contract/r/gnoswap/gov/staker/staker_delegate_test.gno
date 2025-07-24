@@ -46,7 +46,7 @@ func TestStakerDelegate_Delegate(t *testing.T) {
 			amount:        minimumAmount,
 			referrer:      "",
 			expectPanic:   true,
-			expectedError: "[GNOSWAP-GOV_STAKER-008] invalid address || invalid address ",
+			expectedError: "invalid address: ",
 			setupMocks: func() {
 				cleanupStakerDelegateTest(t)
 			},
@@ -143,7 +143,7 @@ func TestStakerDelegate_Undelegate(t *testing.T) {
 			amount:         minimumAmount,
 			expectedAmount: 0,
 			expectPanic:    true,
-			expectedError:  "[GNOSWAP-GOV_STAKER-008] invalid address || invalid address ",
+			expectedError:  "invalid address: ",
 			setupDelegation: func() {
 				cleanupStakerDelegateTest(t)
 			},
@@ -225,7 +225,7 @@ func TestStakerDelegate_Redelegate(t *testing.T) {
 			delegatee:     testutils.TestAddress("validator2"),
 			amount:        minimumAmount,
 			expectPanic:   true,
-			expectedError: "[GNOSWAP-GOV_STAKER-008] invalid address || invalid address ",
+			expectedError: "invalid address: ",
 			setupDelegation: func() {
 				cleanupStakerDelegateTest(t)
 			},
@@ -240,7 +240,7 @@ func TestStakerDelegate_Redelegate(t *testing.T) {
 			delegatee:     std.Address(""),
 			amount:        minimumAmount,
 			expectPanic:   true,
-			expectedError: "[GNOSWAP-GOV_STAKER-008] invalid address || invalid address ",
+			expectedError: "invalid address: ",
 			setupDelegation: func() {
 				cleanupStakerDelegateTest(t)
 			},

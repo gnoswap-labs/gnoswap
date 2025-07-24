@@ -1,6 +1,6 @@
 package halt
 
-func AssertIsHalted(opTypes ...OpType) {
+func AssertIsNotHalted(opTypes ...OpType) {
 	halted, err := IsHalted(opTypes...)
 	if err != nil {
 		panic(err)
@@ -11,55 +11,55 @@ func AssertIsHalted(opTypes ...OpType) {
 	}
 }
 
-func AssertIsHaltedPool() {
-	AssertIsHaltedOperation(OpTypePool)
+func AssertIsNotHaltedPool() {
+	AssertIsNotHaltedOperation(OpTypePool)
 }
 
-func AssertIsHaltedPosition() {
-	AssertIsHaltedOperation(OpTypePosition)
+func AssertIsNotHaltedPosition() {
+	AssertIsNotHaltedOperation(OpTypePosition)
 }
 
-func AssertIsHaltedProtocolFee() {
-	AssertIsHaltedOperation(OpTypeProtocolFee)
+func AssertIsNotHaltedProtocolFee() {
+	AssertIsNotHaltedOperation(OpTypeProtocolFee)
 }
 
-func AssertIsHaltedRouter() {
-	AssertIsHaltedOperation(OpTypeRouter)
+func AssertIsNotHaltedRouter() {
+	AssertIsNotHaltedOperation(OpTypeRouter)
 }
 
-func AssertIsHaltedStaker() {
-	AssertIsHaltedOperation(OpTypeStaker)
+func AssertIsNotHaltedStaker() {
+	AssertIsNotHaltedOperation(OpTypeStaker)
 }
 
-func AssertIsHaltedLaunchpad() {
-	AssertIsHaltedOperation(OpTypeLaunchpad)
+func AssertIsNotHaltedLaunchpad() {
+	AssertIsNotHaltedOperation(OpTypeLaunchpad)
 }
 
-func AssertIsHaltedGovernance() {
-	AssertIsHaltedOperation(OpTypeGovernance)
+func AssertIsNotHaltedGovernance() {
+	AssertIsNotHaltedOperation(OpTypeGovernance)
 }
 
-func AssertIsHaltedGovStaker() {
-	AssertIsHaltedOperation(OpTypeGovStaker)
+func AssertIsNotHaltedGovStaker() {
+	AssertIsNotHaltedOperation(OpTypeGovStaker)
 }
 
-func AssertIsHaltedXGns() {
-	AssertIsHaltedOperation(OpTypeXGns)
+func AssertIsNotHaltedXGns() {
+	AssertIsNotHaltedOperation(OpTypeXGns)
 }
 
-func AssertIsHaltedCommunityPool() {
-	AssertIsHaltedOperation(OpTypeCommunityPool)
+func AssertIsNotHaltedCommunityPool() {
+	AssertIsNotHaltedOperation(OpTypeCommunityPool)
 }
 
-func AssertIsHaltedEmission() {
-	AssertIsHaltedOperation(OpTypeEmission)
+func AssertIsNotHaltedEmission() {
+	AssertIsNotHaltedOperation(OpTypeEmission)
 }
 
-func AssertIsHaltedWithdraw() {
-	AssertIsHaltedOperation(OpTypeWithdraw)
+func AssertIsNotHaltedWithdraw() {
+	AssertIsNotHaltedOperation(OpTypeWithdraw)
 }
 
-func AssertIsHaltedOperation(op OpType) {
+func AssertIsNotHaltedOperation(op OpType) {
 	if halted := isHaltedOperation(op); halted {
 		panic(makeErrorWithDetails(errHalted, op.String()))
 	}

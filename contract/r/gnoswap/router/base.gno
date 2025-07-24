@@ -187,14 +187,16 @@ func handleMultiSwap(
 	numHops int,
 	amountSpecified *i256.Int,
 ) (*u256.Uint, *u256.Uint) {
+	previousRealmAddr := std.PreviousRealm().Address()
+
 	switch swapType {
 	case ExactIn:
 		input, output, fee := getDataForMultiPath(route, 0) // first data
-		sp := newSwapParams(input, output, fee, getPrevAddr(), amountSpecified)
+		sp := newSwapParams(input, output, fee, previousRealmAddr, amountSpecified)
 		return multiSwap(*sp, numHops, route)
 	case ExactOut:
 		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
-		sp := newSwapParams(input, output, fee, getPrevAddr(), amountSpecified)
+		sp := newSwapParams(input, output, fee, previousRealmAddr, amountSpecified)
 		return multiSwapNegative(*sp, numHops-1, route)
 	default:
 		// Any invalid `SwapType` is caught in the `SwapRoute` function,

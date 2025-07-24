@@ -48,18 +48,18 @@ func TestBalanceOf(t *testing.T) {
 	uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(adminAddr))
 }
 
-func TestAssertTooManyEmission(t *testing.T) {
+func TestValidEmissionAmount(t *testing.T) {
 	tests := []struct {
 		name        string
 		amount      int64
-		shouldPanic bool
-		panicMsg    string
+		shouldError bool
+		errorMessage    string
 	}{
 		{
 			name:        "should panic if emission amount is too large",
 			amount:      MAXIMUM_SUPPLY,
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNS-002] too many emission reward || amount: 1000000000000000",
+			shouldError: true,
+			errorMessage:    "[GNOSWAP-GNS-002] too many emission reward || amount: 1000000000000000",
 		},
 		{
 			name:   "should not panic if emission amount is not too large",
@@ -69,12 +69,12 @@ func TestAssertTooManyEmission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					assertTooManyEmission(tt.amount)
-				})
+			err := validEmissionAmount(tt.amount)
+
+			if tt.shouldError {
+				uassert.Equal(t, tt.errorMessage, err.Error())
 			} else {
-				uassert.NotPanics(t, func() { assertTooManyEmission(tt.amount) })
+				uassert.Equal(t, nil, err)
 			}
 		})
 	}
@@ -432,7 +432,7 @@ func TestMintGns(t *testing.T) {
 			inputSkipHeight:      1,
 			expectedMintedAmount: 0,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "gns contract operations are currently disabled",
+			expectedAbortMessage: "halted: emission",
 		},
 		{
 			name:                 "mint gns is failed by caller is not emission realm",

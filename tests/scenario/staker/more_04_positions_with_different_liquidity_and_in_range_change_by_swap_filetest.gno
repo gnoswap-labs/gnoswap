@@ -98,7 +98,6 @@ func initAndSetupSinglePool() {
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
-	emission.RegisterGnsChangeCallback(cross)
 
 	testing.SkipHeights(1)
 }

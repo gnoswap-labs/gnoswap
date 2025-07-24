@@ -28,10 +28,7 @@ import (
 //
 // ref: https://docs.gnoswap.io/contracts/governance/vote.gno#vote
 func Vote(cur realm, proposalID int64, yes bool) string {
-	// Check if system is halted before allowing voting
-	if halt.IsHaltedGovernance() {
-		panic("governance contract operations are currently disabled")
-	}
+	halt.AssertIsNotHaltedGovernance()
 
 	// Get current blockchain state and caller information
 	currentHeight := std.ChainHeight()

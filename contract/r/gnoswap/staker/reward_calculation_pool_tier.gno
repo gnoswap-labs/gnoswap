@@ -71,7 +71,7 @@ func (self *TierRatio) Get(tier uint64) uint64 {
 	case Tier3:
 		return self.Tier3
 	default:
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errInvalidPoolTier, ufmt.Sprintf("unsupported tier(%d)", tier)))
 	}
 }
@@ -100,7 +100,7 @@ type PoolTier struct {
 	getEmission func() int64
 
 	// returns a list of halving blocks within the interval [start, end) in ascending order
-	// there MUST NOT be any emission amount change between start and end - those had to be handled by the CallbackStakerEmissionChange.
+	// there MUST NOT be any emission amount change between start and end - those had to be handled by the stakerEmissionChangeCallback.
 	getHalvingBlocksInRange func(start, end int64) ([]int64, []int64)
 }
 

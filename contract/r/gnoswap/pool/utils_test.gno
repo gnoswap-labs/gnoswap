@@ -1,7 +1,6 @@
 package pool
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/demo/uassert"
@@ -147,40 +146,6 @@ func TestU256Min_AdditionalCases(t *testing.T) {
 			// Test commutativity
 			resultReversed := u256Min(num2, num1)
 			uassert.Equal(t, expected.ToString(), resultReversed.ToString())
-		})
-	}
-}
-
-func TestGetPrevAsString(t *testing.T) {
-	tests := []struct {
-		name            string
-		_realm          std.Realm
-		expectedAddr    string
-		expectedPkgPath string
-	}{
-		{
-			name:            "user call",
-			_realm:          std.NewUserRealm(std.Address("user")),
-			expectedAddr:    "user",
-			expectedPkgPath: "",
-		},
-		{
-			name:            "code call",
-			_realm:          std.NewCodeRealm("gno.land/r/demo/realm"),
-			expectedAddr:    std.DerivePkgAddr("gno.land/r/demo/realm").String(),
-			expectedPkgPath: "gno.land/r/demo/realm",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			testing.SetRealm(tt._realm)
-			func() {
-				testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-				addr, pkgPath := getPrevAsString()
-				uassert.Equal(t, tt.expectedAddr, addr)
-				uassert.Equal(t, tt.expectedPkgPath, pkgPath)
-			}()
 		})
 	}
 }
@@ -649,82 +614,6 @@ func TestToUint128MaskedValuesRange(t *testing.T) {
 	uassert.Equal(t, "318775800626314356294205765087544249637", resultMaxPrice.ToString())
 }
 
-//assertOnlyNotNil
-func TestAssertOnlyInitializedUint256(t *testing.T) {
-	tests := []struct {
-		name        string
-		input       *u256.Uint
-		shouldPanic bool
-		errorMsg    string
-	}{
-		{
-			name:        "nil input",
-			input:       nil,
-			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-006] invalid input data || value is nil",
-		},
-		{
-			name:        "valid zero",
-			input:       u256.NewUint(0),
-			shouldPanic: false,
-		},
-		{
-			name:        "valid non-zero",
-			input:       u256.NewUint(123),
-			shouldPanic: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
-					assertOnlyInitializedUint256(tt.input)
-				})
-			} else {
-				uassert.NotPanics(t, func() {
-					assertOnlyInitializedUint256(tt.input)
-				})
-			}
-		})
-	}
-}
-
-func TestDerivePkgAddr(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{
-			name:     "Position package path",
-			input:    "gno.land/r/gnoswap/v1/position",
-			expected: "g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5",
-		},
-		{
-			name:     "Pool package path",
-			input:    "gno.land/r/gnoswap/v1/pool",
-			expected: "g148tjamj80yyrm309z7rk690an22thd2l3z8ank",
-		},
-		{
-			name:     "Router package path",
-			input:    "gno.land/r/gnoswap/v1/router",
-			expected: "g1lm2l7tf49h3mykesct7rhfml30yx8dw5xrval7",
-		},
-		{
-			name:     "GNS package path",
-			input:    "gno.land/r/gnoswap/v1/gns",
-			expected: "g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m",
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			got := derivePkgAddr(tc.input)
-			uassert.Equal(t, tc.expected, got.String())
-		})
-	}
-}
-
 func TestCheckOverFlowInt128(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -1047,133 +936,6 @@ func TestCheckTickSpacing_EdgeCases(t *testing.T) {
 	}
 }
 
-func TestAssertOnlyValidAddress(t *testing.T) {
-	tests := []struct {
-		name     string
-		addr     std.Address
-		expected bool
-		errorMsg string
-	}{
-		{
-			name:     "Success - valid address",
-			addr:     "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", // ADMIN address from consts
-			expected: true,
-		},
-		{
-			name:     "Failure - invalid address",
-			addr:     "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8", // invalid length
-			expected: false,
-			errorMsg: "[GNOSWAP-POOL-023] invalid address || (g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8)",
-		},
-		{
-			name:     "Failure - empty address",
-			addr:     "",
-			expected: false,
-			errorMsg: "[GNOSWAP-POOL-023] invalid address || ()",
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			if tc.expected {
-				uassert.NotPanics(t, func() {
-					assertOnlyValidAddress(tc.addr)
-				})
-			} else {
-				uassert.PanicsWithMessage(t, tc.errorMsg, func() {
-					assertOnlyValidAddress(tc.addr)
-				})
-			}
-		})
-	}
-}
-
-func TestAssertOnlyValidAddress_SpecialCases(t *testing.T) {
-	tests := []struct {
-		name        string
-		addr        std.Address
-		shouldPanic bool
-		errorMsg    string
-	}{
-		{
-			name:        "zero address is valid",
-			addr:        consts.ZERO_ADDRESS,
-			shouldPanic: false,
-		},
-		{
-			name:        "admin address",
-			addr:        consts.ADMIN,
-			shouldPanic: false,
-		},
-		{
-			name:        "pool address",
-			addr:        consts.POOL_ADDR,
-			shouldPanic: false,
-		},
-		{
-			name:        "empty string",
-			addr:        "",
-			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-023] invalid address || ()",
-		},
-		{
-			name:        "invalid format - wrong length",
-			addr:        "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha", // 39 chars instead of 40
-			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-023] invalid address || (g1lmvrrrr4er2us84h2732sru76c9zl2nvknha)",
-		},
-		{
-			name:        "too short",
-			addr:        "g1lmvrrrr4er2us84h2732",
-			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-023] invalid address || (g1lmvrrrr4er2us84h2732)",
-		},
-		{
-			name:        "wrong prefix",
-			addr:        "x17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
-			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-023] invalid address || (x17290cwvmrapvp869xfnhhawa8sm9edpufzat7d)",
-		},
-		{
-			name:        "invalid characters",
-			addr:        "g1!@#$%^&*()_+{}[]|\\:;\"'<>,.?/~`12345678",
-			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-023] invalid address || (g1!@#$%^&*()_+{}[]|\\:;\"'<>,.?/~`12345678)",
-		},
-	}
-	
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
-					assertOnlyValidAddress(tt.addr)
-				})
-			} else {
-				uassert.NotPanics(t, func() {
-					assertOnlyValidAddress(tt.addr)
-				})
-			}
-		})
-	}
-}
-
-func TestPermissionFunctions(t *testing.T) {
-	t.Run("user realm detection", func(t *testing.T) {
-		testing.SetRealm(std.NewUserRealm(std.Address("user")))
-		func() {
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-			uassert.True(t, isUserCall())
-		}()
-	})
-
-	t.Run("code realm detection", func(t *testing.T) {
-		testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/realm"))
-		func() {
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-			uassert.False(t, isUserCall())
-		}()
-	})
-}
-
 // Additional edge case tests for better coverage
 func TestConversionBoundaryValues(t *testing.T) {
 	t.Run("uint64 power of 2 boundaries", func(t *testing.T) {
@@ -1418,26 +1180,5 @@ func TestFormatFunctions(t *testing.T) {
 				uassert.Equal(t, tt.expected, result)
 			})
 		}
-	})
-}
-
-func TestRealm(t *testing.T) {
-	t.Run("getPrevRealm", func(t *testing.T) {
-		testing.SetRealm(std.NewUserRealm(std.Address("test_user")))
-		func() {
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-			r := getPrevRealm()
-			uassert.True(t, r.IsUser())
-			uassert.Equal(t, "test_user", r.Address().String())
-		}()
-	})
-
-	t.Run("getPrevAddr", func(t *testing.T) {
-		testing.SetRealm(std.NewUserRealm(std.Address("test_user2")))
-		func() {
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/demo/tests"))
-			addr := getPrevAddr()
-			uassert.Equal(t, "test_user2", addr.String())
-		}()
 	})
 }

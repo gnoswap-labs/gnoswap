@@ -9,7 +9,6 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
 
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
@@ -36,60 +35,31 @@ func handleUnStakingFee(
 	internal bool,
 	positionId uint64,
 	poolPath string,
-) int64 {
+) (int64, int64, error) {
 	if unstakingFee == 0 {
-		return amount
+		return amount, 0, nil
 	}
 
 	// Do not change the order of the operation.
 	feeAmount := (amount * int64(unstakingFee)) / 10000
 	if feeAmount == 0 {
-		return amount
+		return amount, 0, nil
+	} else if feeAmount < 0 {
+		return 0, 0, ufmt.Errorf("fee amount cannot be negative")
 	}
-
-	
-	prevAddr, prevPkgPath := getPrev()
-	
-	protocolFeeAddr := getRoleAddress(prbac.ROLE_PROTOCOL_FEE)
 	
 	if internal {
-		// staker contract has fee
-		gns.Transfer(cross, protocolFeeAddr, feeAmount)
-		if feeAmount < 0 {
-			panic("fee amount cannot be negative")
-		}
-		pf.AddToProtocolFee(cross, consts.GNS_PATH, uint64(feeAmount))
-
-		std.Emit(
-			"ProtocolFeeInternalReward",
-			"prevAddr", prevAddr,
-			"prevRealm", prevPkgPath,
-			"fromPositionId", formatUint(positionId),
-			"fromPoolPath", poolPath,
-			"feeTokenPath", consts.GNS_PATH,
-			"feeAmount", formatInt(feeAmount),
-		)
-	} else {
-		// external contract has fee
-		common.Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
-
-		if feeAmount < 0 {
-			panic("fee amount cannot be negative")
-		}
-		pf.AddToProtocolFee(cross, tokenPath, uint64(feeAmount))
-
-		std.Emit(
-			"ProtocolFeeExternalReward",
-			"prevAddr", prevAddr,
-			"prevRealm", prevPkgPath,
-			"fromPositionId", formatUint(positionId),
-			"fromPoolPath", poolPath,
-			"feeTokenPath", tokenPath,
-			"feeAmount", formatInt(feeAmount),
-		)
+		tokenPath = consts.GNS_PATH
 	}
 
-	return amount - feeAmount
+	protocolFeeAddr := getRoleAddress(prbac.ROLE_PROTOCOL_FEE)
+
+	// external contract has fee
+	common.Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
+
+	pf.AddToProtocolFee(cross, tokenPath, uint64(feeAmount))
+
+	return amount - feeAmount, feeAmount, nil
 }
 
 // GetUnstakingFee returns current rate of unstaking fee
@@ -116,12 +86,12 @@ func SetUnStakingFeeByAdmin(cur realm, fee uint64) {
 
 	setUnStakingFee(fee)
 
-	prevAddr, prevPkgPath := getPrev()
+	previousRealm := std.PreviousRealm()
 
 	std.Emit(
 		"SetUnStakingFeeByAdmin",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"prevFee", formatUint(prevUnStakingFee),
 		"newFee", formatUint(fee),
 	)
@@ -138,12 +108,12 @@ func SetUnStakingFee(cur realm, fee uint64) {
 
 	setUnStakingFee(fee)
 
-	prevAddr, prevPkgPath := getPrev()
+	previousRealm := std.PreviousRealm()
 
 	std.Emit(
 		"SetUnStakingFee",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"prevFee", formatUint(prevUnStakingFee),
 		"newFee", formatUint(fee),
 	)
@@ -152,7 +122,7 @@ func SetUnStakingFee(cur realm, fee uint64) {
 func setUnStakingFee(fee uint64) {
 	// 10000 (bps) = 100%
 	if fee > 10000 {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errInvalidUnstakingFee,
 			ufmt.Sprintf("fee(%d) must be in range 0 ~ 10000", fee),
 		))

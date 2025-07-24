@@ -2,17 +2,14 @@ package router
 
 import (
 	"bytes"
-	"std"
 	"strconv"
 	"strings"
 	"time"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/v1/emission"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (
@@ -69,44 +66,6 @@ func i256MinMax(x, y *i256.Int) (min, max *u256.Uint) {
 		return x.Abs(), y.Abs()
 	}
 	return y.Abs(), x.Abs()
-}
-
-// getPrevAddr returns the address of the previous realm.
-func getPrevAddr() std.Address {
-	return std.PreviousRealm().Address()
-}
-
-// getPrev returns the address and package path of the previous realm.
-func getPrev() (string, string) {
-	prev := std.PreviousRealm()
-	return prev.Address().String(), prev.PkgPath()
-}
-
-// haltCheck performs security validations before any swap operation
-func haltCheck() error {
-	if halt.IsHaltedRouter() {
-		panic("router contract operations are currently disabled")
-	}
-
-	if halt.IsHaltedWithdraw() {
-		panic("router contract withdrawals are currently disabled")
-	}
-
-	return nil
-}
-
-// commonSwapSetup performs all necessary validations and setup for a swap operation
-func commonSwapSetup() error {
-	if err := haltCheck(); err != nil {
-		return err
-	}
-
-	if std.PreviousRealm().PkgPath() != "" {
-		return ufmt.Errorf("%v: only user can call this function", errNoPermission)
-	}
-
-	emission.MintAndDistributeGns(cross)
-	return nil
 }
 
 // checkDeadline checks if the deadline is expired.

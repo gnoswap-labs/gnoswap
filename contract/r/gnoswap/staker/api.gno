@@ -115,7 +115,7 @@ func ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
 
 	pool, ok := pools.Get(poolPath)
 	if !ok {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("pool(%s) not found", poolPath),
 		))
@@ -123,7 +123,7 @@ func ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
 
 	incentive, exist := pool.incentives.GetByIncentiveId(incentiveId)
 	if !exist {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("incentive(%s) not found", incentiveId),
 		))
@@ -145,7 +145,7 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 
 	pool, ok := pools.Get(targetPoolPath)
 	if !ok {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("pool(%s) not found", targetPoolPath),
 		))

@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
+	"gno.land/r/gnoswap/v1/halt"
 	"gno.land/r/gnoswap/v1/referral"
 )
 
@@ -44,15 +46,20 @@ func Delegate(
 	amount int64,
 	referrer string,
 ) int64 {
+	halt.AssertIsNotHaltedGovStaker()
+	halt.AssertIsNotHaltedWithdraw()
+
 	prevRealm := std.PreviousRealm()
+	access.AssertIsUser(prevRealm)
+	access.AssertIsValidAddress(to)
+	
 	caller := prevRealm.Address()
 	from := caller
 	currentTime := time.Now().Unix()
 	currentRealm := std.CurrentRealm()
 	currentHeight := std.ChainHeight()
-
-	assertValidAddress(to)
-
+	
+	
 	emission.MintAndDistributeGns(cross)
 
 	delegation, err := delegate(
@@ -114,12 +121,15 @@ func Undelegate(
 	from std.Address,
 	amount int64,
 ) int64 {
+	halt.AssertIsNotHaltedGovStaker()
+	halt.AssertIsNotHaltedWithdraw()
+
 	prevRealm := std.PreviousRealm()
 	caller := prevRealm.Address()
 	currentTime := time.Now().Unix()
 	currentHeight := std.ChainHeight()
 
-	assertValidAddress(from)
+	access.AssertIsValidAddress(from)
 
 	emission.MintAndDistributeGns(cross)
 
@@ -176,14 +186,17 @@ func Redelegate(
 	newDelegatee std.Address,
 	amount int64,
 ) int64 {
+	halt.AssertIsNotHaltedGovStaker()
+	halt.AssertIsNotHaltedWithdraw()
+
 	prevRealm := std.PreviousRealm()
 	currentTime := time.Now().Unix()
 	currentHeight := std.ChainHeight()
 	caller := prevRealm.Address()
 	delegator := caller
 
-	assertValidAddress(delegatee)
-	assertValidAddress(newDelegatee)
+	access.AssertIsValidAddress(delegatee)
+	access.AssertIsValidAddress(newDelegatee)
 
 	emission.MintAndDistributeGns(cross)
 
@@ -240,7 +253,8 @@ func Redelegate(
 //
 // Reference: https://docs.gnoswap.io/contracts/governance/staker.gno#collectundelegatedgns
 func CollectUndelegatedGns(cur realm) int64 {
-	assertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedGovStaker()
+	halt.AssertIsNotHaltedWithdraw()
 
 	prevRealm := std.PreviousRealm()
 	caller := prevRealm.Address()
@@ -509,14 +523,14 @@ func registerReferrer(caller std.Address, referrer string) string {
 //   - error: nil if valid, error describing validation failure
 func validateDelegateAmount(amount int64) error {
 	if amount < minimumAmount {
-		return makeErrorWithDetail(
+		return makeErrorWithDetails(
 			errLessThanMinimum,
 			ufmt.Sprintf("minimum amount to delegate is %d (requested:%d)", minimumAmount, amount),
 		)
 	}
 
 	if amount%minimumAmount != 0 {
-		return makeErrorWithDetail(
+		return makeErrorWithDetails(
 			errInvalidAmount,
 			ufmt.Sprintf("amount must be multiple of %d", minimumAmount),
 		)

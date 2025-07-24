@@ -12,7 +12,6 @@ var (
 	errInvalidAmount = errors.New("[GNOSWAP-PROTOCOL_FEE-003] invalid amount")
 )
 
-func addDetailToError(err error, detail string) string {
-	finalErr := ufmt.Errorf("%s || %s", err.Error(), detail)
-	return finalErr.Error()
+func makeErrorWithDetail(err error, detail string) error {
+	return ufmt.Errorf("%s || %s", err.Error(), detail)
 }
