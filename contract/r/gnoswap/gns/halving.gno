@@ -251,13 +251,13 @@ func (h *HalvingData) initialize(startHeight, startTimestamp int64) {
 }
 
 // Emission change callback function
-var callbackEmissionChange func(amount int64)
+var emissionChangeCallback func(amount int64)
 
-func SetCallbackEmissionChange(cur realm, callback func(amount int64)) {
+func SetEmissionChangeCallback(cur realm, callback func(amount int64)) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsEmission(caller)
 
-	callbackEmissionChange = callback
+	emissionChangeCallback = callback
 }
 
 // EmissionState is a struct for managing emission state
@@ -461,11 +461,11 @@ func setAvgBlockTimeInMs(ms int64) error {
 	currentYear, _ = getHalvingYearAndEndTimestamp(now)
 	adjusted := hd.getAmountPerBlock(currentYear)
 
-	if callbackEmissionChange == nil {
-		return errCallbackEmissionChangeIsNil
+	if emissionChangeCallback == nil {
+		return errEmissionChangeIsNilCallback
 	}
 
-	callbackEmissionChange(adjusted)
+	emissionChangeCallback(adjusted)
 
 	// final update of global variables
 	avgBlockTimeMs = ms
