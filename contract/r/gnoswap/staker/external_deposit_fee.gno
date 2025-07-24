@@ -9,6 +9,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 var depositGnsAmount = int64(1_000_000_000)    // 1_000 GNS
@@ -146,6 +147,7 @@ func SetDepositGnsAmount(cur realm, amount int64) {
 // Only governance contract can execute this function via proposal.
 func SetMinimumRewardAmount(cur realm, amount int64) {
 	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedStaker()
 	access.AssertIsGovernance(caller)
 
 	prevMinimumRewardAmount := getMinimumRewardAmount()
@@ -170,6 +172,7 @@ func SetMinimumRewardAmount(cur realm, amount int64) {
 //     Example: "gno.land/r/demo/wugnot:1500000000"
 func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedStaker()
 	access.AssertIsGovernance(caller)
 
 	// Parse the paramsStr

@@ -61,8 +61,8 @@ func SetPoolTier(cur realm, poolPath string, tier uint64) {
 // ChangePoolTierByAdmin changes the tier of a pool by an admin
 func ChangePoolTierByAdmin(cur realm, poolPath string, tier uint64) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdmin(caller)
 	halt.AssertIsNotHaltedStaker()
+	access.AssertIsAdmin(caller)
 	assertPoolMustExist(poolPath)
 
 	currentHeight := std.ChainHeight()
@@ -83,8 +83,8 @@ func ChangePoolTierByAdmin(cur realm, poolPath string, tier uint64) {
 // ChangePoolTier changes the tier of a pool by governance
 func ChangePoolTier(cur realm, poolPath string, tier uint64) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsGovernance(caller)
 	halt.AssertIsNotHaltedStaker()
+	access.AssertIsGovernance(caller)
 	assertPoolMustExist(poolPath)
 
 	currentHeight := std.ChainHeight()
@@ -105,8 +105,8 @@ func ChangePoolTier(cur realm, poolPath string, tier uint64) {
 // RemovePoolTierByAdmin removes the tier of a pool by an admin
 func RemovePoolTierByAdmin(cur realm, poolPath string) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdmin(caller)
 	halt.AssertIsNotHaltedStaker()
+	access.AssertIsAdmin(caller)
 	assertPoolMustExist(poolPath)
 
 	currentHeight := std.ChainHeight()
@@ -125,8 +125,8 @@ func RemovePoolTierByAdmin(cur realm, poolPath string) {
 // RemovePoolTier removes the tier of a pool by governance
 func RemovePoolTier(cur realm, poolPath string) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsGovernance(caller)
 	halt.AssertIsNotHaltedStaker()
+	access.AssertIsGovernance(caller)
 	assertPoolMustExist(poolPath)
 	
 	currentHeight := std.ChainHeight()
@@ -145,8 +145,8 @@ func RemovePoolTier(cur realm, poolPath string) {
 // SetWarmUpByAdmin sets the warmup percentage and block duration by an admin
 func SetWarmUpByAdmin(cur realm, pct, blockDuration int64) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdmin(caller)
 	halt.AssertIsNotHaltedStaker()
+	access.AssertIsAdmin(caller)
 
 	setWarmUp(pct, blockDuration)
 
@@ -163,8 +163,8 @@ func SetWarmUpByAdmin(cur realm, pct, blockDuration int64) {
 // SetWarmUp sets the warmup percentage and block duration by governance
 func SetWarmUp(cur realm, pct, blockDuration int64) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsGovernance(caller)
 	halt.AssertIsNotHaltedStaker()
+	access.AssertIsGovernance(caller)
 
 	setWarmUp(pct, blockDuration)
 
