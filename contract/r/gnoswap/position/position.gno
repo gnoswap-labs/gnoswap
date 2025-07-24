@@ -5,7 +5,6 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -92,7 +91,6 @@ func Mint(
 	referrer string,
 ) (uint64, string, string, string) {
 	halt.AssertIsNotHaltedPosition()
-	halt.AssertIsNotHaltedWithdraw()
 
 	previousRealm := std.PreviousRealm()
 	if !previousRealm.IsUser() {
@@ -439,13 +437,9 @@ func SetPositionOperator(
 	id uint64,
 	operator std.Address,
 ) {
-	caller := std.PreviousRealm().PkgPath()
-	if caller != consts.STAKER_PATH {
-		panic(newErrorWithDetail(
-			errNoPermission,
-			ufmt.Sprintf("caller(%s) is not staker", caller),
-		))
-	}
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPosition()
+	access.AssertIsStaker(caller)
 
 	position := MustGetPosition(id)
 	position.operator = operator
