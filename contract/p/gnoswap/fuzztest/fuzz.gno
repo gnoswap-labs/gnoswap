@@ -2,6 +2,9 @@ package fuzztest
 
 import (
 	"errors"
+	"math"
+	"math/rand"
+	"unicode/utf8"
 
 	xs "gno.land/p/wyhaines/rand/xorshift64star"
 )
@@ -132,6 +135,62 @@ func shrinkInt(property func(int) bool, failingInput int) int {
 		}
 	}
 	return current
+}
+
+func GenerateBoundary(vt string) []any {
+	switch vt {
+	case "int":
+		return []any{
+			0, 1, -1,
+			int(math.MaxInt), int(math.MinInt),
+			int(math.MaxInt - 1), int(math.MinInt + 1),
+		}
+	case "uint":
+		return []any{
+			uint(0), uint(1),
+			uint(math.MaxUint), uint(math.MaxUint - 1),
+		}
+	case "string":
+		return []any{
+			"", " ", "\n", "\t",
+			"a", "A", "0",
+			generateLongString(100),
+			generateUnicodeString(),
+		}
+	case "slice":
+		return []any{
+			[]int{},
+			generateLargeSlice(10000),
+		}
+	}
+	return nil
+}
+
+func generateLongString(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = 'a'
+	}
+	return string(b)
+}
+
+func generateUnicodeString() string {
+	runes := []rune{'α', 'β', 'γ', '漢', '字', '🌟'}
+	result := ""
+	for _, r := range runes {
+		if utf8.ValidRune(r) {
+			result += string(r)
+		}
+	}
+	return result
+}
+
+func generateLargeSlice(n int) []int {
+	slice := make([]int, n)
+	for i := 0; i < n; i++ {
+		slice[i] = rand.IntN(100)
+	}
+	return slice
 }
 
 func FuzzWithConfig(config Config, property func(int) bool) *Result {

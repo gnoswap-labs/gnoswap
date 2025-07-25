@@ -1,6 +1,9 @@
 package fuzztest
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 type TestCase struct {
 	orderId int
@@ -152,5 +155,73 @@ func TestShrinking(t *testing.T) {
 	}
 	if result.FailingInput != 100 {
 		t.Errorf("Expected failing input to be 100 but got %v", result.FailingInput)
+	}
+}
+
+func TestGenerateBoundaryValues_Int(t *testing.T) {
+	values := GenerateBoundary("int")
+	expected := map[any]bool{
+		0: true, 1: true, -1: true,
+		int(math.MaxInt): true, int(math.MinInt): true,
+		int(math.MaxInt - 1): true, int(math.MinInt + 1): true,
+	}
+
+	for _, v := range values {
+		if _, ok := expected[v]; !ok {
+			t.Errorf("Unexpected value: %v", v)
+		}
+		delete(expected, v)
+	}
+	for missing := range expected {
+		t.Errorf("Missing value: %v", missing)
+	}
+}
+
+func TestGenerateBoundaryValues_Uint(t *testing.T) {
+	values := GenerateBoundary("uint")
+	expected := map[any]bool{
+		uint(0): true, uint(1): true,
+		uint(math.MaxUint): true, uint(math.MaxUint - 1): true,
+	}
+
+	for _, v := range values {
+		if _, ok := expected[v]; !ok {
+			t.Errorf("Unexpected value: %v", v)
+		}
+		delete(expected, v)
+	}
+	for missing := range expected {
+		t.Errorf("Missing value: %v", missing)
+	}
+}
+
+func TestGenerateBoundaryValues_String(t *testing.T) {
+	values := GenerateBoundary("string")
+	if len(values) == 0 {
+		t.Errorf("Expected some values but got none")
+	}
+	for _, v := range values {
+		if _, ok := v.(string); !ok {
+			t.Errorf("Expected string value but got %T", v)
+		}
+	}
+}
+
+func TestGenerateBoundaryValues_Slice(t *testing.T) {
+	values := GenerateBoundary("slice")
+	if len(values) == 0 {
+		t.Errorf("Expected some values but got none")
+	}
+	for _, v := range values {
+		if _, ok := v.([]int); !ok {
+			t.Errorf("Expected []int value but got %T", v)
+		}
+	}
+}
+
+func TestGenerateBoundaryValues_UnknownType(t *testing.T) {
+	values := GenerateBoundary("invalid-type")
+	if len(values) != 0 {
+		t.Errorf("Expected no values but got %v", values)
 	}
 }
