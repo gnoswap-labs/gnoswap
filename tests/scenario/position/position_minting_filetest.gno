@@ -33,8 +33,8 @@ const (
 var (
 	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm      = std.NewUserRealm(adminAddr)
-	poolAddr, _     = access.GetAddress(prabc.ROLE_POOL.String())
-	positionAddr, _ = access.GetAddress(prabc.ROLE_POSITION.String())
+	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
+	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = std.NewUserRealm(aliceAddr)
