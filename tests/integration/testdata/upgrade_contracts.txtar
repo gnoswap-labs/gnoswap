@@ -1,0 +1,202 @@
+# 
+
+## load default packages
+loadpkg gno.land/p/demo/avl
+loadpkg gno.land/p/demo/ufmt
+loadpkg gno.land/p/demo/json
+loadpkg gno.land/p/demo/ownable
+loadpkg gno.land/p/demo/grc/grc20
+loadpkg gno.land/p/demo/grc/grc721
+
+loadpkg gno.land/r/demo/wugnot
+loadpkg gno.land/r/demo/grc20reg
+
+## load immutable packages
+loadpkg gno.land/p/gnoswap/consts
+loadpkg gno.land/p/gnoswap/uint256
+loadpkg gno.land/p/gnoswap/int256
+loadpkg gno.land/p/gnoswap/rbac
+loadpkg gno.land/p/gnoswap/gnsmath
+loadpkg gno.land/r/gnoswap/v1/access
+loadpkg gno.land/r/gnoswap/v1/rbac
+loadpkg gno.land/r/gnoswap/v1/halt
+loadpkg gno.land/r/gnoswap/v1/bridge
+loadpkg gno.land/r/gnoswap/v1/common
+loadpkg gno.land/r/gnoswap/v1/gns
+loadpkg gno.land/r/gnoswap/v1/emission
+
+## load upgrade packages
+loadpkg gno.land/r/gnoswap/v1/referral
+loadpkg gno.land/r/gnoswap/v1/gnft
+loadpkg gno.land/r/gnoswap/v1/community_pool
+loadpkg gno.land/r/gnoswap/v1/protocol_fee
+loadpkg gno.land/r/gnoswap/v1/pool
+loadpkg gno.land/r/gnoswap/v1/position
+loadpkg gno.land/r/gnoswap/v1/router
+loadpkg gno.land/r/gnoswap/v1/staker
+loadpkg gno.land/r/gnoswap/v1/gov/xgns
+loadpkg gno.land/r/gnoswap/v1/gov/staker
+loadpkg gno.land/r/gnoswap/v1/gov/governance
+loadpkg gno.land/r/gnoswap/v1/launchpad
+
+
+## start a new node
+gnoland start 
+
+## update v2 addresses
+gnokey sign -tx-path $WORK/rbac/multi_update_role_address.tx -chainid=tendermint_test -account-number $test1_account_num -account-sequence $test1_account_seq test1
+gnokey broadcast $WORK/rbac/multi_update_role_address.tx -quiet=false
+
+## deploy v2 contracts
+
+### deploy referral
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/referral -pkgpath gno.land/r/gnoswap/v2/referral -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy gnft
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/gnft -pkgpath gno.land/r/gnoswap/v2/gnft -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy community_pool
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/community_pool -pkgpath gno.land/r/gnoswap/v2/community_pool -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy protocol_fee
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/protocol_fee -pkgpath gno.land/r/gnoswap/v2/protocol_fee -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy pool
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/pool -pkgpath gno.land/r/gnoswap/v2/pool -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy position
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/position -pkgpath gno.land/r/gnoswap/v2/position -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy router
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/router -pkgpath gno.land/r/gnoswap/v2/router -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy staker
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/staker -pkgpath gno.land/r/gnoswap/v2/staker -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy gov/xgns
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/gov/xgns -pkgpath gno.land/r/gnoswap/v2/gov/xgns -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy gov/staker
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/gov/staker -pkgpath gno.land/r/gnoswap/v2/gov/staker -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy gov/governance
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/gov/governance -pkgpath gno.land/r/gnoswap/v2/gov/governance -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy launchpad
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/launchpad -pkgpath gno.land/r/gnoswap/v2/launchpad -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### execute transactions
+
+### execute emission transactions
+#### staker v2 balance is zero before distribute
+gnokey query vm/qeval --data "gno.land/r/gnoswap/v1/gns.BalanceOf(\"g14fclvfqynndp0l6kpyxkpgn4sljw9rr96hz46l\")"
+stdout '0 int64'
+
+#### emission distribute
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/emission -chainid=tendermint_test -func MintAndDistributeGns -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast test1
+
+#### staker v2 balance is not zero
+gnokey query vm/qeval --data "gno.land/r/gnoswap/v1/gns.BalanceOf(\"g14fclvfqynndp0l6kpyxkpgn4sljw9rr96hz46l\")"
+stdout '[1-9][0-9]* int64'
+
+### create pool
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gns -func Approve -args g126swhfaq2vyvvjywevhgw7lv9hg8qan93dasu8 -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/pool -func CreatePool -args "gno.land/r/demo/wugnot" -args "gno.land/r/gnoswap/v1/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout '{"key":"poolPath","value":"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"}'
+
+### pool creation fee getter & setter
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/pool -func SetPoolCreationFeeByAdmin -args 0 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout OK
+
+### withdrawal fee getter & setter
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/pool -func SetWithdrawalFeeByAdmin -args 0 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout OK
+
+-- rbac/multi_update_role_address.tx --
+{
+  "msg": [
+    {
+      "@type": "/vm.m_call",
+      "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
+      "send": "",
+      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "func": "UpdateRoleAddress",
+      "args": ["community_pool", "g1r79m0scwztcdvk3c6sy4rjrtv3rnnzrs9ddh9w"]
+    },
+    {
+      "@type": "/vm.m_call",
+      "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
+      "send": "",
+      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "func": "UpdateRoleAddress",
+      "args": ["governance", "g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5"]
+    },
+    {
+      "@type": "/vm.m_call",
+      "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
+      "send": "",
+      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "func": "UpdateRoleAddress",
+      "args": ["gov_staker", "g1gt2xzjcmhp2t08yh0nkmc3q822sr87t5n92rm0"]
+    },
+    {
+      "@type": "/vm.m_call",
+      "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
+      "send": "",
+      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "func": "UpdateRoleAddress",
+      "args": ["xgns", "g16gjmzf8725njf48325nl3yx3ve53wdu4ru53vm"]
+    },
+    {
+      "@type": "/vm.m_call",
+      "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
+      "send": "",
+      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "func": "UpdateRoleAddress",
+      "args": ["pool", "g126swhfaq2vyvvjywevhgw7lv9hg8qan93dasu8"]
+    },
+    {
+      "@type": "/vm.m_call",
+      "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
+      "send": "",
+      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "func": "UpdateRoleAddress",
+      "args": ["position", "g1vsm68lq9cpn7x507s6gh59anmx86kxfhzyszu2"]
+    },
+    {
+      "@type": "/vm.m_call",
+      "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
+      "send": "",
+      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "func": "UpdateRoleAddress",
+      "args": ["router", "g1cnz5gm2l09pm2k6rknjjar9a2w53fdhk4yjzy5"]
+    },
+    {
+      "@type": "/vm.m_call",
+      "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
+      "send": "",
+      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "func": "UpdateRoleAddress",
+      "args": ["staker", "g14fclvfqynndp0l6kpyxkpgn4sljw9rr96hz46l"]
+    },
+    {
+      "@type": "/vm.m_call",
+      "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
+      "send": "",
+      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "func": "UpdateRoleAddress",
+      "args": ["launchpad", "g1qslhn7vn69e09zwmz5hlz0273v3c33u5z8d9j7"]
+    },
+    {
+      "@type": "/vm.m_call",
+      "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
+      "send": "",
+      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "func": "UpdateRoleAddress",
+      "args": ["protocol_fee", "g1397dea8xlfv5858xzhsly7k998xm2zlvrm93t2"]
+    }
+  ],
+  "fee": { "gas_wanted": "200000000", "gas_fee": "1000000ugnot" },
+  "signatures": null,
+  "memo": ""
+}
