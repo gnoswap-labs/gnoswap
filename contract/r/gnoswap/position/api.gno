@@ -6,12 +6,13 @@ import (
 
 	"gno.land/p/demo/json"
 	ufmt "gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
+
+const MAX_UINT256 string = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 
 func ApiGetPositions() string {
 	rpcPositions := []RpcPosition{}
@@ -246,7 +247,7 @@ func subIn256(x, y *i256.Int) *i256.Int {
 	diff := value.Sub(x, y)
 
 	if diff.IsNeg() {
-		q256 := i256.MustFromDecimal(consts.MAX_UINT256)
+		q256 := i256.MustFromDecimal(MAX_UINT256)
 		return diff.Add(diff, q256)
 	}
 
