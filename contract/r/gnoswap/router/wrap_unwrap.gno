@@ -8,6 +8,8 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+const UGNOT_MIN_DEPOSIT_TO_WRAP uint64 = 1000
+
 var (
 	errFailedToWrapZeroUgnot = "cannot wrap 0 ugnot"
 	errFailedToWrapBelowMin  = "amount(%d) < minimum(%d)"

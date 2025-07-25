@@ -13,6 +13,11 @@ import (
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
+const (
+	MIN_SQRT_RATIO string = "4295128739"                                        // same as TickMathGetSqrtRatioAtTick(MIN_TICK)
+	MAX_SQRT_RATIO string = "1461446703485210103287273052203988822378723970342" // same as TickMathGetSqrtRatioAtTick(MAX_TICK)
+)
+
 // swapInner executes the core swap logic by interacting with the pool contract.
 // This is the main implementation of token swapping that handles both exact input and output swaps.
 //
@@ -81,7 +86,7 @@ func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u2
 		cross,
 		p.amountSpecified,
 		previousRealmAddr, // if single swap => user will receive
-		zero,          // sqrtPriceLimitX96
+		zero,              // sqrtPriceLimitX96
 		newSwapCallbackData(p, previousRealmAddr),
 	)
 }

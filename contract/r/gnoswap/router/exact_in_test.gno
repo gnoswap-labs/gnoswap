@@ -8,7 +8,6 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/access"
@@ -458,9 +457,9 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 		func() {
 			ExactOutSwapRoute(
 				cross,
-				gnot, // inputToken
-				quxPath,     // outputToken
-				"3",         // amountSpecified
+				gnot,    // inputToken
+				quxPath, // outputToken
+				"3",     // amountSpecified
 				"gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:3000", // strRouteArr
 				"100",   // quoteArr
 				"12345", // tokenAmountLimit

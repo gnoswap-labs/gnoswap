@@ -24,6 +24,8 @@ const (
 	POOL_SEPARATOR = "*POOL*"
 )
 
+var wugnotPath string = "gno.land/r/demo/wugnot"
+
 type RouterOperation interface {
 	Validate() error
 	Process() (*SwapResult, error)
