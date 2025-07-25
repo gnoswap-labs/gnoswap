@@ -91,7 +91,7 @@ func ApiGetPositionsByAddress(address std.Address) string {
 	for _, position := range r.Response {
 		owner, err := gnft.OwnerOf(positionIdFrom(position.LpPositionId))
 		if err != nil {
-			owner = consts.ZERO_ADDRESS
+			owner = zeroAddress
 		}
 		rsps.AppendArray(position.JSON(owner))
 	}
@@ -149,7 +149,7 @@ func rpcMakePosition(positionId uint64) RpcPosition {
 
 	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
 	if err != nil {
-		owner = consts.ZERO_ADDRESS
+		owner = zeroAddress
 	}
 
 	return RpcPosition{
@@ -232,11 +232,11 @@ func unclaimedFee(positionId uint64) (*i256.Int, *i256.Int) {
 
 	value01 := subIn256(feeGrowthInside0X128, feeGrowthInside0LastX128)
 	value02 := i256.Zero().Mul(liquidity, value01)
-	unclaimedFee0 := i256.Zero().Div(value02, i256.MustFromDecimal(consts.Q128))
+	unclaimedFee0 := i256.Zero().Div(value02, i256.MustFromDecimal(Q128))
 
 	value11 := subIn256(feeGrowthInside1X128, feeGrowthInside1LastX128)
 	value12 := i256.Zero().Mul(liquidity, value11)
-	unclaimedFee1 := i256.Zero().Div(value12, i256.MustFromDecimal(consts.Q128))
+	unclaimedFee1 := i256.Zero().Div(value12, i256.MustFromDecimal(Q128))
 
 	return unclaimedFee0, unclaimedFee1
 }

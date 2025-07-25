@@ -4,11 +4,12 @@ import (
 	"std"
 	"strconv"
 
-	"gno.land/r/demo/wugnot"
-
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+
+	"gno.land/r/demo/wugnot"
 )
+
+const UGNOT_MIN_DEPOSIT_TO_WRAP uint64 = 1000
 
 // wrap wraps the specified amount of the native token `ugnot` into the wrapped token `wugnot`.
 //
@@ -27,11 +28,11 @@ import (
 // Errors:
 //   - Returns an error if `ugnotAmount` is zero or less than the minimum deposit threshold.
 func wrap(ugnotAmount int64, to std.Address) error {
-	if ugnotAmount == 0 || ugnotAmount < int64(consts.UGNOT_MIN_DEPOSIT_TO_WRAP) {
-		return ufmt.Errorf("amount(%d) < minimum(%d)", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP)
+	if ugnotAmount == 0 || ugnotAmount < int64(UGNOT_MIN_DEPOSIT_TO_WRAP) {
+		return ufmt.Errorf("amount(%d) < minimum(%d)", ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP)
 	}
 
-	wugnotAddr := std.DerivePkgAddr(consts.WRAPPED_WUGNOT)
+	wugnotAddr := std.DerivePkgAddr(WRAPPED_WUGNOT)
 	transferUGNOT(positionAddr, wugnotAddr, ugnotAmount)
 
 	wugnot.Deposit(cross)                   // POSITION HAS WUGNOT
@@ -81,14 +82,14 @@ func transferUGNOT(from, to std.Address, amount int64) {
 	}
 
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	fromBalance := banker.GetCoins(from).AmountOf(consts.UGNOT)
+	fromBalance := banker.GetCoins(from).AmountOf(UGNOT)
 	if fromBalance < int64(amount) {
 		panic(newErrorWithDetail(
 			errInsufficientUGNOT,
 			ufmt.Sprintf("from(%s) balance(%d) is less than amount(%d)", from, fromBalance, amount)))
 	}
 	banker.SendCoins(from, to, std.Coins{
-		{Denom: consts.UGNOT, Amount: int64(amount)},
+		{Denom: UGNOT, Amount: int64(amount)},
 	})
 }
 
@@ -105,12 +106,12 @@ func refundUGNOT(to std.Address, amount int64) {
 
 // isNative checks whether the given token is a native token.
 func isNative(token string) bool {
-	return token == consts.GNOT
+	return token == GNOT
 }
 
 // isWrappedToken checks whether the tokenPath is wrapped token
 func isWrappedToken(tokenPath string) bool {
-	return tokenPath == consts.WRAPPED_WUGNOT
+	return tokenPath == WRAPPED_WUGNOT
 }
 
 // safeWrapNativeToken safely wraps the native token `ugnot` into the wrapped token `wugnot` for a user.
@@ -141,7 +142,7 @@ func safeWrapNativeToken(amountDesired string, userAddress std.Address) (int64, 
 
 	beforeWugnotBalance := wugnot.BalanceOf(userAddress)
 	sentNative := std.OriginSend()
-	sentUgnotAmount := sentNative.AmountOf(consts.UGNOT)
+	sentUgnotAmount := sentNative.AmountOf(UGNOT)
 
 	if sentUgnotAmount <= 0 {
 		return 0, makeErrorWithDetails(errZeroUGNOT, "amount of ugnot is zero")
@@ -175,7 +176,7 @@ func safeWrapNativeToken(amountDesired string, userAddress std.Address) (int64, 
 }
 
 func handleUnwrap(pToken0, pToken1 string, unwrapResult bool, userOldWugnotBalance int64, to std.Address) error {
-	if (pToken0 == consts.WRAPPED_WUGNOT || pToken1 == consts.WRAPPED_WUGNOT) && unwrapResult {
+	if (pToken0 == WRAPPED_WUGNOT || pToken1 == WRAPPED_WUGNOT) && unwrapResult {
 		userNewWugnotBalance := wugnot.BalanceOf(to)
 		leftOver := userNewWugnotBalance - userOldWugnotBalance
 		if leftOver > 0 {
@@ -184,6 +185,6 @@ func handleUnwrap(pToken0, pToken1 string, unwrapResult bool, userOldWugnotBalan
 			}
 		}
 	}
-	
+
 	return nil
 }

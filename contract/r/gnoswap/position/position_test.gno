@@ -14,7 +14,6 @@ import (
 
 	pl "gno.land/r/gnoswap/v1/pool"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/referral"
 )
@@ -400,8 +399,8 @@ func TestValidateTokenPath(t *testing.T) {
 		},
 		{
 			name:      "validateTokenPath is failed by conflicting tokens (GNOT ↔ WUGNOT)",
-			token0:    consts.GNOT,
-			token1:    consts.WRAPPED_WUGNOT,
+			token0:    GNOT,
+			token1:    WRAPPED_WUGNOT,
 			register0: true,
 			register1: true,
 			expected:  errInvalidTokenPath,
@@ -486,12 +485,12 @@ func TestProcessTokens(t *testing.T) {
 		},
 		{
 			name:           "processTokens is failed by token0 is native",
-			token0:         consts.GNOT,
+			token0:         GNOT,
 			token1:         gnsPath,
 			amount0Desired: "1300",
 			amount1Desired: "200",
 			caller:         alice,
-			expected0:      consts.WRAPPED_WUGNOT,
+			expected0:      WRAPPED_WUGNOT,
 			expected1:      "gno.land/r/gnoswap/v1/gns",
 			isNative0:      true,
 			isNative1:      false,
@@ -502,12 +501,12 @@ func TestProcessTokens(t *testing.T) {
 		{
 			name:           "processTokens is failed by token1 is native",
 			token0:         gnsPath,
-			token1:         consts.GNOT,
+			token1:         GNOT,
 			amount0Desired: "150",
 			amount1Desired: "1250",
 			caller:         testutils.TestAddress("user3"),
 			expected0:      "gno.land/r/gnoswap/v1/gns",
-			expected1:      consts.WRAPPED_WUGNOT,
+			expected1:      WRAPPED_WUGNOT,
 			isNative0:      false,
 			isNative1:      true,
 			expectedWrap:   1250,
@@ -515,13 +514,13 @@ func TestProcessTokens(t *testing.T) {
 		},
 		{
 			name:           "processTokens is failed by both tokens are native",
-			token0:         consts.GNOT,
-			token1:         consts.GNOT,
+			token0:         GNOT,
+			token1:         GNOT,
 			amount0Desired: "1100",
 			amount1Desired: "1200",
 			caller:         testutils.TestAddress("user4"),
-			expected0:      consts.WRAPPED_WUGNOT,
-			expected1:      consts.WRAPPED_WUGNOT,
+			expected0:      WRAPPED_WUGNOT,
+			expected1:      WRAPPED_WUGNOT,
 			isNative0:      true,
 			isNative1:      true,
 			expectedWrap:   2300,
@@ -554,13 +553,13 @@ func TestProcessTokens(t *testing.T) {
 				}
 			}()
 
-			if tt.token0 == consts.GNOT {
+			if tt.token0 == GNOT {
 				amount, _ := strconv.ParseInt(tt.amount0Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
 				testing.SetRealm(std.NewUserRealm(positionAddr))
 				transferUGNOT(positionAddr, positionAddr, amount)
 			}
-			if tt.token1 == consts.GNOT {
+			if tt.token1 == GNOT {
 				amount, _ := strconv.ParseInt(tt.amount1Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
 				testing.SetRealm(std.NewUserRealm(positionAddr))
