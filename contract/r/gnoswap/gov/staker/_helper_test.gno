@@ -24,6 +24,8 @@ var (
 	launchpadAddr, _     = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	devOpsAddr, _        = access.GetAddress(prbac.ROLE_DEVOPS.String())
 
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+
 	fooPath  string = "gno.land/r/onbloc/foo"
 	barPath  string = "gno.land/r/onbloc/bar"
 	bazPath  string = "gno.land/r/onbloc/baz"
@@ -52,9 +54,14 @@ var (
 	user3Realm  = std.NewUserRealm(testutils.TestAddress("charlie"))
 	invalidAddr = testutils.TestAddress("invalid")
 
-	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm    = std.NewCodeRealm(consts.ROUTER_PATH)
-	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
+	posPath  = "gno.land/r/gnoswap/v1/position"
+	posRealm = std.NewCodeRealm(posPath)
+
+	routerPath = "gno.land/r/gnoswap/v1/router"
+	rouRealm   = std.NewCodeRealm(routerPath)
+
+	stakerPath  = "gno.land/r/gnoswap/v1/staker"
+	stakerRealm = std.NewCodeRealm(stakerPath)
 )
 
 func makeFakeAddress(name string) std.Address {
@@ -109,7 +116,6 @@ func ugnotFaucet(t *testing.T, to std.Address, amount uint64) {
 func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(addr))
-	wugnotAddr := consts.WUGNOT_ADDR
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
 	wugnot.Deposit(cross)

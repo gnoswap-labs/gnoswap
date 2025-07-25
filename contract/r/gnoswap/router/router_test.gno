@@ -27,7 +27,7 @@ import (
 )
 
 func TestFinalizeSwap(t *testing.T) {
-	gnot := consts.GNOT
+	gnot := "gnot"
 
 	newUint256 := func(val string) *u256.Uint {
 		return u256.MustFromDecimal(val)
@@ -166,7 +166,6 @@ func TestFinalizeSwap(t *testing.T) {
 func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 	const wugnotTokenPath = "gno.land/r/demo/wugnot"
 	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
-	const routerPath = consts.ROUTER_PATH
 	const maxTimeout int64 = 9999999999
 	const wugnotGnsPoolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500"
 
@@ -245,7 +244,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			testing.IssueCoins(positionOwner, newCoins)
 			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
-			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
+			banker.SendCoins(positionOwner, wugnotAddr, newCoins)
 			wugnot.Deposit(cross)
 			if tt.recipient != positionOwner {
 				wugnot.Transfer(cross, tt.recipient, 10000000000)
@@ -332,7 +331,6 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 	const wugnotTokenPath = "gno.land/r/demo/wugnot"
 	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
-	const routerPath = consts.ROUTER_PATH
 	const maxTimeout int64 = 9999999999
 	const wugnotGnsPoolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500"
 
@@ -411,7 +409,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			testing.IssueCoins(positionOwner, newCoins)
 			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
-			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, std.Coins{{"ugnot", int64(10000000000)}})
+			banker.SendCoins(positionOwner, wugnotAddr, std.Coins{{"ugnot", int64(10000000000)}})
 			wugnot.Deposit(cross)
 			if tt.recipient != positionOwner {
 				wugnot.Transfer(cross, tt.recipient, 10000000000)
@@ -523,7 +521,6 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 	const wugnotTokenPath = "gno.land/r/demo/wugnot"
 	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
-	const routerPath = consts.ROUTER_PATH
 	const maxTimeout int64 = 9999999999
 	const gnsWugnotPoolPath = "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:10000"
 
@@ -602,7 +599,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			testing.IssueCoins(positionOwner, newCoins)
 			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
-			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, std.Coins{{"ugnot", int64(10000000000)}})
+			banker.SendCoins(positionOwner, wugnotAddr, std.Coins{{"ugnot", int64(10000000000)}})
 			wugnot.Deposit(cross)
 			if tt.recipient != positionOwner {
 				wugnot.Transfer(cross, tt.recipient, 10000000000)

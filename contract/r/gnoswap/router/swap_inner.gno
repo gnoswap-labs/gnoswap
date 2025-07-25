@@ -5,7 +5,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -189,7 +188,7 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 		minTick := getMinTick(fee) + 1
 		sqrtPriceLimitX96 = new(u256.Uint).Set(common.TickMathGetSqrtRatioAtTick(minTick))
 		if sqrtPriceLimitX96.IsZero() {
-			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
+			sqrtPriceLimitX96 = u256.MustFromDecimal(MIN_SQRT_RATIO)
 		}
 		return new(u256.Uint).Add(sqrtPriceLimitX96, one)
 	}
@@ -197,7 +196,7 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 	maxTick := getMaxTick(fee) - 1
 	sqrtPriceLimitX96 = new(u256.Uint).Set(common.TickMathGetSqrtRatioAtTick(maxTick))
 	if sqrtPriceLimitX96.IsZero() {
-		sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
+		sqrtPriceLimitX96 = u256.MustFromDecimal(MAX_SQRT_RATIO)
 	}
 	return new(u256.Uint).Sub(sqrtPriceLimitX96, one)
 }

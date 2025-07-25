@@ -31,10 +31,17 @@ var (
 var (
 	adminRealm = std.NewUserRealm(admin)
 
-	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
-	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
-	govRealm = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
+	posPath  = "gno.land/r/gnoswap/v1/position"
+	posRealm = std.NewCodeRealm(posPath)
+
+	routerPath = "gno.land/r/gnoswap/v1/router"
+	rouRealm = std.NewCodeRealm(routerPath)
+
+	stakerPath = "gno.land/r/gnoswap/v1/staker"
+	stkRealm = std.NewCodeRealm(stakerPath)
+
+	govPath = "gno.land/r/gnoswap/v1/gov"
+	govRealm = std.NewCodeRealm(govPath)
 
 	govStakerAddr, _     = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 	communityPoolAddr, _ = access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())

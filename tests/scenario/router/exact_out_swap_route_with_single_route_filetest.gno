@@ -35,6 +35,8 @@ var (
 
 	wugnotPath = "gno.land/r/demo/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/v1/gns"
+
+	maxInt64 int64  = 9223372036854775807
 )
 
 var t *testing.T
@@ -60,7 +62,7 @@ func main() {
 
 	println("[SCENARIO] 5. ExactOutSwapRoute")
 	exactOutSwapRouteBy(
-		consts.GNOT,
+		"gnot",
 		gnsPath,
 		"1001502",
 		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500",
@@ -82,10 +84,10 @@ func initializeSetup() {
 	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
 	println("[INFO] WUGNOT Balance of admin:", wugnot.BalanceOf(adminAddr))
 
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, routerAddr, consts.INT64_MAX)
-	wugnot.Approve(cross, routerAddr, consts.INT64_MAX)
+	gns.Approve(cross, poolAddr, maxInt64)
+	wugnot.Approve(cross, poolAddr, maxInt64)
+	gns.Approve(cross, routerAddr, maxInt64)
+	wugnot.Approve(cross, routerAddr, maxInt64)
 }
 
 func createPool(token0Path string, token1Path string, fee uint32, startTick int32) {

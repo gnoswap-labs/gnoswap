@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -66,14 +65,14 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 	specifiedAmount *i256.Int,
 ) error {
 	// no native token
-	if inputToken == consts.WUGNOT_PATH || outputToken == consts.WUGNOT_PATH {
+	if inputToken == wugnotPath || outputToken == wugnotPath {
 		return nil
 	}
 
 	// save current user's WGNOT amount
 	op.userBeforeWugnotBalance = wugnot.BalanceOf(std.PreviousRealm().Address())
 
-	if inputToken != consts.GNOT {
+	if inputToken != "gnot" {
 		return nil
 	}
 

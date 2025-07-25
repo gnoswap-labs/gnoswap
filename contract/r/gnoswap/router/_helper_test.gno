@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
@@ -25,8 +24,14 @@ import (
 )
 
 const (
+	gnot string = "gnot"
+	wrappedWugnot string = "gno.land/r/demo/wugnot"
+
 	ugnotDenom string = "ugnot"
 	ugnotPath  string = "ugnot"
+
+	UGNOT_MIN_DEPOSIT_TO_WRAP uint64 = 1000
+
 	wugnotPath string = "gno.land/r/demo/wugnot"
 	gnsPath    string = "gno.land/r/gnoswap/v1/gns"
 	barPath    string = "gno.land/r/onbloc/bar"
@@ -46,6 +51,11 @@ const (
 	TIER_3 uint64 = 3
 
 	poolCreationFee = 100_000_000
+)
+
+const (
+	MIN_SQRT_RATIO string = "4295128739" // same as TickMathGetSqrtRatioAtTick(MIN_TICK)
+	MAX_SQRT_RATIO string = "1461446703485210103287273052203988822378723970342" // same as TickMathGetSqrtRatioAtTick(MAX_TICK)
 )
 
 const (
@@ -80,8 +90,20 @@ var (
 	bob   = testutils.TestAddress("bob")
 
 	adminRealm  = std.NewUserRealm(admin)
+
+	poolAddr std.Address = "g148tjamj80yyrm309z7rk690an22thd2l3z8ank" 
+
+	routerPath = "gno.land/r/gnoswap/v1/router"
+	routerAddr std.Address = "g1lm2l7tf49h3mykesct7rhfml30yx8dw5xrval7"
 	routerRealm = std.NewUserRealm(routerAddr)
-	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
+
+	posPath  = "gno.land/r/gnoswap/v1/position"
+	posRealm = std.NewCodeRealm(posPath)
+
+	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+
+	gnsPath = "gno.land/r/gnoswap/v1/gns"
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
@@ -313,7 +335,7 @@ func ugnotFaucet(t *testing.T, to std.Address, amount int64) {
 func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(addr))
-	wugnotAddr := consts.WUGNOT_ADDR
+	wugnotAddr := wugnotAddr
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
 	wugnot.Deposit(cross)
