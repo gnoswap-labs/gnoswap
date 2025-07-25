@@ -182,7 +182,7 @@ func testPositionCreationAndRetrieval() {
 	println("[EXPECTED] Position tick lower:", tickLower)
 	println("[EXPECTED] Position tick upper:", tickUpper)
 	println("[EXPECTED] Position liquidity:", positionLiquidity.ToString())
-	println("[EXPECTED] Position operator:", operator)
+	println("[EXPECTED] Position operator: zero address", operator)
 	println("[EXPECTED] Position is not burned:", !pn.PositionGetPositionIsBurned(positionId))
 	println("[EXPECTED] Position is in range:", pn.PositionIsInRange(positionId))
 }
@@ -320,7 +320,7 @@ func positionIdFrom(positionId uint64) grc721.TokenID {
 // [EXPECTED] Position tick lower: -5000
 // [EXPECTED] Position tick upper: 5000
 // [EXPECTED] Position liquidity: 226050
-// [EXPECTED] Position operator: 
+// [EXPECTED] Position operator: zero address
 // [EXPECTED] Position is not burned: true
 // [EXPECTED] Position is in range: true
 //
