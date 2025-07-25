@@ -5,11 +5,12 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/halt"
 	pl "gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/rbac"
@@ -89,20 +90,21 @@ func Mint(
 	caller std.Address,
 	referrer string,
 ) (uint64, string, string, string) {
-	halt.AssertIsHaltedPosition()
-	halt.AssertIsHaltedWithdraw()
-	prevCaller := getPrevRealm()
-	assertOnlyUserOrStaker(prevCaller)
-	if isUserCall() {
-		// if user called, validate the prev address and input addresses(mintTo, caller)
-		assertOnlyValidAddressWith(prevCaller.Address(), mintTo)
-		assertOnlyValidAddressWith(prevCaller.Address(), caller)
+	halt.AssertIsNotHaltedPosition()
+
+	previousRealm := std.PreviousRealm()
+	if !previousRealm.IsUser() {
+		access.AssertIsStaker(previousRealm.Address())
+	} else {
+		assertEqualsAddress(previousRealm.Address(), mintTo)
+		assertEqualsAddress(previousRealm.Address(), caller)
 	}
-	checkDeadline(deadline)
+	
+	assertIsNotExpired(deadline)
 
 	referral.TryRegister(cross, caller, referrer)
 
-	mintAndDistributeGnsCallback()
+	emission.MintAndDistributeGns(cross)
 
 	mintInput := MintInput{
 		token0:         token0,
@@ -136,6 +138,7 @@ func Mint(
 			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
 		}
 	}
+	
 	if processedInput.tokenPair.token1IsNative && processedInput.tokenPair.wrappedAmount > amount1.Int64() {
 		err = unwrap(processedInput.tokenPair.wrappedAmount-amount1.Int64(), caller)
 		if err != nil {
@@ -144,11 +147,11 @@ func Mint(
 	}
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(processedInput.poolPath)
-	prevAddr, prevPkgPath := getPrevAsString()
+	
 	std.Emit(
 		"Mint",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"tickLower", formatInt(processedInput.tickLower),
 		"tickUpper", formatInt(processedInput.tickUpper),
 		"poolPath", processedInput.poolPath,
@@ -178,15 +181,18 @@ func IncreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string) {
-	halt.AssertIsHaltedPosition()
-	halt.AssertIsHaltedWithdraw()
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedWithdraw()
+
+	assertIsOwnerForToken(positionId, caller)
 	assertValidNumberString(amount0DesiredStr)
 	assertValidNumberString(amount1DesiredStr)
 	assertValidNumberString(amount0MinStr)
 	assertValidNumberString(amount1MinStr)
-	checkDeadline(deadline)
+	assertIsNotExpired(deadline)
 
-	mintAndDistributeGnsCallback()
+	emission.MintAndDistributeGns(cross)
 
 	position := MustGetPosition(positionId)
 	token0, token1, _ := splitOf(position.poolKey)
@@ -195,13 +201,17 @@ func IncreaseLiquidity(
 		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
 	}
 
-	caller := getPrevAddr()
-
 	wrappedAmount := int64(0)
 	if isWrappedToken(token0) {
-		wrappedAmount = safeWrapNativeToken(amount0DesiredStr, caller)
+		wrappedAmount, err = safeWrapNativeToken(amount0DesiredStr, caller)
+		if err != nil {
+			panic(err)
+		}
 	} else if isWrappedToken(token1) {
-		wrappedAmount = safeWrapNativeToken(amount1DesiredStr, caller)
+		wrappedAmount, err = safeWrapNativeToken(amount1DesiredStr, caller)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	amount0Desired, amount1Desired, amount0Min, amount1Min := parseAmounts(amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr)
@@ -215,7 +225,10 @@ func IncreaseLiquidity(
 		caller:         caller,
 	}
 
-	_, liquidity, amount0, amount1, poolPath := increaseLiquidity(increaseLiquidityParams)
+	_, liquidity, amount0, amount1, poolPath, err := increaseLiquidity(increaseLiquidityParams)
+	if err != nil {
+		panic(err)
+	}
 
 	amount0Int64 := amount0.Int64()
 	amount1Int64 := amount1.Int64()
@@ -235,11 +248,11 @@ func IncreaseLiquidity(
 		}
 	}
 
-	prevAddr, prevPkgPath := getPrevAsString()
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"IncreaseLiquidity",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
 		"caller", caller.String(),
 		"lpPositionId", formatUint(positionId),
@@ -268,13 +281,14 @@ func DecreaseLiquidity(
 	deadline int64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
-	caller := getPrevAddr()
-	halt.AssertIsHaltedPosition()
-	halt.AssertIsHaltedWithdraw()
-	assertAuthorizedForToken(caller, positionId)
-	checkDeadline(deadline)
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedWithdraw()
+
+	assertIsOwnerForToken(positionId, caller)
+	assertIsNotExpired(deadline)
 	assertValidLiquidityAmount(liquidityStr)
-	mintAndDistributeGnsCallback()
+	emission.MintAndDistributeGns(cross)
 
 	amount0Min := u256.MustFromDecimal(amount0MinStr)
 	amount1Min := u256.MustFromDecimal(amount1MinStr)
@@ -288,14 +302,16 @@ func DecreaseLiquidity(
 		caller:       caller,
 	}
 
-	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
+	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath, err := decreaseLiquidity(decreaseLiquidityParams)
+	if err != nil {
+		panic(err)
+	}
 
-	prevAddr, prevPkgPath := getPrevAsString()
-
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"DecreaseLiquidity",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"lpPositionId", formatUint(positionId),
 		"poolPath", poolPath,
 		"decreasedLiquidity", liquidity.ToString(),
@@ -321,7 +337,11 @@ func CollectFee(
 	positionId uint64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string) {
-	caller := getPrevAddr()
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedWithdraw()
+	
+	assertIsOwnerOrOperatorForToken(positionId, caller)
 
 	return collectFee(cur, positionId, unwrapResult, caller)
 }
@@ -332,11 +352,7 @@ func collectFee(
 	unwrapResult bool,
 	caller std.Address,
 ) (uint64, string, string, string, string, string) {
-	halt.AssertIsHaltedPosition()
-	halt.AssertIsHaltedWithdraw()
-	assertTokenExists(positionId)
-	assertAuthorizedForToken(caller, positionId)
-	mintAndDistributeGnsCallback()
+	emission.MintAndDistributeGns(cross)
 
 	// verify position
 	position := MustGetPosition(positionId)
@@ -396,14 +412,16 @@ func collectFee(
 
 	// UNWRAP
 	pToken0, pToken1, _ := splitOf(position.poolKey)
-	handleUnwrap(pToken0, pToken1, unwrapResult, userWugnot, caller)
+	err = handleUnwrap(pToken0, pToken1, unwrapResult, userWugnot, caller)
+	if err != nil {
+		panic(err)
+	}
 
-	prevAddr, prevPkgPath := getPrevAsString()
-
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"CollectSwapFee",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"lpPositionId", formatUint(positionId),
 		"feeAmount0", withoutFee0,
 		"feeAmount1", withoutFee1,
@@ -419,13 +437,9 @@ func SetPositionOperator(
 	id uint64,
 	operator std.Address,
 ) {
-	caller := getPrevRealm().PkgPath()
-	if caller != consts.STAKER_PATH {
-		panic(newErrorWithDetail(
-			errNoPermission,
-			ufmt.Sprintf("caller(%s) is not staker", caller),
-		))
-	}
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPosition()
+	access.AssertIsStaker(caller)
 
 	position := MustGetPosition(id)
 	position.operator = operator

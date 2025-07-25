@@ -112,39 +112,39 @@ func TestProtocolFeeStateSetDevOpsPct(t *testing.T) {
 	tests := []struct {
 		name        string
 		percentage  uint64
-		shouldPanic bool
-		panicMsg    string
+		shouldError bool
+		errorMsg    string
 		expectedPct uint64
 	}{
 		{
 			name:        "set valid percentage - 0%",
 			percentage:  0,
-			shouldPanic: false,
+			shouldError: false,
 			expectedPct: 0,
 		},
 		{
 			name:        "set valid percentage - 25%",
 			percentage:  2500,
-			shouldPanic: false,
+			shouldError: false,
 			expectedPct: 2500,
 		},
 		{
 			name:        "set valid percentage - 100%",
 			percentage:  10000,
-			shouldPanic: false,
+			shouldError: false,
 			expectedPct: 10000,
 		},
 		{
 			name:        "set invalid percentage - over 100%",
 			percentage:  10001,
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(10001) should not be bigger than 10000",
+			shouldError: true,
+			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(10001) should not be bigger than 10000",
 		},
 		{
 			name:        "set invalid percentage - very large",
 			percentage:  50000,
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(50000) should not be bigger than 10000",
+			shouldError: true,
+			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(50000) should not be bigger than 10000",
 		},
 	}
 
@@ -154,14 +154,12 @@ func TestProtocolFeeStateSetDevOpsPct(t *testing.T) {
 
 			// Initially should be 0
 			uassert.Equal(t, pfs.DevOpsPct, uint64(0))
+			_, _, err := pfs.setDevOpsPct(test.percentage)
 
-			if test.shouldPanic {
-				uassert.PanicsWithMessage(t, test.panicMsg, func() {
-					pfs.setDevOpsPct(test.percentage)
-				})
+			if test.shouldError {
+				uassert.Equal(t, err.Error(), test.errorMsg)
 			} else {
-				pfs.setDevOpsPct(test.percentage)
-				uassert.Equal(t, pfs.DevOpsPct, test.expectedPct)
+				uassert.NoError(t, err)
 			}
 		})
 	}

@@ -196,7 +196,7 @@ func TestExactInSwapRouteWithReferral(t *testing.T) {
 	user1Realm := std.NewUserRealm(user1Addr)
 	testing.SetRealm(user1Realm)
 
-	self := getPrevAddr().String()
+	self := std.PreviousRealm().Address().String()
 	validReferral := testutils.TestAddress("validReferral")
 	println("validReferral", validReferral)
 

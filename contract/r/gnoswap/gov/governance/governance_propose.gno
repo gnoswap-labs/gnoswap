@@ -7,6 +7,7 @@ import (
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/staker"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 // ProposeText creates a new text proposal with the given data.
@@ -32,6 +33,8 @@ func ProposeText(
 	title string,
 	description string,
 ) (newProposalId int64) {
+	halt.AssertIsNotHaltedGovernance()
+
 	// Get caller information for proposal creation
 	previousPkgPath := std.PreviousRealm().PkgPath()
 	previousAddress := std.PreviousRealm().Address()
@@ -131,6 +134,8 @@ func ProposeCommunityPoolSpend(
 	tokenPath string,
 	amount int64,
 ) (newProposalId int64) {
+	halt.AssertIsNotHaltedGovernance()
+
 	// Get caller information for proposal creation
 	previousPkgPath := std.PreviousRealm().PkgPath()
 	previousAddress := std.PreviousRealm().Address()
@@ -235,6 +240,8 @@ func ProposeParameterChange(
 	numToExecute int64,
 	executions string,
 ) (newProposalId int64) {
+	halt.AssertIsNotHaltedGovernance()
+
 	// Get caller information for proposal creation
 	previousPkgPath := std.PreviousRealm().PkgPath()
 	previousAddress := std.PreviousRealm().Address()

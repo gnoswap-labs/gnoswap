@@ -94,7 +94,6 @@ func initAndSetup() {
 	sr.SetUnStakingFeeByAdmin(cross, 0)
 
 	testing.SetRealm(stakerRealm)
-	en.RegisterGnsChangeCallback(cross)
 	testing.SkipHeights(1)
 }
 

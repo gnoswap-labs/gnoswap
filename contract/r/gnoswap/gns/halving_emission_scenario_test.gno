@@ -57,8 +57,8 @@ func testBasicEmissionUpdateFlow(t *testing.T) {
 	InitGnsTest(t)
 
 	// Set up a default callback to prevent nil error
-	if callbackEmissionChange == nil {
-		callbackEmissionChange = func(amount int64) {}
+	if emissionChangeCallback == nil {
+		emissionChangeCallback = func(amount int64) {}
 	}
 
 	// Setup initial state
@@ -78,11 +78,11 @@ func testBasicEmissionUpdateFlow(t *testing.T) {
 	// Step 4: Change block time to 2000ms (2 seconds)
 	// Setup callback to capture the value it receives
 	var callbackEmissionValue int64
-	oldCallback := callbackEmissionChange
-	callbackEmissionChange = func(amount int64) {
+	oldCallback := emissionChangeCallback
+	emissionChangeCallback = func(amount int64) {
 		callbackEmissionValue = amount
 	}
-	defer func() { callbackEmissionChange = oldCallback }()
+	defer func() { emissionChangeCallback = oldCallback }()
 
 	SetAvgBlockTimeInMsByAdmin(cross, 2000)
 
@@ -116,8 +116,8 @@ func testHistoricalBlockEmissionAccuracy(t *testing.T) {
 	InitGnsTest(t)
 
 	// Set up a default callback to prevent nil error
-	if callbackEmissionChange == nil {
-		callbackEmissionChange = func(amount int64) {}
+	if emissionChangeCallback == nil {
+		emissionChangeCallback = func(amount int64) {}
 	}
 
 	testing.SetRealm(adminRealm)
@@ -187,8 +187,8 @@ func testCacheRewardIntegration(t *testing.T) {
 	InitGnsTest(t)
 
 	// Set up a default callback to prevent nil error
-	if callbackEmissionChange == nil {
-		callbackEmissionChange = func(amount int64) {}
+	if emissionChangeCallback == nil {
+		emissionChangeCallback = func(amount int64) {}
 	}
 
 	testing.SetRealm(adminRealm)
@@ -222,14 +222,14 @@ func testCacheRewardIntegration(t *testing.T) {
 	var halvingBlocksDuringCallback []int64
 	// var emissionsDuringCallback []int64
 
-	oldCallback := callbackEmissionChange
-	callbackEmissionChange = func(amount int64) {
+	oldCallback := emissionChangeCallback
+	emissionChangeCallback = func(amount int64) {
 		// Simulate what cacheReward would do
 		halvingBlocks, _ := GetHalvingBlocksInRange(stakingStartBlock, preChangeHeight)
 		halvingBlocksDuringCallback = halvingBlocks
 		// emissionsDuringCallback = emissions
 	}
-	defer func() { callbackEmissionChange = oldCallback }()
+	defer func() { emissionChangeCallback = oldCallback }()
 
 	SetAvgBlockTimeInMsByAdmin(cross, 2000)
 	e2 := GetAmountByHeight(std.ChainHeight())
@@ -271,8 +271,8 @@ func testMultipleBlockTimeChanges(t *testing.T) {
 	InitGnsTest(t)
 
 	// Set up a default callback to prevent nil error
-	if callbackEmissionChange == nil {
-		callbackEmissionChange = func(amount int64) {}
+	if emissionChangeCallback == nil {
+		emissionChangeCallback = func(amount int64) {}
 	}
 
 	testing.SetRealm(adminRealm)

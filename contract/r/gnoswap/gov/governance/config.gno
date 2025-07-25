@@ -58,7 +58,7 @@ func ReconfigureByAdmin(
 	executionWindow int64,
 ) int64 {
 	// Check if system is halted before proceeding
-	halt.AssertIsHaltedGovernance()
+	halt.AssertIsNotHaltedGovernance()
 
 	// Get caller information and verify admin privileges
 	previousRealm := std.PreviousRealm()
@@ -131,7 +131,7 @@ func ReconfigureByGovernance(
 	executionWindow int64,
 ) int64 {
 	// Check if system is halted before proceeding
-	halt.AssertIsHaltedGovernance()
+	halt.AssertIsNotHaltedGovernance()
 
 	// Get caller information and verify governance privileges
 	previousRealm := std.PreviousRealm()

@@ -118,7 +118,7 @@ func (d *Delegation) unDelegateWithoutLockup(
 
 func (d *Delegation) collect(amount int64, currentTime int64) error {
 	if amount > d.CollectableAmount(currentTime) {
-		return makeErrorWithDetail(
+		return makeErrorWithDetails(
 			errInvalidAmount,
 			ufmt.Sprintf("amount to collect is greater than collectable amount"),
 		)

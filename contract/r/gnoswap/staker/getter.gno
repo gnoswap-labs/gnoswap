@@ -27,7 +27,7 @@ import (
 func getPoolByPoolPath(poolPath string) *Pool {
 	pool, ok := pools.Get(poolPath)
 	if !ok {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath)),
 		)
@@ -275,7 +275,7 @@ func GetIncentiveRefundee(poolPath string, incentiveId string) std.Address {
 func getDeposit(lpTokenId uint64) *Deposit {
 	deposit := deposits.get(lpTokenId)
 	if deposit == nil {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("lpTokenId(%d) deposit does not exist", lpTokenId)),
 		)
@@ -518,7 +518,7 @@ func GetPoolReward(tier uint64) int64 {
 func getExternalIncentive(incentiveId string) *ExternalIncentive {
 	incentive, exist := externalIncentives.tree.Get(incentiveId)
 	if !exist {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId)),
 		)

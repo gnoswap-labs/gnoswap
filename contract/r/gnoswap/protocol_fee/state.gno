@@ -1,9 +1,6 @@
 package protocol_fee
 
 import (
-	"std"
-	"strconv"
-
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
@@ -76,25 +73,18 @@ func (pfs *ProtocolFeeState) distributeToGovStaker(token string, amount uint64) 
 }
 
 // setDevOpsPct sets the devOpsPct.
-func (pfs *ProtocolFeeState) setDevOpsPct(pct uint64) {
+func (pfs *ProtocolFeeState) setDevOpsPct(pct uint64) (previousPct, newPct uint64, err error) {
 	if pct > 10000 {
-		panic(addDetailToError(
+		return 0, 0, makeErrorWithDetail(
 			errInvalidPct,
 			ufmt.Sprintf("pct(%d) should not be bigger than 10000", pct),
-		))
+		)
 	}
 
 	prevDevOpsPct := pfs.DevOpsPct
 	pfs.DevOpsPct = pct
 
-	prevAddr, prevPkgPath := getPrev()
-	std.Emit(
-		"SetDevOpsPct",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
-		"newPct", strconv.FormatUint(pct, 10),
-		"prevPct", strconv.FormatUint(prevDevOpsPct, 10),
-	)
+	return prevDevOpsPct, pct, nil
 }
 
 // addAccuToGovStaker adds the amount to the accuToGovStaker by token path.

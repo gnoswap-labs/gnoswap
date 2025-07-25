@@ -160,7 +160,6 @@ func initAccount() {
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
-	emission.RegisterGnsChangeCallback(cross)
 }
 
 func createPoolWugnotGns3000Tier01() {

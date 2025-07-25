@@ -5,6 +5,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/emission"
 	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
 	"gno.land/r/gnoswap/v1/halt"
@@ -22,12 +23,13 @@ import (
 // - If the caller has no deposits.
 // - If an error occurs during the reward collection process.
 func CollectDepositGns(cur realm, depositID string) (int64, error) {
-	previousAddress := std.PreviousRealm().Address()
-	previousPkgPath := std.PreviousRealm().PkgPath()
+	halt.AssertIsNotHaltedLaunchpad()
+	halt.AssertIsNotHaltedWithdraw()
 
-	halt.AssertIsHaltedLaunchpad()
-	halt.AssertIsHaltedWithdraw()
-	assertOnlyUser()
+	previousRealm := std.PreviousRealm()
+	access.AssertIsUser(previousRealm)
+
+	caller := previousRealm.Address()
 
 	emission.MintAndDistributeGns(cross)
 
@@ -36,8 +38,8 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 		panic(err.Error())
 	}
 
-	if !deposit.IsOwner(previousAddress) {
-		panic(makeErrorWithDetails(errInvalidOwner, ufmt.Sprintf("(%s)", previousAddress.String())).Error())
+	if !deposit.IsOwner(caller) {
+		panic(makeErrorWithDetails(errInvalidOwner, ufmt.Sprintf("(%s)", caller.String())).Error())
 	}
 
 	recipient, withdrawalAmount, err := withdrawDeposit(deposit, std.ChainHeight())
@@ -49,8 +51,8 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 
 	std.Emit(
 		"CollectDepositGns",
-		"prevAddr", previousAddress.String(),
-		"prevRealm", previousPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"depositId", depositID,
 		"amount", formatInt(withdrawalAmount),
 	)
