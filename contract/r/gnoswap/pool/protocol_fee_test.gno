@@ -8,7 +8,6 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -33,8 +32,8 @@ func TestSetPoolCreationFee(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				SetPoolCreationFee(cross, newFee)
 			},
-			verify: nil,
-			expected: "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not governance",
+			verify:      nil,
+			expected:    "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not governance",
 			shouldPanic: true,
 		},
 		{
@@ -627,7 +626,7 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 		adminAddr,
 		true,
 		"10000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
@@ -640,7 +639,7 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 		adminAddr,
 		false,
 		"10000",
-		consts.MAX_PRICE,
+		MAX_PRICE,
 		adminAddr,
 	)
 

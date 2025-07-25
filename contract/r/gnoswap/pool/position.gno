@@ -5,7 +5,6 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	plp "gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -13,7 +12,7 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
-var Q128 = u256.MustFromDecimal(consts.Q128)
+var Q128 = u256.MustFromDecimal(Q128)
 
 // getPositionKey generates a unique, encoded key for a liquidity position.
 //

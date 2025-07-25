@@ -6,8 +6,13 @@ import (
 	"gno.land/p/demo/uassert"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+)
 
-	"gno.land/p/gnoswap/consts"
+const (
+	MAX_UINT256 string = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+
+	INT64_MAX  int64  = 9223372036854775807
+	UINT64_MAX uint64 = 18446744073709551615
 )
 
 func TestU256Min(t *testing.T) {
@@ -40,7 +45,7 @@ func TestU256Min(t *testing.T) {
 		// Edge cases with zero
 		{
 			name:     "compare max u256 with zero",
-			num1:     consts.MAX_UINT256,
+			num1:     MAX_UINT256,
 			num2:     "0",
 			expected: "0",
 		},
@@ -69,12 +74,12 @@ func TestU256Min(t *testing.T) {
 		{
 			name:     "large values (num1 smaller)",
 			num1:     "115792089237316195423570985008687907853269984665640564039457584007913129639934",
-			num2:     consts.MAX_UINT256,
+			num2:     MAX_UINT256,
 			expected: "115792089237316195423570985008687907853269984665640564039457584007913129639934",
 		},
 		{
 			name:     "large values (num2 smaller)",
-			num1:     consts.MAX_UINT256,
+			num1:     MAX_UINT256,
 			num2:     "115792089237316195423570985008687907853269984665640564039457584007913129639934",
 			expected: "115792089237316195423570985008687907853269984665640564039457584007913129639934",
 		},
@@ -102,28 +107,28 @@ func TestU256Min_AdditionalCases(t *testing.T) {
 		// Q values comparison
 		{
 			name:     "Q64 vs Q96",
-			num1:     consts.Q64,
-			num2:     consts.Q96,
-			expected: consts.Q64,
+			num1:     Q64,
+			num2:     Q96,
+			expected: Q64,
 		},
 		{
 			name:     "Q96 vs Q128",
-			num1:     consts.Q96,
-			num2:     consts.Q128,
-			expected: consts.Q96,
+			num1:     Q96,
+			num2:     Q128,
+			expected: Q96,
 		},
 		// Price boundaries
 		{
 			name:     "MIN_SQRT_RATIO vs MAX_SQRT_RATIO",
-			num1:     consts.MIN_SQRT_RATIO,
-			num2:     consts.MAX_SQRT_RATIO,
-			expected: consts.MIN_SQRT_RATIO,
+			num1:     MIN_SQRT_RATIO,
+			num2:     MAX_SQRT_RATIO,
+			expected: MIN_SQRT_RATIO,
 		},
 		// Different magnitudes
 		{
 			name:     "very small vs very large",
 			num1:     "1",
-			num2:     consts.MAX_UINT256,
+			num2:     MAX_UINT256,
 			expected: "1",
 		},
 		{
@@ -133,16 +138,16 @@ func TestU256Min_AdditionalCases(t *testing.T) {
 			expected: "999999999999999999999999999999999999999",
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			num1 := u256.MustFromDecimal(tt.num1)
 			num2 := u256.MustFromDecimal(tt.num2)
 			expected := u256.MustFromDecimal(tt.expected)
-			
+
 			result := u256Min(num1, num2)
 			uassert.Equal(t, expected.ToString(), result.ToString())
-			
+
 			// Test commutativity
 			resultReversed := u256Min(num2, num1)
 			uassert.Equal(t, expected.ToString(), resultReversed.ToString())
@@ -214,14 +219,14 @@ func TestSafeConvertToUint64(t *testing.T) {
 		},
 		{
 			name:      "overflow - large value",
-			value:     u256.MustFromDecimal(consts.MAX_UINT128),
+			value:     u256.MustFromDecimal(MAX_UINT128),
 			wantRes:   0,
 			wantPanic: true,
 			errorMsg:  "[GNOSWAP-POOL-005] out of range for numeric value: amount(340282366920938463463374607431768211455) overflows uint64 range (max 18446744073709551615)",
 		},
 		{
 			name:      "overflow - very large value",
-			value:     u256.MustFromDecimal(consts.MAX_UINT256),
+			value:     u256.MustFromDecimal(MAX_UINT256),
 			wantRes:   0,
 			wantPanic: true,
 			errorMsg:  "[GNOSWAP-POOL-005] out of range for numeric value: amount(115792089237316195423570985008687907853269984665640564039457584007913129639935) overflows uint64 range (max 18446744073709551615)",
@@ -270,7 +275,7 @@ func TestSafeConvertToInt64(t *testing.T) {
 
 		// Extreme cases - these will fail on uint64 conversion first
 		{"max uint64 + 1 (overflow)", u256.MustFromDecimal("18446744073709551616"), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(18446744073709551616) overflows uint64 range (max 18446744073709551615)"},
-		{"very large number (MAX_UINT128)", u256.MustFromDecimal(consts.MAX_UINT128), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(340282366920938463463374607431768211455) overflows uint64 range (max 18446744073709551615)"},
+		{"very large number (MAX_UINT128)", u256.MustFromDecimal(MAX_UINT128), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(340282366920938463463374607431768211455) overflows uint64 range (max 18446744073709551615)"},
 	}
 
 	for _, tt := range tests {
@@ -309,17 +314,17 @@ func TestSafeConvertToInt128(t *testing.T) {
 		{"medium positive value", "1000000", "1000000", false, ""},
 
 		// Power of 2 boundaries
-		{"2^64", consts.Q64, consts.Q64, false, ""},
-		{"2^96", consts.Q96, consts.Q96, false, ""},
+		{"2^64", Q64, Q64, false, ""},
+		{"2^96", Q96, Q96, false, ""},
 
 		// Boundary cases
 		{"close to MAX_INT128", "170141183460469231731687303715884105726", "170141183460469231731687303715884105726", false, ""},
-		{"MAX_INT128", consts.MAX_INT128, consts.MAX_INT128, false, ""},
+		{"MAX_INT128", MAX_INT128, MAX_INT128, false, ""},
 
 		// Overflow cases
 		{"just over MAX_INT128", "170141183460469231731687303715884105728", "", true, "[GNOSWAP-POOL-026] overflow: amount(170141183460469231731687303715884105728) overflows int128 range"},
-		{"large overflow", consts.MAX_UINT128, "", true, "[GNOSWAP-POOL-026] overflow: amount(340282366920938463463374607431768211455) overflows int128 range"},
-		{"extreme overflow", consts.MAX_UINT256, "", true, "[GNOSWAP-POOL-026] overflow: amount(115792089237316195423570985008687907853269984665640564039457584007913129639935) overflows int128 range"},
+		{"large overflow", MAX_UINT128, "", true, "[GNOSWAP-POOL-026] overflow: amount(340282366920938463463374607431768211455) overflows int128 range"},
+		{"extreme overflow", MAX_UINT256, "", true, "[GNOSWAP-POOL-026] overflow: amount(115792089237316195423570985008687907853269984665640564039457584007913129639935) overflows int128 range"},
 	}
 
 	for _, tt := range tests {
@@ -362,13 +367,13 @@ func TestToUint128(t *testing.T) {
 		},
 		{
 			name:     "max uint128 - no change",
-			input:    consts.MAX_UINT128,
-			expected: consts.MAX_UINT128,
+			input:    MAX_UINT128,
+			expected: MAX_UINT128,
 		},
 		{
 			name:     "overflow - should mask to max uint128",
-			input:    consts.MAX_UINT256,
-			expected: consts.MAX_UINT128,
+			input:    MAX_UINT256,
+			expected: MAX_UINT128,
 		},
 		{
 			name:     "overflow - just over max uint128",
@@ -393,8 +398,8 @@ func TestToUint128(t *testing.T) {
 		},
 		{
 			name:     "q96 value",
-			input:    consts.Q96,
-			expected: consts.Q96,
+			input:    Q96,
+			expected: Q96,
 		},
 	}
 
@@ -424,9 +429,9 @@ func TestToUint128InputPreservation(t *testing.T) {
 	}{
 		{
 			name:                      "overflow case - input preservation",
-			input:                     consts.MAX_UINT256,
-			expectedResult:            consts.MAX_UINT128,
-			expectedOriginal:          consts.MAX_UINT256,
+			input:                     MAX_UINT256,
+			expectedResult:            MAX_UINT128,
+			expectedOriginal:          MAX_UINT256,
 			shouldBeDifferentInstance: true,
 		},
 		{
@@ -466,13 +471,13 @@ func TestToUint128_PowerOfTwoBoundaries(t *testing.T) {
 	}{
 		{
 			name:     "Q64 (2^64)",
-			input:    consts.Q64,
-			expected: consts.Q64,
+			input:    Q64,
+			expected: Q64,
 		},
 		{
 			name:     "Q96 (2^96)",
-			input:    consts.Q96,
-			expected: consts.Q96,
+			input:    Q96,
+			expected: Q96,
 		},
 		{
 			name:     "2^127",
@@ -481,7 +486,7 @@ func TestToUint128_PowerOfTwoBoundaries(t *testing.T) {
 		},
 		{
 			name:     "Q128 (2^128) wraps to 0",
-			input:    consts.Q128,
+			input:    Q128,
 			expected: "0",
 		},
 		{
@@ -502,12 +507,12 @@ func TestToUint128_PowerOfTwoBoundaries(t *testing.T) {
 		// Price boundaries
 		{
 			name:     "MIN_SQRT_RATIO",
-			input:    consts.MIN_SQRT_RATIO,
-			expected: consts.MIN_SQRT_RATIO,
+			input:    MIN_SQRT_RATIO,
+			expected: MIN_SQRT_RATIO,
 		},
 		{
 			name:     "MAX_SQRT_RATIO overflows uint128",
-			input:    consts.MAX_SQRT_RATIO,
+			input:    MAX_SQRT_RATIO,
 			expected: "318775800626314356294205765087544249638",
 			// MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342
 			// This value is used as the maximum price square root in Uniswap V3
@@ -517,12 +522,12 @@ func TestToUint128_PowerOfTwoBoundaries(t *testing.T) {
 		},
 		{
 			name:     "MIN_PRICE",
-			input:    consts.MIN_PRICE,
-			expected: consts.MIN_PRICE,
+			input:    MIN_PRICE,
+			expected: MIN_PRICE,
 		},
 		{
 			name:     "MAX_PRICE overflows uint128",
-			input:    consts.MAX_PRICE,
+			input:    MAX_PRICE,
 			expected: "318775800626314356294205765087544249637",
 			// MAX_PRICE = MAX_SQRT_RATIO - 1 = 1461446703485210103287273052203988822378723970341
 			// When masked to uint128:
@@ -535,9 +540,9 @@ func TestToUint128_PowerOfTwoBoundaries(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			original := u256.MustFromDecimal(tt.input)
 			originalStr := original.ToString()
-			
+
 			result := toUint128(original)
-			
+
 			uassert.Equal(t, tt.expected, result.ToString())
 			uassert.Equal(t, originalStr, original.ToString())
 		})
@@ -547,50 +552,50 @@ func TestToUint128_PowerOfTwoBoundaries(t *testing.T) {
 func TestVerifyToUint128MaskingLogic(t *testing.T) {
 	// 1. Verify toUint128 function logic
 	// toUint128 keeps only lower 128 bits when value > MAX_UINT128
-	
+
 	// Verify MAX_UINT128
-	maxUint128 := u256.MustFromDecimal(consts.MAX_UINT128)
+	maxUint128 := u256.MustFromDecimal(MAX_UINT128)
 	uassert.Equal(t, "340282366920938463463374607431768211455", maxUint128.ToString())
-	uassert.Equal(t, consts.MAX_UINT128, maxUint128.ToString())
-	
+	uassert.Equal(t, MAX_UINT128, maxUint128.ToString())
+
 	// 2. Verify MAX_SQRT_RATIO
-	maxSqrtRatio := u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
-	uassert.Equal(t, consts.MAX_SQRT_RATIO, "1461446703485210103287273052203988822378723970342")
+	maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
+	uassert.Equal(t, MAX_SQRT_RATIO, "1461446703485210103287273052203988822378723970342")
 	uassert.True(t, maxSqrtRatio.Gt(maxUint128), "MAX_SQRT_RATIO should be > MAX_UINT128")
-	
+
 	// 3. Verify masking logic
 	// mask = (1 << 128) - 1 = MAX_UINT128
 	mask := new(u256.Uint).Lsh(u256.One(), 128)
 	mask = new(u256.Uint).Sub(mask, u256.One())
 	uassert.Equal(t, mask.ToString(), maxUint128.ToString())
-	
+
 	// 4. Verify actual masking
 	maskedMaxSqrt := new(u256.Uint).And(maxSqrtRatio, mask)
 	uassert.Equal(t, "318775800626314356294205765087544249638", maskedMaxSqrt.ToString())
-	
+
 	// 5. Verify toUint128 function result matches manual masking
 	toUint128Result := toUint128(maxSqrtRatio)
 	uassert.Equal(t, maskedMaxSqrt.ToString(), toUint128Result.ToString())
-	
+
 	// 6. Verify MAX_PRICE (MAX_SQRT_RATIO - 1)
-	maxPrice := u256.MustFromDecimal(consts.MAX_PRICE)
-	uassert.Equal(t, consts.MAX_PRICE, "1461446703485210103287273052203988822378723970341")
-	
+	maxPrice := u256.MustFromDecimal(MAX_PRICE)
+	uassert.Equal(t, MAX_PRICE, "1461446703485210103287273052203988822378723970341")
+
 	// Verify MAX_PRICE = MAX_SQRT_RATIO - 1
 	maxSqrtMinusOne := new(u256.Uint).Sub(maxSqrtRatio, u256.One())
 	uassert.True(t, maxPrice.Eq(maxSqrtMinusOne), "MAX_PRICE should equal MAX_SQRT_RATIO - 1")
-	
+
 	// 7. Verify MAX_PRICE masking
 	maskedMaxPrice := new(u256.Uint).And(maxPrice, mask)
 	uassert.Equal(t, "318775800626314356294205765087544249637", maskedMaxPrice.ToString())
-	
+
 	toUint128PriceResult := toUint128(maxPrice)
 	uassert.Equal(t, maskedMaxPrice.ToString(), toUint128PriceResult.ToString())
-	
+
 	// 8. Verify difference between masked values is 1
 	diff := new(u256.Uint).Sub(maskedMaxSqrt, maskedMaxPrice)
 	uassert.Equal(t, "1", diff.ToString())
-	
+
 	// Final verification
 	uassert.Equal(t, "318775800626314356294205765087544249638", toUint128Result.ToString())
 	uassert.Equal(t, "318775800626314356294205765087544249637", toUint128PriceResult.ToString())
@@ -598,17 +603,17 @@ func TestVerifyToUint128MaskingLogic(t *testing.T) {
 
 // Additional verification: Ensure masked values are within uint128 range
 func TestToUint128MaskedValuesRange(t *testing.T) {
-	maxSqrtRatio := u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
-	maxUint128 := u256.MustFromDecimal(consts.MAX_UINT128)
-	
+	maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
+	maxUint128 := u256.MustFromDecimal(MAX_UINT128)
+
 	// toUint128 results
 	resultMaxSqrt := toUint128(maxSqrtRatio)
-	resultMaxPrice := toUint128(u256.MustFromDecimal(consts.MAX_PRICE))
-	
+	resultMaxPrice := toUint128(u256.MustFromDecimal(MAX_PRICE))
+
 	// Verify results are <= MAX_UINT128
 	uassert.True(t, resultMaxSqrt.Lte(maxUint128), "Masked MAX_SQRT_RATIO should be <= MAX_UINT128")
 	uassert.True(t, resultMaxPrice.Lte(maxUint128), "Masked MAX_PRICE should be <= MAX_UINT128")
-	
+
 	// Verify specific values
 	uassert.Equal(t, "318775800626314356294205765087544249638", resultMaxSqrt.ToString())
 	uassert.Equal(t, "318775800626314356294205765087544249637", resultMaxPrice.ToString())
@@ -628,7 +633,7 @@ func TestCheckOverFlowInt128(t *testing.T) {
 		},
 		{
 			name:        "Edge case - MAX_INT128",
-			input:       i256.MustFromDecimal(consts.MAX_INT128),
+			input:       i256.MustFromDecimal(MAX_INT128),
 			shouldPanic: false,
 		},
 		{
@@ -650,7 +655,7 @@ func TestCheckOverFlowInt128(t *testing.T) {
 		},
 		{
 			name:        "very large positive (MAX_INT256)",
-			input:       i256.MustFromDecimal(consts.MAX_INT256),
+			input:       i256.MustFromDecimal(MAX_INT256),
 			shouldPanic: true,
 			errorMsg:    "[GNOSWAP-POOL-026] overflow: amount(57896044618658097711785492504343953926634992332820282019728792003956564819967) overflows int128 range",
 		},
@@ -682,7 +687,7 @@ func TestCheckOverFlowInt128_BoundaryValues(t *testing.T) {
 		// Exact boundaries
 		{
 			name:        "MAX_INT128 exact",
-			input:       consts.MAX_INT128,
+			input:       MAX_INT128,
 			shouldPanic: false,
 		},
 		{
@@ -705,12 +710,12 @@ func TestCheckOverFlowInt128_BoundaryValues(t *testing.T) {
 		// Q values
 		{
 			name:        "Q96 within range",
-			input:       consts.Q96,
+			input:       Q96,
 			shouldPanic: false,
 		},
 		{
 			name:        "Q128 exceeds range",
-			input:       consts.Q128,
+			input:       Q128,
 			shouldPanic: true,
 			errorMsg:    "[GNOSWAP-POOL-026] overflow: amount(340282366920938463463374607431768211456) overflows int128 range",
 		},
@@ -731,7 +736,7 @@ func TestCheckOverFlowInt128_BoundaryValues(t *testing.T) {
 			shouldPanic: false,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			value := i256.MustFromDecimal(tt.input)
@@ -785,13 +790,13 @@ func TestCheckTickSpacing(t *testing.T) {
 		// Edge cases with extreme tick values
 		{
 			name:        "min tick boundary",
-			tick:        consts.MIN_TICK, // -887272
+			tick:        MIN_TICK, // -887272
 			tickSpacing: 1,
 			shouldPanic: false,
 		},
 		{
 			name:        "max tick boundary",
-			tick:        consts.MAX_TICK, // 887272
+			tick:        MAX_TICK, // 887272
 			tickSpacing: 1,
 			shouldPanic: false,
 		},
@@ -836,13 +841,13 @@ func TestCheckTickSpacing_EdgeCases(t *testing.T) {
 		// Boundary values with tick spacing 1
 		{
 			name:        "MIN_TICK with spacing 1",
-			tick:        consts.MIN_TICK,
+			tick:        MIN_TICK,
 			tickSpacing: 1,
 			shouldPanic: false,
 		},
 		{
 			name:        "MAX_TICK with spacing 1",
-			tick:        consts.MAX_TICK,
+			tick:        MAX_TICK,
 			tickSpacing: 1,
 			shouldPanic: false,
 		},
@@ -959,13 +964,13 @@ func TestConversionBoundaryValues(t *testing.T) {
 
 	t.Run("edge case q values", func(t *testing.T) {
 		// Q96 should work with int128
-		q96 := u256.MustFromDecimal(consts.Q96)
+		q96 := u256.MustFromDecimal(Q96)
 		result := safeConvertToInt128(q96)
-		uassert.Equal(t, consts.Q96, result.ToString())
+		uassert.Equal(t, Q96, result.ToString())
 
 		// Q128 is actually 2^128 which is larger than MAX_INT128 (2^127 - 1)
 		// So it should panic
-		q128Val := u256.MustFromDecimal(consts.Q128)
+		q128Val := u256.MustFromDecimal(Q128)
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("expected panic for Q128 value, but none occurred")
@@ -978,36 +983,36 @@ func TestConversionBoundaryValues(t *testing.T) {
 func TestSafeConversions_ExactBoundaries(t *testing.T) {
 	t.Run("uint64 exact boundary", func(t *testing.T) {
 		// MAX_UINT64
-		maxValue := u256.MustFromDecimal(consts.MAX_UINT64)
+		maxValue := u256.MustFromDecimal(MAX_UINT64)
 		result := safeConvertToUint64(maxValue)
-		uassert.Equal(t, consts.UINT64_MAX, result)
-		
+		uassert.Equal(t, UINT64_MAX, result)
+
 		// MAX_UINT64 + 1
 		overValue := new(u256.Uint).Add(maxValue, u256.One())
-		uassert.PanicsWithMessage(t, 
+		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-POOL-005] out of range for numeric value: amount(18446744073709551616) overflows uint64 range (max 18446744073709551615)",
 			func() { safeConvertToUint64(overValue) })
 	})
-	
+
 	t.Run("int64 exact boundary", func(t *testing.T) {
 		// MAX_INT64
-		maxValue := u256.MustFromDecimal(consts.MAX_INT64)
+		maxValue := u256.MustFromDecimal(MAX_INT64)
 		result := safeConvertToInt64(maxValue)
-		uassert.Equal(t, consts.INT64_MAX, result)
-		
+		uassert.Equal(t, INT64_MAX, result)
+
 		// MAX_INT64 + 1
 		overValue := new(u256.Uint).Add(maxValue, u256.One())
 		uassert.PanicsWithMessage(t,
 			"[GNOSWAP-POOL-005] out of range for numeric value: amount(9223372036854775808) overflows int64 range (max 9223372036854775807)",
 			func() { safeConvertToInt64(overValue) })
 	})
-	
+
 	t.Run("int128 exact boundary", func(t *testing.T) {
 		// MAX_INT128
-		maxValue := u256.MustFromDecimal(consts.MAX_INT128)
+		maxValue := u256.MustFromDecimal(MAX_INT128)
 		result := safeConvertToInt128(maxValue)
-		uassert.Equal(t, consts.MAX_INT128, result.ToString())
-		
+		uassert.Equal(t, MAX_INT128, result.ToString())
+
 		// MAX_INT128 + 1
 		overValue := new(u256.Uint).Add(maxValue, u256.One())
 		uassert.PanicsWithMessage(t,

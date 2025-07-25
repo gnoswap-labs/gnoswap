@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/demo/wugnot"
@@ -391,7 +390,7 @@ func TestCollect(t *testing.T) {
 				testing.IssueCoins(positionOwner, newCoins)
 				testing.SetOriginSend(newCoins)
 				banker := std.NewBanker(std.BankerTypeRealmSend)
-				banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
+				banker.SendCoins(positionOwner, WUGNOT_ADDR, newCoins)
 				wugnot.Deposit(cross)
 				wugnot.Approve(cross, poolAddr, maxApprove)
 				gns.Approve(cross, poolAddr, maxApprove)
@@ -551,7 +550,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 		testing.IssueCoins(adminAddr, newCoins)
 		testing.SetOriginSend(newCoins)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
-		banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
+		banker.SendCoins(adminAddr, WUGNOT_ADDR, newCoins)
 		wugnot.Deposit(cross)
 
 		// Approve tokens for router
@@ -643,7 +642,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 		testing.IssueCoins(adminAddr, newCoins)
 		testing.SetOriginSend(newCoins)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
-		banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
+		banker.SendCoins(adminAddr, WUGNOT_ADDR, newCoins)
 		wugnot.Deposit(cross)
 
 		// Approve tokens for router
@@ -723,7 +722,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 		testing.IssueCoins(adminAddr, newCoins)
 		testing.SetOriginSend(newCoins)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
-		banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
+		banker.SendCoins(adminAddr, WUGNOT_ADDR, newCoins)
 		wugnot.Deposit(cross)
 
 		// Approve tokens for router
