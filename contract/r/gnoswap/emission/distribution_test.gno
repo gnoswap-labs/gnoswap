@@ -7,6 +7,9 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/uassert"
 
+	prbac "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -240,6 +243,7 @@ func TestCalculateAmount(t *testing.T) {
 
 func TestTransferToTarget(t *testing.T) {
 	resetObject(t)
+	emissionAddr, _ := access.GetAddress(prbac.ROLE_EMISSION.String())
 
 	tests := []struct {
 		name         string
@@ -451,6 +455,7 @@ func setupTestEnv(t *testing.T) {
 	distributedToGovStaker = 0
 
 	testing.SetRealm(adminRealm)
+	emissionAddr, _ := access.GetAddress(prbac.ROLE_EMISSION.String())
 	gns.Transfer(cross, emissionAddr, 1000000)
 }
 

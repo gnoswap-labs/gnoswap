@@ -4,6 +4,9 @@ import (
 	"std"
 	"time"
 
+	prbac "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/halt"
 )
@@ -26,6 +29,12 @@ func MintAndDistributeGns(cur realm) int64 {
 		// Skip if we've already minted tokens at this height
 		return 0
 	}
+
+	emissionAddr, ok := access.GetAddress(prbac.ROLE_EMISSION.String())
+	if !ok {
+		panic(errEmissionAddressNotFound)
+	}
+
 	// Mint new tokens and add any leftover amounts from previous distribution
 	mintedEmissionRewardAmount := gns.MintGns(cross, emissionAddr)
 
