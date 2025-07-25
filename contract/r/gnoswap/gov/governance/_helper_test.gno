@@ -5,7 +5,6 @@ import (
 
 	"gno.land/p/demo/json"
 
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
 )
@@ -40,7 +39,7 @@ var (
 	stakerPath = "gno.land/r/gnoswap/v1/staker"
 	stkRealm = std.NewCodeRealm(stakerPath)
 
-	govPath = "gno.land/r/gnoswap/v1/gov"
+	govPath = "gno.land/r/gnoswap/v1/gov/governance"
 	govRealm = std.NewCodeRealm(govPath)
 
 	govStakerAddr, _     = access.GetAddress(prbac.ROLE_GOV_STAKER.String())

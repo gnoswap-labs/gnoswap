@@ -61,7 +61,7 @@ func main() {
 
 	println("[SCENARIO] 5. ExactOutSwapRoute multi route (gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500,gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000,gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:10000)")
 	exactOutSwapRouteBy(
-		gnot,
+		"gnot",
 		gnsPath,
 		"1001502",
 		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500,gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000,gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:10000",

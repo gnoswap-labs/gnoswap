@@ -15,7 +15,6 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
-	"gno.land/p/gnoswap/consts"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
