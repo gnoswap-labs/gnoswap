@@ -24,7 +24,11 @@ const (
 	POOL_SEPARATOR = "*POOL*"
 )
 
-var wugnotPath string = "gno.land/r/demo/wugnot"
+var (
+	gnot    string = "gnot"
+	wrappedWugnot string = "gno.land/r/demo/wugnot"
+	wugnotPath string = "gno.land/r/demo/wugnot"
+)
 
 type RouterOperation interface {
 	Validate() error
