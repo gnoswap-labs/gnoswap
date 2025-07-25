@@ -320,7 +320,7 @@ func positionIdFrom(positionId uint64) grc721.TokenID {
 // [EXPECTED] Position tick lower: -5000
 // [EXPECTED] Position tick upper: 5000
 // [EXPECTED] Position liquidity: 226050
-// [EXPECTED] Position operator: g100000000000000000000000000000000dnmcnx
+// [EXPECTED] Position operator: 
 // [EXPECTED] Position is not burned: true
 // [EXPECTED] Position is in range: true
 //
