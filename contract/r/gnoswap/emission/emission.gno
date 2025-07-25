@@ -4,9 +4,6 @@ import (
 	"std"
 	"time"
 
-	prbac "gno.land/p/gnoswap/rbac"
-
-	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/halt"
 )
@@ -16,6 +13,9 @@ var (
 	leftGNSAmount int64
 	// lastExecutedHeight stores the last block height when distribution was executed
 	lastExecutedHeight int64
+
+	// emissionAddr is the address of the emission realm
+	emissionAddr = std.CurrentRealm().Address()
 )
 
 // MintAndDistributeGns mints new GNS tokens and distributes them to targets
@@ -28,11 +28,6 @@ func MintAndDistributeGns(cur realm) int64 {
 	if lastMintedHeight >= currentHeight {
 		// Skip if we've already minted tokens at this height
 		return 0
-	}
-
-	emissionAddr, ok := access.GetAddress(prbac.ROLE_EMISSION.String())
-	if !ok {
-		panic(errEmissionAddressNotFound)
 	}
 
 	// Mint new tokens and add any leftover amounts from previous distribution
