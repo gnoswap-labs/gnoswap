@@ -4,7 +4,6 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -48,6 +47,8 @@ var (
 	tickLower       = int32(9000)
 	tickUpper       = int32(11000)
 	liquidityExpect = "100000000000"
+
+	MAX_PRICE string = "1461446703485210103287273052203988822378723970341"
 )
 
 // DrySwap Test - ZeroForOne False (Token1 to Token0)
@@ -115,7 +116,7 @@ func testDrySwapZeroForOneFalse(t *testing.T) {
 		FeeTier500,
 		false, // zeroForOne = false
 		amountSpecified,
-		consts.MAX_PRICE, // Use MAX_PRICE for zeroForOne=false
+		MAX_PRICE, // Use MAX_PRICE for zeroForOne=false
 	)
 
 	// Then: Verify DrySwap results for zeroForOne=false
@@ -140,7 +141,7 @@ func testDrySwapZeroForOneFalse(t *testing.T) {
 		FeeTier500,
 		false, // zeroForOne = false
 		negativeAmount,
-		consts.MAX_PRICE,
+		MAX_PRICE,
 	)
 
 	// Then: Verify DrySwap results for negative amount

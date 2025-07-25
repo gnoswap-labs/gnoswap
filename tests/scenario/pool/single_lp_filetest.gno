@@ -9,7 +9,6 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -30,12 +29,12 @@ const (
 
 // Variables for test addresses and realms
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm      = std.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm     = std.NewUserRealm(positionAddr)
-	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
-	rouRealm     = std.NewUserRealm(routerAddr)
+	posRealm        = std.NewUserRealm(positionAddr)
+	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
+	rouRealm        = std.NewUserRealm(routerAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
@@ -55,6 +54,9 @@ var (
 	test_tickUpper2 = int32(100000)
 
 	poolCreationFee = int64(100_000_000)
+
+	MIN_PRICE string = "4295128740"
+	MAX_PRICE string = "1461446703485210103287273052203988822378723970341"
 )
 
 func main() {
@@ -240,7 +242,7 @@ func TestSwap() {
 	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20000)).ToString(), adminAddr)
 
 	testing.SetRealm(rouRealm)
-	test_price := consts.MIN_PRICE
+	test_price := MIN_PRICE
 	{
 		poolOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(poolAddr)
 		poolOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(poolAddr)
@@ -333,7 +335,7 @@ func TestSwap() {
 		userOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(adminAddr)
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
-		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, false, "16000", consts.MAX_PRICE, adminAddr) // give enough amount to take fees away
+		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, false, "16000", MAX_PRICE, adminAddr) // give enough amount to take fees away
 
 		intAmount0, _ := strconv.Atoi(amount0)
 		intAmount1, _ := strconv.Atoi(amount1)
