@@ -7,8 +7,6 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-
-	"gno.land/p/gnoswap/consts"
 )
 
 var (

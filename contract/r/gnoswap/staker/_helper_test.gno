@@ -7,7 +7,6 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/common"
