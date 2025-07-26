@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 )
 
 func TestGetPoolPath(t *testing.T) {
@@ -137,11 +136,11 @@ func TestCreatePool(t *testing.T) {
 					expectedToken0, expectedToken1 = expectedToken1, expectedToken0
 				}
 
-				if expectedToken0 == consts.GNOT {
-					expectedToken0 = consts.WRAPPED_WUGNOT
+				if expectedToken0 == GNOT {
+					expectedToken0 = WRAPPED_WUGNOT
 				}
-				if expectedToken1 == consts.GNOT {
-					expectedToken1 = consts.WRAPPED_WUGNOT
+				if expectedToken1 == GNOT {
+					expectedToken1 = WRAPPED_WUGNOT
 				}
 
 				if pool.token0Path != expectedToken0 || pool.token1Path != expectedToken1 {

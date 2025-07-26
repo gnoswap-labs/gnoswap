@@ -9,7 +9,6 @@ import (
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v1/access"
@@ -31,12 +30,12 @@ const (
 
 // Variables for test addresses and realms
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm      = std.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm     = std.NewUserRealm(positionAddr)
-	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
-	rouRealm     = std.NewUserRealm(routerAddr)
+	posRealm        = std.NewUserRealm(positionAddr)
+	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
+	rouRealm        = std.NewUserRealm(routerAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
@@ -54,6 +53,8 @@ var (
 	test_liquidityExpect256 = u256.NewUint(100_000_000)
 
 	poolCreationFee = int64(100_000_000)
+
+	MIN_PRICE string = "4295128740"
 )
 
 func main() {
@@ -167,7 +168,7 @@ func TestSwapFooBarFooToBar() {
 		adminAddr,
 		true,
 		"16000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 	println("[EXPECTED] poolIn:", poolIn, "expected: 16000")
@@ -205,7 +206,7 @@ func TestSwapBarBazBarToBaz() {
 		adminAddr,
 		true,
 		"16000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 

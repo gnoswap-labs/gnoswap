@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -54,6 +53,9 @@ var (
 	tickLower       = int32(9000)
 	tickUpper       = int32(12000)
 	liquidityExpect = "100000000000"
+
+	MIN_PRICE string = "4295128740"
+	MAX_PRICE string = "1461446703485210103287273052203988822378723970341"
 )
 
 // Global pool setup flag
@@ -188,7 +190,7 @@ func testPoolSwapping(t *testing.T) {
 		adminAddr,
 		true, // zeroForOne
 		"16000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
@@ -209,7 +211,7 @@ func testPoolSwapping(t *testing.T) {
 		adminAddr,
 		false, // zeroForOne = false
 		"16000",
-		consts.MAX_PRICE,
+		MAX_PRICE,
 		adminAddr,
 	)
 
@@ -295,7 +297,7 @@ func testPoolMultiToken(t *testing.T) {
 		adminAddr,
 		true, // zeroForOne
 		"16000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
@@ -327,7 +329,7 @@ func testPoolEdgeCases(t *testing.T) {
 		FeeTier500,
 		true,
 		"1000000000", // Very large amount
-		consts.MIN_PRICE,
+		MIN_PRICE,
 	)
 
 	// Then: Verify DrySwap handles large amounts gracefully

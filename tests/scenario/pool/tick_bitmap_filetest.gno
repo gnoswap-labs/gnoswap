@@ -8,14 +8,19 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	plp "gno.land/p/gnoswap/gnsmath"
+)
 
-	"gno.land/p/gnoswap/consts"
+const (
+	MIN_TICK int32 = -887272
+	MAX_TICK int32 = 887272
+
+	MAX_UINT256 string = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 )
 
 var (
 	tickSpacing = int32(1)
-	minTick     = (consts.MIN_TICK / tickSpacing) * tickSpacing
-	maxTick     = (consts.MAX_TICK / tickSpacing) * tickSpacing
+	minTick     = (MIN_TICK / tickSpacing) * tickSpacing
+	maxTick     = (MAX_TICK / tickSpacing) * tickSpacing
 )
 
 var t *testing.T
@@ -550,7 +555,7 @@ func BitwiseNotForUint256BitmapIndexing_Helper(x *u256.Uint) *u256.Uint {
 	// REF: https://stackoverflow.com/a/77071037
 
 	// Create a mask with all bits set to 1
-	mask := u256.MustFromDecimal(consts.MAX_UINT256)
+	mask := u256.MustFromDecimal(MAX_UINT256)
 	// mask = new(u256.Uint).Sub(mask, u256.NewUint(1))
 
 	// XOR with mask to perform bitwise NOT
