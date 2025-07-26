@@ -9,14 +9,15 @@ import (
 	"gno.land/p/demo/uassert"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 )
 
 var (
-	govRealm = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
+	govRealm = std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/governance")
 
 	startHeight    int64 = std.ChainHeight()
-	startTimestamp int64 = time.Now().Unix() + milliToSec(consts.BLOCK_GENERATION_INTERVAL)
+
+	blockTime int64 = 2000
+	startTimestamp int64 = time.Now().Unix() + milliToSec(blockTime)
 )
 
 var FIRST_BLOCK_OF_YEAR = []int64{
