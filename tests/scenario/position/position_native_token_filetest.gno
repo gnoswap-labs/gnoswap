@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/access"
@@ -17,6 +16,16 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
+)
+
+const (
+	INT64_MAX int64 = 9223372036854775807
+
+	GNOT        string = "gnot"
+	GNS_PATH    string = "gno.land/r/gnoswap/v1/gns"
+	WUGNOT_PATH string = "gno.land/r/demo/wugnot"
+
+	MIN_PRICE string = "4295128740"
 )
 
 var (
@@ -65,8 +74,8 @@ func initPool() {
 	ufmt.Println("[INFO] Creating GNOT/GNS pool")
 	pool.CreatePool(
 		cross,
-		consts.GNOT,
-		consts.GNS_PATH,
+		GNOT,
+		GNS_PATH,
 		500,
 		common.TickMathGetSqrtRatioAtTick(1).ToString(),
 	)
@@ -75,9 +84,9 @@ func initPool() {
 func mintPosition() {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	wugnot.Approve(cross, positionAddr, consts.INT64_MAX)
+	gns.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross, positionAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Issue initial GNOT")
 	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
@@ -91,8 +100,8 @@ func mintPosition() {
 	ufmt.Println("[INFO] Minting position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
-		consts.GNOT,
-		consts.GNS_PATH,
+		GNOT,
+		GNS_PATH,
 		500,
 		-8000,
 		8000,
@@ -128,21 +137,21 @@ func executeSwap() {
 	testing.SetOriginSend(std.Coins{{"ugnot", 1234567}})
 	wugnot.Deposit(cross)
 
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	wugnot.Approve(cross, positionAddr, consts.INT64_MAX)
-	wugnot.Approve(cross, routerAddr, consts.INT64_MAX)
+	wugnot.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross, positionAddr, INT64_MAX)
+	wugnot.Approve(cross, routerAddr, INT64_MAX)
 
 	testing.SetRealm(routerRealm)
 	ufmt.Println("[INFO] Executing swap")
 	amount0, amount1 := pool.Swap(
 		cross,
-		consts.WUGNOT_PATH,
-		consts.GNS_PATH,
+		WUGNOT_PATH,
+		GNS_PATH,
 		500,
 		adminAddr,
 		true,
 		"1234567",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
