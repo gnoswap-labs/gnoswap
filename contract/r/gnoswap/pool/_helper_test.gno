@@ -15,7 +15,6 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
-	"gno.land/p/gnoswap/consts"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -67,10 +66,16 @@ var (
 	stakerAddr, _   = access.GetAddress(prabc.ROLE_STAKER.String())
 	emissionAddr, _ = access.GetAddress(prabc.ROLE_EMISSION.String())
 
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+
 	alice      = testutils.TestAddress("alice")
 	adminRealm = std.NewUserRealm(adminAddr)
-	posRealm   = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
+
+	posPath  = "gno.land/r/gnoswap/v1/position"
+	posRealm = std.NewCodeRealm(posPath)
+
+	routerPath = "gno.land/r/gnoswap/v1/router"
+	rouRealm   = std.NewCodeRealm(routerPath)
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
@@ -529,7 +534,6 @@ func ugnotFaucet(t *testing.T, to std.Address, amount int64) {
 func ugnotDeposit(t *testing.T, addr std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(addr))
-	wugnotAddr := consts.WUGNOT_ADDR
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
 	wugnot.Deposit(cross)

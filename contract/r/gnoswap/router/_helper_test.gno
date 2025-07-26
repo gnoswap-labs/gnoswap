@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
@@ -27,13 +26,13 @@ import (
 const (
 	ugnotDenom string = "ugnot"
 	ugnotPath  string = "ugnot"
-	wugnotPath string = "gno.land/r/demo/wugnot"
-	gnsPath    string = "gno.land/r/gnoswap/v1/gns"
-	barPath    string = "gno.land/r/onbloc/bar"
-	bazPath    string = "gno.land/r/onbloc/baz"
-	fooPath    string = "gno.land/r/onbloc/foo"
-	oblPath    string = "gno.land/r/onbloc/obl"
-	quxPath    string = "gno.land/r/onbloc/qux"
+
+	gnsPath string = "gno.land/r/gnoswap/v1/gns"
+	barPath string = "gno.land/r/onbloc/bar"
+	bazPath string = "gno.land/r/onbloc/baz"
+	fooPath string = "gno.land/r/onbloc/foo"
+	oblPath string = "gno.land/r/onbloc/obl"
+	quxPath string = "gno.land/r/onbloc/qux"
 
 	fee100      uint32 = 100
 	fee500      uint32 = 500
@@ -79,9 +78,15 @@ var (
 	alice = testutils.TestAddress("alice")
 	bob   = testutils.TestAddress("bob")
 
-	adminRealm  = std.NewUserRealm(admin)
+	adminRealm = std.NewUserRealm(admin)
+
+	routerPath  = "gno.land/r/gnoswap/v1/router"
 	routerRealm = std.NewUserRealm(routerAddr)
-	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
+
+	posPath  = "gno.land/r/gnoswap/v1/position"
+	posRealm = std.NewCodeRealm(posPath)
+
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
@@ -313,7 +318,7 @@ func ugnotFaucet(t *testing.T, to std.Address, amount int64) {
 func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(addr))
-	wugnotAddr := consts.WUGNOT_ADDR
+	wugnotAddr := wugnotAddr
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
 	wugnot.Deposit(cross)

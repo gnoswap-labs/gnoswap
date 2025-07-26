@@ -6,8 +6,9 @@ import (
 	"gno.land/r/demo/wugnot"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 )
+
+const UGNOT_MIN_DEPOSIT_TO_WRAP uint64 = 1000
 
 var (
 	errFailedToWrapZeroUgnot = "cannot wrap 0 ugnot"
@@ -19,15 +20,15 @@ func wrap(ugnotAmount int64) {
 		panic(addDetailToError(errWrapUnwrap, errFailedToWrapZeroUgnot))
 	}
 
-	if ugnotAmount < int64(consts.UGNOT_MIN_DEPOSIT_TO_WRAP) {
+	if ugnotAmount < int64(UGNOT_MIN_DEPOSIT_TO_WRAP) {
 		panic(addDetailToError(
 			errWugnotMinimum,
-			ufmt.Sprintf(errFailedToWrapBelowMin, ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP),
+			ufmt.Sprintf(errFailedToWrapBelowMin, ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP),
 		))
 	}
 
 	// WRAP IT
-	wugnotAddr := std.DerivePkgAddr(consts.WRAPPED_WUGNOT)
+	wugnotAddr := std.DerivePkgAddr(wrappedWugnot)
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(routerAddr, wugnotAddr, std.Coins{{"ugnot", int64(ugnotAmount)}})
 	wugnot.Deposit(cross) // ROUTER HAS WUGNOT
