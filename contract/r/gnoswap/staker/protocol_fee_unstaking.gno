@@ -12,6 +12,10 @@ import (
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
 
+const (
+	FEE_PRECISION = 10000
+)
+
 var unstakingFee = uint64(100) // 1%
 
 // handleUnStakingFee calculates and applies the unstaking fee.
@@ -40,11 +44,13 @@ func handleUnStakingFee(
 	}
 
 	// Do not change the order of the operation.
-	feeAmount := (amount * int64(unstakingFee)) / 10000
+	feeAmount := (amount * int64(unstakingFee)) / FEE_PRECISION
+	if feeAmount < 0 {
+		return 0, 0, ufmt.Errorf("fee amount cannot be negative")
+	}
+
 	if feeAmount == 0 {
 		return amount, 0, nil
-	} else if feeAmount < 0 {
-		return 0, 0, ufmt.Errorf("fee amount cannot be negative")
 	}
 
 	if internal {
@@ -55,7 +61,6 @@ func handleUnStakingFee(
 
 	// external contract has fee
 	common.Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
-
 	pf.AddToProtocolFee(cross, tokenPath, uint64(feeAmount))
 
 	return amount - feeAmount, feeAmount, nil
