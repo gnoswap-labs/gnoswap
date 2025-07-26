@@ -6,6 +6,7 @@ import (
 	"gno.land/p/demo/avl"
 
 	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -125,8 +126,8 @@ func newSwapState(
 	}
 }
 
-func (s *SwapState) setSqrtPriceX96(sqrtPriceX96 string) {
-	s.sqrtPriceX96 = u256.MustFromDecimal(sqrtPriceX96)
+func (s *SwapState) setSqrtPriceX96(sqrtPriceX96 *u256.Uint) {
+	s.sqrtPriceX96 = sqrtPriceX96.Clone()
 }
 
 func (s *SwapState) setTick(tick int32) {
@@ -266,7 +267,7 @@ func (t *TickInfo) valueOrZero() {
 	t.secondsPerLiquidityOutsideX128 = t.secondsPerLiquidityOutsideX128.NilToZero()
 }
 
-func newPool(poolInfo *createPoolParams) *Pool {
+func newPool(poolInfo *poolCreateConfig) *Pool {
 	maxLiquidityPerTick := calculateMaxLiquidityPerTick(poolInfo.tickSpacing)
 	tick := common.TickMathGetTickAtSqrtRatio(poolInfo.SqrtPriceX96())
 	slot0 := newSlot0(poolInfo.SqrtPriceX96(), tick, slot0FeeProtocol, true)
@@ -291,9 +292,9 @@ func newPool(poolInfo *createPoolParams) *Pool {
 
 var tickCrossHook func(poolPath string, tickId int32, zeroForOne bool)
 
-func SetTickCrossHook(hook func(poolPath string, tickId int32, zeroForOne bool)) {
-	if tickCrossHook != nil {
-		panic("tickCrossHook already set")
-	}
+func SetTickCrossHook(cur realm, hook func(poolPath string, tickId int32, zeroForOne bool)) {
+	caller := std.PreviousRealm().Address()
+	access.AssertIsStaker(caller)
+
 	tickCrossHook = hook
 }

@@ -15,12 +15,15 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
+
+	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
-	pn "gno.land/r/gnoswap/v1/position"
+
+	"gno.land/p/demo/uassert"
+
+	_ "gno.land/r/gnoswap/v1/rbac" // initialize rbac package
 )
 
 const (
@@ -37,7 +40,7 @@ const (
 	fee100      uint32 = 100
 	fee500      uint32 = 500
 	fee3000     uint32 = 3000
-	maxApprove  uint64 = 18446744073709551615
+	maxApprove  int64  = 9223372036854775806
 	max_timeout int64  = 9999999999
 
 	maxSqrtPriceLimitX96 string = "1461373636630004318706518188784493106690254656249"
@@ -56,17 +59,23 @@ var (
 )
 
 var (
-	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
-	devOpsAddr, _ = access.GetAddress(access.ROLE_DEVOPS)
+	adminAddr, _  = access.GetAddress(prabc.ROLE_ADMIN.String())
+	devOpsAddr, _ = access.GetAddress(prabc.ROLE_DEVOPS.String())
 
-	govAddr, _      = access.GetAddress(access.ROLE_GOVERNANCE)
-	stakerAddr, _   = access.GetAddress(access.ROLE_STAKER)
-	emissionAddr, _ = access.GetAddress(access.ROLE_EMISSION)
+	govAddr, _      = access.GetAddress(prabc.ROLE_GOVERNANCE.String())
+	stakerAddr, _   = access.GetAddress(prabc.ROLE_STAKER.String())
+	emissionAddr, _ = access.GetAddress(prabc.ROLE_EMISSION.String())
+
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 
 	alice      = testutils.TestAddress("alice")
 	adminRealm = std.NewUserRealm(adminAddr)
-	posRealm   = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
+
+	posPath  = "gno.land/r/gnoswap/v1/position"
+	posRealm = std.NewCodeRealm(posPath)
+
+	routerPath = "gno.land/r/gnoswap/v1/router"
+	rouRealm   = std.NewCodeRealm(routerPath)
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
@@ -79,60 +88,69 @@ func InitialisePoolTest(t *testing.T) {
 	ugnotDeposit(t, adminAddr, 100_000_000_000_000)
 
 	testing.SetOriginCaller(adminAddr)
-	TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
-	poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
-	if !DoesPoolPathExist(poolPath) {
-		CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
-	}
+	func() {
+		testing.SetRealm(adminRealm)
+		TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
+		poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
+		if !DoesPoolPathExist(poolPath) {
+			CreatePool(cross, wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
+		}
+	}()
 
 	// 2. create position
 	testing.SetOriginCaller(alice)
-	TokenFaucet(t, wugnotPath, alice)
-	TokenFaucet(t, gnsPath, alice)
-	TokenApprove(t, wugnotPath, alice, poolAddr, uint64(1000))
-	TokenApprove(t, gnsPath, alice, poolAddr, uint64(1000))
-	MintPosition(t,
-		wugnotPath,
-		gnsPath,
-		fee3000,
-		int32(1020),
-		int32(5040),
-		"1000",
-		"1000",
-		"0",
-		"0",
-		max_timeout,
-		alice,
-		alice,
-	)
+	func() {
+		testing.SetRealm(std.NewUserRealm(alice))
+		TokenFaucet(t, wugnotPath, alice)
+		TokenFaucet(t, gnsPath, alice)
+		TokenApprove(t, wugnotPath, alice, poolAddr, 1000)
+		TokenApprove(t, gnsPath, alice, poolAddr, 1000)
+		MintPosition(t,
+			wugnotPath,
+			gnsPath,
+			fee3000,
+			int32(1020),
+			int32(5040),
+			"1000",
+			"1000",
+			"0",
+			"0",
+			max_timeout,
+			alice,
+			alice,
+		)
+	}()
 }
 
 func TokenFaucet(t *testing.T, tokenPath string, to std.Address) {
 	t.Helper()
 	testing.SetOriginCaller(adminAddr)
-	defaultAmount := uint64(5_000_000_000)
+	defaultAmount := int64(5_000_000_000)
 
-	switch tokenPath {
-	case wugnotPath:
-		wugnotTransfer(t, to, defaultAmount)
-	case gnsPath:
-		gnsTransfer(t, to, defaultAmount)
-	case barPath:
-		barTransfer(t, to, defaultAmount)
-	case bazPath:
-		bazTransfer(t, to, defaultAmount)
-	case fooPath:
-		fooTransfer(t, to, defaultAmount)
-	case oblPath:
-		oblTransfer(t, to, defaultAmount)
-	case quxPath:
-		quxTransfer(t, to, defaultAmount)
-	default:
-		panic("token not found")
-	}
+	func() {
+		testing.SetRealm(adminRealm)
+		switch tokenPath {
+		case wugnotPath:
+			wugnotTransfer(t, to, defaultAmount)
+		case gnsPath:
+			gnsTransfer(t, to, defaultAmount)
+		case barPath:
+			barTransfer(t, to, defaultAmount)
+		case bazPath:
+			bazTransfer(t, to, defaultAmount)
+		case fooPath:
+			fooTransfer(t, to, defaultAmount)
+		case oblPath:
+			oblTransfer(t, to, defaultAmount)
+		case quxPath:
+			quxTransfer(t, to, defaultAmount)
+		default:
+			panic("token not found")
+		}
+	}()
 }
 
-func TokenBalance(t *testing.T, tokenPath string, owner std.Address) uint64 {
+func TokenBalance(t *testing.T, tokenPath string, owner std.Address) int64 {
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
@@ -154,7 +172,7 @@ func TokenBalance(t *testing.T, tokenPath string, owner std.Address) uint64 {
 	}
 }
 
-func TokenAllowance(t *testing.T, tokenPath string, owner, spender std.Address) uint64 {
+func TokenAllowance(t *testing.T, tokenPath string, owner, spender std.Address) int64 {
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
@@ -176,7 +194,7 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender std.Address) 
 	}
 }
 
-func TokenApprove(t *testing.T, tokenPath string, owner, spender std.Address, amount uint64) {
+func TokenApprove(t *testing.T, tokenPath string, owner, spender std.Address, amount int64) {
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
@@ -211,24 +229,20 @@ func MintPosition(t *testing.T,
 	deadline int64,
 	mintTo std.Address,
 	caller std.Address,
-) (uint64, string, string, string) {
+) (string, string) {
 	t.Helper()
-	testing.SetRealm(std.NewUserRealm(caller))
+	testing.SetRealm(posRealm)
 
-	return pn.Mint(
+	return Mint(
+		cross,
 		token0,
 		token1,
 		fee,
+		mintTo,
 		tickLower,
 		tickUpper,
 		amount0Desired,
-		amount1Desired,
-		amount0Min,
-		amount1Min,
-		deadline,
-		mintTo,
 		caller,
-		"",
 	)
 }
 
@@ -375,113 +389,113 @@ func MintPositionAll(t *testing.T, caller std.Address) {
 			fee3000,
 			p.tickLower,
 			p.tickUpper,
-			"100000000",
-			"100000000",
-			"0",
-			"0",
-			max_timeout,
-			caller,
-			caller)
+			"100000000", // liquidityAmount
+			"100000000", // unused
+			"0",         // unused
+			"0",         // unused
+			max_timeout, // unused
+			caller,      // mintTo (recipient)
+			caller)      // positionCaller
 	}
 }
 
-func wugnotApprove(t *testing.T, owner, spender std.Address, amount uint64) {
+func wugnotApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	wugnot.Approve(spender, amount)
+	wugnot.Approve(cross, spender, amount)
 }
 
-func gnsApprove(t *testing.T, owner, spender std.Address, amount uint64) {
+func gnsApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	gns.Approve(spender, amount)
+	gns.Approve(cross, spender, amount)
 }
 
-func barApprove(t *testing.T, owner, spender std.Address, amount uint64) {
+func barApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	bar.Approve(spender, amount)
+	bar.Approve(cross, spender, amount)
 }
 
-func bazApprove(t *testing.T, owner, spender std.Address, amount uint64) {
+func bazApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	baz.Approve(spender, amount)
+	baz.Approve(cross, spender, amount)
 }
 
-func fooApprove(t *testing.T, owner, spender std.Address, amount uint64) {
+func fooApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	foo.Approve(spender, amount)
+	foo.Approve(cross, spender, amount)
 }
 
-func oblApprove(t *testing.T, owner, spender std.Address, amount uint64) {
+func oblApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	obl.Approve(spender, amount)
+	obl.Approve(cross, spender, amount)
 }
 
-func quxApprove(t *testing.T, owner, spender std.Address, amount uint64) {
+func quxApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(owner))
-	qux.Approve(spender, amount)
+	qux.Approve(cross, spender, amount)
 }
 
-func wugnotTransfer(t *testing.T, to std.Address, amount uint64) {
+func wugnotTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	wugnot.Transfer(to, amount)
+	wugnot.Transfer(cross, to, amount)
 }
 
-func gnsTransfer(t *testing.T, to std.Address, amount uint64) {
+func gnsTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	gns.Transfer(to, amount)
+	gns.Transfer(cross, to, amount)
 }
 
-func barTransfer(t *testing.T, to std.Address, amount uint64) {
+func barTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	bar.Transfer(to, amount)
+	bar.Transfer(cross, to, amount)
 }
 
-func bazTransfer(t *testing.T, to std.Address, amount uint64) {
+func bazTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	baz.Transfer(to, amount)
+	baz.Transfer(cross, to, amount)
 }
 
-func fooTransfer(t *testing.T, to std.Address, amount uint64) {
+func fooTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	foo.Transfer(to, amount)
+	foo.Transfer(cross, to, amount)
 }
 
-func oblTransfer(t *testing.T, to std.Address, amount uint64) {
+func oblTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	obl.Transfer(to, amount)
+	obl.Transfer(cross, to, amount)
 }
 
-func quxTransfer(t *testing.T, to std.Address, amount uint64) {
+func quxTransfer(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	qux.Transfer(to, amount)
+	qux.Transfer(cross, to, amount)
 }
 
 // ----------------------------------------------------------------------------
 // ugnot
 
-func ugnotTransfer(t *testing.T, from, to std.Address, amount uint64) {
+func ugnotTransfer(t *testing.T, from, to std.Address, amount int64) {
 	t.Helper()
 
 	testing.SetRealm(std.NewUserRealm(from))
-	testing.SetOriginSend(std.Coins{{ugnotDenom, int64(amount)}})
+	testing.SetOriginSend(std.Coins{{ugnotDenom, amount}})
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(from, to, std.Coins{{ugnotDenom, int64(amount)}})
+	banker.SendCoins(from, to, std.Coins{{ugnotDenom, amount}})
 }
 
-func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
+func ugnotBalanceOf(t *testing.T, addr std.Address) int64 {
 	t.Helper()
 
 	banker := std.NewBanker(std.BankerTypeRealmIssue)
@@ -490,12 +504,12 @@ func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
 		return 0
 	}
 
-	return uint64(coins.AmountOf(ugnotDenom))
+	return coins.AmountOf(ugnotDenom)
 }
 
 func ugnotMint(t *testing.T, addr std.Address, denom string, amount int64) {
 	t.Helper()
-	testing.IssueCoins(addr, std.Coins{{denom, int64(amount)}})
+	testing.IssueCoins(addr, std.Coins{{denom, amount}})
 }
 
 func ugnotBurn(t *testing.T, addr std.Address, denom string, amount int64) {
@@ -504,7 +518,7 @@ func ugnotBurn(t *testing.T, addr std.Address, denom string, amount int64) {
 	banker.RemoveCoin(addr, denom, amount)
 }
 
-func ugnotFaucet(t *testing.T, to std.Address, amount uint64) {
+func ugnotFaucet(t *testing.T, to std.Address, amount int64) {
 	t.Helper()
 	faucetAddress := adminAddr
 	testing.SetOriginCaller(faucetAddress)
@@ -517,13 +531,12 @@ func ugnotFaucet(t *testing.T, to std.Address, amount uint64) {
 	ugnotTransfer(t, faucetAddress, to, amount)
 }
 
-func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
+func ugnotDeposit(t *testing.T, addr std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(addr))
-	wugnotAddr := consts.WUGNOT_ADDR
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
-	wugnot.Deposit()
+	wugnot.Deposit(cross)
 }
 
 // resetObject resets the object state(clear or make it default values)
@@ -550,32 +563,32 @@ func burnTokens(t *testing.T) {
 
 func burnFoo(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	foo.Burn(addr, foo.BalanceOf(addr))
+	foo.Burn(cross, addr, foo.BalanceOf(addr))
 }
 
 func burnBar(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	bar.Burn(addr, bar.BalanceOf(addr))
+	bar.Burn(cross, addr, bar.BalanceOf(addr))
 }
 
 func burnBaz(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	baz.Burn(addr, baz.BalanceOf(addr))
+	baz.Burn(cross, addr, baz.BalanceOf(addr))
 }
 
 func burnQux(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	qux.Burn(addr, qux.BalanceOf(addr))
+	qux.Burn(cross, addr, qux.BalanceOf(addr))
 }
 
 func burnObl(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	obl.Burn(addr, obl.BalanceOf(addr))
+	obl.Burn(cross, addr, obl.BalanceOf(addr))
 }
 
 func burnUsdc(addr std.Address) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	usdc.Burn(addr, usdc.BalanceOf(addr))
+	usdc.Burn(cross, addr, usdc.BalanceOf(addr))
 }
 
 func TestBeforeResetObject(t *testing.T) {
@@ -592,24 +605,27 @@ func TestBeforeResetObject(t *testing.T) {
 
 	// transfer some tokens
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	foo.Transfer(addr01, 100_000_000)
-	bar.Transfer(addr01, 100_000_000)
+	func() {
+		testing.SetRealm(std.NewUserRealm(adminAddr))
+		foo.Transfer(cross, addr01, 100_000_000)
+		bar.Transfer(cross, addr01, 100_000_000)
+	}()
 
-	uassert.Equal(t, foo.BalanceOf(addr01), uint64(100_000_000))
-	uassert.Equal(t, bar.BalanceOf(addr01), uint64(100_000_000))
+	uassert.Equal(t, foo.BalanceOf(addr01), int64(100_000_000))
+	uassert.Equal(t, bar.BalanceOf(addr01), int64(100_000_000))
 }
 
 func TestResetObject(t *testing.T) {
 	resetObject(t)
 	uassert.Equal(t, pools.Size(), 0)
 	uassert.Equal(t, slot0FeeProtocol, uint8(0))
-	uassert.Equal(t, poolCreationFee, uint64(100_000_000))
+	uassert.Equal(t, poolCreationFee, int64(100_000_000))
 	uassert.Equal(t, withdrawalFeeBPS, uint64(100))
 }
 
 func TestBurnTokens(t *testing.T) {
 	burnTokens(t)
 
-	uassert.Equal(t, foo.BalanceOf(addr01), uint64(0)) // 100_000_000 -> 0
-	uassert.Equal(t, bar.BalanceOf(addr01), uint64(0)) // 100_000_000 -> 0
+	uassert.Equal(t, foo.BalanceOf(addr01), int64(0)) // 100_000_000 -> 0
+	uassert.Equal(t, bar.BalanceOf(addr01), int64(0)) // 100_000_000 -> 0
 }

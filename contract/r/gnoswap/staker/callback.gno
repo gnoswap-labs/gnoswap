@@ -4,7 +4,7 @@ import (
 	"std"
 )
 
-// callbackStakerEmissionChange is called by emission when
+// stakerEmissionChangeCallback is called by emission when
 // - msPerBlock is changed
 // - staker emission % is changed
 // it does NOT get called in regards of halving(manually handled in cacheReward).
@@ -15,7 +15,7 @@ import (
 //   - It first caches the reward until the current block height.
 //   - Then, it updates the `currentEmission` of the poolTier,
 //     which will be applied for future blocks thereafter.
-func callbackStakerEmissionChange(emission uint64) {
+func stakerEmissionChangeCallback(emission int64) {
+	poolTier.currentEmission = int64(emission)
 	poolTier.cacheReward(std.ChainHeight(), pools)
-	poolTier.currentEmission = emission
 }

@@ -5,59 +5,46 @@ import (
 	"time"
 
 	"gno.land/p/demo/json"
+	"gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/v1/protocol_fee"
 )
 
 // GetLockedAmount gets the total locked amount of GNS.
-func GetLockedAmount() uint64 {
+func GetLockedAmount() int64 {
+	lockedAmount := int64(0)
+
+	delegations.Iterate("", "", func(key string, value interface{}) bool {
+		delegation := value.(*Delegation)
+		lockedAmount += delegation.DelegatedAmount()
+		return false
+	})
+
 	return lockedAmount
-}
-
-// GetLockedInfoByAddress gets the locked info of an address.
-// - total locked amount
-// - claimable amount
-func GetLockedInfoByAddress(addr std.Address) string {
-	lockedList, exist := addrLockedGns.Get(addr.String())
-	if !exist {
-		return ""
-	}
-
-	now := uint64(time.Now().Unix())
-
-	totalLocked := uint64(0)
-	claimableAmount := uint64(0)
-	nextClaimableTime := uint64(0)
-
-	for _, locked := range lockedList.([]lockedGNS) {
-		amount := locked.amount
-		unlockTime := locked.unlock
-
-		totalLocked += amount
-
-		if now >= unlockTime {
-			claimableAmount += amount
-		} else {
-			if nextClaimableTime == 0 || unlockTime < nextClaimableTime {
-				nextClaimableTime = unlockTime
-			}
-		}
-	}
-
-	data := json.Builder().
-		WriteString("height", formatInt(std.ChainHeight())).
-		WriteString("now", formatInt(time.Now().Unix())).
-		WriteString("totalLocked", formatUint(totalLocked)).
-		WriteString("claimableAmount", formatUint(claimableAmount)).
-		WriteString("nextClaimableTime", formatUint(nextClaimableTime)).
-		Node()
-
-	return marshal(data)
 }
 
 // GetClaimableRewardByAddress gets the claimable reward of an address.
 func GetClaimableRewardByAddress(addr std.Address) string {
-	rewardState.finalize(collectAndGetGNSBalance(), updateAndGetProtocolFeeBalance())
+	return GetClaimableRewardByRewardID(addr.String())
+}
 
-	emissionReward, protocolFeeRewards := rewardState.CalculateReward(addr)
+// GetClaimableRewardByAddress gets the claimable reward of an address.
+func GetClaimableRewardByLaunchpad(addr std.Address) string {
+	return GetClaimableRewardByRewardID(makeLaunchpadRewardID(addr.String()))
+}
+
+// GetClaimableRewardByRewardID gets the claimable reward of an address.
+func GetClaimableRewardByRewardID(rewardID string) string {
+	func(cur realm) {
+		emission.MintAndDistributeGns(cross)
+		protocol_fee.DistributeProtocolFee(cross)
+	}(cross)
+
+	emissionDistributedAmount := emission.GetAccuDistributedToGovStaker()
+	emissionReward := emissionRewardManager.GetClaimableRewardAmount(emissionDistributedAmount, rewardID, std.ChainHeight())
+
+	protocolFeeDistributedAmounts := getDistributedProtocolFees()
+	protocolFeeRewards := protocolFeeRewardManager.GetClaimableRewardAmounts(protocolFeeDistributedAmounts, rewardID, std.ChainHeight())
+
 	if emissionReward == 0 && len(protocolFeeRewards) == 0 {
 		return ""
 	}
@@ -65,7 +52,7 @@ func GetClaimableRewardByAddress(addr std.Address) string {
 	data := json.Builder().
 		WriteString("height", formatInt(std.ChainHeight())).
 		WriteString("now", formatInt(time.Now().Unix())).
-		WriteString("emissionReward", formatUint(emissionReward)).
+		WriteString("emissionReward", formatInt(emissionReward)).
 		Node()
 
 	if len(protocolFeeRewards) > 0 {
@@ -74,7 +61,7 @@ func GetClaimableRewardByAddress(addr std.Address) string {
 			if protocolFeeReward > 0 {
 				pfObj := json.Builder().
 					WriteString("tokenPath", tokenPath).
-					WriteString("amount", formatUint(protocolFeeReward)).
+					WriteString("amount", formatInt(protocolFeeReward)).
 					Node()
 				pfArr.AppendArray(pfObj)
 			}

@@ -29,6 +29,9 @@ type Slot0 struct {
 	unlocked     bool       // whether the pool is currently locked to reentrancy
 }
 
+func (s *Slot0) Tick() int32        { return s.tick }
+func (s *Slot0) FeeProtocol() uint8 { return s.feeProtocol }
+
 func newSlot0(
 	sqrtPriceX96 *u256.Uint,
 	tick int32,
@@ -76,98 +79,45 @@ type Pool struct {
 	positions            *avl.Tree  // maps the key (caller, lower tick, upper tick) to a unique position
 }
 
+func (p *Pool) PoolPath() string                 { return GetPoolPath(p.token0Path, p.token1Path, p.fee) }
+func (p *Pool) Token0Path() string               { return p.token0Path }
+func (p *Pool) Token1Path() string               { return p.token1Path }
+func (p *Pool) Fee() uint32                      { return p.fee }
+func (p *Pool) BalanceToken0() *u256.Uint        { return p.balances.token0 }
+func (p *Pool) BalanceToken1() *u256.Uint        { return p.balances.token1 }
+func (p *Pool) TickSpacing() int32               { return p.tickSpacing }
+func (p *Pool) MaxLiquidityPerTick() *u256.Uint  { return p.maxLiquidityPerTick }
+func (p *Pool) Slot0() Slot0                     { return p.slot0 }
+func (p *Pool) Slot0SqrtPriceX96() *u256.Uint    { return p.slot0.sqrtPriceX96 }
+func (p *Pool) Slot0Tick() int32                 { return p.slot0.tick }
+func (p *Pool) Slot0FeeProtocol() uint8          { return p.slot0.feeProtocol }
+func (p *Pool) Slot0Unlocked() bool              { return p.slot0.unlocked }
+func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint { return p.feeGrowthGlobal0X128 }
+func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint { return p.feeGrowthGlobal1X128 }
+func (p *Pool) ProtocolFeesToken0() *u256.Uint   { return p.protocolFees.token0 }
+func (p *Pool) ProtocolFeesToken1() *u256.Uint   { return p.protocolFees.token1 }
+func (p *Pool) Liquidity() *u256.Uint            { return p.liquidity }
+
 func (p *Pool) Ticks() string {
 	if p.ticks == nil {
 		return "[]"
 	}
 
-	var result []string
-	p.ticks.Iterate("", "", func(key string, value interface{}) bool {
-		tick, err := strconv.ParseInt(key, 10, 32)
-		if err != nil {
-			return true
-		}
-		tickInfo := value.(TickInfo)
-		result = append(result, ufmt.Sprintf(
+	tickInfoStrings := []string{}
+
+	p.ticks.Iterate("", "", func(tickKey string, tickValue any) bool {
+		tick, _ := strconv.Atoi(tickKey)
+		tickInfo := tickValue.(TickInfo)
+
+		tickInfoStrings = append(tickInfoStrings, ufmt.Sprintf(
 			`{"tick":%d,"feeGrowthOutside0X128":"%s","feeGrowthOutside1X128":"%s"}`,
 			tick,
 			tickInfo.feeGrowthOutside0X128.ToString(),
 			tickInfo.feeGrowthOutside1X128.ToString(),
 		))
-		return true
+
+		return false
 	})
 
-	return "[" + strings.Join(result, ",") + "]"
-}
-
-func (p *Pool) PoolPath() string {
-	return GetPoolPath(p.token0Path, p.token1Path, p.fee)
-}
-
-func (p *Pool) Token0Path() string {
-	return p.token0Path
-}
-
-func (p *Pool) Token1Path() string {
-	return p.token1Path
-}
-
-func (p *Pool) Fee() uint32 {
-	return p.fee
-}
-
-func (p *Pool) BalanceToken0() *u256.Uint {
-	return p.balances.token0
-}
-
-func (p *Pool) BalanceToken1() *u256.Uint {
-	return p.balances.token1
-}
-
-func (p *Pool) TickSpacing() int32 {
-	return p.tickSpacing
-}
-
-func (p *Pool) MaxLiquidityPerTick() *u256.Uint {
-	return p.maxLiquidityPerTick
-}
-
-func (p *Pool) Slot0() Slot0 {
-	return p.slot0
-}
-
-func (p *Pool) Slot0SqrtPriceX96() *u256.Uint {
-	return p.slot0.sqrtPriceX96
-}
-
-func (p *Pool) Slot0Tick() int32 {
-	return p.slot0.tick
-}
-
-func (p *Pool) Slot0FeeProtocol() uint8 {
-	return p.slot0.feeProtocol
-}
-
-func (p *Pool) Slot0Unlocked() bool {
-	return p.slot0.unlocked
-}
-
-func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint {
-	return p.feeGrowthGlobal0X128
-}
-
-func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint {
-	return p.feeGrowthGlobal1X128
-}
-
-func (p *Pool) ProtocolFeesToken0() *u256.Uint {
-	return p.protocolFees.token0
-}
-
-func (p *Pool) ProtocolFeesToken1() *u256.Uint {
-	return p.protocolFees.token1
-}
-
-func (p *Pool) Liquidity() *u256.Uint {
-	return p.liquidity
+	return "[" + strings.Join(tickInfoStrings, ",") + "]"
 }

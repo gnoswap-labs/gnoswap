@@ -309,6 +309,10 @@ func (p *Pool) mustGetTick(tick int32) TickInfo {
 // calculateMaxLiquidityPerTick calculates the maximum liquidity
 // per tick for a given tick spacing.
 func calculateMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
+	// Floor MIN_TICK and MAX_TICK to the nearest multiple of tickSpacing
+	// This ensures that the tick range is properly aligned with the tickSpacing
+	// For example, if tickSpacing is 60 and MIN_TICK is -887272:
+	// -887272 / 60 = -14787.866... -> -14787 * 60 = -887220
 	minTick := (consts.MIN_TICK / tickSpacing) * tickSpacing
 	maxTick := (consts.MAX_TICK / tickSpacing) * tickSpacing
 	numTicks := uint64((maxTick-minTick)/tickSpacing) + 1
@@ -422,39 +426,31 @@ func getFeeGrowthAboveX128(
 	return feeGrowthAbove0X128, feeGrowthAbove1X128
 }
 
-// checkTicks validates the tick range for a liquidity position.
+// validateTicks validates the tick range for a liquidity position.
 //
 // This function performs three essential checks to ensure the provided
 // tick values are valid before creating or modifying a liquidity position.
-func checkTicks(tickLower, tickUpper int32) {
-	assertTickLowerLessThanUpper(tickLower, tickUpper)
-	assertValidTickLower(tickLower)
-	assertValidTickUpper(tickUpper)
-}
-
-func assertTickLowerLessThanUpper(tickLower, tickUpper int32) {
+func validateTicks(tickLower, tickUpper int32) error {
 	if tickLower >= tickUpper {
-		panic(newErrorWithDetail(
+		return makeErrorWithDetails(
 			errInvalidTickRange,
 			ufmt.Sprintf("tickLower(%d), tickUpper(%d)", tickLower, tickUpper),
-		))
+		)
 	}
-}
 
-func assertValidTickLower(tickLower int32) {
 	if tickLower < consts.MIN_TICK {
-		panic(newErrorWithDetail(
+		return makeErrorWithDetails(
 			errTickLowerInvalid,
 			ufmt.Sprintf("tickLower(%d) < MIN_TICK(%d)", tickLower, consts.MIN_TICK),
-		))
+		)
 	}
-}
 
-func assertValidTickUpper(tickUpper int32) {
 	if tickUpper > consts.MAX_TICK {
-		panic(newErrorWithDetail(
+		return makeErrorWithDetails(
 			errTickUpperInvalid,
 			ufmt.Sprintf("tickUpper(%d) > MAX_TICK(%d)", tickUpper, consts.MAX_TICK),
-		))
+		)
 	}
+
+	return nil
 }

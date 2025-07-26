@@ -4,134 +4,209 @@ import (
 	"testing"
 
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+
+	prabc "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/v1/access"
+	_ "gno.land/r/gnoswap/v1/rbac" // initialize rbac package
 )
 
-func TestVariousFunctionCallbacks(t *testing.T) {
+func TestCallbackRegistration(t *testing.T) {
 	callbackTree = avl.NewTree()
+	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	testing.SetOriginCaller(adminAddr)
 
-	tests := []struct {
-		name     string
-		key      string
-		callback any
-		args     []any
-		want     any
-		wantErr  bool
-	}{
-		{
-			name: "Simple addition function",
-			key:  "test/add",
-			callback: func(a, b int) int {
-				return a + b
-			},
-			args: []any{5, 3},
-			want: 8,
-		},
-		{
-			name: "String concatenation",
-			key:  "test/concat",
-			callback: func(a, b string) string {
-				return a + b
-			},
-			args: []any{"Hello, ", "World"},
-			want: "Hello, World",
-		},
-		{
-			name: "No arguments function",
-			key:  "test/constant",
-			callback: func() int {
-				return 42
-			},
-			args: []any{},
-			want: 42,
-		},
-		{
-			name: "Multiple return values",
-			key:  "test/divide",
-			callback: func(a, b int) (int, bool) {
-				if b == 0 {
-					return 0, false
-				}
-				return a / b, true
-			},
-			args: []any{10, 2},
-			want: [2]any{5, true},
-		},
-		{
-			name: "Function with slice argument",
-			key:  "test/sum",
-			callback: func(numbers []int) int {
-				sum := 0
-				for _, n := range numbers {
-					sum += n
-				}
-				return sum
-			},
-			args: []any{[]int{1, 2, 3, 4, 5}},
-			want: 15,
-		},
-	}
+	RegisterCallback(cross, "test", "add", func(a, b int) int {
+		return a + b
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			RegisterCallback(tt.key, tt.callback)
+	cb, exists := LookupCallback("test", "add")
+	uassert.True(t, exists)
 
-			cb, exists := GetCallback(tt.key)
-			uassert.True(t, exists)
+	addFn, ok := cb.(func(int, int) int)
+	uassert.True(t, ok)
+	result := addFn(5, 3)
+	uassert.Equal(t, result, 8)
+}
 
-			switch fn := cb.(type) {
-			case func(int, int) int:
-				if len(tt.args) == 2 {
-					result := fn(tt.args[0].(int), tt.args[1].(int))
-					uassert.Equal(t, result, tt.want)
-				}
-			case func(string, string) string:
-				if len(tt.args) == 2 {
-					result := fn(tt.args[0].(string), tt.args[1].(string))
-					uassert.Equal(t, result, tt.want)
-				}
-			case func() int:
-				result := fn()
-				uassert.Equal(t, result, tt.want)
-			case func(int, int) (int, bool):
-				if len(tt.args) == 2 {
-					quotient, ok := fn(tt.args[0].(int), tt.args[1].(int))
-					expected := tt.want.([2]any)
-					if quotient != expected[0].(int) || ok != expected[1].(bool) {
-						t.Errorf("got (%v, %v), want (%v, %v)",
-							quotient, ok, expected[0], expected[1])
-					}
-				}
-			case func([]int) int:
-				if len(tt.args) == 1 {
-					result := fn(tt.args[0].([]int))
-					uassert.Equal(t, result, tt.want)
-				}
-			default:
-				t.Errorf("Unexpected function type for %s", tt.name)
-			}
+func TestCallbackUpdate(t *testing.T) {
+	callbackTree = avl.NewTree()
+	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	testing.SetOriginCaller(adminAddr)
+
+	RegisterCallback(cross, "test", "multiply", func(a, b int) int {
+		return a * b
+	})
+
+	cb, exists := LookupCallback("test", "multiply")
+	uassert.True(t, exists)
+
+	multiplyFn, ok := cb.(func(int, int) int)
+	uassert.True(t, ok)
+	result := multiplyFn(3, 4)
+	uassert.Equal(t, result, 12) // 3 * 4 = 12
+
+	// update callback
+	UpdateCallback(cross, "test", "multiply", func(a, b int) int {
+		return a * b * 2
+	})
+
+	// get callback and check the result
+	cb, exists = LookupCallback("test", "multiply")
+	uassert.True(t, exists)
+
+	multiplyFn, ok = cb.(func(int, int) int)
+	uassert.True(t, ok)
+	result = multiplyFn(3, 4)
+	uassert.Equal(t, result, 24) // 3 * 4 * 2 = 24
+}
+
+func TestCallbackRegistrationErrors(t *testing.T) {
+	callbackTree = avl.NewTree()
+	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	testing.SetOriginCaller(adminAddr)
+
+	// duplicate registration test
+	RegisterCallback(cross, "test", "duplicate", func() {})
+
+	uassert.AbortsWithMessage(t, "callback already registered for key: test/duplicate", func() {
+		RegisterCallback(cross, "test", "duplicate", func() {})
+	})
+
+	// unauthorized user registration
+	userAddr := testutils.TestAddress("user")
+	testing.SetOriginCaller(userAddr)
+
+	uassert.AbortsWithMessage(t, "unauthorized: caller g1w4ek2ujlta047h6lta047h6lta047h6lkvk347 is not admin or governance", func() {
+		RegisterCallback(cross, "test", "unauthorized", func() {})
+	})
+}
+
+func TestCallbackUpdateErrors(t *testing.T) {
+	callbackTree = avl.NewTree()
+	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	testing.SetOriginCaller(adminAddr)
+
+	uassert.AbortsWithMessage(t, "callback not found for key: test/nonexistent", func() {
+		UpdateCallback(cross, "test", "nonexistent", func() {})
+	})
+
+	RegisterCallback(cross, "test", "update", func() {})
+
+	userAddr := testutils.TestAddress("user")
+	testing.SetOriginCaller(userAddr)
+	uassert.AbortsWithMessage(t, "unauthorized: caller g1w4ek2ujlta047h6lta047h6lta047h6lkvk347 is not admin or governance", func() {
+		UpdateCallback(cross, "test", "update", func() {})
+	})
+}
+
+func TestUpgradablePattern(t *testing.T) {
+	t.Run("version Management", func(t *testing.T) {
+		callbackTree = avl.NewTree()
+		adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+		testing.SetOriginCaller(adminAddr)
+
+		// v1
+		RegisterCallback(cross, "emission", "MintAndDistributeGns", func() uint64 {
+			return 100
 		})
-	}
-}
 
-func TestDuplicateCallback(t *testing.T) {
-	callbackTree = avl.NewTree()
+		// v2
+		UpdateCallback(cross, "emission", "MintAndDistributeGns", func() uint64 {
+			return 200
+		})
 
-	key := "test/duplicate"
-	RegisterCallback(key, func() {})
+		// check version
+		cb, exists := LookupCallback("emission", "MintAndDistributeGns")
+		uassert.True(t, exists)
+		fn, ok := cb.(func() uint64)
+		uassert.True(t, ok)
+		result := fn()
+		uassert.Equal(t, result, uint64(200))
+	})
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("Expected panic on duplicate registration")
+	t.Run("Multiple Contract Callbacks", func(t *testing.T) {
+		callbackTree = avl.NewTree()
+		adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+		testing.SetOriginCaller(adminAddr)
+
+		// Emission contract callback
+			RegisterCallback(cross, "emission", "MintAndDistributeGns", func() uint64 {
+				return 100
+			})
+
+		// Position contract callback
+			RegisterCallback(cross, "position", "GetPosition", func(id uint64) string {
+				return "position"
+			})
+
+		// check each callback is independent
+		cb1, exists := LookupCallback("emission", "MintAndDistributeGns")
+		uassert.True(t, exists)
+		cb2, exists := LookupCallback("position", "GetPosition")
+		uassert.True(t, exists)
+
+		fn1, ok := cb1.(func() uint64)
+		uassert.True(t, ok)
+		fn2, ok := cb2.(func(uint64) string)
+		uassert.True(t, ok)
+
+		uassert.Equal(t, fn1(), uint64(100))
+		uassert.Equal(t, fn2(1), "position")
+	})
+
+	t.Run("Rollback Scenario", func(t *testing.T) {
+		callbackTree = avl.NewTree()
+		adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+		testing.SetOriginCaller(adminAddr)
+
+		// v1
+		originalCallback := func() uint64 {
+			return 100
 		}
-	}()
+		
+		RegisterCallback(cross, "emission", "MintAndDistributeGns", originalCallback)
 
-	RegisterCallback(key, func() {})
-}
+		// buggy version
+		UpdateCallback(cross, "emission", "MintAndDistributeGns", func() uint64 {
+			panic("buggy version")
+		})
 
-func TestNonExistentCallback(t *testing.T) {
-	callbackTree = avl.NewTree()
+		// rollback
+		UpdateCallback(cross, "emission", "MintAndDistributeGns", originalCallback)
 
-	_, exists := GetCallback("non/existent/key")
-	uassert.False(t, exists)
+		// check rollback
+		cb, exists := LookupCallback("emission", "MintAndDistributeGns")
+		uassert.True(t, exists)
+		fn, ok := cb.(func() uint64)
+		uassert.True(t, ok)
+		result := fn()
+		uassert.Equal(t, result, uint64(100))
+	})
+
+	t.Run("Namespace Collision", func(t *testing.T) {
+		callbackTree = avl.NewTree()
+		adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+		testing.SetOriginCaller(adminAddr)
+
+		// same namespace, different function
+		RegisterCallback(cross, "emission", "func1", func() int { return 1 })
+		RegisterCallback(cross, "emission", "func2", func() int { return 2 })
+
+		// check each function is independent
+		cb1, exists := LookupCallback("emission", "func1")
+		uassert.True(t, exists)
+		cb2, exists := LookupCallback("emission", "func2")
+		uassert.True(t, exists)
+
+		fn1, ok := cb1.(func() int)
+		uassert.True(t, ok)
+		fn2, ok := cb2.(func() int)
+		uassert.True(t, ok)
+
+		uassert.Equal(t, fn1(), 1)
+		uassert.Equal(t, fn2(), 2)
+	})
 }

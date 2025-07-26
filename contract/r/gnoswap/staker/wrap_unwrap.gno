@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 )
 
 // wrap converts `ugnot` tokens into `wugnot` tokens.
@@ -17,28 +18,29 @@ import (
 // Panics:
 // - If `ugnotAmount` is less than or equal to 0.
 // - If `ugnotAmount` is less than the minimum deposit required (`consts.UGNOT_MIN_DEPOSIT_TO_WRAP`).
-func wrap(ugnotAmount uint64) {
+func wrap(ugnotAmount int64) {
 	if ugnotAmount <= 0 {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errWrapUnwrap,
 			"cannot wrap 0 ugnot",
 		))
 	}
 
-	if ugnotAmount < consts.UGNOT_MIN_DEPOSIT_TO_WRAP {
-		panic(addDetailToError(
+	if ugnotAmount < int64(consts.UGNOT_MIN_DEPOSIT_TO_WRAP) {
+		panic(makeErrorWithDetails(
 			errWugnotMinimum,
 			ufmt.Sprintf("amount(%d) < minimum(%d)", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP),
 		))
 	}
 
 	// WRAP IT
+	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(stakerAddr, consts.WUGNOT_ADDR, std.Coins{{Denom: "ugnot", Amount: int64(ugnotAmount)}})
-	wugnot.Deposit() // STAKER HAS WUGNOT
+	banker.SendCoins(stakerAddr, consts.WUGNOT_ADDR, std.Coins{{Denom: "ugnot", Amount: ugnotAmount}})
+	wugnot.Deposit(cross) // STAKER HAS WUGNOT
 
 	// SEND WUGNOT: STAKER -> USER
-	wugnot.Transfer(std.PreviousRealm().Address(), ugnotAmount)
+	wugnot.Transfer(cross, std.PreviousRealm().Address(), ugnotAmount)
 }
 
 // unwrap converts `wugnot` tokens back into `ugnot` tokens.
@@ -48,18 +50,20 @@ func wrap(ugnotAmount uint64) {
 //
 // Note:
 // - If `wugnotAmount` is 0, the function simply returns without executing further steps.
-func unwrap(wugnotAmount uint64) {
+func unwrap(wugnotAmount int64) {
 	if wugnotAmount == 0 {
 		return
 	}
 
+	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
+	
 	// SEND WUGNOT: USER -> STAKER
-	wugnot.TransferFrom(std.PreviousRealm().Address(), stakerAddr, wugnotAmount)
+	wugnot.TransferFrom(cross, std.PreviousRealm().Address(), stakerAddr, wugnotAmount)
 
 	// UNWRAP IT
-	wugnot.Withdraw(wugnotAmount)
+	wugnot.Withdraw(cross, wugnotAmount)
 
 	// SEND GNOT: STAKER -> USER
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(stakerAddr, std.PreviousRealm().Address(), std.Coins{{Denom: "ugnot", Amount: int64(wugnotAmount)}})
+	banker.SendCoins(stakerAddr, std.PreviousRealm().Address(), std.Coins{{Denom: "ugnot", Amount: wugnotAmount}})
 }

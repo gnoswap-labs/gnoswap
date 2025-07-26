@@ -6,14 +6,17 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
+	prbac "gno.land/p/gnoswap/rbac"
 )
 
 func TestWrap(t *testing.T) {
+	// t.Skip("skipping warp test")
 	user1Addr := testutils.TestAddress("user1")
+	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	tests := []struct {
 		name        string
 		action      func()
-		verify      func() uint64
+		verify      func() int64
 		expected    string
 		shouldPanic bool
 	}{
@@ -39,12 +42,18 @@ func TestWrap(t *testing.T) {
 			name: "Success - Valid amount",
 			action: func() {
 				testing.SetRealm(std.NewUserRealm(user1Addr))
-				ugnotFaucet(t, user1Addr, 1_000)
-				ugnotFaucet(t, stakerAddr, 1_000)
+				func() {
+					testing.SetRealm(adminRealm)
+					ugnotFaucet(t, user1Addr, 1_000)
+					ugnotFaucet(t, stakerAddr, 1_000)
+				}()
 				testing.SetRealm(std.NewUserRealm(user1Addr))
-				wrap(1_000)
+				func() {
+					testing.SetRealm(stakerRealm)
+					wrap(1_000)
+				}()
 			},
-			verify: func() uint64 {
+			verify: func() int64 {
 				return TokenBalance(t, wugnotPath, user1Addr)
 			},
 			expected:    "1000",
@@ -77,7 +86,7 @@ func TestWrap(t *testing.T) {
 				tc.action()
 				if tc.verify != nil {
 					balance := tc.verify()
-					if strconv.FormatUint(balance, 10) != tc.expected {
+					if strconv.FormatInt(balance, 10) != tc.expected {
 						t.Errorf("Expected balance: %s, got: %d", tc.expected, balance)
 					}
 				}
@@ -88,10 +97,11 @@ func TestWrap(t *testing.T) {
 
 func TestUnwrap(t *testing.T) {
 	user2Addr := testutils.TestAddress("user2")
+	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	tests := []struct {
 		name        string
 		action      func()
-		verify      func() uint64
+		verify      func() int64
 		expected    string
 		shouldPanic bool
 	}{
@@ -108,15 +118,28 @@ func TestUnwrap(t *testing.T) {
 			name: "Success - Valid amount",
 			action: func() {
 				testing.SetRealm(std.NewUserRealm(user2Addr))
-				ugnotFaucet(t, user2Addr, 1_000)
-				ugnotFaucet(t, stakerAddr, 1_000)
+				func() {
+					testing.SetRealm(adminRealm)
+					ugnotFaucet(t, user2Addr, 1_000)
+					ugnotFaucet(t, stakerAddr, 1_000)
+				}()
 				testing.SetRealm(std.NewUserRealm(user2Addr))
-				wrap(1_000)
+				func() {
+					testing.SetRealm(stakerRealm)
+					wrap(1_000)
+				}()
 				testing.SetRealm(std.NewUserRealm(user2Addr))
-				wugnotApprove(t, user2Addr, stakerAddr, 1_000)
-				unwrap(1_000)
+				func() {
+					testing.SetRealm(std.NewUserRealm(stakerAddr))
+					wugnotApprove(t, user2Addr, stakerAddr, 1_000)
+				}()
+				testing.SetRealm(std.NewUserRealm(user2Addr))
+				func() {
+					testing.SetRealm(stakerRealm)
+					unwrap(1_000)
+				}()
 			},
-			verify: func() uint64 {
+			verify: func() int64 {
 				return TokenBalance(t, wugnotPath, user2Addr)
 			},
 			expected:    "0",
@@ -149,7 +172,7 @@ func TestUnwrap(t *testing.T) {
 				tc.action()
 				if tc.verify != nil {
 					balance := tc.verify()
-					if strconv.FormatUint(balance, 10) != tc.expected {
+					if strconv.FormatInt(balance, 10) != tc.expected {
 						t.Errorf("Expected balance: %s, got: %d", tc.expected, balance)
 					}
 				}

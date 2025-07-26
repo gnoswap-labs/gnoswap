@@ -35,27 +35,26 @@ func liquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 		))
 	}
 
-	var z *u256.Uint
+	absDelta := y.Abs()
 
 	// Subtract or add based on the sign of y
-	if y.Lt(i256.Zero()) {
-		absDelta := y.Abs()
-		z = new(u256.Uint).Sub(x, absDelta)
+	if y.IsNeg() {
+		z := new(u256.Uint).Sub(x, absDelta)
 		if z.Gte(x) {
 			panic(newErrorWithDetail(
 				errLiquidityCalculation,
 				ufmt.Sprintf("Condition failed: (z must be < x) (x: %s, y: %s, z:%s)", x.ToString(), y.ToString(), z.ToString()),
 			))
 		}
+		return z
 	} else {
-		z = new(u256.Uint).Add(x, y.Abs())
+		z := new(u256.Uint).Add(x, absDelta)
 		if z.Lt(x) {
 			panic(newErrorWithDetail(
 				errLiquidityCalculation,
 				ufmt.Sprintf("Condition failed: (z must be >= x) (x: %s, y: %s, z:%s)", x.ToString(), y.ToString(), z.ToString()),
 			))
 		}
+		return z
 	}
-
-	return z
 }

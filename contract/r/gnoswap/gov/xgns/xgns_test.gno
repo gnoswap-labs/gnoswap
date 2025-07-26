@@ -6,33 +6,62 @@ import (
 
 	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/consts"
-
-	"gno.land/r/gnoswap/v1/access"
+	prbac "gno.land/p/gnoswap/rbac"
 )
 
 var (
-	adminAddr        = getContractAddress(access.ROLE_ADMIN)
-	govStakerAddress = getContractAddress(access.ROLE_GOV_STAKER)
-	launchpadAddress = getContractAddress(access.ROLE_LAUNCHPAD)
+	adminAddr        = getContractAddress(prbac.ROLE_ADMIN.String())
+	govStakerAddress = getContractAddress(prbac.ROLE_GOV_STAKER.String())
+	launchpadAddress = getContractAddress(prbac.ROLE_LAUNCHPAD.String())
 )
 
 func TestTotalSupply(t *testing.T) {
-	expectedSupply := uint64(0)
+	expectedSupply := int64(0)
 	actualSupply := TotalSupply()
 	if actualSupply != expectedSupply {
 		t.Errorf("TotalSupply() failed. Expected %d, got %d", expectedSupply, actualSupply)
 	}
 }
 
-func TestVotingSupply(t *testing.T) {
-	initialSupply := uint64(1000)
-	launchpadBalance := uint64(200)
+func TestMintFail(t *testing.T) {
+	amount := int64(100)
+	testing.SetRealm(std.NewUserRealm(adminAddr))
+	uassert.AbortsWithMessage(t, "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not gov_staker", func() {
+		Mint(cross, govStakerAddress, amount)
+	})
+	uassert.AbortsWithMessage(t, "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not launchpad", func() {
+		MintByLaunchPad(cross, govStakerAddress, amount)
+	})
+}
 
-	testing.SetRealm(std.NewCodeRealm(consts.GOV_STAKER_PATH))
-	Mint(govStakerAddress, initialSupply-launchpadBalance)
+func TestBurn(t *testing.T) {
+	mintAmount := int64(1000)
+	burnAmount := int64(200)
 
 	testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
-	MintByLaunchPad(launchpadAddress, launchpadBalance)
+
+	testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
+	MintByLaunchPad(cross, launchpadAddress, mintAmount)
+	BurnByLaunchPad(cross, launchpadAddress, burnAmount)
+	expectedBalance := mintAmount - burnAmount
+	actualBalance := BalanceOf(launchpadAddress)
+	if actualBalance != expectedBalance {
+		t.Errorf("Burn() failed. Expected %d, got %d", expectedBalance, actualBalance)
+	}
+
+	// reset state by burn all
+	BurnByLaunchPad(cross, launchpadAddress, actualBalance)
+}
+
+func TestVotingSupply(t *testing.T) {
+	initialSupply := int64(1000)
+	launchpadBalance := int64(200)
+
+	testing.SetRealm(std.NewUserRealm(govStakerAddress))
+	Mint(cross, govStakerAddress, initialSupply-launchpadBalance)
+
+	testing.SetRealm(std.NewUserRealm(launchpadAddress))
+	MintByLaunchPad(cross, launchpadAddress, launchpadBalance)
 
 	expectedVotingSupply := initialSupply - launchpadBalance
 	actualVotingSupply := VotingSupply()
@@ -47,36 +76,13 @@ func TestVotingSupply(t *testing.T) {
 	}
 }
 
-func TestMintFail(t *testing.T) {
-	amount := uint64(100)
-	testing.SetRealm(std.NewUserRealm(adminAddr))
-	uassert.PanicsWithMessage(t, "[GNOSWAP-XGNS-001] caller has no permission || only gov/staker(g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa) or launchpad(g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3) contract can call Mint, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", func() {
-		Mint(govStakerAddress, amount)
-	})
-	uassert.PanicsWithMessage(t, "[GNOSWAP-XGNS-001] caller has no permission || only launchpad(g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3) contract can call MintByLaunchPad, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", func() {
-		MintByLaunchPad(govStakerAddress, amount)
-	})
-}
-
-func TestBurn(t *testing.T) {
-	burnAmount := uint64(200)
-
-	testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
-	BurnByLaunchPad(launchpadAddress, burnAmount)
-	expectedBalance := uint64(0)
-	actualBalance := BalanceOf(launchpadAddress)
-	if actualBalance != expectedBalance {
-		t.Errorf("Burn() failed. Expected %d, got %d", expectedBalance, actualBalance)
-	}
-}
-
 func TestBurnFail(t *testing.T) {
-	amount := uint64(100)
+	amount := int64(100)
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	uassert.PanicsWithMessage(t, "[GNOSWAP-XGNS-001] caller has no permission || only gov/staker(g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa) or launchpad(g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3) contract can call Burn, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", func() {
-		Burn(govStakerAddress, amount)
+	uassert.AbortsWithMessage(t, "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not gov_staker", func() {
+		Burn(cross, govStakerAddress, amount)
 	})
-	uassert.PanicsWithMessage(t, "[GNOSWAP-XGNS-001] caller has no permission || only launchpad(g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3) contract can call BurnByLaunchPad, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", func() {
-		BurnByLaunchPad(govStakerAddress, amount)
+	uassert.AbortsWithMessage(t, "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not launchpad", func() {
+		BurnByLaunchPad(cross, govStakerAddress, amount)
 	})
 }

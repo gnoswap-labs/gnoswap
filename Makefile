@@ -54,6 +54,22 @@ search:
 fmt:
 	find . -name "*.gno" -type f -exec gofumpt -w {} \;
 
+# Docker commands
+docker-build:
+	docker-compose build
+
+docker-up:
+	docker-compose up -d
+
+docker-down:
+	docker-compose down
+
+docker-logs:
+	docker-compose logs -f
+
+docker-shell:
+	docker-compose exec app bash
+
 # 📌 Help message
 .PHONY: help
 help:
@@ -68,5 +84,10 @@ help:
 	@echo "  make search          Find test files"
 	@echo "  make reset           Reset the test environment"
 	@echo "  make fmt             Format all .gno files"
+	@echo "  make docker-build    Build Docker images"
+	@echo "  make docker-up       Start Docker containers"
+	@echo "  make docker-down     Stop Docker containers"
+	@echo "  make docker-logs     View Docker container logs"
+	@echo "  make docker-shell    Open a shell in the Docker container"
 
 

@@ -39,3 +39,7 @@ var (
 func newErrorWithDetail(err error, detail string) string {
 	return ufmt.Errorf("%s || %s", err.Error(), detail).Error()
 }
+
+func makeErrorWithDetails(err error, details string) error {
+	return ufmt.Errorf("%s || %s", err.Error(), details)
+}

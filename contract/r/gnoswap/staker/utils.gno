@@ -6,17 +6,17 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
+	prbac "gno.land/p/gnoswap/rbac"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
-
-	phalt "gno.land/p/gnoswap/halt"
-	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/v1/rbac"
 )
 
 // GetOrigPkgAddr returns the original package address.
 // In staker contract, original package address is the staker address.
 func GetOrigPkgAddr() std.Address {
-	return stakerAddr
+	return getRoleAddress(prbac.ROLE_STAKER)
 }
 
 // poolPathAlign ensures that a pool path is formatted with tokens in lexicographical order.
@@ -39,7 +39,7 @@ func GetOrigPkgAddr() std.Address {
 func poolPathAlign(poolPath string) string {
 	res, err := common.Split(poolPath, ":", 3)
 	if err != nil {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errInvalidPoolPath,
 			ufmt.Sprintf("invalid poolPath(%s)", poolPath),
 		))
@@ -91,7 +91,7 @@ func poolPathDivide(poolPath string) (string, string, string) {
 //   - grc721.TokenID: the converted token ID
 func positionIdFrom(positionId any) grc721.TokenID {
 	if positionId == nil {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			"positionId is nil",
 		))
@@ -107,7 +107,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 	case grc721.TokenID:
 		return positionId.(grc721.TokenID)
 	default:
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("unsupported positionId type(%T)", positionId),
 		))
@@ -132,58 +132,14 @@ func min(x, y uint64) uint64 {
 
 // contains checks if a string is present in a slice of strings.
 func contains(slice []string, item string) bool {
+	// we can use strings.EqualFold here, but this function should be case-sensitive.
+	// so, it is better to compare strings directly.
 	for _, element := range slice {
 		if element == item {
 			return true
 		}
 	}
 	return false
-}
-
-// derivePkgAddr derives the Realm address from it's pkgpath parameter
-func derivePkgAddr(pkgPath string) std.Address {
-	return std.DerivePkgAddr(pkgPath)
-}
-
-// getPrevRealm returns object of the previous realm.
-func getPrevRealm() std.Realm {
-	return std.PreviousRealm()
-}
-
-// getPrevAddr returns the address of the previous realm.
-func getPrevAddr() std.Address {
-	return std.PreviousRealm().Address()
-}
-
-// getPrevPkgPath returns the package path of the previous realm.
-func getPrevPkgPath() string {
-	return std.PreviousRealm().PkgPath()
-}
-
-// getPrev returns the address and package path of the previous realm.
-func getPrev() (string, string) {
-	prev := getPrevRealm()
-	return prev.Address().String(), prev.PkgPath()
-}
-
-// isUserCall returns true if the caller is a user.
-func isUserCall() bool {
-	return std.PreviousRealm().IsUser()
-}
-
-// assertOnlyNotHalted panics if the contract is halted.
-func assertOnlyNotHalted() {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(phalt.OpTypeWithdraw); err != nil {
-			panic(err.Error())
-		}
-
-		if halt.IsContractHalted(phalt.OpTypeStaker) {
-			panic("staker contract operations are currently disabled")
-		}
-	}
 }
 
 func formatUint(v any) string {
@@ -199,7 +155,7 @@ func formatUint(v any) string {
 	}
 }
 
-func formatInt(v any) string {
+func formatAnyInt(v any) string {
 	switch v := v.(type) {
 	case int32:
 		return strconv.FormatInt(int64(v), 10)
@@ -214,4 +170,13 @@ func formatInt(v any) string {
 
 func formatBool(v bool) string {
 	return strconv.FormatBool(v)
+}
+
+func getRoleAddress(role prbac.SystemRole) std.Address {
+	addr, exists := access.GetAddress(role.String())
+	if !exists {
+		return rbac.DefaultRoleAddresses[role]
+	}
+
+	return addr
 }

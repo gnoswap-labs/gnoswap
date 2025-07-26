@@ -36,9 +36,10 @@ var (
 	errInvalidAvgBlockTime = errors.New("[GNOSWAP-LAUNCHPAD-027] invalid average block time")
 	errInvalidHeight       = errors.New("[GNOSWAP-LAUNCHPAD-028] invalid height")
 	errTierHasParticipants = errors.New("[GNOSWAP-LAUNCHPAD-029] tier has participants")
+	errNotYetEndedProject  = errors.New("[GNOSWAP-LAUNCHPAD-030] project lock period is not over yet")
+	errTransferFailed      = errors.New("[GNOSWAP-LAUNCHPAD-031] transfer failed")
 )
 
-func addDetailToError(err error, detail string) string {
-	finalErr := ufmt.Errorf("%s || %s", err.Error(), detail)
-	return finalErr.Error()
+func makeErrorWithDetails(err error, details string) error {
+	return ufmt.Errorf("%s || %s", err.Error(), details)
 }

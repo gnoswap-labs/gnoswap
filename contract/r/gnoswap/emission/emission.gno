@@ -5,19 +5,23 @@ import (
 	"time"
 
 	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (
 	// leftGNSAmount tracks undistributed GNS tokens from previous distributions
-	leftGNSAmount uint64
+	leftGNSAmount int64
 	// lastExecutedHeight stores the last block height when distribution was executed
 	lastExecutedHeight int64
+
+	// emissionAddr is the address of the emission realm
+	emissionAddr = std.CurrentRealm().Address()
 )
 
 // MintAndDistributeGns mints new GNS tokens and distributes them to targets
 // Returns the total amount of GNS distributed
-func MintAndDistributeGns() uint64 {
-	assertOnlyNotHalted()
+func MintAndDistributeGns(cur realm) int64 {
+	halt.AssertIsNotHaltedEmission()
 
 	currentHeight := std.ChainHeight()
 	lastMintedHeight := gns.GetLastMintedHeight()
@@ -25,8 +29,9 @@ func MintAndDistributeGns() uint64 {
 		// Skip if we've already minted tokens at this height
 		return 0
 	}
+
 	// Mint new tokens and add any leftover amounts from previous distribution
-	mintedEmissionRewardAmount := gns.MintGns(emissionAddr)
+	mintedEmissionRewardAmount := gns.MintGns(cross, emissionAddr)
 
 	distributableAmount := mintedEmissionRewardAmount
 	prevLeftAmount := GetLeftGNSAmount()
@@ -35,25 +40,29 @@ func MintAndDistributeGns() uint64 {
 		setLeftGNSAmount(0)
 	}
 	// Distribute tokens and track any undistributed amount
-	distributedGNSAmount := distributeToTarget(distributableAmount)
+	distributedGNSAmount, err := distributeToTarget(cur, distributableAmount)
+	if err != nil {
+		panic(err)
+	}
+	
 	if distributableAmount != distributedGNSAmount {
 		setLeftGNSAmount(distributableAmount - distributedGNSAmount)
 	}
 
 	// Emit event with distribution details
-	prevAddr, prevPkgPath := getPrevAsString()
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"MintAndDistributeGns",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"lastHeight", formatInt(lastExecutedHeight),
 		"currentHeight", formatInt(currentHeight),
 		"currentTimestamp", formatInt(time.Now().Unix()),
-		"mintedAmount", formatUint(mintedEmissionRewardAmount),
-		"prevLeftAmount", formatUint(prevLeftAmount),
-		"distributedAmount", formatUint(distributedGNSAmount),
-		"currentLeftAmount", formatUint(GetLeftGNSAmount()),
-		"gnsTotalSupply", formatUint(gns.TotalSupply()),
+		"mintedAmount", formatInt(mintedEmissionRewardAmount),
+		"prevLeftAmount", formatInt(prevLeftAmount),
+		"distributedAmount", formatInt(distributedGNSAmount),
+		"currentLeftAmount", formatInt(GetLeftGNSAmount()),
+		"gnsTotalSupply", formatInt(gns.TotalSupply()),
 	)
 
 	setLastExecutedHeight(currentHeight)
@@ -62,12 +71,12 @@ func MintAndDistributeGns() uint64 {
 }
 
 // GetLeftGNSAmount returns the amount of undistributed GNS tokens
-func GetLeftGNSAmount() uint64 {
+func GetLeftGNSAmount() int64 {
 	return leftGNSAmount
 }
 
 // setLeftGNSAmount updates the undistributed GNS token amount
-func setLeftGNSAmount(amount uint64) {
+func setLeftGNSAmount(amount int64) {
 	leftGNSAmount = amount
 }
 

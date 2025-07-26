@@ -8,6 +8,8 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/v1/halt"
 	"gno.land/r/gnoswap/v1/referral"
 )
 
@@ -27,7 +29,7 @@ func NewExactOutSwapOperation(pp ExactOutParams) *ExactOutSwapOperation {
 
 // ExactOutSwapRoute is a function that performs an exact-out swap operation.
 // exact-out swap means that the user wants to swap an exact amount of output tokens for input tokens.
-func ExactOutSwapRoute(
+func ExactOutSwapRoute(cur realm,
 	inputToken string,
 	outputToken string,
 	amountOut string,
@@ -37,13 +39,14 @@ func ExactOutSwapRoute(
 	deadline int64,
 	referrer string,
 ) (string, string) {
+	halt.AssertIsNotHaltedRouter()
+	halt.AssertIsNotHaltedWithdraw()
+
 	if err := checkDeadline(deadline); err != nil {
 		panic(addDetailToError(errExpired, err.Error()))
 	}
 
-	if err := commonSwapSetup(); err != nil {
-		panic(addDetailToError(errInvalidInput, err.Error()))
-	}
+	emission.MintAndDistributeGns(cross)
 
 	baseParams := BaseSwapParams{
 		InputToken:  inputToken,
@@ -72,16 +75,18 @@ func ExactOutSwapRoute(
 		result.AmountSpecified.Abs(),
 	)
 
-	prevAddr, prevPkgPath := getPrev()
-	success := referral.TryRegister(std.Address(prevAddr), referrer)
+	caller := std.PreviousRealm().Address()
+	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer
 	if !success {
-		actualReferrer = referral.GetReferral(prevAddr)
+		actualReferrer = referral.GetReferral(caller.String())
 	}
+
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"ExactOutSwap",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"input", pp.InputToken,
 		"output", pp.OutputToken,
 		"exactAmount", amountOut,

@@ -20,11 +20,17 @@ jobs:
         with:
           ruby-version: 3.4
 
+      - name: Install bundler
+        run: gem install bundler
+
+      - name: Install ruby gems
+        run: bundle install
+
       - name: Generate test matrix
         id: set-matrix
         run: |
           chmod +x .github/scripts/generate_matrix.rb
-          echo "matrix=$(ruby .github/scripts/generate_matrix.rb contract)" >> $GITHUB_OUTPUT
+          echo "matrix=$(ruby .github/scripts/generate_matrix.rb contract tests/scenario)" >> $GITHUB_OUTPUT
 
   test-gnoswap:
     needs: generate-matrix
@@ -40,14 +46,14 @@ jobs:
       - name: Check out gno(master - before change std prefix)
         uses: actions/checkout@v4
         with:
-          repository: gnolang/gno
+          repository: gnoswap-labs/gno
           ref: master
           path: ./gno
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: '1.22'
 
       - name: Config gnovm
         run: |
@@ -63,6 +69,27 @@ jobs:
         with:
           python-version: 3.12
 
+      - name: Cache uv packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            uv-${{ runner.os }}-
+
+      - name: Install uv
+        run: |
+          pip install uv
+
+      - name: Create uv virtual environment
+        run: |
+          uv venv .venv
+
+      - name: Activate venv and install dependencies
+        run: |
+          source .venv/bin/activate
+          uv pip install -r requirements.txt
+
       - name: Checkout gnoswap(main)
         uses: actions/checkout@v4
         with:
@@ -73,7 +100,7 @@ jobs:
           cd tmp/gnoswap
           python3 setup.py -w /home/runner/work/gnoswap/gnoswap
 
-      - name: "Run tests for ${{ matrix.name }}"
+      - name: 'Run tests for ${{ matrix.name }}'
         run: |
           chmod +x .github/scripts/run_tests.rb
           ruby .github/scripts/run_tests.rb \

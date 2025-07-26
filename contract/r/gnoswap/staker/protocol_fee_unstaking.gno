@@ -6,8 +6,9 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
 
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
@@ -30,54 +31,35 @@ var unstakingFee = uint64(100) // 1%
 // - uint64: The amount after deducting the unstaking fee.
 func handleUnStakingFee(
 	tokenPath string,
-	amount uint64,
+	amount int64,
 	internal bool,
 	positionId uint64,
 	poolPath string,
-) uint64 {
+) (int64, int64, error) {
 	if unstakingFee == 0 {
-		return amount
+		return amount, 0, nil
 	}
 
-	feeAmount := amount * unstakingFee / 10000
+	// Do not change the order of the operation.
+	feeAmount := (amount * int64(unstakingFee)) / 10000
 	if feeAmount == 0 {
-		return amount
+		return amount, 0, nil
+	} else if feeAmount < 0 {
+		return 0, 0, ufmt.Errorf("fee amount cannot be negative")
 	}
-
-	prevAddr, prevPkgPath := getPrev()
-
+	
 	if internal {
-		// staker contract has fee
-		gns.Transfer(protocolFeeAddr, feeAmount)
-		pf.AddToProtocolFee(consts.GNS_PATH, feeAmount)
-
-		std.Emit(
-			"ProtocolFeeInternalReward",
-			"prevAddr", prevAddr,
-			"prevRealm", prevPkgPath,
-			"fromPositionId", formatUint(positionId),
-			"fromPoolPath", poolPath,
-			"feeTokenPath", consts.GNS_PATH,
-			"feeAmount", formatUint(feeAmount),
-		)
-	} else {
-		// external contract has fee
-		teller := common.GetTokenTeller(tokenPath)
-		teller.Transfer(protocolFeeAddr, feeAmount)
-		pf.AddToProtocolFee(tokenPath, feeAmount)
-
-		std.Emit(
-			"ProtocolFeeExternalReward",
-			"prevAddr", prevAddr,
-			"prevRealm", prevPkgPath,
-			"fromPositionId", formatUint(positionId),
-			"fromPoolPath", poolPath,
-			"feeTokenPath", tokenPath,
-			"feeAmount", formatUint(feeAmount),
-		)
+		tokenPath = consts.GNS_PATH
 	}
 
-	return amount - feeAmount
+	protocolFeeAddr := getRoleAddress(prbac.ROLE_PROTOCOL_FEE)
+
+	// external contract has fee
+	common.Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
+
+	pf.AddToProtocolFee(cross, tokenPath, uint64(feeAmount))
+
+	return amount - feeAmount, feeAmount, nil
 }
 
 // GetUnstakingFee returns current rate of unstaking fee
@@ -96,22 +78,20 @@ func GetUnstakingFee() uint64 {
 //
 // Panics:
 // - If the caller is not an admin.
-func SetUnStakingFeeByAdmin(fee uint64) {
+func SetUnStakingFeeByAdmin(cur realm, fee uint64) {
 	caller := std.PreviousRealm().Address()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err.Error())
-	}
+	access.AssertIsAdmin(caller)
 
 	prevUnStakingFee := GetUnstakingFee()
 
 	setUnStakingFee(fee)
 
-	prevAddr, prevPkgPath := getPrev()
+	previousRealm := std.PreviousRealm()
 
 	std.Emit(
 		"SetUnStakingFeeByAdmin",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"prevFee", formatUint(prevUnStakingFee),
 		"newFee", formatUint(fee),
 	)
@@ -120,22 +100,20 @@ func SetUnStakingFeeByAdmin(fee uint64) {
 // SetUnStakingFee modifies the unstaking fee
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#setunstakingfee
-func SetUnStakingFee(fee uint64) {
-	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err.Error())
-	}
+func SetUnStakingFee(cur realm, fee uint64) {
+	caller := std.PreviousRealm().Address()
+	access.AssertIsGovernance(caller)
 
 	prevUnStakingFee := GetUnstakingFee()
 
 	setUnStakingFee(fee)
 
-	prevAddr, prevPkgPath := getPrev()
+	previousRealm := std.PreviousRealm()
 
 	std.Emit(
 		"SetUnStakingFee",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"prevFee", formatUint(prevUnStakingFee),
 		"newFee", formatUint(fee),
 	)
@@ -144,9 +122,9 @@ func SetUnStakingFee(fee uint64) {
 func setUnStakingFee(fee uint64) {
 	// 10000 (bps) = 100%
 	if fee > 10000 {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errInvalidUnstakingFee,
-			ufmt.Sprintf("reward_fee.gno__SetUnstakingFee() || fee(%d) must be in range 0 ~ 10000", fee),
+			ufmt.Sprintf("fee(%d) must be in range 0 ~ 10000", fee),
 		))
 	}
 

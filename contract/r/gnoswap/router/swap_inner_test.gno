@@ -2,12 +2,13 @@ package router
 
 import (
 	"std"
-	"strings"
 	"testing"
 
 	"gno.land/p/demo/uassert"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -65,10 +66,9 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 }
 
 func TestSwapInner(t *testing.T) {
-	t.Skip("run this test separately")
 	user1Realm := std.NewUserRealm(user1Addr)
-	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
-	poolAddr, _ := access.GetAddress(access.ROLE_POOL)
+	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	tests := []struct {
 		name              string
@@ -80,6 +80,7 @@ func TestSwapInner(t *testing.T) {
 		expectedRecv      string
 		expectedOut       string
 		expectError       bool
+		expectedErrorMsg  string
 	}{
 		{
 			name: "normal swap - exact input",
@@ -88,8 +89,8 @@ func TestSwapInner(t *testing.T) {
 				MakeMintPositionWithoutFee(t)
 
 				testing.SetRealm(user1Realm)
-				bar.Approve(routerAddr, maxApprove)
-				baz.Approve(routerAddr, maxApprove)
+				bar.Approve(cross, routerAddr, maxApprove)
+				baz.Approve(cross, routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 				TokenFaucet(t, bazPath, user1Addr)
 			},
@@ -113,8 +114,8 @@ func TestSwapInner(t *testing.T) {
 				MakeMintPositionWithoutFee(t)
 
 				testing.SetRealm(user1Realm)
-				bar.Approve(routerAddr, maxApprove)
-				baz.Approve(routerAddr, maxApprove)
+				bar.Approve(cross, routerAddr, maxApprove)
+				baz.Approve(cross, routerAddr, maxApprove)
 				TokenFaucet(t, barPath, user1Addr)
 				TokenFaucet(t, bazPath, user1Addr)
 			},
@@ -127,19 +128,20 @@ func TestSwapInner(t *testing.T) {
 				fee:      3000,
 				payer:    routerAddr,
 			},
-			expectedRecv: "0",
-			expectedOut:  "0",
-			expectError:  true,
+			expectedRecv:     "0",
+			expectedOut:      "0",
+			expectError:      true,
+			expectedErrorMsg: "[GNOSWAP-POOL-005] out of range for numeric value: amount(92267581029952440000000) overflows int64 range (max 9223372036854775807)",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testing.SetRealm(user1Realm)
-			bar.Approve(routerAddr, maxApprove)
-			baz.Approve(routerAddr, maxApprove)
-			bar.Approve(poolAddr, maxApprove)
-			baz.Approve(poolAddr, maxApprove)
+			bar.Approve(cross, routerAddr, maxApprove)
+			baz.Approve(cross, routerAddr, maxApprove)
+			bar.Approve(cross, poolAddr, maxApprove)
+			baz.Approve(cross, poolAddr, maxApprove)
 			TokenFaucet(t, barPath, routerAddr)
 
 			if tt.setupFn != nil {
@@ -147,25 +149,29 @@ func TestSwapInner(t *testing.T) {
 			}
 
 			if tt.expectError {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Error("Expected panic for overflow")
-					} else if !strings.Contains(r.(string), "overflow") {
-						t.Error("Expected panic for overflow")
-					}
-				}()
-			}
+				uassert.AbortsWithMessage(t, tt.expectedErrorMsg, func() {
+					swapInner(
+						cross,
+						tt.amountSpecified,
+						tt.recipient,
+						tt.sqrtPriceLimitX96,
+						tt.data,
+					)
+				})
+			} else {
+				testing.SetRealm(routerRealm)
+				poolRecv, poolOut := swapInner(
+					cross,
+					tt.amountSpecified,
+					tt.recipient,
+					tt.sqrtPriceLimitX96,
+					tt.data,
+				)
 
-			poolRecv, poolOut := swapInner(
-				tt.amountSpecified,
-				tt.recipient,
-				tt.sqrtPriceLimitX96,
-				tt.data,
-			)
-
-			if !tt.expectError {
-				uassert.Equal(t, poolRecv.ToString(), tt.expectedRecv)
-				uassert.Equal(t, poolOut.ToString(), tt.expectedOut)
+				if !tt.expectError {
+					uassert.Equal(t, poolRecv.ToString(), tt.expectedRecv)
+					uassert.Equal(t, poolOut.ToString(), tt.expectedOut)
+				}
 			}
 		})
 	}

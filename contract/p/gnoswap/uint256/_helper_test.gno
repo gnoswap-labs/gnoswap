@@ -37,3 +37,16 @@ func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
 	}()
 	f()
 }
+
+// for original tests
+func parseUint(s string) *Uint {
+	if len(s) >= 2 && s[:2] == "0x" {
+		return MustFromHex(s)
+	}
+	return MustFromDecimal(s)
+}
+
+// for testing.T
+func parseUintT(t *testing.T, s string) *Uint {
+	return parseUint(s)
+}

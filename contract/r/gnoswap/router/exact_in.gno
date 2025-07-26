@@ -8,6 +8,8 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/v1/halt"
 	"gno.land/r/gnoswap/v1/referral"
 )
 
@@ -27,7 +29,7 @@ func NewExactInSwapOperation(pp ExactInParams) *ExactInSwapOperation {
 
 // ExactInSwapRoute is a function that performs an exact-in swap operation.
 // exact-in swap means that the user wants to swap an exact amount of input tokens for output tokens.
-func ExactInSwapRoute(
+func ExactInSwapRoute(cur realm,
 	inputToken string,
 	outputToken string,
 	amountIn string,
@@ -37,13 +39,14 @@ func ExactInSwapRoute(
 	deadline int64,
 	referrer string,
 ) (string, string) {
+	halt.AssertIsNotHaltedRouter()
+	halt.AssertIsNotHaltedWithdraw()
+
 	if err := checkDeadline(deadline); err != nil {
 		panic(addDetailToError(errExpired, err.Error()))
 	}
 
-	if err := commonSwapSetup(); err != nil {
-		panic(addDetailToError(errInvalidInput, err.Error()))
-	}
+	emission.MintAndDistributeGns(cross)
 
 	baseParams := BaseSwapParams{
 		InputToken:  inputToken,
@@ -80,19 +83,20 @@ func ExactInSwapRoute(
 		result.AmountSpecified.Abs(),
 	)
 
-	prevAddr, prevPkgPath := getPrev()
-	success := referral.TryRegister(std.Address(prevAddr), referrer)
+	caller := std.PreviousRealm().Address()
+	success := referral.TryRegister(cross, caller, referrer)
 
 	// get the actual referral address that was used
 	actualReferrer := referrer
 	if !success {
-		actualReferrer = referral.GetReferral(prevAddr)
+		actualReferrer = referral.GetReferral(caller.String())
 	}
 
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"ExactInSwap",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"input", pp.InputToken,
 		"output", pp.OutputToken,
 		"exactAmount", amountIn,

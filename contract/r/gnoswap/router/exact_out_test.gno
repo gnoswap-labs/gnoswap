@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -55,41 +54,35 @@ func TestExactOutSwapOperation(t *testing.T) {
 	})
 
 	t.Run("exact out swap with invalid route", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("Expected panic for invalid route")
-			}
-		}()
-
-		ExactOutSwapRoute(
-			barPath,
-			fooPath,
-			"3",
-			"invalid:route:format", // invalid route format
-			"100",
-			"5",
-			time.Now().Add(time.Hour).Unix(),
-			"",
-		)
+		uassert.AbortsWithMessage(t, "invalid fee: format", func() {
+			ExactOutSwapRoute(
+				cross,
+				barPath,
+				fooPath,
+				"3",
+				"invalid:route:format", // invalid route format
+				"100",
+				"5",
+				time.Now().Add(time.Hour).Unix(),
+				"",
+			)
+		})
 	})
 
 	t.Run("exact out swap with expired deadline", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("Expected panic for expired deadline")
-			}
-		}()
-
-		ExactOutSwapRoute(
-			barPath,
-			fooPath,
-			"3",
-			"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000",
-			"100",
-			"5",
-			time.Now().Add(-time.Hour).Unix(), // expired deadline
-			"",
-		)
+		uassert.AbortsWithMessage(t, "[GNOSWAP-ROUTER-004] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)", func() {
+			ExactOutSwapRoute(
+				cross,
+				barPath,
+				fooPath,
+				"3",
+				"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000",
+				"100",
+				"5",
+				time.Now().Add(-time.Hour).Unix(), // expired deadline
+				"",
+			)
+		})
 	})
 }
 
@@ -103,12 +96,13 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	TokenFaucet2(t, barPath, routerAddr)
 
 	testing.SetRealm(std.NewUserRealm(routerAddr))
-	foo.Approve(poolAddr, consts.UINT64_MAX)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross, poolAddr, maxApprove)
 
 	// create position
 	// a. Position 1: (-50%+50%)
 	pn.Mint(
+		cross,
 		barPath,
 		fooPath,
 		3000,
@@ -126,6 +120,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 	// b. Position 2: (-10%+10%)
 	pn.Mint(
+		cross,
 		barPath,
 		fooPath,
 		3000,
@@ -143,6 +138,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 	// c. Position 3: (full range)
 	pn.Mint(
+		cross,
 		barPath,
 		fooPath,
 		3000,
@@ -160,6 +156,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 	// d. Position 4: (lower out-range)
 	pn.Mint(
+		cross,
 		barPath,
 		fooPath,
 		3000,
@@ -177,6 +174,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 	// e. Position 5: (upper out-range)
 	pn.Mint(
+		cross,
 		barPath,
 		fooPath,
 		3000,
@@ -194,6 +192,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 	t.Run("successful exact out swap at boundary", func(t *testing.T) {
 		amountIn, amountOut := ExactOutSwapRoute(
+			cross,
 			barPath,
 			fooPath,
 			"1000000",
@@ -215,6 +214,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 		token0Balance := u256.MustFromDecimal(balance0)
 		token1Balance := u256.MustFromDecimal(balance1)
+		println("token1Balance", token1Balance.ToString())
 
 		overflowAmount := u256.Zero().Add(token0Balance, u256.One()).ToString()
 
@@ -228,6 +228,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 		// request amount that slightly exceeds the pool balance
 		ExactOutSwapRoute(
+			cross,
 			barPath,
 			fooPath,
 			overflowAmount,
@@ -243,14 +244,15 @@ func TestExactOutSwapBoundary(t *testing.T) {
 func setupTestPool(t *testing.T) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
-	gns.Approve(poolAddr, pl.GetPoolCreationFee())
+	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
 
-	foo.Approve(poolAddr, consts.UINT64_MAX)
-	bar.Approve(poolAddr, consts.UINT64_MAX)
+	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross, poolAddr, maxApprove)
 
-	pl.CreatePool(barPath, fooPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
+	pl.CreatePool(cross, barPath, fooPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 
 	_, _, _, _ = pn.Mint(
+		cross,
 		barPath,
 		fooPath,
 		3000,

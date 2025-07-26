@@ -156,8 +156,22 @@ func DrySwapRoute(
 	strRouteArr, quoteArr string,
 	tokenAmountLimit string,
 ) (string, string, bool) {
-	common.MustRegistered(inputToken, outputToken)
+	drySwapRouteWithCrossFn := func(cur realm) (string, string, bool) {
+		return drySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit)
+	}
 
+	return drySwapRouteWithCrossFn(cross)
+}
+
+// drySwapRoute is a function for applying cross realm
+func drySwapRoute(
+	inputToken, outputToken string,
+	specifiedAmount string,
+	swapTypeStr string,
+	strRouteArr, quoteArr string,
+	tokenAmountLimit string,
+) (string, string, bool) {
+	common.MustRegistered(inputToken, outputToken)
 	// initialize components
 	validator := &SwapValidator{}
 	processor := &SwapProcessor{}

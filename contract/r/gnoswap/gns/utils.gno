@@ -7,50 +7,48 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/halt"
+	prabc "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/rbac"
 )
 
-func getPrev() (string, string) {
-	prev := std.PreviousRealm()
-	return prev.Address().String(), prev.PkgPath()
-}
-
-func getPrevAddr() std.Address {
-	return std.PreviousRealm().Address()
-}
-
-func assertShouldNotBeHalted() {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
+func validBlockTime(blockTime int64) error {
+	if blockTime <= 0 || blockTime >= 1e9 {
+		return errInvalidAvgBlockTimeInMs
 	}
+
+	return nil
 }
 
-func assertCallerIsEmission() {
-	caller := getPrevAddr()
-	if err := common.EmissionOnly(caller); err != nil {
-		panic(err)
-	}
-}
-
-func assertCallerIsAdmin() {
-	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
-}
-
-func assertCallerIsGovernance() {
-	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err)
-	}
-}
-
-func assertValidYear(year int64) {
+func validYear(year int64) error {
 	if year < HALVING_START_YEAR || year > HALVING_END_YEAR {
-		panic(addDetailToError(errInvalidYear, ufmt.Sprintf("year: %d", year)))
+		return makeErrorWithDetails(errInvalidYear, ufmt.Sprintf("year: %d", year))
 	}
+
+	return nil
+}
+
+// validEmissionAmount validates the emission amount if the amount of gns to mint is too many.
+// Parameters:
+//   - amount: The emission amount to validate
+// Returns:
+//   - error: An error if the emission amount is invalid
+func validEmissionAmount(amount int64) error {
+	if (amount + GetMintedEmissionAmount()) > MAX_EMISSION_AMOUNT {
+		return makeErrorWithDetails(errTooManyEmission, ufmt.Sprintf("amount: %d", amount))
+	}
+
+	return nil
+}
+
+func getAdminAddress() std.Address {
+	addr, exists := access.GetAddress(prabc.ROLE_ADMIN.String())
+	if !exists {
+		return rbac.DefaultRoleAddresses[prabc.ROLE_ADMIN]
+	}
+
+	return addr
 }
 
 func i64Min(x, y int64) int64 {

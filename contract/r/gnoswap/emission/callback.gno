@@ -1,40 +1,38 @@
 package emission
 
 import (
-	"gno.land/r/gnoswap/v1/gns"
+	"std"
 
-	br "gno.land/r/gnoswap/v1/bridge"
+	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 // upgradable pattern
+var stakerEmissionChangeCallback func(amount int64)
 
-var callbackStakerEmissionChange func(amount uint64)
+func init() {
+	registerEmissionChangeCallback()
+}
 
-func SetCallbackStakerEmissionChange(callback func(amount uint64)) {
-	if callbackStakerEmissionChange != nil {
-		panic("callbackStakerEmissionChange already set")
-	}
-	callbackStakerEmissionChange = callback
+// registerEmissionChangeCallback registers the callback function for the emission change.
+func registerEmissionChangeCallback() {
+	gns.SetEmissionChangeCallback(cross, emissionChangeCallback)
 }
 
 // Called when per-block emission is changed from the gns side.
 // It does not process non-immediate emission changes, such as halving.
-func callbackEmissionChange(amount uint64) {
+func emissionChangeCallback(amount int64) {
+	if stakerEmissionChangeCallback == nil {
+		panic("stakerEmissionChangeCallback is nil")
+	}
+
 	calculatedAmount := calculateAmount(amount, GetDistributionBpsPct(LIQUIDITY_STAKER))
-	callbackStakerEmissionChange(calculatedAmount)
+	stakerEmissionChangeCallback(calculatedAmount)
 }
 
-func RegisterGnsChangeCallback() {
-	assertStakerOnly()
-	gns.SetCallbackEmissionChange(callbackEmissionChange)
-}
+func SetGnsStakerEmissionChangeCallback(cur realm, callback func(amount int64)) {
+	caller := std.PreviousRealm().Address()
+	access.AssertIsStaker(caller)
 
-func RegisterMintAndDistributeGnsCallback() {
-	br.RegisterCallback(br.MINT_AND_DISTRIBUTE_GNS_KEY, MintAndDistributeGns)
-}
-
-// contract path proxy pattern
-
-func init() {
-	RegisterMintAndDistributeGnsCallback()
+	stakerEmissionChangeCallback = callback
 }

@@ -88,6 +88,7 @@ func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint
 
 	token0, token1, fee := splitOf(params.poolKey)
 	amount0Str, amount1Str := pl.Mint(
+		cross,
 		token0,
 		token1,
 		fee,

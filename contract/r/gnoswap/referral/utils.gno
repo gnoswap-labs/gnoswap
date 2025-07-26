@@ -4,18 +4,22 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
+
+	prabc "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
+	_ "gno.land/r/gnoswap/v1/rbac"
 )
 
 // validCallers is a lookup table of addresses that are authorized to modify referral data.
 // This includes governance contracts, router, position manager, and staker contracts.
 var validCallers = map[std.Address]bool{
-	getAddress(access.ROLE_GOVERNANCE): true,
-	getAddress(access.ROLE_GOV_STAKER): true,
-	getAddress(access.ROLE_ROUTER):     true,
-	getAddress(access.ROLE_POSITION):   true,
-	getAddress(access.ROLE_STAKER):     true,
-	getAddress(access.ROLE_LAUNCHPAD):  true,
+	getAddress(prabc.ROLE_GOVERNANCE.String()): true,
+	getAddress(prabc.ROLE_GOV_STAKER.String()): true,
+	getAddress(prabc.ROLE_ROUTER.String()):     true,
+	getAddress(prabc.ROLE_POSITION.String()):   true,
+	getAddress(prabc.ROLE_STAKER.String()):     true,
+	getAddress(prabc.ROLE_LAUNCHPAD.String()):  true,
 }
 
 // isValidCaller checks if the given address has permission to modify referral data.
@@ -29,9 +33,9 @@ func isValidCaller(caller std.Address) error {
 }
 
 func getAddress(role string) std.Address {
-	addr, err := access.GetAddress(role)
-	if err != nil {
-		panic(err.Error())
+	addr, ok := access.GetAddress(role)
+	if !ok {
+		panic(ufmt.Errorf("address not found for role: %s", role))
 	}
 	return addr
 }

@@ -6,14 +6,16 @@ import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
 
 var (
 	// poolCreationFee is the fee that is charged when a user creates a pool.
 	// The fee is denominated in GNS tokens.
-	poolCreationFee = uint64(100_000_000) // 100_GNS
+	poolCreationFee = int64(100_000_000) // 100_GNS
 
 	// withdrawalFeeBPS is the fee that is charged when a user withdraws their collected fees
 	// The fee is denominated in BPS (Basis Points)
@@ -41,7 +43,7 @@ const (
 // - the amount of token1 after the fee
 //
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_withdrawal.gno#handlewithdrawalfee
-func CollectWithdrawalFee(
+func CollectWithdrawalFee(cur realm,
 	positionId uint64,
 	token0Path string,
 	amount0 string, // uint256
@@ -50,17 +52,14 @@ func CollectWithdrawalFee(
 	poolPath string,
 	positionCaller std.Address,
 ) (string, string) { // uint256 x2
-	assertOnlyNotHalted()
-	common.MustRegistered(token0Path, token1Path)
-
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedWithdraw()
 	// only position contract can call this function
-	caller := getPrevAddr()
-	if err := common.PositionOnly(caller); err != nil {
-		panic(newErrorWithDetail(
-			errNoPermission,
-			ufmt.Sprintf("only position(%s) can call this function, called from %s", positionAddr, caller.String()),
-		))
-	}
+	access.AssertIsPosition(caller)
+
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
 
 	fee := GetWithdrawalFee()
 	if fee == ZeroBps {
@@ -70,19 +69,16 @@ func CollectWithdrawalFee(
 	feeAmount0, afterAmount0 := calculateAmountWithFee(u256.MustFromDecimal(amount0), u256.NewUint(fee))
 	feeAmount1, afterAmount1 := calculateAmountWithFee(u256.MustFromDecimal(amount1), u256.NewUint(fee))
 
-	token0Teller := common.GetTokenTeller(token0Path)
-	checkTransferError(token0Teller.TransferFrom(positionCaller, protocolFeeAddr, feeAmount0.Uint64()))
-	pf.AddToProtocolFee(token0Path, feeAmount0.Uint64())
+	checkTransferError(common.TransferFrom(cross, token0Path, positionCaller, protocolFeeAddr, feeAmount0.Int64()))
+	pf.AddToProtocolFee(cross, token0Path, feeAmount0.Uint64())
+	checkTransferError(common.TransferFrom(cross, token1Path, positionCaller, protocolFeeAddr, feeAmount1.Int64()))
+	pf.AddToProtocolFee(cross, token1Path, feeAmount1.Uint64())
 
-	token1Teller := common.GetTokenTeller(token1Path)
-	checkTransferError(token1Teller.TransferFrom(positionCaller, protocolFeeAddr, feeAmount1.Uint64()))
-	pf.AddToProtocolFee(token1Path, feeAmount1.Uint64())
-
-	prevAddr, prevPkgPath := getPrevAsString()
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"WithdrawalFee",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"lpTokenId", formatUint(positionId),
 		"poolPath", poolPath,
 		"feeAmount0", feeAmount0.ToString(),
@@ -96,51 +92,54 @@ func CollectWithdrawalFee(
 
 // GetPoolCreationFee returns the poolCreationFee
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#getpoolcreationfee
-func GetPoolCreationFee() uint64 {
+func GetPoolCreationFee() int64 {
 	return poolCreationFee
 }
 
 // SetPoolCreationFee sets the poolCreationFee.
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#setpoolcreationfee
-func SetPoolCreationFee(fee uint64) {
-	assertOnlyNotHalted()
-	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err.Error())
-	}
-	prevPoolCreationFee := GetPoolCreationFee()
-	setPoolCreationFee(fee)
+func SetPoolCreationFee(cur realm, fee int64) {
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPool()
+	access.AssertIsGovernance(caller)
 
-	prevAddr, prevPkgPath := getPrevAsString()
+	prevPoolCreationFee := GetPoolCreationFee()
+	err := setPoolCreationFee(fee)
+	if err != nil {
+		panic(err)
+	}
+
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"SetPoolCreationFee",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
-		"prevFee", formatUint(prevPoolCreationFee),
-		"newFee", formatUint(fee),
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"prevFee", formatInt(prevPoolCreationFee),
+		"newFee", formatInt(fee),
 	)
 }
 
 // SetPoolCreationFeeByAdmin sets the poolCreationFee by Admin.
 // Only admin can execute this function.
-func SetPoolCreationFeeByAdmin(fee uint64) {
-	assertOnlyNotHalted()
+func SetPoolCreationFeeByAdmin(cur realm, fee int64) {
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPool()
+	access.AssertIsAdmin(caller)
 
-	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err.Error())
-	}
 	prevPoolCreationFee := GetPoolCreationFee()
-	setPoolCreationFee(fee)
+	err := setPoolCreationFee(fee)
+	if err != nil {
+		panic(err)
+	}
 
-	prevAddr, prevPkgPath := getPrevAsString()
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"SetPoolCreationFeeByAdmin",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
-		"prevFee", formatUint(prevPoolCreationFee),
-		"newFee", formatUint(fee),
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"prevFee", formatInt(prevPoolCreationFee),
+		"newFee", formatInt(fee),
 	)
 }
 
@@ -153,22 +152,23 @@ func GetWithdrawalFee() uint64 {
 // SetWithdrawalFee sets the withdrawal fee.
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_withdrawal.gno#setwithdrawalfee
-func SetWithdrawalFee(fee uint64) {
-	assertOnlyNotHalted()
-	caller := getPrevAddr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err.Error())
-	}
+func SetWithdrawalFee(cur realm, fee uint64) {
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPool()
+	access.AssertIsGovernance(caller)
 
 	prevWithdrawalFee := GetWithdrawalFee()
 
-	setWithdrawalFee(fee)
+	err := setWithdrawalFee(fee)
+	if err != nil {
+		panic(err)
+	}
 
-	prevAddr, prevPkgPath := getPrevAsString()
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"SetWithdrawalFee",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"prevFee", formatUint(prevWithdrawalFee),
 		"newFee", formatUint(fee),
 	)
@@ -176,22 +176,23 @@ func SetWithdrawalFee(fee uint64) {
 
 // SetWithdrawalFeeByAdmin sets the withdrawal fee by Admin.
 // Only admin can execute this function.
-func SetWithdrawalFeeByAdmin(fee uint64) {
-	assertOnlyNotHalted()
-	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err.Error())
-	}
+func SetWithdrawalFeeByAdmin(cur realm, fee uint64) {
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPool()
+	access.AssertIsAdmin(caller)
 
 	prevWithdrawalFee := GetWithdrawalFee()
 
-	setWithdrawalFee(fee)
+	err := setWithdrawalFee(fee)
+	if err != nil {
+		panic(err)
+	}
 
-	prevAddr, prevPkgPath := getPrevAsString()
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"SetWithdrawalFeeByAdmin",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"prevFee", formatUint(prevWithdrawalFee),
 		"newFee", formatUint(fee),
 	)
@@ -215,19 +216,33 @@ func calculateAmountWithFee(amount *u256.Uint, fee *u256.Uint) (*u256.Uint, *u25
 
 // setPoolCreationFee this function is internal function called by SetPoolCreationFee
 // And SetPoolCreationFeeByAdmin
-func setPoolCreationFee(fee uint64) {
+func setPoolCreationFee(fee int64) error {
+	if fee < 0 {
+		return makeErrorWithDetails(
+			errInvalidInput,
+			"pool creation fee cannot be negative",
+		)
+	}
+
+	// update pool creation fee
 	poolCreationFee = fee
+
+	return nil
 }
 
 // setWithdrawalFee this function is internal function called by SetWithdrawalFee
 // function and SetWithdrawalFeeByAdmin function
-func setWithdrawalFee(fee uint64) {
+func setWithdrawalFee(fee uint64) error {
 	// 10000 (bps) = 100%
 	if fee > MaxBpsValue {
-		panic(newErrorWithDetail(
-			errInvalidWithdrawalFeePct,
-			ufmt.Sprintf("withdrawal_fee.gno__setWithdrawalFee() || fee(%d) must be in range 0 ~ 10000", fee),
-		))
+		return makeErrorWithDetails(
+				errInvalidWithdrawalFeePct,
+				ufmt.Sprintf("fee(%d) must be in range 0 ~ 10000", fee),
+			)
 	}
+
+	// update withdrawal fee
 	withdrawalFeeBPS = fee
+
+	return nil
 }

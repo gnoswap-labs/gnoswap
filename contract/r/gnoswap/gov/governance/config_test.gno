@@ -4,215 +4,310 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
-var (
-	adminAddr    = testutils.TestAddress("admin")
-	notAdminAddr = testutils.TestAddress("notadmin")
-)
-
-// we cannot call init() in test, so we mock it here.
-// it's totally same as init()
-func mockInit(t *testing.T) {
-	t.Helper()
-	config = Config{
-		VotingStartDelay:              uint64(86400),
-		VotingPeriod:                  uint64(604800),
-		VotingWeightSmoothingDuration: uint64(86400),
-		Quorum:                        uint64(50),
-		ProposalCreationThreshold:     uint64(1_000_000_000),
-		ExecutionDelay:                uint64(86400),
-		ExecutionWindow:               uint64(2592000),
-	}
-
-	// configVersions[uint64(len(configVersions)+1)] = config
-	configVersions = avl.NewTree()
-	setConfigVersion(1, config)
-}
-
-func resetGlobalConfig(t *testing.T) {
-	t.Helper()
-	config = Config{}
-	// configVersions = make(map[uint64]Config)
-	configVersions = avl.NewTree()
-}
-
-func newConfigObj(t *testing.T) Config {
-	return Config{
-		VotingStartDelay:              100000,
-		VotingPeriod:                  700000,
-		VotingWeightSmoothingDuration: 90000,
-		Quorum:                        60,
-		ProposalCreationThreshold:     2_000_000_000,
-		ExecutionDelay:                90000,
-		ExecutionWindow:               3000000,
-	}
-}
-
-func TestInitialConfig(t *testing.T) {
-	resetGlobalConfig(t)
-	mockInit(t)
-
+// Test for ReconfigureByAdmin function.
+func TestConfig_ReconfigureByAdmin(t *testing.T) {
 	tests := []struct {
-		name     string
-		got      uint64
-		expected uint64
-	}{
-		{"VotingStartDelay", config.VotingStartDelay, 86400},
-		{"VotingPeriod", config.VotingPeriod, 604800},
-		{"VotingWeightSmoothingDuration", config.VotingWeightSmoothingDuration, 86400},
-		{"Quorum", config.Quorum, 50},
-		{"ProposalCreationThreshold", config.ProposalCreationThreshold, 1_000_000_000},
-		{"ExecutionDelay", config.ExecutionDelay, 86400},
-		{"ExecutionWindow", config.ExecutionWindow, 2592000},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			uassert.Equal(t, tt.got, tt.expected)
-		})
-	}
-
-	uassert.Equal(t, configVersions.Size(), 1)
-}
-
-func TestReconfigureByAdmin(t *testing.T) {
-	resetGlobalConfig(t)
-	mockInit(t)
-
-	tests := []struct {
-		name          string
-		caller        std.Address
-		newConfig     Config
-		expectError   bool
-		errorContains string
+		name                          string
+		isAdmin                       bool
+		halted                        bool
+		votingStartDelay              int64
+		votingPeriod                  int64
+		votingWeightSmoothingDuration int64
+		quorum                        int64
+		proposalCreationThreshold     int64
+		executionDelay                int64
+		executionWindow               int64
+		expectedHasPanic              bool
+		expectedPanicMsg              string
 	}{
 		{
-			name:   "Valid admin reconfiguration",
-			caller: adminAddr,
-			newConfig: Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  700000,
-				VotingWeightSmoothingDuration: 90000,
-				Quorum:                        60,
-				ProposalCreationThreshold:     2_000_000_000,
-				ExecutionDelay:                90000,
-				ExecutionWindow:               3000000,
-			},
-			expectError: false,
+			name:                          "Success by admin",
+			isAdmin:                       true,
+			halted:                        false,
+			votingStartDelay:              10,
+			votingPeriod:                  100,
+			votingWeightSmoothingDuration: 20,
+			quorum:                        50,
+			proposalCreationThreshold:     1000,
+			executionDelay:                30,
+			executionWindow:               60,
+			expectedHasPanic:              false,
 		},
 		{
-			name:   "Non-admin caller",
-			caller: testutils.TestAddress("notadmin"),
-			newConfig: Config{
-				VotingStartDelay: 86400,
-			},
-			expectError:   true,
-			errorContains: "admin",
+			name:                          "Fail: not admin",
+			isAdmin:                       false,
+			halted:                        false,
+			votingStartDelay:              10,
+			votingPeriod:                  100,
+			votingWeightSmoothingDuration: 20,
+			quorum:                        50,
+			proposalCreationThreshold:     1000,
+			executionDelay:                30,
+			executionWindow:               60,
+			expectedHasPanic:              true,
+			expectedPanicMsg:              "unauthorized: caller notadmin is not admin",
+		},
+		{
+			name:                          "Fail: halted",
+			isAdmin:                       true,
+			halted:                        true,
+			votingStartDelay:              10,
+			votingPeriod:                  100,
+			votingWeightSmoothingDuration: 20,
+			quorum:                        50,
+			proposalCreationThreshold:     1000,
+			executionDelay:                30,
+			executionWindow:               60,
+			expectedHasPanic:              true,
+			expectedPanicMsg:              "halted: governance",
+		},
+		{
+			name:                          "Edge: zero values",
+			isAdmin:                       true,
+			halted:                        false,
+			votingStartDelay:              0,
+			votingPeriod:                  0,
+			votingWeightSmoothingDuration: 0,
+			quorum:                        0,
+			proposalCreationThreshold:     0,
+			executionDelay:                0,
+			executionWindow:               0,
+			expectedHasPanic:              false,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var err error
-			func() {
-				defer func() {
-					if r := recover(); r != nil {
-						err = r.(error)
-					}
-				}()
-
-				ReconfigureByAdmin(
-					tt.newConfig.VotingStartDelay,
-					tt.newConfig.VotingPeriod,
-					tt.newConfig.VotingWeightSmoothingDuration,
-					tt.newConfig.Quorum,
-					tt.newConfig.ProposalCreationThreshold,
-					tt.newConfig.ExecutionDelay,
-					tt.newConfig.ExecutionWindow,
-				)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				testing.SetRealm(adminRealm)
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			}()
 
-			if tt.expectError {
-				uassert.Error(t, err)
+			// given: set realm and halt state
+			testing.SetRealm(adminRealm)
+			if tc.halted {
+				halt.SetHaltLevel(cross, halt.HaltLevelComplete)
+			} else {
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			}
-			uassert.Equal(t, config.VotingStartDelay, tt.newConfig.VotingStartDelay)
+
+			if tc.isAdmin {
+				testing.SetRealm(adminRealm)
+			} else {
+				testing.SetRealm(std.NewUserRealm(std.Address("notadmin")))
+			}
+
+			if tc.expectedHasPanic {
+				uassert.AbortsWithMessage(t, tc.expectedPanicMsg, func() {
+					ReconfigureByAdmin(
+						cross,
+						tc.votingStartDelay,
+						tc.votingPeriod,
+						tc.votingWeightSmoothingDuration,
+						tc.quorum,
+						tc.proposalCreationThreshold,
+						tc.executionDelay,
+						tc.executionWindow,
+					)
+				})
+			} else {
+				ReconfigureByAdmin(
+					cross,
+					tc.votingStartDelay,
+					tc.votingPeriod,
+					tc.votingWeightSmoothingDuration,
+					tc.quorum,
+					tc.proposalCreationThreshold,
+					tc.executionDelay,
+					tc.executionWindow,
+				)
+				cfg, ok := getCurrentConfig()
+				uassert.True(t, ok)
+				uassert.Equal(t, cfg.VotingStartDelay, tc.votingStartDelay)
+				uassert.Equal(t, cfg.VotingPeriod, tc.votingPeriod)
+				uassert.Equal(t, cfg.VotingWeightSmoothingDuration, tc.votingWeightSmoothingDuration)
+				uassert.Equal(t, cfg.Quorum, tc.quorum)
+				uassert.Equal(t, cfg.ProposalCreationThreshold, tc.proposalCreationThreshold)
+				uassert.Equal(t, cfg.ExecutionDelay, tc.executionDelay)
+				uassert.Equal(t, cfg.ExecutionWindow, tc.executionWindow)
+			}
 		})
 	}
 }
 
-func TestGetConfigVersion(t *testing.T) {
-	// don't call mockInit here.
-	resetGlobalConfig(t)
-
+// Test for ReconfigureByGovernance function.
+func TestConfig_ReconfigureByGovernance(t *testing.T) {
 	tests := []struct {
-		name        string
-		version     uint64
-		expectError bool
+		name                          string
+		isGovernance                  bool
+		halted                        bool
+		votingStartDelay              int64
+		votingPeriod                  int64
+		votingWeightSmoothingDuration int64
+		quorum                        int64
+		proposalCreationThreshold     int64
+		executionDelay                int64
+		executionWindow               int64
+		expectedHasPanic              bool
+		expectedPanicMsg              string
 	}{
 		{
-			name:        "Get current config (version 0)",
-			version:     0,
-			expectError: false,
+			name:                          "Success by governance",
+			isGovernance:                  true,
+			halted:                        false,
+			votingStartDelay:              10,
+			votingPeriod:                  100,
+			votingWeightSmoothingDuration: 20,
+			quorum:                        50,
+			proposalCreationThreshold:     1000,
+			executionDelay:                30,
+			executionWindow:               60,
+			expectedHasPanic:              false,
 		},
 		{
-			name:        "Get existing version",
-			version:     1,
-			expectError: false,
+			name:                          "Fail: not governance",
+			isGovernance:                  false,
+			halted:                        false,
+			votingStartDelay:              10,
+			votingPeriod:                  100,
+			votingWeightSmoothingDuration: 20,
+			quorum:                        50,
+			proposalCreationThreshold:     1000,
+			executionDelay:                30,
+			executionWindow:               60,
+			expectedHasPanic:              true,
+			expectedPanicMsg:              "unauthorized: caller notgov is not governance",
 		},
 		{
-			name:        "Get non-existent version",
-			version:     999,
-			expectError: true,
+			name:                          "Fail: halted",
+			isGovernance:                  true,
+			halted:                        true,
+			votingStartDelay:              10,
+			votingPeriod:                  100,
+			votingWeightSmoothingDuration: 20,
+			quorum:                        50,
+			proposalCreationThreshold:     1000,
+			executionDelay:                30,
+			executionWindow:               60,
+			expectedHasPanic:              true,
+			expectedPanicMsg:              "halted: governance",
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var result Config
-
-			if tt.expectError {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("expected panic, got none")
-					}
-				}()
-				result = GetConfigVersion(tt.version)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given: set realm and halt state
+			testing.SetRealm(adminRealm)
+			if tc.halted {
+				halt.SetHaltLevel(cross, halt.HaltLevelComplete)
+			} else {
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			}
 
-			expectedConfig := config
-			if tt.version != 0 {
-				expectedConfig, _ = getConfigByVersion(tt.version)
+			if tc.isGovernance {
+				testing.SetRealm(govRealm)
+			} else {
+				testing.SetRealm(std.NewUserRealm(std.Address("notgov")))
 			}
-			uassert.Equal(t, result.VotingStartDelay, expectedConfig.VotingStartDelay)
+
+			if tc.expectedHasPanic {
+				uassert.AbortsWithMessage(t, tc.expectedPanicMsg, func() {
+					ReconfigureByGovernance(
+						cross,
+						tc.votingStartDelay,
+						tc.votingPeriod,
+						tc.votingWeightSmoothingDuration,
+						tc.quorum,
+						tc.proposalCreationThreshold,
+						tc.executionDelay,
+						tc.executionWindow,
+					)
+				})
+			} else {
+				ReconfigureByGovernance(
+					cross,
+					tc.votingStartDelay,
+					tc.votingPeriod,
+					tc.votingWeightSmoothingDuration,
+					tc.quorum,
+					tc.proposalCreationThreshold,
+					tc.executionDelay,
+					tc.executionWindow,
+				)
+				cfg, ok := getCurrentConfig()
+				uassert.True(t, ok)
+				uassert.Equal(t, cfg.VotingStartDelay, tc.votingStartDelay)
+				uassert.Equal(t, cfg.VotingPeriod, tc.votingPeriod)
+				uassert.Equal(t, cfg.VotingWeightSmoothingDuration, tc.votingWeightSmoothingDuration)
+				uassert.Equal(t, cfg.Quorum, tc.quorum)
+				uassert.Equal(t, cfg.ProposalCreationThreshold, tc.proposalCreationThreshold)
+				uassert.Equal(t, cfg.ExecutionDelay, tc.executionDelay)
+				uassert.Equal(t, cfg.ExecutionWindow, tc.executionWindow)
+			}
 		})
 	}
 }
 
-func TestReconfigure(t *testing.T) {
-	resetGlobalConfig(t)
-	mockInit(t)
+// Test for reconfigure function (private).
+func TestConfig_reconfigure(t *testing.T) {
+	tests := []struct {
+		name                          string
+		votingStartDelay              int64
+		votingPeriod                  int64
+		votingWeightSmoothingDuration int64
+		quorum                        int64
+		proposalCreationThreshold     int64
+		executionDelay                int64
+		executionWindow               int64
+	}{
+		{
+			name:                          "Normal values",
+			votingStartDelay:              10,
+			votingPeriod:                  100,
+			votingWeightSmoothingDuration: 20,
+			quorum:                        50,
+			proposalCreationThreshold:     1000,
+			executionDelay:                30,
+			executionWindow:               60,
+		},
+		{
+			name:                          "Edge: zero values",
+			votingStartDelay:              0,
+			votingPeriod:                  0,
+			votingWeightSmoothingDuration: 0,
+			quorum:                        0,
+			proposalCreationThreshold:     0,
+			executionDelay:                0,
+			executionWindow:               0,
+		},
+	}
 
-	newConfig := newConfigObj(t)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when: call reconfigure
+			nextVersion, cfg := reconfigure(
+				tc.votingStartDelay,
+				tc.votingPeriod,
+				tc.votingWeightSmoothingDuration,
+				tc.quorum,
+				tc.proposalCreationThreshold,
+				tc.executionDelay,
+				tc.executionWindow,
+			)
 
-	initialVersion := GetLatestConfigVersion()
-
-	version := reconfigure(
-		newConfig.VotingStartDelay,
-		newConfig.VotingPeriod,
-		newConfig.VotingWeightSmoothingDuration,
-		newConfig.Quorum,
-		newConfig.ProposalCreationThreshold,
-		newConfig.ExecutionDelay,
-		newConfig.ExecutionWindow,
-	)
-
-	uassert.Equal(t, version, initialVersion+1)
-	uassert.Equal(t, config.VotingStartDelay, newConfig.VotingStartDelay)
-
-	storedConfig, _ := getConfigByVersion(version)
-	uassert.Equal(t, storedConfig.VotingStartDelay, newConfig.VotingStartDelay)
+			// then: check config state
+			uassert.True(t, nextVersion > 0)
+			uassert.Equal(t, cfg.VotingStartDelay, tc.votingStartDelay)
+			uassert.Equal(t, cfg.VotingPeriod, tc.votingPeriod)
+			uassert.Equal(t, cfg.VotingWeightSmoothingDuration, tc.votingWeightSmoothingDuration)
+			uassert.Equal(t, cfg.Quorum, tc.quorum)
+			uassert.Equal(t, cfg.ProposalCreationThreshold, tc.proposalCreationThreshold)
+			uassert.Equal(t, cfg.ExecutionDelay, tc.executionDelay)
+			uassert.Equal(t, cfg.ExecutionWindow, tc.executionWindow)
+		})
+	}
 }

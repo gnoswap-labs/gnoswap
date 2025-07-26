@@ -354,3 +354,8 @@ pyrightconfig.json
 
 ## ide tool
 .idea
+
+## ruby
+vendor/
+Gemfile.lock
+.bundle/

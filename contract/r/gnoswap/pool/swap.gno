@@ -6,7 +6,9 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 
 	plp "gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
@@ -42,6 +44,7 @@ var fixedPointQ128 = u256.MustFromDecimal(consts.Q128)
 // Returns swapped amount0, amount1 in string
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#swap
 func Swap(
+	cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -51,16 +54,9 @@ func Swap(
 	sqrtPriceLimitX96 string,
 	payer std.Address, // router
 ) (string, string) {
-	assertOnlyNotHalted()
-	if common.GetLimitCaller() {
-		caller := getPrevAddr()
-		if err := common.RouterOnly(caller); err != nil {
-			panic(newErrorWithDetail(
-				errNoPermission,
-				ufmt.Sprintf("only router(%s) can call pool swap(), called from %s", routerAddr, caller.String()),
-			))
-		}
-	}
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPool()
+	access.AssertIsRouter(caller)
 
 	if amountSpecified == "0" {
 		panic(newErrorWithDetail(
@@ -75,6 +71,12 @@ func Swap(
 	if !slot0Start.unlocked {
 		panic(errLockedPool)
 	}
+
+	// no liquidity -> no swap, return zero amounts
+	if pool.liquidity.IsZero() {
+		return "0", "0"
+	}
+
 	pool.slot0.unlocked = false
 	defer func() { pool.slot0.unlocked = true }()
 
@@ -106,12 +108,11 @@ func Swap(
 	// actual swap
 	pool.swapTransfers(zeroForOne, payer, recipient, result.Amount0, result.Amount1)
 
-	prevAddr, prevPkgPath := getPrevAsString()
-
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"Swap",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", GetPoolPath(token0Path, token1Path, fee),
 		"zeroForOne", formatBool(zeroForOne),
 		"requestAmount", amountSpecified,
@@ -138,6 +139,7 @@ func Swap(
 
 // DrySwap simulates a swap and returns the amount0, amount1 that would be received and a boolean indicating if the swap is possible
 func DrySwap(
+	cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -150,6 +152,11 @@ func DrySwap(
 	}
 
 	pool := GetPool(token0Path, token1Path, fee)
+
+	// no liquidity -> simulation fails
+	if pool.liquidity.IsZero() {
+		return "0", "0", false
+	}
 
 	slot0Start := pool.slot0
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
@@ -184,7 +191,7 @@ func DrySwap(
 			return "0", "0", false
 		}
 	}
-
+	
 	// Validate non-zero amounts
 	if result.Amount0.IsZero() || result.Amount1.IsZero() {
 		return "0", "0", false
@@ -388,6 +395,7 @@ func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState
 	if overflow {
 		return state, step, errUnderflow
 	}
+	
 	step.feeAmount = newFeeAmount
 	state.protocolFee.Add(state.protocolFee, delta)
 
@@ -435,7 +443,7 @@ func shouldUsePriceLimit(sqrtPriceNext, sqrtPriceLimit *u256.Uint, zeroForOne bo
 
 // computeAmounts calculates the input and output amounts for the current swap step.
 func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, step StepComputations) (SwapState, StepComputations) {
-	sqrtPriceX96Str, amountInStr, amountOutStr, feeAmountStr := plp.SwapMathComputeSwapStepStr(
+	sqrtPriceX96, amountIn, amountOut, feeAmount := plp.SwapMathComputeSwapStep(
 		state.sqrtPriceX96,
 		sqrtRatioTargetX96,
 		state.liquidity,
@@ -443,11 +451,11 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 		uint64(pool.fee),
 	)
 
-	step.amountIn = u256.MustFromDecimal(amountInStr)
-	step.amountOut = u256.MustFromDecimal(amountOutStr)
-	step.feeAmount = u256.MustFromDecimal(feeAmountStr)
+	step.amountIn = amountIn
+	step.amountOut = amountOut
+	step.feeAmount = feeAmount
 
-	state.setSqrtPriceX96(sqrtPriceX96Str)
+	state.setSqrtPriceX96(sqrtPriceX96)
 
 	return state, step
 }
@@ -465,6 +473,7 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) Swap
 	if amountInWithFeeU256.Gt(u256.MustFromDecimal(consts.MAX_INT256)) {
 		panic("amountIn + feeAmount overflows int256")
 	}
+
 	amountInWithFee := i256.FromUint256(amountInWithFeeU256)
 	if step.amountOut.Gt(u256.MustFromDecimal(consts.MAX_INT256)) {
 		panic("amountOut overflows int256")
@@ -473,11 +482,12 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) Swap
 	if exactInput {
 		state.amountSpecifiedRemaining = i256.Zero().Sub(state.amountSpecifiedRemaining, amountInWithFee)
 		state.amountCalculated = i256.Zero().Sub(state.amountCalculated, i256.FromUint256(step.amountOut))
+
 		return state
-	} else {
-		state.amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
-		state.amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
-	}
+	} 
+	
+	state.amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
+	state.amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
 
 	return state
 }
