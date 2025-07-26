@@ -4,7 +4,6 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/demo/wugnot"
@@ -14,6 +13,8 @@ import (
 	"gno.land/r/gnoswap/v1/gov/xgns"
 	"gno.land/r/gnoswap/v1/halt"
 )
+
+const WUGNOT_PATH string = "gno.land/r/demo/wugnot"
 
 // CollectReward collects the rewards from the protocol fee contract based on the holdings of xGNS.
 // This function allows stakers to claim both emission rewards (in GNS) and protocol fee rewards (in various tokens)
@@ -40,10 +41,9 @@ func CollectReward(cur realm) {
 	halt.AssertIsNotHaltedWithdraw()
 
 	previousRealm := std.PreviousRealm()
-	caller := previousRealm.Address()	
+	caller := previousRealm.Address()
 	from := std.CurrentRealm().Address()
 	currentHeight := std.ChainHeight()
-
 
 	emissionReward, protocolFeeRewards, err := claimRewards(caller.String(), currentHeight)
 	if err != nil {
@@ -110,7 +110,7 @@ func CollectReward(cur realm) {
 func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 	halt.AssertIsNotHaltedGovStaker()
 	halt.AssertIsNotHaltedWithdraw()
-	
+
 	previousRealm := std.PreviousRealm()
 	caller := previousRealm.Address()
 	access.AssertIsLaunchpad(caller)
@@ -297,7 +297,7 @@ func transferToken(
 	}
 
 	// Handle native GNOT transfer through wUGNOT unwrapping
-	isGnoNativeCoin := tokenPath == consts.WUGNOT_PATH
+	isGnoNativeCoin := tokenPath == WUGNOT_PATH
 	if isGnoNativeCoin {
 		wugnot.Withdraw(cross, amount)
 

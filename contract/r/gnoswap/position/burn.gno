@@ -2,7 +2,6 @@ package position
 
 import (
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/demo/wugnot"
@@ -25,28 +24,28 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	position := MustGetPosition(params.positionId)
 	positionLiquidity := position.liquidity
 	if positionLiquidity.IsZero() {
-		return params.positionId, 
-			nil, 
-			fee0, 
+		return params.positionId,
+			nil,
+			fee0,
 			fee1,
-			nil, nil, 
-			position.poolKey, 
+			nil, nil,
+			position.poolKey,
 			makeErrorWithDetails(
-				errZeroLiquidity, 
+				errZeroLiquidity,
 				ufmt.Sprintf("position(position ID:%d) has 0 liquidity", params.positionId),
 			)
 	}
 
 	liquidityToRemove := u256.MustFromDecimal(params.liquidity)
 	if liquidityToRemove.Gt(positionLiquidity) {
-		return params.positionId, 
-			liquidityToRemove, 
-			fee0, 
+		return params.positionId,
+			liquidityToRemove,
+			fee0,
 			fee1,
-			nil, nil, 
-			position.poolKey, 
+			nil, nil,
+			position.poolKey,
 			makeErrorWithDetails(
-				errInvalidLiquidity, 
+				errInvalidLiquidity,
 				ufmt.Sprintf("Liquidity requested(%s) is greater than liquidity held(%s)", liquidityToRemove.ToString(), positionLiquidity.ToString()),
 			)
 	}
@@ -59,22 +58,22 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	burnedAmount0 := u256.MustFromDecimal(burn0)
 	burnedAmount1 := u256.MustFromDecimal(burn1)
 	if isSlippageExceeded(burnedAmount0, burnedAmount1, params.amount0Min, params.amount1Min) {
-		return params.positionId, 
-			liquidityToRemove, 
-			fee0, 
+		return params.positionId,
+			liquidityToRemove,
+			fee0,
 			fee1,
-			burnedAmount0, 
-			burnedAmount1, 
-			position.poolKey, 
+			burnedAmount0,
+			burnedAmount1,
+			position.poolKey,
 			makeErrorWithDetails(
-			errSlippage,
-			ufmt.Sprintf("burnedAmount0(%s) >= amount0Min(%s) || burnedAmount1(%s) >= amount1Min(%s)",
-				burnedAmount0.ToString(), 
-				params.amount0Min.ToString(), 
-				burnedAmount1.ToString(), 
-				params.amount1Min.ToString(),
-			),
-		)
+				errSlippage,
+				ufmt.Sprintf("burnedAmount0(%s) >= amount0Min(%s) || burnedAmount1(%s) >= amount1Min(%s)",
+					burnedAmount0.ToString(),
+					params.amount0Min.ToString(),
+					burnedAmount1.ToString(),
+					params.amount1Min.ToString(),
+				),
+			)
 	}
 
 	positionKey := computePositionKey(caller, position.tickLower, position.tickUpper)
@@ -135,13 +134,13 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	underflow := false
 	position.tokensOwed0, underflow = new(u256.Uint).SubOverflow(position.tokensOwed0, collectAmount0)
 	if underflow {
-		return params.positionId, 
-			liquidityToRemove, 
-			fee0, 
+		return params.positionId,
+			liquidityToRemove,
+			fee0,
 			fee1,
-			collectAmount0, 
-			collectAmount1, 
-			position.poolKey, 
+			collectAmount0,
+			collectAmount1,
+			position.poolKey,
 			makeErrorWithDetails(
 				errUnderflow,
 				"tokensOwed0 underflow",
@@ -149,13 +148,13 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	}
 	position.tokensOwed1, underflow = new(u256.Uint).SubOverflow(position.tokensOwed1, collectAmount1)
 	if underflow {
-		return params.positionId, 
-			liquidityToRemove, 
-			fee0, 
+		return params.positionId,
+			liquidityToRemove,
+			fee0,
 			fee1,
-			collectAmount0, 
-			collectAmount1, 
-			position.poolKey, 
+			collectAmount0,
+			collectAmount1,
+			position.poolKey,
 			makeErrorWithDetails(
 				errUnderflow,
 				"tokensOwed1 underflow",
@@ -172,13 +171,13 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	if params.unwrapResult {
 		err := handleUnwrap(pToken0, pToken1, params.unwrapResult, beforeWugnotBalance, caller)
 		if err != nil {
-			return params.positionId, 
-				liquidityToRemove, 
-				fee0, 
-				fee1, 
-				collectAmount0, 
-				collectAmount1, 
-				position.poolKey, 
+			return params.positionId,
+				liquidityToRemove,
+				fee0,
+				fee1,
+				collectAmount0,
+				collectAmount1,
+				position.poolKey,
 				err
 		}
 	}
@@ -224,5 +223,5 @@ func calculateTokensOwed(
 	positionLiquidity *u256.Uint,
 ) *u256.Uint {
 	diff := new(u256.Uint).Sub(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128)
-	return u256.MulDiv(diff, positionLiquidity, u256.MustFromDecimal(consts.Q128))
+	return u256.MulDiv(diff, positionLiquidity, u256.MustFromDecimal(Q128))
 }

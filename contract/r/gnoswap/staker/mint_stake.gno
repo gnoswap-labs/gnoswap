@@ -6,7 +6,6 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/halt"
@@ -32,20 +31,20 @@ func MintAndStake(
 	referrer string,
 ) (uint64, string, string, string, string) {
 	halt.AssertIsNotHaltedStaker()
-	
+
 	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
-	
+
 	// if one click native
-	if token0 == consts.GNOT || token1 == consts.GNOT {
+	if token0 == GNOT || token1 == GNOT {
 		// check sent ugnot
 		sent := std.OriginSend()
 		ugnotSent := sent.AmountOf("ugnot")
 
 		// not enough ugnot sent
-		if ugnotSent < int64(consts.UGNOT_MIN_DEPOSIT_TO_WRAP) {
+		if ugnotSent < int64(UGNOT_MIN_DEPOSIT_TO_WRAP) {
 			panic(ufmt.Errorf(
 				"%v: too less ugnot sent(%d), minimum:%d",
-				errWugnotMinimum, ugnotSent, consts.UGNOT_MIN_DEPOSIT_TO_WRAP,
+				errWugnotMinimum, ugnotSent, UGNOT_MIN_DEPOSIT_TO_WRAP,
 			))
 		}
 

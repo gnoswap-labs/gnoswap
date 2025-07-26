@@ -11,7 +11,7 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/testutils"
-	"gno.land/p/gnoswap/consts"
+
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -31,10 +31,10 @@ const (
 
 // Variables for test addresses and realms
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
-	poolAddr     = consts.POOL_ADDR
-	positionAddr = consts.POSITION_ADDR
+	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm      = std.NewUserRealm(adminAddr)
+	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
+	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = std.NewUserRealm(aliceAddr)

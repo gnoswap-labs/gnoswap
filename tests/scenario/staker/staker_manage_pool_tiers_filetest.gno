@@ -10,7 +10,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -31,7 +30,7 @@ var (
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -202,4 +201,4 @@ func removePoolTierByAdmin() {
 // [SCENARIO] 6. Remove pool tier by admin
 // [INFO] remove pool tier (set to 0)
 // [EXPECTED] pool tier removed (should be 0): 0
-// [EXPECTED] other pool tier unchanged: 3 
+// [EXPECTED] other pool tier unchanged: 3
