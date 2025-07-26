@@ -86,7 +86,7 @@ func mintAndDistribute() {
 	newDevOpsBalanceChange := gns.BalanceOf(newDevOpsAddr) - previousNewDevOpsBalance
 	newCommunityPoolBalanceChange := gns.BalanceOf(newCommunityPoolAddr) - previousNewCommunityPoolBalance
 
-	totalMintedAmount := gns.GetMintedEmissionAmount()
+	totalMintedAmount := gns.MintedEmissionAmount()
 
 	ufmt.Printf("[EXPECTED] total minted amount should be %d\n", totalMintedAmount)
 	ufmt.Printf("[EXPECTED] (v1) staker balance change should be %d\n", stakerBalanceChange)

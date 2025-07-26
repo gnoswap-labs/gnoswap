@@ -24,7 +24,7 @@ func MintAndDistributeGns(cur realm) int64 {
 	halt.AssertIsNotHaltedEmission()
 
 	currentHeight := std.ChainHeight()
-	lastMintedHeight := gns.GetLastMintedHeight()
+	lastMintedHeight := gns.LastMintedHeight()
 	if lastMintedHeight >= currentHeight {
 		// Skip if we've already minted tokens at this height
 		return 0

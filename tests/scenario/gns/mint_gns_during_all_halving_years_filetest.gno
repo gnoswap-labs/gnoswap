@@ -62,7 +62,7 @@ func mintGNS() {
 	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 
 	mintedAmount := gns.MintGns(cross, user01Addr)
-	totalMintedAmount := gns.GetMintedEmissionAmount()
+	totalMintedAmount := gns.MintedEmissionAmount()
 
 	ufmt.Printf("[EXPECTED] minted amount should be %d\n", mintedAmount)
 	ufmt.Printf("[EXPECTED] total minted amount should be %d\n", totalMintedAmount)
