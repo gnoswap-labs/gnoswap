@@ -319,7 +319,7 @@ func collectRewardsAllWarmUp() {
 	// Skip to different warm-up periods and collect rewards
 	println("[INFO] progress to 50% warm-up")
 	msInDay := int64(86400000)
-	blocksInDay := msInDay / int64(gns.GetAvgBlockTimeInMs())
+	blocksInDay := msInDay / int64(gns.AvgBlockTimeInMs())
 	blocksIn5Days := int64(5 * blocksInDay)
 	testing.SkipHeights(blocksIn5Days)
 
