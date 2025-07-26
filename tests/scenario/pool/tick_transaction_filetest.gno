@@ -9,7 +9,6 @@ import (
 
 	plp "gno.land/p/gnoswap/gnsmath"
 
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -57,6 +56,8 @@ var (
 	tickUpper       = int32(12000)
 	liquidityExpect = "100000000000"
 	poolCreationFee = int64(100_000_000)
+
+	MIN_PRICE string = "4295128740"
 )
 
 func main() {
@@ -145,7 +146,7 @@ func main() {
 		adminAddr,
 		true,
 		"3",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
