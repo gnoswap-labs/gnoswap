@@ -36,7 +36,7 @@ class TestRunner
       # ruby -e "puts Dir.glob('./tests/scenario/**/*_filetest.gno')"
       if content.include?("func main()")
         puts "Running filetest: #{file}"
-        run_command("gno test #{file} -root-dir #{@root_dir} -v")
+        run_command("gno test #{file} -root-dir #{@root_dir}")
         next
       end
 
@@ -51,7 +51,7 @@ class TestRunner
       end
       test_names.each do |test_name|
         puts "Running #{test_name} in #{file}"
-        run_command("gno test #{file} -root-dir #{@root_dir} -run ^#{test_name}$ -v")
+        run_command("gno test #{file} -root-dir #{@root_dir} -run ^#{test_name}$")
       end
     end
   end
