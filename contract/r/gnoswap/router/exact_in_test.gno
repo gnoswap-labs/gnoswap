@@ -8,7 +8,6 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/access"
@@ -273,17 +272,11 @@ func TestExactInSwapRouteWithReferral(t *testing.T) {
 }
 
 func TestExactInZeroForOneFalse(t *testing.T) {
-	const wugnotTokenPath = "gno.land/r/demo/wugnot"
-	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
-	const positionContract = consts.POSITION_ADDR
-	const routerContract = consts.ROUTER_ADDR
-	const routerPath = consts.ROUTER_PATH
-	const poolContract = consts.POOL_ADDR
 	const maxTimeout int64 = 9999999999
 	const wugnotGnsPoolPath = "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:500"
 
 	alice := testutils.TestAddress("alice")
-	positionOwner := consts.ADMIN
+	positionOwner := adminAddr
 
 	tests := []struct {
 		name             string
@@ -309,8 +302,8 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 	}{
 		{
 			name:             "success - gns -> gnot",
-			tokenPath0:       wugnotTokenPath,
-			tokenPath1:       gnsTokenPath,
+			tokenPath0:       wugnotPath,
+			tokenPath1:       gnsPath,
 			feeTier:          pl.FeeTier500,
 			recipient:        alice,
 			tickLower:        -200,
@@ -319,7 +312,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			amount1Requested: "100",
 			feeProtocol0:     10,
 			feeProtocol1:     10,
-			inputToken:       gnsTokenPath,
+			inputToken:       gnsPath,
 			outputToken:      "gnot",
 			amountIn:         "100",
 			routeArr:         wugnotGnsPoolPath,
@@ -352,7 +345,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			testing.IssueCoins(positionOwner, newCoins)
 			testing.SetOriginSend(newCoins)
 			banker := std.NewBanker(std.BankerTypeRealmSend)
-			banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
+			banker.SendCoins(positionOwner, wugnotAddr, newCoins)
 			wugnot.Deposit(cross)
 			if tt.recipient != positionOwner {
 				wugnot.Transfer(cross, tt.recipient, 10000000000)
@@ -360,12 +353,12 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			wugnot.Approve(cross, poolContract, maxApprove)
-			gns.Approve(cross, poolContract, maxApprove)
+			wugnot.Approve(cross, poolAddr, maxApprove)
+			gns.Approve(cross, poolAddr, maxApprove)
 
 			func(cur realm) {
-				teller := common.GetTokenTeller(wugnotTokenPath)
-				teller.Approve(poolContract, maxApprove)
+				teller := common.GetTokenTeller(wugnotPath)
+				teller.Approve(poolAddr, maxApprove)
 			}(cross)
 
 			// Position Creation
@@ -389,14 +382,14 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			wugnot.Transfer(cross, routerContract, 20000000)
-			gns.Transfer(cross, routerContract, 20000000)
-			wugnot.Approve(cross, routerContract, maxApprove)
-			gns.Approve(cross, routerContract, maxApprove)
+			wugnot.Transfer(cross, routerAddr, 20000000)
+			gns.Transfer(cross, routerAddr, 20000000)
+			wugnot.Approve(cross, routerAddr, maxApprove)
+			gns.Approve(cross, routerAddr, maxApprove)
 			beforeGnotBalance := uint64(banker.GetCoins(tt.recipient).AmountOf("ugnot"))
 
 			testing.SetRealm(std.NewCodeRealm(routerPath))
-			wugnot.Approve(cross, poolContract, maxApprove)
+			wugnot.Approve(cross, poolAddr, maxApprove)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			amountIn, amountOut := ExactInSwapRoute(
@@ -464,9 +457,9 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 		func() {
 			ExactOutSwapRoute(
 				cross,
-				consts.GNOT, // inputToken
-				quxPath,     // outputToken
-				"3",         // amountSpecified
+				gnot,    // inputToken
+				quxPath, // outputToken
+				"3",     // amountSpecified
 				"gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:3000", // strRouteArr
 				"100",   // quoteArr
 				"12345", // tokenAmountLimit

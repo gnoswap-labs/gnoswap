@@ -29,6 +29,8 @@ var (
 	launchpadAddr, _     = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	devOpsAddr, _        = access.GetAddress(prbac.ROLE_DEVOPS.String())
 
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+
 	fooPath  string = "gno.land/r/onbloc/foo"
 	barPath  string = "gno.land/r/onbloc/bar"
 	bazPath  string = "gno.land/r/onbloc/baz"
