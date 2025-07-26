@@ -12,7 +12,6 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/demo/wugnot"
@@ -37,18 +36,19 @@ var (
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	wugnotAddr = consts.WUGNOT_ADDR
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 
 	gnsPath    = "gno.land/r/gnoswap/v1/gns"
 	wugnotPath = "gno.land/r/demo/wugnot"
 
 	fee3000 uint32 = 3000
 
-	max_timeout int64 = 9999999999
+	maxTimeout int64 = 9999999999
+	maxInt64   int64 = 9223372036854775807
 )
 
 func main() {
@@ -122,8 +122,8 @@ func mintAndStakePosition01() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position 01")
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
+	wugnot.Approve(cross, poolAddr, maxInt64)
+	gns.Approve(cross, poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 
@@ -139,7 +139,7 @@ func mintAndStakePosition01() {
 		"100",
 		"0",
 		"0",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -159,8 +159,8 @@ func mintAndStakePosition02() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position 02")
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
+	wugnot.Approve(cross, poolAddr, maxInt64)
+	gns.Approve(cross, poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 
@@ -176,7 +176,7 @@ func mintAndStakePosition02() {
 		"100",
 		"0",
 		"0",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -237,7 +237,7 @@ func unstakePosition02() {
 
 	owner := gnft.MustOwnerOf(positionIdFrom(2))
 	ufmt.Printf("[EXPECTED] position 02 owner after unstaking: %s\n", owner)
-	
+
 	if owner != adminAddr {
 		panic("position 02 should be returned to admin after unstaking")
 	}
@@ -270,13 +270,13 @@ func isInErrorRange(actual, expected uint64) bool {
 	} else {
 		diff = expected - actual
 	}
-	
+
 	// Allow 1% error margin
 	errorMargin := expected / 100
 	if errorMargin == 0 {
 		errorMargin = 1
 	}
-	
+
 	return diff <= errorMargin
 }
 

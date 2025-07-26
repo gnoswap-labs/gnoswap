@@ -5,12 +5,15 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
+)
+
+const (
+	FEE_PRECISION = 10000
 )
 
 var unstakingFee = uint64(100) // 1%
@@ -41,22 +44,23 @@ func handleUnStakingFee(
 	}
 
 	// Do not change the order of the operation.
-	feeAmount := (amount * int64(unstakingFee)) / 10000
-	if feeAmount == 0 {
-		return amount, 0, nil
-	} else if feeAmount < 0 {
+	feeAmount := (amount * int64(unstakingFee)) / FEE_PRECISION
+	if feeAmount < 0 {
 		return 0, 0, ufmt.Errorf("fee amount cannot be negative")
 	}
-	
+
+	if feeAmount == 0 {
+		return amount, 0, nil
+	}
+
 	if internal {
-		tokenPath = consts.GNS_PATH
+		tokenPath = GNS_PATH
 	}
 
 	protocolFeeAddr := getRoleAddress(prbac.ROLE_PROTOCOL_FEE)
 
 	// external contract has fee
 	common.Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
-
 	pf.AddToProtocolFee(cross, tokenPath, uint64(feeAmount))
 
 	return amount - feeAmount, feeAmount, nil

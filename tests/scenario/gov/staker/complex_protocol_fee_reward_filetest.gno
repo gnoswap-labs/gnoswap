@@ -10,7 +10,6 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/demo/wugnot"
@@ -38,7 +37,13 @@ var (
 
 	barPath    = "gno.land/r/onbloc/bar"
 	quxPath    = "gno.land/r/onbloc/qux"
+
 	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+
+	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+
+	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 )
 
 func main() {
@@ -85,7 +90,7 @@ func setupTokens() {
 
 func delegateAdminToDummy2() {
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, consts.GOV_STAKER_ADDR, minAmount)
+	gns.Approve(cross, govStakerAddr, minAmount)
 	staker.Delegate(cross, dummy2Addr, int64(minAmount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from admin to dummy2\n", minAmount)
 }
@@ -96,7 +101,7 @@ func delegateDummyToDummy() {
 	gns.Transfer(cross, dummyAddr, amount)
 
 	testing.SetRealm(dummyRealm)
-	gns.Approve(cross, consts.GOV_STAKER_ADDR, amount)
+	gns.Approve(cross, govStakerAddr, amount)
 	staker.Delegate(cross, dummyAddr, int64(amount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from dummy to dummy\n", amount)
 }
@@ -104,26 +109,27 @@ func delegateDummyToDummy() {
 func depositProtocolFee() {
 	// protocol fee deposit (bar, qux, wugnot)
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, consts.PROTOCOL_FEE_ADDR, 1000)
-	qux.Transfer(cross, consts.PROTOCOL_FEE_ADDR, 2500)
+	bar.Transfer(cross, protocolFeeAddr, 1000)
+	qux.Transfer(cross, protocolFeeAddr, 2500)
 
 	coins := std.Coins{{"ugnot", 10000}}
 	testing.IssueCoins(adminAddr, coins)
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, coins)
+
+	banker.SendCoins(adminAddr, wugnotAddr, coins)
 
 	testing.SetOriginSend(coins)
 	wugnot.Deposit(cross)
-	wugnot.Transfer(cross, consts.PROTOCOL_FEE_ADDR, 10000)
+	wugnot.Transfer(cross, protocolFeeAddr, 10000)
 
 	testing.SetRealm(stakerRealm)
 	pf.AddToProtocolFee(cross, barPath, 1000)
 	pf.AddToProtocolFee(cross, quxPath, 2500)
 	pf.AddToProtocolFee(cross, wugnotPath, 10000)
 
-	currentBarBalance := bar.BalanceOf(consts.PROTOCOL_FEE_ADDR)
-	currentQuxBalance := qux.BalanceOf(consts.PROTOCOL_FEE_ADDR)
-	currentWugnotBalance := wugnot.BalanceOf(consts.PROTOCOL_FEE_ADDR)
+	currentBarBalance := bar.BalanceOf(protocolFeeAddr)
+	currentQuxBalance := qux.BalanceOf(protocolFeeAddr)
+	currentWugnotBalance := wugnot.BalanceOf(protocolFeeAddr)
 
 	ufmt.Printf("[INFO] protocol fee deposited: bar(%d), qux(%d), wugnot(%d)\n", currentBarBalance, currentQuxBalance, currentWugnotBalance)
 }
@@ -139,16 +145,16 @@ func depositProtocolFeeAdditional() {
 	// additional protocol fee deposit (bar, qux)
 	testing.SetRealm(adminRealm)
 
-	bar.Transfer(cross, consts.PROTOCOL_FEE_ADDR, 2500)
-	qux.Transfer(cross, consts.PROTOCOL_FEE_ADDR, 4000)
+	bar.Transfer(cross, protocolFeeAddr, 2500)
+	qux.Transfer(cross, protocolFeeAddr, 4000)
 
 	testing.SetRealm(stakerRealm)
 	pf.AddToProtocolFee(cross, barPath, 2500)
 	pf.AddToProtocolFee(cross, quxPath, 4000)
 
-	currentBarBalance := bar.BalanceOf(consts.PROTOCOL_FEE_ADDR)
-	currentQuxBalance := qux.BalanceOf(consts.PROTOCOL_FEE_ADDR)
-	currentWugnotBalance := wugnot.BalanceOf(consts.PROTOCOL_FEE_ADDR)
+	currentBarBalance := bar.BalanceOf(protocolFeeAddr)
+	currentQuxBalance := qux.BalanceOf(protocolFeeAddr)
+	currentWugnotBalance := wugnot.BalanceOf(protocolFeeAddr)
 
 	ufmt.Printf("[INFO] protocol fee deposited: bar(%d), qux(%d), wugnot(%d)\n", currentBarBalance, currentQuxBalance, currentWugnotBalance)
 }

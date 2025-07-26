@@ -14,7 +14,6 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/demo/wugnot"
@@ -40,12 +39,12 @@ var (
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _     = access.GetAddress(prabc.ROLE_POOL.String())
 	positionAddr, _ = access.GetAddress(prabc.ROLE_POSITION.String())
 
-	wugnotAddr = consts.WUGNOT_ADDR
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 
 	barPath = "gno.land/r/onbloc/bar"
 	fooPath = "gno.land/r/onbloc/foo"
@@ -55,7 +54,8 @@ var (
 
 	fee500 uint32 = 500
 
-	max_timeout int64 = 9999999999
+	maxTimeout int64 = 9999999999
+	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
 	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
@@ -143,7 +143,13 @@ func createPools() {
 	pl.CreatePool(cross, barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] create wugnot:gns:500 pool")
-	pl.CreatePool(cross, consts.WUGNOT_PATH, consts.GNS_PATH, 500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+	pl.CreatePool(
+		cross,
+		"gno.land/r/demo/wugnot",
+		"gno.land/r/gnoswap/v1/gns",
+		500,
+		common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
+	)
 
 	println("[INFO] set pool tiers")
 	sr.SetPoolTierByAdmin(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 1)
@@ -156,9 +162,9 @@ func mintNativePosition01() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for native minting")
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	wugnot.Approve(cross, positionAddr, consts.INT64_MAX)
+	gns.Approve(cross, poolAddr, maxInt64)
+	wugnot.Approve(cross, poolAddr, maxInt64)
+	wugnot.Approve(cross, positionAddr, maxInt64)
 	testing.SkipHeights(3)
 
 	println("[INFO] prepare 50000005 ugnot (5 for refund test)")
@@ -187,8 +193,8 @@ func mintNativePosition01() {
 	println("[INFO] mint native position 01 (gns:gnot)")
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		consts.GNS_PATH,
-		consts.GNOT,
+		"gno.land/r/gnoswap/v1/gns",
+		"gnot",
 		fee500,
 		int32(9000),
 		int32(11000),
@@ -196,7 +202,7 @@ func mintNativePosition01() {
 		"1000",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -216,9 +222,9 @@ func mintNativePosition02() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for second native minting")
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	wugnot.Approve(cross, positionAddr, consts.INT64_MAX)
+	gns.Approve(cross, poolAddr, maxInt64)
+	wugnot.Approve(cross, poolAddr, maxInt64)
+	wugnot.Approve(cross, positionAddr, maxInt64)
 	testing.SkipHeights(3)
 
 	println("[INFO] prepare another 50000005 ugnot")
@@ -238,8 +244,8 @@ func mintNativePosition02() {
 	println("[INFO] mint native position 02 (gns:gnot)")
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		consts.GNS_PATH,
-		consts.GNOT,
+		"gno.land/r/gnoswap/v1/gns",
+		"gnot",
 		fee500,
 		int32(9000),
 		int32(11000),
@@ -247,7 +253,7 @@ func mintNativePosition02() {
 		"1000",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -279,7 +285,7 @@ func createExternalIncentiveNative() {
 	banker := std.NewBanker(std.BankerTypeRealmIssue)
 	banker.SendCoins(adminAddr, stakerAddr, std.Coins{{"ugnot", 10_000_000_000}})
 	testing.SetOriginSend(std.Coins{{"ugnot", 10_000_000_000}})
-	wugnot.Approve(cross, stakerAddr, consts.INT64_MAX)
+	wugnot.Approve(cross, stakerAddr, maxInt64)
 
 	incentiveID := fmt.Sprintf("%s:%d:%d", adminAddr, std.ChainHeight(), 1)
 	println("[INFO] create external incentive with incentiveID: ", incentiveID)
@@ -287,7 +293,7 @@ func createExternalIncentiveNative() {
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500", // targetPoolPath
-		consts.GNOT,                 // rewardToken (native)
+		"gnot",                      // rewardToken (native)
 		10_000_000_000,              // rewardAmount
 		1234569600,                  // startTimestamp
 		1234569600+TIMESTAMP_90DAYS, // endTimestamp
@@ -397,7 +403,7 @@ func endExternalIncentive() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve wugnot for unwrapping")
-	wugnot.Approve(cross, stakerAddr, consts.INT64_MAX)
+	wugnot.Approve(cross, stakerAddr, maxInt64)
 
 	wugnotBalanceBefore := wugnot.BalanceOf(adminUser)
 	ugnotBalanceBefore := ugnotBalanceOf(adminAddr)

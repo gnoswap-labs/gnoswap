@@ -6,12 +6,10 @@ import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/halt"
-
-	"gno.land/p/gnoswap/consts"
 )
 
 // defaultAllowed is the list of default allowed tokens to create external incentive
-var defaultAllowed = []string{consts.GNS_PATH, consts.GNOT}
+var defaultAllowed = []string{GNS_PATH, GNOT}
 
 // allowedTokens is a slice of all allowed token paths, including the default and added tokens.
 var allowedTokens = make([]string, 0, len(defaultAllowed))
