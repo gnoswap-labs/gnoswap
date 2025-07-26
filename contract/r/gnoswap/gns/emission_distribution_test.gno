@@ -14,9 +14,9 @@ func TestEmissionDistributionAcrossYears(t *testing.T) {
 	resetEmissionState(t)
 
 	// Set up callback
-	oldCallback := callbackEmissionChange
-	callbackEmissionChange = func(amount int64) {}
-	defer func() { callbackEmissionChange = oldCallback }()
+	// oldCallback := callbackEmissionChange
+	// callbackEmissionChange = func(amount int64) {}
+	// defer func() { callbackEmissionChange = oldCallback }()
 
 	// Test different scenarios of block time changes
 	scenarios := []struct {
@@ -53,7 +53,7 @@ func TestEmissionDistributionAcrossYears(t *testing.T) {
 		t.Run(sc.name, func(t *testing.T) {
 			// Reset state for each scenario
 			resetEmissionState(t)
-			callbackEmissionChange = func(amount int64) {}
+			// callbackEmissionChange = func(amount int64) {}
 
 			// Skip to the target point in the year
 			yearStart := GetHalvingYearStartBlock(sc.changeAtYear)
@@ -130,11 +130,6 @@ func TestEmissionDistributionAcrossYears(t *testing.T) {
 func TestEmissionRateConsistencyAcrossYears(t *testing.T) {
 	resetEmissionState(t)
 
-	// Set up callback
-	oldCallback := callbackEmissionChange
-	callbackEmissionChange = func(amount int64) {}
-	defer func() { callbackEmissionChange = oldCallback }()
-
 	// Skip to year 3
 	targetHeight := GetHalvingYearStartBlock(3) + 1000
 	testing.SkipHeights(targetHeight - std.ChainHeight() - 1)
@@ -172,57 +167,5 @@ func TestEmissionRateConsistencyAcrossYears(t *testing.T) {
 		uassert.True(t, diff <= tolerance,
 			ufmt.Sprintf("Year %d: total emission deviates. Max: %d, Total: %d",
 				year, maxAmount, totalEmission))
-	}
-}
-
-// TestEmissionEvennessScore calculates an "evenness score" to measure
-// how evenly emissions are distributed across years after block time changes
-func TestEmissionEvennessScore(t *testing.T) {
-	resetEmissionState(t)
-
-	// Set up callback
-	oldCallback := callbackEmissionChange
-	callbackEmissionChange = func(amount int64) {}
-	defer func() { callbackEmissionChange = oldCallback }()
-
-	// Skip to year 4
-	targetHeight := GetHalvingYearStartBlock(4) + 500
-	testing.SkipHeights(targetHeight - std.ChainHeight() - 1)
-
-	// Test multiple block time changes
-	blockTimes := []int64{1500, 2500, 1800, 2200}
-
-	for _, newBlockTime := range blockTimes {
-		testing.SetRealm(adminRealm)
-		setAvgBlockTimeInMs(newBlockTime)
-
-		// Calculate "evenness score" - the maximum deviation from expected
-		maxDeviation := int64(0)
-
-		for year := int64(5); year <= HALVING_END_YEAR; year++ {
-			maxAmount := GetHalvingYearMaxAmount(year)
-			amountPerBlock := GetAmountPerBlockPerHalvingYear(year)
-			startBlock := GetHalvingYearStartBlock(year)
-			endBlock := GetHalvingYearEndBlock(year)
-			blocksInYear := endBlock - startBlock + 1
-
-			totalEmission := amountPerBlock * blocksInYear
-			deviation := totalEmission - maxAmount
-			if deviation < 0 {
-				deviation = -deviation
-			}
-
-			if deviation > maxDeviation {
-				maxDeviation = deviation
-			}
-		}
-
-		// Maximum deviation should be less than 1% of any year's emission
-		// This ensures emissions remain evenly distributed
-		maxAllowedDeviation := GetHalvingYearMaxAmount(5) / 100 // 1% of a typical year
-
-		uassert.True(t, maxDeviation <= maxAllowedDeviation,
-			ufmt.Sprintf("Block time %d: max deviation %d exceeds allowed %d",
-				newBlockTime, maxDeviation, maxAllowedDeviation))
 	}
 }

@@ -57,7 +57,7 @@ func MintGns(cur realm, address std.Address) int64 {
 	halt.AssertIsNotHaltedEmission()
 	access.AssertIsEmission(caller)
 
-	lastGNSMintedHeight := GetLastMintedHeight()
+	lastGNSMintedHeight := LastMintedHeight()
 	currentHeight := std.ChainHeight()
 
 	// skip minting process if following conditions are met

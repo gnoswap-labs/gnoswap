@@ -315,19 +315,14 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 	})
 
 	t.Run("success if caller is governance contract", func(t *testing.T) {
-		oldCallback := emissionChangeCallback
-		emissionChangeCallback = func(amount int64) {}
 		testing.SkipHeights(3)
 		testing.SetRealm(govRealm)
 		SetAvgBlockTimeInMs(cross, 4)
 
 		uassert.Equal(t, AvgBlockTimeInMs(), int64(4))
-		callbackEmissionChange = oldCallback
 	})
 
 	t.Run("panic with negative block time", func(t *testing.T) {
-		oldCallback := emissionChangeCallback
-		emissionChangeCallback = func(amount int64) {}
 		testing.SkipHeights(1)
 		testing.SetRealm(govRealm)
 		uassert.AbortsWithMessage(t,
@@ -336,12 +331,9 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 				SetAvgBlockTimeInMs(cross, -1)
 			},
 		)
-		emissionChangeCallback = oldCallback
 	})
 
 	t.Run("panic with extremely large block time", func(t *testing.T) {
-		oldCallback := emissionChangeCallback
-		emissionChangeCallback = func(amount int64) {}
 		testing.SkipHeights(1)
 		testing.SetRealm(govRealm)
 		uassert.AbortsWithMessage(t,
@@ -350,7 +342,6 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 				SetAvgBlockTimeInMs(cross, MAX_BLOCK_TIME_MS)
 			},
 		)
-		emissionChangeCallback = oldCallback
 	})
 }
 

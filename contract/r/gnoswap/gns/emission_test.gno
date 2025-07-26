@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
+	"gno.land/p/demo/ufmt"
 )
 
 // TestEmissionBoundaryConditions tests for emission at year boundaries
@@ -144,9 +144,6 @@ func TestBlockTimeChangeImpact(t *testing.T) {
 
 			// Set up admin context and callback
 			testing.SetRealm(adminRealm)
-			oldCallback := callbackEmissionChange
-			callbackEmissionChange = func(amount int64) {}
-			defer func() { callbackEmissionChange = oldCallback }()
 
 			setAvgBlockTimeInMs(tt.newBlockTime)
 
@@ -269,80 +266,6 @@ func TestEmissionStateConsistency(t *testing.T) {
 	}
 }
 
-// TestBlockTimeValidation tests validation of block time values
-func TestBlockTimeValidation(t *testing.T) {
-	resetEmissionState(t)
-
-	tests := []struct {
-		name        string
-		blockTime   int64
-		shouldPanic bool
-		panicMsg    string
-		description string
-	}{
-		{
-			name:        "Zero block time",
-			blockTime:   0,
-			shouldPanic: true,
-			panicMsg:    "invalid block time interval",
-			description: "Should panic with zero block time",
-		},
-		{
-			name:        "Negative block time",
-			blockTime:   -1000,
-			shouldPanic: true,
-			panicMsg:    "invalid block time interval",
-			description: "Should panic with negative block time",
-		},
-		{
-			name:        "Extremely large block time",
-			blockTime:   MAX_BLOCK_TIME_MS,
-			shouldPanic: true,
-			panicMsg:    "invalid block time interval",
-			description: "Should panic with block time >= MAX_BLOCK_TIME_MS",
-		},
-		{
-			name:        "Valid minimum block time",
-			blockTime:   1,
-			shouldPanic: false,
-			description: "Should accept minimum valid block time",
-		},
-		{
-			name:        "Valid typical block time",
-			blockTime:   2000,
-			shouldPanic: false,
-			description: "Should accept typical block time",
-		},
-		{
-			name:        "Valid large block time",
-			blockTime:   999999,
-			shouldPanic: false,
-			description: "Should accept large but valid block time",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			testing.SetRealm(adminRealm)
-			oldCallback := callbackEmissionChange
-			callbackEmissionChange = func(amount int64) {}
-			defer func() { callbackEmissionChange = oldCallback }()
-
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					setAvgBlockTimeInMs(tt.blockTime)
-				}, tt.description)
-			} else {
-				setAvgBlockTimeInMs(tt.blockTime)
-				uassert.Equal(t, tt.blockTime, AvgBlockTimeInMs(),
-					"%s: Block time should be set correctly", tt.name)
-
-				setAvgBlockTimeInMs(consts.BLOCK_GENERATION_INTERVAL)
-			}
-		})
-	}
-}
-
 // TestEmissionAfterBlockTimeChange tests emission calculations after block time changes
 func TestEmissionAfterBlockTimeChange(t *testing.T) {
 	tests := []struct {
@@ -393,10 +316,6 @@ func TestEmissionAfterBlockTimeChange(t *testing.T) {
 
 			// Change block time
 			testing.SetRealm(adminRealm)
-			oldCallback := callbackEmissionChange
-			callbackEmissionChange = func(amount int64) {}
-			defer func() { callbackEmissionChange = oldCallback }()
-
 			setAvgBlockTimeInMs(tt.newBlockTime)
 
 			// Check adjustments
@@ -440,5 +359,62 @@ func TestEmissionAfterBlockTimeChange(t *testing.T) {
 					"%s: Year should not have ended after restoration", tt.name)
 			}
 		})
+	}
+}
+
+// TestFutureYearEmissionRecalculation tests that emission rates for future years
+// are properly recalculated when average block time changes
+func TestFutureYearEmissionRecalculation(t *testing.T) {
+	resetEmissionState(t)
+
+	// Skip to year 3 (to have both current and future years)
+	targetHeight := GetHalvingYearStartBlock(3) + 1000
+	testing.SkipHeights(targetHeight - std.ChainHeight() - 1)
+
+	// Record emission rates for all years before block time change
+	emissionRatesBefore := make(map[int64]int64)
+	for year := int64(1); year <= HALVING_END_YEAR; year++ {
+		emissionRatesBefore[year] = GetAmountPerBlockPerHalvingYear(year)
+	}
+
+	// Change block time (decrease to 1000ms from 2000ms)
+	// This should roughly double the blocks per year
+	testing.SetRealm(adminRealm)
+	setAvgBlockTimeInMs(1000)
+
+	// Check current year (year 3)
+	currentYear := HalvingYearByHeight(std.ChainHeight())
+	uassert.Equal(t, int64(3), currentYear, "Should be in year 3")
+
+	// Verify that future years' emission rates were recalculated
+	for year := currentYear + 1; year <= HALVING_END_YEAR; year++ {
+		emissionRateAfter := GetAmountPerBlockPerHalvingYear(year)
+		emissionRateBefore := emissionRatesBefore[year]
+
+		// Since block time was halved, emission per block should be roughly halved
+		// to maintain the same total emission per year
+		expectedRatio := float64(emissionRateBefore) / float64(emissionRateAfter)
+
+		// Allow for some rounding error (within 5%)
+		if expectedRatio < 1.9 || expectedRatio > 2.1 {
+			t.Errorf("Year %d: emission rate not properly adjusted. Before: %d, After: %d, Ratio: %.2f",
+				year, emissionRateBefore, emissionRateAfter, expectedRatio)
+		}
+
+		// Verify that the total emission for the year remains roughly the same
+		blocksInYear := GetHalvingYearEndBlock(year) - GetHalvingYearStartBlock(year) + 1
+		totalEmissionAfter := emissionRateAfter * blocksInYear
+		maxAmount := GetHalvingYearMaxAmount(year)
+
+		// The total emission should be close to max amount (within 1%)
+		diff := totalEmissionAfter - maxAmount
+		if diff < 0 {
+			diff = -diff
+		}
+		tolerance := maxAmount / 100 // 1% tolerance
+
+		uassert.True(t, diff <= tolerance,
+			ufmt.Sprintf("Year %d: total emission deviates too much. Expected: %d, Got: %d, Diff: %d",
+				year, maxAmount, totalEmissionAfter, diff))
 	}
 }

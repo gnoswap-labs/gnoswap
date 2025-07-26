@@ -92,7 +92,7 @@ func (h *HalvingData) setEndBlockHeight(year int64, height int64) error {
 	}
 
 	h.endBlockHeight[year-1] = height
-	
+
 	return nil
 }
 
@@ -305,11 +305,11 @@ func NewEmissionState() *EmissionState {
 	}
 }
 
-func (e *EmissionState) getStartHeight() int64                { return e.startHeight }
+func (e *EmissionState) getStartHeight() int64             { return e.startHeight }
 func (e *EmissionState) setStartHeight(height int64)       { e.startHeight = height }
-func (e *EmissionState) getStartTimestamp() int64             { return e.startTimestamp }
+func (e *EmissionState) getStartTimestamp() int64          { return e.startTimestamp }
 func (e *EmissionState) setStartTimestamp(timestamp int64) { e.startTimestamp = timestamp }
-func (e *EmissionState) getEndTimestamp() int64               { return e.endTimestamp }
+func (e *EmissionState) getEndTimestamp() int64            { return e.endTimestamp }
 func (e *EmissionState) setEndTimestamp(timestamp int64)   { e.endTimestamp = timestamp }
 func (e *EmissionState) getHalvingData() HalvingData       { return e.halvingData }
 func (e *EmissionState) setHalvingData(data HalvingData)   { e.halvingData = data }
@@ -336,7 +336,7 @@ func SetAvgBlockTimeInMsByAdmin(cur realm, ms int64) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdmin(caller)
 
-	prevAvgBlockTimeInMs := GetAvgBlockTimeInMs()
+	prevAvgBlockTimeInMs := AvgBlockTimeInMs()
 	err := setAvgBlockTimeInMs(ms)
 	if err != nil {
 		panic(err)
@@ -360,7 +360,7 @@ func SetAvgBlockTimeInMs(cur realm, ms int64) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsGovernance(caller)
 
-	prevAvgBlockTimeInMs := GetAvgBlockTimeInMs()
+	prevAvgBlockTimeInMs := AvgBlockTimeInMs()
 	err := setAvgBlockTimeInMs(ms)
 	if err != nil {
 		panic(err)
@@ -465,10 +465,7 @@ func setAvgBlockTimeInMs(ms int64) error {
 
 	// Validate that we're still within the emission period
 	if currentYear == 0 {
-		panic(addDetailToError(
-			errInvalidYear,
-			ufmt.Sprintf("cannot set average block time after emission period has ended"),
-		))
+		panic("cannot set average block time after emission period has ended")
 	}
 
 	adjusted := hd.getAmountPerBlock(currentYear)
