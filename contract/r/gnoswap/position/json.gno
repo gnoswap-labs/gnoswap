@@ -4,8 +4,6 @@ import (
 	"std"
 
 	"gno.land/p/demo/json"
-
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gnft"
 )
 
@@ -38,7 +36,7 @@ func (pr *PositionsResponse) JSON() *json.Node {
 	for _, position := range pr.Positions {
 		owner, err := gnft.OwnerOf(positionIdFrom(position.LpPositionId))
 		if err != nil {
-			owner = consts.ZERO_ADDRESS
+			owner = zeroAddress
 		}
 		rsps.AppendArray(position.JSON(owner))
 	}

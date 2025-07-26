@@ -6,13 +6,18 @@ import (
 	"testing"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
+)
+
+const (
+	INT64_MAX int64 = 9223372036854775807
+
+	MIN_PRICE string = "4295128740"
 )
 
 var (
@@ -153,7 +158,7 @@ func executeSwap() {
 		adminAddr,
 		true,
 		"1234567",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
@@ -163,8 +168,8 @@ func executeSwap() {
 
 func checkFeesAfterSwap() {
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Checking fees for position 1")
 	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)

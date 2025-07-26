@@ -278,7 +278,7 @@ var mockPosition = map[string]string{
 	"lpPositionId":             "1",
 	"burned":                   "false",
 	"owner":                    `"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"`,
-	"operator":                 `"g100000000000000000000000000000000dnmcnx"`,
+	"operator":                 `""`,
 	"poolKey":                  `"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"`,
 	"tickLower":                "-887270",
 	"tickUpper":                "887270",

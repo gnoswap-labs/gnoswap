@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/halt"
@@ -14,6 +13,8 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
+
+const MAX_INT256 string = "57896044618658097711785492504343953926634992332820282019728792003956564819967"
 
 // SwapResult encapsulates all state changes that occur as a result of a swap
 // This type ensure all state transitions are atomic and can be applied at once.
@@ -38,7 +39,7 @@ type SwapComputation struct {
 	Cache             SwapCache
 }
 
-var fixedPointQ128 = u256.MustFromDecimal(consts.Q128)
+var fixedPointQ128 = u256.MustFromDecimal(Q128)
 
 // Swap swaps token0 for token1, or token1 for token0
 // Returns swapped amount0, amount1 in string
@@ -191,7 +192,7 @@ func DrySwap(
 			return "0", "0", false
 		}
 	}
-	
+
 	// Validate non-zero amounts
 	if result.Amount0.IsZero() || result.Amount1.IsZero() {
 		return "0", "0", false
@@ -288,33 +289,33 @@ func applySwapResult(pool *Pool, result *SwapResult) {
 //   - Price limit must be below MAX_SQRT_RATIO
 func validatePriceLimits(slot0 Slot0, zeroForOne bool, sqrtPriceLimitX96 *u256.Uint) {
 	if zeroForOne {
-		minSqrtRatio := u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
+		minSqrtRatio := u256.MustFromDecimal(MIN_SQRT_RATIO)
 
 		cond1 := sqrtPriceLimitX96.Lt(slot0.sqrtPriceX96)
 		cond2 := sqrtPriceLimitX96.Gt(minSqrtRatio)
 		if !(cond1 && cond2) {
 			panic(newErrorWithDetail(
 				errPriceOutOfRange,
-				ufmt.Sprintf("sqrtPriceLimitX96(%s) < slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) > consts.MIN_SQRT_RATIO(%s)",
+				ufmt.Sprintf("sqrtPriceLimitX96(%s) < slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) > MIN_SQRT_RATIO(%s)",
 					sqrtPriceLimitX96.ToString(),
 					slot0.sqrtPriceX96.ToString(),
 					sqrtPriceLimitX96.ToString(),
-					consts.MIN_SQRT_RATIO),
+					MIN_SQRT_RATIO),
 			))
 		}
 	} else {
-		maxSqrtRatio := u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
+		maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
 
 		cond1 := sqrtPriceLimitX96.Gt(slot0.sqrtPriceX96)
 		cond2 := sqrtPriceLimitX96.Lt(maxSqrtRatio)
 		if !(cond1 && cond2) {
 			panic(newErrorWithDetail(
 				errPriceOutOfRange,
-				ufmt.Sprintf("sqrtPriceLimitX96(%s) > slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) < consts.MAX_SQRT_RATIO(%s)",
+				ufmt.Sprintf("sqrtPriceLimitX96(%s) > slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) < MAX_SQRT_RATIO(%s)",
 					sqrtPriceLimitX96.ToString(),
 					slot0.sqrtPriceX96.ToString(),
 					sqrtPriceLimitX96.ToString(),
-					consts.MAX_SQRT_RATIO),
+					MAX_SQRT_RATIO),
 			))
 		}
 	}
@@ -395,7 +396,7 @@ func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState
 	if overflow {
 		return state, step, errUnderflow
 	}
-	
+
 	step.feeAmount = newFeeAmount
 	state.protocolFee.Add(state.protocolFee, delta)
 
@@ -470,12 +471,12 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 //   - Increments calculated amount by (amountIn + feeAmount)
 func updateAmounts(step StepComputations, state SwapState, exactInput bool) SwapState {
 	amountInWithFeeU256 := new(u256.Uint).Add(step.amountIn, step.feeAmount)
-	if amountInWithFeeU256.Gt(u256.MustFromDecimal(consts.MAX_INT256)) {
+	if amountInWithFeeU256.Gt(u256.MustFromDecimal(MAX_INT256)) {
 		panic("amountIn + feeAmount overflows int256")
 	}
 
 	amountInWithFee := i256.FromUint256(amountInWithFeeU256)
-	if step.amountOut.Gt(u256.MustFromDecimal(consts.MAX_INT256)) {
+	if step.amountOut.Gt(u256.MustFromDecimal(MAX_INT256)) {
 		panic("amountOut overflows int256")
 	}
 
@@ -484,8 +485,8 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) Swap
 		state.amountCalculated = i256.Zero().Sub(state.amountCalculated, i256.FromUint256(step.amountOut))
 
 		return state
-	} 
-	
+	}
+
 	state.amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
 	state.amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
 

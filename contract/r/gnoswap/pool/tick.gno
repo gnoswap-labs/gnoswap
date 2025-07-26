@@ -7,8 +7,11 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+)
 
-	"gno.land/p/gnoswap/consts"
+const (
+	MIN_TICK int32 = -887272
+	MAX_TICK int32 = 887272
 )
 
 // GetTickLiquidityGross returns the gross liquidity for the specified tick.
@@ -313,11 +316,11 @@ func calculateMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 	// This ensures that the tick range is properly aligned with the tickSpacing
 	// For example, if tickSpacing is 60 and MIN_TICK is -887272:
 	// -887272 / 60 = -14787.866... -> -14787 * 60 = -887220
-	minTick := (consts.MIN_TICK / tickSpacing) * tickSpacing
-	maxTick := (consts.MAX_TICK / tickSpacing) * tickSpacing
+	minTick := (MIN_TICK / tickSpacing) * tickSpacing
+	maxTick := (MAX_TICK / tickSpacing) * tickSpacing
 	numTicks := uint64((maxTick-minTick)/tickSpacing) + 1
 
-	return new(u256.Uint).Div(u256.MustFromDecimal(consts.MAX_UINT128), u256.NewUint(numTicks))
+	return new(u256.Uint).Div(u256.MustFromDecimal(MAX_UINT128), u256.NewUint(numTicks))
 }
 
 // getFeeGrowthBelowX128 calculates the fee growth below a specified tick.
@@ -438,17 +441,17 @@ func validateTicks(tickLower, tickUpper int32) error {
 		)
 	}
 
-	if tickLower < consts.MIN_TICK {
+	if tickLower < MIN_TICK {
 		return makeErrorWithDetails(
 			errTickLowerInvalid,
-			ufmt.Sprintf("tickLower(%d) < MIN_TICK(%d)", tickLower, consts.MIN_TICK),
+			ufmt.Sprintf("tickLower(%d) < MIN_TICK(%d)", tickLower, MIN_TICK),
 		)
 	}
 
-	if tickUpper > consts.MAX_TICK {
+	if tickUpper > MAX_TICK {
 		return makeErrorWithDetails(
 			errTickUpperInvalid,
-			ufmt.Sprintf("tickUpper(%d) > MAX_TICK(%d)", tickUpper, consts.MAX_TICK),
+			ufmt.Sprintf("tickUpper(%d) > MAX_TICK(%d)", tickUpper, MAX_TICK),
 		)
 	}
 

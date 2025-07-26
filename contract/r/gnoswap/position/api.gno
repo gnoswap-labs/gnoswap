@@ -6,12 +6,13 @@ import (
 
 	"gno.land/p/demo/json"
 	ufmt "gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
+
+const MAX_UINT256 string = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 
 func ApiGetPositions() string {
 	rpcPositions := []RpcPosition{}
@@ -91,7 +92,7 @@ func ApiGetPositionsByAddress(address std.Address) string {
 	for _, position := range r.Response {
 		owner, err := gnft.OwnerOf(positionIdFrom(position.LpPositionId))
 		if err != nil {
-			owner = consts.ZERO_ADDRESS
+			owner = zeroAddress
 		}
 		rsps.AppendArray(position.JSON(owner))
 	}
@@ -149,7 +150,7 @@ func rpcMakePosition(positionId uint64) RpcPosition {
 
 	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
 	if err != nil {
-		owner = consts.ZERO_ADDRESS
+		owner = zeroAddress
 	}
 
 	return RpcPosition{
@@ -232,11 +233,11 @@ func unclaimedFee(positionId uint64) (*i256.Int, *i256.Int) {
 
 	value01 := subIn256(feeGrowthInside0X128, feeGrowthInside0LastX128)
 	value02 := i256.Zero().Mul(liquidity, value01)
-	unclaimedFee0 := i256.Zero().Div(value02, i256.MustFromDecimal(consts.Q128))
+	unclaimedFee0 := i256.Zero().Div(value02, i256.MustFromDecimal(Q128))
 
 	value11 := subIn256(feeGrowthInside1X128, feeGrowthInside1LastX128)
 	value12 := i256.Zero().Mul(liquidity, value11)
-	unclaimedFee1 := i256.Zero().Div(value12, i256.MustFromDecimal(consts.Q128))
+	unclaimedFee1 := i256.Zero().Div(value12, i256.MustFromDecimal(Q128))
 
 	return unclaimedFee0, unclaimedFee1
 }
@@ -246,7 +247,7 @@ func subIn256(x, y *i256.Int) *i256.Int {
 	diff := value.Sub(x, y)
 
 	if diff.IsNeg() {
-		q256 := i256.MustFromDecimal(consts.MAX_UINT256)
+		q256 := i256.MustFromDecimal(MAX_UINT256)
 		return diff.Add(diff, q256)
 	}
 

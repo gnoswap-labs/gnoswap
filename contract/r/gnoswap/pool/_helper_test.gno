@@ -77,8 +77,12 @@ var (
 	routerPath = "gno.land/r/gnoswap/v1/router"
 	rouRealm   = std.NewCodeRealm(routerPath)
 
-	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
+)
+
+const (
+	MIN_PRICE string = "4295128740"
+	MAX_PRICE string = "1461446703485210103287273052203988822378723970341"
 )
 
 func InitialisePoolTest(t *testing.T) {
