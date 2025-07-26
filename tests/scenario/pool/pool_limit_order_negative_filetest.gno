@@ -9,7 +9,6 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -22,6 +21,8 @@ import (
 // Constants for addresses and approvals
 const (
 	maxApprove int64 = 9223372036854775806
+
+	MAX_UINT128 string = "340282366920938463463374607431768211455"
 )
 
 var (
@@ -131,8 +132,8 @@ func main() {
 		adminAddr,
 		-120,
 		0,
-		consts.MAX_UINT128,
-		consts.MAX_UINT128,
+		MAX_UINT128,
+		MAX_UINT128,
 	)
 
 	println("[EXPECTED] Collect 0:", collect0, "expected: 60207195")

@@ -5,12 +5,11 @@ import (
 
 	"gno.land/p/demo/avl"
 
-	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/common"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 type PositionInfo struct {
@@ -174,10 +173,10 @@ func (step *StepComputations) initSwapStep(state SwapState, pool *Pool, zeroForO
 // clampTickNext ensures that `tickNext` stays within the min, max tick boundaries
 // as the tick bitmap is not aware of these bounds
 func (step *StepComputations) clampTickNext() {
-	if step.tickNext < consts.MIN_TICK {
-		step.tickNext = consts.MIN_TICK
-	} else if step.tickNext > consts.MAX_TICK {
-		step.tickNext = consts.MAX_TICK
+	if step.tickNext < MIN_TICK {
+		step.tickNext = MIN_TICK
+	} else if step.tickNext > MAX_TICK {
+		step.tickNext = MAX_TICK
 	}
 }
 
