@@ -11,6 +11,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
+	"gno.land/r/gnoswap/v1/access"
 	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/staker"
