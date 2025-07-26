@@ -7,7 +7,6 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 	prabc "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
@@ -57,20 +56,25 @@ var (
 )
 
 var (
-	adminAddr = rbac.DefaultRoleAddresses[prabc.ROLE_ADMIN]
+	adminAddr  = rbac.DefaultRoleAddresses[prabc.ROLE_ADMIN]
+	adminRealm = std.NewUserRealm(adminAddr)
 
 	alice = testutils.TestAddress("alice")
 	bob   = testutils.TestAddress("bob")
 
-	emissionAddr = rbac.DefaultRoleAddresses[prabc.ROLE_EMISSION]
-	poolAddr     = rbac.DefaultRoleAddresses[prabc.ROLE_POOL]
+	emissionAddr    = rbac.DefaultRoleAddresses[prabc.ROLE_EMISSION]
+	poolAddr        = rbac.DefaultRoleAddresses[prabc.ROLE_POOL]
 	protocolFeeAddr = rbac.DefaultRoleAddresses[prabc.ROLE_PROTOCOL_FEE]
-	routerAddr = rbac.DefaultRoleAddresses[prabc.ROLE_ROUTER]
-	devOpsAddr = rbac.DefaultRoleAddresses[prabc.ROLE_DEVOPS]
+	routerAddr      = rbac.DefaultRoleAddresses[prabc.ROLE_ROUTER]
+	devOpsAddr      = rbac.DefaultRoleAddresses[prabc.ROLE_DEVOPS]
 
-	adminRealm = std.NewUserRealm(adminAddr)
-	posRealm   = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+
+	posPath  = "gno.land/r/gnoswap/v1/position"
+	posRealm = std.NewCodeRealm(posPath)
+
+	rouPath  = "gno.land/r/gnoswap/v1/router"
+	rouRealm = std.NewCodeRealm(rouPath)
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
@@ -605,7 +609,7 @@ func ugnotFaucet(t *testing.T, to std.Address, amount int64) {
 func ugnotDeposit(t *testing.T, addr std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(addr))
-	wugnotAddr := consts.WUGNOT_ADDR
+	wugnotAddr := wugnotAddr
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, amount}})
 	wugnot.Deposit(cross)
@@ -665,7 +669,7 @@ func burnUsdc(addr std.Address) {
 func burnAllNFT(t *testing.T) {
 	t.Helper()
 
-	testing.SetRealm(std.NewCodeRealm(consts.POSITION_PATH))
+	testing.SetRealm(posRealm)
 	for i := int64(1); i <= gnft.TotalSupply(); i++ {
 		gnft.Burn(cross, positionIdFrom(i))
 	}

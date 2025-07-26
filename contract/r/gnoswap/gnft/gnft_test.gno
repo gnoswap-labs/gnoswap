@@ -9,7 +9,6 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -21,7 +20,8 @@ const (
 )
 
 var (
-	positionRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	positionPath = "gno.land/r/gnoswap/v1/position"
+	positionRealm = std.NewCodeRealm(positionPath)
 
 	addr01      = testutils.TestAddress("addr01")
 	addr01Realm = std.NewUserRealm(addr01)
@@ -354,7 +354,7 @@ func TestMint(t *testing.T) {
 	}{
 		{
 			name:          "mint first nft to addr01",
-			callerRealm:   std.NewCodeRealm(consts.POSITION_PATH),
+			callerRealm:   positionRealm,
 			tokenIdToMint: 1,
 			addressToMint: addr01,
 			expected:      "1",
@@ -364,7 +364,7 @@ func TestMint(t *testing.T) {
 		},
 		{
 			name:          "mint second nft to addr02",
-			callerRealm:   std.NewCodeRealm(consts.POSITION_PATH),
+			callerRealm:   positionRealm,
 			tokenIdToMint: 2,
 			addressToMint: addr02,
 			expected:      "2",
@@ -407,7 +407,7 @@ func TestBurn(t *testing.T) {
 		},
 		{
 			name:          "burn non-existent token id",
-			callerRealm:   std.NewCodeRealm(consts.POSITION_PATH),
+			callerRealm:   positionRealm,
 			tokenIdToBurn: 99,
 			shouldPanic:   true,
 			panicMsg:      errInvalidTokenId,
