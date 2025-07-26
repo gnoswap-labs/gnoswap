@@ -6,8 +6,22 @@ import (
 	"gno.land/p/demo/ufmt"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+)
 
-	"gno.land/p/gnoswap/consts"
+const (
+	MAX_UINT64  string = "18446744073709551615"
+	MAX_INT64   string = "9223372036854775807"
+	MAX_INT128  string = "170141183460469231731687303715884105727"
+	MAX_UINT128 string = "340282366920938463463374607431768211455"
+
+	INT64_MAX  int64  = 9223372036854775807
+
+	Q96_RESOLUTION uint = 96
+	Q128_RESOLUTION uint = 128
+
+	Q64  string = "18446744073709551616"                    // 2 ** 64
+	Q96  string = "79228162514264337593543950336"           // 2 ** 96
+	Q128 string = "340282366920938463463374607431768211456" // 2 ** 128
 )
 
 // safeConvertToUint64 safely converts a *u256.Uint value to a uint64, ensuring no overflow.
@@ -39,7 +53,7 @@ func safeConvertToUint64(value *u256.Uint) uint64 {
 			"%v: amount(%s) overflows uint64 range (max %s)",
 			errOutOfRange,
 			value.ToString(),
-			consts.MAX_UINT64,
+			MAX_UINT64,
 		))
 	}
 	return res
@@ -69,12 +83,12 @@ func safeConvertToUint64(value *u256.Uint) uint64 {
 // safeConvertToInt64(u256.MustFromDecimal("9223372036854775808")) // Panics due to overflow
 func safeConvertToInt64(value *u256.Uint) int64 {
 	res, overflow := value.Uint64WithOverflow()
-	if overflow || res > uint64(consts.INT64_MAX) {
+	if overflow || res > uint64(INT64_MAX) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows int64 range (max %s)",
 			errOutOfRange,
 			value.ToString(),
-			consts.MAX_INT64,
+			MAX_INT64,
 		))
 	}
 	return int64(res)
@@ -105,7 +119,7 @@ func safeConvertToInt64(value *u256.Uint) int64 {
 // safeConvertToInt128(u256.MustFromDecimal("170141183460469231731687303715884105728")) // Panics due to overflow
 func safeConvertToInt128(value *u256.Uint) *i256.Int {
 	liquidityDelta := i256.FromUint256(value)
-	if liquidityDelta.Gt(i256.MustFromDecimal(consts.MAX_INT128)) {
+	if liquidityDelta.Gt(i256.MustFromDecimal(MAX_INT128)) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows int128 range",
 			errOverFlow, value.ToString()))
@@ -139,8 +153,8 @@ func toUint128(value *u256.Uint) *u256.Uint {
 		))
 	}
 
-	if value.Gt(u256.MustFromDecimal(consts.MAX_UINT128)) {
-		mask := new(u256.Uint).Lsh(u256.One(), consts.Q128_RESOLUTION)
+	if value.Gt(u256.MustFromDecimal(MAX_UINT128)) {
+		mask := new(u256.Uint).Lsh(u256.One(), Q128_RESOLUTION)
 		mask = new(u256.Uint).Sub(mask, u256.One())
 		return new(u256.Uint).And(value, mask)
 	}
@@ -186,7 +200,7 @@ func checkTransferError(err error) {
 
 // checkOverFlowInt128 checks if the value overflows the int128 range.
 func checkOverFlowInt128(value *i256.Int) {
-	if value.Gt(i256.MustFromDecimal(consts.MAX_INT128)) {
+	if value.Gt(i256.MustFromDecimal(MAX_INT128)) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows int128 range",
 			errOverFlow, value.ToString()))

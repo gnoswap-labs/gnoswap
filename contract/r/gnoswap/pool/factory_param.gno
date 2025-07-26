@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -15,6 +14,16 @@ const (
 	FeeTier500   uint32 = 500
 	FeeTier3000  uint32 = 3000
 	FeeTier10000 uint32 = 10000
+)
+
+const (
+	GNOT           string = "gnot"
+	WRAPPED_WUGNOT string = "gno.land/r/demo/wugnot"
+)
+
+const (
+	MIN_SQRT_RATIO string = "4295128739"
+	MAX_SQRT_RATIO string = "1461446703485210103287273052203988822378723970342"
 )
 
 // poolCreateConfig holds the essential parameters for creating a new pool.
@@ -57,8 +66,8 @@ func (p *poolCreateConfig) updateWithWrapping() *poolCreateConfig {
 		token0Path, token1Path = token1Path, token0Path
 
 		// Check if initial price is within valid range
-		minSqrtRatio := u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
-		maxSqrtRatio := u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
+		minSqrtRatio := u256.MustFromDecimal(MIN_SQRT_RATIO)
+		maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
 
 		if p.sqrtPriceX96.Lt(minSqrtRatio) || p.sqrtPriceX96.Gt(maxSqrtRatio) {
 			panic(newErrorWithDetail(
@@ -96,11 +105,11 @@ func (p *poolCreateConfig) isInOrder() bool {
 }
 
 func (p *poolCreateConfig) wrap() (string, string) {
-	if p.token0Path == consts.GNOT {
-		p.token0Path = consts.WRAPPED_WUGNOT
+	if p.token0Path == GNOT {
+		p.token0Path = WRAPPED_WUGNOT
 	}
-	if p.token1Path == consts.GNOT {
-		p.token1Path = consts.WRAPPED_WUGNOT
+	if p.token1Path == GNOT {
+		p.token1Path = WRAPPED_WUGNOT
 	}
 	return p.token0Path, p.token1Path
 }

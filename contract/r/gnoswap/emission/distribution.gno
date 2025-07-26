@@ -7,6 +7,8 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
+	prbac "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/halt"
@@ -191,21 +193,53 @@ func calculateAmount(amount, bptPct int64) int64 {
 func transferToTarget(cur realm, target int, amount int64) error {
 	switch target {
 	case LIQUIDITY_STAKER:
+		stakerAddr, ok := access.GetAddress(prbac.ROLE_STAKER.String())
+		if !ok {
+			return makeErrorWithDetails(
+				errDistributionAddressNotFound,
+				ufmt.Sprintf("%s not found", prbac.ROLE_STAKER.String()),
+			)
+		}
+		
 		gns.Transfer(cross, stakerAddr, amount)
 		distributedToStaker += amount
 		accuDistributedToStaker += amount
 
 	case DEVOPS:
+		devOpsAddr, ok := access.GetAddress(prbac.ROLE_DEVOPS.String())
+		if !ok {
+			return makeErrorWithDetails(
+				errDistributionAddressNotFound,
+				ufmt.Sprintf("%s not found", prbac.ROLE_DEVOPS.String()),
+			)
+		}
+		
 		gns.Transfer(cross, devOpsAddr, amount)
 		distributedToDevOps += amount
 		accuDistributedToDevOps += amount
 
 	case COMMUNITY_POOL:
+		communityPoolAddr, ok := access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+		if !ok {
+			return makeErrorWithDetails(
+				errDistributionAddressNotFound,
+				ufmt.Sprintf("%s not found", prbac.ROLE_COMMUNITY_POOL.String()),
+			)
+		}
+		
 		gns.Transfer(cross, communityPoolAddr, amount)
 		distributedToCommunityPool += amount
 		accuDistributedToCommunityPool += amount
 
 	case GOV_STAKER:
+		govStakerAddr, ok := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+		if !ok {
+			return makeErrorWithDetails(
+				errDistributionAddressNotFound,
+				ufmt.Sprintf("%s not found", prbac.ROLE_GOV_STAKER.String()),
+			)
+		}
+		
 		gns.Transfer(cross, govStakerAddr, amount)
 		distributedToGovStaker += amount
 		accuDistributedToGovStaker += amount

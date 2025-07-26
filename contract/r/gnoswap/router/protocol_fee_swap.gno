@@ -3,7 +3,6 @@ package router
 import (
 	"std"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/halt"
@@ -97,8 +96,8 @@ func handleSwapFee(
 		return amount
 	}
 
-	if outputToken == consts.GNOT {
-		outputToken = consts.WRAPPED_WUGNOT
+	if outputToken == gnot {
+		outputToken = wrappedWugnot
 	}
 
 	feeAmount := new(u256.Uint).Mul(amount, u256.NewUint(swapFee))
