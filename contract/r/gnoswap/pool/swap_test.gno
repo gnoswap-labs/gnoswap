@@ -1214,7 +1214,7 @@ func TestSwap_FeeTier100(t *testing.T) {
 				testing.IssueCoins(adminAddr, newCoins)
 				testing.SetOriginSend(newCoins)
 				banker := std.NewBanker(std.BankerTypeRealmSend)
-				banker.SendCoins(adminAddr, WUGNOT_ADDR, newCoins)
+				banker.SendCoins(adminAddr, wugnotAddr, newCoins)
 				wugnot.Deposit(cross)
 
 				testing.SetRealm(posRealm)

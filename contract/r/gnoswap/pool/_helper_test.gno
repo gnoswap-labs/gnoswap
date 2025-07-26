@@ -77,9 +77,6 @@ var (
 	routerPath = "gno.land/r/gnoswap/v1/router"
 	rouRealm   = std.NewCodeRealm(routerPath)
 
-	WUGNOT_ADDR std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
-
-	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
 )
 
