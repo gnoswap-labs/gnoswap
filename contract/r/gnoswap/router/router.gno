@@ -8,7 +8,6 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/demo/wugnot"
 )
 
@@ -237,9 +236,9 @@ func finalizeSwap(
 	handler.UpdateNewBalance()
 
 	var err error
-	if inputToken == consts.GNOT {
+	if inputToken == gnot {
 		err = handler.HandleInputSwap()
-	} else if outputToken == consts.GNOT {
+	} else if outputToken == gnot {
 		handler.HandleOutputSwap()
 	}
 
