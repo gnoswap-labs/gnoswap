@@ -1,13 +1,11 @@
 package staker
 
 import (
-	"gno.land/p/gnoswap/consts"
-
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // Q96
-var _q96 = u256.MustFromDecimal(consts.Q96)
+var _q96 = u256.MustFromDecimal("79228162514264337593543950336")
 
 func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
 	if prev >= current {

@@ -14,6 +14,12 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 )
 
+// contract Paths
+const (
+	GNS_PATH    string      = "gno.land/r/gnoswap/v1/gns"
+	WUGNOT_ADDR std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+)
+
 var (
 	admin, _             = access.GetAddress(prbac.ROLE_ADMIN.String())
 	stakerAddr, _        = access.GetAddress(prbac.ROLE_STAKER.String())
@@ -53,14 +59,9 @@ var (
 	user3Realm  = std.NewUserRealm(testutils.TestAddress("charlie"))
 	invalidAddr = testutils.TestAddress("invalid")
 
-	posPath  = "gno.land/r/gnoswap/v1/position"
-	posRealm = std.NewCodeRealm(posPath)
-
-	routerPath = "gno.land/r/gnoswap/v1/router"
-	rouRealm   = std.NewCodeRealm(routerPath)
-
-	stakerPath  = "gno.land/r/gnoswap/v1/staker"
-	stakerRealm = std.NewCodeRealm(stakerPath)
+	posRealm    = std.NewCodeRealm("gno.land/r/gnoswap/v1/position")
+	rouRealm    = std.NewCodeRealm("gno.land/r/gnoswap/v1/router")
+	stakerRealm = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 )
 
 func makeFakeAddress(name string) std.Address {
@@ -116,7 +117,7 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(addr))
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
+	banker.SendCoins(addr, WUGNOT_ADDR, std.Coins{{ugnotDenom, int64(amount)}})
 	wugnot.Deposit(cross)
 }
 

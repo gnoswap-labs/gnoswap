@@ -9,7 +9,6 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -36,7 +35,7 @@ var (
 	adminRealm   = std.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
-	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -46,7 +45,9 @@ var (
 
 	fee3000 uint32 = 3000
 
-	max_timeout      int64 = 9999999999
+	max_timeout int64 = 9999999999
+	maxInt64    int64 = 9223372036854775807
+
 	depositGnsAmount int64 = 100000000000
 
 	TIMESTAMP_180DAYS = int64(15552000)
@@ -88,7 +89,7 @@ func initAndSetup() {
 	sr.SetWarmUpByAdmin(cross, 30, 150)
 	sr.SetWarmUpByAdmin(cross, 50, 300)
 	sr.SetWarmUpByAdmin(cross, 70, 900)
-	sr.SetWarmUpByAdmin(cross, 100, consts.INT64_MAX)
+	sr.SetWarmUpByAdmin(cross, 100, maxInt64)
 
 	// set unstaking fee to 0
 	sr.SetUnStakingFeeByAdmin(cross, 0)
@@ -111,8 +112,8 @@ func createPool() {
 func mintBarBaz3000_1_4() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	baz.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	baz.Approve(cross, poolAddr, maxInt64)
 
 	anoAdmin := adminUser
 
@@ -149,7 +150,7 @@ func mintBarBaz3000_1_4() {
 func createExternalIncentiveQux180() {
 	testing.SetRealm(adminRealm)
 
-	qux.Approve(cross, stakerAddr, consts.INT64_MAX)
+	qux.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
 	sr.AddToken(cross, quxPath)
