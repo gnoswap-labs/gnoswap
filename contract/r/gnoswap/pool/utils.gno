@@ -1,7 +1,6 @@
 package pool
 
 import (
-	"std"
 	"strconv"
 
 	"gno.land/p/demo/ufmt"
@@ -9,9 +8,6 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/halt"
 )
 
 // safeConvertToUint64 safely converts a *u256.Uint value to a uint64, ensuring no overflow.
@@ -136,7 +132,13 @@ func safeConvertToInt128(value *u256.Uint) *i256.Int {
 //   - If masking is required, a new instance is returned without modifying the input.
 //   - MAX_UINT128 is a constant representing `2^128 - 1`.
 func toUint128(value *u256.Uint) *u256.Uint {
-	assertOnlyInitializedUint256(value)
+	if value == nil {
+		panic(newErrorWithDetail(
+			errInvalidInput,
+			"value is nil",
+		))
+	}
+
 	if value.Gt(u256.MustFromDecimal(consts.MAX_UINT128)) {
 		mask := new(u256.Uint).Lsh(u256.One(), consts.Q128_RESOLUTION)
 		mask = new(u256.Uint).Sub(mask, u256.One())
@@ -172,32 +174,6 @@ func u256Min(num1, num2 *u256.Uint) *u256.Uint {
 	return num2
 }
 
-// derivePkgAddr derives the Realm address from it's pkgPath parameter
-func derivePkgAddr(pkgPath string) std.Address {
-	return std.DerivePkgAddr(pkgPath)
-}
-
-// getPrevRealm returns object of the previous realm.
-func getPrevRealm() std.Realm {
-	return std.PreviousRealm()
-}
-
-// getPrevAddr returns the address of the previous realm.
-func getPrevAddr() std.Address {
-	return std.PreviousRealm().Address()
-}
-
-// getPrevAsString returns the address and package path of the previous realm.
-func getPrevAsString() (string, string) {
-	prev := getPrevRealm()
-	return prev.Address().String(), prev.PkgPath()
-}
-
-// isUserCall returns true if the caller is a user.
-func isUserCall() bool {
-	return std.PreviousRealm().IsUser()
-}
-
 // checkTransferError checks transfer error.
 func checkTransferError(err error) {
 	if err != nil {
@@ -225,73 +201,6 @@ func checkTickSpacing(tick, tickSpacing int32) {
 			ufmt.Sprintf("tick(%d) MOD tickSpacing(%d) != 0(%d)", tick, tickSpacing, tick%tickSpacing),
 		))
 	}
-}
-
-// assertOnlyInitializedUint256 (assertOnlyNotNil) panics if the value is nil.
-func assertOnlyInitializedUint256(value *u256.Uint) {
-	if value == nil {
-		panic(newErrorWithDetail(
-			errInvalidInput,
-			"value is nil",
-		))
-	}
-}
-
-// assertOnlyValidAddress panics if the address is invalid.
-func assertOnlyValidAddress(addr std.Address) {
-	if !addr.IsValid() {
-		panic(newErrorWithDetail(
-			errInvalidAddress,
-			ufmt.Sprintf("(%s)", addr),
-		))
-	}
-}
-
-// assertOnlyNotHalted panics if the contract is halted.
-func assertOnlyNotHalted() {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err.Error())
-		}
-
-		if halt.IsContractHalted(halt.OpTypePool) {
-			panic("pool contract operations are currently disabled")
-		}
-	}
-}
-
-// assertOnlyPositionContract panics if the caller is not the position contract.
-func assertOnlyPositionContract() {
-	caller := getPrevAddr()
-	if err := access.PositionOnly(caller); err != nil {
-		panic(newErrorWithDetail(
-			errNoPermission,
-			ufmt.Sprintf("only position(%s) can call, called from %s", positionAddr, caller.String()),
-		))
-	}
-}
-
-// assertOnlyAdmin panics if the caller is not the admin.
-func assertOnlyAdmin() {
-	caller := getPrevAddr()
-	if err := access.AdminOnly(caller); err != nil {
-		panic(err)
-	}
-}
-
-// assertOnlyGovernance panics if the caller is not the governance.
-func assertOnlyGovernance() {
-	caller := getPrevAddr()
-	if err := access.GovernanceOnly(caller); err != nil {
-		panic(err)
-	}
-}
-
-// assertOnlyRegistered panics if the token is not registered.
-func assertOnlyRegistered(tokenPath string) {
-	common.MustRegistered(tokenPath)
 }
 
 // formatUint converts various unsigned integer types to string representation.

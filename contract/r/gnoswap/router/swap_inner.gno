@@ -5,13 +5,17 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	pl "gno.land/r/gnoswap/v1/pool"
+)
+
+const (
+	MIN_SQRT_RATIO string = "4295128739"                                        // same as TickMathGetSqrtRatioAtTick(MIN_TICK)
+	MAX_SQRT_RATIO string = "1461446703485210103287273052203988822378723970342" // same as TickMathGetSqrtRatioAtTick(MAX_TICK)
 )
 
 // swapInner executes the core swap logic by interacting with the pool contract.
@@ -76,12 +80,14 @@ func swapInner(
 type RealSwapExecutor struct{}
 
 func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
+	previousRealmAddr := std.PreviousRealm().Address()
+
 	return swapInner(
 		cross,
 		p.amountSpecified,
-		getPrevAddr(), // if single swap => user will receive
-		zero,          // sqrtPriceLimitX96
-		newSwapCallbackData(p, getPrevAddr()),
+		previousRealmAddr, // if single swap => user will receive
+		zero,              // sqrtPriceLimitX96
+		newSwapCallbackData(p, previousRealmAddr),
 	)
 }
 
@@ -137,11 +143,13 @@ func swapDryInner(
 type DrySwapExecutor struct{}
 
 func (e *DrySwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
+	previousRealmAddr := std.PreviousRealm().Address()
+
 	return swapDryInner(
 		cross,
 		p.amountSpecified,
 		zero,
-		newSwapCallbackData(p, getPrevAddr()),
+		newSwapCallbackData(p, previousRealmAddr),
 	)
 }
 
@@ -185,7 +193,7 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 		minTick := getMinTick(fee) + 1
 		sqrtPriceLimitX96 = new(u256.Uint).Set(common.TickMathGetSqrtRatioAtTick(minTick))
 		if sqrtPriceLimitX96.IsZero() {
-			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
+			sqrtPriceLimitX96 = u256.MustFromDecimal(MIN_SQRT_RATIO)
 		}
 		return new(u256.Uint).Add(sqrtPriceLimitX96, one)
 	}
@@ -193,7 +201,7 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 	maxTick := getMaxTick(fee) - 1
 	sqrtPriceLimitX96 = new(u256.Uint).Set(common.TickMathGetSqrtRatioAtTick(maxTick))
 	if sqrtPriceLimitX96.IsZero() {
-		sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
+		sqrtPriceLimitX96 = u256.MustFromDecimal(MAX_SQRT_RATIO)
 	}
 	return new(u256.Uint).Sub(sqrtPriceLimitX96, one)
 }

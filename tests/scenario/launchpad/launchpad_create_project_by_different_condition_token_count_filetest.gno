@@ -10,6 +10,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/launchpad"
@@ -19,10 +20,10 @@ import (
 var t *testing.T
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	launchpadAddr, _ = access.GetAddress(access.ROLE_LAUNCHPAD)
+	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 )
 
 func main() {

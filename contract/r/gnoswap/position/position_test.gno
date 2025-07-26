@@ -1,6 +1,7 @@
 package position
 
 import (
+	"errors"
 	"std"
 	"strconv"
 	"testing"
@@ -10,13 +11,11 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/rbac"
 	"gno.land/r/gnoswap/v1/referral"
 )
 
@@ -568,24 +567,23 @@ func TestProcessTokens(t *testing.T) {
 				transferUGNOT(positionAddr, positionAddr, amount)
 			}
 
-			if !tt.expectPanic {
-				token0, token1, native0, native1, wrapped := processTokens(
-					tt.token0,
-					tt.token1,
-					tt.amount0Desired,
-					tt.amount1Desired,
-					tt.caller,
-				)
+			token0, token1, native0, native1, wrapped, err := processTokens(
+				tt.token0,
+				tt.token1,
+				tt.amount0Desired,
+				tt.amount1Desired,
+				tt.caller,
+			)
 
+			if tt.expectPanic {
+				uassert.ErrorIs(t, err, errors.New(tt.expectMsg))
+			} else {
+				uassert.Nil(t, err)
 				uassert.Equal(t, tt.expected0, token0)
 				uassert.Equal(t, tt.expected1, token1)
 				uassert.Equal(t, tt.isNative0, native0)
 				uassert.Equal(t, tt.isNative1, native1)
 				uassert.Equal(t, tt.expectedWrap, wrapped)
-			} else {
-				uassert.PanicsWithMessage(t, tt.expectMsg, func() {
-					processTokens(tt.token0, tt.token1, tt.amount0Desired, tt.amount1Desired, tt.caller)
-				})
 			}
 		})
 	}
@@ -1321,8 +1319,6 @@ func TestCollectFees(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupPositionStakerPermission(t)
-
 			testing.SetOriginCaller(adminAddr)
 			CreatePoolWithoutFee(t)
 
@@ -1506,22 +1502,4 @@ func TestReposition(t *testing.T) {
 			}
 		})
 	}
-}
-
-func setupPositionStakerPermission(t *testing.T) {
-	t.Helper()
-
-	adminAddr := testutils.TestAddress("admin")
-
-	testing.SetOriginCaller(adminAddr)
-	testing.SetRealm(std.NewUserRealm(adminAddr))
-
-	globalManager := rbac.GlobalManager()
-	globalManager.UpdatePermission("staker", "access", func(addr std.Address) error {
-		if addr != adminAddr {
-			return ufmt.Errorf("caller is not staker")
-		}
-
-		return nil
-	})
 }

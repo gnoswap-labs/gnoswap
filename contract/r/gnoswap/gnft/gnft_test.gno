@@ -9,8 +9,10 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
+	_ "gno.land/r/gnoswap/v1/rbac" // initialize rbac package
 )
 
 const (
@@ -18,7 +20,8 @@ const (
 )
 
 var (
-	positionRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	positionPath = "gno.land/r/gnoswap/v1/position"
+	positionRealm = std.NewCodeRealm(positionPath)
 
 	addr01      = testutils.TestAddress("addr01")
 	addr01Realm = std.NewUserRealm(addr01)
@@ -304,7 +307,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "[GNOSWAP-GNFT-004] invalid addresss || ",
+			panicMsg:          "invalid address: ",
 		},
 		{
 			name:              "transfer to is invalid address",
@@ -313,7 +316,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            std.Address("this_is_invalid_address"),
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "[GNOSWAP-GNFT-004] invalid addresss || this_is_invalid_address",
+			panicMsg:          "invalid address: this_is_invalid_address",
 		},
 	}
 
@@ -351,7 +354,7 @@ func TestMint(t *testing.T) {
 	}{
 		{
 			name:          "mint first nft to addr01",
-			callerRealm:   std.NewCodeRealm(consts.POSITION_PATH),
+			callerRealm:   positionRealm,
 			tokenIdToMint: 1,
 			addressToMint: addr01,
 			expected:      "1",
@@ -361,7 +364,7 @@ func TestMint(t *testing.T) {
 		},
 		{
 			name:          "mint second nft to addr02",
-			callerRealm:   std.NewCodeRealm(consts.POSITION_PATH),
+			callerRealm:   positionRealm,
 			tokenIdToMint: 2,
 			addressToMint: addr02,
 			expected:      "2",
@@ -404,7 +407,7 @@ func TestBurn(t *testing.T) {
 		},
 		{
 			name:          "burn non-existent token id",
-			callerRealm:   std.NewCodeRealm(consts.POSITION_PATH),
+			callerRealm:   positionRealm,
 			tokenIdToBurn: 99,
 			shouldPanic:   true,
 			panicMsg:      errInvalidTokenId,
@@ -433,7 +436,7 @@ func TestSetTokenURIByImageURI(t *testing.T) {
 	testAddr := testutils.TestAddress("testAddr")
 	tokenID := grc721.TokenID("10")
 
-	positionAddr, _ := access.GetAddress(access.ROLE_POSITION)
+	positionAddr, _ := access.GetAddress(prbac.ROLE_POSITION.String())
 
 	// set position contract as caller
 	testing.SetOriginCaller(positionAddr)

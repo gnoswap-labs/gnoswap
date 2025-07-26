@@ -8,6 +8,8 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/v1/halt"
 	"gno.land/r/gnoswap/v1/referral"
 )
 
@@ -37,13 +39,14 @@ func ExactOutSwapRoute(cur realm,
 	deadline int64,
 	referrer string,
 ) (string, string) {
+	halt.AssertIsNotHaltedRouter()
+	halt.AssertIsNotHaltedWithdraw()
+
 	if err := checkDeadline(deadline); err != nil {
 		panic(addDetailToError(errExpired, err.Error()))
 	}
 
-	if err := commonSwapSetup(); err != nil {
-		panic(addDetailToError(errInvalidInput, err.Error()))
-	}
+	emission.MintAndDistributeGns(cross)
 
 	baseParams := BaseSwapParams{
 		InputToken:  inputToken,
@@ -72,16 +75,18 @@ func ExactOutSwapRoute(cur realm,
 		result.AmountSpecified.Abs(),
 	)
 
-	prevAddr, prevPkgPath := getPrev()
-	success := referral.TryRegister(cross, std.Address(prevAddr), referrer)
+	caller := std.PreviousRealm().Address()
+	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer
 	if !success {
-		actualReferrer = referral.GetReferral(prevAddr)
+		actualReferrer = referral.GetReferral(caller.String())
 	}
+
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"ExactOutSwap",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"input", pp.InputToken,
 		"output", pp.OutputToken,
 		"exactAmount", amountOut,

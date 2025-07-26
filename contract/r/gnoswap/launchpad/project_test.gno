@@ -4,8 +4,8 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 )
 
 func TestProject_Getters(t *testing.T) {

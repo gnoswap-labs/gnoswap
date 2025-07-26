@@ -12,11 +12,13 @@ import (
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/bar"
+
+	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/v1/rbac"
 )
 
 const (
 	// External incentive timestamps
-	incentiveStartTimestamp int64 = 1234569600
 	incentiveDuration       int64 = 90 * 24 * 60 * 60 // 90 days
 
 	rewardMinimumAmount int64 = 1000000000
@@ -24,9 +26,13 @@ const (
 
 func TestCollectRewardGracefulDegradation(t *testing.T) {
 	// setup
-	testing.SetRealm(adminRealm)
-	SetUnStakingFeeByAdmin(cross, 0)
+	govAddr := rbac.DefaultRoleAddresses[prabc.ROLE_GOVERNANCE]
+	testing.SetOriginCaller(govAddr)
+	SetMinimumRewardAmount(cross, 1000000000)
 
+	testing.SetOriginCaller(admin)
+	SetUnStakingFeeByAdmin(cross, 0)
+	
 	// Create pool
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
 	CreatePool(t, barPath, bazPath, fee3000, "79228162514264337593543950336", admin)
@@ -64,12 +70,14 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 
 	// Stake position
 	testing.SetRealm(std.NewUserRealm(addr01))
+	stakerAddr := getRoleAddress(prabc.ROLE_STAKER)
 	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
 	StakeToken(cross, positionId, "")
 
 	// Create external incentive
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, stakerAddr, rewardMinimumAmount)
+	incentiveStartTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
 	CreateExternalIncentive(
 		cross,
 		poolPath,

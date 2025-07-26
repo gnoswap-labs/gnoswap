@@ -9,13 +9,14 @@ import (
 
 	"gno.land/r/gnoswap/v1/gns"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
 	_ "gno.land/r/gnoswap/v1/staker"
 )
 
 var t *testing.T
 
-var adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+var adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 
 const (
 	milliSecondsOfYear = 31536000000 // 365 * 24 * 60 * 60 * 1000

@@ -9,19 +9,16 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/access"
-
 	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/v1/rbac"
+
+	prbac "gno.land/p/gnoswap/rbac"
 )
 
 var (
-	admin         = ownable.NewWithAddress(std.DerivePkgAddr(govStakerAddr.String()))
+	admin         = ownable.NewWithAddress(std.DerivePkgAddr(prbac.ROLE_GOV_STAKER.String()))
 	token, ledger = grc20.NewToken("XGNS", "xGNS", 6)
-
-	govStakerAddr = getContractAddress(access.ROLE_GOV_STAKER)
-	launchpadAddr = getContractAddress(access.ROLE_LAUNCHPAD)
 )
-
-func init() {}
 
 func TotalSupply() int64 {
 	return token.TotalSupply()
@@ -44,8 +41,12 @@ func VotingSupply() int64 {
 
 	// this is amount of xGNS held by launchpad
 	// this xGNS doesn't participate in voting
-	launchpad := token.BalanceOf(launchpadAddr)
-	return total - launchpad
+	launchpad, ok := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	if !ok {
+		panic(ufmt.Sprintf("launchpad address not found"))
+	}
+
+	return total - token.BalanceOf(launchpad)
 }
 
 // BalanceOf retrieves the token balance of a specified address.
@@ -94,29 +95,14 @@ func Render(path string) string {
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Mint function.
 func Mint(cur realm, to std.Address, amount int64) {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err.Error())
-		}
+	halt.AssertIsNotHaltedXGns()
+	halt.AssertIsNotHaltedWithdraw()
 
-		if halt.IsContractHalted(halt.OpTypeXGns) {
-			panic("xGNS contract operations are currently disabled")
-		}
-	}
-
-	// only (gov staker) or (launchpad) contract can call Mint
+	// only gov staker contract can call Mint
 	caller := std.PreviousRealm().Address()
+	access.AssertIsGovStaker(caller)
 
-	if govStakerAddr == caller || launchpadAddr == caller {
-		checkErr(ledger.Mint(to, amount))
-	} else {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("only gov/staker(%s) or launchpad(%s) contract can call Mint, called from %s", govStakerAddr.String(), launchpadAddr.String(), caller.String()),
-		))
-	}
+	checkErr(ledger.Mint(to, amount))
 }
 
 // MintByLaunchPad increases the balance of a specified address by a given amount.
@@ -134,31 +120,13 @@ func Mint(cur realm, to std.Address, amount int64) {
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Mint function.
 func MintByLaunchPad(cur realm, to std.Address, amount int64) {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err.Error())
-		}
+	halt.AssertIsNotHaltedXGns()
+	halt.AssertIsNotHaltedWithdraw()
 
-		if halt.IsContractHalted(halt.OpTypeXGns) {
-			panic("xGNS contract operations are currently disabled")
-		}
-	}
-
+	// only launchpad contract can call MintByLaunchPad
 	caller := std.PreviousRealm().Address()
-	if err := access.LaunchpadOnly(caller); err != nil {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("only launchpad(%s) contract can call MintByLaunchPad, called from %s", launchpadAddr.String(), caller.String()),
-		))
-	}
+	access.AssertIsLaunchpad(caller)
 
-	mint(to, amount)
-}
-
-// mint increases the balance of a specified address by a given amount.
-func mint(to std.Address, amount int64) {
 	checkErr(ledger.Mint(to, amount))
 }
 
@@ -178,60 +146,33 @@ func mint(to std.Address, amount int64) {
 // - Panics if the caller is unauthorized.
 // - Propagates any error from the ledger.Burn function.
 func Burn(cur realm, from std.Address, amount int64) {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err.Error())
-		}
+	halt.AssertIsNotHaltedXGns()
+	halt.AssertIsNotHaltedWithdraw()
 
-		if halt.IsContractHalted(halt.OpTypeXGns) {
-			panic("xGNS contract operations are currently disabled")
-		}
-	}
-
-	// only (gov staker) or (launchpad) contract can call Mint
+	// only gov staker contract can call Burn
 	caller := std.PreviousRealm().Address()
+	access.AssertIsGovStaker(caller)
 
-	if govStakerAddr == caller || launchpadAddr == caller {
-		burn(from, amount)
-	} else {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("only gov/staker(%s) or launchpad(%s) contract can call Burn, called from %s", govStakerAddr.String(), launchpadAddr.String(), caller.String()),
-		))
-	}
+	checkErr(ledger.Burn(from, amount))
 }
 
 func BurnByLaunchPad(cur realm, from std.Address, amount int64) {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err.Error())
-		}
+	halt.AssertIsNotHaltedXGns()
+	halt.AssertIsNotHaltedWithdraw()
 
-		if halt.IsContractHalted(halt.OpTypeXGns) {
-			panic("xGNS contract operations are currently disabled")
-		}
-	}
-
+	// only launchpad contract can call BurnByLaunchPad
 	caller := std.PreviousRealm().Address()
-	if err := access.LaunchpadOnly(caller); err != nil {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("only launchpad(%s) contract can call BurnByLaunchPad, called from %s", launchpadAddr.String(), caller.String()),
-		))
-	}
-	burn(from, amount)
-}
+	access.AssertIsLaunchpad(caller)
 
-func burn(from std.Address, amount int64) {
 	checkErr(ledger.Burn(from, amount))
 }
 
 // getContractAddress retrieves the address which registered the role
 func getContractAddress(roleName string) std.Address {
-	addr, _ := access.GetAddress(roleName)
+	addr, exists := access.GetAddress(roleName)
+	if !exists {
+		return rbac.DefaultRoleAddresses[prbac.SystemRole(roleName)]
+	}
+
 	return addr
 }

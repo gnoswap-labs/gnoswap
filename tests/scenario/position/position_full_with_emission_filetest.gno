@@ -12,20 +12,20 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
 )
 
 var (
-	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm    = std.NewUserRealm(adminAddr)
-	poolAddr, _   = access.GetAddress(access.ROLE_POOL)
-	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
+	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
+	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 	routerRealm   = std.NewUserRealm(routerAddr)
 
 	aliceAddr  = testutils.TestAddress("alice")
@@ -70,7 +70,6 @@ func main() {
 
 func initPoolAndEmission() {
 	testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
-	emission.RegisterGnsChangeCallback(cross)
 
 	testing.SetRealm(adminRealm)
 

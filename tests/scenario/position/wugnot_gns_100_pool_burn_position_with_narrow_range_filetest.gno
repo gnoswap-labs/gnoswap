@@ -10,6 +10,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -21,12 +22,12 @@ import (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+	poolAddr, _ = access.GetAddress(prbac.ROLE_POOL.String())
 
-	positionAddr, _ = access.GetAddress(access.ROLE_POSITION)
+	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
 	gnotPath   = "gnot"
 	wugnotPath = "gno.land/r/demo/wugnot"

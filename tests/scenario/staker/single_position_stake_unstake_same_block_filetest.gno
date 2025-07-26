@@ -1,4 +1,4 @@
-// single position stake and unstake in same block scenario
+// single position stake and unstake in same block scenario test
 
 // PKGPATH: gno.land/r/gnoswap/v1/main
 
@@ -15,114 +15,107 @@ import (
 	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/r/demo/wugnot"
-
 	"gno.land/r/gnoswap/v1/access"
 
-	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
+
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
 	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
 
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	wugnotAddr = consts.WUGNOT_ADDR
+	barPath = "gno.land/r/onbloc/bar"
+	bazPath = "gno.land/r/onbloc/baz"
 
-	gnsPath    = "gno.land/r/gnoswap/v1/gns"
-	wugnotPath = "gno.land/r/demo/wugnot"
-
-	fee3000 uint32 = 3000
+	fee100 uint32 = 100
 
 	max_timeout int64 = 9999999999
 
-	poolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
+	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
 )
 
 func main() {
-	println("[SCENARIO] 1. Initialize account and emission")
-	initAccountAndEmission()
+	println("[SCENARIO] 1. Initialize and setup")
+	initAndSetup()
 	println()
 
-	println("[SCENARIO] 2. Create pool")
+	println("[SCENARIO] 2. Create bar:baz:100 pool")
 	createPool()
 	println()
 
-	println("[SCENARIO] 3. Mint wugnot gns position 01")
-	mintPosition()
+	println("[SCENARIO] 3. Mint position 01")
+	mintPosition01()
 	println()
 
-	println("[SCENARIO] 4. Stake and unstake position 01 in same block")
-	stakeAndUnstakePosition()
+	println("[SCENARIO] 4. Stake and unstake in same block")
+	stakeAndUnstakeInSameBlock()
+	println()
+
+	println("[SCENARIO] 5. Verify final state")
+	verifyFinalState()
 }
 
-func initAccountAndEmission() {
-	println("[INFO] send coins to admin")
+func initAndSetup() {
 	testing.SetRealm(adminRealm)
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 
-	testing.SetRealm(adminRealm)
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}})
-
-	println("[INFO] wrap gnot to wugnot")
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(nil)
-
-	println("[INFO] register gns change callback")
-	testing.SetRealm(stakerRealm)
-	emission.RegisterGnsChangeCallback(cross)
-}
-
-func createPool() {
-	// set unstaking fee to 0
 	println("[INFO] set unstaking fee to 0")
-	testing.SetRealm(adminRealm)
 	sr.SetUnStakingFeeByAdmin(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
-	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
 
-	println("[INFO] create pool gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000 at tick 0")
-	pl.CreatePool(
-		cross,
-		wugnotPath,
-		gnsPath,
-		fee3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(), // 79228162514264337593543950337
-	)
+	println("[INFO] register gns change callback")
+	testing.SetRealm(stakerRealm)
 }
 
-func mintPosition() {
+func createPool() {
 	testing.SetRealm(adminRealm)
 
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
+	println("[INFO] create bar:baz:100 pool")
+	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
-	println("[INFO] mint in-range position (tick range: -60 ~ 60, requested amount: 50, 50)")
-	pn.Mint(
+	println("[INFO] set pool to tier 1")
+	sr.SetPoolTierByAdmin(cross, poolPath, 1)
+
+	testing.SkipHeights(1)
+}
+
+func mintPosition01() {
+	testing.SetRealm(adminRealm)
+
+	println("[INFO] approve tokens for minting")
+	bar.Approve(cross, poolAddr, consts.INT64_MAX)
+	baz.Approve(cross, poolAddr, consts.INT64_MAX)
+	testing.SkipHeights(2)
+
+	println("[INFO] mint position 01 (tick range: -100 ~ 100)")
+	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		wugnotPath,
-		gnsPath,
-		fee3000,
-		int32(-60),
-		int32(60),
-		"50",
-		"50",
+		barPath,
+		bazPath,
+		fee100,
+		int32(-100),
+		int32(100),
+		"1000",
+		"1000",
 		"1",
 		"1",
 		max_timeout,
@@ -130,27 +123,98 @@ func mintPosition() {
 		adminAddr,
 		"",
 	)
+
+	ufmt.Printf("[EXPECTED] position ID: %d\n", positionId)
+	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
+	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
+
+	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
+	ufmt.Printf("[EXPECTED] initial position owner: %s\n", owner)
+
+	testing.SkipHeights(1)
 }
 
-func stakeAndUnstakePosition() {
+func stakeAndUnstakeInSameBlock() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] approve position 01")
+	println("[INFO] check initial state before staking")
+	initialOwner := gnft.MustOwnerOf(positionIdFrom(1))
+	initialGnsBalance := gns.BalanceOf(adminUser)
+
+	ufmt.Printf("[INFO] initial owner: %s\n", initialOwner)
+	ufmt.Printf("[INFO] initial GNS balance: %d\n", initialGnsBalance)
+
+	println("[INFO] approve NFT to staker")
 	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
 
-	beforeGns := gns.BalanceOf(adminUser)
-	ufmt.Printf("[INFO] balance before stake/unstake: %d\n", beforeGns)
-
-	println("[INFO] stake and unstake position 01 in same block")
-	testing.SkipHeights(1)
+	println("[INFO] stake position 01")
 	sr.StakeToken(cross, 1, "")
+
+	ownerAfterStake := gnft.MustOwnerOf(positionIdFrom(1))
+
+	ufmt.Printf("[EXPECTED] owner after stake: %s\n", ownerAfterStake)
+
+	if ownerAfterStake != stakerAddr {
+		panic("position should be owned by staker after staking")
+	}
+
+	println("[INFO] immediately unstake position 01 (same block)")
 	sr.UnStakeToken(cross, 1, false)
 
-	afterGns := gns.BalanceOf(adminUser)
-	diff := afterGns - beforeGns
+	ownerAfterUnstake := gnft.MustOwnerOf(positionIdFrom(1))
+	gnsAfterUnstake := gns.BalanceOf(adminUser)
 
-	println("[INFO] position 01 stake/unstake in same block has no reward")
-	ufmt.Printf("[EXPECTED] balance difference: %d\n", diff)
+	ufmt.Printf("[EXPECTED] owner after unstake: %s\n", ownerAfterUnstake)
+	ufmt.Printf("[EXPECTED] GNS balance after unstake: %d\n", gnsAfterUnstake)
+
+	if ownerAfterUnstake != adminAddr {
+		panic("position should be returned to admin after unstaking")
+	}
+
+	// Check if any reward was accumulated in same block
+	rewardFromSameBlock := gnsAfterUnstake - initialGnsBalance
+	ufmt.Printf("[EXPECTED] reward from same block staking/unstaking: %d\n", rewardFromSameBlock)
+
+	if rewardFromSameBlock != 0 {
+		ufmt.Printf("[INFO] same block staking/unstaking yielded reward: %d\n", rewardFromSameBlock)
+	} else {
+		println("[INFO] no reward accumulated from same block staking/unstaking")
+	}
+
+	println("[INFO] same block stake and unstake completed successfully")
+}
+
+func verifyFinalState() {
+	testing.SetRealm(adminRealm)
+
+	println("[INFO] verify final state after same block operations")
+
+	finalOwner := gnft.MustOwnerOf(positionIdFrom(1))
+
+	ufmt.Printf("[EXPECTED] final position owner: %s\n", finalOwner)
+
+	if finalOwner != adminAddr {
+		panic("final owner should be admin")
+	}
+
+	println("[INFO] position is back to original owner and staker state is clean")
+
+	// Test that position can still be staked normally after same-block operations
+	println("[INFO] test normal staking after same-block operations")
+	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
+	sr.StakeToken(cross, 1, "")
+
+	testing.SkipHeights(1)
+
+	verifyOwner := gnft.MustOwnerOf(positionIdFrom(1))
+
+	ufmt.Printf("[EXPECTED] verification - owner after normal stake: %s\n", verifyOwner)
+
+	if verifyOwner != stakerAddr {
+		panic("position should be staked normally after same-block operations")
+	}
+
+	println("[INFO] same-block operations do not affect normal staking functionality")
 }
 
 func positionIdFrom(positionId any) grc721.TokenID {
@@ -173,22 +237,41 @@ func positionIdFrom(positionId any) grc721.TokenID {
 }
 
 // Output:
-// [SCENARIO] 1. Initialize account and emission
-// [INFO] send coins to admin
-// [INFO] wrap gnot to wugnot
-// [INFO] register gns change callback
-//
-// [SCENARIO] 2. Create pool
+// [SCENARIO] 1. Initialize and setup
 // [INFO] set unstaking fee to 0
 // [INFO] set pool creation fee to 0
-// [INFO] create pool gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000 at tick 0
+// [INFO] register gns change callback
 //
-// [SCENARIO] 3. Mint wugnot gns position 01
-// [INFO] mint in-range position (tick range: -60 ~ 60, requested amount: 50, 50)
+// [SCENARIO] 2. Create bar:baz:100 pool
+// [INFO] create bar:baz:100 pool
+// [INFO] set pool to tier 1
 //
-// [SCENARIO] 4. Stake and unstake position 01 in same block
-// [INFO] approve position 01
-// [INFO] balance before stake/unstake: 99999999999950
-// [INFO] stake and unstake position 01 in same block
-// [INFO] position 01 stake/unstake in same block has no reward
-// [EXPECTED] balance difference: 0
+// [SCENARIO] 3. Mint position 01
+// [INFO] approve tokens for minting
+// [INFO] mint position 01 (tick range: -100 ~ 100)
+// [EXPECTED] position ID: 1
+// [EXPECTED] liquidity: 200510
+// [EXPECTED] amount0: 1000, amount1: 1000
+// [EXPECTED] initial position owner: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+//
+// [SCENARIO] 4. Stake and unstake in same block
+// [INFO] check initial state before staking
+// [INFO] initial owner: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [INFO] initial GNS balance: 100000000000000
+// [INFO] approve NFT to staker
+// [INFO] stake position 01
+// [EXPECTED] owner after stake: g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu
+// [INFO] immediately unstake position 01 (same block)
+// [EXPECTED] owner after unstake: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [EXPECTED] GNS balance after unstake: 100000000000000
+// [EXPECTED] reward from same block staking/unstaking: 0
+// [INFO] no reward accumulated from same block staking/unstaking
+// [INFO] same block stake and unstake completed successfully
+//
+// [SCENARIO] 5. Verify final state
+// [INFO] verify final state after same block operations
+// [EXPECTED] final position owner: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [INFO] position is back to original owner and staker state is clean
+// [INFO] test normal staking after same-block operations
+// [EXPECTED] verification - owner after normal stake: g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu
+// [INFO] same-block operations do not affect normal staking functionality

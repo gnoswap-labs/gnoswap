@@ -10,6 +10,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/launchpad"
@@ -19,10 +20,10 @@ import (
 var t *testing.T
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	launchpadAddr, _ = access.GetAddress(access.ROLE_LAUNCHPAD)
+	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 )
 
 func main() {
@@ -71,7 +72,7 @@ func createProjectByInsufficientRewardToken() {
 	testing.SetRealm(adminRealm)
 	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
 
-	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-010] insufficient balance || caller(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) balance(100000000000000) < depositAmount(100000000000001)"
+	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-010] insufficient balance || caller(g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3) balance(100000000000000) < depositAmount(100000000000001)"
 	uassert.AbortsWithMessage(t, expectedPanicMessage, func() {
 		launchpad.CreateProject(
 			cross,
@@ -106,4 +107,4 @@ func createProjectByInsufficientRewardToken() {
 // [INFO] create project with tier90 ratio: 20
 // [INFO] create project with tier180 ratio: 70
 // [INFO] create project with start time: 1234571490
-// [EXPECTED] Should abort with insufficient reward token error: [GNOSWAP-LAUNCHPAD-010] insufficient balance || caller(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) balance(100000000000000) < depositAmount(100000000000001)
+// [EXPECTED] Should abort with insufficient reward token error: [GNOSWAP-LAUNCHPAD-010] insufficient balance || caller(g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3) balance(100000000000000) < depositAmount(100000000000001)

@@ -10,7 +10,9 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/staker"
 	lp "gno.land/r/gnoswap/v1/launchpad"
@@ -26,7 +28,8 @@ var (
 	bobRealm     = std.NewUserRealm(bobAddr)
 	projectAddr  = testutils.TestAddress("projectAddr")
 	projectRealm = std.NewUserRealm(projectAddr)
-	stakerRealm  = std.NewUserRealm(consts.STAKER_ADDR)
+	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
+	stakerRealm  = std.NewUserRealm(stakerAddr)
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"

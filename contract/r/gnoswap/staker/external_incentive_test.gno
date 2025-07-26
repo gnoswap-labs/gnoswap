@@ -77,6 +77,7 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// create incentive
 			incentive := &ExternalIncentive{
+				incentiveId:    "1",
 				startTimestamp: startTime,
 				endTimestamp:   endTime,
 				startHeight:    100,
@@ -91,7 +92,7 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 
 			if tc.shouldPass {
 				// check if incentive was actually created
-				ictv, exists := pool.incentives.Get(startTime, endTime, tc.creator, tc.rewardToken)
+				ictv, exists := pool.incentives.Get(incentive.incentiveId)
 				if !exists {
 					t.Error("incentive was not created")
 				}

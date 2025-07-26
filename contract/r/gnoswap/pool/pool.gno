@@ -4,18 +4,21 @@ import (
 	"std"
 
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 )
 
 var (
-	positionAddr, _    = access.GetAddress(access.ROLE_POSITION)
-	poolAddr, _        = access.GetAddress(access.ROLE_POOL)
-	protocolFeeAddr, _ = access.GetAddress(access.ROLE_PROTOCOL_FEE)
-	routerAddr, _      = access.GetAddress(access.ROLE_ROUTER)
+	positionAddr, _    = access.GetAddress(prabc.ROLE_POSITION.String())
+	poolAddr, _        = access.GetAddress(prabc.ROLE_POOL.String())
+	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 )
 
 // Mint adds liquidity to a pool by minting a new position.
@@ -55,9 +58,10 @@ func Mint(cur realm,
 	liquidityAmount string,
 	positionCaller std.Address,
 ) (string, string) {
-	assertOnlyNotHalted()
-	assertOnlyPositionContract()
-	assertOnlyValidAddress(positionCaller)
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPool()
+	access.AssertIsPosition(caller)
+	access.AssertIsValidAddress(positionCaller)
 
 	liquidity := u256.MustFromDecimal(liquidityAmount)
 	if liquidity.IsZero() {
@@ -67,7 +71,10 @@ func Mint(cur realm,
 	pool := GetPool(token0Path, token1Path, fee)
 	liquidityDelta := safeConvertToInt128(liquidity)
 	positionParam := newModifyPositionParams(positionCaller, tickLower, tickUpper, liquidityDelta)
-	_, amount0, amount1 := pool.modifyPosition(positionParam)
+	_, amount0, amount1, err := pool.modifyPosition(positionParam)
+	if err != nil {
+		panic(err)
+	}
 
 	if amount0.Gt(u256.Zero()) {
 		pool.safeTransferFrom(positionCaller, poolAddr, pool.token0Path, amount0, true)
@@ -110,8 +117,10 @@ func Burn(
 	liquidityAmount string, // uint128
 	positionCaller std.Address,
 ) (string, string) { // uint256 x2
-	assertOnlyNotHalted()
-	assertOnlyPositionContract()
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPool()
+	access.AssertIsPosition(caller)
+	access.AssertIsValidAddress(positionCaller)
 
 	pool := GetPool(token0Path, token1Path, fee)
 
@@ -119,7 +128,10 @@ func Burn(
 	liqAmountInt256 := safeConvertToInt128(liqAmount)
 	liqDelta := i256.Zero().Neg(liqAmountInt256)
 	posParams := newModifyPositionParams(positionCaller, tickLower, tickUpper, liqDelta)
-	position, amount0, amount1 := pool.modifyPosition(posParams)
+	position, amount0, amount1, err := pool.modifyPosition(posParams)
+	if err != nil {
+		panic(err)
+	}
 
 	if amount0.Gt(u256.Zero()) || amount1.Gt(u256.Zero()) {
 		amount0 = toUint128(amount0)
@@ -128,7 +140,11 @@ func Burn(
 		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, amount1)
 	}
 
-	positionKey := getPositionKey(positionCaller, tickLower, tickUpper)
+	positionKey, err := getPositionKey(positionCaller, tickLower, tickUpper)
+	if err != nil {
+		panic(err)
+	}
+
 	pool.setPosition(positionKey, position)
 
 	// mustGetPosition() is called to ensure the position exists
@@ -170,8 +186,10 @@ func Collect(cur realm,
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	assertOnlyNotHalted()
-	assertOnlyPositionContract()
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPool()
+	access.AssertIsPosition(caller)
+	access.AssertIsValidAddress(recipient)
 
 	pool := GetPool(token0Path, token1Path, fee)
 	// Use recipient address instead of getPrevAddr() for position key generation
@@ -179,7 +197,11 @@ func Collect(cur realm,
 	// and we need to access the same position that was originally created.
 	// getPrevAddr() would return the position contract address, but the actual
 	// position is stored under the recipient's address key.
-	positionKey := getPositionKey(recipient, tickLower, tickUpper)
+	positionKey, err := getPositionKey(recipient, tickLower, tickUpper)
+	if err != nil {
+		panic(err)
+	}
+	
 	position := pool.mustGetPosition(positionKey)
 
 	var amount0, amount1 *u256.Uint
@@ -238,7 +260,13 @@ func CollectProtocolByAdmin(cur realm,
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	assertOnlyAdmin()
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPool()
+	access.AssertIsAdmin(caller)
+
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
+
 	amount0, amount1 := collectProtocol(
 		token0Path,
 		token1Path,
@@ -248,11 +276,11 @@ func CollectProtocolByAdmin(cur realm,
 		amount1Requested,
 	)
 
-	prevAddr, prevPkgPath := getPrevAsString()
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"CollectProtocolByAdmin",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"token0Path", token0Path,
 		"token1Path", token1Path,
 		"fee", formatUint(fee),
@@ -276,7 +304,13 @@ func CollectProtocol(cur realm,
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) {
-	assertOnlyGovernance()
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPool()
+	access.AssertIsGovernance(caller)
+
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
+
 	amount0, amount1 := collectProtocol(
 		token0Path,
 		token1Path,
@@ -286,11 +320,11 @@ func CollectProtocol(cur realm,
 		amount1Requested,
 	)
 
-	prevAddr, prevPkgPath := getPrevAsString()
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"CollectProtocol",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"token0Path", token0Path,
 		"token1Path", token1Path,
 		"fee", formatUint(fee),
@@ -327,10 +361,6 @@ func collectProtocol(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	assertOnlyRegistered(token0Path)
-	assertOnlyRegistered(token1Path)
-	assertOnlyNotHalted()
-
 	pool := GetPool(token0Path, token1Path, fee)
 
 	amount0Req := u256.MustFromDecimal(amount0Requested)

@@ -62,6 +62,47 @@ func TestToAscendingOrder(t *testing.T) {
 	}
 }
 
+func TestToUint128(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "Value within uint128 range",
+			input:    "100000000",
+			expected: "100000000",
+		},
+		{
+			name:     "Exactly MAX_UINT128",
+			input:    MAX_UINT128,
+			expected: MAX_UINT128,
+		},
+		{
+			name:     "Value exceeding uint128 - should mask",
+			input:    "680564733841876926926749214863536422912", // MAX_UINT128 * 2
+			expected: "0",                                       // Masked to lower 128 bits
+		},
+		{
+			name:     "MAX_UINT256 - extreme masking",
+			input:    "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+			expected: MAX_UINT128,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			input := u256.MustFromDecimal(tt.input)
+			result := toUint128(input)
+			expected := u256.MustFromDecimal(tt.expected)
+
+			if !result.Eq(expected) {
+				t.Errorf("Expected %s, got %s", expected.ToString(), result.ToString())
+			}
+		})
+	}
+}
+
 func TestSafeConvertToUint128(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -503,4 +544,57 @@ func TestGetAmountsForLiquidity(t *testing.T) {
 			uassert.Equal(t, tt.expectedAmount1, amount1, ufmt.Sprintf("expected %s but got %s for amount1", tt.expectedAmount1, amount1))
 		})
 	}
+}
+
+func TestExtremeRatioValues(t *testing.T) {
+	t.Run("Zero sqrtRatio handling", func(t *testing.T) {
+		// computeAmount0ForLiquidity already handles zero check
+		result := computeAmount0ForLiquidity(
+			u256.Zero(),
+			u256.MustFromDecimal(Q96),
+			u256.NewUint(1000000),
+		)
+		uassert.Equal(t, "0", result.ToString())
+	})
+
+	t.Run("Maximum possible sqrtRatio", func(t *testing.T) {
+		maxSqrtRatio := u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")
+		liquidity := u256.NewUint(1000)
+
+		// Should not panic
+		_ = computeAmount1ForLiquidity(
+			u256.MustFromDecimal(Q96),
+			maxSqrtRatio,
+			liquidity,
+		)
+	})
+}
+
+func TestMulDivOverflowProtection(t *testing.T) {
+	t.Run("Large values causing uint128 overflow - should panic", func(t *testing.T) {
+		largeValue := u256.MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819967")
+		sqrtRatioA := u256.MustFromDecimal(Q96)
+		sqrtRatioB := new(u256.Uint).Mul(sqrtRatioA, u256.NewUint(2))
+
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-COMMON-009] overflow: amount(115792089237316195423570985008687907853269984665640564039457584007913129639934) overflows uint128 range",
+			func() {
+				_ = computeLiquidityForAmount0(sqrtRatioA, sqrtRatioB, largeValue)
+			})
+	})
+
+	t.Run("Large but safe values - should not panic", func(t *testing.T) {
+		// Nearly half of MAX_UINT128
+		safeValue := u256.MustFromDecimal("170141183460469231731687303715884105727")
+		sqrtRatioA := u256.MustFromDecimal(Q96)
+		sqrtRatioB := new(u256.Uint).Mul(sqrtRatioA, u256.NewUint(2))
+
+		// Should complete without panic
+		result := computeLiquidityForAmount0(sqrtRatioA, sqrtRatioB, safeValue)
+
+		// Result should be within uint128 range
+		if result.Gt(maxUint128) {
+			t.Errorf("Result exceeds uint128 range")
+		}
+	})
 }

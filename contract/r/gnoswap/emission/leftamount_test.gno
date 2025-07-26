@@ -24,8 +24,8 @@ func TestLeftAmountFix(t *testing.T) {
 		expectedLeftAmount int64
 		setupFunc          func()
 		verifyFunc         func(t *testing.T, actualLeft int64)
-		shouldPanic        bool
-		panicMsg           string
+		shouldError        bool
+		errorMessage       string
 	}{
 		{
 			name:               "Verify leftAmount is correctly tracked when rounding occurs",
@@ -39,8 +39,8 @@ func TestLeftAmountFix(t *testing.T) {
 			},
 			expectedTotalSent:  9999, // 3333 * 3
 			expectedLeftAmount: 2,    // 10001 - 9999
-			shouldPanic:        false,
-			panicMsg:           "",
+			shouldError:        false,
+			errorMessage:       "",
 			setupFunc: func() {
 				leftGNSAmount = 0
 				distributionBpsPct = avl.NewTree()
@@ -58,8 +58,8 @@ func TestLeftAmountFix(t *testing.T) {
 			},
 			expectedTotalSent:  9999,
 			expectedLeftAmount: 2,
-			shouldPanic:        false,
-			panicMsg:           "",
+			shouldError:        false,
+			errorMessage:       "",
 			setupFunc: func() {
 				leftGNSAmount = 0
 				distributionBpsPct = avl.NewTree()
@@ -77,8 +77,8 @@ func TestLeftAmountFix(t *testing.T) {
 			},
 			expectedTotalSent:  123453, // 41147 +  41147 +  41147 +  12
 			expectedLeftAmount: 3,      // 123456 - 123453
-			shouldPanic:        false,
-			panicMsg:           "",
+			shouldError:        false,
+			errorMessage:       "",
 			setupFunc: func() {
 				leftGNSAmount = 0
 				lastExecutedHeight = 0
@@ -118,14 +118,12 @@ func TestLeftAmountFix(t *testing.T) {
 				distributionBpsPct.Set(target, bps)
 			}
 
-			if tt.shouldPanic {
-				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					distributeToTarget(cross, tt.distributionAmount)
-				})
-			} else {
-				// Execute distribution
-				totalSent := distributeToTarget(cross, tt.distributionAmount)
+			// Execute distribution
+			totalSent, err := distributeToTarget(cross, tt.distributionAmount)
 
+			if tt.shouldError {
+				uassert.Equal(t, tt.errorMessage, err.Error())
+			} else {
 				// Get leftGNSAmount after distribution
 				leftAmount := tt.distributionAmount - totalSent
 

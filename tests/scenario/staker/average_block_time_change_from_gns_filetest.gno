@@ -19,25 +19,28 @@ import (
 
 	"gno.land/r/gnoswap/v1/access"
 
-	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
+
+	prabc "gno.land/p/gnoswap/rbac"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
+
+	_ "gno.land/r/gnoswap/v1/rbac"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
 	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
 
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
 	wugnotAddr = consts.WUGNOT_ADDR
 
@@ -96,7 +99,6 @@ func initAccountAndEmission() {
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
-	emission.RegisterGnsChangeCallback(cross)
 }
 
 func createPool() {

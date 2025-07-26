@@ -12,6 +12,7 @@
 package main
 
 import (
+	"fmt"
 	"std"
 	"strconv"
 	"testing"
@@ -32,12 +33,15 @@ import (
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
@@ -46,8 +50,8 @@ var (
 	externalCreatorUser  = externalCreatorAddr
 	externalCreatorRealm = std.NewUserRealm(externalCreatorAddr)
 
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
-	poolAddr, _   = access.GetAddress(access.ROLE_POOL)
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
+	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
@@ -198,6 +202,9 @@ func createExternalIncentiveGns() {
 
 	println("[INFO] create external incentive for 90 days")
 	testing.SkipHeights(1)
+
+	incentiveID := fmt.Sprintf("%s:%d:%d", externalCreatorAddr, std.ChainHeight(), 1)
+	println("[INFO] create external incentive with incentiveID: ", incentiveID)
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
@@ -262,15 +269,14 @@ func endExternalGnsIncentive() {
 	println("[INFO] end external incentive and collect remaining GNS")
 	testing.SetRealm(externalCreatorRealm)
 	gnsBalanceBeforeEnds := gns.BalanceOf(externalCreatorUser)
+
+	incentiveID := "g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:127:1"
 	sr.EndExternalIncentive(
 		cross,
-		externalCreatorAddr,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
-		gnsPath,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
-		126,
+		incentiveID,
 	)
+
 	gnsBalanceAfterEnds := gns.BalanceOf(externalCreatorUser)
 
 	ufmt.Printf("[INFO] GNS balance before ending: %d\n", gnsBalanceBeforeEnds)
@@ -345,6 +351,7 @@ func milliToSec(ms int64) int64 {
 // [INFO] transfer GNS to external creator
 // [INFO] approve GNS for external incentive creation
 // [INFO] create external incentive for 90 days
+// [INFO] create external incentive with incentiveID:  g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:127:1
 //
 // [SCENARIO] 6. Start external incentive
 // [INFO] skip blocks until external incentive starts

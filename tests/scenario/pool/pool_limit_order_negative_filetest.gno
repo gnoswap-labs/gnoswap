@@ -10,6 +10,7 @@ import (
 	"gno.land/r/onbloc/foo"
 
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -24,12 +25,13 @@ const (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = std.NewUserRealm(adminAddr)
-	posRealm     = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm     = std.NewCodeRealm(consts.ROUTER_PATH)
-	positionAddr = consts.POSITION_ADDR
-	poolAddr     = consts.POOL_ADDR
+	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
+	posRealm     = std.NewUserRealm(positionAddr)
+	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
+	rouRealm     = std.NewUserRealm(routerAddr)
+	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 
 	poolCreationFee int64 = 100_000_000
 )

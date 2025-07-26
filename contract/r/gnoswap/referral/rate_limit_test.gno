@@ -8,6 +8,8 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
+	prabc "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 )
 
@@ -406,7 +408,7 @@ func setupRateLimitKeeper() *keeper {
 
 func setupValidCaller() func() {
 	origCaller := std.OriginCaller()
-	routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 	testing.SetOriginCaller(routerAddr)
 	return func() {
 		testing.SetOriginCaller(origCaller)
@@ -417,7 +419,7 @@ func setupRateLimitCaller(caller string) func() {
 	origCaller := std.OriginCaller()
 	switch caller {
 	case "router":
-		routerAddr, _ := access.GetAddress(access.ROLE_ROUTER)
+		routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 		testing.SetOriginCaller(routerAddr)
 	case "unauthorized":
 		testing.SetOriginCaller(std.Address("unauthorized"))

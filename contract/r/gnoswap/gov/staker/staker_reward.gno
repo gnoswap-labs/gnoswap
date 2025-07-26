@@ -5,12 +5,14 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 // CollectReward collects the rewards from the protocol fee contract based on the holdings of xGNS.
@@ -34,12 +36,14 @@ import (
 //
 // Reference: https://docs.gnoswap.io/contracts/governance/staker.gno#collectreward
 func CollectReward(cur realm) {
+	halt.AssertIsNotHaltedGovStaker()
+	halt.AssertIsNotHaltedWithdraw()
+
 	previousRealm := std.PreviousRealm()
-	caller := previousRealm.Address()
+	caller := previousRealm.Address()	
 	from := std.CurrentRealm().Address()
 	currentHeight := std.ChainHeight()
 
-	assertIsNotHaltedWithdraw()
 
 	emissionReward, protocolFeeRewards, err := claimRewards(caller.String(), currentHeight)
 	if err != nil {
@@ -104,18 +108,20 @@ func CollectReward(cur realm) {
 //
 // Reference: https://docs.gnoswap.io/contracts/governance/staker.gno#collectrewardfromlaunchpad
 func CollectRewardFromLaunchPad(cur realm, to std.Address) {
+	halt.AssertIsNotHaltedGovStaker()
+	halt.AssertIsNotHaltedWithdraw()
+	
 	previousRealm := std.PreviousRealm()
-	from := std.CurrentRealm().Address()
 	caller := previousRealm.Address()
-	currentHeight := std.ChainHeight()
+	access.AssertIsLaunchpad(caller)
 
-	assertCallerIsLaunchpad(caller)
-	assertIsNotHaltedWithdraw()
+	from := std.CurrentRealm().Address()
+	currentHeight := std.ChainHeight()
 
 	launchpadRewardID := makeLaunchpadRewardID(to.String())
 	_, exists := getLaunchpadProjectDeposit(launchpadRewardID)
 	if !exists {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errNoDelegatedAmount,
 			ufmt.Sprintf("%s is not project wallet from launchpad", to.String()),
 		))
@@ -180,15 +186,17 @@ func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 //   - if system is halted for withdrawals
 //   - if access control operations fail
 func SetAmountByProjectWallet(cur realm, addr std.Address, amount int64, add bool) {
+	halt.AssertIsNotHaltedGovStaker()
+	halt.AssertIsNotHaltedWithdraw()
+
 	caller := std.PreviousRealm().Address()
 	currentHeight := std.ChainHeight()
 
-	assertCallerIsLaunchpad(caller)
-	assertIsNotHaltedWithdraw()
-		
-	launchpadAddr, err := access.GetAddress(access.ROLE_LAUNCHPAD)
-	if err != nil {
-		panic(err)
+	access.AssertIsLaunchpad(caller)
+
+	launchpadAddr, exists := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	if !exists {
+		panic(ufmt.Sprintf("launchpad address not found"))
 	}
 
 	if add {
@@ -265,7 +273,7 @@ func transferToken(
 
 	// Validate recipient address
 	if !to.IsValid() {
-		return makeErrorWithDetail(
+		return makeErrorWithDetails(
 			errInvalidAddress,
 			ufmt.Sprintf("invalid address %s to transfer protocol fee", to.String()),
 		)
@@ -273,7 +281,7 @@ func transferToken(
 
 	// Validate transfer amount
 	if amount < 0 {
-		return makeErrorWithDetail(
+		return makeErrorWithDetails(
 			errInvalidAmount,
 			ufmt.Sprintf("invalid amount %d to transfer protocol fee", amount),
 		)
@@ -282,7 +290,7 @@ func transferToken(
 	// Check sufficient balance
 	balance := common.BalanceOf(tokenPath, from)
 	if balance < amount {
-		return makeErrorWithDetail(
+		return makeErrorWithDetails(
 			errNotEnoughBalance,
 			ufmt.Sprintf("not enough %s balance(%d) to collect(%d)", tokenPath, balance, amount),
 		)

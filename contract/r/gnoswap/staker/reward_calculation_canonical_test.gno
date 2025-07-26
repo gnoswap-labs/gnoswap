@@ -1310,7 +1310,7 @@ type TestEventStakeToken struct {
 
 func (event *TestEventStakeToken) Apply(canonical *canonicalRewardState) {
 	if canonical.global.deposits.Has(event.positionId) {
-		if canonical.global.deposits.Get(event.positionId).liquidity.IsZero() {
+		if canonical.global.deposits.get(event.positionId).liquidity.IsZero() {
 			canonical.StakeToken(event.positionId, event.poolPath, event.address, event.tickLower, event.tickUpper, event.liquidity)
 		} else {
 			canonical.UnstakeToken(event.positionId)

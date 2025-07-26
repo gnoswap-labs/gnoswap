@@ -2,12 +2,10 @@ package governance
 
 import (
 	"std"
-	"strings"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/access"
 	cp "gno.land/r/gnoswap/v1/community_pool"
 	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
@@ -166,11 +164,11 @@ func createParameterHandlers() *ParameterRegistry {
 		// Common system controls
 		{
 			pkgPath:    consts.COMMON_PATH,
-			function:   "SetHalt",
+			function:   "SetHaltLevel",
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
 				// Set system halt status (emergency stop mechanism)
-				halt.SetHalt(cross, parseBool(params[0])) // halt
+				halt.SetHaltLevel(cross, halt.HaltLevel(params[0])) // halt
 				return nil
 			},
 		},
@@ -420,104 +418,16 @@ func createParameterHandlers() *ParameterRegistry {
 			},
 		},
 
-		// Access control handlers
-		{
-			pkgPath:    consts.ACCESS_PATH,
-			function:   "CreateRole",
-			paramCount: 2,
-			handlerFunc: func(params []string) error {
-				// Create new access control role with assigned address
-				addr := std.Address(params[1])
-				if !addr.IsValid() {
-					panic(ufmt.Sprintf("invalid address: %s", params[1]))
-				}
-
-				roleName := params[0]
-				access.CreateRole(cross, roleName, addr)
-
-				return nil
-			},
-		},
-		{
-			pkgPath:    consts.ACCESS_PATH,
-			function:   "SetRole",
-			paramCount: 2,
-			handlerFunc: func(params []string) error {
-				// Assign role to an address
-				addr := std.Address(params[1])
-				if !addr.IsValid() {
-					panic(ufmt.Sprintf("invalid address: %s", params[1]))
-				}
-
-				roleName := params[0]
-				access.SetRole(cross, roleName, addr)
-
-				return nil
-			},
-		},
-		{
-			pkgPath:    consts.ACCESS_PATH,
-			function:   "UpdateRoleAddress",
-			paramCount: 2,
-			handlerFunc: func(params []string) error {
-				// Update the address assigned to a role
-				addr := std.Address(params[1])
-				if !addr.IsValid() {
-					panic(ufmt.Sprintf("invalid address: %s", params[1]))
-				}
-
-				roleName := params[0]
-				access.UpdateRoleAddress(cross, roleName, addr)
-
-				return nil
-			},
-		},
-
 		// System halt controls
-		{
-			pkgPath:    consts.HALT_PATH,
-			function:   "SetHalt",
-			paramCount: 1,
-			handlerFunc: func(params []string) error {
-				// Set system-wide halt status
-				halt.SetHalt(cross, parseBool(params[0])) // true = halt, false = no halt
-
-				return nil
-			},
-		},
-		{
-			pkgPath:    consts.HALT_PATH,
-			function:   "SetHaltWithLevel",
-			paramCount: 2,
-			handlerFunc: func(params []string) error {
-				// Set halt status for specific system levels
-				haltStatus := parseBool(params[0])
-				levels := make([]halt.LevelID, 0)
-				
-				// Parse comma-separated level IDs
-				for _, level := range strings.Split(params[1], ",") {
-					levelID, err := halt.LevelIDFromString(level)
-					if err != nil {
-						return err
-					}
-					levels = append(levels, levelID)
-				}
-
-				return halt.SetHalt(cross, haltStatus, levels...)
-			},
-		},
 		{
 			pkgPath:    consts.HALT_PATH,
 			function:   "SetHaltLevel",
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
-				// Set specific halt level for the system
-				haltLevel, err := halt.LevelIDFromString(params[0])
-				if err != nil {
-					return err
-				}
+				// Set system-wide halt status
+				halt.SetHaltLevel(cross, halt.HaltLevel(params[0])) // true = halt, false = no halt
 
-				return halt.SetHaltLevel(cross, haltLevel)
+				return nil
 			},
 		},
 		{
@@ -529,36 +439,9 @@ func createParameterHandlers() *ParameterRegistry {
 				opType := halt.OpType(params[0])
 				allowed := parseBool(params[1])
 
-				return halt.SetOperationStatus(cross, opType, allowed)
-			},
-		},
-		{
-			pkgPath:    consts.HALT_PATH,
-			function:   "EnableWithdrawals",
-			paramCount: 0,
-			handlerFunc: func(params []string) error {
-				// Enable withdrawals for testnet (special function)
-				return halt.EnableWithdrawalsForTestnet(cross)
-			},
-		},
-		{
-			pkgPath:    consts.HALT_PATH,
-			function:   "EnableContractOperations",
-			paramCount: 1,
-			handlerFunc: func(params []string) error {
-				// Enable operations for specific contract type
-				contract := halt.OpType(params[0])
-				return halt.EnableContractOperations(cross, contract)
-			},
-		},
-		{
-			pkgPath:    consts.HALT_PATH,
-			function:   "DisableContractOperations",
-			paramCount: 1,
-			handlerFunc: func(params []string) error {
-				// Disable operations for specific contract type
-				contract := halt.OpType(params[0])
-				return halt.DisableContractOperations(cross, contract)
+				halt.SetOperationStatus(cross, opType, allowed)
+
+				return nil
 			},
 		},
 	}

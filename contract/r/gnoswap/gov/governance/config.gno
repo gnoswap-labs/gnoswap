@@ -3,9 +3,8 @@ package governance
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/access"
 	en "gno.land/r/gnoswap/v1/emission"
-
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -59,16 +58,12 @@ func ReconfigureByAdmin(
 	executionWindow int64,
 ) int64 {
 	// Check if system is halted before proceeding
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
-	}
+	halt.AssertIsNotHaltedGovernance()
 
 	// Get caller information and verify admin privileges
 	previousRealm := std.PreviousRealm()
 	caller := previousRealm.Address()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsAdmin(caller)
 
 	// Mint and distribute GNS tokens as part of the process
 	en.MintAndDistributeGns(cross)
@@ -136,16 +131,12 @@ func ReconfigureByGovernance(
 	executionWindow int64,
 ) int64 {
 	// Check if system is halted before proceeding
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
-	}
+	halt.AssertIsNotHaltedGovernance()
 
 	// Get caller information and verify governance privileges
 	previousRealm := std.PreviousRealm()
 	caller := previousRealm.Address()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err)
-	}
+	access.AssertIsGovernance(caller)
 
 	// Mint and distribute GNS tokens as part of the process
 	en.MintAndDistributeGns(cross)

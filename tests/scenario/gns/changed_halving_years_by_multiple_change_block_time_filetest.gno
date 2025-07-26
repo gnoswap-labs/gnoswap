@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/ufmt"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/gns"
 
@@ -16,7 +17,7 @@ import (
 
 var t *testing.T
 
-var adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+var adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 
 const (
 	milliSecondsOfYear = 31536000000 // 365 * 24 * 60 * 60 * 1000

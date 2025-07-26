@@ -101,7 +101,7 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	// cache per-pool rewards in the internal incentive(tiers)
 	param.PoolTier.cacheReward(param.CurrentHeight, param.Pools)
 
-	deposit := param.Deposits.Get(param.PositionId)
+	deposit := param.Deposits.get(param.PositionId)
 	poolPath := deposit.targetPoolPath
 
 	pool, ok := param.Pools.Get(poolPath)
