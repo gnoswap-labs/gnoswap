@@ -8,7 +8,9 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+
+	prbac "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/staker"
 	"gno.land/r/gnoswap/v1/gov/xgns"
@@ -17,10 +19,14 @@ import (
 var t *testing.T
 
 var (
-	adminAddr      = consts.ADMIN
+	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm = std.NewUserRealm(adminAddr)
+
+	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+
 	dummyAddr  = testutils.TestAddress("dummy")
 	dummyRealm = std.NewUserRealm(dummyAddr)
+
 	reDelegate = testutils.TestAddress("reDelegate")
 	minAmount  = int64(1_000_000)
 )
@@ -51,7 +57,7 @@ func checkInitialState() {
 func adminDelegateToDummy() {
 	// delegate GNS from admin to dummy
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, consts.GOV_STAKER_ADDR, minAmount)
+	gns.Approve(cross, govStakerAddr, minAmount)
 	staker.Delegate(cross, dummyAddr, int64(minAmount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from admin to dummy\n", minAmount)
 	ufmt.Printf("[EXPECTED] dummy delegated amount: %d\n", minAmount)

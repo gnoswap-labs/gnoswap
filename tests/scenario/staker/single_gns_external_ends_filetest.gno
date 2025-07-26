@@ -22,8 +22,6 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
-
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
@@ -60,12 +58,15 @@ var (
 
 	fee100 uint32 = 100
 
-	max_timeout int64 = 9999999999
+	maxTimeout int64 = 9999999999
+	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
 	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
 
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
+
+	blockTime int64 = 2000
 )
 
 func main() {
@@ -140,8 +141,8 @@ func mintBarQuxPosition01() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position 01")
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	qux.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	qux.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint in-range position 01 (tick range: -50 ~ 50, requested amount: 50, 50)")
 	testing.SkipHeights(1)
@@ -156,7 +157,7 @@ func mintBarQuxPosition01() {
 		"50",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -167,8 +168,8 @@ func mintBarQuxPosition02() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position 02")
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	qux.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	qux.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint in-range position 02 (tick range: -50 ~ 50, requested amount: 50, 50)")
 	testing.SkipHeights(1)
@@ -183,7 +184,7 @@ func mintBarQuxPosition02() {
 		"50",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -198,7 +199,7 @@ func createExternalIncentiveGns() {
 
 	println("[INFO] approve GNS for external incentive creation")
 	testing.SetRealm(externalCreatorRealm) // creator
-	gns.Approve(cross, stakerAddr, consts.INT64_MAX)
+	gns.Approve(cross, stakerAddr, maxInt64)
 
 	println("[INFO] create external incentive for 90 days")
 	testing.SkipHeights(1)
@@ -220,7 +221,7 @@ func startExternalIncentive() {
 	nowTime := time.Now().Unix()
 	timeLeft := externalStartTime - nowTime
 
-	blockAvgTime := milliToSec(consts.BLOCK_GENERATION_INTERVAL)
+	blockAvgTime := milliToSec(blockTime)
 	blockLeft := timeLeft / blockAvgTime
 
 	println("[INFO] skip blocks until external incentive starts")
@@ -328,7 +329,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 }
 
 func milliToSec(ms int64) int64 {
-	return ms / consts.MILLISECONDS_PER_SECOND
+	return ms / int64(1000)
 }
 
 // Output:

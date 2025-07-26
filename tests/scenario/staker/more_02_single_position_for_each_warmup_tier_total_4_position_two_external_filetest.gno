@@ -12,7 +12,6 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -39,7 +38,7 @@ var (
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -48,7 +47,8 @@ var (
 
 	fee100 uint32 = 100
 
-	max_timeout int64 = 9999999999
+	maxTimeout int64 = 9999999999
+	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
 	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
@@ -121,8 +121,8 @@ func createPool() {
 func mintPositions() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	baz.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	baz.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint position 01 (tick range: -30 ~ 30)")
 	positionId1, liquidity1, amount0_1, amount1_1 := pn.Mint(
@@ -136,7 +136,7 @@ func mintPositions() {
 		"50",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -158,7 +158,7 @@ func mintPositions() {
 		"50",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -179,7 +179,7 @@ func mintPositions() {
 		"50",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -200,7 +200,7 @@ func mintPositions() {
 		"50",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -214,7 +214,7 @@ func createExternalIncentives() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create external incentive for bar token (365 days)")
-	bar.Approve(cross, stakerAddr, consts.INT64_MAX)
+	bar.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
 	sr.CreateExternalIncentive(
@@ -229,7 +229,7 @@ func createExternalIncentives() {
 	ufmt.Printf("[INFO] bar external incentive created - reward per block: ~23148\n")
 
 	println("[INFO] create external incentive for baz token (365 days)")
-	baz.Approve(cross, stakerAddr, consts.INT64_MAX)
+	baz.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
 	sr.CreateExternalIncentive(

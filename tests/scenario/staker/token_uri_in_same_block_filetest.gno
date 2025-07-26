@@ -12,8 +12,6 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
-
 	"gno.land/r/gnoswap/v1/access"
 
 	"gno.land/r/gnoswap/v1/gnft"
@@ -36,7 +34,7 @@ var (
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -45,7 +43,8 @@ var (
 
 	fee500 uint32 = 500
 
-	max_timeout int64 = 9999999999
+	maxTimeout int64 = 9999999999
+	maxApprove int64 = 9223372036854775807
 )
 
 func main() {
@@ -80,8 +79,8 @@ func mintPositionsAndCheckURI() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross, poolAddr, maxApprove)
 
 	println("[INFO] mint and stake position 01")
 	positionId1, liquidity1, _, _, _ := sr.MintAndStake(
@@ -95,7 +94,7 @@ func mintPositionsAndCheckURI() {
 		"50000000",
 		"0",
 		"0",
-		max_timeout,
+		maxTimeout,
 		"",
 	)
 
@@ -111,7 +110,7 @@ func mintPositionsAndCheckURI() {
 		"50000000",
 		"0",
 		"0",
-		max_timeout,
+		maxTimeout,
 		"",
 	)
 

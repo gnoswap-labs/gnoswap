@@ -8,13 +8,14 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/staker"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 )
@@ -22,11 +23,17 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = std.NewUserRealm(adminAddr)
+
+	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
+	stakerRealm   = std.NewUserRealm(stakerAddr)
+
+	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+
+	gnoStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+
 	aliceAddr   = testutils.TestAddress("alice")
 	bobAddr     = testutils.TestAddress("bob")
 	bobRealm    = std.NewUserRealm(bobAddr)
-	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
-	stakerRealm   = std.NewUserRealm(stakerAddr)
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
@@ -65,15 +72,15 @@ func main() {
 func adminDelegateToAlice() {
 	amount := int64(1_000_000)
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, consts.GOV_STAKER_ADDR, amount)
+	gns.Approve(cross, gnoStakerAddr, amount)
 	staker.Delegate(cross, aliceAddr, int64(amount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from adminAddr to alice\n", amount)
 }
 
 func mockProtocolFeeDeposit() {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, consts.PROTOCOL_FEE_ADDR, 1000)
-	qux.Transfer(cross, consts.PROTOCOL_FEE_ADDR, 2500)
+	bar.Transfer(cross, protocolFeeAddr, 1000)
+	qux.Transfer(cross, protocolFeeAddr, 2500)
 	testing.SetRealm(stakerRealm)
 	pf.AddToProtocolFee(cross, barPath, 1000)
 	pf.AddToProtocolFee(cross, quxPath, 2500)
@@ -85,15 +92,15 @@ func bobDelegateToBob() {
 	testing.SetRealm(adminRealm)
 	gns.Transfer(cross, bobAddr, amount)
 	testing.SetRealm(bobRealm)
-	gns.Approve(cross, consts.GOV_STAKER_ADDR, amount)
+	gns.Approve(cross, gnoStakerAddr, amount)
 	staker.Delegate(cross, bobAddr, int64(amount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from bob to bob\n", amount)
 }
 
 func mockProtocolFeeDepositAgain() {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, consts.PROTOCOL_FEE_ADDR, 1000)
-	qux.Transfer(cross, consts.PROTOCOL_FEE_ADDR, 2500)
+	bar.Transfer(cross, protocolFeeAddr, 1000)
+	qux.Transfer(cross, protocolFeeAddr, 2500)
 	testing.SetRealm(stakerRealm)
 	pf.AddToProtocolFee(cross, barPath, 1000)
 	pf.AddToProtocolFee(cross, quxPath, 2500)
