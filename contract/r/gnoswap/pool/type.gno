@@ -6,6 +6,7 @@ import (
 	"gno.land/p/demo/avl"
 
 	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -292,8 +293,8 @@ func newPool(poolInfo *poolCreateConfig) *Pool {
 var tickCrossHook func(poolPath string, tickId int32, zeroForOne bool)
 
 func SetTickCrossHook(cur realm, hook func(poolPath string, tickId int32, zeroForOne bool)) {
-	if tickCrossHook != nil {
-		panic("tickCrossHook already set")
-	}
+	caller := std.PreviousRealm().Address()
+	access.AssertIsStaker(caller)
+
 	tickCrossHook = hook
 }
