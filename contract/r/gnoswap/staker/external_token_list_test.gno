@@ -7,7 +7,6 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/access"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -29,8 +28,8 @@ func TestAddToken(t *testing.T) {
 			caller:         getAdminAddress(t),
 			inputTokenPath: "gno.land/r/gnoswap/v1/token1",
 			expectedAllowedTokens: []string{
-				consts.GNS_PATH,
-				consts.GNOT,
+				GNS_PATH,
+				GNOT,
 				"gno.land/r/gnoswap/v1/token1",
 			},
 			expectedHasAbort: false,
@@ -41,10 +40,10 @@ func TestAddToken(t *testing.T) {
 		{
 			name:           "add token failed by non admin",
 			caller:         testutils.TestAddress("non-admin"),
-			inputTokenPath: consts.GNS_PATH,
+			inputTokenPath: GNS_PATH,
 			expectedAllowedTokens: []string{
-				consts.GNS_PATH,
-				consts.GNOT,
+				GNS_PATH,
+				GNOT,
 			},
 			expectedHasAbort: true,
 			expectedAbortMsg: "unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin",
@@ -109,7 +108,7 @@ func TestRemoveToken(t *testing.T) {
 			name:                  "remove token success with custom token by admin",
 			caller:                getAdminAddress(t),
 			inputTokenPath:        customTokenPath,
-			expectedAllowedTokens: []string{consts.GNS_PATH, consts.GNOT},
+			expectedAllowedTokens: []string{GNS_PATH, GNOT},
 			expectedHasAbort:      false,
 			expectedAbortMsg:      "",
 			expectedHasPanic:      false,
@@ -119,15 +118,15 @@ func TestRemoveToken(t *testing.T) {
 			name:                  "remove token failed by non admin",
 			caller:                testutils.TestAddress("non-admin"),
 			inputTokenPath:        customTokenPath,
-			expectedAllowedTokens: []string{consts.GNS_PATH, consts.GNOT, customTokenPath},
+			expectedAllowedTokens: []string{GNS_PATH, GNOT, customTokenPath},
 			expectedHasAbort:      true,
 			expectedAbortMsg:      "unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin",
 		},
 		{
 			name:                  "remove token failed by default token",
 			caller:                getAdminAddress(t),
-			inputTokenPath:        consts.GNS_PATH,
-			expectedAllowedTokens: []string{consts.GNS_PATH, consts.GNOT, customTokenPath},
+			inputTokenPath:        GNS_PATH,
+			expectedAllowedTokens: []string{GNS_PATH, GNOT, customTokenPath},
 			expectedHasAbort:      true,
 			expectedAbortMsg:      "[GNOSWAP-STAKER-018] can not delete default external token: can not remove default token(gno.land/r/gnoswap/v1/gns)",
 			expectedHasPanic:      false,
@@ -138,7 +137,7 @@ func TestRemoveToken(t *testing.T) {
 			name:                  "remove token failed by not existing token",
 			caller:                getAdminAddress(t),
 			inputTokenPath:        "not-existing-token",
-			expectedAllowedTokens: []string{consts.GNS_PATH, consts.GNOT, customTokenPath},
+			expectedAllowedTokens: []string{GNS_PATH, GNOT, customTokenPath},
 			expectedHasAbort:      false,
 			expectedAbortMsg:      "",
 			expectedHasPanic:      false,
@@ -197,19 +196,19 @@ func TestModifyTokenList(t *testing.T) {
 			inputTokenPath:        "gno.land/r/gnoswap/v1/token1",
 			inputValidator:        nil,
 			inputExecutor:         addTokenExecutor,
-			expectedAllowedTokens: []string{consts.GNS_PATH, consts.GNOT, "gno.land/r/gnoswap/v1/token1"},
+			expectedAllowedTokens: []string{GNS_PATH, GNOT, "gno.land/r/gnoswap/v1/token1"},
 			expectedHasError:      false,
 			expectedErrorMsg:      "",
 		},
 		{
 			name:           "modify token list success with validation failure",
 			caller:         getAdminAddress(t),
-			inputTokenPath: consts.GNS_PATH,
+			inputTokenPath: GNS_PATH,
 			inputValidator: func(tokenPath string) error {
 				return ufmt.Errorf("validation failure")
 			},
 			inputExecutor:         addTokenExecutor,
-			expectedAllowedTokens: []string{consts.GNS_PATH, consts.GNOT},
+			expectedAllowedTokens: []string{GNS_PATH, GNOT},
 			expectedHasError:      true,
 			expectedErrorMsg:      "validation failure",
 		},

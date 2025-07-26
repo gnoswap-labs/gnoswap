@@ -59,9 +59,9 @@ var (
 	routerAddr        = getRoleAddress(prbac.ROLE_ROUTER)
 	emissionAddr      = getRoleAddress(prbac.ROLE_EMISSION)
 
-	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm    = std.NewCodeRealm(consts.ROUTER_PATH)
-	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
+	posRealm    = std.NewCodeRealm("gno.land/r/gnoswap/v1/position")
+	rouRealm    = std.NewCodeRealm("gno.land/r/gnoswap/v1/router")
+	stakerRealm = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
@@ -398,9 +398,8 @@ func ugnotFaucet(t *testing.T, to std.Address, amount int64) {
 func ugnotDeposit(t *testing.T, addr std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(addr))
-	wugnotAddr := consts.WUGNOT_ADDR
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, amount}})
+	banker.SendCoins(addr, WUGNOT_ADDR, std.Coins{{ugnotDenom, amount}})
 	wugnot.Deposit(cross)
 }
 

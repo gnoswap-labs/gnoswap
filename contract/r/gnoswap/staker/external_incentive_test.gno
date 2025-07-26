@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/testutils"
-	"gno.land/p/gnoswap/consts"
 )
 
 func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
@@ -32,14 +31,14 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 		{
 			name:        "create incentive with GNS token",
 			creator:     account1,
-			rewardToken: consts.GNS_PATH,
+			rewardToken: GNS_PATH,
 			amount:      1000,
 			shouldPass:  true,
 		},
 		{
 			name:        "create incentive with WUGNOT token",
 			creator:     account1,
-			rewardToken: consts.WUGNOT_PATH,
+			rewardToken: WUGNOT_PATH,
 			amount:      2000,
 			shouldPass:  true,
 		},
@@ -67,7 +66,7 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 		{
 			name:        "create incentive with same token by different account",
 			creator:     account2,
-			rewardToken: consts.GNS_PATH,
+			rewardToken: GNS_PATH,
 			amount:      3500,
 			shouldPass:  true,
 		},

@@ -81,5 +81,6 @@ func getOrCreateInnerTree(tree *avl.Tree, key string) *avl.Tree {
 
 // milliToSec converts milliseconds to seconds
 func milliToSec(ms int64) int64 {
-	return ms / consts.MILLISECONDS_PER_SECOND
+	msPerSec := 1000
+	return ms / msPerSec
 }

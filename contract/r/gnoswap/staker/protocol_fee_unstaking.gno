@@ -5,7 +5,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -47,9 +46,9 @@ func handleUnStakingFee(
 	} else if feeAmount < 0 {
 		return 0, 0, ufmt.Errorf("fee amount cannot be negative")
 	}
-	
+
 	if internal {
-		tokenPath = consts.GNS_PATH
+		tokenPath = GNS_PATH
 	}
 
 	protocolFeeAddr := getRoleAddress(prbac.ROLE_PROTOCOL_FEE)
