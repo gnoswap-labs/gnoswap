@@ -271,3 +271,60 @@ func setupTestPool(t *testing.T) {
 	pool := pl.GetPool(barPath, fooPath, FEE_MEDIUM)
 	uassert.Equal(t, pool.Liquidity().ToString(), "1000000")
 }
+
+func TestCalculateAmountWithFee(t *testing.T) {
+	tests := []struct {
+		name       string
+		userAmount uint64
+		swapFee    uint64
+		expected   uint64
+	}{
+		{
+			name:       "15 bps fee on 1000 tokens",
+			userAmount: 1000,
+			swapFee:    15,
+			expected:   1002, // ceil(1000 * 10000 / 9985) = 1002
+		},
+		{
+			name:       "100 bps fee on 1000 tokens",
+			userAmount: 1000,
+			swapFee:    100,
+			expected:   1011, // ceil(1000 * 10000 / 9900) = 1011
+		},
+		{
+			name:       "0 bps fee",
+			userAmount: 1000,
+			swapFee:    0,
+			expected:   1000,
+		},
+		{
+			name:       "15 bps fee on large amount",
+			userAmount: 1000000,
+			swapFee:    15,
+			expected:   1001503, // ceil(1000000 * 10000 / 9985) = 1001503
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Temporarily set the swap fee
+			prevFee := swapFee
+			swapFee = tt.swapFee
+			defer func() { swapFee = prevFee }()
+
+			userAmountU256 := u256.NewUint(tt.userAmount)
+			result := calculateAmountWithFee(userAmountU256)
+
+			uassert.Equal(t, tt.expected, result.Uint64())
+
+			// Verify that after deducting fee, user gets at least the requested amount
+			if tt.swapFee > 0 {
+				feeAmount := new(u256.Uint).Mul(result, u256.NewUint(tt.swapFee))
+				feeAmount.Div(feeAmount, u256.NewUint(10000))
+				afterFee := new(u256.Uint).Sub(result, feeAmount)
+
+				uassert.True(t, afterFee.Gte(userAmountU256))
+			}
+		})
+	}
+}
