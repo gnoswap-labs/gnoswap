@@ -27,6 +27,7 @@ const (
 	GOV_GOVERNANCE_PATH = "gno.land/r/gnoswap/v1/gov/governance"
 	POOL_PATH           = "gno.land/r/gnoswap/v1/pool"
 	PROTOCOL_FEE_PATH   = "gno.land/r/gnoswap/v1/protocol_fee"
+	ROUTER_PATH         = "gno.land/r/gnoswap/v1/router"
 	STAKER_PATH         = "gno.land/r/gnoswap/v1/staker"
 	HALT_PATH           = "gno.land/r/gnoswap/v1/halt"
 )
@@ -178,7 +179,7 @@ func createParameterHandlers() *ParameterRegistry {
 	handlers := []*ParameterHandlerOptions{
 		// Common system controls
 		{
-			COMMON_PATH,
+			pkgPath:    COMMON_PATH,
 			function:   "SetHaltLevel",
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
