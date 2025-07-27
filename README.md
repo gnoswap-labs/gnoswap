@@ -80,7 +80,6 @@ This section guides you through the process of setting up GnoSwap contracts. The
    contract/
    ├── p/  # Packages directory
    │   └── gnoswap/
-   │       ├── consts/
    │       ├── gnsmath/
    │       └── ...
    └── r/  # Realms directory
