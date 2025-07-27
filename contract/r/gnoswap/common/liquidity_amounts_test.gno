@@ -5,7 +5,6 @@ import (
 
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -227,7 +226,7 @@ func TestComputeLiquidityForAmount0(t *testing.T) {
 }
 
 func TestComputeLiquidityForAmount1(t *testing.T) {
-	q96 := u256.MustFromDecimal(consts.Q96)
+	q96 := u256.MustFromDecimal(Q96)
 	amount1 := u256.MustFromDecimal("1000000")
 
 	t.Run("Basic liquidity calculation", func(t *testing.T) {
@@ -268,7 +267,7 @@ func TestComputeLiquidityForAmount1(t *testing.T) {
 }
 
 func TestGetLiquidityForAmounts(t *testing.T) {
-	q96 := u256.MustFromDecimal(consts.Q96)
+	q96 := u256.MustFromDecimal(Q96)
 
 	tests := []struct {
 		name          string
@@ -406,7 +405,7 @@ func TestComputeAmount0ForLiquidity(t *testing.T) {
 }
 
 func TestComputeAmount1ForLiquidity(t *testing.T) {
-	q96 := u256.MustFromDecimal(consts.Q96) // 2^96 = 79228162514264337593543950336
+	q96 := u256.MustFromDecimal(Q96) // 2^96 = 79228162514264337593543950336
 
 	tests := []struct {
 		name           string
@@ -461,7 +460,7 @@ func TestComputeAmount1ForLiquidity(t *testing.T) {
 }
 
 func TestGetAmountsForLiquidity(t *testing.T) {
-	q96 := u256.MustFromDecimal(consts.Q96) // 2^96 = 79228162514264337593543950336
+	q96 := u256.MustFromDecimal(Q96) // 2^96 = 79228162514264337593543950336
 
 	tests := []struct {
 		name            string

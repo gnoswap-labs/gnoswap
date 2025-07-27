@@ -8,8 +8,6 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
-
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -20,7 +18,7 @@ const (
 )
 
 var (
-	emissionRealm = std.NewCodeRealm(consts.EMISSION_PATH)
+	emissionRealm = std.NewCodeRealm("gno.land/r/gnoswap/v1/emission")
 	adminRealm    = std.NewUserRealm(adminAddr)
 )
 
@@ -50,16 +48,16 @@ func TestBalanceOf(t *testing.T) {
 
 func TestValidEmissionAmount(t *testing.T) {
 	tests := []struct {
-		name        string
-		amount      int64
-		shouldError bool
-		errorMessage    string
+		name         string
+		amount       int64
+		shouldError  bool
+		errorMessage string
 	}{
 		{
-			name:        "should panic if emission amount is too large",
-			amount:      MAXIMUM_SUPPLY,
-			shouldError: true,
-			errorMessage:    "too many emission amount: 1000000000000000",
+			name:         "should panic if emission amount is too large",
+			amount:       MAXIMUM_SUPPLY,
+			shouldError:  true,
+			errorMessage: "too many emission amount: 1000000000000000",
 		},
 		{
 			name:   "should not panic if emission amount is not too large",
@@ -420,7 +418,7 @@ func TestMintGns(t *testing.T) {
 		{
 			name:                 "mint gns is success by emission realm",
 			halted:               false,
-			inputRealm:           std.NewCodeRealm(consts.EMISSION_PATH),
+			inputRealm:           emissionRealm,
 			inputSkipHeight:      1,
 			expectedMintedAmount: 14269406,
 			expectedHasAbort:     false,
@@ -429,7 +427,7 @@ func TestMintGns(t *testing.T) {
 		{
 			name:                 "mint gns is failed by halted",
 			halted:               true,
-			inputRealm:           std.NewCodeRealm(consts.EMISSION_PATH),
+			inputRealm:           emissionRealm,
 			inputSkipHeight:      1,
 			expectedMintedAmount: 0,
 			expectedHasAbort:     true,
@@ -447,7 +445,7 @@ func TestMintGns(t *testing.T) {
 		{
 			name:                 "mint gns is failed by not allowed to mint same block",
 			halted:               false,
-			inputRealm:           std.NewCodeRealm(consts.EMISSION_PATH),
+			inputRealm:           emissionRealm,
 			inputSkipHeight:      0,
 			expectedMintedAmount: 0,
 			expectedHasAbort:     false,

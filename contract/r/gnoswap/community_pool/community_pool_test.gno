@@ -7,8 +7,6 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/gnoswap/consts"
-
 	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/gns"
@@ -22,7 +20,8 @@ var (
 
 	communityPoolAddr = rbac.DefaultRoleAddresses[prabc.ROLE_COMMUNITY_POOL]
 
-	govRealm = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
+	gnsPath  = "gno.land/r/gnoswap/v1/gns"
+	govRealm = std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/governance")
 
 	dummyCaller   = std.NewUserRealm(testutils.TestAddress("dummyCaller"))
 	dummyReceiver = testutils.TestAddress("dummyReceiver")
@@ -52,7 +51,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 				halt.SetHaltLevel(cross, halt.HaltLevelComplete)
 			},
 			caller:      adminRealm,
-			tokenPath:   consts.GNS_PATH,
+			tokenPath:   gnsPath,
 			to:          dummyReceiver,
 			amount:      1000,
 			shouldPanic: true,
@@ -65,7 +64,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			},
 			caller:      dummyCaller,
-			tokenPath:   consts.GNS_PATH,
+			tokenPath:   gnsPath,
 			to:          dummyReceiver,
 			amount:      1000,
 			shouldPanic: true,
@@ -78,7 +77,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 				gns.Transfer(cross, communityPoolAddr, 10_000)
 			},
 			caller:    adminRealm,
-			tokenPath: consts.GNS_PATH,
+			tokenPath: gnsPath,
 			to:        dummyReceiver,
 			amount:    10,
 		},
@@ -127,7 +126,7 @@ func TestTransferToken(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				halt.SetHaltLevel(cross, halt.HaltLevelComplete)
 			},
-			tokenPath:   consts.GNS_PATH,
+			tokenPath:   gnsPath,
 			to:          dummyReceiver,
 			amount:      1000,
 			shouldPanic: true,
@@ -139,7 +138,7 @@ func TestTransferToken(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			},
-			tokenPath:   consts.GNS_PATH,
+			tokenPath:   gnsPath,
 			to:          dummyReceiver,
 			amount:      1000,
 			shouldPanic: true,
@@ -152,7 +151,7 @@ func TestTransferToken(t *testing.T) {
 				gns.Transfer(cross, communityPoolAddr, 10_000)
 			},
 			caller:    govRealm,
-			tokenPath: consts.GNS_PATH,
+			tokenPath: gnsPath,
 			to:        dummyReceiver,
 			amount:    1,
 		},
