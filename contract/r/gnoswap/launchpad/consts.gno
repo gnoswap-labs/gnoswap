@@ -1,7 +1,6 @@
 package launchpad
 
 import (
-	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -17,6 +16,11 @@ const (
 	stringSplitterPad = "*PAD*"
 
 	projectMinimumStartDelayTime = int64(60 * 60) // 1 hour
+)
+
+// contract paths
+const (
+	GOV_XGNS_PATH string = "gno.land/r/gnoswap/v1/gov/xgns"
 )
 
 var projectTierDurations = []int64{
@@ -37,4 +41,4 @@ var projectTierRewardCollectableDuration = map[int64]int64{
 	projectTier180: dayTime * 14, // 14 days
 }
 
-var q128 = u256.MustFromDecimal(consts.Q128)
+var q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")
