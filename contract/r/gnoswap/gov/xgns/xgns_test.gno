@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
+
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
