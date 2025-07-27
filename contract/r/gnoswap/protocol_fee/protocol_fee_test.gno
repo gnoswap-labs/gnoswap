@@ -22,6 +22,15 @@ var (
 	adminUser     = adminAddr
 	dummyRealm    = std.NewCodeRealm("gno.land/r/dummy")
 	aliceAddr     = testutils.TestAddress("alice")
+
+	// contract paths
+	poolPath      = "gno.land/r/gnoswap/v1/pool"
+	routerPath    = "gno.land/r/gnoswap/v1/router"
+	stakerPath    = "gno.land/r/gnoswap/v1/staker"
+	govStakerPath = "gno.land/r/gnoswap/v1/gov/staker"
+
+	stakerRealm    = std.NewCodeRealm(stakerPath)
+	govStakerRealm = std.NewCodeRealm(govStakerPath)
 )
 
 func TestDistributeProtocolFee(t *testing.T) {
@@ -34,7 +43,6 @@ func TestDistributeProtocolFee(t *testing.T) {
 	bar.Transfer(cross, protocolFeeAddr, 1000)
 	qux.Transfer(cross, protocolFeeAddr, 1000)
 
-	stakerRealm := std.NewCodeRealm(consts.STAKER_PATH)
 	testing.SetRealm(stakerRealm)
 	testing.SetOriginCaller(stakerAddr)
 	AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
@@ -49,7 +57,6 @@ func TestDistributeProtocolFee(t *testing.T) {
 	uassert.Equal(t, qux.BalanceOf(govStakerAddr), int64(0))
 
 	// gov/staker > protocol_fee
-	govStakerRealm := std.NewCodeRealm(consts.GOV_STAKER_PATH)
 	testing.SetRealm(govStakerRealm)
 	testing.SetOriginCaller(govStakerAddr)
 	DistributeProtocolFee(cross)
@@ -160,7 +167,7 @@ func TestAddToProtocolFee(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			testing.SetRealm(std.NewCodeRealm(consts.POOL_PATH))
+			testing.SetRealm(std.NewCodeRealm(poolPath))
 			AddToProtocolFee(cross, test.tokenPath, test.amount)
 			uassert.Equal(t, protocolFeeState.TokenListWithAmount[test.tokenPath], test.want)
 		})
@@ -183,7 +190,7 @@ func TestClearTokenListWithAmount(t *testing.T) {
 		},
 		{
 			name:      "clear protocol fee",
-			prevRealm: std.NewCodeRealm(consts.GOV_STAKER_PATH),
+			prevRealm: govStakerRealm,
 			want:      map[string]uint64{},
 		},
 	}
@@ -220,15 +227,15 @@ func TestAssertCallerHasAddProtocolFeePermission(t *testing.T) {
 	}{
 		{
 			name:      "caller is pool contract",
-			prevRealm: std.NewCodeRealm(consts.POOL_PATH),
+			prevRealm: std.NewCodeRealm(poolPath),
 		},
 		{
 			name:      "caller is router contract",
-			prevRealm: std.NewCodeRealm(consts.ROUTER_PATH),
+			prevRealm: std.NewCodeRealm(routerPath),
 		},
 		{
 			name:      "caller is staker contract",
-			prevRealm: std.NewCodeRealm(consts.STAKER_PATH),
+			prevRealm: stakerRealm,
 		},
 	}
 
@@ -331,7 +338,7 @@ func TestDistributeWithDifferentDevOpsPct(t *testing.T) {
 			bar.Transfer(cross, protocolFeeAddr, int64(tt.tokenAmount))
 
 			// record the amount in protocol fee
-			testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+			testing.SetRealm(stakerRealm)
 			AddToProtocolFee(cross, "gno.land/r/onbloc/bar", tt.tokenAmount)
 
 			// initial state
@@ -340,7 +347,7 @@ func TestDistributeWithDifferentDevOpsPct(t *testing.T) {
 			uassert.Equal(t, bar.BalanceOf(govStakerAddr), int64(0))
 
 			// distribute protocol fee
-			testing.SetRealm(std.NewCodeRealm(consts.GOV_STAKER_PATH))
+			testing.SetRealm(govStakerRealm)
 			testing.SetOriginCaller(govStakerAddr)
 			result := DistributeProtocolFee(cross)
 
@@ -599,7 +606,7 @@ func TestBalanceAmountMismatch_Fix(t *testing.T) {
 
 			// record the amount in protocol fee
 			if tt.recordedAmount > 0 {
-				testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+				testing.SetRealm(stakerRealm)
 				AddToProtocolFee(cross, tt.tokenPath, tt.recordedAmount)
 			}
 
@@ -608,7 +615,7 @@ func TestBalanceAmountMismatch_Fix(t *testing.T) {
 			uassert.Equal(t, protocolFeeState.TokenListWithAmount[tt.tokenPath], tt.recordedAmount)
 
 			// distribute protocol fee
-			testing.SetRealm(std.NewCodeRealm(consts.GOV_STAKER_PATH))
+			testing.SetRealm(govStakerRealm)
 			testing.SetOriginCaller(govStakerAddr)
 
 			if tt.expectPanic {
@@ -667,7 +674,7 @@ func TestApiGetActualBalance(t *testing.T) {
 	qux.Transfer(cross, protocolFeeAddr, 2500)
 
 	// Record only part of the amounts
-	testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+	testing.SetRealm(stakerRealm)
 	AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
 	AddToProtocolFee(cross, "gno.land/r/onbloc/qux", 2000)
 
@@ -706,7 +713,7 @@ func TestApiGetRecordedBalance(t *testing.T) {
 	qux.Transfer(cross, protocolFeeAddr, 2500)
 
 	// Record only part of the amounts
-	testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+	testing.SetRealm(stakerRealm)
 	AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
 	AddToProtocolFee(cross, "gno.land/r/onbloc/qux", 2000)
 
@@ -747,7 +754,7 @@ func TestApiGetUnrecordedBalance(t *testing.T) {
 	qux.Transfer(cross, protocolFeeAddr, 2500)
 
 	// Record only part of the amounts
-	testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+	testing.SetRealm(stakerRealm)
 	AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
 	AddToProtocolFee(cross, "gno.land/r/onbloc/qux", 2000)
 
@@ -782,7 +789,7 @@ func TestApiGetUnrecordedBalance_NoUnrecorded(t *testing.T) {
 	bar.Transfer(cross, protocolFeeAddr, 1000)
 
 	// Record the exact amount
-	testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+	testing.SetRealm(stakerRealm)
 	AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
 
 	// Call API function
