@@ -137,7 +137,7 @@ func TestTransferOwnership(t *testing.T) {
 	}
 
 	// Test transfer to empty address should fail
-	uassert.AbortsWithMessage(t, "new owner address is invalid", func() {
+	uassert.AbortsWithMessage(t, "invalid address", func() {
 		TransferOwnership(cross, "")
 	})
 }

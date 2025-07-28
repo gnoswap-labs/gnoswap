@@ -5,6 +5,7 @@ import (
 
 	"gno.land/r/gnoswap/v1/access"
 
+	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
@@ -40,7 +41,10 @@ func RegisterRole(cur realm, roleName string) {
 
 	err := manager.RegisterRole(roleName)
 	if err != nil {
-		panic(err)
+		panic(makeErrorWithDetails(
+			err,
+			ufmt.Sprintf("role name: %s", roleName),
+		))
 	}
 
 	// update access contract role addresses
@@ -63,7 +67,10 @@ func RemoveRole(cur realm, roleName string) {
 	// remove role
 	err := manager.RemoveRole(roleName)
 	if err != nil {
-		panic(err)
+		panic(makeErrorWithDetails(
+			err,
+			ufmt.Sprintf("role name: %s", roleName),
+		))
 	}
 
 	// update access contract role addresses
@@ -89,7 +96,10 @@ func UpdateRoleAddress(cur realm, roleName string, addr std.Address) {
 
 	err := manager.UpdateRoleAddress(roleName, addr)
 	if err != nil {
-		panic(err)
+		panic(makeErrorWithDetails(
+			err,
+			ufmt.Sprintf("role name: %s, address: %s", roleName, addr.String()),
+		))
 	}
 
 	// update access contract role addresses

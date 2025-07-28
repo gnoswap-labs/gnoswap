@@ -2,8 +2,6 @@ package rbac
 
 import (
 	"std"
-
-	"gno.land/p/demo/ufmt"
 )
 
 // RBAC encapsulates and manages toles and their permissions.
@@ -96,7 +94,7 @@ func (rb *RBAC) UpdateRoleAddress(roleName string, addr std.Address) error {
 	}
 
 	if !addr.IsValid() {
-		return ufmt.Errorf("invalid address %s", addr.String())
+		return ErrInvalidAddress
 	}
 
 	role.setAddress(addr)

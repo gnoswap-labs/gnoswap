@@ -49,7 +49,7 @@ func (o *Ownable2Step) AcceptOwnership() error {
 	if o.pendingOwner.String() == "" {
 		return ErrNoPendingOwner
 	}
-	
+
 	if std.OriginCaller() != o.pendingOwner {
 		return ErrPendingUnauthorized
 	}
