@@ -71,7 +71,7 @@ func handleUnStakingFee(
 // the input fee and emits an event indicating the change.
 //
 // Parameters:
-// - fee (uint64): The new unstaking fee rate in basis points (bps).
+// - fee (int64): The new unstaking fee rate in basis points (bps).
 //
 // Panics:
 // - If the caller is not an admin.
@@ -89,8 +89,8 @@ func SetUnStakingFeeByAdmin(cur realm, fee int64) {
 		"SetUnStakingFeeByAdmin",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevFee", formatUint(prevUnStakingFee),
-		"newFee", formatUint(fee),
+		"prevFee", formatAnyInt(prevUnStakingFee),
+		"newFee", formatAnyInt(fee),
 	)
 }
 
@@ -111,8 +111,8 @@ func SetUnStakingFee(cur realm, fee int64) {
 		"SetUnStakingFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevFee", formatUint(prevUnStakingFee),
-		"newFee", formatUint(fee),
+		"prevFee", formatAnyInt(prevUnStakingFee),
+		"newFee", formatAnyInt(fee),
 	)
 }
 
