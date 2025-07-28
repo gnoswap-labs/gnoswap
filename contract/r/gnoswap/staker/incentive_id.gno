@@ -10,16 +10,10 @@ import (
 var incentiveCounter = NewCounter()
 
 // getCurrentIncentiveIndex returns the current incentive counter value
-func getCurrentIncentiveIndex() int64 {
-	incentiveID := incentiveCounter.Get()
-
-	return incentiveID
-}
+func getCurrentIncentiveIndex() int64 { return incentiveCounter.Get() }
 
 // nextIncentiveIndex increments and returns the next incentive counter value
-func nextIncentiveIndex() int64 {
-	return incentiveCounter.next()
-}
+func nextIncentiveIndex() int64 { return incentiveCounter.next() }
 
 // nextIncentiveID generates a new unique incentive ID using creator address, block height and counter
 func nextIncentiveID(creator std.Address, height int64) string {
