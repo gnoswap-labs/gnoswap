@@ -25,3 +25,9 @@ func assertIsAdmin(addr std.Address) {
 		panic(ufmt.Errorf("caller is not admin"))
 	}
 }
+
+func assertIsValidRoleName(roleName string) {
+	if roleName == "" {
+		panic(ufmt.Errorf("role name is empty"))
+	}
+}

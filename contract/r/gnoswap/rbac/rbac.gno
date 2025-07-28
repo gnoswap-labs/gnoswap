@@ -3,7 +3,6 @@ package rbac
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/v1/access"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -21,9 +20,9 @@ func init() {
 func initRbac() {
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
-	for role := range DefaultRoleAddresses {
+	for role, addr := range DefaultRoleAddresses {
 		manager.RegisterRole(role.String())
-		manager.UpdateRoleAddress(role.String(), DefaultRoleAddresses[role])
+		manager.UpdateRoleAddress(role.String(), addr)
 	}
 
 	updateAccessRoleAddresses(manager.GetRoleAddresses())
@@ -36,16 +35,19 @@ func RegisterRole(cur realm, roleName string) {
 	caller := std.PreviousRealm().Address()
 	assertIsAdmin(caller)
 
-	if prbac.IsSystemRole(roleName) {
-		panic(ufmt.Errorf("cannot register system role %s", roleName))
-	}
+	// validate input
+	assertIsValidRoleName(roleName)
 
 	err := manager.RegisterRole(roleName)
 	if err != nil {
 		panic(err)
 	}
 
+	// update access contract role addresses
 	updateAccessRoleAddresses(manager.GetRoleAddresses())
+
+	// emit register role event
+	emitRegisterRoleEvent(roleName)
 }
 
 // Removes an existing role from the RBAC system
@@ -55,16 +57,20 @@ func RemoveRole(cur realm, roleName string) {
 	caller := std.PreviousRealm().Address()
 	assertIsAdmin(caller)
 
-	if prbac.IsSystemRole(roleName) {
-		panic(ufmt.Errorf("cannot remove system role %s", roleName))
-	}
+	// validate input
+	assertIsValidRoleName(roleName)
 
+	// remove role
 	err := manager.RemoveRole(roleName)
 	if err != nil {
 		panic(err)
 	}
 
+	// update access contract role addresses
 	updateAccessRoleAddresses(manager.GetRoleAddresses())
+
+	// emit remove role event
+	emitRemoveRoleEvent(roleName)
 }
 
 // Retrieves the address associated with a given role
@@ -86,7 +92,11 @@ func UpdateRoleAddress(cur realm, roleName string, addr std.Address) {
 		panic(err)
 	}
 
+	// update access contract role addresses
 	updateAccessRoleAddresses(manager.GetRoleAddresses())
+
+	// emit update role address event
+	emitUpdateRoleAddressEvent(roleName, addr)
 }
 
 // updateAccessRoleAddresses updates the role addresses in the access package
