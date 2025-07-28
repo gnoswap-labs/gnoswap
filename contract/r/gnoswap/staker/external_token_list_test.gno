@@ -264,3 +264,10 @@ func setupExternalTokenListPermission(t *testing.T, caller std.Address, permissi
 	testing.SetOriginCaller(caller)
 	testing.SetRealm(std.NewUserRealm(caller))
 }
+
+func setupExternalDepositFeePermission(t *testing.T, caller std.Address, permissionName string) {
+	t.Helper()
+
+	testing.SetOriginCaller(caller)
+	testing.SetRealm(std.NewUserRealm(caller))
+}
