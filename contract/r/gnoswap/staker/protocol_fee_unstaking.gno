@@ -15,6 +15,10 @@ const FEE_PRECISION = 10000
 
 var unstakingFee = uint64(100) // 1%
 
+// GetUnstakingFee returns current rate of unstaking fee
+// ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#getunstakingfee
+func GetUnstakingFee() uint64 { return unstakingFee }
+
 // handleUnStakingFee calculates and applies the unstaking fee.
 //
 // The function deducts a fee from the unstaked amount based on the `unstakingFee` rate,
@@ -59,12 +63,6 @@ func handleUnStakingFee(
 	pf.AddToProtocolFee(cross, tokenPath, uint64(feeAmount))
 
 	return amount - feeAmount, feeAmount, nil
-}
-
-// GetUnstakingFee returns current rate of unstaking fee
-// ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#getunstakingfee
-func GetUnstakingFee() uint64 {
-	return unstakingFee
 }
 
 // SetUnStakingFeeByAdmin sets the unstaking fee rate by an admin.

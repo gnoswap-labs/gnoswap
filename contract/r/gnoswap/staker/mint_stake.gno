@@ -22,10 +22,10 @@ func MintAndStake(
 	fee uint32,
 	tickLower int32,
 	tickUpper int32,
-	amount0Desired string, // *u256.Uint
-	amount1Desired string, // *u256.Uint
-	amount0Min string, // *u256.Uint
-	amount1Min string, // *u256.Uint
+	amount0Desired string,
+	amount1Desired string,
+	amount0Min string,
+	amount1Min string,
 	deadline int64,
 	referrer string,
 ) (uint64, string, string, string, string) {
@@ -71,7 +71,7 @@ func MintAndStake(
 	toTid := grc721.TokenID(ufmt.Sprintf("%d", positionId))
 	gnft.SetTokenURIByImageURI(cross, toTid)
 
-	poolPath, _, _ := StakeToken(cur, positionId, "") // poolPath, stakedAmount0, stakedAmount1
+	poolPath, _, _ := StakeToken(cur, positionId, "")
 
 	return positionId, liquidity, amount0, amount1, poolPath
 }

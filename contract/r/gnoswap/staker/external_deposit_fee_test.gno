@@ -88,7 +88,6 @@ func TestSetDepositGnsAmount(t *testing.T) {
 		expectedHasAbort bool
 		expectedAbortMsg string
 		expectedHasPanic bool
-		expectedPanicMsg string
 	}{
 		{
 			name:             "set deposit success by governance",
@@ -97,16 +96,12 @@ func TestSetDepositGnsAmount(t *testing.T) {
 			expectedAmount:   3_000_000_000,
 			expectedHasAbort: false,
 			expectedAbortMsg: "",
-			expectedHasPanic: false,
-			expectedPanicMsg: "",
 		},
 		{
 			name:             "set deposit failed by non governance",
 			caller:           testutils.TestAddress("non-governance"),
 			inputAmount:      3_000_000_000,
 			expectedAmount:   0,
-			expectedHasPanic: false,
-			expectedPanicMsg: "",
 			expectedHasAbort: true,
 			expectedAbortMsg: "unauthorized: caller g1dehkutt8damx2unwv9hxxe2lta047h6l9v0nxc is not governance",
 		},
@@ -115,8 +110,6 @@ func TestSetDepositGnsAmount(t *testing.T) {
 			caller:           testutils.TestAddress("unauthorized"),
 			inputAmount:      3_000_000_000,
 			expectedAmount:   0,
-			expectedHasPanic: false,
-			expectedPanicMsg: "",
 			expectedHasAbort: true,
 			expectedAbortMsg: "unauthorized: caller g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg is not governance",
 		},
@@ -130,11 +123,7 @@ func TestSetDepositGnsAmount(t *testing.T) {
 			testing.SetOriginCaller(tt.caller)
 
 			// when
-			if tt.expectedHasPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
-					SetDepositGnsAmount(cross, tt.inputAmount)
-				})
-			} else if tt.expectedHasAbort {
+			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
 					SetDepositGnsAmount(cross, tt.inputAmount)
 				})
@@ -217,20 +206,6 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 			uassert.Equal(t, tt.expectedMinimumRewardAmount, actual)
 		})
 	}
-}
-
-func setupExternalDepositFeeAdminPermission(t *testing.T) {
-	t.Helper()
-
-	setupExternalDepositFeePermission(t, adminAddr, "admin")
-}
-
-func setupExternalDepositFeeGovernancePermission(t *testing.T) {
-	t.Helper()
-
-	// Use the actual governance address from access package
-	addr, _ := access.GetAddress(prbac.ROLE_GOVERNANCE.String())
-	setupExternalDepositFeePermission(t, addr, "governance")
 }
 
 func setupExternalDepositFeePermission(t *testing.T, caller std.Address, permissionName string) {
