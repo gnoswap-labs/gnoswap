@@ -13,11 +13,11 @@ import (
 
 const FEE_PRECISION = 10000
 
-var unstakingFee = uint64(100) // 1%
+var unstakingFee = int64(100) // 1%
 
 // GetUnstakingFee returns current rate of unstaking fee
 // ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#getunstakingfee
-func GetUnstakingFee() uint64 { return unstakingFee }
+func GetUnstakingFee() int64 { return unstakingFee }
 
 // handleUnStakingFee calculates and applies the unstaking fee.
 //
@@ -45,7 +45,7 @@ func handleUnStakingFee(
 	}
 
 	// Do not change the order of the operation.
-	feeAmount := (amount * int64(unstakingFee)) / FEE_PRECISION
+	feeAmount := (amount * unstakingFee) / FEE_PRECISION
 	if feeAmount < 0 {
 		return 0, 0, ufmt.Errorf("fee amount cannot be negative")
 	}
@@ -75,7 +75,7 @@ func handleUnStakingFee(
 //
 // Panics:
 // - If the caller is not an admin.
-func SetUnStakingFeeByAdmin(cur realm, fee uint64) {
+func SetUnStakingFeeByAdmin(cur realm, fee int64) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdmin(caller)
 
@@ -97,7 +97,7 @@ func SetUnStakingFeeByAdmin(cur realm, fee uint64) {
 // SetUnStakingFee modifies the unstaking fee
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#setunstakingfee
-func SetUnStakingFee(cur realm, fee uint64) {
+func SetUnStakingFee(cur realm, fee int64) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsGovernance(caller)
 
@@ -116,9 +116,9 @@ func SetUnStakingFee(cur realm, fee uint64) {
 	)
 }
 
-func setUnStakingFee(fee uint64) {
+func setUnStakingFee(fee int64) {
 	// 10000 (bps) = 100%
-	if fee > 10000 {
+	if fee < 0 || fee > 10000 {
 		panic(makeErrorWithDetails(
 			errInvalidUnstakingFee,
 			ufmt.Sprintf("fee(%d) must be in range 0 ~ 10000", fee),

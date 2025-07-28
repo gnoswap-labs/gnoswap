@@ -400,7 +400,8 @@ func createParameterHandlers() *ParameterRegistry {
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
 				// Set fee charged for unstaking operations
-				sr.SetUnStakingFee(cross, parseUint64(params[0]))
+				fee := parseNumber(params[0], kindInt64).(int64)
+				sr.SetUnStakingFee(cross, fee)
 				return nil
 			},
 		},
