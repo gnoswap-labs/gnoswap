@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	prbac "gno.land/p/gnoswap/rbac"
 )
 
 func TestWrap(t *testing.T) {
