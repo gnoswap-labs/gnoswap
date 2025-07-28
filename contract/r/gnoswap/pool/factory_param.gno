@@ -62,19 +62,19 @@ func (p *poolCreateConfig) Fee() uint32              { return p.fee }
 func (p *poolCreateConfig) updateWithWrapping() *poolCreateConfig {
 	token0Path, token1Path := p.wrap()
 
+	// Always validate that the price is within valid range
+	minSqrtRatio := u256.MustFromDecimal(MIN_SQRT_RATIO)
+	maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
+
+	if p.sqrtPriceX96.Lt(minSqrtRatio) || p.sqrtPriceX96.Gt(maxSqrtRatio) {
+		panic(newErrorWithDetail(
+			errOutOfRange,
+			ufmt.Sprintf("sqrtPriceX96(%s) is out of range", p.sqrtPriceX96.ToString()),
+		))
+	}
+
 	if !p.isInOrder() {
 		token0Path, token1Path = token1Path, token0Path
-
-		// Check if initial price is within valid range
-		minSqrtRatio := u256.MustFromDecimal(MIN_SQRT_RATIO)
-		maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
-
-		if p.sqrtPriceX96.Lt(minSqrtRatio) || p.sqrtPriceX96.Gt(maxSqrtRatio) {
-			panic(newErrorWithDetail(
-				errOutOfRange,
-				ufmt.Sprintf("sqrtPriceX96(%s) is out of range", p.sqrtPriceX96.ToString()),
-			))
-		}
 
 		// newPrice = 2^192 / oldPrice
 		newPrice := u256.Zero().Div(Q192, p.sqrtPriceX96)

@@ -190,8 +190,8 @@ func TestUpdateWithWrapping(t *testing.T) {
 			token0Path:      wugnotPath,
 			token1Path:      gnsPath,
 			fee:             FeeTier3000,
-			sqrtPriceX96Str: "4295128738", // MIN_SQRT_RATIO - 1
-			sqrtPriceX96:    u256.MustFromDecimal("4295128739"),
+			sqrtPriceX96Str: "4295128738",                       // MIN_SQRT_RATIO - 1
+			sqrtPriceX96:    u256.MustFromDecimal("4295128738"), // Fixed to match the string
 			tickSpacing:     GetFeeAmountTickSpacing(FeeTier3000),
 			expectedPanic:   true,
 			expectedMsg:     "out of range for numeric value",
@@ -216,6 +216,17 @@ func TestUpdateWithWrapping(t *testing.T) {
 			sqrtPriceX96:    sqrtPriceX96FromTick,
 			tickSpacing:     GetFeeAmountTickSpacing(FeeTier3000),
 			expectedPanic:   false,
+		},
+		{
+			name:            "fail - tokens swapped below MIN_SQRT_RATIO",
+			token0Path:      gnsPath,    // swapped: gns first
+			token1Path:      wugnotPath, // swapped: wugnot second
+			fee:             FeeTier3000,
+			sqrtPriceX96Str: "4295128738", // MIN_SQRT_RATIO - 1
+			sqrtPriceX96:    u256.MustFromDecimal("4295128738"),
+			tickSpacing:     GetFeeAmountTickSpacing(FeeTier3000),
+			expectedPanic:   true,
+			expectedMsg:     "out of range for numeric value",
 		},
 	}
 
