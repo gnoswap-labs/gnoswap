@@ -214,7 +214,7 @@ func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, cu
 	}
 
 	// only refundee or admin can end incentive
-	if !access.IsAuthorized(adminAddr, caller) && caller != incentive.refundee {
+	if !access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && caller != incentive.refundee {
 		return nil, 0, makeErrorWithDetails(
 			errNoPermission,
 			ufmt.Sprintf(

@@ -6,7 +6,6 @@ import (
 	"gno.land/r/demo/wugnot"
 
 	"gno.land/p/demo/ufmt"
-	prbac "gno.land/p/gnoswap/rbac"
 )
 
 const WUGNOT_ADDR std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"

@@ -5,16 +5,13 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
 
-const (
-	FEE_PRECISION = 10000
-)
+const FEE_PRECISION = 10000
 
 var unstakingFee = uint64(100) // 1%
 

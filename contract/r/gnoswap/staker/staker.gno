@@ -11,7 +11,6 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/halt"
 
-	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 
@@ -28,13 +27,13 @@ import (
 const ZERO_ADDRESS = std.Address("")
 
 var (
-	stakerAddr = getRoleAddress(prbac.ROLE_STAKER)
-	devOpsAddr = getRoleAddress(prbac.ROLE_DEVOPS)
+	stakerAddr        = getRoleAddress(prbac.ROLE_STAKER)
+	devOpsAddr        = getRoleAddress(prbac.ROLE_DEVOPS)
 	communityPoolAddr = getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
-	govStakerAddr = getRoleAddress(prbac.ROLE_GOV_STAKER)
-	protocolFeeAddr = getRoleAddress(prbac.ROLE_PROTOCOL_FEE)
-	adminAddr = getRoleAddress(prbac.ROLE_ADMIN)
-	positionAddr = getRoleAddress(prbac.ROLE_POSITION)
+	govStakerAddr     = getRoleAddress(prbac.ROLE_GOV_STAKER)
+	protocolFeeAddr   = getRoleAddress(prbac.ROLE_PROTOCOL_FEE)
+	adminAddr         = getRoleAddress(prbac.ROLE_ADMIN)
+	positionAddr      = getRoleAddress(prbac.ROLE_POSITION)
 )
 
 // list of staked positions

@@ -19,7 +19,7 @@ import (
 
 const (
 	// External incentive timestamps
-	incentiveDuration       int64 = 90 * 24 * 60 * 60 // 90 days
+	incentiveDuration int64 = 90 * 24 * 60 * 60 // 90 days
 
 	rewardMinimumAmount int64 = 1000000000
 )
@@ -30,12 +30,12 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 	testing.SetOriginCaller(govAddr)
 	SetMinimumRewardAmount(cross, 1000000000)
 
-	testing.SetOriginCaller(admin)
+	testing.SetOriginCaller(adminAddr)
 	SetUnStakingFeeByAdmin(cross, 0)
-	
+
 	// Create pool
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
-	CreatePool(t, barPath, bazPath, fee3000, "79228162514264337593543950336", admin)
+	CreatePool(t, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
 
 	// Set pool tier
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)

@@ -7,7 +7,7 @@ import (
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
-	prbac "gno.land/p/gnoswap/rbac"
+
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/gns"
