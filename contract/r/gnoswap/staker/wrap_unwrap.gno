@@ -6,9 +6,10 @@ import (
 	"gno.land/r/demo/wugnot"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 )
+
+const WUGNOT_ADDR std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 
 // wrap converts `ugnot` tokens into `wugnot` tokens.
 //
@@ -17,7 +18,7 @@ import (
 //
 // Panics:
 // - If `ugnotAmount` is less than or equal to 0.
-// - If `ugnotAmount` is less than the minimum deposit required (`consts.UGNOT_MIN_DEPOSIT_TO_WRAP`).
+// - If `ugnotAmount` is less than the minimum deposit required (`UGNOT_MIN_DEPOSIT_TO_WRAP`).
 func wrap(ugnotAmount int64) {
 	if ugnotAmount <= 0 {
 		panic(makeErrorWithDetails(
@@ -26,17 +27,17 @@ func wrap(ugnotAmount int64) {
 		))
 	}
 
-	if ugnotAmount < int64(consts.UGNOT_MIN_DEPOSIT_TO_WRAP) {
+	if ugnotAmount < int64(UGNOT_MIN_DEPOSIT_TO_WRAP) {
 		panic(makeErrorWithDetails(
 			errWugnotMinimum,
-			ufmt.Sprintf("amount(%d) < minimum(%d)", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP),
+			ufmt.Sprintf("amount(%d) < minimum(%d)", ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP),
 		))
 	}
 
 	// WRAP IT
 	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(stakerAddr, consts.WUGNOT_ADDR, std.Coins{{Denom: "ugnot", Amount: ugnotAmount}})
+	banker.SendCoins(stakerAddr, WUGNOT_ADDR, std.Coins{{Denom: "ugnot", Amount: ugnotAmount}})
 	wugnot.Deposit(cross) // STAKER HAS WUGNOT
 
 	// SEND WUGNOT: STAKER -> USER
@@ -56,7 +57,7 @@ func unwrap(wugnotAmount int64) {
 	}
 
 	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
-	
+
 	// SEND WUGNOT: USER -> STAKER
 	wugnot.TransferFrom(cross, std.PreviousRealm().Address(), stakerAddr, wugnotAmount)
 

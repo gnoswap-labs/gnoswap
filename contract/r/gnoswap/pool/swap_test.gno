@@ -7,7 +7,6 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/demo/wugnot"
@@ -713,7 +712,7 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 					alice,
 					true,
 					"20000",
-					consts.MIN_PRICE,
+					MIN_PRICE,
 					addr,
 				)
 				return actualAmount0, actualAmount1
@@ -741,7 +740,7 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 					alice,
 					true,
 					"-20000",
-					consts.MIN_PRICE,
+					MIN_PRICE,
 					addr,
 				)
 				return actualAmount0, actualAmount1
@@ -853,7 +852,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 					alice,
 					true,
 					"200",
-					consts.MIN_PRICE,
+					MIN_PRICE,
 					addr,
 				)
 				return actualAmount0, actualAmount1
@@ -881,7 +880,7 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 					alice,
 					true,
 					"-200",
-					consts.MIN_PRICE,
+					MIN_PRICE,
 					addr,
 				)
 				return actualAmount0, actualAmount1
@@ -1215,7 +1214,7 @@ func TestSwap_FeeTier100(t *testing.T) {
 				testing.IssueCoins(adminAddr, newCoins)
 				testing.SetOriginSend(newCoins)
 				banker := std.NewBanker(std.BankerTypeRealmSend)
-				banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
+				banker.SendCoins(adminAddr, wugnotAddr, newCoins)
 				wugnot.Deposit(cross)
 
 				testing.SetRealm(posRealm)

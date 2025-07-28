@@ -54,8 +54,8 @@ func main() {
 func initEmission() {}
 
 func getHalvingYears() {
-	println("[INFO] current halving years", gns.GetHalvingYearByHeight(std.ChainHeight()))
-	println("[INFO] average block time in ms", gns.GetAvgBlockTimeInMs())
+	println("[INFO] current halving years", gns.HalvingYearByHeight(std.ChainHeight()))
+	println("[INFO] average block time in ms", gns.AvgBlockTimeInMs())
 
 	for year := int64(1); year <= 12; year++ {
 		startBlockHeight := gns.GetHalvingYearStartBlock(year)
@@ -68,7 +68,7 @@ func getHalvingYears() {
 func changeBlockTime(blockTime int64) {
 	testing.SetOriginCaller(adminAddr)
 
-	currentYear := gns.GetHalvingYearByHeight(std.ChainHeight())
+	currentYear := gns.HalvingYearByHeight(std.ChainHeight())
 
 	// get previous end block height and amount per block
 	prevEndBlockHeight := gns.GetHalvingYearEndBlock(currentYear)

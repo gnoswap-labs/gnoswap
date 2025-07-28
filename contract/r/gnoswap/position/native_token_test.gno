@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 )
 
 func TestTransferUGNOT(t *testing.T) {
@@ -236,7 +235,7 @@ func TestIsWrappedToken(t *testing.T) {
 	}{
 		{
 			name:      "isWrappedToken is success by wrapped WUGNOT",
-			tokenPath: consts.WRAPPED_WUGNOT,
+			tokenPath: WRAPPED_WUGNOT,
 			expected:  true,
 		},
 		{

@@ -6,13 +6,19 @@ import (
 	"testing"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
+)
+
+const (
+	INT64_MAX int64 = 9223372036854775807
+
+	MIN_PRICE string = "4295128740"                                        // MIN_SQRT_RATIO + 1
+	MAX_PRICE string = "1461446703485210103287273052203988822378723970341" // MAX_SQRT_RATIO - 1
 )
 
 var (
@@ -193,7 +199,7 @@ func executeFirstSwap() {
 		adminAddr,
 		true,
 		"1234567",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
@@ -211,7 +217,7 @@ func checkUnclaimedFeesAfterFirstSwap() {
 
 func executeSecondSwap() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
 
 	testing.SetRealm(routerRealm)
 	ufmt.Println("[INFO] Executing second swap")
@@ -223,7 +229,7 @@ func executeSecondSwap() {
 		adminAddr,
 		true,
 		"20000000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
@@ -241,7 +247,7 @@ func checkUnclaimedFeesAfterSecondSwap() {
 
 func executeThirdSwap() {
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	testing.SetRealm(routerRealm)
 	ufmt.Println("[INFO] Executing third swap")
@@ -253,7 +259,7 @@ func executeThirdSwap() {
 		adminAddr,
 		false,
 		"20000000",
-		consts.MAX_PRICE,
+		MAX_PRICE,
 		adminAddr,
 	)
 

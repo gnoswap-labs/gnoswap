@@ -14,7 +14,6 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -40,7 +39,7 @@ var (
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -53,7 +52,8 @@ var (
 
 	fee500 uint32 = 500
 
-	max_timeout int64 = 9999999999
+	maxTimeout int64 = 9999999999
+	maxInt64   int64 = 9223372036854775807
 
 	t *testing.T
 )
@@ -117,8 +117,8 @@ func mintPositionsForUsers() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] admin: approve tokens for minting")
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	foo.Approve(cross, poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] admin: mint position 01 (tick range: -1000 ~ 1000)")
@@ -133,7 +133,7 @@ func mintPositionsForUsers() {
 		"1000",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -152,8 +152,8 @@ func mintPositionsForUsers() {
 	testing.SetRealm(user2Realm)
 
 	println("[INFO] user2: approve tokens for minting")
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	foo.Approve(cross, poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] user2: mint position 02 (tick range: -1000 ~ 1000)")
@@ -168,7 +168,7 @@ func mintPositionsForUsers() {
 		"1000",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		user2Addr,
 		user2Addr,
 		"",

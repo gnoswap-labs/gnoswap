@@ -16,6 +16,9 @@ const (
 
 	HALVING_START_YEAR = int64(1)
 	HALVING_END_YEAR   = int64(12)
+
+	// Maximum allowed block time in milliseconds (1 second)
+	MAX_BLOCK_TIME_MS = 1e9
 )
 
 // Annual halving amount - maximum issuance per year
@@ -89,7 +92,7 @@ func (h *HalvingData) setEndBlockHeight(year int64, height int64) error {
 	}
 
 	h.endBlockHeight[year-1] = height
-	
+
 	return nil
 }
 
@@ -323,8 +326,8 @@ func init() {
 	emissionState = GetEmissionState()
 }
 
-// GetAvgBlockTimeInMs returns average block time in milliseconds
-func GetAvgBlockTimeInMs() int64 {
+// AvgBlockTimeInMs returns average block time in milliseconds
+func AvgBlockTimeInMs() int64 {
 	return avgBlockTimeMs
 }
 
@@ -333,7 +336,7 @@ func SetAvgBlockTimeInMsByAdmin(cur realm, ms int64) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdmin(caller)
 
-	prevAvgBlockTimeInMs := GetAvgBlockTimeInMs()
+	prevAvgBlockTimeInMs := AvgBlockTimeInMs()
 	err := setAvgBlockTimeInMs(ms)
 	if err != nil {
 		panic(err)
@@ -357,7 +360,7 @@ func SetAvgBlockTimeInMs(cur realm, ms int64) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsGovernance(caller)
 
-	prevAvgBlockTimeInMs := GetAvgBlockTimeInMs()
+	prevAvgBlockTimeInMs := AvgBlockTimeInMs()
 	err := setAvgBlockTimeInMs(ms)
 	if err != nil {
 		panic(err)
@@ -414,8 +417,8 @@ func setAvgBlockTimeInMs(ms int64) error {
 	es := GetEmissionState()
 
 	currentHeight := std.ChainHeight()
-	currentYear := GetHalvingYearByHeight(currentHeight)
-	prevBlockTimeMs := GetAvgBlockTimeInMs()
+	currentYear := HalvingYearByHeight(currentHeight)
+	prevBlockTimeMs := AvgBlockTimeInMs()
 
 	hd := &es.halvingData
 	for year := currentYear; year <= HALVING_END_YEAR; year++ {
@@ -429,7 +432,7 @@ func setAvgBlockTimeInMs(ms int64) error {
 		// For current year, use remaining amount to avoid over/under emission
 		if year == currentYear {
 			startHeight := hd.getStartBlockHeight(year)
-			lastGNSMintedHeight := GetLastMintedHeight() + 1
+			lastGNSMintedHeight := LastMintedHeight() + 1
 			if lastGNSMintedHeight < startHeight {
 				lastGNSMintedHeight = startHeight
 			}
@@ -459,6 +462,12 @@ func setAvgBlockTimeInMs(ms int64) error {
 
 	// adjust the current year's amount per block
 	currentYear, _ = getHalvingYearAndEndTimestamp(now)
+
+	// Validate that we're still within the emission period
+	if currentYear == 0 {
+		panic("cannot set average block time after emission period has ended")
+	}
+
 	adjusted := hd.getAmountPerBlock(currentYear)
 
 	if emissionChangeCallback == nil {
@@ -473,18 +482,18 @@ func setAvgBlockTimeInMs(ms int64) error {
 	return nil
 }
 
-// GetAmountByHeight returns emission amount based on block height
-func GetAmountByHeight(height int64) int64 {
+// AmountByHeight returns emission amount based on block height
+func AmountByHeight(height int64) int64 {
 	if isEmissionEnded(height) {
 		return 0
 	}
 
-	halvingYear := GetHalvingYearByHeight(height)
+	halvingYear := HalvingYearByHeight(height)
 	return GetAmountPerBlockPerHalvingYear(halvingYear)
 }
 
-// GetHalvingYearByHeight returns halving year based on block height
-func GetHalvingYearByHeight(height int64) int64 {
+// HalvingYearByHeight returns halving year based on block height
+func HalvingYearByHeight(height int64) int64 {
 	if isEmissionEnded(height) {
 		return 0
 	}

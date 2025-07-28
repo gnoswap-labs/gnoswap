@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/json"
-
-	"gno.land/p/gnoswap/consts"
 )
 
 // JsonResponse is an interface that all JSON response types must implement.
@@ -121,7 +119,7 @@ func newApiInternalIncentive(poolPath string, tier uint64) ApiInternalIncentive 
 func (r ApiInternalIncentive) JSON() *json.Node {
 	return json.ObjectNode("", map[string]*json.Node{
 		"poolPath":       json.StringNode("poolPath", r.PoolPath),
-		"rewardToken":    json.StringNode("rewardToken", consts.GNS_PATH),
+		"rewardToken":    json.StringNode("rewardToken", GNS_PATH),
 		"tier":           json.NumberNode("tier", float64(r.Tier)),
 		"rewardPerBlock": json.StringNode("rewardPerBlock", r.RewardPerBlock),
 	})

@@ -11,14 +11,23 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+
 	prbac "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
+)
+
+const (
+	INT64_MAX int64 = 9223372036854775807
+
+	MIN_PRICE string = "4295128740"                                        // MIN_SQRT_RATIO + 1
+	MAX_PRICE string = "1461446703485210103287273052203988822378723970341" // MAX_SQRT_RATIO - 1
 )
 
 var (
@@ -80,8 +89,8 @@ func initPool() {
 	ufmt.Println("[INFO] Distributing Foo tokens")
 	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
 
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Printf("[INFO] Initial Bar balance of Alice: %d\n", bar.BalanceOf(aliceAddr))
 	ufmt.Printf("[INFO] Initial Foo balance of Alice: %d\n", foo.BalanceOf(aliceAddr))
@@ -98,8 +107,8 @@ func initPool() {
 
 func mintPosition() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
@@ -136,8 +145,8 @@ func checkInitialState() {
 
 func executeSwaps() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	testing.SetRealm(routerRealm)
 	ufmt.Println("[INFO] Executing swap BAR -> FOO")
@@ -149,7 +158,7 @@ func executeSwaps() {
 		adminAddr,
 		true,
 		"10000000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
@@ -165,7 +174,7 @@ func executeSwaps() {
 		adminAddr,
 		false,
 		"10000000",
-		consts.MAX_PRICE,
+		MAX_PRICE,
 		adminAddr,
 	)
 
@@ -175,8 +184,8 @@ func executeSwaps() {
 
 func collectFees() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees")
 	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
@@ -187,8 +196,8 @@ func collectFees() {
 
 func burnPosition() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Decreasing all liquidity")
 	_, liquidity, _, _, amount0, amount1, _ := position.DecreaseLiquidity(

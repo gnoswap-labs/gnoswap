@@ -101,11 +101,11 @@ func voteProposal(proposalID int64) {
 
 // [SCENARIO] 4. Execute Multi Proposal
 func executeMultiProposal(proposalID int64) {
-	prevBlockTime := gns.GetAvgBlockTimeInMs()
+	prevBlockTime := gns.AvgBlockTimeInMs()
 	prevCommunityPool := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
 	governance.Execute(cross, proposalID)
 	
-	afterBlockTime := gns.GetAvgBlockTimeInMs()
+	afterBlockTime := gns.AvgBlockTimeInMs()
 	afterCommunityPool := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
 	ufmt.Printf("[EXPECTED] before executing - block time: %d, community pool: %d\n", prevBlockTime, prevCommunityPool)
 	ufmt.Printf("[EXPECTED] after executing - block time: %d, community pool: %d\n", afterBlockTime, afterCommunityPool)

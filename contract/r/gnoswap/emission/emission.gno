@@ -13,6 +13,9 @@ var (
 	leftGNSAmount int64
 	// lastExecutedHeight stores the last block height when distribution was executed
 	lastExecutedHeight int64
+
+	// emissionAddr is the address of the emission realm
+	emissionAddr = std.CurrentRealm().Address()
 )
 
 // MintAndDistributeGns mints new GNS tokens and distributes them to targets
@@ -21,11 +24,12 @@ func MintAndDistributeGns(cur realm) int64 {
 	halt.AssertIsNotHaltedEmission()
 
 	currentHeight := std.ChainHeight()
-	lastMintedHeight := gns.GetLastMintedHeight()
+	lastMintedHeight := gns.LastMintedHeight()
 	if lastMintedHeight >= currentHeight {
 		// Skip if we've already minted tokens at this height
 		return 0
 	}
+
 	// Mint new tokens and add any leftover amounts from previous distribution
 	mintedEmissionRewardAmount := gns.MintGns(cross, emissionAddr)
 

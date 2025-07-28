@@ -7,7 +7,6 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/halt"
@@ -17,6 +16,8 @@ import (
 
 	"gno.land/r/gnoswap/v1/gns"
 )
+
+const GNS_PATH string = "gno.land/r/gnoswap/v1/gns"
 
 var (
 	feeAmountTickSpacing = avl.NewTree() // feeBps(uint32) -> tickSpacing(int32)
@@ -66,14 +67,14 @@ func CreatePool(
 
 	if poolCreationFee > 0 {
 		gns.TransferFrom(cross, std.PreviousRealm().Address(), protocolFeeAddr, poolCreationFee)
-		pf.AddToProtocolFee(cross, consts.GNS_PATH, uint64(poolCreationFee))
+		pf.AddToProtocolFee(cross, GNS_PATH, uint64(poolCreationFee))
 
 		std.Emit(
 			"PoolCreationFee",
 			"prevAddr", previousRealm.Address().String(),
 			"prevRealm", previousRealm.PkgPath(),
 			"poolPath", poolPath,
-			"feeTokenPath", consts.GNS_PATH,
+			"feeTokenPath", GNS_PATH,
 			"feeAmount", formatInt(poolCreationFee),
 		)
 	}

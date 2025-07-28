@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -16,6 +15,8 @@ import (
 	"gno.land/r/gnoswap/v1/halt"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
+
+const ADMIN std.Address = "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"
 
 // CreateExternalIncentive creates an incentive program for a pool.
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#createexternalincentive
@@ -55,7 +56,7 @@ func CreateExternalIncentive(cur realm,
 	}
 
 	// native ugnot check
-	if rewardToken == consts.GNOT {
+	if rewardToken == GNOT {
 		sent := std.OriginSend()
 		ugnotSent := sent.AmountOf("ugnot")
 
@@ -68,7 +69,7 @@ func CreateExternalIncentive(cur realm,
 
 		wrap(ugnotSent)
 
-		rewardToken = consts.WUGNOT_PATH
+		rewardToken = WUGNOT_PATH
 	}
 
 	// must be in seconds format, not milliseconds
@@ -107,7 +108,7 @@ func CreateExternalIncentive(cur realm,
 		std.ChainHeight(),
 		depositGnsAmount,
 		time.Now().Unix(),
-		gns.GetAvgBlockTimeInMs(),
+		gns.AvgBlockTimeInMs(),
 	)
 
 	if externalIncentives.Has(incentiveId) {
@@ -142,7 +143,7 @@ func CreateExternalIncentive(cur realm,
 		"depositGnsAmount", formatInt(depositGnsAmount),
 		"currentHeight", formatInt(std.ChainHeight()),
 		"currentTime", formatInt(time.Now().Unix()),
-		"avgBlockTimeInMs", formatInt(gns.GetAvgBlockTimeInMs()),
+		"avgBlockTimeInMs", formatInt(gns.AvgBlockTimeInMs()),
 	)
 }
 
@@ -151,7 +152,7 @@ func CreateExternalIncentive(cur realm,
 func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedStaker()
-	
+
 	pool, exists := pools.Get(targetPoolPath)
 	if !exists {
 		panic(makeErrorWithDetails(
@@ -174,7 +175,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	common.Transfer(cross, incentive.rewardToken, incentive.refundee, refund)
 
 	// unwrap if wugnot
-	if incentive.rewardToken == consts.WUGNOT_PATH {
+	if incentive.rewardToken == WUGNOT_PATH {
 		unwrap(refund)
 	}
 
@@ -195,7 +196,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		"refundToken", incentive.rewardToken,
 		"refundAmount", formatInt(refund),
 		"refundGnsAmount", formatInt(incentive.depositGnsAmount),
-		"isRequestUnwrap", formatBool(incentive.rewardToken == consts.WUGNOT_PATH),
+		"isRequestUnwrap", formatBool(incentive.rewardToken == WUGNOT_PATH),
 		"externalIncentiveEndBy", previousRealm.Address().String(),
 	)
 }
@@ -220,7 +221,7 @@ func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, cu
 	if !access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && caller != incentive.refundee {
 		return nil, 0, makeErrorWithDetails(
 			errNoPermission,
-			ufmt.Sprintf("only refundee(%s) or admin(%s) can end incentive, but called from %s", incentive.refundee, consts.ADMIN, caller),
+			ufmt.Sprintf("only refundee(%s) or admin(%s) can end incentive, but called from %s", incentive.refundee, ADMIN, caller),
 		)
 	}
 

@@ -72,7 +72,7 @@ func CreateProject(
 	caller := previousRealm.Address()
 	launchpadAddr := std.CurrentRealm().Address()
 
-	averageBlockTimeMs := gns.GetAvgBlockTimeInMs()
+	averageBlockTimeMs := gns.AvgBlockTimeInMs()
 	currentHeight := std.ChainHeight()
 	currentTime := time.Now().Unix()
 

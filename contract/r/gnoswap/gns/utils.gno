@@ -35,8 +35,8 @@ func validYear(year int64) error {
 // Returns:
 //   - error: An error if the emission amount is invalid
 func validEmissionAmount(amount int64) error {
-	if (amount + GetMintedEmissionAmount()) > MAX_EMISSION_AMOUNT {
-		return makeErrorWithDetails(errTooManyEmission, ufmt.Sprintf("amount: %d", amount))
+	if (amount + MintedEmissionAmount()) > MAX_EMISSION_AMOUNT {
+		return ufmt.Errorf("too many emission amount: %d", amount)
 	}
 
 	return nil

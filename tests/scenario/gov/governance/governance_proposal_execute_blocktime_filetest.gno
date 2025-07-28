@@ -93,11 +93,11 @@ func vote(proposalID int64, yea bool) {
 func executeChangeAvgBlockTime(proposalID int64) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 
-	prevAvgBlockTime := gns.GetAvgBlockTimeInMs()
+	prevAvgBlockTime := gns.AvgBlockTimeInMs()
 
 	governance.Execute(cross, proposalID)
 
-	afterAvgBlockTime := gns.GetAvgBlockTimeInMs()
+	afterAvgBlockTime := gns.AvgBlockTimeInMs()
 
 	ufmt.Printf("[EXPECTED] before proposal %d executing - avg block time: %dms\n", proposalID, prevAvgBlockTime)
 	ufmt.Printf("[EXPECTED] after proposal %d executing - avg block time: %dms\n", proposalID, afterAvgBlockTime)

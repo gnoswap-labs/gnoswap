@@ -8,19 +8,27 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+
+	prbac "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/v1/access"
 	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/staker"
 )
 
 var (
-	admin        = consts.ADMIN
+	admin, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = std.NewUserRealm(admin)
+
+	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+
 	dummyToAddr  = testutils.TestAddress("dummyTo")
 	dummyToRealm = std.NewUserRealm(dummyToAddr)
+
 	dummyAddr    = testutils.TestAddress("dummy")
 	dummyRealm   = std.NewUserRealm(dummyAddr)
+
 	minAmount    = int64(1_000_000)
 )
 
@@ -63,7 +71,7 @@ func changeEmissionDistribution() {
 // Admin delegates GNS to dummyTo
 func adminDelegateToDummyTo() {
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, consts.GOV_STAKER_ADDR, minAmount)
+	gns.Approve(cross, govStakerAddr, minAmount)
 	staker.Delegate(cross, dummyToAddr, int64(minAmount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from admin to dummyTo\n", minAmount)
 }
@@ -74,7 +82,7 @@ func adminDelegateToDummy() {
 	amount := 5 * minAmount
 	gns.Transfer(cross, dummyAddr, amount)
 	testing.SetRealm(dummyRealm)
-	gns.Approve(cross, consts.GOV_STAKER_ADDR, amount)
+	gns.Approve(cross, govStakerAddr, amount)
 	staker.Delegate(cross, dummyAddr, int64(amount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from admin to dummy\n", amount)
 }

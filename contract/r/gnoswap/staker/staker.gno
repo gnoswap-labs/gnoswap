@@ -7,7 +7,6 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/halt"
@@ -24,6 +23,8 @@ import (
 
 	"gno.land/r/gnoswap/v1/referral"
 )
+
+const ZERO_ADDRESS = std.Address("")
 
 // list of staked positions
 type Deposits struct {
@@ -497,7 +498,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		externalIncentives.set(incentiveId, incentive)
 
 		// unwrap if necessary
-		if unwrapResult && rewardToken == consts.WUGNOT_PATH {
+		if unwrapResult && rewardToken == WUGNOT_PATH {
 			unwrap(toUser)
 		}
 		std.Emit(
@@ -520,7 +521,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 	communityPoolAddr := getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
 
 	// internal reward to user
-	toUser, feeAmount, err := handleUnStakingFee(consts.GNS_PATH, int64(reward.Internal), true, positionId, deposit.targetPoolPath)
+	toUser, feeAmount, err := handleUnStakingFee(GNS_PATH, int64(reward.Internal), true, positionId, deposit.targetPoolPath)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -531,7 +532,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		"prevRealm", previousRealm.PkgPath(),
 		"fromPositionId", formatUint(positionId),
 		"fromPoolPath", deposit.targetPoolPath,
-		"feeTokenPath", consts.GNS_PATH,
+		"feeTokenPath", GNS_PATH,
 		"feeAmount", formatInt(feeAmount),
 	)
 
@@ -559,7 +560,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		"positionId", formatUint(positionId),
 		"poolPath", deposit.targetPoolPath,
 		"recipient", deposit.owner.String(),
-		"rewardToken", consts.GNS_PATH,
+		"rewardToken", GNS_PATH,
 		"rewardAmount", formatInt(reward.Internal),
 		"rewardToUser", formatInt(toUser),
 		"rewardToFee", formatInt(int64(reward.Internal)-toUser),
@@ -620,7 +621,7 @@ func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) (string, stri
 	// transfer NFT ownership to origin owner
 	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	gnft.TransferFrom(cross, stakerAddr, deposit.owner, positionIdFrom(positionId))
-	pn.SetPositionOperator(cross, positionId, consts.ZERO_ADDRESS)
+	pn.SetPositionOperator(cross, positionId, ZERO_ADDRESS)
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(

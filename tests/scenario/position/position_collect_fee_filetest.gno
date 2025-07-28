@@ -11,7 +11,6 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -19,6 +18,13 @@ import (
 	"gno.land/r/gnoswap/v1/position"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
+)
+
+const (
+	INT64_MAX int64 = 9223372036854775807
+
+	MIN_PRICE string = "4295128740"                                        // MIN_SQRT_RATIO + 1
+	MAX_PRICE string = "1461446703485210103287273052203988822378723970341" // MAX_SQRT_RATIO - 1
 )
 
 var (
@@ -76,8 +82,8 @@ func initPool() {
 	ufmt.Println("[INFO] Distributing Foo tokens")
 	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
 
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Printf("[INFO] Initial Bar balance of Alice: %d\n", bar.BalanceOf(aliceAddr))
 	ufmt.Printf("[INFO] Initial Foo balance of Alice: %d\n", foo.BalanceOf(aliceAddr))
@@ -94,8 +100,8 @@ func initPool() {
 
 func mintPosition() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
@@ -123,8 +129,8 @@ func mintPosition() {
 
 func executeMultipleSwaps() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	testing.SetRealm(routerRealm)
 	ufmt.Println("[INFO] Executing first swap BAR -> FOO")
@@ -136,7 +142,7 @@ func executeMultipleSwaps() {
 		adminAddr,
 		true,
 		"10000000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
@@ -152,7 +158,7 @@ func executeMultipleSwaps() {
 		adminAddr,
 		false,
 		"10000000",
-		consts.MAX_PRICE,
+		MAX_PRICE,
 		adminAddr,
 	)
 
@@ -162,8 +168,8 @@ func executeMultipleSwaps() {
 
 func decreaseLiquidityPartially() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Decreasing liquidity by 50%")
 	_, liquidity, _, _, amount0, amount1, _ := position.DecreaseLiquidity(
@@ -183,8 +189,8 @@ func decreaseLiquidityPartially() {
 
 func executeMoreSwaps() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	testing.SetRealm(routerRealm)
 	ufmt.Println("[INFO] Executing additional swap BAR -> FOO")
@@ -196,7 +202,7 @@ func executeMoreSwaps() {
 		adminAddr,
 		true,
 		"5000000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
