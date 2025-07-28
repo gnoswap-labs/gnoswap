@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"std"
 	"strconv"
 	"strings"
@@ -10,6 +11,10 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/demo/wugnot"
+
+	"gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/v1/referral"
 )
 
 const (
@@ -25,9 +30,9 @@ const (
 )
 
 var (
-	gnot    string = "gnot"
+	gnot          string = "gnot"
 	wrappedWugnot string = "gno.land/r/demo/wugnot"
-	wugnotPath string = "gno.land/r/demo/wugnot"
+	wugnotPath    string = "gno.land/r/demo/wugnot"
 )
 
 type RouterOperation interface {
@@ -208,4 +213,108 @@ func handleMultiSwap(
 		// so no invalid values can get in here.
 		panic(errInvalidSwapType)
 	}
+}
+
+/* --------- common swap operation --------- */
+
+// SwapRouteParams contains all parameters needed for swap route execution
+type SwapRouteParams struct {
+	inputToken  string
+	outputToken string
+	routeArr    string
+	quoteArr    string
+	deadline    int64
+	referrer    string
+	typ         SwapType
+	exactAmount string // amountIn for ExactIn, amountOut for ExactOut
+	limitAmount string // amountOutMin for ExactIn, amountInMax for ExactOut
+}
+
+// commonSwapRoute handles the common logic for both ExactIn and ExactOut swaps
+// Returns inputAmount, outputAmount, and actualReferrer
+func commonSwapRoute(cur realm, params SwapRouteParams) (string, string, string, error) {
+	// Common pre-swap checks
+	halt.AssertIsNotHaltedRouter()
+	halt.AssertIsNotHaltedWithdraw()
+
+	if err := checkDeadline(params.deadline); err != nil {
+		panic(addDetailToError(errExpired, err.Error()))
+	}
+
+	emission.MintAndDistributeGns(cross)
+
+	baseParams := BaseSwapParams{
+		InputToken:  params.inputToken,
+		OutputToken: params.outputToken,
+		RouteArr:    params.routeArr,
+		QuoteArr:    params.quoteArr,
+	}
+
+	// Create operation based on swap type
+	var (
+		op     RouterOperation
+		result *SwapResult
+		err    error
+	)
+
+	switch params.typ {
+	case ExactIn:
+		pp := NewExactInParams(baseParams, params.exactAmount, params.limitAmount)
+		op = NewExactInSwapOperation(pp)
+	case ExactOut:
+		pp := NewExactOutParams(baseParams, params.exactAmount, params.limitAmount)
+		op = NewExactOutSwapOperation(pp)
+	default:
+		msg := addDetailToError(errInvalidSwapType, "unknown swap type")
+		return "", "", "", errors.New(msg)
+	}
+
+	result, err = executeSwapOperation(op)
+	if err != nil {
+		msg := addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("invalid %s SwapOperation: %s", params.typ.String(), err.Error()),
+		)
+		return "", "", "", errors.New(msg)
+	}
+
+	// get operation-specific values for finalization
+	var (
+		userBeforeWugnotBalance int64
+		userWrappedWugnot       int64
+		limitValue              *u256.Uint
+	)
+
+	switch typedOp := op.(type) {
+	case *ExactInSwapOperation:
+		userBeforeWugnotBalance = typedOp.userBeforeWugnotBalance
+		userWrappedWugnot = typedOp.userWrappedWugnot
+		limitValue = u256.MustFromDecimal(params.limitAmount)
+	case *ExactOutSwapOperation:
+		userBeforeWugnotBalance = typedOp.userBeforeWugnotBalance
+		userWrappedWugnot = typedOp.userWrappedWugnot
+		limitValue = u256.MustFromDecimal(params.limitAmount)
+	}
+
+	inputAmount, outputAmount := finalizeSwap(
+		params.inputToken,
+		params.outputToken,
+		result.AmountIn,
+		result.AmountOut,
+		params.typ,
+		limitValue,
+		userBeforeWugnotBalance,
+		userWrappedWugnot,
+		result.AmountSpecified.Abs(),
+	)
+
+	// handle referral registration
+	caller := std.PreviousRealm().Address()
+	success := referral.TryRegister(cross, caller, params.referrer)
+	actualReferrer := params.referrer
+	if !success {
+		actualReferrer = referral.GetReferral(caller.String())
+	}
+
+	return inputAmount, outputAmount, actualReferrer, nil
 }

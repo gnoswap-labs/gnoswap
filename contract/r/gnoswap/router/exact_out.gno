@@ -6,11 +6,6 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
-
-	"gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/halt"
-	"gno.land/r/gnoswap/v1/referral"
 )
 
 type ExactOutSwapOperation struct {
@@ -39,47 +34,21 @@ func ExactOutSwapRoute(cur realm,
 	deadline int64,
 	referrer string,
 ) (string, string) {
-	halt.AssertIsNotHaltedRouter()
-	halt.AssertIsNotHaltedWithdraw()
-
-	if err := checkDeadline(deadline); err != nil {
-		panic(addDetailToError(errExpired, err.Error()))
+	params := SwapRouteParams{
+		inputToken:   inputToken,
+		outputToken:  outputToken,
+		routeArr:     routeArr,
+		quoteArr:     quoteArr,
+		deadline:     deadline,
+		referrer:     referrer,
+		typ:     ExactOut,
+		exactAmount:  amountOut,
+		limitAmount:  amountInMax,
 	}
 
-	emission.MintAndDistributeGns(cross)
-
-	baseParams := BaseSwapParams{
-		InputToken:  inputToken,
-		OutputToken: outputToken,
-		RouteArr:    routeArr,
-		QuoteArr:    quoteArr,
-	}
-
-	pp := NewExactOutParams(baseParams, amountOut, amountInMax)
-	op := NewExactOutSwapOperation(pp)
-
-	result, err := executeSwapOperation(op)
+	inputAmount, outputAmount, actualReferrer, err := commonSwapRoute(cur, params)
 	if err != nil {
-		panic(addDetailToError(errInvalidInput, err.Error()))
-	}
-
-	inputAmount, outputAmount := finalizeSwap(
-		pp.InputToken,
-		pp.OutputToken,
-		result.AmountIn,
-		result.AmountOut,
-		ExactOut,
-		u256.MustFromDecimal(pp.AmountInMax),
-		op.userBeforeWugnotBalance,
-		op.userWrappedWugnot,
-		result.AmountSpecified.Abs(),
-	)
-
-	caller := std.PreviousRealm().Address()
-	success := referral.TryRegister(cross, caller, referrer)
-	actualReferrer := referrer
-	if !success {
-		actualReferrer = referral.GetReferral(caller.String())
+		panic(err)
 	}
 
 	previousRealm := std.PreviousRealm()
@@ -87,11 +56,11 @@ func ExactOutSwapRoute(cur realm,
 		"ExactOutSwap",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"input", pp.InputToken,
-		"output", pp.OutputToken,
+		"input", inputToken,
+		"output", outputToken,
 		"exactAmount", amountOut,
-		"route", pp.RouteArr,
-		"quote", pp.QuoteArr,
+		"route", routeArr,
+		"quote", quoteArr,
 		"resultInputAmount", inputAmount,
 		"resultOutputAmount", outputAmount,
 		"referrer", actualReferrer,
