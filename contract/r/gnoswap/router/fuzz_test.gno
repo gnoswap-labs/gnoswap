@@ -1,12 +1,13 @@
 package router
 
 import (
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	"gno.land/p/gnoswap/fuzztest"
+	fuzzer "gno.land/p/gnoswap/fuzztest"
 	i256 "gno.land/p/gnoswap/int256"
 )
 
@@ -17,12 +18,12 @@ type RouteGenerator struct {
 }
 
 func (g *RouteGenerator) Generate() any {
-	numRoutes := fuzztest.IntRange(g.minRoutes, g.maxRoutes).Generate().(int)
+	numRoutes := fuzzer.IntRange(g.minRoutes, g.maxRoutes).Generate().(int)
 	routes := make([]string, numRoutes)
 
 	for i := 0; i < numRoutes; i++ {
 		// generate a simple route with 1-3 pools
-		numPools := fuzztest.IntRange(1, 3).Generate().(int)
+		numPools := fuzzer.IntRange(1, 3).Generate().(int)
 		pools := make([]string, numPools)
 		for j := 0; j < numPools; j++ {
 			pools[j] = "pool" + strconv.Itoa(j)
@@ -52,7 +53,7 @@ func (g *QuoteGenerator) Generate() any {
 		if maxQuote > 50 {
 			maxQuote = 50 // cap individual quotes at 50%
 		}
-		quote := fuzztest.IntRange(1, maxQuote).Generate().(int)
+		quote := fuzzer.IntRange(1, maxQuote).Generate().(int)
 		quotes[i] = quote
 		remaining -= quote
 	}
@@ -74,19 +75,19 @@ type AmountGenerator struct {
 }
 
 func (g *AmountGenerator) Generate() any {
-	if g.allowZero && fuzztest.Bool().Generate().(bool) {
+	if g.allowZero && fuzzer.Bool().Generate().(bool) {
 		return "0"
 	}
 
-	digits := fuzztest.IntRange(g.minDigits, g.maxDigits).Generate().(int)
+	digits := fuzzer.IntRange(g.minDigits, g.maxDigits).Generate().(int)
 	amount := ""
 
 	// first digit should not be 0
-	amount += strconv.Itoa(fuzztest.IntRange(1, 9).Generate().(int))
+	amount += strconv.Itoa(fuzzer.IntRange(1, 9).Generate().(int))
 
 	// rest of digits
 	for i := 1; i < digits; i++ {
-		amount += strconv.Itoa(fuzztest.IntRange(0, 9).Generate().(int))
+		amount += strconv.Itoa(fuzzer.IntRange(0, 9).Generate().(int))
 	}
 
 	return amount
@@ -287,7 +288,7 @@ func TestFuzzCheckDeadline(t *testing.T) {
 	currentTime := time.Now().Unix()
 
 	// Generate deadlines around current time
-	gen := fuzztest.IntRange(int(currentTime-3600), int(currentTime+3600))
+	gen := fuzzer.IntRange(int(currentTime-3600), int(currentTime+3600))
 
 	for i := 0; i < 1000; i++ {
 		deadline := int64(gen.Generate().(int))
@@ -350,7 +351,7 @@ func TestFuzzSwapType(t *testing.T) {
 // TestFuzzValidateRoutesAndQuotes tests the complete validation flow
 func TestFuzzValidateRoutesAndQuotes(t *testing.T) {
 	for i := 0; i < 1000; i++ {
-		numRoutes := fuzztest.IntRange(0, 10).Generate().(int)
+		numRoutes := fuzzer.IntRange(0, 10).Generate().(int)
 
 		// Generate routes
 		routeGen := &RouteGenerator{minRoutes: numRoutes, maxRoutes: numRoutes}
@@ -383,18 +384,10 @@ func TestFuzzValidateRoutesAndQuotes(t *testing.T) {
 	}
 }
 
-// Helper function to check if a string is a valid number
 func isValidNumber(s string) bool {
 	if s == "" {
 		return false
 	}
-	for i, c := range s {
-		if i == 0 && c == '-' {
-			continue
-		}
-		if c < '0' || c > '9' {
-			return false
-		}
-	}
-	return true
+	matched, _ := regexp.MatchString(`^-?\d+$`, s)
+	return matched
 }
