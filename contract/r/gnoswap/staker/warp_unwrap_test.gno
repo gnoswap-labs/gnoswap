@@ -10,9 +10,7 @@ import (
 )
 
 func TestWrap(t *testing.T) {
-	// t.Skip("skipping warp test")
 	user1Addr := testutils.TestAddress("user1")
-	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	tests := []struct {
 		name        string
 		action      func()
@@ -97,7 +95,6 @@ func TestWrap(t *testing.T) {
 
 func TestUnwrap(t *testing.T) {
 	user2Addr := testutils.TestAddress("user2")
-	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	tests := []struct {
 		name        string
 		action      func()

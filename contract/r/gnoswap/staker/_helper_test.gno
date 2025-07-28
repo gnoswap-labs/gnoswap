@@ -47,7 +47,6 @@ var (
 )
 
 var (
-	adminAddr = getRoleAddress(prbac.ROLE_ADMIN)
 	admin        = adminAddr
 	adminRealm   = std.NewUserRealm(admin)
 

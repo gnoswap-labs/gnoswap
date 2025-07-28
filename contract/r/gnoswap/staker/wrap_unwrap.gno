@@ -35,7 +35,6 @@ func wrap(ugnotAmount int64) {
 	}
 
 	// WRAP IT
-	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(stakerAddr, WUGNOT_ADDR, std.Coins{{Denom: "ugnot", Amount: ugnotAmount}})
 	wugnot.Deposit(cross) // STAKER HAS WUGNOT
@@ -55,8 +54,6 @@ func unwrap(wugnotAmount int64) {
 	if wugnotAmount == 0 {
 		return
 	}
-
-	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 
 	// SEND WUGNOT: USER -> STAKER
 	wugnot.TransferFrom(cross, std.PreviousRealm().Address(), stakerAddr, wugnotAmount)

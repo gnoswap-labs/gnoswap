@@ -10,7 +10,6 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -704,13 +703,6 @@ type currentInfo struct {
 }
 
 func getCurrentInfo() currentInfo {
-	stakerAddr, _ := access.GetAddress(prbac.ROLE_STAKER.String())
-	devOpsAddr, _ := access.GetAddress(prbac.ROLE_DEVOPS.String())
-	communityPoolAddr, _ := access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
-	govStakerAddr, _ := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
-	protocolFeeAddr, _ := access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
-	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
-
 	return currentInfo{
 		height:           std.ChainHeight(),
 		time:             time.Now().Unix(),

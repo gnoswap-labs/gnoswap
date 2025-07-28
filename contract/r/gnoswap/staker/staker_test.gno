@@ -70,7 +70,6 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 
 	// Stake position
 	testing.SetRealm(std.NewUserRealm(addr01))
-	stakerAddr := getRoleAddress(prabc.ROLE_STAKER)
 	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
 	StakeToken(cross, positionId, "")
 

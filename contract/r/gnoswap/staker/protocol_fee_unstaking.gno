@@ -57,8 +57,6 @@ func handleUnStakingFee(
 		tokenPath = GNS_PATH
 	}
 
-	protocolFeeAddr := getRoleAddress(prbac.ROLE_PROTOCOL_FEE)
-
 	// external contract has fee
 	common.Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
 	pf.AddToProtocolFee(cross, tokenPath, uint64(feeAmount))

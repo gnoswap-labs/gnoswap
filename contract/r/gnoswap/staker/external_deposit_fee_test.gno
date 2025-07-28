@@ -222,9 +222,7 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 func setupExternalDepositFeeAdminPermission(t *testing.T) {
 	t.Helper()
 
-	// Use the actual admin address from access package
-	addr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
-	setupExternalDepositFeePermission(t, addr, "admin")
+	setupExternalDepositFeePermission(t, adminAddr, "admin")
 }
 
 func setupExternalDepositFeeGovernancePermission(t *testing.T) {
@@ -244,8 +242,7 @@ func setupExternalDepositFeePermission(t *testing.T, caller std.Address, permiss
 
 func getAdminAddress(t *testing.T) std.Address {
 	t.Helper()
-	addr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
-	return addr
+	return adminAddr
 }
 
 func getGovernanceAddress(t *testing.T) std.Address {

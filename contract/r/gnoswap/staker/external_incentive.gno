@@ -16,8 +16,6 @@ import (
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
-const ADMIN std.Address = "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"
-
 // CreateExternalIncentive creates an incentive program for a pool.
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#createexternalincentive
 func CreateExternalIncentive(cur realm,
@@ -121,7 +119,6 @@ func CreateExternalIncentive(cur realm,
 	externalIncentives.set(incentiveId, incentive)
 
 	// deposit gns amount
-	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	gns.TransferFrom(cross, caller, stakerAddr, depositGnsAmount)
 
 	// transfer reward token from user to staker
@@ -166,7 +163,6 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		panic(err)
 	}
 
-	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	poolLeftExternalRewardAmount := common.BalanceOf(incentive.rewardToken, stakerAddr)
 	if poolLeftExternalRewardAmount < refund {
 		refund = poolLeftExternalRewardAmount
@@ -218,10 +214,13 @@ func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, cu
 	}
 
 	// only refundee or admin can end incentive
-	if !access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && caller != incentive.refundee {
+	if !access.IsAuthorized(adminAddr, caller) && caller != incentive.refundee {
 		return nil, 0, makeErrorWithDetails(
 			errNoPermission,
-			ufmt.Sprintf("only refundee(%s) or admin(%s) can end incentive, but called from %s", incentive.refundee, ADMIN, caller),
+			ufmt.Sprintf(
+				"only refundee(%s) or admin(%s) can end incentive, but called from %s",
+				incentive.refundee, adminAddr.String(), caller,
+			),
 		)
 	}
 
