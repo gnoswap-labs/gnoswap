@@ -13,7 +13,6 @@ import (
 	"gno.land/r/demo/wugnot"
 
 	"gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/halt"
 	"gno.land/r/gnoswap/v1/referral"
 )
 
@@ -209,8 +208,6 @@ func handleMultiSwap(
 		sp := newSwapParams(input, output, fee, previousRealmAddr, amountSpecified)
 		return multiSwapNegative(*sp, numHops-1, route)
 	default:
-		// Any invalid `SwapType` is caught in the `SwapRoute` function,
-		// so no invalid values can get in here.
 		panic(errInvalidSwapType)
 	}
 }
@@ -232,12 +229,9 @@ type SwapRouteParams struct {
 // commonSwapRoute handles the common logic for both ExactIn and ExactOut swaps
 // Returns inputAmount, outputAmount, and actualReferrer
 func commonSwapRoute(cur realm, params SwapRouteParams) (string, string, string, error) {
-	// Common pre-swap checks
-	halt.AssertIsNotHaltedRouter()
-	halt.AssertIsNotHaltedWithdraw()
-
 	if err := checkDeadline(params.deadline); err != nil {
-		panic(addDetailToError(errExpired, err.Error()))
+		errMsg := addDetailToError(errExpired, err.Error())
+		return "", "", "", errors.New(errMsg)
 	}
 
 	emission.MintAndDistributeGns(cross)

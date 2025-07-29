@@ -6,6 +6,8 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	i256 "gno.land/p/gnoswap/int256"
+
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 type ExactInSwapOperation struct {
@@ -34,6 +36,9 @@ func ExactInSwapRoute(cur realm,
 	deadline int64,
 	referrer string,
 ) (string, string) {
+	halt.AssertIsNotHaltedRouter()
+	halt.AssertIsNotHaltedWithdraw()
+
 	params := SwapRouteParams{
 		inputToken:   inputToken,
 		outputToken:  outputToken,
