@@ -9,6 +9,7 @@ import (
 
 	fuzzer "gno.land/p/gnoswap/fuzztest"
 	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // RouteGenerator generates valid route strings for testing
@@ -93,7 +94,6 @@ func (g *AmountGenerator) Generate() any {
 	return amount
 }
 
-// TestFuzzParseRoutes tests the ParseRoutes validation function directly
 func TestFuzzParseRoutes(t *testing.T) {
 	parser := &RouteParser{}
 	gen := &RouteGenerator{minRoutes: 0, maxRoutes: 10}
@@ -147,7 +147,6 @@ func TestFuzzParseRoutes(t *testing.T) {
 	}
 }
 
-// TestFuzzValidateQuoteSum tests the ValidateQuoteSum function directly
 func TestFuzzValidateQuoteSum(t *testing.T) {
 	parser := &RouteParser{}
 
@@ -168,11 +167,11 @@ func TestFuzzValidateQuoteSum(t *testing.T) {
 
 	// Test invalid quotes
 	invalidQuotesTests := [][]string{
-		{"50", "50", "1"},  // Sum to 101
-		{"30", "30", "30"}, // Sum to 90
-		{"0", "100"},       // Contains 0
-		{"101"},            // Single quote > 100
-		{"-10", "110"},     // Negative quote
+		{"50", "50", "1"},  /* sum to 101 */
+		{"30", "30", "30"}, /* sum to 90 */
+		{"0", "100"},       /* contains 0 */
+		{"101"},            /* single quote > 100 */
+		{"-10", "110"},     /* negative quote */
 	}
 
 	for _, quotes := range invalidQuotesTests {
@@ -183,7 +182,6 @@ func TestFuzzValidateQuoteSum(t *testing.T) {
 	}
 }
 
-// TestFuzzSwapValidatorAmount tests the amount validation function directly
 func TestFuzzSwapValidatorAmount(t *testing.T) {
 	validator := &SwapValidator{}
 	gen := &AmountGenerator{minDigits: 1, maxDigits: 20, allowZero: true}
@@ -379,6 +377,301 @@ func TestFuzzValidateRoutesAndQuotes(t *testing.T) {
 					t.Errorf("validateRoutesAndQuotes returned wrong count: expected %d, got routes=%d, quotes=%d",
 						numRoutes, len(routes), len(quotes))
 				}
+			}
+		}
+	}
+}
+
+func TestFuzzGetDataForSinglePath(t *testing.T) {
+	// format: "token0:token1:fee"
+	validTokens := []string{"gno.land/r/demo/token0", "gno.land/r/demo/token1", "gno.land/r/demo/wugnot"}
+	validFees := []uint32{100, 500, 3000, 10000}
+
+	// valid paths
+	for i := 0; i < 100; i++ {
+		token0 := validTokens[fuzzer.IntRange(0, len(validTokens)-1).Generate().(int)]
+		token1 := validTokens[fuzzer.IntRange(0, len(validTokens)-1).Generate().(int)]
+		fee := validFees[fuzzer.IntRange(0, len(validFees)-1).Generate().(int)]
+
+		if token0 == token1 {
+			continue // skip same token pairs
+		}
+
+		poolPath := token0 + ":" + token1 + ":" + strconv.FormatUint(uint64(fee), 10)
+
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Errorf("getDataForSinglePath panicked for valid path %s: %v", poolPath, r)
+				}
+			}()
+
+			token0Out, token1Out, feeOut := getDataForSinglePath(poolPath)
+
+			if token0Out != token0 || token1Out != token1 || feeOut != fee {
+				t.Errorf("getDataForSinglePath returned wrong data for %s: got %s:%s:%d",
+					poolPath, token0Out, token1Out, feeOut)
+			}
+		}()
+	}
+
+	// invalid paths
+	invalidPaths := []string{
+		"",                        /* empty */
+		"token0:token1",           /* missing fee */
+		"token0",                  /* only one component */
+		"token0:token1:fee:extra", /* extra component */
+		"token0::fee",             /* empty token1 */
+		":token1:fee",             /* empty token0 */
+		"token0:token1:",          /* empty fee */
+		"token0,token1,fee",       /* wrong separator */
+	}
+
+	for _, path := range invalidPaths {
+		func() {
+			defer func() {
+				if r := recover(); r == nil {
+					t.Errorf("getDataForSinglePath should panic for invalid path: %s", path)
+				}
+			}()
+
+			getDataForSinglePath(path)
+		}()
+	}
+}
+
+func TestFuzzGetDataForMultiPath(t *testing.T) {
+	// format: "token0:token1:fee"
+	// the function extracts pool data at the given index
+
+	for i := 0; i < 100; i++ {
+		numPools := fuzzer.IntRange(1, 3).Generate().(int)
+		pools := make([]string, numPools)
+
+		for j := 0; j < numPools; j++ {
+			token0 := "gno.land/r/demo/token" + strconv.Itoa(j)
+			token1 := "gno.land/r/demo/token" + strconv.Itoa(j+1)
+			fee := strconv.Itoa(fuzzer.IntRange(100, 10000).Generate().(int))
+			pools[j] = token0 + ":" + token1 + ":" + fee
+		}
+
+		possiblePath := strings.Join(pools, "*POOL*")
+
+		for poolIdx := 0; poolIdx < 3; poolIdx++ {
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						// should panic for this case
+						if poolIdx >= numPools {
+							return
+						}
+						t.Errorf("getDataForMultiPath panicked for valid input: path=%s, idx=%d: %v",
+							possiblePath, poolIdx, r)
+					}
+				}()
+
+				token0Out, token1Out, feeOut := getDataForMultiPath(possiblePath, poolIdx)
+
+				// verify we got valid data if within range
+				if poolIdx < numPools {
+					if token0Out == "" || token1Out == "" {
+						t.Errorf("getDataForMultiPath returned empty tokens for idx=%d", poolIdx)
+					}
+					if feeOut == 0 {
+						t.Errorf("getDataForMultiPath returned zero fee for idx=%d", poolIdx)
+					}
+				}
+			}()
+		}
+	}
+
+	invalidIndices := []int{-1, 3, 100}
+	validPath := "gno.land/r/demo/token0:gno.land/r/demo/token1:500*POOL*gno.land/r/demo/token1:gno.land/r/demo/token2:3000"
+
+	for _, idx := range invalidIndices {
+		token0Out, token1Out, feeOut := getDataForMultiPath(validPath, idx)
+
+		if token0Out != "" || token1Out != "" || feeOut != 0 {
+			t.Errorf("getDataForMultiPath should return empty values for invalid index %d, got: %s, %s, %d",
+				idx, token0Out, token1Out, feeOut)
+		}
+	}
+
+	// out of bounds
+	shortPath := "gno.land/r/demo/token0:gno.land/r/demo/token1:500"
+
+	for poolIdx := 1; poolIdx <= 2; poolIdx++ {
+		func() {
+			defer func() {
+				if r := recover(); r == nil {
+					t.Errorf("getDataForMultiPath should panic for out of bounds access: path has 1 pool, accessing index %d", poolIdx)
+				}
+			}()
+
+			getDataForMultiPath(shortPath, poolIdx)
+		}()
+	}
+}
+
+func TestFuzzAssertHopsInRange(t *testing.T) {
+	// number of hops
+	gen := fuzzer.IntRange(-10, 10)
+
+	for i := 0; i < 100; i++ {
+		hops := gen.Generate().(int)
+
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					if hops >= 1 && hops <= 3 {
+						t.Errorf("assertHopsInRange panicked for valid hop count %d: %v", hops, r)
+					}
+				} else {
+					if hops < 1 || hops > 3 {
+						t.Errorf("assertHopsInRange should panic for invalid hop count %d", hops)
+					}
+				}
+			}()
+
+			assertHopsInRange(hops)
+		}()
+	}
+}
+
+func TestFuzzSwapValidatorSlippage(t *testing.T) {
+	validator := &SwapValidator{}
+
+	// ExactIn slippage validation
+	for i := 0; i < 100; i++ {
+		amountIn := u256.NewUint(uint64(fuzzer.IntRange(100, 10000).Generate().(int)))
+		amountOut := u256.NewUint(uint64(fuzzer.IntRange(50, 10000).Generate().(int)))
+		limit := u256.NewUint(uint64(fuzzer.IntRange(1, 10000).Generate().(int)))
+
+		err := validator.slippage(ExactIn, amountIn, amountOut, limit)
+
+		if amountOut.Lt(limit) {
+			// Should fail when output is less than limit
+			if err == nil {
+				t.Errorf("slippage validation should fail for ExactIn when output < limit: out=%s, limit=%s",
+					amountOut.ToString(), limit.ToString())
+			}
+		} else {
+			// Should pass when output >= limit
+			if err != nil {
+				t.Errorf("slippage validation failed for valid ExactIn: out=%s, limit=%s, err=%v",
+					amountOut.ToString(), limit.ToString(), err)
+			}
+		}
+	}
+
+	// ExactOut slippage validation
+	for i := 0; i < 100; i++ {
+		amountIn := u256.NewUint(uint64(fuzzer.IntRange(100, 10000).Generate().(int)))
+		amountOut := u256.NewUint(uint64(fuzzer.IntRange(50, 10000).Generate().(int)))
+		limit := u256.NewUint(uint64(fuzzer.IntRange(1, 10000).Generate().(int)))
+
+		err := validator.slippage(ExactOut, amountIn, amountOut, limit)
+
+		if amountIn.Gt(limit) {
+			// Should fail when input is greater than limit
+			if err == nil {
+				t.Errorf("slippage validation should fail for ExactOut when input > limit: in=%s, limit=%s",
+					amountIn.ToString(), limit.ToString())
+			}
+		} else {
+			// Should pass when input <= limit
+			if err != nil {
+				t.Errorf("slippage validation failed for valid ExactOut: in=%s, limit=%s, err=%v",
+					amountIn.ToString(), limit.ToString(), err)
+			}
+		}
+	}
+}
+
+func TestFuzzSwapValidatorExactOutAmount(t *testing.T) {
+	validator := &SwapValidator{}
+
+	for i := 0; i < 100; i++ {
+		resultVal := uint64(fuzzer.IntRange(1, 10000).Generate().(int))
+		specifiedVal := uint64(fuzzer.IntRange(1, 10000).Generate().(int))
+
+		resultAmount := u256.NewUint(resultVal)
+		specifiedAmount := u256.NewUint(specifiedVal)
+
+		err := validator.exactOutAmount(resultAmount, specifiedAmount)
+
+		if resultAmount.Lt(specifiedAmount) {
+			// Should fail when result < specified
+			if err == nil {
+				t.Errorf("exactOutAmount should fail when result < specified: result=%d, specified=%d",
+					resultVal, specifiedVal)
+			}
+		} else {
+			// Should pass when result >= specified
+			if err != nil {
+				t.Errorf("exactOutAmount failed for valid amounts: result=%d, specified=%d, err=%v",
+					resultVal, specifiedVal, err)
+			}
+		}
+	}
+}
+
+func TestFuzzSplitSingleChar(t *testing.T) {
+	// separator candidates (only `:` is valid)
+	separators := []byte{',', ':', '*', '|'}
+
+	for _, sep := range separators {
+		for i := 0; i < 50; i++ {
+			numParts := fuzzer.IntRange(1, 5).Generate().(int)
+			parts := make([]string, numParts)
+
+			for j := 0; j < numParts; j++ {
+				parts[j] = "part" + strconv.Itoa(j)
+			}
+
+			input := strings.Join(parts, string(sep))
+			result := splitSingleChar(input, sep)
+
+			if len(result) != numParts {
+				t.Errorf("splitSingleChar returned wrong number of parts: expected %d, got %d for input %s",
+					numParts, len(result), input)
+			}
+
+			for j, part := range result {
+				if part != parts[j] {
+					t.Errorf("splitSingleChar returned wrong part at index %d: expected %s, got %s",
+						j, parts[j], part)
+				}
+			}
+		}
+	}
+
+	edgeCases := []struct {
+		input    string
+		sep      byte
+		expected []string
+	}{
+		{"", ',', []string{""}},                /* empty string */
+		{"single", ',', []string{"single"}},    /* no separator */
+		{",", ',', []string{"", ""}},           /* only separator */
+		{"a,,b", ',', []string{"a", "", "b"}},  /* consecutive separators */
+		{",start", ',', []string{"", "start"}}, /* leading separator */
+		{"end,", ',', []string{"end", ""}},     /* trailing separator */
+	}
+
+	for _, tc := range edgeCases {
+		result := splitSingleChar(tc.input, tc.sep)
+
+		if len(result) != len(tc.expected) {
+			t.Errorf("splitSingleChar(%q, %c) returned wrong length: expected %d, got %d",
+				tc.input, tc.sep, len(tc.expected), len(result))
+			continue
+		}
+
+		for i, part := range result {
+			if part != tc.expected[i] {
+				t.Errorf("splitSingleChar(%q, %c) wrong part at index %d: expected %q, got %q",
+					tc.input, tc.sep, i, tc.expected[i], part)
 			}
 		}
 	}
