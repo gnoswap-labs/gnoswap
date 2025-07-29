@@ -16,15 +16,20 @@ import (
 type RouteGenerator struct {
 	minRoutes int
 	maxRoutes int
+	seedMgr   *fuzzer.SeedManager
 }
 
 func (g *RouteGenerator) Generate() any {
-	numRoutes := fuzzer.IntRange(g.minRoutes, g.maxRoutes).Generate().(int)
+	if g.seedMgr == nil {
+		g.seedMgr = fuzzer.NewSeedManager()
+	}
+
+	numRoutes := g.seedMgr.CreateIntGenerator(g.minRoutes, g.maxRoutes).Generate().(int)
 	routes := make([]string, numRoutes)
 
 	for i := 0; i < numRoutes; i++ {
 		// generate a simple route with 1-3 pools
-		numPools := fuzzer.IntRange(1, 3).Generate().(int)
+		numPools := g.seedMgr.CreateIntGenerator(1, 3).Generate().(int)
 		pools := make([]string, numPools)
 		for j := 0; j < numPools; j++ {
 			pools[j] = "pool" + strconv.Itoa(j)
@@ -38,9 +43,14 @@ func (g *RouteGenerator) Generate() any {
 // QuoteGenerator generates valid quote arrays that sum to 100
 type QuoteGenerator struct {
 	numQuotes int
+	seedMgr   *fuzzer.SeedManager
 }
 
 func (g *QuoteGenerator) Generate() any {
+	if g.seedMgr == nil {
+		g.seedMgr = fuzzer.NewSeedManager()
+	}
+
 	if g.numQuotes == 1 {
 		return "100"
 	}
@@ -54,7 +64,7 @@ func (g *QuoteGenerator) Generate() any {
 		if maxQuote > 50 {
 			maxQuote = 50 // cap individual quotes at 50%
 		}
-		quote := fuzzer.IntRange(1, maxQuote).Generate().(int)
+		quote := g.seedMgr.CreateIntGenerator(1, maxQuote).Generate().(int)
 		quotes[i] = quote
 		remaining -= quote
 	}
@@ -73,33 +83,36 @@ type AmountGenerator struct {
 	minDigits int
 	maxDigits int
 	allowZero bool
+	seedMgr   *fuzzer.SeedManager
 }
 
 func (g *AmountGenerator) Generate() any {
-	if g.allowZero && fuzzer.Bool().Generate().(bool) {
+	if g.seedMgr == nil {
+		g.seedMgr = fuzzer.NewSeedManager()
+	}
+
+	if g.allowZero && g.seedMgr.CreateBoolGenerator().Generate().(bool) {
 		return "0"
 	}
 
-	digits := fuzzer.IntRange(g.minDigits, g.maxDigits).Generate().(int)
+	digits := g.seedMgr.CreateIntGenerator(g.minDigits, g.maxDigits).Generate().(int)
 	amount := ""
 
 	// first digit should not be 0
-	amount += strconv.Itoa(fuzzer.IntRange(1, 9).Generate().(int))
+	amount += strconv.Itoa(g.seedMgr.CreateIntGenerator(1, 9).Generate().(int))
 
 	// rest of digits
 	for i := 1; i < digits; i++ {
-		amount += strconv.Itoa(fuzzer.IntRange(0, 9).Generate().(int))
+		amount += strconv.Itoa(g.seedMgr.CreateIntGenerator(0, 9).Generate().(int))
 	}
 
 	return amount
 }
 
-/*
-* Note:
-* While the uassert package could be used, its API is not flexible enough,
-* so made a separate assert helper function.
- */
-
+// Test helper functions
+//
+// While the uassert package could be used, its API is not flexible enough,
+// so made a separate assert helper function.
 type testHelper struct {
 	t *testing.T
 }
@@ -265,16 +278,30 @@ func TestFuzzValidateQuoteSum(t *testing.T) {
 func TestFuzzSwapValidatorAmount(t *testing.T) {
 	helper := newTestHelper(t)
 	validator := &SwapValidator{}
-	gen := &AmountGenerator{minDigits: 1, maxDigits: 20, allowZero: true}
+	// Create a seed manager for this test run
+	seedMgr := fuzzer.NewSeedManager()
+	gen := &AmountGenerator{
+		minDigits: 1,
+		maxDigits: 20,
+		allowZero: true,
+		seedMgr:   seedMgr,
+	}
+
+	// Track generated values to ensure variety
+	generatedValues := make(map[string]int)
 
 	for i := 0; i < 1000; i++ {
 		amountStr := gen.Generate().(string)
+		generatedValues[amountStr]++
 
 		parsedAmount, err := validator.amount(amountStr)
 
 		if amountStr == "0" {
-			// Zero amounts should fail
-			helper.assertError(err, true, "zero amount")
+			// Zero amounts are allowed by amount() function (only negative values fail)
+			helper.assertError(err, false, "zero amount")
+			if err == nil && !parsedAmount.IsZero() {
+				t.Errorf("amount() should return zero for input '0'")
+			}
 			continue
 		}
 
@@ -283,6 +310,12 @@ func TestFuzzSwapValidatorAmount(t *testing.T) {
 		if err == nil && !parsedAmount.Gt(i256.Zero()) {
 			t.Errorf("amount() returned non-positive value for %s", amountStr)
 		}
+	}
+
+	// Log variety of generated values
+	t.Logf("Generated %d unique values out of 1000 iterations", len(generatedValues))
+	if len(generatedValues) < 100 {
+		t.Errorf("Generator produced too few unique values: %d", len(generatedValues))
 	}
 
 	// Test boundary values

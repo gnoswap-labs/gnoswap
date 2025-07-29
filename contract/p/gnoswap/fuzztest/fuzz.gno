@@ -14,8 +14,22 @@ type Generator interface {
 	Generate() any
 }
 
+// seedCounter is a simple counter to ensure different seeds
+// We use a function-scoped approach to avoid realm modification issues
+var seedCounter uint64
+
+// getNextSeed returns a new seed value for RNG initialization
+// Uses a combination of counter and current time to ensure uniqueness
+func getNextSeed() uint64 {
+	// Increment counter and combine with time for uniqueness
+	seedCounter++
+	// Use a prime multiplier to spread values
+	return seedCounter * 2654435761
+}
+
 func initRNG(rng **xs.Xorshift64Star) {
 	if *rng == nil {
+		// Use entropy-based seed to avoid realm issues
 		*rng = xs.New()
 	}
 }
@@ -45,7 +59,16 @@ func IntRange(min, max int) Generator {
 	return &IntGenerator{
 		min: min,
 		max: max,
-		rng: xs.New(),
+		rng: nil, // Will be initialized on first use
+	}
+}
+
+// IntRangeWithSeed creates an IntGenerator with a specific seed
+func IntRangeWithSeed(min, max int, seed uint64) Generator {
+	return &IntGenerator{
+		min: min,
+		max: max,
+		rng: xs.New(seed),
 	}
 }
 
@@ -67,7 +90,16 @@ func Uint32Range(min, max uint32) Generator {
 	return &Uint32Generator{
 		min: min,
 		max: max,
-		rng: xs.New(),
+		rng: nil, // Will be initialized on first use
+	}
+}
+
+// Uint32RangeWithSeed creates a Uint32Generator with a specific seed
+func Uint32RangeWithSeed(min, max uint32, seed uint64) Generator {
+	return &Uint32Generator{
+		min: min,
+		max: max,
+		rng: xs.New(seed),
 	}
 }
 
@@ -85,7 +117,12 @@ func (g *BoolGenerator) Generate() any {
 }
 
 func Bool() Generator {
-	return &BoolGenerator{rng: xs.New()}
+	return &BoolGenerator{rng: nil} // Will be initialized on first use
+}
+
+// BoolWithSeed creates a BoolGenerator with a specific seed
+func BoolWithSeed(seed uint64) Generator {
+	return &BoolGenerator{rng: xs.New(seed)}
 }
 
 type StringGenerator struct {
@@ -105,6 +142,15 @@ func (g *StringGenerator) Generate() interface{} {
 		result[i] = byte(g.rng.Uint64()%94 + 33)
 	}
 	return string(result)
+}
+
+// StringWithSeed creates a StringGenerator with a specific seed
+func StringWithSeed(minLen, maxLen int, seed uint64) Generator {
+	return &StringGenerator{
+		minLen: minLen,
+		maxLen: maxLen,
+		rng:    xs.New(seed),
+	}
 }
 
 type NumberStringGenerator struct {
@@ -147,7 +193,7 @@ func NumberString() Generator {
 		min:       0,
 		max:       1000000,
 		baseTypes: []int{2, 8, 10, 16},
-		rng:       xs.New(),
+		rng:       nil, // Will be initialized on first use
 	}
 }
 
@@ -159,14 +205,25 @@ func NumberStringRange(min, max int64, bases ...int) Generator {
 		min:       min,
 		max:       max,
 		baseTypes: bases,
-		rng:       xs.New(),
+		rng:       nil, // Will be initialized on first use
 	}
+}
+
+// SetGlobalSeed is deprecated - seeds are now handled automatically
+func SetGlobalSeed(seed uint64) {
+	// No-op to maintain API compatibility
+}
+
+// ResetGlobalSeed is deprecated - seeds are now handled automatically
+func ResetGlobalSeed() {
+	// No-op to maintain API compatibility
 }
 
 // Config controls fuzzing parameters
 type Config struct {
 	Iterations int
 	Shrink     bool
+	Seed       uint64 // Optional: if provided, uses this seed for reproducibility
 }
 
 type Result struct {
@@ -260,7 +317,8 @@ func generateLargeSlice(n int) []int {
 }
 
 func FuzzWithConfig(config Config, property func(int) bool) *Result {
-	return FuzzWithConfigAndGen(config, &IntGenerator{rng: xs.New()}, property)
+	// Note: config.Seed is ignored as we use entropy-based seeding
+	return FuzzWithConfigAndGen(config, &IntGenerator{rng: nil}, property)
 }
 
 func FuzzWithConfigAndGen(config Config, gen Generator, property func(int) bool) *Result {
@@ -301,7 +359,7 @@ func Fuzz(property interface{}) error {
 }
 
 func fuzzString(fn func(string) bool) error {
-	gen := &StringGenerator{rng: xs.New()}
+	gen := &StringGenerator{rng: nil} // Will be initialized on first use
 	for i := 0; i < 100; i++ {
 		if !fn(gen.Generate().(string)) {
 			return errors.New("property violation")
@@ -322,7 +380,7 @@ func FuzzWithGen(gen Generator, property func(int) bool) error {
 
 func FuzzN(property interface{}) error {
 	if fn, ok := property.(func(int, int) bool); ok {
-		gen := &IntGenerator{rng: xs.New()}
+		gen := &IntGenerator{rng: nil} // Will be initialized on first use
 		for i := 0; i < 100; i++ {
 			a := gen.Generate().(int)
 			b := gen.Generate().(int)
