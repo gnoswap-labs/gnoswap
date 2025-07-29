@@ -3,12 +3,12 @@ package position
 import (
 	"std"
 	"strconv"
+	"strings"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
 )
 
@@ -121,16 +121,18 @@ func isOwnerOrOperator(positionId uint64, addr std.Address) bool {
 // - token1Path string
 // - fee uint32
 func splitOf(poolKey string) (string, string, uint32) {
-	res, err := common.Split(poolKey, ":", 3)
-	if err != nil {
+	res := strings.Split(poolKey, ":")
+	if len(res) != 3 {
 		panic(newErrorWithDetail(errInvalidInput, ufmt.Sprintf("invalid poolKey(%s)", poolKey)))
 	}
+	
 	pToken0, pToken1, pFeeStr := res[0], res[1], res[2]
 
 	pFee, err := strconv.Atoi(pFeeStr)
 	if err != nil {
 		panic(newErrorWithDetail(errInvalidInput, ufmt.Sprintf("invalid fee(%s)", pFeeStr)))
 	}
+	
 	return pToken0, pToken1, uint32(pFee)
 }
 
