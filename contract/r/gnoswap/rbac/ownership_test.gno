@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
@@ -126,10 +128,7 @@ func TestTransferOwnership(t *testing.T) {
 	// Test successful transfer (we can't fully test the assertion since it depends on std.PreviousRealm())
 	// We test the manager's functionality directly
 	testing.SetRealm(std.NewUserRealm(ADMIN))
-	err := manager.TransferOwnership(DEV_OPS)
-	if err != nil {
-		t.Errorf("TransferOwnership failed: %v", err)
-	}
+	TransferOwnership(cross, DEV_OPS)
 
 	// Verify pending owner is set
 	pendingOwner := GetPendingOwner()
@@ -138,40 +137,61 @@ func TestTransferOwnership(t *testing.T) {
 	}
 
 	// Test transfer to empty address should fail
-	err = manager.TransferOwnership("")
-	if err == nil {
-		t.Error("TransferOwnership with empty address should fail")
-	}
+	uassert.AbortsWithMessage(t, "invalid address", func() {
+		TransferOwnership(cross, "")
+	})
 }
 
 func TestAcceptOwnership(t *testing.T) {
-	// Reset manager for test
-	manager = prbac.NewRBACWithAddress(ADMIN)
-
-	// Set up pending owner
-	testing.SetRealm(std.NewUserRealm(ADMIN))
-	err := manager.TransferOwnership(DEV_OPS)
-	if err != nil {
-		t.Fatalf("Failed to transfer ownership: %v", err)
+	tests := []struct {
+		name                   string
+		ownerAddr              std.Address
+		transferAddr           std.Address
+		acceptAddr             std.Address
+		expectedOwner          std.Address
+		expectedHasAborted     bool
+		expectedAbortedMessage string
+	}{
+		{
+			name:                   "Owner should accept ownership",
+			ownerAddr:              ADMIN,
+			transferAddr:           DEV_OPS,
+			acceptAddr:             DEV_OPS,
+			expectedOwner:          DEV_OPS,
+			expectedHasAborted:     false,
+			expectedAbortedMessage: "",
+		},
+		{
+			name:                   "Acceptor should abort",
+			ownerAddr:              ADMIN,
+			transferAddr:           DEV_OPS,
+			acceptAddr:             testutils.TestAddress("not-owner"),
+			expectedOwner:          ADMIN,
+			expectedHasAborted:     true,
+			expectedAbortedMessage: "caller is not pending owner",
+		},
 	}
 
-	// Test successful acceptance (we test the manager's functionality directly)
-	testing.SetRealm(std.NewUserRealm(DEV_OPS))
-	err = manager.AcceptOwnership()
-	if err != nil {
-		t.Errorf("AcceptOwnership failed: %v", err)
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			manager = prbac.NewRBACWithAddress(tt.ownerAddr)
 
-	// Verify ownership changed
-	newOwner := GetOwner()
-	if newOwner != DEV_OPS {
-		t.Errorf("Owner not changed correctly, got %s, want %s", newOwner, DEV_OPS)
-	}
+			testing.SetRealm(std.NewUserRealm(tt.ownerAddr))
+			TransferOwnership(cross, tt.transferAddr)
 
-	// Verify pending owner is cleared
-	pendingOwner := GetPendingOwner()
-	if pendingOwner != "" {
-		t.Errorf("Pending owner should be cleared, got %s", pendingOwner)
+			testing.SetRealm(std.NewUserRealm(tt.acceptAddr))
+			if tt.expectedHasAborted {
+				uassert.AbortsWithMessage(t, tt.expectedAbortedMessage, func() {
+					AcceptOwnership(cross)
+				})
+			} else {
+				AcceptOwnership(cross)
+			}
+
+			if GetOwner() != tt.expectedOwner {
+				t.Errorf("Owner not changed correctly, got %s, want %s", GetOwner(), tt.expectedOwner)
+			}
+		})
 	}
 }
 
@@ -215,4 +235,4 @@ func TestOwnershipWorkflow(t *testing.T) {
 	if GetPendingOwner() != "" {
 		t.Error("Pending owner should be cleared after acceptance")
 	}
-} 
+}
