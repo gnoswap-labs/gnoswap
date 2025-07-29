@@ -114,6 +114,8 @@ func MustOwnerOf(tid grc721.TokenID) std.Address {
 func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
 	halt.AssertIsNotHaltedPosition()
 
+	assertIsEmptyTokenURI(tid)
+
 	err := setTokenURI(tid, tURI)
 	if err != nil {
 		panic(err)
@@ -129,6 +131,35 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 	)
 
 	return true, nil
+}
+
+// SetTokenURIByImageURI generates and sets a new token URI for a specified token ID using a random image URI.
+//
+// Parameters:
+//   - tid (grc721.TokenID): The ID of the token for which the URI will be set.
+//
+// Panics:
+//   - If the contract is halted.
+//   - If the caller is not the owner of the token.
+//   - If the token URI cannot be set.
+func SetTokenURIByImageURI(cur realm, tid grc721.TokenID) {
+	halt.AssertIsNotHaltedPosition()
+
+	tokenURI := genImageURI(generateRandInstance())
+
+	err := setTokenURI(tid, grc721.TokenURI(tokenURI))
+	if err != nil {
+		panic(err)
+	}
+
+	previousRealm := std.PreviousRealm()
+	std.Emit(
+		"SetTokenURI",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"lpTokenId", string(tid),
+		"tokenURI", string(tokenURI),
+	)
 }
 
 // SafeTransferFrom securely transfers ownership of a token from one address to another.
@@ -235,35 +266,6 @@ func GetApproved(tid grc721.TokenID) (std.Address, error) {
 //   - bool: true if the operator is approved to manage all tokens of the owner, false otherwise.
 func IsApprovedForAll(owner, operator std.Address) bool {
 	return nft.IsApprovedForAll(owner, operator)
-}
-
-// SetTokenURIByImageURI generates and sets a new token URI for a specified token ID using a random image URI.
-//
-// Parameters:
-//   - tid (grc721.TokenID): The ID of the token for which the URI will be set.
-//
-// Panics:
-//   - If the contract is halted.
-//   - If the caller is not the owner of the token.
-//   - If the token URI cannot be set.
-func SetTokenURIByImageURI(cur realm, tid grc721.TokenID) {
-	halt.AssertIsNotHaltedPosition()
-
-	tokenURI := genImageURI(generateRandInstance())
-
-	err := setTokenURI(tid, grc721.TokenURI(tokenURI))
-	if err != nil {
-		panic(err)
-	}
-
-	previousRealm := std.PreviousRealm()
-	std.Emit(
-		"SetTokenURI",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"lpTokenId", string(tid),
-		"tokenURI", string(tokenURI),
-	)
 }
 
 // Mint creates a new NFT and assigns it to the specified address (only callable by owner)
