@@ -215,7 +215,6 @@ func handleMultiSwap(
 	}
 }
 
-/* --------- common swap operation --------- */
 
 // SwapRouteParams contains all parameters needed for swap route execution
 type SwapRouteParams struct {
