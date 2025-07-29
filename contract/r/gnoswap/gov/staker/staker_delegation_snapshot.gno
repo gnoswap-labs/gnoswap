@@ -1,5 +1,3 @@
-// TODO: Change file name
-
 package staker
 
 import (
@@ -7,6 +5,7 @@ import (
 	"time"
 
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 // CleanStakerDelegationSnapshotByAdmin cleans old delegation history records.
@@ -27,6 +26,8 @@ import (
 //
 // Note: This operation is irreversible and will permanently remove historical data
 func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64) {
+	halt.AssertIsNotHaltedGovStaker()
+
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdmin(caller)
 
@@ -60,6 +61,8 @@ func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64) {
 //
 // Note: This change affects all future undelegation operations
 func SetUnDelegationLockupPeriodByAdmin(cur realm, period int64) {
+	halt.AssertIsNotHaltedGovStaker()
+
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdmin(caller)
 
@@ -68,4 +71,12 @@ func SetUnDelegationLockupPeriodByAdmin(cur realm, period int64) {
 	}
 
 	setUnDelegationLockupPeriod(period)
+
+	previousRealm := std.PreviousRealm()
+	std.Emit(
+		"SetUnDelegationLockupPeriod",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"period", formatInt(period),
+	)
 }
