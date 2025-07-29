@@ -94,7 +94,91 @@ func (g *AmountGenerator) Generate() any {
 	return amount
 }
 
+/*
+* Note:
+* While the uassert package could be used, its API is not flexible enough,
+* so made a separate assert helper function.
+ */
+
+type testHelper struct {
+	t *testing.T
+}
+
+func newTestHelper(t *testing.T) *testHelper {
+	return &testHelper{t: t}
+}
+
+// assertError checks if an error occurred when expected
+func (h *testHelper) assertError(err error, shouldFail bool, context string) {
+	if shouldFail && err == nil {
+		h.t.Errorf("%s: expected error but got none", context)
+	} else if !shouldFail && err != nil {
+		h.t.Errorf("%s: unexpected error: %v", context, err)
+	}
+}
+
+// assertPanic tests if a function panics when expected
+func (h *testHelper) assertPanic(f func(), shouldPanic bool, context string) {
+	defer func() {
+		r := recover()
+		if shouldPanic && r == nil {
+			h.t.Errorf("%s: expected panic but got none", context)
+		} else if !shouldPanic && r != nil {
+			h.t.Errorf("%s: unexpected panic: %v", context, r)
+		}
+	}()
+	f()
+}
+
+// validateParseRoutesResult checks if ParseRoutes returned expected results
+func (h *testHelper) validateParseRoutesResult(routes []string, quotes []string, numExpected int) {
+	if len(routes) != numExpected || len(quotes) != numExpected {
+		h.t.Errorf("ParseRoutes returned wrong count: expected %d, got routes=%d, quotes=%d",
+			numExpected, len(routes), len(quotes))
+	}
+}
+
+// testBoundaryValue represents a boundary test case
+type testBoundaryValue struct {
+	input       string
+	shouldPanic bool
+	shouldFail  bool
+	description string
+}
+
+// runBoundaryTests executes boundary value tests with proper error handling
+func (h *testHelper) runBoundaryTests(name string, tests []testBoundaryValue, testFunc func(string) (any, error)) {
+	for _, test := range tests {
+		h.t.Run(name+"_"+test.description, func(t *testing.T) {
+			h.assertPanic(func() {
+				_, err := testFunc(test.input)
+				if !test.shouldPanic {
+					h.assertError(err, test.shouldFail, test.description)
+				}
+			}, test.shouldPanic, test.description)
+		})
+	}
+}
+
+// generatePoolPath creates a valid pool path string
+func generatePoolPath(token0, token1 string, fee uint32) string {
+	return token0 + ":" + token1 + ":" + strconv.FormatUint(uint64(fee), 10)
+}
+
+// generateMultiPoolPath creates a multi-pool path string
+func generateMultiPoolPath(numPools int) string {
+	pools := make([]string, numPools)
+	for j := 0; j < numPools; j++ {
+		token0 := "gno.land/r/demo/token" + strconv.Itoa(j)
+		token1 := "gno.land/r/demo/token" + strconv.Itoa(j+1)
+		fee := strconv.Itoa(fuzzer.IntRange(100, 10000).Generate().(int))
+		pools[j] = token0 + ":" + token1 + ":" + fee
+	}
+	return strings.Join(pools, "*POOL*")
+}
+
 func TestFuzzParseRoutes(t *testing.T) {
+	helper := newTestHelper(t)
 	parser := &RouteParser{}
 	gen := &RouteGenerator{minRoutes: 0, maxRoutes: 10}
 	failures := 0
@@ -111,32 +195,31 @@ func TestFuzzParseRoutes(t *testing.T) {
 
 		// Empty routes should error
 		if routeStr == "" {
+			helper.assertError(err, true, "empty route string")
 			if err == nil {
 				failures++
-				t.Errorf("ParseRoutes should fail for empty route string")
 			}
 			continue
 		}
 
 		// More than 7 routes should error
 		if numRoutes > 7 {
+			helper.assertError(err, true, "too many routes")
 			if err == nil {
 				failures++
-				t.Errorf("ParseRoutes should fail for %d routes (max 7)", numRoutes)
 			}
 			continue
 		}
 
 		// Valid routes should pass
 		if numRoutes >= 1 && numRoutes <= 7 {
+			helper.assertError(err, false, "valid routes")
 			if err != nil {
 				failures++
-				t.Errorf("ParseRoutes failed for valid input: routes=%s, quotes=%s, error=%v", routeStr, quoteStr, err)
 			} else {
-				// Verify parsed results
+				helper.validateParseRoutesResult(routes, quotes, numRoutes)
 				if len(routes) != numRoutes || len(quotes) != numRoutes {
 					failures++
-					t.Errorf("ParseRoutes returned wrong count: expected %d, got routes=%d, quotes=%d", numRoutes, len(routes), len(quotes))
 				}
 			}
 		}
@@ -148,6 +231,7 @@ func TestFuzzParseRoutes(t *testing.T) {
 }
 
 func TestFuzzValidateQuoteSum(t *testing.T) {
+	helper := newTestHelper(t)
 	parser := &RouteParser{}
 
 	// Test valid quotes that sum to 100
@@ -159,9 +243,7 @@ func TestFuzzValidateQuoteSum(t *testing.T) {
 			quotes := strings.Split(quoteStr, ",")
 
 			err := parser.ValidateQuoteSum(quotes)
-			if err != nil {
-				t.Errorf("ValidateQuoteSum failed for valid quotes: %v, error: %v", quotes, err)
-			}
+			helper.assertError(err, false, "valid quotes summing to 100")
 		}
 	}
 
@@ -176,13 +258,12 @@ func TestFuzzValidateQuoteSum(t *testing.T) {
 
 	for _, quotes := range invalidQuotesTests {
 		err := parser.ValidateQuoteSum(quotes)
-		if err == nil {
-			t.Errorf("ValidateQuoteSum should fail for invalid quotes: %v", quotes)
-		}
+		helper.assertError(err, true, "invalid quotes: "+strings.Join(quotes, ","))
 	}
 }
 
 func TestFuzzSwapValidatorAmount(t *testing.T) {
+	helper := newTestHelper(t)
 	validator := &SwapValidator{}
 	gen := &AmountGenerator{minDigits: 1, maxDigits: 20, allowZero: true}
 
@@ -193,66 +274,35 @@ func TestFuzzSwapValidatorAmount(t *testing.T) {
 
 		if amountStr == "0" {
 			// Zero amounts should fail
-			if err == nil {
-				t.Errorf("amount() should fail for zero amount")
-			}
+			helper.assertError(err, true, "zero amount")
 			continue
 		}
 
 		// Positive amounts should pass
-		if err != nil {
-			t.Errorf("amount() failed for valid amount %s: %v", amountStr, err)
-		} else {
-			// Verify the amount is positive
-			if !parsedAmount.Gt(i256.Zero()) {
-				t.Errorf("amount() returned non-positive value for %s", amountStr)
-			}
+		helper.assertError(err, false, "positive amount: "+amountStr)
+		if err == nil && !parsedAmount.Gt(i256.Zero()) {
+			t.Errorf("amount() returned non-positive value for %s", amountStr)
 		}
 	}
 
 	// Test boundary values
-	boundaryTests := []struct {
-		input       string
-		shouldPanic bool
-		shouldFail  bool
-	}{
-		{"1", false, false}, // Minimum valid
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", false, false}, // Max uint256
-		{"-1", false, true}, // Negative (should fail)
-		{"0", false, false}, // Zero (allowed for amount, but not ideal)
-		{"abc", true, true}, // Non-numeric (should panic)
-		{"", true, true},    // Empty (should panic)
-		{"1.5", true, true}, // Decimal (should panic)
+	boundaryTests := []testBoundaryValue{
+		{"1", false, false, "minimum_valid"},
+		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", false, false, "max_uint256"},
+		{"-1", false, true, "negative"},
+		{"0", false, false, "zero"},
+		{"abc", true, true, "non_numeric"},
+		{"", true, true, "empty"},
+		{"1.5", true, true, "decimal"},
 	}
 
-	for _, test := range boundaryTests {
-		t.Run("boundary_"+test.input, func(t *testing.T) {
-			if test.shouldPanic {
-				// Use defer/recover to handle expected panics
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("amount() should panic for invalid value %s", test.input)
-					}
-				}()
-			}
-
-			result, err := validator.amount(test.input)
-
-			if !test.shouldPanic {
-				if test.shouldFail && err == nil {
-					t.Errorf("amount() should fail for value %s", test.input)
-				} else if !test.shouldFail && err != nil {
-					t.Errorf("amount() failed for valid value %s: %v", test.input, err)
-				} else if !test.shouldFail && result.Lt(i256.Zero()) {
-					t.Errorf("amount() returned non-positive value for %s", test.input)
-				}
-			}
-		})
-	}
+	helper.runBoundaryTests("amount", boundaryTests, func(input string) (any, error) {
+		return validator.amount(input)
+	})
 }
 
-// TestFuzzAmountLimit tests the amountLimit validation function directly
 func TestFuzzAmountLimit(t *testing.T) {
+	helper := newTestHelper(t)
 	validator := &SwapValidator{}
 	gen := &AmountGenerator{minDigits: 1, maxDigits: 20, allowZero: true}
 
@@ -263,26 +313,20 @@ func TestFuzzAmountLimit(t *testing.T) {
 
 		if amountStr == "0" {
 			// Zero limits should fail
-			if err == nil {
-				t.Errorf("amountLimit() should fail for zero limit")
-			}
+			helper.assertError(err, true, "zero limit")
 			continue
 		}
 
 		// Non-zero amounts should pass
-		if err != nil {
-			t.Errorf("amountLimit() failed for valid limit %s: %v", amountStr, err)
-		} else {
-			// Verify the amount is not zero
-			if parsedAmount.IsZero() {
-				t.Errorf("amountLimit() returned zero for %s", amountStr)
-			}
+		helper.assertError(err, false, "non-zero limit: "+amountStr)
+		if err == nil && parsedAmount.IsZero() {
+			t.Errorf("amountLimit() returned zero for %s", amountStr)
 		}
 	}
 }
 
-// TestFuzzCheckDeadline tests the checkDeadline function directly
 func TestFuzzCheckDeadline(t *testing.T) {
+	helper := newTestHelper(t)
 	currentTime := time.Now().Unix()
 
 	// Generate deadlines around current time
@@ -295,29 +339,23 @@ func TestFuzzCheckDeadline(t *testing.T) {
 
 		if deadline < currentTime {
 			// Past deadlines should fail
-			if err == nil {
-				t.Errorf("checkDeadline() should fail for past deadline %d (current: %d)", deadline, currentTime)
-			}
+			helper.assertError(err, true, "past deadline")
 		} else {
 			// Current or future deadlines should pass
-			if err != nil {
-				t.Errorf("checkDeadline() failed for valid deadline %d (current: %d): %v", deadline, currentTime, err)
-			}
+			helper.assertError(err, false, "valid deadline")
 		}
 	}
 }
 
-// TestFuzzSwapType tests the swapType validation function directly
 func TestFuzzSwapType(t *testing.T) {
+	helper := newTestHelper(t)
 	validator := &SwapValidator{}
 
 	// Valid swap types
 	validTypes := []string{"EXACT_IN", "EXACT_OUT"}
 	for _, swapTypeStr := range validTypes {
 		swapType, err := validator.swapType(swapTypeStr)
-		if err != nil {
-			t.Errorf("swapType() failed for valid type %s: %v", swapTypeStr, err)
-		}
+		helper.assertError(err, false, "valid swap type: "+swapTypeStr)
 
 		// Verify correct mapping
 		if swapTypeStr == "EXACT_IN" && swapType != ExactIn {
@@ -340,14 +378,13 @@ func TestFuzzSwapType(t *testing.T) {
 
 	for _, swapTypeStr := range invalidTypes {
 		_, err := validator.swapType(swapTypeStr)
-		if err == nil {
-			t.Errorf("swapType() should fail for invalid type: %s", swapTypeStr)
-		}
+		helper.assertError(err, true, "invalid swap type: "+swapTypeStr)
 	}
 }
 
-// TestFuzzValidateRoutesAndQuotes tests the complete validation flow
 func TestFuzzValidateRoutesAndQuotes(t *testing.T) {
+	helper := newTestHelper(t)
+
 	for i := 0; i < 1000; i++ {
 		numRoutes := fuzzer.IntRange(0, 10).Generate().(int)
 
@@ -365,24 +402,20 @@ func TestFuzzValidateRoutesAndQuotes(t *testing.T) {
 		// Verify results
 		if numRoutes == 0 || numRoutes > 7 {
 			// Should fail
-			if err == nil {
-				t.Errorf("validateRoutesAndQuotes should fail for %d routes", numRoutes)
-			}
+			helper.assertError(err, true, "invalid number of routes")
 		} else {
 			// Should pass
-			if err != nil {
-				t.Errorf("validateRoutesAndQuotes failed for valid input: routes=%d, error=%v", numRoutes, err)
-			} else {
-				if len(routes) != numRoutes || len(quotes) != numRoutes {
-					t.Errorf("validateRoutesAndQuotes returned wrong count: expected %d, got routes=%d, quotes=%d",
-						numRoutes, len(routes), len(quotes))
-				}
+			helper.assertError(err, false, "valid routes and quotes")
+			if err == nil {
+				helper.validateParseRoutesResult(routes, quotes, numRoutes)
 			}
 		}
 	}
 }
 
 func TestFuzzGetDataForSinglePath(t *testing.T) {
+	helper := newTestHelper(t)
+
 	// format: "token0:token1:fee"
 	validTokens := []string{"gno.land/r/demo/token0", "gno.land/r/demo/token1", "gno.land/r/demo/wugnot"}
 	validFees := []uint32{100, 500, 3000, 10000}
@@ -397,22 +430,16 @@ func TestFuzzGetDataForSinglePath(t *testing.T) {
 			continue // skip same token pairs
 		}
 
-		poolPath := token0 + ":" + token1 + ":" + strconv.FormatUint(uint64(fee), 10)
+		poolPath := generatePoolPath(token0, token1, fee)
 
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					t.Errorf("getDataForSinglePath panicked for valid path %s: %v", poolPath, r)
-				}
-			}()
-
+		helper.assertPanic(func() {
 			token0Out, token1Out, feeOut := getDataForSinglePath(poolPath)
 
 			if token0Out != token0 || token1Out != token1 || feeOut != fee {
 				t.Errorf("getDataForSinglePath returned wrong data for %s: got %s:%s:%d",
 					poolPath, token0Out, token1Out, feeOut)
 			}
-		}()
+		}, false, "valid path: "+poolPath)
 	}
 
 	// invalid paths
@@ -428,48 +455,21 @@ func TestFuzzGetDataForSinglePath(t *testing.T) {
 	}
 
 	for _, path := range invalidPaths {
-		func() {
-			defer func() {
-				if r := recover(); r == nil {
-					t.Errorf("getDataForSinglePath should panic for invalid path: %s", path)
-				}
-			}()
-
+		helper.assertPanic(func() {
 			getDataForSinglePath(path)
-		}()
+		}, true, "invalid path: "+path)
 	}
 }
 
 func TestFuzzGetDataForMultiPath(t *testing.T) {
-	// format: "token0:token1:fee"
-	// the function extracts pool data at the given index
+	helper := newTestHelper(t)
 
 	for i := 0; i < 100; i++ {
 		numPools := fuzzer.IntRange(1, 3).Generate().(int)
-		pools := make([]string, numPools)
-
-		for j := 0; j < numPools; j++ {
-			token0 := "gno.land/r/demo/token" + strconv.Itoa(j)
-			token1 := "gno.land/r/demo/token" + strconv.Itoa(j+1)
-			fee := strconv.Itoa(fuzzer.IntRange(100, 10000).Generate().(int))
-			pools[j] = token0 + ":" + token1 + ":" + fee
-		}
-
-		possiblePath := strings.Join(pools, "*POOL*")
+		possiblePath := generateMultiPoolPath(numPools)
 
 		for poolIdx := 0; poolIdx < 3; poolIdx++ {
-			func() {
-				defer func() {
-					if r := recover(); r != nil {
-						// should panic for this case
-						if poolIdx >= numPools {
-							return
-						}
-						t.Errorf("getDataForMultiPath panicked for valid input: path=%s, idx=%d: %v",
-							possiblePath, poolIdx, r)
-					}
-				}()
-
+			helper.assertPanic(func() {
 				token0Out, token1Out, feeOut := getDataForMultiPath(possiblePath, poolIdx)
 
 				// verify we got valid data if within range
@@ -481,12 +481,13 @@ func TestFuzzGetDataForMultiPath(t *testing.T) {
 						t.Errorf("getDataForMultiPath returned zero fee for idx=%d", poolIdx)
 					}
 				}
-			}()
+			}, poolIdx >= numPools, "pool index out of range")
 		}
 	}
 
+	// Test invalid indices
 	invalidIndices := []int{-1, 3, 100}
-	validPath := "gno.land/r/demo/token0:gno.land/r/demo/token1:500*POOL*gno.land/r/demo/token1:gno.land/r/demo/token2:3000"
+	validPath := generateMultiPoolPath(2)
 
 	for _, idx := range invalidIndices {
 		token0Out, token1Out, feeOut := getDataForMultiPath(validPath, idx)
@@ -497,49 +498,48 @@ func TestFuzzGetDataForMultiPath(t *testing.T) {
 		}
 	}
 
-	// out of bounds
-	shortPath := "gno.land/r/demo/token0:gno.land/r/demo/token1:500"
+	// Test out of bounds access
+	shortPath := generatePoolPath("gno.land/r/demo/token0", "gno.land/r/demo/token1", 500)
 
 	for poolIdx := 1; poolIdx <= 2; poolIdx++ {
-		func() {
-			defer func() {
-				if r := recover(); r == nil {
-					t.Errorf("getDataForMultiPath should panic for out of bounds access: path has 1 pool, accessing index %d", poolIdx)
-				}
-			}()
-
+		helper.assertPanic(func() {
 			getDataForMultiPath(shortPath, poolIdx)
-		}()
+		}, true, "out of bounds access")
 	}
 }
 
 func TestFuzzAssertHopsInRange(t *testing.T) {
-	// number of hops
+	helper := newTestHelper(t)
 	gen := fuzzer.IntRange(-10, 10)
 
 	for i := 0; i < 100; i++ {
 		hops := gen.Generate().(int)
+		isValid := hops >= 1 && hops <= 3
 
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					if hops >= 1 && hops <= 3 {
-						t.Errorf("assertHopsInRange panicked for valid hop count %d: %v", hops, r)
-					}
-				} else {
-					if hops < 1 || hops > 3 {
-						t.Errorf("assertHopsInRange should panic for invalid hop count %d", hops)
-					}
-				}
-			}()
-
+		helper.assertPanic(func() {
 			assertHopsInRange(hops)
-		}()
+		}, !isValid, "hop count validation")
 	}
 }
 
 func TestFuzzSwapValidatorSlippage(t *testing.T) {
+	helper := newTestHelper(t)
 	validator := &SwapValidator{}
+
+	// Test helper for slippage validation
+	testSlippage := func(swapType SwapType, amountIn, amountOut, limit *u256.Uint) {
+		err := validator.slippage(swapType, amountIn, amountOut, limit)
+
+		shouldFail := false
+		if swapType == ExactIn {
+			shouldFail = amountOut.Lt(limit)
+		} else {
+			shouldFail = amountIn.Gt(limit)
+		}
+
+		context := "slippage validation for " + string(swapType)
+		helper.assertError(err, shouldFail, context)
+	}
 
 	// ExactIn slippage validation
 	for i := 0; i < 100; i++ {
@@ -547,21 +547,7 @@ func TestFuzzSwapValidatorSlippage(t *testing.T) {
 		amountOut := u256.NewUint(uint64(fuzzer.IntRange(50, 10000).Generate().(int)))
 		limit := u256.NewUint(uint64(fuzzer.IntRange(1, 10000).Generate().(int)))
 
-		err := validator.slippage(ExactIn, amountIn, amountOut, limit)
-
-		if amountOut.Lt(limit) {
-			// Should fail when output is less than limit
-			if err == nil {
-				t.Errorf("slippage validation should fail for ExactIn when output < limit: out=%s, limit=%s",
-					amountOut.ToString(), limit.ToString())
-			}
-		} else {
-			// Should pass when output >= limit
-			if err != nil {
-				t.Errorf("slippage validation failed for valid ExactIn: out=%s, limit=%s, err=%v",
-					amountOut.ToString(), limit.ToString(), err)
-			}
-		}
+		testSlippage(ExactIn, amountIn, amountOut, limit)
 	}
 
 	// ExactOut slippage validation
@@ -570,25 +556,12 @@ func TestFuzzSwapValidatorSlippage(t *testing.T) {
 		amountOut := u256.NewUint(uint64(fuzzer.IntRange(50, 10000).Generate().(int)))
 		limit := u256.NewUint(uint64(fuzzer.IntRange(1, 10000).Generate().(int)))
 
-		err := validator.slippage(ExactOut, amountIn, amountOut, limit)
-
-		if amountIn.Gt(limit) {
-			// Should fail when input is greater than limit
-			if err == nil {
-				t.Errorf("slippage validation should fail for ExactOut when input > limit: in=%s, limit=%s",
-					amountIn.ToString(), limit.ToString())
-			}
-		} else {
-			// Should pass when input <= limit
-			if err != nil {
-				t.Errorf("slippage validation failed for valid ExactOut: in=%s, limit=%s, err=%v",
-					amountIn.ToString(), limit.ToString(), err)
-			}
-		}
+		testSlippage(ExactOut, amountIn, amountOut, limit)
 	}
 }
 
 func TestFuzzSwapValidatorExactOutAmount(t *testing.T) {
+	helper := newTestHelper(t)
 	validator := &SwapValidator{}
 
 	for i := 0; i < 100; i++ {
@@ -599,20 +572,9 @@ func TestFuzzSwapValidatorExactOutAmount(t *testing.T) {
 		specifiedAmount := u256.NewUint(specifiedVal)
 
 		err := validator.exactOutAmount(resultAmount, specifiedAmount)
+		shouldFail := resultAmount.Lt(specifiedAmount)
 
-		if resultAmount.Lt(specifiedAmount) {
-			// Should fail when result < specified
-			if err == nil {
-				t.Errorf("exactOutAmount should fail when result < specified: result=%d, specified=%d",
-					resultVal, specifiedVal)
-			}
-		} else {
-			// Should pass when result >= specified
-			if err != nil {
-				t.Errorf("exactOutAmount failed for valid amounts: result=%d, specified=%d, err=%v",
-					resultVal, specifiedVal, err)
-			}
-		}
+		helper.assertError(err, shouldFail, "exactOutAmount validation")
 	}
 }
 
