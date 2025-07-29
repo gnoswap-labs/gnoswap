@@ -18,6 +18,44 @@ func init() {
 	allowedTokens = defaultAllowed
 }
 
+// AddToken adds a new token path to the list of allowed tokens
+// Only the admin can add a new token.
+//
+// Parameters:
+//   - tokenPath (string): The path of the token to add
+//
+// Panics:
+//   - If the caller is not the admin
+func AddToken(cur realm, tokenPath string) {
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedStaker()
+	access.AssertIsAdmin(caller)
+
+	if err := modifyTokenList(tokenPath, nil, addTokenExecutor); err != nil {
+		panic(err.Error())
+	}
+}
+
+// RemoveToken removes a token path from the list of allowed tokens.
+// Only the admin  can remove a token.
+//
+// Default tokens can not be removed.
+//
+// Parameters:
+//   - tokenPath (string): The path of the token to remove
+//
+// Panics:
+//   - If the caller is not the admin
+func RemoveToken(cur realm, tokenPath string) {
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedStaker()
+	access.AssertIsAdmin(caller)
+
+	if err := modifyTokenList(tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
+		panic(err.Error())
+	}
+}
+
 // TokenValidator is a function type that validates a token
 type TokenValidator func(tokenPath string) error
 
@@ -66,42 +104,4 @@ func removeTokenValidator(tokenPath string) error {
 	}
 
 	return nil
-}
-
-// AddToken adds a new token path to the list of allowed tokens
-// Only the admin can add a new token.
-//
-// Parameters:
-//   - tokenPath (string): The path of the token to add
-//
-// Panics:
-//   - If the caller is not the admin
-func AddToken(cur realm, tokenPath string) {
-	caller := std.PreviousRealm().Address()
-	halt.AssertIsNotHaltedStaker()
-	access.AssertIsAdmin(caller)
-
-	if err := modifyTokenList(tokenPath, nil, addTokenExecutor); err != nil {
-		panic(err.Error())
-	}
-}
-
-// RemoveToken removes a token path from the list of allowed tokens.
-// Only the admin  can remove a token.
-//
-// Default tokens can not be removed.
-//
-// Parameters:
-//   - tokenPath (string): The path of the token to remove
-//
-// Panics:
-//   - If the caller is not the admin
-func RemoveToken(cur realm, tokenPath string) {
-	caller := std.PreviousRealm().Address()
-	halt.AssertIsNotHaltedStaker()
-	access.AssertIsAdmin(caller)
-
-	if err := modifyTokenList(tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
-		panic(err.Error())
-	}
 }

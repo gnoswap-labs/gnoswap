@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"math"
 	"testing"
 )
 
@@ -39,7 +40,7 @@ func TestHandleUnstakingFee(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			unstakingFee = uint64(tc.expectedFee) // Set the fee globally for the test
+			unstakingFee = tc.expectedFee // Set the fee globally for the test
 
 			netAmount, _, err := handleUnStakingFee(tc.tokenPath, tc.amount, tc.internal, tc.positionId, tc.poolPath)
 			if err != nil {
@@ -56,11 +57,14 @@ func TestHandleUnstakingFee(t *testing.T) {
 func TestSetUnstakingFee(t *testing.T) {
 	tests := []struct {
 		name        string
-		fee         uint64
+		fee         int64
 		shouldPanic bool
 	}{
 		{name: "Valid fee", fee: 500, shouldPanic: false},
 		{name: "Excessive fee", fee: 10001, shouldPanic: true},
+		{name: "Negative fee", fee: -1, shouldPanic: true},
+		// int64 overflow fee -> become negative fee
+		{name: "Int64 overflow fee", fee: math.MaxInt64, shouldPanic: true},
 	}
 
 	for _, tc := range tests {

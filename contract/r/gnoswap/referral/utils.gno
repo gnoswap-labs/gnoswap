@@ -11,31 +11,28 @@ import (
 	_ "gno.land/r/gnoswap/v1/rbac"
 )
 
-// validCallers is a lookup table of addresses that are authorized to modify referral data.
+// validCallerRoles is a list of roles that are authorized to modify referral data.
 // This includes governance contracts, router, position manager, and staker contracts.
-var validCallers = map[std.Address]bool{
-	getAddress(prabc.ROLE_GOVERNANCE.String()): true,
-	getAddress(prabc.ROLE_GOV_STAKER.String()): true,
-	getAddress(prabc.ROLE_ROUTER.String()):     true,
-	getAddress(prabc.ROLE_POSITION.String()):   true,
-	getAddress(prabc.ROLE_STAKER.String()):     true,
-	getAddress(prabc.ROLE_LAUNCHPAD.String()):  true,
+var validCallerRoles = []string{
+	prabc.ROLE_GOVERNANCE.String(),
+	prabc.ROLE_GOV_STAKER.String(),
+	prabc.ROLE_ROUTER.String(),
+	prabc.ROLE_POSITION.String(),
+	prabc.ROLE_STAKER.String(),
+	prabc.ROLE_LAUNCHPAD.String(),
 }
 
-// isValidCaller checks if the given address has permission to modify referral data.
-// Only specific pre-authorized addresses defined in validCallers map are allowed to
-// register, update, or remove referrals.
+// isValidCaller checks if the caller address has permission to modify referral data.
+// Only addresses with specific roles (governance, router, position manager, staker, etc.)
+// defined in validCallerRoles are allowed to register, update, or remove referrals.
 func isValidCaller(caller std.Address) error {
-	if validCallers[caller] {
-		return nil
-	}
-	return ufmt.Errorf("unauthorized caller: %s", caller)
-}
+	roleAddresses := access.GetRoleAddresses()
 
-func getAddress(role string) std.Address {
-	addr, ok := access.GetAddress(role)
-	if !ok {
-		panic(ufmt.Errorf("address not found for role: %s", role))
+	for _, role := range validCallerRoles {
+		if roleAddresses[role] == caller {
+			return nil
+		}
 	}
-	return addr
+
+	return ufmt.Errorf("unauthorized caller: %s", caller)
 }
