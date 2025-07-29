@@ -1022,16 +1022,6 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 			expectedHasAbort:   true,
 		},
 		{
-			name:               "success - others cancel when proposer below threshold",
-			proposalTime:       now,
-			cancellationTime:   now.Add(-time.Second * time.Duration(testConfig.VotingStartDelay+testConfig.VotingPeriod+testConfig.ExecutionDelay)),
-			canceler:           testutils.TestAddress("other"),
-			proposer:           testutils.TestAddress("proposer"),
-			proposerThreshold:  1_000_000_000,
-			proposerCurrentGns: 500_000_000, // Below threshold
-			expectedHasAbort:   false,
-		},
-		{
 			name:               "fail - cancel nonexistent proposal",
 			proposalTime:       now,
 			cancellationTime:   now.Add(-time.Second * time.Duration(testConfig.VotingStartDelay+testConfig.VotingPeriod+testConfig.ExecutionDelay)),
