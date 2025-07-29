@@ -6,7 +6,6 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/halt"
 
@@ -23,16 +22,14 @@ func MintAndStake(
 	fee uint32,
 	tickLower int32,
 	tickUpper int32,
-	amount0Desired string, // *u256.Uint
-	amount1Desired string, // *u256.Uint
-	amount0Min string, // *u256.Uint
-	amount1Min string, // *u256.Uint
+	amount0Desired string,
+	amount1Desired string,
+	amount0Min string,
+	amount1Min string,
 	deadline int64,
 	referrer string,
 ) (uint64, string, string, string, string) {
 	halt.AssertIsNotHaltedStaker()
-
-	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 
 	// if one click native
 	if token0 == GNOT || token1 == GNOT {
@@ -49,7 +46,6 @@ func MintAndStake(
 		}
 
 		// send it over to position to wrap
-		positionAddr := getRoleAddress(prbac.ROLE_POSITION)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(stakerAddr, positionAddr, std.Coins{{Denom: "ugnot", Amount: ugnotSent}})
 	}
@@ -75,7 +71,7 @@ func MintAndStake(
 	toTid := grc721.TokenID(ufmt.Sprintf("%d", positionId))
 	gnft.SetTokenURIByImageURI(cross, toTid)
 
-	poolPath, _, _ := StakeToken(cur, positionId, "") // poolPath, stakedAmount0, stakedAmount1
+	poolPath, _, _ := StakeToken(cur, positionId, "")
 
 	return positionId, liquidity, amount0, amount1, poolPath
 }
