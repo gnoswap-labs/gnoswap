@@ -7,15 +7,13 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-
-	"gno.land/p/gnoswap/consts"
 )
 
 var (
 	// Q128 is 2^128
-	q128 = u256.MustFromDecimal(consts.Q128)
+	q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")
 	// Q192 is 2^192
-	q192 = u256.MustFromDecimal("6277101735386680763835789423207666416102355444464034512895")
+	q192 = u256.MustFromDecimal("6277101735386680763835789423207666416102355444464034512896")
 
 	// pools is the global pool storage
 	pools *Pools
@@ -189,7 +187,7 @@ func (self *Pool) CurrentStakedLiquidity(currentHeight int64) *u256.Uint {
 
 // IsExternallyIncentivizedPool returns true if the pool has any external incentives.
 func (self *Pool) IsExternallyIncentivizedPool() bool {
-	return self.incentives.byTime.Size() != 0
+	return self.incentives.incentives.Size() > 0
 }
 
 // Get the latest reward in [0, currentHeight] range.

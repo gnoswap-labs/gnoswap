@@ -11,19 +11,29 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+
+	prbac "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 )
 
+const (
+	INT64_MAX int64 = 9223372036854775807
+
+	MIN_PRICE string = "4295128740"                                        // MIN_SQRT_RATIO + 1
+	MAX_PRICE string = "1461446703485210103287273052203988822378723970341" // MAX_SQRT_RATIO - 1
+)
+
 var (
-	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm    = std.NewUserRealm(adminAddr)
-	poolAddr, _   = access.GetAddress(access.ROLE_POOL)
-	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
+	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
+	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 	routerRealm   = std.NewUserRealm(routerAddr)
 
 	user1Addr  = testutils.TestAddress("user1")
@@ -87,10 +97,10 @@ func initPoolAndUsers() {
 
 func mintUser1Position() {
 	testing.SetRealm(user1Realm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	baz.Approve(cross, poolAddr, consts.INT64_MAX)
-	bar.Approve(cross, routerAddr, consts.INT64_MAX)
-	baz.Approve(cross, routerAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	baz.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross, routerAddr, INT64_MAX)
+	baz.Approve(cross, routerAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for user1")
 	positionId, liquidity, amount0, amount1 := position.Mint(
@@ -118,10 +128,10 @@ func mintUser1Position() {
 
 func mintUser2Position() {
 	testing.SetRealm(user2Realm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	baz.Approve(cross, poolAddr, consts.INT64_MAX)
-	bar.Approve(cross, routerAddr, consts.INT64_MAX)
-	baz.Approve(cross, routerAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	baz.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross, routerAddr, INT64_MAX)
+	baz.Approve(cross, routerAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for user2")
 	positionId, liquidity, amount0, amount1 := position.Mint(
@@ -149,10 +159,10 @@ func mintUser2Position() {
 
 func executeSwaps() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	baz.Approve(cross, poolAddr, consts.INT64_MAX)
-	bar.Approve(cross, routerAddr, consts.INT64_MAX)
-	baz.Approve(cross, routerAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	baz.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross, routerAddr, INT64_MAX)
+	baz.Approve(cross, routerAddr, INT64_MAX)
 
 	testing.SetRealm(routerRealm)
 
@@ -165,7 +175,7 @@ func executeSwaps() {
 		adminAddr,
 		true,
 		"10000000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 	ufmt.Printf("[EXPECTED] Swap1 amount0 should be %s\n", amount0)
@@ -180,7 +190,7 @@ func executeSwaps() {
 		adminAddr,
 		false,
 		"10000000",
-		consts.MAX_PRICE,
+		MAX_PRICE,
 		adminAddr,
 	)
 	ufmt.Printf("[EXPECTED] Swap2 amount0 should be %s\n", amount0)
@@ -189,8 +199,8 @@ func executeSwaps() {
 
 func collectUser1Fees() {
 	testing.SetRealm(user1Realm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	baz.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	baz.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees for user1")
 	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
@@ -200,8 +210,8 @@ func collectUser1Fees() {
 
 func collectUser2Fees() {
 	testing.SetRealm(user2Realm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	baz.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	baz.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees for user2")
 	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 2, false)

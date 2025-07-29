@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -30,12 +30,13 @@ const (
 
 // Variables for test addresses and realms
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
-	adminRealm   = std.NewUserRealm(adminAddr)
-	posRealm     = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm     = std.NewCodeRealm(consts.ROUTER_PATH)
-	positionAddr = consts.POSITION_ADDR
-	poolAddr     = consts.POOL_ADDR
+	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm      = std.NewUserRealm(adminAddr)
+	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
+	posRealm        = std.NewUserRealm(positionAddr)
+	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
+	rouRealm        = std.NewUserRealm(routerAddr)
+	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
 // Token paths
@@ -49,6 +50,8 @@ var (
 	tickLower       = int32(9000)
 	tickUpper       = int32(11000)
 	liquidityExpect = "100000000000"
+
+	MIN_PRICE string = "4295128740"
 )
 
 // DrySwap vs Actual Swap Comparison Test
@@ -115,7 +118,7 @@ func testDrySwapVsActualSwap(t *testing.T) {
 		FeeTier500,
 		true, // zeroForOne
 		amountSpecified,
-		consts.MIN_PRICE,
+		MIN_PRICE,
 	)
 
 	println("[INFO] DrySwap prediction completed")
@@ -139,7 +142,7 @@ func testDrySwapVsActualSwap(t *testing.T) {
 		adminAddr,
 		true, // zeroForOne
 		amountSpecified,
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 

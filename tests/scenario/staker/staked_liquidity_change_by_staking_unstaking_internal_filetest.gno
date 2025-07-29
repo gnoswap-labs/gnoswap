@@ -1,4 +1,4 @@
-// staked liquidity change by staking/unstaking internal incentive scenario
+// staked liquidity change by staking and unstaking (internal rewards) scenario test
 
 // PKGPATH: gno.land/r/gnoswap/v1/main
 
@@ -12,16 +12,17 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/demo/wugnot"
 
 	"gno.land/r/gnoswap/v1/access"
 
-	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
+
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -29,73 +30,61 @@ import (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	wugnotAddr = consts.WUGNOT_ADDR
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 
 	gnsPath    = "gno.land/r/gnoswap/v1/gns"
 	wugnotPath = "gno.land/r/demo/wugnot"
 
 	fee3000 uint32 = 3000
 
-	max_timeout int64 = 9999999999
-
-	poolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
+	maxTimeout int64 = 9999999999
+	maxInt64   int64 = 9223372036854775807
 )
 
 func main() {
-	println("[SCENARIO] 1. Initialize account and emission")
-	initAccountAndEmission()
+	println("[SCENARIO] 1. Initialize with default settings")
+	initializeWithDefaults()
 	println()
 
-	println("[SCENARIO] 2. Create pool")
+	println("[SCENARIO] 2. Create gnot:gns:3000 pool")
 	createPool()
 	println()
 
-	println("[SCENARIO] 3. Mint wugnot gns position 01")
-	mintPosition01()
+	println("[SCENARIO] 3. Mint and stake position 01")
+	mintAndStakePosition01()
 	println()
 
-	println("[SCENARIO] 4. Mint wugnot gns position 02")
-	mintPosition02()
+	println("[SCENARIO] 4. Mint and stake position 02")
+	mintAndStakePosition02()
 	println()
 
-	println("[SCENARIO] 5. Stake position 01")
-	testing.SkipHeights(1)
-	stakePosition(1)
+	println("[SCENARIO] 5. Collect rewards for both positions")
+	collectRewardsBothPositions()
 	println()
 
-	println("[SCENARIO] 6. Stake position 02")
-	testing.SkipHeights(1)
-	stakePosition(2)
+	println("[SCENARIO] 6. Unstake position 02")
+	unstakePosition02()
 	println()
 
-	println("[SCENARIO] 7. Collect reward")
-	collectReward(1)
-	collectReward(2)
-	println()
-
-	println("[SCENARIO] 8. Unstake position")
-	unstakePosition(1)
-	unstakePosition(2)
-	println()
+	println("[SCENARIO] 7. Collect rewards after unstaking")
+	collectRewardsAfterUnstaking()
 }
 
-func initAccountAndEmission() {
-	println("[INFO] send coins to admin")
+func initializeWithDefaults() {
 	testing.SetRealm(adminRealm)
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 
-	println("[INFO] wrap gnot to wugnot")
-	testing.SetRealm(adminRealm)
+	println("[INFO] prepare wugnot by depositing ugnot")
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
 	testing.SetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}})
@@ -107,119 +96,188 @@ func initAccountAndEmission() {
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
-	emission.RegisterGnsChangeCallback(cross)
 }
 
 func createPool() {
-	println("[INFO] set pool creation fee to 0")
 	testing.SetRealm(adminRealm)
+
+	println("[INFO] set pool creation fee to 0")
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
 
-	println("[INFO] create pool gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000 at tick 0")
-	testing.SetRealm(adminRealm)
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminAddr, poolAddr, std.Coins{{"ugnot", 1000000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 1000000}})
+	testing.SkipHeights(1)
+
+	println("[INFO] create wugnot:gns:3000 pool")
 	pl.CreatePool(
 		cross,
 		wugnotPath,
 		gnsPath,
 		fee3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(), // 79228162514264337593543950337
+		common.TickMathGetSqrtRatioAtTick(0).ToString(), // price ratio 1:1
 	)
+
+	ufmt.Printf("[EXPECTED] pool created with price ratio 1:1\n")
 }
 
-func mintPosition01() {
+func mintAndStakePosition01() {
 	testing.SetRealm(adminRealm)
 
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
+	println("[INFO] approve tokens for position 01")
+	wugnot.Approve(cross, poolAddr, maxInt64)
+	gns.Approve(cross, poolAddr, maxInt64)
 
-	println("[INFO] mint in-range position 01 (tick range: -60 ~ 60, requested amount: 1000000, 1000000)")
-	pn.Mint(
+	testing.SkipHeights(1)
+
+	println("[INFO] mint position 01 (tick range: -60 ~ 60)")
+	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		wugnotPath,
 		gnsPath,
 		fee3000,
 		int32(-60),
 		int32(60),
-		"1000000",
-		"1000000",
-		"1",
-		"1",
-		max_timeout,
+		"100",
+		"100",
+		"0",
+		"0",
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
 	)
+
+	ufmt.Printf("[EXPECTED] position 01 - ID: %d, liquidity: %s\n", lpTokenId, liquidity)
+	ufmt.Printf("[EXPECTED] amounts - wugnot: %s, gns: %s\n", amount0, amount1)
+
+	println("[INFO] approve NFT to staker and stake position 01")
+	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
+	sr.StakeToken(cross, 1, "")
+
+	ufmt.Printf("[EXPECTED] position 01 staked\n")
 }
 
-func mintPosition02() {
+func mintAndStakePosition02() {
 	testing.SetRealm(adminRealm)
 
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
+	println("[INFO] approve tokens for position 02")
+	wugnot.Approve(cross, poolAddr, maxInt64)
+	gns.Approve(cross, poolAddr, maxInt64)
 
-	println("[INFO] mint in-range position 02 (tick range: -60 ~ 60, requested amount: 1000000, 1000000)")
-	pn.Mint(
+	testing.SkipHeights(1)
+
+	println("[INFO] mint position 02 (tick range: -60 ~ 60)")
+	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		wugnotPath,
 		gnsPath,
 		fee3000,
 		int32(-60),
 		int32(60),
-		"1000000",
-		"1000000",
-		"1",
-		"1",
-		max_timeout,
+		"100",
+		"100",
+		"0",
+		"0",
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
 	)
+
+	ufmt.Printf("[EXPECTED] position 02 - ID: %d, liquidity: %s\n", lpTokenId, liquidity)
+	ufmt.Printf("[EXPECTED] amounts - wugnot: %s, gns: %s\n", amount0, amount1)
+
+	println("[INFO] approve NFT to staker and stake position 02")
+	gnft.Approve(cross, stakerAddr, positionIdFrom(2))
+	sr.StakeToken(cross, 2, "")
+	testing.SkipHeights(1)
+
+	ufmt.Printf("[EXPECTED] position 02 staked\n")
 }
 
-func stakePosition(positionId uint64) {
+func collectRewardsBothPositions() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] stake position", positionId)
-	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
-	sr.StakeToken(cross, positionId, "")
-}
+	println("[INFO] clear any accumulated rewards first")
+	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 2, false)
 
-func unstakePosition(positionId uint64) {
-	testing.SetRealm(adminRealm)
-	sr.CollectReward(cross, positionId, false)
+	testing.SkipHeights(1)
+
+	println("[INFO] collect reward for position 01")
 	beforeGns := gns.BalanceOf(adminUser)
-
-	testing.SkipHeights(1)
-
-	ufmt.Printf("[INFO] unstake position %d with collected reward\n", positionId)
-	sr.UnStakeToken(cross, positionId, false)
-
+	sr.CollectReward(cross, 1, false)
 	afterGns := gns.BalanceOf(adminUser)
-	diff := afterGns - beforeGns
+	reward1 := afterGns - beforeGns
 
-	ufmt.Printf("[EXPECTED] position %d reward collected: GNS=%d\n", positionId, diff)
+	ufmt.Printf("[EXPECTED] position 01 reward: %d\n", reward1)
+
+	// Expected calculation: 10702054 * 50% * 30% = 1605307
+	if !isInErrorRange(uint64(reward1), 1605307) {
+		ufmt.Printf("[WARNING] expected around 1605307, got %d\n", reward1)
+	}
+
+	println("[INFO] collect reward for position 02")
+	beforeGns = gns.BalanceOf(adminUser)
+	sr.CollectReward(cross, 2, false)
+	afterGns = gns.BalanceOf(adminUser)
+	reward2 := afterGns - beforeGns
+
+	ufmt.Printf("[EXPECTED] position 02 reward: %d\n", reward2)
+
+	// Both positions should get equal rewards as they have same liquidity
+	if !isInErrorRange(uint64(reward2), 1605307) {
+		ufmt.Printf("[WARNING] expected around 1605307, got %d\n", reward2)
+	}
 }
 
-func collectReward(positionId uint64) {
+func unstakePosition02() {
 	testing.SetRealm(adminRealm)
 
-	sr.CollectReward(cross, positionId, false)
+	println("[INFO] unstake position 02")
+	sr.UnStakeToken(cross, 2, false)
 
-	println("[INFO] collect reward for position", positionId)
-	oldGns := gns.BalanceOf(adminUser)
+	owner := gnft.MustOwnerOf(positionIdFrom(2))
+	ufmt.Printf("[EXPECTED] position 02 owner after unstaking: %s\n", owner)
 
+	if owner != adminAddr {
+		panic("position 02 should be returned to admin after unstaking")
+	}
+}
+
+func collectRewardsAfterUnstaking() {
+	testing.SetRealm(adminRealm)
+
+	println("[INFO] collect reward for position 01 after position 02 unstaked")
+	beforeGns := gns.BalanceOf(adminUser)
 	testing.SkipHeights(1)
+	sr.CollectReward(cross, 1, false)
+	afterGns := gns.BalanceOf(adminUser)
+	reward := afterGns - beforeGns
 
-	sr.CollectReward(cross, positionId, false)
+	ufmt.Printf("[EXPECTED] position 01 reward after unstaking pos 02: %d\n", reward)
 
-	newGns := gns.BalanceOf(adminUser)
+	// Now position 01 should get full reward: 10702054 * 30% = 3210615
+	if !isInErrorRange(uint64(reward), 3210615) {
+		ufmt.Printf("[WARNING] expected around 3210615, got %d\n", reward)
+	}
 
-	diffGns := newGns - oldGns
+	println("[INFO] position 01 now receives full rewards since position 02 is unstaked")
+}
 
-	ufmt.Printf("[EXPECTED] position %d reward collected: GNS=%d\n", positionId, diffGns)
+func isInErrorRange(actual, expected uint64) bool {
+	diff := uint64(0)
+	if actual > expected {
+		diff = actual - expected
+	} else {
+		diff = expected - actual
+	}
+
+	// Allow 1% error margin
+	errorMargin := expected / 100
+	if errorMargin == 0 {
+		errorMargin = 1
+	}
+
+	return diff <= errorMargin
 }
 
 func positionIdFrom(positionId any) grc721.TokenID {
@@ -242,36 +300,44 @@ func positionIdFrom(positionId any) grc721.TokenID {
 }
 
 // Output:
-// [SCENARIO] 1. Initialize account and emission
-// [INFO] send coins to admin
-// [INFO] wrap gnot to wugnot
+// [SCENARIO] 1. Initialize with default settings
+// [INFO] prepare wugnot by depositing ugnot
 // [INFO] set unstaking fee to 0
 // [INFO] register gns change callback
 //
-// [SCENARIO] 2. Create pool
+// [SCENARIO] 2. Create gnot:gns:3000 pool
 // [INFO] set pool creation fee to 0
-// [INFO] create pool gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000 at tick 0
+// [INFO] create wugnot:gns:3000 pool
+// [EXPECTED] pool created with price ratio 1:1
 //
-// [SCENARIO] 3. Mint wugnot gns position 01
-// [INFO] mint in-range position 01 (tick range: -60 ~ 60, requested amount: 1000000, 1000000)
+// [SCENARIO] 3. Mint and stake position 01
+// [INFO] approve tokens for position 01
+// [INFO] mint position 01 (tick range: -60 ~ 60)
+// [EXPECTED] position 01 - ID: 1, liquidity: 33385
+// [EXPECTED] amounts - wugnot: 100, gns: 100
+// [INFO] approve NFT to staker and stake position 01
+// [EXPECTED] position 01 staked
 //
-// [SCENARIO] 4. Mint wugnot gns position 02
-// [INFO] mint in-range position 02 (tick range: -60 ~ 60, requested amount: 1000000, 1000000)
+// [SCENARIO] 4. Mint and stake position 02
+// [INFO] approve tokens for position 02
+// [INFO] mint position 02 (tick range: -60 ~ 60)
+// [EXPECTED] position 02 - ID: 2, liquidity: 33385
+// [EXPECTED] amounts - wugnot: 100, gns: 100
+// [INFO] approve NFT to staker and stake position 02
+// [EXPECTED] position 02 staked
 //
-// [SCENARIO] 5. Stake position 01
-// [INFO] stake position 1
+// [SCENARIO] 5. Collect rewards for both positions
+// [INFO] clear any accumulated rewards first
+// [INFO] collect reward for position 01
+// [EXPECTED] position 01 reward: 1605307
+// [INFO] collect reward for position 02
+// [EXPECTED] position 02 reward: 1605307
 //
-// [SCENARIO] 6. Stake position 02
-// [INFO] stake position 2
+// [SCENARIO] 6. Unstake position 02
+// [INFO] unstake position 02
+// [EXPECTED] position 02 owner after unstaking: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
 //
-// [SCENARIO] 7. Collect reward
-// [INFO] collect reward for position 1
-// [EXPECTED] position 1 reward collected: GNS=1605307
-// [INFO] collect reward for position 2
-// [EXPECTED] position 2 reward collected: GNS=1605307
-//
-// [SCENARIO] 8. Unstake position
-// [INFO] unstake position 1 with collected reward
-// [EXPECTED] position 1 reward collected: GNS=1605307
-// [INFO] unstake position 2 with collected reward
-// [EXPECTED] position 2 reward collected: GNS=3210615
+// [SCENARIO] 7. Collect rewards after unstaking
+// [INFO] collect reward for position 01 after position 02 unstaked
+// [EXPECTED] position 01 reward after unstaking pos 02: 3210615
+// [INFO] position 01 now receives full rewards since position 02 is unstaked

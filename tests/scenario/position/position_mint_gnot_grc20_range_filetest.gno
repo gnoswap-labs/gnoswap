@@ -11,7 +11,9 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+
+	prbac "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -20,11 +22,18 @@ import (
 	"gno.land/r/gnoswap/v1/position"
 )
 
+const (
+	INT64_MAX int64  = 9223372036854775807
+	MIN_PRICE string = "4295128740"
+
+	WUGNOT_ADDR std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+)
+
 var (
-	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm    = std.NewUserRealm(adminAddr)
-	poolAddr, _   = access.GetAddress(access.ROLE_POOL)
-	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
+	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
+	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 	routerRealm   = std.NewUserRealm(routerAddr)
 
 	aliceAddr  = testutils.TestAddress("alice")
@@ -84,17 +93,17 @@ func initPool() {
 	testing.IssueCoins(adminAddr, mintedGnotCoin)
 
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, std.Coins{{"ugnot", defaultTokenAmount * 3}})
+	banker.SendCoins(adminAddr, WUGNOT_ADDR, std.Coins{{"ugnot", defaultTokenAmount * 3}})
 	testing.SetOriginSend(std.Coins{{"ugnot", defaultTokenAmount * 3}})
 	wugnot.Deposit(cross)
 
 	wugnot.Transfer(cross, aliceAddr, defaultTokenAmount)
 
-	banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, distributedGnotCoin)
+	banker.SendCoins(adminAddr, WUGNOT_ADDR, distributedGnotCoin)
 	banker.SendCoins(adminAddr, aliceAddr, distributedGnotCoin)
 
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
+	wugnot.Approve(cross, poolAddr, INT64_MAX)
+	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Printf("[INFO] Initial GNS balance of Alice: %d\n", gns.BalanceOf(aliceAddr))
 	ufmt.Printf("[INFO] Initial WUGNOT balance of Alice: %d\n", wugnot.BalanceOf(aliceAddr))
@@ -111,8 +120,8 @@ func initPool() {
 
 func mintInRangePosition() {
 	testing.SetRealm(aliceRealm)
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
+	wugnot.Approve(cross, poolAddr, INT64_MAX)
+	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting in-range position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
@@ -150,8 +159,8 @@ func checkInRangePosition() {
 
 func mintOutRangePosition() {
 	testing.SetRealm(aliceRealm)
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
+	wugnot.Approve(cross, poolAddr, INT64_MAX)
+	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting out-range position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
@@ -189,8 +198,8 @@ func checkOutRangePosition() {
 
 func executeSwap() {
 	testing.SetRealm(adminRealm)
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
+	wugnot.Approve(cross, poolAddr, INT64_MAX)
+	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	testing.SetRealm(routerRealm)
 	ufmt.Println("[INFO] Executing swap to test ranges")
@@ -202,7 +211,7 @@ func executeSwap() {
 		adminAddr,
 		true,
 		"10000000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 

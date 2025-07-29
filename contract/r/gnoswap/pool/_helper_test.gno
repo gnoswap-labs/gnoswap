@@ -15,12 +15,15 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
-	"gno.land/p/gnoswap/consts"
+
+	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/p/demo/uassert"
+
+	_ "gno.land/r/gnoswap/v1/rbac" // initialize rbac package
 )
 
 const (
@@ -56,20 +59,30 @@ var (
 )
 
 var (
-	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
-	devOpsAddr, _ = access.GetAddress(access.ROLE_DEVOPS)
+	adminAddr, _  = access.GetAddress(prabc.ROLE_ADMIN.String())
+	devOpsAddr, _ = access.GetAddress(prabc.ROLE_DEVOPS.String())
 
-	govAddr, _      = access.GetAddress(access.ROLE_GOVERNANCE)
-	stakerAddr, _   = access.GetAddress(access.ROLE_STAKER)
-	emissionAddr, _ = access.GetAddress(access.ROLE_EMISSION)
+	govAddr, _      = access.GetAddress(prabc.ROLE_GOVERNANCE.String())
+	stakerAddr, _   = access.GetAddress(prabc.ROLE_STAKER.String())
+	emissionAddr, _ = access.GetAddress(prabc.ROLE_EMISSION.String())
+
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 
 	alice      = testutils.TestAddress("alice")
 	adminRealm = std.NewUserRealm(adminAddr)
-	posRealm   = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
 
-	// addresses used in tests
+	posPath  = "gno.land/r/gnoswap/v1/position"
+	posRealm = std.NewCodeRealm(posPath)
+
+	routerPath = "gno.land/r/gnoswap/v1/router"
+	rouRealm   = std.NewCodeRealm(routerPath)
+
 	addrUsedInTest = []std.Address{addr01, addr02}
+)
+
+const (
+	MIN_PRICE string = "4295128740"
+	MAX_PRICE string = "1461446703485210103287273052203988822378723970341"
 )
 
 func InitialisePoolTest(t *testing.T) {
@@ -525,7 +538,6 @@ func ugnotFaucet(t *testing.T, to std.Address, amount int64) {
 func ugnotDeposit(t *testing.T, addr std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(addr))
-	wugnotAddr := consts.WUGNOT_ADDR
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
 	wugnot.Deposit(cross)

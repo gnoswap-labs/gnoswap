@@ -24,7 +24,7 @@ func init() {
 //	// In other packages:
 //	keeper := referral.GetKeeper()
 //	keeper.register(addr, refAddr)
-func GetKeeper() ReferralKeeper {
+func getKeeper() ReferralKeeper {
 	return gReferralKeeper
 }
 
@@ -51,8 +51,7 @@ func IsEmpty() bool {
 // TryRegister attempts to register a new referral for an address.
 func TryRegister(cur realm, addr std.Address, referral string) bool {
 	refAddr := std.Address(referral)
-	r := NewReferral()
-	err := r.Register(addr, refAddr)
+	err := gReferralKeeper.register(addr, refAddr)
 	if err != nil {
 		std.Emit(
 			EventRegisterFailed,
@@ -61,9 +60,6 @@ func TryRegister(cur realm, addr std.Address, referral string) bool {
 		)
 		return false
 	}
-
-	// update global keeper
-	gReferralKeeper = r.keeper
 
 	std.Emit(
 		EventRegisterSuccess,

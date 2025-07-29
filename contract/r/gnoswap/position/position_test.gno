@@ -1,6 +1,7 @@
 package position
 
 import (
+	"errors"
 	"std"
 	"strconv"
 	"testing"
@@ -10,13 +11,10 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/rbac"
 	"gno.land/r/gnoswap/v1/referral"
 )
 
@@ -401,8 +399,8 @@ func TestValidateTokenPath(t *testing.T) {
 		},
 		{
 			name:      "validateTokenPath is failed by conflicting tokens (GNOT ↔ WUGNOT)",
-			token0:    consts.GNOT,
-			token1:    consts.WRAPPED_WUGNOT,
+			token0:    GNOT,
+			token1:    WRAPPED_WUGNOT,
 			register0: true,
 			register1: true,
 			expected:  errInvalidTokenPath,
@@ -487,12 +485,12 @@ func TestProcessTokens(t *testing.T) {
 		},
 		{
 			name:           "processTokens is failed by token0 is native",
-			token0:         consts.GNOT,
+			token0:         GNOT,
 			token1:         gnsPath,
 			amount0Desired: "1300",
 			amount1Desired: "200",
 			caller:         alice,
-			expected0:      consts.WRAPPED_WUGNOT,
+			expected0:      WRAPPED_WUGNOT,
 			expected1:      "gno.land/r/gnoswap/v1/gns",
 			isNative0:      true,
 			isNative1:      false,
@@ -503,12 +501,12 @@ func TestProcessTokens(t *testing.T) {
 		{
 			name:           "processTokens is failed by token1 is native",
 			token0:         gnsPath,
-			token1:         consts.GNOT,
+			token1:         GNOT,
 			amount0Desired: "150",
 			amount1Desired: "1250",
 			caller:         testutils.TestAddress("user3"),
 			expected0:      "gno.land/r/gnoswap/v1/gns",
-			expected1:      consts.WRAPPED_WUGNOT,
+			expected1:      WRAPPED_WUGNOT,
 			isNative0:      false,
 			isNative1:      true,
 			expectedWrap:   1250,
@@ -516,13 +514,13 @@ func TestProcessTokens(t *testing.T) {
 		},
 		{
 			name:           "processTokens is failed by both tokens are native",
-			token0:         consts.GNOT,
-			token1:         consts.GNOT,
+			token0:         GNOT,
+			token1:         GNOT,
 			amount0Desired: "1100",
 			amount1Desired: "1200",
 			caller:         testutils.TestAddress("user4"),
-			expected0:      consts.WRAPPED_WUGNOT,
-			expected1:      consts.WRAPPED_WUGNOT,
+			expected0:      WRAPPED_WUGNOT,
+			expected1:      WRAPPED_WUGNOT,
 			isNative0:      true,
 			isNative1:      true,
 			expectedWrap:   2300,
@@ -555,37 +553,36 @@ func TestProcessTokens(t *testing.T) {
 				}
 			}()
 
-			if tt.token0 == consts.GNOT {
+			if tt.token0 == GNOT {
 				amount, _ := strconv.ParseInt(tt.amount0Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
 				testing.SetRealm(std.NewUserRealm(positionAddr))
 				transferUGNOT(positionAddr, positionAddr, amount)
 			}
-			if tt.token1 == consts.GNOT {
+			if tt.token1 == GNOT {
 				amount, _ := strconv.ParseInt(tt.amount1Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
 				testing.SetRealm(std.NewUserRealm(positionAddr))
 				transferUGNOT(positionAddr, positionAddr, amount)
 			}
 
-			if !tt.expectPanic {
-				token0, token1, native0, native1, wrapped := processTokens(
-					tt.token0,
-					tt.token1,
-					tt.amount0Desired,
-					tt.amount1Desired,
-					tt.caller,
-				)
+			token0, token1, native0, native1, wrapped, err := processTokens(
+				tt.token0,
+				tt.token1,
+				tt.amount0Desired,
+				tt.amount1Desired,
+				tt.caller,
+			)
 
+			if tt.expectPanic {
+				uassert.ErrorIs(t, err, errors.New(tt.expectMsg))
+			} else {
+				uassert.Nil(t, err)
 				uassert.Equal(t, tt.expected0, token0)
 				uassert.Equal(t, tt.expected1, token1)
 				uassert.Equal(t, tt.isNative0, native0)
 				uassert.Equal(t, tt.isNative1, native1)
 				uassert.Equal(t, tt.expectedWrap, wrapped)
-			} else {
-				uassert.PanicsWithMessage(t, tt.expectMsg, func() {
-					processTokens(tt.token0, tt.token1, tt.amount0Desired, tt.amount1Desired, tt.caller)
-				})
 			}
 		})
 	}
@@ -1321,8 +1318,6 @@ func TestCollectFees(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupPositionStakerPermission(t)
-
 			testing.SetOriginCaller(adminAddr)
 			CreatePoolWithoutFee(t)
 
@@ -1506,22 +1501,4 @@ func TestReposition(t *testing.T) {
 			}
 		})
 	}
-}
-
-func setupPositionStakerPermission(t *testing.T) {
-	t.Helper()
-
-	adminAddr := testutils.TestAddress("admin")
-
-	testing.SetOriginCaller(adminAddr)
-	testing.SetRealm(std.NewUserRealm(adminAddr))
-
-	globalManager := rbac.GlobalManager()
-	globalManager.UpdatePermission("staker", "access", func(addr std.Address) error {
-		if addr != adminAddr {
-			return ufmt.Errorf("caller is not staker")
-		}
-
-		return nil
-	})
 }

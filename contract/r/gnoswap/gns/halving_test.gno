@@ -64,10 +64,12 @@ var END_TIMESTAMP_OF_YEAR = []int64{
 	startTimestamp + SECONDS_IN_YEAR*12,
 }
 
-func TestGetAmountByHeight(t *testing.T) {
+func TestAmountByHeight(t *testing.T) {
+	resetEmissionState(t)
+
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		firstBlockOfYear := FIRST_BLOCK_OF_YEAR[year-1]
-		uassert.Equal(t, GetAmountPerBlockPerHalvingYear(year), GetAmountByHeight(firstBlockOfYear))
+		uassert.Equal(t, GetAmountPerBlockPerHalvingYear(year), AmountByHeight(firstBlockOfYear))
 		if year == HALVING_START_YEAR {
 			uassert.Equal(t, GetHalvingYearAccuAmount(year), GetHalvingYearMaxAmount(year))
 		} else {
@@ -86,20 +88,24 @@ func TestGetAmountByHeight(t *testing.T) {
 	}
 }
 
-func TestGetHalvingYearByHeight(t *testing.T) {
+func TestHalvingYearByHeight(t *testing.T) {
+	resetEmissionState(t)
+
 	t.Run("during halving years", func(t *testing.T) {
 		for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 			firstBlockOfYear := FIRST_BLOCK_OF_YEAR[year-1]
-			uassert.Equal(t, year, GetHalvingYearByHeight(firstBlockOfYear))
+			uassert.Equal(t, year, HalvingYearByHeight(firstBlockOfYear))
 		}
 	})
 
 	t.Run("no year after 12 years", func(t *testing.T) {
-		uassert.Equal(t, int64(0), GetHalvingYearByHeight(GetEndHeight()+1))
+		uassert.Equal(t, int64(0), HalvingYearByHeight(GetEndHeight()+1))
 	})
 }
 
 func TestGetHalvingYearAndEndTimestamp(t *testing.T) {
+	resetEmissionState(t)
+
 	t.Run("bit of extra timestamp for each year", func(t *testing.T) {
 		for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 			firstTimestampOfYear := FIRST_TIMESTAMP_OF_YEAR[year-1]
@@ -110,7 +116,7 @@ func TestGetHalvingYearAndEndTimestamp(t *testing.T) {
 	})
 
 	t.Run("after 12 years", func(t *testing.T) {
-		year, endTimestamp := getHalvingYearAndEndTimestamp(GetEndTimestamp() + 1)
+		year, endTimestamp := getHalvingYearAndEndTimestamp(endTimestamp() + 1)
 		uassert.Equal(t, int64(0), year)
 		uassert.Equal(t, int64(0), endTimestamp)
 	})
@@ -154,37 +160,30 @@ func TestGetHalvingInfo(t *testing.T) {
 	uassert.Equal(t, len(halving), 12)
 }
 
-func TestSetAvgBlockTime_InvalidIntervalPanics(t *testing.T) {
-	uassert.PanicsWithMessage(t,
-		"invalid block time interval",
-		func() {
-			testing.SetRealm(std.NewUserRealm(adminAddr))
-			setAvgBlockTimeInMs(0)
-		},
-	)
-	uassert.PanicsWithMessage(t,
-		"invalid block time interval",
-		func() {
-			testing.SetRealm(govRealm)
-			setAvgBlockTimeInMs(-5)
-		},
-	)
+func TestSetAvgBlockTime_InvalidIntervalErrors(t *testing.T) {
+	testing.SetRealm(std.NewUserRealm(adminAddr))
+
+	err := setAvgBlockTimeInMs(0)
+	uassert.ErrorIs(t, errInvalidAvgBlockTimeInMs, err)
+
+	err = setAvgBlockTimeInMs(-5)
+	uassert.ErrorIs(t, errInvalidAvgBlockTimeInMs, err)
 }
 
 func TestSetAvgBlockTime_CallbackInvocation(t *testing.T) {
 	/*
-		Test that the function registered with callbackEmissionChange
+		Test that the function registered with emissionChangeCallback
 		accepts the amountPerBlock value of the "current year" as an argument,
 		and only once.
 	*/
 	called := 0
 	var received int64
-	oldCb := callbackEmissionChange
-	callbackEmissionChange = func(a int64) {
+	oldCb := emissionChangeCallback
+	emissionChangeCallback = func(a int64) {
 		called++
 		received = a
 	}
-	defer func() { callbackEmissionChange = oldCb }()
+	defer func() { emissionChangeCallback = oldCb }()
 
 	// assume current block height is at the first year boundary
 	testing.SkipHeights(1)
@@ -202,6 +201,8 @@ func TestSetAvgBlockTime_RecalculatesAllYears(t *testing.T) {
 		Test that the "issuance per block" is actually reallocated
 		by comparing the value of the amountPerBlock array before and after the call.
 	*/
+	resetEmissionState(t)
+
 	es := GetEmissionState()
 	before := make([]int64, HALVING_END_YEAR)
 	for y := int64(1); y <= HALVING_END_YEAR; y++ {
@@ -209,9 +210,9 @@ func TestSetAvgBlockTime_RecalculatesAllYears(t *testing.T) {
 	}
 
 	// ignore callback in test
-	oldCallback := callbackEmissionChange
-	callbackEmissionChange = func(amount int64) {}
-	defer func() { callbackEmissionChange = oldCallback }()
+	oldCallback := emissionChangeCallback
+	emissionChangeCallback = func(amount int64) {}
+	defer func() { emissionChangeCallback = oldCallback }()
 
 	testing.SkipHeights(1)
 	testing.SetRealm(adminRealm)
@@ -245,34 +246,34 @@ func TestSetAvgBlockTime_RecalculatesAllYears(t *testing.T) {
 
 func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 	t.Run("panic if caller is not admin", func(t *testing.T) {
-		oldCallback := callbackEmissionChange
-		callbackEmissionChange = func(amount int64) {}
+		oldCallback := emissionChangeCallback
+		emissionChangeCallback = func(amount int64) {}
 		uassert.AbortsWithMessage(t,
-			"caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) has no permission",
+			"unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not admin",
 			func() {
 				testing.SetOriginCaller(alice)
 				testing.SetRealm(std.NewUserRealm(alice))
 				SetAvgBlockTimeInMsByAdmin(cross, 1)
 			},
 		)
-		callbackEmissionChange = oldCallback
+		emissionChangeCallback = oldCallback
 	})
 
 	t.Run("success if caller is admin", func(t *testing.T) {
-		oldCallback := callbackEmissionChange
-		callbackEmissionChange = func(amount int64) {}
+		oldCallback := emissionChangeCallback
+		emissionChangeCallback = func(amount int64) {}
 
 		testing.SkipHeights(1)
 		testing.SetRealm(std.NewUserRealm(adminAddr))
 		SetAvgBlockTimeInMsByAdmin(cross, 2)
-		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(2))
+		uassert.Equal(t, AvgBlockTimeInMs(), int64(2))
 
-		callbackEmissionChange = oldCallback
+		emissionChangeCallback = oldCallback
 	})
 
 	t.Run("panic with negative block time", func(t *testing.T) {
-		oldCallback := callbackEmissionChange
-		callbackEmissionChange = func(amount int64) {}
+		oldCallback := emissionChangeCallback
+		emissionChangeCallback = func(amount int64) {}
 		testing.SkipHeights(1)
 		testing.SetRealm(std.NewUserRealm(adminAddr))
 		uassert.AbortsWithMessage(t,
@@ -281,80 +282,84 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 				SetAvgBlockTimeInMsByAdmin(cross, -1)
 			},
 		)
-		callbackEmissionChange = oldCallback
+		emissionChangeCallback = oldCallback
 	})
 
 	t.Run("panic with extremely large block time", func(t *testing.T) {
-		oldCallback := callbackEmissionChange
-		callbackEmissionChange = func(amount int64) {}
+		oldCallback := emissionChangeCallback
+		emissionChangeCallback = func(amount int64) {}
 		testing.SkipHeights(1)
 		testing.SetRealm(std.NewUserRealm(adminAddr))
 		uassert.AbortsWithMessage(t,
-			"invalid block time interval",
+			"[GNOSWAP-GNS-004] invalid avg block time in ms",
 			func() {
-				SetAvgBlockTimeInMsByAdmin(cross, 1e9)
+				SetAvgBlockTimeInMsByAdmin(cross, MAX_BLOCK_TIME_MS)
 			},
 		)
-		callbackEmissionChange = oldCallback
+		emissionChangeCallback = oldCallback
 	})
 }
 
 func TestSetAvgBlockTimeInMs(t *testing.T) {
 	t.Run("panic if caller is not governance contract", func(t *testing.T) {
-		oldCallback := callbackEmissionChange
-		callbackEmissionChange = func(amount int64) {}
-		expectedMsg := "caller(g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m) has no permission"
+		oldCallback := emissionChangeCallback
+		emissionChangeCallback = func(amount int64) {}
+
+		expectedMsg := "unauthorized: caller g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m is not governance"
 		uassert.AbortsWithMessage(t,
 			expectedMsg,
 			func() {
 				SetAvgBlockTimeInMs(cross, 3)
 			},
 		)
-		callbackEmissionChange = oldCallback
+		emissionChangeCallback = oldCallback
 	})
 
 	t.Run("success if caller is governance contract", func(t *testing.T) {
-		oldCallback := callbackEmissionChange
-		callbackEmissionChange = func(amount int64) {}
+		oldCallback := emissionChangeCallback
+		emissionChangeCallback = func(amount int64) {}
+
 		testing.SkipHeights(3)
 		testing.SetRealm(govRealm)
 		SetAvgBlockTimeInMs(cross, 4)
-		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(4))
-		callbackEmissionChange = oldCallback
+
+		uassert.Equal(t, AvgBlockTimeInMs(), int64(4))
+		emissionChangeCallback = oldCallback
 	})
 
 	t.Run("panic with negative block time", func(t *testing.T) {
-		oldCallback := callbackEmissionChange
-		callbackEmissionChange = func(amount int64) {}
+		oldCallback := emissionChangeCallback
+		emissionChangeCallback = func(amount int64) {}
+
 		testing.SkipHeights(1)
 		testing.SetRealm(govRealm)
 		uassert.AbortsWithMessage(t,
-			"invalid block time interval",
+			"[GNOSWAP-GNS-004] invalid avg block time in ms",
 			func() {
 				SetAvgBlockTimeInMs(cross, -1)
 			},
 		)
-		callbackEmissionChange = oldCallback
+		emissionChangeCallback = oldCallback
 	})
 
 	t.Run("panic with extremely large block time", func(t *testing.T) {
-		oldCallback := callbackEmissionChange
-		callbackEmissionChange = func(amount int64) {}
+		oldCallback := emissionChangeCallback
+		emissionChangeCallback = func(amount int64) {}
+
 		testing.SkipHeights(1)
 		testing.SetRealm(govRealm)
 		uassert.AbortsWithMessage(t,
-			"invalid block time interval",
+			"[GNOSWAP-GNS-004] invalid avg block time in ms",
 			func() {
-				SetAvgBlockTimeInMs(cross, 1e9)
+				SetAvgBlockTimeInMs(cross, MAX_BLOCK_TIME_MS)
 			},
 		)
-		callbackEmissionChange = oldCallback
+		emissionChangeCallback = oldCallback
 	})
 }
 
 func TestGetEmission(t *testing.T) {
 	t.Run("emission during halving year", func(t *testing.T) {
-		// Set initial values for the test
 		year := HALVING_START_YEAR
 		initialMinted := int64(1000)
 		initialLeft := int64(5000)
@@ -461,4 +466,186 @@ func TestGetEmission(t *testing.T) {
 			}
 		}
 	})
+}
+
+// TestGetHalvingYearAndEndTimestampValidation tests various scenarios for getHalvingYearAndEndTimestamp
+// to ensure proper validation and handling of edge cases
+func TestGetHalvingYearAndEndTimestampValidation(t *testing.T) {
+	resetEmissionState(t)
+
+	es := GetEmissionState()
+
+	tests := []struct {
+		name            string
+		timestampOffset int64 // offset from start timestamp
+		expectedYear    int64
+		expectedEndTime int64
+		description     string
+	}{
+		{
+			name:            "Before emission start",
+			timestampOffset: -1000,
+			expectedYear:    1,
+			expectedEndTime: es.getStartTimestamp() + SECONDS_IN_YEAR,
+			description:     "Should return year 1 even before emission starts",
+		},
+		{
+			name:            "Start of emission",
+			timestampOffset: 0,
+			expectedYear:    1,
+			expectedEndTime: es.getStartTimestamp() + SECONDS_IN_YEAR,
+			description:     "Should return year 1 at emission start",
+		},
+		{
+			name:            "Middle of year 1",
+			timestampOffset: SECONDS_IN_YEAR / 2,
+			expectedYear:    1,
+			expectedEndTime: es.getStartTimestamp() + SECONDS_IN_YEAR,
+			description:     "Should return year 1 in the middle of first year",
+		},
+		{
+			name:            "End of year 1",
+			timestampOffset: SECONDS_IN_YEAR - 1,
+			expectedYear:    1,
+			expectedEndTime: es.getStartTimestamp() + SECONDS_IN_YEAR,
+			description:     "Should return year 1 at the end of first year",
+		},
+		{
+			name:            "Start of year 2",
+			timestampOffset: SECONDS_IN_YEAR,
+			expectedYear:    2,
+			expectedEndTime: es.getStartTimestamp() + (SECONDS_IN_YEAR * 2),
+			description:     "Should return year 2 at the start of second year",
+		},
+		{
+			name:            "Middle of year 6",
+			timestampOffset: (SECONDS_IN_YEAR * 5) + (SECONDS_IN_YEAR / 2),
+			expectedYear:    6,
+			expectedEndTime: es.getStartTimestamp() + (SECONDS_IN_YEAR * 6),
+			description:     "Should return year 6 in the middle of sixth year",
+		},
+		{
+			name:            "Start of year 12",
+			timestampOffset: SECONDS_IN_YEAR * 11,
+			expectedYear:    12,
+			expectedEndTime: es.getStartTimestamp() + (SECONDS_IN_YEAR * 12),
+			description:     "Should return year 12 at the start of final year",
+		},
+		{
+			name:            "End of year 12",
+			timestampOffset: (SECONDS_IN_YEAR * 12) - 1,
+			expectedYear:    12,
+			expectedEndTime: es.getStartTimestamp() + (SECONDS_IN_YEAR * 12),
+			description:     "Should return year 12 at the end of emission period",
+		},
+		{
+			name:            "Exactly at emission end",
+			timestampOffset: SECONDS_IN_YEAR * 12,
+			expectedYear:    13,
+			expectedEndTime: es.getStartTimestamp() + (SECONDS_IN_YEAR * 13),
+			description:     "Should return year 13 exactly at emission end timestamp (edge case)",
+		},
+		{
+			name:            "Just after emission end",
+			timestampOffset: (SECONDS_IN_YEAR * 12) + 1,
+			expectedYear:    0,
+			expectedEndTime: 0,
+			description:     "Should return (0, 0) immediately after emission ends",
+		},
+		{
+			name:            "Far after emission end",
+			timestampOffset: SECONDS_IN_YEAR * 20,
+			expectedYear:    0,
+			expectedEndTime: 0,
+			description:     "Should return (0, 0) far after emission ends",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			timestamp := es.getStartTimestamp() + tt.timestampOffset
+			year, endTime := getHalvingYearAndEndTimestamp(timestamp)
+
+			uassert.Equal(t, tt.expectedYear, year,
+				"Year mismatch for %s: %s", tt.name, tt.description)
+			uassert.Equal(t, tt.expectedEndTime, endTime,
+				"End time mismatch for %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+// TestHalvingDataGettersWithInvalidYear tests that HalvingData getters handle invalid years properly
+func TestHalvingDataGettersWithInvalidYear(t *testing.T) {
+	resetEmissionState(t)
+
+	hd := &HalvingData{
+		startBlockHeight: make([]int64, HALVING_END_YEAR),
+		endBlockHeight:   make([]int64, HALVING_END_YEAR),
+		startTimestamp:   make([]int64, HALVING_END_YEAR),
+		maxAmount:        make([]int64, HALVING_END_YEAR),
+		mintedAmount:     make([]int64, HALVING_END_YEAR),
+		leftAmount:       make([]int64, HALVING_END_YEAR),
+		accumAmount:      make([]int64, HALVING_END_YEAR),
+		amountPerBlock:   make([]int64, HALVING_END_YEAR),
+	}
+
+	// Set test values for valid years
+	for i := int64(0); i < HALVING_END_YEAR; i++ {
+		hd.startBlockHeight[i] = 1000 + i*100
+		hd.endBlockHeight[i] = 2000 + i*100
+		hd.startTimestamp[i] = 3000 + i*100
+		hd.maxAmount[i] = 4000 + i*100
+		hd.mintedAmount[i] = 5000 + i*100
+		hd.leftAmount[i] = 6000 + i*100
+		hd.accumAmount[i] = 7000 + i*100
+		hd.amountPerBlock[i] = 8000 + i*100
+	}
+
+	tests := []struct {
+		name     string
+		year     int64
+		getter   func(int64) int64
+		expected int64
+	}{
+		// Year 0 tests (should return 0)
+		{"StartBlockHeight with year 0", 0, hd.getStartBlockHeight, 0},
+		{"EndBlockHeight with year 0", 0, hd.getEndBlockHeight, 0},
+		{"StartTimestamp with year 0", 0, hd.getStartTimestamp, 0},
+		{"MaxAmount with year 0", 0, hd.getMaxAmount, 0},
+		{"MintedAmount with year 0", 0, hd.getMintedAmount, 0},
+		{"LeftAmount with year 0", 0, hd.getLeftAmount, 0},
+		{"AccumAmount with year 0", 0, hd.getAccumAmount, 0},
+		{"AmountPerBlock with year 0", 0, hd.getAmountPerBlock, 0},
+
+		// Year -1 tests (negative year, should return 0)
+		{"StartBlockHeight with year -1", -1, hd.getStartBlockHeight, 0},
+
+		// Valid year tests
+		{"StartBlockHeight with year 1", 1, hd.getStartBlockHeight, 1000},
+		{"EndBlockHeight with year 1", 1, hd.getEndBlockHeight, 2000},
+		{"StartTimestamp with year 1", 1, hd.getStartTimestamp, 3000},
+		{"MaxAmount with year 1", 1, hd.getMaxAmount, 4000},
+		{"MintedAmount with year 1", 1, hd.getMintedAmount, 5000},
+		{"LeftAmount with year 1", 1, hd.getLeftAmount, 6000},
+		{"AccumAmount with year 1", 1, hd.getAccumAmount, 7000},
+		{"AmountPerBlock with year 1", 1, hd.getAmountPerBlock, 8000},
+
+		// Last valid year tests
+		{"StartBlockHeight with year 12", 12, hd.getStartBlockHeight, 2100},
+		{"EndBlockHeight with year 12", 12, hd.getEndBlockHeight, 3100},
+		{"StartTimestamp with year 12", 12, hd.getStartTimestamp, 4100},
+		{"MaxAmount with year 12", 12, hd.getMaxAmount, 5100},
+		{"MintedAmount with year 12", 12, hd.getMintedAmount, 6100},
+		{"LeftAmount with year 12", 12, hd.getLeftAmount, 7100},
+		{"AccumAmount with year 12", 12, hd.getAccumAmount, 8100},
+		{"AmountPerBlock with year 12", 12, hd.getAmountPerBlock, 9100},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.getter(tt.year)
+			uassert.Equal(t, tt.expected, result,
+				"Unexpected result for %s", tt.name)
+		})
+	}
 }

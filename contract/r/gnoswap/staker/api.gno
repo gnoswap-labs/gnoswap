@@ -6,8 +6,6 @@ import (
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
-
-	"gno.land/p/gnoswap/consts"
 )
 
 func ApiGetRewardTokens() string {
@@ -18,12 +16,12 @@ func ApiGetRewardTokens() string {
 
 		// HANDLE INTERNAL
 		if poolTier.IsInternallyIncentivizedPool(pool.poolPath) {
-			thisPoolRewardTokens = append(thisPoolRewardTokens, consts.GNS_PATH)
+			thisPoolRewardTokens = append(thisPoolRewardTokens, GNS_PATH)
 		}
 
 		// HANDLE EXTERNAL
 		if pool.IsExternallyIncentivizedPool() {
-			pool.incentives.byTime.Iterate("", "", func(key string, value any) bool {
+			pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
 				ictv := value.(*ExternalIncentive)
 				if ictv.RewardToken() == "" {
 					return false
@@ -62,12 +60,12 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 
 	// HANDLE INTERNAL
 	if poolTier.IsInternallyIncentivizedPool(pool.poolPath) {
-		thisPoolRewardTokens = append(thisPoolRewardTokens, consts.GNS_PATH)
+		thisPoolRewardTokens = append(thisPoolRewardTokens, GNS_PATH)
 	}
 
 	// HANDLE EXTERNAL
 	if pool.IsExternallyIncentivizedPool() {
-		pool.incentives.byTime.Iterate("", "", func(key string, value any) bool {
+		pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
 			ictv := value.(*ExternalIncentive)
 			if ictv.RewardToken() == "" {
 				return false
@@ -93,7 +91,7 @@ func ApiGetExternalIncentives() string {
 
 	pools.tree.Iterate("", "", func(key string, value any) bool {
 		pool := value.(*Pool)
-		pool.incentives.byTime.Iterate("", "", func(key string, value any) bool {
+		pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
 			ictv := value.(*ExternalIncentive)
 			externalIctv := newApiExternalIncentive(ictv)
 			apiExternalIncentives = append(apiExternalIncentives, externalIctv)
@@ -115,7 +113,7 @@ func ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
 
 	pool, ok := pools.Get(poolPath)
 	if !ok {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("pool(%s) not found", poolPath),
 		))
@@ -123,7 +121,7 @@ func ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
 
 	incentive, exist := pool.incentives.GetByIncentiveId(incentiveId)
 	if !exist {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("incentive(%s) not found", incentiveId),
 		))
@@ -145,13 +143,13 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 
 	pool, ok := pools.Get(targetPoolPath)
 	if !ok {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("pool(%s) not found", targetPoolPath),
 		))
 	}
 
-	pool.incentives.byTime.Iterate("", "", func(key string, value any) bool {
+	pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
 		incentive := value.(*ExternalIncentive)
 		if incentive.targetPoolPath != targetPoolPath {
 			return false
@@ -176,7 +174,7 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 
 	pools.tree.Iterate("", "", func(key string, value any) bool {
 		pool := value.(*Pool)
-		pool.incentives.byTime.Iterate("", "", func(key string, value any) bool {
+		pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
 			incentive := value.(*ExternalIncentive)
 			if incentive.rewardToken != rewardTokenPath {
 				return false
@@ -292,7 +290,7 @@ type ResponseApiGetRewardByLpTokenId struct {
 }
 
 func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
-	deposit := deposits.Get(targetLpTokenId)
+	deposit := deposits.get(targetLpTokenId)
 
 	reward := calcPositionReward(std.ChainHeight(), targetLpTokenId)
 
@@ -303,7 +301,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			IncentiveType:     "INTERNAL",
 			IncentiveId:       "",
 			TargetPoolPath:    deposit.targetPoolPath,
-			RewardTokenPath:   consts.GNS_PATH,
+			RewardTokenPath:   GNS_PATH,
 			RewardTokenAmount: reward.Internal,
 			StakeTimestamp:    deposit.stakeTimestamp,
 			StakeHeight:       deposit.stakeHeight,
@@ -315,7 +313,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 		if externalReward == 0 {
 			continue
 		}
-		incentive := externalIncentives.Get(incentiveId)
+		incentive := externalIncentives.get(incentiveId)
 		rewards = append(rewards, ApiReward{
 			IncentiveType:     "EXTERNAL",
 			IncentiveId:       incentiveId,
@@ -350,7 +348,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 				IncentiveType:     "INTERNAL",
 				IncentiveId:       "",
 				TargetPoolPath:    deposit.targetPoolPath,
-				RewardTokenPath:   consts.GNS_PATH,
+				RewardTokenPath:   GNS_PATH,
 				RewardTokenAmount: reward.Internal,
 				StakeTimestamp:    deposit.stakeTimestamp,
 				StakeHeight:       deposit.stakeHeight,
@@ -363,7 +361,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 			if externalReward == 0 {
 				continue
 			}
-			incentive := externalIncentives.Get(incentiveId)
+			incentive := externalIncentives.get(incentiveId)
 			rewards = append(rewards, ApiReward{
 				IncentiveType:     "EXTERNAL",
 				IncentiveId:       incentiveId,
@@ -409,7 +407,7 @@ func ApiGetStakes() string {
 func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 	stakes := []ApiStake{}
 
-	deposit := deposits.Get(targetLpTokenId)
+	deposit := deposits.get(targetLpTokenId)
 	stk := newApiStake(targetLpTokenId, deposit)
 	stakes = append(stakes, stk)
 

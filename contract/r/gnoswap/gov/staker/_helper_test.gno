@@ -6,21 +6,30 @@ import (
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/testutils"
-	"gno.land/r/demo/wugnot"
 
-	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/demo/wugnot"
 
 	"gno.land/r/gnoswap/v1/access"
 )
 
+// contract Paths
+const (
+	GNS_PATH    string      = "gno.land/r/gnoswap/v1/gns"
+	WUGNOT_ADDR std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+)
+
 var (
-	admin, _             = access.GetAddress(access.ROLE_ADMIN)
-	stakerAddr, _        = access.GetAddress(access.ROLE_STAKER)
-	communityPoolAddr, _ = access.GetAddress(access.ROLE_COMMUNITY_POOL)
-	govStakerAddr, _     = access.GetAddress(access.ROLE_GOV_STAKER)
-	protocolFeeAddr, _   = access.GetAddress(access.ROLE_PROTOCOL_FEE)
-	launchpadAddr, _     = access.GetAddress(access.ROLE_LAUNCHPAD)
-	devOpsAddr, _        = access.GetAddress(access.ROLE_DEVOPS)
+	admin, _             = access.GetAddress(prbac.ROLE_ADMIN.String())
+	stakerAddr, _        = access.GetAddress(prbac.ROLE_STAKER.String())
+	communityPoolAddr, _ = access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+	govStakerAddr, _     = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	protocolFeeAddr, _   = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	launchpadAddr, _     = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	devOpsAddr, _        = access.GetAddress(prbac.ROLE_DEVOPS.String())
+
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 
 	fooPath  string = "gno.land/r/onbloc/foo"
 	barPath  string = "gno.land/r/onbloc/bar"
@@ -50,9 +59,9 @@ var (
 	user3Realm  = std.NewUserRealm(testutils.TestAddress("charlie"))
 	invalidAddr = testutils.TestAddress("invalid")
 
-	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm    = std.NewCodeRealm(consts.ROUTER_PATH)
-	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
+	posRealm    = std.NewCodeRealm("gno.land/r/gnoswap/v1/position")
+	rouRealm    = std.NewCodeRealm("gno.land/r/gnoswap/v1/router")
+	stakerRealm = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 )
 
 func makeFakeAddress(name string) std.Address {
@@ -107,9 +116,8 @@ func ugnotFaucet(t *testing.T, to std.Address, amount uint64) {
 func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(addr))
-	wugnotAddr := consts.WUGNOT_ADDR
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
+	banker.SendCoins(addr, WUGNOT_ADDR, std.Coins{{ugnotDenom, int64(amount)}})
 	wugnot.Deposit(cross)
 }
 

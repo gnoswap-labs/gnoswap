@@ -3,33 +3,76 @@ package governance
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
-
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/access"
 	en "gno.land/r/gnoswap/v1/emission"
-
 	"gno.land/r/gnoswap/v1/halt"
 )
 
-// ReconfigureByAdmin updates the proposal realted configuration.
-// Returns the new configuration version number.
+// Config represents the configuration of the governor contract
+// ref: https://docs.gnoswap.io/core-concepts/governance#scope-of-proposals-5
+type Config struct {
+	// VotingStartDelay is the delay before voting starts after proposal creation (in seconds)
+	VotingStartDelay int64
+	// VotingPeriod is the duration during which votes are collected (in seconds)
+	VotingPeriod int64
+	// VotingWeightSmoothingDuration is the period over which voting weight is averaged
+	// for proposal creation and cancellation threshold calculations (in seconds)
+	VotingWeightSmoothingDuration int64
+	// Quorum is the percentage of total GNS supply required for proposal approval
+	Quorum int64
+	// ProposalCreationThreshold is the minimum average voting weight required to create a proposal
+	ProposalCreationThreshold int64
+	// ExecutionDelay is the waiting period after voting ends before a proposal can be executed (in seconds)
+	ExecutionDelay int64
+	// ExecutionWindow is the time window during which an approved proposal can be executed (in seconds)
+	ExecutionWindow int64
+}
+
+// ReconfigureByAdmin updates the governance configuration by admin privileges.
+// This function allows administrative updates to governance parameters without going through proposal process.
+// 
+// Parameters:
+//   - cur: realm context (for cross-realm calls)
+//   - votingStartDelay: delay before voting starts (seconds)
+//   - votingPeriod: duration for collecting votes (seconds)
+//   - votingWeightSmoothingDuration: period for averaging voting weight (seconds)
+//   - quorum: percentage of total supply required for approval
+//   - proposalCreationThreshold: minimum voting weight to create proposals
+//   - executionDelay: waiting period before execution (seconds)
+//   - executionWindow: time window for execution (seconds)
+//
+// Returns:
+//   - int64: new configuration version number
+//
+// Panics:
+//   - if system is halted
+//   - if caller is not admin
 func ReconfigureByAdmin(
 	cur realm,
-	votingStartDelay uint64,
-	votingPeriod uint64,
-	votingWeightSmoothingDuration uint64,
-	quorum uint64,
-	proposalCreationThreshold uint64,
-	executionDelay uint64,
-	executionWindow uint64,
-) uint64 {
-	caller := std.PreviousRealm().Address()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
+	votingStartDelay int64,
+	votingPeriod int64,
+	votingWeightSmoothingDuration int64,
+	quorum int64,
+	proposalCreationThreshold int64,
+	executionDelay int64,
+	executionWindow int64,
+) int64 {
+	// Check if system is halted before proceeding
+	halt.AssertIsNotHaltedGovernance()
 
-	return reconfigure(
-		cur,
+	// Get caller information and verify admin privileges
+	previousRealm := std.PreviousRealm()
+	caller := previousRealm.Address()
+	access.AssertIsAdmin(caller)
+
+	// Mint and distribute GNS tokens as part of the process
+	en.MintAndDistributeGns(cross)
+
+	// Store previous version for event emission
+	previousVersion := getCurrentConfigVersion()
+	
+	// Apply the new configuration
+	nextVersion, newCfg := reconfigure(
 		votingStartDelay,
 		votingPeriod,
 		votingWeightSmoothingDuration,
@@ -38,36 +81,125 @@ func ReconfigureByAdmin(
 		executionDelay,
 		executionWindow,
 	)
+
+	// Emit configuration change event with all parameters
+	std.Emit(
+		"Reconfigure",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"votingStartDelay", formatInt(newCfg.VotingStartDelay),
+		"votingPeriod", formatInt(newCfg.VotingPeriod),
+		"votingWeightSmoothingDuration", formatInt(newCfg.VotingWeightSmoothingDuration),
+		"quorum", formatInt(newCfg.Quorum),
+		"proposalCreationThreshold", formatInt(newCfg.ProposalCreationThreshold),
+		"executionDelay", formatInt(newCfg.ExecutionDelay),
+		"executionPeriod", formatInt(newCfg.ExecutionWindow),
+		"newConfigVersion", formatInt(nextVersion),
+		"prevConfigVersion", formatInt(previousVersion),
+	)
+
+	return nextVersion
 }
 
-// reconfigure updates the Governor's configuration.
-// Only governance contract can execute this function via proposal
-// Returns the new configuration version number.
-func reconfigure(
+// ReconfigureByGovernance updates the governance configuration through governance proposal process.
+// This function allows configuration updates through democratic voting process.
+//
+// Parameters:
+//   - cur: realm context (for cross-realm calls)
+//   - votingStartDelay: delay before voting starts (seconds)
+//   - votingPeriod: duration for collecting votes (seconds)
+//   - votingWeightSmoothingDuration: period for averaging voting weight (seconds)
+//   - quorum: percentage of total supply required for approval
+//   - proposalCreationThreshold: minimum voting weight to create proposals
+//   - executionDelay: waiting period before execution (seconds)
+//   - executionWindow: time window for execution (seconds)
+//
+// Returns:
+//   - int64: new configuration version number
+//
+// Panics:
+//   - if system is halted
+//   - if caller is not governance contract
+func ReconfigureByGovernance(
 	cur realm,
-	votingStartDelay uint64,
-	votingPeriod uint64,
-	votingWeightSmoothingDuration uint64,
-	quorum uint64,
-	proposalCreationThreshold uint64,
-	executionDelay uint64,
-	executionWindow uint64,
-) uint64 {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
-	}
+	votingStartDelay int64,
+	votingPeriod int64,
+	votingWeightSmoothingDuration int64,
+	quorum int64,
+	proposalCreationThreshold int64,
+	executionDelay int64,
+	executionWindow int64,
+) int64 {
+	// Check if system is halted before proceeding
+	halt.AssertIsNotHaltedGovernance()
 
+	// Get caller information and verify governance privileges
+	previousRealm := std.PreviousRealm()
+	caller := previousRealm.Address()
+	access.AssertIsGovernance(caller)
+
+	// Mint and distribute GNS tokens as part of the process
 	en.MintAndDistributeGns(cross)
 
-	// Update proposal states before reconfiguring
-	transition := UpdateProposalStateTransition()
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
+	// Store previous version for event emission
+	previousVersion := getCurrentConfigVersion()
+	
+	// Apply the new configuration
+	nextVersion, newCfg := reconfigure(
+		votingStartDelay,
+		votingPeriod,
+		votingWeightSmoothingDuration,
+		quorum,
+		proposalCreationThreshold,
+		executionDelay,
+		executionWindow,
+	)
 
-	prevVersion := governanceState.configCounter
+	// Emit configuration change event with all parameters
+	std.Emit(
+		"Reconfigure",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"votingStartDelay", formatInt(newCfg.VotingStartDelay),
+		"votingPeriod", formatInt(newCfg.VotingPeriod),
+		"votingWeightSmoothingDuration", formatInt(newCfg.VotingWeightSmoothingDuration),
+		"quorum", formatInt(newCfg.Quorum),
+		"proposalCreationThreshold", formatInt(newCfg.ProposalCreationThreshold),
+		"executionDelay", formatInt(newCfg.ExecutionDelay),
+		"executionPeriod", formatInt(newCfg.ExecutionWindow),
+		"newConfigVersion", formatInt(nextVersion),
+		"prevConfigVersion", formatInt(previousVersion),
+	)
 
-	newConfig := Config{
+	return nextVersion
+}
+
+// reconfigure is the internal function that updates the Governor's configuration.
+// This function creates a new configuration and stores it with an incremented version number.
+//
+// Parameters:
+//   - votingStartDelay: delay before voting starts (seconds)
+//   - votingPeriod: duration for collecting votes (seconds)
+//   - votingWeightSmoothingDuration: period for averaging voting weight (seconds)
+//   - quorum: percentage of total supply required for approval
+//   - proposalCreationThreshold: minimum voting weight to create proposals
+//   - executionDelay: waiting period before execution (seconds)
+//   - executionWindow: time window for execution (seconds)
+//
+// Returns:
+//   - int64: new configuration version number
+//   - Config: the newly created configuration
+func reconfigure(
+	votingStartDelay int64,
+	votingPeriod int64,
+	votingWeightSmoothingDuration int64,
+	quorum int64,
+	proposalCreationThreshold int64,
+	executionDelay int64,
+	executionWindow int64,
+) (int64, Config) {	
+	// Create new configuration with provided parameters
+	cfg := Config{
 		VotingStartDelay:              votingStartDelay,
 		VotingPeriod:                  votingPeriod,
 		VotingWeightSmoothingDuration: votingWeightSmoothingDuration,
@@ -76,59 +208,12 @@ func reconfigure(
 		ExecutionDelay:                executionDelay,
 		ExecutionWindow:               executionWindow,
 	}
+	
+	// Generate next version number
+	nextVersion := nextConfigVersion()
 
-	// Apply reconfiguration using state transition
-	transition = ReconfigureTransition(newConfig)
-	if err := applyTransition(transition); err != nil {
-		panic(err)
-	}
+	// Store the new configuration with version
+	setConfig(nextVersion, cfg)
 
-	newVersion := governanceState.configCounter
-
-	prevAddr, prevPkgPath := getPrev()
-	std.Emit(
-		"Reconfigure",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
-		"votingStartDelay", formatUint(newConfig.VotingStartDelay),
-		"votingPeriod", formatUint(newConfig.VotingPeriod),
-		"votingWeightSmoothingDuration", formatUint(newConfig.VotingWeightSmoothingDuration),
-		"quorum", formatUint(newConfig.Quorum),
-		"proposalCreationThreshold", formatUint(newConfig.ProposalCreationThreshold),
-		"executionDelay", formatUint(newConfig.ExecutionDelay),
-		"executionPeriod", formatUint(newConfig.ExecutionWindow),
-		"newConfigVersion", formatUint(newVersion),
-		"prevConfigVersion", formatUint(prevVersion),
-	)
-
-	return newVersion
-}
-
-// GetConfigVersion returns the configuration for a specific version.
-// If version is 0, it returns the current configuration.
-func GetConfigVersion(version uint64) Config {
-	cfg, exists := governanceState.GetConfig(version)
-	if !exists {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("config version(%d) does not exist", version),
-		))
-	}
-
-	return cfg
-}
-
-// GetLatestConfig returns the latest configuration.
-func GetLatestConfig() Config {
-	return governanceState.currentConfig
-}
-
-// GetLatestConfigVersion returns the latest configuration version.
-func GetLatestConfigVersion() uint64 {
-	return governanceState.configCounter
-}
-
-// GetProposalCreationThreshold returns the current proposal creation threshold.
-func GetProposalCreationThreshold() uint64 {
-	return governanceState.currentConfig.ProposalCreationThreshold
+	return nextVersion, cfg
 }

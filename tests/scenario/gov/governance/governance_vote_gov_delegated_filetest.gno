@@ -11,6 +11,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	gns "gno.land/r/gnoswap/v1/gns"
@@ -19,7 +20,7 @@ import (
 )
 
 var (
-	adminAddr, _     = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
 	dummyAddr        = testutils.TestAddress("dummyAddr")
 	currentBlockTime = int64(2)
 )
@@ -55,26 +56,26 @@ func delegateGnsToAdminAndDummy() {
 	// admin
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	gns.Approve(cross, consts.GOV_STAKER_ADDR, delegatedAmount)
-	gs.Delegate(cross, adminAddr, uint64(delegatedAmount), "")
+	gs.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 	ufmt.Printf("[INFO] gns delegated to admin %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 	// dummy
 	gns.Approve(cross, consts.GOV_STAKER_ADDR, delegatedAmount)
-	gs.Delegate(cross, dummyAddr, uint64(delegatedAmount), "")
+	gs.Delegate(cross, dummyAddr, int64(delegatedAmount), "")
 	ufmt.Printf("[INFO] gns delegated to dummy %s (amount: %d)\n", dummyAddr.String(), delegatedAmount)
 }
 
-func proposeText() uint64 {
+func proposeText() int64 {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	proposalId := governance.ProposeText(cross, "test_title", "test_description")
 	ufmt.Printf("[INFO] created proposal ID: %d\n", proposalId)
 	return proposalId
 }
 
-func voteProposalWithDummy(proposalId uint64) {
+func voteProposalWithDummy(proposalId int64) {
 	testing.SetRealm(std.NewUserRealm(dummyAddr))
 	governance.Vote(cross, proposalId, true)
 	state := governance.GetExecutionStateByProposalId(proposalId)
-	ufmt.Printf("[EXPECTED] after voting - active: %v, passed: %v\n", state.Active, state.Passed)
+	ufmt.Printf("[EXPECTED] after voting - %s\n", state)
 }
 
 // Output:
@@ -92,4 +93,4 @@ func voteProposalWithDummy(proposalId uint64) {
 // [INFO] current height: 86523
 //
 // [SCENARIO] 5. Vote for the proposal with dummy
-// [EXPECTED] after voting - active: true, passed: false
+// [EXPECTED] after voting - active

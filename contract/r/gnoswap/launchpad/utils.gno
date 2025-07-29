@@ -1,54 +1,15 @@
 package launchpad
 
 import (
-	"std"
 	"strconv"
 	"strings"
 
 	"gno.land/p/demo/ufmt"
-
-	"gno.land/r/gnoswap/v1/access"
-
-	"gno.land/r/gnoswap/v1/halt"
 )
-
-// isUserCall returns true if the caller is a user.
-func isUserCall() bool {
-	return std.PreviousRealm().IsUser()
-}
 
 // formatInt returns the string representation of the int64 value.
 func formatInt(value int64) string {
 	return strconv.FormatInt(value, 10)
-}
-
-// assertOnlyNotHalted panics if the contract is halted.
-func assertOnlyNotHalted() {
-	currentLevel := halt.GetCurrentHaltLevel()
-	if currentLevel != halt.LvMainnetSafeMode {
-		// Check if withdrawals are specifically halted, not just if the system is halted
-		if err := halt.IsHalted(halt.OpTypeWithdraw); err != nil {
-			panic(err)
-		}
-
-		if halt.IsContractHalted(halt.OpTypeLaunchpad) {
-			panic("launchpad contract operations are currently disabled")
-		}
-	}
-}
-
-// assertOnlyAdmin panics if the caller is not an admin.
-func assertOnlyUser() {
-	if !isUserCall() {
-		panic(makeErrorWithDetails(errInvalidAddress, "only user can call this function"))
-	}
-}
-
-// assertOnlyAdmin panics if the caller is not an admin.
-func assertOnlyAdmin(caller std.Address) {
-	if err := access.AdminOnly(caller); err != nil {
-		panic(makeErrorWithDetails(errInvalidAddress, err.Error()))
-	}
 }
 
 // assertValidAmount panics if the amount is zero.
@@ -92,12 +53,20 @@ func parseProjectTierID(projectTierID string) (string, int64) {
 	}
 
 	projectID := ufmt.Sprintf("%s:%s", parts[0], parts[1])
-	
+
 	tierDuration, err := strconv.ParseInt(parts[2], 10, 64)
 	if err != nil {
 		panic(makeErrorWithDetails(
 			errInvalidData,
 			ufmt.Sprintf("(%s)", projectTierID),
+		))
+	}
+
+	// Validate tier duration
+	if tierDuration != projectTier30 && tierDuration != projectTier90 && tierDuration != projectTier180 {
+		panic(makeErrorWithDetails(
+			errInvalidTier,
+			ufmt.Sprintf("pool type(%d) is not available", tierDuration),
 		))
 	}
 

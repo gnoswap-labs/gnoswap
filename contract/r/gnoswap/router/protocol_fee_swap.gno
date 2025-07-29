@@ -3,7 +3,6 @@ package router
 import (
 	"std"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/halt"
@@ -30,22 +29,21 @@ func GetSwapFee() uint64 {
 // SetSwapFeeByAdmin modifies the swap fee
 // Only admin can execute this function
 func SetSwapFeeByAdmin(cur realm, fee uint64) {
-	caller := getPrevAddr()
-	if err := access.AdminOnly(caller); err != nil {
-		panic(err)
-	}
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedRouter()
+	halt.AssertIsNotHaltedProtocolFee()
+	access.AssertIsAdmin(caller)
 
 	prevSwapFee := swapFee
 	if err := setSwapFee(fee); err != nil {
 		panic(err)
 	}
 
-	prevAddr, prevPkgPath := getPrev()
-
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"SetSwapFeeByAdmin",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"newFee", formatUint(fee),
 		"prevFee", formatUint(prevSwapFee),
 	)
@@ -55,32 +53,27 @@ func SetSwapFeeByAdmin(cur realm, fee uint64) {
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/router/protocol_fee_swap.gno#setswapfee
 func SetSwapFee(cur realm, fee uint64) {
-	caller := getPrevAddr()
-	if err := access.GovernanceOnly(caller); err != nil {
-		panic(err)
-	}
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedRouter()
+	halt.AssertIsNotHaltedProtocolFee()
+	access.AssertIsGovernance(caller)
 
 	prevSwapFee := swapFee
 	if err := setSwapFee(fee); err != nil {
 		panic(err)
 	}
 
-	prevAddr, prevPkgPath := getPrev()
-
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"SetSwapFee",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"newFee", formatUint(fee),
 		"prevFee", formatUint(prevSwapFee),
 	)
 }
 
 func setSwapFee(fee uint64) error {
-	if err := halt.IsHalted(); err != nil {
-		panic(err)
-	}
-
 	// 10000 (bps) = 100%
 	if fee > 10000 {
 		return ufmt.Errorf(
@@ -103,8 +96,8 @@ func handleSwapFee(
 		return amount
 	}
 
-	if outputToken == consts.GNOT {
-		outputToken = consts.WRAPPED_WUGNOT
+	if outputToken == gnot {
+		outputToken = wrappedWugnot
 	}
 
 	feeAmount := new(u256.Uint).Mul(amount, u256.NewUint(swapFee))
@@ -114,12 +107,11 @@ func handleSwapFee(
 	common.TransferFrom(cross, outputToken, std.PreviousRealm().Address(), protocolFeeAddr, feeAmountInt64)
 	pf.AddToProtocolFee(cross, outputToken, uint64(feeAmountInt64))
 
-	prevAddr, prevPkgPath := getPrev()
-
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"SwapRouteFee",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"tokenPath", outputToken,
 		"amount", formatInt64(feeAmountInt64),
 	)

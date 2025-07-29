@@ -8,6 +8,10 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/gov/xgns"
+
+	prbac "gno.land/p/gnoswap/rbac"
 )
 
 func TestCollectDepositGns(t *testing.T) {
@@ -24,7 +28,7 @@ func TestCollectDepositGns(t *testing.T) {
 	}{
 		{
 			name:             "collect deposit gns successfully",
-			depositID:        "gno.land/r/onbloc/obl:123:30:g1w4ek2ujlta047h6lta047h6lta047h6lkvk347:133",
+			depositID:        "1",
 			callerAddress:    userAddr,
 			expectedHasAbort: false,
 			expectedAmount:   1000000000,
@@ -38,7 +42,7 @@ func TestCollectDepositGns(t *testing.T) {
 		},
 		{
 			name:                 "collect deposit gns failed by invalid owner",
-			depositID:            "gno.land/r/onbloc/obl:123:30:g1w4ek2ujlta047h6lta047h6lta047h6lkvk347:133",
+			depositID:            "1",
 			callerAddress:        otherAddr,
 			expectedHasAbort:     true,
 			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-026] invalid owner || (g1da6xsetjta047h6lta047h6lta047h6ltrh8mk)",
@@ -49,8 +53,6 @@ func TestCollectDepositGns(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			initLaunchpadWithdrawTest(t)
 			testing.SetOriginCaller(tt.callerAddress)
-
-			println(tt.callerAddress.String())
 
 			collectDepositFn := func() {
 				CollectDepositGns(cross, tt.depositID)
@@ -69,7 +71,7 @@ func TestCollectDepositGns(t *testing.T) {
 }
 
 func TestWithdrawDeposit(t *testing.T) {
-	const currentDepositID = "gno.land/r/onbloc/obl:123:30:g1w4ek2ujlta047h6lta047h6lta047h6lkvk347:133"
+	const currentDepositID = "1"
 
 	tests := []struct {
 		name                 string
@@ -110,6 +112,7 @@ func initLaunchpadWithdrawTest(t *testing.T) {
 
 	// Initialize test environment
 	deposits = avl.NewTree()
+	depositCounter = NewCounter()
 	projects = avl.NewTree()
 	projectTierRewardManagers = avl.NewTree()
 
@@ -137,9 +140,19 @@ func initLaunchpadWithdrawTest(t *testing.T) {
 
 	testing.SkipHeights(10)
 
+	depositAmount := int64(1000000000)
+
 	depositor := testutils.TestAddress("user")
 	testing.SetOriginCaller(depositor)
-	deposit, _, _, _, _ := depositGns(project.ID(), 30, 1000000000, depositor)
+
+	depositGns(project.ID(), 30, depositAmount, depositor)
+
+	govStakerAddr, _ := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	govStakerRealm := std.NewUserRealm(govStakerAddr)
+	testing.SetRealm(govStakerRealm)
+
+	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	xgns.Mint(cross, launchpadAddr, depositAmount)
 
 	// Move to after individual deposit unlock time (30 days from deposit)
 	// Instead of project tier end time

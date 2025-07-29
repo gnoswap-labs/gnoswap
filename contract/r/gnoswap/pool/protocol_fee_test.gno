@@ -7,9 +7,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -34,9 +32,8 @@ func TestSetPoolCreationFee(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				SetPoolCreationFee(cross, newFee)
 			},
-			verify: nil,
-			// expected:    "caller(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) has no permission",
-			expected:    ufmt.Sprintf("caller(%s) has no permission", adminAddr.String()),
+			verify:      nil,
+			expected:    "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not governance",
 			shouldPanic: true,
 		},
 		{
@@ -90,7 +87,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			},
 			verify: nil,
 			// expected:    "caller(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) has no permission",
-			expected:    ufmt.Sprintf("caller(%s) has no permission", govAddr.String()),
+			expected:    "unauthorized: caller g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd is not admin",
 			shouldPanic: true,
 		},
 		{
@@ -101,7 +98,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 				SetPoolCreationFeeByAdmin(cross, newFee)
 			},
 			verify:      nil,
-			expected:    "caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) has no permission",
+			expected:    "unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not admin",
 			shouldPanic: true,
 		},
 		{
@@ -164,7 +161,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				CollectWithdrawalFee(cross, 0, "gno.land/r/onbloc/foo", "0", "gno.land/r/onbloc/foo", "0", "", adminAddr)
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-POOL-001] caller has no permission || only position(g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5) can call this function, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
+			expected:    "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not position",
 			shouldPanic: true,
 		},
 		{
@@ -247,7 +244,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 				SetWithdrawalFee(cross, newFee)
 			},
 			verify:      nil,
-			expected:    "caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) has no permission",
+			expected:    "unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not governance",
 			shouldPanic: true,
 		},
 		{
@@ -259,7 +256,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 				SetWithdrawalFee(cross, newFee)
 			},
 			verify:      nil,
-			expected:    "caller(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) has no permission",
+			expected:    "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not governance",
 			shouldPanic: true,
 		},
 		{
@@ -312,7 +309,7 @@ func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 				SetWithdrawalFeeByAdmin(cross, newFee)
 			},
 			verify:      nil,
-			expected:    "caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) has no permission",
+			expected:    "unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not admin",
 			shouldPanic: true,
 		},
 		{
@@ -324,7 +321,7 @@ func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 				SetWithdrawalFeeByAdmin(cross, newFee)
 			},
 			verify:      nil,
-			expected:    "caller(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) has no permission",
+			expected:    "unauthorized: caller g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd is not admin",
 			shouldPanic: true,
 		},
 		{
@@ -461,61 +458,82 @@ func TestProtocolFee(t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (3, 3)",
 			action: func(t *testing.T) {
-				setFeeProtocol(3, 3)
+				_, err := setFeeProtocol(3, 3)
+				if err != nil {
+					panic(err)
+				}
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage || expected (feeProtocol0(3) == 0 || (feeProtocol0(3) >= 4 && feeProtocol0(3) <= 10)) && (feeProtocol1(3) == 0 || (feeProtocol1(3) >= 4 && feeProtocol1(3) <= 10))",
+			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage",
 			shouldPanic: true,
 		},
 		{
 			name: "panic when setting fee protocol with invalid values (6, 3)",
 			action: func(t *testing.T) {
-				setFeeProtocol(6, 3)
+				_, err := setFeeProtocol(6, 3)
+				if err != nil {
+					panic(err)
+				}
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage || expected (feeProtocol0(6) == 0 || (feeProtocol0(6) >= 4 && feeProtocol0(6) <= 10)) && (feeProtocol1(3) == 0 || (feeProtocol1(3) >= 4 && feeProtocol1(3) <= 10))",
+			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage",
 			shouldPanic: true,
 		},
 		{
 			name: "panic when setting fee protocol with invalid values (3, 6)",
 			action: func(t *testing.T) {
-				setFeeProtocol(3, 6)
+				_, err := setFeeProtocol(3, 6)
+				if err != nil {
+					panic(err)
+				}
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage || expected (feeProtocol0(3) == 0 || (feeProtocol0(3) >= 4 && feeProtocol0(3) <= 10)) && (feeProtocol1(6) == 0 || (feeProtocol1(6) >= 4 && feeProtocol1(6) <= 10))",
+			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage",
 			shouldPanic: true,
 		},
 		{
 			name: "panic when setting fee protocol with invalid values (11, 11)",
 			action: func(t *testing.T) {
-				setFeeProtocol(11, 11)
+				_, err := setFeeProtocol(11, 11)
+				if err != nil {
+					panic(err)
+				}
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage || expected (feeProtocol0(11) == 0 || (feeProtocol0(11) >= 4 && feeProtocol0(11) <= 10)) && (feeProtocol1(11) == 0 || (feeProtocol1(11) >= 4 && feeProtocol1(11) <= 10))",
+			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage",
 			shouldPanic: true,
 		},
 		{
 			name: "panic when setting fee protocol with invalid values (6, 11)",
 			action: func(t *testing.T) {
-				setFeeProtocol(6, 11)
+				_, err := setFeeProtocol(6, 11)
+				if err != nil {
+					panic(err)
+				}
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage || expected (feeProtocol0(6) == 0 || (feeProtocol0(6) >= 4 && feeProtocol0(6) <= 10)) && (feeProtocol1(11) == 0 || (feeProtocol1(11) >= 4 && feeProtocol1(11) <= 10))",
+			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage",
 			shouldPanic: true,
 		},
 		{
 			name: "panic when setting fee protocol with invalid values (11, 6)",
 			action: func(t *testing.T) {
-				setFeeProtocol(11, 6)
+				_, err := setFeeProtocol(11, 6)
+				if err != nil {
+					panic(err)
+				}
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage || expected (feeProtocol0(11) == 0 || (feeProtocol0(11) >= 4 && feeProtocol0(11) <= 10)) && (feeProtocol1(6) == 0 || (feeProtocol1(6) >= 4 && feeProtocol1(6) <= 10))",
+			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage",
 			shouldPanic: true,
 		},
 		{
 			name: "set fee protocol to valid values (10, 10)",
 			action: func(t *testing.T) {
-				setFeeProtocol(10, 10)
+				_, err := setFeeProtocol(10, 10)
+				if err != nil {
+					panic(err)
+				}
 			},
 			verify: func(t *testing.T) interface{} {
 				return slot0FeeProtocol
@@ -608,7 +626,7 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 		adminAddr,
 		true,
 		"10000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
@@ -621,7 +639,7 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 		adminAddr,
 		false,
 		"10000",
-		consts.MAX_PRICE,
+		MAX_PRICE,
 		adminAddr,
 	)
 

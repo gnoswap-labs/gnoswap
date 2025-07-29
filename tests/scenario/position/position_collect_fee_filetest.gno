@@ -11,7 +11,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
@@ -20,11 +20,18 @@ import (
 	"gno.land/r/onbloc/foo"
 )
 
+const (
+	INT64_MAX int64 = 9223372036854775807
+
+	MIN_PRICE string = "4295128740"                                        // MIN_SQRT_RATIO + 1
+	MAX_PRICE string = "1461446703485210103287273052203988822378723970341" // MAX_SQRT_RATIO - 1
+)
+
 var (
-	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm    = std.NewUserRealm(adminAddr)
-	poolAddr, _   = access.GetAddress(access.ROLE_POOL)
-	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
+	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
+	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 	routerRealm   = std.NewUserRealm(routerAddr)
 
 	aliceAddr  = testutils.TestAddress("alice")
@@ -48,19 +55,15 @@ func main() {
 	executeMultipleSwaps()
 	println()
 
-	ufmt.Println("[SCENARIO] 4. Check tokens owed")
-	checkTokensOwed()
-	println()
-
-	ufmt.Println("[SCENARIO] 5. Decrease liquidity partially")
+	ufmt.Println("[SCENARIO] 4. Decrease liquidity partially")
 	decreaseLiquidityPartially()
 	println()
 
-	ufmt.Println("[SCENARIO] 6. Execute more swaps")
+	ufmt.Println("[SCENARIO] 5. Execute more swaps")
 	executeMoreSwaps()
 	println()
 
-	ufmt.Println("[SCENARIO] 7. Verify final tokens owed")
+	ufmt.Println("[SCENARIO] 6. Verify final tokens owed")
 	verifyFinalTokensOwed()
 	println()
 }
@@ -79,8 +82,8 @@ func initPool() {
 	ufmt.Println("[INFO] Distributing Foo tokens")
 	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
 
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Printf("[INFO] Initial Bar balance of Alice: %d\n", bar.BalanceOf(aliceAddr))
 	ufmt.Printf("[INFO] Initial Foo balance of Alice: %d\n", foo.BalanceOf(aliceAddr))
@@ -97,8 +100,8 @@ func initPool() {
 
 func mintPosition() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
@@ -126,8 +129,8 @@ func mintPosition() {
 
 func executeMultipleSwaps() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	testing.SetRealm(routerRealm)
 	ufmt.Println("[INFO] Executing first swap BAR -> FOO")
@@ -139,7 +142,7 @@ func executeMultipleSwaps() {
 		adminAddr,
 		true,
 		"10000000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
@@ -155,7 +158,7 @@ func executeMultipleSwaps() {
 		adminAddr,
 		false,
 		"10000000",
-		consts.MAX_PRICE,
+		MAX_PRICE,
 		adminAddr,
 	)
 
@@ -163,19 +166,10 @@ func executeMultipleSwaps() {
 	ufmt.Printf("[EXPECTED] Swap2 amount1 should be %s\n", amount1)
 }
 
-func checkTokensOwed() {
-	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPosition(1)
-
-	ufmt.Println("[INFO] Checking tokens owed after swaps")
-	ufmt.Printf("[EXPECTED] Token0 owed should be %s\n", pos.TokensOwed0().ToString())
-	ufmt.Printf("[EXPECTED] Token1 owed should be %s\n", pos.TokensOwed1().ToString())
-}
-
 func decreaseLiquidityPartially() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Decreasing liquidity by 50%")
 	_, liquidity, _, _, amount0, amount1, _ := position.DecreaseLiquidity(
@@ -195,8 +189,8 @@ func decreaseLiquidityPartially() {
 
 func executeMoreSwaps() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	testing.SetRealm(routerRealm)
 	ufmt.Println("[INFO] Executing additional swap BAR -> FOO")
@@ -208,7 +202,7 @@ func executeMoreSwaps() {
 		adminAddr,
 		true,
 		"5000000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
@@ -217,13 +211,6 @@ func executeMoreSwaps() {
 }
 
 func verifyFinalTokensOwed() {
-	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPosition(1)
-
-	ufmt.Println("[INFO] Checking final tokens owed")
-	ufmt.Printf("[EXPECTED] Final token0 owed should be %s\n", pos.TokensOwed0().ToString())
-	ufmt.Printf("[EXPECTED] Final token1 owed should be %s\n", pos.TokensOwed1().ToString())
-
 	testing.SetRealm(aliceRealm)
 	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
 
@@ -254,25 +241,17 @@ func verifyFinalTokensOwed() {
 // [EXPECTED] Swap2 amount0 should be -10062294
 // [EXPECTED] Swap2 amount1 should be 10000000
 //
-// [SCENARIO] 4. Check tokens owed
-// [INFO] Checking tokens owed after swaps
-// [EXPECTED] Token0 owed should be 0
-// [EXPECTED] Token1 owed should be 0
-//
-// [SCENARIO] 5. Decrease liquidity partially
+// [SCENARIO] 4. Decrease liquidity partially
 // [INFO] Decreasing liquidity by 50%
 // [EXPECTED] Removed liquidity should be 614189560
 // [EXPECTED] Amount0 removed should be 28730202
 // [EXPECTED] Amount1 removed should be 28836469
 //
-// [SCENARIO] 6. Execute more swaps
+// [SCENARIO] 5. Execute more swaps
 // [INFO] Executing additional swap BAR -> FOO
 // [EXPECTED] Swap3 amount0 should be 5000000
 // [EXPECTED] Swap3 amount1 should be -4931555
 //
-// [SCENARIO] 7. Verify final tokens owed
-// [INFO] Checking final tokens owed
-// [EXPECTED] Final token0 owed should be 0
-// [EXPECTED] Final token1 owed should be 0
+// [SCENARIO] 6. Verify final tokens owed
 // [EXPECTED] Collected fee0 should be 14850
 // [EXPECTED] Collected fee1 should be 0

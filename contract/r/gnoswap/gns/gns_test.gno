@@ -48,18 +48,18 @@ func TestBalanceOf(t *testing.T) {
 	uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(adminAddr))
 }
 
-func TestAssertTooManyEmission(t *testing.T) {
+func TestValidEmissionAmount(t *testing.T) {
 	tests := []struct {
 		name        string
 		amount      int64
-		shouldPanic bool
-		panicMsg    string
+		shouldError bool
+		errorMessage    string
 	}{
 		{
 			name:        "should panic if emission amount is too large",
 			amount:      MAXIMUM_SUPPLY,
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNS-002] too many emission reward || amount: 1000000000000000",
+			shouldError: true,
+			errorMessage:    "too many emission amount: 1000000000000000",
 		},
 		{
 			name:   "should not panic if emission amount is not too large",
@@ -69,12 +69,12 @@ func TestAssertTooManyEmission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					assertTooManyEmission(tt.amount)
-				})
+			err := validEmissionAmount(tt.amount)
+
+			if tt.shouldError {
+				uassert.Equal(t, tt.errorMessage, err.Error())
 			} else {
-				uassert.NotPanics(t, func() { assertTooManyEmission(tt.amount) })
+				uassert.Equal(t, nil, err)
 			}
 		})
 	}
@@ -165,13 +165,13 @@ func TestGetterSetter(t *testing.T) {
 	t.Run("last minted height", func(t *testing.T) {
 		value := int64(123)
 		setLastMintedHeight(value)
-		uassert.Equal(t, value, GetLastMintedHeight())
+		uassert.Equal(t, value, LastMintedHeight())
 	})
 
 	t.Run("left emission amount", func(t *testing.T) {
 		value := int64(0)
 		setLeftEmissionAmount(value)
-		uassert.Equal(t, value, GetLeftEmissionAmount())
+		uassert.Equal(t, value, LeftEmissionAmount())
 	})
 }
 
@@ -222,7 +222,7 @@ func TestGrc20Methods(t *testing.T) {
 			},
 			shouldPanic:   true,
 			exceptionKind: "abort",
-			panicMsg:      `caller(g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m) has no permission`,
+			panicMsg:      `unauthorized: caller g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m is not emission`,
 		},
 		{
 			name: "Burn without permission should panic",
@@ -313,6 +313,7 @@ func TestGrc20Methods(t *testing.T) {
 }
 
 func TestCalculateAmountToMint(t *testing.T) {
+	resetEmissionState(t)
 	startHeight := std.ChainHeight()
 
 	tests := []struct {
@@ -432,7 +433,7 @@ func TestMintGns(t *testing.T) {
 			inputSkipHeight:      1,
 			expectedMintedAmount: 0,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "halted",
+			expectedAbortMessage: "halted: emission",
 		},
 		{
 			name:                 "mint gns is failed by caller is not emission realm",
@@ -441,7 +442,7 @@ func TestMintGns(t *testing.T) {
 			inputSkipHeight:      1,
 			expectedMintedAmount: 0,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "caller(g1w4ek2ujlta047h6lta047h6lta047h6lkvk347) has no permission",
+			expectedAbortMessage: "unauthorized: caller g1w4ek2ujlta047h6lta047h6lta047h6lkvk347 is not emission",
 		},
 		{
 			name:                 "mint gns is failed by not allowed to mint same block",
@@ -459,7 +460,12 @@ func TestMintGns(t *testing.T) {
 			InitGnsTest(t)
 
 			testing.SetOriginCaller(adminAddr)
-			halt.SetHaltByAdmin(cross, tt.halted) // set halt
+
+			if tt.halted {
+				halt.SetHaltLevel(cross, halt.HaltLevelEmergency) // set halt
+			} else {
+				halt.SetHaltLevel(cross, halt.HaltLevelNone) // set halt
+			}
 
 			var mintedAmount int64
 
@@ -480,6 +486,7 @@ func TestMintGns(t *testing.T) {
 			}
 
 			uassert.Equal(t, tt.expectedMintedAmount, mintedAmount)
+			halt.SetHaltLevel(cross, halt.HaltLevelNone)
 		})
 	}
 }

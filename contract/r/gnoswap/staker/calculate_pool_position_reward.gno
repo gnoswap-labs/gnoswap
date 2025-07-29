@@ -1,13 +1,11 @@
 package staker
 
 import (
-	"gno.land/p/gnoswap/consts"
-
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // Q96
-var _q96 = u256.MustFromDecimal(consts.Q96)
+var _q96 = u256.MustFromDecimal("79228162514264337593543950336")
 
 func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
 	if prev >= current {
@@ -101,7 +99,7 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	// cache per-pool rewards in the internal incentive(tiers)
 	param.PoolTier.cacheReward(param.CurrentHeight, param.Pools)
 
-	deposit := param.Deposits.Get(param.PositionId)
+	deposit := param.Deposits.get(param.PositionId)
 	poolPath := deposit.targetPoolPath
 
 	pool, ok := param.Pools.Get(poolPath)

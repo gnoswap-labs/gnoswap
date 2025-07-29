@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/scenario/upgrade"
+gno = "0.9"

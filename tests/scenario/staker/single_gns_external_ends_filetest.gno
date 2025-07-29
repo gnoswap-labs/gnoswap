@@ -12,6 +12,7 @@
 package main
 
 import (
+	"fmt"
 	"std"
 	"strconv"
 	"testing"
@@ -20,8 +21,6 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
-
-	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -32,12 +31,15 @@ import (
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
@@ -46,8 +48,8 @@ var (
 	externalCreatorUser  = externalCreatorAddr
 	externalCreatorRealm = std.NewUserRealm(externalCreatorAddr)
 
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
-	poolAddr, _   = access.GetAddress(access.ROLE_POOL)
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
+	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
@@ -56,12 +58,15 @@ var (
 
 	fee100 uint32 = 100
 
-	max_timeout int64 = 9999999999
+	maxTimeout int64 = 9999999999
+	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
 	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
 
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
+
+	blockTime int64 = 2000
 )
 
 func main() {
@@ -136,8 +141,8 @@ func mintBarQuxPosition01() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position 01")
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	qux.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	qux.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint in-range position 01 (tick range: -50 ~ 50, requested amount: 50, 50)")
 	testing.SkipHeights(1)
@@ -152,7 +157,7 @@ func mintBarQuxPosition01() {
 		"50",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -163,8 +168,8 @@ func mintBarQuxPosition02() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position 02")
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	qux.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	qux.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint in-range position 02 (tick range: -50 ~ 50, requested amount: 50, 50)")
 	testing.SkipHeights(1)
@@ -179,7 +184,7 @@ func mintBarQuxPosition02() {
 		"50",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -194,10 +199,13 @@ func createExternalIncentiveGns() {
 
 	println("[INFO] approve GNS for external incentive creation")
 	testing.SetRealm(externalCreatorRealm) // creator
-	gns.Approve(cross, stakerAddr, consts.INT64_MAX)
+	gns.Approve(cross, stakerAddr, maxInt64)
 
 	println("[INFO] create external incentive for 90 days")
 	testing.SkipHeights(1)
+
+	incentiveID := fmt.Sprintf("%s:%d:%d", externalCreatorAddr, std.ChainHeight(), 1)
+	println("[INFO] create external incentive with incentiveID: ", incentiveID)
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
@@ -213,7 +221,7 @@ func startExternalIncentive() {
 	nowTime := time.Now().Unix()
 	timeLeft := externalStartTime - nowTime
 
-	blockAvgTime := milliToSec(consts.BLOCK_GENERATION_INTERVAL)
+	blockAvgTime := milliToSec(blockTime)
 	blockLeft := timeLeft / blockAvgTime
 
 	println("[INFO] skip blocks until external incentive starts")
@@ -262,15 +270,14 @@ func endExternalGnsIncentive() {
 	println("[INFO] end external incentive and collect remaining GNS")
 	testing.SetRealm(externalCreatorRealm)
 	gnsBalanceBeforeEnds := gns.BalanceOf(externalCreatorUser)
+
+	incentiveID := "g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:127:1"
 	sr.EndExternalIncentive(
 		cross,
-		externalCreatorAddr,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
-		gnsPath,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
-		126,
+		incentiveID,
 	)
+
 	gnsBalanceAfterEnds := gns.BalanceOf(externalCreatorUser)
 
 	ufmt.Printf("[INFO] GNS balance before ending: %d\n", gnsBalanceBeforeEnds)
@@ -322,7 +329,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 }
 
 func milliToSec(ms int64) int64 {
-	return ms / consts.MILLISECONDS_PER_SECOND
+	return ms / int64(1000)
 }
 
 // Output:
@@ -345,6 +352,7 @@ func milliToSec(ms int64) int64 {
 // [INFO] transfer GNS to external creator
 // [INFO] approve GNS for external incentive creation
 // [INFO] create external incentive for 90 days
+// [INFO] create external incentive with incentiveID:  g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:127:1
 //
 // [SCENARIO] 6. Start external incentive
 // [INFO] skip blocks until external incentive starts

@@ -10,23 +10,25 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/staker"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 )
 
 var (
-	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _  = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminRealm    = std.NewUserRealm(adminAddr)
-	poolAddr, _   = access.GetAddress(access.ROLE_POOL)
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
-	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
+	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
+	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 	routerRealm   = std.NewUserRealm(routerAddr)
 
 	aliceAddr  = testutils.TestAddress("alice")
@@ -35,6 +37,8 @@ var (
 	token0Path = "gno.land/r/onbloc/bar"
 	token1Path = "gno.land/r/onbloc/foo"
 	fee        = uint32(3000)
+
+	maxInt64 int64 = 9223372036854775807
 )
 
 func main() {
@@ -69,10 +73,10 @@ func initPool() {
 	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
-	bar.Approve(cross, stakerAddr, consts.INT64_MAX)
-	foo.Approve(cross, stakerAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	foo.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross, stakerAddr, maxInt64)
+	foo.Approve(cross, stakerAddr, maxInt64)
 
 	ufmt.Printf("[INFO] Creating %s:%s:%d pool (tick: %d)\n", token0Path, token1Path, fee, 0)
 	pool.CreatePool(

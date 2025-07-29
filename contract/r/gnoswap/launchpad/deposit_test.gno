@@ -224,6 +224,7 @@ func TestNewDeposit(t *testing.T) {
 
 	tests := []struct {
 		name               string
+		depositID          string
 		projectID          string
 		tier               int64
 		depositor          std.Address
@@ -236,6 +237,7 @@ func TestNewDeposit(t *testing.T) {
 	}{
 		{
 			name:               "create new deposit successfully",
+			depositID:          "123",
 			projectID:          projectID,
 			tier:               30,
 			depositor:          testAddr,
@@ -244,7 +246,7 @@ func TestNewDeposit(t *testing.T) {
 			createdBlockHeight: 90,
 			endBlockTime:       1000,
 			endBlockHeight:     100,
-			expectedID:         makeDepositID(projectID, 30, testAddr, 90),
+			expectedID:         "123",
 		},
 	}
 
@@ -254,6 +256,7 @@ func TestNewDeposit(t *testing.T) {
 			endBlockTimeInfo := newBlockTimeInfo(tt.endBlockTime, tt.endBlockHeight)
 
 			deposit := NewDeposit(
+				tt.depositID,
 				tt.projectID,
 				tt.tier,
 				tt.depositor,

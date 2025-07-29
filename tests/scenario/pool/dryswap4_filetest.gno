@@ -4,7 +4,7 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -29,11 +29,11 @@ const (
 
 // Variables for test addresses and realms
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = std.NewUserRealm(adminAddr)
-	posRealm     = std.NewCodeRealm(consts.POSITION_PATH)
-	positionAddr = consts.POSITION_ADDR
-	poolAddr     = consts.POOL_ADDR
+	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
+	posRealm     = std.NewUserRealm(positionAddr)
+	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
 // Token paths
@@ -47,6 +47,8 @@ var (
 	tickLower       = int32(9000)
 	tickUpper       = int32(11000)
 	liquidityExpect = "100000000000"
+
+	MAX_PRICE string = "1461446703485210103287273052203988822378723970341"
 )
 
 // DrySwap Test - ZeroForOne False (Token1 to Token0)
@@ -114,7 +116,7 @@ func testDrySwapZeroForOneFalse(t *testing.T) {
 		FeeTier500,
 		false, // zeroForOne = false
 		amountSpecified,
-		consts.MAX_PRICE, // Use MAX_PRICE for zeroForOne=false
+		MAX_PRICE, // Use MAX_PRICE for zeroForOne=false
 	)
 
 	// Then: Verify DrySwap results for zeroForOne=false
@@ -139,7 +141,7 @@ func testDrySwapZeroForOneFalse(t *testing.T) {
 		FeeTier500,
 		false, // zeroForOne = false
 		negativeAmount,
-		consts.MAX_PRICE,
+		MAX_PRICE,
 	)
 
 	// Then: Verify DrySwap results for negative amount

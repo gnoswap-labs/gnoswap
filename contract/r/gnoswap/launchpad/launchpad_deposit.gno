@@ -9,15 +9,26 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gns"
 	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
 	"gno.land/r/gnoswap/v1/gov/xgns"
+	"gno.land/r/gnoswap/v1/halt"
 	"gno.land/r/gnoswap/v1/referral"
 )
 
-// depositId -> Deposit
-var deposits = avl.NewTree()
+var (
+	depositCounter *Counter // Counter for generating unique deposit IDs
+
+	// depositId -> Deposit
+	deposits *avl.Tree // Tree storing all deposits by ID
+)
+
+func init() {
+	depositCounter = NewCounter()
+	deposits = avl.NewTree()
+}
 
 // DepositGns handles the deposit process for a specific project tier.
 //
@@ -62,11 +73,13 @@ var deposits = avl.NewTree()
 //
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_deposit.gno#depositgns
 func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, referrer string) string {
-	previousAddress := std.PreviousRealm().Address()
-	previousPkgPath := std.PreviousRealm().PkgPath()
+	halt.AssertIsNotHaltedLaunchpad()
+	halt.AssertIsNotHaltedWithdraw()
 
-	assertOnlyNotHalted()
-	assertOnlyUser()
+	previousRealm := std.PreviousRealm()
+	access.AssertIsUser(previousRealm)
+
+	caller := previousRealm.Address()
 	assertValidAmount(depositAmount)
 
 	projectID, tierDuration := parseProjectTierID(targetProjectTierID)
@@ -74,13 +87,13 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 		projectID,
 		tierDuration,
 		depositAmount,
-		previousAddress,
+		caller,
 	)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	actualReferrer, success := registerReferral(referrer, previousAddress)
+	actualReferrer, success := registerReferral(referrer, caller)
 	if !success {
 		actualReferrer = referral.GetReferral(std.PreviousRealm().Address().String())
 	}
@@ -88,8 +101,8 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 	if isFirstDeposit {
 		std.Emit(
 			"FirstDepositForProjectTier",
-			"prevAddr", previousAddress.String(),
-			"prevRealm", previousPkgPath,
+			"prevAddr", previousRealm.Address().String(),
+			"prevRealm", previousRealm.PkgPath(),
 			"targetProjectTierId", targetProjectTierID,
 			"amount", formatInt(depositAmount),
 			"depositId", deposit.ID(),
@@ -101,8 +114,8 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 
 	std.Emit(
 		"DepositGns",
-		"prevAddr", previousAddress.String(),
-		"prevRealm", previousPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"targetProjectTierId", targetProjectTierID,
 		"amount", formatInt(depositAmount),
 		"depositId", deposit.ID(),
@@ -114,7 +127,7 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 	launchpadAddress := std.CurrentRealm().Address()
 
 	// stake governance token to the project
-	err = stakeGovernance(projectID, depositAmount, launchpadAddress, previousAddress)
+	err = stakeGovernance(projectID, depositAmount, launchpadAddress, caller)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -161,7 +174,10 @@ func depositGns(
 		return common.BalanceOf(tokenPath, caller)
 	}
 
-	project.CheckConditions(callerAddress, balanceOfFn)
+	err = project.CheckConditions(callerAddress, balanceOfFn)
+	if err != nil {
+		return nil, nil, false, "", err
+	}
 
 	projectTier, err := project.getTier(tierDuration)
 	if err != nil {
@@ -189,7 +205,10 @@ func depositGns(
 		averageBlockTimeMs,
 	)
 
+	depositID := nextDepositID()
+
 	deposit := NewDeposit(
+		depositID,
 		projectID,
 		tierDuration,
 		callerAddress,
@@ -197,7 +216,7 @@ func depositGns(
 		createdBlockTimeInfo,
 		individualUnlockBlockTimeInfo, // Use individual unlock time instead of project tier end time
 	)
-	deposits.Set(deposit.ID(), deposit)
+	deposits.Set(depositID, deposit)
 
 	projectTier.deposit(deposit)
 
@@ -263,7 +282,7 @@ func stakeGovernance(projectID string, depositAmount int64, launchpadAddress std
 		return err
 	}
 
-	gov_staker.SetAmountByProjectWallet(cross, project.Recipient(), uint64(depositAmount), true)
+	gov_staker.SetAmountByProjectWallet(cross, project.Recipient(), depositAmount, true)
 
 	gns.TransferFrom(
 		cross,
@@ -272,7 +291,7 @@ func stakeGovernance(projectID string, depositAmount int64, launchpadAddress std
 		depositAmount,
 	)
 
-	xgns.Mint(cross, launchpadAddress, depositAmount)
+	xgns.MintByLaunchPad(cross, launchpadAddress, depositAmount)
 
 	return nil
 }
@@ -284,4 +303,21 @@ func getDeposit(depositID string) (*Deposit, error) {
 	}
 
 	return depositI.(*Deposit), nil
+}
+
+// getCurrentDepositID returns the current deposit ID (last assigned).
+//
+// Returns:
+//   - string: current deposit ID
+func getCurrentDepositID() string {
+	return formatInt(depositCounter.Get())
+}
+
+// nextDepositID increments and returns the next unique deposit ID.
+// This is used when creating new deposits.
+//
+// Returns:
+//   - string: next unique deposit ID
+func nextDepositID() string {
+	return formatInt(depositCounter.next())
 }

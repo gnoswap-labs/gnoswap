@@ -12,6 +12,8 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 
+	prbac "gno.land/p/gnoswap/rbac"
+
 	_ "gno.land/r/onbloc/obl"
 )
 
@@ -64,8 +66,8 @@ func TestDepositGnsPrivate(t *testing.T) {
 }
 
 func TestStakeGovernance(t *testing.T) {
-	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-	launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 	tests := []struct {
 		name                 string
@@ -95,7 +97,7 @@ func TestStakeGovernance(t *testing.T) {
 			userAddress:          adminAddr,
 			expectedError:        false,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "caller(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) has no permission",
+			expectedAbortMessage: "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not launchpad",
 		},
 		{
 			name:                 "stake governance failed by invalid project id",
@@ -148,6 +150,7 @@ func initLaunchpadDepositTest(t *testing.T) {
 
 	// Initialize test environment
 	deposits = avl.NewTree()
+	depositCounter = NewCounter()
 	projects = avl.NewTree()
 	projectTierRewardManagers = avl.NewTree()
 

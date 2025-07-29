@@ -7,7 +7,11 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
+	prbac "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 const (
@@ -33,17 +37,6 @@ var (
 	accuDistributedToCommunityPool int64
 	accuDistributedToGovStaker     int64
 )
-
-func getDistributionBpsPct(key string) int64 {
-	val, exists := distributionBpsPct.Get(key)
-	if !exists {
-		panic(addDetailToError(
-			errInvalidEmissionTarget,
-			ufmt.Sprintf("invalid target(%s)", key),
-		))
-	}
-	return val.(int64)
-}
 
 // Initialize default distribution percentages:
 // - Liquidity Stakers: 75%
@@ -73,14 +66,12 @@ func ChangeDistributionPctByAdmin(cur realm,
 	target03 int, pct03 int64,
 	target04 int, pct04 int64,
 ) {
-	assertOnlyAdmin()
-	targets := []int{target01, target02, target03, target04}
-	for _, target := range targets {
-		assertDistributionTarget(target)
-	}
-	assertNoDuplicateTargets(target01, target02, target03, target04)
-	assertSumDistributionPct(pct01, pct02, pct03, pct04)
-	assertOnlyNotHalted()
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedEmission()
+	access.AssertIsAdmin(caller)
+
+	assertValidDistributionTargets(target01, target02, target03, target04)
+	assertValidDistributionPct(pct01, pct02, pct03, pct04)
 
 	changeDistributionPcts(
 		cur,
@@ -104,14 +95,12 @@ func ChangeDistributionPct(cur realm,
 	target03 int, pct03 int64,
 	target04 int, pct04 int64,
 ) {
-	assertOnlyGovernance()
-	targets := []int{target01, target02, target03, target04}
-	for _, target := range targets {
-		assertDistributionTarget(target)
-	}
-	assertNoDuplicateTargets(target01, target02, target03, target04)
-	assertSumDistributionPct(pct01, pct02, pct03, pct04)
-	assertOnlyNotHalted()
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedEmission()
+	access.AssertIsGovernance(caller)
+
+	assertValidDistributionTargets(target01, target02, target03, target04)
+	assertValidDistributionPct(pct01, pct02, pct03, pct04)
 
 	changeDistributionPcts(
 		cur,
@@ -136,11 +125,11 @@ func changeDistributionPcts(
 	setDistributionBpsPct(cur, target03, pct03)
 	setDistributionBpsPct(cur, target04, pct04)
 
-	prevAddr, prevPkgPath := getPrevAsString()
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"ChangeDistributionPct",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"target01", targetToStr(target01),
 		"pct01", formatInt(pct01),
 		"target02", targetToStr(target02),
@@ -154,41 +143,33 @@ func changeDistributionPcts(
 
 // distributeToTarget splits an amount according to the configured percentages
 // and sends tokens to each target address. Returns the total amount distributed.
-func distributeToTarget(cur realm, amount int64) int64 {
+func distributeToTarget(cur realm, amount int64) (int64, error) {
 	totalSent := int64(0)
 
+	var err error
+
 	distributionBpsPct.Iterate("", "", func(targetStr string, iPct any) bool {
-		targetInt, err := strconv.Atoi(targetStr)
-		if err != nil {
-			panic(addDetailToError(
-				errInvalidEmissionTarget,
-				ufmt.Sprintf("invalid target(%s)", targetStr),
-			))
+		targetInt, distErr := strconv.Atoi(targetStr)
+		if distErr != nil {
+			err = distErr
+
+			return true
 		}
 
 		pct := iPct.(int64)
 		distAmount := calculateAmount(amount, pct)
 		totalSent += distAmount
 
-		transferToTarget(cross, targetInt, distAmount)
+		err = transferToTarget(cross, targetInt, distAmount)
+		if distErr != nil {
+			err = distErr
+			return true
+		}
 
 		return false
 	})
 
-	leftAmount := amount - totalSent
-
-	// guard for totalSent > amount case
-	// this should never happen.
-	if leftAmount < 0 {
-		panic(addDetailToError(
-			errInvalidEmissionTarget,
-			ufmt.Sprintf("total distributed amount (%d) exceeds original amount (%d)", totalSent, amount),
-		))
-	}
-
-	setLeftGNSAmount(leftAmount)
-
-	return totalSent
+	return totalSent, err
 }
 
 // calculateAmount converts a basis point percentage to actual token amount
@@ -209,44 +190,79 @@ func calculateAmount(amount, bptPct int64) int64 {
 
 // transferToTarget sends tokens to the appropriate address based on target type
 // and updates both current and accumulated distribution tracking
-func transferToTarget(cur realm, target int, amount int64) {
+func transferToTarget(cur realm, target int, amount int64) error {
 	switch target {
 	case LIQUIDITY_STAKER:
+		stakerAddr, ok := access.GetAddress(prbac.ROLE_STAKER.String())
+		if !ok {
+			return makeErrorWithDetails(
+				errDistributionAddressNotFound,
+				ufmt.Sprintf("%s not found", prbac.ROLE_STAKER.String()),
+			)
+		}
+		
 		gns.Transfer(cross, stakerAddr, amount)
 		distributedToStaker += amount
 		accuDistributedToStaker += amount
 
 	case DEVOPS:
+		devOpsAddr, ok := access.GetAddress(prbac.ROLE_DEVOPS.String())
+		if !ok {
+			return makeErrorWithDetails(
+				errDistributionAddressNotFound,
+				ufmt.Sprintf("%s not found", prbac.ROLE_DEVOPS.String()),
+			)
+		}
+		
 		gns.Transfer(cross, devOpsAddr, amount)
 		distributedToDevOps += amount
 		accuDistributedToDevOps += amount
 
 	case COMMUNITY_POOL:
+		communityPoolAddr, ok := access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+		if !ok {
+			return makeErrorWithDetails(
+				errDistributionAddressNotFound,
+				ufmt.Sprintf("%s not found", prbac.ROLE_COMMUNITY_POOL.String()),
+			)
+		}
+		
 		gns.Transfer(cross, communityPoolAddr, amount)
 		distributedToCommunityPool += amount
 		accuDistributedToCommunityPool += amount
 
 	case GOV_STAKER:
+		govStakerAddr, ok := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+		if !ok {
+			return makeErrorWithDetails(
+				errDistributionAddressNotFound,
+				ufmt.Sprintf("%s not found", prbac.ROLE_GOV_STAKER.String()),
+			)
+		}
+		
 		gns.Transfer(cross, govStakerAddr, amount)
 		distributedToGovStaker += amount
 		accuDistributedToGovStaker += amount
 
 	default:
-		panic(addDetailToError(
+		return makeErrorWithDetails(
 			errInvalidEmissionTarget,
 			ufmt.Sprintf("invalid target(%d)", target),
-		))
+		)
 	}
+
+	return nil
 }
 
 func GetDistributionBpsPct(target int) int64 {
-	assertDistributionTarget(target)
+	assertValidDistributionTarget(target)
 	if distributionBpsPct == nil {
 		panic("distributionBpsPct is nil")
 	}
+
 	iInt64, exist := distributionBpsPct.Get(strconv.Itoa(target))
 	if !exist {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errInvalidEmissionTarget,
 			ufmt.Sprintf("invalid target(%d)", target),
 		))
@@ -288,12 +304,16 @@ func GetAccuDistributedToGovStaker() int64 {
 }
 
 func ClearDistributedToStaker(cur realm) {
-	assertStakerOnly()
+	caller := std.PreviousRealm().Address()
+	access.AssertIsStaker(caller)
+
 	distributedToStaker = 0
 }
 
 func ClearDistributedToGovStaker(cur realm) {
-	assertOnlyGovStaker()
+	caller := std.PreviousRealm().Address()
+	access.AssertIsGovStaker(caller)
+	
 	distributedToGovStaker = 0
 }
 
@@ -314,8 +334,8 @@ func setDistributionBpsPct(cur realm, target int, pct int64) {
 		}
 		if oldPctInt64 != pct {
 			changedPct := calculateAmount(gns.GetEmission(), pct)
-			if callbackStakerEmissionChange != nil {
-				callbackStakerEmissionChange(changedPct)
+			if stakerEmissionChangeCallback != nil {
+				stakerEmissionChangeCallback(changedPct)
 			}
 		}
 	}

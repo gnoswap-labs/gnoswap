@@ -4,11 +4,10 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/gnoswap/v1/rbac"
-
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
+	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/v1/access"
 )
 
 func TestGetDepositGnsAmount(t *testing.T) {
@@ -33,7 +32,7 @@ func TestSetDepositGnsAmountByAdmin(t *testing.T) {
 	}{
 		{
 			name:             "set deposit amount by admin success",
-			caller:           testutils.TestAddress("admin"),
+			caller:           getAdminAddress(t),
 			inputAmount:      2_000_000_000,
 			expectedAmount:   2_000_000_000,
 			expectedHasAbort: false,
@@ -49,7 +48,7 @@ func TestSetDepositGnsAmountByAdmin(t *testing.T) {
 			expectedHasPanic: false,
 			expectedPanicMsg: "",
 			expectedHasAbort: true,
-			expectedAbortMsg: "caller(g1w4ek2u33ta047h6lta047h6lta047h6ldvdwpn) has no permission",
+			expectedAbortMsg: "unauthorized: caller g1w4ek2u33ta047h6lta047h6lta047h6ldvdwpn is not admin",
 		},
 	}
 
@@ -57,7 +56,6 @@ func TestSetDepositGnsAmountByAdmin(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			depositGnsAmount = 0
-			setupExternalDepositFeeAdminPermission(t)
 
 			testing.SetOriginCaller(tt.caller)
 
@@ -94,7 +92,7 @@ func TestSetDepositGnsAmount(t *testing.T) {
 	}{
 		{
 			name:             "set deposit success by governance",
-			caller:           testutils.TestAddress("governance"),
+			caller:           getGovernanceAddress(t),
 			inputAmount:      3_000_000_000,
 			expectedAmount:   3_000_000_000,
 			expectedHasAbort: false,
@@ -110,7 +108,7 @@ func TestSetDepositGnsAmount(t *testing.T) {
 			expectedHasPanic: false,
 			expectedPanicMsg: "",
 			expectedHasAbort: true,
-			expectedAbortMsg: "caller(g1dehkutt8damx2unwv9hxxe2lta047h6l9v0nxc) has no permission",
+			expectedAbortMsg: "unauthorized: caller g1dehkutt8damx2unwv9hxxe2lta047h6l9v0nxc is not governance",
 		},
 		{
 			name:             "set deposit amount failed by unauthorized caller",
@@ -120,7 +118,7 @@ func TestSetDepositGnsAmount(t *testing.T) {
 			expectedHasPanic: false,
 			expectedPanicMsg: "",
 			expectedHasAbort: true,
-			expectedAbortMsg: "caller(g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg) has no permission",
+			expectedAbortMsg: "unauthorized: caller g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg is not governance",
 		},
 	}
 
@@ -128,7 +126,6 @@ func TestSetDepositGnsAmount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			depositGnsAmount = 0
-			setupExternalDepositFeeGovernancePermission(t)
 
 			testing.SetOriginCaller(tt.caller)
 
@@ -165,7 +162,7 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 	}{
 		{
 			name:                        "set minimum reward amount success by governance",
-			caller:                      testutils.TestAddress("governance"),
+			caller:                      getGovernanceAddress(t),
 			inputMinimumRewardAmount:    1_000_000_000,
 			expectedMinimumRewardAmount: 1_000_000_000,
 			expectedHasAbort:            false,
@@ -181,7 +178,7 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 			expectedHasPanic:            false,
 			expectedPanicMsg:            "",
 			expectedHasAbort:            true,
-			expectedAbortMsg:            "caller(g1dehkutt8damx2unwv9hxxe2lta047h6l9v0nxc) has no permission",
+			expectedAbortMsg:            "unauthorized: caller g1dehkutt8damx2unwv9hxxe2lta047h6l9v0nxc is not governance",
 		},
 		{
 			name:                        "set minimum reward amount failed by unauthorized caller",
@@ -191,7 +188,7 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 			expectedHasPanic:            false,
 			expectedPanicMsg:            "",
 			expectedHasAbort:            true,
-			expectedAbortMsg:            "caller(g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg) has no permission",
+			expectedAbortMsg:            "unauthorized: caller g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg is not governance",
 		},
 	}
 
@@ -199,7 +196,6 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			minimumRewardAmount = 0
-			setupExternalDepositFeeGovernancePermission(t)
 
 			testing.SetOriginCaller(tt.caller)
 
@@ -226,14 +222,16 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 func setupExternalDepositFeeAdminPermission(t *testing.T) {
 	t.Helper()
 
-	addr := testutils.TestAddress("admin")
+	// Use the actual admin address from access package
+	addr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 	setupExternalDepositFeePermission(t, addr, "admin")
 }
 
 func setupExternalDepositFeeGovernancePermission(t *testing.T) {
 	t.Helper()
 
-	addr := testutils.TestAddress("governance")
+	// Use the actual governance address from access package
+	addr, _ := access.GetAddress(prbac.ROLE_GOVERNANCE.String())
 	setupExternalDepositFeePermission(t, addr, "governance")
 }
 
@@ -242,13 +240,16 @@ func setupExternalDepositFeePermission(t *testing.T, caller std.Address, permiss
 
 	testing.SetOriginCaller(caller)
 	testing.SetRealm(std.NewUserRealm(caller))
+}
 
-	globalManager := rbac.GlobalManager()
-	globalManager.UpdatePermission(permissionName, "access", func(addr std.Address) error {
-		if addr != caller {
-			return ufmt.Errorf("caller is not %s", addr)
-		}
+func getAdminAddress(t *testing.T) std.Address {
+	t.Helper()
+	addr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+	return addr
+}
 
-		return nil
-	})
+func getGovernanceAddress(t *testing.T) std.Address {
+	t.Helper()
+	addr, _ := access.GetAddress(prbac.ROLE_GOVERNANCE.String())
+	return addr
 }

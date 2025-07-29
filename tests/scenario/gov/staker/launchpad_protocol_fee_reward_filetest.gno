@@ -9,24 +9,31 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 
+	prbac "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/staker"
 	lp "gno.land/r/gnoswap/v1/launchpad"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 )
 
 var (
-	admin        = consts.ADMIN
+	admin, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = std.NewUserRealm(admin)
-	bobAddr      = testutils.TestAddress("bob")
-	bobRealm     = std.NewUserRealm(bobAddr)
+
+	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
+	stakerRealm  = std.NewUserRealm(stakerAddr)
+
+	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	launchpadAddr, _  = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+
 	projectAddr  = testutils.TestAddress("projectAddr")
 	projectRealm = std.NewUserRealm(projectAddr)
-	stakerRealm  = std.NewUserRealm(consts.STAKER_ADDR)
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
@@ -45,11 +52,7 @@ func main() {
 	skipBlocksAndDistribute()
 	println()
 
-	println("[SCENARIO] 3. Check and collect protocol fee reward for bob")
-	protocolFeeRewardBob()
-	println()
-
-	println("[SCENARIO] 4. Check and collect protocol fee reward for project recipient")
+	println("[SCENARIO] 3. Check and collect protocol fee reward for project recipient")
 	protocolFeeRewardProjectRecipient()
 	println()
 }
@@ -59,7 +62,7 @@ func createLaunchpadProject() {
 	startTime := int64(time.Now().Unix() + 3600) // 1 hour
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, consts.LAUNCHPAD_ADDR, rewardAmount)
+	bar.Approve(cross, launchpadAddr, rewardAmount)
 	lp.CreateProject(
 		cross,
 		"Bar Launchpad Project",
@@ -78,15 +81,15 @@ func createLaunchpadProject() {
 	ufmt.Printf("[INFO] skipped 3600 blocks\n")
 
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, consts.LAUNCHPAD_ADDR, rewardAmount)
+	gns.Approve(cross, launchpadAddr, rewardAmount)
 	lp.DepositGns(cross, "gno.land/r/onbloc/bar:123:30", int64(rewardAmount), "")
 }
 
 func setupProtocolFeeDeposit() {
 	// mock protocol fee deposit (bar, qux)
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, consts.PROTOCOL_FEE_ADDR, 1000)
-	qux.Transfer(cross, consts.PROTOCOL_FEE_ADDR, 2500)
+	bar.Transfer(cross, protocolFeeAddr, 1000)
+	qux.Transfer(cross, protocolFeeAddr, 2500)
 
 	testing.SetRealm(stakerRealm)
 	pf.AddToProtocolFee(cross, barPath, 1000)
@@ -100,16 +103,8 @@ func skipBlocksAndDistribute() {
 	ufmt.Printf("[INFO] skipped 10 blocks\n")
 }
 
-func protocolFeeRewardBob() {
-	gcr := staker.GetClaimableRewardByAddress(bobAddr)
-	ufmt.Printf("[INFO] claimable reward (bob): %s\n", gcr)
-	testing.SetRealm(bobRealm)
-	staker.CollectReward(cross)
-	ufmt.Printf("[INFO] collected protocol fee reward for bob\n")
-}
-
 func protocolFeeRewardProjectRecipient() {
-	gcr := staker.GetClaimableRewardByAddress(projectAddr)
+	gcr := staker.GetClaimableRewardByLaunchpad(projectAddr)
 	ufmt.Printf("[INFO] claimable reward (project recipient): %s\n", gcr)
 	testing.SetRealm(projectRealm)
 
@@ -136,11 +131,7 @@ func protocolFeeRewardProjectRecipient() {
 // [SCENARIO] 2. Skip blocks and distribute protocol fee
 // [INFO] skipped 10 blocks
 //
-// [SCENARIO] 3. Check and collect protocol fee reward for bob
-// [INFO] claimable reward (bob):
-// [INFO] collected protocol fee reward for bob
-//
-// [SCENARIO] 4. Check and collect protocol fee reward for project recipient
+// [SCENARIO] 3. Check and collect protocol fee reward for project recipient
 // [INFO] claimable reward (project recipient): {"height":"3733","now":"1234585940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"999"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2499"}]}
 // [INFO] collected protocol fee reward for project recipient
 // [EXPECTED] collected bar amount: 999

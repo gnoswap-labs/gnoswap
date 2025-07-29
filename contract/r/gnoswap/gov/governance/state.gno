@@ -2,319 +2,244 @@ package governance
 
 import (
 	"std"
-	"strings"
-	"time"
 
 	"gno.land/p/demo/avl"
-	"gno.land/p/demo/ufmt"
-
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
-type GovernanceState struct {
-	// Core state
-	proposalCounter    uint64
-	proposals          *avl.Tree // proposalId -> ProposalInfo
-	archievedProposals *avl.Tree // proposalId -> ProposalInfo
+// Global state variables for governance system
+var (
+	configCounter   *Counter  // Counter for generating config version numbers
+	proposalCounter *Counter  // Counter for generating unique proposal IDs
+	
+	configs                 *avl.Tree // Tree storing governance configurations by version
+	proposals               *avl.Tree // Tree storing all proposals by ID
+	proposalManager         *ProposalManager // Manager for user-proposal associations
+	proposalUserVotingInfos *avl.Tree // Tree storing voting info for each proposal by user
 
-	// voting state
-	votes     *avl.Tree // voteKey(proposalId:voter) -> bool
-	userVotes *avl.Tree // userVoteKey(voter:proposalId) -> voteWeight
+	// Function to retrieve user voting snapshots (can be overridden for testing)
+	getUserVotingInfoSnapshotFn func(snapshotTime int64) (map[string]*VotingInfo, int64, bool)
+)
 
-	// tracker
-	proposalIdByProposer *avl.Tree // proposer -> proposalId
-
-	// config
-	currentConfig  Config
-	configVersions *avl.Tree // version -> config
-	configCounter  uint64
+// init initializes the governance system state when the contract is deployed.
+// This function sets up all necessary data structures and default configurations.
+func init() {
+	initConfig()
+	initProposal()
+	initStakerDelegationSnapshots()
 }
 
-// NewGovernanceState creates a new `GovernanceState` with initial config
-func NewGovernanceState(initialConfig Config) *GovernanceState {
-	versions := avl.NewTree()
-	versions.Set(formatUint(uint64(1)), initialConfig)
+// initConfig initializes the governance configuration system.
+// Sets up the configuration counter and creates the default initial configuration.
+func initConfig() {
+	configCounter = NewCounter()
+	configs = avl.NewTree()
 
-	return &GovernanceState{
-		proposalCounter:      0,
-		proposals:            avl.NewTree(),
-		archievedProposals:   avl.NewTree(),
-		votes:                avl.NewTree(),
-		userVotes:            avl.NewTree(),
-		proposalIdByProposer: avl.NewTree(),
-		currentConfig:        initialConfig,
-		configVersions:       versions,
-		configCounter:        1,
+	// Create the initial governance configuration with default parameters
+	nextConfigVersion := nextConfigVersion()
+	config := Config{
+		VotingStartDelay:              86400,         // 1 day - delay before voting starts
+		VotingPeriod:                  604800,        // 7 days - duration for collecting votes
+		VotingWeightSmoothingDuration: 86400,         // 1 day - period for averaging voting weight
+		Quorum:                        50,            // 50% of total xGNS supply required
+		ProposalCreationThreshold:     1_000_000_000, // 1 billion - minimum balance to create proposals
+		ExecutionDelay:                86400,         // 1 day - waiting period before execution
+		ExecutionWindow:               2592000,       // 30 days - window for executing proposals
+	}
+
+	setConfig(nextConfigVersion, config)
+}
+
+// initProposal initializes the proposal management system.
+// Sets up counters, storage trees, and management structures for proposals.
+func initProposal() {
+	proposalCounter = NewCounter()
+	proposals = avl.NewTree()
+	proposalManager = NewProposalManager()
+	proposalUserVotingInfos = avl.NewTree()
+}
+
+// initStakerDelegationSnapshots initializes the voting snapshot function.
+// Sets up the default function to retrieve voting weights from staker contract.
+func initStakerDelegationSnapshots() {
+	getUserVotingInfoSnapshotFn = func(snapshotTime int64) (map[string]*VotingInfo, int64, bool) {
+		return getUserVotingInfotWithDelegationSnapshots(snapshotTime)
 	}
 }
 
-/* Proposal management */
-
-func (s *GovernanceState) WithNewProposal(proposer std.Address, proposal ProposalInfo) *GovernanceState {
-	state := s.clone()
-	state.proposalCounter++
-
-	proposalId := state.proposalCounter
-	state.proposals.Set(formatUint(proposalId), proposal)
-	state.proposalIdByProposer.Set(proposal.Proposer.String(), proposalId)
-
-	return state
+// getCurrentConfigVersion returns the current governance configuration version.
+//
+// Returns:
+//   - int64: current configuration version number
+func getCurrentConfigVersion() int64 {
+	return configCounter.Get()
 }
 
-func (s *GovernanceState) WithUpdatedProposal(proposalId uint64, updater func(ProposalInfo) ProposalInfo) *GovernanceState {
-	proposal, exists := s.proposals.Get(formatUint(proposalId))
-	if !exists {
-		return s // no change if proposal doesn't exist
-	}
-
-	info, ok := proposal.(ProposalInfo)
-	if !ok {
-		panic(ufmt.Sprintf("proposal(%d) is not ProposalInfo", proposalId))
-	}
-	updated := updater(info)
-
-	state := s.clone()
-	state.proposals.Set(formatUint(proposalId), updated)
-
-	return state
+// nextConfigVersion increments and returns the next configuration version number.
+// This is used when creating new governance configurations.
+//
+// Returns:
+//   - int64: next configuration version number
+func nextConfigVersion() int64 {
+	return configCounter.next()
 }
 
-func (s *GovernanceState) WithArchivedProposal(proposalId uint64) *GovernanceState {
-	id := formatUint(proposalId)
-	proposal, exists := s.proposals.Get(id)
-	if !exists {
-		return s
-	}
-
-	state := s.clone()
-	state.proposals.Remove(id)
-	state.archievedProposals.Set(id, proposal)
-
-	// remove from proposal mapping
-	info, ok := proposal.(ProposalInfo)
-	if !ok {
-		panic(ufmt.Sprintf("archived proposal(%d) is not ProposalInfo", proposalId))
-	}
-	state.proposalIdByProposer.Remove(info.Proposer.String())
-
-	return state
+// getCurrentProposalID returns the current proposal ID (last assigned).
+//
+// Returns:
+//   - int64: current proposal ID
+func getCurrentProposalID() int64 {
+	return proposalCounter.Get()
 }
 
-/* Vote management */
-
-func (s *GovernanceState) WithVote(proposalId uint64, voter std.Address, vote bool, weight uint64) *GovernanceState {
-	state := s.clone()
-
-	// record the vote
-	voteKey := createVoteKey(proposalId, voter.String())
-	state.votes.Set(voteKey, vote)
-
-	// record user vote with metadata
-	userVoteKey := createUserVoteKey(voter, proposalId)
-	voteData := voteWithWeight{
-		Yes:         vote,
-		Weight:      weight,
-		VotedHeight: uint64(std.ChainHeight()),
-		VotedAt:     uint64(time.Now().Unix()),
-	}
-	state.userVotes.Set(userVoteKey, voteData)
-
-	// update proposal vote counts
-	return state.WithUpdatedProposal(proposalId, func(p ProposalInfo) ProposalInfo {
-		if vote {
-			p.Yea = new(u256.Uint).Add(p.Yea, u256.NewUint(weight))
-		} else {
-			p.Nay = new(u256.Uint).Add(p.Nay, u256.NewUint(weight))
-		}
-		return p
-	})
+// nextProposalID increments and returns the next unique proposal ID.
+// This is used when creating new proposals.
+//
+// Returns:
+//   - int64: next unique proposal ID
+func nextProposalID() int64 {
+	return proposalCounter.next()
 }
 
-// configuration management
-
-// WithConfig adds a new configuration version
-func (s *GovernanceState) WithNewConfig(cfg Config) *GovernanceState {
-	state := s.clone()
-	state.configCounter++
-	state.configVersions.Set(formatUint(state.configCounter), cfg)
-	state.currentConfig = cfg
-	return state
-}
-
-// Query methods (should readonly)
-
-// GetProposal retrieves a proposal by ID
-func (s *GovernanceState) GetProposal(proposalId uint64) (ProposalInfo, bool) {
-	val, exists := s.proposals.Get(formatUint(proposalId))
-	if !exists {
-		return ProposalInfo{}, false
-	}
-	info, ok := val.(ProposalInfo)
-	if !ok {
-		panic(ufmt.Sprintf("proposal(%d) is not ProposalInfo", proposalId))
-	}
-	return info, true
-}
-
-func (s *GovernanceState) GetArchivedProposal(proposalId uint64) (ProposalInfo, bool) {
-	val, exists := s.archievedProposals.Get(formatUint(proposalId))
-	if !exists {
-		return ProposalInfo{}, false
-	}
-	info, ok := val.(ProposalInfo)
-	if !ok {
-		panic(ufmt.Sprintf("archived proposal(%d) is not ProposalInfo", proposalId))
-	}
-	return info, true
-}
-
-func (s *GovernanceState) GetVote(proposalId uint64, voter std.Address) (bool, bool) {
-	key := createVoteKey(proposalId, voter.String())
-	val, exists := s.votes.Get(key)
-	if !exists {
-		return false, false
-	}
-	return val.(bool), true
-}
-
-// GetUserVote retrieves detailed vote information
-func (s *GovernanceState) GetUserVote(voter std.Address, proposalId uint64) (voteWithWeight, bool) {
-	userVoteKey := createUserVoteKey(voter, proposalId)
-	val, exists := s.userVotes.Get(userVoteKey)
-	if !exists {
-		return voteWithWeight{}, false
-	}
-	return val.(voteWithWeight), true
-}
-
-// GetProposalByProposer retrieves the active proposal ID for a proposer
-func (s *GovernanceState) GetProposalByProposer(proposer std.Address) (uint64, bool) {
-	val, exists := s.proposalIdByProposer.Get(proposer.String())
-	if !exists {
-		return 0, false
-	}
-	return val.(uint64), true
-}
-
-func (s *GovernanceState) GetConfig(version uint64) (Config, bool) {
-	if version == 0 {
-		return s.currentConfig, true
-	}
-
-	val, exists := s.configVersions.Get(formatUint(version))
+// getConfig retrieves a specific governance configuration by version number.
+//
+// Parameters:
+//   - version: configuration version to retrieve
+//
+// Returns:
+//   - Config: governance configuration for the specified version
+//   - bool: true if configuration exists, false otherwise
+func getConfig(version int64) (Config, bool) {
+	val, exists := configs.Get(formatInt(version))
 	if !exists {
 		return Config{}, false
 	}
-	cfg, ok := val.(Config)
-	if !ok {
-		panic(ufmt.Sprintf("config version(%d) is not Config", version))
-	}
-	return cfg, true
+
+	return val.(Config), true
 }
 
-// GetProposalCounter returns the current proposal counter
-func (s *GovernanceState) GetProposalCounter() uint64 {
-	return s.proposalCounter
+// setConfig stores a governance configuration with the specified version number.
+//
+// Parameters:
+//   - version: configuration version number
+//   - config: governance configuration to store
+func setConfig(version int64, config Config) {
+	configs.Set(formatInt(version), config)
 }
 
-func (s *GovernanceState) GetAccumulatedVotes(proposalId uint64) (uint64, uint64) {
-	proposal, exists := s.GetProposal(proposalId)
+// getCurrentConfig retrieves the current active governance configuration.
+//
+// Returns:
+//   - Config: current governance configuration
+//   - bool: true if configuration exists, false otherwise
+func getCurrentConfig() (Config, bool) {
+	return getConfig(getCurrentConfigVersion())
+}
+
+// getProposal retrieves a specific proposal by its ID.
+//
+// Parameters:
+//   - proposalID: unique identifier of the proposal
+//
+// Returns:
+//   - *Proposal: pointer to the proposal if found
+//   - bool: true if proposal exists, false otherwise
+func getProposal(proposalID int64) (*Proposal, bool) {
+	val, exists := proposals.Get(formatInt(proposalID))
 	if !exists {
-		return 0, 0
+		return nil, false
 	}
-	return proposal.Yea.Uint64(), proposal.Nay.Uint64()
+	
+	return val.(*Proposal), true
 }
 
-/* Iterators */
+// addProposal stores a new proposal in the system.
+// Also registers the proposal with the proposal manager for user tracking.
+//
+// Parameters:
+//   - proposal: proposal to store
+//
+// Returns:
+//   - bool: true if proposal was successfully added
+func addProposal(proposal *Proposal) bool {
+	// Store proposal in main proposals tree
+	proposals.Set(formatInt(proposal.ID()), proposal)
+	
+	// Register proposal with user in proposal manager
+	proposalManager.addProposal(proposal.Proposer(), proposal.ID())
 
-func (s *GovernanceState) IterateProposals(fn func(uint64, ProposalInfo) bool) {
-	s.proposals.Iterate("", "", func(key string, value any) bool {
-		proposalId := parseUint64(key)
-		proposal, ok := value.(ProposalInfo)
+	return true
+}
+
+// getUserProposals retrieves all proposals created by a specific user.
+//
+// Parameters:
+//   - user: address of the user
+//
+// Returns:
+//   - []*Proposal: slice of proposals created by the user
+func getUserProposals(user std.Address) []*Proposal {
+	// Get proposal IDs for this user
+	proposalIDs := proposalManager.GetUserProposals(user)
+	proposals := make([]*Proposal, 0)
+
+	// Retrieve each proposal by ID
+	for _, proposalID := range proposalIDs {
+		proposal, ok := getProposal(proposalID)
 		if !ok {
-			panic(ufmt.Sprintf("proposal(%d) is not ProposalInfo", proposalId))
+			continue // Skip if proposal not found (shouldn't happen)
 		}
-		return fn(proposalId, proposal)
-	})
-}
 
-// IterateUserVotes iterates over all votes by a specific user
-func (s *GovernanceState) IterateUserVotes(voter std.Address, fn func(uint64, voteWithWeight) bool) {
-	prefix := voter.String() + ":"
-	s.userVotes.Iterate(prefix, prefix+"~", func(key string, val any) bool {
-		// Extract proposal ID from key
-		parts := strings.Split(key, ":")
-		if len(parts) != 2 {
-			return true
-		}
-		proposalId := parseUint64(parts[1])
-		vote := val.(voteWithWeight)
-		return fn(proposalId, vote)
-	})
-}
-
-// Helper method to clone state
-func (s *GovernanceState) clone() *GovernanceState {
-	// Create new AVL trees by copying all data
-	newProposals := avl.NewTree()
-	s.proposals.Iterate("", "", func(key string, value any) bool {
-		newProposals.Set(key, value)
-		return false
-	})
-
-	newArchivedProposals := avl.NewTree()
-	s.archievedProposals.Iterate("", "", func(key string, value any) bool {
-		newArchivedProposals.Set(key, value)
-		return false
-	})
-
-	newVotes := avl.NewTree()
-	s.votes.Iterate("", "", func(key string, value any) bool {
-		newVotes.Set(key, value)
-		return false
-	})
-
-	newUserVotes := avl.NewTree()
-	s.userVotes.Iterate("", "", func(key string, value any) bool {
-		newUserVotes.Set(key, value)
-		return false
-	})
-
-	newProposalIdByProposer := avl.NewTree()
-	s.proposalIdByProposer.Iterate("", "", func(key string, value any) bool {
-		newProposalIdByProposer.Set(key, value)
-		return false
-	})
-
-	newConfigVersions := avl.NewTree()
-	s.configVersions.Iterate("", "", func(key string, value any) bool {
-		newConfigVersions.Set(key, value)
-		return false
-	})
-
-	return &GovernanceState{
-		proposalCounter:      s.proposalCounter,
-		proposals:            newProposals,
-		archievedProposals:   newArchivedProposals,
-		votes:                newVotes,
-		userVotes:            newUserVotes,
-		proposalIdByProposer: newProposalIdByProposer,
-		currentConfig:        s.currentConfig,
-		configVersions:       newConfigVersions,
-		configCounter:        s.configCounter,
+		proposals = append(proposals, proposal)
 	}
+	
+	return proposals
 }
 
-// Validation methods
+// getProposalUserVotingInfos retrieves all voting information for a specific proposal.
+// Returns a mapping of user addresses to their voting information.
+//
+// Parameters:
+//   - proposalID: unique identifier of the proposal
+//
+// Returns:
+//   - map[string]*VotingInfo: mapping of user addresses to voting information
+//   - bool: true if voting information exists for the proposal
+func getProposalUserVotingInfos(proposalID int64) (map[string]*VotingInfo, bool) {
+	userVotingInfosI, exists := proposalUserVotingInfos.Get(formatInt(proposalID))
+	if !exists {
+		return map[string]*VotingInfo{}, false
+	}
 
-// CanPropose checks if an address can create a proposal
-func (s *GovernanceState) CanPropose(proposer std.Address) bool {
-	_, hasActiveProposal := s.GetProposalByProposer(proposer)
-	return !hasActiveProposal
+	// Type assertion to convert interface{} to the expected map type
+	userVotingInfos, ok := userVotingInfosI.(map[string]*VotingInfo)
+	if !ok {
+		return map[string]*VotingInfo{}, false
+	}
+
+	return userVotingInfos, true
 }
 
-// HasVoted checks if a voter has already voted on a proposal
-func (s *GovernanceState) HasVoted(proposalId uint64, voter std.Address) bool {
-	_, exists := s.GetVote(proposalId, voter)
-	return exists
+// getProposalUserVotingInfo retrieves voting information for a specific user on a specific proposal.
+//
+// Parameters:
+//   - proposalID: unique identifier of the proposal
+//   - userAddress: address of the user
+//
+// Returns:
+//   - *VotingInfo: voting information for the user
+//   - bool: true if voting information exists for the user
+func getProposalUserVotingInfo(proposalID int64, userAddress std.Address) (*VotingInfo, bool) {
+	// First get all voting info for the proposal
+	userVotingInfos, exists := getProposalUserVotingInfos(proposalID)	
+	if !exists {
+		return nil, false
+	}
+
+	// Then lookup the specific user's voting info
+	val, exists := userVotingInfos[userAddress.String()]
+	if !exists {
+		return nil, false
+	}
+
+	return val, true
 }

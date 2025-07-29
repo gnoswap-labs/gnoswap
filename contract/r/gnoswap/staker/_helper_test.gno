@@ -7,9 +7,8 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -48,20 +47,20 @@ var (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr = getRoleAddress(prbac.ROLE_ADMIN)
 	admin        = adminAddr
 	adminRealm   = std.NewUserRealm(admin)
 
 	alice = testutils.TestAddress("alice")
 
-	govGovernanceAddr, _ = access.GetAddress(access.ROLE_GOVERNANCE)
-	poolAddr, _          = access.GetAddress(access.ROLE_POOL)
-	routerAddr, _        = access.GetAddress(access.ROLE_ROUTER)
-	emissionAddr, _      = access.GetAddress(access.ROLE_EMISSION)
+	govGovernanceAddr = getRoleAddress(prbac.ROLE_GOVERNANCE)
+	poolAddr          = getRoleAddress(prbac.ROLE_POOL)
+	routerAddr        = getRoleAddress(prbac.ROLE_ROUTER)
+	emissionAddr      = getRoleAddress(prbac.ROLE_EMISSION)
 
-	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm    = std.NewCodeRealm(consts.ROUTER_PATH)
-	stakerRealm = std.NewCodeRealm(consts.STAKER_PATH)
+	posRealm    = std.NewCodeRealm("gno.land/r/gnoswap/v1/position")
+	rouRealm    = std.NewCodeRealm("gno.land/r/gnoswap/v1/router")
+	stakerRealm = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
@@ -398,9 +397,8 @@ func ugnotFaucet(t *testing.T, to std.Address, amount int64) {
 func ugnotDeposit(t *testing.T, addr std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(addr))
-	wugnotAddr := consts.WUGNOT_ADDR
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, amount}})
+	banker.SendCoins(addr, WUGNOT_ADDR, std.Coins{{ugnotDenom, amount}})
 	wugnot.Deposit(cross)
 }
 

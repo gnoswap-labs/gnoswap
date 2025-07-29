@@ -9,6 +9,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
@@ -18,7 +19,7 @@ import (
 )
 
 var (
-	adminAddr, _     = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
 	currentBlockTime = int64(2)
 )
 
@@ -62,12 +63,12 @@ func delegateGnsToAdmin() {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 
 	gns.Approve(cross, consts.GOV_STAKER_ADDR, delegatedAmount)
-	govStaker.Delegate(cross, adminAddr, uint64(delegatedAmount), "")
+	govStaker.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 
 	ufmt.Printf("[INFO] gns delegated to %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 }
 
-func proposeReconfigureGovernance() uint64 {
+func proposeReconfigureGovernance() int64 {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	proposalID := governance.ProposeParameterChange(cross, "gov", "reconfigure", 1, "gno.land/r/gnoswap/v1/gov/governance*EXE*Reconfigure*EXE*123,456,789,1234,5678,12345,67890")
 
@@ -75,7 +76,7 @@ func proposeReconfigureGovernance() uint64 {
 	return proposalID
 }
 
-func vote(proposalID uint64, yea bool) {
+func vote(proposalID int64, yea bool) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 
 	prevYeaNum := governance.GetYeaByProposalId(proposalID)
@@ -85,18 +86,17 @@ func vote(proposalID uint64, yea bool) {
 
 	afterYeaNum := governance.GetYeaByProposalId(proposalID)
 	afterNayNum := governance.GetNayByProposalId(proposalID)
-	ufmt.Printf("[EXPECTED] before proposal %d voting - yea: %s, nay: %s\n", proposalID, prevYeaNum, prevNayNum)
-	ufmt.Printf("[EXPECTED] after proposal %d voting - yea: %s, nay: %s\n", proposalID, afterYeaNum, afterNayNum)
+	ufmt.Printf("[EXPECTED] before proposal %d voting - yea: %d, nay: %d\n", proposalID, prevYeaNum, prevNayNum)
+	ufmt.Printf("[EXPECTED] after proposal %d voting - yea: %d, nay: %d\n", proposalID, afterYeaNum, afterNayNum)
 }
 
-func executeReconfigureGovernance(proposalID uint64) {
+func executeReconfigureGovernance(proposalID int64) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-
-	prevGovConfig := governance.GetConfigVersion(0)
+	prevGovConfig := governance.GetLatestConfig()
 
 	governance.Execute(cross, proposalID)
 
-	afterGovConfig := governance.GetConfigVersion(0)
+	afterGovConfig := governance.GetLatestConfig()
 
 	ufmt.Printf("[EXPECTED] before proposal %d executing - voting start delay: %d, voting period: %d, quorum: %d\n", proposalID, prevGovConfig.VotingStartDelay, prevGovConfig.VotingPeriod, prevGovConfig.Quorum)
 	ufmt.Printf("[EXPECTED] after proposal %d executing - voting start delay: %d, voting period: %d, quorum: %d\n", proposalID, afterGovConfig.VotingStartDelay, afterGovConfig.VotingPeriod, afterGovConfig.Quorum)

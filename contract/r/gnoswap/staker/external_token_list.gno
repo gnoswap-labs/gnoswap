@@ -1,14 +1,15 @@
 package staker
 
 import (
-	"gno.land/p/demo/ufmt"
+	"std"
 
-	"gno.land/p/gnoswap/consts"
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 // defaultAllowed is the list of default allowed tokens to create external incentive
-var defaultAllowed = []string{consts.GNS_PATH, consts.GNOT}
+var defaultAllowed = []string{GNS_PATH, GNOT}
 
 // allowedTokens is a slice of all allowed token paths, including the default and added tokens.
 var allowedTokens = make([]string, 0, len(defaultAllowed))
@@ -24,12 +25,7 @@ type TokenValidator func(tokenPath string) error
 type TokenExecutor func(tokenPath string, tokens []string) []string
 
 // modifyTokenList handles common token modification logics, such as admin check, validation, and execution.
-func modifyTokenList(cur realm, tokenPath string, validator TokenValidator, executor TokenExecutor) error {
-	caller := getPrevAddr()
-	if err := common.AdminOnly(caller); err != nil {
-		return err
-	}
-
+func modifyTokenList(tokenPath string, validator TokenValidator, executor TokenExecutor) error {
 	// validate token operation if validator is provided
 	if validator != nil {
 		if err := validator(tokenPath); err != nil {
@@ -46,6 +42,7 @@ func addTokenExecutor(tokenPath string, tokens []string) []string {
 	if contains(tokens, tokenPath) {
 		return tokens
 	}
+
 	return append(tokens, tokenPath)
 }
 
@@ -67,6 +64,7 @@ func removeTokenValidator(tokenPath string) error {
 	if contains(defaultAllowed, tokenPath) {
 		return ufmt.Errorf("%v: can not remove default token(%s)", errDefaultExternalToken, tokenPath)
 	}
+
 	return nil
 }
 
@@ -79,7 +77,11 @@ func removeTokenValidator(tokenPath string) error {
 // Panics:
 //   - If the caller is not the admin
 func AddToken(cur realm, tokenPath string) {
-	if err := modifyTokenList(cur, tokenPath, nil, addTokenExecutor); err != nil {
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedStaker()
+	access.AssertIsAdmin(caller)
+
+	if err := modifyTokenList(tokenPath, nil, addTokenExecutor); err != nil {
 		panic(err.Error())
 	}
 }
@@ -95,7 +97,11 @@ func AddToken(cur realm, tokenPath string) {
 // Panics:
 //   - If the caller is not the admin
 func RemoveToken(cur realm, tokenPath string) {
-	if err := modifyTokenList(cur, tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedStaker()
+	access.AssertIsAdmin(caller)
+
+	if err := modifyTokenList(tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
 		panic(err.Error())
 	}
 }

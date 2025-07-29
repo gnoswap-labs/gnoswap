@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -42,14 +41,14 @@ func TestNewPoolParams(t *testing.T) {
 		"Success - native token wrapped wugnot token",
 		func(t *testing.T) {
 			params := newPoolParams(
-				consts.GNOT,
+				GNOT,
 				"token1",
 				500,
 				"1000000",
 				GetFeeAmountTickSpacing(500),
 			)
 			token0, _ := params.wrap()
-			if token0 != consts.WRAPPED_WUGNOT {
+			if token0 != WRAPPED_WUGNOT {
 				t.Errorf("Expected GNOT to be wrapped to WUGNOT")
 			}
 		},
@@ -247,8 +246,8 @@ func TestUpdateWithWrapping(t *testing.T) {
 
 				// Verify that the inverted price is within valid range
 				if !params.isInOrder() {
-					minSqrtRatio := u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
-					maxSqrtRatio := u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
+					minSqrtRatio := u256.MustFromDecimal(MIN_SQRT_RATIO)
+					maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
 					newSqrtPriceX96 := updatedParams.SqrtPriceX96()
 
 					if newSqrtPriceX96.Lt(minSqrtRatio) || newSqrtPriceX96.Gt(maxSqrtRatio) {
@@ -295,11 +294,11 @@ func TestWrap(t *testing.T) {
 			expected0 := params.token0Path
 			expected1 := params.token1Path
 
-			if params.token0Path == consts.GNOT {
-				expected0 = consts.WRAPPED_WUGNOT
+			if params.token0Path == GNOT {
+				expected0 = WRAPPED_WUGNOT
 			}
-			if params.token1Path == consts.GNOT {
-				expected1 = consts.WRAPPED_WUGNOT
+			if params.token1Path == GNOT {
+				expected1 = WRAPPED_WUGNOT
 			}
 
 			uassert.Equal(t, expected0, wrapped0, "Token0 should be wrapped if GNOT")

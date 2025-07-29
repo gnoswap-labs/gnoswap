@@ -9,6 +9,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
@@ -18,7 +19,7 @@ import (
 )
 
 var (
-	adminAddr, _     = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
 	currentBlockTime = int64(2)
 )
 
@@ -62,12 +63,12 @@ func delegateGnsToAdmin() {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 
 	gns.Approve(cross, consts.GOV_STAKER_ADDR, delegatedAmount)
-	govStaker.Delegate(cross, adminAddr, uint64(delegatedAmount), "")
+	govStaker.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 
 	ufmt.Printf("[INFO] gns delegated to %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 }
 
-func proposeChangeAvgBlockTime() uint64 {
+func proposeChangeAvgBlockTime() int64 {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 	proposalID := governance.ProposeParameterChange(cross, "blocktime", "set", 1, "gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*5000")
 
@@ -75,7 +76,7 @@ func proposeChangeAvgBlockTime() uint64 {
 	return proposalID
 }
 
-func vote(proposalID uint64, yea bool) {
+func vote(proposalID int64, yea bool) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 
 	prevYeaNum := governance.GetYeaByProposalId(proposalID)
@@ -85,18 +86,18 @@ func vote(proposalID uint64, yea bool) {
 
 	afterYeaNum := governance.GetYeaByProposalId(proposalID)
 	afterNayNum := governance.GetNayByProposalId(proposalID)
-	ufmt.Printf("[EXPECTED] before proposal %d voting - yea: %s, nay: %s\n", proposalID, prevYeaNum, prevNayNum)
-	ufmt.Printf("[EXPECTED] after proposal %d voting - yea: %s, nay: %s\n", proposalID, afterYeaNum, afterNayNum)
+	ufmt.Printf("[EXPECTED] before proposal %d voting - yea: %d, nay: %d\n", proposalID, prevYeaNum, prevNayNum)
+	ufmt.Printf("[EXPECTED] after proposal %d voting - yea: %d, nay: %d\n", proposalID, afterYeaNum, afterNayNum)
 }
 
-func executeChangeAvgBlockTime(proposalID uint64) {
+func executeChangeAvgBlockTime(proposalID int64) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 
-	prevAvgBlockTime := gns.GetAvgBlockTimeInMs()
+	prevAvgBlockTime := gns.AvgBlockTimeInMs()
 
 	governance.Execute(cross, proposalID)
 
-	afterAvgBlockTime := gns.GetAvgBlockTimeInMs()
+	afterAvgBlockTime := gns.AvgBlockTimeInMs()
 
 	ufmt.Printf("[EXPECTED] before proposal %d executing - avg block time: %dms\n", proposalID, prevAvgBlockTime)
 	ufmt.Printf("[EXPECTED] after proposal %d executing - avg block time: %dms\n", proposalID, afterAvgBlockTime)

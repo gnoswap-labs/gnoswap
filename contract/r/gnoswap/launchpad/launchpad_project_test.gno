@@ -16,11 +16,13 @@ import (
 
 	_ "gno.land/r/onbloc/bar"
 	_ "gno.land/r/onbloc/foo"
+
+	prbac "gno.land/p/gnoswap/rbac"
 )
 
 func TestCreateProject(t *testing.T) {
-	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-	launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	oblPath := "gno.land/r/onbloc/obl"
 	tests := []struct {
 		name                 string
@@ -94,7 +96,7 @@ func TestCreateProject(t *testing.T) {
 			callerAddress:        testutils.TestAddress("non-admin"),
 			averageBlockTimeMs:   2000,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-002] invalid address || caller(g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj) is not authorized for role admin",
+			expectedAbortMessage: "unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin",
 		},
 		{
 			name:                 "create project failed by start time is in the past",
@@ -173,7 +175,7 @@ func TestCreateProject(t *testing.T) {
 }
 
 func TestCreateProjectPrivate(t *testing.T) {
-	launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	projectAddr := testutils.TestAddress("projectAddr")
 	oblPath := "gno.land/r/onbloc/obl"
 	tests := []struct {
@@ -349,7 +351,7 @@ func TestCreateProjectPrivate(t *testing.T) {
 }
 
 func TestCreateProjectPrivate_Multiple(t *testing.T) {
-	launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	projectAddr := testutils.TestAddress("projectAddr")
 	oblPath := "gno.land/r/onbloc/obl"
 	tests := []struct {
@@ -740,11 +742,11 @@ func initLaunchpadProjectTest(t *testing.T) {
 }
 
 func initLaunchpadProjectTestAvgBlockTime(t *testing.T, avgBlockTimeMs int64) {
-	emissionAddr, _ := access.GetAddress(access.ROLE_EMISSION)
+	emissionAddr, _ := access.GetAddress(prbac.ROLE_EMISSION.String())
 	testing.SetOriginCaller(emissionAddr)
-	gns.SetCallbackEmissionChange(cross, func(amount int64) {})
+	gns.SetEmissionChangeCallback(cross, func(amount int64) {})
 
-	adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 	testing.SetOriginCaller(adminAddr)
 	gns.SetAvgBlockTimeInMsByAdmin(cross, avgBlockTimeMs)
 }

@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/demo/wugnot"
@@ -42,7 +41,7 @@ func TestMint(t *testing.T) {
 
 	t.Run("unauthorized caller mint should fail", func(t *testing.T) {
 		unauthorized := testutils.TestAddress("unauthorized")
-		expected := "[GNOSWAP-POOL-001] caller has no permission || only position(g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5) can call, called from g148tjamj80yyrm309z7rk690an22thd2l3z8ank"
+		expected := "unauthorized: caller g148tjamj80yyrm309z7rk690an22thd2l3z8ank is not position"
 
 		uassert.AbortsWithMessage(t, expected, func() {
 			Mint(cross, fooTokenPath, barTokenPath, fee, recipient, tickLower, tickUpper, liquidityAmount, unauthorized)
@@ -391,7 +390,7 @@ func TestCollect(t *testing.T) {
 				testing.IssueCoins(positionOwner, newCoins)
 				testing.SetOriginSend(newCoins)
 				banker := std.NewBanker(std.BankerTypeRealmSend)
-				banker.SendCoins(positionOwner, consts.WUGNOT_ADDR, newCoins)
+				banker.SendCoins(positionOwner, wugnotAddr, newCoins)
 				wugnot.Deposit(cross)
 				wugnot.Approve(cross, poolAddr, maxApprove)
 				gns.Approve(cross, poolAddr, maxApprove)
@@ -411,7 +410,7 @@ func TestCollect(t *testing.T) {
 
 				// Verify position exists
 				pool := GetPool(tt.tokenPath0, tt.tokenPath1, tt.feeTier)
-				posKey := getPositionKey(tt.recipient, tt.tickLower, tt.tickUpper)
+				posKey, _ := getPositionKey(tt.recipient, tt.tickLower, tt.tickUpper)
 				pool.mustGetPosition(posKey)
 
 				// Setup for swap
@@ -465,7 +464,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 
 	t.Run("unauthorized caller should fail", func(t *testing.T) {
 		unauthorized := testutils.TestAddress("unauthorized")
-		expected := "caller(" + unauthorized.String() + ") is not authorized for role admin"
+		expected := "unauthorized: caller g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg is not admin"
 
 		testing.SetRealm(std.NewUserRealm(unauthorized))
 		uassert.AbortsWithMessage(t, expected, func() {
@@ -551,7 +550,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 		testing.IssueCoins(adminAddr, newCoins)
 		testing.SetOriginSend(newCoins)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
-		banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
+		banker.SendCoins(adminAddr, wugnotAddr, newCoins)
 		wugnot.Deposit(cross)
 
 		// Approve tokens for router
@@ -643,7 +642,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 		testing.IssueCoins(adminAddr, newCoins)
 		testing.SetOriginSend(newCoins)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
-		banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
+		banker.SendCoins(adminAddr, wugnotAddr, newCoins)
 		wugnot.Deposit(cross)
 
 		// Approve tokens for router
@@ -723,7 +722,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 		testing.IssueCoins(adminAddr, newCoins)
 		testing.SetOriginSend(newCoins)
 		banker := std.NewBanker(std.BankerTypeRealmSend)
-		banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, newCoins)
+		banker.SendCoins(adminAddr, wugnotAddr, newCoins)
 		wugnot.Deposit(cross)
 
 		// Approve tokens for router
