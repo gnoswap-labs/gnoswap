@@ -44,9 +44,6 @@ gnokey maketx addpkg -pkgdir ../../contract/p/gnoswap/uint256 -pkgpath gno.land/
 ## deploy int256
 gnokey maketx addpkg -pkgdir ../../contract/p/gnoswap/int256 -pkgpath gno.land/p/gnoswap/int256 -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
-## deploy consts
-gnokey maketx addpkg -pkgdir ../../contract/p/gnoswap/consts -pkgpath gno.land/p/gnoswap/consts -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-
 ## deploy gnsmath
 gnokey maketx addpkg -pkgdir ../../contract/p/gnoswap/gnsmath -pkgpath gno.land/p/gnoswap/gnsmath -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 

@@ -8,7 +8,6 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -62,7 +61,7 @@ func initEmission() {
 }
 
 func mintAndDistribute() {
-	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/emission"))
 
 	previousStakerBalance := gns.BalanceOf(stakerAddr)
 	previousGovStakerBalance := gns.BalanceOf(govStakerAddr)
