@@ -679,3 +679,197 @@ func isValidNumber(s string) bool {
 	matched, _ := regexp.MatchString(`^-?\d+$`, s)
 	return matched
 }
+
+// FinalizeSwapParams holds generated parameters for finalizeSwap
+type FinalizeSwapParams struct {
+	inputToken              string
+	outputToken             string
+	resultAmountIn          *u256.Uint
+	resultAmountOut         *u256.Uint
+	swapType                SwapType
+	tokenAmountLimit        *u256.Uint
+	userBeforeWugnotBalance int64
+	userWrappedWugnot       int64
+	amountSpecified         *u256.Uint
+}
+
+type FinalizeSwapGenerator struct {
+	seedMgr *fuzzer.SeedManager
+}
+
+func (g *FinalizeSwapGenerator) Generate() any {
+	if g.seedMgr == nil {
+		g.seedMgr = fuzzer.NewSeedManager()
+	}
+
+	// To simplify the test, we use fixed token pairs like TestFinalizeSwap
+	tokenPairs := []struct {
+		input  string
+		output string
+	}{
+		{barPath, bazPath}, /* Regular token pair */
+		{"gnot", barPath},  /* GNOT as input */
+		{barPath, "gnot"},  /* GNOT as output */
+	}
+
+	pairIdx := g.seedMgr.CreateIntGenerator(0, len(tokenPairs)-1).Generate().(int)
+	pair := tokenPairs[pairIdx]
+
+	swapType := ExactIn
+	if g.seedMgr.CreateBoolGenerator().Generate().(bool) {
+		swapType = ExactOut
+	}
+
+	var resultAmountIn, resultAmountOut, amountSpecified, tokenAmountLimit *u256.Uint
+
+	if swapType == ExactIn {
+		// specify input amount
+		specifiedVal := uint64(g.seedMgr.CreateIntGenerator(100, 10000000).Generate().(int))
+		amountSpecified = u256.NewUint(specifiedVal)
+		resultAmountIn = amountSpecified
+
+		// output is typically 85-99% of input (fees and slippage)
+		outputRatio := g.seedMgr.CreateIntGenerator(85, 99).Generate().(int)
+		outputVal := specifiedVal * uint64(outputRatio) / 100
+		resultAmountOut = u256.NewUint(outputVal)
+
+		// limit for minimum output (slippage protection)
+		limitRatio := g.seedMgr.CreateIntGenerator(80, 100).Generate().(int)
+		limitVal := outputVal * uint64(limitRatio) / 100
+		tokenAmountLimit = u256.NewUint(limitVal)
+	} else {
+		// specify output amount
+		specifiedVal := uint64(g.seedMgr.CreateIntGenerator(100, 10000000).Generate().(int))
+		amountSpecified = u256.NewUint(specifiedVal)
+		resultAmountOut = amountSpecified
+
+		inputRatio := g.seedMgr.CreateIntGenerator(101, 120).Generate().(int)
+		inputVal := specifiedVal * uint64(inputRatio) / 100
+		resultAmountIn = u256.NewUint(inputVal)
+
+		limitRatio := g.seedMgr.CreateIntGenerator(100, 130).Generate().(int)
+		limitVal := inputVal * uint64(limitRatio) / 100
+		tokenAmountLimit = u256.NewUint(limitVal)
+	}
+
+	userBeforeWugnotBalance := int64(0)
+	userWrappedWugnot := int64(0)
+
+	if pair.input == "gnot" {
+		requiredAmount := resultAmountIn.Uint64()
+		wrapRatio := g.seedMgr.CreateIntGenerator(100, 150).Generate().(int)
+		userWrappedWugnot = int64(requiredAmount * uint64(wrapRatio) / 100)
+		userBeforeWugnotBalance = int64(g.seedMgr.CreateIntGenerator(0, 1000000).Generate().(int))
+	}
+
+	return &FinalizeSwapParams{
+		inputToken:              pair.input,
+		outputToken:             pair.output,
+		resultAmountIn:          resultAmountIn,
+		resultAmountOut:         resultAmountOut,
+		swapType:                swapType,
+		tokenAmountLimit:        tokenAmountLimit,
+		userBeforeWugnotBalance: userBeforeWugnotBalance,
+		userWrappedWugnot:       userWrappedWugnot,
+		amountSpecified:         amountSpecified,
+	}
+}
+
+func TestFuzzFinalizeSwap(t *testing.T) {
+	initRouterTest(t)
+	createBasicPool(t)
+
+	gen := &FinalizeSwapGenerator{}
+	passCount := 0
+	failCount := 0
+
+	for i := 0; i < 1000; i++ {
+		params := gen.Generate().(*FinalizeSwapParams)
+		shouldFail := false
+
+		// slippage check
+		if params.swapType == ExactIn {
+			if params.resultAmountOut.Lt(params.tokenAmountLimit) {
+				shouldFail = true
+			}
+		} else {
+			if params.resultAmountIn.Gt(params.tokenAmountLimit) {
+				shouldFail = true
+			}
+
+			// exact output validation (with tolerance of 1)
+			diff := new(u256.Uint)
+			if params.resultAmountOut.Gt(params.amountSpecified) {
+				diff.Sub(params.resultAmountOut, params.amountSpecified)
+			} else {
+				diff.Sub(params.amountSpecified, params.resultAmountOut)
+			}
+			if diff.Gt(u256.One()) {
+				shouldFail = true
+			}
+		}
+
+		if params.inputToken == "gnot" {
+			// spend (resultAmountIn) must not exceed wrapped amount
+			if params.resultAmountIn.Gt(u256.NewUint(uint64(params.userWrappedWugnot))) {
+				shouldFail = true
+			}
+		}
+
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					errStr, ok := r.(string)
+					if !ok {
+						t.Errorf("Unexpected panic type: %v", r)
+						failCount++
+						return
+					}
+
+					// filter out expected errors
+					isSlippageError := strings.Contains(errStr, "slippage check failed")
+					isWugnotError := strings.Contains(errStr, "too much wugnot spent")
+					isExactOutError := strings.Contains(errStr, "errExactOutAmountExceeded")
+
+					if shouldFail || isSlippageError || isWugnotError || isExactOutError {
+						failCount++
+					} else {
+						t.Errorf("Unexpected panic with params: %+v, error: %v", params, r)
+						failCount++
+					}
+				} else {
+					if shouldFail {
+						t.Errorf("Expected panic but none occurred with params: %+v", params)
+					}
+					passCount++
+				}
+			}()
+
+			amountIn, amountOut := finalizeSwap(
+				params.inputToken,
+				params.outputToken,
+				params.resultAmountIn,
+				params.resultAmountOut,
+				params.swapType,
+				params.tokenAmountLimit,
+				params.userBeforeWugnotBalance,
+				params.userWrappedWugnot,
+				params.amountSpecified,
+			)
+
+			// verify amountIn is positive string
+			inVal, err := strconv.ParseInt(amountIn, 10, 64)
+			if err != nil || inVal <= 0 {
+				t.Errorf("Invalid amountIn: %s", amountIn)
+			}
+
+			// verify amountOut is negative string
+			outVal, err := strconv.ParseInt(amountOut, 10, 64)
+			if err != nil || outVal >= 0 {
+				t.Errorf("Invalid amountOut: %s (should be negative)", amountOut)
+			}
+		}()
+	}
+
+	t.Logf("FinalizeSwap fuzzing: %d passed, %d failed (as expected)", passCount, failCount)
+}
