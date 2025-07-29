@@ -17,16 +17,17 @@ import (
 // only `gov/staker` can execute this function.
 // It returns list of token with amount has been sent to gov/staker.
 func DistributeProtocolFee(cur realm) map[string]uint64 {
-	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedProtocolFee()
 	halt.AssertIsNotHaltedWithdraw()
-	access.AssertIsGovStaker(caller)
+
+	caller := std.PreviousRealm().Address()
+	assertIsAdminOrGovStaker(caller)
 
 	sentToDevOpsForEvent := make([]string, 0)
 	sentToGovStakerForEvent := make([]string, 0)
 	toReturnDistributedToGovStaker := make(map[string]uint64)
 
-	for token, amount := range protocolFeeState.TokenListWithAmount {
+	for token, amount := range protocolFeeState.tokenListWithAmount {
 		balance := uint64(common.BalanceOf(token, protocolFeeAddr))
 
 		// anyone can just send certain grc20 token to `protocol_fee` contract
@@ -50,7 +51,7 @@ func DistributeProtocolFee(cur realm) map[string]uint64 {
 			distributeAmount = balance
 		}
 
-		toDevOpsAmount := distributeAmount * protocolFeeState.DevOpsPct / 10000 // default 0%
+		toDevOpsAmount := distributeAmount * protocolFeeState.GetDevOpsPct() / 10000 // default 0%
 		toGovStakerAmount := distributeAmount - toDevOpsAmount                  // default 100%
 
 		// Distribute to DevOps
@@ -85,50 +86,65 @@ func DistributeProtocolFee(cur realm) map[string]uint64 {
 	return toReturnDistributedToGovStaker
 }
 
-func GetDevOpsPct() uint64 {
-	return protocolFeeState.DevOpsPct
-}
-
-// SetDevOpsPctByAdmin sets the devOpsPct.
-func SetDevOpsPctByAdmin(cur realm, pct uint64) {
-	caller := std.PreviousRealm().Address()
+// SetDevOpsPct sets the devOpsPct.
+// Only admin or governance contract can execute this function via proposal
+func SetDevOpsPct(cur realm, pct uint64) {
 	halt.AssertIsNotHaltedProtocolFee()
-	access.AssertIsAdmin(caller)
+	
+	caller := std.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernance(caller)
 
-	prevPct, newPct, err := protocolFeeState.setDevOpsPct(pct)
+	assertIsValidPercent(pct)
+
+	prevDevOpsPct := protocolFeeState.GetDevOpsPct()
+	prevGovStakerPct := protocolFeeState.GetGovStakerPct()
+
+	newDevOpsPct, err := protocolFeeState.setDevOpsPct(pct)
 	if err != nil {
 		panic(err)
 	}
+	newGovStakerPct := protocolFeeState.GetGovStakerPct()
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"SetDevOpsPct",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"newPct", strconv.FormatUint(newPct, 10),
-		"prevPct", strconv.FormatUint(prevPct, 10),
+		"newDevOpsPct", strconv.FormatUint(newDevOpsPct, 10),
+		"prevDevOpsPct", strconv.FormatUint(prevDevOpsPct, 10),
+		"newGovStakerPct", strconv.FormatUint(newGovStakerPct, 10),
+		"prevGovStakerPct", strconv.FormatUint(prevGovStakerPct, 10),
 	)
 }
 
-// SetDevOpsPct sets the devOpsPct.
-// Only governance contract can execute this function via proposal
-func SetDevOpsPct(cur realm, pct uint64) {
-	caller := std.PreviousRealm().Address()
+// SetGovStakerPct sets the stakerPct.
+// Only admin or governance contract can execute this function via proposal
+func SetGovStakerPct(cur realm, pct uint64) {
 	halt.AssertIsNotHaltedProtocolFee()
-	access.AssertIsGovernance(caller)
+	
+	caller := std.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernance(caller)
 
-	prevPct, newPct, err := protocolFeeState.setDevOpsPct(pct)
+	assertIsValidPercent(pct)
+
+	prevDevOpsPct := protocolFeeState.GetDevOpsPct()
+	prevGovStakerPct := protocolFeeState.GetGovStakerPct()
+
+	newGovStakerPct, err := protocolFeeState.setGovStakerPct(pct)
 	if err != nil {
 		panic(err)
 	}
+	newDevOpsPct := protocolFeeState.GetDevOpsPct()
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
-		"SetDevOpsPct",
+		"SetGovStakerPct",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"newPct", strconv.FormatUint(newPct, 10),
-		"prevPct", strconv.FormatUint(prevPct, 10),
+		"newDevOpsPct", strconv.FormatUint(newDevOpsPct, 10),
+		"prevDevOpsPct", strconv.FormatUint(prevDevOpsPct, 10),
+		"newGovStakerPct", strconv.FormatUint(newGovStakerPct, 10),
+		"prevGovStakerPct", strconv.FormatUint(prevGovStakerPct, 10),
 	)
 }
 
@@ -136,16 +152,19 @@ func SetDevOpsPct(cur realm, pct uint64) {
 // Only `pool + router + staker` can execute this function.
 func AddToProtocolFee(cur realm, tokenPath string, amount uint64) {
 	halt.AssertIsNotHaltedProtocolFee()
-	assertCallerHasAddProtocolFeePermission()
 
-	protocolFeeState.TokenListWithAmount[tokenPath] += amount
+	caller := std.PreviousRealm().Address()
+	assertIsPoolOrRouterOrStaker(caller)
+
+	protocolFeeState.tokenListWithAmount[tokenPath] += amount
 }
 
 // ClearTokenListWithAmount clears the tokenListWithAmount.
 // only `gov/staker` can execute this function.
 func ClearTokenListWithAmount(cur realm) {
-	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedProtocolFee()
+	
+	caller := std.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)
 
 	protocolFeeState.clearTokenListWithAmount()
@@ -157,11 +176,12 @@ func ClearTokenListWithAmount(cur realm) {
 // which means gov/staker doesn't known how much protocol_fee has been distributed from last time
 // Therefore, gov/staker calls GetAccuTransferToGovStaker to get the accumulated amount and clear it
 func ClearAccuTransferToGovStaker(cur realm) {
-	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedProtocolFee()
+
+	caller := std.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)
 
-	protocolFeeState.AccuToGovStaker = avl.NewTree()
+	protocolFeeState.accuToGovStaker = avl.NewTree()
 }
 
 func makeEventString(tokenPath string, amount uint64) string {

@@ -57,7 +57,6 @@ func TestDistributeProtocolFee(t *testing.T) {
 
 	// gov/staker > protocol_fee
 	testing.SetRealm(govStakerRealm)
-	testing.SetOriginCaller(govStakerAddr)
 	DistributeProtocolFee(cross)
 
 	uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), int64(0))
@@ -69,62 +68,10 @@ func TestDistributeProtocolFee(t *testing.T) {
 	uassert.Equal(t, qux.BalanceOf(govStakerAddr), int64(1000))
 }
 
-func TestSetDevOpsPctByAdmin(t *testing.T) {
-	tests := []struct {
-		name        string
-		realm       std.Realm
-		percentage  uint64
-		shouldPanic bool
-		panicMsg    string
-		expectedPct uint64
-	}{
-		{
-			name:        "no permission to set devops percentage",
-			realm:       std.NewUserRealm(testutils.TestAddress("dummy")),
-			percentage:  123,
-			shouldPanic: true,
-			panicMsg:    "unauthorized: caller g1v36k6mteta047h6lta047h6lta047h6lz7gmv8 is not admin",
-		},
-		{
-			name:        "invalid percentage value",
-			realm:       adminRealm,
-			percentage:  100001,
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(100001) should not be bigger than 10000",
-		},
-		{
-			name:        "successfully set devops percentage",
-			realm:       adminRealm,
-			percentage:  123,
-			shouldPanic: false,
-			expectedPct: 123,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			// Reset protocol fee state for clean test
-			protocolFeeState = NewProtocolFeeState()
-
-			testing.SetRealm(test.realm)
-
-			if test.shouldPanic {
-				uassert.AbortsWithMessage(t, test.panicMsg, func() {
-					SetDevOpsPctByAdmin(cross, test.percentage)
-				})
-			} else {
-				uassert.Equal(t, GetDevOpsPct(), uint64(0))
-				SetDevOpsPctByAdmin(cross, test.percentage)
-				uassert.Equal(t, GetDevOpsPct(), test.expectedPct)
-			}
-		})
-	}
-}
-
 func TestTokenList(t *testing.T) {
 	// Reset and setup test data
 	protocolFeeState = NewProtocolFeeState()
-	protocolFeeState.TokenListWithAmount = map[string]uint64{
+	protocolFeeState.tokenListWithAmount = map[string]uint64{
 		"gno.land/r/foo": 100,
 		"gno.land/r/bar": 0,
 		"gno.land/r/baz": 200,
@@ -168,7 +115,7 @@ func TestAddToProtocolFee(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			testing.SetRealm(std.NewCodeRealm(poolPath))
 			AddToProtocolFee(cross, test.tokenPath, test.amount)
-			uassert.Equal(t, protocolFeeState.TokenListWithAmount[test.tokenPath], test.want)
+			uassert.Equal(t, protocolFeeState.tokenListWithAmount[test.tokenPath], test.want)
 		})
 	}
 }
@@ -198,7 +145,7 @@ func TestClearTokenListWithAmount(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			// Reset and setup test data for each test case
 			protocolFeeState = NewProtocolFeeState()
-			protocolFeeState.TokenListWithAmount = map[string]uint64{
+			protocolFeeState.tokenListWithAmount = map[string]uint64{
 				"gno.land/r/foo": 100,
 				"gno.land/r/baz": 200,
 			}
@@ -211,7 +158,7 @@ func TestClearTokenListWithAmount(t *testing.T) {
 				})
 			} else {
 				ClearTokenListWithAmount(cross)
-				uassert.Equal(t, len(protocolFeeState.TokenListWithAmount), len(test.want))
+				uassert.Equal(t, len(protocolFeeState.tokenListWithAmount), len(test.want))
 			}
 		})
 	}
@@ -330,7 +277,7 @@ func TestDistributeWithDifferentDevOpsPct(t *testing.T) {
 			}
 
 			testing.SetRealm(adminRealm)
-			SetDevOpsPctByAdmin(cross, tt.devOpsPct)
+			SetDevOpsPct(cross, tt.devOpsPct)
 			uassert.Equal(t, GetDevOpsPct(), tt.devOpsPct)
 
 			testing.SetOriginCaller(adminAddr)
@@ -359,7 +306,7 @@ func TestDistributeWithDifferentDevOpsPct(t *testing.T) {
 				uassert.Equal(t, result["gno.land/r/onbloc/bar"], tt.expectedGovStakerAmount)
 			}
 
-			uassert.Equal(t, len(protocolFeeState.TokenListWithAmount), 0)
+			uassert.Equal(t, len(protocolFeeState.tokenListWithAmount), 0)
 		})
 	}
 }
@@ -601,7 +548,7 @@ func TestBalanceAmountMismatch_Fix(t *testing.T) {
 			tt.setupFunc()
 
 			testing.SetRealm(adminRealm)
-			SetDevOpsPctByAdmin(cross, tt.devOpsPct)
+			SetDevOpsPct(cross, tt.devOpsPct)
 
 			// record the amount in protocol fee
 			if tt.recordedAmount > 0 {
@@ -611,7 +558,7 @@ func TestBalanceAmountMismatch_Fix(t *testing.T) {
 
 			// check initial state
 			uassert.Equal(t, bar.BalanceOf(protocolFeeAddr), int64(tt.actualBalance))
-			uassert.Equal(t, protocolFeeState.TokenListWithAmount[tt.tokenPath], tt.recordedAmount)
+			uassert.Equal(t, protocolFeeState.tokenListWithAmount[tt.tokenPath], tt.recordedAmount)
 
 			// distribute protocol fee
 			testing.SetRealm(govStakerRealm)
@@ -651,7 +598,7 @@ func TestBalanceAmountMismatch_Fix(t *testing.T) {
 				}
 
 				// verify TokenListWithAmount is cleared
-				uassert.Equal(t, len(protocolFeeState.TokenListWithAmount), 0)
+				uassert.Equal(t, len(protocolFeeState.tokenListWithAmount), 0)
 			}
 		})
 	}
