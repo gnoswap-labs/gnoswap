@@ -2,287 +2,54 @@ package access
 
 import (
 	"std"
-
-	"gno.land/p/demo/ufmt"
-
-	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/v1/rbac"
 )
 
-// event types
-const (
-	roleSet     = "RoleSet"
-	roleUpdated = "RoleUpdated"
-	roleCreated = "RoleCreated"
-	roleDeleted = "RoleDeleted"
-)
+var roleAddresses map[string]std.Address
 
-var currentConfig *config
-
-// set up the default roles and current config
 func init() {
-	cfg, err := initializeDefaultRoles()
-	if err != nil {
-		panic(err)
-	}
-	currentConfig = cfg
+	roleAddresses = make(map[string]std.Address)
 }
 
-// config contains all the addresses needed for access control
-type config struct {
-	roles map[string]std.Address
+// GetAddress retrieves the address associated with a given role
+// Returns the address and a boolean indicating if the role exists
+// Used to verify role assignments and permissions
+func GetAddress(role string) (std.Address, bool) {
+	addr, ok := roleAddresses[role]
+
+	return addr, ok
 }
 
-// newConfig returns an empty config with zero addresses
-func newConfig() *config {
-	return &config{
-		roles: make(map[string]std.Address),
+// GetRoleAddresses retrieves all role addresses
+// Returns a map of role names to their corresponding addresses
+// Used to get a complete view of all role-address mappings
+func GetRoleAddresses() map[string]std.Address {
+	addresses := make(map[string]std.Address)
+
+	for role, addr := range roleAddresses {
+		addresses[role] = addr
 	}
+
+	return addresses
 }
 
-// validateConfig checks if the configuration state is valid
-func validateConfig() error {
-	if currentConfig == nil {
-		return ufmt.Errorf(errNotInitialized)
-	}
-	return nil
+// SetRoleAddresses updates the role addresses
+// Takes a map of role names to their corresponding addresses
+// Used to set the role addresses in the access package
+func SetRoleAddresses(cur realm, newRoleAddresses map[string]std.Address) {
+	caller := std.PreviousRealm().Address()
+	assertIsRBAC(caller)
+
+	roleAddresses = newRoleAddresses
 }
 
-// validateRoleName checks if the role name is valid
-func validateRoleName(roleName string) error {
-	if roleName == "" {
-		return ufmt.Errorf(errEmptyRole)
-	}
-	return nil
-}
-
-// createAddressChecker creates a permission checker for a specific address
-func createAddressChecker(addr std.Address, roleName string) prbac.PermissionChecker {
-	return func(caller std.Address) error {
-		if caller != addr {
-			return ufmt.Errorf(errUnauthorized, caller.String(), roleName)
-		}
-		return nil
-	}
-}
-
-// setConfig sets the current configuration
-func setConfig(cfg *config) error {
-	if cfg == nil {
-		return ufmt.Errorf(errConfigNil)
-	}
-	currentConfig = cfg
-	return nil
-}
-
-// initialize registers all roles and permissions to the global RBAC manager
-func initialize(cfg *config) error {
-	if cfg == nil {
-		return ufmt.Errorf(errConfigNil)
-	}
-
-	for roleName, addr := range cfg.roles {
-		err := declareNewRole(roleName, addr)
-		if err != nil {
-			errStr := err.Error()
-			if ufmt.Sprintf("%s", errStr) == ufmt.Sprintf(errDeclareRole, roleName, "role "+roleName+" already exists") {
-				// If already exists, only update permission
-				checker := createAddressChecker(addr, roleName)
-				if updateErr := rbac.UpdatePermission(cross, roleName, PERM_ACCESS, checker); updateErr != nil {
-					return updateErr
-				}
-			} else {
-				return err
-			}
-		}
-	}
-
-	return setConfig(cfg)
-}
-
-// declareNewRole declares a new role with permissions
-func declareNewRole(roleName string, addr std.Address) error {
-	checker := createAddressChecker(addr, roleName)
-	if err := rbac.DeclareRole(cross, roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
-		return ufmt.Errorf(errDeclareRole, roleName, err)
-	}
-	return nil
-}
-
-// getCurrentConfig returns the current configuration
-func getCurrentConfig() *config {
-	if currentConfig == nil {
-		return nil
-	}
-
-	return currentConfig
-}
-
-// SetRole sets or updates a role with the given address
-func SetRole(cur realm, roleName string, address std.Address) error {
-	if err := validateConfig(); err != nil {
-		return err
-	}
-
-	if err := validateRoleName(roleName); err != nil {
-		return err
-	}
-
-	// only admin can set roles
-	if !isAdmin() {
-		return ufmt.Errorf("only admin can set roles")
-	}
-
-	prevAddress := currentConfig.roles[roleName]
-	checker := createAddressChecker(address, roleName)
-
-	if RoleExists(roleName) {
-		if err := rbac.UpdatePermission(cross, roleName, PERM_ACCESS, checker); err != nil {
-			return err
-		}
-	} else {
-		if err := rbac.DeclareRole(cross, roleName, prbac.WithPermission(PERM_ACCESS, checker)); err != nil {
-			return err
-		}
-	}
-
-	currentConfig.roles[roleName] = address
-
-	std.Emit(
-		roleSet,
-		"roleName", roleName,
-		"prevAddress", prevAddress.String(),
-		"newAddress", address.String(),
-	)
-	return nil
-}
-
-func GetAddress(roleName string) (std.Address, error) {
-	if currentConfig == nil {
-		return std.Address(""), ufmt.Errorf(errNotInitialized)
-	}
-	return currentConfig.roles[roleName], nil
-}
-
-// UpdateRoleAddress updates the address for a specific role's permission checker
-func UpdateRoleAddress(cur realm, roleName string, newAddress std.Address) error {
-	if !isAdmin() {
-		return ufmt.Errorf("only admin can update roles")
-	}
-
-	if err := validateConfig(); err != nil {
-		return err
-	}
-
-	prevAddress := currentConfig.roles[roleName]
-	currentConfig.roles[roleName] = newAddress
-	newChecker := createAddressChecker(newAddress, roleName)
-
-	std.Emit(
-		roleUpdated,
-		"roleName", roleName,
-		"prevAddress", prevAddress.String(),
-		"newAddress", newAddress.String(),
-	)
-	return rbac.UpdatePermission(cross, roleName, PERM_ACCESS, newChecker)
-}
-
-// CreateRole creates a new role with the given address
-func CreateRole(cur realm, roleName string, address std.Address) error {
-	if !isAdmin() {
-		return ufmt.Errorf("only admin can create roles")
-	}
-
-	if err := validateConfig(); err != nil {
-		return err
-	}
-
-	if err := validateRoleName(roleName); err != nil {
-		return err
-	}
-
-	if RoleExists(roleName) {
-		return ufmt.Errorf(errRoleExists, roleName)
-	}
-
-	if err := declareNewRole(roleName, address); err != nil {
-		return err
-	}
-
-	currentConfig.roles[roleName] = address
-
-	std.Emit(
-		roleCreated,
-		"roleName", roleName,
-		"address", address.String(),
-	)
-	return nil
-}
-
-// RoleExists checks if a role exists in the current configuration
-func RoleExists(roleName string) bool {
-	if currentConfig == nil {
+// IsAuthorized checks if the given caller address has the specified role
+// Returns true if the caller matches the role's authorized address
+// Returns false if the role doesn't exist or addresses don't match
+func IsAuthorized(role string, caller std.Address) bool {
+	roleAddr, ok := roleAddresses[role]
+	if !ok {
 		return false
 	}
-	_, exists := currentConfig.roles[roleName]
-	return exists
-}
 
-// GetRoles returns all registered role names
-func GetRoles() []string {
-	if currentConfig == nil {
-		return []string{}
-	}
-	roles := make([]string, 0, len(currentConfig.roles))
-	for role := range currentConfig.roles {
-		roles = append(roles, role)
-	}
-	return roles
-}
-
-// DeleteRole deletes a role and its associated permissions
-func DeleteRole(cur realm, roleName string) error {
-	if !isAdmin() {
-		return ufmt.Errorf("only admin can delete roles")
-	}
-
-	if err := validateConfig(); err != nil {
-		return err
-	}
-
-	if err := validateRoleName(roleName); err != nil {
-		return err
-	}
-
-	if !RoleExists(roleName) {
-		return ufmt.Errorf("role %s does not exist", roleName)
-	}
-
-	// Prevent deletion of critical roles
-	if roleName == ROLE_ADMIN {
-		return ufmt.Errorf("cannot delete admin role")
-	}
-
-	// Store the address before deletion for event emission
-	deletedAddress := currentConfig.roles[roleName]
-
-	// Remove the role from RBAC
-	if err := rbac.RemoveRole(cross, roleName); err != nil {
-		return ufmt.Errorf("failed to remove role from RBAC: %v", err)
-	}
-
-	// Remove the role from current config
-	delete(currentConfig.roles, roleName)
-
-	std.Emit(
-		roleDeleted,
-		"roleName", roleName,
-		"address", deletedAddress.String(),
-	)
-	return nil
-}
-
-func isAdmin() bool {
-	caller := std.PreviousRealm().Address()
-	return rbac.CheckPermission("admin", PERM_ACCESS, caller) == nil
+	return caller == roleAddr
 }

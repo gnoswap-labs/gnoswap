@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -32,12 +32,13 @@ const (
 
 // Variables for test addresses and realms
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
-	adminRealm   = std.NewUserRealm(adminAddr)
-	posRealm     = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm     = std.NewCodeRealm(consts.ROUTER_PATH)
-	positionAddr = consts.POSITION_ADDR
-	poolAddr     = consts.POOL_ADDR
+	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm      = std.NewUserRealm(adminAddr)
+	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
+	posRealm        = std.NewUserRealm(positionAddr)
+	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
+	rouRealm        = std.NewUserRealm(routerAddr)
+	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
 // Token paths
@@ -52,6 +53,9 @@ var (
 	tickLower       = int32(9000)
 	tickUpper       = int32(12000)
 	liquidityExpect = "100000000000"
+
+	MIN_PRICE string = "4295128740"
+	MAX_PRICE string = "1461446703485210103287273052203988822378723970341"
 )
 
 // Global pool setup flag
@@ -186,7 +190,7 @@ func testPoolSwapping(t *testing.T) {
 		adminAddr,
 		true, // zeroForOne
 		"16000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
@@ -207,7 +211,7 @@ func testPoolSwapping(t *testing.T) {
 		adminAddr,
 		false, // zeroForOne = false
 		"16000",
-		consts.MAX_PRICE,
+		MAX_PRICE,
 		adminAddr,
 	)
 
@@ -293,7 +297,7 @@ func testPoolMultiToken(t *testing.T) {
 		adminAddr,
 		true, // zeroForOne
 		"16000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
@@ -325,7 +329,7 @@ func testPoolEdgeCases(t *testing.T) {
 		FeeTier500,
 		true,
 		"1000000000", // Very large amount
-		consts.MIN_PRICE,
+		MIN_PRICE,
 	)
 
 	// Then: Verify DrySwap handles large amounts gracefully

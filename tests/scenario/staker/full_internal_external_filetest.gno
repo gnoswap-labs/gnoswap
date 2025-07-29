@@ -13,7 +13,6 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/demo/wugnot"
@@ -29,27 +28,30 @@ import (
 	rr "gno.land/r/gnoswap/v1/router"
 	sr "gno.land/r/gnoswap/v1/staker"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
-	poolAddr, _          = access.GetAddress(access.ROLE_POOL)
-	routerAddr, _        = access.GetAddress(access.ROLE_ROUTER)
-	emissionAddr, _      = access.GetAddress(access.ROLE_EMISSION)
-	devOpsAddr, _        = access.GetAddress(access.ROLE_DEVOPS)
-	communityPoolAddr, _ = access.GetAddress(access.ROLE_COMMUNITY_POOL)
+	poolAddr, _          = access.GetAddress(prabc.ROLE_POOL.String())
+	routerAddr, _        = access.GetAddress(prabc.ROLE_ROUTER.String())
+	emissionAddr, _      = access.GetAddress(prabc.ROLE_EMISSION.String())
+	devOpsAddr, _        = access.GetAddress(prabc.ROLE_DEVOPS.String())
+	communityPoolAddr, _ = access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
-	wugnotAddr = consts.WUGNOT_ADDR
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 
 	externalCreator = testutils.TestAddress("externalCreator")
 
@@ -65,7 +67,8 @@ var (
 	fee500  uint32 = 500
 	fee3000 uint32 = 3000
 
-	max_timeout int64 = 9999999999
+	maxTimeout int64 = 9999999999
+	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
 	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
@@ -157,7 +160,6 @@ func initAccount() {
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
-	emission.RegisterGnsChangeCallback(cross)
 }
 
 func createPoolWugnotGns3000Tier01() {
@@ -167,7 +169,7 @@ func createPoolWugnotGns3000Tier01() {
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
 
 	println("[INFO] approve gns and create pool")
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
+	gns.Approve(cross, poolAddr, maxInt64)
 	pl.CreatePool(cross, wugnotPath, gnsPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	totalSupply := gns.TotalSupply()
@@ -180,13 +182,13 @@ func createExternalIncentiveGns() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve gns for external incentive")
-	gns.Approve(cross, stakerAddr, consts.INT64_MAX)
+	gns.Approve(cross, stakerAddr, maxInt64)
 
 	println("[INFO] create external incentive")
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000",
-		consts.GNS_PATH,
+		"gno.land/r/gnoswap/v1/gns",
 		2_000_000_000,
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,
@@ -199,8 +201,8 @@ func mintPos01InRange() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens and mint position")
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
+	wugnot.Approve(cross, poolAddr, maxInt64)
+	gns.Approve(cross, poolAddr, maxInt64)
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
@@ -213,7 +215,7 @@ func mintPos01InRange() {
 		"1000",
 		"0",
 		"0",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -229,7 +231,7 @@ func createBarBaz500Tier02() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz:500 pool")
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
+	gns.Approve(cross, poolAddr, maxInt64)
 	pl.CreatePool(cross, barPath, bazPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set pool tier to 2")
@@ -242,8 +244,8 @@ func mintPositions02To06() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] mint position 02 (bar:baz in-range)")
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	baz.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	baz.Approve(cross, poolAddr, maxInt64)
 
 	pn.Mint(
 		cross,
@@ -256,7 +258,7 @@ func mintPositions02To06() {
 		"1000",
 		"0",
 		"0",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -267,8 +269,8 @@ func mintPositions02To06() {
 	println("[INFO] mint positions 03-06 (out-range)")
 	// Position 03 (wugnot:gns out-range)
 	for i := 3; i <= 6; i++ {
-		wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-		gns.Approve(cross, poolAddr, consts.INT64_MAX)
+		wugnot.Approve(cross, poolAddr, maxInt64)
+		gns.Approve(cross, poolAddr, maxInt64)
 
 		pn.Mint(
 			cross,
@@ -281,7 +283,7 @@ func mintPositions02To06() {
 			"1000",
 			"0",
 			"0",
-			max_timeout,
+			maxTimeout,
 			adminAddr,
 			adminAddr,
 			"",
@@ -317,7 +319,7 @@ func collectRewardsAllWarmUp() {
 	// Skip to different warm-up periods and collect rewards
 	println("[INFO] progress to 50% warm-up")
 	msInDay := int64(86400000)
-	blocksInDay := msInDay / int64(gns.GetAvgBlockTimeInMs())
+	blocksInDay := msInDay / int64(gns.AvgBlockTimeInMs())
 	blocksIn5Days := int64(5 * blocksInDay)
 	testing.SkipHeights(blocksIn5Days)
 
@@ -331,10 +333,10 @@ func performSwaps() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] perform exact-in swaps")
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
-	wugnot.Approve(cross, routerAddr, consts.INT64_MAX)
-	gns.Approve(cross, routerAddr, consts.INT64_MAX)
+	wugnot.Approve(cross, poolAddr, maxInt64)
+	gns.Approve(cross, poolAddr, maxInt64)
+	wugnot.Approve(cross, routerAddr, maxInt64)
+	gns.Approve(cross, routerAddr, maxInt64)
 
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
 		cross,
@@ -344,7 +346,7 @@ func performSwaps() {
 		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000",
 		"100",
 		"0",
-		max_timeout,
+		maxTimeout,
 		"",
 	)
 
@@ -377,8 +379,8 @@ func oneClickStakingPos07OutRange() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] mint and stake position 07 (one-click)")
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	foo.Approve(cross, poolAddr, maxInt64)
 
 	lpTokenId, liquidity, amount0, amount1, poolPath := sr.MintAndStake(
 		cross,
@@ -391,7 +393,7 @@ func oneClickStakingPos07OutRange() {
 		"1000",
 		"0",
 		"0",
-		max_timeout,
+		maxTimeout,
 		"",
 	)
 

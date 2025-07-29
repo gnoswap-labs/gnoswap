@@ -7,7 +7,6 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/gns"
 )
@@ -45,8 +44,8 @@ func TestStakerReward_CollectReward(t *testing.T) {
 			setupRewards: func() {
 				cleanupStakerRewardTest(t)
 				setupStakerRewardTestProtocolFeeRewards(t, testutils.TestAddress("alice"), 1000, map[string]int64{
-					consts.GNS_PATH: 500,
-					barPath:         300,
+					GNS_PATH: 500,
+					barPath:  300,
 				}, 1000)
 			},
 			cleanupMocks: func() {
@@ -54,8 +53,8 @@ func TestStakerReward_CollectReward(t *testing.T) {
 			},
 			expectedEmission: 0,
 			expectedProtocol: map[string]int64{
-				consts.GNS_PATH: 500,
-				barPath:         300,
+				GNS_PATH: 500,
+				barPath:  300,
 			},
 		},
 		{
@@ -78,10 +77,10 @@ func TestStakerReward_CollectReward(t *testing.T) {
 			setupRewards: func() {
 				cleanupStakerRewardTest(t)
 				setupStakerRewardTestProtocolFeeRewards(t, testutils.TestAddress("alice"), 1000, map[string]int64{
-					consts.GNS_PATH: 1000,
-					barPath:         2000,
-					bazPath:         1500,
-					usdcPath:        500,
+					GNS_PATH: 1000,
+					barPath:  2000,
+					bazPath:  1500,
+					usdcPath: 500,
 				}, 1000)
 			},
 			cleanupMocks: func() {
@@ -89,10 +88,10 @@ func TestStakerReward_CollectReward(t *testing.T) {
 			},
 			expectedEmission: 0,
 			expectedProtocol: map[string]int64{
-				consts.GNS_PATH: 1000,
-				barPath:         2000,
-				bazPath:         1500,
-				usdcPath:        500,
+				GNS_PATH: 1000,
+				barPath:  2000,
+				bazPath:  1500,
+				usdcPath: 500,
 			},
 		},
 	}
@@ -112,10 +111,7 @@ func TestStakerReward_CollectReward(t *testing.T) {
 					CollectReward(cross)
 				})
 			} else {
-				// Should not panic and collect rewards successfully
-				CollectReward(cross)
-				// Note: In a real implementation, we would verify the actual reward collection
-				// by checking balances, events, etc.
+				uassert.NotPanics(t, func() { CollectReward(cross) })
 			}
 		})
 	}
@@ -151,7 +147,7 @@ func TestStakerReward_CollectRewardFromLaunchPad(t *testing.T) {
 			caller:        testutils.TestAddress("alice"),
 			to:            testutils.TestAddress("project1"),
 			expectPanic:   true,
-			expectedError: "caller(" + testutils.TestAddress("alice").String() + ") has no permission",
+			expectedError: "unauthorized: caller " + testutils.TestAddress("alice").String() + " is not launchpad",
 			setupLaunchpad: func() {
 				cleanupStakerRewardTest(t)
 			},
@@ -245,7 +241,7 @@ func TestStakerReward_SetAmountByProjectWallet(t *testing.T) {
 			amount:        1000,
 			add:           true,
 			expectPanic:   true,
-			expectedError: "caller(" + testutils.TestAddress("alice").String() + ") has no permission",
+			expectedError: "unauthorized: caller " + testutils.TestAddress("alice").String() + " is not launchpad",
 			setupMocks: func() {
 				cleanupStakerRewardTest(t)
 			},
@@ -305,7 +301,7 @@ func TestStakerReward_transferToken(t *testing.T) {
 	}{
 		{
 			name:        "Valid token transfer",
-			tokenPath:   consts.GNS_PATH,
+			tokenPath:   GNS_PATH,
 			from:        govStakerAddr,
 			to:          testutils.TestAddress("to"),
 			amount:      100,
@@ -316,7 +312,7 @@ func TestStakerReward_transferToken(t *testing.T) {
 		},
 		{
 			name:         "Invalid to address should error",
-			tokenPath:    consts.GNS_PATH,
+			tokenPath:    GNS_PATH,
 			from:         govStakerAddr,
 			to:           std.Address(""),
 			amount:       100,
@@ -326,7 +322,7 @@ func TestStakerReward_transferToken(t *testing.T) {
 		},
 		{
 			name:         "Negative amount should error",
-			tokenPath:    consts.GNS_PATH,
+			tokenPath:    GNS_PATH,
 			from:         govStakerAddr,
 			to:           testutils.TestAddress("to"),
 			amount:       -100,
@@ -336,7 +332,7 @@ func TestStakerReward_transferToken(t *testing.T) {
 		},
 		{
 			name:        "Zero amount should work",
-			tokenPath:   consts.GNS_PATH,
+			tokenPath:   GNS_PATH,
 			from:        govStakerAddr,
 			to:          testutils.TestAddress("to"),
 			amount:      0,
@@ -347,7 +343,7 @@ func TestStakerReward_transferToken(t *testing.T) {
 		},
 		{
 			name:        "WUGNOT token path should use native coin transfer",
-			tokenPath:   consts.WUGNOT_PATH,
+			tokenPath:   WUGNOT_PATH,
 			from:        govStakerAddr,
 			to:          testutils.TestAddress("to"),
 			amount:      100,
@@ -401,8 +397,8 @@ func TestStakerReward_LaunchpadExclusionAndRewards(t *testing.T) {
 			expectRewardEligible: true,
 			expectEmissionReward: 100_000_000,
 			expectProtocolReward: map[string]int64{
-				consts.GNS_PATH: 50_000_000,
-				barPath:         30_000_000,
+				GNS_PATH: 50_000_000,
+				barPath:  30_000_000,
 			},
 			description: "Regular xGNS should have full voting weight and reward eligibility",
 		},
@@ -415,8 +411,8 @@ func TestStakerReward_LaunchpadExclusionAndRewards(t *testing.T) {
 			expectRewardEligible: true, // But eligible for rewards
 			expectEmissionReward: 200_000_000,
 			expectProtocolReward: map[string]int64{
-				consts.GNS_PATH: 100_000_000,
-				barPath:         60_000_000,
+				GNS_PATH: 100_000_000,
+				barPath:  60_000_000,
 			},
 			description: "Launchpad xGNS should be excluded from voting but eligible for rewards",
 		},
@@ -429,8 +425,8 @@ func TestStakerReward_LaunchpadExclusionAndRewards(t *testing.T) {
 			expectRewardEligible: true,
 			expectEmissionReward: 100_000_000, // Based on total xGNS
 			expectProtocolReward: map[string]int64{
-				consts.GNS_PATH: 50_000_000,
-				barPath:         30_000_000,
+				GNS_PATH: 50_000_000,
+				barPath:  30_000_000,
 			},
 			description: "Mixed xGNS should have voting weight from regular only but rewards from total",
 		},
@@ -485,7 +481,7 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 	}{
 		{
 			name:        "success - normal token transfer",
-			tokenPath:   consts.GNS_PATH,
+			tokenPath:   GNS_PATH,
 			from:        admin,
 			to:          testutils.TestAddress("to"),
 			amount:      100_000_000,
@@ -494,7 +490,7 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 		},
 		{
 			name:        "success - exact balance transfer",
-			tokenPath:   consts.GNS_PATH,
+			tokenPath:   GNS_PATH,
 			from:        admin,
 			to:          testutils.TestAddress("to"),
 			amount:      100_000_000,
@@ -503,7 +499,7 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 		},
 		{
 			name:          "fail - insufficient balance",
-			tokenPath:     consts.GNS_PATH,
+			tokenPath:     GNS_PATH,
 			from:          testutils.TestAddress("from"), // not have balance
 			to:            testutils.TestAddress("to"),
 			amount:        200_000_000,
@@ -513,7 +509,7 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 		},
 		{
 			name:          "fail - invalid to address",
-			tokenPath:     consts.GNS_PATH,
+			tokenPath:     GNS_PATH,
 			from:          admin,
 			to:            std.Address(""),
 			amount:        100_000_000,
@@ -523,7 +519,7 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 		},
 		{
 			name:          "fail - negative amount",
-			tokenPath:     consts.GNS_PATH,
+			tokenPath:     GNS_PATH,
 			from:          admin,
 			to:            testutils.TestAddress("to"),
 			amount:        -100_000_000,
@@ -533,7 +529,7 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 		},
 		{
 			name:        "success - zero amount transfer",
-			tokenPath:   consts.GNS_PATH,
+			tokenPath:   GNS_PATH,
 			from:        admin,
 			to:          testutils.TestAddress("to"),
 			amount:      0,
@@ -541,18 +537,18 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 			shouldFail:  false,
 		},
 		{
-			name:        "success - self transfer",
-			tokenPath:   consts.GNS_PATH,
-			from:        testutils.TestAddress("user"),
-			to:          testutils.TestAddress("user"),
-			amount:      100_000_000,
-			fromBalance: 500_000_000,
-			shouldFail:  true,
+			name:          "success - self transfer",
+			tokenPath:     GNS_PATH,
+			from:          testutils.TestAddress("user"),
+			to:            testutils.TestAddress("user"),
+			amount:        100_000_000,
+			fromBalance:   500_000_000,
+			shouldFail:    true,
 			expectedError: "[GNOSWAP-GOV_STAKER-010] not enough balance || not enough gno.land/r/gnoswap/v1/gns balance(0) to collect(100000000)",
 		},
 		{
 			name:        "success - WUGNOT native coin transfer",
-			tokenPath:   consts.WUGNOT_PATH,
+			tokenPath:   WUGNOT_PATH,
 			from:        admin,
 			to:          testutils.TestAddress("to"),
 			amount:      100_000_000,
@@ -568,7 +564,7 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 			// Note: In real implementation, we would set up token balances
 			cleanupStakerRewardTest(t)
 			setupStakerRewardStakerTokenBalance(t)
-			
+
 			testing.SetRealm(adminRealm)
 
 			// When: Transfer token
@@ -607,18 +603,18 @@ func TestStakerReward_RewardCalculationAccuracy(t *testing.T) {
 			totalStake:     10_000_000_000,
 			emissionReward: 0,
 			protocolFeeReward: map[string]int64{
-				consts.GNS_PATH: 0,
-				barPath:         0,
+				GNS_PATH: 0,
+				barPath:  0,
 			},
 			updatedEmissionReward: 100_000_000,
 			updatedProtocolFeeReward: map[string]int64{
-				consts.GNS_PATH: 50_000_000,
-				barPath:         30_000_000,
+				GNS_PATH: 50_000_000,
+				barPath:  30_000_000,
 			},
 			expectedEmission: 99_999_999,
 			expectedProtocol: map[string]int64{
-				consts.GNS_PATH: 49_999_999,
-				barPath:         29_999_999,
+				GNS_PATH: 49_999_999,
+				barPath:  29_999_999,
 			},
 		},
 		{
@@ -627,15 +623,15 @@ func TestStakerReward_RewardCalculationAccuracy(t *testing.T) {
 			totalStake:     1_000_000_000_000, // 1T
 			emissionReward: 0,
 			protocolFeeReward: map[string]int64{
-				consts.GNS_PATH: 0,
+				GNS_PATH: 0,
 			},
 			updatedEmissionReward: 1_000,
 			updatedProtocolFeeReward: map[string]int64{
-				consts.GNS_PATH: 1_000,
+				GNS_PATH: 1_000,
 			},
 			expectedEmission: 999, // 0.0001% of total (with precision loss)
 			expectedProtocol: map[string]int64{
-				consts.GNS_PATH: 999, // 0.0001% of 1B
+				GNS_PATH: 999, // 0.0001% of 1B
 			},
 		},
 		{
@@ -644,15 +640,15 @@ func TestStakerReward_RewardCalculationAccuracy(t *testing.T) {
 			totalStake:     9223372036854775807,
 			emissionReward: 0,
 			protocolFeeReward: map[string]int64{
-				consts.GNS_PATH: 2_000_000_000,
+				GNS_PATH: 2_000_000_000,
 			},
 			updatedEmissionReward: 0,
 			updatedProtocolFeeReward: map[string]int64{
-				consts.GNS_PATH: 2_000_000_000,
+				GNS_PATH: 2_000_000_000,
 			},
 			expectedEmission: 0,
 			expectedProtocol: map[string]int64{
-				consts.GNS_PATH: 0,
+				GNS_PATH: 0,
 			},
 		},
 		{
@@ -729,7 +725,7 @@ func setupStakerRewardStakerTokenBalance(t *testing.T) {
 	testing.SetOriginSend(newCoins)
 
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminRealm.Address(), consts.WUGNOT_ADDR, newCoins)
+	banker.SendCoins(adminRealm.Address(), WUGNOT_ADDR, newCoins)
 	wugnot.Deposit(cross)
 
 	wugnot.Transfer(cross, govStakerAddr, amount)

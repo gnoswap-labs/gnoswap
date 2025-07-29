@@ -12,36 +12,37 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/demo/wugnot"
 
 	"gno.land/r/gnoswap/v1/access"
 
-	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	sr "gno.land/r/gnoswap/v1/staker"
+
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
-	poolAddr, _     = access.GetAddress(access.ROLE_POOL)
-	positionAddr, _ = access.GetAddress(access.ROLE_POSITION)
+	poolAddr, _     = access.GetAddress(prabc.ROLE_POOL.String())
+	positionAddr, _ = access.GetAddress(prabc.ROLE_POSITION.String())
 
-	wugnotAddr = consts.WUGNOT_ADDR
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
@@ -51,7 +52,8 @@ var (
 
 	fee3000 uint32 = 3000
 
-	max_timeout int64 = 9999999999
+	maxTimeout int64 = 9999999999
+	maxInt64   int64 = 9223372036854775807
 )
 
 func main() {
@@ -82,7 +84,6 @@ func initAccountAndEmission() {
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
-	emission.RegisterGnsChangeCallback(cross)
 }
 
 func createPools() {
@@ -93,7 +94,7 @@ func createPools() {
 	testing.SkipHeights(1)
 
 	println("[INFO] create gnot:gns:3000 pool")
-	pl.CreatePool(cross, consts.GNOT, consts.GNS_PATH, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // price ratio 1:1
+	pl.CreatePool(cross, "gnot", "gno.land/r/gnoswap/v1/gns", 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // price ratio 1:1
 
 	println("[INFO] create bar:qux:3000 pool")
 	pl.CreatePool(cross, barPath, quxPath, 3000, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // tick 10_000 ≈ x2.7
@@ -108,9 +109,9 @@ func mintAndStakeNative() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for native mint and stake")
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	wugnot.Approve(cross, positionAddr, consts.INT64_MAX)
+	gns.Approve(cross, poolAddr, maxInt64)
+	wugnot.Approve(cross, poolAddr, maxInt64)
+	wugnot.Approve(cross, positionAddr, maxInt64)
 
 	testing.SkipHeights(2)
 
@@ -134,8 +135,8 @@ func mintAndStakeNative() {
 	println("[INFO] mint and stake native position")
 	lpTokenId, liquidity, amount0, amount1, poolPath := sr.MintAndStake(
 		cross,
-		consts.GNOT,
-		consts.GNS_PATH,
+		"gnot",
+		"gno.land/r/gnoswap/v1/gns",
 		fee3000,
 		int32(-5040),
 		int32(5040),
@@ -143,7 +144,7 @@ func mintAndStakeNative() {
 		"100000",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		"",
 	)
 
@@ -166,8 +167,8 @@ func mintAndStakeGRC20Pair() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for GRC20 mint and stake")
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	qux.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	qux.Approve(cross, poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] mint and stake GRC20 pair position")
@@ -182,7 +183,7 @@ func mintAndStakeGRC20Pair() {
 		"1000",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		"",
 	)
 

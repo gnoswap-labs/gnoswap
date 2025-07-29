@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
@@ -14,11 +14,17 @@ import (
 	"gno.land/r/onbloc/foo"
 )
 
+const (
+	INT64_MAX int64 = 9223372036854775807
+
+	MIN_PRICE string = "4295128740"
+)
+
 var (
-	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm    = std.NewUserRealm(adminAddr)
-	poolAddr, _   = access.GetAddress(access.ROLE_POOL)
-	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
+	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
+	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 	routerRealm   = std.NewUserRealm(routerAddr)
 
 	barPath        = "gno.land/r/onbloc/bar"
@@ -152,7 +158,7 @@ func executeSwap() {
 		adminAddr,
 		true,
 		"1234567",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
@@ -162,8 +168,8 @@ func executeSwap() {
 
 func checkFeesAfterSwap() {
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Checking fees for position 1")
 	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)

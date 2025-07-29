@@ -8,7 +8,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
+
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/gns"
 )
@@ -1127,7 +1127,7 @@ func setupGovernanceExecuteTestCommunityPoolBalance(t *testing.T) {
 	testing.SetOriginSend(newCoins)
 
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminRealm.Address(), consts.WUGNOT_ADDR, newCoins)
+	banker.SendCoins(adminRealm.Address(), wugnotAddr, newCoins)
 	wugnot.Deposit(cross)
 
 	wugnot.Transfer(cross, communityPoolAddr, gnotAmount)

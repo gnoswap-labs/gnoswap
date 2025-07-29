@@ -10,7 +10,8 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gov/governance"
@@ -21,7 +22,7 @@ import (
 )
 
 var (
-	adminAddr, _     = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
 	dummyAddr        = testutils.TestAddress("dummy")
 	user01           = testutils.TestAddress("user01")
 	currentBlockTime = int64(2)
@@ -72,7 +73,9 @@ func launchpadProjectCreateAndDeposit() {
 func delegateGnsToDummy() {
 	delegatedAmount := int64(2_000_000_000)
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	gns.Approve(cross, consts.GOV_STAKER_ADDR, delegatedAmount)
+
+	govStakerAddr := std.Address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
+	gns.Approve(cross, govStakerAddr, delegatedAmount)
 	gs.Delegate(cross, dummyAddr, int64(delegatedAmount), "")
 	ufmt.Printf("[INFO] gns delegated to dummy %s (amount: %d)\n", dummyAddr.String(), delegatedAmount)
 }

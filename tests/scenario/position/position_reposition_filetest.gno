@@ -6,19 +6,29 @@ import (
 	"testing"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+
+	prbac "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 )
 
+const (
+	INT64_MAX int64 = 9223372036854775807
+
+	MIN_PRICE string = "4295128740"                                        // MIN_SQRT_RATIO + 1
+	MAX_PRICE string = "1461446703485210103287273052203988822378723970341" // MAX_SQRT_RATIO - 1
+)
+
 var (
-	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm    = std.NewUserRealm(adminAddr)
-	poolAddr, _   = access.GetAddress(access.ROLE_POOL)
-	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
+	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
+	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 	routerRealm   = std.NewUserRealm(routerAddr)
 
 	barPath        = "gno.land/r/onbloc/bar"
@@ -80,8 +90,8 @@ func initPool() {
 
 func mintInitialPosition() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting initial position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
@@ -118,7 +128,7 @@ func checkInitialPositionState() {
 
 func executeSwap() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
 
 	p := pool.GetPool(barPath, fooPath, fee500)
 	println("[DEBUG] Tick before swap:", p.Slot0Tick())
@@ -133,7 +143,7 @@ func executeSwap() {
 		adminAddr,
 		true,
 		"20000000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
@@ -146,8 +156,8 @@ func executeSwap() {
 func repositionToNewRange() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees before reposition")
 	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
@@ -198,7 +208,7 @@ func executeSwapInNewRange() {
 	println("[DEBUG] Pool liquidity:", p.Liquidity().ToString())
 
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	testing.SetRealm(routerRealm)
 	ufmt.Println("[INFO] Executing swap in new range")
@@ -210,7 +220,7 @@ func executeSwapInNewRange() {
 		adminAddr,
 		false,
 		"20000000",
-		consts.MAX_PRICE,
+		MAX_PRICE,
 		adminAddr,
 	)
 

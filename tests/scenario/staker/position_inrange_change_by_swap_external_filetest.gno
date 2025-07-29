@@ -12,12 +12,10 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/gnoswap/v1/access"
 
-	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 
@@ -26,28 +24,32 @@ import (
 	rt "gno.land/r/gnoswap/v1/router"
 	sr "gno.land/r/gnoswap/v1/staker"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
-	poolAddr, _   = access.GetAddress(access.ROLE_POOL)
-	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
+	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
+	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
 
 	fee100 uint32 = 100
 
-	max_timeout int64 = 9999999999
+	maxTimeout int64 = 9999999999
+	maxInt64   int64 = 9223372036854775807
 
 	// external incentive
 	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
@@ -108,7 +110,6 @@ func initAndSetup() {
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
-	emission.RegisterGnsChangeCallback(cross)
 }
 
 func createPool() {
@@ -124,7 +125,7 @@ func createExternalIncentive() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for external incentive")
-	bar.Approve(cross, stakerAddr, consts.INT64_MAX)
+	bar.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
 	println("[INFO] create external incentive with bar token")
@@ -150,8 +151,8 @@ func mintNarrowRangePosition() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	baz.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	baz.Approve(cross, poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] mint narrow range position (tick range: -50 ~ 50)")
@@ -166,7 +167,7 @@ func mintNarrowRangePosition() {
 		"10000",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -233,8 +234,8 @@ func performSwapToMovePrice() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for swapping")
-	bar.Approve(cross, routerAddr, consts.INT64_MAX)
-	baz.Approve(cross, routerAddr, consts.INT64_MAX)
+	bar.Approve(cross, routerAddr, maxInt64)
+	baz.Approve(cross, routerAddr, maxInt64)
 
 	// Check current tick before swap
 	currentTickBefore := pl.PoolGetSlot0Tick(poolPath)
@@ -253,7 +254,7 @@ func performSwapToMovePrice() {
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
 		"100",
 		"0",
-		max_timeout,
+		maxTimeout,
 		"",
 	)
 
@@ -276,7 +277,7 @@ func performSwapToMovePrice() {
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
 			"100",
 			"0",
-			max_timeout,
+			maxTimeout,
 			"",
 		)
 
@@ -328,7 +329,7 @@ func performReverseSwap() {
 		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100",
 		"100",
 		"0",
-		max_timeout,
+		maxTimeout,
 		"",
 	)
 

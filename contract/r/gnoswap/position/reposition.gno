@@ -6,6 +6,8 @@ import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/v1/halt"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
@@ -28,13 +30,16 @@ func Reposition(
 	amount0MinStr string,
 	amount1MinStr string,
 ) (uint64, string, int32, int32, string, string) {
-	assertOnlyNotHalted()
-	verifyTokenIdAndOwnership(positionId)
-	mintAndDistributeGnsCallback()
+	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedWithdraw()
+
+	caller := std.PreviousRealm().Address()
+	assertIsOwnerForToken(positionId, caller)
+	
+	emission.MintAndDistributeGns(cross)
 
 	// position should be burned to reposition
 	position := MustGetPosition(positionId)
-	caller := getPrevAddr()
 	oldTickLower := position.tickLower
 	oldTickUpper := position.tickUpper
 
@@ -52,7 +57,10 @@ func Reposition(
 	}
 
 	token0, token1, _ := splitOf(position.poolKey)
-	token0, token1, _, _, _ = processTokens(token0, token1, amount0DesiredStr, amount1DesiredStr, caller)
+	token0, token1, _, _, _, err := processTokens(token0, token1, amount0DesiredStr, amount1DesiredStr, caller)
+	if err != nil {
+		panic(err)
+	}
 
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
@@ -91,12 +99,12 @@ func Reposition(
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(position.poolKey)
 	token0Balance := pl.PoolGetBalanceToken0(position.poolKey)
 	token1Balance := pl.PoolGetBalanceToken1(position.poolKey)
-	prevAddr, prevPkgPath := getPrevAsString()
-
+	
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"Reposition",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"lpPositionId", formatUint(positionId),
 		"tickLower", formatInt(int64(tickLower)),
 		"tickUpper", formatInt(int64(tickUpper)),

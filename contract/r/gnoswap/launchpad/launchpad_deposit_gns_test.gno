@@ -14,6 +14,8 @@ import (
 	"gno.land/r/gnoswap/v1/halt"
 
 	"gno.land/r/onbloc/obl"
+
+	prbac "gno.land/p/gnoswap/rbac"
 )
 
 func TestDepositGns(t *testing.T) {
@@ -33,8 +35,8 @@ func TestDepositGns(t *testing.T) {
 			setupFunc: func() (string, std.Address) {
 				userAddr := testutils.TestAddress("user1")
 				projectAddr := testutils.TestAddress("project1")
-				adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-				launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+				adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+				launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 				// Reset state
 				projects = avl.NewTree()
@@ -109,8 +111,8 @@ func TestDepositGns(t *testing.T) {
 				deposits = avl.NewTree()
 				depositCounter = NewCounter()
 
-				adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-				launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+				adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+				launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 				// Set initial block height
 				testing.SetHeight(123)
@@ -168,8 +170,8 @@ func TestDepositGns(t *testing.T) {
 			setupFunc: func() (string, std.Address) {
 				userAddr := testutils.TestAddress("user3")
 				projectAddr := testutils.TestAddress("project3")
-				adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-				launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+				adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+				launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 				// Reset state
 				projects = avl.NewTree()
@@ -231,11 +233,13 @@ func TestDepositGns(t *testing.T) {
 		{
 			name: "fail with zero amount",
 			setupFunc: func() (string, std.Address) {
-				userAddr := testutils.TestAddress("user5")
-
 				// Unhalt the system
-				halt.SetHalt(cross, false)
-
+				adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+				testing.SetRealm(std.NewUserRealm(adminAddr))
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+				
+				userAddr := testutils.TestAddress("user5")
+				
 				// Return a valid project tier ID format
 				return "gno.land/r/onbloc/obl:123:30", userAddr
 			},
@@ -293,8 +297,8 @@ func TestDepositGns(t *testing.T) {
 			setupFunc: func() (string, std.Address) {
 				userAddr := testutils.TestAddress("user9")
 				projectAddr := testutils.TestAddress("project9")
-				adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-				launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+				adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+				launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 				// Reset state
 				projects = avl.NewTree()
@@ -351,8 +355,8 @@ func TestDepositGns(t *testing.T) {
 			setupFunc: func() (string, std.Address) {
 				userAddr := testutils.TestAddress("user10")
 				projectAddr := testutils.TestAddress("project10")
-				adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-				launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+				adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+				launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 				// Reset state
 				projects = avl.NewTree()
@@ -408,8 +412,8 @@ func TestDepositGns(t *testing.T) {
 			setupFunc: func() (string, std.Address) {
 				contractAddr := testutils.TestAddress("contract")
 				projectAddr := testutils.TestAddress("project12")
-				adminAddr, _ := access.GetAddress(access.ROLE_ADMIN)
-				launchpadAddr, _ := access.GetAddress(access.ROLE_LAUNCHPAD)
+				adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+				launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 				// Reset state
 				projects = avl.NewTree()
@@ -459,7 +463,7 @@ func TestDepositGns(t *testing.T) {
 			depositAmount:        1000000,
 			referrer:             "",
 			expectedPanic:        true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-002] invalid address || only user can call this function",
+			expectedPanicMessage: "caller is not user",
 		},
 	}
 
@@ -478,7 +482,9 @@ func TestDepositGns(t *testing.T) {
 				deposits = origDeposits
 				// Restore halt state if needed
 				if origHalted {
-					halt.SetHalt(cross, true)
+					adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+					testing.SetRealm(std.NewUserRealm(adminAddr))
+					halt.SetHaltLevel(cross, halt.HaltLevelComplete)
 				}
 			}()
 

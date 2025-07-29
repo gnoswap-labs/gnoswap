@@ -1077,7 +1077,7 @@ func TestGovernancePropose_ProposalIDGeneration(t *testing.T) {
 func cleanup() {
 	// Reset global state
 	testing.SetRealm(adminRealm)
-	halt.SetHaltByAdmin(cross, false)
+	halt.SetHaltLevel(cross, halt.HaltLevelNone)
 	configCounter = NewCounter()
 	proposalCounter = NewCounter()
 	configs = avl.NewTree()

@@ -9,24 +9,31 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 
+	prbac "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/staker"
 	lp "gno.land/r/gnoswap/v1/launchpad"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 )
 
 var (
-	admin        = consts.ADMIN
+	admin, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = std.NewUserRealm(admin)
-	bobAddr      = testutils.TestAddress("bob")
-	bobRealm     = std.NewUserRealm(bobAddr)
+
+	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
+	stakerRealm  = std.NewUserRealm(stakerAddr)
+
+	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	launchpadAddr, _  = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+
 	projectAddr  = testutils.TestAddress("projectAddr")
 	projectRealm = std.NewUserRealm(projectAddr)
-	stakerRealm  = std.NewUserRealm(consts.STAKER_ADDR)
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
@@ -55,7 +62,7 @@ func createLaunchpadProject() {
 	startTime := int64(time.Now().Unix() + 3600) // 1 hour
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, consts.LAUNCHPAD_ADDR, rewardAmount)
+	bar.Approve(cross, launchpadAddr, rewardAmount)
 	lp.CreateProject(
 		cross,
 		"Bar Launchpad Project",
@@ -74,15 +81,15 @@ func createLaunchpadProject() {
 	ufmt.Printf("[INFO] skipped 3600 blocks\n")
 
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, consts.LAUNCHPAD_ADDR, rewardAmount)
+	gns.Approve(cross, launchpadAddr, rewardAmount)
 	lp.DepositGns(cross, "gno.land/r/onbloc/bar:123:30", int64(rewardAmount), "")
 }
 
 func setupProtocolFeeDeposit() {
 	// mock protocol fee deposit (bar, qux)
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, consts.PROTOCOL_FEE_ADDR, 1000)
-	qux.Transfer(cross, consts.PROTOCOL_FEE_ADDR, 2500)
+	bar.Transfer(cross, protocolFeeAddr, 1000)
+	qux.Transfer(cross, protocolFeeAddr, 2500)
 
 	testing.SetRealm(stakerRealm)
 	pf.AddToProtocolFee(cross, barPath, 1000)

@@ -2,7 +2,6 @@ package position
 
 import (
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/demo/wugnot"
@@ -14,9 +13,7 @@ import (
 // If unwrapResult is true and the position involves WUGNOT, any leftover WUGNOT will be
 // unwrapped to GNOT at the end of the operation.
 // Returns position ID, liquidity, fee0, fee1, amount0, amount1, poolPath
-func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string) {
-	verifyTokenIdAndOwnership(params.positionId)
-
+func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string, error) {
 	caller := params.caller
 
 	// BEFORE DECREASE LIQUIDITY, COLLECT FEE FIRST
@@ -27,18 +24,30 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	position := MustGetPosition(params.positionId)
 	positionLiquidity := position.liquidity
 	if positionLiquidity.IsZero() {
-		panic(newErrorWithDetail(
-			errZeroLiquidity,
-			ufmt.Sprintf("position(position ID:%d) has 0 liquidity", params.positionId),
-		))
+		return params.positionId,
+			nil,
+			fee0,
+			fee1,
+			nil, nil,
+			position.poolKey,
+			makeErrorWithDetails(
+				errZeroLiquidity,
+				ufmt.Sprintf("position(position ID:%d) has 0 liquidity", params.positionId),
+			)
 	}
 
 	liquidityToRemove := u256.MustFromDecimal(params.liquidity)
 	if liquidityToRemove.Gt(positionLiquidity) {
-		panic(newErrorWithDetail(
-			errInvalidLiquidity,
-			ufmt.Sprintf("Liquidity requested(%s) is greater than liquidity held(%s)", liquidityToRemove.ToString(), positionLiquidity.ToString()),
-		))
+		return params.positionId,
+			liquidityToRemove,
+			fee0,
+			fee1,
+			nil, nil,
+			position.poolKey,
+			makeErrorWithDetails(
+				errInvalidLiquidity,
+				ufmt.Sprintf("Liquidity requested(%s) is greater than liquidity held(%s)", liquidityToRemove.ToString(), positionLiquidity.ToString()),
+			)
 	}
 
 	beforeWugnotBalance := wugnot.BalanceOf(caller) // before unwrap
@@ -48,7 +57,24 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	burnedAmount0 := u256.MustFromDecimal(burn0)
 	burnedAmount1 := u256.MustFromDecimal(burn1)
-	verifySlippageAmounts(burnedAmount0, burnedAmount1, params.amount0Min, params.amount1Min)
+	if isSlippageExceeded(burnedAmount0, burnedAmount1, params.amount0Min, params.amount1Min) {
+		return params.positionId,
+			liquidityToRemove,
+			fee0,
+			fee1,
+			burnedAmount0,
+			burnedAmount1,
+			position.poolKey,
+			makeErrorWithDetails(
+				errSlippage,
+				ufmt.Sprintf("burnedAmount0(%s) >= amount0Min(%s) || burnedAmount1(%s) >= amount1Min(%s)",
+					burnedAmount0.ToString(),
+					params.amount0Min.ToString(),
+					burnedAmount1.ToString(),
+					params.amount1Min.ToString(),
+				),
+			)
+	}
 
 	positionKey := computePositionKey(caller, position.tickLower, position.tickUpper)
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
@@ -108,32 +134,55 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	underflow := false
 	position.tokensOwed0, underflow = new(u256.Uint).SubOverflow(position.tokensOwed0, collectAmount0)
 	if underflow {
-		panic(newErrorWithDetail(
-			errUnderflow,
-			"tokensOwed0 underflow",
-		))
+		return params.positionId,
+			liquidityToRemove,
+			fee0,
+			fee1,
+			collectAmount0,
+			collectAmount1,
+			position.poolKey,
+			makeErrorWithDetails(
+				errUnderflow,
+				"tokensOwed0 underflow",
+			)
 	}
 	position.tokensOwed1, underflow = new(u256.Uint).SubOverflow(position.tokensOwed1, collectAmount1)
 	if underflow {
-		panic(newErrorWithDetail(
-			errUnderflow,
-			"tokensOwed1 underflow",
-		))
+		return params.positionId,
+			liquidityToRemove,
+			fee0,
+			fee1,
+			collectAmount0,
+			collectAmount1,
+			position.poolKey,
+			makeErrorWithDetails(
+				errUnderflow,
+				"tokensOwed1 underflow",
+			)
 	}
 
 	if position.isClear() {
 		position.burned = true // just update flag (we don't want to burn actual position)
 	}
+
 	mustUpdatePosition(params.positionId, position)
 
 	// NO UNWRAP
-	if !params.unwrapResult {
-		return params.positionId, liquidityToRemove, fee0, fee1, collectAmount0, collectAmount1, position.poolKey
+	if params.unwrapResult {
+		err := handleUnwrap(pToken0, pToken1, params.unwrapResult, beforeWugnotBalance, caller)
+		if err != nil {
+			return params.positionId,
+				liquidityToRemove,
+				fee0,
+				fee1,
+				collectAmount0,
+				collectAmount1,
+				position.poolKey,
+				err
+		}
 	}
 
-	handleUnwrap(pToken0, pToken1, params.unwrapResult, beforeWugnotBalance, caller)
-
-	return params.positionId, liquidityToRemove, fee0, fee1, collectAmount0, collectAmount1, position.poolKey
+	return params.positionId, liquidityToRemove, fee0, fee1, collectAmount0, collectAmount1, position.poolKey, nil
 }
 
 func updateTokensOwed(
@@ -174,5 +223,5 @@ func calculateTokensOwed(
 	positionLiquidity *u256.Uint,
 ) *u256.Uint {
 	diff := new(u256.Uint).Sub(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128)
-	return u256.MulDiv(diff, positionLiquidity, u256.MustFromDecimal(consts.Q128))
+	return u256.MulDiv(diff, positionLiquidity, u256.MustFromDecimal(Q128))
 }

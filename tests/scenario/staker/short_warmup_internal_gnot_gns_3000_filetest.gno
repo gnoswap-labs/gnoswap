@@ -13,7 +13,6 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/demo/wugnot"
@@ -24,30 +23,34 @@ import (
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
+
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
-
-	wugnotAddr = consts.WUGNOT_ADDR
+	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
 	gnsPath    = "gno.land/r/gnoswap/v1/gns"
+
 	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 
 	fee3000 uint32 = 3000
 
-	max_timeout int64 = 9999999999
+	maxTimeout int64 = 9999999999
+	maxInt64   int64 = 9223372036854775807
 )
 
 func main() {
@@ -75,10 +78,10 @@ func initWithShortWarmUp() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] override warm-up periods for testing")
-	sr.SetWarmUp(cross, 30, 150)
-	sr.SetWarmUp(cross, 50, 300)
-	sr.SetWarmUp(cross, 70, 900)
-	sr.SetWarmUp(cross, 100, math.MaxInt64)
+	sr.SetWarmUpByAdmin(cross, 30, 150)
+	sr.SetWarmUpByAdmin(cross, 50, 300)
+	sr.SetWarmUpByAdmin(cross, 70, 900)
+	sr.SetWarmUpByAdmin(cross, 100, math.MaxInt64)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFeeByAdmin(cross, 0)
@@ -98,7 +101,7 @@ func initWithShortWarmUp() {
 	println("[INFO] prepare wugnot")
 	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, std.Coins{{"ugnot", 50_000_000_000_000}})
+	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
 	testing.SetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}})
 	wugnot.Deposit(cross)
 	testing.SetOriginSend(nil)
@@ -108,7 +111,6 @@ func initWithShortWarmUp() {
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
-	emission.RegisterGnsChangeCallback(cross)
 
 	testing.SkipHeights(1)
 }
@@ -127,8 +129,8 @@ func mintWugnotGnsPos01() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
+	wugnot.Approve(cross, poolAddr, maxInt64)
+	gns.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint position 01 (tick range: -1020 ~ 1020)")
 	positionId, liquidity, amount0, amount1 := pn.Mint(
@@ -142,7 +144,7 @@ func mintWugnotGnsPos01() {
 		"50",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -172,7 +174,7 @@ func stakeToken01() {
 func collectReward01() {
 	testing.SetRealm(adminRealm)
 
-	communityPoolAddr, _ := access.GetAddress(access.ROLE_COMMUNITY_POOL)
+	communityPoolAddr, _ := access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
 	println("[INFO] check GNS balances before reward collection")
 	gnsBefore := gns.BalanceOf(adminUser)

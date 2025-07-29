@@ -6,7 +6,7 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 )
 
 const (
@@ -15,6 +15,9 @@ const (
 
 	HALVING_START_YEAR = int64(1)
 	HALVING_END_YEAR   = int64(12)
+
+	// Maximum allowed block time in milliseconds (1 second)
+	MAX_BLOCK_TIME_MS = 1e9
 )
 
 // Annual halving amount - maximum issuance per year
@@ -33,11 +36,25 @@ var halvingAmountsPerYear = [HALVING_END_YEAR]int64{
 	1_171_875_000_000 * 12,  // Year 12: 14062500000000
 }
 
-var (
-	blockPerYear = SECONDS_IN_YEAR / milliToSec(consts.BLOCK_GENERATION_INTERVAL)
-	blockPerDay  = consts.SECONDS_PER_DAY / milliToSec(consts.BLOCK_GENERATION_INTERVAL)
+const (
+	// Default block generation interval, in milliseconds, used to estimate
+	// how many blocks will be produced over a given timeframe.
+	// GnoSwap’s emission logic relies on this as an initial value,
+	// but actual block times may vary (e.g. due to network conditions).
+	// Governance or an admin can adjust it dynamically by calling
+	// [SetAvgBlockTimeInMs](https://github.com/gnoswap-labs/gnoswap/blob/a29e0f994466430618548ae992cca11a52f5102a/contract/r/gnoswap/gns/halving.gno#L359) to keep emission schedules accurate.
+	BLOCK_GENERATION_INTERVAL int64 = 2000
+	MILLISECONDS_PER_SECOND   int64 = 1000
 
-	avgBlockTimeMs int64 = consts.BLOCK_GENERATION_INTERVAL
+	SECONDS_PER_DAY = 86400
+)
+
+var (
+	blockGenMs   = milliToSec(BLOCK_GENERATION_INTERVAL)
+	blockPerYear = SECONDS_IN_YEAR / blockGenMs
+	blockPerDay  = SECONDS_PER_DAY / blockGenMs
+
+	avgBlockTimeMs = BLOCK_GENERATION_INTERVAL
 	perBlockMint         = avl.NewTree() // height => uint64
 )
 
@@ -62,21 +79,34 @@ func (h *HalvingData) getStartBlockHeight(year int64) int64 {
 	return h.startBlockHeight[year-1]
 }
 
-func (h *HalvingData) setStartBlockHeight(year int64, height int64) {
-	assertValidYear(year)
+func (h *HalvingData) setStartBlockHeight(year int64, height int64) error {
+	err := validYear(year)
+	if err != nil {
+		return err
+	}
+
 	h.startBlockHeight[year-1] = height
+
+	return nil
 }
 
 func (h *HalvingData) getEndBlockHeight(year int64) int64 {
 	if year == 0 {
 		return 0
 	}
+
 	return h.endBlockHeight[year-1]
 }
 
-func (h *HalvingData) setEndBlockHeight(year int64, height int64) {
-	assertValidYear(year)
+func (h *HalvingData) setEndBlockHeight(year int64, height int64) error {
+	err := validYear(year)
+	if err != nil {
+		return err
+	}
+
 	h.endBlockHeight[year-1] = height
+
+	return nil
 }
 
 func (h *HalvingData) getStartTimestamp(year int64) int64 {
@@ -86,9 +116,15 @@ func (h *HalvingData) getStartTimestamp(year int64) int64 {
 	return h.startTimestamp[year-1]
 }
 
-func (h *HalvingData) setStartTimestamp(year int64, timestamp int64) {
-	assertValidYear(year)
+func (h *HalvingData) setStartTimestamp(year int64, timestamp int64) error {
+	err := validYear(year)
+	if err != nil {
+		return err
+	}
+
 	h.startTimestamp[year-1] = timestamp
+
+	return nil
 }
 
 func (h *HalvingData) getMaxAmount(year int64) int64 {
@@ -98,9 +134,15 @@ func (h *HalvingData) getMaxAmount(year int64) int64 {
 	return h.maxAmount[year-1]
 }
 
-func (h *HalvingData) setMaxAmount(year, amount int64) {
-	assertValidYear(year)
+func (h *HalvingData) setMaxAmount(year, amount int64) error {
+	err := validYear(year)
+	if err != nil {
+		return err
+	}
+
 	h.maxAmount[year-1] = amount
+
+	return nil
 }
 
 func (h *HalvingData) getMintedAmount(year int64) int64 {
@@ -110,9 +152,15 @@ func (h *HalvingData) getMintedAmount(year int64) int64 {
 	return h.mintedAmount[year-1]
 }
 
-func (h *HalvingData) setMintedAmount(year, amount int64) {
-	assertValidYear(year)
+func (h *HalvingData) setMintedAmount(year, amount int64) error {
+	err := validYear(year)
+	if err != nil {
+		return err
+	}
+
 	h.mintedAmount[year-1] = amount
+
+	return nil
 }
 
 func (h *HalvingData) getLeftAmount(year int64) int64 {
@@ -122,9 +170,15 @@ func (h *HalvingData) getLeftAmount(year int64) int64 {
 	return h.leftAmount[year-1]
 }
 
-func (h *HalvingData) setLeftAmount(year, amount int64) {
-	assertValidYear(year)
+func (h *HalvingData) setLeftAmount(year, amount int64) error {
+	err := validYear(year)
+	if err != nil {
+		return err
+	}
+
 	h.leftAmount[year-1] = amount
+
+	return nil
 }
 
 func (h *HalvingData) getAccumAmount(year int64) int64 {
@@ -134,14 +188,26 @@ func (h *HalvingData) getAccumAmount(year int64) int64 {
 	return h.accumAmount[year-1]
 }
 
-func (h *HalvingData) setAccumAmount(year, amount int64) {
-	assertValidYear(year)
+func (h *HalvingData) setAccumAmount(year, amount int64) error {
+	err := validYear(year)
+	if err != nil {
+		return err
+	}
+
 	h.accumAmount[year-1] = amount
+
+	return nil
 }
 
-func (h *HalvingData) addAccumAmount(year, amount int64) {
-	assertValidYear(year)
+func (h *HalvingData) addAccumAmount(year, amount int64) error {
+	err := validYear(year)
+	if err != nil {
+		return err
+	}
+
 	h.accumAmount[year-1] += amount
+
+	return nil
 }
 
 func (h *HalvingData) getAmountPerBlock(year int64) int64 {
@@ -151,9 +217,15 @@ func (h *HalvingData) getAmountPerBlock(year int64) int64 {
 	return h.amountPerBlock[year-1]
 }
 
-func (h *HalvingData) setAmountPerBlock(year, amount int64) {
-	assertValidYear(year)
+func (h *HalvingData) setAmountPerBlock(year, amount int64) error {
+	err := validYear(year)
+	if err != nil {
+		return err
+	}
+
 	h.amountPerBlock[year-1] = amount
+
+	return nil
 }
 
 // initialize halving data according to emission schedule
@@ -195,12 +267,13 @@ func (h *HalvingData) initialize(startHeight, startTimestamp int64) {
 }
 
 // Emission change callback function
-var callbackEmissionChange func(amount int64)
+var emissionChangeCallback func(amount int64)
 
-func SetCallbackEmissionChange(cur realm, callback func(amount int64)) {
-	assertCallerIsEmission()
+func SetEmissionChangeCallback(cur realm, callback func(amount int64)) {
+	caller := std.PreviousRealm().Address()
+	access.AssertIsEmission(caller)
 
-	callbackEmissionChange = callback
+	emissionChangeCallback = callback
 }
 
 // EmissionState is a struct for managing emission state
@@ -225,7 +298,7 @@ func GetEmissionState() *EmissionState {
 
 // NewEmissionState creates a new emission state
 func NewEmissionState() *EmissionState {
-	now := time.Now().Unix() + milliToSec(consts.BLOCK_GENERATION_INTERVAL)
+	now := time.Now().Unix() + milliToSec(BLOCK_GENERATION_INTERVAL)
 	emissionEndTime := now + SECONDS_IN_YEAR*HALVING_END_YEAR
 
 	return &EmissionState{
@@ -266,39 +339,57 @@ func init() {
 	emissionState = GetEmissionState()
 }
 
-// GetAvgBlockTimeInMs returns average block time in milliseconds
-func GetAvgBlockTimeInMs() int64 {
+// AvgBlockTimeInMs returns average block time in milliseconds
+func AvgBlockTimeInMs() int64 {
 	return avgBlockTimeMs
 }
 
 // SetAvgBlockTimeInMsByAdmin admin sets average block time
 func SetAvgBlockTimeInMsByAdmin(cur realm, ms int64) {
-	if ms <= 0 {
-		panic(errInvalidAvgBlockTimeInMs)
-	}
-	assertCallerIsAdmin()
+	caller := std.PreviousRealm().Address()
+	access.AssertIsAdmin(caller)
 
-	prevAvgBlockTimeInMs := GetAvgBlockTimeInMs()
-	setAvgBlockTimeInMs(ms)
+	prevAvgBlockTimeInMs := AvgBlockTimeInMs()
+	err := setAvgBlockTimeInMs(ms)
+	if err != nil {
+		panic(err)
+	}
 
 	// Log event generation
 	halvingData := GetEmissionState().getHalvingData()
-	prevAddr, prevPkgPath := getPrev()
-	emitBlockTimeChangeEvent("SetAvgBlockTimeInMsByAdmin", prevAddr, prevPkgPath,
-		prevAvgBlockTimeInMs, ms, halvingData)
+	previousRealm := std.PreviousRealm()
+	emitBlockTimeChangeEvent(
+		"SetAvgBlockTimeInMsByAdmin",
+		previousRealm.Address().String(),
+		previousRealm.PkgPath(),
+		prevAvgBlockTimeInMs,
+		ms,
+		halvingData,
+	)
 }
 
 // SetAvgBlockTimeInMs sets average block time through governance proposal
 func SetAvgBlockTimeInMs(cur realm, ms int64) {
-	assertCallerIsGovernance()
-	prevAvgBlockTimeInMs := GetAvgBlockTimeInMs()
-	setAvgBlockTimeInMs(ms)
+	caller := std.PreviousRealm().Address()
+	access.AssertIsGovernance(caller)
+
+	prevAvgBlockTimeInMs := AvgBlockTimeInMs()
+	err := setAvgBlockTimeInMs(ms)
+	if err != nil {
+		panic(err)
+	}
 
 	// Log event generation
 	halvingData := GetEmissionState().getHalvingData()
-	prevAddr, prevPkgPath := getPrev()
-	emitBlockTimeChangeEvent("SetAvgBlockTimeInMs", prevAddr, prevPkgPath,
-		prevAvgBlockTimeInMs, ms, halvingData)
+	previousRealm := std.PreviousRealm()
+	emitBlockTimeChangeEvent(
+		"SetAvgBlockTimeInMs",
+		previousRealm.Address().String(),
+		previousRealm.PkgPath(),
+		prevAvgBlockTimeInMs,
+		ms,
+		halvingData,
+	)
 }
 
 // Helper function to emit event to remove duplicate code
@@ -320,28 +411,27 @@ func emitBlockTimeChangeEvent(eventName, prevAddr, prevPkgPath string, prevTime,
 }
 
 // setAvgBlockTimeInMs sets the new average block time (ms) and updates all halving schedules.
-func setAvgBlockTimeInMs(ms int64) {
-	assertShouldNotBeHalted()
-
+func setAvgBlockTimeInMs(ms int64) error {
 	// prevent division errors due to very large values or zero.
 	// block time values outside of practical range are blocked
-	if ms <= 0 || ms >= 1e9 {
-		panic("invalid block time interval")
+	err := validBlockTime(ms)
+	if err != nil {
+		return errInvalidAvgBlockTimeInMs
 	}
 
 	now := time.Now().Unix()
 
 	// sync blockPerYear, blockPerDay
-	// SECONDS_IN_YEAR, consts.SECONDS_PER_DAY must be in seconds
+	// SECONDS_IN_YEAR, SECONDS_PER_DAY must be in seconds
 	blockPerYear = secToMs(SECONDS_IN_YEAR) / ms
-	blockPerDay = secToMs(consts.SECONDS_PER_DAY) / ms
+	blockPerDay = secToMs(SECONDS_PER_DAY) / ms
 
 	// recalculate all remaining years (amountPerBlock)
 	es := GetEmissionState()
 
 	currentHeight := std.ChainHeight()
-	currentYear := GetHalvingYearByHeight(currentHeight)
-	prevBlockTimeMs := GetAvgBlockTimeInMs()
+	currentYear := HalvingYearByHeight(currentHeight)
+	prevBlockTimeMs := AvgBlockTimeInMs()
 
 	hd := &es.halvingData
 	for year := currentYear; year <= HALVING_END_YEAR; year++ {
@@ -355,7 +445,7 @@ func setAvgBlockTimeInMs(ms int64) {
 		// For current year, use remaining amount to avoid over/under emission
 		if year == currentYear {
 			startHeight := hd.getStartBlockHeight(year)
-			lastGNSMintedHeight := GetLastMintedHeight() + 1
+			lastGNSMintedHeight := LastMintedHeight() + 1
 			if lastGNSMintedHeight < startHeight {
 				lastGNSMintedHeight = startHeight
 			}
@@ -385,30 +475,38 @@ func setAvgBlockTimeInMs(ms int64) {
 
 	// adjust the current year's amount per block
 	currentYear, _ = getHalvingYearAndEndTimestamp(now)
-	adjusted := hd.getAmountPerBlock(currentYear)
 
-	if callbackEmissionChange == nil {
-		panic(errCallbackEmissionChangeIsNil.Error())
+	// Validate that we're still within the emission period
+	if currentYear == 0 {
+		panic("cannot set average block time after emission period has ended")
 	}
 
-	callbackEmissionChange(adjusted)
+	adjusted := hd.getAmountPerBlock(currentYear)
+
+	if emissionChangeCallback == nil {
+		return errEmissionChangeIsNilCallback
+	}
+
+	emissionChangeCallback(adjusted)
 
 	// final update of global variables
 	avgBlockTimeMs = ms
+
+	return nil
 }
 
-// GetAmountByHeight returns emission amount based on block height
-func GetAmountByHeight(height int64) int64 {
+// AmountByHeight returns emission amount based on block height
+func AmountByHeight(height int64) int64 {
 	if isEmissionEnded(height) {
 		return 0
 	}
 
-	halvingYear := GetHalvingYearByHeight(height)
+	halvingYear := HalvingYearByHeight(height)
 	return GetAmountPerBlockPerHalvingYear(halvingYear)
 }
 
-// GetHalvingYearByHeight returns halving year based on block height
-func GetHalvingYearByHeight(height int64) int64 {
+// HalvingYearByHeight returns halving year based on block height
+func HalvingYearByHeight(height int64) int64 {
 	if isEmissionEnded(height) {
 		return 0
 	}

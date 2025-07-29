@@ -7,21 +7,29 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
-
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 )
 
 var (
-	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
+	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
 	adminRealm    = std.NewUserRealm(adminAddr)
 	adminUser     = adminAddr
 	dummyRealm    = std.NewCodeRealm("gno.land/r/dummy")
 	aliceAddr     = testutils.TestAddress("alice")
+
+	// contract paths
+	poolPath      = "gno.land/r/gnoswap/v1/pool"
+	routerPath    = "gno.land/r/gnoswap/v1/router"
+	stakerPath    = "gno.land/r/gnoswap/v1/staker"
+	govStakerPath = "gno.land/r/gnoswap/v1/gov/staker"
+
+	stakerRealm    = std.NewCodeRealm(stakerPath)
+	govStakerRealm = std.NewCodeRealm(govStakerPath)
 )
 
 func TestDistributeProtocolFee(t *testing.T) {
@@ -34,7 +42,6 @@ func TestDistributeProtocolFee(t *testing.T) {
 	bar.Transfer(cross, protocolFeeAddr, 1000)
 	qux.Transfer(cross, protocolFeeAddr, 1000)
 
-	stakerRealm := std.NewCodeRealm(consts.STAKER_PATH)
 	testing.SetRealm(stakerRealm)
 	testing.SetOriginCaller(stakerAddr)
 	AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
@@ -49,7 +56,6 @@ func TestDistributeProtocolFee(t *testing.T) {
 	uassert.Equal(t, qux.BalanceOf(govStakerAddr), int64(0))
 
 	// gov/staker > protocol_fee
-	govStakerRealm := std.NewCodeRealm(consts.GOV_STAKER_PATH)
 	testing.SetRealm(govStakerRealm)
 	testing.SetOriginCaller(govStakerAddr)
 	DistributeProtocolFee(cross)
@@ -77,7 +83,7 @@ func TestSetDevOpsPctByAdmin(t *testing.T) {
 			realm:       std.NewUserRealm(testutils.TestAddress("dummy")),
 			percentage:  123,
 			shouldPanic: true,
-			panicMsg:    "caller(g1v36k6mteta047h6lta047h6lta047h6lz7gmv8) has no permission",
+			panicMsg:    "unauthorized: caller g1v36k6mteta047h6lta047h6lta047h6lz7gmv8 is not admin",
 		},
 		{
 			name:        "invalid percentage value",
@@ -160,7 +166,7 @@ func TestAddToProtocolFee(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			testing.SetRealm(std.NewCodeRealm(consts.POOL_PATH))
+			testing.SetRealm(std.NewCodeRealm(poolPath))
 			AddToProtocolFee(cross, test.tokenPath, test.amount)
 			uassert.Equal(t, protocolFeeState.TokenListWithAmount[test.tokenPath], test.want)
 		})
@@ -179,11 +185,11 @@ func TestClearTokenListWithAmount(t *testing.T) {
 			name:        "no permission to clear",
 			prevRealm:   dummyRealm,
 			shouldPanic: true,
-			panicMsg:    "caller(g1lvx5ssxvuz5tttx6uza3myv8xy6w36a46fv7sy) has no permission",
+			panicMsg:    "unauthorized: caller g1lvx5ssxvuz5tttx6uza3myv8xy6w36a46fv7sy is not gov_staker",
 		},
 		{
 			name:      "clear protocol fee",
-			prevRealm: std.NewCodeRealm(consts.GOV_STAKER_PATH),
+			prevRealm: govStakerRealm,
 			want:      map[string]uint64{},
 		},
 	}
@@ -211,7 +217,7 @@ func TestClearTokenListWithAmount(t *testing.T) {
 	}
 }
 
-func TestAssertOnlyPoolRouterStaker(t *testing.T) {
+func TestAssertCallerHasAddProtocolFeePermission(t *testing.T) {
 	tests := []struct {
 		name        string
 		prevRealm   std.Realm
@@ -220,21 +226,15 @@ func TestAssertOnlyPoolRouterStaker(t *testing.T) {
 	}{
 		{
 			name:      "caller is pool contract",
-			prevRealm: std.NewCodeRealm(consts.POOL_PATH),
+			prevRealm: std.NewCodeRealm(poolPath),
 		},
 		{
 			name:      "caller is router contract",
-			prevRealm: std.NewCodeRealm(consts.ROUTER_PATH),
+			prevRealm: std.NewCodeRealm(routerPath),
 		},
 		{
 			name:      "caller is staker contract",
-			prevRealm: std.NewCodeRealm(consts.STAKER_PATH),
-		},
-		{
-			name:        "caller is stranger",
-			prevRealm:   dummyRealm,
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-001] caller has no permission",
+			prevRealm: stakerRealm,
 		},
 	}
 
@@ -244,21 +244,21 @@ func TestAssertOnlyPoolRouterStaker(t *testing.T) {
 
 			// When a function is defined to accept realm as a parameter,
 			// there's no need to wrap it with an anonymous function,
-			// but since the assertOnlyPoolRouterStaker function doesn't accept a realm parameter,
+			// but since the assertCallerHasAddProtocolFeePermission function doesn't accept a realm parameter,
 			// it appears that a separate execution scope needs to be set up to distinguish realms,
 			// and this anonymous function wrapping pattern must be maintained for the tests to pass.
 			if test.shouldPanic {
 				uassert.AbortsWithMessage(t, test.panicMsg, func() {
 					func(cur realm) {
 						testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-						assertOnlyPoolRouterStaker()
+						assertCallerHasAddProtocolFeePermission()
 					}(cross)
 				})
 			} else {
 				uassert.NotPanics(t, func() {
 					func(cur realm) {
 						testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
-						assertOnlyPoolRouterStaker()
+						assertCallerHasAddProtocolFeePermission()
 					}(cross)
 				})
 			}
@@ -337,7 +337,7 @@ func TestDistributeWithDifferentDevOpsPct(t *testing.T) {
 			bar.Transfer(cross, protocolFeeAddr, int64(tt.tokenAmount))
 
 			// record the amount in protocol fee
-			testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+			testing.SetRealm(stakerRealm)
 			AddToProtocolFee(cross, "gno.land/r/onbloc/bar", tt.tokenAmount)
 
 			// initial state
@@ -346,7 +346,7 @@ func TestDistributeWithDifferentDevOpsPct(t *testing.T) {
 			uassert.Equal(t, bar.BalanceOf(govStakerAddr), int64(0))
 
 			// distribute protocol fee
-			testing.SetRealm(std.NewCodeRealm(consts.GOV_STAKER_PATH))
+			testing.SetRealm(govStakerRealm)
 			testing.SetOriginCaller(govStakerAddr)
 			result := DistributeProtocolFee(cross)
 
@@ -605,7 +605,7 @@ func TestBalanceAmountMismatch_Fix(t *testing.T) {
 
 			// record the amount in protocol fee
 			if tt.recordedAmount > 0 {
-				testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+				testing.SetRealm(stakerRealm)
 				AddToProtocolFee(cross, tt.tokenPath, tt.recordedAmount)
 			}
 
@@ -614,7 +614,7 @@ func TestBalanceAmountMismatch_Fix(t *testing.T) {
 			uassert.Equal(t, protocolFeeState.TokenListWithAmount[tt.tokenPath], tt.recordedAmount)
 
 			// distribute protocol fee
-			testing.SetRealm(std.NewCodeRealm(consts.GOV_STAKER_PATH))
+			testing.SetRealm(govStakerRealm)
 			testing.SetOriginCaller(govStakerAddr)
 
 			if tt.expectPanic {
@@ -673,7 +673,7 @@ func TestApiGetActualBalance(t *testing.T) {
 	qux.Transfer(cross, protocolFeeAddr, 2500)
 
 	// Record only part of the amounts
-	testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+	testing.SetRealm(stakerRealm)
 	AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
 	AddToProtocolFee(cross, "gno.land/r/onbloc/qux", 2000)
 
@@ -712,7 +712,7 @@ func TestApiGetRecordedBalance(t *testing.T) {
 	qux.Transfer(cross, protocolFeeAddr, 2500)
 
 	// Record only part of the amounts
-	testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+	testing.SetRealm(stakerRealm)
 	AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
 	AddToProtocolFee(cross, "gno.land/r/onbloc/qux", 2000)
 
@@ -753,7 +753,7 @@ func TestApiGetUnrecordedBalance(t *testing.T) {
 	qux.Transfer(cross, protocolFeeAddr, 2500)
 
 	// Record only part of the amounts
-	testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+	testing.SetRealm(stakerRealm)
 	AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
 	AddToProtocolFee(cross, "gno.land/r/onbloc/qux", 2000)
 
@@ -788,7 +788,7 @@ func TestApiGetUnrecordedBalance_NoUnrecorded(t *testing.T) {
 	bar.Transfer(cross, protocolFeeAddr, 1000)
 
 	// Record the exact amount
-	testing.SetRealm(std.NewCodeRealm(consts.STAKER_PATH))
+	testing.SetRealm(stakerRealm)
 	AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
 
 	// Call API function

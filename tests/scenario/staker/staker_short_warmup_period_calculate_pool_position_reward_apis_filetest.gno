@@ -13,15 +13,15 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
-
 	"gno.land/r/gnoswap/v1/access"
 
-	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	sr "gno.land/r/gnoswap/v1/staker"
+
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -30,15 +30,15 @@ import (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
@@ -48,7 +48,8 @@ var (
 	fee100  uint32 = 100
 	fee3000 uint32 = 3000
 
-	max_timeout int64 = 9999999999
+	maxTimeout int64 = 9999999999
+	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
 	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
@@ -99,10 +100,10 @@ func initAndSetup() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] override warm-up period for testing")
-	sr.SetWarmUp(cross, 30, 150)
-	sr.SetWarmUp(cross, 50, 300)
-	sr.SetWarmUp(cross, 70, 900)
-	sr.SetWarmUp(cross, 100, math.MaxInt64)
+	sr.SetWarmUpByAdmin(cross, 30, 150)
+	sr.SetWarmUpByAdmin(cross, 50, 300)
+	sr.SetWarmUpByAdmin(cross, 70, 900)
+	sr.SetWarmUpByAdmin(cross, 100, math.MaxInt64)
 
 	println("[INFO] set pool creation fee to 0")
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
@@ -112,7 +113,6 @@ func initAndSetup() {
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
-	emission.RegisterGnsChangeCallback(cross)
 
 	testing.SkipHeights(1)
 }
@@ -142,8 +142,8 @@ func createExternalIncentiveBarBaz() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for external incentive")
-	bar.Approve(cross, stakerAddr, consts.INT64_MAX)
-	baz.Approve(cross, stakerAddr, consts.INT64_MAX)
+	bar.Approve(cross, stakerAddr, maxInt64)
+	baz.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount*2)
 
 	println("[INFO] create external incentive BAR for bar:baz:100")
@@ -185,7 +185,7 @@ func createExternalIncentiveQux() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for external incentive")
-	qux.Approve(cross, stakerAddr, consts.INT64_MAX)
+	qux.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
 	println("[INFO] create external incentive QUX for bar:qux:100")
@@ -205,8 +205,8 @@ func mintAndStakeOnlyInternal() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	foo.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint and stake position 01 (bar:foo:100)")
 	lpTokenId, liquidity, _, _, _ := sr.MintAndStake(
@@ -220,7 +220,7 @@ func mintAndStakeOnlyInternal() {
 		"50",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		"",
 	)
 
@@ -244,7 +244,7 @@ func mintAndStakeOnlyInternal() {
 		"50",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		"",
 	)
 
@@ -261,8 +261,8 @@ func mintAndStakeOnlyExternal() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	baz.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	baz.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint and stake position 03 (bar:baz:100)")
 	lpTokenId, liquidity, _, _, _ := sr.MintAndStake(
@@ -276,7 +276,7 @@ func mintAndStakeOnlyExternal() {
 		"50",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		"",
 	)
 
@@ -300,7 +300,7 @@ func mintAndStakeOnlyExternal() {
 		"50",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		"",
 	)
 
@@ -317,8 +317,8 @@ func mintAndStakeBothInternalExternal() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	qux.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	qux.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint and stake position 05 (bar:qux:100)")
 	lpTokenId, liquidity, _, _, _ := sr.MintAndStake(
@@ -332,7 +332,7 @@ func mintAndStakeBothInternalExternal() {
 		"50",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		"",
 	)
 

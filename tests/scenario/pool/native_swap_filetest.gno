@@ -6,13 +6,13 @@ import (
 
 	"gno.land/r/demo/wugnot"
 
-	"gno.land/r/onbloc/foo"
-
-	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/onbloc/foo"
 
 	"gno.land/r/gnoswap/v1/gns"
 )
@@ -29,12 +29,13 @@ const (
 
 // Variables for test addresses and realms
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
-	adminRealm   = std.NewUserRealm(adminAddr)
-	posRealm     = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm     = std.NewCodeRealm(consts.ROUTER_PATH)
-	positionAddr = consts.POSITION_ADDR
-	poolAddr     = consts.POOL_ADDR
+	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm      = std.NewUserRealm(adminAddr)
+	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
+	posRealm        = std.NewUserRealm(positionAddr)
+	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
+	rouRealm        = std.NewUserRealm(routerAddr)
+	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
 // Token paths
@@ -51,6 +52,11 @@ var (
 	test_liquidityExpect256 = u256.NewUint(100_000_000)
 
 	poolCreationFee = int64(100_000_000)
+
+	MIN_PRICE string = "4295128740"
+	MAX_PRICE string = "1461446703485210103287273052203988822378723970341"
+
+	WRAPPED_WUGNOT string = "gno.land/r/demo/wugnot"
 )
 
 func main() {
@@ -58,7 +64,7 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, consts.WRAPPED_WUGNOT, fooPath, fee500, "130621891405341611593710811006") // x2.7
+	pool.CreatePool(cross, WRAPPED_WUGNOT, fooPath, fee500, "130621891405341611593710811006") // x2.7
 
 	println("[SCENARIO] 1. Mint LP and Get GNFT")
 	TestMint()
@@ -72,7 +78,7 @@ func main() {
 
 // 2. Mint LP and Get GNFT
 func TestMint() {
-	token0, token1 := fooPath, consts.WRAPPED_WUGNOT
+	token0, token1 := fooPath, WRAPPED_WUGNOT
 	if token1 < token0 {
 		token0, token1 = token1, token0
 	}
@@ -99,7 +105,7 @@ func TestMint() {
 	amount0, amount1 := pool.Mint(
 		cross,
 		fooPath,
-		consts.WRAPPED_WUGNOT,
+		WRAPPED_WUGNOT,
 		fee500,
 		positionAddr,
 		test_tickLower,
@@ -114,7 +120,7 @@ func TestMint() {
 }
 
 func TestSwapBuyNative() {
-	pools := pool.GetPool(fooPath, consts.WRAPPED_WUGNOT, fee500)
+	pools := pool.GetPool(fooPath, WRAPPED_WUGNOT, fee500)
 
 	adminOldT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
 	adminOldT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)
@@ -127,13 +133,13 @@ func TestSwapBuyNative() {
 	testing.SetRealm(rouRealm)
 	amount0, amount1 := pool.Swap(
 		cross,
-		fooPath,               // token0
-		consts.WRAPPED_WUGNOT, // token1
+		fooPath,        // token0
+		WRAPPED_WUGNOT, // token1
 		fee500,
 		adminAddr,
 		true,
 		"10000",
-		consts.MIN_PRICE,
+		MIN_PRICE,
 		adminAddr,
 	)
 
@@ -148,7 +154,7 @@ func TestSwapBuyNative() {
 }
 
 func TestSwapSellNative() {
-	pools := pool.GetPool(fooPath, consts.WRAPPED_WUGNOT, fee500)
+	pools := pool.GetPool(fooPath, WRAPPED_WUGNOT, fee500)
 
 	adminOldT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
 	adminOldT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)
@@ -161,13 +167,13 @@ func TestSwapSellNative() {
 	testing.SetRealm(rouRealm)
 	amount0, amount1 := pool.Swap( // ugnot 10_000 > foo ??
 		cross,
-		fooPath,               // token0
-		consts.WRAPPED_WUGNOT, // token1
+		fooPath,        // token0
+		WRAPPED_WUGNOT, // token1
 		fee500,
 		adminAddr,
 		false,
 		"10000",
-		consts.MAX_PRICE,
+		MAX_PRICE,
 		adminAddr,
 	)
 

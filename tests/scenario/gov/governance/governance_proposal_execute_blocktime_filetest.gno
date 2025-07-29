@@ -8,7 +8,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	adminAddr, _     = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
 	currentBlockTime = int64(2)
 )
 
@@ -61,7 +61,9 @@ func delegateGnsToAdmin() {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 
-	gns.Approve(cross, consts.GOV_STAKER_ADDR, delegatedAmount)
+	govStakerAddr := std.Address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
+
+	gns.Approve(cross, govStakerAddr, delegatedAmount)
 	govStaker.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 
 	ufmt.Printf("[INFO] gns delegated to %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
@@ -92,11 +94,11 @@ func vote(proposalID int64, yea bool) {
 func executeChangeAvgBlockTime(proposalID int64) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 
-	prevAvgBlockTime := gns.GetAvgBlockTimeInMs()
+	prevAvgBlockTime := gns.AvgBlockTimeInMs()
 
 	governance.Execute(cross, proposalID)
 
-	afterAvgBlockTime := gns.GetAvgBlockTimeInMs()
+	afterAvgBlockTime := gns.AvgBlockTimeInMs()
 
 	ufmt.Printf("[EXPECTED] before proposal %d executing - avg block time: %dms\n", proposalID, prevAvgBlockTime)
 	ufmt.Printf("[EXPECTED] after proposal %d executing - avg block time: %dms\n", proposalID, afterAvgBlockTime)

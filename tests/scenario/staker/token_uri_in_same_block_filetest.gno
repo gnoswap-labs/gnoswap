@@ -12,38 +12,39 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
-
 	"gno.land/r/gnoswap/v1/access"
 
-	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	sr "gno.land/r/gnoswap/v1/staker"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
 	barPath = "gno.land/r/onbloc/bar"
 	fooPath = "gno.land/r/onbloc/foo"
 
 	fee500 uint32 = 500
 
-	max_timeout int64 = 9999999999
+	maxTimeout int64 = 9999999999
+	maxApprove int64 = 9223372036854775807
 )
 
 func main() {
@@ -60,7 +61,6 @@ func initializeAndCreatePool() {
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
-	emission.RegisterGnsChangeCallback(cross)
 
 	testing.SetRealm(adminRealm)
 
@@ -79,8 +79,8 @@ func mintPositionsAndCheckURI() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	foo.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross, poolAddr, maxApprove)
 
 	println("[INFO] mint and stake position 01")
 	positionId1, liquidity1, _, _, _ := sr.MintAndStake(
@@ -94,7 +94,7 @@ func mintPositionsAndCheckURI() {
 		"50000000",
 		"0",
 		"0",
-		max_timeout,
+		maxTimeout,
 		"",
 	)
 
@@ -110,7 +110,7 @@ func mintPositionsAndCheckURI() {
 		"50000000",
 		"0",
 		"0",
-		max_timeout,
+		maxTimeout,
 		"",
 	)
 

@@ -7,14 +7,17 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 
 	en "gno.land/r/gnoswap/v1/emission"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 
 	"gno.land/r/gnoswap/v1/gns"
 )
+
+const GNS_PATH string = "gno.land/r/gnoswap/v1/gns"
 
 var (
 	feeAmountTickSpacing = avl.NewTree() // feeBps(uint32) -> tickSpacing(int32)
@@ -42,8 +45,13 @@ func CreatePool(
 	fee uint32,
 	sqrtPriceX96 string,
 ) {
-	assertOnlyNotHalted()
-	poolInfo := createPool(token0Path, token1Path, fee, sqrtPriceX96, GetFeeAmountTickSpacing(fee))
+	halt.AssertIsNotHaltedPool()
+
+	poolInfo, err := createPool(token0Path, token1Path, fee, sqrtPriceX96, GetFeeAmountTickSpacing(fee))
+	if err != nil {
+		panic(err)
+	}
+
 	en.MintAndDistributeGns(cross)
 
 	poolPath := poolInfo.generatePoolPath()
@@ -55,18 +63,18 @@ func CreatePool(
 		))
 	}
 
-	prevAddr, prevRealm := getPrevAsString()
+	previousRealm := std.PreviousRealm()
 
 	if poolCreationFee > 0 {
 		gns.TransferFrom(cross, std.PreviousRealm().Address(), protocolFeeAddr, poolCreationFee)
-		pf.AddToProtocolFee(cross, consts.GNS_PATH, uint64(poolCreationFee))
+		pf.AddToProtocolFee(cross, GNS_PATH, uint64(poolCreationFee))
 
 		std.Emit(
 			"PoolCreationFee",
-			"prevAddr", prevAddr,
-			"prevRealm", prevRealm,
+			"prevAddr", previousRealm.Address().String(),
+			"prevRealm", previousRealm.PkgPath(),
 			"poolPath", poolPath,
-			"feeTokenPath", consts.GNS_PATH,
+			"feeTokenPath", GNS_PATH,
 			"feeAmount", formatInt(poolCreationFee),
 		)
 	}
@@ -78,8 +86,8 @@ func CreatePool(
 
 	std.Emit(
 		"CreatePool",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"token0Path", token0Path,
 		"token1Path", token1Path,
 		"fee", formatUint(fee),
@@ -148,6 +156,7 @@ func GetPoolFromPoolPath(poolPath string) *Pool {
 			ufmt.Sprintf("expected poolPath(%s) to exist", poolPath),
 		))
 	}
+
 	return iPool.(*Pool)
 }
 
@@ -175,13 +184,11 @@ func GetPoolFromPoolPath(poolPath string) *Pool {
 // poolPath := GetPoolPath("path/to/token0", "path/to/token1", 3000)
 // // Output: "path/to/token0:path/to/token1:3000"
 func GetPoolPath(token0Path, token1Path string, fee uint32) string {
-	assertOnlyRegistered(token0Path)
-	assertOnlyRegistered(token1Path)
-
 	// all the token paths in the pool are sorted in alphabetical order.
 	if strings.Compare(token1Path, token0Path) < 0 {
 		token0Path, token1Path = token1Path, token0Path
 	}
+
 	return ufmt.Sprintf("%s:%s:%d", token0Path, token1Path, fee)
 }
 
@@ -216,8 +223,14 @@ func SetFeeProtocolByAdmin(
 	feeProtocol0 uint8,
 	feeProtocol1 uint8,
 ) {
-	assertOnlyAdmin()
-	setFeeProtocolInternal(feeProtocol0, feeProtocol1, "SetFeeProtocolByAdmin")
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPool()
+	access.AssertIsAdmin(caller)
+
+	err := setFeeProtocolInternal(feeProtocol0, feeProtocol1, "SetFeeProtocolByAdmin")
+	if err != nil {
+		panic(err)
+	}
 }
 
 // SetFeeProtocol sets the fee protocol for all pools
@@ -225,8 +238,14 @@ func SetFeeProtocolByAdmin(
 // Also it will be applied to new created pools
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#setfeeprotocol
 func SetFeeProtocol(cur realm, feeProtocol0, feeProtocol1 uint8) {
-	assertOnlyGovernance()
-	setFeeProtocolInternal(feeProtocol0, feeProtocol1, "SetFeeProtocol")
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedPool()
+	access.AssertIsGovernance(caller)
+
+	err := setFeeProtocolInternal(feeProtocol0, feeProtocol1, "SetFeeProtocol")
+	if err != nil {
+		panic(err)
+	}
 }
 
 // setFeeAmountTickSpacing associates a tick spacing value with a fee amount.
@@ -285,24 +304,29 @@ func mustGetPool(poolPath string) *Pool {
 // Notes:
 //   - This function is called by higher-level functions like `SetFeeProtocolByAdmin` or `SetFeeProtocol`.
 //   - It does not validate caller permissions; validation must be performed by the calling function.
-func setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8, eventName string) {
+func setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8, eventName string) error {
 	oldFee := slot0FeeProtocol
-	newFee := setFeeProtocol(feeProtocol0, feeProtocol1)
+	newFee, err := setFeeProtocol(feeProtocol0, feeProtocol1)
+	if err != nil {
+		return err
+	}
 
 	feeProtocol0Old := oldFee % 16
 	feeProtocol1Old := oldFee >> 4
 
-	prevAddr, prevPkgPath := getPrevAsString()
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		eventName,
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"prevFeeProtocol0", formatUint(feeProtocol0Old),
 		"prevFeeProtocol1", formatUint(feeProtocol1Old),
 		"feeProtocol0", formatUint(feeProtocol0),
 		"feeProtocol1", formatUint(feeProtocol1),
 		"newFee", formatUint(newFee),
 	)
+
+	return nil
 }
 
 // setFeeProtocol updates the protocol fee configuration for all managed pools.
@@ -334,14 +358,11 @@ func setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8, eventName string) 
 //   - This function ensures that all pools under management are updated to use the same fee protocol.
 //   - Caller restrictions (e.g., admin or governance) are not enforced in this function.
 //   - Ensure the system is not halted before updating fees.
-func setFeeProtocol(feeProtocol0, feeProtocol1 uint8) uint8 {
-	assertOnlyNotHalted()
+func setFeeProtocol(feeProtocol0, feeProtocol1 uint8) (uint8, error) {
 	if err := validateFeeProtocol(feeProtocol0, feeProtocol1); err != nil {
-		panic(newErrorWithDetail(
-			err,
-			ufmt.Sprintf("expected (feeProtocol0(%d) == 0 || (feeProtocol0(%d) >= 4 && feeProtocol0(%d) <= 10)) && (feeProtocol1(%d) == 0 || (feeProtocol1(%d) >= 4 && feeProtocol1(%d) <= 10))", feeProtocol0, feeProtocol0, feeProtocol0, feeProtocol1, feeProtocol1, feeProtocol1),
-		))
+		return 0, err
 	}
+
 	// combine both protocol fee into a single byte:
 	// - feePrtocol0 occupies the lower 4 bits
 	// - feeProtocol1 is shifted the lower 4 positions to occupy the upper 4 bits
@@ -357,7 +378,7 @@ func setFeeProtocol(feeProtocol0, feeProtocol1 uint8) uint8 {
 
 	// update slot0
 	slot0FeeProtocol = newFee
-	return newFee
+	return newFee, nil
 }
 
 // validateFeeProtocol validates the fee protocol values for token0 and token1.

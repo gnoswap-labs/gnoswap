@@ -1,49 +1,22 @@
 package rbac
 
-// TODO: copy from examples/gno.land/p/oxtekgrinder/ownable2step package.
-// After the audit, we need to modify the package to use it directly.
-
 import (
-	"errors"
 	"std"
 )
 
-var (
-	ErrNoPendingOwner      = errors.New("no pending owner")
-	ErrUnauthorized        = errors.New("caller is not owner")
-	ErrPendingUnauthorized = errors.New("caller is not pending owner")
-	ErrInvalidAddress      = errors.New("new owner address is invalid")
+const (
+	OwnershipTransferEvent = "OwnershipTransfer"
+	OwnershipAcceptedEvent = "OwnershipAccepted"
 )
-
-const OwnershipTransferEvent = "OwnershipTransfer"
 
 // Ownable2Step is a two-step ownership transfer package
 // It allows the current owner to set a new owner and the new owner will need to accept the ownership before it is transferred
-// XXX Implement using Ownable instead of replicating it.
 type Ownable2Step struct {
 	owner        std.Address
 	pendingOwner std.Address
 }
 
-func NewOwnable2Step() *Ownable2Step {
-	return &Ownable2Step{
-		owner:        std.CurrentRealm().Address(),
-		pendingOwner: "",
-	}
-}
-
-func NewWithOrigin() *Ownable2Step {
-	origin := std.OriginCaller()
-	previous := std.PreviousRealm()
-	if origin != previous.Address() {
-		panic("NewWithOrigin() should be called from init() where std.PreviousRealm() is origin")
-	}
-	return &Ownable2Step{
-		owner: origin,
-	}
-}
-
-func NewWithAddress(addr std.Address) *Ownable2Step {
+func newOwnable2StepWithAddress(addr std.Address) *Ownable2Step {
 	return &Ownable2Step{
 		owner:        addr,
 		pendingOwner: "",
@@ -52,14 +25,22 @@ func NewWithAddress(addr std.Address) *Ownable2Step {
 
 // TransferOwnership initiate the transfer of the ownership to a new address by setting the PendingOwner
 func (o *Ownable2Step) TransferOwnership(newOwner std.Address) error {
-	if !o.OwnedByCurrent() {
+	if !o.OwnedByOriginCaller() {
 		return ErrUnauthorized
 	}
+
 	if !newOwner.IsValid() {
 		return ErrInvalidAddress
 	}
 
 	o.pendingOwner = newOwner
+
+	std.Emit(
+		OwnershipTransferEvent,
+		"from", o.owner.String(),
+		"to", newOwner.String(),
+	)
+
 	return nil
 }
 
@@ -68,12 +49,19 @@ func (o *Ownable2Step) AcceptOwnership() error {
 	if o.pendingOwner.String() == "" {
 		return ErrNoPendingOwner
 	}
-	if std.CurrentRealm().Address() != o.pendingOwner {
+
+	if std.OriginCaller() != o.pendingOwner {
 		return ErrPendingUnauthorized
 	}
 
 	o.owner = o.pendingOwner
 	o.pendingOwner = ""
+
+	std.Emit(
+		OwnershipAcceptedEvent,
+		"from", o.owner.String(),
+		"to", o.pendingOwner.String(),
+	)
 
 	return nil
 }
@@ -82,7 +70,7 @@ func (o *Ownable2Step) AcceptOwnership() error {
 // Top-level usage: disables all only-owner actions/functions,
 // Embedded usage: behaves like a burn functionality, removing the owner from the struct
 func (o *Ownable2Step) DropOwnership() error {
-	if !o.OwnedByCurrent() {
+	if !o.OwnedByOriginCaller() {
 		return ErrUnauthorized
 	}
 
@@ -109,26 +97,14 @@ func (o *Ownable2Step) PendingOwner() std.Address {
 	return o.pendingOwner
 }
 
-// OwnedByCurrent checks if the caller of the function is the Realm's owner
-func (o *Ownable2Step) OwnedByCurrent() bool {
-	return std.CurrentRealm().Address() == o.owner
+// OwnedByOriginCaller checks if the caller of the function is the Realm's owner
+func (o *Ownable2Step) OwnedByOriginCaller() bool {
+	return std.OriginCaller() == o.owner
 }
 
-// AssertOwnedByCurrent panics if the caller is not the owner
-func (o *Ownable2Step) AssertOwnedByCurrent() {
-	if std.CurrentRealm().Address() != o.owner {
-		panic(ErrUnauthorized)
-	}
-}
-
-// OwnedByPrevious checks if the caller of the function is the Realm's owner
-func (o *Ownable2Step) OwnedByPrevious() bool {
-	return std.PreviousRealm().Address() == o.owner
-}
-
-// AssertOwnedByPrevious panics if the caller is not the owner
-func (o *Ownable2Step) AssertOwnedByPrevious() {
-	if std.PreviousRealm().Address() != o.owner {
+// AssertOwnedByOriginCaller panics if the caller is not the owner
+func (o *Ownable2Step) AssertOwnedByOriginCaller() {
+	if std.OriginCaller() != o.owner {
 		panic(ErrUnauthorized)
 	}
 }

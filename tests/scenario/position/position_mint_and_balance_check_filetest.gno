@@ -11,7 +11,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -20,11 +20,16 @@ import (
 	"gno.land/r/gnoswap/v1/position"
 )
 
+const (
+	INT64_MAX int64 = 9223372036854775807
+	WUGNOT_ADDR std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+)
+
 var (
-	adminAddr, _  = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm    = std.NewUserRealm(adminAddr)
-	poolAddr, _   = access.GetAddress(access.ROLE_POOL)
-	routerAddr, _ = access.GetAddress(access.ROLE_ROUTER)
+	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
+	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 	routerRealm   = std.NewUserRealm(routerAddr)
 
 	aliceAddr  = testutils.TestAddress("alice")
@@ -76,19 +81,19 @@ func initTokensAndPool() {
 	testing.IssueCoins(adminAddr, mintedGnotCoin)
 
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, std.Coins{{"ugnot", defaultTokenAmount * 3}})
+	banker.SendCoins(adminAddr, WUGNOT_ADDR, std.Coins{{"ugnot", defaultTokenAmount * 3}})
 	testing.SetOriginSend(std.Coins{{"ugnot", defaultTokenAmount * 3}})
 	wugnot.Deposit(cross)
 
 	wugnot.Transfer(cross, aliceAddr, defaultTokenAmount)
 	wugnot.Transfer(cross, bobAddr, defaultTokenAmount)
 
-	banker.SendCoins(adminAddr, consts.WUGNOT_ADDR, distributedGnotCoin)
+	banker.SendCoins(adminAddr, WUGNOT_ADDR, distributedGnotCoin)
 	banker.SendCoins(adminAddr, aliceAddr, distributedGnotCoin)
 	banker.SendCoins(adminAddr, bobAddr, distributedGnotCoin)
 
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
+	wugnot.Approve(cross, poolAddr, INT64_MAX)
+	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Printf("[INFO] Initial GNS balance of Alice: %d\n", gns.BalanceOf(aliceAddr))
 	ufmt.Printf("[INFO] Initial GNS balance of Bob: %d\n", gns.BalanceOf(bobAddr))
@@ -107,8 +112,8 @@ func initTokensAndPool() {
 
 func mintAlicePosition() {
 	testing.SetRealm(aliceRealm)
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
+	wugnot.Approve(cross, poolAddr, INT64_MAX)
+	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for Alice")
 	positionId, liquidity, amount0, amount1 := position.Mint(
@@ -136,8 +141,8 @@ func mintAlicePosition() {
 
 func mintBobPosition() {
 	testing.SetRealm(bobRealm)
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
+	wugnot.Approve(cross, poolAddr, INT64_MAX)
+	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for Bob")
 	positionId, liquidity, amount0, amount1 := position.Mint(

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -23,6 +22,12 @@ const (
 // to separate each pool, we use POOL_SEPARATOR
 const (
 	POOL_SEPARATOR = "*POOL*"
+)
+
+var (
+	gnot    string = "gnot"
+	wrappedWugnot string = "gno.land/r/demo/wugnot"
+	wugnotPath string = "gno.land/r/demo/wugnot"
 )
 
 type RouterOperation interface {
@@ -66,14 +71,14 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 	specifiedAmount *i256.Int,
 ) error {
 	// no native token
-	if inputToken == consts.WUGNOT_PATH || outputToken == consts.WUGNOT_PATH {
+	if inputToken == wugnotPath || outputToken == wugnotPath {
 		return nil
 	}
 
 	// save current user's WGNOT amount
 	op.userBeforeWugnotBalance = wugnot.BalanceOf(std.PreviousRealm().Address())
 
-	if inputToken != consts.GNOT {
+	if inputToken != "gnot" {
 		return nil
 	}
 
@@ -187,14 +192,16 @@ func handleMultiSwap(
 	numHops int,
 	amountSpecified *i256.Int,
 ) (*u256.Uint, *u256.Uint) {
+	previousRealmAddr := std.PreviousRealm().Address()
+
 	switch swapType {
 	case ExactIn:
 		input, output, fee := getDataForMultiPath(route, 0) // first data
-		sp := newSwapParams(input, output, fee, getPrevAddr(), amountSpecified)
+		sp := newSwapParams(input, output, fee, previousRealmAddr, amountSpecified)
 		return multiSwap(*sp, numHops, route)
 	case ExactOut:
 		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
-		sp := newSwapParams(input, output, fee, getPrevAddr(), amountSpecified)
+		sp := newSwapParams(input, output, fee, previousRealmAddr, amountSpecified)
 		return multiSwapNegative(*sp, numHops-1, route)
 	default:
 		// Any invalid `SwapType` is caught in the `SwapRoute` function,

@@ -7,7 +7,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
@@ -17,7 +17,7 @@ var t *testing.T
 
 var (
 	user01Addr   = testutils.TestAddress("user01Addr")
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 )
 
 const (
@@ -58,11 +58,11 @@ func main() {
 func initEmission() {}
 
 func mintGNS() {
-	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/emission"))
 
 	mintedAmount := gns.MintGns(cross, user01Addr)
 
-	totalMintedAmount := gns.GetMintedEmissionAmount()
+	totalMintedAmount := gns.MintedEmissionAmount()
 
 	ufmt.Printf("[EXPECTED] minted amount should be %d\n", mintedAmount)
 	ufmt.Printf("[EXPECTED] total minted amount should be %d\n", totalMintedAmount)
@@ -71,7 +71,7 @@ func mintGNS() {
 func changeBlockTime(blockTime int64) {
 	testing.SetOriginCaller(adminAddr)
 
-	currentYear := gns.GetHalvingYearByHeight(std.ChainHeight())
+	currentYear := gns.HalvingYearByHeight(std.ChainHeight())
 
 	// get previous end block height and amount per block
 	prevEndBlockHeight := gns.GetHalvingYearEndBlock(currentYear)
@@ -90,8 +90,8 @@ func changeBlockTime(blockTime int64) {
 }
 
 func getHalvingYears() {
-	println("[INFO] current halving years", gns.GetHalvingYearByHeight(std.ChainHeight()))
-	println("[INFO] average block time in ms", gns.GetAvgBlockTimeInMs())
+	println("[INFO] current halving years", gns.HalvingYearByHeight(std.ChainHeight()))
+	println("[INFO] average block time in ms", gns.AvgBlockTimeInMs())
 
 	for year := int64(1); year <= 12; year++ {
 		startBlockHeight := gns.GetHalvingYearStartBlock(year)

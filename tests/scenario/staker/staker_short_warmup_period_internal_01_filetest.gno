@@ -13,8 +13,6 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
-
 	"gno.land/r/gnoswap/v1/access"
 
 	"gno.land/r/gnoswap/v1/emission"
@@ -25,21 +23,24 @@ import (
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/qux"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
@@ -49,6 +50,7 @@ var (
 	fee3000 uint32 = 3000
 
 	max_timeout int64 = 9999999999
+	maxInt64    int64 = 9223372036854775807
 
 	MUST_EXISTS_IN_TIER_1 = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
 )
@@ -90,10 +92,10 @@ func initAndSetup() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] override warm-up period for testing")
-	sr.SetWarmUp(cross, 30, 150)
-	sr.SetWarmUp(cross, 50, 300)
-	sr.SetWarmUp(cross, 70, 900)
-	sr.SetWarmUp(cross, 100, math.MaxInt64)
+	sr.SetWarmUpByAdmin(cross, 30, 150)
+	sr.SetWarmUpByAdmin(cross, 50, 300)
+	sr.SetWarmUpByAdmin(cross, 70, 900)
+	sr.SetWarmUpByAdmin(cross, 100, math.MaxInt64)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFeeByAdmin(cross, 0)
@@ -112,7 +114,6 @@ func initAndSetup() {
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
-	emission.RegisterGnsChangeCallback(cross)
 
 	ufmt.Printf("[EXPECTED] initialization completed\n")
 }
@@ -146,8 +147,8 @@ func mintBarQux100Position1() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	qux.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	qux.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint position 01 (bar:qux:100)")
 	positionId, liquidity, _, _ := pn.Mint(
@@ -185,8 +186,8 @@ func mintBarBaz3000Position2() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	baz.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	baz.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint position 02 (bar:baz:3000)")
 	positionId, liquidity, _, _ := pn.Mint(

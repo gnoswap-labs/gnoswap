@@ -9,7 +9,8 @@ import (
 	"testing"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 	gns "gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/governance"
@@ -17,7 +18,7 @@ import (
 )
 
 var (
-	adminAddr, _     = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
 	currentBlockTime = int64(2)
 )
 
@@ -46,7 +47,8 @@ func main() {
 func delegateGnsToAdmin() {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	gns.Approve(cross, consts.GOV_STAKER_ADDR, delegatedAmount)
+	govStakerAddr := std.Address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
+	gns.Approve(cross, govStakerAddr, delegatedAmount)
 	gs.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 	ufmt.Printf("[INFO] gns delegated to %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 }

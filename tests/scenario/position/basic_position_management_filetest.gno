@@ -9,7 +9,7 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/testutils"
-	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -29,10 +29,10 @@ const (
 
 // Variables for test addresses and realms
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
-	adminRealm   = std.NewUserRealm(adminAddr)
-	poolAddr     = consts.POOL_ADDR
-	positionAddr = consts.POSITION_ADDR
+	adminAddr, _             = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm               = std.NewUserRealm(adminAddr)
+	poolAddr     std.Address = "g148tjamj80yyrm309z7rk690an22thd2l3z8ank"
+	positionAddr std.Address = "g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5"
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = std.NewUserRealm(aliceAddr)
@@ -182,7 +182,7 @@ func testPositionCreationAndRetrieval() {
 	println("[EXPECTED] Position tick lower:", tickLower)
 	println("[EXPECTED] Position tick upper:", tickUpper)
 	println("[EXPECTED] Position liquidity:", positionLiquidity.ToString())
-	println("[EXPECTED] Position operator:", operator)
+	println("[EXPECTED] Position operator: zero address", operator)
 	println("[EXPECTED] Position is not burned:", !pn.PositionGetPositionIsBurned(positionId))
 	println("[EXPECTED] Position is in range:", pn.PositionIsInRange(positionId))
 }
@@ -320,7 +320,7 @@ func positionIdFrom(positionId uint64) grc721.TokenID {
 // [EXPECTED] Position tick lower: -5000
 // [EXPECTED] Position tick upper: 5000
 // [EXPECTED] Position liquidity: 226050
-// [EXPECTED] Position operator: g100000000000000000000000000000000dnmcnx
+// [EXPECTED] Position operator: zero address
 // [EXPECTED] Position is not burned: true
 // [EXPECTED] Position is in range: true
 //

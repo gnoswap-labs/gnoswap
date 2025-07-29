@@ -4,12 +4,10 @@ package main
 import (
 	"std"
 	"strconv"
-
 	"testing"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/gnoswap/v1/access"
 	en "gno.land/r/gnoswap/v1/emission"
@@ -21,20 +19,23 @@ import (
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/qux"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
-	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
+	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
@@ -43,7 +44,8 @@ var (
 	fee100  uint32 = 100
 	fee3000 uint32 = 3000
 
-	max_timeout           int64 = 9999999999
+	maxTimeout            int64 = 9999999999
+	maxInt64              int64 = 9223372036854775807
 	MUST_EXISTS_IN_TIER_1       = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
 )
 
@@ -89,10 +91,10 @@ func initAndSetup() {
 	testing.SetRealm(adminRealm)
 
 	// override warm-up period for testing
-	sr.SetWarmUp(cross, 30, 150)
-	sr.SetWarmUp(cross, 50, 300)
-	sr.SetWarmUp(cross, 70, 900)
-	sr.SetWarmUp(cross, 100, consts.INT64_MAX)
+	sr.SetWarmUpByAdmin(cross, 30, 150)
+	sr.SetWarmUpByAdmin(cross, 50, 300)
+	sr.SetWarmUpByAdmin(cross, 70, 900)
+	sr.SetWarmUpByAdmin(cross, 100, maxInt64)
 
 	// set unstaking fee to 0
 	sr.SetUnStakingFeeByAdmin(cross, 0)
@@ -110,7 +112,6 @@ func initAndSetup() {
 	)
 
 	testing.SetRealm(stakerRealm)
-	en.RegisterGnsChangeCallback(cross)
 	testing.SkipHeights(1)
 }
 
@@ -140,8 +141,8 @@ func poolInitCreatePool() {
 func mintBarQux100_1() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	qux.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	qux.Approve(cross, poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
 		cross,
@@ -154,7 +155,7 @@ func mintBarQux100_1() {
 		"50",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminUser,
 		adminUser,
 		"",
@@ -176,8 +177,8 @@ func mintBarQux100_1() {
 func mintBarBaz100_2() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	baz.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	baz.Approve(cross, poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
 		cross,
@@ -190,7 +191,7 @@ func mintBarBaz100_2() {
 		"50",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminUser,
 		adminUser,
 		"",

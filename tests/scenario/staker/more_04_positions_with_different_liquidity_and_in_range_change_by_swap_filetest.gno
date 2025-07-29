@@ -12,7 +12,6 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -25,29 +24,36 @@ import (
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/v1/rbac"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	stakerAddr, _ = access.GetAddress(access.ROLE_STAKER)
+	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
 
 	fee100 uint32 = 100
 
-	max_timeout int64 = 9999999999
+	maxTimeout int64 = 9999999999
+	maxInt64   int64 = 9223372036854775807
 
 	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+
+	minTick int32 = -887272
+	maxTick int32 = 887272
 )
 
 func main() {
@@ -95,7 +101,6 @@ func initAndSetupSinglePool() {
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
-	emission.RegisterGnsChangeCallback(cross)
 
 	testing.SkipHeights(1)
 }
@@ -104,9 +109,9 @@ func createPool() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz:100 pool at price ratio 1:1")
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	baz.Approve(cross, poolAddr, consts.INT64_MAX)
+	gns.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross, poolAddr, maxInt64)
+	baz.Approve(cross, poolAddr, maxInt64)
 
 	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString()) // price ratio 1:1
 
@@ -119,8 +124,8 @@ func createPool() {
 func mintPositionsWithDifferentLiquidity() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, consts.INT64_MAX)
-	baz.Approve(cross, poolAddr, consts.INT64_MAX)
+	bar.Approve(cross, poolAddr, maxInt64)
+	baz.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint position 01 - full range (max liquidity)")
 	positionId1, liquidity1, amount0_1, amount1_1 := pn.Mint(
@@ -128,13 +133,13 @@ func mintPositionsWithDifferentLiquidity() {
 		barPath,
 		bazPath,
 		fee100,
-		int32(consts.MIN_TICK),   // min tick
-		int32(consts.MAX_TICK-1), // max tick
+		int32(minTick),
+		int32(maxTick-1),
 		"3000",
 		"3000",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -156,7 +161,7 @@ func mintPositionsWithDifferentLiquidity() {
 		"6000",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -177,7 +182,7 @@ func mintPositionsWithDifferentLiquidity() {
 		"1000",
 		"1",
 		"1",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -198,7 +203,7 @@ func mintPositionsWithDifferentLiquidity() {
 		"50",
 		"0",
 		"0",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",
@@ -213,13 +218,13 @@ func mintPositionsWithDifferentLiquidity() {
 		barPath,
 		bazPath,
 		fee100,
-		int32(consts.MAX_TICK-10), // very high tick
-		int32(consts.MAX_TICK-1),  // max tick
+		int32(maxTick-10), // very high tick
+		int32(maxTick-1),  // max tick
 		"50",
 		"50",
 		"0",
 		"0",
-		max_timeout,
+		maxTimeout,
 		adminAddr,
 		adminAddr,
 		"",

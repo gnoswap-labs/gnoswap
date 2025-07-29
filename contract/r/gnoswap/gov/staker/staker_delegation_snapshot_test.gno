@@ -28,14 +28,14 @@ func TestStakerDelegationSnapshot_CleanStakerDelegationSnapshotByAdmin(t *testin
 			caller:        testutils.TestAddress("alice"),
 			threshold:     100,
 			expectPanic:   true,
-			expectedError: "caller(" + testutils.TestAddress("alice").String() + ") has no permission",
+			expectedError: "unauthorized: caller " + testutils.TestAddress("alice").String() + " is not admin",
 		},
 		{
 			name:          "Invalid caller address should panic",
 			caller:        testutils.TestAddress("invalid"),
 			threshold:     100,
 			expectPanic:   true,
-			expectedError: "caller(g1d9h8vctvd9j97h6lta047h6lta047h6l8k5rvt) has no permission",
+			expectedError: "unauthorized: caller g1d9h8vctvd9j97h6lta047h6lta047h6l8k5rvt is not admin",
 		},
 	}
 

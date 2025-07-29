@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
 )
 
 func TestTransferUGNOT(t *testing.T) {
@@ -236,7 +235,7 @@ func TestIsWrappedToken(t *testing.T) {
 	}{
 		{
 			name:      "isWrappedToken is success by wrapped WUGNOT",
-			tokenPath: consts.WRAPPED_WUGNOT,
+			tokenPath: WRAPPED_WUGNOT,
 			expected:  true,
 		},
 		{
@@ -276,7 +275,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 		amountDesired string
 		userAddress   std.Address
 		sentAmount    int64
-		expectPanic   bool
+		expectError   bool
 		expectedWrap  int64
 		expectedError string
 	}{
@@ -285,7 +284,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			amountDesired: "50",
 			userAddress:   alice,
 			sentAmount:    0,
-			expectPanic:   true,
+			expectError:   true,
 			expectedError: "[GNOSWAP-POSITION-008] can not wrap less than minimum amount || amount(50) < minimum(1000)",
 		},
 		{
@@ -293,7 +292,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			amountDesired: "150",
 			userAddress:   alice,
 			sentAmount:    100,
-			expectPanic:   true,
+			expectError:   true,
 			expectedError: "[GNOSWAP-POSITION-008] can not wrap less than minimum amount || amount(150) < minimum(1000)",
 		},
 		{
@@ -301,7 +300,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			amountDesired: "invalid",
 			userAddress:   alice,
 			sentAmount:    200,
-			expectPanic:   true,
+			expectError:   true,
 			expectedError: "[GNOSWAP-POSITION-003] wrap, unwrap failed || strconv.ParseInt: parsing \"invalid\": invalid syntax",
 		},
 		{
@@ -309,7 +308,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			amountDesired: "1050",
 			userAddress:   alice,
 			sentAmount:    1050,
-			expectPanic:   false,
+			expectError:   false,
 			expectedWrap:  1050,
 		},
 		{
@@ -317,7 +316,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			amountDesired: "1000",
 			userAddress:   alice,
 			sentAmount:    1500,
-			expectPanic:   false,
+			expectError:   false,
 			expectedWrap:  1000,
 		},
 		{
@@ -325,7 +324,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			amountDesired: "1000",
 			userAddress:   alice,
 			sentAmount:    1000,
-			expectPanic:   false,
+			expectError:   false,
 			expectedWrap:  1000,
 		},
 		{
@@ -333,7 +332,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			amountDesired: "0",
 			userAddress:   alice,
 			sentAmount:    100,
-			expectPanic:   false,
+			expectError:   false,
 			expectedWrap:  0,
 		},
 		{
@@ -341,7 +340,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			amountDesired: "100",
 			userAddress:   alice,
 			sentAmount:    100,
-			expectPanic:   true, // Simulate wrap error internally
+			expectError:   true, // Simulate wrap error internally
 			expectedError: "[GNOSWAP-POSITION-008] can not wrap less than minimum amount || amount(100) < minimum(1000)",
 		},
 	}
@@ -359,13 +358,12 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			transferUGNOT(positionAddr, positionAddr, amount)
 
 			// Verify wrapped amount
-			if !tt.expectPanic {
-				wrappedAmount := safeWrapNativeToken(tt.amountDesired, tt.userAddress)
-				uassert.Equal(t, tt.expectedWrap, wrappedAmount)
+			wrappedAmount, err := safeWrapNativeToken(tt.amountDesired, tt.userAddress)
+			if tt.expectError {
+				uassert.ErrorIs(t, err, errors.New(tt.expectedError))
 			} else {
-				uassert.PanicsWithMessage(t, tt.expectedError, func() {
-					safeWrapNativeToken(tt.amountDesired, tt.userAddress)
-				})
+				uassert.Nil(t, err)
+				uassert.Equal(t, tt.expectedWrap, wrappedAmount)
 			}
 		})
 	}

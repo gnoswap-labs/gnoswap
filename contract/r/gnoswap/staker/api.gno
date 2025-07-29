@@ -6,8 +6,6 @@ import (
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
-
-	"gno.land/p/gnoswap/consts"
 )
 
 func ApiGetRewardTokens() string {
@@ -18,7 +16,7 @@ func ApiGetRewardTokens() string {
 
 		// HANDLE INTERNAL
 		if poolTier.IsInternallyIncentivizedPool(pool.poolPath) {
-			thisPoolRewardTokens = append(thisPoolRewardTokens, consts.GNS_PATH)
+			thisPoolRewardTokens = append(thisPoolRewardTokens, GNS_PATH)
 		}
 
 		// HANDLE EXTERNAL
@@ -62,7 +60,7 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 
 	// HANDLE INTERNAL
 	if poolTier.IsInternallyIncentivizedPool(pool.poolPath) {
-		thisPoolRewardTokens = append(thisPoolRewardTokens, consts.GNS_PATH)
+		thisPoolRewardTokens = append(thisPoolRewardTokens, GNS_PATH)
 	}
 
 	// HANDLE EXTERNAL
@@ -115,7 +113,7 @@ func ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
 
 	pool, ok := pools.Get(poolPath)
 	if !ok {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("pool(%s) not found", poolPath),
 		))
@@ -123,7 +121,7 @@ func ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
 
 	incentive, exist := pool.incentives.GetByIncentiveId(incentiveId)
 	if !exist {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("incentive(%s) not found", incentiveId),
 		))
@@ -145,7 +143,7 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 
 	pool, ok := pools.Get(targetPoolPath)
 	if !ok {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("pool(%s) not found", targetPoolPath),
 		))
@@ -303,7 +301,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			IncentiveType:     "INTERNAL",
 			IncentiveId:       "",
 			TargetPoolPath:    deposit.targetPoolPath,
-			RewardTokenPath:   consts.GNS_PATH,
+			RewardTokenPath:   GNS_PATH,
 			RewardTokenAmount: reward.Internal,
 			StakeTimestamp:    deposit.stakeTimestamp,
 			StakeHeight:       deposit.stakeHeight,
@@ -350,7 +348,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 				IncentiveType:     "INTERNAL",
 				IncentiveId:       "",
 				TargetPoolPath:    deposit.targetPoolPath,
-				RewardTokenPath:   consts.GNS_PATH,
+				RewardTokenPath:   GNS_PATH,
 				RewardTokenAmount: reward.Internal,
 				StakeTimestamp:    deposit.stakeTimestamp,
 				StakeHeight:       deposit.stakeHeight,

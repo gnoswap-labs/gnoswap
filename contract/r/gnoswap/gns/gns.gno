@@ -9,8 +9,8 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/demo/grc20reg"
-
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 const (
@@ -20,7 +20,7 @@ const (
 )
 
 var (
-	adminAddr, _         = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr            = getAdminAddress()
 	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
 	UserTeller           = token.CallerTeller()
 	owner                = ownable.NewWithAddress(adminAddr)
@@ -44,36 +44,20 @@ func init() {
 	burnAmount = 0
 }
 
-func GetName() string {
-	return token.GetName()
-}
-
-func GetSymbol() string {
-	return token.GetSymbol()
-}
-
-func GetDecimals() int {
-	return token.GetDecimals()
-}
-
-func TotalSupply() int64 {
-	return token.TotalSupply()
-}
-
-func KnownAccounts() int {
-	return token.KnownAccounts()
-}
-
-func BalanceOf(owner std.Address) int64 {
-	return token.BalanceOf(owner)
-}
-
-func Allowance(owner, spender std.Address) int64 {
-	return token.Allowance(owner, spender)
-}
+func Name() string                               { return token.GetName() }
+func Symbol() string                             { return token.GetSymbol() }
+func Decimals() int                              { return token.GetDecimals() }
+func TotalSupply() int64                         { return token.TotalSupply() }
+func KnownAccounts() int                         { return token.KnownAccounts() }
+func BalanceOf(owner std.Address) int64          { return token.BalanceOf(owner) }
+func Allowance(owner, spender std.Address) int64 { return token.Allowance(owner, spender) }
 
 func MintGns(cur realm, address std.Address) int64 {
-	lastGNSMintedHeight := GetLastMintedHeight()
+	caller := std.PreviousRealm().Address()
+	halt.AssertIsNotHaltedEmission()
+	access.AssertIsEmission(caller)
+
+	lastGNSMintedHeight := LastMintedHeight()
 	currentHeight := std.ChainHeight()
 
 	// skip minting process if following conditions are met
@@ -83,32 +67,33 @@ func MintGns(cur realm, address std.Address) int64 {
 		return 0
 	}
 
-	assertShouldNotBeHalted()
-	assertCallerIsEmission()
-
 	// calculate gns amount to mint
 	amountToMint := calculateAmountToMint(lastGNSMintedHeight+1, currentHeight)
+	err := validEmissionAmount(amountToMint)
+	if err != nil {
+		panic(err)
+	}
 
 	// update
 	setLastMintedHeight(currentHeight)
-	setMintedEmissionAmount(GetMintedEmissionAmount() + amountToMint)
-	setLeftEmissionAmount(GetLeftEmissionAmount() - amountToMint)
+	setMintedEmissionAmount(MintedEmissionAmount() + amountToMint)
+	setLeftEmissionAmount(LeftEmissionAmount() - amountToMint)
 
 	// mint calculated amount to address
-	err := privateLedger.Mint(address, amountToMint)
+	err = privateLedger.Mint(address, amountToMint)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	prevAddr, prevPkgPath := getPrev()
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"MintGNS",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"mintedBlockHeight", formatInt(currentHeight),
 		"mintedGNSAmount", formatInt(amountToMint),
-		"accumMintedGNSAmount", formatInt(GetMintedEmissionAmount()),
-		"accumLeftMintGNSAmount", formatInt(GetLeftEmissionAmount()),
+		"accumMintedGNSAmount", formatInt(MintedEmissionAmount()),
+		"accumLeftMintGNSAmount", formatInt(LeftEmissionAmount()),
 	)
 
 	return amountToMint
@@ -120,15 +105,15 @@ func Burn(cur realm, from std.Address, amount int64) {
 
 	burnAmount += amount
 
-	prevAddr, prevPkgPath := getPrev()
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"Burn",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"burnedBlockHeight", formatInt(std.ChainHeight()),
 		"burnFrom", from.String(),
 		"burnedGNSAmount", formatInt(amount),
-		"accumBurnedGNSAmount", formatInt(GetBurnAmount()),
+		"accumBurnedGNSAmount", formatInt(BurnAmount()),
 	)
 }
 
@@ -192,8 +177,8 @@ func calculateAmountToMint(fromHeight, toHeight int64) int64 {
 		return 0
 	}
 
-	fromYear := GetHalvingYearByHeight(fromHeight)
-	toYear := GetHalvingYearByHeight(toHeight)
+	fromYear := HalvingYearByHeight(fromHeight)
+	toYear := HalvingYearByHeight(toHeight)
 
 	// if invalid halving year is returned, return 0
 	if fromYear == 0 || toYear == 0 {
@@ -246,13 +231,12 @@ func calculateAmountToMint(fromHeight, toHeight int64) int64 {
 		}
 	}
 
-	assertTooManyEmission(totalAmountToMint)
 	return totalAmountToMint
 }
 
 // isLastBlockOfHalvingYear returns true if the current block is the last block of a halving year.
 func isLastBlockOfHalvingYear(height int64) bool {
-	year := GetHalvingYearByHeight(height)
+	year := HalvingYearByHeight(height)
 	lastBlock := GetHalvingYearEndBlock(year)
 
 	return height == lastBlock
@@ -270,46 +254,19 @@ func skipIfSameHeight(lastMintedHeight, currentHeight int64) bool {
 	return lastMintedHeight == currentHeight
 }
 
-// GetLastMintedHeight returns the last block height that gns was minted.
-func GetLastMintedHeight() int64 {
-	return lastMintedHeight
-}
+// BurnAmount returns the amount of GNS that has been burned.
+func BurnAmount() int64 { return burnAmount }
 
-// GetLeftEmissionAmount returns the amount of GNS can be minted.
-func GetLeftEmissionAmount() int64 {
-	return leftEmissionAmount
-}
+// LastMintedHeight returns the last block height that gns was minted.
+func LastMintedHeight() int64 { return lastMintedHeight }
 
-// GetBurnAmount returns the amount of GNS that has been burned.
-func GetBurnAmount() int64 {
-	return burnAmount
-}
+// LeftEmissionAmount returns the amount of GNS can be minted.
+func LeftEmissionAmount() int64 { return leftEmissionAmount }
 
-// GetMintedEmissionAmount returns the amount of GNS that has been minted by the emission contract.
+// MintedEmissionAmount returns the amount of GNS that has been minted by the emission contract.
 // It does not include initial minted amount.
-func GetMintedEmissionAmount() int64 {
-	return mintedEmissionAmount
-}
+func MintedEmissionAmount() int64 { return mintedEmissionAmount }
 
-func setLastMintedHeight(height int64) {
-	lastMintedHeight = height
-}
-
-func setLeftEmissionAmount(amount int64) {
-	leftEmissionAmount = amount
-}
-
-func setMintedEmissionAmount(amount int64) {
-	mintedEmissionAmount = amount
-}
-
-// assertTooManyEmission asserts if the amount of gns to mint is too many.
-// It checks if the amount of gns to mint is greater than the left emission amount or the total emission amount.
-func assertTooManyEmission(amount int64) {
-	if (amount + GetMintedEmissionAmount()) > MAX_EMISSION_AMOUNT {
-		panic(addDetailToError(
-			errTooManyEmission,
-			ufmt.Sprintf("amount: %d", amount),
-		))
-	}
-}
+func setLastMintedHeight(height int64)     { lastMintedHeight = height }
+func setLeftEmissionAmount(amount int64)   { leftEmissionAmount = amount }
+func setMintedEmissionAmount(amount int64) { mintedEmissionAmount = amount }

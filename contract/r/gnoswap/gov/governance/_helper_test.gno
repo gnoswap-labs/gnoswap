@@ -5,12 +5,12 @@ import (
 
 	"gno.land/p/demo/json"
 
-	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/access"
 )
 
 var (
-	admin, _ = access.GetAddress(access.ROLE_ADMIN)
+	admin, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 
 	fooPath string = "gno.land/r/onbloc/foo"
 	barPath string = "gno.land/r/onbloc/bar"
@@ -24,20 +24,29 @@ var (
 	fee3000 uint32 = 3000
 
 	max_timeout int64 = 9999999999
+
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 )
 
 // Realms to mock frames
 var (
 	adminRealm = std.NewUserRealm(admin)
 
-	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
-	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
-	govRealm = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
+	posPath  = "gno.land/r/gnoswap/v1/position"
+	posRealm = std.NewCodeRealm(posPath)
 
-	govStakerAddr, _     = access.GetAddress(access.ROLE_GOV_STAKER)
-	communityPoolAddr, _ = access.GetAddress(access.ROLE_COMMUNITY_POOL)
-	launchpadAddr, _     = access.GetAddress(access.ROLE_LAUNCHPAD)
+	routerPath = "gno.land/r/gnoswap/v1/router"
+	rouRealm = std.NewCodeRealm(routerPath)
+
+	stakerPath = "gno.land/r/gnoswap/v1/staker"
+	stkRealm = std.NewCodeRealm(stakerPath)
+
+	govPath = "gno.land/r/gnoswap/v1/gov/governance"
+	govRealm = std.NewCodeRealm(govPath)
+
+	govStakerAddr, _     = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	communityPoolAddr, _ = access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+	launchpadAddr, _     = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 )
 
 /* HELPER */

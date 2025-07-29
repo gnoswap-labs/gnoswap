@@ -7,8 +7,6 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
-
-	"gno.land/p/gnoswap/consts"
 )
 
 // marshal data to json string
@@ -54,7 +52,7 @@ func updateUint64InTree(tree *avl.Tree, key string, delta uint64, add bool) uint
 		newValue = current + delta
 	} else {
 		if current < delta {
-			panic(addDetailToError(
+			panic(makeErrorWithDetails(
 				errNotEnoughBalance,
 				ufmt.Sprintf("not enough balance: current(%d) < requested(%d)", current, delta),
 			))
@@ -81,5 +79,6 @@ func getOrCreateInnerTree(tree *avl.Tree, key string) *avl.Tree {
 
 // milliToSec converts milliseconds to seconds
 func milliToSec(ms int64) int64 {
-	return ms / consts.MILLISECONDS_PER_SECOND
+	var msPerSec int64 = 1000
+	return ms / msPerSec
 }

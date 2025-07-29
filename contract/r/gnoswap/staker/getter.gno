@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
+	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -26,7 +27,7 @@ import (
 func getPoolByPoolPath(poolPath string) *Pool {
 	pool, ok := pools.Get(poolPath)
 	if !ok {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath)),
 		)
@@ -274,7 +275,7 @@ func GetIncentiveRefundee(poolPath string, incentiveId string) std.Address {
 func getDeposit(lpTokenId uint64) *Deposit {
 	deposit := deposits.get(lpTokenId)
 	if deposit == nil {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("lpTokenId(%d) deposit does not exist", lpTokenId)),
 		)
@@ -517,7 +518,7 @@ func GetPoolReward(tier uint64) int64 {
 func getExternalIncentive(incentiveId string) *ExternalIncentive {
 	incentive, exist := externalIncentives.tree.Get(incentiveId)
 	if !exist {
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId)),
 		)
@@ -703,22 +704,21 @@ type currentInfo struct {
 }
 
 func getCurrentInfo() currentInfo {
+	stakerAddr, _ := access.GetAddress(prbac.ROLE_STAKER.String())
+	devOpsAddr, _ := access.GetAddress(prbac.ROLE_DEVOPS.String())
+	communityPoolAddr, _ := access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+	govStakerAddr, _ := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	protocolFeeAddr, _ := access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+
 	return currentInfo{
 		height:           std.ChainHeight(),
 		time:             time.Now().Unix(),
-		gnsStaker:        gns.BalanceOf(getAddress(access.ROLE_STAKER)),
+		gnsStaker:        gns.BalanceOf(stakerAddr),
 		gnsDevOps:        gns.BalanceOf(devOpsAddr),
-		gnsCommunityPool: gns.BalanceOf(getAddress(access.ROLE_COMMUNITY_POOL)),
-		gnsGovStaker:     gns.BalanceOf(getAddress(access.ROLE_GOV_STAKER)),
-		gnsProtocolFee:   gns.BalanceOf(getAddress(access.ROLE_PROTOCOL_FEE)),
-		gnsADMIN:         gns.BalanceOf(getAddress(access.ROLE_ADMIN)),
+		gnsCommunityPool: gns.BalanceOf(communityPoolAddr),
+		gnsGovStaker:     gns.BalanceOf(govStakerAddr),
+		gnsProtocolFee:   gns.BalanceOf(protocolFeeAddr),
+		gnsADMIN:         gns.BalanceOf(adminAddr),
 	}
-}
-
-func getAddress(roleName string) std.Address {
-	addr, err := access.GetAddress(roleName)
-	if err != nil {
-		panic(err)
-	}
-	return addr
 }

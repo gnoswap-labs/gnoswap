@@ -4,12 +4,17 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
 	pl "gno.land/r/gnoswap/v1/pool"
+)
+
+const (
+	WRAPPED_WUGNOT string = "gno.land/r/demo/wugnot"
+	UGNOT          string = "ugnot"
+	GNOT           string = "gnot"
 )
 
 // mint creates a new liquidity position by adding liquidity to a pool and minting an NFT representing the position.
@@ -79,7 +84,7 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 
 	position := Position{
 		nonce:                    u256.Zero(),
-		operator:                 consts.ZERO_ADDRESS,
+		operator:                 zeroAddress,
 		poolKey:                  poolKey,
 		tickLower:                params.tickLower,
 		tickUpper:                params.tickUpper,
@@ -159,7 +164,11 @@ func processMintInput(input MintInput) (ProcessedMintInput, error) {
 	var result ProcessedMintInput
 
 	// process tokens
-	token0, token1, token0IsNative, token1IsNative, wrappedAmount := processTokens(input.token0, input.token1, input.amount0Desired, input.amount1Desired, input.caller)
+	token0, token1, token0IsNative, token1IsNative, wrappedAmount, err := processTokens(input.token0, input.token1, input.amount0Desired, input.amount1Desired, input.caller)
+	if err != nil {
+		return ProcessedMintInput{}, err
+	}
+
 	pair := TokenPair{
 		token0:         token0,
 		token1:         token1,
@@ -229,7 +238,7 @@ func processTokens(
 	amount0Desired string,
 	amount1Desired string,
 	caller std.Address,
-) (string, string, bool, bool, int64) {
+) (string, string, bool, bool, int64, error) {
 	err := validateTokenPath(token0, token1)
 	if err != nil {
 		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
@@ -240,27 +249,36 @@ func processTokens(
 	wrappedAmount := int64(0)
 
 	if isNative(token0) {
-		token0 = consts.WRAPPED_WUGNOT
+		token0 = WRAPPED_WUGNOT
 		token0IsNative = true
 
-		wrappedAmount = safeWrapNativeToken(amount0Desired, caller)
+		wrappedAmount, err = safeWrapNativeToken(amount0Desired, caller)
+		if err != nil {
+			return "", "", false, false, 0, err
+		}
 	} else if isNative(token1) {
-		token1 = consts.WRAPPED_WUGNOT
+		token1 = WRAPPED_WUGNOT
 		token1IsNative = true
 
-		wrappedAmount = safeWrapNativeToken(amount1Desired, caller)
+		wrappedAmount, err = safeWrapNativeToken(amount1Desired, caller)
+		if err != nil {
+			return "", "", false, false, 0, err
+		}
 	}
 
-	return token0, token1, token0IsNative, token1IsNative, wrappedAmount
+	return token0, token1, token0IsNative, token1IsNative, wrappedAmount, nil
 }
 
-func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, string) {
-	// verify position ID exists
+func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, string, error) {
 	caller := params.caller
-	assertTokenExists(params.positionId)
-	assertOnlyOwnerOfToken(params.positionId, caller)
+	position, exist := GetPosition(params.positionId)
+	if !exist {
+		return 0, nil, nil, nil, "", makeErrorWithDetails(
+			errDataNotFound,
+			ufmt.Sprintf("positionId(%d) doesn't exist", params.positionId),
+		)
+	}
 
-	position := MustGetPosition(params.positionId)
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
 			poolKey:        position.poolKey,
@@ -293,14 +311,14 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	{
 		diff := new(u256.Uint).Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
-		mulDiv := u256.MulDiv(diff, new(u256.Uint).Set(position.liquidity), u256.MustFromDecimal(consts.Q128))
+		mulDiv := u256.MulDiv(diff, new(u256.Uint).Set(position.liquidity), u256.MustFromDecimal(Q128))
 
 		position.tokensOwed0 = new(u256.Uint).Add(position.tokensOwed0, mulDiv)
 	}
 
 	{
 		diff := new(u256.Uint).Sub(feeGrowthInside1LastX128, position.feeGrowthInside1LastX128)
-		mulDiv := u256.MulDiv(diff, new(u256.Uint).Set(position.liquidity), u256.MustFromDecimal(consts.Q128))
+		mulDiv := u256.MulDiv(diff, new(u256.Uint).Set(position.liquidity), u256.MustFromDecimal(Q128))
 
 		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, mulDiv)
 	}
@@ -314,13 +332,13 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	updated := setPosition(params.positionId, position)
 	if !updated {
-		panic(newErrorWithDetail(
+		return 0, nil, nil, nil, "", makeErrorWithDetails(
 			errPositionDoesNotExist,
 			ufmt.Sprintf("can not increase liquidity for non-existent position(%d)", params.positionId),
-		))
+		)
 	}
 
-	return params.positionId, liquidity, amount0, amount1, position.poolKey
+	return params.positionId, liquidity, amount0, amount1, position.poolKey, nil
 }
 
 // validateTokenPath validates the relationship and format of token paths.
@@ -343,8 +361,8 @@ func validateTokenPath(token0, token1 string) error {
 	if token0 == token1 {
 		return errInvalidTokenPath
 	}
-	if (token0 == consts.GNOT && token1 == consts.WRAPPED_WUGNOT) ||
-		(token0 == consts.WRAPPED_WUGNOT && token1 == consts.GNOT) {
+	if (token0 == GNOT && token1 == WRAPPED_WUGNOT) ||
+		(token0 == WRAPPED_WUGNOT && token1 == GNOT) {
 		return errInvalidTokenPath
 	}
 	if (!isNative(token0) && !isValidTokenPath(token0)) ||

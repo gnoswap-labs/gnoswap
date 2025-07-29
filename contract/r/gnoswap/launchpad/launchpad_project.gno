@@ -9,11 +9,12 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/v1/halt"
 )
 
 var (
@@ -61,14 +62,16 @@ func CreateProject(
 	tier180Ratio int64,
 	startTime int64,
 ) string {
-	previousAddress := std.PreviousRealm().Address()
-	previousPkgPath := std.PreviousRealm().PkgPath()
+	halt.AssertIsNotHaltedLaunchpad()
+	halt.AssertIsNotHaltedWithdraw()
+
+	previousRealm := std.PreviousRealm()
+	access.AssertIsAdmin(previousRealm.Address())
+
+	caller := previousRealm.Address()
 	launchpadAddr := std.CurrentRealm().Address()
 
-	assertOnlyNotHalted()
-	assertOnlyAdmin(previousAddress)
-
-	averageBlockTimeMs := gns.GetAvgBlockTimeInMs()
+	averageBlockTimeMs := gns.AvgBlockTimeInMs()
 	currentHeight := std.ChainHeight()
 	currentTime := time.Now().Unix()
 
@@ -94,15 +97,15 @@ func CreateProject(
 		panic(err)
 	}
 
-	tokenBalance := common.BalanceOf(tokenPath, previousAddress)
+	tokenBalance := common.BalanceOf(tokenPath, caller)
 	if tokenBalance < depositAmount {
-		panic(makeErrorWithDetails(errInsufficientBalance, ufmt.Sprintf("caller(%s) balance(%d) < depositAmount(%d)", previousAddress.String(), tokenBalance, depositAmount)))
+		panic(makeErrorWithDetails(errInsufficientBalance, ufmt.Sprintf("caller(%s) balance(%d) < depositAmount(%d)", launchpadAddr.String(), tokenBalance, depositAmount)))
 	}
 
 	err = common.TransferFrom(
 		cross,
 		tokenPath,
-		previousAddress,
+		caller,
 		launchpadAddr,
 		depositAmount,
 	)
@@ -112,8 +115,8 @@ func CreateProject(
 
 	std.Emit(
 		"CreateProject",
-		"prevAddr", previousAddress.String(),
-		"prevRealm", previousPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"name", name,
 		"tokenPath", tokenPath,
 		"recipient", recipient.String(),
@@ -243,13 +246,13 @@ func createProject(params *createProjectParams) (*Project, error) {
 // Returns:
 // - uint64: The amount of rewards transferred to the recipient.
 func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.Address) int64 {
-	previousAddress := std.PreviousRealm().Address()
-	previousPkgPath := std.PreviousRealm().PkgPath()
-	currentHeight := int64(std.ChainHeight())
+	halt.AssertIsNotHaltedLaunchpad()
+	halt.AssertIsNotHaltedWithdraw()
 
-	assertOnlyUser()
-	assertOnlyNotHalted()
-	assertOnlyAdmin(previousAddress)
+	previousRealm := std.PreviousRealm()
+	access.AssertIsAdmin(previousRealm.Address())
+
+	currentHeight := std.ChainHeight()
 
 	projectLeftReward, err := transferLeftFromProject(projectID, recipient, currentHeight)
 	if err != nil {
@@ -263,8 +266,8 @@ func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.A
 
 	std.Emit(
 		"TransferLeftFromProjectByAdmin",
-		"prevAddr", previousAddress.String(),
-		"prevRealm", previousPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"projectId", projectID,
 		"recipient", recipient.String(),
 		"tokenPath", project.tokenPath,
@@ -567,5 +570,5 @@ func (p *createProjectParams) validateConditions() error {
 }
 
 func isGovernanceToken(tokenPath string) bool {
-	return tokenPath == consts.GOV_XGNS_PATH
+	return tokenPath == GOV_XGNS_PATH
 }

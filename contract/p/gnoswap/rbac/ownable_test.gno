@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"std"
 	"testing"
 
 	"gno.land/p/demo/testutils"
@@ -13,10 +14,9 @@ var (
 	bob   = testutils.TestAddress("bob")
 )
 
-func TestNewOwnable2Step(t *testing.T) {
-	testing.SetOriginCaller(alice)
+func TestNewWithAddress(t *testing.T) {
+	o := newOwnable2StepWithAddress(alice)
 
-	o := NewOwnable2Step()
 	got := o.Owner()
 	pendingOwner := o.PendingOwner()
 
@@ -27,7 +27,7 @@ func TestNewOwnable2Step(t *testing.T) {
 func TestInitiateTransferOwnership(t *testing.T) {
 	testing.SetOriginCaller(alice)
 
-	o := NewOwnable2Step()
+	o := newOwnable2StepWithAddress(alice)
 
 	err := o.TransferOwnership(bob)
 	urequire.NoError(t, err)
@@ -42,7 +42,7 @@ func TestInitiateTransferOwnership(t *testing.T) {
 func TestTransferOwnership(t *testing.T) {
 	testing.SetOriginCaller(alice)
 
-	o := NewOwnable2Step()
+	o := newOwnable2StepWithAddress(alice)
 
 	err := o.TransferOwnership(bob)
 	urequire.NoError(t, err)
@@ -65,10 +65,35 @@ func TestTransferOwnership(t *testing.T) {
 	uassert.Equal(t, pendingOwner.String(), "")
 }
 
+func TestOwnedByOriginCaller(t *testing.T) {
+	testing.SetOriginCaller(alice)
+
+	o := newOwnable2StepWithAddress(alice)
+	unauthorizedCaller := bob
+	testing.SetOriginCaller(unauthorizedCaller)
+	uassert.False(t, o.OwnedByOriginCaller())
+}
+
+func TestOwnedByOriginCallerUnauthorized(t *testing.T) {
+	testing.SetOriginCaller(alice)
+	testing.SetRealm(std.NewUserRealm(alice))
+
+	var o *Ownable2Step
+	func() {
+		testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+		o = newOwnable2StepWithAddress(alice)
+	}()
+
+	uassert.True(t, o.OwnedByOriginCaller())
+
+	unauthorizedCaller := bob
+	testing.SetRealm(std.NewUserRealm(unauthorizedCaller))
+	uassert.False(t, o.OwnedByOriginCaller())
+}
 func TestDropOwnership(t *testing.T) {
 	testing.SetOriginCaller(alice)
 
-	o := NewOwnable2Step()
+	o := New()
 
 	err := o.DropOwnership()
 	urequire.NoError(t, err, "DropOwnership failed")
@@ -79,7 +104,7 @@ func TestDropOwnership(t *testing.T) {
 
 func TestDropOwnershipVulnerability(t *testing.T) {
 	testing.SetOriginCaller(alice)
-	o := NewOwnable2Step()
+	o := New()
 
 	// alice initiates ownership transfer to bob
 	err := o.TransferOwnership(bob)
@@ -105,7 +130,7 @@ func TestDropOwnershipVulnerability(t *testing.T) {
 func TestErrUnauthorized(t *testing.T) {
 	testing.SetOriginCaller(alice)
 
-	o := NewOwnable2Step()
+	o := New()
 
 	testing.SetOriginCaller(bob)
 
@@ -116,7 +141,7 @@ func TestErrUnauthorized(t *testing.T) {
 func TestErrInvalidAddress(t *testing.T) {
 	testing.SetOriginCaller(alice)
 
-	o := NewOwnable2Step()
+	o := New()
 
 	err := o.TransferOwnership("")
 	uassert.ErrorContains(t, err, ErrInvalidAddress.Error())
@@ -128,7 +153,7 @@ func TestErrInvalidAddress(t *testing.T) {
 func TestErrNoPendingOwner(t *testing.T) {
 	testing.SetOriginCaller(alice)
 
-	o := NewOwnable2Step()
+	o := New()
 
 	err := o.AcceptOwnership()
 	uassert.ErrorContains(t, err, ErrNoPendingOwner.Error())
@@ -137,7 +162,7 @@ func TestErrNoPendingOwner(t *testing.T) {
 func TestErrPendingUnauthorized(t *testing.T) {
 	testing.SetOriginCaller(alice)
 
-	o := NewOwnable2Step()
+	o := New()
 
 	err := o.TransferOwnership(bob)
 	urequire.NoError(t, err)

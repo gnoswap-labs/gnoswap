@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -20,13 +20,15 @@ import (
 	"gno.land/r/demo/wugnot"
 )
 
+const INT64_MAX int64 = 9223372036854775807
+
 var (
-	adminAddr, _ = access.GetAddress(access.ROLE_ADMIN)
+	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	poolAddr, _ = access.GetAddress(access.ROLE_POOL)
+	poolAddr, _ = access.GetAddress(prbac.ROLE_POOL.String())
 
-	positionAddr, _ = access.GetAddress(access.ROLE_POSITION)
+	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
 	gnotPath   = "gnot"
 	wugnotPath = "gno.land/r/demo/wugnot"
@@ -66,10 +68,10 @@ func initializeSetup() {
 	println("[INFO] WUGNOT Balance of admin:", wugnot.BalanceOf(adminAddr))
 	println("[INFO] ugnot Balance of admin:", banker.GetCoins(adminAddr))
 
-	gns.Approve(cross, poolAddr, consts.INT64_MAX)
-	wugnot.Approve(cross, poolAddr, consts.INT64_MAX)
-	gns.Approve(cross, positionAddr, consts.INT64_MAX)
-	wugnot.Approve(cross, positionAddr, consts.INT64_MAX)
+	gns.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross, poolAddr, INT64_MAX)
+	gns.Approve(cross, positionAddr, INT64_MAX)
+	wugnot.Approve(cross, positionAddr, INT64_MAX)
 }
 
 func createPool(token0Path string, token1Path string, fee uint32, startTick int32) {
