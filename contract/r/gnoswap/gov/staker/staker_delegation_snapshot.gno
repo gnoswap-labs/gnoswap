@@ -1,5 +1,3 @@
-// TODO: Change file name
-
 package staker
 
 import (
