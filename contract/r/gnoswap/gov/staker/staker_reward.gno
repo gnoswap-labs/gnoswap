@@ -40,8 +40,7 @@ func CollectReward(cur realm) {
 	halt.AssertIsNotHaltedGovStaker()
 	halt.AssertIsNotHaltedWithdraw()
 
-	previousRealm := std.PreviousRealm()
-	caller := previousRealm.Address()
+	caller := std.PreviousRealm().Address()
 	from := std.CurrentRealm().Address()
 	currentHeight := std.ChainHeight()
 
@@ -54,6 +53,7 @@ func CollectReward(cur realm) {
 	if emissionReward > 0 {
 		gns.Transfer(cross, caller, emissionReward)
 
+		previousRealm := std.PreviousRealm()
 		std.Emit(
 			"CollectEmissionReward",
 			"prevAddr", previousRealm.Address().String(),
@@ -72,6 +72,7 @@ func CollectReward(cur realm) {
 				panic(err)
 			}
 
+			previousRealm := std.PreviousRealm()
 			std.Emit(
 				"CollectProtocolFeeReward",
 				"prevAddr", previousRealm.Address().String(),
@@ -111,8 +112,7 @@ func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 	halt.AssertIsNotHaltedGovStaker()
 	halt.AssertIsNotHaltedWithdraw()
 
-	previousRealm := std.PreviousRealm()
-	caller := previousRealm.Address()
+	caller := std.PreviousRealm().Address()
 	access.AssertIsLaunchpad(caller)
 
 	from := std.CurrentRealm().Address()
@@ -136,6 +136,7 @@ func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 	if emissionReward > 0 {
 		gns.Transfer(cross, to, emissionReward)
 
+		previousRealm := std.PreviousRealm()
 		std.Emit(
 			"CollectEmissionFromLaunchPad",
 			"prevAddr", previousRealm.Address().String(),
@@ -154,6 +155,7 @@ func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 				panic(err)
 			}
 
+			previousRealm := std.PreviousRealm()
 			std.Emit(
 				"CollectProtocolFeeFromLaunchPad",
 				"prevAddr", previousRealm.Address().String(),
