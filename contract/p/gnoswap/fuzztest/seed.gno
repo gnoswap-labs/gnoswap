@@ -5,6 +5,18 @@ import (
 )
 
 // SeedManager helps generate unique seeds for tests
+//
+// Note:
+// The original fuzztest implementation used a fixed seed (987654321) in initRNG,
+// which caused all generators to produce the same sequence of values. This was
+// problematic for fuzz testing as it reduced test coverage and made it impossible
+// to find edge cases through randomization.
+//
+// SeedManager provides a way for test code to manage its own seeds without
+// relying on global state. Each test creates its own SeedManager instance,
+// which uses time-based initialization for uniqueness and a counter with
+// prime multiplication for generating diverse seeds for multiple generators
+// within the same test.
 type SeedManager struct {
 	baseSeed uint64
 	counter  uint64
@@ -29,7 +41,9 @@ func NewSeedManagerWithSeed(seed uint64) *SeedManager {
 // NextSeed returns the next unique seed
 func (sm *SeedManager) NextSeed() uint64 {
 	sm.counter++
-	// Use a prime multiplier to ensure good distribution
+	// Use a prime multiplier (2654435761) to ensure good distribution
+	// This prime is commonly used in hash functions for its excellent
+	// distribution properties when combined with modulo operations
 	return sm.baseSeed + sm.counter*2654435761
 }
 
