@@ -3,13 +3,13 @@ package staker
 import (
 	"std"
 	"strconv"
+	"strings"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/rbac"
 )
 
@@ -37,15 +37,7 @@ func GetOrigPkgAddr() std.Address {
 // Panics:
 // - If the input `poolPath` is invalid or cannot be split into exactly three parts.
 func poolPathAlign(poolPath string) string {
-	res, err := common.Split(poolPath, ":", 3)
-	if err != nil {
-		panic(makeErrorWithDetails(
-			errInvalidPoolPath,
-			ufmt.Sprintf("invalid poolPath(%s)", poolPath),
-		))
-	}
-
-	pToken0, pToken1, fee := res[0], res[1], res[2]
+	pToken0, pToken1, fee := poolPathDivide(poolPath)
 
 	if pToken0 < pToken1 {
 		return ufmt.Sprintf("%s:%s:%s", pToken0, pToken1, fee)
@@ -73,8 +65,8 @@ func poolPathAlign(poolPath string) string {
 // Panics:
 // - If the `poolPath` cannot be split into exactly three components.
 func poolPathDivide(poolPath string) (string, string, string) {
-	res, err := common.Split(poolPath, ":", 3)
-	if err != nil {
+	res := strings.Split(poolPath, ":")
+	if len(res) != 3 {
 		panic(errInvalidPoolPath)
 	}
 
