@@ -209,16 +209,6 @@ func NumberStringRange(min, max int64, bases ...int) Generator {
 	}
 }
 
-// SetGlobalSeed is deprecated - seeds are now handled automatically
-func SetGlobalSeed(seed uint64) {
-	// No-op to maintain API compatibility
-}
-
-// ResetGlobalSeed is deprecated - seeds are now handled automatically
-func ResetGlobalSeed() {
-	// No-op to maintain API compatibility
-}
-
 // Config controls fuzzing parameters
 type Config struct {
 	Iterations int
