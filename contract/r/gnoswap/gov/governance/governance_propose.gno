@@ -4,7 +4,6 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/staker"
 	"gno.land/r/gnoswap/v1/halt"
@@ -166,16 +165,13 @@ func ProposeCommunityPoolSpend(
 		panic(err)
 	}
 
-	// Get community pool package path for execution
-	communityPoolPackagePath := consts.COMMUNITY_POOL_PATH
-
 	// Create the community pool spend proposal with execution data
 	proposal, err := createProposal(
 		CommunityPoolSpend,
 		config,
 		maxVotingWeight,
 		NewProposalMetadata(title, description),
-		NewProposalCommunityPoolSpendData(tokenPath, to, amount, communityPoolPackagePath),
+		NewProposalCommunityPoolSpendData(tokenPath, to, amount, COMMUNITY_POOL_PATH),
 		callerAddress,
 		gnsBalance,
 		createdAt,
@@ -371,7 +367,7 @@ func createProposal(
 
 	// Get current configuration version for tracking
 	configVersion := getCurrentConfigVersion()
-	
+
 	// Create the proposal object
 	proposal := NewProposal(
 		proposalID,

@@ -679,12 +679,12 @@ func applyUnStake(positionId uint64) error {
 
 // hasTokenOwnership validates that the caller has permission to operate the token.
 func hasTokenOwnership(owner, caller std.Address) error {
-	callerIsOwner := owner == caller
+	isCallerOwner := owner == caller
 
 	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
-	stakerIsOwner := owner == stakerAddr
+	isStakerOwner := owner == stakerAddr
 
-	if err := common.SatisfyCond(callerIsOwner || stakerIsOwner); err != nil {
+	if !isCallerOwner && !isStakerOwner {
 		return errNoPermission
 	}
 
