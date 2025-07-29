@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math"
 	"math/rand"
+	"strconv"
 	"unicode/utf8"
 
 	xs "gno.land/p/wyhaines/rand/xorshift64star"
@@ -23,6 +24,7 @@ func initRNG(rng **xs.Xorshift64Star) {
 var (
 	_ Generator = (*IntGenerator)(nil)
 	_ Generator = (*Uint32Generator)(nil)
+	_ Generator = (*NumberStringGenerator)(nil)
 )
 
 type IntGenerator struct {
@@ -105,6 +107,62 @@ func (g *StringGenerator) Generate() interface{} {
 	return string(result)
 }
 
+type NumberStringGenerator struct {
+	min, max  int64
+	baseTypes []int
+	rng       *xs.Xorshift64Star
+}
+
+func (g *NumberStringGenerator) Generate() any {
+	initRNG(&g.rng)
+
+	if g.min == 0 && g.max == 0 {
+		g.max = 1000000
+	}
+
+	size := uint64(g.max - g.min + 1)
+	value := int64(g.rng.Uint64()%size) + g.min
+
+	if len(g.baseTypes) == 0 {
+		g.baseTypes = []int{2, 8, 10, 16}
+	}
+
+	baseIndex := g.rng.Uint64() % uint64(len(g.baseTypes))
+	base := g.baseTypes[baseIndex]
+
+	switch base {
+	case 2:
+		return "0b" + strconv.FormatInt(value, 2)
+	case 8:
+		return "0o" + strconv.FormatInt(value, 8)
+	case 16:
+		return "0x" + strconv.FormatInt(value, 16)
+	default:
+		return strconv.FormatInt(value, 10)
+	}
+}
+
+func NumberString() Generator {
+	return &NumberStringGenerator{
+		min:       0,
+		max:       1000000,
+		baseTypes: []int{2, 8, 10, 16},
+		rng:       xs.New(),
+	}
+}
+
+func NumberStringRange(min, max int64, bases ...int) Generator {
+	if len(bases) == 0 {
+		bases = []int{2, 8, 10, 16}
+	}
+	return &NumberStringGenerator{
+		min:       min,
+		max:       max,
+		baseTypes: bases,
+		rng:       xs.New(),
+	}
+}
+
 // Config controls fuzzing parameters
 type Config struct {
 	Iterations int
@@ -156,6 +214,14 @@ func GenerateBoundary(vt string) []any {
 			"a", "A", "0",
 			generateLongString(100),
 			generateUnicodeString(),
+		}
+	case "numberString":
+		return []any{
+			"0", "1", "-1",
+			"0b0", "0b1", "0b1111111111111111",
+			"0o0", "0o7", "0o777",
+			"0x0", "0x1", "0xFFFF", "0xffffffff",
+			"9223372036854775807", "-9223372036854775808",
 		}
 	case "slice":
 		return []any{
