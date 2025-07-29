@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	"gno.land/r/gnoswap/v1/access"
 )
 
@@ -37,11 +36,25 @@ var halvingAmountsPerYear = [HALVING_END_YEAR]int64{
 	1_171_875_000_000 * 12,  // Year 12: 14062500000000
 }
 
-var (
-	blockPerYear = SECONDS_IN_YEAR / milliToSec(consts.BLOCK_GENERATION_INTERVAL)
-	blockPerDay  = consts.SECONDS_PER_DAY / milliToSec(consts.BLOCK_GENERATION_INTERVAL)
+const (
+	// Default block generation interval, in milliseconds, used to estimate
+	// how many blocks will be produced over a given timeframe.
+	// GnoSwap’s emission logic relies on this as an initial value,
+	// but actual block times may vary (e.g. due to network conditions).
+	// Governance or an admin can adjust it dynamically by calling
+	// [SetAvgBlockTimeInMs](https://github.com/gnoswap-labs/gnoswap/blob/a29e0f994466430618548ae992cca11a52f5102a/contract/r/gnoswap/gns/halving.gno#L359) to keep emission schedules accurate.
+	BLOCK_GENERATION_INTERVAL int64 = 2000
+	MILLISECONDS_PER_SECOND   int64 = 1000
 
-	avgBlockTimeMs int64 = consts.BLOCK_GENERATION_INTERVAL
+	SECONDS_PER_DAY = 86400
+)
+
+var (
+	blockGenMs   = milliToSec(BLOCK_GENERATION_INTERVAL)
+	blockPerYear = SECONDS_IN_YEAR / blockGenMs
+	blockPerDay  = SECONDS_PER_DAY / blockGenMs
+
+	avgBlockTimeMs = BLOCK_GENERATION_INTERVAL
 	perBlockMint         = avl.NewTree() // height => uint64
 )
 
@@ -285,7 +298,7 @@ func GetEmissionState() *EmissionState {
 
 // NewEmissionState creates a new emission state
 func NewEmissionState() *EmissionState {
-	now := time.Now().Unix() + milliToSec(consts.BLOCK_GENERATION_INTERVAL)
+	now := time.Now().Unix() + milliToSec(BLOCK_GENERATION_INTERVAL)
 	emissionEndTime := now + SECONDS_IN_YEAR*HALVING_END_YEAR
 
 	return &EmissionState{
@@ -409,9 +422,9 @@ func setAvgBlockTimeInMs(ms int64) error {
 	now := time.Now().Unix()
 
 	// sync blockPerYear, blockPerDay
-	// SECONDS_IN_YEAR, consts.SECONDS_PER_DAY must be in seconds
+	// SECONDS_IN_YEAR, SECONDS_PER_DAY must be in seconds
 	blockPerYear = secToMs(SECONDS_IN_YEAR) / ms
-	blockPerDay = secToMs(consts.SECONDS_PER_DAY) / ms
+	blockPerDay = secToMs(SECONDS_PER_DAY) / ms
 
 	// recalculate all remaining years (amountPerBlock)
 	es := GetEmissionState()

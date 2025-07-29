@@ -7,8 +7,6 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
-
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gns"
@@ -167,7 +165,7 @@ func depositGns(
 	}
 
 	balanceOfFn := func(tokenPath string, caller std.Address) int64 {
-		if tokenPath == consts.GOV_XGNS_PATH {
+		if tokenPath == GOV_XGNS_PATH {
 			return xgns.BalanceOf(caller)
 		}
 
