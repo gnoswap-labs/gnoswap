@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/p/gnoswap/consts"
+
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
@@ -38,9 +38,8 @@ func TestBurn(t *testing.T) {
 	mintAmount := int64(1000)
 	burnAmount := int64(200)
 
-	testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/launchpad"))
 
-	testing.SetRealm(std.NewCodeRealm(consts.LAUNCHPAD_PATH))
 	MintByLaunchPad(cross, launchpadAddress, mintAmount)
 	BurnByLaunchPad(cross, launchpadAddress, burnAmount)
 	expectedBalance := mintAmount - burnAmount
