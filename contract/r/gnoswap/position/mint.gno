@@ -77,7 +77,10 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 		))
 	}
 
-	gnft.Mint(cross, params.mintTo, positionIdFrom(id)) // owner, position ID
+	err := mintGNFT(id, params.mintTo)
+	if err != nil {
+		panic(err)
+	}
 
 	pool := pl.GetPoolFromPoolPath(poolKey)
 	positionKey := computePositionKey(params.caller, params.tickLower, params.tickUpper)
@@ -406,4 +409,14 @@ func parseAmounts(amount0Desired, amount1Desired, amount0Min, amount1Min string)
 // - string: A unique path string representing the liquidity pool.
 func computePoolPath(token0, token1 string, fee uint32) string {
 	return pl.GetPoolPath(token0, token1, fee)
+}
+
+func mintGNFT(positionID uint64, mintTo std.Address) error {
+	gnftID := positionIdFrom(positionID)
+	positionAddr := std.CurrentRealm().Address()
+
+	gnft.Mint(cross, positionAddr, gnftID) // owner, position ID
+	gnft.SetTokenURIByImageURI(cross, gnftID)
+
+	return gnft.TransferFrom(cross, positionAddr, mintTo, gnftID)
 }

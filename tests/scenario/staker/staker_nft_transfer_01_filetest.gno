@@ -173,7 +173,7 @@ func attemptNftTransfer() {
 	println("[INFO] test 1: non-owner tries to transfer")
 	testing.SetRealm(dummyRealm)
 
-	errorMessage := "[GNOSWAP-GNFT-001] caller has no permission || caller (g1v36k6mteta047h6lta047h6lta047h6lz7gmv8) is not the owner or operator of token (1)"
+	errorMessage := "caller is not token owner or approved"
 	uassert.AbortsWithMessage(t, errorMessage, func() {
 		gnft.TransferFrom(cross, adminAddr, dummyAddr, positionIdFrom(1))
 	})

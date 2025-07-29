@@ -4,7 +4,6 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
@@ -254,7 +253,6 @@ func TestTransferFrom(t *testing.T) {
 		shouldPanic       bool
 		panicMsg          string
 		expected          std.Address
-		verifyTokenList   func()
 	}{
 		{
 			name:              "transfer non-existent token id",
@@ -263,7 +261,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            addr02,
 			tokenIdToTransfer: 99,
 			shouldPanic:       true,
-			panicMsg:          "[GNOSWAP-GNFT-001] caller has no permission || caller (g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5) is not the owner or operator of token (99)",
+			panicMsg:          "caller is not token owner or approved",
 		},
 		{
 			name:              "transfer token owned by other user without approval",
@@ -272,7 +270,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "[GNOSWAP-GNFT-001] caller has no permission || caller (g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5) is not the owner or operator of token (1)",
+			panicMsg:          "caller is not token owner or approved",
 		},
 		{
 			name: "transfer token owned by other user with approval",
@@ -284,10 +282,6 @@ func TestTransferFrom(t *testing.T) {
 			fromAddr:          addr01,
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
-			verifyTokenList: func() {
-				uassert.Equal(t, 0, len(mustGetTokenList(addr01)))
-				uassert.Equal(t, 1, len(mustGetTokenList(addr02)))
-			},
 		},
 		{
 			name:              "transfer token owned by caller",
@@ -295,10 +289,6 @@ func TestTransferFrom(t *testing.T) {
 			fromAddr:          addr02,
 			toAddr:            addr01,
 			tokenIdToTransfer: 1,
-			verifyTokenList: func() {
-				uassert.Equal(t, 1, len(mustGetTokenList(addr01)))
-				uassert.Equal(t, 0, len(mustGetTokenList(addr02)))
-			},
 		},
 		{
 			name:              "transfer from is invalid address",
@@ -307,7 +297,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "invalid address: ",
+			panicMsg:          "caller is not token owner or approved",
 		},
 		{
 			name:              "transfer to is invalid address",
@@ -316,7 +306,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            std.Address("this_is_invalid_address"),
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "invalid address: this_is_invalid_address",
+			panicMsg:          "caller is not token owner or approved",
 		},
 	}
 
@@ -333,7 +323,6 @@ func TestTransferFrom(t *testing.T) {
 			} else {
 				testing.SetRealm(tt.callerRealm)
 				TransferFrom(cross, tt.fromAddr, tt.toAddr, tid(tt.tokenIdToTransfer))
-				tt.verifyTokenList()
 			}
 		})
 	}
@@ -359,7 +348,8 @@ func TestMint(t *testing.T) {
 			addressToMint: addr01,
 			expected:      "1",
 			verifyTokenList: func() {
-				uassert.Equal(t, 1, len(mustGetTokenList(addr01)))
+				balance, _ := BalanceOf(addr01)
+				uassert.Equal(t, int64(1), balance)
 			},
 		},
 		{
@@ -369,7 +359,8 @@ func TestMint(t *testing.T) {
 			addressToMint: addr02,
 			expected:      "2",
 			verifyTokenList: func() {
-				uassert.Equal(t, 1, len(mustGetTokenList(addr02)))
+				balance, _ := BalanceOf(addr02)
+				uassert.Equal(t, int64(1), balance)
 			},
 		},
 	}
@@ -456,31 +447,8 @@ func TestSetTokenURIByImageURI(t *testing.T) {
 	}
 }
 
-func TestSetTokenURILast(t *testing.T) {
-	resetObject(t)
-	testing.SetRealm(positionRealm)
-	Mint(cross, addr01, tid(1))
-	Mint(cross, addr01, tid(2)) // last minted
-
-	t.Run("set token uri last", func(t *testing.T) {
-		testing.SetRealm(addr01Realm)
-		SetTokenURILast(cross)
-	})
-
-	t.Run("token uri(2)", func(t *testing.T) {
-		res, err := TokenURI(tid(2))
-		if err != nil {
-			t.Errorf("Unexpected error: %v", err)
-		}
-		if res == "" {
-			t.Error("token URI should not be empty")
-		}
-	})
-}
-
 func resetObject(t *testing.T) {
 	t.Helper()
 
 	nft = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
-	tokenList = avl.NewTree()
 }

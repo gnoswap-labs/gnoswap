@@ -215,7 +215,7 @@ func testNftTransferRestrictions() {
 
 	println("[INFO] admin tries to transfer staked position 01 (should fail)")
 
-	errorMessage := "[GNOSWAP-GNFT-001] caller has no permission || caller (g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) is not the owner or operator of token (1)"
+	errorMessage := "caller is not token owner or approved"
 	uassert.AbortsWithMessage(t, errorMessage, func() {
 		gnft.TransferFrom(cross, stakerAddr, user2Addr, positionIdFrom(1))
 	})
