@@ -145,7 +145,8 @@ func initLaunchpadWithdrawTest(t *testing.T) {
 	depositor := testutils.TestAddress("user")
 	testing.SetOriginCaller(depositor)
 
-	depositGns(project.ID(), 30, depositAmount, depositor)
+	deposit, _, _, _, err := depositGns(project.ID(), 30, depositAmount, depositor)
+	uassert.NoError(t, err)
 
 	govStakerAddr, _ := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 	govStakerRealm := std.NewUserRealm(govStakerAddr)
