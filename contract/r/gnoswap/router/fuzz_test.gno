@@ -1057,7 +1057,10 @@ func TestFuzzFinalizeSwap(t *testing.T) {
 	t.Logf("Error breakdown: slippage=%d, wugnot=%d, exactOut=%d, unexpected=%d",
 		slippageErrorCount, wugnotErrorCount, exactOutErrorCount, unexpectedErrorCount)
 
-	// Compare with expected counts
+	// Note: The expected pass/fail figures are results from a simple analysis,
+	// so there may be differences from the actual results.
+	// To improve accuracy, detailed implementation of the swap functionality
+	// needs to be added to the generator.
 	uassert.Equal(t, gen.expectedPassCount, passCount)
 	uassert.Equal(t, gen.expectedFailCount, failCount)
 }
