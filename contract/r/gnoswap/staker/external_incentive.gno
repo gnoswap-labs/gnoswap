@@ -30,7 +30,7 @@ func CreateExternalIncentive(cur realm,
 	access.AssertIsUser(std.PreviousRealm())
 
 	// panic if pool does not exist
-	if !pl.DoesPoolPathExist(targetPoolPath) {
+	if !pl.ExistsPoolPath(targetPoolPath) {
 		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("targetPoolPath(%s) does not exist", targetPoolPath),

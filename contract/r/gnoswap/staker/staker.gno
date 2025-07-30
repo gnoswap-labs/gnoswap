@@ -286,7 +286,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 		warmups:           instantiateWarmup(currentHeight),
 	}
 
-	currentTick := pl.PoolGetSlot0Tick(poolPath)
+	currentTick := pl.GetSlot0Tick(poolPath)
 
 	deposits.set(positionId, deposit)
 	stakers.addDeposit(caller, positionId, deposit)
@@ -659,7 +659,7 @@ func applyUnStake(positionId uint64) error {
 	}
 
 	currentHeight := std.ChainHeight()
-	currentTick := pl.PoolGetSlot0Tick(deposit.targetPoolPath)
+	currentTick := pl.GetSlot0Tick(deposit.targetPoolPath)
 	signedLiquidity := i256.FromUint256(deposit.liquidity)
 	signedLiquidity = signedLiquidity.Neg(signedLiquidity)
 	if pn.PositionIsInRange(positionId) {
@@ -736,9 +736,7 @@ func getLiquidity(positionId uint64) *u256.Uint {
 }
 
 func getTokenPairBalanceFromPosition(poolPath string, positionId uint64) (string, string) {
-	pool := pl.GetPoolFromPoolPath(poolPath)
-
-	currentX96 := pool.Slot0SqrtPriceX96()
+	currentX96 := pl.GetSlot0SqrtPriceX96(poolPath)
 	lowerX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickLower(positionId))
 	upperX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickUpper(positionId))
 
