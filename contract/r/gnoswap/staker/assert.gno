@@ -5,6 +5,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/v1/gnft"
+	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 func assertIsDepositor(caller std.Address, positionId uint64) {
@@ -39,6 +40,15 @@ func assertIsPositionOwner(positionId uint64, caller std.Address) {
 		panic(makeErrorWithDetails(
 			errNoPermission,
 			ufmt.Sprintf("caller(%s) is not owner(%s)", caller.String(), owner.String()),
+		))
+	}
+}
+
+func assertPoolMustExist(poolPath string) {
+	if !(pl.DoesPoolPathExist(poolPath)) {
+		panic(makeErrorWithDetails(
+			errInvalidPoolPath,
+			ufmt.Sprintf("pool(%s) does not exist", poolPath),
 		))
 	}
 }
