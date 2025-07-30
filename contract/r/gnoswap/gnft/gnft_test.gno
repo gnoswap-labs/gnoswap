@@ -8,9 +8,6 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	prbac "gno.land/p/gnoswap/rbac"
-
-	"gno.land/r/gnoswap/v1/access"
 	_ "gno.land/r/gnoswap/v1/rbac" // initialize rbac package
 )
 
@@ -19,7 +16,7 @@ const (
 )
 
 var (
-	positionPath = "gno.land/r/gnoswap/v1/position"
+	positionPath  = "gno.land/r/gnoswap/v1/position"
 	positionRealm = std.NewCodeRealm(positionPath)
 
 	addr01      = testutils.TestAddress("addr01")
@@ -420,30 +417,6 @@ func TestBurn(t *testing.T) {
 				tt.verifyTokenList()
 			}
 		})
-	}
-}
-
-func TestSetTokenURIByImageURI(t *testing.T) {
-	testAddr := testutils.TestAddress("testAddr")
-	tokenID := grc721.TokenID("10")
-
-	positionAddr, _ := access.GetAddress(prbac.ROLE_POSITION.String())
-
-	// set position contract as caller
-	testing.SetOriginCaller(positionAddr)
-
-	// need to mint token to set owner
-	Mint(cross, testAddr, tokenID)
-	testing.SetOriginCaller(testAddr)
-
-	SetTokenURIByImageURI(cross, tokenID)
-
-	uri, err := TokenURI(tokenID)
-	if uri == "" {
-		t.Error("token URI should not be empty")
-	}
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
 	}
 }
 

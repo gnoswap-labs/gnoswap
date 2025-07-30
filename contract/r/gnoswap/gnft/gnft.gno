@@ -121,45 +121,7 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 		panic(err)
 	}
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
-		"SetTokenURI",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"lpTokenId", string(tid),
-		"tokenURI", string(tURI),
-	)
-
 	return true, nil
-}
-
-// SetTokenURIByImageURI generates and sets a new token URI for a specified token ID using a random image URI.
-//
-// Parameters:
-//   - tid (grc721.TokenID): The ID of the token for which the URI will be set.
-//
-// Panics:
-//   - If the contract is halted.
-//   - If the caller is not the owner of the token.
-//   - If the token URI cannot be set.
-func SetTokenURIByImageURI(cur realm, tid grc721.TokenID) {
-	halt.AssertIsNotHaltedPosition()
-
-	tokenURI := genImageURI(generateRandInstance())
-
-	err := setTokenURI(tid, grc721.TokenURI(tokenURI))
-	if err != nil {
-		panic(err)
-	}
-
-	previousRealm := std.PreviousRealm()
-	std.Emit(
-		"SetTokenURI",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"lpTokenId", string(tid),
-		"tokenURI", string(tokenURI),
-	)
 }
 
 // SafeTransferFrom securely transfers ownership of a token from one address to another.
@@ -268,18 +230,42 @@ func IsApprovedForAll(owner, operator std.Address) bool {
 	return nft.IsApprovedForAll(owner, operator)
 }
 
-// Mint creates a new NFT and assigns it to the specified address (only callable by owner)
+// Mint creates a new NFT and assigns it to the specified address (only callable by owner).
+// The minting process involves three steps:
+// 1. Minting the token to the owner (position contract) address
+// 2. Setting the token URI with a randomly generated SVG image
+// 3. Transferring the token to the specified recipient address
+//
 // Parameters:
-//   - to: The address or username to mint the token to
+//   - to: The address that will receive the newly minted NFT
 //   - tid: The token ID to assign to the new NFT
 //
 // Returns:
 //   - grc721.TokenID: The ID of the newly minted token
+//
+// Panics:
+//   - If the position contract is halted
+//   - If the caller is not the position contract owner
+//   - If minting, setting URI, or transferring fails
 func Mint(cur realm, to std.Address, tid grc721.TokenID) grc721.TokenID {
 	halt.AssertIsNotHaltedPosition()
 	owner.AssertOwnedByPrevious()
 
-	checkErr(nft.Mint(to, tid))
+	// owner is the position contract
+	ownerAddress := owner.Owner()
+
+	// mint the token to the owner address
+	checkErr(nft.Mint(ownerAddress, tid))
+
+	// set the token URI
+	tokenURI := genImageURI(generateRandInstance())
+	err := setTokenURI(tid, grc721.TokenURI(tokenURI))
+	if err != nil {
+		panic(err)
+	}
+
+	// transfer the token owner to the to address
+	checkErr(nft.TransferFrom(ownerAddress, to, tid))
 
 	return tid
 }
@@ -331,6 +317,15 @@ func setTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) error {
 	if err != nil {
 		return makeErrorWithDetails(err, ufmt.Sprintf("token id (%s)", tid))
 	}
+
+	previousRealm := std.PreviousRealm()
+	std.Emit(
+		"SetTokenURI",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"lpTokenId", string(tid),
+		"tokenURI", string(tURI),
+	)
 
 	return nil
 }
