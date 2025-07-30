@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/ufmt"
 )
 
 func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
@@ -21,84 +22,65 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 	startTime := currentTime + 86400   // 1 day later
 	endTime := startTime + (86400 * 7) // 7 days after start
 
+	// Define allowed tokens and test scenarios
+	allowedTokens := []string{GNS_PATH, WUGNOT_PATH, "token0_path", "token1_path"}
+	accounts := []std.Address{account1, account2}
+	amounts := []int64{1000, 2000, 1500, 2500, 3000, 3500}
+
+	// Test various combinations
 	tests := []struct {
-		name        string
-		creator     std.Address
-		rewardToken string
-		amount      int64
-		shouldPass  bool
+		accountIdx int
+		tokenIdx   int
+		amountIdx  int
 	}{
-		{
-			name:        "create incentive with GNS token",
-			creator:     account1,
-			rewardToken: GNS_PATH,
-			amount:      1000,
-			shouldPass:  true,
-		},
-		{
-			name:        "create incentive with WUGNOT token",
-			creator:     account1,
-			rewardToken: WUGNOT_PATH,
-			amount:      2000,
-			shouldPass:  true,
-		},
-		{
-			name:        "create incentive with pool's first token",
-			creator:     account2,
-			rewardToken: "token0_path",
-			amount:      1500,
-			shouldPass:  true,
-		},
-		{
-			name:        "create incentive with pool's second token",
-			creator:     account2,
-			rewardToken: "token1_path",
-			amount:      2500,
-			shouldPass:  true,
-		},
-		{
-			name:        "create incentive with different token by same account",
-			creator:     account1,
-			rewardToken: "token0_path",
-			amount:      3000,
-			shouldPass:  true,
-		},
-		{
-			name:        "create incentive with same token by different account",
-			creator:     account2,
-			rewardToken: GNS_PATH,
-			amount:      3500,
-			shouldPass:  true,
-		},
+		{0, 0, 0}, // account1, GNS, 1000
+		{0, 1, 1}, // account1, WUGNOT, 2000
+		{1, 2, 2}, // account2, token0_path, 1500
+		{1, 3, 3}, // account2, token1_path, 2500
+		{0, 2, 4}, // account1, token0_path, 3000
+		{1, 0, 5}, // account2, GNS, 3500
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+	for i, tc := range tests {
+		creator := accounts[tc.accountIdx]
+		token := allowedTokens[tc.tokenIdx]
+		amount := amounts[tc.amountIdx]
+
+		incentiveId := ufmt.Sprintf("%d", i+1)
+		name := ufmt.Sprintf("account_%d_token_%s_amount_%d", tc.accountIdx+1, token, amount)
+
+		t.Run(name, func(t *testing.T) {
 			// create incentive
 			incentive := &ExternalIncentive{
-				incentiveId:    "1",
+				incentiveId:    incentiveId,
 				startTimestamp: startTime,
 				endTimestamp:   endTime,
 				startHeight:    100,
 				endHeight:      200,
-				rewardToken:    tc.rewardToken,
-				rewardAmount:   tc.amount,
-				refundee:       tc.creator,
+				rewardToken:    token,
+				rewardAmount:   amount,
+				refundee:       creator,
 			}
 
 			// add incentive
-			pool.incentives.create(tc.creator, incentive)
+			pool.incentives.create(creator, incentive)
 
-			if tc.shouldPass {
-				// check if incentive was actually created
-				ictv, exists := pool.incentives.Get(incentive.incentiveId)
-				if !exists {
-					t.Error("incentive was not created")
-				}
+			// verify incentive was created
+			ictv, exists := pool.incentives.Get(incentive.incentiveId)
+			if !exists {
+				t.Fatal("incentive was not created")
+			}
 
-				if ictv.rewardAmount != tc.amount {
-					t.Errorf("expected reward amount %d, got %d", tc.amount, ictv.rewardAmount)
-				}
+			if ictv.rewardAmount != amount {
+				t.Errorf("expected reward amount %d, got %d", amount, ictv.rewardAmount)
+			}
+
+			if ictv.rewardToken != token {
+				t.Errorf("expected reward token %s, got %s", token, ictv.rewardToken)
+			}
+
+			if ictv.refundee != creator {
+				t.Errorf("expected refundee %s, got %s", creator, ictv.refundee)
 			}
 		})
 	}
