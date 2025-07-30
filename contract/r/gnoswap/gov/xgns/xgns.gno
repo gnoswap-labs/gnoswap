@@ -96,7 +96,6 @@ func Render(path string) string {
 // - Propagates any error from the ledger.Mint function.
 func Mint(cur realm, to std.Address, amount int64) {
 	halt.AssertIsNotHaltedXGns()
-	halt.AssertIsNotHaltedWithdraw()
 
 	// only gov staker contract can call Mint
 	caller := std.PreviousRealm().Address()
@@ -121,7 +120,6 @@ func Mint(cur realm, to std.Address, amount int64) {
 // - Propagates any error from the ledger.Mint function.
 func MintByLaunchPad(cur realm, to std.Address, amount int64) {
 	halt.AssertIsNotHaltedXGns()
-	halt.AssertIsNotHaltedWithdraw()
 
 	// only launchpad contract can call MintByLaunchPad
 	caller := std.PreviousRealm().Address()
@@ -147,7 +145,6 @@ func MintByLaunchPad(cur realm, to std.Address, amount int64) {
 // - Propagates any error from the ledger.Burn function.
 func Burn(cur realm, from std.Address, amount int64) {
 	halt.AssertIsNotHaltedXGns()
-	halt.AssertIsNotHaltedWithdraw()
 
 	// only gov staker contract can call Burn
 	caller := std.PreviousRealm().Address()
@@ -158,7 +155,6 @@ func Burn(cur realm, from std.Address, amount int64) {
 
 func BurnByLaunchPad(cur realm, from std.Address, amount int64) {
 	halt.AssertIsNotHaltedXGns()
-	halt.AssertIsNotHaltedWithdraw()
 
 	// only launchpad contract can call BurnByLaunchPad
 	caller := std.PreviousRealm().Address()
