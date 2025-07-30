@@ -72,7 +72,7 @@ func testDrySwapFailureCases(t *testing.T) {
 
 	// Create pool
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 	pool.CreatePool(
 		cross,
 		barPath,
@@ -91,7 +91,6 @@ func testDrySwapFailureCases(t *testing.T) {
 
 	// DrySwap should fail when no liquidity exists
 	dryPoolIn, dryPoolOut, _ := pool.DrySwap(
-		cross,
 		fooPath,
 		barPath,
 		FeeTier500,
@@ -137,7 +136,6 @@ func testDrySwapFailureCases(t *testing.T) {
 	println("[INFO] Available liquidity is much smaller than requested amount")
 
 	dryPoolInLarge, dryPoolOutLarge, _ := pool.DrySwap(
-		cross,
 		fooPath,
 		barPath,
 		FeeTier500,

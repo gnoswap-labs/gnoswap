@@ -98,6 +98,7 @@ func main() {
 		liqToMint,
 		adminAddr,
 	)
+	thisPool = pool.GetPool(barPath, fooPath, fee100)
 	println("[EXPECTED] Pool liquidity after first mint:", thisPool.Liquidity().ToString(), "expected: 10000000000")
 	println()
 
@@ -114,6 +115,7 @@ func main() {
 		liqToMint,
 		adminAddr,
 	)
+	thisPool = pool.GetPool(barPath, fooPath, fee100)
 	println("[EXPECTED] Pool liquidity after second mint:", thisPool.Liquidity().ToString(), "expected: 10000000000")
 	println()
 
@@ -149,7 +151,8 @@ func main() {
 		MIN_PRICE,
 		adminAddr,
 	)
-
+	
+	thisPool = pool.GetPool(barPath, fooPath, fee100)
 	println("[EXPECTED] Pool tick after swap:", thisPool.Slot0Tick(), "expected: -24082")
 	println("[EXPECTED] Pool sqrt price after swap:", thisPool.Slot0SqrtPriceX96().ToString(), "expected:", testSqrtSubOne.ToString())
 	println("[EXPECTED] Pool liquidity after swap:", thisPool.Liquidity().ToString(), "expected: 20000000000")

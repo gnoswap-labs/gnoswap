@@ -109,7 +109,7 @@ func createPool() {
 
 	println("[INFO] set pool creation fee to 0")
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] create pool gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000 at tick 0")
 	pl.CreatePool(

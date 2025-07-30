@@ -75,7 +75,7 @@ func testDrySwapVsActualSwap(t *testing.T) {
 
 	// Create pool
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 	pool.CreatePool(
 		cross,
 		barPath,
@@ -112,7 +112,6 @@ func testDrySwapVsActualSwap(t *testing.T) {
 	println("[INFO] Amount specified:", amountSpecified)
 
 	dryPoolIn, dryPoolOut, _ := pool.DrySwap(
-		cross,
 		fooPath,
 		barPath,
 		FeeTier500,

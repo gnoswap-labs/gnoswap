@@ -83,7 +83,7 @@ func setupPools(t *testing.T) {
 	pool.InitPoolTest(t)
 
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 
 	// Create Foo:Bar pool with fee 500
 	println("[INFO] Creating Foo:Bar pool with fee tier 500")
@@ -323,7 +323,6 @@ func testPoolEdgeCases(t *testing.T) {
 	println("[INFO] Attempting swap with amount larger than available liquidity")
 	testing.SetRealm(rouRealm)
 	dryIn, dryOut, _ := pool.DrySwap(
-		cross,
 		fooPath,
 		barPath,
 		FeeTier500,

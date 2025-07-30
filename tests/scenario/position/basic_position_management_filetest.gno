@@ -76,7 +76,7 @@ func setupPool() {
 	if !poolSetup {
 		println("[INFO] Setting up pool for position tests")
 		testing.SetRealm(adminRealm)
-		pl.SetPoolCreationFeeByAdmin(cross, 0)
+		pl.SetPoolCreationFee(cross, 0)
 		gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
 		pl.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 		poolSetup = true

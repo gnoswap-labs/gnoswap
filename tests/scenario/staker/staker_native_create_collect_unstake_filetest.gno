@@ -117,7 +117,7 @@ func initWithShortWarmUp() {
 	sr.SetUnStakingFeeByAdmin(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] set community pool distribution to 0%")
 	emission.ChangeDistributionPctByAdmin(

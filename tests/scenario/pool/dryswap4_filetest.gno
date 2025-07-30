@@ -72,7 +72,7 @@ func testDrySwapZeroForOneFalse(t *testing.T) {
 
 	// Create pool
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 	pool.CreatePool(
 		cross,
 		barPath,
@@ -110,7 +110,6 @@ func testDrySwapZeroForOneFalse(t *testing.T) {
 	println("[INFO] Direction: foo (Token1) -> bar (Token0)")
 
 	poolIn, poolOut, _ := pool.DrySwap(
-		cross,
 		fooPath,
 		barPath,
 		FeeTier500,
@@ -135,7 +134,6 @@ func testDrySwapZeroForOneFalse(t *testing.T) {
 	println("[INFO] This means exact output amount is specified")
 
 	poolInNeg, poolOutNeg, _ := pool.DrySwap(
-		cross,
 		fooPath,
 		barPath,
 		FeeTier500,
