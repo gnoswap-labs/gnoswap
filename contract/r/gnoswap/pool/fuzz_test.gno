@@ -3,6 +3,8 @@ package pool
 import (
 	"testing"
 
+	"gno.land/r/gnoswap/v1/common"
+
 	fuzzer "gno.land/p/gnoswap/fuzztest"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -344,6 +346,208 @@ func TestFuzzOverflows(t *testing.T) {
 					panic("value exceeds int128 range")
 				}
 			}, tt.shouldFail, tt.description)
+		}
+	})
+}
+
+// TestFuzzTickToSqrtPriceX96 tests TickMathGetSqrtRatioAtTick function
+func TestFuzzTickToSqrtPriceX96(t *testing.T) {
+	helper := newPoolTestHelper(t)
+
+	// Test valid tick range
+	t.Run("ValidTickRange", func(t *testing.T) {
+		tickGen := fuzzer.IntRange(-887272, 887272)
+
+		for i := 0; i < 1000; i++ {
+			tick := int32(tickGen.Generate().(int))
+
+			helper.assertPanic(func() {
+				sqrtPrice := common.TickMathGetSqrtRatioAtTick(tick)
+
+				// Verify result is within valid range
+				minSqrtRatio := u256.MustFromDecimal("4295128739")
+				maxSqrtRatio := u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")
+
+				if sqrtPrice.Lt(minSqrtRatio) || sqrtPrice.Gt(maxSqrtRatio) {
+					t.Errorf("sqrtPrice %s out of valid range for tick %d", sqrtPrice.ToString(), tick)
+				}
+
+				// Verify monotonicity: higher tick = higher sqrtPrice
+				if tick < 887272 {
+					nextSqrtPrice := common.TickMathGetSqrtRatioAtTick(tick + 1)
+					if !nextSqrtPrice.Gt(sqrtPrice) {
+						t.Errorf("Monotonicity violated: tick %d sqrtPrice %s >= tick %d sqrtPrice %s",
+							tick, sqrtPrice.ToString(), tick+1, nextSqrtPrice.ToString())
+					}
+				}
+			}, false, "valid tick to sqrtPrice conversion")
+		}
+	})
+
+	// Test invalid tick range
+	t.Run("InvalidTickRange", func(t *testing.T) {
+		invalidTicks := []int32{
+			-887273,
+			-1000000,
+			887273,
+			1000000,
+			-2147483648, // MIN_INT32
+			2147483647,  // MAX_INT32
+		}
+
+		for _, tick := range invalidTicks {
+			helper.assertPanic(func() {
+				common.TickMathGetSqrtRatioAtTick(tick)
+			}, true, "invalid tick should panic")
+		}
+	})
+
+	// Test boundary values
+	t.Run("BoundaryValues", func(t *testing.T) {
+		boundaryTests := []struct {
+			tick              int32
+			expectedSqrtPrice string
+			description       string
+		}{
+			{-887272, "4295128739", "MIN_TICK"},
+			{887272, "1461446703485210103287273052203988822378723970342", "MAX_TICK"},
+			{0, "79228162514264337593543950336", "ZERO_TICK"}, // sqrt(1) * 2^96
+		}
+
+		for _, test := range boundaryTests {
+			sqrtPrice := common.TickMathGetSqrtRatioAtTick(test.tick)
+			expected := u256.MustFromDecimal(test.expectedSqrtPrice)
+
+			if !sqrtPrice.Eq(expected) {
+				t.Errorf("%s: expected sqrtPrice %s, got %s",
+					test.description, test.expectedSqrtPrice, sqrtPrice.ToString())
+			}
+		}
+	})
+}
+
+func TestFuzzSqrtPriceX96ToTick(t *testing.T) {
+	helper := newPoolTestHelper(t)
+
+	t.Run("Valid sqrtPrice range", func(t *testing.T) {
+		for i := 0; i < 1000; i++ {
+			// Generate random tick and get its sqrtPrice
+			tickGen := fuzzer.IntRange(-887272, 887272)
+			originalTick := int32(tickGen.Generate().(int))
+			sqrtPrice := common.TickMathGetSqrtRatioAtTick(originalTick)
+
+			helper.assertPanic(func() {
+				resultTick := common.TickMathGetTickAtSqrtRatio(sqrtPrice)
+
+				// The result should be the same or slightly lower due to rounding
+				// TickMathGetTickAtSqrtRatio returns the greatest tick for which
+				// getSqrtRatioAtTick(tick) <= sqrtPriceX96
+				if resultTick > originalTick {
+					t.Errorf("Result tick %d > original tick %d", resultTick, originalTick)
+				}
+
+				// The difference should be at most 1 due to rounding
+				if originalTick-resultTick > 1 {
+					t.Errorf("Tick difference too large: original %d, result %d", originalTick, resultTick)
+				}
+			}, false, "valid sqrtPrice to tick conversion")
+		}
+	})
+
+	t.Run("Invalid sqrtPrice range", func(t *testing.T) {
+		invalidSqrtPrices := []string{
+			"0",
+			"1",
+			"4295128738", // MIN_SQRT_RATIO - 1
+			"1461446703485210103287273052203988822378723970343", // MAX_SQRT_RATIO + 1
+			MAX_UINT256,
+		}
+
+		for _, sqrtPriceStr := range invalidSqrtPrices {
+			sqrtPrice := u256.MustFromDecimal(sqrtPriceStr)
+			helper.assertPanic(func() {
+				common.TickMathGetTickAtSqrtRatio(sqrtPrice)
+			}, true, "invalid sqrtPrice should panic")
+		}
+	})
+
+	t.Run("Round trip conversion", func(t *testing.T) {
+		tickGen := fuzzer.IntRange(-887272, 887271) // Exclude MAX_TICK (887272)
+
+		for i := 0; i < 500; i++ {
+			originalTick := int32(tickGen.Generate().(int))
+
+			// Convert tick -> sqrtPrice -> tick
+			sqrtPrice := common.TickMathGetSqrtRatioAtTick(originalTick)
+			resultTick := common.TickMathGetTickAtSqrtRatio(sqrtPrice)
+
+			// Due to rounding, resultTick should be either originalTick or originalTick-1
+			if resultTick != originalTick && resultTick != originalTick-1 {
+				t.Errorf("Round-trip conversion failed: original %d, result %d", originalTick, resultTick)
+			}
+
+			// If we convert the resultTick back to sqrtPrice, it should be <= original sqrtPrice
+			resultSqrtPrice := common.TickMathGetSqrtRatioAtTick(resultTick)
+			if resultSqrtPrice.Gt(sqrtPrice) {
+				t.Errorf("Round-trip sqrtPrice increased: original %s, result %s",
+					sqrtPrice.ToString(), resultSqrtPrice.ToString())
+			}
+		}
+
+		// Special test for MAX_TICK
+		maxTick := int32(887272)
+		maxSqrtPrice := common.TickMathGetSqrtRatioAtTick(maxTick)
+
+		// TickMathGetTickAtSqrtRatio should panic for MAX_SQRT_RATIO
+		helper.assertPanic(func() {
+			common.TickMathGetTickAtSqrtRatio(maxSqrtPrice)
+		}, true, "MAX_SQRT_RATIO should panic in TickMathGetTickAtSqrtRatio")
+	})
+
+	t.Run("Precision at boundaries", func(t *testing.T) {
+		// Test ticks near boundaries (excluding MAX_TICK)
+		boundaryTicks := []int32{
+			-887272, -887271, -887270, // Near MIN_TICK
+			-1, 0, 1, // Near zero
+			887270, 887271, // Near MAX_TICK (excluding 887272)
+		}
+
+		for _, tick := range boundaryTicks {
+			sqrtPrice := common.TickMathGetSqrtRatioAtTick(tick)
+			resultTick := common.TickMathGetTickAtSqrtRatio(sqrtPrice)
+
+			// Verify the invariant: getSqrtRatioAtTick(resultTick) <= sqrtPrice < getSqrtRatioAtTick(resultTick + 1)
+			resultSqrtPrice := common.TickMathGetSqrtRatioAtTick(resultTick)
+			if resultSqrtPrice.Gt(sqrtPrice) {
+				t.Errorf("Invariant violated at tick %d: resultSqrtPrice %s > sqrtPrice %s",
+					tick, resultSqrtPrice.ToString(), sqrtPrice.ToString())
+			}
+
+			if resultTick < 887272 {
+				nextSqrtPrice := common.TickMathGetSqrtRatioAtTick(resultTick + 1)
+				if !sqrtPrice.Lt(nextSqrtPrice) {
+					t.Errorf("Invariant violated at tick %d: sqrtPrice %s >= nextSqrtPrice %s",
+						tick, sqrtPrice.ToString(), nextSqrtPrice.ToString())
+				}
+			}
+		}
+
+		// Special test for edge case: sqrtPrice values near MAX_SQRT_RATIO
+		maxSqrtRatio := u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")
+
+		// Test that sqrtPrice < MAX_SQRT_RATIO works
+		justBelowMax := new(u256.Uint).Sub(maxSqrtRatio, u256.One())
+		tick := common.TickMathGetTickAtSqrtRatio(justBelowMax)
+		if tick != 887271 {
+			t.Errorf("Expected tick 887271 for sqrtPrice just below MAX_SQRT_RATIO, got %d", tick)
+		}
+
+		// Test MIN_TICK edge case
+		minTick := int32(-887272)
+		minSqrtPrice := common.TickMathGetSqrtRatioAtTick(minTick)
+		resultMinTick := common.TickMathGetTickAtSqrtRatio(minSqrtPrice)
+		if resultMinTick != minTick {
+			t.Errorf("MIN_TICK round-trip failed: expected %d, got %d", minTick, resultMinTick)
 		}
 	})
 }
