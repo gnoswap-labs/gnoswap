@@ -114,7 +114,7 @@ func MustOwnerOf(tid grc721.TokenID) std.Address {
 func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
 	halt.AssertIsNotHaltedPosition()
 
-	assertIsEmptyTokenURI(tid)
+	assertIsValidTokenURI(tid)
 
 	err := setTokenURI(tid, tURI)
 	if err != nil {
