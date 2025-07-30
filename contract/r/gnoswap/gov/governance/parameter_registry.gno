@@ -5,15 +5,31 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
+
 	cp "gno.land/r/gnoswap/v1/community_pool"
 	en "gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/gns"
-	"gno.land/r/gnoswap/v1/halt"
+
 	pl "gno.land/r/gnoswap/v1/pool"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 	rr "gno.land/r/gnoswap/v1/router"
 	sr "gno.land/r/gnoswap/v1/staker"
+
+	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/v1/halt"
+)
+
+// Package paths
+const (
+	COMMON_PATH         = "gno.land/r/gnoswap/v1/common"
+	COMMUNITY_POOL_PATH = "gno.land/r/gnoswap/v1/community_pool"
+	EMISSION_PATH       = "gno.land/r/gnoswap/v1/emission"
+	GNS_PATH            = "gno.land/r/gnoswap/v1/gns"
+	GOV_GOVERNANCE_PATH = "gno.land/r/gnoswap/v1/gov/governance"
+	POOL_PATH           = "gno.land/r/gnoswap/v1/pool"
+	PROTOCOL_FEE_PATH   = "gno.land/r/gnoswap/v1/protocol_fee"
+	ROUTER_PATH         = "gno.land/r/gnoswap/v1/router"
+	STAKER_PATH         = "gno.land/r/gnoswap/v1/staker"
+	HALT_PATH           = "gno.land/r/gnoswap/v1/halt"
 )
 
 // ParameterHandler interface defines the contract for parameter execution handlers.
@@ -26,10 +42,10 @@ type ParameterHandler interface {
 // ParameterHandlerOptions contains the configuration and execution logic for a parameter handler.
 // This struct encapsulates all information needed to identify and execute a parameter change.
 type ParameterHandlerOptions struct {
-	pkgPath     string                   // Package path of the target contract
-	function    string                   // Function name to be called
-	paramCount  int                      // Expected number of parameters
-	handlerFunc func([]string) error     // Function that executes the parameter change
+	pkgPath     string               // Package path of the target contract
+	function    string               // Function name to be called
+	paramCount  int                  // Expected number of parameters
+	handlerFunc func([]string) error // Function that executes the parameter change
 }
 
 // HandlerKey generates a unique key for this handler based on package path and function name.
@@ -53,7 +69,7 @@ func (h *ParameterHandlerOptions) Execute(params []string) error {
 	if len(params) != h.paramCount {
 		return ufmt.Errorf("expected %d parameters, got %d", h.paramCount, len(params))
 	}
-	
+
 	// Create realm context function and execute handler
 	fn := func(cur realm) error {
 		return h.handlerFunc(params)
@@ -73,9 +89,9 @@ func (h *ParameterHandlerOptions) Execute(params []string) error {
 // Returns:
 //   - ParameterHandler: configured parameter handler interface
 func NewParameterHandlerOptions(
-	pkgPath, 
-	function string, 
-	paramCount int, 
+	pkgPath,
+	function string,
+	paramCount int,
 	handlerFunc func([]string) error,
 ) ParameterHandler {
 	return &ParameterHandlerOptions{
@@ -126,7 +142,7 @@ func (r *ParameterRegistry) handler(pkgPath, function string) (ParameterHandler,
 	if !ok {
 		return nil, ufmt.Errorf("failed to cast handler %s to ParameterHandler", key)
 	}
-	
+
 	return &handler, nil
 }
 
@@ -163,7 +179,7 @@ func createParameterHandlers() *ParameterRegistry {
 	handlers := []*ParameterHandlerOptions{
 		// Common system controls
 		{
-			pkgPath:    consts.COMMON_PATH,
+			pkgPath:    COMMON_PATH,
 			function:   "SetHaltLevel",
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
@@ -175,7 +191,7 @@ func createParameterHandlers() *ParameterRegistry {
 
 		// Community pool token transfers
 		{
-			pkgPath:    consts.COMMUNITY_POOL_PATH,
+			pkgPath:    COMMUNITY_POOL_PATH,
 			function:   "TransferToken",
 			paramCount: 3,
 			handlerFunc: func(params []string) error {
@@ -193,7 +209,7 @@ func createParameterHandlers() *ParameterRegistry {
 
 		// Emission distribution configuration
 		{
-			pkgPath:    consts.EMISSION_PATH,
+			pkgPath:    EMISSION_PATH,
 			function:   "ChangeDistributionPct",
 			paramCount: 8,
 			handlerFunc: func(params []string) error {
@@ -206,7 +222,7 @@ func createParameterHandlers() *ParameterRegistry {
 				pct03 := parseNumber(params[5], kindInt64).(int64) // pct03
 				target04 := parseNumber(params[6], kindInt).(int)  // target04
 				pct04 := parseNumber(params[7], kindInt64).(int64) // pct04
-				
+
 				// Update emission distribution percentages
 				en.ChangeDistributionPct(
 					cross,
@@ -226,7 +242,7 @@ func createParameterHandlers() *ParameterRegistry {
 
 		// GNS token configuration
 		{
-			pkgPath:    consts.GNS_PATH,
+			pkgPath:    GNS_PATH,
 			function:   "SetAvgBlockTimeInMs",
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
@@ -240,7 +256,7 @@ func createParameterHandlers() *ParameterRegistry {
 
 		// Governance configuration changes
 		{
-			pkgPath:    consts.GOV_GOVERNANCE_PATH,
+			pkgPath:    GOV_GOVERNANCE_PATH,
 			function:   "Reconfigure",
 			paramCount: 7,
 			handlerFunc: func(params []string) error {
@@ -261,7 +277,7 @@ func createParameterHandlers() *ParameterRegistry {
 					votingWeightSmoothingDuration,
 					quorum,
 					proposalCreationThreshold,
-					executionDelay, 
+					executionDelay,
 					executionWindow,
 				)
 
@@ -271,7 +287,7 @@ func createParameterHandlers() *ParameterRegistry {
 
 		// Pool protocol fee configuration
 		{
-			pkgPath:    consts.POOL_PATH,
+			pkgPath:    POOL_PATH,
 			function:   "SetFeeProtocol",
 			paramCount: 2,
 			handlerFunc: func(params []string) error {
@@ -300,7 +316,7 @@ func createParameterHandlers() *ParameterRegistry {
 		},
 		// Pool creation fee
 		{
-			pkgPath:    consts.POOL_PATH,
+			pkgPath:    POOL_PATH,
 			function:   "SetPoolCreationFee",
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
@@ -311,7 +327,7 @@ func createParameterHandlers() *ParameterRegistry {
 		},
 		// Pool withdrawal fee
 		{
-			pkgPath:    consts.POOL_PATH,
+			pkgPath:    POOL_PATH,
 			function:   "SetWithdrawalFee",
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
@@ -323,7 +339,7 @@ func createParameterHandlers() *ParameterRegistry {
 
 		// Protocol fee distribution
 		{
-			pkgPath:    consts.PROTOCOL_FEE_PATH,
+			pkgPath:    PROTOCOL_FEE_PATH,
 			function:   "SetDevOpsPct",
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
@@ -335,7 +351,7 @@ func createParameterHandlers() *ParameterRegistry {
 
 		// Router swap fee
 		{
-			pkgPath:    consts.ROUTER_PATH,
+			pkgPath:    ROUTER_PATH,
 			function:   "SetSwapFee",
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
@@ -347,7 +363,7 @@ func createParameterHandlers() *ParameterRegistry {
 
 		// Staker configuration handlers
 		{
-			pkgPath:    consts.STAKER_PATH,
+			pkgPath:    STAKER_PATH,
 			function:   "SetDepositGnsAmount",
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
@@ -357,7 +373,7 @@ func createParameterHandlers() *ParameterRegistry {
 			},
 		},
 		{
-			pkgPath:    consts.STAKER_PATH,
+			pkgPath:    STAKER_PATH,
 			function:   "SetPoolTier",
 			paramCount: 2,
 			handlerFunc: func(params []string) error {
@@ -371,7 +387,7 @@ func createParameterHandlers() *ParameterRegistry {
 			},
 		},
 		{
-			pkgPath:    consts.STAKER_PATH,
+			pkgPath:    STAKER_PATH,
 			function:   "ChangePoolTier",
 			paramCount: 2,
 			handlerFunc: func(params []string) error {
@@ -385,7 +401,7 @@ func createParameterHandlers() *ParameterRegistry {
 			},
 		},
 		{
-			pkgPath:    consts.STAKER_PATH,
+			pkgPath:    STAKER_PATH,
 			function:   "RemovePoolTier",
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
@@ -395,17 +411,18 @@ func createParameterHandlers() *ParameterRegistry {
 			},
 		},
 		{
-			pkgPath:    consts.STAKER_PATH,
+			pkgPath:    STAKER_PATH,
 			function:   "SetUnStakingFee",
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
 				// Set fee charged for unstaking operations
-				sr.SetUnStakingFee(cross, parseUint64(params[0]))
+				fee := parseNumber(params[0], kindInt64).(int64)
+				sr.SetUnStakingFee(cross, fee)
 				return nil
 			},
 		},
 		{
-			pkgPath:    consts.STAKER_PATH,
+			pkgPath:    STAKER_PATH,
 			function:   "SetWarmUp",
 			paramCount: 2,
 			handlerFunc: func(params []string) error {
@@ -420,7 +437,7 @@ func createParameterHandlers() *ParameterRegistry {
 
 		// System halt controls
 		{
-			pkgPath:    consts.HALT_PATH,
+			pkgPath:    HALT_PATH,
 			function:   "SetHaltLevel",
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
@@ -431,7 +448,7 @@ func createParameterHandlers() *ParameterRegistry {
 			},
 		},
 		{
-			pkgPath:    consts.HALT_PATH,
+			pkgPath:    HALT_PATH,
 			function:   "SetOperationStatus",
 			paramCount: 2,
 			handlerFunc: func(params []string) error {

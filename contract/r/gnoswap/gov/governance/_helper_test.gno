@@ -24,6 +24,8 @@ var (
 	fee3000 uint32 = 3000
 
 	max_timeout int64 = 9999999999
+
+	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 )
 
 // Realms to mock frames

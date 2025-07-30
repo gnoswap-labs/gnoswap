@@ -1,18 +1,12 @@
 package rbac
 
 import (
-	"errors"
 	"std"
-
-	"gno.land/p/demo/ufmt"
-	oo "gno.land/p/oxtekgrinder/ownable2step"
 )
-
-var ErrUnauthorized = errors.New("caller is not owner")
 
 // RBAC encapsulates and manages toles and their permissions.
 type RBAC struct {
-	ownable *oo.Ownable2Step
+	ownable *Ownable2Step
 	// roles maps role names to their respective `Role` objects
 	roles map[string]*Role
 }
@@ -20,14 +14,14 @@ type RBAC struct {
 // New creates a new RBAC instance.
 func New() *RBAC {
 	return &RBAC{
-		ownable: oo.New(),
+		ownable: newOwnable2StepWithAddress(std.OriginCaller()),
 		roles:   make(map[string]*Role),
 	}
 }
 
 func NewRBACWithAddress(addr std.Address) *RBAC {
 	return &RBAC{
-		ownable: oo.NewWithAddress(addr),
+		ownable: newOwnable2StepWithAddress(addr),
 		roles:   make(map[string]*Role),
 	}
 }
@@ -47,7 +41,7 @@ func (rb *RBAC) IsAuthorized(roleName string, addr std.Address) bool {
 // Returns an error if the role already exists.
 func (rb *RBAC) RegisterRole(roleName string) error {
 	if rb.existsRole(roleName) {
-		return ufmt.Errorf("role %s already exists", roleName)
+		return ErrRoleAlreadyExists
 	}
 
 	rb.roles[roleName] = NewRole(roleName)
@@ -57,12 +51,12 @@ func (rb *RBAC) RegisterRole(roleName string) error {
 
 func (rb *RBAC) RemoveRole(roleName string) error {
 	if !rb.existsRole(roleName) {
-		return ufmt.Errorf("role %s does not exist", roleName)
+		return ErrRoleDoesNotExist
 	}
 
 	// Check if it's a system role
 	if IsSystemRole(roleName) {
-		return ufmt.Errorf("cannot remove system role %s", roleName)
+		return ErrCannotRemoveSystemRole
 	}
 
 	// Simply delete the role since permissions are no longer managed here
@@ -86,7 +80,7 @@ func (rb *RBAC) GetRoleAddresses() map[string]std.Address {
 func (rb *RBAC) GetRoleAddress(roleName string) (std.Address, error) {
 	role, exists := rb.roles[roleName]
 	if !exists {
-		return "", ufmt.Errorf("role %s does not exist", roleName)
+		return "", ErrRoleDoesNotExist
 	}
 
 	return role.Address(), nil
@@ -96,11 +90,11 @@ func (rb *RBAC) GetRoleAddress(roleName string) (std.Address, error) {
 func (rb *RBAC) UpdateRoleAddress(roleName string, addr std.Address) error {
 	role, exists := rb.roles[roleName]
 	if !exists {
-		return ufmt.Errorf("role %s does not exist", roleName)
+		return ErrRoleDoesNotExist
 	}
 
 	if !addr.IsValid() {
-		return ufmt.Errorf("invalid address %s", addr.String())
+		return ErrInvalidAddress
 	}
 
 	role.setAddress(addr)
@@ -110,13 +104,13 @@ func (rb *RBAC) UpdateRoleAddress(roleName string, addr std.Address) error {
 
 // RemoveRoleAddress removes a role address
 func (rb *RBAC) RemoveRoleAddress(roleName string) error {
-	if !rb.ownable.OwnedByPrevious() {
+	if !rb.ownable.OwnedByOriginCaller() {
 		return ErrUnauthorized
 	}
 
 	role, exists := rb.roles[roleName]
 	if !exists {
-		return ufmt.Errorf("role %s does not exist", roleName)
+		return ErrRoleDoesNotExist
 	}
 
 	role.setAddress("")
@@ -127,7 +121,8 @@ func (rb *RBAC) RemoveRoleAddress(roleName string) error {
 // Ownership management
 func (rb *RBAC) Owner() std.Address { return rb.ownable.Owner() }
 
-func (rb *RBAC) OwnedByPrevious() bool { return rb.ownable.OwnedByPrevious() }
+// OwnedByOriginCaller checks if the caller of the function is the Realm's owner
+func (rb *RBAC) OwnedByOriginCaller() bool { return rb.ownable.OwnedByOriginCaller() }
 
 // PendingOwner returns the pending owner address
 func (rb *RBAC) PendingOwner() std.Address { return rb.ownable.PendingOwner() }

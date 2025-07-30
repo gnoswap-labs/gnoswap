@@ -12,7 +12,6 @@ loadpkg gno.land/r/demo/wugnot
 loadpkg gno.land/r/demo/grc20reg
 
 ## load immutable packages
-loadpkg gno.land/p/gnoswap/consts
 loadpkg gno.land/p/gnoswap/uint256
 loadpkg gno.land/p/gnoswap/int256
 loadpkg gno.land/p/gnoswap/rbac
