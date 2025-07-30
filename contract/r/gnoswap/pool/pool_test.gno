@@ -20,7 +20,7 @@ import (
 // cleanupPool removes the created pool to prevent interference with other tests
 func cleanupPool(t *testing.T, token0Path, token1Path string, fee uint32) {
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
-	if pools.Has(poolPath) {
+	if ExistsPoolPath(poolPath) {
 		pools.Remove(poolPath)
 	}
 }
@@ -60,7 +60,7 @@ func TestMint(t *testing.T) {
 	t.Run("invalid tick range should fail", func(t *testing.T) {
 		// Create pool before minting
 		testing.SetRealm(adminRealm)
-		SetPoolCreationFeeByAdmin(cross, 0)
+		SetPoolCreationFee(cross, 0)
 		CreatePool(
 			cross,
 			fooTokenPath,
@@ -93,7 +93,7 @@ func TestMint(t *testing.T) {
 	t.Run("successful mint", func(t *testing.T) {
 		// create pool first
 		testing.SetRealm(adminRealm)
-		SetPoolCreationFeeByAdmin(cross, 0)
+		SetPoolCreationFee(cross, 0)
 		CreatePool(
 			cross,
 			barTokenPath,
@@ -212,7 +212,7 @@ func TestBurn(t *testing.T) {
 
 			if tt.existsPool {
 				testing.SetRealm(adminRealm)
-				SetPoolCreationFeeByAdmin(cross, 0)
+				SetPoolCreationFee(cross, 0)
 				CreatePool(
 					cross,
 					barTokenPath,
@@ -363,8 +363,8 @@ func TestCollect(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Pool Creation
 			testing.SetRealm(adminRealm)
-			SetPoolCreationFeeByAdmin(cross, 0)
-			if !DoesPoolPathExist(GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
+			SetPoolCreationFee(cross, 0)
+			if !ExistsPoolPath(GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
 				CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
 			}
 
@@ -409,7 +409,7 @@ func TestCollect(t *testing.T) {
 				)
 
 				// Verify position exists
-				pool := GetPool(tt.tokenPath0, tt.tokenPath1, tt.feeTier)
+				pool := mustGetPool(GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier))
 				posKey, _ := getPositionKey(tt.recipient, tt.tickLower, tt.tickUpper)
 				pool.mustGetPosition(posKey)
 
@@ -464,11 +464,11 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 
 	t.Run("unauthorized caller should fail", func(t *testing.T) {
 		unauthorized := testutils.TestAddress("unauthorized")
-		expected := "unauthorized: caller g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg is not admin"
+		expected := "unauthorized: caller g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg is not admin or governance"
 
 		testing.SetRealm(std.NewUserRealm(unauthorized))
 		uassert.AbortsWithMessage(t, expected, func() {
-			CollectProtocolByAdmin(
+			CollectProtocol(
 				cross,
 				fooTokenPath,
 				barTokenPath,
@@ -483,7 +483,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 	t.Run("collect with zero requested amounts should return zero", func(t *testing.T) {
 		// Create pool first
 		testing.SetRealm(adminRealm)
-		SetPoolCreationFeeByAdmin(cross, 0)
+		SetPoolCreationFee(cross, 0)
 		CreatePool(
 			cross,
 			fooTokenPath,
@@ -494,10 +494,10 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 		defer cleanupPool(t, fooTokenPath, barTokenPath, FeeTier500)
 
 		// Set protocol fees
-		SetFeeProtocolByAdmin(cross, 10, 10)
+		SetFeeProtocol(cross, 10, 10)
 
 		testing.SetRealm(adminRealm)
-		amount0, amount1 := CollectProtocolByAdmin(
+		amount0, amount1 := CollectProtocol(
 			cross,
 			fooTokenPath,
 			barTokenPath,
@@ -516,7 +516,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 
 		testing.SetRealm(adminRealm)
 		uassert.AbortsWithMessage(t, expected, func() {
-			CollectProtocolByAdmin(
+			CollectProtocol(
 				cross,
 				fooTokenPath,
 				bazTokenPath,
@@ -531,7 +531,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 	t.Run("successful collect protocol fees", func(t *testing.T) {
 		// Create pool first
 		testing.SetRealm(adminRealm)
-		SetPoolCreationFeeByAdmin(cross, 0)
+		SetPoolCreationFee(cross, 0)
 		CreatePool(
 			cross,
 			barTokenPath,
@@ -542,7 +542,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 		defer cleanupPool(t, barTokenPath, bazTokenPath, FeeTier500)
 
 		// Set protocol fees
-		SetFeeProtocolByAdmin(cross, 10, 10)
+		SetFeeProtocol(cross, 10, 10)
 
 		// Setup tokens for swap to generate protocol fees
 		testing.SetOriginCaller(adminAddr)
@@ -580,13 +580,13 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 		testing.SkipHeights(1)
 
 		// Get pool before collection
-		pool := GetPool(barTokenPath, bazTokenPath, FeeTier500)
+		pool := mustGetPool(GetPoolPath(barTokenPath, bazTokenPath, FeeTier500))
 		beforeProtocolFees0 := pool.ProtocolFeesToken0()
 		beforeProtocolFees1 := pool.ProtocolFeesToken1()
 
 		// Collect protocol fees
 		testing.SetRealm(adminRealm)
-		collectedAmount0, collectedAmount1 := CollectProtocolByAdmin(
+		collectedAmount0, collectedAmount1 := CollectProtocol(
 			cross,
 			barTokenPath,
 			bazTokenPath,
@@ -605,7 +605,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 			uassert.NotEqual(t, "0", collectedAmount1)
 
 			// Verify pool protocol fees are reduced
-			pool = GetPool(barTokenPath, bazTokenPath, FeeTier500)
+			pool = mustGetPool(GetPoolPath(barTokenPath, bazTokenPath, FeeTier500))
 			afterProtocolFees0 := pool.ProtocolFeesToken0()
 			afterProtocolFees1 := pool.ProtocolFeesToken1()
 
@@ -623,7 +623,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 	t.Run("collect more than available protocol fees", func(t *testing.T) {
 		// Create pool first
 		testing.SetRealm(adminRealm)
-		SetPoolCreationFeeByAdmin(cross, 0)
+		SetPoolCreationFee(cross, 0)
 		CreatePool(
 			cross,
 			barTokenPath,
@@ -634,7 +634,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 		defer cleanupPool(t, barTokenPath, bazTokenPath, FeeTier3000)
 
 		// Set protocol fees
-		SetFeeProtocolByAdmin(cross, 10, 10)
+		SetFeeProtocol(cross, 10, 10)
 
 		// Setup tokens for swap to generate protocol fees
 		testing.SetOriginCaller(adminAddr)
@@ -672,13 +672,13 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 		testing.SkipHeights(1)
 
 		// Get pool protocol fees
-		pool := GetPool(barTokenPath, bazTokenPath, FeeTier3000)
+		pool := mustGetPool(GetPoolPath(barTokenPath, bazTokenPath, FeeTier3000))
 		availableProtocolFees0 := pool.ProtocolFeesToken0()
 		availableProtocolFees1 := pool.ProtocolFeesToken1()
 
 		// Try to collect more than available
 		testing.SetRealm(adminRealm)
-		collectedAmount0, collectedAmount1 := CollectProtocolByAdmin(
+		collectedAmount0, collectedAmount1 := CollectProtocol(
 			cross,
 			barTokenPath,
 			bazTokenPath,
@@ -693,7 +693,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 		uassert.Equal(t, availableProtocolFees1.ToString(), collectedAmount1)
 
 		// Verify pool protocol fees are now zero
-		pool = GetPool(barTokenPath, bazTokenPath, FeeTier3000)
+		pool = mustGetPool(GetPoolPath(barTokenPath, bazTokenPath, FeeTier3000))
 		uassert.Equal(t, "0", pool.ProtocolFeesToken0().ToString())
 		uassert.Equal(t, "0", pool.ProtocolFeesToken1().ToString())
 	})
@@ -703,7 +703,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 
 		// Create pool first
 		testing.SetRealm(adminRealm)
-		SetPoolCreationFeeByAdmin(cross, 0)
+		SetPoolCreationFee(cross, 0)
 		CreatePool(
 			cross,
 			barTokenPath,
@@ -714,7 +714,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 		defer cleanupPool(t, barTokenPath, bazTokenPath, FeeTier3000)
 
 		// Set protocol fees
-		SetFeeProtocolByAdmin(cross, 10, 10)
+		SetFeeProtocol(cross, 10, 10)
 
 		// Setup tokens for swap to generate protocol fees
 		testing.SetOriginCaller(adminAddr)
@@ -757,7 +757,7 @@ func TestCollectProtocolByAdmin(t *testing.T) {
 
 		// Collect protocol fees to different recipient
 		testing.SetRealm(adminRealm)
-		collectedAmount0, collectedAmount1 := CollectProtocolByAdmin(
+		collectedAmount0, collectedAmount1 := CollectProtocol(
 			cross,
 			barTokenPath,
 			bazTokenPath,
@@ -852,7 +852,7 @@ func TestCreatePoolTable(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
 			testing.SetRealm(adminRealm)
-			SetPoolCreationFeeByAdmin(cross, 0)
+			SetPoolCreationFee(cross, 0)
 			gns.Approve(cross, poolAddr, 0)
 
 			poolPath := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
@@ -865,11 +865,11 @@ func TestCreatePoolTable(t *testing.T) {
 			} else {
 				CreatePool(cross, tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96)
 
-				poolTick := PoolGetSlot0Tick(poolPath)
+				poolTick := GetSlot0Tick(poolPath)
 				uassert.Equal(t, tt.expectedTick, int32(poolTick))
 
 				if tt.expectedPrice != "" {
-					poolPrice := poolGetSlot0Price(t, tt.token0Path, tt.token1Path, tt.fee)
+					poolPrice := GetSlot0Price(t, tt.token0Path, tt.token1Path, tt.fee)
 					uassert.Equal(t, tt.expectedPrice, poolPrice)
 				}
 			}
@@ -946,7 +946,7 @@ func TestMintValidationTable(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup pool
 			testing.SetRealm(adminRealm)
-			SetPoolCreationFeeByAdmin(cross, 0)
+			SetPoolCreationFee(cross, 0)
 			CreatePool(cross, tt.token0Path, tt.token1Path, tt.fee, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
 			defer cleanupPool(t, tt.token0Path, tt.token1Path, tt.fee)
 
@@ -1036,7 +1036,7 @@ func TestMintLiquidityOverflowTable(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup pool
 			testing.SetRealm(adminRealm)
-			SetPoolCreationFeeByAdmin(cross, 0)
+			SetPoolCreationFee(cross, 0)
 			CreatePool(cross, tt.token0Path, tt.token1Path, tt.fee, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
 			defer cleanupPool(t, tt.token0Path, tt.token1Path, tt.fee)
 
@@ -1049,7 +1049,7 @@ func TestMintLiquidityOverflowTable(t *testing.T) {
 			Mint(cross, tt.token0Path, tt.token1Path, tt.fee, addr01, -887220, 887220, "3161", adminAddr)
 
 			// Calculate actual liquidity amount based on pool state
-			pool := GetPool(tt.token0Path, tt.token1Path, tt.fee)
+			pool := mustGetPool(GetPoolPath(tt.token0Path, tt.token1Path, tt.fee))
 			tickSpacing := pool.tickSpacing
 
 			var actualLiquidity string
@@ -1094,8 +1094,8 @@ func TestMintLiquidityOverflowTable(t *testing.T) {
 }
 
 // Helper function to get pool slot0 price
-func poolGetSlot0Price(t *testing.T, token0Path, token1Path string, fee uint32) string {
+func GetSlot0Price(t *testing.T, token0Path, token1Path string, fee uint32) string {
 	t.Helper()
-	pool := GetPool(token0Path, token1Path, fee)
+	pool := mustGetPool(GetPoolPath(token0Path, token1Path, fee))
 	return pool.slot0.sqrtPriceX96.ToString()
 }

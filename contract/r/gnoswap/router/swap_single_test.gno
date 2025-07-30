@@ -6,10 +6,12 @@ import (
 
 	"gno.land/p/demo/uassert"
 	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 )
@@ -76,7 +78,15 @@ func TestSingleSwap(t *testing.T) {
 				tt.setupFn(t)
 			}
 
-			amountIn, amountOut := singleSwap(&tt.params)
+			singleSwapFn := func(cur realm) (*u256.Uint, *u256.Uint) {
+				return singleSwap(&tt.params)
+			}
+
+			testing.SetRealm(user1Realm)
+			common.Approve(cross, tt.params.tokenIn, poolAddr, maxApprove)
+			common.Approve(cross, tt.params.tokenOut, poolAddr, maxApprove)
+			
+			amountIn, amountOut := singleSwapFn(cross)
 
 			uassert.Equal(t, amountIn.ToString(), tt.expectedIn)
 			uassert.Equal(t, amountOut.ToString(), tt.expectedOut)
@@ -166,7 +176,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				amountSpecified: newInt256("100"),
 			},
 			expectError:  true,
-			errType:      "abort",
+			errType:      "panic",
 			errorMessage: "[GNOSWAP-ROUTER-006] invalid pool fee tier || unknown fee(0)",
 		},
 		{
@@ -184,7 +194,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				amountSpecified: newInt256("100"),
 			},
 			expectError:  true,
-			errType:      "abort",
+			errType:      "panic",
 			errorMessage: "[GNOSWAP-ROUTER-006] invalid pool fee tier || unknown fee(1000000)",
 		},
 		{

@@ -88,7 +88,7 @@ func main() {
 	println("[EXPECTED] amount1:", amount1, "expected: 100000")
 
 	// check pool liquidity
-	poolLiquidity := pl.PoolGetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500")
+	poolLiquidity := pl.GetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500")
 	println("[EXPECTED] pool liquidity:", poolLiquidity, "expected: 637408")
 
 	println("[INFO] Executing dry swap to check expected output")

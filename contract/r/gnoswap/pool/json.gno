@@ -52,7 +52,7 @@ type RpcPool struct {
 
 func newRpcPool(poolPath string) RpcPool {
 	rpcPool := RpcPool{}
-	pool := GetPoolFromPoolPath(poolPath)
+	pool := mustGetPool(poolPath).Clone()
 
 	rpcPool.PoolPath = poolPath
 

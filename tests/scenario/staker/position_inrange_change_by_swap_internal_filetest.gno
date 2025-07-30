@@ -147,7 +147,7 @@ func mintNarrowRangePosition() {
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
 
 	// Check current pool tick
-	currentTick := pl.PoolGetSlot0Tick(poolPath)
+	currentTick := pl.GetSlot0Tick(poolPath)
 	ufmt.Printf("[INFO] current pool tick: %d\n", currentTick)
 	ufmt.Printf("[INFO] position range: -50 to 50\n")
 
@@ -168,7 +168,7 @@ func stakePositionAndVerifyInRange() {
 	ufmt.Printf("[EXPECTED] position staked successfully\n")
 
 	// Verify position is in-range
-	currentTick := pl.PoolGetSlot0Tick(poolPath)
+	currentTick := pl.GetSlot0Tick(poolPath)
 	ufmt.Printf("[INFO] current tick after staking: %d\n", currentTick)
 
 	if currentTick < -50 || currentTick > 50 {
@@ -207,7 +207,7 @@ func performSwapToMovePrice() {
 	baz.Approve(cross, routerAddr, maxInt64)
 
 	// Check current tick before swap
-	currentTickBefore := pl.PoolGetSlot0Tick(poolPath)
+	currentTickBefore := pl.GetSlot0Tick(poolPath)
 	ufmt.Printf("[INFO] tick before swap: %d\n", currentTickBefore)
 
 	println("[INFO] perform large swap to move price out of range")
@@ -230,7 +230,7 @@ func performSwapToMovePrice() {
 	ufmt.Printf("[INFO] swapped %s bar for %s baz\n", swapAmount, amountOut)
 
 	// Check tick after swap
-	currentTickAfter := pl.PoolGetSlot0Tick(poolPath)
+	currentTickAfter := pl.GetSlot0Tick(poolPath)
 	ufmt.Printf("[EXPECTED] tick after swap: %d\n", currentTickAfter)
 
 	// Position should now be out of range (tick > 50)
@@ -250,7 +250,7 @@ func performSwapToMovePrice() {
 			"",
 		)
 
-		finalTick := pl.PoolGetSlot0Tick(poolPath)
+		finalTick := pl.GetSlot0Tick(poolPath)
 		ufmt.Printf("[EXPECTED] final tick after additional swap: %d\n", finalTick)
 	}
 
@@ -282,7 +282,7 @@ func performReverseSwap() {
 	testing.SetRealm(adminRealm)
 
 	// Check current tick before reverse swap
-	currentTickBefore := pl.PoolGetSlot0Tick(poolPath)
+	currentTickBefore := pl.GetSlot0Tick(poolPath)
 	ufmt.Printf("[INFO] tick before reverse swap: %d\n", currentTickBefore)
 
 	println("[INFO] perform reverse swap to move price back into range")
@@ -305,7 +305,7 @@ func performReverseSwap() {
 	ufmt.Printf("[INFO] swapped %s baz for %s bar\n", reverseSwapAmount, amountOut)
 
 	// Check tick after reverse swap
-	currentTickAfter := pl.PoolGetSlot0Tick(poolPath)
+	currentTickAfter := pl.GetSlot0Tick(poolPath)
 	ufmt.Printf("[EXPECTED] tick after reverse swap: %d\n", currentTickAfter)
 
 	// Position should be back in range (-50 <= tick <= 50)
@@ -334,7 +334,7 @@ func collectRewardAfterReturningInRange() {
 	ufmt.Printf("[EXPECTED] reward after returning to in-range: %d\n", backInRangeReward)
 
 	// Get final tick for verification
-	finalTick := pl.PoolGetSlot0Tick(poolPath)
+	finalTick := pl.GetSlot0Tick(poolPath)
 	ufmt.Printf("[INFO] final tick: %d\n", finalTick)
 
 	if finalTick >= -50 && finalTick <= 50 {

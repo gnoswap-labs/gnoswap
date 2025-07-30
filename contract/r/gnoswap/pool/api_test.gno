@@ -12,7 +12,7 @@ import (
 
 func TestInitTwoPools_GetPools(t *testing.T) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	SetPoolCreationFeeByAdmin(cross, 0)
+	SetPoolCreationFee(cross, 0)
 	// foo:bar
 	CreatePool(cross, "gno.land/r/onbloc/bar", "gno.land/r/onbloc/foo", FeeTier500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 

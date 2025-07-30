@@ -96,7 +96,7 @@ func InitialisePoolTest(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
 		poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
-		if !DoesPoolPathExist(poolPath) {
+		if !ExistsPoolPath(poolPath) {
 			CreatePool(cross, wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
 		}
 	}()

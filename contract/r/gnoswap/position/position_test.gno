@@ -761,7 +761,7 @@ func TestMintInternal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testing.SetRealm(adminRealm)
-			pl.SetPoolCreationFeeByAdmin(cross, 0)
+			pl.SetPoolCreationFee(cross, 0)
 			CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
 
 			TokenFaucet(t, barPath, alice)
@@ -910,7 +910,7 @@ func TestMint(t *testing.T) {
 			initPositionTest(t)
 
 			testing.SetRealm(adminRealm)
-			pl.SetPoolCreationFeeByAdmin(cross, 0)
+			pl.SetPoolCreationFee(cross, 0)
 			CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
 
 			TokenFaucet(t, barPath, alice)
@@ -1039,7 +1039,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 			initPositionTest(t)
 			testing.SetRealm(adminRealm)
 
-			pl.SetPoolCreationFeeByAdmin(cross, 0)
+			pl.SetPoolCreationFee(cross, 0)
 			CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
 
 			TokenFaucet(t, barPath, alice)
@@ -1195,7 +1195,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			initPositionTest(t)
 			testing.SetRealm(adminRealm)
 
-			pl.SetPoolCreationFeeByAdmin(cross, 0)
+			pl.SetPoolCreationFee(cross, 0)
 			CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
 
 			TokenFaucet(t, barPath, alice)
