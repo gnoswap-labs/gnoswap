@@ -39,7 +39,7 @@ func GetAmountOfToken(tokenPath string) uint64 {
 func GetAccuTransfersToGovStaker() map[string]int64 {
 	accuTransfers := make(map[string]int64)
 
-	protocolFeeState.accuToGovStaker.Iterate("", "", func(key string, value interface{}) bool {
+	protocolFeeState.accuToGovStaker.Iterate("", "", func(key string, value any) bool {
 		amount, ok := value.(uint64)
 		if !ok {
 			return false
@@ -55,7 +55,7 @@ func GetAccuTransfersToGovStaker() map[string]int64 {
 func GetAccuTransfersToDevOps() map[string]int64 {
 	accuTransfers := make(map[string]int64)
 
-	protocolFeeState.accuToDevOps.Iterate("", "", func(key string, value interface{}) bool {
+	protocolFeeState.accuToDevOps.Iterate("", "", func(key string, value any) bool {
 		amount, ok := value.(uint64)
 		if !ok {
 			return false
