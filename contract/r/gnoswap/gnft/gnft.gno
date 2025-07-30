@@ -185,6 +185,8 @@ func TransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 //   - If the caller is not the token owner.
 //   - If the `Approve` call fails.
 func Approve(cur realm, approved std.Address, tid grc721.TokenID) error {
+	halt.AssertIsNotHaltedPosition()
+
 	checkErr(nft.Approve(approved, tid))
 	return nil
 }
@@ -202,6 +204,8 @@ func Approve(cur realm, approved std.Address, tid grc721.TokenID) error {
 //   - If the contract is halted.
 //   - If the `SetApprovalForAll` operation fails.
 func SetApprovalForAll(cur realm, operator std.Address, approved bool) error {
+	halt.AssertIsNotHaltedPosition()
+
 	checkErr(nft.SetApprovalForAll(operator, approved))
 	return nil
 }
