@@ -57,7 +57,13 @@ func Reposition(
 	}
 
 	token0, token1, _ := splitOf(position.poolKey)
-	token0, token1, _, _, _, err := processTokens(token0, token1, amount0DesiredStr, amount1DesiredStr, caller)
+	token0, token1, _, _, _, err := processTokens(
+		token0,
+		token1,
+		amount0DesiredStr,
+		amount1DesiredStr,
+		caller,
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -96,9 +102,9 @@ func Reposition(
 	position.burned = false
 	mustUpdatePosition(positionId, position)
 
-	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(position.poolKey)
-	token0Balance := pl.PoolGetBalanceToken0(position.poolKey)
-	token1Balance := pl.PoolGetBalanceToken1(position.poolKey)
+	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(position.poolKey)
+	token0Balance := pl.GetBalanceToken0(position.poolKey)
+	token1Balance := pl.GetBalanceToken1(position.poolKey)
 	
 	previousRealm := std.PreviousRealm()
 	std.Emit(
@@ -114,7 +120,7 @@ func Reposition(
 		"prevTickLower", formatInt(int64(oldTickLower)),
 		"prevTickUpper", formatInt(int64(oldTickUpper)),
 		"poolPath", position.poolKey,
-		"sqrtPriceX96", poolSqrtPriceX96,
+		"sqrtPriceX96", poolSqrtPriceX96.ToString(),
 		"positionLiquidity", PositionGetPositionLiquidityStr(positionId),
 		"token0Balance", token0Balance,
 		"token1Balance", token1Balance,
