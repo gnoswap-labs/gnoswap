@@ -18,7 +18,6 @@ import (
 // It returns list of token with amount has been sent to gov/staker.
 func DistributeProtocolFee(cur realm) map[string]uint64 {
 	halt.AssertIsNotHaltedProtocolFee()
-	halt.AssertIsNotHaltedWithdraw()
 
 	caller := std.PreviousRealm().Address()
 	assertIsAdminOrGovStaker(caller)
