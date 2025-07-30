@@ -6,6 +6,7 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
+	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -120,4 +121,74 @@ func (p *Pool) Ticks() string {
 	})
 
 	return "[" + strings.Join(tickInfoStrings, ",") + "]"
+}
+
+func (p *Pool) Clone() *Pool {
+	ticks := avl.NewTree()
+	tickBitmaps := avl.NewTree()
+	positions := avl.NewTree()
+
+	// clone ticks
+	p.ticks.Iterate("", "", func(tickKey string, tickValue any) bool {
+		tickInfo := tickValue.(TickInfo)
+		ticks.Set(tickKey, TickInfo{
+			feeGrowthOutside0X128:          u256.Zero().Set(tickInfo.feeGrowthOutside0X128),
+			feeGrowthOutside1X128:          u256.Zero().Set(tickInfo.feeGrowthOutside1X128),
+			liquidityGross:                 u256.Zero().Set(tickInfo.liquidityGross),
+			liquidityNet:                   i256.Zero().Set(tickInfo.liquidityNet),
+			tickCumulativeOutside:          tickInfo.tickCumulativeOutside,
+			secondsPerLiquidityOutsideX128: u256.Zero().Set(tickInfo.secondsPerLiquidityOutsideX128),
+			secondsOutside:                 tickInfo.secondsOutside,
+			initialized:                    tickInfo.initialized,
+		})
+		return false
+	})
+
+	// clone tickBitmaps
+	p.tickBitmaps.Iterate("", "", func(tickKey string, tickValue any) bool {
+		tickBitmap := tickValue.(*u256.Uint)
+		tickBitmaps.Set(tickKey, u256.Zero().Set(tickBitmap))
+		return false
+	})
+
+	// clone positions
+	p.positions.Iterate("", "", func(positionKey string, positionValue any) bool {
+		positionInfo := positionValue.(PositionInfo)
+		positions.Set(positionKey, PositionInfo{
+			liquidity:                u256.Zero().Set(positionInfo.liquidity),
+			feeGrowthInside0LastX128: u256.Zero().Set(positionInfo.feeGrowthInside0LastX128),
+			feeGrowthInside1LastX128: u256.Zero().Set(positionInfo.feeGrowthInside1LastX128),
+			tokensOwed0:              u256.Zero().Set(positionInfo.tokensOwed0),
+			tokensOwed1:              u256.Zero().Set(positionInfo.tokensOwed1),
+		})
+		return false
+	})
+
+	return &Pool{
+		token0Path:  p.token0Path,
+		token1Path:  p.token1Path,
+		fee:         p.fee,
+		tickSpacing: p.tickSpacing,
+		slot0: Slot0{
+			sqrtPriceX96: u256.Zero().Set(p.slot0.sqrtPriceX96),
+			tick:         p.slot0.tick,
+			feeProtocol:  p.slot0.feeProtocol,
+			unlocked:     p.slot0.unlocked,
+		},
+		balances: Balances{
+			token0: u256.Zero().Set(p.balances.token0),
+			token1: u256.Zero().Set(p.balances.token1),
+		},
+		protocolFees: ProtocolFees{
+			token0: u256.Zero().Set(p.protocolFees.token0),
+			token1: u256.Zero().Set(p.protocolFees.token1),
+		},
+		maxLiquidityPerTick:  u256.Zero().Set(p.maxLiquidityPerTick),
+		feeGrowthGlobal0X128: u256.Zero().Set(p.feeGrowthGlobal0X128),
+		feeGrowthGlobal1X128: u256.Zero().Set(p.feeGrowthGlobal1X128),
+		liquidity:            u256.Zero().Set(p.liquidity),
+		ticks:                ticks,
+		tickBitmaps:          tickBitmaps,
+		positions:            positions,
+	}
 }
