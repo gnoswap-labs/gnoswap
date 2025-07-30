@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/demo/uassert"
 	fuzzer "gno.land/p/gnoswap/fuzztest"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -688,13 +689,37 @@ type FinalizeSwapParams struct {
 	resultAmountOut         *u256.Uint
 	swapType                SwapType
 	tokenAmountLimit        *u256.Uint
-	userBeforeWugnotBalance int64
-	userWrappedWugnot       int64
+	userBeforeWugnotBalance uint64
+	userWrappedWugnot       uint64
 	amountSpecified         *u256.Uint
 }
 
 type FinalizeSwapGenerator struct {
 	seedMgr *fuzzer.SeedManager
+
+	successCount             int
+	failCount                int
+	successExactInMinAmount  int
+	successExactInMaxAmount  int
+	successExactOutMinAmount int
+	successExactOutMaxAmount int
+}
+
+func newFinalizeSwapGenerator(
+	successExactInMinAmount,
+	successExactInMaxAmount,
+	successExactOutMinAmount,
+	successExactOutMaxAmount int,
+) *FinalizeSwapGenerator {
+	return &FinalizeSwapGenerator{
+		seedMgr:                  fuzzer.NewSeedManager(),
+		successCount:             0,
+		failCount:                0,
+		successExactInMinAmount:  successExactInMinAmount,
+		successExactInMaxAmount:  successExactInMaxAmount,
+		successExactOutMinAmount: successExactOutMinAmount,
+		successExactOutMaxAmount: successExactOutMaxAmount,
+	}
 }
 
 func (g *FinalizeSwapGenerator) Generate() any {
@@ -722,29 +747,50 @@ func (g *FinalizeSwapGenerator) Generate() any {
 
 	var resultAmountIn, resultAmountOut, amountSpecified, tokenAmountLimit *u256.Uint
 
+	isSuccess := g.seedMgr.CreateBoolGenerator().Generate().(bool)
+	if isSuccess {
+		g.successCount++
+	} else {
+		g.failCount++
+	}
+
+	const maxInt64 = 1<<63 - 1
+	
+	var specifiedVal int64
+
 	if swapType == ExactIn {
 		// specify input amount
-		specifiedVal := uint64(g.seedMgr.CreateIntGenerator(100, 10000000).Generate().(int))
-		amountSpecified = u256.NewUint(specifiedVal)
+		if isSuccess {
+			specifiedVal = int64(g.seedMgr.CreateIntGenerator(g.successExactInMinAmount, g.successExactInMaxAmount).Generate().(int))
+		} else {
+			specifiedVal = int64(g.seedMgr.CreateIntGenerator(g.successExactInMaxAmount, maxInt64).Generate().(int))
+		}
+
+		amountSpecified = u256.NewUint(uint64(specifiedVal))
 		resultAmountIn = amountSpecified
 
 		// output is typically 85-99% of input (fees and slippage)
 		outputRatio := g.seedMgr.CreateIntGenerator(85, 99).Generate().(int)
-		outputVal := specifiedVal * uint64(outputRatio) / 100
+		outputVal := uint64(specifiedVal) * uint64(outputRatio) / 100
 		resultAmountOut = u256.NewUint(outputVal)
 
 		// limit for minimum output (slippage protection)
 		limitRatio := g.seedMgr.CreateIntGenerator(80, 100).Generate().(int)
-		limitVal := outputVal * uint64(limitRatio) / 100
+		limitVal := uint64(outputVal) * uint64(limitRatio) / 100
 		tokenAmountLimit = u256.NewUint(limitVal)
 	} else {
-		// specify output amount
-		specifiedVal := uint64(g.seedMgr.CreateIntGenerator(100, 10000000).Generate().(int))
-		amountSpecified = u256.NewUint(specifiedVal)
+		// specify output amount		// specify input amount
+		if isSuccess {
+			specifiedVal = int64(g.seedMgr.CreateIntGenerator(g.successExactOutMinAmount, g.successExactOutMaxAmount).Generate().(int))
+		} else {
+			specifiedVal = int64(g.seedMgr.CreateIntGenerator(g.successExactOutMaxAmount, maxInt64).Generate().(int))
+		}
+
+		amountSpecified = u256.NewUint(uint64(specifiedVal))
 		resultAmountOut = amountSpecified
 
 		inputRatio := g.seedMgr.CreateIntGenerator(101, 120).Generate().(int)
-		inputVal := specifiedVal * uint64(inputRatio) / 100
+		inputVal := uint64(specifiedVal) * uint64(inputRatio) / 100
 		resultAmountIn = u256.NewUint(inputVal)
 
 		limitRatio := g.seedMgr.CreateIntGenerator(100, 130).Generate().(int)
@@ -769,8 +815,8 @@ func (g *FinalizeSwapGenerator) Generate() any {
 		resultAmountOut:         resultAmountOut,
 		swapType:                swapType,
 		tokenAmountLimit:        tokenAmountLimit,
-		userBeforeWugnotBalance: userBeforeWugnotBalance,
-		userWrappedWugnot:       userWrappedWugnot,
+		userBeforeWugnotBalance: uint64(userBeforeWugnotBalance),
+		userWrappedWugnot:       uint64(userWrappedWugnot),
 		amountSpecified:         amountSpecified,
 	}
 }
@@ -779,7 +825,7 @@ func TestFuzzFinalizeSwap(t *testing.T) {
 	initRouterTest(t)
 	createBasicPool(t)
 
-	gen := &FinalizeSwapGenerator{}
+	gen := newFinalizeSwapGenerator(1, 10000000, 1, 10000000)
 	passCount := 0
 	failCount := 0
 
@@ -852,8 +898,8 @@ func TestFuzzFinalizeSwap(t *testing.T) {
 				params.resultAmountOut,
 				params.swapType,
 				params.tokenAmountLimit,
-				params.userBeforeWugnotBalance,
-				params.userWrappedWugnot,
+				int64(params.userBeforeWugnotBalance),
+				int64(params.userWrappedWugnot),
 				params.amountSpecified,
 			)
 
@@ -870,6 +916,9 @@ func TestFuzzFinalizeSwap(t *testing.T) {
 			}
 		}()
 	}
-
+	
 	t.Logf("FinalizeSwap fuzzing: %d passed, %d failed (as expected)", passCount, failCount)
+	
+	uassert.Equal(t, gen.successCount, passCount)
+	uassert.Equal(t, gen.failCount, failCount)
 }
