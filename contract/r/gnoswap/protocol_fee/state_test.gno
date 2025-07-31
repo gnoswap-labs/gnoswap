@@ -153,8 +153,8 @@ func TestProtocolFeeStateSetDevOpsPct(t *testing.T) {
 			pfs := NewProtocolFeeState()
 
 			// Initially should be 0
-			uassert.Equal(t, pfs.DevOpsPct, uint64(0))
-			_, _, err := pfs.setDevOpsPct(test.percentage)
+			uassert.Equal(t, pfs.devOpsPct, uint64(0))
+			_, err := pfs.setDevOpsPct(test.percentage)
 
 			if test.shouldError {
 				uassert.Equal(t, err.Error(), test.errorMsg)
@@ -200,17 +200,17 @@ func TestProtocolFeeStateClearTokenListWithAmount(t *testing.T) {
 
 			// Setup initial data
 			for token, amount := range test.initialData {
-				pfs.TokenListWithAmount[token] = amount
+				pfs.tokenListWithAmount[token] = amount
 			}
 
 			// Verify initial state
-			uassert.Equal(t, len(pfs.TokenListWithAmount), len(test.initialData))
+			uassert.Equal(t, len(pfs.tokenListWithAmount), len(test.initialData))
 
 			// Clear the list
 			pfs.clearTokenListWithAmount()
 
 			// Verify final state
-			uassert.Equal(t, len(pfs.TokenListWithAmount), test.expectedLen)
+			uassert.Equal(t, len(pfs.tokenListWithAmount), test.expectedLen)
 		})
 	}
 }
@@ -258,7 +258,7 @@ func TestProtocolFeeStateUpdateDistributedToGovStakerHistory(t *testing.T) {
 			}
 
 			// Check if history was updated correctly
-			historyValue, exists := pfs.DistributedToGovStakerHistory.Get(test.tokenPath)
+			historyValue, exists := pfs.distributedToGovStakerHistory.Get(test.tokenPath)
 			uassert.True(t, exists)
 			uassert.Equal(t, historyValue.(uint64), test.expectedSum)
 		})
@@ -308,7 +308,7 @@ func TestProtocolFeeStateUpdateDistributedToDevOpsHistory(t *testing.T) {
 			}
 
 			// Check if history was updated correctly
-			historyValue, exists := pfs.DistributedToDevOpsHistory.Get(test.tokenPath)
+			historyValue, exists := pfs.distributedToDevOpsHistory.Get(test.tokenPath)
 			uassert.True(t, exists)
 			uassert.Equal(t, historyValue.(uint64), test.expectedSum)
 		})

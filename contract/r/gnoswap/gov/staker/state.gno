@@ -362,20 +362,7 @@ func claimRewardsProtocolFeeReward(address string, currentHeight int64) (map[str
 // Returns:
 //   - map[string]int64: distributed amounts by token path
 func getDistributedProtocolFees() map[string]int64 {
-	distributedAmounts := make(map[string]int64)
-
-	protocol_fee.GetAccuTransferToGovStaker().Iterate("", "", func(key string, value interface{}) bool {
-		amount, ok := value.(uint64)
-		if !ok {
-			return false
-		}
-
-		distributedAmounts[key] = int64(amount)
-
-		return false
-	})
-
-	return distributedAmounts
+	return protocol_fee.GetAccuTransfersToGovStaker()
 }
 
 // getLaunchpadProjectDeposit retrieves the deposit amount for a launchpad project.
