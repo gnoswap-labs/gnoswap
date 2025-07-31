@@ -20,7 +20,8 @@ func SetPoolTier(cur realm, poolPath string, tier uint64) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	assertPoolMustExist(poolPath)
+	assertIsPoolExists(poolPath)
+	assertIsValidPoolTier(tier)
 
 	currentHeight := std.ChainHeight()
 	setPoolTier(poolPath, tier, currentHeight)
@@ -43,7 +44,8 @@ func ChangePoolTier(cur realm, poolPath string, tier uint64) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	assertPoolMustExist(poolPath)
+	assertIsPoolExists(poolPath)
+	assertIsValidPoolTier(tier)
 
 	currentHeight := std.ChainHeight()
 	previousTier, newTier := changePoolTier(poolPath, tier, currentHeight)
@@ -67,7 +69,7 @@ func RemovePoolTier(cur realm, poolPath string) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	assertPoolMustExist(poolPath)
+	assertIsPoolExists(poolPath)
 
 	currentHeight := std.ChainHeight()
 	removePoolTier(poolPath, currentHeight)
