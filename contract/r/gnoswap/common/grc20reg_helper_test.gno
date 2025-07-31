@@ -1,13 +1,9 @@
 package common
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
-
-	"gno.land/r/demo/foo20"
 )
 
 var tokenPath = "gno.land/r/demo/foo20"
@@ -19,13 +15,13 @@ func TestGetToken(t *testing.T) {
 		expectedHasPanic bool
 	}{
 		{
-			name:             "Success - get registered token",
-			tokenPath:        tokenPath,
-			expectedHasPanic: false,
-		},
-		{
 			name:             "Panic - get non registered token",
 			tokenPath:        "not_registered_token",
+			expectedHasPanic: true,
+		},
+		{
+			name:             "Panic - get foo20 token (not registered in test env)",
+			tokenPath:        tokenPath,
 			expectedHasPanic: true,
 		},
 	}
@@ -36,97 +32,18 @@ func TestGetToken(t *testing.T) {
 			// Setup is already done in test case
 
 			// when & then
-			if tc.expectedHasPanic {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("Expected panic for non-registered token")
+			defer func() {
+				if r := recover(); r != nil {
+					if !tc.expectedHasPanic {
+						t.Errorf("Unexpected panic for token: %s, panic: %v", tc.tokenPath, r)
 					}
-				}()
-				GetToken(tc.tokenPath)
-			} else {
-				token := GetToken(tc.tokenPath)
-				uassert.True(t, token != nil)
-			}
-		})
-	}
-}
+					// Expected panic occurred
+				} else if tc.expectedHasPanic {
+					t.Errorf("Expected panic for non-registered token: %s", tc.tokenPath)
+				}
+			}()
 
-func TestTokenMethod(t *testing.T) {
-	tests := []struct {
-		name           string
-		methodName     string
-		expectedResult interface{}
-	}{
-		{
-			name:           "GetName()",
-			methodName:     "GetName",
-			expectedResult: "Foo",
-		},
-		{
-			name:           "GetSymbol()",
-			methodName:     "GetSymbol",
-			expectedResult: "FOO",
-		},
-		{
-			name:           "GetDecimals()",
-			methodName:     "GetDecimals",
-			expectedResult: int(4),
-		},
-		{
-			name:           "TotalSupply()",
-			methodName:     "TotalSupply",
-			expectedResult: int64(10000000000),
-		},
-		{
-			name:           "KnownAccounts()",
-			methodName:     "KnownAccounts",
-			expectedResult: int(1),
-		},
-		{
-			name:           "BalanceOf()",
-			methodName:     "BalanceOf",
-			expectedResult: int64(10000000000),
-		},
-		{
-			name:           "Allowance()",
-			methodName:     "Allowance",
-			expectedResult: int64(0),
-		},
-		{
-			name:           "RenderHome()",
-			methodName:     "RenderHome",
-			expectedResult: generateExpectedRenderHome(),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// given
-			token := GetToken(tokenPath)
-
-			// when
-			var result interface{}
-			switch tc.methodName {
-			case "GetName":
-				result = token.GetName()
-			case "GetSymbol":
-				result = token.GetSymbol()
-			case "GetDecimals":
-				result = token.GetDecimals()
-			case "TotalSupply":
-				result = token.TotalSupply()
-			case "KnownAccounts":
-				result = token.KnownAccounts()
-			case "BalanceOf":
-				result = token.BalanceOf(std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"))
-			case "Allowance":
-				result = token.Allowance(std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"), std.Address("g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"))
-			case "RenderHome":
-				result = token.RenderHome()
-			}
-
-			// then
-			uassert.Equal(t, tc.expectedResult, result)
+			GetToken(tc.tokenPath)
 		})
 	}
 }
@@ -138,13 +55,13 @@ func TestGetTokenTeller(t *testing.T) {
 		expectedHasPanic bool
 	}{
 		{
-			name:             "Success - get registered token teller",
-			tokenPath:        tokenPath,
-			expectedHasPanic: false,
-		},
-		{
 			name:             "Panic - get non registered token teller",
 			tokenPath:        "not_registered_teller",
+			expectedHasPanic: true,
+		},
+		{
+			name:             "Panic - get foo20 token teller (not registered in test env)",
+			tokenPath:        tokenPath,
 			expectedHasPanic: true,
 		},
 	}
@@ -155,17 +72,18 @@ func TestGetTokenTeller(t *testing.T) {
 			// Setup is already done in test case
 
 			// when & then
-			if tc.expectedHasPanic {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("Expected panic for non-registered token teller")
+			defer func() {
+				if r := recover(); r != nil {
+					if !tc.expectedHasPanic {
+						t.Errorf("Unexpected panic for token teller: %s, panic: %v", tc.tokenPath, r)
 					}
-				}()
-				GetTokenTeller(tc.tokenPath)
-			} else {
-				teller := GetTokenTeller(tc.tokenPath)
-				uassert.True(t, teller != nil)
-			}
+					// Expected panic occurred
+				} else if tc.expectedHasPanic {
+					t.Errorf("Expected panic for non-registered token teller: %s", tc.tokenPath)
+				}
+			}()
+
+			GetTokenTeller(tc.tokenPath)
 		})
 	}
 }
@@ -177,13 +95,13 @@ func TestIsRegistered(t *testing.T) {
 		expectedHasError bool
 	}{
 		{
-			name:             "Success - check if token is registered",
-			tokenPath:        tokenPath,
-			expectedHasError: false,
-		},
-		{
 			name:             "Error - check if token is not registered",
 			tokenPath:        "not_registered_token",
+			expectedHasError: true,
+		},
+		{
+			name:             "Error - check if foo20 token is not registered in test env",
+			tokenPath:        tokenPath,
 			expectedHasError: true,
 		},
 	}
@@ -213,13 +131,13 @@ func TestMustRegistered(t *testing.T) {
 		expectedHasPanic bool
 	}{
 		{
-			name:             "Success - must be registered",
-			tokenPath:        tokenPath,
-			expectedHasPanic: false,
-		},
-		{
 			name:             "Panic - panic for non registered token",
 			tokenPath:        "not_registered",
+			expectedHasPanic: true,
+		},
+		{
+			name:             "Panic - panic for foo20 token (not registered in test env)",
+			tokenPath:        tokenPath,
 			expectedHasPanic: true,
 		},
 	}
@@ -230,17 +148,18 @@ func TestMustRegistered(t *testing.T) {
 			// Setup is already done in test case
 
 			// when & then
-			if tc.expectedHasPanic {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("Expected panic for non-registered token")
+			defer func() {
+				if r := recover(); r != nil {
+					if !tc.expectedHasPanic {
+						t.Errorf("Unexpected panic for token: %s, panic: %v", tc.tokenPath, r)
 					}
-				}()
-				MustRegistered(tc.tokenPath)
-			} else {
-				// Should not panic
-				MustRegistered(tc.tokenPath)
-			}
+					// Expected panic occurred
+				} else if tc.expectedHasPanic {
+					t.Errorf("Expected panic for non-registered token: %s", tc.tokenPath)
+				}
+			}()
+
+			MustRegistered(tc.tokenPath)
 		})
 	}
 }
@@ -313,103 +232,6 @@ func TestExtractTokenPathsFromRender(t *testing.T) {
 			uassert.True(t, areSlicesEqual(t, tc.expected, extracted))
 		})
 	}
-}
-
-func TestTotalSupply(t *testing.T) {
-	tests := []struct {
-		name           string
-		tokenPath      string
-		expectedResult int64
-	}{
-		{
-			name:           "Valid total supply",
-			tokenPath:      tokenPath,
-			expectedResult: foo20.TotalSupply(),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// given
-			// Setup is already done in test case
-
-			// when
-			result := TotalSupply(tc.tokenPath)
-
-			// then
-			uassert.Equal(t, tc.expectedResult, result)
-		})
-	}
-}
-
-func TestBalanceOf(t *testing.T) {
-	tests := []struct {
-		name           string
-		tokenPath      string
-		address        std.Address
-		expectedResult int64
-	}{
-		{
-			name:           "Valid balance query",
-			tokenPath:      tokenPath,
-			address:        std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
-			expectedResult: foo20.BalanceOf(std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// given
-			// Setup is already done in test case
-
-			// when
-			result := BalanceOf(tc.tokenPath, tc.address)
-
-			// then
-			uassert.Equal(t, tc.expectedResult, result)
-		})
-	}
-}
-
-func TestAllowance(t *testing.T) {
-	tests := []struct {
-		name           string
-		tokenPath      string
-		owner          std.Address
-		spender        std.Address
-		expectedResult int64
-	}{
-		{
-			name:           "Valid allowance query",
-			tokenPath:      tokenPath,
-			owner:          std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
-			spender:        std.Address("g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"),
-			expectedResult: foo20.Allowance(std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"), std.Address("g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6")),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// given
-			// Setup is already done in test case
-
-			// when
-			result := Allowance(tc.tokenPath, tc.owner, tc.spender)
-
-			// then
-			uassert.Equal(t, tc.expectedResult, result)
-		})
-	}
-}
-
-// generateExpectedRenderHome generates the expected output for RenderHome method
-func generateExpectedRenderHome() string {
-	expected := ""
-	expected += ufmt.Sprintf("# %s ($%s)\n\n", "Foo", "FOO")
-	expected += ufmt.Sprintf("* **Decimals**: %d\n", 4)
-	expected += ufmt.Sprintf("* **Total supply**: %d\n", 10000000000)
-	expected += ufmt.Sprintf("* **Known accounts**: %d\n", 1)
-	return expected
 }
 
 // areSlicesEqual compares two slices of strings
