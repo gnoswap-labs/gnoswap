@@ -28,10 +28,9 @@ import (
 func Execute(cur realm, proposalID int64) int64 {
 	// Check if execution is allowed (system not halted for execution)
 	halt.AssertIsNotHaltedGovernance()
-	halt.AssertIsNotHaltedWithdraw()
 
 	// Get caller information and current blockchain state
-	previousRealm := std.PreviousRealm()
+	caller := std.PreviousRealm().Address()
 	currentHeight := std.ChainHeight()
 	currentAt := time.Now().Unix()
 
@@ -43,13 +42,14 @@ func Execute(cur realm, proposalID int64) int64 {
 		proposalID,
 		currentAt,
 		currentHeight,
-		previousRealm.Address(),
+		caller,
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	// Emit execution event for tracking and auditing
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"Execute",
 		"prevAddr", previousRealm.Address().String(),
@@ -126,18 +126,24 @@ func executeProposal(
 	return proposal, nil
 }
 
-// Cancel cancels an active proposal with the given ID.
+// Cancel cancels a proposal in upcoming status.
+// This function allows cancellation of proposals that are in the upcoming state,
+// before entering the voting period. Only the proposal creator can cancel their proposal
+// during this upcoming window.
 //
 // Parameters:
-//   - cur: realm context for cross-realm calls
-//   - proposalID: unique identifier of the proposal to cancel
+//   - cur: realm context for cross-realm calls and contract interactions
+//   - proposalID: unique identifier of the proposal to cancel (must be positive)
 //
 // Returns:
-//   - int64: the canceled proposal ID
+//   - int64: the ID of the successfully canceled proposal
 //
 // Panics:
-//   - if system is halted
-//   - if cancellation fails
+//   - if governance system is in halted state
+//   - if proposal does not exist
+//   - if proposal is not in upcoming status
+//   - if proposal is already executed or canceled
+//   - if caller is not the original proposer
 //
 // ref: https://docs.gnoswap.io/contracts/governance/vote.gno#cancel
 func Cancel(cur realm, proposalID int64) int64 {
@@ -146,23 +152,23 @@ func Cancel(cur realm, proposalID int64) int64 {
 	// Get current blockchain state and caller information
 	currentHeight := std.ChainHeight()
 	currentAt := time.Now().Unix()
-	previousRealm := std.PreviousRealm()
+	caller := std.PreviousRealm().Address()
 
 	// Mint and distribute GNS tokens as part of the process
 	en.MintAndDistributeGns(cross)
 
 	// Attempt to cancel the proposal
-	proposal, err := cancel(proposalID, currentAt, currentHeight, previousRealm.Address())
+	proposal, err := cancel(proposalID, currentAt, currentHeight, caller)
 	if err != nil {
 		panic(err)
 	}
 
 	// Emit cancellation event for tracking
-	prevAddr, prevPkgPath := previousRealm.Address(), previousRealm.PkgPath()
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"Cancel",
-		"prevAddr", prevAddr.String(),
-		"prevRealm", prevPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"proposalId", formatInt(proposalID),
 	)
 
@@ -171,16 +177,17 @@ func Cancel(cur realm, proposalID int64) int64 {
 
 // cancel handles the core logic of proposal cancellation.
 // This internal function validates the proposal state and updates its status to canceled.
+// It checks if the proposal exists and can be canceled, then updates its status.
 //
 // Parameters:
-//   - proposalID: unique identifier of the proposal
-//   - canceledAt: timestamp when cancellation is performed
-//   - canceledHeight: blockchain height at cancellation
-//   - canceledBy: address of the canceller
+//   - proposalID: unique identifier of the proposal to be canceled
+//   - canceledAt: unix timestamp when cancellation is requested
+//   - canceledHeight: blockchain height at time of cancellation
+//   - canceledBy: address of the account requesting cancellation
 //
 // Returns:
-//   - *Proposal: pointer to the canceled proposal
-//   - error: cancellation error if any
+//   - *Proposal: the canceled proposal if successful
+//   - error: returns error if proposal not found or cancellation fails
 func cancel(proposalID, canceledAt, canceledHeight int64, canceledBy std.Address) (proposal *Proposal, err error) {
 	// Retrieve the proposal from storage
 	proposal, ok := getProposal(proposalID)

@@ -33,13 +33,12 @@ func Vote(cur realm, proposalID int64, yes bool) string {
 	// Get current blockchain state and caller information
 	currentHeight := std.ChainHeight()
 	currentAt := time.Now()
-	previousRealm := std.PreviousRealm()
 
 	// Mint and distribute GNS tokens as part of the voting process
 	en.MintAndDistributeGns(cross)
 
 	// Extract voter address from realm context
-	voter := previousRealm.Address()
+	voter := std.PreviousRealm().Address()
 
 	// Process the vote and get updated vote tallies
 	userVote, totalYesVoteWeight, totalNoVoteWeight, err := vote(
@@ -54,6 +53,7 @@ func Vote(cur realm, proposalID int64, yes bool) string {
 	}
 
 	// Emit voting event for tracking and transparency
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"Vote",
 		"prevAddr", previousRealm.Address().String(),

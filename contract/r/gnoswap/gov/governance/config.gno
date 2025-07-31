@@ -28,16 +28,18 @@ type Config struct {
 	ExecutionWindow int64
 }
 
-// ReconfigureByAdmin updates the governance configuration by admin privileges.
+// Reconfigure updates the governance configuration by admin or governance contract.
 // This function allows administrative updates to governance parameters without going through proposal process.
-// 
+// Only admin or governance contract can call this function.
+// After successful reconfiguration, it emits a "Reconfigure" event with all updated parameters.
+//
 // Parameters:
 //   - cur: realm context (for cross-realm calls)
 //   - votingStartDelay: delay before voting starts (seconds)
 //   - votingPeriod: duration for collecting votes (seconds)
 //   - votingWeightSmoothingDuration: period for averaging voting weight (seconds)
-//   - quorum: percentage of total supply required for approval
-//   - proposalCreationThreshold: minimum voting weight to create proposals
+//   - quorum: percentage of total supply required for approval (0-100)
+//   - proposalCreationThreshold: minimum voting weight to create proposals (in GNS)
 //   - executionDelay: waiting period before execution (seconds)
 //   - executionWindow: time window for execution (seconds)
 //
@@ -46,8 +48,9 @@ type Config struct {
 //
 // Panics:
 //   - if system is halted
-//   - if caller is not admin
-func ReconfigureByAdmin(
+//   - if caller is not admin or governance
+//   - if any parameter validation fails
+func Reconfigure(
 	cur realm,
 	votingStartDelay int64,
 	votingPeriod int64,
@@ -60,17 +63,15 @@ func ReconfigureByAdmin(
 	// Check if system is halted before proceeding
 	halt.AssertIsNotHaltedGovernance()
 
-	// Get caller information and verify admin privileges
-	previousRealm := std.PreviousRealm()
-	caller := previousRealm.Address()
-	access.AssertIsAdmin(caller)
+	caller := std.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernance(caller)
 
 	// Mint and distribute GNS tokens as part of the process
 	en.MintAndDistributeGns(cross)
 
 	// Store previous version for event emission
 	previousVersion := getCurrentConfigVersion()
-	
+
 	// Apply the new configuration
 	nextVersion, newCfg := reconfigure(
 		votingStartDelay,
@@ -83,79 +84,7 @@ func ReconfigureByAdmin(
 	)
 
 	// Emit configuration change event with all parameters
-	std.Emit(
-		"Reconfigure",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"votingStartDelay", formatInt(newCfg.VotingStartDelay),
-		"votingPeriod", formatInt(newCfg.VotingPeriod),
-		"votingWeightSmoothingDuration", formatInt(newCfg.VotingWeightSmoothingDuration),
-		"quorum", formatInt(newCfg.Quorum),
-		"proposalCreationThreshold", formatInt(newCfg.ProposalCreationThreshold),
-		"executionDelay", formatInt(newCfg.ExecutionDelay),
-		"executionPeriod", formatInt(newCfg.ExecutionWindow),
-		"newConfigVersion", formatInt(nextVersion),
-		"prevConfigVersion", formatInt(previousVersion),
-	)
-
-	return nextVersion
-}
-
-// ReconfigureByGovernance updates the governance configuration through governance proposal process.
-// This function allows configuration updates through democratic voting process.
-//
-// Parameters:
-//   - cur: realm context (for cross-realm calls)
-//   - votingStartDelay: delay before voting starts (seconds)
-//   - votingPeriod: duration for collecting votes (seconds)
-//   - votingWeightSmoothingDuration: period for averaging voting weight (seconds)
-//   - quorum: percentage of total supply required for approval
-//   - proposalCreationThreshold: minimum voting weight to create proposals
-//   - executionDelay: waiting period before execution (seconds)
-//   - executionWindow: time window for execution (seconds)
-//
-// Returns:
-//   - int64: new configuration version number
-//
-// Panics:
-//   - if system is halted
-//   - if caller is not governance contract
-func ReconfigureByGovernance(
-	cur realm,
-	votingStartDelay int64,
-	votingPeriod int64,
-	votingWeightSmoothingDuration int64,
-	quorum int64,
-	proposalCreationThreshold int64,
-	executionDelay int64,
-	executionWindow int64,
-) int64 {
-	// Check if system is halted before proceeding
-	halt.AssertIsNotHaltedGovernance()
-
-	// Get caller information and verify governance privileges
 	previousRealm := std.PreviousRealm()
-	caller := previousRealm.Address()
-	access.AssertIsGovernance(caller)
-
-	// Mint and distribute GNS tokens as part of the process
-	en.MintAndDistributeGns(cross)
-
-	// Store previous version for event emission
-	previousVersion := getCurrentConfigVersion()
-	
-	// Apply the new configuration
-	nextVersion, newCfg := reconfigure(
-		votingStartDelay,
-		votingPeriod,
-		votingWeightSmoothingDuration,
-		quorum,
-		proposalCreationThreshold,
-		executionDelay,
-		executionWindow,
-	)
-
-	// Emit configuration change event with all parameters
 	std.Emit(
 		"Reconfigure",
 		"prevAddr", previousRealm.Address().String(),
@@ -197,7 +126,7 @@ func reconfigure(
 	proposalCreationThreshold int64,
 	executionDelay int64,
 	executionWindow int64,
-) (int64, Config) {	
+) (int64, Config) {
 	// Create new configuration with provided parameters
 	cfg := Config{
 		VotingStartDelay:              votingStartDelay,
@@ -208,7 +137,7 @@ func reconfigure(
 		ExecutionDelay:                executionDelay,
 		ExecutionWindow:               executionWindow,
 	}
-	
+
 	// Generate next version number
 	nextVersion := nextConfigVersion()
 

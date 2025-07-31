@@ -359,7 +359,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 }
 
 func TestGovernanceExecute_Cancel(t *testing.T) {
-	executableDelay := testConfig.VotingStartDelay + testConfig.VotingPeriod + testConfig.ExecutionDelay
+	executableDelay := int64(0)
 
 	tests := []struct {
 		name string
@@ -456,7 +456,7 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 				return proposal
 			}(),
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-021] proposal not executable",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-009] unable to cancel voting proposal",
 		},
 		{
 			name:       "fail - proposal already canceled",
@@ -483,7 +483,7 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 				return proposal
 			}(),
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-021] proposal not executable",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-008] can not cancel already canceled proposal",
 		},
 	}
 
@@ -1000,15 +1000,15 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 		description        string
 	}{
 		{
-			name:               "fail - proposer cancels upcoming proposal",
+			name:               "success - proposer cancels upcoming proposal",
 			proposalTime:       now,
 			cancellationTime:   now,
 			canceler:           testutils.TestAddress("proposer"),
 			proposer:           testutils.TestAddress("proposer"),
 			proposerThreshold:  1_000_000_000,
 			proposerCurrentGns: 2_000_000_000,
-			expectedHasAbort:   true,
-			expectedError:      "[GNOSWAP-GOVERNANCE-021] proposal not executable",
+			expectedHasAbort:   false,
+			expectedError:      "",
 		},
 		{
 			name:               "fail - proposer tries to cancel active proposal",
@@ -1018,7 +1018,7 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 			proposer:           testutils.TestAddress("proposer"),
 			proposerThreshold:  1_000_000_000,
 			proposerCurrentGns: 2_000_000_000,
-			expectedError:      "[GNOSWAP-GOVERNANCE-021] proposal not executable",
+			expectedError:      "[GNOSWAP-GOVERNANCE-009] unable to cancel voting proposal",
 			expectedHasAbort:   true,
 		},
 		{
