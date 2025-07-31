@@ -326,8 +326,6 @@ func TestTransferFrom(t *testing.T) {
 }
 
 func TestMint(t *testing.T) {
-	resetObject(t)
-
 	tests := []struct {
 		name            string
 		callerRealm     std.Realm
@@ -360,14 +358,31 @@ func TestMint(t *testing.T) {
 				uassert.Equal(t, int64(1), balance)
 			},
 		},
+		{
+			name:          "mint failed by existing token id",
+			callerRealm:   positionRealm,
+			tokenIdToMint: 0,
+			addressToMint: addr01,
+			shouldPanic:   true,
+			panicMsg:      "token id already exists",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+
+			// token id 0 is pre-minted
+			testing.SetRealm(positionRealm)
+			Mint(cross, testutils.TestAddress("human"), tid(0))
+
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
 					Mint(cross, tt.addressToMint, tid(tt.tokenIdToMint))
 				})
+
+				balance, _ := BalanceOf(tt.addressToMint)
+				uassert.Equal(t, int64(0), balance)
 			} else {
 				testing.SetRealm(tt.callerRealm)
 				mintedTokenId := Mint(cross, tt.addressToMint, tid(tt.tokenIdToMint))
