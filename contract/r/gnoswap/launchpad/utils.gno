@@ -12,22 +12,6 @@ func formatInt(value int64) string {
 	return strconv.FormatInt(value, 10)
 }
 
-// assertValidAmount panics if the amount is zero.
-func assertValidAmount(amount int64) {
-	if amount < minimumDepositAmount {
-		panic(makeErrorWithDetails(
-			errInvalidAmount,
-			ufmt.Sprintf("amount(%d) should greater than minimum deposit amount(%d)", amount, minimumDepositAmount),
-		))
-	}
-	if (amount % minimumDepositAmount) != 0 {
-		panic(makeErrorWithDetails(
-			errInvalidAmount,
-			ufmt.Sprintf("amount(%d) must be a multiple of 1_000_000", amount),
-		))
-	}
-}
-
 // parseProjectTierID parses a project tier ID into its project ID and duration.
 //
 // This function splits the project tier ID into its components and extracts

@@ -3,7 +3,6 @@ package launchpad
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/halt"
 )
@@ -30,20 +29,14 @@ func CollectRewardByDepositId(cur realm, depositID string) int64 {
 	previousRealm := std.PreviousRealm()
 	access.AssertIsUser(previousRealm)
 
-	deposit, err := getDeposit(depositID)
-	if err != nil {
-		panic(err.Error())
-	}
-
 	caller := previousRealm.Address()
-	if !deposit.IsOwner(caller) {
-		panic(makeErrorWithDetails(errInvalidOwner, ufmt.Sprintf("(%s)", caller.String())).Error())
-	}
+	assertIsDepositOwner(depositID, caller)
 
+	deposit := mustGetDeposit(depositID)
 	currentHeight := std.ChainHeight()
 	rewardAmount, err := collectDepositReward(deposit, currentHeight)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 
 	std.Emit(
@@ -69,11 +62,6 @@ func CollectRewardByDepositId(cur realm, depositID string) int64 {
 // - int64: The amount of reward collected
 // - error: If the collection fails
 func collectDepositReward(deposit *Deposit, currentHeight int64) (int64, error) {
-	// Input validation
-	if deposit == nil {
-		return 0, makeErrorWithDetails(errNotExistDeposit, "deposit is nil")
-	}
-
 	if currentHeight <= 0 {
 		return 0, makeErrorWithDetails(errInvalidHeight, "currentHeight must be positive")
 	}

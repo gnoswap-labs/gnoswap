@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -16,19 +15,6 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/halt"
 )
-
-var (
-	// projectId -> Project
-	projects *avl.Tree
-
-	// projectTierId -> RewardManager
-	projectTierRewardManagers *avl.Tree
-)
-
-func init() {
-	projects = avl.NewTree()
-	projectTierRewardManagers = avl.NewTree()
-}
 
 // CreateProject creates a new project with specified tiers, conditions, and token deposit.
 //
@@ -352,38 +338,6 @@ func validateRefundProject(project *Project, recipient std.Address, height int64
 	}
 
 	return project.validateRefundRemainingAmount(height)
-}
-
-func getProject(projectID string) (*Project, error) {
-	project, ok := projects.Get(projectID)
-	if !ok {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectID))
-	}
-
-	return project.(*Project), nil
-}
-
-func getProjectTier(projectID string, tierDuration int64) (*ProjectTier, error) {
-	project, err := getProject(projectID)
-	if err != nil {
-		return nil, err
-	}
-
-	tier, ok := project.tiers[tierDuration]
-	if !ok {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("tier(%d) not found", tierDuration))
-	}
-
-	return tier, nil
-}
-
-func getProjectTierRewardManager(projectTierID string) (*RewardManager, error) {
-	rewardManager, ok := projectTierRewardManagers.Get(projectTierID)
-	if !ok {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("reward manager(%s) not found", projectTierID))
-	}
-
-	return rewardManager.(*RewardManager), nil
 }
 
 type createProjectParams struct {

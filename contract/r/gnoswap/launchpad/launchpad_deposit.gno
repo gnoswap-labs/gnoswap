@@ -4,9 +4,6 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/ufmt"
-
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gns"
@@ -15,18 +12,6 @@ import (
 	"gno.land/r/gnoswap/v1/halt"
 	"gno.land/r/gnoswap/v1/referral"
 )
-
-var (
-	depositCounter *Counter // Counter for generating unique deposit IDs
-
-	// depositId -> Deposit
-	deposits *avl.Tree // Tree storing all deposits by ID
-)
-
-func init() {
-	depositCounter = NewCounter()
-	deposits = avl.NewTree()
-}
 
 // DepositGns handles the deposit process for a specific project tier.
 //
@@ -76,11 +61,11 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 	previousRealm := std.PreviousRealm()
 	access.AssertIsUser(previousRealm)
 
-	assertValidAmount(depositAmount)
+	assertIsValidAmount(depositAmount)
 
 	projectID, tierDuration := parseProjectTierID(targetProjectTierID)
 	caller := previousRealm.Address()
-	
+
 	deposit, rewardState, isFirstDeposit, distributeAmountPerBlockX128, err := depositGns(
 		projectID,
 		tierDuration,
@@ -278,30 +263,4 @@ func stakeGovernance(projectID string, depositAmount int64, launchpadAddress std
 	xgns.MintByLaunchPad(cross, launchpadAddress, depositAmount)
 
 	return nil
-}
-
-func getDeposit(depositID string) (*Deposit, error) {
-	depositI, ok := deposits.Get(depositID)
-	if !ok {
-		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositID))
-	}
-
-	return depositI.(*Deposit), nil
-}
-
-// getCurrentDepositID returns the current deposit ID (last assigned).
-//
-// Returns:
-//   - string: current deposit ID
-func getCurrentDepositID() string {
-	return formatInt(depositCounter.Get())
-}
-
-// nextDepositID increments and returns the next unique deposit ID.
-// This is used when creating new deposits.
-//
-// Returns:
-//   - string: next unique deposit ID
-func nextDepositID() string {
-	return formatInt(depositCounter.next())
 }
