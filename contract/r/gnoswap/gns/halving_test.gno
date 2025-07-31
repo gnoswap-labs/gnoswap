@@ -192,7 +192,7 @@ func TestSetAvgBlockTime_CallbackInvocation(t *testing.T) {
 	setAvgBlockTimeInMs(1000)
 
 	uassert.Equal(t, 1, called)
-	es := GetEmissionState()
+	es := getEmissionState()
 	expected := es.halvingData.getAmountPerBlock(1)
 	uassert.Equal(t, expected, received)
 }
@@ -204,7 +204,7 @@ func TestSetAvgBlockTime_RecalculatesAllYears(t *testing.T) {
 	*/
 	resetEmissionState(t)
 
-	es := GetEmissionState()
+	es := getEmissionState()
 	before := make([]int64, HALVING_END_YEAR)
 	for y := int64(1); y <= HALVING_END_YEAR; y++ {
 		before[y-1] = es.halvingData.getAmountPerBlock(y)
@@ -474,7 +474,7 @@ func TestGetEmission(t *testing.T) {
 func TestGetHalvingYearAndEndTimestampValidation(t *testing.T) {
 	resetEmissionState(t)
 
-	es := GetEmissionState()
+	es := getEmissionState()
 
 	tests := []struct {
 		name            string

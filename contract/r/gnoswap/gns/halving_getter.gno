@@ -10,7 +10,7 @@ import (
 
 // GetHalvingBlocksInRange returns halving blocks and emissions per block within the range
 func GetHalvingBlocksInRange(startHeight, endHeight int64) ([]int64, []int64) {
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	halvingBlocks := make([]int64, 0)
 	halvingEmissions := make([]int64, 0)
 
@@ -31,7 +31,7 @@ func GetHalvingBlocksInRange(startHeight, endHeight int64) ([]int64, []int64) {
 // GetEmission returns the emission amount for the current block,
 // **and** updates that year's mintedAmount and leftAmount.
 func GetEmission() int64 {
-	es := GetEmissionState()
+	es := getEmissionState()
 	hd := &es.halvingData
 	height := std.ChainHeight()
 
@@ -59,106 +59,106 @@ func GetEmission() int64 {
 
 // GetHalvingYearStartBlock returns the starting block height for a specific halving year
 func GetHalvingYearStartBlock(year int64) int64 {
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getStartBlockHeight(year)
 }
 
 // setHalvingYearStartBlock sets the starting block height for a specific halving year
 func setHalvingYearStartBlock(year int64, block int64) {
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	halvingData.setStartBlockHeight(year, block)
-	GetEmissionState().setHalvingData(halvingData)
+	getEmissionState().setHalvingData(halvingData)
 }
 
 // GetHalvingYearEndBlock returns the ending block height for a specific halving year
 func GetHalvingYearEndBlock(year int64) int64 {
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getEndBlockHeight(year)
 }
 
 // setHalvingYearEndBlock sets the ending block height for a specific halving year
 func setHalvingYearEndBlock(year int64, block int64) {
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	halvingData.setEndBlockHeight(year, block)
-	GetEmissionState().setHalvingData(halvingData)
+	getEmissionState().setHalvingData(halvingData)
 }
 
 // GetHalvingYearTimestamp returns the starting timestamp for a specific halving year
 func GetHalvingYearTimestamp(year int64) int64 {
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getStartTimestamp(year)
 }
 
 // setHalvingYearTimestamp sets the starting timestamp for a specific halving year
 func setHalvingYearTimestamp(year int64, timestamp int64) {
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	halvingData.setStartTimestamp(year, timestamp)
-	GetEmissionState().setHalvingData(halvingData)
+	getEmissionState().setHalvingData(halvingData)
 }
 
 // GetHalvingYearMaxAmount returns the maximum issuance amount for a specific halving year
 func GetHalvingYearMaxAmount(year int64) int64 {
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getMaxAmount(year)
 }
 
 // setHalvingYearMaxAmount sets the maximum issuance amount for a specific halving year
 func setHalvingYearMaxAmount(year, amount int64) {
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	halvingData.setMaxAmount(year, amount)
-	GetEmissionState().setHalvingData(halvingData)
+	getEmissionState().setHalvingData(halvingData)
 }
 
 // GetHalvingYearMintAmount returns the minted amount for a specific halving year
 func GetHalvingYearMintAmount(year int64) int64 {
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getMintedAmount(year)
 }
 
 // setHalvingYearMintAmount sets the minted amount for a specific halving year
 func setHalvingYearMintAmount(year, amount int64) {
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	halvingData.setMintedAmount(year, amount)
-	GetEmissionState().setHalvingData(halvingData)
+	getEmissionState().setHalvingData(halvingData)
 }
 
 // GetHalvingYearLeftAmount returns the remaining issuance amount for a specific halving year
 func GetHalvingYearLeftAmount(year int64) int64 {
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getLeftAmount(year)
 }
 
 // setHalvingYearLeftAmount sets the remaining issuance amount for a specific halving year
 func setHalvingYearLeftAmount(year, amount int64) {
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	halvingData.setLeftAmount(year, amount)
-	GetEmissionState().setHalvingData(halvingData)
+	getEmissionState().setHalvingData(halvingData)
 }
 
 // GetHalvingYearAccuAmount returns the accumulated issuance amount for a specific halving year
 func GetHalvingYearAccuAmount(year int64) int64 {
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getAccumAmount(year)
 }
 
 // setHalvingYearAccuAmount sets the accumulated issuance amount for a specific halving year
 func setHalvingYearAccuAmount(year, amount int64) {
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	halvingData.setAccumAmount(year, amount)
-	GetEmissionState().setHalvingData(halvingData)
+	getEmissionState().setHalvingData(halvingData)
 }
 
 // GetAmountPerBlockPerHalvingYear returns the issuance amount per block for a specific halving year
 func GetAmountPerBlockPerHalvingYear(year int64) int64 {
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getAmountPerBlock(year)
 }
 
 // setAmountPerBlockPerHalvingYear sets the issuance amount per block for a specific halving year
 func setAmountPerBlockPerHalvingYear(year, amount int64) {
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	halvingData.setAmountPerBlock(year, amount)
-	GetEmissionState().setHalvingData(halvingData)
+	getEmissionState().setHalvingData(halvingData)
 }
 
 // GetHalvingAmountsPerYear returns the halving amount for a specific year
@@ -173,12 +173,12 @@ func GetEndHeight() int64 {
 
 // endTimestamp returns the end timestamp of the emission period
 func endTimestamp() int64 {
-	return GetEmissionState().getEndTimestamp()
+	return getEmissionState().getEndTimestamp()
 }
 
 // setEndTimestamp sets the end timestamp of the emission period
 func setEndTimestamp(timestamp int64) {
-	GetEmissionState().setEndTimestamp(timestamp)
+	getEmissionState().setEndTimestamp(timestamp)
 }
 
 // GetHalvingInfo returns the halving information in JSON format
@@ -218,7 +218,7 @@ func isEmissionEnded(height int64) bool {
 
 // getHalvingYearAndEndTimestamp returns the halving year and end timestamp corresponding to the given timestamp
 func getHalvingYearAndEndTimestamp(timestamp int64) (int64, int64) {
-	state := GetEmissionState()
+	state := getEmissionState()
 
 	endTimestamp := state.getEndTimestamp()
 	startTimestamp := state.getStartTimestamp()
