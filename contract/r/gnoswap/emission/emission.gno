@@ -4,6 +4,7 @@ import (
 	"std"
 	"time"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/halt"
 )
@@ -16,7 +17,26 @@ var (
 
 	// emissionAddr is the address of the emission realm
 	emissionAddr = std.CurrentRealm().Address()
+
+	// minBlockHeight is the minimum block height from which emission minting is allowed
+	// Default is 0, meaning emission is allowed from genesis
+	minBlockHeight int64
 )
+
+// GetLeftGNSAmount returns the amount of undistributed GNS tokens
+func GetLeftGNSAmount() int64 { return leftGNSAmount }
+
+// GetMinBlockHeight returns the minimum block height for emission minting
+func GetMinBlockHeight() int64 { return minBlockHeight }
+
+// setLeftGNSAmount updates the undistributed GNS token amount
+func setLeftGNSAmount(amount int64) { leftGNSAmount = amount }
+
+// GetLastExecutedHeight returns the last block height when distribution was executed
+func GetLastExecutedHeight() int64 { return lastExecutedHeight }
+
+// setLastExecutedHeight updates the last executed block height
+func setLastExecutedHeight(height int64) { lastExecutedHeight = height }
 
 // MintAndDistributeGns mints new GNS tokens and distributes them to targets
 // Returns the total amount of GNS distributed
@@ -24,6 +44,13 @@ func MintAndDistributeGns(cur realm) int64 {
 	halt.AssertIsNotHaltedEmission()
 
 	currentHeight := std.ChainHeight()
+
+	// Check if current block height is below minimum allowed height
+	if currentHeight < minBlockHeight {
+		// Silently skip emission minting if below minimum height
+		return 0
+	}
+
 	lastMintedHeight := gns.LastMintedHeight()
 	if lastMintedHeight >= currentHeight {
 		// Skip if we've already minted tokens at this height
@@ -35,7 +62,7 @@ func MintAndDistributeGns(cur realm) int64 {
 
 	distributableAmount := mintedEmissionRewardAmount
 	prevLeftAmount := GetLeftGNSAmount()
-	if hasLeftGNSAmount() {
+	if leftGNSAmount > 0 {
 		distributableAmount += prevLeftAmount
 		setLeftGNSAmount(0)
 	}
@@ -44,7 +71,7 @@ func MintAndDistributeGns(cur realm) int64 {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	if distributableAmount != distributedGNSAmount {
 		setLeftGNSAmount(distributableAmount - distributedGNSAmount)
 	}
@@ -70,27 +97,25 @@ func MintAndDistributeGns(cur realm) int64 {
 	return distributedGNSAmount
 }
 
-// GetLeftGNSAmount returns the amount of undistributed GNS tokens
-func GetLeftGNSAmount() int64 {
-	return leftGNSAmount
-}
+// SetMinBlockHeight sets the minimum block height for emission minting
+// Only admin or governance can call this function
+func SetMinBlockHeight(cur realm, height int64) {
+	caller := std.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernance(caller)
 
-// setLeftGNSAmount updates the undistributed GNS token amount
-func setLeftGNSAmount(amount int64) {
-	leftGNSAmount = amount
-}
+	// this check will also prevent the overflow of int64 value
+	if height < 0 {
+		panic("minimum block height cannot be negative")
+	}
 
-// GetLastExecutedHeight returns the last block height when distribution was executed
-func GetLastExecutedHeight() int64 {
-	return lastExecutedHeight
-}
+	oldHeight := minBlockHeight
+	minBlockHeight = height
 
-// setLastExecutedHeight updates the last executed block height
-func setLastExecutedHeight(height int64) {
-	lastExecutedHeight = height
-}
-
-// hasLeftGNSAmount checks if there are any undistributed GNS tokens
-func hasLeftGNSAmount() bool {
-	return leftGNSAmount > 0
+	std.Emit(
+		"SetMinBlockHeight",
+		"caller", caller.String(),
+		"oldHeight", formatInt(oldHeight),
+		"newHeight", formatInt(height),
+		"currentChainHeight", formatInt(std.ChainHeight()),
+	)
 }
