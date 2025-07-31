@@ -327,7 +327,7 @@ func setTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) error {
 		"SetTokenURI",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"lpTokenId", string(tid),
+		"tokenId", string(tid),
 		"tokenURI", string(tURI),
 	)
 
