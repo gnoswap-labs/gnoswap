@@ -8,19 +8,20 @@ import (
 
 var tokenPath = "gno.land/r/demo/foo20"
 
-func TestGetToken(t *testing.T) {
+func TestGrc20regHelper_GetToken(t *testing.T) {
 	tests := []struct {
-		name             string
-		tokenPath        string
-		expectedHasPanic bool
+		name                 string
+		tokenPath            string
+		expectedHasPanic     bool
+		expectedPanicMessage string
 	}{
 		{
-			name:             "Panic - get non registered token",
+			name:             "Success call with non registered token should panic",
 			tokenPath:        "not_registered_token",
 			expectedHasPanic: true,
 		},
 		{
-			name:             "Panic - get foo20 token (not registered in test env)",
+			name:             "Success call with foo20 token should panic in test env",
 			tokenPath:        tokenPath,
 			expectedHasPanic: true,
 		},
@@ -28,39 +29,47 @@ func TestGetToken(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// given
-			// Setup is already done in test case
-
-			// when & then
 			defer func() {
 				if r := recover(); r != nil {
-					if !tc.expectedHasPanic {
-						t.Errorf("Unexpected panic for token: %s, panic: %v", tc.tokenPath, r)
+					if tc.expectedHasPanic {
+						// Expected panic occurred
+						if tc.expectedPanicMessage != "" {
+							uassert.Equal(t, tc.expectedPanicMessage, r.(string))
+						}
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
 					}
-					// Expected panic occurred
 				} else if tc.expectedHasPanic {
-					t.Errorf("Expected panic for non-registered token: %s", tc.tokenPath)
+					t.Errorf("[%s] expected panic but none occurred", tc.name)
 				}
 			}()
 
+			// given
+			// Test environment has no registered tokens
+
+			// when
 			GetToken(tc.tokenPath)
+
+			// then
+			// Handled by defer function above
 		})
 	}
 }
 
-func TestGetTokenTeller(t *testing.T) {
+func TestGrc20regHelper_GetTokenTeller(t *testing.T) {
 	tests := []struct {
-		name             string
-		tokenPath        string
-		expectedHasPanic bool
+		name                 string
+		tokenPath            string
+		expectedHasPanic     bool
+		expectedPanicMessage string
 	}{
 		{
-			name:             "Panic - get non registered token teller",
+			name:             "Success call with non registered token teller should panic",
 			tokenPath:        "not_registered_teller",
 			expectedHasPanic: true,
 		},
 		{
-			name:             "Panic - get foo20 token teller (not registered in test env)",
+			name:             "Success call with foo20 token teller should panic in test env",
 			tokenPath:        tokenPath,
 			expectedHasPanic: true,
 		},
@@ -68,39 +77,46 @@ func TestGetTokenTeller(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// given
-			// Setup is already done in test case
-
-			// when & then
 			defer func() {
 				if r := recover(); r != nil {
-					if !tc.expectedHasPanic {
-						t.Errorf("Unexpected panic for token teller: %s, panic: %v", tc.tokenPath, r)
+					if tc.expectedHasPanic {
+						// Expected panic occurred
+						if tc.expectedPanicMessage != "" {
+							uassert.Equal(t, tc.expectedPanicMessage, r.(string))
+						}
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
 					}
-					// Expected panic occurred
 				} else if tc.expectedHasPanic {
-					t.Errorf("Expected panic for non-registered token teller: %s", tc.tokenPath)
+					t.Errorf("[%s] expected panic but none occurred", tc.name)
 				}
 			}()
 
+			// given
+			// Test environment has no registered token tellers
+
+			// when
 			GetTokenTeller(tc.tokenPath)
+
+			// then
+			// Handled by defer function above
 		})
 	}
 }
 
-func TestIsRegistered(t *testing.T) {
+func TestGrc20regHelper_IsRegistered(t *testing.T) {
 	tests := []struct {
 		name             string
 		tokenPath        string
 		expectedHasError bool
 	}{
 		{
-			name:             "Error - check if token is not registered",
+			name:             "Success call with non registered token should return error",
 			tokenPath:        "not_registered_token",
 			expectedHasError: true,
 		},
 		{
-			name:             "Error - check if foo20 token is not registered in test env",
+			name:             "Success call with foo20 token should return error in test env",
 			tokenPath:        tokenPath,
 			expectedHasError: true,
 		},
@@ -109,7 +125,7 @@ func TestIsRegistered(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			// Setup is already done in test case
+			// Test environment has no registered tokens
 
 			// when
 			err := IsRegistered(tc.tokenPath)
@@ -124,19 +140,20 @@ func TestIsRegistered(t *testing.T) {
 	}
 }
 
-func TestMustRegistered(t *testing.T) {
+func TestGrc20regHelper_MustRegistered(t *testing.T) {
 	tests := []struct {
-		name             string
-		tokenPath        string
-		expectedHasPanic bool
+		name                 string
+		tokenPath            string
+		expectedHasPanic     bool
+		expectedPanicMessage string
 	}{
 		{
-			name:             "Panic - panic for non registered token",
+			name:             "Success call with non registered token should panic",
 			tokenPath:        "not_registered",
 			expectedHasPanic: true,
 		},
 		{
-			name:             "Panic - panic for foo20 token (not registered in test env)",
+			name:             "Success call with foo20 token should panic in test env",
 			tokenPath:        tokenPath,
 			expectedHasPanic: true,
 		},
@@ -144,27 +161,34 @@ func TestMustRegistered(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// given
-			// Setup is already done in test case
-
-			// when & then
 			defer func() {
 				if r := recover(); r != nil {
-					if !tc.expectedHasPanic {
-						t.Errorf("Unexpected panic for token: %s, panic: %v", tc.tokenPath, r)
+					if tc.expectedHasPanic {
+						// Expected panic occurred
+						if tc.expectedPanicMessage != "" {
+							uassert.Equal(t, tc.expectedPanicMessage, r.(string))
+						}
+					} else {
+						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
 					}
-					// Expected panic occurred
 				} else if tc.expectedHasPanic {
-					t.Errorf("Expected panic for non-registered token: %s", tc.tokenPath)
+					t.Errorf("[%s] expected panic but none occurred", tc.name)
 				}
 			}()
 
+			// given
+			// Test environment has no registered tokens
+
+			// when
 			MustRegistered(tc.tokenPath)
+
+			// then
+			// Handled by defer function above
 		})
 	}
 }
 
-func TestExtractTokenPathsFromRender(t *testing.T) {
+func TestGrc20regHelper_ExtractTokenPathsFromRender(t *testing.T) {
 	var (
 		wugnotPath = "gno.land/r/demo/wugnot"
 		gnsPath    = "gno.land/r/gnoswap/v1/gns"
@@ -194,42 +218,42 @@ func TestExtractTokenPathsFromRender(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		render   string
-		expected []string
+		name         string
+		render       string
+		expectedList []string
 	}{
 		{
-			name:     "no registered token",
-			render:   renderList[0],
-			expected: []string{},
+			name:         "Success call with no registered token",
+			render:       renderList[0],
+			expectedList: []string{},
 		},
 		{
-			name:     "1 registered token",
-			render:   renderList[1],
-			expected: []string{wugnotPath},
+			name:         "Success call with 1 registered token",
+			render:       renderList[1],
+			expectedList: []string{wugnotPath},
 		},
 		{
-			name:     "2 registered tokens",
-			render:   renderList[2],
-			expected: []string{wugnotPath, gnsPath},
+			name:         "Success call with 2 registered tokens",
+			render:       renderList[2],
+			expectedList: []string{wugnotPath, gnsPath},
 		},
 		{
-			name:     "4 registered tokens",
-			render:   renderList[3],
-			expected: []string{wugnotPath, gnsPath, fooPath, quxPath},
+			name:         "Success call with 4 registered tokens",
+			render:       renderList[3],
+			expectedList: []string{wugnotPath, gnsPath, fooPath, quxPath},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			// Setup is already done in test case
+			// Render string is provided in test case
 
 			// when
-			extracted := extractTokenPathsFromRender(tc.render)
+			extractedList := extractTokenPathsFromRender(tc.render)
 
 			// then
-			uassert.True(t, areSlicesEqual(t, tc.expected, extracted))
+			uassert.True(t, areSlicesEqual(t, tc.expectedList, extractedList))
 		})
 	}
 }
