@@ -165,6 +165,57 @@ func TestIsApprovedForAll(t *testing.T) {
 	}
 }
 
+func TestSetTokenURI(t *testing.T) {
+	tests := []struct {
+		name     string
+		callerRealm      std.Realm
+		tokenId          uint64
+		expectedHasAbort bool
+		expectedErrMsg   string
+	}{
+		{
+			name:             "set token uri expected error",
+			callerRealm:      addr01Realm,
+			tokenId:          1,
+			expectedHasAbort: true,
+			expectedErrMsg:   "[GNOSWAP-GNFT-002] cannot set URI || token id (1) has already set URI",
+		},
+		{
+			name:             "set token uri is failed by not owner",
+			callerRealm:      addr02Realm,
+			tokenId:          1,
+			expectedHasAbort: true,
+			expectedErrMsg:   "[GNOSWAP-GNFT-002] cannot set URI || token id (1) has already set URI",
+		},
+		{
+			name:             "set token uri is failed by empty token uri",
+			callerRealm:      addr01Realm,
+			tokenId:          1,
+			expectedHasAbort: true,
+			expectedErrMsg:   "[GNOSWAP-GNFT-002] cannot set URI || token id (1) has already set URI",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+
+			// token id 1 is pre-minted
+			testing.SetRealm(positionRealm)
+			Mint(cross, addr01, tid(1))
+
+			testing.SetRealm(tt.callerRealm)
+			if tt.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tt.expectedErrMsg, func() {
+					SetTokenURI(cross, tid(tt.tokenId), "not change")
+				})
+			} else {
+				SetTokenURI(cross, tid(tt.tokenId), "not change")
+			}
+		})
+	}
+}
+
 func TestGetApproved(t *testing.T) {
 	resetObject(t)
 	testing.SetRealm(positionRealm)
