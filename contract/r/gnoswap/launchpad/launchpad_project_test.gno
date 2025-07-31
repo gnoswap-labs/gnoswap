@@ -748,7 +748,7 @@ func initLaunchpadProjectTestAvgBlockTime(t *testing.T, avgBlockTimeMs int64) {
 
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 	testing.SetOriginCaller(adminAddr)
-	gns.SetAvgBlockTimeInMsByAdmin(cross, avgBlockTimeMs)
+	gns.SetAvgBlockTimeInMs(cross, avgBlockTimeMs)
 }
 
 func setupLaunchpadProjectTestEmptyProject(t *testing.T, projectID string) {

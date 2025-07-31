@@ -74,7 +74,7 @@ func changeBlockTime(blockTime int64) {
 	prevAmountPerBlock := gns.GetAmountPerBlockPerHalvingYear(currentYear)
 
 	// change block time
-	gns.SetAvgBlockTimeInMsByAdmin(cross, blockTime)
+	gns.SetAvgBlockTimeInMs(cross, blockTime)
 
 	// get current end block height and amount per block
 	endBlockHeight := gns.GetHalvingYearEndBlock(currentYear)

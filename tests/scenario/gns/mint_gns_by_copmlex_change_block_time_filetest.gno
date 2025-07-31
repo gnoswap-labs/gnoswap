@@ -77,7 +77,7 @@ func changeBlockTime(blockTime int64) {
 	currentYear := gns.HalvingYearByHeight(std.ChainHeight())
 	prevEndBlockHeight := gns.GetHalvingYearEndBlock(currentYear)
 	prevAmountPerBlock := gns.GetAmountPerBlockPerHalvingYear(currentYear)
-	gns.SetAvgBlockTimeInMsByAdmin(cross, blockTime)
+	gns.SetAvgBlockTimeInMs(cross, blockTime)
 	endBlockHeight := gns.GetHalvingYearEndBlock(currentYear)
 	amountPerBlock := gns.GetAmountPerBlockPerHalvingYear(currentYear)
 	ufmt.Printf("[INFO] block time changed to %dms\n", blockTime)

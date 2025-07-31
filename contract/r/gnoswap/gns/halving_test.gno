@@ -245,62 +245,6 @@ func TestSetAvgBlockTime_RecalculatesAllYears(t *testing.T) {
 	}
 }
 
-func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
-	t.Run("panic if caller is not admin", func(t *testing.T) {
-		oldCallback := emissionChangeCallback
-		emissionChangeCallback = func(amount int64) {}
-		uassert.AbortsWithMessage(t,
-			"unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not admin",
-			func() {
-				testing.SetOriginCaller(alice)
-				testing.SetRealm(std.NewUserRealm(alice))
-				SetAvgBlockTimeInMsByAdmin(cross, 1)
-			},
-		)
-		emissionChangeCallback = oldCallback
-	})
-
-	t.Run("success if caller is admin", func(t *testing.T) {
-		oldCallback := emissionChangeCallback
-		emissionChangeCallback = func(amount int64) {}
-
-		testing.SkipHeights(1)
-		testing.SetRealm(std.NewUserRealm(adminAddr))
-		SetAvgBlockTimeInMsByAdmin(cross, 2)
-		uassert.Equal(t, AvgBlockTimeInMs(), int64(2))
-
-		emissionChangeCallback = oldCallback
-	})
-
-	t.Run("panic with negative block time", func(t *testing.T) {
-		oldCallback := emissionChangeCallback
-		emissionChangeCallback = func(amount int64) {}
-		testing.SkipHeights(1)
-		testing.SetRealm(std.NewUserRealm(adminAddr))
-		uassert.AbortsWithMessage(t,
-			errInvalidAvgBlockTimeInMs.Error(),
-			func() {
-				SetAvgBlockTimeInMsByAdmin(cross, -1)
-			},
-		)
-		emissionChangeCallback = oldCallback
-	})
-
-	t.Run("panic with extremely large block time", func(t *testing.T) {
-		oldCallback := emissionChangeCallback
-		emissionChangeCallback = func(amount int64) {}
-		testing.SkipHeights(1)
-		testing.SetRealm(std.NewUserRealm(adminAddr))
-		uassert.AbortsWithMessage(t,
-			"[GNOSWAP-GNS-004] invalid avg block time in ms",
-			func() {
-				SetAvgBlockTimeInMsByAdmin(cross, MAX_BLOCK_TIME_MS)
-			},
-		)
-		emissionChangeCallback = oldCallback
-	})
-}
-
 func TestSetAvgBlockTimeInMs(t *testing.T) {
 	t.Run("panic if caller is not governance contract", func(t *testing.T) {
 		oldCallback := emissionChangeCallback

@@ -66,7 +66,7 @@ func testBasicEmissionUpdateFlow(t *testing.T) {
 	testing.SetOriginCaller(adminAddr)
 
 	// Step 1: Set initial block time to 1000ms (1 second)
-	SetAvgBlockTimeInMsByAdmin(cross, 1000)
+	SetAvgBlockTimeInMs(cross, 1000)
 
 	// Step 2: Record current emission value (E1)
 	e1 := AmountByHeight(std.ChainHeight())
@@ -84,7 +84,7 @@ func testBasicEmissionUpdateFlow(t *testing.T) {
 	}
 	defer func() { emissionChangeCallback = oldCallback }()
 
-	SetAvgBlockTimeInMsByAdmin(cross, 2000)
+	SetAvgBlockTimeInMs(cross, 2000)
 
 	// Step 5: Record new emission value (E2)
 	e2 := AmountByHeight(std.ChainHeight())
@@ -124,7 +124,7 @@ func testHistoricalBlockEmissionAccuracy(t *testing.T) {
 	testing.SetOriginCaller(adminAddr)
 
 	// Step 1: Set initial block time and record emission at height H1
-	SetAvgBlockTimeInMsByAdmin(cross, 1000)
+	SetAvgBlockTimeInMs(cross, 1000)
 	h1 := std.ChainHeight()
 	e1 := AmountByHeight(h1)
 	t.Logf("Height H1: %d, Emission: %d", h1, e1)
@@ -134,7 +134,7 @@ func testHistoricalBlockEmissionAccuracy(t *testing.T) {
 
 	// Step 3: Change block time at height H2
 	h2 := std.ChainHeight()
-	SetAvgBlockTimeInMsByAdmin(cross, 2000)
+	SetAvgBlockTimeInMs(cross, 2000)
 	e2 := AmountByHeight(h2)
 	t.Logf("Height H2: %d, New Emission: %d", h2, e2)
 
@@ -204,7 +204,7 @@ func testCacheRewardIntegration(t *testing.T) {
 	}
 
 	// Set initial block time
-	SetAvgBlockTimeInMsByAdmin(cross, 1000)
+	SetAvgBlockTimeInMs(cross, 1000)
 	e1 := AmountByHeight(std.ChainHeight())
 	t.Logf("Block 1000 - Initial emission: %d GNS/block", e1)
 
@@ -231,7 +231,7 @@ func testCacheRewardIntegration(t *testing.T) {
 	}
 	defer func() { emissionChangeCallback = oldCallback }()
 
-	SetAvgBlockTimeInMsByAdmin(cross, 2000)
+	SetAvgBlockTimeInMs(cross, 2000)
 	e2 := AmountByHeight(std.ChainHeight())
 	t.Logf("Block 1100 - New emission: %d GNS/block", e2)
 
@@ -279,7 +279,7 @@ func testMultipleBlockTimeChanges(t *testing.T) {
 	testing.SetOriginCaller(adminAddr)
 
 	// Step 1: Initial state: BlockTime = 1000ms, Emission = E1
-	SetAvgBlockTimeInMsByAdmin(cross, 1000)
+	SetAvgBlockTimeInMs(cross, 1000)
 	e1 := AmountByHeight(std.ChainHeight())
 	t.Logf("Initial state - Emission E1: %d", e1)
 
@@ -293,7 +293,7 @@ func testMultipleBlockTimeChanges(t *testing.T) {
 
 	// Step 2: Block 1000: Change to 2000ms -> Emission = E2
 	h1 := std.ChainHeight()
-	SetAvgBlockTimeInMsByAdmin(cross, 2000)
+	SetAvgBlockTimeInMs(cross, 2000)
 	e2 := AmountByHeight(std.ChainHeight())
 	t.Logf("Block %d - Changed to 2000ms, Emission E2: %d", h1, e2)
 
@@ -302,7 +302,7 @@ func testMultipleBlockTimeChanges(t *testing.T) {
 
 	// Step 3: Block 1100: Change to 1500ms -> Emission = E3
 	h2 := std.ChainHeight()
-	SetAvgBlockTimeInMsByAdmin(cross, 1500)
+	SetAvgBlockTimeInMs(cross, 1500)
 	e3 := AmountByHeight(std.ChainHeight())
 	t.Logf("Block %d - Changed to 1500ms, Emission E3: %d", h2, e3)
 
