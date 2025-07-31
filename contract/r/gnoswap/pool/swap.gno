@@ -57,7 +57,7 @@ func Swap(
 ) (string, string) {
 	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedPool()
-	access.AssertIsRouter(caller)
+	access.AssertIsWhitelistedRouter(caller)
 
 	if amountSpecified == "0" {
 		panic(newErrorWithDetail(
