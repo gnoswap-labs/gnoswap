@@ -7,6 +7,7 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 
+	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -39,16 +40,20 @@ func ExactInSwapRoute(cur realm,
 	halt.AssertIsNotHaltedRouter()
 	halt.AssertIsNotHaltedWithdraw()
 
+	assertIsNotPassedDeadline(deadline)
+
+	emission.MintAndDistributeGns(cross)
+
 	params := SwapRouteParams{
-		inputToken:   inputToken,
-		outputToken:  outputToken,
-		routeArr:     RouteArr,
-		quoteArr:     quoteArr,
-		deadline:     deadline,
-		referrer:     referrer,
-		typ:     ExactIn,
-		exactAmount:  amountIn,
-		limitAmount:  amountOutMin,
+		inputToken:  inputToken,
+		outputToken: outputToken,
+		routeArr:    RouteArr,
+		quoteArr:    quoteArr,
+		deadline:    deadline,
+		referrer:    referrer,
+		typ:         ExactIn,
+		exactAmount: amountIn,
+		limitAmount: amountOutMin,
 	}
 
 	inputAmount, outputAmount, actualReferrer, err := commonSwapRoute(cur, params)

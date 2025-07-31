@@ -12,7 +12,6 @@ import (
 
 	"gno.land/r/demo/wugnot"
 
-	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/referral"
 )
 
@@ -212,7 +211,6 @@ func handleMultiSwap(
 	}
 }
 
-
 // SwapRouteParams contains all parameters needed for swap route execution
 type SwapRouteParams struct {
 	inputToken  string
@@ -229,13 +227,6 @@ type SwapRouteParams struct {
 // commonSwapRoute handles the common logic for both ExactIn and ExactOut swaps
 // Returns inputAmount, outputAmount, and actualReferrer
 func commonSwapRoute(cur realm, params SwapRouteParams) (string, string, string, error) {
-	if err := checkDeadline(params.deadline); err != nil {
-		errMsg := addDetailToError(errExpired, err.Error())
-		return "", "", "", errors.New(errMsg)
-	}
-
-	emission.MintAndDistributeGns(cross)
-
 	baseParams := BaseSwapParams{
 		InputToken:  params.inputToken,
 		OutputToken: params.outputToken,
