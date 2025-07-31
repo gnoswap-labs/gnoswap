@@ -11,8 +11,6 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/demo/wugnot"
-
-	"gno.land/r/gnoswap/v1/referral"
 )
 
 const (
@@ -218,15 +216,13 @@ type SwapRouteParams struct {
 	routeArr    string
 	quoteArr    string
 	deadline    int64
-	referrer    string
 	typ         SwapType
 	exactAmount string // amountIn for ExactIn, amountOut for ExactOut
 	limitAmount string // amountOutMin for ExactIn, amountInMax for ExactOut
 }
 
-// commonSwapRoute handles the common logic for both ExactIn and ExactOut swaps
-// Returns inputAmount, outputAmount, and actualReferrer
-func commonSwapRoute(cur realm, params SwapRouteParams) (string, string, string, error) {
+// createSwapOperation creates the appropriate swap operation based on swap type
+func createSwapOperation(params SwapRouteParams) (RouterOperation, error) {
 	baseParams := BaseSwapParams{
 		InputToken:  params.inputToken,
 		OutputToken: params.outputToken,
@@ -234,41 +230,21 @@ func commonSwapRoute(cur realm, params SwapRouteParams) (string, string, string,
 		QuoteArr:    params.quoteArr,
 	}
 
-	// Create operation based on swap type
-	var (
-		op     RouterOperation
-		result *SwapResult
-		err    error
-	)
-
 	switch params.typ {
 	case ExactIn:
 		pp := NewExactInParams(baseParams, params.exactAmount, params.limitAmount)
-		op = NewExactInSwapOperation(pp)
+		return NewExactInSwapOperation(pp), nil
 	case ExactOut:
 		pp := NewExactOutParams(baseParams, params.exactAmount, params.limitAmount)
-		op = NewExactOutSwapOperation(pp)
+		return NewExactOutSwapOperation(pp), nil
 	default:
 		msg := addDetailToError(errInvalidSwapType, "unknown swap type")
-		return "", "", "", errors.New(msg)
+		return nil, errors.New(msg)
 	}
+}
 
-	result, err = executeSwapOperation(op)
-	if err != nil {
-		msg := addDetailToError(
-			errInvalidInput,
-			ufmt.Sprintf("invalid %s SwapOperation: %s", params.typ.String(), err.Error()),
-		)
-		return "", "", "", errors.New(msg)
-	}
-
-	// get operation-specific values for finalization
-	var (
-		userBeforeWugnotBalance int64
-		userWrappedWugnot       int64
-		limitValue              *u256.Uint
-	)
-
+// extractSwapOperationData extracts common data from swap operation
+func extractSwapOperationData(op RouterOperation) (int64, int64, error) {
 	var baseOp *baseSwapOperation
 	switch typedOp := op.(type) {
 	case *ExactInSwapOperation:
@@ -276,15 +252,37 @@ func commonSwapRoute(cur realm, params SwapRouteParams) (string, string, string,
 	case *ExactOutSwapOperation:
 		baseOp = &typedOp.baseSwapOperation
 	default:
-		return "", "", "", ufmt.Errorf("unexpected operation type: %T", op)
+		return 0, 0, ufmt.Errorf("unexpected operation type: %T", op)
 	}
 
-	userBeforeWugnotBalance = baseOp.userBeforeWugnotBalance
-	userWrappedWugnot = baseOp.userWrappedWugnot
+	return baseOp.userBeforeWugnotBalance, baseOp.userWrappedWugnot, nil
+}
 
-	limitValue, err = u256.FromDecimal(params.limitAmount)
+// commonSwapRoute handles the common logic for both ExactIn and ExactOut swaps
+// Returns inputAmount, outputAmount, and actualReferrer
+func commonSwapRoute(cur realm, params SwapRouteParams) (string, string, error) {
+	op, err := createSwapOperation(params)
 	if err != nil {
-		return "", "", "", err
+		return "", "", err
+	}
+
+	result, err := executeSwapOperation(op)
+	if err != nil {
+		msg := addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("invalid %s SwapOperation: %s", params.typ.String(), err.Error()),
+		)
+		return "", "", errors.New(msg)
+	}
+
+	userBeforeWugnotBalance, userWrappedWugnot, err := extractSwapOperationData(op)
+	if err != nil {
+		return "", "", err
+	}
+
+	limitValue, err := u256.FromDecimal(params.limitAmount)
+	if err != nil {
+		return "", "", err
 	}
 
 	inputAmount, outputAmount := finalizeSwap(
@@ -299,13 +297,5 @@ func commonSwapRoute(cur realm, params SwapRouteParams) (string, string, string,
 		result.AmountSpecified.Abs(),
 	)
 
-	// handle referral registration
-	caller := std.PreviousRealm().Address()
-	success := referral.TryRegister(cross, caller, params.referrer)
-	actualReferrer := params.referrer
-	if !success {
-		actualReferrer = referral.GetReferral(caller.String())
-	}
-
-	return inputAmount, outputAmount, actualReferrer, nil
+	return inputAmount, outputAmount, nil
 }

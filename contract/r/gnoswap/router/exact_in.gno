@@ -9,6 +9,7 @@ import (
 
 	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/v1/referral"
 )
 
 type ExactInSwapOperation struct {
@@ -50,18 +51,25 @@ func ExactInSwapRoute(cur realm,
 		routeArr:    RouteArr,
 		quoteArr:    quoteArr,
 		deadline:    deadline,
-		referrer:    referrer,
 		typ:         ExactIn,
 		exactAmount: amountIn,
 		limitAmount: amountOutMin,
 	}
 
-	inputAmount, outputAmount, actualReferrer, err := commonSwapRoute(cur, params)
+	inputAmount, outputAmount, err := commonSwapRoute(cur, params)
 	if err != nil {
 		panic(err)
 	}
 
+	// handle referral registration
 	previousRealm := std.PreviousRealm()
+	caller := previousRealm.Address()
+	success := referral.TryRegister(cross, caller, referrer)
+	actualReferrer := referrer
+	if !success {
+		actualReferrer = referral.GetReferral(caller.String())
+	}
+
 	std.Emit(
 		"ExactInSwap",
 		"prevAddr", previousRealm.Address().String(),
