@@ -226,16 +226,13 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 
 			// Pool Creation
 			testing.SetRealm(std.NewUserRealm(positionOwner))
-			pl.SetPoolCreationFeeByAdmin(cross, 0)
-			if !pl.DoesPoolPathExist(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
+			pl.SetPoolCreationFee(cross, 0)
+			if !pl.ExistsPoolPath(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
 				pl.CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
 			}
 
 			if tt.feeProtocol0 != 0 || tt.feeProtocol1 != 0 {
-				pool := pl.GetPool(tt.tokenPath0, tt.tokenPath1, tt.feeTier)
-				pl.SetFeeProtocolByAdmin(cross, tt.feeProtocol0, tt.feeProtocol1)
-				uassert.Equal(t, tt.feeProtocol0, pool.Slot0FeeProtocol()%16)
-				uassert.Equal(t, tt.feeProtocol1, pool.Slot0FeeProtocol()>>4)
+				pl.SetFeeProtocol(cross, tt.feeProtocol0, tt.feeProtocol1)
 			}
 
 			testing.SetOriginCaller(positionOwner)
@@ -391,16 +388,13 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 
 			// Pool Creation
 			testing.SetRealm(std.NewUserRealm(positionOwner))
-			pl.SetPoolCreationFeeByAdmin(cross, 0)
-			if !pl.DoesPoolPathExist(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
+			pl.SetPoolCreationFee(cross, 0)
+			if !pl.ExistsPoolPath(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
 				pl.CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
 			}
 
 			if tt.feeProtocol0 != 0 || tt.feeProtocol1 != 0 {
-				pool := pl.GetPool(tt.tokenPath0, tt.tokenPath1, tt.feeTier)
-				pl.SetFeeProtocolByAdmin(cross, tt.feeProtocol0, tt.feeProtocol1)
-				uassert.Equal(t, tt.feeProtocol0, pool.Slot0FeeProtocol()%16)
-				uassert.Equal(t, tt.feeProtocol1, pool.Slot0FeeProtocol()>>4)
+				pl.SetFeeProtocol(cross, tt.feeProtocol0, tt.feeProtocol1)
 			}
 
 			testing.SetOriginCaller(positionOwner)
@@ -581,16 +575,13 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 
 			// Pool Creation
 			testing.SetRealm(std.NewUserRealm(positionOwner))
-			pl.SetPoolCreationFeeByAdmin(cross, 0)
-			if !pl.DoesPoolPathExist(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
+			pl.SetPoolCreationFee(cross, 0)
+			if !pl.ExistsPoolPath(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
 				pl.CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
 			}
 
 			if tt.feeProtocol0 != 0 || tt.feeProtocol1 != 0 {
-				pool := pl.GetPool(tt.tokenPath0, tt.tokenPath1, tt.feeTier)
-				pl.SetFeeProtocolByAdmin(cross, tt.feeProtocol0, tt.feeProtocol1)
-				uassert.Equal(t, tt.feeProtocol0, pool.Slot0FeeProtocol()%16)
-				uassert.Equal(t, tt.feeProtocol1, pool.Slot0FeeProtocol()>>4)
+				pl.SetFeeProtocol(cross, tt.feeProtocol0, tt.feeProtocol1)
 			}
 
 			testing.SetOriginCaller(positionOwner)
@@ -774,6 +765,8 @@ func TestValidateQuoteSum(t *testing.T) {
 func TestHandleMultiSwap(t *testing.T) {
 	tests := []struct {
 		name              string
+		inputToken        string
+		outputToken       string
 		swapType          SwapType
 		route             string
 		numHops           int
@@ -785,6 +778,8 @@ func TestHandleMultiSwap(t *testing.T) {
 	}{
 		{
 			name:              "ExactIn - 2 hops",
+			inputToken:        "gno.land/r/onbloc/bar",
+			outputToken:       "gno.land/r/onbloc/qux",
 			swapType:          ExactIn,
 			route:             "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
 			numHops:           2,
@@ -794,6 +789,8 @@ func TestHandleMultiSwap(t *testing.T) {
 		},
 		{
 			name:              "ExactOut - 2 hops",
+			inputToken:        "gno.land/r/onbloc/bar",
+			outputToken:       "gno.land/r/onbloc/qux",
 			swapType:          ExactOut,
 			route:             "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
 			numHops:           2,
@@ -803,6 +800,8 @@ func TestHandleMultiSwap(t *testing.T) {
 		},
 		{
 			name:              "ExactIn - 3 hops",
+			inputToken:        "gno.land/r/onbloc/bar",
+			outputToken:       "gno.land/r/onbloc/qux",
 			swapType:          ExactIn,
 			route:             "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/foo:500",
 			numHops:           3,
@@ -812,12 +811,14 @@ func TestHandleMultiSwap(t *testing.T) {
 		},
 		{
 			name:            "Invalid SwapType",
+			inputToken:      "gno.land/r/onbloc/bar",
+			outputToken:     "gno.land/r/onbloc/qux",
 			swapType:        SwapType(99),
 			route:           "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
 			numHops:         2,
 			amountSpecified: "1000",
 			shouldPanic:     true,
-			panicMsg:        "invalid swap type",
+			panicMsg:        "[GNOSWAP-ROUTER-008] invalid swap type",
 		},
 	}
 
@@ -826,31 +827,26 @@ func TestHandleMultiSwap(t *testing.T) {
 			initRouterTest(t)
 			createMultiHopPools(t)
 
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					if r == nil {
-						t.Errorf("Expected panic but got none")
-						return
-					}
-					if errMsg, ok := r.(string); ok {
-						if !strings.Contains(errMsg, tt.panicMsg) {
-							t.Errorf("Expected panic message containing %q, got %q", tt.panicMsg, errMsg)
-						}
-					}
-				}()
-			}
+			testing.SetRealm(adminRealm)
 
 			amountSpecified := i256.MustFromDecimal(tt.amountSpecified)
 
-			amountIn, amountOut := handleMultiSwap(
-				tt.swapType,
-				tt.route,
-				tt.numHops,
-				amountSpecified,
-			)
+			handleMultiSwapFn := func(cur realm) (*u256.Uint, *u256.Uint) {
+				return handleMultiSwap(
+					tt.swapType,
+					tt.route,
+					tt.numHops,
+					amountSpecified,
+				)
+			}
 
-			if !tt.shouldPanic {
+			if tt.shouldPanic {
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					handleMultiSwapFn(cross)
+				})
+			} else {
+				amountIn, amountOut := handleMultiSwapFn(cross)
+
 				uassert.Equal(t, tt.expectedAmountIn, amountIn.ToString())
 				uassert.Equal(t, tt.expectedAmountOut, amountOut.ToString())
 			}
@@ -913,7 +909,7 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 			expectedAmountIn:  "",
 			expectedAmountOut: "",
 			expectError:       true,
-			errorMsg:          "[GNOSWAP-ROUTER-009] invalid pool path",
+			errorMsg:          "[GNOSWAP-ROUTER-009] invalid pool path || len(poolPathSplit) != 3, poolPath: ",
 		},
 	}
 
@@ -926,34 +922,23 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 				amountSpecified: i256.MustFromDecimal(tt.toSwap),
 			}
 
-			if tt.expectError {
-				defer func() {
-					r := recover()
-					if r == nil {
-						t.Errorf("Expected error but got none")
-						return
-					}
-					if errMsg, ok := r.(string); ok {
-						if !strings.Contains(errMsg, tt.errorMsg) {
-							t.Errorf("Expected error message containing %q, got %q", tt.errorMsg, errMsg)
-						}
-					}
-				}()
+			toSwapAmount := i256.MustFromDecimal(tt.toSwap)
+			testing.SetRealm(adminRealm)
+
+			processRouteFn := func(cur realm) (*u256.Uint, *u256.Uint, error) {
+				return op.processRoute(tt.route, toSwapAmount, tt.swapType)
 			}
 
-			toSwapAmount := i256.MustFromDecimal(tt.toSwap)
-			amountIn, amountOut, err := op.processRoute(tt.route, toSwapAmount, tt.swapType)
-
 			if tt.expectError {
-				if err == nil {
-					t.Errorf("Expected error but got none")
-				}
+				uassert.AbortsWithMessage(t, tt.errorMsg, func() {
+					processRouteFn(cross)
+				})
 			} else {
-				if err != nil {
-					t.Errorf("Unexpected error: %v", err)
-				}
+				amountIn, amountOut, err := processRouteFn(cross)
+
 				uassert.Equal(t, tt.expectedAmountIn, amountIn.ToString())
 				uassert.Equal(t, tt.expectedAmountOut, amountOut.ToString())
+				uassert.NoError(t, err)
 			}
 		})
 	}

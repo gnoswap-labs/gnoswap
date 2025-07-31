@@ -84,6 +84,8 @@ func main() {
 		test_liquidityExpectStr,
 		adminAddr,
 	)
+
+	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	currentLiq := thisPool.Liquidity().ToString()
 	println("[INFO] Current liquidity:", currentLiq)
 	println()
@@ -102,6 +104,7 @@ func main() {
 		adminAddr,
 	)
 
+	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	nowLiq := thisPool.Liquidity().ToString()
 	println("[INFO] Current liquidity:", currentLiq)
 	println("[INFO] Now liquidity:", nowLiq)
@@ -123,6 +126,7 @@ func main() {
 		adminAddr,
 	)
 
+	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	nowLiq = thisPool.Liquidity().ToString()
 	println("[INFO] Current liquidity:", currentLiq)
 	println("[INFO] Now liquidity:", nowLiq)
@@ -147,6 +151,8 @@ func main() {
 		test_liquidityExpectStr,
 		adminAddr,
 	)
+
+	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	nowLiq = thisPool.Liquidity().ToString()
 	println("[INFO] Now liquidity:", nowLiq)
 
@@ -164,6 +170,7 @@ func main() {
 		adminAddr,
 	)
 
+	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	poolTick := thisPool.Slot0Tick()
 	println("[EXPECTED] Pool tick:", poolTick, "expected: -1")
 	println()
@@ -185,6 +192,8 @@ func main() {
 		test_liquidityExpectStr,
 		adminAddr,
 	)
+
+	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	nowLiq = thisPool.Liquidity().ToString()
 	println("[INFO] Now liquidity:", nowLiq)
 
@@ -202,6 +211,7 @@ func main() {
 		adminAddr,
 	)
 
+	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	poolTick = thisPool.Slot0Tick()
 	println("[EXPECTED] Pool tick:", poolTick, "expected: -1")
 	println()

@@ -59,7 +59,7 @@ func (p *poolCreateConfig) Token0Path() string       { return p.token0Path }
 func (p *poolCreateConfig) Token1Path() string       { return p.token1Path }
 func (p *poolCreateConfig) Fee() uint32              { return p.fee }
 
-func (p *poolCreateConfig) updateWithWrapping() *poolCreateConfig {
+func (p *poolCreateConfig) updateWithWrapping() (*poolCreateConfig, error) {
 	token0Path, token1Path := p.wrap()
 
 	if !p.isInOrder() {
@@ -70,10 +70,10 @@ func (p *poolCreateConfig) updateWithWrapping() *poolCreateConfig {
 		maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
 
 		if p.sqrtPriceX96.Lt(minSqrtRatio) || p.sqrtPriceX96.Gt(maxSqrtRatio) {
-			panic(newErrorWithDetail(
+			return nil, makeErrorWithDetails(
 				errOutOfRange,
 				ufmt.Sprintf("sqrtPriceX96(%s) is out of range", p.sqrtPriceX96.ToString()),
-			))
+			)
 		}
 
 		// newPrice = 2^192 / oldPrice
@@ -81,15 +81,16 @@ func (p *poolCreateConfig) updateWithWrapping() *poolCreateConfig {
 
 		// Check if calculated price is within valid range
 		if newPrice.Lt(minSqrtRatio) || newPrice.Gt(maxSqrtRatio) {
-			panic(newErrorWithDetail(
+			return nil, makeErrorWithDetails(
 				errOutOfRange,
 				ufmt.Sprintf("sqrtPriceX96(%s) is out of range", newPrice.ToString()),
-			))
+			)
 		}
 
 		p.sqrtPriceX96 = newPrice
 	}
-	return newPoolParams(token0Path, token1Path, p.fee, p.sqrtPriceX96.ToString(), GetFeeAmountTickSpacing(p.fee))
+	
+	return newPoolParams(token0Path, token1Path, p.fee, p.sqrtPriceX96.ToString(), GetFeeAmountTickSpacing(p.fee)), nil
 }
 
 func (p *poolCreateConfig) isSameTokenPath() bool {
@@ -114,12 +115,8 @@ func (p *poolCreateConfig) wrap() (string, string) {
 	return p.token0Path, p.token1Path
 }
 
-func (p *poolCreateConfig) generatePoolPath() string {
-	if !p.isInOrder() {
-		p.token0Path, p.token1Path = p.token1Path, p.token0Path
-	}
-
-	return ufmt.Sprintf("%s:%s:%d", p.token0Path, p.token1Path, p.fee)
+func (p *poolCreateConfig) poolPath() string {
+	return GetPoolPath(p.token0Path, p.token1Path, p.fee)
 }
 
 func (p *poolCreateConfig) isSupportedFee(feeTier uint32) bool {
@@ -127,5 +124,14 @@ func (p *poolCreateConfig) isSupportedFee(feeTier uint32) bool {
 	case FeeTier100, FeeTier500, FeeTier3000, FeeTier10000:
 		return true
 	}
+	return false
+}
+
+func isValidFeeTier(feeTier uint32) bool {
+	switch feeTier {
+	case FeeTier100, FeeTier500, FeeTier3000, FeeTier10000:
+		return true
+	}
+
 	return false
 }

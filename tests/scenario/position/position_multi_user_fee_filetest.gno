@@ -77,7 +77,7 @@ func main() {
 
 func initPoolAndUsers() {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 
 	ufmt.Println("[INFO] Creating pool at tick -23028")
 	pool.CreatePool(

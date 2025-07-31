@@ -40,11 +40,8 @@ func ExactOutSwapRoute(cur realm,
 	referrer string,
 ) (string, string) {
 	halt.AssertIsNotHaltedRouter()
-	halt.AssertIsNotHaltedWithdraw()
 
-	if err := checkDeadline(deadline); err != nil {
-		panic(addDetailToError(errExpired, err.Error()))
-	}
+	assertIsNotExpired(deadline)
 
 	emission.MintAndDistributeGns(cross)
 

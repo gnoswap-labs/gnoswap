@@ -102,7 +102,7 @@ func createPool() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	testing.SkipHeights(1)
 

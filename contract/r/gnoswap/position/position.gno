@@ -146,7 +146,7 @@ func Mint(
 		}
 	}
 
-	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(processedInput.poolPath)
+	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(processedInput.poolPath)
 	
 	std.Emit(
 		"Mint",
@@ -161,9 +161,9 @@ func Mint(
 		"liquidity", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
-		"sqrtPriceX96", poolSqrtPriceX96,
-		"token0Balance", pl.PoolGetBalanceToken0(processedInput.poolPath),
-		"token1Balance", pl.PoolGetBalanceToken1(processedInput.poolPath),
+		"sqrtPriceX96", poolSqrtPriceX96.ToString(),
+		"token0Balance", pl.GetBalanceToken0(processedInput.poolPath),
+		"token1Balance", pl.GetBalanceToken1(processedInput.poolPath),
 	)
 
 	return id, liquidity.ToString(), amount0.ToString(), amount1.ToString()
@@ -181,11 +181,11 @@ func IncreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string) {
-	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedPosition()
-	halt.AssertIsNotHaltedWithdraw()
 
+	caller := std.PreviousRealm().Address()
 	assertIsOwnerForToken(positionId, caller)
+
 	assertValidNumberString(amount0DesiredStr)
 	assertValidNumberString(amount1DesiredStr)
 	assertValidNumberString(amount0MinStr)
@@ -259,10 +259,10 @@ func IncreaseLiquidity(
 		"liquidity", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
-		"sqrtPriceX96", pl.PoolGetSlot0SqrtPriceX96(poolPath),
+		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath).ToString(),
 		"positionLiquidity", PositionGetPositionLiquidityStr(positionId),
-		"token0Balance", pl.PoolGetBalanceToken0(poolPath),
-		"token1Balance", pl.PoolGetBalanceToken1(poolPath),
+		"token0Balance", pl.GetBalanceToken0(poolPath),
+		"token1Balance", pl.GetBalanceToken1(poolPath),
 	)
 
 	return positionId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
@@ -281,13 +281,14 @@ func DecreaseLiquidity(
 	deadline int64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
-	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedPosition()
 	halt.AssertIsNotHaltedWithdraw()
 
+	caller := std.PreviousRealm().Address()
 	assertIsOwnerForToken(positionId, caller)
 	assertIsNotExpired(deadline)
 	assertValidLiquidityAmount(liquidityStr)
+
 	emission.MintAndDistributeGns(cross)
 
 	amount0Min := u256.MustFromDecimal(amount0MinStr)
@@ -320,10 +321,10 @@ func DecreaseLiquidity(
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"unwrapResult", formatBool(unwrapResult),
-		"sqrtPriceX96", pl.PoolGetSlot0SqrtPriceX96(poolPath),
+		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath).ToString(),
 		"positionLiquidity", PositionGetPositionLiquidityStr(positionId),
-		"token0Balance", pl.PoolGetBalanceToken0(poolPath),
-		"token1Balance", pl.PoolGetBalanceToken1(poolPath),
+		"token0Balance", pl.GetBalanceToken0(poolPath),
+		"token1Balance", pl.GetBalanceToken1(poolPath),
 	)
 
 	return positionId, liquidity.ToString(), fee0.ToString(), fee1.ToString(), amount0.ToString(), amount1.ToString(), poolPath
@@ -337,17 +338,16 @@ func CollectFee(
 	positionId uint64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string) {
-	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedPosition()
 	halt.AssertIsNotHaltedWithdraw()
-	
+
+	caller := std.PreviousRealm().Address()
 	assertIsOwnerOrOperatorForToken(positionId, caller)
 
-	return collectFee(cur, positionId, unwrapResult, caller)
+	return collectFee(positionId, unwrapResult, caller)
 }
 
 func collectFee(
-	cur realm,
 	positionId uint64,
 	unwrapResult bool,
 	caller std.Address,
@@ -399,7 +399,7 @@ func collectFee(
 	mustUpdatePosition(positionId, position)
 
 	// handle withdrawal fee
-	withoutFee0, withoutFee1 := pl.CollectWithdrawalFee(
+	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(
 		cross,
 		positionId,
 		token0,
@@ -437,8 +437,9 @@ func SetPositionOperator(
 	id uint64,
 	operator std.Address,
 ) {
-	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedPosition()
+	
+	caller := std.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
 
 	position := MustGetPosition(id)
@@ -475,15 +476,12 @@ func computePositionKey(
 }
 
 func getCurrentFeeGrowth(position Position, owner std.Address) (FeeGrowthInside, error) {
-	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := computePositionKey(owner, position.tickLower, position.tickUpper)
-
-	feeGrowthInside0 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
-	feeGrowthInside1 := new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey))
+	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.poolKey, positionKey)
 
 	feeGrowthInside := FeeGrowthInside{
-		feeGrowthInside0LastX128: feeGrowthInside0,
-		feeGrowthInside1LastX128: feeGrowthInside1,
+		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
+		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
 	}
 
 	return feeGrowthInside, nil

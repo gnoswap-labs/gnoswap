@@ -76,7 +76,7 @@ func main() {
 
 func initPool() {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 
 	ufmt.Println("[INFO] Creating pool at tick 10000")
 	pool.CreatePool(
@@ -147,6 +147,7 @@ func executeSwap() {
 		adminAddr,
 	)
 
+	p = pool.GetPool(barPath, fooPath, fee500)
 	println("[DEBUG] Tick after swap:", p.Slot0Tick())
 
 	ufmt.Printf("[EXPECTED] Swap amount0 should be %s\n", amount0)

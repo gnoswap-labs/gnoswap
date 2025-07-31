@@ -17,7 +17,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	caller := params.caller
 
 	// BEFORE DECREASE LIQUIDITY, COLLECT FEE FIRST
-	_, fee0Str, fee1Str, _, _, _ := collectFee(cross, params.positionId, params.unwrapResult, params.caller)
+	_, fee0Str, fee1Str, _, _, _ := collectFee(params.positionId, params.unwrapResult, params.caller)
 	fee0 := u256.MustFromDecimal(fee0Str)
 	fee1 := u256.MustFromDecimal(fee1Str)
 
@@ -77,11 +77,9 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	}
 
 	positionKey := computePositionKey(caller, position.tickLower, position.tickUpper)
-	pool := pl.GetPoolFromPoolPath(position.poolKey)
-	feeGrowthInside0LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
-	feeGrowthInside1LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey))
+	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.poolKey, positionKey)
 
-	currentSqrtPriceX96 := pool.Slot0SqrtPriceX96()
+	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(position.poolKey)
 	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickLower)
 	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickUpper)
 	calculatedToken0BalanceStr, calculatedToken1BalanceStr := common.GetAmountsForLiquidity(

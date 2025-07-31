@@ -76,7 +76,7 @@ func main() {
 
 func initPool() {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 
 	testing.SetRealm(adminRealm)
 

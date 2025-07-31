@@ -148,25 +148,22 @@ func TestSwapInner(t *testing.T) {
 				tt.setupFn(t)
 			}
 
-			if tt.expectError {
-				uassert.AbortsWithMessage(t, tt.expectedErrorMsg, func() {
-					swapInner(
-						cross,
-						tt.amountSpecified,
-						tt.recipient,
-						tt.sqrtPriceLimitX96,
-						tt.data,
-					)
-				})
-			} else {
-				testing.SetRealm(routerRealm)
-				poolRecv, poolOut := swapInner(
-					cross,
+			swapInnerFn := func(cur realm) (*u256.Uint, *u256.Uint) {
+				return swapInner(
 					tt.amountSpecified,
 					tt.recipient,
 					tt.sqrtPriceLimitX96,
 					tt.data,
 				)
+			}
+
+			if tt.expectError {
+				uassert.AbortsWithMessage(t, tt.expectedErrorMsg, func() {
+					swapInnerFn(cross)
+				})
+			} else {
+				testing.SetRealm(routerRealm)
+				poolRecv, poolOut := swapInnerFn(cross)
 
 				if !tt.expectError {
 					uassert.Equal(t, poolRecv.ToString(), tt.expectedRecv)

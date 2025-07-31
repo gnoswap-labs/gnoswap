@@ -89,7 +89,7 @@ func InitialisePoolTest(t *testing.T) {
 	testing.SetOriginCaller(adminAddr)
 	TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
 	poolPath := pl.GetPoolPath(wugnotPath, gnsPath, fee3000)
-	if !pl.DoesPoolPathExist(poolPath) {
+	if !pl.ExistsPoolPath(poolPath) {
 		pl.CreatePool(cross, wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
 	}
 
@@ -217,7 +217,7 @@ func CreatePool(t *testing.T,
 
 	testing.SetRealm(std.NewUserRealm(caller))
 	poolPath := pl.GetPoolPath(token0, token1, fee)
-	if !pl.DoesPoolPathExist(poolPath) {
+	if !pl.ExistsPoolPath(poolPath) {
 		pl.CreatePool(cross, token0, token1, fee, sqrtPriceX96)
 	}
 }
@@ -413,7 +413,7 @@ func MintPositionAll(t *testing.T, caller std.Address) {
 // set pool create fee to 0 for testing
 func CreatePoolWithoutFee(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 	CreatePool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
 }
 
@@ -424,7 +424,7 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 	testing.SetRealm(adminRealm)
 
 	// set pool create fee to 0 for testing
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 	CreatePool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
 
 	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
@@ -467,12 +467,6 @@ func LPTokenApprove(t *testing.T, owner, operator std.Address, positionId uint64
 // 	testing.SetRealm(std.NewUserRealm(owner))
 // 	sr.UnStakeToken(positionId, unwrap)
 // }
-
-func getPoolFromPositionId(t *testing.T, positionId uint64) *pl.Pool {
-	t.Helper()
-	position := MustGetPosition(positionId)
-	return pl.GetPoolFromPoolPath(position.poolKey)
-}
 
 func wugnotApprove(t *testing.T, owner, spender std.Address, amount int64) {
 	t.Helper()
@@ -688,7 +682,7 @@ func TestBeforeResetPositionObject(t *testing.T) {
 	uassert.Equal(t, positions.Size(), 1, "positions should have 1 position")
 	uassert.Equal(t, nextId, uint64(2), "nextId should be 2")
 	uassert.Equal(t, gnft.TotalSupply(), int64(1), "gnft total supply should be 1")
-	uassert.Equal(t, pl.PoolGetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"), "50000", "pool liquidity should be 50000")
+	uassert.Equal(t, pl.GetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"), "50000", "pool liquidity should be 50000")
 }
 
 func TestResetObject(t *testing.T) {

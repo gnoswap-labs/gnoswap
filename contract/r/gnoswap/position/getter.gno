@@ -61,7 +61,7 @@ func PositionGetPositionIsBurned(positionId uint64) bool {
 func PositionIsInRange(positionId uint64) bool {
 	position := MustGetPosition(positionId)
 	poolPath := position.poolKey
-	poolCurrentTick := pl.PoolGetSlot0Tick(poolPath)
+	poolCurrentTick := pl.GetSlot0Tick(poolPath)
 
 	return position.tickLower <= poolCurrentTick && poolCurrentTick < position.tickUpper
 }

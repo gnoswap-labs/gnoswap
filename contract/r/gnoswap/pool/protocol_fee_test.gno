@@ -29,11 +29,11 @@ func TestSetPoolCreationFee(t *testing.T) {
 			name: "Panic call by non-governance",
 			action: func() {
 				const newFee = 2_000_000_000
-				testing.SetRealm(adminRealm)
+				testing.SetRealm(std.NewUserRealm(alice))
 				SetPoolCreationFee(cross, newFee)
 			},
 			verify:      nil,
-			expected:    "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not governance",
+			expected:    "unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not admin or governance",
 			shouldPanic: true,
 		},
 		{
@@ -78,27 +78,14 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 		shouldPanic bool
 	}{
 		{
-			name: "Panic call by non-admin (gov contract)",
-			action: func() {
-				const newFee = 2_000_000_000
-				govRealm := std.NewUserRealm(govAddr)
-				testing.SetRealm(govRealm)
-				SetPoolCreationFeeByAdmin(cross, newFee)
-			},
-			verify: nil,
-			// expected:    "caller(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) has no permission",
-			expected:    "unauthorized: caller g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd is not admin",
-			shouldPanic: true,
-		},
-		{
 			name: "Panic call by non-admin (user)",
 			action: func() {
 				const newFee = 2_000_000_000
 				testing.SetRealm(std.NewUserRealm(alice))
-				SetPoolCreationFeeByAdmin(cross, newFee)
+				SetPoolCreationFee(cross, newFee)
 			},
 			verify:      nil,
-			expected:    "unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not admin",
+			expected:    "unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not admin or governance",
 			shouldPanic: true,
 		},
 		{
@@ -106,7 +93,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			action: func() {
 				const newFee = 2_000_000_000
 				testing.SetRealm(adminRealm)
-				SetPoolCreationFeeByAdmin(cross, newFee)
+				SetPoolCreationFee(cross, newFee)
 			},
 			verify: func() string {
 				return strconv.FormatInt(GetPoolCreationFee(), 10)
@@ -119,7 +106,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			action: func() {
 				const newFee = 1_000_000_000
 				testing.SetRealm(adminRealm)
-				SetPoolCreationFeeByAdmin(cross, newFee)
+				SetPoolCreationFee(cross, newFee)
 			},
 			verify: func() string {
 				return strconv.FormatInt(GetPoolCreationFee(), 10)
@@ -158,7 +145,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 			name: "Panic if caller is not position contract",
 			action: func(t *testing.T) {
 				testing.SetOriginCaller(adminAddr)
-				CollectWithdrawalFee(cross, 0, "gno.land/r/onbloc/foo", "0", "gno.land/r/onbloc/foo", "0", "", adminAddr)
+				HandleWithdrawalFee(cross, 0, "gno.land/r/onbloc/foo", "0", "gno.land/r/onbloc/foo", "0", "", adminAddr)
 			},
 			verify:      nil,
 			expected:    "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not position",
@@ -168,7 +155,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 			name: "Panic if pkgPath is not registered",
 			action: func(t *testing.T) {
 				testing.SetRealm(std.NewUserRealm(positionAddr))
-				CollectWithdrawalFee(cross, 0, "pkgPath", "1000", "pkgPath", "1000", "poolPath", adminAddr)
+				HandleWithdrawalFee(cross, 0, "pkgPath", "1000", "pkgPath", "1000", "poolPath", adminAddr)
 			},
 			verify:      nil,
 			expected:    "[GNOSWAP-COMMON-004] token is not registered || token(pkgPath)",
@@ -201,7 +188,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				TokenApprove(t, gnsPath, alice, poolAddr, 1000000000)
 				testing.SetRealm(std.NewUserRealm(positionAddr))
 				poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
-				return CollectWithdrawalFee(cross, 2, wugnotPath, "1000", gnsPath, "1000", poolPath, alice)
+				return HandleWithdrawalFee(cross, 2, wugnotPath, "1000", gnsPath, "1000", poolPath, alice)
 			},
 			expected:    "990,990",
 			shouldPanic: false,
@@ -244,20 +231,19 @@ func TestSetWithdrawalFee(t *testing.T) {
 				SetWithdrawalFee(cross, newFee)
 			},
 			verify:      nil,
-			expected:    "unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not governance",
+			expected:    "unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not admin or governance",
 			shouldPanic: true,
 		},
 		{
-			name: "Panic call to set withdrawal fee by admin",
+			name: "Success call to set withdrawal fee by admin",
 			action: func(t *testing.T) {
 				const newFee = uint64(200)
 				adminRealm := std.NewUserRealm(adminAddr)
 				testing.SetRealm(adminRealm)
 				SetWithdrawalFee(cross, newFee)
 			},
-			verify:      nil,
-			expected:    "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not governance",
-			shouldPanic: true,
+			expected:    strconv.FormatUint(200, 10),
+			shouldPanic: false,
 		},
 		{
 			name: "Success call to set withdrawal fee by governance",
@@ -292,70 +278,6 @@ func TestSetWithdrawalFee(t *testing.T) {
 	}
 }
 
-func TestSetWithdrawalFeeByAdmin(t *testing.T) {
-	tests := []struct {
-		name        string
-		action      func(t *testing.T)
-		verify      func(t *testing.T) string
-		expected    string
-		shouldPanic bool
-	}{
-		{
-			name: "Panic call to set withdrawal fee by non-admin (user)",
-			action: func(t *testing.T) {
-				const newFee = uint64(100)
-				userRealm := std.NewUserRealm(alice)
-				testing.SetRealm(userRealm)
-				SetWithdrawalFeeByAdmin(cross, newFee)
-			},
-			verify:      nil,
-			expected:    "unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not admin",
-			shouldPanic: true,
-		},
-		{
-			name: "Panic call to set withdrawal fee by non-admin (gov contract)",
-			action: func(t *testing.T) {
-				const newFee = uint64(100)
-				govRealm := std.NewUserRealm(govAddr)
-				testing.SetRealm(govRealm)
-				SetWithdrawalFeeByAdmin(cross, newFee)
-			},
-			verify:      nil,
-			expected:    "unauthorized: caller g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd is not admin",
-			shouldPanic: true,
-		},
-		{
-			name: "Success call to set withdrawal fee by admin",
-			action: func(t *testing.T) {
-				const newFee = uint64(100)
-				adminRealm := std.NewUserRealm(adminAddr)
-				testing.SetRealm(adminRealm)
-				SetWithdrawalFeeByAdmin(cross, newFee)
-			},
-			verify: func(t *testing.T) string {
-				return strconv.FormatUint(GetWithdrawalFee(), 10)
-			},
-			expected:    strconv.FormatUint(100, 10),
-			shouldPanic: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			if !tc.shouldPanic {
-				tc.action(t)
-				if tc.verify != nil {
-					gotWithdrawalFee := tc.verify(t)
-					uassert.Equal(t, gotWithdrawalFee, tc.expected)
-				}
-			} else {
-				uassert.AbortsWithMessage(t, tc.expected, func() {
-					tc.action(t)
-				})
-			}
-		})
-	}
-}
 
 func TestCalculateAmountWithFee(t *testing.T) {
 	tests := []struct {
@@ -434,7 +356,7 @@ func TestProtocolFee(t *testing.T) {
 			name: "create first pool with zero creation fee",
 			action: func(t *testing.T) {
 				testing.SetRealm(adminRealm)
-				SetPoolCreationFeeByAdmin(cross, 0)
+				SetPoolCreationFee(cross, 0)
 				CreatePool(cross, barPath, fooPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
 			},
 			verify: func(t *testing.T) interface{} {
@@ -449,7 +371,7 @@ func TestProtocolFee(t *testing.T) {
 				// Pool already created in previous test
 			},
 			verify: func(t *testing.T) interface{} {
-				pool := GetPool(barPath, fooPath, 3000)
+				pool := mustGetPoolBy(barPath, fooPath, 3000)
 				return pool.slot0.feeProtocol
 			},
 			expected:    uint8(0),
@@ -547,7 +469,7 @@ func TestProtocolFee(t *testing.T) {
 				// Fee already set in previous test
 			},
 			verify: func(t *testing.T) interface{} {
-				pool := GetPool(barPath, fooPath, 3000)
+				pool := mustGetPoolBy(barPath, fooPath, 3000)
 				return pool.slot0.feeProtocol
 			},
 			expected:    uint8(170),
@@ -559,7 +481,7 @@ func TestProtocolFee(t *testing.T) {
 				CreatePool(cross, barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 			},
 			verify: func(t *testing.T) interface{} {
-				pool := GetPool(barPath, fooPath, 500)
+				pool := mustGetPoolBy(barPath, fooPath, 500)
 				return pool.slot0.feeProtocol
 			},
 			expected:    uint8(170),
@@ -644,7 +566,7 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 	)
 
 	// Verify that no protocol fees were collected since protocol fees are not enabled
-	thisPool := GetPool(barPath, fooPath, fee500)
+	thisPool := mustGetPoolBy(barPath, fooPath, fee500)
 	uassert.Equal(t, thisPool.protocolFees.token0.ToString(), "0")
 	uassert.Equal(t, thisPool.protocolFees.token1.ToString(), "0")
 

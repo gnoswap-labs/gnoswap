@@ -6,6 +6,8 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 )
 
+const maxApprove int64 = 9223372036854775807
+
 var (
 	poolAddr, _        = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())

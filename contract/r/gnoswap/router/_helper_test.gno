@@ -37,7 +37,6 @@ const (
 	fee100      uint32 = 100
 	fee500      uint32 = 500
 	fee3000     uint32 = 3000
-	maxApprove  int64  = 9223372036854775807
 	max_timeout int64  = 9999999999
 
 	TIER_1 uint64 = 1
@@ -175,7 +174,7 @@ func CreatePool(t *testing.T,
 
 	testing.SetRealm(std.NewUserRealm(caller))
 	poolPath := pl.GetPoolPath(token0, token1, fee)
-	if !pl.DoesPoolPathExist(poolPath) {
+	if !pl.ExistsPoolPath(poolPath) {
 		pl.CreatePool(cross, token0, token1, fee, sqrtPriceX96)
 		sr.SetPoolTierByAdmin(cross, poolPath, TIER_1)
 	}
@@ -327,7 +326,7 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 func CreatePoolWithoutFee(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	// set pool create fee to 0 for testing
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 	CreatePool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
 	CreatePool(t, bazPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
 	CreatePool(t, barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
@@ -336,7 +335,7 @@ func CreatePoolWithoutFee(t *testing.T) {
 
 func CreateSecondPoolWithoutFee(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	CreatePool(t,
 		bazPath,

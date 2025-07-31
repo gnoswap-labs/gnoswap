@@ -209,8 +209,8 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 	t.Run("failed exact out swap at boundary", func(t *testing.T) {
 		poolPath := pl.GetPoolPath(barPath, fooPath, 3000)
-		balance0 := pl.PoolGetBalanceToken0(poolPath)
-		balance1 := pl.PoolGetBalanceToken1(poolPath)
+		balance0 := pl.GetBalanceToken0(poolPath)
+		balance1 := pl.GetBalanceToken1(poolPath)
 
 		token0Balance := u256.MustFromDecimal(balance0)
 		token1Balance := u256.MustFromDecimal(balance1)

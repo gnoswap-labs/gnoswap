@@ -204,7 +204,7 @@ func TestMintInternal_PositionMint(t *testing.T) {
 			initPositionTest(t)
 
 			testing.SetRealm(adminRealm)
-			pl.SetPoolCreationFeeByAdmin(cross, 0)
+			pl.SetPoolCreationFee(cross, 0)
 			CreatePool(t, tt.params.token0, tt.params.token1, tt.params.fee, "79228162514264337593543950336", adminAddr)
 
 			TokenFaucet(t, tt.params.token0, alice)
@@ -297,7 +297,7 @@ func TestMintInternal_PanicCases(t *testing.T) {
 			initPositionTest(t)
 
 			testing.SetRealm(adminRealm)
-			pl.SetPoolCreationFeeByAdmin(cross, 0)
+			pl.SetPoolCreationFee(cross, 0)
 			CreatePool(t, tt.params.token0, tt.params.token1, tt.params.fee, "79228162514264337593543950336", adminAddr)
 
 			TokenFaucet(t, tt.params.token0, alice)
@@ -562,7 +562,7 @@ func TestMintInternal_FeeTierEdgeCases(t *testing.T) {
 			initPositionTest(t)
 
 			testing.SetRealm(adminRealm)
-			pl.SetPoolCreationFeeByAdmin(cross, 0)
+			pl.SetPoolCreationFee(cross, 0)
 			CreatePool(t, tt.params.token0, tt.params.token1, tt.params.fee, "79228162514264337593543950336", adminAddr)
 
 			TokenFaucet(t, tt.params.token0, alice)
@@ -835,7 +835,7 @@ func TestMintInternal_TickBoundaries(t *testing.T) {
 			initPositionTest(t)
 
 			testing.SetRealm(adminRealm)
-			pl.SetPoolCreationFeeByAdmin(cross, 0)
+			pl.SetPoolCreationFee(cross, 0)
 			CreatePool(t, tt.params.token0, tt.params.token1, tt.params.fee, "79228162514264337593543950336", adminAddr)
 
 			TokenFaucet(t, tt.params.token0, alice)

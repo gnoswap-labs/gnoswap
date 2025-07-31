@@ -66,7 +66,7 @@ func Swap(
 		))
 	}
 
-	pool := GetPool(token0Path, token1Path, fee)
+	pool := mustGetPoolBy(token0Path, token1Path, fee)
 
 	slot0Start := pool.slot0
 	if !slot0Start.unlocked {
@@ -103,7 +103,7 @@ func Swap(
 	if err != nil {
 		panic(err)
 	}
-
+	
 	applySwapResult(pool, result)
 
 	// actual swap
@@ -140,7 +140,6 @@ func Swap(
 
 // DrySwap simulates a swap and returns the amount0, amount1 that would be received and a boolean indicating if the swap is possible
 func DrySwap(
-	cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -535,6 +534,7 @@ func (p *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amou
 	if zeroForOne {
 		// payer > POOL
 		p.safeTransferFrom(payer, poolAddr, p.token0Path, amount0.Abs(), true)
+
 		// POOL > recipient
 		p.safeTransfer(recipient, p.token1Path, amount1, false)
 	} else {

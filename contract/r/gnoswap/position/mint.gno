@@ -79,8 +79,8 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 
 	gnft.Mint(cross, params.mintTo, positionIdFrom(id)) // owner, position ID
 
-	pool := pl.GetPoolFromPoolPath(poolKey)
 	positionKey := computePositionKey(params.caller, params.tickLower, params.tickUpper)
+	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(poolKey, positionKey)
 
 	position := Position{
 		nonce:                    u256.Zero(),
@@ -89,8 +89,8 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 		tickLower:                params.tickLower,
 		tickUpper:                params.tickUpper,
 		liquidity:                liquidity,
-		feeGrowthInside0LastX128: new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey)),
-		feeGrowthInside1LastX128: new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey)),
+		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
+		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
 		tokensOwed0:              u256.Zero(),
 		tokensOwed1:              u256.Zero(),
 		token0Balance:            amount0,
@@ -164,7 +164,13 @@ func processMintInput(input MintInput) (ProcessedMintInput, error) {
 	var result ProcessedMintInput
 
 	// process tokens
-	token0, token1, token0IsNative, token1IsNative, wrappedAmount, err := processTokens(input.token0, input.token1, input.amount0Desired, input.amount1Desired, input.caller)
+	token0, token1, token0IsNative, token1IsNative, wrappedAmount, err := processTokens(
+		input.token0,
+		input.token1,
+		input.amount0Desired,
+		input.amount1Desired,
+		input.caller,
+	)
 	if err != nil {
 		return ProcessedMintInput{}, err
 	}
@@ -292,12 +298,10 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		},
 	)
 
-	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := computePositionKey(caller, position.tickLower, position.tickUpper)
-	feeGrowthInside0LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
-	feeGrowthInside1LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey))
+	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.poolKey, positionKey)
 
-	currentSqrtPriceX96 := pool.Slot0SqrtPriceX96()
+	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(position.poolKey)
 	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickLower)
 	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickUpper)
 	calculatedToken0BalanceStr, calculatedToken1BalanceStr := common.GetAmountsForLiquidity(

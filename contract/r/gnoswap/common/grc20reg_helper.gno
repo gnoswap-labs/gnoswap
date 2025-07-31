@@ -108,3 +108,9 @@ func Transfer(cur realm, path string, to std.Address, amount int64) error {
 func TransferFrom(cur realm, path string, from, to std.Address, amount int64) error {
 	return GetTokenTeller(path).TransferFrom(from, to, amount)
 }
+
+// Approve approves the given amount of tokens for the given spender.
+// It is a wrapper of grc20.Teller.Approve.
+func Approve(cur realm, path string, spender std.Address, amount int64) error {
+	return GetTokenTeller(path).Approve(spender, amount)
+}

@@ -25,9 +25,9 @@ const (
 )
 
 var (
-	gnot    string = "gnot"
+	gnot          string = "gnot"
 	wrappedWugnot string = "gno.land/r/demo/wugnot"
-	wugnotPath string = "gno.land/r/demo/wugnot"
+	wugnotPath    string = "gno.land/r/demo/wugnot"
 )
 
 type RouterOperation interface {
