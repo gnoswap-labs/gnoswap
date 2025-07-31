@@ -53,22 +53,23 @@ func init() {
 	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), int64(0))
 }
 
-// ChangeDistributionPctByAdmin changes the distribution percentage for the given targets.
+// ChangeDistributionPct changes the distribution percentage for the given targets.
 // Panics if following conditions are not met:
-// - caller is not admin
+// - caller is not admin or governance
 // - invalid target
 // - duplicate targets
 // - sum of percentages is not 10000
 // - swap is halted
-func ChangeDistributionPctByAdmin(cur realm,
+func ChangeDistributionPct(cur realm,
 	target01 int, pct01 int64,
 	target02 int, pct02 int64,
 	target03 int, pct03 int64,
 	target04 int, pct04 int64,
 ) {
-	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedEmission()
-	access.AssertIsAdmin(caller)
+
+	caller := std.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernance(caller)
 
 	assertValidDistributionTargets(target01, target02, target03, target04)
 	assertValidDistributionPct(pct01, pct02, pct03, pct04)
@@ -80,34 +81,20 @@ func ChangeDistributionPctByAdmin(cur realm,
 		target03, pct03,
 		target04, pct04,
 	)
-}
 
-// ChangeDistributionPct changes the distribution percentage for the given targets.
-// Panics if following conditions are not met:
-// - caller is not governance
-// - invalid target
-// - duplicate targets
-// - sum of percentages is not 10000
-// - swap is halted
-func ChangeDistributionPct(cur realm,
-	target01 int, pct01 int64,
-	target02 int, pct02 int64,
-	target03 int, pct03 int64,
-	target04 int, pct04 int64,
-) {
-	caller := std.PreviousRealm().Address()
-	halt.AssertIsNotHaltedEmission()
-	access.AssertIsGovernance(caller)
-
-	assertValidDistributionTargets(target01, target02, target03, target04)
-	assertValidDistributionPct(pct01, pct02, pct03, pct04)
-
-	changeDistributionPcts(
-		cur,
-		target01, pct01,
-		target02, pct02,
-		target03, pct03,
-		target04, pct04,
+	previousRealm := std.PreviousRealm()
+	std.Emit(
+		"ChangeDistributionPct",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"target01", targetToStr(target01),
+		"pct01", formatInt(pct01),
+		"target02", targetToStr(target02),
+		"pct02", formatInt(pct02),
+		"target03", targetToStr(target03),
+		"pct03", formatInt(pct03),
+		"target04", targetToStr(target04),
+		"pct04", formatInt(pct04),
 	)
 }
 
@@ -124,21 +111,6 @@ func changeDistributionPcts(
 	setDistributionBpsPct(cur, target02, pct02)
 	setDistributionBpsPct(cur, target03, pct03)
 	setDistributionBpsPct(cur, target04, pct04)
-
-	previousRealm := std.PreviousRealm()
-	std.Emit(
-		"ChangeDistributionPct",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"target01", targetToStr(target01),
-		"pct01", formatInt(pct01),
-		"target02", targetToStr(target02),
-		"pct02", formatInt(pct02),
-		"target03", targetToStr(target03),
-		"pct03", formatInt(pct03),
-		"target04", targetToStr(target04),
-		"pct04", formatInt(pct04),
-	)
 }
 
 // distributeToTarget splits an amount according to the configured percentages

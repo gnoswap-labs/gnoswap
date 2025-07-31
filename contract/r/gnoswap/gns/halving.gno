@@ -344,34 +344,10 @@ func AvgBlockTimeInMs() int64 {
 	return avgBlockTimeMs
 }
 
-// SetAvgBlockTimeInMsByAdmin admin sets average block time
-func SetAvgBlockTimeInMsByAdmin(cur realm, ms int64) {
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdmin(caller)
-
-	prevAvgBlockTimeInMs := AvgBlockTimeInMs()
-	err := setAvgBlockTimeInMs(ms)
-	if err != nil {
-		panic(err)
-	}
-
-	// Log event generation
-	halvingData := getEmissionState().getHalvingData()
-	previousRealm := std.PreviousRealm()
-	emitBlockTimeChangeEvent(
-		"SetAvgBlockTimeInMsByAdmin",
-		previousRealm.Address().String(),
-		previousRealm.PkgPath(),
-		prevAvgBlockTimeInMs,
-		ms,
-		halvingData,
-	)
-}
-
 // SetAvgBlockTimeInMs sets average block time through governance proposal
 func SetAvgBlockTimeInMs(cur realm, ms int64) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsGovernance(caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	prevAvgBlockTimeInMs := AvgBlockTimeInMs()
 	err := setAvgBlockTimeInMs(ms)
