@@ -222,7 +222,7 @@ func pctToIndex(pct int64) int {
 }
 
 func assertPoolMustExist(poolPath string) {
-	if !(pl.ExistsPoolPath(poolPath)) {
+	if !pl.ExistsPoolPath(poolPath) {
 		panic(makeErrorWithDetails(
 			errInvalidPoolPath,
 			ufmt.Sprintf("pool(%s) does not exist", poolPath),
