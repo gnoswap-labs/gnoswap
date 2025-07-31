@@ -59,14 +59,15 @@ func TestTransferToken(t *testing.T) {
 		{
 			name: "panic if not governance",
 			setup: func() {
-				testing.SetRealm(dummyCaller)
+				testing.SetRealm(adminRealm)
 				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+				testing.SetRealm(dummyCaller)
 			},
 			tokenPath:   gnsPath,
 			to:          dummyReceiver,
 			amount:      1000,
 			shouldPanic: true,
-			panicMsg:    "unauthorized: caller g100fnnlz5eh87p5hvwt8pf279lxaelm8k8md049 is not governance",
+			panicMsg:    "unauthorized: caller g100fnnlz5eh87p5hvwt8pf279lxaelm8k8md049 is not admin or governance",
 		},
 		{
 			name: "success if enough balance",
@@ -93,7 +94,7 @@ func TestTransferToken(t *testing.T) {
 		{
 			name: "governance can transfer community pool token",
 			setup: func() {
-				testing.SetRealm(govRealm)
+				testing.SetRealm(adminRealm)
 				gns.Transfer(cross, communityPoolAddr, 10_000)
 			},
 			caller:    govRealm,
