@@ -63,14 +63,11 @@ func CreateProject(
 	startTime int64,
 ) string {
 	halt.AssertIsNotHaltedLaunchpad()
-	halt.AssertIsNotHaltedWithdraw()
 
-	previousRealm := std.PreviousRealm()
-	access.AssertIsAdmin(previousRealm.Address())
+	caller := std.PreviousRealm().Address()
+	access.AssertIsAdmin(caller)
 
-	caller := previousRealm.Address()
 	launchpadAddr := std.CurrentRealm().Address()
-
 	averageBlockTimeMs := gns.AvgBlockTimeInMs()
 	currentHeight := std.ChainHeight()
 	currentTime := time.Now().Unix()
@@ -99,7 +96,12 @@ func CreateProject(
 
 	tokenBalance := common.BalanceOf(tokenPath, caller)
 	if tokenBalance < depositAmount {
-		panic(makeErrorWithDetails(errInsufficientBalance, ufmt.Sprintf("caller(%s) balance(%d) < depositAmount(%d)", launchpadAddr.String(), tokenBalance, depositAmount)))
+		panic(
+			makeErrorWithDetails(
+				errInsufficientBalance,
+				ufmt.Sprintf("caller(%s) balance(%d) < depositAmount(%d)", launchpadAddr.String(), tokenBalance, depositAmount),
+			),
+		)
 	}
 
 	err = common.TransferFrom(
@@ -113,6 +115,7 @@ func CreateProject(
 		panic(err)
 	}
 
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"CreateProject",
 		"prevAddr", previousRealm.Address().String(),
@@ -247,10 +250,9 @@ func createProject(params *createProjectParams) (*Project, error) {
 // - uint64: The amount of rewards transferred to the recipient.
 func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.Address) int64 {
 	halt.AssertIsNotHaltedLaunchpad()
-	halt.AssertIsNotHaltedWithdraw()
 
-	previousRealm := std.PreviousRealm()
-	access.AssertIsAdmin(previousRealm.Address())
+	caller := std.PreviousRealm().Address()
+	access.AssertIsAdmin(caller)
 
 	currentHeight := std.ChainHeight()
 
@@ -264,6 +266,7 @@ func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.A
 		panic(err)
 	}
 
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"TransferLeftFromProjectByAdmin",
 		"prevAddr", previousRealm.Address().String(),

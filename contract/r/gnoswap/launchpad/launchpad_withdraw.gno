@@ -29,8 +29,6 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 	previousRealm := std.PreviousRealm()
 	access.AssertIsUser(previousRealm)
 
-	caller := previousRealm.Address()
-
 	emission.MintAndDistributeGns(cross)
 
 	deposit, err := getDeposit(depositID)
@@ -38,6 +36,7 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 		panic(err.Error())
 	}
 
+	caller := previousRealm.Address()
 	if !deposit.IsOwner(caller) {
 		panic(makeErrorWithDetails(errInvalidOwner, ufmt.Sprintf("(%s)", caller.String())).Error())
 	}

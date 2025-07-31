@@ -72,15 +72,15 @@ func init() {
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_deposit.gno#depositgns
 func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, referrer string) string {
 	halt.AssertIsNotHaltedLaunchpad()
-	halt.AssertIsNotHaltedWithdraw()
 
 	previousRealm := std.PreviousRealm()
 	access.AssertIsUser(previousRealm)
 
-	caller := previousRealm.Address()
 	assertValidAmount(depositAmount)
 
 	projectID, tierDuration := parseProjectTierID(targetProjectTierID)
+	caller := previousRealm.Address()
+	
 	deposit, rewardState, isFirstDeposit, distributeAmountPerBlockX128, err := depositGns(
 		projectID,
 		tierDuration,
