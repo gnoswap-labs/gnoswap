@@ -9,21 +9,9 @@ import (
 // Counter for generating unique incentive IDs
 var incentiveCounter = NewCounter()
 
-// getCurrentIncentiveIndex returns the current incentive counter value
-func getCurrentIncentiveIndex() int64 {
-	incentiveID := incentiveCounter.Get()
-
-	return incentiveID
-}
-
-// nextIncentiveIndex increments and returns the next incentive counter value
-func nextIncentiveIndex() int64 {
-	return incentiveCounter.next()
-}
-
 // nextIncentiveID generates a new unique incentive ID using creator address, block height and counter
 func nextIncentiveID(creator std.Address, height int64) string {
-	return makeIncentiveID(creator, height, nextIncentiveIndex())
+	return makeIncentiveID(creator, height, incentiveCounter.next())
 }
 
 // makeIncentiveID formats an incentive ID string from the given components

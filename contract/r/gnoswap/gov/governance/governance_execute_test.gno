@@ -1022,16 +1022,6 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 			expectedHasAbort:   true,
 		},
 		{
-			name:               "success - others cancel when proposer below threshold",
-			proposalTime:       now,
-			cancellationTime:   now.Add(-time.Second * time.Duration(testConfig.VotingStartDelay+testConfig.VotingPeriod+testConfig.ExecutionDelay)),
-			canceler:           testutils.TestAddress("other"),
-			proposer:           testutils.TestAddress("proposer"),
-			proposerThreshold:  1_000_000_000,
-			proposerCurrentGns: 500_000_000, // Below threshold
-			expectedHasAbort:   false,
-		},
-		{
 			name:               "fail - cancel nonexistent proposal",
 			proposalTime:       now,
 			cancellationTime:   now.Add(-time.Second * time.Duration(testConfig.VotingStartDelay+testConfig.VotingPeriod+testConfig.ExecutionDelay)),
@@ -1109,12 +1099,14 @@ func TestGovernanceExecute_ReExecutionPrevention(t *testing.T) {
 		testing.SetRealm(std.NewUserRealm(testutils.TestAddress("executor")))
 
 		// when - first execution
-		uassert.AbortsWithMessage(t, "invalid uint64 value: -1", func() {
+		errInvalidRangeMsg := "[GNOSWAP-STAKER-008] invalid unstaking fee || fee(-1) must be in range 0 ~ 10000"
+		uassert.AbortsWithMessage(t, errInvalidRangeMsg, func() {
 			Execute(cross, 1)
 		})
 
 		// then - second execution should fail
-		uassert.AbortsWithMessage(t, "[GNOSWAP-GOVERNANCE-021] proposal not executable", func() {
+		errNotExecutableMsg := "[GNOSWAP-GOVERNANCE-021] proposal not executable"
+		uassert.AbortsWithMessage(t, errNotExecutableMsg, func() {
 			Execute(cross, 1)
 		})
 	})

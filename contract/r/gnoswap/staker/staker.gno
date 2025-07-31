@@ -26,6 +26,16 @@ import (
 
 const ZERO_ADDRESS = std.Address("")
 
+var (
+	stakerAddr        = getRoleAddress(prbac.ROLE_STAKER)
+	devOpsAddr        = getRoleAddress(prbac.ROLE_DEVOPS)
+	communityPoolAddr = getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
+	govStakerAddr     = getRoleAddress(prbac.ROLE_GOV_STAKER)
+	protocolFeeAddr   = getRoleAddress(prbac.ROLE_PROTOCOL_FEE)
+	adminAddr         = getRoleAddress(prbac.ROLE_ADMIN)
+	positionAddr      = getRoleAddress(prbac.ROLE_POSITION)
+)
+
 // list of staked positions
 type Deposits struct {
 	tree *avl.Tree
@@ -282,7 +292,6 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 	stakers.addDeposit(caller, positionId, deposit)
 
 	// transfer NFT ownership to staker contract
-	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	if err := transferDeposit(positionId, owner, caller, stakerAddr); err != nil {
 		panic(err.Error())
 	}
@@ -619,7 +628,6 @@ func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) (string, stri
 	}
 
 	// transfer NFT ownership to origin owner
-	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	gnft.TransferFrom(cross, stakerAddr, deposit.owner, positionIdFrom(positionId))
 	pn.SetPositionOperator(cross, positionId, ZERO_ADDRESS)
 
@@ -680,8 +688,6 @@ func applyUnStake(positionId uint64) error {
 // hasTokenOwnership validates that the caller has permission to operate the token.
 func hasTokenOwnership(owner, caller std.Address) error {
 	isCallerOwner := owner == caller
-
-	stakerAddr := getRoleAddress(prbac.ROLE_STAKER)
 	isStakerOwner := owner == stakerAddr
 
 	if !isCallerOwner && !isStakerOwner {

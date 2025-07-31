@@ -247,9 +247,7 @@ func TestModifyTokenList(t *testing.T) {
 func setupExternalTokenListAdminPermission(t *testing.T) {
 	t.Helper()
 
-	// Use the actual admin address from access package
-	addr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
-	setupExternalDepositFeePermission(t, addr, "admin")
+	setupExternalDepositFeePermission(t, adminAddr, "admin")
 }
 
 func setupExternalTokenListGovernancePermission(t *testing.T) {
@@ -261,6 +259,13 @@ func setupExternalTokenListGovernancePermission(t *testing.T) {
 }
 
 func setupExternalTokenListPermission(t *testing.T, caller std.Address, permissionName string) {
+	t.Helper()
+
+	testing.SetOriginCaller(caller)
+	testing.SetRealm(std.NewUserRealm(caller))
+}
+
+func setupExternalDepositFeePermission(t *testing.T, caller std.Address, permissionName string) {
 	t.Helper()
 
 	testing.SetOriginCaller(caller)

@@ -16,7 +16,7 @@ import (
 // GetOrigPkgAddr returns the original package address.
 // In staker contract, original package address is the staker address.
 func GetOrigPkgAddr() std.Address {
-	return getRoleAddress(prbac.ROLE_STAKER)
+	return stakerAddr
 }
 
 // poolPathAlign ensures that a pool path is formatted with tokens in lexicographical order.

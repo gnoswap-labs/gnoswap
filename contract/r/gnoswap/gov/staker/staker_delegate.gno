@@ -4,7 +4,6 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
@@ -47,18 +46,18 @@ func Delegate(
 	referrer string,
 ) int64 {
 	halt.AssertIsNotHaltedGovStaker()
-	halt.AssertIsNotHaltedWithdraw()
 
 	prevRealm := std.PreviousRealm()
 	access.AssertIsUser(prevRealm)
 	access.AssertIsValidAddress(to)
+
+	assertIsValidDelegateAmount(amount)
 	
 	caller := prevRealm.Address()
 	from := caller
 	currentTime := time.Now().Unix()
 	currentRealm := std.CurrentRealm()
 	currentHeight := std.ChainHeight()
-	
 	
 	emission.MintAndDistributeGns(cross)
 
@@ -122,14 +121,14 @@ func Undelegate(
 	amount int64,
 ) int64 {
 	halt.AssertIsNotHaltedGovStaker()
-	halt.AssertIsNotHaltedWithdraw()
 
-	prevRealm := std.PreviousRealm()
-	caller := prevRealm.Address()
+	caller := std.PreviousRealm().Address()
+	access.AssertIsValidAddress(from)
+
+	assertIsValidDelegateAmount(amount)
+
 	currentTime := time.Now().Unix()
 	currentHeight := std.ChainHeight()
-
-	access.AssertIsValidAddress(from)
 
 	emission.MintAndDistributeGns(cross)
 
@@ -144,11 +143,13 @@ func Undelegate(
 		panic(err)
 	}
 
+	prevRealm := std.PreviousRealm()
 	std.Emit(
 		"Undelegate",
 		"prevAddr", prevRealm.Address().String(),
 		"prevRealm", prevRealm.PkgPath(),
-		"from", from.String(),
+		"from", caller.String(),
+		"to", from.String(),
 		"amount", formatInt(unDelegationAmount),
 	)
 
@@ -187,16 +188,16 @@ func Redelegate(
 	amount int64,
 ) int64 {
 	halt.AssertIsNotHaltedGovStaker()
-	halt.AssertIsNotHaltedWithdraw()
 
-	prevRealm := std.PreviousRealm()
-	currentTime := time.Now().Unix()
-	currentHeight := std.ChainHeight()
-	caller := prevRealm.Address()
-	delegator := caller
-
+	caller := std.PreviousRealm().Address()
 	access.AssertIsValidAddress(delegatee)
 	access.AssertIsValidAddress(newDelegatee)
+
+	assertIsValidDelegateAmount(amount)
+	
+	currentTime := time.Now().Unix()
+	currentHeight := std.ChainHeight()
+	delegator := caller
 
 	emission.MintAndDistributeGns(cross)
 
@@ -216,6 +217,16 @@ func Redelegate(
 		unDelegationAmount,
 		currentTime,
 		currentHeight,
+	)
+
+	prevRealm := std.PreviousRealm()
+	std.Emit(
+		"Undelegate",
+		"prevAddr", prevRealm.Address().String(),
+		"prevRealm", prevRealm.PkgPath(),
+		"from", delegation.DelegateFrom().String(),
+		"to", delegation.DelegateTo().String(),
+		"amount", formatInt(delegation.DelegatedAmount()),
 	)
 
 	std.Emit(
@@ -267,6 +278,10 @@ func CollectUndelegatedGns(cur realm) int64 {
 		panic(err)
 	}
 
+	if collectedAmount == 0 {
+		return 0
+	}
+
 	xgns.Burn(cross, caller, collectedAmount)
 	gns.Transfer(cross, caller, collectedAmount)
 
@@ -303,11 +318,6 @@ func delegate(
 	currentTime,
 	currentHeight int64,
 ) (*Delegation, error) {
-	err := validateDelegateAmount(amount)
-	if err != nil {
-		return nil, err
-	}
-
 	delegationID := nextDelegationID()
 	delegation := NewDelegation(
 		delegationID,
@@ -347,11 +357,6 @@ func unDelegate(
 	currentTime,
 	currentHeight int64,
 ) (int64, error) {
-	err := validateDelegateAmount(amount)
-	if err != nil {
-		return 0, err
-	}
-
 	delegations := getUserDelegationsWithDelegatee(delegator, delegatee)
 	if len(delegations) == 0 {
 		return 0, nil
@@ -412,11 +417,6 @@ func unDelegateWithoutLockup(
 	amount,
 	currentTime int64,
 ) (int64, error) {
-	err := validateDelegateAmount(amount)
-	if err != nil {
-		return 0, err
-	}
-
 	delegations := getUserDelegationsWithDelegatee(delegator, delegatee)
 	if len(delegations) == 0 {
 		return 0, nil
@@ -459,14 +459,14 @@ func unDelegateWithoutLockup(
 //   - currentTime: current timestamp
 //
 // Returns:
-//   - int64: total amount collected
+//   - map[int64]int64: delegationID -> amount collected
 //   - error: nil on success, error if collection fails
 func collectDelegations(user std.Address, currentTime int64) (int64, error) {
 	collectedAmount := int64(0)
 
 	delegations := getUserDelegations(user)
 	if len(delegations) == 0 {
-		return 0, nil
+		return collectedAmount, nil
 	}
 
 	// Collect from all available delegations
@@ -479,7 +479,7 @@ func collectDelegations(user std.Address, currentTime int64) (int64, error) {
 
 		err := delegation.collect(collectableAmount, currentTime)
 		if err != nil {
-			return 0, err
+			return collectedAmount, err
 		}
 
 		collectedAmount += collectableAmount
@@ -511,30 +511,4 @@ func registerReferrer(caller std.Address, referrer string) string {
 	}
 
 	return actualReferrer
-}
-
-// validateDelegateAmount validates that the delegation amount meets system requirements.
-// This function checks minimum amount and multiple requirements.
-//
-// Parameters:
-//   - amount: amount to validate
-//
-// Returns:
-//   - error: nil if valid, error describing validation failure
-func validateDelegateAmount(amount int64) error {
-	if amount < minimumAmount {
-		return makeErrorWithDetails(
-			errLessThanMinimum,
-			ufmt.Sprintf("minimum amount to delegate is %d (requested:%d)", minimumAmount, amount),
-		)
-	}
-
-	if amount%minimumAmount != 0 {
-		return makeErrorWithDetails(
-			errInvalidAmount,
-			ufmt.Sprintf("amount must be multiple of %d", minimumAmount),
-		)
-	}
-
-	return nil
 }
