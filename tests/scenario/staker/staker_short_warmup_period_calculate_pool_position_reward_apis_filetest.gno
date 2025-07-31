@@ -100,16 +100,16 @@ func initAndSetup() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] override warm-up period for testing")
-	sr.SetWarmUpByAdmin(cross, 30, 150)
-	sr.SetWarmUpByAdmin(cross, 50, 300)
-	sr.SetWarmUpByAdmin(cross, 70, 900)
-	sr.SetWarmUpByAdmin(cross, 100, math.MaxInt64)
+	sr.SetWarmUp(cross, 30, 150)
+	sr.SetWarmUp(cross, 50, 300)
+	sr.SetWarmUp(cross, 70, 900)
+	sr.SetWarmUp(cross, 100, math.MaxInt64)
 
 	println("[INFO] set pool creation fee to 0")
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFeeByAdmin(cross, 0)
+	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
@@ -122,7 +122,7 @@ func createPoolBarFoo100() {
 
 	println("[INFO] create bar:foo:100 pool")
 	pl.CreatePool(cross, barPath, fooPath, 100, "79228162514264337593543950337")
-	sr.SetPoolTierByAdmin(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", 1)
+	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", 1)
 
 	ufmt.Printf("[EXPECTED] pool created and set to tier 1\n")
 	testing.SkipHeights(1)
@@ -175,7 +175,7 @@ func createPoolBarQux100() {
 
 	println("[INFO] create bar:qux:100 pool for internal tier #1 and external")
 	pl.CreatePool(cross, barPath, quxPath, 100, "79228162514264337593543950337")
-	sr.SetPoolTierByAdmin(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
 
 	ufmt.Printf("[EXPECTED] pool created and set to tier 1\n")
 	testing.SkipHeights(1)

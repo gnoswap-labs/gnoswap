@@ -31,37 +31,12 @@ func setupPermission(t *testing.T, caller std.Address) {
 }
 
 // Common test error messages
-const (
-	unauthorizedAdminMsg      = "unauthorized: caller %s is not admin"
-	unauthorizedGovernanceMsg = "unauthorized: caller %s is not governance"
-)
+const unauthorizedMsg = "unauthorized: caller %s is not admin or governance"
 
 func TestGetDepositGnsAmount(t *testing.T) {
 	expected := int64(1_000_000_000)
 	actual := GetDepositGnsAmount()
 	uassert.Equal(t, expected, actual)
-}
-
-func TestSetDepositGnsAmountByAdmin(t *testing.T) {
-	testPermissionBasedFunction(t, []permissionTest{
-		{
-			name:           "admin success",
-			caller:         getAdminAddress(t),
-			inputAmount:    2_000_000_000,
-			expectedAmount: 2_000_000_000,
-			shouldAbort:    false,
-		},
-		{
-			name:           "non-admin failure",
-			caller:         testutils.TestAddress("user1"),
-			inputAmount:    2_000_000_000,
-			expectedAmount: 0,
-			shouldAbort:    true,
-			expectedMsg:    ufmt.Sprintf(unauthorizedAdminMsg, testutils.TestAddress("user1")),
-		},
-	}, func(amount int64) {
-		SetDepositGnsAmountByAdmin(cross, amount)
-	}, GetDepositGnsAmount, &depositGnsAmount)
 }
 
 func TestSetDepositGnsAmount(t *testing.T) {
@@ -74,12 +49,19 @@ func TestSetDepositGnsAmount(t *testing.T) {
 			shouldAbort:    false,
 		},
 		{
+			name:           "admin success",
+			caller:         getAdminAddress(t),
+			inputAmount:    2_000_000_000,
+			expectedAmount: 2_000_000_000,
+			shouldAbort:    false,
+		},
+		{
 			name:           "non-governance failure",
 			caller:         testutils.TestAddress("non-governance"),
 			inputAmount:    3_000_000_000,
 			expectedAmount: 0,
 			shouldAbort:    true,
-			expectedMsg:    ufmt.Sprintf(unauthorizedGovernanceMsg, testutils.TestAddress("non-governance")),
+			expectedMsg:    ufmt.Sprintf(unauthorizedMsg, testutils.TestAddress("non-governance")),
 		},
 		{
 			name:           "unauthorized failure",
@@ -87,7 +69,7 @@ func TestSetDepositGnsAmount(t *testing.T) {
 			inputAmount:    3_000_000_000,
 			expectedAmount: 0,
 			shouldAbort:    true,
-			expectedMsg:    ufmt.Sprintf(unauthorizedGovernanceMsg, testutils.TestAddress("unauthorized")),
+			expectedMsg:    ufmt.Sprintf(unauthorizedMsg, testutils.TestAddress("unauthorized")),
 		},
 	}, func(amount int64) {
 		SetDepositGnsAmount(cross, amount)
@@ -109,7 +91,7 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 			inputAmount:    1_000_000_000,
 			expectedAmount: 0,
 			shouldAbort:    true,
-			expectedMsg:    ufmt.Sprintf(unauthorizedGovernanceMsg, testutils.TestAddress("non-governance")),
+			expectedMsg:    ufmt.Sprintf(unauthorizedMsg, testutils.TestAddress("non-governance")),
 		},
 		{
 			name:           "unauthorized failure",
@@ -117,7 +99,7 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 			inputAmount:    1_000_000_000,
 			expectedAmount: 0,
 			shouldAbort:    true,
-			expectedMsg:    ufmt.Sprintf(unauthorizedGovernanceMsg, testutils.TestAddress("unauthorized")),
+			expectedMsg:    ufmt.Sprintf(unauthorizedMsg, testutils.TestAddress("unauthorized")),
 		},
 	}, func(amount int64) {
 		SetMinimumRewardAmount(cross, amount)
