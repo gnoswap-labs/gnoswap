@@ -75,6 +75,10 @@ func (z *Int) Lt(x *Int) bool {
 	}
 }
 
+func (z *Int) Lte(x *Int) bool {
+	return z.Lt(x) || z.Eq(x)
+}
+
 // Gt returns true if z > x
 func (z *Int) Gt(x *Int) bool {
 	if z == nil || x == nil {
@@ -93,6 +97,10 @@ func (z *Int) Gt(x *Int) bool {
 			return z.abs.Gt(x.abs)
 		}
 	}
+}
+
+func (z *Int) Gte(x *Int) bool {
+	return z.Gt(x) || z.Eq(x)
 }
 
 // Clone creates a new Int identical to z
