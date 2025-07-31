@@ -190,7 +190,21 @@ func depositGns(
 
 	currentTime := time.Now().Unix()
 	createdBlockTimeInfo := newBlockTimeInfo(currentTime, currentHeight)
+
+	// Calculate individual unlock time based on deposit creation and tier duration
+	unlockTime := currentTime + projectTierDurationTimes[tierDuration]
+	averageBlockTimeMs := (projectTier.endBlockTimeInfo.BlockTime() - projectTier.startBlockTimeInfo.BlockTime()) * 1000 /
+		(projectTier.endBlockTimeInfo.BlockHeight() - projectTier.startBlockTimeInfo.BlockHeight())
+
+	individualUnlockBlockTimeInfo := newBlockTimeInfoByTimeAndAverageBlockTimeMs(
+		currentTime,
+		currentHeight,
+		unlockTime,
+		averageBlockTimeMs,
+	)
+
 	depositID := nextDepositID()
+
 	deposit := NewDeposit(
 		depositID,
 		projectID,
@@ -198,7 +212,7 @@ func depositGns(
 		callerAddress,
 		depositAmount,
 		createdBlockTimeInfo,
-		projectTier.endBlockTimeInfo,
+		individualUnlockBlockTimeInfo, // Use individual unlock time instead of project tier end time
 	)
 	deposits.Set(depositID, deposit)
 
