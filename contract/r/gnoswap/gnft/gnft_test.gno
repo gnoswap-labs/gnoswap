@@ -398,27 +398,42 @@ func TestBurn(t *testing.T) {
 		name            string
 		callerRealm     std.Realm
 		tokenIdToBurn   uint64
+		expectedBalance int64
 		shouldPanic     bool
 		panicMsg        string
-		verifyTokenList func()
 	}{
 		{
-			name:          "burn without permission",
-			tokenIdToBurn: 1,
-			shouldPanic:   true,
-			panicMsg:      "ownable: caller is not owner",
+			name:            "burn success",
+			tokenIdToBurn:   1,
+			shouldPanic:     false,
+			expectedBalance: 0,
 		},
 		{
-			name:          "burn non-existent token id",
-			callerRealm:   positionRealm,
-			tokenIdToBurn: 99,
-			shouldPanic:   true,
-			panicMsg:      errInvalidTokenId,
+			name:            "burn without permission",
+			callerRealm:     std.NewUserRealm(addr01),
+			tokenIdToBurn:   1,
+			expectedBalance: 1,
+			shouldPanic:     true,
+			panicMsg:        "ownable: caller is not owner",
+		},
+		{
+			name:            "burn non-existent token id",
+			callerRealm:     positionRealm,
+			tokenIdToBurn:   99,
+			expectedBalance: 1,
+			shouldPanic:     true,
+			panicMsg:        errInvalidTokenId,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+
+			// token id 1 is pre-minted
+			testing.SetRealm(positionRealm)
+			Mint(cross, testutils.TestAddress("human"), tid(1))
+
 			testing.SetRealm(tt.callerRealm)
 
 			if tt.shouldPanic {
@@ -426,11 +441,11 @@ func TestBurn(t *testing.T) {
 					Burn(cross, tid(tt.tokenIdToBurn))
 				})
 			} else {
-				uassert.NotAborts(t, func() {
-					Burn(cross, tid(tt.tokenIdToBurn))
-				})
-				tt.verifyTokenList()
+				Burn(cross, tid(tt.tokenIdToBurn))
 			}
+
+			balance, _ := BalanceOf(testutils.TestAddress("human"))
+			uassert.Equal(t, tt.expectedBalance, balance)
 		})
 	}
 }
