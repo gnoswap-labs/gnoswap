@@ -2,6 +2,8 @@ package fuzztest
 
 import (
 	"math"
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -223,5 +225,96 @@ func TestGenerateBoundaryValues_UnknownType(t *testing.T) {
 	values := GenerateBoundary("invalid-type")
 	if len(values) != 0 {
 		t.Errorf("Expected no values but got %v", values)
+	}
+}
+
+func TestNumberStringGenerator(t *testing.T) {
+	gen := NumberString()
+
+	for i := 0; i < 100; i++ {
+		value := gen.Generate().(string)
+
+		if strings.HasPrefix(value, "0b") {
+			binary := strings.TrimPrefix(value, "0b")
+			if _, err := strconv.ParseInt(binary, 2, 64); err != nil {
+				t.Errorf("Invalid binary string: %s", value)
+			}
+		} else if strings.HasPrefix(value, "0o") {
+			octal := strings.TrimPrefix(value, "0o")
+			if _, err := strconv.ParseInt(octal, 8, 64); err != nil {
+				t.Errorf("Invalid octal string: %s", value)
+			}
+		} else if strings.HasPrefix(value, "0x") {
+			hex := strings.TrimPrefix(value, "0x")
+			if _, err := strconv.ParseInt(hex, 16, 64); err != nil {
+				t.Errorf("Invalid hex string: %s", value)
+			}
+		} else {
+			if _, err := strconv.ParseInt(value, 10, 64); err != nil {
+				t.Errorf("Invalid decimal string: %s", value)
+			}
+		}
+	}
+}
+
+func TestNumberStringGeneratorWithRange(t *testing.T) {
+	gen := NumberStringRange(-100, 100, 10, 16)
+
+	for i := 0; i < 50; i++ {
+		value := gen.Generate().(string)
+
+		var parsed int64
+		var err error
+
+		if strings.HasPrefix(value, "0x") {
+			hex := strings.TrimPrefix(value, "0x")
+			parsed, err = strconv.ParseInt(hex, 16, 64)
+		} else {
+			parsed, err = strconv.ParseInt(value, 10, 64)
+		}
+
+		if err != nil {
+			t.Errorf("Failed to parse number string: %s", value)
+			continue
+		}
+
+		if parsed < -100 || parsed > 100 {
+			t.Errorf("Value out of range: %d from %s", parsed, value)
+		}
+	}
+}
+
+func TestGenerateBoundaryValues_NumberString(t *testing.T) {
+	values := GenerateBoundary("numberString")
+
+	if len(values) == 0 {
+		t.Errorf("Expected boundary values for numberString")
+		return
+	}
+
+	expectedPatterns := []string{
+		"0", "1", "-1",
+		"0b", "0o", "0x",
+	}
+
+	foundPatterns := make(map[string]bool)
+	for _, v := range values {
+		s, ok := v.(string)
+		if !ok {
+			t.Errorf("Expected string value but got %T", v)
+			continue
+		}
+
+		for _, pattern := range expectedPatterns {
+			if strings.HasPrefix(s, pattern) || s == pattern {
+				foundPatterns[pattern] = true
+			}
+		}
+	}
+
+	for _, pattern := range expectedPatterns[:3] {
+		if !foundPatterns[pattern] {
+			t.Errorf("Missing boundary value pattern: %s", pattern)
+		}
 	}
 }
