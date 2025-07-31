@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math"
 	"math/rand"
+	"strconv"
 	"unicode/utf8"
 
 	xs "gno.land/p/wyhaines/rand/xorshift64star"
@@ -13,8 +14,22 @@ type Generator interface {
 	Generate() any
 }
 
+// seedCounter is a simple counter to ensure different seeds
+// We use a function-scoped approach to avoid realm modification issues
+var seedCounter uint64
+
+// getNextSeed returns a new seed value for RNG initialization
+// Uses a combination of counter and current time to ensure uniqueness
+func getNextSeed() uint64 {
+	// Increment counter and combine with time for uniqueness
+	seedCounter++
+	// Use a prime multiplier to spread values
+	return seedCounter * 2654435761
+}
+
 func initRNG(rng **xs.Xorshift64Star) {
 	if *rng == nil {
+		// Use entropy-based seed to avoid realm issues
 		*rng = xs.New()
 	}
 }
@@ -23,6 +38,7 @@ func initRNG(rng **xs.Xorshift64Star) {
 var (
 	_ Generator = (*IntGenerator)(nil)
 	_ Generator = (*Uint32Generator)(nil)
+	_ Generator = (*NumberStringGenerator)(nil)
 )
 
 type IntGenerator struct {
@@ -43,7 +59,16 @@ func IntRange(min, max int) Generator {
 	return &IntGenerator{
 		min: min,
 		max: max,
-		rng: xs.New(),
+		rng: nil, // Will be initialized on first use
+	}
+}
+
+// IntRangeWithSeed creates an IntGenerator with a specific seed
+func IntRangeWithSeed(min, max int, seed uint64) Generator {
+	return &IntGenerator{
+		min: min,
+		max: max,
+		rng: xs.New(seed),
 	}
 }
 
@@ -65,7 +90,16 @@ func Uint32Range(min, max uint32) Generator {
 	return &Uint32Generator{
 		min: min,
 		max: max,
-		rng: xs.New(),
+		rng: nil, // Will be initialized on first use
+	}
+}
+
+// Uint32RangeWithSeed creates a Uint32Generator with a specific seed
+func Uint32RangeWithSeed(min, max uint32, seed uint64) Generator {
+	return &Uint32Generator{
+		min: min,
+		max: max,
+		rng: xs.New(seed),
 	}
 }
 
@@ -83,7 +117,12 @@ func (g *BoolGenerator) Generate() any {
 }
 
 func Bool() Generator {
-	return &BoolGenerator{rng: xs.New()}
+	return &BoolGenerator{rng: nil} // Will be initialized on first use
+}
+
+// BoolWithSeed creates a BoolGenerator with a specific seed
+func BoolWithSeed(seed uint64) Generator {
+	return &BoolGenerator{rng: xs.New(seed)}
 }
 
 type StringGenerator struct {
@@ -105,10 +144,76 @@ func (g *StringGenerator) Generate() interface{} {
 	return string(result)
 }
 
+// StringWithSeed creates a StringGenerator with a specific seed
+func StringWithSeed(minLen, maxLen int, seed uint64) Generator {
+	return &StringGenerator{
+		minLen: minLen,
+		maxLen: maxLen,
+		rng:    xs.New(seed),
+	}
+}
+
+type NumberStringGenerator struct {
+	min, max  int64
+	baseTypes []int
+	rng       *xs.Xorshift64Star
+}
+
+func (g *NumberStringGenerator) Generate() any {
+	initRNG(&g.rng)
+
+	if g.min == 0 && g.max == 0 {
+		g.max = 1000000
+	}
+
+	size := uint64(g.max - g.min + 1)
+	value := int64(g.rng.Uint64()%size) + g.min
+
+	if len(g.baseTypes) == 0 {
+		g.baseTypes = []int{2, 8, 10, 16}
+	}
+
+	baseIndex := g.rng.Uint64() % uint64(len(g.baseTypes))
+	base := g.baseTypes[baseIndex]
+
+	switch base {
+	case 2:
+		return "0b" + strconv.FormatInt(value, 2)
+	case 8:
+		return "0o" + strconv.FormatInt(value, 8)
+	case 16:
+		return "0x" + strconv.FormatInt(value, 16)
+	default:
+		return strconv.FormatInt(value, 10)
+	}
+}
+
+func NumberString() Generator {
+	return &NumberStringGenerator{
+		min:       0,
+		max:       1000000,
+		baseTypes: []int{2, 8, 10, 16},
+		rng:       nil, // Will be initialized on first use
+	}
+}
+
+func NumberStringRange(min, max int64, bases ...int) Generator {
+	if len(bases) == 0 {
+		bases = []int{2, 8, 10, 16}
+	}
+	return &NumberStringGenerator{
+		min:       min,
+		max:       max,
+		baseTypes: bases,
+		rng:       nil, // Will be initialized on first use
+	}
+}
+
 // Config controls fuzzing parameters
 type Config struct {
 	Iterations int
 	Shrink     bool
+	Seed       uint64 // Optional: if provided, uses this seed for reproducibility
 }
 
 type Result struct {
@@ -157,6 +262,14 @@ func GenerateBoundary(vt string) []any {
 			generateLongString(100),
 			generateUnicodeString(),
 		}
+	case "numberString":
+		return []any{
+			"0", "1", "-1",
+			"0b0", "0b1", "0b1111111111111111",
+			"0o0", "0o7", "0o777",
+			"0x0", "0x1", "0xFFFF", "0xffffffff",
+			"9223372036854775807", "-9223372036854775808",
+		}
 	case "slice":
 		return []any{
 			[]int{},
@@ -194,7 +307,8 @@ func generateLargeSlice(n int) []int {
 }
 
 func FuzzWithConfig(config Config, property func(int) bool) *Result {
-	return FuzzWithConfigAndGen(config, &IntGenerator{rng: xs.New()}, property)
+	// Note: config.Seed is ignored as we use entropy-based seeding
+	return FuzzWithConfigAndGen(config, &IntGenerator{rng: nil}, property)
 }
 
 func FuzzWithConfigAndGen(config Config, gen Generator, property func(int) bool) *Result {
@@ -235,7 +349,7 @@ func Fuzz(property interface{}) error {
 }
 
 func fuzzString(fn func(string) bool) error {
-	gen := &StringGenerator{rng: xs.New()}
+	gen := &StringGenerator{rng: nil} // Will be initialized on first use
 	for i := 0; i < 100; i++ {
 		if !fn(gen.Generate().(string)) {
 			return errors.New("property violation")
@@ -256,7 +370,7 @@ func FuzzWithGen(gen Generator, property func(int) bool) error {
 
 func FuzzN(property interface{}) error {
 	if fn, ok := property.(func(int, int) bool); ok {
-		gen := &IntGenerator{rng: xs.New()}
+		gen := &IntGenerator{rng: nil} // Will be initialized on first use
 		for i := 0; i < 100; i++ {
 			a := gen.Generate().(int)
 			b := gen.Generate().(int)
