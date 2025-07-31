@@ -58,7 +58,7 @@ func main() {
 func changeEmissionDistribution() {
 	// change emission distribution ratio
 	testing.SetRealm(adminRealm)
-	en.ChangeDistributionPctByAdmin(
+	en.ChangeDistributionPct(
 		cross,
 		int(1), 7000,
 		int(2), 2000,

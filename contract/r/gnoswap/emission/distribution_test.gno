@@ -13,7 +13,7 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 )
 
-func TestChangeDistributionPctByAdmin(t *testing.T) {
+func TestChangeDistributionPct(t *testing.T) {
 	resetObject(t)
 
 	originCallback := stakerEmissionChangeCallback
@@ -82,7 +82,7 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					ChangeDistributionPctByAdmin(
+					ChangeDistributionPct(
 						cross,
 						target01, pct01,
 						target02, pct02,
@@ -92,7 +92,7 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 				})
 			} else {
 				uassert.NotPanics(t, func() {
-					ChangeDistributionPctByAdmin(
+					ChangeDistributionPct(
 						cross,
 						target01, pct01,
 						target02, pct02,
@@ -802,7 +802,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 
 				if tt.shouldPanic {
 					uassert.AbortsWithMessage(t, tt.expectedErr, func() {
-						ChangeDistributionPctByAdmin(
+						ChangeDistributionPct(
 							cross,
 							tt.targets[0], tt.percentages[0],
 							tt.targets[1], tt.percentages[1],
@@ -812,7 +812,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 					})
 				} else {
 					// Should not panic for valid distribution
-					ChangeDistributionPctByAdmin(
+					ChangeDistributionPct(
 						cross,
 						tt.targets[0], tt.percentages[0],
 						tt.targets[1], tt.percentages[1],
@@ -923,7 +923,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				setupFunc: func() {
 					// Set initial distribution
 					testing.SetRealm(adminRealm)
-					ChangeDistributionPctByAdmin(
+					ChangeDistributionPct(
 						cross,
 						LIQUIDITY_STAKER, 2500,
 						DEVOPS, 2500,
@@ -982,7 +982,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				// Attempt the change with duplicates
 				uassert.AbortsWithMessage(t, tt.expectedErr, func() {
 					if tt.isAdmin {
-						ChangeDistributionPctByAdmin(
+						ChangeDistributionPct(
 							cross,
 							tt.targets[0], tt.percentages[0],
 							tt.targets[1], tt.percentages[1],

@@ -139,7 +139,7 @@ func initAccount() {
 	sr.SetUnStakingFeeByAdmin(cross, 0)
 
 	println("[INFO] change distribution percentage")
-	emission.ChangeDistributionPctByAdmin(
+	emission.ChangeDistributionPct(
 		cross,
 		1, 7500, // staker
 		2, 2500, // devOps

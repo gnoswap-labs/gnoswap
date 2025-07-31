@@ -103,7 +103,7 @@ func initAndSetup() {
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
 
 	// set community pool distribution to 0% (give it to devOps)
-	en.ChangeDistributionPctByAdmin(
+	en.ChangeDistributionPct(
 		cross,
 		1, 7500,
 		2, 2500,

@@ -60,7 +60,8 @@ func init() {
 // - duplicate targets
 // - sum of percentages is not 10000
 // - swap is halted
-func ChangeDistributionPct(cur realm,
+func ChangeDistributionPct(
+	cur realm,
 	target01 int, pct01 int64,
 	target02 int, pct02 int64,
 	target03 int, pct03 int64,
@@ -75,7 +76,6 @@ func ChangeDistributionPct(cur realm,
 	assertValidDistributionPct(pct01, pct02, pct03, pct04)
 
 	changeDistributionPcts(
-		cur,
 		target01, pct01,
 		target02, pct02,
 		target03, pct03,
@@ -99,7 +99,6 @@ func ChangeDistributionPct(cur realm,
 }
 
 func changeDistributionPcts(
-	cur realm,
 	target01 int, pct01 int64,
 	target02 int, pct02 int64,
 	target03 int, pct03 int64,
@@ -107,15 +106,15 @@ func changeDistributionPcts(
 ) {
 	// First, cache the percentage of the staker just before it changes Callback if needed
 	// (check if the LIQUIDITY_STAKER was located between target01 and 04)
-	setDistributionBpsPct(cur, target01, pct01)
-	setDistributionBpsPct(cur, target02, pct02)
-	setDistributionBpsPct(cur, target03, pct03)
-	setDistributionBpsPct(cur, target04, pct04)
+	setDistributionBpsPct(target01, pct01)
+	setDistributionBpsPct(target02, pct02)
+	setDistributionBpsPct(target03, pct03)
+	setDistributionBpsPct(target04, pct04)
 }
 
 // distributeToTarget splits an amount according to the configured percentages
 // and sends tokens to each target address. Returns the total amount distributed.
-func distributeToTarget(cur realm, amount int64) (int64, error) {
+func distributeToTarget(amount int64) (int64, error) {
 	totalSent := int64(0)
 
 	var err error
@@ -132,7 +131,7 @@ func distributeToTarget(cur realm, amount int64) (int64, error) {
 		distAmount := calculateAmount(amount, pct)
 		totalSent += distAmount
 
-		err = transferToTarget(cross, targetInt, distAmount)
+		err = transferToTarget(targetInt, distAmount)
 		if distErr != nil {
 			err = distErr
 			return true
@@ -162,7 +161,7 @@ func calculateAmount(amount, bptPct int64) int64 {
 
 // transferToTarget sends tokens to the appropriate address based on target type
 // and updates both current and accumulated distribution tracking
-func transferToTarget(cur realm, target int, amount int64) error {
+func transferToTarget(target int, amount int64) error {
 	switch target {
 	case LIQUIDITY_STAKER:
 		stakerAddr, ok := access.GetAddress(prbac.ROLE_STAKER.String())
@@ -290,7 +289,7 @@ func ClearDistributedToGovStaker(cur realm) {
 }
 
 // setDistributionBpsPct changes percentage of each target for how much gns it will get by emission.
-func setDistributionBpsPct(cur realm, target int, pct int64) {
+func setDistributionBpsPct(target int, pct int64) {
 	if distributionBpsPct == nil {
 		distributionBpsPct = avl.NewTree()
 	}
