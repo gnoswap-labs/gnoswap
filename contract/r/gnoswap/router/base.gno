@@ -269,15 +269,22 @@ func commonSwapRoute(cur realm, params SwapRouteParams) (string, string, string,
 		limitValue              *u256.Uint
 	)
 
+	var baseOp *baseSwapOperation
 	switch typedOp := op.(type) {
 	case *ExactInSwapOperation:
-		userBeforeWugnotBalance = typedOp.userBeforeWugnotBalance
-		userWrappedWugnot = typedOp.userWrappedWugnot
-		limitValue = u256.MustFromDecimal(params.limitAmount)
+		baseOp = &typedOp.baseSwapOperation
 	case *ExactOutSwapOperation:
-		userBeforeWugnotBalance = typedOp.userBeforeWugnotBalance
-		userWrappedWugnot = typedOp.userWrappedWugnot
-		limitValue = u256.MustFromDecimal(params.limitAmount)
+		baseOp = &typedOp.baseSwapOperation
+	default:
+		return "", "", "", ufmt.Errorf("unexpected operation type: %T", op)
+	}
+
+	userBeforeWugnotBalance = baseOp.userBeforeWugnotBalance
+	userWrappedWugnot = baseOp.userWrappedWugnot
+
+	limitValue, err = u256.FromDecimal(params.limitAmount)
+	if err != nil {
+		return "", "", "", err
 	}
 
 	inputAmount, outputAmount := finalizeSwap(
