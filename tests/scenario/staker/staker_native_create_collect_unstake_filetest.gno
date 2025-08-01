@@ -108,13 +108,13 @@ func initWithShortWarmUp() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] override warm-up periods for testing")
-	sr.SetWarmUpByAdmin(cross, 30, 150)
-	sr.SetWarmUpByAdmin(cross, 50, 300)
-	sr.SetWarmUpByAdmin(cross, 70, 900)
-	sr.SetWarmUpByAdmin(cross, 100, math.MaxInt64)
+	sr.SetWarmUp(cross, 30, 150)
+	sr.SetWarmUp(cross, 50, 300)
+	sr.SetWarmUp(cross, 70, 900)
+	sr.SetWarmUp(cross, 100, math.MaxInt64)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFeeByAdmin(cross, 0)
+	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
@@ -152,8 +152,8 @@ func createPools() {
 	)
 
 	println("[INFO] set pool tiers")
-	sr.SetPoolTierByAdmin(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 1)
-	sr.SetPoolTierByAdmin(cross, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500", 2)
+	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 1)
+	sr.SetPoolTier(cross, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500", 2)
 
 	testing.SkipHeights(18)
 }

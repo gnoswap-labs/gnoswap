@@ -136,7 +136,7 @@ func initAccount() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFeeByAdmin(cross, 0)
+	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] change distribution percentage")
 	emission.ChangeDistributionPct(
@@ -235,7 +235,7 @@ func createBarBaz500Tier02() {
 	pl.CreatePool(cross, barPath, bazPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set pool tier to 2")
-	sr.SetPoolTierByAdmin(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 2)
+	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 2)
 
 	testing.SkipHeights(1)
 }
@@ -371,7 +371,7 @@ func createPoolBarFoo100Tier03() {
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 3")
-	sr.SetPoolTierByAdmin(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", 3)
+	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", 3)
 	testing.SkipHeights(1)
 }
 
