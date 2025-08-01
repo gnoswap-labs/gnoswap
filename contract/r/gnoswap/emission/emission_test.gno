@@ -28,6 +28,7 @@ func TestMintAndDistributeGns(t *testing.T) {
 		{
 			name: "block passed",
 			setup: func() {
+				distributionStartBlockHeight = 10
 				testing.SkipHeights(123)
 			},
 			verify: func(distributed int64) {
@@ -64,7 +65,7 @@ func TestMintAndDistributeGns(t *testing.T) {
 	}
 }
 
-func TestSetMinBlockHeight(t *testing.T) {
+func TestSetDistributionStartBlockHeight(t *testing.T) {
 	tests := []struct {
 		name        string
 		setup       func()
@@ -75,23 +76,23 @@ func TestSetMinBlockHeight(t *testing.T) {
 		verify      func()
 	}{
 		{
-			name:   "admin can set min block height",
+			name:   "admin can set distribution start block height",
 			height: 1000,
 			caller: adminAddr,
 			verify: func() {
-				uassert.Equal(t, int64(1000), GetMinBlockHeight())
+				uassert.Equal(t, int64(1000), GetDistributionStartBlockHeight())
 			},
 		},
 		{
-			name:   "governance can set min block height",
+			name:   "governance can set distribution start block height",
 			height: 2000,
 			caller: govAddr,
 			verify: func() {
-				uassert.Equal(t, int64(2000), GetMinBlockHeight())
+				uassert.Equal(t, int64(2000), GetDistributionStartBlockHeight())
 			},
 		},
 		{
-			name:        "non-admin/governance cannot set min block height",
+			name:        "non-admin/governance cannot set distribution start block height",
 			height:      3000,
 			caller:      alice,
 			shouldPanic: true,
@@ -102,26 +103,26 @@ func TestSetMinBlockHeight(t *testing.T) {
 			height:      -100,
 			caller:      adminAddr,
 			shouldPanic: true,
-			panicMsg:    "minimum block height cannot be negative",
+			panicMsg:    "distribution start block height cannot be negative",
 		},
 		{
 			name:   "can set zero block height",
 			height: 0,
 			caller: adminAddr,
 			verify: func() {
-				uassert.Equal(t, int64(0), GetMinBlockHeight())
+				uassert.Equal(t, int64(0), GetDistributionStartBlockHeight())
 			},
 		},
 		{
-			name: "update existing min block height",
+			name: "update existing distribution start block height",
 			setup: func() {
 				testing.SetOriginCaller(adminAddr)
-				SetMinBlockHeight(cross, 5000)
+				SetDistributionStartBlockHeight(cross, 5000)
 			},
 			height: 10000,
 			caller: govAddr,
 			verify: func() {
-				uassert.Equal(t, int64(10000), GetMinBlockHeight())
+				uassert.Equal(t, int64(10000), GetDistributionStartBlockHeight())
 			},
 		},
 	}
@@ -136,10 +137,10 @@ func TestSetMinBlockHeight(t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					SetMinBlockHeight(cross, tt.height)
+					SetDistributionStartBlockHeight(cross, tt.height)
 				})
 			} else {
-				SetMinBlockHeight(cross, tt.height)
+				SetDistributionStartBlockHeight(cross, tt.height)
 				if tt.verify != nil {
 					tt.verify()
 				}
@@ -150,21 +151,21 @@ func TestSetMinBlockHeight(t *testing.T) {
 	}
 }
 
-func TestMintAndDistributeGnsWithMinBlockHeight(t *testing.T) {
+func TestMintAndDistributeGnsWithDistributionStartBlockHeight(t *testing.T) {
 	tests := []struct {
 		name          string
 		setup         func()
-		minHeight     int64
+		startHeight   int64
 		currentHeight int64
 		verify        func(distributed int64)
 	}{
 		{
-			name:          "emission allowed when current height >= min height",
-			minHeight:     100,
+			name:          "emission allowed when current height >= start height",
+			startHeight:   100,
 			currentHeight: 200,
 			setup: func() {
 				testing.SetOriginCaller(adminAddr)
-				SetMinBlockHeight(cross, 100)
+				SetDistributionStartBlockHeight(cross, 100)
 				testing.SkipHeights(200)
 			},
 			verify: func(distributed int64) {
@@ -172,12 +173,12 @@ func TestMintAndDistributeGnsWithMinBlockHeight(t *testing.T) {
 			},
 		},
 		{
-			name:          "emission blocked when current height < min height",
-			minHeight:     500,
+			name:          "emission blocked when current height < start height",
+			startHeight:   500,
 			currentHeight: 100,
 			setup: func() {
 				testing.SetOriginCaller(adminAddr)
-				SetMinBlockHeight(cross, 500)
+				SetDistributionStartBlockHeight(cross, 500)
 				testing.SkipHeights(100)
 			},
 			verify: func(distributed int64) {
@@ -185,12 +186,12 @@ func TestMintAndDistributeGnsWithMinBlockHeight(t *testing.T) {
 			},
 		},
 		{
-			name:          "emission allowed at exact min height",
-			minHeight:     300,
+			name:          "emission allowed at exact start height",
+			startHeight:   300,
 			currentHeight: 300,
 			setup: func() {
 				testing.SetOriginCaller(adminAddr)
-				SetMinBlockHeight(cross, 300)
+				SetDistributionStartBlockHeight(cross, 300)
 				testing.SkipHeights(300)
 			},
 			verify: func(distributed int64) {
@@ -198,14 +199,14 @@ func TestMintAndDistributeGnsWithMinBlockHeight(t *testing.T) {
 			},
 		},
 		{
-			name:          "default min height (0) allows emission from genesis",
+			name:          "default start height (0) blocks emission until set",
 			currentHeight: 1,
 			setup: func() {
 				testing.SkipHeights(1)
 			},
 			verify: func(distributed int64) {
-				uassert.Equal(t, int64(0), GetMinBlockHeight())
-				uassert.True(t, distributed > 0)
+				uassert.Equal(t, int64(0), GetDistributionStartBlockHeight())
+				uassert.Equal(t, int64(0), distributed)
 			},
 		},
 	}

@@ -47,5 +47,5 @@ func resetObject(t *testing.T) {
 	// Reset emission-specific variables
 	leftGNSAmount = 0
 	lastExecutedHeight = 0
-	minBlockHeight = 0
+	distributionStartBlockHeight = 0
 }

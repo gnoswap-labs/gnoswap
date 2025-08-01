@@ -18,16 +18,16 @@ var (
 	// emissionAddr is the address of the emission realm
 	emissionAddr = std.CurrentRealm().Address()
 
-	// minBlockHeight is the minimum block height from which emission minting is allowed
-	// Default is 0, meaning emission is allowed from genesis
-	minBlockHeight int64
+	// distributionStartBlockHeight is the block height from which emission distribution starts
+	// Default is 0, meaning distribution is not started until explicitly set
+	distributionStartBlockHeight int64
 )
 
 // GetLeftGNSAmount returns the amount of undistributed GNS tokens
 func GetLeftGNSAmount() int64 { return leftGNSAmount }
 
-// GetMinBlockHeight returns the minimum block height for emission minting
-func GetMinBlockHeight() int64 { return minBlockHeight }
+// GetDistributionStartBlockHeight returns the block height from which emission distribution starts
+func GetDistributionStartBlockHeight() int64 { return distributionStartBlockHeight }
 
 // setLeftGNSAmount updates the undistributed GNS token amount
 func setLeftGNSAmount(amount int64) { leftGNSAmount = amount }
@@ -45,9 +45,9 @@ func MintAndDistributeGns(cur realm) int64 {
 
 	currentHeight := std.ChainHeight()
 
-	// Check if current block height is below minimum allowed height
-	if currentHeight < minBlockHeight {
-		// Silently skip emission minting if below minimum height
+	// Check if distribution start block height is set and if current height has reached it
+	// and skip emission distribution if not started or below start height
+	if distributionStartBlockHeight == 0 || currentHeight < distributionStartBlockHeight {
 		return 0
 	}
 
@@ -97,22 +97,22 @@ func MintAndDistributeGns(cur realm) int64 {
 	return distributedGNSAmount
 }
 
-// SetMinBlockHeight sets the minimum block height for emission minting
+// SetDistributionStartBlockHeight sets the block height from which emission distribution starts
 // Only admin or governance can call this function
-func SetMinBlockHeight(cur realm, height int64) {
+func SetDistributionStartBlockHeight(cur realm, height int64) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	// this check will also prevent the overflow of int64 value
 	if height < 0 {
-		panic("minimum block height cannot be negative")
+		panic("distribution start block height cannot be negative")
 	}
 
-	oldHeight := minBlockHeight
-	minBlockHeight = height
+	oldHeight := distributionStartBlockHeight
+	distributionStartBlockHeight = height
 
 	std.Emit(
-		"SetMinBlockHeight",
+		"SetDistributionStartBlockHeight",
 		"caller", caller.String(),
 		"oldHeight", formatInt(oldHeight),
 		"newHeight", formatInt(height),

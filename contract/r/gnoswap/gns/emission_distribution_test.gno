@@ -13,11 +13,6 @@ import (
 func TestEmissionDistributionAcrossYears(t *testing.T) {
 	resetEmissionState(t)
 
-	// Set up callback
-	// oldCallback := callbackEmissionChange
-	// callbackEmissionChange = func(amount int64) {}
-	// defer func() { callbackEmissionChange = oldCallback }()
-
 	// Test different scenarios of block time changes
 	scenarios := []struct {
 		name            string
@@ -51,9 +46,7 @@ func TestEmissionDistributionAcrossYears(t *testing.T) {
 
 	for _, sc := range scenarios {
 		t.Run(sc.name, func(t *testing.T) {
-			// Reset state for each scenario
 			resetEmissionState(t)
-			// callbackEmissionChange = func(amount int64) {}
 
 			// Skip to the target point in the year
 			yearStart := GetHalvingYearStartBlock(sc.changeAtYear)
