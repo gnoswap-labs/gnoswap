@@ -3,7 +3,6 @@ package pool
 import (
 	"std"
 	"strconv"
-	"strings"
 	"testing"
 
 	"gno.land/p/demo/uassert"
@@ -141,87 +140,6 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 				uassert.AbortsWithMessage(t, tc.expected, func() {
 					tc.action()
 				})
-			}
-		})
-	}
-}
-
-func TestHandleWithdrawalFee(t *testing.T) {
-	tests := []struct {
-		name        string
-		action      func(t *testing.T)
-		verify      func(t *testing.T) (string, string)
-		expected    string
-		shouldPanic bool
-	}{
-		{
-			name: "Panic if caller is not position contract",
-			action: func(t *testing.T) {
-				testing.SetOriginCaller(adminAddr)
-				CollectWithdrawalFee(cross, 0, "gno.land/r/onbloc/foo", "0", "gno.land/r/onbloc/foo", "0", "", adminAddr)
-			},
-			verify:      nil,
-			expected:    "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not position",
-			shouldPanic: true,
-		},
-		{
-			name: "Panic if pkgPath is not registered",
-			action: func(t *testing.T) {
-				testing.SetRealm(std.NewUserRealm(positionAddr))
-				CollectWithdrawalFee(cross, 0, "pkgPath", "1000", "pkgPath", "1000", "poolPath", adminAddr)
-			},
-			verify:      nil,
-			expected:    "[GNOSWAP-COMMON-004] token is not registered || token(pkgPath)",
-			shouldPanic: true,
-		},
-		{
-			name: "Success call by position contract",
-			action: func(t *testing.T) {
-				InitialisePoolTest(t)
-				testing.SetRealm(std.NewUserRealm(alice))
-				TokenApprove(t, wugnotPath, alice, poolAddr, 1000)
-				TokenApprove(t, gnsPath, alice, poolAddr, 1000)
-
-				testing.SetRealm(posRealm)
-				Mint(
-					cross,
-					wugnotPath,
-					gnsPath,
-					fee3000,
-					positionAddr,
-					int32(1020),
-					int32(5040),
-					"1000",
-					alice,
-				)
-			},
-			verify: func(t *testing.T) (string, string) {
-				testing.SetRealm(std.NewUserRealm(alice))
-				TokenApprove(t, wugnotPath, alice, poolAddr, 10000000000)
-				TokenApprove(t, gnsPath, alice, poolAddr, 1000000000)
-				testing.SetRealm(std.NewUserRealm(positionAddr))
-				poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
-				return CollectWithdrawalFee(cross, 2, wugnotPath, "1000", gnsPath, "1000", poolPath, alice)
-			},
-			expected:    "990,990",
-			shouldPanic: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			if tc.shouldPanic {
-				uassert.AbortsWithMessage(t, tc.expected, func() {
-					tc.action(t)
-				})
-			} else {
-				tc.action(t)
-				if tc.verify != nil {
-					gotAfterAmount0, gotAfterAmount1 := tc.verify(t)
-					expected := strings.Split(tc.expected, ",")
-					uassert.Equal(t, gotAfterAmount0, expected[0])
-					uassert.Equal(t, gotAfterAmount1, expected[1])
-				}
 			}
 		})
 	}

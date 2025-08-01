@@ -848,6 +848,7 @@ func TestHandleMultiSwap(t *testing.T) {
 				tt.route,
 				tt.numHops,
 				amountSpecified,
+				false,
 			)
 
 			if !tt.shouldPanic {
