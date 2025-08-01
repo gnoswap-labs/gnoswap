@@ -70,7 +70,7 @@ func initAccountAndEmission() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFeeByAdmin(cross, 0)
+	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
@@ -102,7 +102,7 @@ func setPoolTierByAdmin() {
 	targetTier := uint64(2)
 
 	println("[INFO] set pool tier to 2")
-	sr.SetPoolTierByAdmin(cross, poolPath, targetTier)
+	sr.SetPoolTier(cross, poolPath, targetTier)
 
 	// Verify the tier was set correctly
 	currentTier := sr.GetPoolTier(poolPath)
@@ -120,7 +120,7 @@ func changePoolTierByAdmin() {
 	newTier := uint64(3)
 
 	println("[INFO] change pool tier from 2 to 3")
-	sr.SetPoolTierByAdmin(cross, poolPath, newTier)
+	sr.SetPoolTier(cross, poolPath, newTier)
 
 	// Verify the tier was changed correctly
 	currentTier := sr.GetPoolTier(poolPath)
@@ -138,7 +138,7 @@ func setAnotherPoolTier3() {
 	targetTier := uint64(3)
 
 	println("[INFO] set another pool (bar:foo:100) to tier 3")
-	sr.SetPoolTierByAdmin(cross, poolPath, targetTier)
+	sr.SetPoolTier(cross, poolPath, targetTier)
 
 	// Verify the tier was set correctly
 	currentTier := sr.GetPoolTier(poolPath)
@@ -155,7 +155,7 @@ func removePoolTierByAdmin() {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
 
 	println("[INFO] remove pool tier (set to 0)")
-	sr.RemovePoolTierByAdmin(cross, poolPath)
+	sr.RemovePoolTier(cross, poolPath)
 
 	// Verify the tier was removed (should be 0)
 	currentTier := sr.GetPoolTier(poolPath)

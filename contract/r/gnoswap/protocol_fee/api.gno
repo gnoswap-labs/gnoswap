@@ -32,7 +32,7 @@ func ApiGetTokenListWithAmountOverZero() string {
 }
 
 func ApiGetAccuTransferToGovStaker() string {
-	distributedAmountList := GetAccuTransferToGovStaker()
+	distributedAmountList := protocolFeeState.accuToGovStaker
 	if distributedAmountList == nil {
 		return ""
 	}
@@ -41,7 +41,7 @@ func ApiGetAccuTransferToGovStaker() string {
 }
 
 func ApiGetAccuTransferToDevOps() string {
-	distributedAmountList := GetAccuTransferToDevOps()
+	distributedAmountList := protocolFeeState.accuToDevOps
 	if distributedAmountList == nil {
 		return ""
 	}
@@ -101,7 +101,7 @@ func ApiGetActualBalance() string {
 	tokenMap := make(map[string]uint64)
 
 	// get all recorded tokens
-	for token := range protocolFeeState.TokenListWithAmount {
+	for token := range protocolFeeState.tokenListWithAmount {
 		actualBalance := uint64(common.BalanceOf(token, protocolFeeAddr))
 		tokenMap[token] = actualBalance
 	}
@@ -143,7 +143,7 @@ func ApiGetUnrecordedBalance() string {
 	unrecordedMap := make(map[string]uint64)
 
 	// Check all recorded tokens for discrepancies
-	for token, recordedAmount := range protocolFeeState.TokenListWithAmount {
+	for token, recordedAmount := range protocolFeeState.tokenListWithAmount {
 		actualBalance := uint64(common.BalanceOf(token, protocolFeeAddr))
 		if actualBalance > recordedAmount {
 			unrecordedAmount := actualBalance - recordedAmount

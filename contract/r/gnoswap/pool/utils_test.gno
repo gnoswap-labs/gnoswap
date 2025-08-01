@@ -558,7 +558,7 @@ func TestVerifyToUint128MaskingLogic(t *testing.T) {
 	uassert.Equal(t, MAX_UINT128, maxUint128.ToString())
 
 	// 2. Verify MAX_SQRT_RATIO
-	maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
+
 	uassert.Equal(t, MAX_SQRT_RATIO, "1461446703485210103287273052203988822378723970342")
 	uassert.True(t, maxSqrtRatio.Gt(maxUint128), "MAX_SQRT_RATIO should be > MAX_UINT128")
 
@@ -602,7 +602,6 @@ func TestVerifyToUint128MaskingLogic(t *testing.T) {
 
 // Additional verification: Ensure masked values are within uint128 range
 func TestToUint128MaskedValuesRange(t *testing.T) {
-	maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
 	maxUint128 := u256.MustFromDecimal(MAX_UINT128)
 
 	// toUint128 results
