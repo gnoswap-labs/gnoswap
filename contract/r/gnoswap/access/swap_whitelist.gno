@@ -70,11 +70,3 @@ func GetWhitelistedSwaps() []std.Address {
 
 	return routers
 }
-
-// AssertIsWhitelistedSwap checks if the caller is a whitelisted router
-// This replaces the old AssertIsRouter for multi-router support
-func AssertIsWhitelistedSwap(caller std.Address) {
-	if !IsSwapWhitelisted(caller) {
-		panic(ufmt.Errorf("unauthorized: caller %s is not a whitelisted router", caller))
-	}
-}

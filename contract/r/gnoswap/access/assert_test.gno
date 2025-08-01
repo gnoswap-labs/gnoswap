@@ -4,7 +4,9 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
@@ -416,6 +418,50 @@ func TestAssertIsRBAC(t *testing.T) {
 			} else {
 				uassert.NotPanics(t, func() {
 					assertIsRBAC(tt.testAddr)
+				})
+			}
+		})
+	}
+}
+
+
+func TestAssertIsSwapWhitelisted(t *testing.T) {
+	officialRouter := testutils.TestAddress("official")
+	whitelistedRouter := testutils.TestAddress("whitelisted")
+	nonWhitelistedRouter := testutils.TestAddress("non_whitelisted")
+
+	tests := []struct {
+		name        string
+		router      std.Address
+		shouldPanic bool
+	}{
+		{
+			name:        "official router passes",
+			router:      officialRouter,
+			shouldPanic: false,
+		},
+		{
+			name:        "whitelisted router passes",
+			router:      whitelistedRouter,
+			shouldPanic: false,
+		},
+		{
+			name:        "non-whitelisted router panics",
+			router:      nonWhitelistedRouter,
+			shouldPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			swapWhitelist = make(map[std.Address]bool)
+			roleAddresses[prbac.ROLE_ROUTER.String()] = officialRouter
+			swapWhitelist[whitelistedRouter] = true
+
+			if tt.shouldPanic {
+				expectedPanicMsg := ufmt.Sprintf("unauthorized: caller %s is not a whitelisted router", tt.router.String())
+				uassert.PanicsWithMessage(t, expectedPanicMsg, func() {
+					AssertIsSwapWhitelisted(tt.router)
 				})
 			}
 		})
