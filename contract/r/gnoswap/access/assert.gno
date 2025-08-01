@@ -111,6 +111,14 @@ func AssertIsUser(r std.Realm) {
 	}
 }
 
+// AssertIsSwapWhitelisted checks if the caller is a whitelisted router
+// This replaces the old AssertIsRouter for multi-router support
+func AssertIsSwapWhitelisted(caller std.Address) {
+	if !IsSwapWhitelisted(caller) {
+		panic(ufmt.Errorf("unauthorized: caller %s is not a whitelisted router", caller))
+	}
+}
+
 // assertIsRBAC checks if the caller is the rbac and optionally updates the rbac address
 func assertIsRBAC(caller std.Address) {
 	rbacAddress := std.DerivePkgAddr(rbacPackagePath)
