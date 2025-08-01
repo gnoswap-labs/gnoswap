@@ -39,7 +39,6 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. Cancel Proposal and Check State")
-	testing.SkipHeights((config.VotingStartDelay + config.VotingPeriod + config.ExecutionDelay) / currentBlockTime)
 	cancelProposalAndCheckState(proposalId)
 	println()
 }

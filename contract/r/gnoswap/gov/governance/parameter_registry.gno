@@ -270,7 +270,7 @@ func createParameterHandlers() *ParameterRegistry {
 				executionWindow := parseInt64(params[6])
 
 				// Reconfigure governance parameters through governance process
-				ReconfigureByGovernance(
+				Reconfigure(
 					cross,
 					votingStartDelay,
 					votingPeriod,
