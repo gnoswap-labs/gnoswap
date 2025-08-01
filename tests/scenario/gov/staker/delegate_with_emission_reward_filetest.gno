@@ -58,6 +58,7 @@ func main() {
 func changeEmissionDistribution() {
 	// change emission distribution ratio
 	testing.SetRealm(adminRealm)
+	en.SetDistributionStartBlockHeight(cross, 1)
 	en.ChangeDistributionPct(
 		cross,
 		int(1), 7000,

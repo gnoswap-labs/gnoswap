@@ -14,6 +14,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gov/governance"
 
 	gns "gno.land/r/gnoswap/v1/gns"
@@ -69,6 +70,8 @@ func main() {
 func delegateGnsToAdmin() {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(std.NewUserRealm(adminAddr))
+
+	emission.SetDistributionStartBlockHeight(cross, 1)
 
 	govStakerAddr := std.Address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
 
