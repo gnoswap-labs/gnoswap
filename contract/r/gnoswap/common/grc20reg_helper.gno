@@ -108,3 +108,7 @@ func Transfer(cur realm, path string, to std.Address, amount int64) error {
 func TransferFrom(cur realm, path string, from, to std.Address, amount int64) error {
 	return GetTokenTeller(path).TransferFrom(from, to, amount)
 }
+
+func Approve(cur realm, path string, spender std.Address, amount int64) error {
+	return GetTokenTeller(path).Approve(spender, amount)
+}

@@ -75,7 +75,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 
 	// Create external incentive
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, stakerAddr, rewardMinimumAmount)
+	gns.Approve(cross, stakerAddr, maxApprove)
 	incentiveStartTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
 	CreateExternalIncentive(
 		cross,

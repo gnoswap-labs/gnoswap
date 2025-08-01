@@ -38,22 +38,22 @@ func CreateExternalIncentive(
 
 	en.MintAndDistributeGns(cross)
 
-	// native ugnot check
+	// transfer reward token from user to staker
 	if rewardToken == GNOT {
-		sent := std.OriginSend()
-		ugnotSent := sent.AmountOf("ugnot")
-
-		if ugnotSent != rewardAmount {
-			panic(makeErrorWithDetails(
-				errInvalidInput,
-				ufmt.Sprintf("user(%s) sent ugnot(%d) amount not equal to rewardAmount(%d)", caller.String(), ugnotSent, rewardAmount),
-			))
-		}
-
-		wrap(ugnotSent)
-
 		rewardToken = WUGNOT_PATH
+		err := wrapWithTransfer(stakerAddr, rewardAmount)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		err := common.TransferFrom(cross, rewardToken, caller, stakerAddr, rewardAmount)
+		if err != nil {
+			panic(err)
+		}
 	}
+
+	// deposit gns amount
+	gns.TransferFrom(cross, caller, stakerAddr, depositGnsAmount)
 
 	incentiveId := nextIncentiveID(caller, std.ChainHeight())
 	pool := pools.GetOrCreate(targetPoolPath)
@@ -79,12 +79,6 @@ func CreateExternalIncentive(
 	}
 	// store external incentive information for each incentiveId
 	externalIncentives.set(incentiveId, incentive)
-
-	// deposit gns amount
-	gns.TransferFrom(cross, caller, stakerAddr, depositGnsAmount)
-
-	// transfer reward token from user to staker
-	common.TransferFrom(cross, rewardToken, caller, stakerAddr, rewardAmount)
 
 	pool.incentives.create(caller, incentive)
 
@@ -133,11 +127,16 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		refund = poolLeftExternalRewardAmount
 	}
 
-	common.Transfer(cross, incentive.rewardToken, incentive.refundee, refund)
-
 	// unwrap if wugnot
-	if incentive.rewardToken == WUGNOT_PATH {
-		unwrap(refund)
+	isUnwrap := incentive.rewardToken == WUGNOT_PATH
+	if isUnwrap {
+		err = unwrapWithTransfer(incentive.refundee, refund)
+	} else {
+		err = common.Transfer(cross, incentive.rewardToken, incentive.refundee, refund)
+	}
+
+	if err != nil {
+		panic(err)
 	}
 
 	// also refund deposit gns amount

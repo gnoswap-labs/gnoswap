@@ -358,7 +358,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			transferUGNOT(positionAddr, positionAddr, amount)
 
 			// Verify wrapped amount
-			wrappedAmount, err := safeWrapNativeToken(tt.amountDesired, tt.userAddress)
+			wrappedAmount, err := safeWrapNativeToken(amount, tt.userAddress)
 			if tt.expectError {
 				uassert.ErrorIs(t, err, errors.New(tt.expectedError))
 			} else {

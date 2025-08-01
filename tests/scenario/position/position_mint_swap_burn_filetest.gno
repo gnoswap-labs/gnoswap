@@ -35,6 +35,7 @@ var (
 	adminRealm    = std.NewUserRealm(adminAddr)
 	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
+	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 	routerRealm   = std.NewUserRealm(routerAddr)
 
 	aliceAddr  = testutils.TestAddress("alice")
@@ -188,6 +189,7 @@ func collectFees() {
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees")
+	
 	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
 
 	ufmt.Printf("[EXPECTED] Collected fee0 should be %s\n", fee0)

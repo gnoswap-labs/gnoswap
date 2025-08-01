@@ -8,8 +8,8 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/halt"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -99,7 +99,7 @@ func Mint(
 		assertEqualsAddress(previousRealm.Address(), mintTo)
 		assertEqualsAddress(previousRealm.Address(), caller)
 	}
-	
+
 	assertIsNotExpired(deadline)
 
 	referral.TryRegister(cross, caller, referrer)
@@ -138,7 +138,7 @@ func Mint(
 			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
 		}
 	}
-	
+
 	if processedInput.tokenPair.token1IsNative && processedInput.tokenPair.wrappedAmount > amount1.Int64() {
 		err = unwrap(processedInput.tokenPair.wrappedAmount-amount1.Int64(), caller)
 		if err != nil {
@@ -147,7 +147,7 @@ func Mint(
 	}
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(processedInput.poolPath)
-	
+
 	std.Emit(
 		"Mint",
 		"prevAddr", previousRealm.Address().String(),
@@ -203,12 +203,14 @@ func IncreaseLiquidity(
 
 	wrappedAmount := int64(0)
 	if isWrappedToken(token0) {
-		wrappedAmount, err = safeWrapNativeToken(amount0DesiredStr, caller)
+		amount0DesiredInt := mustParseInt64(amount0DesiredStr)
+		wrappedAmount, err = safeWrapNativeToken(amount0DesiredInt, caller)
 		if err != nil {
 			panic(err)
 		}
 	} else if isWrappedToken(token1) {
-		wrappedAmount, err = safeWrapNativeToken(amount1DesiredStr, caller)
+		amount1DesiredInt := mustParseInt64(amount1DesiredStr)
+		wrappedAmount, err = safeWrapNativeToken(amount1DesiredInt, caller)
 		if err != nil {
 			panic(err)
 		}
@@ -340,7 +342,7 @@ func CollectFee(
 	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedPosition()
 	halt.AssertIsNotHaltedWithdraw()
-	
+
 	assertIsOwnerOrOperatorForToken(positionId, caller)
 
 	return collectFee(cur, positionId, unwrapResult, caller)
@@ -379,10 +381,6 @@ func collectFee(
 	position.feeGrowthInside0LastX128 = new(u256.Uint).Set(currentFeeGrowth.feeGrowthInside0LastX128)
 	position.feeGrowthInside1LastX128 = new(u256.Uint).Set(currentFeeGrowth.feeGrowthInside1LastX128)
 
-	// check user wugnot amount
-	// need this value to unwrap fee
-	userWugnot := wugnot.BalanceOf(caller)
-
 	// collect fee
 	amount0, amount1 := pl.Collect(
 		cross,
@@ -398,24 +396,32 @@ func collectFee(
 	position.tokensOwed1 = new(u256.Uint).Sub(tokensOwed1, u256.MustFromDecimal(amount1))
 	mustUpdatePosition(positionId, position)
 
-	// handle withdrawal fee
-	withoutFee0, withoutFee1 := pl.CollectWithdrawalFee(
-		cross,
-		positionId,
-		token0,
-		amount0,
-		token1,
-		amount1,
-		position.poolKey,
-		caller,
-	)
+	withdrawalFeeBps := pl.GetWithdrawalFee()
+	amount0WithoutFee, fee0 := calculateAmountWithWithdrawalFee(amount0, withdrawalFeeBps)
+	amount1WithoutFee, fee1 := calculateAmountWithWithdrawalFee(amount1, withdrawalFeeBps)
 
-	// UNWRAP
-	pToken0, pToken1, _ := splitOf(position.poolKey)
-	err = handleUnwrap(pToken0, pToken1, unwrapResult, userWugnot, caller)
-	if err != nil {
-		panic(err)
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+
+	if isWrappedToken(token0) && unwrapResult {
+		unwrapWithTransferFrom(caller, poolAddr, amount0WithoutFee)
+	} else {
+		common.TransferFrom(cross, token0, poolAddr, caller, amount0WithoutFee)
 	}
+
+	if isWrappedToken(token1) && unwrapResult {
+		unwrapWithTransferFrom(caller, poolAddr, amount0WithoutFee)
+	} else {
+		common.TransferFrom(cross, token1, poolAddr, caller, amount1WithoutFee)
+	}
+
+	protocolFeeAddr, _ := access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	common.TransferFrom(cross, token0, poolAddr, protocolFeeAddr, fee0)
+	common.TransferFrom(cross, token1, poolAddr, protocolFeeAddr, fee1)
+
+	amount0WithoutFeeStr := formatInt(amount0WithoutFee)
+	amount1WithoutFeeStr := formatInt(amount1WithoutFee)
+	fee0Str := formatInt(fee0)
+	fee1Str := formatInt(fee1)
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
@@ -423,13 +429,36 @@ func collectFee(
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"lpPositionId", formatUint(positionId),
-		"feeAmount0", withoutFee0,
-		"feeAmount1", withoutFee1,
+		"feeAmount0", amount0WithoutFeeStr,
+		"feeAmount1", amount1WithoutFeeStr,
 		"poolPath", position.poolKey,
 		"unwrapResult", formatBool(unwrapResult),
 	)
 
-	return positionId, withoutFee0, withoutFee1, position.poolKey, amount0, amount1
+	std.Emit(
+		"WithdrawalFee",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"lpTokenId", formatUint(positionId),
+		"poolPath", position.poolKey,
+		"feeAmount0", fee0Str,
+		"feeAmount1", fee1Str,
+		"amount0WithoutFee", amount0WithoutFeeStr,
+		"amount1WithoutFee", amount1WithoutFeeStr,
+	)
+
+	return positionId, amount0WithoutFeeStr, amount1WithoutFeeStr, position.poolKey, amount0, amount1
+}
+
+func calculateAmountWithWithdrawalFee(amount string, fee uint64) (int64, int64) {
+	amountUint := u256.MustFromDecimal(amount)
+	feeUint := u256.NewUint(fee)
+
+	feeAmount := new(u256.Uint).Mul(amountUint, feeUint)
+	feeAmount = new(u256.Uint).Div(feeAmount, u256.NewUint(10000))
+	amountWithoutFee := new(u256.Uint).Sub(amountUint, feeAmount)
+
+	return amountWithoutFee.Int64(), feeAmount.Int64()
 }
 
 func SetPositionOperator(

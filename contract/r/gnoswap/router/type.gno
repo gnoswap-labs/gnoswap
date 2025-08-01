@@ -57,9 +57,9 @@ func (s SwapType) String() string {
 // SingleSwapParams contains parameters for executing a single pool swap.
 // It represents the simplest form of swap that occurs within a single liquidity pool.
 type SingleSwapParams struct {
-	tokenIn  string // token to spend
-	tokenOut string // token to receive
-	fee      uint32 // fee of the pool used to swap
+	tokenIn    string // token to spend
+	tokenOut   string // token to receive
+	fee        uint32 // fee of the pool used to swap
 
 	// Amount specified for the swap:
 	//  - Positive: exact input amount (tokenIn)
@@ -76,7 +76,8 @@ func (p SingleSwapParams) Fee() uint32      { return p.fee }
 // that involve multiple pools.
 type SwapParams struct {
 	SingleSwapParams
-	recipient std.Address // address to receive the token
+	recipient  std.Address // address to receive the token
+	withUnwrap bool        // whether to unwrap the token
 }
 
 func (p SwapParams) TokenIn() string        { return p.tokenIn }
@@ -95,7 +96,7 @@ func (p SwapParams) Recipient() std.Address { return p.recipient }
 //
 // Returns:
 //   - *SwapParams: new `SwapParams` instance
-func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient std.Address, amountSpecified *i256.Int) *SwapParams {
+func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient std.Address, amountSpecified *i256.Int, withUnwrap bool) *SwapParams {
 	return &SwapParams{
 		SingleSwapParams: SingleSwapParams{
 			tokenIn:         tokenIn,
@@ -103,6 +104,7 @@ func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient std.Address, 
 			fee:             fee,
 			amountSpecified: amountSpecified,
 		},
+		withUnwrap: withUnwrap,
 		recipient: recipient,
 	}
 }
@@ -114,6 +116,7 @@ type SwapResult struct {
 	AmountIn        *u256.Uint
 	AmountOut       *u256.Uint
 	AmountSpecified *i256.Int
+	WithUnwrap      bool
 }
 
 // SwapParamsInterface defines the common interface for swap parameters

@@ -1,92 +1,108 @@
 package staker
 
 import (
+	"errors"
 	"std"
-	"strconv"
 	"testing"
 
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
+	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 func TestWrap(t *testing.T) {
 	user1Addr := testutils.TestAddress("user1")
 	tests := []struct {
-		name        string
-		action      func()
-		verify      func() int64
-		expected    string
-		shouldPanic bool
+		name                  string
+		callerAddr            std.Address
+		toAddr                std.Address
+		tokenPath             string
+		amount                int64
+		expectedBalanceChange int64
+		expectedHasError      bool
+		expectedError         error
 	}{
 		{
-			name: "Failure - Amount less than minimum",
-			action: func() {
-				wrap(999)
-			},
-			verify:      nil,
-			expected:    "[GNOSWAP-STAKER-006] can not wrapless than minimum amount || amount(999) < minimum(1000)",
-			shouldPanic: true,
+			name: "success by native token",
+			callerAddr:            user1Addr,
+			toAddr:                stakerAddr,
+			tokenPath:             "gnot",
+			amount:                1000,
+			expectedBalanceChange: 1000,
+			expectedHasError:      false,
+			expectedError:         nil,
 		},
 		{
-			name: "Failure - Zero amount",
-			action: func() {
-				wrap(0)
-			},
-			verify:      nil,
-			expected:    "[GNOSWAP-STAKER-005] wrap, unwrap failed || cannot wrap 0 ugnot",
-			shouldPanic: true,
+			name: "success by grc20 token amount is 999",
+			callerAddr:            user1Addr,
+			toAddr:                stakerAddr,
+			tokenPath:             wugnotPath,
+			amount:                999,
+			expectedBalanceChange: 999,
+			expectedHasError:      false,
+			expectedError:         nil,
 		},
 		{
-			name: "Success - Valid amount",
-			action: func() {
-				testing.SetRealm(std.NewUserRealm(user1Addr))
-				func() {
-					testing.SetRealm(adminRealm)
-					ugnotFaucet(t, user1Addr, 1_000)
-					ugnotFaucet(t, stakerAddr, 1_000)
-				}()
-				testing.SetRealm(std.NewUserRealm(user1Addr))
-				func() {
-					testing.SetRealm(stakerRealm)
-					wrap(1_000)
-				}()
-			},
-			verify: func() int64 {
-				return TokenBalance(t, wugnotPath, user1Addr)
-			},
-			expected:    "1000",
-			shouldPanic: false,
+			name: "success by token amount is 0",
+			callerAddr:            user1Addr,
+			toAddr:                stakerAddr,
+			tokenPath:             wugnotPath,
+			amount:                0,
+			expectedBalanceChange: 0,
+			expectedHasError:      false,
+			expectedError:         nil,
+		},
+		{
+			name: "failure by native token amount is 999",
+			callerAddr:            user1Addr,
+			toAddr:                stakerAddr,
+			tokenPath:             "gnot",
+			amount:                999,
+			expectedBalanceChange: 0,
+			expectedHasError:      true,
+			expectedError:         errors.New("[GNOSWAP-STAKER-006] can not wrapless than minimum amount || amount(999) < minimum(1000)"),
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					switch v := r.(type) {
-					case string:
-						if v != tc.expected {
-							t.Errorf("Expected panic: %s, got: %s", tc.expected, v)
-						}
-					case error:
-						if v.Error() != tc.expected {
-							t.Errorf("Expected panic: %s, got: %s", tc.expected, v.Error())
-						}
-					default:
-						t.Errorf("Unexpected panic type: %v", r)
-					}
-				}
-			}()
+			isNative := tc.tokenPath == "gnot"
+			testing.SetRealm(std.NewUserRealm(tc.callerAddr))
 
-			if tc.shouldPanic {
-				tc.action()
+			if isNative {
+				ugnotFaucet(t, tc.callerAddr, 1_000)
+
+				testing.SetOriginSend(std.Coins{{ugnotPath, tc.amount}})
+				banker := std.NewBanker(std.BankerTypeRealmSend)
+				banker.SendCoins(tc.callerAddr, tc.toAddr, std.Coins{{ugnotPath, tc.amount}})
 			} else {
-				tc.action()
-				if tc.verify != nil {
-					balance := tc.verify()
-					if strconv.FormatInt(balance, 10) != tc.expected {
-						t.Errorf("Expected balance: %s, got: %d", tc.expected, balance)
-					}
+				ugnotFaucet(t, tc.callerAddr, 1_000)
+				ugnotDeposit(t, tc.callerAddr, 1_000)
+			}
+			
+			testing.SetRealm(std.NewUserRealm(tc.callerAddr))
+			wugnot.Approve(cross, tc.toAddr, tc.amount)
+
+			beforeBalance := TokenBalance(t, wugnotPath, tc.toAddr)
+
+			var err error
+			func(cur realm) {
+				testing.SetRealm(std.NewUserRealm(tc.toAddr))
+				if isNative {
+					err = wrapWithTransfer(tc.toAddr, tc.amount)
+				} else {
+					err = common.TransferFrom(cross, tc.tokenPath, tc.callerAddr, tc.toAddr, tc.amount)
 				}
+			}(cross)
+
+			afterBalance := TokenBalance(t, wugnotPath, tc.toAddr)
+
+			if tc.expectedHasError {
+				uassert.ErrorIs(t, tc.expectedError, err)
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, tc.expectedBalanceChange, afterBalance-beforeBalance)
 			}
 		})
 	}
@@ -95,83 +111,69 @@ func TestWrap(t *testing.T) {
 func TestUnwrap(t *testing.T) {
 	user2Addr := testutils.TestAddress("user2")
 	tests := []struct {
-		name        string
-		action      func()
-		verify      func() int64
-		expected    string
-		shouldPanic bool
+		name                  string
+		amount                int64
+		unwrap                bool
+		expectedBalanceChange int64
+		expectedHasPanic      bool
+		expectedPanicMessage  string
 	}{
 		{
-			name: "Failure - Zero amount",
-			action: func() {
-				unwrap(0)
-			},
-			verify:      nil,
-			expected:    "",
-			shouldPanic: false, // No panic as zero amount is ignored
+			name:                  "Failure - Zero amount",
+			amount:                0,
+			unwrap:                true,
+			expectedBalanceChange: 0,
+			expectedHasPanic:      false,
+			expectedPanicMessage:  "",
 		},
 		{
-			name: "Success - Valid amount",
-			action: func() {
-				testing.SetRealm(std.NewUserRealm(user2Addr))
-				func() {
-					testing.SetRealm(adminRealm)
-					ugnotFaucet(t, user2Addr, 1_000)
-					ugnotFaucet(t, stakerAddr, 1_000)
-				}()
-				testing.SetRealm(std.NewUserRealm(user2Addr))
-				func() {
-					testing.SetRealm(stakerRealm)
-					wrap(1_000)
-				}()
-				testing.SetRealm(std.NewUserRealm(user2Addr))
-				func() {
-					testing.SetRealm(std.NewUserRealm(stakerAddr))
-					wugnotApprove(t, user2Addr, stakerAddr, 1_000)
-				}()
-				testing.SetRealm(std.NewUserRealm(user2Addr))
-				func() {
-					testing.SetRealm(stakerRealm)
-					unwrap(1_000)
-				}()
-			},
-			verify: func() int64 {
-				return TokenBalance(t, wugnotPath, user2Addr)
-			},
-			expected:    "0",
-			shouldPanic: false,
+			name:                  "Success - Valid amount",
+			amount:                1_000,
+			unwrap:                true,
+			expectedBalanceChange: 1_000,
+			expectedHasPanic:      false,
+			expectedPanicMessage:  "",
+		},
+		{
+			name:                  "Success - Valid amount with unwrap",
+			amount:                1_000,
+			unwrap:                true,
+			expectedBalanceChange: 1_000,
+			expectedHasPanic:      false,
+			expectedPanicMessage:  "",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					switch v := r.(type) {
-					case string:
-						if v != tc.expected {
-							t.Errorf("Expected panic: %s, got: %s", tc.expected, v)
-						}
-					case error:
-						if v.Error() != tc.expected {
-							t.Errorf("Expected panic: %s, got: %s", tc.expected, v.Error())
-						}
-					default:
-						t.Errorf("Unexpected panic type: %v", r)
-					}
-				}
-			}()
+			ugnotFaucet(t, stakerAddr, 1_000)
+			ugnotDeposit(t, stakerAddr, 1_000)
 
-			if tc.shouldPanic {
-				tc.action()
+			testing.SetRealm(stakerRealm)
+
+			beforeBalance := TokenBalance(t, wugnotPath, user2Addr)
+			if tc.unwrap {
+				banker := std.NewBanker(std.BankerTypeRealmSend)
+				beforeBalance = banker.GetCoins(user2Addr).AmountOf("ugnot")
+			}
+
+			var err error
+			func(cur realm) {
+				testing.SetRealm(std.NewUserRealm(stakerAddr))
+				err = unwrapWithTransfer(user2Addr, tc.amount)
+			}(cross)
+
+			afterBalance := TokenBalance(t, wugnotPath, user2Addr)
+			if tc.unwrap {
+				banker := std.NewBanker(std.BankerTypeRealmSend)
+				afterBalance = banker.GetCoins(user2Addr).AmountOf("ugnot")
+			}
+
+			if tc.expectedHasPanic {
+				uassert.ErrorIs(t, errors.New(tc.expectedPanicMessage), err)
 			} else {
-				tc.action()
-				if tc.verify != nil {
-					balance := tc.verify()
-					if strconv.FormatInt(balance, 10) != tc.expected {
-						t.Errorf("Expected balance: %s, got: %d", tc.expected, balance)
-					}
-				}
+				uassert.NoError(t, err)
+				uassert.Equal(t, tc.expectedBalanceChange, afterBalance-beforeBalance)
 			}
 		})
 	}
