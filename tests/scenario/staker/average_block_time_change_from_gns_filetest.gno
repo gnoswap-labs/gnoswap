@@ -105,7 +105,7 @@ func createPool() {
 	// set unstaking fee to 0
 	println("[INFO] set unstaking fee to 0")
 	testing.SetRealm(adminRealm)
-	sr.SetUnStakingFeeByAdmin(cross, 0)
+	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
 	testing.SetRealm(adminRealm)
