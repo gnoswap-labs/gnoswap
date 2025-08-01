@@ -48,4 +48,6 @@ func resetObject(t *testing.T) {
 	leftGNSAmount = 0
 	lastExecutedHeight = 0
 	distributionStartBlockHeight = 0
+
+	testing.SetHeight(0)
 }
