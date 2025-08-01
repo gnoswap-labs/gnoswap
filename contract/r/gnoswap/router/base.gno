@@ -22,13 +22,9 @@ const (
 // swap can be done by multiple pools
 // to separate each pool, we use POOL_SEPARATOR
 const (
-	POOL_SEPARATOR = "*POOL*"
-)
-
-var (
-	gnot          string = "gnot"
-	wrappedWugnot string = "gno.land/r/demo/wugnot"
-	wugnotPath    string = "gno.land/r/demo/wugnot"
+	POOL_SEPARATOR        = "*POOL*"
+	gnot           string = "gnot"
+	wugnotPath     string = "gno.land/r/demo/wugnot"
 )
 
 type RouterOperation interface {
@@ -59,6 +55,7 @@ type BaseSwapParams struct {
 
 // common swap operation
 type baseSwapOperation struct {
+	withUnwrap              bool
 	userBeforeWugnotBalance int64
 	userWrappedWugnot       int64
 	routes                  []string
@@ -72,14 +69,15 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 	specifiedAmount *i256.Int,
 ) error {
 	// no native token
-	if inputToken == wugnotPath || outputToken == wugnotPath {
+	if inputToken != gnot && outputToken != gnot {
 		return nil
 	}
 
 	// save current user's WGNOT amount
 	op.userBeforeWugnotBalance = wugnot.BalanceOf(std.PreviousRealm().Address())
 
-	if inputToken != "gnot" {
+	if outputToken == gnot {
+		op.withUnwrap = true
 		return nil
 	}
 
@@ -93,7 +91,9 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 
 	// wrap user's WUGNOT
 	if ugnotSentByUser > 0 {
-		wrap(ugnotSentByUser)
+		if err := wrapWithTransfer(ugnotSentByUser); err != nil {
+			return err
+		}
 	}
 
 	op.userWrappedWugnot = ugnotSentByUser
@@ -162,9 +162,9 @@ func (op *baseSwapOperation) processRoute(
 
 	switch numHops {
 	case SINGLE_HOP_ROUTE:
-		amountIn, amountOut = handleSingleSwap(route, toSwap)
+		amountIn, amountOut = handleSingleSwap(route, toSwap, op.withUnwrap)
 	default:
-		amountIn, amountOut = handleMultiSwap(swapType, route, numHops, toSwap)
+		amountIn, amountOut = handleMultiSwap(swapType, route, numHops, toSwap, op.withUnwrap)
 	}
 
 	if amountIn == nil || amountOut == nil {
@@ -175,7 +175,7 @@ func (op *baseSwapOperation) processRoute(
 }
 
 // handleSingleSwap handles a single swap operation.
-func handleSingleSwap(route string, amountSpecified *i256.Int) (*u256.Uint, *u256.Uint) {
+func handleSingleSwap(route string, amountSpecified *i256.Int, withUnwrap bool) (*u256.Uint, *u256.Uint) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
 		tokenIn:         input,
@@ -192,17 +192,18 @@ func handleMultiSwap(
 	route string,
 	numHops int,
 	amountSpecified *i256.Int,
+	withUnwrap bool,
 ) (*u256.Uint, *u256.Uint) {
 	previousRealmAddr := std.PreviousRealm().Address()
 
 	switch swapType {
 	case ExactIn:
 		input, output, fee := getDataForMultiPath(route, 0) // first data
-		sp := newSwapParams(input, output, fee, previousRealmAddr, amountSpecified)
+		sp := newSwapParams(input, output, fee, previousRealmAddr, amountSpecified, withUnwrap)
 		return multiSwap(*sp, numHops, route)
 	case ExactOut:
 		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
-		sp := newSwapParams(input, output, fee, previousRealmAddr, amountSpecified)
+		sp := newSwapParams(input, output, fee, previousRealmAddr, amountSpecified, withUnwrap)
 		return multiSwapNegative(*sp, numHops-1, route)
 	default:
 		panic(errInvalidSwapType)
@@ -219,6 +220,10 @@ type SwapRouteParams struct {
 	typ         SwapType
 	exactAmount string // amountIn for ExactIn, amountOut for ExactOut
 	limitAmount string // amountOutMin for ExactIn, amountInMax for ExactOut
+}
+
+func (p *SwapRouteParams) IsUnwrap() bool {
+	return p.outputToken == gnot
 }
 
 // createSwapOperation creates the appropriate swap operation based on swap type
@@ -260,7 +265,7 @@ func extractSwapOperationData(op RouterOperation) (int64, int64, error) {
 
 // commonSwapRoute handles the common logic for both ExactIn and ExactOut swaps
 // Returns inputAmount, outputAmount, and actualReferrer
-func commonSwapRoute(cur realm, params SwapRouteParams) (string, string, error) {
+func commonSwapRoute(params SwapRouteParams) (string, string, error) {
 	op, err := createSwapOperation(params)
 	if err != nil {
 		return "", "", err

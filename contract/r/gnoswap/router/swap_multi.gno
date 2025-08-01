@@ -163,7 +163,7 @@ func (p *MultiSwapProcessor) processBackwardRealSwap(sp SwapParams, numPools int
 	swapInfo := p.collectBackwardSwapInfo(sp, numPools, swapPath)
 
 	// Then execute swaps in forward order
-	return p.executeCollectedSwaps(swapInfo, sp.recipient)
+	return p.executeCollectedSwaps(swapInfo, sp.recipient, sp.withUnwrap)
 }
 
 // collectBackwardSwapInfo simulates swaps backward to collect parameters
@@ -201,17 +201,15 @@ func (p *MultiSwapProcessor) collectBackwardSwapInfo(sp SwapParams, numPools int
 }
 
 // executeCollectedSwaps performs the collected swaps in forward order
-func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, finalRecipient std.Address) (*u256.Uint, *u256.Uint, error) {
+func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, finalRecipient std.Address, withUnwrap bool) (*u256.Uint, *u256.Uint, error) {
 	firstAmountIn := zero
 	currentPoolIndex := len(swapInfo) - 1
 	payer := std.PreviousRealm().Address() // Initial payer is the user
 
 	for currentPoolIndex >= 0 {
-		var recipient std.Address
-		if currentPoolIndex == 0 {
+		recipient := routerAddr
+		if currentPoolIndex == 0 && !withUnwrap {
 			recipient = finalRecipient
-		} else {
-			recipient = routerAddr
 		}
 
 		// Execute the swap

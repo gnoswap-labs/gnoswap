@@ -252,7 +252,8 @@ func processTokens(
 		token0 = WRAPPED_WUGNOT
 		token0IsNative = true
 
-		wrappedAmount, err = safeWrapNativeToken(amount0Desired, caller)
+		amount0DesiredInt := mustParseInt64(amount0Desired)
+		wrappedAmount, err = safeWrapNativeToken(amount0DesiredInt, caller)
 		if err != nil {
 			return "", "", false, false, 0, err
 		}
@@ -260,7 +261,8 @@ func processTokens(
 		token1 = WRAPPED_WUGNOT
 		token1IsNative = true
 
-		wrappedAmount, err = safeWrapNativeToken(amount1Desired, caller)
+		amount1DesiredInt := mustParseInt64(amount1Desired)
+		wrappedAmount, err = safeWrapNativeToken(amount1DesiredInt, caller)
 		if err != nil {
 			return "", "", false, false, 0, err
 		}

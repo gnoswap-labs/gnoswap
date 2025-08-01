@@ -215,12 +215,12 @@ func Collect(cur realm,
 	if amount0.Gt(u256.Zero()) {
 		position.tokensOwed0 = new(u256.Uint).Sub(position.tokensOwed0, amount0)
 		pool.balances.token0 = new(u256.Uint).Sub(pool.balances.token0, amount0)
-		checkTransferError(common.Transfer(cross, pool.token0Path, recipient, amount0.Int64()))
+		common.Approve(cross, pool.token0Path, positionAddr, amount0.Int64())
 	}
 	if amount1.Gt(u256.Zero()) {
 		position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
 		pool.balances.token1 = new(u256.Uint).Sub(pool.balances.token1, amount1)
-		checkTransferError(common.Transfer(cross, pool.token1Path, recipient, amount1.Int64()))
+		common.Approve(cross, pool.token1Path, positionAddr, amount1.Int64())
 	}
 
 	pool.setPosition(positionKey, position)

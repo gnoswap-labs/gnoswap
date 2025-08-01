@@ -2,6 +2,7 @@ package router
 
 import (
 	"std"
+	"strconv"
 
 	"gno.land/p/demo/ufmt"
 
@@ -56,9 +57,21 @@ func ExactOutSwapRoute(cur realm,
 		limitAmount: amountInMax,
 	}
 
-	inputAmount, outputAmount, err := commonSwapRoute(cur, params)
+	inputAmount, outputAmount, err := commonSwapRoute(params)
 	if err != nil {
 		panic(err)
+	}
+
+	if params.IsUnwrap() {
+		amount, err := strconv.ParseInt(params.exactAmount, 10, 64)
+		if err != nil {
+			panic(err)
+		}
+
+		err = unwrapWithTransfer(std.CurrentRealm().Address(), amount)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	// handle referral registration
@@ -124,6 +137,7 @@ func (op *ExactOutSwapOperation) Process() (*SwapResult, error) {
 		Routes:          op.routes,
 		Quotes:          op.quotes,
 		AmountSpecified: op.amountSpecified,
+		WithUnwrap:      op.withUnwrap,
 	}, nil
 }
 

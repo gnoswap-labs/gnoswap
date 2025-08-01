@@ -2,14 +2,22 @@ package position
 
 import (
 	"std"
-	"strconv"
 
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/demo/wugnot"
 )
 
-const UGNOT_MIN_DEPOSIT_TO_WRAP uint64 = 1000
+const (
+	UGNOT_MIN_DEPOSIT_TO_WRAP = uint64(1000)
+	WUGNOT_PATH               = "gno.land/r/demo/wugnot"
+	GNOT_DENOM                = "ugnot"
+)
+
+var (
+	errFailedToWrapZeroUgnot = "cannot wrap 0 ugnot"
+	errFailedToWrapBelowMin  = "amount(%d) < minimum(%d)"
+)
 
 // wrap wraps the specified amount of the native token `ugnot` into the wrapped token `wugnot`.
 //
@@ -93,17 +101,6 @@ func transferUGNOT(from, to std.Address, amount int64) {
 	})
 }
 
-// refundUGNOT refunds a specified amount of `UGNOT` tokens to the provided address.
-// This function uses `transferUGNOT` to perform the transfer from the contract's position address
-// (`POSITION_ADDR`) to the recipient.
-//
-// Parameters:
-// - `to`: The recipient's address (std.Address) who will receive the refund.
-// - `amount`: The amount of `UGNOT` tokens to refund (uint64).
-func refundUGNOT(to std.Address, amount int64) {
-	transferUGNOT(positionAddr, to, amount)
-}
-
 // isNative checks whether the given token is a native token.
 func isNative(token string) bool {
 	return token == GNOT
@@ -117,74 +114,100 @@ func isWrappedToken(tokenPath string) bool {
 // safeWrapNativeToken safely wraps the native token `ugnot` into the wrapped token `wugnot` for a user.
 //
 // Parameters:
-//   - amountDesired: The desired amount of `ugnot` to be wrapped, provided as a string.
-//   - userAddress: The address of the user initiating the wrapping process.
+//   - amount: The desired amount of `ugnot` to be wrapped.
+//   - toAddress: The address of the user initiating the wrapping process.
 //
 // Returns:
 //   - uint64: The amount of `ugnot` that was successfully wrapped into `wugnot`.
 //
 // Panics:
 //   - If the sent `ugnot` amount is zero.
-//   - If `amountDesired` cannot be parsed into a valid uint64 value.
-//   - If the sent `ugnot` amount is less than `amountDesired`.
+//   - If `amount` cannot be parsed into a valid uint64 value.
+//   - If the sent `ugnot` amount is less than `amount`.
 //   - If the `wrap` function fails to wrap the tokens.
 //   - If there is a mismatch between the expected wrapped token amount and the user's balance after wrapping.
-func safeWrapNativeToken(amountDesired string, userAddress std.Address) (int64, error) {
-	amount, err := strconv.ParseInt(amountDesired, 10, 64)
-	if err != nil {
-		return 0, makeErrorWithDetails(errWrapUnwrap, err.Error())
-	}
-
-	// if amountDesired is zero, return 0
+func safeWrapNativeToken(amount int64, toAddress std.Address) (int64, error) {
+	// if amount is zero, return 0
 	if amount == 0 {
 		return 0, nil
 	}
 
-	beforeWugnotBalance := wugnot.BalanceOf(userAddress)
-	sentNative := std.OriginSend()
-	sentUgnotAmount := sentNative.AmountOf(UGNOT)
+	beforeWrappedBalance := wugnot.BalanceOf(toAddress)
+	nativeSentAmount := std.OriginSend().AmountOf(UGNOT)
 
-	if sentUgnotAmount <= 0 {
+	if nativeSentAmount <= 0 {
 		return 0, makeErrorWithDetails(errZeroUGNOT, "amount of ugnot is zero")
 	}
 
-	if sentUgnotAmount < amount {
+	if nativeSentAmount < amount {
 		return 0, makeErrorWithDetails(errInsufficientUGNOT, "amount of ugnot is less than desired amount")
 	}
 
-	if sentUgnotAmount > amount {
-		exceed := sentUgnotAmount - amount
-		refundUGNOT(userAddress, exceed)
+	// if nativeSentAmount is greater than amount, refund the excess amount
+	if nativeSentAmount > amount {
+		excessAmount := nativeSentAmount - amount
+		transferUGNOT(positionAddr, toAddress, excessAmount)
 
-		sentUgnotAmount = amount
+		nativeSentAmount = amount
 	}
 
-	if err = wrap(sentUgnotAmount, userAddress); err != nil {
-		return 0, makeErrorWithDetails(errWugnotMinimum, err.Error())
+	if err := wrapWithTransfer(nativeSentAmount, toAddress); err != nil {
+		return 0, err
 	}
 
-	afterWugnotBalance := wugnot.BalanceOf(userAddress)
-	diff := afterWugnotBalance - beforeWugnotBalance
+	afterWrappedBalance := wugnot.BalanceOf(toAddress)
+	balanceDiff := afterWrappedBalance - beforeWrappedBalance
 
-	if diff != sentUgnotAmount {
+	if balanceDiff != nativeSentAmount {
 		return 0, makeErrorWithDetails(
 			errWrapUnwrap,
-			ufmt.Sprintf("amount of ugnot (%d) is not equal to amount of wugnot. (diff: %d)", sentUgnotAmount, diff),
+			ufmt.Sprintf("amount of ugnot (%d) is not equal to amount of wugnot. (diff: %d)", nativeSentAmount, balanceDiff),
 		)
 	}
-	return sentUgnotAmount, nil
+
+	return nativeSentAmount, nil
 }
 
-func handleUnwrap(pToken0, pToken1 string, unwrapResult bool, userOldWugnotBalance int64, to std.Address) error {
-	if (pToken0 == WRAPPED_WUGNOT || pToken1 == WRAPPED_WUGNOT) && unwrapResult {
-		userNewWugnotBalance := wugnot.BalanceOf(to)
-		leftOver := userNewWugnotBalance - userOldWugnotBalance
-		if leftOver > 0 {
-			if err := unwrap(leftOver, to); err != nil {
-				return makeErrorWithDetails(errWrapUnwrap, err.Error())
-			}
-		}
+func wrapWithTransfer(ugnotAmount int64, toAddress std.Address) error {
+	if ugnotAmount <= 0 {
+		return makeErrorWithDetails(errWrapUnwrap, errFailedToWrapZeroUgnot)
 	}
+
+	if ugnotAmount < int64(UGNOT_MIN_DEPOSIT_TO_WRAP) {
+		return makeErrorWithDetails(
+			errWugnotMinimum,
+			ufmt.Sprintf(errFailedToWrapBelowMin, ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP),
+		)
+	}
+
+	// WRAP IT
+	wugnotAddr := std.DerivePkgAddr(WUGNOT_PATH)
+	currentRealmAddr := std.CurrentRealm().Address()
+
+	banker := std.NewBanker(std.BankerTypeRealmSend)
+	banker.SendCoins(currentRealmAddr, wugnotAddr, std.Coins{{"ugnot", int64(ugnotAmount)}})
+	wugnot.Deposit(cross) // ROUTER HAS WUGNOT
+
+	// SEND WUGNOT: ROUTER -> USER
+	wugnot.Transfer(cross, toAddress, ugnotAmount)
+
+	return nil
+}
+
+func unwrapWithTransferFrom(fromAddress, toAddress std.Address, wugnotAmount int64) error {
+	if wugnotAmount == 0 {
+		return nil
+	}
+
+	currentRealmAddr := std.CurrentRealm().Address()
+	if fromAddress != currentRealmAddr {
+		wugnot.TransferFrom(cross, fromAddress, currentRealmAddr, wugnotAmount)
+	}
+
+	wugnot.Withdraw(cross, wugnotAmount)
+
+	banker := std.NewBanker(std.BankerTypeRealmSend)
+	banker.SendCoins(currentRealmAddr, toAddress, std.Coins{{"ugnot", int64(wugnotAmount)}})
 
 	return nil
 }
