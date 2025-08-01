@@ -36,7 +36,7 @@ class TestRunner
       # ruby -e "puts Dir.glob('./tests/scenario/**/*_filetest.gno')"
       if content.include?("func main()")
         puts "Running filetest: #{file}"
-        run_command("gno test #{file} -root-dir #{@root_dir} -v")
+        run_command("gno test #{file} -root-dir #{@root_dir}")
         next
       end
 
@@ -51,7 +51,7 @@ class TestRunner
       end
       test_names.each do |test_name|
         puts "Running #{test_name} in #{file}"
-        run_command("gno test #{file} -root-dir #{@root_dir} -run ^#{test_name}$ -v")
+        run_command("gno test #{file} -root-dir #{@root_dir} -run ^#{test_name}$")
       end
     end
   end
@@ -65,40 +65,9 @@ class TestRunner
     end
   end
 
-  # TODO (notJoon): remove this function after the gno test has been stabilized.
-  def run_gnoa_tests
-    puts "Running gnoA tests"
-    Dir.chdir("./#{@folder}") do
-      gnoa_files = Dir.glob('*_test.gnoA')
-
-      if gnoa_files.empty?
-        puts "No gnoA test files found"
-        return
-      end
-
-      gnoa_files.each do |file|
-        puts "Testing #{file}"
-        base = file.sub(/\.gnoA$/, '')
-        gno_file = "#{base}.gno"
-
-        # Rename .gnoA to .gno
-        FileUtils.mv(file, gno_file)
-
-        begin
-          run_command("gno test . -root-dir #{@root_dir} -v")
-        ensure
-          # Always move the file back, even if the test fails
-          FileUtils.mv(gno_file, file)
-        end
-      end
-    end
-  end
-
   def run_all
     run_unit_tests
     remove_test_files
-    # temporary disable gnoa tests
-    # run_gnoa_tests
   end
 end
 
