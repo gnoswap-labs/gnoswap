@@ -58,12 +58,13 @@ func main() {
 }
 
 func initEmission() {
+	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartBlockHeight(cross, 1)
 	emission.MintAndDistributeGns(cross)
 }
 
 func mintAndDistribute() {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 0)
 
 	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/emission"))
 
