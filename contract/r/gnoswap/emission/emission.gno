@@ -47,7 +47,7 @@ func MintAndDistributeGns(cur realm) int64 {
 
 	// Check if distribution start block height is set and if current height has reached it
 	// and skip emission distribution if not started or below start height
-	if distributionStartBlockHeight == 0 || currentHeight < distributionStartBlockHeight {
+	if currentHeight < distributionStartBlockHeight {
 		return 0
 	}
 
