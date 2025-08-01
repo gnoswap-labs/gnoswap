@@ -40,6 +40,7 @@ var (
 	errWarmUpAmountNotFound        = errors.New("[GNOSWAP-STAKER-031] warm-up amount not found")
 	errOverflow                    = errors.New("[GNOSWAP-STAKER-032] overflow")
 	errUnauthorized                = errors.New("[GNOSWAP-STAKER-033] unauthorized access")
+	errAddExistingToken            = errors.New("[GNOSWAP-STAKER-034] can not add existing token")
 )
 
 func makeErrorWithDetails(err error, details string) error {

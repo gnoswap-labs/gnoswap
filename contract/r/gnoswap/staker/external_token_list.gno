@@ -31,9 +31,17 @@ func AddToken(cur realm, tokenPath string) {
 	halt.AssertIsNotHaltedStaker()
 	access.AssertIsAdmin(caller)
 
-	if err := modifyTokenList(tokenPath, nil, addTokenExecutor); err != nil {
+	if err := modifyTokenList(tokenPath, addTokenValidator, addTokenExecutor); err != nil {
 		panic(err.Error())
 	}
+
+	previousRealm := std.PreviousRealm()
+	std.Emit(
+		"AddToken",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"tokenPath", tokenPath,
+	)
 }
 
 // RemoveToken removes a token path from the list of allowed tokens.
@@ -54,6 +62,14 @@ func RemoveToken(cur realm, tokenPath string) {
 	if err := modifyTokenList(tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
 		panic(err.Error())
 	}
+
+	previousRealm := std.PreviousRealm()
+	std.Emit(
+		"RemoveToken",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"tokenPath", tokenPath,
+	)
 }
 
 // TokenValidator is a function type that validates a token
@@ -82,6 +98,15 @@ func addTokenExecutor(tokenPath string, tokens []string) []string {
 	}
 
 	return append(tokens, tokenPath)
+}
+
+// addTokenValidator validates token addition operation
+func addTokenValidator(tokenPath string) error {
+	if contains(defaultAllowed, tokenPath) {
+		return ufmt.Errorf("%v: can not add existing token(%s)", errAddExistingToken, tokenPath)
+	}
+
+	return nil
 }
 
 // removeTokenExecutor executes token removal operation

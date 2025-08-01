@@ -31,7 +31,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 	SetMinimumRewardAmount(cross, 1000000000)
 
 	testing.SetOriginCaller(adminAddr)
-	SetUnStakingFeeByAdmin(cross, 0)
+	SetUnStakingFee(cross, 0)
 
 	// Create pool
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
@@ -39,7 +39,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 
 	// Set pool tier
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
-	SetPoolTierByAdmin(cross, poolPath, 1)
+	SetPoolTier(cross, poolPath, 1)
 
 	// Give tokens to test user
 	TokenFaucet(t, barPath, addr01)
