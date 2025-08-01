@@ -6,6 +6,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 )
