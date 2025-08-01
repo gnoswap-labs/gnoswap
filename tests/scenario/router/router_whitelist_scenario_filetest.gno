@@ -115,7 +115,7 @@ func initPool() {
 	// Setup internal incentive pool
 	poolPath := pool.GetPoolPath(token0Path, token1Path, FEE_MEDIUM)
 	testing.SetRealm(adminRealm)
-	staker.SetPoolTierByAdmin(cross, poolPath, 1)
+	staker.SetPoolTier(cross, poolPath, 1)
 }
 
 func testOfficialRouterSwap() {
