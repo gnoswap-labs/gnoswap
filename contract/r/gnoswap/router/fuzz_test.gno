@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/uassert"
-	fuzzer "gno.land/p/gnoswap/fuzztest"
+	"gno.land/p/gnoswap/fuzz"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -18,12 +18,12 @@ import (
 type RouteGenerator struct {
 	minRoutes int
 	maxRoutes int
-	seedMgr   *fuzzer.SeedManager
+	seedMgr   *fuzz.SeedManager
 }
 
 func (g *RouteGenerator) Generate() any {
 	if g.seedMgr == nil {
-		g.seedMgr = fuzzer.NewSeedManager()
+		g.seedMgr = fuzz.NewSeedManager()
 	}
 
 	numRoutes := g.seedMgr.CreateIntGenerator(g.minRoutes, g.maxRoutes).Generate().(int)
@@ -45,12 +45,12 @@ func (g *RouteGenerator) Generate() any {
 // QuoteGenerator generates valid quote arrays that sum to 100
 type QuoteGenerator struct {
 	numQuotes int
-	seedMgr   *fuzzer.SeedManager
+	seedMgr   *fuzz.SeedManager
 }
 
 func (g *QuoteGenerator) Generate() any {
 	if g.seedMgr == nil {
-		g.seedMgr = fuzzer.NewSeedManager()
+		g.seedMgr = fuzz.NewSeedManager()
 	}
 
 	if g.numQuotes == 1 {
@@ -85,12 +85,12 @@ type AmountGenerator struct {
 	minDigits int
 	maxDigits int
 	allowZero bool
-	seedMgr   *fuzzer.SeedManager
+	seedMgr   *fuzz.SeedManager
 }
 
 func (g *AmountGenerator) Generate() any {
 	if g.seedMgr == nil {
-		g.seedMgr = fuzzer.NewSeedManager()
+		g.seedMgr = fuzz.NewSeedManager()
 	}
 
 	if g.allowZero && g.seedMgr.CreateBoolGenerator().Generate().(bool) {
@@ -186,7 +186,7 @@ func generateMultiPoolPath(numPools int) string {
 	for j := 0; j < numPools; j++ {
 		token0 := "gno.land/r/demo/token" + strconv.Itoa(j)
 		token1 := "gno.land/r/demo/token" + strconv.Itoa(j+1)
-		fee := strconv.Itoa(fuzzer.IntRange(100, 10000).Generate().(int))
+		fee := strconv.Itoa(fuzz.IntRange(100, 10000).Generate().(int))
 		pools[j] = token0 + ":" + token1 + ":" + fee
 	}
 	return strings.Join(pools, "*POOL*")
@@ -281,7 +281,7 @@ func TestFuzzSwapValidatorAmount(t *testing.T) {
 	helper := newTestHelper(t)
 	validator := &SwapValidator{}
 	// Create a seed manager for this test run
-	seedMgr := fuzzer.NewSeedManager()
+	seedMgr := fuzz.NewSeedManager()
 	gen := &AmountGenerator{
 		minDigits: 1,
 		maxDigits: 20,
@@ -365,7 +365,7 @@ func TestFuzzCheckDeadline(t *testing.T) {
 	currentTime := time.Now().Unix()
 
 	// Generate deadlines around current time
-	gen := fuzzer.IntRange(int(currentTime-3600), int(currentTime+3600))
+	gen := fuzz.IntRange(int(currentTime-3600), int(currentTime+3600))
 
 	for i := 0; i < 1000; i++ {
 		deadline := int64(gen.Generate().(int))
@@ -421,7 +421,7 @@ func TestFuzzValidateRoutesAndQuotes(t *testing.T) {
 	helper := newTestHelper(t)
 
 	for i := 0; i < 1000; i++ {
-		numRoutes := fuzzer.IntRange(0, 10).Generate().(int)
+		numRoutes := fuzz.IntRange(0, 10).Generate().(int)
 
 		// Generate routes
 		routeGen := &RouteGenerator{minRoutes: numRoutes, maxRoutes: numRoutes}
@@ -457,9 +457,9 @@ func TestFuzzGetDataForSinglePath(t *testing.T) {
 
 	// valid paths
 	for i := 0; i < 100; i++ {
-		token0 := validTokens[fuzzer.IntRange(0, len(validTokens)-1).Generate().(int)]
-		token1 := validTokens[fuzzer.IntRange(0, len(validTokens)-1).Generate().(int)]
-		fee := validFees[fuzzer.IntRange(0, len(validFees)-1).Generate().(int)]
+		token0 := validTokens[fuzz.IntRange(0, len(validTokens)-1).Generate().(int)]
+		token1 := validTokens[fuzz.IntRange(0, len(validTokens)-1).Generate().(int)]
+		fee := validFees[fuzz.IntRange(0, len(validFees)-1).Generate().(int)]
 
 		if token0 == token1 {
 			continue // skip same token pairs
@@ -500,7 +500,7 @@ func TestFuzzGetDataForMultiPath(t *testing.T) {
 	helper := newTestHelper(t)
 
 	for i := 0; i < 100; i++ {
-		numPools := fuzzer.IntRange(1, 3).Generate().(int)
+		numPools := fuzz.IntRange(1, 3).Generate().(int)
 		possiblePath := generateMultiPoolPath(numPools)
 
 		for poolIdx := 0; poolIdx < 3; poolIdx++ {
@@ -545,7 +545,7 @@ func TestFuzzGetDataForMultiPath(t *testing.T) {
 
 func TestFuzzAssertHopsInRange(t *testing.T) {
 	helper := newTestHelper(t)
-	gen := fuzzer.IntRange(-10, 10)
+	gen := fuzz.IntRange(-10, 10)
 
 	for i := 0; i < 100; i++ {
 		hops := gen.Generate().(int)
@@ -578,18 +578,18 @@ func TestFuzzSwapValidatorSlippage(t *testing.T) {
 
 	// ExactIn slippage validation
 	for i := 0; i < 100; i++ {
-		amountIn := u256.NewUint(uint64(fuzzer.IntRange(100, 10000).Generate().(int)))
-		amountOut := u256.NewUint(uint64(fuzzer.IntRange(50, 10000).Generate().(int)))
-		limit := u256.NewUint(uint64(fuzzer.IntRange(1, 10000).Generate().(int)))
+		amountIn := u256.NewUint(uint64(fuzz.IntRange(100, 10000).Generate().(int)))
+		amountOut := u256.NewUint(uint64(fuzz.IntRange(50, 10000).Generate().(int)))
+		limit := u256.NewUint(uint64(fuzz.IntRange(1, 10000).Generate().(int)))
 
 		testSlippage(ExactIn, amountIn, amountOut, limit)
 	}
 
 	// ExactOut slippage validation
 	for i := 0; i < 100; i++ {
-		amountIn := u256.NewUint(uint64(fuzzer.IntRange(100, 10000).Generate().(int)))
-		amountOut := u256.NewUint(uint64(fuzzer.IntRange(50, 10000).Generate().(int)))
-		limit := u256.NewUint(uint64(fuzzer.IntRange(1, 10000).Generate().(int)))
+		amountIn := u256.NewUint(uint64(fuzz.IntRange(100, 10000).Generate().(int)))
+		amountOut := u256.NewUint(uint64(fuzz.IntRange(50, 10000).Generate().(int)))
+		limit := u256.NewUint(uint64(fuzz.IntRange(1, 10000).Generate().(int)))
 
 		testSlippage(ExactOut, amountIn, amountOut, limit)
 	}
@@ -600,8 +600,8 @@ func TestFuzzSwapValidatorExactOutAmount(t *testing.T) {
 	validator := &SwapValidator{}
 
 	for i := 0; i < 100; i++ {
-		resultVal := uint64(fuzzer.IntRange(1, 10000).Generate().(int))
-		specifiedVal := uint64(fuzzer.IntRange(1, 10000).Generate().(int))
+		resultVal := uint64(fuzz.IntRange(1, 10000).Generate().(int))
+		specifiedVal := uint64(fuzz.IntRange(1, 10000).Generate().(int))
 
 		resultAmount := u256.NewUint(resultVal)
 		specifiedAmount := u256.NewUint(specifiedVal)
@@ -619,7 +619,7 @@ func TestFuzzSplitSingleChar(t *testing.T) {
 
 	for _, sep := range separators {
 		for i := 0; i < 50; i++ {
-			numParts := fuzzer.IntRange(1, 5).Generate().(int)
+			numParts := fuzz.IntRange(1, 5).Generate().(int)
 			parts := make([]string, numParts)
 
 			for j := 0; j < numParts; j++ {
@@ -696,7 +696,7 @@ type FinalizeSwapParams struct {
 }
 
 type FinalizeSwapGenerator struct {
-	seedMgr *fuzzer.SeedManager
+	seedMgr *fuzz.SeedManager
 
 	successCount             int
 	failCount                int
@@ -717,7 +717,7 @@ func newFinalizeSwapGenerator(
 	successExactOutMaxAmount int,
 ) *FinalizeSwapGenerator {
 	return &FinalizeSwapGenerator{
-		seedMgr:                  fuzzer.NewSeedManager(),
+		seedMgr:                  fuzz.NewSeedManager(),
 		successCount:             0,
 		failCount:                0,
 		successExactInMinAmount:  successExactInMinAmount,
@@ -729,7 +729,7 @@ func newFinalizeSwapGenerator(
 
 func (g *FinalizeSwapGenerator) Generate() any {
 	if g.seedMgr == nil {
-		g.seedMgr = fuzzer.NewSeedManager()
+		g.seedMgr = fuzz.NewSeedManager()
 	}
 
 	// Default swap fee from protocol_fee_swap.gno
