@@ -12,7 +12,8 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
-	gns "gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/governance"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 )
@@ -62,6 +63,7 @@ func main() {
 func delegateGnsToAdmin() {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(std.NewUserRealm(adminAddr))
+	emission.SetDistributionStartBlockHeight(cross, 1)
 
 	govStakerAddr := std.Address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
 	gns.Approve(cross, govStakerAddr, delegatedAmount)
@@ -106,12 +108,12 @@ func executeMultiProposal(proposalID int64) {
 	prevBlockTime := gns.AvgBlockTimeInMs()
 	prevCommunityPool := gns.BalanceOf(communityPoolAddr)
 	governance.Execute(cross, proposalID)
-	
+
 	afterBlockTime := gns.AvgBlockTimeInMs()
 	afterCommunityPool := gns.BalanceOf(communityPoolAddr)
 	ufmt.Printf("[EXPECTED] before executing - block time: %d, community pool: %d\n", prevBlockTime, prevCommunityPool)
 	ufmt.Printf("[EXPECTED] after executing - block time: %d, community pool: %d\n", afterBlockTime, afterCommunityPool)
-	
+
 	state := governance.GetExecutionStateByProposalId(proposalID)
 	ufmt.Printf("[EXPECTED] proposal executed: %v\n", state)
 }
