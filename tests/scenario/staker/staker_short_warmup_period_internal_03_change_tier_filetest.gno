@@ -97,13 +97,13 @@ func initAndSetup() {
 	testing.SetRealm(adminRealm)
 
 	// override warm-up period for testing
-	sr.SetWarmUpByAdmin(cross, 30, 150)
-	sr.SetWarmUpByAdmin(cross, 50, 300)
-	sr.SetWarmUpByAdmin(cross, 70, 900)
-	sr.SetWarmUpByAdmin(cross, 100, maxInt64)
+	sr.SetWarmUp(cross, 30, 150)
+	sr.SetWarmUp(cross, 50, 300)
+	sr.SetWarmUp(cross, 70, 900)
+	sr.SetWarmUp(cross, 100, maxInt64)
 
 	// set unstaking fee to 0
-	sr.SetUnStakingFeeByAdmin(cross, 0)
+	sr.SetUnStakingFee(cross, 0)
 
 	// set pool creation fee to 0
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
@@ -136,7 +136,7 @@ func createPool() {
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
 
 	pl.CreatePool(cross, barPath, quxPath, 100, "79228162514264337593543950337")
-	sr.SetPoolTierByAdmin(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
 
 	pl.CreatePool(cross, barPath, bazPath, 3000, "79228162514264337593543950337")
 
@@ -237,7 +237,7 @@ func setPoolTier() {
 
 	testing.SetRealm(adminRealm)
 
-	sr.SetPoolTierByAdmin(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 2)
+	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 2)
 	ufmt.Printf("[EXPECTED] bar:baz:3000 pool set to tier 2\n")
 	testing.SkipHeights(1)
 }
@@ -266,7 +266,7 @@ func stakeToken_2() {
 func changePoolTier() {
 	testing.SetRealm(adminRealm)
 
-	sr.ChangePoolTierByAdmin(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 1)
+	sr.ChangePoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 1)
 	sr.CollectReward(cross, 2, false)
 	ufmt.Printf("[EXPECTED] pool tier changed to 1\n")
 
