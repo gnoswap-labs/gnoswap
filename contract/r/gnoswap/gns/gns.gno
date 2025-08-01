@@ -53,8 +53,9 @@ func BalanceOf(owner std.Address) int64          { return token.BalanceOf(owner)
 func Allowance(owner, spender std.Address) int64 { return token.Allowance(owner, spender) }
 
 func MintGns(cur realm, address std.Address) int64 {
-	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedEmission()
+	
+	caller := std.PreviousRealm().Address()
 	access.AssertIsEmission(caller)
 
 	lastGNSMintedHeight := LastMintedHeight()
@@ -169,7 +170,7 @@ func calculateAmountToMint(fromHeight, toHeight int64) int64 {
 	}
 
 	// handle negative block height or block height before emission start
-	startHeight := GetEmissionState().getStartHeight()
+	startHeight := getEmissionState().getStartHeight()
 	if fromHeight < startHeight {
 		fromHeight = startHeight
 	}

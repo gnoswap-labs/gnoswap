@@ -184,9 +184,9 @@ var (
 )
 
 const (
-	TIMESTAMP_90DAYS  = 7776000
-	TIMESTAMP_180DAYS = 15552000
-	TIMESTAMP_365DAYS = 31536000
+	TIMESTAMP_90DAYS  = int64(7776000)
+	TIMESTAMP_180DAYS = int64(15552000)
+	TIMESTAMP_365DAYS = int64(31536000)
 
 	MAX_UNIX_EPOCH_TIME = 253402300799 // 9999-12-31 23:59:59
 
@@ -255,7 +255,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 		actualReferrer = referral.GetReferral(caller.String())
 	}
 
-	token0Amount, token1Amount, err := calculateStakeTokenAmount(positionId, owner, caller)
+	token0Amount, token1Amount, err := getPositionStakeTokenAmount(positionId, owner, caller)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -350,7 +350,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 // Returns:
 //   - *stakeResult: The staking data if successful
 //   - error: An error if any validation fails
-func calculateStakeTokenAmount(positionId uint64, owner, caller std.Address) (string, string, error) {
+func getPositionStakeTokenAmount(positionId uint64, owner, caller std.Address) (string, string, error) {
 	exist := deposits.Has(positionId)
 	if exist {
 		return "", "", errAlreadyStaked
@@ -677,7 +677,7 @@ func applyUnStake(positionId uint64) error {
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := std.PreviousRealm().Address()
 
-	_, _, err := calculateStakeTokenAmount(positionId, owner, caller)
+	_, _, err := getPositionStakeTokenAmount(positionId, owner, caller)
 	if err != nil {
 		return err
 	}
@@ -736,26 +736,9 @@ func getLiquidity(positionId uint64) *u256.Uint {
 }
 
 func getTokenPairBalanceFromPosition(poolPath string, positionId uint64) (string, string) {
-	pool := pl.GetPoolFromPoolPath(poolPath)
-
-	currentX96 := pool.Slot0SqrtPriceX96()
-	lowerX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickLower(positionId))
-	upperX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickUpper(positionId))
-
-	token0Balance, token1Balance := common.GetAmountsForLiquidity(
-		currentX96,
-		lowerX96,
-		upperX96,
-		u256.MustFromDecimal(pn.PositionGetPositionLiquidityStr(positionId)),
-	)
-
-	if token0Balance == "" {
-		token0Balance = "0"
-	}
-	if token1Balance == "" {
-		token1Balance = "0"
-	}
-	return token0Balance, token1Balance
+	position := pn.MustGetPosition(positionId)
+	
+	return position.Token0Balance().ToString(), position.Token1Balance().ToString()
 }
 
 func getTickOf(positionId uint64) (int32, int32) {
