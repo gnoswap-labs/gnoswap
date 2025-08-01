@@ -8,15 +8,15 @@ import (
 )
 
 // Router whitelist storage
-var routerWhitelist map[std.Address]bool
+var swapWhitelist map[std.Address]bool
 
 func init() {
-	routerWhitelist = make(map[std.Address]bool)
+	swapWhitelist = make(map[std.Address]bool)
 }
 
-// AddRouter adds a router address to the whitelist
-// Only admin or governance can add routers
-func AddRouter(cur realm, router std.Address) {
+// UpdateSwapWhiteList adds a address to the whitelist
+// Only admin or governance can add custom routers
+func UpdateSwapWhiteList(cur realm, router std.Address) {
 	caller := std.PreviousRealm().Address()
 	AssertIsAdminOrGovernance(caller)
 
@@ -24,20 +24,20 @@ func AddRouter(cur realm, router std.Address) {
 		panic(ufmt.Errorf("invalid router address: %s", router))
 	}
 
-	routerWhitelist[router] = true
+	swapWhitelist[router] = true
 }
 
-// RemoveRouter removes a router address from the whitelist
+// RemoveFromSwapWhiteList removes a router address from the whitelist
 // Only admin or governance can remove routers
-func RemoveRouter(cur realm, router std.Address) {
+func RemoveFromSwapWhiteList(cur realm, router std.Address) {
 	caller := std.PreviousRealm().Address()
 	AssertIsAdminOrGovernance(caller)
 
-	delete(routerWhitelist, router)
+	delete(swapWhitelist, router)
 }
 
-// IsRouterWhitelisted checks if an address is in the router whitelist
-func IsRouterWhitelisted(addr std.Address) bool {
+// IsSwapWhitelisted checks if an address is in the swap whitelist
+func IsSwapWhitelisted(addr std.Address) bool {
 	// Check if it's the official router first
 	//
 	// Note: While it's a common pattern to store the router's address
@@ -50,12 +50,12 @@ func IsRouterWhitelisted(addr std.Address) bool {
 	}
 
 	// Then check whitelist
-	return routerWhitelist[addr]
+	return swapWhitelist[addr]
 }
 
-// GetWhitelistedRouters returns all whitelisted router addresses
-func GetWhitelistedRouters() []std.Address {
-	routers := make([]std.Address, 0, len(routerWhitelist)+1)
+// GetWhitelistedSwaps returns all whitelisted router addresses
+func GetWhitelistedSwaps() []std.Address {
+	routers := make([]std.Address, 0, len(swapWhitelist)+1)
 
 	// Include official router
 	officialRouter, ok := GetAddress(prbac.ROLE_ROUTER.String())
@@ -64,17 +64,17 @@ func GetWhitelistedRouters() []std.Address {
 	}
 
 	// Add whitelisted routers
-	for router := range routerWhitelist {
+	for router := range swapWhitelist {
 		routers = append(routers, router)
 	}
 
 	return routers
 }
 
-// AssertIsWhitelistedRouter checks if the caller is a whitelisted router
+// AssertIsWhitelistedSwap checks if the caller is a whitelisted router
 // This replaces the old AssertIsRouter for multi-router support
-func AssertIsWhitelistedRouter(caller std.Address) {
-	if !IsRouterWhitelisted(caller) {
+func AssertIsWhitelistedSwap(caller std.Address) {
+	if !IsSwapWhitelisted(caller) {
 		panic(ufmt.Errorf("unauthorized: caller %s is not a whitelisted router", caller))
 	}
 }

@@ -171,10 +171,10 @@ func testAddCustomRouterToWhitelist() {
 	// Admin adds custom router to whitelist
 	testing.SetRealm(adminRealm)
 
-	access.AddRouter(cross, customRouter1Addr)
+	access.UpdateSwapWhiteList(cross, customRouter1Addr)
 	println("[EXPECTED] Custom router added to whitelist:", customRouter1Addr)
 
-	isWhitelisted := access.IsRouterWhitelisted(customRouter1Addr)
+	isWhitelisted := access.IsSwapWhitelisted(customRouter1Addr)
 	uassert.True(t, isWhitelisted, "Expected custom router to be whitelisted")
 
 	println("[EXPECTED] Router is whitelisted")
@@ -214,11 +214,11 @@ func testRemoveCustomRouterFromWhitelist() {
 	// Admin removes custom router from whitelist
 	testing.SetRealm(adminRealm)
 
-	access.RemoveRouter(cross, customRouter1Addr)
+	access.RemoveFromSwapWhiteList(cross, customRouter1Addr)
 	println("[EXPECTED] Custom router removed from whitelist:", customRouter1Addr)
 
 	// Verify it's not whitelisted anymore
-	isWhitelisted := access.IsRouterWhitelisted(customRouter1Addr)
+	isWhitelisted := access.IsSwapWhitelisted(customRouter1Addr)
 	uassert.False(t, isWhitelisted, "Expected custom router to be removed from whitelist")
 	println("[EXPECTED] Router is no longer whitelisted")
 	println()
@@ -245,10 +245,10 @@ func testListWhitelistedRouters() {
 
 	// Add another custom router for testing
 	testing.SetRealm(adminRealm)
-	access.AddRouter(cross, customRouter2Addr)
+	access.UpdateSwapWhiteList(cross, customRouter2Addr)
 
 	// Get all whitelisted routers
-	routers := access.GetWhitelistedRouters()
+	routers := access.GetWhitelistedSwaps()
 
 	println("[EXPECTED] Total whitelisted routers:", len(routers))
 	for i, router := range routers {
