@@ -8,6 +8,7 @@ import (
 	"gno.land/p/demo/ownable"
 
 	prabc "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/v1/access"
 
 	_ "gno.land/r/gnoswap/v1/rbac" // initialize rbac package
@@ -31,4 +32,14 @@ func resetGnsTokenObject(t *testing.T) {
 	owner = ownable.NewWithAddress(adminAddr)
 
 	privateLedger.Mint(owner.Owner(), INITIAL_MINT_AMOUNT)
+}
+
+// resetEmissionState resets the emission state to a clean state for testing
+func resetEmissionState(t *testing.T) {
+	t.Helper()
+
+	emissionState = nil
+	avgBlockTimeMs = BLOCK_GENERATION_INTERVAL
+	blockPerYear = SECONDS_IN_YEAR / milliToSec(BLOCK_GENERATION_INTERVAL)
+	blockPerDay = SECONDS_PER_DAY / milliToSec(BLOCK_GENERATION_INTERVAL)
 }

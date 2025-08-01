@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -35,8 +34,8 @@ func validYear(year int64) error {
 // Returns:
 //   - error: An error if the emission amount is invalid
 func validEmissionAmount(amount int64) error {
-	if (amount + GetMintedEmissionAmount()) > MAX_EMISSION_AMOUNT {
-		return makeErrorWithDetails(errTooManyEmission, ufmt.Sprintf("amount: %d", amount))
+	if (amount + MintedEmissionAmount()) > MAX_EMISSION_AMOUNT {
+		return ufmt.Errorf("too many emission amount: %d", amount)
 	}
 
 	return nil
@@ -59,11 +58,11 @@ func i64Min(x, y int64) int64 {
 }
 
 func secToMs(sec int64) int64 {
-	return sec * consts.MILLISECONDS_PER_SECOND
+	return sec * MILLISECONDS_PER_SECOND
 }
 
 func milliToSec(ms int64) int64 {
-	return ms / consts.MILLISECONDS_PER_SECOND
+	return ms / MILLISECONDS_PER_SECOND
 }
 
 func formatUint(v any) string {

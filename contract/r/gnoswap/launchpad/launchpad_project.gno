@@ -9,7 +9,6 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -72,7 +71,7 @@ func CreateProject(
 	caller := previousRealm.Address()
 	launchpadAddr := std.CurrentRealm().Address()
 
-	averageBlockTimeMs := gns.GetAvgBlockTimeInMs()
+	averageBlockTimeMs := gns.AvgBlockTimeInMs()
 	currentHeight := std.ChainHeight()
 	currentTime := time.Now().Unix()
 
@@ -254,7 +253,7 @@ func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.A
 	access.AssertIsAdmin(previousRealm.Address())
 
 	currentHeight := std.ChainHeight()
-	
+
 	projectLeftReward, err := transferLeftFromProject(projectID, recipient, currentHeight)
 	if err != nil {
 		panic(err)
@@ -571,5 +570,5 @@ func (p *createProjectParams) validateConditions() error {
 }
 
 func isGovernanceToken(tokenPath string) bool {
-	return tokenPath == consts.GOV_XGNS_PATH
+	return tokenPath == GOV_XGNS_PATH
 }

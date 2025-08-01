@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -64,7 +63,8 @@ func delegateGnsToAdmin() {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 
-	gns.Approve(cross, consts.GOV_STAKER_ADDR, delegatedAmount)
+	govStakerAddr := std.Address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
+	gns.Approve(cross, govStakerAddr, delegatedAmount)
 	gs.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 
 	ufmt.Printf("[INFO] gns delegated to %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
@@ -101,12 +101,14 @@ func voteProposal(proposalID int64) {
 
 // [SCENARIO] 4. Execute Multi Proposal
 func executeMultiProposal(proposalID int64) {
-	prevBlockTime := gns.GetAvgBlockTimeInMs()
-	prevCommunityPool := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
+	communityPoolAddr := std.Address("g100fnnlz5eh87p5hvwt8pf279lxaelm8k8md049")
+
+	prevBlockTime := gns.AvgBlockTimeInMs()
+	prevCommunityPool := gns.BalanceOf(communityPoolAddr)
 	governance.Execute(cross, proposalID)
 	
-	afterBlockTime := gns.GetAvgBlockTimeInMs()
-	afterCommunityPool := gns.BalanceOf(consts.COMMUNITY_POOL_ADDR)
+	afterBlockTime := gns.AvgBlockTimeInMs()
+	afterCommunityPool := gns.BalanceOf(communityPoolAddr)
 	ufmt.Printf("[EXPECTED] before executing - block time: %d, community pool: %d\n", prevBlockTime, prevCommunityPool)
 	ufmt.Printf("[EXPECTED] after executing - block time: %d, community pool: %d\n", afterBlockTime, afterCommunityPool)
 	

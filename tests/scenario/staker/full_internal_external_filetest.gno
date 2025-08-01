@@ -136,7 +136,7 @@ func initAccount() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFeeByAdmin(cross, 0)
+	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] change distribution percentage")
 	emission.ChangeDistributionPctByAdmin(
@@ -235,7 +235,7 @@ func createBarBaz500Tier02() {
 	pl.CreatePool(cross, barPath, bazPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set pool tier to 2")
-	sr.SetPoolTierByAdmin(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 2)
+	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 2)
 
 	testing.SkipHeights(1)
 }
@@ -319,7 +319,7 @@ func collectRewardsAllWarmUp() {
 	// Skip to different warm-up periods and collect rewards
 	println("[INFO] progress to 50% warm-up")
 	msInDay := int64(86400000)
-	blocksInDay := msInDay / int64(gns.GetAvgBlockTimeInMs())
+	blocksInDay := msInDay / int64(gns.AvgBlockTimeInMs())
 	blocksIn5Days := int64(5 * blocksInDay)
 	testing.SkipHeights(blocksIn5Days)
 
@@ -371,7 +371,7 @@ func createPoolBarFoo100Tier03() {
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 3")
-	sr.SetPoolTierByAdmin(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", 3)
+	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", 3)
 	testing.SkipHeights(1)
 }
 

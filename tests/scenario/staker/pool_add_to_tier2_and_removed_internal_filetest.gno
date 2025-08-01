@@ -89,7 +89,7 @@ func initAndSetup() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFeeByAdmin(cross, 0)
+	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
@@ -148,7 +148,7 @@ func setPoolToTier2() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set pool to tier 2")
-	sr.SetPoolTierByAdmin(cross, poolPath, 2)
+	sr.SetPoolTier(cross, poolPath, 2)
 
 	currentTier := sr.GetPoolTier(poolPath)
 	ufmt.Printf("[EXPECTED] pool tier set to: %d\n", currentTier)
@@ -185,7 +185,7 @@ func removePoolFromTier() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] remove pool from tier system")
-	sr.RemovePoolTierByAdmin(cross, poolPath)
+	sr.RemovePoolTier(cross, poolPath)
 
 	currentTier := sr.GetPoolTier(poolPath)
 	ufmt.Printf("[EXPECTED] pool tier after removal: %d (should be 0)\n", currentTier)
@@ -233,7 +233,7 @@ func verifyPoolRemovalEffects() {
 
 	// Test adding back to tier system
 	println("[INFO] test adding pool back to tier system")
-	sr.SetPoolTierByAdmin(cross, poolPath, 1)
+	sr.SetPoolTier(cross, poolPath, 1)
 
 	restoredTier := sr.GetPoolTier(poolPath)
 	ufmt.Printf("[EXPECTED] restored pool tier: %d\n", restoredTier)

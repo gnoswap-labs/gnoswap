@@ -8,7 +8,6 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/gns"
 
@@ -89,11 +88,11 @@ func main() {
 func initEmission() {}
 
 func mintGNS() {
-	testing.SetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/emission"))
 
 	mintedAmount := gns.MintGns(cross, user01Addr)
 
-	totalMintedAmount := gns.GetMintedEmissionAmount()
+	totalMintedAmount := gns.MintedEmissionAmount()
 
 	ufmt.Printf("[EXPECTED] minted amount should be %d\n", mintedAmount)
 	ufmt.Printf("[EXPECTED] total minted amount should be %d\n", totalMintedAmount)
@@ -102,7 +101,7 @@ func mintGNS() {
 func changeBlockTime(blockTime int64) {
 	testing.SetOriginCaller(adminAddr)
 
-	currentYear := gns.GetHalvingYearByHeight(std.ChainHeight())
+	currentYear := gns.HalvingYearByHeight(std.ChainHeight())
 
 	// get previous end block height and amount per block
 	prevEndBlockHeight := gns.GetHalvingYearEndBlock(currentYear)
