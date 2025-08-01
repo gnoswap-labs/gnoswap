@@ -92,7 +92,7 @@ func initializeWithDefaults() {
 	testing.SetOriginSend(nil)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFeeByAdmin(cross, 0)
+	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
