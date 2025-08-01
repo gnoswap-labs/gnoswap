@@ -108,7 +108,16 @@ func SetDistributionStartBlockHeight(cur realm, height int64) {
 		panic("distribution start block height cannot be negative")
 	}
 
+	currentHeight := std.ChainHeight()
 	oldHeight := distributionStartBlockHeight
+
+	// If setting a future start height and no emission has occurred yet,
+	// reinitialize the emission state to adjust halving years
+	if height > currentHeight && gns.MintedEmissionAmount() == 0 {
+		emissionState := gns.GetEmissionState()
+		emissionState.ReinitializeWithStartHeight(height)
+	}
+
 	distributionStartBlockHeight = height
 
 	std.Emit(
@@ -116,6 +125,6 @@ func SetDistributionStartBlockHeight(cur realm, height int64) {
 		"caller", caller.String(),
 		"oldHeight", formatInt(oldHeight),
 		"newHeight", formatInt(height),
-		"currentChainHeight", formatInt(std.ChainHeight()),
+		"currentChainHeight", formatInt(currentHeight),
 	)
 }

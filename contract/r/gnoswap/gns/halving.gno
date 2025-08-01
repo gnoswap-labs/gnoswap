@@ -55,7 +55,7 @@ var (
 	blockPerDay  = SECONDS_PER_DAY / blockGenMs
 
 	avgBlockTimeMs = BLOCK_GENERATION_INTERVAL
-	perBlockMint         = avl.NewTree() // height => uint64
+	perBlockMint   = avl.NewTree() // height => uint64
 )
 
 // HalvingData is a struct that stores data for each halving period
@@ -318,7 +318,7 @@ func NewEmissionState() *EmissionState {
 	}
 }
 
-func (e *EmissionState) getStartHeight() int64             { return e.startHeight }
+func (e *EmissionState) GetStartHeight() int64             { return e.startHeight }
 func (e *EmissionState) setStartHeight(height int64)       { e.startHeight = height }
 func (e *EmissionState) getStartTimestamp() int64          { return e.startTimestamp }
 func (e *EmissionState) setStartTimestamp(timestamp int64) { e.startTimestamp = timestamp }
@@ -330,8 +330,33 @@ func (e *EmissionState) setHalvingData(data HalvingData)   { e.halvingData = dat
 // initializeHalvingData initializes halving data
 func (e *EmissionState) initializeHalvingData() {
 	halvingData := e.getHalvingData()
-	halvingData.initialize(e.getStartHeight(), e.getStartTimestamp())
+	halvingData.initialize(e.GetStartHeight(), e.getStartTimestamp())
 	e.setHalvingData(halvingData)
+}
+
+// ReinitializeWithStartHeight reinitializes emission state with a new start height
+// This is used when distribution start block height is set
+func (e *EmissionState) ReinitializeWithStartHeight(newStartHeight int64) {
+	// Set new start height and timestamp
+	e.setStartHeight(newStartHeight)
+
+	// Calculate new start timestamp based on current time and block difference
+	currentHeight := std.ChainHeight()
+	blockDiff := newStartHeight - currentHeight
+	if blockDiff > 0 {
+		// Future start: add expected time for blocks
+		additionalTime := blockDiff * avgBlockTimeMs / MILLISECONDS_PER_SECOND
+		e.setStartTimestamp(time.Now().Unix() + additionalTime)
+	} else {
+		// Start now or in the past
+		e.setStartTimestamp(time.Now().Unix())
+	}
+
+	// Update end timestamp to maintain full emission period
+	e.setEndTimestamp(e.getStartTimestamp() + SECONDS_IN_YEAR*HALVING_END_YEAR)
+
+	// Reinitialize halving data with new parameters
+	e.initializeHalvingData()
 }
 
 // init package initialization function
