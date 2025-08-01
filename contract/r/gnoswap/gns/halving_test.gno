@@ -250,7 +250,7 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 		oldCallback := emissionChangeCallback
 		emissionChangeCallback = func(amount int64) {}
 
-		expectedMsg := "unauthorized: caller g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m is not governance"
+		expectedMsg := "unauthorized: caller g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m is not admin or governance"
 		uassert.AbortsWithMessage(t,
 			expectedMsg,
 			func() {

@@ -32,7 +32,7 @@ func TestChangeDistributionPct(t *testing.T) {
 		{
 			name:        "panic if caller is not admin",
 			shouldPanic: true,
-			panicMsg:    `unauthorized: caller g10xg6559w9e93zfttlhvdmaaa0er3zewcr7nh20 is not admin`,
+			panicMsg:    `unauthorized: caller g10xg6559w9e93zfttlhvdmaaa0er3zewcr7nh20 is not admin or governance`,
 			targets:     []int{1, 2, 3, 4},
 			pcts:        []int64{1000, 2000, 3000, 4000},
 		},
@@ -437,6 +437,7 @@ func TestDistributeToTarget(t *testing.T) {
 		resetObject(t)
 		setupTestEnv(t)
 		amount := int64(1000000)
+		
 		totalSent, _ := distributeToTarget(amount)
 
 		// Expected distribution amounts
@@ -487,7 +488,7 @@ func TestDistributeToTarget(t *testing.T) {
 		amount := int64(-10000)
 
 		// Negative amount should cause panic
-		uassert.AbortsWithMessage(t, "invalid amount or bptPct", func() {
+		uassert.PanicsWithMessage(t, "invalid amount or bptPct", func() {
 			distributeToTarget(amount)
 		})
 
@@ -505,7 +506,7 @@ func TestDistributeToTarget(t *testing.T) {
 		amount := int64(9223372036854775807) // int64 maximum value
 
 		// Maximum value should cause panic
-		uassert.AbortsWithMessage(t, "amount too large", func() {
+		uassert.PanicsWithMessage(t, "amount too large", func() {
 			distributeToTarget(amount)
 		})
 
