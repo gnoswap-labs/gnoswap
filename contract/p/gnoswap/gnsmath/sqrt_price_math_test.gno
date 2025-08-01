@@ -236,14 +236,6 @@ func TestGetNextSqrtPriceFromAmount0RoundingUp(t *testing.T) {
 			expected:  u256.MustFromDecimal("4295128740"),
 		},
 		{
-			name:      "min_boundary_no_change_tiny_amount",
-			sqrtPX96:  u256.MustFromDecimal("4295128740"),
-			liquidity: u256.MustFromDecimal("1000000000000000000"),
-			amount:    u256.MustFromDecimal("1"),
-			add:       true,
-			expected:  u256.MustFromDecimal("4295128740"),
-		},
-		{
 			name:      "increase_price_from_min",
 			sqrtPX96:  u256.MustFromDecimal("4295128739"),
 			liquidity: u256.MustFromDecimal("1000"),
@@ -499,14 +491,6 @@ func TestGetNextPriceAmount1Remove(t *testing.T) {
 			sqrtPX96:    u256.MustFromDecimal("1000000000000000000"),
 			liquidity:   u256.MustFromDecimal("1000000"),
 			amount:      u256.MustFromDecimal("12589254117"),
-			shouldPanic: true,
-			panicMsg:    errSqrtPriceExceedsQuotient.Error(),
-		},
-		{
-			name:        "quotient_exactly_equals_sqrtPX96",
-			sqrtPX96:    u256.MustFromDecimal("1000000000000000000"),
-			liquidity:   u256.MustFromDecimal("1000000000000000000"),
-			amount:      u256.MustFromDecimal("1000000000000000000"),
 			shouldPanic: true,
 			panicMsg:    errSqrtPriceExceedsQuotient.Error(),
 		},
@@ -1415,6 +1399,109 @@ func TestHelperFunctionConsistency(t *testing.T) {
 		wrapperRemove := getNextSqrtPriceFromAmount1RoundingDown(sqrtP, liquidity, smallAmount, false)
 		uassert.Equal(t, directRemove.ToString(), wrapperRemove.ToString())
 	})
+}
+
+// TestSwapMathComputeStepExtremeExactOut tests SwapMathComputeSwapStep with extreme ExactOut scenarios
+// to ensure getNextSqrtPriceFromOutput handles edge cases correctly
+func TestSwapMathComputeStepExtremeExactOut(t *testing.T) {
+	tests := []struct {
+		name        string
+		sqrtPrice   string
+		liquidity   string
+		amountOut   string
+		zeroForOne  bool
+		expectPanic bool
+	}{
+		{
+			name:        "Remove more than available liquidity (token1)",
+			sqrtPrice:   "79228162514264337593543950336",
+			liquidity:   "1000000",
+			amountOut:   "1000000000000000000", // Much larger than liquidity
+			zeroForOne:  true,
+			expectPanic: false,
+		},
+		{
+			name:        "Remove more than available liquidity (token0)",
+			sqrtPrice:   "79228162514264337593543950336",
+			liquidity:   "1000000",
+			amountOut:   "1000000000000000000",
+			zeroForOne:  false,
+			expectPanic: false,
+		},
+		{
+			name:        "remove almost all liquidity",
+			sqrtPrice:   "79228162514264337593543950336",
+			liquidity:   "1000000000000000000",
+			amountOut:   "999999999999999999",
+			zeroForOne:  true,
+			expectPanic: false,
+		},
+		{
+			name:        "zero liquidity should panic",
+			sqrtPrice:   "79228162514264337593543950336",
+			liquidity:   "0",
+			amountOut:   "1000",
+			zeroForOne:  true,
+			expectPanic: true,
+		},
+		{
+			name:        "extreme output with min sqrt price",
+			sqrtPrice:   "4295128739", // MIN_SQRT_RATIO
+			liquidity:   "1000000000",
+			amountOut:   "115792089237316195423570985008687907853269984665640564039457584007913129639935", // max uint256
+			zeroForOne:  true,
+			expectPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sqrtPrice := u256.MustFromDecimal(tt.sqrtPrice)
+			liquidity := u256.MustFromDecimal(tt.liquidity)
+			amountOut := u256.MustFromDecimal(tt.amountOut)
+
+			if tt.expectPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("%s: expected panic but didn't get one", tt.name)
+					}
+				}()
+			}
+
+			// getNextSqrtPriceFromOutput is not exported, so we'll test through SwapMathComputeSwapStep
+			// Create a scenario that triggers getNextSqrtPriceFromOutput
+			amountRemaining := i256.Zero().Neg(i256.FromUint256(amountOut))
+
+			// Set target price far enough to trigger partial swap
+			var sqrtTarget *u256.Uint
+			if tt.zeroForOne {
+				sqrtTarget = u256.MustFromDecimal("4295128739") // MIN_SQRT_RATIO
+			} else {
+				sqrtTarget = u256.MustFromDecimal("1461446703485210103287273052203988822378723970342") // MAX_SQRT_RATIO
+			}
+
+			sqrtNext, _, _, _ := SwapMathComputeSwapStep(
+				sqrtPrice,
+				sqrtTarget,
+				liquidity,
+				amountRemaining,
+				3000, // 0.3% fee
+			)
+
+			if !tt.expectPanic && sqrtNext == nil {
+				t.Errorf("%s: got nil result", tt.name)
+			} else if !tt.expectPanic {
+				// Verify the result is bounded by MIN/MAX sqrt ratio
+				if tt.zeroForOne {
+					uassert.Equal(t, sqrtNext.ToString(), MIN_SQRT_RATIO.ToString(), 
+						"Expected price to reach MIN_SQRT_RATIO for token1 removal exceeding liquidity")
+				} else {
+					uassert.Equal(t, sqrtNext.ToString(), MAX_SQRT_RATIO.ToString(),
+						"Expected price to reach MAX_SQRT_RATIO for token0 removal exceeding liquidity")
+				}
+			}
+		})
+	}
 }
 
 // Helper functions

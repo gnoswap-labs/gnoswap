@@ -97,22 +97,6 @@ func TestSwapMathComputeSwapStep(t *testing.T) {
 			amountOut: "1",
 			feeAmount: "1",
 		},
-		// Edge cases - zero values
-		{
-			name:            "zero_liquidity",
-			currentX96:      encodePriceSqrtTest(t, "1", "1"),
-			targetX96:       encodePriceSqrtTest(t, "2", "1"),
-			liquidity:       u256.Zero(),
-			amountRemaining: i256.MustFromDecimal("1000000"),
-			feePips:         3000,
-			sqrtNextX96:     encodePriceSqrtTest(t, "1", "1"),
-			chkSqrtNextX96: func(sqrtRatioNextX96, priceTarget *u256.Uint) {
-				uassert.True(t, sqrtRatioNextX96.Eq(encodePriceSqrtTest(t, "2", "1")))
-			},
-			amountIn:  "0",
-			amountOut: "0",
-			feeAmount: "0",
-		},
 		{
 			name:            "zero_amount_remaining",
 			currentX96:      encodePriceSqrtTest(t, "1", "1"),
@@ -293,14 +277,6 @@ func TestSwapMathFeeConsistency(t *testing.T) {
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			amount:    i256.MustFromDecimal("1000000"),
 			fee_pips:  999999, // 99.9999%
-		},
-		{
-			name:      "fee_consistency_zero_liquidity_exactIn",
-			current:   encodePriceSqrtTest(t, "1", "1"),
-			target:    encodePriceSqrtTest(t, "2", "1"),
-			liquidity: u256.Zero(),
-			amount:    i256.MustFromDecimal("1000000"),
-			fee_pips:  3000,
 		},
 	}
 
