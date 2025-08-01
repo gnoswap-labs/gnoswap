@@ -46,8 +46,9 @@ func MintAndDistributeGns(cur realm) int64 {
 	currentHeight := std.ChainHeight()
 
 	// Check if distribution start block height is set and if current height has reached it
-	// and skip emission distribution if not started or below start height
-	if currentHeight < distributionStartBlockHeight {
+	// If distributionStartBlockHeight is 0 (default), skip distribution to prevent immediate start
+	// If current height is below start height, skip distribution
+	if distributionStartBlockHeight == 0 || currentHeight < distributionStartBlockHeight {
 		return 0
 	}
 
@@ -100,6 +101,8 @@ func MintAndDistributeGns(cur realm) int64 {
 // SetDistributionStartBlockHeight sets the block height from which emission distribution starts
 // Only admin or governance can call this function
 func SetDistributionStartBlockHeight(cur realm, height int64) {
+	halt.AssertIsNotHaltedEmission()
+
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
