@@ -170,7 +170,7 @@ func calculateAmountToMint(fromHeight, toHeight int64) int64 {
 	}
 
 	// handle negative block height or block height before emission start
-	startHeight := GetEmissionState().GetStartHeight()
+	startHeight := getEmissionState().getStartHeight()
 	if fromHeight < startHeight {
 		fromHeight = startHeight
 	}

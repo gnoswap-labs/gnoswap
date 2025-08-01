@@ -114,8 +114,7 @@ func SetDistributionStartBlockHeight(cur realm, height int64) {
 	// If setting a future start height and no emission has occurred yet,
 	// reinitialize the emission state to adjust halving years
 	if height > currentHeight && gns.MintedEmissionAmount() == 0 {
-		emissionState := gns.GetEmissionState()
-		emissionState.ReinitializeWithStartHeight(height)
+		gns.ReinitializeEmissionState(cross, height)
 	}
 
 	distributionStartBlockHeight = height

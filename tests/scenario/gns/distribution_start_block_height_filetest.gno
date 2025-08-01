@@ -43,7 +43,7 @@ func testScenario1InitialConfiguration() {
 	println("[SCENARIO] 1. Initial Halving Year Configuration")
 
 	// Get initial emission state
-	initialStartHeight := gns.GetEmissionState().GetStartHeight()
+	initialStartHeight := gns.EmissionStartHeight()
 	initialEndHeight := gns.GetHalvingYearEndBlock(12) // Last halving year
 	ufmt.Printf("[INFO] Initial emission start height: %d\n", initialStartHeight)
 	ufmt.Printf("[INFO] Initial emission end height (year 12): %d\n", initialEndHeight)
@@ -59,7 +59,7 @@ func testScenario2SetDistributionStartHeight() {
 	emission.SetDistributionStartBlockHeight(cross, futureHeight)
 
 	// Check if halving years were adjusted
-	newStartHeight := gns.GetEmissionState().GetStartHeight()
+	newStartHeight := gns.EmissionStartHeight()
 	newEndHeight := gns.GetHalvingYearEndBlock(12)
 
 	ufmt.Printf("[INFO] New emission start height: %d\n", newStartHeight)
@@ -114,7 +114,7 @@ func testScenario5ReinitializeProtection() {
 	emission.SetDistributionStartBlockHeight(cross, newFutureHeight)
 
 	// Check if halving years remained unchanged (should not reinitialize)
-	currentStartHeight := gns.GetEmissionState().GetStartHeight()
+	currentStartHeight := gns.EmissionStartHeight()
 	currentEndHeight := gns.GetHalvingYearEndBlock(12)
 
 	ufmt.Printf("[INFO] Start height after attempted change: %d\n", currentStartHeight)
@@ -126,7 +126,7 @@ func testScenario5ReinitializeProtection() {
 func testScenario6VerifyTotalEmissionPeriod() {
 	println("[SCENARIO] 6. Verify Total Emission Period")
 
-	newStartHeight := gns.GetEmissionState().GetStartHeight()
+	newStartHeight := gns.EmissionStartHeight()
 	newEndHeight := gns.GetHalvingYearEndBlock(12)
 
 	blocksPerYear := int64(365 * 24 * 60 * 60 * 1000 / defaultBlockTime)

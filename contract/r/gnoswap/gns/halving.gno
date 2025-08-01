@@ -318,7 +318,9 @@ func NewEmissionState() *EmissionState {
 	}
 }
 
-func (e *EmissionState) GetStartHeight() int64             { return e.startHeight }
+func EmissionStartHeight() int64 { return getEmissionState().getStartHeight() }
+
+func (e *EmissionState) getStartHeight() int64             { return e.startHeight }
 func (e *EmissionState) setStartHeight(height int64)       { e.startHeight = height }
 func (e *EmissionState) getStartTimestamp() int64          { return e.startTimestamp }
 func (e *EmissionState) setStartTimestamp(timestamp int64) { e.startTimestamp = timestamp }
@@ -330,13 +332,20 @@ func (e *EmissionState) setHalvingData(data HalvingData)   { e.halvingData = dat
 // initializeHalvingData initializes halving data
 func (e *EmissionState) initializeHalvingData() {
 	halvingData := e.getHalvingData()
-	halvingData.initialize(e.GetStartHeight(), e.getStartTimestamp())
+	halvingData.initialize(e.getStartHeight(), e.getStartTimestamp())
 	e.setHalvingData(halvingData)
 }
 
-// ReinitializeWithStartHeight reinitializes emission state with a new start height
+// reinitializeWithStartHeight reinitializes emission state with a new start height
 // This is used when distribution start block height is set
-func (e *EmissionState) ReinitializeWithStartHeight(newStartHeight int64) {
+func ReinitializeEmissionState(cur realm, height int64) {
+	caller := std.PreviousRealm().Address()
+	access.AssertIsEmission(caller)
+
+	emissionState.reinitializeWithStartHeight(height)
+}
+
+func (e *EmissionState) reinitializeWithStartHeight(newStartHeight int64) {
 	// Set new start height and timestamp
 	e.setStartHeight(newStartHeight)
 
