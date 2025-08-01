@@ -1,4 +1,4 @@
-package fuzztest
+package fuzz
 
 import (
 	"errors"
@@ -8,6 +8,15 @@ import (
 	"unicode/utf8"
 
 	xs "gno.land/p/wyhaines/rand/xorshift64star"
+
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
+)
+
+const (
+	MAX_UINT64  string = "18446744073709551615"
+	MAX_INT128  string = "170141183460469231731687303715884105727"
+	MAX_UINT128 string = "340282366920938463463374607431768211455"
 )
 
 type Generator interface {
@@ -304,6 +313,114 @@ func generateLargeSlice(n int) []int {
 		slice[i] = rand.IntN(100)
 	}
 	return slice
+}
+
+// Uint256Generator generates various uint256 values for testing
+type Uint256Generator struct {
+	allowZero bool
+	maxBits   uint
+	seedMgr   *SeedManager
+}
+
+func NewUint256Generator(allowZero bool, maxBits uint) *Uint256Generator {
+	return &Uint256Generator{
+		allowZero: allowZero,
+		maxBits:   maxBits,
+		seedMgr:   NewSeedManager(),
+	}
+}
+
+func (g *Uint256Generator) Generate() any {
+	if g.seedMgr == nil {
+		g.seedMgr = NewSeedManager()
+	}
+
+	// Generate special cases
+	specialCase := g.seedMgr.CreateIntGenerator(0, 10).Generate().(int)
+	switch specialCase {
+	case 0:
+		if g.allowZero {
+			return u256.Zero()
+		}
+	case 1:
+		return u256.One()
+	case 2:
+		// MAX_UINT128
+		return u256.MustFromDecimal(MAX_UINT128)
+	case 3:
+		val := u256.MustFromDecimal(MAX_UINT128)
+		return new(u256.Uint).Add(val, u256.One())
+	case 4:
+		return u256.MustFromDecimal(MAX_INT128)
+	case 5:
+		return u256.MustFromDecimal(MAX_UINT64)
+	}
+
+	// random value within maxBits
+	bits := g.seedMgr.CreateIntGenerator(1, int(g.maxBits)).Generate().(int)
+	val := u256.One()
+	val = new(u256.Uint).Lsh(val, uint(bits))
+
+	offset := g.seedMgr.CreateIntGenerator(0, 1000).Generate().(int)
+	val = new(u256.Uint).Add(val, u256.NewUint(uint64(offset)))
+
+	return val
+}
+
+// Int256Generator generates various int256 values for testing
+type Int256Generator struct {
+	allowZero     bool
+	allowNegative bool
+	maxBits       uint
+	seedMgr       *SeedManager
+}
+
+func NewInt256Generator(allowZero bool, allowNegative bool, maxBits uint) *Int256Generator {
+	return &Int256Generator{
+		allowZero:     allowZero,
+		allowNegative: allowNegative,
+		maxBits:       maxBits,
+		seedMgr:       NewSeedManager(),
+	}
+}
+
+func (g *Int256Generator) Generate() any {
+	if g.seedMgr == nil {
+		g.seedMgr = NewSeedManager()
+	}
+
+	specialCase := g.seedMgr.CreateIntGenerator(0, 10).Generate().(int)
+	switch specialCase {
+	case 0:
+		if g.allowZero {
+			return i256.Zero()
+		}
+	case 1:
+		return i256.One()
+	case 2:
+		return i256.MustFromDecimal(MAX_INT128)
+	case 3:
+		val := i256.MustFromDecimal(MAX_INT128)
+		return new(i256.Int).Add(val, i256.One())
+	case 4:
+		if g.allowNegative {
+			val := i256.MustFromDecimal(MAX_INT128)
+			return i256.Zero().Neg(val)
+		}
+	}
+
+	bits := g.seedMgr.CreateIntGenerator(1, int(g.maxBits)).Generate().(int)
+	uval := u256.One()
+	uval = new(u256.Uint).Lsh(uval, uint(bits))
+
+	val := i256.FromUint256(uval)
+
+	// Randomly make negative
+	if g.allowNegative && g.seedMgr.CreateBoolGenerator().Generate().(bool) {
+		val = i256.Zero().Neg(val)
+	}
+
+	return val
 }
 
 func FuzzWithConfig(config Config, property func(int) bool) *Result {

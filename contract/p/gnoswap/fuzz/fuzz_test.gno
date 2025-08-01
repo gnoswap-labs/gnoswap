@@ -1,4 +1,4 @@
-package fuzztest
+package fuzz
 
 import (
 	"math"
