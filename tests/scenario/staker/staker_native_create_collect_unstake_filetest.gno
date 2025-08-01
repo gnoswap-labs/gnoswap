@@ -14,13 +14,12 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/common"
-
 	"gno.land/r/demo/wugnot"
 
 	"gno.land/r/gnoswap/v1/access"
-
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/emission"
+
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 
@@ -106,6 +105,7 @@ func main() {
 
 func initWithShortWarmUp() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartBlockHeight(cross, 1)
 
 	println("[INFO] override warm-up periods for testing")
 	sr.SetWarmUp(cross, 30, 150)
