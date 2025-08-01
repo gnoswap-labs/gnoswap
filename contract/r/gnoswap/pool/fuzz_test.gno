@@ -5,7 +5,7 @@ import (
 
 	"gno.land/r/gnoswap/v1/common"
 
-	fuzzer "gno.land/p/gnoswap/fuzztest"
+	fuzz "gno.land/p/gnoswap/fuzz"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -33,7 +33,7 @@ func (h *poolTestHelper) assertPanic(f func(), shouldPanic bool, context string)
 // TestFuzzSafeConvertToInt128 tests the safeConvertToInt128 function for overflow/underflow
 func TestFuzzSafeConvertToInt128(t *testing.T) {
 	helper := newPoolTestHelper(t)
-	gen := fuzzer.NewUint256Generator(true, 256)
+	gen := fuzz.NewUint256Generator(true, 256)
 
 	overflowCount := 0
 	successCount := 0
@@ -82,7 +82,7 @@ func TestFuzzSafeConvertToInt128(t *testing.T) {
 
 func TestFuzzSafeConvertToUint64(t *testing.T) {
 	helper := newPoolTestHelper(t)
-	gen := fuzzer.NewUint256Generator(true, 128)
+	gen := fuzz.NewUint256Generator(true, 128)
 
 	for i := 0; i < 1000; i++ {
 		value := gen.Generate().(*u256.Uint)
@@ -101,7 +101,7 @@ func TestFuzzSafeConvertToUint64(t *testing.T) {
 
 func TestFuzzSafeConvertToInt64(t *testing.T) {
 	helper := newPoolTestHelper(t)
-	gen := fuzzer.NewUint256Generator(true, 128)
+	gen := fuzz.NewUint256Generator(true, 128)
 
 	for i := 0; i < 1000; i++ {
 		value := gen.Generate().(*u256.Uint)
@@ -120,8 +120,8 @@ func TestFuzzSafeConvertToInt64(t *testing.T) {
 
 func TestFuzzLiquidityMathAddDelta(t *testing.T) {
 	helper := newPoolTestHelper(t)
-	xGen := fuzzer.NewUint256Generator(true, 256)
-	yGen := fuzzer.NewInt256Generator(true, true, 256)
+	xGen := fuzz.NewUint256Generator(true, 256)
+	yGen := fuzz.NewInt256Generator(true, true, 256)
 
 	underflowCount := 0
 	overflowCount := 0
@@ -184,7 +184,7 @@ func TestFuzzLiquidityMathAddDelta(t *testing.T) {
 
 func TestFuzzToUint128(t *testing.T) {
 	helper := newPoolTestHelper(t)
-	gen := fuzzer.NewUint256Generator(true, 256)
+	gen := fuzz.NewUint256Generator(true, 256)
 
 	truncatedCount := 0
 	unchangedCount := 0
@@ -223,7 +223,7 @@ func TestFuzzToUint128(t *testing.T) {
 }
 
 func TestFuzzU256Min(t *testing.T) {
-	gen := fuzzer.NewUint256Generator(true, 256)
+	gen := fuzz.NewUint256Generator(true, 256)
 
 	for i := 0; i < 1000; i++ {
 		num1 := gen.Generate().(*u256.Uint)
@@ -259,7 +259,7 @@ func TestFuzzCheckTickSpacing(t *testing.T) {
 	for _, spacing := range validSpacings {
 		// multiples of spacings are valid
 		for i := 0; i < 100; i++ {
-			multiplier := int32(fuzzer.IntRange(-1000, 1000).Generate().(int))
+			multiplier := int32(fuzz.IntRange(-1000, 1000).Generate().(int))
 			tick := multiplier * spacing
 
 			helper.assertPanic(func() {
@@ -270,8 +270,8 @@ func TestFuzzCheckTickSpacing(t *testing.T) {
 		// invalid ticks (not multiples of spacing)
 		if spacing > 1 {
 			for i := 0; i < 100; i++ {
-				multiplier := int32(fuzzer.IntRange(-1000, 1000).Generate().(int))
-				offset := int32(fuzzer.IntRange(1, int(spacing-1)).Generate().(int))
+				multiplier := int32(fuzz.IntRange(-1000, 1000).Generate().(int))
+				offset := int32(fuzz.IntRange(1, int(spacing-1)).Generate().(int))
 				tick := multiplier*spacing + offset
 
 				helper.assertPanic(func() {
@@ -356,7 +356,7 @@ func TestFuzzTickToSqrtPriceX96(t *testing.T) {
 
 	// Test valid tick range
 	t.Run("ValidTickRange", func(t *testing.T) {
-		tickGen := fuzzer.IntRange(-887272, 887272)
+		tickGen := fuzz.IntRange(-887272, 887272)
 
 		for i := 0; i < 1000; i++ {
 			tick := int32(tickGen.Generate().(int))
@@ -432,7 +432,7 @@ func TestFuzzSqrtPriceX96ToTick(t *testing.T) {
 	t.Run("Valid sqrtPrice range", func(t *testing.T) {
 		for i := 0; i < 1000; i++ {
 			// Generate random tick and get its sqrtPrice
-			tickGen := fuzzer.IntRange(-887272, 887272)
+			tickGen := fuzz.IntRange(-887272, 887272)
 			originalTick := int32(tickGen.Generate().(int))
 			sqrtPrice := common.TickMathGetSqrtRatioAtTick(originalTick)
 
@@ -472,7 +472,7 @@ func TestFuzzSqrtPriceX96ToTick(t *testing.T) {
 	})
 
 	t.Run("Round trip conversion", func(t *testing.T) {
-		tickGen := fuzzer.IntRange(-887272, 887271) // Exclude MAX_TICK (887272)
+		tickGen := fuzz.IntRange(-887272, 887271) // Exclude MAX_TICK (887272)
 
 		for i := 0; i < 500; i++ {
 			originalTick := int32(tickGen.Generate().(int))
