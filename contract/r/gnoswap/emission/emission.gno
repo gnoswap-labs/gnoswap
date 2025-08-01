@@ -102,6 +102,7 @@ func MintAndDistributeGns(cur realm) int64 {
 // Only admin or governance can call this function
 func SetDistributionStartBlockHeight(cur realm, height int64) {
 	halt.AssertIsNotHaltedEmission()
+	halt.AssertIsNotHaltedWithdraw()
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
