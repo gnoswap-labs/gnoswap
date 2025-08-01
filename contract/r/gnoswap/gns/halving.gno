@@ -287,8 +287,8 @@ type EmissionState struct {
 // Global variable for singleton pattern
 var emissionState *EmissionState
 
-// GetEmissionState returns emission state (singleton pattern)
-func GetEmissionState() *EmissionState {
+// getEmissionState returns emission state (singleton pattern)
+func getEmissionState() *EmissionState {
 	if emissionState == nil {
 		emissionState = NewEmissionState()
 		emissionState.initializeHalvingData()
@@ -361,7 +361,7 @@ func (e *EmissionState) ReinitializeWithStartHeight(newStartHeight int64) {
 
 // init package initialization function
 func init() {
-	emissionState = GetEmissionState()
+	emissionState = getEmissionState()
 }
 
 // AvgBlockTimeInMs returns average block time in milliseconds
@@ -369,34 +369,10 @@ func AvgBlockTimeInMs() int64 {
 	return avgBlockTimeMs
 }
 
-// SetAvgBlockTimeInMsByAdmin admin sets average block time
-func SetAvgBlockTimeInMsByAdmin(cur realm, ms int64) {
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdmin(caller)
-
-	prevAvgBlockTimeInMs := AvgBlockTimeInMs()
-	err := setAvgBlockTimeInMs(ms)
-	if err != nil {
-		panic(err)
-	}
-
-	// Log event generation
-	halvingData := GetEmissionState().getHalvingData()
-	previousRealm := std.PreviousRealm()
-	emitBlockTimeChangeEvent(
-		"SetAvgBlockTimeInMsByAdmin",
-		previousRealm.Address().String(),
-		previousRealm.PkgPath(),
-		prevAvgBlockTimeInMs,
-		ms,
-		halvingData,
-	)
-}
-
 // SetAvgBlockTimeInMs sets average block time through governance proposal
 func SetAvgBlockTimeInMs(cur realm, ms int64) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsGovernance(caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	prevAvgBlockTimeInMs := AvgBlockTimeInMs()
 	err := setAvgBlockTimeInMs(ms)
@@ -405,7 +381,7 @@ func SetAvgBlockTimeInMs(cur realm, ms int64) {
 	}
 
 	// Log event generation
-	halvingData := GetEmissionState().getHalvingData()
+	halvingData := getEmissionState().getHalvingData()
 	previousRealm := std.PreviousRealm()
 	emitBlockTimeChangeEvent(
 		"SetAvgBlockTimeInMs",
@@ -452,7 +428,7 @@ func setAvgBlockTimeInMs(ms int64) error {
 	blockPerDay = secToMs(SECONDS_PER_DAY) / ms
 
 	// recalculate all remaining years (amountPerBlock)
-	es := GetEmissionState()
+	es := getEmissionState()
 
 	currentHeight := std.ChainHeight()
 	currentYear := HalvingYearByHeight(currentHeight)

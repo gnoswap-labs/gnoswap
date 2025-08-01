@@ -87,13 +87,13 @@ func initAndSetupSinglePool() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFeeByAdmin(cross, 0)
+	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
 
 	println("[INFO] set community pool distribution to 0%")
-	emission.ChangeDistributionPctByAdmin(
+	emission.ChangeDistributionPct(
 		cross,
 		1, 7500, // staker
 		2, 2500, // devOps
@@ -112,7 +112,7 @@ func createPool() {
 	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set pool to tier 1")
-	sr.SetPoolTierByAdmin(cross, poolPath, 1)
+	sr.SetPoolTier(cross, poolPath, 1)
 
 	testing.SkipHeights(1)
 }

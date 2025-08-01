@@ -53,8 +53,9 @@ func BalanceOf(owner std.Address) int64          { return token.BalanceOf(owner)
 func Allowance(owner, spender std.Address) int64 { return token.Allowance(owner, spender) }
 
 func MintGns(cur realm, address std.Address) int64 {
-	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedEmission()
+	
+	caller := std.PreviousRealm().Address()
 	access.AssertIsEmission(caller)
 
 	lastGNSMintedHeight := LastMintedHeight()

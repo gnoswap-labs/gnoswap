@@ -13,7 +13,12 @@ func createPool(
 	tickSpacing int32,
 ) (*poolCreateConfig, error) {
 	poolInfo := newPoolParams(token0Path, token1Path, fee, sqrtPriceX96, tickSpacing)
-	
+
+	// Validate the sqrtPriceX96 is within valid range before processing
+	if err := validateSqrtPriceX96(poolInfo.sqrtPriceX96); err != nil {
+		return nil, err
+	}
+
 	// check if token0Path == token1Path
 	if poolInfo.isSameTokenPath() {
 		return nil, makeErrorWithDetails(
@@ -32,7 +37,12 @@ func createPool(
 		)
 	}
 
-	poolInfo = poolInfo.updateWithWrapping()
+	var err error
+	poolInfo, err = poolInfo.updateWithWrapping()
+	if err != nil {
+		return nil, err
+	}
+
 	common.MustRegistered(poolInfo.token0Path)
 	common.MustRegistered(poolInfo.token1Path)
 
