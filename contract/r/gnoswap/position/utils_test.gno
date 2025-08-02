@@ -272,9 +272,9 @@ func TestIsOperator(t *testing.T) {
 
 			// given - nft owner is position realm then set as approved alice
 			testing.SetRealm(posRealm)
-			gnft.Mint(cross, posRealm.Address(), positionIdFrom(tc.positionId))
+			gnft.Mint(cross, stakerAddr, positionIdFrom(tc.positionId))
 
-			testing.SetOriginCaller(posRealm.Address())
+			testing.SetOriginCaller(stakerAddr)
 			gnft.Approve(cross, alice, positionIdFrom(tc.positionId))
 
 			// when
