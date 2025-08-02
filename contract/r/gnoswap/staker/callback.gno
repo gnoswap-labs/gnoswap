@@ -2,6 +2,8 @@ package staker
 
 import (
 	"std"
+
+	"gno.land/r/gnoswap/v1/emission"
 )
 
 // stakerEmissionChangeCallback is called by emission when
@@ -15,7 +17,8 @@ import (
 //   - It first caches the reward until the current block height.
 //   - Then, it updates the `currentEmission` of the poolTier,
 //     which will be applied for future blocks thereafter.
-func stakerEmissionChangeCallback(emission int64) {
-	poolTier.currentEmission = int64(emission)
-	poolTier.cacheReward(std.ChainHeight(), pools)
+func stakerEmissionChangeCallback(emissionAmount int64) {
+	poolTier.currentEmission = int64(emissionAmount)
+	currentAccuDistributedAmount := emission.GetAccuDistributedToStaker()
+	poolTier.cacheReward(currentAccuDistributedAmount, std.ChainHeight(), pools)
 }

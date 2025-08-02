@@ -9,6 +9,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/halt"
 
 	"gno.land/r/gnoswap/v1/gnft"
@@ -202,7 +203,8 @@ func init() {
 	// ONLY GNOT:GNS 0.3%
 
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1)
-	poolTier = NewPoolTier(pools, std.ChainHeight(), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange)
+	currentAccuDistributedAmount := emission.GetAccuDistributedToStaker()
+	poolTier = NewPoolTier(pools, std.ChainHeight(), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange, currentAccuDistributedAmount)
 	registerstakerEmissionChangeCallback()
 }
 
@@ -299,13 +301,15 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 	// after transfer, set caller(user) as position operator (to collect fee and reward)
 	pn.SetPositionOperator(cross, positionId, caller)
 
+	currentAccuDistributedAmount := emission.GetAccuDistributedToStaker()
+
 	signedLiquidity := i256.FromUint256(liquidity)
 	isInRange := false
-	poolTier.cacheReward(currentHeight, pools)
+	poolTier.cacheReward(currentAccuDistributedAmount, currentHeight, pools)
 
 	if pn.PositionIsInRange(positionId) {
 		isInRange = true
-		pool.modifyDeposit(signedLiquidity, currentHeight, currentTick)
+		pool.modifyDeposit(currentAccuDistributedAmount, signedLiquidity, currentHeight, currentTick)
 	}
 	// historical tick must be set regardless of the deposit's range
 	pool.historicalTick.set(currentHeight, currentTick)
@@ -660,10 +664,11 @@ func applyUnStake(positionId uint64) error {
 
 	currentHeight := std.ChainHeight()
 	currentTick := pl.PoolGetSlot0Tick(deposit.targetPoolPath)
+	currentAccuDistributedAmount := emission.GetAccuDistributedToStaker()
 	signedLiquidity := i256.FromUint256(deposit.liquidity)
 	signedLiquidity = signedLiquidity.Neg(signedLiquidity)
 	if pn.PositionIsInRange(positionId) {
-		pool.modifyDeposit(signedLiquidity, currentHeight, currentTick)
+		pool.modifyDeposit(currentAccuDistributedAmount, signedLiquidity, currentHeight, currentTick)
 	}
 
 	upperTick := pool.ticks.Get(deposit.tickUpper)

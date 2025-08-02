@@ -4,6 +4,7 @@ import (
 	"std"
 
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/halt"
 
 	en "gno.land/r/gnoswap/v1/emission"
@@ -107,14 +108,16 @@ func setPoolTier(poolPath string, tier uint64, height int64) {
 	en.MintAndDistributeGns(cross)
 
 	pools.GetOrCreate(poolPath)
-	poolTier.changeTier(height, pools, poolPath, tier)
+	currentAccuDistributedAmount := emission.GetAccuDistributedToStaker()
+	poolTier.changeTier(height, pools, poolPath, tier, currentAccuDistributedAmount)
 }
 
 func changePoolTier(poolPath string, tier uint64, height int64) (uint64, uint64) {
 	en.MintAndDistributeGns(cross)
 	previousTier := poolTier.CurrentTier(poolPath)
 
-	poolTier.changeTier(height, pools, poolPath, tier)
+	currentAccuDistributedAmount := emission.GetAccuDistributedToStaker()
+	poolTier.changeTier(height, pools, poolPath, tier, currentAccuDistributedAmount)
 
 	return previousTier, tier
 }
@@ -122,7 +125,8 @@ func changePoolTier(poolPath string, tier uint64, height int64) (uint64, uint64)
 func removePoolTier(poolPath string, height int64) {
 	en.MintAndDistributeGns(cross)
 
-	poolTier.changeTier(height, pools, poolPath, NOT_EMISSION_TARGET_TIER)
+	currentAccuDistributedAmount := emission.GetAccuDistributedToStaker()
+	poolTier.changeTier(height, pools, poolPath, NOT_EMISSION_TARGET_TIER, currentAccuDistributedAmount)
 }
 
 func setWarmUp(pct, blockDuration int64) {

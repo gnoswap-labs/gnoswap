@@ -10,6 +10,7 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
@@ -170,7 +171,8 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 		if zeroForOne {
 			liquidityInRangeDelta = i256.Zero().Neg(liquidityInRangeDelta)
 		}
-		newAcc := pool.modifyDeposit(liquidityInRangeDelta, blockNumber, nextTick)
+		currentAccuDistributedAmount := emission.GetAccuDistributedToStaker()
+		newAcc := pool.modifyDeposit(currentAccuDistributedAmount, liquidityInRangeDelta, blockNumber, nextTick)
 		tick.updateCurrentOutsideAccumulation(blockNumber, newAcc)
 	}
 }

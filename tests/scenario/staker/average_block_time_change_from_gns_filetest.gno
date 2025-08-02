@@ -13,6 +13,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/emission"
 
 	"gno.land/r/demo/wugnot"
 
@@ -81,6 +82,7 @@ func main() {
 
 	println("[SCENARIO] 7. Collect reward for 1 blocks")
 	collectRewardWithSkippingBlocks(1, 1)
+	println()
 }
 
 func initAccountAndEmission() {
@@ -157,6 +159,7 @@ func stakePosition() {
 	before := gns.BalanceOf(adminUser)
 
 	testing.SkipHeights(100)
+	emission.MintAndDistributeGns(cross)
 	sr.CollectReward(cross, 1, false)
 
 	after := gns.BalanceOf(adminUser)
@@ -170,6 +173,8 @@ func collectRewardWithSkippingBlocks(positionId uint64, blocks int64) {
 
 	before := gns.BalanceOf(adminUser)
 	testing.SkipHeights(blocks)
+
+	emission.MintAndDistributeGns(cross)
 
 	sr.CollectReward(cross, positionId, false)
 	after := gns.BalanceOf(adminUser)

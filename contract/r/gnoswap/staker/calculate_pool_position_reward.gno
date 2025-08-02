@@ -2,6 +2,7 @@ package staker
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/v1/emission"
 )
 
 // Q96
@@ -50,11 +51,13 @@ func calcPositionReward(currentHeight int64, positionId uint64) Reward {
 	internal := int64(0)
 	for _, reward := range rewards {
 		internal += reward.Internal
+		println("internal", internal)
 	}
 
 	internalPenalty := int64(0)
 	for _, reward := range rewards {
 		internalPenalty += reward.InternalPenalty
+		println("internalPenalty", internalPenalty)
 	}
 
 	externalReward := make(map[string]int64)
@@ -64,6 +67,7 @@ func calcPositionReward(currentHeight int64, positionId uint64) Reward {
 				externalReward[incentive] += reward
 			}
 		}
+		println("externalReward", externalReward)
 	}
 
 	externalPenalty := make(map[string]int64)
@@ -73,6 +77,7 @@ func calcPositionReward(currentHeight int64, positionId uint64) Reward {
 				externalPenalty[incentive] += penalty
 			}
 		}
+		println("externalPenalty", externalPenalty)
 	}
 
 	return Reward{
@@ -97,7 +102,8 @@ type CalcPositionRewardParam struct {
 
 func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	// cache per-pool rewards in the internal incentive(tiers)
-	param.PoolTier.cacheReward(param.CurrentHeight, param.Pools)
+	currentAccuDistributedAmount := emission.GetAccuDistributedToStaker()
+	param.PoolTier.cacheReward(currentAccuDistributedAmount, param.CurrentHeight, param.Pools)
 
 	deposit := param.Deposits.get(param.PositionId)
 	poolPath := deposit.targetPoolPath
@@ -119,7 +125,7 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	if param.PoolTier.CurrentTier(poolPath) != 0 {
 		// Internal incentivized pool.
 		// Calculate reward for each warmup
-		internalRewards, internalPenalties = pool.RewardStateOf(deposit).calculateInternalReward(lastCollectHeight, param.CurrentHeight)
+		internalRewards, internalPenalties = pool.RewardStateOf(deposit).calculateInternalReward(currentAccuDistributedAmount, lastCollectHeight, param.CurrentHeight)
 	}
 
 	// All active incentives
@@ -133,7 +139,7 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	for incentiveId, incentive := range allIncentives {
 		// External incentivized pool.
 		// Calculate reward for each warmup
-		externalReward, externalPenalty := pool.RewardStateOf(deposit).calculateExternalReward(int64(lastCollectHeight), int64(param.CurrentHeight), incentive)
+		externalReward, externalPenalty := pool.RewardStateOf(deposit).calculateExternalReward(currentAccuDistributedAmount, int64(lastCollectHeight), int64(param.CurrentHeight), incentive)
 
 		for i := range externalReward {
 			externalRewards[i][incentiveId] = externalReward[i]

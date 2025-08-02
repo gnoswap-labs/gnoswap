@@ -10,6 +10,7 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -501,7 +502,8 @@ func GetPoolTierCount(tier uint64) uint64 {
 // Returns:
 // - int64: The current reward amount for the specified tier.
 func GetPoolReward(tier uint64) int64 {
-	return poolTier.CurrentReward(tier)
+	currentAccuDistributedAmount := emission.GetAccuDistributedToStaker()
+	return poolTier.CurrentReward(tier, currentAccuDistributedAmount)
 }
 
 // getExternalIncentive retrieves an external incentive by its ID.

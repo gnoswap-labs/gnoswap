@@ -39,12 +39,14 @@ func TestCanonicalSimple(t *testing.T) {
 
 	canonical.NextBlock()
 
-	// gnousdc takes the entire emission
-	canonical.AssertCanonicalInternalRewardPerPool(gnousdc, int64(canonical.PerBlockEmission))
+	// gnousdc takes the entire emission delta
+	expectedPoolReward := int64(canonical.PerBlockEmission)
+	canonical.AssertCanonicalInternalRewardPerPool(gnousdc, expectedPoolReward)
 
-	expected := canonical.PerBlockEmission * 30 / 100
-	canonical.AssertEmulatedRewardOf(0, expected)
-	canonical.AssertCanonicalRewardOf(0, expected)
+	// 30% warmup ratio applied to the distributed emission
+	expected := expectedPoolReward * 30 / 100
+	canonical.AssertEmulatedRewardOf(0, uint64(expected))
+	canonical.AssertCanonicalRewardOf(0, uint64(expected))
 }
 
 // To check precision error
@@ -65,11 +67,12 @@ func TestCanonicalLargeStakedLiquidity(t *testing.T) {
 
 	canonical.NextBlock()
 
-	canonical.AssertCanonicalInternalRewardPerPool(gnousdc, int64(canonical.PerBlockEmission))
+	expectedPoolReward := int64(canonical.PerBlockEmission)
+	canonical.AssertCanonicalInternalRewardPerPool(gnousdc, expectedPoolReward)
 
-	expected := canonical.PerBlockEmission * 30 / 100
-	canonical.AssertEmulatedRewardOf(0, expected)
-	canonical.AssertCanonicalRewardOf(0, expected)
+	expected := expectedPoolReward * 30 / 100
+	canonical.AssertEmulatedRewardOf(0, uint64(expected))
+	canonical.AssertCanonicalRewardOf(0, uint64(expected))
 }
 
 // To check precision error
@@ -106,9 +109,10 @@ func TestCanonicalLargeStakedLiquidity_2(t *testing.T) {
 
 	canonical.NextBlock()
 
-	canonical.AssertCanonicalInternalRewardPerPool(gnousdc, int64(canonical.PerBlockEmission))
+	expectedPoolReward := int64(canonical.PerBlockEmission)
+	canonical.AssertCanonicalInternalRewardPerPool(gnousdc, expectedPoolReward)
 
-	expected := canonical.PerBlockEmission / 100 * 30
+	expected := uint64(expectedPoolReward) / 100 * 30
 	canonical.AssertEmulatedRewardOf(0, expected/9)
 	canonical.AssertCanonicalRewardOf(0, expected/9)
 

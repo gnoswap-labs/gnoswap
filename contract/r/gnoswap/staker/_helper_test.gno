@@ -10,6 +10,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
@@ -403,7 +404,8 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount int64) {
 func deletePoolTier(t *testing.T, poolPath string) {
 	t.Helper()
 	if poolTier != nil {
-		poolTier.changeTier(std.ChainHeight(), pools, poolPath, 0)
+		currentAccuDistributedAmount := emission.GetAccuDistributedToStaker()
+		poolTier.changeTier(std.ChainHeight(), pools, poolPath, 0, currentAccuDistributedAmount)
 	} else {
 		panic("poolTier is nil")
 	}
