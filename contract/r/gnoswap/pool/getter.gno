@@ -1,5 +1,7 @@
 package pool
 
+import "time"
+
 func PoolGetPoolList() []string {
 	poolPaths := []string{}
 	pools.Iterate("", "", func(poolPath string, _ any) bool {
@@ -130,7 +132,8 @@ func PoolGetTickInitialized(poolPath string, tick int32) bool {
 // TWAP related getter functions
 func GetPriceObserve(poolPath string, secondsAgo int64) string {
 	pool := mustGetPool(poolPath)
-	twapPrice, err := pool.observe(secondsAgo)
+	currentTime := time.Now().Unix()
+	twapPrice, err := pool.observe(secondsAgo, currentTime)
 	if err != nil {
 		return "0"
 	}
@@ -139,6 +142,7 @@ func GetPriceObserve(poolPath string, secondsAgo int64) string {
 
 func GetSlot0PriceOracle(poolPath string) (int64, string, string) {
 	pool := mustGetPool(poolPath)
-	lastCumulativeUpdateTime, sqrtPriceCumulativeX96, liquidityCumulative := pool.slot0PriceOracle()
+	currentTime := time.Now().Unix()
+	lastCumulativeUpdateTime, sqrtPriceCumulativeX96, liquidityCumulative := pool.slot0PriceOracle(currentTime)
 	return lastCumulativeUpdateTime, sqrtPriceCumulativeX96.ToString(), liquidityCumulative.ToString()
 } 

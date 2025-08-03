@@ -3,7 +3,6 @@ package pool
 import (
 	"strconv"
 	"strings"
-	"time"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
@@ -128,10 +127,7 @@ func (p *Pool) Ticks() string {
 	return "[" + strings.Join(tickInfoStrings, ",") + "]"
 }
 
-
-func (p *Pool) calculatePriceCumulatives() (*u256.Uint, *u256.Uint, int64) {
-	currentTime := time.Now().Unix()
-
+func (p *Pool) calculatePriceCumulatives(currentTime int64) (*u256.Uint, *u256.Uint, int64) {
 	// calculate time delta
 	timeDelta := currentTime - p.lastCumulativeUpdateTime
 	if timeDelta == 0 {
@@ -143,7 +139,7 @@ func (p *Pool) calculatePriceCumulatives() (*u256.Uint, *u256.Uint, int64) {
 	// update cumulative values (only price is used)
 	// sqrtPriceCumulativeX96 = sqrtPriceCumulativeX96 + sqrtPriceX96 * timeDelta
 	priceDelta := u256.Zero().Mul(p.slot0.sqrtPriceX96, timeDeltaUint)
-	
+
 	// liquidityCumulative = liquidityCumulative + liquidity * timeDelta
 	liquidityDelta := u256.Zero().Mul(p.liquidity, timeDeltaUint)
 
@@ -156,8 +152,8 @@ func (p *Pool) calculatePriceCumulatives() (*u256.Uint, *u256.Uint, int64) {
 
 // updatePriceCumulatives updates cumulative price values when pool price changes
 // This should be called whenever the pool's price changes (swap, mint, burn)
-func (p *Pool) updatePriceCumulatives() {
-	sqrtPriceCumulativeX96, liquidityCumulative, lastCumulativeUpdateTime := p.calculatePriceCumulatives()
+func (p *Pool) updatePriceCumulatives(currentTime int64) {
+	sqrtPriceCumulativeX96, liquidityCumulative, lastCumulativeUpdateTime := p.calculatePriceCumulatives(currentTime)
 
 	p.sqrtPriceCumulativeX96 = sqrtPriceCumulativeX96
 	p.liquidityCumulative = liquidityCumulative
@@ -166,14 +162,14 @@ func (p *Pool) updatePriceCumulatives() {
 
 // observe calculates the TWAP price for a given time period with X96 precision
 // Similar to Uniswap V3's observe function but with improved precision
-func (p *Pool) observe(secondsAgo int64) (*u256.Uint, error) {
+func (p *Pool) observe(secondsAgo int64, currentTime int64) (*u256.Uint, error) {
 	if secondsAgo == 0 {
-		return nil, makeErrorWithDetails(errInvalidInput, "secondsAgo must be greater than 0")
+		return u256.Zero(), makeErrorWithDetails(errInvalidInput, "secondsAgo must be greater than 0")
 	}
 
 	// calculate current cumulatives
-	currentSqrtPriceCumulativeX96, _, lastCumulativeUpdateTime := p.calculatePriceCumulatives()
-	
+	currentSqrtPriceCumulativeX96, _, lastCumulativeUpdateTime := p.calculatePriceCumulatives(currentTime)
+
 	// if no past observation, return current price
 	if lastCumulativeUpdateTime == 0 {
 		return p.slot0.sqrtPriceX96.Clone(), nil
@@ -181,42 +177,42 @@ func (p *Pool) observe(secondsAgo int64) (*u256.Uint, error) {
 
 	// if period is too long, error
 	if secondsAgo > lastCumulativeUpdateTime {
-		return nil, makeErrorWithDetails(
-			errInvalidInput, 
+		return u256.Zero(), makeErrorWithDetails(
+			errInvalidInput,
 			ufmt.Sprintf("secondsAgo(%d) > lastUpdateTime(%d)", secondsAgo, lastCumulativeUpdateTime),
 		)
 	}
-	
+
 	// calculate past cumulative by estimating the cumulative at (currentTime - secondsAgo)
 	// For simplicity, we use linear interpolation: past_cumulative = current_cumulative - (current_price * secondsAgo)
 	pastTime := lastCumulativeUpdateTime - secondsAgo
 	if pastTime < 0 {
 		pastTime = 0
 	}
-	
+
 	// Estimate past cumulative by subtracting the price contribution over the time period
 	// past_cumulative = current_cumulative - (current_price * secondsAgo)
 	priceContribution := u256.Zero().Mul(p.slot0.sqrtPriceX96, u256.NewUintFromInt64(secondsAgo))
 	pastSqrtPriceCumulativeX96 := u256.Zero().Sub(currentSqrtPriceCumulativeX96, priceContribution)
-	
+
 	// calculate price delta: current_cumulative - past_cumulative
 	priceDelta := u256.Zero().Sub(currentSqrtPriceCumulativeX96, pastSqrtPriceCumulativeX96)
-	
+
 	// calculate TWAP: price_delta / time_delta
 	secondsAgoUint := u256.NewUintFromInt64(secondsAgo)
 	if secondsAgoUint.IsZero() {
 		return p.slot0.sqrtPriceX96.Clone(), nil
 	}
-	
+
 	// calculate TWAP sqrt price with X96 precision
 	twapSqrtPriceX96 := u256.Zero().Div(priceDelta, secondsAgoUint)
-	
+
 	return twapSqrtPriceX96, nil
 }
 
 // slot0PriceOracle returns the current price oracle state (similar to Uniswap V3's slot0)
 // This can be used to validate price oracle calculations
-func (p *Pool) slot0PriceOracle() (int64, *u256.Uint, *u256.Uint) {
-	p.updatePriceCumulatives()
+func (p *Pool) slot0PriceOracle(currentTime int64) (int64, *u256.Uint, *u256.Uint) {
+	p.updatePriceCumulatives(currentTime)
 	return p.lastCumulativeUpdateTime, p.sqrtPriceCumulativeX96, p.liquidityCumulative
 }
