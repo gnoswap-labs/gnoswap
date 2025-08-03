@@ -2,6 +2,7 @@ package pool
 
 import (
 	"std"
+	"time"
 
 	"gno.land/p/demo/avl"
 
@@ -272,20 +273,23 @@ func newPool(poolInfo *poolCreateConfig) *Pool {
 	slot0 := newSlot0(poolInfo.SqrtPriceX96(), tick, slot0FeeProtocol, true)
 
 	return &Pool{
-		token0Path:           poolInfo.Token0Path(),
-		token1Path:           poolInfo.Token1Path(),
-		balances:             newBalances(),
-		fee:                  poolInfo.Fee(),
-		tickSpacing:          poolInfo.TickSpacing(),
-		maxLiquidityPerTick:  maxLiquidityPerTick,
-		slot0:                slot0,
-		feeGrowthGlobal0X128: u256.Zero(),
-		feeGrowthGlobal1X128: u256.Zero(),
-		protocolFees:         newProtocolFees(),
-		liquidity:            u256.Zero(),
-		ticks:                avl.NewTree(),
-		tickBitmaps:          avl.NewTree(),
-		positions:            avl.NewTree(),
+		token0Path:               poolInfo.Token0Path(),
+		token1Path:               poolInfo.Token1Path(),
+		balances:                 newBalances(),
+		fee:                      poolInfo.Fee(),
+		tickSpacing:              poolInfo.TickSpacing(),
+		maxLiquidityPerTick:      maxLiquidityPerTick,
+		slot0:                    slot0,
+		feeGrowthGlobal0X128:     u256.Zero(),
+		feeGrowthGlobal1X128:     u256.Zero(),
+		protocolFees:             newProtocolFees(),
+		liquidity:                u256.Zero(),
+		ticks:                    avl.NewTree(),
+		tickBitmaps:              avl.NewTree(),
+		positions:                avl.NewTree(),
+		lastCumulativeUpdateTime: time.Now().Unix(),
+		sqrtPriceCumulativeX96:   u256.Zero(),
+		liquidityCumulative:      u256.Zero(),
 	}
 }
 

@@ -106,6 +106,9 @@ func Swap(
 
 	applySwapResult(pool, result)
 
+	// update TWAP state
+	pool.updatePriceCumulatives()
+
 	// actual swap
 	pool.swapTransfers(zeroForOne, payer, recipient, result.Amount0, result.Amount1)
 

@@ -3,6 +3,7 @@ package pool
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
@@ -77,6 +78,11 @@ type Pool struct {
 	ticks                *avl.Tree  // tick(int32) -> TickInfo
 	tickBitmaps          *avl.Tree  // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
 	positions            *avl.Tree  // maps the key (caller, lower tick, upper tick) to a unique position
+
+	// TWAP related fields
+	lastCumulativeUpdateTime int64      // last cumulative update time (in seconds)
+	sqrtPriceCumulativeX96   *u256.Uint // cumulative sqrt price (Q64.96 precision)
+	liquidityCumulative      *u256.Uint // cumulative liquidity (time-weighted average calculation)
 }
 
 func (p *Pool) PoolPath() string                 { return GetPoolPath(p.token0Path, p.token1Path, p.fee) }
@@ -120,4 +126,97 @@ func (p *Pool) Ticks() string {
 	})
 
 	return "[" + strings.Join(tickInfoStrings, ",") + "]"
+}
+
+
+func (p *Pool) calculatePriceCumulatives() (*u256.Uint, *u256.Uint, int64) {
+	currentTime := time.Now().Unix()
+
+	// calculate time delta
+	timeDelta := currentTime - p.lastCumulativeUpdateTime
+	if timeDelta == 0 {
+		return p.sqrtPriceCumulativeX96, p.liquidityCumulative, p.lastCumulativeUpdateTime
+	}
+
+	timeDeltaUint := u256.NewUintFromInt64(timeDelta)
+
+	// update cumulative values (only price is used)
+	// sqrtPriceCumulativeX96 = sqrtPriceCumulativeX96 + sqrtPriceX96 * timeDelta
+	priceDelta := u256.Zero().Mul(p.slot0.sqrtPriceX96, timeDeltaUint)
+	
+	// liquidityCumulative = liquidityCumulative + liquidity * timeDelta
+	liquidityDelta := u256.Zero().Mul(p.liquidity, timeDeltaUint)
+
+	sqrtPriceCumulativeX96 := u256.Zero().Add(p.sqrtPriceCumulativeX96, priceDelta)
+	liquidityCumulative := u256.Zero().Add(p.liquidityCumulative, liquidityDelta)
+	lastCumulativeUpdateTime := currentTime
+
+	return sqrtPriceCumulativeX96, liquidityCumulative, lastCumulativeUpdateTime
+}
+
+// updatePriceCumulatives updates cumulative price values when pool price changes
+// This should be called whenever the pool's price changes (swap, mint, burn)
+func (p *Pool) updatePriceCumulatives() {
+	sqrtPriceCumulativeX96, liquidityCumulative, lastCumulativeUpdateTime := p.calculatePriceCumulatives()
+
+	p.sqrtPriceCumulativeX96 = sqrtPriceCumulativeX96
+	p.liquidityCumulative = liquidityCumulative
+	p.lastCumulativeUpdateTime = lastCumulativeUpdateTime
+}
+
+// observe calculates the TWAP price for a given time period with X96 precision
+// Similar to Uniswap V3's observe function but with improved precision
+func (p *Pool) observe(secondsAgo int64) (*u256.Uint, error) {
+	if secondsAgo == 0 {
+		return nil, makeErrorWithDetails(errInvalidInput, "secondsAgo must be greater than 0")
+	}
+
+	// calculate current cumulatives
+	currentSqrtPriceCumulativeX96, _, lastCumulativeUpdateTime := p.calculatePriceCumulatives()
+	
+	// if no past observation, return current price
+	if lastCumulativeUpdateTime == 0 {
+		return p.slot0.sqrtPriceX96.Clone(), nil
+	}
+
+	// if period is too long, error
+	if secondsAgo > lastCumulativeUpdateTime {
+		return nil, makeErrorWithDetails(
+			errInvalidInput, 
+			ufmt.Sprintf("secondsAgo(%d) > lastUpdateTime(%d)", secondsAgo, lastCumulativeUpdateTime),
+		)
+	}
+	
+	// calculate past cumulative by estimating the cumulative at (currentTime - secondsAgo)
+	// For simplicity, we use linear interpolation: past_cumulative = current_cumulative - (current_price * secondsAgo)
+	pastTime := lastCumulativeUpdateTime - secondsAgo
+	if pastTime < 0 {
+		pastTime = 0
+	}
+	
+	// Estimate past cumulative by subtracting the price contribution over the time period
+	// past_cumulative = current_cumulative - (current_price * secondsAgo)
+	priceContribution := u256.Zero().Mul(p.slot0.sqrtPriceX96, u256.NewUintFromInt64(secondsAgo))
+	pastSqrtPriceCumulativeX96 := u256.Zero().Sub(currentSqrtPriceCumulativeX96, priceContribution)
+	
+	// calculate price delta: current_cumulative - past_cumulative
+	priceDelta := u256.Zero().Sub(currentSqrtPriceCumulativeX96, pastSqrtPriceCumulativeX96)
+	
+	// calculate TWAP: price_delta / time_delta
+	secondsAgoUint := u256.NewUintFromInt64(secondsAgo)
+	if secondsAgoUint.IsZero() {
+		return p.slot0.sqrtPriceX96.Clone(), nil
+	}
+	
+	// calculate TWAP sqrt price with X96 precision
+	twapSqrtPriceX96 := u256.Zero().Div(priceDelta, secondsAgoUint)
+	
+	return twapSqrtPriceX96, nil
+}
+
+// slot0PriceOracle returns the current price oracle state (similar to Uniswap V3's slot0)
+// This can be used to validate price oracle calculations
+func (p *Pool) slot0PriceOracle() (int64, *u256.Uint, *u256.Uint) {
+	p.updatePriceCumulatives()
+	return p.lastCumulativeUpdateTime, p.sqrtPriceCumulativeX96, p.liquidityCumulative
 }

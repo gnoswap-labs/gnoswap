@@ -126,3 +126,19 @@ func PoolGetTickSecondsOutside(poolPath string, tick int32) uint32 {
 func PoolGetTickInitialized(poolPath string, tick int32) bool {
 	return mustGetPool(poolPath).GetTickInitialized(tick)
 }
+
+// TWAP related getter functions
+func GetPriceObserve(poolPath string, secondsAgo int64) string {
+	pool := mustGetPool(poolPath)
+	twapPrice, err := pool.observe(secondsAgo)
+	if err != nil {
+		return "0"
+	}
+	return twapPrice.ToString()
+}
+
+func GetSlot0PriceOracle(poolPath string) (int64, string, string) {
+	pool := mustGetPool(poolPath)
+	lastCumulativeUpdateTime, sqrtPriceCumulativeX96, liquidityCumulative := pool.slot0PriceOracle()
+	return lastCumulativeUpdateTime, sqrtPriceCumulativeX96.ToString(), liquidityCumulative.ToString()
+} 
