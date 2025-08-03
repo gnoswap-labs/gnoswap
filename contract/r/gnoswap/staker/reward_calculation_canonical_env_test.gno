@@ -239,7 +239,7 @@ func (self *canonicalRewardState) CalculateCanonicalReward() map[uint64]Reward {
 	rewards := make(map[uint64]Reward)
 
 	liquidityPerPool := self.LiquidityPerPool()
-	
+
 	// Calculate internal reward per pool for this block only
 	internalRewardPerPool := make(map[string]int64)
 	tierCount := []uint64{0, 0, 0, 0}
@@ -247,7 +247,7 @@ func (self *canonicalRewardState) CalculateCanonicalReward() map[uint64]Reward {
 		tierCount[pool.tier]++
 	}
 	ratio := TierRatioFromCounts(tierCount[1], tierCount[2], tierCount[3])
-	
+
 	// Calculate per-block reward for each pool
 	blockEmission := int64(self.PerBlockEmission)
 	for _, pool := range self.Pool {
@@ -256,13 +256,13 @@ func (self *canonicalRewardState) CalculateCanonicalReward() map[uint64]Reward {
 			tierAllocation := blockEmission * int64(ratio.Get(pool.tier)) / 100
 			poolReward := tierAllocation / int64(tierCount[pool.tier])
 			internalRewardPerPool[pool.poolPath] = poolReward
-			
+
 			// Update canonical pool state
 			pool.lastAccuDistributed = self.accuDistributed
 			pool.lastUpdateHeight = currentHeight
 		}
 	}
-	
+
 	externalRewardPerPool := self.ExternalRewardPerPool(int64(currentHeight))
 
 	// Update lastPoolRewards for testing
@@ -304,7 +304,7 @@ func (self *canonicalRewardState) NextBlock() {
 	// Update accumulated distribution internally instead of calling emission contract
 	self.accuDistributed += int64(self.PerBlockEmission)
 	testing.SkipHeights(1)
-	
+
 	if self.lastUpdateHeight < self.CurrentHeight() {
 		self.Reward = append(self.Reward, self.CalculateCanonicalReward())
 	}
@@ -342,7 +342,7 @@ func (self *canonicalRewardState) CanonicalRewardOfHeight(depositId uint64, heig
 func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) ([]int64, []int64, []map[string]int64, []map[string]int64) {
 	deposit := self.global.deposits.get(positionId)
 	poolPath := deposit.targetPoolPath
-	
+
 	// Get canonical pool reward for this position
 	canonicalPool, ok := self.Pool[poolPath]
 	if !ok {
@@ -357,21 +357,21 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 		}
 		return internalRewards, internalPenalties, externalRewards, externalPenalties
 	}
-	
+
 	currentHeight := self.CurrentHeight()
 	lastCollectHeight := deposit.lastCollectHeight
-	
+
 	// Initialize result arrays
 	internalRewards := make([]int64, len(deposit.warmups))
 	internalPenalties := make([]int64, len(deposit.warmups))
 	externalRewards := make([]map[string]int64, len(deposit.warmups))
 	externalPenalties := make([]map[string]int64, len(deposit.warmups))
-	
+
 	for i := range externalRewards {
 		externalRewards[i] = make(map[string]int64)
 		externalPenalties[i] = make(map[string]int64)
 	}
-	
+
 	// Calculate internal rewards if pool is in a tier
 	if canonicalPool.tier > 0 {
 		// Use the pre-calculated pool reward from the last canonical calculation
@@ -394,7 +394,7 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 			}
 		}
 	}
-	
+
 	// Calculate external rewards
 	for _, incentive := range canonicalPool.incentive {
 		if currentHeight >= incentive.startHeight && currentHeight <= incentive.endHeight && self.isInRange(deposit) {
@@ -410,11 +410,11 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 				if endHeight > incentive.endHeight {
 					endHeight = incentive.endHeight
 				}
-				
+
 				if endHeight > startHeight {
 					blockCount := endHeight - startHeight
 					totalExternalReward := blockCount * incentive.rewardPerBlock
-					
+
 					// Apply to current warmup
 					warmupIndex := deposit.FindWarmup(currentHeight)
 					if warmupIndex < len(deposit.warmups) {
@@ -427,7 +427,7 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 			}
 		}
 	}
-	
+
 	return internalRewards, internalPenalties, externalRewards, externalPenalties
 }
 
@@ -770,4 +770,3 @@ func (self *canonicalRewardState) AssertCanonicalRewardMap(expected map[uint64]i
 		self.AssertCanonicalRewardOf(key, uint64(value))
 	}
 }
-

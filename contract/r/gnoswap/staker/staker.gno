@@ -275,7 +275,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 		liquidity:         liquidity,
 		lastCollectHeight: currentHeight,
 		warmups:           instantiateWarmup(currentHeight),
-		
+
 		// Initialize accumulation tracking - will be set after cacheReward
 		lastInternalAccumulation:  u256.Zero(),
 		lastExternalAccumulations: make(map[string]*u256.Uint),
@@ -301,7 +301,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 	// After cacheReward, get current accumulation and set to deposit
 	_, currentInternalAcc := pool.CurrentGlobalRewardAccumulation(currentHeight)
 	deposit.lastInternalAccumulation = currentInternalAcc.Clone()
-	
+
 	// Initialize external accumulations with current values
 	allCurrentIncentives := pool.incentives.GetAllInHeights(0, currentHeight)
 	for incentiveId, incentive := range allCurrentIncentives {
@@ -464,7 +464,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		// Update internal accumulation - get the latest calculated accumulation
 		_, currentInternalAcc := pool.CurrentGlobalRewardAccumulation(currentHeight)
 		deposit.lastInternalAccumulation = currentInternalAcc.Clone()
-		
+
 		// Update external accumulations
 		for incentiveId, incentive := range pool.incentives.GetAllInHeights(0, currentHeight) {
 			// External incentives are already updated in calcPositionReward
@@ -729,7 +729,7 @@ func poolHasIncentives(poolPath string) error {
 			errNonIncentivizedPool, poolPath,
 		)
 	}
-	hasInternal := poolTier.IsInternallyIncentivizedPool(poolPath)
+	hasInternal := poolTier.IsInternalIncentivizedPool(poolPath)
 	hasExternal := pool.IsExternallyIncentivizedPool()
 	if hasInternal == false && hasExternal == false {
 		return ufmt.Errorf(
@@ -760,7 +760,7 @@ func getLiquidity(positionId uint64) *u256.Uint {
 
 func getTokenPairBalanceFromPosition(poolPath string, positionId uint64) (string, string) {
 	position := pn.MustGetPosition(positionId)
-	
+
 	return position.Token0Balance().ToString(), position.Token1Balance().ToString()
 }
 

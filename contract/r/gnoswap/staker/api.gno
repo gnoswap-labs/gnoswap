@@ -15,7 +15,7 @@ func ApiGetRewardTokens() string {
 		thisPoolRewardTokens := []string{}
 
 		// HANDLE INTERNAL
-		if poolTier.IsInternallyIncentivizedPool(pool.poolPath) {
+		if poolTier.IsInternalIncentivizedPool(pool.poolPath) {
 			thisPoolRewardTokens = append(thisPoolRewardTokens, GNS_PATH)
 		}
 
@@ -59,7 +59,7 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 	thisPoolRewardTokens := []string{}
 
 	// HANDLE INTERNAL
-	if poolTier.IsInternallyIncentivizedPool(pool.poolPath) {
+	if poolTier.IsInternalIncentivizedPool(pool.poolPath) {
 		thisPoolRewardTokens = append(thisPoolRewardTokens, GNS_PATH)
 	}
 

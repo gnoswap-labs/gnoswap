@@ -10,11 +10,6 @@ import (
 )
 
 var (
-	// Q128 is 2^128
-	q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")
-	// Q192 is 2^192
-	q192 = u256.MustFromDecimal("6277101735386680763835789423207666416102355444464034512896")
-
 	// pools is the global pool storage
 	pools *Pools
 )
@@ -267,9 +262,10 @@ func (self *Pool) updateGlobalRewardRatioAccumulation(currentHeight int64, curre
 	// Use the pool-specific reward from PoolTier (already calculated per pool)
 	totalReward := u256.NewUintFromInt64(poolReward)
 
-	// Calculate reward per liquidity (multiply by Q128 for precision)
-	rewardPerLiquidity := u256.Zero().Mul(totalReward, q128)
-	rewardPerLiquidity = rewardPerLiquidity.Div(rewardPerLiquidity, currentStakedLiquidity)
+	// Calculate reward per liquidity with enhanced X128 precision
+	// Use MulDiv to minimize precision loss: (totalReward * Q128) / currentStakedLiquidity
+	// This gives us 128-bit precision in intermediate calculation
+	rewardPerLiquidity := u256.MulDiv(totalReward, q128, currentStakedLiquidity)
 
 	// Add to existing accumulation
 	newAcc := u256.Zero().Add(oldAcc, rewardPerLiquidity)
@@ -304,97 +300,6 @@ func (self *Pool) RewardStateOf(deposit *Deposit) *RewardState {
 	}
 
 	return result
-}
-
-// calculateInternalReward calculates the internal reward for the deposit.
-// It calls rewardPerWarmup for each rewardCache interval, applies warmup, and returns the rewards and penalties.
-func (self *RewardState) calculateInternalReward(startHeight, endHeight int64) ([]int64, []int64) {
-	currentReward := self.pool.CurrentReward(startHeight)
-	self.pool.rewardCache.Iterate(startHeight, endHeight, func(key int64, value any) bool {
-		// we calculate per-position reward
-		self.rewardPerWarmup(startHeight, int64(key), currentReward)
-		currentReward = value.(int64)
-		startHeight = int64(key)
-		return false
-	})
-
-	if startHeight < endHeight {
-		self.rewardPerWarmup(startHeight, endHeight, currentReward)
-	}
-
-	self.applyWarmup()
-
-	return self.rewards, self.penalties
-}
-
-// calculateExternalReward calculates the external reward for the deposit.
-// It calls rewardPerWarmup for startHeight to endHeight(clamped to the incentive period), applies warmup and returns the rewards and penalties.
-func (self *RewardState) calculateExternalReward(startHeight, endHeight int64, incentive *ExternalIncentive) ([]int64, []int64) {
-	if startHeight < int64(self.deposit.lastCollectHeight) {
-		// This must not happen, but adding some guards just in case.
-		startHeight = int64(self.deposit.lastCollectHeight)
-	}
-
-	if endHeight < incentive.startHeight {
-		return nil, nil // Not started yet
-	}
-
-	if startHeight < incentive.startHeight {
-		startHeight = incentive.startHeight
-	}
-
-	if endHeight > incentive.endHeight {
-		endHeight = incentive.endHeight
-	}
-
-	if startHeight > incentive.endHeight {
-		return nil, nil // Already ended
-	}
-
-	rewardPerBlock := incentive.rewardPerBlock
-
-	self.rewardPerWarmup(startHeight, endHeight, rewardPerBlock)
-
-	self.applyWarmup()
-
-	return self.rewards, self.penalties
-}
-
-// applyWarmup applies the warmup to the rewards and calculate penalties.
-func (self *RewardState) applyWarmup() {
-	for i, warmup := range self.deposit.warmups {
-		refactorReward := self.rewards[i]
-		self.rewards[i] = safeMulInt64(refactorReward, int64(warmup.WarmupRatio)) / 100
-		self.penalties[i] = safeSubInt64(refactorReward, self.rewards[i])
-	}
-}
-
-// rewardPerWarmup calculates the reward for each warmup, adds to the RewardState's rewards array.
-func (self *RewardState) rewardPerWarmup(startHeight, endHeight int64, rewardPerBlock int64) {
-	for i, warmup := range self.deposit.warmups {
-		if startHeight >= warmup.NextWarmupHeight {
-			// passed the warmup
-			continue
-		}
-
-		if endHeight < warmup.NextWarmupHeight {
-			rewardAcc := self.pool.CalculateRewardForPosition(startHeight, self.pool.CurrentTick(startHeight), endHeight, self.pool.CurrentTick(endHeight), self.deposit)
-			rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.liquidity)
-			rewardAcc = u256.Zero().Mul(rewardAcc, u256.NewUintFromInt64(rewardPerBlock))
-			rewardAcc = u256.Zero().Div(rewardAcc, q128)
-			self.rewards[i] += int64(rewardAcc.Uint64())
-			// done
-			break
-		}
-
-		rewardAcc := self.pool.CalculateRewardForPosition(startHeight, self.pool.CurrentTick(startHeight), warmup.NextWarmupHeight, self.pool.CurrentTick(warmup.NextWarmupHeight), self.deposit)
-		rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.liquidity)
-		rewardAcc = u256.Zero().Mul(rewardAcc, u256.NewUintFromInt64(rewardPerBlock))
-		rewardAcc = u256.Zero().Div(rewardAcc, q128)
-		self.rewards[i] += int64(rewardAcc.Uint64())
-
-		startHeight = warmup.NextWarmupHeight
-	}
 }
 
 // modifyDeposit updates the pool's staked liquidity and returns the new accumulation.

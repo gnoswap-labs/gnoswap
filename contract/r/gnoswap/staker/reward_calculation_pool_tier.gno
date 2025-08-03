@@ -255,7 +255,7 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentBlock int64, tot
 	})
 }
 
-// IsInternallyIncentivizedPool returns true if the pool is in a tier.
-func (self *PoolTier) IsInternallyIncentivizedPool(poolPath string) bool {
+// IsInternalIncentivizedPool returns true if the pool is in a tier.
+func (self *PoolTier) IsInternalIncentivizedPool(poolPath string) bool {
 	return self.CurrentTier(poolPath) > 0
 }

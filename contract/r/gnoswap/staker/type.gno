@@ -27,7 +27,7 @@ type ExternalIncentive struct {
 
 	// New fields for accumulation-based reward system
 	rewardAccumulation *u256.Uint // accumulated reward per liquidity (Q128)
-	lastUpdateHeight   int64       // last height when accumulation was updated
+	lastUpdateHeight   int64      // last height when accumulation was updated
 }
 
 func (e ExternalIncentive) IsStarted(currentHeight int64) bool {
@@ -193,10 +193,10 @@ func (self *ExternalIncentive) updateAccumulation(currentHeight int64, totalStak
 		return
 	}
 
-	// Calculate reward per liquidity and add to accumulation
+	// Calculate reward per liquidity with enhanced X128 precision
 	totalReward := u256.NewUintFromInt64(actualRewardDistributed)
-	rewardPerLiquidity := u256.Zero().Mul(totalReward, u256.MustFromDecimal("340282366920938463463374607431768211456"))
-	rewardPerLiquidity = rewardPerLiquidity.Div(rewardPerLiquidity, totalStakedLiquidity)
+	// Use MulDiv to minimize precision loss: (totalReward * Q128) / totalStakedLiquidity
+	rewardPerLiquidity := u256.MulDiv(totalReward, u256.MustFromDecimal("340282366920938463463374607431768211456"), totalStakedLiquidity)
 
 	self.rewardAccumulation = self.rewardAccumulation.Add(self.rewardAccumulation, rewardPerLiquidity)
 	self.lastUpdateHeight = currentHeight

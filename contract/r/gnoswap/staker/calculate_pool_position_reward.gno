@@ -121,17 +121,17 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 
 	// Calculate internal rewards using accumulation differences with proper warmup calculation
 	if param.PoolTier.CurrentTier(poolPath) != 0 {
-		// For internal rewards, use position-specific accumulation
-		totalInternalReward := u256.Zero().Mul(positionRewardAcc, deposit.liquidity)
-		totalInternalReward = u256.Zero().Rsh(totalInternalReward, 128) // Q128
+		// For internal rewards, use position-specific accumulation with enhanced X128 precision
+		// Use MulDiv to minimize precision loss: (positionRewardAcc * deposit.liquidity) / Q128
+		totalInternalReward := u256.MulDiv(positionRewardAcc, deposit.liquidity, u256.MustFromDecimal("340282366920938463463374607431768211456"))
 
 		baseInternalReward := int64(totalInternalReward.Uint64())
-		
+
 		// Calculate warmup-weighted reward
 		internalRewards, internalPenalties = calculateWarmupWeightedReward(
-			deposit, 
-			baseInternalReward, 
-			deposit.lastCollectHeight, 
+			deposit,
+			baseInternalReward,
+			deposit.lastCollectHeight,
 			param.CurrentHeight,
 		)
 	}
@@ -146,25 +146,25 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 		// Check if position is in range for external rewards using common function
 		currentTick := pool.CurrentTick(param.CurrentHeight)
 		isInRange := isPositionInRange(currentTick, deposit.tickLower, deposit.tickUpper)
-		
+
 		var baseExternalReward int64
 		if !isInRange {
 			// Position is out-of-range, no external reward
 			baseExternalReward = 0
 		} else {
-			// Calculate reward based on accumulation difference
+			// Calculate reward based on accumulation difference with enhanced X128 precision
 			lastAcc := deposit.lastExternalAccumulations[incentiveId]
 			if lastAcc == nil {
 				lastAcc = u256.Zero()
 			}
-			
+
 			accDiff := u256.Zero().Sub(incentive.rewardAccumulation, lastAcc)
-			externalReward := u256.Zero().Mul(accDiff, deposit.liquidity)
-			externalReward = externalReward.Div(externalReward, u256.MustFromDecimal("340282366920938463463374607431768211456")) // Q128
-			
+			// Use MulDiv to minimize precision loss: (accDiff * deposit.liquidity) / Q128
+			externalReward := u256.MulDiv(accDiff, deposit.liquidity, u256.MustFromDecimal("340282366920938463463374607431768211456"))
+
 			baseExternalReward = int64(externalReward.Uint64())
 		}
-		
+
 		// Apply warmup to external rewards using the same logic as internal rewards
 		rewards, penalties := calculateWarmupWeightedReward(
 			deposit,
@@ -207,54 +207,54 @@ func calculateWarmupWeightedReward(deposit *Deposit, baseReward int64, startHeig
 	if totalBlocks <= 0 {
 		return []int64{}, []int64{}
 	}
-	
+
 	// Find breakpoints where warmup tier changes
 	breakpoints := findWarmupBreakpoints(deposit, startHeight, endHeight)
-	
+
 	userRewards := make([]int64, len(deposit.warmups))
 	penalties := make([]int64, len(deposit.warmups))
-	
+
 	// Calculate reward for each period between breakpoints
 	for i := 0; i < len(breakpoints)-1; i++ {
 		periodStart := breakpoints[i]
 		periodEnd := breakpoints[i+1]
 		periodBlocks := periodEnd - periodStart
-		
+
 		if periodBlocks <= 0 {
 			continue
 		}
-		
+
 		// Find warmup ratio for this period (use middle of period)
 		midHeight := periodStart + periodBlocks/2
 		warmupIndex := deposit.FindWarmup(midHeight)
 		warmupRatio := deposit.warmups[warmupIndex].WarmupRatio
-		
+
 		// Calculate period reward and apply warmup
 		periodUserReward, periodPenalty := calculatePeriodReward(
-			baseReward, 
-			totalBlocks, 
-			periodBlocks, 
+			baseReward,
+			totalBlocks,
+			periodBlocks,
 			warmupRatio,
 		)
-		
+
 		userRewards[i] = periodUserReward
 		penalties[i] = periodPenalty
 	}
-	
+
 	return userRewards, penalties
 }
 
 // findWarmupBreakpoints finds all height points where warmup tier changes
 func findWarmupBreakpoints(deposit *Deposit, startHeight int64, endHeight int64) []int64 {
 	breakpoints := []int64{startHeight}
-	
+
 	// Add warmup tier change points within the period
 	for _, warmup := range deposit.warmups {
 		if warmup.NextWarmupHeight > startHeight && warmup.NextWarmupHeight <= endHeight {
 			breakpoints = append(breakpoints, warmup.NextWarmupHeight)
 		}
 	}
-	
+
 	breakpoints = append(breakpoints, endHeight)
 	return breakpoints
 }
@@ -263,10 +263,10 @@ func findWarmupBreakpoints(deposit *Deposit, startHeight int64, endHeight int64)
 func calculatePeriodReward(baseReward int64, totalBlocks int64, periodBlocks int64, warmupRatio uint64) (int64, int64) {
 	// Calculate period reward proportional to blocks
 	periodReward := baseReward * periodBlocks / totalBlocks
-	
+
 	// Apply warmup ratio
 	periodUserReward := periodReward * int64(warmupRatio) / 100
 	periodPenalty := periodReward - periodUserReward
-	
+
 	return periodUserReward, periodPenalty
 }

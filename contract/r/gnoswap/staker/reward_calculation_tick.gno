@@ -176,11 +176,11 @@ func tickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 		// Optimized: Only update accumulation and historical tick, skip complex reward calculations
 		// The actual liquidity change will be processed during collect
 		_, newAcc := pool.CurrentGlobalRewardAccumulation(blockNumber)
-		
+
 		// Update global accumulation and historical tick
 		pool.globalRewardAccumulation.set(blockNumber, newAcc)
 		pool.historicalTick.set(blockNumber, nextTick)
-		
+
 		// Update tick's outside accumulation (this is lightweight)
 		tick.updateCurrentOutsideAccumulation(blockNumber, newAcc)
 	}

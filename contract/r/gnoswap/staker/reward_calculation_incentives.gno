@@ -167,4 +167,3 @@ func (self *Incentives) calculateUnclaimableReward(incentiveId string) int64 {
 
 	return unclaimableAmount
 }
-
