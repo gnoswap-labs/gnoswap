@@ -34,6 +34,8 @@ var (
 	protocolFeeAddr   = getRoleAddress(prbac.ROLE_PROTOCOL_FEE)
 	adminAddr         = getRoleAddress(prbac.ROLE_ADMIN)
 	positionAddr      = getRoleAddress(prbac.ROLE_POSITION)
+
+	avgBlockTimeMs 	= 2000
 )
 
 // list of staked positions
@@ -203,13 +205,13 @@ func init() {
 
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1)
 	poolTier = NewPoolTier(pools, std.ChainHeight(), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange)
-	registerstakerEmissionChangeCallback()
+	registerAvgBlockTimeChangeCallback()
 }
 
-func registerstakerEmissionChangeCallback() {
-	en.SetGnsStakerEmissionChangeCallback(cross, func(emission int64) {
+func registerAvgBlockTimeChangeCallback() {
+	gns.SetAvgBlockTimeChangeCallback(cross, func(avgBlockTimeMs int64) {
 		func(cur realm) {
-			stakerEmissionChangeCallback(emission)
+			avgBlockTimeMs = avgBlockTimeMs
 		}(cross)
 	})
 }

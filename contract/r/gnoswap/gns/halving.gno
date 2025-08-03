@@ -55,7 +55,7 @@ var (
 	blockPerDay  = SECONDS_PER_DAY / blockGenMs
 
 	avgBlockTimeMs = BLOCK_GENERATION_INTERVAL
-	perBlockMint         = avl.NewTree() // height => uint64
+	perBlockMint   = avl.NewTree() // height => uint64
 )
 
 // HalvingData is a struct that stores data for each halving period
@@ -266,16 +266,6 @@ func (h *HalvingData) initialize(startHeight, startTimestamp int64) {
 	}
 }
 
-// Emission change callback function
-var emissionChangeCallback func(amount int64)
-
-func SetEmissionChangeCallback(cur realm, callback func(amount int64)) {
-	caller := std.PreviousRealm().Address()
-	access.AssertIsEmission(caller)
-
-	emissionChangeCallback = callback
-}
-
 // EmissionState is a struct for managing emission state
 type EmissionState struct {
 	startHeight    int64       // emission start block height
@@ -459,11 +449,12 @@ func setAvgBlockTimeInMs(ms int64) error {
 
 	adjusted := hd.getAmountPerBlock(currentYear)
 
-	if emissionChangeCallback == nil {
-		return errEmissionChangeIsNilCallback
+	// when avgBlockTimeChangeCallbacks is not nil, call the callback function
+	if avgBlockTimeChangeCallbacks != nil {
+		for _, callback := range avgBlockTimeChangeCallbacks {
+			callback(adjusted)
+		}
 	}
-
-	emissionChangeCallback(adjusted)
 
 	// final update of global variables
 	avgBlockTimeMs = ms

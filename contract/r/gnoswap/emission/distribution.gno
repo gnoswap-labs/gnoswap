@@ -293,23 +293,6 @@ func setDistributionBpsPct(target int, pct int64) {
 	if distributionBpsPct == nil {
 		distributionBpsPct = avl.NewTree()
 	}
-	if target == LIQUIDITY_STAKER {
-		oldPct, exist := distributionBpsPct.Get(strconv.Itoa(target))
-		if !exist {
-			panic("should not happen")
-		}
-
-		oldPctInt64, ok := oldPct.(int64)
-		if !ok {
-			panic("cannot convert oldPct to int64")
-		}
-		if oldPctInt64 != pct {
-			changedPct := calculateAmount(gns.GetEmission(), pct)
-			if stakerEmissionChangeCallback != nil {
-				stakerEmissionChangeCallback(changedPct)
-			}
-		}
-	}
 
 	distributionBpsPct.Set(strconv.Itoa(target), pct)
 }
