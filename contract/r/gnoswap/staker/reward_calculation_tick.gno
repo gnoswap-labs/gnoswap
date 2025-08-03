@@ -136,15 +136,17 @@ func (self *Tick) modifyDepositUpper(currentHeight int64, currentTick int32, liq
 
 // updateCurrentOutsideAccumulation updates the tick's outside accumulation
 // It "flips" the accumulation's inside/outside by subtracting the current outside accumulation from the global accumulation
+// In the new system, this handles actual reward accumulation per liquidity (not just block ratios)
 func (self *Tick) updateCurrentOutsideAccumulation(blockNumber int64, acc *u256.Uint) {
 	currentOutsideAccumulation := self.CurrentOutsideAccumulation(blockNumber)
 	newOutsideAccumulation := u256.Zero().Sub(acc, currentOutsideAccumulation)
 	self.outsideAccumulation.set(blockNumber, newOutsideAccumulation)
 }
 
-// TickCrossHook is a hook that is called when a tick is crossed.
+// tickCrossHook is a hook that is called when a tick is crossed.
 // Modifies the tick's outside accumulation and updates the tick's liquidity info
-func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tickId int32, zeroForOne bool) {
+// Optimized to minimize calculations during swaps - only updates accumulations
+func tickCrossHook(pools *Pools, height func() int64) func(poolPath string, tickId int32, zeroForOne bool) {
 	return func(poolPath string, tickId int32, zeroForOne bool) {
 		pool, ok := pools.Get(poolPath)
 		if !ok {
@@ -170,14 +172,23 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 		if zeroForOne {
 			liquidityInRangeDelta = i256.Zero().Neg(liquidityInRangeDelta)
 		}
-		newAcc := pool.modifyDeposit(liquidityInRangeDelta, blockNumber, nextTick)
+
+		// Optimized: Only update accumulation and historical tick, skip complex reward calculations
+		// The actual liquidity change will be processed during collect
+		_, newAcc := pool.CurrentGlobalRewardAccumulation(blockNumber)
+		
+		// Update global accumulation and historical tick
+		pool.globalRewardAccumulation.set(blockNumber, newAcc)
+		pool.historicalTick.set(blockNumber, nextTick)
+		
+		// Update tick's outside accumulation (this is lightweight)
 		tick.updateCurrentOutsideAccumulation(blockNumber, newAcc)
 	}
 }
 
 func setTickCrossHook() {
 	// Sets tick cross hook for pool contract
-	pl.SetTickCrossHook(cross, TickCrossHook(pools, std.ChainHeight))
+	pl.SetTickCrossHook(cross, tickCrossHook(pools, std.ChainHeight))
 }
 
 func init() {

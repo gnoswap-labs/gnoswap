@@ -108,11 +108,10 @@ type ApiInternalIncentive struct {
 }
 
 func newApiInternalIncentive(poolPath string, tier uint64) ApiInternalIncentive {
-	perBlock := calculateInternalRewardPerBlockByPoolPath(poolPath)
 	return ApiInternalIncentive{
 		PoolPath:       poolPath,
 		Tier:           tier,
-		RewardPerBlock: perBlock,
+		RewardPerBlock: "0",
 	}
 }
 

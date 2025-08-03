@@ -132,26 +132,16 @@ func (self *Incentives) endUnclaimablePeriod(endHeight int64) {
 	}
 }
 
-// calculate unclaimable reward by checking unclaimable periods
+// calculate unclaimable reward using accumulation-based system
 func (self *Incentives) calculateUnclaimableReward(incentiveId string) int64 {
 	incentive, ok := self.GetByIncentiveId(incentiveId)
 	if !ok {
 		return 0
 	}
 
-	blocks := int64(0)
-
-	self.unclaimablePeriods.ReverseIterate(0, incentive.startHeight, func(key int64, value any) bool {
-		endHeight := value.(int64)
-		if endHeight == 0 {
-			endHeight = incentive.endHeight
-		}
-		if endHeight <= incentive.startHeight {
-			return true
-		}
-		blocks += endHeight - incentive.startHeight
-		return true
-	})
+	// For accumulation-based system, unclaimable reward is calculated differently
+	// We need to check unclaimable periods and calculate based on accumulation
+	unclaimableAmount := int64(0)
 
 	self.unclaimablePeriods.Iterate(incentive.startHeight, incentive.endHeight, func(key int64, value any) bool {
 		startHeight := key
@@ -159,9 +149,22 @@ func (self *Incentives) calculateUnclaimableReward(incentiveId string) int64 {
 		if endHeight == 0 {
 			endHeight = incentive.endHeight
 		}
-		blocks += endHeight - startHeight
+
+		// Clamp to incentive period
+		if startHeight < incentive.startHeight {
+			startHeight = incentive.startHeight
+		}
+		if endHeight > incentive.endHeight {
+			endHeight = incentive.endHeight
+		}
+
+		if startHeight < endHeight {
+			blocks := endHeight - startHeight
+			unclaimableAmount += blocks * incentive.rewardPerBlock
+		}
 		return false
 	})
 
-	return int64(blocks) * incentive.rewardPerBlock
+	return unclaimableAmount
 }
+

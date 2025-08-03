@@ -171,7 +171,7 @@ func transferToTarget(target int, amount int64) error {
 				ufmt.Sprintf("%s not found", prbac.ROLE_STAKER.String()),
 			)
 		}
-		
+
 		gns.Transfer(cross, stakerAddr, amount)
 		distributedToStaker += amount
 		accuDistributedToStaker += amount

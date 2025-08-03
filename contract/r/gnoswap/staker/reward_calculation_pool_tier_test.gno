@@ -53,7 +53,7 @@ func TestNewPoolTier(t *testing.T) {
 	currentHeight := int64(100)
 	mustExistsInTier1 := "testPool"
 
-	poolTier := NewPoolTier(NewPools(), currentHeight, mustExistsInTier1, func() int64 { return 0 }, func(start, end int64) ([]int64, []int64) { return nil, nil })
+	poolTier := NewPoolTier(NewPools(), currentHeight, mustExistsInTier1, func() int64 { return 0 })
 
 	// Test initial counts
 	if count := poolTier.CurrentCount(1); count != 1 {
@@ -72,27 +72,10 @@ func TestNewPoolTier(t *testing.T) {
 	}
 }
 
-func TestCacheReward(t *testing.T) {
-	currentHeight := int64(250)
-	// Simulate emission updates
-	poolTier := NewPoolTier(NewPools(), currentHeight, "testPool", func() int64 { return 1000 }, func(startHeight int64, endHeight int64) ([]int64, []int64) {
-		return []int64{100, 150, 200}, []int64{1000, 500, 250}
-	})
-
-	// Cache rewards
-	poolTier.cacheReward(currentHeight, pools)
-
-	// Verify rewards
-	reward := poolTier.CurrentReward(1)
-	if reward == 0 {
-		t.Errorf("Expected reward for tier 1 at height 250, got 0")
-	}
-}
-
 var test_gnousdc = pl.GetPoolPath("gno.land/r/demo/wugnot", "gno.land/r/gnoswap/v1/gns", 3000)
 
 func SetupPoolTier(t *testing.T) *PoolTier {
-	poolTier := NewPoolTier(NewPools(), 1, test_gnousdc, func() int64 { return 1000 }, func(start, end int64) ([]int64, []int64) { return nil, nil })
+	poolTier := NewPoolTier(NewPools(), 1, test_gnousdc, func() int64 { return 1000 })
 
 	poolTier.changeTier(1, pools, test_gnousdc, 1)
 	return poolTier

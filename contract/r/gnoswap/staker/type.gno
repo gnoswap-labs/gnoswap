@@ -24,6 +24,10 @@ type ExternalIncentive struct {
 	refundee         std.Address // refundee address
 
 	unclaimableRefunded bool // whether unclaimable reward is refunded
+
+	// New fields for accumulation-based reward system
+	rewardAccumulation *u256.Uint // accumulated reward per liquidity (Q128)
+	lastUpdateHeight   int64       // last height when accumulation was updated
 }
 
 func (e ExternalIncentive) IsStarted(currentHeight int64) bool {
@@ -141,11 +145,61 @@ func (self *ExternalIncentive) Clone() *ExternalIncentive {
 		rewardPerBlock:      self.rewardPerBlock,
 		refundee:            self.refundee,
 		unclaimableRefunded: self.unclaimableRefunded,
+		rewardAccumulation:  self.rewardAccumulation.Clone(),
+		lastUpdateHeight:    self.lastUpdateHeight,
 	}
 }
 
 func (self *ExternalIncentive) setUnClaimableRefunded(unClaimableRefunded bool) {
 	self.unclaimableRefunded = unClaimableRefunded
+}
+
+// updateAccumulation updates the reward accumulation for the given period
+// For external incentives, we track the actual consumed reward from the incentive
+func (self *ExternalIncentive) updateAccumulation(currentHeight int64, totalStakedLiquidity *u256.Uint) {
+	if self.lastUpdateHeight >= currentHeight {
+		return
+	}
+
+	if totalStakedLiquidity.IsZero() {
+		self.lastUpdateHeight = currentHeight
+		return
+	}
+
+	// Calculate blocks in active period
+	startHeight := self.lastUpdateHeight
+	if startHeight < self.startHeight {
+		startHeight = self.startHeight
+	}
+
+	endHeight := currentHeight
+	if endHeight > self.endHeight {
+		endHeight = self.endHeight
+	}
+
+	if startHeight >= endHeight {
+		self.lastUpdateHeight = currentHeight
+		return
+	}
+
+	// For external incentives, calculate based on actual reward spent
+	// This is more accurate than block-based calculation
+	rewardSpentBefore := self.RewardSpent(uint64(startHeight))
+	rewardSpentAfter := self.RewardSpent(uint64(endHeight))
+	actualRewardDistributed := rewardSpentAfter - rewardSpentBefore
+
+	if actualRewardDistributed <= 0 {
+		self.lastUpdateHeight = currentHeight
+		return
+	}
+
+	// Calculate reward per liquidity and add to accumulation
+	totalReward := u256.NewUintFromInt64(actualRewardDistributed)
+	rewardPerLiquidity := u256.Zero().Mul(totalReward, u256.MustFromDecimal("340282366920938463463374607431768211456"))
+	rewardPerLiquidity = rewardPerLiquidity.Div(rewardPerLiquidity, totalStakedLiquidity)
+
+	self.rewardAccumulation = self.rewardAccumulation.Add(self.rewardAccumulation, rewardPerLiquidity)
+	self.lastUpdateHeight = currentHeight
 }
 
 // NewExternalIncentive creates a new external incentive
@@ -186,6 +240,8 @@ func NewExternalIncentive(
 		createdHeight:       createdHeight,
 		depositGnsAmount:    depositGnsAmount,
 		unclaimableRefunded: false,
+		rewardAccumulation:  u256.Zero(),
+		lastUpdateHeight:    startHeight,
 	}
 }
 
@@ -199,4 +255,8 @@ type Deposit struct {
 	liquidity         *u256.Uint  // liquidity
 	lastCollectHeight int64       // last collect block height
 	warmups           []Warmup    // warmup information
+
+	// New fields for accumulation-based reward system
+	lastInternalAccumulation  *u256.Uint            // last internal reward accumulation per liquidity (Q128)
+	lastExternalAccumulations map[string]*u256.Uint // incentiveId -> last external reward accumulation per liquidity (Q128)
 }

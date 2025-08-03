@@ -491,19 +491,6 @@ func GetPoolTierCount(tier uint64) uint64 {
 	return uint64(poolTier.CurrentCount(tier))
 }
 
-// GetPoolReward retrieves the current reward amount for the specified pool tier.
-//
-// This function fetches the reward for the given tier based on the current block height.
-//
-// Parameters:
-// - tier (uint64): The tier for which the reward is retrieved.
-//
-// Returns:
-// - int64: The current reward amount for the specified tier.
-func GetPoolReward(tier uint64) int64 {
-	return poolTier.CurrentReward(tier)
-}
-
 // getExternalIncentive retrieves an external incentive by its ID.
 //
 // This function looks up an external incentive in the global `externalIncentives` tree using the specified `incentiveId`.

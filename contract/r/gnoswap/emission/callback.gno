@@ -23,7 +23,7 @@ func registerEmissionChangeCallback() {
 // It does not process non-immediate emission changes, such as halving.
 func emissionChangeCallback(amount int64) {
 	if stakerEmissionChangeCallback == nil {
-		panic("stakerEmissionChangeCallback is nil")
+		return;
 	}
 
 	calculatedAmount := calculateAmount(amount, GetDistributionBpsPct(LIQUIDITY_STAKER))

@@ -160,8 +160,26 @@ func formatAnyInt(v any) string {
 	}
 }
 
-func formatBool(v bool) string {
-	return strconv.FormatBool(v)
+// formatBool converts a boolean value to its string representation.
+func formatBool(value bool) string {
+	if value {
+		return "true"
+	}
+	return "false"
+}
+
+// isPositionInRange checks if a position is within the active liquidity range
+// at the given tick. This is used by both internal and external reward calculations.
+//
+// Parameters:
+// - currentTick (int32): The current tick of the pool
+// - tickLower (int32): The lower tick of the position
+// - tickUpper (int32): The upper tick of the position
+//
+// Returns:
+// - bool: true if the position is in range, false otherwise
+func isPositionInRange(currentTick int32, tickLower int32, tickUpper int32) bool {
+	return currentTick >= tickLower && currentTick < tickUpper
 }
 
 func getRoleAddress(role prbac.SystemRole) std.Address {

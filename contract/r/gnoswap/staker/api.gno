@@ -266,11 +266,6 @@ func makeRewardTokensArray(rewardsTokenList []string) []*json.Node {
 	return rewardsTokenArray
 }
 
-func calculateInternalRewardPerBlockByPoolPath(poolPath string) string {
-	reward := poolTier.CurrentRewardPerPool(poolPath)
-	return ufmt.Sprintf("%d", reward)
-}
-
 // ResponseQueryBase contains basic information about a query response.
 type ResponseQueryBase struct {
 	Height    int64 `json:"height"`    // The block height at the time of the query

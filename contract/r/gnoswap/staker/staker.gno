@@ -202,16 +202,7 @@ func init() {
 	// ONLY GNOT:GNS 0.3%
 
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1)
-	poolTier = NewPoolTier(pools, std.ChainHeight(), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange)
-	registerstakerEmissionChangeCallback()
-}
-
-func registerstakerEmissionChangeCallback() {
-	en.SetGnsStakerEmissionChangeCallback(cross, func(emission int64) {
-		func(cur realm) {
-			stakerEmissionChangeCallback(emission)
-		}(cross)
-	})
+	poolTier = NewPoolTier(pools, std.ChainHeight(), MUST_EXISTS_IN_TIER_1, en.GetAccuDistributedToStaker)
 }
 
 // StakeToken stakes an LP token into the staker contract. It transfer the LP token
@@ -284,6 +275,10 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 		liquidity:         liquidity,
 		lastCollectHeight: currentHeight,
 		warmups:           instantiateWarmup(currentHeight),
+		
+		// Initialize accumulation tracking - will be set after cacheReward
+		lastInternalAccumulation:  u256.Zero(),
+		lastExternalAccumulations: make(map[string]*u256.Uint),
 	}
 
 	currentTick := pl.PoolGetSlot0Tick(poolPath)
@@ -303,10 +298,24 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 	isInRange := false
 	poolTier.cacheReward(currentHeight, pools)
 
+	// After cacheReward, get current accumulation and set to deposit
+	_, currentInternalAcc := pool.CurrentGlobalRewardAccumulation(currentHeight)
+	deposit.lastInternalAccumulation = currentInternalAcc.Clone()
+	
+	// Initialize external accumulations with current values
+	allCurrentIncentives := pool.incentives.GetAllInHeights(0, currentHeight)
+	for incentiveId, incentive := range allCurrentIncentives {
+		// Update incentive accumulation to current height first
+		currentStakedLiquidity := pool.CurrentStakedLiquidity(currentHeight)
+		incentive.updateAccumulation(currentHeight, currentStakedLiquidity)
+		deposit.lastExternalAccumulations[incentiveId] = incentive.rewardAccumulation.Clone()
+	}
+
 	if pn.PositionIsInRange(positionId) {
 		isInRange = true
 		pool.modifyDeposit(signedLiquidity, currentHeight, currentTick)
 	}
+
 	// historical tick must be set regardless of the deposit's range
 	pool.historicalTick.set(currentHeight, currentTick)
 
@@ -438,8 +447,6 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 
 	assertIsDepositor(caller, positionId)
 
-	deposit := deposits.get(positionId)
-
 	en.MintAndDistributeGns(cross)
 
 	currentHeight := std.ChainHeight()
@@ -448,7 +455,23 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 	reward := calcPositionReward(currentHeight, positionId)
 
 	// update lastCollectHeight to current height
+	deposit := deposits.get(positionId)
 	deposit.lastCollectHeight = currentHeight
+
+	// Update accumulation tracking for next collection
+	pool, ok := pools.Get(deposit.targetPoolPath)
+	if ok {
+		// Update internal accumulation - get the latest calculated accumulation
+		_, currentInternalAcc := pool.CurrentGlobalRewardAccumulation(currentHeight)
+		deposit.lastInternalAccumulation = currentInternalAcc.Clone()
+		
+		// Update external accumulations
+		for incentiveId, incentive := range pool.incentives.GetAllInHeights(0, currentHeight) {
+			// External incentives are already updated in calcPositionReward
+			// Just save the current accumulation value
+			deposit.lastExternalAccumulations[incentiveId] = incentive.rewardAccumulation.Clone()
+		}
+	}
 
 	// transfer external rewards to user
 	externalReward := reward.External
