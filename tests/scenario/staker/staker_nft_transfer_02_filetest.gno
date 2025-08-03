@@ -195,5 +195,5 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 4. Collect reward
 // [INFO] skip blocks to accumulate rewards
 // [INFO] collect reward for position 01
-// [EXPECTED] reward collected: 16053080
+// [EXPECTED] reward collected: 16053081
 // [INFO] one-click staking and reward collection successful

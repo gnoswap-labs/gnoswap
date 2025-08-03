@@ -372,12 +372,12 @@ func milliToSec(ms int64) int64 {
 // [INFO] skip blocks until external incentive ends
 // [INFO] end external incentive and collect remaining GNS
 // [INFO] GNS balance before ending: 0
-// [INFO] GNS balance after ending: 1000296192
+// [INFO] GNS balance after ending: 1000000000
 // [EXPECTED] external creator should receive deposit amount minus penalty
 //
 // [SCENARIO] 11. Collect rewards after external incentive ends
 // [INFO] collect rewards after external incentive ends
 // [INFO] GNS balance before collection: 99990000001387
-// [INFO] GNS balance after collection: 99997247150993
-// [INFO] total reward collected: 7247149606
+// [INFO] GNS balance after collection: 99998121512731
+// [INFO] total reward collected: 8121511344
 // [EXPECTED] positions should still receive rewards after external incentive ends

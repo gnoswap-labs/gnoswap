@@ -419,7 +419,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] stake position 01
 // [INFO] collect reward for 30% warm-up
 // [EXPECTED] user reward (30% warm-up): 1605307
-// [EXPECTED] community pool reward (unclaimable + penalty): 25149827
+// [EXPECTED] community pool reward (unclaimable + penalty): 3745719
 // [INFO] progress to 50% warm-up
 // [EXPECTED] user reward (50% warm-up): 2675513
 // [EXPECTED] community pool reward (50% penalty): 2675513

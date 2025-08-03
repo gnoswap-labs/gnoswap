@@ -332,4 +332,4 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] checking reward for position 01 (now out-range)
 // [EXPECTED] position 01 (out-range) reward: 0 GNS
 // [INFO] checking reward for position 02 (still in-range)
-// [EXPECTED] position 02 (in-range) reward: 1605307 GNS
+// [EXPECTED] position 02 (in-range) reward: 1554720 GNS

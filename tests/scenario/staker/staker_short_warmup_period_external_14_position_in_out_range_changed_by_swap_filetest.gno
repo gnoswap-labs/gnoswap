@@ -370,12 +370,12 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 8. Check rewards after 50 blocks
 // [INFO] making external incentive active
 // [INFO] checking rewards after 50 blocks
-// [EXPECTED] position 01 reward: 179 BAR
-// [EXPECTED] position 02 reward: 92148 BAR
+// [EXPECTED] position 01 reward: 143 BAR
+// [EXPECTED] position 02 reward: 74653 BAR
 //
 // [SCENARIO] 9. Make position 01 out of range via swap
 // [EXPECTED] position 01 made out of range by swap, current tick: -195
 //
 // [SCENARIO] 10. Check rewards after position goes out of range
 // [EXPECTED] position 01 (out of range) reward: 0 BAR
-// [EXPECTED] position 02 (in range) reward: 1619 BAR
+// [EXPECTED] position 02 (in range) reward: 1616 BAR

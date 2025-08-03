@@ -305,7 +305,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 5. Collect reward with tier 2
 // [INFO] skip blocks to accumulate rewards with tier 2
 // [INFO] collect reward with tier 2
-// [EXPECTED] reward with tier 2: 10595032
+// [EXPECTED] reward with tier 2: 10595033
 // [INFO] confirmed: rewards are distributed with tier 2
 //
 // [SCENARIO] 6. Remove pool from tier system

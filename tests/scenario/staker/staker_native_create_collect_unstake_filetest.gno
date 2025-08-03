@@ -524,29 +524,29 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] wugnot balance before collect: 0
 // [INFO] ugnot balance before collect: 10099998010
 // [INFO] collect reward for token 01 (no unwrap)
-// [EXPECTED] wugnot balance after collect: 196243
+// [EXPECTED] wugnot balance after collect: 162700
 // [EXPECTED] ugnot balance after collect: 10099998010
-// [EXPECTED] wugnot increase: 196243
+// [EXPECTED] wugnot increase: 162700
 // [EXPECTED] ugnot change: 0
 //
 // [SCENARIO] 9. Unstake token 02
 // [INFO] skip more blocks
-// [INFO] wugnot balance before unstake: 196243
+// [INFO] wugnot balance before unstake: 162700
 // [INFO] ugnot balance before unstake: 10099998010
 // [INFO] unstake token 02 (no unwrap)
 // [EXPECTED] NFT owner after unstaking: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
-// [EXPECTED] wugnot balance after unstake: 694953
+// [EXPECTED] wugnot balance after unstake: 597465
 // [EXPECTED] ugnot balance after unstake: 10099998010
-// [EXPECTED] wugnot increase from unstake: 498710
+// [EXPECTED] wugnot increase from unstake: 434765
 // [EXPECTED] ugnot change from unstake: 0
 //
 // [SCENARIO] 10. End external incentive
 // [INFO] approve wugnot for unwrapping
-// [INFO] wugnot balance before end: 694953
+// [INFO] wugnot balance before end: 597465
 // [INFO] ugnot balance before end: 10099998010
 // [INFO] skip to end of external incentive
 // [INFO] end external incentive
-// [EXPECTED] wugnot balance after end: 694953
+// [EXPECTED] wugnot balance after end: 597465
 // [EXPECTED] ugnot balance after end: 10099998010
 // [EXPECTED] wugnot change: 0
 // [EXPECTED] ugnot refund: 0

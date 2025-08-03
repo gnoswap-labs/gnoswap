@@ -359,32 +359,32 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 6. Third reward collection with longer interval
 // [INFO] skip 10 blocks for third reward accumulation (longer period)
 // [INFO] collect third reward
-// [EXPECTED] third reward (10 blocks): 16053080
+// [EXPECTED] third reward (10 blocks): 16053081
 // [INFO] third reward collection completed
 //
 // [SCENARIO] 7. Compare reward accumulation patterns
 // [INFO] analyze reward accumulation patterns
 // [INFO] test pattern: frequent small collections
 // [INFO] small collection 1 (2 blocks): 3210615
-// [INFO] small collection 2 (2 blocks): 3210615
-// [INFO] small collection 3 (2 blocks): 3210615
-// [INFO] small collection 4 (2 blocks): 3210615
-// [INFO] small collection 5 (2 blocks): 3210615
-// [EXPECTED] total from frequent collections (10 blocks): 16053075
+// [INFO] small collection 2 (2 blocks): 3210616
+// [INFO] small collection 3 (2 blocks): 3210616
+// [INFO] small collection 4 (2 blocks): 3210616
+// [INFO] small collection 5 (2 blocks): 3210616
+// [EXPECTED] total from frequent collections (10 blocks): 16053079
 // [INFO] test pattern: single large collection
-// [EXPECTED] single large collection (10 blocks): 16053080
+// [EXPECTED] single large collection (10 blocks): 16053081
 // [INFO] reward pattern analysis:
-// [INFO] - Frequent collections total: 16053075
-// [INFO] - Single large collection: 16053080
+// [INFO] - Frequent collections total: 16053079
+// [INFO] - Single large collection: 16053081
 // [INFO] reward amounts may vary due to emission timing and block-based calculations
 //
 // [SCENARIO] 8. Final verification with multiple collections
 // [INFO] final verification with multiple rapid collections
-// [INFO] initial GNS balance: 100000065817623
+// [INFO] initial GNS balance: 100000065817629
 // [INFO] perform 3 consecutive collections
-// [EXPECTED] consecutive collection 1: 24079621
+// [EXPECTED] consecutive collection 1: 24079622
 // [EXPECTED] consecutive collection 2: 0
 // [EXPECTED] consecutive collection 3: 0
-// [EXPECTED] total GNS gained in this test: 24079621
+// [EXPECTED] total GNS gained in this test: 24079622
 // [INFO] reward collection pattern scenario completed successfully
 // [INFO] confirmed: rewards accumulate over time and are collected when requested

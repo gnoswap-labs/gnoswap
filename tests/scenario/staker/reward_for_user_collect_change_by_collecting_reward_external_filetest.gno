@@ -388,13 +388,13 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 6. Second external reward collection period
 // [INFO] skip 5 blocks for second external reward accumulation
 // [INFO] collect second external reward
-// [EXPECTED] second external reward (5 blocks): 34722
+// [EXPECTED] second external reward (5 blocks): 34721
 // [INFO] second external reward collection completed
 //
 // [SCENARIO] 7. Third external reward collection with longer interval
 // [INFO] skip 10 blocks for third external reward accumulation (longer period)
 // [INFO] collect third external reward
-// [EXPECTED] third external reward (10 blocks): 69444
+// [EXPECTED] third external reward (10 blocks): 69443
 // [INFO] third external reward collection completed
 //
 // [SCENARIO] 8. Compare external reward accumulation patterns
@@ -407,15 +407,15 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] small external collection 5 (2 blocks): 13888
 // [EXPECTED] total from frequent external collections (10 blocks): 69440
 // [INFO] test pattern: single large external collection
-// [EXPECTED] single large external collection (10 blocks): 69444
+// [EXPECTED] single large external collection (10 blocks): 69443
 // [INFO] external reward pattern analysis:
 // [INFO] - Frequent external collections total: 69440
-// [INFO] - Single large external collection: 69444
+// [INFO] - Single large external collection: 69443
 // [INFO] external reward amounts may vary due to incentive timing and block-based calculations
 //
 // [SCENARIO] 9. Final verification with multiple external collections
 // [INFO] final verification with multiple rapid external collections
-// [INFO] initial BAR balance: 99910000283716
+// [INFO] initial BAR balance: 99910000283713
 // [INFO] perform 3 consecutive external collections
 // [EXPECTED] consecutive external collection 1: 104165
 // [EXPECTED] consecutive external collection 2: 0

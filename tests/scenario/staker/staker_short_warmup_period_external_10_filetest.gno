@@ -369,7 +369,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 8. Collect rewards after duration
 // [INFO] skip duration 200 blocks
 // [INFO] collect reward for position 01
-// [EXPECTED] collected reward: 409808 BAR tokens
+// [EXPECTED] collected reward: 346056 BAR tokens
 //
 // [SCENARIO] 9. Mint and stake position 02
 // [INFO] approve tokens for minting position 02

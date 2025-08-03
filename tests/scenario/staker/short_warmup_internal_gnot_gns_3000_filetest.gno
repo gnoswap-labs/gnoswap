@@ -42,9 +42,9 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	gnsPath    = "gno.land/r/gnoswap/v1/gns"
+	gnsPath = "gno.land/r/gnoswap/v1/gns"
 
-	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotPath             = "gno.land/r/demo/wugnot"
 	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 
 	fee3000 uint32 = 3000
@@ -252,5 +252,5 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] user GNS balance before: 99999999999950
 // [INFO] community pool GNS balance before: 0
 // [INFO] collect reward for position 01
-// [EXPECTED] user reward: 3210615
-// [EXPECTED] community pool reward: 28895546
+// [EXPECTED] user reward: 3210616
+// [EXPECTED] community pool reward: 7491438

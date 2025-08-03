@@ -329,7 +329,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 5. Collect reward with tier 2
 // [INFO] skip blocks to accumulate rewards with tier 2
 // [INFO] collect reward with tier 2
-// [EXPECTED] reward with tier 2: 10595032
+// [EXPECTED] reward with tier 2: 10595033
 // [INFO] tier 2 reward recorded for comparison
 //
 // [SCENARIO] 6. Change pool to tier 3
@@ -340,14 +340,14 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 7. Collect reward with tier 3
 // [INFO] skip blocks to accumulate rewards with tier 3
 // [INFO] collect reward with tier 3
-// [EXPECTED] reward with tier 3: 6421229
+// [EXPECTED] reward with tier 3: 6421232
 // [INFO] tier 3 reward recorded for comparison
 //
 // [SCENARIO] 8. Compare tier rewards
 // [INFO] compare rewards between tiers
 // [INFO] skip blocks for tier comparison
 // [INFO] collect reward for comparison
-// [EXPECTED] current tier 3 reward: 3210614
+// [EXPECTED] current tier 3 reward: 3210615
 // [INFO] tier comparison analysis:
 // [INFO] - Tier 1: 70% of total emission
 // [INFO] - Tier 2: 15% of total emission
@@ -359,6 +359,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] final pool tier: 3
 // [INFO] skip blocks for final reward test
 // [INFO] collect final reward
-// [EXPECTED] final reward: 3210614
+// [EXPECTED] final reward: 3210615
 // [INFO] pool tier change scenario completed successfully
 // [INFO] confirmed: tier changes work correctly and affect reward distribution

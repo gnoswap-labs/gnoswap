@@ -520,7 +520,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] perform exact-in swaps
 // [EXPECTED] swap result - tokenIn: 500, tokenOut: -497
 // [INFO] check reward for position 01 after swap
-// [EXPECTED] position 01 reward after swap: 7491949
+// [EXPECTED] position 01 reward after swap: 7491951
 //
 // [SCENARIO] 10. Create bar:foo:100 pool (tier 3)
 // [INFO] create bar:foo:100 pool
@@ -531,11 +531,11 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] mint and stake result - ID: 7, liquidity: 166674
 // [EXPECTED] amounts - 0: 0, 1: 1000, pool: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100
 // [INFO] collect reward for position 07
-// [EXPECTED] reward to community pool: 4280820
+// [EXPECTED] reward to community pool: 2140411
 //
 // [SCENARIO] 12. Unstake token 01
 // [INFO] unstake token 01
-// [EXPECTED] reward from unstaking: 15519260
+// [EXPECTED] reward from unstaking: 15519262
 //
 // [SCENARIO] 13. Create pool with external incentive only
 // [INFO] create baz:qux:3000 pool (external only)

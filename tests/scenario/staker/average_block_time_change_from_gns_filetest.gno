@@ -13,6 +13,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
+	en "gno.land/r/gnoswap/v1/emission"
 
 	"gno.land/r/demo/wugnot"
 
@@ -168,6 +169,8 @@ func stakePosition() {
 func collectRewardWithSkippingBlocks(positionId uint64, blocks int64) {
 	testing.SetRealm(adminRealm)
 
+	en.MintAndDistributeGns(cross)
+
 	before := gns.BalanceOf(adminUser)
 	testing.SkipHeights(blocks)
 
@@ -218,10 +221,10 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] mint in-range position (tick range: -60 ~ 60, requested amount: 50, 50)
 //
 // [SCENARIO] 4. Stake position 01
-// [INFO] balance changes by 100 blocks 321061619
+// [INFO] balance changes by 100 blocks 324272250
 //
 // [SCENARIO] 5. Collect reward for 1 blocks
-// [EXPECTED] position 1's reward for 1 blocks: 3210615
+// [EXPECTED] position 1's reward for 1 blocks: 3210616
 //
 // [SCENARIO] 6. Change avg block time (2000ms -> 4000ms)
 // [INFO] change avg block time to 4000 ms

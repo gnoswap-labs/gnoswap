@@ -306,7 +306,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 5. Collect rewards after first stake
 // [INFO] skip blocks to accumulate rewards
 // [INFO] collect reward after first stake
-// [EXPECTED] reward after first stake: 17658388
+// [EXPECTED] reward after first stake: 17658389
 //
 // [SCENARIO] 6. Unstake operation
 // [INFO] unstake position 01
@@ -322,7 +322,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 8. Collect rewards after restake
 // [INFO] skip blocks to accumulate more rewards
 // [INFO] collect reward after restake
-// [EXPECTED] reward after restake: 17658388
+// [EXPECTED] reward after restake: 17658389
 // [INFO] rewards accumulated successfully after restaking
 //
 // [SCENARIO] 9. Final unstake operation

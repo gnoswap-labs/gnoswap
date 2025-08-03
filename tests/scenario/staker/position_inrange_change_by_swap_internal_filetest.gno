@@ -399,7 +399,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 5. Collect reward while in-range
 // [INFO] skip blocks to accumulate rewards while in-range
 // [INFO] collect reward while position is in-range
-// [EXPECTED] reward while in-range: 17658388
+// [EXPECTED] reward while in-range: 17658389
 // [INFO] confirmed: rewards distributed while position is in-range
 //
 // [SCENARIO] 6. Perform swap to move price out of range
