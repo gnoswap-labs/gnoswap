@@ -33,7 +33,12 @@ func getProject(projectID string) (*Project, error) {
 		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectID))
 	}
 
-	return project.(*Project), nil
+	p, ok := project.(*Project)
+	if !ok {
+		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectID))
+	}
+
+	return p, nil
 }
 
 func getProjectTier(projectID string, tierDuration int64) (*ProjectTier, error) {
@@ -56,7 +61,12 @@ func getProjectTierRewardManager(projectTierID string) (*RewardManager, error) {
 		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("reward manager(%s) not found", projectTierID))
 	}
 
-	return rewardManager.(*RewardManager), nil
+	manager, ok := rewardManager.(*RewardManager)
+	if !ok {
+		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("reward manager(%s) not found", projectTierID))
+	}
+
+	return manager, nil
 }
 
 func mustGetDeposit(depositID string) *Deposit {
@@ -74,7 +84,12 @@ func getDeposit(depositID string) (*Deposit, error) {
 		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositID))
 	}
 
-	return depositI.(*Deposit), nil
+	deposit, ok := depositI.(*Deposit)
+	if !ok {
+		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("deposit(%s) not found", depositID))
+	}
+
+	return deposit, nil
 }
 
 // getCurrentDepositID returns the current deposit ID (last assigned).
