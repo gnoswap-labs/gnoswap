@@ -183,7 +183,10 @@ func subUint256(x, y *u256.Uint) *u256.Uint {
 	if x.Cmp(y) < 0 {
 		q256 := u256.MustFromDecimal(MAX_UINT256)
 		diff := u256.Zero().Sub(q256, y)
-		return u256.Zero().Add(diff, x)
+		result := u256.Zero().Add(diff, x)
+
+		// Add 1 to the result since MAX_UINT256 is 2^256 - 1
+		return u256.Zero().Add(result, u256.One())
 	}
 
 	return u256.Zero().Sub(x, y)
