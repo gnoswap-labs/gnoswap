@@ -257,8 +257,13 @@ func (h *HalvingData) initialize(startHeight, startTimestamp int64) {
 
 		// Calculate and set amount per block
 		amountPerDay := currentYearMaxAmount / DAY_PER_YEAR
-		amountPerBlock := amountPerDay / blockPerDay
-		h.setAmountPerBlock(year, amountPerBlock)
+		if blockPerDay > 0 {
+			amountPerBlock := amountPerDay / blockPerDay
+			h.setAmountPerBlock(year, amountPerBlock)
+		} else {
+			// Safety fallback if blockPerDay is 0
+			h.setAmountPerBlock(year, 0)
+		}
 
 		// Set initial minted amount and remaining amount
 		h.setMintedAmount(year, 0)
@@ -436,6 +441,14 @@ func setAvgBlockTimeInMs(ms int64) error {
 	blockPerYear = secToMs(SECONDS_IN_YEAR) / ms
 	blockPerDay = secToMs(SECONDS_PER_DAY) / ms
 
+	// Additional safety check for division by zero
+	if blockPerYear <= 0 {
+		panic("invalid blockPerYear calculation - would result in division by zero")
+	}
+	if blockPerDay <= 0 {
+		panic("invalid blockPerDay calculation - would result in division by zero")
+	}
+
 	// recalculate all remaining years (amountPerBlock)
 	es := getEmissionState()
 
@@ -466,12 +479,20 @@ func setAvgBlockTimeInMs(ms int64) error {
 			if changedRemainBlockNum > 0 {
 				changedAmountPerBlock := leftAmount / changedRemainBlockNum
 				hd.setAmountPerBlock(year, changedAmountPerBlock)
+			} else {
+				// If no remaining blocks, set amount per block to 0
+				hd.setAmountPerBlock(year, 0)
 			}
 		} else {
 			// For future years, use total year amount
 			dailyAmount := maxMintedAmount / DAY_PER_YEAR
-			changedAmountPerBlock := dailyAmount / blockPerDay
-			hd.setAmountPerBlock(year, changedAmountPerBlock)
+			if blockPerDay > 0 {
+				changedAmountPerBlock := dailyAmount / blockPerDay
+				hd.setAmountPerBlock(year, changedAmountPerBlock)
+			} else {
+				// Safety fallback if blockPerDay is 0
+				hd.setAmountPerBlock(year, 0)
+			}
 		}
 
 		changedEndHeight := currentHeight + changedRemainBlockNum

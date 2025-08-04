@@ -53,8 +53,13 @@ func BalanceOf(owner std.Address) int64          { return token.BalanceOf(owner)
 func Allowance(owner, spender std.Address) int64 { return token.Allowance(owner, spender) }
 
 func MintGns(cur realm, address std.Address) int64 {
+	// Input validation
+	if address == "" {
+		panic("address cannot be empty")
+	}
+
 	halt.AssertIsNotHaltedEmission()
-	
+
 	caller := std.PreviousRealm().Address()
 	access.AssertIsEmission(caller)
 
@@ -101,9 +106,22 @@ func MintGns(cur realm, address std.Address) int64 {
 }
 
 func Burn(cur realm, from std.Address, amount int64) {
+	// Input validation
+	if from == "" {
+		panic("from address cannot be empty")
+	}
+	if amount <= 0 {
+		panic("amount must be positive")
+	}
+
 	owner.AssertOwnedByCurrent()
 	checkErr(privateLedger.Burn(from, amount))
 
+	// Check for overflow in burnAmount addition
+	maxInt64 := int64(9223372036854775807) // math.MaxInt64
+	if amount > 0 && burnAmount > maxInt64-amount {
+		panic("overflow in burnAmount calculation")
+	}
 	burnAmount += amount
 
 	previousRealm := std.PreviousRealm()
@@ -119,16 +137,43 @@ func Burn(cur realm, from std.Address, amount int64) {
 }
 
 func Transfer(cur realm, to std.Address, amount int64) {
+	// Input validation
+	if to == "" {
+		panic("to address cannot be empty")
+	}
+	if amount <= 0 {
+		panic("amount must be positive")
+	}
+
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.Transfer(to, amount))
 }
 
 func Approve(cur realm, spender std.Address, amount int64) {
+	// Input validation
+	if spender == "" {
+		panic("spender address cannot be empty")
+	}
+	if amount < 0 {
+		panic("amount cannot be negative")
+	}
+
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.Approve(spender, amount))
 }
 
 func TransferFrom(cur realm, from, to std.Address, amount int64) {
+	// Input validation
+	if from == "" {
+		panic("from address cannot be empty")
+	}
+	if to == "" {
+		panic("to address cannot be empty")
+	}
+	if amount <= 0 {
+		panic("amount must be positive")
+	}
+
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.TransferFrom(from, to, amount))
 }
@@ -203,15 +248,32 @@ func calculateAmountToMint(fromHeight, toHeight int64) int64 {
 		// amount of gns to mint for each block for current year
 		singleBlockAmount := GetAmountPerBlockPerHalvingYear(year)
 
-		// amount of gns to mint for current year
+		// amount of gns to mint for current year - check for overflow
+		if singleBlockAmount > 0 && blocks > 0 {
+			// Check for overflow: if a * b > max_int64, then a > max_int64 / b
+			maxInt64 := int64(9223372036854775807) // math.MaxInt64
+			if singleBlockAmount > maxInt64/blocks {
+				panic("overflow in yearAmountToMint calculation")
+			}
+		}
 		yearAmountToMint := singleBlockAmount * blocks
 
 		// if last block of halving year, handle left emission amount
 		if mintUntilHeight >= yearEndHeight {
 			leftover := handleLeftEmissionAmount(year, yearAmountToMint)
+			// Check for overflow in addition
+			maxInt64 := int64(9223372036854775807) // math.MaxInt64
+			if leftover > 0 && yearAmountToMint > maxInt64-leftover {
+				panic("overflow in yearAmountToMint addition")
+			}
 			yearAmountToMint += leftover
 		}
 
+		// Check for overflow in totalAmountToMint addition
+		maxInt64 := int64(9223372036854775807) // math.MaxInt64
+		if yearAmountToMint > 0 && totalAmountToMint > maxInt64-yearAmountToMint {
+			panic("overflow in totalAmountToMint calculation")
+		}
 		totalAmountToMint += yearAmountToMint
 
 		setHalvingYearMintAmount(year, GetHalvingYearMintAmount(year)+yearAmountToMint)

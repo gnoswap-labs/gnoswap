@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/json"
+	"gno.land/p/demo/ufmt"
 )
 
 // GetHalvingBlocksInRange returns halving blocks and emissions per block within the range
@@ -163,6 +164,10 @@ func setAmountPerBlockPerHalvingYear(year, amount int64) {
 
 // GetHalvingAmountsPerYear returns the halving amount for a specific year
 func GetHalvingAmountsPerYear(year int64) int64 {
+	// Input validation to prevent array bounds panic
+	if year < HALVING_START_YEAR || year > HALVING_END_YEAR {
+		panic(ufmt.Sprintf("invalid year: %d, must be between %d and %d", year, HALVING_START_YEAR, HALVING_END_YEAR))
+	}
 	return halvingAmountsPerYear[year-1]
 }
 
