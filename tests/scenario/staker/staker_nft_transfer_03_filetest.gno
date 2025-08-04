@@ -89,7 +89,7 @@ func main() {
 
 func initAccountAndEmission() {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 1)
+	emission.SetDistributionStartBlockHeight(cross, 124)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFee(cross, 0)

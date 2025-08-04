@@ -64,7 +64,7 @@ func main() {
 
 func initPool() {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 1)
+	emission.SetDistributionStartBlockHeight(cross, 124)
 	pool.SetPoolCreationFeeByAdmin(cross, 0)
 
 	defaultTokenAmount := int64(100000000)

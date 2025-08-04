@@ -87,7 +87,7 @@ func main() {
 func initAccountAndEmission() {
 	println("[INFO] send coins to admin")
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 1)
+	emission.SetDistributionStartBlockHeight(cross, 124)
 
 	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 

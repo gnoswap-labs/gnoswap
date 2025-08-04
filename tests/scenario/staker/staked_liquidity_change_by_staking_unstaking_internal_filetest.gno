@@ -82,7 +82,7 @@ func main() {
 
 func initializeWithDefaults() {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 1)
+	emission.SetDistributionStartBlockHeight(cross, 124)
 
 	println("[INFO] prepare wugnot by depositing ugnot")
 	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
