@@ -91,7 +91,7 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 
 	// wrap user's WUGNOT
 	if ugnotSentByUser > 0 {
-		if err := wrapWithTransfer(ugnotSentByUser); err != nil {
+		if err := wrapWithTransfer(std.PreviousRealm().Address(), ugnotSentByUser); err != nil {
 			return err
 		}
 	}
