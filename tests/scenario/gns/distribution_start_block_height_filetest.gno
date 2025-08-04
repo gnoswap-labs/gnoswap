@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -23,6 +24,8 @@ var (
 	emissionAddr = std.DerivePkgAddr("gno.land/r/gnoswap/v1/emission")
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	userAddr     = testutils.TestAddress("user")
+
+	t *testing.T
 )
 
 func main() {
@@ -37,6 +40,7 @@ func main() {
 	testScenario4EmissionAfterStartHeight()
 	testScenario5ReinitializeProtection()
 	testScenario6VerifyTotalEmissionPeriod()
+	testScenario7OverrideDistributionStartHeight()
 }
 
 func testScenario1InitialConfiguration() {
@@ -139,6 +143,33 @@ func testScenario6VerifyTotalEmissionPeriod() {
 	ufmt.Printf("[EXPECTED] Difference should be minimal (< 12 blocks for rounding)\n")
 }
 
+func testScenario7OverrideDistributionStartHeight() {
+	ufmt.Println()
+	println("[SCENARIO] 7. Override Distribution Start Height Before Distribution Starts")
+
+	// Current height is 10123 from previous scenarios
+	currentHeight := std.ChainHeight()
+	ufmt.Printf("[INFO] Current chain height: %d\n", currentHeight)
+
+	// Step 1: Set initial distribution start height to future block (20000)
+	initialHeight := int64(20000)
+	testing.SetOriginCaller(adminAddr)
+	emission.SetDistributionStartBlockHeight(cross, initialHeight)
+	ufmt.Printf("[INFO] Initial distribution start height set to: %d\n", initialHeight)
+	ufmt.Printf("[INFO] Current distribution start height: %d\n", emission.GetDistributionStartBlockHeight())
+
+	// Step 2: Try to override with a past block (should panic)
+	ufmt.Println("[INFO] Attempting to set distribution start height to past block...")
+
+	pastHeight := int64(5000) // This is less than current height (10123)
+	expectedPanic := "distribution start block height must be greater than current block height"
+	uassert.AbortsWithMessage(t, expectedPanic, func() {
+		emission.SetDistributionStartBlockHeight(cross, pastHeight)
+	})
+	println("[INFO] Panicked as expected: distribution start block height must be greater than current block height")
+	println("[EXPECTED] Should panic with 'distribution start block height must be greater than current block height'")
+}
+
 // Output:
 // [SCENARIO] Test Distribution Start Block Height with Halving Year Adjustment
 // [SCENARIO] 1. Initial Halving Year Configuration
@@ -175,3 +206,11 @@ func testScenario6VerifyTotalEmissionPeriod() {
 // [INFO] Actual total blocks: 189216000
 // [INFO] Difference: 0 blocks
 // [EXPECTED] Difference should be minimal (< 12 blocks for rounding)
+//
+// [SCENARIO] 7. Override Distribution Start Height Before Distribution Starts
+// [INFO] Current chain height: 10123
+// [INFO] Initial distribution start height set to: 20000
+// [INFO] Current distribution start height: 20000
+// [INFO] Attempting to set distribution start height to past block...
+// [INFO] Panicked as expected: distribution start block height must be greater than current block height
+// [EXPECTED] Should panic with 'distribution start block height must be greater than current block height'
