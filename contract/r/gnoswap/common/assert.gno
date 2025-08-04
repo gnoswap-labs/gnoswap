@@ -2,18 +2,12 @@ package common
 
 import (
 	"std"
-
-	"gno.land/p/demo/ufmt"
-)
-
-const (
-	ErrNoPermission = "caller(%s) has no permission"
 )
 
 // AssertCaller checks if the caller is the given address.
 func AssertCaller(caller, addr std.Address) error {
 	if caller != addr {
-		return ufmt.Errorf(ErrNoPermission, caller.String())
+		return makeErrorWithDetails(errNoPermission, caller.String())
 	}
 	return nil
 }
@@ -21,7 +15,7 @@ func AssertCaller(caller, addr std.Address) error {
 // SatisfyCond checks if the given condition is true.
 func SatisfyCond(cond bool) error {
 	if !cond {
-		return ufmt.Errorf("condition not satisfied")
+		return makeErrorWithDetails(errConditionNotSatisfied, "condition not satisfied")
 	}
 	return nil
 }

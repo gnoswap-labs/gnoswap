@@ -7,16 +7,17 @@ import (
 )
 
 var (
-	errNoPermission      = errors.New("[GNOSWAP-COMMON-001] caller has no permission")
-	errHalted            = errors.New("[GNOSWAP-COMMON-002] halted")
-	errOutOfRange        = errors.New("[GNOSWAP-COMMON-003] value out of range")
-	errNotRegistered     = errors.New("[GNOSWAP-COMMON-004] token is not registered")
-	errInvalidAddr       = errors.New("[GNOSWAP-COMMON-005] invalid address")
-	errOverflow          = errors.New("[GNOSWAP-COMMON-006] overflow")
-	errInvalidPositionId = errors.New("[GNOSWAP-COMMON-007] invalid positionId")
-	errInvalidInput      = errors.New("[GNOSWAP-COMMON-008] invalid input data")
-	errOverFlow          = errors.New("[GNOSWAP-COMMON-009] overflow")
-	errIdenticalTicks    = errors.New("[GNOSWAP-COMMON-010] identical ticks")
+	errNoPermission          = errors.New("[GNOSWAP-COMMON-001] caller has no permission")
+	errHalted                = errors.New("[GNOSWAP-COMMON-002] halted")
+	errOutOfRange            = errors.New("[GNOSWAP-COMMON-003] value out of range")
+	errNotRegistered         = errors.New("[GNOSWAP-COMMON-004] token is not registered")
+	errInvalidAddr           = errors.New("[GNOSWAP-COMMON-005] invalid address")
+	errOverflow              = errors.New("[GNOSWAP-COMMON-006] overflow")
+	errInvalidPositionId     = errors.New("[GNOSWAP-COMMON-007] invalid positionId")
+	errInvalidInput          = errors.New("[GNOSWAP-COMMON-008] invalid input data")
+	errOverFlow              = errors.New("[GNOSWAP-COMMON-009] overflow")
+	errIdenticalTicks        = errors.New("[GNOSWAP-COMMON-010] identical ticks")
+	errConditionNotSatisfied = errors.New("[GNOSWAP-COMMON-011] condition not satisfied")
 )
 
 // newErrorWithDetail appends additional context or details to an existing error message.
@@ -29,4 +30,8 @@ var (
 //   - string: The combined error message in the format "<original_error> || <detail>".
 func newErrorWithDetail(err error, detail string) string {
 	return ufmt.Errorf("%s || %s", err.Error(), detail).Error()
+}
+
+func makeErrorWithDetails(err error, details string) error {
+	return ufmt.Errorf("%s || %s", err.Error(), details)
 }
