@@ -214,7 +214,10 @@ func createProject(params *createProjectParams) (*Project, error) {
 			projectTier.TotalDistributeAmount(),
 			projectTier.StartHeight(),
 			projectTier.EndHeight(),
+			projectTier.StartTime(),
+			projectTier.EndTime(),
 			params.currentHeight,
+			params.currentTime,
 		))
 	}
 

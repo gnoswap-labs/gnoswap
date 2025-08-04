@@ -12,7 +12,7 @@ import (
 // rewards for a specific tier of a project.
 //
 // Fields:
-// - distributeAmountPerBlockX128 (u256.Uint): The amount of tokens to be distributed per block, represented as a Q128 fixed-point number.
+// - distributeAmountPerSecondX128 (u256.Uint): The amount of tokens to be distributed per second, represented as a Q128 fixed-point number.
 // - startBlockTimeInfo (BlockTimeInfo): The block time and height information for the start of the tier.
 // - endBlockTimeInfo (BlockTimeInfo): The block time and height information for the end of the tier.
 // - id (string): The unique identifier for the tier, formatted as "{projectID}:duration".
@@ -23,7 +23,7 @@ import (
 // - totalWithdrawCount (int64): The total number of withdrawals from the tier.
 // - totalCollectedAmount (int64): The total amount of tokens collected as rewards for the tier.
 type ProjectTier struct {
-	distributeAmountPerBlockX128 *u256.Uint     // distribute amount per block, Q128
+	distributeAmountPerSecondX128 *u256.Uint     // distribute amount per second, Q128
 	startBlockTimeInfo           *BlockTimeInfo // project tier start block time
 	endBlockTimeInfo             *BlockTimeInfo // project tier end block time
 
@@ -72,8 +72,8 @@ func (t *ProjectTier) CurrentDepositAmount() int64 {
 	return t.totalDepositAmount - t.totalWithdrawAmount
 }
 
-func (t *ProjectTier) DistributeAmountPerBlockX128() *u256.Uint {
-	return t.distributeAmountPerBlockX128
+func (t *ProjectTier) DistributeAmountPerSecondX128() *u256.Uint {
+	return t.distributeAmountPerSecondX128
 }
 
 func (t *ProjectTier) isActivated(currentHeight int64) bool {
@@ -128,12 +128,18 @@ func (t *ProjectTier) calculateLeftReward() int64 {
 	return t.totalDistributeAmount - t.totalCollectedAmount
 }
 
-func (t *ProjectTier) updateDistributeAmountPerBlock() {
-	distributeBlockCount := t.endBlockTimeInfo.BlockHeight() - t.startBlockTimeInfo.BlockHeight()
+func (t *ProjectTier) updateDistributeAmountPerSecond() {
+	// Use time duration instead of block count
+	distributeTimeDuration := t.endBlockTimeInfo.BlockTime() - t.startBlockTimeInfo.BlockTime()
+	if distributeTimeDuration <= 0 {
+		return
+	}
+	
 	totalDistributeAmountX128 := new(u256.Uint).Mul(u256.NewUintFromInt64(t.totalDistributeAmount), q128.Clone())
-	distributeAmountPerBlockX128 := new(u256.Uint).Div(totalDistributeAmountX128, u256.NewUintFromInt64(distributeBlockCount))
+	// Divide by time duration in seconds
+	distributeAmountPerSecondX128 := new(u256.Uint).Div(totalDistributeAmountX128, u256.NewUintFromInt64(distributeTimeDuration))
 
-	t.distributeAmountPerBlockX128 = distributeAmountPerBlockX128
+	t.distributeAmountPerSecondX128 = distributeAmountPerSecondX128
 }
 
 // NewProjectTier returns a pointer to a new ProjectTier with the given values.
@@ -163,7 +169,7 @@ func NewProjectTier(
 	tier := &ProjectTier{
 		id:                           makeProjectTierID(projectID, tierDuration),
 		totalDistributeAmount:        totalDistributeAmount,
-		distributeAmountPerBlockX128: u256.Zero(),
+		distributeAmountPerSecondX128: u256.Zero(),
 		startBlockTimeInfo:           startBlockTimeInfo,
 		endBlockTimeInfo:             endBlockTimeInfo,
 		totalDepositAmount:           0,
@@ -173,7 +179,7 @@ func NewProjectTier(
 		totalCollectedAmount:         0,
 	}
 
-	tier.updateDistributeAmountPerBlock()
+	tier.updateDistributeAmountPerSecond()
 
 	return tier
 }

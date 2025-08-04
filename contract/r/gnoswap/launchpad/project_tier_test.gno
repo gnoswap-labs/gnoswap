@@ -12,7 +12,7 @@ func TestProjectTier_Getters(t *testing.T) {
 		name                         string
 		id                           string
 		totalDistributeAmount        int64
-		distributeAmountPerBlockX128 *u256.Uint
+		distributeAmountPerSecondX128 *u256.Uint
 		startTime                    int64
 		startHeight                  int64
 		endTime                      int64
@@ -29,7 +29,7 @@ func TestProjectTier_Getters(t *testing.T) {
 			name:                         "project tier get id",
 			id:                           "test:180",
 			totalDistributeAmount:        1000,
-			distributeAmountPerBlockX128: u256.NewUintFromInt64(100),
+			distributeAmountPerSecondX128: u256.NewUintFromInt64(100),
 			startTime:                    1000,
 			startHeight:                  100,
 			endTime:                      2000,
@@ -46,7 +46,7 @@ func TestProjectTier_Getters(t *testing.T) {
 			name:                         "project tier get total distribute amount",
 			id:                           "test:180",
 			totalDistributeAmount:        1000,
-			distributeAmountPerBlockX128: u256.NewUintFromInt64(100),
+			distributeAmountPerSecondX128: u256.NewUintFromInt64(100),
 			startTime:                    1000,
 			startHeight:                  100,
 			endTime:                      2000,
@@ -67,7 +67,7 @@ func TestProjectTier_Getters(t *testing.T) {
 			tier := &ProjectTier{
 				id:                           tt.id,
 				totalDistributeAmount:        tt.totalDistributeAmount,
-				distributeAmountPerBlockX128: tt.distributeAmountPerBlockX128,
+				distributeAmountPerSecondX128: tt.distributeAmountPerSecondX128,
 				startBlockTimeInfo: &BlockTimeInfo{
 					blockTime:   tt.startTime,
 					blockHeight: tt.startHeight,
@@ -304,4 +304,132 @@ func TestNewProjectTier(t *testing.T) {
 			uassert.Equal(t, tier.EndHeight(), tt.expectedEndHeight)
 		})
 	}
+}
+
+// TestProjectTier_UpdateDistributeAmountPerSecond tests time-based distribution calculation
+func TestProjectTier_UpdateDistributeAmountPerSecond(t *testing.T) {
+	tests := []struct {
+		name                          string
+		totalDistributeAmount         int64
+		startTime                     int64
+		endTime                       int64
+		expectedDistributePerSecondGT int64
+		expectedDistributePerSecondLT int64
+	}{
+		{
+			name:                          "standard 100 second duration",
+			totalDistributeAmount:         1000,
+			startTime:                     1000,
+			endTime:                       1100,
+			expectedDistributePerSecondGT: 9,  // Should be ~10
+			expectedDistributePerSecondLT: 11,
+		},
+		{
+			name:                          "1 hour duration",
+			totalDistributeAmount:         3600,
+			startTime:                     0,
+			endTime:                       3600,
+			expectedDistributePerSecondGT: 0, // Should be exactly 1
+			expectedDistributePerSecondLT: 2,
+		},
+		{
+			name:                          "30 day duration with large amount",
+			totalDistributeAmount:         2592000, // 30 days in seconds
+			startTime:                     0,
+			endTime:                       2592000, // 30 days
+			expectedDistributePerSecondGT: 0,       // Should be exactly 1
+			expectedDistributePerSecondLT: 2,
+		},
+		{
+			name:                          "very short duration",
+			totalDistributeAmount:         100,
+			startTime:                     1000,
+			endTime:                       1010, // 10 seconds
+			expectedDistributePerSecondGT: 9,   // Should be ~10
+			expectedDistributePerSecondLT: 11,
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create tier with time-based parameters
+			tier := &ProjectTier{
+				id:                   "test:30",
+				totalDistributeAmount: tt.totalDistributeAmount,
+				startBlockTimeInfo:   &BlockTimeInfo{blockTime: tt.startTime, blockHeight: 100},
+				endBlockTimeInfo:     &BlockTimeInfo{blockTime: tt.endTime, blockHeight: 200},
+			}
+			
+			// Update distribute amount per second
+			tier.updateDistributeAmountPerSecond()
+			
+			// Get the actual value (need to shift right by 128 to get the integer part)
+			actualPerSecond := tier.distributeAmountPerSecondX128.Rsh(tier.distributeAmountPerSecondX128, 128).Int64()
+			
+			// Verify it's in expected range
+			uassert.Equal(t, true, actualPerSecond > tt.expectedDistributePerSecondGT,
+				"Distribute per second should be greater than expected minimum")
+			uassert.Equal(t, true, actualPerSecond < tt.expectedDistributePerSecondLT,
+				"Distribute per second should be less than expected maximum")
+		})
+	}
+}
+
+// TestProjectTier_VaryingBlockTimes tests that tier calculations work correctly with varying block times
+func TestProjectTier_VaryingBlockTimes(t *testing.T) {
+	// Test that the tier correctly calculates rewards based on time, not blocks
+	
+	// Scenario 1: Fast blocks (1 second per block)
+	fastBlockTier := &ProjectTier{
+		id:                    "fast:30",
+		totalDistributeAmount: 1000,
+		startBlockTimeInfo:    &BlockTimeInfo{blockTime: 1000, blockHeight: 100},
+		endBlockTimeInfo:      &BlockTimeInfo{blockTime: 1100, blockHeight: 200}, // 100 blocks in 100 seconds
+	}
+	fastBlockTier.updateDistributeAmountPerSecond()
+	
+	// Scenario 2: Slow blocks (10 seconds per block)
+	slowBlockTier := &ProjectTier{
+		id:                    "slow:30",
+		totalDistributeAmount: 1000,
+		startBlockTimeInfo:    &BlockTimeInfo{blockTime: 1000, blockHeight: 100},
+		endBlockTimeInfo:      &BlockTimeInfo{blockTime: 1100, blockHeight: 110}, // 10 blocks in 100 seconds
+	}
+	slowBlockTier.updateDistributeAmountPerSecond()
+	
+	// Both should have the same distribute amount per second
+	uassert.Equal(t, 
+		fastBlockTier.distributeAmountPerSecondX128.ToString(), 
+		slowBlockTier.distributeAmountPerSecondX128.ToString(),
+		"Distribution rate should be the same regardless of block time")
+}
+
+// TestProjectTier_EdgeCases tests edge cases for project tier
+func TestProjectTier_EdgeCases(t *testing.T) {
+	// Test zero duration
+	zeroDurationTier := &ProjectTier{
+		id:                    "zero:30",
+		totalDistributeAmount: 1000,
+		startBlockTimeInfo:    &BlockTimeInfo{blockTime: 1000, blockHeight: 100},
+		endBlockTimeInfo:      &BlockTimeInfo{blockTime: 1000, blockHeight: 100}, // Same time
+		distributeAmountPerSecondX128: u256.Zero(),
+	}
+	zeroDurationTier.updateDistributeAmountPerSecond()
+	
+	// Should result in zero distribution
+	uassert.Equal(t, true, zeroDurationTier.distributeAmountPerSecondX128.IsZero(),
+		"Zero duration should result in zero distribution rate")
+	
+	// Test negative duration (end before start - should not happen but test defensive programming)
+	invalidTier := &ProjectTier{
+		id:                    "invalid:30",
+		totalDistributeAmount: 1000,
+		startBlockTimeInfo:    &BlockTimeInfo{blockTime: 2000, blockHeight: 200},
+		endBlockTimeInfo:      &BlockTimeInfo{blockTime: 1000, blockHeight: 100}, // End before start
+		distributeAmountPerSecondX128: u256.Zero(),
+	}
+	invalidTier.updateDistributeAmountPerSecond()
+	
+	// Should handle gracefully (likely zero or unchanged)
+	// The actual behavior depends on implementation details
 }

@@ -2,6 +2,7 @@ package launchpad
 
 import (
 	"std"
+	"time"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/halt"
@@ -78,7 +79,8 @@ func collectDepositReward(deposit *Deposit, currentHeight int64) (int64, error) 
 	}
 
 	// Update reward state before collection
-	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight)
+	currentTime := time.Now().Unix()
+	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight, currentTime)
 	if err != nil {
 		return 0, err
 	}

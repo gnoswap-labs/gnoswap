@@ -14,7 +14,7 @@ import (
 //
 // Fields:
 // - rewards (avl.Tree): A map of deposit IDs to their associated reward states.
-// - distributeAmountPerBlockX128 (u256.Uint): The amount of tokens to be distributed per block, represented as a Q128 fixed-point number.
+// - distributeAmountPerSecondX128 (u256.Uint): The amount of tokens to be distributed per second, represented as a Q128 fixed-point number.
 // - accumulatedRewardPerDepositX128 (u256.Uint): The accumulated reward per GNS stake, represented as a Q128 fixed-point number.
 // - totalDistributeAmount (int64): The total amount of tokens to be distributed.
 // - totalClaimedAmount (int64): The total amount of tokens claimed.
@@ -26,15 +26,18 @@ import (
 type RewardManager struct {
 	rewards *avl.Tree // depositId -> RewardState
 
-	distributeAmountPerBlockX128    *u256.Uint // distribute amount per block, Q128
+	distributeAmountPerSecondX128   *u256.Uint // distribute amount per second, Q128
 	accumulatedRewardPerDepositX128 *u256.Uint // accumulated reward per GNS stake, Q128
 
 	totalDistributeAmount       int64 // total distributed amount
 	totalClaimedAmount          int64 // total claimed amount
 	distributeStartHeight       int64 // start height of reward calculation
 	distributeEndHeight         int64 // end height of reward calculation
+	distributeStartTime         int64 // start time of reward distribution
+	distributeEndTime           int64 // end time of reward distribution
 	accumulatedDistributeAmount int64 // accumulated distribute amount
 	accumulatedHeight           int64 // last height when reward was calculated
+	accumulatedTime             int64 // last time when reward was calculated
 	rewardClaimableDuration     int64 // duration of reward claimable
 }
 
@@ -42,8 +45,8 @@ func (r *RewardManager) IsInitialized() bool {
 	return r.rewards.Size() > 0
 }
 
-func (r *RewardManager) DistributeAmountPerBlockX128() *u256.Uint {
-	return r.distributeAmountPerBlockX128
+func (r *RewardManager) DistributeAmountPerSecondX128() *u256.Uint {
+	return r.distributeAmountPerSecondX128
 }
 
 func (r *RewardManager) AccumulatedHeight() int64 {
@@ -71,31 +74,31 @@ func (r *RewardManager) getDepositRewardState(depositId string) (*RewardState, e
 	return rewardStateI.(*RewardState), nil
 }
 
-func (r *RewardManager) calculateRewardPerDepositX128(rewardPerBlockX128 *u256.Uint, totalStaked int64, currentHeight int64) (*u256.Uint, error) {
-	accumulatedHeight := r.accumulatedHeight
-	if r.distributeStartHeight > accumulatedHeight {
-		accumulatedHeight = r.distributeStartHeight
+func (r *RewardManager) calculateRewardPerDepositX128(rewardPerSecondX128 *u256.Uint, totalStaked int64, currentHeight int64, currentTime int64) (*u256.Uint, error) {
+	accumulatedTime := r.accumulatedTime
+	if r.distributeStartTime > accumulatedTime {
+		accumulatedTime = r.distributeStartTime
 	}
 
 	// not started yet
-	if currentHeight < accumulatedHeight {
+	if currentTime < accumulatedTime {
 		return u256.Zero(), nil
 	}
 
-	// past distribute end height
-	if accumulatedHeight > r.distributeEndHeight {
+	// past distribute end time
+	if accumulatedTime > r.distributeEndTime {
 		return u256.Zero(), nil
 	}
 
-	// past distribute end height, set to distribute end height
-	if currentHeight > r.distributeEndHeight {
-		currentHeight = r.distributeEndHeight
+	// past distribute end time, set to distribute end time
+	if currentTime > r.distributeEndTime {
+		currentTime = r.distributeEndTime
 	}
 
-	if rewardPerBlockX128.IsZero() {
+	if rewardPerSecondX128.IsZero() {
 		return nil, makeErrorWithDetails(
 			errNoLeftReward,
-			ufmt.Sprintf("rewardPerBlock(%d)", rewardPerBlockX128),
+			ufmt.Sprintf("rewardPerSecond(%d)", rewardPerSecondX128),
 		)
 	}
 
@@ -104,9 +107,9 @@ func (r *RewardManager) calculateRewardPerDepositX128(rewardPerBlockX128 *u256.U
 		return u256.Zero(), nil
 	}
 
-	// blockDuration * rewardPerBlock / totalStaked
-	blockDuration := currentHeight - accumulatedHeight
-	totalRewardX128 := u256.Zero().Mul(u256.NewUintFromInt64(blockDuration), rewardPerBlockX128)
+	// timeDuration * rewardPerSecond / totalStaked
+	timeDuration := currentTime - accumulatedTime
+	totalRewardX128 := u256.Zero().Mul(u256.NewUintFromInt64(timeDuration), rewardPerSecondX128)
 	rewardPerDepositX128 := u256.Zero().Div(totalRewardX128, u256.NewUintFromInt64(totalStaked))
 
 	return rewardPerDepositX128, nil
@@ -145,21 +148,22 @@ func (r *RewardManager) addRewardState(deposit *Deposit, rewardState *RewardStat
 	return rewardState
 }
 
-func (r *RewardManager) addRewardPerDepositX128(rewardPerDepositX128 *u256.Uint, currentHeight int64) {
+func (r *RewardManager) addRewardPerDepositX128(rewardPerDepositX128 *u256.Uint, currentHeight int64, currentTime int64) {
 	if rewardPerDepositX128.IsZero() {
 		return
 	}
 
-	if r.accumulatedHeight > currentHeight || r.distributeStartHeight > currentHeight {
+	if r.accumulatedTime > currentTime || r.distributeStartTime > currentTime {
 		return
 	}
 
-	if currentHeight > r.distributeEndHeight {
-		currentHeight = r.distributeEndHeight
+	if currentTime > r.distributeEndTime {
+		currentTime = r.distributeEndTime
 	}
 
 	r.accumulatedRewardPerDepositX128 = u256.Zero().Add(r.accumulatedRewardPerDepositX128, rewardPerDepositX128)
 	r.accumulatedHeight = currentHeight
+	r.accumulatedTime = currentTime
 }
 
 // updateRewardPerDepositX128 updates the reward per deposit state.
@@ -169,33 +173,39 @@ func (r *RewardManager) addRewardPerDepositX128(rewardPerDepositX128 *u256.Uint,
 // Parameters:
 // - totalDepositAmount (int64): Current total deposit amount
 // - height (int64): Current blockchain height
+// - time (int64): Current timestamp
 //
 // Returns:
 // - error: If the update fails
-func (r *RewardManager) updateRewardPerDepositX128(totalDepositAmount int64, height int64) error {
+func (r *RewardManager) updateRewardPerDepositX128(totalDepositAmount int64, height int64, time int64) error {
 	// Input validation
 	if height <= 0 {
 		return makeErrorWithDetails(errInvalidHeight, "height must be positive")
 	}
+	if time <= 0 {
+		return makeErrorWithDetails(errInvalidHeight, "time must be positive")
+	}
 
 	// Calculate and update rewards
 	rewardPerDepositX128, err := r.calculateRewardPerDepositX128(
-		r.distributeAmountPerBlockX128,
+		r.distributeAmountPerSecondX128,
 		totalDepositAmount,
 		height,
+		time,
 	)
 	if err != nil {
 		return err
 	}
 
-	r.addRewardPerDepositX128(rewardPerDepositX128, height)
+	r.addRewardPerDepositX128(rewardPerDepositX128, height, time)
 
 	return nil
 }
 
-func (r *RewardManager) updateDistributeAmountPerBlockX128(totalDistributeAmount int64, distributeStartHeight int64, distributeEndHeight int64) {
-	blockDuration := distributeEndHeight - distributeStartHeight
-	if blockDuration <= 0 {
+func (r *RewardManager) updateDistributeAmountPerSecondX128(totalDistributeAmount int64, distributeStartHeight int64, distributeEndHeight int64, distributeStartTime int64, distributeEndTime int64) {
+	// Use time duration for per-second calculation
+	timeDuration := distributeEndTime - distributeStartTime
+	if timeDuration <= 0 {
 		return
 	}
 
@@ -203,12 +213,15 @@ func (r *RewardManager) updateDistributeAmountPerBlockX128(totalDistributeAmount
 		u256.NewUintFromInt64(totalDistributeAmount),
 		128,
 	)
-	amountPerBlockX128 := u256.Zero().Div(
+	// Divide by time duration in seconds
+	amountPerSecondX128 := u256.Zero().Div(
 		totalDistributeAmountX128,
-		u256.NewUintFromInt64(blockDuration),
+		u256.NewUintFromInt64(timeDuration),
 	)
 
-	r.distributeAmountPerBlockX128 = amountPerBlockX128
+	r.distributeAmountPerSecondX128 = amountPerSecondX128
+	r.distributeStartTime = distributeStartTime
+	r.distributeEndTime = distributeEndTime
 }
 
 // collectReward processes the reward collection for a specific deposit.
@@ -266,23 +279,29 @@ func NewRewardManager(
 	totalDistributeAmount int64,
 	distributeStartHeight int64,
 	distributeEndHeight int64,
+	distributeStartTime int64,
+	distributeEndTime int64,
 	currentHeight int64,
+	currentTime int64,
 ) *RewardManager {
 	manager := &RewardManager{
 		totalDistributeAmount:           totalDistributeAmount,
 		distributeStartHeight:           distributeStartHeight,
 		distributeEndHeight:             distributeEndHeight,
+		distributeStartTime:             distributeStartTime,
+		distributeEndTime:               distributeEndTime,
 		totalClaimedAmount:              0,
 		accumulatedDistributeAmount:     0,
 		accumulatedHeight:               0,
+		accumulatedTime:                 0,
 		accumulatedRewardPerDepositX128: u256.Zero(),
-		distributeAmountPerBlockX128:    u256.Zero(),
+		distributeAmountPerSecondX128:   u256.Zero(),
 		rewardClaimableDuration:         0,
 		rewards:                         avl.NewTree(),
 	}
 
-	manager.updateDistributeAmountPerBlockX128(totalDistributeAmount, distributeStartHeight, distributeEndHeight)
-	manager.updateRewardPerDepositX128(0, currentHeight)
+	manager.updateDistributeAmountPerSecondX128(totalDistributeAmount, distributeStartHeight, distributeEndHeight, distributeStartTime, distributeEndTime)
+	manager.updateRewardPerDepositX128(0, currentHeight, currentTime)
 
 	return manager
 }

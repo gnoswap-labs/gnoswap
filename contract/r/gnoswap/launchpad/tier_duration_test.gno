@@ -122,7 +122,7 @@ func TestTierDurationConsistency(t *testing.T) {
 
 			initialStartHeight := tier.StartHeight()
 			initialEndHeight := tier.EndHeight()
-			initialDistributePerBlock := tier.DistributeAmountPerBlockX128().ToString()
+			initialDistributePerSecond := tier.DistributeAmountPerSecondX128().ToString()
 
 			// calculate expected duration in blocks
 			expectedDurationBlocks := tt.expectedDurationDays * 24 * 60 * 60 / 2
@@ -165,13 +165,156 @@ func TestTierDurationConsistency(t *testing.T) {
 				"%s: Start height should not change", tt.name)
 			uassert.Equal(t, initialEndHeight, tierAfterDeposits.EndHeight(),
 				"%s: End height should not change", tt.name)
-			uassert.Equal(t, initialDistributePerBlock, tierAfterDeposits.DistributeAmountPerBlockX128().ToString(),
-				"%s: Distribute per block should not change", tt.name)
+			uassert.Equal(t, initialDistributePerSecond, tierAfterDeposits.DistributeAmountPerSecondX128().ToString(),
+				"%s: Distribute per second should not change", tt.name)
 
 			// Verify duration remains consistent
 			finalDuration := tierAfterDeposits.EndHeight() - tierAfterDeposits.StartHeight()
 			uassert.Equal(t, expectedDurationBlocks, finalDuration,
 				"Duration should remain consistent")
+		})
+	}
+}
+
+// calculateEndTimeByTierType calculates the end time based on tier type
+func calculateEndTimeByTierType(tierType int64, startTime int64, startHeight int64, averageBlockTimeMs int64) *BlockTimeInfo {
+	// Calculate end time based on tier duration
+	endTime := startTime + projectTierDurationTimes[tierType]
+	
+	// Create and return block time info
+	return newBlockTimeInfoByTimeAndAverageBlockTimeMs(
+		startTime,
+		startHeight,
+		endTime,
+		averageBlockTimeMs,
+	)
+}
+
+// TestTierDuration_TimestampBasedCalculation tests that tier duration calculations are time-based
+func TestTierDuration_TimestampBasedCalculation(t *testing.T) {
+	tests := []struct {
+		name                 string
+		tierType             int64
+		startTime            int64
+		averageBlockTimeMs   int64
+		expectedDurationDays int64
+		description          string
+	}{
+		{
+			name:                 "30 day tier standard",
+			tierType:             30,
+			startTime:            1000000,
+			averageBlockTimeMs:   5000, // 5 seconds per block
+			expectedDurationDays: 30,
+			description:          "30 day tier should always be 30 days regardless of block time",
+		},
+		{
+			name:                 "30 day tier with fast blocks",
+			tierType:             30,
+			startTime:            1000000,
+			averageBlockTimeMs:   1000, // 1 second per block
+			expectedDurationDays: 30,
+			description:          "30 day tier should still be 30 days with fast blocks",
+		},
+		{
+			name:                 "30 day tier with slow blocks",
+			tierType:             30,
+			startTime:            1000000,
+			averageBlockTimeMs:   20000, // 20 seconds per block
+			expectedDurationDays: 30,
+			description:          "30 day tier should still be 30 days with slow blocks",
+		},
+		{
+			name:                 "90 day tier",
+			tierType:             90,
+			startTime:            1000000,
+			averageBlockTimeMs:   5000,
+			expectedDurationDays: 90,
+			description:          "90 day tier should be 90 days",
+		},
+		{
+			name:                 "180 day tier",
+			tierType:             180,
+			startTime:            1000000,
+			averageBlockTimeMs:   5000,
+			expectedDurationDays: 180,
+			description:          "180 day tier should be 180 days",
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Calculate end time info
+			endTimeInfo := calculateEndTimeByTierType(
+				tt.tierType,
+				tt.startTime,
+				100, // start height
+				tt.averageBlockTimeMs,
+			)
+			
+			// Calculate actual duration in seconds
+			actualDurationSeconds := endTimeInfo.BlockTime() - tt.startTime
+			actualDurationDays := actualDurationSeconds / 86400 // seconds per day
+			
+			// Verify the duration matches expected days
+			uassert.Equal(t, tt.expectedDurationDays, actualDurationDays, tt.description)
+		})
+	}
+}
+
+// TestTierDuration_BlockHeightEstimation tests that block height is estimated correctly
+func TestTierDuration_BlockHeightEstimation(t *testing.T) {
+	tests := []struct {
+		name               string
+		tierType           int64
+		startHeight        int64
+		averageBlockTimeMs int64
+		expectedMinBlocks  int64
+		expectedMaxBlocks  int64
+	}{
+		{
+			name:               "30 days with 5 second blocks",
+			tierType:           30,
+			startHeight:        1000,
+			averageBlockTimeMs: 5000,
+			expectedMinBlocks:  518000, // 30*24*60*60/5 = 518,400 blocks
+			expectedMaxBlocks:  519000,
+		},
+		{
+			name:               "30 days with 1 second blocks",
+			tierType:           30,
+			startHeight:        1000,
+			averageBlockTimeMs: 1000,
+			expectedMinBlocks:  2591000, // 30*24*60*60/1 = 2,592,000 blocks
+			expectedMaxBlocks:  2593000,
+		},
+		{
+			name:               "30 days with 20 second blocks",
+			tierType:           30,
+			startHeight:        1000,
+			averageBlockTimeMs: 20000,
+			expectedMinBlocks:  129000, // 30*24*60*60/20 = 129,600 blocks
+			expectedMaxBlocks:  130000,
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			startTime := int64(1000000)
+			
+			endTimeInfo := calculateEndTimeByTierType(
+				tt.tierType,
+				startTime,
+				tt.startHeight,
+				tt.averageBlockTimeMs,
+			)
+			
+			actualBlockCount := endTimeInfo.BlockHeight() - tt.startHeight
+			
+			// Verify block count is in expected range
+			uassert.Equal(t, true, 
+				actualBlockCount >= tt.expectedMinBlocks && actualBlockCount <= tt.expectedMaxBlocks,
+				"Block count should be estimated based on average block time")
 		})
 	}
 }
