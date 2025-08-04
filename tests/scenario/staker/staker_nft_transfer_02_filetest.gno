@@ -14,10 +14,11 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
 
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/emission"
 
 	"gno.land/r/gnoswap/v1/gns"
 
@@ -70,6 +71,7 @@ func main() {
 
 func initAccountAndEmission() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartBlockHeight(cross, 124)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFee(cross, 0)

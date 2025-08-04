@@ -195,10 +195,10 @@ func processMintInput(input MintInput) (ProcessedMintInput, error) {
 
 	result = ProcessedMintInput{
 		tokenPair:      pair,
-		amount0Desired: new(u256.Uint).Set(amount0Desired),
-		amount1Desired: new(u256.Uint).Set(amount1Desired),
-		amount0Min:     new(u256.Uint).Set(amount0Min),
-		amount1Min:     new(u256.Uint).Set(amount1Min),
+		amount0Desired: amount0Desired,
+		amount1Desired: amount1Desired,
+		amount0Min:     amount0Min,
+		amount1Min:     amount1Min,
 		tickLower:      tickLower,
 		tickUpper:      tickUpper,
 		poolPath:       poolPath,

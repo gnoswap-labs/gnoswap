@@ -42,9 +42,9 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	gnsPath    = "gno.land/r/gnoswap/v1/gns"
+	gnsPath = "gno.land/r/gnoswap/v1/gns"
 
-	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotPath             = "gno.land/r/demo/wugnot"
 	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 
 	fee3000 uint32 = 3000
@@ -76,6 +76,7 @@ func main() {
 
 func initWithShortWarmUp() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartBlockHeight(cross, 124)
 
 	println("[INFO] override warm-up periods for testing")
 	sr.SetWarmUp(cross, 30, 150)
