@@ -233,16 +233,6 @@ func unclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
 	return unclaimedFee0, unclaimedFee1
 }
 
-func subUint256(x, y *u256.Uint) *u256.Uint {
-	if x.Cmp(y) < 0 {
-		q256 := u256.MustFromDecimal(MAX_UINT256)
-		diff := u256.Zero().Sub(q256, y)
-		return u256.Zero().Add(diff, x)
-	}
-
-	return u256.Zero().Sub(x, y)
-}
-
 func IsBurned(positionId uint64) bool {
 	position := MustGetPosition(positionId)
 	return position.burned

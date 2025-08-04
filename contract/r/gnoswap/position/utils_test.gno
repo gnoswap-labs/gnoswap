@@ -7,6 +7,7 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/uassert"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v1/gnft"
 )
 
@@ -115,7 +116,6 @@ func TestAssertValidNumberString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			if tt.expectedHasPanic {
 				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
 					assertValidNumberString(tt.input)
@@ -432,6 +432,80 @@ func TestSplitOf(t *testing.T) {
 				uassert.Equal(t, tc.expectedPath1, gotToken1, "Token1 mismatch")
 				uassert.Equal(t, tc.expectedFee, gotFee, "Fee mismatch")
 			}
+		})
+	}
+}
+
+func TestSubUint256(t *testing.T) {
+	tests := []struct {
+		name     string
+		x        *u256.Uint
+		y        *u256.Uint
+		expected *u256.Uint
+	}{
+		{
+			name:     "Normal case: x > y",
+			x:        u256.NewUint(100),
+			y:        u256.NewUint(50),
+			expected: u256.NewUint(50),
+		},
+		{
+			name:     "Equality case: x == y",
+			x:        u256.NewUint(100),
+			y:        u256.NewUint(100),
+			expected: u256.NewUint(0),
+		},
+		{
+			name: "Underflow case: x < y",
+			x:    u256.NewUint(50),
+			y:    u256.NewUint(100),
+			expected: func() *u256.Uint {
+				// 2^256 - 1 - 100 + 50 = 2^256 - 51
+				max := u256.MustFromDecimal(MAX_UINT256)
+				diff := u256.Zero().Sub(max, u256.NewUint(100))
+				return u256.Zero().Add(diff, u256.NewUint(50))
+			}(),
+		},
+		{
+			name:     "y = 0",
+			x:        u256.NewUint(100),
+			y:        u256.NewUint(0),
+			expected: u256.NewUint(100),
+		},
+		{
+			name: "x = 0, y > 0",
+			x:    u256.NewUint(0),
+			y:    u256.NewUint(100),
+			expected: func() *u256.Uint {
+				// 2^256 - 1 - 100 + 0 = 2^256 - 101
+				max := u256.MustFromDecimal(MAX_UINT256)
+				return u256.Zero().Sub(max, u256.NewUint(100))
+			}(),
+		},
+		{
+			name:     "Large numbers: normal subtraction",
+			x:        u256.MustFromDecimal("1000000000000000000000"),
+			y:        u256.MustFromDecimal("500000000000000000000"),
+			expected: u256.MustFromDecimal("500000000000000000000"),
+		},
+		{
+			name: "Large numbers: underflow",
+			x:    u256.MustFromDecimal("500000000000000000000"),
+			y:    u256.MustFromDecimal("1000000000000000000000"),
+			expected: func() *u256.Uint {
+				max := u256.MustFromDecimal(MAX_UINT256)
+				diff := u256.Zero().Sub(max, u256.MustFromDecimal("1000000000000000000000"))
+				return u256.Zero().Add(diff, u256.MustFromDecimal("500000000000000000000"))
+			}(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := subUint256(tt.x, tt.y)
+			uassert.Equal(t, tt.expected.ToString(), result.ToString(),
+				"subUint256(%s, %s) should equal %s",
+				tt.x.ToString(), tt.y.ToString(), tt.expected.ToString())
 		})
 	}
 }
