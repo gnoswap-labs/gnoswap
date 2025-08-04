@@ -59,6 +59,8 @@ func TokenURI(tid grc721.TokenID) (string, error) {
 //   - int64: The number of NFTs owned by the address.
 //   - error: Returns an error if the balance retrieval fails.
 func BalanceOf(owner std.Address) (int64, error) {
+	assertIsValidAddress(owner)
+
 	balance, err := nft.BalanceOf(owner)
 	if err != nil {
 		return 0, err
@@ -150,7 +152,11 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 func SafeTransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPosition()
 
-	checkErr(nft.SafeTransferFrom(from, to, tid))
+	assertFromIsValidAddress(from)
+	assertToIsValidAddress(to)
+
+	err := nft.SafeTransferFrom(from, to, tid)
+	checkTransferErr(err, from, to, tid)
 	return nil
 }
 
@@ -167,7 +173,11 @@ func SafeTransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error
 func TransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPosition()
 
-	checkErr(nft.TransferFrom(from, to, tid))
+	assertFromIsValidAddress(from)
+	assertToIsValidAddress(to)
+
+	err := nft.TransferFrom(from, to, tid)
+	checkTransferErr(err, from, to, tid)
 	return nil
 }
 
@@ -186,8 +196,10 @@ func TransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 //   - If the `Approve` call fails.
 func Approve(cur realm, approved std.Address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPosition()
+	assertIsValidAddress(approved)
 
-	checkErr(nft.Approve(approved, tid))
+	err := nft.Approve(approved, tid)
+	checkApproveErr(err, approved, tid)
 	return nil
 }
 
@@ -205,6 +217,7 @@ func Approve(cur realm, approved std.Address, tid grc721.TokenID) error {
 //   - If the `SetApprovalForAll` operation fails.
 func SetApprovalForAll(cur realm, operator std.Address, approved bool) error {
 	halt.AssertIsNotHaltedPosition()
+	assertIsValidAddress(operator)
 
 	checkErr(nft.SetApprovalForAll(operator, approved))
 	return nil
