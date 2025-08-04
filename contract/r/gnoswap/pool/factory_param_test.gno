@@ -174,8 +174,8 @@ func TestUpdateWithWrapping(t *testing.T) {
 			token0Path:      wugnotPath,
 			token1Path:      gnsPath,
 			fee:             FeeTier3000,
-			sqrtPriceX96Str: "4295128738", // MIN_SQRT_RATIO - 1
-			sqrtPriceX96:    u256.MustFromDecimal("4295128739"),
+			sqrtPriceX96Str: "4295128738",                       // MIN_SQRT_RATIO - 1
+			sqrtPriceX96:    u256.MustFromDecimal("4295128738"), // Fixed to match the string
 			tickSpacing:     GetFeeAmountTickSpacing(FeeTier3000),
 			expectedPanic:   true,
 			expectedMsg:     "out of range for numeric value",
@@ -201,6 +201,17 @@ func TestUpdateWithWrapping(t *testing.T) {
 			tickSpacing:     GetFeeAmountTickSpacing(FeeTier3000),
 			expectedPanic:   false,
 		},
+		{
+			name:            "fail - tokens swapped below MIN_SQRT_RATIO",
+			token0Path:      gnsPath,    // swapped: gns first
+			token1Path:      wugnotPath, // swapped: wugnot second
+			fee:             FeeTier3000,
+			sqrtPriceX96Str: "4295128738", // MIN_SQRT_RATIO - 1
+			sqrtPriceX96:    u256.MustFromDecimal("4295128738"),
+			tickSpacing:     GetFeeAmountTickSpacing(FeeTier3000),
+			expectedPanic:   true,
+			expectedMsg:     "out of range for numeric value",
+		},
 	}
 
 	for _, tt := range tests {
@@ -208,31 +219,37 @@ func TestUpdateWithWrapping(t *testing.T) {
 			params := newPoolParams(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96Str, tt.tickSpacing)
 			updatedParams, err := params.updateWithWrapping()
 
-			if !tt.expectedPanic {
-				expected0 := params.token0Path
-				expected1 := params.token1Path
-				if !params.isInOrder() {
-					expected0, expected1 = expected1, expected0
+			if tt.expectedPanic {
+				uassert.NotNil(t, err, "Expected error but got none")
+				if err != nil {
+					uassert.True(t, strings.Contains(err.Error(), tt.expectedMsg),
+						ufmt.Sprintf("Expected error message to contain %s, got %s", tt.expectedMsg, err.Error()))
 				}
+				return
+			}
 
-				uassert.Equal(t, expected0, updatedParams.Token0Path(), "Token0Path should be swapped if needed")
-				uassert.Equal(t, expected1, updatedParams.Token1Path(), "Token1Path should be swapped if needed")
+			uassert.Nil(t, err, "Unexpected error: "+ufmt.Sprintf("%v", err))
 
-				// Verify that the inverted price is within valid range
-				if !params.isInOrder() {
-					minSqrtRatio := u256.MustFromDecimal(MIN_SQRT_RATIO)
-					maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
-					newSqrtPriceX96 := updatedParams.SqrtPriceX96()
+			expected0 := params.token0Path
+			expected1 := params.token1Path
+			if !params.isInOrder() {
+				expected0, expected1 = expected1, expected0
+			}
 
-					if newSqrtPriceX96.Lt(minSqrtRatio) || newSqrtPriceX96.Gt(maxSqrtRatio) {
-						t.Errorf("Inverted price %s is out of valid range [%s, %s]",
-							newSqrtPriceX96.ToString(),
-							minSqrtRatio.ToString(),
-							maxSqrtRatio.ToString())
-					}
+			uassert.Equal(t, expected0, updatedParams.Token0Path(), "Token0Path should be swapped if needed")
+			uassert.Equal(t, expected1, updatedParams.Token1Path(), "Token1Path should be swapped if needed")
+
+			// Verify that the inverted price is within valid range
+			if !params.isInOrder() {
+
+				newSqrtPriceX96 := updatedParams.SqrtPriceX96()
+
+				if newSqrtPriceX96.Lt(minSqrtRatio) || newSqrtPriceX96.Gt(maxSqrtRatio) {
+					t.Errorf("Inverted price %s is out of valid range [%s, %s]",
+						newSqrtPriceX96.ToString(),
+						minSqrtRatio.ToString(),
+						maxSqrtRatio.ToString())
 				}
-			} else {
-				uassert.Equal(t, err, nil, "Error should be nil")
 			}
 		})
 	}

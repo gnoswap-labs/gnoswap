@@ -144,7 +144,7 @@ func createPool(t *testing.T,
 	poolPath := pl.GetPoolPath(token0, token1, fee)
 	if !pl.ExistsPoolPath(poolPath) {
 		pl.CreatePool(cross, token0, token1, fee, sqrtPriceX96)
-		sr.SetPoolTierByAdmin(cross, poolPath, tier1)
+		sr.SetPoolTier(cross, poolPath, tier1)
 	}
 }
 

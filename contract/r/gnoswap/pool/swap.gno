@@ -57,7 +57,7 @@ func Swap(
 ) (string, string) {
 	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedPool()
-	access.AssertIsRouter(caller)
+	access.AssertIsSwapWhitelisted(caller)
 
 	if amountSpecified == "0" {
 		panic(newErrorWithDetail(
@@ -288,7 +288,6 @@ func applySwapResult(pool *Pool, result *SwapResult) {
 //   - Price limit must be below MAX_SQRT_RATIO
 func validatePriceLimits(slot0 Slot0, zeroForOne bool, sqrtPriceLimitX96 *u256.Uint) {
 	if zeroForOne {
-		minSqrtRatio := u256.MustFromDecimal(MIN_SQRT_RATIO)
 
 		cond1 := sqrtPriceLimitX96.Lt(slot0.sqrtPriceX96)
 		cond2 := sqrtPriceLimitX96.Gt(minSqrtRatio)
@@ -303,7 +302,6 @@ func validatePriceLimits(slot0 Slot0, zeroForOne bool, sqrtPriceLimitX96 *u256.U
 			))
 		}
 	} else {
-		maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
 
 		cond1 := sqrtPriceLimitX96.Gt(slot0.sqrtPriceX96)
 		cond2 := sqrtPriceLimitX96.Lt(maxSqrtRatio)

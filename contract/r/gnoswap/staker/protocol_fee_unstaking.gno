@@ -7,6 +7,7 @@ import (
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/halt"
 
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
@@ -65,48 +66,22 @@ func handleUnStakingFee(
 	return amount - feeAmount, feeAmount, nil
 }
 
-// SetUnStakingFeeByAdmin sets the unstaking fee rate by an admin.
-//
-// This function ensures that only admins can modify the unstaking fee. It validates
-// the input fee and emits an event indicating the change.
-//
-// Parameters:
-// - fee (int64): The new unstaking fee rate in basis points (bps).
-//
-// Panics:
-// - If the caller is not an admin.
-func SetUnStakingFeeByAdmin(cur realm, fee int64) {
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdmin(caller)
-
-	prevUnStakingFee := GetUnstakingFee()
-
-	setUnStakingFee(fee)
-
-	previousRealm := std.PreviousRealm()
-
-	std.Emit(
-		"SetUnStakingFeeByAdmin",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"prevFee", formatAnyInt(prevUnStakingFee),
-		"newFee", formatAnyInt(fee),
-	)
-}
-
 // SetUnStakingFee modifies the unstaking fee
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#setunstakingfee
 func SetUnStakingFee(cur realm, fee int64) {
+	halt.AssertIsNotHaltedStaker()
+
 	caller := std.PreviousRealm().Address()
-	access.AssertIsGovernance(caller)
+	access.AssertIsAdminOrGovernance(caller)
+
+	assertIsValidFeeRate(fee)
 
 	prevUnStakingFee := GetUnstakingFee()
 
 	setUnStakingFee(fee)
 
 	previousRealm := std.PreviousRealm()
-
 	std.Emit(
 		"SetUnStakingFee",
 		"prevAddr", previousRealm.Address().String(),
@@ -117,13 +92,5 @@ func SetUnStakingFee(cur realm, fee int64) {
 }
 
 func setUnStakingFee(fee int64) {
-	// 10000 (bps) = 100%
-	if fee < 0 || fee > 10000 {
-		panic(makeErrorWithDetails(
-			errInvalidUnstakingFee,
-			ufmt.Sprintf("fee(%d) must be in range 0 ~ 10000", fee),
-		))
-	}
-
 	unstakingFee = fee
 }

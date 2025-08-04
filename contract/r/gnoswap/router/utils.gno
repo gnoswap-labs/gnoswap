@@ -27,6 +27,14 @@ func assertHopsInRange(hops int) {
 	}
 }
 
+// assertIsNotPassedDeadline panics if the deadline is passed.
+func assertIsNotPassedDeadline(deadline int64) {
+	if err := checkDeadline(deadline); err != nil {
+		errMsg := addDetailToError(errExpired, err.Error())
+		panic(errMsg)
+	}
+}
+
 // getDataForSinglePath extracts token0, token1, and fee from a single path.
 func getDataForSinglePath(poolPath string) (token0, token1 string, fee uint32) {
 	poolPathSplit := strings.Split(poolPath, ":")

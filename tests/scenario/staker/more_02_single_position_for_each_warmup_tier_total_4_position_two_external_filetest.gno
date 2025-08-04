@@ -91,13 +91,13 @@ func initAndSetup() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFeeByAdmin(cross, 0)
+	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
 	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] set community pool distribution to 0%")
-	emission.ChangeDistributionPctByAdmin(
+	emission.ChangeDistributionPct(
 		cross,
 		1, 7500, // staker
 		2, 2500, // devOps

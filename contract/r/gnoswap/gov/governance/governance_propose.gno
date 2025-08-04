@@ -33,10 +33,9 @@ func ProposeText(
 	description string,
 ) (newProposalId int64) {
 	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedWithdraw()
 
 	// Get caller information for proposal creation
-	previousPkgPath := std.PreviousRealm().PkgPath()
-	previousAddress := std.PreviousRealm().Address()
 	callerAddress := std.PreviousRealm().Address()
 
 	// Get current blockchain state
@@ -87,10 +86,11 @@ func ProposeText(
 	}
 
 	// Emit proposal creation event for indexing and tracking
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"ProposeText",
-		"prevAddr", previousAddress.String(),
-		"prevRealm", previousPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"title", title,
 		"description", description,
 		"proposalId", formatInt(proposal.ID()),
@@ -134,10 +134,9 @@ func ProposeCommunityPoolSpend(
 	amount int64,
 ) (newProposalId int64) {
 	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedWithdraw()
 
 	// Get caller information for proposal creation
-	previousPkgPath := std.PreviousRealm().PkgPath()
-	previousAddress := std.PreviousRealm().Address()
 	callerAddress := std.PreviousRealm().Address()
 
 	// Get current blockchain state
@@ -188,10 +187,11 @@ func ProposeCommunityPoolSpend(
 	}
 
 	// Emit proposal creation event for indexing and tracking
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"ProposeCommunityPoolSpend",
-		"prevAddr", previousAddress.String(),
-		"prevRealm", previousPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"title", title,
 		"description", description,
 		"to", to.String(),
@@ -237,10 +237,9 @@ func ProposeParameterChange(
 	executions string,
 ) (newProposalId int64) {
 	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedWithdraw()
 
 	// Get caller information for proposal creation
-	previousPkgPath := std.PreviousRealm().PkgPath()
-	previousAddress := std.PreviousRealm().Address()
 	callerAddress := std.PreviousRealm().Address()
 
 	// Get current blockchain state
@@ -291,10 +290,11 @@ func ProposeParameterChange(
 	}
 
 	// Emit proposal creation event for indexing and tracking
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"ProposeParameterChange",
-		"prevAddr", previousAddress.String(),
-		"prevRealm", previousPkgPath,
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
 		"title", title,
 		"description", description,
 		"numToExecute", formatInt(numToExecute),
