@@ -498,6 +498,31 @@ func TestSubUint256(t *testing.T) {
 				return u256.Zero().Add(diff, u256.MustFromDecimal("500000000000000000000"))
 			}(),
 		},
+		{
+			name: "Underflow: 0 - 1 (most basic off-by-one check)",
+			x:    u256.NewUint(0),
+			y:    u256.NewUint(1),
+			expected: func() *u256.Uint {
+				// 0 - 1 = -1 mod 2^256 = 2^256 - 1
+				return new(u256.Uint).Sub(u256.NewUint(0), u256.NewUint(1))
+			}(),
+		},
+		{
+			name: "Underflow: direct comparison with u256.Sub",
+			x:    u256.NewUint(50),
+			y:    u256.NewUint(100),
+			expected: func() *u256.Uint {
+				return new(u256.Uint).Sub(u256.NewUint(50), u256.NewUint(100))
+			}(),
+		},
+		{
+			name: "Verify off-by-one: 10 - 11",
+			x:    u256.NewUint(10),
+			y:    u256.NewUint(11),
+			expected: func() *u256.Uint {
+				return new(u256.Uint).Sub(u256.NewUint(10), u256.NewUint(11))
+			}(),
+		},
 	}
 
 	for _, tt := range tests {
