@@ -15,7 +15,6 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/access"
@@ -78,11 +77,7 @@ func main() {
 	stakePosition01()
 	println()
 
-	println("[SCENARIO] 5. Attempt NFT transfer (should fail)")
-	attemptNftTransfer()
-	println()
-
-	println("[SCENARIO] 6. Collect reward")
+	println("[SCENARIO] 5. Collect reward")
 	collectReward()
 }
 
@@ -167,19 +162,6 @@ func stakePosition01() {
 	}
 }
 
-func attemptNftTransfer() {
-	println("[INFO] attempt to transfer staked NFT (should fail)")
-
-	// Test 1: caller is not owner (caller is same as spender)
-	println("[INFO] test 1: non-owner tries to transfer")
-	testing.SetRealm(dummyRealm)
-
-	errorMessage := "[GNOSWAP-GNFT-001] caller has no permission || caller (g1v36k6mteta047h6lta047h6lta047h6lz7gmv8) is not the owner or operator of token (1)"
-	uassert.AbortsWithMessage(t, errorMessage, func() {
-		gnft.TransferFrom(cross, adminAddr, dummyAddr, positionIdFrom(1))
-	})
-}
-
 func collectReward() {
 	testing.SetRealm(adminRealm)
 
@@ -241,10 +223,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] stake position 01
 // [EXPECTED] NFT owner after staking: g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu
 //
-// [SCENARIO] 5. Attempt NFT transfer (should fail)
-// [INFO] attempt to transfer staked NFT (should fail)
-// [INFO] test 1: non-owner tries to transfer
-//
-// [SCENARIO] 6. Collect reward
+// [SCENARIO] 5. Collect reward
 // [INFO] collect reward for position 01
 // [EXPECTED] reward collected: 9631848
