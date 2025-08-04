@@ -3,10 +3,13 @@ package staker
 import (
 	"std"
 
+	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/halt"
 
 	en "gno.land/r/gnoswap/v1/emission"
+	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 const (
