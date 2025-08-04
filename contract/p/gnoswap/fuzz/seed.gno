@@ -1,4 +1,4 @@
-package fuzztest
+package fuzz
 
 import (
 	"time"
@@ -7,7 +7,7 @@ import (
 // SeedManager helps generate unique seeds for tests
 //
 // Note:
-// The original fuzztest implementation used a fixed seed (987654321) in initRNG,
+// The original fuzz test implementation used a fixed seed (987654321) in initRNG,
 // which caused all generators to produce the same sequence of values. This was
 // problematic for fuzz testing as it reduced test coverage and made it impossible
 // to find edge cases through randomization.

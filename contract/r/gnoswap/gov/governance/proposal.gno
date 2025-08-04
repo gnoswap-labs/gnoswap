@@ -355,9 +355,12 @@ func (p *Proposal) updateExecuteResult(success bool) {
 // Returns:
 //   - error: cancellation error if proposal cannot be canceled
 func (p *Proposal) cancel(canceledAt int64, canceledHeight int64, canceledBy std.Address) error {
-	// Note: For cancellation, we check against executability which includes timing validation
-	if !p.IsExecutable(canceledAt) {
-		return errProposalNotExecutable
+	if p.status.IsCanceled(canceledAt) {
+		return errAlreadyCanceledProposal
+	}
+
+	if !p.status.IsUpcoming(canceledAt) {
+		return errUnableToCancleVotingProposal
 	}
 
 	// Mark proposal as canceled

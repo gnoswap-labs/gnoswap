@@ -54,8 +54,8 @@ func TestProposal_TypeOperations(t *testing.T) {
 // TestProposal_Validation tests proposal validation
 func TestProposal_Validation(t *testing.T) {
 	tests := []struct {
-		name           string
-		metadata       *ProposalMetadata
+		name          string
+		metadata      *ProposalMetadata
 		data          *ProposalData
 		expectedError bool
 	}{
@@ -125,10 +125,10 @@ func TestProposal_StatusOperations(t *testing.T) {
 	baseTime := time.Unix(1000, 0)
 	config := Config{
 		VotingStartDelay: 100,
-		VotingPeriod:    200,
-		ExecutionDelay:  100,
-		ExecutionWindow: 200,
-		Quorum:         50,
+		VotingPeriod:     200,
+		ExecutionDelay:   100,
+		ExecutionWindow:  200,
+		Quorum:           50,
 	}
 
 	tests := []struct {
@@ -148,14 +148,14 @@ func TestProposal_StatusOperations(t *testing.T) {
 		{
 			name:           "Executed proposal",
 			proposalType:   CommunityPoolSpend,
-			currentTime:    baseTime.Add(time.Duration(100 + 200 + 100) * time.Second), // voting start + voting period + execution delay
+			currentTime:    baseTime.Add(time.Duration(100+200+100) * time.Second), // voting start + voting period + execution delay
 			isExecuted:     true,
 			expectedActive: false,
 		},
 		{
 			name:           "Canceled proposal",
 			proposalType:   ParameterChange,
-			currentTime:    baseTime.Add(time.Duration(100 + 200 + 100) * time.Second), // voting start + voting period + execution delay
+			currentTime:    baseTime,
 			isCanceled:     true,
 			expectedActive: false,
 		},
@@ -193,8 +193,8 @@ func TestProposal_StatusOperations(t *testing.T) {
 // TestNewProposal tests creation of new proposal
 func TestNewProposal(t *testing.T) {
 	tests := []struct {
-		name          string
-		proposalType  ProposalType
+		name         string
+		proposalType ProposalType
 		title        string
 		description  string
 		proposer     std.Address
@@ -202,16 +202,16 @@ func TestNewProposal(t *testing.T) {
 		{
 			name:         "Create Text proposal",
 			proposalType: Text,
-			title:       "Test Title",
-			description: "Test Description",
-			proposer:    std.Address("g1proposer"),
+			title:        "Test Title",
+			description:  "Test Description",
+			proposer:     std.Address("g1proposer"),
 		},
 		{
 			name:         "Create CommunityPoolSpend proposal",
 			proposalType: CommunityPoolSpend,
-			title:       "Spend Proposal",
-			description: "Community Pool Spend",
-			proposer:    std.Address("g1proposer"),
+			title:        "Spend Proposal",
+			description:  "Community Pool Spend",
+			proposer:     std.Address("g1proposer"),
 		},
 	}
 
@@ -221,10 +221,10 @@ func TestNewProposal(t *testing.T) {
 			baseTime := time.Now().Unix()
 			config := Config{
 				VotingStartDelay: 100,
-				VotingPeriod:    200,
-				ExecutionDelay:  100,
-				ExecutionWindow: 200,
-				Quorum:         50,
+				VotingPeriod:     200,
+				ExecutionDelay:   100,
+				ExecutionWindow:  200,
+				Quorum:           50,
 			}
 
 			// when
@@ -248,4 +248,4 @@ func TestNewProposal(t *testing.T) {
 			uassert.Equal(t, proposal.CreatedAt(), baseTime)
 		})
 	}
-} 
+}
