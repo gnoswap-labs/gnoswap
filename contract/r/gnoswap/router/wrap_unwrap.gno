@@ -75,20 +75,35 @@ func wrapWithTransfer(toAddress std.Address, amount int64) error {
 //
 // Returns:
 // - error: Any error that occurred during the transfer and unwrap process
+
+// unwrapWithTransferFrom transfers WUGNOT from a source address, unwraps it to GNOT,
+// and sends the GNOT to a target address
+//
+// Parameters:
+// - fromAddress: The address holding the WUGNOT tokens
+// - toAddress: The address to receive the unwrapped GNOT
+// - wugnotAmount: The amount of WUGNOT to transfer and unwrap
+//
+// Returns:
+// - error: Any error that occurred during the transfer and unwrap process
 func unwrapWithTransferFrom(fromAddress, toAddress std.Address, wugnotAmount int64) error {
 	if wugnotAmount == 0 {
 		return nil
 	}
 
-	wugnot.TransferFrom(cross, fromAddress, toAddress, wugnotAmount)
+	currentRealmAddr := std.CurrentRealm().Address()
+	if fromAddress != currentRealmAddr {
+		wugnot.TransferFrom(cross, fromAddress, currentRealmAddr, wugnotAmount)
+	}
 
 	wugnot.Withdraw(cross, wugnotAmount)
 
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(toAddress, fromAddress, std.Coins{{"ugnot", int64(wugnotAmount)}})
+	banker.SendCoins(currentRealmAddr, toAddress, std.Coins{{"ugnot", int64(wugnotAmount)}})
 
 	return nil
 }
+
 
 // unwrapWithTransfer handles transferring tokens to a target address,
 // with special handling for WUGNOT tokens that need to be unwrapped back to GNOT.

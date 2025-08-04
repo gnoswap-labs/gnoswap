@@ -63,15 +63,14 @@ func (h *GnotSwapHandler) HandleInputSwap() error {
 
 	toUnwrap := h.WrappedAmount - spend
 
-	fromAddress := std.PreviousRealm().Address()
-	toAddress := std.CurrentRealm().Address()
-	return unwrapWithTransferFrom(fromAddress, toAddress, toUnwrap)
+	caller := std.PreviousRealm().Address()
+	return unwrapWithTransferFrom(caller, caller, toUnwrap)
 }
 
 // HandleOutputSwap manages unwrapping logic for GNOT output tokens
 func (h *GnotSwapHandler) HandleOutputSwap() error {
 	userRecvWugnot := h.NewBalance - h.BeforeBalance - h.WrappedAmount
-	return unwrapWithTransfer(std.CurrentRealm().Address(), userRecvWugnot)
+	return unwrapWithTransfer(std.PreviousRealm().Address(), userRecvWugnot)
 }
 
 // SwapValidator provides validation methods for swap operations
