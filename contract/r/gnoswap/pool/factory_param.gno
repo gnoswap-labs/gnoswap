@@ -132,3 +132,12 @@ func validateSqrtPriceX96(sqrtPriceX96 *u256.Uint) error {
 	}
 	return nil
 }
+
+func isValidFeeTier(feeTier uint32) bool {
+	switch feeTier {
+	case FeeTier100, FeeTier500, FeeTier3000, FeeTier10000:
+		return true
+	}
+
+	return false
+}
