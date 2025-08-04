@@ -115,6 +115,11 @@ func SetDistributionStartBlockHeight(cur realm, height int64) {
 
 	currentHeight := std.ChainHeight()
 
+	// Prevent changing start height after distribution has already started
+	if distributionStartBlockHeight != 0 && distributionStartBlockHeight <= currentHeight {
+		panic("distribution has already started, cannot change start block height")
+	}
+
 	// Prevent setting distribution start height to a past block
 	if height > 0 && height <= currentHeight {
 		panic("distribution start block height must be greater than current block height")

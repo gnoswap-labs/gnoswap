@@ -71,6 +71,22 @@ func TestSetDistributionStartBlockHeight(t *testing.T) {
 				uassert.Equal(t, int64(10000), GetDistributionStartBlockHeight())
 			},
 		},
+		{
+			name: "cannot change start height after distribution has started",
+			setup: func() {
+				// Reset to block 0
+				testing.SetHeight(0)
+				// Set initial distribution start height to block 100
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartBlockHeight(cross, 100)
+				// Simulate chain advancing to block 150 (past start height)
+				testing.SetHeight(150)
+			},
+			height:      200,
+			caller:      adminAddr,
+			shouldPanic: true,
+			panicMsg:    "distribution has already started, cannot change start block height",
+		},
 	}
 
 	for _, tt := range tests {
