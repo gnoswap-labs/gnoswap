@@ -403,13 +403,13 @@ func collectFee(
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	if isWrappedToken(token0) && unwrapResult {
-		unwrapWithTransferFrom(caller, poolAddr, amount0WithoutFee)
+		unwrapWithTransferFrom(poolAddr, caller, amount0WithoutFee)
 	} else {
 		common.TransferFrom(cross, token0, poolAddr, caller, amount0WithoutFee)
 	}
 
 	if isWrappedToken(token1) && unwrapResult {
-		unwrapWithTransferFrom(caller, poolAddr, amount0WithoutFee)
+		unwrapWithTransferFrom(poolAddr, caller, amount1WithoutFee)
 	} else {
 		common.TransferFrom(cross, token1, poolAddr, caller, amount1WithoutFee)
 	}

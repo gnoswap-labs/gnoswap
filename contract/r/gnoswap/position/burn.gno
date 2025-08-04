@@ -133,13 +133,13 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	if isWrappedToken(pToken0) && params.unwrapResult {
-		unwrapWithTransferFrom(caller, poolAddr, collectAmount0.Int64())
+		unwrapWithTransferFrom(poolAddr, caller, collectAmount0.Int64())
 	} else {
 		common.TransferFrom(cross, pToken0, poolAddr, caller, collectAmount0.Int64())
 	}
 
 	if isWrappedToken(pToken1) && params.unwrapResult {
-		unwrapWithTransferFrom(caller, poolAddr, collectAmount1.Int64())
+		unwrapWithTransferFrom(poolAddr, caller, collectAmount1.Int64())
 	} else {
 		common.TransferFrom(cross, pToken1, poolAddr, caller, collectAmount1.Int64())
 	}
