@@ -252,6 +252,9 @@ func calculateAmountToMint(fromHeight, toHeight int64) int64 {
 		if singleBlockAmount > 0 && blocks > 0 {
 			// Check for overflow: if a * b > max_int64, then a > max_int64 / b
 			maxInt64 := int64(9223372036854775807) // math.MaxInt64
+			if blocks == 0 {
+				panic("division by zero: blocks cannot be zero")
+			}
 			if singleBlockAmount > maxInt64/blocks {
 				panic("overflow in yearAmountToMint calculation")
 			}

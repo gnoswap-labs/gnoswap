@@ -13,7 +13,21 @@ import (
 )
 
 func validBlockTime(blockTime int64) error {
-	if blockTime <= 0 || blockTime >= 1e9 {
+	if blockTime <= 0 {
+		return errInvalidAvgBlockTimeInMs
+	}
+
+	// Prevent division by zero and ensure reasonable block times
+	// blockPerYear = secToMs(SECONDS_IN_YEAR) / blockTime = 31,536,000,000 / blockTime
+	// blockPerDay = secToMs(SECONDS_PER_DAY) / blockTime = 86,400,000 / blockTime
+	// To ensure these don't result in 0, blockTime must be significantly smaller
+	const maxAllowedBlockTime = 86400000 // 1 day in ms
+	if blockTime >= maxAllowedBlockTime {
+		return errInvalidAvgBlockTimeInMs
+	}
+
+	// Additional safety check for extremely large values
+	if blockTime >= 1e9 {
 		return errInvalidAvgBlockTimeInMs
 	}
 
@@ -31,6 +45,7 @@ func validYear(year int64) error {
 // validEmissionAmount validates the emission amount if the amount of gns to mint is too many.
 // Parameters:
 //   - amount: The emission amount to validate
+//
 // Returns:
 //   - error: An error if the emission amount is invalid
 func validEmissionAmount(amount int64) error {

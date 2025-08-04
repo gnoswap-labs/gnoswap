@@ -262,7 +262,7 @@ func (h *HalvingData) initialize(startHeight, startTimestamp int64) {
 			h.setAmountPerBlock(year, amountPerBlock)
 		} else {
 			// Safety fallback if blockPerDay is 0
-			h.setAmountPerBlock(year, 0)
+			panic("blockPerDay cannot be zero during initialization")
 		}
 
 		// Set initial minted amount and remaining amount
@@ -491,7 +491,7 @@ func setAvgBlockTimeInMs(ms int64) error {
 				hd.setAmountPerBlock(year, changedAmountPerBlock)
 			} else {
 				// Safety fallback if blockPerDay is 0
-				hd.setAmountPerBlock(year, 0)
+				panic("blockPerDay cannot be zero during block time adjustment")
 			}
 		}
 
