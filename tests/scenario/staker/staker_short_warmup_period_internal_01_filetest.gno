@@ -90,6 +90,7 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartBlockHeight(cross, 124)
 
 	println("[INFO] override warm-up period for testing")
 	sr.SetWarmUp(cross, 30, 150)

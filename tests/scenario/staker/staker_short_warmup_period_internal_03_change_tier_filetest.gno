@@ -45,10 +45,10 @@ var (
 	fee100  uint32 = 100
 	fee3000 uint32 = 3000
 
-	max_timeout           int64 = 9999999999
-	maxInt64              int64 = 9223372036854775807
+	max_timeout int64 = 9999999999
+	maxInt64    int64 = 9223372036854775807
 
-	MUST_EXISTS_IN_TIER_1       = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
+	MUST_EXISTS_IN_TIER_1 = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
 )
 
 func main() {
@@ -95,6 +95,7 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
+	en.SetDistributionStartBlockHeight(cross, 124)
 
 	// override warm-up period for testing
 	sr.SetWarmUp(cross, 30, 150)

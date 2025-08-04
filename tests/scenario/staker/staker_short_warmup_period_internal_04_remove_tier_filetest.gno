@@ -89,6 +89,7 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
+	en.SetDistributionStartBlockHeight(cross, 124)
 
 	// override warm-up period for testing
 	sr.SetWarmUp(cross, 30, 150)
