@@ -4,6 +4,7 @@ import (
 	"math"
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/testutils"
 
@@ -403,14 +404,14 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount int64) {
 func deletePoolTier(t *testing.T, poolPath string) {
 	t.Helper()
 	if poolTier != nil {
-		poolTier.changeTier(std.ChainHeight(), pools, poolPath, 0)
+		poolTier.changeTier(std.ChainHeight(), time.Now().Unix(), pools, poolPath, 0)
 	} else {
 		panic("poolTier is nil")
 	}
 }
 
-func changeWarmup(t *testing.T, index int, blockDuration int64) {
-	modifyWarmup(index, blockDuration)
+func changeWarmup(t *testing.T, index int, timeDuration int64) {
+	modifyWarmup(index, timeDuration)
 }
 
 type gnsBalanceTracker struct {

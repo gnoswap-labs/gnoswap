@@ -266,7 +266,7 @@ func makeRewardTokensArray(rewardsTokenList []string) []*json.Node {
 	return rewardsTokenArray
 }
 
-func calculateInternalRewardPerBlockByPoolPath(poolPath string) string {
+func calculateInternalRewardPerSecondByPoolPath(poolPath string) string {
 	reward := poolTier.CurrentRewardPerPool(poolPath)
 	return ufmt.Sprintf("%d", reward)
 }
@@ -304,7 +304,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			RewardTokenPath:   GNS_PATH,
 			RewardTokenAmount: reward.Internal,
 			StakeTimestamp:    deposit.stakeTimestamp,
-			StakeHeight:       deposit.stakeHeight,
+			StakeTime:         deposit.stakeTime,
 			IncentiveStart:    deposit.stakeTimestamp,
 		})
 	}
@@ -321,7 +321,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			RewardTokenPath:   incentive.rewardToken,
 			RewardTokenAmount: externalReward,
 			StakeTimestamp:    deposit.stakeTimestamp,
-			StakeHeight:       deposit.stakeHeight,
+			StakeTime:         deposit.stakeTime,
 			IncentiveStart:    incentive.startTimestamp,
 		})
 	}
@@ -351,7 +351,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 				RewardTokenPath:   GNS_PATH,
 				RewardTokenAmount: reward.Internal,
 				StakeTimestamp:    deposit.stakeTimestamp,
-				StakeHeight:       deposit.stakeHeight,
+				StakeTime:         deposit.stakeTime,
 				IncentiveStart:    deposit.stakeTimestamp,
 			})
 		}
@@ -369,7 +369,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 				RewardTokenPath:   incentive.rewardToken,
 				RewardTokenAmount: externalReward,
 				StakeTimestamp:    deposit.stakeTimestamp,
-				StakeHeight:       deposit.stakeHeight,
+				StakeTime:         deposit.stakeTime,
 				IncentiveStart:    incentive.startTimestamp,
 			})
 		}

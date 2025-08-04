@@ -29,16 +29,16 @@ func TestDefaultWarmupTemplate(t *testing.T) {
 	for i, expected := range expectedRatios {
 		uassert.Equal(t, expected, warmups[i].WarmupRatio)
 	}
-	uassert.Equal(t, int64(math.MaxInt64), warmups[3].BlockDuration)
+	uassert.Equal(t, int64(math.MaxInt64), warmups[3].TimeDuration)
 }
 
 func TestInstantiateWarmup(t *testing.T) {
-	currentHeight := int64(1000)
-	warmups := instantiateWarmup(currentHeight)
+	currentTime := int64(100000) // Arbitrary time for testing
+	warmups := instantiateWarmup(currentTime)
 
 	for i := 0; i < len(warmups)-1; i++ {
-		uassert.True(t, warmups[i].NextWarmupHeight > currentHeight)
-		uassert.True(t, warmups[i+1].NextWarmupHeight > warmups[i].NextWarmupHeight)
+		uassert.True(t, warmups[i].NextWarmupTime > currentTime)
+		uassert.True(t, warmups[i+1].NextWarmupTime > warmups[i].NextWarmupTime)
 	}
 }
 
@@ -111,7 +111,7 @@ func TestWarmupEdgeCases(t *testing.T) {
 
 func TestFindWarmup(t *testing.T) {
 	deposit := &Deposit{
-		warmups: instantiateWarmup(1000),
+		warmups: instantiateWarmup(100000), // Use time parameter only
 	}
 
 	tests := []struct {
@@ -119,10 +119,10 @@ func TestFindWarmup(t *testing.T) {
 		expectedIndex int
 	}{
 		{1001, 0},
-		{deposit.warmups[0].NextWarmupHeight - 1, 0},
-		{deposit.warmups[0].NextWarmupHeight, 1},
-		{deposit.warmups[1].NextWarmupHeight, 2},
-		{deposit.warmups[2].NextWarmupHeight, 3},
+		{deposit.warmups[0].NextWarmupTime - 1, 0},
+		{deposit.warmups[0].NextWarmupTime, 1},
+		{deposit.warmups[1].NextWarmupTime, 2},
+		{deposit.warmups[2].NextWarmupTime, 3},
 		{math.MaxInt64, 3},
 	}
 
@@ -206,10 +206,10 @@ func TestModifyWarmup(t *testing.T) {
 
 			if !tt.shouldPanic {
 				if tt.duration < 0 {
-					instantiated := instantiateWarmup(0)
-					uassert.Equal(t, tt.expectedValue, instantiated[tt.index].NextWarmupHeight)
+					instantiated := instantiateWarmup(0) // Zero time for testing
+					uassert.Equal(t, tt.expectedValue, instantiated[tt.index].NextWarmupTime)
 				} else {
-					uassert.Equal(t, tt.expectedValue, warmupTemplate[tt.index].BlockDuration)
+					uassert.Equal(t, tt.expectedValue, warmupTemplate[tt.index].TimeDuration)
 				}
 			}
 		})
@@ -261,7 +261,7 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 			testing.SkipHeights(startHeight)
 
 			deposit := &Deposit{
-				warmups: instantiateWarmup(startHeight),
+				warmups: instantiateWarmup(int64(100000)), // Use time parameter only
 			}
 
 			position := u256.NewUint(tt.position)

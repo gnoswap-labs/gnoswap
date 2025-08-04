@@ -2,6 +2,7 @@ package staker
 
 import (
 	"std"
+	"time"
 )
 
 // stakerEmissionChangeCallback is called by emission when
@@ -17,5 +18,5 @@ import (
 //     which will be applied for future blocks thereafter.
 func stakerEmissionChangeCallback(emission int64) {
 	poolTier.currentEmission = int64(emission)
-	poolTier.cacheReward(std.ChainHeight(), pools)
+	poolTier.cacheReward(std.ChainHeight(), time.Now().Unix(), pools)
 }
