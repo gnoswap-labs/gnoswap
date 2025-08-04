@@ -181,7 +181,7 @@ func collectRewardWithSkippingBlocks(positionId uint64, blocks int64) {
 func changeAvgBlockTime(blockTimeMs int64) {
 	println("[INFO] change avg block time to", blockTimeMs, "ms")
 	testing.SetRealm(adminRealm)
-	gns.SetAvgBlockTimeInMsByAdmin(cross, blockTimeMs)
+	gns.SetAvgBlockTimeInMs(cross, blockTimeMs)
 }
 
 func positionIdFrom(positionId any) grc721.TokenID {
