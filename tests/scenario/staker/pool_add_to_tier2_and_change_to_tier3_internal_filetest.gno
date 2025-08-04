@@ -93,7 +93,7 @@ func initAndSetup() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFeeByAdmin(cross, 0)
+	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
 	pl.SetPoolCreationFeeByAdmin(cross, 0)
@@ -152,7 +152,7 @@ func setPoolToTier2() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set pool to tier 2")
-	sr.SetPoolTierByAdmin(cross, poolPath, 2)
+	sr.SetPoolTier(cross, poolPath, 2)
 
 	currentTier := sr.GetPoolTier(poolPath)
 	ufmt.Printf("[EXPECTED] pool tier set to: %d\n", currentTier)
@@ -190,7 +190,7 @@ func changePoolToTier3() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] change pool from tier 2 to tier 3")
-	sr.ChangePoolTierByAdmin(cross, poolPath, 3)
+	sr.ChangePoolTier(cross, poolPath, 3)
 
 	currentTier := sr.GetPoolTier(poolPath)
 	ufmt.Printf("[EXPECTED] pool tier changed to: %d\n", currentTier)

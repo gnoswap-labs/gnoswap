@@ -105,7 +105,7 @@ func createPool() {
 	// set unstaking fee to 0
 	println("[INFO] set unstaking fee to 0")
 	testing.SetRealm(adminRealm)
-	sr.SetUnStakingFeeByAdmin(cross, 0)
+	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
 	testing.SetRealm(adminRealm)
@@ -181,7 +181,7 @@ func collectRewardWithSkippingBlocks(positionId uint64, blocks int64) {
 func changeAvgBlockTime(blockTimeMs int64) {
 	println("[INFO] change avg block time to", blockTimeMs, "ms")
 	testing.SetRealm(adminRealm)
-	gns.SetAvgBlockTimeInMsByAdmin(cross, blockTimeMs)
+	gns.SetAvgBlockTimeInMs(cross, blockTimeMs)
 }
 
 func positionIdFrom(positionId any) grc721.TokenID {

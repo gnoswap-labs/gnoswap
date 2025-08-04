@@ -40,7 +40,7 @@ func MintAndDistributeGns(cur realm) int64 {
 		setLeftGNSAmount(0)
 	}
 	// Distribute tokens and track any undistributed amount
-	distributedGNSAmount, err := distributeToTarget(cur, distributableAmount)
+	distributedGNSAmount, err := distributeToTarget(distributableAmount)
 	if err != nil {
 		panic(err)
 	}

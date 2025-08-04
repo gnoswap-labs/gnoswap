@@ -119,7 +119,7 @@ func TestLeftAmountFix(t *testing.T) {
 			}
 
 			// Execute distribution
-			totalSent, err := distributeToTarget(cross, tt.distributionAmount)
+			totalSent, err := distributeToTarget(tt.distributionAmount)
 
 			if tt.shouldError {
 				uassert.Equal(t, tt.errorMessage, err.Error())

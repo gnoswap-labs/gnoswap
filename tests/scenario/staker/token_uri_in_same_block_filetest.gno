@@ -69,7 +69,7 @@ func initializeAndCreatePool() {
 
 	println("[INFO] create bar:foo:500 pool")
 	pl.CreatePool(cross, barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
-	sr.SetPoolTierByAdmin(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 1)
+	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 1)
 
 	ufmt.Printf("[EXPECTED] pool created and set to tier 1\n")
 	testing.SkipHeights(1)

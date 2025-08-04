@@ -12,8 +12,8 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
-	sr "gno.land/r/gnoswap/v1/staker"
 	"gno.land/r/gnoswap/v1/router"
+	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/v1/rbac"
@@ -144,7 +144,7 @@ func createPool(t *testing.T,
 	poolPath := pl.GetPoolPath(token0, token1, fee)
 	if !pl.DoesPoolPathExist(poolPath) {
 		pl.CreatePool(cross, token0, token1, fee, sqrtPriceX96)
-		sr.SetPoolTierByAdmin(cross, poolPath, tier1)
+		sr.SetPoolTier(cross, poolPath, tier1)
 	}
 }
 
