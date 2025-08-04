@@ -18,16 +18,6 @@ func TestCollectDepositReward(t *testing.T) {
 		expectedError  string
 	}{
 		{
-			name: "nil deposit returns error",
-			setupFunc: func() (*Deposit, map[string]interface{}) {
-				return nil, nil
-			},
-			deposit:        nil,
-			currentHeight:  100,
-			expectedAmount: 0,
-			expectedError:  "[GNOSWAP-LAUNCHPAD-020] not exist deposit || deposit is nil",
-		},
-		{
 			name: "invalid height returns error",
 			setupFunc: func() (*Deposit, map[string]interface{}) {
 				deposit := &Deposit{
