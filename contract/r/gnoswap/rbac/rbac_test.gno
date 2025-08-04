@@ -2,7 +2,6 @@ package rbac
 
 import (
 	"std"
-
 	"testing"
 
 	"gno.land/p/demo/testutils"
@@ -14,11 +13,11 @@ import (
 
 func TestRegisterRole(t *testing.T) {
 	tests := []struct {
-		name string
-		setup func()
-		roleName string
+		name        string
+		setup       func()
+		roleName    string
 		shouldError bool
-		errorMsg string
+		errorMsg    string
 	}{
 		{
 			name: "Register new custom role should succeed",
@@ -26,7 +25,7 @@ func TestRegisterRole(t *testing.T) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 			},
-			roleName: "custom_role",
+			roleName:    "custom_role",
 			shouldError: false,
 		},
 		{
@@ -35,9 +34,9 @@ func TestRegisterRole(t *testing.T) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 			},
-			roleName: prbac.ROLE_ADMIN.String(),
+			roleName:    prbac.ROLE_ADMIN.String(),
 			shouldError: true,
-			errorMsg: "already exists",
+			errorMsg:    "already exists",
 		},
 		{
 			name: "Register existing role should error",
@@ -46,9 +45,9 @@ func TestRegisterRole(t *testing.T) {
 				initRbac()
 				manager.RegisterRole("duplicate_role")
 			},
-			roleName: "duplicate_role",
+			roleName:    "duplicate_role",
 			shouldError: true,
-			errorMsg: "already exists",
+			errorMsg:    "already exists",
 		},
 		{
 			name: "Register role with empty string should succeed (manager internal)",
@@ -56,7 +55,7 @@ func TestRegisterRole(t *testing.T) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 			},
-			roleName: "",
+			roleName:    "",
 			shouldError: false, // manager.RegisterRole doesn't validate, only the public function does
 		},
 		{
@@ -65,7 +64,7 @@ func TestRegisterRole(t *testing.T) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 			},
-			roleName: "role with spaces",
+			roleName:    "role with spaces",
 			shouldError: false,
 		},
 		{
@@ -74,7 +73,7 @@ func TestRegisterRole(t *testing.T) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 			},
-			roleName: "role_with-special.chars",
+			roleName:    "role_with-special.chars",
 			shouldError: false,
 		},
 		{
@@ -83,7 +82,7 @@ func TestRegisterRole(t *testing.T) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 			},
-			roleName: "very_long_role_name_that_exceeds_normal_length_expectations_but_should_still_work",
+			roleName:    "very_long_role_name_that_exceeds_normal_length_expectations_but_should_still_work",
 			shouldError: false,
 		},
 		{
@@ -94,7 +93,7 @@ func TestRegisterRole(t *testing.T) {
 				manager.RegisterRole("role_1")
 				manager.RegisterRole("role_2")
 			},
-			roleName: "role_3",
+			roleName:    "role_3",
 			shouldError: false,
 		},
 	}
@@ -122,11 +121,11 @@ func TestRegisterRole(t *testing.T) {
 
 func TestRemoveRole(t *testing.T) {
 	tests := []struct {
-		name string
-		setup func()
-		roleName string
+		name        string
+		setup       func()
+		roleName    string
 		shouldError bool
-		errorMsg string
+		errorMsg    string
 	}{
 		{
 			name: "Remove custom role should succeed",
@@ -135,7 +134,7 @@ func TestRemoveRole(t *testing.T) {
 				initRbac()
 				manager.RegisterRole("removable_role")
 			},
-			roleName: "removable_role",
+			roleName:    "removable_role",
 			shouldError: false,
 		},
 		{
@@ -144,9 +143,9 @@ func TestRemoveRole(t *testing.T) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 			},
-			roleName: prbac.ROLE_ADMIN.String(),
+			roleName:    prbac.ROLE_ADMIN.String(),
 			shouldError: true,
-			errorMsg: "cannot remove system role",
+			errorMsg:    "cannot remove system role",
 		},
 		{
 			name: "Remove non-existent role should error",
@@ -154,9 +153,9 @@ func TestRemoveRole(t *testing.T) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 			},
-			roleName: "non_existent_role",
+			roleName:    "non_existent_role",
 			shouldError: true,
-			errorMsg: "does not exist",
+			errorMsg:    "does not exist",
 		},
 		{
 			name: "Remove role with empty string should error",
@@ -164,9 +163,9 @@ func TestRemoveRole(t *testing.T) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 			},
-			roleName: "",
+			roleName:    "",
 			shouldError: true,
-			errorMsg: "does not exist",
+			errorMsg:    "does not exist",
 		},
 		{
 			name: "Remove role multiple times should error on second attempt",
@@ -176,9 +175,9 @@ func TestRemoveRole(t *testing.T) {
 				manager.RegisterRole("remove_twice_role")
 				manager.RemoveRole("remove_twice_role") // First removal
 			},
-			roleName: "remove_twice_role",
+			roleName:    "remove_twice_role",
 			shouldError: true,
-			errorMsg: "does not exist",
+			errorMsg:    "does not exist",
 		},
 	}
 
@@ -211,18 +210,18 @@ func TestGetRoleAddress(t *testing.T) {
 	initRbac()
 
 	tests := []struct {
-		name string
-		roleName string
+		name      string
+		roleName  string
 		shouldErr bool
 	}{
 		{
-			name: "Get existing role address should succeed",
-			roleName: prbac.ROLE_ADMIN.String(),
+			name:      "Get existing role address should succeed",
+			roleName:  prbac.ROLE_ADMIN.String(),
 			shouldErr: false,
 		},
 		{
-			name: "Get non-existent role should return error",
-			roleName: "non_existent_role",
+			name:      "Get non-existent role should return error",
+			roleName:  "non_existent_role",
 			shouldErr: true,
 		},
 	}
@@ -260,27 +259,27 @@ func TestUpdateRoleAddress(t *testing.T) {
 	}
 
 	tests := []struct {
-		name string
-		roleName string
-		addr std.Address
+		name      string
+		roleName  string
+		addr      std.Address
 		shouldErr bool
 	}{
 		{
-			name: "Update existing role with valid address should succeed",
-			roleName: testRole,
-			addr: DEV_OPS,
+			name:      "Update existing role with valid address should succeed",
+			roleName:  testRole,
+			addr:      DEV_OPS,
 			shouldErr: false,
 		},
 		{
-			name: "Update non-existent role should fail",
-			roleName: "non_existent_role",
-			addr: DEV_OPS,
+			name:      "Update non-existent role should fail",
+			roleName:  "non_existent_role",
+			addr:      DEV_OPS,
 			shouldErr: true,
 		},
 		{
-			name: "Update role with invalid address should fail",
-			roleName: testRole,
-			addr: "",
+			name:      "Update role with invalid address should fail",
+			roleName:  testRole,
+			addr:      "",
 			shouldErr: true,
 		},
 	}
@@ -339,13 +338,13 @@ func TestUpdateAccessRoleAddresses(t *testing.T) {
 
 func TestAddressChangeComplete(t *testing.T) {
 	tests := []struct {
-		name string
-		setup func()
-		roleName string
-		oldAddress std.Address
-		newAddress std.Address
+		name          string
+		setup         func()
+		roleName      string
+		oldAddress    std.Address
+		newAddress    std.Address
 		expectSuccess bool
-		verifyFunc func(t *testing.T, roleName string, expectedAddr std.Address)
+		verifyFunc    func(t *testing.T, roleName string, expectedAddr std.Address)
 	}{
 		{
 			name: "Change admin role address",
@@ -353,9 +352,9 @@ func TestAddressChangeComplete(t *testing.T) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 			},
-			roleName: prbac.ROLE_ADMIN.String(),
-			oldAddress: ADMIN,
-			newAddress: testutils.TestAddress("new_admin"),
+			roleName:      prbac.ROLE_ADMIN.String(),
+			oldAddress:    ADMIN,
+			newAddress:    testutils.TestAddress("new_admin"),
 			expectSuccess: true,
 			verifyFunc: func(t *testing.T, roleName string, expectedAddr std.Address) {
 				// Verify in RBAC
@@ -376,9 +375,9 @@ func TestAddressChangeComplete(t *testing.T) {
 				manager.RegisterRole("custom_role")
 				manager.UpdateRoleAddress("custom_role", testutils.TestAddress("custom"))
 			},
-			roleName: "custom_role",
-			oldAddress: testutils.TestAddress("custom"),
-			newAddress: testutils.TestAddress("new_custom"),
+			roleName:      "custom_role",
+			oldAddress:    testutils.TestAddress("custom"),
+			newAddress:    testutils.TestAddress("new_custom"),
 			expectSuccess: true,
 			verifyFunc: func(t *testing.T, roleName string, expectedAddr std.Address) {
 				// Verify in RBAC
@@ -397,9 +396,9 @@ func TestAddressChangeComplete(t *testing.T) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 			},
-			roleName: prbac.ROLE_ROUTER.String(),
-			oldAddress: ROUTER_ADDR,
-			newAddress: testutils.TestAddress("new_router"),
+			roleName:      prbac.ROLE_ROUTER.String(),
+			oldAddress:    ROUTER_ADDR,
+			newAddress:    testutils.TestAddress("new_router"),
 			expectSuccess: true,
 			verifyFunc: func(t *testing.T, roleName string, expectedAddr std.Address) {
 				// First change router
@@ -465,20 +464,20 @@ func TestAddressChangeComplete(t *testing.T) {
 
 func TestRBACToAccessSync(t *testing.T) {
 	tests := []struct {
-		name string
+		name       string
 		operations []struct {
-			action string // "register", "update", "remove"
+			action   string // "register", "update", "remove"
 			roleName string
-			address std.Address
+			address  std.Address
 		}
 		verifyRoles map[string]std.Address // Expected final state
 	}{
 		{
 			name: "Register new role updates access package",
 			operations: []struct {
-				action string
+				action   string
 				roleName string
-				address std.Address
+				address  std.Address
 			}{
 				{action: "register", roleName: "test_role_1"},
 				{action: "update", roleName: "test_role_1", address: testutils.TestAddress("test_role_1")},
@@ -490,9 +489,9 @@ func TestRBACToAccessSync(t *testing.T) {
 		{
 			name: "Remove role updates access package",
 			operations: []struct {
-				action string
+				action   string
 				roleName string
-				address std.Address
+				address  std.Address
 			}{
 				{action: "register", roleName: "temp_role"},
 				{action: "update", roleName: "temp_role", address: testutils.TestAddress("temp_role")},
@@ -505,9 +504,9 @@ func TestRBACToAccessSync(t *testing.T) {
 		{
 			name: "Multiple operations sync correctly",
 			operations: []struct {
-				action string
+				action   string
 				roleName string
-				address std.Address
+				address  std.Address
 			}{
 				{action: "register", roleName: "role_a"},
 				{action: "register", roleName: "role_b"},
