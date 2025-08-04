@@ -58,21 +58,19 @@ func checkTransferErr(err error, from, to std.Address, tid grc721.TokenID) {
 		return
 	}
 
-	errMsg := err.Error()
 	caller := std.PreviousRealm().Address()
 
 	// Check if token exists
 	owner, ownerErr := nft.OwnerOf(tid)
 	if ownerErr != nil {
-		panic(makeErrorWithDetails(errTokenNotExists, ufmt.Sprintf("token %s", string(tid))))
+		panic(ownerErr)
 	}
 
-	// More specific error messages based on the situation
-	switch {
-	case errMsg == "caller is not token owner or approved":
+	switch err {
+	case grc721.ErrCallerIsNotOwnerOrApproved:
 		// Check if caller is the owner
 		if caller == owner {
-			panic(makeErrorWithDetails(errNotOwnerOrApproved, ufmt.Sprintf("owner mismatch - from: %s, actual owner: %s, token: %s", from, owner, string(tid))))
+			panic(makeErrorWithDetails(grc721.ErrTransferFromIncorrectOwner, ufmt.Sprintf("owner mismatch - from: %s, actual owner: %s, token: %s", from, owner, string(tid))))
 		}
 
 		// Check if caller is approved for this specific token
@@ -80,15 +78,18 @@ func checkTransferErr(err error, from, to std.Address, tid grc721.TokenID) {
 		if approved != caller {
 			// Check if caller is approved for all tokens
 			if !nft.IsApprovedForAll(owner, caller) {
-				panic(makeErrorWithDetails(errNotOwnerOrApproved, ufmt.Sprintf("caller %s is not owner %s or approved for token %s", caller, owner, string(tid))))
+				panic(makeErrorWithDetails(grc721.ErrCallerIsNotOwnerOrApproved, ufmt.Sprintf("caller %s is not owner %s or approved for token %s", caller, owner, string(tid))))
 			}
 		}
 
-	case errMsg == "transfer to zero address":
-		panic(makeErrorWithDetails(errInvalidAddress, ufmt.Sprintf("to address (%s)", to)))
+	case grc721.ErrInvalidAddress:
+		panic(makeErrorWithDetails(grc721.ErrInvalidAddress, ufmt.Sprintf("to address (%s)", to)))
 
-	case errMsg == "transfer from incorrect owner":
-		panic(makeErrorWithDetails(errNotOwnerOrApproved, ufmt.Sprintf("from %s is not the owner %s of token %s", from, owner, string(tid))))
+	case grc721.ErrTransferFromIncorrectOwner:
+		panic(makeErrorWithDetails(grc721.ErrTransferFromIncorrectOwner, ufmt.Sprintf("from %s is not the owner %s of token %s", from, owner, string(tid))))
+
+	case grc721.ErrInvalidTokenId:
+		panic(makeErrorWithDetails(grc721.ErrInvalidTokenId, ufmt.Sprintf("token %s", string(tid))))
 
 	default:
 		panic(err.Error())

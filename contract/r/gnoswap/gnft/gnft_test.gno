@@ -310,7 +310,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            addr02,
 			tokenIdToTransfer: 99,
 			shouldPanic:       true,
-			panicMsg:          "[GNOSWAP-GNFT-007] token does not exist || token 99",
+			panicMsg:          "invalid token id",
 		},
 		{
 			name:              "transfer token owned by other user without approval",
@@ -319,7 +319,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "[GNOSWAP-GNFT-006] caller is not token owner or approved || caller g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5 is not owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st or approved for token 1",
+			panicMsg:          "caller is not token owner or approved || caller g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5 is not owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st or approved for token 1",
 		},
 		{
 			name: "transfer token owned by other user with approval",
@@ -614,7 +614,7 @@ func TestSafeTransferFrom(t *testing.T) {
 			to:          addr02,
 			tokenId:     1,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-006] caller is not token owner or approved || from g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st is not the owner g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at of token 1",
+			panicMsg:    "transfer from incorrect owner || from g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st is not the owner g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at of token 1",
 		},
 		{
 			name:        "transfer non-existent token",
@@ -623,7 +623,7 @@ func TestSafeTransferFrom(t *testing.T) {
 			to:          addr02,
 			tokenId:     999,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-007] token does not exist || token 999",
+			panicMsg:    "invalid token id",
 		},
 		{
 			name:        "transfer to zero address",
