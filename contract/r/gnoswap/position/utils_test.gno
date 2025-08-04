@@ -463,7 +463,8 @@ func TestSubUint256(t *testing.T) {
 				// 2^256 - 1 - 100 + 50 = 2^256 - 51
 				max := u256.MustFromDecimal(MAX_UINT256)
 				diff := u256.Zero().Sub(max, u256.NewUint(100))
-				return u256.Zero().Add(diff, u256.NewUint(50))
+				result := u256.Zero().Add(diff, u256.NewUint(50))
+				return u256.Zero().Add(result, u256.One())
 			}(),
 		},
 		{
@@ -477,9 +478,11 @@ func TestSubUint256(t *testing.T) {
 			x:    u256.NewUint(0),
 			y:    u256.NewUint(100),
 			expected: func() *u256.Uint {
-				// 2^256 - 1 - 100 + 0 = 2^256 - 101
+				// 2^256 - 1 - 100 + 0 = 2^256 - 101 + 1
 				max := u256.MustFromDecimal(MAX_UINT256)
-				return u256.Zero().Sub(max, u256.NewUint(100))
+				diff := u256.Zero().Sub(max, u256.NewUint(100))
+				result := u256.Zero().Add(diff, u256.One())
+				return result
 			}(),
 		},
 		{
@@ -493,9 +496,11 @@ func TestSubUint256(t *testing.T) {
 			x:    u256.MustFromDecimal("500000000000000000000"),
 			y:    u256.MustFromDecimal("1000000000000000000000"),
 			expected: func() *u256.Uint {
+				// 2^256 - 1 - 1000000000000000000000 + 500000000000000000000 + 1
 				max := u256.MustFromDecimal(MAX_UINT256)
 				diff := u256.Zero().Sub(max, u256.MustFromDecimal("1000000000000000000000"))
-				return u256.Zero().Add(diff, u256.MustFromDecimal("500000000000000000000"))
+				result := u256.Zero().Add(diff, u256.MustFromDecimal("500000000000000000000"))
+				return u256.Zero().Add(result, u256.One())
 			}(),
 		},
 		{
