@@ -37,7 +37,7 @@ func tierBuilder(b *json.NodeBuilder, prefix string, tier *ProjectTier) *json.No
 	// Add tiers info
 	b.WriteString(prefix+"Id", tier.id)
 	b.WriteString(prefix+"TierAmount", ufmt.Sprintf("%d", tier.TotalDistributeAmount()))
-	b.WriteString(prefix+"TierAmountPerBlockX128", tier.DistributeAmountPerBlockX128().ToString())
+	b.WriteString(prefix+"TierAmountPerSecondX128", tier.DistributeAmountPerSecondX128().ToString())
 	timeInfoBuilder(b, prefix+"Started", tier.startBlockTimeInfo)
 	timeInfoBuilder(b, prefix+"Ended", tier.endBlockTimeInfo)
 	b.WriteString(prefix+"TotalDepositAmount", ufmt.Sprintf("%d", tier.TotalDepositAmount()))

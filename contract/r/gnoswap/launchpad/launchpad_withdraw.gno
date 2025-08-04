@@ -2,6 +2,7 @@ package launchpad
 
 import (
 	"std"
+	"time"
 
 	"gno.land/p/demo/ufmt"
 
@@ -110,7 +111,8 @@ func withdrawDeposit(deposit *Deposit, currentHeight int64) (std.Address, int64,
 	}
 
 	// Update rewards with current deposit amount
-	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight)
+	currentTime := time.Now().Unix()
+	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight, currentTime)
 	if err != nil {
 		return "", 0, err
 	}
@@ -119,7 +121,7 @@ func withdrawDeposit(deposit *Deposit, currentHeight int64) (std.Address, int64,
 	projectTier.withdraw(deposit)
 
 	// Update rewards with new deposit amount after withdrawal
-	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight)
+	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight, currentTime)
 	if err != nil {
 		return "", 0, err
 	}
