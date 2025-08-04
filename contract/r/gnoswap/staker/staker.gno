@@ -202,7 +202,7 @@ func init() {
 	// ONLY GNOT:GNS 0.3%
 
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1)
-	poolTier = NewPoolTier(pools, std.ChainHeight(), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange)
+	poolTier = NewPoolTier(pools, std.ChainHeight(), time.Now().Unix(), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange)
 	registerstakerEmissionChangeCallback()
 }
 
@@ -274,16 +274,17 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 	tickLower, tickUpper := getTickOf(positionId)
 
 	// staked status
+	currentTime := time.Now().Unix()
 	deposit := &Deposit{
 		owner:             caller,
-		stakeTimestamp:    time.Now().Unix(),
-		stakeHeight:       currentHeight,
+		stakeTimestamp:    currentTime,
+		stakeTime:         currentTime,
 		targetPoolPath:    poolPath,
 		tickLower:         tickLower,
 		tickUpper:         tickUpper,
 		liquidity:         liquidity,
-		lastCollectHeight: currentHeight,
-		warmups:           instantiateWarmup(currentHeight),
+		lastCollectTime:   currentHeight, // TODO: should be currentTime
+		warmups:           instantiateWarmup(currentTime),
 	}
 
 	currentTick := pl.PoolGetSlot0Tick(poolPath)
@@ -301,7 +302,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 
 	signedLiquidity := i256.FromUint256(liquidity)
 	isInRange := false
-	poolTier.cacheReward(currentHeight, pools)
+	poolTier.cacheReward(currentHeight, currentTime, pools)
 
 	if pn.PositionIsInRange(positionId) {
 		isInRange = true
@@ -447,8 +448,8 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 	// get all internal and external rewards
 	reward := calcPositionReward(currentHeight, positionId)
 
-	// update lastCollectHeight to current height
-	deposit.lastCollectHeight = currentHeight
+	// update lastCollectTime to current time
+	deposit.lastCollectTime = currentHeight // TODO: should be currentTime
 
 	// transfer external rewards to user
 	externalReward := reward.External

@@ -163,5 +163,5 @@ func (self *Incentives) calculateUnclaimableReward(incentiveId string) int64 {
 		return false
 	})
 
-	return int64(blocks) * incentive.rewardPerBlock
+	return int64(blocks) * incentive.rewardPerSecond
 }

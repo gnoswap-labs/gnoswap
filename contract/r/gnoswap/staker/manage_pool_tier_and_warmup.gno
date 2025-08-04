@@ -2,6 +2,7 @@ package staker
 
 import (
 	"std"
+	"time"
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/halt"
@@ -84,14 +85,14 @@ func RemovePoolTier(cur realm, poolPath string) {
 	)
 }
 
-// SetWarmUp sets the warmup percentage and block duration by governance
-func SetWarmUp(cur realm, pct, blockDuration int64) {
+// SetWarmUp sets the warmup percentage and time duration by governance
+func SetWarmUp(cur realm, pct, timeDuration int64) {
 	halt.AssertIsNotHaltedStaker()
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	setWarmUp(pct, blockDuration)
+	setWarmUp(pct, timeDuration)
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
@@ -99,7 +100,7 @@ func SetWarmUp(cur realm, pct, blockDuration int64) {
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"pct", formatInt(pct),
-		"blockDuration", formatInt(blockDuration),
+		"timeDuration", formatInt(timeDuration),
 	)
 }
 
@@ -107,14 +108,14 @@ func setPoolTier(poolPath string, tier uint64, height int64) {
 	en.MintAndDistributeGns(cross)
 
 	pools.GetOrCreate(poolPath)
-	poolTier.changeTier(height, pools, poolPath, tier)
+	poolTier.changeTier(height, time.Now().Unix(), pools, poolPath, tier)
 }
 
 func changePoolTier(poolPath string, tier uint64, height int64) (uint64, uint64) {
 	en.MintAndDistributeGns(cross)
 	previousTier := poolTier.CurrentTier(poolPath)
 
-	poolTier.changeTier(height, pools, poolPath, tier)
+	poolTier.changeTier(height, time.Now().Unix(), pools, poolPath, tier)
 
 	return previousTier, tier
 }
@@ -122,13 +123,13 @@ func changePoolTier(poolPath string, tier uint64, height int64) (uint64, uint64)
 func removePoolTier(poolPath string, height int64) {
 	en.MintAndDistributeGns(cross)
 
-	poolTier.changeTier(height, pools, poolPath, NOT_EMISSION_TARGET_TIER)
+	poolTier.changeTier(height, time.Now().Unix(), pools, poolPath, NOT_EMISSION_TARGET_TIER)
 }
 
-func setWarmUp(pct, blockDuration int64) {
+func setWarmUp(pct, timeDuration int64) {
 	en.MintAndDistributeGns(cross)
 
-	modifyWarmup(pctToIndex(pct), blockDuration)
+	modifyWarmup(pctToIndex(pct), timeDuration)
 }
 
 func pctToIndex(pct int64) int {

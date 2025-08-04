@@ -97,15 +97,15 @@ type Tick struct {
 	// conceptually equal with Pool.liquidityNet but only for the staked positions
 	stakedLiquidityDelta *i256.Int
 
-	// currentOutsideAccumulation is the accumulation of the blockNumber / TotalStake outside the tick.
+	// currentOutsideAccumulation is the accumulation of the time / TotalStake outside the tick.
 	// It is calculated by subtracting the current tick's currentOutsideAccumulation from the global reward ratio accumulation.
-	outsideAccumulation *UintTree // blockNumber -> *u256.Uint
+	outsideAccumulation *UintTree // timestamp -> *u256.Uint
 }
 
 // CurrentOutsideAccumulation returns the latest outside accumulation for the tick
-func (self *Tick) CurrentOutsideAccumulation(blockNumber int64) *u256.Uint {
+func (self *Tick) CurrentOutsideAccumulation(timestamp int64) *u256.Uint {
 	var acc *u256.Uint
-	self.outsideAccumulation.ReverseIterate(0, blockNumber, func(key int64, value any) bool {
+	self.outsideAccumulation.ReverseIterate(0, timestamp, func(key int64, value any) bool {
 		acc = value.(*u256.Uint)
 		return true
 	})
@@ -116,7 +116,7 @@ func (self *Tick) CurrentOutsideAccumulation(blockNumber int64) *u256.Uint {
 }
 
 // modifyDepositLower updates the tick's liquidity info by treating the deposit as a lower tick
-func (self *Tick) modifyDepositLower(currentHeight int64, currentTick int32, liquidity *i256.Int) {
+func (self *Tick) modifyDepositLower(currentTime int64, currentTick int32, liquidity *i256.Int) {
 	// update staker side tick info
 	self.stakedLiquidityGross = liquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
 	if self.stakedLiquidityGross.Lt(u256.Zero()) {
@@ -126,7 +126,7 @@ func (self *Tick) modifyDepositLower(currentHeight int64, currentTick int32, liq
 }
 
 // modifyDepositUpper updates the tick's liquidity info by treating the deposit as an upper tick
-func (self *Tick) modifyDepositUpper(currentHeight int64, currentTick int32, liquidity *i256.Int) {
+func (self *Tick) modifyDepositUpper(currentTime int64, currentTick int32, liquidity *i256.Int) {
 	self.stakedLiquidityGross = liquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
 	if self.stakedLiquidityGross.Lt(u256.Zero()) {
 		panic("stakedLiquidityGross is negative")
@@ -136,10 +136,10 @@ func (self *Tick) modifyDepositUpper(currentHeight int64, currentTick int32, liq
 
 // updateCurrentOutsideAccumulation updates the tick's outside accumulation
 // It "flips" the accumulation's inside/outside by subtracting the current outside accumulation from the global accumulation
-func (self *Tick) updateCurrentOutsideAccumulation(blockNumber int64, acc *u256.Uint) {
-	currentOutsideAccumulation := self.CurrentOutsideAccumulation(blockNumber)
+func (self *Tick) updateCurrentOutsideAccumulation(timestamp int64, acc *u256.Uint) {
+	currentOutsideAccumulation := self.CurrentOutsideAccumulation(timestamp)
 	newOutsideAccumulation := u256.Zero().Sub(acc, currentOutsideAccumulation)
-	self.outsideAccumulation.set(blockNumber, newOutsideAccumulation)
+	self.outsideAccumulation.set(timestamp, newOutsideAccumulation)
 }
 
 // TickCrossHook is a hook that is called when a tick is crossed.
@@ -153,7 +153,7 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 
 		tick := pool.ticks.Get(tickId)
 
-		blockNumber := height()
+		timestamp := height()
 
 		var nextTick int32
 		if zeroForOne {
@@ -170,8 +170,8 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 		if zeroForOne {
 			liquidityInRangeDelta = i256.Zero().Neg(liquidityInRangeDelta)
 		}
-		newAcc := pool.modifyDeposit(liquidityInRangeDelta, blockNumber, nextTick)
-		tick.updateCurrentOutsideAccumulation(blockNumber, newAcc)
+		newAcc := pool.modifyDeposit(liquidityInRangeDelta, timestamp, nextTick)
+		tick.updateCurrentOutsideAccumulation(timestamp, newAcc)
 	}
 }
 

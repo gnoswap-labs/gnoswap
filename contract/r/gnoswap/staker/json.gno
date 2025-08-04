@@ -43,7 +43,7 @@ type ApiExternalIncentive struct {
 	StartHeight         int64  `json:"startHeight"`
 	EndHeight           int64  `json:"endHeight"`
 	Active              bool   `json:"active"`
-	RewardPerBlock      int64  `json:"rewardPerBlock"`
+	RewardPerSecond     int64  `json:"rewardPerSecond"`
 	Refundee            string `json:"refundee"`
 	CreatedHeight       int64  `json:"createdHeight"`
 	DepositGnsAmount    int64  `json:"depositGnsAmount"`
@@ -61,13 +61,13 @@ func newApiExternalIncentive(ictv *ExternalIncentive) ApiExternalIncentive {
 		PoolPath:            ictv.targetPoolPath,
 		RewardToken:         ictv.rewardToken,
 		RewardAmount:        ictv.rewardAmount,
-		RewardLeft:          ictv.RewardLeft(uint64(std.ChainHeight())),
+		RewardLeft:          ictv.RewardLeft(uint64(std.ChainHeight()), time.Now().Unix()),
 		StartTimestamp:      ictv.startTimestamp,
 		EndTimestamp:        ictv.endTimestamp,
 		StartHeight:         ictv.startHeight,
 		EndHeight:           ictv.endHeight,
 		Active:              isActive,
-		RewardPerBlock:      ictv.rewardPerBlock,
+		RewardPerSecond:     ictv.rewardPerSecond,
 		Refundee:            ictv.refundee.String(),
 		CreatedHeight:       ictv.createdHeight,
 		DepositGnsAmount:    ictv.depositGnsAmount,
@@ -92,7 +92,7 @@ func (r ApiExternalIncentive) JSON() *json.Node {
 		"startHeight":         json.NumberNode("startHeight", float64(r.StartHeight)),
 		"endHeight":           json.NumberNode("endHeight", float64(r.EndHeight)),
 		"active":              json.BoolNode("active", active),
-		"rewardPerBlock":      json.StringNode("rewardPerBlock", strconv.FormatInt(r.RewardPerBlock, 10)),
+		"rewardPerSecond":     json.StringNode("rewardPerSecond", strconv.FormatInt(r.RewardPerSecond, 10)),
 		"refundee":            json.StringNode("refundee", r.Refundee),
 		"createdHeight":       json.NumberNode("createdHeight", float64(r.CreatedHeight)),
 		"depositGnsAmount":    json.NumberNode("depositGnsAmount", float64(r.DepositGnsAmount)),
@@ -104,15 +104,15 @@ type ApiInternalIncentive struct {
 	PoolPath       string `json:"poolPath"`
 	Tier           uint64 `json:"tier"`
 	StartTimestamp int64  `json:"startTimestamp"`
-	RewardPerBlock string `json:"rewardPerBlock"`
+	RewardPerSecond string `json:"rewardPerSecond"`
 }
 
 func newApiInternalIncentive(poolPath string, tier uint64) ApiInternalIncentive {
-	perBlock := calculateInternalRewardPerBlockByPoolPath(poolPath)
+	perSecond := calculateInternalRewardPerSecondByPoolPath(poolPath)
 	return ApiInternalIncentive{
 		PoolPath:       poolPath,
 		Tier:           tier,
-		RewardPerBlock: perBlock,
+		RewardPerSecond: perSecond,
 	}
 }
 
@@ -121,7 +121,7 @@ func (r ApiInternalIncentive) JSON() *json.Node {
 		"poolPath":       json.StringNode("poolPath", r.PoolPath),
 		"rewardToken":    json.StringNode("rewardToken", GNS_PATH),
 		"tier":           json.NumberNode("tier", float64(r.Tier)),
-		"rewardPerBlock": json.StringNode("rewardPerBlock", r.RewardPerBlock),
+		"rewardPerSecond": json.StringNode("rewardPerSecond", r.RewardPerSecond),
 	})
 }
 
@@ -154,22 +154,22 @@ type ApiStake struct {
 	Owner          std.Address `json:"owner"`          // The address of the owner of the staked LP token
 	NumberOfStakes uint64      `json:"numberOfStakes"` // The number of times this LP token has been staked
 	StakeTimestamp int64       `json:"stakeTimestamp"` // The timestamp when the LP token was staked
-	StakeHeight    int64       `json:"stakeHeight"`    // The block height when the LP token was staked
+	StakeTime      int64       `json:"stakeTime"`      // The time when the LP token was staked
 	TargetPoolPath string      `json:"targetPoolPath"` // The path of the target pool for the stake
 	StakeDuration  uint64      `json:"stakeDuration"`  // The duration of the stake
 }
 
 func newApiStake(tokenId uint64, deposit *Deposit) ApiStake {
 	stakeDuration := uint64(0)
-	if std.ChainHeight() > deposit.stakeHeight {
-		stakeDuration = uint64(std.ChainHeight() - deposit.stakeHeight)
+	if std.ChainHeight() > deposit.stakeTime {
+		stakeDuration = uint64(std.ChainHeight() - deposit.stakeTime) // TODO: should use time difference
 	}
 
 	return ApiStake{
 		PositionId:     tokenId,
 		Owner:          deposit.owner,
 		StakeTimestamp: deposit.stakeTimestamp,
-		StakeHeight:    deposit.stakeHeight,
+		StakeTime:      deposit.stakeTime,
 		TargetPoolPath: deposit.targetPoolPath,
 		StakeDuration:  stakeDuration,
 	}
@@ -180,7 +180,7 @@ func (s ApiStake) JSON() *json.Node {
 		"positionId":     json.NumberNode("positionId", float64(s.PositionId)),
 		"owner":          json.StringNode("owner", s.Owner.String()),
 		"stakeTimestamp": json.NumberNode("stakeTimestamp", float64(s.StakeTimestamp)),
-		"stakeHeight":    json.NumberNode("stakeHeight", float64(s.StakeHeight)),
+		"stakeTime":      json.NumberNode("stakeTime", float64(s.StakeTime)),
 		"targetPoolPath": json.StringNode("targetPoolPath", s.TargetPoolPath),
 		"stakeDuration":  json.NumberNode("stakeDuration", float64(s.StakeDuration)),
 	})
@@ -213,7 +213,7 @@ type ApiReward struct {
 	RewardTokenPath   string `json:"rewardTokenPath"`   // The pathe of the reward token
 	RewardTokenAmount int64  `json:"rewardTokenAmount"` // The amount of the reward token
 	StakeTimestamp    int64  `json:"stakeTimestamp"`    // The timestamp when the LP token was staked
-	StakeHeight       int64  `json:"stakeHeight"`       // The block height when the LP token was staked
+	StakeTime         int64  `json:"stakeTime"`         // The time when the LP token was staked
 	IncentiveStart    int64  `json:"incentiveStart"`    // The timestamp when the incentive started
 }
 
@@ -225,7 +225,7 @@ func (r ApiReward) JSON() *json.Node {
 		"rewardTokenPath":   json.StringNode("rewardTokenPath", r.RewardTokenPath),
 		"rewardTokenAmount": json.NumberNode("rewardTokenAmount", float64(r.RewardTokenAmount)),
 		"stakeTimestamp":    json.NumberNode("stakeTimestamp", float64(r.StakeTimestamp)),
-		"stakeHeight":       json.NumberNode("stakeHeight", float64(r.StakeHeight)),
+		"stakeTime":         json.NumberNode("stakeTime", float64(r.StakeTime)),
 		"incentiveStart":    json.NumberNode("incentiveStart", float64(r.IncentiveStart)),
 	})
 }
@@ -274,7 +274,7 @@ func makeRewardsArray(rewards []ApiReward) []*json.Node {
 			"rewardTokenPath":   json.StringNode("rewardTokenPath", reward.RewardTokenPath),
 			"rewardTokenAmount": json.NumberNode("rewardTokenAmount", float64(reward.RewardTokenAmount)),
 			"stakeTimestamp":    json.NumberNode("stakeTimestamp", float64(reward.StakeTimestamp)),
-			"stakeHeight":       json.NumberNode("stakeHeight", float64(reward.StakeHeight)),
+			"stakeTime":         json.NumberNode("stakeTime", float64(reward.StakeTime)),
 			"incentiveStart":    json.NumberNode("incentiveStart", float64(reward.IncentiveStart)),
 		})
 	}

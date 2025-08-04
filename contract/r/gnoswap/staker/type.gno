@@ -20,7 +20,7 @@ type ExternalIncentive struct {
 	rewardLeft       int64       // remaining reward amount
 	startHeight      int64       // start height for external reward
 	endHeight        int64       // end height for external reward
-	rewardPerBlock   int64       // reward per block
+	rewardPerSecond  int64       // reward per second
 	refundee         std.Address // refundee address
 
 	unclaimableRefunded bool // whether unclaimable reward is refunded
@@ -93,7 +93,8 @@ func (e ExternalIncentive) RewardAmount() int64 {
 	return e.rewardAmount
 }
 
-func (self *ExternalIncentive) RewardSpent(currentHeight uint64) int64 {
+func (self *ExternalIncentive) RewardSpent(currentHeight uint64, currentTime int64) int64 {
+	// Still check heights for state validation
 	if currentHeight < uint64(self.startHeight) {
 		return 0
 	}
@@ -102,12 +103,22 @@ func (self *ExternalIncentive) RewardSpent(currentHeight uint64) int64 {
 		return int64(self.rewardAmount)
 	}
 
-	blocks := currentHeight - uint64(self.startHeight)
-	rewardSpent := safeMulInt64(int64(blocks), self.rewardPerBlock)
+	// But use time for calculation
+	if currentTime < self.startTimestamp {
+		return 0
+	}
+
+	if currentTime > self.endTimestamp {
+		return int64(self.rewardAmount)
+	}
+
+	timeDuration := currentTime - self.startTimestamp
+	rewardSpent := safeMulInt64(timeDuration, self.rewardPerSecond)
 	return rewardSpent
 }
 
-func (self *ExternalIncentive) RewardLeft(currentHeight uint64) int64 {
+func (self *ExternalIncentive) RewardLeft(currentHeight uint64, currentTime int64) int64 {
+	// Still check heights for state validation
 	if currentHeight <= uint64(self.startHeight) {
 		return int64(self.rewardAmount)
 	}
@@ -116,12 +127,21 @@ func (self *ExternalIncentive) RewardLeft(currentHeight uint64) int64 {
 		return 0
 	}
 
-	if currentHeight == uint64(self.endHeight) {
-		return self.rewardPerBlock
+	// But use time for calculation
+	if currentTime <= self.startTimestamp {
+		return int64(self.rewardAmount)
 	}
 
-	blocks := uint64(self.endHeight) - currentHeight
-	rewardLeft := safeMulInt64(int64(blocks), self.rewardPerBlock)
+	if currentTime > self.endTimestamp {
+		return 0
+	}
+
+	if currentTime == self.endTimestamp {
+		return self.rewardPerSecond
+	}
+
+	timeDuration := self.endTimestamp - currentTime
+	rewardLeft := safeMulInt64(timeDuration, self.rewardPerSecond)
 	return rewardLeft
 }
 
@@ -138,7 +158,7 @@ func (self *ExternalIncentive) Clone() *ExternalIncentive {
 		rewardLeft:          self.rewardLeft,
 		startHeight:         self.startHeight,
 		endHeight:           self.endHeight,
-		rewardPerBlock:      self.rewardPerBlock,
+		rewardPerSecond:     self.rewardPerSecond,
 		refundee:            self.refundee,
 		unclaimableRefunded: self.unclaimableRefunded,
 	}
@@ -163,8 +183,7 @@ func NewExternalIncentive(
 	msPerBlock int64, // msPerBlock is in milliseconds
 ) *ExternalIncentive {
 	incentiveDuration := endTimestamp - startTimestamp
-	incentiveBlock := incentiveDuration * 1000 / msPerBlock
-	rewardPerBlock := rewardAmount / int64(incentiveBlock)
+	rewardPerSecond := rewardAmount / incentiveDuration
 
 	blocksLeftUntilStartHeight := (startTimestamp - currentTime) * 1000 / msPerBlock
 	blocksLeftUntilEndHeight := (endTimestamp - currentTime) * 1000 / msPerBlock
@@ -181,7 +200,7 @@ func NewExternalIncentive(
 		endTimestamp:        endTimestamp,
 		startHeight:         startHeight,
 		endHeight:           endHeight,
-		rewardPerBlock:      rewardPerBlock,
+		rewardPerSecond:     rewardPerSecond,
 		refundee:            refundee,
 		createdHeight:       createdHeight,
 		depositGnsAmount:    depositGnsAmount,
@@ -192,11 +211,11 @@ func NewExternalIncentive(
 type Deposit struct {
 	owner             std.Address // owner address
 	stakeTimestamp    int64       // staked time
-	stakeHeight       int64       // staked block height
+	stakeTime         int64       // staked time (same as stakeTimestamp)
 	targetPoolPath    string      // staked position's pool path
 	tickLower         int32       // tick lower
 	tickUpper         int32       // tick upper
 	liquidity         *u256.Uint  // liquidity
-	lastCollectHeight int64       // last collect block height
+	lastCollectTime   int64       // last collect time
 	warmups           []Warmup    // warmup information
 }
