@@ -140,6 +140,7 @@ func main() {
 	println("[EXPECTED] Collect 1:", collect1, "expected: 0")
 	println()
 
+	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	slotTick := thisPool.Slot0Tick()
 	println("[EXPECTED] slot tick should be < -120")
 	if slotTick >= -120 {

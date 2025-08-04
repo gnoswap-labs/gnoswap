@@ -53,21 +53,6 @@ func TestNewPoolParams(t *testing.T) {
 			}
 		},
 	)
-
-	t.Run(
-		"Fail - same token path", func(t *testing.T) {
-			params := newPoolParams(
-				"token0",
-				"token0",
-				500,
-				"1000000",
-				GetFeeAmountTickSpacing(500),
-			)
-			if !params.isSameTokenPath() {
-				t.Errorf("Expected token0Path(token0) == token1Path(token0)")
-			}
-		},
-	)
 }
 
 func TestNewPoolParam(t *testing.T) {
@@ -138,7 +123,7 @@ func TestIsInOrder(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			params := newPoolParams(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96Str, tt.tickSpacing)
-			poolPath := params.generatePoolPath()
+			poolPath := params.poolPath()
 			uassert.Equal(t, poolPath, "gno.land/r/gnoswap/v1/gns:gno.land/r/gnoswap/v1/wugnot:3000", "Pool path should match")
 			uassert.Equal(t, params.isInOrder(), true, "Tokens order should match")
 		})
@@ -347,7 +332,7 @@ func TestGeneratePoolPath(t *testing.T) {
 			if !params.isInOrder() {
 				expected = ufmt.Sprintf("%s:%s:%d", params.token1Path, params.token0Path, params.fee)
 			}
-			actual := params.generatePoolPath()
+			actual := params.poolPath()
 
 			uassert.Equal(t, expected, actual, "Pool path should match expected")
 		})

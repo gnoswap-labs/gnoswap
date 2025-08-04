@@ -78,7 +78,7 @@ func CreatePool(t *testing.T,
 
 	testing.SetRealm(std.NewUserRealm(caller))
 	poolPath := pl.GetPoolPath(token0, token1, fee)
-	if !pl.DoesPoolPathExist(poolPath) {
+	if !pl.ExistsPoolPath(poolPath) {
 		pl.CreatePool(cross, token0, token1, fee, sqrtPriceX96)
 	}
 }
@@ -95,7 +95,7 @@ func LPTokenUnStake(t *testing.T, owner std.Address, positionId uint64, unwrap b
 
 func CreateSecondPoolWithoutFee(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	CreatePool(t,
 		barPath,

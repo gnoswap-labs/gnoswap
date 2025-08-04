@@ -138,6 +138,8 @@ func main() {
 	println()
 
 	println("[SCENARIO] 5. Verify Final State (Check slot tick >= 120)")
+	
+	thisPool = pool.GetPool(barPath, fooPath, fee100)
 	slotTick := thisPool.Slot0Tick()
 	println("[INFO] slot tick should be >= 120")
 	println("[INFO] Slot tick:", slotTick)

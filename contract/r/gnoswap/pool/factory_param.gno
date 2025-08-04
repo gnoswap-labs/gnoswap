@@ -110,12 +110,8 @@ func (p *poolCreateConfig) wrap() (string, string) {
 	return p.token0Path, p.token1Path
 }
 
-func (p *poolCreateConfig) generatePoolPath() string {
-	if !p.isInOrder() {
-		p.token0Path, p.token1Path = p.token1Path, p.token0Path
-	}
-
-	return ufmt.Sprintf("%s:%s:%d", p.token0Path, p.token1Path, p.fee)
+func (p *poolCreateConfig) poolPath() string {
+	return GetPoolPath(p.token0Path, p.token1Path, p.fee)
 }
 
 func (p *poolCreateConfig) isSupportedFee(feeTier uint32) bool {
@@ -135,4 +131,13 @@ func validateSqrtPriceX96(sqrtPriceX96 *u256.Uint) error {
 		)
 	}
 	return nil
+}
+
+func isValidFeeTier(feeTier uint32) bool {
+	switch feeTier {
+	case FeeTier100, FeeTier500, FeeTier3000, FeeTier10000:
+		return true
+	}
+
+	return false
 }
