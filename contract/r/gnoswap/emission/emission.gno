@@ -42,6 +42,7 @@ func setLastExecutedHeight(height int64) { lastExecutedHeight = height }
 // Returns the total amount of GNS distributed
 func MintAndDistributeGns(cur realm) int64 {
 	halt.AssertIsNotHaltedEmission()
+	halt.AssertIsNotHaltedWithdraw()
 
 	currentHeight := std.ChainHeight()
 
