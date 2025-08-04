@@ -59,7 +59,7 @@ func main() {
 
 func initEmission() {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 1)
+	emission.SetDistributionStartBlockHeight(cross, 124)
 	emission.MintAndDistributeGns(cross)
 }
 
