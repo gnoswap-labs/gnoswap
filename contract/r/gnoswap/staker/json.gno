@@ -40,8 +40,6 @@ type ApiExternalIncentive struct {
 	RewardLeft          int64  `json:"rewardLeft"`
 	StartTimestamp      int64  `json:"startTimestamp"`
 	EndTimestamp        int64  `json:"endTimestamp"`
-	StartHeight         int64  `json:"startHeight"`
-	EndHeight           int64  `json:"endHeight"`
 	Active              bool   `json:"active"`
 	RewardPerSecond     int64  `json:"rewardPerSecond"`
 	Refundee            string `json:"refundee"`
@@ -61,11 +59,9 @@ func newApiExternalIncentive(ictv *ExternalIncentive) ApiExternalIncentive {
 		PoolPath:            ictv.targetPoolPath,
 		RewardToken:         ictv.rewardToken,
 		RewardAmount:        ictv.rewardAmount,
-		RewardLeft:          ictv.RewardLeft(uint64(std.ChainHeight()), time.Now().Unix()),
+		RewardLeft:          ictv.RewardLeft(now),
 		StartTimestamp:      ictv.startTimestamp,
 		EndTimestamp:        ictv.endTimestamp,
-		StartHeight:         ictv.startHeight,
-		EndHeight:           ictv.endHeight,
 		Active:              isActive,
 		RewardPerSecond:     ictv.rewardPerSecond,
 		Refundee:            ictv.refundee.String(),
@@ -89,8 +85,6 @@ func (r ApiExternalIncentive) JSON() *json.Node {
 		"rewardLeft":          json.StringNode("rewardLeft", strconv.FormatInt(r.RewardLeft, 10)),
 		"startTimestamp":      json.NumberNode("startTimestamp", float64(r.StartTimestamp)),
 		"endTimestamp":        json.NumberNode("endTimestamp", float64(r.EndTimestamp)),
-		"startHeight":         json.NumberNode("startHeight", float64(r.StartHeight)),
-		"endHeight":           json.NumberNode("endHeight", float64(r.EndHeight)),
 		"active":              json.BoolNode("active", active),
 		"rewardPerSecond":     json.StringNode("rewardPerSecond", strconv.FormatInt(r.RewardPerSecond, 10)),
 		"refundee":            json.StringNode("refundee", r.Refundee),

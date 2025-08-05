@@ -27,8 +27,8 @@ func SetPoolTier(cur realm, poolPath string, tier uint64) {
 	assertIsPoolExists(poolPath)
 	assertIsValidPoolTier(tier)
 
-	currentHeight := std.ChainHeight()
-	setPoolTier(poolPath, tier, currentHeight)
+	currentTime := time.Now().Unix()
+	setPoolTier(poolPath, tier, currentTime)
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
@@ -37,7 +37,8 @@ func SetPoolTier(cur realm, poolPath string, tier uint64) {
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
 		"tier", formatUint(tier),
-		"height", formatInt(currentHeight),
+		"currentTime", formatInt(currentTime),
+		"currentHeight", formatInt(std.ChainHeight()),
 	)
 }
 
@@ -51,8 +52,8 @@ func ChangePoolTier(cur realm, poolPath string, tier uint64) {
 	assertIsPoolExists(poolPath)
 	assertIsValidPoolTier(tier)
 
-	currentHeight := std.ChainHeight()
-	previousTier, newTier := changePoolTier(poolPath, tier, currentHeight)
+	currentTime := time.Now().Unix()
+	previousTier, newTier := changePoolTier(poolPath, tier, currentTime)
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
@@ -62,7 +63,8 @@ func ChangePoolTier(cur realm, poolPath string, tier uint64) {
 		"poolPath", poolPath,
 		"prevTier", formatUint(previousTier),
 		"newTier", formatUint(newTier),
-		"height", formatInt(currentHeight),
+		"currentTime", formatInt(currentTime),
+		"currentHeight", formatInt(std.ChainHeight()),
 	)
 }
 
@@ -75,8 +77,8 @@ func RemovePoolTier(cur realm, poolPath string) {
 
 	assertIsPoolExists(poolPath)
 
-	currentHeight := std.ChainHeight()
-	removePoolTier(poolPath, currentHeight)
+	currentTime := time.Now().Unix()
+	removePoolTier(poolPath, currentTime)
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
@@ -84,7 +86,8 @@ func RemovePoolTier(cur realm, poolPath string) {
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
-		"height", formatInt(currentHeight),
+		"currentTime", formatInt(currentTime),
+		"currentHeight", formatInt(std.ChainHeight()),
 	)
 }
 
@@ -107,26 +110,26 @@ func SetWarmUp(cur realm, pct, timeDuration int64) {
 	)
 }
 
-func setPoolTier(poolPath string, tier uint64, height int64) {
+func setPoolTier(poolPath string, tier uint64, currentTime int64) {
 	en.MintAndDistributeGns(cross)
 
 	pools.GetOrCreate(poolPath)
-	poolTier.changeTier(height, time.Now().Unix(), pools, poolPath, tier)
+	poolTier.changeTier(std.ChainHeight(), currentTime, pools, poolPath, tier)
 }
 
-func changePoolTier(poolPath string, tier uint64, height int64) (uint64, uint64) {
+func changePoolTier(poolPath string, tier uint64, currentTime int64) (uint64, uint64) {
 	en.MintAndDistributeGns(cross)
 	previousTier := poolTier.CurrentTier(poolPath)
 
-	poolTier.changeTier(height, time.Now().Unix(), pools, poolPath, tier)
+	poolTier.changeTier(std.ChainHeight(), currentTime, pools, poolPath, tier)
 
 	return previousTier, tier
 }
 
-func removePoolTier(poolPath string, height int64) {
+func removePoolTier(poolPath string, currentTime int64) {
 	en.MintAndDistributeGns(cross)
 
-	poolTier.changeTier(height, time.Now().Unix(), pools, poolPath, NOT_EMISSION_TARGET_TIER)
+	poolTier.changeTier(std.ChainHeight(), currentTime, pools, poolPath, NOT_EMISSION_TARGET_TIER)
 }
 
 func setWarmUp(pct, timeDuration int64) {

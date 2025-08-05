@@ -8,7 +8,6 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/r/gnoswap/v1/gns"
 )
 
 func createWarmup(ratio uint64) Warmup {
@@ -217,8 +216,7 @@ func TestModifyWarmup(t *testing.T) {
 }
 
 func TestMultipleWarmupPeriods(t *testing.T) {
-	msInDay := int64(86400000)
-	blocksInDay := msInDay / int64(gns.AvgBlockTimeInMs())
+	secondsInDay := int64(86400)
 	baseRewardPerBlock := int64(50)
 
 	// warmup period configurations
@@ -271,7 +269,7 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 			positionRatio := float64(tt.position) / float64(tt.staked)
 
 			for i, period := range tt.periods {
-				blocks := period.days * blocksInDay
+				blocks := period.days * secondsInDay / 5
 				totalBlockReward := baseRewardPerBlock * blocks
 
 				reward, _ := deposit.warmups[i].apply(

@@ -12,6 +12,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+const blockPerSecond = int64(5)
+
 func Setup(t *testing.T) *canonicalRewardState {
 	pools := NewPools()
 	deposits := NewDeposits()
@@ -565,10 +567,17 @@ func TestCanonicalExternalReward_1(t *testing.T) {
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 200)
 
-	currentHeight := int64(canonical.CurrentHeight())
 	currentTime := canonical.CurrentTime()
 	// Create incentive for 4 seconds
-	incentiveId := canonical.CreateExternalIncentive(gnousdc, gnsPath, 100000000, currentTime+1, currentTime+5, currentHeight+1, currentHeight+5, std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"))
+	incentiveId := canonical.CreateExternalIncentive(
+		gnousdc,
+		gnsPath,
+		100000000,
+		currentTime+getTimeByBlock(1),
+		currentTime+getTimeByBlock(5),
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		std.ChainHeight(),
+	)
 
 	err := canonical.StakeToken(
 		0,
@@ -602,10 +611,17 @@ func TestCanonicalExternalReward_2(t *testing.T) {
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 200)
 
-	currentHeight := int64(canonical.CurrentHeight())
 	currentTime := canonical.CurrentTime()
 	// Create incentive for 4 seconds
-	incentiveId := canonical.CreateExternalIncentive(gnousdc, gnsPath, 100000000, currentTime+1, currentTime+5, currentHeight+1, currentHeight+5, std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"))
+	incentiveId := canonical.CreateExternalIncentive(
+		gnousdc,
+		gnsPath,
+		100000000,
+		currentTime+getTimeByBlock(1),
+		currentTime+getTimeByBlock(5),
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		std.ChainHeight(),
+	)
 
 	canonical.NextBlock()
 	canonical.NextBlock()
@@ -639,10 +655,17 @@ func TestCanonicalExternalReward_3(t *testing.T) {
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 200)
 
-	currentHeight := int64(canonical.CurrentHeight())
 	currentTime := canonical.CurrentTime()
 	// Create incentive for 4 seconds
-	incentiveId := canonical.CreateExternalIncentive(gnousdc, gnsPath, 100000000, currentTime+1, currentTime+5, currentHeight+1, currentHeight+5, std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"))
+	incentiveId := canonical.CreateExternalIncentive(
+		gnousdc,
+		gnsPath,
+		100000000,
+		currentTime+getTimeByBlock(1),
+		currentTime+getTimeByBlock(5),
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		std.ChainHeight(),
+	)
 
 	err := canonical.StakeToken(
 		0,
@@ -792,7 +815,7 @@ func TestCanonicalMultiplePool_2(t *testing.T) {
 		t.Errorf("StakeToken failed: %s", err.Error())
 	}
 
-	expected := canonical.PerSecondEmission * 30 / 100
+	expected := canonical.PerBlockEmission * 30 / 100
 
 	canonical.NextBlock()
 	canonical.AssertEmulatedRewardOf(0, expected*50/100)
@@ -861,9 +884,9 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 }
 
 func TestCanonicalWarmup_1(t *testing.T) {
-	modifyWarmup(0, 10)
-	modifyWarmup(1, 10)
-	modifyWarmup(2, 10)
+	modifyWarmup(0, 10 * blockPerSecond)
+	modifyWarmup(1, 10 * blockPerSecond)
+	modifyWarmup(2, 10 * blockPerSecond)
 
 	canonical := Setup(t)
 
@@ -940,9 +963,9 @@ func TestCanonicalWarmup_1(t *testing.T) {
 }
 
 func TestCanonicalWarmup_2(t *testing.T) {
-	modifyWarmup(0, 10)
-	modifyWarmup(1, 10)
-	modifyWarmup(2, 10)
+	modifyWarmup(0, 10 * blockPerSecond)
+	modifyWarmup(1, 10 * blockPerSecond)
+	modifyWarmup(2, 10 * blockPerSecond)
 
 	canonical := Setup(t)
 
@@ -1516,4 +1539,8 @@ func TestCanonicalSimulation_0(t *testing.T) {
 
 		canonical.AssertEmulatedRewardMap(canonicalRewardMap)
 	}
+}
+
+func getTimeByBlock(block int64) int64 {
+	return block * blockPerSecond
 }

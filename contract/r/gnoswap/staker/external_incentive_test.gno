@@ -55,8 +55,6 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 				incentiveId:    incentiveId,
 				startTimestamp: startTime,
 				endTimestamp:   endTime,
-				startHeight:    100,
-				endHeight:      200,
 				rewardToken:    token,
 				rewardAmount:   amount,
 				refundee:       creator,

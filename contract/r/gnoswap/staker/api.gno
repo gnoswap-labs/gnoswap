@@ -3,6 +3,7 @@ package staker
 import (
 	"math"
 	"std"
+	"time"
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
@@ -292,7 +293,7 @@ type ResponseApiGetRewardByLpTokenId struct {
 func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 	deposit := deposits.get(targetLpTokenId)
 
-	reward := calcPositionReward(std.ChainHeight(), targetLpTokenId)
+	reward := calcPositionReward(std.ChainHeight(), time.Now().Unix(), targetLpTokenId)
 
 	rewards := []ApiReward{}
 
@@ -340,7 +341,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 	stakers.IterateAll(std.Address(targetAddress), func(positionId uint64, deposit *Deposit) bool {
 		rewards := []ApiReward{}
 
-		reward := calcPositionReward(std.ChainHeight(), positionId)
+		reward := calcPositionReward(std.ChainHeight(), time.Now().Unix(), positionId)
 
 		// get internal gns reward
 		if reward.Internal > 0 {

@@ -1,7 +1,7 @@
 package staker
 
 import (
-	"std"
+	"time"
 
 	"gno.land/p/demo/avl"
 
@@ -47,7 +47,7 @@ func (self *Pools) Get(poolPath string) (*Pool, bool) {
 func (self *Pools) GetOrCreate(poolPath string) *Pool {
 	pool, ok := self.Get(poolPath)
 	if !ok {
-		pool = NewPool(poolPath, std.ChainHeight())
+		pool = NewPool(poolPath, time.Now().Unix())
 		self.set(poolPath, pool)
 	}
 	return pool

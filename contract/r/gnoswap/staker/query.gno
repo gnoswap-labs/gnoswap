@@ -2,6 +2,7 @@ package staker
 
 import (
 	"std"
+	"time"
 
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -40,16 +41,16 @@ func QueryPoolData(poolPath string) (*PoolData, error) {
 		return nil, ufmt.Errorf("pool %s not found", poolPath)
 	}
 
-	currentHeight := std.ChainHeight()
+	currentTimestamp := time.Now().Unix()
 	tier := poolTier.CurrentTier(poolPath)
 
-	ictvIds := filterActiveIncentives(pool, currentHeight)
+	ictvIds := filterActiveIncentives(pool, currentTimestamp)
 
 	return &PoolData{
 		PoolPath:         poolPath,
 		Tier:             tier,
 		ActiveIncentives: ictvIds,
-		StakedLiquidity:  pool.CurrentStakedLiquidity(std.ChainHeight()),
+		StakedLiquidity:  pool.CurrentStakedLiquidity(currentTimestamp),
 	}, nil
 }
 
@@ -106,14 +107,21 @@ func QueryDepositData(lpTokenId uint64) (*DepositData, error) {
 	}, nil
 }
 
-func filterActiveIncentives(pool *Pool, currentHeight int64) []string {
+func filterActiveIncentives(pool *Pool, currentTimestamp int64) []string {
 	ictvIds := make([]string, 0)
+
 	pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
-		ictv := value.(*ExternalIncentive)
-		if ictv.startHeight <= currentHeight && currentHeight < ictv.endHeight {
+		ictv, ok := value.(*ExternalIncentive)
+		if !ok {
+			return false
+		}
+
+		if ictv.startTimestamp <= currentTimestamp && currentTimestamp < ictv.endTimestamp {
 			ictvIds = append(ictvIds, ictv.incentiveId)
 		}
+
 		return false
 	})
+
 	return ictvIds
 }

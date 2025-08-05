@@ -27,7 +27,7 @@ const (
 
 func TestCollectRewardGracefulDegradation(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 124)
+	emission.SetDistributionStartTime(cross, time.Now().Unix() + 1)
 
 	// setup
 	govAddr := rbac.DefaultRoleAddresses[prabc.ROLE_GOVERNANCE]

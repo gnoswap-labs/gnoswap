@@ -1,9 +1,9 @@
 package staker
 
 import (
-	"std"
 	"strconv"
 	"strings"
+	"time"
 
 	"gno.land/p/demo/avl"
 
@@ -116,7 +116,7 @@ func (self *Tick) CurrentOutsideAccumulation(timestamp int64) *u256.Uint {
 }
 
 // modifyDepositLower updates the tick's liquidity info by treating the deposit as a lower tick
-func (self *Tick) modifyDepositLower(currentTime int64, currentTick int32, liquidity *i256.Int) {
+func (self *Tick) modifyDepositLower(currentTime int64, liquidity *i256.Int) {
 	// update staker side tick info
 	self.stakedLiquidityGross = liquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
 	if self.stakedLiquidityGross.Lt(u256.Zero()) {
@@ -126,7 +126,7 @@ func (self *Tick) modifyDepositLower(currentTime int64, currentTick int32, liqui
 }
 
 // modifyDepositUpper updates the tick's liquidity info by treating the deposit as an upper tick
-func (self *Tick) modifyDepositUpper(currentTime int64, currentTick int32, liquidity *i256.Int) {
+func (self *Tick) modifyDepositUpper(currentTime int64, liquidity *i256.Int) {
 	self.stakedLiquidityGross = liquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
 	if self.stakedLiquidityGross.Lt(u256.Zero()) {
 		panic("stakedLiquidityGross is negative")
@@ -144,7 +144,7 @@ func (self *Tick) updateCurrentOutsideAccumulation(timestamp int64, acc *u256.Ui
 
 // TickCrossHook is a hook that is called when a tick is crossed.
 // Modifies the tick's outside accumulation and updates the tick's liquidity info
-func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tickId int32, zeroForOne bool) {
+func TickCrossHook(pools *Pools, timestamp func() int64) func(poolPath string, tickId int32, zeroForOne bool) {
 	return func(poolPath string, tickId int32, zeroForOne bool) {
 		pool, ok := pools.Get(poolPath)
 		if !ok {
@@ -153,7 +153,7 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 
 		tick := pool.ticks.Get(tickId)
 
-		timestamp := height()
+		timestamp := timestamp()
 
 		var nextTick int32
 		if zeroForOne {
@@ -177,7 +177,9 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 
 func setTickCrossHook() {
 	// Sets tick cross hook for pool contract
-	pl.SetTickCrossHook(cross, TickCrossHook(pools, std.ChainHeight))
+	pl.SetTickCrossHook(cross, TickCrossHook(pools, func() int64 {
+		return time.Now().Unix()
+	}))
 }
 
 func init() {

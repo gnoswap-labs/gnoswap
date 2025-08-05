@@ -202,16 +202,15 @@ func init() {
 	// ONLY GNOT:GNS 0.3%
 
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1)
-	poolTier = NewPoolTier(pools, std.ChainHeight(), time.Now().Unix(), MUST_EXISTS_IN_TIER_1, en.GetEmission, en.GetHalvingBlocksInRange)
-	registerstakerEmissionChangeCallback()
-}
 
-func registerstakerEmissionChangeCallback() {
-	en.SetGnsStakerEmissionChangeCallback(cross, func(emission int64) {
-		func(cur realm) {
-			stakerEmissionChangeCallback(emission)
-		}(cross)
-	})
+	poolTier = NewPoolTier(
+		pools,
+		std.ChainHeight(),
+		time.Now().Unix(),
+		MUST_EXISTS_IN_TIER_1,
+		en.GetStakerEmissionAmountPerSeconds,
+		en.GetStakerEmissionAmountPerSecondsInRange,
+	)
 }
 
 // StakeToken stakes an LP token into the staker contract. It transfer the LP token
@@ -246,8 +245,8 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 
 	previousRealm := std.PreviousRealm()
 	caller := previousRealm.Address()
-	currentHeight := std.ChainHeight()
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
+	currentTime := time.Now().Unix()
 
 	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer
@@ -274,7 +273,6 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 	tickLower, tickUpper := getTickOf(positionId)
 
 	// staked status
-	currentTime := time.Now().Unix()
 	deposit := &Deposit{
 		owner:             caller,
 		stakeTimestamp:    currentTime,
@@ -283,7 +281,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 		tickLower:         tickLower,
 		tickUpper:         tickUpper,
 		liquidity:         liquidity,
-		lastCollectTime:   currentHeight, // TODO: should be currentTime
+		lastCollectTime:   currentTime,
 		warmups:           instantiateWarmup(currentTime),
 	}
 
@@ -302,22 +300,22 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 
 	signedLiquidity := i256.FromUint256(liquidity)
 	isInRange := false
-	poolTier.cacheReward(currentHeight, currentTime, pools)
+	poolTier.cacheReward(currentTime, currentTime, pools)
 
 	if pn.PositionIsInRange(positionId) {
 		isInRange = true
-		pool.modifyDeposit(signedLiquidity, currentHeight, currentTick)
+		pool.modifyDeposit(signedLiquidity, currentTime, currentTick)
 	}
 	// historical tick must be set regardless of the deposit's range
-	pool.historicalTick.set(currentHeight, currentTick)
+	pool.historicalTick.set(currentTime, currentTick)
 
 	// this could happen because of how position stores the ticks.
 	// ticks are negated if the token1 < token0
 	upperTick := pool.ticks.Get(tickUpper)
 	lowerTick := pool.ticks.Get(tickLower)
 
-	upperTick.modifyDepositUpper(currentHeight, currentTick, signedLiquidity)
-	lowerTick.modifyDepositLower(currentHeight, currentTick, signedLiquidity)
+	upperTick.modifyDepositUpper(currentTime, signedLiquidity)
+	lowerTick.modifyDepositLower(currentTime, signedLiquidity)
 
 	std.Emit(
 		"StakeToken",
@@ -443,13 +441,14 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 
 	en.MintAndDistributeGns(cross)
 
-	currentHeight := std.ChainHeight()
+	currentTime := time.Now().Unix()
+	blockHeight := std.ChainHeight()
 	previousRealm := std.PreviousRealm()
 	// get all internal and external rewards
-	reward := calcPositionReward(currentHeight, positionId)
+	reward := calcPositionReward(blockHeight, currentTime, positionId)
 
 	// update lastCollectTime to current time
-	deposit.lastCollectTime = currentHeight // TODO: should be currentTime
+	deposit.lastCollectTime = currentTime
 
 	// transfer external rewards to user
 	externalReward := reward.External
@@ -457,7 +456,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 	toUserExternalPenalty := make(map[string]int64)
 	for incentiveId, rewardAmount := range externalReward {
 		incentive := externalIncentives.get(incentiveId).Clone()
-		if !incentive.IsStarted(currentHeight) {
+		if !incentive.IsStarted(currentTime) {
 			continue
 		}
 
@@ -471,7 +470,8 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 				"incentiveId", incentiveId,
 				"requiredAmount", formatInt(rewardAmount),
 				"availableAmount", formatInt(incentive.rewardAmount),
-				"blockHeight", formatInt(currentHeight),
+				"currentTime", formatInt(currentTime),
+				"currentHeight", formatInt(blockHeight),
 			)
 			continue
 		}
@@ -493,6 +493,8 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 			"fromPoolPath", incentive.targetPoolPath,
 			"feeTokenPath", rewardToken,
 			"feeAmount", formatInt(feeAmount),
+			"currentTime", formatInt(currentTime),
+			"currentHeight", formatInt(blockHeight),
 		)
 		if toUser > 0 {
 			common.Transfer(cross, rewardToken, deposit.owner, toUser)
@@ -525,6 +527,8 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 			"rewardToFee", formatInt(int64(rewardAmount)-toUser),
 			"rewardPenalty", formatInt(externalPenalty),
 			"isRequestUnwrap", formatBool(unwrapResult),
+			"currentTime", formatInt(currentTime),
+			"currentHeight", formatInt(blockHeight),
 		)
 	}
 
@@ -556,7 +560,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		gns.Transfer(cross, communityPoolAddr, int64(reward.InternalPenalty))
 	}
 
-	unClaimableInternal := processUnClaimableReward(deposit.targetPoolPath, currentHeight)
+	unClaimableInternal := processUnClaimableReward(deposit.targetPoolPath, currentTime)
 	if unClaimableInternal > 0 {
 		// internal unClaimable to community pool
 		totalEmissionSent = safeAddInt64(totalEmissionSent, unClaimableInternal)
@@ -576,6 +580,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		"rewardToFee", formatInt(int64(reward.Internal)-toUser),
 		"rewardPenalty", formatInt(reward.InternalPenalty),
 		"rewardUnClaimableAmount", formatInt(unClaimableInternal),
+		"currentTime", formatInt(currentTime),
 	)
 
 	return formatInt(toUser), formatInt(reward.InternalPenalty), toUserExternalReward, toUserExternalPenalty
@@ -659,18 +664,18 @@ func applyUnStake(positionId uint64) error {
 		)
 	}
 
-	currentHeight := std.ChainHeight()
+	currentTime := time.Now().Unix()
 	currentTick := pl.GetSlot0Tick(deposit.targetPoolPath)
 	signedLiquidity := i256.FromUint256(deposit.liquidity)
 	signedLiquidity = signedLiquidity.Neg(signedLiquidity)
 	if pn.PositionIsInRange(positionId) {
-		pool.modifyDeposit(signedLiquidity, currentHeight, currentTick)
+		pool.modifyDeposit(signedLiquidity, currentTime, currentTick)
 	}
 
 	upperTick := pool.ticks.Get(deposit.tickUpper)
 	lowerTick := pool.ticks.Get(deposit.tickLower)
-	upperTick.modifyDepositUpper(currentHeight, currentTick, signedLiquidity)
-	lowerTick.modifyDepositLower(currentHeight, currentTick, signedLiquidity)
+	upperTick.modifyDepositUpper(currentTime, signedLiquidity)
+	lowerTick.modifyDepositLower(currentTime, signedLiquidity)
 
 	deposits.remove(positionId)
 	stakers.removeDeposit(deposit.owner, positionId)

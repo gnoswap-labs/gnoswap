@@ -18,16 +18,14 @@ type ExternalIncentive struct {
 	rewardToken      string      // external reward token path
 	rewardAmount     int64       // total reward amount
 	rewardLeft       int64       // remaining reward amount
-	startHeight      int64       // start height for external reward
-	endHeight        int64       // end height for external reward
 	rewardPerSecond  int64       // reward per second
 	refundee         std.Address // refundee address
 
 	unclaimableRefunded bool // whether unclaimable reward is refunded
 }
 
-func (e ExternalIncentive) IsStarted(currentHeight int64) bool {
-	return currentHeight >= e.startHeight
+func (e ExternalIncentive) IsStarted(currentTimestamp int64) bool {
+	return currentTimestamp >= e.startTimestamp
 }
 
 // safeMulInt64 performs safe multiplication of int64 values, panicking on overflow
@@ -93,54 +91,50 @@ func (e ExternalIncentive) RewardAmount() int64 {
 	return e.rewardAmount
 }
 
-func (self *ExternalIncentive) RewardSpent(currentHeight uint64, currentTime int64) int64 {
+func (self *ExternalIncentive) RewardSpent(currentTimestamp int64) int64 {
 	// Still check heights for state validation
-	if currentHeight < uint64(self.startHeight) {
+	if currentTimestamp < self.startTimestamp {
 		return 0
 	}
 
-	if currentHeight > uint64(self.endHeight) {
+	if currentTimestamp > self.endTimestamp {
 		return int64(self.rewardAmount)
 	}
 
 	// But use time for calculation
-	if currentTime < self.startTimestamp {
+	if currentTimestamp < self.startTimestamp {
 		return 0
 	}
 
-	if currentTime > self.endTimestamp {
+	if currentTimestamp > self.endTimestamp {
 		return int64(self.rewardAmount)
 	}
 
-	timeDuration := currentTime - self.startTimestamp
+	timeDuration := currentTimestamp - self.startTimestamp
 	rewardSpent := safeMulInt64(timeDuration, self.rewardPerSecond)
 	return rewardSpent
 }
 
-func (self *ExternalIncentive) RewardLeft(currentHeight uint64, currentTime int64) int64 {
+func (self *ExternalIncentive) RewardLeft(currentTimestamp int64) int64 {
 	// Still check heights for state validation
-	if currentHeight <= uint64(self.startHeight) {
+	if currentTimestamp <= self.startTimestamp {
 		return int64(self.rewardAmount)
 	}
 
-	if currentHeight > uint64(self.endHeight) {
+	if currentTimestamp > self.endTimestamp {
 		return 0
 	}
 
 	// But use time for calculation
-	if currentTime <= self.startTimestamp {
+	if currentTimestamp <= self.startTimestamp {
 		return int64(self.rewardAmount)
 	}
 
-	if currentTime > self.endTimestamp {
+	if currentTimestamp > self.endTimestamp {
 		return 0
 	}
 
-	if currentTime == self.endTimestamp {
-		return self.rewardPerSecond
-	}
-
-	timeDuration := self.endTimestamp - currentTime
+	timeDuration := self.endTimestamp - currentTimestamp
 	rewardLeft := safeMulInt64(timeDuration, self.rewardPerSecond)
 	return rewardLeft
 }
@@ -156,8 +150,6 @@ func (self *ExternalIncentive) Clone() *ExternalIncentive {
 		rewardToken:         self.rewardToken,
 		rewardAmount:        self.rewardAmount,
 		rewardLeft:          self.rewardLeft,
-		startHeight:         self.startHeight,
-		endHeight:           self.endHeight,
 		rewardPerSecond:     self.rewardPerSecond,
 		refundee:            self.refundee,
 		unclaimableRefunded: self.unclaimableRefunded,
@@ -180,16 +172,9 @@ func NewExternalIncentive(
 	createdHeight int64,
 	depositGnsAmount int64,
 	currentTime int64, // current time in unix time(seconds)
-	msPerBlock int64, // msPerBlock is in milliseconds
 ) *ExternalIncentive {
 	incentiveDuration := endTimestamp - startTimestamp
 	rewardPerSecond := rewardAmount / incentiveDuration
-
-	blocksLeftUntilStartHeight := (startTimestamp - currentTime) * 1000 / msPerBlock
-	blocksLeftUntilEndHeight := (endTimestamp - currentTime) * 1000 / msPerBlock
-
-	startHeight := std.ChainHeight() + blocksLeftUntilStartHeight
-	endHeight := std.ChainHeight() + blocksLeftUntilEndHeight
 
 	return &ExternalIncentive{
 		incentiveId:         incentiveId,
@@ -198,8 +183,6 @@ func NewExternalIncentive(
 		rewardAmount:        rewardAmount,
 		startTimestamp:      startTimestamp,
 		endTimestamp:        endTimestamp,
-		startHeight:         startHeight,
-		endHeight:           endHeight,
 		rewardPerSecond:     rewardPerSecond,
 		refundee:            refundee,
 		createdHeight:       createdHeight,

@@ -12,7 +12,6 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -54,7 +53,6 @@ func CreateProject(
 	access.AssertIsAdmin(caller)
 
 	launchpadAddr := std.CurrentRealm().Address()
-	averageBlockTimeMs := gns.AvgBlockTimeInMs()
 	currentHeight := std.ChainHeight()
 	currentTime := time.Now().Unix()
 
@@ -71,7 +69,6 @@ func CreateProject(
 		startTime:             startTime,
 		currentTime:           currentTime,
 		currentHeight:         currentHeight,
-		averageBlockTimeMs:    averageBlockTimeMs,
 		minimumStartDelayTime: projectMinimumStartDelayTime,
 	}
 
@@ -149,7 +146,6 @@ func createProject(params *createProjectParams) (*Project, error) {
 		params.currentTime,
 		params.currentHeight,
 		params.currentTime,
-		params.averageBlockTimeMs,
 	)
 
 	// create project
@@ -204,7 +200,6 @@ func createProject(params *createProjectParams) (*Project, error) {
 			tierDistributeAmount,
 			params.startTime,
 			params.startTime+tierDurationTime,
-			params.averageBlockTimeMs,
 			params.currentTime,
 			params.currentHeight,
 		)
@@ -356,7 +351,6 @@ type createProjectParams struct {
 	startTime             int64
 	currentTime           int64
 	currentHeight         int64
-	averageBlockTimeMs    int64
 	minimumStartDelayTime int64
 }
 

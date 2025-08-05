@@ -14,7 +14,6 @@ import (
 	rr "gno.land/r/gnoswap/v1/router"
 	sr "gno.land/r/gnoswap/v1/staker"
 
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -246,10 +245,6 @@ func createParameterHandlers() *ParameterRegistry {
 			function:   "SetAvgBlockTimeInMs",
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
-				// Update average block time for GNS calculations
-				blockTime := parseNumber(params[0], kindInt64).(int64)
-				gns.SetAvgBlockTimeInMs(cross, blockTime)
-
 				return nil
 			},
 		},

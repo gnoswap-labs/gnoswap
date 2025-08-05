@@ -194,40 +194,6 @@ func GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) strin
 	return rewardAmount.ToString()
 }
 
-// GetIncentiveStartHeight retrieves the start height of a specified incentive.
-//
-// This function looks up an incentive within the specified pool using the `poolPath` and `incentiveId`.
-// It then returns the height at which the incentive starts.
-//
-// Parameters:
-// - poolPath (string): The path of the pool containing the incentive.
-// - incentiveId (string): The ID of the incentive to retrieve the start height for.
-//
-// Returns:
-// - int64: The starting height of the specified incentive.
-func GetIncentiveStartHeight(poolPath string, incentiveId string) int64 {
-	incentive := getIncentive(poolPath, incentiveId)
-
-	return incentive.startHeight
-}
-
-// GetIncentiveEndHeight retrieves the end height of a specified incentive.
-//
-// This function looks up an incentive within the specified pool using the `poolPath` and `incentiveId`.
-// It then returns the height at which the incentive ends.
-//
-// Parameters:
-// - poolPath (string): The path of the pool containing the incentive.
-// - incentiveId (string): The ID of the incentive to retrieve the end height for.
-//
-// Returns:
-// - int64: The ending height of the specified incentive.
-func GetIncentiveEndHeight(poolPath string, incentiveId string) int64 {
-	incentive := getIncentive(poolPath, incentiveId)
-
-	return incentive.endHeight
-}
-
 // GetIncentiveRewardPerSecond retrieves the reward per second of a specified incentive.
 //
 // This function looks up an incentive within the specified pool using the `poolPath` and `incentiveId`.
@@ -423,7 +389,7 @@ func GetDepositLiquidityAsString(lpTokenId uint64) string {
 //
 // Returns:
 // - uint64: The last collection height of the deposit.
-func GetDepositLastCollectHeight(lpTokenId uint64) int64 {
+func GetDepositLastCollectTimestamp(lpTokenId uint64) int64 {
 	deposit := getDeposit(lpTokenId)
 
 	return deposit.lastCollectTime
@@ -578,9 +544,7 @@ func GetPrintExternalInfo() string {
 					RewardPerSecond:   strconv.FormatInt(incentive.rewardPerSecond, 10),
 					Refundee:          incentive.refundee,
 					TokenAmountFull:   incentive.depositGnsAmount,
-					TokenAmountToGive: incentive.RewardSpent(uint64(std.ChainHeight()), time.Now().Unix()),
-					StartHeight:       incentive.startHeight,
-					EndHeight:         incentive.endHeight,
+					TokenAmountToGive: incentive.RewardSpent(time.Now().Unix()),
 				}
 
 				externalIncentivesList = append(externalIncentivesList, externalIncentive)
