@@ -26,8 +26,8 @@ func assertValidDistributionTargets(target01, target02, target03, target04 int) 
 		validTargets[target] = true
 	}
 
-	for _, used := range validTargets {
-		if !used {
+	for _, valid := range validTargets {
+		if !valid {
 			panic(errDuplicateTarget)
 		}
 	}
