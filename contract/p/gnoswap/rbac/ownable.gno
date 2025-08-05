@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	OwnershipTransferEvent          = "OwnershipTransfer"
-	OwnershipTransferInitiatedEvent = "OwnershipTransferInitiated"
+	OwnershipTransferEvent        = "OwnershipTransfer"
+	OwnershipTransferStartedEvent = "OwnershipTransferStarted"
 )
 
 // Ownable2Step is a two-step ownership transfer package
@@ -36,7 +36,7 @@ func (o *Ownable2Step) TransferOwnership(newOwner std.Address) error {
 	o.pendingOwner = newOwner
 
 	std.Emit(
-		OwnershipTransferInitiatedEvent,
+		OwnershipTransferStartedEvent,
 		"from", o.owner.String(),
 		"to", newOwner.String(),
 	)
