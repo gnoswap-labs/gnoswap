@@ -351,9 +351,6 @@ func TestSetGnsStakerEmissionChangeCallback_SecurityValidation(t *testing.T) {
 			caller:           stakerAddr,
 			expectedHasPanic: false,
 		},
-		// NOTE: Testing nil callback cross-realm panic is removed because
-		// cross-realm panics in Gno cause program abort and are not recoverable.
-		// The security check is still in place and working as intended.
 	}
 
 	for _, tc := range tests {
