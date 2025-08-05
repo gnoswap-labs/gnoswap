@@ -73,7 +73,7 @@ func assertIsPositionOwner(positionId uint64, caller std.Address) {
 }
 
 func assertIsPoolExists(poolPath string) {
-	if !pl.DoesPoolPathExist(poolPath) {
+	if !pl.ExistsPoolPath(poolPath) {
 		panic(makeErrorWithDetails(
 			errInvalidPoolPath,
 			ufmt.Sprintf("pool(%s) does not exist", poolPath),

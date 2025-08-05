@@ -20,6 +20,7 @@ var t *testing.T
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm   = std.NewUserRealm(adminAddr)
 
 	// current distribution targets
 	stakerAddr, _        = access.GetAddress(prbac.ROLE_STAKER.String())
@@ -57,10 +58,14 @@ func main() {
 }
 
 func initEmission() {
+	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartBlockHeight(cross, 124)
 	emission.MintAndDistributeGns(cross)
 }
 
 func mintAndDistribute() {
+	testing.SetRealm(adminRealm)
+
 	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/emission"))
 
 	previousStakerBalance := gns.BalanceOf(stakerAddr)

@@ -64,7 +64,7 @@ var (
 // turn protocol fee on
 func init() {
 	testing.SetRealm(adminRealm)
-	pool.SetFeeProtocolByAdmin(cross, 4, 4)
+	pool.SetFeeProtocol(cross, 4, 4)
 }
 
 func main() {
@@ -147,6 +147,7 @@ func main() {
 
 	println("[INFO] Collected:", collect0, collect1)
 
+	thisPool = pool.GetPool(barPath, fooPath, fee100)
 	slotTick := thisPool.Slot0Tick()
 	println("[EXPECTED] Pool tick:", slotTick, "expected: >= 120")
 	uassert.True(t, slotTick >= 120, ufmt.Sprintf("tick(%d) should be >= 120", slotTick)) //temporary fix (cc @jinoosss)

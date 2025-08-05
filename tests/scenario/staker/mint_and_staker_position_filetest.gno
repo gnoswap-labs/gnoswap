@@ -13,6 +13,8 @@ import (
 
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/emission"
+
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/staker"
 
@@ -62,7 +64,8 @@ func main() {
 
 func initPool() {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	emission.SetDistributionStartBlockHeight(cross, 124)
+	pool.SetPoolCreationFee(cross, 0)
 
 	defaultTokenAmount := int64(100000000)
 
