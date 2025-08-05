@@ -3,24 +3,16 @@ package gnft
 import (
 	"std"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
-var nft = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
-
 var (
-	owner     = ownable.NewWithAddress(getPositionAddress()) // deployed position contract
-	tokenList *avl.Tree // addr -> []grc721.TokenID
+	nft   = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
+	owner = ownable.NewWithAddress(getPositionAddress()) // deployed position contract
 )
-
-func init() {
-	tokenList = avl.NewTree()
-}
 
 // Name returns the full name of the NFT
 // Returns:
@@ -67,6 +59,8 @@ func TokenURI(tid grc721.TokenID) (string, error) {
 //   - int64: The number of NFTs owned by the address.
 //   - error: Returns an error if the balance retrieval fails.
 func BalanceOf(owner std.Address) (int64, error) {
+	assertIsValidAddress(owner)
+
 	balance, err := nft.BalanceOf(owner)
 	if err != nil {
 		return 0, err
@@ -121,22 +115,14 @@ func MustOwnerOf(tid grc721.TokenID) std.Address {
 //   - If the URI update fails, the function panics with the associated error.
 func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
 	halt.AssertIsNotHaltedPosition()
-	assertIsOwnerOfToken(tid)
 
-	err := setTokenURI(cur, tid, tURI)
+	assertIsValidTokenURI(tid)
+
+	err := setTokenURI(tid, tURI)
 	if err != nil {
 		panic(err)
 	}
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
-		"SetTokenURI",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"lpTokenId", string(tid),
-		"tokenURI", string(tURI),
-	)
-	
 	return true, nil
 }
 
@@ -165,20 +151,12 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 //   - If the internal transfer (`nft.TransferFrom`) fails.
 func SafeTransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPosition()
-	access.AssertIsValidAddress(from)
-	access.AssertIsValidAddress(to)
 
-	caller := std.PreviousRealm().Address()
-	ownerAddr, _ := OwnerOf(tid)
-	approved, _ := GetApproved(tid)
-	if (caller != ownerAddr) && (caller != approved) {
-		panic(makeErrorWithDetails(errNoPermission, ufmt.Sprintf("caller (%s) is not the owner or operator of token (%s)", caller, string(tid))))
-	}
+	assertFromIsValidAddress(from)
+	assertToIsValidAddress(to)
 
-	removeTokenList(from, tid)
-	appendTokenList(to, tid)
-
-	checkErr(nft.TransferFrom(from, to, tid))
+	err := nft.SafeTransferFrom(from, to, tid)
+	checkTransferErr(err, from, to, tid)
 	return nil
 }
 
@@ -193,7 +171,14 @@ func SafeTransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error
 // Returns:
 //   - error: Returns `nil` if the transfer is successful; otherwise, returns an error.
 func TransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
-	return SafeTransferFrom(cur, from, to, tid)
+	halt.AssertIsNotHaltedPosition()
+
+	assertFromIsValidAddress(from)
+	assertToIsValidAddress(to)
+
+	err := nft.TransferFrom(from, to, tid)
+	checkTransferErr(err, from, to, tid)
+	return nil
 }
 
 // Approve grants permission to transfer a specific token ID to another address.
@@ -210,12 +195,11 @@ func TransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 //   - If the caller is not the token owner.
 //   - If the `Approve` call fails.
 func Approve(cur realm, approved std.Address, tid grc721.TokenID) error {
-	assertIsOwnerOfToken(tid)
+	halt.AssertIsNotHaltedPosition()
+	assertIsValidAddress(approved)
 
 	err := nft.Approve(approved, tid)
-	if err != nil {
-		panic(err.Error())
-	}
+	checkApproveErr(err, approved, tid)
 	return nil
 }
 
@@ -232,6 +216,9 @@ func Approve(cur realm, approved std.Address, tid grc721.TokenID) error {
 //   - If the contract is halted.
 //   - If the `SetApprovalForAll` operation fails.
 func SetApprovalForAll(cur realm, operator std.Address, approved bool) error {
+	halt.AssertIsNotHaltedPosition()
+	assertIsValidAddress(operator)
+
 	checkErr(nft.SetApprovalForAll(operator, approved))
 	return nil
 }
@@ -260,82 +247,43 @@ func IsApprovedForAll(owner, operator std.Address) bool {
 	return nft.IsApprovedForAll(owner, operator)
 }
 
-// SetTokenURIByImageURI generates and sets a new token URI for a specified token ID using a random image URI.
+// Mint creates a new NFT and assigns it to the specified address (only callable by owner).
+// The minting process involves three steps:
+// 1. Minting the token to the owner (position contract) address
+// 2. Setting the token URI with a randomly generated SVG image
+// 3. Transferring the token to the specified recipient address
 //
 // Parameters:
-//   - tid (grc721.TokenID): The ID of the token for which the URI will be set.
-//
-// Panics:
-//   - If the contract is halted.
-//   - If the caller is not the owner of the token.
-//   - If the token URI cannot be set.
-func SetTokenURIByImageURI(cur realm, tid grc721.TokenID) {
-	assertIsOwnerOfToken(tid)
-
-	tokenURI := genImageURI(generateRandInstance())
-
-	err := setTokenURI(cur, tid, grc721.TokenURI(tokenURI))
-	if err != nil {
-		panic(makeErrorWithDetails(err, ufmt.Sprintf("%s (%s)", err.Error(), string(tid))))
-	}
-
-	previousRealm := std.PreviousRealm()
-	std.Emit(
-		"SetTokenURI",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"lpTokenId", string(tid),
-		"tokenURI", string(tokenURI),
-	)
-}
-
-// SetTokenURILast sets the token URI for the last token owned by the caller using a randomly generated image URI.
-//
-// This function ensures the contract is active and the caller owns at least one token.
-// It retrieves the list of tokens owned by the caller and applies a new token URI to the most recently minted token.
-//
-// Panics:
-//   - If the contract is halted.
-//   - If the caller does not own any tokens (empty token list).
-//   - If URI generation or assignment fails.
-func SetTokenURILast(cur realm) {
-	caller := std.PreviousRealm().Address()
-	assertHasToken(caller)
-
-	tokenListByCaller, _ := getTokenList(caller)
-	lenTokenListByCaller := len(tokenListByCaller)
-	lastTokenId := tokenListByCaller[lenTokenListByCaller-1]
-
-	tokenURI := genImageURI(generateRandInstance())
-	err := setTokenURI(cur, lastTokenId, grc721.TokenURI(tokenURI))
-	if err != nil {
-		panic(makeErrorWithDetails(err, ufmt.Sprintf("%s (%s)", err.Error(), string(lastTokenId))))
-	}
-
-	previousRealm := std.PreviousRealm()
-	std.Emit(
-		"SetTokenURI",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"lpTokenId", string(lastTokenId),
-		"tokenURI", string(tokenURI),
-	)
-}
-
-// Mint creates a new NFT and assigns it to the specified address (only callable by owner)
-// Parameters:
-//   - to: The address or username to mint the token to
+//   - to: The address that will receive the newly minted NFT
 //   - tid: The token ID to assign to the new NFT
 //
 // Returns:
 //   - grc721.TokenID: The ID of the newly minted token
+//
+// Panics:
+//   - If the position contract is halted
+//   - If the caller is not the position contract owner
+//   - If minting, setting URI, or transferring fails
 func Mint(cur realm, to std.Address, tid grc721.TokenID) grc721.TokenID {
 	halt.AssertIsNotHaltedPosition()
 	owner.AssertOwnedByPrevious()
 
-	checkErr(nft.Mint(to, tid))
+	// owner is the position contract
+	ownerAddress := owner.Owner()
 
-	appendTokenList(to, tid)
+	// mint the token to the owner address
+	checkErr(nft.Mint(ownerAddress, tid))
+
+	// set the token URI
+	tokenURI := genImageURI(generateRandInstance())
+	err := setTokenURI(tid, grc721.TokenURI(tokenURI))
+	if err != nil {
+		panic(err)
+	}
+
+	// transfer the token owner to the to address
+	checkErr(nft.TransferFrom(ownerAddress, to, tid))
+
 	return tid
 }
 
@@ -362,12 +310,6 @@ func Burn(cur realm, tid grc721.TokenID) {
 	halt.AssertIsNotHaltedPosition()
 	owner.AssertOwnedByPrevious()
 
-	ownerAddr, err := OwnerOf(tid)
-	if err != nil {
-		panic(err.Error())
-	}
-	removeTokenList(ownerAddr, tid)
-
 	checkErr(nft.Burn(tid))
 }
 
@@ -377,7 +319,7 @@ func Burn(cur realm, tid grc721.TokenID) {
 //
 // Returns:
 //   - string: HTML representation of the NFT or 404 if path is invalid
-func Render(cur realm, path string) string {
+func Render(path string) string {
 	switch {
 	case path == "":
 		return nft.RenderHome()
@@ -387,77 +329,20 @@ func Render(cur realm, path string) string {
 }
 
 // setTokenURI sets the metadata URI for a specific token ID
-func setTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) error {
-	uri, _ := nft.TokenURI(tid)
-	if string(uri) != "" {
-		return makeErrorWithDetails(errCannotSetURI, ufmt.Sprintf("token id (%s)", tid))
-	}
-
+func setTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) error {
 	_, err := nft.SetTokenURI(tid, tURI)
 	if err != nil {
 		return makeErrorWithDetails(err, ufmt.Sprintf("token id (%s)", tid))
 	}
 
+	previousRealm := std.PreviousRealm()
+	std.Emit(
+		"SetTokenURI",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"tokenId", string(tid),
+		"tokenURI", string(tURI),
+	)
+
 	return nil
-}
-
-// getTokenList retrieves the list of nft tokens for an address
-// Parameters:
-//   - addr: The address to check for nft tokens
-//
-// Returns:
-//   - []grc721.TokenID: Array of token IDs
-//   - bool: true if tokens exist for the address, false otherwise
-func getTokenList(addr std.Address) ([]grc721.TokenID, bool) {
-	iTokens, exists := tokenList.Get(addr.String())
-	if !exists {
-		return []grc721.TokenID{}, false
-	}
-
-	return iTokens.([]grc721.TokenID), true
-}
-
-// mustGetTokenList same as getTokenList but panics if tokens don't exist
-// Parameters:
-//   - addr: The address to check for nft tokens
-//
-// Returns:
-//   - []grc721.TokenID: Array of token IDs
-func mustGetTokenList(addr std.Address) []grc721.TokenID {
-	tokens, exists := getTokenList(addr)
-	if !exists {
-		panic(ufmt.Sprintf("user %s has no minted nft tokens", addr.String()))
-	}
-
-	return tokens
-}
-
-// appendTokenList adds a token ID to the list of nft tokens
-// Parameters:
-//   - addr: The address to append the token for
-//   - tid: The token ID to append
-func appendTokenList(addr std.Address, tid grc721.TokenID) {
-	prevTokenList, _ := getTokenList(addr)
-	prevTokenList = append(prevTokenList, tid)
-	tokenList.Set(addr.String(), prevTokenList)
-}
-
-// removeTokenList removes a token ID from the list of nft tokens
-// Parameters:
-//   - addr: The address to remove the token for
-//   - tid: The token ID to remove
-func removeTokenList(addr std.Address, tid grc721.TokenID) {
-	prevTokenList, exist := getTokenList(addr)
-	if !exist {
-		return
-	}
-
-	for i, token := range prevTokenList {
-		if token == tid {
-			prevTokenList = append(prevTokenList[:i], prevTokenList[i+1:]...)
-			break
-		}
-	}
-
-	tokenList.Set(addr.String(), prevTokenList)
 }

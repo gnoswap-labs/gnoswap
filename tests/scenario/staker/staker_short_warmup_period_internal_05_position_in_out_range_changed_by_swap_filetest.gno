@@ -10,6 +10,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/emission"
 
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
@@ -81,6 +82,7 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartBlockHeight(cross, 124)
 
 	// override warm-up period for testing
 	sr.SetWarmUp(cross, 30, 150)
@@ -225,7 +227,7 @@ func stakeToken_1_2() {
 }
 
 func makePosition1OutRange() {
-	poolTick := pl.PoolGetSlot0Tick(poolPath)
+	poolTick := pl.GetSlot0Tick(poolPath)
 	if poolTick != 0 {
 		panic("expected pool tick to be 0")
 	}

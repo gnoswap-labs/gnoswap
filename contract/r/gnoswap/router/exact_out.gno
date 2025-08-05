@@ -40,7 +40,6 @@ func ExactOutSwapRoute(cur realm,
 	referrer string,
 ) (string, string) {
 	halt.AssertIsNotHaltedRouter()
-	halt.AssertIsNotHaltedWithdraw()
 
 	assertIsNotPassedDeadline(deadline)
 

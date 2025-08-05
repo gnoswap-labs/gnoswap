@@ -13,6 +13,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/emission"
 
 	"gno.land/r/gnoswap/v1/access"
 
@@ -91,12 +92,13 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartBlockHeight(cross, 124)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)

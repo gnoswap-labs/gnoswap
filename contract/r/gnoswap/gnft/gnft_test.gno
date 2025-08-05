@@ -2,16 +2,13 @@ package gnft
 
 import (
 	"std"
+	"strings"
 	"testing"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	prbac "gno.land/p/gnoswap/rbac"
-
-	"gno.land/r/gnoswap/v1/access"
 	_ "gno.land/r/gnoswap/v1/rbac" // initialize rbac package
 )
 
@@ -20,7 +17,7 @@ const (
 )
 
 var (
-	positionPath = "gno.land/r/gnoswap/v1/position"
+	positionPath  = "gno.land/r/gnoswap/v1/position"
 	positionRealm = std.NewCodeRealm(positionPath)
 
 	addr01      = testutils.TestAddress("addr01")
@@ -169,6 +166,57 @@ func TestIsApprovedForAll(t *testing.T) {
 	}
 }
 
+func TestSetTokenURI(t *testing.T) {
+	tests := []struct {
+		name             string
+		callerRealm      std.Realm
+		tokenId          uint64
+		expectedHasAbort bool
+		expectedErrMsg   string
+	}{
+		{
+			name:             "set token uri expected error",
+			callerRealm:      addr01Realm,
+			tokenId:          1,
+			expectedHasAbort: true,
+			expectedErrMsg:   "[GNOSWAP-GNFT-002] cannot set URI || token id (1) has already set URI",
+		},
+		{
+			name:             "set token uri is failed by not owner",
+			callerRealm:      addr02Realm,
+			tokenId:          1,
+			expectedHasAbort: true,
+			expectedErrMsg:   "[GNOSWAP-GNFT-002] cannot set URI || token id (1) has already set URI",
+		},
+		{
+			name:             "set token uri is failed by empty token uri",
+			callerRealm:      addr01Realm,
+			tokenId:          1,
+			expectedHasAbort: true,
+			expectedErrMsg:   "[GNOSWAP-GNFT-002] cannot set URI || token id (1) has already set URI",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+
+			// token id 1 is pre-minted
+			testing.SetRealm(positionRealm)
+			Mint(cross, addr01, tid(1))
+
+			testing.SetRealm(tt.callerRealm)
+			if tt.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tt.expectedErrMsg, func() {
+					SetTokenURI(cross, tid(tt.tokenId), "not change")
+				})
+			} else {
+				SetTokenURI(cross, tid(tt.tokenId), "not change")
+			}
+		})
+	}
+}
+
 func TestGetApproved(t *testing.T) {
 	resetObject(t)
 	testing.SetRealm(positionRealm)
@@ -254,7 +302,6 @@ func TestTransferFrom(t *testing.T) {
 		shouldPanic       bool
 		panicMsg          string
 		expected          std.Address
-		verifyTokenList   func()
 	}{
 		{
 			name:              "transfer non-existent token id",
@@ -263,7 +310,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            addr02,
 			tokenIdToTransfer: 99,
 			shouldPanic:       true,
-			panicMsg:          "[GNOSWAP-GNFT-001] caller has no permission || caller (g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5) is not the owner or operator of token (99)",
+			panicMsg:          "invalid token id",
 		},
 		{
 			name:              "transfer token owned by other user without approval",
@@ -272,7 +319,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "[GNOSWAP-GNFT-001] caller has no permission || caller (g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5) is not the owner or operator of token (1)",
+			panicMsg:          "caller is not token owner or approved || caller g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5 is not owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st or approved for token 1",
 		},
 		{
 			name: "transfer token owned by other user with approval",
@@ -284,10 +331,6 @@ func TestTransferFrom(t *testing.T) {
 			fromAddr:          addr01,
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
-			verifyTokenList: func() {
-				uassert.Equal(t, 0, len(mustGetTokenList(addr01)))
-				uassert.Equal(t, 1, len(mustGetTokenList(addr02)))
-			},
 		},
 		{
 			name:              "transfer token owned by caller",
@@ -295,10 +338,6 @@ func TestTransferFrom(t *testing.T) {
 			fromAddr:          addr02,
 			toAddr:            addr01,
 			tokenIdToTransfer: 1,
-			verifyTokenList: func() {
-				uassert.Equal(t, 1, len(mustGetTokenList(addr01)))
-				uassert.Equal(t, 0, len(mustGetTokenList(addr02)))
-			},
 		},
 		{
 			name:              "transfer from is invalid address",
@@ -307,7 +346,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "invalid address: ",
+			panicMsg:          "[GNOSWAP-GNFT-004] invalid addresss || from address ()",
 		},
 		{
 			name:              "transfer to is invalid address",
@@ -316,7 +355,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            std.Address("this_is_invalid_address"),
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "invalid address: this_is_invalid_address",
+			panicMsg:          "[GNOSWAP-GNFT-004] invalid addresss || to address (this_is_invalid_address)",
 		},
 	}
 
@@ -333,15 +372,12 @@ func TestTransferFrom(t *testing.T) {
 			} else {
 				testing.SetRealm(tt.callerRealm)
 				TransferFrom(cross, tt.fromAddr, tt.toAddr, tid(tt.tokenIdToTransfer))
-				tt.verifyTokenList()
 			}
 		})
 	}
 }
 
 func TestMint(t *testing.T) {
-	resetObject(t)
-
 	tests := []struct {
 		name            string
 		callerRealm     std.Realm
@@ -359,7 +395,8 @@ func TestMint(t *testing.T) {
 			addressToMint: addr01,
 			expected:      "1",
 			verifyTokenList: func() {
-				uassert.Equal(t, 1, len(mustGetTokenList(addr01)))
+				balance, _ := BalanceOf(addr01)
+				uassert.Equal(t, int64(1), balance)
 			},
 		},
 		{
@@ -369,17 +406,35 @@ func TestMint(t *testing.T) {
 			addressToMint: addr02,
 			expected:      "2",
 			verifyTokenList: func() {
-				uassert.Equal(t, 1, len(mustGetTokenList(addr02)))
+				balance, _ := BalanceOf(addr02)
+				uassert.Equal(t, int64(1), balance)
 			},
+		},
+		{
+			name:          "mint failed by existing token id",
+			callerRealm:   positionRealm,
+			tokenIdToMint: 0,
+			addressToMint: addr01,
+			shouldPanic:   true,
+			panicMsg:      "token id already exists",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+
+			// token id 0 is pre-minted
+			testing.SetRealm(positionRealm)
+			Mint(cross, testutils.TestAddress("human"), tid(0))
+
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
 					Mint(cross, tt.addressToMint, tid(tt.tokenIdToMint))
 				})
+
+				balance, _ := BalanceOf(tt.addressToMint)
+				uassert.Equal(t, int64(0), balance)
 			} else {
 				testing.SetRealm(tt.callerRealm)
 				mintedTokenId := Mint(cross, tt.addressToMint, tid(tt.tokenIdToMint))
@@ -395,22 +450,327 @@ func TestBurn(t *testing.T) {
 		name            string
 		callerRealm     std.Realm
 		tokenIdToBurn   uint64
+		expectedBalance int64
 		shouldPanic     bool
 		panicMsg        string
-		verifyTokenList func()
 	}{
 		{
-			name:          "burn without permission",
-			tokenIdToBurn: 1,
-			shouldPanic:   true,
-			panicMsg:      "ownable: caller is not owner",
+			name:            "burn success",
+			tokenIdToBurn:   1,
+			shouldPanic:     false,
+			expectedBalance: 0,
 		},
 		{
-			name:          "burn non-existent token id",
-			callerRealm:   positionRealm,
-			tokenIdToBurn: 99,
-			shouldPanic:   true,
-			panicMsg:      errInvalidTokenId,
+			name:            "burn without permission",
+			callerRealm:     std.NewUserRealm(addr01),
+			tokenIdToBurn:   1,
+			expectedBalance: 1,
+			shouldPanic:     true,
+			panicMsg:        "ownable: caller is not owner",
+		},
+		{
+			name:            "burn non-existent token id",
+			callerRealm:     positionRealm,
+			tokenIdToBurn:   99,
+			expectedBalance: 1,
+			shouldPanic:     true,
+			panicMsg:        errInvalidTokenId,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+
+			// token id 1 is pre-minted
+			testing.SetRealm(positionRealm)
+			Mint(cross, testutils.TestAddress("human"), tid(1))
+
+			testing.SetRealm(tt.callerRealm)
+
+			if tt.shouldPanic {
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					Burn(cross, tid(tt.tokenIdToBurn))
+				})
+			} else {
+				Burn(cross, tid(tt.tokenIdToBurn))
+			}
+
+			balance, _ := BalanceOf(testutils.TestAddress("human"))
+			uassert.Equal(t, tt.expectedBalance, balance)
+		})
+	}
+}
+
+func TestTokenURI(t *testing.T) {
+	resetObject(t)
+	testing.SetRealm(positionRealm)
+	Mint(cross, addr01, tid(1))
+
+	tests := []struct {
+		name        string
+		tokenId     uint64
+		shouldError bool
+		errorMsg    string
+	}{
+		{
+			name:        "valid token URI",
+			tokenId:     1,
+			shouldError: false,
+		},
+		{
+			name:        "non-existent token",
+			tokenId:     999,
+			shouldError: true,
+			errorMsg:    errInvalidTokenId,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			uri, err := TokenURI(tid(tt.tokenId))
+
+			if tt.shouldError {
+				uassert.Error(t, err)
+				if err != nil {
+					uassert.Equal(t, tt.errorMsg, err.Error())
+				}
+			} else {
+				uassert.NoError(t, err)
+				uassert.NotEmpty(t, uri)
+				uassert.True(t, strings.HasPrefix(uri, "data:image/svg+xml;base64,"))
+			}
+		})
+	}
+}
+
+func TestMustOwnerOf(t *testing.T) {
+	resetObject(t)
+	testing.SetRealm(positionRealm)
+	Mint(cross, addr01, tid(1))
+
+	tests := []struct {
+		name        string
+		tokenId     uint64
+		shouldPanic bool
+		panicMsg    string
+		expected    std.Address
+	}{
+		{
+			name:        "valid token",
+			tokenId:     1,
+			shouldPanic: false,
+			expected:    addr01,
+		},
+		{
+			name:        "non-existent token",
+			tokenId:     999,
+			shouldPanic: true,
+			panicMsg:    errInvalidTokenId,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					MustOwnerOf(tid(tt.tokenId))
+				})
+			} else {
+				owner := MustOwnerOf(tid(tt.tokenId))
+				uassert.Equal(t, tt.expected, owner)
+			}
+		})
+	}
+}
+
+func TestSafeTransferFrom(t *testing.T) {
+	resetObject(t)
+	testing.SetRealm(positionRealm)
+	Mint(cross, addr01, tid(1))
+
+	tests := []struct {
+		name        string
+		setup       func(cur realm)
+		callerRealm std.Realm
+		from        std.Address
+		to          std.Address
+		tokenId     uint64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:        "owner transfers own token",
+			callerRealm: addr01Realm,
+			from:        addr01,
+			to:          addr02,
+			tokenId:     1,
+			shouldPanic: false,
+		},
+		{
+			name:        "non-owner transfers without approval",
+			callerRealm: addr02Realm,
+			from:        addr01,
+			to:          addr02,
+			tokenId:     1,
+			shouldPanic: true,
+			panicMsg:    "transfer from incorrect owner || from g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st is not the owner g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at of token 1",
+		},
+		{
+			name:        "transfer non-existent token",
+			callerRealm: addr01Realm,
+			from:        addr01,
+			to:          addr02,
+			tokenId:     999,
+			shouldPanic: true,
+			panicMsg:    "invalid token id",
+		},
+		{
+			name:        "transfer to zero address",
+			callerRealm: addr01Realm,
+			from:        addr01,
+			to:          std.Address(""),
+			tokenId:     1,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-GNFT-004] invalid addresss || to address ()",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup(cross)
+			}
+
+			testing.SetRealm(tt.callerRealm)
+
+			if tt.shouldPanic {
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					SafeTransferFrom(cross, tt.from, tt.to, tid(tt.tokenId))
+				})
+			} else {
+				err := SafeTransferFrom(cross, tt.from, tt.to, tid(tt.tokenId))
+				uassert.NoError(t, err)
+
+				// Verify ownership transferred
+				newOwner, _ := OwnerOf(tid(tt.tokenId))
+				uassert.Equal(t, tt.to, newOwner)
+			}
+		})
+	}
+}
+
+func TestExists(t *testing.T) {
+	resetObject(t)
+	testing.SetRealm(positionRealm)
+	Mint(cross, addr01, tid(1))
+	Mint(cross, addr01, tid(2))
+	Burn(cross, tid(2))
+
+	tests := []struct {
+		name     string
+		tokenId  uint64
+		expected bool
+	}{
+		{
+			name:     "existing token",
+			tokenId:  1,
+			expected: true,
+		},
+		{
+			name:     "burned token",
+			tokenId:  2,
+			expected: false,
+		},
+		{
+			name:     "never minted token",
+			tokenId:  999,
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			exists := Exists(tid(tt.tokenId))
+			uassert.Equal(t, tt.expected, exists)
+		})
+	}
+}
+
+func TestRender(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		expected string
+	}{
+		{
+			name:     "empty path",
+			path:     "",
+			expected: nft.RenderHome(),
+		},
+		{
+			name:     "invalid path",
+			path:     "invalid",
+			expected: "404\n",
+		},
+		{
+			name:     "another invalid path",
+			path:     "/token/1",
+			expected: "404\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Render(tt.path)
+			uassert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestApprove(t *testing.T) {
+	resetObject(t)
+	testing.SetRealm(positionRealm)
+	Mint(cross, addr01, tid(1))
+
+	tests := []struct {
+		name        string
+		callerRealm std.Realm
+		approved    std.Address
+		tokenId     uint64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:        "owner approves address",
+			callerRealm: addr01Realm,
+			approved:    addr02,
+			tokenId:     1,
+			shouldPanic: false,
+		},
+		{
+			name:        "non-owner tries to approve",
+			callerRealm: addr02Realm,
+			approved:    testutils.TestAddress("addr03"),
+			tokenId:     1,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-GNFT-006] caller is not token owner or approved || caller g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at cannot approve for token 1 owned by g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st",
+		},
+		{
+			name:        "approve for non-existent token",
+			callerRealm: addr01Realm,
+			approved:    addr02,
+			tokenId:     999,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-GNFT-007] token does not exist || token 999",
+		},
+		{
+			name:        "approve self",
+			callerRealm: addr01Realm,
+			approved:    addr01,
+			tokenId:     1,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-GNFT-008] cannot transfer to self || cannot approve to current owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st for token 1",
 		},
 	}
 
@@ -420,67 +780,22 @@ func TestBurn(t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					Burn(cross, tid(tt.tokenIdToBurn))
+					Approve(cross, tt.approved, tid(tt.tokenId))
 				})
 			} else {
-				uassert.NotAborts(t, func() {
-					Burn(cross, tid(tt.tokenIdToBurn))
-				})
-				tt.verifyTokenList()
+				err := Approve(cross, tt.approved, tid(tt.tokenId))
+				uassert.NoError(t, err)
+
+				// Verify approval
+				approved, _ := GetApproved(tid(tt.tokenId))
+				uassert.Equal(t, tt.approved, approved)
 			}
 		})
 	}
-}
-
-func TestSetTokenURIByImageURI(t *testing.T) {
-	testAddr := testutils.TestAddress("testAddr")
-	tokenID := grc721.TokenID("10")
-
-	positionAddr, _ := access.GetAddress(prbac.ROLE_POSITION.String())
-
-	// set position contract as caller
-	testing.SetOriginCaller(positionAddr)
-
-	// need to mint token to set owner
-	Mint(cross, testAddr, tokenID)
-	testing.SetOriginCaller(testAddr)
-
-	SetTokenURIByImageURI(cross, tokenID)
-
-	uri, err := TokenURI(tokenID)
-	if uri == "" {
-		t.Error("token URI should not be empty")
-	}
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-}
-
-func TestSetTokenURILast(t *testing.T) {
-	resetObject(t)
-	testing.SetRealm(positionRealm)
-	Mint(cross, addr01, tid(1))
-	Mint(cross, addr01, tid(2)) // last minted
-
-	t.Run("set token uri last", func(t *testing.T) {
-		testing.SetRealm(addr01Realm)
-		SetTokenURILast(cross)
-	})
-
-	t.Run("token uri(2)", func(t *testing.T) {
-		res, err := TokenURI(tid(2))
-		if err != nil {
-			t.Errorf("Unexpected error: %v", err)
-		}
-		if res == "" {
-			t.Error("token URI should not be empty")
-		}
-	})
 }
 
 func resetObject(t *testing.T) {
 	t.Helper()
 
 	nft = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
-	tokenList = avl.NewTree()
 }

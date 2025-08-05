@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/demo/uassert"
 
+	"gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 
 	"gno.land/r/gnoswap/v1/gnft"
@@ -25,6 +26,9 @@ const (
 )
 
 func TestCollectRewardGracefulDegradation(t *testing.T) {
+	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartBlockHeight(cross, 124)
+
 	// setup
 	govAddr := rbac.DefaultRoleAddresses[prabc.ROLE_GOVERNANCE]
 	testing.SetOriginCaller(govAddr)
@@ -34,7 +38,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 	SetUnStakingFee(cross, 0)
 
 	// Create pool
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 	CreatePool(t, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
 
 	// Set pool tier

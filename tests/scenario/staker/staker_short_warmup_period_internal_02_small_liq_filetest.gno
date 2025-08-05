@@ -78,6 +78,7 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
+	en.SetDistributionStartBlockHeight(cross, 124)
 
 	// override warm-up period for testing
 	sr.SetWarmUp(cross, 30, 150)
@@ -89,7 +90,7 @@ func initAndSetup() {
 	sr.SetUnStakingFee(cross, 0)
 
 	// set pool creation fee to 0
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	// set community pool distribution to 0% (give it to devOps)
 	en.ChangeDistributionPct(

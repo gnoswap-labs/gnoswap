@@ -99,7 +99,7 @@ func testPositionMint() {
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 100000000")
 
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
-	poolTick := pl.PoolGetSlot0Tick(poolPath)
+	poolTick := pl.GetSlot0Tick(poolPath)
 
 	println("[INFO] pool tick:", poolTick)
 	println()
