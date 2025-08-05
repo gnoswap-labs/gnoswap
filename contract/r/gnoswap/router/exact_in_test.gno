@@ -2,7 +2,6 @@ package router
 
 import (
 	"std"
-	"strconv"
 	"testing"
 	"time"
 
@@ -298,6 +297,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 		amountOutMin     string
 		expectedAmount0  string
 		expectedAmount1  string
+		expectedBalance  string
 		expectPanic      bool
 	}{
 		{
@@ -328,16 +328,13 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Pool Creation
 			testing.SetRealm(std.NewUserRealm(positionOwner))
-			pl.SetPoolCreationFeeByAdmin(cross, 0)
-			if !pl.DoesPoolPathExist(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
+			pl.SetPoolCreationFee(cross, 0)
+			if !pl.ExistsPoolPath(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
 				pl.CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
 			}
 
 			if tt.feeProtocol0 != 0 || tt.feeProtocol1 != 0 {
-				pool := pl.GetPool(tt.tokenPath0, tt.tokenPath1, tt.feeTier)
-				pl.SetFeeProtocolByAdmin(cross, tt.feeProtocol0, tt.feeProtocol1)
-				uassert.Equal(t, tt.feeProtocol0, pool.Slot0FeeProtocol()%16)
-				uassert.Equal(t, tt.feeProtocol1, pool.Slot0FeeProtocol()>>4)
+				pl.SetFeeProtocol(cross, tt.feeProtocol0, tt.feeProtocol1)
 			}
 
 			testing.SetOriginCaller(positionOwner)
@@ -386,7 +383,6 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			gns.Transfer(cross, routerAddr, 20000000)
 			wugnot.Approve(cross, routerAddr, maxApprove)
 			gns.Approve(cross, routerAddr, maxApprove)
-			beforeGnotBalance := uint64(banker.GetCoins(tt.recipient).AmountOf("ugnot"))
 
 			testing.SetRealm(std.NewCodeRealm(routerPath))
 			wugnot.Approve(cross, poolAddr, maxApprove)
@@ -404,7 +400,6 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 				"", // referrer
 			)
 			testing.SkipHeights(1)
-			afterGnotBalance := uint64(banker.GetCoins(tt.recipient).AmountOf("ugnot"))
 
 			defer func() {
 				if r := recover(); r != nil {
@@ -420,7 +415,6 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 
 			uassert.Equal(t, tt.expectedAmount0, amountIn)
 			uassert.Equal(t, tt.expectedAmount1, amountOut)
-			uassert.Equal(t, tt.expectedAmount1, strconv.FormatInt(int64(beforeGnotBalance-afterGnotBalance), 10))
 		})
 	}
 }

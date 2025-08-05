@@ -114,7 +114,7 @@ func TestCreatePool(t *testing.T) {
 	}
 
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	SetPoolCreationFeeByAdmin(cross, 0)
+	SetPoolCreationFee(cross, 0)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -167,7 +167,7 @@ func TestGetPool(t *testing.T) {
 			name: "Panic - unregistered poolPath",
 			setupFn: func(t *testing.T) {
 				testing.SetRealm(adminRealm)
-				SetPoolCreationFeeByAdmin(cross, 0)
+				SetPoolCreationFee(cross, 0)
 			},
 			action: func(t *testing.T) *Pool {
 				return GetPool(barPath, fooPath, fee500)
@@ -179,7 +179,7 @@ func TestGetPool(t *testing.T) {
 			name: "success - get pool (bar:foo:500)",
 			setupFn: func(t *testing.T) {
 				testing.SetRealm(adminRealm)
-				SetPoolCreationFeeByAdmin(cross, 0)
+				SetPoolCreationFee(cross, 0)
 				CreatePool(cross, barPath, fooPath, fee500, "4295128740")
 			},
 			action: func(t *testing.T) *Pool {

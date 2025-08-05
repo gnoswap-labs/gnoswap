@@ -38,7 +38,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 	SetUnStakingFee(cross, 0)
 
 	// Create pool
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 	CreatePool(t, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
 
 	// Set pool tier
