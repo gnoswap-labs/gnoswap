@@ -1,9 +1,10 @@
 package gns
 
 import (
+	"math"
 	"std"
 	"strings"
-	"math"
+
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
@@ -56,7 +57,7 @@ func Allowance(owner, spender std.Address) int64 { return token.Allowance(owner,
 func MintGns(cur realm, address std.Address) int64 {
 	// Input validation
 	if !address.IsValid() {
-		panic("address is not valid")
+		panic(errInvalidAddress)
 	}
 
 	halt.AssertIsNotHaltedEmission()
@@ -89,7 +90,7 @@ func MintGns(cur realm, address std.Address) int64 {
 	// mint calculated amount to address
 	err = privateLedger.Mint(address, amountToMint)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 
 	previousRealm := std.PreviousRealm()
@@ -109,19 +110,19 @@ func MintGns(cur realm, address std.Address) int64 {
 func Burn(cur realm, from std.Address, amount int64) {
 	// Input validation
 	if from == "" {
-		panic("from address cannot be empty")
+		panic(errFromAddressEmpty)
 	}
 	if amount <= 0 {
-		panic("amount must be positive")
+		panic(errAmountMustBePositive)
 	}
 
 	owner.AssertOwnedByCurrent()
 	checkErr(privateLedger.Burn(from, amount))
 
 	// Check for overflow in burnAmount addition
-	
+
 	if burnAmount > maxInt64-amount {
-		panic("overflow in burnAmount calculation")
+		panic(errOverflowInCalculation)
 	}
 	burnAmount += amount
 
@@ -140,10 +141,10 @@ func Burn(cur realm, from std.Address, amount int64) {
 func Transfer(cur realm, to std.Address, amount int64) {
 	// Input validation
 	if to == "" {
-		panic("to address cannot be empty")
+		panic(errToAddressEmpty)
 	}
 	if amount <= 0 {
-		panic("amount must be positive")
+		panic(errAmountMustBePositive)
 	}
 
 	userTeller := token.CallerTeller()
@@ -153,10 +154,10 @@ func Transfer(cur realm, to std.Address, amount int64) {
 func Approve(cur realm, spender std.Address, amount int64) {
 	// Input validation
 	if spender == "" {
-		panic("spender address cannot be empty")
+		panic(errSpenderAddressEmpty)
 	}
 	if amount < 0 {
-		panic("amount cannot be negative")
+		panic(errAmountCannotBeNegative)
 	}
 
 	userTeller := token.CallerTeller()
@@ -166,13 +167,13 @@ func Approve(cur realm, spender std.Address, amount int64) {
 func TransferFrom(cur realm, from, to std.Address, amount int64) {
 	// Input validation
 	if from == "" {
-		panic("from address cannot be empty")
+		panic(errFromAddressEmpty)
 	}
 	if to == "" {
-		panic("to address cannot be empty")
+		panic(errToAddressEmpty)
 	}
 	if amount <= 0 {
-		panic("amount must be positive")
+		panic(errAmountMustBePositive)
 	}
 
 	userTeller := token.CallerTeller()
@@ -197,7 +198,7 @@ func Render(path string) string {
 
 func checkErr(err error) {
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 }
 
@@ -253,7 +254,7 @@ func calculateAmountToMint(fromHeight, toHeight int64) int64 {
 		if singleBlockAmount > 0 && blocks > 0 {
 			// Check for overflow: if a * b > max_int64, then a > max_int64 / b
 			if singleBlockAmount > maxInt64/blocks {
-				panic("overflow in yearAmountToMint calculation")
+				panic(errOverflowInCalculation)
 			}
 		}
 		yearAmountToMint := singleBlockAmount * blocks
@@ -263,14 +264,14 @@ func calculateAmountToMint(fromHeight, toHeight int64) int64 {
 			leftover := handleLeftEmissionAmount(year, yearAmountToMint)
 			// Check for overflow in addition
 			if leftover > 0 && yearAmountToMint > maxInt64-leftover {
-				panic("overflow in yearAmountToMint addition")
+				panic(errOverflowInCalculation)
 			}
 			yearAmountToMint += leftover
 		}
 
 		// Check for overflow in totalAmountToMint addition
 		if yearAmountToMint > 0 && totalAmountToMint > maxInt64-yearAmountToMint {
-			panic("overflow in totalAmountToMint calculation")
+			panic(errOverflowInCalculation)
 		}
 		totalAmountToMint += yearAmountToMint
 

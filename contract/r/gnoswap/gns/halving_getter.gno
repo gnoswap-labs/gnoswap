@@ -166,7 +166,7 @@ func setAmountPerBlockPerHalvingYear(year, amount int64) {
 func GetHalvingAmountsPerYear(year int64) int64 {
 	// Input validation to prevent array bounds panic
 	if year < HALVING_START_YEAR || year > HALVING_END_YEAR {
-		panic(ufmt.Sprintf("invalid year: %d, must be between %d and %d", year, HALVING_START_YEAR, HALVING_END_YEAR))
+		panic(makeErrorWithDetails(errInvalidYear, ufmt.Sprintf("year: %d, must be between %d and %d", year, HALVING_START_YEAR, HALVING_END_YEAR)))
 	}
 	return halvingAmountsPerYear[year-1]
 }
@@ -210,7 +210,7 @@ func GetHalvingInfo() string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 
 	return string(b)

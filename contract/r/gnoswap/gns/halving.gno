@@ -262,7 +262,7 @@ func (h *HalvingData) initialize(startHeight, startTimestamp int64) {
 			h.setAmountPerBlock(year, amountPerBlock)
 		} else {
 			// Safety fallback if blockPerDay is 0
-			panic("blockPerDay cannot be zero during initialization")
+			panic(errBlockPerDayCannotBeZero)
 		}
 
 		// Set initial minted amount and remaining amount
@@ -443,10 +443,10 @@ func setAvgBlockTimeInMs(ms int64) error {
 
 	// Additional safety check for division by zero
 	if blockPerYear <= 0 {
-		panic("invalid blockPerYear calculation - would result in division by zero")
+		panic(errInvalidBlockPerYear)
 	}
 	if blockPerDay <= 0 {
-		panic("invalid blockPerDay calculation - would result in division by zero")
+		panic(errInvalidBlockPerDay)
 	}
 
 	// recalculate all remaining years (amountPerBlock)
@@ -491,7 +491,7 @@ func setAvgBlockTimeInMs(ms int64) error {
 				hd.setAmountPerBlock(year, changedAmountPerBlock)
 			} else {
 				// Safety fallback if blockPerDay is 0
-				panic("blockPerDay cannot be zero during block time adjustment")
+				panic(errBlockPerDayCannotBeZero)
 			}
 		}
 
@@ -509,7 +509,7 @@ func setAvgBlockTimeInMs(ms int64) error {
 
 	// Validate that we're still within the emission period
 	if currentYear == 0 {
-		panic("cannot set average block time after emission period has ended")
+		panic(errEmissionPeriodEnded)
 	}
 
 	adjusted := hd.getAmountPerBlock(currentYear)

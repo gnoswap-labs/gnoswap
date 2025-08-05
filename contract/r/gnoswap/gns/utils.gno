@@ -89,7 +89,7 @@ func formatUint(v any) string {
 	case uint64:
 		return strconv.FormatUint(v, 10)
 	default:
-		panic(ufmt.Sprintf("invalid type: %T", v))
+		panic(makeErrorWithDetails(errInvalidType, ufmt.Sprintf("type: %T", v)))
 	}
 }
 
@@ -102,6 +102,6 @@ func formatInt(v any) string {
 	case int:
 		return strconv.Itoa(v)
 	default:
-		panic(ufmt.Sprintf("invalid type: %T", v))
+		panic(makeErrorWithDetails(errInvalidType, ufmt.Sprintf("type: %T", v)))
 	}
 }
