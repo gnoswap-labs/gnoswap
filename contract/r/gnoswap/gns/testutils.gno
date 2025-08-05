@@ -3,8 +3,7 @@ package gns
 import (
 	"std"
 	"testing"
-
-	"gno.land/p/demo/avl"
+	"time"
 )
 
 func InitGnsTest(t *testing.T) {
@@ -12,15 +11,8 @@ func InitGnsTest(t *testing.T) {
 
 	setLeftEmissionAmount(MAX_EMISSION_AMOUNT)
 	setMintedEmissionAmount(0)
-	setLastMintedHeight(std.ChainHeight())
+	setLastMintedTimestamp(time.Now().Unix())
 	burnAmount = 0
 
-	blockPerYear = SECONDS_IN_YEAR / blockGenMs
-	blockPerDay = SECONDS_PER_DAY / blockGenMs
-
-	avgBlockTimeMs = BLOCK_GENERATION_INTERVAL
-	perBlockMint = avl.NewTree() // height => uint64
-
-	emissionState = NewEmissionState()
-	emissionState.initializeHalvingData()
+	emissionState = NewEmissionState(std.ChainHeight(), time.Now().Unix())
 }

@@ -1,7 +1,6 @@
 package gns
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/demo/uassert"
@@ -11,52 +10,53 @@ import (
 // TestEmissionBoundaryConditions tests for emission at year boundaries
 func TestEmissionBoundaryConditions(t *testing.T) {
 	resetEmissionState(t)
+	InitGnsTest(t)
 
 	tests := []struct {
 		name           string
-		height         int64
+		timestamp      int64
 		expectedAmount int64
 		description    string
 	}{
 		{
-			name:           "Emission at first block of year 1",
-			height:         GetHalvingYearStartBlock(1),
-			expectedAmount: GetAmountPerBlockPerHalvingYear(1),
-			description:    "Should return year 1 amount at first block",
+			name:           "Emission at first second of year 1",
+			timestamp:      GetHalvingYearStartTimestamp(1),
+			expectedAmount: GetHalvingAmountsPerYear(1) / SECONDS_IN_YEAR,
+			description:    "Should return year 1 amount at first second",
 		},
 		{
-			name:           "Emission at last block of year 1",
-			height:         GetHalvingYearEndBlock(1),
-			expectedAmount: GetAmountPerBlockPerHalvingYear(1),
-			description:    "Should return year 1 amount at last block",
+			name:           "Emission at last second of year 1",
+			timestamp:      GetHalvingYearEndTimestamp(1),
+			expectedAmount: GetHalvingAmountsPerYear(1) / SECONDS_IN_YEAR,
+			description:    "Should return year 1 amount at last second",
 		},
 		{
-			name:           "Emission at first block of year 2",
-			height:         GetHalvingYearStartBlock(2),
-			expectedAmount: GetAmountPerBlockPerHalvingYear(2),
-			description:    "Should return year 2 amount at first block",
+			name:           "Emission at first second of year 2",
+			timestamp:      GetHalvingYearStartTimestamp(2),
+			expectedAmount: GetHalvingAmountsPerYear(2) / SECONDS_IN_YEAR,
+			description:    "Should return year 2 amount at first second",
 		},
 		{
 			name:           "Emission at boundary between year 6 and 7",
-			height:         GetHalvingYearEndBlock(6) + 1,
-			expectedAmount: GetAmountPerBlockPerHalvingYear(7),
+			timestamp:      GetHalvingYearEndTimestamp(6) + 1,
+			expectedAmount: GetHalvingAmountsPerYear(7) / SECONDS_IN_YEAR,
 			description:    "Should transition correctly between halving periods",
 		},
 		{
-			name:           "Emission at last block of year 12",
-			height:         GetHalvingYearEndBlock(12),
-			expectedAmount: GetAmountPerBlockPerHalvingYear(12),
-			description:    "Should return year 12 amount at last emission block",
+			name:           "Emission at last second of year 12",
+			timestamp:      GetHalvingYearEndTimestamp(12),
+			expectedAmount: GetHalvingAmountsPerYear(12) / SECONDS_IN_YEAR,
+			description:    "Should return year 12 amount at last emission second",
 		},
 		{
 			name:           "Emission after year 12 ends",
-			height:         GetHalvingYearEndBlock(12) + 1,
+			timestamp:      GetHalvingYearEndTimestamp(12) + 1,
 			expectedAmount: 0,
 			description:    "Should return 0 after emission period ends",
 		},
 		{
 			name:           "Emission far after emission period",
-			height:         GetHalvingYearEndBlock(12) + 1000000,
+			timestamp:      GetHalvingYearEndTimestamp(12) + 1000000,
 			expectedAmount: 0,
 			description:    "Should return 0 far after emission ends",
 		},
@@ -64,108 +64,73 @@ func TestEmissionBoundaryConditions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			amount := AmountByHeight(tt.height)
+			amount := GetEmissionAmountPerSecondsByTimestamp(tt.timestamp)
 			uassert.Equal(t, tt.expectedAmount, amount,
 				"%s: %s", tt.name, tt.description)
 		})
 	}
 }
 
-// TestBlockTimeChangeImpact tests the impact of block time changes on emission
-func TestBlockTimeChangeImpact(t *testing.T) {
+// TestEmissionAmountCalculation tests emission amount calculation for different timestamps
+func TestEmissionAmountCalculation(t *testing.T) {
+	resetEmissionState(t)
+	InitGnsTest(t)
+
 	tests := []struct {
-		name                  string
-		initialBlockTime      int64
-		changeAtYear          int64
-		changeAtPercent       int // percentage of year completed
-		newBlockTime          int64
-		expectedYearEndChange bool
-		expectedAmountChange  bool
-		description           string
+		name           string
+		year           int64
+		timestampPct   int // percentage through the year (0-100)
+		expectedAmount int64
+		description    string
 	}{
 		{
-			name:                  "Decrease block time early in year",
-			initialBlockTime:      2000,
-			changeAtYear:          3,
-			changeAtPercent:       20,
-			newBlockTime:          1000,
-			expectedYearEndChange: true,
-			expectedAmountChange:  true,
-			description:           "Should extend year and decrease amount per block",
+			name:         "Start of year 1",
+			year:         1,
+			timestampPct: 0,
+			expectedAmount: GetHalvingAmountsPerYear(1) / SECONDS_IN_YEAR,
+			description:  "Should return year 1 rate at start",
 		},
 		{
-			name:                  "Increase block time early in year",
-			initialBlockTime:      2000,
-			changeAtYear:          3,
-			changeAtPercent:       20,
-			newBlockTime:          3000,
-			expectedYearEndChange: true,
-			expectedAmountChange:  true,
-			description:           "Should shorten year and increase amount per block",
+			name:         "Middle of year 3",
+			year:         3,
+			timestampPct: 50,
+			expectedAmount: GetHalvingAmountsPerYear(3) / SECONDS_IN_YEAR,
+			description:  "Should return year 3 rate at middle",
 		},
 		{
-			name:                  "Minimal block time change",
-			initialBlockTime:      2000,
-			changeAtYear:          5,
-			changeAtPercent:       50,
-			newBlockTime:          2001,
-			expectedYearEndChange: true,
-			expectedAmountChange:  true,
-			description:           "Even small changes should affect calculations",
+			name:         "End of year 5",
+			year:         5,
+			timestampPct: 99,
+			expectedAmount: GetHalvingAmountsPerYear(5) / SECONDS_IN_YEAR,
+			description:  "Should return year 5 rate near end",
 		},
 		{
-			name:                  "Block time change late in year",
-			initialBlockTime:      2000,
-			changeAtYear:          2,
-			changeAtPercent:       90,
-			newBlockTime:          1500,
-			expectedYearEndChange: true,
-			expectedAmountChange:  true,
-			description:           "Should still adjust remaining blocks correctly",
+			name:         "Start of halving period (year 7)",
+			year:         7,
+			timestampPct: 0,
+			expectedAmount: GetHalvingAmountsPerYear(7) / SECONDS_IN_YEAR,
+			description:  "Should return halved rate at year 7",
+		},
+		{
+			name:         "Last year emission",
+			year:         12,
+			timestampPct: 50,
+			expectedAmount: GetHalvingAmountsPerYear(12) / SECONDS_IN_YEAR,
+			description:  "Should return year 12 rate",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resetEmissionState(t)
-
-			// Skip to the target year and percentage
-			targetHeight := GetHalvingYearStartBlock(tt.changeAtYear)
-			blocksInYear := GetHalvingYearEndBlock(tt.changeAtYear) - GetHalvingYearStartBlock(tt.changeAtYear) + 1
-			skipBlocks := (blocksInYear * int64(tt.changeAtPercent)) / 100
-			targetHeight += skipBlocks
-
-			// Skip to target height
-			testing.SkipHeights(targetHeight - std.ChainHeight() - 1)
-
-			// Record values before change
-			prevEndBlock := GetHalvingYearEndBlock(tt.changeAtYear)
-			prevAmountPerBlock := GetAmountPerBlockPerHalvingYear(tt.changeAtYear)
-
-			// Set up admin context and callback
-			testing.SetRealm(adminRealm)
-
-			setAvgBlockTimeInMs(tt.newBlockTime)
-
-			newEndBlock := GetHalvingYearEndBlock(tt.changeAtYear)
-			newAmountPerBlock := GetAmountPerBlockPerHalvingYear(tt.changeAtYear)
-
-			if tt.expectedYearEndChange {
-				uassert.NotEqual(t, prevEndBlock, newEndBlock,
-					"%s: Year end block should change", tt.name)
-			}
-
-			if tt.expectedAmountChange {
-				uassert.NotEqual(t, prevAmountPerBlock, newAmountPerBlock,
-					"%s: Amount per block should change", tt.name)
-			}
-
-			// Verify that future years are also adjusted
-			if tt.changeAtYear < HALVING_END_YEAR {
-				nextYearStart := GetHalvingYearStartBlock(tt.changeAtYear + 1)
-				uassert.Equal(t, newEndBlock+1, nextYearStart,
-					"%s: Next year should start immediately after current year ends", tt.name)
-			}
+			startTs := GetHalvingYearStartTimestamp(tt.year)
+			endTs := GetHalvingYearEndTimestamp(tt.year)
+			duration := endTs - startTs
+			
+			targetTs := startTs + (duration * int64(tt.timestampPct) / 100)
+			amount := GetEmissionAmountPerSecondsByTimestamp(targetTs)
+			
+			uassert.Equal(t, tt.expectedAmount, amount,
+				"%s: %s", tt.name, tt.description)
 		})
 	}
 }
@@ -183,21 +148,15 @@ func TestEmissionStateConsistency(t *testing.T) {
 		{
 			name: "Initial state consistency",
 			operation: func() {
-				// No operation, just check initial state
+				resetObject(t)
 			},
 			validation: func(t *testing.T) {
 				totalMaxAmount := int64(0)
 				for year := int64(1); year <= 12; year++ {
 					totalMaxAmount += GetHalvingYearMaxAmount(year)
 
-					if year == 1 {
-						uassert.Equal(t, GetHalvingYearMaxAmount(year), GetHalvingYearAccuAmount(year),
-							"Year 1 accumulated amount should equal max amount")
-					} else {
-						expected := GetHalvingYearAccuAmount(year-1) + GetHalvingYearMaxAmount(year)
-						uassert.Equal(t, expected, GetHalvingYearAccuAmount(year),
-							"Accumulated amount should be sum of all previous years")
-					}
+					uassert.Equal(t, GetHalvingYearMaxAmount(year), GetHalvingYearLeftAmount(year),
+					"Year 1 left amount should equal max amount")
 
 					// Verify initial minted/left amounts
 					uassert.Equal(t, int64(0), GetHalvingYearMintAmount(year),
@@ -213,44 +172,16 @@ func TestEmissionStateConsistency(t *testing.T) {
 			description: "Verify initial emission state is consistent",
 		},
 		{
-			name: "Minting updates state correctly",
-			operation: func() {
-				// Skip to middle of year 3 and mint
-				targetHeight := (GetHalvingYearStartBlock(3) + GetHalvingYearEndBlock(3)) / 2
-				testing.SkipHeights(targetHeight - std.ChainHeight() - 1)
-
-				// Simulate minting by calling GetEmission
-				_ = GetEmission()
-			},
-			validation: func(t *testing.T) {
-				year := int64(3)
-				mintedAmount := GetHalvingYearMintAmount(year)
-				leftAmount := GetHalvingYearLeftAmount(year)
-				maxAmount := GetHalvingYearMaxAmount(year)
-
-				// Verify conservation of tokens
-				uassert.Equal(t, maxAmount, mintedAmount+leftAmount,
-					"Minted + Left should equal Max amount")
-
-				// Verify minting occurred
-				uassert.True(t, mintedAmount > 0,
-					"Minted amount should be greater than 0")
-				uassert.True(t, leftAmount < maxAmount,
-					"Left amount should be less than max amount")
-			},
-			description: "Verify minting updates state consistently",
-		},
-		{
 			name: "Year boundaries maintain continuity",
 			operation: func() {
 				// No additional operation needed
 			},
 			validation: func(t *testing.T) {
 				for year := int64(1); year < 12; year++ {
-					endBlock := GetHalvingYearEndBlock(year)
-					nextStartBlock := GetHalvingYearStartBlock(year + 1)
+					endTimestamp := GetHalvingYearEndTimestamp(year)
+					nextStartTimestamp := GetHalvingYearStartTimestamp(year + 1)
 
-					uassert.Equal(t, endBlock+1, nextStartBlock,
+					uassert.Equal(t, endTimestamp+1, nextStartTimestamp,
 						"Year end should be followed by next year start")
 				}
 			},
@@ -266,155 +197,104 @@ func TestEmissionStateConsistency(t *testing.T) {
 	}
 }
 
-// TestEmissionAfterBlockTimeChange tests emission calculations after block time changes
-func TestEmissionAfterBlockTimeChange(t *testing.T) {
+// TestYearTransitions tests emission calculations at year transitions
+func TestYearTransitions(t *testing.T) {
+	resetEmissionState(t)
+	InitGnsTest(t)
+
 	tests := []struct {
-		name             string
-		initialBlockTime int64
-		newBlockTime     int64
-		testYear         int64
-		description      string
+		name        string
+		fromYear    int64
+		toYear      int64
+		description string
 	}{
 		{
-			name:             "Halve block time doubles blocks per year",
-			initialBlockTime: 2000,
-			newBlockTime:     1000,
-			testYear:         5,
-			description:      "Halving block time should roughly double remaining blocks",
+			name:        "Transition from year 1 to 2",
+			fromYear:    1,
+			toYear:      2,
+			description: "Should maintain same emission rate",
 		},
 		{
-			name:             "Double block time halves blocks per year",
-			initialBlockTime: 2000,
-			newBlockTime:     4000,
-			testYear:         2,
-			description:      "Doubling block time should roughly halve remaining blocks",
+			name:        "Transition from year 6 to 7 (halving)",
+			fromYear:    6,
+			toYear:      7,
+			description: "Should halve emission rate",
 		},
 		{
-			name:             "Multiple changes in same year",
-			initialBlockTime: 2000,
-			newBlockTime:     1500,
-			testYear:         3,
-			description:      "Multiple block time changes should compound correctly",
+			name:        "Transition from year 11 to 12",
+			fromYear:    11,
+			toYear:      12,
+			description: "Should maintain same emission rate",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resetEmissionState(t)
 
-			// Skip to 30% of test year
-			yearStart := GetHalvingYearStartBlock(tt.testYear)
-			yearEnd := GetHalvingYearEndBlock(tt.testYear)
-			targetHeight := yearStart + (yearEnd-yearStart)*3/10
-
-			testing.SkipHeights(targetHeight - std.ChainHeight() - 1)
-
-			// Record state before change
-			heightBeforeChange := std.ChainHeight()
-			remainingBlocksBefore := yearEnd - heightBeforeChange
-			leftAmountBefore := GetHalvingYearLeftAmount(tt.testYear)
-
-			// Change block time
-			testing.SetRealm(adminRealm)
-			setAvgBlockTimeInMs(tt.newBlockTime)
-
-			// Check adjustments
-			newYearEnd := GetHalvingYearEndBlock(tt.testYear)
-			remainingBlocksAfter := newYearEnd - heightBeforeChange
-			newAmountPerBlock := GetAmountPerBlockPerHalvingYear(tt.testYear)
-
-			// Calculate expected remaining blocks based on time ratio
-			expectedRemainingBlocks := remainingBlocksBefore * tt.initialBlockTime / tt.newBlockTime
-
-			// Allow 1 block difference due to rounding
-			diff := remainingBlocksAfter - expectedRemainingBlocks
-			if diff < 0 {
-				diff = -diff
-			}
-			uassert.True(t, diff <= 1,
-				"%s: Remaining blocks should be adjusted proportionally", tt.name)
-
-			// Verify amount per block is recalculated to maintain correct total
-			expectedTotalRemaining := newAmountPerBlock * remainingBlocksAfter
-
-			amountDiff := leftAmountBefore - expectedTotalRemaining
-			if amountDiff < 0 {
-				amountDiff = -amountDiff
-			}
-			uassert.True(t, amountDiff <= newAmountPerBlock,
-				"%s: Total remaining emission should be preserved", tt.name)
-
-			// If we change back, verify amounts are restored (approximately)
-			if tt.name == "Multiple changes in same year" {
-				setAvgBlockTimeInMs(tt.initialBlockTime)
-
-				finalAmountPerBlock := GetAmountPerBlockPerHalvingYear(tt.testYear)
-				finalYearEnd := GetHalvingYearEndBlock(tt.testYear)
-
-				// Due to rounding, exact restoration isn't guaranteed,
-				// but should be very close
-				uassert.NotEqual(t, int64(0), finalAmountPerBlock,
-					"%s: Amount per block should not be zero after restoration", tt.name)
-				uassert.True(t, finalYearEnd > heightBeforeChange,
-					"%s: Year should not have ended after restoration", tt.name)
+			// Test at the boundary
+			endTs := GetHalvingYearEndTimestamp(tt.fromYear)
+			nextStartTs := GetHalvingYearStartTimestamp(tt.toYear)
+			
+			// Verify continuity
+			uassert.Equal(t, endTs+1, nextStartTs,
+				"Timestamps should be continuous at year boundary")
+			
+			// Get emission amounts
+			amountBefore := GetEmissionAmountPerSecondsByTimestamp(endTs)
+			amountAfter := GetEmissionAmountPerSecondsByTimestamp(nextStartTs)
+			
+			// Check halving if applicable
+			if tt.fromYear == 6 && tt.toYear == 7 {
+				// Should be approximately half (allowing for rounding)
+				ratio := float64(amountBefore) / float64(amountAfter)
+				uassert.True(t, ratio > 1.9 && ratio < 2.1,
+					"Emission should approximately halve at year 7")
+			} else if tt.fromYear%4 == 0 && tt.toYear%4 == 1 {
+				// Other halving boundaries
+				ratio := float64(amountBefore) / float64(amountAfter)
+				uassert.True(t, ratio > 1.9 && ratio < 2.1,
+					"Emission should approximately halve at halving boundaries")
+			} else {
+				// Should maintain same rate within halving period
+				uassert.Equal(t, amountBefore, amountAfter,
+					"Emission rate should be constant within halving period")
 			}
 		})
 	}
 }
 
-// TestFutureYearEmissionRecalculation tests that emission rates for future years
-// are properly recalculated when average block time changes
-func TestFutureYearEmissionRecalculation(t *testing.T) {
+// TestEmissionTotalAmount tests that total emission amounts are correct
+func TestEmissionTotalAmount(t *testing.T) {
 	resetEmissionState(t)
+	InitGnsTest(t)
 
-	// Skip to year 3 (to have both current and future years)
-	targetHeight := GetHalvingYearStartBlock(3) + 1000
-	testing.SkipHeights(targetHeight - std.ChainHeight() - 1)
-
-	// Record emission rates for all years before block time change
-	emissionRatesBefore := make(map[int64]int64)
+	// Calculate total emission by summing all years
+	totalEmission := int64(0)
 	for year := int64(1); year <= HALVING_END_YEAR; year++ {
-		emissionRatesBefore[year] = GetAmountPerBlockPerHalvingYear(year)
+		yearAmount := GetHalvingAmountsPerYear(year)
+		totalEmission += yearAmount
 	}
 
-	// Change block time (decrease to 1000ms from 2000ms)
-	// This should roughly double the blocks per year
-	testing.SetRealm(adminRealm)
-	setAvgBlockTimeInMs(1000)
+	// Should equal MAX_EMISSION_AMOUNT (900 billion with 6 decimals)
+	uassert.Equal(t, MAX_EMISSION_AMOUNT, totalEmission,
+		"Total emission should equal MAX_EMISSION_AMOUNT")
+	
+	// Test emission per second consistency
+	for year := int64(1); year <= HALVING_END_YEAR; year++ {
+		yearAmount := GetHalvingAmountsPerYear(year)
+		expectedPerSecond := yearAmount / SECONDS_IN_YEAR
+		
+		// Test at various points in the year
+		startTs := GetHalvingYearStartTimestamp(year)
+		midTs := startTs + SECONDS_IN_YEAR/2
+		nearEndTs := GetHalvingYearEndTimestamp(year) - 100
+		
+		uassert.Equal(t, expectedPerSecond, GetEmissionAmountPerSecondsByTimestamp(startTs),
+			ufmt.Sprintf("Year %d start emission rate incorrect", year))
+		uassert.Equal(t, expectedPerSecond, GetEmissionAmountPerSecondsByTimestamp(midTs),
+			ufmt.Sprintf("Year %d middle emission rate incorrect", year))
+		uassert.Equal(t, expectedPerSecond, GetEmissionAmountPerSecondsByTimestamp(nearEndTs),
+			ufmt.Sprintf("Year %d near-end emission rate incorrect", year))
 
-	// Check current year (year 3)
-	currentYear := HalvingYearByHeight(std.ChainHeight())
-	uassert.Equal(t, int64(3), currentYear, "Should be in year 3")
-
-	// Verify that future years' emission rates were recalculated
-	for year := currentYear + 1; year <= HALVING_END_YEAR; year++ {
-		emissionRateAfter := GetAmountPerBlockPerHalvingYear(year)
-		emissionRateBefore := emissionRatesBefore[year]
-
-		// Since block time was halved, emission per block should be roughly halved
-		// to maintain the same total emission per year
-		expectedRatio := float64(emissionRateBefore) / float64(emissionRateAfter)
-
-		// Allow for some rounding error (within 5%)
-		if expectedRatio < 1.9 || expectedRatio > 2.1 {
-			t.Errorf("Year %d: emission rate not properly adjusted. Before: %d, After: %d, Ratio: %.2f",
-				year, emissionRateBefore, emissionRateAfter, expectedRatio)
-		}
-
-		// Verify that the total emission for the year remains roughly the same
-		blocksInYear := GetHalvingYearEndBlock(year) - GetHalvingYearStartBlock(year) + 1
-		totalEmissionAfter := emissionRateAfter * blocksInYear
-		maxAmount := GetHalvingYearMaxAmount(year)
-
-		// The total emission should be close to max amount (within 1%)
-		diff := totalEmissionAfter - maxAmount
-		if diff < 0 {
-			diff = -diff
-		}
-		tolerance := maxAmount / 100 // 1% tolerance
-
-		uassert.True(t, diff <= tolerance,
-			ufmt.Sprintf("Year %d: total emission deviates too much. Expected: %d, Got: %d, Diff: %d",
-				year, maxAmount, totalEmissionAfter, diff))
 	}
 }

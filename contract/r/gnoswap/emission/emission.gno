@@ -12,50 +12,80 @@ import (
 var (
 	// leftGNSAmount tracks undistributed GNS tokens from previous distributions
 	leftGNSAmount int64
-	// lastExecutedHeight stores the last block height when distribution was executed
-	lastExecutedHeight int64
+	// lastExecutedTimestamp stores the last timestamp when distribution was executed
+	lastExecutedTimestamp int64
 
 	// emissionAddr is the address of the emission realm
 	emissionAddr = std.CurrentRealm().Address()
 
-	// distributionStartBlockHeight is the block height from which emission distribution starts
+	// distributionStartTimestamp is the timestamp from which emission distribution starts
 	// Default is 0, meaning distribution is not started until explicitly set
-	distributionStartBlockHeight int64
+	distributionStartTimestamp int64
 )
 
 // GetLeftGNSAmount returns the amount of undistributed GNS tokens
 func GetLeftGNSAmount() int64 { return leftGNSAmount }
 
 // GetDistributionStartBlockHeight returns the block height from which emission distribution starts
-func GetDistributionStartBlockHeight() int64 { return distributionStartBlockHeight }
+func GetDistributionStartTimestamp() int64 { return distributionStartTimestamp }
 
 // setLeftGNSAmount updates the undistributed GNS token amount
 func setLeftGNSAmount(amount int64) { leftGNSAmount = amount }
 
-// GetLastExecutedHeight returns the last block height when distribution was executed
-func GetLastExecutedHeight() int64 { return lastExecutedHeight }
+// GetLastExecutedTimestamp returns the last timestamp when distribution was executed
+func GetLastExecutedTimestamp() int64 { return lastExecutedTimestamp }
 
-// setLastExecutedHeight updates the last executed block height
-func setLastExecutedHeight(height int64) { lastExecutedHeight = height }
+// setLastExecutedTimestamp updates the last executed timestamp
+func setLastExecutedTimestamp(timestamp int64) { lastExecutedTimestamp = timestamp }
 
-// MintAndDistributeGns mints new GNS tokens and distributes them to targets
-// Returns the total amount of GNS distributed
+// MintAndDistributeGns mints new GNS tokens according to the emission schedule and distributes them to target modules.
+//
+// This function is called by external systems (e.g., cron jobs) to trigger periodic GNS emission.
+// It handles the minting process based on the halving schedule, manages any undistributed amounts
+// from previous distributions, and distributes tokens to staking and governance modules.
+//
+// Parameters:
+//   - cur realm: Current execution context realm
+//
+// Returns:
+//   - int64: Total amount of GNS tokens distributed in this execution
+//
+// Behavior:
+//   - Checks if distribution has started (distributionStartTimestamp > 0)
+//   - Skips if already minted for current timestamp
+//   - Mints new tokens based on time elapsed and halving schedule
+//   - Adds any leftover amounts from previous distributions
+//   - Distributes to target modules (staking, governance)
+//   - Stores any undistributed amount for next execution
+//
+// Panics:
+//   - System is halted for emission or withdrawal
+//   - Distribution error occurs
+//
+// Events:
+//   Emits MintAndDistributeGns event with distribution details
+//
+// Example:
+//   // Called by external system every block or periodically
+//   distributed := MintAndDistributeGns()
+//   // distributed = 1000000 (1 GNS distributed)
 func MintAndDistributeGns(cur realm) int64 {
 	halt.AssertIsNotHaltedEmission()
 	halt.AssertIsNotHaltedWithdraw()
 
 	currentHeight := std.ChainHeight()
+	currentTimestamp := time.Now().Unix()
 
-	// Check if distribution start block height is set and if current height has reached it
-	// If distributionStartBlockHeight is 0 (default), skip distribution to prevent immediate start
-	// If current height is below start height, skip distribution
-	if distributionStartBlockHeight == 0 || currentHeight < distributionStartBlockHeight {
+	// Check if distribution start timestamp is set and if current timestamp has reached it
+	// If distributionStartTimestamp is 0 (default), skip distribution to prevent immediate start
+	// If current timestamp is below start timestamp, skip distribution
+	if distributionStartTimestamp == 0 || currentTimestamp < distributionStartTimestamp {
 		return 0
 	}
 
-	lastMintedHeight := gns.LastMintedHeight()
-	if lastMintedHeight >= currentHeight {
-		// Skip if we've already minted tokens at this height
+	// Skip if we've already minted tokens at this timestamp
+	lastMintedTimestamp := gns.LastMintedTimestamp()
+	if currentTimestamp <= lastMintedTimestamp {
 		return 0
 	}
 
@@ -78,15 +108,16 @@ func MintAndDistributeGns(cur realm) int64 {
 		setLeftGNSAmount(distributableAmount - distributedGNSAmount)
 	}
 
-	// Emit event with distribution details
+	setLastExecutedTimestamp(currentTimestamp)
+
 	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"MintAndDistributeGns",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"lastHeight", formatInt(lastExecutedHeight),
+		"lastTimestamp", formatInt(lastExecutedTimestamp),
+		"currentTimestamp", formatInt(currentTimestamp),
 		"currentHeight", formatInt(currentHeight),
-		"currentTimestamp", formatInt(time.Now().Unix()),
 		"mintedAmount", formatInt(mintedEmissionRewardAmount),
 		"prevLeftAmount", formatInt(prevLeftAmount),
 		"distributedAmount", formatInt(distributedGNSAmount),
@@ -94,14 +125,44 @@ func MintAndDistributeGns(cur realm) int64 {
 		"gnsTotalSupply", formatInt(gns.TotalSupply()),
 	)
 
-	setLastExecutedHeight(currentHeight)
-
 	return distributedGNSAmount
 }
 
-// SetDistributionStartBlockHeight sets the block height from which emission distribution starts
-// Only admin or governance can call this function
-func SetDistributionStartBlockHeight(cur realm, height int64) {
+// SetDistributionStartTime configures when GNS emission distribution should begin.
+//
+// This function sets the timestamp from which the emission schedule starts. It must be
+// called before any emissions can occur. Once distribution has started, the timestamp
+// cannot be changed. This ensures the integrity of the emission schedule.
+//
+// Parameters:
+//   - cur realm: Current execution context realm
+//   - startTimestamp: Unix timestamp when distribution should start
+//
+// Requirements:
+//   - Caller must be admin or governance
+//   - startTimestamp must be positive
+//   - startTimestamp must be in the future
+//   - Cannot change after distribution has started
+//
+// Panics:
+//   - System is halted for emission or withdrawal
+//   - Caller is not admin or governance
+//   - startTimestamp is negative
+//   - startTimestamp is in the past
+//   - Distribution has already started
+//
+// Events:
+//   Emits SetDistributionStartTime event with configuration details
+//
+// Example:
+//   // Set distribution to start at specific timestamp
+//   futureTime := time.Now().Unix() + 86400 // 24 hours from now
+//   SetDistributionStartTime(futureTime)
+//
+// Note:
+//   If no emissions have occurred yet, this also reinitializes the emission
+//   state to adjust halving year calculations based on the new start time.
+func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	halt.AssertIsNotHaltedEmission()
 	halt.AssertIsNotHaltedWithdraw()
 
@@ -109,37 +170,38 @@ func SetDistributionStartBlockHeight(cur realm, height int64) {
 	access.AssertIsAdminOrGovernance(caller)
 
 	// this check will also prevent the overflow of int64 value
-	if height < 0 {
-		panic("distribution start block height cannot be negative")
+	if startTimestamp < 0 {
+		panic("distribution start timestamp cannot be negative")
 	}
 
-	currentHeight := std.ChainHeight()
+	currentTimestamp := time.Now().Unix()
 
 	// Prevent changing start height after distribution has already started
-	if distributionStartBlockHeight != 0 && distributionStartBlockHeight <= currentHeight {
-		panic("distribution has already started, cannot change start block height")
+	if distributionStartTimestamp != 0 && distributionStartTimestamp <= currentTimestamp {
+		panic("distribution has already started, cannot change start timestamp")
 	}
 
 	// Prevent setting distribution start height to a past block
-	if height > 0 && height <= currentHeight {
-		panic("distribution start block height must be greater than current block height")
+	if startTimestamp > 0 && startTimestamp <= currentTimestamp {
+		panic("distribution start timestamp must be greater than current timestamp")
 	}
 
-	oldHeight := distributionStartBlockHeight
+	prevStartTimestamp := distributionStartTimestamp
 
 	// If setting a future start height and no emission has occurred yet,
 	// reinitialize the emission state to adjust halving years
-	if height > currentHeight && gns.MintedEmissionAmount() == 0 {
-		gns.ReinitializeEmissionState(cross, height)
+	if startTimestamp > currentTimestamp && gns.MintedEmissionAmount() == 0 {
+		gns.InitEmissionState(cross, startTimestamp, startTimestamp)
 	}
 
-	distributionStartBlockHeight = height
+	distributionStartTimestamp = startTimestamp
 
 	std.Emit(
-		"SetDistributionStartBlockHeight",
+		"SetDistributionStartTime",
 		"caller", caller.String(),
-		"oldHeight", formatInt(oldHeight),
-		"newHeight", formatInt(height),
-		"currentChainHeight", formatInt(currentHeight),
+		"prevStartTimestamp", formatInt(prevStartTimestamp),
+		"newStartTimestamp", formatInt(startTimestamp),
+		"height", formatInt(std.ChainHeight()),
+		"timestamp", formatInt(time.Now().Unix()),
 	)
 }

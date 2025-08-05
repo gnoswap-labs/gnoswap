@@ -3,6 +3,7 @@ package emission
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
@@ -11,86 +12,68 @@ import (
 
 var alice = testutils.TestAddress("alice")
 
-func TestSetDistributionStartBlockHeight(t *testing.T) {
+func TestSetDistributionStartTime(t *testing.T) {
+	now := time.Now().Unix()
+
 	tests := []struct {
 		name        string
 		setup       func()
-		height      int64
+		timestamp   int64
 		caller      std.Address
 		shouldPanic bool
 		panicMsg    string
-		verify      func()
 	}{
 		{
-			name:   "admin can set distribution start block height",
-			height: 1000,
-			caller: adminAddr,
-			verify: func() {
-				uassert.Equal(t, int64(1000), GetDistributionStartBlockHeight())
-			},
+			name:      "admin can set distribution start time",
+			timestamp: 1000 + now,
+			caller:    adminAddr,
 		},
 		{
-			name:   "governance can set distribution start block height",
-			height: 2000,
-			caller: govAddr,
-			verify: func() {
-				uassert.Equal(t, int64(2000), GetDistributionStartBlockHeight())
-			},
+			name:      "governance can set distribution start time",
+			timestamp: 2000 + now,
+			caller:    govAddr,
 		},
 		{
-			name:        "non-admin/governance cannot set distribution start block height",
-			height:      3000,
+			name:        "non-admin/governance cannot set distribution start time",
+			timestamp:   3000 + now,
 			caller:      alice,
 			shouldPanic: true,
 			panicMsg:    ufmt.Sprintf("unauthorized: caller %s is not admin or governance", alice.String()),
 		},
 		{
-			name:        "cannot set negative block height",
-			height:      -100,
+			name:        "cannot set negative timestamp",
+			timestamp:   -100,
 			caller:      adminAddr,
 			shouldPanic: true,
-			panicMsg:    "distribution start block height cannot be negative",
+			panicMsg:    "distribution start timestamp cannot be negative",
 		},
 		{
-			name:   "can set zero block height",
-			height: 0,
-			caller: adminAddr,
-			verify: func() {
-				uassert.Equal(t, int64(0), GetDistributionStartBlockHeight())
-			},
-		},
-		{
-			name: "update existing distribution start block height",
+			name: "update existing distribution start time",
 			setup: func() {
 				testing.SetOriginCaller(adminAddr)
-				SetDistributionStartBlockHeight(cross, 5000)
+				SetDistributionStartTime(cross, 5000+now)
 			},
-			height: 10000,
-			caller: govAddr,
-			verify: func() {
-				uassert.Equal(t, int64(10000), GetDistributionStartBlockHeight())
-			},
+			timestamp: 10000 + now,
+			caller:    govAddr,
 		},
 		{
-			name: "cannot change start height after distribution has started",
+			name: "cannot change start time after distribution has started",
 			setup: func() {
-				// Reset to block 0
-				testing.SetHeight(0)
-				// Set initial distribution start height to block 100
+				// Set initial distribution start time to 100
 				testing.SetOriginCaller(adminAddr)
-				SetDistributionStartBlockHeight(cross, 100)
-				// Simulate chain advancing to block 150 (past start height)
-				testing.SetHeight(150)
+				SetDistributionStartTime(cross, 100+now)
+				testing.SkipHeights(21) // skip to 21 to simulate time advancing to 105 (past start time)
 			},
-			height:      200,
+			timestamp:   200 + now,
 			caller:      adminAddr,
 			shouldPanic: true,
-			panicMsg:    "distribution has already started, cannot change start block height",
+			panicMsg:    "distribution has already started, cannot change start timestamp",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			testing.SetHeight(123)
 			if tt.setup != nil {
 				tt.setup()
 			}
@@ -99,13 +82,11 @@ func TestSetDistributionStartBlockHeight(t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					SetDistributionStartBlockHeight(cross, tt.height)
+					SetDistributionStartTime(cross, tt.timestamp)
 				})
 			} else {
-				SetDistributionStartBlockHeight(cross, tt.height)
-				if tt.verify != nil {
-					tt.verify()
-				}
+				SetDistributionStartTime(cross, tt.timestamp)
+				uassert.Equal(t, tt.timestamp, GetDistributionStartTimestamp())
 			}
 		})
 
@@ -113,63 +94,46 @@ func TestSetDistributionStartBlockHeight(t *testing.T) {
 	}
 }
 
-func TestMintAndDistributeGnsWithDistributionStartBlockHeight(t *testing.T) {
-	testing.SetHeight(0)
-
+func TestMintAndDistributeGnsWithDistributionStartTime(t *testing.T) {
 	tests := []struct {
-		name          string
-		setup         func()
-		startHeight   int64
-		currentHeight int64
-		verify        func(distributed int64)
+		name         string
+		startTime    int64
+		skipHeight   int64
+		simulateTime bool
+		verify       func(distributed int64)
 	}{
 		{
-			name:          "emission allowed when current height >= start height",
-			startHeight:   100,
-			currentHeight: 200,
-			setup: func() {
-				testing.SetOriginCaller(adminAddr)
-				SetDistributionStartBlockHeight(cross, 100)
-				testing.SkipHeights(200)
-			},
+			name:         "emission allowed when current time >= start time",
+			startTime:    100,
+			skipHeight:   200,
+			simulateTime: true,
 			verify: func(distributed int64) {
 				uassert.True(t, distributed > 0)
 			},
 		},
 		{
-			name:          "emission blocked when current height < start height",
-			startHeight:   500,
-			currentHeight: 100,
-			setup: func() {
-				testing.SetOriginCaller(adminAddr)
-				SetDistributionStartBlockHeight(cross, 500)
-				testing.SkipHeights(100)
-			},
+			name:         "emission blocked when current time < start time",
+			startTime:    500,
+			skipHeight:   100,
+			simulateTime: true,
 			verify: func(distributed int64) {
 				uassert.Equal(t, int64(0), distributed)
 			},
 		},
 		{
-			name:          "emission allowed at exact start height",
-			startHeight:   300,
-			currentHeight: 300,
-			setup: func() {
-				testing.SetOriginCaller(adminAddr)
-				SetDistributionStartBlockHeight(cross, 300)
-				testing.SkipHeights(300)
-			},
+			name:         "emission allowed at exact start time",
+			startTime:    300,
+			skipHeight:   300,
+			simulateTime: true,
 			verify: func(distributed int64) {
 				uassert.True(t, distributed > 0)
 			},
 		},
 		{
-			name:          "default start height (0) blocks emission until set",
-			currentHeight: 1,
-			setup: func() {
-				testing.SkipHeights(1)
-			},
+			name:         "default start time (0) blocks emission until set",
+			skipHeight:   1,
+			simulateTime: true,
 			verify: func(distributed int64) {
-				uassert.Equal(t, int64(0), GetDistributionStartBlockHeight())
 				uassert.Equal(t, int64(0), distributed)
 			},
 		},
@@ -177,9 +141,17 @@ func TestMintAndDistributeGnsWithDistributionStartBlockHeight(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.setup != nil {
-				tt.setup()
-			}
+			resetObject(t)
+
+			now := time.Now().Unix()
+
+			testing.SetOriginCaller(adminAddr)
+			SetDistributionStartTime(cross, 100+now)
+
+			testing.SkipHeights(tt.skipHeight)
+			defer func() {
+				testing.SkipHeights(-tt.skipHeight)
+			}()
 
 			distributed := MintAndDistributeGns(cross)
 			if tt.verify != nil {

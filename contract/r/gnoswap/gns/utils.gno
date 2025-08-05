@@ -57,14 +57,6 @@ func i64Min(x, y int64) int64 {
 	return y
 }
 
-func secToMs(sec int64) int64 {
-	return sec * MILLISECONDS_PER_SECOND
-}
-
-func milliToSec(ms int64) int64 {
-	return ms / MILLISECONDS_PER_SECOND
-}
-
 func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:

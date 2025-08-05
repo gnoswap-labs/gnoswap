@@ -81,7 +81,7 @@ func TestLeftAmountFix(t *testing.T) {
 			errorMessage:       "",
 			setupFunc: func() {
 				leftGNSAmount = 0
-				lastExecutedHeight = 0
+				lastExecutedTimestamp = 0
 				distributionBpsPct = avl.NewTree()
 			},
 			verifyFunc: func(t *testing.T, actualLeft int64) {
