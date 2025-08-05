@@ -4,6 +4,7 @@ package main
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
@@ -59,7 +60,7 @@ func main() {
 
 func initEmission() {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 124)
+	emission.SetDistributionStartTime(cross, time.Now().Unix() + 1)
 	emission.MintAndDistributeGns(cross)
 }
 

@@ -434,7 +434,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 6. Collect external reward while in-range
 // [INFO] skip blocks to accumulate external rewards while in-range
 // [INFO] collect external reward while position is in-range
-// [EXPECTED] external reward while in-range: 76388
+// [EXPECTED] external reward while in-range: 190970
 // [INFO] confirmed: external rewards distributed while position is in-range
 //
 // [SCENARIO] 7. Perform swap to move price out of range

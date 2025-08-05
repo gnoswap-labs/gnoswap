@@ -7,6 +7,7 @@ package main
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
@@ -63,7 +64,7 @@ func main() {
 func delegateGnsToAdmin() {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	emission.SetDistributionStartBlockHeight(cross, 124)
+	emission.SetDistributionStartTime(cross, time.Now().Unix() + 1)
 
 	govStakerAddr := std.Address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
 	gns.Approve(cross, govStakerAddr, delegatedAmount)

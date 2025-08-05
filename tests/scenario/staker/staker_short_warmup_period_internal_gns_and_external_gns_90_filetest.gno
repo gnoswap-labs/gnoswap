@@ -5,11 +5,13 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/emission"
 
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
@@ -86,6 +88,7 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	// override warm-up period for testing
 	sr.SetWarmUp(cross, 30, 150)
@@ -268,5 +271,5 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] incentives are now active, initial rewards cleared
 //
 // [SCENARIO] 8. Collect reward for single block
-// [EXPECTED] BAR reward: 359
-// [EXPECTED] GNS reward (internal + external): 3746617
+// [EXPECTED] BAR reward: 1284
+// [EXPECTED] GNS reward (internal + external): 13380778

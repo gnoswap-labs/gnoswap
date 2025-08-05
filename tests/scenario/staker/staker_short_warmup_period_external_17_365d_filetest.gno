@@ -301,10 +301,10 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 7. Check rewards for 1 block of 365 days external
 // [INFO] skipping 1 block to check rewards
 // [INFO] collecting reward for position 01
-// [EXPECTED] position 01 reward: 599113 QUX
+// [EXPECTED] position 01 reward: 2139690 QUX
 // [INFO] collecting reward for position 02
-// [EXPECTED] position 02 reward: 3708086 QUX
+// [EXPECTED] position 02 reward: 13243164 QUX
 // [INFO] collecting reward for position 03
-// [EXPECTED] position 03 reward: 87471 QUX
+// [EXPECTED] position 03 reward: 312398 QUX
 // [INFO] collecting reward for position 04
-// [EXPECTED] position 04 reward: 305 QUX
+// [EXPECTED] position 04 reward: 1092 QUX

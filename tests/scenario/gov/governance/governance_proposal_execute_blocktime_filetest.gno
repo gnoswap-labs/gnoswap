@@ -71,9 +71,9 @@ func delegateGnsToAdmin() {
 
 func proposeChangeAvgBlockTime() int64 {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	proposalID := governance.ProposeParameterChange(cross, "blocktime", "set", 1, "gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*5000")
+	proposalID := governance.ProposeParameterChange(cross, "poolcreationfee", "set", 1, "gno.land/r/gnoswap/v1/pool*EXE*SetPoolCreationFee*EXE*0")
 
-	ufmt.Printf("[INFO] Change Average Block Time Proposal ID: %d\n", proposalID)
+	ufmt.Printf("[INFO] Change Pool Creation Fee Proposal ID: %d\n", proposalID)
 	return proposalID
 }
 
@@ -91,17 +91,17 @@ func vote(proposalID int64, yea bool) {
 	ufmt.Printf("[EXPECTED] after proposal %d voting - yea: %d, nay: %d\n", proposalID, afterYeaNum, afterNayNum)
 }
 
-func executeChangeAvgBlockTime(proposalID int64) {
+func executeSetPoolCreationFee(proposalID int64) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 
-	prevAvgBlockTime := gns.AvgBlockTimeInMs()
+	prevPoolCreationFee := gns.GetPoolCreationFee()
 
 	governance.Execute(cross, proposalID)
 
-	afterAvgBlockTime := gns.AvgBlockTimeInMs()
+	afterPoolCreationFee := gns.GetPoolCreationFee()
 
-	ufmt.Printf("[EXPECTED] before proposal %d executing - avg block time: %dms\n", proposalID, prevAvgBlockTime)
-	ufmt.Printf("[EXPECTED] after proposal %d executing - avg block time: %dms\n", proposalID, afterAvgBlockTime)
+	ufmt.Printf("[EXPECTED] before proposal %d executing - pool creation fee: %d\n", proposalID, prevPoolCreationFee)
+	ufmt.Printf("[EXPECTED] after proposal %d executing - pool creation fee: %d\n", proposalID, afterPoolCreationFee)
 }
 
 // Output:

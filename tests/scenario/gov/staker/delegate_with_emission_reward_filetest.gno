@@ -5,6 +5,7 @@ package main
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
@@ -58,7 +59,7 @@ func main() {
 func changeEmissionDistribution() {
 	// change emission distribution ratio
 	testing.SetRealm(adminRealm)
-	en.SetDistributionStartBlockHeight(cross, 124)
+	en.SetDistributionStartTime(cross, time.Now().Unix() + 1)
 	en.ChangeDistributionPct(
 		cross,
 		int(1), 7000,

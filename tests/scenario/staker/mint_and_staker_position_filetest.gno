@@ -7,6 +7,7 @@ package main
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
@@ -64,7 +65,7 @@ func main() {
 
 func initPool() {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 124)
+	emission.SetDistributionStartTime(cross, time.Now().Unix() + 1)
 	pool.SetPoolCreationFee(cross, 0)
 
 	defaultTokenAmount := int64(100000000)
@@ -115,14 +116,14 @@ func mintAndStakePosition() {
 		"",
 	)
 
-	stakeHeight := staker.GetDepositStakeHeight(positionId)
+	stakeTimestamp := staker.GetDepositStakeTimestamp(positionId)
 
 	poolBalance0 := common.BalanceOf(token0Path, poolAddr)
 	poolBalance1 := common.BalanceOf(token1Path, poolAddr)
 
 	ufmt.Printf("[EXPECTED] Position ID should be %d\n", positionId)
 	ufmt.Printf("[EXPECTED] Liquidity should be %s\n", liquidity)
-	ufmt.Printf("[EXPECTED] Staked height should be %d\n", stakeHeight)
+	ufmt.Printf("[EXPECTED] Staked timestamp should be %d\n", stakeTimestamp)
 	ufmt.Printf("[EXPECTED] Amount0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 	ufmt.Printf("[EXPECTED] Pool Balance0 should be %d\n", poolBalance0)
@@ -151,7 +152,7 @@ func unstakePosition() {
 // [INFO] Mint and Stake Position
 // [EXPECTED] Position ID should be 1
 // [EXPECTED] Liquidity should be 34026470
-// [EXPECTED] Staked height should be 123
+// [EXPECTED] Staked timestamp should be 1234567890
 // [EXPECTED] Amount0 should be 10000000
 // [EXPECTED] Amount1 should be 10000000
 // [EXPECTED] Pool Balance0 should be 10000000

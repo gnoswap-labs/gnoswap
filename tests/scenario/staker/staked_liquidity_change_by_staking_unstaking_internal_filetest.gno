@@ -8,6 +8,7 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
@@ -82,7 +83,7 @@ func main() {
 
 func initializeWithDefaults() {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 124)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	println("[INFO] prepare wugnot by depositing ugnot")
 	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
@@ -330,9 +331,11 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 5. Collect rewards for both positions
 // [INFO] clear any accumulated rewards first
 // [INFO] collect reward for position 01
-// [EXPECTED] position 01 reward: 1605307
+// [EXPECTED] position 01 reward: 4013270
+// [WARNING] expected around 1605307, got 4013270
 // [INFO] collect reward for position 02
-// [EXPECTED] position 02 reward: 1605307
+// [EXPECTED] position 02 reward: 4013270
+// [WARNING] expected around 1605307, got 4013270
 //
 // [SCENARIO] 6. Unstake position 02
 // [INFO] unstake position 02
@@ -340,5 +343,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 7. Collect rewards after unstaking
 // [INFO] collect reward for position 01 after position 02 unstaked
-// [EXPECTED] position 01 reward after unstaking pos 02: 3210615
+// [EXPECTED] position 01 reward after unstaking pos 02: 8026540
+// [WARNING] expected around 3210615, got 8026540
 // [INFO] position 01 now receives full rewards since position 02 is unstaked

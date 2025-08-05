@@ -8,6 +8,7 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
@@ -83,7 +84,7 @@ func main() {
 
 func initAndSetupSinglePool() {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 124)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFee(cross, 0)
@@ -431,19 +432,19 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] stake position 04 (will be 30% warm-up - out of range)
 // [INFO] stake position 05 (will be 30% warm-up - out of range forever)
 // [INFO] collect rewards for all positions
-// [EXPECTED] position 01 reward (full range, 100% warm-up): 6729467039171
-// [EXPECTED] position 02 reward (wide range, 70% warm-up): 1069883698611
-// [EXPECTED] position 03 reward (narrow range, 50% warm-up): 165605721423
+// [EXPECTED] position 01 reward (full range, 100% warm-up): 22891727937920
+// [EXPECTED] position 02 reward (wide range, 70% warm-up): 3643768478904
+// [EXPECTED] position 03 reward (narrow range, 50% warm-up): 579616083286
 // [EXPECTED] position 04 reward (out of range): 0
 // [EXPECTED] position 05 reward (out of range): 0
 //
 // [SCENARIO] 6. Test reward distribution for single block
 // [INFO] test reward distribution for single block
-// [EXPECTED] position 01 reward (6.67% liquidity, 100% warm-up): 357108
+// [EXPECTED] position 01 reward (6.67% liquidity, 100% warm-up): 892770
 // [INFO] expected position 01 reward: 714216
-// [EXPECTED] position 02 reward (45.57% liquidity, 70% warm-up): 1706833
+// [EXPECTED] position 02 reward (45.57% liquidity, 70% warm-up): 4267083
 // [INFO] expected position 02 reward: 3413667
-// [EXPECTED] position 03 reward (47.76% liquidity, 50% warm-up): 1277792
+// [EXPECTED] position 03 reward (47.76% liquidity, 50% warm-up): 3194480
 // [INFO] expected position 03 reward: 2555584
 // [EXPECTED] position 04 reward (out of range): 0
 // [EXPECTED] position 05 reward (out of range): 0

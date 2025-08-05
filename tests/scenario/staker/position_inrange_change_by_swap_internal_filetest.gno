@@ -8,6 +8,7 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
@@ -93,7 +94,7 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 124)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFee(cross, 0)
@@ -400,7 +401,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 5. Collect reward while in-range
 // [INFO] skip blocks to accumulate rewards while in-range
 // [INFO] collect reward while position is in-range
-// [EXPECTED] reward while in-range: 17658388
+// [EXPECTED] reward while in-range: 44145964
 // [INFO] confirmed: rewards distributed while position is in-range
 //
 // [SCENARIO] 6. Perform swap to move price out of range

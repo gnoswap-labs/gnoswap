@@ -2,11 +2,12 @@
 package main
 
 import (
-	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -28,19 +29,17 @@ func main() {
 	initEmission()
 	println()
 
-	ufmt.Println("[SCENARIO] 2. Get halving years (block time is 2000ms)")
+	ufmt.Println("[SCENARIO] 2. Get halving years")
 	getHalvingYears()
 	println()
 
-	ufmt.Println("[SCENARIO] 3. Skip 788400 blocks (distribute of half of 1 year)")
-	testing.SkipHeights(788400)
+	ufmt.Println("[SCENARIO] 3. Skip 10000 blocks (distribute of half of 1 year)")
+	testing.SetOriginCaller(adminAddr)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+10000*5)
+	testing.SkipHeights(10000)
 	println()
 
-	ufmt.Println("[SCENARIO] 4. Change block time to 3500ms (2000ms -> 3500ms)")
-	changeBlockTime(3500)
-	println()
-
-	ufmt.Println("[SCENARIO] 5. Get halving years (block time is 3500ms)")
+	ufmt.Println("[SCENARIO] 4. Get halving years")
 	getHalvingYears()
 	println()
 }
@@ -48,76 +47,47 @@ func main() {
 func initEmission() {}
 
 func getHalvingYears() {
-	println("[INFO] current halving years", gns.HalvingYearByHeight(std.ChainHeight()))
-	println("[INFO] average block time in ms", gns.AvgBlockTimeInMs())
+	println("[INFO] current halving years", gns.GetHalvingYear(time.Now().Unix()))
 
 	for year := int64(1); year <= 12; year++ {
-		startBlockHeight := gns.GetHalvingYearStartBlock(year)
-		endBlockHeight := gns.GetHalvingYearEndBlock(year)
-		blockCount := endBlockHeight - startBlockHeight + 1
-		ufmt.Printf("[EXPECTED] halving year %d block range %d~%d (block count: %d)\n", year, startBlockHeight, endBlockHeight, blockCount)
+		startBlockTime := gns.GetHalvingYearStartTimestamp(year)
+		endBlockTime := gns.GetHalvingYearEndTimestamp(year)
+		timeDiff := endBlockTime - startBlockTime + 1
+		ufmt.Printf("[EXPECTED] halving year %d time range %d~%d (time diff: %d)\n", year, startBlockTime, endBlockTime, timeDiff)
 	}
-}
-
-func changeBlockTime(blockTime int64) {
-	testing.SetOriginCaller(adminAddr)
-
-	currentYear := gns.HalvingYearByHeight(std.ChainHeight())
-
-	// get previous end block height and amount per block
-	prevEndBlockHeight := gns.GetHalvingYearEndBlock(currentYear)
-	prevAmountPerBlock := gns.GetAmountPerBlockPerHalvingYear(currentYear)
-
-	// change block time
-	gns.SetAvgBlockTimeInMs(cross, blockTime)
-
-	// get current end block height and amount per block
-	endBlockHeight := gns.GetHalvingYearEndBlock(currentYear)
-	amountPerBlock := gns.GetAmountPerBlockPerHalvingYear(currentYear)
-
-	ufmt.Printf("[INFO] current year is %d\n", currentYear)
-	ufmt.Printf("[EXPECTED] end block height should be changed %d to %d\n", prevEndBlockHeight, endBlockHeight)
-	ufmt.Printf("[EXPECTED] amount per block should be changed %d to %d\n", prevAmountPerBlock, amountPerBlock)
 }
 
 // Output:
 // [SCENARIO] 1. Initialize emission
 //
-// [SCENARIO] 2. Get halving years (block time is 2000ms)
+// [SCENARIO] 2. Get halving years
+// [INFO] current halving years 0
+// [EXPECTED] halving year 1 time range 0~31535999 (time diff: 31536000)
+// [EXPECTED] halving year 2 time range 31536000~63071999 (time diff: 31536000)
+// [EXPECTED] halving year 3 time range 63072000~94607999 (time diff: 31536000)
+// [EXPECTED] halving year 4 time range 94608000~126143999 (time diff: 31536000)
+// [EXPECTED] halving year 5 time range 126144000~157679999 (time diff: 31536000)
+// [EXPECTED] halving year 6 time range 157680000~189215999 (time diff: 31536000)
+// [EXPECTED] halving year 7 time range 189216000~220751999 (time diff: 31536000)
+// [EXPECTED] halving year 8 time range 220752000~252287999 (time diff: 31536000)
+// [EXPECTED] halving year 9 time range 252288000~283823999 (time diff: 31536000)
+// [EXPECTED] halving year 10 time range 283824000~315359999 (time diff: 31536000)
+// [EXPECTED] halving year 11 time range 315360000~346895999 (time diff: 31536000)
+// [EXPECTED] halving year 12 time range 346896000~378431999 (time diff: 31536000)
+//
+// [SCENARIO] 3. Skip 10000 blocks (distribute of half of 1 year)
+//
+// [SCENARIO] 4. Get halving years
 // [INFO] current halving years 1
-// [INFO] average block time in ms 2000
-// [EXPECTED] halving year 1 block range 124~15768123 (block count: 15768000)
-// [EXPECTED] halving year 2 block range 15768124~31536123 (block count: 15768000)
-// [EXPECTED] halving year 3 block range 31536124~47304123 (block count: 15768000)
-// [EXPECTED] halving year 4 block range 47304124~63072123 (block count: 15768000)
-// [EXPECTED] halving year 5 block range 63072124~78840123 (block count: 15768000)
-// [EXPECTED] halving year 6 block range 78840124~94608123 (block count: 15768000)
-// [EXPECTED] halving year 7 block range 94608124~110376123 (block count: 15768000)
-// [EXPECTED] halving year 8 block range 110376124~126144123 (block count: 15768000)
-// [EXPECTED] halving year 9 block range 126144124~141912123 (block count: 15768000)
-// [EXPECTED] halving year 10 block range 141912124~157680123 (block count: 15768000)
-// [EXPECTED] halving year 11 block range 157680124~173448123 (block count: 15768000)
-// [EXPECTED] halving year 12 block range 173448124~189216123 (block count: 15768000)
-//
-// [SCENARIO] 3. Skip 788400 blocks (distribute of half of 1 year)
-//
-// [SCENARIO] 4. Change block time to 3500ms (2000ms -> 3500ms)
-// [INFO] current year is 1
-// [EXPECTED] end block height should be changed 15768123 to 9348294
-// [EXPECTED] amount per block should be changed 14269406 to 26285749
-//
-// [SCENARIO] 5. Get halving years (block time is 3500ms)
-// [INFO] current halving years 1
-// [INFO] average block time in ms 3500
-// [EXPECTED] halving year 1 block range 124~9348294 (block count: 9348171)
-// [EXPECTED] halving year 2 block range 9348295~18358580 (block count: 9010286)
-// [EXPECTED] halving year 3 block range 18358581~27368865 (block count: 9010285)
-// [EXPECTED] halving year 4 block range 27368866~36379151 (block count: 9010286)
-// [EXPECTED] halving year 5 block range 36379152~45389437 (block count: 9010286)
-// [EXPECTED] halving year 6 block range 45389438~54399723 (block count: 9010286)
-// [EXPECTED] halving year 7 block range 54399724~63410008 (block count: 9010285)
-// [EXPECTED] halving year 8 block range 63410009~72420294 (block count: 9010286)
-// [EXPECTED] halving year 9 block range 72420295~81430580 (block count: 9010286)
-// [EXPECTED] halving year 10 block range 81430581~90440865 (block count: 9010285)
-// [EXPECTED] halving year 11 block range 90440866~99451151 (block count: 9010286)
-// [EXPECTED] halving year 12 block range 99451152~108461437 (block count: 9010286)
+// [EXPECTED] halving year 1 time range 1234617890~1266153889 (time diff: 31536000)
+// [EXPECTED] halving year 2 time range 1266153890~1297689889 (time diff: 31536000)
+// [EXPECTED] halving year 3 time range 1297689890~1329225889 (time diff: 31536000)
+// [EXPECTED] halving year 4 time range 1329225890~1360761889 (time diff: 31536000)
+// [EXPECTED] halving year 5 time range 1360761890~1392297889 (time diff: 31536000)
+// [EXPECTED] halving year 6 time range 1392297890~1423833889 (time diff: 31536000)
+// [EXPECTED] halving year 7 time range 1423833890~1455369889 (time diff: 31536000)
+// [EXPECTED] halving year 8 time range 1455369890~1486905889 (time diff: 31536000)
+// [EXPECTED] halving year 9 time range 1486905890~1518441889 (time diff: 31536000)
+// [EXPECTED] halving year 10 time range 1518441890~1549977889 (time diff: 31536000)
+// [EXPECTED] halving year 11 time range 1549977890~1581513889 (time diff: 31536000)
+// [EXPECTED] halving year 12 time range 1581513890~1613049889 (time diff: 31536000)
