@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	OwnershipTransferEvent = "OwnershipTransfer"
-	OwnershipAcceptedEvent = "OwnershipAccepted"
+	OwnershipTransferEvent          = "OwnershipTransfer"
+	OwnershipTransferInitiatedEvent = "OwnershipTransferInitiated"
 )
 
 // Ownable2Step is a two-step ownership transfer package
@@ -36,7 +36,7 @@ func (o *Ownable2Step) TransferOwnership(newOwner std.Address) error {
 	o.pendingOwner = newOwner
 
 	std.Emit(
-		OwnershipTransferEvent,
+		OwnershipTransferInitiatedEvent,
 		"from", o.owner.String(),
 		"to", newOwner.String(),
 	)
@@ -54,13 +54,14 @@ func (o *Ownable2Step) AcceptOwnership() error {
 		return ErrPendingUnauthorized
 	}
 
+	prevOwner := o.owner
 	o.owner = o.pendingOwner
 	o.pendingOwner = ""
 
 	std.Emit(
-		OwnershipAcceptedEvent,
-		"from", o.owner.String(),
-		"to", o.pendingOwner.String(),
+		OwnershipTransferEvent,
+		"from", prevOwner.String(),
+		"to", o.owner.String(),
 	)
 
 	return nil
@@ -100,11 +101,4 @@ func (o *Ownable2Step) PendingOwner() std.Address {
 // OwnedByOriginCaller checks if the caller of the function is the Realm's owner
 func (o *Ownable2Step) OwnedByOriginCaller() bool {
 	return std.OriginCaller() == o.owner
-}
-
-// AssertOwnedByOriginCaller panics if the caller is not the owner
-func (o *Ownable2Step) AssertOwnedByOriginCaller() {
-	if std.OriginCaller() != o.owner {
-		panic(ErrUnauthorized)
-	}
 }
