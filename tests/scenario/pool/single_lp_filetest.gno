@@ -119,6 +119,7 @@ func TestMint() {
 	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 
+	pool = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	println("[EXPECTED] test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))):", test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))), "expected: should be true")
 
@@ -145,6 +146,7 @@ func TestMint() {
 	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 
+	pool = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	expected = new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20))
 	println("[EXPECTED] test_liquidity.Eq(expected):", test_liquidity.Eq(expected), "expected: should be true")
@@ -168,18 +170,22 @@ func TestBurn() {
 	println("[EXPECTED] test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(18))):", test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(18))), "expected: should be true")
 
 	pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(8)).ToString(), adminAddr)
+	pool = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	println("[EXPECTED] test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))):", test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))), "expected: should be true")
 
 	pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, "1", adminAddr)
+	pool = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	println("[EXPECTED] test_liquidity.ToString():", test_liquidity.ToString(), "expected: should be 9999")
 
 	pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, "999", adminAddr)
+	pool = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	println("[EXPECTED] test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(9))):", test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(9))), "expected: should be true")
 
 	pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(9)).ToString(), adminAddr)
+	pool = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	println("[EXPECTED] test_liquidity.ToString():", test_liquidity.ToString(), "expected: should be 0")
 	println()

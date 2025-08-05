@@ -73,7 +73,7 @@ func main() {
 
 func initializeSetup() {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 
 	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100000000000000}})
 	testing.SetOriginSend(std.Coins{{"ugnot", 100000000000000}})

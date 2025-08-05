@@ -80,7 +80,7 @@ func main() {
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 385771")
 
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"
-	poolTick := pl.PoolGetSlot0Tick(poolPath)
+	poolTick := pl.GetSlot0Tick(poolPath)
 	println("[EXPECTED] pool tick:", poolTick, "expected: 1")
 
 	println("[INFO] Setting up additional pools and positions")
@@ -116,7 +116,7 @@ func main() {
 	poolLiq = pool.Liquidity()
 	println("[EXPECTED] pool liquidity after swap:", poolLiq.ToString(), "expected: 435768")
 
-	poolTick = pl.PoolGetSlot0Tick(poolPath)
+	poolTick = pl.GetSlot0Tick(poolPath)
 	println("[EXPECTED] pool tick after swap:", poolTick, "expected: -5569")
 	
 	println("[INFO] Scenario completed")
@@ -125,7 +125,7 @@ func main() {
 func createPoolWithoutFee(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	// set pool create fee to 0 for testing
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 	createPool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
 	createPool(t, bazPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
 	createPool(t, barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
@@ -143,7 +143,7 @@ func createPool(t *testing.T,
 
 	testing.SetRealm(std.NewUserRealm(caller))
 	poolPath := pl.GetPoolPath(token0, token1, fee)
-	if !pl.DoesPoolPathExist(poolPath) {
+	if !pl.ExistsPoolPath(poolPath) {
 		pl.CreatePool(cross, token0, token1, fee, sqrtPriceX96)
 		sr.SetPoolTier(cross, poolPath, tier1)
 	}

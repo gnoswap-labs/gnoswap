@@ -62,7 +62,7 @@ func isOwner(positionId uint64, addr std.Address) bool {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -125,14 +125,14 @@ func splitOf(poolKey string) (string, string, uint32) {
 	if len(res) != 3 {
 		panic(newErrorWithDetail(errInvalidInput, ufmt.Sprintf("invalid poolKey(%s)", poolKey)))
 	}
-	
+
 	pToken0, pToken1, pFeeStr := res[0], res[1], res[2]
 
 	pFee, err := strconv.Atoi(pFeeStr)
 	if err != nil {
 		panic(newErrorWithDetail(errInvalidInput, ufmt.Sprintf("invalid fee(%s)", pFeeStr)))
 	}
-	
+
 	return pToken0, pToken1, uint32(pFee)
 }
 
@@ -171,10 +171,23 @@ func isTokenOwner(positionId uint64, caller std.Address) bool {
 	if err != nil {
 		return false
 	}
-	
+
 	return owner == caller
 }
 
 func isSlippageExceeded(amount0, amount1, amount0Min, amount1Min *u256.Uint) bool {
 	return !(amount0.Gte(amount0Min) && amount1.Gte(amount1Min))
+}
+
+func subUint256(x, y *u256.Uint) *u256.Uint {
+	if x.Cmp(y) < 0 {
+		q256 := u256.MustFromDecimal(MAX_UINT256)
+		diff := u256.Zero().Sub(q256, y)
+		result := u256.Zero().Add(diff, x)
+
+		// Add 1 to the result since MAX_UINT256 is 2^256 - 1
+		return u256.Zero().Add(result, u256.One())
+	}
+
+	return u256.Zero().Sub(x, y)
 }

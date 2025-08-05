@@ -26,37 +26,15 @@ func GetSwapFee() uint64 {
 	return swapFee
 }
 
-// SetSwapFeeByAdmin modifies the swap fee
-// Only admin can execute this function
-func SetSwapFeeByAdmin(cur realm, fee uint64) {
-	caller := std.PreviousRealm().Address()
-	halt.AssertIsNotHaltedRouter()
-	halt.AssertIsNotHaltedProtocolFee()
-	access.AssertIsAdmin(caller)
-
-	prevSwapFee := swapFee
-	if err := setSwapFee(fee); err != nil {
-		panic(err)
-	}
-
-	previousRealm := std.PreviousRealm()
-	std.Emit(
-		"SetSwapFeeByAdmin",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"newFee", formatUint(fee),
-		"prevFee", formatUint(prevSwapFee),
-	)
-}
-
 // SetSwapFee modifies the swap fee
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/router/protocol_fee_swap.gno#setswapfee
 func SetSwapFee(cur realm, fee uint64) {
-	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedRouter()
 	halt.AssertIsNotHaltedProtocolFee()
-	access.AssertIsGovernance(caller)
+	
+	caller := std.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernance(caller)
 
 	prevSwapFee := swapFee
 	if err := setSwapFee(fee); err != nil {

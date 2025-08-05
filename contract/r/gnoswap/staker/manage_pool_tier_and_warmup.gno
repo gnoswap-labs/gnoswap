@@ -3,10 +3,13 @@ package staker
 import (
 	"std"
 
+	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/halt"
 
 	en "gno.land/r/gnoswap/v1/emission"
+	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 const (
@@ -143,5 +146,14 @@ func pctToIndex(pct int64) int {
 		return 3
 	default:
 		panic("staker.gno__pctToIndex() || pct is not valid")
+	}
+}
+
+func assertPoolMustExist(poolPath string) {
+	if !pl.ExistsPoolPath(poolPath) {
+		panic(makeErrorWithDetails(
+			errInvalidPoolPath,
+			ufmt.Sprintf("pool(%s) does not exist", poolPath),
+		))
 	}
 }

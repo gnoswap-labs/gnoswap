@@ -66,11 +66,11 @@ func testInitData(t *testing.T) {
 	pools.Set("token0:token1:3000", mockPool)
 }
 
-func TestPoolGetters(t *testing.T) {
+func TestGetters(t *testing.T) {
 	testInitData(t)
 
 	t.Run("get pool list", func(t *testing.T) {
-		poolList := PoolGetPoolList()
+		poolList := GetPoolList()
 		if len(poolList) != 1 || poolList[0] != "token0:token1:3000" {
 			t.Errorf("Expected pool list [%s], got %v", "token0:token1:3000", poolList)
 		}
@@ -80,112 +80,112 @@ func TestPoolGetters(t *testing.T) {
 		validPoolPath := "token0:token1:3000"
 
 		t.Run("get token0 path", func(t *testing.T) {
-			token0Path := PoolGetToken0Path(validPoolPath)
+			token0Path := GetToken0Path(validPoolPath)
 			if token0Path != "token0" {
 				t.Errorf("Expected token0 path [%s], got %s", "token0", token0Path)
 			}
 		})
 
 		t.Run("get token1 path", func(t *testing.T) {
-			token1Path := PoolGetToken1Path(validPoolPath)
+			token1Path := GetToken1Path(validPoolPath)
 			if token1Path != "token1" {
 				t.Errorf("Expected token1 path [%s], got %s", "token1", token1Path)
 			}
 		})
 
 		t.Run("get fee", func(t *testing.T) {
-			fee := PoolGetFee(validPoolPath)
+			fee := GetFee(validPoolPath)
 			if fee != 3000 {
 				t.Errorf("Expected fee [%d], got %d", 3000, fee)
 			}
 		})
 
 		t.Run("get balance token0", func(t *testing.T) {
-			balanceToken0 := PoolGetBalanceToken0(validPoolPath)
+			balanceToken0 := GetBalanceToken0(validPoolPath)
 			if balanceToken0 != "1000" {
 				t.Errorf("Expected balance token0 [%s], got %s", "1000", balanceToken0)
 			}
 		})
 
 		t.Run("get balance token1", func(t *testing.T) {
-			balanceToken1 := PoolGetBalanceToken1(validPoolPath)
+			balanceToken1 := GetBalanceToken1(validPoolPath)
 			if balanceToken1 != "2000" {
 				t.Errorf("Expected balance token1 [%s], got %s", "2000", balanceToken1)
 			}
 		})
 
 		t.Run("get tick spacing", func(t *testing.T) {
-			tickSpacing := PoolGetTickSpacing(validPoolPath)
+			tickSpacing := GetTickSpacing(validPoolPath)
 			if tickSpacing != 10 {
 				t.Errorf("Expected tick spacing [%d], got %d", 10, tickSpacing)
 			}
 		})
 
 		t.Run("get max liquidity per tick", func(t *testing.T) {
-			maxLiquidityPerTick := PoolGetMaxLiquidityPerTick(validPoolPath)
+			maxLiquidityPerTick := GetMaxLiquidityPerTick(validPoolPath)
 			if maxLiquidityPerTick != "1000000" {
 				t.Errorf("Expected max liquidity per tick [%s], got %s", "1000000", maxLiquidityPerTick)
 			}
 		})
 
 		t.Run("get slot0 sqrt price x96", func(t *testing.T) {
-			sqrtPriceX96 := PoolGetSlot0SqrtPriceX96(validPoolPath)
-			if sqrtPriceX96 != "1000000000000000000" {
-				t.Errorf("Expected sqrt price x96 [%s], got %s", "1000000000000000000", sqrtPriceX96)
+			sqrtPriceX96 := GetSlot0SqrtPriceX96(validPoolPath)
+			if sqrtPriceX96.ToString() != "1000000000000000000" {
+				t.Errorf("Expected sqrt price x96 [%s], got %s", "1000000000000000000", sqrtPriceX96.ToString())
 			}
 		})
 
 		t.Run("get slot0 tick", func(t *testing.T) {
-			tick := PoolGetSlot0Tick(validPoolPath)
+			tick := GetSlot0Tick(validPoolPath)
 			if tick != 5 {
 				t.Errorf("Expected tick [%d], got %d", 5, tick)
 			}
 		})
 
 		t.Run("get slot0 fee protocol", func(t *testing.T) {
-			feeProtocol := PoolGetSlot0FeeProtocol(validPoolPath)
+			feeProtocol := GetSlot0FeeProtocol(validPoolPath)
 			if feeProtocol != 6 {
 				t.Errorf("Expected fee protocol [%d], got %d", 6, feeProtocol)
 			}
 		})
 
 		t.Run("get slot0 unlocked", func(t *testing.T) {
-			unlocked := PoolGetSlot0Unlocked(validPoolPath)
+			unlocked := GetSlot0Unlocked(validPoolPath)
 			if unlocked != false {
 				t.Errorf("Expected unlocked [%t], got %t", false, unlocked)
 			}
 		})
 
 		t.Run("get fee growth global0x128", func(t *testing.T) {
-			feeGrowthGlobal0X128 := PoolGetFeeGrowthGlobal0X128(validPoolPath)
+			feeGrowthGlobal0X128 := GetFeeGrowthGlobal0X128(validPoolPath)
 			if feeGrowthGlobal0X128 != "1000000000000000000" {
 				t.Errorf("Expected fee growth global 0 x128 [%s], got %s", "1000000000000000000", feeGrowthGlobal0X128)
 			}
 		})
 
 		t.Run("get fee growth global1x128", func(t *testing.T) {
-			feeGrowthGlobal1X128 := PoolGetFeeGrowthGlobal1X128(validPoolPath)
+			feeGrowthGlobal1X128 := GetFeeGrowthGlobal1X128(validPoolPath)
 			if feeGrowthGlobal1X128 != "2000000000000000000" {
 				t.Errorf("Expected fee growth global 1 x128 [%s], got %s", "2000000000000000000", feeGrowthGlobal1X128)
 			}
 		})
 
 		t.Run("get protocol fees token0", func(t *testing.T) {
-			protocolFeesToken0 := PoolGetProtocolFeesToken0(validPoolPath)
+			protocolFeesToken0 := GetProtocolFeesToken0(validPoolPath)
 			if protocolFeesToken0 != "1000" {
 				t.Errorf("Expected protocol fees token0 [%s], got %s", "1000", protocolFeesToken0)
 			}
 		})
 
 		t.Run("get protocol fees token1", func(t *testing.T) {
-			protocolFeesToken1 := PoolGetProtocolFeesToken1(validPoolPath)
+			protocolFeesToken1 := GetProtocolFeesToken1(validPoolPath)
 			if protocolFeesToken1 != "2000" {
 				t.Errorf("Expected protocol fees token1 [%s], got %s", "2000", protocolFeesToken1)
 			}
 		})
 
 		t.Run("get liquidity", func(t *testing.T) {
-			liquidity := PoolGetLiquidity(validPoolPath)
+			liquidity := GetLiquidity(validPoolPath)
 			if liquidity != "1000000" {
 				t.Errorf("Expected liquidity [%s], got %s", "1000000", liquidity)
 			}
@@ -197,103 +197,103 @@ func TestPoolGetters(t *testing.T) {
 
 		t.Run("get token0 path", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetToken0Path(invalidPoolPath)
+				GetToken0Path(invalidPoolPath)
 			})
 		})
 
 		t.Run("get token1 path", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetToken1Path(invalidPoolPath)
+				GetToken1Path(invalidPoolPath)
 			})
 		})
 
 		t.Run("get fee", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetFee(invalidPoolPath)
+				GetFee(invalidPoolPath)
 			})
 		})
 
 		t.Run("get balance token0", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetBalanceToken0(invalidPoolPath)
+				GetBalanceToken0(invalidPoolPath)
 			})
 		})
 
 		t.Run("get balance token1", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetBalanceToken1(invalidPoolPath)
+				GetBalanceToken1(invalidPoolPath)
 			})
 		})
 
 		t.Run("get tick spacing", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetTickSpacing(invalidPoolPath)
+				GetTickSpacing(invalidPoolPath)
 			})
 		})
 
 		t.Run("get liquidity", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetLiquidity(invalidPoolPath)
+				GetLiquidity(invalidPoolPath)
 			})
 		})
 
 		t.Run("get max liquidity per tick", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetMaxLiquidityPerTick(invalidPoolPath)
+				GetMaxLiquidityPerTick(invalidPoolPath)
 			})
 		})
 
 		t.Run("get slot0 sqrt price x96", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetSlot0SqrtPriceX96(invalidPoolPath)
+				GetSlot0SqrtPriceX96(invalidPoolPath)
 			})
 		})
 
 		t.Run("get slot0 tick", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetSlot0Tick(invalidPoolPath)
+				GetSlot0Tick(invalidPoolPath)
 			})
 		})
 
 		t.Run("get slot0 fee protocol", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetSlot0FeeProtocol(invalidPoolPath)
+				GetSlot0FeeProtocol(invalidPoolPath)
 			})
 		})
 
 		t.Run("get slot0 unlocked", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetSlot0Unlocked(invalidPoolPath)
+				GetSlot0Unlocked(invalidPoolPath)
 			})
 		})
 
 		t.Run("get fee growth global0x128", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetFeeGrowthGlobal0X128(invalidPoolPath)
+				GetFeeGrowthGlobal0X128(invalidPoolPath)
 			})
 		})
 
 		t.Run("get fee growth global1x128", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetFeeGrowthGlobal1X128(invalidPoolPath)
+				GetFeeGrowthGlobal1X128(invalidPoolPath)
 			})
 		})
 
 		t.Run("get protocol fees token0", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetProtocolFeesToken0(invalidPoolPath)
+				GetProtocolFeesToken0(invalidPoolPath)
 			})
 		})
 
 		t.Run("get protocol fees token1", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetProtocolFeesToken1(invalidPoolPath)
+				GetProtocolFeesToken1(invalidPoolPath)
 			})
 		})
 
 		t.Run("get liquidity", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetLiquidity(invalidPoolPath)
+				GetLiquidity(invalidPoolPath)
 			})
 		})
 	})
@@ -349,28 +349,28 @@ func TestPositionGetters(t *testing.T) {
 
 			if tt.expectedHasPanic {
 				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
-					PoolGetPositionLiquidity(tt.poolPath, tt.positionKey)
+					GetPositionLiquidity(tt.poolPath, tt.positionKey)
 				})
 				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
-					PoolGetPositionFeeGrowthInside0LastX128(tt.poolPath, tt.positionKey)
+					GetPositionFeeGrowthInside0LastX128(tt.poolPath, tt.positionKey)
 				})
 				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
-					PoolGetPositionFeeGrowthInside1LastX128(tt.poolPath, tt.positionKey)
+					GetPositionFeeGrowthInside1LastX128(tt.poolPath, tt.positionKey)
 				})
 				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
-					PoolGetPositionTokensOwed0(tt.poolPath, tt.positionKey)
+					GetPositionTokensOwed0(tt.poolPath, tt.positionKey)
 				})
 				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
-					PoolGetPositionTokensOwed1(tt.poolPath, tt.positionKey)
+					GetPositionTokensOwed1(tt.poolPath, tt.positionKey)
 				})
 
 				return
 			} else {
-				liquidity = PoolGetPositionLiquidity(tt.poolPath, tt.positionKey)
-				feeGrowthInside0LastX128 = PoolGetPositionFeeGrowthInside0LastX128(tt.poolPath, tt.positionKey)
-				feeGrowthInside1LastX128 = PoolGetPositionFeeGrowthInside1LastX128(tt.poolPath, tt.positionKey)
-				tokensOwed0 = PoolGetPositionTokensOwed0(tt.poolPath, tt.positionKey)
-				tokensOwed1 = PoolGetPositionTokensOwed1(tt.poolPath, tt.positionKey)
+				liquidity = GetPositionLiquidity(tt.poolPath, tt.positionKey).ToString()
+				feeGrowthInside0LastX128 = GetPositionFeeGrowthInside0LastX128(tt.poolPath, tt.positionKey)
+				feeGrowthInside1LastX128 = GetPositionFeeGrowthInside1LastX128(tt.poolPath, tt.positionKey)
+				tokensOwed0 = GetPositionTokensOwed0(tt.poolPath, tt.positionKey)
+				tokensOwed1 = GetPositionTokensOwed1(tt.poolPath, tt.positionKey)
 			}
 
 			uassert.Equal(t, tt.expectedLiquidity, liquidity)
@@ -387,31 +387,31 @@ func TestPositionGetters(t *testing.T) {
 
 		t.Run("get position liquidity", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetPositionLiquidity(validPoolPath, invalidPositionKey)
+				GetPositionLiquidity(validPoolPath, invalidPositionKey).ToString()
 			})
 		})
 
 		t.Run("get position fee growth inside0 last x128", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetPositionFeeGrowthInside0LastX128(validPoolPath, invalidPositionKey)
+				GetPositionFeeGrowthInside0LastX128(validPoolPath, invalidPositionKey)
 			})
 		})
 
 		t.Run("get position fee growth inside1 last x128", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetPositionFeeGrowthInside1LastX128(validPoolPath, invalidPositionKey)
+				GetPositionFeeGrowthInside1LastX128(validPoolPath, invalidPositionKey)
 			})
 		})
 
 		t.Run("get position tokens owed0", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetPositionTokensOwed0(validPoolPath, invalidPositionKey)
+				GetPositionTokensOwed0(validPoolPath, invalidPositionKey)
 			})
 		})
 
 		t.Run("get position tokens owed1", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetPositionTokensOwed1(validPoolPath, invalidPositionKey)
+				GetPositionTokensOwed1(validPoolPath, invalidPositionKey)
 			})
 		})
 	})
@@ -424,56 +424,56 @@ func TestTickGetters(t *testing.T) {
 		validTick := int32(0)
 
 		t.Run("get tick liquidity gross", func(t *testing.T) {
-			liquidityGross := PoolGetTickLiquidityGross(validPoolPath, validTick)
+			liquidityGross := GetTickLiquidityGross(validPoolPath, validTick)
 			if liquidityGross != "1000000" {
 				t.Errorf("Expected liquidity gross [%s], got %s", "1000000", liquidityGross)
 			}
 		})
 
 		t.Run("get tick liquidity net", func(t *testing.T) {
-			liquidityNet := PoolGetTickLiquidityNet(validPoolPath, validTick)
+			liquidityNet := GetTickLiquidityNet(validPoolPath, validTick)
 			if liquidityNet != "2000000" {
 				t.Errorf("Expected liquidity net [%s], got %s", "2000000", liquidityNet)
 			}
 		})
 
 		t.Run("get tick fee growth outside0 x128", func(t *testing.T) {
-			feeGrowthOutside0X128 := PoolGetTickFeeGrowthOutside0X128(validPoolPath, validTick)
+			feeGrowthOutside0X128 := GetTickFeeGrowthOutside0X128(validPoolPath, validTick)
 			if feeGrowthOutside0X128 != "3000000" {
 				t.Errorf("Expected fee growth outside0 x128 [%s], got %s", "3000000", feeGrowthOutside0X128)
 			}
 		})
 
 		t.Run("get tick fee growth outside1 x128", func(t *testing.T) {
-			feeGrowthOutside1X128 := PoolGetTickFeeGrowthOutside1X128(validPoolPath, validTick)
+			feeGrowthOutside1X128 := GetTickFeeGrowthOutside1X128(validPoolPath, validTick)
 			if feeGrowthOutside1X128 != "4000000" {
 				t.Errorf("Expected fee growth outside1 x128 [%s], got %s", "4000000", feeGrowthOutside1X128)
 			}
 		})
 
 		t.Run("get tick cumulative outside", func(t *testing.T) {
-			tickCumulativeOutside := PoolGetTickCumulativeOutside(validPoolPath, validTick)
+			tickCumulativeOutside := GetTickCumulativeOutside(validPoolPath, validTick)
 			if tickCumulativeOutside != 5 {
 				t.Errorf("Expected tick cumulative outside [%d], got %d", 5, tickCumulativeOutside)
 			}
 		})
 
 		t.Run("get tick seconds per liquidity outside x128", func(t *testing.T) {
-			secondsPerLiquidityOutsideX128 := PoolGetTickSecondsPerLiquidityOutsideX128(validPoolPath, validTick)
+			secondsPerLiquidityOutsideX128 := GetTickSecondsPerLiquidityOutsideX128(validPoolPath, validTick)
 			if secondsPerLiquidityOutsideX128 != "6000000" {
 				t.Errorf("Expected seconds per liquidity outside x128 [%s], got %s", "6000000", secondsPerLiquidityOutsideX128)
 			}
 		})
 
 		t.Run("get tick seconds outside", func(t *testing.T) {
-			secondsOutside := PoolGetTickSecondsOutside(validPoolPath, validTick)
+			secondsOutside := GetTickSecondsOutside(validPoolPath, validTick)
 			if secondsOutside != 7 {
 				t.Errorf("Expected seconds outside [%d], got %d", 7, secondsOutside)
 			}
 		})
 
 		t.Run("get tick initialized", func(t *testing.T) {
-			initialized := PoolGetTickInitialized(validPoolPath, validTick)
+			initialized := GetTickInitialized(validPoolPath, validTick)
 			if initialized != true {
 				t.Errorf("Expected initialized [%t], got %t", true, initialized)
 			}
@@ -486,43 +486,43 @@ func TestTickGetters(t *testing.T) {
 
 		t.Run("get tick liquidity gross", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetTickLiquidityGross(validPoolPath, invalidTick)
+				GetTickLiquidityGross(validPoolPath, invalidTick)
 			})
 		})
 
 		t.Run("get tick liquidity net", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetTickLiquidityNet(validPoolPath, invalidTick)
+				GetTickLiquidityNet(validPoolPath, invalidTick)
 			})
 		})
 
 		t.Run("get tick fee growth outside0 x128", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetTickFeeGrowthOutside0X128(validPoolPath, invalidTick)
+				GetTickFeeGrowthOutside0X128(validPoolPath, invalidTick)
 			})
 		})
 
 		t.Run("get tick cumulative outside", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetTickCumulativeOutside(validPoolPath, invalidTick)
+				GetTickCumulativeOutside(validPoolPath, invalidTick)
 			})
 		})
 
 		t.Run("get tick seconds per liquidity outside x128", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetTickSecondsPerLiquidityOutsideX128(validPoolPath, invalidTick)
+				GetTickSecondsPerLiquidityOutsideX128(validPoolPath, invalidTick)
 			})
 		})
 
 		t.Run("get tick seconds outside", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetTickSecondsOutside(validPoolPath, invalidTick)
+				GetTickSecondsOutside(validPoolPath, invalidTick)
 			})
 		})
 
 		t.Run("get tick initialized", func(t *testing.T) {
 			shouldPanic(t, func() {
-				PoolGetTickInitialized(validPoolPath, invalidTick)
+				GetTickInitialized(validPoolPath, invalidTick)
 			})
 		})
 	})

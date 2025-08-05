@@ -2,7 +2,6 @@ package pool
 
 import (
 	"std"
-	"strings"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
@@ -47,43 +46,48 @@ func CreatePool(
 ) {
 	halt.AssertIsNotHaltedPool()
 
-	poolInfo, err := createPool(token0Path, token1Path, fee, sqrtPriceX96, GetFeeAmountTickSpacing(fee))
+	assertIsNotEqualsTokens(token0Path, token1Path)
+	assertIsSupportedFeeTier(fee)
+	assertIsNotExistsPoolPath(token0Path, token1Path, fee)
+
+	en.MintAndDistributeGns(cross)
+
+	poolInfo := newPoolParams(
+		token0Path,
+		token1Path,
+		fee,
+		sqrtPriceX96,
+		GetFeeAmountTickSpacing(fee),
+	)
+
+	poolInfo, err := poolInfo.updateWithWrapping()
 	if err != nil {
 		panic(err)
 	}
 
-	en.MintAndDistributeGns(cross)
+	// check if wrapped token paths are registered
+	common.MustRegistered(poolInfo.token0Path)
+	common.MustRegistered(poolInfo.token1Path)
 
-	poolPath := poolInfo.generatePoolPath()
-	// check whether the pool already exist
-	if DoesPoolPathExist(poolPath) {
-		panic(newErrorWithDetail(
-			errPoolAlreadyExists,
-			ufmt.Sprintf("expected poolPath(%s) not to exist", poolPath),
-		))
-	}
-
-	previousRealm := std.PreviousRealm()
+	pool := newPool(poolInfo)
+	pools.Set(poolInfo.poolPath(), pool)
 
 	if poolCreationFee > 0 {
 		gns.TransferFrom(cross, std.PreviousRealm().Address(), protocolFeeAddr, poolCreationFee)
 		pf.AddToProtocolFee(cross, GNS_PATH, uint64(poolCreationFee))
 
+		previousRealm := std.PreviousRealm()
 		std.Emit(
 			"PoolCreationFee",
 			"prevAddr", previousRealm.Address().String(),
 			"prevRealm", previousRealm.PkgPath(),
-			"poolPath", poolPath,
+			"poolPath", poolInfo.poolPath(),
 			"feeTokenPath", GNS_PATH,
 			"feeAmount", formatInt(poolCreationFee),
 		)
 	}
 
-	pool := newPool(poolInfo)
-	pools.Set(poolPath, pool)
-
-	currentTick := common.TickMathGetTickAtSqrtRatio(poolInfo.SqrtPriceX96())
-
+	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"CreatePool",
 		"prevAddr", previousRealm.Address().String(),
@@ -92,145 +96,10 @@ func CreatePool(
 		"token1Path", token1Path,
 		"fee", formatUint(fee),
 		"sqrtPriceX96", sqrtPriceX96,
-		"poolPath", poolPath,
-		"tick", formatInt(currentTick),
+		"poolPath", pool.PoolPath(),
+		"tick", formatInt(pool.Slot0Tick()),
 		"tickSpacing", formatInt(poolInfo.TickSpacing()),
 	)
-}
-
-// DoesPoolPathExist checks if a pool exists for the given poolPath.
-// The poolPath is a unique identifier for a pool, combining token paths and fee.
-func DoesPoolPathExist(poolPath string) bool {
-	return pools.Has(poolPath)
-}
-
-// GetPool retrieves a pool instance based on the provided token paths and fee tier.
-//
-// This function determines the pool path by combining the paths of token0 and token1 along with the fee tier,
-// and then retrieves the corresponding pool instance using that path.
-//
-// Parameters:
-// - token0Path (string): The unique path for token0.
-// - token1Path (string): The unique path for token1.
-// - fee (uint32): The fee tier for the pool, expressed in basis points (e.g., 3000 for 0.3%).
-//
-// Returns:
-// - *Pool: A pointer to the Pool instance corresponding to the provided tokens and fee tier.
-//
-// Notes:
-// - The order of token paths (token0Path and token1Path) matters and should match the pool's configuration.
-// - Ensure that the tokens and fee tier provided are valid and registered in the system.
-//
-// Example:
-// pool := GetPool("gno.land/r/demo/wugnot", "gno.land/r/gnoswap/v1/gns", 3000)
-func GetPool(token0Path, token1Path string, fee uint32) *Pool {
-	poolPath := GetPoolPath(token0Path, token1Path, fee)
-	return GetPoolFromPoolPath(poolPath)
-}
-
-// GetPoolFromPoolPath retrieves a pool instance based on the provided pool path.
-//
-// This function checks if a pool exists for the given poolPath in the `pools` mapping.
-// If the pool exists, it returns the pool instance. Otherwise, it panics with a descriptive error.
-//
-// Parameters:
-// - poolPath (string): The unique identifier or path for the pool.
-//
-// Returns:
-// - *Pool: A pointer to the Pool instance corresponding to the given poolPath.
-//
-// Panics:
-//   - If the `poolPath` does not exist in the `pools` mapping, it panics with an error message
-//     indicating that the expected poolPath was not found.
-//
-// Notes:
-// - Ensure that the `poolPath` provided is valid and corresponds to an existing pool in the `pools` mapping.
-//
-// Example:
-// pool := GetPoolFromPoolPath("path/to/pool")
-func GetPoolFromPoolPath(poolPath string) *Pool {
-	iPool, exist := pools.Get(poolPath)
-	if !exist {
-		panic(newErrorWithDetail(
-			errDataNotFound,
-			ufmt.Sprintf("expected poolPath(%s) to exist", poolPath),
-		))
-	}
-
-	return iPool.(*Pool)
-}
-
-// GetPoolPath generates a unique pool path string based on the token paths and fee tier.
-//
-// This function ensures that the token paths are registered and sorted in alphabetical order
-// before combining them with the fee tier to create a unique identifier for the pool.
-//
-// Parameters:
-// - token0Path (string): The unique identifier or path for token0.
-// - token1Path (string): The unique identifier or path for token1.
-// - fee (uint32): The fee tier for the pool, expressed in basis points (e.g., 3000 for 0.3%).
-//
-// Returns:
-// - string: A unique pool path string in the format "token0Path:token1Path:fee".
-//
-// Notes:
-//   - The function validates that both `token0Path` and `token1Path` are registered in the system
-//     using `common.MustRegistered`.
-//   - The token paths are sorted alphabetically to ensure consistent pool path generation, regardless
-//     of the input order.
-//   - This sorting guarantees that the pool path remains deterministic for the same pair of tokens and fee.
-//
-// Example:
-// poolPath := GetPoolPath("path/to/token0", "path/to/token1", 3000)
-// // Output: "path/to/token0:path/to/token1:3000"
-func GetPoolPath(token0Path, token1Path string, fee uint32) string {
-	// all the token paths in the pool are sorted in alphabetical order.
-	if strings.Compare(token1Path, token0Path) < 0 {
-		token0Path, token1Path = token1Path, token0Path
-	}
-
-	return ufmt.Sprintf("%s:%s:%d", token0Path, token1Path, fee)
-}
-
-// GetFeeAmountTickSpacing retrieves the tick spacing associated with a given fee amount.
-// The tick spacing determines the minimum distance between ticks in the pool.
-//
-// Parameters:
-//   - fee (uint32): The fee tier in basis points (e.g., 3000 for 0.3%)
-//
-// Returns:
-//   - int32: The tick spacing value for the given fee tier
-//
-// Panics:
-//   - If the fee amount is not registered in feeAmountTickSpacing
-func GetFeeAmountTickSpacing(fee uint32) int32 {
-	feeStr := formatUint(fee)
-	iTickSpacing, exist := feeAmountTickSpacing.Get(feeStr)
-	if !exist {
-		panic(newErrorWithDetail(
-			errUnsupportedFeeTier,
-			ufmt.Sprintf("expected fee(%d) to be one of %d, %d, %d, %d", fee, FeeTier100, FeeTier500, FeeTier3000, FeeTier10000),
-		))
-	}
-
-	return iTickSpacing.(int32)
-}
-
-// SetFeeProtocolByAdmin sets the fee protocol for all pools
-// Also it will be applied to new created pools
-func SetFeeProtocolByAdmin(
-	cur realm,
-	feeProtocol0 uint8,
-	feeProtocol1 uint8,
-) {
-	caller := std.PreviousRealm().Address()
-	halt.AssertIsNotHaltedPool()
-	access.AssertIsAdmin(caller)
-
-	err := setFeeProtocolInternal(feeProtocol0, feeProtocol1, "SetFeeProtocolByAdmin")
-	if err != nil {
-		panic(err)
-	}
 }
 
 // SetFeeProtocol sets the fee protocol for all pools
@@ -238,9 +107,10 @@ func SetFeeProtocolByAdmin(
 // Also it will be applied to new created pools
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#setfeeprotocol
 func SetFeeProtocol(cur realm, feeProtocol0, feeProtocol1 uint8) {
-	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedPool()
-	access.AssertIsGovernance(caller)
+
+	caller := std.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernance(caller)
 
 	err := setFeeProtocolInternal(feeProtocol0, feeProtocol1, "SetFeeProtocol")
 	if err != nil {
@@ -264,7 +134,7 @@ func setFeeAmountTickSpacing(fee uint32, tickSpacing int32) {
 
 // mustGetPool retrieves a pool instance by its path and ensures it exists.
 //
-// This function attempts to fetch the pool using GetPoolFromPoolPath().
+// This function attempts to fetch the pool by poolPath.
 // If the pool does not exist, it panics with a detailed error message.
 //
 // Parameters:
@@ -277,14 +147,20 @@ func setFeeAmountTickSpacing(fee uint32, tickSpacing int32) {
 //   - If the pool does not exist, an error is thrown with the message
 //     "expected poolPath(<poolPath>) to exist".
 func mustGetPool(poolPath string) *Pool {
-	pool := GetPoolFromPoolPath(poolPath)
-	if pool == nil {
+	iPool, exist := pools.Get(poolPath)
+	if !exist {
 		panic(newErrorWithDetail(
 			errDataNotFound,
 			ufmt.Sprintf("expected poolPath(%s) to exist", poolPath),
 		))
 	}
-	return pool
+
+	return iPool.(*Pool)
+}
+
+func mustGetPoolBy(token0Path, token1Path string, fee uint32) *Pool {
+	poolPath := GetPoolPath(token0Path, token1Path, fee)
+	return mustGetPool(poolPath)
 }
 
 // setFeeProtocolInternal updates the protocol fee for all pools and emits an event.
@@ -299,10 +175,10 @@ func mustGetPool(poolPath string) *Pool {
 // Parameters:
 //   - feeProtocol0: uint8, protocol fee for token0 (must be 0 or between 4 and 10 inclusive).
 //   - feeProtocol1: uint8, protocol fee for token1 (must be 0 or between 4 and 10 inclusive).
-//   - eventName: string, the name of the event to emit (e.g., "SetFeeProtocolByAdmin").
+//   - eventName: string, the name of the event to emit (e.g., "SetFeeProtocol").
 //
 // Notes:
-//   - This function is called by higher-level functions like `SetFeeProtocolByAdmin` or `SetFeeProtocol`.
+//   - This function is called by higher-level functions like `SetFeeProtocol` or `SetFeeProtocol`.
 //   - It does not validate caller permissions; validation must be performed by the calling function.
 func setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8, eventName string) error {
 	oldFee := slot0FeeProtocol
