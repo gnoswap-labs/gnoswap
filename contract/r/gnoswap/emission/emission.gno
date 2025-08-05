@@ -1,6 +1,7 @@
 package emission
 
 import (
+	"math"
 	"std"
 	"time"
 
@@ -30,14 +31,26 @@ func GetLeftGNSAmount() int64 { return leftGNSAmount }
 // Returns 0 if distribution has not been started yet.
 func GetDistributionStartTimestamp() int64 { return distributionStartTimestamp }
 
-// setLeftGNSAmount updates the amount of undistributed GNS tokens.
-func setLeftGNSAmount(amount int64) { leftGNSAmount = amount }
+// setLeftGNSAmount updates the undistributed GNS token amount
+func setLeftGNSAmount(amount int64) {
+	if amount < 0 {
+		panic("left GNS amount cannot be negative")
+	}
+	
+	leftGNSAmount = amount
+}
 
 // GetLastExecutedTimestamp returns the timestamp of the last emission distribution execution.
 func GetLastExecutedTimestamp() int64 { return lastExecutedTimestamp }
 
 // setLastExecutedTimestamp updates the timestamp of the last emission distribution execution.
-func setLastExecutedTimestamp(timestamp int64) { lastExecutedTimestamp = timestamp }
+func setLastExecutedTimestamp(timestamp int64) { 
+	if timestamp < 0 {
+		panic("last executed timestamp cannot be negative")
+	}
+
+	lastExecutedTimestamp = timestamp
+}
 
 // MintAndDistributeGns mints and distributes GNS tokens according to the emission schedule.
 //
@@ -69,12 +82,27 @@ func MintAndDistributeGns(cur realm) int64 {
 		return 0
 	}
 
+	// Additional check to prevent re-entrancy
+	if lastExecutedHeight >= currentHeight {
+		// Skip if we've already processed this height in emission
+		return 0
+	}
+
 	// Mint new tokens and add any leftover amounts from previous distribution
 	mintedEmissionRewardAmount := gns.MintGns(cross, emissionAddr)
+
+	// Validate minted amount
+	if mintedEmissionRewardAmount < 0 {
+		panic("minted emission reward amount cannot be negative")
+	}
 
 	distributableAmount := mintedEmissionRewardAmount
 	prevLeftAmount := GetLeftGNSAmount()
 	if leftGNSAmount > 0 {
+		// Check for overflow before addition
+		if distributableAmount > math.MaxInt64-prevLeftAmount {
+			panic("distributable amount would overflow")
+		}
 		distributableAmount += prevLeftAmount
 		setLeftGNSAmount(0)
 	}
@@ -84,8 +112,20 @@ func MintAndDistributeGns(cur realm) int64 {
 		panic(err)
 	}
 
+	// Validate distribution arithmetic
+	if distributedGNSAmount < 0 {
+		panic("distributed amount cannot be negative")
+	}
+	if distributedGNSAmount > distributableAmount {
+		panic("distributed amount cannot exceed distributable amount")
+	}
+
 	if distributableAmount != distributedGNSAmount {
-		setLeftGNSAmount(distributableAmount - distributedGNSAmount)
+		remainder := distributableAmount - distributedGNSAmount
+		if remainder < 0 {
+			panic("remainder calculation error")
+		}
+		setLeftGNSAmount(remainder)
 	}
 
 	setLastExecutedTimestamp(currentTimestamp)
