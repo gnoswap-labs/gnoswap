@@ -10,14 +10,14 @@ type ProposalStatusType int
 
 const (
 	_                ProposalStatusType = iota
-	StatusUpcoming   // Proposal created but voting hasn't started yet
-	StatusActive     // Proposal is in voting period
-	StatusPassed     // Proposal has passed but hasn't been executed (or is text proposal)
-	StatusRejected   // Proposal failed to meet voting requirements
-	StatusExecutable // Proposal can be executed (passed and in execution window)
-	StatusExecuted   // Proposal has been successfully executed
-	StatusExpired    // Proposal execution window has passed
-	StatusCanceled   // Proposal has been canceled
+	StatusUpcoming                      // Proposal created but voting hasn't started yet
+	StatusActive                        // Proposal is in voting period
+	StatusPassed                        // Proposal has passed but hasn't been executed (or is text proposal)
+	StatusRejected                      // Proposal failed to meet voting requirements
+	StatusExecutable                    // Proposal can be executed (passed and in execution window)
+	StatusExecuted                      // Proposal has been successfully executed
+	StatusExpired                       // Proposal execution window has passed
+	StatusCanceled                      // Proposal has been canceled
 )
 
 // String returns the string representation of ProposalStatusType for display purposes.
@@ -247,15 +247,6 @@ func (p *ProposalStatus) execute(executedAt int64, executedHeight int64, execute
 	return p.actionStatus.execute(executedAt, executedHeight, executedBy)
 }
 
-// updateExecuteResult updates the execution result status.
-// This records whether the execution was successful or failed.
-//
-// Parameters:
-//   - success: true if execution was successful
-func (p *ProposalStatus) updateExecuteResult(success bool) {
-	p.actionStatus.updateResult(success)
-}
-
 // vote records a vote on the proposal and updates vote tallies.
 // This delegates to the vote status for actual vote recording.
 //
@@ -321,4 +312,3 @@ func NewProposalStatus(
 		),
 	}
 }
-

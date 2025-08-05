@@ -33,7 +33,6 @@ func ProposeText(
 	description string,
 ) (newProposalId int64) {
 	halt.AssertIsNotHaltedGovernance()
-	halt.AssertIsNotHaltedWithdraw()
 
 	// Get caller information for proposal creation
 	callerAddress := std.PreviousRealm().Address()
@@ -237,7 +236,6 @@ func ProposeParameterChange(
 	executions string,
 ) (newProposalId int64) {
 	halt.AssertIsNotHaltedGovernance()
-	halt.AssertIsNotHaltedWithdraw()
 
 	// Get caller information for proposal creation
 	callerAddress := std.PreviousRealm().Address()

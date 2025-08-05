@@ -7,10 +7,10 @@ const (
 	// To execute a message, we need to parse the message and call the corresponding function
 	// with the given parameters
 	parameterSeparator = "*EXE*"
-	
+
 	messageSeparator = "*GOV*"
 
-	maxTitleLength = 255
+	maxTitleLength       = 255
 	maxDescriptionLength = 10_000
 	maxNumberOfExecution = 10
 )

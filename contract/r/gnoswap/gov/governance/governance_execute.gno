@@ -120,8 +120,6 @@ func executeProposal(
 		}
 	}
 
-	// Mark execution as successful
-	proposal.status.updateExecuteResult(true)
 
 	return proposal, nil
 }
