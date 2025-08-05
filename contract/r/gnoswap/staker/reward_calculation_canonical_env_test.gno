@@ -39,11 +39,12 @@ func (self *canonicalPool) InternalReward(emission uint64, ratio TierRatio, coun
 	}
 }
 
-func (self *canonicalPool) ExternalReward(currentHeight int64) map[string]int64 {
+func (self *canonicalPool) ExternalReward(currentTimestamp int64) map[string]int64 {
 	reward := make(map[string]int64)
 
 	for _, incentive := range self.incentive {
-		if incentive.startHeight > int64(currentHeight) || incentive.endHeight < int64(currentHeight) {
+		// Use timestamp-based checks instead of height-based
+		if incentive.startTimestamp > currentTimestamp || incentive.endTimestamp < currentTimestamp {
 			continue
 		}
 
@@ -65,10 +66,11 @@ type canonicalRewardState struct {
 
 	emissionUpdates *UintTree
 
-	MsPerBlock       int64
-	PerBlockEmission uint64
+	SecondsPerBlock     int64  // How many seconds per block (1 for testing)
+	PerBlockEmission    uint64  // This will be converted to per-second internally
+	PerSecondEmission   uint64  // Actual per-second emission rate
 
-	CurrentTimestamp int64
+	CurrentTimestamp    int64  // Current timestamp in seconds
 
 	// emulated reward claimed by unstake
 	emulatedClaimedReward map[uint64]int64
@@ -87,9 +89,10 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 		Pool:             make(map[string]*canonicalPool),
 		Reward:           make([]map[uint64]Reward, 124),
 		emissionUpdates:  NewUintTree(),
-		MsPerBlock:       1000,
-		PerBlockEmission: 1000000000,
-		CurrentTimestamp: 0,
+		SecondsPerBlock:   1,  // 1 second per block
+		PerBlockEmission:  1000000000,
+		PerSecondEmission: 1000000000,  // Same as per-block since 1 block = 1 second
+		CurrentTimestamp:  0,  // Start at timestamp 0
 
 		emulatedClaimedReward: make(map[uint64]int64),
 	}
@@ -99,7 +102,7 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 
 	// Technically, the block number being provided to the NewPoolTier should be 124, but because of duplicate creation of the default pool, we put 123 here to just make rewardCache work for the testing.
 	// XXXX: type changed. need to check if this is correct.
-	result.global.poolTier = NewPoolTier(pools, 123, int64(123000), test_gnousdc, func() int64 { return int64(result.PerBlockEmission) }, func(start, end int64) ([]int64, []int64) {
+	result.global.poolTier = NewPoolTier(pools, 123, result.CurrentTimestamp, test_gnousdc, func() int64 { return int64(result.PerSecondEmission) }, func(start, end int64) ([]int64, []int64) {
 		heights := make([]int64, 0)
 		emissions := make([]int64, 0)
 		result.emissionUpdates.Iterate(start, end, func(key int64, value any) bool {
@@ -135,6 +138,7 @@ func (self *canonicalRewardState) isInRange(deposit *Deposit) bool {
 func (self *canonicalRewardState) SetEmissionUpdate(emission uint64) {
 	self.emissionUpdates.set(self.CurrentHeight(), emission)
 	self.PerBlockEmission = emission
+	self.PerSecondEmission = emission  // Since 1 block = 1 second in tests
 }
 
 func (self *canonicalRewardState) LiquidityPerPool() map[string]*u256.Uint {
@@ -187,21 +191,26 @@ func (self *canonicalRewardState) CurrentHeight() int64 {
 	return int64(len(self.Reward)) // due to testing requirement
 }
 
+func (self *canonicalRewardState) CurrentTime() int64 {
+	return self.CurrentTimestamp
+}
+
 // Process block with canonical reward calculation
 func (self *canonicalRewardState) CalculateCanonicalReward() map[uint64]Reward {
 	currentHeight := self.CurrentHeight() + 1
 	rewards := make(map[uint64]Reward)
 
 	liquidityPerPool := self.LiquidityPerPool()
-	internalRewardPerPool := self.InternalRewardPerPool(self.PerBlockEmission)
-	externalRewardPerPool := self.ExternalRewardPerPool(int64(currentHeight))
+	internalRewardPerPool := self.InternalRewardPerPool(self.PerSecondEmission)
+	externalRewardPerPool := self.ExternalRewardPerPool(self.CurrentTimestamp)
 
 	self.global.deposits.Iterate(0, math.MaxUint64, func(positionId uint64, deposit *Deposit) bool {
 		if !self.isInRange(deposit) {
 			return false
 		}
 
-		warmup := deposit.warmups[deposit.FindWarmup(int64(currentHeight))]
+		// Use timestamp for warmup calculation
+		warmup := deposit.warmups[deposit.FindWarmup(self.CurrentTimestamp)]
 		internal, internalPenalty := warmup.apply(internalRewardPerPool[deposit.targetPoolPath], deposit.liquidity, liquidityPerPool[deposit.targetPoolPath])
 		poolExternals := externalRewardPerPool[deposit.targetPoolPath]
 		externals := make(map[string]int64)
@@ -225,7 +234,7 @@ func (self *canonicalRewardState) CalculateCanonicalReward() map[uint64]Reward {
 
 func (self *canonicalRewardState) NextBlock() {
 	self.Reward = append(self.Reward, self.CalculateCanonicalReward())
-	self.CurrentTimestamp += self.MsPerBlock
+	self.CurrentTimestamp += self.SecondsPerBlock  // Advance by 1 second
 	testing.SkipHeights(1)
 	if int64(self.CurrentHeight()) != std.ChainHeight() {
 		panic(ufmt.Sprintf("height mismatch: %d != %d", self.CurrentHeight(), std.ChainHeight()))
@@ -234,7 +243,7 @@ func (self *canonicalRewardState) NextBlock() {
 
 func (self *canonicalRewardState) NextBlockNoCanonical() {
 	self.Reward = append(self.Reward, nil) // just placeholder
-	self.CurrentTimestamp += self.MsPerBlock
+	self.CurrentTimestamp += self.SecondsPerBlock  // Advance by 1 second
 	testing.SkipHeights(1)
 	if int64(self.CurrentHeight()) != std.ChainHeight() {
 		panic(ufmt.Sprintf("height mismatch: %d != %d", self.CurrentHeight(), std.ChainHeight()))
@@ -268,7 +277,7 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 	currentHeight := self.CurrentHeight()
 
 	// cache per-tier and per-pool rewards
-	self.global.poolTier.cacheReward(currentHeight, int64(100000), self.global.pools)
+	self.global.poolTier.cacheReward(currentHeight, self.CurrentTimestamp, self.global.pools)
 
 	deposit := self.global.deposits.get(positionId)
 
@@ -366,13 +375,14 @@ func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath s
 
 	deposit := &Deposit{
 		owner:             owner,
-		stakeTime:         currentHeight,
+		stakeTimestamp:    self.CurrentTimestamp,
+		stakeTime:         currentHeight,  // Keep for backward compatibility
 		targetPoolPath:    targetPoolPath,
 		tickLower:         tickLower,
 		tickUpper:         tickUpper,
 		liquidity:         liquidity,
 		lastCollectTime:   currentHeight,
-		warmups:           instantiateWarmup(int64(100000)), // Use time parameter only
+		warmups:           instantiateWarmup(self.CurrentTimestamp),
 	}
 	canonicalPool, ok := self.Pool[deposit.targetPoolPath]
 	if !ok {
@@ -385,7 +395,7 @@ func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath s
 	// update global state
 	self.global.deposits.set(positionId, deposit)
 
-	self.global.poolTier.cacheReward(currentHeight, int64(100000), self.global.pools)
+	self.global.poolTier.cacheReward(currentHeight, self.CurrentTimestamp, self.global.pools)
 
 	signedLiquidity := i256.FromUint256(deposit.liquidity)
 	if self.isInRange(deposit) {
@@ -503,7 +513,7 @@ func (self *canonicalRewardState) ChangePoolTier(poolPath string, tier uint64) {
 	if !self.global.pools.Has(poolPath) {
 		self.global.pools.set(poolPath, NewPool(poolPath, self.CurrentHeight()))
 	}
-	self.global.poolTier.changeTier(self.CurrentHeight(), int64(100000), self.global.pools, poolPath, tier)
+	self.global.poolTier.changeTier(self.CurrentHeight(), self.CurrentTimestamp, self.global.pools, poolPath, tier)
 }
 
 func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64, initialTick int32) {
