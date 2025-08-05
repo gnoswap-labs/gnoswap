@@ -22,6 +22,10 @@ func registerEmissionChangeCallback() {
 // Called when per-block emission is changed from the gns side.
 // It does not process non-immediate emission changes, such as halving.
 func emissionChangeCallback(amount int64) {
+	if amount < 0 {
+		panic("emission amount cannot be negative")
+	}
+
 	if stakerEmissionChangeCallback == nil {
 		panic("stakerEmissionChangeCallback is nil")
 	}
@@ -33,6 +37,10 @@ func emissionChangeCallback(amount int64) {
 func SetGnsStakerEmissionChangeCallback(cur realm, callback func(amount int64)) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
+
+	if callback == nil {
+		panic("callback function cannot be nil")
+	}
 
 	stakerEmissionChangeCallback = callback
 }
