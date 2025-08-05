@@ -3,7 +3,7 @@ package gns
 import (
 	"std"
 	"strings"
-
+	"math"
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
@@ -17,6 +17,7 @@ const (
 	MAXIMUM_SUPPLY      = int64(1_000_000_000_000_000)
 	INITIAL_MINT_AMOUNT = int64(100_000_000_000_000)
 	MAX_EMISSION_AMOUNT = int64(900_000_000_000_000) // MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT
+	maxInt64            = math.MaxInt64
 )
 
 var (
@@ -54,8 +55,8 @@ func Allowance(owner, spender std.Address) int64 { return token.Allowance(owner,
 
 func MintGns(cur realm, address std.Address) int64 {
 	// Input validation
-	if address == "" {
-		panic("address cannot be empty")
+	if !address.IsValid() {
+		panic("address is not valid")
 	}
 
 	halt.AssertIsNotHaltedEmission()
@@ -118,8 +119,8 @@ func Burn(cur realm, from std.Address, amount int64) {
 	checkErr(privateLedger.Burn(from, amount))
 
 	// Check for overflow in burnAmount addition
-	maxInt64 := int64(9223372036854775807) // math.MaxInt64
-	if amount > 0 && burnAmount > maxInt64-amount {
+	
+	if burnAmount > maxInt64-amount {
 		panic("overflow in burnAmount calculation")
 	}
 	burnAmount += amount
@@ -251,10 +252,6 @@ func calculateAmountToMint(fromHeight, toHeight int64) int64 {
 		// amount of gns to mint for current year - check for overflow
 		if singleBlockAmount > 0 && blocks > 0 {
 			// Check for overflow: if a * b > max_int64, then a > max_int64 / b
-			maxInt64 := int64(9223372036854775807) // math.MaxInt64
-			if blocks == 0 {
-				panic("division by zero: blocks cannot be zero")
-			}
 			if singleBlockAmount > maxInt64/blocks {
 				panic("overflow in yearAmountToMint calculation")
 			}
@@ -265,7 +262,6 @@ func calculateAmountToMint(fromHeight, toHeight int64) int64 {
 		if mintUntilHeight >= yearEndHeight {
 			leftover := handleLeftEmissionAmount(year, yearAmountToMint)
 			// Check for overflow in addition
-			maxInt64 := int64(9223372036854775807) // math.MaxInt64
 			if leftover > 0 && yearAmountToMint > maxInt64-leftover {
 				panic("overflow in yearAmountToMint addition")
 			}
@@ -273,7 +269,6 @@ func calculateAmountToMint(fromHeight, toHeight int64) int64 {
 		}
 
 		// Check for overflow in totalAmountToMint addition
-		maxInt64 := int64(9223372036854775807) // math.MaxInt64
 		if yearAmountToMint > 0 && totalAmountToMint > maxInt64-yearAmountToMint {
 			panic("overflow in totalAmountToMint calculation")
 		}
