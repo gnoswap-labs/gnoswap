@@ -123,17 +123,22 @@ func distributeToTarget(amount int64) (int64, error) {
 		targetInt, distErr := strconv.Atoi(targetStr)
 		if distErr != nil {
 			err = distErr
-
 			return true
 		}
 
 		pct := iPct.(int64)
 		distAmount := calculateAmount(amount, pct)
+
+		// Skip zero amounts to avoid unnecessary transfers
+		if distAmount == 0 {
+			return false
+		}
+
 		totalSent += distAmount
 
-		err = transferToTarget(targetInt, distAmount)
-		if distErr != nil {
-			err = distErr
+		transferErr := transferToTarget(targetInt, distAmount)
+		if transferErr != nil {
+			err = transferErr
 			return true
 		}
 
@@ -151,9 +156,15 @@ func calculateAmount(amount, bptPct int64) int64 {
 		panic("invalid amount or bptPct")
 	}
 
-	// prevent multiplication overflow
-	if amount > 9223372036854775807/10000 {
-		panic("amount too large")
+	// More precise overflow prevention
+	const maxInt64 = 9223372036854775807
+	if amount > maxInt64/10000 {
+		panic("amount too large, would cause overflow")
+	}
+
+	// Additional safety check for zero division
+	if bptPct == 0 {
+		return 0
 	}
 
 	return amount * bptPct / 10000
@@ -171,7 +182,7 @@ func transferToTarget(target int, amount int64) error {
 				ufmt.Sprintf("%s not found", prbac.ROLE_STAKER.String()),
 			)
 		}
-		
+
 		gns.Transfer(cross, stakerAddr, amount)
 		distributedToStaker += amount
 		accuDistributedToStaker += amount
@@ -184,7 +195,7 @@ func transferToTarget(target int, amount int64) error {
 				ufmt.Sprintf("%s not found", prbac.ROLE_DEVOPS.String()),
 			)
 		}
-		
+
 		gns.Transfer(cross, devOpsAddr, amount)
 		distributedToDevOps += amount
 		accuDistributedToDevOps += amount
@@ -197,7 +208,7 @@ func transferToTarget(target int, amount int64) error {
 				ufmt.Sprintf("%s not found", prbac.ROLE_COMMUNITY_POOL.String()),
 			)
 		}
-		
+
 		gns.Transfer(cross, communityPoolAddr, amount)
 		distributedToCommunityPool += amount
 		accuDistributedToCommunityPool += amount
@@ -284,7 +295,6 @@ func ClearDistributedToStaker(cur realm) {
 func ClearDistributedToGovStaker(cur realm) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)
-	
 	distributedToGovStaker = 0
 }
 

@@ -1,6 +1,7 @@
 package emission
 
 import (
+	"math"
 	"std"
 	"time"
 
@@ -30,13 +31,23 @@ func GetLeftGNSAmount() int64 { return leftGNSAmount }
 func GetDistributionStartBlockHeight() int64 { return distributionStartBlockHeight }
 
 // setLeftGNSAmount updates the undistributed GNS token amount
-func setLeftGNSAmount(amount int64) { leftGNSAmount = amount }
+func setLeftGNSAmount(amount int64) {
+	if amount < 0 {
+		panic("left GNS amount cannot be negative")
+	}
+	leftGNSAmount = amount
+}
 
 // GetLastExecutedHeight returns the last block height when distribution was executed
 func GetLastExecutedHeight() int64 { return lastExecutedHeight }
 
 // setLastExecutedHeight updates the last executed block height
-func setLastExecutedHeight(height int64) { lastExecutedHeight = height }
+func setLastExecutedHeight(height int64) {
+	if height < 0 {
+		panic("last executed height cannot be negative")
+	}
+	lastExecutedHeight = height
+}
 
 // MintAndDistributeGns mints new GNS tokens and distributes them to targets
 // Returns the total amount of GNS distributed
@@ -59,12 +70,27 @@ func MintAndDistributeGns(cur realm) int64 {
 		return 0
 	}
 
+	// Additional check to prevent re-entrancy
+	if lastExecutedHeight >= currentHeight {
+		// Skip if we've already processed this height in emission
+		return 0
+	}
+
 	// Mint new tokens and add any leftover amounts from previous distribution
 	mintedEmissionRewardAmount := gns.MintGns(cross, emissionAddr)
+
+	// Validate minted amount
+	if mintedEmissionRewardAmount < 0 {
+		panic("minted emission reward amount cannot be negative")
+	}
 
 	distributableAmount := mintedEmissionRewardAmount
 	prevLeftAmount := GetLeftGNSAmount()
 	if leftGNSAmount > 0 {
+		// Check for overflow before addition
+		if distributableAmount > math.MaxInt64-prevLeftAmount {
+			panic("distributable amount would overflow")
+		}
 		distributableAmount += prevLeftAmount
 		setLeftGNSAmount(0)
 	}
@@ -74,8 +100,20 @@ func MintAndDistributeGns(cur realm) int64 {
 		panic(err)
 	}
 
+	// Validate distribution arithmetic
+	if distributedGNSAmount < 0 {
+		panic("distributed amount cannot be negative")
+	}
+	if distributedGNSAmount > distributableAmount {
+		panic("distributed amount cannot exceed distributable amount")
+	}
+
 	if distributableAmount != distributedGNSAmount {
-		setLeftGNSAmount(distributableAmount - distributedGNSAmount)
+		remainder := distributableAmount - distributedGNSAmount
+		if remainder < 0 {
+			panic("remainder calculation error")
+		}
+		setLeftGNSAmount(remainder)
 	}
 
 	// Emit event with distribution details
