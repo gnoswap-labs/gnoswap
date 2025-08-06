@@ -93,7 +93,6 @@ func unwrapWithTransferFrom(fromAddress, toAddress std.Address, wugnotAmount int
 
 	currentRealmAddr := std.CurrentRealm().Address()
 	if fromAddress != currentRealmAddr {
-		println(wugnot.Allowance(fromAddress, currentRealmAddr), wugnotAmount)
 		wugnot.TransferFrom(cross, fromAddress, currentRealmAddr, wugnotAmount)
 	}
 
