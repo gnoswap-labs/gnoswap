@@ -17,6 +17,15 @@ import (
 
 const MAX_INT256 string = "57896044618658097711785492504343953926634992332820282019728792003956564819967"
 
+var (
+	// MUST BE IMMUTABLE.
+	// DO NOT USE THIS VALUE IN ANY ARITHMETIC OPERATIONS' INITIALIZATION
+	zero = u256.Zero()
+	fixedPointQ128 = u256.MustFromDecimal(Q128)
+
+	maxInt256 = u256.MustFromDecimal(MAX_INT256)
+)
+
 // SwapResult encapsulates all state changes that occur as a result of a swap
 // This type ensure all state transitions are atomic and can be applied at once.
 type SwapResult struct {
@@ -40,8 +49,6 @@ type SwapComputation struct {
 	Cache             SwapCache
 }
 
-var fixedPointQ128 = u256.MustFromDecimal(Q128)
-
 // Swap swaps token0 for token1, or token1 for token0
 // Returns swapped amount0, amount1 in string
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#swap
@@ -63,7 +70,7 @@ func Swap(
 	if amountSpecified == "0" {
 		panic(newErrorWithDetail(
 			errInvalidSwapAmount,
-			ufmt.Sprintf("amountSpecified == 0"),
+			"amountSpecified == 0",
 		))
 	}
 
@@ -260,13 +267,13 @@ func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 
 	// Update protocol fees if necessary
 	if comp.ZeroForOne {
-		if state.protocolFee.Gt(u256.Zero()) {
-			result.NewProtocolFees.token0 = new(u256.Uint).Add(result.NewProtocolFees.token0, state.protocolFee)
+		if state.protocolFee.Gt(zero) {
+			result.NewProtocolFees.token0 = u256.Zero().Add(result.NewProtocolFees.token0, state.protocolFee)
 		}
 		result.FeeGrowthGlobal0X128 = state.feeGrowthGlobalX128.Clone()
 	} else {
-		if state.protocolFee.Gt(u256.Zero()) {
-			result.NewProtocolFees.token1 = new(u256.Uint).Add(result.NewProtocolFees.token1, state.protocolFee)
+		if state.protocolFee.Gt(zero) {
+			result.NewProtocolFees.token1 = u256.Zero().Add(result.NewProtocolFees.token1, state.protocolFee)
 		}
 		result.FeeGrowthGlobal1X128 = state.feeGrowthGlobalX128.Clone()
 	}
@@ -294,9 +301,9 @@ func applySwapResult(pool *Pool, result *SwapResult) {
 // For !zeroForOne (selling token1):
 //   - Price limit must be above current price
 //   - Price limit must be below MAX_SQRT_RATIO
+// TODO: consider to reduce branches
 func validatePriceLimits(slot0 Slot0, zeroForOne bool, sqrtPriceLimitX96 *u256.Uint) {
 	if zeroForOne {
-
 		cond1 := sqrtPriceLimitX96.Lt(slot0.sqrtPriceX96)
 		cond2 := sqrtPriceLimitX96.Gt(minSqrtRatio)
 		if !(cond1 && cond2) {
@@ -310,7 +317,6 @@ func validatePriceLimits(slot0 Slot0, zeroForOne bool, sqrtPriceLimitX96 *u256.U
 			))
 		}
 	} else {
-
 		cond1 := sqrtPriceLimitX96.Gt(slot0.sqrtPriceX96)
 		cond2 := sqrtPriceLimitX96.Lt(maxSqrtRatio)
 		if !(cond1 && cond2) {
@@ -343,7 +349,7 @@ func getFeeGrowthGlobal(pool *Pool, zeroForOne bool) *u256.Uint {
 }
 
 func shouldContinueSwap(state SwapState, sqrtPriceLimitX96 *u256.Uint) bool {
-	return !(state.amountSpecifiedRemaining.IsZero()) && !(state.sqrtPriceX96.Eq(sqrtPriceLimitX96))
+	return !state.amountSpecifiedRemaining.IsZero() && !state.sqrtPriceX96.Eq(sqrtPriceLimitX96)
 }
 
 // computeSwapStep executes a single step of swap and returns new state
@@ -361,8 +367,10 @@ func computeSwapStep(
 	sqrtRatioTargetX96 := computeTargetSqrtRatio(step, sqrtPriceLimitX96, zeroForOne).Clone()
 
 	// computing the amounts to be swapped at this step
-	var newState SwapState
-	var err error
+	var (
+		newState SwapState
+		err error
+	)
 
 	newState, step = computeAmounts(state, sqrtRatioTargetX96, pool, step)
 	newState = updateAmounts(step, newState, exactInput)
@@ -379,7 +387,7 @@ func computeSwapStep(
 	// update global fee tracker
 	if newState.liquidity.Gt(u256.Zero()) {
 		update := u256.MulDiv(step.feeAmount, fixedPointQ128, newState.liquidity)
-		newState.setFeeGrowthGlobalX128(new(u256.Uint).Add(newState.feeGrowthGlobalX128, update))
+		newState.setFeeGrowthGlobalX128(u256.Zero().Add(newState.feeGrowthGlobalX128, update))
 	}
 
 	// handling tick transitions
@@ -397,7 +405,7 @@ func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState
 	delta := step.feeAmount
 	delta.Div(delta, u256.NewUint(uint64(feeProtocol)))
 
-	newFeeAmount, overflow := new(u256.Uint).SubOverflow(step.feeAmount, delta)
+	newFeeAmount, overflow := u256.Zero().SubOverflow(step.feeAmount, delta)
 	if overflow {
 		return state, step, errUnderflow
 	}
@@ -475,13 +483,13 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 //   - Increments remaining output amount by amountOut
 //   - Increments calculated amount by (amountIn + feeAmount)
 func updateAmounts(step StepComputations, state SwapState, exactInput bool) SwapState {
-	amountInWithFeeU256 := new(u256.Uint).Add(step.amountIn, step.feeAmount)
-	if amountInWithFeeU256.Gt(u256.MustFromDecimal(MAX_INT256)) {
+	amountInWithFeeU256 := u256.Zero().Add(step.amountIn, step.feeAmount)
+	if amountInWithFeeU256.Gt(maxInt256) {
 		panic("amountIn + feeAmount overflows int256")
 	}
 
 	amountInWithFee := i256.FromUint256(amountInWithFeeU256)
-	if step.amountOut.Gt(u256.MustFromDecimal(MAX_INT256)) {
+	if step.amountOut.Gt(maxInt256) {
 		panic("amountOut overflows int256")
 	}
 
@@ -536,6 +544,7 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 	return newState
 }
 
+// TODO: consider to reduce branches
 func (p *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amount0, amount1 *i256.Int) {
 	if zeroForOne {
 		// payer > POOL

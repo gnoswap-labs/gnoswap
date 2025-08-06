@@ -113,8 +113,8 @@ func positionUpdate(
 	}
 
 	// validate negative feeGrowth before calculation
-	diff0 := new(u256.Uint).Sub(feeGrowthInside0X128, position.feeGrowthInside0LastX128)
-	diff1 := new(u256.Uint).Sub(feeGrowthInside1X128, position.feeGrowthInside1LastX128)
+	diff0 := u256.Zero().Sub(feeGrowthInside0X128, position.feeGrowthInside0LastX128)
+	diff1 := u256.Zero().Sub(feeGrowthInside1X128, position.feeGrowthInside1LastX128)
 
 	// calculate tokensOwed
 	tokensOwed0 := u256.Zero()
