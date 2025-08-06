@@ -93,17 +93,18 @@ func unwrapWithTransferFrom(fromAddress, toAddress std.Address, wugnotAmount int
 
 	currentRealmAddr := std.CurrentRealm().Address()
 	if fromAddress != currentRealmAddr {
+		println(wugnot.Allowance(fromAddress, currentRealmAddr), wugnotAmount)
 		wugnot.TransferFrom(cross, fromAddress, currentRealmAddr, wugnotAmount)
 	}
 
 	wugnot.Withdraw(cross, wugnotAmount)
 
+	sendCoins := std.Coins{{Denom: GNOT_DENOM, Amount: wugnotAmount}}
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(currentRealmAddr, toAddress, std.Coins{{"ugnot", int64(wugnotAmount)}})
+	banker.SendCoins(currentRealmAddr, toAddress, sendCoins)
 
 	return nil
 }
-
 
 // unwrapWithTransfer handles transferring tokens to a target address,
 // with special handling for WUGNOT tokens that need to be unwrapped back to GNOT.

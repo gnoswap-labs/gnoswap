@@ -182,6 +182,7 @@ func handleSingleSwap(route string, amountSpecified *i256.Int, withUnwrap bool) 
 		tokenOut:        output,
 		fee:             fee,
 		amountSpecified: amountSpecified,
+		withUnwrap:      withUnwrap,
 	}
 
 	return singleSwap(&singleParams)

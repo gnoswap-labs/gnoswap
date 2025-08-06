@@ -60,6 +60,7 @@ type SingleSwapParams struct {
 	tokenIn    string // token to spend
 	tokenOut   string // token to receive
 	fee        uint32 // fee of the pool used to swap
+	withUnwrap bool   // whether to unwrap the token
 
 	// Amount specified for the swap:
 	//  - Positive: exact input amount (tokenIn)

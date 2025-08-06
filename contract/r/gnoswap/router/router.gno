@@ -70,7 +70,8 @@ func (h *GnotSwapHandler) HandleInputSwap() error {
 // HandleOutputSwap manages unwrapping logic for GNOT output tokens
 func (h *GnotSwapHandler) HandleOutputSwap() error {
 	userRecvWugnot := h.NewBalance - h.BeforeBalance - h.WrappedAmount
-	return unwrapWithTransfer(std.PreviousRealm().Address(), userRecvWugnot)
+	caller := std.PreviousRealm().Address()
+	return unwrapWithTransfer(caller, userRecvWugnot)
 }
 
 // SwapValidator provides validation methods for swap operations
@@ -244,8 +245,6 @@ func finalizeSwap(
 	var err error
 	if inputToken == gnot {
 		err = handler.HandleInputSwap()
-	} else if outputToken == gnot {
-		err = handler.HandleOutputSwap()
 	}
 
 	if err != nil {
