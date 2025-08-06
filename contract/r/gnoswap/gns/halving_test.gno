@@ -140,7 +140,7 @@ func TestEmissionState(t *testing.T) {
 	uassert.True(t, es.getEndTimestamp() > es.getStartTimestamp())
 
 	// Test amount per seconds for year 1
-	expected := es.getHalvingYearAmountPerSeconds(1)
+	expected := es.getHalvingYearAmountPerSecond(1)
 	uassert.True(t, expected > 0)
 }
 
@@ -155,7 +155,7 @@ func TestAmountPerSecondsCalculation(t *testing.T) {
 
 	// Test each year has correct amount per seconds calculation
 	for y := int64(1); y <= HALVING_END_YEAR; y++ {
-		amountPerSeconds := es.getHalvingYearAmountPerSeconds(y)
+		amountPerSeconds := es.getHalvingYearAmountPerSecond(y)
 		yearMaxAmount := GetHalvingYearMaxAmount(y)
 
 		// Amount per seconds should be year max amount divided by seconds in year
@@ -268,7 +268,7 @@ func TestHalvingDataGettersWithInvalidYear(t *testing.T) {
 		mintedAmount:     make([]int64, HALVING_END_YEAR),
 		leftAmount:       make([]int64, HALVING_END_YEAR),
 		accumAmount:      make([]int64, HALVING_END_YEAR),
-		amountPerSeconds: make([]int64, HALVING_END_YEAR),
+		amountPerSecond: make([]int64, HALVING_END_YEAR),
 	}
 
 	// Set test values for valid years
@@ -279,7 +279,7 @@ func TestHalvingDataGettersWithInvalidYear(t *testing.T) {
 		hd.mintedAmount[i] = 5000 + i*100
 		hd.leftAmount[i] = 6000 + i*100
 		hd.accumAmount[i] = 7000 + i*100
-		hd.amountPerSeconds[i] = 8000 + i*100
+		hd.amountPerSecond[i] = 8000 + i*100
 	}
 
 	tests := []struct {
@@ -295,7 +295,7 @@ func TestHalvingDataGettersWithInvalidYear(t *testing.T) {
 		{"MintedAmount with year 0", 0, hd.getMintedAmount, 0},
 		{"LeftAmount with year 0", 0, hd.getLeftAmount, 0},
 		{"AccumAmount with year 0", 0, hd.getAccumAmount, 0},
-		{"AmountPerSeconds with year 0", 0, hd.getAmountPerSeconds, 0},
+		{"AmountPerSeconds with year 0", 0, hd.getAmountPerSecond, 0},
 
 		// Year -1 tests (negative year, should return 0)
 		{"StartTimestamp with year -1", -1, hd.getStartTimestamp, 0},
@@ -307,7 +307,7 @@ func TestHalvingDataGettersWithInvalidYear(t *testing.T) {
 		{"MintedAmount with year 1", 1, hd.getMintedAmount, 5000},
 		{"LeftAmount with year 1", 1, hd.getLeftAmount, 6000},
 		{"AccumAmount with year 1", 1, hd.getAccumAmount, 7000},
-		{"AmountPerSeconds with year 1", 1, hd.getAmountPerSeconds, 8000},
+		{"AmountPerSeconds with year 1", 1, hd.getAmountPerSecond, 8000},
 
 		// Last valid year tests
 		{"StartTimestamp with year 12", 12, hd.getStartTimestamp, 2100},
@@ -316,7 +316,7 @@ func TestHalvingDataGettersWithInvalidYear(t *testing.T) {
 		{"MintedAmount with year 12", 12, hd.getMintedAmount, 6100},
 		{"LeftAmount with year 12", 12, hd.getLeftAmount, 7100},
 		{"AccumAmount with year 12", 12, hd.getAccumAmount, 8100},
-		{"AmountPerSeconds with year 12", 12, hd.getAmountPerSeconds, 9100},
+		{"AmountPerSeconds with year 12", 12, hd.getAmountPerSecond, 9100},
 	}
 
 	for _, tt := range tests {
