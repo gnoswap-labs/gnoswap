@@ -220,12 +220,16 @@ func Collect(
 	if amount0.Gt(u256.Zero()) {
 		position.tokensOwed0 = u256.Zero().Sub(position.tokensOwed0, amount0)
 		pool.balances.token0 = u256.Zero().Sub(pool.balances.token0, amount0)
-		checkTransferError(common.Transfer(cross, pool.token0Path, recipient, amount0.Int64()))
+		if err := common.Approve(cross, pool.token0Path, positionAddr, amount0.Int64()); err != nil {
+			panic(err)
+		}
 	}
 	if amount1.Gt(u256.Zero()) {
 		position.tokensOwed1 = u256.Zero().Sub(position.tokensOwed1, amount1)
 		pool.balances.token1 = u256.Zero().Sub(pool.balances.token1, amount1)
-		checkTransferError(common.Transfer(cross, pool.token1Path, recipient, amount1.Int64()))
+		if err := common.Approve(cross, pool.token1Path, positionAddr, amount1.Int64()); err != nil {
+			panic(err)
+		}
 	}
 
 	pool.setPosition(positionKey, position)
