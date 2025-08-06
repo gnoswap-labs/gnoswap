@@ -6,7 +6,7 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/v1/emission"
-	protocol_fee "gno.land/r/gnoswap/v1/protocol_fee"
+	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
 
 // Global state variables for staker contract
@@ -313,7 +313,7 @@ func claimRewardsEmissionReward(address string, currentTimestamp int64) (int64, 
 //   - amount: amount of stake to add
 //   - currentTimestamp: current timestamp
 func addStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) {
-	protocol_fee.DistributeProtocolFee(cross)
+	pf.DistributeProtocolFee(cross)
 
 	distributedAmounts := getDistributedProtocolFees()
 
@@ -329,7 +329,7 @@ func addStakeProtocolFeeReward(address string, amount int64, currentTimestamp in
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
 func removeStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) {
-	protocol_fee.DistributeProtocolFee(cross)
+	pf.DistributeProtocolFee(cross)
 
 	distributedAmounts := getDistributedProtocolFees()
 
@@ -348,7 +348,7 @@ func removeStakeProtocolFeeReward(address string, amount int64, currentTimestamp
 //   - map[string]int64: protocol fee rewards claimed by token
 //   - error: nil on success, error if claiming fails
 func claimRewardsProtocolFeeReward(address string, currentTimestamp int64) (map[string]int64, error) {
-	protocol_fee.DistributeProtocolFee(cross)
+	pf.DistributeProtocolFee(cross)
 
 	distributedAmounts := getDistributedProtocolFees()
 
@@ -362,7 +362,7 @@ func claimRewardsProtocolFeeReward(address string, currentTimestamp int64) (map[
 // Returns:
 //   - map[string]int64: distributed amounts by token path
 func getDistributedProtocolFees() map[string]int64 {
-	return protocol_fee.GetAccuTransfersToGovStaker()
+	return pf.GetAccuTransfersToGovStaker()
 }
 
 // getLaunchpadProjectDeposit retrieves the deposit amount for a launchpad project.
